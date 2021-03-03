@@ -427,6 +427,42 @@ class Agent
 	}
 
 	/**
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function sendAutomaticMessage()
+	{
+		Debug::addAgent('start ' . __METHOD__);
+
+		$result = '\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();';
+
+		if(
+			!self::isCronCall() &&
+			self::isExecModeAgent() ||
+			self::isCronCall() &&
+			self::isExecModeCron()
+		)
+		{
+			ExecLog::setExecFunction(__METHOD__);
+
+			if(AutomaticAction\Messages::isActualMessagesForSend())
+			{
+				AutomaticAction\Messages::sendMessages(self::getTimeOutTransferToNextInQueue());
+			}
+		}
+
+		Debug::addAgent('stop ' . __METHOD__);
+
+		return $result;
+	}
+
+	/**
 	 * Checks method has been called from cron exec ready script
 	 *
 	 * @return bool

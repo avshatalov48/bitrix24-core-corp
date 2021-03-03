@@ -84,6 +84,7 @@ $APPLICATION->IncludeComponent(
 							<span class="timeman-report-time-item-value"
 									data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>" <?
 							if (!empty($fieldCell['RECORDED_VALUE_HINT'])): ?>
+								data-hint-html
 								data-hint-no-icon
 								data-hint="<?= htmlspecialcharsbx($fieldCell['RECORDED_VALUE_HINT']); ?>"
 							<? endif; ?>
@@ -99,6 +100,7 @@ $APPLICATION->IncludeComponent(
 								<span class="timeman-report-time-item-value-real" <?
 								if (!empty($fieldCell['ACTUAL_VALUE_HINT'])): ?>
 									data-hint-no-icon
+									data-hint-html
 									data-hint="<?= htmlspecialcharsbx($fieldCell['ACTUAL_VALUE_HINT']); ?>"
 								<? endif; ?>
 								><?=
@@ -107,6 +109,7 @@ $APPLICATION->IncludeComponent(
 								<div class="<?= empty($fieldCell['ACTUAL_INFO']) ? 'timeman-hide' : ''; ?>" <?
 								if (!empty($fieldCell['ACTUAL_INFO_HINT'])): ?>
 									data-hint-no-icon
+									data-hint-html
 									data-hint="<?= htmlspecialcharsbx($fieldCell['ACTUAL_INFO_HINT']); ?>"
 								<? endif; ?>>
 									<div class="timeman-report-time-item-edited">

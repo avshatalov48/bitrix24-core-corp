@@ -97,6 +97,7 @@ const FieldListItem = {
 				:value="itemLabel"
 				:class="classes"
 				@click.capture="toggleSelector"
+				@keydown.capture.space.stop.prevent="toggleSelector"
 			>
 			<div class="b24-form-control-label">
 				{{ field.label }}

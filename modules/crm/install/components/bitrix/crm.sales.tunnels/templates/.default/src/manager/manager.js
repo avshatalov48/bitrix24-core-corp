@@ -641,6 +641,14 @@ export default class Manager
 
 							return prevColumn.data.stage.ENTITY_ID;
 						})(),
+						color: event.data.column.getColor(),
+						semantics: (() => {
+							const {column} = event.data;
+							const grid = column.getGrid();
+							const prevColumn = grid.getPreviousColumnSibling(column);
+
+							return prevColumn.data.stage.SEMANTICS;
+						})()
 					})
 					.then(({data}) => {
 						if (data.success)

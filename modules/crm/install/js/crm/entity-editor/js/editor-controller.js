@@ -324,6 +324,7 @@ if(typeof BX.Crm.EntityEditorProductRowProxy === "undefined")
 		{
 			this._currencyId = currencyId;
 			this._externalEditor.setCurrencyId(this._currencyId);
+			this.markAsChanged();
 		}
 	};
 	BX.Crm.EntityEditorProductRowProxy.prototype.onProductAdd = function(product)

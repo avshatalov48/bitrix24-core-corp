@@ -2247,7 +2247,8 @@ create table if not exists b_crm_invoice
 	index IX_BSO_DATE_PAYED(DATE_PAYED),
 	index IX_BSO_DATE_INSERT(DATE_INSERT),
 	index IX_BSO_DATE_PAY_BEFORE(DATE_PAY_BEFORE),
-	unique IXS_ACCOUNT_NUMBER(ACCOUNT_NUMBER)
+	unique IXS_ACCOUNT_NUMBER(ACCOUNT_NUMBER),
+    FULLTEXT INDEX IX_B_CRM_INVOICE_SEARCH(SEARCH_CONTENT)
 );
 
 create table if not exists b_crm_invoice_payment(

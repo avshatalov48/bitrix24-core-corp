@@ -255,7 +255,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				{
 					if ($report)
 					{
-						$arCurFiles = unserialize($report["FILES"]);
+						$arCurFiles = unserialize($report["FILES"], ['allowed_classes' => false]);
 						$arFiles = (is_array($arCurFiles) && count($arCurFiles) > 0) ? array_merge($arCurFiles, $arResult) : $arResult;
 						CTimeManReportFull::Update($report["ID"], ["FILES" => $arFiles]);
 					}
@@ -269,7 +269,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				Header('Content-Type: text/html; charset=' . LANG_CHARSET);
 				?>
 				<script type="text/javascript">
-					window.parent.window.<?echo (int)$_POST["form_id"]?>.RefreshUpload(<?php echo CUtil::PhpToJsObject($arResult);?>, <?php echo intval($_POST["uniqueID"])?>);
+					window.parent.window['<?=CUtil::JSescape($_POST["form_id"])?>'].RefreshUpload(<?php echo CUtil::PhpToJsObject($arResult);?>, <?php echo intval($_POST["uniqueID"])?>);
 				</script>
 				<?
 			}
@@ -277,7 +277,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 			{
 				if ($report)
 				{
-					$arFiles = unserialize($report["FILES"]);
+					$arFiles = unserialize($report["FILES"], ['allowed_classes' => false]);
 				}
 				else
 				{
@@ -345,7 +345,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 				if (is_array($report) && $report['FILES'] <> '')
 				{
-					$arFiles = unserialize($report['FILES']);
+					$arFiles = unserialize($report['FILES'], ['allowed_classes' => false]);
 				}
 			}
 			elseif (isset($_SESSION['report_files']))
@@ -640,7 +640,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 								if ($res["INFO"]['TASKS_ENABLED'] = (CBXFeatures::IsFeatureEnabled('Tasks') && CModule::IncludeModule('tasks')))
 								{
-									$res["INFO"]['TASKS'] = unserialize($res["INFO"]['TASKS']);
+									$res["INFO"]['TASKS'] = unserialize($res["INFO"]['TASKS'], ['allowed_classes' => false]);
 								}
 								else
 								{
@@ -649,7 +649,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 								if ($res["INFO"]['CALENDAR_ENABLED'] = CBXFeatures::IsFeatureEnabled('Calendar'))
 								{
-									$res["INFO"]['EVENTS'] = unserialize($res["INFO"]['EVENTS']);
+									$res["INFO"]['EVENTS'] = unserialize($res["INFO"]['EVENTS'], ['allowed_classes' => false]);
 								}
 								else
 								{
@@ -658,7 +658,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 								if ($res["INFO"]['FILES'])
 								{
-									$res["INFO"]['FILES'] = unserialize($res["INFO"]['FILES']);
+									$res["INFO"]['FILES'] = unserialize($res["INFO"]['FILES'], ['allowed_classes' => false]);
 								}
 
 								$res["INFO"]['CAN_EDIT'] = ($arUser['ID'] != $USER->GetID()) && ($bCanEditAll || in_array($arUser['ID'], $arAccessUsers['WRITE']));
@@ -2354,7 +2354,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 										if ($res['INFO']['TASKS_ENABLED'])
 										{
-											$res['INFO']['TASKS'] = unserialize($arRes['TASKS']);
+											$res['INFO']['TASKS'] = unserialize($arRes['TASKS'], ['allowed_classes' => false]);
 										}
 										else
 										{
@@ -2363,7 +2363,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 
 										if ($res['INFO']['CALENDAR_ENABLED'])
 										{
-											$res['INFO']['EVENTS'] = unserialize($arRes['EVENTS']);
+											$res['INFO']['EVENTS'] = unserialize($arRes['EVENTS'], ['allowed_classes' => false]);
 										}
 										else
 										{

@@ -25,7 +25,7 @@ $this->SetViewTarget("sidebar", 250);
 			<?endif?>>
 		</span>
 		<span class="sidebar-user-info">
-			<span class="user-post-name"><?=$arPost["AuthorName"]?></span>
+			<span class="user-post-name"><?=\CUser::formatName(\CSite::getNameFormat(false), $arPost['arUser'], true, false)?></span>
 			<span class="user-post-title"><?=htmlspecialcharsbx($arPost["TITLE"])?></span>
 		</span>
 	</a>

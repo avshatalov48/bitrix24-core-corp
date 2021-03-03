@@ -408,6 +408,11 @@ export class RequisiteListItem
 		return BX.prop.getString(this._data, 'presetId', "0");
 	}
 
+	getPresetCountryId()
+	{
+		return BX.prop.getString(this._data, 'presetCountryId', "0");
+	}
+
 	getBankDetails()
 	{
 		return BX.prop.getArray(this._data, 'bankDetails', []);
@@ -533,6 +538,11 @@ export class RequisiteListItem
 	setPresetId(presetId)
 	{
 		this._data.presetId = presetId;
+	}
+
+	setPresetCountryId(presetCountryId)
+	{
+		this._data.presetCountryId = presetCountryId;
 	}
 
 	setSelected(selected)

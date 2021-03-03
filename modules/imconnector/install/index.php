@@ -75,22 +75,23 @@ Class ImConnector extends CModule
 
 		Option::set($this->MODULE_ID, 'uri_client', $arParams["public_url"]);
 
-		$listConnector = array(
-			"livechat",
-			"network",
-			"yandex",
-			"viber",
-			"telegrambot",
-			"vkgroup",
-			"facebook",
-			"facebookcomments",
-			"fbinstagram",
-			"botframework",
-			"avito",
-			"whatsappbytwilio",
-			"wechat",
-			"olx",
-		);
+		$listConnector = [
+			'livechat',
+			'network',
+			'yandex',
+			'viber',
+			'telegrambot',
+			'vkgroup',
+			'ok',
+			'facebook',
+			'facebookcomments',
+			'fbinstagram',
+			'botframework',
+			'avito',
+			'whatsappbytwilio',
+			'wechat',
+			'olx',
+		];
 		Option::set($this->MODULE_ID, 'list_connector', implode(",", $listConnector));
 
 		ModuleManager::registerModule($this->MODULE_ID);

@@ -72,6 +72,11 @@ class ComparePeriods extends Serial
 			],
 		];
 
+		if (empty($dataFromReport))
+		{
+			return $result;
+		}
+
 		$currentPeriod = is_array($dataFromReport[0]) ? $dataFromReport[0] : [];
 		$previousPeriod = is_array($dataFromReport[1]) ? $dataFromReport[1] : [];
 

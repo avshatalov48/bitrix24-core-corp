@@ -144,20 +144,4 @@ class Notify extends Sale\Notify
 
 		return parent::sendShipmentAllowDelivery($entity);
 	}
-
-	/**
-	 * @param Internals\Entity $entity
-	 * @return Sale\Result
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentTypeException
-	 */
-	public static function sendPrintableCheck(Internals\Entity $entity)
-	{
-		if (IsModuleInstalled('bitrix24'))
-		{
-			return new Sale\Result();
-		}
-
-		return parent::sendShipmentAllowDelivery($entity);
-	}
 }

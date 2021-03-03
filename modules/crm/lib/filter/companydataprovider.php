@@ -151,7 +151,7 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 				)
 			);
 
-			$regAddressLabels = EntityAddress::getShortLabels(EntityAddress::Registered);
+			$regAddressLabels = EntityAddress::getShortLabels(Crm\EntityAddressType::Registered);
 			$result += array(
 				'ADDRESS_LEGAL' => $this->createField(
 					'ADDRESS_LEGAL',

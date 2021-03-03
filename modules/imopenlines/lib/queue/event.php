@@ -3,13 +3,18 @@ namespace Bitrix\ImOpenLines\Queue;
 
 use \Bitrix\ImOpenLines,
 	\Bitrix\ImOpenLines\Session,
+	\Bitrix\ImOpenLines\QueueManager,
 	\Bitrix\ImOpenLines\Model\QueueTable,
 	\Bitrix\ImOpenLines\Model\ConfigTable,
+	\Bitrix\ImOpenLines\Model\ConfigQueueTable,
 	\Bitrix\ImOpenLines\Model\SessionCheckTable;
 
-use \Bitrix\Main\Loader;
+use \Bitrix\Main\Loader,
+	\Bitrix\Main\UserTable;
 
 use \Bitrix\Intranet\UserAbsence;
+
+use \Bitrix\Iblock\SectionTable;
 
 /**
  * Class Event
@@ -20,9 +25,14 @@ class Event
 	const COUNT_SESSIONS_DEFAULT = 1; //default session count to transfer
 	const COUNT_SESSIONS_REALTIME = 5; //sessions count to transfer to new or returned operator
 
+	private static $userFieldsUpdate = [];
+	private static $linesUsersDelete = [];
+	private static $linesDepartmentsDelete = [];
+	private static $linesDepartmentsUpdate = [];
+
 	//initialization
 	/**
-	 * @param array $configLine
+	 * @param $configLine
 	 * @return bool|\Bitrix\ImOpenLines\Queue\Event\Evenly|\Bitrix\ImOpenLines\Queue\Event\All|\Bitrix\ImOpenLines\Queue\Event\Strictly
 	 * @return Event\All|Event\Evenly|Event\Strictly|bool
 	 * @throws \Bitrix\Main\ArgumentException
@@ -44,7 +54,7 @@ class Event
 	}
 
 	/**
-	 * @param array $configLine
+	 * @param $configLine
 	 * @return bool|\Bitrix\ImOpenLines\Queue\Event\Evenly|\Bitrix\ImOpenLines\Queue\Event\All|\Bitrix\ImOpenLines\Queue\Event\Strictly
 	 */
 	public static function initializationUsingConfiguration($configLine)
@@ -118,9 +128,13 @@ class Event
 	public static function onQueueOperatorsAdd(\Bitrix\Main\Event $event)
 	{
 		$eventData = $event->getParameters();
-		$eventData['line'] = intval($eventData['line']);
+		$eventData['line'] = (int)$eventData['line'];
 
-		if ($eventData['line'] > 0 && !empty($eventData['operators']) && is_array($eventData['operators']))
+		if (
+			$eventData['line'] > 0 &&
+			!empty($eventData['operators']) &&
+			is_array($eventData['operators'])
+		)
 		{
 			self::returnUserToQueue($eventData['operators'], $eventData['line']);
 
@@ -182,16 +196,25 @@ class Event
 	{
 		$eventData = $event->getParameters();
 
-		if(!empty($eventData['USER_ID']) && !empty($eventData['ABSENCE_TYPE']))
+		if(
+			!empty($eventData['USER_ID']) &&
+			!empty($eventData['ABSENCE_TYPE'])
+		)
 		{
 			$isVacation = true;
 
-			if(Loader::includeModule('intranet') && !UserAbsence::isVacation($eventData['ABSENCE_TYPE']))
+			if(
+				Loader::includeModule('intranet') &&
+				!UserAbsence::isVacation($eventData['ABSENCE_TYPE'])
+			)
 			{
 				$isVacation = false;
 			}
 
-			if ($isVacation === true && ImOpenLines\Queue::isRealOperator($eventData['USER_ID']))
+			if (
+				$isVacation === true &&
+				ImOpenLines\Queue::isRealOperator($eventData['USER_ID'])
+			)
 			{
 				self::returnUserToAllQueues($eventData['USER_ID']);
 			}
@@ -215,7 +238,8 @@ class Event
 	protected static function returnUserToAllQueues($userId, $checkTimeman = false)
 	{
 		$filter = [
-			'USER_ID' => $userId
+			'USER_ID' => $userId,
+			'!==CONFIG.ID' => null
 		];
 
 		if ($checkTimeman)
@@ -226,7 +250,11 @@ class Event
 		$queueList = QueueTable::getList(
 			[
 				'select' => ['CONFIG_ID'],
-				'filter' => $filter
+				'filter' => $filter,
+				'order' => [
+					'SORT' => 'ASC',
+					'ID' => 'ASC'
+				]
 			]
 		)->fetchAll();
 
@@ -248,13 +276,15 @@ class Event
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected static function returnUserToQueue(array $userIds, $lineId)
+	protected static function returnUserToQueue(array $userIds, $lineId): void
 	{
-		self::initialization($lineId)->returnUserToQueue($userIds);
+		$configManager = self::initialization($lineId);
+		if(!empty($configManager))
+		{
+			$configManager->returnUserToQueue($userIds);
+		}
 	}
 	//END Return user to queue
-
-
 
 	//Operator temporarily unavailable
 	/**
@@ -298,7 +328,11 @@ class Event
 				{
 					if (!\Bitrix\ImOpenLines\Queue::isOperatorSingleInLine($lineId, $userId))
 					{
-						self::initialization($lineId)->returnNotAcceptedSessionsToQueue($userId, ImOpenLines\Queue::REASON_OPERATOR_DAY_END);
+						$configManager = self::initialization($lineId);
+						if(!empty($configManager))
+						{
+							$configManager->returnNotAcceptedSessionsToQueue($userId, ImOpenLines\Queue::REASON_OPERATOR_DAY_END);
+						}
 					}
 				}
 			}
@@ -328,9 +362,17 @@ class Event
 	{
 		$eventData = $event->getParameters();
 
-		if (is_array($eventData['operators']) && count($eventData['operators']) > 0 && !empty($eventData['line']))
+		if (
+			!empty($eventData['line']) &&
+			is_array($eventData['operators']) &&
+			count($eventData['operators']) > 0
+		)
 		{
-			self::initialization($eventData['line'])->returnSessionsUsersToQueue($eventData['operators'], ImOpenLines\Queue::REASON_REMOVED_FROM_QUEUE);
+			$configManager = self::initialization($eventData['line']);
+			if(!empty($configManager))
+			{
+				$configManager->returnSessionsUsersToQueue($eventData['operators'], ImOpenLines\Queue::REASON_REMOVED_FROM_QUEUE);
+			}
 
 			ImOpenLines\Debug::addQueueEvent( __METHOD__, 0, 0, ['eventData' => $eventData]);
 		}
@@ -364,20 +406,22 @@ class Event
 			foreach ($eventData['operators_before'] as $singleOperatorId)
 			{
 				$queueInstance = self::initialization($eventData['line']);
-
-				if (!$queueInstance->isOperatorActive($singleOperatorId))
+				if(!empty($queueInstance))
 				{
-					$queueInstance->returnNotAcceptedSessionsToQueue(
-						$singleOperatorId,
-						ImOpenLines\Queue::REASON_OPERATOR_NOT_AVAILABLE
-					);
+					$operatorActive = $queueInstance->isOperatorActive($singleOperatorId);
+					if ($operatorActive !== true)
+					{
+						$queueInstance->returnNotAcceptedSessionsToQueue(
+							$singleOperatorId,
+							$operatorActive
+						);
+					}
 				}
 			}
 		}
 
 		return true;
 	}
-
 
 	/**
 	 * Delete the user.
@@ -393,26 +437,278 @@ class Event
 	 */
 	public static function onUserDelete($userId)
 	{
-		if (!empty($userId) && is_numeric($userId) && ImOpenLines\Queue::isRealOperator($userId))
+		if (
+			!empty($userId) &&
+			is_numeric($userId) &&
+			ImOpenLines\Queue::isRealOperator($userId)
+		)
 		{
-			$listLine = self::getLineIsSessionOperator($userId);
+			$linesOperator = self::getLineIsOperator($userId);
+			$linesIsSessionOperator = self::getLineIsSessionOperatorNotLine($userId);
 
-			if (!empty($listLine))
+			if (!empty($linesIsSessionOperator))
 			{
-				foreach ($listLine as $lineId)
+				foreach ($linesIsSessionOperator as $lineId)
 				{
-					self::initialization($lineId)->returnSessionsUsersToQueue([$userId], ImOpenLines\Queue::REASON_OPERATOR_DELETED);
+					$configManager = self::initialization($lineId);
+					if(!empty($configManager))
+					{
+						$configManager->returnSessionsUsersToQueue([$userId], ImOpenLines\Queue::REASON_OPERATOR_DELETED);
+					}
 				}
 			}
 
-			ImOpenLines\Debug::addQueueEvent( __METHOD__, 0, 0, ['userId' => $userId, 'listLine' => $listLine]);
+			if (!empty($linesOperator))
+			{
+				self::$linesUsersDelete[$userId] = $linesOperator;
+				foreach ($linesOperator as $lineId)
+				{
+					$queueManager = new QueueManager($lineId);
+					$queueManager->deleteItemsConfigQueue([['ENTITY_ID' => $userId, 'ENTITY_TYPE' => 'user']]);
+				}
+			}
+
+			ImOpenLines\Debug::addQueueEvent( __METHOD__, 0, 0, ['userId' => $userId, 'linesOperator' => $linesOperator, 'linesIsSessionOperator' => $linesIsSessionOperator]);
 		}
 
 		return true;
 	}
 
 	/**
-	 * User update. Checking is disabled.
+	 * @param $sectionId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnBeforeDepartmentsDelete($sectionId)
+	{
+		if (Loader::includeModule('iblock'))
+		{
+			$idIblockStructure = QueueManager::getIdIblockStructure();
+
+			if(!empty($idIblockStructure))
+			{
+				$res = SectionTable::getList([
+					'filter' => [
+						'=IBLOCK_ID' => $idIblockStructure,
+						'=ID' => $sectionId
+					]
+				]);
+
+				if($res->getSelectedRowsCount())
+				{
+					$lines = self::getLineIsDepartmentQueue([$sectionId]);
+
+					if (!empty($lines))
+					{
+						self::$linesDepartmentsDelete[$sectionId] = $lines;
+						foreach ($lines as $lineId)
+						{
+							$queueManager = new QueueManager($lineId);
+							$queueManager->deleteItemsConfigQueue([['ENTITY_ID' => $sectionId, 'ENTITY_TYPE' => 'department']]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param $fields
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnAfterDepartmentsDelete($fields)
+	{
+		if (!empty(self::$linesDepartmentsDelete[$fields['ID']]))
+		{
+			QueueManager::resetCacheStructureDepartments();
+			foreach (self::$linesDepartmentsDelete[$fields['ID']] as $lineId)
+			{
+				$queueManager = new QueueManager($lineId);
+				$queueManager->refresh();
+			}
+
+			unset(self::$linesDepartmentsDelete[$fields['ID']]);
+		}
+	}
+
+	/**
+	 * @param $fields
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnBeforeDepartmentsUpdate(&$fields)
+	{
+		if (
+			Loader::includeModule('iblock') &&
+			((int)$fields['IBLOCK_ID']) > 0 &&
+			((int)$fields['ID']) > 0 &&
+			(int)$fields['IBLOCK_ID'] === QueueManager::getIdIblockStructure()
+		)
+		{
+			$raw = \CIBlockSection::GetList([], [
+				'IBLOCK_ID' => $fields['IBLOCK_ID'],
+				'ID' => $fields['ID'],
+			],
+			false,
+			[
+				'UF_HEAD',
+				'IBLOCK_SECTION_ID'
+			]);
+			if ($oldFields = $raw->GetNext())
+			{
+				if(
+					isset($fields['UF_HEAD']) &&
+					(int)$fields['UF_HEAD'] !== (int)$oldFields['UF_HEAD']
+				)
+				{
+					$lines = self::getLineIsDepartmentQueue([$fields['ID']]);
+					if (!empty($lines))
+					{
+						self::$linesDepartmentsUpdate[$fields['ID']] = $lines;
+					}
+				}
+				elseif(
+					isset($fields['IBLOCK_SECTION_ID']) &&
+					(int)$fields['IBLOCK_SECTION_ID'] !== (int)$oldFields['IBLOCK_SECTION_ID']
+				)
+				{
+					$lines = self::getLineIsDepartmentQueue([$fields['IBLOCK_SECTION_ID'], $oldFields['IBLOCK_SECTION_ID']]);
+					if (!empty($lines))
+					{
+						self::$linesDepartmentsUpdate[$fields['ID']] = $lines;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param $fields
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnAfterDepartmentsUpdate(&$fields)
+	{
+		if(
+			isset($fields['ID']) &&
+			((int)$fields['ID']) > 0 &&
+			!empty(self::$linesDepartmentsUpdate[$fields['ID']])
+		)
+		{
+			QueueManager::resetCacheStructureDepartments();
+			foreach (self::$linesDepartmentsUpdate[$fields['ID']] as $lineId)
+			{
+				$queueManager = new QueueManager($lineId);
+				$queueManager->refresh();
+			}
+		}
+	}
+
+	/**
+	 * @param $userId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function OnAfterUserDelete($userId)
+	{
+		if (
+			!empty($userId) &&
+			is_numeric($userId) &&
+			!empty(self::$linesUsersDelete[$userId])
+		)
+		{
+			foreach (self::$linesUsersDelete[$userId] as $lineId)
+			{
+				$queueManager = new QueueManager($lineId);
+				$queueManager->refresh();
+			}
+
+			unset(self::$linesUsersDelete[$userId]);
+		}
+	}
+
+	/**
+	 * @param $userFields
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onUserAdd(&$userFields)
+	{
+		if(
+			$userFields['RESULT'] &&
+			(
+				!isset($userFields['ACTIVE']) ||
+				$userFields['ACTIVE'] === 'Y'
+			) &&
+			!empty($userFields['UF_DEPARTMENT'])
+		)
+		{
+			$lines = self::getLineIsDepartmentQueue($userFields['UF_DEPARTMENT']);
+
+			if (!empty($lines))
+			{
+				foreach ($lines as $lineId)
+				{
+					$queueManager = new QueueManager($lineId);
+					$queueManager->refresh();
+				}
+			}
+		}
+
+		self::$userFieldsUpdate = false;
+	}
+
+	/**
+	 * @param $userFields
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onUserUpdateBefore(&$userFields)
+	{
+		if(
+			isset($userFields['ACTIVE']) ||
+			isset($userFields['UF_DEPARTMENT'])
+		)
+		{
+			$usersManager = UserTable::getList([
+				'select' => [
+					'ID',
+					'ACTIVE',
+					'UF_DEPARTMENT'
+				],
+				'filter' => [
+					'=ID' => $userFields['ID']
+				]
+			]);
+			if ($user = $usersManager->fetch())
+			{
+				self::$userFieldsUpdate = $user;
+			}
+		}
+	}
+
+	/**
+	 * User update.
 	 *
 	 * @param $userFields
 	 *
@@ -424,10 +720,69 @@ class Event
 	 */
 	public static function onUserUpdate(&$userFields)
 	{
-		if ($userFields['ACTIVE'] == 'N')
+		if(
+			$userFields['RESULT'] === true &&
+			!empty(self::$userFieldsUpdate)
+		)
 		{
-			self::onUserDelete($userFields['ID']);
+			if (
+				isset($userFields['ACTIVE']) &&
+				isset(self::$userFieldsUpdate['ACTIVE']) &&
+				self::$userFieldsUpdate['ACTIVE'] === 'Y' &&
+				$userFields['ACTIVE'] === 'N'
+			)
+			{
+				self::onUserDelete($userFields['ID']);
+			}
+			else
+			{
+				$changedDepartments = [];
+
+				if(
+					isset($userFields['ACTIVE']) &&
+					isset(self::$userFieldsUpdate['ACTIVE']) &&
+					self::$userFieldsUpdate['ACTIVE'] === 'N' &&
+					$userFields['ACTIVE'] === 'Y'
+				)
+				{
+					if(isset($userFields['UF_DEPARTMENT']))
+					{
+						$changedDepartments = $userFields['UF_DEPARTMENT'];
+					}
+					else
+					{
+						$changedDepartments = self::$userFieldsUpdate['UF_DEPARTMENT'];
+					}
+				}
+				elseif(
+					isset($userFields['UF_DEPARTMENT']) &&
+					isset(self::$userFieldsUpdate['UF_DEPARTMENT']) &&
+					(
+						!isset($userFields['ACTIVE']) ||
+						$userFields['ACTIVE'] === 'Y'
+					)
+				)
+				{
+					$changedDepartments = array_merge(array_diff($userFields['UF_DEPARTMENT'], self::$userFieldsUpdate['UF_DEPARTMENT']), array_diff(self::$userFieldsUpdate['UF_DEPARTMENT'], $userFields['UF_DEPARTMENT']));
+				}
+
+				if(!empty($changedDepartments))
+				{
+					$lines = self::getLineIsDepartmentQueue($changedDepartments);
+
+					if (!empty($lines))
+					{
+						foreach ($lines as $lineId)
+						{
+							$queueManager = new QueueManager($lineId);
+							$queueManager->refresh();
+						}
+					}
+				}
+			}
 		}
+
+		self::$userFieldsUpdate = false;
 	}
 	//END Removing an operator
 
@@ -474,11 +829,15 @@ class Event
 					{
 						if (!\Bitrix\ImOpenLines\Queue::isOperatorSingleInLine($lineId, $userId))
 						{
-							self::initialization($lineId)->returnSessionsUsersToQueueIsStartAbsence(
-								[$userId],
-								$durationAbsenceDay,
-								ImOpenLines\Queue::REASON_OPERATOR_ABSENT
-							);
+							$configManager = self::initialization($lineId);
+							if(!empty($configManager))
+							{
+								$configManager->returnSessionsUsersToQueueIsStartAbsence(
+									[$userId],
+									$durationAbsenceDay,
+									ImOpenLines\Queue::REASON_OPERATOR_ABSENT
+								);
+							}
 						}
 					}
 				}
@@ -500,17 +859,15 @@ class Event
 	//END Absence
 
 	/**
-	 * Return all lines where the user is an operator or has active dialogs.
-	 *
 	 * @param $userId
-	 * @param bool $checkTimeman
+	 * @param false $checkTimeman
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getLineIsSessionOperator($userId, $checkTimeman = false)
+	public static function getLineIsOperator($userId, $checkTimeman = false)
 	{
 		$result = [];
 
@@ -532,7 +889,11 @@ class Event
 			$queueListManager = QueueTable::getList(
 				[
 					'select' => ['CONFIG_ID'],
-					'filter' => $filterQueue
+					'filter' => $filterQueue,
+					'order' => [
+						'SORT' => 'ASC',
+						'ID' => 'ASC'
+					]
 				]
 			);
 
@@ -540,7 +901,31 @@ class Event
 			{
 				$result[$queue['CONFIG_ID']] = $queue['CONFIG_ID'];
 			}
+		}
 
+		return $result;
+	}
+
+	/**
+	 * @param $userId
+	 * @param false $checkTimeman
+	 * @param array $excludeLine
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getLineIsSessionOperatorNotLine($userId, $checkTimeman = false, $excludeLine = [])
+	{
+		$result = [];
+
+		if(
+			!empty($userId) &&
+			is_numeric($userId) &&
+			ImOpenLines\Queue::isRealOperator($userId)
+		)
+		{
 			$filterSession = [
 				'=SESSION.OPERATOR_ID' => $userId
 			];
@@ -550,9 +935,9 @@ class Event
 				$filterSession['=SESSION.CONFIG.CHECK_AVAILABLE'] = 'Y';
 			}
 
-			if(!empty($result))
+			if(!empty($excludeLine))
 			{
-				$filterSession['!=SESSION.CONFIG_ID'] = $result;
+				$filterSession['!=SESSION.CONFIG_ID'] = $excludeLine;
 			}
 
 			$sessionListManager = SessionCheckTable::getList(
@@ -577,6 +962,96 @@ class Event
 	}
 
 	/**
+	 * Return all lines where the user is an operator or has active dialogs.
+	 *
+	 * @param $userId
+	 * @param bool $checkTimeman
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getLineIsSessionOperator($userId, $checkTimeman = false)
+	{
+		$linesOperator = self::getLineIsOperator($userId, $checkTimeman);
+		$linesIsSessionOperator = self::getLineIsSessionOperatorNotLine($userId, $checkTimeman, $linesOperator);
+
+		return array_merge($linesOperator, $linesIsSessionOperator);
+	}
+
+	/**
+	 * @param $departments
+	 * @param bool $recursion
+	 * @param bool $includeCurrentDepartment
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getParentDepartments($departments, $recursion = true, $includeCurrentDepartment = true): array
+	{
+		$result = [];
+
+		foreach ($departments as $department)
+		{
+			$subordinateDepartments = QueueManager::getParentDepartments($department, $recursion, $includeCurrentDepartment);
+
+			if(!empty($subordinateDepartments))
+			{
+				foreach ($subordinateDepartments as $idDepartment=>$subordinateDepartment)
+				{
+					$result[$idDepartment] = $subordinateDepartment;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $departments
+	 * @param bool $recursion
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getLineIsDepartmentQueue($departments, $recursion = true)
+	{
+		$result = [];
+
+		$fullDepartments = self::getParentDepartments($departments, $recursion);
+
+		if($fullDepartments)
+		{
+			$queueListManager = ConfigQueueTable::getList(
+				[
+					'select' => ['CONFIG_ID'],
+					'filter' => [
+						'ENTITY_TYPE' => 'department',
+						'ENTITY_ID' => array_keys($fullDepartments)
+					],
+					'order' => [
+						'SORT' => 'ASC',
+						'ID' => 'ASC'
+					]
+				]
+			);
+
+			while ($queue = $queueListManager->fetch())
+			{
+				$result[$queue['CONFIG_ID']] = $queue['CONFIG_ID'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * OnChatAnswer event handler for filling free slots.
 	 *
 	 * @param \Bitrix\Main\Event $event
@@ -591,7 +1066,12 @@ class Event
 		$eventData = $event->getParameters();
 		$config = $eventData['RUNTIME_SESSION']->getConfig();
 
-		self::initializationUsingConfiguration($config)->checkFreeSlotOnChatAnswer();
+		$configManager = self::initializationUsingConfiguration($config);
+
+		if(!empty($configManager))
+		{
+			$configManager->checkFreeSlotOnChatAnswer();
+		}
 	}
 
 	/**
@@ -651,7 +1131,12 @@ class Event
 	{
 		$config = $session->getConfig();
 
-		self::initializationUsingConfiguration($config)->checkFreeSlotOnChatFinish();
+		$configManager = self::initializationUsingConfiguration($config);
+
+		if(!empty($configManager))
+		{
+			$configManager->checkFreeSlotOnChatFinish();
+		}
 	}
 
 	/**
@@ -665,14 +1150,18 @@ class Event
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function checkFreeSlotBySendMessage($messageData)
+	public static function checkFreeSlotBySendMessage($messageData): void
 	{
 		if ($messageData['AUTHOR_ID'] > 0)
 		{
 			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 			list($connectorId, $lineId) = explode('|', $messageData['CHAT_ENTITY_ID']);
 
-			self::initialization($lineId)->checkFreeSlotOnMessageSend($messageData);
+			$configManager = self::initialization($lineId);
+			if(!empty($configManager))
+			{
+				$configManager->checkFreeSlotOnMessageSend($messageData);
+			}
 		}
 	}
 }

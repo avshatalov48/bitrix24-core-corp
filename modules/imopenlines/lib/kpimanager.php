@@ -703,7 +703,11 @@ class KpiManager
 		$queueListManager = QueueTable::getList(
 			[
 				'select' => ['CONFIG_ID'],
-				'filter' => $filterQueue
+				'filter' => $filterQueue,
+				'order' => [
+					'SORT' => 'ASC',
+					'ID' => 'ASC'
+				]
 			]
 		);
 

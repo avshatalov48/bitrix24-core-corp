@@ -80,13 +80,13 @@ CJSCore::Init(['access']);
 										<?= htmlspecialcharsbx($task['NAME']) ?>
 									</td>
 									<td class="table-blue-td-action">
-										<a class="tm-edit-task table-blue-edit"
-												title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>"
-												href="<?= $this->__component->getEditTaskUrl($task) ?>"></a>
+											<a class="tm-edit-task table-blue-edit" title=
+											"<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>" href=
+											"<?= $this->__component->getEditTaskUrl($task) ?>"></a>
 										<? if ($task['CAN_BE_DELETED']): ?>
 											<span class="table-blue-delete tm-delete-role"
-													title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_DELETE')) ?>"
-													data-task-id="<?= htmlspecialcharsbx($task['ID']) ?>"></span>
+												title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_DELETE')) ?>"
+												data-task-id="<?= htmlspecialcharsbx($task['ID']) ?>"></span>
 										<? endif; ?>
 									</td>
 								</tr>

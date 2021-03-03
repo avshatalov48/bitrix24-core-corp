@@ -234,6 +234,8 @@ class Entity
 			return;
 		}
 
+		self::processRestUtm($fields);
+
 		$traceId = null;
 		if (!empty($fields['TRACE']) && is_numeric($fields['TRACE']))
 		{
@@ -291,6 +293,8 @@ class Entity
 		{
 			return;
 		}
+
+		self::processRestUtm($fields);
 
 		$traceId = Tracking\Internals\TraceTable::getTraceIdByEntity($entityTypeId, $entityId);
 		if (!$traceId && is_numeric($fields['TRACE']))
@@ -492,5 +496,50 @@ class Entity
 
 		$traceId = Trace::create()->setSource($row['SOURCE_ID'])->save();
 		Trace::appendEntity($traceId, $entityTypeId, $entityId);
+	}
+
+	protected static function processRestUtm(array $fields)
+	{
+		$tags = [];
+		foreach (Crm\UtmTable::getCodeList() as $utmCode)
+		{
+			if (!empty($fields[$utmCode]))
+			{
+				$tags[$utmCode] = $fields[$utmCode];
+			}
+		}
+
+		if (empty($tags['UTM_SOURCE']))
+		{
+			return;
+		}
+
+		$prefixSource1C = '1c-b24-standalone-';
+		if (mb_substr($tags['UTM_SOURCE'], 0, mb_strlen($prefixSource1C)) !== $prefixSource1C)
+		{
+			return;
+		}
+
+		$sourceId = Tracking\Internals\SourceTable::getSourceByUtmSource($tags['UTM_SOURCE']);
+		if ($sourceId)
+		{
+			return;
+		}
+
+		$result = Tracking\Internals\SourceTable::add([
+			'NAME' => $tags['UTM_CAMPAIGN'] ?? '1C',
+			'CODE' => '1c',
+		]);
+		$sourceId = $result->getId();
+		if (!$sourceId || !$result->isSuccess())
+		{
+			return;
+		}
+
+		Tracking\Internals\SourceFieldTable::setSourceField(
+			$sourceId,
+			Tracking\Internals\SourceFieldTable::FIELD_UTM_SOURCE,
+			[$tags['UTM_SOURCE']]
+		);
 	}
 }

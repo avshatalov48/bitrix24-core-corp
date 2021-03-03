@@ -190,7 +190,10 @@ class Marta extends Base
 		if ($messageFields['SYSTEM'] == 'Y')
 			return false;
 
-		\Bitrix\Im\Bot::startWriting(Array('BOT_ID' => self::getBotId()), $messageFields['DIALOG_ID']);
+		if ($messageFields['CHAT_ENTITY_TYPE'] != 'LINES')
+		{
+			\Bitrix\Im\Bot::startWriting(Array('BOT_ID' => self::getBotId()), $messageFields['DIALOG_ID']);
+		}
 
 		$userName = \Bitrix\Im\User::getInstance($messageFields['FROM_USER_ID'])->getName();
 

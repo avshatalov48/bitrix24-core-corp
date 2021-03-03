@@ -42,7 +42,10 @@ class Strictly extends Queue
 		];
 
 		$filter = ['=CONFIG_ID' => $this->config['ID']];
-		$order = ['ID' => 'asc'];
+		$order = [
+			'SORT' => 'ASC',
+			'ID' => 'ASC'
+		];
 
 		$res = ImOpenLines\Queue::getList([
 			'select' => $select,

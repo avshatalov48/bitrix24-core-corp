@@ -29,6 +29,7 @@ abstract class Entity
 	protected const OPTION_NAME_VIEW_FIELDS_PREFIX = 'kanban_select_more_v4_';
 	protected const OPTION_NAME_EDIT_FIELDS_PREFIX = 'kanban_edit_more_v4_';
 
+	protected $canEditCommonSettings = false;
 	protected $filter;
 	protected $categoryId = 0;
 	protected $itemLastId;
@@ -59,6 +60,19 @@ abstract class Entity
 		'#quote_id#',
 		'#invoice_id#'
 	];
+
+	/**
+	 * Mark that current user can or not edit common settings.
+	 *
+	 * @param bool $canEditCommonSettings
+	 * @return $this
+	 */
+	public function setCanEditCommonSettings(bool $canEditCommonSettings): self
+	{
+		$this->canEditCommonSettings = $canEditCommonSettings;
+
+		return $this;
+	}
 
 	/**
 	 * Set current category id to work with.
@@ -368,11 +382,24 @@ abstract class Entity
 
 	protected function getAdditionalSelectFieldsFromOptions(): ?array
 	{
-		return \CUserOptions::getOption(
+		$isAddCommonSuffix = $this->canEditCommonSettings;
+
+		$fields = \CUserOptions::getOption(
 			static::OPTION_CATEGORY,
-			$this->getAdditionalSelectFieldsOptionName(true),
+			$this->getAdditionalSelectFieldsOptionName($isAddCommonSuffix),
 			null
 		);
+
+		if(!$isAddCommonSuffix && !$fields)
+		{
+			$fields = \CUserOptions::getOption(
+				static::OPTION_CATEGORY,
+				$this->getAdditionalSelectFieldsOptionName(true),
+				null
+			);
+		}
+
+		return $fields;
 	}
 
 	protected function getDefaultAdditionalSelectFields(): array

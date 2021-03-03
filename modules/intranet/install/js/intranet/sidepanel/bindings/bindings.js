@@ -108,10 +108,6 @@
 				loader: 'crm-button-view-loader'
 			},
 			{
-				condition: ['/crm/webform/edit/(\\d+)/'],
-				loader: 'crm-webform-view-loader'
-			},
-			{
 				condition: [
 					new RegExp("^/marketplace\/hook/"),
 				],

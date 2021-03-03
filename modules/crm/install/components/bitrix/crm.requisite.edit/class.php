@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityPreset;
@@ -1580,14 +1582,22 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				{
 					if ($fieldName === EntityRequisite::ADDRESS)
 					{
-						$addressTypeInfos = Bitrix\Crm\RequisiteAddress::getClientTypeInfos();
-						$addressTypeInfosDesc = Bitrix\Crm\RequisiteAddress::getTypeInfos();
-						foreach ($addressTypeInfos as $k => $typeInfo)
+						$addressTypes = EntityAddressType::getDescriptionsByZonesOrValues(
+							[
+								EntityAddress::getZoneId(),
+								EntityRequisite::getAddressZoneByCountry($this->presetCountryId)
+							],
+							is_array($this->fields[$fieldName]) ? array_keys($this->fields[$fieldName]) : []
+						);
+						$addressTypeInfos = [];
+						foreach ($addressTypes as $addId => $descr)
 						{
-							$addressTypeInfos[$k]['desc'] = isset($addressTypeInfosDesc[$typeInfo['id']]) ?
-								$addressTypeInfosDesc[$typeInfo['id']]['DESCRIPTION'] : '';
+							$addressTypeInfos[] = [
+								'id' => $addId,
+								'name' => $descr
+							];
 						}
-						unset($addressTypeInfosDesc);
+						unset($addressTypes, $addId, $descr);
 						$rqFields[] = array(
 							'id' => $fieldName,
 							'name' => $fieldTitle,

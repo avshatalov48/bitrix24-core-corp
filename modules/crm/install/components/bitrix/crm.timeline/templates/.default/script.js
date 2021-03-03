@@ -13583,7 +13583,7 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 			descriptionNode.appendChild(
 				BX.create('SPAN', {
 					attrs: { className: "crm-entity-stream-content-clicked-description-name" },
-					html: paySystemName
+					text: paySystemName
 				})
 			);
 
@@ -14029,7 +14029,15 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 	};
 	BX.CrmHistoryItemOrcderCheck.prototype.getTitle = function()
 	{
-		return this.getMessage('orderCheck') + ' "' + this.getTextDataParam("CHECK_NAME") + '"';
+		var result = this.getMessage('orderCheck');
+
+		var checkName = this.getTextDataParam('CHECK_NAME');
+		if (checkName !== '')
+		{
+			result += ' "' + checkName + '"';
+		}
+
+		return result;
 	};
 	BX.CrmHistoryItemOrcderCheck.prototype.getWrapperClassName = function()
 	{
@@ -14101,16 +14109,19 @@ if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
 			;
 
 			var descriptionNode = BX.create("DIV", { attrs: { className: className } });
-			descriptionNode.appendChild(BX.create("A", {
-				attrs: { href: showUrl},
-				events: {
-					click: BX.delegate(function(e) {
-						BX.Crm.Page.openSlider(showUrl, { width: 500 });
-						e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-					}, this)
-				},
-				text: title
-			}));
+			if (showUrl !== "")
+			{
+				descriptionNode.appendChild(BX.create("A", {
+					attrs: { href: showUrl},
+					events: {
+						click: BX.delegate(function(e) {
+							BX.Crm.Page.openSlider(showUrl, { width: 500 });
+							e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+						}, this)
+					},
+					text: title
+				}));
+			}
 
 			var legend =  this.getTextDataParam("LEGEND"),
 				legendNode;

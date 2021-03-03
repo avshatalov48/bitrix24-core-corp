@@ -79,7 +79,12 @@ class Tracker
 			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), Crm::ERROR_IMOL_NO_SESSION, __METHOD__));
 		}
 
-		if ($result->isSuccess() && Loader::includeModule('crm') && $session->getConfig('CRM') == 'Y')
+		if (
+			$result->isSuccess() &&
+			Loader::includeModule('crm') &&
+			$session->getConfig('CRM') === 'Y' &&
+			$session->getConfig('CRM_CHAT_TRACKER') === 'Y'
+		)
 		{
 			$messageOriginId = intval($params['ID']);
 			$messageText = self::prepareMessage($params['TEXT']);

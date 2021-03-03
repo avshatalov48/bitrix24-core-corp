@@ -6,7 +6,6 @@
  * Please, use new ajax.php class for new features
  */
 
-use Bitrix\Crm\Kanban\Driver;
 use Bitrix\Main\Text\HtmlFilter;
 
 define('NO_KEEP_STATISTIC', 'Y');
@@ -119,19 +118,33 @@ if ($version == 2)
 		$result['ITEMS']['dropzones'] = array();
 		foreach ($result['ITEMS']['columns'] as $k => &$column)
 		{
-			if ($column['dropzone'])
+			if ($column['dropzone'] || $column['alwaysShowInDropzone'])
 			{
-				$result['ITEMS']['dropzones'][] = array(
+				$element = [
 					'id' => $column['id'],
 					'name' => $column['name'],
 					'color' => $column['color'],
-					'data' => array(
-						'type' => $column['type']
-					)
-				);
-				unset($result['ITEMS']['columns'][$k]);
+					'data' => [
+						'type' => $column['type'],
+					],
+				];
+
+				if ($element['id'] === 'DELETED')
+				{
+					array_unshift($result['ITEMS']['dropzones'], $element);
+				}
+				else
+				{
+					$result['ITEMS']['dropzones'][] = $element;
+				}
+
+				if ($column['dropzone'])
+				{
+					unset($result['ITEMS']['columns'][$k]);
+				}
 			}
-			else
+
+			if (!$column['dropzone'])
 			{
 				$column = array(
 					'id' => $column['id'],

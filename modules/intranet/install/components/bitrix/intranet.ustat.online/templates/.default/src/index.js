@@ -485,18 +485,20 @@ class UstatOnline
 
 		if (Type.isArrayLike(this.timemanTextNodes))
 		{
-			this.timemanTextNodes.forEach(text => {
+			for (let text of this.timemanTextNodes)
+			{
 				let textItems = text.textContent.length;
 				textSum += textItems;
-			});
+			}
 		}
 
 		if (Type.isArrayLike(this.timemanValueNodes))
 		{
-			this.timemanValueNodes.forEach(value => {
+			for (let value of this.timemanValueNodes)
+			{
 				let valueItems = value.textContent.length;
 				valueSum += valueItems;
-			});
+			}
 		}
 
 		if (textSum >= 17 && valueSum >= 6 || textSum >= 19 && valueSum >= 4)

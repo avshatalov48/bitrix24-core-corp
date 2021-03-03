@@ -1027,7 +1027,7 @@ class CCrmProduct
 		}
 		return $tmpSelect;
 	}
-	
+
 	public static function ObtainPricesVats(&$arProducts, &$arProductId, &$arPricesSelect, &$arCatalogProductSelect, $bRealPrice = false)
 	{
 		if (is_array($arProducts) && is_array($arProductId) && is_array($arPricesSelect) && is_array($arCatalogProductSelect)
@@ -1466,6 +1466,16 @@ class CCrmProduct
 	public static function handlerOnBeforeIBlockElementDelete($ID)
 	{
 		if (!self::allowedElementHandlers())
+		{
+			return true;
+		}
+
+		$iblockId = (int)CIBlockElement::GetIBlockByID($ID);
+		if ($iblockId <= 0)
+		{
+			return true;
+		}
+		if (!CCrmCatalog::Exists($iblockId))
 		{
 			return true;
 		}

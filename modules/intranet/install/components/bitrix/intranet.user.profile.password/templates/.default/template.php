@@ -35,10 +35,12 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 			)
 		)
 	);
-	?>
+
+	if ($arResult["IsOwnProfile"]):?>
 	<div style="margin-left: 20px">
 		<span class="ui-btn ui-btn-light-border" data-role="intranet-pass-logout"><?=GetMessage("INTRANET_USER_PROFILE_PASSWORD_LOGOUT")?></span>
 	</div>
+	<?endif; ?>
 </div>
 
 <script>

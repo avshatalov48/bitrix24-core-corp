@@ -66,6 +66,7 @@ export class WidgetModel extends VuexBuilderModel
 				consentUrl: '',
 				dialogStart: false,
 				watchTyping: false,
+				showSessionId: false,
 			},
 			dialog:
 			{
@@ -223,6 +224,10 @@ export class WidgetModel extends VuexBuilderModel
 				if (typeof payload.watchTyping === 'boolean')
 				{
 					state.common.watchTyping = payload.watchTyping;
+				}
+				if (typeof payload.showSessionId === 'boolean')
+				{
+					state.common.showSessionId = payload.showSessionId;
 				}
 				if (payload.operators instanceof Array)
 				{

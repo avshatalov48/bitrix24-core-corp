@@ -82,7 +82,7 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 				'=ENTITY.ENTITY_ID' => $entityId,
 			],
 			'order' => ['DATE_CREATE' => 'DESC'],
-			'limit' => 10
+			'limit' => 5
 		])->fetchAll();
 
 		$traces = array_filter(

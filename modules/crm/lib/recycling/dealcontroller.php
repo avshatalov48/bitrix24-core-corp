@@ -451,6 +451,7 @@ class DealController extends BaseController
 		$relationMap->build();
 
 		$this->eraseActivities($recyclingEntityID, $params, $relationMap);
+		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedTimeline($recyclingEntityID);
 		$this->eraseSuspendedDocuments($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
@@ -459,7 +460,6 @@ class DealController extends BaseController
 		$this->eraseSuspendedObservers($recyclingEntityID);
 		$this->eraseSuspendedWaitings($recyclingEntityID);
 		$this->eraseSuspendedChats($recyclingEntityID);
-		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 

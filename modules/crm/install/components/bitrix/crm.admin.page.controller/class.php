@@ -24,6 +24,11 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	/** @var \Bitrix\Crm\Product\Url\ShopBuilder */
 	private $urlBuilder = null;
 
+	/** @var string */
+	private $currentPage = null;
+
+	private $currentPageParams = null;
+
 	public function configureActions()
 	{
 		return [];
@@ -61,6 +66,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			$this->checkRequiredParams();
 
 			$this->initUrlBuilder();
+
+			$this->initCurrentPage();
 
 			$this->prepareMenuToRender();
 
@@ -180,6 +187,17 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		{
 			$this->urlBuilder = new Crm\Product\Url\ShopBuilder();
 		}
+	}
+
+	private function initCurrentPage(): void
+	{
+		$this->currentPage = $this->request->getRequestUri();
+		$pos = mb_strpos($this->currentPage, '?');
+		if ($pos !== false)
+		{
+			$this->currentPage = mb_substr($this->currentPage, 0, $pos);
+		}
+		$this->currentPageParams = $this->request->getQueryList()->getValues();
 	}
 
 	private function hasSectionChild($iblockId, $sectionId)
@@ -582,21 +600,99 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					$menuItem["ITEMS"] = $childMenuItems;
 					foreach ($childMenuItems as $childMenuItem)
 					{
-						if ($childMenuItem["URL"] == $this->arParams["REQUEST_URI"] || $childMenuItem["IS_ACTIVE"])
+						if (
+							$childMenuItem["IS_ACTIVE"]
+							|| (
+								isset($childMenuItem["URL"])
+								&& $this->checkMenuItemUrl($childMenuItem["URL"])
+							)
+						)
 						{
 							$isActive = true;
+							break;
 						}
+/*						if ($childMenuItem["URL"] == $this->arParams["REQUEST_URI"] || $childMenuItem["IS_ACTIVE"])
+						{
+							$isActive = true;
+						} */
 					}
 				}
-				if (($this->arParams["REQUEST_URI"] == $menuItem["URL"]) || $isActive)
+				if (
+					$isActive
+					|| (
+						isset($menuItem["URL"])
+						&& $this->checkMenuItemUrl($menuItem["URL"])
+					)
+				)
 				{
 					$menuItem["IS_ACTIVE"] = true;
 				}
+/*				if (($this->arParams["REQUEST_URI"] == $menuItem["URL"]) || $isActive)
+				{
+					$menuItem["IS_ACTIVE"] = true;
+				} */
 				$menuItems[] = $menuItem;
 			}
 		}
 
 		return $menuItems;
+	}
+
+	private function checkMenuItemUrl(string $url): bool
+	{
+		$result = false;
+
+		if ($url !== '' && mb_strpos($this->currentPage, $url) === 0)
+		{
+			$result = true;
+		}
+
+		if (!$result)
+		{
+			$pos = mb_strpos($url, '?');
+			if ($pos !== false)
+			{
+				if (mb_substr($url, 0, $pos) === $this->currentPage)
+				{
+					$right = mb_substr($url, $pos+1);
+					$paramList = explode('&', $right);
+					$found = true;
+
+					foreach ($paramList as $block)
+					{
+						$eqpos = mb_strpos($block, '=');
+						$value = '';
+						if ($eqpos === false)
+						{
+							$name = $block;
+						}
+						elseif ($eqpos === 0)
+						{
+							continue;
+						}
+						else
+						{
+							$name = mb_substr($block, 0, $eqpos);
+							$value = urldecode(mb_substr($block, $eqpos+1));
+						}
+
+						$requestValue = isset($this->currentPageParams[$name]) ? $this->currentPageParams[$name] : '';
+						if ($requestValue != $value)
+						{
+							$found = false;
+							break;
+						}
+					}
+
+					if ($found)
+					{
+						$result = true;
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	private function isAssociativeArray($array)

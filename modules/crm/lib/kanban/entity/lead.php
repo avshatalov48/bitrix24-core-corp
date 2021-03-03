@@ -70,7 +70,8 @@ class Lead extends Entity
 					$defaultFilter,
 					[
 						'STATUS_SEMANTIC_ID' => [
-							\Bitrix\Crm\PhaseSemantics::SUCCESS
+							\Bitrix\Crm\PhaseSemantics::SUCCESS,
+							\Bitrix\Crm\PhaseSemantics::FAILURE
 						]
 					]
 				)

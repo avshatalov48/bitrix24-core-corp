@@ -23,9 +23,10 @@ class EntityAddressType
 	const Beneficiary = 9;
 	const Bank = 10;
 	const Delivery = 11;
+	const Billing = 12;
 
 	const First = 1;
-	const Last = 11;
+	const Last = 12;
 
 	const PrimaryName = 'PRIMARY';
 	const SecondaryName = 'SECONDARY';
@@ -38,8 +39,11 @@ class EntityAddressType
 	const BeneficiaryName = 'BENEFICIARY';
 	const BankName = 'BANK';
 	const DeliveryName = 'DELIVERY';
+	const BillingName = 'BILLING';
 
 	private static $ALL_DESCRIPTIONS = array();
+
+	private static $zoneMap = null;
 
 	public static function isDefined($typeID)
 	{
@@ -63,9 +67,24 @@ class EntityAddressType
 			self::Post,
 			self::Beneficiary,
 			self::Bank,
-			self::Delivery
+			self::Delivery,
+			self::Billing
 		);
 	}
+
+    public static function getAvailableIds()
+    {
+    	// List of all types used in the zone map.
+	    // Could be obtained from the map, but it is not effective.
+    	return [
+		    self::Delivery,
+		    self::Primary,
+		    self::Registered,
+		    self::Home,
+            self::Post,
+		    self::Beneficiary
+	    ];
+    }
 
 	public static function resolveID($name)
 	{
@@ -109,6 +128,9 @@ class EntityAddressType
 
 			case self::DeliveryName:
 				return self::Delivery;
+
+			case self::BillingName:
+				return self::Billing;
 
 			default:
 				return self::Undefined;
@@ -163,6 +185,9 @@ class EntityAddressType
 			case self::Delivery:
 				return self::DeliveryName;
 
+			case self::Billing:
+				return self::BillingName;
+
 			case self::Undefined:
 			default:
 				return '';
@@ -186,7 +211,7 @@ class EntityAddressType
 				self::Beneficiary => GetMessage('CRM_ADDRESS_TYPE_BENEFICIARY'),
 				self::Bank => GetMessage('CRM_ADDRESS_TYPE_BANK'),
 				self::Delivery => GetMessage('CRM_ADDRESS_TYPE_DELIVERY'),
-			);
+				self::Billing => GetMessage('CRM_ADDRESS_TYPE_BILLING')			);
 		}
 
 		return self::$ALL_DESCRIPTIONS[LANGUAGE_ID];
@@ -215,5 +240,264 @@ class EntityAddressType
 			}
 		}
 		return $result;
+	}
+
+	protected static function getZoneMap() : array
+	{
+		if (self::$zoneMap === null)
+		{
+			// Need sync with EntityAddress::getZoneMap()
+			// See the getAvailableIds, need sync...
+			self::$zoneMap = [
+				'ru' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'ua' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'ur' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'by' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'kz' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'en' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+                        self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'eu' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'de' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'la' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'br' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'fr' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'it' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'pl' => [
+					'types' => [
+                        self::Primary, self::Delivery, self::Home,
+                        self::Post, self::Registered, self::Beneficiary
+					],
+					'default' => self::Primary
+				],
+				'tr' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'cn' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'sc' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'tc' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'ja' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'vn' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'id' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'ms' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'th' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'in' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'hi' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'uk' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'co' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				],
+				'mx' => [
+					'types' => [
+						self::Delivery, self::Primary, self::Registered,
+						self::Home, self::Beneficiary
+					],
+					'default' => self::Delivery
+				]
+			];
+		}
+
+		return self::$zoneMap;
+	}
+
+	public static function getDefaultIdByZone(string $addressZoneId) : int
+	{
+		$zoneMap = self::getZoneMap();
+
+		return isset($zoneMap[$addressZoneId]) ? $zoneMap[$addressZoneId]['default'] : self::Undefined;
+	}
+
+	public static function getDescriptionsByZonesOrValues(array $addressZones = [], array $values = []) : array
+	{
+		return self::getDescriptions(self::getIdsByZonesOrValues($addressZones, $values));
+	}
+
+	public static function getIdsByZonesOrValues(array $addressZoneIds = [], array $values = []) : array
+	{
+		$ids = [];
+
+		$addressTypeMap = array_fill_keys(EntityAddressType::getAllIDs(), 0);
+		$zoneMap = self::getZoneMap();
+
+		$addressZoneIds = array_unique($addressZoneIds);
+
+		$typeIndex = 1;
+		foreach ($addressZoneIds as $addressZoneId)
+		{
+			if (isset($zoneMap[$addressZoneId]))
+			{
+				foreach ($zoneMap[$addressZoneId]['types'] as $typeId)
+				{
+					if (isset($addressTypeMap[$typeId]) && $addressTypeMap[$typeId] <= 0)
+					{
+						$addressTypeMap[$typeId] = $typeIndex++;
+					}
+				}
+			}
+		}
+
+		foreach ($values as $typeId)
+		{
+			if (isset($addressTypeMap[$typeId]) && $addressTypeMap[$typeId] <= 0)
+			{
+				$addressTypeMap[$typeId] = $typeIndex++;
+			}
+		}
+
+		asort($addressTypeMap);
+
+		foreach ($addressTypeMap as $typeId => $index)
+		{
+			if ($index > 0)
+			{
+				$ids[] = $typeId;
+			}
+		}
+
+		return $ids;
 	}
 }

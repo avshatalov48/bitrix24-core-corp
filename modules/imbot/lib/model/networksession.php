@@ -14,9 +14,10 @@ use Bitrix\Main;
  * <li> DIALOG_ID string mandatory
  * <li> SESSION_ID int optional
  * <li> GREETING_SHOWN bool optional
+ * <li> MENU_STATE string
  * </ul>
  *
- * @package Bitrix\ImBot
+ * @package Bitrix\ImBot\Model
  **/
 
 class NetworkSessionTable extends Main\Entity\DataManager
@@ -59,6 +60,9 @@ class NetworkSessionTable extends Main\Entity\DataManager
 				'data_type' => 'boolean',
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
+			],
+			'MENU_STATE' => [
+				'data_type' => 'string',
 			],
 		];
 	}

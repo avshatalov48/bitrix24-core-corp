@@ -136,7 +136,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 		<?
 		$defaultMeasure = \Bitrix\Crm\Measure::getDefaultMeasure();
 		$defaultTax = CCrmTax::GetDefaultVatRateInfo();
-		$measures = \Bitrix\Crm\Measure::getMeasures(100);
+		$measures = \Bitrix\Crm\Measure::getMeasures(0);
 		$productTotalContainerID = $arResult['PREFIX'].'_product_sum_total_container';
 		$rowIdPrefix = $arResult['PREFIX'].'_product_row_';
 

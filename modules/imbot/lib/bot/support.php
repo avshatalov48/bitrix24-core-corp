@@ -5,6 +5,9 @@ use Bitrix\Main\Localization\Loc;
 
 if (\CModule::IncludeModule('bitrix24'))
 {
+	/**
+	 * @deprecated
+	 */
 	class Support extends \Bitrix\Bitrix24\SupportBot
 	{
 	}
@@ -13,6 +16,9 @@ else
 {
 	Loc::loadMessages(__FILE__);
 
+	/**
+	 * @deprecated
+	 */
 	class Support extends Network
 	{
 		const BOT_CODE = "support";

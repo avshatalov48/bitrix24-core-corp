@@ -2960,6 +2960,21 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 			}
 		}
 	}
+	else // bReopen
+	{
+		var postTopBlock = BX('post_item_top');
+		if (postTopBlock)
+		{
+			if (typeof data.topText !== 'undefined')
+			{
+				postTopBlock.innerHTML = data.topText;
+				var postScripts = oMSL.parseAndExecCode(data.topText, 0, false, true);
+				setTimeout(function() {
+					__MSLSendErrorEval(postScripts);
+				}, 0);
+			}
+		}
+	}
 
 	if (data.bSetFocusOnCommentForm == "YES")
 	{
@@ -5719,11 +5734,16 @@ BitrixMSL.prototype.checkNodesHeight = function()
 			blockHeight = BX(nodeToCheckId.text_block_id).offsetHeight;
 			if (BX(nodeToCheckId.title_block_id))
 			{
-				blockHeight += BX(nodeToCheckId.title_block_id).offsetHeight
+				blockHeight += BX(nodeToCheckId.title_block_id).offsetHeight;
 			}
 			if (BX(nodeToCheckId.files_block_id))
 			{
-				blockHeight += BX(nodeToCheckId.files_block_id).offsetHeight
+				blockHeight += BX(nodeToCheckId.files_block_id).offsetHeight;
+			}
+			var importantNode = BX(nodeToCheckId.text_block_id).parentNode.querySelector('.post-item-important');
+			if (importantNode)
+			{
+				blockHeight += importantNode.offsetHeight;
 			}
 
 			if (

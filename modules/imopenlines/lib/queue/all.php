@@ -1,7 +1,8 @@
 <?php
 namespace Bitrix\ImOpenLines\Queue;
 
-use \Bitrix\Main\Type\DateTime;
+use \Bitrix\Main\Event,
+	\Bitrix\Main\Type\DateTime;
 
 use \Bitrix\Im;
 
@@ -32,9 +33,9 @@ class All extends Queue
 	{
 		$result = false;
 
-		if($this->isOperatorActive($userId))
+		if($this->isOperatorActive($userId) === true)
 		{
-			if($userId != $currentOperator)
+			if((int)$userId !== (int)$currentOperator)
 			{
 				$freeCountChatOperator = ImOpenLines\Queue::getCountFreeSlotOperator($userId, $this->config['ID']);
 
@@ -95,7 +96,11 @@ class All extends Queue
 			],
 			'filter' => [
 				'=CONFIG_ID' => $this->config['ID']
-			]
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			],
 		]);
 
 		while($queueUser = $res->fetch())
@@ -152,10 +157,42 @@ class All extends Queue
 
 				$resultOperatorQueue = $this->getOperatorsQueue();
 
-				if($resultOperatorQueue['RESULT'] == true)
+				$reasonReturn = SessionCheckTable::getById($this->session['ID'])->fetch()['REASON_RETURN'];
+
+				//Event
+				$resultOperatorQueue = self::sendEventOnBeforeSessionTransfer(
+					[
+						'session' => $this->session,
+						'config' => $this->config,
+						'chat' => $this->chat,
+						'reasonReturn' => $reasonReturn,
+						'newOperatorQueue' => $resultOperatorQueue
+					]
+				);
+				// END Event
+
+				if((bool)$resultOperatorQueue['RESULT'] === true)
 				{
-					$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST']);
-					$this->chat->update(['AUTHOR_ID' => 0]);
+					if(!empty($resultOperatorQueue['OPERATOR_LIST']))
+					{
+						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST']);
+						$this->chat->update(['AUTHOR_ID' => 0]);
+					}
+					elseif(
+						!empty($resultOperatorQueue['OPERATOR_ID']) &&
+						(int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID']
+					)
+					{
+						$leaveTransfer = (string)$this->config['WELCOME_BOT_LEFT'] === Config::BOT_LEFT_CLOSE && Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()? 'N':'Y';
+
+						$this->chat->transfer([
+							'FROM' => $this->session['OPERATOR_ID'],
+							'TO' => $resultOperatorQueue['OPERATOR_ID'],
+							'MODE' => Chat::TRANSFER_MODE_AUTO,
+							'LEAVE' => $leaveTransfer
+						]);
+					}
+
 					$updateSessionCheck['UNDISTRIBUTED'] = 'N';
 
 					$result = true;
@@ -168,8 +205,6 @@ class All extends Queue
 				}
 
 				$updateSessionCheck['DATE_QUEUE'] = $resultOperatorQueue['DATE_QUEUE'];
-
-				$reasonReturn = SessionCheckTable::getById($this->session['ID'])->fetch()['REASON_RETURN'];
 
 				SessionCheckTable::update($this->session['ID'], $updateSessionCheck);
 

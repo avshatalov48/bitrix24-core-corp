@@ -412,18 +412,7 @@ class CCrmSaleHelper
 
 		if ($isCrmAccess && !$isDbAccess)
 		{
-			$shopRole = self::getShopRole($userId);
-			if ($shopRole)
-			{
-				self::addDbAccessAddingAgent($userId);
-				self::addToCacheAccess($userId, $role, true);
-				return true;
-			}
-			else
-			{
-				self::addToCacheAccess($userId, $role, false);
-				return false;
-			}
+			return false;
 		}
 
 		self::addToCacheAccess($userId, $role, false);

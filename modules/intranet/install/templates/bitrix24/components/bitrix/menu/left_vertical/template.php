@@ -128,6 +128,9 @@ $groupPopupExists = false;
 							data-top-menu-id="<?=$item["PARAMS"]["top_menu_id"]?>"
 						<?endif ?>
 						data-new-page="<?=(isset($item["OPEN_IN_NEW_PAGE"]) && $item["OPEN_IN_NEW_PAGE"])? "Y" : "N"?>"
+						<? if (array_key_exists("can_be_first_item", $item["PARAMS"]) && !$item["PARAMS"]["can_be_first_item"]) :?>
+						data-disable-first-item="Y"
+						<? endif ?>
 						class="<?=$itemClass?>"
 					><?
 						?><span
@@ -365,6 +368,7 @@ $arJSParams = array(
 		MENU_SAVE_BUTTON: '<?=GetMessageJS("MENU_SAVE_BUTTON")?>',
 		MENU_EMPTY_FORM_ERROR: '<?=GetMessageJS("MENU_EMPTY_FORM_ERROR")?>',
 		MENU_SELF_ITEM_FIRST_ERROR: '<?=GetMessageJS("MENU_SELF_ITEM_FIRST_ERROR")?>',
+		MENU_FIRST_ITEM_ERROR: '<?=GetMessageJS("MENU_FIRST_ITEM_ERROR")?>',
 		MENU_COLLAPSE: '<?=GetMessageJS("MENU_COLLAPSE")?>',
 		MENU_EXPAND: '<?=GetMessageJS("MENU_EXPAND")?>',
 		MENU_CONFIRM_BUTTON: '<?=GetMessageJS("MENU_CONFIRM_BUTTON")?>',

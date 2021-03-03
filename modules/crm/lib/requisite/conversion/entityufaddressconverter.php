@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Requisite\Conversion;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Location;
 use Bitrix\Main\Application;
@@ -174,7 +175,7 @@ class EntityUfAddressConverter extends EntityAddressConverter
 					$address = $this->getAddressFieldsFromUserFieldValue($id, $row[$this->sourceUserFieldName]);
 					if (!empty($address))
 					{
-						$result[EntityAddress::Delivery] = $address;
+						$result[EntityAddressType::Delivery] = $address;
 					}
 				}
 			}
@@ -292,7 +293,7 @@ class EntityUfAddressConverter extends EntityAddressConverter
 				$address = $this->getAddressFieldsFromUserFieldValue($id, $row[$userFieldName]);
 				if (!empty($address))
 				{
-					$result[EntityAddress::Delivery] = $address;
+					$result[EntityAddressType::Delivery] = $address;
 				}
 			}
 		}

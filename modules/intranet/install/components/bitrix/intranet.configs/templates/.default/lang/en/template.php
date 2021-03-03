@@ -110,6 +110,7 @@ $MESS["CONFIG_NAME_CHANGE_ACTION"] = "Change";
 $MESS["CONFIG_NAME_CHANGE_INFO"] = "Note: you can change your Bitrix24 address only once.";
 $MESS["CONFIG_NAME_CHANGE_SECTION"] = "Change your Bitrix24 address";
 $MESS["CONFIG_NAME_FILEMAN_GOOGLE_API_KEY"] = "Google Maps key specified in the Site Explorer module settings";
+$MESS["CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY"] = "Yandex Maps key";
 $MESS["CONFIG_NAME_FORMAT"] = "Name format";
 $MESS["CONFIG_NAME_GOOGLE_API_HOST_HINT"] = "The key was obtained for domain <b>#domain#</b>. If you can't get Google Maps working, change key settings or <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">get a new one</a>.";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY"] = "Google API integration preferences";

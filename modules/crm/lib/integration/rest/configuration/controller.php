@@ -20,6 +20,7 @@ class Controller
 		Entity\Field::ENTITY_CODE => 400,
 		Entity\DetailConfiguration::ENTITY_CODE => 500,
 		Entity\Setting::ENTITY_CODE => 600,
+		Entity\WebForm::ENTITY_CODE => 800,
 	];
 
 	/**
@@ -75,6 +76,9 @@ class Controller
 					case Entity\Setting::ENTITY_CODE:
 						$result = Entity\Setting::export($data);
 						break;
+					case Entity\WebForm::ENTITY_CODE:
+						$result = Entity\WebForm::getInstance()->export($data);
+						break;
 				}
 			}
 			catch (Exception $e)
@@ -124,6 +128,9 @@ class Controller
 					case Entity\Deal::ENTITY_CODE:
 						$result = Entity\Deal::clear($data);
 						break;
+					case Entity\WebForm::ENTITY_CODE:
+						$result = Entity\WebForm::getInstance()->clear($data);
+						break;
 				}
 			}
 			catch (Exception $e)
@@ -169,6 +176,9 @@ class Controller
 						break;
 					case Entity\Setting::ENTITY_CODE:
 						$result = Entity\Setting::import($data);
+						break;
+					case Entity\WebForm::ENTITY_CODE:
+						$result = Entity\WebForm::getInstance()->import($data);
 						break;
 				}
 			}

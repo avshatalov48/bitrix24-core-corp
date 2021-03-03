@@ -738,7 +738,7 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'TYPE_ID', 'name' => GetMessage('CRM_COLUMN_TYPE')),
 	array('id' => 'SOURCE_ID', 'name' => GetMessage('CRM_COLUMN_SOURCE')),
 	array('id' => 'SOURCE_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_SOURCE_DESCRIPTION')),
-	array('id' => 'EXPORT', 'name' => GetMessage('CRM_COLUMN_EXPORT')),
+	array('id' => 'EXPORT', 'name' => GetMessage('CRM_COLUMN_EXPORT_NEW')),
 	array('id' => 'OPENED', 'name' => GetMessage('CRM_COLUMN_OPENED'))
 ));
 
@@ -2477,7 +2477,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'IMPORT_DEFAULT_EXPORT',
-	'name' => GetMessage('CRM_FIELD_IMPORT_DEFAULT_EXPORT'),
+	'name' => GetMessage('CRM_FIELD_IMPORT_DEFAULT_EXPORT_NEW'),
 	'type' => 'checkbox',
 	'value' => false
 );

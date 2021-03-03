@@ -111,6 +111,8 @@
 			const urlPostfix = '.png';
 			return {
 				changeDeadline: `${urlPrefix}deadline${urlPostfix}`,
+				approve: `${urlPrefix}approve${urlPostfix}`,
+				disapprove: `${urlPrefix}disapprove${urlPostfix}`,
 				changeResponsible: `${urlPrefix}responsible${urlPostfix}`,
 				start: `${urlPrefix}start${urlPostfix}`,
 				pause: `${urlPrefix}pause${urlPostfix}`,
@@ -1030,7 +1032,7 @@
 
 		approve()
 		{
-			this.status = Task.statusList.complete;
+			this.status = Task.statusList.completed;
 
 			return new Promise((resolve, reject) => {
 				(new Request())
@@ -1325,6 +1327,20 @@
 					title: BX.message(`${titlePrefix}_CHANGE_DEADLINE`),
 					iconName: 'action_term',
 					color: '#F2A100',
+					position: 'right',
+				},
+				approve: {
+					identifier: 'approve',
+					title: BX.message(`${titlePrefix}_APPROVE`),
+					iconName: 'action_accept',
+					color: '#468EE5',
+					position: 'right',
+				},
+				disapprove: {
+					identifier: 'disapprove',
+					title: BX.message(`${titlePrefix}_DISAPPROVE`),
+					iconName: 'action_finish_up',
+					color: '#FF5752',
 					position: 'right',
 				},
 				changeResponsible: {

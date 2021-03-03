@@ -40,11 +40,7 @@ $nodes = [$arResult['userField']['~id']];
 	id="<?= $arResult['userField']['~id'] ?>_select"
 >
 	<?php
-	if(
-		is_array($arResult['userField']['VALUE'])
-		&&
-		!count($arResult['userField']['VALUE'])
-	)
+	if(!$arResult['userField']['VALUE'])
 	{
 		print EnumType::getEmptyCaption($arResult['userField']);
 	}

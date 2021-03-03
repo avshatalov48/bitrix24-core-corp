@@ -1002,7 +1002,21 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 				if($entityId > 0)
 				{
-					$requisites = EntityRequisite::getSingleInstance()->getList([
+					/** @var EntityRequisite $entityRequisite */
+					$entityRequisite = EntityRequisite::getSingleInstance();
+					if (!$requisiteId)
+					{
+						$settings = $entityRequisite->loadSettings($entityTypeId, $entityId);
+						if (isset($settings['REQUISITE_ID_SELECTED']) && $settings['REQUISITE_ID_SELECTED'] > 0)
+						{
+							$defRequisiteId = (int)$settings['REQUISITE_ID_SELECTED'];
+							if ($entityRequisite->exists($defRequisiteId))
+							{
+								$requisiteId = $defRequisiteId;
+							}
+						}
+					}
+					$requisites = $entityRequisite->getList([
 						'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
 						'filter' => [
 							'=ENTITY_TYPE_ID' => $entityTypeId,

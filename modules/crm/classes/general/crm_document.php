@@ -1125,6 +1125,22 @@ class CCrmDocument
 				}
 				break;
 
+			case 'UF:url':
+				if (is_array($fieldValue))
+				{
+					$result = array();
+					foreach ($fieldValue as $r)
+					{
+						$result[] = sprintf('[url=%s]%s[/url]', $r, $r);
+					}
+				}
+				else
+				{
+					$result = sprintf('[url=%s]%s[/url]', $fieldValue, $fieldValue);
+				}
+				return $result;
+			break;
+
 			case 'select':
 				if (is_array($arFieldType["Options"]))
 				{

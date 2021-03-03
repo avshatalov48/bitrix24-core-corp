@@ -161,12 +161,13 @@ class EntityEditorConfig
 			$optionName = "{$optionName}_common";
 		}
 
-		return \CUserOptions::GetOption(
+		$result = \CUserOptions::GetOption(
 			'crm.entity.editor',
 			$optionName,
 			null,
 			$this->scope === Crm\Entity\EntityEditorConfigScope::PERSONAL ? $this->userID : false
 		);
+		return is_array($result) ? $this->normalize($result) : $result;
 	}
 
 	public function set(array $data)
@@ -193,6 +194,21 @@ class EntityEditorConfig
 		if($this->scope === Crm\Entity\EntityEditorConfigScope::COMMON)
 		{
 			$optionName = "{$optionName}_common";
+		}
+
+		if ( // compatibility mode
+			is_array($data) &&
+			isset($data[0]['type']) &&
+			$data[0]['type'] === 'section'
+		)
+		{
+			$data = [
+				[
+					'name' => 'default_column',
+					'type' => 'column',
+					'elements' => $data
+				]
+			];
 		}
 
 		return \CUserOptions::SetOption(
@@ -244,6 +260,40 @@ class EntityEditorConfig
 
 		\CUserOptions::DeleteOptionsByName('crm.entity.editor', $optionName);
 		\CUserOptions::DeleteOptionsByName('crm.entity.editor', "{$optionName}_scope");
+	}
+
+	public function normalize(array $data, array $options = [])
+	{
+		if ( // compatibility mode
+			isset($data[0]) &&
+			isset($data[0]['type']) &&
+			$data[0]['type'] === 'column'
+		)
+		{
+			$data = (array)$data[0]['elements'];
+		}
+
+		if (isset($options['remove_if_empty_name']) && $options['remove_if_empty_name'])
+		{
+			for($i = 0, $sectionCount = count($data); $i < $sectionCount; $i++)
+			{
+				if((isset($data[$i]['elements']) && is_array($data[$i]['elements'])))
+				{
+					for ($j = 0, $elementCount = count($data[$i]['elements']); $j < $elementCount; $j++)
+					{
+						if (
+							!isset($data[$i]['elements'][$j]['name']) ||
+							trim($data[$i]['elements'][$j]['name']) === ''
+						)
+						{
+							unset($data[$i]['elements'][$j]);
+						}
+					}
+				}
+			}
+		}
+
+		return $data;
 	}
 
 	public function sanitize(array $data)

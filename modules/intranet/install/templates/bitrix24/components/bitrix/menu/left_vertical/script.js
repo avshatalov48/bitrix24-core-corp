@@ -2383,7 +2383,13 @@ BX.Bitrix24.LeftMenu = {
 		{
 			this.itemDomBlank.parentNode.insertBefore(this.itemMoveBlank, this.itemDomBlank);
 		}
-		else if(dragElement.getAttribute("data-type") == "self" && dest.id === "left-menu-empty-item")
+		else if(
+			(
+				dragElement.getAttribute("data-type") == "self"
+				|| dragElement.getAttribute("data-disable-first-item") == "Y"
+			)
+			&& dest.id === "left-menu-empty-item"
+		)
 		{
 			return; // self-item cannot be moved on the first place
 		}
@@ -2410,6 +2416,11 @@ BX.Bitrix24.LeftMenu = {
 		if (BX.type.isDomNode(firstItem) && firstItem.getAttribute("data-type") == "self")
 		{
 			this.showMessage(firstItem, BX.message("MENU_SELF_ITEM_FIRST_ERROR"), "right");
+			this.menuItemsBlock.replaceChild(dragElement, this.itemDomBlank);
+		}
+		else if (firstItem.getAttribute("data-disable-first-item") == "Y")
+		{
+			this.showMessage(firstItem, BX.message("MENU_FIRST_ITEM_ERROR"), "right");
 			this.menuItemsBlock.replaceChild(dragElement, this.itemDomBlank);
 		}
 		else if (this.itemMoveBlank && BX.findParent(this.itemMoveBlank, {className: "menu-items"}))

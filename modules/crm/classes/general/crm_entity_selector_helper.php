@@ -1267,8 +1267,18 @@ class CCrmEntitySelectorHelper
 
 						if (!empty($requisiteDataJson) && ($viewDataOnly || !empty($requisiteDataSign)))
 						{
+							if (is_array($presetList[$presetID])
+								&& isset($presetList[$presetID]['COUNTRY_ID']))
+							{
+								$presetCountryId = (int)$presetList[$presetID]['COUNTRY_ID'];
+							}
+							else
+							{
+								$presetCountryId = 0;
+							}
 							$resultItem = array(
 								'presetId' => $presetID,
+								'presetCountryId' => $presetCountryId,
 								'requisiteId' => $copyMode ? 0 : $requisiteId,
 								'entityTypeId' => $entityTypeId,
 								'entityId' => $copyMode ? 0 : $entityId,

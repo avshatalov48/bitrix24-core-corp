@@ -10,20 +10,34 @@ use Bitrix\Location\Entity\Address;
 
 class EntityAddress
 {
+	/** @deprecated  Use constants of EntityAddressType */
 	const Undefined = 0;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Primary = 1;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Secondary = 2;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Third = 3;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Home = 4;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Work = 5;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Registered = 6;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Custom = 7;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Post = 8;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Beneficiary = 9;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Bank = 10;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Delivery = 11;
 
+	/** @deprecated  Use constants of EntityAddressType */
 	const First = 1;
+	/** @deprecated  Use constants of EntityAddressType */
 	const Last = 11;
 
 	private static $messagesLoaded = false;
@@ -79,6 +93,8 @@ class EntityAddress
 
 	private static $locationModuleIncluded = null;
 
+	private static $zoneMap = null;
+
 	/**
 	 * @return bool
 	 * @throws Main\LoaderException
@@ -98,13 +114,10 @@ class EntityAddress
 		return AddressTable::getList($params);
 	}
 
+	/** @deprecated Use method of EntityAddressType */
 	public static function isDefined($typeID)
 	{
-		if(!is_int($typeID))
-		{
-			$typeID = (int)$typeID;
-		}
-		return $typeID >= self::First && $typeID <= self::Last;
+		return EntityAddressType::isDefined($typeID);
 	}
 
 	private static $labels = array();
@@ -135,11 +148,13 @@ class EntityAddress
 	}
 
 	/**
+	* @deprecated Old functionality. Use methods of EntityAddressType
+	*
 	* @return array
 	*/
 	protected static function getSupportedTypeIDs()
 	{
-		return array(EntityAddress::Primary);
+		return array(EntityAddressType::Primary);
 	}
 
 	/**
@@ -589,6 +604,8 @@ class EntityAddress
 	}
 
 	/**
+    * @deprecated Old functionality
+	*
 	* @return int
 	*/
 	public static function resolveEntityFieldTypeID($fieldName, array $aliases = null)
@@ -608,7 +625,7 @@ class EntityAddress
 			}
 		}
 
-		return EntityAddress::Primary;
+		return EntityAddressType::Primary;
 	}
 
 	/**
@@ -616,9 +633,9 @@ class EntityAddress
 	*/
 	public static function mapEntityField($fieldName, $typeID, array $aliases = null)
 	{
-		if(!EntityAddress::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = EntityAddress::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		if(is_array($aliases) && isset($aliases[$fieldName]))
@@ -637,10 +654,10 @@ class EntityAddress
 			$options = array();
 		}
 
-		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddress::Undefined;
-		if(!EntityAddress::isDefined($typeID))
+		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddressType::Undefined;
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = EntityAddress::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$skipEmpty = isset($options['SKIP_EMPTY']) ? $options['SKIP_EMPTY'] : false;
@@ -1188,9 +1205,9 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::IsDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			throw new Main\ArgumentOutOfRangeException('typeID', self::First, self::Last);
+			throw new Main\ArgumentOutOfRangeException('typeID', EntityAddressType::First, EntityAddressType::Last);
 		}
 
 		$primaryFields = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID, 'TYPE_ID' => $typeID);
@@ -1340,6 +1357,7 @@ class EntityAddress
 		//endregion Send event
 	}
 
+	/** @deprecated  Use method of EntityAddressType */
 	public static function getTypeInfos()
 	{
 		if(self::$typeInfos === null)
@@ -1347,12 +1365,12 @@ class EntityAddress
 			self::includeModuleFile();
 
 			self::$typeInfos = array(
-				self::Primary => array(
-					'ID' => self::Primary,
+				EntityAddressType::Primary => array(
+					'ID' => EntityAddressType::Primary,
 					'DESCRIPTION' => GetMessage('CRM_ENTITY_ADDRESS_PRY')
 				),
-				self::Registered => array(
-					'ID' => self::Registered,
+				EntityAddressType::Registered => array(
+					'ID' => EntityAddressType::Registered,
 					'DESCRIPTION' => GetMessage('CRM_ENTITY_ADDRESS_REG')
 				)
 			);
@@ -1395,15 +1413,18 @@ class EntityAddress
 			&& (isset($a['COUNTRY_CODE']) ? $a['COUNTRY_CODE'] : '') === (isset($b['COUNTRY_CODE']) ? $b['COUNTRY_CODE'] : '')
 		);
 	}
+
+	/** @deprecated  Use methods of EntityAddressType */
 	public static function getClientTypeInfos()
 	{
 		self::includeModuleFile();
 		return array(
-			array('id' => self::Primary, 'name' => GetMessage('CRM_ENTITY_ADDRESS_PRY')),
-			array('id' => self::Registered, 'name' => GetMessage('CRM_ENTITY_ADDRESS_REG'))
+			array('id' => EntityAddressType::Primary, 'name' => GetMessage('CRM_ENTITY_ADDRESS_PRY')),
+			array('id' => EntityAddressType::Registered, 'name' => GetMessage('CRM_ENTITY_ADDRESS_REG'))
 		);
 	}
 
+	/** @deprecated  Use method of EntityAddressType */
 	public static function getTypeDescription($typeID)
 	{
 		if(!is_int($typeID))
@@ -1411,15 +1432,16 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$typeInfos = self::getTypeInfos();
 		return $typeInfos[$typeID]['DESCRIPTION'];
 	}
 
+	/** @deprecated  Use method of EntityAddressType */
 	public static function getTypeLabels()
 	{
 		if(self::$typeLabels === null)
@@ -1427,12 +1449,14 @@ class EntityAddress
 			self::includeModuleFile();
 
 			self::$typeLabels = array(
-				self::Primary => GetMessage('CRM_ENTITY_FULL_ADDRESS'),
-				self::Registered => GetMessage('CRM_ENTITY_FULL_REG_ADDRESS')
+				EntityAddressType::Primary => GetMessage('CRM_ENTITY_FULL_ADDRESS'),
+				EntityAddressType::Registered => GetMessage('CRM_ENTITY_FULL_REG_ADDRESS')
 			);
 		}
 		return self::$typeLabels;
 	}
+
+	/** @deprecated  Use method of EntityAddressType */
 	public static function getFullAddressLabel($typeID = 0)
 	{
 		if(!is_int($typeID))
@@ -1440,14 +1464,15 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$labels = self::getTypeLabels();
 		return isset($labels[$typeID]) ? $labels[$typeID] : "[{$typeID}]";
 	}
+
 	public static function getLabels($typeID = 0)
 	{
 		if(!is_int($typeID))
@@ -1455,18 +1480,18 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		if(!isset(self::$labels[$typeID]))
 		{
 			self::includeModuleFile();
 
-			if($typeID === self::Registered)
+			if($typeID === EntityAddressType::Registered)
 			{
-				self::$labels[self::Registered] = array(
+				self::$labels[EntityAddressType::Registered] = array(
 					//For backward compatibility
 					'ADDRESS' => GetMessage('CRM_ENTITY_REG_ADDRESS_1'),
 					'ADDRESS_1' => GetMessage('CRM_ENTITY_REG_ADDRESS_1'),
@@ -1504,9 +1529,9 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$labels = self::getLabels($typeID);
@@ -1519,18 +1544,18 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		if(!isset(self::$shortLabels[$typeID]))
 		{
 			self::includeModuleFile();
 
-			if($typeID === self::Registered)
+			if($typeID === EntityAddressType::Registered)
 			{
-				self::$shortLabels[self::Registered] = array(
+				self::$shortLabels[EntityAddressType::Registered] = array(
 					//For backward compatibility
 					'ADDRESS' => GetMessage('CRM_ENTITY_SHORT_REG_ADDRESS_1'),
 					'ADDRESS_1' => GetMessage('CRM_ENTITY_SHORT_REG_ADDRESS_1'),
@@ -1626,6 +1651,7 @@ class EntityAddress
 		$fields = $dbResult->fetch();
 		return is_array($fields)  ? $fields : null;
 	}
+
 	public static function getCountries(array $filter = null)
 	{
 		if (!Main\Loader::includeModule('sale'))
@@ -1675,10 +1701,10 @@ class EntityAddress
 			$options = array();
 		}
 
-		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddress::Undefined;
-		if(!EntityAddress::isDefined($typeID))
+		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddressType::Undefined;
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = EntityAddress::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$result = array();
@@ -1700,10 +1726,10 @@ class EntityAddress
 			$options = array();
 		}
 
-		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddress::Undefined;
-		if(!EntityAddress::isDefined($typeID))
+		$typeID = isset($options['TYPE_ID']) ? $options['TYPE_ID'] : EntityAddressType::Undefined;
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = EntityAddress::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		$map = static::getFieldMap($typeID);
@@ -1717,9 +1743,9 @@ class EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::Primary;
 		}
 
 		if(!is_array($options))
@@ -2036,5 +2062,112 @@ class EntityAddress
 		}
 
 		return $data;
+	}
+
+	public static function getZoneMap() : array
+	{
+		if (self::$zoneMap === null)
+		{
+			// Need sync with EntityAddressType::getZoneMap()
+			self::$zoneMap = array_fill_keys(
+				[
+					'ru', 'ua', 'ur', 'by', 'kz', 'en', 'eu', 'de', 'la',
+					'br', 'fr', 'it', 'pl', 'tr', 'cn', 'sc', 'tc', 'ja',
+					'vn', 'id', 'ms', 'th', 'in', 'hi', 'uk', 'co', 'mx'
+				],
+				true
+			);
+		}
+
+		return self::$zoneMap;
+	}
+
+	protected static function adjustZone() : string
+	{
+		$addressZoneId = '';
+
+		$bitrix24Path = Main\Application::getDocumentRoot().'/bitrix/modules/bitrix24/';
+		$bitrix24 = Main\IO\Directory::isDirectoryExists($bitrix24Path);
+		if ($bitrix24 && Main\Loader::includeModule('bitrix24'))
+		{
+			$bitrix24Zone = \CBitrix24::getCurrentAreaConfig();
+			$zoneMap = self::getZoneMap();
+			if (is_array($bitrix24Zone) && !empty($bitrix24Zone)
+				&& isset($bitrix24Zone['ID']) && is_string($bitrix24Zone['ID'])
+				&& isset($zoneMap[$bitrix24Zone['ID']]))
+			{
+				$addressZoneId = $bitrix24Zone['ID'];
+			}
+			unset($bitrix24Zone);
+		}
+		unset($bitrix24Path, $bitrix24);
+
+		if ($addressZoneId === '')
+		{
+			$siteIterator = \Bitrix\Main\SiteTable::getList(
+				[
+					'select' => array('LID', 'LANGUAGE_ID'),
+					'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+				]
+			);
+			if ($site = $siteIterator->fetch())
+			{
+				$languageId = (string)$site['LANGUAGE_ID'];
+				$knownLanguageList = [
+					'br', 'de', 'en', 'fr', 'hi', 'id', 'it', 'ja', 'la',
+					'ms', 'pl', 'ru', 'sc', 'tc', 'th', 'tr', 'ua', 'vn'
+				];
+				$zoneMap = self::getZoneMap();
+				if (in_array($languageId, $knownLanguageList, true)
+					&& isset($zoneMap[$languageId]))
+				{
+					$addressZoneId = $languageId;
+				}
+			}
+			unset($site, $siteIterator);
+		}
+
+		if ($addressZoneId === '')
+		{
+			$addressZoneId = 'eu';
+		}
+
+		return $addressZoneId;
+	}
+
+	protected static function getDefaultZoneId() : string
+	{
+		$addressZoneId = Main\Config\Option::get('crm', 'default_address_zone_id', '');
+		$zoneMap = self::getZoneMap();
+		if(!is_string($addressZoneId) || $addressZoneId === '' || !isset($zoneMap[$addressZoneId]))
+		{
+			$addressZoneId = self::adjustZone();
+			Main\Config\Option::set('crm', 'default_address_zone_id', $addressZoneId);
+		}
+
+		return $addressZoneId;
+	}
+
+	public static function getZoneId() : string
+	{
+		$addressZoneId = Main\Config\Option::get('crm', 'current_address_zone_id', '');
+		$zoneMap = self::getZoneMap();
+		if (!is_string($addressZoneId) || $addressZoneId === '' || !isset($zoneMap[$addressZoneId]))
+		{
+			$addressZoneId = self::getDefaultZoneId();
+		}
+
+		return $addressZoneId;
+	}
+
+	public static function setZoneId(string $addressZoneId)
+	{
+		$zoneMap = self::getZoneMap();
+		if (!isset($zoneMap[$addressZoneId]))
+		{
+			throw new Main\ArgumentException('Unknown address zone', 'addressZoneId');
+		}
+
+		Main\Config\Option::set('crm', 'current_address_zone_id', $addressZoneId);
 	}
 }

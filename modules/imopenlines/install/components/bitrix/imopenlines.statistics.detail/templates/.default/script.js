@@ -185,5 +185,37 @@ BX.ready(function(){
 			return BX.OpenLines.ExportManager.items[BX.OpenLines.ExportManager.currentId];
 		};
 	}
+
+	BX.namespace("BX.OpenLines.Actions");
+
+	BX.OpenLines.Actions.getGridInstance = function()
+	{
+		if (window.top.BX.Main.gridManager)
+		{
+			var result = window.top.BX.Main.gridManager.data.filter(function(current)
+			{
+				return current.id.indexOf(BX.message('IMOL_STATISTICS_GRID_ID')) === 0;
+			});
+
+			if (result[0] && result[0].hasOwnProperty('instance'))
+			{
+				return result[0].instance;
+			}
+		}
+
+		return false;
+	};
+
+	BX.OpenLines.Actions.closeSpam = function(chatId)
+	{
+		BX.MessengerCommon.linesMarkAsSpam(chatId);
+		BX.OpenLines.Actions.getGridInstance().reloadTable('POST');
+	};
+
+	BX.OpenLines.Actions.close = function(chatId)
+	{
+		BX.MessengerCommon.linesCloseDialog(chatId, true);
+		BX.OpenLines.Actions.getGridInstance().reloadTable('POST');
+	};
 });
 

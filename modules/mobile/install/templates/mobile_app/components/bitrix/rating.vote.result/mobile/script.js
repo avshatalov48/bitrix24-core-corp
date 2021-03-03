@@ -56,7 +56,7 @@
 	BX.LikeResultMobile.prototype = {
 		get: function ()
 		{
-				BX.rest.callBatch({
+			BX.rest.callBatch({
 					reactions : ['like.reactions', {
 						ENTITY_TYPE_ID: this.entityTypeId,
 						ENTITY_ID: this.entityId
@@ -67,8 +67,7 @@
 						REACTION: (this.currentReaction == 'all' ? '' : this.currentReaction),
 						PATH_TO_USER_PROFILE: this.pathToUserProfile,
 					}],
-				}, (result) =>
-			{
+			}, function (result) {
 				if (
 					result.reactions.error()
 					|| result.likeList.error()
@@ -85,7 +84,7 @@
 				this.tabData = result.reactions;
 				this.buildHead(result.reactions);
 				this.processUsersResult(result.likeList);
-			});
+			}.bind(this));
 		},
 
 		buildHead: function (result)
@@ -151,7 +150,8 @@
 					laugh: 2,
 					wonder: 3,
 					cry: 4,
-					angry: 5
+					angry: 5,
+					facepalm: 6
 				};
 				if (sample[a.reaction] < sample[b.reaction])
 				{
@@ -247,7 +247,7 @@
 			BX.cleanNode(contentNode);
 		},
 
-		processUsersResult(result)
+		processUsersResult: function(result)
 		{
 			this.blockScrollRequest = false;
 			var

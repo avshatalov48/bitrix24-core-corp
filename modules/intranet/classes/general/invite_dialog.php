@@ -29,7 +29,7 @@ class CIntranetInviteDialog
 			'mode' => Router::COMPONENT_MODE_AJAX,
 		]);
 
-		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false})";
+		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false, width: 1100})";
 	}
 
 	public static function setSendPassword($value)
@@ -309,13 +309,17 @@ class CIntranetInviteDialog
 					{
 						$url = (CMain::IsHTTPS() ? "https" : "http") . "://" . $serverName . $arSite["DIR"];
 					}
-					$event->SendImmediate("INTRANET_USER_ADD", $siteIdByDepartmentId, array(
-						"EMAIL_TO" => $arUser["EMAIL"],
-						"LINK" => $url,
-						"USER_ID_FROM" => $USER->GetID(),
-						"PASSWORD" => $strPassword,
-						"USER_TEXT" => $messageText
-					));
+					$event->SendImmediate(
+						$bitrix24Installed ? "BITRIX24_USER_ADD" : "INTRANET_USER_ADD",
+						$siteIdByDepartmentId,
+						array(
+							"EMAIL_TO" => $arUser["EMAIL"],
+							"LINK" => $url,
+							"USER_ID_FROM" => $USER->GetID(),
+							"PASSWORD" => $strPassword,
+							"USER_TEXT" => $messageText
+						)
+					);
 				}
 				else
 				{
@@ -1744,7 +1748,7 @@ class CIntranetInviteDialog
 		);
 	}
 
-	public static function logAction($arUserId, $module, $action, $label)
+	public static function logAction($arUserId, $module, $action, $label, $context = 'web')
 	{
 		if (function_exists('AddEventToStatFile'))
 		{
@@ -1757,7 +1761,7 @@ class CIntranetInviteDialog
 			{
 				if ($userId > 0)
 				{
-					AddEventToStatFile($module, $action, $label, $userId);
+					AddEventToStatFile($module, $action, $label, $userId, $context);
 				}
 			}
 		}

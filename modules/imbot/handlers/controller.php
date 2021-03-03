@@ -127,6 +127,10 @@ else if (
 	}
 	else
 	{
+		if ($result instanceof \Bitrix\ImBot\Error)
+		{
+			\Bitrix\ImBot\Log::write($result, 'ERROR RESULT');
+		}
 		echo \Bitrix\Main\Web\Json::encode($result);
 	}
 }

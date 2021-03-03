@@ -429,8 +429,9 @@ class LeadController extends BaseController
 		$relationMap->build();
 
 		$this->eraseActivities($recyclingEntityID, $params, $relationMap);
+		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedMultiFields($recyclingEntityID);
-		$this->eraseSuspendedAddresses($recyclingEntityID, array(Crm\EntityAddress::Primary));
+		$this->eraseSuspendedAddresses($recyclingEntityID, array(Crm\EntityAddressType::Primary));
 		$this->eraseSuspendedTimeline($recyclingEntityID);
 		$this->eraseSuspendedDocuments($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
@@ -439,7 +440,6 @@ class LeadController extends BaseController
 		$this->eraseSuspendedObservers($recyclingEntityID);
 		$this->eraseSuspendedWaitings($recyclingEntityID);
 		$this->eraseSuspendedChats($recyclingEntityID);
-		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 

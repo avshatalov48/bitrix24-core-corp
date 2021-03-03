@@ -10,19 +10,33 @@ $arResult['ITEMS']['dropzones'] = array();
 
 foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 {
-	if ($column['dropzone'])
+	if ($column['dropzone'] || $column['alwaysShowInDropzone'])
 	{
-		$arResult['ITEMS']['dropzones'][] = array(
+		 $element = [
 			'id' => $column['id'],
 			'name' => $column['name'],
 			'color' => $column['color'],
-			'data' => array(
-				'type' => $column['type']
-			)
-		);
-		unset($arResult['ITEMS']['columns'][$k]);
+			'data' => [
+				'type' => $column['type'],
+			],
+		];
+
+		if ($element['id'] === 'DELETED')
+		{
+			array_unshift($arResult['ITEMS']['dropzones'], $element);
+		}
+		else
+		{
+			$arResult['ITEMS']['dropzones'][] = $element;
+		}
+
+		if ($column['dropzone'])
+		{
+			unset($arResult['ITEMS']['columns'][$k]);
+		}
 	}
-	else
+
+	if (!$column['dropzone'])
 	{
 		$column = array(
 			'id' => $column['id'],

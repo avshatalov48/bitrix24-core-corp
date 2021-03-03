@@ -51,6 +51,13 @@
 			}
 			BX.addCustomEvent(this.selectorUtmSource, this.selectorUtmSource.events.search, this.onUtmSourceSearch.bind(this));
 		}
+
+
+		var utmContentBtn = BX('crm-analytics-source-block-utm-content-btn');
+		if (utmContentBtn)
+		{
+			BX.clipboard.bindCopyClick(utmContentBtn, {text: utmContentBtn.previousElementSibling});
+		}
 	};
 	Editor.prototype.onEditExpenses = function ()
 	{
@@ -121,7 +128,7 @@
 		{
 			return;
 		}
-		
+
 		this.picker = BX("crm-analytics-utm-editor-color-select");
 		this.pickerIcon = BX("crm-analytics-utm-editor-color-icon-value");
 
@@ -214,7 +221,7 @@
 				canUnSelectItem: true,
 				events: {
 					onNewItem: function() {
-						BX.util.popup(this.manager.provider.AUTH_URL, 800, 600);
+						BX.Seo.Ads.LoginFactory.getLoginObject(this.manager.provider).login();
 					}.bind(this),
 					onSelectItem: function(item) {
 						this.setProfile(item);

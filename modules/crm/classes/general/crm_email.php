@@ -1469,17 +1469,22 @@ class CCrmEMail
 			$datetime = $msgFields['FIELD_DATE'];
 		}
 
-		$deadline = convertTimeStamp(strtotime('tomorrow') + $currentUserOffset - $userOffset, 'FULL', $siteId);
+		$deadlineTimestamp = strtotime('tomorrow') + $currentUserOffset - $userOffset;
+		$deadline = convertTimeStamp($deadlineTimestamp, 'FULL', $siteId);
 		if (CModule::includeModule('calendar'))
 		{
 			$calendarSettings = \CCalendar::getSettings();
 
+			$workTimeEndHour = $calendarSettings['work_time_end'] > 0 ? $calendarSettings['work_time_end'] : 19;
 			$dummyDeadline = new \Bitrix\Main\Type\DateTime();
 			$dummyDeadline->setTime(
-				$calendarSettings['work_time_end'] > 0 ? $calendarSettings['work_time_end'] : 19,
+				$workTimeEndHour,
 				0,
 				$currentUserOffset - $userOffset
 			);
+			$deadlineTimestamp += $workTimeEndHour * 60 * 60; // work time end in tomorrow
+			$deadline = convertTimeStamp($deadlineTimestamp, 'FULL', $siteId);
+
 			if ($dummyDeadline->getTimestamp() > $nowTimestamp + $currentUserOffset)
 			{
 				$deadline = $dummyDeadline->format(\Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));

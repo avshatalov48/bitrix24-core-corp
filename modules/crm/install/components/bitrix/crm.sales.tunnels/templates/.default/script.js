@@ -3857,6 +3857,13 @@ this.BX.Crm = this.BX.Crm || {};
 	            var grid = column.getGrid();
 	            var prevColumn = grid.getPreviousColumnSibling(column);
 	            return prevColumn.data.stage.ENTITY_ID;
+	          }(),
+	          color: event.data.column.getColor(),
+	          semantics: function () {
+	            var column = event.data.column;
+	            var grid = column.getGrid();
+	            var prevColumn = grid.getPreviousColumnSibling(column);
+	            return prevColumn.data.stage.SEMANTICS;
 	          }()
 	        }).then(function (_ref10) {
 	          var data = _ref10.data;

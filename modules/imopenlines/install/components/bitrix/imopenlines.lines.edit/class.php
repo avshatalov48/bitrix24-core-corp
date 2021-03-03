@@ -2,260 +2,455 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Loader,
-	\Bitrix\ImOpenLines\Config,
-	\Bitrix\Main\Engine\Contract\Controllerable,
-	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\HttpApplication,
-	\Bitrix\ImOpenlines\QuickAnswers;
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Config\Configuration,
+	\Bitrix\Main\Engine\Contract\Controllerable;
 
+use \Bitrix\UI\EntitySelector,
+	\Bitrix\UI\EntitySelector\Item;
+
+use \Bitrix\Im;
+
+use	\Bitrix\ImOpenLines\Tools,
+	\Bitrix\ImOpenLines\Config,
+	\Bitrix\ImOpenLines\Common,
+	\Bitrix\ImOpenLines\QueueManager,
+	\Bitrix\ImOpenlines\QuickAnswers;
 
 class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controllerable
 {
 	/** @var \Bitrix\ImOpenlines\Security\Permissions */
 	protected $userPermissions;
 
+	protected const AVAILABLE_OPTION_TIME_TASK = [
+		'10800',
+		'25200',
+		'43200',
+		'172800',
+		'345600',
+		'518400',
+		'1209600'
+	];
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	protected function checkModules()
 	{
+		$result = true;
+
 		if (!Loader::includeModule('imopenlines'))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_NOT_INSTALLED'));
-			return false;
+			$result = false;
 		}
 		if (!Loader::includeModule('im'))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_IM_NOT_INSTALLED'));
-			return false;
+			$result = false;
 		}
-		return true;
+
+		return $result;
 	}
 
-	private function updateLine()
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function updateLine(): bool
 	{
-		if (!\check_bitrix_sessid())
-			return false;
+		$result = false;
 
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
-		$post = $request->getPostList()->toArray();
+		$post = $this->request->getPostList()->toArray();
 
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		if (!$configManager->canEditLine($post['CONFIG_ID']))
-			return false;
-
-		$boolParams = [
-			'ACTIVE',
-			'CRM',
-			'CRM_FORWARD',
-			'CRM_TRANSFER_CHANGE',
-			'CRM_CREATE_THIRD',
-			'CHECK_AVAILABLE',
-			'RECORDING',
-			'WORKTIME_ENABLE',
-			'CATEGORY_ENABLE',
-			'VOTE_MESSAGE',
-			'VOTE_BEFORE_FINISH',
-			'VOTE_CLOSING_DELAY',
-			'WATCH_TYPING',
-			'WELCOME_MESSAGE',
-			'WELCOME_BOT_ENABLE',
-			'AGREEMENT_MESSAGE',
-			'KPI_FIRST_ANSWER_ALERT',
-			'KPI_FURTHER_ANSWER_ALERT',
-			'KPI_CHECK_OPERATOR_ACTIVITY'
-		];
-		foreach ($boolParams as $field)
+		if(
+			!empty($post) &&
+			\check_bitrix_sessid() &&
+			Config::canEditLine($post['CONFIG_ID'])
+		)
 		{
-			$post['CONFIG'][$field] = isset($post['CONFIG'][$field])? $post['CONFIG'][$field]: 'N';
-		}
-
-		$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: [];
-
-		if(empty($post['CONFIG']['LIMITATION_MAX_CHAT']) || !is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1)
-		{
-			$post['CONFIG']['MAX_CHAT'] = 0;
-		}
-		elseif($post['CONFIG']['MAX_CHAT'] > 150)
-		{
-			$post['CONFIG']['MAX_CHAT'] = 150;
-		}
-		else
-		{
-			$post['CONFIG']['MAX_CHAT'] = round($post['CONFIG']['MAX_CHAT']);
-		}
-
-		$queueList = [];
-		$queueUsersFields = [];
-
-		if (!empty($post['CONFIG']['QUEUE']['U']))
-		{
-			$arAccessCodes = [];
-			foreach ($post['CONFIG']['QUEUE']['U'] as $userCode)
+			$boolParams = [
+				'ACTIVE',
+				'CRM',
+				'CRM_FORWARD',
+				'CRM_CHAT_TRACKER',
+				'CRM_TRANSFER_CHANGE',
+				'CRM_CREATE_THIRD',
+				'CHECK_AVAILABLE',
+				'RECORDING',
+				'WORKTIME_ENABLE',
+				'CATEGORY_ENABLE',
+				'VOTE_MESSAGE',
+				'VOTE_BEFORE_FINISH',
+				'VOTE_CLOSING_DELAY',
+				'WATCH_TYPING',
+				'WELCOME_MESSAGE',
+				'WELCOME_BOT_ENABLE',
+				'AGREEMENT_MESSAGE',
+				'KPI_FIRST_ANSWER_ALERT',
+				'KPI_FURTHER_ANSWER_ALERT',
+				'KPI_CHECK_OPERATOR_ACTIVITY'
+			];
+			foreach ($boolParams as $field)
 			{
-				$userId = mb_substr($userCode, 1);
-				if (\Bitrix\Im\User::getInstance($userId)->isExtranet())
-					continue;
+				$post['CONFIG'][$field] = isset($post['CONFIG'][$field])? $post['CONFIG'][$field]: 'N';
+			}
 
-				$queueList[] = $userId;
-				$arAccessCodes[] = $userCode;
+			$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: [];
 
-				if (!empty($post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode]) && is_array($post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode]))
+			if(empty($post['CONFIG']['LIMITATION_MAX_CHAT']) || !is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1)
+			{
+				$post['CONFIG']['MAX_CHAT'] = 0;
+			}
+			elseif($post['CONFIG']['MAX_CHAT'] > 150)
+			{
+				$post['CONFIG']['MAX_CHAT'] = 150;
+			}
+			else
+			{
+				$post['CONFIG']['MAX_CHAT'] = round($post['CONFIG']['MAX_CHAT']);
+			}
+
+			$queueList = [];
+			$queueUsersFields = [];
+
+			if((string)$post['CONFIG']['OPERATOR_DATA'] !== 'queue')
+			{
+				unset($post['CONFIG']['QUEUE_USERS_FIELDS']);
+			}
+
+			if((string)$post['CONFIG']['OPERATOR_DATA'] !== 'hide')
+			{
+				$post['CONFIG']['DEFAULT_OPERATOR_DATA'] = [];
+			}
+
+			if(
+				!empty($post['CONFIG']['QUEUE']) &&
+				is_array($post['CONFIG']['QUEUE'])
+			)
+			{
+				$userList = QueueManager::getUserListFromQueue($post['CONFIG']['QUEUE']);
+
+				foreach ($post['CONFIG']['QUEUE'] as $entity)
 				{
-					$queueUsersFields[$userId] = $post['CONFIG']['QUEUE_USERS_FIELDS']['U'][$userCode];
-					if (mb_substr($queueUsersFields[$userId]['USER_AVATAR'], 0, 1) == '/')
+					if(QueueManager::validateQueueTypeField($entity['type']))
 					{
-						$queueUsersFields[$userId]['USER_AVATAR'] = \Bitrix\ImOpenLines\Common::getServerAddress() . $queueUsersFields[$userId]['USER_AVATAR'];
+						if(
+							(string)$entity['type'] === 'user' &&
+							QueueManager::isValidUser($entity['id'])
+						)
+						{
+							$queueList[] = [
+								'ENTITY_ID' => $entity['id'],
+								'ENTITY_TYPE' => $entity['type'],
+							];
+						}
+						elseif((string)$entity['type'] === 'department')
+						{
+							$queueList[] = [
+								'ENTITY_ID' => $entity['id'],
+								'ENTITY_TYPE' => $entity['type'],
+							];
+						}
 					}
+				}
 
-					$avatarFromProfile = \Bitrix\ImOpenLines\Common::getServerAddress() . \Bitrix\Im\User::getInstance($userId)->getAvatar();
-					if ($queueUsersFields[$userId]['USER_AVATAR'] === $avatarFromProfile)
+				if(!empty($userList))
+				{
+					foreach ($userList as $userId)
 					{
-						$queueUsersFields[$userId]['USER_AVATAR'] = '';
+						if (
+							!empty($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId]) &&
+							is_array($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId])
+						)
+						{
+							$queueUsersFields[$userId] = $post['CONFIG']['QUEUE_USERS_FIELDS'][$userId];
+							if (mb_strpos($queueUsersFields[$userId]['USER_AVATAR'], '/') === 0)
+							{
+								$queueUsersFields[$userId]['USER_AVATAR'] = Common::getServerAddress() . $queueUsersFields[$userId]['USER_AVATAR'];
+							}
+
+							$avatarFromProfile = Common::getServerAddress() . Im\User::getInstance($userId)->getAvatar();
+							if ($queueUsersFields[$userId]['USER_AVATAR'] === $avatarFromProfile)
+							{
+								$queueUsersFields[$userId]['USER_AVATAR'] = '';
+							}
+							if($queueUsersFields[$userId]['USER_NAME'] === Im\User::getInstance($userId)->getFullName(false))
+							{
+								$queueUsersFields[$userId]['USER_NAME'] = '';
+							}
+						}
 					}
 				}
 			}
-			\Bitrix\Main\FinderDestTable::merge(array(
-				'CONTEXT' => 'IMOPENLINES',
-				'CODE' => \Bitrix\Main\FinderDestTable::convertRights($arAccessCodes, array('U'.$GLOBALS['USER']->GetId()))
-			));
-		}
 
-		$post['CONFIG']['QUEUE'] = $queueList;
-		$post['CONFIG']['QUEUE_USERS_FIELDS'] = $queueUsersFields;
-		$post['CONFIG']['TEMPORARY'] = 'N';
-		$post['CONFIG']['WORKTIME_HOLIDAYS'] = explode(',', $post['CONFIG']['WORKTIME_HOLIDAYS']);
+			$post['CONFIG']['QUEUE'] = $queueList;
+			$post['CONFIG']['QUEUE_USERS_FIELDS'] = $queueUsersFields;
+			$post['CONFIG']['TEMPORARY'] = 'N';
+			$post['CONFIG']['WORKTIME_HOLIDAYS'] = explode(',', $post['CONFIG']['WORKTIME_HOLIDAYS']);
 
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		$config = $configManager->get($post['CONFIG_ID']);
+			$configManager = new Config();
+			$config = $configManager->get($post['CONFIG_ID']);
 
-		if($config['TEMPORARY'] == 'Y' && !$configManager->canActivateLine())
-		{
-			$post['CONFIG']['ACTIVE'] = 'N';
-		}
+			if(
+				(string)$config['TEMPORARY'] === 'Y' &&
+				!Config::canActivateLine()
+			)
+			{
+				$post['CONFIG']['ACTIVE'] = 'N';
+			}
 
-		if (!$configManager->update($post['CONFIG_ID'], $post['CONFIG']))
-		{
-			$this->arResult['ERROR'] = $configManager->getError()->msg;
-		}
-		else if ($request->getPost('action') == 'save')
-		{
-			if(empty($request['back_url']))
-				LocalRedirect($this->arResult['PATH_TO_LIST']);
+			if ($configManager->update($post['CONFIG_ID'], $post['CONFIG']))
+			{
+				if(
+					empty($post['AUTOMATIC_MESSAGE']['ENABLE']) ||
+					$post['AUTOMATIC_MESSAGE']['ENABLE'] !== 'Y'
+				)
+				{
+					$configManager->deleteAllAutomaticMessage($post['CONFIG_ID']);
+				}
+				else
+				{
+					foreach ($post['AUTOMATIC_MESSAGE']['TASK'] as $cell=>$task)
+					{
+						if(!in_array($task['TIME_TASK'], self::AVAILABLE_OPTION_TIME_TASK, false))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['TIME_TASK'] = current(self::AVAILABLE_OPTION_TIME_TASK);
+						}
+
+						if(Tools::isEmpty($task['MESSAGE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['MESSAGE'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_TITLE');
+						}
+						if(Tools::isEmpty($task['TEXT_BUTTON_CLOSE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['TEXT_BUTTON_CLOSE'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_CLOSE_TITLE');
+						}
+						if(Tools::isEmpty($task['LONG_TEXT_BUTTON_CLOSE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['LONG_TEXT_BUTTON_CLOSE'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_CLOSE_TITLE');
+						}
+						if(Tools::isEmpty($task['TEXT_BUTTON_CONTINUE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['TEXT_BUTTON_CONTINUE'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_CONTINUE_TITLE');
+						}
+						if(Tools::isEmpty($task['LONG_TEXT_BUTTON_CONTINUE']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['LONG_TEXT_BUTTON_CONTINUE'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_CONTINUE_TITLE');
+						}
+						if(Tools::isEmpty($task['TEXT_BUTTON_NEW']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['TEXT_BUTTON_NEW'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE');
+						}
+						if(Tools::isEmpty($task['LONG_TEXT_BUTTON_NEW']))
+						{
+							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['LONG_TEXT_BUTTON_NEW'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE');
+						}
+					}
+
+					$configManager->updateAllAutomaticMessage($post['CONFIG_ID'], $post['AUTOMATIC_MESSAGE']['TASK']);
+				}
+
+				$result = true;
+
+				if ((string)$this->request->getPost('action') === 'save')
+				{
+					if(empty($this->request['back_url']))
+					{
+						LocalRedirect($this->arResult['PATH_TO_LIST']);
+					}
+					else
+					{
+						LocalRedirect(urldecode($this->request['back_url']));
+					}
+				}
+			}
 			else
-				LocalRedirect(urldecode($request['back_url']));
-
-			return false;
+			{
+				$this->arResult['ERROR'] = $configManager->getError()->msg;
+			}
 		}
 
-		return true;
+		return $result;
 	}
 
-	private function getWorkTimeConfig()
+	/**
+	 * @return mixed
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getWorkTimeConfig()
 	{
 		$params['TIME_ZONE_ENABLED'] = CTimeZone::Enabled();
 		$params['TIME_ZONE_LIST'] = CTimeZone::GetZones();
 
-		$params['WEEK_DAYS'] = Array('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU');
+		$params['WEEK_DAYS'] = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
 
-		$params['WORKTIME_LIST_FROM'] = array();
-		$params['WORKTIME_LIST_TO'] = array();
-		if (\Bitrix\Main\Loader::includeModule('calendar'))
+		$params['WORKTIME_LIST_FROM'] = [];
+		$params['WORKTIME_LIST_TO'] = [];
+		if (Loader::includeModule('calendar'))
 		{
-			$params['WORKTIME_LIST_FROM'][strval(0)] = CCalendar::FormatTime(0, 0);
+			$params['WORKTIME_LIST_FROM'][(string)0] = CCalendar::FormatTime(0, 0);
 			for ($i = 0; $i < 24; $i++)
 			{
 				if ($i !== 0)
 				{
-					$params['WORKTIME_LIST_FROM'][strval($i)] = CCalendar::FormatTime($i, 0);
-					$params['WORKTIME_LIST_TO'][strval($i)] = CCalendar::FormatTime($i, 0);
+					$params['WORKTIME_LIST_FROM'][(string)$i] = CCalendar::FormatTime($i, 0);
+					$params['WORKTIME_LIST_TO'][(string)$i] = CCalendar::FormatTime($i, 0);
 				}
-				$params['WORKTIME_LIST_FROM'][strval($i).'.30'] = CCalendar::FormatTime($i, 30);
-				$params['WORKTIME_LIST_TO'][strval($i).'.30'] = CCalendar::FormatTime($i, 30);
+				$params['WORKTIME_LIST_FROM'][$i.'.30'] = CCalendar::FormatTime($i, 30);
+				$params['WORKTIME_LIST_TO'][$i.'.30'] = CCalendar::FormatTime($i, 30);
 			}
-			$params['WORKTIME_LIST_TO'][strval('23.59')] = CCalendar::FormatTime(23, 59);
+			$params['WORKTIME_LIST_TO']['23.59'] = CCalendar::FormatTime(23, 59);
 		}
 
 		return $params;
 	}
 
-	private function getQueueDestination()
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getQueue(): array
 	{
-		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
-			return Array();
+		$result = [
+			'lineId' => $this->arResult['CONFIG']['ID'],
+			'readOnly' => !$this->arResult['CAN_EDIT'],
+			'queueInputName' => 'CONFIG[QUEUE]',
+			'queueUserInputName' => 'CONFIG[QUEUE_USERS_FIELDS]',
+			'blockIdQueueInput' => 'input-config-queue',
+			'popupDepartment' => [
+				'nameOption' => [
+					'category' => 'imopenlines',
+					'name' => 'config',
+					'nameValue' => 'disablesPopupDepartment'
+				],
+				'valueDisables' => false,
+				'titleOption' => GetMessageJS('OL_COMPONENT_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE')
+			],
+		];
 
-		$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
-		// TODO filter non-business users
-
-		$destination = array(
-			'LINE_ID' => $this->arResult['CONFIG']['ID'],
-			'DEST_SORT' => CSocNetLogDestination::GetDestinationSort(array(
-				'DEST_CONTEXT' => 'IMOPENLINES',
-				'CODE_TYPE' => 'U'
-			)),
-			'LAST' => array(),
-			'DEPARTMENT' => $structure['department'],
-			'SELECTED' => array(
-				'USERS' => array_values($this->arResult['CONFIG']['QUEUE'])
-			),
-		);
-		CSocNetLogDestination::fillLastDestination($destination['DEST_SORT'], $destination['LAST']);
-
-		$destinationUsers = array_values($this->arResult['CONFIG']['QUEUE']);
-		if (isset($destination['LAST']['USERS']))
+		$configUserOptions = \CUserOptions::GetOption($result['popupDepartment']['nameOption']['category'], $result['popupDepartment']['nameOption']['name']);
+		if(!empty($configUserOptions[$result['popupDepartment']['nameOption']['nameValue']]))
 		{
-			foreach ($destination['LAST']['USERS'] as $value)
-				$destinationUsers[] = str_replace('U', '', $value);
+			$result['popupDepartment']['valueDisables'] = $configUserOptions[$result['popupDepartment']['nameOption']['nameValue']] === 'N';
 		}
-		$destination['EXTRANET_USER'] = 'N';
-		$destination['USERS'] = CSocNetLogDestination::GetUsers(Array('id' => $destinationUsers));
-		$queueUsersFields = array();
-		foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
+
+		if (Loader::includeModule('ui'))
 		{
-			if (empty($userFields['USER_AVATAR']))
+			if(
+				!empty($this->arResult['CONFIG']['QUEUE']) &&
+				is_array($this->arResult['CONFIG']['QUEUE'])
+			)
 			{
-				$userFields['USER_AVATAR'] = \Bitrix\Im\User::getInstance($key)->getAvatar();
-			}
-			$queueUsersFields['U'.$key] = $userFields;
-		}
-		$destination['QUEUE_USERS_FIELDS'] = $queueUsersFields;
+				$preselectedItems = [];
+				if(
+					!empty($this->arResult['CONFIG']['configQueue']) &&
+					is_array($this->arResult['CONFIG']['configQueue'])
+				)
+				{
+					foreach ($this->arResult['CONFIG']['configQueue'] as $configQueue)
+					{
+						$preselectedItems[] = [
+							$configQueue['ENTITY_TYPE'],
+							$configQueue['ENTITY_ID']
+						];
+					}
+				}
 
-		return $destination;
+				$itemCollections = EntitySelector\Dialog::getSelectedItems($preselectedItems);
+
+				$preselectedUsers = [];
+				foreach ($this->arResult['CONFIG']['QUEUE'] as $userId)
+				{
+					$preselectedUsers[] = [
+						'user',
+						$userId
+					];
+				}
+
+				//TODO: 279941 (426ad54dd7a8) socialnetwork
+				$userCollections = EntitySelector\Dialog::getSelectedItems($preselectedUsers);
+				$items = $userCollections->getAll();
+				$users = [];
+
+				foreach ($items as $item)
+				{
+					//$item = new \Bitrix\UI\EntitySelector\Item;
+					$users[] = [
+						'entityId' => $item->getId(),
+						'entityType' => $item->getEntityId(),
+						'name' => $item->getTitle(),
+						'avatar' => $item->getAvatar(),
+						'department' => $this->arResult['CONFIG']['QUEUE_FULL'][$item->getId()]['DEPARTMENT_ID']
+					];
+				}
+
+				$result['queueUsers'] = $users;
+
+				foreach ($this->arResult['CONFIG']['QUEUE_USERS_FIELDS'] as $key => $userFields)
+				{
+					if (empty($userFields['USER_AVATAR']))
+					{
+						$userFields['USER_AVATAR'] = \Bitrix\Im\User::getInstance($key)->getAvatar();
+					}
+					$result['queueUsersFields'][$key] = $userFields;
+				}
+
+				$result['queueItems'] = array_map(function(Item $item) {
+					return $item->jsonSerialize();
+				}, $itemCollections->getAll());
+			}
+		}
+
+		return $result;
 	}
 
-	private function getPagesMenu($pathToList, $configId)
+	/**
+	 * @param $pathToList
+	 * @param $configId
+	 * @return array
+	 */
+	protected function getPagesMenu($pathToList, $configId)
 	{
-		$menuList = array(
-			'queue-crm' => array(
+		$menuList = [
+			'queue-crm' => [
 				'PAGE' => 'queue-crm.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_QUEUE')
-			),
-			'work-time' => array(
+			],
+			'work-time' => [
 				'PAGE' => 'work-time.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_WORKTIME')
-			),
-			'agreements' => array(
+			],
+			'agreements' => [
 				'PAGE' => 'agreements.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_AGREEMENTS')
-			),
-			'automatic-actions' => array(
+			],
+			'automatic-actions' => [
 				'PAGE' => 'automatic-actions.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_AUTOMATIC_ACTIONS')
-			),
-			'quality-mark' => array(
+			],
+			'quality-mark' => [
 				'PAGE' => 'quality-mark.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_QUALITY_MARK')
-			),
-			'bots' => array(
+			],
+			'bots' => [
 				'PAGE' => 'bots.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_BOTS')
-			),
-			'kpi' => array(
+			],
+			'kpi' => [
 				'PAGE' => 'kpi.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_KPI')
-			),
-			'others' => array(
+			],
+			'others' => [
 				'PAGE' => 'others.php',
 				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_OTHERS')
-			)
-		);
+			]
+		];
 		$menuItemBase = $pathToList . 'edit.php?ID=' . $configId;
 		if ($this->request['IFRAME'] === 'Y')
 		{
@@ -339,13 +534,62 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		return $result;
 	}
 
-	private function showConfig()
+	/**
+	 * @param $configId
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function getConfigAutomaticMessage($configId): array
 	{
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
+		$result = [];
 
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		$configId = intval($request->get('ID'));
-		if ($configId == 0)
+		$configManager = new Config();
+		$configAutomaticMessage = $configManager->getAutomaticMessage($configId);
+
+		if(count($configAutomaticMessage) > 0)
+		{
+			$result['ENABLE'] = 'Y';
+			foreach ($configAutomaticMessage as $config)
+			{
+				$result['TASK'][$config['ID']] = [
+					'TIME_TASK' => $config['TIME_TASK'],
+					'MESSAGE' => $config['MESSAGE'],
+					'TEXT_BUTTON_CLOSE' => $config['TEXT_BUTTON_CLOSE'],
+					'LONG_TEXT_BUTTON_CLOSE' => $config['LONG_TEXT_BUTTON_CLOSE'],
+					'AUTOMATIC_TEXT_CLOSE' => $config['AUTOMATIC_TEXT_CLOSE'],
+					'TEXT_BUTTON_CONTINUE' => $config['TEXT_BUTTON_CONTINUE'],
+					'LONG_TEXT_BUTTON_CONTINUE' => $config['LONG_TEXT_BUTTON_CONTINUE'],
+					'AUTOMATIC_TEXT_CONTINUE' => $config['AUTOMATIC_TEXT_CONTINUE'],
+					'TEXT_BUTTON_NEW' => $config['TEXT_BUTTON_NEW'],
+					'LONG_TEXT_BUTTON_NEW' => $config['LONG_TEXT_BUTTON_NEW'],
+					'AUTOMATIC_TEXT_NEW' => $config['AUTOMATIC_TEXT_NEW'],
+				];
+			}
+		}
+		else
+		{
+			$result['ENABLE'] = 'N';
+			$result['TASK']['n1'] = [];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function showConfig()
+	{
+		$configManager = new Config();
+		$configId = (int)$this->request->get('ID');
+		if ($configId === 0)
 		{
 			if(!$configManager->canActivateLine())
 			{
@@ -372,7 +616,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			}
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_SOCIALNETWORK_NOT_INSTALLED'));
 			return false;
@@ -384,11 +628,17 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			return false;
 		}
 
-		$config = $configManager->get($configId);
+		$config = $configManager->get($configId, true, true, true);
+
 		if (!$config)
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
 			return false;
+		}
+
+		if(Configuration::getValue('ol_automatic_messages'))
+		{
+			$this->arResult['AUTOMATIC_MESSAGE'] = $this->getConfigAutomaticMessage($configId);
 		}
 
 		$this->arResult['CAN_EDIT'] = $configManager->canEditLine($configId);
@@ -405,7 +655,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		$config['WORKTIME_HOLIDAYS'] = implode(',', $config['WORKTIME_HOLIDAYS']);
 		$this->arResult['CONFIG'] = $config;
 
-		$this->arResult['QUEUE_DESTINATION'] = $this->getQueueDestination();
+		$this->arResult['QUEUE'] = $this->getQueue();
 
 		$this->arResult['CRM_SOURCES'] = \Bitrix\Main\Loader::includeModule('crm')? CCrmStatus::GetStatusList('SOURCE'): Array();
 		$this->arResult['CRM_SOURCES'] = ['create' => Loc::getMessage('OL_COMPONENT_LE_CRM_SOURCE_CREATE')]+$this->arResult['CRM_SOURCES'];
@@ -419,7 +669,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				$this->arResult['BOT_LIST'][$botId] = \Bitrix\Im\User::getInstance($botId)->getFullName();
 			}
 
-			if (\Bitrix\Main\Loader::includeModule('rest'))
+			if (Loader::includeModule('rest'))
 			{
 				$this->arResult['CAN_INSTALL_APPLICATIONS'] = \CRestUtil::canInstallApplication();
 			}
@@ -460,27 +710,23 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		if (empty($this->arResult['CONFIG']['WORKTIME_TIMEZONE']))
 		{
 			if (LANGUAGE_ID == 'ru')
+			{
 				$tzByLang = 'Europe/Moscow';
+			}
 			elseif (LANGUAGE_ID == 'de')
+			{
 				$tzByLang = 'Europe/Berlin';
+			}
 			elseif (LANGUAGE_ID == 'ua')
+			{
 				$tzByLang = 'Europe/Kiev';
+			}
 			else
+			{
 				$tzByLang = 'America/New_York';
+			}
 
 			$this->arResult['CONFIG']['WORKTIME_TIMEZONE'] = $tzByLang;
-		}
-
-		$usersLimit = \Bitrix\Imopenlines\Limit::getLicenseUsersLimit();
-		if ($usersLimit)
-		{
-			$this->arResult['BUSINESS_USERS'] = 'U'.implode(',U', $usersLimit);
-			$this->arResult['BUSINESS_USERS_LIMIT'] = 'Y';
-		}
-		else
-		{
-			$this->arResult['BUSINESS_USERS'] = Array();
-			$this->arResult['BUSINESS_USERS_LIMIT'] = 'N';
 		}
 
 		$quickAnswersStorageList = QuickAnswers\ListsDataManager::getStorageList();
@@ -488,7 +734,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		{
 			$quickAnswersStorageList[0] = array('NAME' => Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE'));
 			ksort($quickAnswersStorageList);
-			$uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
+			$uri = new \Bitrix\Main\Web\Uri($this->request->getRequestUri());
 			$this->arResult['QUICK_ANSWERS_MANAGE_URL'] = $uri->addParams(array('action' => 'imopenlines_create_qa_list'))->getLocator();
 		}
 
@@ -505,13 +751,13 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		$this->arResult['CONFIG_MENU'] = $this->getPagesMenu($this->arResult['PATH_TO_LIST'], $configId);
 
-		$this->arResult['IFRAME'] = $request->get('IFRAME') == 'Y';
-		$this->arResult['IS_ACTION'] = $request->get('action') != '';
-		$this->arResult['IS_OPENED'] = $request->get('opened') === 'Y';
-		$this->arResult['SHOW_QUEUE_SETTINGS'] = htmlspecialcharsbx($request->get('SHOW_QUEUE_SETTINGS'));
-		$this->arResult['SHOW_AUTO_ACTION_SETTINGS'] = htmlspecialcharsbx($request->get('SHOW_AUTO_ACTION_SETTINGS'));
-		$this->arResult['SHOW_WORKERS_TIME'] = htmlspecialcharsbx($request->get('SHOW_WORKERS_TIME'));
-		$this->arResult['PAGE'] = (htmlspecialcharsbx($request->get('PAGE')) ? : 'queue-crm');
+		$this->arResult['IFRAME'] = $this->request->get('IFRAME') == 'Y';
+		$this->arResult['IS_ACTION'] = $this->request->get('action') != '';
+		$this->arResult['IS_OPENED'] = $this->request->get('opened') === 'Y';
+		$this->arResult['SHOW_QUEUE_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_QUEUE_SETTINGS'));
+		$this->arResult['SHOW_AUTO_ACTION_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_AUTO_ACTION_SETTINGS'));
+		$this->arResult['SHOW_WORKERS_TIME'] = htmlspecialcharsbx($this->request->get('SHOW_WORKERS_TIME'));
+		$this->arResult['PAGE'] = (htmlspecialcharsbx($this->request->get('PAGE')) ? : 'queue-crm');
 
 		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
 		$uriParams['action-line'] = 'edit';
@@ -632,46 +878,63 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		return true;
 	}
 
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function executeComponent()
 	{
-		global $APPLICATION;
+		$result = false;
 
 		$this->includeComponentLang('class.php');
 
-		if (!$this->checkModules())
+		if ($this->checkModules())
 		{
-			return false;
-		}
+			$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
 
-		$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
+			$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
 
-		$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
+			/*CModule::includeModule('crm');
+			$contactCenterHandler = new \Bitrix\Intranet\ContactCenter();
+			$forms = $contactCenterHandler->crmGetItems()->getData()['form']['LIST'];
+			$this->arResult['CRM_FORMS_LIST'] = $forms;*/
 
-//		CModule::includeModule('crm');
-//		$contactCenterHandler = new \Bitrix\Intranet\ContactCenter();
-//		$forms = $contactCenterHandler->crmGetItems()->getData()['form']['LIST'];
-//		$this->arResult['CRM_FORMS_LIST'] = $forms;
-
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
-		if($request->getQuery('action') == 'imopenlines_create_qa_list' && $request->getQuery('ID') > 0)
-		{
-			if(!$this->createQuickAnswersStorage())
+			if(
+				$this->request->getQuery('action') == 'imopenlines_create_qa_list' &&
+				$this->request->getQuery('ID') > 0 &&
+				!$this->createQuickAnswersStorage()
+			)
 			{
 				$this->showConfig();
 			}
-		}
-		if ($request->isPost() && $request->getPost('form') == 'imopenlines_edit_form')
-		{
-			if (!$this->updateLine())
+			if (
+				$this->request->isPost() &&
+				$this->request->getPost('form') == 'imopenlines_edit_form' &&
+				!$this->updateLine()
+			)
 			{
-				\ShowError(Loc::getMessage('OL_COMPONENT_LE_ERROR_PERMISSION'));
-				return false;
+				\ShowError(Loc::getMessage('OL_COMPONENT_ERROR_SAVE_CONFIG'));
+			}
+			else
+			{
+				$result = $this->showConfig();
 			}
 		}
 
-		return $this->showConfig();
+		return $result;
 	}
 
+	/**
+	 * @param $config
+	 * @param null $storageList
+	 * @return bool
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	protected function isCreateNewQuickAnswersStorageAllowed($config, $storageList = null)
 	{
 		if(intval($config['QUICK_ANSWERS_IBLOCK_ID']) <= 0)
@@ -695,16 +958,21 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		return false;
 	}
 
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	protected function createQuickAnswersStorage()
 	{
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
 		$configManager = new \Bitrix\ImOpenLines\Config();
-		if(!$configManager->canEditLine($request->getQuery('ID')))
+		if(!$configManager->canEditLine($this->request->getQuery('ID')))
 		{
 			$this->arResult['ERROR'] = Loc::getMessage('OL_COMPONENT_LE_QUICK_ANSWERS_NO_ACCESS_CREATE');
 			return false;
 		}
-		$lineId = intval($request->getQuery('ID'));
+		$lineId = (int)$this->request->getQuery('ID');
 		$config = $configManager->get($lineId);
 		if($config && $this->isCreateNewQuickAnswersStorageAllowed($config))
 		{
@@ -712,7 +980,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			$iblockId = QuickAnswers\ListsDataManager::createStorage($lineId, $USER->GetID());
 			if($iblockId > 0)
 			{
-				$configManager->update($lineId, array('QUICK_ANSWERS_IBLOCK_ID' => $iblockId));
+				$configManager->update($lineId, ['QUICK_ANSWERS_IBLOCK_ID' => $iblockId]);
 				$listsDataManager = new QuickAnswers\ListsDataManager($lineId);
 				$newUrl = $listsDataManager->getUrlToList();
 				LocalRedirect($newUrl);
@@ -736,21 +1004,26 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	 */
 	public function configureActions()
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Reload blocks using ajax-request
 	 *
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function loadPageAction()
 	{
 		ob_start();
 		$this->executeComponent();
 		$html = ob_get_clean();
-		return array(
+		return [
 			'html' => $html
-		);
+		];
 	}
 };

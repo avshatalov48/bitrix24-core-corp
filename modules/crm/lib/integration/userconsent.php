@@ -8,6 +8,7 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\EventResult;
@@ -246,7 +247,7 @@ class UserConsent
 		// get address requisites
 		$addresses = EntityRequisite::getAddresses($data['ID']);
 		$addressTypes = array(
-			EntityAddress::Registered
+			EntityAddressType::Registered
 		);
 
 		$address = null;
@@ -279,11 +280,11 @@ class UserConsent
 			}
 			if ($address['REG_ADDRESS'])
 			{
-				$addressTypeId =  EntityAddress::Registered;
+				$addressTypeId =  EntityAddressType::Registered;
 			}
 			else
 			{
-				$addressTypeId =  EntityAddress::Primary;
+				$addressTypeId =  EntityAddressType::Primary;
 			}
 
 			$address = Format\CompanyAddressFormatter::format($address, array(

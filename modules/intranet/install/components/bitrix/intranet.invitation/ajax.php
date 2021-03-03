@@ -161,6 +161,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $users;
 	}
 
+	protected function prepareGroupIds($groups)
+	{
+		$formattedGroups = [];
+		foreach ($groups as $key => $id)
+		{
+			$formattedGroups[$key] = "SG".$id;
+		}
+
+		return $formattedGroups;
+	}
+
 	protected function registerNewUser($newUsers, &$strError)
 	{
 		$arError = [];
@@ -184,7 +195,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$isExtranet = isset($newUsers["UF_DEPARTMENT"]) ? false : true;
 			if (isset($newUsers["SONET_GROUPS_CODE"]) && is_array($newUsers["SONET_GROUPS_CODE"]))
 			{
-				CIntranetInviteDialog::RequestToSonetGroups($invitedUserIds, $newUsers["SONET_GROUPS_CODE"], "", $isExtranet);
+				CIntranetInviteDialog::RequestToSonetGroups(
+					$invitedUserIds,
+					$this->prepareGroupIds($newUsers["SONET_GROUPS_CODE"]),
+					"",
+					$isExtranet
+				);
 			}
 
 			$type = $isExtranet ? 'extranet' : 'intranet';
@@ -442,21 +458,30 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		$userData = $_POST;
 
-		if (empty($userData["DEPARTMENT_ID"]))
+		if (empty($userData["UF_DEPARTMENT"]))
 		{
 			$departmentId = $this->getHeadDepartmentId();
 			$userData["DEPARTMENT_ID"] = [$departmentId];
 		}
+		else
+		{
+			$userData["DEPARTMENT_ID"] = $userData["UF_DEPARTMENT"];
+		}
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
 
-		if ($idAdded)
+		if ($idAdded && isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]))
 		{
-			CIntranetInviteDialog::RequestToSonetGroups($idAdded, $_POST["SONET_GROUPS_CODE"], "");
+			CIntranetInviteDialog::RequestToSonetGroups(
+				$idAdded,
+				$this->prepareGroupIds($_POST["SONET_GROUPS_CODE"]),
+				""
+			);
 		}
 
 		if (!empty($strError))
 		{
+			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}

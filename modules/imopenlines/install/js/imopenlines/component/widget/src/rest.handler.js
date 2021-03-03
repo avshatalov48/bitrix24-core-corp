@@ -32,6 +32,7 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 			consentUrl: data.consentUrl,
 			connectors: data.connectors || [],
 			watchTyping: data.watchTyping,
+			showSessionId: data.showSessionId,
 		});
 
 		this.store.commit('application/set', {disk: data.disk});

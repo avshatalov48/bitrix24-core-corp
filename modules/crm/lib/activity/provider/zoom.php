@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -147,6 +148,11 @@ class Zoom extends Base
 		return $providerTypeId === static::TYPE_ZOOM_CONF_START;
 	}
 
+	public static function canKeepCompletedInCalendar($providerTypeId = null)
+	{
+		return ActivitySettings::getValue(ActivitySettings::KEEP_COMPLETED_CALLS);
+	}
+
 	public static function deleteAssociatedEntity($entityId, array $activity, array $options = array())
 	{
 		$result = new Result();
@@ -162,5 +168,15 @@ class Zoom extends Base
 		}
 
 		return $result;
+	}
+
+	public static function checkFields($action, &$fields, $id, $params = null)
+	{
+		if (($action === 'UPDATE') && isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
+		{
+			$fields['DEADLINE'] = $fields['START_TIME'];
+		}
+
+		return new \Bitrix\Main\Result();
 	}
 }

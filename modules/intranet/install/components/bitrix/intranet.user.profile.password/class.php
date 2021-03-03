@@ -181,6 +181,7 @@ class CIntranetUserProfilePasswordComponent extends \CBitrixComponent implements
 			return;
 		}
 
+		$this->arResult["IsOwnProfile"] = $this->arParams["USER_ID"] === $USER->GetID();
 		$this->arResult["FormFields"] = $this->getFieldInfo();
 		$this->arResult["FormConfig"] = $this->getConfig();
 

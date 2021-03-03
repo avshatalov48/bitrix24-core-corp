@@ -1,8 +1,18 @@
 #ui-page-slider-content {z-index: 111;}
 #ui-button-panel {z-index: 112;}
 
+.invite-body .popup-window-tabs-content.popup-window-tabs-content-invite {
+	background-color: inherit;
+}
+
+.invite-body .ui-page-slider-workarea-content-padding {
+	padding: 20px 0;
+}
+
 .invite-wrap {
-	padding: 0 3px !important;
+	margin-bottom: 15px;
+	padding: 13px 23px 26px 23px;
+	background-color: #fff;
 }
 
 .invite-body {
@@ -22,6 +32,10 @@
 }
 
 /*region title*/
+.invite-content-container {
+	background-color: #fff;
+}
+
 .invite-title-container {
 	display: flex;
 	align-items: center;
@@ -93,10 +107,10 @@
 
 .invite-content-container {}
 
-.invite-form-container {
-	padding-bottom: 9px;
-	margin-bottom: 21px;
-}
+/*.invite-form-container {*/
+/*	padding-bottom: 9px;*/
+/*	margin-bottom: 21px;*/
+/*}*/
 
 .invite-form-ctl-description {
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -325,6 +339,7 @@
 	align-items: center;
 	justify-content: space-between;
 	border-bottom: 1px solid #e4e7ea;
+	flex-wrap: wrap;
 	padding: 12px 0;
 }
 
@@ -332,6 +347,7 @@
 
 .invite-limit-counters-block-name {
 	opacity: 0.81;
+	flex:1;
 	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #525c69;
 }
@@ -346,6 +362,15 @@
 	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
 	padding-left: 20px;
 	color: #009cce;
+}
+
+
+.invite-limit-counters-block-value-unlimited {
+	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
+	padding-left: 20px;
+	color: #009cce;
+	text-align: right;
+	width: 100%;
 }
 
 
@@ -555,7 +580,7 @@
 .invite-wrap-decal {
 	position: absolute;
 	bottom: 75px;
-	right: 50%;
+	/*right: 50%;*/
 	left: 0;
 	/*outline: 1px solid #f00;*/
 }
@@ -574,10 +599,16 @@
 
 
 .invite-wrap-decal-arrow {
-	position: absolute;
-	left: 250px;
+	position: fixed;
+	bottom: 77px;
+	/*left: 250px;*/
 	/*right: 0;*/
-	bottom: 0;
+	/*bottom: 0;*/
+	z-index: 89;
+}
+
+.js-intranet-invitation-arrow-hide .invite-wrap-decal-arrow {
+	display: none;
 }
 
 /*endregion*/

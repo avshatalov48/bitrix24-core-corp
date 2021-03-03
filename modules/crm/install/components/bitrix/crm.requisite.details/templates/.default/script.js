@@ -281,7 +281,8 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			this.emitEvent('onSave', {
 				'requisiteData': BX.prop.getString(entityData, 'REQUISITE_DATA', ""),
 				'requisiteDataSign': BX.prop.getString(entityData, 'REQUISITE_DATA_SIGN', ""),
-				'presetId': this.getPresetId()
+				'presetId': this.getPresetId(),
+				'presetCountryId': this.getPresetCountryId()
 			});
 
 			setTimeout(this.closeSliderSilently.bind(this), 0);
@@ -316,6 +317,10 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		getPresetId: function()
 		{
 			return this.getContextField('pid');
+		},
+		getPresetCountryId: function()
+		{
+			return this.getContextField('presetCountryId');
 		},
 		getContextField: function(fieldName)
 		{

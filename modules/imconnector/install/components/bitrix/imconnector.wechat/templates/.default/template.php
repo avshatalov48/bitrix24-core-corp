@@ -256,7 +256,7 @@ else
 							   class="imconnector-field-control-input imconnector-input-data"
 							   id="imconnector-wechat-app-id"
 							   name="app_id"
-							   value="<?=$arResult["FORM"]["app_id"]?>"
+							   value="<?=htmlspecialcharsbx($arResult["FORM"]["app_id"])?>"
 							   placeholder="<?=$idPlaceholder?>">
 					</div>
 					<div class="imconnector-field-box-subtitle">
@@ -267,7 +267,7 @@ else
 							   class="imconnector-field-control-input imconnector-input-data"
 							   id="imconnector-wechat-app-secret"
 							   name="app_secret"
-							   value="<?=$arResult["FORM"]["app_secret"]?>"
+							   value="<?=htmlspecialcharsbx($arResult["FORM"]["app_secret"])?>"
 							   placeholder="<?=$secretPlaceholder?>">
 					</div>
 					<div class="imconnector-field-box-subtitle">
@@ -278,7 +278,7 @@ else
 							   class="imconnector-field-control-input imconnector-input-data"
 							   id="imconnector-wechat-encrypt-key"
 							   name="encrypt_key"
-							   value="<?=$arResult['FORM']['encrypt_key']?>"
+							   value="<?=htmlspecialcharsbx($arResult['FORM']['encrypt_key'])?>"
 							   placeholder="<?=$encryptKeyPlaceholder?>">
 					</div>
 					<div class="imconnector-field-control-box">

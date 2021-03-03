@@ -5162,12 +5162,14 @@ class CCrmLiveFeedComponent
 
 						$strUser = "";
 
-						$strUser .= '<span class="feed-com-avatar crm-feed-company-avatar">';
+						$strUser .= '<span class="crm-feed-company-avatar">';
 						if(is_array($arFileTmp) && isset($arFileTmp['src']))
 						{
 							if ($this->params["PATH_TO_USER"] <> '')
 							{
-								$strUser .= '<a target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), intval($arField["VALUE"]), $this->params["PATH_TO_USER"]).'"><img src="'.$arFileTmp['src'].'" alt=""/></a>';
+								$strUser .= '<a target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), (int)$arField["VALUE"], $this->params["PATH_TO_USER"]).'" class="ui-icon ui-icon-common-user" style="border: none;">'.
+									"<i style=\"background: url('".\CHTTP::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
+									'</a>';
 							}
 							else
 							{
@@ -5476,8 +5478,10 @@ class CCrmLiveFeedComponent
 					if(is_array($arFileTmp) && isset($arFileTmp['src']))
 					{
 						$strResult .= '<span class="crm-feed-user-block" href="'.$url.'">';
-							$strResult .= '<span class="feed-com-avatar crm-feed-company-avatar">';
-								$strResult .= '<a href="'.$url.'"><img width="39" height="39" alt="" src="'.$arFileTmp['src'].'"></a>';
+							$strResult .= '<span class="crm-feed-company-avatar">';
+								$strResult .= '<a href="'.$url.'" class="ui-icon ui-icon-common-user" style="border: none;">'.
+									"<i style=\"background: url('".\CHTTP::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
+									'</a>';
 							$strResult .= '</span>';
 							$strResult .= '<span class="crm-feed-client-right"><a href="'.$url.'" class="crm-feed-user-name">'.$arField["VALUE"]["TITLE"].'</a></span>';
 						$strResult .= '</span>';

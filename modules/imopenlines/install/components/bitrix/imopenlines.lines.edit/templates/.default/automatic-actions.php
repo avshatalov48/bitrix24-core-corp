@@ -1,5 +1,5 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc; ?>
 
 <div class="imopenlines-form-settings-section">
@@ -13,17 +13,164 @@ use \Bitrix\Main\Localization\Loc; ?>
 					   class="imopenlines-control-checkbox"
 					   <? if ($arResult['CONFIG']['WELCOME_MESSAGE'] == "Y") { ?>checked<? } ?>>
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW')?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP"))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP'))?>"></span>
 			</label>
 		</div>
 		<div class="imopenlines-control-container <? if ($arResult['CONFIG']['WELCOME_MESSAGE'] != 'Y') { ?>invisible<? } ?>" id="imol_action_welcome">
-			<div class="imopenlines-control-subtitle"><?=Loc::getMessage("IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT")?></div>
+			<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT')?></div>
 			<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-				name="CONFIG[WELCOME_MESSAGE_TEXT]"><?=htmlspecialcharsbx($arResult["CONFIG"]["WELCOME_MESSAGE_TEXT"])?></textarea>
+				name="CONFIG[WELCOME_MESSAGE_TEXT]"><?=htmlspecialcharsbx($arResult['CONFIG']['WELCOME_MESSAGE_TEXT'])?></textarea>
 			</div>
 		</div>
+	</div>
+	<?if(isset($arResult['AUTOMATIC_MESSAGE'])):?>
+	<div class="imopenlines-form-settings-block">
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   id="imol_automatic_message"
+					   name="AUTOMATIC_MESSAGE[ENABLE]"
+					   value="Y"
+					   class="imopenlines-control-checkbox"
+					   <? if ($arResult['AUTOMATIC_MESSAGE']['ENABLE'] == 'Y') { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ENABLE')?>
+			</label>
+		</div>
+		<div<? if ($arResult['AUTOMATIC_MESSAGE']['ENABLE'] != 'Y') { ?> class="invisible"<? } ?> id="imol_action_automatic_message">
+			<?foreach ($arResult['AUTOMATIC_MESSAGE']['TASK'] as $idConfigTask => $configTask):?>
+				<div class="imopenlines-control-container imopenlines-control-select">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<select class="imopenlines-control-input" name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TIME_TASK]">
+							<option value="10800" <?if((int)$configTask['TIME_TASK'] === '10800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_3_H')?></option>
+							<option value="25200" <?if((int)$configTask['TIME_TASK'] === '25200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_7_H')?></option>
+							<option value="43200" <?if((int)$configTask['TIME_TASK'] === '43200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_12_H')?></option>
+							<option value="172800" <?if((int)$configTask['TIME_TASK'] === '172800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_D')?></option>
+							<option value="345600" <?if((int)$configTask['TIME_TASK'] === '345600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_4_D')?></option>
+							<option value="518400" <?if((int)$configTask['TIME_TASK'] === '518400') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_6_D')?></option>
+							<option value="1209600" <?if((int)$configTask['TIME_TASK'] === '1209600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_W')?></option>
+						</select>
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TEXT')?></div>
+					<div class="imopenlines-control-inner">
+				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][MESSAGE]"><?=htmlspecialcharsbx($configTask['MESSAGE'])?></textarea>
+					</div>
+				</div>
+				<div class="imopenlines-control-checkbox-container">
+					<div class="imopenlines-control-checkbox-container"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE')?></div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_CLOSE]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CLOSE'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_LONG_TEXT_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_CLOSE]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CLOSE'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
+					<div class="imopenlines-control-inner">
+				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CLOSE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CLOSE'])?></textarea>
+					</div>
+				</div>
 
+				<div class="imopenlines-control-checkbox-container">
+					<div class="imopenlines-control-checkbox-container"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE')?></div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_CONTINUE]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CONTINUE'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_LONG_TEXT_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_CONTINUE]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CONTINUE'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
+					<div class="imopenlines-control-inner">
+				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CONTINUE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CONTINUE'])?></textarea>
+					</div>
+				</div>
+
+				<div class="imopenlines-control-checkbox-container">
+					<div class="imopenlines-control-checkbox-container"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE')?></div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_NEW]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_NEW'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_LONG_TEXT_NAME')?>
+					</div>
+					<div class="imopenlines-control-inner">
+						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_NEW]"
+							   class="imopenlines-control-input"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_NEW'])?>"
+							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE')?>"
+							   type="text">
+					</div>
+				</div>
+				<div class="imopenlines-control-container">
+					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
+					<div class="imopenlines-control-inner">
+				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_NEW]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_NEW'])?></textarea>
+					</div>
+				</div>
+			<?endforeach;?>
+		</div>
+	</div>
+	<?endif;?>
+	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_NA_TIME_NEW')?>
@@ -50,7 +197,7 @@ use \Bitrix\Main\Localization\Loc; ?>
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_NO_ANSWER_RULE')?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_DESC_NEW'))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_DESC_NEW'))?>"></span>
 			</div>
 			<div class="imopenlines-control-inner">
 				<select name="CONFIG[NO_ANSWER_RULE]" id="imol_no_answer_rule" class="imopenlines-control-input">
@@ -71,7 +218,7 @@ use \Bitrix\Main\Localization\Loc; ?>
 		<div class="imopenlines-control-container imopenlines-control-select" id="imol_no_answer_rule_form_form">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage("IMOL_CONFIG_NO_ANSWER_FORM_ID")?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_FORM_TEXT'))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_FORM_TEXT'))?>"></span>
 			</div>
 			<div class="imopenlines-control-inner">
 				<select name="CONFIG[NO_ANSWER_FORM_ID]" class="imopenlines-control-input">
@@ -98,6 +245,8 @@ use \Bitrix\Main\Localization\Loc; ?>
 						  class="imopenlines-control-input imopenlines-control-textarea"><?=htmlspecialcharsbx($arResult["CONFIG"]["NO_ANSWER_TEXT"])?></textarea>
 			</div>
 		</div>
+	</div>
+	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_CLOSE_ACTION_NEW')?>
@@ -136,10 +285,12 @@ use \Bitrix\Main\Localization\Loc; ?>
 						  name="CONFIG[CLOSE_TEXT]"><?=htmlspecialcharsbx($arResult["CONFIG"]["CLOSE_TEXT"])?></textarea>
 			</div>
 		</div>
+	</div>
+	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_FULL_CLOSE_TIME_NEW')?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_FULL_CLOSE_TIME_DESC_NEW'))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_FULL_CLOSE_TIME_DESC_NEW'))?>"></span>
 			</div>
 			<div class="imopenlines-control-inner">
 				<select name="CONFIG[FULL_CLOSE_TIME]" class="imopenlines-control-input">

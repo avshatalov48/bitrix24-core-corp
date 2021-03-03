@@ -44,7 +44,7 @@ class App extends Webpack\Base
 		}
 		else
 		{
-			return '\\Bitrix\\Crm\\UI\\Webpack\\Form\\App::rebuildAgent();';
+			return static::class . '::rebuildAgent();';
 		}
 	}
 

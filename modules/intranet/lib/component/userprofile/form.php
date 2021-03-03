@@ -361,6 +361,12 @@ class Form
 					"lineCount" => 3
 				]
 			);
+			$fields[] = array(
+				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_WORK_PROFILE"),
+				"name" => "WORK_PROFILE",
+				"type" => "text",
+				"editable" => true
+			);
 		}
 
 		$result = array_merge($fields, array_values($this->getUserFieldInfos()));
@@ -682,9 +688,11 @@ class Form
 			'WORK_COUNTRY' => $result["User"]["WORK_COUNTRY"],
 			'WORK_COMPANY' => $result["User"]["WORK_COMPANY"],
 			'WORK_DEPARTMENT' => $result["User"]["WORK_DEPARTMENT"],
+			'WORK_PROFILE' => $result["User"]["WORK_PROFILE"],
 			'PERSONAL_PROFESSION' => $result["User"]["PERSONAL_PROFESSION"],
 			'DATE_REGISTER' => $result["User"]["DATE_REGISTER"],
 			'WORK_NOTES' => $result["User"]["WORK_NOTES"],
+			'LAST_ACTIVITY_DATE' => $result["User"]["LAST_ACTIVITY_DATE"],
 		];
 
 		$userFields = $this->getUserFields();

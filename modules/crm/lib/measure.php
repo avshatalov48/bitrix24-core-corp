@@ -207,6 +207,48 @@ class Measure
 		);
 	}
 
+	/**
+	 * @param int $measureId
+	 * @return array|null
+	 * @throws Main\LoaderException
+	 * @throws Main\SystemException
+	 */
+	public static function getMeasureById(int $measureId): ?array
+	{
+		if (!Main\Loader::includeModule('catalog'))
+		{
+			throw new Main\SystemException("Could not load 'catalog' module.");
+		}
+		if ($measureId <= 0)
+		{
+			return null;
+		}
+
+		$dbMeasureResult = \CCatalogMeasure::getList(
+			[],
+			['=ID' => $measureId],
+			false,
+			false,
+			['ID', 'CODE', 'SYMBOL_RUS', 'SYMBOL_INTL', 'IS_DEFAULT']
+		);
+
+		$measureFields = is_object($dbMeasureResult) ? $dbMeasureResult->Fetch() : null;
+		if(!is_array($measureFields))
+		{
+			return null;
+		}
+
+		return [
+			'ID' => (int)$measureFields['ID'],
+			'CODE' => (int)$measureFields['CODE'],
+			'IS_DEFAULT' => isset($measureFields['IS_DEFAULT']) && $measureFields['IS_DEFAULT'] === 'Y',
+			'SYMBOL' => (isset($measureFields['SYMBOL_RUS'])
+				? $measureFields['SYMBOL_RUS']
+				: $measureFields['SYMBOL_INTL']
+			)
+		];
+	}
+
 	public static function getFieldCaption($fieldName)
 	{
 		$result = Loc::getMessage("CRM_MEASURE_FIELD_{$fieldName}");

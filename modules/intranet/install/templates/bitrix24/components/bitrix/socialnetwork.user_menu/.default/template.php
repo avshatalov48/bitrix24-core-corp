@@ -163,7 +163,8 @@ if (
 				loader: '".$this->getFolder()."/images/slider/livefeed.min.svg', 
 				width: 1000 
 			})",
-			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['blog']) === 0)
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['blog']) === 0),
+			'URL' => $uri->getUri()
 		)
 	));
 }

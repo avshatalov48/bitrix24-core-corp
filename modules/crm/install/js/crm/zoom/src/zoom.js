@@ -452,6 +452,7 @@ export class Zoom extends Timeline.Editor
 					conferenceParams: {
 						conferenceTitle: conferenceTitle,
 						dateTimeStart: dateTimeStart,
+						timestampStart: timestampStart,
 						duration: duration,
 						durationType: durationType,
 					},

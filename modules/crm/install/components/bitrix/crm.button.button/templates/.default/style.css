@@ -541,11 +541,11 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 }
 
 .b24-widget-button-show {
-	-webkit-animation: show .3s linear forwards;
-	animation: show .3s linear forwards;
+	-webkit-animation: b24-widget-show .3s linear forwards;
+	animation: b24-widget-show .3s linear forwards;
 }
 
-@-webkit-keyframes show {
+@-webkit-keyframes b24-widget-show {
 	0% { opacity: 0; }
 	50% { opacity: 0; }
 	100% {
@@ -554,7 +554,7 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	}
 }
 
-@keyframes show {
+@keyframes b24-widget-show {
 	0% { opacity: 0; }
 	50% { opacity: 0; }
 	100% {
@@ -564,11 +564,11 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 }
 
 .b24-widget-button-hide {
-	-webkit-animation: hidden .3s linear forwards;
-	animation: hidden .3s linear forwards;
+	-webkit-animation: b24-widget-hidden .3s linear forwards;
+	animation: b24-widget-hidden .3s linear forwards;
 }
 
-@-webkit-keyframes hidden {
+@-webkit-keyframes b24-widget-hidden {
 	0% { opacity: 1;
 		visibility: visible;
 	}
@@ -580,7 +580,7 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	}
 }
 
-@keyframes hidden {
+@keyframes b24-widget-hidden {
 	0% { opacity: 1;
 		visibility: visible;
 	}

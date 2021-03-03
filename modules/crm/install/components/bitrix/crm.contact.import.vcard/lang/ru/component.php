@@ -34,7 +34,7 @@ $MESS["CRM_FIELD_IMPORT_DEFAULT_TYPE_ID"] = "Тип контакта (по ум�
 $MESS["CRM_FIELD_IMPORT_DEFAULT_SOURCE_ID"] = "Источник (по умолчанию)";
 $MESS["CRM_FIELD_IMPORT_DEFAULT_SOURCE_DESCRIPTION"] = "Описание (по умолчанию)";
 $MESS["CRM_FIELD_IMPORT_DEFAULT_OPENED"] = "Доступен для всех (по умолчанию)";
-$MESS["CRM_FIELD_IMPORT_DEFAULT_EXPORT"] = "Участвует в экспорте (по умолчанию)";
+$MESS["CRM_FIELD_IMPORT_DEFAULT_EXPORT_NEW"] = "Участвует в экспорте (по умолчанию)";
 $MESS["CRM_FIELD_IMPORT_DEFAULT_RESPONSIBLE"] = "Ответственный (по умолчанию)";
 
 $MESS["CRM_SECTION_IMPORT_ADDR_PARAMS"] = "Параметры импорта адреса";

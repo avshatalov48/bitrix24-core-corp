@@ -60,31 +60,27 @@ endif;
 			<?
 			if ($arResult['CAN_MESSAGE'] && $arParams['PM_URL']):
 				?>
-				<li class="bx-icon bx-icon-message"><a href="<?echo ($url = str_replace('#USER_ID#', $arUser['ID'], $arParams['PM_URL']))?>" onclick="if (typeof(BX) != 'undefined' && BX.IM) { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else { window.open('<?=$url?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }"><?echo GetMessage('INTR_ISP_PM')?></a></li>
+				<li class="bx-icon bx-icon-message">
+					<a href="javascript:void(0)" onclick="if (top.BXIM) { top.BXIM.openMessenger(<?=$arUser['ID']?>); }">
+						<?echo GetMessage('INTR_ISP_PM')?>
+					</a>
+				</li>
 				<?
 			endif;
 			?>
 			<?
-			if ($arResult['CAN_VIDEO_CALL'] && $arParams['PATH_TO_VIDEO_CALL']):
+			if ($arResult['CAN_VIDEO_CALL']):
 				?>
-				<li class="bx-icon bx-icon-video"><a href="<?echo $arResult["Urls"]["VideoCall"]?>" onclick="window.open('<?echo $arResult["Urls"]["VideoCall"] ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+Math.floor((screen.height - 600)/2-14)+',left='+Math.floor((screen.width - 1000)/2-5)); return false;"><?echo GetMessage('INTR_ISP_VIDEO_CALL')?></a></li>
+				<li class="bx-icon bx-icon-video">
+					<a href="javascript:void(0)" onclick="if (top.BXIM) { top.BXIM.callTo(<?=$arUser['ID']?>); }">
+					   <?echo GetMessage('INTR_ISP_VIDEO_CALL')?>
+					</a>
+				</li>
 				<?
 			endif;
-			if ($arResult['CAN_EDIT_USER'] == false && $arResult['CAN_EDIT_USER_SELF'] == true) :
+			if ($arResult['CAN_EDIT_USER'] || $arResult['CAN_EDIT_USER_SELF']) :
 				?>
-				<li class="bx-icon bx-icon-edit"><a href="<?=CComponentEngine::MakePathFromTemplate(
-					$arParams["PATH_TO_USER_EDIT"],
-					array(
-						"user_id" => $arUser['ID']
-					))?>"><?echo GetMessage('INTR_ISP_EDIT_USER')?></a></li>
-				<?
-			elseif ($arResult['CAN_EDIT_USER']):
-				?>
-				<li class="bx-icon bx-icon-edit"><a href="javascript:<?echo $APPLICATION->GetPopupLink(
-						array(
-							'URL' => '/bitrix/admin/user_edit.php?lang='.LANGUAGE_ID.'&bxpublic=Y&from_module=main&ID='.$arUser['ID'],
-							"PARAMS"=>array("width"=>780, "height"=>500, "resize"=>false),
-				))?>"><?echo GetMessage('INTR_ISP_EDIT_USER')?></a></li>
+				<li class="bx-icon bx-icon-edit"><a href="<?=$arUser["DETAIL_URL"]?>"><?echo GetMessage('INTR_ISP_EDIT_USER')?></a></li>
 				<?
 			endif;
 			?>

@@ -295,25 +295,24 @@ class OrderPaymentController extends EntityController
 	 */
 	protected static function resolveCreatorID(array $fields)
 	{
-		$authorID = 0;
+		$authorId = 0;
 
 		if (isset($fields['RESPONSIBLE_ID']))
 		{
-			$authorID = (int)$fields['RESPONSIBLE_ID'];
+			$authorId = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if ($authorID === 0 && isset($fields['ORDER_CREATED_BY']))
+		if ($authorId === 0 && isset($fields['ORDER_CREATED_BY']))
 		{
-			$authorID = (int)$fields['ORDER_CREATED_BY'];
+			$authorId = (int)$fields['ORDER_CREATED_BY'];
 		}
 
-		if($authorID === 0)
+		if ($authorId <= 0)
 		{
-			//Set portal admin as default creator
-			$authorID = 1;
+			$authorId = self::getDefaultAuthorId();
 		}
 
-		return $authorID;
+		return $authorId;
 	}
 
 	/**

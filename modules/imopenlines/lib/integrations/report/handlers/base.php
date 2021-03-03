@@ -135,11 +135,15 @@ abstract class Base extends BaseReport
 			return $result;
 		}
 
-		$queueResults = QueueTable::getList(array(
-			'select' => array('USER_ID')
-		))->fetchAll();
-		$operatorIds = array();
-		$result = array();
+		$queueResults = QueueTable::getList([
+			'select' => ['USER_ID'],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			]
+		])->fetchAll();
+		$operatorIds = [];
+		$result = [];
 		foreach ($queueResults as $resultRow)
 		{
 			$operatorIds[] = (int)$resultRow['USER_ID'];
@@ -162,10 +166,10 @@ abstract class Base extends BaseReport
 
 		foreach ($users as $user)
 		{
-			$name = \CUser::FormatName(\CSite::GetDefaultNameFormat(), array(
-				"NAME" => $user["NAME"],
-				"LAST_NAME" => $user["LAST_NAME"]
-			));
+			$name = \CUser::FormatName(\CSite::GetDefaultNameFormat(), [
+				'NAME' => $user['NAME'],
+				'LAST_NAME' => $user['LAST_NAME']
+			]);
 
 			$result[$user['ID']] = $name;
 		}
@@ -260,10 +264,13 @@ abstract class Base extends BaseReport
 
 		$responsibleField = $this->getFormElement('filterByResponsible');
 		$responsibleFieldValue = $responsibleField->getValue();
+
 		if ($responsibleFieldValue !== '__')
 		{
 			$query->where('OPERATOR_ID', $responsibleFieldValue);
 		}
+
+		$query->where('OPERATOR_ID', '!=', 0);
 		return $query;
 	}
 

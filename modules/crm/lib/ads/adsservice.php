@@ -170,10 +170,11 @@ abstract class AdsService
 			$account = static::getService()->getAccount($type);
 
 			$providers[$type] = array(
+				'ENGINE_CODE' => static::getService()::getEngineCode($type),
 				'TYPE' => $type,
 				'HAS_AUTH' => $authAdapter->hasAuth(),
 				'AUTH_URL' => $authAdapter->getAuthUrl(),
-				'PROFILE' => $account->getProfileCached(),
+				'PROFILE' => $account->getProfileCached()
 			);
 
 			// check if no profile, then may be auth was removed in service

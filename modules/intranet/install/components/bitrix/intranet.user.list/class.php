@@ -443,7 +443,8 @@ class CIntranetUserListComponent extends UserList
 			$result['invited'] = [
 				'name' => Loc::getMessage('INTRANET_USER_LIST_FILTER_PRESET_INVITED'),
 				'fields' => array_merge($defaultFieldsValues, [
-					'INVITED' => 'Y'
+					'INVITED' => 'Y',
+					'FIRED' => 'N'
 				])
 			];
 		}

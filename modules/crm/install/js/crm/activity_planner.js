@@ -20,6 +20,7 @@ BX.namespace('BX.Crm.Activity');
 		this.loadOffsetLeft = 2;
 		this.loadOffsetRight = 2;
 		this.PLANNER_DURATION_LIMIT = 864000000; // 10 days
+		this.activityId = null;
 
 		this.showError = function(message){window.alert(message);};
 
@@ -222,6 +223,16 @@ BX.namespace('BX.Crm.Activity');
 		return this.scopeNode;
 	};
 
+	Planner.prototype.setActivityId = function(activityId)
+	{
+		this.activityId = activityId || null;
+	};
+
+	Planner.prototype.getActivityId = function()
+	{
+		return this.activityId;
+	};
+
 	Planner.prototype.getNode = function(name, scope)
 	{
 		if (!scope)
@@ -346,12 +357,11 @@ BX.namespace('BX.Crm.Activity');
 						}
 
 						var wrapper = slider.iframe.contentDocument.body;
+
 						var planner = new BX.Crm.Activity.Planner();
-
+						planner.setActivityId(params.activity_id);
 						planner.plannerId = me.getPlannerId();
-
 						wrapper.setAttribute(CRM_ACTIVITY_PLANNER_ID_ATTRIBUTE, planner.getPlannerId());
-
 						planner.setPlannerNode(wrapper);
 						planner.prepareEditLayout(wrapper);
 
@@ -1153,7 +1163,6 @@ BX.namespace('BX.Crm.Activity');
 	Planner.prototype.updatePlanner = function(params)
 	{
 		var me = this;
-
 		me.ajaxProgress = true;
 		BX.ajax({
 			method: 'POST',
@@ -1164,12 +1173,12 @@ BX.namespace('BX.Crm.Activity');
 				ajax_action: 'PLANNER_UPDATE',
 				from: params.from,
 				to: params.to,
-				entries: params.users
+				entries: params.users,
+				activity_id: this.getActivityId() || 0
 			},
 			onsuccess: function (response)
 			{
 				var data = response.DATA || {};
-
 				var
 					showPlanner = true,
 					plannerShown = BX.hasClass(me.getPlannerContainer(), 'crm-activity-popup-calendar-planner-wrap-shown');

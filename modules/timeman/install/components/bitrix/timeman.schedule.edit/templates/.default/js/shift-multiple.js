@@ -155,9 +155,6 @@
 			this.hideElement(this.nameSpan);
 			this.hideElement(this.pencil);
 			this.nameInput.focus();
-			var val = this.nameInput.value;
-			this.nameInput.value = '';
-			this.nameInput.value = BX.util.htmlspecialchars(val);
 		},
 		attachOnDeleteEvent: function (obj)
 		{

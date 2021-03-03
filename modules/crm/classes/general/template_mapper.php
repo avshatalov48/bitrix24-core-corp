@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\ContactAddressFormatter;
@@ -493,7 +494,7 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 				case 'ADDRESS_LEGAL':
 				{
 					$addressOptions = array(
-						'TYPE_ID' => $fieldName === 'ADDRESS' ? EntityAddress::Primary : EntityAddress::Registered
+						'TYPE_ID' => $fieldName === 'ADDRESS' ? EntityAddressType::Primary : EntityAddressType::Registered
 					);
 
 					if($isHtml)

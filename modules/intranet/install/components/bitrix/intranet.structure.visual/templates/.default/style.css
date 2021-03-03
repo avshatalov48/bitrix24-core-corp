@@ -2,6 +2,9 @@
 
 .structure-wrap {
     padding: 10px 20px 0 10px;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
 }
 
 .structure-dept-block {

@@ -65,12 +65,19 @@ class OrderCheckController extends EntityController
 		}
 		elseif ($typeId === TimelineType::UNDEFINED)
 		{
-			$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_LEGEND', [
-				'#DATE_CREATE#' => $entity['DATE_CREATE_FORMATTED'],
-				'#SUM_WITH_CURRENCY#' => $entity['SUM_WITH_CURRENCY']
-			]);
+			if ($check)
+			{
+				$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_LEGEND', [
+					'#DATE_CREATE#' => $entity['DATE_CREATE_FORMATTED'],
+					'#SUM_WITH_CURRENCY#' => $entity['SUM_WITH_CURRENCY']
+				]);
+				$data['CHECK_URL'] = $check->getUrl();
+			}
+			elseif ($data['SETTINGS']['FAILURE'])
+			{
+				$data['LEGEND'] = $data['SETTINGS']['ERROR_TEXT'];
+			}
 			$data['PRINTED'] = $data['SETTINGS']['PRINTED'];
-			$data['CHECK_URL'] = $check ? $check->getUrl() : '';
 		}
 
 		unset($data['SETTINGS']);
@@ -84,24 +91,23 @@ class OrderCheckController extends EntityController
 	 */
 	protected static function resolveCreatorID(array $fields)
 	{
-		$authorID = 0;
+		$authorId = 0;
 		if (isset($fields['CREATED_BY']))
 		{
-			$authorID = (int)$fields['CREATED_BY'];
+			$authorId = (int)$fields['CREATED_BY'];
 		}
 
-		if ($authorID <= 0 && isset($fields['RESPONSIBLE_ID']))
+		if ($authorId <= 0 && isset($fields['RESPONSIBLE_ID']))
 		{
-			$authorID = (int)$fields['RESPONSIBLE_ID'];
+			$authorId = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if ($authorID <= 0)
+		if ($authorId <= 0)
 		{
-			//Set portal admin as default creator
-			$authorID = 1;
+			$authorId = self::getDefaultAuthorId();
 		}
 
-		return $authorID;
+		return $authorId;
 	}
 
 	/**
@@ -143,6 +149,26 @@ class OrderCheckController extends EntityController
 
 		$entityId = OrderCheckEntry::create([
 			'ENTITY_ID' => (int)$ownerId,
+			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
+			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
+			'SETTINGS' => $settings,
+			'BINDINGS' => $bindings,
+		]);
+
+		foreach($bindings as $binding)
+		{
+			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
+			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+		}
+	}
+
+	public function onCheckFailure(array $params)
+	{
+		$bindings = $params['BINDINGS'] ?? [];
+		$settings = $params['SETTINGS'] ?? [];
+		$orderFields = $params['ORDER_FIELDS'] ?? [];
+
+		$entityId = OrderCheckEntry::create([
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,

@@ -155,10 +155,7 @@ class Lead extends ProductsDataProvider implements Nameable
 		unset($this->data['HONORIFIC']);
 		if(empty($this->data['ADDRESS']))
 		{
-			unset($this->data['ADDRESS']);
-		}
-		else
-		{
+			// for lead there is only one available type
 			$address = LeadAddress::getByOwner(LeadAddress::Primary, $this->getCrmOwnerType(), $this->source);
 			if($address)
 			{

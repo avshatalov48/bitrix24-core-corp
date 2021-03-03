@@ -158,11 +158,22 @@ switch ($action)
 			}
 			$from = CCalendar::Date(CCalendar::Timestamp($_REQUEST['from']), false);
 			$to = CCalendar::Date(CCalendar::Timestamp($_REQUEST['to']), false);
+			$currentEventId = 0;
+			$activityId = isset($_POST['activity_id']) ? intval($_POST['activity_id']) : 0;
+			if ($activityId)
+			{
+				$activity = \CCrmActivity::getByID($activityId);
+				if (is_array($activity) && is_set($activity['CALENDAR_EVENT_ID']))
+				{
+					$currentEventId = $activity['CALENDAR_EVENT_ID'];
+				}
+			}
 
 			$accessibility = CCalendar::GetAccessibilityForUsers(array(
 					'users' => $userIds,
 					'from' => $from, // date or datetime in UTC
 					'to' => $to, // date or datetime in UTC
+					'curEventId' => $currentEventId,
 					'getFromHR' => true
 			));
 

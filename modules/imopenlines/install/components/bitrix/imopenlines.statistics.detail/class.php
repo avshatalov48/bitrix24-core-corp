@@ -7,6 +7,7 @@ use \Bitrix\Main\Loader,
 
 use \Bitrix\Imopenlines\Limit,
 	\Bitrix\ImOpenLines\Config,
+	\Bitrix\ImOpenLines\Session,
 	\Bitrix\ImOpenLines\Model\SessionTable;
 
 class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
@@ -23,6 +24,26 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	protected $showHistory;
 	protected $configId;
 	private $enableNextPage;
+
+	/**
+	 * @param $status
+	 * @param $close
+	 * @return bool
+	 */
+	protected static function isOperatorCloseSession($status, $close): bool
+	{
+		$result = true;
+
+		if(
+			$status < Session::STATUS_WAIT_CLIENT &&
+			$close !== 'Y'
+		)
+		{
+			$result = false;
+		}
+
+		return $result;
+	}
 
 	private function init()
 	{
@@ -136,14 +157,14 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			foreach ($crmLinks as $type => $link)
 			{
-				$crmData[] = '<a href="' . $link . '" target="_blank">'.self::getCrmName($type).'</a>';
+				$crmData[] = '<a href="' . $link . '" title="" target="_blank">'.self::getCrmName($type).'</a>';
 			}
 		}
 
 		$crmActivityLink = self::getCrmActivityLink($row['data']);
 		if (!empty($crmActivityLink))
 		{
-			$crmData[] = '<a href="'.$crmActivityLink.'" target="_blank">'.self::getCrmName('ACTIVITY').'</a>';
+			$crmData[] = '<a href="'.$crmActivityLink.'" title="" target="_blank">'.self::getCrmName('ACTIVITY').'</a>';
 		}
 
 		if (empty($crmData))
@@ -296,7 +317,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		if ($field === 'VOTE' && in_array($rating, [5,1]))
 		{
-			$result = '<span class="ol-stat-rating ol-stat-rating-'.$rating.'"></span>';
+			$result = '<span class="ol-stat-rating ol-stat-rating-'.$rating.'" title=""></span>';
 		}
 		else if ($field === 'VOTE_HEAD' && $rating >= 1 && $rating <= 5)
 		{
@@ -306,14 +327,14 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			if(Limit::canUseVoteHead())
 			{
-				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'"></span><script>BX.ready(function(){
+				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" title=""></span><script>BX.ready(function(){
 				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', true);
 				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 			})</script>';
 			}
 			else
 			{
-				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-left: -5px;" class="tariff-lock"></span></span><script>BX.ready(function(){
+				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');" title=""><span style="margin-left: -5px;" class="tariff-lock"></span></span><script>BX.ready(function(){
 				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', false);
 				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 			})</script>';
@@ -350,8 +371,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			if(Limit::canUseVoteHead())
 			{
 				$result = '
-				<div id="ol-comment-head-text-'.$sessionId.'">' . $comment . '</div>
-				<div id="ol-comment-head-placeholder-'.$sessionId.'"></div><script>BX.ready(function(){
+				<div id="ol-comment-head-text-'.$sessionId.'" title="">' . $comment . '</div>
+				<div id="ol-comment-head-placeholder-'.$sessionId.'" title=""></div><script>BX.ready(function(){
 				var voteChild = BX.MessengerCommon.linesCommentHeadNodes('.$sessionId.', BX("ol-comment-head-text-'.$sessionId.'").innerHTML.replace(/<br>/g, "\n"), true, "statistics");
 				BX("ol-comment-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 				BX.style(BX("ol-comment-head-text-'.$sessionId.'"), \'display\', \'none\');
@@ -359,11 +380,11 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 			elseif($comment === '')
 			{
-				$result = '<span class = "bx-messenger-content-item-vote-comment-add"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . Loc::getMessage('OL_STATS_COMMENT_HEAD_ADD') . '<span id="ol-comment-head-text-'.$sessionId.'"></span></span>';
+				$result = '<span class = "bx-messenger-content-item-vote-comment-add"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');" title=""><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . Loc::getMessage('OL_STATS_COMMENT_HEAD_ADD') . '<span id="ol-comment-head-text-'.$sessionId.'"></span></span>';
 			}
 			else
 			{
-				$result = '<span id="ol-comment-head-text-'.$sessionId.'"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . $comment . '</span>';
+				$result = '<span id="ol-comment-head-text-'.$sessionId.'"  onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');" title=""><span style="margin-top: 1px; margin-left: 5px;" class="tariff-lock"></span>' . $comment . '</span>';
 			}
 		}
 
@@ -948,7 +969,15 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$result["=VOTE_HEAD"] = $filter["VOTE_HEAD"];
 		}
 
-		if(isset($filter['FIND']) && \Bitrix\Main\Search\Content::canUseFulltextSearch($filter['FIND'], \Bitrix\Main\Search\Content::TYPE_MIXED))
+		$minSearchToken = \Bitrix\Main\Config\Option::get('imopenlines', 'min_search_token');
+		if (
+			isset($filter['FIND'])
+			&& (
+				$minSearchToken <= 0
+				|| \Bitrix\Main\Search\Content::isIntegerToken($filter['FIND'])
+				|| mb_strlen($filter['FIND']) >= $minSearchToken
+			)
+			&& \Bitrix\Main\Search\Content::canUseFulltextSearch($filter['FIND'], \Bitrix\Main\Search\Content::TYPE_MIXED))
 		{
 			global $DB;
 			if (!\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT') && $DB->IndexExists("b_imopenlines_session_index", array("SEARCH_CONTENT"), true))
@@ -1111,10 +1140,11 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		if (empty($gridHeaders))
 		{
 			$gridHeaders = \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance();
+			$isNeedKpi = true;
 		}
 		$selectHeaders = array_intersect(SessionTable::getSelectFieldsPerformance(), $gridHeaders);
 
-		$requiredHeaders = ['ID', 'USER_CODE'];
+		$requiredHeaders = ['ID', 'USER_CODE', 'CLOSED', 'CHAT_ID', 'CHAT_OPERATOR_ID' => 'CHAT.AUTHOR_ID'];
 		$selectHeaders = array_merge($requiredHeaders, $selectHeaders);
 
 		foreach ($gridHeaders as $gridHeader)
@@ -1259,46 +1289,48 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 			$newRow["SOURCE_TEXT"] = $arSources[$row["data"]["SOURCE"]];
 
-			if ($row["data"]["STATUS"] < 40)
+			if ($row["data"]["STATUS"] < Session::STATUS_OPERATOR)
 			{
 				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW");
 			}
-			else if ($row["data"]["STATUS"] >= 40 && $row["data"]["STATUS"] < 60)
+			else if ($row["data"]["STATUS"] >= Session::STATUS_OPERATOR && $row["data"]["STATUS"] < Session::STATUS_CLOSE)
 			{
 				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW");
 			}
-			else if ($row["data"]["STATUS"] >= 60)
+			else if ($row["data"]["STATUS"] >= Session::STATUS_CLOSE)
 			{
 				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED");
 			}
 
 			switch ($row["data"]["STATUS"])
 			{
-				case 0:
+				case Session::STATUS_NEW:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_NEW");
 				break;
-				case 5:
+				case Session::STATUS_SKIP:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW");
 				break;
-				case 10:
+				case Session::STATUS_ANSWER:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW");
 				break;
-				case 20:
+				case Session::STATUS_CLIENT:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW");
 				break;
-				case 25:
+				case Session::STATUS_CLIENT_AFTER_OPERATOR:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW");
 				break;
-				case 40:
+				case Session::STATUS_OPERATOR:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW");
 				break;
-				case 50:
+				case Session::STATUS_WAIT_CLIENT:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2");
 				break;
-				case 60:
+				case Session::STATUS_CLOSE:
+				case Session::STATUS_DUPLICATE:
+				case Session::STATUS_SILENTLY_CLOSE:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED");
 				break;
-				case 65:
+				case Session::STATUS_SPAM:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_STATS_HEADER_SPAM_2");
 				break;
 			}
@@ -1322,11 +1354,11 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 				if (!is_array($this->showHistory) || in_array($row["data"]["OPERATOR_ID"], $this->showHistory))
 				{
-					$newRow["ACTION"] = '<nobr><a href="#history" onclick="BXIM.openHistory(\'imol|'.$row["data"]["ID"].'\'); return false;">'.Loc::getMessage('OL_COMPONENT_TABLE_ACTION_HISTORY').'</a></nobr> ';
+					$newRow["ACTION"] = '<nobr><a href="#history" title="" onclick="BXIM.openHistory(\'imol|'.$row["data"]["ID"].'\'); return false;">'.Loc::getMessage('OL_COMPONENT_TABLE_ACTION_HISTORY').'</a></nobr> ';
 				}
 				if ($configManager->canJoin($row["data"]["CONFIG_ID"]))
 				{
-					$newRow["ACTION"] .= '<nobr><a href="#startSession" onclick="BXIM.openMessenger(\'imol|'.$row["data"]["USER_CODE"].'\'); return false;">'.Loc::getMessage('OL_COMPONENT_TABLE_ACTION_START').'</a></nobr>';
+					$newRow["ACTION"] .= '<nobr><a href="#startSession" title="" onclick="BXIM.openMessenger(\'imol|'.$row["data"]["USER_CODE"].'\'); return false;">'.Loc::getMessage('OL_COMPONENT_TABLE_ACTION_START').'</a></nobr>';
 				}
 			}
 
@@ -1359,7 +1391,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				}
 				else
 				{
-					$newRow["EXTRA_URL"] = '<a href="'.htmlspecialcharsbx($row["data"]["EXTRA_URL"]).'" target="_blank">'.htmlspecialcharsbx($parsedUrl['host']).'</a>';
+					$newRow["EXTRA_URL"] = '<a href="'.htmlspecialcharsbx($row["data"]["EXTRA_URL"]).'" title="" target="_blank">'.htmlspecialcharsbx($parsedUrl['host']).'</a>';
 				}
 			}
 			else
@@ -1415,20 +1447,49 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 				if (!is_array($this->showHistory) || in_array($row["data"]["OPERATOR_ID"], $this->showHistory))
 				{
-					$actions[] = $arActivityMenuItems[] = array(
-						'TITLE' => GetMessage('OL_COMPONENT_TABLE_ACTION_HISTORY'),
-						'TEXT' => GetMessage('OL_COMPONENT_TABLE_ACTION_HISTORY'),
-						'ONCLICK' => "BXIM.openHistory('imol|{$row["data"]["ID"]}')",
+					$actions[] = $arActivityMenuItems[] = [
+						'TITLE' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_HISTORY'),
+						'TEXT' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_HISTORY'),
+						'ONCLICK' => "BXIM.openHistory('imol|{$row['data']['ID']}')",
 						'DEFAULT' => true
-					);
+					];
 				}
-				if ($configManager->canJoin($row["data"]["CONFIG_ID"]))
+				if ($configManager->canJoin($row['data']['CONFIG_ID']))
 				{
-					$actions[] = $arActivityMenuItems[] = array(
-						'TITLE' => GetMessage('OL_COMPONENT_TABLE_ACTION_START'),
-						'TEXT' => GetMessage('OL_COMPONENT_TABLE_ACTION_START'),
-						'ONCLICK' => "BXIM.openMessenger('imol|{$row["data"]["USER_CODE"]}')"
-					);
+					$actions[] = $arActivityMenuItems[] = [
+						'TITLE' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_START'),
+						'TEXT' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_START'),
+						'ONCLICK' => "BXIM.openMessenger('imol|{$row['data']['USER_CODE']}')"
+					];
+
+					if(!self::isOperatorCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
+					{
+						$currentUserId = $GLOBALS['USER']->GetId();
+
+						if($row['data']['CHAT_OPERATOR_ID'] <= 0)
+						{
+							$textClose = Loc::getMessage('OL_COMPONENT_TABLE_ACTION_ANSWER_AND_CLOSE');
+						}
+						elseif($row['data']['CHAT_OPERATOR_ID'] == $currentUserId)
+						{
+							$textClose = Loc::getMessage('OL_COMPONENT_TABLE_ACTION_CLOSE');
+						}
+						else
+						{
+							$textClose = Loc::getMessage('OL_COMPONENT_TABLE_ACTION_CLOSE_ON_OPERATOR');
+						}
+						$actions[] = $arActivityMenuItems[] = [
+							'TITLE' => $textClose,
+							'TEXT' => $textClose,
+							'ONCLICK' => "BX.OpenLines.Actions.close('{$row['data']['CHAT_ID']}')"
+						];
+
+						$actions[] = $arActivityMenuItems[] = [
+							'TITLE' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_SPAN'),
+							'TEXT' => Loc::getMessage('OL_COMPONENT_TABLE_ACTION_SPAN'),
+							'ONCLICK' => "BX.OpenLines.Actions.closeSpam('{$row['data']['CHAT_ID']}')"
+						];
+					}
 				}
 			}
 

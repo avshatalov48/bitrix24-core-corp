@@ -117,7 +117,11 @@ class LivechatTable extends DataManager
 			new TextField('TEXT_PHRASES', array(
 				'title' => Loc::getMessage('LIVECHAT_ENTITY_TEXT_PHRASES_FIELD'),
 				'serialized' => true
-			))
+			)),
+			new BooleanField('SHOW_SESSION_ID', array(
+				'values' => array('N', 'Y'),
+				'default_value' => 'N',
+			)),
 		);
 	}
 	/**

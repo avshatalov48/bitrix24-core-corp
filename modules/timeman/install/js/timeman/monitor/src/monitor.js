@@ -78,6 +78,12 @@ class Monitor
 		Debug.log('Monitor started');
 		Debug.space();
 
+		if (this.isTrackerEventsApiAvailable())
+		{
+			Logger.log('Events started');
+			BXDesktopSystem.TrackerStart();
+		}
+
 		EventHandler.start();
 		Sender.start();
 
@@ -86,11 +92,22 @@ class Monitor
 
 	stop()
 	{
+		if (this.isTrackerEventsApiAvailable())
+		{
+			Logger.log('Events stopped');
+			BXDesktopSystem.TrackerStop();
+		}
+
 		EventHandler.stop();
 		Sender.stop();
 
 		Logger.warn('Monitor stopped');
 		Debug.log('Monitor stopped');
+	}
+
+	isTrackerEventsApiAvailable()
+	{
+		return (BX.desktop.getApiVersion() >= 55);
 	}
 
 	onAway(away)

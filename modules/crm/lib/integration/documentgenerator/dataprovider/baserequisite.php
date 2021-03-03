@@ -142,6 +142,7 @@ abstract class BaseRequisite extends DataProvider
 			'ACTIVE' => 'ACTIVE',
 			'SORT' => 'SORT',
 			'COUNTRY_ID' => 'COUNTRY_ID',
+			'RQ_ADDR' => 'RQ_ADDR',
 		];
 	}
 }

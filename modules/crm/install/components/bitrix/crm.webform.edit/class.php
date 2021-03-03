@@ -1083,6 +1083,12 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		/* External analytics data */
 		$this->arResult['EXTERNAL_ANALYTICS_DATA'] = $this->crmWebForm->getExternalAnalyticsData();
 
+		$this->arResult['IS_RU_ZONE'] = Loader::includeModule('bitrix24')
+			? in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by'])
+			: in_array(LANGUAGE_ID, ['ru', 'kz', 'by'])
+		;
+		$this->arResult['IS_UA_ZONE_RU_LANG'] = Loader::includeModule('bitrix24') && LANGUAGE_ID === 'ua';
+
 		$replaceList = array('id' => $id, 'form_id' => $id);
 		$this->arResult['PATH_TO_WEB_FORM_LIST'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_WEB_FORM_LIST'], $replaceList);
 

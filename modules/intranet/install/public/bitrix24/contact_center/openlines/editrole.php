@@ -6,14 +6,19 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_afte
 
 $APPLICATION->SetTitle(GetMessage('OL_PAGE_EDIT_ROLE_TITLE'));
 ?>
-<?$APPLICATION->IncludeComponent(
-	'bitrix:intranet.contact_center.menu.top',
-	'',
-	[
-		'COMPONENT_BASE_DIR' => '/contact_center/',
-	],
-	false
-);?>
+<?
+if($_GET['IFRAME'] !== 'Y')
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.contact_center.menu.top',
+		'',
+		[
+			'COMPONENT_BASE_DIR' => '/contact_center/',
+		],
+		false
+	);
+}
+?>
 <?$APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrapper',
 								 '',
 								 [

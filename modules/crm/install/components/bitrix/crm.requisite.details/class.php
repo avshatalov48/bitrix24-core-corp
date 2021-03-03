@@ -1,7 +1,6 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Crm\EntityAddress;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -12,10 +11,13 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type;
 use Bitrix\Main\UserField;
 use Bitrix\Main\Web\Json;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Location\Entity\Address;
 
 Loc::loadMessages(__FILE__);
@@ -866,7 +868,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 						$this->rawRequisiteData[$rqFieldName] = [];
 						if (is_array($this->formData[$rqFieldName]))
 						{
-							$allowedRqAddrTypeMap = array_fill_keys(array_keys(RequisiteAddress::getTypeInfos()), true);
+							$allowedRqAddrTypeMap = array_fill_keys(EntityAddressType::getAllIDs(), true);
 							foreach ($this->formData[$rqFieldName] as $addressTypeId => $addressJson)
 							{
 								$addressTypeId = (int)$addressTypeId;
@@ -1349,16 +1351,43 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 						{
 							if ($this->isLocationModuleIncluded)
 							{
-								$featureRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getAddressSearchRestriction();
+								$featureRestriction = RestrictionManager::getAddressSearchRestriction();
+								$addressTypeInfos = [];
+								foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
+								{
+									$addressTypeInfos[$id] = [
+										'ID' => $id,
+										'DESCRIPTION' => $desc
+									];
+								}
+								$countryAddressTypeMap = [];
+								foreach (EntityRequisite::getCountryAddressZoneMap() as $countryId => $addressZoneId)
+								{
+									$countryAddressTypeMap[$countryId] =
+										EntityAddressType::getIdsByZonesOrValues([$addressZoneId]);
+								}
+								unset($countryId, $addressZoneId);
 								$fields[] = [
 									'title' => $fieldTitle,
 									'name' => $fieldName,
 									'type' => 'crm_address',
 									'editable' => true,
 									'data' => [
-										'types' => RequisiteAddress::getTypeInfos(),
+										'types' => $addressTypeInfos,
 										'autocompleteEnabled' => $featureRestriction->hasPermission(),
-										'featureRestrictionCallback' => $featureRestriction ? $featureRestriction->prepareInfoHelperScript() : '',
+										'featureRestrictionCallback' => (
+											$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+										),
+										'addressZoneConfig' => [
+											'defaultAddressType' => EntityAddressType::getDefaultIdByZone(
+												EntityAddress::getZoneId()
+											),
+											'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues(
+												[EntityAddress::getZoneId()]
+											),
+											'countryAddressTypeMap' => $countryAddressTypeMap,
+											'countryId' => $this->presetCountryId
+										]
 									]
 								];
 							}
@@ -1646,6 +1675,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'requisite_id' => $this->requisiteId,
 			'pseudoId' => $this->pseudoId,
 			'pid' => $this->presetId,
+			'presetCountryId' => $this->presetCountryId,
 			'externalData' => $this->prepareExternalData(),
 			'external_context_id' => $this->externalContextId,
 			'ADDRESS_ONLY' => 'N'

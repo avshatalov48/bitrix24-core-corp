@@ -113,11 +113,7 @@ class Application
 		};
 
 		options.view = {
-			type: (
-					(options.fields || []).length <= 1
-					&&
-					(options.agreements || []).length <= 1
-				)
+			type: (((options.fields || []).length + (options.agreements || []).length) <= 3)
 				? 'widget'
 				: 'panel',
 			position: positions[pos][0],

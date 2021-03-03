@@ -37,7 +37,7 @@ final class CrmDeal extends CrmEntity
 			$res = \CCrmDeal::getListEx(
 				[],
 				[
-					'ID' => $this->getEntityId(),
+					'ID' => $logEntryFields['ENTITY_ID'],
 					'CHECK_PERMISSIONS' => 'N'
 				],
 				false,
@@ -97,7 +97,7 @@ final class CrmDeal extends CrmEntity
 				&& !empty($fields['CURRENT_ENTITY'])
 			) // not-message
 			{
-				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS']);
+				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS'], [ 'allowed_classes' => false ]);
 				if (is_array($logEntry['PARAMS']))
 				{
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);

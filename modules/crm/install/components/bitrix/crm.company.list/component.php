@@ -102,6 +102,7 @@ use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
@@ -333,7 +334,7 @@ $arResult['AJAX_OPTION_HISTORY'] = isset($arParams['AJAX_OPTION_HISTORY']) ? $ar
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 
 $addressLabels = EntityAddress::getShortLabels();
-$regAddressLabels = EntityAddress::getShortLabels(EntityAddress::Registered);
+$regAddressLabels = EntityAddress::getShortLabels(EntityAddressType::Registered);
 $requisite = new \Bitrix\Crm\EntityRequisite();
 
 //region Filter Presets Initialization
@@ -486,7 +487,7 @@ if($enableOutmodedFields)
 			array('id' => 'ADDRESS_POSTAL_CODE', 'name' => $addressLabels['POSTAL_CODE'], 'sort' => 'address_postal_code', 'editable' => false),
 			array('id' => 'ADDRESS_COUNTRY', 'name' => $addressLabels['COUNTRY'], 'sort' => 'address_country', 'editable' => false),
 
-			array('id' => 'FULL_REG_ADDRESS', 'name' => EntityAddress::getFullAddressLabel(EntityAddress::Registered), 'sort' => false, 'editable' => false),
+			array('id' => 'FULL_REG_ADDRESS', 'name' => EntityAddress::getFullAddressLabel(EntityAddressType::Registered), 'sort' => false, 'editable' => false),
 			//REG_ADDRESS = ADDRESS_LEGAL
 			array('id' => 'ADDRESS_LEGAL', 'name' => $regAddressLabels['ADDRESS'], 'sort' => 'registered_address', 'editable' => false),
 			array('id' => 'REG_ADDRESS_2', 'name' => $regAddressLabels['ADDRESS_2'], 'sort' => 'registered_address_2', 'editable' => false),
@@ -1668,7 +1669,7 @@ if(isset($arSort['nearest_activity']))
 else
 {
 	$addressSort = array();
-	$addressTypeID = \Bitrix\Crm\EntityAddress::Primary;
+	$addressTypeID = EntityAddressType::Primary;
 	foreach($arSort as $k => $v)
 	{
 		if(strncmp($k, 'address', 7) === 0)
@@ -1679,7 +1680,7 @@ else
 
 	if(empty($addressSort))
 	{
-		$addressTypeID = \Bitrix\Crm\EntityAddress::Registered;
+		$addressTypeID = EntityAddressType::Registered;
 		foreach($arSort as $k => $v)
 		{
 			if(strncmp($k, 'registered_address', 18) === 0)
@@ -1845,8 +1846,8 @@ $addressFormatOptions = $sExportType === 'csv'
 	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true);
 
 $regAddressFormatOptions = $sExportType === 'csv'
-	? array('SEPARATOR' => AddressSeparator::Comma, 'TYPE_ID' => EntityAddress::Registered)
-	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true, 'TYPE_ID' => EntityAddress::Registered);
+	? ['SEPARATOR' => AddressSeparator::Comma, 'TYPE_ID' => EntityAddressType::Registered]
+	: ['SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true, 'TYPE_ID' => EntityAddressType::Registered];
 
 $bizProcTabId = $isMyCompanyMode ? 'CRM_MYCOMPANY_SHOW_V12_active_tab' : 'CRM_COMPANY_SHOW_V12_active_tab';
 

@@ -2,70 +2,14 @@
 <?
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(["ui.forms", "ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.selector", "ui.hint"]);
+\Bitrix\Main\UI\Extension::load(["ui.forms", "ui.buttons", "ui.buttons.icons", "ui.alerts",
+	"ui.selector", "ui.hint", 'ui.entity-selector']);
 \CJSCore::Init(['phone_number']);
 
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'invite-body');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background invite-body');
 
 $menuContainerId = 'invitation-form-menu-'.$this->randString();
 $contentContainerId = 'invitation-form-content-'.$this->randString();
-
-if (!function_exists('drawInviteDialogSelector'))
-{
-	function drawInviteDialogSelector($params)
-	{
-		global $APPLICATION;
-
-		$action = $params['action'];
-		$isExtranet = $params["isExtranet"];
-
-		if ($isExtranet)
-		{
-			$options = [
-				'lazyLoad' => 'Y',
-				'context' => 'USER_INVITE',
-				'contextCode' => 'SG',
-				'enableUsers' => 'N',
-				'enableSonetgroups' => 'Y',
-				'socNetGroupsSiteId' => $params['extranetSiteId'],
-				'enableDepartments' => 'N',
-				'allowAddSocNetGroup' => 'Y',
-			];
-		}
-		else
-		{
-			$options = [
-				'lazyLoad' => 'Y',
-				'context' => 'USER_INVITE',
-				'contextCode' => 'SG',
-				'enableUsers' => 'N',
-				'enableSonetgroups' => 'Y',
-				'socNetGroupsSiteId' => "",
-				'enableDepartments' => 'Y',
-				'allowAddSocNetGroup' => 'Y',
-				'departmentSelectDisable' => 'N',
-				'departmentFlatEnable' => "Y"
-			];
-		}
-
-		$selectorName = $action.'_'.randString(6);
-
-		$APPLICATION->IncludeComponent(
-			"bitrix:main.user.selector",
-			"",
-			[
-				"ID" => $selectorName,
-				"LAZYLOAD" => 'Y',
-				"INPUT_NAME" => 'GROUP_AND_DEPARTMENT[]',
-				"USE_SYMBOLIC_ID" => true,
-				"BUTTON_SELECT_CAPTION" => Loc::getMessage('BX24_INVITE_DIALOG_ACTION_ADD'),
-				"BUTTON_SELECT_CAPTION_MORE" => Loc::getMessage('BX24_INVITE_DIALOG_DEST_LINK_2'),
-				'API_VERSION' => '3',
-				"SELECTOR_OPTIONS" => $options
-			]
-		);
-	}
-}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.feedback.form',
@@ -262,11 +206,17 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 			<div class="invite-content-container">
 				<div class="invite-form-container">
 					<form method="POST" name="MASS_INVITE_DIALOG_FORM" class="invite-form-container">
-						<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_LABEL")?></div>
+						<div class="ui-ctl-label-text">
+							<?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_LABEL_".
+								($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>
+						</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textarea ui-ctl-lg">
 							<textarea name="mass_invite_emails" class="ui-ctl-element"></textarea>
 						</div>
-						<div class="invite-form-ctl-description"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_DESC")?></div>
+						<div class="invite-form-ctl-description">
+							<?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_DESC_".
+								($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>
+						</div>
 					</form>
 				</div>
 			</div>
@@ -285,12 +235,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 					<div class="invite-form-row">
 						<div class="invite-form-col">
 							<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_GROUP_OR_DEPARTMENT_INPUT")?></div>
-							<?
-							drawInviteDialogSelector(array(
-								 'action' => 'inviteWithGroupDp',
-								 'isExtranet' => false
-							));
-							?>
+							<div data-role="entity-selector-container"></div>
 						</div>
 					</div>
 					<div data-role="rows-container"></div>
@@ -316,12 +261,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						<div class="invite-form-row">
 							<div class="invite-form-col">
 								<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_GROUP_OR_DEPARTMENT_INPUT")?></div>
-								<?
-								drawInviteDialogSelector(array(
-									 'action' => 'add',
-									 'isExtranet' => false
-								));
-								?>
+								<div data-role="entity-selector-container"></div>
 							</div>
 						</div>
 
@@ -368,13 +308,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 					<div class="invite-form-row" style="margin-bottom: 15px;">
 						<div class="invite-form-col">
 							<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_EXTRANET_GROUP")?></div>
-							<?
-							drawInviteDialogSelector(array(
-								'action' => 'extranet',
-								'extranetSiteId' => $arResult["EXTRANET_SITE_ID"],
-								'isExtranet' => true
-							));
-							?>
+							<div data-role="entity-selector-container"></div>
 						</div>
 					</div>
 					<div data-role="rows-container"></div>
@@ -440,7 +374,9 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 			</div>
 		</div>
 
-		<div class="invite-wrap js-intranet-invitation-block" data-role="success-block">
+		<div class="invite-wrap js-intranet-invitation-block" data-role="success-block"
+			 style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #fff; z-index: 90;"
+		>
 			<div style="height: 78vh;" class="invite-send-success-wrap">
 				<div class="invite-send-success-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_SUCCESS_SEND")?></div>
 				<div class="invite-send-success-decal-1"></div>
@@ -452,6 +388,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 		</div>
 	</div>
 </div>
+
 <?
 $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 	"BUTTONS" => [
@@ -471,16 +408,15 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 ?>
 
 <?$this->SetViewTarget("below_page", 10);?>
+<div class="invite-wrap-decal-arrow">
+	<svg width="79" height="74" xmlns="http://www.w3.org/2000/svg">
+		<g stroke="#2FC6F6" stroke-width="2" fill="none" fill-rule="evenodd" opacity=".73" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M71.747 72.41C59.827 32.816 36.576 9.119 1.992 1.32M76.4 62.11l-4.512 10.558-9.862-5.279"/>
+		</g>
+	</svg>
+</div>
 <div class="invite-wrap-decal">
 	<div class="invite-wrap-decal-image"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_PICTURE_TITLE")?></div>
-	<div class="invite-wrap-decal-arrow">
-		<svg width="200" height="100" style="width: 100%;height: 100px;" viewBox="0 0 200 100">
-			<g  fill="none" fill-rule="evenodd" opacity="0.73" stroke-linecap="round" stroke-linejoin="round"  transform="translate(1, 1)" stroke="#2FC6F6" stroke-width="2">
-				<path d="M157.401367,95.4106445 C128.701497,40.6785482 76.4322917,9.12760417 0.59375,0.7578125" />
-				<polyline transform="translate(154.187500, 91.278809) rotate(-11) translate(-154.187500, -91.278809) " points="161.375 86 156.862305 96.5576172 147 91.2788086" />
-			</g>
-		</svg>
-	</div>
 </div>
 <?$this->EndViewTarget();?>
 

@@ -15,6 +15,7 @@
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Settings\LeadSettings;
 
 Extension::load(["ui.icons", "ui.hint", "crm.report.tracking.ad.report"]);
 
@@ -34,6 +35,9 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 				$sourceIconClass = htmlspecialcharsbx($row['SOURCE_CODE']['iconClass']);
 				$sourceColor = htmlspecialcharsbx($row['SOURCE_CODE']['color']);
 				$paddingClass = empty($row['SOURCE_CODE']['usePadding']) ? '' : 'crm-report-chart-grid-item-padding';
+				$sourceOnclick = $expensesReport['supported']
+					? 'onclick="BX.Crm.Report.Tracking.Ad.Report.open(' . htmlspecialcharsbx(Json::encode($expensesReport['options'])) . ')"'
+					: '';
 
 				$row['SOURCE_CODE'] = '<div class="crm-report-chart-grid-item ' . $paddingClass . '" style="white-space: nowrap">'
 					. '<div class="crm-report-chart-modal-title-icon ' . $sourceIconClass . '">'
@@ -42,10 +46,19 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 					. (!$expensesReport['supported']
 						? '<span>' . $sourceCaption . '</span>'
 						: (
-							'<span '
-							. 'class="crm-report-chart-grid-link" '
-							. 'onclick="BX.Crm.Report.Tracking.Ad.Report.open(' . htmlspecialcharsbx(Json::encode($expensesReport['options'])) . ')"'
-							. '>' . $sourceCaption . '</span>'
+							'<span>'
+								. '<div '
+									. 'class="crm-report-chart-grid-link" '
+									. $sourceOnclick
+								. '>' . $sourceCaption
+								. '</div>'
+								. '<span '
+									. 'class="crm-report-chart-grid-link-expenses" '
+									. $sourceOnclick
+								. '>'
+										. Loc::getMessage('CRM_REPORT_VC_W_C_CHART_GRID_BTN_DETAILS')
+								. '</span>'
+							. '</div>'
 						)
 					)
 					. '</div>';
@@ -167,11 +180,12 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 		];
 	}
 
+	$gridId =  $containerId . '-grid' . (LeadSettings::isEnabled() ? '-l1' : '');
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.grid",
 		"",
 		array(
-			"GRID_ID" => $containerId . '-grid',
+			"GRID_ID" => $gridId,
 			"COLUMNS" => $arResult['GRID']['COLUMNS'],
 			"ROWS" => $arResult['GRID']['ROWS'],
 			'SHOW_ROW_CHECKBOXES' => false,
@@ -199,7 +213,7 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 
 	BX.ready(function () {
 		BX.Main.gridManager
-			.getInstanceById('<?=\CUtil::JSEscape($containerId . '-grid')?>')
+			.getInstanceById('<?=\CUtil::JSEscape($gridId)?>')
 			.getRows()
 			.getBodyChild()
 			.forEach(function (row) {

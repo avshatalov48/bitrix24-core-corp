@@ -497,6 +497,7 @@ this.BX = this.BX || {};
 	            conferenceParams: {
 	              conferenceTitle: conferenceTitle,
 	              dateTimeStart: dateTimeStart,
+	              timestampStart: timestampStart,
 	              duration: duration,
 	              durationType: durationType
 	            },

@@ -174,6 +174,7 @@ BX.ViPermissionEdit.prototype =
 
 	renderNewAccessCode: function(accessCode, provider, name, roleId)
 	{
+		name = BX.util.htmlspecialchars(name);
 		var template = BX('bx-vi-new-access-row').innerHTML;
 		template = this.__replaceAll(template, {PROVIDER: provider, NAME: name, ACCESS_CODE: accessCode});
 		var newElement = BX.create('tr', {html: template});

@@ -81,7 +81,7 @@ $tabContainerId = "{$guid}_tabs";
 		if($arResult['REST_USE'])
 		{
 			?><li class="crm-entity-section-tab">
-				<a href="#" class="crm-entity-section-tab-link" onclick="BX.rest.Marketplace.open(<?=\CUtil::PhpToJSObject($arResult['REST_PLACEMENT_CONFIG'])?>);" class="crm-entity-section-tab-link"><?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON')?></a>
+				<a href="#" class="crm-entity-section-tab-link" onclick="BX.rest.Marketplace.open(<?=\CUtil::PhpToJSObject($arResult['REST_PLACEMENT_CONFIG'])?>);" class="crm-entity-section-tab-link"><?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON_2')?></a>
 			</li><?
 		}
 		?></ul><?

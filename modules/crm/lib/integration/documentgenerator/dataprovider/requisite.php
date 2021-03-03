@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\DocumentGenerator\Value\Name;
@@ -47,56 +48,26 @@ class Requisite extends BaseRequisite
 	public function getAddressFields()
 	{
 		static $addressFields = false;
+
 		if($addressFields === false)
 		{
-			$addressFields = [
-				'DELIVERY_ADDRESS' => [
-					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_DELIVERY_ADDRESS_TITLE'),
+			$addressFields = [];
+			foreach (EntityAddressType::getAvailableIds() as $addresTypeId)
+			{
+				$addresTypeName = EntityAddressType::resolveName($addresTypeId);
+				$addresTypeTitle = EntityAddressType::getDescription($addresTypeId);
+				$addressFields[$addresTypeName.'_ADDRESS'] = [
+					'TITLE' => $addresTypeTitle,
 					'PROVIDER' => Address::class,
-					'VALUE' => 'DELIVERY_ADDRESS_RAW',
+					'VALUE' => $addresTypeName.'_ADDRESS_RAW',
 					'OPTIONS' => [
-						'TYPE_ID' => 11,
+						'TYPE_ID' => $addresTypeId,
 						'COUNTRY_ID' => $this->getDocumentCountryId(),
 					],
-				],
-				'PRIMARY_ADDRESS' => [
-					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_PRIMARY_ADDRESS_TITLE'),
-					'PROVIDER' => Address::class,
-					'VALUE' => 'PRIMARY_ADDRESS_RAW',
-					'OPTIONS' => [
-						'TYPE_ID' => 1,
-						'COUNTRY_ID' => $this->getDocumentCountryId(),
-					],
-				],
-				'REGISTERED_ADDRESS' => [
-					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_REGISTERED_ADDRESS_TITLE'),
-					'PROVIDER' => Address::class,
-					'VALUE' => 'REGISTERED_ADDRESS_RAW',
-					'OPTIONS' => [
-						'TYPE_ID' => 6,
-						'COUNTRY_ID' => $this->getDocumentCountryId(),
-					],
-				],
-				'HOME_ADDRESS' => [
-					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_HOME_ADDRESS_TITLE'),
-					'PROVIDER' => Address::class,
-					'VALUE' => 'HOME_ADDRESS_RAW',
-					'OPTIONS' => [
-						'TYPE_ID' => 4,
-						'COUNTRY_ID' => $this->getDocumentCountryId(),
-					],
-				],
-				'BENEFICIARY_ADDRESS' => [
-					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_REQUISITE_BENEFICIARY_ADDRESS_TITLE'),
-					'PROVIDER' => Address::class,
-					'VALUE' => 'BENEFICIARY_ADDRESS_RAW',
-					'OPTIONS' => [
-						'TYPE_ID' => 9,
-						'COUNTRY_ID' => $this->getDocumentCountryId(),
-					],
-				],
-			];
+				];
+			}
 		}
+
 		return $addressFields;
 	}
 
@@ -164,13 +135,11 @@ class Requisite extends BaseRequisite
 		static $types = null;
 		if($types === null)
 		{
-			$types = [
-				RequisiteAddress::Delivery => 'DELIVERY_ADDRESS',
-				RequisiteAddress::Primary => 'PRIMARY_ADDRESS',
-				RequisiteAddress::Registered => 'REGISTERED_ADDRESS',
-				RequisiteAddress::Home => 'HOME_ADDRESS',
-				RequisiteAddress::Beneficiary => 'BENEFICIARY_ADDRESS',
-			];
+			$types = [];
+			foreach (EntityAddressType::getAvailableIds() as $typeId)
+			{
+				$types[$typeId] = EntityAddressType::resolveName($typeId).'_ADDRESS';
+			}
 		}
 
 		if(isset($types[$addressTypeId]))

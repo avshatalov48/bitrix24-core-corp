@@ -13,7 +13,7 @@
 	 */
 	var VueVendorV2;
 
-	if (typeof exports !== 'undefined' && typeof exports.VueVendorV2 !== 'undefined') {
+	if (typeof exports !== 'undefined' && 'VueVendorV2' in exports) {
 	  var currentVersion = '2.6.12';
 
 	  if (exports.VueVendorV2.version != currentVersion) {
@@ -236,7 +236,7 @@
 
 	  var H = new RegExp("[^" + P.source + ".$_\\d]");
 	  var B,
-	      U = "__proto__" in {},
+	      U = ("__proto__" in {}),
 	      z = "undefined" != typeof window,
 	      V = "undefined" != typeof WXEnvironment && !!WXEnvironment.platform,
 	      K = V && WXEnvironment.platform.toLowerCase(),
@@ -5376,9 +5376,7 @@
 	  _state: state
 	}, deprecatedMethods);
 
-	var MoveObserver =
-	/*#__PURE__*/
-	function () {
+	var MoveObserver = /*#__PURE__*/function () {
 	  function MoveObserver(handler, element) {
 	    babelHelpers.classCallCheck(this, MoveObserver);
 	    babelHelpers.defineProperty(this, "detecting", false);
@@ -5544,7 +5542,8 @@
 	  },
 	  string: function string() {},
 	  formatMoney: function formatMoney(val, format) {
-	    return (format || '').replace('#', val || 0);
+	    val = this.number(val).toFixed(2) || 0;
+	    return (format || '#').replace('&#', '|||||').replace('&amp;#', '|-|||-|').replace('#', val).replace('|-|||-|', '&amp;#').replace('|||||', '&#');
 	  },
 	  replaceText: function replaceText(text, fields) {
 	    fields = fields || {};
@@ -5658,9 +5657,13 @@
 	  }
 	};
 
-	var Event =
-	/*#__PURE__*/
-	function () {
+	var _namespace = new WeakMap();
+
+	var _subscribers = new WeakMap();
+
+	var _emittedOnce = new WeakMap();
+
+	var Event = /*#__PURE__*/function () {
 	  function Event() {
 	    babelHelpers.classCallCheck(this, Event);
 
@@ -5756,15 +5759,7 @@
 	  return Event;
 	}();
 
-	var _namespace = new WeakMap();
-
-	var _subscribers = new WeakMap();
-
-	var _emittedOnce = new WeakMap();
-
-	var Item =
-	/*#__PURE__*/
-	function (_Event) {
+	var Item = /*#__PURE__*/function (_Event) {
 	  babelHelpers.inherits(Item, _Event);
 
 	  function Item(options) {
@@ -5865,7 +5860,11 @@
 	        return;
 	      }
 
-	      if (e.key === 'Esc' || e.key === 'Delete' || e.key === 'Backspace') {
+	      if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0) {
+	        return;
+	      }
+
+	      if (e.ctrlKey || e.metaKey) {
 	        return;
 	      }
 
@@ -5874,9 +5873,7 @@
 	  }
 	};
 
-	var Storage =
-	/*#__PURE__*/
-	function () {
+	var Storage = /*#__PURE__*/function () {
 	  function Storage() {
 	    babelHelpers.classCallCheck(this, Storage);
 	    babelHelpers.defineProperty(this, "language", 'en');
@@ -5991,9 +5988,7 @@
 	  }
 	};
 
-	var Model =
-	/*#__PURE__*/
-	function () {
+	var Model = /*#__PURE__*/function () {
 	  function Model(options) {
 	    babelHelpers.classCallCheck(this, Model);
 	    babelHelpers.defineProperty(this, "dark", null);
@@ -6261,6 +6256,54 @@
 	  return Model;
 	}();
 
+	var storedValues = null;
+	var lsStoredValuesKey = 'b24-form-field-stored-values';
+
+	function restore() {
+	  if (storedValues !== null) {
+	    return storedValues;
+	  }
+
+	  if (window.localStorage) {
+	    var stored = window.localStorage.getItem(lsStoredValuesKey);
+
+	    if (stored) {
+	      try {
+	        storedValues = JSON.parse(stored);
+	      } catch (e) {}
+	    }
+	  }
+
+	  storedValues = storedValues || {};
+	  storedValues.type = storedValues.type || {};
+	  return storedValues;
+	}
+
+	function storeFieldValues(fields) {
+	  try {
+	    if (!window.localStorage) {
+	      return storedValues;
+	    }
+
+	    var storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
+	    var stored = fields.reduce(function (result, field) {
+	      if (storedTypes.indexOf(field.getType()) >= 0) {
+	        var value = field.value();
+
+	        if (value) {
+	          result.type[field.getType()] = value;
+	        }
+	      }
+
+	      return result;
+	    }, restore());
+	    window.localStorage.setItem(lsStoredValuesKey, JSON.stringify(stored));
+	  } catch (e) {}
+	}
+	function getStoredFieldValue(fieldType) {
+	  return restore()['type'][fieldType] || '';
+	}
+
 	var DefaultOptions = {
 	  type: 'string',
 	  label: 'Default field name',
@@ -6269,9 +6312,7 @@
 	  required: false
 	};
 
-	var Controller =
-	/*#__PURE__*/
-	function (_Event) {
+	var Controller = /*#__PURE__*/function (_Event) {
 	  babelHelpers.inherits(Controller, _Event);
 	  babelHelpers.createClass(Controller, [{
 	    key: "getComponentName",
@@ -6530,7 +6571,7 @@
 	      }
 
 	      var values = this.options.values || [];
-	      var value = this.options.value || values[0] || '';
+	      var value = this.options.value || values[0] || getStoredFieldValue(this.getType());
 	      var items = this.options.items || [];
 	      var selected = !this.multiple || values.length > 0;
 
@@ -6940,9 +6981,7 @@
 	  }
 	};
 
-	var Controller$1 =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$1 = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1() {
@@ -7060,7 +7099,7 @@
 	    }
 
 	    if (!phoneDb.list) {
-	      phoneDb.list = "247,ac,___-____|376,ad,___-___-___|971,ae,___-_-___-____|93,af,__-__-___-____|1268,ag,_ (___) ___-____|1264,ai,_ (___) ___-____|355,al,___ (___) ___-___|374,am,___-__-___-___|599,bq,___-___-____|244,ao,___ (___) ___-___|6721,aq,___-___-___|54,ar,__ (___) ___-____|1684,as,_ (___) ___-____|43,at,__ (___) ___-____|61,au,__-_-____-____|297,aw,___-___-____|994,az,___ (__) ___-__-__|387,ba,___-__-____|1246,bb,_ (___) ___-____|880,bd,___-__-___-___|32,be,__ (___) ___-___|226,bf,___-__-__-____|359,bg,___ (___) ___-___|973,bh,___-____-____|257,bi,___-__-__-____|229,bj,___-__-__-____|1441,bm,_ (___) ___-____|673,bn,___-___-____|591,bo,___-_-___-____|55,br,__-__-____-____|1242,bs,_ (___) ___-____|975,bt,___-_-___-___|267,bw,___-__-___-___|375,by,___ (__) ___-__-__|501,bz,___-___-____|243,cd,___ (___) ___-___|236,cf,___-__-__-____|242,cg,___-__-___-____|41,ch,__-__-___-____|225,ci,___-__-___-___|682,ck,___-__-___|56,cl,__-_-____-____|237,cm,___-____-____|86,cn,__ (___) ____-___|57,co,__ (___) ___-____|506,cr,___-____-____|53,cu,__-_-___-____|238,cv,___ (___) __-__|357,cy,___-__-___-___|420,cz,___ (___) ___-___|49,de,__-___-___|253,dj,___-__-__-__-__|45,dk,__-__-__-__-__|1767,dm,_ (___) ___-____|1809,do,_ (___) ___-____|,do,_ (___) ___-____|213,dz,___-__-___-____|593,ec,___-_-___-____|372,ee,___-___-____|20,eg,__ (___) ___-____|291,er,___-_-___-___|34,es,__ (___) ___-___|251,et,___-__-___-____|358,fi,___ (___) ___-__-__|679,fj,___-__-_____|500,fk,___-_____|691,fm,___-___-____|298,fo,___-___-___|262,fr,___-_____-____|33,fr,__ (___) ___-___|508,fr,___-__-____|590,fr,___ (___) ___-___|241,ga,___-_-__-__-__|1473,gd,_ (___) ___-____|995,ge,___ (___) ___-___|594,gf,___-_____-____|233,gh,___ (___) ___-___|350,gi,___-___-_____|299,gl,___-__-__-__|220,gm,___ (___) __-__|224,gn,___-__-___-___|240,gq,___-__-___-____|30,gr,__ (___) ___-____|502,gt,___-_-___-____|1671,gu,_ (___) ___-____|245,gw,___-_-______|592,gy,___-___-____|852,hk,___-____-____|504,hn,___-____-____|385,hr,___-__-___-___|509,ht,___-__-__-____|36,hu,__ (___) ___-___|62,id,__-__-___-__|353,ie,___ (___) ___-___|972,il,___-_-___-____|91,in,__ (____) ___-___|246,io,___-___-____|964,iq,___ (___) ___-____|98,ir,__ (___) ___-____|354,is,___-___-____|39,it,__ (___) ____-___|1876,jm,_ (___) ___-____|962,jo,___-_-____-____|81,jp,__ (___) ___-___|254,ke,___-___-______|996,kg,___ (___) ___-___|855,kh,___ (__) ___-___|686,ki,___-__-___|269,km,___-__-_____|1869,kn,_ (___) ___-____|850,kp,___-___-___|82,kr,__-__-___-____|965,kw,___-____-____|1345,ky,_ (___) ___-____|77,kz,_ (___) ___-__-__|856,la,___-__-___-___|961,lb,___-_-___-___|1758,lc,_ (___) ___-____|423,li,___ (___) ___-____|94,lk,__-__-___-____|231,lr,___-__-___-___|266,ls,___-_-___-____|370,lt,___ (___) __-___|352,lu,___ (___) ___-___|371,lv,___-__-___-___|218,ly,___-__-___-___|212,ma,___-__-____-___|377,mc,___-__-___-___|373,md,___-____-____|382,me,___-__-___-___|261,mg,___-__-__-_____|692,mh,___-___-____|389,mk,___-__-___-___|223,ml,___-__-__-____|95,mm,__-___-___|976,mn,___-__-__-____|853,mo,___-____-____|1670,mp,_ (___) ___-____|596,mq,___ (___) __-__-__|222,mr,___ (__) __-____|1664,ms,_ (___) ___-____|356,mt,___-____-____|230,mu,___-___-____|960,mv,___-___-____|265,mw,___-_-____-____|52,mx,__-__-__-____|60,my,__-_-___-___|258,mz,___-__-___-___|264,na,___-__-___-____|687,nc,___-__-____|227,ne,___-__-__-____|6723,nf,___-___-___|234,ng,___-__-___-__|505,ni,___-____-____|31,nl,__-__-___-____|47,no,__ (___) __-___|977,np,___-__-___-___|674,nr,___-___-____|683,nu,___-____|64,nz,__-__-___-___|968,om,___-__-___-___|507,pa,___-___-____|51,pe,__ (___) ___-___|689,pf,___-__-__-__|675,pg,___ (___) __-___|63,ph,__ (___) ___-____|92,pk,__ (___) ___-____|48,pl,__ (___) ___-___|970,ps,___-__-___-____|351,pt,___-__-___-____|680,pw,___-___-____|595,py,___ (___) ___-___|974,qa,___-____-____|40,ro,__-__-___-____|381,rs,___-__-___-____|7,ru,_ (___) ___-__-__|250,rw,___ (___) ___-___|966,sa,___-_-___-____|677,sb,___-_____|248,sc,___-_-___-___|249,sd,___-__-___-____|46,se,__-__-___-____|65,sg,__-____-____|386,si,___-__-___-___|421,sk,___ (___) ___-___|232,sl,___-__-______|378,sm,___-____-______|221,sn,___-__-___-____|252,so,___-_-___-___|597,sr,___-___-___|211,ss,___-__-___-____|239,st,___-__-_____|503,sv,___-__-__-____|1721,sx,_ (___) ___-____|963,sy,___-__-____-___|268,sz,___ (__) __-____|1649,tc,_ (___) ___-____|235,td,___-__-__-__-__|228,tg,___-__-___-___|66,th,__-__-___-___|992,tj,___-__-___-____|690,tk,___-____|670,tl,___-___-____|993,tm,___-_-___-____|216,tn,___-__-___-___|676,to,___-_____|90,tr,__ (___) ___-____|1868,tt,_ (___) ___-____|688,tv,___-_____|886,tw,___-____-____|255,tz,___-__-___-____|380,ua,___ (__) ___-__-__|256,ug,___ (___) ___-___|44,gb,__-__-____-____|598,uy,___-_-___-__-__|998,uz,___-__-___-____|396698,va,__-_-___-_____|1784,vc,_ (___) ___-____|58,ve,__ (___) ___-____|1284,vg,_ (___) ___-____|1340,vi,_ (___) ___-____|84,vn,__-__-____-___|678,vu,___-_____|681,wf,___-__-____|685,ws,___-__-____|967,ye,___-_-___-___|27,za,__-__-___-____|260,zm,___ (__) ___-____|263,zw,___-_-______|1,us,_ (___) ___-____|".split('|').map(function (item) {
+	      phoneDb.list = "247,ac,___-____|376,ad,___-___-___|971,ae,___-_-___-____|93,af,__-__-___-____|1268,ag,_ (___) ___-____|1264,ai,_ (___) ___-____|355,al,___ (___) ___-___|374,am,___-__-___-___|599,bq,___-___-____|244,ao,___ (___) ___-___|6721,aq,___-___-___|54,ar,__ (___) ___-____|1684,as,_ (___) ___-____|43,at,__ (___) ___-____|61,au,__-_-____-____|297,aw,___-___-____|994,az,___ (__) ___-__-__|387,ba,___-__-____|1246,bb,_ (___) ___-____|880,bd,___-__-___-___|32,be,__ (___) ___-___|226,bf,___-__-__-____|359,bg,___ (___) ___-___|973,bh,___-____-____|257,bi,___-__-__-____|229,bj,___-__-__-____|1441,bm,_ (___) ___-____|673,bn,___-___-____|591,bo,___-_-___-____|55,br,__-(__)-____-____|1242,bs,_ (___) ___-____|975,bt,___-_-___-___|267,bw,___-__-___-___|375,by,___ (__) ___-__-__|501,bz,___-___-____|243,cd,___ (___) ___-___|236,cf,___-__-__-____|242,cg,___-__-___-____|41,ch,__-__-___-____|225,ci,___-__-___-___|682,ck,___-__-___|56,cl,__-_-____-____|237,cm,___-____-____|86,cn,__ (___) ____-___|57,co,__ (___) ___-____|506,cr,___-____-____|53,cu,__-_-___-____|238,cv,___ (___) __-__|357,cy,___-__-___-___|420,cz,___ (___) ___-___|49,de,__-___-___|253,dj,___-__-__-__-__|45,dk,__-__-__-__-__|1767,dm,_ (___) ___-____|1809,do,_ (___) ___-____|,do,_ (___) ___-____|213,dz,___-__-___-____|593,ec,___-_-___-____|372,ee,___-___-____|20,eg,__ (___) ___-____|291,er,___-_-___-___|34,es,__ (___) ___-___|251,et,___-__-___-____|358,fi,___ (___) ___-__-__|679,fj,___-__-_____|500,fk,___-_____|691,fm,___-___-____|298,fo,___-___-___|262,fr,___-_____-____|33,fr,__ (___) ___-___|508,fr,___-__-____|590,fr,___ (___) ___-___|241,ga,___-_-__-__-__|1473,gd,_ (___) ___-____|995,ge,___ (___) ___-___|594,gf,___-_____-____|233,gh,___ (___) ___-___|350,gi,___-___-_____|299,gl,___-__-__-__|220,gm,___ (___) __-__|224,gn,___-__-___-___|240,gq,___-__-___-____|30,gr,__ (___) ___-____|502,gt,___-_-___-____|1671,gu,_ (___) ___-____|245,gw,___-_-______|592,gy,___-___-____|852,hk,___-____-____|504,hn,___-____-____|385,hr,___-__-___-___|509,ht,___-__-__-____|36,hu,__ (___) ___-___|62,id,__-__-___-__|353,ie,___ (___) ___-___|972,il,___-_-___-____|91,in,__ (____) ___-___|246,io,___-___-____|964,iq,___ (___) ___-____|98,ir,__ (___) ___-____|354,is,___-___-____|39,it,__ (___) ____-___|1876,jm,_ (___) ___-____|962,jo,___-_-____-____|81,jp,__ (___) ___-___|254,ke,___-___-______|996,kg,___ (___) ___-___|855,kh,___ (__) ___-___|686,ki,___-__-___|269,km,___-__-_____|1869,kn,_ (___) ___-____|850,kp,___-___-___|82,kr,__-__-___-____|965,kw,___-____-____|1345,ky,_ (___) ___-____|77,kz,_ (___) ___-__-__|856,la,___-__-___-___|961,lb,___-_-___-___|1758,lc,_ (___) ___-____|423,li,___ (___) ___-____|94,lk,__-__-___-____|231,lr,___-__-___-___|266,ls,___-_-___-____|370,lt,___ (___) __-___|352,lu,___ (___) ___-___|371,lv,___-__-___-___|218,ly,___-__-___-___|212,ma,___-__-____-___|377,mc,___-__-___-___|373,md,___-____-____|382,me,___-__-___-___|261,mg,___-__-__-_____|692,mh,___-___-____|389,mk,___-__-___-___|223,ml,___-__-__-____|95,mm,__-___-___|976,mn,___-__-__-____|853,mo,___-____-____|1670,mp,_ (___) ___-____|596,mq,___ (___) __-__-__|222,mr,___ (__) __-____|1664,ms,_ (___) ___-____|356,mt,___-____-____|230,mu,___-___-____|960,mv,___-___-____|265,mw,___-_-____-____|52,mx,__-__-__-____|60,my,__-_-___-___|258,mz,___-__-___-___|264,na,___-__-___-____|687,nc,___-__-____|227,ne,___-__-__-____|6723,nf,___-___-___|234,ng,___-__-___-__|505,ni,___-____-____|31,nl,__-__-___-____|47,no,__ (___) __-___|977,np,___-__-___-___|674,nr,___-___-____|683,nu,___-____|64,nz,__-__-___-___|968,om,___-__-___-___|507,pa,___-___-____|51,pe,__ (___) ___-___|689,pf,___-__-__-__|675,pg,___ (___) __-___|63,ph,__ (___) ___-____|92,pk,__ (___) ___-____|48,pl,__ (___) ___-___|970,ps,___-__-___-____|351,pt,___-__-___-____|680,pw,___-___-____|595,py,___ (___) ___-___|974,qa,___-____-____|40,ro,__-__-___-____|381,rs,___-__-___-____|7,ru,_ (___) ___-__-__|250,rw,___ (___) ___-___|966,sa,___-_-___-____|677,sb,___-_____|248,sc,___-_-___-___|249,sd,___-__-___-____|46,se,__-__-___-____|65,sg,__-____-____|386,si,___-__-___-___|421,sk,___ (___) ___-___|232,sl,___-__-______|378,sm,___-____-______|221,sn,___-__-___-____|252,so,___-_-___-___|597,sr,___-___-___|211,ss,___-__-___-____|239,st,___-__-_____|503,sv,___-__-__-____|1721,sx,_ (___) ___-____|963,sy,___-__-____-___|268,sz,___ (__) __-____|1649,tc,_ (___) ___-____|235,td,___-__-__-__-__|228,tg,___-__-___-___|66,th,__-__-___-___|992,tj,___-__-___-____|690,tk,___-____|670,tl,___-___-____|993,tm,___-_-___-____|216,tn,___-__-___-___|676,to,___-_____|90,tr,__ (___) ___-____|1868,tt,_ (___) ___-____|688,tv,___-_____|886,tw,___-____-____|255,tz,___-__-___-____|380,ua,___ (__) ___-__-__|256,ug,___ (___) ___-___|44,gb,__-__-____-____|598,uy,___-_-___-__-__|998,uz,___-__-___-____|396698,va,__-_-___-_____|1784,vc,_ (___) ___-____|58,ve,__ (___) ___-____|1284,vg,_ (___) ___-____|1340,vi,_ (___) ___-____|84,vn,__-__-____-___|678,vu,___-_____|681,wf,___-__-____|685,ws,___-__-____|967,ye,___-_-___-___|27,za,__-__-___-____|260,zm,___ (__) ___-____|263,zw,___-_-______|1,us,_ (___) ___-____|".split('|').map(function (item) {
 	        item = item.split(',');
 	        return {
 	          code: item[0],
@@ -7089,9 +7128,7 @@
 	  }
 	};
 
-	var Controller$2 =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$2 = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -7133,9 +7170,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$3 =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$3 = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -7179,9 +7214,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$4 =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$4 = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -7213,9 +7246,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$5 =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$5 = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -7247,9 +7278,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$6 =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$6 = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -7286,9 +7315,7 @@
 	  template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<textarea class=\"b24-form-control\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t></textarea>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\t\t\t\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t"
 	};
 
-	var Controller$7 =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$7 = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1() {
@@ -7320,9 +7347,7 @@
 	  template: "\t\n\t\t<label class=\"b24-form-control-container\"\n\t\t\t@click.capture=\"$emit('input-click', $event)\"\n\t\t>\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t>\n\t\t\t<span class=\"b24-form-control-desc\">{{ field.label }}</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</label>\n\t"
 	};
 
-	var Controller$8 =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$8 = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, null, [{
 	    key: "type",
@@ -7350,9 +7375,7 @@
 	  template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<span class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</span>\n\n\t\t\t<label class=\"b24-form-control\"\n\t\t\t\tv-for=\"item in field.items\"\n\t\t\t\t:class=\"{'b24-form-control-checked': item.selected}\"\n\t\t\t>\n\t\t\t\t<input :type=\"field.type\" \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\">{{ item.label }}</span>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
 	};
 
-	var Controller$9 =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$9 = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, null, [{
 	    key: "type",
@@ -7375,9 +7398,7 @@
 	  return Controller$$1;
 	}(Controller);
 
-	var Controller$a =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$a = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, null, [{
 	    key: "type",
@@ -7402,12 +7423,10 @@
 
 	var FieldSelect = {
 	  mixins: [MixinField],
-	  template: "\n\t\t<div class=\"field-item\">\n\t\t\t<label>\n\t\t\t\t<div class=\"field-label\">\n\t\t\t\t\t{{ field.label }} \n\t\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t\t</div>\n\t\t\t\t<div>\n\t\t\t\t\t<select \n\t\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t\tv-bind:multiple=\"field.multiple\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<option v-for=\"item in field.items\" \n\t\t\t\t\t\t\tv-bind:value=\"item.value\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ item.label }}\n\t\t\t\t\t\t</option>\n\t\t\t\t\t</select>\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"field-item\">\n\t\t\t<label>\n\t\t\t\t<div class=\"b24-form-control-select-label\">\n\t\t\t\t\t{{ field.label }} \n\t\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t\t</div>\n\t\t\t\t<div>\n\t\t\t\t\t<select \n\t\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t\tv-bind:multiple=\"field.multiple\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<option v-for=\"item in field.items\" \n\t\t\t\t\t\t\tv-bind:value=\"item.value\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ item.label }}\n\t\t\t\t\t\t</option>\n\t\t\t\t\t</select>\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
 	};
 
-	var Controller$b =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$b = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1() {
@@ -7429,9 +7448,7 @@
 	  return Controller$$1;
 	}(Controller);
 
-	var Item$1 =
-	/*#__PURE__*/
-	function (_BaseItem) {
+	var Item$1 = /*#__PURE__*/function (_BaseItem) {
 	  babelHelpers.inherits(Item$$1, _BaseItem);
 
 	  function Item$$1(options) {
@@ -7552,9 +7569,7 @@
 	  methods: {}
 	};
 
-	var Controller$c =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$c = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1() {
@@ -7633,7 +7648,7 @@
 	var FieldListItem = {
 	  mixins: [fieldListMixin],
 	  props: ['field', 'item', 'itemSubComponent'],
-	  template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\t@click.capture=\"toggleSelector\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.capture=\"unselect\"\n\t\t\t\t:title=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></div>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('visible:on')\"\n\t\t\t\t@visible:off=\"$emit('visible:off')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
+	  template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\t@click.capture=\"toggleSelector\"\n\t\t\t\t@keydown.capture.space.stop.prevent=\"toggleSelector\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.capture=\"unselect\"\n\t\t\t\t:title=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></div>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('visible:on')\"\n\t\t\t\t@visible:off=\"$emit('visible:off')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
 	  computed: {
 	    itemLabel: function itemLabel() {
 	      if (!this.item || !this.item.selected) {
@@ -7684,9 +7699,7 @@
 	  bigPic: true
 	};
 
-	var Controller$d =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$d = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, [{
 	    key: "getOriginalType",
@@ -7726,9 +7739,7 @@
 	  return Controller$$1;
 	}(Controller);
 
-	var Item$2 =
-	/*#__PURE__*/
-	function (_BaseItem) {
+	var Item$2 = /*#__PURE__*/function (_BaseItem) {
 	  babelHelpers.inherits(Item$$1, _BaseItem);
 
 	  function Item$$1(options) {
@@ -7939,9 +7950,7 @@
 	  template: "<component :is=\"getProductComponent()\" :field=\"field\"></component>"
 	};
 
-	var Controller$e =
-	/*#__PURE__*/
-	function (_ListField$Controller) {
+	var Controller$e = /*#__PURE__*/function (_ListField$Controller) {
 	  babelHelpers.inherits(Controller, _ListField$Controller);
 	  babelHelpers.createClass(Controller, null, [{
 	    key: "type",
@@ -7989,12 +7998,14 @@
 	  }, {
 	    key: "formatMoney",
 	    value: function formatMoney(val) {
-	      return Conv.formatMoney(val.toFixed(2), this.currency.format);
+	      return Conv.formatMoney(val, this.currency.format);
 	    }
 	  }, {
 	    key: "getCurrencyFormatArray",
 	    value: function getCurrencyFormatArray() {
-	      return this.currency.format.split('#');
+	      return this.currency.format.replace('&#', '|||||').replace('&amp;#', '|-|||-|').split('#').map(function (item) {
+	        return item.replace('|-|||-|', '&amp;#').replace('|||||', '&#');
+	      });
 	    }
 	  }]);
 	  return Controller;
@@ -8641,9 +8652,7 @@
 	  }
 	};
 
-	var Controller$f =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$f = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, null, [{
 	    key: "type",
@@ -8701,9 +8710,7 @@
 	  return Controller$$1;
 	}(Controller);
 
-	var Controller$g =
-	/*#__PURE__*/
-	function (_DateTimeField$Contro) {
+	var Controller$g = /*#__PURE__*/function (_DateTimeField$Contro) {
 	  babelHelpers.inherits(Controller, _DateTimeField$Contro);
 
 	  function Controller() {
@@ -8766,9 +8773,7 @@
 	  }
 	};
 
-	var Controller$h =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$h = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 	  babelHelpers.createClass(Controller$$1, null, [{
 	    key: "type",
@@ -8832,9 +8837,7 @@
 	  return Controller$$1;
 	}(Controller);
 
-	var Controller$i =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$i = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -8861,9 +8864,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$j =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$j = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -8890,9 +8891,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$k =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$k = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -8919,9 +8918,7 @@
 	  return Controller;
 	}(Controller$1);
 
-	var Controller$l =
-	/*#__PURE__*/
-	function (_StringField$Controll) {
+	var Controller$l = /*#__PURE__*/function (_StringField$Controll) {
 	  babelHelpers.inherits(Controller, _StringField$Controll);
 
 	  function Controller(options) {
@@ -8943,9 +8940,7 @@
 	  template: "\n\t\t<hr v-if=\"field.content.type=='hr'\" class=\"b24-form-field-layout-hr\">\n\t\t<div v-else-if=\"field.content.type=='br'\" class=\"b24-form-field-layout-br\"></div>\n\t\t<div v-else-if=\"field.content.type=='section'\" class=\"b24-form-field-layout-section\">\n\t\t\t{{ field.label }}\n\t\t</div>\n\t\t<div v-else-if=\"field.content.html\" v-html=\"field.content.html\"></div>\n\t"
 	};
 
-	var Controller$m =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$m = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1(options) {
@@ -9086,9 +9081,7 @@
 	  }
 	};
 
-	var Controller$n =
-	/*#__PURE__*/
-	function (_BaseField$Controller) {
+	var Controller$n = /*#__PURE__*/function (_BaseField$Controller) {
 	  babelHelpers.inherits(Controller$$1, _BaseField$Controller);
 
 	  function Controller$$1(options) {
@@ -9123,9 +9116,7 @@
 	  return accum;
 	}, {}));
 
-	var Factory =
-	/*#__PURE__*/
-	function () {
+	var Factory = /*#__PURE__*/function () {
 	  function Factory() {
 	    babelHelpers.classCallCheck(this, Factory);
 	  }
@@ -9176,9 +9167,7 @@
 	var ViewPositions = ['left', 'center', 'right'];
 	var ViewVerticals = ['top', 'bottom'];
 
-	var Navigation =
-	/*#__PURE__*/
-	function () {
+	var Navigation = /*#__PURE__*/function () {
 	  function Navigation() {
 	    babelHelpers.classCallCheck(this, Navigation);
 	    babelHelpers.defineProperty(this, "index", 1);
@@ -9263,9 +9252,7 @@
 	  return Navigation;
 	}();
 
-	var Page =
-	/*#__PURE__*/
-	function () {
+	var Page = /*#__PURE__*/function () {
 	  function Page(title) {
 	    babelHelpers.classCallCheck(this, Page);
 	    babelHelpers.defineProperty(this, "fields", []);
@@ -9319,9 +9306,13 @@
 	};
 	var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
 
-	var Manager =
-	/*#__PURE__*/
-	function () {
+	var _form = new WeakMap();
+
+	var _list = new WeakMap();
+
+	var _groups = new WeakMap();
+
+	var Manager = /*#__PURE__*/function () {
 	  function Manager(form) {
 	    babelHelpers.classCallCheck(this, Manager);
 
@@ -9562,12 +9553,6 @@
 	  return Manager;
 	}();
 
-	var _form = new WeakMap();
-
-	var _list = new WeakMap();
-
-	var _groups = new WeakMap();
-
 	var ConditionOperations = [];
 
 	for (var operationName in Operations) {
@@ -9578,9 +9563,13 @@
 	  ConditionOperations.push(Operations[_operationName]);
 	}
 
-	var Analytics$1 =
-	/*#__PURE__*/
-	function () {
+	var _form$1 = new WeakMap();
+
+	var _isStartSent = new WeakMap();
+
+	var _filledFields = new WeakMap();
+
+	var Analytics$1 = /*#__PURE__*/function () {
 	  function Analytics$$1(form) {
 	    babelHelpers.classCallCheck(this, Analytics$$1);
 
@@ -9682,15 +9671,19 @@
 	  return Analytics$$1;
 	}();
 
-	var _form$1 = new WeakMap();
+	var _key = new WeakMap();
 
-	var _isStartSent = new WeakMap();
+	var _use = new WeakMap();
 
-	var _filledFields = new WeakMap();
+	var _widgetId = new WeakMap();
 
-	var ReCaptcha$1 =
-	/*#__PURE__*/
-	function () {
+	var _response = new WeakMap();
+
+	var _target = new WeakMap();
+
+	var _callback = new WeakMap();
+
+	var ReCaptcha$1 = /*#__PURE__*/function () {
 	  function ReCaptcha$$1() {
 	    babelHelpers.classCallCheck(this, ReCaptcha$$1);
 
@@ -9815,21 +9808,11 @@
 	  return ReCaptcha$$1;
 	}();
 
-	var _key = new WeakMap();
+	var _currency = new WeakMap();
 
-	var _use = new WeakMap();
+	var _fields = new WeakMap();
 
-	var _widgetId = new WeakMap();
-
-	var _response = new WeakMap();
-
-	var _target = new WeakMap();
-
-	var _callback = new WeakMap();
-
-	var Basket =
-	/*#__PURE__*/
-	function () {
+	var Basket = /*#__PURE__*/function () {
 	  function Basket(fields, currency) {
 	    babelHelpers.classCallCheck(this, Basket);
 
@@ -9913,10 +9896,6 @@
 	  }]);
 	  return Basket;
 	}();
-
-	var _currency = new WeakMap();
-
-	var _fields = new WeakMap();
 
 	var Scrollable = {
 	  props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
@@ -10507,9 +10486,19 @@
 	  view: 'inline'
 	};
 
-	var Controller$o =
-	/*#__PURE__*/
-	function (_Event) {
+	var _id = new WeakMap();
+
+	var _fields$1 = new WeakMap();
+
+	var _dependence = new WeakMap();
+
+	var _properties = new WeakMap();
+
+	var _personalisation = new WeakMap();
+
+	var _vue = new WeakMap();
+
+	var Controller$o = /*#__PURE__*/function (_Event) {
 	  babelHelpers.inherits(Controller$$1, _Event);
 
 	  function Controller$$1() {
@@ -10673,6 +10662,8 @@
 	      if (!this.valid()) {
 	        return false;
 	      }
+
+	      storeFieldValues(this.getFields());
 
 	      if (!this.recaptcha.isVerified()) {
 	        this.recaptcha.verify(function () {
@@ -11077,18 +11068,6 @@
 	  return Controller$$1;
 	}(Event);
 
-	var _id = new WeakMap();
-
-	var _fields$1 = new WeakMap();
-
-	var _dependence = new WeakMap();
-
-	var _properties = new WeakMap();
-
-	var _personalisation = new WeakMap();
-
-	var _vue = new WeakMap();
-
 	function performEventOfWidgetFormInit(b24options, options) {
 	  var compatibleData = createEventData(b24options, options);
 	  BX.SiteButton.onWidgetFormInit(compatibleData);
@@ -11204,9 +11183,11 @@
 
 	/** @var {Object} module Current module.*/
 
-	var Application =
-	/*#__PURE__*/
-	function () {
+	var _forms = new WeakMap();
+
+	var _userProviderPromise = new WeakMap();
+
+	var Application = /*#__PURE__*/function () {
 	  function Application() {
 	    babelHelpers.classCallCheck(this, Application);
 
@@ -11317,7 +11298,7 @@
 	        6: ['left', 'bottom']
 	      };
 	      options.view = {
-	        type: (options.fields || []).length <= 1 && (options.agreements || []).length <= 1 ? 'widget' : 'panel',
+	        type: (options.fields || []).length + (options.agreements || []).length <= 3 ? 'widget' : 'panel',
 	        position: positions[pos][0],
 	        vertical: positions[pos][1]
 	      };
@@ -11487,10 +11468,6 @@
 	  }]);
 	  return Application;
 	}();
-
-	var _forms = new WeakMap();
-
-	var _userProviderPromise = new WeakMap();
 
 	var App = new Application();
 

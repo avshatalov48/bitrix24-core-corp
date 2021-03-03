@@ -1042,7 +1042,8 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 								'type': 'requisite_controller',
 								'config': {
 									'requisiteFieldId': 'REQUISITES',
-									'addressFieldId': 'ADDRESS'
+									'addressFieldId': 'ADDRESS',
+									'requisiteBinding': BX.prop.getObject(this._settings, "requisiteBinding", null)
 								}
 							}],
 							initialMode: BX.UI.EntityEditorMode.names.edit,
@@ -2808,7 +2809,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 				this._entityInfo = BX.prop.get(this._settings, "entityInfo", null);
 				this._mode = BX.prop.getInteger(this._settings, "mode", 0);
 				this._enableCommunications = BX.prop.getBoolean(this._settings, "enableCommunications", true);
-				this._enableAddress = BX.prop.getBoolean(this._settings, "enableAddress", true);;
+				this._enableAddress = BX.prop.getBoolean(this._settings, "enableAddress", true);
 				this._enableRequisitesTooltip = BX.prop.getBoolean(this._settings, "enableTooltip", true);
 				this._isRequisiteEnabled = (this._entityInfo.hasRequisites()
 					&& BX.prop.getBoolean(this._settings, "enableRequisite", false)

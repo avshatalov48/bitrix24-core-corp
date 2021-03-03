@@ -1724,9 +1724,15 @@ class CCrmExternalChannelImportAddress extends CCrmExternalChannelImportRequisit
 	{
 		$result = array();
 
-		foreach(\Bitrix\Crm\RequisiteAddress::getClientTypeInfos() as $typeInfo)
+		$addressTypes = Crm\EntityAddressType::getDescriptions(
+			Crm\EntityAddressType::getAvailableIds()
+		);
+		foreach($addressTypes as $addressTypeId => $addressTypeTitle)
 		{
-			$result[$typeInfo['id']] = $typeInfo;
+			$result[$addressTypeId] = [
+				'id' => $addressTypeId,
+				'name' => $addressTypeTitle
+			];
 		}
 
 		return $result;

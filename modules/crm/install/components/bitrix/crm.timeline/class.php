@@ -219,7 +219,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 			$this->arResult['ADDITIONAL_TABS'][] = array(
 				'id' => 'activity_rest_applist',
-				'name' => Loc::getMessage('CRM_REST_BUTTON_TITLE')
+				'name' => Loc::getMessage('CRM_REST_BUTTON_TITLE_2')
 			);
 		}
 
@@ -425,7 +425,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 				)
 			),
 			'applications' => array(
-				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_APPLICATIONS'),
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_APPLICATIONS_2'),
 				'fields' => array(
 					'ENTRY_CATEGORY_ID' => array(
 						Crm\Filter\TimelineEntryCategory::APPLICATION

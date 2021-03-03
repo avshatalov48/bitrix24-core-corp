@@ -26,7 +26,16 @@ interface ChatBot
 	public static function unRegister();
 
 	/**
+	 * Returns registered bot Id.
+	 *
+	 * @return int
+	 */
+	public static function getBotId();
+
+	/**
 	 * Event handler when bot join to chat.
+	 * @see \Bitrix\Im\Bot::onJoinChat
+	 * Method registers at bot field `b_im_bot.METHOD_WELCOME_MESSAGE`
 	 *
 	 * @param string $dialogId
 	 * @param array $joinFields
@@ -37,6 +46,8 @@ interface ChatBot
 
 	/**
 	 * Event handler on bot remove.
+	 * @see \Bitrix\Im\Bot::unRegister
+	 * Method registers at bot field `b_im_bot.METHOD_BOT_DELETE`
 	 *
 	 * @param int|null $bodId
 	 *
@@ -44,9 +55,10 @@ interface ChatBot
 	 */
 	public static function onBotDelete($bodId = null);
 
-
 	/**
 	 * Event handler on message add.
+	 * @see \Bitrix\Im\Bot::onMessageAdd
+	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_ADD`
 	 *
 	 * @param int $messageId
 	 * @param array $messageFields
@@ -57,6 +69,7 @@ interface ChatBot
 
 	/**
 	 * Event handler on answer add.
+	 * @see \Bitrix\ImBot\Controller::sendToBot
 	 *
 	 * @param string $command
 	 * @param array $params
@@ -67,6 +80,8 @@ interface ChatBot
 
 	/**
 	 * Event handler on command add.
+	 * @see \Bitrix\Im\Command::onCommandAdd
+	 * Method registers at bot field `b_im_command.METHOD_COMMAND_ADD`
 	 *
 	 * @param int $messageId
 	 * @param array $messageFields
@@ -77,16 +92,14 @@ interface ChatBot
 
 
 	/**
-	 * Returns registered bot Id.
-	 *
-	 * @return int
+	 * todo:
+	 * @see \Bitrix\Im\Bot::onMessageUpdate
+	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_UPDATE`
 	 */
-	public static function getBotId();
 
 	/**
-	 * Is bot enabled.
-	 *
-	 * @return bool
+	 * todo:
+	 * @see \Bitrix\Im\Bot::onMessageDelete
+	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_DELETE`
 	 */
-	public static function isEnabled();
 }

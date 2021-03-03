@@ -1,5 +1,8 @@
 <?
 
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 
 IncludeModuleLangFile(__FILE__);
@@ -13,7 +16,8 @@ class CCrmPaySystem
 	private static $arActFiles = array();
 	private static $arCrmCompatibleActs = array(
 		'bill', 'billua', 'billen', 'billde', 'billla', 'billkz', 'billby', 'billbr', 'billfr',
-		'paypal', 'yandexinvoice', 'yandex', 'yandexcheckout', 'invoicedocument'
+		'paypal', 'yandexinvoice', 'yandex', 'yandexcheckout', 'invoicedocument', 'bepaid', 'roboxchange',
+		'sberbankonline', 'uapay', 'alfabank', 'wooppay'
 	);
 	private static $paySystems = null;
 	private static $defBuyerParamsMap = null;
@@ -69,7 +73,7 @@ class CCrmPaySystem
 				unset($code['INPUT']);
 			}
 
-			if (isset($code['DEFAULT']))
+			if (isset($code['DEFAULT']) && $code['TYPE'] !== 'SELECT')
 			{
 				$type = null;
 				$code['VALUE'] = $code['DEFAULT']['PROVIDER_VALUE'];
@@ -1584,7 +1588,7 @@ class CCrmPaySystem
 							),
 							'COMPANY_ADR' => array(
 								'TYPE' => 'REQUISITE',
-								'VALUE' => 'RQ_ADDR_'.\Bitrix\Crm\EntityAddress::Registered.'|'.$countryId
+								'VALUE' => 'RQ_ADDR_'.EntityAddressType::Registered.'|'.$countryId
 							),
 							'PHONE' => array(
 								'TYPE' => 'REQUISITE',
@@ -1604,7 +1608,7 @@ class CCrmPaySystem
 							),
 							'ADDRESS' => array(
 								'TYPE' => 'REQUISITE',
-								'VALUE' => 'RQ_ADDR_'.\Bitrix\Crm\EntityAddress::Primary.'|'.$countryId
+								'VALUE' => 'RQ_ADDR_'.EntityAddressType::Primary.'|'.$countryId
 							)
 						)
 					);
@@ -1826,28 +1830,23 @@ class CCrmPaySystem
 		$result = array();
 
 		$preset = new \Bitrix\Crm\EntityPreset();
-		$requisite = new \Bitrix\Crm\EntityRequisite();
+		$requisite = new EntityRequisite();
 		$allowedCountries = $requisite->getAllowedRqFieldCountries();
 
-		// address types
-		$addressTypeList = array();
-		$addressTitleList = array();
-		foreach(Bitrix\Crm\RequisiteAddress::getClientTypeInfos() as $typeInfo)
-		{
-			$addressTypeList[] = $typeInfo['id'];
-			$addressTitleList[$typeInfo['id']] = $typeInfo['name'];
-		}
-
+		$addressTypesByCountry = [];
+		$addressTitleList = EntityAddressType::getDescriptions(EntityAddressType::getAllIDs());
 
 		// rq fields
 		$rqFields = array();
 		$tmpFields = $requisite->getRqFields();
 		foreach ($tmpFields as $fieldName)
 		{
-			if ($fieldName === \Bitrix\Crm\EntityRequisite::ADDRESS)
+			if ($fieldName === EntityRequisite::ADDRESS)
 			{
-				foreach ($addressTypeList as $addressType)
+				foreach (EntityAddressType::getAllIDs() as $addressType)
+				{
 					$rqFields[$fieldName.'_'.$addressType] = true;
+				}
 			}
 			else
 			{
@@ -1863,10 +1862,21 @@ class CCrmPaySystem
 			{
 				foreach ($fieldCountryIds as $countryId)
 				{
-					if ($fieldName === \Bitrix\Crm\EntityRequisite::ADDRESS)
+					if ($fieldName === EntityRequisite::ADDRESS)
 					{
-						foreach ($addressTypeList as $addressType)
+						if (!isset($addressTypesByCountry[$countryId]))
+						{
+							$addressTypesByCountry[$countryId] = EntityAddressType::getIdsByZonesOrValues(
+								[
+									EntityAddress::getZoneId(),
+									EntityRequisite::getAddressZoneByCountry($countryId)
+								]
+							);
+						}
+						foreach ($addressTypesByCountry[$countryId] as $addressType)
+						{
 							$rqFieldsByCountry[$countryId][$fieldName.'_'.$addressType] = true;
+						}
 					}
 					else
 					{
@@ -1877,19 +1887,7 @@ class CCrmPaySystem
 		}
 
 		// allowed fields
-		$fieldsAllowed = array();
-		foreach (array_merge(array_keys($rqFields), $requisite->getUserFields()) as $fieldName)
-		{
-			if ($fieldName === \Bitrix\Crm\EntityRequisite::ADDRESS)
-			{
-				foreach ($addressTypeList as $addressType)
-					$fieldsAllowed[$fieldName.'_'.$addressType] = true;
-			}
-			else
-			{
-				$fieldsAllowed[$fieldName] = true;
-			}
-		}
+		$fieldsAllowed = array_merge($rqFields, array_fill_keys($requisite->getUserFields(), true));
 
 		// used fields
 		$usedCountries = array();
@@ -1930,10 +1928,21 @@ class CCrmPaySystem
 		{
 			foreach ($fieldList as $fieldName)
 			{
-				if ($fieldName === \Bitrix\Crm\EntityRequisite::ADDRESS)
+				if ($fieldName === EntityRequisite::ADDRESS)
 				{
-					foreach ($addressTypeList as $addressType)
+					if (!isset($addressTypesByCountry[$countryId]))
+					{
+						$addressTypesByCountry[$countryId] = EntityAddressType::getIdsByZonesOrValues(
+							[
+								EntityAddress::getZoneId(),
+								EntityRequisite::getAddressZoneByCountry($countryId)
+							]
+						);
+					}
+					foreach ($addressTypesByCountry[$countryId] as $addressType)
+					{
 						$activeFieldsByCountry[$countryId][$fieldName.'_'.$addressType] = true;
+					}
 				}
 				else
 				{
@@ -1948,8 +1957,8 @@ class CCrmPaySystem
 			'RQ_COMPANY_NAME' => true,
 			'RQ_INN' => true,
 			'RQ_KPP' => true,
-			'RQ_ADDR_'.\Bitrix\Crm\EntityAddress::Primary => true,
-			'RQ_ADDR_'.\Bitrix\Crm\EntityAddress::Registered => true,
+			'RQ_ADDR_'.EntityAddressType::Primary => true,
+			'RQ_ADDR_'.EntityAddressType::Registered => true,
 			'RQ_EMAIL' => true,
 			'RQ_PHONE' => true,
 			'RQ_FAX' => true,
@@ -1974,7 +1983,7 @@ class CCrmPaySystem
 			$countryTitleList[$k] = $v;
 
 		$result[] = array('id' => '', 'title' => GetMessage('CRM_PS_SELECT_NONE'));
-		$addressPrefix = \Bitrix\Crm\EntityRequisite::ADDRESS;
+		$addressPrefix = EntityRequisite::ADDRESS;
 		$isUTFMode = \Bitrix\Crm\EntityPreset::isUTFMode();
 		foreach ($countrySort as $countryId)
 		{

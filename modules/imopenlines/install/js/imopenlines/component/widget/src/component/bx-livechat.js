@@ -805,28 +805,30 @@ Vue.component('bx-livechat',
 		},
 		onTextareaFileSelected(event)
 		{
-			let fileInput = event && event.fileInput? event.fileInput: this.storedFile;
-			if (!fileInput)
+			let fileInputEvent = null;
+			if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0)
 			{
-				return false;
+				fileInputEvent = event.fileChangeEvent;
+			}
+			else
+			{
+				fileInputEvent =  this.storedFile;
 			}
 
-			if (fileInput.files[0].size > this.application.disk.maxFileSize)
+			if (!fileInputEvent)
 			{
-				// TODO change alert to correct overlay window
-				alert(this.localize.BX_LIVECHAT_FILE_SIZE_EXCEEDED.replace('#LIMIT#', Math.round(this.application.disk.maxFileSize/1024/1024)));
 				return false;
 			}
 
 			if (!this.widget.dialog.userConsent && this.widget.common.consentUrl)
 			{
-				this.storedFile = event.fileInput;
+				this.storedFile = event.fileChangeEvent;
 				this.showConsentWidow();
 
 				return false;
 			}
 
-			this.$root.$bitrixApplication.uploadFile(fileInput);
+			this.$root.$bitrixApplication.uploadFile(fileInputEvent);
 		},
 		onTextareaAppButtonClick(event)
 		{

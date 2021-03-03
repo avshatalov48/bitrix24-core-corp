@@ -15,25 +15,17 @@ use \Bitrix\Imopenlines\Limit;
 				   data-limit="<?=!Limit::canUseVoteClient()?'Y':'N';?>"
 				   <? if ($arResult['CONFIG']['VOTE_MESSAGE'] == "Y") { ?>checked<? } ?>>
 			<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW")?>
-			<?
-			if (!Limit::canUseVoteClient() || Limit::isDemoLicense())
-			{
-				?>
+			<?if(!Limit::canUseVoteClient()):?>
 				<span class="tariff-lock"></span>
-				<?
-				if (!Limit::canUseVoteClient())
-				{
-					?>
-					<script type="text/javascript">
-						BX.bind(BX('imol_vote_message'), 'change', function(e){
-							BX('imol_vote_message').checked = false;
-							window.BX.imolTrialHandler.openPopupQueueVote();
-						});
-					</script>
-					<?
-				}
-			}
-			?>
+				<script type="text/javascript">
+					BX.bind(BX('imol_vote_message'), 'change', function(e){
+						BX('imol_vote_message').checked = false;
+						window.BX.imolTrialHandler.openPopupQueueVote();
+					});
+				</script>
+			<?elseif(Limit::isDemoLicense()):?>
+				<span class="tariff-lock" onclick="window.BX.imolTrialHandler.openPopupQueueVote(); return false;"></span>
+			<?endif;?>
 		</label>
 	</div>
 	<div id="imol_vote_message_block" <? if ($arResult['CONFIG']['VOTE_MESSAGE'] != "Y") { ?>class="invisible"<? } ?>>

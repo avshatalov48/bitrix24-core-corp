@@ -18,7 +18,7 @@ class Welcome
 	protected $chat = null;
 
 	/**
-	 * Queue constructor.
+	 * Welcome constructor.
 	 * @param Session $session
 	 */
 	function __construct($session)

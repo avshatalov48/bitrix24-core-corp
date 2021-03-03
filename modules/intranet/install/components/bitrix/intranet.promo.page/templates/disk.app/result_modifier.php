@@ -32,6 +32,6 @@ $arResult["IMAGE_PATH"] =
 
 $arResult["DOWNLOAD_PATH"] =
 	$arResult["PAGE"] === "MACOS" ?
-		"http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" :
-		"http://dl.bitrix24.com/b24/bitrix24_desktop.exe"
+		"https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" :
+		"https://dl.bitrix24.com/b24/bitrix24_desktop.exe"
 ;

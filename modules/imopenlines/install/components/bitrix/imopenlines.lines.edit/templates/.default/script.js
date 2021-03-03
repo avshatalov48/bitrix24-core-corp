@@ -2,7 +2,7 @@
 	if (!!window.BX.OpenLinesConfigEdit)
 		return;
 
-	var destinationInstance = null;
+	var selectorQueueInstance = null;
 
 	window.BX.OpenLinesConfigEdit = {
 		init : function()
@@ -44,25 +44,45 @@
 				}
 			}
 		},
-		initDestination : function(nodes, inputs, params)
+		loadKpiEntitySelector : function(params)
 		{
-			if (destinationInstance === null)
-				destinationInstance = new Destination(params);
-			destinationInstance.setInput(BX(nodes.destInputNode), inputs.destInputName);
-			destinationInstance.setUserDataInput(BX(nodes.userDataInputNode), inputs.userDataInputName);
-			destinationInstance.setDefaultUserDataInput(BX(nodes.defaultUserDataInputNode));
+			if (params)
+			{
+				if(params.firstAnswer)
+				{
+					var selectorFirstAnswer = new kpiSelector(params.firstAnswer);
+
+					selectorFirstAnswer.setInput();
+				}
+				if(params.furtherAnswer)
+				{
+					var selectorFurtherAnswer = new kpiSelector(params.furtherAnswer);
+
+					selectorFurtherAnswer.setInput();
+				}
+			}
+		},
+		initQueue : function(nodes, params)
+		{
+			if (selectorQueueInstance === null)
+			{
+				selectorQueueInstance = new Queue(params);
+			}
+			selectorQueueInstance.setInput(BX(nodes.queueInputNode));
+			selectorQueueInstance.setUserInput(BX(nodes.userInputNode));
+			selectorQueueInstance.setDefaultUserInput(BX(nodes.defaultUserInputNode));
 		},
 		formSubmitAction : function()
 		{
 			BX.OpenLinesConfigEdit.sendUsersData();
 			BX.OpenLinesConfigEdit.updateLinesList();
+			BX.SidePanel.Instance.close();
 		},
 		sendUsersData : function()
 		{
-			if (destinationInstance !== null)
+			if (selectorQueueInstance !== null)
 			{
-				var selectedUsers = destinationInstance.params.selectedForMessage;
-				BX.SidePanel.Instance.postMessage(window, 'ImOpenlines:reloadUsersList', selectedUsers);
+				BX.SidePanel.Instance.postMessage(window, 'ImOpenlines:reloadUsersList', selectorQueueInstance.selector.getDialog().getSelectedItems());
 			}
 		},
 		updateLinesList : function()
@@ -278,6 +298,10 @@
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_action_welcome'))
 		},
+		toggleAutomaticMessageBlock: function()
+		{
+			BX.animationHandler.fadeSlideToggleByClass(BX('imol_action_automatic_message'))
+		},
 		toggleAgreementBlock: function()
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_agreement_message_block'))
@@ -296,10 +320,20 @@
 		{
 			if(BX('imol_worktime_checkbox').getAttribute('data-limit') != 'Y')
 			{
-				BX.animationHandler.fadeSlideToggleByClass(BX('imol_worktime_block'));
+				if(BX('imol_worktime_checkbox').checked)
+				{
+					BX('imol_worktime_block').classList.remove("invisible");
+				}
+				else
+				{
+					BX('imol_worktime_block').classList.add("invisible");
+				}
 			}
 
-			if (BX('imol_check_available').checked || BX('imol_worktime_checkbox').checked)
+			if (
+				BX('imol_check_available').checked ||
+				BX('imol_worktime_checkbox').checked
+			)
 			{
 				BX('imol_worktime_answer_block').classList.remove("invisible");
 			}
@@ -549,6 +583,11 @@
 				BX.OpenLinesConfigEdit.toggleAutoMessageBlock
 			);
 			BX.bind(
+				BX('imol_automatic_message'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleAutomaticMessageBlock
+			);
+			BX.bind(
 				BX('imol_check_available'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleWorkTimeBlock
@@ -654,18 +693,6 @@
 				alert(BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT'));
 			}
 		},
-		openPopupOld : function(dialogId, text)
-		{
-			if (typeof(B24) != 'undefined' && typeof(B24.licenseInfoPopup) != 'undefined')
-			{
-				B24.licenseInfoPopup.show(dialogId, BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE'), text);
-			}
-			else
-			{
-				alert(text);
-			}
-		},
-
 		openPopupQueueAll : function ()
 		{
 			BX.imolTrialHandler.openPopup(BX.message('IMOL_CONFIG_EDIT_LIMIT_INFO_HELPER_MESSAGE_TO_ALL'));
@@ -928,183 +955,242 @@
 			BX.removeClass(node, 'imopenlines-page-show');
 			BX.addClass(node, 'imopenlines-page-hide');
 		},
-
 	};
 
-	var Destination = function(params, type)
+	var Queue = function(params)
 	{
-		this.p = (!!params.queue ? params.queue : {});
-		if (!!params.queue["SELECTED"])
+		if(!params.queue)
 		{
-			var res = {}, tp, j;
-			for (tp in params.queue["SELECTED"])
-			{
-				if (params.queue["SELECTED"].hasOwnProperty(tp) && typeof params.queue["SELECTED"][tp] == "object")
-				{
-					for (j in params.queue["SELECTED"][tp])
-					{
-						if (params.queue["SELECTED"][tp].hasOwnProperty(j))
-						{
-							if (tp == 'USERS')
-								res['U' + params.queue["SELECTED"][tp][j]] = 'users';
-							else if (tp == 'SG')
-								res['SG' + params.queue["SELECTED"][tp][j]] = 'sonetgroups';
-							else if (tp == 'DR')
-								res['DR' + params.queue["SELECTED"][tp][j]] = 'department';
-						}
-					}
-				}
-			}
-			this.p["SELECTED"] = res;
+			params.queue = {};
 		}
 
-		this.id = this.p['LINE_ID'];
+		this.id = params.queue['lineId'];
 		this.nodes = {};
 		this.defaultOperator = params.defaultOperator || {};
 		this.nodesType = {
-			destInput : [],
-			userDataInput : [],
-			defaultUserDataInput: ''
+			destInput : '',
+			userInput : '',
+			userInputBox : '',
+			userInputContainer : '',
+			userInputButton : '',
+			defaultUserInput: '',
 		};
-		this.ajaxUrl = '/bitrix/components/bitrix/imopenlines.lines.edit/ajax.php';
 
-		var makeDepartmentTree = function(id, relation)
-		{
-			var arRelations = {}, relId, arItems, x;
-			if (relation[id])
-			{
-				for (x in relation[id])
-				{
-					if (relation[id].hasOwnProperty(x))
-					{
-						relId = relation[id][x];
-						arItems = [];
-						if (relation[relId] && relation[relId].length > 0)
-							arItems = makeDepartmentTree(relId, relation);
-						arRelations[relId] = {
-							id: relId,
-							type: 'category',
-							items: arItems
-						};
-					}
-				}
-			}
-			return arRelations;
-		},
-		buildDepartmentRelation = function(department)
-		{
-			var relation = {}, p;
-			for(var iid in department)
-			{
-				if (department.hasOwnProperty(iid))
-				{
-					p = department[iid]['parent'];
-					if (!relation[p])
-						relation[p] = [];
-					relation[p][relation[p].length] = iid;
-				}
-			}
-			return makeDepartmentTree('DR0', relation);
+		this.popupDepartment = false;
+
+		this.params = {
+			'queueItems' : params.queue.queueItems,
+			'readOnly' : params.queue.readOnly,
+			'queueInputName' : params.queue.queueInputName,
+			'queueUserInputName' : params.queue.queueUserInputName,
+			'blockIdQueueInput' : params.queue.blockIdQueueInput,
+			'queueUsers' : params.queue.queueUsers,
+			'popupDepartment' : params.queue.popupDepartment,
+			queueUsersFields: (!!params.queue['queueUsersFields'] ? BX.clone(params.queue['queueUsersFields']) : {}),
 		};
-		if (true || type == 'users')
-		{
-			this.params = {
-				'name' : null,
-				'searchInput' : null,
-				'extranetUser' :  (this.p['EXTRANET_USER'] == "Y"),
-				'userSearchArea' : 'I',
-				'bindMainPopup' : { node : null, 'offsetTop' : '5px', 'offsetLeft': '15px'},
-				'bindSearchPopup' : { node : null, 'offsetTop' : '5px', 'offsetLeft': '15px'},
-				departmentSelectDisable : true,
-				'callback' : {
-					'select' : BX.delegate(this.select, this),
-					'unSelect' : BX.delegate(this.unSelect, this),
-					'openDialog' : BX.delegate(this.openDialog, this),
-					'closeDialog' : BX.delegate(this.closeDialog, this),
-					'openSearch' : BX.delegate(this.openDialog, this),
-					'closeSearch' : BX.delegate(this.closeSearch, this)
-				},
-				items : {
-					users : (!!this.p['USERS'] ? this.p['USERS'] : {}),
-					groups : {},
-					sonetgroups : {},
-					department : (!!this.p['DEPARTMENT'] ? this.p['DEPARTMENT'] : {}),
-					departmentRelation : (!!this.p['DEPARTMENT'] ? buildDepartmentRelation(this.p['DEPARTMENT']) : {}),
-					contacts : {},
-					companies : {},
-					leads : {},
-					deals : {}
-				},
-				itemsLast : {
-					users : (!!this.p['LAST'] && !!this.p['LAST']['USERS'] ? this.p['LAST']['USERS'] : {}),
-					sonetgroups : {},
-					department : {},
-					groups : {},
-					contacts : {},
-					companies : {},
-					leads : {},
-					deals : {},
-					crm : []
-				},
-				queueItems: (!!this.p['QUEUE_USERS_FIELDS'] ? BX.clone(this.p['QUEUE_USERS_FIELDS']) : {}),
-				itemsSelected : (!!this.p['SELECTED'] ? BX.clone(this.p['SELECTED']) : {}),
-				isCrmFeed : false,
-				destSort : (!!this.p['DEST_SORT'] ? BX.clone(this.p['DEST_SORT']) : {})
-			};
-
-			this.params.selectedForMessage = BX.clone(this.params.itemsSelected);
-		}
 	};
-	Destination.prototype =
+	Queue.prototype =
 	{
-		setInput : function(node, inputName)
+		setInput : function(node)
 		{
 			node = BX(node);
 			if (!!node && !node.hasAttribute("bx-destination-id"))
 			{
-				var id = 'destination' + ('' + new Date().getTime()).substr(6), res;
-				node.setAttribute('bx-destination-id', id);
-				res = new DestInput(id, node, inputName);
-				this.nodes[id] = node;
-				this.nodesType.destInput.push(id);
-				BX.defer_proxy(function(){
-					params = this.params;
-					params.name = res.id;
-					params.searchInput = res.nodes.input;
-					params.bindMainPopup.node = res.nodes.container;
-					params.bindSearchPopup.node = res.nodes.container;
+				var locked = false;
+				if(this.params.readOnly)
+				{
+					locked = true;
+				}
 
-					BX.SocNetLogDestination.init(params);
-				}, this)();
+				this.selector = new BX.UI.EntitySelector.TagSelector({
+					id: node.id,
+					readonly: locked,
+
+					dialogOptions: {
+						id: node.id,
+
+						context: 'IMOL_QUEUE_USERS',
+						selectedItems: this.params.queueItems,
+						events: {
+							'Item:onSelect': BX.proxy(function(event) {
+								this.addItemQueue(event);
+							}, this),
+							'Item:onDeselect': BX.proxy(function(event) {
+								this.deleteItemQueue(event);
+							}, this),
+							onShow: BX.proxy(function(event) {
+								this.nodes[this.nodesType.userInputButton].style.visibility = 'hidden';
+								event.target.tagSelector.hideAddButton();
+							}, this),
+							onHide: BX.proxy(function(event) {
+								this.nodes[this.nodesType.userInputButton].style.visibility = 'visible';
+								event.target.tagSelector.showAddButton();
+							}, this),
+						},
+						entities: [
+							{
+								id: 'user',
+								options: {
+									inviteEmployeeLink: false,
+									intranetUsersOnly: true,
+								}
+							},
+							{
+								id: 'department',
+								options: {
+									inviteEmployeeLink: false,
+									selectMode: 'usersAndDepartments',
+								}
+							},
+						],
+					}
+				});
+				this.selector.renderTo(document.getElementById(node.id));
+				this.reloadInputConfigQueue(this.selector.getDialog());
+				BX.addCustomEvent("ItemUser:onDeselect", BX.delegate(function (id) {
+					this.selector.getDialog().getItem({id: id, entityId: "user"}).deselect();
+				}, this));
+
+				this.nodes[node.id] = node;
+				this.nodesType.destInput = node.id;
 			}
 		},
-		setUserDataInput : function(node, inputName)
+		setUserInput : function(node)
 		{
 			node = BX(node);
 			if (!!node && !node.hasAttribute("bx-destination-id"))
 			{
 				var id = 'data-destination' + ('' + new Date().getTime()).substr(6), res;
 				node.setAttribute('bx-destination-id', id);
-				res = new UserDataInput(id, node, inputName);
-				this.nodes[id] = node;
-				this.nodesType.userDataInput.push(id);
-				BX.defer_proxy(function(){
-					params = this.params;
-					params.name = res.id;
-					params.searchInput = res.nodes.input;
-					params.bindMainPopup.node = res.nodes.container;
-					params.bindSearchPopup.node = res.nodes.container;
 
-					BX.SocNetLogDestination.init(params);
-				}, this)();
+				this.nodesType.userInput = id;
+				this.nodesType.userInputBox = id + '-input-box';
+				this.nodesType.userInputContainer = id + '-container';
+				this.nodesType.userInputButton = id + '-add-button';
+
+				node.appendChild(
+					BX.create(
+						"SPAN",
+						{
+							props : {
+								id: this.nodesType.userInputContainer
+							}
+						}
+					)
+				);
+				node.appendChild(
+					BX.create(
+						"SPAN",
+						{
+							props : {
+								className : "bx-destination-input-box",
+								id : this.nodesType.userInputBox
+							},
+							html : [
+								'<input type="text" value="" class="bx-destination-input" id="' + id + '-input">'
+							]
+						}
+					)
+				);
+				if(!this.params.readOnly)
+				{
+					node.appendChild(
+						BX.create(
+							"span",
+							{
+								props : {
+									className : "ui-tag-selector-item ui-tag-selector-add-button"
+								},
+								children: [
+									BX.create(
+										"a",
+										{
+											props : {
+												href: '#' + this.params.blockIdQueueInput,
+												className : "ui-tag-selector-add-button-caption",
+												id : this.nodesType.userInputButton
+											},
+											html : [
+												BX.message("LM_ADD")
+											]
+										}
+									)
+								]
+							}
+						)
+					);
+				}
+
+				this.nodes[this.nodesType.userInput] = node;
+				this.nodes[this.nodesType.userInputBox] = BX(this.nodesType.userInputBox);
+				this.nodes[this.nodesType.userInputContainer] = BX(this.nodesType.userInputContainer);
+				this.nodes[this.nodesType.userInputButton] = BX(this.nodesType.userInputButton);
+
+				if(typeof this.selector !== "undefined")
+				{
+					BX.bind(this.nodes[this.nodesType.userInputButton], 'click', BX.proxy(function(e){
+						this.selector.dialog.show();
+					}, this));
+				}
+
+				if(!this.params.readOnly)
+				{
+					BX.addCustomEvent(node, 'selectUserInput', BX.proxy(this.selectUserInput, this));
+				}
+
+				var previousNode;
+				this.params.queueUsers.forEach(BX.proxy(function (entity)
+				{
+					var queueItem = (!!this.params.queueUsersFields[entity.entityId] ? this.params.queueUsersFields[entity.entityId] : {});
+					previousNode = this.selectUserInputNodes(entity, queueItem, previousNode);
+				}, this));
 			}
 		},
-		setDefaultUserDataInput : function(node)
+
+		selectUserInput : function (item, el)
+		{
+			if(!BX.findChild(this.nodes[this.nodesType.userInputContainer], { attr : { 'data-id' : item.entityId }}, false, false))
+			{
+				var elements = BX.findChildren(el, {className: 'imopenlines-form-settings-user-input'}, true);
+				if (elements !== null)
+				{
+					var name;
+					for (var j = 0; j < elements.length; j++)
+					{
+						name = this.params.queueUserInputName+''+ '[' + item.entityId + '][' + elements[j].name + ']';
+						elements[j].setAttribute('name', name);
+					}
+				}
+
+				var avatarNode = BX.findChild(el, { attr : { 'id' : 'button-avatar-user-' + item.entityId }}, true);
+				var avatarInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-user-' + item.entityId }}, true);
+				var avatarFileIdInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-file-id-user-' + item.entityId }}, true);
+
+				if (!!avatarNode && !!avatarInput)
+				{
+					var avatarClickHandler = function() {
+						this.currentAvatarNode = avatarNode;
+						this.currentAvatarInputNode = avatarInput;
+						this.currentAvatarFileIdInputNode = avatarFileIdInput;
+						this.showAvatarPopup();
+					};
+					BX.bind(
+						avatarNode,
+						'click',
+						BX.delegate(avatarClickHandler, this)
+					);
+				}
+
+				this.nodes[this.nodesType.userInputContainer].appendChild(el);
+			}
+		},
+
+		setDefaultUserInput : function(node)
 		{
 			node = BX(node);
 			if (!!node)
 			{
-				var el = this.createDefaultUserDataInputNode(this.defaultOperator);
+				var el = this.createDefaultUserInputNode(this.defaultOperator);
 				var avatarNode = BX.findChild(el, { attr : { 'id' : 'button-avatar-user-default-user'}}, true);
 				var avatarInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-user-default-user' }}, true);
 				var avatarFileIdInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-file-id-user-default-user'}}, true);
@@ -1125,6 +1211,173 @@
 				node.appendChild(el);
 			}
 		},
+		addItemQueue : function(event)
+		{
+			this.showPopupDepartment(event.getData().item);
+			this.reloadInputConfigQueue(event.getData().item.getDialog());
+			this.reloadUserInputQueue(event.getData().item.getDialog());
+		},
+		deleteItemQueue : function(event)
+		{
+			this.reloadInputConfigQueue(event.getData().item.getDialog());
+			this.reloadUserInputQueue(event.getData().item.getDialog());
+		},
+		reloadInputConfigQueue : function(dialog)
+		{
+			var items = dialog.getSelectedItems();
+			BX.cleanNode(BX(this.params.blockIdQueueInput));
+			items.forEach(BX.delegate(function (entity, index) {
+					BX(this.params.blockIdQueueInput).appendChild(BX.create('input', {
+						props: {
+							name: this.params.queueInputName + '[' + index + '][id]',
+							value: entity.id,
+						},
+						attrs: {
+							type: 'hidden'
+						}
+					}));
+					BX(this.params.blockIdQueueInput).appendChild(BX.create('input', {
+						props: {
+							name: this.params.queueInputName + '[' +index + '][type]',
+							value: entity.entityId,
+						},
+						attrs: {
+							type: 'hidden'
+						}
+					}));
+				},
+				this));
+		},
+		reloadUserInputQueue : function(dialog)
+		{
+			var items = dialog.getSelectedItems();
+
+			var queue = [];
+			items.forEach(function (entity) {
+				queue.push({type : entity.entityId, id : entity.id})
+			});
+
+			this.sendActionRequest('getUsersQueue', {'queue': queue}, BX.proxy(this.setResultRequestQueueUsers, this));
+		},
+		showPopupDepartment : function (item)
+		{
+			var entity = {
+				'id' : item.getId(),
+				'entityId' : item.getEntityId()
+			};
+			if(
+				this.params.popupDepartment.valueDisables !== true &&
+				item.getEntityId() === 'department' &&
+				!!this.selector
+			)
+			{
+				if(!!this.popupDepartment)
+				{
+					this.popupDepartment.close();
+					this.popupDepartment.destroy();
+				}
+
+				var container = this.selector.getTag(entity).getContainer();
+				if(container)
+				{
+					var content = [
+						BX.create('DIV',
+							{
+								html: BX.message('LM_HEAD_DEPARTMENT_EXCLUDED_QUEUE'),
+								style: {margin: '10px 20px 10px 5px'}
+							}
+						),
+						BX.create('DIV',
+							{
+								style: {margin: '10px 20px 10px 5px'},
+								children: [
+									BX.create("A",
+										{
+											props: {href: 'javascript:void(0)'},
+											text: this.params.popupDepartment.titleOption,
+											events: {'click': BX.proxy(function(){
+													this.setDisablesPopupDepartment();
+												}, this)
+											}
+										}
+									)
+								]
+							}
+						)
+					];
+
+					this.popupDepartment = BX.PopupWindowManager.create('popup-department', container, {
+						content:  BX.create('DIV', {attrs: {className: 'imopenlines-hint-popup-contents'}, children: content}),
+						zIndex: 100,
+						closeIcon: {
+							opacity: 1
+						},
+						closeByEsc: true,
+						darkMode: false,
+						autoHide: true,
+						angle: true,
+						offsetLeft: 20,
+						offsetTop: 10,
+						events: {
+							onPopupClose: BX.proxy(function() {
+								this.popupDepartment.destroy();
+							}, this)
+						}
+					});
+
+					this.popupDepartment.show();
+				}
+			}
+		},
+		setDisablesPopupDepartment : function ()
+		{
+			if(!!this.popupDepartment)
+			{
+				BX.userOptions.save(
+					this.params.popupDepartment.nameOption.category,
+					this.params.popupDepartment.nameOption.name,
+					this.params.popupDepartment.nameOption.nameValue,
+					'N',
+					false
+				);
+				this.params.popupDepartment.valueDisables = true;
+				this.popupDepartment.close();
+				this.popupDepartment.destroy();
+			}
+		},
+		setResultRequestQueueUsers : function(data)
+		{
+			this.params.queueUsers = data.data;
+			var previousNode;
+			var nodesChildUserInput = BX.findChild(this.nodes[this.nodesType.userInputContainer], {}, false, true);
+
+			var nodesUserInput = {};
+			if(nodesChildUserInput)
+			{
+				nodesChildUserInput.forEach(BX.proxy(function (child)
+				{
+					nodesUserInput[child.getAttribute('data-id')] = child;
+				}, this));
+			}
+
+			this.params.queueUsers.forEach(BX.proxy(function (entity)
+			{
+				delete nodesUserInput[entity.entityId];
+
+				var queueItem = (!!this.params.queueUsersFields[entity.entityId] ? this.params.queueUsersFields[entity.entityId] : {});
+				previousNode = this.selectUserInputNodes(entity, queueItem, previousNode);
+			}, this));
+
+			if(nodesUserInput)
+			{
+				for (var userId in nodesUserInput)
+				{
+					delete this.params.queueUsersFields[userId];
+					BX.Dom.remove(nodesUserInput[userId]);
+				}
+			}
+		},
+
 		showAvatarPopup : function ()
 		{
 			if (!this.avatarPopup)
@@ -1168,163 +1421,129 @@
 
 			this.avatarPopup.close();
 		},
-		select : function(item, type, search, bUndeleted, id)
+		createUserInputNode : function(params, queueItem)
 		{
-			var type1 = type, prefix = 'S';
+			params.entityId = BX.util.htmlspecialchars(params.entityId);
+			params.department = BX.util.htmlspecialchars(params.department);
+			params.name = BX.util.htmlspecialchars(params.name);
+			params.avatar = BX.util.htmlspecialchars(params.avatar);
+			queueItem.USER_AVATAR = BX.util.htmlspecialchars(queueItem.USER_AVATAR);
+			queueItem.USER_NAME = BX.util.htmlspecialchars(queueItem.USER_NAME);
+			queueItem.USER_WORK_POSITION = BX.util.htmlspecialchars(queueItem.USER_WORK_POSITION);
+			queueItem.USER_AVATAR_ID = BX.util.htmlspecialchars(queueItem.USER_AVATAR_ID);
+			var userName = (!!queueItem.USER_NAME ? queueItem.USER_NAME : params.name),
+				userWorkPosition = (!!queueItem.USER_WORK_POSITION ? queueItem.USER_WORK_POSITION : ''),
+				userAvatar = (!!queueItem.USER_AVATAR ? queueItem.USER_AVATAR : ''),
+				userAvatarShow = (!!queueItem.USER_AVATAR ? queueItem.USER_AVATAR : params.avatar),
+				userAvatarFileId = (!!queueItem.USER_AVATAR_ID ? queueItem.USER_AVATAR_ID : null);
 
-			if (type == 'groups')
+			if(!!params.avatar)
 			{
-				type1 = 'all-users';
+				params.avatar = ' style="background-image: url(' + params.avatar.replaceAll(/ /g, '%20') + ')"';
 			}
-			else if (BX.util.in_array(type, ['contacts', 'companies', 'leads', 'deals']))
+			if(!!userAvatarShow)
 			{
-				type1 = 'crm';
-			}
-
-			if (type == 'sonetgroups')
-			{
-				prefix = 'SG';
-			}
-			else if (type == 'groups')
-			{
-				prefix = 'UA';
-			}
-			else if (type == 'users')
-			{
-				prefix = 'U';
-			}
-			else if (type == 'department')
-			{
-				prefix = 'DR';
-			}
-			else if (type == 'contacts')
-			{
-				prefix = 'CRMCONTACT';
-			}
-			else if (type == 'companies')
-			{
-				prefix = 'CRMCOMPANY';
-			}
-			else if (type == 'leads')
-			{
-				prefix = 'CRMLEAD';
-			}
-			else if (type == 'deals')
-			{
-				prefix = 'CRMDEAL';
+				userAvatarShow = ' style="background-image: url(' + userAvatarShow.replaceAll(/ /g, '%20') + ')"';
 			}
 
-			var stl = (bUndeleted ? ' bx-destination-undelete' : '');
-			stl += (type == 'sonetgroups' && typeof window['arExtranetGroupID'] != 'undefined' && BX.util.in_array(item.entityId, window['arExtranetGroupID']) ? ' bx-destination-extranet' : '');
-			var classPostfix = type1 + stl;
-			var elementParams = {
-				item: item,
-				type: type,
-				bUndeleted: bUndeleted,
-				classPostfix: classPostfix,
-				prefix: prefix
-			};
-			var queueItem = (!!this.params.queueItems[elementParams.item.id] ? this.params.queueItems[elementParams.item.id] : {});
-			this.params.selectedForMessage[elementParams.item.id] = elementParams.item;
-
-			this.selectDestInputNodes(elementParams);
-			this.selectUserDataInputNodes(elementParams, queueItem);
-		},
-		createDestInputNode : function(params)
-		{
-			var destInputTemplate = BX('dest_input_template').innerHTML;
-			var innerHtml = destInputTemplate
-				.replace(new RegExp('%data_id%', 'g'), params.item.id)
-				.replace(new RegExp('%user_name_default%', 'g'), params.item.name)
-				.replace(new RegExp('%dest_input_container_class%', 'g'), 'bx-destination bx-destination-' + params.classPostfix);
-			var el = BX.create('DIV');
-			el.innerHTML = innerHtml;
-			el = el.children[0];
-
-			if(!params.bUndeleted)
-			{
-				el.appendChild(BX.create("span", {
-					props : {
-						'className' : "imopenlines-remove-btn"
-					},
-					events : {
-						'click' : BX.delegate(
-							function(e){
-								this.deleteItem(params.item.id, params.type);
-								BX.PreventDefault(e)
-							},
-							this
-						),
-						'mouseover' : function(){
-							BX.addClass(this.parentNode, 'bx-destination-hover');
-						},
-						'mouseout' : function(){
-							BX.removeClass(this.parentNode, 'bx-destination-hover');
-						}
-					}
-				}));
-			}
-
-			return el;
-		},
-		createUserDataInputNode : function(params, queueItem)
-		{
-			var userName = (!!queueItem.USER_NAME ? BX.util.htmlspecialchars(queueItem.USER_NAME) : params.item.name),
-				userWorkPosition = (!!queueItem.USER_WORK_POSITION ? BX.util.htmlspecialchars(queueItem.USER_WORK_POSITION) : ''),
-				userAvatar = (!!queueItem.USER_AVATAR ? BX.util.htmlspecialchars(queueItem.USER_AVATAR) : params.item.avatar),
-				userAvatarFileId = (!!queueItem.USER_AVATAR_ID ? BX.util.htmlspecialchars(queueItem.USER_AVATAR_ID) : null);
-			var userDataInputTemplate = BX('user_data_input_template').innerHTML;
-			var innerHtml = userDataInputTemplate
-				.replace(new RegExp('%data_id%', 'g'), params.item.id)
-				.replace(new RegExp('%user_name_default%', 'g'), params.item.name)
-				.replace(new RegExp('%user_avatar_default%', 'g'), params.item.avatar.replace(/ /, '%20'))
+			var userInputTemplate = BX('user_data_input_template').innerHTML;
+			var innerHtml = userInputTemplate
+				.replace(new RegExp('%data_id%', 'g'), params.entityId)
+				.replace(new RegExp('%data_department%', 'g'), params.department)
+				.replace(new RegExp('%user_name_default%', 'g'), params.name)
+				.replace(new RegExp('%user_avatar_default%', 'g'), params.avatar)
 				.replace(new RegExp('%user_name%', 'g'), userName)
 				.replace(new RegExp('%user_work_position%', 'g'), userWorkPosition)
 				.replace(new RegExp('%user_avatar%', 'g'), userAvatar)
-				.replace(new RegExp('%user_avatar_show%', 'g'), userAvatar.replace(/ /, '%20'))
+				.replace(new RegExp('%user_avatar_show%', 'g'), userAvatarShow)
 				.replace(new RegExp('%user_avatar_file_id%', 'g'), userAvatarFileId)
 				.replace(new RegExp('%user_data_input_container_class%', 'g'), 'imopenlines-form-settings-user')
 				.replace(new RegExp('background-image: url\\(\\)', 'g'), '');
+
 			var el = BX.create('DIV');
 			el.innerHTML = innerHtml;
 			el = el.children[0];
 
-			if(!params.bUndeleted)
+			if(
+				(
+					!params.department ||
+					params.department == 0
+				)
+				&& !this.params.readOnly
+			)
 			{
-				el.appendChild(BX.create("span", {
-					props : {
-						'className' : "imopenlines-form-settings-user-delete"
-					},
-					events : {
-						'click' : BX.delegate(
-							function(e){
-								this.deleteItem(params.item.id, params.type);
-								BX.PreventDefault(e)
-							},
-							this
-						),
-						'mouseover' : function(){
-							BX.addClass(this.parentNode, 'bx-destination-hover');
-						},
-						'mouseout' : function(){
-							BX.removeClass(this.parentNode, 'bx-destination-hover');
-						}
-					}
-				}));
+				el.appendChild(this.createBottomDeleteUser(params.entityId));
 			}
 
 			return el;
 		},
-		createDefaultUserDataInputNode : function(item)
+		modificationUserInputNode : function(params, el)
 		{
+			params.entityId = BX.util.htmlspecialchars(params.entityId);
+			params.department = BX.util.htmlspecialchars(params.department);
+			el.setAttribute('data-department', params.department);
+
+			var bottomDeleteUser = BX.findChildByClassName(el, 'imopenlines-form-settings-user-delete');
+
+			if(
+				(
+					!params.department ||
+					params.department == 0
+				)
+				&& !this.params.readOnly
+			)
+			{
+				if(!bottomDeleteUser)
+				{
+					el.appendChild(this.createBottomDeleteUser(params.entityId));
+				}
+			}
+			else
+			{
+				if(bottomDeleteUser)
+				{
+					BX.Dom.remove(bottomDeleteUser);
+				}
+			}
+
+			return el;
+		},
+		createBottomDeleteUser : function(entityId)
+		{
+			var bottom = BX.create("span", {
+				props : {
+					'className' : "imopenlines-form-settings-user-delete"
+				},
+				events : {
+					'click' : BX.delegate(
+						function(e){
+							BX.onCustomEvent('ItemUser:onDeselect', [entityId]);
+						},
+						this
+					),
+					'mouseover' : function(){
+						BX.addClass(this.parentNode, 'bx-destination-hover');
+					},
+					'mouseout' : function(){
+						BX.removeClass(this.parentNode, 'bx-destination-hover');
+					}
+				}
+			});
+
+			return bottom;
+		},
+		createDefaultUserInputNode : function(item)
+		{
+			item.AVATAR = BX.util.htmlspecialchars(item.AVATAR);
 			var userName = (!!item.NAME ? BX.util.htmlspecialchars(item.NAME) : ''),
-				userAvatar = (!!item.AVATAR ? BX.util.htmlspecialchars(item.AVATAR) : ''),
+				userAvatar = (!!item.AVATAR ? item.AVATAR : ''),
+				userAvatarShow = (!!item.AVATAR ? ' style="background-image: url(' + item.AVATAR.replaceAll(/ /g, '%20') + ')' : ''),
 				userAvatarFileId = (!!item.AVATAR_ID ? BX.util.htmlspecialchars(item.AVATAR_ID) : null);
-			var userDataInputTemplate = BX('default_user_data_input_template').innerHTML;
-			var innerHtml = userDataInputTemplate
+			var userInputTemplate = BX('default_user_data_input_template').innerHTML;
+			var innerHtml = userInputTemplate
 				.replace(new RegExp('%user_name%', 'g'), userName)
 				.replace(new RegExp('%user_avatar%', 'g'), userAvatar)
-				.replace(new RegExp('%user_avatar_show%', 'g'), userAvatar.replace(/ /, '%20'))
+				.replace(new RegExp('%user_avatar_show%', 'g'), userAvatarShow)
 				.replace(new RegExp('%user_avatar_file_id%', 'g'), userAvatarFileId)
 				.replace(new RegExp('background-image: url\\(\\)', 'g'), '');
 			var el = BX.create('DIV');
@@ -1333,104 +1552,45 @@
 
 			return el;
 		},
-		selectDestInputNodes : function(params)
+		selectUserInputNodes : function(params, queueItem, previousNode)
 		{
-			this.nodesType.destInput.forEach(
-				BX.delegate(
-					function (id) {
-						var el = this.createDestInputNode(params);
-						BX.onCustomEvent(this.nodes[id], 'select', [params.item, el, params.prefix])
-					},
-					this
-				)
-			);
-		},
-		selectUserDataInputNodes : function(params, queueItem)
-		{
-			this.nodesType.userDataInput.forEach(
-				BX.delegate(
-					function (id) {
-						var el = this.createUserDataInputNode(params, queueItem);
-						BX.onCustomEvent(this.nodes[id], 'select', [params.item, el, params.prefix])
-					},
-					this
-				)
-			);
-		},
-		unSelect : function(item, type, search, id)
-		{
-			delete this.params.selectedForMessage[item.id];
-			this.nodesEvent('unSelect', [item]);
-		},
-		deleteItem : function(id, type)
-		{
-			for (var key in this.nodes)
+			var currentNode = BX.findChild(this.nodes[this.nodesType.userInputContainer], { attr : { 'data-id' : params.entityId }}, false, false)
+			if(!currentNode)
 			{
-				BX.SocNetLogDestination.deleteItem(id, type, key);
+				var el = this.createUserInputNode(params, queueItem);
+				BX.onCustomEvent(this.nodes[this.nodesType.userInput], 'selectUserInput', [params, el]);
 			}
-		},
-		openDialog : function(id)
-		{
-			BX.onCustomEvent(this.nodes[id], 'openDialog', []);
-		},
-		closeDialog : function(id)
-		{
-			if (!BX.SocNetLogDestination.isOpenSearch())
+			else
 			{
-				BX.onCustomEvent(this.nodes[id], 'closeDialog', []);
-				this.disableBackspace();
+				var el = this.modificationUserInputNode(params, currentNode);
 			}
-		},
-		closeSearch : function(id)
-		{
-			if (!BX.SocNetLogDestination.isOpenSearch())
-			{
-				BX.onCustomEvent(this.nodes[id], 'closeSearch', []);
-				this.disableBackspace();
-			}
-		},
-		disableBackspace : function()
-		{
-			if (BX.SocNetLogDestination.backspaceDisable || BX.SocNetLogDestination.backspaceDisable !== null)
-				BX.unbind(window, 'keydown', BX.SocNetLogDestination.backspaceDisable);
 
-			BX.bind(window, 'keydown', BX.SocNetLogDestination.backspaceDisable = function(event){
-				if (event.keyCode == 8)
-				{
-					BX.PreventDefault(event);
-					return false;
-				}
-				return true;
-			});
-			setTimeout(function(){
-				BX.unbind(window, 'keydown', BX.SocNetLogDestination.backspaceDisable);
-				BX.SocNetLogDestination.backspaceDisable = null;
-			}, 5000);
-		},
-		nodesEvent : function (event, params)
-		{
-			for (var key in this.nodes)
+			if(!previousNode)
 			{
-				BX.onCustomEvent(this.nodes[key], event, params)
+				BX.prepend(el, BX(this.nodes[this.nodesType.userInputContainer]));
 			}
+			else
+			{
+				BX.insertAfter(el, previousNode)
+			}
+
+			return el;
 		},
 		sendActionRequest: function (action, sendData, callbackSuccess, callbackFailure)
 		{
 			callbackSuccess = callbackSuccess || null;
-			callbackFailure = callbackFailure || BX.proxy(this.showErrorPopup, this);
+			callbackFailure = callbackFailure || null;/*BX.proxy(this.showErrorPopup, this)*/
 			sendData = sendData || {};
 
 			if (sendData instanceof FormData)
 			{
 				sendData.append('action', action);
 				sendData.append('configId', this.id);
-				sendData.append('sessid', BX.bitrix_sessid());
 			}
 			else
 			{
 				sendData.action = action;
 				sendData.configId = this.id;
-				sendData.sessid = BX.bitrix_sessid();
 			}
 
 			BX.ajax.runComponentAction('bitrix:imopenlines.lines.edit', action, {
@@ -1450,339 +1610,6 @@
 				var applyData = {'error': true, 'text': data.error};
 				callbackFailure.apply(this, [applyData]);
 			}, this));
-		}
-	};
-
-	var DestInput = function(id, node, inputName)
-	{
-		this.node = node;
-		this.id = id;
-		this.inputName = inputName;
-		this.node.appendChild(BX.create('SPAN', {
-			props : { className : "bx-destination-wrap" },
-			html : [
-				'<span id="', this.id, '-container"><span class="bx-destination-wrap-item"></span></span>',
-				'<span class="bx-destination-input-box" id="', this.id, '-input-box">',
-					'<input type="text" value="" class="bx-destination-input" id="', this.id, '-input">',
-				'</span>',
-				'<a href="#" class="bx-destination-add" id="', this.id, '-add-button"></a>'
-			].join('')}));
-		BX.defer_proxy(this.bind, this)();
-	};
-	DestInput.prototype =
-	{
-		bind : function()
-		{
-			this.nodes = {
-				inputBox : BX(this.id + '-input-box'),
-				input : BX(this.id + '-input'),
-				container : BX(this.id + '-container'),
-				button : BX(this.id + '-add-button')
-			};
-			BX.bind(this.nodes.input, 'keyup', BX.proxy(this.search, this));
-			BX.bind(this.nodes.input, 'keydown', BX.proxy(this.searchBefore, this));
-			BX.bind(this.nodes.button, 'click', BX.proxy(function(e){BX.SocNetLogDestination.openDialog(this.id,  {bindNode: this.nodes.inputBox}); BX.PreventDefault(e); }, this));
-			BX.bind(this.nodes.container, 'click', BX.proxy(function(e){BX.SocNetLogDestination.openDialog(this.id,  {bindNode: this.nodes.inputBox}); BX.PreventDefault(e); }, this));
-			this.onChangeDestination();
-			BX.addCustomEvent(this.node, 'select', BX.proxy(this.select, this));
-			BX.addCustomEvent(this.node, 'unSelect', BX.proxy(this.unSelect, this));
-			BX.addCustomEvent(this.node, 'delete', BX.proxy(this.delete, this));
-			BX.addCustomEvent(this.node, 'openDialog', BX.proxy(this.openDialog, this));
-			BX.addCustomEvent(this.node, 'closeDialog', BX.proxy(this.closeDialog, this));
-			BX.addCustomEvent(this.node, 'closeSearch', BX.proxy(this.closeSearch, this));
-		},
-		select : function(item, el, prefix)
-		{
-			if (BX.message('LM_BUSINESS_USERS_ON') == 'Y' && BX.message('LM_BUSINESS_USERS').split(',').indexOf(item.id) == -1)
-			{
-				BX.SocNetLogDestination.closeDialog(this.id);
-				BX.imolTrialHandler.openPopupOld('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
-				return false;
-			}
-			if(!BX.findChild(this.nodes.container, { attr : { 'data-id' : item.id }}, false, false))
-			{
-				el.appendChild(BX.create("INPUT", { props : {
-						type : "hidden",
-						name : ('CONFIG['+this.inputName+']'+ '[' + prefix + '][]'),
-						value : item.id
-					}
-				}));
-				this.nodes.container.appendChild(el);
-			}
-			this.onChangeDestination();
-		},
-		unSelect : function(item)
-		{
-			var elements = BX.findChildren(this.nodes.container, {attribute: {'data-id': ''+item.id+''}}, true);
-			if (elements !== null)
-			{
-				for (var j = 0; j < elements.length; j++)
-					BX.remove(elements[j]);
-			}
-			this.onChangeDestination();
-		},
-		onChangeDestination : function()
-		{
-			var selectedId = [];
-			var nodesButton = BX.findChildrenByClassName(this.nodes.container, "bx-destination", false);
-			for (var i = 0; i < nodesButton.length; i++)
-			{
-				selectedId.push({
-					'id' : nodesButton[i].getAttribute('data-id').substr(1),
-					'name' : nodesButton[i].innerText
-				});
-			}
-			BX.onCustomEvent('onChangeDestination', [selectedId]);
-
-			this.nodes.input.innerHTML = '';
-			this.nodes.button.innerHTML = (BX.SocNetLogDestination.getSelectedCount(this.id) <= 0 ? BX.message("LM_ADD1") : BX.message("LM_ADD2"));
-		},
-		openDialog : function()
-		{
-			BX.style(this.nodes.inputBox, 'display', 'inline-block');
-			BX.style(this.nodes.button, 'display', 'none');
-			BX.focus(this.nodes.input);
-		},
-		closeDialog : function()
-		{
-			if (this.nodes.input.value.length <= 0)
-			{
-				BX.style(this.nodes.inputBox, 'display', 'none');
-				BX.style(this.nodes.button, 'display', 'inline-block');
-				this.nodes.input.value = '';
-			}
-		},
-		closeSearch : function()
-		{
-			if (this.nodes.input.value.length > 0)
-			{
-				BX.style(this.nodes.inputBox, 'display', 'none');
-				BX.style(this.nodes.button, 'display', 'inline-block');
-				this.nodes.input.value = '';
-			}
-		},
-		searchBefore : function(event)
-		{
-			if (event.keyCode == 8 && this.nodes.input.value.length <= 0)
-			{
-				BX.SocNetLogDestination.sendEvent = false;
-				BX.SocNetLogDestination.deleteLastItem(this.id);
-			}
-			return true;
-		},
-		search : function(event)
-		{
-			if (event.keyCode == 16 || event.keyCode == 17 || event.keyCode == 18 || event.keyCode == 20 || event.keyCode == 244 || event.keyCode == 224 || event.keyCode == 91)
-				return false;
-
-			if (event.keyCode == 13)
-			{
-				BX.SocNetLogDestination.selectFirstSearchItem(this.id);
-				return true;
-			}
-			if (event.keyCode == 27)
-			{
-				this.nodes.input.value = '';
-				BX.style(this.nodes.button, 'display', 'inline');
-			}
-			else
-			{
-				BX.SocNetLogDestination.search(this.nodes.input.value, true, this.id, '', {bindNode: this.nodes.inputBox});
-			}
-
-			if (!BX.SocNetLogDestination.isOpenDialog() && this.nodes.input.value.length <= 0)
-			{
-				BX.SocNetLogDestination.openDialog(this.id, {bindNode: this.nodes.inputBox});
-			}
-			else if (BX.SocNetLogDestination.sendEvent && BX.SocNetLogDestination.isOpenDialog())
-			{
-				BX.SocNetLogDestination.closeDialog();
-			}
-			if (event.keyCode == 8)
-			{
-				BX.SocNetLogDestination.sendEvent = true;
-			}
-			return true;
-		}
-	};
-
-	var UserDataInput = function(id, node, inputName)
-	{
-		this.node = node;
-		this.id = id;
-		this.inputName = inputName;
-		this.caller = destinationInstance;
-		this.node.appendChild(
-			BX.create(
-				"SPAN",
-				{
-					props : {
-						id: this.id + "-container"
-					}
-				}
-			)
-		);
-		this.node.appendChild(
-			BX.create(
-				"SPAN",
-				{
-					props : {
-						className : "bx-destination-input-box",
-						id : this.id + "-input-box"
-					},
-					html : [
-						'<input type="text" value="" class="bx-destination-input" id="' + this.id + '-input">'
-					]
-				}
-			)
-		);
-		this.node.appendChild(
-			BX.create(
-				"A",
-				{
-					props : {
-						href: "#",
-						className : "imopenlines-form-settings-user-link",
-						id : this.id + "-add-button"
-					}
-				}
-			)
-		);
-
-		BX.defer_proxy(this.bind, this)();
-	};
-	UserDataInput.prototype =
-	{
-		bind : function()
-		{
-			this.nodes = {
-				inputBox : BX(this.id + '-input-box'),
-				//input : BX(this.id + '-input'),
-				container : BX(this.id + '-container'),
-				button : BX(this.id + '-add-button')
-			};
-			BX.bind(this.nodes.input, 'keyup', BX.proxy(this.search, this));
-			BX.bind(this.nodes.input, 'keydown', BX.proxy(this.searchBefore, this));
-			BX.bind(this.nodes.button, 'click', BX.proxy(function(e){BX.SocNetLogDestination.openDialog(this.id, {bindNode: this.nodes.button}); BX.PreventDefault(e); }, this));
-			this.onChangeDestination();
-			BX.addCustomEvent(this.node, 'select', BX.proxy(this.select, this));
-			BX.addCustomEvent(this.node, 'unSelect', BX.proxy(this.unSelect, this));
-			BX.addCustomEvent(this.node, 'delete', BX.proxy(this.delete, this));
-			BX.addCustomEvent(this.node, 'openDialog', BX.proxy(this.openDialog, this));
-			BX.addCustomEvent(this.node, 'closeDialog', BX.proxy(this.closeDialog, this));
-			BX.addCustomEvent(this.node, 'closeSearch', BX.proxy(this.closeSearch, this));
-		},
-		select : function (item, el, prefix)
-		{
-			if (BX.message('LM_BUSINESS_USERS_ON') == 'Y' && BX.message('LM_BUSINESS_USERS').split(',').indexOf(item.id) == -1)
-			{
-				BX.SocNetLogDestination.closeDialog(this.id);
-				BX.imolTrialHandler.openPopupOld('imol_queue', BX.message('LM_BUSINESS_USERS_TEXT'));
-				return false;
-			}
-			if(!BX.findChild(this.nodes.container, { attr : { 'data-id' : item.id }}, false, false))
-			{
-				var elements = BX.findChildren(el, {className: 'imopenlines-form-settings-user-input'}, true);
-				if (elements !== null)
-				{
-					var name;
-					for (var j = 0; j < elements.length; j++)
-					{
-						name = 'CONFIG['+this.inputName+']'+ '[' + prefix + '][' + item.id + '][' + elements[j].name + ']';
-						elements[j].setAttribute('name', name);
-					}
-				}
-
-				var avatarNode = BX.findChild(el, { attr : { 'id' : 'button-avatar-user-' + item.id }}, true);
-				var avatarInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-user-' + item.id }}, true);
-				var avatarFileIdInput = BX.findChild(el, { attr : { 'id' : 'input-avatar-file-id-user-' + item.id }}, true);
-				if (!!avatarNode && !!avatarInput)
-				{
-					var avatarClickHandler = function() {
-						this.currentAvatarNode = avatarNode;
-						this.currentAvatarInputNode = avatarInput;
-						this.currentAvatarFileIdInputNode = avatarFileIdInput;
-						this.showAvatarPopup();
-					};
-					BX.bind(
-						avatarNode,
-						'click',
-						BX.delegate(avatarClickHandler, this)
-					);
-				}
-
-				this.nodes.container.appendChild(el);
-			}
-			this.onChangeDestination();
-		},
-		unSelect : function (item)
-		{
-			var elements = BX.findChildren(this.nodes.container, {attribute: {'data-id': ''+item.id+''}}, true);
-			if (elements !== null)
-			{
-				for (var j = 0; j < elements.length; j++)
-					BX.remove(elements[j]);
-			}
-			this.onChangeDestination();
-		},
-		onChangeDestination : function()
-		{
-			var selectedId = [];
-			var nodesButton = BX.findChildrenByClassName(this.nodes.container, "imopenlines-form-settings-user", false);
-			for (var i = 0; i < nodesButton.length; i++)
-			{
-				selectedId.push({
-					'id' : nodesButton[i].getAttribute('data-id').substr(1),
-					'name' : nodesButton[i].innerText
-				});
-			}
-			BX.onCustomEvent('onChangeDestination', [selectedId]);
-
-			//this.nodes.input.innerHTML = '';
-			this.nodes.button.innerHTML = (BX.SocNetLogDestination.getSelectedCount(this.id) <= 0 ? BX.message("LM_ADD1") : BX.message("LM_ADD2"));
-		},
-		showAvatarPopup : function ()
-		{
-			if (!this.avatarPopup)
-			{
-				var contentNode = BX('imol_user_data_avatar_upload');
-				this.avatarEditor = new ImolAvatarEditor({
-					'caller': this.caller,
-					'context': contentNode
-				});
-				BX.addCustomEvent(this.avatarEditor, 'onClose', BX.delegate(this.showAvatarPopup, this));
-				BX.addCustomEvent(this.avatarEditor, 'onSelect', BX.delegate(this.onSelectAvatar, this));
-
-				this.avatarPopup = BX.PopupWindowManager.create(
-					'imol_user_edit_avatar',
-					null,
-					{
-						autoHide: true,
-						lightShadow: true,
-						overlay: true,
-						closeIcon: true,
-						closeByEsc: true,
-						angle: true,
-						content: contentNode
-					}
-				);
-			}
-
-			this.avatarEditor.markCurrentAvatar(this.currentAvatarInputNode.value);
-			this.avatarPopup.setBindElement(this.currentAvatarNode);
-			this.avatarPopup.show();
-		},
-		onSelectAvatar: function (path, fileId)
-		{
-			if (path)
-			{
-				this.currentAvatarNode.style['background-image'] = "url(" + path + ")";
-				this.currentAvatarInputNode.value = path;
-
-				this.currentAvatarFileIdInputNode.value = fileId;
-			}
-
-			this.avatarPopup.close();
 		}
 	};
 
@@ -1990,7 +1817,6 @@
 				}
 
 				this.initAvatar(node);
-				//this.initCarousel();
 				this.selectAvatar(node);
 				this.hideLoader();
 			}
@@ -1998,25 +1824,24 @@
 
 		onFileRemoved: function(data)
 		{
-			if (data.fileId && data.fileId > 0)
+			if (data.data.fileId && data.data.fileId > 0)
 			{
-				var node = this.getUserAvatarNodeByFileId(data.fileId);
+				var node = this.getUserAvatarNodeByFileId(data.data.fileId);
 			}
 
 			if (data.error)
 			{
-				this.caller.showErrorPopup(data);
+				//this.caller.showErrorPopup(data);
 				if (node)
 				{
 					node.style.display = '';
 				}
 			}
-			else
+			else if(node)
 			{
 				BX.remove(node);
 			}
 
-			this.initCarousel();
 			this.hideLoader();
 		},
 
@@ -2251,4 +2076,103 @@
 			}
 		},
 	};
+
+	var kpiSelector = function(params)
+	{
+		this.params = {
+			id : params.id,
+			inputName : params.inputName,
+			inputId : params.inputId,
+			list : params.list,
+			readOnly : params.readOnly,
+		};
+
+		this.nodesType = {
+			userInput : this.params.id,
+			userInputContainer : this.params.inputId,
+		};
+		this.nodes = {};
+		this.nodes[this.nodesType.userInput] = BX(this.params.id);
+		this.nodes[this.nodesType.userInputContainer] = BX(this.params.inputId);
+	};
+	kpiSelector.prototype =
+		{
+			setInput: function ()
+			{
+				var locked = false;
+				if(this.params.readOnly)
+				{
+					locked = true;
+				}
+
+				this.selector = new BX.UI.EntitySelector.TagSelector({
+					id: this.nodesType.userInput,
+					readonly: locked,
+
+					dialogOptions: {
+						id: this.nodesType.userInput,
+						context: 'IMOL_KPI_USERS',
+
+						preselectedItems: this.prepareItems(),
+
+						events: {
+							'Item:onSelect': BX.proxy(function() {
+								this.reloadInputKpi();
+							}, this),
+							'Item:onDeselect': BX.proxy(function() {
+								this.reloadInputKpi();
+							}, this),
+							//TODO: 280454 (b416c3108697)
+							'onLoad': BX.proxy(function() {
+								this.reloadInputKpi();
+							}, this),
+						},
+						entities: [
+							{
+								id: 'user',
+								options: {
+									inviteEmployeeLink: false,
+									intranetUsersOnly: true,
+								}
+							},
+							{
+								id: 'department',
+								options: {
+									inviteEmployeeLink: false,
+									selectMode: 'usersOnly',
+								}
+							},
+						]
+					}
+				});
+				this.selector.renderTo(this.nodes[this.nodesType.userInput]);
+			},
+			prepareItems: function ()
+			{
+				var preselectedItems = [];
+
+				this.params.list.forEach(function (item) {
+					preselectedItems.push(['user', item])
+				})
+
+				return preselectedItems;
+			},
+			reloadInputKpi : function()
+			{
+				var items = this.selector.getDialog().getSelectedItems();
+				BX.cleanNode(this.nodes[this.nodesType.userInputContainer]);
+				items.forEach(BX.delegate(function (entity) {
+						this.nodes[this.nodesType.userInputContainer].appendChild(BX.create('input', {
+							props: {
+								name: this.params.inputName,
+								value: entity.id,
+							},
+							attrs: {
+								type: 'hidden'
+							}
+						}));
+					},
+					this));
+			},
+		}
 })(window);

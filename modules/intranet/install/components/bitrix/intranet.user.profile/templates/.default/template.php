@@ -398,7 +398,7 @@ if (
 				"ENTITY_DATA" => $arResult["FormData"],
 				"ENABLE_SECTION_EDIT" => false,
 				"ENABLE_SECTION_CREATION" => false,
-				"ENABLE_SECTION_DRAG_DROP" => false,
+				"ENABLE_SECTION_DRAG_DROP" => true,
 				"FORCE_DEFAULT_SECTION_NAME" => true,
 				"ENABLE_PERSONAL_CONFIGURATION_UPDATE" => $arResult["EnablePersonalConfigurationUpdate"],
 				"ENABLE_COMMON_CONFIGURATION_UPDATE" => $arResult["EnableCommonConfigurationUpdate"],
@@ -408,6 +408,7 @@ if (
 				"ENABLE_USER_FIELD_MANDATORY_CONTROL" => $arResult["EnableUserFieldMandatoryControl"],
 				"USER_FIELD_ENTITY_ID" => $arResult["UserFieldEntityId"],
 				"USER_FIELD_PREFIX" => $arResult["UserFieldPrefix"],
+				"ENABLE_FIELD_DRAG_DROP" => true,
 				"USER_FIELD_CREATE_SIGNATURE" => $arResult["UserFieldCreateSignature"],
 				"SERVICE_URL" => POST_FORM_ACTION_URI.'&'.bitrix_sessid_get(),
 				"COMPONENT_AJAX_DATA" => array(

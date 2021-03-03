@@ -3703,10 +3703,20 @@ if(typeof BX.Crm.EntityEditorSubsection === "undefined")
 
 		this._wrapper.appendChild(this._contentContainer);
 
+		var isFieldContextMenuEnabled = false;
+
 		//Layout fields
 		for(var i = 0, l = this._fields.length; i < l; i++)
 		{
 			this.layoutChild(this._fields[i]);
+			if(!isFieldContextMenuEnabled && this._fields[i].isContextMenuEnabled())
+			{
+				isFieldContextMenuEnabled = true;
+			}
+		}
+		if(isFieldContextMenuEnabled)
+		{
+			BX.addClass(this._contentContainer, "ui-entity-editor-section-content-padding-right");
 		}
 
 		this._addChildButton = this._createChildButton = null;
@@ -8564,6 +8574,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					clientEditorEnabled: this._schemeElement.getData().hasOwnProperty('clientEditorFieldsParams'),
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.company),
 					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.company),
+					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute())
 				}
 			)
@@ -8674,6 +8685,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					clientEditorEnabled: this._schemeElement.getData().hasOwnProperty('clientEditorFieldsParams'),
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.contact),
 					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.contact),
+					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute())
 				}
 			)
@@ -9093,6 +9105,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					'BANK_DETAIL_ID': BX.prop.getInteger(eventArgs, "bankDetailId", 0)
 				}
 			);
+
+			this._model.setField("REQUISITE_BINDING", null,  { enableNotification: false });
 		}
 	};
 	// save changes in requisites in model

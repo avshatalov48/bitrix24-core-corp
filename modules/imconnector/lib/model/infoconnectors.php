@@ -28,35 +28,23 @@ class InfoConnectorsTable extends Entity\DataManager
 	 * Returns entity map definition
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getMap(): array
 	{
-		return array(
-			new  Entity\IntegerField('LINE_ID', array(
+		return [
+			new Entity\IntegerField('LINE_ID', [
 				'primary' => true
-			)),
-			new  Entity\TextField('DATA', array(
+			]),
+			new Entity\TextField('DATA', [
 				'serialized' => true,
-			)),
-			new  Entity\DatetimeField('EXPIRES', array(
+			]),
+			new Entity\DatetimeField('EXPIRES', [
 				'default_value' => new Type\DateTime,
-			)),
-			new  Entity\StringField('HASH', array(
-				'validation' => array(__CLASS__, 'validateVarChar')
-			)),
-		);
-	}
-
-	/**
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 */
-	public static function validateVarChar(): array
-	{
-		return array(
-			new Length(null, 32),
-		);
+			]),
+			new Entity\StringField('DATA_HASH', [
+				'size' => 32
+			]),
+		];
 	}
 }

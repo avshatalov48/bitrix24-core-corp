@@ -140,9 +140,16 @@ export class EntityEditorClientRequisites
 
 				if (!Type.isNull(addressValue) && Object.keys(addressValue).length)
 				{
+					let countryId = 0;
+					if (defaultRequisite)
+					{
+						countryId = parseInt(defaultRequisite.getPresetCountryId());
+					}
 					this._addressField = EntityEditorBaseAddressField.create(this._entityInfo.getId(), {
 						showFirstItemOnly: true,
-						showAddressTypeInViewMode: true
+						showAddressTypeInViewMode: true,
+						addressZoneConfig: BX.prop.getObject(this._addressConfig, "addressZoneConfig", {}),
+						countryId: countryId
 					});
 					this._addressField.setMultiple(true);
 					this._addressField.setTypesList(BX.prop.getObject(this._addressConfig, "types", {}));
@@ -365,6 +372,8 @@ export class EntityEditorClientRequisites
 	{
 		let eventData = event.getData();
 		this._requisiteList.setSelected(eventData.id, eventData.bankDetailId);
+
+		this.doAddressLayout();
 
 		let newSelectedRequisite = this._requisiteList.getSelected();
 		if (newSelectedRequisite)

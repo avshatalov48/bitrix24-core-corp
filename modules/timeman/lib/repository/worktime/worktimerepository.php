@@ -204,6 +204,8 @@ class WorktimeRepository
 			->where('USER_ID', $userId)
 			->addOrder('ID', 'DESC')
 			->setLimit(1)
+			->setCacheTtl(3600 * 12)
+			->cacheJoins(true)
 			->exec()
 			->fetchObject();
 	}

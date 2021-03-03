@@ -191,7 +191,7 @@
 	flex: 1 1 auto;
 	margin: 0 2% 0 0;
 	padding: 13px 12px 13px 12px;
-	max-width: 55%;
+	max-width: 70%;
 	height: 62px;
 	border-radius: 3px;
 	border: 1px solid rgba(47,198,246,.32);
@@ -213,10 +213,9 @@
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
-	margin: 0 0 0 2%;
+	margin: 0 0 0 5px;
 	white-space: nowrap;
-	/*text-overflow: ellipsis;*/
-	/*overflow: hidden;*/
+	max-width: calc(100% - 39px);
 }
 
 .imconnector-field-button-subtitle {
@@ -237,7 +236,7 @@
 .imconnector-field-button-icon {
 	margin: 0 2% 0 0;
 	min-width: 33px;
-	width: 17%;
+	width: 34px;
 	height: 34px;
 	display: inline-block;
 	background-position: center;
@@ -604,6 +603,7 @@
 
 	-webkit-transition: opacity 0.2s linear;
 	transition: opacity 0.2s linear;
+	margin: 10px;
 }
 
 .imconnector-line-status-active:before {
@@ -652,11 +652,11 @@
 }
 
 .imconnector-field-user-item .imconnector-close-icon {
-	display: none;
+	visibility:hidden;
 }
 
 .imconnector-field-user-item:hover .imconnector-close-icon {
-	display: block;
+	visibility:visible;
 }
 
 .imconnector-field-user-box.box-rights {
@@ -686,4 +686,8 @@ select::-ms-expand {
 
 select {
 	-moz-appearance: none;
+}
+
+.imconnector-hint-popup-contents {
+	padding: 10px;
 }

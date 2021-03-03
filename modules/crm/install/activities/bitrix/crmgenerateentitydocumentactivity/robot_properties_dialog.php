@@ -55,7 +55,9 @@ foreach($selectFieldNames as $fieldName): ?>
         <span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($map[$fieldName]['Name'])?>: </span>
         <select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>" id="id_<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>">
             <option value=""></option>
-            <?foreach ($map[$fieldName]['Options'] as $value => $optionLabel):?>
+            <?php
+			$map[$fieldName]['Options'] = $map[$fieldName]['Options'] ?? [];
+            foreach ($map[$fieldName]['Options'] as $value => $optionLabel):?>
                 <option value="<?=htmlspecialcharsbx($value)?>"
                         <?=($value == $dialog->getCurrentValue($map[$fieldName]['FieldName'])) ? ' selected' : ''?>
                 ><?=htmlspecialcharsbx($optionLabel)?></option>

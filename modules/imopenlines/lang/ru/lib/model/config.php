@@ -5,6 +5,7 @@ $MESS["CONFIG_ENTITY_ACTIVE_FIELD"] = "Активность";
 $MESS["CONFIG_ENTITY_CRM_FIELD"] = "Проверка по базе CRM";
 $MESS["CONFIG_ENTITY_CRM_TRANSFER_CHANGE_FIELD"] = "Изменение ответственного при перенаправлении";
 $MESS["CONFIG_ENTITY_CRM_FORWARD_FIELD"] = "Перенаправление на ответственного CRM";
+$MESS["CONFIG_ENTITY_CRM_CHAT_TRACKER_FIELD"] = "Чат трекер";
 $MESS["CONFIG_ENTITY_CRM_SOURCE_FIELD"] = "Источник звонка для сущности CRM";
 $MESS["CONFIG_ENTITY_CRM_CREATE_FIELD"] = "Правило при отсутствии записи в CRM";
 $MESS["CONFIG_ENTITY_CRM_CREATE_SECOND_FIELD"] = "Вторичное правило при отсутствии записи в CRM";

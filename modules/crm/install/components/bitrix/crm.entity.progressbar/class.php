@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 CModule::IncludeModule("crm");
+
+use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -243,7 +245,11 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 		$isPassed = true;
 
 		if ($this->entityTypeID === CCrmOwnerType::DealRecurring)
+		{
 			$isPassed = false;
+		}
+
+		$infos = PhaseColorScheme::fillDefaultColors($infos);
 
 		foreach($infos as $info)
 		{

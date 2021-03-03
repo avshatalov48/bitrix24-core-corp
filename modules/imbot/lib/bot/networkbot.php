@@ -26,4 +26,10 @@ interface NetworkBot extends ChatBot
 	 */
 	public static function getBotCode();
 
+	/**
+	 * Is bot enabled.
+	 *
+	 * @return bool
+	 */
+	public static function isEnabled();
 }

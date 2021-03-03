@@ -223,7 +223,7 @@ else
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID')?>:
 						</div>
 						<span class="imconnector-field-box-entity-link">
-						<?=$arResult['FORM']['business_id']?>
+						<?=htmlspecialcharsbx($arResult['FORM']['business_id'])?>
 						</span>
 					</div>
 
@@ -233,7 +233,7 @@ else
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_NAME')?>:
 						</div>
 						<span class="imconnector-field-box-entity-link">
-						<?=$arResult['FORM']['business_name']?>
+						<?=htmlspecialcharsbx($arResult['FORM']['business_name'])?>
 						</span>
 					</div>
 					<?endif;?>
@@ -245,8 +245,8 @@ else
 						<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
 						<input type="hidden" name="<?=$arResult['CONNECTOR']?>_active" value="true">
 						<?=bitrix_sessid_post();?>
-						<input type="hidden" name="business_id" value="<?=$arResult['FORM']['business_id']?>">
-						<input type="hidden" name="business_name" value="<?=$arResult['FORM']['business_name']?>">
+						<input type="hidden" name="business_id" value="<?=htmlspecialcharsbx($arResult['FORM']['business_id'])?>">
+						<input type="hidden" name="business_name" value="<?=htmlspecialcharsbx($arResult['FORM']['business_name'])?>">
 
 						<?
 						$buttonName = Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT');
@@ -280,7 +280,7 @@ else
 							   class="imconnector-field-control-input"
 							   id="imconnector-imessage-business-id"
 							   name="business_id"
-							   value="<?=$arResult['FORM']['business_id']?>"
+							   value="<?=htmlspecialcharsbx($arResult['FORM']['business_id'])?>"
 							   placeholder="<?=$placeholder?>">
 						<button class="ui-btn ui-btn-success"
 								id="webform-small-button-have-bot"

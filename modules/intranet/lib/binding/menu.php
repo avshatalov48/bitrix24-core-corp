@@ -67,6 +67,47 @@ class Menu
 		'USER_PROFILE_TOOLBAR' => 'USER_DETAIL@TOP_MENU'
 	];
 
+	private const REST_PLACEMENT_SCOPE = [
+		'crm' => [
+			'CRM_DEAL_LIST_TOOLBAR',
+			'CRM_LEAD_LIST_TOOLBAR',
+			'CRM_CONTACT_LIST_TOOLBAR',
+			'CRM_COMPANY_LIST_TOOLBAR',
+			'CRM_INVOICE_LIST_TOOLBAR',
+			'CRM_QUOTE_LIST_TOOLBAR',
+			'CRM_ORDER_LIST_TOOLBAR',
+			'CRM_DEAL_DETAIL_TOOLBAR',
+			'CRM_LEAD_DETAIL_TOOLBAR',
+			'CRM_CONTACT_DETAIL_TOOLBAR',
+			'CRM_COMPANY_DETAIL_TOOLBAR',
+			'CRM_INVOICE_DETAIL_TOOLBAR',
+			'CRM_QUOTE_DETAIL_TOOLBAR',
+			'CRM_DEAL_DOCUMENTGENERATOR_BUTTON',
+			'CRM_LEAD_DOCUMENTGENERATOR_BUTTON',
+			'CRM_CONTACT_DOCUMENTGENERATOR_BUTTON',
+			'CRM_COMPANY_DOCUMENTGENERATOR_BUTTON',
+			'CRM_INVOICE_DOCUMENTGENERATOR_BUTTON',
+			'CRM_QUOTE_DOCUMENTGENERATOR_BUTTON',
+			'CRM_DEAL_ACTIVITY_TIMELINE_MENU',
+			'CRM_LEAD_ACTIVITY_TIMELINE_MENU',
+			'CRM_LEAD_ROBOT_DESIGNER_TOOLBAR',
+			'CRM_DEAL_ROBOT_DESIGNER_TOOLBAR',
+			'CRM_ANALYTICS_TOOLBAR',
+			'CRM_FUNNELS_TOOLBAR',
+		],
+		'task' => [
+			'TASK_USER_LIST_TOOLBAR',
+			'TASK_GROUP_LIST_TOOLBAR',
+			'TASK_ROBOT_DESIGNER_TOOLBAR',
+		],
+		'user' => [
+			'USER_PROFILE_MENU',
+			'USER_PROFILE_TOOLBAR',
+		],
+		'sonet_group' => [
+			'SONET_GROUP_TOOLBAR',
+		],
+	];
 	/**
 	 * During building menu items will be set to true for specific links.
 	 * @var bool
@@ -169,9 +210,12 @@ class Menu
 	public static function getRestMap(): array
 	{
 		$map = [];
-		foreach (self::REST_PLACEMENT_MAP as $key => $foo)
+		foreach (self::REST_PLACEMENT_SCOPE as $scope => $placementList)
 		{
-			$map[$key] = [];
+			foreach ($placementList as $placement)
+			{
+				$map[$scope][$placement] = [];
+			}
 		}
 
 		return $map;
@@ -622,7 +666,7 @@ class Menu
 					}
 					$returnItems[] = [
 						'href' => '/marketplace/?placement=' . $placementMap[$marketCode],
-						'text' => Loc::getMessage('INTRANET_BIND_MENU_APPS')
+						'text' => Loc::getMessage('INTRANET_BIND_MENU_APPS_2')
 					];
 				}
 				if ($inline)

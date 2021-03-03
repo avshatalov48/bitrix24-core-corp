@@ -61,6 +61,16 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			$params = [];
 		}
 
+		$params['PATH_TO_PRODUCT_LIST'] = (
+			(
+				isset($params['PATH_TO_PRODUCT_LIST'])
+				&& is_string($params['PATH_TO_PRODUCT_LIST'])
+				&& $params['PATH_TO_PRODUCT_LIST'] !== ''
+			)
+			? $params['PATH_TO_PRODUCT_LIST'] :
+			'#SITE_DIR#crm/product/index.php'
+		);
+
 		return $params;
 	}
 
@@ -202,6 +212,10 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	protected function parseComponentVariables(): void
 	{
+		if (!\Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		{
+			LocalRedirect(CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_PRODUCT_LIST']));
+		}
 		$this->arParams['SEF_MODE'] = 'Y';
 		$templateUrls = $this->getTemplateUrls();
 		if ($this->arParams['SEF_MODE'] === 'Y')
@@ -346,7 +360,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					'CACHE_TYPE' => 'N',
 					'PAGE_CONSTANTS' => [
 						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID
+						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+						'SELF_FOLDER_URL' => '/shop/settings/'
 					]
 				];
 				break;
@@ -363,7 +378,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					'CACHE_TYPE' => 'N',
 					'PAGE_CONSTANTS' => [
 						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID
+						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+						'SELF_FOLDER_URL' => '/shop/settings/'
 					]
 				];
 				break;
@@ -377,7 +393,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					'CACHE_TYPE' => 'N',
 					'PAGE_CONSTANTS' => [
 						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID
+						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+						'SELF_FOLDER_URL' => '/shop/settings/'
 					]
 				];
 				break;
@@ -391,7 +408,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					'CACHE_TYPE' => 'N',
 					'PAGE_CONSTANTS' => [
 						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID
+						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+						'SELF_FOLDER_URL' => '/shop/settings/'
 					]
 				];
 				break;
@@ -405,7 +423,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 					'CACHE_TYPE' => 'N',
 					'PAGE_CONSTANTS' => [
 						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID
+						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+						'SELF_FOLDER_URL' => '/shop/settings/'
 					]
 				];
 				break;
@@ -421,7 +440,6 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 		return $result;
 	}
-
 
 	/**
 	 * @return void

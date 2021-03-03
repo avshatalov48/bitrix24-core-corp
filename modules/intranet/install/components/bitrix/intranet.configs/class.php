@@ -848,6 +848,11 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 		}
 
+		if(isset($_POST['yandex_map_api_key']))
+		{
+			\Bitrix\Main\Config\Option::set('fileman', 'yandex_map_api_key', $_POST['yandex_map_api_key']);
+		}
+
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{
 			if($this->arResult['IS_BITRIX24'])
@@ -864,6 +869,8 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				\Bitrix\Main\Config\Option::set('fileman', 'google_map_api_key', $_POST['google_api_key']);
 			}
 		}
+
+
 
 		//gdpr
 		if ($this->arResult["IS_BITRIX24"])
@@ -1128,6 +1135,8 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		}
 
 		$this->arResult['STRESSLEVEL_AVAILABLE'] = COption::GetOptionString("intranet", "stresslevel_available", "Y");
+
+		$this->arResult['YANDEX_MAP_API_KEY'] = \Bitrix\Main\Config\Option::get('fileman', 'yandex_map_api_key');
 
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{

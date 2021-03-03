@@ -365,6 +365,25 @@ if(Loader::includeModule('rest'))
 					$result = array(
 						'result' => true
 					);
+
+					if ($row['CODE'])
+					{
+						$id = uniqid($row['CODE'], true);
+						AddEventToStatFile(
+							'imconnector',
+							'registerRestConnector',
+							$id,
+							$row['CODE'],
+							'appCode'
+						);
+						AddEventToStatFile(
+							'imconnector',
+							'registerRestConnector',
+							$id,
+							$registerParams['ID'],
+							'connectorCode'
+						);
+					}
 				}
 				else
 				{

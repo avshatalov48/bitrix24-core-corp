@@ -31,4 +31,4 @@ $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_RETURNED_FINISH_TITLE"] = "Водител
 $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_RETURN"] = "ВОЗВРАТ";
 $MESS["TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED"] = "не получена";
 $MESS["TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED_FULL"] = "Расчетная стоимость не получена";
-$MESS["TIMELINE_DELIVERY_TAXI_PAID_CANCELLATION"] = "Платная отмена заказа. Подробности можно узнать в личном кабинете Яндекс.Такси.";
+$MESS["TIMELINE_DELIVERY_TAXI_PAID_CANCELLATION"] = "Платная отмена заказа. Подробности можно узнать в личном кабинете Яндекс Go.";

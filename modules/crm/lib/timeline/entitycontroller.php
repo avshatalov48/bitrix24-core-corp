@@ -146,4 +146,23 @@ class EntityController extends Controller
 			}
 		}
 	}
+
+	protected static function getDefaultAuthorId()
+	{
+		$by = 'id';
+		$sort = 'asc';
+		$user = \CUser::GetList(
+			$by,
+			$sort,
+			['GROUPS_ID' => [1], 'ACTIVE' => 'Y'],
+			['FIELDS' => ['ID'], 'NAV_PARAMS' => ['nTopCount' => 1]]
+		)->fetch();
+
+		if (is_array($user))
+		{
+			return intval($user['ID']);
+		}
+
+		return 0;
+	}
 }

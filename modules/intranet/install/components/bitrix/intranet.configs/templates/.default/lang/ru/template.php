@@ -221,4 +221,5 @@ $MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "Для работы с картам�
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD2"] = "Ключ с правами на Google Maps JavaScript API, Places API, Geocoding API для использования в браузере пользователя";
 $MESS["CONFIG_NAME_FILEMAN_GOOGLE_API_KEY"] = "Ключ для интеграции с Google Maps модуля Управление структурой";
 $MESS["CONFIG_LOCATION_SOURCE_OSM_SERVICE_URL"] = "Адрес сервиса";
+$MESS["CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY"] = "Ключ для интеграции с Yandex Maps";
 ?>

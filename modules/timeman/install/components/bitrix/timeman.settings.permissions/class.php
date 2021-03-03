@@ -45,12 +45,12 @@ class TimemanSettingsPermissionsComponent extends \Bitrix\Timeman\Component\Base
 			$this->showError(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_PERMISSIONS_ERROR'));
 			return;
 		}
-		$tasks = \CTask::getList(['ID' => 'asc'], ['MODULE_ID' => 'timeman', 'SYS' => 'N']);
+		$tasks = \CTask::getList(['ID' => 'asc'], ['MODULE_ID' => 'timeman']);
 		$this->arResult['tasks'] = [];
 
 		while ($task = $tasks->fetch())
 		{
-			$name = Loc::getMessage('TASK_NAME_'.mb_strtoupper($task['NAME'])) ?: $task['NAME'];
+			$name = Loc::getMessage('TASK_NAME_'.mb_strtoupper($task['NAME']).'_CONVERTED_EDITABLE') ?: $task['NAME'];
 			$this->arResult['tasks'][] = [
 				'ID' => $task['ID'],
 				'NAME' => $name,
@@ -112,10 +112,6 @@ class TimemanSettingsPermissionsComponent extends \Bitrix\Timeman\Component\Base
 				$codeDescription = $accessCodes[$taskAccessCode['ACCESS_CODE']];
 				$taskAccessCodes[$id]['ACCESS_PROVIDER'] = $codeDescription['provider'];
 				$taskAccessCodes[$id]['ACCESS_NAME'] = $codeDescription['name'];
-			}
-			else
-			{
-				$taskAccessCodes[$id]['ACCESS_NAME'] = Loc::getMessage('TIMEMAN_SETTINGS_PERMS_UNKNOWN_ACCESS_CODE');
 			}
 		}
 		$this->arResult['taskAccessCodes'] = $taskAccessCodes;

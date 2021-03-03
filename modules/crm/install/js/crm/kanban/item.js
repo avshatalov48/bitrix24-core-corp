@@ -666,10 +666,10 @@ BX.CRM.Kanban.Item.prototype = {
 				text: BX.message("CRM_KANBAN_REST_DEMO_CRM_MIGRATION")
 			},
 			{
-				text: BX.message("CRM_KANBAN_REST_DEMO_MARKET")
+				text: BX.message("CRM_KANBAN_REST_DEMO_MARKET_2")
 			},
 			{
-				text: BX.message("CRM_KANBAN_REST_DEMO_PUBLICATION")
+				text: BX.message("CRM_KANBAN_REST_DEMO_PUBLICATION_2")
 			}
 		];
 

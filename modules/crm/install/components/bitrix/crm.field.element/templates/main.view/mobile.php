@@ -78,6 +78,13 @@ $nodes = [$fieldName];
 ?>
 
 <script>
+	BX.message({
+		"CRM_ENTITY_TYPE_COMPANY": '<?=GetMessageJS('CRM_ENTITY_TYPE_COMPANY')?>',
+		"CRM_ENTITY_TYPE_DEAL": '<?=GetMessageJS('CRM_ENTITY_TYPE_DEAL')?>',
+		"CRM_ENTITY_TYPE_CONTACT": '<?=GetMessageJS('CRM_ENTITY_TYPE_CONTACT')?>',
+		"CRM_ENTITY_TYPE_ORDER": '<?=GetMessageJS('CRM_ENTITY_TYPE_ORDER')?>',
+		"CRM_ENTITY_TYPE_LEAD": '<?=GetMessageJS('CRM_ENTITY_TYPE_LEAD')?>',
+	});
 	BX.ready(function ()
 	{
 		new BX.Mobile.Field.ElementCrm(

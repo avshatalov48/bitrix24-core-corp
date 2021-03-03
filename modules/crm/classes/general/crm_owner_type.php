@@ -2884,6 +2884,46 @@ class CCrmOwnerTypeAbbr
 		}
 	}
 
+	/**
+	 * @param string $typeName
+	 * @return string
+	 */
+	public static function ResolveByTypeName(string $typeName): string
+	{
+		if ($typeName === '')
+		{
+			return self::Undefined;
+		}
+
+		switch($typeName)
+		{
+			case CCrmOwnerType::LeadName:
+				return self::Lead;
+			case CCrmOwnerType::DealName:
+				return self::Deal;
+			case CCrmOwnerType::ContactName:
+				return self::Contact;
+			case CCrmOwnerType::CompanyName:
+				return self::Company;
+			case CCrmOwnerType::InvoiceName:
+				return self::Invoice;
+			case CCrmOwnerType::QuoteName:
+				return self::Quote;
+			case CCrmOwnerType::OrderName:
+				return self::Order;
+			case CCrmOwnerType::RequisiteName:
+				return self::Requisite;
+			case CCrmOwnerType::DealCategoryName:
+				return self::DealCategory;
+			case CCrmOwnerType::CustomActivityTypeName:
+				return self::CustomActivityType;
+			case CCrmOwnerType::SystemName:
+				return self::System;
+			default:
+				return self::Undefined;
+		}
+	}
+
 	public static function ResolveName($abbr)
 	{
 		if(!is_string($abbr))
@@ -2930,4 +2970,3 @@ class CCrmOwnerTypeAbbr
 		return CCrmOwnerType::ResolveID(self::ResolveName($abbr));
 	}
 }
-

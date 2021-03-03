@@ -743,7 +743,7 @@ if(!$isInternal
 		//endregion
 		//region Export
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_EXPORT'),
+			'NAME' => GetMessage('CRM_CONTACT_EXPORT_NEW'),
 			'VALUE' => 'export',
 			'ONCHANGE' => array(
 				array(

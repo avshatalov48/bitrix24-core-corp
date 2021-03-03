@@ -786,6 +786,13 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		}
 		?>
 	<!-- //GDPR for Europe-->
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY')?></td>
+			<td class="content-edit-form-field-input">
+				<input class="content-edit-form-field-input-text" name="yandex_map_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['YANDEX_MAP_API_KEY'])?>">
+			</td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
 
 		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD']):?>
 			<tr>

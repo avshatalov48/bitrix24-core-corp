@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -1688,7 +1689,7 @@ class CCrmMobileHelper
 	public static function getCompanySortFields()
 	{
 		$addressLabels = Bitrix\Crm\EntityAddress::getShortLabels();
-		$regAddressLabels = Bitrix\Crm\EntityAddress::getShortLabels(Bitrix\Crm\EntityAddress::Registered);
+		$regAddressLabels = Bitrix\Crm\EntityAddress::getShortLabels(EntityAddressType::Registered);
 
 		$fields = array(
 			'ID' => array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_COMPANY_ID'), 'sort' => 'id'),
@@ -1777,7 +1778,7 @@ class CCrmMobileHelper
 	public static function getCompanyFields($includeUserFields = true)
 	{
 		$addressLabels = Bitrix\Crm\EntityAddress::getShortLabels();
-		$regAddressLabels = Bitrix\Crm\EntityAddress::getShortLabels(Bitrix\Crm\EntityAddress::Registered);
+		$regAddressLabels = Bitrix\Crm\EntityAddress::getShortLabels(EntityAddressType::Registered);
 
 		$fields = array(
 			'ID' => array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_COMPANY_ID')),
@@ -1789,7 +1790,7 @@ class CCrmMobileHelper
 			'ASSIGNED_BY' => array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_COMPANY_ASSIGNED_BY')),
 
 			'FULL_ADDRESS' => array('id' => 'FULL_ADDRESS', 'name' => Bitrix\Crm\EntityAddress::getFullAddressLabel()),
-			'FULL_REG_ADDRESS' => array('id' => 'FULL_REG_ADDRESS', 'name' => Bitrix\Crm\EntityAddress::getFullAddressLabel(Bitrix\Crm\EntityAddress::Registered)),
+			'FULL_REG_ADDRESS' => array('id' => 'FULL_REG_ADDRESS', 'name' => Bitrix\Crm\EntityAddress::getFullAddressLabel(EntityAddressType::Registered)),
 
 			'BANKING_DETAILS' => array('id' => 'BANKING_DETAILS', 'name' => GetMessage('CRM_COLUMN_COMPANY_BANKING_DETAILS')),
 			'INDUSTRY' => array('id' => 'INDUSTRY', 'name' => GetMessage('CRM_COLUMN_COMPANY_INDUSTRY')),

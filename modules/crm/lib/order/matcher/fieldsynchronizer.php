@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Order\Matcher;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
@@ -838,7 +839,7 @@ class FieldSynchronizer
 			'required' => false,
 			'hidden' => false,
 		]);
-		$addressTypes = RequisiteAddress::getClientTypeInfos();
+		$addressTypes = EntityAddressType::getDescriptions(EntityAddressType::getAvailableIds());
 
 		$bankDetailFields = static::getFieldsInternal(
 			'BANK_DETAIL',
@@ -880,16 +881,16 @@ class FieldSynchronizer
 			{
 				$addressTypeInfo = [];
 
-				foreach ($addressTypes as $addressType)
+				foreach ($addressTypes as $addressTypeId => $addressTypeTitle)
 				{
 					$addressFieldsInfo = [];
 
 					foreach ($addressFields as $addressField)
 					{
-						$addressField['name'] = $entityName.'_'.$addressField['entity_field_name'].'_'.$presetId.'_'.$addressType['id'];
+						$addressField['name'] = $entityName.'_'.$addressField['entity_field_name'].'_'.$presetId.'_'.$addressTypeId;
 						$addressField['preset_id'] = $presetId;
 						$addressField['address'] = 'Y';
-						$addressField['address_type'] = $addressType['id'];
+						$addressField['address_type'] = $addressTypeId;
 
 						$addressFieldsInfo[] = $addressField;
 					}
@@ -897,8 +898,8 @@ class FieldSynchronizer
 					$addressTypeInfo[] = [
 						'type' => 'tree',
 						'tree' => [
-							'ADDRESS_TYPE_'.$addressType['id'] => [
-								'CAPTION' => $addressType['name'],
+							'ADDRESS_TYPE_'.$addressTypeId => [
+								'CAPTION' => $addressTypeTitle,
 								'FIELDS' => $addressFieldsInfo
 							]
 						]

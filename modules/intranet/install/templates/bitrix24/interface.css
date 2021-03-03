@@ -2792,7 +2792,12 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 }
 
 .tm-popup-task-form {
+	position: relative;
 	margin: 10px 0 0;
+}
+
+.tm-popup-event-form {
+	position: relative;
 }
 
 .tm-report-popup .tm-popup-task-form {
@@ -2892,12 +2897,12 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	display: block;
 	content: "";
 	position: absolute;
-	left: 11px;
-	top: 9px;
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -322px;
-	background-size: cover;
-	height: 19px;
-	width: 19px;
+	left: 50%;
+	top: 50%;
+	margin: -7px 0 0 -7px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2213%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cpath%20fill%3D%22%23535C6A%22%20d%3D%22M12.7936508%2C5.46825397%20C12.7936508%2C5.26190476%2012.6904762%2C5.15873016%2012.484127%2C5.15873016%20L7.73809524%2C5.15873016%20L7.73809524%2C0.30952381%20C7.73809524%2C0.103174603%207.63492063%2C0%207.42857143%2C0%20L5.36507937%2C0%20C5.15873016%2C0%205.05555556%2C0.103174603%205.05555556%2C0.30952381%20L5.05555556%2C5.15873016%20L0.30952381%2C5.15873016%20C0.103174603%2C5.15873016%200%2C5.26190476%200%2C5.46825397%20L0%2C7.53174603%20C0%2C7.73809524%200.103174603%2C7.84126984%200.30952381%2C7.84126984%20L5.15873016%2C7.84126984%20L5.15873016%2C12.6904762%20C5.15873016%2C12.8968254%205.26190476%2C13%205.46825397%2C13%20L7.53174603%2C13%20C7.73809524%2C13%207.84126984%2C12.8968254%207.84126984%2C12.6904762%20L7.84126984%2C7.84126984%20L12.6904762%2C7.84126984%20C12.8968254%2C7.84126984%2013%2C7.73809524%2013%2C7.53174603%20L12.7936508%2C5.46825397%20Z%22/%3E%3C/svg%3E') center no-repeat;
+	height: 14px;
+	width: 14px;
 }
 
 

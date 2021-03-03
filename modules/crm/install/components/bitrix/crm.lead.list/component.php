@@ -409,7 +409,7 @@ if(!$bInternal)
 			'name' => GetMessage('CRM_PRESET_ALL_CLOSED'),
 			'fields' => array_merge(
 				$defaultFilter,
-				array('STATUS_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS))
+				array('STATUS_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE))
 			)
 		)
 	);
@@ -2078,7 +2078,7 @@ else
 			);
 
 		$navDbResult = \Bitrix\Crm\LeadAddress::getEntityList(
-			\Bitrix\Crm\EntityAddress::Primary,
+			\Bitrix\Crm\EntityAddressType::Primary,
 			$addressSort,
 			$arFilter,
 			false,

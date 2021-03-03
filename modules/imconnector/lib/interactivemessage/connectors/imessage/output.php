@@ -466,7 +466,7 @@ class Output extends InteractiveMessage\Output
 	 * @return array
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function nativeMessageProcessing($message): array
+	public function nativeMessageProcessing($message): array
 	{
 		if(
 			$this->load() &&

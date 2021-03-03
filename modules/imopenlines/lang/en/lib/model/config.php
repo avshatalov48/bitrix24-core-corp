@@ -15,6 +15,7 @@ $MESS["CONFIG_ENTITY_CLOSE_BOT_ID_FIELD"] = "Closed dialog bot ID";
 $MESS["CONFIG_ENTITY_CLOSE_FORM_ID_FIELD"] = "The ID of CRM form to use when closing conversation";
 $MESS["CONFIG_ENTITY_CLOSE_RULE_FIELD"] = "Conversation close rule";
 $MESS["CONFIG_ENTITY_CLOSE_TEXT_FIELD"] = "Text to use when closing conversation";
+$MESS["CONFIG_ENTITY_CRM_CHAT_TRACKER_FIELD"] = "Chat tracker";
 $MESS["CONFIG_ENTITY_CRM_CREATE_FIELD"] = "Rule to apply when no CRM entry found";
 $MESS["CONFIG_ENTITY_CRM_CREATE_SECOND_FIELD"] = "Secondary rule to apply when CRM entry is missing";
 $MESS["CONFIG_ENTITY_CRM_CREATE_THIRD_FIELD"] = "Tertiary rule to apply when CRM entry is missing";

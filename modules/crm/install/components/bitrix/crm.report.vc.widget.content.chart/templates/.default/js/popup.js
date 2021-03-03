@@ -61,7 +61,7 @@
 			offsetLeft: 30,
 			offsetTop: -10
 		};
-		this.popup = new BX.PopupWindow('crm-report-vc-chart-popup', null, parameters);
+		this.popup = new BX.PopupWindow(parameters);
 	};
 	Popup.prototype.show = function (item)
 	{

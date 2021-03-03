@@ -1,2 +1,2 @@
 <?
-$MESS["CONTACT_CENTER_APP_BANNER_TITLE"] = "Установить из Приложения24";
+$MESS["CONTACT_CENTER_APP_BANNER_TITLE_2"] = "Установить из Приложения24";

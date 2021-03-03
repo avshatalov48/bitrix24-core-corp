@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_view_dialog,im_view_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_logger,main_md5,im_const,ui_icons,ui_forms,im_lib_utils,ui_vue,ui_vue_vuex) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_view_dialog,im_view_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,main_md5,im_const,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
 	'use strict';
 
 	/**
@@ -81,6 +81,7 @@
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
 	  widgetFormSend: 'imopenlines.widget.form.send',
+	  widgetActionSend: 'imopenlines.widget.action.send',
 	  pullServerTime: 'server.time',
 	  pullConfigGet: 'pull.config.get'
 	});
@@ -169,7 +170,8 @@
 	          showConsent: false,
 	          consentUrl: '',
 	          dialogStart: false,
-	          watchTyping: false
+	          watchTyping: false,
+	          showSessionId: false
 	        },
 	        dialog: {
 	          sessionId: 0,
@@ -322,6 +324,10 @@
 
 	          if (typeof payload.watchTyping === 'boolean') {
 	            state.common.watchTyping = payload.watchTyping;
+	          }
+
+	          if (typeof payload.showSessionId === 'boolean') {
+	            state.common.showSessionId = payload.showSessionId;
 	          }
 
 	          if (payload.operators instanceof Array) {
@@ -671,7 +677,8 @@
 	        online: data.online,
 	        consentUrl: data.consentUrl,
 	        connectors: data.connectors || [],
-	        watchTyping: data.watchTyping
+	        watchTyping: data.watchTyping,
+	        showSessionId: data.showSessionId
 	      });
 	      this.store.commit('application/set', {
 	        disk: data.disk
@@ -989,6 +996,8 @@
 	    }).then(function () {
 	      return _this.initWidget();
 	    }).then(function () {
+	      return _this.initUploader();
+	    }).then(function () {
 	      return _this.initComplete();
 	    });
 	  }
@@ -1164,6 +1173,140 @@
 	      });
 	    }
 	  }, {
+	    key: "initUploader",
+	    value: function initUploader() {
+	      var _this3 = this;
+
+	      this.uploader = new im_lib_uploader.Uploader({
+	        generatePreview: true,
+	        sender: {
+	          host: this.host,
+	          customHeaders: {
+	            'Livechat-Auth-Id': this.getUserHash()
+	          },
+	          actionUploadChunk: 'imopenlines.widget.disk.upload',
+	          actionCommitFile: 'imopenlines.widget.disk.commit',
+	          actionRollbackUpload: 'imopenlines.widget.disk.rollbackUpload'
+	        }
+	      });
+	      this.uploader.subscribe('onStartUpload', function (event) {
+	        var eventData = event.getData();
+	        im_lib_logger.Logger.log('Uploader: onStartUpload', eventData);
+
+	        _this3.controller.getStore().dispatch('files/update', {
+	          chatId: _this3.getChatId(),
+	          id: eventData.id,
+	          fields: {
+	            status: im_const.FileStatus.upload,
+	            progress: 0
+	          }
+	        });
+	      });
+	      this.uploader.subscribe('onProgress', function (event) {
+	        var eventData = event.getData();
+	        im_lib_logger.Logger.log('Uploader: onProgress', eventData);
+
+	        _this3.controller.getStore().dispatch('files/update', {
+	          chatId: _this3.getChatId(),
+	          id: eventData.id,
+	          fields: {
+	            status: im_const.FileStatus.upload,
+	            progress: eventData.progress === 100 ? 99 : eventData.progress
+	          }
+	        });
+	      });
+	      this.uploader.subscribe('onSelectFile', function (event) {
+	        var eventData = event.getData();
+	        var file = eventData.file;
+	        im_lib_logger.Logger.log('Uploader: onSelectFile', eventData);
+	        var fileType = 'file';
+
+	        if (file.type.toString().startsWith('image')) {
+	          fileType = 'image';
+	        } else if (file.type.toString().startsWith('video')) {
+	          fileType = 'video';
+	        }
+
+	        _this3.controller.getStore().dispatch('files/add', {
+	          chatId: _this3.getChatId(),
+	          authorId: _this3.getUserId(),
+	          name: eventData.file.name,
+	          type: fileType,
+	          extension: file.name.split('.').splice(-1)[0],
+	          size: eventData.file.size,
+	          image: !eventData.previewData ? false : {
+	            width: eventData.previewDataWidth,
+	            height: eventData.previewDataHeight
+	          },
+	          status: im_const.FileStatus.upload,
+	          progress: 0,
+	          authorName: _this3.controller.application.getCurrentUser().name,
+	          urlPreview: eventData.previewData ? URL.createObjectURL(eventData.previewData) : ""
+	        }).then(function (fileId) {
+	          _this3.addMessage('', {
+	            id: fileId,
+	            source: eventData,
+	            previewBlob: eventData.previewData
+	          });
+	        });
+	      });
+	      this.uploader.subscribe('onComplete', function (event) {
+	        var eventData = event.getData();
+	        im_lib_logger.Logger.log('Uploader: onComplete', eventData);
+
+	        _this3.controller.getStore().dispatch('files/update', {
+	          chatId: _this3.getChatId(),
+	          id: eventData.id,
+	          fields: {
+	            status: im_const.FileStatus.wait,
+	            progress: 100
+	          }
+	        });
+
+	        var message = _this3.messagesQueue.find(function (message) {
+	          return message.file.id === eventData.id;
+	        });
+
+	        var fileType = _this3.controller.getStore().getters['files/get'](_this3.getChatId(), message.file.id, true).type;
+
+	        _this3.fileCommit({
+	          chatId: _this3.getChatId(),
+	          uploadId: eventData.result.data.file.id,
+	          messageText: message.text,
+	          messageId: message.id,
+	          fileId: message.file.id,
+	          fileType: fileType
+	        }, message);
+	      });
+	      this.uploader.subscribe('onUploadFileError', function (event) {
+	        var eventData = event.getData();
+	        im_lib_logger.Logger.log('Uploader: onUploadFileError', eventData);
+
+	        var message = _this3.messagesQueue.find(function (message) {
+	          return message.file.id === eventData.id;
+	        });
+
+	        if (typeof message === 'undefined') {
+	          return;
+	        }
+
+	        _this3.fileError(_this3.getChatId(), message.file.id, message.id);
+	      });
+	      this.uploader.subscribe('onCreateFileError', function (event) {
+	        var eventData = event.getData();
+	        im_lib_logger.Logger.log('Uploader: onCreateFileError', eventData);
+
+	        var message = _this3.messagesQueue.find(function (message) {
+	          return message.file.id === eventData.id;
+	        });
+
+	        _this3.fileError(_this3.getChatId(), message.file.id, message.id);
+	      });
+	      return new Promise(function (resolve, reject) {
+	        return resolve();
+	      });
+	    }
+	  }, {
 	    key: "initComplete",
 	    value: function initComplete() {
 	      window.dispatchEvent(new CustomEvent('onBitrixLiveChat', {
@@ -1189,7 +1332,7 @@
 	  }, {
 	    key: "requestWidgetData",
 	    value: function requestWidgetData() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      if (!this.isReady()) {
 	        console.error('LiveChatWidget.start: widget code or host is not specified');
@@ -1210,23 +1353,23 @@
 	        this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {
 	          code: this.code
 	        }, function (xhr) {
-	          _this3.configRequestXhr = xhr;
+	          _this4.configRequestXhr = xhr;
 	        }).then(function (result) {
-	          _this3.configRequestXhr = null;
+	          _this4.configRequestXhr = null;
 
-	          _this3.clearError();
+	          _this4.clearError();
 
-	          _this3.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
+	          _this4.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
 
-	          if (!_this3.inited) {
-	            _this3.inited = true;
+	          if (!_this4.inited) {
+	            _this4.inited = true;
 
-	            _this3.fireInitEvent();
+	            _this4.fireInitEvent();
 	          }
 	        }).catch(function (result) {
-	          _this3.configRequestXhr = null;
+	          _this4.configRequestXhr = null;
 
-	          _this3.setError(result.error().ex.error, result.error().ex.error_description);
+	          _this4.setError(result.error().ex.error, result.error().ex.error_description);
 	        });
 
 	        if (this.isConfigDataLoaded()) {
@@ -1238,7 +1381,7 @@
 	  }, {
 	    key: "requestData",
 	    value: function requestData() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      if (this.requestDataSend) {
 	        return true;
@@ -1304,9 +1447,9 @@
 	      query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
 	      this.controller.restClient.callBatch(query, function (response) {
 	        if (!response) {
-	          _this4.requestDataSend = false;
+	          _this5.requestDataSend = false;
 
-	          _this4.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	          _this5.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 
 	          return false;
 	        }
@@ -1314,84 +1457,84 @@
 	        var configGet = response[RestMethod.widgetConfigGet];
 
 	        if (configGet && configGet.error()) {
-	          _this4.requestDataSend = false;
+	          _this5.requestDataSend = false;
 
-	          _this4.setError(configGet.error().ex.error, configGet.error().ex.error_description);
+	          _this5.setError(configGet.error().ex.error, configGet.error().ex.error_description);
 
 	          return false;
 	        }
 
-	        _this4.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
+	        _this5.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
 
 	        var userGetResult = response[RestMethod.widgetUserGet];
 
 	        if (userGetResult.error()) {
-	          _this4.requestDataSend = false;
+	          _this5.requestDataSend = false;
 
-	          _this4.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
+	          _this5.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
 
 	          return false;
 	        }
 
-	        _this4.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+	        _this5.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
 	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
 	        if (chatGetResult.error()) {
-	          _this4.requestDataSend = false;
+	          _this5.requestDataSend = false;
 
-	          _this4.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
+	          _this5.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
 
 	          return false;
 	        }
 
-	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+	        _this5.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 
 	        var dialogGetResult = response[RestMethod.widgetDialogGet];
 
 	        if (dialogGetResult) {
 	          if (dialogGetResult.error()) {
-	            _this4.requestDataSend = false;
+	            _this5.requestDataSend = false;
 
-	            _this4.setError(dialogGetResult.error().ex.error, dialogGetResult.error().ex.error_description);
+	            _this5.setError(dialogGetResult.error().ex.error, dialogGetResult.error().ex.error_description);
 
 	            return false;
 	          }
 
-	          _this4.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
+	          _this5.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
 	        }
 
 	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
 
 	        if (dialogMessagesGetResult) {
 	          if (dialogMessagesGetResult.error()) {
-	            _this4.requestDataSend = false;
+	            _this5.requestDataSend = false;
 
-	            _this4.setError(dialogMessagesGetResult.error().ex.error, dialogMessagesGetResult.error().ex.error_description);
+	            _this5.setError(dialogMessagesGetResult.error().ex.error, dialogMessagesGetResult.error().ex.error_description);
 
 	            return false;
 	          }
 
-	          _this4.controller.getStore().dispatch('dialogues/saveDialog', {
-	            dialogId: _this4.controller.application.getDialogId(),
-	            chatId: _this4.controller.application.getChatId()
+	          _this5.controller.getStore().dispatch('dialogues/saveDialog', {
+	            dialogId: _this5.controller.application.getDialogId(),
+	            chatId: _this5.controller.application.getChatId()
 	          });
 
-	          _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+	          _this5.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
 	        }
 
 	        var userRegisterResult = response[RestMethod.widgetUserRegister];
 
 	        if (userRegisterResult) {
 	          if (userRegisterResult.error()) {
-	            _this4.requestDataSend = false;
+	            _this5.requestDataSend = false;
 
-	            _this4.setError(userRegisterResult.error().ex.error, userRegisterResult.error().ex.error_description);
+	            _this5.setError(userRegisterResult.error().ex.error, userRegisterResult.error().ex.error_description);
 
 	            return false;
 	          }
 
-	          _this4.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
+	          _this5.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
 	        }
 
 	        var timeShift = 0;
@@ -1409,13 +1552,13 @@
 	          config.server.timeShift = timeShift;
 	        }
 
-	        _this4.startPullClient(config).then(function () {
-	          _this4.processSendMessages();
+	        _this5.startPullClient(config).then(function () {
+	          _this5.processSendMessages();
 	        }).catch(function (error) {
-	          _this4.setError(error.ex.error, error.ex.error_description);
+	          _this5.setError(error.ex.error, error.ex.error_description);
 	        });
 
-	        _this4.requestDataSend = false;
+	        _this5.requestDataSend = false;
 	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	        name: 'widget.init.config',
 	        dialog: this.controller.application.getDialogData()
@@ -1424,16 +1567,16 @@
 	  }, {
 	    key: "prepareFileData",
 	    value: function prepareFileData(files) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      if (!im_lib_utils.Utils.types.isArray(files)) {
 	        return files;
 	      }
 
 	      return files.map(function (file) {
-	        var hash = (window.md5 || main_md5.md5)(_this5.getUserId() + '|' + file.id + '|' + _this5.getUserHash());
+	        var hash = (window.md5 || main_md5.md5)(_this6.getUserId() + '|' + file.id + '|' + _this6.getUserHash());
 
-	        var urlParam = 'livechat_auth_id=' + hash + '&livechat_user_id=' + _this5.getUserId();
+	        var urlParam = 'livechat_auth_id=' + hash + '&livechat_user_id=' + _this6.getUserId();
 
 	        if (file.urlPreview) {
 	          file.urlPreview = file.urlPreview + '&' + urlParam;
@@ -1470,7 +1613,7 @@
 	  }, {
 	    key: "startPullClient",
 	    value: function startPullClient(config) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var promise = new BX.Promise();
 
@@ -1521,7 +1664,7 @@
 	          if (result.status === pull_client.PullClient.PullStatus.Online) {
 	            promise.resolve(true);
 
-	            _this6.pullConnectedFirstTime();
+	            _this7.pullConnectedFirstTime();
 	          }
 	        }
 	      });
@@ -1560,14 +1703,14 @@
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      if (data.status === pull_client.PullClient.PullStatus.Online) {
 	        this.offline = false;
 
 	        if (this.pullRequestMessage) {
 	          this.getDialogUnread().then(function () {
-	            _this7.processSendMessages();
+	            _this8.processSendMessages();
 	          });
 	          this.pullRequestMessage = false;
 	        } else {
@@ -1586,7 +1729,7 @@
 	  }, {
 	    key: "attachTemplate",
 	    value: function attachTemplate() {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      if (this.template) {
 	        this.controller.getStore().commit('widget/common', {
@@ -1617,7 +1760,7 @@
 	          application.rootNode.innerHTML = '';
 	        }
 	      }).then(function (vue) {
-	        _this8.template = vue;
+	        _this9.template = vue;
 	        return new Promise(function (resolve, reject) {
 	          return resolve();
 	        });
@@ -1645,7 +1788,7 @@
 	  }, {
 	    key: "addMessage",
 	    value: function addMessage() {
-	      var _this9 = this;
+	      var _this10 = this;
 
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
@@ -1680,71 +1823,39 @@
 	        params: params,
 	        sending: !file
 	      }).then(function (messageId) {
-	        if (!_this9.isDialogStart()) {
-	          _this9.controller.getStore().commit('widget/common', {
+	        if (!_this10.isDialogStart()) {
+	          _this10.controller.getStore().commit('widget/common', {
 	            dialogStart: true
 	          });
 	        }
 
-	        _this9.messagesQueue.push({
+	        _this10.messagesQueue.push({
 	          id: messageId,
 	          text: text,
 	          file: file,
 	          sending: false
 	        });
 
-	        if (_this9.getChatId()) {
-	          _this9.processSendMessages();
+	        if (_this10.getChatId()) {
+	          _this10.processSendMessages();
 	        } else {
-	          _this9.requestData();
+	          _this10.requestData();
 	        }
 	      });
 	      return true;
 	    }
 	  }, {
 	    key: "uploadFile",
-	    value: function uploadFile(fileInput) {
-	      var _this10 = this;
-
-	      if (!fileInput) {
+	    value: function uploadFile(event) {
+	      if (!event) {
 	        return false;
 	      }
 
-	      im_lib_logger.Logger.warn('addFile', fileInput.files[0].name, fileInput.files[0].size, fileInput.files[0]);
-	      var file = fileInput.files[0];
-	      var fileType = 'file';
-
-	      if (file.type.toString().startsWith('image')) {
-	        fileType = 'image';
+	      if (!this.getChatId()) {
+	        this.requestData();
 	      }
 
-	      if (!this.controller.application.isUnreadMessagesLoaded()) {
-	        this.addMessage('', {
-	          id: 0,
-	          source: fileInput
-	        });
-	        return true;
-	      }
-
-	      this.controller.getStore().dispatch('files/add', {
-	        chatId: this.getChatId(),
-	        authorId: this.getUserId(),
-	        name: file.name,
-	        type: fileType,
-	        extension: file.name.split('.').splice(-1)[0],
-	        size: file.size,
-	        image: false,
-	        status: im_const.FileStatus.upload,
-	        progress: 0,
-	        authorName: this.controller.application.getCurrentUser().name,
-	        urlPreview: ""
-	      }).then(function (fileId) {
-	        return _this10.addMessage('', {
-	          id: fileId,
-	          source: fileInput
-	        });
-	      });
-	      return true;
+	      this.uploader.addFilesFromEvent(event);
 	    }
 	  }, {
 	    key: "cancelUploadFile",
@@ -1756,6 +1867,8 @@
 	      });
 
 	      if (element) {
+	        this.uploader.deleteTask(fileId);
+
 	        if (element.xhr) {
 	          element.xhr.abort();
 	        }
@@ -1779,6 +1892,16 @@
 	    key: "processSendMessages",
 	    value: function processSendMessages() {
 	      var _this12 = this;
+
+	      if (!this.getDiskFolderId()) {
+	        this.requestDiskFolderId().then(function () {
+	          _this12.processSendMessages();
+	        }).catch(function () {
+	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
+	          return false;
+	        });
+	        return false;
+	      }
 
 	      if (this.offline) {
 	        return false;
@@ -1842,117 +1965,19 @@
 	  }, {
 	    key: "sendMessageWithFile",
 	    value: function sendMessageWithFile(message) {
-	      var _this14 = this;
-
 	      this.controller.application.stopWriting();
-	      var fileType = this.controller.getStore().getters['files/get'](this.getChatId(), message.file.id, true).type;
 	      var diskFolderId = this.getDiskFolderId();
-	      var query = {};
-
-	      if (diskFolderId) {
-	        query[im_const.RestMethodHandler.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
-	          id: diskFolderId,
-	          data: {
-	            NAME: message.file.source.files[0].name
-	          },
-	          fileContent: message.file.source,
-	          generateUniqueName: true
-	        }];
-	      } else {
-	        query[im_const.RestMethodHandler.imDiskFolderGet] = [im_const.RestMethod.imDiskFolderGet, {
-	          chat_id: this.getChatId()
-	        }];
-	        query[im_const.RestMethodHandler.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
-	          id: '$result[' + im_const.RestMethodHandler.imDiskFolderGet + '][ID]',
-	          data: {
-	            NAME: message.file.source.files[0].name
-	          },
-	          fileContent: message.file.source,
-	          generateUniqueName: true
-	        }];
-	      }
-
-	      this.controller.restClient.callBatch(query, function (response) {
-	        if (!response) {
-	          _this14.requestDataSend = false;
-	          console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [1]');
-
-	          _this14.fileError(_this14.getChatId, message.file.id, message.id);
-
-	          return false;
-	        }
-
-	        if (!diskFolderId) {
-	          var diskFolderGet = response[im_const.RestMethodHandler.imDiskFolderGet];
-
-	          if (diskFolderGet && diskFolderGet.error()) {
-	            console.warn(diskFolderGet.error().ex.error, diskFolderGet.error().ex.error_description);
-
-	            _this14.fileError(_this14.getChatId(), message.file.id, message.id);
-
-	            return false;
-	          }
-
-	          _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, diskFolderGet);
-	        }
-
-	        var diskId = 0;
-	        var diskFileUpload = response[im_const.RestMethodHandler.imDiskFileUpload];
-
-	        if (diskFileUpload) {
-	          var result = diskFileUpload.data();
-
-	          if (diskFileUpload.error()) {
-	            console.warn(diskFileUpload.error().ex.error, diskFileUpload.error().ex.error_description);
-
-	            _this14.fileError(_this14.getChatId(), message.file.id, message.id);
-
-	            return false;
-	          } else if (!result) {
-	            console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [2]');
-
-	            _this14.fileError(_this14.getChatId(), message.file.id, message.id);
-
-	            return false;
-	          }
-
-	          diskId = result.ID;
-	        } else {
-	          console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [3]');
-
-	          _this14.fileError(_this14.getChatId(), message.file.id, message.id);
-
-	          return false;
-	        }
-
-	        message.chatId = _this14.getChatId();
-
-	        _this14.controller.getStore().dispatch('files/update', {
-	          chatId: message.chatId,
-	          id: message.file.id,
-	          fields: {
-	            status: im_const.FileStatus.wait,
-	            progress: 95
-	          }
-	        });
-
-	        _this14.fileCommit({
-	          chatId: message.chatId,
-	          uploadId: diskId,
-	          messageText: message.text,
-	          messageId: message.id,
-	          fileId: message.file.id,
-	          fileType: fileType
-	        }, message);
-	      }, false, function (xhr) {
-	        message.xhr = xhr;
-	      }, im_lib_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethodHandler.imDiskFileCommit,
-	        data: {
-	          timMessageType: fileType
-	        },
-	        dialog: this.getDialogData()
-	      }));
+	      message.chatId = this.getChatId();
+	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = message.chatId;
+	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
+	      this.uploader.addTask({
+	        taskId: message.file.id,
+	        fileData: message.file.source.file,
+	        fileName: message.file.source.file.name,
+	        generateUniqueName: true,
+	        diskFolderId: diskFolderId,
+	        previewBlob: message.file.previewBlob
+	      });
 	    }
 	  }, {
 	    key: "fileError",
@@ -1974,6 +1999,41 @@
 	          retry: false
 	        });
 	      }
+	    }
+	  }, {
+	    key: "requestDiskFolderId",
+	    value: function requestDiskFolderId() {
+	      var _this14 = this;
+
+	      if (this.requestDiskFolderPromise) {
+	        return this.requestDiskFolderPromise;
+	      }
+
+	      this.requestDiskFolderPromise = new Promise(function (resolve, reject) {
+	        if (_this14.flagRequestDiskFolderIdSended || _this14.getDiskFolderId()) {
+	          _this14.flagRequestDiskFolderIdSended = false;
+	          resolve();
+	          return true;
+	        }
+
+	        _this14.flagRequestDiskFolderIdSended = true;
+
+	        _this14.controller.restClient.callMethod(im_const.RestMethod.imDiskFolderGet, {
+	          chat_id: _this14.controller.application.getChatId()
+	        }).then(function (response) {
+	          _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
+
+	          _this14.flagRequestDiskFolderIdSended = false;
+	          resolve();
+	        }).catch(function (error) {
+	          _this14.flagRequestDiskFolderIdSended = false;
+
+	          _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
+
+	          reject();
+	        });
+	      });
+	      return this.requestDiskFolderPromise;
 	    }
 	  }, {
 	    key: "fileCommit",
@@ -2146,16 +2206,36 @@
 	  }, {
 	    key: "execMessageKeyboardCommand",
 	    value: function execMessageKeyboardCommand(data) {
+	      if (data.action === 'ACTION' && data.params.action === 'LIVECHAT') {
+	        var _data$params = data.params,
+	            _dialogId = _data$params.dialogId,
+	            _messageId = _data$params.messageId;
+	        var values = JSON.parse(data.params.value);
+	        var sessionId = parseInt(values.SESSION_ID);
+
+	        if (sessionId !== this.getSessionId()) {
+	          alert(this.localize.BX_LIVECHAT_ACTION_EXPIRED);
+	          return false;
+	        }
+
+	        this.controller.restClient.callMethod(RestMethod.widgetActionSend, {
+	          'MESSAGE_ID': _messageId,
+	          'DIALOG_ID': _dialogId,
+	          'ACTION_VALUE': data.params.value
+	        });
+	        return true;
+	      }
+
 	      if (data.action !== 'COMMAND') {
 	        return false;
 	      }
 
-	      var _data$params = data.params,
-	          dialogId = _data$params.dialogId,
-	          messageId = _data$params.messageId,
-	          botId = _data$params.botId,
-	          command = _data$params.command,
-	          params = _data$params.params;
+	      var _data$params2 = data.params,
+	          dialogId = _data$params2.dialogId,
+	          messageId = _data$params2.messageId,
+	          botId = _data$params2.botId,
+	          command = _data$params2.command,
+	          params = _data$params2.params;
 	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
 	        'MESSAGE_ID': messageId,
 	        'DIALOG_ID': dialogId,
@@ -2414,7 +2494,7 @@
 	        customData = this.customData;
 	      } else {
 	        customData = [{
-	          MESSAGE: this.localize.BX_LIVECHAT_EXTRA_SITE + ': ' + location.href
+	          MESSAGE: this.localize.BX_LIVECHAT_EXTRA_SITE + ': [URL]' + location.href + '[/URL]'
 	        }];
 	      }
 
@@ -3583,25 +3663,25 @@
 	      document.removeEventListener('mouseleave', this.onTextareaStopDrag);
 	    },
 	    onTextareaFileSelected: function onTextareaFileSelected(event) {
-	      var fileInput = event && event.fileInput ? event.fileInput : this.storedFile;
+	      var fileInputEvent = null;
 
-	      if (!fileInput) {
-	        return false;
+	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
+	        fileInputEvent = event.fileChangeEvent;
+	      } else {
+	        fileInputEvent = this.storedFile;
 	      }
 
-	      if (fileInput.files[0].size > this.application.disk.maxFileSize) {
-	        // TODO change alert to correct overlay window
-	        alert(this.localize.BX_LIVECHAT_FILE_SIZE_EXCEEDED.replace('#LIMIT#', Math.round(this.application.disk.maxFileSize / 1024 / 1024)));
+	      if (!fileInputEvent) {
 	        return false;
 	      }
 
 	      if (!this.widget.dialog.userConsent && this.widget.common.consentUrl) {
-	        this.storedFile = event.fileInput;
+	        this.storedFile = event.fileChangeEvent;
 	        this.showConsentWidow();
 	        return false;
 	      }
 
-	      this.$root.$bitrixApplication.uploadFile(fileInput);
+	      this.$root.$bitrixApplication.uploadFile(fileInputEvent);
 	    },
 	    onTextareaAppButtonClick: function onTextareaAppButtonClick(event) {
 	      if (event.appId === FormType.smile) {
@@ -3818,8 +3898,17 @@
 	      return state.widget.dialog.operator.firstName ? state.widget.dialog.operator.firstName : state.widget.dialog.operator.name;
 	    },
 	    operatorDescription: function operatorDescription(state) {
-	      if (!this.showName) return '';
-	      return state.widget.dialog.operator.workPosition ? state.widget.dialog.operator.workPosition : this.localize.BX_LIVECHAT_USER;
+	      if (!this.showName) {
+	        return '';
+	      }
+
+	      var operatorPosition = state.widget.dialog.operator.workPosition ? state.widget.dialog.operator.workPosition : this.localize.BX_LIVECHAT_USER;
+
+	      if (state.widget.common.showSessionId && state.widget.dialog.sessionId >= 0) {
+	        return this.localize.BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID.replace("#POSITION#", operatorPosition).replace("#ID#", state.widget.dialog.sessionId);
+	      }
+
+	      return this.localize.BX_LIVECHAT_OPERATOR_POSITION_ONLY.replace("#POSITION#", operatorPosition);
 	    },
 	    localize: function localize() {
 	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
@@ -3843,7 +3932,7 @@
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button v-if=\"false\" class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button v-if=\"false\" class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4332,27 +4421,6 @@
 
 	/**
 	 * Bitrix OpenLines widget
-	 * Footer component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
-	ui_vue.Vue.component('bx-livechat-footer', {
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_COPYRIGHT_', this.$root.$bitrixMessages);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
-	    widget: function widget(state) {
-	      return state.widget;
-	    }
-	  })),
-	  template: "\n\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t<a :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t</a>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t</template>\n\t\t</div>\n\t"
-	});
-
-	/**
-	 * Bitrix OpenLines widget
 	 * Widget component & controller
 	 *
 	 * @package bitrix
@@ -4368,5 +4436,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,window,window,window,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Messenger.Const,BX,BX,BX.Messenger.Lib,BX,BX));
+}((this.window = this.window || {}),BX,window,window,window,window,window,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Messenger.Const,BX,BX,BX,BX.Messenger.Lib,BX));
 //# sourceMappingURL=widget.bundle.js.map

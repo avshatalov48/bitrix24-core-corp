@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMOL_CHAT_ANSWER_F"] = "#USER# picked conversation";
 $MESS["IMOL_CHAT_ANSWER_M"] = "#USER# picked conversation";
 $MESS["IMOL_CHAT_APP_ICON_QUICK_DESCRIPTION"] = "Open canned responses database";
@@ -11,8 +11,10 @@ $MESS["IMOL_CHAT_ASSIGN_OPERATOR_NEW"] = "Enquiry assigned to #USER#";
 $MESS["IMOL_CHAT_CHAT_NAME"] = "#USER_NAME# - #LINE_NAME#";
 $MESS["IMOL_CHAT_CHAT_NAME_COLOR_GUEST"] = "#COLOR# guest ##NUMBER#";
 $MESS["IMOL_CHAT_CHAT_NAME_GUEST"] = "Guest ##NUMBER#";
+$MESS["IMOL_CHAT_CLOSE_F"] = "#USER# ended current conversation";
 $MESS["IMOL_CHAT_CLOSE_FOR_OPEN_F"] = "#USER# closed the current conversation and started a new one";
 $MESS["IMOL_CHAT_CLOSE_FOR_OPEN_M"] = "#USER# closed the current conversation and started a new one";
+$MESS["IMOL_CHAT_CLOSE_M"] = "#USER# ended current conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE"] = "The agent you are trying to assign is already assigned to this conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST"] = "There is a concurrent request to accept this conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION"] = "Cannot load session";
@@ -26,6 +28,8 @@ $MESS["IMOL_CHAT_INTERCEPT_M"] = "#USER_1# took conversation from #USER_2#";
 $MESS["IMOL_CHAT_LEAD_ADD"] = "New lead created: \"#LEAD_NAME#\"";
 $MESS["IMOL_CHAT_MARK_SPAM_F"] = "#USER# marked the current conversation as spam";
 $MESS["IMOL_CHAT_MARK_SPAM_M"] = "#USER# marked the current conversation as spam";
+$MESS["IMOL_CHAT_NEW_QUESTION_F"] = "#USER# has a new question";
+$MESS["IMOL_CHAT_NEW_QUESTION_M"] = "#USER# has a new question";
 $MESS["IMOL_CHAT_NEXT_IN_QUEUE_NEW"] = "Enquiry transferred to #USER_TO# according to queuing rules";
 $MESS["IMOL_CHAT_NOTIFY_RATING_CLIENT_DISLIKE_NEW"] = "Client rated conversation ##NUMBER# as: [b]#RATING#[/b]";
 $MESS["IMOL_CHAT_NOTIFY_RATING_CLIENT_LIKE_NEW"] = "Client rated conversation ##NUMBER# as: [b]#RATING#[/b]";
@@ -59,4 +63,3 @@ $MESS["IMOL_CHAT_TRANSFER_LINE_F"] = "#USER_FROM# redirected conversation from q
 $MESS["IMOL_CHAT_TRANSFER_LINE_M"] = "#USER_FROM# redirected conversation from queue \"#LINE_FROM#\" to queue \"#LINE_TO#\"";
 $MESS["IMOL_CHAT_TRANSFER_M"] = "#USER_FROM# transfered conversation to #USER_TO#";
 $MESS["IMOL_CRM_ERROR_NOT_GIVEN_CORRECT_DATA"] = "No valid data were submitted";
-?>

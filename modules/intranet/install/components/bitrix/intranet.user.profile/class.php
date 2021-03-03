@@ -44,10 +44,27 @@ class CIntranetUserProfileComponent extends UserProfile
 
 		$this->arResult["IS_CURRENT_USER_ADMIN"] = $isAdminRights;
 
+		$this->init();
+
+		$this->arResult["isCloud"] = Loader::includeModule("bitrix24");
+		if ($this->arResult["isCloud"])
+		{
+			$licensePrefix = \CBitrix24::getLicensePrefix();
+			$this->arResult["isRusCloud"] = in_array($licensePrefix, array("ru", "by", "kz", "ua"));
+		}
+
+		$this->arResult["Urls"] = $this->getUrls();
+		$this->arResult["User"] = $this->getUserData();
+		$this->arResult["CurrentUser"] = [
+			'STATUS' => $this->getCurrentUserStatus()
+		];
+
 		$this->userFieldDispatcher = \Bitrix\Main\UserField\Dispatcher::instance();
 
 		$this->arResult["EnablePersonalConfigurationUpdate"] = true;
-		$this->arResult["EnableCommonConfigurationUpdate"] = $isAdminRights;
+		$this->arResult["EnableCommonConfigurationUpdate"] = $isAdminRights
+			&& $this->arResult["User"]["STATUS"] !== "email";
+		
 		$this->arResult["EnableSettingsForAll"] = \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('edit_other_settings');
 
 		$this->arResult["Permissions"] = $this->getPermissions();
@@ -70,21 +87,6 @@ class CIntranetUserProfileComponent extends UserProfile
 			? $this->userFieldDispatcher->getCreateSignature(array("ENTITY_ID" => $this->arResult["UserFieldEntityId"]))
 			: '';
 		$this->arResult["EnableUserFieldMandatoryControl"] = false;
-
-		$this->init();
-
-		$this->arResult["isCloud"] = Loader::includeModule("bitrix24");
-		if ($this->arResult["isCloud"])
-		{
-			$licensePrefix = \CBitrix24::getLicensePrefix();
-			$this->arResult["isRusCloud"] = in_array($licensePrefix, array("ru", "by", "kz", "ua"));
-		}
-
-		$this->arResult["Urls"] = $this->getUrls();
-		$this->arResult["User"] = $this->getUserData();
-		$this->arResult["CurrentUser"] = [
-			'STATUS' => $this->getCurrentUserStatus()
-		];
 
 		if ($this->arResult["User"]["STATUS"] === "email")
 		{

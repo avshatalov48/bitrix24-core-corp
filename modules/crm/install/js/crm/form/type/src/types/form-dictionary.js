@@ -8,6 +8,12 @@ type EnumString = {
 	name: string;
 };
 
+type DescEnumString = {
+	id: string;
+	name: string;
+	desc: string;
+};
+
 type Language = EnumString;
 
 type Views = {
@@ -62,6 +68,10 @@ type Personalization = {
 	list: Array<EnumString>;
 };
 
+type Properties = {
+	list: Array<DescEnumString>;
+};
+
 type DepGroup = {
 	types: Array<EnumInt>;
 };
@@ -104,6 +114,7 @@ export type FormDictionary = {
 	captcha: Captcha;
 	templates: Array<string>;
 	personalization: Personalization;
+	properties: Properties;
 	deps: Deps;
 	restriction: Restriction;
 	product: Product;

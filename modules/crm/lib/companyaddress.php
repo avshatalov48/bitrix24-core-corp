@@ -27,7 +27,7 @@ class CompanyAddress extends EntityAddress
 	*/
 	protected static function getSupportedTypeIDs()
 	{
-		return array(EntityAddress::Primary, EntityAddress::Registered);
+		return array(EntityAddressType::Primary, EntityAddressType::Registered);
 	}
 
 	/**
@@ -37,7 +37,7 @@ class CompanyAddress extends EntityAddress
 	{
 		if(!isset(self::$fieldMaps[$typeID]))
 		{
-			if($typeID === EntityAddress::Registered)
+			if($typeID === EntityAddressType::Registered)
 			{
 				self::$fieldMaps[$typeID] = array(
 					'ADDRESS_1' => 'REG_ADDRESS',
@@ -92,7 +92,7 @@ class CompanyAddress extends EntityAddress
 			$fieldName = $aliases[$fieldName];
 		}
 
-		return mb_stripos($fieldName, 'REG_') === 0 ? EntityAddress::Registered : EntityAddress::Primary;
+		return mb_stripos($fieldName, 'REG_') === 0 ? EntityAddressType::Registered : EntityAddressType::Primary;
 	}
 
 	/**

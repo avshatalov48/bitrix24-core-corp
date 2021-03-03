@@ -33,11 +33,11 @@ class Chat
 	const RATING_VALUE_LIKE = '5';
 	const RATING_VALUE_DISLIKE = '1';
 
-	public static $fieldAssoc = Array(
+	public static $fieldAssoc = [
 		'LINES_SESSION' => 'ENTITY_DATA_1',
 		'LINES_CRM' => 'ENTITY_DATA_2',
 		'LIVECHAT_SESSION' => 'ENTITY_DATA_1',
-	);
+	];
 
 	const TRANSFER_MODE_AUTO = 'AUTO';
 	const TRANSFER_MODE_MANUAL = 'MANUAL';
@@ -48,6 +48,8 @@ class Chat
 
 	const CHAT_TYPE_OPERATOR = 'LINES';
 	const CHAT_TYPE_CLIENT = 'LIVECHAT';
+
+	public const ERROR_USER_NOT_OPERATOR = 'ERROR_USER_NOT_OPERATOR';
 
 	private $error = null;
 	private $moduleLoad = false;
@@ -61,7 +63,7 @@ class Chat
 	public const PREFIX_KEY_LOCK_NEW_SESSION = 'imol_start_session_by_message_chat_id_';
 	public const PREFIX_KEY_LOCK_ANSWER_SESSION = 'imol_answer_session_chat_id_';
 
-	public function __construct($chatId = 0, $params = Array())
+	public function __construct($chatId = 0, $params = [])
 	{
 		$imLoad = \Bitrix\Main\Loader::includeModule('im');
 		$pullLoad = \Bitrix\Main\Loader::includeModule('pull');
@@ -231,7 +233,7 @@ class Chat
 
 		if(!$this->isDataLoaded())
 		{
-			$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
+			$result->addError(new Error('Chat failed to load', 'NOT_LOAD_CHAT', __METHOD__, ['chat' => $this->chat]));
 		}
 
 		if($result->isSuccess())
@@ -246,31 +248,21 @@ class Chat
 					$chat->AddUser($this->chat['ID'], $userId, false, true);
 				}
 
-				if ($skipSession)
-				{
-					Tools\Lock::getInstance()->delete($keyLock);
-				}
-				else
+				if($skipSession !== true)
 				{
 					$session = new Session();
 					$resultLoad = $session->load([
 						'USER_CODE' => $this->chat['ENTITY_ID'],
 						'MODE' => Session::MODE_OUTPUT,
-						'OPERATOR_ID' => $userId
+						'SKIP_CREATE' => 'Y'
 					]);
-					if (!$resultLoad)
-					{
-						Tools\Lock::getInstance()->delete($keyLock);
-						$result->setResult(false);
-						$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION'), 'IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION', __METHOD__, ['USER_CODE' => $this->chat['ENTITY_ID'], 'MODE' => Session::MODE_OUTPUT, 'OPERATOR_ID' => $userId]));
-					}
-					else
+					if ($resultLoad)
 					{
 						if($this->validationAction($session->getData('CHAT_ID')))
 						{
-							if($session->isNowCreated())
+							if (!$session->isNowCreated())
 							{
-								Tools\Lock::getInstance()->delete($keyLock);
+								$session->answer($userId);
 							}
 						}
 						else
@@ -278,105 +270,66 @@ class Chat
 							$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 						}
 					}
+					else
+					{
+						$result->setResult(false);
+						$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION'), 'IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION', __METHOD__, ['USER_CODE' => $this->chat['ENTITY_ID'], 'MODE' => Session::MODE_OUTPUT, 'OPERATOR_ID' => $userId]));
+					}
 				}
 
 				if($result->isSuccess())
 				{
-					$config = [];
-
-					if ($skipSession)
-					{
-						//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-						list(, $lineId) = explode('|', $this->chat['ENTITY_ID']);
-						$configManager = new Config();
-						$config = $configManager->get($lineId);
-					}
-					else if ($session && !$session->isNowCreated())
-					{
-						$session->setOperatorId($userId, false, false);
-
-						if ($session->getData('CRM_ACTIVITY_ID') > 0)
-						{
-							$closeDate = new Main\Type\DateTime();
-							$closeDate->add(intval($session->getConfig('AUTO_CLOSE_TIME')).' SECONDS');
-							$closeDate->add('1 DAY');
-
-							$crmManager = new Crm($session);
-							if($crmManager->isLoaded())
-							{
-								$crmManager->setSessionAnswered(['DATE_CLOSE' => $closeDate]);
-							}
-						}
-
-						$sessionUpdate = Array(
-							'OPERATOR_ID' => $userId,
-							'WAIT_ACTION' => 'N',
-							'WAIT_ANSWER' => 'N',
-							'SEND_NO_ANSWER_TEXT' => 'Y'
-						);
-						if (!ImUser::getInstance($userId)->isBot() && $session->getData('DATE_OPERATOR_ANSWER') <= 0)
-						{
-							$currentDate = new DateTime();
-							$sessionUpdate['DATE_OPERATOR_ANSWER'] = $currentDate;
-							$sessionUpdate['TIME_ANSWER'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
-						}
-
-						$session->update($sessionUpdate);
-						$config = $session->getConfig();
-					}
-					else if ($session)
-					{
-						$config = $session->getConfig();
-					}
-
 					$relations = \CIMChat::GetRelationById($this->chat['ID']);
 					foreach ($relations as $relation)
 					{
 						if(
-							!ImUser::getInstance($relation['USER_ID'])->isConnector() &&
-							!ImUser::getInstance($relation['USER_ID'])->isBot() &&
-							$userId != $relation['USER_ID']
+							$userId != $relation['USER_ID'] &&
+							Queue::isRealOperator($relation['USER_ID'])
 						)
 						{
 							$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
 						}
 					}
 
-					$this->update(Array(
+					$this->update([
 						'AUTHOR_ID' => $userId
-					));
+					]);
 
-					Pull\Event::add($userId, Array(
+					Pull\Event::add($userId, [
 						'module_id' => 'imopenlines',
 						'command' => 'linesAnswer',
-						'params' => Array(
+						'params' => [
 							'chatId' => $this->chat['ID']
-						)
-					));
+						]
+					]);
 
 					if (!$skipMessage)
 					{
 						$userAnswer = ImUser::getInstance($userId);
 
-						Im::addMessage(Array(
-							"FROM_USER_ID" => $userId,
-							"TO_CHAT_ID" => $this->chat['ID'],
-							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), Array('#USER#' => '[USER='.$userAnswer->getId().'][/USER]')),
-							"SYSTEM" => 'Y',
-						));
+						Im::addMessage([
+							'FROM_USER_ID' => $userId,
+							'TO_CHAT_ID' => $this->chat['ID'],
+							'MESSAGE' => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), ['#USER#' => '[USER='.$userAnswer->getId().'][/USER]']),
+							'SYSTEM' => 'Y',
+						]);
 					}
 
 					Tools\Lock::getInstance()->delete($keyLock);
 
 					if ($session)
 					{
-						$eventData = array(
+						$eventData = [
 							'RUNTIME_SESSION' => $session,
 							'USER_ID' => $userId,
-						);
-						$event = new Event("imopenlines", "OnChatAnswer", $eventData);
+						];
+						$event = new Event('imopenlines', 'OnChatAnswer', $eventData);
 						$event->send();
 					}
+				}
+				else
+				{
+					Tools\Lock::getInstance()->delete($keyLock);
 				}
 			}
 			else
@@ -528,7 +481,7 @@ class Chat
 						$chat->SetOwner($this->chat['ID'], 0);
 					}
 
-					$session->transferToNextInQueue();
+					$session->transferToNextInQueue(false);
 
 					Im::addMessage(Array(
 						"TO_CHAT_ID" => $this->chat['ID'],
@@ -616,7 +569,7 @@ class Chat
 						// END Event
 
 						//Transfer to queue
-						if (mb_substr($params['TO'], 0, 5) == 'queue')
+						if (mb_strpos($params['TO'], 'queue') === 0)
 						{
 							$result = $this->transferToQueue($params, $session, $mode);
 						}
@@ -1193,43 +1146,102 @@ class Chat
 	}
 
 	/**
-	 * @return bool
+	 * @param int $userId
+	 * @param bool $permissionOtherClose
+	 * @return Result
 	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function finish()
+	public function finish($userId = 0, $permissionOtherClose = true)
 	{
-		$result = false;
+		$result = new Result();
 
-		if($this->isDataLoaded())
+		$session = new Session();
+
+		if (
+			$this->isDataLoaded() &&
+			$session->load([
+				'USER_CODE' => $this->chat['ENTITY_ID'],
+				'SKIP_CREATE' => 'Y'
+			])
+		)
 		{
-			$session = new Session();
-			$resultLoadSession = $session->load([
-				'USER_CODE' => $this->chat['ENTITY_ID']
-			]);
-			if ($resultLoadSession)
+			if($this->validationAction($session->getData('CHAT_ID')))
 			{
-				if($this->validationAction($session->getData('CHAT_ID')))
+				if(
+					$permissionOtherClose === true ||
+					(
+						$userId > 0 &&
+						$session->getData('OPERATOR_ID') == $userId
+					)
+				)
 				{
-					$eventData = [
-						'RUNTIME_SESSION' => $session
-					];
+					$queueManager = Queue::initialization($session);
 
-					$event = new Event("imopenlines", "OnChatFinish", $eventData);
-					$event->send();
+					if($queueManager && $queueManager->startLock())
+					{
+						if($userId > 0)
+						{
+							if(
+								$this->chat['AUTHOR_ID'] <= 0 &&
+								!ImUser::getInstance($userId)->isConnector()
+							)
+							{
+								$this->answer($userId);
+								$session->load([
+									'USER_CODE' => $this->chat['ENTITY_ID'],
+									'SKIP_CREATE' => 'Y'
+								]);
+							}
+							elseif(
+								$permissionOtherClose === true &&
+								$session->getData('OPERATOR_ID') != $userId
+							)
+							{
+								$user = ImUser::getInstance($userId);
+								$message = Loc::getMessage('IMOL_CHAT_CLOSE_'.$user->getGender(), [
+									'#USER#' => '[USER=' . $user->getId() . '][/USER]',
+								]);
 
-					$session->finish();
+								Im::addMessage([
+									'TO_CHAT_ID' => $this->chat['ID'],
+									'MESSAGE' => $message,
+									'SYSTEM' => 'Y',
+								]);
+							}
+						}
 
-					$result = true;
+						$eventData = [
+							'RUNTIME_SESSION' => $session
+						];
+
+						$event = new Event('imopenlines', 'OnChatFinish', $eventData);
+						$event->send();
+
+						$session->finish();
+
+						$queueManager->stopLock();
+						$result->setResult(true);
+					}
+				}
+				else
+				{
+					$result->addError(new Error('Attempt to close the dialog by a user who is not an operator', self::ERROR_USER_NOT_OPERATOR, __METHOD__, ['USER_ID' => $userId, 'PERMISSION_OTHER_CLOSE' => $permissionOtherClose]));
 				}
 			}
 			else
 			{
-				$this->validationAction();
+				$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 			}
+		}
+		else
+		{
+			$this->validationAction();
+			$result->addError(new Error('Session or chat failed to load', 'NOT_LOAD_SESSION_OR_CHAT', __METHOD__, ['USER_ID' => $userId, 'PERMISSION_OTHER_CLOSE' => $permissionOtherClose]));
 		}
 
 		return $result;
@@ -1239,6 +1251,7 @@ class Chat
 	 * @param $userId
 	 * @return bool
 	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
@@ -1265,15 +1278,15 @@ class Chat
 				if($queueManager && $queueManager->startLock())
 				{
 					$user = ImUser::getInstance($userId);
-					$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), Array(
+					$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), [
 						'#USER#' => '[USER='.$user->getId().'][/USER]',
-					));
+					]);
 
-					Im::addMessage(Array(
-						"TO_CHAT_ID" => $this->chat['ID'],
-						"MESSAGE" => $message,
-						"SYSTEM" => 'Y',
-					));
+					Im::addMessage([
+						'TO_CHAT_ID' => $this->chat['ID'],
+						'MESSAGE' => $message,
+						'SYSTEM' => 'Y',
+					]);
 
 					if (\Bitrix\ImOpenLines\Connector::isLiveChat($session->getData('SOURCE')))
 					{
@@ -1286,11 +1299,11 @@ class Chat
 						]]);
 					}
 
-					$eventData = array(
+					$eventData = [
 						'RUNTIME_SESSION' => $session,
 						'USER_ID' => $userId,
-					);
-					$event = new Event("imopenlines", "OnChatMarkSpam", $eventData);
+					];
+					$event = new Event('imopenlines', 'OnChatMarkSpam', $eventData);
 					$event->send();
 
 					$session->markSpam();
@@ -1400,6 +1413,127 @@ class Chat
 	}
 
 	/**
+	 * @param $userId
+	 * @param string $message
+	 * @return Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function startSessionAndCloseOldSession($userId, $message = ''): Result
+	{
+		$result = new Result();
+
+		if($this->isDataLoaded())
+		{
+			$keyLock = self::PREFIX_KEY_LOCK_NEW_SESSION . $this->chat['ENTITY_ID'];
+
+			if (Tools\Lock::getInstance()->set($keyLock))
+			{
+				$user = ImUser::getInstance($userId);
+
+				$session = new Session();
+				$resultLoad = $session->load([
+					'USER_CODE' => $this->chat['ENTITY_ID'],
+					'SKIP_CREATE' => 'Y'
+				]);
+				if ($resultLoad)
+				{
+					if($this->validationAction($session->getData('CHAT_ID')))
+					{
+						Im::addMessage([
+							'TO_CHAT_ID' => $this->chat['ID'],
+							'SYSTEM' => 'Y',
+							'MESSAGE' => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), [
+								'#USER#' => '[USER='.$user->getId().'][/USER]',
+							]),
+						]);
+
+						$session->finish(false, true, true);
+						$this->close();
+					}
+					else
+					{
+						$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
+					}
+				}
+
+				if($result->isSuccess())
+				{
+					if(ImUser::getInstance($userId)->isConnector())
+					{
+						$mode = Session::MODE_INPUT;
+					}
+					else
+					{
+						$mode = Session::MODE_OUTPUT;
+					}
+					$session = new Session();
+					$resultCreate = $session->load([
+						'USER_CODE' => $this->chat['ENTITY_ID'],
+						'MODE' => $mode,
+					]);
+
+					if(
+						$resultCreate &&
+						$session->isNowCreated()
+					)
+					{
+						$session->joinUser();
+
+						$dateClose = new DateTime();
+						$dateClose->add('1 MONTH');
+
+						$sessionUpdate = [
+							'CHECK_DATE_CLOSE' => $dateClose
+						];
+						$session->update($sessionUpdate);
+
+						if(
+							$mode === Session::MODE_INPUT &&
+							empty($message)
+						)
+						{
+							$message = Loc::getMessage('IMOL_CHAT_NEW_QUESTION_'.$user->getGender(), [
+								'#USER#' => '[USER='.$user->getId().'][/USER]',
+							]);
+						}
+						if(!empty($message))
+						{
+							Im::addMessage([
+								'TO_CHAT_ID' => $this->chat['ID'],
+								'MESSAGE' => $message,
+								'SYSTEM' => 'Y',
+								'IMPORTANT_CONNECTOR' => 'Y',
+								'NO_SESSION_OL' => 'Y',
+								'PARAMS' => [
+									'CLASS' => 'bx-messenger-content-item-ol-output',
+									'IMOL_FORM' => 'offline',
+									'TYPE' => 'lines',
+									'COMPONENT_ID' => 'bx-imopenlines-message',
+								],
+							]);
+						}
+
+						$result->setResult(true);
+					}
+				}
+
+				Tools\Lock::getInstance()->delete($keyLock);
+			}
+		}
+		else
+		{
+			$result->addError(new Error('This chat is blocked for this operation. Running a parallel competitive query.', 'IMOL_CHAT_ERROR_NOT_START_SESSION', __METHOD__, ['chat' => $this->chat]));
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Create a new dialog based on an old message.
 	 *
 	 * @param $userId
@@ -1425,65 +1559,65 @@ class Chat
 				$resultLoad = $session->load([
 					'USER_CODE' => $this->chat['ENTITY_ID']
 				]);
-				if ($resultLoad)
+				if (
+					$resultLoad &&
+					$this->validationAction($session->getData('CHAT_ID'))
+				)
 				{
-					if($this->validationAction($session->getData('CHAT_ID')))
+					$message = \CIMMessenger::GetById($messageId);
+					if ($message['CHAT_ID'] == $this->chat['ID'])
 					{
-						$message = \CIMMessenger::GetById($messageId);
-						if ($message['CHAT_ID'] == $this->chat['ID'])
-						{
-							$user = ImUser::getInstance($userId);
-							Im::addMessage(Array(
-								"TO_CHAT_ID" => $this->chat['ID'],
-								"SYSTEM" => 'Y',
-								"MESSAGE" => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), Array(
+						$user = ImUser::getInstance($userId);
+						Im::addMessage([
+							'TO_CHAT_ID' => $this->chat['ID'],
+							'SYSTEM' => 'Y',
+							'MESSAGE' => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), [
 								'#USER#' => '[USER='.$user->getId().'][/USER]',
-								)),
-							));
+							]),
+						]);
 
-							$configId = $session->getData('CONFIG_ID');
-							$sessionId = $session->getData('SESSION_ID');
+						$configId = $session->getData('CONFIG_ID');
+						$sessionId = $session->getData('SESSION_ID');
 
-							$session->finish(false, true, false);
+						$session->finish(false, true, false);
 
-							$session = new Session();
-							$session->load(Array(
-								'USER_CODE' => $this->chat['ENTITY_ID'],
-								'MODE' => Session::MODE_OUTPUT,
-								'OPERATOR_ID' => $userId,
-								'CONFIG_ID' => $configId,
-								'PARENT_ID' => $sessionId
-							));
+						$session = new Session();
+						$session->load([
+							'USER_CODE' => $this->chat['ENTITY_ID'],
+							'MODE' => Session::MODE_OUTPUT,
+							'OPERATOR_ID' => $userId,
+							'CONFIG_ID' => $configId,
+							'PARENT_ID' => $sessionId
+						]);
 
-							if ($this->chat['AUTHOR_ID'] == $userId)
-							{
-								$resultAnswer = true;
-							}
-							else
-							{
-								$resultAnswer = $this->answer($userId, false, true)->isSuccess();
-							}
+						if ($this->chat['AUTHOR_ID'] == $userId)
+						{
+							$resultAnswer = true;
+						}
+						else
+						{
+							$resultAnswer = $this->answer($userId, false, true)->isSuccess();
+						}
 
-							if($resultAnswer)
-							{
-								Im::addMessage(Array(
-									"TO_CHAT_ID" => $this->chat['ID'],
-									"FROM_USER_ID" => $message['AUTHOR_ID'],
-									"MESSAGE" => $message['MESSAGE'],
-									"PARAMS" => $message['PARAMS'],
-									"SKIP_CONNECTOR" => 'Y',
-								));
+						if($resultAnswer)
+						{
+							Im::addMessage([
+								'TO_CHAT_ID' => $this->chat['ID'],
+								'FROM_USER_ID' => $message['AUTHOR_ID'],
+								'MESSAGE' => $message['MESSAGE'],
+								'PARAMS' => $message['PARAMS'],
+								'SKIP_CONNECTOR' => 'Y',
+							]);
 
-								$dateClose = new DateTime();
-								$dateClose->add('1 MONTH');
+							$dateClose = new DateTime();
+							$dateClose->add('1 MONTH');
 
-								$sessionUpdate = Array(
-									'CHECK_DATE_CLOSE' => $dateClose
-								);
-								$session->update($sessionUpdate);
+							$sessionUpdate = [
+								'CHECK_DATE_CLOSE' => $dateClose
+							];
+							$session->update($sessionUpdate);
 
-								$result = true;
-							}
+							$result = true;
 						}
 					}
 				}
@@ -1546,8 +1680,9 @@ class Chat
 
 	/**
 	 * @param $params
-	 * @return bool
+	 * @return Result
 	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
@@ -1555,13 +1690,14 @@ class Chat
 	 */
 	public function setPauseFlag($params)
 	{
-		$result = false;
+		$result = new Result();
 
 		$pause = $params['ACTIVE'] == 'Y'? 'Y': 'N';
 		$sessionField = $this->getFieldData(self::FIELD_SESSION);
+
 		if ($sessionField['PAUSE'] == $pause)
 		{
-			$result = true;
+			$result->setResult(true);
 		}
 		elseif($this->isDataLoaded())
 		{
@@ -1573,7 +1709,10 @@ class Chat
 			{
 				if($this->validationAction($session->getData('CHAT_ID')))
 				{
-					if(empty($params['USER_ID']) || $params['USER_ID'] == $session->getData('OPERATOR_ID'))
+					if(
+						empty($params['USER_ID']) ||
+						$params['USER_ID'] == $session->getData('OPERATOR_ID')
+					)
 					{
 						$queueManager = Queue::initialization($session);
 
@@ -1592,76 +1731,124 @@ class Chat
 
 								$formattedDate = \FormatDate('d F', $datePause->getTimestamp());
 								Im::addMessage([
-									"TO_CHAT_ID" => $this->chat['ID'],
-									"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_ON', ['#DATE#' => '[b]'.$formattedDate.'[/b]']),
-									"SYSTEM" => 'Y',
+									'TO_CHAT_ID' => $this->chat['ID'],
+									'MESSAGE' => Loc::getMessage('IMOL_CHAT_ASSIGN_ON', ['#DATE#' => '[b]'.$formattedDate.'[/b]']),
+									'SYSTEM' => 'Y',
 								]);
 							}
 							else
 							{
 								Im::addMessage([
-									"TO_CHAT_ID" => $this->chat['ID'],
-									"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_OFF'),
-									"SYSTEM" => 'Y',
+									'TO_CHAT_ID' => $this->chat['ID'],
+									'MESSAGE' => Loc::getMessage('IMOL_CHAT_ASSIGN_OFF'),
+									'SYSTEM' => 'Y',
 								]);
 							}
 
 							$queueManager->stopLock();
-							$result = true;
+							$result->setResult(true);
 						}
 					}
+					elseif ($params['USER_ID'] != $session->getData('OPERATOR_ID'))
+					{
+						$result->addError(new Error('Attempt to pin / unpin a chat by a user who is not an operator', self::ERROR_USER_NOT_OPERATOR, __METHOD__, ['USER_ID' => $params['USER_ID'], 'OPERATOR_ID' => $session->getData('OPERATOR_ID')]));
+					}
+				}
+				else
+				{
+					$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 				}
 			}
+			else
+			{
+				$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION'), 'IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION', __METHOD__, $params));
+			}
+		}
+		else
+		{
+			$result->addError(new Error('Chat failed to load', 'NOT_LOAD_CHAT', __METHOD__, $params));
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @return bool
+	 * @param int $userId
+	 * @return Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function createLead()
+	public function createLead($userId = 0)
 	{
-		$result = false;
+		$result = new Result();
 
 		$sessionField = $this->getFieldData(self::FIELD_SESSION);
 		if ($sessionField['CRM'] == 'Y')
 		{
-			$result = true;
+			$result->setResult(true);
 		}
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
-			if($session->load([
+			$resultLoad = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
-			]))
+			]);
+			if($resultLoad)
 			{
 				if($this->validationAction($session->getData('CHAT_ID')))
 				{
-					$crmManager = new Crm($session);
-					if($crmManager->isLoaded())
+					if(
+						$userId > 0 &&
+						$session->getData('OPERATOR_ID') == $userId
+					)
 					{
-						$crmFieldsManager = $crmManager->getFields();
-						$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
-						$crmFieldsManager->setDataFromUser();
-						$crmManager->setSkipSearch();
-						$crmManager->setSkipAutomationTrigger();
-
-						$rawResult = $crmManager->registrationChanges();
-						$crmManager->sendCrmImMessages();
-
-						if($rawResult->isSuccess())
+						$crmManager = new Crm($session);
+						if($crmManager->isLoaded())
 						{
-							$result = true;
+							$crmFieldsManager = $crmManager->getFields();
+							$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
+							$crmFieldsManager->setDataFromUser();
+							$crmManager->setSkipSearch();
+							$crmManager->setSkipAutomationTrigger();
+
+							$rawResult = $crmManager->registrationChanges();
+							$crmManager->sendCrmImMessages();
+
+							if($rawResult->isSuccess())
+							{
+								$result->setResult(true);
+							}
+							else
+							{
+								$result->addErrors($rawResult->getErrors());
+							}
+						}
+						else
+						{
+							$result->addError(new Error('Failed to load CRM', 'IMOL_CHAT_ERROR_NOT_LOAD_CRM', __METHOD__));
 						}
 					}
+					else
+					{
+						$result->addError(new Error('Attempt to save a CRM entity by a user who is not an operator', self::ERROR_USER_NOT_OPERATOR, __METHOD__, ['USER_ID' => $userId]));
+					}
+				}
+				else
+				{
+					$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 				}
 			}
+			else
+			{
+				$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION'), 'IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION', __METHOD__));
+			}
+		}
+		else
+		{
+			$result->addError(new Error('Chat failed to load', 'IMOL_CHAT_ERROR_NOT_LOAD_CHAT', __METHOD__));
 		}
 
 		return $result;

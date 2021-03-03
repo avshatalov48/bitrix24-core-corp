@@ -1,9 +1,10 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Conversion\EntityConversionMap;
 use Bitrix\Crm\Conversion\LeadConversionMapper;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -104,7 +105,7 @@ $arResult['FIELD_LIST'] = array();
 
 global $USER_FIELD_MANAGER;
 $addressLabels = EntityAddress::getShortLabels();
-$regAddressLabels = EntityAddress::getShortLabels(EntityAddress::Registered);
+$regAddressLabels = EntityAddress::getShortLabels(EntityAddressType::Registered);
 $multifildInfos = CCrmFieldMulti::GetEntityTypeInfos();
 
 //region Lead Fields

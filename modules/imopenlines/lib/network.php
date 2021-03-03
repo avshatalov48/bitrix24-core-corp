@@ -1,12 +1,15 @@
 <?php
-
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Main,
-	Bitrix\ImBot,
-	Bitrix\ImOpenLines,
-	Bitrix\ImOpenLines\Log,
+	Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImBot;
+
+use Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Log;
+use Bitrix\ImConnector\InteractiveMessage;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,70 +39,99 @@ class Network
 	 */
 	public function sendMessage($lineId, $fields, $userCodeSession = '')
 	{
-		if (!\Bitrix\Main\Loader::includeModule('imbot'))
+		if (!Loader::includeModule('imbot'))
 		{
 			$this->error = new BasicError(__METHOD__, 'IMBOT_ERROR', Loc::getMessage('IMOL_NETWORK_IMBOT_LOAD_ERROR'));
 		}
 
 		\Bitrix\ImOpenLines\Log::write($fields, 'NETWORK ANSWER');
 
-		$userArray = [];
-		if ($fields['message']['user_id'] > 0)
+		$isActiveKeyboard = false;
+		if (
+			!empty($fields['im']['chat_id']) &&
+			$fields['im']['chat_id'] > 0 &&
+			Loader::includeModule('imconnector'))
 		{
-			$actualLineId = Queue::getActualLineId([
-				'LINE_ID' =>  $lineId,
-				'USER_CODE' => $userCodeSession
-			]);
+			//Processing for native messages
+			$interactiveMessage = InteractiveMessage\Output::getInstance($fields['im']['chat_id'], ['connectorId' => 'network']);
+			$fields['message'] = $interactiveMessage->nativeMessageProcessing($fields['message']);
 
-			$imolUserData = Queue::getUserData($actualLineId, $fields['message']['user_id']);
-			if ($imolUserData)
-			{
-				$userArray = [
-					'ID' => $imolUserData['ID'],
-					'NAME' => $imolUserData['FIRST_NAME'],
-					'LAST_NAME' => $imolUserData['LAST_NAME'],
-					'PERSONAL_GENDER' => $imolUserData['GENDER'],
-					'PERSONAL_PHOTO' => $imolUserData['AVATAR']
-				];
-			}
-			else
-			{
-				$user = \Bitrix\Im\User::getInstance($fields['message']['user_id']);
-
-				$avatarUrl = '';
-				if ($user->getAvatarId())
-				{
-					$arFileTmp = \CFile::ResizeImageGet(
-						$user->getAvatarId(),
-						['width' => 300, 'height' => 300],
-						BX_RESIZE_IMAGE_EXACT,
-						false,
-						false,
-						true
-					);
-					$avatarUrl = mb_substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
-				}
-
-				$userArray = [
-					'ID' => $user->getId(),
-					'NAME' => $user->getName(false),
-					'LAST_NAME' => $user->getLastName(false),
-					'PERSONAL_GENDER' => $user->getGender(),
-					'PERSONAL_PHOTO' => $avatarUrl
-				];
-			}
+			$isActiveKeyboard = $interactiveMessage->isLoadedKeyboard();
 		}
 
-		\Bitrix\ImBot\Service\Openlines::operatorMessageAdd([
-			"LINE_ID" => $lineId,
-			"GUID" => $fields['chat']['id'],
-			"MESSAGE_ID" => $fields['im']['message_id'],
-			"MESSAGE_TEXT" => $fields['message']['text'],
-			"FILES" => $fields['message']['files'],
-			"ATTACH" => $fields['message']['attachments'],
-			"PARAMS" => $fields['message']['params'],
-			"USER" => $userArray
-		]);
+		if($isActiveKeyboard === true)
+		{
+			\Bitrix\ImBot\Service\Openlines::operatorMessageAdd([
+				'LINE_ID' => $lineId,
+				'GUID' => $fields['chat']['id'],
+				'MESSAGE_ID' => $fields['im']['message_id'],
+				'MESSAGE_TEXT' => $fields['message']['text'],
+				'FILES' => $fields['message']['files'],
+				'ATTACH' => $fields['message']['attachments'],
+				'PARAMS' => $fields['message']['params'],
+				'KEYBOARD' => $fields['message']['keyboardData'],
+			]);
+		}
+		else
+		{
+			$userArray = [];
+			if ($fields['message']['user_id'] > 0)
+			{
+				$actualLineId = Queue::getActualLineId([
+					'LINE_ID' =>  $lineId,
+					'USER_CODE' => $userCodeSession
+				]);
+
+				$imolUserData = Queue::getUserData($actualLineId, $fields['message']['user_id']);
+				if ($imolUserData)
+				{
+					$userArray = [
+						'ID' => $imolUserData['ID'],
+						'NAME' => $imolUserData['FIRST_NAME'],
+						'LAST_NAME' => $imolUserData['LAST_NAME'],
+						'PERSONAL_GENDER' => $imolUserData['GENDER'],
+						'PERSONAL_PHOTO' => $imolUserData['AVATAR']
+					];
+				}
+				else
+				{
+					$user = \Bitrix\Im\User::getInstance($fields['message']['user_id']);
+
+					$avatarUrl = '';
+					if ($user->getAvatarId())
+					{
+						$arFileTmp = \CFile::ResizeImageGet(
+							$user->getAvatarId(),
+							['width' => 300, 'height' => 300],
+							BX_RESIZE_IMAGE_EXACT,
+							false,
+							false,
+							true
+						);
+						$avatarUrl = mb_substr($arFileTmp['src'], 0, 4) == 'http'? $arFileTmp['src']: \Bitrix\ImOpenLines\Common::getServerAddress().$arFileTmp['src'];
+					}
+
+					$userArray = [
+						'ID' => $user->getId(),
+						'NAME' => $user->getName(false),
+						'LAST_NAME' => $user->getLastName(false),
+						'PERSONAL_GENDER' => $user->getGender(),
+						'PERSONAL_PHOTO' => $avatarUrl
+					];
+				}
+			}
+
+			\Bitrix\ImBot\Service\Openlines::operatorMessageAdd([
+				'LINE_ID' => $lineId,
+				'GUID' => $fields['chat']['id'],
+				'MESSAGE_ID' => $fields['im']['message_id'],
+				'MESSAGE_TEXT' => $fields['message']['text'],
+				'FILES' => $fields['message']['files'],
+				'ATTACH' => $fields['message']['attachments'],
+				'PARAMS' => $fields['message']['params'],
+				'USER' => $userArray
+			]);
+		}
 
 		return true;
 	}
@@ -313,6 +345,10 @@ class Network
 		{
 			$result = $this->executeClientRequestFinalizeSession($params);
 		}
+		else if ($command == 'clientCommandSend')
+		{
+			$result = $this->executeClientCommandSend($params);
+		}
 
 		return $result;
 	}
@@ -471,6 +507,11 @@ class Network
 		return true;
 	}
 
+	/**
+	 * @param $params
+	 *
+	 * @return bool
+	 */
 	private function executeClientStartWriting($params)
 	{
 		if (!isset($params['USER']))
@@ -493,6 +534,93 @@ class Network
 		return true;
 	}
 
+	/**
+	 * Runs command recived from client.
+	 * @param array $params Incomming parameters. <pre>
+	 * [
+	 * 	(string) LINE_ID
+	 * 	(string) GUID
+	 * 	(string) MESSAGE_ID
+	 * 	(string) CONNECTOR_MID
+	 * 	(array) USER
+	 * 	(string) COMMAND_CONTEXT
+	 * 	(string) COMMAND
+	 * 	(string) COMMAND_ID
+	 * 	(string) COMMAND_PARAMS
+	 * ]</pre>
+	 *
+	 * @return bool
+	 */
+	private function executeClientCommandSend(array $params)
+	{
+		if (!isset($params['USER']))
+		{
+			return false;
+		}
+
+		$userId = $this->getUserId($params['USER'], false);
+		if (!$userId)
+		{
+			return false;
+		}
+
+		\Bitrix\ImOpenLines\Log::write($params, 'NETWORK CLIENT COMMAND');
+
+		if (!empty($params['COMMAND']) && !empty($params['COMMAND_PARAMS']))
+		{
+			if (!\Bitrix\Main\Loader::includeModule('im'))
+			{
+				return false;
+			}
+			if (!\Bitrix\Main\Loader::includeModule('imconnector'))
+			{
+				return false;
+			}
+
+			$interactiveMessage = \Bitrix\ImConnector\InteractiveMessage\Input::initialization('network');
+			$result = $interactiveMessage->processingCommandKeyboard($params['COMMAND'], $params['COMMAND_PARAMS']);
+
+			if ($result->isSuccess())
+			{
+				$message = \CIMMessenger::GetById($params['MESSAGE_ID']);
+				if ($message['PARAMS']['CONNECTOR_MID'][0] == $params['CONNECTOR_MID'])
+				{
+					foreach ($message['PARAMS']['KEYBOARD'] as &$button)
+					{
+						$button['DISABLED'] = 'Y';
+					}
+
+					\Bitrix\ImBot\Service\Openlines::operatorMessageUpdate([
+						'LINE_ID' => $params['LINE_ID'],
+						'GUID' => $params['GUID'],
+						'MESSAGE_ID' => $params['MESSAGE_ID'],
+						'CONNECTOR_MID' => $params['CONNECTOR_MID'],
+						'MESSAGE_TEXT' => $message['MESSAGE'],
+						'URL_PREVIEW' => 'N',
+						'KEYBOARD' => $message['PARAMS']['KEYBOARD'],
+					]);
+				}
+			}
+		}
+
+		$event = new \Bitrix\Main\Event('imconnector', 'OnReceivedClientCommand', Array(
+			'user' => $userId,
+			'connector' => 'network',
+			'line' => $params['LINE_ID'],
+			'chat' => Array('id' => $params['GUID']),
+			'command' => $params['COMMAND'],
+			'command_params' => $params['COMMAND_PARAMS'],
+		));
+		$event->send();
+
+		return true;
+	}
+
+	/**
+	 * @param $params
+	 *
+	 * @return bool
+	 */
 	private function executeClientMessageAdd($params)
 	{
 		if (!isset($params['USER']))

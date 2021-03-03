@@ -98,7 +98,7 @@ let nodeElementCrm = (function ()
 						sections.push(key);
 						let span = document.createElement('span');
 						span.setAttribute('class', 'mobile-grid-data-span mobile-grid-crm-element-category-title');
-						span.innerHTML = key;
+						span.innerHTML = Loc.getMessage('CRM_ENTITY_TYPE_' + key.toUpperCase());
 						div.appendChild(span);
 					}
 

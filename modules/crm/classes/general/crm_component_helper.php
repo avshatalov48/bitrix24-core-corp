@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 
@@ -397,11 +399,34 @@ class CCrmComponentHelper
 				break;
 			case "requisite_address":
 				$featureRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getAddressSearchRestriction();
+				$addressTypeInfos = [];
+				foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
+				{
+					$addressTypeInfos[$id] = [
+						'ID' => $id,
+						'DESCRIPTION' => $desc
+					];
+				}
+				$countryAddressTypeMap = [];
+				foreach (EntityRequisite::getCountryAddressZoneMap() as $countryId => $addressZoneId)
+				{
+					$countryAddressTypeMap[$countryId] = EntityAddressType::getIdsByZonesOrValues([$addressZoneId]);
+				}
+				unset($countryId, $addressZoneId);
 				$result = [
 					'multiple' => true,
-					'types' => RequisiteAddress::getTypeInfos(),
+					'types' => $addressTypeInfos,
 					'autocompleteEnabled' => $featureRestriction->hasPermission(),
-					'featureRestrictionCallback' => $featureRestriction ? $featureRestriction->prepareInfoHelperScript() : '',
+					'featureRestrictionCallback' => (
+						$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+					),
+					'addressZoneConfig' => [
+						'defaultAddressType' => EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId()),
+						'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues(
+							[EntityAddress::getZoneId()]
+						),
+						'countryAddressTypeMap' => $countryAddressTypeMap
+					]
 				];
 				break;
 			case "address":
@@ -409,7 +434,9 @@ class CCrmComponentHelper
 				$result = [
 					'multiple' => false,
 					'autocompleteEnabled' => $featureRestriction->hasPermission(),
-					'featureRestrictionCallback' => $featureRestriction ? $featureRestriction->prepareInfoHelperScript() : '',
+					'featureRestrictionCallback' => (
+						$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+					)
 				];
 				break;
 		}

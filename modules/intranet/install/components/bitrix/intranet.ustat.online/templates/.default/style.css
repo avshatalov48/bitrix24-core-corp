@@ -58,7 +58,7 @@
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-counter .ui-graph-circle-number {
-	margin-top: 1px;
+	margin-top: 0;
 }
 
 /*.intranet-ustat-online-counter .ui-graph-circle {*/

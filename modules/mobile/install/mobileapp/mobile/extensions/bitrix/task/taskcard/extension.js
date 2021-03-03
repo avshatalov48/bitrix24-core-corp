@@ -518,6 +518,14 @@ include('InAppNotifier');
 					this.onChangeResponsibleAction();
 					break;
 
+				case 'approve':
+					this.onApproveAction();
+					break;
+
+				case 'disapprove':
+					this.onDisapproveAction();
+					break;
+
 				case 'start':
 					this.onStartAction();
 					break;
@@ -798,6 +806,45 @@ include('InAppNotifier');
 				this.task.rawAccess['favorite.delete'] = true;
 
 				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: true}, true);
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		onApproveAction()
+		{
+			this.task.rawAccess.approve = false;
+			this.task.rawAccess.disapprove = false;
+			this.task.rawAccess.complete = false;
+			this.task.rawAccess.renew = true;
+
+			this.updateTask({
+				status: Task.statusList.completed,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.approve().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		onDisapproveAction()
+		{
+			this.task.rawAccess.approve = false;
+			this.task.rawAccess.disapprove = false;
+			this.task.rawAccess.renew = false;
+			this.task.rawAccess.complete = false;
+			this.task.rawAccess.start = true;
+
+			this.updateTask({
+				status: Task.statusList.pending,
+				activityDate: Date.now(),
+			});
+			this.redrawTaskPopupMenu();
+
+			this.task.disapprove().then(() => {
+				this.updateTask();
 				this.redrawTaskPopupMenu();
 			});
 		}

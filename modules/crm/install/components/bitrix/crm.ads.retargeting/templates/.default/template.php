@@ -2,7 +2,9 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\UI\Extension;
 
+Extension::load('seo.ads.login');
 /** @var array $arParams */
 
 $containerNodeId = $arParams['CONTAINER_NODE_ID'];
@@ -36,7 +38,7 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 			<a
 				target="_blank"
 				href="javascript: void(0);"
-				onclick="BX.util.popup('<?=htmlspecialcharsbx($provider['AUTH_URL'])?>', 800, 600);"
+				onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=\Bitrix\Main\Web\Json::encode($provider)?>)"
 				class="webform-small-button webform-small-button-transparent">
 				<?=Loc::getMessage('CRM_ADS_RTG_LOGIN')?>
 			</a>

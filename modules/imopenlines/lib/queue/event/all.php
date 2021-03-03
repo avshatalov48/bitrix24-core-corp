@@ -34,14 +34,18 @@ class All extends Queue
 
 		$res = ImOpenLines\Queue::getList([
 			'select' => $select,
-			'filter' => $filter
+			'filter' => $filter,
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			]
 		]);
 
 		while($queueUser = $res->fetch())
 		{
-			if($this->isOperatorActive($queueUser['USER_ID']))
+			if($this->isOperatorActive($queueUser['USER_ID']) === true)
 			{
-				$result = $result + ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID']);
+				$result += ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID']);
 			}
 		}
 

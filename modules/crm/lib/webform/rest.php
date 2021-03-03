@@ -60,7 +60,7 @@ class Rest
 				$webpack->build();
 				$webpack = Webpack\Form::instance($form['ID']);
 			}
-			$url = $webpack->getLoader()->getFileUrl();
+			$url = $webpack->getEmbeddedFileUrl();
 
 			$result[] = array_merge($form, ['URL' => $url]);
 		}

@@ -30,17 +30,6 @@ $vatRateListItems = array();
 if ($bVatMode)
 	$vatRateListItems = CCrmVat::GetVatRatesListItems();
 
-// measure list items
-$measureListItems = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-$measures = \Bitrix\Crm\Measure::getMeasures(100);
-if (is_array($measures))
-{
-	foreach ($measures as $measure)
-		$measureListItems[$measure['ID']] = $measure['SYMBOL'];
-	unset($measure);
-}
-unset($measures);
-
 $productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
 if($productID <= 0)
 {
@@ -71,10 +60,16 @@ if(!$product)
 }
 
 // Product properties
-$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'edit');
+$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(
+	false,
+	[CCrmProductPropsHelper::OPERATION_EDIT]
+);
 $arResult['EDITABLE_PROP_USER_TYPES'] = $arPropUserTypeList;
 $arResult['EDITABLE_PROPS'] = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
-$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'view');
+$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(
+	false,
+	[CCrmProductPropsHelper::OPERATION_VIEW]
+);
 $arResult['PROP_USER_TYPES'] = $arPropUserTypeList;
 $arProps = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
 $arResult['PROPS'] = $arProps;
@@ -202,7 +197,12 @@ if ($productID > 0/* && count($arProps) > 0*/)
 					],
 					$htmlControlName,
 				];
-				$arPropertyValues[$propID][] = call_user_func_array($method, $params);
+				$value = call_user_func_array($method, $params);
+				if ($arProperty['USER_TYPE'] === \CIBlockPropertyHTML::USER_TYPE)
+				{
+					$value = HTMLToTxt($value);
+				}
+				$arPropertyValues[$propID][] = $value;
 			}
 			unset($propertyInfo);
 		}
@@ -331,12 +331,14 @@ if ($bVatMode)
 	);
 }
 
+$measure = \Bitrix\Crm\Measure::getMeasureById((int)$product['MEASURE']);
+$measureName = (!empty($measure) ? $measure['SYMBOL'] : GetMessage('CRM_MEASURE_NOT_SELECTED'));
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'MEASURE',
 	'name' => GetMessage('CRM_FIELD_MEASURE'),
 	'type' => 'label',
 	'params' => array(),
-	'value' => htmlspecialcharsbx(isset($product['MEASURE']) ? $measureListItems[$product['MEASURE']] : $measureListItems['']),
+	'value' => htmlspecialcharsbx($measureName),
 	'isTactile' => true
 );
 

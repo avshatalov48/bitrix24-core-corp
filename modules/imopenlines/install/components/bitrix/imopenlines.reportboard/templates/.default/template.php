@@ -28,7 +28,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	<?php
 
 	$boardId = \Bitrix\ImOpenLines\Integrations\Report\EventHandler::getOpenLinesBoardId();
-	$filter = new \Bitrix\Report\VisualConstructor\Helper\Filter($boardId);
+	$filter = new \Bitrix\ImOpenLines\Integrations\Report\VisualConstructor\Helper\Filter($boardId);
 
 	/** @var CAllMain $APPLICATION */
 	$APPLICATION->IncludeComponent(

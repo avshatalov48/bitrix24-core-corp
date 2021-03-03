@@ -99,9 +99,9 @@ class NoAnswer
 
 				$session = new Session();
 				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
-				$resultTransfer = $session->sendMessageNoAnswer();
+				$resultNoAnswer = $session->sendMessageNoAnswer();
 
-				if($resultTransfer == true)
+				if($resultNoAnswer == true)
 				{
 					$countIterationPull++;
 				}

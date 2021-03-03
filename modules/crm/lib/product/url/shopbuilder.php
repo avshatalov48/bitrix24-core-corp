@@ -1,7 +1,8 @@
 <?php
 namespace Bitrix\Crm\Product\Url;
 
-use Bitrix\Main\Loader,
+use Bitrix\Main,
+	Bitrix\Main\Loader,
 	Bitrix\Catalog;
 
 if (Loader::includeModule('catalog'))
@@ -14,9 +15,26 @@ if (Loader::includeModule('catalog'))
 
 		protected const PATH_PREFIX = '/shop/settings/';
 
+		protected const PATH_DETAIL_CARD_PREFIX = '/shop/catalog/';
+
 		public function use(): bool
 		{
-			return (defined('CATALOG_PRODUCT') && defined('SELF_FOLDER_URL'));
+			if (defined('CATALOG_PRODUCT') && defined('SELF_FOLDER_URL'))
+			{
+				return true;
+			}
+			$request = Main\Context::getCurrent()->getRequest();
+			if (!$request->isAdminSection())
+			{
+				if (
+					mb_strpos($request->getRequestedPage(), self::PATH_DETAIL_CARD_PREFIX) === 0
+				)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		protected function addSliderOptions(array &$options): void
@@ -66,9 +84,9 @@ if (Loader::includeModule('catalog'))
 				.'#ADDITIONAL_PARAMETERS#';
 			if ($this->isUiCatalog())
 			{
-				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = '/shop/catalog/'
+				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = self::PATH_DETAIL_CARD_PREFIX
 					.'#IBLOCK_ID#/product/#ENTITY_ID#/';
-				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = '/shop/catalog/'
+				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = self::PATH_DETAIL_CARD_PREFIX
 					.'#IBLOCK_ID#/product/0/copy/#ENTITY_ID#/';
 				$this->urlTemplates[self::PAGE_ELEMENT_SAVE] = $this->urlTemplates[self::PAGE_ELEMENT_DETAIL];
 			}

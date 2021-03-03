@@ -47,6 +47,18 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 						$isNeedSocServTab = true;
 					}
 				}
+
+				if (
+					isset($activeSocServ['Dropbox'])
+					|| isset($activeSocServ['GoogleOAuth'])
+					|| isset($activeSocServ['Office365'])
+					|| isset($activeSocServ['Box'])
+					|| isset($activeSocServ['YandexOAuth'])
+					|| isset($activeSocServ['LiveIDOAuth'])
+				)
+				{
+					$isNeedSocServTab = true;
+				}
 			}
 			elseif (!empty($activeSocServ))
 			{

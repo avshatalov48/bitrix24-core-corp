@@ -894,7 +894,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			),
 			array(
 				'name' => 'EXPORT',
-				'title' => Loc::getMessage('CRM_CONTACT_FIELD_EXPORT'),
+				'title' => Loc::getMessage('CRM_CONTACT_FIELD_EXPORT_NEW'),
 				'type' => 'boolean',
 				'editable' => true
 			),

@@ -846,11 +846,11 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 					$entity = 'ADDRESS';
 					$field = $match['SETTINGS']['RQ_ADDR_CODE'];
 
-					$addressTypeInfo = array_column(\Bitrix\Crm\RequisiteAddress::getClientTypeInfos(), null, 'id');
+					$addressTypeDescriptions = \Bitrix\Crm\EntityAddressType::getAllDescriptions();
 
-					if (isset($addressTypeInfo[$match['SETTINGS']['RQ_ADDR_TYPE']]))
+					if (isset($addressTypeDescriptions[$match['SETTINGS']['RQ_ADDR_TYPE']]))
 					{
-						$entityFieldName[] = $addressTypeInfo[$match['SETTINGS']['RQ_ADDR_TYPE']]['name'];
+						$entityFieldName[] = $addressTypeDescriptions[$match['SETTINGS']['RQ_ADDR_TYPE']];
 					}
 				}
 

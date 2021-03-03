@@ -62,7 +62,7 @@ class ContactAddress extends EntityAddress
 	*/
 	public static function resolveEntityFieldTypeID($fieldName, array $aliases = null)
 	{
-		return EntityAddress::Primary;
+		return EntityAddressType::Primary;
 	}
 
 	/**

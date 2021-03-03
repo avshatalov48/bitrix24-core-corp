@@ -187,6 +187,8 @@ class Controller extends Event
 			return false;
 		}
 
+		Field.Storage.storeFieldValues(this.getFields());
+
 		if (!this.recaptcha.isVerified())
 		{
 			this.recaptcha.verify(() => this.submit());
@@ -361,7 +363,10 @@ class Controller extends Event
 		}
 
 		this.setView(options.view);
-		this.buttonCaption = options.buttonCaption || this.messages.get('defButton');
+		if (typeof options.buttonCaption !== 'undefined')
+		{
+			this.buttonCaption = options.buttonCaption;
+		}
 		if (typeof options.visible !== 'undefined')
 		{
 			this.visible = !!options.visible;

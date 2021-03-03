@@ -11,6 +11,11 @@ class Agent
 	 * @param int $step
 	 * @param int $line
 	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function agentDisconnectConnectorVK($step = 0, $line = 0)
 	{

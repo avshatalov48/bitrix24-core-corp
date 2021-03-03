@@ -209,6 +209,10 @@ class LiveChatManager
 		{
 			$update['COPYRIGHT_REMOVED'] = $fields['COPYRIGHT_REMOVED'] == 'Y'? 'Y': 'N';
 		}
+		if (isset($fields['SHOW_SESSION_ID']))
+		{
+			$update['SHOW_SESSION_ID'] = $fields['SHOW_SESSION_ID'] === 'Y'? 'Y': 'N';
+		}
 		if (isset($fields['CACHE_WIDGET_ID']))
 		{
 			$update['CACHE_WIDGET_ID'] = intval($fields['CACHE_WIDGET_ID']);
@@ -504,7 +508,12 @@ class LiveChatManager
 			return "";
 		}
 
-		$resources = \Bitrix\Main\UI\Extension::getResourceList('imopenlines.component.widget');
+		$resources = \Bitrix\Main\UI\Extension::getResourceList([
+			'main.core.minimal',
+			'imopenlines.component.widget',
+		], [
+			'skip_extensions' => ['core', 'main.core', 'main.polyfill.core'],
+		]);
 
 		$scriptContent = "// widget bundle";
 		foreach ($resources['js'] as $path)

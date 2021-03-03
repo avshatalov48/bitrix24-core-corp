@@ -4,6 +4,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\Format\EntityAddressFormatter;
 use Bitrix\Crm\EntityPreset;
@@ -154,7 +155,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 					'propertyKey' => 'COMPANY_ADR',
 					'requisiteName' => EntityRequisite::ADDRESS,
 					'type' => 'address',
-					'params' => array('address_type' => EntityAddress::Registered)
+					'params' => array('address_type' => EntityAddressType::Registered)
 				);
 			}
 		}
@@ -166,7 +167,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 					'propertyKey' => 'ADDRESS',
 					'requisiteName' => EntityRequisite::ADDRESS,
 					'type' => 'address',
-					'params' => array('address_type' => EntityAddress::Primary)
+					'params' => array('address_type' => EntityAddressType::Primary)
 				);
 			}
 		}
@@ -286,7 +287,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 			{
 				$params = isset($binding['params']) ? $binding['params'] : array();
 				$addressType = isset($params['address_type'])
-					? (int)$params['address_type'] : EntityAddress::Primary;
+					? (int)$params['address_type'] : EntityAddressType::Primary;
 
 				if(!isset($fields[$name]))
 				{
@@ -566,7 +567,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 					),
 					'COMPANY_ADR' => array(
 						'TYPE' => 'REQUISITE',
-						'VALUE' => 'RQ_ADDR_'.EntityAddress::Registered.'|'.$countryId
+						'VALUE' => 'RQ_ADDR_'.EntityAddressType::Registered.'|'.$countryId
 					),
 					'PHONE' => array(
 						'TYPE' => 'REQUISITE',
@@ -586,7 +587,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 					),
 					'ADDRESS' => array(
 						'TYPE' => 'REQUISITE',
-						'VALUE' => 'RQ_ADDR_'.EntityAddress::Primary.'|'.$countryId
+						'VALUE' => 'RQ_ADDR_'.EntityAddressType::Primary.'|'.$countryId
 					)
 				)
 			);

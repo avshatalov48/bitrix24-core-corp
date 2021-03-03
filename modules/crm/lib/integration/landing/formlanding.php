@@ -134,7 +134,7 @@ class FormLanding
 			$res = \Bitrix\Landing\Site::add([
 				'TITLE' => 'CRM Forms',
 				'TYPE' => $this::SITE_TYPE,
-				'CODE' => 'crm_forms',
+				'CODE' => \Bitrix\Landing\Site\Type::PSEUDO_SCOPE_CODE_FORMS,
 				'SPECIAL' => 'Y'
 			]);
 			if ($res->isSuccess())
@@ -255,8 +255,10 @@ class FormLanding
 	{
 		if ($this->canUse())
 		{
+			Rights::setGlobalOff();
 			$this->deletingLandingId = $landingId;
-			Landing::delete($landingId);
+			Landing::delete($landingId)->isSuccess();
+			Rights::setGlobalOn();
 		}
 	}
 

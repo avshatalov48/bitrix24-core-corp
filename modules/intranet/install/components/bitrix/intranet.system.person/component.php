@@ -22,24 +22,15 @@ if (CModule::IncludeModule('socialnetwork') && $GLOBALS["USER"]->IsAuthorized())
 		($GLOBALS["USER"]->GetID() != $arParams["USER"]["ID"])
 		&& ($arParams["USER"]["ACTIVE"] != "N")
 		&& CBXFeatures::IsFeatureEnabled("WebMessenger") 
-		&& (IsModuleInstalled("im") || $arResult["CurrentUserPerms"]["Operations"]["message"])
+		&& (IsModuleInstalled("im"))
 	)
+	{
 		$arResult['CAN_MESSAGE'] = true;
+		$arResult['CAN_VIDEO_CALL'] = true;
+	}
 		
 	if ($arResult["CurrentUserPerms"]["Operations"]["viewprofile"])
 		$arResult['CAN_VIEW_PROFILE'] = true;
-		
-	if (
-		($GLOBALS["USER"]->GetID() != $arParams["USER"]["ID"])
-		&& $arResult["CurrentUserPerms"]["Operations"]["videocall"]
-		&& ($arParams["USER"]["ACTIVE"] != "N")
-	)
-		$arResult['CAN_VIDEO_CALL'] = true;
-		
-	if(!CModule::IncludeModule("video"))
-		$arResult['CAN_VIDEO_CALL'] = false;
-	elseif(!CVideo::CanUserMakeCall())
-		$arResult['CAN_VIDEO_CALL'] = false;
 }
 
 $arResult["Urls"]["VideoCall"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIDEO_CALL"], array("user_id" => $arParams["USER"]["ID"], "USER_ID" => $arParams["USER"]["ID"], "ID" => $arParams["USER"]["ID"]));

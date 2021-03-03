@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Integration\StorageManager;
@@ -2773,7 +2774,7 @@ class CAllCrmQuote
 					{
 						$v = Bitrix\Crm\Format\CompanyAddressFormatter::format(
 							$arCompany,
-							array('TYPE_ID' => \Bitrix\Crm\EntityAddress::Registered)
+							array('TYPE_ID' => EntityAddressType::Registered)
 						);
 					}
 					elseif ($k === 'CLIENT_EMAIL')
@@ -2933,7 +2934,7 @@ class CAllCrmQuote
 			$requisiteToClientFieldsMap = array(
 				$personTypeCompany => array(
 					'RQ_COMPANY_NAME' => 'CLIENT_TITLE',
-					'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Registered => 'CLIENT_ADDR',
+					'RQ_ADDR_'.EntityAddressType::Registered => 'CLIENT_ADDR',
 					'RQ_INN' => 'CLIENT_TP_ID',
 					'RQ_KPP' => 'CLIENT_TPA_ID',
 					'RQ_CONTACT' => 'CLIENT_CONTACT',
@@ -2944,7 +2945,7 @@ class CAllCrmQuote
 					'RQ_NAME' => 'CLIENT_TITLE',
 					'RQ_EMAIL' => 'CLIENT_EMAIL',
 					'RQ_PHONE' => 'CLIENT_PHONE',
-					'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Primary => 'CLIENT_ADDR'
+					'RQ_ADDR_'.EntityAddressType::Primary => 'CLIENT_ADDR'
 				),
 			);
 
@@ -3846,7 +3847,7 @@ class CAllCrmQuote
 					$personTypeCompany => array(
 						'COMPANY_NAME' => 'RQ_COMPANY_NAME',
 						'COMPANY' => 'RQ_COMPANY_NAME',
-						'COMPANY_ADR' => 'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Registered,
+						'COMPANY_ADR' => 'RQ_ADDR_'.EntityAddressType::Registered,
 						'INN' => 'RQ_INN',
 						'KPP' => 'RQ_KPP',
 						'CONTACT_PERSON' => 'RQ_CONTACT',
@@ -3857,7 +3858,7 @@ class CAllCrmQuote
 						'FIO' => 'RQ_NAME',
 						'EMAIL' => 'RQ_EMAIL',
 						'PHONE' => 'RQ_PHONE',
-						'ADDRESS' => 'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Primary,
+						'ADDRESS' => 'RQ_ADDR_'.EntityAddressType::Primary,
 					),
 				);
 

@@ -2,9 +2,16 @@
 namespace Bitrix\ImOpenLines\Model;
 
 use \Bitrix\Main,
-	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Localization\Loc;
+
+use \Bitrix\Main\ORM\Event,
 	\Bitrix\Main\ORM\Query\Join,
+	\Bitrix\Main\ORM\EventResult,
+	\Bitrix\Main\ORM\Fields\StringField,
+	\Bitrix\Main\ORM\Fields\IntegerField,
+	\Bitrix\Main\ORM\Fields\DatetimeField,
 	\Bitrix\Main\ORM\Fields\Relations\Reference;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -43,60 +50,85 @@ class QueueTable extends Main\ORM\Data\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
+		return [
+			new IntegerField('ID', [
 				'primary' => true,
 				'autocomplete' => true,
 				'title' => Loc::getMessage('QUEUE_ENTITY_ID_FIELD'),
-			),
-			'CONFIG_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('SORT'),
+			new IntegerField('CONFIG_ID', [
 				'required' => true,
 				'title' => Loc::getMessage('QUEUE_ENTITY_CONFIG_ID_FIELD'),
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('USER_ID', [
 				'required' => true,
-				'title' => Loc::getMessage('QUEUE_ENTITY_USER_ID_FIELD'),
-			),
-			'LAST_ACTIVITY_DATE' => array(
-				'data_type' => 'datetime',
+				'title' => Loc::getMessage('QUEUE_ENTITY_CONFIG_ID_FIELD'),
+			]),
+			new IntegerField('DEPARTMENT_ID', [
+				'default_value' => 0,
+			]),
+			new DatetimeField('LAST_ACTIVITY_DATE', [
 				'title' => Loc::getMessage('QUEUE_ENTITY_LAST_ACTIVITY_DATE_FIELD'),
-				'default_value' => array(__CLASS__, 'getCurrentDate'),
-			),
-			'LAST_ACTIVITY_DATE_EXACT' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('QUEUE_ENTITY_LAST_ACTIVITY_DATE_EXACT_FIELD')
-			),
-			'USER_NAME' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateString'),
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			]),
+			new IntegerField('LAST_ACTIVITY_DATE_EXACT', [
+				'title' => Loc::getMessage('QUEUE_ENTITY_LAST_ACTIVITY_DATE_EXACT_FIELD'),
+			]),
+			new StringField('USER_NAME', [
+				'validation' => [__CLASS__, 'validateString'],
 				'title' => Loc::getMessage('QUEUE_ENTITY_USER_NAME_FIELD'),
-			),
-			'USER_WORK_POSITION' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateString'),
+			]),
+			new StringField('USER_WORK_POSITION', [
+				'validation' => [__CLASS__, 'validateString'],
 				'title' => Loc::getMessage('QUEUE_ENTITY_USER_WORK_POSITION_FIELD'),
-			),
-			'USER_AVATAR' => array(
-				'data_type' => 'string',
+			]),
+			new StringField('USER_AVATAR', [
 				'title' => Loc::getMessage('QUEUE_ENTITY_USER_AVATAR_FIELD'),
-			),
-			'USER_AVATAR_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('USER_AVATAR_ID', [
 				'title' => Loc::getMessage('QUEUE_ENTITY_USER_AVATAR_FILE_ID_FIELD'),
-			),
-			'USER' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
+				'default_value' => 0,
+			]),
+			new Reference(
+				'USER',
+				\Bitrix\Main\UserTable::class,
+				Join::on('this.USER_ID', 'ref.ID')
 			),
 			new Reference(
 				'CONFIG',
 				ConfigTable::class,
 				Join::on('this.CONFIG_ID', 'ref.ID')
 			)
-		);
+		];
+	}
+
+	/**
+	 * @param Event $event
+	 * @return EventResult|void
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onDelete(Event $event)
+	{
+		$result = new EventResult;
+		$userQueueId = $event->getParameters()['primary']['ID'];
+
+		$userAvatarId = self::getList([
+			'select' => ['USER_AVATAR_ID'],
+			'filter' => ['=ID' => $userQueueId]
+		])->fetch()['USER_AVATAR_ID'];
+
+		if(
+			!empty($userAvatarId) &&
+			$userAvatarId > 0
+		)
+		{
+			\CFile::Delete($userAvatarId);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -116,8 +148,8 @@ class QueueTable extends Main\ORM\Data\DataManager
 	 */
 	public static function validateString()
 	{
-		return array(
+		return [
 			new Main\Entity\Validator\Length(null, 255),
-		);
+		];
 	}
 }

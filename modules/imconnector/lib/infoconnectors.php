@@ -418,14 +418,14 @@ class InfoConnectors
 					'LINE_ID' => $lineId,
 					'DATA' => $dataEncoded,
 					'EXPIRES' => $timeExpires,
-					'HASH' => $hashDataEncoded,
+					'DATA_HASH' => $hashDataEncoded,
 				]
 			);
 
 			$cacheData = [
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
-				'HASH' => $hashDataEncoded,
+				'DATA_HASH' => $hashDataEncoded,
 			];
 
 			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
@@ -468,19 +468,19 @@ class InfoConnectors
 				[
 					'DATA' => $dataEncoded,
 					'EXPIRES' => $timeExpires,
-					'HASH' => $hashDataEncoded,
+					'DATA_HASH' => $hashDataEncoded,
 				]
 			);
 
 			$cacheData = [
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
-				'HASH' => $hashDataEncoded,
+				'DATA_HASH' => $hashDataEncoded,
 			];
 
 			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
 
-			if ($connectorData['HASH'] === $hashDataEncoded)
+			if ($connectorData['DATA_HASH'] === $hashDataEncoded)
 			{
 				$result = false;
 			}

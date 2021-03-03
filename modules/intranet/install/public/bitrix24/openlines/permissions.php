@@ -6,14 +6,19 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_afte
 
 $APPLICATION->SetTitle(GetMessage('OL_PAGE_PERMISSIONS_TITLE'));
 ?>
-<?$APPLICATION->IncludeComponent(
-	'bitrix:imopenlines.menu.top',
-	'',
-	[
-		'COMPONENT_BASE_DIR' => '/openlines/',
-	],
-	false
-);?>
+<?
+if($_GET['IFRAME'] !== 'Y')
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:imopenlines.menu.top',
+		'',
+		[
+			'COMPONENT_BASE_DIR' => '/openlines/',
+		],
+		false
+	);
+}
+?>
 <?$APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrapper',
 								 '',
 								 [

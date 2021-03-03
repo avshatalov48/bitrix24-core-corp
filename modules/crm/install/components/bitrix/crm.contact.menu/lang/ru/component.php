@@ -32,7 +32,6 @@ $MESS["CRM_CONTACT_ADD_EVENT"] = "Добавить событие";
 $MESS["CRM_CONTACT_ADD_EVENT_TITLE"] = "Добавить событие для контакта";
 $MESS["CRM_CONTACT_IMPORT"] = "Импорт контактов";
 $MESS["CRM_CONTACT_IMPORT_TITLE"] = "Импорт контактов";
-$MESS["CRM_CONTACT_EXPORT"] = "Экспорт контактов";
 $MESS["CRM_CONTACT_EXPORT_TITLE"] = "Экспорт контактов";
 $MESS["CRM_CONTACT_STEXPORT_SUMMARY"] = "Будет сформирован файл экспорта для контактов. Выполнение этой операции может занять продолжительное время при большом количестве данных.";
 $MESS["CRM_CONTACT_STEXPORT_OPTION_REQUISITE_MULTILINE"] = "Экспортировать реквизиты";

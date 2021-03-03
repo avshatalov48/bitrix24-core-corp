@@ -4,6 +4,7 @@ namespace Bitrix\Crm\UI\Webpack;
 
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\WebPacker;
 
 /**
@@ -50,6 +51,7 @@ abstract class Base
 
 	private $configured = false;
 	private $fileConfigured = false;
+	private $hasRow = false;
 
 	/**
 	 * Rebuild all packs.
@@ -95,8 +97,14 @@ abstract class Base
 
 		$row = Internals\WebpackTable::getByPrimary($this->getWebpackPrimary())->fetch();
 		$this->fileId = $row ? (int) $row['FILE_ID'] : null;
+		$this->hasRow = $row ? true : false;
 
 		$this->controller = (new WebPacker\FileController());
+	}
+
+	public function hasRow()
+	{
+		return $this->hasRow;
 	}
 
 	private function getWebpackPrimary()
@@ -333,5 +341,33 @@ abstract class Base
 	public function delete()
 	{
 		$this->controller->delete();
+	}
+
+	/**
+	 * Check file exists.
+	 *
+	 * @return bool
+	 */
+	final public function checkFileExists()
+	{
+		if (!$this->hasRow())
+		{
+			return true;
+		}
+
+		$url = $this->getEmbeddedFileUrl();
+		if (!$url)
+		{
+			return true;
+		}
+
+		$client = new HttpClient();
+		$client->setTimeout(5);
+		if (!$client->head($url) || $client->getStatus() !== 200)
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

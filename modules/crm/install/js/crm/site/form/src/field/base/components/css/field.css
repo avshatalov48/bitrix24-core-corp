@@ -320,7 +320,7 @@
 /*region Label */
 .b24-form-control-required { color: #f00; }
 
-.field-label,
+.b24-form-control-select-label,
 .b24-form-control-label {
 	transition: 180ms linear all;
 	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -358,7 +358,7 @@
 	transform: translateY(0);
 }
 
-.field-label,
+.b24-form-control-select-label,
 .b24-form-control:focus + .b24-form-control-label,
 .b24-form-control-not-empty + .b24-form-control-label {
 	top: 8px;
@@ -366,7 +366,7 @@
 	font-size: 13px;
 }
 
-.field-label {
+.b24-form-control-select-label {
 	position: absolute;
 	top: 3px;
 	left: 10px;

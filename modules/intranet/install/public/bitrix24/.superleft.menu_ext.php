@@ -261,6 +261,7 @@ $arMenu[] = array(
 		"counter_id" => "im-message",
 		"menu_item_id" => "menu_im_messenger",
 		"my_tools_section" => true,
+		"can_be_first_item" => false
 	),
 	""
 );
@@ -351,7 +352,7 @@ if (CModule::IncludeModule("bitrix24"))
 
 //marketplace
 $arMenu[] = array(
-	GetMessage("MENU_MARKETPLACE_APPS"),
+	GetMessage("MENU_MARKETPLACE_APPS_2"),
 	"/marketplace/",
 	array(),
 	array(

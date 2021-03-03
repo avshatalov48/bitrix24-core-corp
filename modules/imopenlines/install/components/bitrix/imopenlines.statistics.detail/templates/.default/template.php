@@ -40,7 +40,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER_ID' => $arResult['FILTER_ID'],
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'ENABLE_LIVE_SEARCH' => true,
+		'ENABLE_LIVE_SEARCH' => (bool)\Bitrix\Main\Config\Option::get('imopenlines', 'enable_live_search'),
 		'ENABLE_LABEL' => true
 	],
 	$component,
@@ -105,13 +105,15 @@ $APPLICATION->IncludeComponent(
 );
 
 \Bitrix\Imopenlines\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
+?>
+<script type="text/javascript">
+<?
 if (is_array($arResult['STEXPORT_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.progressbar');
 	\Bitrix\Main\UI\Extension::load('ui.buttons');
 	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/imopenlines/common.js');
 	?>
-	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
@@ -129,8 +131,10 @@ if (is_array($arResult['STEXPORT_PARAMS']))
 			wait: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_WAIT')?>",
 			requestError: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_REQUEST_ERR')?>"
 		};
-	</script>
-
 	<?php
 }
 ?>
+	BX.message({
+		IMOL_STATISTICS_GRID_ID: '<?=CUtil::JSEscape($arResult['GRID_ID'])?>',
+	});
+</script>

@@ -64,7 +64,7 @@ abstract class Queue
 	 *
 	 * @param $userId
 	 * @param bool $ignorePause
-	 * @return bool
+	 * @return bool|string
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
@@ -113,14 +113,18 @@ abstract class Queue
 
 		$res = ImOpenLines\Queue::getList([
 			'select' => $select,
-			'filter' => $filter
+			'filter' => $filter,
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			]
 		]);
 
 		while($queueUser = $res->fetch())
 		{
-			if($this->isOperatorActive($queueUser['USER_ID']))
+			if($this->isOperatorActive($queueUser['USER_ID']) === true)
 			{
-				$result = $result + ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID'], $this->configLine['MAX_CHAT'], $this->configLine['TYPE_MAX_CHAT']);
+				$result += ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID'], $this->configLine['MAX_CHAT'], $this->configLine['TYPE_MAX_CHAT']);
 			}
 		}
 

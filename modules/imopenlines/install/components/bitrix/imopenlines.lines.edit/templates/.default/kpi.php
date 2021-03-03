@@ -1,21 +1,38 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\UI\Extension;
 use \Bitrix\Imopenlines\Limit;
 
-\Bitrix\Main\UI\Extension::load("ui.forms");
+Extension::load('ui.forms');
 
-$arResult["KPI_MENU"]["kpiFirstAnswer"]["element"] = "imol_kpi_first_answer_time_menu";
-$arResult["KPI_MENU"]["kpiFirstAnswer"]["bindElement"] = "imol_kpi_first_answer_time_menu";
-$arResult["KPI_MENU"]["kpiFirstAnswer"]["inputElement"] = "imol_kpi_first_answer_time";
-$arResult["KPI_MENU"]["kpiFurtherAnswer"]["element"] = "imol_kpi_further_answer_time_menu";
-$arResult["KPI_MENU"]["kpiFurtherAnswer"]["bindElement"] = "imol_kpi_further_answer_time_menu";
-$arResult["KPI_MENU"]["kpiFurtherAnswer"]["inputElement"] = "imol_kpi_further_answer_time";
+$arResult['KPI_MENU']['kpiFirstAnswer']['element'] = 'imol_kpi_first_answer_time_menu';
+$arResult['KPI_MENU']['kpiFirstAnswer']['bindElement'] = 'imol_kpi_first_answer_time_menu';
+$arResult['KPI_MENU']['kpiFirstAnswer']['inputElement'] = 'imol_kpi_first_answer_time';
+$arResult['KPI_MENU']['kpiFurtherAnswer']['element'] = 'imol_kpi_further_answer_time_menu';
+$arResult['KPI_MENU']['kpiFurtherAnswer']['bindElement'] = 'imol_kpi_further_answer_time_menu';
+$arResult['KPI_MENU']['kpiFurtherAnswer']['inputElement'] = 'imol_kpi_further_answer_time';
+$arResult['kpiSelector'] = [
+	'firstAnswer' => [
+		'id' => 'kpi-first-answer-selector',
+		'inputName' => 'CONFIG[KPI_FIRST_ANSWER_LIST][]',
+		'inputId' => 'kpi-first-answer-input',
+		'list' => $arResult['CONFIG']['KPI_FIRST_ANSWER_LIST'],
+		'readOnly' => !$arResult['CAN_EDIT']
+	],
+	'furtherAnswer' => [
+		'id' => 'kpi-first-further-selector',
+		'inputName' => 'CONFIG[KPI_FURTHER_ANSWER_LIST][]',
+		'inputId' => 'kpi-first-further-input',
+		'list' => $arResult['CONFIG']['KPI_FURTHER_ANSWER_LIST'],
+		'readOnly' => !$arResult['CAN_EDIT']
+	],
+];
 ?>
 <script type="text/javascript">
 	BX.ready(function(){
-		var params = <?=CUtil::PhpToJSObject($arResult["KPI_MENU"])?>;
-		BX.OpenLinesConfigEdit.loadKpiTimeMenus(params);
+		BX.OpenLinesConfigEdit.loadKpiTimeMenus(<?=CUtil::PhpToJSObject($arResult['KPI_MENU'])?>);
+		BX.OpenLinesConfigEdit.loadKpiEntitySelector(<?=CUtil::PhpToJSObject($arResult['kpiSelector'])?>);
 		BX.message({
 			IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SET: '<?=GetMessageJS('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SET')?>',
 			IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SECONDS: '<?=GetMessageJS('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SECONDS')?>',
@@ -31,12 +48,12 @@ $arResult["KPI_MENU"]["kpiFurtherAnswer"]["inputElement"] = "imol_kpi_further_an
 			</div>
 			<div class="imopenlines-control-inner">
 				<div class="imopenlines-control-input imopenlines-control-input-kpi" id="imol_kpi_first_answer_time_menu">
-					<?=$arResult["KPI_MENU"]["kpiFirstAnswer"]["currentTitle"]?>
+					<?=$arResult['KPI_MENU']['kpiFirstAnswer']['currentTitle']?>
 				</div>
-				<input type="hidden" name="CONFIG[KPI_FIRST_ANSWER_TIME]" id="imol_kpi_first_answer_time" value="<?=$arResult["CONFIG"]["KPI_FIRST_ANSWER_TIME"]?>">
+				<input type="hidden" name="CONFIG[KPI_FIRST_ANSWER_TIME]" id="imol_kpi_first_answer_time" value="<?=$arResult['CONFIG']['KPI_FIRST_ANSWER_TIME']?>">
 			</div>
 		</div>
-		<div id="imol_kpi_first_answer_full_block" <? if ($arResult["CONFIG"]["KPI_FIRST_ANSWER_TIME"] == 0) { ?>class="invisible"<? } ?>>
+		<div id="imol_kpi_first_answer_full_block" <? if ($arResult['CONFIG']['KPI_FIRST_ANSWER_TIME'] == 0) { ?>class="invisible"<? } ?>>
 			<div class="imopenlines-control-checkbox-container">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_kpi_first_answer_alert"
@@ -51,23 +68,16 @@ $arResult["KPI_MENU"]["kpiFurtherAnswer"]["inputElement"] = "imol_kpi_further_an
 			<div id="imol_kpi_first_answer_inner_block" <?if($arResult['CONFIG']['KPI_FIRST_ANSWER_ALERT'] != 'Y') {?>class="invisible"<? } ?>>
 				<div class="imopenlines-form-settings-inner">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST")?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_KPI_FIRST_ANSWER_DESC"))?>"></span>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST')?>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_KPI_FIRST_ANSWER_DESC'))?>"></span>
 					</div>
-					<?$APPLICATION->IncludeComponent(
-						'bitrix:main.user.selector',
-						'',
-						[
-							'INPUT_NAME' => 'CONFIG[KPI_FIRST_ANSWER_LIST][]',
-							'LIST' => $arResult['CONFIG']['KPI_FIRST_ANSWER_LIST'],
-							'SELECTOR_OPTIONS' => ['enableDepartments' => 'Y', 'useSearch' => 'Y', 'multiple' => 'Y']
-						]
-					);?>
+					<span id="<?=$arResult['kpiSelector']['firstAnswer']['id']?>"></span>
+					<span id="<?=$arResult['kpiSelector']['firstAnswer']['inputId']?>"></span>
 				</div>
 				<div class="imopenlines-control-container">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_TEXT')?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_DESC"))?>"></span>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_DESC'))?>"></span>
 					</div>
 					<div class="imopenlines-control-inner">
 						<textarea type="text"
@@ -85,12 +95,12 @@ $arResult["KPI_MENU"]["kpiFurtherAnswer"]["inputElement"] = "imol_kpi_further_an
 			</div>
 			<div class="imopenlines-control-inner">
 				<div class="imopenlines-control-input imopenlines-control-input-kpi" id="imol_kpi_further_answer_time_menu">
-					<?=$arResult["KPI_MENU"]["kpiFurtherAnswer"]["currentTitle"]?>
+					<?=$arResult['KPI_MENU']['kpiFurtherAnswer']['currentTitle']?>
 				</div>
-				<input type="hidden" name="CONFIG[KPI_FURTHER_ANSWER_TIME]" id="imol_kpi_further_answer_time" value="<?=$arResult["CONFIG"]["KPI_FURTHER_ANSWER_TIME"]?>">
+				<input type="hidden" name="CONFIG[KPI_FURTHER_ANSWER_TIME]" id="imol_kpi_further_answer_time" value="<?=$arResult['CONFIG']['KPI_FURTHER_ANSWER_TIME']?>">
 			</div>
 		</div>
-		<div id="imol_kpi_further_answer_full_block" <? if ($arResult["CONFIG"]["KPI_FURTHER_ANSWER_TIME"] == 0) { ?>class="invisible"<? } ?>>
+		<div id="imol_kpi_further_answer_full_block" <? if ($arResult['CONFIG']['KPI_FURTHER_ANSWER_TIME'] == 0) { ?>class="invisible"<? } ?>>
 			<div class="imopenlines-control-checkbox-container">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_kpi_further_answer_alert"
@@ -105,23 +115,16 @@ $arResult["KPI_MENU"]["kpiFurtherAnswer"]["inputElement"] = "imol_kpi_further_an
 			<div id="imol_kpi_further_answer_inner_block" <?if($arResult['CONFIG']['KPI_FURTHER_ANSWER_ALERT'] != 'Y') {?>class="invisible"<? } ?>>
 				<div class="imopenlines-form-settings-inner">
 					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage("IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST")?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_KPI_FURTHER_ANSWER_DESC"))?>"></span>
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_LIST')?>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_KPI_FURTHER_ANSWER_DESC'))?>"></span>
 					</div>
-					<?$APPLICATION->IncludeComponent(
-						'bitrix:main.user.selector',
-						'',
-						[
-							'INPUT_NAME' => 'CONFIG[KPI_FURTHER_ANSWER_LIST][]',
-							'LIST' => $arResult['CONFIG']['KPI_FURTHER_ANSWER_LIST'],
-							'SELECTOR_OPTIONS' => ['enableDepartments' => 'Y', 'useSearch' => 'Y', 'multiple' => 'Y']
-						]
-					);?>
+					<span id="<?=$arResult['kpiSelector']['furtherAnswer']['id']?>"></span>
+					<span id="<?=$arResult['kpiSelector']['furtherAnswer']['inputId']?>"></span>
 				</div>
 				<div class="imopenlines-control-container">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_TEXT')?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_DESC"))?>"></span>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_KPI_ANSWER_ALERT_DESC'))?>"></span>
 					</div>
 					<div class="imopenlines-control-inner">
 					<textarea type="text"

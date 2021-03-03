@@ -333,6 +333,7 @@ $tabControl->BeginNextTab();
 <?
 if ($current_ib_structure || $current_ibtype):
 ?>
+	<option value=""><?echo GetMessage('INTR_OPTION_NOT_SET')?></option>
 	<?foreach ($arIB[$current_ibtype] as $iblock_id => $iblock):?><option value="<?echo $iblock_id?>"<?echo $iblock_id == $current_ib_structure ? ' selected="selected"' : ''?>><?=htmlspecialcharsbx($iblock) ?></option><?endforeach;?>
 <?
 else:
@@ -348,6 +349,7 @@ endif;
 <?
 if ($current_ib_honour || $current_ibtype):
 ?>
+	<option value=""><?echo GetMessage('INTR_OPTION_NOT_SET')?></option>
 	<?foreach ($arIB[$current_ibtype] as $iblock_id => $iblock):?><option value="<?echo $iblock_id?>"<?echo $iblock_id == $current_ib_honour ? ' selected="selected"' : ''?>><?=htmlspecialcharsbx($iblock) ?></option><?endforeach;?>
 <?
 else:
@@ -363,6 +365,7 @@ endif;
 <?
 if ($current_ib_state_history || $current_ibtype):
 ?>
+	<option value=""><?echo GetMessage('INTR_OPTION_NOT_SET')?></option>
 	<?foreach ($arIB[$current_ibtype] as $iblock_id => $iblock):?><option value="<?echo $iblock_id?>"<?echo $iblock_id == $current_ib_state_history ? ' selected="selected"' : ''?>><?=htmlspecialcharsbx($iblock) ?></option><?endforeach;?>
 <?
 else:

@@ -190,6 +190,8 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		$this->arResult['ROW'] += [
 			'ICON_CLASS' => null,
 			'CONFIGURABLE' => true,
+			'ADVERTISABLE' => false,
+			'UTM_CONTENT' => null,
 		];
 
 		$hasCode = !empty($this->arResult['ROW']['CODE']);
@@ -207,6 +209,8 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 				}
 				$this->arResult['ROW']['ICON_CLASS'] = $adsSources[$code]['ICON_CLASS'];
 				$this->arResult['ROW']['CONFIGURABLE'] = $adsSources[$code]['CONFIGURABLE'];
+				$this->arResult['ROW']['ADVERTISABLE'] = $adsSources[$code]['ADVERTISABLE'];
+				$this->arResult['ROW']['UTM_CONTENT'] = $adsSources[$code]['UTM_CONTENT'] ?? null;
 			}
 		}
 
@@ -219,7 +223,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		{
 			$GLOBALS['APPLICATION']->SetTitle($this->arResult['ROW']['NAME']);
 		}
-		elseif ($hasCode)
+		elseif ($this->arResult['ROW']['ADVERTISABLE'])
 		{
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage(
 				'CRM_ANALYTICS_SOURCE_EDIT_TITLE_ADS',
@@ -262,7 +266,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		Tracking\Analytics\Ad::updateAccountIdCompatible();
 		$adType = Tracking\Analytics\Ad::getSeoCodeByCode($this->arResult['ROW']['CODE']);
 		$this->arResult['AD_UPDATE_ACCESSIBLE'] = $hasCode && Tracking\Manager::isAdUpdateAccessible();
-		$this->arResult['AD_ACCESSIBLE'] = $hasCode && Tracking\Manager::isAdAccessible();
+		$this->arResult['AD_ACCESSIBLE'] = $hasCode && $this->arResult['ROW']['ADVERTISABLE'] && Tracking\Manager::isAdAccessible();
 		$this->arResult['PROVIDER'] = $this->arResult['AD_ACCESSIBLE']
 			? self::getAdProvider($adType, $this->arResult['ROW']['AD_CLIENT_ID'])
 			: null;

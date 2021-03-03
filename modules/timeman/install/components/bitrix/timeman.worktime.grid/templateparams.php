@@ -236,7 +236,7 @@ class TemplateParams
 				'hint-no-icon' => true,
 				'hint' => $hint,
 			];
-			if ($workedByShifted && $this->shift)
+			if (($workedByShifted && $this->shift) || $usersInDifferentTimezones)
 			{
 				$this->hintDataset .= 'data-hint-html';
 			}

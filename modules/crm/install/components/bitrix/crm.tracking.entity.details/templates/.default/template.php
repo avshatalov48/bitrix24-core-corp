@@ -19,7 +19,7 @@ Loc::loadMessages(__FILE__);
 $containerId = 'crm-tracking-entity-details';
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>"
-	class="crm-tracking-entity-details"
+	class="crm-tracking-entity-details-banner"
 	style="display: none;"
 >
 	<div class="crm-tracking-entity-details-inner">

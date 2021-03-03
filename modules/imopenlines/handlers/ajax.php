@@ -156,36 +156,63 @@ else if($request->isPost() &&
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->setPinMode($request->getPost('ACTIVATE') == 'Y');
-		if ($result)
+		if ($result->isSuccess())
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
 				'ERROR' => ''
-			));
+			]);
 		}
 		else
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'CODE' => $control->getError()->code,
-				'ERROR' => $control->getError()->msg
-			));
+			$errors = $result->getErrors();
+			$error = current($errors);
+
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
+				'CODE' => $error->getCode(),
+				'ERROR' => $error->getMessage()
+			]);
 		}
 	}
 	else if ($request->getPost('COMMAND') == 'closeDialog')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->closeDialog();
-		if ($result)
+		if ($result->isSuccess())
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
 				'ERROR' => ''
-			));
+			]);
 		}
 		else
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'CODE' => $control->getError()->code,
-				'ERROR' => $control->getError()->msg
-			));
+			$errors = $result->getErrors();
+			$error = current($errors);
+
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
+				'CODE' => $error->getCode(),
+				'ERROR' => $error->getMessage()
+			]);
+		}
+	}
+	else if ($request->getPost('COMMAND') == 'closeDialogOtherOperator')
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
+		$result = $control->closeDialogOtherOperator();
+		if ($result->isSuccess())
+		{
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
+				'ERROR' => ''
+			]);
+		}
+		else
+		{
+			$errors = $result->getErrors();
+			$error = current($errors);
+
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
+				'CODE' => $error->getCode(),
+				'ERROR' => $error->getMessage()
+			]);
 		}
 	}
 	else if ($request->getPost('COMMAND') == 'markSpam')
@@ -228,18 +255,21 @@ else if($request->isPost() &&
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->createLead();
-		if ($result)
+		if ($result->isSuccess())
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
 				'ERROR' => ''
-			));
+			]);
 		}
 		else
 		{
-			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'CODE' => $control->getError()->code,
-				'ERROR' => $control->getError()->msg
-			));
+			$errors = $result->getErrors();
+			$error = current($errors);
+
+			echo \Bitrix\ImOpenLines\Common::objectEncode([
+				'CODE' => $error->getCode(),
+				'ERROR' => $error->getMessage()
+			]);
 		}
 	}
 	else if ($request->getPost('COMMAND') == 'cancelCrmExtend')

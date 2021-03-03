@@ -112,7 +112,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 if($arResult['REST_USE'])
 {
 	?><span id="<?=htmlspecialcharsbx($restSectionButtonID)?>" class="crm-entity-add-app-link">
-		<?=GetMessage('CRM_ENTITY_ED_REST_SECTION')?>
+		<?=GetMessage('CRM_ENTITY_ED_REST_SECTION_2')?>
 	</span><?
 }
 
@@ -660,7 +660,8 @@ if(!empty($htmlEditorConfigs))
 			BX.Crm.EntityEditorDeliverySelector.messages =
 			{
 				notSelected: "<?=GetMessageJS('CRM_ENTITY_ED_DELIVERY_SELECTOR_NOT_SELECTED')?>",
-				deliveryStore: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_DELIVERY_STORE')?>"
+				deliveryStore: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_DELIVERY_STORE')?>",
+				deliveryProfile: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_DELIVERY_PROFILE')?>",
 			};
 
 			BX.Crm.EntityEditorOrderPropertySubsection.messages =

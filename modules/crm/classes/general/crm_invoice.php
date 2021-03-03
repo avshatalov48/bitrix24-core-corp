@@ -1,7 +1,9 @@
 <?php
+
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\EntityAddressType;
 use \Bitrix\Crm\Invoice\Invoice;
 use \Bitrix\Crm\Invoice\Compatible;
 use Bitrix\Iblock;
@@ -2628,7 +2630,7 @@ class CAllCrmInvoice
 					{
 						$curVal = Bitrix\Crm\Format\CompanyAddressFormatter::format(
 							$arCompany,
-							array('TYPE_ID' => \Bitrix\Crm\EntityAddress::Registered)
+							array('TYPE_ID' => EntityAddressType::Registered)
 						);
 					}
 					elseif ($property['FIELDS']['CODE'] === 'INN')
@@ -2787,7 +2789,7 @@ class CAllCrmInvoice
 				$requisiteToPropsMap = array(
 					$personTypeCompany => array(
 						'RQ_COMPANY_NAME' => array('COMPANY_NAME', 'COMPANY'),
-						'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Registered => 'COMPANY_ADR',
+						'RQ_ADDR_'.EntityAddressType::Registered => 'COMPANY_ADR',
 						'RQ_INN' => 'INN',
 						'RQ_KPP' => 'KPP',
 						'RQ_CONTACT' => 'CONTACT_PERSON',
@@ -2798,7 +2800,7 @@ class CAllCrmInvoice
 						'RQ_NAME' => 'FIO',
 						'RQ_EMAIL' => 'EMAIL',
 						'RQ_PHONE' => 'PHONE',
-						'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Primary => 'ADDRESS'
+						'RQ_ADDR_'.EntityAddressType::Primary => 'ADDRESS'
 					),
 				);
 
@@ -5264,7 +5266,7 @@ class CAllCrmInvoice
 					$personTypeCompany => array(
 						'COMPANY_NAME' => 'RQ_COMPANY_NAME',
 						'COMPANY' => 'RQ_COMPANY_NAME',
-						'COMPANY_ADR' => 'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Registered,
+						'COMPANY_ADR' => 'RQ_ADDR_'.EntityAddressType::Registered,
 						'INN' => 'RQ_INN',
 						'KPP' => 'RQ_KPP',
 						'CONTACT_PERSON' => 'RQ_CONTACT',
@@ -5275,7 +5277,7 @@ class CAllCrmInvoice
 						'FIO' => 'RQ_NAME',
 						'EMAIL' => 'RQ_EMAIL',
 						'PHONE' => 'RQ_PHONE',
-						'ADDRESS' => 'RQ_ADDR_'.Bitrix\Crm\EntityAddress::Primary,
+						'ADDRESS' => 'RQ_ADDR_'.EntityAddressType::Primary,
 					),
 				);
 

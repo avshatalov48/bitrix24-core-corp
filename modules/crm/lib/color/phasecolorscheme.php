@@ -217,4 +217,26 @@ class PhaseColorScheme
 	{
 		Main\Config\Option::delete('crm', array('name' => $optionName));
 	}
+
+	public static function fillDefaultColors(array $stages): array
+	{
+		$offset = -1;
+		foreach($stages as &$stage)
+		{
+			$semantics = $stage['SEMANTICS'] ?? '';
+			if(!PhaseSemantics::isFinal($semantics))
+			{
+				$offset++;
+			}
+			$color = $stage['COLOR'] ?? '';
+			if(empty($color) || mb_strlen($stage['COLOR']) < 4)
+			{
+				$stage['COLOR'] = static::getDefaultColorBySemantics($semantics, [
+					'offset' => $offset,
+				]);
+			}
+		}
+
+		return $stages;
+	}
 }

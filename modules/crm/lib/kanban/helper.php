@@ -331,7 +331,8 @@ class Helper
 						$defaultFilter,
 						array(
 							'STATUS_SEMANTIC_ID' => array(
-								\Bitrix\Crm\PhaseSemantics::SUCCESS
+								\Bitrix\Crm\PhaseSemantics::SUCCESS,
+								\Bitrix\Crm\PhaseSemantics::FAILURE
 							)
 						)
 					)
@@ -360,11 +361,11 @@ class Helper
 						)
 					)
 				);
-				$presets[$entity]['filter_won'] = array(
+				$presets[$entity]['filter_closed'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WON'),
 					'fields' => array(
 						'STAGE_SEMANTIC_ID' => array(
-							\Bitrix\Crm\PhaseSemantics::SUCCESS
+							[\Bitrix\Crm\PhaseSemantics::SUCCESS, \Bitrix\Crm\PhaseSemantics::FAILURE]
 						)
 					)
 				);

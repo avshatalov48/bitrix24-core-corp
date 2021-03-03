@@ -52,15 +52,30 @@ class Openlines
 	}
 
 	/**
+	 * Removes mentions from message.
+	 *
+	 * @param string $messageText
+	 *
+	 * @return string
+	 */
+	private static function prepareMessage($messageText)
+	{
+		$messageText = $messageText === '0' ? '#ZERO#' : $messageText;
+		$messageText = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageText);
+		$messageText = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageText);
+
+		return $messageText;
+	}
+
+	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageAdd
 	 * @param array $params
 	 *
 	 * @return bool
 	 */
 	public static function operatorMessageAdd($params)
 	{
-		$params['MESSAGE_TEXT'] = $params['MESSAGE_TEXT'] === '0'? '#ZERO#': $params['MESSAGE_TEXT'];
-		$params['MESSAGE_TEXT'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $params['MESSAGE_TEXT']);
-		$params['MESSAGE_TEXT'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $params['MESSAGE_TEXT']);
+		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
 
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
 		$query = $http->query(
@@ -76,15 +91,14 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageUpdate
 	 * @param array $params
 	 *
 	 * @return bool
 	 */
 	public static function operatorMessageUpdate($params)
 	{
-		$params['MESSAGE_TEXT'] = $params['MESSAGE_TEXT'] === '0'? '#ZERO#': $params['MESSAGE_TEXT'];
-		$params['MESSAGE_TEXT'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $params['MESSAGE_TEXT']);
-		$params['MESSAGE_TEXT'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $params['MESSAGE_TEXT']);
+		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
 
 		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
 		$query = $http->query(
@@ -100,6 +114,7 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network::operatorMessageDelete
 	 * @param array $params
 	 *
 	 * @return bool
@@ -120,6 +135,7 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network::operatorStartWriting
 	 * @param array $params
 	 *
 	 * @return bool
@@ -140,6 +156,7 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network::operatorSessionStart
 	 * @param array $params
 	 *
 	 * @return bool
@@ -160,6 +177,7 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network::operatorSessionFinish
 	 * @param array $params
 	 *
 	 * @return bool
@@ -180,6 +198,7 @@ class Openlines
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network::operatorMessageReceived
 	 * @param array $params
 	 *
 	 * @return bool

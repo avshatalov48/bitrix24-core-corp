@@ -1,15 +1,20 @@
 <?php
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
-if (!CModule::IncludeModule('iblock'))
+if (!Loader::includeModule('iblock'))
 {
 	return false;
 }
 
-Loc::loadMessages(__FILE__);
-
 class CCrmProductPropsHelper
 {
+	public const OPERATION_VIEW = 'view';
+	public const OPERATION_EDIT = 'edit';
+	public const OPERATION_FILTER = 'filter';
+	public const OPERATION_IMPORT = 'import';
+	public const OPERATION_EXPORT = 'export';
+	public const OPERATION_REST = 'rest';
+
 	protected static $whiteListByOperation = null;
 	protected static $blackList = null;
 	protected static $typeListSupportingUrlTemplate = null;
@@ -19,10 +24,10 @@ class CCrmProductPropsHelper
 		if (self::$whiteListByOperation === null)
 		{
 			self::$whiteListByOperation = array(
-				'view' => array(),
-				'edit' => array(),
-				'filter' => array(),
-				'import' => array(
+				self::OPERATION_VIEW => array(),
+				self::OPERATION_EDIT => array(),
+				self::OPERATION_FILTER => array(),
+				self::OPERATION_IMPORT => array(
 					'S:HTML',
 					'S:Date',
 					'S:DateTime',
@@ -32,7 +37,7 @@ class CCrmProductPropsHelper
 					'S:Money',
 					'N:Sequence'
 				),
-				'export' => array(
+				self::OPERATION_EXPORT => array(
 					'S:HTML',
 					'S:Date',
 					'S:DateTime',
@@ -42,7 +47,7 @@ class CCrmProductPropsHelper
 					'S:Money',
 					'N:Sequence'
 				),
-				'rest' => array(
+				self::OPERATION_REST => array(
 					'S:HTML',
 					'S:Date',
 					'S:DateTime',
@@ -58,6 +63,7 @@ class CCrmProductPropsHelper
 
 		return self::$whiteListByOperation;
 	}
+
 	public static function GetUserTypeBlackList()
 	{
 		if (self::$blackList === null)
@@ -109,29 +115,21 @@ class CCrmProductPropsHelper
 
 	public static function GetPropsTypesDescriptions($userType = false, $arOperations = array())
 	{
-		$descriptions = array(
-			'S' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_S'),
-			'N' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_N'),
-			'L' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_L'),
-			'F' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_F'),
-			'G' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_G'),
-			'E' => GetMessage('CRM_PRODUCT_PE_PROP_TYPE_E')
-		);
-
-		return $descriptions;
+		return \Bitrix\Iblock\Helpers\Admin\Property::getBaseTypeList(true);
 	}
+
 	public static function GetPropsTypesByOperations($userType = false, $arOperations = array())
 	{
 		if (!is_array($arOperations))
-			$arOperations = array(strval($arOperations));
+			$arOperations = array((string)$arOperations);
 
 		$methodByOperation = array(
-			'view' => 'GetPublicViewHTML',
-			'edit' => 'GetPublicEditHTML',
-			'filter' => 'GetPublicFilterHTML',
-			'import' => 'GetPublicEditHTML',
-			'export' => 'GetPublicEditHTML',
-			'rest' => 'GetPublicEditHTML',
+			self::OPERATION_VIEW => 'GetPublicViewHTML',
+			self::OPERATION_EDIT => 'GetPublicEditHTML',
+			self::OPERATION_FILTER => 'GetPublicFilterHTML',
+			self::OPERATION_IMPORT => 'GetPublicEditHTML',
+			self::OPERATION_EXPORT => 'GetPublicEditHTML',
+			self::OPERATION_REST => 'GetPublicEditHTML',
 		);
 
 		$whiteListByOperation = self::GetUserTypeWhiteListByOperation();
@@ -190,6 +188,7 @@ class CCrmProductPropsHelper
 
 		return $result;
 	}
+
 	public static function GetProps($catalogID, $arPropUserTypeList = array(), $arOperations = array())
 	{
 		if (!is_array($arOperations))
@@ -200,12 +199,12 @@ class CCrmProductPropsHelper
 
 		// validate operations list
 		$validOperations = array(
-			'view',
-			'edit',
-			'filter',
-			'import',
-			'export',
-			'rest'
+			self::OPERATION_VIEW,
+			self::OPERATION_EDIT,
+			self::OPERATION_FILTER,
+			self::OPERATION_IMPORT,
+			self::OPERATION_EXPORT,
+			self::OPERATION_REST
 		);
 		$validatedOperations = array();
 		foreach ($arOperations as $operationName)
@@ -228,7 +227,7 @@ class CCrmProductPropsHelper
 			$isImportOrExport = false;
 			foreach ($arOperations as $operationName)
 			{
-				if ($operationName === 'import' || $operationName === 'export')
+				if ($operationName === self::OPERATION_IMPORT || $operationName === self::OPERATION_EXPORT)
 				{
 					$isImportOrExport = true;
 				}
@@ -269,6 +268,7 @@ class CCrmProductPropsHelper
 
 		return $arProps;
 	}
+
 	public static function ListAddFilterFields($arPropUserTypeList, $arProps, $sFormName, &$arFilter, &$arFilterable,
 												&$arCustomFilter, &$arDateFilter)
 	{

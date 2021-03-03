@@ -88,7 +88,7 @@ const Form = {
 							v-if="form.pager.ended()"						
 						>
 							<button type="submit" class="b24-form-btn">
-								{{ form.buttonCaption }}
+								{{ form.buttonCaption || form.messages.get('defButton') }}
 							</button>
 						</div>
 					</div>

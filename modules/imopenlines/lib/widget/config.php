@@ -41,7 +41,7 @@ class Config
 		}
 
 		$result = \Bitrix\ImOpenLines\Model\LivechatTable::getList([
-			'select' => ['CONFIG_ID', 'TEXT_PHRASES'],
+			'select' => ['CONFIG_ID', 'TEXT_PHRASES', 'SHOW_SESSION_ID'],
 			'filter' => ['=URL_CODE' => $code]
 		])->fetch();
 		if (!$result)
@@ -121,7 +121,8 @@ class Config
 				'MESSAGE_DISLIKE' => (string)$config['VOTE_MESSAGE_1_DISLIKE'],
 			],
 			'TEXT_MESSAGES' => $result['TEXT_PHRASES'],
-			'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y'
+			'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y',
+			'SHOW_SESSION_ID' => $result['SHOW_SESSION_ID'] === 'Y'
 		];
 	}
 

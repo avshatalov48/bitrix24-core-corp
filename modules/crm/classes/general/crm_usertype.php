@@ -2241,7 +2241,10 @@ class CCrmUserType
 		$arUserFields = $this->GetAbstractFields();
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
 		{
-			if (isset($arFilter[$FIELD_NAME]))
+			if (
+				isset($arFilter[$FIELD_NAME])
+				|| $arFilter[$FIELD_NAME] === false
+			)
 			{
 				$value = $arFilter[$FIELD_NAME];
 				unset($arFilter[$FIELD_NAME]);
@@ -2253,7 +2256,14 @@ class CCrmUserType
 			$userTypeID = isset($arUserField['USER_TYPE_ID']) ? $arUserField['USER_TYPE_ID'] : '';
 			$forceExactMode = $userTypeID === 'crm_status' || $userTypeID === 'crm';
 
-			if ($arUserField['USER_TYPE']['BASE_TYPE'] != 'file' && (is_array($value) || $value <> ''))
+			if (
+				$arUserField['USER_TYPE']['BASE_TYPE'] != 'file'
+				&& (
+					is_array($value)
+					|| (string) $value !== ''
+					|| $value === false
+				)
+			)
 			{
 				if ($arUserField['SHOW_FILTER'] == 'I' || $forceExactMode)
 					$arFilter['='.$FIELD_NAME] = $value;

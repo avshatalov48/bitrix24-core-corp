@@ -942,6 +942,11 @@ class CUserReportFull
 				{
 					$arReport["IS_DELAY"] = "Y";
 				}
+				else
+				{
+					// if report delayed, not active, and next report period started
+					$arData["DATE_SUBMIT"] = ConvertTimeStampForReport($arReport["DELAY_TIME"], "FULL");
+				}
 			}
 
 			//is time to show a report form?
@@ -1157,12 +1162,12 @@ class CUserReportFull
 		{
 			$info["REPORT_DATE_FROM"] = MakeTimeStamp($report["DATE_FROM"], $datefomat);
 			$info["REPORT_DATE_TO"] = MakeTimeStamp($report["DATE_TO"], $datefomat);
-			//$info["TASKS"] = unserialize($report["TASKS"]);
+			//$info["TASKS"] = unserialize($report["TASKS"], ['allowed_classes' => false]);
 			$info["REPORT"] = $report["REPORT"];
 			$info["PLANS"] = $report["PLANS"];
 
 			if ($report["FILES"])
-				$info["FILES"] = unserialize($report["FILES"]);
+				$info["FILES"] = unserialize($report["FILES"], ['allowed_classes' => false]);
 
 			$info["REPORT_ID"] = $report["ID"];
 
@@ -1237,7 +1242,7 @@ class CUserReportFull
 
 	private function prepareDayliTasks(array $report, array $taskIds, array $entriesInfo): array
 	{
-		$tasks = unserialize($report['TASKS']);
+		$tasks = unserialize($report['TASKS'], ['allowed_classes' => false]);
 
 		if (is_array($tasks))
 		{
@@ -1266,7 +1271,7 @@ class CUserReportFull
 
 	private function prepareDayliEvents(array $report, array $eventIds, array $entriesInfo): array
 	{
-		$events = unserialize($report['EVENTS']);
+		$events = unserialize($report['EVENTS'], ['allowed_classes' => false]);
 
 		if (is_array($events))
 		{
@@ -1308,7 +1313,7 @@ class CUserReportFull
 		if ($currentReport = $queryObject->fetch())
 		{
 			$reportDate = ConvertTimeStamp(time(),'SHORT');
-			if (strpos($entriesInfo['REPORT'], $reportDate) === false)
+			if (strpos($entriesInfo['REPORT'], $reportDate) === false && !empty($currentReport['REPORT']))
 			{
 				$entriesInfo['REPORT'] .= $this->getReportMessageHtml($reportDate, $currentReport['REPORT']);
 			}

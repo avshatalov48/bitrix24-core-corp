@@ -268,6 +268,7 @@
 .tm-task-popup-link-delay a { color: #000 !important; }*/
 
 .tm-report-popup { width: 680px; font: normal 12px/normal Arial,Verdana, Helvetica, sans-serif;}
+.tm-report-popup.ui-form { padding: 0; }
 .tm-report-popup-titlebar { position: relative; text-align: center; height: 49px;}
 .tm-report-popup-title { position: absolute; top: 9px; left: 9px; font:  normal 15px/31px Arial, Helvetica, sans-serif; }
 .tm-report-popup-title-date { display: inline-block; vertical-align: bottom; font:  bold 15px/31px Arial, Helvetica, sans-serif; margin-top: 9px; }
@@ -793,7 +794,7 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .report-webform-field-upload-list li.uploading a.upload-file-name { cursor: default; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; filter: alpha(opacity=50); -moz-opacity: 0.5; -khtml-opacity: 0.5; opacity: 0.5; }
 .report-webform-field-upload-list a.delete-file { vertical-align:top; display: inline-block; width:15px; height: 16px; background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat 0 -281px; margin: 0 0 0 6px; outline: none;}
 .report-webform-field-upload-list a.delete-file:hover { background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -17px -281px; cursor:pointer; }
-.report-webform-field-upload-list i { vertical-align:top; display: none; width:15px; height: 15px; background: url(/bitrix/js/timeman/images/waiter-small-white.gif) no-repeat 0 2px; margin: 0 0 0 8px; }
+.report-webform-field-upload-list i { vertical-align:top; display: none; width:15px; height: 15px; background: url(/bitrix/js/timeman/timemanager/images/waiter-small-white.gif) no-repeat 0 2px; margin: 0 0 0 8px; }
 .report-webform-field-upload-list li.uploading i {  display: inline-block; }
 .report-file-list{padding-left: 20px;font-size: 12px;font-family:Arial}
 
@@ -828,7 +829,31 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 	border: 1px solid transparent;
 }
 
-.report-webform-field-upload .webform-small-button
+.tm-webform-small-button {
+	display: inline-block;
+	padding: 0 18px;
+	outline: none;
+	border: none;
+	border-radius: 2px;
+	background: #ecedef;
+	box-shadow: 0 0 0 1px #c6cdd3 inset;
+	color: #7a818a;
+	vertical-align: middle;
+	text-decoration: none;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	font: normal 12px/47px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	cursor: pointer;
+	transition: background-color 0.2s linear, color 0.2s linear;
+	-webkit-font-smoothing: antialiased;
+	box-sizing: border-box;
+	margin: 0 12px 0 0;
+	height: 39px;
+	line-height: 39px;
+}
+
+.report-webform-field-upload .tm-webform-small-button
 {
 	padding: 0;
 	margin: 0;

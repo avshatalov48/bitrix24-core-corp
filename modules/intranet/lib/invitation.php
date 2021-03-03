@@ -183,7 +183,8 @@ class Invitation
 		)
 		{
 			$secret = $registerSettings['REGISTER_SECRET'];
-			$result = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://').BX24_HOST_NAME.'/?secret='.($secret <> '' ? urlencode($secret) : 'yes');
+			$result = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://')
+				.(defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME).'/?secret='.($secret <> '' ? urlencode($secret) : 'yes');
 		}
 
 		return $result;

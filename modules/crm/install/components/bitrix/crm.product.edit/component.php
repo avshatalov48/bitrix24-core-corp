@@ -60,7 +60,7 @@ if ($bVatMode)
 
 // measure list items
 $arResult['MEASURE_LIST_ITEMS'] = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-$measures = \Bitrix\Crm\Measure::getMeasures(100);
+$measures = \Bitrix\Crm\Measure::getMeasures(0);
 if (is_array($measures))
 {
 	foreach ($measures as $measure)

@@ -30,7 +30,7 @@ use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Format\ContactAddressFormatter;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\LeadAddressFormatter;
-use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 
 $entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 $arResult['ENTITY_TYPE_ID'] = $entityTypeID;
@@ -917,7 +917,7 @@ elseif($entityTypeID === CCrmOwnerType::Company)
 				'type' => 'address',
 				'editable'=> false,
 				'data' => array('lines' => CompanyAddressFormatter::prepareLines(
-					$entityFields, array('TYPE_ID' => EntityAddress::Primary, 'NL2BR' => true))
+					$entityFields, array('TYPE_ID' => EntityAddressType::Primary, 'NL2BR' => true))
 				)
 			);
 		}
@@ -927,7 +927,7 @@ elseif($entityTypeID === CCrmOwnerType::Company)
 				'type' => 'address',
 				'editable'=> false,
 				'data' => array('lines' => CompanyAddressFormatter::prepareLines(
-					$entityFields, array('TYPE_ID' => EntityAddress::Registered, 'NL2BR' => true))
+					$entityFields, array('TYPE_ID' => EntityAddressType::Registered, 'NL2BR' => true))
 				)
 			);
 		}

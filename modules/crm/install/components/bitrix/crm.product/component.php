@@ -28,6 +28,21 @@ if (!CModule::IncludeModule('sale'))
 
 global $APPLICATION;
 
+$arParams['PATH_TO_CATALOG'] = (
+	(
+		isset($arParams['PATH_TO_CATALOG'])
+		&& is_string($arParams['PATH_TO_CATALOG'])
+		&& $arParams['PATH_TO_CATALOG'] !== ''
+	)
+	? $arParams['PATH_TO_CATALOG']
+	: '#SITE_DIR#crm/catalog/'
+);
+
+if (\Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+{
+	LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']));
+}
+
 $componentPage = '';
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
@@ -158,4 +173,3 @@ $arResult =
 	);
 
 $this->IncludeComponentTemplate($componentPage);
-?>

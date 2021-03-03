@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["CRM_CONTACT_CREATION_CANCELED"] = "Contact has not been created because the operation was canceled by event handler: \"#NAME#\"";
+$MESS["CRM_CONTACT_DEFAULT_TITLE_TEMPLATE"] = "Contact #%NUMBER%";
 $MESS["CRM_CONTACT_EVENT_ADD"] = "Contact created";
 $MESS["CRM_CONTACT_EVENT_UPDATE_ASSIGNED_BY"] = "Responsible person updated";
 $MESS["CRM_CONTACT_EVENT_UPDATE_COMPANY"] = "Company updated";
@@ -15,12 +16,12 @@ $MESS["CRM_CONTACT_FIELD_ADDRESS_REGION"] = "Region";
 $MESS["CRM_CONTACT_FIELD_ASSIGNED_BY_ID"] = "Responsible person";
 $MESS["CRM_CONTACT_FIELD_BIRTHDATE"] = "Date of birth";
 $MESS["CRM_CONTACT_FIELD_COMMENTS"] = "Comment";
-$MESS["CRM_CONTACT_FIELD_COMPANY_ID"] = "Company";
 $MESS["CRM_CONTACT_FIELD_COMPANY"] = "Company";
+$MESS["CRM_CONTACT_FIELD_COMPANY_ID"] = "Company";
 $MESS["CRM_CONTACT_FIELD_CREATED_BY_ID"] = "Created by";
 $MESS["CRM_CONTACT_FIELD_DATE_CREATE"] = "Created on";
 $MESS["CRM_CONTACT_FIELD_DATE_MODIFY"] = "Modified on";
-$MESS["CRM_CONTACT_FIELD_EXPORT"] = "Mark for export";
+$MESS["CRM_CONTACT_FIELD_EXPORT_NEW"] = "Included in export";
 $MESS["CRM_CONTACT_FIELD_FACE_ID"] = "FaceID connection";
 $MESS["CRM_CONTACT_FIELD_HAS_EMAIL"] = "Has email";
 $MESS["CRM_CONTACT_FIELD_HAS_IMOL"] = "Has Open Channel";
@@ -80,5 +81,3 @@ $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Cannot verify permissions because no
 $MESS["CRM_PS_CONTACT_FIELD_EMAIL"] = "Email";
 $MESS["CRM_PS_CONTACT_FIELD_FULL_NAME"] = "Full name";
 $MESS["CRM_PS_CONTACT_FIELD_PHONE"] = "Phone";
-$MESS["CRM_CONTACT_DEFAULT_TITLE_TEMPLATE"] = "Contact #%NUMBER%";
-?>

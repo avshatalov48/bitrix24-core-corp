@@ -4,7 +4,9 @@ namespace Bitrix\ImOpenLines\Model;
 use \Bitrix\Main,
 	\Bitrix\Main\Type\DateTime,
 	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Entity\Validator,
+	\Bitrix\Main\Entity\Validator;
+use \Bitrix\Main\ORM\Event,
+	\Bitrix\Main\ORM\EventResult,
 	\Bitrix\Main\ORM\Fields\StringField,
 	\Bitrix\Main\ORM\Fields\BooleanField,
 	\Bitrix\Main\ORM\Fields\IntegerField;
@@ -78,6 +80,11 @@ class ConfigTable extends Main\Entity\DataManager
 			new BooleanField('CRM_FORWARD', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_FORWARD_FIELD'),
+				'default_value' => 'Y',
+			]),
+			new BooleanField('CRM_CHAT_TRACKER', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_CHAT_TRACKER_FIELD'),
 				'default_value' => 'Y',
 			]),
 			new BooleanField('CRM_TRANSFER_CHANGE', [
@@ -441,6 +448,35 @@ class ConfigTable extends Main\Entity\DataManager
 				'default_value' => 'N',
 			])
 		);
+	}
+
+
+	/**
+	 * @param Event $event
+	 * @return EventResult|void
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onDelete(Event $event)
+	{
+		$result = new EventResult;
+		$configId = $event->getParameters()['primary']['ID'];
+
+		$defaultOperatorData = self::getList([
+			'select' => ['DEFAULT_OPERATOR_DATA'],
+			'filter' => ['=ID' => $configId]
+		])->fetch()['DEFAULT_OPERATOR_DATA'];
+
+		if(
+			!empty($defaultOperatorData['AVATAR_ID']) &&
+			$defaultOperatorData['AVATAR_ID'] > 0
+		)
+		{
+			\CFile::Delete($defaultOperatorData['AVATAR_ID']);
+		}
+
+		return $result;
 	}
 
 	/**

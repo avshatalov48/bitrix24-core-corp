@@ -661,8 +661,8 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 	$stdItems['MARKETPLACE'] = array(
 		'ID' => 'MARKETPLACE',
 		'MENU_ID' => 'menu_crm_marketplace',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE'),
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_2'),
+		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_2'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_MARKETPLACE']),
 		'ICON' => 'apps',
 		'IS_DISABLED' => true

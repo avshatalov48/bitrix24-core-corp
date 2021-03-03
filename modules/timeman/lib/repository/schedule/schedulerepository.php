@@ -581,6 +581,8 @@ class ScheduleRepository
 		{
 			$result->whereNot('SCHEDULE_ID', $exceptScheduleId);
 		}
+		$result->setCacheTtl(3600 * 12);
+		$result->cacheJoins(true);
 		return $result
 			->exec()
 			->fetchCollection();
@@ -601,6 +603,8 @@ class ScheduleRepository
 		{
 			$departmentAssignmentsResult->whereNot('SCHEDULE_ID', $exceptScheduleId);
 		}
+		$departmentAssignmentsResult->setCacheTtl(3600 * 12);
+		$departmentAssignmentsResult->cacheJoins(true);
 		return $departmentAssignmentsResult
 			->exec()
 			->fetchCollection();
@@ -634,6 +638,7 @@ class ScheduleRepository
 		$res = $this->getActiveSchedulesQuery()
 			->addSelect('ID')
 			->where('IS_FOR_ALL_USERS', true)
+			->setCacheTtl(3600 * 12)
 			->exec()
 			->fetch();
 		if ($res)
@@ -685,6 +690,8 @@ class ScheduleRepository
 				$query->addSelect($fieldName);
 			}
 		}
+		$query->setCacheTtl(3600 * 12);
+		$query->cacheJoins(true);
 		return $query
 			->whereIn('ID', $userScheduleIds)
 			->exec()

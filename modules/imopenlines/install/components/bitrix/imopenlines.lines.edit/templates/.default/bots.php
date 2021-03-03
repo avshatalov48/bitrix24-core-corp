@@ -6,7 +6,7 @@ use \Bitrix\Main\Localization\Loc;
 <div class="imopenlines-form-settings-section">
 	<div class="imopenlines-form-settings-title imopenlines-form-settings-title-other">
 		<?=Loc::getMessage('IMOL_CONFIG_EDIT_BOT_SETTINGS')?>
-		<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_BOT_JOIN_TIP_NEW"))?>"></span>
+		<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_BOT_JOIN_TIP_NEW_2"))?>"></span>
 	</div>
 	<div class="imopenlines-control-container">
 		<div class="imopenlines-control-checkbox-container">
@@ -58,7 +58,7 @@ use \Bitrix\Main\Localization\Loc;
 			<div class="imopenlines-control-container imopenlines-control-select">
 				<div class="imopenlines-control-subtitle">
 					<?=Loc::getMessage("IMOL_CONFIG_EDIT_BOT_TIME_NEW")?>
-					<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_BOT_TIME_TIP"))?>"></span>
+					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_BOT_TIME_TIP"))?>"></span>
 				</div>
 				<div class="imopenlines-control-inner">
 					<select name="CONFIG[WELCOME_BOT_TIME]" class="imopenlines-control-input">
@@ -107,7 +107,7 @@ use \Bitrix\Main\Localization\Loc;
 			{
 			?>
 			BX('imol_welcome_bot').checked = false;
-			alert('<?=GetMessageJS("IMOL_CONFIG_EDIT_BOT_EMPTY_NEW")?>');
+			alert('<?=GetMessageJS("IMOL_CONFIG_EDIT_BOT_EMPTY_NEW_2")?>');
 			<?
 			}
 			else

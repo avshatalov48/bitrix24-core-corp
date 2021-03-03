@@ -7,8 +7,8 @@ use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmDeal;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Kanban\Entity;
-use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -77,11 +77,11 @@ class Deal extends Entity
 					]
 				]
 			],
-			'filter_won' => [
+			'filter_closed' => [
 				'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WON'),
 				'fields' => [
 					'STAGE_SEMANTIC_ID' => [
-						\Bitrix\Crm\PhaseSemantics::SUCCESS,
+						[\Bitrix\Crm\PhaseSemantics::SUCCESS, \Bitrix\Crm\PhaseSemantics::FAILURE]
 					]
 				]
 			],

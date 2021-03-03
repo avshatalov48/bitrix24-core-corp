@@ -45,20 +45,6 @@ class Limit
 	}
 
 	/**
-	 * @return array|bool
-	 */
-	public static function getLicenseUsersLimit()
-	{
-		if (!\CModule::IncludeModule('bitrix24'))
-			return false;
-
-		if (\CBitrix24BusinessTools::isLicenseUnlimited())
-			return false;
-
-		return \CBitrix24BusinessTools::getUnlimUsers();
-	}
-
-	/**
 	 * @return bool|mixed
 	 */
 	public static function canUseQueueAll()
@@ -180,7 +166,6 @@ class Limit
 	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)
 	{
 		Config::checkLinesLimit();
-		QueueManager::checkBusinessUsers();
 	}
 
 	/**
@@ -233,6 +218,7 @@ class Limit
 
 	/**
 	 * @deprecated
+	 *
 	 * TODO: delete
 	 */
 	public static function increaseTracker()
@@ -244,5 +230,15 @@ class Limit
 		\CGlobalCounter::Increment(self::TRACKER_COUNTER, \CGlobalCounter::ALL_SITES);
 
 		return true;
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @return array|bool
+	 */
+	public static function getLicenseUsersLimit()
+	{
+		return false;
 	}
 }

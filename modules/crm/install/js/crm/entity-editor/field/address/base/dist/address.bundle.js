@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 	'use strict';
 
 	function _templateObject24() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs\">\n\t\t\t\t\t\t\t<label>\n\t\t\t\t\t\t\t\t<input onclick=\"", "\" type=\"checkbox\" value=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"ui-ctl-label-text\">", "</span>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs\">\n\t\t\t\t\t<label>\n\t\t\t\t\t<input onclick=\"", "\" type=\"checkbox\" value=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-ctl-label-text\">", "</span>\n\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t"]);
 
 	  _templateObject24 = function _templateObject24() {
 	    return data;
@@ -260,6 +260,7 @@ this.BX = this.BX || {};
 	      this._settings = settings ? settings : {};
 	      this._typesList = [];
 	      this._availableTypesIds = [];
+	      this._allowedTypeIds = [];
 	      this._addressList = [];
 	      this._wrapper = null;
 	      this._isEditMode = true;
@@ -267,6 +268,10 @@ this.BX = this.BX || {};
 	      this._enableAutocomplete = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
 	      this._hideDefaultAddressType = BX.prop.getBoolean(this._settings, 'hideDefaultAddressType', false);
 	      this._showAddressTypeInViewMode = BX.prop.getBoolean(this._settings, 'showAddressTypeInViewMode', false);
+	      this._addrZoneConfig = BX.prop.getObject(this._settings, 'addressZoneConfig', {});
+	      this._countryId = BX.prop.getInteger(this._settings, 'countryId', BX.prop.getInteger(this._addrZoneConfig, "countryId", 0));
+	      this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0);
+	      this.updateAllowedTypes();
 	    }
 	  }, {
 	    key: "setMultiple",
@@ -407,19 +412,60 @@ this.BX = this.BX || {};
 	      return types;
 	    }
 	  }, {
-	    key: "getDefaultType",
-	    value: function getDefaultType() {
-	      var _iterator4 = _createForOfIteratorHelper(this._typesList),
+	    key: "setAllowedTypes",
+	    value: function setAllowedTypes(typeIds) {
+	      this._allowedTypeIds = [];
+
+	      if (main_core.Type.isArray(typeIds)) {
+	        this._allowedTypeIds = typeIds;
+	      }
+	    }
+	  }, {
+	    key: "getAllowedTypes",
+	    value: function getAllowedTypes() {
+	      return this._allowedTypeIds;
+	    }
+	  }, {
+	    key: "setCountryId",
+	    value: function setCountryId(countryId) {
+	      var needUpdateAllowedTypes = false;
+	      countryId = parseInt(countryId);
+
+	      if (this._countryId !== countryId) {
+	        needUpdateAllowedTypes = true;
+	      }
+
+	      this._countryId = countryId;
+
+	      if (needUpdateAllowedTypes) {
+	        this.updateAllowedTypes();
+	      }
+	    }
+	  }, {
+	    key: "getCountryId",
+	    value: function getCountryId() {
+	      return this._countryId;
+	    }
+	  }, {
+	    key: "getAddressZoneConfig",
+	    value: function getAddressZoneConfig() {
+	      return this._addrZoneConfig;
+	    }
+	  }, {
+	    key: "getValueTypes",
+	    value: function getValueTypes() {
+	      var result = [];
+
+	      var _iterator4 = _createForOfIteratorHelper(this._addressList),
 	          _step4;
 
 	      try {
 	        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-	          var item = _step4.value;
-	          var value = BX.prop.getString(item, "ID", "");
-	          var isDefault = BX.prop.getString(item, "IS_DEFAULT", false);
+	          var addressItem = _step4.value;
+	          var addressType = parseInt(addressItem.getType());
 
-	          if (isDefault && this._availableTypesIds.indexOf(value) >= 0) {
-	            return value;
+	          if (result.indexOf(addressType) < 0) {
+	            result.push(addressType);
 	          }
 	        }
 	      } catch (err) {
@@ -428,23 +474,113 @@ this.BX = this.BX || {};
 	        _iterator4.f();
 	      }
 
-	      var _iterator5 = _createForOfIteratorHelper(this._typesList),
+	      return result;
+	    }
+	  }, {
+	    key: "updateAllowedTypes",
+	    value: function updateAllowedTypes() {
+	      var allowedTypeList = [];
+	      var typeValues = this.getValueTypes();
+	      var countryId = this.getCountryId();
+	      var config = this.getAddressZoneConfig();
+
+	      if (main_core.Type.isPlainObject(config)) {
+	        if (config.hasOwnProperty("currentZoneAddressTypes") && main_core.Type.isArray(config["currentZoneAddressTypes"])) {
+	          var i;
+	          var typeId;
+	          var curZoneAddrTypes = config["currentZoneAddressTypes"];
+
+	          for (i = 0; i < curZoneAddrTypes.length; i++) {
+	            typeId = parseInt(curZoneAddrTypes[i]);
+
+	            if (allowedTypeList.indexOf(typeId) < 0) {
+	              allowedTypeList.push(typeId);
+	            }
+	          }
+
+	          if (countryId > 0 && config.hasOwnProperty("countryAddressTypeMap") && main_core.Type.isPlainObject(config["countryAddressTypeMap"]) && config["countryAddressTypeMap"].hasOwnProperty(countryId) && main_core.Type.isArray(config["countryAddressTypeMap"][countryId])) {
+	            var addrTypeMap = config["countryAddressTypeMap"][countryId];
+
+	            for (i = 0; i < addrTypeMap.length; i++) {
+	              typeId = parseInt(addrTypeMap[i]);
+
+	              if (allowedTypeList.indexOf(typeId) < 0) {
+	                allowedTypeList.push(typeId);
+	              }
+	            }
+	          }
+
+	          for (i = 0; i < typeValues.length; i++) {
+	            typeId = parseInt(typeValues[i]);
+
+	            if (allowedTypeList.indexOf(typeId) < 0) {
+	              allowedTypeList.push(typeId);
+	            }
+	          }
+	        }
+	      }
+
+	      this._allowedTypeIds = allowedTypeList;
+
+	      var _iterator5 = _createForOfIteratorHelper(this._addressList),
 	          _step5;
 
 	      try {
 	        for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-	          var _item = _step5.value;
-
-	          var _value = BX.prop.getString(_item, "ID", "");
-
-	          if (this._availableTypesIds.indexOf(_value) >= 0) {
-	            return _value;
-	          }
+	          var addressItem = _step5.value;
+	          addressItem.setAllowedTypesIds(babelHelpers.toConsumableArray(this._allowedTypeIds));
 	        }
 	      } catch (err) {
 	        _iterator5.e(err);
 	      } finally {
 	        _iterator5.f();
+	      }
+	    }
+	  }, {
+	    key: "getDefaultType",
+	    value: function getDefaultType() {
+	      var defAddrType = this._defaultAddressType.toString();
+
+	      if (defAddrType > 0 && this._availableTypesIds.indexOf(defAddrType) >= 0 && this._allowedTypeIds.indexOf(parseInt(defAddrType)) >= 0) {
+	        return defAddrType;
+	      }
+
+	      var _iterator6 = _createForOfIteratorHelper(this._typesList),
+	          _step6;
+
+	      try {
+	        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+	          var item = _step6.value;
+	          var value = BX.prop.getString(item, "ID", "");
+	          var isDefault = BX.prop.getString(item, "IS_DEFAULT", false);
+
+	          if (isDefault && this._availableTypesIds.indexOf(value) >= 0 && this._allowedTypeIds.indexOf(parseInt(value)) >= 0) {
+	            return value;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator6.e(err);
+	      } finally {
+	        _iterator6.f();
+	      }
+
+	      var _iterator7 = _createForOfIteratorHelper(this._typesList),
+	          _step7;
+
+	      try {
+	        for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+	          var _item = _step7.value;
+
+	          var _value = BX.prop.getString(_item, "ID", "");
+
+	          if (this._availableTypesIds.indexOf(_value) >= 0 && this._allowedTypeIds.indexOf(parseInt(_value)) >= 0) {
+	            return _value;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator7.e(err);
+	      } finally {
+	        _iterator7.f();
 	      }
 
 	      return null;
@@ -463,12 +599,12 @@ this.BX = this.BX || {};
 	      main_core.Dom.clean(this._wrapper);
 	      var addrCounter = true;
 
-	      var _iterator6 = _createForOfIteratorHelper(this._addressList),
-	          _step6;
+	      var _iterator8 = _createForOfIteratorHelper(this._addressList),
+	          _step8;
 
 	      try {
-	        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-	          var addressItem = _step6.value;
+	        for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+	          var addressItem = _step8.value;
 	          addressItem.setEditMode(this._isEditMode);
 
 	          if (!this._isEditMode && this._showFirstItemOnly && addrCounter > 1) {
@@ -482,9 +618,9 @@ this.BX = this.BX || {};
 	          addrCounter++;
 	        }
 	      } catch (err) {
-	        _iterator6.e(err);
+	        _iterator8.e(err);
 	      } finally {
-	        _iterator6.f();
+	        _iterator8.f();
 	      }
 
 	      if (this._isEditMode && this._isMultiple && !main_core.Type.isNull(this.getDefaultType())) {
@@ -507,18 +643,18 @@ this.BX = this.BX || {};
 	        return item.getId();
 	      });
 
-	      var _iterator7 = _createForOfIteratorHelper(ids),
-	          _step7;
+	      var _iterator9 = _createForOfIteratorHelper(ids),
+	          _step9;
 
 	      try {
-	        for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-	          var id = _step7.value;
+	        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+	          var id = _step9.value;
 	          this.removeAddress(id);
 	        }
 	      } catch (err) {
-	        _iterator7.e(err);
+	        _iterator9.e(err);
 	      } finally {
-	        _iterator7.f();
+	        _iterator9.f();
 	      }
 	    }
 	  }, {
@@ -528,6 +664,7 @@ this.BX = this.BX || {};
 	      var addressItem = new AddressItem(main_core.Text.getRandom(8), {
 	        typesList: this.getTypesList(),
 	        availableTypesIds: babelHelpers.toConsumableArray(this._availableTypesIds),
+	        allowedTypesIds: babelHelpers.toConsumableArray(this._allowedTypeIds),
 	        canChangeType: this._isMultiple,
 	        enableAutocomplete: this._enableAutocomplete,
 	        showAddressTypeInViewMode: this._isMultiple && this._showAddressTypeInViewMode,
@@ -545,6 +682,7 @@ this.BX = this.BX || {};
 
 	      this._addressList.push(addressItem);
 
+	      this.updateAllowedTypes();
 	      this.updateTypeSelectorVisibility(this._addressList.length > 1);
 	      return addressItem;
 	    }
@@ -559,6 +697,7 @@ this.BX = this.BX || {};
 	        this._addressList.splice(this._addressList.indexOf(addressItem), 1);
 
 	        this.updateAvailableTypes(null, type);
+	        this.updateAllowedTypes();
 	        this.updateTypeSelectorVisibility(this._addressList.length > 1);
 	        addressItem.destroy();
 	      }
@@ -577,19 +716,19 @@ this.BX = this.BX || {};
 	    value: function initAvailableTypes() {
 	      this._availableTypesIds = [];
 
-	      var _iterator8 = _createForOfIteratorHelper(this._typesList),
-	          _step8;
+	      var _iterator10 = _createForOfIteratorHelper(this._typesList),
+	          _step10;
 
 	      try {
-	        for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
-	          var type = _step8.value;
+	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
+	          var type = _step10.value;
 
 	          this._availableTypesIds.push(BX.prop.getString(type, "ID", ""));
 	        }
 	      } catch (err) {
-	        _iterator8.e(err);
+	        _iterator10.e(err);
 	      } finally {
-	        _iterator8.f();
+	        _iterator10.f();
 	      }
 	    }
 	  }, {
@@ -603,18 +742,18 @@ this.BX = this.BX || {};
 	        this._availableTypesIds.splice(this._availableTypesIds.indexOf(removedType), 1);
 	      }
 
-	      var _iterator9 = _createForOfIteratorHelper(this._addressList),
-	          _step9;
+	      var _iterator11 = _createForOfIteratorHelper(this._addressList),
+	          _step11;
 
 	      try {
-	        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-	          var addressItem = _step9.value;
+	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
+	          var addressItem = _step11.value;
 	          addressItem.setAvailableTypesIds(babelHelpers.toConsumableArray(this._availableTypesIds));
 	        }
 	      } catch (err) {
-	        _iterator9.e(err);
+	        _iterator11.e(err);
 	      } finally {
-	        _iterator9.f();
+	        _iterator11.f();
 	      }
 	    }
 	  }, {
@@ -624,18 +763,18 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      var _iterator10 = _createForOfIteratorHelper(this._addressList),
-	          _step10;
+	      var _iterator12 = _createForOfIteratorHelper(this._addressList),
+	          _step12;
 
 	      try {
-	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
-	          var addressItem = _step10.value;
+	        for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
+	          var addressItem = _step12.value;
 	          addressItem.setTypeSelectorVisibility(showTypeSelector);
 	        }
 	      } catch (err) {
-	        _iterator10.e(err);
+	        _iterator12.e(err);
 	      } finally {
-	        _iterator10.f();
+	        _iterator12.f();
 	      }
 	    }
 	  }, {
@@ -683,6 +822,7 @@ this.BX = this.BX || {};
 	      var prevType = data.prevType;
 	      var type = data.type;
 	      this.updateAvailableTypes(type, prevType);
+	      this.updateAllowedTypes();
 	      this.emitUpdateEvent();
 	    }
 	  }, {
@@ -756,18 +896,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "resetView",
 	    value: function resetView() {
-	      var _iterator11 = _createForOfIteratorHelper(this._addressList),
-	          _step11;
+	      var _iterator13 = _createForOfIteratorHelper(this._addressList),
+	          _step13;
 
 	      try {
-	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
-	          var addressItem = _step11.value;
+	        for (_iterator13.s(); !(_step13 = _iterator13.n()).done;) {
+	          var addressItem = _step13.value;
 	          addressItem.resetView();
 	        }
 	      } catch (err) {
-	        _iterator11.e(err);
+	        _iterator13.e(err);
 	      } finally {
-	        _iterator11.f();
+	        _iterator13.f();
 	      }
 	    }
 	  }], [{
@@ -797,6 +937,7 @@ this.BX = this.BX || {};
 	    _this2._isTypesMenuOpened = false;
 	    _this2._typesList = BX.prop.getArray(settings, 'typesList', []);
 	    _this2._availableTypesIds = BX.prop.getArray(settings, 'availableTypesIds', []);
+	    _this2._allowedTypesIds = BX.prop.getArray(settings, 'allowedTypesIds', []);
 	    _this2._canChangeType = BX.prop.getBoolean(settings, 'canChangeType', false);
 	    _this2.typesMenuId = 'address_type_menu_' + _this2._id;
 	    _this2._type = BX.prop.getString(settings, 'type', "");
@@ -900,6 +1041,54 @@ this.BX = this.BX || {};
 	      this._availableTypesIds = ids;
 	    }
 	  }, {
+	    key: "setAllowedTypesIds",
+	    value: function setAllowedTypesIds(ids) {
+	      this._allowedTypesIds = ids;
+	    }
+	  }, {
+	    key: "getTypeListByIds",
+	    value: function getTypeListByIds(ids) {
+	      var result = [];
+
+	      if (main_core.Type.isArray(ids) && ids.length > 0) {
+	        var typeMap = {};
+
+	        var _iterator14 = _createForOfIteratorHelper(this._typesList),
+	            _step14;
+
+	        try {
+	          for (_iterator14.s(); !(_step14 = _iterator14.n()).done;) {
+	            var item = _step14.value;
+	            typeMap["a" + item.value] = item;
+	          }
+	        } catch (err) {
+	          _iterator14.e(err);
+	        } finally {
+	          _iterator14.f();
+	        }
+
+	        var _iterator15 = _createForOfIteratorHelper(ids),
+	            _step15;
+
+	        try {
+	          for (_iterator15.s(); !(_step15 = _iterator15.n()).done;) {
+	            var typeId = _step15.value;
+	            var index = "a" + typeId;
+
+	            if (typeMap.hasOwnProperty(index)) {
+	              result.push(typeMap[index]);
+	            }
+	          }
+	        } catch (err) {
+	          _iterator15.e(err);
+	        } finally {
+	          _iterator15.f();
+	        }
+	      }
+
+	      return result;
+	    }
+	  }, {
 	    key: "layout",
 	    value: function layout() {
 	      if (main_core.Type.isNull(this._addressWidget)) {
@@ -939,14 +1128,20 @@ this.BX = this.BX || {};
 	      }
 
 	      var menu = [];
+	      var allowedTypes = babelHelpers.toConsumableArray(this._allowedTypesIds);
+	      var selectedTypeId = parseInt(this._type);
 
-	      var _iterator12 = _createForOfIteratorHelper(this._typesList),
-	          _step12;
+	      if (allowedTypes.indexOf(selectedTypeId) < 0) {
+	        allowedTypes.push(selectedTypeId);
+	      }
+
+	      var _iterator16 = _createForOfIteratorHelper(this.getTypeListByIds(allowedTypes)),
+	          _step16;
 
 	      try {
-	        for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
-	          var item = _step12.value;
-	          var selected = item.value === this._type;
+	        for (_iterator16.s(); !(_step16 = _iterator16.n()).done;) {
+	          var item = _step16.value;
+	          var selected = selectedTypeId === parseInt(item.value);
 
 	          if (this._availableTypesIds.indexOf(item.value) < 0 && !selected) {
 	            continue;
@@ -960,9 +1155,9 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      } catch (err) {
-	        _iterator12.e(err);
+	        _iterator16.e(err);
 	      } finally {
-	        _iterator12.f();
+	        _iterator16.f();
 	      }
 
 	      main_popup.MenuManager.show(this.typesMenuId, bindElement, menu, {
@@ -1022,7 +1217,11 @@ this.BX = this.BX || {};
 
 	      this.refreshIcon();
 	      this._domNodes.detailsToggler = main_core.Tag.render(_templateObject14(), this.onToggleDetailsVisibility.bind(this));
-	      this._domNodes.copyButton = main_core.Tag.render(_templateObject15(), this.onCopyButtonClick.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_COPY1'));
+
+	      if (this._canChangeType) {
+	        this._domNodes.copyButton = main_core.Tag.render(_templateObject15(), this.onCopyButtonClick.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_COPY1'));
+	      }
+
 	      this.refreshCopyButtonVisibility();
 	      this.setDetailsVisibility(this._showDetails);
 	      var result = main_core.Tag.render(_templateObject16(), this._domNodes.copyButton ? this._domNodes.copyButton : '', this._domNodes.detailsToggler, this._domNodes.addressContainer, this._domNodes.detailsContainer);
@@ -1106,7 +1305,6 @@ this.BX = this.BX || {};
 
 	      if (main_core.Type.isDomNode(node)) {
 	        var isVisible = !!this.getAddress();
-
 	        main_core.Dom.style(node, 'display', isVisible ? '' : 'none');
 	      }
 	    }
@@ -1209,10 +1407,9 @@ this.BX = this.BX || {};
 	    value: function getCopyDestinationLayout() {
 	      var _this7 = this;
 
-	      var types = this._typesList.filter(function (item) {
-	        return item.value != _this7._type;
+	      var types = this.getTypeListByIds(this._allowedTypesIds).filter(function (item) {
+	        return item.value !== _this7._type;
 	      });
-
 	      return main_core.Tag.render(_templateObject23(), main_core.Loc.getMessage('CRM_ADDRESS_COPY_TO'), types.map(function (item) {
 	        return main_core.Tag.render(_templateObject24(), _this7.onChangeCopyDestination.bind(_this7), item.value, main_core.Text.encode(item.name));
 	      }));

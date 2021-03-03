@@ -174,6 +174,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return false;
 		}
 
+		$this->entity->setCanEditCommonSettings($this->canEditSettings());
+
 		if (
 			isset($this->arParams['EXTRA']['CATEGORY_ID'])
 			&& $this->arParams['EXTRA']['CATEGORY_ID'] > 0
@@ -310,7 +312,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$allStatuses = array_merge($allStatuses, $orderStatuses);
 		}
 
-		$colorOffset = -1;
 		foreach ($allStatuses as $status)
 		{
 			$status['STATUS_ID'] = htmlspecialcharsbx($status['STATUS_ID']);
@@ -344,20 +345,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 			{
 				$status['PROGRESS_TYPE'] = 'PROGRESS';
 				$status['SEMANTICS'] = PhaseSemantics::PROCESS;
-				$colorOffset++;
-			}
-			//set default color
-			if(empty($status['COLOR']))
-			{
-				$status['COLOR'] = PhaseColorScheme::getDefaultColorBySemantics($status['SEMANTICS'], [
-					'offset' => $colorOffset,
-				]);
 			}
 
 			$statuses[$status['STATUS_ID']] = $status;
 		}
 
-		return $statuses;
+		return PhaseColorScheme::fillDefaultColors($statuses);
 	}
 
 	/**
@@ -796,9 +789,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$this->semanticIds = (array)$filter['STATUS_SEMANTIC_ID'];
 		}
+		elseif ($this->entity->getTypeName() === 'LEAD')
+		{
+			$this->semanticIds = [PhaseSemantics::PROCESS, PhaseSemantics::SUCCESS, PhaseSemantics::FAILURE];
+		}
 		elseif (isset($filter['STAGE_SEMANTIC_ID']))
 		{
 			$this->semanticIds = (array)$filter['STAGE_SEMANTIC_ID'];
+		}
+		elseif ($this->entity->getTypeName() === 'DEAL')
+		{
+			$this->semanticIds = [PhaseSemantics::PROCESS, PhaseSemantics::SUCCESS, PhaseSemantics::FAILURE];
 		}
 		elseif (
 			isset($filter['=STATUS_ID'])
@@ -978,7 +979,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'count' => 0,
 			'total' => 0,
 			'currency' => $this->currency,
-			'dropzone' => true
+			'dropzone' => true,
+			'alwaysShowInDropzone' => true
 		];
 	}
 
@@ -1099,6 +1101,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					'total' => 0,
 					'currency' => $baseCurrency,
 					'dropzone' => $isDropZone,
+					'alwaysShowInDropzone' => $this->isAlwaysShowInDropzone($status),
 					'canAddItem' => $this->entity->canAddItemToStage($status['STATUS_ID'], $userPerms),
 				];
 				// win column
@@ -1140,6 +1143,15 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		return $columns;
+	}
+
+	/**
+	 * @param array $status
+	 * @return bool
+	 */
+	protected function isAlwaysShowInDropzone(array $status): bool
+	{
+		return ($status['PROGRESS_TYPE'] === 'WIN' || $status['PROGRESS_TYPE'] === 'LOOSE');
 	}
 
 	/**
@@ -1487,7 +1499,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$pageCount = $res->NavPageCount;
 		$specialReqKeys = [
 			'OPPORTUNITY' => 'OPPORTUNITY_WITH_CURRENCY',
-			'CONTACT_ID' => 'CLIENT'
+			'CONTACT_ID' => 'CLIENT',
+			'COMPANY_ID' => 'CLIENT'
 		];
 		$users = [];
 		$fileIds = [];
@@ -1831,6 +1844,18 @@ class CrmKanbanComponent extends \CBitrixComponent
 				// special keys
 				foreach ($specialReqKeys as $reqKeyOrig => $reqKey)
 				{
+					if(
+						isset($this->requiredFields[$reqKey])
+						&& $reqKey === 'CLIENT'
+						&& (
+							!empty($row['COMPANY_ID'])
+							|| !empty($row['CONTACT_ID'])
+						)
+					)
+					{
+						continue;
+					}
+
 					if (
 						isset($this->requiredFields[$reqKey]) &&
 						(

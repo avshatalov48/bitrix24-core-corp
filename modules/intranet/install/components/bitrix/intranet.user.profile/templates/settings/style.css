@@ -1,5 +1,8 @@
 .main-ui-select-inner {
 	z-index: 3100 !important;
+	max-height: 177px;
+	overflow: auto;
+
 }
 
 /*region Buttons panel*/

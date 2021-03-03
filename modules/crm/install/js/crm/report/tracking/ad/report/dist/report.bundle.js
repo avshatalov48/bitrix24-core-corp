@@ -6,7 +6,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	'use strict';
 
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div data-role=\"title\"></div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-line\">\n\t\t\t\t\t\t\t<div data-role=\"title\"></div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -56,7 +56,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	      BX.SidePanel.Instance.open('crm:api.tracking.ad.report' + "-".concat(sourceId, "-").concat(level), {
 	        cacheable: false,
 	        contentCallback: function contentCallback() {
-	          var container = _this.createUiContainer();
+	          var container = _this.createUiContainer(level);
 
 	          _this.build();
 
@@ -108,6 +108,24 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        _this3.initActivators();
 
 	        _this3.hideLoader();
+
+	        if (!_this3.filter.level) {
+	          var popupOptions = {
+	            content: main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_SETTINGS_HINT'),
+	            zIndex: 5000,
+	            maxWidth: 300,
+	            offsetLeft: -315,
+	            offsetTop: -30,
+	            animation: 'fading',
+	            darkMode: true,
+	            bindElement: _this3.ui.hint
+	          };
+	          var popup = new main_popup.Popup(popupOptions);
+	          popup.show();
+	          setTimeout(function () {
+	            return popup.destroy();
+	          }, 7000);
+	        }
 	      });
 	    }
 	  }, {
@@ -167,10 +185,11 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	    }
 	  }, {
 	    key: "createUiContainer",
-	    value: function createUiContainer() {
-	      var container = main_core.Tag.render(_templateObject());
+	    value: function createUiContainer(level) {
+	      var container = main_core.Tag.render(_templateObject(), level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>');
 	      this.ui.container = container;
 	      this.ui.title = this.getNode('title');
+	      this.ui.hint = this.getNode('hint');
 	      this.ui.loader = this.getNode('loader');
 	      this.ui.loaderText = this.getNode('loader/text');
 	      this.ui.grid = this.getNode('grid');
@@ -180,6 +199,13 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        statusType: 'none',
 	        column: true
 	      });
+
+	      if (this.ui.hint) {
+	        this.ui.hint.addEventListener('click', function () {
+	          return BX.Helper.show("redirect=detail&code=12526974");
+	        });
+	      }
+
 	      this.getNode('loader/bar').appendChild(progressBar.getContainer());
 	      this.ui.loaderProgressBar = progressBar;
 	      this.setLoaderText(main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_BUILD'));

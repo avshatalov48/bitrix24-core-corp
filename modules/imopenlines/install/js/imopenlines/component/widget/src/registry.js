@@ -42,7 +42,6 @@ import "./component/bx-livechat-form-offline";
 import "./component/bx-livechat-form-vote";
 import "./component/bx-livechat-form-welcome";
 import "./component/bx-livechat-smiles";
-import "./component/bx-livechat-footer";
 
 
 BX.LiveChatWidget = WidgetPublicManager;

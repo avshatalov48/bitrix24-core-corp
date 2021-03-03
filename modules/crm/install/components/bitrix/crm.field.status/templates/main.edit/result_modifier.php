@@ -18,7 +18,6 @@ if($this->getComponent()->isMobileMode())
 }
 else
 {
-	$fieldName = $arResult['fieldName'];
 	$value = $arResult['value'];
 
 	\CJSCore::Init('ui');
@@ -46,23 +45,21 @@ else
 		$itemList[] = $item;
 	}
 
-	$params = Json::encode([
+	$postfix = $this->randString();
+
+	$arResult['params'] = [
 		'isMulti' => ($arResult['userField']['MULTIPLE'] === 'Y'),
-		'fieldName' => $arResult['userField']['FIELD_NAME']
-	]);
-	$arResult['params'] = $params;
+		'fieldName' => $arResult['fieldName']
+	];
 
-	$result = '';
+	$arResult['valueContainerId'] = $arResult['fieldName'] . '_value_' . $postfix;
 
-	$controlNodeId = $arResult['userField']['FIELD_NAME'] . '_control_';
-	$valueContainerId = $arResult['userField']['FIELD_NAME'] . '_value_';
-
-	$spanAttrList = [
-		'id' => $valueContainerId,
+	$arResult['spanAttrList'] = [
+		'id' => $arResult['valueContainerId'],
 		'style' => 'display: none'
 	];
 
-	$arResult['spanAttrList'] = $spanAttrList;
+	$arResult['controlNodeId'] = $arResult['userField']['FIELD_NAME'] . '_control_' . $postfix;
 
 	$arResult['attrList'] = [];
 
@@ -82,24 +79,19 @@ else
 		$startValue = $startValue[0];
 	}
 
-	$items = Json::encode($itemList);
-	$currentValue = Json::encode($startValue);
+	$arResult['items'] = $itemList;
+	$arResult['currentValue'] = $startValue;
 
-	$arResult['items'] = $items;
-	$arResult['currentValue'] = $currentValue;
-
-	$fieldNameJs = CUtil::JSEscape($arResult['userField']['FIELD_NAME']);
-	$htmlFieldNameJs = CUtil::JSEscape($fieldName);
-	$controlNodeIdJs = CUtil::JSEscape($controlNodeId);
-	$valueContainerIdJs = CUtil::JSEscape($valueContainerId);
-	$block = ($arResult['userField']['MULTIPLE'] === 'Y' ?
-		'main-ui-multi-select' : 'main-ui-select'
+	$block = (
+		$arResult['userField']['MULTIPLE'] === 'Y'
+			? 'main-ui-multi-select'
+			: 'main-ui-select'
 	);
 
 	$arResult['block'] = $block;
-	$arResult['controlNodeId'] = $controlNodeId;
-	$arResult['fieldNameJs'] = $fieldNameJs;
-	$arResult['valueContainerIdJs'] = $valueContainerIdJs;
-	$arResult['htmlFieldNameJs'] = $htmlFieldNameJs;
-	$arResult['controlNodeIdJs'] = $controlNodeIdJs;
+	$arResult['fieldNameJs'] = \CUtil::JSEscape($arResult['fieldName']);
+
+	Asset::getInstance()->addJs(
+		'/bitrix/components/bitrix/main.field.enum/templates/main.edit/desktop.js'
+	);
 }

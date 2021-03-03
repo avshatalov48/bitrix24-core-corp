@@ -448,7 +448,7 @@ class ContactController extends BaseController
 
 		$this->eraseActivities($recyclingEntityID, $params, $relationMap);
 		$this->eraseSuspendedMultiFields($recyclingEntityID);
-		$this->eraseSuspendedAddresses($recyclingEntityID, array(Crm\EntityAddress::Primary));
+		$this->eraseSuspendedAddresses($recyclingEntityID, array(Crm\EntityAddressType::Primary));
 		$this->eraseSuspendedTimeline($recyclingEntityID);
 		$this->eraseSuspendedDocuments($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);

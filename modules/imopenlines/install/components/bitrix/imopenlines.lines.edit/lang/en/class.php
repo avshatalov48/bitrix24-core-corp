@@ -1,9 +1,15 @@
 <?php
+$MESS["OL_COMPONENT_AUTOMATIC_MESSAGE_CLOSE_TITLE"] = "End conversation";
+$MESS["OL_COMPONENT_AUTOMATIC_MESSAGE_CONTINUE_TITLE"] = "Continue conversation";
+$MESS["OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE"] = "New conversation";
+$MESS["OL_COMPONENT_AUTOMATIC_MESSAGE_TITLE"] = "It looks like we never got a response from you. Do you have any further questions?";
 $MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL"] = "Auto create a deal";
 $MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_SECOND"] = "Create deal in this funnel";
 $MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_THIRD"] = "Use an active deal, don't create a new one";
 $MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_IN_CHAT"] = "Create manually in the chat window";
 $MESS["OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_LEAD"] = "Auto create a new lead";
+$MESS["OL_COMPONENT_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE"] = "Don't show again";
+$MESS["OL_COMPONENT_ERROR_SAVE_CONFIG"] = "Error saving Open Channel configuration.";
 $MESS["OL_COMPONENT_KPI_FIRST_ANSWER_TEXT"] = "#OPERATOR# exceeded maximum initial response time in conversation ##DIALOG#.";
 $MESS["OL_COMPONENT_KPI_FURTHER_ANSWER_TEXT"] = "#OPERATOR# exceeded maximum response time in conversation ##DIALOG#.";
 $MESS["OL_COMPONENT_LE_BOT_LIST"] = "chat bot  is not selected";

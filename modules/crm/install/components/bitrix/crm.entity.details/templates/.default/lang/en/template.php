@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ENT_DETAIL_BUTTON_CANCEL"] = "Cancel";
 $MESS["CRM_ENT_DETAIL_BUTTON_SAVE"] = "Save";
 $MESS["CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_MESSAGE"] = "Are you sure you want to delete the company?";
@@ -41,5 +41,4 @@ $MESS["CRM_ENT_DETAIL_ORDER_URL_COPIED"] = "Order link has been copied to the Cl
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE"] = "Are you sure you want to delete this quote?";
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE"] = "Delete Quote";
 $MESS["CRM_ENT_DETAIL_QUOTE_URL_COPIED"] = "Quote link has been copied to the Clipboard";
-$MESS["CRM_ENT_DETAIL_REST_BUTTON"] = "Applications";
-?>
+$MESS["CRM_ENT_DETAIL_REST_BUTTON_2"] = "Market";

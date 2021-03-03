@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Intranet\UserField\Types\EmployeeType;
+use Bitrix\Main\Web\Json;
+
 
 IncludeModuleLangFile(__FILE__);
 
@@ -214,7 +216,10 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 			"GetUIFilterProperty" => array(__CLASS__, 'GetUIFilterProperty'),
 			"ConvertToDB" => array("CIBlockPropertyEmployee","ConvertFromToDB"),
 			"CheckFields" => array("CIBlockPropertyEmployee","CheckFields"),
-			"GetLength" => array("CIBlockPropertyEmployee","GetLength")
+			"GetLength" => array("CIBlockPropertyEmployee","GetLength"),
+			"GetUIEntityEditorProperty" => array("CIBlockPropertyEmployee","GetUIEntityEditorProperty"),
+			"GetUIEntityEditorPropertyEditHtml" => array("CIBlockPropertyEmployee","GetUIEntityEditorPropertyEditHtml"),
+			"GetUIEntityEditorPropertyViewHtml" => array("CIBlockPropertyEmployee","GetUIEntityEditorPropertyViewHtml"),
 		);
 	}
 
@@ -572,5 +577,114 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		$field['type'] = 'custom_entity';
 		$field['filterable'] = '';
 		$field['selector'] = ['type' => 'user'];
+	}
+
+	public static function GetUIEntityEditorProperty($settings, $value)
+	{
+		return [
+			'type' => 'custom'
+		];
+	}
+
+	public static function GetUIEntityEditorPropertyViewHtml(array $params = [])
+	{
+		if (empty($params['VALUE']))
+		{
+			return '';
+		}
+
+		if (!is_array($params['VALUE']))
+		{
+			$params['VALUE'] = [$params['VALUE']];
+		}
+
+		foreach ($params['VALUE'] as $value)
+		{
+			$result[] = parent::GetPublicViewHTML(['VALUE' => $value]);
+		}
+		return implode(', ', $result);
+	}
+
+	public static function GetUIEntityEditorPropertyEditHtml(array $params = [])
+	{
+		\Bitrix\Main\UI\Extension::load(['ui.entity-selector', 'ui.buttons', 'ui.forms']);
+
+		$isMultipleValue = $params['SETTINGS']['MULTIPLE'] === 'Y';
+
+		$isMultipleValue = CUtil::PhpToJSObject($isMultipleValue);
+
+		$preselectedItems = [];
+
+		if (!is_array($params['VALUE']))
+		{
+			$params['VALUE'] = (!empty($params['VALUE'])) ? [$params['VALUE']] : [];
+		}
+
+		foreach ($params['VALUE'] as $value)
+		{
+			$preselectedItems[] = ['user', $value];
+		}
+
+		$selectedItems = \Bitrix\UI\EntitySelector\Dialog::getSelectedItems($preselectedItems)->toJsObject();
+
+		$container_id = $params['FIELD_NAME'] . '_container';
+		$container_hidden_id = $params['FIELD_NAME'] . '_container_hidden';
+
+		return <<<HTML
+			<input type="hidden" name="{$params['FIELD_NAME']}[]" value="0" />
+			<div id="{$container_id}" name="{$container_id}"></div>
+			<div id ="{$container_hidden_id}" name="{$container_hidden_id}"></div>
+			<script>
+				(function() {
+					var selector = new BX.UI.EntitySelector.TagSelector({
+						id: '{$container_id}',
+						multiple: {$isMultipleValue},
+						
+						dialogOptions: {
+							height: 300,
+							id: '{$container_id}',
+							multiple: {$isMultipleValue},
+							context: 'CATALOG_PRODUCT_CARD_EMPLOYEES',
+							selectedItems: {$selectedItems},
+	
+							events: {
+								'Item:onSelect': setSelectedInputs.bind(this, 'Item:onSelect'),
+								'Item:onDeselect': setSelectedInputs.bind(this, 'Item:onDeselect'),
+							},
+	
+							entities: [
+								{
+									id: 'user'
+								},
+								{
+									id: 'department'
+								}
+							]
+						}
+					})
+				
+					function setSelectedInputs(eventName, event)
+					{
+						var dialog = event.getData().item.getDialog();
+						dialog.hide();
+						var selectedItems = dialog.getSelectedItems();
+						if (Array.isArray(selectedItems))
+						{
+							var selectedItemsId = [];
+							var htmlInputs = '';
+							selectedItems.forEach(function(item, index, array)
+							{
+								htmlInputs += '<input type="hidden" name="{$params['FIELD_NAME']}[]" value="' + item['id'] + '" />';
+								selectedItemsId.push(item['id']);
+							});
+							document.getElementById('{$container_hidden_id}').innerHTML = htmlInputs;
+							BX.Event.EventEmitter.emit('onChangeEmployee');
+						}
+					}
+				
+					selector.renderTo(document.getElementById('{$container_id}'));
+				})();
+			</script>
+HTML;
 	}
 }

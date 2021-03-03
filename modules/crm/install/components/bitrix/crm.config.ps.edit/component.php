@@ -271,12 +271,26 @@ if (check_bitrix_sessid())
 
 				if ($psID === 0)
 				{
-					$image = '/bitrix/images/sale/sale_payments/'.$handler.'.png';
-					if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$image))
+					if (preg_match('/[a-z1-9_]+/i', $_POST['PS_MODE'], $psMode))
 					{
-						$arActFields['LOGOTIP'] = CFile::MakeFileArray($image);
-						$arActFields['LOGOTIP']['MODULE_ID'] = "sale";
-						CFile::SaveForDB($arActFields, 'LOGOTIP', 'sale/paysystem/logotip');
+						$image = '/bitrix/images/sale/sale_payments/'.$handler.'/'.$psMode[0].'.png';
+						if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$image))
+						{
+							$arActFields['LOGOTIP'] = CFile::MakeFileArray($image);
+							$arActFields['LOGOTIP']['MODULE_ID'] = "sale";
+							CFile::SaveForDB($arActFields, 'LOGOTIP', 'sale/paysystem/logotip');
+						}
+					}
+
+					if (!isset($arActFields['LOGOTIP']))
+					{
+						$image = '/bitrix/images/sale/sale_payments/'.$handler.'.png';
+						if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$image))
+						{
+							$arActFields['LOGOTIP'] = CFile::MakeFileArray($image);
+							$arActFields['LOGOTIP']['MODULE_ID'] = "sale";
+							CFile::SaveForDB($arActFields, 'LOGOTIP', 'sale/paysystem/logotip');
+						}
 					}
 				}
 

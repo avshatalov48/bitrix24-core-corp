@@ -5,7 +5,7 @@ const FieldSelect = {
 	template: `
 		<div class="field-item">
 			<label>
-				<div class="field-label">
+				<div class="b24-form-control-select-label">
 					{{ field.label }} 
 					<span v-show="field.required" class="b24-form-control-required">*</span>
 				</div>

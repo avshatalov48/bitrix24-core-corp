@@ -1,7 +1,8 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main\Loader,
+use \Bitrix\Main,
+	\Bitrix\Main\Loader,
 	\Bitrix\Main\ModuleManager,
 	\Bitrix\Main\Localization\Loc;
 
@@ -10,7 +11,9 @@ use \Bitrix\Crm\Tracking,
 	\Bitrix\Crm\Settings\LeadSettings,
 	\Bitrix\Crm\Automation\Trigger\OpenLineTrigger,
 	\Bitrix\Crm\Integration\Channel\IMOpenLineTracker,
-	\Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger;
+	\Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger,
+	\Bitrix\Crm\Automation\Trigger\OpenLineAnswerTrigger,
+	\Bitrix\Crm\Automation\Trigger\OpenLineAnswerControlTrigger;
 
 use \Bitrix\Im\User as ImUser;
 
@@ -892,7 +895,11 @@ class Crm
 				$fieldsAdd['SECOND_NAME'] = $fields->getPersonSecondName();
 			}
 
-			if(!isset($fieldsAdd['NAME'], $fieldsAdd['LAST_NAME'], $fieldsAdd['SECOND_NAME']))
+			if(
+				!isset($fieldsAdd['NAME']) &&
+				!isset($fieldsAdd['LAST_NAME']) &&
+				!isset($fieldsAdd['SECOND_NAME'])
+			)
 			{
 				$fieldsAdd['NAME'] = LiveChat::getDefaultGuestName();
 			}
@@ -1526,7 +1533,11 @@ class Crm
 					],
 					'filter' => [
 						'=CONFIG_ID' => $session->getConfig('ID')
-					]
+					],
+					'order' => [
+						'SORT' => 'ASC',
+						'ID' => 'ASC'
+					],
 				]);
 
 				while($queueUser = $res->fetch())
@@ -1777,6 +1788,63 @@ class Crm
 			{
 				$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS, __METHOD__));
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Session $session
+	 * @return Result|\Bitrix\Main\Result
+	 */
+	public function executeAutomationAnswerTrigger(Session $session)
+	{
+		return self::executeAnswerTriggerInternal(OpenLineAnswerTrigger::class, $session);
+	}
+
+	/**
+	 * @param Session $session
+	 * @return Result|\Bitrix\Main\Result
+	 */
+	public function executeAutomationAnswerControlTrigger(Session $session)
+	{
+		return self::executeAnswerTriggerInternal(OpenLineAnswerControlTrigger::class, $session);
+	}
+
+	private function executeAnswerTriggerInternal($className, Session $session)
+	{
+		/** @var OpenLineAnswerTrigger | OpenLineAnswerControlTrigger $className */
+		$result = new Result();
+
+		if (
+			!class_exists($className)
+			||
+			!\Bitrix\Crm\Automation\Factory::canUseAutomation()
+			||
+			$this->isSkipAutomationTrigger()
+		)
+		{
+			return $result;
+		}
+
+		$bindings = CrmCommon::getActivityBindingsFormatted($session->getData('CRM_ACTIVITY_ID'));
+
+		$answerTimeSec = null;
+		$dateCreate = $session->getData('DATE_CREATE');
+		if ($dateCreate instanceof Main\Type\Date)
+		{
+			$answerTimeSec = max(0, time() - $dateCreate->getTimestamp());
+		}
+
+		if(is_array($bindings))
+		{
+			$data = $session->getData();
+			$data['ANSWER_TIME_SEC'] = $answerTimeSec;
+			$result = $className::execute($bindings, $data);
+		}
+		else
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS, __METHOD__));
 		}
 
 		return $result;

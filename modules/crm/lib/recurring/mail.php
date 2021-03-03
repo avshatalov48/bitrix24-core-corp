@@ -5,6 +5,7 @@ use Bitrix\Main\Type\DateTime,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\Loader,
 	Bitrix\Sale\PaySystem,
+	Bitrix\Sale\BusinessValue,
 	Bitrix\Main,
 	Bitrix\Crm,
 	Bitrix\Disk,
@@ -96,7 +97,7 @@ class Mail
 		}
 
 		$this->invoice = $invoiceData;
-		
+
 		return $result;
 	}
 
@@ -544,6 +545,13 @@ class Mail
 			$paymentData = is_array($data) ? \CCrmInvoice::PrepareSalePaymentData($data, array('PUBLIC_LINK_MODE' => 'Y')) : null;
 			$action->InitParamArrays($data, $invoiceId, '', $paymentData, array(), array(), REGISTRY_TYPE_CRM_INVOICE);
 			$siteId = $data['LID'];
+
+			if (!empty($paymentData['USER_FIELDS']))
+			{
+				BusinessValue::redefineProviderField([
+					'PROPERTY' => $paymentData['USER_FIELDS']
+				]);
+			}
 		}
 
 		$service = PaySystem\Manager::getObjectById($paySystem);

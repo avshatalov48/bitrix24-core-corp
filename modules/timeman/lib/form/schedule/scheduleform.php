@@ -2,6 +2,7 @@
 namespace Bitrix\Timeman\Form\Schedule;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\RandomSequence;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 

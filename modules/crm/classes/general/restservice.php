@@ -3483,15 +3483,7 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 		}
 		elseif($name === 'ADDRESSTYPE')
 		{
-			$descriptions = EntityAddressType::getDescriptions(
-					array(
-							EntityAddressType::Primary,
-							EntityAddressType::Home,
-							EntityAddressType::Registered,
-							EntityAddressType::Beneficiary,
-							EntityAddressType::Delivery
-					)
-			);
+			$descriptions = EntityAddressType::getDescriptions(EntityAddressType::getAvailableIds());
 		}
 		elseif($name === 'CONTENTTYPE')
 		{
@@ -15007,6 +14999,8 @@ class CCrmEntityEditorRestProxy implements ICrmRestProxy
 			{
 				throw new RestException("Parameter 'data' must be array.");
 			}
+
+			$data = $config->normalize($data);
 
 			if(empty($data))
 			{

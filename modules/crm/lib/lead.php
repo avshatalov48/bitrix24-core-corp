@@ -455,7 +455,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 			new Main\Entity\IntegerField('FACE_ID'),
 			new Main\Entity\ReferenceField('ADDRESS_ENTITY', AddressTable::getEntity(), array(
 				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.TYPE_ID' => new Main\DB\SqlExpression('?', EntityAddress::Primary),
+				'=ref.TYPE_ID' => new Main\DB\SqlExpression('?', EntityAddressType::Primary),
 				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?', \CCrmOwnerType::Lead)
 			)),
 			new Main\Entity\ReferenceField('PRODUCT_ROW', ProductRowTable::getEntity(), array(

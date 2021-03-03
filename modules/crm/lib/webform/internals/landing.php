@@ -9,6 +9,7 @@ namespace Bitrix\Crm\WebForm\Internals;
 
 use Bitrix\Main\ORM;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\UI\Webpack;
 
 /**
  * Class LandingTable
@@ -159,6 +160,12 @@ class LandingTable extends ORM\Data\DataManager
 		if ($row = static::query()->addSelect('LANDING_ID')->where('FORM_ID', $formId)->fetch())
 		{
 			return $row['LANDING_ID'];
+		}
+
+		$webpack = Webpack\Form::instance($formId);
+		if (!$webpack->isBuilt() && !$webpack->build())
+		{
+			return null;
 		}
 
 		$landingId = Integration\Landing\FormLanding::getInstance()->createLanding($formId, $name);

@@ -409,7 +409,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix
 				if (!empty($_POST["itemInfo"]["counterId"]))
 					$itemData["COUNTER_ID"] = $_POST["itemInfo"]["counterId"];
 
-				$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".$siteID);
+				$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".$siteID, "", $siteID);
 
 				if (!empty($adminOption))
 				{
@@ -438,7 +438,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix
 			if (!isset($_POST["menu_item_id"]))
 				break;
 
-			$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".$siteID);
+			$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".$siteID, "", $siteID);
 
 			if (!empty($adminOption))
 			{

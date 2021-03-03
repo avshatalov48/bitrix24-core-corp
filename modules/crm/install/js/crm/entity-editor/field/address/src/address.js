@@ -31,6 +31,8 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		settings.enableAutocomplete = this._autocompleteEnabled;
 		settings.hideDefaultAddressType = this._isMultiple; // hide for multiple addresses only
 		settings.showAddressTypeInViewMode = this._isMultiple; //for multiple addresses only
+		settings.addressZoneConfig = BX.prop.getObject(params, "addressZoneConfig", {});
+		settings.countryId = 0;
 		this._field = EntityEditorBaseAddressField.create(id, settings);
 		this._field.setMultiple(this._isMultiple);
 		if (this._isMultiple)
@@ -62,6 +64,16 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		{
 			this.refreshLayout();
 		}
+	}
+
+	getCountryId()
+	{
+		return this._field.getCountryId();
+	}
+
+	setCountryId(countryId)
+	{
+		this._field.setCountryId(countryId);
 	}
 
 	layout(options)

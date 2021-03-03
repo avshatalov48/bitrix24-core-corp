@@ -618,7 +618,7 @@ if (!empty($arResult['ERRORS']))
 			<div class="crm-webform-edit-task-options-metrics-container">
 				<div id="CRM_WEBFORM_EXTERNAL_ANALYTICS" class="crm-webform-edit-task-options-metric">
 
-					<?if(in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by'))):?>
+					<?if($arResult['IS_RU_ZONE']):?>
 					<div data-bx-crm-webform-ext-an="ya" class="<?=($arResult['FORM']['YANDEX_METRIC_ID'] ? 'crm-webform-edit-task-options-metric-exist' : '')?>">
 						<div class="crm-webform-edit-task-options-metric-option">
 							<span class="crm-webform-edit-task-options-metric-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_EXTERNAL_ANALYTICS_YA')?>:</span>
@@ -695,12 +695,13 @@ if (!empty($arResult['ERRORS']))
 						</div><!--crm-webform-edit-task-options-metric-create-->
 					</div><!--crm-webform-edit-task-options-metric-option-->
 
+					<?if(!$arResult['IS_UA_ZONE_RU_LANG']):?>
 					<div class="crm-webform-edit-task-options-document-settings-description">
 						<span class="crm-webform-edit-task-options-document-settings-description-element">
 							<?=Loc::getMessage('CRM_WEBFORM_EDIT_EXTERNAL_ANALYTICS_AUTO_EVENTS')?>
 						</span>
 					</div>
-
+					<?endif;?>
 				</div><!--crm-webform-edit-task-options-metric-->
 			</div>
 		</div><!--crm-webform-edit-task-options-settings-container-->

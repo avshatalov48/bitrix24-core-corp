@@ -103,6 +103,26 @@ if(Loader::includeModule('rest'))
 				$status->setConnection(true);
 				$status->setRegister(true);
 				$status->setError(false);
+
+				$app = \Bitrix\Rest\AppTable::getByClientId($server->getClientId());
+				if ($app['CODE'])
+				{
+					$id = uniqid($app['CODE'], true);
+					AddEventToStatFile(
+						'imconnector',
+						'activateRestConnector',
+						$id,
+						$app['CODE'],
+						'appCode'
+					);
+					AddEventToStatFile(
+						'imconnector',
+						'activateRestConnector',
+						$id,
+						$params['CONNECTOR'],
+						'connectorCode'
+					);
+				}
 			}
 			else
 			{

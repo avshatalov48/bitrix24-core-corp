@@ -159,6 +159,11 @@ class Provider
 
 		foreach ($adsSources as $index => $item)
 		{
+			if (!empty($item['SHOW_ONLY_EXISTS']))
+			{
+				continue;
+			}
+
 			$list[] = $item + [
 				'ID' => null,
 				'UTM_SOURCE' => null,
@@ -185,6 +190,7 @@ class Provider
 				'ICON_CLASS' => 'ui-icon ui-icon-service-google-ads',
 				'ICON_COLOR' => '#3889db',
 				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => [
 					/*
@@ -193,22 +199,26 @@ class Provider
 					'www.g.cn',
 					*/
 				],
+				'UTM_CONTENT' => 'cid|{campaignid}|gid|{adgroupid}|kwid|{targetid}',
 			],
 			[
 				'CODE' => 'fb',
 				'ICON_CLASS' => 'ui-icon ui-icon-service-fb',
 				'ICON_COLOR' => '#38659f',
 				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
 					? ['www.facebook.com', 'facebook.com']
 					: [],
+				'UTM_CONTENT' => 'cid|{{campaign.id}}|gid|{{adset.id}}|kwid|{{ad.id}}',
 			],
 			[
 				'CODE' => 'instagram',
 				'ICON_CLASS' => 'ui-icon ui-icon-service-instagram',
 				'ICON_COLOR' => '#d56c9a',
 				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
 					? ['www.instagram.com', 'instagram.com']
@@ -223,6 +233,7 @@ class Provider
 				'ICON_CLASS' => 'ui-icon ui-icon-service-vk',
 				'ICON_COLOR' => '#3871ba',
 				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
 					? ['www.vk.com', 'vk.com']
@@ -233,6 +244,7 @@ class Provider
 				'ICON_CLASS' => 'ui-icon ui-icon-service-ya-direct',
 				'ICON_COLOR' => '#ffce00',
 				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => [
 					/*
@@ -240,6 +252,14 @@ class Provider
 					['regexp' => 'yandex\.[A-Za-z]{2,6}'],
 					*/
 				],
+			];
+			$list[] = [
+				'CODE' => '1c',
+				'ICON_CLASS' => 'ui-icon ui-icon-service-1c',
+				'ICON_COLOR' => '#fade39',
+				'CONFIGURABLE' => true,
+				'HAS_PATH_TO_LIST' => true,
+				'SHOW_ONLY_EXISTS' => true,
 			];
 		}
 

@@ -369,24 +369,23 @@ class OrderController extends EntityController
 	 */
 	protected static function resolveCreatorID(array $fields)
 	{
-		$authorID = 0;
-		if(isset($fields['CREATED_BY']))
+		$authorId = 0;
+		if (isset($fields['CREATED_BY']))
 		{
-			$authorID = (int)$fields['CREATED_BY'];
+			$authorId = (int)$fields['CREATED_BY'];
 		}
 
-		if($authorID <= 0 && isset($fields['RESPONSIBLE_ID']))
+		if ($authorId <= 0 && isset($fields['RESPONSIBLE_ID']))
 		{
-			$authorID = (int)$fields['RESPONSIBLE_ID'];
+			$authorId = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if($authorID <= 0)
+		if ($authorId <= 0)
 		{
-			//Set portal admin as default creator
-			$authorID = 1;
+			$authorId = self::getDefaultAuthorId();
 		}
 
-		return $authorID;
+		return $authorId;
 	}
 
 	/**
@@ -419,8 +418,7 @@ class OrderController extends EntityController
 
 		if($authorID <= 0)
 		{
-			//Set portal admin as default editor
-			$authorID = 1;
+			$authorID = self::getDefaultAuthorId();
 		}
 
 		return $authorID;

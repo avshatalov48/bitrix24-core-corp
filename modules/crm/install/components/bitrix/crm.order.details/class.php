@@ -1,6 +1,8 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+define('CRM_ORDER_DETAILS_AREA', true);
+
 use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Salescenter;

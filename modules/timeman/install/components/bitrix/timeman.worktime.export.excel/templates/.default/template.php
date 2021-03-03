@@ -7,33 +7,28 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Text\HtmlFilter;
 ?>
 
-<html>
-	<head>
-		<title><?=HtmlFilter::encode($arResult['Title'])?></title>
-		<meta http-equiv="Content-Type" content="text/html; charset='<?=LANG_CHARSET?>">
-	</head>
-	<body>
-		<table border="1">
-			<thead>
-				<tr>
-				<?php foreach ($arResult['HEADERS'] as $header):?>
-					<th><?=HtmlFilter::encode($header['name']);?></th>
-				<?php endforeach;?>
-				</tr>
-			</thead>
-			<tbody>
-			<?php foreach ($arResult['ROWS'] as $row):?>
-				<tr>
-				<?php foreach ($row['columns'] as $value):?>
-					<td>
-						<?php if (count($row) == 1):?><b><?php endif;?>
-							<?=HtmlFilter::encode($value);?>
+<title><?=HtmlFilter::encode($arResult['Title'])?></title>
+<meta http-equiv="Content-Type" content="text/html; charset='<?=LANG_CHARSET?>">
+
+<table border="1">
+	<thead>
+	<tr>
+		<?php foreach ($arResult['HEADERS'] as $header):?>
+			<th><?=HtmlFilter::encode($header['name']);?></th>
+		<?php endforeach;?>
+	</tr>
+	</thead>
+	<tbody>
+	<?php foreach ($arResult['ROWS'] as $row):?>
+		<tr>
+			<?php foreach ($row['columns'] as $value):?>
+				<td>
+					<?php if (count($row) == 1):?><b><?php endif;?>
+						<?=HtmlFilter::encode($value);?>
 						<?php if (count($row) == 1):?></b><?php endif;?>
-					</td>
-				<?php endforeach;?>
-				</tr>
+				</td>
 			<?php endforeach;?>
-			</tbody>
-		</table>
-	</body>
-</html>
+		</tr>
+	<?php endforeach;?>
+	</tbody>
+</table>

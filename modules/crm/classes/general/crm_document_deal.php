@@ -361,6 +361,11 @@ class CCrmDocumentDeal extends CCrmDocument
 				'Type' => 'bool',
 				'Editable' => false,
 			),
+			"ORDER_IDS" => array(
+				"Name" => GetMessage("CRM_FIELD_ORDER_IDS"),
+				"Type" => "int",
+				"Multiple" => true,
+			),
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -387,6 +392,16 @@ class CCrmDocumentDeal extends CCrmDocument
 		$arFields['STAGE_ID_PRINTABLE'] = DealCategory::getStageName($stageID, $categoryID);
 
 		$arFields['CONTACT_IDS'] = Crm\Binding\DealContactTable::getDealContactIDs($arFields['ID']);
+
+		$orderIds = Crm\Binding\OrderDealTable::getList([
+			'select' => ['ORDER_ID'],
+			'filter' => [
+				'=DEAL_ID' => $arFields['ID'],
+			],
+			'order' => ['ORDER_ID' => 'DESC']
+		])->fetchAll();
+
+		$arFields['ORDER_IDS'] = array_column($orderIds, 'ORDER_ID');
 
 		if ($arFields['COMPANY_ID'] <= 0)
 		{

@@ -145,7 +145,6 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
 					array('name' => 'STAGE_ID'),
 					array('name' => 'CLOSEDATE'),
-					array('name' => 'COMPANY'),
 					array('name' => 'CLIENT'),
 				)
 			),
@@ -1252,7 +1251,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => (IsModuleInstalled('salescenter')) ? 'moneyPay' : 'money',
+				'type' => (Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
 				'data' => array(

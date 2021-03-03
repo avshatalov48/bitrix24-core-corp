@@ -53,7 +53,7 @@ use \Bitrix\Main\Localization\Loc;
 					   value="Y"
 					   class="imopenlines-control-checkbox">
 				<?=Loc::getMessage('IMOL_CONFIG_RECORDING')?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_RECORDING_DESC'))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_RECORDING_DESC'))?>"></span>
 			</label>
 		</div>
 	</div>
@@ -61,7 +61,7 @@ use \Bitrix\Main\Localization\Loc;
 		<div class="imopenlines-control-container">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage("IMOL_CONFIG_EDIT_LANG_NEW")?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_LANG_EMAIL_TIP_NEW"))?>"></span>
+				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_LANG_EMAIL_TIP_NEW"))?>"></span>
 			</div>
 			<div class="imopenlines-control-container imopenlines-control-select">
 				<div class="imopenlines-control-inner">

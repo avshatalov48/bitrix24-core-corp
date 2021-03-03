@@ -96,6 +96,10 @@ final class Update190500 extends Stepper
 					}
 				}
 			}
+			else
+			{
+				Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
+			}
 		}
 
 		return $return;

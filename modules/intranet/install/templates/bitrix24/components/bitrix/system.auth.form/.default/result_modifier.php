@@ -140,11 +140,17 @@ if (
 	$arResult["SHOW_LICENSE_BUTTON"] = true;
 	$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;
 	$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
-	$arResult["HOST_NAME"] = BX24_HOST_NAME;
+	$arResult["HOST_NAME"] = defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME;
 }
 
 $arResult["HELPDESK_URL"] = "";
 if (Loader::includeModule("ui"))
 {
 	$arResult["HELPDESK_URL"] = \Bitrix\UI\Util::getHelpdeskUrl(true);
+}
+
+$arResult["OPEN_HELPER_AFTER_PAGE_LOADING"] = false;
+if (isset($_GET["helper"]) && $_GET["helper"] === "Y")
+{
+	$arResult["OPEN_HELPER_AFTER_PAGE_LOADING"] = true;
 }

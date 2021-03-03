@@ -193,7 +193,7 @@ if(!is_array($arBasketItems))
 	$arBasketItems = array();
 
 $arCurFormat = CCurrencyLang::GetCurrencyFormat($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]);
-$currency = trim(str_replace('#', '', $arCurFormat['FORMAT_STRING']));
+$currency = preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']);
 
 $vat = 0;
 $arCols = array();
@@ -215,7 +215,7 @@ if (!empty($arBasketItems))
 				$caption .= ', '.$currency;
 
 			$arCols[$column] = array(
-				'NAME' => htmlspecialcharsbx($caption),
+				'NAME' => htmlspecialcharsbx($caption, ENT_COMPAT, false),
 				'SORT' => CSalePaySystemAction::GetParamValue('QUOTE_COLUMN_'.$column.'_SORT')
 			);
 		}
@@ -228,7 +228,7 @@ if (!empty($arBasketItems))
 		foreach ($userColumns as $id => $val)
 		{
 			$arCols[$id] = array(
-				'NAME' => htmlspecialcharsbx($val['NAME']),
+				'NAME' => htmlspecialcharsbx($val['NAME'], ENT_COMPAT, false),
 				'SORT' => $val['SORT']
 			);
 		}
@@ -518,9 +518,13 @@ for ($n = 0; $n <= $rowsCnt; $n++)
 	<?=sprintf(
 		"Всего наименований %s, на сумму %s",
 		$items,
-		SaleFormatCurrency(
-			$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
-			$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+		htmlspecialcharsbx(
+			SaleFormatCurrency(
+				$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+				$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+				false
+			),
+			ENT_COMPAT,
 			false
 		)
 	); ?>
@@ -535,9 +539,12 @@ for ($n = 0; $n <= $rowsCnt; $n++)
 	}
 	else
 	{
-		echo SaleFormatCurrency(
-			$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
-			$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+		echo htmlspecialcharsbx(SaleFormatCurrency(
+				$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+				$GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+				false
+			),
+			ENT_COMPAT,
 			false
 		);
 	}

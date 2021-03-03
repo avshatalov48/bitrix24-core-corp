@@ -104,6 +104,15 @@ CREATE TABLE b_imopenlines_session_check
 	KEY IX_IMOL_SCH_3 (DATE_MAIL)
 );
 
+CREATE TABLE b_imopenlines_session_automatic_tasks
+(
+	ID int(11) NOT NULL auto_increment,
+	CONFIG_AUTOMATIC_MESSAGE_ID int(11) NOT NULL,
+	SESSION_ID int(11) NOT NULL,
+	DATE_TASK datetime NOT NULL,
+	PRIMARY KEY (ID)
+);
+
 CREATE TABLE b_imopenlines_livechat
 (
 	CONFIG_ID int(11) NOT NULL,
@@ -121,6 +130,7 @@ CREATE TABLE b_imopenlines_livechat
 	CACHE_BUTTON_ID int(11) NULL,
 	PHONE_CODE varchar(255) NULL,
 	TEXT_PHRASES text NULL,
+	SHOW_SESSION_ID char(1) NOT NULL DEFAULT 'N',
 	PRIMARY KEY (CONFIG_ID)
 );
 
@@ -135,6 +145,7 @@ CREATE TABLE b_imopenlines_config
 	CRM_CREATE_SECOND varchar(50) default '',
 	CRM_CREATE_THIRD varchar(50) default '',
 	CRM_FORWARD char(1) not null default 'Y',
+	CRM_CHAT_TRACKER char(1) not null default 'Y',
 	CRM_SOURCE varchar(50) default 'create',
 	CRM_TRANSFER_CHANGE char(1) not null default 'Y',
 	QUEUE_TIME int(11) DEFAULT 60,
@@ -211,6 +222,24 @@ CREATE TABLE b_imopenlines_config
 	PRIMARY KEY PK_B_IMOPENLINES_CONFIG (ID)
 );
 
+CREATE TABLE b_imopenlines_config_automatic_messages
+(
+	ID int(11) NOT NULL auto_increment,
+	CONFIG_ID int NOT NULL,
+	TIME_TASK int NOT NULL,
+	MESSAGE TEXT NULL,
+	TEXT_BUTTON_CLOSE varchar(255) NULL,
+	LONG_TEXT_BUTTON_CLOSE varchar(255) NULL,
+	AUTOMATIC_TEXT_CLOSE text NULL,
+	TEXT_BUTTON_CONTINUE varchar(255) NULL,
+	LONG_TEXT_BUTTON_CONTINUE varchar(255) NULL,
+	AUTOMATIC_TEXT_CONTINUE text NULL,
+	TEXT_BUTTON_NEW varchar(255) NULL,
+	LONG_TEXT_BUTTON_NEW varchar(255) NULL,
+	AUTOMATIC_TEXT_NEW text NULL,
+	PRIMARY KEY (ID)
+);
+
 CREATE TABLE b_imopenlines_config_statistic
 (
 	CONFIG_ID int(11) NOT NULL,
@@ -234,17 +263,32 @@ CREATE TABLE b_imopenlines_config_category
 	KEY IX_IMOL_CC_2 (CONFIG_ID, SORT DESC)
 );
 
+CREATE TABLE b_imopenlines_config_queue
+(
+	ID int(11) NOT NULL auto_increment,
+	SORT int(11) NULL default 0,
+	CONFIG_ID int(11) NOT NULL,
+	ENTITY_ID int(11) NOT NULL,
+	ENTITY_TYPE varchar(255) NOT NULL,
+
+	PRIMARY KEY PK_B_IMOPENLINES_CONFIG_QUEUE (ID),
+	KEY IX_IMOL_CQ_2 (CONFIG_ID),
+	KEY IX_IMOL_CQ_3 (ENTITY_ID, ENTITY_TYPE)
+);
+
 CREATE TABLE b_imopenlines_queue
 (
 	ID int(11) NOT NULL auto_increment,
+	SORT int(11) NULL default 0,
 	CONFIG_ID int(11) NOT NULL,
 	USER_ID int(11) NOT NULL,
+	DEPARTMENT_ID int(11) NULL default 0,
 	LAST_ACTIVITY_DATE datetime,
 	LAST_ACTIVITY_DATE_EXACT bigint NULL,
 	USER_NAME varchar(255) NULL,
 	USER_WORK_POSITION varchar(255) NULL,
 	USER_AVATAR text NULL,
-	USER_AVATAR_ID int(11) NULL,
+	USER_AVATAR_ID int(11) NULL default 0,
 	PRIMARY KEY PK_B_IMOPENLINES_QUEUE (ID),
 	KEY IX_IMOL_Q_2 (CONFIG_ID, LAST_ACTIVITY_DATE),
 	KEY IX_IMOL_Q_3 (USER_ID)

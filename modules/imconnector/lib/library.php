@@ -3,6 +3,7 @@ namespace Bitrix\ImConnector;
 
 use \Bitrix\Main\Context,
 	\Bitrix\Main\IO\Path,
+	\Bitrix\Main\Text\Encoding,
 	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\Text\UtfSafeString;
 
@@ -125,7 +126,38 @@ class Library
 	];
 
 	public const AUTO_DELETE_BLOCK = [
-		'imessage', 'vkgroup'
+		'imessage',
+		'vkgroup',
+		'ok'
+	];
+
+	public const portalZoneNotCloud = [
+		'ua',
+		'en',
+		'ru'
+	];
+
+	public const connectorPortalZoneLimit = [
+		'avito' => [
+			'allow' => ['ru'],
+			'deny' => [],
+		],
+		'yandex' => [
+			'allow' => [],
+			'deny' => ['ua'],
+		],
+		'vkgroup' => [
+			'allow' => [],
+			'deny' => ['ua'],
+		],
+		'ok' => [
+			'allow' => ['ru', 'by', 'kz'],
+			'deny' => ['ua'],
+		],
+		'olx' => [
+			'allow' => ['ua', 'pl'],
+			'deny' => [],
+		],
 	];
 
 	/** @var array A list of connectors, which works without servers */
@@ -199,7 +231,8 @@ class Library
 
 	/** @var array A list of connectors, where we send writing status.*/
 	public static $listConnectorWritingStatus = [
-		'imessage'
+		'imessage',
+		'ok'
 	];
 
 	public static $listSingleThreadGroupChats = array(
@@ -906,7 +939,7 @@ class Library
 	 *
 	 * return void
 	 */
-	static public function loadMessages()
+	public static function loadMessages()
 	{
 		Loc::loadMessages(__FILE__);
 	}
@@ -916,7 +949,7 @@ class Library
 	 *
 	 * @return string
 	 */
-	static public function getCurrentServerUrl()
+	public static function getCurrentServerUrl()
 	{
 		$url  = '';
 
@@ -938,7 +971,7 @@ class Library
 	 *
 	 * @return string
 	 */
-	static public function getCurrentUri()
+	public static function getCurrentUri()
 	{
 		$server = Context::getCurrent()->getServer();
 		$request = Context::getCurrent()->getRequest();
@@ -953,7 +986,7 @@ class Library
 	/**
 	 * Loads the language file connector.php.
 	 */
-	static public function loadMessagesConnectorClass()
+	public static function loadMessagesConnectorClass()
 	{
 		Loc::loadMessages(dirname(__DIR__));
 	}
@@ -964,19 +997,32 @@ class Library
 	 * @param $value
 	 * @return bool
 	 */
-	static public function isEmpty($value)
+	public static function isEmpty($value): bool
 	{
 		if(empty($value))
 		{
-			if(isset($value) && ($value===0 || $value===0.0 || $value==="0"))
-				return false;
+			if(
+				isset($value) &&
+				(
+					$value === 0 ||
+					$value === 0.0 ||
+					$value === '0'
+				)
+			)
+			{
+				$result = false;
+			}
 			else
-				return true;
+			{
+				$result = true;
+			}
 		}
 		else
 		{
-			return false;
+			$result = false;
 		}
+
+		return $result;
 	}
 
 	/**
@@ -985,7 +1031,7 @@ class Library
 	 * @param string $url
 	 * @return string
 	 */
-	static public function getNameFile($url)
+	public static function getNameFile($url, $notNull = false)
 	{
 		$fileName = Path::getName($url);
 
@@ -993,7 +1039,68 @@ class Library
 		{
 			$pos = UtfSafeString::getLastPosition($fileName, '?');
 			if ($pos !== false)
+			{
 				$fileName = mb_substr($fileName, 0, $pos);
+			}
+		}
+
+		if (
+			$fileName == '' &&
+			$notNull === true
+		)
+		{
+			$fileName = uniqid();
+		}
+
+		return $fileName;
+	}
+
+	/**
+	 * @param $data
+	 * @return array|bool|\SplFixedArray|string
+	 */
+	public static function getNameFileIsContentDisposition($data)
+	{
+		$fileName = '';
+
+		if ($data !== '')
+		{
+			$data = rawurldecode($data);
+			if (preg_match("'filename\*=([^;]+)'i", $data, $res))
+			{
+				[$charset, $str] = preg_split("/'[^']*'/", trim($res[1], '"'));
+				$fileName = Encoding::convertEncoding($str, $charset, SITE_CHARSET);
+			}
+			else if (preg_match("'filename=([^;]+)'i", $data, $res))
+			{
+				$fileName = trim($res[1], '"');
+			}
+			else if (preg_match("'filename\*0=([^;]+)'i", $data, $res))
+			{
+				$fileName = trim($res[1], '"');
+
+				$i = 0;
+				while (preg_match("'filename\*".(++$i)."=([^;]+)'i", $data, $res))
+				{
+					$fileName .= trim($res[1], '"');
+				}
+			}
+			else if (preg_match("'filename\*0\*=([^;]+)'i", $data, $res))
+			{
+				$str = trim($res[1], '"');
+
+				$i = 0;
+				while (preg_match("'filename\*".(++$i)."\*?=([^;]+)'i", $data, $res))
+				{
+					$str .= trim($res[1], '"');
+				}
+
+				[$charset, $str] = preg_split("/'[^']*'/", $str);
+				if (!empty($str))
+				{
+					$fileName = $charset ?  Encoding::convertEncoding($str, $charset, SITE_CHARSET) : $str;
+				}
+			}
 		}
 
 		return $fileName;

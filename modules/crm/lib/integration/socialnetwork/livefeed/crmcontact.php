@@ -40,7 +40,7 @@ final class CrmContact extends CrmEntity
 			$res = \CCrmContact::getListEx(
 				[],
 				[
-					'ID' => $this->getEntityId(),
+					'ID' => $logEntryFields['ENTITY_ID'],
 					'CHECK_PERMISSIONS' => 'N'
 				],
 				false,
@@ -105,7 +105,7 @@ final class CrmContact extends CrmEntity
 				&& !empty($fields['CURRENT_ENTITY'])
 			) // not-message
 			{
-				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS']);
+				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS'], [ 'allowed_classes' => false ]);
 				if (is_array($logEntry['PARAMS']))
 				{
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);
@@ -128,7 +128,7 @@ final class CrmContact extends CrmEntity
 			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
-				$this->setSourceTitle(truncateText(($logEntry['TITLE'] != '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
+				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
 			}
 		}
 

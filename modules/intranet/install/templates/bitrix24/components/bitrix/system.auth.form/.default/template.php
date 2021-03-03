@@ -310,6 +310,12 @@ $frame = $this->createFrame("b24_helper")->begin("");
 			helpUrl: '<?=$arResult["HELPDESK_URL"]?>',
 			runtimeUrl: '//helpdesk.bitrix24.ru/widget/hero/runtime.js'
 		});
+
+		<?if ($arResult["OPEN_HELPER_AFTER_PAGE_LOADING"]):?>
+			BX.ready(function() {
+				BX.Helper.show();
+			});
+		<?endif;?>
 		<?
 		if ($support_bot && $_REQUEST['support_chat'])
 			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$support_bot.');});';

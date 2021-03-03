@@ -36,6 +36,7 @@ class Auth
 		'imopenlines.widget.user.consent.apply',
 		'imopenlines.widget.vote.send',
 		'imopenlines.widget.form.send',
+		'imopenlines.widget.action.send',
 
 		// pull
 		'server.time',
@@ -266,7 +267,7 @@ class Auth
 
 		/** @var \Bitrix\Main\Engine\Action $action */
 		$action = $event->getParameter('action');
-		if (!in_array(mb_strtolower($action->getName()), ['download', 'showimage']))
+		if (!in_array(mb_strtolower($action->getName()), ['download', 'showimage', 'showpreview']))
 		{
 			return false;
 		}
@@ -303,7 +304,7 @@ class Auth
 			$USER->Authorize($userId, false, false, 'public');
 		}
 
-		$authCode = str_replace(self::AUTH_TYPE.'|', '', $_SESSION["SESS_AUTH"]["XML_ID"]);
+		$authCode = str_replace(self::AUTH_TYPE.'|', '', $USER->GetParam("XML_ID"));
 
 		$cookie = new \Bitrix\Main\Web\Cookie('LIVECHAT_HASH', $authCode, null, false);
 		$cookie->setHttpOnly(false);

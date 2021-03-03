@@ -392,8 +392,8 @@ final class Output
 		}
 		elseif($this->result->isSuccess())
 		{
-			//TODO: Make an exception to the status of reading left only In the Contact
-			if($name != 'setStatusReading' || $this->connector == 'vkgroup')
+			//TODO: Make an exception to the status of reading left only for VK and Avito
+			if($name != 'setStatusReading' || $this->connector == 'vkgroup' || $this->connector === 'avito')
 			{
 				$result->setResult($arguments);
 

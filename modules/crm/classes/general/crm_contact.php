@@ -6,6 +6,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\ContactCompanyTable;
@@ -49,7 +50,11 @@ class CAllCrmContact
 			return \CCrmFieldMulti::GetEntityTypeCaption($fieldName);
 		}
 
-		$result = GetMessage("CRM_CONTACT_FIELD_{$fieldName}");
+		$result = GetMessage("CRM_CONTACT_FIELD_{$fieldName}_NEW");
+		if (!(is_string($result) && $result !== ''))
+		{
+			$result = GetMessage("CRM_CONTACT_FIELD_{$fieldName}");
+		}
 
 		if (!(is_string($result) && $result !== '')
 			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
@@ -285,12 +290,12 @@ class CAllCrmContact
 			if (COption::GetOptionString('crm', '~CRM_CONVERT_CONTACT_ADDRESSES', 'N') === 'Y')
 			{
 				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
-					.EntityAddress::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Contact;
+					.EntityAddressType::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Contact;
 			}
 			else
 			{
 				$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ANCHOR_ID AND ADDR.TYPE_ID = '
-					.EntityAddress::Primary.' AND ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Contact.
+					.EntityAddressType::Primary.' AND ADDR.ANCHOR_TYPE_ID = '.CCrmOwnerType::Contact.
 					' AND ADDR.IS_DEF = 1';
 			}
 
@@ -1369,7 +1374,7 @@ class CAllCrmContact
 			EntityAddress::register(
 				CCrmOwnerType::Contact,
 				$ID,
-				EntityAddress::Primary,
+				EntityAddressType::Primary,
 				array(
 					'ADDRESS_1' => isset($arFields['ADDRESS']) ? $arFields['ADDRESS'] : null,
 					'ADDRESS_2' => isset($arFields['ADDRESS_2']) ? $arFields['ADDRESS_2'] : null,
@@ -2030,7 +2035,7 @@ class CAllCrmContact
 				EntityAddress::register(
 					CCrmOwnerType::Contact,
 					$ID,
-					EntityAddress::Primary,
+					EntityAddressType::Primary,
 					array(
 						'ADDRESS_1' => isset($arFields['ADDRESS'])
 							? $arFields['ADDRESS'] : (isset($arRow['ADDRESS']) ? $arRow['ADDRESS'] : null),
@@ -2475,7 +2480,7 @@ class CAllCrmContact
 				$CCrmFieldMulti = new CCrmFieldMulti();
 				$CCrmFieldMulti->DeleteByElement('CONTACT', $ID);
 
-				EntityAddress::unregister(CCrmOwnerType::Contact, $ID, EntityAddress::Primary);
+				EntityAddress::unregister(CCrmOwnerType::Contact, $ID, EntityAddressType::Primary);
 				\Bitrix\Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Contact, $ID);
 
 				$requisite = new \Bitrix\Crm\EntityRequisite();
@@ -3327,10 +3332,10 @@ class CAllCrmContact
 			elseif($fieldName === Crm\EntityRequisite::ADDRESS)
 			{
 				$requisiteFields[Crm\EntityRequisite::ADDRESS] = array(
-					EntityAddress::Primary =>
+					EntityAddressType::Primary =>
 						ContactAddress::mapEntityFields(
 							$entityFields,
-							array('TYPE_ID' => EntityAddress::Primary, 'SKIP_EMPTY' => true)
+							array('TYPE_ID' => EntityAddressType::Primary, 'SKIP_EMPTY' => true)
 						)
 				);
 			}

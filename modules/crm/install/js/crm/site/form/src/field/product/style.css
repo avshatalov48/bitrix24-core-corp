@@ -118,3 +118,7 @@
 }
 
 .b24-form-field-product .b24-form-control.b24-form-control-not-empty { border-radius: 4px 4px 0 0; }
+
+.b24-form-control-product-custom-price .b24-form-control-input-text {
+	min-width: 120px;
+}

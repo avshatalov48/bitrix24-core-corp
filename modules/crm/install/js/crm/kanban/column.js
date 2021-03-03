@@ -189,13 +189,26 @@
 			}
 
 			var index = BX.util.array_search(beforeItem, this.items);
-			if (index >= 0)
+			var items = this.getItems();
+			var alreadySet = false;
+			for (itemId in items)
 			{
-				this.items.splice(index, 0, item);
+				if (items[itemId].id === item.getId())
+				{
+					alreadySet = true;
+				}
 			}
-			else
+
+			if (!alreadySet)
 			{
-				this.items.push(item);
+				if (index >= 0)
+				{
+					this.items.splice(index, 0, item);
+				}
+				else
+				{
+					this.items.push(item);
+				}
 			}
 
 			item.animate({
@@ -206,7 +219,7 @@
 				useAnimation: item.useAnimation
 			});
 
-			if (item.isCountable())
+			if (item.isCountable() && !alreadySet)
 			{
 				this.incrementTotal();
 			}
@@ -215,6 +228,14 @@
 			{
 				this.render();
 			}
+
+			BX.Event.EventEmitter.emit(
+				'Crm.Kanban.Column:onItemAdded',
+				{
+					item:item,
+					targetColumn: this,
+					beforeItem: beforeItem
+				});
 		},
 
 		addItems: function(items, beforeItem)

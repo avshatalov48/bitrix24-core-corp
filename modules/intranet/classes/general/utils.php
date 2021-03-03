@@ -1424,7 +1424,7 @@ class CIntranetUtils
 		if (COption::GetOptionString('intranet', 'allow_external_mail', 'Y') != 'Y')
 			return false;
 
-		if (COption::GetOptionString('extranet', 'extranet_site', '') == SITE_ID)
+		if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite())
 			return false;
 
 		if (isset(\Bitrix\Main\Application::getInstance()->getKernelSession()['aExtranetUser_'.$USER->GetID()][SITE_ID]))

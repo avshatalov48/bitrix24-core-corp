@@ -26,7 +26,7 @@ class CCrmTrackingEntityPathComponent extends CBitrixComponent
 		$paths = Tracking\Entity::getPaths(
 			$entityTypeId,
 			$entityId,
-			$this->arParams['LIMIT'] ?: null
+			$this->arParams['LIMIT'] ?: 4
 		);
 
 		return $paths;

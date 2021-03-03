@@ -85,31 +85,34 @@
 		},
 		onEntityEditorLayout: function(editorSection, e)
 		{
-			var sectionSerialNumber = e.serialNumber;
-			if (sectionSerialNumber === 0 && this.mlInstalled)
+			if (!editorSection.getEditor().isEmbedded())
 			{
-				if(!this.elements.scoring)
+				var sectionSerialNumber = e.serialNumber;
+				if (sectionSerialNumber === 0 && this.mlInstalled)
 				{
-					this.elements.scoring = BX.create("div", {
-						props: {className: "crm-entity-widget-scoring"},
-						events: {
-							click: this.onScoringButtonClick.bind(this)
-						},
-						children: [
-							BX.create("div", {
-								props: {className: "crm-entity-widget-scoring-icon"}
-							}),
-							this.elements.title = BX.create("div", {
-								props: {className: "crm-entity-widget-scoring-text"},
-								text: this.getTitle()
-							})
-						]
-					});
-				}
-				e.customNodes.push(this.elements.scoring);
-				if(this.spotlightEnabled)
-				{
-					this.showSpotlight();
+					if(!this.elements.scoring)
+					{
+						this.elements.scoring = BX.create("div", {
+							props: {className: "crm-entity-widget-scoring"},
+							events: {
+								click: this.onScoringButtonClick.bind(this)
+							},
+							children: [
+								BX.create("div", {
+									props: {className: "crm-entity-widget-scoring-icon"}
+								}),
+								this.elements.title = BX.create("div", {
+									props: {className: "crm-entity-widget-scoring-text"},
+									text: this.getTitle()
+								})
+							]
+						});
+					}
+					e.customNodes.push(this.elements.scoring);
+					if(this.spotlightEnabled)
+					{
+						this.showSpotlight();
+					}
 				}
 			}
 		},

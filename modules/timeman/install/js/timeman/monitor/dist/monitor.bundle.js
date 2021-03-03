@@ -729,6 +729,12 @@ this.BX = this.BX || {};
 
 	      debug.log('Monitor started');
 	      debug.space();
+
+	      if (this.isTrackerEventsApiAvailable()) {
+	        logger.log('Events started');
+	        BXDesktopSystem.TrackerStart();
+	      }
+
 	      eventHandler.start();
 	      sender.start();
 	      logger.warn('Monitor started');
@@ -736,10 +742,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "stop",
 	    value: function stop() {
+	      if (this.isTrackerEventsApiAvailable()) {
+	        logger.log('Events stopped');
+	        BXDesktopSystem.TrackerStop();
+	      }
+
 	      eventHandler.stop();
 	      sender.stop();
 	      logger.warn('Monitor stopped');
 	      debug.log('Monitor stopped');
+	    }
+	  }, {
+	    key: "isTrackerEventsApiAvailable",
+	    value: function isTrackerEventsApiAvailable() {
+	      return BX.desktop.getApiVersion() >= 55;
 	    }
 	  }, {
 	    key: "onAway",

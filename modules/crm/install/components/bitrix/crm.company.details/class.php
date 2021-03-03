@@ -8,6 +8,7 @@ use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\Tracking;
@@ -1918,7 +1919,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->entityData['ADDRESS_HTML'] = CompanyAddressFormatter::format(
 				$this->entityData,
 				array(
-					'TYPE_ID' => EntityAddress::Primary,
+					'TYPE_ID' => EntityAddressType::Primary,
 					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
 					'NL2BR' => true,
 					'HTML_ENCODE' => true
@@ -1928,7 +1929,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->entityData['REG_ADDRESS_HTML'] = CompanyAddressFormatter::format(
 				$this->entityData,
 				array(
-					'TYPE_ID' => EntityAddress::Registered,
+					'TYPE_ID' => EntityAddressType::Registered,
 					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
 					'NL2BR' => true,
 					'HTML_ENCODE' => true

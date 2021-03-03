@@ -183,7 +183,7 @@ if($isEditMode)
 	$arResult['FIELDS']['tab_1'][] = array(
 		'id' => 'ID',
 		'name' => GetMessage('CRM_MEASURE_FIELD_ID'),
-		'value' => isset($arResult['ELEMENT']['ID']),
+		'value' => isset($arResult['ELEMENT']['ID']) ? $arResult['ELEMENT']['ID'] : '',
 		'type' => 'label'
 	);
 }

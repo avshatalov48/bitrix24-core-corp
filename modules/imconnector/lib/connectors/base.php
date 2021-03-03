@@ -12,6 +12,9 @@ use \Bitrix\ImConnector\Library,
  */
 class Base
 {
+	/**
+	 * @var string Full (or virtual) connector id (for example "botframework.skype", NOT "botframework").
+	 */
 	protected $idConnector = '';
 
 	/**

@@ -107,7 +107,7 @@ if ($bVatMode)
 
 // measure list items
 $arResult['MEASURE_LIST_ITEMS'] = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-$measures = \Bitrix\Crm\Measure::getMeasures(100);
+$measures = \Bitrix\Crm\Measure::getMeasures(0);
 if (is_array($measures))
 {
 	foreach ($measures as $measure)
@@ -279,11 +279,24 @@ $arResult['HEADERS'] = array_merge(
 $exportProps = [];
 if ($isInExportMode)
 {
-	$propUserTypeListExport = CCrmProductPropsHelper::GetPropsTypesByOperations(false, ['export']);
-	$exportProps = CCrmProductPropsHelper::GetProps($catalogID, $propUserTypeListExport, ['export']);
+	$propUserTypeListExport = CCrmProductPropsHelper::GetPropsTypesByOperations(
+		false,
+		[CCrmProductPropsHelper::OPERATION_EXPORT]
+	);
+	$exportProps = CCrmProductPropsHelper::GetProps(
+		$catalogID,
+		$propUserTypeListExport,
+		[CCrmProductPropsHelper::OPERATION_EXPORT]
+	);
 	unset($propUserTypeListExport);
 }
-$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, array('view', 'filter'));
+$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(
+	false,
+	[
+		CCrmProductPropsHelper::OPERATION_VIEW,
+		CCrmProductPropsHelper::OPERATION_FILTER
+	]
+);
 $arResult['PROP_USER_TYPES'] = $arPropUserTypeList;
 $arProps = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
 $arResult['PROPS'] = $arProps;
@@ -1466,7 +1479,12 @@ while($arElement = $obRes->GetNext())
 									],
 									$controlSettings
 								];
-								$arPropertyValues[$arElement['ID']][$propID][] = call_user_func_array($method, $params);
+								$value = call_user_func_array($method, $params);
+								if ($arProperty['USER_TYPE'] === \CIBlockPropertyHTML::USER_TYPE)
+								{
+									$value = HTMLToTxt($value);
+								}
+								$arPropertyValues[$arElement['ID']][$propID][] = $value;
 							}
 							unset($propertyInfo);
 						}

@@ -1,10 +1,11 @@
-<?
+<?php
 $MESS["BX_LIVECHAT_ABOUT_CONSENT_ERROR"] = "We cannot save your information because you didn't agree to the terms of our Privacy Policy.";
 $MESS["BX_LIVECHAT_ABOUT_FIELD_EMAIL"] = "Email";
 $MESS["BX_LIVECHAT_ABOUT_FIELD_NAME_NEW"] = "Full name";
 $MESS["BX_LIVECHAT_ABOUT_RESULT"] = "Nice to meet you!";
 $MESS["BX_LIVECHAT_ABOUT_SEND"] = "Send";
 $MESS["BX_LIVECHAT_ABOUT_TITLE"] = "Introduce yourself";
+$MESS["BX_LIVECHAT_ACTION_EXPIRED"] = "Unfortunately this action is no longer available.";
 $MESS["BX_LIVECHAT_AUTH_FAILED"] = "Unfortunately, we could not load Live Chat.<br><br>This site may have some other widget installed. <br><br>Please try #LINK_START#refreshing the page#LINK_END# or use other means of communication.";
 $MESS["BX_LIVECHAT_CLOSE_BUTTON"] = "Close widget";
 $MESS["BX_LIVECHAT_CONSENT_AGREE"] = "I accept";
@@ -39,6 +40,8 @@ Please use any other communication facility to post to this Open Channel.";
 $MESS["BX_LIVECHAT_OLD_VUE_DEV"] = "Your site uses Vue library version #CURRENT_VERSION#. Live Chat widget does not support this version (2.1 or higher is required; 2.5 or higher is recommended). Please contact your web developer to update the library.";
 $MESS["BX_LIVECHAT_ONLINE_LINE_1"] = "We are online";
 $MESS["BX_LIVECHAT_ONLINE_LINE_2"] = "and ready to help!";
+$MESS["BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID"] = "#POSITION# (conversation ##ID#)";
+$MESS["BX_LIVECHAT_OPERATOR_POSITION_ONLY"] = "#POSITION#";
 $MESS["BX_LIVECHAT_PORTAL_USER_NEW"] = "You cannot post to this chat because you are logged on to this Bitrix24 in this browser as an employee.<br><br>However, you can post to this Open Channel from #LINK_START#your portal#LINK_END# or use any other communication tool.";
 $MESS["BX_LIVECHAT_SONET_MORE"] = "#COUNT# more...";
 $MESS["BX_LIVECHAT_SONET_TITLE"] = "Click the icon of your choice to send us a message via your favorite app.";
@@ -51,4 +54,3 @@ $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "We are sorry we could not help you. You
 $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Like";
 $MESS["BX_LIVECHAT_VOTE_PLUS_TITLE"] = "Thank you!";
 $MESS["BX_LIVECHAT_VOTE_TITLE"] = "Please tell us how we did.";
-?>

@@ -92,15 +92,15 @@ class PoolTable extends DataManager
 	 */
 	public static function removePoolItem($typeId, $value)
 	{
-		$value = Communication\Normalizer::normalize($value, $typeId);
-		if (!Communication\Validator::validate($value, $typeId))
+		$normalizedValue = Communication\Normalizer::normalize($value, $typeId);
+		if (!Communication\Validator::validate($normalizedValue, $typeId))
 		{
 			return false;
 		}
 
 		$row = static::getRow([
 			'select' => ['ID'],
-			'filter' => ['=TYPE_ID' => $typeId, '=VALUE' => $value]
+			'filter' => ['=TYPE_ID' => $typeId, '=VALUE' => [$value, $normalizedValue]]
 		]);
 		if (!$row)
 		{

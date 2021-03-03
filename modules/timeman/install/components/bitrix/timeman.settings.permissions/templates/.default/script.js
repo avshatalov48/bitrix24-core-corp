@@ -245,7 +245,7 @@
 							for (var id in data[provider])
 							{
 								providerName = BX.Access.GetProviderName(data[provider][id].provider);
-								accessName = data[provider][id].name;
+								accessName = BX.util.htmlspecialchars(data[provider][id].name);
 								this.renderNewAccessCode(id, providerName, accessName, 1);
 							}
 						}

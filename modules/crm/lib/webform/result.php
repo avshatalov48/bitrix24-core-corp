@@ -46,7 +46,12 @@ class Result extends Model
 	 */
 	public function getUrl()
 	{
-		return $this->url;
+		if (preg_match('#^(?:/|https?://)#', $this->url))
+		{
+			return $this->url;
+		}
+
+		return null;
 	}
 
 	/**

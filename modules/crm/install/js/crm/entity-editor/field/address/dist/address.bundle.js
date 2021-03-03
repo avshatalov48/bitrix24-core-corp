@@ -83,6 +83,8 @@ this.BX = this.BX || {};
 
 	      settings.showAddressTypeInViewMode = this._isMultiple; //for multiple addresses only
 
+	      settings.addressZoneConfig = BX.prop.getObject(params, "addressZoneConfig", {});
+	      settings.countryId = 0;
 	      this._field = crm_entityEditor_field_address_base.EntityEditorBaseAddressField.create(id, settings);
 
 	      this._field.setMultiple(this._isMultiple);
@@ -114,6 +116,16 @@ this.BX = this.BX || {};
 	      if (this._field.setValue(addressList)) {
 	        this.refreshLayout();
 	      }
+	    }
+	  }, {
+	    key: "getCountryId",
+	    value: function getCountryId() {
+	      return this._field.getCountryId();
+	    }
+	  }, {
+	    key: "setCountryId",
+	    value: function setCountryId(countryId) {
+	      this._field.setCountryId(countryId);
 	    }
 	  }, {
 	    key: "layout",

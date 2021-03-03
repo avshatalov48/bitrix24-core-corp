@@ -1,24 +1,24 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
 ?>
 <div class="imconnector-field-container">
 	<div class="imconnector-field-section">
 		<div class="imconnector-field-main-title">
-			<?if($arResult["PAGE"] == 'connection'):?>
+			<?if($arResult['PAGE'] == 'connection'):?>
 				<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INFO_OLD_CONNECT')?>
 			<?else:?>
 				<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INFO')?>
 			<?endif;?>
 		</div>
 		<div class="imconnector-field-box">
-			<?if(!empty($arResult["INFO_CONNECTION"]["business_name"])):?>
+			<?if(!empty($arResult['INFO_CONNECTION']['business_name'])):?>
 				<div class="imconnector-field-box-entity-row">
 					<div class="imconnector-field-box-subtitle">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_NAME')?>
 					</div>
 					<span class="imconnector-field-box-entity-link">
-					<?=$arResult["INFO_CONNECTION"]["business_name"]?>
+					<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['business_name'])?>
 					</span>
 				</div>
 			<?endif;?>
@@ -27,20 +27,20 @@ use \Bitrix\Main\Localization\Loc;
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID')?>
 				</div>
 				<span class="imconnector-field-box-entity-link">
-					<?=$arResult["INFO_CONNECTION"]["business_id"]?>
+					<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['business_id'])?>
 				</span>
 			</div>
 			<div class="imconnector-field-box-entity-row">
 				<div class="imconnector-field-box-subtitle">
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_CHAT_LINK')?>
 				</div>
-				<a href="<?=$arResult["INFO_CONNECTION"]["url"]?>"
+				<a href="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['url'])?>"
 				   class="imconnector-field-box-entity-link"
 				   target="_blank">
-					<?=$arResult["INFO_CONNECTION"]["url"]?>
+					<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['url'])?>
 				</a>
 				<span class="imconnector-field-box-entity-icon-copy-to-clipboard"
-					  data-text="<?=CUtil::JSEscape($arResult["INFO_CONNECTION"]["url"])?>"></span>
+					  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['INFO_CONNECTION']['url']))?>"></span>
 			</div>
 		</div>
 	</div>

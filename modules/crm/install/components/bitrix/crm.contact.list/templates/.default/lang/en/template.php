@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Total";
 $MESS["CRM_CONTACT_ACTION_DELETE"] = "Delete";
 $MESS["CRM_CONTACT_ACTION_MERGE"] = "Merge";
@@ -49,9 +49,9 @@ $MESS["CRM_CONTACT_EDIT"] = "Edit Contact";
 $MESS["CRM_CONTACT_EDIT_TITLE"] = "Edit Contact";
 $MESS["CRM_CONTACT_EVENT"] = "Add Event";
 $MESS["CRM_CONTACT_EVENT_TITLE"] = "Add new event";
-$MESS["CRM_CONTACT_EXPORT"] = "Include in export";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_SUMMARY"] = "Export permission will be set for the selected contacts. This may take some time if there is a lot of contacts.";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_TITLE"] = "Set Contact Export Permissions";
+$MESS["CRM_CONTACT_EXPORT_NEW"] = "Include in export";
 $MESS["CRM_CONTACT_EXPORT_OFF"] = "No";
 $MESS["CRM_CONTACT_EXPORT_ON"] = "Yes";
 $MESS["CRM_CONTACT_LIST_ADD"] = "Add contact";
@@ -100,4 +100,3 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# of #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Show quantity";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
-?>

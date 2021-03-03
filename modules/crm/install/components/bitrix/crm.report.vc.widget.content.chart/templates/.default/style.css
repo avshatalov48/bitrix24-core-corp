@@ -102,7 +102,7 @@
 
 .crm-report-chart-grid-item {
 	display: flex;
-	align-items: center;
+	align-items: end;
 }
 /* END OF DYNAMIC GRAPH */
 

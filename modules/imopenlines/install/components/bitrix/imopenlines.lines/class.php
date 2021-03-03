@@ -28,11 +28,11 @@ class CImOpenLinesListComponent extends \CBitrixComponent
 		if (is_array($allowedUserIds))
 		{
 			$limit = array();
-			$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList(Array(
-				'filter' => Array(
+			$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList([
+				'filter' => [
 					'=USER_ID' => $allowedUserIds
-				)
-			));
+				]
+			]);
 			while ($row = $orm->fetch())
 			{
 				$limit[$row['CONFIG_ID']] = $row['CONFIG_ID'];

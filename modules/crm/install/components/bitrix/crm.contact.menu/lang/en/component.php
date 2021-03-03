@@ -32,7 +32,6 @@ $MESS["CRM_CONTACT_DELETE_DLG_TITLE"] = "Delete contact";
 $MESS["CRM_CONTACT_DELETE_TITLE"] = "Delete contact";
 $MESS["CRM_CONTACT_EDIT"] = "Edit";
 $MESS["CRM_CONTACT_EDIT_TITLE"] = "Edit contact";
-$MESS["CRM_CONTACT_EXPORT"] = "Export";
 $MESS["CRM_CONTACT_EXPORT_CARDDAV"] = "Export using CardDAV";
 $MESS["CRM_CONTACT_EXPORT_CARDDAV_TITLE"] = "Export contacts using CardDAV";
 $MESS["CRM_CONTACT_EXPORT_CSV"] = "Export to CSV";

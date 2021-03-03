@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
@@ -325,7 +326,7 @@ class CAllCrmLead
 		if(!(is_array($arOptions) && isset($arOptions['DISABLE_ADDRESS']) && $arOptions['DISABLE_ADDRESS']))
 		{
 			$addrJoin = 'LEFT JOIN b_crm_addr ADDR ON L.ID = ADDR.ENTITY_ID AND ADDR.TYPE_ID = '
-				.\Bitrix\Crm\EntityAddress::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Lead;
+				.EntityAddressType::Primary.' AND ADDR.ENTITY_TYPE_ID = '.CCrmOwnerType::Lead;
 
 			$result['ADDRESS'] = array('FIELD' => 'ADDR.ADDRESS_1', 'TYPE' => 'string', 'FROM' => $addrJoin);
 			$result['ADDRESS_2'] = array('FIELD' => 'ADDR.ADDRESS_2', 'TYPE' => 'string', 'FROM' => $addrJoin);
@@ -1576,7 +1577,7 @@ class CAllCrmLead
 			\Bitrix\Crm\EntityAddress::register(
 				CCrmOwnerType::Lead,
 				$ID,
-				\Bitrix\Crm\EntityAddress::Primary,
+				EntityAddressType::Primary,
 				$addressFields
 			);
 		}
@@ -2392,7 +2393,7 @@ class CAllCrmLead
 				\Bitrix\Crm\EntityAddress::unregister(
 					CCrmOwnerType::Lead,
 					$ID,
-					\Bitrix\Crm\EntityAddress::Primary);
+					EntityAddressType::Primary);
 			}
 			elseif(isset($arFields['ADDRESS'])
 				|| isset($arFields['ADDRESS_2'])
@@ -2407,7 +2408,7 @@ class CAllCrmLead
 				\Bitrix\Crm\EntityAddress::register(
 					CCrmOwnerType::Lead,
 					$ID,
-					\Bitrix\Crm\EntityAddress::Primary,
+					EntityAddressType::Primary,
 					array(
 						'ADDRESS_1' => isset($arFields['ADDRESS'])
 							? $arFields['ADDRESS'] : (isset($arRow['ADDRESS']) ? $arRow['ADDRESS'] : null),
@@ -3029,7 +3030,7 @@ class CAllCrmLead
 				CCrmProductRow::DeleteByOwner('L', $ID);
 				CCrmProductRow::DeleteSettings('L', $ID);
 
-				Crm\EntityAddress::unregister(CCrmOwnerType::Lead, $ID, \Bitrix\Crm\EntityAddress::Primary);
+				Crm\EntityAddress::unregister(CCrmOwnerType::Lead, $ID, EntityAddressType::Primary);
 				Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Pseudoactivity\WaitEntry::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Lead, $ID);

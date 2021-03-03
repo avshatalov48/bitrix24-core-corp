@@ -58,6 +58,7 @@ class Dictionary
 			'captcha' => $this->getCaptcha(),
 			'templates' => [],
 			'personalization' => $this->getPersonalization(),
+			'properties' => $this->getProperties(),
 			'deps' => $this->getDeps(),
 			'sign' => $this->getSign(),
 			'restriction' => $this->getRestriction(),
@@ -240,7 +241,7 @@ class Dictionary
 	}
 
 	/**
-	 * Get captcha.
+	 * Get personalization.
 	 *
 	 * @return array
 	 */
@@ -254,6 +255,49 @@ class Dictionary
 				['id' => '{{second-name}}', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PERC_FIELD_SECOND_NAME')],
 				['id' => '{{phone}}', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PERC_FIELD_PHONE')],
 				['id' => '{{email}}', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PERC_FIELD_EMAIL')],
+			],
+		];
+	}
+
+	/**
+	 * Get properties.
+	 *
+	 * @return array
+	 */
+	public function getProperties()
+	{
+		return [
+			'list' => [
+				[
+					'id' => '%from_domain%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_DOMAIN'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_DOMAIN_DESC'),
+				],
+				[
+					'id' => '%from_url%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_URL'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_URL_DESC'),
+				],
+				[
+					'id' => '%my_param1%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_PARAM'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_PARAM_DESC'),
+				],
+				[
+					'id' => '%crm_result_id%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_RESULT_ID'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_RESULT_ID_DESC'),
+				],
+				[
+					'id' => '%crm_form_id%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_FORM_ID'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_FORM_ID_DESC'),
+				],
+				[
+					'id' => '%crm_form_name%',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_FORM_NAME'),
+					'desc' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_PROPS_FORM_NAME_DESC'),
+				],
 			],
 		];
 	}

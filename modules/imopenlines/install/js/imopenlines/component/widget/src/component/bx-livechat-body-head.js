@@ -92,10 +92,22 @@ Vue.component('bx-livechat-head',
 		operatorDescription(state)
 		{
 			if (!this.showName)
+			{
 				return '';
+			}
 
-			return state.widget.dialog.operator.workPosition? state.widget.dialog.operator.workPosition: this.localize.BX_LIVECHAT_USER;
+			const operatorPosition = state.widget.dialog.operator.workPosition? state.widget.dialog.operator.workPosition: this.localize.BX_LIVECHAT_USER;
+
+			if (state.widget.common.showSessionId && state.widget.dialog.sessionId >= 0)
+			{
+				return this.localize.BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID
+					.replace("#POSITION#", operatorPosition)
+					.replace("#ID#", state.widget.dialog.sessionId);
+			}
+
+			return this.localize.BX_LIVECHAT_OPERATOR_POSITION_ONLY.replace("#POSITION#", operatorPosition);
 		},
+
 		localize()
 		{
 			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
@@ -163,7 +175,7 @@ Vue.component('bx-livechat-head',
 						</div>
 						<div class="bx-livechat-user-info">
 							<div class="bx-livechat-user-name">{{operatorName}}</div>
-							<div class="bx-livechat-user-position">{{operatorDescription}}</div>
+							<div class="bx-livechat-user-position">{{operatorDescription}}</div>							
 						</div>
 					</template>
 					<div class="bx-livechat-control-box">

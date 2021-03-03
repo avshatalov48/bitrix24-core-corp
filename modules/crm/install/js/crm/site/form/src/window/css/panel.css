@@ -16,7 +16,6 @@
 	.b24-window-panel {
 		height: -webkit-fill-available;
 		height: -moz-fill-available;
-		height: fill-available;
 	}
 }
 

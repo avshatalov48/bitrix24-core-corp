@@ -226,14 +226,26 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 							$dbRes = CUser::GetList(
 								$by,$order,
 								array('UF_DEPARTMENT' => $dpt),
-								array('SELECT' => array('ID'))
+								array('SELECT' => array('ID', 'UF_DEPARTMENT'))
 							);
 
 							$GLOBALS['DB']->StartTransaction();
 
 							$obUser = new CUser();
 							while ($arRes = $dbRes->fetch())
-								$obUser->update($arRes['ID'], array('UF_DEPARTMENT' => array($arSection['IBLOCK_SECTION_ID'])));
+							{
+								if (count($arRes['UF_DEPARTMENT']) > 1)
+								{
+									$newDpt = $arRes['UF_DEPARTMENT'];
+									$deletedDptKey = array_search($dpt, $arRes['UF_DEPARTMENT']);
+									unset($newDpt[$deletedDptKey]);
+								}
+								else
+								{
+									$newDpt = [$arSection['IBLOCK_SECTION_ID']];
+								}
+								$obUser->update($arRes['ID'], array('UF_DEPARTMENT' => $newDpt));
+							}
 
 							$dbRes = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $IBLOCK_ID, 'SECTION_ID' => $arSection['ID']));
 

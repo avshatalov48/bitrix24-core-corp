@@ -45,9 +45,9 @@ $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/t
 			<div class="im-connector-settings-channel-options">
 				<span class="im-connector-settings-channel-options-name"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE')?></span>
 				<?if(!empty($arResult['LIST_LINE']) && (count($arResult['LIST_LINE'])>1 || !empty($arResult['PATH_TO_ADD_LINE']))):?>
-					<span class="im-connector-settings-channel-options-line" data-role="im-connector-select"><?=$arResult['ACTIVE_LINE']['NAME']?></span>
+					<span class="im-connector-settings-channel-options-line" data-role="im-connector-select"><?=htmlspecialcharsbx($arResult['ACTIVE_LINE']['NAME'])?></span>
 				<?elseif(!empty($arResult['LIST_LINE']) && count($arResult['LIST_LINE'])==1):?>
-					<span class="im-connector-settings-channel-options-tune"><?=$arResult['ACTIVE_LINE']['NAME']?></span>
+					<span class="im-connector-settings-channel-options-tune"><?=htmlspecialcharsbx($arResult['ACTIVE_LINE']['NAME'])?></span>
 				<?elseif(!empty($arResult['PATH_TO_ADD_LINE'])):?>
 					<a href="<?=$arResult['PATH_TO_ADD_LINE']?>" onclick="createLine(); return false;" class="im-connector-settings-channel-options-tune"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE')?></a>
 				<?endif;?>

@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
+use Bitrix\Bitrix24\Util;
 
 Loc::loadMessages(__FILE__);
 
@@ -125,6 +126,25 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		}
 	}
 
+	private function prepareUserData()
+	{
+		if (!Loader::includeModule("bitrix24"))
+		{
+			return;
+		}
+
+		if (\CBitrix24BusinessTools::isAvailable())
+		{
+			$this->arResult["USER_MAX_COUNT"] = intval(COption::GetOptionString("main", "PARAM_MAX_USERS"));
+		}
+		else
+		{
+			$this->arResult["USER_MAX_COUNT"] = \CBitrix24::getMaxBitrix24UsersCount();
+		}
+
+		$this->arResult["USER_CURRENT_COUNT"] = \Bitrix\Bitrix24\Util::getCurrentUserCount();
+	}
+
 	public function executeComponent()
 	{
 		global $USER;
@@ -170,6 +190,7 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		if ($this->arResult["IS_CLOUD"])
 		{
 			$this->prepareLinkRegisterData();
+			$this->prepareUserData();
 			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = \CBitrix24::isEmailConfirmed();
 		}
 

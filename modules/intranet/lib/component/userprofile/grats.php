@@ -364,7 +364,7 @@ class Grats
 			{
 				$postsData[$postFields['ID']] = $postFields;
 
-				if ($postFields["MICRO"] == "Y")
+				if ($postFields["MICRO"] === "Y")
 				{
 					$title = \CTextParser::clearAllTags($postFields['DETAIL_TEXT']);
 
@@ -376,7 +376,7 @@ class Grats
 					$title = preg_replace("/&nbsp;/is".BX_UTF_PCRE_MODIFIER, "", $parser->convertText($title));
 					$title = preg_replace("/\\<br \\/\\>/is".BX_UTF_PCRE_MODIFIER, " ", $title);
 
-					$postsData[$postFields['ID']]['TITLE'] = htmlspecialcharsback(truncateText($title, 100));
+					$postsData[$postFields['ID']]['TITLE'] = truncateText($title, 100);
 				}
 				unset($postsData[$postFields['ID']]['DETAIL_TEXT']);
 

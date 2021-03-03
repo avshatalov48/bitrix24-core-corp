@@ -47,6 +47,31 @@ class Invite extends \Bitrix\Main\Engine\Controller
 			);
 			$this->addError(new Error($errorText, 'INTRANET_CONTROLLER_INVITE_REGISTER_ERROR'));
 		}
+		else
+		{
+			\CIntranetInviteDialog::logAction(
+				$userIdList,
+				(
+					isset($fields['DEPARTMENT_ID'])
+					&& (int)$fields['DEPARTMENT_ID'] > 0
+						? 'intranet'
+						: 'extranet'
+				),
+				'invite_user',
+				(
+					!empty($fields['PHONE'])
+						? 'sms_dialog'
+						: 'invite_dialog'
+				),
+				(
+					!empty($fields['CONTEXT'])
+					&& $fields['CONTEXT'] === 'mobile'
+						? 'mobile'
+						: 'web'
+				)
+			);
+		}
+
 		return [
 			'userIdList' => $userIdList,
 			'errors' => []

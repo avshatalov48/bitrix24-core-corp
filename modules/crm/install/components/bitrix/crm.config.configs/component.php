@@ -1043,7 +1043,8 @@ if(\Bitrix\Main\Loader::includeModule('location'))
 		'value' =>
 			'<div class="crm-dup-control-type-radio-wrap">'.htmlspecialcharsbx($addrFormatDescrs[$curAddrFormatID]).'</div>'.
 			'<div class="crm-dup-control-type-info" id="' . $arResult['ADDR_FORMAT_DESCR_ID'] . '">' . $arResult['ADDR_FORMAT_INFOS'][$curAddrFormatID] . '</div>'.
-			'<div class="crm-dup-control-type-info">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK') . '</div>'
+			'<div class="crm-dup-control-type-info">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK') . '</div>'.
+			'<input type="hidden" name="ENTITY_ADDRESS_FORMAT_ID" value="'.$curAddrFormatID.'">'
 	);
 }
 else

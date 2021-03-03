@@ -17,6 +17,7 @@ $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC"] = "Будет отображат
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_TAGS"] = "UTM-метки";
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_DESC"] = "Источник перехода. Например: email, newsletter, banner, instagram";
 $MESS["CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_BTN_ADD"] = "добавить метку";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UTM_CONTENT_DESC"] = "Для правильного построения детального отчета по расходам необходимо настроить рекламный кабинет";
 $MESS["CRM_TRACKING_SOURCE_EDIT_ICON_COLOR"] = "Выбор цвета";
 $MESS["CRM_TRACKING_SOURCE_EDIT_ICON_COLOR_CHOOSE"] = "Выбрать другой";
 $MESS["CRM_TRACKING_SOURCE_EDIT_ARCHIVE"] = "В архив";
@@ -34,4 +35,5 @@ $MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_NAME"] = "Реферальные до
 $MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_ADD"] = "добавить домен";
 $MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_HINT"] = "Лиды и сделки, созданные после перехода с этих доменов, будут учитываться для этого источника.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_EXPENSES"] = "Расходы";
+$MESS["CRM_TRACKING_SOURCE_EDIT_BTN_COPY"] = "копировать";
 ?>

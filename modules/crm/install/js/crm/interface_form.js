@@ -11432,7 +11432,8 @@ if(typeof(BX.CrmAddressType) === "undefined")
 		post: 8,
 		beneficiary: 9,
 		bank: 10,
-		delivery: 11
+		delivery: 11,
+		billing: 12
 	};
 }
 

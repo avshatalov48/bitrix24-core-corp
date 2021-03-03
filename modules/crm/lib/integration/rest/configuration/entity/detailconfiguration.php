@@ -294,7 +294,8 @@ class DetailConfiguration
 				$this->entityTypeDetailConfiguration[$item['ENTITY']]['SCOPE'],
 				$extras
 			);
-			$data = $config->sanitize($item['DATA']);
+			$data = $config->normalize($item['DATA'], ['remove_if_empty_name' => true]);
+			$data = $config->sanitize($data);
 			if(!empty($data))
 			{
 				$config->set($data);
@@ -332,13 +333,14 @@ class DetailConfiguration
 					$extras
 				);
 				$errors = [];
-				if(!$config->check($item['DATA'], $errors))
+				$data = $config->normalize($item['DATA'], ['remove_if_empty_name' => true]);
+				if(!$config->check($data, $errors))
 				{
 					$return['ERROR_MESSAGES'][] = $errors;
 				}
 				else
 				{
-					$data = $config->sanitize($item['DATA']);
+					$data = $config->sanitize($data);
 					if(!empty($data))
 					{
 						try

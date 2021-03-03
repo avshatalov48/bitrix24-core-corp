@@ -35,6 +35,21 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 
 		this.initRequisiteEditor();
 		this.initRequisiteList();
+
+		let selectedItem = BX.prop.getObject(this.getConfig(), "requisiteBinding", {});
+		if (!Type.isUndefined(selectedItem.REQUISITE_ID) && !Type.isUndefined(selectedItem.BANK_DETAIL_ID))
+		{
+			let requisite = this._requisiteList.getByRequisiteId(selectedItem.REQUISITE_ID);
+			if (requisite)
+			{
+				let bankDetail = selectedItem.BANK_DETAIL_ID > 0 ?
+					requisite.getBankDetailByBankDetailId(selectedItem.BANK_DETAIL_ID) : null;
+				this._requisiteList.setSelected(
+					this._requisiteList.indexOf(requisite),
+					bankDetail ? requisite.getBankDetails().indexOf(bankDetail) : null
+				);
+			}
+		}
 	}
 
 	initRequisiteList()
@@ -69,10 +84,12 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 	{
 		if (this._addressField)
 		{
+			let countryId = 0;
 			let addressList = {};
 			let selectedRequisite = this._requisiteList ? this._requisiteList.getSelected() : null;
 			if (selectedRequisite)
 			{
+				countryId = selectedRequisite.getPresetCountryId();
 				let requisiteAddressList = selectedRequisite.getAddressList();
 				for (let type in requisiteAddressList)
 				{
@@ -85,6 +102,7 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 					}
 				}
 			}
+			this._addressField.setCountryId(countryId);
 			this._addressField.setAddressList(addressList);
 		}
 	}
@@ -493,6 +511,11 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		if (presetId > 0)
 		{
 			requisite.setPresetId(presetId);
+		}
+		let presetCountryId = BX.prop.getInteger(formData, 'PRESET_COUNTRY_ID', 0);
+		if (presetCountryId > 0)
+		{
+			requisite.setPresetCountryId(presetCountryId);
 		}
 		if (this._requisiteList.indexOf(requisite) < 0)
 		{

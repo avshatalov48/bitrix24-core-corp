@@ -286,6 +286,9 @@ final class Config
 
 	private static function sendChangeMonitorEnabledEvent($recipient, $enabled): void
 	{
+		//disabled
+		return;
+
 		if (!in_array($enabled, [State::ENABLED, State::DISABLED], true))
 		{
 			throw new ArgumentException('Invalid enabled status ' . $enabled);
@@ -305,6 +308,9 @@ final class Config
 
 	private static function sendChangeMonitorEnabledEventForAll($enabled): void
 	{
+		//disabled
+		return;
+
 		if (!in_array($enabled, [State::ENABLED, State::DISABLED], true))
 		{
 			throw new ArgumentException('Invalid enabled status ' . $enabled);
@@ -324,6 +330,9 @@ final class Config
 
 	private static function setMonitorEnableOption($value): void
 	{
+		//disabled
+		return;
+
 		Option::set(self::MODULE_ID, self::MONITOR_ENABLE_OPTION, Json::encode($value));
 	}
 
@@ -334,6 +343,9 @@ final class Config
 
 	public static function setMonitorSkipOption($value): void
 	{
+		//disabled
+		return;
+
 		Option::set(self::MODULE_ID, self::MONITOR_SKIP_OPTION, Json::encode($value));
 	}
 

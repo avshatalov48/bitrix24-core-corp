@@ -17,6 +17,8 @@ Loc::loadMessages(__FILE__);
  */
 class SourceTable extends DataManager
 {
+	protected static $sources;
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -80,6 +82,14 @@ class SourceTable extends DataManager
 				'data_type' => 'string',
 			],
 		];
+	}
+
+	public static function add(array $data)
+	{
+		$result = parent::add($data);
+		static::$sources = null;
+
+		return $result;
 	}
 
 	/**
@@ -173,12 +183,12 @@ class SourceTable extends DataManager
 	 */
 	private static function getSourceByField($name, $value)
 	{
-		static $sources = null;
-		if ($sources === null)
+		static::$sources = null;
+		if (static::$sources === null)
 		{
-			$sources = Tracking\Provider::getActualSources();
+			static::$sources = Tracking\Provider::getActualSources();
 		}
-		foreach ($sources as $source)
+		foreach (static::$sources as $source)
 		{
 			if (!isset($source[$name]))
 			{

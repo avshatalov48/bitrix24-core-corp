@@ -835,12 +835,15 @@ CrmWebFormListItem.prototype =
 		this.sendActionRequest(
 			'copy',
 			function(data){
+				/*
 				copier.init({
 					id: data.copiedId,
 					title: data.copiedName,
 					detailUrl: this.getDetailPageById(data.copiedId)
 				});
 				this.redirectToDetailPage(data.copiedId, true);
+				*/
+				window.location.reload();
 			},
 			function(){
 				copier.erase();

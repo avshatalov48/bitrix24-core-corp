@@ -10,8 +10,6 @@ abstract class Base
 	/** @var \Bitrix\ImBot\Error  */
 	protected static $lastError;
 
-	/** @var \Bitrix\ImBot\Http */
-	protected static $httpClient;
 
 	/**
 	 * Returns registered bot Id.
@@ -159,7 +157,7 @@ abstract class Base
 	 *
 	 * @return bool
 	 */
-	public static function onBotDelete($bodId)
+	public static function onBotDelete($bodId = null)
 	{
 		return self::setBotId(0);
 	}
@@ -221,7 +219,7 @@ abstract class Base
 	}
 
 	/**
-	 * @return \Bitrix\ImBot\Bot\Base
+	 * @return \Bitrix\ImBot\Bot\Base|string
 	 */
 	public static function getClassName()
 	{
@@ -238,23 +236,5 @@ abstract class Base
 			self::$lastError = new \Bitrix\ImBot\Error(null, '', '');
 		}
 		return self::$lastError;
-	}
-
-
-	/**
-	 * Returns web client.
-	 *
-	 * @param string $botCode Bot code Id.
-	 *
-	 * @return \Bitrix\ImBot\Http
-	 */
-	protected static function instanceHttpClient($botCode)
-	{
-		if (!(self::$httpClient instanceof \Bitrix\ImBot\Http))
-		{
-			self::$httpClient = new \Bitrix\ImBot\Http($botCode);
-		}
-
-		return self::$httpClient;
 	}
 }

@@ -35,6 +35,7 @@ $MESS["MENU_EDIT_SELF_PAGE"] = "Edit custom menu item";
 $MESS["MENU_EMPTY_FORM_ERROR"] = "Some of the fields are missing.";
 $MESS["MENU_ERROR_OCCURRED"] = "That's an error.";
 $MESS["MENU_EXPAND"] = "Expand menu";
+$MESS["MENU_FIRST_ITEM_ERROR"] = "This item cannot be a main page<br/>of your Bitrix24";
 $MESS["MENU_HIDDEN_ITEMS"] = "Hidden";
 $MESS["MENU_HIDE"] = "hide";
 $MESS["MENU_HIDE_ITEM"] = "Hide item";

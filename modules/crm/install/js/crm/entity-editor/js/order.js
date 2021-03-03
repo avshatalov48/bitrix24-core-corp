@@ -4861,6 +4861,11 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			this.addChild(this._activeElementsBlock, {
 				enableSaving: false
 			});
+			// dirty clutch to prevent saving scheme every time during saving form
+			if(this._editor._config)
+			{
+				this._editor._config._isChanged = false;
+			}
 		}
 
 		element = BX.UI.EntitySchemeElement.create(
@@ -4887,6 +4892,11 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			this.addChild(this._disabledFieldsBlock, {
 				enableSaving: false
 			});
+			// dirty clutch to prevent saving scheme every time during saving form
+			if(this._editor._config)
+			{
+				this._editor._config._isChanged = false;
+			}
 		}
 	};
 
@@ -4941,6 +4951,11 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			parent.addChild(field, {
 				enableSaving: false
 			});
+			// dirty clutch to prevent saving scheme every time during saving form
+			if(this._editor._config)
+			{
+				this._editor._config._isChanged = false;
+			}
 		}
 	};
 

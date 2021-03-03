@@ -15,7 +15,7 @@ class CIntranetRestService extends IRestService
 
 	public static function OnRestServiceBuildDescription()
 	{
-		return array(
+		$result = array(
 			'department' => array(
 				'department.fields' => array('CIntranetRestService', 'departmentFields'),
 				'department.get' => array('CIntranetRestService', 'departmentGet'),
@@ -27,11 +27,23 @@ class CIntranetRestService extends IRestService
 				\CRestUtil::PLACEMENTS => array(
 					self::CONTACT_CENTER_PLACEMENT => array()
 				),
-			),
-			'intranet' => array(
-				\CRestUtil::PLACEMENTS => \Bitrix\Intranet\Binding\Menu::getRestMap()
 			)
 		);
+
+		$placementMap = \Bitrix\Intranet\Binding\Menu::getRestMap();
+		foreach ($placementMap as $scope => $placementList)
+		{
+			if (!empty($result[$scope][\CRestUtil::PLACEMENTS]))
+			{
+				$result[$scope][\CRestUtil::PLACEMENTS] = array_merge($placementList, $result[$scope][\CRestUtil::PLACEMENTS]);
+			}
+			else
+			{
+				$result[$scope][\CRestUtil::PLACEMENTS] = $placementList;
+			}
+		}
+
+		return $result;
 	}
 
 	public static function departmentFields($arParams)

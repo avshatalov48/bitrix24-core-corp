@@ -281,6 +281,10 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 			'NAME' => $data['name'],
 			'SORT' => $data['sort'],
 			'COLOR' => $data['color'],
+			'SEMANTICS' => (isset($data['semantics']) &&
+				in_array($data['semantics'], [\Bitrix\Crm\PhaseSemantics::SUCCESS, \Bitrix\Crm\PhaseSemantics::FAILURE]))
+					? $data['semantics']
+					: null
 		]);
 
 		if (!$id)

@@ -14,8 +14,10 @@ class OrderCheckEntry extends TimelineEntry
 			throw new Main\ArgumentException('Empty bindings for check entity.', 'Bindings');
 		}
 
+		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
+
 		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-		if ($entityID <= 0)
+		if ($entityID <= 0 && !isset($settings['FAILURE']))
 		{
 			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
 		}
@@ -37,8 +39,6 @@ class OrderCheckEntry extends TimelineEntry
 
 		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
 			? $params['CREATED'] : new DateTime();
-
-		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
 
 		$result = TimelineTable::add(
 			array(

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS b_imconnectors_info_connectors(
     LINE_ID int(11) PRIMARY KEY,
     DATA LONGTEXT,
     EXPIRES DATETIME,
-    HASH varchar(32) NOT NULL
+    DATA_HASH varchar(32) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS b_imconnectors_chat_last_message(

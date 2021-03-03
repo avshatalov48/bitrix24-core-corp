@@ -85,11 +85,6 @@ class WorktimeRecordManager
 
 	private function moreThanHalfTillNextShiftOrNewShiftStarted()
 	{
-		$nextShift = $this->buildNextClosestShiftWithDate();
-		if ($nextShift && $this->currentDateTime->getTimestamp() >= $nextShift->getDateTimeStart()->getTimestamp())
-		{
-			return true;
-		}
 		if ($this->shift)
 		{
 			if ($this->schedule && $this->schedule->isShifted())
@@ -100,7 +95,7 @@ class WorktimeRecordManager
 		}
 		elseif ($this->schedule && !$this->schedule->isFlextime())
 		{
-			if ($nextShift)
+			if ($nextShift = $this->buildNextClosestShiftWithDate())
 			{
 				if ($nextShift->getDateTimeStart()->getTimestamp() - $this->record->getRecordedStartTimestamp() < 24 * 3600)
 				{

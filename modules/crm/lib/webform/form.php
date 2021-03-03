@@ -1033,13 +1033,7 @@ class Form
 	 */
 	public function getRedirectDelay()
 	{
-		$delay = Form::REDIRECT_DELAY;
-		if (!empty($this->params['FORM_SETTINGS']['REDIRECT_DELAY']))
-		{
-			$delay = (int) $this->params['FORM_SETTINGS']['REDIRECT_DELAY'];
-		}
-
-		return $delay;
+		return (int) ($this->params['FORM_SETTINGS']['REDIRECT_DELAY'] ?? Form::REDIRECT_DELAY);
 	}
 
 	/**
@@ -1133,6 +1127,17 @@ class Form
 			unset($agreement['ID']);
 			$agreement['FORM_ID'] = $newFormId;
 			Internals\AgreementTable::add($agreement);
+		}
+
+		// copy assigned by
+		$queue = Internals\QueueTable::getList(array(
+			'filter' => array('=FORM_ID' => $formId)
+		));
+		while($queueRow = $queue->fetch())
+		{
+			unset($queueRow['ID']);
+			$queueRow['FORM_ID'] = $newFormId;
+			Internals\QueueTable::add($queueRow);
 		}
 
 

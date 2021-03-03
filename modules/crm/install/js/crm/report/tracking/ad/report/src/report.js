@@ -4,7 +4,7 @@ import 'sidepanel';
 import 'ui.progressbar';
 import { Tag, Runtime, Event, Loc, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events'
-import { Menu } from 'main.popup'
+import { Menu, Popup, PopupOptions } from 'main.popup'
 
 type Options = {
 	sourceId: string;
@@ -53,7 +53,7 @@ class Report
 			{
 				cacheable: false,
 				contentCallback: () => {
-					const container = this.createUiContainer();
+					const container = this.createUiContainer(level);
 					this.build();
 					return container;
 				}
@@ -116,6 +116,23 @@ class Report
 				Runtime.html(this.getNode('grid'), data.html)
 				this.initActivators();
 				this.hideLoader();
+
+				if (!this.filter.level)
+				{
+					const popupOptions: PopupOptions = {
+						content: Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_SETTINGS_HINT'),
+						zIndex: 5000,
+						maxWidth: 300,
+						offsetLeft: -315,
+						offsetTop: -30,
+						animation: 'fading',
+						darkMode: true,
+						bindElement: this.ui.hint,
+					};
+					const popup = new Popup(popupOptions);
+					popup.show();
+					setTimeout(() => popup.destroy(), 10000);
+				}
 			});
 	}
 
@@ -174,13 +191,16 @@ class Report
 		}
 	}
 
-	createUiContainer ()
+	createUiContainer (level)
 	{
 		const container = Tag.render`
 			<div class="crm-report-tracking-panel">
 				<div class="crm-report-tracking-panel-title">
 					<div class="crm-report-tracking-panel-title-name">
-						<div data-role="title"></div>
+						<div class="crm-report-tracking-panel-title-line">
+							<div data-role="title"></div>							
+							${level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>'}
+						</div>
 						<div data-role="selector"></div>
 					</div>
 				</div>
@@ -196,6 +216,7 @@ class Report
 
 		this.ui.container = container;
 		this.ui.title = this.getNode('title');
+		this.ui.hint = this.getNode('hint');
 		this.ui.loader = this.getNode('loader');
 		this.ui.loaderText = this.getNode('loader/text');
 		this.ui.grid = this.getNode('grid');
@@ -206,6 +227,12 @@ class Report
 			statusType: 'none',
 			column: true,
 		});
+
+		if (this.ui.hint)
+		{
+			this.ui.hint.addEventListener('click', () => BX.Helper.show("redirect=detail&code=12526974"));
+		}
+
 		this.getNode('loader/bar').appendChild(progressBar.getContainer());
 		this.ui.loaderProgressBar = progressBar;
 		this.setLoaderText(Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_BUILD'));

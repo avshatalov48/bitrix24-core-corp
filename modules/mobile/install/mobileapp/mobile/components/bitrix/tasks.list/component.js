@@ -2419,6 +2419,14 @@ include('InAppNotifier');
 					this.onChangeResponsibleAction(task);
 					break;
 
+				case 'approve':
+					this.onApproveAction(task);
+					break;
+
+				case 'disapprove':
+					this.onDisapproveAction(task);
+					break;
+
 				case 'start':
 					this.onStartAction(task);
 					break;
@@ -2466,6 +2474,9 @@ include('InAppNotifier');
 			this.updateItem(task.id, {});
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onChangeDeadlineAction(task)
 		{
 			const pickerParams = {
@@ -2499,6 +2510,45 @@ include('InAppNotifier');
 			});
 		}
 
+		/**
+		 * @param {Task} task
+		 */
+		onApproveAction(task)
+		{
+			if (task.status === TaskList.statusList.waitCtrl)
+			{
+				task.rawAccess.approve = false;
+				task.rawAccess.disapprove = false;
+				task.rawAccess.complete = false;
+				task.rawAccess.renew = true;
+				task.approve().then(() => this.updateItem(task.id, {status: task.status}));
+				this.updateItem(task.id, {
+					status: task.status,
+					activityDate: Date.now(),
+				});
+			}
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onDisapproveAction(task)
+		{
+			if (task.status === TaskList.statusList.waitCtrl)
+			{
+				task.rawAccess.approve = false;
+				task.rawAccess.disapprove = false;
+				task.rawAccess.renew = false;
+				task.rawAccess.complete = false;
+				task.rawAccess.start = true;
+				task.disapprove().then(() => this.updateItem(task.id, {status: task.status}));
+				this.updateItem(task.id, {status: task.status});
+			}
+		}
+
+		/**
+		 * @param {Task} task
+		 */
 		onStartAction(task)
 		{
 			if (task.status !== TaskList.statusList.inprogress)
@@ -2510,6 +2560,9 @@ include('InAppNotifier');
 			}
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onPauseAction(task)
 		{
 			if (task.status !== TaskList.statusList.pending)
@@ -2521,6 +2574,9 @@ include('InAppNotifier');
 			}
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onChangeResponsibleAction(task)
 		{
 			return new UserList(this.list, task.responsible, this.currentUser, {
@@ -2543,6 +2599,9 @@ include('InAppNotifier');
 			});
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onMoreAction(task)
 		{
 			const taskItemData = this.getItemDataFromTask(task);
@@ -2599,18 +2658,27 @@ include('InAppNotifier');
 			this.updateItem(task.id, {});
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onPinAction(task)
 		{
 			this.updateItem(task.id, {isPinned: true});
 			task.pin();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onUnpinAction(task)
 		{
 			this.updateItem(task.id, {isPinned: false});
 			task.unpin();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onReadAction(task)
 		{
 			this.filter.pseudoUpdateCounters(-task.newCommentsCount, task);
@@ -2618,6 +2686,9 @@ include('InAppNotifier');
 			task.read();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onMuteAction(task)
 		{
 			this.updateItem(task.id, {isMuted: true});
@@ -2625,6 +2696,9 @@ include('InAppNotifier');
 			task.mute();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onUnmuteAction(task)
 		{
 			this.updateItem(task.id, {isMuted: false});
@@ -2632,6 +2706,9 @@ include('InAppNotifier');
 			task.unmute();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onUnfollowAction(task)
 		{
 			task.auditors = task.auditors.filter(userId => userId !== Number(this.currentUser.id));
@@ -2645,6 +2722,9 @@ include('InAppNotifier');
 			task.stopWatch();
 		}
 
+		/**
+		 * @param {Task} task
+		 */
 		onRemoveAction(task)
 		{
 			dialogs.showActionSheet({

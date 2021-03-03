@@ -58,7 +58,7 @@ class RequisiteTable extends Entity\DataManager
 				'reference' => array(
 					'=this.ID' => 'ref.ENTITY_ID',
 					'=ref.ENTITY_TYPE_ID' => array('?', \CCrmOwnerType::Requisite),
-					'=ref.TYPE_ID' => array('?', EntityAddress::Primary)
+					'=ref.TYPE_ID' => array('?', EntityAddressType::Primary)
 				)
 			),
 			'RQ_CONTACT' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField150')),

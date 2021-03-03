@@ -2,7 +2,7 @@
 namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Location\Entity\Address;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -152,6 +152,8 @@ class ClientResolver
 					if ($presetId > 0)
 					{
 						$fields['PRESET_ID'] = $presetId;
+						$fields['PRESET_COUNTRY_ID'] = EntityRequisite::getSingleInstance()
+							->getCountryIdByPresetId($presetId);
 					}
 
 					$caption = $shortName !== '' ? $shortName : $fullName;
@@ -262,7 +264,7 @@ class ClientResolver
 					if ($this->compatibilityMode)
 					{
 						$fields['RQ_ADDR'] = array(
-							EntityAddress::Registered => array(
+							EntityAddressType::Registered => array(
 								'ADDRESS_1' => $address1,
 								'ADDRESS_2' => $address2,
 								'CITY' => $city,
@@ -289,7 +291,7 @@ class ClientResolver
 						if ($locationAddress)
 						{
 							$fields['RQ_ADDR'] = array(
-								EntityAddress::Registered => $locationAddress->toJson()
+								EntityAddressType::Registered => $locationAddress->toJson()
 							);
 						}
 						unset($locationAddress);
@@ -358,6 +360,8 @@ class ClientResolver
 					if ($presetId > 0)
 					{
 						$fields['PRESET_ID'] = $presetId;
+						$fields['PRESET_COUNTRY_ID'] = EntityRequisite::getSingleInstance()
+							->getCountryIdByPresetId($presetId);
 					}
 				}
 
@@ -402,6 +406,8 @@ class ClientResolver
 				if ($presetId > 0)
 				{
 					$fields['PRESET_ID'] = $presetId;
+					$fields['PRESET_COUNTRY_ID'] = EntityRequisite::getSingleInstance()
+						->getCountryIdByPresetId($presetId);
 				}
 				$caption = $shortName !== '' ? $shortName : $fullName;
 
@@ -413,7 +419,7 @@ class ClientResolver
 				if ($this->compatibilityMode)
 				{
 					$fields['RQ_ADDR'] = array(
-						EntityAddress::Registered => array(
+						EntityAddressType::Registered => array(
 							'ADDRESS_1' => $address1,
 							'ADDRESS_2' => $address2,
 							'CITY' => $city,
@@ -440,7 +446,7 @@ class ClientResolver
 					if ($locationAddress)
 					{
 						$fields['RQ_ADDR'] = array(
-							EntityAddress::Registered => $locationAddress->toJson()
+							EntityAddressType::Registered => $locationAddress->toJson()
 						);
 					}
 					unset($locationAddress);

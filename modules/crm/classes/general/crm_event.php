@@ -833,6 +833,14 @@ class CCrmEvent
 		{
 			return false;
 		}
+		$user = \Bitrix\Main\UserTable::query()
+			->where('ID', $userID)
+			->setSelect(['IS_REAL_USER'])
+			->fetch();
+		if (!$user || $user['IS_REAL_USER'] !== 'Y')
+		{
+			return false;
+		}
 
 		$timestamp = time() + CTimeZone::GetOffset();
 		//Event grouping interval in seconds

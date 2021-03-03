@@ -44,25 +44,17 @@ use \Bitrix\Imopenlines\Limit;
 							   data-limit="<?=!Limit::canWorkHourSettings()?'Y':'N';?>"
 							<? if ($arResult['CONFIG']['WORKTIME_ENABLE'] == 'Y') { ?>checked<? } ?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_ENABLE')?>
-						<?
-						if (!Limit::canWorkHourSettings() || Limit::isDemoLicense())
-						{
-							?>
+						<?if(!Limit::canWorkHourSettings()):?>
 							<span class="tariff-lock"></span>
-						<?
-						if (!Limit::canWorkHourSettings())
-						{
-						?>
 							<script type="text/javascript">
 								BX.bind(BX('imol_worktime_checkbox'), 'change', function(e){
 									BX('imol_worktime_checkbox').checked = false;
 									window.BX.imolTrialHandler.openPopupWorkTime();
 								});
 							</script>
-							<?
-						}
-						}
-						?>
+						<?elseif(Limit::isDemoLicense()):?>
+							<span class="tariff-lock" onclick="window.BX.imolTrialHandler.openPopupWorkTime(); return false;"></span>
+						<?endif;?>
 					</label>
 				</div>
 			</div>
@@ -130,7 +122,7 @@ use \Bitrix\Imopenlines\Limit;
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF")?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP"))?>"></span>
+						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP"))?>"></span>
 					</div>
 					<div class="imopenlines-control-inner">
 						<select size="7" multiple="true" name="CONFIG[WORKTIME_DAYOFF][]" class="imopenlines-control-input  imopenlines-control-select-multiple">
@@ -182,7 +174,7 @@ use \Bitrix\Imopenlines\Limit;
 						</select>
 					</div>
 				</div>
-				<div class="imopenlines-control-container imopenlines-control-select" id="imol_worktime_dayoff_rule_form">
+				<div class="imopenlines-control-container imopenlines-control-select invisible" id="imol_worktime_dayoff_rule_form">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_FORM_ID")?>
 					</div>
@@ -198,7 +190,7 @@ use \Bitrix\Imopenlines\Limit;
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TEXT_NEW')?>
 					</div>
 					<div class="imopenlines-control-inner">
-						<textarea class="imopenlines-control-input imopenlines-control-textarea" name="CONFIG[WORKTIME_DAYOFF_TEXT]"><?=htmlspecialcharsbx($arResult["CONFIG"]["WORKTIME_DAYOFF_TEXT"])?></textarea>
+						<textarea class="imopenlines-control-input imopenlines-control-textarea" name="CONFIG[WORKTIME_DAYOFF_TEXT]"><?=htmlspecialcharsbx($arResult['CONFIG']['WORKTIME_DAYOFF_TEXT'])?></textarea>
 					</div>
 				</div>
 			</div>

@@ -1346,7 +1346,7 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 		if(DATA.CAN_OPEN_AND_RELAUNCH)
 		{
 			this.MAIN_ROW_CELL_BTN.appendChild(BX.create('span', {
-				props: {className: 'webform-small-button tm-popup-relaunch-btn', id: 'tm_popup_relaunch_new'},
+				props: {className: 'tm-webform-small-button tm-popup-relaunch-btn', id: 'tm_popup_relaunch_new'},
 				events: {
 					click: BX.proxy(function(){
 						this.ACTIONS.REOPEN();
@@ -2133,8 +2133,7 @@ BX.CTimeManClock = function(parent, params)
 		offsetTop: -135,
 		autoHide: true,
 		closeIcon: true,
-		closeByEsc: true,
-		zIndex: this.params.zIndex
+		closeByEsc: true
 	};
 
 	p.lightShadow = true;
@@ -3894,7 +3893,7 @@ BX.CTimeManUploadForm = function(params)
 	window[this.id] = this;
 	this.DIV = ((params.div)
 		?params.div
-		:BX.create("DIV")
+		:BX.create("DIV", {props: {className: 'ui-form-row'}})
 	);
 	this.mode = params.mode||"view";
 }
@@ -4100,10 +4099,10 @@ BX.CTimeManUploadForm.prototype.GetUploadForm = function()
 		}
 	}
 	this.uploadform = BX.create("DIV",{
-		props:{className:"webform-row task-attachments-row"},
+		props:{className:"task-attachments-row"},
 		children:[
 			BX.create("DIV",{
-				props:{className:"webform-field webform-field-attachments"},
+				props:{className:"ui-form-content"},
 				children:[
 					BX.create("DIV",{
 						props:{className:"tm-popup-section-title"},
@@ -4123,7 +4122,7 @@ BX.CTimeManUploadForm.prototype.GetUploadForm = function()
 						props:{className:"report-webform-field-upload"},
 						children:[
 							BX.create("SPAN",{
-								props:{className:"webform-small-button report-webform-button-upload"},
+								props:{className:"tm-webform-small-button report-webform-button-upload"},
 								children:[
 									BX.message('JS_CORE_TM_UPLOAD_FILES')
 								]
@@ -4268,19 +4267,26 @@ BX.CTimeManReportFormWeekly = function(parent, params)
 		autoHide: false,
 		draggable:false,
 		closeByEsc:true,
-		titleBar: true
+		titleBar: true,
+		toFrontOnShow: false
 	});
 
-BX.addCustomEvent(this.popup, "onPopupClose", BX.proxy(function(){
-	this.overlay.style.display = "none";
-	//BX.removeClass(document.body, "report-body-overflow");
+	BX.ZIndexManager.register(this.overlay);
+
+	BX.addCustomEvent(this.popup, "onPopupClose", BX.proxy(function(){
+		this.overlay.style.display = "none";
+		//BX.removeClass(document.body, "report-body-overflow");
 	}, this));
+
 	BX.addCustomEvent(this.popup, "onAfterPopupShow", BX.proxy(function(){
-	this.overlay.style.display = "block";
-	//BX.addClass(document.body, "report-body-overflow");
-	setTimeout(BX.proxy(this.FixOverlay,this),10)
-//	this.FixOverlay();
+		this.overlay.style.display = "block";
+		BX.ZIndexManager.bringToFront(this.overlay);
+
+		//BX.addClass(document.body, "report-body-overflow");
+		setTimeout(BX.proxy(this.FixOverlay,this),10);
+		//this.FixOverlay();
 	}, this));
+
 	this.popup_place.appendChild(
 			BX.create("DIV",{
 			style:{display:"inline-block"},
@@ -4291,17 +4297,17 @@ BX.addCustomEvent(this.popup, "onPopupClose", BX.proxy(function(){
 		);
 
 	this.FixOverlay();
-	BX.bind(window.top, "resize", BX.proxy(this.FixOverlay, this))
+	BX.bind(window.top, 'resize', BX.proxy(this.FixOverlay, this));
 	this.ACTIONS = {
 		delay: BX.proxy(this.ActionDelay, this),
 		edit: BX.proxy(this.ActionEdit, this),
 		save: BX.proxy(this.ActionSave, this),
 		send: BX.proxy(this.ActionSend, this)
 
-	}
-}
+	};
+};
 
-BX.extend(BX.CTimeManReportFormWeekly, BX.CTimeManPopup)
+BX.extend(BX.CTimeManReportFormWeekly, BX.CTimeManPopup);
 
 BX.CTimeManReportFormWeekly.prototype.FixOverlay = function()
 {
@@ -4724,7 +4730,7 @@ BX.CTimeManReportFormWeekly.prototype.GetContent = function()
 	}
 
 	this.DIV = BX.create('DIV', {
-		props: {className: 'tm-report-popup' + (this.mode == 'edit' ? '' : ' tm-report-popup-read-mode') + (this.ie7 ? ' tm-report-popup-ie7' : '')},
+		props: {className: 'tm-report-popup ui-form' + (this.mode == 'edit' ? '' : ' tm-report-popup-read-mode') + (this.ie7 ? ' tm-report-popup-ie7' : '')},
 		children: [
 			this.GetContentPeopleRow(),
 			this.GetContentReportRow(report_value)
@@ -4893,13 +4899,10 @@ BX.CTimeManReportFormWeekly.prototype.ActionSave = function(e)
 BX.CTimeManReportFormWeekly.prototype.ActionSend = function(e)
 {
 		this.ACTIVE = "Y";
-		this.DELAY = "N";
+		this.DELAY = "Y";
 		this.closeAfterPost = true;
 		this.ActionEdit();
 }
-
-
-
 
 BX.CTimeManReportFormWeekly.prototype.ActionDelay = function(e)
 {
@@ -5857,7 +5860,7 @@ BX.CTimeManReportForm.prototype.GetContent = function()
 	}
 
 	this.DIV = BX.create('DIV', {
-		props: {className: 'tm-report-popup' + (this.mode == 'edit' ? '' : ' tm-report-popup-read-mode') + (this.ie7 ? ' tm-report-popup-ie7' : '')},
+		props: {className: 'tm-report-popup ui-form' + (this.mode == 'edit' ? '' : ' tm-report-popup-read-mode') + (this.ie7 ? ' tm-report-popup-ie7' : '')},
 		children: [
 			this.GetContentPeopleRow(),
 			this.GetContentTimeRow(),
@@ -6273,8 +6276,8 @@ BX.JSTimeManReportFullForm = function(userdata, slider)
 					draggable:false,
 					titleBar:true,
 					closeByEsc:true,
-					bindOnResize:false
-
+					bindOnResize:false,
+					toFrontOnShow: false
 				}
 			);
 		//closebyEsc disable fix for task-popup
@@ -6411,7 +6414,7 @@ BX.JSTimeManReportFullForm.prototype.GetContent = function()
 	}
 
 	var content = BX.create("DIV",{
-		props:{className:'tm-report-popup tm-report-popup-read-mode'+(this.ie7 ? ' tm-report-popup-ie7' : '')},
+		props:{className:'tm-report-popup ui-form tm-report-popup-read-mode'+(this.ie7 ? ' tm-report-popup-ie7' : '')},
 		children:
 		[
 			this.GetPeople(),
@@ -6939,8 +6942,11 @@ BX.ReportSlider = function(user,start_report_id)
 	}
 	);
 	document.body.appendChild(this.overlay);
-	BX.bind(window.top, "resize", BX.proxy(this.FixOverlay, this))
-}
+
+	BX.ZIndexManager.register(this.overlay);
+
+	BX.bind(window.top, "resize", BX.proxy(this.FixOverlay, this));
+};
 
 BX.ReportSlider.prototype.ShowReport = function(report_id)
 {
@@ -6955,6 +6961,7 @@ BX.ReportSlider.prototype.ShowReport = function(report_id)
 			}, this));
 		BX.addCustomEvent(this.report_form.popupform, "onPopupShow", BX.proxy(function(){
 			this.overlay.style.display = "block";
+			BX.ZIndexManager.bringToFront(this.overlay);
 			//BX.addClass(document.body, "report-body-overflow");
 			}, this));
 		BX.addCustomEvent(this.report_form.popupform, "onAfterPopupShow", BX.proxy(function(){
@@ -7161,6 +7168,7 @@ BX.TimeManSlider.prototype.Show = function(data)
 		}, this));
 		BX.addCustomEvent(this.WND.popup, "onPopupShow", BX.proxy(function(){
 			this.overlay.style.display = "block";
+			BX.ZIndexManager.bringToFront(this.overlay);
 			//BX.addClass(document.body, "report-body-overflow");
 		}, this));
 
@@ -7214,7 +7222,6 @@ BX.TimeManSlider.prototype.ShowOverlay = function()
 
 	this.overlay = BX.create("DIV",{
 		props:{className:"report-fixed-overlay"},
-		style:{zIndex: 999},
 		children:[
 			(this.coreoverlay = BX.create("DIV",{
 				props:{className:"bx-tm-dialog-overlay"}
@@ -7235,6 +7242,9 @@ BX.TimeManSlider.prototype.ShowOverlay = function()
 		]
 	});
 	document.body.appendChild(this.overlay);
+
+	BX.ZIndexManager.register(this.overlay);
+
 	BX.bind(top, "resize", BX.proxy(this.FixOverlay, this))
 }
 

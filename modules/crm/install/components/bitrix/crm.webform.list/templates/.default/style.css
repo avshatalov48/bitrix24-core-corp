@@ -566,6 +566,7 @@ div.crm-webform-list-widget-content {
 	-webkit-transition: opacity .3s;
 	transition: opacity .3s;
 	opacity: 1;
+	z-index: 2;
 }
 
 .crm-webform-list-active-info-def .crm-webform-list-text {
@@ -590,6 +591,7 @@ div.crm-webform-list-widget-content {
 	-webkit-transition: opacity .3s;
 	transition: opacity .3s;
 	opacity: 0;
+	z-index: 0;
 }
 
 .crm-webform-list-active-info-now .crm-webform-list-text {
@@ -614,9 +616,11 @@ div.crm-webform-list-widget-content {
 }
 .user-container-show-now .crm-webform-list-active-info-def {
 	opacity: 0;
+	z-index: 0;
 }
 .user-container-show-now .crm-webform-list-active-info-now  {
 	opacity: 1;
+	z-index: 2;
 }
 
 .crm-webform-list-url-element {

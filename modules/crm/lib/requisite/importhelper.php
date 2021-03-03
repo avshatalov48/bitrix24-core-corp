@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Requisite;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\EntityPreset;
@@ -233,7 +234,6 @@ class ImportHelper
 		unset($preset, $presetInfo, $presetHasAddress, $presetFieldsInfo, $fieldInfo);
 
 		$addresses = array();
-		$rqAddrTypeInfos = RequisiteAddress::getTypeInfos();
 		$addressFields = array(
 			'ADDRESS_1',
 			'ADDRESS_2',
@@ -245,14 +245,14 @@ class ImportHelper
 			'COUNTRY_CODE'/*,
 			'LOC_ADDR_ID'*/
 		);
-		$rqAddrTypes = array_keys($rqAddrTypeInfos);
 		if (is_array($fields)
 			&& is_array($fields[EntityRequisite::ADDRESS])
 			&& !empty($fields[EntityRequisite::ADDRESS]))
 		{
+			$rqAddrTypeMap = array_fill_keys(EntityAddressType::getAvailableIds(), true);
 			foreach ($fields[EntityRequisite::ADDRESS] as $addrTypeId => $address)
 			{
-				if (in_array($addrTypeId, $rqAddrTypes, true) && !RequisiteAddress::isEmpty($address))
+				if (isset($rqAddrTypeMap[$addrTypeId]) && !RequisiteAddress::isEmpty($address))
 				{
 					foreach ($addressFields as $fieldName)
 					{
@@ -1442,7 +1442,6 @@ class ImportHelper
 
 					// update addresses
 					$requisiteAddresses = array();
-					$rqAddrTypeInfos = RequisiteAddress::getTypeInfos();
 					$addressFields = array(
 						'ADDRESS_1',
 						'ADDRESS_2',
@@ -1454,14 +1453,14 @@ class ImportHelper
 						'COUNTRY_CODE'/*,
 						'LOC_ADDR_ID'*/
 					);
-					$rqAddrTypes = array_keys($rqAddrTypeInfos);
 					if (is_array($requisiteFields)
 						&& is_array($requisiteFields[EntityRequisite::ADDRESS])
 						&& !empty($requisiteFields[EntityRequisite::ADDRESS]))
 					{
+						$rqAddrTypeMap = array_fill_keys(EntityAddressType::getAvailableIds(), true);
 						foreach ($requisiteFields[EntityRequisite::ADDRESS] as $addrTypeId => $address)
 						{
-							if (in_array($addrTypeId, $rqAddrTypes, true) && !RequisiteAddress::isEmpty($address))
+							if (isset($rqAddrTypeMap[$addrTypeId]) && !RequisiteAddress::isEmpty($address))
 							{
 								foreach ($addressFields as $fieldName)
 								{
@@ -2412,10 +2411,9 @@ class ImportHelper
 	{
 		if (!is_array(self::$addressTypeList))
 		{
-			$addressTypeList = array();
-			foreach(RequisiteAddress::getClientTypeInfos() as $typeInfo)
-				$addressTypeList[$typeInfo['id']] = $typeInfo['name'];
-			self::$addressTypeList = $addressTypeList;
+			self::$addressTypeList = EntityAddressType::getDescriptions(
+				EntityAddressType::getAvailableIds()
+			);
 		}
 
 		return self::$addressTypeList;

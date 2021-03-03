@@ -75,7 +75,7 @@ class CCrmStatus
 				],
 				'SEMANTICS' => [
 					'TYPE' => 'char',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::Immutable]
 				],
 				'EXTRA' => ['TYPE' => 'crm_status_extra'],
 			];
@@ -282,15 +282,16 @@ class CCrmStatus
 			'SYSTEM'	=> $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
 			'CATEGORY_ID' => $categoryId,
 			'COLOR' => $arFields['COLOR'],
-			'SEMANTICS' => $arFields['SEMANTICS'],
+			'SEMANTICS' => $arFields['SEMANTICS'] ?? null,
 		]);
-		self::ClearCachedStatuses($this->entityId);
 
 		if(!$result->isSuccess())
 		{
 			$this->LAST_ERROR = $result->getErrorMessages()[0];
 			return false;
 		}
+
+		self::ClearCachedStatuses($this->entityId);
 
 		return $result->getId();
 	}

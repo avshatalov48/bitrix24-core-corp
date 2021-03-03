@@ -50,10 +50,12 @@ class RequisiteAddress extends EntityAddress
 	 * @param $fieldName
 	 * @param array|null $aliases
 	 * @return int
+	 *
+	 * @deprecated Use methods of EntityAddressType and EntityAddress
 	 */
 	public static function resolveEntityFieldTypeID($fieldName, array $aliases = null)
 	{
-		return EntityAddress::Primary;
+		return EntityAddressType::Primary;
 	}
 
 	/**
@@ -66,6 +68,7 @@ class RequisiteAddress extends EntityAddress
 		EntityAddress::deleteByEntity(\CCrmOwnerType::Requisite, $entityID);
 	}
 
+	/** @deprecated Use methods of EntityAddressType and EntityAddress */
 	public static function getTypeInfos()
 	{
 		if(self::$typeInfos === null)
@@ -81,40 +84,37 @@ class RequisiteAddress extends EntityAddress
 		return self::$typeInfos;
 	}
 
+	/** @deprecated Use methods of EntityAddressType and EntityAddress */
 	public static function getTypesList()
 	{
 		static $addressTypes;
 		if($addressTypes === null)
 		{
 			$addressTypes = [];
-			self::includeModuleFile();
-
-			$addressTypes[self::Delivery] = [
-				'ID' => self::Delivery,
-				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_DELIVERY')
-			];
-			$addressTypes += parent::getTypeInfos();
-			$addressTypes[self::Home] = array(
-				'ID' => self::Home,
-				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_HOME')
-			);
-			$addressTypes[self::Beneficiary] = array(
-				'ID' => self::Beneficiary,
-				'DESCRIPTION' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_BENEFICIARY')
-			);
+			$descriptions = EntityAddressType::getDescriptions(EntityAddressType::getAvailableIds());
+			foreach ($descriptions as $typeId => $description)
+			{
+				$addressTypes[$typeId] = [
+					'ID' => $typeId,
+					'DESCRIPTION' => $description
+				];
+			}
 		}
+
 		return $addressTypes;
 	}
 
+	/** @deprecated Use methods of EntityAddressType and EntityAddress */
 	public static function getDefaultTypeId()
 	{
-		$veryDefaultId = self::Delivery;
+		$veryDefaultId = EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId());
 		$defaultId = Main\Config\Option::get('crm', 'requisite_default_address_type', $veryDefaultId);
-		$addressTypes = self::getTypesList();
+		$addressTypeMap = array_fill_keys(EntityAddressType::getAllIDs(), true);
 
-		return (isset($addressTypes[$defaultId]) ? $defaultId : $veryDefaultId);
+		return (isset($addressTypeMap[$defaultId]) ? $defaultId : $veryDefaultId);
 	}
 
+	/** @deprecated Use methods of EntityAddressType and EntityAddress */
 	public static function getClientTypeInfos()
 	{
 		self::includeModuleFile();
@@ -130,6 +130,7 @@ class RequisiteAddress extends EntityAddress
 		);
 	}
 
+	/** @deprecated Use methods of EntityAddressType and EntityAddress */
 	public static function getTypeDescription($typeID)
 	{
 		if(!is_int($typeID))
@@ -137,9 +138,9 @@ class RequisiteAddress extends EntityAddress
 			$typeID = (int)$typeID;
 		}
 
-		if(!self::isDefined($typeID))
+		if(!EntityAddressType::isDefined($typeID))
 		{
-			$typeID = self::Primary;
+			$typeID = EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId());
 		}
 
 		$typeInfos = self::getTypeInfos();

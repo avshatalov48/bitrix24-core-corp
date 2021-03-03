@@ -12,6 +12,7 @@ export class EntityEditorBaseAddressField
 		this._settings = settings ? settings : {};
 		this._typesList = [];
 		this._availableTypesIds = [];
+		this._allowedTypeIds = [];
 		this._addressList = [];
 		this._wrapper = null;
 		this._isEditMode = true;
@@ -19,6 +20,14 @@ export class EntityEditorBaseAddressField
 		this._enableAutocomplete = BX.prop.getBoolean(settings, 'enableAutocomplete', true);
 		this._hideDefaultAddressType = BX.prop.getBoolean(this._settings, 'hideDefaultAddressType', false);
 		this._showAddressTypeInViewMode = BX.prop.getBoolean(this._settings, 'showAddressTypeInViewMode', false);
+		this._addrZoneConfig = BX.prop.getObject(this._settings, 'addressZoneConfig', {});
+		this._countryId = BX.prop.getInteger(
+			this._settings,
+			'countryId',
+			BX.prop.getInteger(this._addrZoneConfig, "countryId", 0)
+		);
+		this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0);
+		this.updateAllowedTypes();
 	}
 
 	setMultiple(isMultiple)
@@ -137,14 +146,138 @@ export class EntityEditorBaseAddressField
 		return types;
 	}
 
+	setAllowedTypes(typeIds)
+	{
+		this._allowedTypeIds = [];
+		if (Type.isArray(typeIds))
+		{
+			this._allowedTypeIds = typeIds;
+		}
+	}
+
+	getAllowedTypes()
+	{
+		return this._allowedTypeIds;
+	}
+
+	setCountryId(countryId)
+	{
+		let needUpdateAllowedTypes = false;
+
+		countryId = parseInt(countryId);
+		if (this._countryId !== countryId)
+		{
+			needUpdateAllowedTypes = true;
+		}
+		this._countryId = countryId;
+
+		if (needUpdateAllowedTypes)
+		{
+			this.updateAllowedTypes();
+		}
+	}
+
+	getCountryId()
+	{
+		return this._countryId;
+	}
+
+	getAddressZoneConfig()
+	{
+		return this._addrZoneConfig
+	}
+
+	getValueTypes()
+	{
+		let result = [];
+
+		for (let addressItem of this._addressList)
+		{
+			let addressType = parseInt(addressItem.getType());
+			if (result.indexOf(addressType) < 0)
+			{
+				result.push(addressType);
+			}
+		}
+
+		return result;
+	}
+
+	updateAllowedTypes()
+	{
+		let allowedTypeList = [];
+		let typeValues = this.getValueTypes();
+		let countryId = this.getCountryId();
+		let config = this.getAddressZoneConfig();
+
+		if (Type.isPlainObject(config))
+		{
+			if (config.hasOwnProperty("currentZoneAddressTypes")
+				&& Type.isArray(config["currentZoneAddressTypes"]))
+			{
+				let i;
+				let typeId;
+				let curZoneAddrTypes = config["currentZoneAddressTypes"];
+				for (i = 0; i < curZoneAddrTypes.length; i++)
+				{
+					typeId = parseInt(curZoneAddrTypes[i]);
+					if (allowedTypeList.indexOf(typeId) < 0)
+					{
+						allowedTypeList.push(typeId);
+					}
+				}
+				if (countryId > 0
+					&& config.hasOwnProperty("countryAddressTypeMap")
+					&& Type.isPlainObject(config["countryAddressTypeMap"])
+					&& config["countryAddressTypeMap"].hasOwnProperty(countryId)
+					&& Type.isArray(config["countryAddressTypeMap"][countryId]))
+				{
+					let addrTypeMap = config["countryAddressTypeMap"][countryId];
+					for (i = 0; i < addrTypeMap.length; i++)
+					{
+						typeId = parseInt(addrTypeMap[i]);
+						if (allowedTypeList.indexOf(typeId) < 0)
+						{
+							allowedTypeList.push(typeId);
+						}
+					}
+				}
+				for (i = 0; i < typeValues.length; i++)
+				{
+					typeId = parseInt(typeValues[i]);
+					if (allowedTypeList.indexOf(typeId) < 0)
+					{
+						allowedTypeList.push(typeId);
+					}
+				}
+			}
+		}
+		this._allowedTypeIds = allowedTypeList;
+
+		for (let addressItem of this._addressList)
+		{
+			addressItem.setAllowedTypesIds([...this._allowedTypeIds]);
+		}
+	}
+
 	getDefaultType()
 	{
+		let defAddrType = this._defaultAddressType.toString();
+		if (defAddrType > 0
+			&& this._availableTypesIds.indexOf(defAddrType) >= 0
+			&& this._allowedTypeIds.indexOf(parseInt(defAddrType)) >= 0)
+		{
+			return  defAddrType;
+		}
+
 		for (let item of this._typesList)
 		{
 			let value = BX.prop.getString(item, "ID", "");
 			let isDefault = BX.prop.getString(item, "IS_DEFAULT", false);
 
-			if (isDefault && this._availableTypesIds.indexOf(value) >= 0)
+			if (isDefault
+				&& this._availableTypesIds.indexOf(value) >= 0
+				&& this._allowedTypeIds.indexOf(parseInt(value)) >= 0)
 			{
 				return value;
 			}
@@ -152,11 +285,13 @@ export class EntityEditorBaseAddressField
 		for (let item of this._typesList)
 		{
 			let value = BX.prop.getString(item, "ID", "");
-			if (this._availableTypesIds.indexOf(value) >= 0)
+			if (this._availableTypesIds.indexOf(value) >= 0
+				&& this._allowedTypeIds.indexOf(parseInt(value)) >= 0)
 			{
 				return value;
 			}
 		}
+
 		return null;
 	}
 
@@ -226,6 +361,7 @@ export class EntityEditorBaseAddressField
 		let addressItem = new AddressItem(Text.getRandom(8), {
 			typesList: this.getTypesList(),
 			availableTypesIds: [...this._availableTypesIds],
+			allowedTypesIds: [...this._allowedTypeIds],
 			canChangeType: this._isMultiple,
 			enableAutocomplete: this._enableAutocomplete,
 			showAddressTypeInViewMode: this._isMultiple && this._showAddressTypeInViewMode,
@@ -241,6 +377,7 @@ export class EntityEditorBaseAddressField
 		addressItem.subscribe('onCopyAddress', this.onCopyAddress.bind(this));
 		this.updateAvailableTypes(type, null);
 		this._addressList.push(addressItem);
+		this.updateAllowedTypes();
 		this.updateTypeSelectorVisibility(this._addressList.length > 1);
 		return addressItem;
 	}
@@ -253,6 +390,7 @@ export class EntityEditorBaseAddressField
 			let type = addressItem.getType();
 			this._addressList.splice(this._addressList.indexOf(addressItem), 1);
 			this.updateAvailableTypes(null, type);
+			this.updateAllowedTypes();
 			this.updateTypeSelectorVisibility(this._addressList.length > 1);
 			addressItem.destroy();
 		}
@@ -342,6 +480,7 @@ export class EntityEditorBaseAddressField
 		let prevType = data.prevType;
 		let type = data.type;
 		this.updateAvailableTypes(type, prevType);
+		this.updateAllowedTypes();
 		this.emitUpdateEvent();
 	}
 
@@ -431,6 +570,7 @@ class AddressItem extends EventEmitter
 		this._isTypesMenuOpened = false;
 		this._typesList = BX.prop.getArray(settings, 'typesList', []);
 		this._availableTypesIds = BX.prop.getArray(settings, 'availableTypesIds', []);
+		this._allowedTypesIds = BX.prop.getArray(settings, 'allowedTypesIds', []);
 		this._canChangeType = BX.prop.getBoolean(settings, 'canChangeType', false);
 		this.typesMenuId = 'address_type_menu_' + this._id;
 		this._type = BX.prop.getString(settings, 'type', "");
@@ -536,6 +676,35 @@ class AddressItem extends EventEmitter
 		this._availableTypesIds = ids;
 	}
 
+	setAllowedTypesIds(ids)
+	{
+		this._allowedTypesIds = ids;
+	}
+
+	getTypeListByIds(ids)
+	{
+		let result = [];
+
+		if (Type.isArray(ids) && ids.length > 0)
+		{
+			let typeMap = {};
+			for (let item of this._typesList)
+			{
+				typeMap["a" + item.value] = item;
+			}
+			for (let typeId of ids)
+			{
+				let index = "a" + typeId;
+				if (typeMap.hasOwnProperty(index))
+				{
+					result.push(typeMap[index]);
+				}
+			}
+		}
+
+		return result;
+	}
+
 	layout()
 	{
 		if (Type.isNull(this._addressWidget))
@@ -574,10 +743,15 @@ class AddressItem extends EventEmitter
 		}
 
 		let menu = [];
-
-		for (let item of this._typesList)
+		let allowedTypes = [...this._allowedTypesIds];
+		let selectedTypeId = parseInt(this._type);
+		if (allowedTypes.indexOf(selectedTypeId) < 0)
 		{
-			let selected = (item.value === this._type);
+			allowedTypes.push(selectedTypeId);
+		}
+		for (let item of this.getTypeListByIds(allowedTypes))
+		{
+			let selected = (selectedTypeId === parseInt(item.value));
 			if (this._availableTypesIds.indexOf(item.value) < 0 && !selected)
 			{
 				continue;
@@ -696,8 +870,11 @@ class AddressItem extends EventEmitter
 		this._domNodes.detailsToggler =
 			Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onToggleDetailsVisibility.bind(this)}"></span>`;
 
-		this._domNodes.copyButton =
+		if (this._canChangeType)
+		{
+			this._domNodes.copyButton =
 				Tag.render`<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link" onclick="${this.onCopyButtonClick.bind(this)}">${Loc.getMessage('CRM_ADDRESS_COPY1')}</span>`;
+		}
 
 		this.refreshCopyButtonVisibility();
 		this.setDetailsVisibility(this._showDetails);
@@ -800,10 +977,6 @@ class AddressItem extends EventEmitter
 		if (Type.isDomNode(node))
 		{
 			let isVisible = !!this.getAddress();
-			if (isVisible)
-			{
-
-			}
 			Dom.style(node, 'display', isVisible ? '' : 'none');
 		}
 	}
@@ -905,18 +1078,18 @@ class AddressItem extends EventEmitter
 
 	getCopyDestinationLayout()
 	{
-		let types = this._typesList.filter((item) => item.value != this._type);
+		let types = this.getTypeListByIds(this._allowedTypesIds).filter((item) => item.value !== this._type);
 		return Tag.render`
 			<div>
 				<div class="ui-title-7">${Loc.getMessage('CRM_ADDRESS_COPY_TO')}</div>
 				<div>
 					${types.map((item) => Tag.render`
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs">
-							<label>
-								<input onclick="${this.onChangeCopyDestination.bind(this)}" type="checkbox" value="${item.value}">
-								<span class="ui-ctl-label-text">${Text.encode(item.name)}</span>
-							</label>
-						</div>
+					<div class="ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs">
+					<label>
+					<input onclick="${this.onChangeCopyDestination.bind(this)}" type="checkbox" value="${item.value}">
+						<span class="ui-ctl-label-text">${Text.encode(item.name)}</span>
+					</label>
+					</div>
 					`)}
 				</div>
 			</div>
@@ -944,7 +1117,7 @@ class AddressItem extends EventEmitter
 
 	onCopyButtonClick()
 	{
-		this.showCopyDestinationPopup()
+		this.showCopyDestinationPopup();
 	}
 
 	onChangeCopyDestination(e)

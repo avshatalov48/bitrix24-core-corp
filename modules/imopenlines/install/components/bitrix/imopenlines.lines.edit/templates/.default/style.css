@@ -15,22 +15,6 @@
     padding: 0;
     vertical-align: middle;
 }
-.bx-destination-add {
-    border-bottom: 1px dashed transparent;
-    color: #2067b0;
-    cursor: pointer;
-    display: inline-block;
-    font-size: 13px;
-    font-weight: bold;
-    line-height: 17px;
-    margin: 7px 7px 7px 3px;
-    position: relative;
-    transition: border-bottom-color 0.2s linear 0s;
-    vertical-align: top;
-}
-.bx-destination-add:hover {
-    border-bottom: 1px dashed #2067b0;
-}
 .bx-destination {
     border-radius: 1px;
     display: inline-block;
@@ -68,14 +52,6 @@
     right: 0;
     top: 1px;
     width: 24px;
-}
-.bx-destination-wrap-item {
-    display: inline-block;
-    margin-bottom: 6px;
-    min-height: 30px;
-    min-width: 1px;
-    vertical-align: middle;
-    z-index: 2;
 }
 .bx-destination:hover {
     text-decoration: none;
@@ -681,20 +657,6 @@
 	transition: opacity .3s;
 }
 
-.imopenlines-remove-btn {
-	position: absolute;
-	right: 0;
-	top: 0;
-	width: 25px;
-	height: 30px;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%228%22%20viewBox%3D%220%200%208%208%22%3E%3Cpath%20fill%3D%22%238AC4E6%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.073%203.657l2.12-2.12L5.778.12l-2.12%202.12L1.537.12.12%201.538l2.12%202.12-2.12%202.12%201.417%201.417%202.12-2.12%202.12%202.12%201.417-1.417-2.12-2.12z%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-position: center;
-	opacity: 0.6;
-	transition: opacity .3s;
-	cursor: pointer;
-}
-
 .imopenlines-extra-btn-container-active.ui-form-settings-extra-name:before {
 	transform: rotate(180deg);
 }
@@ -837,19 +799,6 @@
 
 .imopenlines-form-settings-user-delete:hover {
 	opacity: 1;
-}
-
-.imopenlines-form-settings-user-link {
-	color: #2066b0;
-	font-size: 14px;
-	border-bottom: 1px dashed rgba(39, 107, 179, .4);
-	transition: border .2s ease;
-	display: inline-block;
-	vertical-align: middle;
-}
-
-.imopenlines-form-settings-user-link:hover {
-	border-color: rgba(39, 107, 179, .8);
 }
 
 .imopenlines-vote-container {
@@ -1469,3 +1418,8 @@ select {
 .imopenlines-control-checkbox-label .tariff-lock {
 	margin: 1px 0 0 8px;
 }
+
+.imopenlines-hint-popup-contents {
+	padding: 10px;
+}
+

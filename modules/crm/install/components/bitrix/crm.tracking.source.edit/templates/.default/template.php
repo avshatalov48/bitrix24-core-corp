@@ -17,8 +17,9 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 Extension::load([
 	"ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.icons", "ui.forms",
-	"color_picker", "sidepanel",
-	"seo.ads.client_selector"
+	"color_picker", "sidepanel", "clipboard",
+	"seo.ads.client_selector",
+	"seo.ads.login"
 ]);
 
 $this->addExternalCss($this->GetFolder() . '/utm.css');
@@ -97,7 +98,7 @@ $containerId = 'crm-analytics-source-ads-editor';
 	<form method="post">
 		<?=bitrix_sessid_post();?>
 
-		<?if ($arResult['ROW']['CODE']):?>
+		<?if ($arResult['ROW']['ADVERTISABLE']):?>
 			<div data-role="crm/tracking/desc"
 				class="crm-analytics-source-block crm-analytics-source-block-desc"
 				style="<?=($arResult['HAS_AUTH'] ? 'display: none;' : '')?>"
@@ -142,7 +143,9 @@ $containerId = 'crm-analytics-source-ads-editor';
 
 							<a  data-role="crm/tracking/connect/btn" type="button"
 								href="<?=htmlspecialcharsbx($arResult['PROVIDER']['AUTH_URL'])?>"
-								onclick="BX.util.popup(this.href, 800, 600); return false;"
+								onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=
+									htmlspecialcharsbx(Json::encode($arResult['PROVIDER']))
+								?>).login(); return false;"
 								class="ui-btn ui-btn-light-border"
 							><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECT')?></a>
 						</div>
@@ -249,6 +252,23 @@ $containerId = 'crm-analytics-source-ads-editor';
 					</div>
 					<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_DESC") ?></div>
 				</div>
+				<? if ($arResult['ROW']['UTM_CONTENT']): ?>
+				<div class="crm-analytics-utm-editor-field" style="margin-top: 30px;">
+					<div class="crm-analytics-utm-editor-field-input-block">
+						<div class="crm-analytics-utm-editor-field-input-decs">utm_content</div>
+						<div class="crm-analytics-source-block-utm-content">
+							<div class="crm-analytics-source-block-utm-content-val"><?=htmlspecialcharsbx($arResult['ROW']['UTM_CONTENT'])?></div>
+							<div class="crm-analytics-source-block-utm-content-btn"
+								id="crm-analytics-source-block-utm-content-btn"
+							><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_BTN_COPY')?></div>
+						</div>
+					</div>
+					<div class="crm-analytics-utm-editor-field-decs">
+						<?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_CONTENT_DESC") ?>
+						<span class="crm-analytics-source-hint" onclick="top.BX.Helper.show('redirect=detail&code=12526974');"></span>
+					</div>
+				</div>
+				<? endif ?>
 			</div>
 		</div>
 
@@ -375,7 +395,6 @@ $containerId = 'crm-analytics-source-ads-editor';
 				'save', 'cancel' => $arParams['PATH_TO_LIST'],
 				(
 					$arResult['ROW']['ID'] &&
-					!$arResult['ROW']['CODE'] &&
 					$arResult['ROW']['ACTIVE'] != 'N'
 				)
 					? ['TYPE' => 'remove', 'NAME' => 'archive', 'CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_ARCHIVE'),]

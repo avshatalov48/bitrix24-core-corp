@@ -54,6 +54,7 @@ $MESS["MENU_RENAME_ITEM"] = "Переименовать";
 $MESS["MENU_SAVE_BUTTON"] = "Сохранить";
 $MESS["MENU_EMPTY_FORM_ERROR"] = "Не заполнены все поля";
 $MESS["MENU_SELF_ITEM_FIRST_ERROR"] = "Свой пункт нельзя сделать главной<br/>страницей вашего Битрикс24";
+$MESS["MENU_FIRST_ITEM_ERROR"] = "Данный пункт нельзя сделать главной<br/>страницей вашего Битрикс24";
 $MESS["MENU_COLLAPSE"] = "Свернуть меню";
 $MESS["MENU_EXPAND"] = "Развернуть меню";
 $MESS["MENU_CONFIRM_BUTTON"] = "Подтвердить";

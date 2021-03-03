@@ -438,6 +438,7 @@ class ReceivingMessage
 					'disableSslVerification' => true
 				]
 			);
+
 			$httpClient->setHeader('User-Agent', 'Bitrix Connector Client');
 
 			if(!empty($file['headers']) && is_array($file['headers']))
@@ -450,7 +451,7 @@ class ReceivingMessage
 
 			if(Library::isEmpty($file['name']))
 			{
-				$fileName = Library::getNameFile($file['url']);
+				$fileName = Library::getNameFile($file['url'], true);
 			}
 			else
 			{
@@ -462,18 +463,39 @@ class ReceivingMessage
 			if($httpClient->download($file['url'], $tempFilePath) && $httpClient->getStatus() == '200')
 			{
 				if(!empty($file['type']))
-					$type = $file['type'];
-				else
-					$type = $httpClient->getHeaders()->get('Content-Type');
-
-				//Correct handling of links with redirect
-				$effectiveUrl = $httpClient->getEffectiveUrl();
-				if(
-					Library::isEmpty($file['name']) &&
-					$effectiveUrl != $file['url']
-				)
 				{
-					$fileName = Library::getNameFile($effectiveUrl);
+					$type = $file['type'];
+				}
+				else
+				{
+					$type = $httpClient->getHeaders()->get('Content-Type');
+				}
+
+				if(Library::isEmpty($file['name']) )
+				{
+					$contentDisposition = $httpClient->getHeaders()->get('Content-Disposition');
+					if(!empty($contentDisposition))
+					{
+						$fileNameContentDisposition = Library::getNameFileIsContentDisposition($contentDisposition);
+						if(
+							!empty($fileNameContentDisposition) &&
+							is_string($fileNameContentDisposition)
+						)
+						{
+							$fileName = $fileNameContentDisposition;
+						}
+					}
+					else
+					{
+						//Correct handling of links with redirect
+						$effectiveUrl = $httpClient->getEffectiveUrl();
+						if(
+							$effectiveUrl != $file['url']
+						)
+						{
+							$fileName = Library::getNameFile($effectiveUrl);
+						}
+					}
 				}
 
 				if(empty($type) || $type == 'application/octet-stream' || $type == 'binary/octet-stream')
@@ -483,27 +505,36 @@ class ReceivingMessage
 				}
 
 				//The definition of the file extension, it is not specified.
-				if(mb_strpos($fileName, '.') === false)
+				if(
+				!empty(Library::$mimeTypeAssociationExtension[$type]) &&
+				mb_strpos($fileName, '.') === false
+				)
 				{
-					if(Library::$mimeTypeAssociationExtension[$type])
-						$fileName = $fileName . Library::$mimeTypeAssociationExtension[$type];
+					$fileName .= Library::$mimeTypeAssociationExtension[$type];
 				}
 
 				if(empty($type))
+				{
 					$type = 'application/octet-stream';
+				}
 
 				if(Library::isEmpty($file['description']))
+				{
 					$description = '';
+				}
 				else
+				{
 					$description = $file['description'];
+				}
 
-				$file = array(
-					"name" => $fileName,
-					"tmp_name" => $tempFilePath,
-					"type" => $type,
-					"description" => $description,
-					"MODULE_ID" => Library::MODULE_ID
-				);
+
+				$file = [
+					'name' => $fileName,
+					'tmp_name' => $tempFilePath,
+					'type' => $type,
+					'description' => $description,
+					'MODULE_ID' => Library::MODULE_ID
+				];
 			}
 			else
 			{

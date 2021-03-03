@@ -18,7 +18,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemRestored", BX.delegate(this.onBeforeItemRestored, this));
 
 	BX.addCustomEvent(this, "Kanban.Grid:onBeforeItemMoved", BX.delegate(this.onBeforeItemMoved, this));
-	BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
+	//BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnAddedAsync", BX.delegate(this.onColumnAddedAsync, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnUpdated", BX.delegate(this.onColumnUpdated, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onColumnMoved", BX.delegate(this.onColumnMoved, this));
@@ -69,6 +69,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	popupCancel: null,
 	dropZonesShow: false,
 	schemeInline: null,
+	isBindEvents: false,
 
 	/**
 	 * Get current checkeds items.
@@ -200,40 +201,77 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	bindEvents: function()
 	{
-		// BX.addCustomEvent("BX.UI.ActionPanel:hidePanel", this.resetSelectItems.bind(this));
-		BX.bind(window, "click", function(el) {
-
-			if(this.dropZonesShow)
+		if (!this.isBindEvents)
+		{
+			// BX.addCustomEvent("BX.UI.ActionPanel:hidePanel", this.resetSelectItems.bind(this));
+			BX.bind(window, "click", function(el)
 			{
-				return;
-			}
 
-			this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
+				if(this.dropZonesShow)
+				{
+					return;
+				}
 
-			if(
-				!BX.findParent(el.target, {"className": "main-kanban-item"}) &&
-				!BX.findParent(el.target, {"className": "ui-action-panel"})
-			)
+				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
+
+				if(
+					!BX.findParent(el.target, {"className": "main-kanban-item"}) &&
+					!BX.findParent(el.target, {"className": "ui-action-panel"})
+				)
+				{
+					this.stopActionPanel();
+					this.unSetKanbanDragMode();
+				}
+			}.bind(this));
+
+			BX.bind(window, "keydown", function(el)
 			{
-				this.stopActionPanel();
-				this.unSetKanbanDragMode();
-			}
-		}.bind(this));
 
-		BX.bind(window, "keydown", function(el) {
+				if(this.dropZonesShow)
+				{
+					return;
+				}
 
-			if(this.dropZonesShow)
-			{
-				return;
-			}
+				if(el.code === "Escape")
+				{
+					this.resetMultiSelectMode();
+					this.stopActionPanel();
+					this.unSetKanbanDragMode();
+				}
+			}.bind(this));
 
-			if(el.code === "Escape")
-			{
-				this.resetMultiSelectMode();
-				this.stopActionPanel();
-				this.unSetKanbanDragMode();
-			}
-		}.bind(this));
+			BX.addCustomEvent(
+				window,
+				'Crm.PartialEditorDialog.Close',
+				function (editor, params)
+				{
+					if (params.isCancelled)
+					{
+						this.moveItem(
+							this.itemMoving.item,
+							this.itemMoving.oldColumn,
+							this.itemMoving.oldNextSiblingId
+						);
+					}
+				}.bind(this)
+			);
+
+			BX.Event.EventEmitter.subscribe(
+				'Crm.Kanban.Column:onItemAdded',
+				function(event){
+					if (this.itemMoving && this.items[this.itemMoving.item.id] !== undefined)
+					{
+						this.onItemMoved(
+							event.data.item,
+							event.data.targetColumn,
+							event.data.beforeItem
+						);
+					}
+				}.bind(this)
+			);
+
+			this.isBindEvents = true;
+		}
 	},
 
 	/**
@@ -672,7 +710,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * @param {boolean} force Force load without filter.
 	 * @returns {void}
 	 */
-	loadNew: function(id, force, changePriceInColumn)
+	loadNew: function(id, force)
 	{
 		var gridData = this.getData();
 		var entityId = typeof id !== "undefined" ? id : 0;
@@ -1218,6 +1256,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onApplyFilter: function(filterId, values, filterInstance, promise, params)
 	{
+		this.itemMoving = null;
 		this.fadeOut();
 		if (typeof params !== "undefined")
 		{
@@ -2223,12 +2262,12 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 		else
 		{
-			// move visual and save
-			this.onItemMoved(
-				this.itemMoving.item,
-				this.itemMoving.newColumn,
-				this.itemMoving.newNextSibling
-			);
+			// // move visual and save
+			// this.onItemMoved(
+			// 	this.itemMoving.item,
+			// 	this.itemMoving.newColumn,
+			// 	this.itemMoving.newNextSibling
+			// );
 			if (!stilError)
 			{
 				this.moveItem(

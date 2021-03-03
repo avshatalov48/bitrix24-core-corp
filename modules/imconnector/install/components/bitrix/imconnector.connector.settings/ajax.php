@@ -1,98 +1,87 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?if (
+	!defined('B_PROLOG_INCLUDED') ||
+	B_PROLOG_INCLUDED !== true
+) die();
 
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc,
-	\Bitrix\ImOpenLines\Model\QueueTable;
+	\Bitrix\Main\Engine\Controller;
 
-class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
+use \Bitrix\Im;
+
+use \Bitrix\Imopenlines\Limit,
+	\Bitrix\ImOpenLines\Config,
+	\Bitrix\ImOpenLines\Security,
+	\Bitrix\ImOpenLines\Model\QueueTable,
+	\Bitrix\ImOpenLines\Model\ConfigTable;
+
+class ConnectorSettingsAjaxController extends Controller
 {
 	/**
-	 * Saves user list for current open line by ajax request
+	 * Saves user list for current open line by ajax request.
 	 *
-	 * @param int $lineId
+	 * @param $configId
 	 * @param array $queue
 	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function saveUsersAction($lineId, array $queue)
+	public function saveUsersAction($configId, array $queue)
 	{
-		$this->includeModules();
+		$configId = (int)$configId;
 
-		$lineId = intval($lineId);
-		$config['QUEUE'] = array();
-		$arAccessCodes = array();
-
-		foreach ($queue as $userCode)
+		if(
+			Loader::includeModule('imopenlines')
+		)
 		{
-			$userId = mb_substr($userCode, 1);
-			$userId = intval($userId);
-
-			if (\Bitrix\Im\User::getInstance($userId)->isExtranet())
-				continue;
-
-			$config['QUEUE'][] = $userId;
-
-			$result = QueueTable::getList([
-				'filter' => [
-					'=USER_ID' => $userId,
-					'=CONFIG_ID' => $lineId
-				]
-			]);
-			while ($row = $result->fetch())
+			if(Config::canEditLine($configId))
 			{
-				$config['QUEUE_USERS_FIELDS'][$userId] = $row;
+				$config['QUEUE'] = [];
+				foreach ($queue as $entity)
+				{
+					$config['QUEUE'][] = [
+						'ENTITY_TYPE' => $entity['type'],
+						'ENTITY_ID' => $entity['id']
+					];
+
+					if($entity['type'] === 'user')
+					{
+						$users[] = $entity['id'];
+					}
+				}
+
+				$configManager = new Config();
+				$result = $configManager->update($configId, $config);
 			}
-
-			$arAccessCodes[] = $userCode;
+			else
+			{
+				$result = [
+					'error' => 'Permission denied'
+				];
+			}
 		}
-
-		\Bitrix\Main\FinderDestTable::merge(
-			array(
-				"CONTEXT" => "IMCONNECTOR",
-				"CODE" => \Bitrix\Main\FinderDestTable::convertRights($arAccessCodes, array('U' . $GLOBALS["USER"]->GetId()))
-			)
-		);
-
-		$configManager = new \Bitrix\ImOpenLines\Config();
-
-		return $configManager->update($lineId, $config);
-	}
-
-	/**
-	 * Save and get formatted data about users in line
-	 *
-	 * @param $lineId
-	 * @param array $queue
-	 *
-	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public function getSaveUsersAction($lineId, array $queue)
-	{
-		$this->includeModules();
-		$success = $this->saveUsersAction($lineId, $queue);
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		$config = $configManager->get($lineId);
-		$return['success'] = $success;
-		$users = CSocNetLogDestination::GetUsers(array('id' => $config['QUEUE']));
-
-		foreach ($config['QUEUE'] as $queue)
+		else
 		{
-			$key = 'U' . $queue;
-			$return['users'][$key] = $users[$key];
+			$result = [
+				'error' => 'Failed to load module'
+			];
 		}
 
-		return $return;
+
+		return $result;
 	}
 
 	/**
-	 * Activate line with checking possibility to do this
+	 * Activate line with checking possibility to do this.
 	 *
 	 * @param $lineId
-	 *
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function activateLineAction($lineId)
 	{
@@ -104,7 +93,7 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 
 			if ($canActivate['result'])
 			{
-				$config = new \Bitrix\ImOpenLines\Config();
+				$config = new Config();
 				$result['result'] = $config->setActive($lineId);
 			}
 			else
@@ -117,12 +106,14 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * Return current line data
+	 * Return current line data.
 	 *
 	 * @param $lineId
-	 *
-	 * @return array
+	 * @return array|false
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getConfigItemAction($lineId)
 	{
@@ -130,18 +121,18 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 
 		if (Loader::includeModule('imopenlines'))
 		{
-			$result = \Bitrix\ImOpenLines\Model\ConfigTable::getList(
-				array(
-					'select' => array(
+			$result = ConfigTable::getList(
+				[
+					'select' => [
 						'ID',
 						'NAME' => 'LINE_NAME',
 						'IS_LINE_ACTIVE' => 'ACTIVE'
-					),
-					'filter' => array(
+					],
+					'filter' => [
 						'=TEMPORARY' => 'N',
 						'=ID' => $lineId
-					)
-				)
+					]
+				]
 			)->fetch();
 		}
 
@@ -150,32 +141,34 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 
 	/**
 	 * @param $lineId
-	 *
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function checkCanActiveLine($lineId)
 	{
-		Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/imconnector.connector.settings/ajax.php');
+		Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/imconnector.connector.settings/ajax.php');
 
 		$result['result'] = true;
 
 		if (Loader::includeModule('imopenlines'))
 		{
-			$canModifyLine = \Bitrix\ImOpenLines\Security\Helper::canCurrentUserModifyLine();
+			$canModifyLine = Security\Helper::canCurrentUserModifyLine();
 
 			if ($canModifyLine)
 			{
-				$linesLimit = \Bitrix\Imopenlines\Limit::getLinesLimit();
+				$linesLimit = Limit::getLinesLimit();
 
 				if ($linesLimit > 0)
 				{
-					$activeLinesCount = \Bitrix\ImOpenLines\Model\ConfigTable::getList(
-						array(
-							'select' => array('ID'),
-							'filter' => array('ACTIVE' => 'Y', '!=ID' => $lineId, '=TEMPORARY' => 'N'),
+					$activeLinesCount = ConfigTable::getList(
+						[
+							'select' => ['ID'],
+							'filter' => ['ACTIVE' => 'Y', '!=ID' => $lineId, '=TEMPORARY' => 'N'],
 							'count_total' => true
-						)
+						]
 					)->getCount();
 
 					if ($activeLinesCount >= $linesLimit)
@@ -197,18 +190,5 @@ class ConnectorSettingsAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	private function includeModules()
-	{
-		$moduleList = array('im', 'imopenlines', 'socialnetwork');
-
-		foreach ($moduleList as $module)
-		{
-			Loader::includeModule($module);
-		}
 	}
 }

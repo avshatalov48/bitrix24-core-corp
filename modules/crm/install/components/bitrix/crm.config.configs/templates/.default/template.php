@@ -42,7 +42,7 @@ $arTabs[] = array(
 
 $arTabs[] = array(
 	'id' => 'tab_rest',
-	'name' => GetMessage('CRM_TAB_REST'),
+	'name' => GetMessage('CRM_TAB_REST_2'),
 	'title' => GetMessage('CRM_TAB_REST_TITLE'),
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_rest']

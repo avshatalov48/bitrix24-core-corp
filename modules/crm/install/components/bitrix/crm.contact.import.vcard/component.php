@@ -1099,7 +1099,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 //IMPORT_EXPORT -->
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'IMPORT_DEFAULT_EXPORT',
-	'name' => GetMessage('CRM_FIELD_IMPORT_DEFAULT_EXPORT'),
+	'name' => GetMessage('CRM_FIELD_IMPORT_DEFAULT_EXPORT_NEW'),
 	'type' => 'checkbox',
 	'value' => false
 );

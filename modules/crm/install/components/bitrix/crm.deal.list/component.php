@@ -496,9 +496,9 @@ if (!$bInternal && $arParams['IS_RECURRING'] !== 'Y')
 				'STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::PROCESS)
 			)
 		),
-		'filter_won' => array(
+		'filter_closed' => array(
 			'name' => GetMessage('CRM_PRESET_WON'),
-			'fields' => array('STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS))
+			'fields' => array('STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE))
 		),
 	);
 }

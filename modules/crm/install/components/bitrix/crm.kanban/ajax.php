@@ -54,7 +54,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$this->addError(new \Bitrix\Main\Error('Entity not found'));
 		}
-		elseif(!$entity->checkReadPermissions())
+		elseif(!$entity->checkReadPermissions(0))
 		{
 			$this->addError(new \Bitrix\Main\Error('Access denied'));
 		}

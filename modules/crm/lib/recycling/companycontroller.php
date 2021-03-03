@@ -448,7 +448,7 @@ class CompanyController extends BaseController
 		$this->eraseSuspendedMultiFields($recyclingEntityID);
 		$this->eraseSuspendedAddresses(
 			$recyclingEntityID,
-			array(Crm\EntityAddress::Primary, Crm\EntityAddress::Registered)
+			array(Crm\EntityAddressType::Primary, Crm\EntityAddressType::Registered)
 		);
 		$this->eraseSuspendedTimeline($recyclingEntityID);
 		$this->eraseSuspendedDocuments($recyclingEntityID);

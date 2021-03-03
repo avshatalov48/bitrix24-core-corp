@@ -106,12 +106,6 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 		}
 
 		$countries = EntityPreset::getCountryList();
-		$addressTypes = array();
-		foreach(RequisiteAddress::getClientTypeInfos() as $typeInfo)
-		{
-			$addressTypes[$typeInfo['id']] = $typeInfo['name'];
-		}
-
 		$fieldNamePrefix = Loc::getMessage('CRM_REQUISITE_FILTER_PREFIX');
 		foreach($countrySort as $countryId)
 		{
@@ -142,7 +136,7 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 							)
 						);
 					}
-					elseif(!empty($addressTypes))
+					else
 					{
 						$addressTypeId = RequisiteAddress::Undefined;
 						$addressTypeName = $fieldTitles[$fieldName][$countryId];

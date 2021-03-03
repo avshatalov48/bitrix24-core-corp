@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Category;
+use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Main;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Entity\Query;
@@ -907,10 +908,16 @@ class DealCategory
 
 		if($ID <= 0)
 		{
-			return \CCrmStatus::GetStatus('DEAL_STAGE');
+			$infos = \CCrmStatus::GetStatus('DEAL_STAGE');
+		}
+		else
+		{
+			$infos = \CCrmStatus::GetStatus(self::convertToStatusEntityID($ID));
 		}
 
-		return \CCrmStatus::GetStatus(self::convertToStatusEntityID($ID));
+		$infos = PhaseColorScheme::fillDefaultColors($infos);
+
+		return $infos;
 	}
 
 	/**

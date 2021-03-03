@@ -25,8 +25,8 @@ $crmFormSuccessUrl = $data['CRM_FORM_RESULT_SUCCESS_URL'];
 
 
 $APPLICATION->SetTitle(Loc::getMessage('CRM_ADS_LEADADS_CAPTION_' . $typeUpped));
-Extension::load('ui.buttons');
-Extension::load('ui.hint');
+
+Extension::load(['ui.buttons','ui.hint','seo.ads.login']);
 
 if (!empty($arParams['CONTAINER_NODE_ID']))
 {
@@ -64,7 +64,7 @@ else
 		<div class="crm-ads-forms-social crm-ads-forms-social-<?=$type?>">
 			<a
 				href="javascript: void(0);"
-				onclick="BX.util.popup('<?=htmlspecialcharsbx($provider['AUTH_URL'])?>', 800, 600);"
+				onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($provider))?>).login();"
 				class="webform-small-button webform-small-button-transparent">
 				<?=Loc::getMessage('CRM_ADS_LEADADS_LOGIN')?>
 			</a>

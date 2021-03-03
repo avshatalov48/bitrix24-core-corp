@@ -7,6 +7,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 
@@ -228,7 +229,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_MAILBOX',
 				'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
 				'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
-				'PERSONAL_PROFESSION', 'WORK_NOTES'
+				'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE'
 			),
 			"SELECT" => array("UF_DEPARTMENT", "UF_PHONE_INNER", "UF_SKYPE", "UF_SKYPE_LINK", "UF_ZOOM")
 		);
@@ -241,6 +242,13 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			if ($value === null)
 			{
 				$user[$field] = "";
+			}
+
+			if ($field === "LAST_ACTIVITY_DATE" && $value != '')
+			{
+				$user["LAST_ACTIVITY_DATE_FROM_DB"] = $value;
+				$user[$field] = DateTime::createFromTimestamp(MakeTimeStamp($value, 'YYYY-MM-DD HH:MI:SS'));
+				$user[$field] = FormatDateFromDB($user[$field]);
 			}
 		}
 
@@ -274,7 +282,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			$user["PERSONAL_WWW"] = ((mb_strpos($user["PERSONAL_WWW"], "http") === false) ? "http://" : "").$user["PERSONAL_WWW"];
 		}
 
-		$user["ONLINE_STATUS"] = \CUser::GetOnlineStatus($this->arParams["ID"], MakeTimeStamp($user["LAST_ACTIVITY_DATE"], "YYYY-MM-DD HH-MI-SS"));
+		$user["ONLINE_STATUS"] = \CUser::GetOnlineStatus($this->arParams["ID"],
+			MakeTimeStamp($user["LAST_ACTIVITY_DATE_FROM_DB"], "YYYY-MM-DD HH-MI-SS"));
 
 		$user["SHOW_SONET_ADMIN"] = false;
 		if(
@@ -346,7 +355,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			'LOGIN', 'PASSWORD', 'CONFIRM_PASSWORD',
 			'PERSONAL_FAX',  'PERSONAL_MAILBOX', 'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
 			'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
-			'PERSONAL_PROFESSION', 'WORK_NOTES'
+			'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE'
 		);
 
 		$newFields = array();

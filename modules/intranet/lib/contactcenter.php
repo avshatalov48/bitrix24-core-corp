@@ -385,27 +385,28 @@ class ContactCenter
 						"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap[$code]
 					);
 
+					$link = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
 					if (empty($connector["link"]))
 					{
-						$itemsList[$code]["LINK"] = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
+						$itemsList[$code]["LINK"] = $link;
 					}
 					else
 					{
 						$itemsList[$code]["LIST"] =  $this->getConnectorListItem($code, $configList, $statusList);
 						if (empty($itemsList[$code]["LIST"]))
 						{
-							$itemsList[$code]["LINK"] = \CUtil::JSEscape( $linkTemplate . "?ID=" . $code);
+							$itemsList[$code]["LINK"] = $link;
 						}
 					}
 
-					if ($code == "vkgroup")
+					if ($code === "vkgroup")
 					{
 						$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selectedOrder);
 
 						//Hack for vkgroup order
 						if ($isAddItemToList)
 						{
-							$uri = new Uri($itemsList["vkgroup"]["LINK"]);
+							$uri = new Uri($link);
 							$uri->addParams(array("group_orders" => "Y"));
 							$itemsList["vkgrouporder"] = array(
 								"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_VK_ORDER"),
@@ -514,7 +515,7 @@ class ContactCenter
 
 			$itemsList = array_merge($itemsList, array(
 				'ccplacement' => array(
-					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_CC_PLACEMENT"),
+					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_CC_PLACEMENT_2"),
 					"LOGO_CLASS" => "ui-icon ui-icon-service-rest-contact-center",
 					"SELECTED" => false
 				),
@@ -871,7 +872,7 @@ class ContactCenter
 					"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
 					"ID" => 0,
 					'DELIMITER_BEFORE' => true,
-					"ONCLICK" => "BX.OpenLinesConfigEdit.createLineAction('{$openLineSliderPath}', true);",
+					"ONCLICK" => "BX.ImConnectorLinesConfigEdit.createLineAction('{$openLineSliderPath}', true);",
 				];
 			}
 		}

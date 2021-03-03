@@ -1,16 +1,21 @@
 <?php
 namespace Bitrix\ImBot\Bot;
 
-use Bitrix\Im;
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Im;
+use Bitrix\ImBot;
 
 Loc::loadMessages(__FILE__);
 
-class Support24 extends Network
+class Support24 extends Network implements NetworkBot, MenuBot
 {
 	const BOT_CODE = "support24";
+
+	public const COMMAND_SUPPORT24 = 'support24';
+	public const COMMAND_SUPPORT24_ACTIVATE_PARTNER = 'activatePartnerSupport';
+	public const COMMAND_SUPPORT24_DEACTIVATE_PARTNER = 'deactivatePartnerSupport';
+	public const COMMAND_SUPPORT24_DECLINE_PARTNER_REQUEST = 'declinePartnerRequest';
 
 	const SUPPORT_LEVEL_NONE = 'none';
 	const SUPPORT_LEVEL_FREE = 'free';
@@ -40,6 +45,7 @@ class Support24 extends Network
 	const START_MESSAGE_DAYS_DEPTH = 30;
 
 	public const OPTION_BOT_ID = 'support24_bot_id';
+	public const OPTION_BOT_WELCOME_SHOWN = 'support24_welcome_message';
 	public const OPTION_BOT_SUPPORT_LEVEL = 'support24_support_level';
 	public const OPTION_BOT_PAID_CODE = 'support24_paid_code';
 	public const OPTION_BOT_FREE_CODE = 'support24_free_code';
@@ -54,9 +60,154 @@ class Support24 extends Network
 	public const OPTION_BOT_PAID_NAME = 'support24_paid_name';
 	public const OPTION_BOT_PAID_DESC = 'support24_paid_desc';
 	public const OPTION_BOT_PAID_AVATAR = 'support24_paid_avatar';
+	public const OPTION_BOT_FREE_MENU = 'support24_free_menu';
+	public const OPTION_BOT_PAID_MENU = 'support24_paid_menu';
+	public const OPTION_BOT_FREE_MESSAGES = "support24_free_messages";
+	public const OPTION_BOT_PAID_MESSAGES = "support24_paid_messages";
 
 	private static $isAdmin = Array();
 	private static $isIntegrator = Array();
+
+	//region Register
+
+	/**
+	 * Register bot at portal.
+	 *
+	 * @param array $params
+	 *
+	 * @return bool|int
+	 */
+	public static function register(array $params = Array())
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return false;
+		}
+
+		$botId = parent::join(self::getBotCode());
+		if (!$botId)
+		{
+			return false;
+		}
+
+		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ID, $botId);
+		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_SUPPORT_LEVEL, self::getSupportLevel());
+
+		self::updateBotProperties();
+
+		$eventManager = Main\EventManager::getInstance();
+		$eventManager->registerEventHandlerCompatible(
+			"main",
+			"OnAfterSetOption_~controller_group_name",
+			self::MODULE_ID,
+			__CLASS__,
+			"onAfterLicenseChange"/** @see ImBot\Bot\Support24::onAfterLicenseChange */
+		);
+		$eventManager->registerEventHandlerCompatible(
+			"main",
+			"OnAfterUserAuthorize",
+			self::MODULE_ID,
+			__CLASS__,
+			"onAfterUserAuthorize"/** @see ImBot\Bot\Support24::onAfterUserAuthorize */
+		);
+
+		self::scheduleAction(1, self::SCHEDULE_ACTION_WELCOME, '', 10);
+
+		Im\Command::register([
+			'MODULE_ID' => self::MODULE_ID,
+			'BOT_ID' => $botId,
+			'COMMAND' => self::COMMAND_SUPPORT24,
+			'HIDDEN' => 'Y',
+			'CLASS' => __CLASS__,
+			'METHOD_COMMAND_ADD' => 'onCommandAdd'/** @see ImBot\Bot\Support24::onCommandAdd */
+		]);
+
+		Im\Command::register([
+			'MODULE_ID' => self::MODULE_ID,
+			'BOT_ID' => $botId,
+			'COMMAND' => self::COMMAND_MENU,
+			'HIDDEN' => 'Y',
+			'CLASS' => __CLASS__,
+			'METHOD_COMMAND_ADD' => 'onCommandAdd'/** @see ImBot\Bot\Support24::onCommandAdd */
+		]);
+
+		return $botId;
+	}
+
+	/**
+	 * Unregister bot at portal.
+	 *
+	 * @param string $code Open Line Id.
+	 * @param bool $notifyController Send unregister notification request to controller.
+	 *
+	 * @return bool
+	 */
+	public static function unRegister($code = '', $notifyController = true)
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		$result = false;
+		$code = self::getBotCode();
+		$botId = self::getBotId();
+
+		if ($code !== '')
+		{
+			self::sendRequestFinalizeSession();
+
+			$result = parent::unRegister($code, $notifyController);
+
+			if (is_array($result) && isset($result['result']))
+			{
+				$result = $result['result'];
+				if ($result)
+				{
+					Main\Config\Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$code.'_bot_id']);
+				}
+			}
+		}
+
+		if ($result === false && $botId > 0)
+		{
+			$result = Im\Bot::unRegister(['BOT_ID' => $botId]);
+		}
+
+		if ($result)
+		{
+			self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
+
+			Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ID, 0);
+
+			$eventManager = Main\EventManager::getInstance();
+			$eventManager->unregisterEventHandler(
+				"main",
+				"OnAfterSetOption_~controller_group_name",
+				self::MODULE_ID,
+				__CLASS__,
+				"onAfterLicenseChange"
+			);
+			$eventManager->unregisterEventHandler(
+				"main",
+				"OnAfterUserAuthorize",
+				self::MODULE_ID,
+				__CLASS__,
+				"onAfterUserAuthorize"
+			);
+		}
+
+		return $result;
+	}
+
+	//endregion
+
+	//region Param getters
 
 	/**
 	 * @return string
@@ -128,7 +279,7 @@ class Support24 extends Network
 	/**
 	 * @return string
 	 */
-	private static function getBotCode()
+	public static function getBotCode()
 	{
 		if (Main\Loader::includeModule('bitrix24'))
 		{
@@ -156,95 +307,6 @@ class Support24 extends Network
 		}
 
 		return $code;
-	}
-
-	/**
-	 * Register bot at portal.
-	 *
-	 * @param array $params
-	 *
-	 * @return bool|int
-	 */
-	public static function register(array $params = Array())
-	{
-		if (!Main\Loader::includeModule('im'))
-		{
-			return false;
-		}
-
-		if (!Main\Loader::includeModule('bitrix24'))
-		{
-			return false;
-		}
-
-		$botId = parent::join(self::getBotCode());
-		if (!$botId)
-		{
-			return false;
-		}
-
-		Main\Config\Option::set('imbot', self::OPTION_BOT_ID, $botId);
-		Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_LEVEL, self::getSupportLevel());
-
-		self::updateBotProperties();
-
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->registerEventHandlerCompatible("main", "OnAfterSetOption_~controller_group_name", "imbot", "\Bitrix\ImBot\Bot\Support24", "onAfterLicenseChange");
-		$eventManager->registerEventHandlerCompatible("main", "OnAfterUserAuthorize", "imbot", "\Bitrix\ImBot\Bot\Support24", "onAfterUserAuthorize");
-
-		self::scheduleAction(1, self::SCHEDULE_ACTION_WELCOME, '', 10);
-
-		\Bitrix\Im\Command::register(Array(
-			'MODULE_ID' => self::MODULE_ID,
-			'BOT_ID' => $botId,
-			'COMMAND' => 'support24',
-			'HIDDEN' => 'Y',
-			'CLASS' => __CLASS__,
-			'METHOD_COMMAND_ADD' => 'onCommandAdd'/** @see \Bitrix\ImBot\Bot\Support24::onCommandAdd */
-		));
-
-		return $botId;
-	}
-
-	/**
-	 * Unregister bot at portal.
-	 *
-	 * @param string $code
-	 * @param bool $serverRequest
-	 *
-	 * @return array|bool
-	 */
-	public static function unRegister($code = '', $serverRequest = true)
-	{
-		if (!Main\Loader::includeModule('im'))
-			return false;
-
-		self::sendRequestFinalizeSession();
-
-		$code = self::getBotCode();
-		$botId = self::getBotId();
-
-		$result = \Bitrix\Im\Bot::unRegister(Array('BOT_ID' => $botId));
-		if (!$result)
-		{
-			return false;
-		}
-
-		self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
-
-		Main\Config\Option::set('imbot', self::OPTION_BOT_ID, 0);
-		Main\Config\Option::set('imbot', "network_".$code."_bot_id", 0);
-
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->unregisterEventHandler("main", "OnAfterSetOption_~controller_group_name", "imbot", "\Bitrix\ImBot\Bot\Support24", "onAfterLicenseChange");
-		$eventManager->unregisterEventHandler("main", "OnAfterUserAuthorize", "imbot", "\Bitrix\ImBot\Bot\Support24", "onAfterUserAuthorize");
-
-		if ($serverRequest)
-		{
-			$result = self::sendUnregisterRequest($code, $botId);
-		}
-
-		return $result;
 	}
 
 	/**
@@ -294,35 +356,42 @@ class Support24 extends Network
 	}
 
 	/**
-	 * @return int
+	 * Checks if bot has ITR menu.
+	 * @return bool
 	 */
-	public static function getPartnerId()
+	public static function hasBotMenu()
 	{
-		return 0;
+		return !empty(self::getBotMenu());
 	}
 
 	/**
-	 * @return string
+	 * Returns stored data for ITR menu.
+	 * @return array
 	 */
-	public static function getPartnerName()
+	public static function getBotMenu()
 	{
-		return '';
-	}
+		static $structure;
+		if ($structure === null)
+		{
+			$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
+				self::OPTION_BOT_FREE_MENU : self::OPTION_BOT_PAID_MENU;
 
-	/**
-	 * @return string
-	 */
-	public static function getPartnerCode()
-	{
-		return Main\Config\Option::get("bitrix24", "partner_ol", "");
-	}
+			$json = Main\Config\Option::get('imbot', $optionName, '');
 
-	/**
-	 * @return string
-	 */
-	public static function getPartnerData()
-	{
-		return '';
+			$structure = [];
+			if ($json)
+			{
+				try
+				{
+					$structure = Main\Web\Json::decode($json);
+				}
+				catch (Main\ArgumentException $e)
+				{
+				}
+			}
+		}
+
+		return $structure;
 	}
 
 	/**
@@ -575,10 +644,22 @@ class Support24 extends Network
 	}
 
 	/**
+	 * @return bool
+	 */
+	public static function isNeedUpdateBotAvatarAfterNewMessage()
+	{
+		return (bool)self::getBotAvatar() !== true;
+	}
+
+	//endregion
+
+	//region Event handlers
+
+	/**
 	 * @param string $command
 	 * @param array $params
 	 *
-	 * @return \Bitrix\ImBot\Error|array
+	 * @return ImBot\Error|array
 	 */
 	public static function onAnswerAdd($command, $params)
 	{
@@ -589,7 +670,7 @@ class Support24 extends Network
 	 * @param string $command
 	 * @param array $params
 	 *
-	 * @return \Bitrix\ImBot\Error|array
+	 * @return ImBot\Error|array
 	 */
 	public static function onReceiveCommand($command, $params)
 	{
@@ -597,18 +678,10 @@ class Support24 extends Network
 		//
 		// if (isset($params['LINE']['CODE']) && $params['LINE']['CODE'] !== self::getBotCode())
 		// {
-		//     return new \Bitrix\ImBot\Error(__METHOD__, 'SUPPORT_CODE_MISMATCH', 'Support code is not correct for this portal');
+		//     return new ImBot\Error(__METHOD__, 'SUPPORT_CODE_MISMATCH', 'Support code is not correct for this portal');
 		// }
 
 		return parent::onReceiveCommand($command, $params);
-	}
-
-	/**
-	 * @return bool
-	 */
-	public static function isNeedUpdateBotAvatarAfterNewMessage()
-	{
-		return (bool)self::getBotAvatar() !== true;
 	}
 
 	/**
@@ -696,7 +769,13 @@ class Support24 extends Network
 			return true;
 		}
 
-		\CUserOptions::SetOption("imbot", 'support24_welcome_message', time(), false, $messageFields['USER_ID']);
+		\CUserOptions::SetOption(
+			self::MODULE_ID,
+			self::OPTION_BOT_WELCOME_SHOWN,
+			time(),
+			false,
+			$messageFields['USER_ID']
+		);
 
 		self::sendMessage(Array(
 			'DIALOG_ID' => $messageFields['USER_ID'],
@@ -728,10 +807,11 @@ class Support24 extends Network
 		if (!empty($messageFields['DIALOG_ID']))
 		{
 			self::startDialogSession([
-				'BOT_ID' => self::getBotId(),
-				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'BOT_ID' => static::getBotId(),
+				'DIALOG_ID' => (int)$messageFields['DIALOG_ID'],
 				'GREETING_SHOWN' => 'Y',
 			]);
+			self::stopMenuTrack((int)$messageFields['DIALOG_ID']);
 		}
 
 		return parent::operatorMessageAdd($messageId, $messageFields);
@@ -746,8 +826,11 @@ class Support24 extends Network
 	public static function onMessageAdd($messageId, $messageFields)
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
+		// check restrictions
 		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
 		{
 			$groupLimited = self::getMessage('GROUP_LIMITED');
@@ -767,8 +850,8 @@ class Support24 extends Network
 			return true;
 		}
 
-		$message = '';
-
+		$allowShowMenu = self::hasBotMenu();
+		$warningRestrictionMessage = '';
 		if (
 			self::isActivePartnerSupport() &&
 			self::isUserIntegrator($messageFields['FROM_USER_ID'])
@@ -778,7 +861,8 @@ class Support24 extends Network
 			if (!Partner24::allowIntegratorAccessAlongSupport24())
 			{
 				// show message about partner OL
-				$message = self::getMessage('MESSAGE_PARTNER_INTEGRATOR');
+				$warningRestrictionMessage = self::getMessage('MESSAGE_PARTNER_INTEGRATOR');
+				$allowShowMenu = false;
 			}
 		}
 		elseif (
@@ -786,7 +870,8 @@ class Support24 extends Network
 			!self::isUserIntegrator($messageFields['FROM_USER_ID'])
 		)
 		{
-			$message = self::getMessage('MESSAGE_PARTNER');
+			$warningRestrictionMessage = self::getMessage('MESSAGE_PARTNER');
+			$allowShowMenu = false;
 		}
 		else if (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
 		{
@@ -794,41 +879,83 @@ class Support24 extends Network
 			{
 				if (!self::isActiveFreeSupportForUser($messageFields['FROM_USER_ID']))
 				{
-					$message = self::getMessage('MESSAGE_LIMITED');
+					$warningRestrictionMessage = self::getMessage('MESSAGE_LIMITED');
 				}
 			}
 			else if (!self::isUserIntegrator($messageFields['FROM_USER_ID']))
 			{
-				$message = self::getMessage('MESSAGE_END');
+				$warningRestrictionMessage = self::getMessage('MESSAGE_END');
 			}
 		}
 		else if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
 		{
 			if (!self::isActivePaidSupportForUser($messageFields['FROM_USER_ID']))
 			{
-				$message = self::getMessage('MESSAGE_LIMITED');
+				$warningRestrictionMessage = self::getMessage('MESSAGE_LIMITED');
 			}
 		}
 
-		if (!empty($message))
+		// ITR menu on before any dialog starts
+		if ($allowShowMenu)
 		{
+			if (!self::isMenuTrackFinished((int)$messageFields['FROM_USER_ID']))
+			{
+				$prevMenuState = self::getMenuState((int)$messageFields['FROM_USER_ID']);
+				$lastMenuItemId = is_array($prevMenuState['track']) ? end($prevMenuState['track']) : null;
+
+				if (!$lastMenuItemId && !empty($warningRestrictionMessage))
+				{
+					// show restriction warning message first
+					self::sendMessage(array(
+						'DIALOG_ID' => $messageFields['FROM_USER_ID'],
+						'MESSAGE' => $warningRestrictionMessage,
+						'SYSTEM' => 'N',
+						'URL_PREVIEW' => 'N',
+					));
+				}
+
+				if ($lastMenuItemId !== self::COMMAND_MENU_EXIT)
+				{
+					$menuState = self::showMenu(
+						[
+							'BOT_ID' => self::getBotId(),
+							'DIALOG_ID' => $messageFields['FROM_USER_ID'],
+						],
+						true
+					);
+					$menuState['messages'][] = $messageId;
+					self::saveMenuState(
+						(int)$messageFields['FROM_USER_ID'],
+						$menuState
+					);
+
+					if (!self::isMenuTrackFinished((int)$messageFields['FROM_USER_ID'], $menuState))
+					{
+						return false;//continue menu travel
+					}
+				}
+			}
+		}
+		elseif (!empty($warningRestrictionMessage))
+		{
+			// show restriction warning message
 			self::sendMessage(Array(
 				'DIALOG_ID' => $messageFields['FROM_USER_ID'],
-				'MESSAGE' => $message,
+				'MESSAGE' => $warningRestrictionMessage,
 				'SYSTEM' => 'N',
-				'URL_PREVIEW' => 'N'
+				'URL_PREVIEW' => 'N',
 			));
 
 			return true;
 		}
-
-		if (!empty($messageFields['DIALOG_ID']))
+		elseif (!empty($messageFields['DIALOG_ID']))
 		{
 			self::startDialogSession([
 				'BOT_ID' => self::getBotId(),
 				'DIALOG_ID' => $messageFields['DIALOG_ID'],
 				'GREETING_SHOWN' => 'Y',
 			]);
+			self::stopMenuTrack((int)$messageFields['DIALOG_ID']);
 		}
 
 		return parent::onMessageAdd($messageId, $messageFields);
@@ -878,7 +1005,29 @@ class Support24 extends Network
 			}
 		}
 
-		if (self::allowSendStartMessage($params))
+		// ITR menu on before any dialog starts
+		if (self::hasBotMenu())
+		{
+			if (!self::isMenuTrackFinished((int)$params['USER_ID']))
+			{
+				$menuState = self::showMenu([
+					'BOT_ID' => $params['BOT_ID'],
+					'DIALOG_ID' => $params['USER_ID'],
+				]);
+				self::saveMenuState(
+					(int)$params['USER_ID'],
+					$menuState
+				);
+
+				if (!self::isMenuTrackFinished((int)$params['USER_ID'], $menuState))
+				{
+					return false;//continue menu travel
+				}
+			}
+		}
+
+		// Show greeting message on before any dialog starts
+		elseif (self::allowSendStartMessage($params))
 		{
 			// Message for only three state: free, paid and partner.
 			$message = '';
@@ -918,6 +1067,7 @@ class Support24 extends Network
 					'DIALOG_ID' => $params['USER_ID'],
 					'GREETING_SHOWN' => 'Y',
 				]);
+				self::stopMenuTrack((int)$params['USER_ID']);
 			}
 		}
 
@@ -962,19 +1112,20 @@ class Support24 extends Network
 		return parent::finishDialogSession($params);
 	}
 
+
 	/**
 	 * Checks if starting message at this dialog has been sent.
 	 *
-	 * @param array $params
-	 * @param int $params['BOT_ID'] Bot id.
-	 * @param int $params['DIALOG_ID'] Dialg id.
-	 * @param int $params['USER_ID'] User id.
-	 *
+	 * @param array $params <pre>[
+	 * 	(int) BOT_ID Bot id.
+	 * 	(int) DIALOG_ID Dialg id.
+	 * 	(int) USER_ID User id.
+	 * ]</pre>
 	 * @return bool
 	 */
-	public static function allowSendStartMessage($params)
+	public static function allowSendStartMessage(array $params)
 	{
-		$res = \Bitrix\ImBot\Model\NetworkSessionTable::getList([
+		$res = ImBot\Model\NetworkSessionTable::getList([
 			'select' => [
 				'GREETING_SHOWN',
 			],
@@ -1003,7 +1154,7 @@ class Support24 extends Network
 	{
 		if (!empty($params['BOT_ID']) && !empty($params['USER_ID']))
 		{
-			$res = \Bitrix\ImBot\Model\NetworkSessionTable::getList([
+			$res = ImBot\Model\NetworkSessionTable::getList([
 				'select' => [
 					'ID'
 				],
@@ -1014,7 +1165,7 @@ class Support24 extends Network
 			]);
 			if ($sess = $res->fetch())
 			{
-				\Bitrix\ImBot\Model\NetworkSessionTable::delete($sess['ID']);
+				ImBot\Model\NetworkSessionTable::delete($sess['ID']);
 			}
 		}
 
@@ -1076,7 +1227,7 @@ class Support24 extends Network
 
 		if ($isPreviousSupportLevelPartner)
 		{
-			$previousCode = self::getPartnerCode();
+			$previousCode = Main\Config\Option::get("bitrix24", "partner_ol", "");
 		}
 
 		if ($isSupportLevelChange)
@@ -1100,7 +1251,7 @@ class Support24 extends Network
 		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
 		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
-		$http = self::instanceHttpClient(parent::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$http->query(
 			'clientChangeLicence',
 			Array(
@@ -1171,7 +1322,7 @@ class Support24 extends Network
 		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
 		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
-		$http = self::instanceHttpClient(parent::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$http->query(
 			'clientChangeLicence',
 			Array(
@@ -1191,76 +1342,84 @@ class Support24 extends Network
 	}
 
 	/**
-	 * @param int $messageId
-	 * @param array $messageFields
-	 *
+	 * @inheritDoc
 	 * @return bool
 	 */
 	public static function onCommandAdd($messageId, $messageFields)
 	{
 		if ($messageFields['SYSTEM'] === 'Y')
+		{
 			return false;
+		}
 
 		if ($messageFields['COMMAND_CONTEXT'] !== 'KEYBOARD')
+		{
 			return false;
+		}
 
 		if ($messageFields['MESSAGE_TYPE'] !== IM_MESSAGE_PRIVATE)
+		{
 			return false;
-
-		if ($messageFields['COMMAND'] !== 'support24')
-			return false;
+		}
 
 		if ($messageFields['TO_USER_ID'] != self::getBotId())
+		{
 			return false;
-
-		$messageParams = [];
-
-		if ($messageFields['COMMAND_PARAMS'] === 'activatePartnerSupport')
-		{
-			$keyboard = new \Bitrix\Im\Bot\Keyboard(self::getBotId());
-			$keyboard->addButton(Array(
-				"DISPLAY" => "LINE",
-				"TEXT" => self::getMessage('PARTNER_BUTTON_MANAGE'),
-				"LINK" => self::getMessage('PARTNER_BUTTON_MANAGE_URL'),
-				"CONTEXT" => "DESKTOP",
-			));
-			$messageParams['KEYBOARD'] = $keyboard;
-
-			$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
-			$attach->AddMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
-			$messageParams['ATTACH'] = $attach;
-
-			$result = Partner24::acceptRequest($messageFields['FROM_USER_ID']);
-			if (!$result)
-			{
-				return false;
-			}
 		}
-		else
+
+		if ($messageFields['COMMAND'] === self::COMMAND_SUPPORT24)
 		{
-			if ($messageFields['COMMAND_PARAMS'] === 'deactivatePartnerSupport')
+			$messageParams = [];
+
+			if ($messageFields['COMMAND_PARAMS'] === self::COMMAND_SUPPORT24_ACTIVATE_PARTNER)
 			{
-				Partner24::deactivate($messageFields['FROM_USER_ID']);
+				$keyboard = new Im\Bot\Keyboard(self::getBotId());
+				$keyboard->addButton(array(
+					"DISPLAY" => "LINE",
+					"TEXT" => self::getMessage('PARTNER_BUTTON_MANAGE'),
+					"LINK" => self::getMessage('PARTNER_BUTTON_MANAGE_URL'),
+					"CONTEXT" => "DESKTOP",
+				));
+				$messageParams[self::MESSAGE_PARAM_KEYBOARD] = $keyboard;
 
 				$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
 				$attach->AddMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
-				$messageParams['ATTACH'] = $attach;
-			}
-			else if ($messageFields['COMMAND_PARAMS'] === 'declinePartnerRequest')
-			{
-				Partner24::declineRequest($messageFields['FROM_USER_ID']);
+				$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
 
-				$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::PROBLEM);
-				$attach->AddMessage(self::getMessage('PARTNER_REQUEST_REJECTED'));
-				$messageParams['ATTACH'] = $attach;
+				$result = Partner24::acceptRequest($messageFields['FROM_USER_ID']);
+				if (!$result)
+				{
+					return false;
+				}
 			}
-			$messageParams['KEYBOARD'] = 'N';
+			else
+			{
+				if ($messageFields['COMMAND_PARAMS'] === self::COMMAND_SUPPORT24_DEACTIVATE_PARTNER)
+				{
+					Partner24::deactivate($messageFields['FROM_USER_ID']);
+
+					$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
+					$attach->AddMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
+					$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
+				}
+				elseif ($messageFields['COMMAND_PARAMS'] === self::COMMAND_SUPPORT24_DECLINE_PARTNER_REQUEST)
+				{
+					Partner24::declineRequest($messageFields['FROM_USER_ID']);
+
+					$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::PROBLEM);
+					$attach->AddMessage(self::getMessage('PARTNER_REQUEST_REJECTED'));
+					$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
+				}
+				$messageParams[self::MESSAGE_PARAM_KEYBOARD] = 'N';
+			}
+
+			\CIMMessageParam::Set($messageId, $messageParams);
+			\CIMMessageParam::SendPull($messageId, [self::MESSAGE_PARAM_ATTACH, self::MESSAGE_PARAM_KEYBOARD]);
+
+			return true;
 		}
 
-		\CIMMessageParam::Set($messageId, $messageParams);
-		\CIMMessageParam::SendPull($messageId, ['ATTACH', 'KEYBOARD']);
-
-		return true;
+		return parent::onCommandAdd($messageId, $messageFields);
 	}
 
 	/**
@@ -1350,7 +1509,7 @@ class Support24 extends Network
 				}
 				else
 				{
-					\Bitrix\Im\Model\MessageTable::add(Array(
+					Im\Model\MessageTable::add(Array(
 						'CHAT_ID' => $dialog['CHAT_ID'],
 						'AUTHOR_ID' => self::getBotId(),
 						'MESSAGE' => self::replacePlaceholders($message, $dialog['USER_ID'])
@@ -1420,7 +1579,7 @@ class Support24 extends Network
 				}
 				else
 				{
-					\Bitrix\Im\Model\MessageTable::add(Array(
+					Im\Model\MessageTable::add(Array(
 						'CHAT_ID' => $dialog['CHAT_ID'],
 						'AUTHOR_ID' => self::getBotId(),
 						'MESSAGE' => self::replacePlaceholders($message, $dialog['USER_ID'])
@@ -1466,7 +1625,7 @@ class Support24 extends Network
 
 		$message = $params['MESSAGE'] ?? '';
 
-		$http = self::instanceHttpClient(parent::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$http->query(
 			'clientRequestFinalizeSession',
 			Array(
@@ -1521,7 +1680,7 @@ class Support24 extends Network
 			return true;
 		}
 
-		$martaCheck = \CUserOptions::GetOption("imbot", 'support24_welcome_message', 0, $params['user_fields']['ID']);
+		$martaCheck = \CUserOptions::GetOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, 0, $params['user_fields']['ID']);
 		if ($martaCheck > 0)
 		{
 			$_SESSION['SUPPORT24'][$params['user_fields']['ID']]['WELCOME'] = $martaCheck;
@@ -1535,10 +1694,14 @@ class Support24 extends Network
 			self::scheduleAction($params['user_fields']['ID'], self::SCHEDULE_ACTION_WELCOME, '', 10);
 		}
 
-		\CUserOptions::SetOption("imbot", 'support24_welcome_message', time(), false, $params['user_fields']['ID']);
+		\CUserOptions::SetOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, time(), false, $params['user_fields']['ID']);
 
 		return true;
 	}
+
+	//endregion
+
+	//region Bot methods
 
 	/**
 	 * @return bool
@@ -1555,7 +1718,7 @@ class Support24 extends Network
 			return false;
 		}
 
-		$botCache = \Bitrix\Im\Bot::getCache(self::getBotId());
+		$botCache = Im\Bot::getCache(self::getBotId());
 		if ($botCache['APP_ID'] !== self::getBotCode())
 		{
 			Main\Config\Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id", 0);
@@ -1578,20 +1741,34 @@ class Support24 extends Network
 			]
 		];
 
-		$botData = \Bitrix\Im\User::getInstance(self::getBotId());
-		$userAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
+		$botData = Im\User::getInstance(self::getBotId());
+		$userAvatar = Im\User::uploadAvatar(self::getBotAvatar(), self::getBotId());
 		if ($userAvatar && $botData->getAvatarId() != $userAvatar)
 		{
 			$botParams['PROPERTIES']['PERSONAL_PHOTO'] = $userAvatar;
 		}
 
-		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), $botParams);
+		Im\Bot::update(Array('BOT_ID' => self::getBotId()), $botParams);
 
 		return true;
 	}
 
 	/**
-	 * @param array $messageFields
+	 * Sends message to client.
+	 * @inheritDoc
+	 *
+	 * @param array $messageFields <pre>
+	 * [
+	 * 	(int) TO_USER_ID
+	 * 	(int) FROM_USER_ID
+	 * 	(int|string) DIALOG_ID
+	 * 	(array) PARAMS
+	 * 	(string) MESSAGE
+	 * 	(array | \CIMMessageParamAttach) ATTACH
+	 * 	(array | Im\Bot\Keyboard) KEYBOARD
+	 * 	(string) SYSTEM - N|Y
+	 * 	(string) URL_PREVIEW  - N|Y
+	 * ]</pre>
 	 *
 	 * @return array
 	 */
@@ -1640,7 +1817,11 @@ class Support24 extends Network
 		}
 
 		$messageFields['FROM_USER_ID'] = self::getBotId();
-		$messageFields['PARAMS']['IMOL_QUOTE_MSG'] = 'Y';
+
+		if (!isset($messageFields['PARAMS'], $messageFields['PARAMS'][self::MESSAGE_PARAM_ALLOW_QUOTE]))
+		{
+			$messageFields['PARAMS'][self::MESSAGE_PARAM_ALLOW_QUOTE] = 'Y';
+		}
 
 		$messageFields['MESSAGE'] = self::replacePlaceholders($messageFields['MESSAGE'], $userId);
 
@@ -1653,66 +1834,9 @@ class Support24 extends Network
 		return [];
 	}
 
-	/**
-	 * @param string $message
-	 * @param int $userId
-	 *
-	 * @return string
-	 */
-	public static function replacePlaceholders($message, $userId = 0)
-	{
-		if (!Main\Loader::includeModule('im'))
-		{
-			return $message;
-		}
+	//endregion
 
-		$message = parent::replacePlaceholders($message, $userId);
-
-		if (!Main\Loader::includeModule('bitrix24'))
-		{
-			return $message;
-		}
-
-		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
-		$previousLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
-
-		$currentLicenceName = \CBitrix24::getLicenseName($currentLicence);
-		$currentLicenceName = $currentLicenceName? $currentLicenceName: $currentLicence;
-
-		$previousLicenceName = \CBitrix24::getLicenseName($previousLicence);
-		$previousLicenceName = $previousLicenceName? $previousLicenceName: $previousLicence;
-
-		$message = str_replace(Array(
-			'#SUPPORT_ID#',
-			'#SUPPORT_NAME#',
-			'#TARIFF_NAME#',
-			'#TARIFF_CODE#',
-			'#PREVIOUS_TARIFF_NAME#',
-			'#PREVIOUS_TARIFF_CODE#',
-		), Array(
-			self::getBotId(),
-			self::getBotName(),
-			$currentLicenceName,
-			$currentLicence,
-			$previousLicenceName,
-			$previousLicence,
-		), $message);
-
-		if (self::isEnabled())
-		{
-			$message = str_replace(Array(
-				'#PARTNER_NAME#',
-				'#PARTNER_BOT_ID#',
-				'#PARTNER_BOT_NAME#',
-			), Array(
-				Partner24::getPartnerName(),
-				Partner24::getBotId(),
-				Partner24::getBotName(),
-			), $message);
-		}
-
-		return $message;
-	}
+	//region Schedule actions
 
 	/**
 	 * @param int|string $userId
@@ -1925,15 +2049,15 @@ class Support24 extends Network
 		}
 		else if ($action == self::SCHEDULE_ACTION_PARTNER_JOIN)
 		{
-			$keyboard = new \Bitrix\Im\Bot\Keyboard(self::getBotId());
+			$keyboard = new Im\Bot\Keyboard(self::getBotId());
 			$keyboard->addButton(Array(
 				"DISPLAY" => "LINE",
 				"TEXT" => self::getMessage('PARTNER_BUTTON_YES'),
 				"BG_COLOR" => "#29619b",
 				"TEXT_COLOR" => "#fff",
 				"BLOCK" => "Y",
-				"COMMAND" => "support24",
-				"COMMAND_PARAMS" => "activatePartnerSupport",
+				"COMMAND" => self::COMMAND_SUPPORT24,
+				"COMMAND_PARAMS" => self::COMMAND_SUPPORT24_ACTIVATE_PARTNER,
 			));
 			$keyboard->addButton(Array(
 				"DISPLAY" => "LINE",
@@ -1942,7 +2066,7 @@ class Support24 extends Network
 				"TEXT_COLOR" => "#fff",
 				"BLOCK" => "Y",
 				"COMMAND" => "support24",
-				"COMMAND_PARAMS" => "declinePartnerRequest",
+				"COMMAND_PARAMS" => self::COMMAND_SUPPORT24_DECLINE_PARTNER_REQUEST,
 			));
 
 			self::sendMessage(Array(
@@ -1968,6 +2092,10 @@ class Support24 extends Network
 		return true;
 	}
 
+	//endregion
+
+	//region Phrases & Messages
+
 	/**
 	 * @param string $code
 	 * @param string|null $supportLevel
@@ -1987,7 +2115,9 @@ class Support24 extends Network
 			$code = mb_substr($code, 4);
 		}
 
-		$optionCode = $supportLevel == self::SUPPORT_LEVEL_FREE? "support24_free_messages": "support24_paid_messages";
+		$optionCode = $supportLevel == self::SUPPORT_LEVEL_FREE ?
+			self::OPTION_BOT_FREE_MESSAGES : self::OPTION_BOT_PAID_MESSAGES;
+
 		$messages = unserialize(
 			Main\Config\Option::get('imbot', $optionCode, "a:0:{}"),
 			['allowed_classes' => false]
@@ -1995,4 +2125,67 @@ class Support24 extends Network
 
 		return isset($messages[$code])? $messages[$code]: '';
 	}
+
+
+	/**
+	 * @param string $message
+	 * @param int $userId
+	 *
+	 * @return string
+	 */
+	public static function replacePlaceholders($message, $userId = 0)
+	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return $message;
+		}
+
+		$message = parent::replacePlaceholders($message, $userId);
+
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return $message;
+		}
+
+		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
+		$previousLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
+
+		$currentLicenceName = \CBitrix24::getLicenseName($currentLicence);
+		$currentLicenceName = $currentLicenceName? $currentLicenceName: $currentLicence;
+
+		$previousLicenceName = \CBitrix24::getLicenseName($previousLicence);
+		$previousLicenceName = $previousLicenceName? $previousLicenceName: $previousLicence;
+
+		$message = str_replace(Array(
+			'#SUPPORT_ID#',
+			'#SUPPORT_NAME#',
+			'#TARIFF_NAME#',
+			'#TARIFF_CODE#',
+			'#PREVIOUS_TARIFF_NAME#',
+			'#PREVIOUS_TARIFF_CODE#',
+		), Array(
+			self::getBotId(),
+			self::getBotName(),
+			$currentLicenceName,
+			$currentLicence,
+			$previousLicenceName,
+			$previousLicence,
+		), $message);
+
+		if (self::isEnabled())
+		{
+			$message = str_replace(Array(
+				'#PARTNER_NAME#',
+				'#PARTNER_BOT_ID#',
+				'#PARTNER_BOT_NAME#',
+			), Array(
+				Partner24::getPartnerName(),
+				Partner24::getBotId(),
+				Partner24::getBotName(),
+			), $message);
+		}
+
+		return $message;
+	}
+	//endregion
 }

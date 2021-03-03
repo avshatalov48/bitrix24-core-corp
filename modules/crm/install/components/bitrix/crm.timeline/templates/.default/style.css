@@ -2148,7 +2148,7 @@ table.blogquote td {
 	box-sizing: border-box;
 	max-width: 350px;
 	height: 31px;
-	border-width: 15.5px 46px 15.5px 40px;
+	border-width: 15.5px 54px 15.5px 40px;
 	border-style: solid;
 	border-radius: 50%;
 	border-image: url(images/player-cap.svg) 14 48 14 36 fill repeat stretch;
@@ -2168,9 +2168,11 @@ table.blogquote td {
 .crm-audio-cap-time {
 	position: absolute;
 	top: -9px;
-	right: -38px;
+	right: -51px;
 	color: #8f979f;
 	font-size: 11px;
+	width: 51px;
+	text-align: center;
 }
 
 .crm-audio-cap-speed {
@@ -2951,7 +2953,7 @@ table.blogquote td {
 }
 
 .crm-entity-stream-content-new-zoom-field-sm {
-	width: 95px;
+	width: 105px;
 }
 
 .crm-entity-stream-content-new-zoom-field-xs {

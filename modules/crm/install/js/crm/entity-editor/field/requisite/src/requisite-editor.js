@@ -233,6 +233,10 @@ export class EntityEditorRequisiteEditor
 				{
 					requisite.setPresetId(value.presetId);
 				}
+				if (Type.isString(value.presetCountryId))
+				{
+					requisite.setPresetCountryId(value.presetCountryId);
+				}
 				if (this.isViewMode())
 				{
 					requisite.setNew(false);

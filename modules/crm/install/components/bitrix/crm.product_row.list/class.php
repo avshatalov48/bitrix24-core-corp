@@ -740,7 +740,7 @@ class CCrmProductRowListComponent extends \CBitrixComponent implements \Bitrix\M
 	{
 		// measure list items
 		$measureListItems = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-		$measures = \Bitrix\Crm\Measure::getMeasures(100);
+		$measures = \Bitrix\Crm\Measure::getMeasures(0);
 		if (is_array($measures))
 		{
 			foreach ($measures as $measure)

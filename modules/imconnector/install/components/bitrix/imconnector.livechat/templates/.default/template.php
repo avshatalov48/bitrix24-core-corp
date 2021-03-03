@@ -422,6 +422,25 @@ else
 									?>
 								</div><!--imconnector-public-link-settings-inner-option-->
 							</div>
+						</div>
+						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
+							<span class="imconnector-livechat-public-link-settings-inner-param"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_SESSION_ID')?>:</span>
+							<div class="imconnector-livechat-public-link-settings-inner-content">
+								<div class="imconnector-public-link-settings-inner-option">
+									<label for="widgetShowSessionId" class="imconnector-livechat-public-link-settings-inner-option-container">
+										<input
+											id="widgetShowSessionId"
+											name="SHOW_SESSION_ID"
+											class="imconnector-public-link-settings-inner-option-field"
+											type="checkbox"
+											<?=($arResult['INFO_CONNECTION']['SHOW_SESSION_ID'] === "Y"? "checked": "")?>
+										>
+										<span class="imconnector-public-link-settings-inner-option-text">
+											<span class="imconnector-livechat-public-link-settings-normal"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_SHOW_SESSION_ID')?></span>
+										</span>
+									</label><!--imconnector-livechat-public-link-settings-inner-option-container-->
+								</div><!--imconnector-public-link-settings-inner-option-->
+							</div>
 						</div><!--imconnector-livechat-public-link-settings-inner-container-->
 					</div><!--imconnector-livechat-public-link-settings-inner-->
 					<div id="imconnector-livechat-phrases-config-toggle" class="imconnector-livechat-public-link-settings" style="margin-top: 2px;">

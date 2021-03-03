@@ -77,6 +77,7 @@ class SessionCheckTable extends DataManager
 					'REMOVING',
 					'DISMISSAL',
 					'NOT_AVAILABLE',
+					'OFFLINE',
 					'DEFAULT'
 				],
 				'default_value' => 'DEFAULT',

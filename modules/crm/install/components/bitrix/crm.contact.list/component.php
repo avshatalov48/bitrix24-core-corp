@@ -102,6 +102,7 @@ use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Format\ContactAddressFormatter;
@@ -474,7 +475,7 @@ $arResult['HEADERS'] = array_merge(
 		array('id' => 'COMMENTS', 'name' => GetMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /**because of MSSQL**/, 'editable' => false),
 		array('id' => 'SOURCE_ID', 'name' => GetMessage('CRM_COLUMN_SOURCE'), 'sort' => 'source_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('SOURCE'))),
 		array('id' => 'SOURCE_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_SOURCE_DESCRIPTION'), 'sort' => false /**because of MSSQL**/, 'editable' => false),
-		array('id' => 'EXPORT', 'name' => GetMessage('CRM_COLUMN_EXPORT'), 'type' => 'checkbox', 'type' => 'checkbox', 'editable' => true),
+		array('id' => 'EXPORT', 'name' => GetMessage('CRM_COLUMN_EXPORT_NEW'), 'type' => 'checkbox', 'type' => 'checkbox', 'editable' => true),
 		array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
 		array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => true, 'class' => 'date'),
 		array('id' => 'MODIFY_BY', 'name' => GetMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false, 'class' => 'username'),
@@ -1862,7 +1863,7 @@ else
 			);
 
 		$navDbResult = \Bitrix\Crm\ContactAddress::getEntityList(
-			\Bitrix\Crm\EntityAddress::Primary,
+			EntityAddressType::Primary,
 			$addressSort,
 			$arFilter,
 			false,

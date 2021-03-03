@@ -2,8 +2,12 @@
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER"] = "Connect";
+$MESS["OL_COMPONENT_TABLE_ACTION_ANSWER_AND_CLOSE"] = "Take on and end conversation";
 $MESS["OL_COMPONENT_TABLE_ACTION_ASSIGN"] = "Transfer conversation to me";
+$MESS["OL_COMPONENT_TABLE_ACTION_CLOSE"] = "End conversation";
+$MESS["OL_COMPONENT_TABLE_ACTION_CLOSE_ON_OPERATOR"] = "End conversation with current agent";
 $MESS["OL_COMPONENT_TABLE_ACTION_HISTORY"] = "History";
+$MESS["OL_COMPONENT_TABLE_ACTION_SPAN"] = "Force end conversation";
 $MESS["OL_COMPONENT_TABLE_ACTION_START"] = "Start conversation";
 $MESS["OL_COMPONENT_TABLE_INPUT"] = "Inbound";
 $MESS["OL_COMPONENT_TABLE_NO"] = "No";

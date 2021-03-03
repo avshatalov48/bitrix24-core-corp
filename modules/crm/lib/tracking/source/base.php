@@ -26,6 +26,7 @@ class Base
 	const Organic = 'organic';
 	const Other = 'other';
 	const Sender = 'sender-mail';
+	const OneC = '1c';
 
 	/** @var string $code Code. */
 	protected $code;
@@ -73,6 +74,10 @@ class Base
 		}
 
 		$name = $name ?: static::getNameByCode($code);
+		if ($code === self::OneC)
+		{
+			return $name;
+		}
 		if ($code)
 		{
 			return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_ADS_DESC', ['%name%' => $name]);

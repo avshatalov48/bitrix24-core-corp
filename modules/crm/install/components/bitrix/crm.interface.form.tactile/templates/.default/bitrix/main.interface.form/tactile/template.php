@@ -1,6 +1,8 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
-use Bitrix\Main\Localization\Loc;
+
+use Bitrix\Crm\EntityAddressType;
+
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');
@@ -349,15 +351,24 @@ foreach($arSections as &$arSection):
 			}
 			else
 			{
-				$addressTypeInfos = Bitrix\Crm\EntityAddress::getClientTypeInfos();
+				$addressTypeInfos = [
+					[
+						'id' => EntityAddressType::Primary,
+						'name' => EntityAddressType::getDescription(EntityAddressType::Primary)
+					],
+					[
+						'id' => EntityAddressType::Registered,
+						'name' => EntityAddressType::getDescription(EntityAddressType::Registered)
+					]
+				];
 			}
 			$addressTypeDesc = array();
 			foreach ($addressTypeInfos as $typeInfo)
 			{
-				if (isset($typeInfo['id']) && isset($typeInfo['desc']))
-					$addressTypeDesc[$typeInfo['id']] = $typeInfo['desc'];
+				if (isset($typeInfo['id']) && isset($typeInfo['name']))
+					$addressTypeDesc[$typeInfo['id']] = $typeInfo['name'];
 			}
-			$currentAddressTypeID = Bitrix\Crm\EntityAddress::Primary;
+			$currentAddressTypeID = EntityAddressType::Primary;
 			$createAddressButtonID = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}_add");
 			$addressLabels = Bitrix\Crm\EntityAddress::getLabels();
 
@@ -379,7 +390,7 @@ foreach($arSections as &$arSection):
 								<?=htmlspecialcharsbx(
 									isset($addressTypeDesc[$currentAddressTypeID])
 										? $addressTypeDesc[$currentAddressTypeID]
-										: Bitrix\Crm\EntityAddress::getTypeDescription($currentAddressTypeID)
+										: EntityAddressType::getDescription($currentAddressTypeID)
 								)?>
 							</span>
 							<span class="crm-offer-requisite-option-arrow"></span>
@@ -398,7 +409,7 @@ foreach($arSections as &$arSection):
 								$itemWrapperID = mb_strtolower($itemWrapperID);
 								$itemTitle = isset($addressTypeDesc[$addressTypeID]) ?
 									$addressTypeDesc[$addressTypeID] :
-									Bitrix\Crm\EntityAddress::getTypeDescription($addressTypeID);
+									EntityAddressType::getDescription($addressTypeID);
 								?><div class="crm-multi-address-item" id="<?=htmlspecialcharsbx($itemWrapperID)?>">
 									<table class="crm-offer-info-table"><tbody>
 										<tr>

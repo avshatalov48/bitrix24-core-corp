@@ -180,6 +180,49 @@ class CCrmEntityListBuilder
 			$arFilter = array();
 		}
 
+		foreach($arFilter as $key => $value)
+		{
+			if ($key === 'SEARCH_CONTENT')
+			{
+				continue;
+			}
+			if ($key === 'RQ')
+			{
+				foreach($value as $rqKey => $item)
+				{
+					if ($item['VALUE'] === '^%^')
+					{
+						$arFilter[$key][$rqKey]['OPERATION'] = '!=';
+						$arFilter[$key][$rqKey]['VALUE'] = false;
+					}
+					if ($item['VALUE'] === '^&^')
+					{
+						$arFilter[$key][$rqKey]['OPERATION'] = '=';
+						$arFilter[$key][$rqKey]['VALUE'] = false;
+					}
+				}
+			}
+			else
+			{
+				if($value === '^%^' || $value === '^&^')
+				{
+					unset($arFilter[$key]);
+					if(mb_strpos($key, '?') === 0)
+					{
+						$key = mb_substr($key, 1);
+					}
+				}
+				if($value === '^%^')
+				{
+					$arFilter['!' . $key] = false;
+				}
+				elseif($value === '^&^')
+				{
+					$arFilter[$key] = false;
+				}
+			}
+		}
+
 		// ID must present in select (If select is empty it will be filled by CSqlUtil::PrepareSql)
 		if(!is_array($arSelectFields))
 		{

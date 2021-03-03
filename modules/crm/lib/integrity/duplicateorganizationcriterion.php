@@ -261,7 +261,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		$results = array();
 		while($fields = $dbResult->fetch())
 		{
-			$matches = array('TITLE' => isset($fields['TITLE']) ? $fields['TITLE'] : '');
+			$matches = array('TITLE' => isset($fields['TITLE']) ? $fields['TITLE'] : '', 'NORMALIZED' => true);
 			$results[self::prepareMatchHash($matches)] = $matches;
 		}
 		return $results;
@@ -477,13 +477,20 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 	public function getMatches()
 	{
 		return array(
-			'TITLE' => $this->title
+			'TITLE' => $this->title,
+			'NORMALIZED' => true
 		);
 	}
 	public static function createFromMatches(array $matches)
 	{
 		$title = isset($matches['TITLE']) ? $matches['TITLE'] : '';
-		return new DuplicateOrganizationCriterion($title);
+		$normalized = isset($matches['NORMALIZED']) && $matches['NORMALIZED'];
+		$criterion = new DuplicateOrganizationCriterion($title);
+		if ($normalized)
+		{
+			$criterion->setTitle($title, false);
+		}
+		return $criterion;
 	}
 	public static function loadEntityMatches($entityTypeID, $entityID)
 	{
@@ -496,7 +503,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		$query->setLimit(1);
 		$dbResult = $query->exec();
 		$fields = $dbResult->fetch();
-		return is_array($fields) ? $fields : null;
+		return is_array($fields) ? array_merge($fields, ['NORMALIZED' => true]) : null;
 	}
 	public static function loadEntitiesMatches($entityTypeID, array $entityIDs)
 	{
@@ -518,6 +525,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 			}
 			$results[$entityID] = array(
 				'TITLE' => isset($fields['TITLE']) ? $fields['TITLE'] : '',
+				'NORMALIZED' => true
 			);
 		}
 		return $results;

@@ -1490,7 +1490,6 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					array('name' => 'TITLE'),
 					array('name' => 'STATUS_ID'),
 					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
-					array('name' => 'COMPANY'),
 					array('name' => 'CLIENT'),
 					array('name' => 'HONORIFIC'),
 					array('name' => 'LAST_NAME'),

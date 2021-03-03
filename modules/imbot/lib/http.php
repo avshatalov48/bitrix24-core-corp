@@ -10,9 +10,6 @@ Loc::loadMessages(__FILE__);
 
 class Http
 {
-	const MODULE_ID = 'imbot';
-	const BOT_ID = 'marta';
-
 	const TYPE_BITRIX24 = 'B24';
 	const TYPE_CP = 'CP';
 	const VERSION = 1;
@@ -24,7 +21,11 @@ class Http
 	private $licenceCode = '';
 	private $domain = '';
 	private $type = '';
-	private $error = null;
+	private $botId = '';
+
+	/** @var Error */
+	private $error;
+
 
 	function __construct($botId)
 	{
@@ -33,7 +34,7 @@ class Http
 		{
 			$this->controllerUrl = BOT_CONTROLLER_URL;
 		}
-		if(defined('BX24_HOST_NAME'))
+		if (defined('BX24_HOST_NAME'))
 		{
 			$this->licenceCode = BX24_HOST_NAME;
 		}
@@ -42,7 +43,7 @@ class Http
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
 			$this->licenceCode = md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
 		}
-		$this->type = self::getPortalType();
+		$this->type = $this->getPortalType();
 		$this->domain = self::getServerAddress();
 		$this->botId = $botId;
 
@@ -51,9 +52,13 @@ class Http
 		return true;
 	}
 
-	public static function getPortalType()
+	/**
+	 * Returns the kind of portal installation.
+	 * @return string
+	 */
+	private function getPortalType()
 	{
-		if(defined('BX24_HOST_NAME'))
+		if (defined('BX24_HOST_NAME'))
 		{
 			$type = self::TYPE_BITRIX24;
 		}
@@ -75,7 +80,7 @@ class Http
 		static $publicUrl;
 		if ($publicUrl === null)
 		{
-			$publicUrl = Main\Config\Option::get(self::MODULE_ID, "portal_url");
+			$publicUrl = Main\Config\Option::get('imbot', "portal_url");
 
 			if (defined('BOT_CLIENT_URL'))
 			{
@@ -162,7 +167,7 @@ class Http
 		$params['BX_TYPE'] = $this->type;
 		$params['BX_VERSION'] = self::VERSION;
 		$params['BX_LANG'] = \Bitrix\Im\Bot::getDefaultLanguage();
-		$params = \Bitrix\Main\Text\Encoding::convertEncodingArray($params, SITE_CHARSET, 'UTF-8');
+		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 		$params["BX_HASH"] = self::requestSign($this->type, md5(implode("|", $params)));
 
 		$waitResponse = $waitResponse? true: \Bitrix\Main\Config\Option::get("imbot", "wait_response");

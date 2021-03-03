@@ -20,7 +20,7 @@ $signer = new \Bitrix\Main\Security\Sign\Signer;
 try
 {
 	$params = $signer->unsign($request->get('signedParamsString'), 'crm.order.buyer_group.list');
-	$params = unserialize(base64_decode($params));
+	$params = unserialize(base64_decode($params), ['allowed_classes' => false]);
 }
 catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
 {

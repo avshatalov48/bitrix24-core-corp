@@ -1006,12 +1006,14 @@ class ActualEntitySelector
 		$result = [];
 
 		$sortedCriteria = [];
+		$hasCommCriterion = false;
 		foreach ($this->duplicateCriteria as $index => $criterion)
 		{
 			$sort = 10000;
 			if ($criterion instanceof DuplicateCommunicationCriterion)
 			{
 				$sort = 1000;
+				$hasCommCriterion = true;
 			}
 			else if ($criterion instanceof DuplicatePersonCriterion)
 			{
@@ -1024,7 +1026,7 @@ class ActualEntitySelector
 		$found = false;
 		foreach ($sortedCriteria as $criterion)
 		{
-			if ($found && $criterion instanceof DuplicatePersonCriterion)
+			if (($hasCommCriterion || $found) && $criterion instanceof DuplicatePersonCriterion)
 			{
 				if (!$criterion->getSecondName() || !$criterion->getName())
 				{

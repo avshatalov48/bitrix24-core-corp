@@ -792,6 +792,9 @@ Class crm extends CModule
 		\Bitrix\Main\Config\Option::set('crm', 'enable_slider', 'Y');
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
+		// Adjust default address zone
+		\Bitrix\Crm\EntityAddress::getZoneId();
+
 		RegisterModuleDependences('mail', 'OnGetFilterList', 'crm', 'CCrmEMail', 'OnGetFilterList');
 		RegisterModuleDependences('mail', 'OnGetFilterList', 'crm', 'CCrmEMail', 'OnGetFilterListImap');
 		RegisterModuleDependences('main', 'OnUserTypeBuildList', 'crm', 'CUserTypeCrm', 'GetUserTypeDescription');

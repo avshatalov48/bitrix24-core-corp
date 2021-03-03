@@ -223,12 +223,34 @@ class TimeHelper
 
 	public function getUserToServerOffset($userId = null)
 	{
-		$key = $userId === null ? -1 : (int)$userId;
-		if ($this->timezoneOffsets[$key] === null)
+		$userId = ($userId === null ? -1 : (int) $userId);
+
+		$cacheTtl = (defined('BX_COMP_MANAGED_CACHE') ? 3153600 : 3600 * 24);
+		$cacheId = 'time_zone_'.$userId;
+		$cacheDir = '/timeman/timezone/'.substr(md5($userId), -2).'/'.$userId;
+
+		$cache = new \CPHPCache;
+		if ($cache->initCache($cacheTtl, $cacheId, $cacheDir))
 		{
-			$this->timezoneOffsets[$key] = (int)\CTimeZone::getOffset($userId, true);
+			$this->timezoneOffsets[$userId] = $cache->getVars();
 		}
-		return $this->timezoneOffsets[$key];
+		else
+		{
+			global $CACHE_MANAGER;
+
+			$cache->startDataCache();
+
+			$CACHE_MANAGER->startTagCache($cacheDir);
+
+			$this->timezoneOffsets[$userId] = (int) \CTimeZone::getOffset($userId, true);
+
+			$CACHE_MANAGER->registerTag('USER_NAME_'. $userId);
+			$CACHE_MANAGER->endTagCache();
+
+			$cache->endDataCache($this->timezoneOffsets[$userId]);
+		}
+
+		return $this->timezoneOffsets[$userId];
 	}
 
 	public function setTimezoneOffsets($offsetsByUserId)

@@ -100,6 +100,13 @@ class Order extends Sale\Order
 		);
 	}
 
+	public function addTimelineCheckEntryOnFailure(array $settings = []) : void
+	{
+		Crm\Timeline\OrderCheckController::getInstance()->onCheckFailure(
+			$this->getTimelineEntryParamsOnCheckFailure($settings)
+		);
+	}
+
 	/**
 	 * @param array $settings
 	 * @return array
@@ -111,6 +118,18 @@ class Order extends Sale\Order
 		return [
 			'ORDER_FIELDS' => $this->getFieldValues(),
 			'SETTINGS' => $settings,
+			'BINDINGS' => $this->getTimelineBindings(),
+		];
+	}
+
+	private function getTimelineEntryParamsOnCheckFailure(array $settings)
+	{
+		$resultSettings = $settings;
+		$resultSettings['FAILURE'] = 'Y';
+		$resultSettings['PRINTED'] = 'N';
+		return [
+			'ORDER_FIELDS' => $this->getFieldValues(),
+			'SETTINGS' => $resultSettings,
 			'BINDINGS' => $this->getTimelineBindings(),
 		];
 	}

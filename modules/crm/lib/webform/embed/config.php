@@ -294,7 +294,7 @@ class Config
 	{
 		$result = [];
 
-		if ($this->isDisabled())
+		if (!$this->editMode && $this->isDisabled())
 		{
 			return $result;
 		}

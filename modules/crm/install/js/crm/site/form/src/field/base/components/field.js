@@ -108,7 +108,12 @@ const Field = {
 			{
 				return;
 			}
-			if (e.key === 'Esc' || e.key === 'Delete' || e.key === 'Backspace')
+
+			if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0)
+			{
+				return;
+			}
+			if (e.ctrlKey || e.metaKey)
 			{
 				return;
 			}

@@ -127,6 +127,12 @@ class ImConnectorLiveChat extends \CBitrixComponent
 							$update['COPYRIGHT_REMOVED'] = 'Y';
 						}
 
+						$update['SHOW_SESSION_ID'] = 'N';
+						if ($this->request->get('SHOW_SESSION_ID'))
+						{
+							$update['SHOW_SESSION_ID'] = 'Y';
+						}
+
 						$update['PHONE_CODE'] = $this->request->get('PHONE_CODE');
 						if(isset($update['PHONE_CODE']) && $update['PHONE_CODE'][0] === '+')
 						{

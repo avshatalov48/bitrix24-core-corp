@@ -736,7 +736,7 @@ class CTimeManUser
 
 		if (!is_array($arIDs) && $arIDs <> '')
 		{
-			$arIDs = unserialize($arIDs);
+			$arIDs = unserialize($arIDs, ['allowed_classes' => false]);
 		}
 
 		$arIDs = array_values($arIDs);

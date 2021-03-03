@@ -10,6 +10,22 @@ $MESS["IMOL_CONFIG_EDIT_ACTIONS"] = "Configure actions";
 $MESS["IMOL_CONFIG_EDIT_ADDITIONAL"] = "More";
 $MESS["IMOL_CONFIG_EDIT_AGREEMENT_MESSAGE"] = "Send warning about collecting personal data";
 $MESS["IMOL_CONFIG_EDIT_APPLY"] = "Apply";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE"] = "Auto response text on user action";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_BUTTON_NAME"] = "Button text";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE"] = "End conversation";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE"] = "Continue conversation";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ENABLE"] = "Enable idle user auto responder";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_LONG_TEXT_NAME"] = "Menu item text";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE"] = "New conversation";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TEXT"] = "Auto response text";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME"] = "Idle wait time after last message ";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_D"] = "2 days";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_W"] = "2 weeks";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_3_H"] = "3 hours";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_4_D"] = "4 days";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_6_D"] = "6 days";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_7_H"] = "7 hours";
+$MESS["IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_12_H"] = "12 hours";
 $MESS["IMOL_CONFIG_EDIT_AUTO_ACTION"] = "Automatic actions";
 $MESS["IMOL_CONFIG_EDIT_AUTO_ACTION_CONFIG"] = "Configure automatic actions";
 $MESS["IMOL_CONFIG_EDIT_AUTO_CLOSE_ACTION"] = "Action to perform when auto closing conversation";
@@ -26,10 +42,10 @@ $MESS["IMOL_CONFIG_EDIT_AUTO_CLOSE_TIME_2_D"] = "2 days";
 $MESS["IMOL_CONFIG_EDIT_AUTO_CLOSE_TIME_4_H"] = "4 hours";
 $MESS["IMOL_CONFIG_EDIT_AUTO_CLOSE_TIME_8_H"] = "8 hours";
 $MESS["IMOL_CONFIG_EDIT_BACK"] = "Back";
-$MESS["IMOL_CONFIG_EDIT_BOT_EMPTY_NEW"] = "There are currently no Open Channel chat bots installed. You can get chat bots from Bitrix24 Marketplace.";
+$MESS["IMOL_CONFIG_EDIT_BOT_EMPTY_NEW_2"] = "No Open Channel chatbots are installed on your system. You can download new chatbots from Bitrix24.Market.";
 $MESS["IMOL_CONFIG_EDIT_BOT_ID"] = "Select chat bot";
 $MESS["IMOL_CONFIG_EDIT_BOT_JOIN_NEW"] = "Assign chat bot when a client enquiry is received";
-$MESS["IMOL_CONFIG_EDIT_BOT_JOIN_TIP_NEW"] = "A chat bot is your first level of support. All messages are processed by the bot first, prior to being queued for live assistance.<br><br> You can download new bots from Bitrix24 Marketplace.";
+$MESS["IMOL_CONFIG_EDIT_BOT_JOIN_TIP_NEW_2"] = "A chatbot offers the first line of customer support. It will handle incoming requests and, if unable to serve a request, place it in the queue to be processed by human agents.<br><br> You can download new chatbots from Bitrix24.Market.";
 $MESS["IMOL_CONFIG_EDIT_BOT_SETTINGS"] = "Chat bot settings";
 $MESS["IMOL_CONFIG_EDIT_BOT_TIME_NEW"] = "Transfer conversation from bot to a live agent after";
 $MESS["IMOL_CONFIG_EDIT_BOT_TIME_TIP"] = "Time period after which client will be transferred from a bot to a live agent. Client may connect to the agent earlier by sending 0.";
@@ -55,6 +71,7 @@ $MESS["IMOL_CONFIG_EDIT_CONNECTED_SOURCE"] = "Connected communication channels";
 $MESS["IMOL_CONFIG_EDIT_CONNECTORS"] = "Connect communication channels";
 $MESS["IMOL_CONFIG_EDIT_CRM"] = "Verify client in CRM database";
 $MESS["IMOL_CONFIG_EDIT_CRM_BASE"] = "CRM customer database";
+$MESS["IMOL_CONFIG_EDIT_CRM_CHAT_TRACKER"] = "Enable chat tracker";
 $MESS["IMOL_CONFIG_EDIT_CRM_CREATE"] = "If client was not found in CRM";
 $MESS["IMOL_CONFIG_EDIT_CRM_CREATE_LEAD_DESC"] = "A new lead will be created only if client contact information is available";
 $MESS["IMOL_CONFIG_EDIT_CRM_DISABLED"] = "Please enable the CRM module in Bitrix24 settings to activate this option.";
@@ -104,9 +121,7 @@ $MESS["IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_2"] = "seconds";
 $MESS["IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_TIP_NEW"] = "This parameter defines the priority and order of Open Channels as they appear in agent's chat.";
 $MESS["IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_DESC"] = "Enable this option for more even distribution of enquiries among agents by limiting the number of simultaneous enquiries.";
 $MESS["IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_TITLE_NEW"] = "Limit simultaneous enquiries submitted to an agent";
-$MESS["IMOL_CONFIG_EDIT_LM_ADD1"] = "Add employees";
-$MESS["IMOL_CONFIG_EDIT_LM_ADD2"] = "Add more";
-$MESS["IMOL_CONFIG_EDIT_LM_ERROR_BUSINESS_NEW"] = "You can select only business users with your plan";
+$MESS["IMOL_CONFIG_EDIT_LM_ADD"] = "Add";
 $MESS["IMOL_CONFIG_EDIT_MAX_CHAT_TITLE_NEW"] = "Maximum enquiries per agent";
 $MESS["IMOL_CONFIG_EDIT_NAME"] = "Open Channel name";
 $MESS["IMOL_CONFIG_EDIT_NA_TIME_NEW"] = "Mark enquiry as unanswered in";
@@ -125,12 +140,6 @@ $MESS["IMOL_CONFIG_EDIT_OPERATOR_DATA_TIP"] = "<b>Use employee user profile</b> 
 <br><br><b>Use Open Channel entries</b> - shows information provided in the Open Channel settings.<br><br>
 <b>Hide agent information</b> - no user info will be shown.";
 $MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_ACTIVE"] = "Your current plan restricts the number of active Open Channels. Please deactivate any other currently active Open Channel before activating this one.";
-$MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_BUSINESS_USERS_TEXT_NEW"] = "Your current plan limits the number of business users you can have.
-<br><br>
-Only business users can be added to Open Channel queues.
-<br><br>
-Number of business users depends on your Bitrix24 subscription plan.";
-$MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE"] = "Advanced Open Channels";
 $MESS["IMOL_CONFIG_EDIT_POPUP_LIMITED_TITLE_DEFAULT"] = "You cannot use this function on your current plan.";
 $MESS["IMOL_CONFIG_EDIT_QUALITY_MARK"] = "Quality assessment";
 $MESS["IMOL_CONFIG_EDIT_QUEUE"] = "Queue";
@@ -222,6 +231,7 @@ $MESS["IMOL_CONFIG_EDIT_WORKTIME_TIME"] = "Business hours";
 $MESS["IMOL_CONFIG_EDIT_WORKTIME_TIMEZONE"] = "Select time zone";
 $MESS["IMOL_CONFIG_FULL_CLOSE_TIME_DESC_NEW"] = "Specify time you deem reasonable to wait until an enquiry is closed to make sure a client has a chance to rate how well the agent performed.
 <br><br>Select <b>Close immediately</b> to have the client's rating re-open the session.";
+$MESS["IMOL_CONFIG_HEAD_DEPARTMENT_EXCLUDED_QUEUE"] = "Only the department employees will be selected, without the heads of departments";
 $MESS["IMOL_CONFIG_NO_ANSWER_DESC_NEW"] = "If none of the agents responded to the enquiry, an automated reply can be sent or just leave the enquiry hanging.";
 $MESS["IMOL_CONFIG_NO_ANSWER_FORM_ID"] = "CRM form";
 $MESS["IMOL_CONFIG_NO_ANSWER_FORM_TEXT"] = "If a client ID is recognized, web form will not be sent and text will be sent back instead";

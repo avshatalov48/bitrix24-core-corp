@@ -18,7 +18,7 @@ $tabs['automation'] = GetMessage("CRM_CONFIGS_TAB_AUTOMATION");
 $tabs['work_with_mail'] = GetMessage("CRM_CONFIGS_TAB_WORK_WITH_MAIL");
 $tabs['integration'] = GetMessage("CRM_CONFIGS_TAB_INTEGRATION");
 if($arResult['BITRIX24'])
-	$tabs['apps'] = GetMessage("CRM_CONFIGS_TAB_APPS");
+	$tabs['apps'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
 $tabs['numerator'] = GetMessage("CRM_CONFIGS_TAB_NUMERATOR");
 $tabs['other'] = GetMessage("CRM_CONFIGS_TAB_OTHER");
 
@@ -77,7 +77,7 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_printed_forms_of_documents']['PS']['NAME'] = GetMessage("CRM_CONFIGS_PS");
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['URL'] = $siteDir.'/marketplace/category/payment/';
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
-	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS");
+	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
 
 	$items['tab_content_rights']['PERMS']['URL'] = $siteDir.'/crm/configs/perms/';
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
@@ -218,7 +218,7 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_numerator']['INVOICE']['URL'] = '#';
 	$items['tab_content_numerator']['INVOICE']['ICON_CLASS'] = 'img-invoice js-numerator-invoice';
 	$items['tab_content_numerator']['INVOICE']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_INVOICE");
-	
+
 	$items['tab_content_numerator']['QUOTE']['URL'] = '#';
 	$items['tab_content_numerator']['QUOTE']['ICON_CLASS'] = 'img-quote js-numerator-quote';
 	$items['tab_content_numerator']['QUOTE']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_QUOTE");
