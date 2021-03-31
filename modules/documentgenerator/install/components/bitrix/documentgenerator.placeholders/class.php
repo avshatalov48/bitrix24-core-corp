@@ -114,6 +114,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 	{
 		$grid = [];
 		$grid['GRID_ID'] = $this->gridId;
+		$grid['ROWS'] = [];
 		$grid['COLUMNS'] = [
 			[
 				'id' => 'TITLE',

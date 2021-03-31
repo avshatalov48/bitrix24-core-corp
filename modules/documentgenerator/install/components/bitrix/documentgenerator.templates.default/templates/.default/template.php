@@ -86,5 +86,5 @@ if($arResult['IS_SLIDER'])
 	?>
 	</body>
 	</html><?
-	\Bitrix\Main\Application::getInstance()->terminate();
+	\CMain::FinalActions();
 }

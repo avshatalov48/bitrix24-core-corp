@@ -47,7 +47,6 @@ $MESS["CTRLR_GRP_SET_SALE"] = "Интернет-магазин";
 $MESS["CTRLR_GRP_SET_INTRANET"] = "Интранет";
 $MESS["CTRLR_GRP_SET_IBLOCK"] = "Информационные блоки";
 $MESS["CTRLR_GRP_SET_CALENDAR"] = "Календарь событий";
-$MESS["CTRLR_GRP_SET_COMPRESSION"] = "Компрессия";
 $MESS["CTRLR_GRP_SET_REPORT"] = "Конструктор отчетов";
 $MESS["CTRLR_GRP_SET_CONTROLLER"] = "Контроллер";
 $MESS["CTRLR_GRP_SET_IDEA"] = "Менеджер идей";

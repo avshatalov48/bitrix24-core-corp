@@ -278,5 +278,5 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 	?></div>
 	</body>
 	</html><?
-	\Bitrix\Main\Application::getInstance()->terminate();
+	\CMain::FinalActions();
 }

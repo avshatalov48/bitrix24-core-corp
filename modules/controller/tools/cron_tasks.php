@@ -1,6 +1,9 @@
 <?php
 $DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = realpath(dirname(__FILE__)."/../../../..");
 
+//select status,count(*) from b_controller_task group by status
+//update b_controller_task set status='L' where status='F' and task_id='REMOTE_COMMAND'
+
 /*Command line arguments*/
 $limit = 10000;
 $show_eta = false;
@@ -46,6 +49,7 @@ if (CModule::IncludeModule("controller"))
 	{
 		$interval = 60; //Seconds
 		$last_count = false;
+		$last_time = false;
 		do
 		{
 			$stime = microtime(true);
@@ -65,7 +69,7 @@ if (CModule::IncludeModule("controller"))
 				$tasks_done = $last_count - $current_count;
 				if ($tasks_done > 0 && $current_count > 0)
 				{
-					$tasks_per_second = $tasks_done / $interval;
+					$tasks_per_second = $tasks_done / ($stime - $last_time);
 					$seconds_remains = $current_count / $tasks_per_second;
 					$eta = time() + $seconds_remains;
 					$hours_remains = intval($seconds_remains / 3600);
@@ -93,6 +97,7 @@ if (CModule::IncludeModule("controller"))
 				}
 			}
 			$last_count = $current_count;
+			$last_time = $stime;
 			usleep(($interval - (microtime(true) - $stime)) * 1000000);
 		}
 		while ($current_count);

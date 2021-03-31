@@ -189,7 +189,16 @@ class Numerator extends Base
 	 */
 	protected function getRestNumeratorIds()
 	{
-		return unserialize(Option::get(Driver::MODULE_ID, $this->restCreatedOptionName, serialize([])));
+		return unserialize(
+			Option::get(
+				Driver::MODULE_ID,
+				$this->restCreatedOptionName,
+				serialize([])
+			),
+			[
+				'allowed_classes' => false,
+			]
+		);
 	}
 
 	/**

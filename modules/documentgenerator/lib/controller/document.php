@@ -600,6 +600,11 @@ class Document extends Base
 		$result = [];
 		if(is_string($moduleId) && !empty($moduleId) && Loader::includeModule($moduleId))
 		{
+			if (!DataProviderManager::checkProviderName($provider, $moduleId))
+			{
+				$this->errorCollection->add([new Error('Wrong provider')]);
+				return $result;
+			}
 			$result = [
 				'documentList' => $this->getDocumentListUrl(),
 				'canEditTemplate' => Driver::getInstance()->getUserPermissions()->canModifyTemplates(),

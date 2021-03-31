@@ -85,11 +85,15 @@ class DataProviderManager
 		{
 			return true;
 		}
-		if($result && $moduleId && is_string($moduleId) && !empty($moduleId))
+		if($moduleId && is_string($moduleId) && !empty($moduleId))
 		{
 			$result = false;
 			$providers = static::getInstance()->getList(['filter' => ['MODULE' => $moduleId]]);
 			$providerClassName = mb_strtolower($providerClassName);
+			if (!is_a($providerClassName, DataProvider::class, true))
+			{
+				return false;
+			}
 			foreach($providers as $name => $provider)
 			{
 				if(

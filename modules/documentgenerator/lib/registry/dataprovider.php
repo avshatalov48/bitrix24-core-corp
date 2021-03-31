@@ -25,10 +25,10 @@ class DataProvider extends Registry
 				if(is_a($provider, Filterable::class, true))
 				{
 					/** @var Filterable $provider */
+					unset($result[$key]);
 					$extendedList = $provider::getExtendedList();
 					if(!empty($extendedList))
 					{
-						unset($result[$key]);
 						foreach($extendedList as $item)
 						{
 							$result[$item['PROVIDER']] = [

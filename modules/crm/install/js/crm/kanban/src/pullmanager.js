@@ -98,6 +98,7 @@ export default class PullManager
 			item.setActivityExistInnerHtml();
 
 			item.useAnimation = true;
+			item.setChangedInPullRequest();
 			this.grid.insertItem(item);
 
 			const newColumn = this.grid.getColumn(paramsItem.data.columnId);

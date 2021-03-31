@@ -426,7 +426,7 @@ echo $USER_FIELD_MANAGER->ShowScript();
 	}
 	else
 	{
-		$arGroupOptions = unserialize($arGroupFields["INSTALL_INFO"]);
+		$arGroupOptions = unserialize($arGroupFields["INSTALL_INFO"], ["allowed_classes" => false]);
 	}
 
 	$arDefGroupOptions = $arGroupOptions["default"];

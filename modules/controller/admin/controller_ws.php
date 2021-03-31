@@ -129,7 +129,8 @@ else
 		else
 			$dbUser = CUser::GetByLogin($oRequest->arParameters['login']);
 
-		if (!($arUser = $dbUser->Fetch()))
+		$arUser = $dbUser->Fetch();
+		if (!$arUser)
 		{
 			$oResponse->status = "444 User is not found.";
 			$oResponse->text = "User is not found.";
@@ -137,113 +138,104 @@ else
 			$arControllerLog['DESCRIPTION'] = $oResponse->text;
 			$a = CControllerLog::Add($arControllerLog);
 		}
-		else
+		elseif ($err)
 		{
-			if (mb_strlen($arUser["PASSWORD"]) > 32)
-			{
-				$salt = mb_substr($arUser["PASSWORD"], 0, mb_strlen($arUser["PASSWORD"]) - 32);
-				$db_password = mb_substr($arUser["PASSWORD"], -32);
-			}
-			else
-			{
-				$salt = "";
-				$db_password = $arUser["PASSWORD"];
-			}
+			$oResponse->status = "445 Event Error.";
+			$oResponse->text = $err;
+			$arControllerLog['STATUS'] = 'N';
+			$arControllerLog['DESCRIPTION'] = $oResponse->text;
+			$a = CControllerLog::Add($arControllerLog);
+		}
+		elseif ($arUser['ACTIVE'] !== 'Y')
+		{
+			$oResponse->status = "446 User is not active.";
+			$oResponse->text = "User is not active.";
+			$arControllerLog['STATUS'] = 'N';
+			$arControllerLog['DESCRIPTION'] = $oResponse->text;
+			$a = CControllerLog::Add($arControllerLog);
+		}
+		elseif (
+			$user_id > 0 //External auth
+			|| \Bitrix\Main\Security\Password::equals($arUser["PASSWORD"], $oRequest->arParameters['password'], true)
+			|| (
+				$arParams['OTP']
+				&& \Bitrix\Main\Security\Password::equals($arUser["PASSWORD"], mb_substr($oRequest->arParameters['password'], 0, -6), true)
+			)
+		)
+		{
+			$arSaveUser = CControllerClient::PrepareUserInfo($arUser);
 
-			$altPassword = null;
-			if ($arParams['OTP'])
-			{
-				$altPassword = mb_substr($oRequest->arParameters['password'], 0, -6);
-			}
+			$arSaveUser["GROUP_ID"] = Array();
 
-			if ($err)
-			{
-				$oResponse->status = "445 Event Error.";
-				$oResponse->text = $err;
-				$arControllerLog['STATUS'] = 'N';
-				$arControllerLog['DESCRIPTION'] = $oResponse->text;
-				$a = CControllerLog::Add($arControllerLog);
-			}
-			elseif (
-				$arUser['ACTIVE'] == 'Y'
-				&& (
-					$user_id > 0 //External auth
-					|| md5($db_password.'MySalt') == md5(md5($salt.$oRequest->arParameters['password']).'MySalt')
-					|| (
-						$altPassword
-						&& md5($db_password.'MySalt') == md5(md5($salt.$altPassword).'MySalt')
-					)
-				)
+			$bCanAuthorize = $USER->CanDoOperation("controller_member_auth", $arUser['ID']);
+			$arUserGroups = CUser::GetUserGroup($arUser['ID']);
+
+			$arParams['USER_ID'] = $arUser['ID'];
+			if (
+				CModule::IncludeModule('security')
+				&& !\Bitrix\Security\Mfa\Otp::verifyUser($arParams)
 			)
 			{
-				$arSaveUser = CControllerClient::PrepareUserInfo($arUser);
-
-				$arSaveUser["GROUP_ID"] = Array();
-
-				$bCanAuthorize = $USER->CanDoOperation("controller_member_auth", $arUser['ID']);
-				$arUserGroups = CUser::GetUserGroup($arUser['ID']);
-
-				$arParams['USER_ID'] = $arUser['ID'];
-				if (
-					CModule::IncludeModule('security')
-					&& !\Bitrix\Security\Mfa\Otp::verifyUser($arParams)
-				)
-				{
-					$oResponse->status = "443 Bad password.";
-					$oResponse->text = GetMessage("CTRLR_WS_ERR_BAD_PASSW");
-					break;
-				}
-				elseif ($bCanAuthorize)
-				{
-					$arSaveUser['CONTROLLER_ADMIN'] = 'Y';
-					$arSaveUser["GROUP_ID"][] = "administrators";
-				}
-				elseif (COption::GetOptionString("controller", "auth_loc_enabled", "N") != "Y")
-				{
-					$oResponse->status = "423 Remote Authorization Disabled.";
-					$oResponse->text = "Remote authorization disabled on controller.";
-					break;
-				}
-
-				$arLocGroups = \Bitrix\Controller\GroupMapTable::getMapping("CONTROLLER_GROUP_ID", "REMOTE_GROUP_CODE");
-				foreach ($arLocGroups as $arTGroup)
-				{
-					foreach ($arUserGroups as $group_id)
-					{
-						if ($arTGroup["FROM"] == $group_id)
-							$arSaveUser["GROUP_ID"][] = $arTGroup["TO"];
-					}
-				}
-
-				foreach (GetModuleEvents("controller", "OnBeforeSendCheckAuth", true) as $arEvent)
-				{
-					ExecuteModuleEventEx($arEvent, array($arControllerMember, &$arSaveUser));
-				}
-
-				$oResponse->status = "200 OK";
-				$oResponse->arParameters['USER_INFO'] = $arSaveUser;
-
-				$arControllerLog['DESCRIPTION'] = $arSaveUser['NAME'].' '.$arSaveUser['LAST_NAME'].' ('.$arSaveUser['LOGIN'].')';
-				$a = CControllerLog::Add($arControllerLog);
-				if (\Bitrix\Controller\AuthLogTable::isEnabled())
-				{
-					\Bitrix\Controller\AuthLogTable::logControllerToSiteAuth(
-						$arControllerMember["ID"],
-						$arUser['ID'],
-						true,
-						'CONTROLLER_WS',
-						$arSaveUser['NAME'].' '.$arSaveUser['LAST_NAME'].' ('.$arSaveUser['LOGIN'].')'
-					);
-				}
-			}
-			else
-			{
-				$oResponse->status = "443 Bad password.";
-				$oResponse->text = GetMessage("CTRLR_WS_ERR_BAD_PASSW");
+				$oResponse->status = "443 Bad password (otp).";
+				$oResponse->text = "Bad password (otp).";
 				$arControllerLog['STATUS'] = 'N';
 				$arControllerLog['DESCRIPTION'] = $oResponse->text;
 				$a = CControllerLog::Add($arControllerLog);
+				break;
 			}
+			elseif ($bCanAuthorize)
+			{
+				$arSaveUser['CONTROLLER_ADMIN'] = 'Y';
+				$arSaveUser["GROUP_ID"][] = "administrators";
+			}
+			elseif (COption::GetOptionString("controller", "auth_loc_enabled", "N") != "Y")
+			{
+				$oResponse->status = "423 Remote Authorization Disabled.";
+				$oResponse->text = "Remote authorization disabled on controller.";
+				$arControllerLog['STATUS'] = 'N';
+				$arControllerLog['DESCRIPTION'] = $oResponse->text;
+				$a = CControllerLog::Add($arControllerLog);
+				break;
+			}
+
+			$arLocGroups = \Bitrix\Controller\GroupMapTable::getMapping("CONTROLLER_GROUP_ID", "REMOTE_GROUP_CODE");
+			foreach ($arLocGroups as $arTGroup)
+			{
+				foreach ($arUserGroups as $group_id)
+				{
+					if ($arTGroup["FROM"] == $group_id)
+						$arSaveUser["GROUP_ID"][] = $arTGroup["TO"];
+				}
+			}
+
+			foreach (GetModuleEvents("controller", "OnBeforeSendCheckAuth", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, array($arControllerMember, &$arSaveUser));
+			}
+
+			$oResponse->status = "200 OK";
+			$oResponse->arParameters['USER_INFO'] = $arSaveUser;
+
+			$arControllerLog['DESCRIPTION'] = $arSaveUser['NAME'].' '.$arSaveUser['LAST_NAME'].' ('.$arSaveUser['LOGIN'].')';
+			$a = CControllerLog::Add($arControllerLog);
+			if (\Bitrix\Controller\AuthLogTable::isEnabled())
+			{
+				\Bitrix\Controller\AuthLogTable::logControllerToSiteAuth(
+					$arControllerMember["ID"],
+					$arUser['ID'],
+					true,
+					'CONTROLLER_WS',
+					$arSaveUser['NAME'].' '.$arSaveUser['LAST_NAME'].' ('.$arSaveUser['LOGIN'].')'
+				);
+			}
+		}
+		else
+		{
+			$oResponse->status = "443 Bad password.";
+			$oResponse->text = GetMessage("CTRLR_WS_ERR_BAD_PASSW");
+			$arControllerLog['STATUS'] = 'N';
+			$arControllerLog['DESCRIPTION'] = $oResponse->text;
+			$a = CControllerLog::Add($arControllerLog);
 		}
 
 		break;
@@ -368,7 +360,7 @@ else
 		{
 			if ($oRequest->arParameters['sendfile'] == 'Y' && mb_strlen($arCommand['ADD_PARAMS']) > 3)
 			{
-				$arParams = unserialize($arCommand['ADD_PARAMS']);
+				$arParams = unserialize($arCommand['ADD_PARAMS'], ["allowed_classes" => false]);
 				if (is_array($arParams) && array_key_exists('FILE', $arParams))
 				{
 					$oResponse->status = '200 OK';

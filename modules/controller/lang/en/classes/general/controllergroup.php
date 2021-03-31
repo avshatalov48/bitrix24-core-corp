@@ -47,7 +47,6 @@ $MESS["CTRLR_GRP_SET_SALE"] = "e-Store";
 $MESS["CTRLR_GRP_SET_INTRANET"] = "Intranet";
 $MESS["CTRLR_GRP_SET_IBLOCK"] = "Information blocks";
 $MESS["CTRLR_GRP_SET_CALENDAR"] = "Event Calendar";
-$MESS["CTRLR_GRP_SET_COMPRESSION"] = "Compression";
 $MESS["CTRLR_GRP_SET_REPORT"] = "Report Wizard";
 $MESS["CTRLR_GRP_SET_CONTROLLER"] = "Site Controller";
 $MESS["CTRLR_GRP_SET_IDEA"] = "Idea manager";

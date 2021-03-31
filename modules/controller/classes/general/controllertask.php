@@ -5,54 +5,61 @@ class CControllerTask
 {
 	public static function GetTaskArray()
 	{
-		return 	Array(
-			'SET_SETTINGS'=>GetMessage("CTRLR_TASK_TYPE_SET_SETTINGS"),
-			'UPDATE'=>GetMessage("CTRLR_TASK_TYPE_UPDATE"),
-			'COUNTERS_UPDATE'=>GetMessage("CTRLR_TASK_TYPE_COUNTERS_UPDATE"),
-			'REMOTE_COMMAND'=>GetMessage("CTRLR_TASK_TYPE_REMOTE_COMMAND"),
-			'CLOSE_MEMBER'=>GetMessage("CTRLR_TASK_TYPE_CLOSE_MEMBER")
+		return array(
+			'SET_SETTINGS' => GetMessage("CTRLR_TASK_TYPE_SET_SETTINGS"),
+			'UPDATE' => GetMessage("CTRLR_TASK_TYPE_UPDATE"),
+			'COUNTERS_UPDATE' => GetMessage("CTRLR_TASK_TYPE_COUNTERS_UPDATE"),
+			'REMOTE_COMMAND' => GetMessage("CTRLR_TASK_TYPE_REMOTE_COMMAND"),
+			'CLOSE_MEMBER' => GetMessage("CTRLR_TASK_TYPE_CLOSE_MEMBER"),
 		);
-
 	}
 
 	public static function GetStatusArray()
 	{
-		return Array(
-			'N'=>GetMessage("CTRLR_TASK_STATUS_NEW"),
-			'L'=>GetMessage("CTRLR_TASK_STATUS_LOW"),
-			'P'=>GetMessage("CTRLR_TASK_STATUS_PART"),
-			'Y'=>GetMessage("CTRLR_TASK_STATUS_COMPL"),
-			'F'=>GetMessage("CTRLR_TASK_STATUS_FAIL"),
+		return array(
+			'N' => GetMessage("CTRLR_TASK_STATUS_NEW"),
+			'L' => GetMessage("CTRLR_TASK_STATUS_LOW"),
+			'P' => GetMessage("CTRLR_TASK_STATUS_PART"),
+			'R' => GetMessage("CTRLR_TASK_STATUS_RETRY"),
+			'Y' => GetMessage("CTRLR_TASK_STATUS_COMPL"),
+			'F' => GetMessage("CTRLR_TASK_STATUS_FAIL"),
 		);
 	}
 
 	public static function CheckFields(&$arFields, $ID = false)
 	{
 		/** @global CMain $APPLICATION */
-		global $APPLICATION;
+		global $APPLICATION, $DB;
 
-		$arMsg = Array();
+		$arMsg = array();
 
-		if($ID>0)
+		if ($ID > 0)
+		{
 			unset($arFields["ID"]);
+		}
 
-		global $DB;
-		if(($ID===false || is_set($arFields, "TASK_ID")) && $arFields["TASK_ID"] == '')
+		if (($ID === false || is_set($arFields, "TASK_ID")) && $arFields["TASK_ID"] == '')
+		{
 			$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_ID"));
-		elseif(is_set($arFields, "TASK_ID"))
+		}
+		elseif (is_set($arFields, "TASK_ID"))
 		{
 			$arTaskID = CControllerTask::GetTaskArray();
-			if(!isset($arTaskID[$arFields['TASK_ID']]))
+			if (!isset($arTaskID[$arFields['TASK_ID']]))
 				$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_BAD_ID"));
 		}
 
-		if(($ID===false || is_set($arFields, "CONTROLLER_MEMBER_ID")) && intval($arFields["CONTROLLER_MEMBER_ID"])<=0)
+		if (($ID === false || is_set($arFields, "CONTROLLER_MEMBER_ID")) && intval($arFields["CONTROLLER_MEMBER_ID"]) <= 0)
+		{
 			$arMsg[] = array("id"=>"CONTROLLER_MEMBER_ID", "text"=> GetMessage("CTRLR_TASK_ERR_CLIENTID"));
+		}
 
-		if(isset($arFields["INIT_EXECUTE"]))
+		if (isset($arFields["INIT_EXECUTE"]))
+		{
 			$arFields["INIT_CRC"] = crc32($arFields["INIT_EXECUTE"]);
+		}
 
-		if(count($arMsg)<=0 && $ID===false)
+		if (!$arMsg && $ID === false)
 		{
 			$strSql = "
 				SELECT INIT_EXECUTE
@@ -64,7 +71,7 @@ class CControllerTask
 			$dbr = $DB->Query($strSql);
 			while($ar = $dbr->Fetch())
 			{
-				if($ar["INIT_EXECUTE"] == $arFields["INIT_EXECUTE"])
+				if ($ar["INIT_EXECUTE"] == $arFields["INIT_EXECUTE"])
 				{
 					$arMsg[] = array("id"=>"TASK_ID", "text"=> GetMessage("CTRLR_TASK_ERR_ALREADY")." [".intval($arFields["CONTROLLER_MEMBER_ID"])."].");
 					break;
@@ -99,15 +106,27 @@ class CControllerTask
 			}
 		}
 
-		if(count($arMsg)>0)
+		if ($arMsg)
 		{
 			$e = new CAdminException($arMsg);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
 
-		if($ID===false && !is_set($arFields, "DATE_CREATE"))
+		if ($ID === false && !is_set($arFields, "DATE_CREATE"))
+		{
 			$arFields["~DATE_CREATE"] = $DB->CurrentTimeFunction();
+		}
+
+		if ($ID === false && !is_set($arFields, "RETRY_COUNT"))
+		{
+			$arFields["RETRY_COUNT"] = COption::GetOptionInt("controller", "task_retry_count");
+		}
+
+		if ($ID === false && !is_set($arFields, "RETRY_TIMEOUT"))
+		{
+			$arFields["RETRY_TIMEOUT"] = COption::GetOptionInt("controller", "task_retry_timeout");
+		}
 
 		return true;
 	}
@@ -116,8 +135,10 @@ class CControllerTask
 	{
 		global $DB;
 
-		if(!CControllerTask::CheckFields($arFields))
+		if (!CControllerTask::CheckFields($arFields))
+		{
 			return false;
+		}
 
 		unset($arFields["TIMESTAMP_X"]);
 		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
@@ -130,8 +151,11 @@ class CControllerTask
 	public static function Update($ID, $arFields)
 	{
 		global $DB;
-		if(!CControllerTask::CheckFields($arFields, $ID))
+
+		if (!CControllerTask::CheckFields($arFields, $ID))
+		{
 			return false;
+		}
 
 		unset($arFields["TIMESTAMP_X"]);
 		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
@@ -153,7 +177,9 @@ class CControllerTask
 	public static function Delete($ID)
 	{
 		global $DB;
+
 		$DB->Query("DELETE FROM b_controller_task WHERE ID=".intval($ID));
+
 		return true;
 	}
 
@@ -162,24 +188,28 @@ class CControllerTask
 		global $DB;
 
 		static $arFields = array(
-			"ID" => Array("FIELD_NAME" => "T.ID", "FIELD_TYPE" => "int"),
-			"TIMESTAMP_X" => Array("FIELD_NAME" => "T.TIMESTAMP_X", "FIELD_TYPE" => "datetime"),
-			"DATE_CREATE" => Array("FIELD_NAME" => "T.DATE_CREATE", "FIELD_TYPE" => "datetime"),
-			"TASK_ID" => Array("FIELD_NAME" => "T.TASK_ID", "FIELD_TYPE" => "string"),
-			"CONTROLLER_MEMBER_ID" => Array("FIELD_NAME" => "T.CONTROLLER_MEMBER_ID", "FIELD_TYPE" => "int"),
-			"CONTROLLER_MEMBER_NAME" => Array("FIELD_NAME" => "M.NAME", "FIELD_TYPE" => "string"),
-			"CONTROLLER_MEMBER_URL" => Array("FIELD_NAME" => "M.URL", "FIELD_TYPE" => "string"),
-			"STATUS" => Array("FIELD_NAME" => "T.STATUS", "FIELD_TYPE" => "string"),
-			"DATE_EXECUTE" => Array("FIELD_NAME" => "T.DATE_EXECUTE", "FIELD_TYPE" => "datetime"),
+			"ID" => array("FIELD_NAME" => "T.ID", "FIELD_TYPE" => "int"),
+			"TIMESTAMP_X" => array("FIELD_NAME" => "T.TIMESTAMP_X", "FIELD_TYPE" => "datetime"),
+			"DATE_CREATE" => array("FIELD_NAME" => "T.DATE_CREATE", "FIELD_TYPE" => "datetime"),
+			"TASK_ID" => array("FIELD_NAME" => "T.TASK_ID", "FIELD_TYPE" => "string"),
+			"CONTROLLER_MEMBER_ID" => array("FIELD_NAME" => "T.CONTROLLER_MEMBER_ID", "FIELD_TYPE" => "int"),
+			"CONTROLLER_MEMBER_NAME" => array("FIELD_NAME" => "M.NAME", "FIELD_TYPE" => "string"),
+			"CONTROLLER_MEMBER_URL" => array("FIELD_NAME" => "M.URL", "FIELD_TYPE" => "string"),
+			"STATUS" => array("FIELD_NAME" => "T.STATUS", "FIELD_TYPE" => "string"),
+			"DATE_EXECUTE" => array("FIELD_NAME" => "T.DATE_EXECUTE", "FIELD_TYPE" => "datetime"),
 		);
 
 		$obWhere = new CSQLWhere;
 		$obWhere->SetFields($arFields);
 
 		$arFilterNew = Array();
-		foreach($arFilter as $k=>$value)
-			if(is_array($value) || $value <> '' || $value === false)
-				$arFilterNew[$k]=$value;
+		foreach ($arFilter as $k=>$value)
+		{
+			if (is_array($value) || $value <> '' || $value === false)
+			{
+				$arFilterNew[$k] = $value;
+			}
+		}
 
 		$strWhere = $obWhere->GetQuery($arFilterNew);
 
@@ -205,11 +235,14 @@ class CControllerTask
 					,T.UPDATE_PERIOD
 					,T.RESULT_EXECUTE
 					,T.STATUS
+					,T.RETRY_COUNT
+					,T.RETRY_TIMEOUT
 					,M.NAME as CONTROLLER_MEMBER_NAME
 					,M.URL as CONTROLLER_MEMBER_URL
 					,".$DB->DateToCharFunction("T.TIMESTAMP_X")." as TIMESTAMP_X
 					,".$DB->DateToCharFunction("T.DATE_EXECUTE")." as DATE_EXECUTE
 					,".$DB->DateToCharFunction("T.DATE_CREATE")." as DATE_CREATE
+					,unix_timestamp(now()) - unix_timestamp(T.DATE_EXECUTE) as EXECUTED_INTERVAL
 			";
 		}
 
@@ -267,7 +300,7 @@ class CControllerTask
 		$STATUS = "0";
 
 		// locking the task
-		if(!CControllerAgent::_Lock($lockId))
+		if (!CControllerAgent::_Lock($lockId))
 		{
 			$APPLICATION->ResetException();
 			return $STATUS;
@@ -280,7 +313,7 @@ class CControllerTask
 			"WHERE T.ID='".$ID."' AND T.STATUS<>'Y'";
 
 		$db_task = $DB->Query($strSql);
-		if($ar_task = $db_task->Fetch())
+		if ($ar_task = $db_task->Fetch())
 		{
 			$arControllerLog = array(
 				'CONTROLLER_MEMBER_ID' => $ar_task["CONTROLLER_MEMBER_ID"],
@@ -405,7 +438,7 @@ class CControllerTask
 			case 'REMOTE_COMMAND':
 				$arControllerLog['NAME'] = 'REMOTE_COMMAND';
 				if($ar_task['INIT_EXECUTE_PARAMS'] <> '')
-					$ar_task['INIT_EXECUTE_PARAMS'] = unserialize($ar_task['INIT_EXECUTE_PARAMS']);
+					$ar_task['INIT_EXECUTE_PARAMS'] = unserialize($ar_task['INIT_EXECUTE_PARAMS'], ["allowed_classes" => false]);
 				else
 					$ar_task['INIT_EXECUTE_PARAMS'] = Array();
 
@@ -477,28 +510,46 @@ class CControllerTask
 		return $STATUS;
 	}
 
+	public static function PostponeTask($ID, $RETRY_COUNT)
+	{
+		global $DB;
+		$DB->Query("
+			UPDATE b_controller_task SET
+				RETRY_COUNT=".intval($RETRY_COUNT)."
+				".($RETRY_COUNT > 0? ",STATUS='R'": "")."
+			WHERE ID=".intval($ID)."
+		");
+	}
+
 	public static function ProcessAllTask($limit = 10000)
 	{
 		global $DB;
 		//1. Finish partial
 		//2. Execute new tasks
-		//3. Run low priority tasks
-		foreach (array('P', 'N', 'L') as $status)
+		//3. Retry failed tasks
+		//4. Run low priority tasks
+		foreach (array('P', 'N', 'R', 'L') as $status)
 		{
 			if ($limit > 0)
 			{
 				$dbrTask = $DB->Query($DB->TopSQL("
-					SELECT ID
+					SELECT ID, RETRY_COUNT
 					FROM b_controller_task
 					WHERE STATUS = '$status'
+					".($status=='R'? 'and DATE_EXECUTE < date_sub(now(), interval RETRY_TIMEOUT second)': '')."
 					ORDER BY ID ASC
 				", $limit));
 				while ($arTask = $dbrTask->Fetch())
 				{
-					$status = CControllerTask::ProcessTask($arTask["ID"]);
-					while ($status === "P")
+					$new_status = CControllerTask::ProcessTask($arTask["ID"]);
+					while ($new_status === "P")
 					{
-						$status = CControllerTask::ProcessTask($arTask["ID"]);
+						$new_status = CControllerTask::ProcessTask($arTask["ID"]);
+					}
+
+					if ($new_status === "F" && $arTask["RETRY_COUNT"] > 0)
+					{
+						CControllerTask::PostponeTask($arTask["ID"], $arTask["RETRY_COUNT"]-1);
 					}
 
 					$limit--;

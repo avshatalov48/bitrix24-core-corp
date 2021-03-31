@@ -19,7 +19,7 @@ $arStatus = CControllerTask::GetStatusArray();
 $iTaskNCnt = 0;
 if ($USER->CanDoOperation("controller_task_run"))
 {
-	$dbrTaskN = CControllerTask::GetList(Array(), Array("=STATUS" => Array('P', 'N', 'L')), true);
+	$dbrTaskN = CControllerTask::GetList(Array(), Array("=STATUS" => Array('P', 'N', 'R', 'L')), true);
 	$iTaskNCnt = $dbrTaskN->Fetch()['C'];
 }
 
@@ -34,19 +34,33 @@ if (
 )
 {
 	$strError = "";
+	$onlyRetry = false;
 	$endTime = microtime(true) + COption::GetOptionString('controller', 'tasks_run_step_time');
 
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 	if ($iTaskNCnt > 0)
 	{
+		$sleep = 0;
 		//1. Finish partial
 		//2. Execute new tasks
-		//3. Run low priority tasks
-		foreach (array('P', 'N', 'L') as $status2exec)
+		//3. Retry failed tasks
+		//4. Run low priority tasks
+		foreach (array('P', 'N', 'R', 'L') as $status2exec)
 		{
 			$dbrTask = CControllerTask::GetList(Array("ID" => "ASC"), Array("=STATUS" => $status2exec));
 			while ($arTask = $dbrTask->Fetch())
 			{
+				if ($status2exec === 'R')
+				{
+					//check timeout
+					if ($arTask["EXECUTED_INTERVAL"] < $arTask["RETRY_TIMEOUT"])
+					{
+						$onlyRetry = true;
+						continue;
+					}
+				}
+				$onlyRetry = false;
+
 				$status = CControllerTask::ProcessTask($arTask["ID"]);
 
 				if ($status === "0" && $e = $APPLICATION->GetException())
@@ -67,35 +81,24 @@ if (
 						break;
 				}
 
+				if ($status === "F" && $arTask["RETRY_COUNT"] > 0)
+				{
+					CControllerTask::PostponeTask($arTask["ID"], $arTask["RETRY_COUNT"]-1);
+					$iCntExecuted--;
+				}
+
 				if (microtime(true) > $endTime)
 					break;
 			}
 		}
-
-		if($strError <> '')
-		{
-			$message = new CAdminMessage($strError);
-			echo $message->Show();
-		}
-		else
-		{
-			$message = new CAdminMessage(array(
-				"TYPE" => "PROGRESS",
-				"MESSAGE" => GetMessage("CTRLR_TASK_PROGRESS"),
-				"DETAILS" => GetMessage("CTRLR_TASK_PROGRESS_BAR")." $iCntExecuted ".GetMessage("CTRLR_TASK_PROGRESS_BAR_FROM")." $iCntTotal #PROGRESS_BAR#",
-				"HTML" => true,
-				"PROGRESS_TOTAL" => $iCntTotal,
-				"PROGRESS_VALUE" => $iCntExecuted,
-			));
-			echo $message->Show();
-			?>
-			<script>
-				Start(<?echo $iCntTotal?>, <?echo $iCntExecuted?>);
-			</script>
-			<?
-		}
 	}
-	else
+
+	if($strError <> '')
+	{
+		$message = new CAdminMessage($strError);
+		echo $message->Show();
+	}
+	elseif ($iTaskNCnt == 0 || $onlyRetry)
 	{
 		$message = new CAdminMessage(array(
 			"TYPE" => "PROGRESS",
@@ -113,6 +116,24 @@ if (
 		</script>
 		<?
 	}
+	else
+	{
+		$message = new CAdminMessage(array(
+			"TYPE" => "PROGRESS",
+			"MESSAGE" => GetMessage("CTRLR_TASK_PROGRESS"),
+			"DETAILS" => GetMessage("CTRLR_TASK_PROGRESS_BAR")." $iCntExecuted ".GetMessage("CTRLR_TASK_PROGRESS_BAR_FROM")." $iCntTotal #PROGRESS_BAR#",
+			"HTML" => true,
+			"PROGRESS_TOTAL" => $iCntTotal,
+			"PROGRESS_VALUE" => $iCntExecuted,
+		));
+		echo $message->Show();
+		?>
+		<script>
+			Start(<?echo $iCntTotal?>, <?echo $iCntExecuted?>);
+		</script>
+		<?
+	}
+
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 }
 
@@ -150,7 +171,7 @@ $arFilterFields = Array(
 $adminFilter = $lAdmin->InitFilter($arFilterFields);
 
 if (!isset($find_status) || !is_array($find_status) && $_REQUEST["del_filter"] !== "Y")
-	$find_status = array('P', 'N', 'L');
+	$find_status = array('P', 'R', 'N', 'L');
 
 $arFilter = array(
 	"%TASK_ID" => $_REQUEST["find_task_id"],
@@ -239,6 +260,8 @@ $arHeaders = array(
 	array("id" => "TIMESTAMP_X", "content" => GetMessage("CTRLR_TASK_COLUMN_DATE_MOD"), "sort" => "timestamp_x"),
 	array("id" => "DATE_CREATE", "content" => GetMessage("CTRLR_TASK_COLUMN_DATE_CRE"), "default" => true, "sort" => "DATE_CREATE"),
 	array("id" => "ID", "content" => "ID", "default" => true, "sort" => "id"),
+	array("id" => "RETRY_COUNT", "content" => GetMessage("CTRLR_TASK_COLUMN_RETRY_COUNT")),
+	array("id" => "RETRY_TIMEOUT", "content" => GetMessage("CTRLR_TASK_COLUMN_RETRY_TIMEOUT")),
 );
 
 $lAdmin->AddHeaders($arHeaders);

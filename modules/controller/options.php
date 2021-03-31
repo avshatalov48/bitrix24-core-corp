@@ -21,7 +21,7 @@ while ($ar_groups = $dbr_groups->GetNext())
 
 $arOptions = array(
 	array("default_group", GetMessage("CTRLR_OPTIONS_DEF_GROUP"), 1, array("selectbox", $arGroups)),
-	array("group_update_time", GetMessage("CTRLR_OPTIONS_TIME_AUTOUPDATE"), 0, array("text", 5)),
+	array("group_update_time", GetMessage("CTRLR_OPTIONS_TIME_AUTOUPDATE"), 0, array("text", 6)),
 	array("show_hostname", GetMessage("CTRLR_OPTIONS_SHOW_HOSTNAME"), 0, array("checkbox")),
 );
 if (ControllerIsSharedMode())
@@ -29,6 +29,8 @@ if (ControllerIsSharedMode())
 	$arOptions[] = array("shared_kernel_path", GetMessage("CTRLR_OPTIONS_SHARED_KERNEL_PATH"), "", array("text", 50));
 }
 $arOptions[] = array("auth_log_days", GetMessage("CTRLR_OPTIONS_AUTH_LOG_DAYS"), 0, array("text", 6));
+$arOptions[] = array("task_retry_count", GetMessage("CTRLR_OPTIONS_TASK_RETRY_COUNT"), 0, array("text", 6));
+$arOptions[] = array("task_retry_timeout", GetMessage("CTRLR_OPTIONS_TASK_RETRY_TIMEOUT"), 0, array("text", 6));
 
 $aTabs = array();
 $aTabs[] = array(

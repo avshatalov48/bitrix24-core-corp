@@ -154,6 +154,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        item.setActivityExistInnerHtml();
 	        item.useAnimation = true;
+	        item.setChangedInPullRequest();
 	        this.grid.insertItem(item);
 	        var newColumn = this.grid.getColumn(paramsItem.data.columnId);
 	        var newPrice = parseFloat(paramsItem.data.price);

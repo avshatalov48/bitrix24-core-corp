@@ -286,7 +286,7 @@ class CControllerGroup
 		$dbr_group = CControllerGroup::GetByID($group_id);
 		if ($ar_group = $dbr_group->Fetch())
 		{
-			$arSettings = unserialize($ar_group["INSTALL_INFO"]);
+			$arSettings = unserialize($ar_group["INSTALL_INFO"], ["allowed_classes" => false]);
 			$strCommand = CControllerGroupSettings::GeneratePHPInstall($arSettings);
 			return $strCommand.$ar_group["INSTALL_PHP"];
 		}
@@ -433,7 +433,6 @@ class CControllerGroupSettings
 			"catalog" => Array("name" => GetMessage("CTRLR_GRP_SET_CATALOG")),
 			"clouds" => Array("name" => GetMessage("CTRLR_GRP_SET_CLOUDS")),
 			"cluster" => Array("name" => GetMessage("CTRLR_GRP_SET_CLUSTER")),
-			"compression" => Array("name" => GetMessage("CTRLR_GRP_SET_COMPRESSION")),
 			"controller" => Array("name" => GetMessage("CTRLR_GRP_SET_CONTROLLER")),
 			"crm" => Array("name" => GetMessage("CTRLR_GRP_SET_CRM")),
 			"currency" => Array("name" => GetMessage("CTRLR_GRP_SET_CURRENCY")),

@@ -2,8 +2,6 @@
 
 namespace Bitrix\DocumentGenerator\Model;
 
-use Bitrix\DocumentGenerator\DataProvider;
-use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main;
 use Bitrix\Main\Entity\Event;
 use Bitrix\Main\Entity\EventResult;
@@ -36,22 +34,6 @@ class TemplateProviderTable extends Main\Entity\DataManager
 			]),
 			new Main\Entity\StringField('PROVIDER', [
 				'primary' => true,
-				'validation' => function()
-				{
-					return [
-						function($value)
-						{
-							if(DataProviderManager::checkProviderName(static::getClassNameFromFilterString($value)))
-							{
-								return true;
-							}
-							else
-							{
-								return Loc::getMessage('DOCUMENTGENERATOR_MODEL_TEMPLATE_CLASS_VALIDATION', ['#CLASSNAME#' => $value, '#PARENT#' => DataProvider::class]);
-							}
-						},
-					];
-				},
 			]),
 			new Main\Entity\ReferenceField('TEMPLATE', '\Bitrix\DocumentGenerator\Model\Template',
 				['=this.TEMPLATE_ID' => 'ref.ID']

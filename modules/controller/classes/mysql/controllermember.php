@@ -40,34 +40,45 @@ class CControllerMember extends CAllControllerMember
 		else
 			$strAddWhere = '';
 
-		$strSql = "
-			SELECT M.ID
-			FROM b_controller_member M
-			INNER JOIN b_controller_group G ON M.CONTROLLER_GROUP_ID = G.ID
-			WHERE
-				G.TRIAL_PERIOD > 0
-				AND TO_DAYS(now()) - TO_DAYS(M.IN_GROUP_FROM) >= G.TRIAL_PERIOD
-				AND SITE_ACTIVE = 'Y'
-				AND DISCONNECTED = 'N'
-				".$strAddWhere."
-		";
-
-		$dbr = $DB->Query($strSql);
-		while ($ar = $dbr->Fetch())
+		$rsTrialGroups = $DB->Query("SELECT ID FROM b_controller_group WHERE TRIAL_PERIOD > 0");
+		$arTrialGroups = array();
+		while ($arGroup = $rsTrialGroups->Fetch())
 		{
-			if ($id > 0)
+			$arTrialGroups[] = $arGroup["ID"];
+		}
+
+		if ($arTrialGroups)
+		{
+			$strSql = "
+				SELECT M.ID
+				FROM b_controller_member M
+				INNER JOIN b_controller_group G ON M.CONTROLLER_GROUP_ID = G.ID
+				WHERE
+					G.ID in (".implode(",", $arTrialGroups).")
+					AND G.TRIAL_PERIOD > 0
+					AND M.IN_GROUP_FROM < DATE_SUB(now(), INTERVAL G.TRIAL_PERIOD DAY)
+					AND SITE_ACTIVE = 'Y'
+					AND DISCONNECTED = 'N'
+					".$strAddWhere."
+			";
+
+			$dbr = $DB->Query($strSql);
+			while ($ar = $dbr->Fetch())
 			{
-				CControllerMember::CloseMember($id, true);
-				return true;
-			}
-			elseif (!isset($handledMembers[$ar["ID"]]))
-			{
-				$handledMembers[$ar["ID"]] = $ar["ID"];
-				CControllerTask::Add(array(
-					"TASK_ID" => "CLOSE_MEMBER",
-					"CONTROLLER_MEMBER_ID" => $ar["ID"],
-					"INIT_EXECUTE_PARAMS" => true,
-				));
+				if ($id > 0)
+				{
+					CControllerMember::CloseMember($id, true);
+					return true;
+				}
+				elseif (!isset($handledMembers[$ar["ID"]]))
+				{
+					$handledMembers[$ar["ID"]] = $ar["ID"];
+					CControllerTask::Add(array(
+						"TASK_ID" => "CLOSE_MEMBER",
+						"CONTROLLER_MEMBER_ID" => $ar["ID"],
+						"INIT_EXECUTE_PARAMS" => true,
+					));
+				}
 			}
 		}
 
@@ -111,7 +122,7 @@ class CControllerMember extends CAllControllerMember
 					OR DATE_ACTIVE_TO < ".$DB->CurrentTimeFunction()."
 					OR ACTIVE = 'N'
 				)
-				AND SITE_ACTIVE = 'Y'
+				AND SITE_ACTIVE <> 'N'
 				AND DISCONNECTED = 'N'
 				".$strAddWhere."
 		";

@@ -339,7 +339,7 @@ class CAllControllerMember
 	public static function logChanges($CONTROLLER_MEMBER_ID, $arFieldsOld, $arFieldsNew, $strNote)
 	{
 		global $DB, $USER;
-		static $arFieldsToLog = array("CONTROLLER_GROUP_ID", "SITE_ACTIVE", "NAME");
+		static $arFieldsToLog = array("CONTROLLER_GROUP_ID", "SITE_ACTIVE", "NAME", "ACTIVE");
 
 		if(is_object($USER))
 			$USER_ID = $USER->GetID();
@@ -703,7 +703,7 @@ class CAllControllerMember
 				{
 					$arFilterNew[$k] = $value;
 				}
-				elseif($value <> '')
+				elseif((string)$value <> '')
 				{
 					if(array_key_exists("date_format", $arOptions) && preg_match($date_field, $k))
 						$arFilterNew[$k] = ConvertTimeStamp(MakeTimeStamp($value, $arOptions["date_format"]), "FULL");

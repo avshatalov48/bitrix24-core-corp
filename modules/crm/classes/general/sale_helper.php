@@ -412,7 +412,18 @@ class CCrmSaleHelper
 
 		if ($isCrmAccess && !$isDbAccess)
 		{
-			return false;
+			$shopRole = self::getShopRole($userId);
+			if ($shopRole)
+			{
+				self::addDbAccessAddingAgent($userId);
+				self::addToCacheAccess($userId, $role, true);
+				return true;
+			}
+			else
+			{
+				self::addToCacheAccess($userId, $role, false);
+				return false;
+			}
 		}
 
 		self::addToCacheAccess($userId, $role, false);
@@ -603,6 +614,11 @@ class CCrmSaleHelper
 	}
 
 	public static function updateShopAccess()
+	{
+		self::startAgentToAddShopAccess();
+	}
+
+	public static function updateShopAccessByAgent()
 	{
 		$userIds = self::getListUserIdFromCrmRoles(true);
 
@@ -1194,6 +1210,28 @@ class CCrmSaleHelper
 				$moduleId,
 				"N",
 				60,
+				"",
+				"Y",
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
+			);
+		}
+	}
+
+	private static function startAgentToAddShopAccess(): void
+	{
+		$moduleId = "crm";
+		$agentName = "CCrmSaleHelper::updateShopAccessByAgent();";
+		$agent = \CAgent::getList([], [
+			"MODULE_ID" => $moduleId,
+			"NAME" => $agentName
+		])->fetch();
+		if (!$agent)
+		{
+			CAgent::addAgent(
+				$agentName,
+				$moduleId,
+				"N",
+				10,
 				"",
 				"Y",
 				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")

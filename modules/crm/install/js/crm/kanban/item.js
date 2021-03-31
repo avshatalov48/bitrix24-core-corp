@@ -25,6 +25,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.clientNameItems = [];
 	this.useAnimation = false;
 	this.isAnimationInProgress = false;
+	this.changedInPullRequest = false;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -1712,6 +1713,21 @@ BX.CRM.Kanban.Item.prototype = {
 				}.bind(this));
 			}.bind(this)
 		);
+	},
+
+	setChangedInPullRequest: function()
+	{
+		this.changedInPullRequest = true;
+	},
+
+	dropChangedInPullRequest: function()
+	{
+		this.changedInPullRequest = false;
+	},
+
+	isChangedInPullRequest: function()
+	{
+		return (this.changedInPullRequest === true);
 	}
 }
 

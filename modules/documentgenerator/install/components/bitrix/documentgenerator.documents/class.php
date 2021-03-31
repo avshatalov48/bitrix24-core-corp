@@ -60,12 +60,12 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_MODULE_EMPTY'));
 			return;
 		}
-		elseif(!Loader::includeModule($moduleId))
+		if(!Loader::includeModule($moduleId))
 		{
 			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_MODULE_ERROR', ['#MODULE_ID#' => $moduleId]));
 			return;
 		}
-		if(empty($this->arParams['provider']) || !DataProviderManager::checkProviderName($this->arParams['provider']))
+		if(empty($this->arParams['provider']) || !DataProviderManager::checkProviderName($this->arParams['provider'], $moduleId))
 		{
 			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_PROVIDER_DOCGEN_ERROR'));
 			return;
@@ -132,6 +132,7 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 	{
 		$grid = [];
 		$grid['GRID_ID'] = $this->gridId;
+		$grid['ROWS'] = [];
 		$grid['COLUMNS'] = [
 			[
 				'id' => 'ID',

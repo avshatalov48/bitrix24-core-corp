@@ -977,9 +977,9 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Hook on item moved.
-	 * @param {BX.Kanban.Item} item
+	 * @param {BX.CRM.Kanban.Item} item
 	 * @param {BX.Kanban.Column|BX.Kanban.DropZone} targetColumn
-	 * @param {BX.Kanban.Item} [beforeItem]
+	 * @param {BX.CRM.Kanban.Item} [beforeItem]
 	 * @param {Boolean} [skipHandler]
 	 * @returns {void}
 	 */
@@ -992,10 +992,11 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		// first checking if targetColumn require some fields
 		if (
-			itemData.required &&
-			itemData.required[columnId] &&
-			itemData.required[columnId].length > 0 &&
-			this.itemMoving.oldColumn.getId() !== targetColumn.getId()
+			itemData.required
+			&& itemData.required[columnId]
+			&& itemData.required[columnId].length > 0
+			&& this.itemMoving.oldColumn.getId() !== targetColumn.getId()
+			&& !item.isChangedInPullRequest()
 		)
 		{
 			// check required fm fields
@@ -1070,6 +1071,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			gridData.entityType === "LEAD" &&
 			targetColumn.getId() === "CONVERTED" &&
 			this.itemMoving.dropEvent
+			&& !item.isChangedInPullRequest()
 		)
 		{
 			BX.Crm.KanbanComponent.dropPopup(
@@ -1142,37 +1144,44 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		// ajax
-		this.ajax({
-				action: "status",
-				entity_id: this.itemMoving.groupIds
+		if (!item.isChangedInPullRequest())
+		{
+			this.ajax({
+					action: "status",
+					entity_id: (
+						this.itemMoving.groupIds
 							? this.itemMoving.groupIds
-							: itemId,
-				prev_entity_id: afterItemId,
-				status: targetColumnId
-			},
-			function(data)
-			{
-				if (data && !data.error)
+							: itemId
+					),
+					prev_entity_id: afterItemId,
+					status: targetColumnId
+				},
+				function(data)
 				{
-					if (data.items && data.items.length > 0)
+					if (data && !data.error)
 					{
-						this.updateItem(itemId, data.items[0]);
+						if (data.items && data.items.length > 0)
+						{
+							this.updateItem(itemId, data.items[0]);
+						}
+						else
+						{
+							item.setDataKey("columnId", targetColumnId);
+						}
 					}
-					else
+					else if (data)
 					{
-						item.setDataKey("columnId", targetColumnId);
+						BX.Kanban.Utils.showErrorDialog(data.error, true);
 					}
-				}
-				else if (data)
+				}.bind(this),
+				function(error)
 				{
-					BX.Kanban.Utils.showErrorDialog(data.error, true);
-				}
-			}.bind(this),
-			function(error)
-			{
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-			}.bind(this)
-		);
+					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				}.bind(this)
+			);
+		}
+
+		item.dropChangedInPullRequest();
 	},
 
 	/**
