@@ -1,0 +1,75 @@
+.crm-tracking-call-tester {
+	padding: 0 15px 0 21px !important;
+}
+.crm-tracking-call-tester-title-wrap {
+	min-height: 74px;
+	box-sizing: border-box;
+	position: relative;
+}
+.crm-tracking-call-tester-title {
+	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	margin: 0;
+	padding: 21px 0 21px 5px;
+	display: block;
+	word-wrap: break-word;
+	color: #000;
+}
+.crm-tracking-call-tester-section {
+	padding: 15px;
+	background: white;
+}
+
+.crm-tracking-call-tester-status-icon {
+	width: 14px;
+	height: 14px;
+	display: inline-block;
+	margin: 0 5px 0 0;
+	border-radius: 20px;
+}
+.crm-tracking-call-tester-status-icon-green {
+	background: #a1e071;
+}
+.crm-tracking-call-tester-status-icon-gray {
+	background: #b7b7b7;
+}
+
+.crm-tracking-call-tester-section-success{
+	display: none;
+}
+
+.crm-tracking-call-tester-status-success .crm-tracking-call-tester-section-unknown{
+	display: none;
+}
+.crm-tracking-call-tester-status-success .crm-tracking-call-tester-section-success{
+	display: block;
+}
+
+.crm-tracking-call-tester-header {
+	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+	margin: 0 0 19px;
+}
+
+.crm-tracking-call-tester-desc {
+	margin-bottom: 25px;
+}
+
+.crm-tracking-call-tester-desc-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #525c69;
+}
+
+.crm-tracking-call-tester-result {
+	text-align: center;
+}
+.crm-tracking-call-tester-result-success {
+	color: green;
+}
+.crm-tracking-call-tester-result-unknown {
+	color: darkred;
+}
+
+.crm-tracking-call-tester-section-success .crm-tracking-call-tester-header {
+	color: #48ab01;
+}

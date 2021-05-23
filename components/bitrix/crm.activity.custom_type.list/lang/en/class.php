@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_PERMISSION_DENIED"] = "Access denied";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_ID"] = "ID";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_NAME"] = "Name";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_SORT"] = "Sort";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_CREATED_DATE"] = "Created on";
+?>

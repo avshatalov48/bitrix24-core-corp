@@ -1,0 +1,67 @@
+.invite-wrap {
+	 padding: 0 3px !important;
+ }
+
+.invite-title-container {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	border-bottom: 1px solid #edeef0;
+	padding-bottom: 9px;
+	margin-bottom: 17px;
+	/*padding-left: 3px;*/
+}
+
+.invite-title-icon {
+	width: 47px;
+	height: 47px;
+	flex-basis: 47px;
+	background-repeat: no-repeat;
+}
+
+.invite-title-icon-message {
+	background-image: url(images/invite-guest.svg);
+}
+
+.invite-title-text {
+	padding-left: 17px;
+	/*flex: 1;*/
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	color: #333;
+	letter-spacing: 0;
+}
+
+.invite-content-container {
+
+}
+
+.invite-form-container {
+	padding-bottom: 9px;
+	margin-bottom: 21px;
+}
+
+.invite-form-row {
+	display: flex;
+	align-items: flex-start;
+}
+
+.invite-form-col {
+	flex: 1;
+	margin-bottom: 17px;
+}
+
+.invite-form-row .invite-form-col:first-child {
+	padding-right: 10px;
+}
+
+.invite-form-row .invite-form-col:last-child {
+	padding-left: 10px;
+}
+
+.invite-form-buttons {
+	border-top: 1px solid #edeef0;
+	display: flex;
+	align-items: baseline;
+	padding-top: 23px;
+}

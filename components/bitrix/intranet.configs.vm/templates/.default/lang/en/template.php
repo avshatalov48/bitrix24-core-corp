@@ -1,0 +1,29 @@
+<?
+$MESS["CONFIG_VM_HEADER_SETTINGS"] = "Settings";
+$MESS["CONFIG_VM_SMTP_TITLE"] = "E-Mail Configuration";
+$MESS["CONFIG_VM_SMTP_HOST"] = "SMTP server";
+$MESS["CONFIG_VM_SMTP_PORT"] = "SMTP port";
+$MESS["CONFIG_VM_SMTP_USER"] = "SMTP user login";
+$MESS["CONFIG_VM_SMTP_PASSWORD"] = "User password";
+$MESS["CONFIG_VM_SMTP_REPEAT_PASSWORD"] = "Confirm password";
+$MESS["CONFIG_VM_SMTP_EMAIL"] = "E-mail address";
+$MESS["CONFIG_VM_SMTP_TLS"] = "Use TLS";
+$MESS["CONFIG_VM_SMTP_AUTH"] = "Use authentication";
+$MESS["CONFIG_VM_SMTP_ERROR"] = "E-mail configuration error";
+$MESS["CONFIG_VM_BXENV_UPDATE"] = "The Virtual Appliance needs to be updated.";
+$MESS["CONFIG_VM_BXENV_UPDATE_ARTICLE_ID"] = "6147609";
+$MESS["CONFIG_VM_SAVE_SUCCESSFULLY"] = "Settings has been updated successfully";
+$MESS["CONFIG_VM_CERTIFICATE_TITLE"] = "Certificate Settings";
+$MESS["CONFIG_VM_CERTIFICATE_TYPE"] = "Certificate type";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_CONF"] = "Configure Let's Encrypt certificate";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_CONF"] = "Configure SSL certificate";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_EMAIL"] = "Notification e-mail address";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_DNS"] = "Valid DNS names for this certificate";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_KEY_PATH"] = "Private key path";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_PATH"] = "Certificate path";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_PATH_CHAIN"] = "Certificate chain path";
+$MESS["CONFIG_VM_SAVE"] = "Save";
+$MESS["CONFIG_VM_START"] = "Start";
+$MESS["CONFIG_VM_UPLOAD"] = "Download";
+$MESS["CONFIG_VM_CERTIFICATE_PROCESS"] = "The certificate is now being configured. This can take some time.";
+?>

@@ -1,0 +1,554 @@
+@icon-set: url(/bitrix/js/tasks/css/images/media.png);
+
+.bg-image (@y: 0, @x: 0) {
+	background: @icon-set no-repeat @x @y;
+}
+.box-sizing (@value) {
+	-webkit-box-sizing: @value;
+	-moz-box-sizing: @value;
+	box-sizing: @value;
+}
+
+// drag and buttons are off by default
+.tasks-btn-drag,
+.tasks-uf-panel-row-buttons {
+	display: none;
+}
+
+// but drag is shown on hover when drag mode is on
+&.drag-mode-on {
+	.tasks-uf-panel-row {
+		.tasks-uf-panel-row-geometry {
+			&:hover {
+				.tasks-btn-drag {
+					display: block;
+				}
+			}
+		}
+	}
+}
+// and buttons are shown on simple hover
+.tasks-uf-panel-row {
+	.tasks-uf-panel-row-geometry {
+		&:hover {
+			.tasks-uf-panel-row-buttons {
+				display: block;
+			}
+		}
+	}
+}
+
+.tasks-uf-panel {
+
+	.input-block-padding(){
+		padding: 8px 10px;
+	}
+	.input-block-font(){
+		color: #535c69;
+		font-size: 15px;
+
+		&[disabled="disabled"] {
+			color: lighten(#535c69, 30%)
+		}
+	}
+	.input-block-border(){
+		border: 1px solid #c6cdd3;
+		border-radius: 2px;
+	}
+	.input-block-background {
+		background-color: #ffffff;
+	}
+	.input-block-wide(){
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.input-block(){
+		.input-block-border();
+		.input-block-padding();
+		.input-block-font();
+		.input-block-background();
+	}
+	.inline-block() {
+		display: inline-block;
+	}
+	.tasks-uf-panel-data-v-offset() {
+		margin-top: 11px;
+	}
+
+	// panel flying mode
+	&.tasks {
+		&.flying {
+
+			max-width: 300px;
+
+			.tasks-uf-panel-row {
+				.tasks-uf-panel-row-title {
+					width: 100%;
+					text-align: left;
+					max-height: 42px;
+					overflow: hidden;
+					position: relative;
+				}
+				.tasks-btn-drag {
+					display: block;
+				}
+			}
+		}
+	}
+
+	.tasks-uf-panel-settings {
+		position: absolute;
+		top: 17px;
+		right: 28px;
+	}
+
+	.tasks-uf-panel-dnd-after {
+		border-top: 1px solid #a5abb2;
+		height: 0;
+		width: 200px;
+		padding: 0;
+		margin: 0 0 0 10px;
+		color: gray;
+		opacity: 0;
+	}
+	.tasks-uf-panel-items {
+
+		min-width: 670px;
+
+		&.top {
+			.tasks-uf-panel-dnd-after.panel {
+				opacity: 1;
+			}
+		}
+
+		border-bottom: 1px solid transparent;
+
+		&.not-empty {
+			border-bottom-color: #e6e9ec;
+		}
+	}
+
+	.tasks-uf-panel-row {
+
+		@common-abs-v-offset: 15px;
+
+		width: 100%;
+		position: relative;
+		overflow: hidden;
+
+		&.after {
+			.tasks-uf-panel-dnd-after {
+				opacity: 1;
+			}
+		}
+
+		.tasks-uf-panel-row-geometry {
+			margin: 5px 0 5px 0;
+			min-height: 34px;
+			border-left: 1px solid #EAEDEE;
+
+			-webkit-transition: background-color 0.2s linear;
+			transition: background-color 0.2s linear;
+
+			// drag button coordinates
+			.tasks-btn-drag {
+				top: @common-abs-v-offset - 4px;
+				left: 5px;
+			}
+
+			&:hover {
+				background-color: #f2f2f2;
+
+				.tasks-uf-panel-row-buttons {
+					display: block;
+				}
+			}
+		}
+
+		&.required {
+			.tasks-uf-panel-row-title-text {
+				.tasks-uf-panel-row-title-red-star {
+					.inline-block();
+				}
+			}
+		}
+
+		&.invisible {
+			height: 0;
+			width: auto;
+			overflow: hidden;
+			opacity: 0;
+		}
+
+		.tasks-uf-panel-row-padding()
+		{
+			padding-bottom: 6px;
+			padding-top: 6px;
+		}
+
+		.tasks-uf-panel-row-title {
+			.inline-block();
+			.box-sizing(border-box);
+
+			width: 30%;
+			max-width: 200px;
+			text-align: right;
+			padding: 0 10px 0 30px;
+			.tasks-uf-panel-row-padding();
+			color: #5e6675;
+			vertical-align: top;
+
+			.tasks-uf-panel-row-title-text {
+				padding-top: 9px;
+				font-size: 15px;
+				overflow: hidden;
+			}
+			.tasks-uf-panel-row-title-red-star {
+				display: none;
+			}
+			.tasks-uf-panel-row-title-edit {
+				display: none;
+			}
+
+			input[type="text"] {
+				.input-block();
+				.input-block-wide();
+			}
+		}
+
+		.tasks-uf-panel-row-data {
+			.inline-block();
+			.box-sizing(border-box);
+
+			width: 69%;
+			box-sizing: border-box;
+			vertical-align: top;
+			padding: 0 80px 0 0;
+			.tasks-uf-panel-row-padding();
+
+			.tasks-uf-panel-row-data-value {
+
+				min-height: 35px;
+				position: relative;
+
+				-webkit-transition: opacity 0.2s linear;
+				transition: opacity 0.2s linear;
+
+				.tasks-uf-panel-row-data-value-overlay {
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					top: 0;
+					left: 0;
+					cursor: default;
+					display: none;
+					z-index: 999;
+				}
+			}
+		}
+
+		// field stubs
+		.tasks-uf-panel-row-data-field-stub {
+			&[data-type="boolean"] {
+				display: none;
+			}
+		}
+		&[data-type="boolean"] {
+			.tasks-uf-panel-row-data-field-stub {
+				&[data-type="boolean"] {
+					display: block;
+				}
+				&:not([data-type="boolean"]) {
+					display: none;
+				}
+			}
+		}
+
+		.tasks-uf-panel-row-buttons {
+
+			position: absolute;
+			top: @common-abs-v-offset;
+			right: 0;
+			padding-right: 8px;
+
+			.tasks-uf-panel-row-button() {
+				.inline-block();
+			}
+
+			.tasks-uf-panel-row-button-delete {
+				.tasks-uf-panel-row-button();
+			}
+			.tasks-uf-panel-row-button-edit {
+				.tasks-uf-panel-row-button();
+				border-left: 1px solid #c2c9cc;
+				padding-left: 4px;
+			}
+			.tasks-uf-panel-row-button-edit {
+				&:before {
+					top: -1px;
+					right: 0px;
+					left: auto;
+				}
+			}
+		}
+
+		.tasks-uf-panel-row-data-form-place {
+
+			overflow: hidden;
+
+			&.invisible {
+				height: 0;
+				width: auto;
+				opacity: 0;
+			}
+		}
+
+		.tasks-uf-panel-form {
+
+			.tasks-uf-panel-form-flags{
+
+				margin-top: 20px;
+				margin-bottom: 20px;
+
+				> * {
+					margin-right: 10px;
+				}
+
+				label.disabled {
+					color: gray;
+				}
+			}
+
+			.task-message-label {
+				margin-top: 10px;
+
+				&.invisible {
+					display: none;
+				}
+			}
+		}
+
+		// edit mode
+		&.edit {
+			.tasks-uf-panel-row-title-text {
+				display: none;
+			}
+			.tasks-uf-panel-row-title-edit {
+				display: block;
+			}
+			.tasks-uf-panel-row-data-value {
+				opacity: 0.5;
+			}
+			.tasks-uf-panel-row-data-value-overlay {
+				display: block !important;
+			}
+
+			// drag and buttons are off in edit mode anyway
+			.tasks-uf-panel-row-buttons,
+			.tasks-btn-drag {
+				display: none !important;
+			}
+		}
+	}
+
+	.tasks-uf-panel-new-item-place {
+		overflow: hidden;
+	}
+
+	.tasks-uf-panel-bottom-actions {
+
+		padding: 12px 20px;
+
+		.invisible {
+			display: none;
+		}
+
+		a {
+			.inline-block();
+			border-bottom: 1px dashed #0069C4;
+			outline: medium none;
+			text-decoration: none;
+			margin-right: 20px;
+			margin-bottom: 3px;
+		}
+	}
+
+	.tasks-uf-panel-bottom-actions-off {
+		padding-left: 0;
+		color: #9095A0;
+	}
+
+	/////////////////////////////////////
+	///// Field deface
+	/////////////////////////////////////
+
+	.tasks-uf-panel-row.defaceable {
+
+		// make plain inputs thin
+		.tasks-uf-panel-row-data {
+			input[type="text"] {
+				.input-block();
+			}
+		}
+		// and make them wide, but not for employee field
+		&:not([data-type="employee"]) {
+			input[type="text"] {
+				.input-block-wide();
+			}
+		}
+
+		// change calendar icon for date and datetime fields
+		&[data-type="date"],
+		&[data-type="datetime"] {
+			.tasks-uf-panel-row-data {
+
+				.fields {
+					&.datetime {
+						position: relative;
+					}
+				}
+
+				.calendar-icon {
+					position: absolute;
+					top: 10px;
+					right: 7px;
+
+					margin: 0;
+					padding: 0;
+
+					&.calendar-icon-hover {
+						background-color: transparent !important;
+						border: 0 none  !important;
+						margin: 0;
+						padding: 0;
+						cursor: default !important;
+					}
+
+					// appearance
+					width: 18px;
+					height: 15px;
+					.bg-image(-269px);
+					bottom: 0;
+					z-index: 1;
+					opacity: 0.7;
+				}
+			}
+		}
+
+		// add extra-padding to the sole checkbox and crm and disk_file fields
+		&[data-type="crm"],&[data-type="disk_file"] {
+			.tasks-uf-panel-row-data {
+				.tasks-uf-panel-data-v-offset();
+			}
+		}
+		&[data-type="boolean"] {
+			.fields {
+				input[type="checkbox"] {
+					.tasks-uf-panel-data-v-offset();
+				}
+			}
+		}
+
+		// defacing select boxes
+		&[data-multiple="0"] {
+			.tasks-uf-panel-row-data {
+				select {
+
+					.input-block-border();
+
+					position: absolute;
+					line-height: 36px;
+					font-size: 15px;
+					//border: none;
+					top: 0;
+					bottom: 0;
+					box-sizing: border-box;
+					margin: auto;
+					padding: 0 8px;
+					background: white; //transparent;
+					z-index: 2;
+					outline: none;
+					color: #535c69;
+					height: 36px;
+
+					max-width: 100%;
+				}
+			}
+		}
+		.tasks-uf-panel-row-data
+		{
+			select {
+				.input-block-border();
+				.input-block-font();
+				max-width: 100%;
+
+				option {
+					.input-block-padding();
+					.input-block-font();
+				}
+			}
+		}
+
+		// for multiple fields
+		&[data-multiple="1"] {
+
+			// leave some space between values
+			.fields {
+				margin-bottom: 3px;
+			}
+
+			// deface "add more" button
+			input[type="button"] {
+				background: none;
+				border-top: 0 none;
+				border-left: 0 none;
+				border-right: 0 none;
+				border-bottom: 1px dashed #0a51ae;
+				color: #0a51ae;
+				cursor: pointer;
+
+				padding: 0;
+				margin: 0;
+			}
+		}
+	}
+}
+
+// for popup
+.tasks-uf-panel-scrollpane {
+
+	display: block;
+
+	.menu-popup-item {
+		padding-right: 5px;
+
+		.menu-popup-item-text {
+			max-width: 300px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+
+	.tasks-red {
+		&.invisible {
+			display: none;
+		}
+	}
+}
+
+.tasks-uf-panel-restricted {
+	margin-top: 14px;
+	color: #5e6675;
+	font-size: 14px;
+}
+@disabled-color: gray;
+.tasks-btn-restricted {
+	.tasks-uf-panel-btn-action {
+		color: @disabled-color;
+		border-color: @disabled-color !important;
+
+		&:hover {
+			color: @disabled-color;
+		}
+	}
+}

@@ -1,0 +1,26 @@
+table.bx-users-table {border-collapse: collapse; width: 100%;}
+div.bx-users-nav {padding: 10px 0px;}
+.bx-user-image-default-100 {background-image: url(/bitrix/components/bitrix/intranet.structure.list/templates/.default/images/nopic_user_100_noborder.gif); height: 100px; width: 100px; border: solid 1px #C4C4C4;}
+
+.bx-user-controls-cell {width: 200px;}
+.bx-user-controls-cell  a {text-decoration: none;}
+.bx-user-controls-cell  a:hover {text-decoration: underline;}
+
+.bx-user-controls-cell ul {width: 200px; list-style-image: none; list-style-position: outside; list-style-type: none; margin: 0; padding: 0;}
+.bx-user-controls-cell ul li.bx-icon {
+	padding-top: 3px;
+	height: 19px;
+	display: block;
+	padding-left: 22px;
+	clear: both;
+	background-image: url(/bitrix/components/bitrix/intranet.structure.list/templates/.default/images/icons_all.png);
+	background-repeat: no-repeat;
+}
+
+.bx-user-controls-cell .bx-icon-message{background-position: 0 0;}
+.bx-user-controls-cell .bx-icon-online{background-position: 0 -20px;}
+.bx-user-controls-cell .bx-icon-away{background-position: 0 -40px;}
+.bx-user-controls-cell .bx-icon-birth{background-position: 0 -60px;}
+.bx-user-controls-cell .bx-icon-featured{background-position: 0 -80px;}
+.bx-user-controls-cell .bx-icon-edit{background-position: 0 -99px;}
+.bx-user-controls-cell .bx-icon-video{background-position: 0 -120px;}

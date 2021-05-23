@@ -1,0 +1,22 @@
+<?php
+$MESS['INTRANET_USTAT_PERIOD_BUTTON_TODAY'] = 'Сегодня';
+$MESS['INTRANET_USTAT_PERIOD_BUTTON_WEEK'] = 'Неделя';
+$MESS['INTRANET_USTAT_PERIOD_BUTTON_MONTH'] = 'Месяц';
+$MESS['INTRANET_USTAT_PERIOD_BUTTON_YEAR'] = 'Год';
+$MESS['INTRANET_USTAT_PERIOD_TITLE'] = 'Период времени:';
+$MESS['INTRANET_USTAT_TOGGLE_PEOPLE'] = 'Люди';
+$MESS['INTRANET_USTAT_TOGGLE_COMPANY'] = 'Компания';
+$MESS['INTRANET_USTAT_SECTION_SOCNET_HELP_GENERAL'] = 'Общее число опубликованных сообщений и комментариев за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_SOCNET_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется социальной сетью за выбранный период.';
+$MESS['INTRANET_USTAT_SECTION_LIKES_HELP_GENERAL'] = 'Общее число отметок "Мне нравится" у сообщений, комментариев, задач и других элементов за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_LIKES_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании ставит отметки "Мне нравится" за выбранный период.';
+$MESS['INTRANET_USTAT_SECTION_TASKS_HELP_GENERAL'] = 'Общее число изменений в задачах (создание новой задачи, комментарии, смена сроков и т.п.) за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_TASKS_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется задачами за выбранный период.';
+$MESS['INTRANET_USTAT_SECTION_IM_HELP_GENERAL'] = 'Общее число отправленных сообщений и звонков за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_IM_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется мгновенными сообщениями и видеозвонками за выбранный период.';
+$MESS['INTRANET_USTAT_SECTION_DISK_HELP_GENERAL'] = 'Общее число файлов, загруженных или измененных в Битрикс24.Диск, за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_DISK_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется файлами и Битрикс24.Диск.';
+$MESS['INTRANET_USTAT_SECTION_MOBILE_HELP_GENERAL'] = 'Общее число действий в мобильном приложении "Битрикс24" за выбранный период времени (учитывается все: сообщения, изменения в задачах, CRM и т.д.)';
+$MESS['INTRANET_USTAT_SECTION_MOBILE_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется мобильным приложением за выбранный период.';
+$MESS['INTRANET_USTAT_SECTION_CRM_HELP_GENERAL'] = 'Общее число действий в CRM (изменения по делам, сделкам, лидам и т.п.) за выбранный период времени.';
+$MESS['INTRANET_USTAT_SECTION_CRM_HELP_INVOLVEMENT'] = 'Показывает, какой процент от всех сотрудников компании пользуется CRM за выбранный период.';

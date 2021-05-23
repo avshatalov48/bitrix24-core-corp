@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_ORDER_SPLB_ENTER_BARCODES"] = "Enter bar codes";
+$MESS["CRM_ORDER_SPLB_SAVE"] = "Save";
+$MESS["CRM_ORDER_SPLB_CANCEL"] = "Cancel";
+?>

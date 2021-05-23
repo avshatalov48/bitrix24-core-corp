@@ -1,0 +1,325 @@
+.timeman-report-wrap {
+	background: #fff;
+	max-width: 1000px;
+}
+
+.timeman-report-pagetitle {
+	display: flex;
+	align-items: center;
+}
+
+.timeman-hide {
+	display: none !important;
+}
+
+.timeman-report-nav-current {
+	font: 19px/25px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+
+.timeman-report-users, .timeman-report-user {
+	display: flex;
+	align-items: center;
+}
+
+.timeman-report-user {
+	width: 50%;
+}
+
+.timeman-report-user:first-child {
+	margin-right: 25px;
+}
+
+.timeman-report-users {
+	padding-bottom: 14px;
+	margin-bottom: 26px;
+	border-bottom: 1px solid #e2e4e6;
+	margin-left: 3px;
+}
+
+.timeman-report-user-info {
+	display: flex;
+	flex-direction: column;
+	width: 80%;
+}
+
+.timeman-report-user-name {
+	font-weight: 700;
+	color: #2066b0;
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.timeman-report-user-position {
+	font-size: 13px;
+	line-height: 18px;
+	color: #828b95;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.timeman-report-user-label {
+	font-size: 15px;
+	line-height: 24px;
+	color: #828b95;
+	margin-right: 10px;
+}
+
+.timeman-report-user-avatar {
+	display: block;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	margin-right: 9px;
+	border-radius: 50%;
+	overflow: hidden;
+	background-size: cover;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2089%2089%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%23535C69%22%20cx%3D%2244.5%22%20cy%3D%2244.5%22%20r%3D%2244.5%22/%3E%3Cpath%20d%3D%22M68.18%2071.062c0-3.217-3.61-16.826-3.61-16.826%200-1.99-2.6-4.26-7.72-5.585a17.363%2017.363%200%200%201-4.887-2.223c-.33-.188-.28-1.925-.28-1.925l-1.648-.25c0-.142-.14-2.225-.14-2.225%201.972-.663%201.77-4.574%201.77-4.574%201.252.695%202.068-2.4%202.068-2.4%201.482-4.3-.738-4.04-.738-4.04a27.076%2027.076%200%200%200%200-7.918c-.987-8.708-15.847-6.344-14.085-3.5-4.343-.8-3.352%209.082-3.352%209.082l.942%202.56c-1.85%201.2-.564%202.65-.5%204.32.09%202.466%201.6%201.955%201.6%201.955.093%204.07%202.1%204.6%202.1%204.6.377%202.556.142%202.12.142%202.12l-1.786.217a7.147%207.147%200%200%201-.14%201.732c-2.1.936-2.553%201.485-4.64%202.4-4.032%201.767-8.414%204.065-9.193%207.16-.78%203.093-3.095%2015.32-3.095%2015.32H68.18z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E);
+	background-repeat: no-repeat;
+}
+
+.timeman-report-nav {
+	margin-left: 20px;
+}
+
+.page-header .timeman-report-nav {
+	margin-bottom: 10px;
+	margin-left: 0;
+}
+
+.timeman-report-nav-arrow {
+	display: inline-block;
+	width: 15px;
+	height: 12px;
+	background-repeat: no-repeat;
+	background-position: center;
+	cursor: pointer;
+}
+
+.timeman-report-nav-arrow-prev {
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%227%22%20height%3D%2212%22%20viewBox%3D%220%200%207%2012%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M0.00130245%200.834871L5.16103%205.9946L0%2011.1543L0.834871%2011.9905L5.9946%206.82947L6.83207%205.9959L5.9959%205.15973L0.836173%200L0.00130245%200.834871Z%22%20transform%3D%22translate%286.83203%2011.9905%29%20rotate%28-180%29%22%20fill%3D%22%23535C6B%22/%3E%0A%3C/svg%3E%0A);
+}
+
+.timeman-report-nav-arrow-next {
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%227%22%20height%3D%2212%22%20viewBox%3D%220%200%207%2012%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M0.00130245%200.834871L5.16103%205.9946L0%2011.1543L0.834871%2011.9905L5.9946%206.82947L6.83207%205.9959L5.9959%205.15973L0.836173%200L0.00130245%200.834871Z%22%20fill%3D%22%23535C6B%22/%3E%0A%3C/svg%3E%0A);
+}
+
+.timeman-report-title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-bottom: 15px;
+}
+
+.timeman-report-title-text {
+	color: #333;
+	font: 16px/23px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.timeman-report-title-change {
+	border-bottom: 1px dashed rgba(216, 216, 216, .5);
+	color: #80868e;
+	font-size: 13px;
+	line-height: 18px;
+	cursor: pointer;
+}
+
+.timeman-report-title-change:hover {
+	border-color: rgba(216, 216, 216, 1);
+}
+
+.timeman-report-time {
+	margin-bottom: 90px;
+}
+
+.timeman-report-time-list {
+	display: flex;
+}
+
+.timeman-report-time-item {
+	width: 240px;
+	overflow: hidden;
+	color: #333;
+	background: #eaf9fe;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.timeman-report-time-item + .timeman-report-time-item {
+	margin-left: 8px;
+}
+
+.timeman-report-time-item-title {
+	background: #cdf1fd;
+	padding: 10px 16px 13px;
+}
+
+.timeman-report-time-item-title-text {
+	font-size: 16px;
+	line-height: 23px;
+}
+
+.timeman-report-time-item-inner {
+	padding: 15px 12px 15px 14px;
+}
+
+.timeman-report-time-item-value {
+	font-size: 24px;
+	line-height: 30px;
+}
+
+.timeman-report-time-item-value-real {
+	text-transform: lowercase;
+	color: #525c69;
+}
+
+.timeman-report-time-item-edited, .timeman-report-time-item-reason-title {
+	font-size: 12px;
+	line-height: 16px;
+	color: rgba(51, 51, 51, .45);
+}
+
+.timeman-report-time-item-edited {
+	margin: 6px 0 5px;
+	position: relative;
+}
+
+.timeman-report-time-item-edited .timeman-record-violation-icon {
+	margin-bottom: -1px;
+}
+
+.timeman-report-time-item-reason-title:after {
+	content: ':';
+}
+
+.timeman-report-time-item-reason-text {
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.timeman-report-time-item-interval,
+.tm-popup-notice-time-unit {
+	font-size: 16px;
+	color: #828b95;
+}
+
+.timeman-report-time-item-approved {
+	background: #eaf8b8;
+}
+
+.timeman-report-time-item-approved .timeman-report-time-item-title {
+	background: #d1f066;
+}
+
+.timeman-report-time-item-unapproved {
+	background: #fef6d4;
+}
+
+.timeman-report-time-item-unapproved .timeman-report-time-item-title {
+	background: #fbe479;
+}
+
+.timeman-report-time-item-changed {
+	background: #f1f2f3;
+}
+
+.timeman-report-time-item-changed .timeman-report-time-item-title {
+	background: #e1e3e6;
+}
+
+.timeman-report-decs {
+	margin-bottom: 43px;
+}
+
+.timeman-report-decs .timeman-report-title,
+.timeman-report-comment .timeman-report-title,
+.timeman-report-activity-block .timeman-report-title  {
+	border-bottom: 1px solid #e2e4e6;
+	margin-bottom: 15px;
+}
+
+.timeman-report-comment-inner .feed-comments-block {
+	margin: 0;
+}
+
+.timeman-report-decs-inner {
+	color: #333;
+}
+
+.timeman-report-buttons {
+	margin: 20px 0 0 0;
+}
+
+.timeman-report-buttons-inner {
+	display: flex;
+	justify-content: center;
+}
+
+.timeman-report-slider .timeman-report-buttons {
+	background: #fff;
+	padding: 14px 19px 13px;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 9;
+	box-shadow: 0 -2px 4px 0 #f2f2f2;
+}
+
+.timeman-report-buttons .timeman-report-btn-cancel {
+	color: #535c69;
+}
+
+.timeman-report-buttons .timeman-report-btn-cancel:hover {
+	color: #535c69;
+}
+
+.timeman-report-title-edited {
+	margin-bottom: 5px;
+	padding-bottom: 5px;
+}
+
+.timeman-report-activity-block {
+	display: flex;
+	margin-bottom: 45px;
+}
+
+.timeman-report-activity {
+	flex: 1;
+}
+
+.timeman-report-activity-tasks .timeman-report-activity-list {
+	padding-left: 20px;
+	margin: 0;
+}
+
+.timeman-report-activity-events {
+	margin-left: 22px;
+}
+
+.timeman-report-activity-item {
+	display: block;
+	color: #333;
+	margin-bottom: 11px;
+	line-height: 20px;
+}
+
+.timeman-report-activity-item:hover {
+	color: #333;
+}
+
+.timeman-report-activity-more {
+	color: #9b9b9b;
+	border-bottom: 1px dashed rgba(155, 155, 155, .5);
+	cursor: pointer;
+	transition: .2s;
+	margin-left: 20px;
+}
+
+.timeman-report-activity-more:hover {
+	border-color: rgba(155, 155, 155, 1);
+}
+
+.timeman-report-title-info-icon {
+	margin-right: auto;
+}

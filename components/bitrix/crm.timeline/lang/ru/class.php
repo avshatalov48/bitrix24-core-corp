@@ -1,0 +1,14 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль crm не установлен.";
+$MESS["CRM_TIMELINE_ENTITY_TYPE_NOT_ASSIGNED"] = "Не задан тип сущности.";
+$MESS["CRM_TIMELINE_ENTITY_NOT_ASSIGNED"] = "Не задан ИД сущности.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS["CRM_REST_BUTTON_TITLE_2"] = "Маркет";
+$MESS["CRM_TIMELINE_FILTER_PRESET_COMMUNICATIONS"] = "Коммуникации";
+$MESS["CRM_TIMELINE_FILTER_PRESET_COMMENTS"] = "Комментарии и ожидание";
+$MESS["CRM_TIMELINE_FILTER_PRESET_DOCUMENTS"] = "Документы";
+$MESS["CRM_TIMELINE_FILTER_PRESET_TASKS"] = "Задачи";
+$MESS["CRM_TIMELINE_FILTER_PRESET_BUSINESS_PROCESSES"] = "Роботы и бизнес-процессы";
+$MESS["CRM_TIMELINE_FILTER_PRESET_SYSTEM_EVENTS"] = "Системные события";
+$MESS["CRM_TIMELINE_FILTER_PRESET_APPLICATIONS_2"] = "Приложения";
+?>

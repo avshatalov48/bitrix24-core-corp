@@ -1,0 +1,20 @@
+<?php
+$MESS["DOCGEN_DOCUMENTS_MODULE_DOCGEN_ERROR"] = "Модуль \"Генератор документов\" не установлен";
+$MESS["DOCGEN_DOCUMENTS_PERMISSIONS_ERROR"] = "У вас недостаточно прав для просмотра документов";
+$MESS["DOCGEN_DOCUMENTS_MODULE_EMPTY"] = "Не указан модуль";
+$MESS["DOCGEN_DOCUMENTS_MODULE_ERROR"] = "Модуль #MODULE_ID# не установлен";
+$MESS["DOCGEN_DOCUMENTS_TITLE"] = "Список документов";
+$MESS["DOCGEN_DOCUMENTS_PROVIDER_DOCGEN_ERROR"] = "Указан неверный провайдер";
+$MESS["DOCGEN_DOCUMENTS_VALUE_DOCGEN_ERROR"] = "Не указано значение провайдера";
+$MESS["DOCGEN_DOCUMENTS_INIT_PROVIDER_ERROR"] = "Ошибка создания провайдера";
+$MESS["DOCGEN_DOCUMENTS_ACCESS_ERROR"] = "Нет прав к провайдеру";
+$MESS["DOCGEN_DOCUMENTS_NAME_TITLE"] = "Заголовок";
+$MESS["DOCGEN_DOCUMENTS_CREATE_TIME_TITLE"] = "Дата создания";
+$MESS["DOCGEN_DOCUMENTS_UPDATE_TIME_TITLE"] = "Дата изменения";
+$MESS["DOCGEN_DOCUMENTS_CREATED_BY_TITLE"] = "Кем создан";
+$MESS["DOCGEN_DOCUMENTS_UPDATED_BY_TITLE"] = "Кем изменен";
+$MESS["DOCGEN_DOCUMENTS_TEMPLATE_TITLE"] = "Шаблон";
+$MESS["DOCGEN_DOCUMENTS_VIEW_ACTION"] = "Просмотреть";
+$MESS["DOCGEN_DOCUMENTS_DELETE_ACTION"] = "Удалить";
+$MESS["DOCGEN_DOCUMENTS_NUMBER_TITLE"] = "Номер";
+$MESS["DOCGEN_DOCUMENTS_DELETED_TEMPLATE"] = "Шаблон удалён";

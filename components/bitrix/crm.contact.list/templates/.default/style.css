@@ -1,0 +1,54 @@
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.event
+{
+	background: url("images/popup/event.gif") no-repeat 0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.quote
+{
+	background: url("images/popup/quote.png") no-repeat  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.invoice
+{
+	background: url("images/popup/invoice.png") no-repeat  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.deal
+{
+    background: url("images/popup/deal.gif") no-repeat 0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.task
+{
+    background: url("images/popup/task.gif") no-repeat 0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.subscribe
+{
+	background: url("images/popup/subscribe.gif") no-repeat 0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.calendar
+{
+	background: url("images/popup/calendar.gif") no-repeat  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.bizproc {
+	background: url("images/popup/bizproc.gif") no-repeat 2px 0 !important;
+ 	width: 18px !important;
+ 	height: 18px !important;
+}
+
+a.bizproc {
+	display:block; 
+	padding-right:20px;
+}
+a.bizproc_status_attention {
+	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
+}
+
+a.bizproc_status_inprogress {
+	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
+}
+
+div.rq-multi-val-sep { margin-top: 8px; }

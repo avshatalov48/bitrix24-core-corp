@@ -1,0 +1,34 @@
+<?
+$MESS["TASKS_STATUS_1"] = "Новая";
+$MESS["TASKS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_3"] = "Выполняется";
+$MESS["TASKS_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_STATUS_5"] = "Завершена";
+$MESS["TASKS_STATUS_6"] = "Отложена";
+$MESS["TASKS_STATUS_7"] = "Отклонена";
+$MESS["TASKS_PRIORITY"] = "Приоритет";
+$MESS["TASKS_PRIORITY_0"] = "Низкий";
+$MESS["TASKS_PRIORITY_1"] = "Средний";
+$MESS["TASKS_PRIORITY_2"] = "Высокий";
+$MESS["TASKS_RESPONSIBLE"] = "Ответственный";
+$MESS["TASKS_CREATOR"] = "Постановщик";
+$MESS["TASKS_STATUS"] = "Статус";
+$MESS["TASKS_SIDEBAR_START_DATE"] = "с";
+$MESS["TASKS_TASK_TITLE_LABEL"] = "Задача";
+$MESS["TASKS_STATUS_OVERDUE"] = "Просрочена";
+$MESS["TASKS_STATUS_NEW"] = "Новая";
+$MESS["TASKS_STATUS_ACCEPTED"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_IN_PROGRESS"] = "Выполняется";
+$MESS["TASKS_STATUS_WAITING"] = "Ждет контроля";
+$MESS["TASKS_STATUS_COMPLETED"] = "Завершена";
+$MESS["TASKS_STATUS_DELAYED"] = "Отложена";
+$MESS["TASKS_STATUS_DECLINED"] = "Отклонена";
+$MESS["TASKS_NEW_RESPONSIBLE"] = "Новый сотрудник";
+$MESS["TASKS_CREATED_DATE"] = "Дата создания";
+$MESS["TASKS_DEADLINE"] = "Крайний срок";
+$MESS["TASKS_START_DATE_PLAN"] = "Дата старта";
+$MESS["TASKS_END_DATE_PLAN"] = "Дата финиша";
+$MESS["TASKS_NO_DATE"] = "нет";
+$MESS["TASKS_DATE_START"] = "Начало выполнения";
+$MESS["TASKS_CLOSED_DATE"] = "Дата завершения";
+?>

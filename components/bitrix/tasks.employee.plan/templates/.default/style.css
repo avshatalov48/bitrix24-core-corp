@@ -1,0 +1,209 @@
+/* Filter */
+
+.tasks-employee-plan-inner {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	-ms-grid-row-align: center;
+	align-items: center;
+	height: 41px;
+	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.tasks-employee-plan-goal,
+.tasks-employee-plan-department,
+.tasks-employee-plan-worker,
+.tasks-employee-plan-time {
+	padding: 0 40px 12px 0;
+	-webkit-box-flex: 0;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
+}
+
+.tasks-employee-plan-name {
+	margin: auto 3px auto auto;
+	display: inline-block;
+	color: #80868e;
+	vertical-align: middle;
+}
+
+.tasks-employee-plan-item,
+.tasks-employee-plan-period-calendar-item {
+	max-width: 160px;
+	display: inline-block;
+	border-bottom: 1px dashed #535c69;
+	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535c69;
+	vertical-align: middle;
+	-webkit-transition: border-bottom .3s ease, color .3s ease;
+	-moz-transition: border-bottom .3s ease, color .3s ease;
+	transition: border-bottom .3s ease, color .3s ease;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.tasks-employee-plan-item:hover {
+	border-bottom: 1px dashed #282f3a;
+	color: #282f3a;
+}
+
+.tasks-employee-plan-worker {
+	position: relative;
+	overflow: hidden;
+}
+
+.tasks-employee-plan-worker-item {
+	opacity: 1;
+	margin-left: 6px;
+	margin-right: 8px;
+}
+
+.tasks-employee-plan-worker-inner {
+	position: absolute;
+	right: -200px;
+	vertical-align: middle;
+	opacity: 0;
+
+	display: none;
+}
+
+.tasks-employee-plan-worker-inner-item {
+	padding: 5px;
+	height: 30px;
+	max-width: 160px;
+	border: 1px solid #cdd0d4;
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535c69;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	-webkit-transition: opacity .4s ease;
+	-moz-transition: opacity .4s ease;
+	transition: opacity .4s ease;
+}
+
+.tasks-employee-plan-worker.search {
+	padding: 0 10px 12px 0;
+	min-width: 270px;
+}
+
+.tasks-employee-plan-worker.search .tasks-employee-plan-worker-inner {
+	position: static;
+	opacity: 1;
+	/*
+	-webkit-transition: opacity .4s ease;
+	-moz-transition: opacity .4s ease;
+	transition: opacity .4s ease;
+	*/
+}
+
+.tasks-employee-plan-worker.search .tasks-employee-plan-worker-item {
+	position: absolute;
+	right: -200px;
+	/*
+	opacity: 0;
+	*/
+}
+
+.tasks-employee-plan-worker.search .tasks-employee-plan-worker-inner {
+	display: inline-block;
+}
+
+/* Calendar */
+
+.tasks-employee-plan-period {
+	padding: 0 0 12px 0;
+	-webkit-box-flex: 0;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
+	overflow: hidden;
+}
+
+.tasks-employee-plan-period-inner {
+	display: inline-block;
+}
+
+.tasks-employee-plan-period-calendar-container {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.tasks-employee-plan-period-calendar {
+	position: absolute;
+	right: -330px;
+	display: inline-block;
+	-webkit-transition: opacity .5s ease;
+	-moz-transition: opacity .5s ease;
+	transition: opacity .5s ease;
+	opacity: 0;
+}
+
+.tasks-employee-plan-period-calendar-inner,
+.tasks-employee-plan-period-calendar-date,
+.tasks-employee-plan-period-calendar-dash {
+	display: inline-block;
+}
+
+.tasks-employee-plan-period.active-calendar {
+	min-width: 330px;
+}
+
+.tasks-employee-plan-period.active-calendar .tasks-employee-plan-period-calendar-item {
+	position: absolute;
+	right: -330px;
+	opacity: 0;
+}
+
+.tasks-employee-plan-period.active-calendar .tasks-employee-plan-period-calendar {
+	position: static;
+	right: 0;
+	opacity: 1;
+}
+
+.tasks-employee-plan-period-calendar-date {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+}
+
+.tasks-employee-plan-period-calendar-date-item {
+	padding: 5px 5px 5px 8px;
+	height: 30px;
+	max-width: 90px;
+	border: 1px solid #cdd0d4;
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #424956;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.tasks-employee-plan-period-calendar-dash {
+	color: #99a4b9;
+}
+
+.tasks-empplan-bottom-panel {
+	margin-top: 20px;
+}
+
+.tasks-employee-plan-offset {
+	display: inline-block;
+	width: 10px;
+}

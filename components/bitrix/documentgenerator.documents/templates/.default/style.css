@@ -1,0 +1,8 @@
+.pagetitle-inner-container-documents {
+	display: flex;
+	align-items: center;
+}
+
+.pagetitle-inner-container-documents .pagetitle {
+	margin-right: 70px;
+}

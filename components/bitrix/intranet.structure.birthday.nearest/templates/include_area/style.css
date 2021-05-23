@@ -1,0 +1,17 @@
+.bx-birthday-layout-include {width: 100%;}
+.bx-birthday-layout-include .bx-user-info {border-bottom: solid 1px #C4C4C4; padding: 2px 0px;}
+
+.bx-birthday-layout-include .bx-user-info-inner .bx-user-birthday, .bx-birthday-layout-include .bx-user-info-inner .bx-user-name, .bx-birthday-layout-include .bx-user-info-inner .bx-user-post {margin-bottom: 2px; margin-left: 60px;}
+
+.bx-birthday-layout-include .bx-user-info-inner .bx-user-image {float: left; height: 50px; width: 50px; border: solid 1px #C4C4C4;}
+.bx-birthday-layout-include .bx-user-info-inner .bx-user-image-default {background-image: url('images/nopic_user_50_noborder.gif');}
+.bx-birthday-layout-include .bx-user-info-inner .bx-user-image a {display: block; height: 50px; width: 50px; text-decoration: none; text-align: center;}
+.bx-birthday-layout-include .bx-user-info-inner .bx-user-image img {border: 0;}
+.bx-birthday-layout-include .bx-users-delimiter {clear: both;}
+.bx-birthday-layout-include .bx-user-info-inner, .bx-birthday-layout-include .bx-birthday-officelink {margin: 5px 0px;}
+.bx-birthday-layout-include .bx-user-birthday-today {font-weight: bold;}
+
+.bx-user-birthday {
+	color: #82929A;
+	font-size: 0.95em;
+}

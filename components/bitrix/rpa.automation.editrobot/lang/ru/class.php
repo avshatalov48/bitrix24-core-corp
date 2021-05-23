@@ -1,0 +1,4 @@
+<?php
+$MESS["RPA_AUTOMATION_EDITROBOT_TITLE"] = "Добавить задание";
+$MESS["RPA_AUTOMATION_EDITROBOT_TITLE_EDIT"] = "Настроить задание";
+$MESS["RPA_AUTOMATION_EDITROBOT_SCENARIO"] = "Сценарий";

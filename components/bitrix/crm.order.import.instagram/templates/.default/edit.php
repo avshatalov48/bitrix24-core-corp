@@ -1,0 +1,25 @@
+<?
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+	die();
+
+global $APPLICATION;
+
+$componentParameters = [
+	'PATH_TO_CONNECTOR_INSTAGRAM_VIEW' => isset($arResult['PATH_TO_CONNECTOR_INSTAGRAM_VIEW']) ? $arResult['PATH_TO_CONNECTOR_INSTAGRAM_VIEW'] : '',
+	'PATH_TO_CONNECTOR_INSTAGRAM_VIEW_FULL' => isset($arResult['PATH_TO_CONNECTOR_INSTAGRAM_VIEW_FULL']) ? $arResult['PATH_TO_CONNECTOR_INSTAGRAM_VIEW_FULL'] : '',
+	'PATH_TO_CONNECTOR_INSTAGRAM_EDIT' => isset($arResult['PATH_TO_CONNECTOR_INSTAGRAM_EDIT']) ? $arResult['PATH_TO_CONNECTOR_INSTAGRAM_EDIT'] : '',
+	'PATH_TO_CONNECTOR_INSTAGRAM_EDIT_FULL' => isset($arResult['PATH_TO_CONNECTOR_INSTAGRAM_EDIT_FULL']) ? $arResult['PATH_TO_CONNECTOR_INSTAGRAM_EDIT_FULL'] : '',
+	'PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK' => isset($arResult['PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK']) ? $arResult['PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK'] : '',
+	'REDIRECT_TO_IMPORT' => isset($arParams['REDIRECT_TO_IMPORT']) ? $arParams['REDIRECT_TO_IMPORT'] : 'Y',
+];
+
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
+	[
+		'POPUP_COMPONENT_NAME' => 'bitrix:crm.order.import.instagram.edit',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => $componentParameters,
+		'USE_PADDING' => false,
+	]
+);

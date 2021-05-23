@@ -1,0 +1,44 @@
+.tm-role-block-wrap {
+	margin-bottom: 26px;
+}
+
+.tm-role-input-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.tm-role-title {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+.tm-role-input {
+	color: #475767;
+	padding-left: 11px;
+	margin-top: 5px;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	overflow: hidden;
+	min-height: 38px;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	position: relative;
+	font-size: 14px;
+}
+
+.tm-operation-select-read option,
+.tm-operation-select-update option {
+	font-weight: normal;
+}
+
+.tm-operation-select-read, .tm-operation-select-update {
+	font-weight: normal;
+	text-overflow: ellipsis;
+	width: 100%;
+}
+
+.tm-config-block-wrap .table-blue-td-name {
+	min-width: 160px;
+	box-sizing: border-box;
+}

@@ -1,0 +1,21 @@
+<?
+$MESS["CRM_COLUMN_ORDER_CHECK_ID"] = "ID";
+$MESS["CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"] = "Название кассы";
+$MESS["CRM_COLUMN_ORDER_CHECK_TYPE"] = "Тип чека";
+$MESS["CRM_COLUMN_ORDER_CHECK_STATUS"] = "Статус чека";
+$MESS["CRM_COLUMN_ORDER_CHECK_ORDER_ID"] = "ID заказа";
+$MESS["CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"] = "ID оплаты";
+$MESS["CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"] = "Оплата";
+$MESS["CRM_COLUMN_ORDER_CHECK_TITLE"] = "Документ оплаты";
+$MESS["CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"] = "ID отгрузки";
+$MESS["CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"] = "Отгрузка";
+$MESS["CRM_COLUMN_ORDER_CHECK_DATE_CREATE"] = "Дата создания";
+$MESS["CRM_COLUMN_ORDER_CHECK_SUM"] = "Сумма чека";
+$MESS["CRM_COLUMN_ORDER_CHECK_LINK"] = "Ссылка на чек";
+$MESS['CRM_ORDER_CASHBOX_STATUS_N'] = "Не напечатан";
+$MESS['CRM_ORDER_CASHBOX_STATUS_P'] = "В процессе печати";
+$MESS['CRM_ORDER_CASHBOX_STATUS_Y'] = "Напечатан";
+$MESS['CRM_ORDER_CASHBOX_STATUS_E'] = "Ошибка";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS["CRM_ERROR_WRONG_ORDER_ID"] = "Неверный идентификатор заказа";
+$MESS["CRM_ERROR_WRONG_ORDER"] = "Заказ не найден";

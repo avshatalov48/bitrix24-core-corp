@@ -1,0 +1,5 @@
+<?php
+$MESS['CRM_PRODUCT_COMPLEX_NAME'] = 'Товары';
+$MESS['CRM_PRODUCT_COMPLEX_DESCRIPTION'] = 'Товары';
+$MESS['CRM_NAME'] = 'CRM';
+$MESS['CRM_PRODUCT_NAME'] = 'Товары';

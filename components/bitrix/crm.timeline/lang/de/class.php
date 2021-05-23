@@ -1,0 +1,13 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
+$MESS["CRM_PERMISSION_DENIED"] = "Zugriff verweigert";
+$MESS["CRM_REST_BUTTON_TITLE_2"] = "Market";
+$MESS["CRM_TIMELINE_ENTITY_NOT_ASSIGNED"] = "Die Element-ID ist nicht angegeben.";
+$MESS["CRM_TIMELINE_ENTITY_TYPE_NOT_ASSIGNED"] = "Elementtyp ist nicht angegeben.";
+$MESS["CRM_TIMELINE_FILTER_PRESET_APPLICATIONS_2"] = "Anwendungen";
+$MESS["CRM_TIMELINE_FILTER_PRESET_BUSINESS_PROCESSES"] = "Automatisierungsregeln und Workflows";
+$MESS["CRM_TIMELINE_FILTER_PRESET_COMMENTS"] = "Kommentare";
+$MESS["CRM_TIMELINE_FILTER_PRESET_COMMUNICATIONS"] = "Kommunikation";
+$MESS["CRM_TIMELINE_FILTER_PRESET_DOCUMENTS"] = "Dokumente";
+$MESS["CRM_TIMELINE_FILTER_PRESET_SYSTEM_EVENTS"] = "Systemereignisse";
+$MESS["CRM_TIMELINE_FILTER_PRESET_TASKS"] = "Aufgaben";

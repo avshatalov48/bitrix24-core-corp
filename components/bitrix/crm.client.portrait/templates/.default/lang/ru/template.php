@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_IDEAL"] = "Идеальная";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_LOW"] = "Очень низкая";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_LOW"] = "Низкая";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_DESIRABLE"] = "Максимально-желаемая";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_HIGH"] = "Высокая";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_HIGH"] = "Очень высокая";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_CRITICAL"] = "Критичная";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_EMAIL"] = "E-mail";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_PHONE"] = "Телефон";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY"] = "Компания";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_POST"] = "Должность";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_RESPONSIBLE"] = "Ответственный";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS"] = "Комментарий";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_HIDE"] = "скрыть";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_SHOW"] = "показать";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WON_DEALS"] = "Сумма выигранных сделок";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_CONVERSION"] = "Конверсия";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_PIE_TITLE"] = "Загруженность по каналам";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WEB"] = "Сайт";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY_TYPE"] = "Тип компании";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_INDUSTRY"] = "Сфера деятельности";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_TITLE"] = "Максимально желаемая нагрузка";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_SAVE"] = "Сохранить";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_CANCEL"] = "Отменить";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_DESCRIPTION"] = "Максимально-желаемая нагрузка от клиента - это количество дел на одну сделку, которое приемлемо для вашей компании.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_HELP"] = "Вы можете задать значение средней нагрузки от клиента вручную или воспользоваться автоматическим определением этого числа. При автоматическом рассчитывается среднее количество дел на одну сделку.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_AUTO"] = "Автоматически";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_MANUAL"] = "Указать вручную";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_SHOW_DEAL_CATEGORIES"] = "показать направления";
+?>

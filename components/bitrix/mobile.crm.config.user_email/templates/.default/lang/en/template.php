@@ -1,0 +1,8 @@
+<?
+$MESS["M_CRM_CONFIG_USER_EMAIL_PULL_TEXT"] = "Pull down to refresh...";
+$MESS["M_CRM_CONFIG_USER_EMAIL_DOWN_TEXT"] = "Release to refresh...";
+$MESS["M_CRM_CONFIG_USER_EMAIL_LOAD_TEXT"] = "Updating...";
+$MESS["M_CRM_CONFIG_USER_EMAIL_INPUT_LEGEND"] = "Enter an e-mail";
+$MESS["M_CRM_CONFIG_USER_EMAIL_SAVE_BTN"] = "Save";
+$MESS["M_CRM_CONFIG_USER_EMAIL_CANCEL_BTN"] = "Cancel";
+?>

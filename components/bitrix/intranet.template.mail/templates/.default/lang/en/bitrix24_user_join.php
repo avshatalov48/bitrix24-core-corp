@@ -1,0 +1,38 @@
+<?
+$MESS["INTRANET_BITRIX24"] = "Bitrix24";
+$MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Edit notification settings";
+$MESS["INTRANET_MAIL_EVENTS_UNSUBSCRIBE"] = "Unsubscribe from all";
+$MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE"] = "New message from #NAME#";
+$MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP"] = "New messages from #NAME#";
+$MESS["INTRANET_MAIL_TITLE_IM_NEW_NOTIFY"] = "New notification from #NAME#";
+$MESS["INTRANET_OPEN"] = "View";
+$MESS["INTRANET_OPEN_NOTIFY"] = "View notifications";
+$MESS["INTRANET_SITE_LINK"] = "https://www.bitrix24.com/";
+$MESS["INTRANET_USER_JOIN_ACCEPT"] = "Join";
+$MESS["INTRANET_USER_JOIN_APPLE_APP_LINK"] = "https://itunes.apple.com/app/bitrix24/id561683423";
+$MESS["INTRANET_USER_JOIN_APPLE_IMG_LINK"] = "https://www.bitrix24.com/images/mail/bitrix24/app-store-badge-en.png";
+$MESS["INTRANET_USER_JOIN_FOOTER"] = "This is an automatically generated email. You can manage all notifications in your Bitrix24.";
+$MESS["INTRANET_USER_JOIN_GOOGLEPLAY_APP_LINK"] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
+$MESS["INTRANET_USER_JOIN_GOOGLEPLAY_IMG_LINK"] = "https://www.bitrix24.com/images/mail/bitrix24/google-play-badge-en.png";
+$MESS["INTRANET_USER_JOIN_HELP1"] = "We're 95% sure we already have an answer!";
+$MESS["INTRANET_USER_JOIN_HELP2"] = "Check out our #LINK_START#Helpdesk FAQ#LINK_END#.";
+$MESS["INTRANET_USER_JOIN_HELP3"] = "Register for our #LINK_START#upcoming webinars#LINK_END#.";
+$MESS["INTRANET_USER_JOIN_HELP4"] = "Get in touch with your #LINK_START#local Bitrix24 partner#LINK_END# for onboarding or implementation support.";
+$MESS["INTRANET_USER_JOIN_IMG_LINK"] = "http://www.bitrix24.com/images/mail/tutorials/tools_en.png";
+$MESS["INTRANET_USER_JOIN_INFO_TEXT"] = "#SPAN_START# Bitrix24 is a leading collaboration platform #SPAN_END# used by 6,000,000+ companies worldwide.";
+$MESS["INTRANET_USER_JOIN_INFO_TEXT3"] = "What is Bitrix24?";
+$MESS["INTRANET_USER_JOIN_MESSAGE"] = "Glad you're here - thanks for joining us! <br> Sign in to Bitrix24 with your login and password and get on board. We'll be able to keep track of our projects and tasks, manage documents and organize events and meetings.";
+$MESS["INTRANET_USER_JOIN_MESSAGE_REQUEST_MESSAGE"] = "Hang tight, the administrator has to confirm your request. This may take some time.";
+$MESS["INTRANET_USER_JOIN_MOBILE_TEXT1"] = "Stay connected!";
+$MESS["INTRANET_USER_JOIN_MOBILE_TEXT2"] = "Simply install free Bitrix24 mobile app.";
+$MESS["INTRANET_USER_JOIN_MORE"] = "Learn more";
+$MESS["INTRANET_USER_JOIN_PARTNERS_LINK"] = "https://www.bitrix24.com/partners/";
+$MESS["INTRANET_USER_JOIN_QUESTIONS"] = "Any questions?";
+$MESS["INTRANET_USER_JOIN_REQUEST_REJECT_MESSAGE"] = "Unfortunately, your registration request has been declined. You can send another request and ask the administrator why the registration was rejected.";
+$MESS["INTRANET_USER_JOIN_TEXT"] = "#NAME# invites you to #BLOCK_START#Bitrix#BLOCK_MIDDLE#24#BLOCK_END#";
+$MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN"] = "Your registration on #URL# has been completed successfully";
+$MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST"] = "Thank you for registering on #URL#";
+$MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_CONFIRM"] = "Your registration on #URL# has been confirmed";
+$MESS["INTRANET_USER_JOIN_TITLE_BITRIX24_USER_JOIN_REQUEST_REJECT"] = "Your registration on #URL# has been declined";
+$MESS["INTRANET_USER_JOIN_WEBINARS_LINK"] = "https://www.bitrix24.com/support/webinars.php";
+?>

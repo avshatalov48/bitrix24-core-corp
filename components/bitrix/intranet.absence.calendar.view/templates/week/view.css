@@ -1,0 +1,32 @@
+tr.bx-calendar-week-currow td {background-color: #E3EEF3 !important;}
+
+.bx-calendar-week-main-table{border-top: solid 1px #C9C9C9; border-left: solid 1px #C9C9C9; border-spacing: 0;}
+
+.bx-calendar-week-main-table td {padding: 2px 0px; vertical-align: middle; border-right: solid 1px #C9C9C9; border-bottom: solid 1px #C9C9C9; font-size: 0.95em;  -moz-box-sizing: border-box;}
+.bx-calendar-week-main-table td.bx-calendar-week-day {font-size: 0.95em; text-align: center; padding: 4px;}
+.bx-calendar-week-main-table td.bx-calendar-week-holiday {background-color: #f7f8e9; color: #C30808;}
+.bx-calendar-week-main-table td.bx-calendar-week-today {background-color: #fdffd4;}
+
+.bx-calendar-week-main-table td.bx-calendar-week-first-col div {width: 224px !important; white-space: nowrap; overflow: hidden; display: block; padding: 0px 0px 0px 6px;}
+.bx-calendar-week-main-table td.bx-calendar-week-first-col {width: 230px; height: 20px; white-space: nowrap; overflow: hidden;}
+
+table.bx-calendar-week-control-table {border-collapse: collapse; border: none;}
+table.bx-calendar-week-control-table td {border-collapse: collapse; border: none; padding: 7px 10px 7px 10px; text-align: center; vertical-align: center; font-weight: bold; font-size: 16px; color: #0C283D; white-space: nowrap;}
+table.bx-calendar-week-control-table td.bx-calendar-week-control-text a {text-decoration: none;}
+
+.bx-calendar-week-main-table td.bx-calendar-week-empty {width: 230px; height: 20px; background-color:#FFFFFF;}
+
+
+.bx-calendar-week-icon {display: block; height: 21px; width: 21px; background-repeat: no-repeat; background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/arrows.gif);}
+.bx-calendar-week-back {background-position: 0 0;}
+.bx-calendar-week-fwd {background-position: -21px 0;}
+
+div.bx-calendar-entry {position: absolute; height: 17px; background-repeat: repeat-x; background-position: left top; overflow: hidden; cursor: pointer; -moz-box-sizing: border-box; box-sizing: border-box; text-align: left; z-index: 20;}
+div.bx-calendar-entry nobr {position: absolute; height: 16px; background-repeat: repeat-x; background-position: left top; white-space: nowrap; font-size: 10px; padding: 1px 0px 0px 2px;}
+div.bx-calendar-entry-active, div.bx-calendar-entry-active nobr {background-position: left bottom; overflow: visible !important; z-index: 30;}
+div.bx-calendar-entry-active nobr.bx-calendar-admin {padding-right: 36px;}
+
+div.bx-calendar-entry a.bx-calendar-delete {position: absolute; display: none; width: 17px; height: 17px; right: 0px; top: 0px; padding: 0px; background-image: url(images/calendar_btns.gif);}
+div.bx-calendar-entry a.bx-calendar-edit {position: absolute; display: none; width: 17px; height: 17px; right: 18px; top: 0px; padding: 0px; background-image: url(images/calendar_btns.gif);}
+div.bx-calendar-entry-active a.bx-calendar-delete {display: block; background-position: top left !important; background-repeat: no-repeat;}
+div.bx-calendar-entry-active a.bx-calendar-edit {display: block; background-position: top right !important; background-repeat: no-repeat;}

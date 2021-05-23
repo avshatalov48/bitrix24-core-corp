@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_BUTTON_LIST_ACTIONS_VIEW"] = "View";
+$MESS["CRM_BUTTON_LIST_ACTIONS_EDIT"] = "Edit";
+$MESS["CRM_BUTTON_LIST_ACTIONS_COPY"] = "Create based on";
+$MESS["CRM_BUTTON_LIST_ACTIONS_REMOVE"] = "Delete widget";
+$MESS["CRM_BUTTON_LIST_FORMS_MINE"] = "My company's widgets";
+$MESS["CRM_BUTTON_LIST_FORMS_PRESET"] = "Standard widgets";
+?>

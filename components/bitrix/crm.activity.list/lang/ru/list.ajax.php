@@ -1,0 +1,9 @@
+<?
+$MESS["CRM_ACTIVITY_LIST_ROW_COUNT"] = "Всего: #ROW_COUNT#";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_ACT_STATISTICS_NOT_REQUIRED_SUMMARY"] = "Обновление статистических данных для дел не требуется.";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_ACT_STATISTICS_PROGRESS_SUMMARY"] = "Обработано дел: #PROCESSED_ITEMS# из #TOTAL_ITEMS#.";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_ACT_STATISTICS_COMPLETED_SUMMARY"] = "Обновление статистических данных для дел завершено. Обработано дел: #PROCESSED_ITEMS#.";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_SEARCH_CONTENT_NOT_REQUIRED_SUMMARY"] = "Перестроение поискового индекса дел не требуется.";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_SEARCH_CONTENT_PROGRESS_SUMMARY"] = "Обработано дел: #PROCESSED_ITEMS# из #TOTAL_ITEMS#.";
+$MESS["CRM_ACTIVITY_LIST_REBUILD_SEARCH_CONTENT_COMPLETED_SUMMARY"] = "Обновление поискового индекса дел завершено. Обработано дел: #PROCESSED_ITEMS#.";
+?>

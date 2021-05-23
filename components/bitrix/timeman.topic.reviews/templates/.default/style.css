@@ -1,0 +1,8 @@
+.timeman-comment { background-color: #F2F2F2;margin-bottom: 2px;padding:5px;font-size:10px;font-family:Verdana;}
+.timeman-comment-body {display: inline-block;vertical-align: top;overflow: hidden;width: 81%;}
+.timeman-comment-avatar { display: inline-block; vertical-align: top; width: 30px; height: 30px; background: url(images/nopic_30x30.gif) no-repeat; border: 1px solid #D3D7D8; }
+.timeman-comment-body { display: inline-block; vertical-align: top; overflow: hidden; width: 81%; }
+.timeman-comment-header { padding-left: 10px; margin-bottom: 3px; }
+.timeman-comment-createdby { vertical-align: middle; padding-right: 5px; }
+.timeman-comment-content { overflow: hidden; padding-left: 10px; }
+.timeman-comment-time { color:#929292; padding-right: 15px; vertical-align: middle; display: inline-block; }

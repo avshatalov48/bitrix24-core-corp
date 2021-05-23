@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_WEBFORM_EDIT_V2_THEME"] = "Тема";
+$MESS["CRM_WEBFORM_EDIT_V2_STYLE"] = "Стиль полей";
+$MESS["CRM_WEBFORM_EDIT_V2_MODE"] = "Оформление";
+$MESS["CRM_WEBFORM_EDIT_V2_PRIMARY_COLOR"] = "Основной цвет";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP"] = "настроить";
+$MESS["CRM_WEBFORM_EDIT_V2_DEF"] = "По умолчанию";
+$MESS["CRM_WEBFORM_EDIT_V2_STANDARD"] = "Стандартный";
+$MESS["CRM_WEBFORM_EDIT_V2_AUTO"] = "Авто";
+$MESS["CRM_WEBFORM_EDIT_V2_MANUAL"] = "Свой";
+$MESS["CRM_WEBFORM_EDIT_V2_MORE_FIELDS"] = "Дополнительные возможности";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT"] = "Цвет ярких элементов";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT_TEXT"] = "Цвет текста ярких элементов";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM"] = "Цвет фона формы";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM_TEXT"] = "Цвет текста формы";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD"] = "Цвет фона полей";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_BORDER"] = "Цвет границ полей";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_FOCUS"] = "Цвет фона полей в фокусе";
+$MESS["CRM_WEBFORM_EDIT_V2_ENABLE_DESIGN"] = "Включить новый дизайн этой формы в виджете и по прямой ссылке. Выкл - новый дизайн только с новым кодом на сайт.";
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION"] = "Внимание!";
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION_TEXT"] = "Выведена форма с последними сохраненными изменениями.";
+$MESS["CRM_WEBFORM_EDIT_V2_FORM_TRANSPARENT_HINT"] = "Вы можете сделать форму полупрозрачной, изменяя прозрачность `Цвет фона формы` и `Цвет фона полей`";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT"] = "Шрифт";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_URI_HINT"] = "Ссылка на шрифт с сайта https://fonts.google.com";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_FAMILY_HINT"] = "Название шрифта(font-family). Пример: Open Sans";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_COLOR"] = "Указать цвет";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_OPACITY"] = "Указать прозрачность";
+$MESS["CRM_WEBFORM_EDIT_V2_SHADOW"] = "Тень формы";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER"] = "Границы формы";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_BOTTOM"] = "Снизу";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_RIGHT"] = "Справа";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_TOP"] = "Сверху";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_LEFT"] = "Слева";
+?>

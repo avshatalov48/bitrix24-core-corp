@@ -1,0 +1,1072 @@
+.popup-with-radius {
+	border-radius: 30px;
+	background: #eaeced;
+	box-shadow: 0 12px 27px 0 rgba(0, 0, 0, .15);
+}
+
+.popup-with-radius .popup-window-angly:before {
+	background: #e9eaed;
+}
+
+.popup-with-radius-show {
+	animation: show 300ms;
+	animation-fill-mode: both;
+}
+
+.popup-with-radius-close {
+	animation: hide 300ms;
+	animation-fill-mode: both;
+}
+
+.license-widget + .license-widget {
+	margin-left: 20px;
+}
+
+.license-widget {
+	background: #e9eaed;
+	border-radius: 22px;
+	color: #525c69;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	padding: 13px;
+	min-width: 350px;
+	box-sizing: border-box;
+}
+
+.license-widget-item {
+	margin-bottom: 24px;
+	width: 48%;
+	min-height: 62px;
+	cursor: default;
+}
+
+.license-widget-block {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+}
+
+.license-widget-item, .license-widget-option {
+	background: rgba(255, 255, 255, .75);
+	border-radius: 12px;
+	padding: 0 8px 0 10px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.09);
+	overflow: hidden;
+	transform: translate3d(0, 0, 0);
+	will-change: transform;
+	transition: all 0.15s linear;
+}
+
+.license-widget-item:hover, .license-widget-option:hover {
+	transform: translate(0, -1px);
+	background: #fff;
+	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.13);
+}
+
+.license-widget-option {
+	text-align: center;
+	width: 30.9%;
+	padding-top: 13px;
+	padding-bottom: 7px;
+	cursor: pointer;
+}
+
+.license-widget-option-text {
+	color: #767e89;
+	transition: color .2s linear;
+	word-break: break-word;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: calc(100% - 20px);
+	font: 10px/14px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-option svg {
+	transition: all .2s linear;
+}
+
+.license-widget-option:hover svg {
+	fill: #207EDE;
+	opacity: 1;
+}
+
+.license-widget-option:hover .license-widget-option-text {
+	color: #333;
+}
+
+.license-widget-item--wide, .license-widget-item--main {
+	padding: 7px 14px 6px 12px;
+	box-sizing: border-box;
+}
+
+.license-widget-item--main {
+	margin-bottom: 12px;
+	min-height: 66px;
+	background: #fff;
+}
+
+.license-widget-item--wide {
+	min-height: 64px;
+}
+
+.license-widget-option-list, .license-widget-item--wide, .license-widget-item--main {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.license-widget-item--wide .license-widget-item-icon {
+	margin-top: 0;
+}
+
+.license-widget-option-list {
+	align-items: stretch;
+}
+
+.license-widget-item-name {
+	color: #67707b;
+	font: 13px/18px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item-name a {
+	border-bottom: 1px dashed rgba(140, 147, 156, .5);
+	transition: border-color .2s linear;
+	color: #333;
+	padding-bottom: 2px;
+	display: inline-block;
+}
+
+.license-widget-item-name:hover a, .license-widget-item-name:hover a:hover {
+	border-color: rgba(140, 147, 156, 1);
+	color: #333;
+}
+
+.license-widget-item-btn {
+	height: 19px;
+	font: 10px/17px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	background: #fff;
+	border-radius: 20px;
+	cursor: pointer;
+	outline: none;
+	border: 1px solid transparent;
+	box-sizing: border-box;
+	color: #525c69;
+	white-space: nowrap;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .18);
+	padding: 0 14px;
+	transition: all .2s linear;
+	margin-top: 5px;
+	position: relative;
+}
+
+.license-widget-item-btn--disabled {
+	opacity: .4;
+	pointer-events: none;
+}
+
+.license-widget-item:hover .license-widget-item-btn {
+	border-color: #EDEEF0;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .18);
+}
+
+.license-widget-item:hover .license-widget-item-btn:hover {
+	border-color: #bedbf8;
+	color: #525c69;
+}
+
+.license-widget-item--main:hover .license-widget-item-btn {
+	background: rgba(179, 230, 0, .5);
+	box-shadow: none;
+	border-color: transparent;
+}
+
+.license-widget-item--main:hover .license-widget-item-btn:hover {
+	background: rgba(179, 230, 0, 1);
+	border-color: transparent;
+}
+
+.license-widget-item--main .license-widget-item-btn {
+	height: 26px;
+	line-height: 24px;
+	font-size: 12px;
+	box-shadow: none;
+	border: 1px solid #bad9f8;
+	margin-top: 0;
+}
+
+.license-widget-item--main:hover .license-widget-item-btn--disabled,
+.license-widget-item--main:hover .license-widget-item-btn--disabled:hover {
+	background: #fff;
+	border-color: #bad9f8;
+}
+
+.license-widget-item--wide .license-widget-item-btn {
+	margin-top: 0;
+	height: 21px;
+	line-height: 19px;
+}
+
+.license-widget-item--main .license-widget-item-btn--free {
+	background: #c9ed4c;
+	box-shadow: none;
+	border: none;
+}
+
+.license-widget-item:hover .license-widget-item-btn--free,
+.license-widget-item:hover .license-widget-item-btn--free:hover {
+	background: #c9ed4c;
+}
+
+.license-widget-item--active .license-widget-item-btn {
+	border-color: #afceee;
+	box-shadow: none;
+}
+
+.license-widget-item--active:hover .license-widget-item-btn {
+	border-color: #9bc2ed;
+}
+
+.license-widget-item--active:hover .license-widget-item-btn:hover {
+	border-color: #86b8ec;
+}
+
+.license-widget-item--main .license-widget-item-name {
+	color: #333;
+	font-size: 16px;
+	line-height: 16px;
+	margin-bottom: 0;
+	max-width: 155px;
+}
+
+.license-widget-item--main .license-widget-item-name span {
+	word-break: break-word;
+}
+
+.license-widget-item--main .license-widget-item-content,
+.license-widget-item--wide .license-widget-item-content {
+	margin-right: 5px;
+	padding-top: 0;
+}
+
+.license-widget-item--main .license-widget-item-content {
+	padding-bottom: 5px;
+}
+
+.license-widget-item--main .license-widget-item-icon {
+	height: 36px;
+	width: 36px;
+	margin-top: 0;
+	margin-right: 10px;
+}
+
+.license-widget-item-link {
+	line-height: 16px;
+	margin-top: -3px;
+	cursor: pointer;
+}
+
+.license-widget-item-link-text {
+	color: #8c939c;
+	font-size: 11px;
+	line-height: 11px;
+	border-bottom: 1px dashed rgba(140, 147, 156, .5);
+	transition: all .2s linear;
+}
+
+.license-widget-item-link-text:hover {
+	color: #525c69;
+}
+
+.license-widget-item-info {
+	color: #519eed;
+	padding-bottom: 2px;
+	margin-top: -3px;
+}
+
+.license-widget-item-info-text {
+	position: relative;
+	margin-right: 10px;
+	display: inline-block;
+	vertical-align: middle;
+	letter-spacing: -0.4px;
+	font-size: 11px;
+	line-height: 14px;
+}
+
+.license-widget-item-info-text:before {
+	content: '';
+	width: 8px;
+	height: 6px;
+	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%226%22%20viewBox%3D%220%200%208%206%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%231F82E8%22%20fill-rule%3D%22evenodd%22%20points%3D%224.836%2010%202%207.236%202.993%206.269%204.836%208.065%209.007%204%2010%204.967%22%20opacity%3D%22.5%22%20transform%3D%22translate%28-2%20-4%29%22%2F%3E%0A%3C%2Fsvg%3E%0A) no-repeat center;
+	right: -11px;
+	top: 50%;
+	position: absolute;
+	transform: translateY(-50%);
+}
+
+a.license-widget-item-info-text {
+	color: #519eed;
+	transition: color .2s linear;
+	border-bottom: 1px dashed #a6cbf2;
+}
+
+a.license-widget-item-info-text:hover {
+	color: #2b89ea;
+}
+
+.license-widget-item-info--exp {
+	color: #fa726e;
+	line-height: 14px;
+}
+
+.license-widget-item-info--exp .license-widget-item-info-text:before {
+	content: none;
+}
+
+.license-widget-item-content {
+	padding: 5px 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.license-widget-item-icon {
+	border-radius: 50%;
+	height: 26px;
+	width: 26px;
+	background-repeat: no-repeat;
+	background-position: center;
+	margin-right: 8px;
+	margin-top: 13px;
+	flex-shrink: 0;
+}
+
+.license-widget-item-icon--start {
+	background-color: #207ede;
+	background-position: top 9px left 8px;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2219%22%20height%3D%2220%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M17.862.767c.904.756.446%208.387-2.858%2012.312-.27.32-.54.615-.81.884.053%201.39-.34%203.71-3.092%205.37a49.767%2049.767%200%2001-1.29-3.03c-1.44.13-2.78-.373-3.915-1.323-1.133-.948-1.863-2.172-1.986-3.607a50.21%2050.21%200%2001-3.208-.737C1.86%207.659%204.07%206.864%205.453%206.67c.222-.316.468-.636.741-.96C9.498%201.785%2016.958.01%2017.862.767zM3.684%2014.064c.343.638.839%201.208%201.453%201.7a5.874%205.874%200%20002.007%201.071c-2.332%201.365-4.282%202.112-4.588%201.867-.306-.246.126-2.21%201.128-4.638zm7.208-5.017a2.358%202.358%200%2000-3.314.289%202.34%202.34%200%2000.29%203.304c.995.832%202.479.703%203.314-.29a2.34%202.34%200%2000-.29-3.303zm.853-2.973a1.256%201.256%200%2000.156%201.774%201.266%201.266%200%20001.78-.155%201.256%201.256%200%2000-.156-1.774%201.266%201.266%200%2000-1.78.155z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--tel {
+	background-color: #e8e9ec;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.88%202.281l1.156%201.691c.405.621.15%201.467-.472%201.881l-.694.464a.367.367%200%2000-.119.477%2011.63%2011.63%200%20003.712%203.946.376.376%200%2000.474-.102l.49-.695c.428-.605%201.3-.818%201.887-.377l1.653%201.24c.5.379.538%201.129.077%201.556-1.728%201.652-4.608%202.293-8.4-1.715C-.147%206.639.607%203.769%202.336%202.117a1.021%201.021%200%20011.544.164zM7.653.913a5.68%205.68%200%20014.096%201.673%205.679%205.679%200%20011.673%204.097.525.525%200%2001-.502.502.573.573%200%2001-.35-.142.475.475%200%2001-.143-.35%204.615%204.615%200%2000-1.372-3.412%204.618%204.618%200%2000-3.412-1.373.501.501%200%2001-.492-.492.525.525%200%2001.502-.503zm.285%202.122a3.299%203.299%200%20012.39.972c.639.638.982%201.483.973%202.391a.525.525%200%2001-.502.503.624.624%200%2001-.303-.104l-.047-.04a.475.475%200%2001-.143-.35%202.335%202.335%200%2000-.687-1.69%202.333%202.333%200%2000-1.69-.687.501.501%200%2001-.493-.493.525.525%200%2001.502-.502z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--demo {
+	background-color: #e8e9ec;
+	background-position: top 7px center;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2213%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.62%200A.627.627%200%20000%20.64v7.948c0%20.356.276.64.62.64H5.63v.84l-2.161%202.25a.657.657%200%20000%20.923.61.61%200%2000.895%200l1.907-1.966%201.907%201.966a.63.63%200%2000.46.19c.16%200%20.32-.071.435-.19a.657.657%200%20000-.923L6.914%2010.09v-.863h5.007c.345%200%20.62-.284.62-.64V.64a.627.627%200%2000-.62-.64H.62zm2.104%205.807c-.254%200-.485-.185-.485-.432%200-.226.208-.432.485-.432h6.198c.254%200%20.484.185.484.432%200%20.226-.207.432-.46.432H2.723zm-.485-3.12c0%20.248.23.432.485.432h6.221c.254%200%20.46-.205.46-.432%200-.247-.23-.431-.483-.431H2.724c-.277%200-.485.205-.485.431z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--expdemo {
+	background-color: #fa726e;
+	background-position: top 7px center;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2213%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.62%200A.627.627%200%20000%20.64v7.948c0%20.356.276.64.62.64H5.63v.84l-2.161%202.25a.657.657%200%20000%20.923.61.61%200%2000.895%200l1.907-1.966%201.907%201.966a.63.63%200%2000.46.19c.16%200%20.32-.071.435-.19a.657.657%200%20000-.923L6.914%2010.09v-.863h5.007c.345%200%20.62-.284.62-.64V.64a.627.627%200%2000-.62-.64H.62zm2.104%205.807c-.254%200-.485-.185-.485-.432%200-.226.208-.432.485-.432h6.198c.254%200%20.484.185.484.432%200%20.226-.207.432-.46.432H2.723zm-.485-3.12c0%20.248.23.432.485.432h6.221c.254%200%20.46-.205.46-.432%200-.247-.23-.431-.483-.431H2.724c-.277%200-.485.205-.485.431z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--mp {
+	background-color: #e8e9ec;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.77.004l-.036.018-5.54%202.193c-.14.065-.19.206-.194.373v7.06c.002.159.084.309.193.351l5.487%202.17a.36.36%200%2000.23.006l5.537-2.187c.11-.045.19-.198.19-.356V2.634c.003-.216-.051-.342-.194-.408L5.873.022c-.037-.02-.067-.028-.102-.018zm.034.752l4.599%201.826-4.6%201.814-4.602-1.82L5.804.756z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--low {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2222%22%20height%3D%2214%22%3E%3Cg%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M20.231%2011.033a2%202%200%2001-2%202H2.778a2%202%200%2001-2-2V2.954a2%202%200%20012-2H18.23a2%202%200%20012%202v1.799a1.01%201.01%200%2001.116-.007H21a1%201%200%20011%201V8.24a1%201%200%2001-1%201h-.653l-.116-.006v1.798zM17.83%202.498H3.18a1%201%200%2000-.993.884l-.006.116v6.991a1%201%200%2000.883.993l.117.007h14.65a1%201%200%2000.993-.883l.006-.117v-6.99a1%201%200%2000-1-1z%22%2F%3E%3Cpath%20d%3D%22M3.724%203.839h3.537v6.309H3.724z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--expired {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2222%22%20height%3D%2218%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M18.567.395c.42.42.42%201.1%200%201.52l-1.04%201.038.704.001a2%202%200%20012%202v1.799a1.01%201.01%200%2001.116-.007H21a1%201%200%20011%201v2.495a1%201%200%2001-1%201h-.653l-.116-.006v1.798a2%202%200%2001-2%202L5.45%2015.032l-2.045%202.045a1.075%201.075%200%2011-1.52-1.52L17.047.395c.42-.42%201.1-.42%201.52%200zm-2.583%204.102l-8.991%208.99%2010.836.002a1%201%200%2000.994-.883l.006-.117v-6.99a1%201%200%2000-1-1l-1.845-.002zm-5.031-1.543L9.409%204.498h-6.23a1%201%200%2000-.993.884l-.006.116-.001%206.23-1.4%201.398v-.046L.777%204.954a2%202%200%20012-2h8.175z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--alert {
+	background-position: top 10px center;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M17.5%2012.84L10.223.72c-.561-.93-1.897-.93-2.446%200L.5%2012.84C-.073%2013.795.62%2015%201.729%2015h14.554c1.098%200%201.79-1.205%201.217-2.16zM7.956%204.943c0-.537.43-.967.966-.967h.132c.536%200%20.966.43.966.967v3.614c0%20.537-.43.967-.966.967h-.132a.962.962%200%2001-.966-.967V4.943zm2.255%207.014c0%20.669-.549%201.217-1.217%201.217a1.222%201.222%200%2001-1.217-1.217c0-.668.549-1.216%201.217-1.216s1.217.548%201.217%201.216z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--upd {
+	background-color: #d6d8db;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2217%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.33%208.09H4.639a5.486%205.486%200%20007.427%205.165l1.063%202.336a8.05%208.05%200%2001-11.053-7.5H.51a.3.3%200%2001-.212-.513l2.91-2.91a.3.3%200%2001.424%200l2.91%202.91a.3.3%200%2001-.213.512zm9.485-5.658a8.023%208.023%200%20012.357%205.676h1.558a.3.3%200%2001.212.513l-2.91%202.91a.3.3%200%2001-.424%200l-2.91-2.91a.3.3%200%2001.213-.512h1.698a5.487%205.487%200%2000-8.29-4.7L6.167%201.112a8.051%208.051%200%20019.648%201.32z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--invite {
+	background-color: rgba(255, 255, 255, .2);
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2225%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.89%202.23c.333-2.94%205.354-2.142%204.759-1.183%201.467-.272%201.133%203.066%201.133%203.066l-.318.863.105.077c.467.389.084.853.064%201.383-.03.832-.54.66-.54.66-.03%201.373-.708%201.554-.708%201.554-.128.863-.048.716-.048.716l.603.073v.196c.005.13.021.26.048.388.71.316.862.502%201.567.81%201.362.597%202.843%201.373%203.107%202.417.155.612.487%202.286.735%203.565-2.365%201.008-5.3%201.606-8.479%201.606-2.554%200-4.95-.386-7.022-1.061.318-1.738%201.083-4.619%201.083-4.619%200-.672.877-1.438%202.608-1.885a5.88%205.88%200%20001.651-.751c.11-.064.095-.65.095-.65l.557-.086.001-.033c.008-.149.047-.718.047-.718-.667-.224-.598-1.544-.598-1.544-.424.236-.7-.808-.7-.808-.46-1.335.138-1.367.237-1.364h.013a9.123%209.123%200%20010-2.672zM5.589%203.47l.2.024c.396.06.775.211%201.106.44.261.212.46.49.572.807.156.634.272%201.277.346%201.925.028.357.086.71.171%201.058l.103.27c.073.177.153.351.24.522l.136.252-.15-.118a2.783%202.783%200%2001-.398-.414s.13.41.151.466c.048.07.088.146.12.225-.028%200-.306.13-.306.13l-1.08.337.015.513.12.055c.155.081.292.194.403.33.052.114.116.223.19.323-.984.4-1.56.985-1.584%201.64-.016.116-.613%202.26-.647%202.743H3.728a34.774%2034.774%200%2001-2.949-.535c.052-.735.17-1.996.36-2.265.27-.384%201.229-.933%201.59-1.134.239-.138.49-.254.75-.345.134-.117.238-.263.303-.428.138-.172.318-.305.523-.386l.015-.513-1.08-.337-.022-.01a2.846%202.846%200%2000-.284-.12c.043-.09.093-.178.149-.261.02-.055.122-.428.122-.428-.118.151-.252.29-.399.414l-.15.117.174-.347c.111-.235.21-.475.297-.72.086-.34.146-.686.18-1.034.074-.649.19-1.292.346-1.926a1.81%201.81%200%2001.572-.805%202.65%202.65%200%20011.309-.464h.055zM22.536%204.56v2.183h2.211v1.46L22.536%208.2v2.184h-1.46V8.2h-2.211V6.742h2.21l.001-2.183h1.46z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--free {
+	background-color: #207ede;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M15.332%2014.211H4.794c-.09%200-.18-.003-.268-.01C2.144%2014.146.23%2012.155.23%209.708a4.55%204.55%200%20011.29-3.18%204.392%204.392%200%20011.469-.991%204.8%204.8%200%20011.348-3.723A4.592%204.592%200%20017.621.426c1.578.002%202.97.808%203.807%202.039a3.718%203.718%200%20011.271-.222c1.97.002%203.587%201.536%203.774%203.499%201.887.42%203.299%202.138%203.297%204.192-.002%202.368-1.88%204.286-4.196%204.285-.081%200-.162-.003-.242-.008z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--comp {
+	background-color: #207ede;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2217%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.252%202.498a8.317%208.317%200%20010%202.27l.051.001c.129.015.439.14.186%201.025l-.075.253c-.074.235-.262.718-.517.565v.13c-.004.301-.057%201.031-.473%201.181l.037.638.439.072c-.016.188.01.376.074.552a4.51%204.51%200%20001.307.638c1.309.363%202.001.975%202.059%201.526l.004.075s.629%202.544.87%204.008c-1.989.424-4.159.657-6.43.657-2.092%200-4.098-.198-5.956-.56l.387-2.114c.124-.662.242-1.261.312-1.56.189-.807%201.174-1.425%202.16-1.91l.296-.142c.558-.262.677-.419%201.24-.688.02-.109.033-.22.037-.33v-.167l.477-.062.004.006c.012.013.042-.001-.042-.612l-.043-.018c-.128-.066-.497-.338-.518-1.302l-.03.008c-.087.016-.34.02-.39-.458l-.007-.11c-.015-.451-.32-.846.056-1.177l.078-.062-.251-.732-.016-.246c-.033-.684-.038-2.546.911-2.358-.47-.816%203.5-1.492%203.763%201.003zm4.534-.566c.471.039.923.211%201.308.499.263.227.461.527.572.866.156.681.272%201.372.346%202.069.033.375.094.746.18%201.112.098.295.21.585.339.868l.132.279-.15-.127a2.9%202.9%200%2001-.4-.445l.113.43a.775.775%200%2000.01.03c.055.09.105.184.148.281-.01%200-.056.02-.108.044l-.198.095-1.08.363.015.551c.205.088.385.23.522.414.065.176.169.334.303.46.26.098.511.221.75.37.36.215.756.355%201.167.41.414.074.675.792.675.792l.094%202.001c-1.302.42-2.79.768-4.417%201.025h-.086c-.036-.52-.632-2.824-.648-2.95-.023-.703-.6-1.331-1.584-1.76.075-.11.139-.225.19-.347.11-.147.248-.268.403-.355l.12-.06.016-.55-1.08-.365-.198-.095a.625.625%200%2000-.108-.044%201.35%201.35%200%2001.12-.242l.094-.31.057-.19c-.118.163-.25.312-.397.446l-.15.127.136-.271c.13-.275.245-.56.343-.85.085-.374.143-.754.171-1.137.074-.697.19-1.388.347-2.07.111-.338.309-.637.571-.865a2.54%202.54%200%20011.133-.479l.175-.02h.054zm-13.474%200c.47.039.922.21%201.307.499.262.228.46.527.571.866.156.681.272%201.372.346%202.069.029.383.086.763.172%201.137.13.388.29.763.479%201.122a2.888%202.888%200%2001-.547-.574l.152.5c.047.076.087.157.12.242-.027%200-.306.14-.306.14l-1.08.363.015.551c.205.088.385.231.522.415.052.122.116.238.19.346-.983.43-1.56%201.058-1.582%201.761l-.029.133c-.122.52-.587%202.36-.618%202.817h-.39a30.162%2030.162%200%2001-4.115-.928l.098-2.098.03-.075c.08-.187.314-.658.644-.716.411-.056.807-.196%201.167-.411.238-.149.49-.272.75-.37.133-.126.237-.284.301-.46.137-.183.317-.326.523-.414l.015-.55-1.08-.364-.197-.095a.624.624%200%2000-.109-.044c.044-.097.093-.19.15-.28l.04-.146.081-.315a2.88%202.88%200%2001-.55.573c.184-.37.341-.754.47-1.148.088-.366.148-.737.181-1.112.074-.697.19-1.388.346-2.07.11-.338.309-.638.571-.865.385-.288.837-.46%201.308-.5h.054z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--task {
+	background-color: #207ede;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M11.944%2014.92v-3.207h2.96V3.08H3.065v8.633h2.96v3.207h5.92zM2.16.712h13.65c.809%200%201.464.655%201.464%201.462v13.652c0%20.807-.655%201.462-1.463%201.462H2.159a1.463%201.463%200%2001-1.463-1.462V2.174c0-.807.655-1.462%201.463-1.462zm4.947%206.216l1.376%201.43%203.44-3.502%201.206%201.256-4.646%204.664L6.024%208.31l1.082-1.381z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--kp {
+	background-color: #207ede;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2221%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.373%207.912c0-.06.007-.122.022-.181a.732.732%200%2001.888-.545l3.42.873a.746.746%200%2001.555.726v6.9h1.221v2.493H.94v-2.494H2.16V3.603a1.24%201.24%200%20011.026-1.231L11.734.953a1.235%201.235%200%20011.417%201.231v13.5h1.222V7.912zM7.26%2015.88v-4.023H4.962v4.023h2.299zm3.448-1.725v-2.298H8.41v2.298h2.3zm7.471-2.873h-2.298v2.299h2.298v-2.3zm-7.47-6.897h-2.3v2.3h2.3v-2.3zm-3.45%200H4.963v2.3h2.299v-2.3zm3.45%204.023h-2.3v2.3h2.3v-2.3zm-3.45%200H4.963v2.3h2.299v-2.3z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--crm {
+	background-color: #207ede;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2219%22%20height%3D%2216%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.745.892h16.818c.435%200%20.786.4.786.894%200%20.1-.014.2-.043.294l-.508%201.66c-.11.36-.408.6-.743.6H1.25c-.335%200-.634-.241-.743-.602l-.504-1.66C-.14%201.61.078%201.102.488.94A.7.7%200%2001.745.892zm2.86%205.747h11.098c.427%200%20.773.4.773.894%200%20.107-.017.214-.05.314l-.538%201.66c-.113.35-.402.58-.724.58H4.115c-.327%200-.619-.238-.728-.594l-.51-1.66c-.143-.466.068-.977.47-1.142a.68.68%200%2001.259-.052zm3.448%205.747h4.202c.427%200%20.773.4.773.894%200%20.087-.011.174-.033.257l-.43%201.66c-.098.379-.399.638-.74.638H7.53c-.333%200-.628-.247-.733-.612l-.477-1.66c-.134-.47.085-.975.49-1.13a.676.676%200%2001.243-.047z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--main .license-widget-item-icon--demo {
+	background-color: #207ede;
+	background-position: top 9px right 9px;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2217%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.841.975c-.444%200-.799.366-.799.824l.001%2010.25c0%20.458.355.825.8.825H7.3v1.082l-2.786%202.902a.847.847%200%20000%201.191.787.787%200%20001.155%200l2.458-2.536%202.459%202.536a.814.814%200%2000.592.245.797.797%200%2000.563-.245.847.847%200%20000-1.19l-2.784-2.872v-1.113h6.457c.445%200%20.8-.367.8-.825V1.8a.809.809%200%2000-.8-.824H.841zm2.713%207.487c-.327%200-.624-.238-.624-.557%200-.291.267-.556.624-.556h7.992c.328%200%20.625.238.625.556%200%20.292-.267.557-.595.557H3.554zM2.93%204.44c0%20.319.297.557.624.557h8.022c.328%200%20.595-.265.595-.557%200-.319-.297-.557-.625-.557H3.554c-.357%200-.624.265-.624.557z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-inner {
+	display: flex;
+	height: 100%;
+}
+
+.license-widget-item--main .license-widget-inner,
+.license-widget-item--wide .license-widget-inner {
+	align-items: center;
+}
+
+.license-widget-banner {
+	margin-top: 24px;
+	width: 100%;
+	height: 117px;
+	position: relative;
+}
+
+.license-widget-banner-inner {
+	background: #fff;
+	border-radius: 11px;
+	width: 100%;
+	height: 100%;
+}
+
+.license-widget-item-name .ui-hint {
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}
+
+.license-widget-item-name .ui-hint:hover .ui-hint-icon {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cg%20fill%3D%22none%22%20opacity%3D%22.7%22%3E%3Cpath%20fill%3D%22%232fc6f6%22%20d%3D%22M12.48%206.49C12.48%203.183%209.8.5%206.49.5%203.183.5.5%203.182.5%206.49c0%203.31%202.682%205.99%205.99%205.99%203.31%200%205.99-2.68%205.99-5.99z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M4.06%204.842c0-.308.098-.62.296-.936.197-.316.486-.578.865-.785.38-.207.823-.31%201.33-.31.47%200%20.884.086%201.244.26.36.173.638.41.834.707.196.298.294.623.294.973%200%20.275-.056.517-.168.724-.11.208-.244.387-.398.538-.154.15-.43.404-.83.76-.11.1-.198.19-.265.266-.065.076-.114.146-.147.21-.032.062-.057.125-.075.19-.018.062-.045.173-.08.332-.062.337-.255.505-.58.505-.168%200-.31-.055-.425-.165-.115-.11-.172-.274-.172-.49%200-.273.043-.51.127-.71.084-.198.196-.373.336-.524.14-.15.327-.33.564-.537.207-.183.357-.32.45-.412.092-.093.17-.195.233-.31.063-.112.095-.236.095-.37%200-.258-.097-.477-.29-.655-.192-.178-.44-.268-.746-.268-.358%200-.62.09-.79.27-.167.18-.31.445-.427.795-.11.367-.32.55-.627.55-.182%200-.335-.064-.46-.192s-.187-.267-.187-.416zm2.372%205.33c-.197%200-.37-.064-.518-.192-.147-.128-.22-.307-.22-.537%200-.205.07-.376.213-.516s.318-.21.525-.21c.205%200%20.376.07.516.21.14.14.21.31.21.516%200%20.227-.074.405-.22.535-.146.13-.314.194-.506.194z%22/%3E%3C/g%3E%3C/svg%3E')
+}
+
+.license-widget-item-name .ui-hint-icon {
+	vertical-align: top;
+	margin: 0;
+}
+
+.license-widget-item-notice {
+	border-radius: 7px;
+	background: #eff8fe;
+	color: #059dcd;
+	font-size: 11px;
+	line-height: 11px;
+	text-align: center;
+	padding: 5px 5px 7px;
+	margin-left: 15px;
+	width: 105px;
+	box-sizing: border-box;
+}
+
+.license-widget-item-text {
+	font-size: 12px;
+	line-height: 14px;
+	color: #525c69;
+	opacity: .5;
+}
+
+.license-widget-item--active {
+	background: #fff;
+}
+
+.license-widget-item--active .license-widget-item-name {
+	color: #333;
+}
+
+.license-widget-item--active .license-widget-item-icon--tel {
+	background-color: #207EDE;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.88%202.281l1.156%201.691c.405.621.15%201.467-.472%201.881l-.694.464a.367.367%200%2000-.119.477%2011.63%2011.63%200%20003.712%203.946.376.376%200%2000.474-.102l.49-.695c.428-.605%201.3-.818%201.887-.377l1.653%201.24c.5.379.538%201.129.077%201.556-1.728%201.652-4.608%202.293-8.4-1.715C-.147%206.639.607%203.769%202.336%202.117a1.021%201.021%200%20011.544.164zM7.653.913a5.68%205.68%200%20014.096%201.673%205.679%205.679%200%20011.673%204.097.525.525%200%2001-.502.502.573.573%200%2001-.35-.142.475.475%200%2001-.143-.35%204.615%204.615%200%2000-1.372-3.412%204.618%204.618%200%2000-3.412-1.373.501.501%200%2001-.492-.492.525.525%200%2001.502-.503zm.285%202.122a3.299%203.299%200%20012.39.972c.639.638.982%201.483.973%202.391a.525.525%200%2001-.502.503.624.624%200%2001-.303-.104l-.047-.04a.475.475%200%2001-.143-.35%202.335%202.335%200%2000-.687-1.69%202.333%202.333%200%2000-1.69-.687.501.501%200%2001-.493-.493.525.525%200%2001.502-.502z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--active .license-widget-item-icon--demo {
+	background-color: #207EDE;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2213%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.62%200A.627.627%200%20000%20.64v7.948c0%20.356.276.64.62.64H5.63v.84l-2.161%202.25a.657.657%200%20000%20.923.61.61%200%2000.895%200l1.907-1.966%201.907%201.966a.63.63%200%2000.46.19c.16%200%20.32-.071.435-.19a.657.657%200%20000-.923L6.914%2010.09v-.863h5.007c.345%200%20.62-.284.62-.64V.64a.627.627%200%2000-.62-.64H.62zm2.104%205.807c-.254%200-.485-.185-.485-.432%200-.226.208-.432.485-.432h6.198c.254%200%20.484.185.484.432%200%20.226-.207.432-.46.432H2.723zm-.485-3.12c0%20.248.23.432.485.432h6.221c.254%200%20.46-.205.46-.432%200-.247-.23-.431-.483-.431H2.724c-.277%200-.485.205-.485.431z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--active .license-widget-item-icon--mp {
+	background-color: #207EDE;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.77.004l-.036.018-5.54%202.193c-.14.065-.19.206-.194.373v7.06c.002.159.084.309.193.351l5.487%202.17a.36.36%200%2000.23.006l5.537-2.187c.11-.045.19-.198.19-.356V2.634c.003-.216-.051-.342-.194-.408L5.873.022c-.037-.02-.067-.028-.102-.018zm.034.752l4.599%201.826-4.6%201.814-4.602-1.82L5.804.756z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--disabled {
+	opacity: .75;
+}
+
+.license-widget-item--disabled .license-widget-item-icon--demo {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2215%22%20height%3D%2216%22%3E%3Cg%20opacity%3D%22.6%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14.727.386a.806.806%200%20010%201.14L13.54%202.71v7.877a.63.63%200%2001-.528.633l-.092.007H7.914v.863l2.158%202.227a.657.657%200%20010%20.923.618.618%200%2001-.82.066l-.075-.066-1.907-1.966-1.907%201.966a.61.61%200%2001-.895%200A.655.655%200%20014.4%2014.4l.068-.082%202.16-2.25v-.84l-1.603-.001-2.977%202.978a.806.806%200%2001-1.14-1.14L13.587.385a.806.806%200%20011.14%200zM9.879%202L7.624%204.255h-3.9c-.277%200-.485.206-.485.432%200%20.248.23.432.485.432H6.76L4.935%206.943H3.724c-.247%200-.438.162-.477.357l-.008.075c0%20.22.183.39.401.425l.084.007.348-.001-3.025%203.025a.654.654%200%2001-.04-.148l-.006-.095L1%202.64a.63.63%200%2001.528-.632L1.62%202h8.259zM8.446%207.806h1.5a.464.464%200%2000.452-.357l.008-.074c0-.22-.182-.39-.4-.425l-.084-.007h-.613l-.863.863z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+	background-position: center;
+}
+
+.license-widget-item--expired, .license-widget-item--expired:hover {
+	background: #fa726e;
+}
+
+.license-widget-item--expired .license-widget-item-name,
+.license-widget-item--expired .license-widget-item-text {
+	color: #fff;
+	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item--expired .license-widget-item-link-text {
+	color: #fff;
+	opacity: .7;
+	border-color: rgba(255, 255, 255, .7);
+	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item--expired .license-widget-item-link-text:hover {
+	border-color: rgba(255, 255, 255, 1);
+	color: #fff;
+	opacity: 1;
+}
+
+.license-widget-item--expired .ui-hint-icon {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.228.831a5.5%205.5%200%20110%2011%205.5%205.5%200%20010-11zm-.051%207.446a.631.631%200%2000-.646.633c0%20.201.065.358.193.47.13.112.28.168.453.168a.645.645%200%2000.442-.17.593.593%200%2000.191-.468.612.612%200%2000-.183-.45.612.612%200%2000-.45-.183zm.102-5.163c-.442%200-.829.091-1.16.272-.331.182-.584.41-.756.687-.173.276-.26.548-.26.818%200%20.13.055.251.164.363a.539.539%200%2000.402.168c.269%200%20.451-.16.548-.48.102-.306.226-.538.374-.695.147-.157.376-.236.688-.236.266%200%20.484.078.652.234a.751.751%200%2001.253.573.653.653%200%2001-.083.323c-.055.1-.123.19-.204.27-.08.08-.212.2-.393.36a6.715%206.715%200%2000-.493.469c-.122.131-.22.284-.293.459a1.58%201.58%200%2000-.11.618c0%20.19.05.333.15.429.101.096.225.144.372.144.283%200%20.452-.147.506-.441.031-.14.054-.236.07-.292a.892.892%200%2001.066-.165.94.94%200%2001.13-.183c.057-.067.135-.144.231-.232.348-.311.59-.533.724-.665.135-.131.251-.288.349-.47.098-.18.146-.391.146-.632%200-.306-.085-.59-.257-.85a1.765%201.765%200%2000-.728-.618%202.478%202.478%200%2000-1.088-.228z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--expired .license-widget-item-btn {
+	border: none;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .15);
+}
+
+.license-widget-item--expired.license-widget-item--main .license-widget-item-btn {
+	line-height: 26px;
+}
+
+.license-widget-item--expired:hover .license-widget-item-btn,
+.license-widget-item--expired:hover .license-widget-item-btn:hover {
+	background: #fff;
+}
+
+.license-widget-item--expired:hover .license-widget-item-btn:hover {
+	opacity: .9;
+	color: #333;
+}
+
+.license-widget-item--expired .license-widget-item-icon {
+	background-color: rgba(255, 255, 255, .2);
+	background-size: 18px 10px;
+}
+
+.license-widget-item--expired.license-widget-item--main .license-widget-item-icon {
+	background-size: auto;
+}
+
+.license-widget-item--expired .license-widget-item-notice {
+	background: rgba(255, 255, 255, .2);
+	color: #fff;
+}
+
+.license-widget-item--expired .license-widget-item-info-text {
+	color: #fff;
+	opacity: .7;
+	vertical-align: top;
+	padding-right: 0;
+	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item--expired .license-widget-item-info {
+	margin-top: 0;
+}
+
+.license-widget-item--expired .license-widget-item-info-text:before {
+	content: none;
+}
+
+.license-widget-label {
+	position: absolute;
+	top: -6px;
+	right: 16px;
+
+	color: #fff;
+	font: 9px/12px "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	border-radius: 8px;
+	padding: 0 6px 1px 7px;
+}
+
+.license-widget-banner .license-widget-label {
+	background: #9dcf00;
+}
+
+.ui-btn.license-btn .license-widget-label {
+	background: #2FC6F6;
+}
+
+.license-widget-item--upd .license-widget-item-icon--upd {
+	background-color: #9dcf00;
+}
+
+.license-widget-item--upd .license-widget-item-text {
+	color: #8EBB00;
+}
+
+.ui-btn.license-btn:not(.license-btn-animate) .license-btn-icon-battery,
+.ui-btn.license-btn:not(.license-btn-animate) .license-btn-icon-battery {
+	display: none;
+}
+
+/* buttons */
+
+.ui-btn.license-btn {
+	--ui-btn-height: 34px;
+	--ui-btn-padding: 0 30px 0 15px;
+	color: #fff;
+	--ui-btn-color-hover: #fff;
+	--ui-btn-color-active: #fff;
+	text-transform: none;
+	font: 14px/32px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	max-width: 170px;
+	min-width: 106px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	display: block;
+}
+
+.bx-ie .ui-btn.license-btn {
+	padding-right: 30px;
+}
+
+.ui-btn.license-btn .license-widget-label {
+	right: 7px;
+}
+
+.ui-btn.license-btn-primary {
+	margin-left: 12px !important;
+}
+
+.license-btn-num {
+	color: rgba(0, 125, 141, 1);
+	font: 11px/14px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background: #fff;
+	padding: 0 8px;
+	border-radius: 8px;
+	margin-left: 6px;
+	white-space: nowrap;
+	max-width: 70px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn {
+	color: #333;
+	--ui-btn-color-hover: #333;
+	--ui-btn-color-active: #333;
+}
+
+.ui-btn.license-btn:before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	display: block;
+	transform: translateY(-50%);
+	width: 24px;
+	height: 24px;
+	margin-top: 1px;
+	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%224%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.7%22%20d%3D%22M0%200h8L4%204z%22%2F%3E%3C%2Fsvg%3E) no-repeat center;
+	transition: 160ms color linear, 160ms opacity linear, 160ms background-color linear;
+}
+
+.ui-btn.license-btn.ui-btn-icon-tariff,
+.ui-btn.license-btn.ui-btn-icon-demo {
+	padding-left: 35px;
+}
+
+.ui-btn.license-btn:after {
+	left: 9px;
+}
+
+.ui-btn.license-btn.ui-btn-icon-tariff:after {
+	background-color: rgba(255, 255, 255, .3);
+	border-radius: 50%;
+	background-size: 18px 18px;
+	background-position: center left 2px;
+	left: 5px;
+}
+
+.ui-btn.license-btn.ui-btn-icon-demo:after {
+	background-color: #2fc6f6;
+	border-radius: 50%;
+	background-position: center top 0;
+	left: 5px;
+}
+
+.ui-btn.license-btn-primary {
+	background: #14BFD5;
+	border-color: #14BFD5;
+}
+
+.ui-btn.license-btn-primary:hover,
+.ui-btn.license-btn-primary:active {
+	background: #2CD4EA;
+	border-color: #2CD4EA;
+}
+
+.ui-btn.license-btn-orange {
+	background: #EBA51C;
+	border-color: #EBA51C;
+}
+
+.ui-btn.license-btn-orange:hover,
+.ui-btn.license-btn-orange:active {
+	background: #FBB62F;
+	border-color: #FBB62F;
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange {
+	background: rgba(255, 169, 0, .57);
+	border-color: rgba(255, 169, 0, .65);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange:hover,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange:active{
+	background: rgba(255, 180, 32, .6);
+	border-color: rgba(255, 185, 48, .65);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange.ui-btn-icon-tariff:after {
+	background-color: #eba51C;
+}
+
+.ui-btn.license-btn-orange-border {
+	background: rgba(225, 149, 0, .17);
+	border-color: rgba(255, 169, 0, .65);
+}
+
+.ui-btn.license-btn-orange-border:hover,
+.ui-btn.license-btn-orange-border:active {
+	background: rgba(237, 165, 24, .32);
+	border-color: rgba(255, 169, 0, .65);
+}
+
+.ui-btn.license-btn-orange-border.ui-btn-icon-tariff:after {
+	background-color: #ffa900;
+}
+
+.bitrix24-light-theme .ui-btn-themes.license-btn-orange-border {
+	background: rgba(225, 149, 0, .17);
+	border-color: rgba(255, 169, 0, .65);
+}
+
+.bitrix24-light-theme .ui-btn-themes.license-btn-orange-border:hover,
+.bitrix24-light-theme .ui-btn-themes.license-btn-orange-border:active {
+	background: rgba(237, 165, 24, .32);
+	border-color: rgba(255, 182, 38, .61);
+}
+
+.ui-btn.license-btn-blue-border {
+	background: rgba(47, 198, 246, .17);
+	border-color: rgba(47, 198, 246, .5);
+}
+
+.ui-btn.license-btn-blue-border:hover,
+.ui-btn.license-btn-blue-border:active {
+	background: rgba(87, 214, 255, .3);
+	border-color: rgba(77, 212, 255, .5);
+}
+
+.ui-btn.license-btn-blue-border.ui-btn-icon-tariff:after,
+.ui-btn.license-btn-light-border.ui-btn-icon-tariff:after {
+	background-color: #2fc6f6;
+}
+
+.ui-btn.license-btn-light-border {
+	background: rgba(255, 255, 255, .07);
+	border-color: rgba(255, 255, 255, .44);
+}
+
+.ui-btn.license-btn-light-border:hover,
+.ui-btn.license-btn-light-border:active {
+	background: rgba(255, 255, 255, .28);
+	border-color: rgba(255, 255, 255, .53);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-light-border {
+	background: rgba(0, 0, 0, .07);
+	border-color: rgba(0, 0, 0, .06);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-light-border:hover,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-light-border:active {
+	background: rgba(0, 0, 0, .11);
+	border-color: rgba(0, 0, 0, .06);
+}
+
+.ui-btn.license-btn-alert {
+	background: #EA5753;
+	border-color: #EA5753;
+}
+
+.ui-btn.license-btn-alert:hover,
+.ui-btn.license-btn-alert:active {
+	background: #FA726E;
+	border-color: rgba(255, 87, 82, .64);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-alert,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-alert:hover,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-alert:active {
+	color: #fff;
+}
+
+.ui-btn.license-btn-alert-border {
+	background: rgba(250, 114, 110, .56);
+	border-color: rgba(250, 114, 110, .65);
+}
+
+.ui-btn.license-btn-alert-border:hover,
+.ui-btn.license-btn-alert-border:active {
+	background: rgba(255, 151, 148, .5);
+	border-color: rgba(255, 137, 133, .65);
+}
+
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange:before,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange-border:before,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-blue-border:before,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-light-border:before,
+.bitrix24-dark-theme .ui-btn-themes.license-btn-alert-border:before {
+	opacity: .43;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%224%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.7%22%20d%3D%22M0%200h8L4%204z%22%2F%3E%3C%2Fsvg%3E)
+}
+
+.header-item {
+	height: 63px;
+	transition: .1s;
+	margin-right: 11px;
+	margin-left: 15px;
+	display: flex;
+	align-items: center;
+}
+
+.license-btn-icon-battery {
+	margin-left: -5px;
+	margin-right: 3px;
+	position: relative;
+	width: 22px;
+	height: 14px;
+	display: inline-block;
+	vertical-align: middle;
+	top: -1px;
+}
+
+.license-btn-icon-battery-inner {
+	position: absolute;
+	will-change: width;
+	top: 4px;
+	left: 3.5px;
+	font-size: 0;
+	width: 14px;
+	display: inline-block;
+	overflow: hidden;
+	vertical-align: top;
+	height: 7px;
+}
+
+.license-btn-icon-battery-inner span {
+	width: 3px;
+	height: 6px;
+	display: inline-block;
+	vertical-align: top;
+	background: #fff;
+	box-shadow: 0 0 1px 0 #fff;
+}
+
+.license-btn-icon-battery-inner span + span {
+	margin-left: 2px;
+}
+
+.license-btn-icon-battery-cross {
+	opacity: 0;
+	position: absolute;
+	top: -2px;
+	left: 0;
+}
+
+.license-btn-icon-battery-full {
+	display: inline-block;
+	vertical-align: top;
+	width: 22px;
+	height: 14px;
+	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2222%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M20.231%2011.033a2%202%200%2001-2%202H2.778a2%202%200%2001-2-2V2.954a2%202%200%20012-2H18.23a2%202%200%20012%202v1.799a1.01%201.01%200%2001.116-.007H21a1%201%200%20011%201V8.24a1%201%200%2001-1%201h-.653l-.116-.006v1.798zM17.83%202.498H3.18a1%201%200%2000-.993.884l-.006.116v6.991a1%201%200%2000.883.993l.117.007h14.65a1%201%200%2000.993-.883l.006-.117v-6.99a1%201%200%2000-1-1z%22%2F%3E%3C%2Fsvg%3E) no-repeat center;
+}
+
+.license-btn-animate-forward .license-btn-icon-battery-inner {
+	-webkit-animation: reduce 1.5s .5s linear forwards;
+	animation: reduce 1.5s .5s linear forwards;
+}
+
+.license-btn-animate-forward, .license-btn-animate-back {
+	-webkit-animation: flash 2s linear 3;
+	animation: flash 2s linear 3;
+}
+
+.license-btn-animate-forward .license-btn-icon-battery-full {
+	-webkit-animation: hide .5s 2s linear forwards;
+	animation: hide .5s 2s linear forwards;
+}
+
+.license-btn-animate-forward .license-btn-icon-battery-cross {
+	-webkit-animation: show .5s 2.3s linear forwards;
+	animation: show .5s 2.3s linear forwards;
+}
+
+.license-btn-animate-back .license-btn-icon-battery-full {
+	opacity: 0;
+}
+
+.license-btn-animate-back .license-btn-icon-battery-cross {
+	opacity: 1;
+}
+
+.license-btn-animate-back .license-btn-icon-battery-inner {
+	-webkit-animation: increase 1.5s .8s linear forwards;
+	animation: increase 1.5s .8s linear forwards;
+}
+
+.license-btn-animate-back .license-btn-icon-battery-full {
+	-webkit-animation: show .5s .8s linear forwards;
+	animation: show .5s .8s linear forwards;
+}
+
+.license-btn-animate-back .license-btn-icon-battery-cross {
+	-webkit-animation: hide .5s .5s linear forwards;
+	animation: hide .5s .5s linear forwards;
+}
+
+@-webkit-keyframes reduce {
+	0% {
+		width: 14px;
+	}
+	99% {
+		opacity: 1;
+	}
+	100% {
+		width: 0;
+		opacity: 0;
+	}
+}
+
+@keyframes reduce {
+	0% {
+		width: 14px;
+	}
+	99% {
+		opacity: 1;
+	}
+	100% {
+		width: 0;
+		opacity: 0;
+	}
+}
+
+@-webkit-keyframes increase {
+	0% {
+		width: 0;
+		opacity: 0;
+	}
+	1% {
+		opacity: 1;
+	}
+	100% {
+		width: 14px;
+	}
+}
+
+@keyframes increase {
+	0% {
+		width: 0;
+		opacity: 0;
+	}
+	1% {
+		opacity: 1;
+	}
+	100% {
+		width: 14px;
+	}
+}
+
+@-webkit-keyframes flash {
+	0% {
+		background-color: rgba(250, 114, 110, .56);
+	}
+	50% {
+		background-color: #ea5753;
+	}
+	100% {
+		background-color: rgba(250, 114, 110, .56);
+	}
+}
+
+@keyframes flash {
+	0% {
+		background-color: rgba(250, 114, 110, .56);
+	}
+	50% {
+		background-color: #ea5753;
+	}
+	100% {
+		background-color: rgba(250, 114, 110, .56);
+	}
+}
+
+@-webkit-keyframes hide {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes hide {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@-webkit-keyframes show {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes show {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+
+
+
+
+

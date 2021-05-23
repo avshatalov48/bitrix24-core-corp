@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_ML_MODEL_LIST_SCORING_TITLE"] = "AI скоринг";
+$MESS["CRM_ML_MODEL_LIST_CONFIRMATION"] = "Подтверждение";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_DISABLE"] = "Отключить";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_CANCEL"] = "Отмена";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_TRAIN_FREE_OF_CHARGE"] = "Обучить модель бесплатно";
+$MESS["CRM_ML_MODEL_LIST_LEAD_SCORING_DISABLE"] = "Отключить скоринг лидов";
+$MESS["CRM_ML_MODEL_LIST_LEAD_SCORING_DISABLE"] = "Отключить скоринг лидов";
+$MESS["CRM_ML_MODEL_LIST_DEAL_SCORING_DISABLE"] = "Отключить скоринг сделок для этого направления";
+$MESS["CRM_ML_MODEL_LIST_DISABLE_LEAD_SCORING"] = "Отключить скоринг лидов?";
+$MESS["CRM_ML_MODEL_LIST_DISABLE_DEAL_SCORING"] = "Отключить скоринг сделок для этого направления?";
+$MESS["CRM_ML_MODEL_LIST_SCORING_REENABLE_WARNING"] = "Вы не сможете включить скоринг обратно до #DATE#";
+$MESS["CRM_ML_MODEL_LIST_SCORING_TRAINING_IN_PROCESS"] = "Выполняется обучение модели AI скоринга, текущий прогресс: #PROGRESS#%";;
+$MESS["CRM_ML_MODEL_LIST_SCORING_ERROR_TOO_SOON_2"] = "AI скоринг отключен по вашему запросу. Вы сможете повторно обучить AI модель и включить скоринг не ранее #DATE#.";;
+$MESS["CRM_ML_MODEL_LIST_SCORING_ENOUGH_DATA"] = "В вашей CRM достаточно данных для обучения модели AI скоринга.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_NOT_ENOUGH_DATA"] = "В вашей CRM недостаточно данных для обучения модели AI скоринга. Узнать требования к объему и содержанию данных, требующихся для обучения, вы можете из этой #LINK_START#статьи#LINK_END#";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_READY"] = "Модель обучена и готова к прогнозированию.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY"] = "Качество модели: #QUALITY#%.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE"] = "Дата обучения: #TRAINING_DATE#.";
+$MESS["CRM_ML_MODEL_LIST_AVAILABLE_MODELS"] = "Доступные для прогнозирования модели";
+$MESS["CRM_ML_MODEL_LIST_SCORING_DESCRIPTION_P1"] = "Чем руководствуется ваш менеджер по продажам в работе со сделками: очередностью, интуицией? Работайте в первую очередь с перспективными клиентами.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_DESCRIPTION_P2"] = "АI скоринг проанализирует все сделки и покажет % вероятности успешного завершения каждой. Система поможет вашему менеджеру понять, где нужно поднажать, чтобы увеличить вероятность успеха. Упустить теплого клиента, пока тратишь время на бесперспективного, теперь просто невозможно!";
+$MESS["CRM_ML_MODEL_LIST_HELP"] = "Помощь";

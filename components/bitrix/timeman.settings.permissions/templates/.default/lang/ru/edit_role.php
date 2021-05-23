@@ -1,0 +1,9 @@
+<?php
+$MESS["TIMEMAN_ROLE_LABEL"] = "Роль";
+$MESS['TIMEMAN_ROLE_SAVE'] = 'Сохранить';
+$MESS['TIMEMAN_ROLE_CANCEL'] = 'Отмена';
+$MESS['TIMEMAN_ROLE_ENTITY'] = 'Сущность';
+$MESS['TIMEMAN_DEFAULT_OPERATION_TITLE'] = 'Нет доступа';
+$MESS['TIMEMAN_ACTION_READ'] = 'Чтение';
+$MESS['TIMEMAN_ACTION_UPDATE'] = 'Изменение';
+$MESS['TIMEMAN_ROLE_PERMISSION'] = 'Право';

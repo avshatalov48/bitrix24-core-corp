@@ -1,0 +1,25 @@
+<?php
+$MESS["MB_BP_MAIN_MENU_ITEM"] = "Бізнес процеси";
+$MESS["MB_CALENDAR_LIST"] = "Календар";
+$MESS["MB_CHAT_AND_CALLS"] = "Чат і дзвінки";
+$MESS["MB_COMPANY"] = "Співробітники";
+$MESS["MB_CONTACTS"] = "Контакти";
+$MESS["MB_CRM_ACTIVITY"] = "Мої справи";
+$MESS["MB_CRM_COMPANY"] = "Компанії";
+$MESS["MB_CRM_CONTACT"] = "Контакти";
+$MESS["MB_CRM_DEAL"] = "Угоди";
+$MESS["MB_CRM_INVOICE"] = "Рахунки";
+$MESS["MB_CRM_LEAD"] = "Ліди";
+$MESS["MB_CRM_PRODUCT"] = "Товари";
+$MESS["MB_CRM_QUOTE"] = "Пропозиції";
+$MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM"] = "Файли";
+$MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"] = "Мій диск";
+$MESS["MB_LIVE_FEED"] = "Жива стрічка";
+$MESS["MB_MARKETPLACE_GROUP_TITLE_2"] = "Маркет";
+$MESS["MB_MESSAGES"] = "Чати";
+$MESS["MB_SEC_EXTRANET"] = "ГРУПИ ЕКСТРАНЕТ";
+$MESS["MB_SEC_FAVORITE"] = "ОБРАНЕ";
+$MESS["MB_SEC_GROUPS"] = "ГРУПИ";
+$MESS["MB_SHARED_FILES_MAIN_MENU_ITEM"] = "Загальні файли";
+$MESS["MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"] = "Загальний диск";
+$MESS["MB_TASKS_MAIN_MENU_ITEM"] = "Завдання";

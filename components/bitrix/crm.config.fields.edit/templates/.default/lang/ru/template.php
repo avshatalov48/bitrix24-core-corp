@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_FE_TOOLBAR_FIELDS"] = "Список полей";
+$MESS["CRM_FE_TOOLBAR_FIELDS_TITLE"] = "Список доступных полей";
+$MESS["CRM_FE_TOOLBAR_ADD"] = "Добавить поле";
+$MESS["CRM_FE_TOOLBAR_ADD_TITLE"] = "Добавить новое поле";
+$MESS["CRM_FE_TOOLBAR_DELETE"] = "Удалить поле";
+$MESS["CRM_FE_TOOLBAR_DELETE_TITLE"] = "Удалить поле и перейти в список полей";
+$MESS["CRM_FE_TOOLBAR_DELETE_WARNING"] = "Вы уверены, что хотите удалить это поле?";
+$MESS["CRM_FE_TAB_EDIT"] = "Настройки";
+$MESS["CRM_FE_TAB_EDIT_TITLE"] = "Основные настройки поля";
+$MESS["CRM_FE_TAB_LIST"] = "Список";
+$MESS["CRM_FE_TAB_LIST_TITLE"] = "Значения для списочного свойства";
+$MESS["CRM_FE_FIELD_SORT"] = "Сортировка";
+$MESS["CRM_FE_FIELD_NAME"] = "Название";
+$MESS["CRM_FE_FIELD_IS_REQUIRED"] = "Обязательное";
+$MESS["CRM_FE_FIELD_MULTIPLE"] = "Множественное";
+$MESS["CRM_FE_FIELD_TYPE"] = "Тип";
+$MESS["CRM_FE_LIST_ITEM_ADD"] = "Добавить";
+$MESS["CRM_FE_ENUM_IMPORT"] = "Импортировать списком";
+$MESS["CRM_FE_SORT_UP_TITLE"] = "Вверх";
+$MESS["CRM_FE_SORT_DOWN_TITLE"] = "Вниз";
+$MESS["CRM_FE_DELETE_TITLE"] = "Удалить";
+$MESS["CRM_FE_ENUM_IMPORT_HINT"] = "Каждая уникальная строчка станет элементом списка. Если значение элемента отличается от названия, укажите его в квадратных скобках перед названием. Например, \"[v1]Значение 1\".";
+$MESS["CRM_FE_ENUM_DEFAULTS"] = "Значения по умолчанию";
+$MESS["CRM_FE_ENUM_DEFAULT"] = "Значение по умолчанию";
+$MESS["CRM_FE_ENUM_NO_DEFAULT"] = "(значение не задано)";
+$MESS["CRM_FE_FIELD_SHOW_FILTER"] = "Показывать в фильтре";
+$MESS["CRM_FE_FIELD_USE_MULTI_LANG_LABEL"] = "Задать названия для всех языков";
+$MESS["CRM_FE_FIELD_COMMON_LABEL"] = "Название";
+$MESS["CRM_FE_FIELD_SHOW_IN_LIST"] = "Показывать в списке";
+?>

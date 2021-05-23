@@ -1,0 +1,34 @@
+<?
+$MESS["MOBILE_LOG_DESTINATION_MORE_1"] = "и еще #COUNT# получатель";
+$MESS["MOBILE_LOG_DESTINATION_MORE_2"] = "и еще #COUNT# получателя";
+$MESS["MOBILE_LOG_DESTINATION_MORE_3"] = "и еще #COUNT# получателя";
+$MESS["MOBILE_LOG_DESTINATION_MORE_4"] = "и еще #COUNT# получателя";
+$MESS["MOBILE_LOG_DESTINATION_MORE_5"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_DESTINATION_MORE_6"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_DESTINATION_MORE_7"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_DESTINATION_MORE_8"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_DESTINATION_MORE_9"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_DESTINATION_MORE_0"] = "и еще #COUNT# получателей";
+$MESS["MOBILE_LOG_MORE"] = "Читать далее...";
+$MESS["MOBILE_LOG_EXPAND"] = "Ещё";
+$MESS["MOBILE_LOG_COMMENT_BUTTON_MORE"] = "Показать комментарии <i>·</i> #COMMENTS#";
+$MESS["MOBILE_LOG_COMMENT_ADD_TITLE"] = "Написать комментарий ...";
+$MESS["MOBILE_LOG_COMMENT_ADD_BUTTON_SEND"] = "Отправить";
+$MESS["MOBILE_LOG_COMMENT_FORMAT_DATE"] = "j F, G:i";
+$MESS["MOBILE_LOG_COMMENT_FORMAT_DATE_YEAR"] = "j F Y, G:i";
+$MESS["MOBILE_LOG_LIKE_ME"] = "Вам";
+$MESS["MOBILE_LOG_LIKE_COUNT_USERS"] = "#COUNT# #USERS#";
+$MESS["MOBILE_LOG_LIKE_YOU"] = "#YOU# это нравится.";
+$MESS["MOBILE_LOG_LIKE_YOU_OTHERS"] = "#YOU# и еще #COUNT_USERS# это нравится.";
+$MESS["MOBILE_LOG_LIKE_OTHERS"] = "#COUNT_USERS# это нравится.";
+$MESS["MOBILE_LOG_COMMENT_EDIT"] = "Редактировать";
+$MESS["MOBILE_LOG_COMMENT_DELETE"] = "Удалить";
+$MESS["MOBILE_LOG_COMMENTS"] = "Комментарии";
+$MESS["MOBILE_LOG_COMMENTS_2"] = "Комментарии:";
+$MESS["MOBILE_LOG_LIKE_ACTION"] = "Нравится";
+$MESS["MOBILE_LOG_LIKE2_ACTION"] = "Нравится:";
+$MESS["MOBILE_LOG_LIKE2_ACTION_PATTERN"] = "#LIKE#:";
+$MESS["MOBILE_LOG_COMMENT_ACTION"] = "Комментарий";
+$MESS["MOBILE_LOG_COMMENT_REPLY"] = "Ответить";
+$MESS["MOBILE_LOG_COMMENT_LIKES_LIST"] = "Кому понравилось";
+?>

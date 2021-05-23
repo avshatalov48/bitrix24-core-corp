@@ -1,0 +1,32 @@
+<?
+$MESS["ME_ADD"] = "Добавить собрание";
+$MESS["ME_DETAIL"] = "Просмотр собрания";
+$MESS["ME_DETAIL_EX"] = "Просмотр и редактирование информации о собрании";
+$MESS["ME_EDIT"] = "Редактировать собрание";
+$MESS["ME_EDIT_EX"] = "Просмотр и редактирование информации о собрании";
+$MESS["ME_COPY"] = "Создать следующее собрание";
+$MESS["ME_COPY_EX"] = "Создание нового собрания по итогам этого";
+$MESS["ME_DELETE"] = "Удалить собрание";
+$MESS["ME_DELETE_EX"] = "Удаление собрания";
+$MESS["ME_ERR_NO_MEETINGS"] = "Нет запланированных собраний";
+$MESS["ME_TITLE"] = "Тема";
+$MESS["ME_DATE_START"] = "Дата";
+$MESS["ME_CURRENT_STATE"] = "Стадия";
+$MESS["ME_OWNER"] = "Организатор";
+$MESS["ME_PLACE"] = "Место";
+$MESS["ME_STATE_P"] = "Не началась";
+$MESS["ME_STATE_C"] = "Завершена";
+$MESS["ME_STATE_A"] = "Идет";
+$MESS["ME_DELETE_CONFIRM"] = "Вы точно уверены, что хотите удалить это собрание?";
+$MESS["ME_FILTER"] = "Фильтр";
+$MESS["ME_FILTER_TITLE"] = "Название";
+$MESS["ME_FILTER_CURRENT_STATE"] = "Стадия";
+$MESS["ME_FILTER_CURRENT_STATE_ALL"] = "(все)";
+$MESS["ME_FILTER_OWNER"] = "Организатор";
+$MESS["ME_FILTER_OWNER_CHOOSE"] = "Выбрать";
+$MESS["ME_FILTER_MEMBER"] = "Участник";
+$MESS["ME_FILTER_HEAD"] = "Только мои планерки";
+$MESS["ME_FILTER_SUBMIT"] = "Найти";
+$MESS["ME_FILTER_CANCEL"] = "Отмена";
+$MESS["ME_FILTER_GROUP"] = "Проект";
+?>

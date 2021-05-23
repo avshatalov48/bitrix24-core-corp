@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_TAB_ACTIVITY_CONFIG"] = "Справи";
+$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE"] = "Налаштування справ";
+$MESS["CRM_TAB_CONFIG"] = "Відправка листів";
+$MESS["CRM_TAB_CONFIG_TITLE"] = "Налаштування параметрів відправки листів";
+$MESS["CRM_TAB_DEAL_CONFIG"] = "Угоди";
+$MESS["CRM_TAB_DEAL_CONFIG_TITLE"] = "Налаштування угод";
+$MESS["CRM_TAB_DUPLICATE_CONTROL"] = "Контроль дублікатів";
+$MESS["CRM_TAB_DUPLICATE_CONTROL_TITLE"] = "Налаштування контролю дублікатів";
+$MESS["CRM_TAB_FORMAT"] = "Форматування";
+$MESS["CRM_TAB_FORMAT_TITLE"] = "Налаштування форматування";
+$MESS["CRM_TAB_GENERAL"] = "Загальні";
+$MESS["CRM_TAB_GENERAL_TITLE"] = "Загальні налаштування";
+$MESS["CRM_TAB_HISTORY"] = "Історія";
+$MESS["CRM_TAB_HISTORY_TITLE"] = "Налаштування історії";
+$MESS["CRM_TAB_LIVEFEED"] = "Жива стрічка";
+$MESS["CRM_TAB_LIVEFEED_TITLE"] = "Налаштування живої стрічки";
+$MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Кошик";
+$MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Налаштування кошика";
+$MESS["CRM_TAB_REST_2"] = "Маркет";
+$MESS["CRM_TAB_REST_TITLE"] = "Параметри застосунків";
+$MESS["CRM_TAB_STATUS_CONFIG"] = "Довідники";
+$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Налаштування довідників";

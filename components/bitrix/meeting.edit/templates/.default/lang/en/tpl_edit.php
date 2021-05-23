@@ -1,0 +1,30 @@
+<?
+$MESS["ME_LIST_TITLE"] = "View meetings";
+$MESS["ME_VIEW_TITLE"] = "View";
+$MESS["ME_TITLE"] = "Topic";
+$MESS["ME_TITLE_DEFAULT"] = "Meeting topic";
+$MESS["ME_DESCR_TITLE"] = "Meeting description";
+$MESS["ME_EDIT_TITLE"] = "Edit";
+$MESS["ME_FILES"] = "Files";
+$MESS["ME_DATE"] = "Date";
+$MESS["ME_TIME"] = "Time";
+$MESS["ME_DURATION"] = "Duration";
+$MESS["ME_DURATION_60"] = "minutes";
+$MESS["ME_DURATION_3600"] = "hours";
+$MESS["ME_MEMBERS"] = "Attendees";
+$MESS["ME_PLANNER"] = "Planner";
+$MESS["ME_KEEPER"] = "Administrative assistant";
+$MESS["ME_PLACE"] = "Location";
+$MESS["ME_DESCRIPTION"] = "Meeting description";
+$MESS["ME_AGENDA"] = "Agenda";
+$MESS["ME_AGENDA_EX"] = "Topics of previous meeting";
+$MESS["ME_SAVE"] = "Save";
+$MESS["ME_CREATE"] = "Create meeting";
+$MESS["ME_CANCEL"] = "Cancel";
+$MESS["ME_GROUP"] = "Project meeting";
+$MESS["ME_EVENT_NOTIFY"] = "Notify when attendees confirm or decline invitation";
+$MESS["ME_EVENT_REINVITE"] = "Ask users to reconfirm attendance";
+$MESS["ME_MR_FREE"] = "The meeting room is available.";
+$MESS["ME_MR_RESERVED"] = "The meeting room is occupied.";
+$MESS["ME_MR_RESERVED_WARNING"] = "The meeting room you have selected is occupied. Please opt for another place or time.";
+?>

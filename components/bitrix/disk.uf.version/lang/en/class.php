@@ -1,0 +1,3 @@
+<?
+$MESS["DISK_UF_VERSION_ACTION_SAVE_TO_OWN_FILES"] = "Save to Bitrix24.Drive";
+?>

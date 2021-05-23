@@ -1,0 +1,29 @@
+.bx-ccle2-external-values {
+	max-width: 400px;
+}
+.bx-ccle2-external-values table {
+	border-collapse: collapse;
+	border: 1px solid #EFEFEF;
+	width: 100%;
+}
+.bx-ccle2-external-values td {
+	padding: 8px 13px;
+}
+.bx-ccle2-external-values th {
+	text-align: center;
+	padding: 5px 10px;
+
+	background: rgb(239,239,239);
+	background: -moz-linear-gradient(top,  rgba(239,239,239,1) 0%, rgba(228,228,228,1) 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(239,239,239,1)), color-stop(100%,rgba(228,228,228,1)));
+	background: -webkit-linear-gradient(top,  rgba(239,239,239,1) 0%,rgba(228,228,228,1) 100%);
+	background: -o-linear-gradient(top,  rgba(239,239,239,1) 0%,rgba(228,228,228,1) 100%);
+	background: -ms-linear-gradient(top,  rgba(239,239,239,1) 0%,rgba(228,228,228,1) 100%);
+	background: linear-gradient(to bottom,  rgba(239,239,239,1) 0%,rgba(228,228,228,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#efefef', endColorstr='#e4e4e4',GradientType=0 );
+	/* EFEFEF E4E4E4 */
+}
+.bx-ccle2-external-values .bx-ccle2-addmore {
+	text-align: center;
+	margin: 10px 0;
+}

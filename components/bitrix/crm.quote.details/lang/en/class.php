@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_QUOTE_NOT_FOUND"] = "Quote was not found.";
+$MESS["CRM_QUOTE_CREATION_PAGE_TITLE"] = "Create Quote";
+$MESS["CRM_QUOTE_COPY_PAGE_TITLE"] = "Copy Quote";
+$MESS["CRM_QUOTE_FIELD_ID"] = "ID";
+$MESS["CRM_QUOTE_FIELD_TITLE"] = "Topic";
+$MESS["CRM_QUOTE_FIELD_NUMBER"] = "Quote #";
+$MESS["CRM_QUOTE_FIELD_STATUS_ID"] = "Quote status";
+$MESS["CRM_QUOTE_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Amount and currency";
+$MESS["CRM_QUOTE_FIELD_ASSIGNED_BY_ID"] = "Responsible person";
+$MESS["CRM_QUOTE_FIELD_BEGINDATE"] = "Created on";
+$MESS["CRM_QUOTE_FIELD_CLOSEDATE"] = "Deadline";
+$MESS["CRM_QUOTE_FIELD_LEAD_ID"] = "Lead";
+$MESS["CRM_QUOTE_FIELD_DEAL_ID"] = "Deal";
+$MESS["CRM_QUOTE_FIELD_OPENED"] = "Available to everyone";
+$MESS["CRM_QUOTE_FIELD_COMMENTS"] = "Comment (invisible in quote)";
+$MESS["CRM_QUOTE_FIELD_CONTENT"] = "Contents";
+$MESS["CRM_QUOTE_FIELD_TERMS"] = "Conditions";
+$MESS["CRM_QUOTE_FIELD_CLIENT"] = "Client";
+$MESS["CRM_QUOTE_FIELD_CONTACT_LEGEND"] = "Contacts in the quote";
+$MESS["CRM_QUOTE_FIELD_LEAD"] = "Lead";
+$MESS["CRM_QUOTE_FIELD_DEAL"] = "Deal";
+$MESS["CRM_QUOTE_FIELD_MYCOMPANY"] = "Your company details";
+$MESS["CRM_QUOTE_FIELD_PRODUCTS"] = "Products";
+$MESS["CRM_QUOTE_SECTION_MAIN"] = "About quote";
+$MESS["CRM_QUOTE_SECTION_ADDITIONAL"] = "More";
+$MESS["CRM_QUOTE_SECTION_PRODUCTS"] = "Products";
+$MESS["CRM_QUOTE_TAB_PRODUCTS"] = "Products";
+$MESS["CRM_QUOTE_TAB_TREE"] = "Dependencies";
+$MESS["CRM_QUOTE_TAB_EVENT"] = "History";
+$MESS["CRM_QUOTE_FIELD_FILES"] = "Files";
+$MESS["CRM_QUOTE_FIELD_UTM"] = "UTM parameters";
+?>

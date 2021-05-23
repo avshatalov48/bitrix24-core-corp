@@ -1,0 +1,25 @@
+<?
+$MESS["CRM_ORDER_NOT_FOUND"] = "Заказ не найден.";
+$MESS["CRM_ORDER_ACCESS_DENIED"] = "Доступ запрещён.";
+$MESS["CRM_ORDER_PAYMENT_NOT_FOUND"] = "Оплата не найдена";
+$MESS["CRM_ORDER_WRONG_FIELD_VALUE"] = "Неверное значение поля";
+$MESS["CRM_ORDER_SHIPMENT_NOT_FOUND"] = "Отгрузка не найдена";
+$MESS["CRM_ORDER_WRONG_FIELD_NAME"] = "Не верное наименование поля";
+$MESS["CRM_ORDER_WRONG_PROPERTY_NAME"] = "Не верное наименование свойства";
+$MESS["CRM_ORDER_WRONG_PROPERTY_TYPE"] = "Не верный тип свойства";
+$MESS["CRM_ORDER_NOT_SELECTED"] = "не заполнено";
+$MESS["CRM_ORDER_DA_INSUFFICIENT_RIGHTS"] = "Недостаточно прав";
+$MESS["CRM_ORDER_DA_ORDER_ID_NEGATIVE"] = "Необходим положительный идентификатор заказа, либо данные для создания нового заказа";
+$MESS["CRM_ORDER_DA_CART_NOT_FOUND"] = "Не найдена корзина заказа";
+$MESS["CRM_ORDER_DA_PROPERTIES_ABSENT"] = "Свойства СКУ отсутствуют";
+$MESS["CRM_ORDER_DA_PRODUCT_ID_NOT_DEFINED"] = "Идентификатор товара не определён";
+$MESS["CRM_ORDER_DA_BASKET_CODE_ABSENT"] = "Код позиции корзины не определён";
+$MESS["CRM_ORDER_DA_QUANTITY_ABSENT"] = "Количество товара не определено";
+$MESS["CRM_ORDER_DA_BASKET_ID_BY_CODE_ERROR"] = "Не удалось получить позицию корзины по коду";
+$MESS["CRM_ORDER_DA_COUPONS_ABSENT"] = "Отсутствуют купоны";
+$MESS["CRM_ORDER_DA_ADD_COUPON_ERROR"] = "Ошибка добавления купона";
+$MESS["CRM_ORDER_DA_DELETE_COUPON_ERROR"] = "Ошибка удаления купона";
+$MESS["CRM_ORDER_DA_CURRENCY_CHANGED"] = "Валюта заказа изменена. Проверьте правильность конвертации цен товаров";
+$MESS["CRM_ORDER_DA_DELIVERY_INDEX_ERROR"] = "Индекс отгрузки не определён";
+$MESS["CRM_ORDER_DA_GROUP_ACTION_ABSENT"] = "Групповое действие для товаров не определено";
+$MESS["CRM_ORDER_DA_PROPERTIES_ORDER_ABSENT"] = "Порядок свойств СКУ отсутствует";

@@ -1,0 +1,361 @@
+.crm-tracking-entity-details {
+	width: 100%;
+	margin: 0 0 20px 0;
+}
+
+.crm-tracking-entity-details-inner {
+	background: #38C5F3;
+	border-radius: 1px;
+	padding: 15px 15px 18px;
+	position: relative;
+}
+
+.crm-tracking-entity-details-head {
+	position: relative;
+}
+
+.crm-tracking-entity-details-toggler {
+	position: absolute;
+	top: -10px;
+	right: 0;
+	z-index: 1;
+	visibility: hidden;
+	display: flex;
+	color: rgba(106, 111, 117, 0.5);
+	font-size: 13px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+.crm-tracking-entity-details-overlay {
+	background: rgba(255, 255, 255, 0.7);
+	padding: 10px 0 10px 30px;
+}
+.crm-tracking-entity-details-edit {
+	padding: 10px 0 10px 0;
+	background: white;
+}
+.crm-tracking-entity-details-edit:after {
+	content: '';
+	background: url(/bitrix/js/crm/entity-editor/css/images/icons-sprite.svg) no-repeat center -246px;
+	padding: 10px;
+	opacity: 0.5;
+}
+.crm-tracking-entity-details-edit:hover:after {
+	opacity: 1;
+}
+.crm-tracking-entity-details-show {
+	background: white;
+	padding: 10px 5px 10px 0;
+}
+.crm-tracking-entity-details-show:hover {
+	color: rgba(106, 111, 117, 1);
+}
+
+.crm-tracking-entity-details-toggler :nth-child(2)
+{
+	padding: 10px 5px 10px 10px;
+}
+
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-toggler {
+	visibility: visible;
+}
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-body {
+	display: none;
+}
+
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-head {
+	position: relative;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-tracking-entity-details-path-block-inner:hover .crm-tracking-entity-details-toggler {
+	visibility: visible;
+}
+
+.crm-tracking-entity-details-close {
+	position: absolute;
+	right: -9px;
+	top: -9px;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: #fff;
+	cursor: pointer;
+	opacity: 0;
+	transition: all .2s linear;
+}
+
+.crm-tracking-entity-details-inner:hover .crm-tracking-entity-details-close {
+	opacity: 1;
+}
+
+.crm-tracking-entity-details-close:before {
+	content: '';
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	width: 10px;
+	height: 10px;
+	opacity: .5;
+	transition: all .2s linear;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20opacity%3D%220.627623%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M8.4%207L11.2%204.2L9.8%202.8L7%205.6L4.2%202.8L2.8%204.2L5.6%207L2.8%209.8L4.2%2011.2L7%208.4L9.8%2011.2L11.2%209.8L8.4%207Z%22%20fill%3D%22%23525C69%22/%3E%0A%3C/svg%3E%0A)
+				no-repeat center;
+}
+
+.crm-tracking-entity-details-close:hover:before {
+	opacity: 1;
+}
+
+.crm-tracking-entity-details-text-block {
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	padding-bottom: 20px;
+	margin-bottom: 15px;
+	border-bottom: 1px solid rgba(255, 255, 255, .4);
+}
+
+.crm-tracking-entity-details-title {
+	color: #fff;
+	font: 14px/24px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+	padding-bottom: 12px;
+	border-bottom: 1px solid rgba(255, 255, 255, .4);
+	margin-bottom: 16px;
+}
+
+.crm-tracking-entity-details-subtitle {
+	font-size: 14px;
+	line-height: 20px;
+	margin-bottom: 6px;
+}
+
+.crm-tracking-entity-details-text {
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.crm-tracking-entity-details-content {
+	padding-left: 130px;
+	position: relative;
+}
+
+.crm-tracking-entity-details-content:before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 120px;
+	height: 125px;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22122%22%20height%3D%22126%22%20viewBox%3D%220%200%20122%20126%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M55.1758%20114.879C84.9992%20114.879%20109.176%2090.7023%20109.176%2060.8789C109.176%2031.0555%2084.9992%206.87891%2055.1758%206.87891C25.3524%206.87891%201.17578%2031.0555%201.17578%2060.8789C1.17578%2090.7023%2025.3524%20114.879%2055.1758%20114.879Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.389832%22%20stroke%3D%22white%22%20stroke-opacity%3D%220.281024%22/%3E%0A%3Cg%20filter%3D%22url%28%23filter0_d%29%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M63%2090L63%2031C63%2029.4925%2061.5288%2028%2060%2028L20%2028C18.4712%2028%2017%2029.4925%2017%2031L17%2090C17%2091.5075%2018.4712%2093%2020%2093L60%2093C61.5288%2093%2063%2091.5075%2063%2090Z%22%20fill%3D%22white%22/%3E%0A%3C/g%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M38.1758%2089.8789C38.1758%2090.9835%2039.0712%2091.8789%2040.1758%2091.8789C41.2804%2091.8789%2042.1758%2090.9835%2042.1758%2089.8789C42.1758%2088.7743%2041.2804%2087.8789%2040.1758%2087.8789C39.0712%2087.8789%2038.1758%2088.7743%2038.1758%2089.8789Z%22%20fill%3D%22%23D8D8D8%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M20.1758%2032.8789L20.1758%2084.8789H60.1758L60.1758%2032.8789L20.1758%2032.8789Z%22%20fill%3D%22%230AE989%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M26%2045L26%2074H54L54%2045L26%2045Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M30.1758%2039.8789V37.8789L52.1758%2037.8789V39.8789L30.1758%2039.8789Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M30.1758%2053.8789L30.1758%2069.8789H42.1758V53.8789H30.1758Z%22%20fill%3D%22%23BBED21%22/%3E%0A%3Cg%20filter%3D%22url%28%23filter1_d%29%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M97%2041H38C36.4925%2041%2035%2042.5351%2035%2044V86C35%2087.4649%2036.4925%2089%2038%2089H97C98.5075%2089%20100%2087.4649%20100%2086V44C100%2042.5351%2098.5075%2041%2097%2041Z%22%20fill%3D%22%23434B58%22/%3E%0A%3C/g%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M97.2591%2067.1646C98.4097%2067.1646%2099.3424%2066.2052%2099.3424%2065.0218C99.3424%2063.8383%2098.4097%2062.8789%2097.2591%2062.8789C96.1085%2062.8789%2095.1758%2063.8383%2095.1758%2065.0218C95.1758%2066.2052%2096.1085%2067.1646%2097.2591%2067.1646Z%22%20fill%3D%22%23D8D8D8%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M41.1758%2086.0218H93.6758V44.8789H41.1758V86.0218Z%22%20fill%3D%22white%22/%3E%0A%3Cg%20opacity%3D%220.1%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M44.1758%2079.8789H89.1758V78.8789H44.1758V79.8789Z%22%20fill%3D%22%23525C69%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M44.1758%2072.8789H89.1758V71.8789H44.1758V72.8789Z%22%20fill%3D%22%23525C69%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M44.1758%2064.8789H89.1758V63.8789H44.1758V64.8789Z%22%20fill%3D%22%23525C69%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M44.1758%2057.8789H89.1758V56.8789H44.1758V57.8789Z%22%20fill%3D%22%23525C69%22/%3E%0A%3C/g%3E%0A%3Crect%20opacity%3D%220.196083%22%20x%3D%2252.1758%22%20y%3D%2253.8789%22%20width%3D%225%22%20height%3D%2226%22%20fill%3D%22%232FC6F6%22/%3E%0A%3Crect%20opacity%3D%220.196083%22%20x%3D%2265.1758%22%20y%3D%2260.8789%22%20width%3D%224%22%20height%3D%2219%22%20fill%3D%22%2314CBC3%22/%3E%0A%3Crect%20opacity%3D%220.196083%22%20x%3D%2277.1758%22%20y%3D%2265.8789%22%20width%3D%224%22%20height%3D%2214%22%20fill%3D%22%239DCF00%22/%3E%0A%3Cpath%20d%3D%22M44%2055C44%2054.4477%2044.4477%2054%2045%2054H51C51.5523%2054%2052%2054.4477%2052%2055V80H44V55Z%22%20fill%3D%22%232FC6F6%22/%3E%0A%3Cpath%20d%3D%22M57%2062C57%2061.4477%2057.4477%2061%2058%2061H64C64.5523%2061%2065%2061.4477%2065%2062V80H57V62Z%22%20fill%3D%22%2314CBC3%22/%3E%0A%3Cpath%20d%3D%22M69%2066C69%2065.4477%2069.4477%2065%2070%2065H76C76.5523%2065%2077%2065.4477%2077%2066V80H69V66Z%22%20fill%3D%22%23F7CC00%22/%3E%0A%3Cpath%20d%3D%22M81%2070C81%2069.4477%2081.4477%2069%2082%2069H88C88.5523%2069%2089%2069.4477%2089%2070V80H81V70Z%22%20fill%3D%22%23387CC4%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M83.1758%2062.8789C90.3555%2062.8789%2096.1758%2057.0586%2096.1758%2049.8789C96.1758%2042.6992%2090.3555%2036.8789%2083.1758%2036.8789C75.9961%2036.8789%2070.1758%2042.6992%2070.1758%2049.8789C70.1758%2057.0586%2075.9961%2062.8789%2083.1758%2062.8789Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20opacity%3D%220.277902%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M96.1758%2049.8789C96.1758%2057.0586%2090.3555%2062.8789%2083.1758%2062.8789C75.9961%2062.8789%2070.1758%2057.0586%2070.1758%2049.8789C70.1758%2042.6992%2075.9961%2036.8789%2083.1758%2036.8789C90.3555%2036.8789%2096.1758%2042.6992%2096.1758%2049.8789ZM93.1758%2049.8789C93.1758%2055.4017%2088.6986%2059.8789%2083.1758%2059.8789C77.653%2059.8789%2073.1758%2055.4017%2073.1758%2049.8789C73.1758%2044.3561%2077.653%2039.8789%2083.1758%2039.8789C88.6986%2039.8789%2093.1758%2044.3561%2093.1758%2049.8789Z%22%20fill%3D%22%232FC6F6%22/%3E%0A%3Cpath%20opacity%3D%220.544922%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M89.1758%2053.4035C89.1758%2053.7441%2089.1098%2054.0649%2088.9777%2054.3662C88.8456%2054.6674%2088.6672%2054.9294%2088.4427%2055.152C88.2181%2055.3747%2087.9517%2055.5515%2087.6434%2055.6824C87.3352%2055.8134%2087.0094%2055.8789%2086.6659%2055.8789C86.3224%2055.8789%2085.9966%2055.8134%2085.6884%2055.6824C85.3801%2055.5515%2085.1137%2055.3747%2084.8892%2055.152C84.6646%2054.9294%2084.4863%2054.6674%2084.3542%2054.3662C84.2221%2054.0649%2084.156%2053.7441%2084.156%2053.4035C84.156%2053.063%2084.2221%2052.7421%2084.3542%2052.4409C84.4863%2052.1396%2084.6646%2051.8777%2084.8892%2051.6551C85.1137%2051.4324%2085.3801%2051.2556%2085.6884%2051.1246C85.9966%2050.9936%2086.3224%2050.9282%2086.6659%2050.9282C87.0094%2050.9282%2087.3352%2050.9936%2087.6434%2051.1246C87.9517%2051.2556%2088.2181%2051.4324%2088.4427%2051.6551C88.6672%2051.8777%2088.8456%2052.1396%2088.9777%2052.4409C89.1098%2052.7421%2089.1758%2053.063%2089.1758%2053.4035ZM87.6963%2053.4035C87.6963%2053.2638%2087.6676%2053.1307%2087.6104%2053.0041C87.5532%2052.8775%2087.4783%2052.7683%2087.3858%2052.6766C87.2934%2052.585%2087.1855%2052.5129%2087.0622%2052.4605C86.9389%2052.4082%2086.8068%2052.382%2086.6659%2052.382C86.3841%2052.382%2086.1419%2052.4824%2085.9393%2052.6832C85.7368%2052.884%2085.6355%2053.1241%2085.6355%2053.4035C85.6355%2053.6829%2085.7368%2053.9209%2085.9393%2054.1173C86.1419%2054.3138%2086.3841%2054.412%2086.6659%2054.412C86.8068%2054.412%2086.9389%2054.3858%2087.0622%2054.3334C87.1855%2054.281%2087.2934%2054.209%2087.3858%2054.1173C87.4783%2054.0257%2087.5532%2053.9187%2087.6104%2053.7965C87.6676%2053.6742%2087.6963%2053.5432%2087.6963%2053.4035ZM82.1956%2047.3543C82.1956%2047.6948%2082.1295%2048.0157%2081.9974%2048.3169C81.8653%2048.6182%2081.687%2048.8801%2081.4624%2049.1027C81.2379%2049.3254%2080.9715%2049.5022%2080.6632%2049.6332C80.355%2049.7642%2080.0291%2049.8296%2079.6857%2049.8296C79.3422%2049.8296%2079.0164%2049.7642%2078.7081%2049.6332C78.3999%2049.5022%2078.1335%2049.3254%2077.9089%2049.1027C77.6844%2048.8801%2077.506%2048.6182%2077.3739%2048.3169C77.2418%2048.0157%2077.1758%2047.6948%2077.1758%2047.3543C77.1758%2047.005%2077.2418%2046.6798%2077.3739%2046.3785C77.506%2046.0773%2077.6844%2045.8154%2077.9089%2045.5927C78.1335%2045.37%2078.3999%2045.1954%2078.7081%2045.0688C79.0164%2044.9422%2079.3422%2044.8789%2079.6857%2044.8789C80.0291%2044.8789%2080.355%2044.9422%2080.6632%2045.0688C80.9715%2045.1954%2081.2379%2045.37%2081.4624%2045.5927C81.687%2045.8154%2081.8653%2046.0773%2081.9974%2046.3785C82.1295%2046.6798%2082.1956%2047.005%2082.1956%2047.3543ZM80.716%2047.3543C80.716%2047.0749%2080.6148%2046.8348%2080.4122%2046.6339C80.2097%2046.4331%2079.9675%2046.3327%2079.6857%2046.3327C79.4038%2046.3327%2079.1617%2046.4331%2078.9591%2046.6339C78.7565%2046.8348%2078.6553%2047.0749%2078.6553%2047.3543C78.6553%2047.6337%2078.7565%2047.8716%2078.9591%2048.0681C79.1617%2048.2645%2079.4038%2048.3628%2079.6857%2048.3628C79.9675%2048.3628%2080.2097%2048.2645%2080.4122%2048.0681C80.6148%2047.8716%2080.716%2047.6337%2080.716%2047.3543Z%22%20fill%3D%22%23333333%22/%3E%0A%3Cpath%20opacity%3D%220.7%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M81.1049%2055.8789L80.1758%2055.3768L85.2049%2045.8789L86.1758%2046.3924L81.1049%2055.8789Z%22%20fill%3D%22%23333333%22/%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M90.8838%2015.1189C90.8848%2015.0849%2090.8948%2015.0529%2090.8948%2015.0189C90.8948%2013.2849%2089.4308%2011.8789%2087.6248%2011.8789C86.3118%2011.8789%2085.1878%2012.6269%2084.6668%2013.6999C84.2498%2013.5529%2083.8058%2013.4599%2083.3358%2013.4599C81.2548%2013.4599%2079.5708%2015.0379%2079.4748%2017.0129C79.3948%2017.0069%2079.3168%2016.9899%2079.2348%2016.9899C77.5448%2016.9899%2076.1758%2018.3079%2076.1758%2019.9339C76.1758%2021.5609%2077.5448%2022.8789%2079.2348%2022.8789C79.5058%2022.8789%2079.7638%2022.8339%2080.0148%2022.7709C80.2108%2022.8349%2080.4178%2022.8789%2080.6368%2022.8789H88.8948C89.0648%2022.8789%2089.2278%2022.8509%2089.3848%2022.8119C89.6128%2022.8499%2089.8458%2022.8789%2090.0858%2022.8789C92.3448%2022.8789%2094.1758%2021.1249%2094.1758%2018.9599C94.1758%2017.0579%2092.7608%2015.4749%2090.8838%2015.1189Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20opacity%3D%220.5%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M48.3547%20107.154C48.3547%20103.137%2044.9551%2099.8789%2040.7614%2099.8789C37.7125%2099.8789%2035.1025%20101.612%2033.8927%20104.098C32.9244%20103.757%2031.8933%20103.542%2030.802%20103.542C25.9697%20103.542%2022.0593%20107.198%2021.8364%20111.774C21.6506%20111.76%2021.4695%20111.721%2021.2791%20111.721C17.3547%20111.721%2014.1758%20114.775%2014.1758%20118.542C14.1758%20122.312%2017.3547%20125.365%2021.2791%20125.365C21.9083%20125.365%2024.0261%20125.365%2024.5346%20125.365H43.7105C44.1052%20125.365%2045.9188%20125.365%2046.4761%20125.365C51.7217%20125.365%2055.9734%20121.301%2055.9734%20116.285C55.9734%20111.878%2052.6877%20108.211%2048.3291%20107.386C48.3314%20107.307%2048.3547%20107.233%2048.3547%20107.154Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20opacity%3D%220.2%22%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M106.055%20109.886C106.056%20109.834%20106.072%20109.784%20106.072%20109.732C106.072%20107.052%20103.795%20104.879%20100.985%20104.879C98.9429%20104.879%2097.1944%20106.035%2096.384%20107.693C95.7353%20107.466%2095.0447%20107.322%2094.3136%20107.322C91.0764%20107.322%2088.4569%20109.761%2088.3076%20112.813C88.1831%20112.804%2088.0618%20112.778%2087.9342%20112.778C85.3053%20112.778%2083.1758%20114.815%2083.1758%20117.328C83.1758%20119.842%2085.3053%20121.879%2087.9342%20121.879C88.3558%20121.879%2088.7571%20121.809%2089.1476%20121.712C89.4524%20121.811%2089.7744%20121.879%2090.1151%20121.879H102.961C103.225%20121.879%20103.479%20121.836%20103.723%20121.775C104.078%20121.834%20104.44%20121.879%20104.814%20121.879C108.328%20121.879%20111.176%20119.168%20111.176%20115.822C111.176%20112.883%20108.975%20110.436%20106.055%20109.886Z%22%20fill%3D%22%232FC6F6%22/%3E%0A%3Cpath%20opacity%3D%220.370313%22%20d%3D%22M19.518%204.41345C19.5191%204.37636%2019.5302%204.34145%2019.5302%204.30436C19.5302%202.41272%2017.9036%200.878906%2015.8969%200.878906C14.438%200.878906%2013.1891%201.69491%2012.6102%202.86545C12.1469%202.70509%2011.6536%202.60363%2011.1313%202.60363C8.81911%202.60363%206.948%204.32509%206.84134%206.47963C6.75245%206.47309%206.66578%206.45454%206.57467%206.45454C4.69689%206.45454%203.17578%207.89236%203.17578%209.66618C3.17578%2011.4411%204.69689%2012.8789%206.57467%2012.8789C6.87578%2012.8789%207.16245%2012.8298%207.44134%2012.7611C7.65911%2012.8309%207.88911%2012.8789%208.13245%2012.8789H17.308C17.4969%2012.8789%2017.678%2012.8484%2017.8524%2012.8058C18.1058%2012.8473%2018.3647%2012.8789%2018.6313%2012.8789C21.1413%2012.8789%2023.1758%2010.9655%2023.1758%208.60363C23.1758%206.52872%2021.6036%204.80182%2019.518%204.41345%22%20stroke%3D%22white%22/%3E%0A%3Cpath%20opacity%3D%220.2%22%20d%3D%22M113.312%2092.5371C113.314%2092.4567%20113.338%2092.3811%20113.338%2092.3007C113.338%2088.2022%20109.841%2084.8789%20105.526%2084.8789C102.39%2084.8789%2099.7044%2086.6469%2098.4598%2089.1831C97.4637%2088.8356%2096.403%2088.6158%2095.2802%2088.6158C90.3089%2088.6158%2086.2861%2092.3456%2086.0567%2097.0138C85.8656%2096.9996%2085.6793%2096.9595%2085.4834%2096.9595C81.4462%2096.9595%2078.1758%20100.075%2078.1758%20103.918C78.1758%20107.764%2081.4462%20110.879%2085.4834%20110.879C86.1308%20110.879%2086.7471%20110.773%2087.3467%20110.624C87.8149%20110.775%2088.3094%20110.879%2088.8326%20110.879H108.56C108.966%20110.879%20109.356%20110.813%20109.731%20110.721C110.275%20110.81%20110.832%20110.879%20111.405%20110.879C116.802%20110.879%20121.176%20106.733%20121.176%20101.616C121.176%2097.1202%20117.796%2093.3785%20113.312%2092.5371%22%20stroke%3D%22white%22/%3E%0A%3Cdefs%3E%0A%3Cfilter%20id%3D%22filter0_d%22%20x%3D%2217%22%20y%3D%2228%22%20width%3D%2247%22%20height%3D%2265%22%20filterUnits%3D%22userSpaceOnUse%22%20color-interpolation-filters%3D%22sRGB%22%3E%0A%3CfeFlood%20flood-opacity%3D%220%22%20result%3D%22BackgroundImageFix%22/%3E%0A%3CfeColorMatrix%20in%3D%22SourceAlpha%22%20type%3D%22matrix%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20127%200%22/%3E%0A%3CfeOffset%20dx%3D%221%22/%3E%0A%3CfeColorMatrix%20type%3D%22matrix%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.118688%200%22/%3E%0A%3CfeBlend%20mode%3D%22normal%22%20in2%3D%22BackgroundImageFix%22%20result%3D%22effect1_dropShadow%22/%3E%0A%3CfeBlend%20mode%3D%22normal%22%20in%3D%22SourceGraphic%22%20in2%3D%22effect1_dropShadow%22%20result%3D%22shape%22/%3E%0A%3C/filter%3E%0A%3Cfilter%20id%3D%22filter1_d%22%20x%3D%2229%22%20y%3D%2239%22%20width%3D%2277%22%20height%3D%2260%22%20filterUnits%3D%22userSpaceOnUse%22%20color-interpolation-filters%3D%22sRGB%22%3E%0A%3CfeFlood%20flood-opacity%3D%220%22%20result%3D%22BackgroundImageFix%22/%3E%0A%3CfeColorMatrix%20in%3D%22SourceAlpha%22%20type%3D%22matrix%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%20127%200%22/%3E%0A%3CfeOffset%20dy%3D%224%22/%3E%0A%3CfeGaussianBlur%20stdDeviation%3D%223%22/%3E%0A%3CfeColorMatrix%20type%3D%22matrix%22%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.213032%200%22/%3E%0A%3CfeBlend%20mode%3D%22normal%22%20in2%3D%22BackgroundImageFix%22%20result%3D%22effect1_dropShadow%22/%3E%0A%3CfeBlend%20mode%3D%22normal%22%20in%3D%22SourceGraphic%22%20in2%3D%22effect1_dropShadow%22%20result%3D%22shape%22/%3E%0A%3C/filter%3E%0A%3C/defs%3E%0A%3C/svg%3E%0A);
+	background-repeat: no-repeat;
+	content: '';
+}
+
+.crm-tracking-entity-details-btn-connect.ui-btn {
+	background: #fff;
+	border: none;
+}
+
+.crm-tracking-entity-details-btn-connect.ui-btn:hover {
+	background: #f6f8f9;
+	border: none;
+}
+
+.crm-tracking-entity-details-btn-hide.ui-btn {
+	color: #fff;
+}
+
+.bx-ie .crm-tracking-entity-details-btn-connect.ui-btn {
+	background: #fff;
+	border: none;
+}
+
+.bx-ie .crm-tracking-entity-details-btn-hide.ui-btn,
+.bx-ie .crm-tracking-entity-details-btn-hide.ui-btn:hover {
+	color: #fff;
+}
+
+.crm-tracking-entity-details-path-block {
+	box-sizing: border-box;
+	margin: 0 0 20px;
+	padding: 15px;
+}
+
+.crm-tracking-entity-details-path-block-title {
+	position: relative;
+	display: flex;
+	margin-bottom: 5px;
+	padding-right: 20px;
+	justify-content: space-between;
+}
+
+.crm-tracking-entity-details-path-block-title-text {
+	color: #a3a9b1;
+	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-tracking-entity-details-path-block-inner {
+	position: relative;
+	display: block;
+	margin-bottom: 5px;
+	padding: 13px 10px;
+	border: 1px solid #edeef0;
+	border-radius: 1px;
+	background-color: #fdfdfd;
+}
+
+.crm-tracking-entity-details-path-block {
+	background-color: #f9fafb;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+}
+
+.crm-tracking-entity-details-path-name {
+	font-size: 15px;
+	line-height: 19px;
+	color: #424956;
+}
+
+.crm-tracking-entity-details-path-icon {
+	margin-right: 7px;
+	width: 14px;
+	height: 14px;
+	transform: translateY(2px);
+}
+
+.crm-tracking-entity-details-path-info {
+	font-size: 0;
+	margin-bottom: 10px;
+}
+
+.crm-tracking-entity-details-path-site-link {
+	color: #2066b0;
+	font-size: 14px;
+	line-height: 20px;
+	text-decoration: none;
+}
+
+.crm-tracking-entity-details-path-tip {
+	width: 13px;
+	height: 13px;
+	margin-left: 5px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: inline-block;
+	vertical-align: middle;
+	opacity: .7;
+	transition: opacity .2s linear;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213%22%20height%3D%2213%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M12.978%206.49A6.489%206.489%200%201%201%200%206.488a6.489%206.489%200%200%201%2012.978%200zM5.591%209.143H4.444v.86H8.35v-.86h-.979V4.828h-.633v-.002H4.444v.875H5.59v3.443zm.803-5.222a.977.977%200%200%200%20.981-.973.977.977%200%200%200-.981-.972.977.977%200%200%200-.982.972c0%20.537.44.973.982.973z%22%20fill-rule%3D%22nonzero%22%20fill%3D%22%23B1B7C5%22%20opacity%3D%221%22/%3E%3C/svg%3E)
+				no-repeat center;
+}
+
+.crm-tracking-entity-details-path-tip:hover {
+	opacity: 1;
+}
+
+.crm-tracking-entity-details-path-header {
+	border-bottom: 1px solid #ebecee;
+	padding-bottom: 11px;
+	margin-bottom: 12px;
+}
+
+.crm-tracking-entity-path-details-item {
+	color: #333;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.crm-tracking-entity-path-details-arrow {
+	width: 6px;
+	height: 9px;
+	display: inline-block;
+	margin: 0 8px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%226%22%20height%3D%229%22%20viewBox%3D%220%200%206%209%22%3E%0A%20%20%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.5%22%20d%3D%22M3.043%204.263L0%201.145%201.014.106l4.057%204.157L1.014%208.42%200%207.38z%22/%3E%0A%3C/svg%3E%0A)
+	no-repeat center;
+}
+
+.crm-tracking-entity-details-path-content {
+	font-size: 0;
+}
+
+.bx-ie .ui-icon.crm-tracking-entity-details-path-icon {
+	width: 14px;
+}
+
+.crm-tracking-entity-details-popup {
+	max-width: 325px;
+}
+
+.crm-tracking-entity-details-popup-list {
+	/*height: 95px;*/
+	overflow: hidden;
+	transition: height 0.4s ease-out 0s;
+}
+
+.crm-tracking-entity-details-popup-list-hidden {
+	height: 0;
+}
+
+.crm-tracking-entity-details-popup-title {
+	color: #80868e;
+	font-size: 9px;
+	line-height: 15px;
+	text-transform: uppercase;
+	margin-bottom: 14px;
+}
+
+.crm-tracking-entity-details-popup-time {
+	color: #80868e;
+	min-width: 50px;
+	margin-right: 10px;
+	flex-shrink: 0;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.crm-tracking-entity-details-popup-decs {
+	color: #2066B0;
+	font-size: 14px;
+	line-height: 20px;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.crm-tracking-entity-details-popup-item {
+	display: flex;
+	align-items: flex-start;
+}
+
+.crm-tracking-entity-details-popup-item + .crm-tracking-entity-details-popup-item {
+	margin-top: 3px;
+}
+
+.crm-tracking-entity-details-device {
+	position: relative;
+	opacity: 0.6;
+}
+.crm-tracking-entity-details-device::before {
+	background-size: 13px 21px;
+	width: 22px;
+	height: 25px!important;
+
+	background-repeat: no-repeat!important;
+	background-position: center center!important;
+	position: absolute;
+	content: "";
+	transform: translateX(-50%);
+	right: -11px;
+	cursor: help;
+}
+.crm-tracking-entity-details-device-mobile::before {
+	background: url(images/mobile.svg);
+	top: -23px;
+}
+
+.crm-tracking-entity-details-device-desktop::before {
+	background: url(images/desktop.svg);
+	top: -23px;
+}

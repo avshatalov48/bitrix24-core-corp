@@ -1,0 +1,9 @@
+<?
+$MESS['TASKS_TWR_TEMPLATE_USER'] = 'Пользователь';
+$MESS['TASKS_TWR_TEMPLATE_ACCESS_LEVEL'] = 'Уровень доступа';
+$MESS['TASKS_TWR_TEMPLATE_ACCESS_LEVEL_10'] = 'Чтение';
+$MESS['TASKS_TWR_TEMPLATE_ACCESS_LEVEL_20'] = 'Запись';
+$MESS['TASKS_TWR_TEMPLATE_ACCESS_LEVEL_30'] = 'Удаление';
+$MESS['TASKS_TWR_TEMPLATE_ACCESS_LEVEL_40'] = 'Изменение прав доступа';
+$MESS['TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED'] = 'Права доступа доступны в верхних тарифных планах.';
+$MESS['TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED_MORE'] = 'Подробнее';

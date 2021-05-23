@@ -1,0 +1,43 @@
+table.bx-interface-grid tr.bx-grid-gutter td {
+	padding:0px !important;
+}
+
+table.bx-interface-grid tr.bx-grid-sorting  td {
+	padding:0px !important;
+}
+
+table.bx-interface-grid tr.bx-grid-footer table.bx-grid-footer {
+	color: #E0E0E0 !important;
+}
+
+table.bx-interface-grid tr.bx-grid-head td.bx-sorted {
+    /**background-color: #C0C0C0 !important;**/
+}
+
+table.bx-interface-grid tr.bx-grid-head td {
+    /**background-color: #D9D9D9;
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/listhead.png") !important;**/
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_no.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-up {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_up.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-down {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_down.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid td {
+	padding:6px !important;
+}
+
+table.bx-edit-table td.bx-padding {
+	padding-top: 6px!important;
+}

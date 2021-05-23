@@ -1,0 +1,29 @@
+<?
+$MESS["ME_AGENDA"] = "Agenda";
+$MESS["ME_PROTO"] = "Minutes";
+$MESS["ME_PROTO_OUTSIDE"] = "Topics outside agenda";
+$MESS["ME_PROTO_ADD"] = "Add minute item";
+$MESS["ME_AGENDA_ADD"] = "Add topic";
+$MESS["ME_AGENDA_ADD_DESCRIPTION"] = "Add description";
+$MESS["ME_AGENDA_TASK"] = "Task";
+$MESS["ME_AGENDA_ADD_TASK"] = "Make task";
+$MESS["ME_AGENDA_TASK_ADDED"] = "Bound task";
+$MESS["ME_ADD_EX"] = "Add from meeting";
+$MESS["ME_TASK_ADD"] = "Add from task";
+$MESS["ME_AGENDA_DEADLINE_DEFAULT"] = "Due by";
+$MESS["ME_AGENDA_REPORT"] = "Report";
+$MESS["ME_AGENDA_HIDE_COMMENTS"] = "Hide comments";
+$MESS["ME_AGENDA_CONFIRM_AGENDA"] = "Delete this agenda topic?";
+$MESS["ME_AGENDA_CONFIRM_PROTO"] = "Delete this minute item?";
+$MESS["ME_AGENDA_TT_DRAG"] = "Swap topics";
+$MESS["ME_AGENDA_TT_SHIFT"] = "Rearrange topics";
+$MESS["ME_AGENDA_TT_ADDSUB"] = "Add subtopic";
+$MESS["ME_AGENDA_TT_TASKS_C"] = "Attached tasks";
+$MESS["ME_AGENDA_TT_COMMENTS_C"] = "Comments";
+$MESS["ME_AGENDA_TT_DELETE"] = "Delete";
+$MESS["ME_AGENDA_TT_EDIT"] = "Edit";
+$MESS["ME_AGENDA_TT_SAVE"] = "Save";
+$MESS["ME_AGENDA_TT_CANCEL"] = "Cancel";
+$MESS["ME_AGENDA_TT_CHECK"] = "Mark as completed";
+$MESS["ME_AGENDA_NO_RESPONSIBLE"] = "(not specified)";
+?>

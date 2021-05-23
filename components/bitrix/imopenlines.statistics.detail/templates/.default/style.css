@@ -1,0 +1,38 @@
+.ol-stat-grid-wrap .bx-interface-grid td{vertical-align: middle;}
+.ol-stat-user-img.user-avatar {
+	background-position: 0 -1312px;
+	display: inline-block;
+	height: 30px;
+	margin-right: 11px;
+	vertical-align: middle;
+	width: 30px;
+	float:none;
+}
+.ol-stat-rating { display: inline-block; width: 20px; height: 20px; background: url(./images/rating.png); }
+.ol-stat-rating.ol-stat-rating-1 { background-position: -39px -57px; }
+.ol-stat-rating.ol-stat-rating-5 { background-position: -11px -57px; }
+
+.ol-stat-rating-head { display: inline-block; width: 105px; height: 20px; background: url(./images/rating.png) -7px -5px; }
+.ol-stat-rating-head-wrap { display: inline-block; width: 0; height: 20px; background: url(./images/rating.png) -7px -27px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-1 { width: 20px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-2 { width: 40px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-3 { width: 60px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-4 { width: 80px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-5 { width: 100px; }
+
+div.bx-openlines-dialog-long-run-proc div.bx-openlines-dialog-long-run-proc-popup { width: 520px; }
+div.bx-openlines-dialog-long-run-proc-popup {
+	overflow: hidden;
+	font-size: 14px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.bx-openlines-dialog-long-run-proc-progressbar {
+	margin: 10px 0;
+	padding: 10px 0;
+}
+
+.webform-small-button .tariff-lock {
+	margin-top: -4px;
+	margin-left: 9px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%229%22%20height%3D%2212%22%20viewBox%3D%220%200%209%2012%22%3E%20%20%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.952%2C5%20L9%2C5%20L9%2C12%20L0%2C12%20L0%2C5%20L1.052%2C5%20L1.052%2C3.412%20C1.11533167%2C1.55232274%202.64124466%2C0.0774904251%204.502%2C0.0774904251%20C6.36275534%2C0.0774904251%207.88866833%2C1.55232274%207.952%2C3.412%20L7.952%2C5%20Z%20M6.99642783%2C5%20L7.008%2C3.412%20C6.90300229%2C2.07727573%205.83574593%2C1.02108344%204.5%2C0.93%20C3.16425407%2C1.02108344%202.09699771%2C2.07727573%201.992%2C3.412%20L2.00504053%2C5%20L6.99642783%2C5%20Z%20M5.019%2C8.879%20L5.019%2C10.166%20L3.981%2C10.166%20L3.981%2C8.879%20C3.78769484%2C8.72535601%203.67503077%2C8.49192785%203.675%2C8.245%20C3.675%2C7.78936508%204.04436508%2C7.42%204.5%2C7.42%20C4.95563492%2C7.42%205.325%2C7.78936508%205.325%2C8.245%20C5.32496923%2C8.49192785%205.21230516%2C8.72535601%205.019%2C8.879%20L5.019%2C8.879%20Z%22/%3E%3C/svg%3E') center no-repeat;
+}

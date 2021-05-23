@@ -1,0 +1,60 @@
+
+
+div#CONTACT_form
+{
+    border-left-width: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding-right: 0;
+}
+
+div#CONTACT_form table.bx-edit-table td {
+    background-image: url("/bitrix/components/bitrix/main.interface.form/templates/.default/images/row_bg.gif");
+    background-position: left top;
+    background-repeat: repeat-x;
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-fields-section
+{
+	background-image: none;
+	border: 1px solid #b7b7b7;
+	background-color: #e8e8e8;	
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-fields-section a
+{
+	background-image: url(/bitrix/components/bitrix/crm.lead.convert/templates/.default/images/arrow_close.gif);
+	background-repeat: no-repeat;
+	background-position: 10px 6px;
+	text-decoration: none;
+	color: #2e2e2e;
+	font-weight: bold;
+	margin-left: 15px;
+	padding-left: 25px; 
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-fields-section a.close
+{
+	background-image: url(/bitrix/components/bitrix/crm.lead.convert/templates/.default/images/arrow_down.gif);
+	background-position: 10px 5px;
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-name
+{	
+	border-left: 1px solid #b7b7b7;
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-value
+{	
+	border-right: 1px solid #b7b7b7;
+}
+
+div#CONTACT_form table.bx-edit-table td.bx-add-bottom
+{	
+	border-bottom: 1px solid #b7b7b7;
+}
+
+div#CONTACT_form table.crm-offer-info-table
+{
+	width: auto;
+}

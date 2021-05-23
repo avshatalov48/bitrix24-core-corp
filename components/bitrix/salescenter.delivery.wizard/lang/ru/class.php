@@ -1,0 +1,4 @@
+<?php
+$MESS['SALESCENTER_DELIVERY_INSTALLATION_SLIDER_TITLE'] = 'Доставка';
+$MESS['SALESCENTER_DELIVERY_INSTALLATION_MODULE_ERROR'] = 'Модуль Центр продаж не установлен';
+$MESS['SALESCENTER_DELIVERY_INSTALLATION_SALE_MODULE_ERROR'] = 'Модуль Интернет-магазин не установлен';

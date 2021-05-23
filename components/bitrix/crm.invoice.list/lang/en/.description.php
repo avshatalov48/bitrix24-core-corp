@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_INVOICE_LIST_NAME"] = "Invoices";
+$MESS["CRM_INVOICE_LIST_DESCRIPTION"] = "Invoices";
+$MESS["CRM_NAME"] = "CRM";
+$MESS["CRM_INVOICE_NAME"] = "Invoices";
+?>

@@ -1,0 +1,8 @@
+<?php
+$MESS["SPP_SALESCENTER_TITLE"] = "Выбрать платёжную систему";
+$MESS["SPP_SALESCENTER_PAYSYSTEM_SUB_TITLE"] = "Платёжные системы";
+$MESS["SPP_SALESCENTER_PAYSYSTEM_SUB_APP_TITLE"] = "Приложения от партнеров";
+$MESS["SPP_SALESCENTER_JS_POPUP_CLOSE"] = "Закрыть";
+$MESS["SPP_SALESCENTER_PAYSYSTEM_RECOMMENDATION_SUB_TITLE"] = "Рекомендованные платежные системы";
+$MESS["SPP_SALESCENTER_PAYSYSTEM_OTHER_SUB_TITLE"] = "Другие платежные системы";
+$MESS["SALESCENTER_CONTROL_PANEL_ITEM_LABEL_RECOMMENDATION"] = "Рекомендовано";

@@ -1,0 +1,105 @@
+.tasks-scrum-backlog {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	padding: 0 10px;
+	box-sizing: border-box;
+	background-color: #fff;
+	border-radius: 1px;
+	min-width: calc(50% - 8px);
+	max-width: calc(50% - 8px);
+}
+
+.tasks-scrum-backlog-header {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+	-webkit-box-align: baseline;
+	-ms-flex-align: baseline;
+	align-items: baseline;
+	font-size: 10px;
+	padding: 14px 0 14px 2px;
+	border-bottom: 1px solid #edeefe;
+}
+
+.tasks-scrum-backlog-actions {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	justify-content: space-between;
+	padding: 10px 0 0;
+}
+
+.tasks-scrum-backlog-action-epic {
+	position: relative;
+	margin-left: 12px;
+}
+
+.tasks-scrum-backlog-action-epic::after {
+	display: block;
+	content: '+';
+	position: absolute;
+	left: -12px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.tasks-scrum-backlog-title {
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	color: #333;
+	letter-spacing: 0;
+	margin-right: 10px;
+}
+
+.tasks-scrum-backlog-title-spacer {
+	flex: 1;
+}
+
+.tasks-scrum-backlog-epics-title {}
+
+.tasks-scrum-backlog-story-point-title {
+	font: bold 10px/13px "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: 0.1px;
+	opacity: .5;
+	font-size: 11px;
+	color: #333;
+}
+
+.tasks-scrum-backlog-story-point {
+	background: rgba(82, 92, 105, 0.11);
+	border-radius: 4px;
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82, 92, 105, 0.9);
+	letter-spacing: 0;
+	text-align: center;
+	padding: 3px 12px;
+	margin-left: 5px;
+	font-size: 15px;
+	color: #525c69;
+}
+
+.tasks-scrum-backlog-items {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-pack: start;
+	-ms-flex-pack: start;
+	justify-content: flex-start;
+	padding: 0 0 10px;
+}
+
+.tasks-scrum-backlog-items.tasks-scrum-backlog-items-group-mode {
+	padding: 0 0 10px 16px;
+}

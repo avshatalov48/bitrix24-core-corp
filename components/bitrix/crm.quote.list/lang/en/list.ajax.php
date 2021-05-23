@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_QUOTE_LIST_ROW_COUNT"] = "Total: #ROW_COUNT#";
+$MESS["CRM_QUOTE_LIST_REBUILD_SEARCH_CONTENT_NOT_REQUIRED_SUMMARY"] = "Quote search index doesn't need to be recreated.";
+$MESS["CRM_QUOTE_LIST_REBUILD_SEARCH_CONTENT_PROGRESS_SUMMARY"] = "Quotes processed: #PROCESSED_ITEMS# of #TOTAL_ITEMS#.";
+$MESS["CRM_QUOTE_LIST_REBUILD_SEARCH_CONTENT_COMPLETED_SUMMARY"] = "Quote search index has been recreated. Quotes processed: #PROCESSED_ITEMS#.";
+?>

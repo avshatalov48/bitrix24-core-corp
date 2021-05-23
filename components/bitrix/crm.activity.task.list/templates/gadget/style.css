@@ -1,0 +1,7 @@
+.crm-task-element { margin-bottom: 10px; padding-left: 25px; background: url(images/icon-task.gif) no-repeat 0px 22px; }
+.crm-task-element-type { margin-top: 4px; margin-bottom: 4px; font-size: 13px}
+.crm-task-element-title { color: #7f7f7f; }
+.crm-task-element-name { border-bottom: 1px solid #f2f2f2; }
+.crm-task-element-name-author { color: #444; font-size: 11px; margin-bottom: 10px; }
+.crm-task-element-name-author a { color: #444!important; font-size: 11px; }
+.crm-task-element-name-date { color: #7f7f7f; font-size: 11px; margin-bottom: 2px; }

@@ -1,0 +1,141 @@
+.crm-automation-config {
+	margin: 0 0 3px 0;
+	background: #f7f9fb;
+	height: 53px;
+	padding: 0 17px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.crm-automation-config-title {
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	overflow: hidden;
+	font-size: 14px;
+	color: #525c68;
+	padding: 17px 1px;
+}
+
+/* DESCRIPTION */
+
+.crm-config-automation-desc-main {
+	overflow: hidden;
+}
+
+/* HEAD */
+
+.crm-config-automation-desc-container {
+	margin: 0 0 25px 0;
+	padding: 25px 13px 30px 30px;
+	border: 1px solid #F0EED0;
+	background: #FFFFFC;
+}
+
+.crm-config-automation-desc-head {
+	height: 30px;
+	overflow: hidden;
+}
+
+.crm-config-automation-desc-title {
+	float: left;
+}
+
+.crm-config-automation-desc-title-item {
+	font: 24px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #31C2F3;
+}
+
+.crm-config-automation-desc-close-icon {
+	float: right;
+}
+
+.crm-config-automation-desc-close-icon-item {
+	display: inline-block;
+	height: 18px;
+	width: 18px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2215%22%20viewBox%3D%220%200%2015%2015%22%3E%3Cpath%20fill%3D%22%23B0B8C1%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.728%206.75L1.854.873l-.98.98L6.75%207.727.874%2013.602l.98.98%205.873-5.875%205.874%205.874.98-.978-5.875-5.874%205.875-5.875-.98-.98L7.728%206.75z%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	background-position: center;
+	-webkit-transition: opacity .3s;
+	transition: opacity .3s;
+	cursor: pointer;
+}
+
+.crm-config-automation-desc-close-icon-item:hover {
+	opacity: .5
+}
+
+/* END OF HEAD */
+
+/* LIST BLOCK */
+
+.crm-config-automation-desc-subtitle {
+	margin: 44px 0 0 0;
+}
+
+.crm-config-automation-desc-subtitle-item {
+	font: bold 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #3F4B54;
+}
+
+.crm-config-automation-desc-list-block {
+	overflow: hidden;
+}
+
+.crm-config-automation-desc-list {
+	padding: 0;
+	margin: 25px 0 0 0;
+}
+
+.crm-config-automation-desc-list-item {
+	position: relative;
+	padding: 0 0 0 40px;
+	margin: 0 0 18px 0;
+	font: 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #3F4B54;
+	list-style: none;
+}
+
+.crm-config-automation-desc-list-item:last-child {
+	margin: 0;
+}
+
+.crm-config-automation-desc-list-item:before {
+	content: '';
+	position: absolute;
+	top: 3px;
+	left: 0;
+	display: block;
+	width: 17px;
+	height: 12px;
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAMCAMAAACz+6aNAAAAUVBMVEUAAACL0QCM0gCMzwCMzwCM1QCL0QCL0gCL0QCL0QCL0QCL0QCL0QCK0ACL0QCL0ACM0ACHzwCL0QCL0QCL0gCK0QCK0QCL0QCN0ACIzACL0QDXV6H+AAAAGnRSTlMAz24nGhbt5+He15WMg3hnWSDywqmQPTcxD4d4fwUAAABWSURBVAjXXY5JEoAwCASNGvd9t///UJMyUhIuM9XAQKJrMnkEwCgwwnL8QQrF6dUGMDhwOd1p3rAeysybFurZaQeVB5+VhoxvhGWJBGP1WQHy2nqLfwDqoAThlRRwDgAAAABJRU5ErkJggg==);
+}
+
+
+/* END OF LIST BLOCK */
+
+/* VISUAL BLOCK */
+.crm-config-automation-desc-visual-block {
+	float: right;
+	margin: 0 0 0 30px;
+	width: 300px;
+	min-height: 300px;
+}
+
+.crm-config-automation-desc-visual-block-item {
+	display: inline-block;
+	margin: 0 0 0 30px;
+	width: 191px;
+	height: 191px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22191%22%20height%3D%22191%22%20viewBox%3D%220%200%20191%20191%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ctitle%3Erobot-crm%3C/title%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cellipse%20fill%3D%22%23FFF%22%20cx%3D%2295.45%22%20cy%3D%2295.45%22%20rx%3D%2295.079%22%20ry%3D%2295.079%22/%3E%3Cpath%20d%3D%22M150.953%2017.792l-16.925%2023.51%2010.825%209.498%2012.693-4.308c2.75%203.392%205.18%207.035%207.253%2010.88l-8.836%209.97%204.745%2014.056%2012.92%202.718c.64%204.352.944%208.748.908%2013.147l-12.466%204.08-2.945%2014.506%209.97%208.834c-1.64%204.08-3.61%208.02-5.89%2011.78l-13.142-2.718-9.747%2011.107%204.308%2012.688c-3.392%202.755-7.035%205.184-10.88%207.26l-9.97-8.836-14.052%204.745-2.718%2012.915c-4.352.64-8.748.945-13.147.91l-4.305-12.694-14.505-2.944-8.835%209.97c-4.08-1.64-8.02-3.61-11.78-5.89l2.945-13.146-11.102-9.735-12.706%204.308c-2.752-3.392-5.18-7.034-7.253-10.88l8.834-9.97L30.4%20109.5l-13.15-2.72c-.642-4.353-.946-8.75-.91-13.148l12.69-4.077%202.944-14.505-9.97-8.835c1.643-4.078%203.613-8.018%205.89-11.78l13.146%202.718%209.747-11.103-4.295-12.7c3.392-2.757%207.034-5.19%2010.88-7.266l9.97%208.835%2010.543-3.573L85.037.55C37.224%205.75%200%2046.253%200%2095.45c0%2052.714%2042.735%2095.45%2095.45%2095.45%2052.714%200%2095.45-42.736%2095.45-95.45.022-30.822-14.86-59.753-39.947-77.658z%22%20fill%3D%22%2313AADB%22/%3E%3Cpath%20d%3D%22M132.43%2087.216l-51.41%2057.216c23.956%207.095%2049.53-4.185%2060.444-26.66%2010.914-22.475%203.967-49.548-16.422-63.99l-23.366%2032.462%2030.753.972zM44.46%2095.458c-.01%2017.627%209.08%2034.01%2024.04%2043.333l7.71-24.855-16.958-2.322%2014.48-62.344C55.86%2057.703%2044.46%2075.693%2044.46%2095.457z%22%20fill%3D%22%2313AADA%22/%3E%3Cpath%20d%3D%22M66.648%20144.76l8.17%206.576%206.206-6.904c-4.41-1.305-8.622-3.203-12.52-5.64l-1.856%205.968zM136.472%2027.905c-3.762-2.275-7.7-4.245-11.78-5.89l-8.615%209.96-14.506-2.946-4.307-12.68c-4.4-.04-8.795.26-13.147.9l-2.718%2012.92-3.51%201.185-4.16%2017.905c16.672-7.858%2036.283-6.133%2051.327%204.514l8.986-12.482-.277-.244%202.71-13.143z%22%20fill%3D%22%23FFF%22/%3E%3Cpath%20d%3D%22M81.398%2030.177l2.718-12.928c4.35-.64%208.745-.943%2013.143-.906l4.307%2012.685%2014.505%202.944%208.612-9.97c4.078%201.643%208.018%203.613%2011.78%205.89l-2.718%2013.146.278.244L150.95%2017.78C134.767%206.184%20115.354-.035%2095.45%200c-3.476.002-6.95.19-10.405.568l-7.15%2030.796%203.503-1.187zM76.21%20113.935L68.5%20138.79c3.898%202.44%208.11%204.337%2012.52%205.642l51.41-57.216-30.754-.972L125.038%2053.8c-15.044-10.648-34.655-12.373-51.326-4.514l-14.46%2062.323%2016.96%202.325z%22%20fill%3D%22%23FFF%22/%3E%3Cpath%20d%3D%22M96.968.097L64.2%20107.54l19.175%202.567-18.708%2047.834%2057.59-66.61-27.99-1.4%2046.248-78.735C127.095%204.065%20112.163.26%2096.968.097z%22%20fill%3D%22%23EBCA28%22/%3E%3Cpath%20d%3D%22M96.968.097L64.2%20107.54l18.788%202.807-18.32%2047.594%2043.226-67.312-19.605-.938%2041.228-83.468C119.11%202.294%20108.093.22%2096.968.097z%22%20fill%3D%22%23F6DA23%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+/* END OF VISUAL BLOCK */
+
+/* END OF DESCRIPTION */
+
+/* BUTTON */
+.crm-config-automation-button-container {
+	display: inline-block;
+}
+/* END OF BUTTON */

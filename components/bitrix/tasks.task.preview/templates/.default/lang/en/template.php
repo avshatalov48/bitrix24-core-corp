@@ -1,0 +1,34 @@
+<?
+$MESS["TASKS_STATUS_1"] = "New";
+$MESS["TASKS_STATUS_2"] = "Pending";
+$MESS["TASKS_STATUS_3"] = "In progress";
+$MESS["TASKS_STATUS_4"] = "Pending review";
+$MESS["TASKS_STATUS_5"] = "Completed";
+$MESS["TASKS_STATUS_6"] = "Deferred";
+$MESS["TASKS_STATUS_7"] = "Declined";
+$MESS["TASKS_PRIORITY"] = "Priority";
+$MESS["TASKS_PRIORITY_0"] = "Low";
+$MESS["TASKS_PRIORITY_1"] = "Normal";
+$MESS["TASKS_PRIORITY_2"] = "High";
+$MESS["TASKS_RESPONSIBLE"] = "Responsible person";
+$MESS["TASKS_CREATOR"] = "Created by";
+$MESS["TASKS_STATUS"] = "Status";
+$MESS["TASKS_SIDEBAR_START_DATE"] = "from";
+$MESS["TASKS_TASK_TITLE_LABEL"] = "Task";
+$MESS["TASKS_STATUS_OVERDUE"] = "Overdue";
+$MESS["TASKS_STATUS_NEW"] = "New";
+$MESS["TASKS_STATUS_ACCEPTED"] = "Pending";
+$MESS["TASKS_STATUS_IN_PROGRESS"] = "In progress";
+$MESS["TASKS_STATUS_WAITING"] = "Pending review";
+$MESS["TASKS_STATUS_COMPLETED"] = "Completed";
+$MESS["TASKS_STATUS_DELAYED"] = "Deferred";
+$MESS["TASKS_STATUS_DECLINED"] = "Declined";
+$MESS["TASKS_NEW_RESPONSIBLE"] = "New employee";
+$MESS["TASKS_CREATED_DATE"] = "Created on";
+$MESS["TASKS_DEADLINE"] = "Deadline";
+$MESS["TASKS_START_DATE_PLAN"] = "Start date";
+$MESS["TASKS_END_DATE_PLAN"] = "End date";
+$MESS["TASKS_NO_DATE"] = "no";
+$MESS["TASKS_DATE_START"] = "Started on";
+$MESS["TASKS_CLOSED_DATE"] = "Completed on";
+?>

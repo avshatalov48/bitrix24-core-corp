@@ -1,0 +1,31 @@
+<?
+$MESS["TASKS_STATUS_1"] = "New additional field";
+$MESS["TASKS_STATUS_2"] = "Pending";
+$MESS["TASKS_STATUS_3"] = "In Progress";
+$MESS["TASKS_STATUS_4"] = "Supposedly completed";
+$MESS["TASKS_STATUS_5"] = "Completed";
+$MESS["TASKS_STATUS_6"] = "Deferred";
+$MESS["TASKS_STATUS_7"] = "Declined";
+$MESS["TASKS_SIDEBAR_IN_REPORT_YES"] = "Yes";
+$MESS["TASKS_SIDEBAR_IN_REPORT_NO"] = "No";
+$MESS["TASKS_DURATION_HOURS"] = "hours";
+$MESS["TASKS_DURATION_DAYS"] = "days";
+$MESS["TASKS_EXCEL_ID"] = "ID";
+$MESS["TASKS_EXCEL_TITLE"] = "Task";
+$MESS["TASKS_EXCEL_RESPONSIBLE_ID"] = "Responsible Person";
+$MESS["TASKS_EXCEL_CREATED_BY"] = "Creator";
+$MESS["TASKS_EXCEL_CREATED_DATE"] = "Created On";
+$MESS["TASKS_EXCEL_REAL_STATUS"] = "Status";
+$MESS["TASKS_EXCEL_PRIORITY"] = "Priority";
+$MESS["TASKS_EXCEL_START_DATE_PLAN"] = "Proposed Start Date";
+$MESS["TASKS_EXCEL_END_DATE_PLAN"] = "Proposed End Date";
+$MESS["TASKS_EXCEL_DEADLINE"] = "Deadline";
+$MESS["TASKS_EXCEL_TIME_ESTIMATE"] = "Planned Duration";
+$MESS["TASKS_EXCEL_TIME_SPENT_IN_LOGS"] = "Actual Duration";
+$MESS["TASKS_EXCEL_CLOSED_DATE"] = "Close Date";
+$MESS["TASKS_EXCEL_MARK"] = "Score";
+$MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "In Report";
+$MESS["TASKS_EXCEL_GROUP_ID"] = "Group";
+$MESS["TASKS_ELAPSED_H"] = "h";
+$MESS["TASKS_ELAPSED_M"] = "m";
+?>

@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_UNSUPPORTED_OWNER_TYPE"] = "The owner type is not supported: \"#OWNER_TYPE#\".";
+$MESS["CRM_CURRENCY_IS_NOT_FOUND"] = "Currency with ID #CURRENCY_ID# was not found.";
+$MESS["CRM_PERMISSION_DENIED"] = "Access denied.";
+$MESS["CRM_FIELD_PRODUCT_NAME"] = "Name";
+$MESS["CRM_FIELD_DESCRIPTION"] = "Description";
+$MESS["CRM_FIELD_ACTIVE"] = "Active";
+$MESS["CRM_FIELD_CURRENCY"] = "Currency";
+$MESS["CRM_FIELD_PRICE"] = "Price";
+$MESS["CRM_FIELD_VAT_ID"] = "VAT rate";
+$MESS["CRM_FIELD_VAT_INCLUDED"] = "VAT included";
+$MESS["CRM_FIELD_SECTION"] = "Section";
+$MESS["CRM_FIELD_SORT"] = "Sort";
+$MESS["CRM_PRODUCT_CREATE"] = "Create new product";
+$MESS["CRM_PRODUCT_CREATE_WAIT"] = "Creating the product...";
+$MESS["CRM_PRODUCT_CREATE_AJAX_ERR"] = "Error processing new product request<br>";
+$MESS["CRM_BUTTON_CREATE_TITLE"] = "Create";
+$MESS["CRM_BUTTON_CANCEL_TITLE"] = "Cancel";
+$MESS["CRM_FIELD_MEASURE"] = "Unit of measurement";
+$MESS["CRM_MEASURE_NOT_SELECTED"] = "[not selected]";
+$MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Preview image";
+$MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Full image";
+$MESS["CRM_PRODUCT_FILE_ENLARGE"] = "Enlarge";
+$MESS["CRM_PRODUCT_FILE_DOWNLOAD"] = "Download";
+$MESS["CRM_PRODUCT_PROP_ADD_BUTTON"] = "Add";
+$MESS["CRM_PRODUCT_PROP_NO_VALUE"] = "(not set)";
+$MESS["CRM_PRODUCT_PROP_CHOOSE_ELEMENT"] = "Select from list";
+$MESS["CRM_PRODUCT_PROP_START_TEXT"] = "(enter name)";
+$MESS["CRM_PRODUCT_PROP_NO_SEARCH_RESULT_TEXT"] = "search returned no results";
+?>

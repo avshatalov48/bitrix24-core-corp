@@ -1,0 +1,14 @@
+.sidebar-widget-tasks .sidebar-widget-top-title a,
+.sidebar-widget-tasks .sidebar-widget-top-title a:hover{
+	color: #fff;
+}
+
+.sidebar-widget-tasks .sidebar-widget-top {
+	background-color: #2fc7f7;
+}
+.sidebar-widget-tasks .plus-icon:after, .sidebar-widget-bp .plus-icon:after {
+	background-position: -115px -197px;
+}
+.sidebar-widget-tasks .plus-icon:hover:after, .sidebar-widget-bp .plus-icon:hover:after {
+	background-position: -144px -197px;
+}

@@ -1,0 +1,32 @@
+<?
+$MESS["BPWC_WNCT_2LIST"] = "Shops";
+$MESS["BPWC_WNCT_TAB1"] = "Shop";
+$MESS["BPWC_WNCT_TAB1T"] = "Edit parameters";
+$MESS["BPWC_WNCT_DATE_CREATE"] = "Created on";
+$MESS["BPWC_WNCT_DATE_UPDATE"] = "Last modified on";
+$MESS["BPWC_WNCT_NAME"] = "Name";
+$MESS["BPWC_WNCT_ACTIVE"] = "Active";
+$MESS["BPWC_WNCT_URL"] = "URL";
+$MESS["BPWC_WNCT_LOGIN"] = "Login";
+$MESS["BPWC_WNCT_PASSWORD"] = "Password";
+$MESS["BPWC_WNCT_SIZE"] = "Maximum orders per upload";
+$MESS["BPWC_WNCT_IMPORT_PERIOD"] = "Upload period (days)";
+$MESS["BPWC_WNCT_STATUS"] = "Last synchronization status";
+$MESS["BPWC_WNCT_LABEL"] = "Modification mark";
+$MESS["BPWC_WNCT_NOTE_HINT"] = "Specify the login and password of a shop user with permission to edit orders in all statuses and to import and export.";
+$MESS["BPWC_WNCT_DATA_SYNC_PERIOD"] = "Synchronization period (minutes, set 0 to disable)";
+$MESS["BPWC_WNCT_2SYNC"] = "Import";
+$MESS["BPWC_WNCT_TAB2"] = "Settings";
+$MESS["BPWC_WNCT_TAB2T"] = "Additional settings";
+$MESS["BPWC_WNCT_IMPORT_PROBABILITY"] = "Default deal probability, %";
+$MESS["BPWC_WNCT_IMPORT_RESPONSIBLE"] = "Default responsible person";
+$MESS["BPWC_WNCT_IMPORT_PUBLIC"] = "Deal is public by default";
+$MESS["BPWC_WNCT_IMPORT_PREFIX"] = "Deal name prefix";
+$MESS["BPWC_WLC_NEED_FIRST_SYNC1"] = "Import needs to be run manually for the first time.";
+$MESS["BPWC_WLC_NEED_FIRST_SYNC1_DO"] = "Start import";
+$MESS["BPWC_WLC_NEED_FIRST_SYNC2"] = "In progress";
+$MESS["BPWC_WLC_NEED_FIRST_SYNC3"] = "Import error: ";
+$MESS["BPWC_WNCT_LAST_STATUS_DATE"] = "Last synchronized on";
+$MESS["BPWC_WNCT_IMPORT_GROUP_ID"] = "Notify group";
+$MESS["BPWC_WNCT_DO_SELECT"] = "Select";
+?>

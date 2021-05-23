@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_ORDER_COMPLEX_NAME"] = "Заказы";
+$MESS["CRM_ORDER_COMPLEX_DESCRIPTION"] = "Заказы";
+$MESS["CRM_NAME"] = "CRM";
+$MESS["CRM_ORDER_NAME"] = "Заказы";
+?>

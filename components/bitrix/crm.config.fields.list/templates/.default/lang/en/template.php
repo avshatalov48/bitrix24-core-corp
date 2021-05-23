@@ -1,0 +1,12 @@
+<?
+$MESS["CRM_FIELDS_TOOLBAR_ADD"] = "Add Field";
+$MESS["CRM_FIELDS_TOOLBAR_ADD_TITLE"] = "Add new field";
+$MESS["CRM_FIELDS_TOOLBAR_TYPES"] = "Types";
+$MESS["CRM_FIELDS_TOOLBAR_TYPES_TITLE"] = "View available types";
+$MESS["CRM_FIELDS_LIST_SORT"] = "Sorting";
+$MESS["CRM_FIELDS_LIST_NAME"] = "Name";
+$MESS["CRM_FIELDS_LIST_TYPE"] = "Type";
+$MESS["CRM_FIELDS_LIST_IS_REQUIRED"] = "Required";
+$MESS["CRM_FIELDS_LIST_MULTIPLE"] = "Multiple";
+$MESS["CRM_FIELDS_LIST_SHOW_IN_LIST"] = "Show in list";
+?>

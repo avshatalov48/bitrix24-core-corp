@@ -1,0 +1,37 @@
+<?
+$MESS["CRM_EDIT_BTN_TTL"] = "Click to edit";
+$MESS["CRM_LOCK_BTN_TTL"] = "Cannot edit this item";
+$MESS["CRM_INVOICE_SHOW_TITLE"] = "Invoice ##ACCOUNT_NUMBER# &mdash; #ORDER_TOPIC#";
+$MESS["CRM_INVOICE_SHOW_LEGEND"] = "invoice ##ACCOUNT_NUMBER#";
+$MESS["CRM_INVOICE_DATE_INSERT"] = "Created on";
+$MESS["CRM_INVOICE_DATE_BILL"] = "Invoice date";
+$MESS["CRM_INVOICE_DATE_UPDATE"] = "Modified on";
+$MESS["CRM_INVOICE_DATE_PAY_BEFORE"] = "Pay before";
+$MESS["CRM_INVOICE_SIDEBAR_STATUS"] = "Status";
+$MESS["CRM_DEAL_OPENED"] = "Viewing allowed to all users";
+$MESS["CRM_DEAL_NOT_OPENED"] = "Viewing of this deal limited";
+$MESS["CRM_DEAL_LINK"] = "Deal invoice";
+$MESS["CRM_COMPANY_LINK"] = "Company";
+$MESS["CRM_TAB_PRODUCT_ROWS"] = "Products";
+$MESS["CRM_TAB_PRODUCT_ROWS_TITLE"] = "Invoice products";
+$MESS["CRM_INVOICE_COMMENT"] = "Sales representative's comment";
+$MESS["CRM_INVOICE_PRICE_SHORT"] = "Total";
+$MESS["CRM_DEAL_CLIENT_NOT_ASSIGNED"] = "[not assigned]";
+$MESS["INVOICE_USER_DESCRIPTION"] = "Invoice notes (appears on invoice)";
+$MESS["CRM_INVOICE_TITLE"] = "Invoice";
+$MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_DATE"] = "Payment date";
+$MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_NUM"] = "Document #";
+$MESS["CRM_INVOICE_FIELD_DATE_MARKED"] = "Cancellation date";
+$MESS["CRM_INVOICE_FIELD_REASON_MARKED"] = "Comment";
+$MESS["CRM_INVOICE_CLIENT"] = "Contractor";
+$MESS["CRM_CONTACT_LINK"] = "Contact person";
+$MESS["CRM_TAB_HISTORY"] = "History";
+$MESS["CRM_TAB_HISTORY_TITLE"] = "Invoice change history";
+$MESS["CRM_QUOTE_LINK"] = "Quote";
+$MESS["CRM_TAB_1"] = "Invoice information";
+$MESS["CRM_TAB_1_TITLE"] = "Invoice parameters";
+$MESS["CRM_INVOICE_PUBLIC_LINK_COPY"] = "Copy";
+$MESS["CRM_TAB_TREE"] = "Dependencies";
+$MESS["CRM_TAB_TREE_TITLE"] = "Links to other entities and items";
+$MESS["CRM_INVOICE_RECUR_SHOW_TITLE"] = "Recurring invoice ##ACCOUNT_NUMBER# &mdash; #ORDER_TOPIC#";
+?>

@@ -1,0 +1,36 @@
+<?
+$MESS['CRM_MODULE_NOT_INSTALLED'] = 'Модуль CRM не установлен.';
+$MESS['CRM_SALE_MODULE_NOT_INSTALLED'] = 'Модуль "Интернет магазин" не установлен.';
+$MESS['CRM_PERMISSION_DENIED'] = 'Доступ запрещен';
+$MESS['CRM_LOC_NOT_FOUND'] = 'Местоположение не найдено!';
+$MESS['CRM_LOC_SECTION_MAIN'] = 'Местоположение';
+$MESS['CRM_LOC_SECTION_ZIP'] = 'Список индексов';
+$MESS['CRM_LOC_SECTION_COUNTRY'] = 'Страна';
+$MESS['CRM_LOC_FIELD_ID'] = 'ID';
+$MESS['CRM_LOC_FIELD_SORT'] = 'Сортировка';
+$MESS['CRM_LOC_FIELD_LOC_DEFAULT'] = 'Выводить по умолчанию';
+$MESS['CRM_LOC_FIELD_COUNTRY_ID'] = 'Выберите страну';
+$MESS['CRM_LOC_FIELD_CHANGE_COUNTRY'] = 'Изменить текущую страну';
+$MESS['CRM_LOC_FIELD_NAME'] = 'Полное наименование';
+$MESS['CRM_LOC_FIELD_SHORT_NAME'] = 'Краткое наименование';
+$MESS['CRM_LOC_NEW_COUNTRY'] = 'Новая страна';
+$MESS['CRM_LOC_WITHOUT_COUNTRY'] = 'Без страны';
+$MESS['CRM_LOC_SECTION_REGION'] = 'Регион/Штат/Провинция';
+$MESS['CRM_LOC_NEW_REGION'] = 'Новый регион';
+$MESS['CRM_LOC_WITHOUT_REGION'] = 'Без региона';
+$MESS['CRM_LOC_FIELD_REGION_ID'] = 'Выберите регион';
+$MESS['CRM_LOC_SECTION_CITY'] = 'Город';
+$MESS['CRM_LOC_FIELD_WITHOUT_CITY'] = 'Без города';
+$MESS['CRM_LOC_FIELD_LOC_ZIP'] = 'Список индексов';
+$MESS['CRM_ADD_ZIP'] = 'Добавить индекс';
+$MESS['CRM_LOC_ADD_UNKNOWN_ERROR'] = 'Во время создания местоположения произошла ошибка.';
+$MESS['CRM_LOC_UPDATE_UNKNOWN_ERROR'] = 'Во время обновления местоположения произошла ошибка.';
+$MESS['CRM_LOC_DELETE_UNKNOWN_ERROR'] = 'Во время удаления местоположения произошла ошибка.';
+$MESS['CRM_ERROR_SELECT_COUNTRY'] = "Выберите страну, которую хотите изменить, или введите новую страну не отмечая флаг \"Изменить текущую страну\".";
+$MESS["CRM_ERROR_COUNTRY_NAME"] = "Страна: не указано полное наименование страны.";
+$MESS["CRM_ERROR_COUNTRY_NAME_LANG"] = "Страна: не указано полное наименование страны на языке";
+$MESS["CRM_ERROR_CITY_NAME"] = "Город: не указано полное наименование города.";
+$MESS["CRM_ERROR_CITY_NAME_LANG"] = "Город: не указано полное наименование города на языке";
+$MESS["CRM_ERROR_REGION_NAME_LANG"] = "Регион: не указано полное наименование региона на языке";
+$MESS["CRM_DEL_ZIP"] = "Удалить";
+?>

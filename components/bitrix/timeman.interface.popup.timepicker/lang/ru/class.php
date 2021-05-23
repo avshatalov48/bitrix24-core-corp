@@ -1,0 +1,7 @@
+<?php
+$MESS['TIMEMAN_POPUP_WORK_TIME_START_TITLE'] = 'Начало';
+$MESS['TIMEMAN_POPUP_WORK_TIME_END_TITLE'] = 'Окончание';
+$MESS['TIMEMAN_DURATION_TITLE'] = 'Длительность';
+$MESS['TIMEMAN_EDIT_BREAK_LENGTH_TITLE'] = 'Длительность перерыва';
+$MESS['TIMEMAN_EDIT_REASON_TITLE'] = 'Причина изменения';
+$MESS["TIMEMAN_EDIT_CLOCK_SET_CUSTOM_DATE"] = "Изменить день";

@@ -1,0 +1,454 @@
+.rpa-stage-list {
+	overflow: hidden;
+}
+
+.rpa-stage.rpa-initial-stage {
+	margin: 10px auto 55px;
+}
+
+.rpa-initial-stage:after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -45px;
+	width: 2px;
+	height: 35px;
+	margin: 0 auto;
+	background: #dee1e3;
+}
+
+.rpa-stage {
+	position: relative;
+	padding: 15px 19px 15px 13px;
+	border: 1px solid #e1e2e3;
+	border-radius: 3px;
+	margin: 10px auto;
+	background: #fff;
+}
+
+.rpa-stage-title {
+	margin-bottom: 10px;
+	color: #545c69;
+	font-size: 14px;
+}
+
+.rpa-stage-phase-inner {
+	position: relative;
+	padding: 6px 7px 6px 4px;
+	line-height: 15px;
+	background: #ace9fb;
+	margin-bottom: 5px;
+	font-size: 15px;
+	font-weight: bold;
+	color: #545c69;
+	overflow: hidden;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+
+.rpa-stage-phase-panel {
+	float: right;
+	font-size: 0;
+}
+
+.rpa-stage-phase-panel-button {
+	width: 35px;
+	height: 35px;
+	background: transparent;
+	display: inline-block;
+	position: relative;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.rpa-stage-phase-panel-button:hover {
+	background: rgba(0,0,0,0.08);
+}
+
+.rpa-stage-phase-panel-button:after {
+	content: '';
+	position: absolute;
+	width: 13px;
+	height: 13px;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	opacity: 0.5;
+	vertical-align: middle;
+	background: url(images/rpa-stage.png) no-repeat 0 -72px;
+}
+
+.rpa-stage-phase-dark .rpa-stage-phase-panel-button:after {
+	background-position: 0 -100px;
+}
+
+.rpa-stage-phase-panel-button.rpa-stage-phase-panel-button-close:after {
+	background-position: -15px -72px;
+	width: 10px;
+	height: 10px;
+}
+
+.rpa-stage-phase-dark .rpa-stage-phase-panel-button-close:after {
+	background-position: -15px -100px;
+}
+
+.rpa-stage-phase-panel-button.rpa-stage-phase-panel-button-refresh:after {
+	background-position: -14px -85px;
+	width: 13px;
+	height: 12px;
+}
+
+.rpa-stage-phase-dark .rpa-stage-phase-panel-button-refresh:after {
+	background-position: -14px -116px;
+}
+
+.rpa-stage-phase-panel-button:hover:after {
+	opacity: 1;
+}
+
+.rpa-stage-phase-dark .rpa-stage-phase-icon-edit:after {
+	background-position: 0 -116px;
+}
+
+.rpa-stage-phase-icon-edit {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	height: 26px;
+	background: transparent;
+	vertical-align: middle;
+	display: inline-block;
+	overflow: hidden;
+	float: right;
+	margin: 2px 0;
+}
+
+.rpa-stage-phase:hover .rpa-stage-phase-icon-edit {
+	width: 26px;
+}
+
+.rpa-stage-phase-icon-edit:after {
+	content: '';
+	position: absolute;
+	width: 11px;
+	height: 11px;
+	background: url(images/rpa-stage.png) no-repeat 0 -87px;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	opacity: 0.5;
+}
+
+.rpa-stage-phase-icon-edit:hover {
+	background: rgba(0, 0, 0, 0.08);
+}
+
+.rpa-stage-phase-icon-edit:hover:after {
+	opacity: 1;
+}
+
+.rpa-stage-phase:hover .rpa-stage-phase-panel {
+	display: block;
+}
+
+.rpa-stage-addphase {
+	line-height: 25px;
+	text-transform: uppercase;
+	text-decoration: none;
+	color: #545c69;
+	font-weight: bold;
+	padding-left: 4px;
+	display: inline-block;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.rpa-stage-addphase:hover {
+	color: #545c69;
+	text-decoration: underline;
+}
+
+.rpa-stage-final {
+	overflow: hidden;
+}
+
+.rpa-stage-final-title {
+	position: relative;
+	text-transform: uppercase;
+	text-align: center;
+	color: #545c69;
+	font-weight: bold;
+	line-height: 30px;
+	margin: 15px 0 -15px;
+	font-size: 19px;
+}
+
+.rpa-stage-final-title:before {
+	content: '';
+	position: absolute;
+	width: 2px;
+	height: 15px;
+	top: -15px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	background: #dee1e3;
+}
+
+.rpa-stage-final-title-sub {
+	background: #eef2f4;
+	padding: 0 5px;
+}
+
+.rpa-stage-final-result {
+	border-radius: 4px 4px 0 0;
+	border: 2px solid #e1e2e3;
+	border-bottom: 0;
+	padding: 0 10px;
+	overflow: hidden;
+	line-height: 25px;
+	font-weight: bold;
+	margin: 0 88px;
+	font-size: 11px;
+	text-transform: uppercase;
+}
+
+.rpa-stage-final-failure {
+	color: #c42929;
+	text-align: right;
+	width: 50%;
+	float: left;
+}
+
+.rpa-stage-final-success {
+	color: #388c3b;
+	width: 50%;
+	float: left;
+}
+
+.rpa-stage-final-column {
+	width: 50%;
+	float: left;
+}
+
+.rpa-stage-final-column .rpa-stage.rpa-stage-success {
+	margin-right: 15px;
+	position: relative;
+	padding-bottom: 47px;
+}
+
+.rpa-stage-final-column .rpa-stage.rpa-stage-success:after,
+.rpa-stage-final-column .rpa-stage.rpa-stage-failure:after {
+	content: '';
+	position: absolute;
+	width: 34px;
+	height: 34px;
+	left: 0;
+	right: 0;
+	margin: 5px auto auto;
+	background: #989da5 url(images/rpa-stage.png) no-repeat 0 0;
+}
+
+.rpa-stage-final-column .rpa-stage.rpa-stage-failure:after {
+	background: #989da5 url(images/rpa-stage.png) no-repeat 0 -36px;
+	bottom: 11px;
+}
+
+.rpa-stage-final-column .rpa-stage.rpa-stage-failure:before {
+	content: '';
+	position: absolute;
+	height: 1px;
+	background: #eaebed;
+	left: 13px;
+	right: 19px;
+	bottom: 57px;
+}
+
+.rpa-stage-final-column .rpa-stage.rpa-stage-failure {
+	margin-left: 15px;
+	padding-bottom: 67px;
+}
+
+.rpa-stage-success .rpa-stage-phase {
+	background: #dbf199;
+}
+
+.light-icon .rpa-stage-phase-icon-arrow {
+	background: #fff;
+}
+
+.light-icon .rpa-stage-phase-icon-arrow:after {
+	border-left: 4px solid #fff;
+}
+
+.light-icon .rpa-stage-phase-icon-burger {
+	border-top: 2px solid #fff;
+	border-bottom: 2px solid #fff;
+}
+
+.light-icon .rpa-stage-phase-icon-burger:after {
+	background: #fff;
+}
+
+.dark-icon .rpa-stage-phase-icon-arrow {
+	background: #545c69;
+}
+
+.dark-icon .rpa-stage-phase-icon-arrow:after {
+	border-left: 4px solid #545c69;
+}
+
+.dark-icon .rpa-stage-phase-icon-burger {
+	border-top: 2px solid #545c69;
+	border-bottom: 2px solid #545c69;
+}
+
+.dark-icon .rpa-stage-phase-icon-burger:after {
+	background: #545c69;
+}
+
+.rpa-stage-phase-edit .rpa-stage-phase-title-inner {
+	display: block;
+	padding-right: 0;
+}
+
+.rpa-stage-phase-edit .rpa-stage-phase-title {
+	padding-right: 0;
+}
+
+.rpa-stage-phase-edit:hover .rpa-stage-phase-title-inner {
+	padding-right: 26px;
+}
+
+.rpa-stage-phase-title {
+	position: relative;
+	vertical-align: middle;
+	display: block;
+	overflow: hidden;
+	padding: 3px 26px 2px 0;
+	white-space: nowrap;
+}
+
+.rpa-stage-phase-title-inner {
+	display: inline-block;
+	max-width: 100%;
+	position: relative;
+	padding-right: 26px;
+	line-height: 28px;
+}
+
+.rpa-stage-phase-icon-arrow {
+	width: 14px;
+	height: 2px;
+	background: #aa9c8a;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	margin: auto;
+}
+
+.rpa-stage-phase-icon-arrow:after {
+	content: '';
+	position: absolute;
+	border: 4px solid transparent;
+	border-right: 0;
+	border-left: 4px solid #aa9c8a;
+	right: 0;
+	top: -3px;
+}
+
+.rpa-stage-phase-icon {
+	width: 35px;
+	height: 35px;
+	background: transparent;
+	display: inline-block;
+	position: relative;
+	vertical-align: middle;
+	float: left;
+	margin-right: 4px;
+}
+
+.rpa-stage-phase-icon {
+	opacity: 0.5;
+}
+
+.rpa-stage-phase-icon.rpa-stage-phase-icon-move:hover {
+	opacity: 0.7;
+}
+
+.rpa-stage-phase-icon-move {
+	cursor: move;
+}
+
+.rpa-stage-phase-icon-burger {
+	width: 14px;
+	height: 6px;
+	border-top: 2px solid #545c69;
+	border-bottom: 2px solid #545c69;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	margin: auto;
+	cursor: move;
+}
+
+.rpa-stage-phase-icon-burger:after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	width: 14px;
+	height: 2px;
+	background: #545c69;;
+}
+
+.rpa-stage-phase-title-form {
+	display: none;
+}
+
+.rpa-stage-phase-title input {
+	outline: none;
+	border: 1px solid #bcbcbc;
+	line-height: 28px;
+	color: #535c69;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 0 6px;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.rpa-stage-edit-mode .rpa-stage-phase-title-form {
+	display: block;
+}
+
+.rpa-stage-edit-mode .rpa-stage-phase-title-inner {
+	display: none;
+}
+
+.rpa-stage-phase-number {
+	float: left;
+}
+
+.rpa-stage-phase-name {
+	overflow: hidden;
+	display: block;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	padding-right: 5px;
+}
+
+.rpa-stages-common, .rpa-stages-fail {
+	padding-bottom: 10px;
+}

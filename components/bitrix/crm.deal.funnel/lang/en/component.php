@@ -1,0 +1,35 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_PERMISSION_DENIED"] = "Access Denied";
+$MESS["CRM_COLUMN_FUNNEL"] = " Funnel";
+$MESS["CRM_COLUMN_TITLE"] = "Deal Stage";
+$MESS["CRM_COLUMN_OPPORTUNITY"] = "Amount";
+$MESS["CRM_COLUMN_STAGE_ID"] = "Deal Stage";
+$MESS["CRM_COLUMN_STATE_ID"] = "Status";
+$MESS["CRM_COLUMN_CURRENCY_ID"] = "Currency";
+$MESS["CRM_COLUMN_PROBABILITY"] = "Probability";
+$MESS["CRM_COLUMN_PROCENT"] = "%";
+$MESS["CRM_COLUMN_COUNT"] = "Deals";
+$MESS["CRM_COLUMN_PRODUCT_ID"] = "Product";
+$MESS["CRM_COLUMN_COMPANY_LIST"] = "Companies";
+$MESS["CRM_COLUMN_CONTACT_LIST"] = "Contacts";
+$MESS["CRM_COLUMN_TYPE_ID"] = "Type";
+$MESS["CRM_COLUMN_CLOSED"] = "Closed";
+$MESS["CRM_COLUMN_BEGINDATE"] = "Start Date";
+$MESS["CRM_COLUMN_MODIFY_BY"] = "Modified by";
+$MESS["CRM_COLUMN_ASSIGNED_BY"] = "Responsible Person";
+$MESS["CRM_COLUMN_DATE_CREATE"] = "Created";
+$MESS["CRM_COLUMN_DATE_MODIFY"] = "Modified";
+$MESS["CRM_COLUMN_SUMM"] = "Amount, #CURRENCY#";
+$MESS["CRM_PRESET_WEEK"] = "This Week";
+$MESS["CRM_PRESET_WEEK_PREV"] = "Last Week";
+$MESS["CRM_PRESET_MONTH"] = "This Month";
+$MESS["CRM_PRESET_MONTH_PREV"] = "Last Month";
+$MESS["CRM_PRESET_MY_WEEK"] = "My This Week's Deals";
+$MESS["CRM_PRESET_MY_WEEK_AGO"] = "My Last Week's Deals";
+$MESS["CRM_DEAL_NAV_TITLE_LIST"] = "Sales Funnel";
+$MESS["CRM_FUNNEL_TYPE_CLASSICAL"] = "standard";
+$MESS["CRM_FUNNEL_TYPE_CUMULATIVE"] = "with conversions";
+$MESS["CRM_FUNNEL_TYPE_CUMULATIVE2"] = "with conversions";
+$MESS["CRM_COLUMN_CLOSEDATE"] = "Assumed close date";
+?>

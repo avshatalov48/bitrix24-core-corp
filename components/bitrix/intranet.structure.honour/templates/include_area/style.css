@@ -1,0 +1,14 @@
+.bx-honour-layout-include {width: 100%;}
+.bx-honour-layout-include .bx-user-info {border-bottom: solid 1px #C4C4C4; padding: 2px 0px;}
+
+.bx-honour-layout-include .bx-user-info-inner .bx-user-subtitle, .bx-honour-layout-include .bx-user-info-inner .bx-user-post, .bx-honour-layout-include .bx-user-info-inner .bx-user-name {margin-bottom: 2px; margin-left: 60px;}
+
+.bx-honour-layout-include .bx-user-info-inner .bx-user-image {float: left; height: 50px; width: 50px; border: solid 1px #C4C4C4;}
+.bx-honour-layout-include .bx-user-info-inner .bx-user-image-default {background-image: url('images/nopic_user_50_noborder.gif');}
+.bx-honour-layout-include .bx-user-info-inner .bx-user-image a {display: block; height: 50px; width: 50px; text-decoration: none; text-align: center;}
+.bx-honour-layout-include .bx-user-info-inner .bx-user-image img {border: 0;}
+
+.bx-honour-layout-include .bx-users-delimiter {clear: both;}
+.bx-honour-layout-include .bx-user-info-inner {margin: 5px 0px;}
+
+.bx-honour-layout-include .bx-user-subtitle{font-weight: bold;}

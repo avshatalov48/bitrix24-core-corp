@@ -1,0 +1,33 @@
+<?
+$MESS ['SERVER_UNREACHABLE'] = "Не удается установить соединение с сервером";
+$MESS ['AUTH_ERROR'] = "Не удается авторизоваться на сервере, проверьте правильность логина и пароля.";
+$MESS ['USER_AUTH_ERROR'] = "Для доступа требуется авторизация";
+$MESS ['EMPTY_PIN_ERROR'] = "Не указан пин!";
+$MESS ['UNKNOW_METHOD_ERROR'] = "Передан неверный метод";
+$MESS ['EMPTY_ACTIVATION_CODE_ERROR'] = "Не указан код активации!";
+$MESS ['WRONG_RESPONSE'] = "Неверный ответ сервера";
+$MESS ['EMPTY_ORG_LIST'] = "Не указано ни одной организации";
+$MESS ['UNKNOW_ORG'] = "Неизвестная организация";
+$MESS ['TITLE_PAYROLL'] = "Зарплата и отпуск";
+$MESS ['PIN_ACTIVATION'] = "Активация ПИНа";
+$MESS ['WEBSERVICE_MODULE_NOT_INSTALLED'] = 'Не установлен модуль веб-сервисов.';
+$MESS ['HTTP_WRITE_ERROR'] = "Не удается отослать SOAP запрос. Ошибка протокола HTTP.";
+$MESS ['HTTP_READ_TIMEOUT'] = "Превышен временной интервал ожидания HTTP ответа от сервера 1С.";
+$MESS ['HTTP_READ_ERROR'] = "Не удается получить SOAP ответ. Ошибка протокола HTTP.";
+$MESS ['SOAP_PORTAL_EMP_ID'] = "ИдентификаторСотрудника";
+$MESS ['SOAP_EMP_PIN'] = "ПИН";
+$MESS ['SOAP_MONTH'] = "НомерМесяца";
+$MESS ['SOAP_YEAR'] = "Год";
+$MESS ['SOAP_DATETIME'] = "ДатаВремя";
+$MESS ['SOAP_IP'] = "IPАдрес";
+$MESS ['SOAP_LOGIN'] = "ЛогинСотрудника";
+$MESS ['SOAP_ADDINFO'] = "ДополнительнаяИнформация";
+$MESS ['SOAP_ACTIVATION_CODE'] = "КодАктивации";
+$MESS ['SOAP_PAYROLL_METHOD'] = "ПолучитьРасчетныеЛистки";
+$MESS ['SOAP_HOLIDAY_METHOD'] = "ПолучитьОстаткиОтпуска";
+$MESS ['SOAP_ACTIVATION_METHOD'] = "ПолучитьПИН";
+$MESS ['PAYROLL'] = "Расчетный листок за #DATE#";
+$MESS ['TITLE_HOLIDAY'] = "Остаток отпуска";
+$MESS ['ERROR_RESP_MESSAGE'] = "Описание&nbsp;ошибки";
+$MESS["payroll_error_url"] = "Не указан параметр \"URL веб-сервиса\".";
+?>

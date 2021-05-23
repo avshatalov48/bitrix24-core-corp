@@ -1,0 +1,108 @@
+/*ToolBar*/
+div.bx-crm-interface-toolbar{
+	font-size:13px;
+	/*height:60px;*/
+	/*padding-right:15px;*/
+	color:#94a6af;
+	/*border-bottom:1px solid #edeef0;*/
+}
+.bx-crm-interface-toolbar .bx-crm-context-button{
+	font-size:12px;
+	line-height:20px;
+	display:inline-block;
+	height:20px;
+	margin-right:1px;
+	padding:13px 20px;
+	-webkit-transition:background .2s cubic-bezier(.000, .465, .750, .750);
+	   -moz-transition:background .2s cubic-bezier(.000, .465, .750, .750);
+		 -o-transition:background .2s cubic-bezier(.000, .465, .750, .750);
+			transition:background .2s cubic-bezier(.000, .465, .750, .750);
+	vertical-align:middle;
+	white-space:nowrap;
+	text-decoration:none;
+	text-transform:uppercase;
+	color:#6b798a;
+	opacity:.8;
+	font-family: "OpenSans-Bold";
+}
+.bx-crm-interface-toolbar .bx-crm-context-button:hover,
+.bx-crm-interface-toolbar .bx-crm-context-button.active{
+	background:#def9ff;
+	opacity: 1;
+}
+.bx-crm-interface-toolbar .bx-crm-context-button {
+	cursor : pointer;
+}
+.bx-crm-interface-toolbar label.bx-crm-context-button form { display: none; opacity:0;}
+.bx-opera .bx-crm-interface-toolbar label.bx-crm-context-button form { display:block !important;}
+.bx-crm-context-button-icon{
+	line-height:24px;
+	display:inline-block;
+	width:24px;
+	height:24px;
+	margin-right:2px;
+	-webkit-transition:opacity .2s cubic-bezier(.000, .465, .750, .750);
+	   -moz-transition:opacity .2s cubic-bezier(.000, .465, .750, .750);
+		 -o-transition:opacity .2s cubic-bezier(.000, .465, .750, .750);
+			transition:opacity .2s cubic-bezier(.000, .465, .750, .750);
+	vertical-align:middle;
+	opacity:.8;
+	background:url(images/sprite2.png) no-repeat;
+}
+.bx-crm-interface-toolbar .bx-crm-context-button:hover  .bx-crm-context-button-icon,
+.bx-crm-interface-toolbar .bx-crm-context-button.active .bx-crm-context-button-icon{
+	opacity:1;
+}
+
+
+
+.bx-crm-context-button-icon.btn-new {background-position: -78px -14px;}
+.bx-crm-context-button-icon.btn-view {background-position: -78px -48px;}
+.bx-crm-context-button-icon.btn-edit {background-position: -78px -82px;}
+.bx-crm-context-button-icon.btn-copy {background-position: -78px -357px;}
+.bx-crm-context-button-icon.btn-delete {background-position: -78px -116px;}
+.bx-crm-context-button-icon.btn-parent-section {background-position: -78px -145px;}
+.bx-crm-context-button-icon.btn-add-section {background-position: -78px -175px;}
+.bx-crm-context-button-icon.btn-edit-sections {background-position: -78px -82px;}
+.bx-crm-context-button-icon.btn-list {background-position: -78px -247px;}
+.bx-crm-context-button-icon.btn-settings {background-position: -78px -283px;}
+
+.bx-crm-context-button-icon.btn-settings:hover{
+	-webkit-transform:rotate(180deg);
+	-moz-transform:rotate(180deg);
+	-ms-transform:rotate(180deg);
+	-o-transform:rotate(180deg);
+	transform:rotate(180deg);
+	-webkit-transition:all .5s ease;
+	-moz-transition:all .5s ease;
+	-ms-transition:all .5s ease;
+	-o-transition:all .5s ease;
+	transition:all .5s ease;
+}
+
+.bx-crm-context-button {
+	position: relative;
+	overflow: hidden;
+}
+.bx-crm-context-button input {
+	filter: alpha(opacity=0) !important;
+	font-size: 320px !important;
+	height: 105px !important;
+	opacity: 0 !important;
+	position: absolute !important;
+	cursor: pointer !important;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+}
+
+/*Popup menu*/
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-crm-product-import {
+	background:url(images/sprite2.png) no-repeat -78px -211px !important;
+	opacity: .8;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-crm-product-export {
+	background:url(images/sprite2.png) no-repeat -78px -319px !important;
+	opacity: .8;
+}

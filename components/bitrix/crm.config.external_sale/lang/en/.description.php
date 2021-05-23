@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_BPWC_COMPONENT_NAME"] = "Contact shop";
+$MESS["CRM_BPWC_COMPONENT_NAME_DESCRIPTION"] = "Contact shop";
+$MESS["CRM_NAME"] = "CRM";
+$MESS["CRM_CONFIG_NAME"] = "Settings";
+?>

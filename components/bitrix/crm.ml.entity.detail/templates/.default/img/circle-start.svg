@@ -1,0 +1,24 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="419" height="387" viewBox="0 0 419 387" fill="#fff" fill-rule="evenodd">
+    <g>
+        <circle id="c1" cx="209" cy="208" r="85" stroke="#fff" stroke-width="12px" transform="rotate(-48 208 205)"
+         fill-opacity="0" stroke-opacity="0.6"  stroke-dasharray="180"></circle>
+        <circle id="c2" cx="209" cy="206" r="115" stroke="#fff" stroke-width="20px" transform="rotate(50 208 205)"
+        fill-opacity="0" stroke-opacity="0.6"  stroke-dasharray="320"></circle>
+        <circle id="c3" cx="208" cy="204" r="147" stroke="#fff" stroke-width="3px" transform="rotate(-140 208 205)"
+         fill-opacity="0" stroke-opacity="0.6" stroke-dasharray="440"></circle>
+        <circle id="c4" cx="208" cy="205" r="179" stroke="#fff" stroke-width="3px" transform="rotate(142 208 205)"
+         fill-opacity="0" stroke-opacity="0.4" stroke-dasharray="376"></circle>
+        <circle id="c5" cx="211" cy="204" r="211" stroke="#fff" stroke-width="1px" transform="rotate(-80 208 205)"
+        fill-opacity="0" stroke-opacity="0.4" stroke-dasharray="500"></circle>
+
+        <path opacity=".832" transform="translate(149 144)" id="b" d="M62 0c34.242 0 62 27.758 62 62 0 34.242-27.758 62-62 62-34.242 0-62-27.758-62-62C0 27.758 27.758 0 62 0zm0 20c-23.196 0-42 18.804-42 42s18.804 42 42 42 42-18.804 42-42-18.804-42-42-42z"/>
+        <rect transform="translate(179.5 174)" width="60" height="60" x=".718" y=".718" fill="#2FC6F6" opacity=".914" rx="30"/>
+        <path transform="translate(179.5 174)" fill="#FFF" d="M25.433 23.84l7.436-2.132a3.898 3.898 0 1 1 4.464 2.642l-.94 6.69a6.994 6.994 0 1 1-8.184 2.742l-3.84-3.11a5.675 5.675 0 1 1 1.065-6.832zm.633 1.879c.04.275.062.558.062.845 0 .902-.21 1.755-.585 2.512l3.98 3.224a6.966 6.966 0 0 1 4.926-1.65l.903-6.427a3.894 3.894 0 0 1-1.351-.78l-7.935 2.276z"/>
+    </g>
+    <animateTransform xlink:href="#c1" type="rotate" attributeName="transform" from="0 209 208" to="360 209 208" dur="12s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c2" type="rotate" attributeName="transform" from="360 209 206" to="0 209 206" dur="15s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c3" type="rotate" attributeName="transform" from="0 208 204" to="360 208 204" dur="17s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c4" type="rotate" attributeName="transform" from="360 208 205" to="0 208 205" dur="19s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c5" type="rotate" attributeName="transform" from="0 211 204" to="360 211 204" dur="21s" begin="0" repeatCount="indefinite"/>
+</svg>
+

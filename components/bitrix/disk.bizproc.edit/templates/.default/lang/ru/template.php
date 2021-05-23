@@ -1,0 +1,30 @@
+<?
+$MESS["BIZPROC_WFEDIT_MENU_BACK"] = "Назад";
+$MESS["BIZPROC_WFEDIT_MENU_PARAMS_TITLE"] = "Параметры шаблона, переменные, автозапуск";
+$MESS["BIZPROC_WFEDIT_MENU_PARAMS"] = "Параметры шаблона";
+$MESS["BIZPROC_WFEDIT_MENU_LIST"] = "Список шаблонов";
+$MESS["BIZPROC_WFEDIT_MENU_LIST_TITLE"] = "Перейти в список шаблонов";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_WARN"] = "Если вы изменяли шаблон и не сохранили изменения - они будут утеряны. Продолжить?";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_STATE"] = "Бизнес-процесс со статусами";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_STATE_TITLE"] = "Длительный бизнес-процесс с разделением прав доступа, при работе с документами в разных статусах";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_SEQ"] = "Последовательный бизнес-процесс";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_SEQ_TITLE"] = "Простой бизнес-процесс, позволяющий запустить документ в последовательную обработку";
+$MESS["BIZPROC_WFEDIT_MENU_ADD"] = "Создать шаблон";
+$MESS["BIZPROC_WFEDIT_MENU_ADD_TITLE"] = "Добавить новый шаблон";
+$MESS["BIZPROC_WFEDIT_SAVE_BUTTON"] = "Сохранить";
+$MESS["BIZPROC_WFEDIT_APPLY_BUTTON"] = "Применить";
+$MESS["BIZPROC_WFEDIT_CANCEL_BUTTON"] = "Отмена";
+$MESS["BIZPROC_WFEDIT_MENU_EXPORT"] = "Экспорт";
+$MESS["BIZPROC_WFEDIT_MENU_EXPORT_TITLE"] = "Экспортировать шаблон бизнес-процесса";
+$MESS["BIZPROC_WFEDIT_MENU_IMPORT"] = "Импорт";
+$MESS["BIZPROC_WFEDIT_MENU_IMPORT_TITLE"] = "Импортировать шаблон бизнес-процесса";
+$MESS["BIZPROC_IMPORT_BUTTON"] = "Импортировать";
+$MESS["BIZPROC_IMPORT_TITLE"] = "Импорт шаблона";
+$MESS["BIZPROC_IMPORT_FILE"] = "Файл";
+$MESS["BIZPROC_WFEDIT_MENU_IMPORT_PROMT"] = "Текущий шаблон бизнес-процесса будет заменен импортируемым. Продолжить?";
+$MESS["BIZPROC_IMPORT_FILE_OLD_TEMPLATE"] = "Старый шаблон";
+$MESS["BIZPROC_IMPORT_FILE_OLD_TEMPLATE_CP"] = "10.12.2014";
+$MESS["BIZPROC_IMPORT_FILE_OLD_TEMPLATE_B24"] = "23.03.2015";
+$MESS["BIZPROC_IMPORT_FILE_OLD_TEMPLATE_P1"] = "У вас установлен новый модуль \"Диск\", в связи с чем старые шаблоны, которые были созданы до обновления, могут работать некорректно.";
+$MESS["BIZPROC_IMPORT_FILE_OLD_TEMPLATE_P2"] = "Если вы импортируете шаблон, который был создан на другом сайте, до появления нового модуля \"Диск\" (до #DATE#), отметьте шаблон как \"Старый\", для корректной работы параметров и переменных внутри процесса.";
+?>

@@ -1,0 +1,55 @@
+.crm-entity-section-requisite-selector .crm-entity-card-container{
+	float: none;
+	width: 100%;
+	padding-top: 30px;
+}
+
+.crm-entity-requisites-slider-wrapper { }
+
+.crm-entity-requisites-slider-title { margin-bottom: 23px; }
+
+.crm-entity-requisites-slider-title-text {
+	margin-bottom: 3px;
+	color: #000;
+	font: 300 24px/24px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-requisites-slider-title-description {
+	color: #525c69;
+	font: 300 13px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-requisites-slider-content { }
+
+.crm-entity-requisites-slider-widget {
+	padding: 16px 28px;
+	background-color: #fff;
+}
+
+.crm-entity-requisites-slider-widget-title {
+	display: flex;
+	padding-bottom: 16px;
+	border-bottom: 1px solid #edeef0;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.crm-entity-requisites-slider-widget-title-text {
+	color: #525c69;
+	vertical-align: middle;
+	font: bold 14px/24px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-requisites-slider-remove {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background-color: #000;
+}
+
+.crm-entity-requisites-slider-widget-content {
+	margin-bottom: 20px;
+	padding-top: 12px;
+}
+
+.crm-entity-requisites-slider-widget .crm-entity-widget-content-block { padding: 0 18px 0 0; }

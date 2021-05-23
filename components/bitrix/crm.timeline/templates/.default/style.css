@@ -1,0 +1,3736 @@
+/* FEED */
+
+/*region Wrapper */
+.crm-entity-stream-container-content { }
+
+.crm-entity-stream-container-empty {
+	box-sizing: border-box;
+	padding: 35px 60px;
+	width: 100%;
+	background-color: #ebf1f4;
+}
+
+.crm-entity-stream-container-empty-icon-container { text-align: center; }
+
+.crm-entity-stream-container-empty-icon {
+	display: inline-block;
+	margin: 10px;
+	width: 47px;
+	height: 39px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -1003px;
+}
+
+.crm-entity-stream-container-empty-title {
+	margin: 0 auto 20px;
+	max-width: 500px;
+	color: #555c6d;
+	text-align: center;
+	font: 20px/31px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-container-empty-list {
+	margin: 0 auto;
+	padding: 0;
+	max-width: 500px;
+	list-style: none;
+}
+
+.crm-entity-stream-container-empty-list-item {
+	margin: 0 0 15px 40px;
+	padding: 0;
+	color: #555c6d;
+	vertical-align: middle;
+	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-container-empty-list-item:before {
+	display: inline-block;
+	margin-right: 5px;
+	width: 20px;
+	height: 17px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -1063px;
+	content: '';
+	vertical-align: middle;
+	line-height: 17px;
+}
+
+/*endregion */
+
+/*region Event Wrapper*/
+.crm-entity-stream-section {
+	position: relative;
+	margin-bottom: 15px;
+	transition: height 220ms ease, opacity 220ms ease;
+}
+
+.crm-entity-stream-section:before {
+	position: absolute;
+	top: 20px;
+	right: 0;
+	left: -29px;
+	z-index: 100;
+	height: 1px;
+	background-color: #dbe1e6;
+	content: "";
+	transition: left 300ms ease;
+}
+
+.crm-entity-stream-section-fixed-anchor { position: relative; }
+
+.crm-entity-stream-section-fixed-anchor:after,
+.crm-entity-stream-section:after {
+	position: absolute;
+	top: 20px;
+	bottom: -41px;
+	left: -29px;
+	z-index: 100;
+	width: 1px;
+	background-color: #cfd6da;
+	content: "";
+}
+
+.bitrix24-dark-theme .crm-entity-stream-section:after,
+.bitrix24-dark-theme .crm-entity-stream-section:before { background-color: #9d9d9d; }
+
+.crm-entity-stream-section.crm-entity-stream-section-top-fixed.crm-entity-stream-section-animate-start:after,
+.crm-entity-stream-section.crm-entity-stream-section-last:after { display: none; }
+
+.crm-entity-stream-section.crm-entity-stream-section-planned-above-overlay .crm-entity-stream-section-icon-info .crm-entity-stream-section-content { background-color: #f1f6f6; }
+
+.crm-entity-stream-section.crm-entity-stream-section-top-fixed { }
+
+.crm-entity-stream-section-top-fixed-btn {
+	position: absolute;
+	right: 10px;
+	bottom: 13px;
+	z-index: 550;
+	display: block;
+	width: 20px;
+	height: 20px;
+	border: none;
+	background: url(images/icons-sprite.svg?3) no-repeat center -870px;
+	opacity: 0;
+	cursor: pointer;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-section:hover .crm-entity-stream-section-top-fixed-btn { opacity: .7; }
+
+.crm-entity-stream-section-top-fixed-btn:hover {
+	opacity: 1;
+	-webkit-transform: rotate(-43deg);
+	-ms-transform: rotate(-43deg);
+	transform: rotate(-43deg);
+	-webkit-transform-origin: center;
+	-ms-transform-origin: center;
+	transform-origin: center;
+}
+
+.crm-entity-stream-section-top-fixed-btn.crm-entity-stream-section-top-fixed-btn-active {
+	opacity: .7;
+	-webkit-transform: rotate(-43deg);
+	-ms-transform: rotate(-43deg);
+	transform: rotate(-43deg);
+	-webkit-transform-origin: center;
+	-ms-transform-origin: center;
+	transform-origin: center;
+}
+
+.crm-entity-stream-section-top-fixed-btn.crm-entity-stream-section-top-fixed-btn-active:hover {
+	-webkit-transform: rotate(0);
+	-ms-transform: rotate(0);
+	transform: rotate(0);
+}
+
+.crm-entity-stream-section .crm-entity-stream-section-top-fixed-btn-spotlight { opacity: 1; }
+
+.crm-entity-stream-section.crm-entity-stream-section-animate-start .crm-entity-stream-section-top-fixed-btn { opacity: 0; }
+
+.crm-entity-stream-section-shadow { transition: opacity 120ms ease !important; }
+
+.crm-entity-stream-content-detail-action + .crm-entity-stream-section-top-fixed-btn {
+	right: 42px;
+	bottom: 13px;
+}
+
+/*.crm-entity-stream-section-top-fixed .bxhtmled-toolbar-cnt,*/
+.crm-entity-stream-section-top-fixed .feed-add-post-form-but-wrap { background: #f7fbe9; }
+
+.crm-entity-stream-section .crm-entity-stream-section-comment-editor { transition: 400ms all ease; }
+
+.crm-entity-stream-section .crm-entity-stream-section-comment-editor .feed-add-post-edit-form { margin-bottom: 0; }
+
+.crm-entity-stream-section .crm-entity-stream-section-comment-editor .feed-add-post-form-but-wrap { border-bottom: 0; }
+
+.crm-entity-stream-section .crm-entity-stream-section-comment-editor .diskuf-files-entity {
+	margin-bottom: 0;
+	border-top: 1px solid #f0f1f2;
+	border-bottom: 0;
+}
+
+/*endregion */
+
+/*region Icons */
+.crm-entity-stream-section-icon {
+	position: absolute;
+	top: 5px;
+	left: -44px;
+	z-index: 200;
+	width: 31px;
+	height: 31px;
+	border-radius: 50%;
+	background: #7f8389 url(images/icons-sprite.svg?5) no-repeat center 0;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+	transition: left 300ms ease;
+}
+
+.crm-entity-stream-section-icon:after {
+	position: absolute;
+	content: '';
+}
+
+.crm-entity-stream-section-icon.crm-entity-stream-section-counter:before {
+	position: absolute;
+	top: -7px;
+	right: -7px;
+	box-sizing: border-box;
+	width: 18px;
+	height: 16px;
+	border: 2px solid #ebf1f4;
+	border-radius: 8px;
+	background-color: #f54819;
+	color: #fff;
+	content: "1";
+	vertical-align: middle;
+	text-align: center;
+	font: bold 9px/12px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-section-icon-IM { background-position: center 0; }
+
+.crm-entity-stream-section-icon-live-im {
+	background-color: #9dcf00;
+	background-position: center -1211px;
+}
+
+.crm-entity-stream-section-icon-call { background-position: center -31px; }
+
+.crm-entity-stream-section-icon-email { background-position: center -62px; }
+
+.crm-entity-stream-section-icon-crmForm { background-position: center -93px; }
+
+.crm-entity-stream-section-icon-store { background-position: center -1249px; }
+
+.crm-entity-stream-section-icon-task { background-position: center -124px; }
+
+.crm-entity-stream-section-icon-meeting { background-position: center -155px; }
+
+.crm-entity-stream-section-icon-visit { background-position: center -912px; }
+
+.crm-entity-stream-section-icon-bp { background-position: center -1086px; }
+
+.crm-entity-stream-section-icon-info {
+	background-color: #a4acb3;
+	background-position: center -186px;
+}
+
+.crm-entity-stream-section-icon-comment {
+	background-color: #2fc6f6;
+	background-position: center -217px;
+}
+
+.crm-entity-stream-section-icon-complete {
+	background-color: #7bd500;
+	background-position: center -651px;
+}
+
+.crm-entity-stream-section-icon-convert {
+	background-color: #2fc6f6;
+	background-position: center -682px;
+}
+
+.crm-entity-stream-section-icon-wallet {
+	background-color: #10c13e;
+	background-position: center -1310px;
+}
+
+.crm-entity-stream-section-icon-document { background-position: center -1174px; }
+
+.crm-entity-stream-section-icon-robot { background-position: center -713px; }
+
+.crm-entity-stream-section-icon-rest { background-position: center -1133px; }
+
+.crm-entity-stream-section-icon-taxi {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2210%22%20viewBox%3D%220%200%2019%2010%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M14.4657063%2C0%20C15.3630888%2C-1.64846494e-16%2016.1506131%2C0.59772167%2016.3919952%2C1.46203067%20L18.2607441%2C8.15339797%20C18.4093003%2C8.68532796%2018.0985143%2C9.23697096%2017.5665843%2C9.38552709%20C17.4790152%2C9.4099832%2017.3885198%2C9.42238263%2017.2975997%2C9.42238263%20L1%2C9.42238263%20C0.44771525%2C9.42238263%202.62956323e-13%2C8.97466738%202.62900812e-13%2C8.42238263%20C2.62900812e-13%2C8.33223909%200.0121885346%2C8.24250944%200.0362343641%2C8.15563219%20L1.88764839%2C1.46649911%20C2.12748475%2C0.599973666%202.91607575%2C-2.78926502e-16%203.81517966%2C0%20L14.4657063%2C0%20Z%20M5.1256341%2C4.71119132%20L2.44297936%2C4.71119132%20L2.44297936%2C7.39384606%20L5.1256341%2C7.39384606%20L5.1256341%2C4.71119132%20Z%20M10.4923736%2C4.71119132%20L7.8083586%2C4.71119132%20L7.8083586%2C7.39384606%20L10.4923736%2C7.39384606%20L10.4923736%2C4.71119132%20Z%20M15.8577877%2C4.71119132%20L13.175133%2C4.71119132%20L13.175133%2C7.39384606%20L15.8577877%2C7.39384606%20L15.8577877%2C4.71119132%20Z%20M13.175133%2C2.02853657%20L10.4924783%2C2.02853657%20L10.4924783%2C4.71119132%20L13.175133%2C4.71119132%20L13.175133%2C2.02853657%20Z%20M7.8083586%2C2.02853657%20L5.12570386%2C2.02853657%20L5.12570386%2C4.71119132%20L7.8083586%2C4.71119132%20L7.8083586%2C2.02853657%20Z%22/%3E%3C/svg%3E');
+	background-position: center !important;
+}
+
+.crm-entity-stream-section-icon-terminal {
+	background: #177ce2 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2219%22%20viewBox%3D%220%200%2014%2019%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M11.7903962%2C0.351908949%20C12.4866623%2C0.351908949%2013.0555706%2C0.880737096%2013.1283306%2C1.55186708%20L13.1361935%2C1.69771788%20L13.1361935%2C8.8328958%20C13.1361935%2C8.87415297%2013.0657821%2C8.99984934%2012.9681436%2C9.1584872%20L12.5666822%2C9.79430207%20C12.483891%2C9.92911151%2012.4187538%2C10.0432306%2012.3960106%2C10.1072128%20L12.3872887%2C10.1453387%20L12.3870562%2C17.3937008%20C12.3870562%2C18.0900753%2011.8582888%2C18.6588897%2011.1871197%2C18.7316366%20L11.0412589%2C18.7394981%20L2.99443696%2C18.7394981%20C2.29812748%2C18.7394981%201.72924659%2C18.2107307%201.65649051%2C17.5395615%20L1.64862803%2C17.3937008%20L1.64862803%2C10.0807219%20C1.64862803%2C10.0386657%201.57805775%2C9.91212493%201.48024051%2C9.75265403%20L1.02044402%2C9.01782672%20C0.966222071%2C8.92567359%200.925394904%2C8.84929153%200.908370192%2C8.80107267%20L0.899665101%2C8.7627005%20L0.899665101%2C1.69771788%20C0.899665101%2C1.00141924%201.42849325%2C0.432528948%202.09962324%2C0.35977157%20L2.24547403%2C0.351908949%20L11.7903962%2C0.351908949%20Z%20M4.64098162%2C14.7868286%20L3.68357119%2C14.7868286%20C3.34528562%2C14.7868286%203.07082665%2C15.0612179%203.07082665%2C15.3995267%20C3.07082665%2C15.7378355%203.345274%2C16.0122247%203.68357119%2C16.0122247%20L4.64098162%2C16.0122247%20C4.97924394%2C16.0122247%205.2537494%2C15.7378355%205.2537494%2C15.3995267%20C5.2537494%2C15.0612179%204.97924394%2C14.7868286%204.64098162%2C14.7868286%20Z%20M7.50046387%2C14.7865962%20L6.54306506%2C14.7865962%20C6.20475625%2C14.7865962%205.93025079%2C15.0611016%205.93025079%2C15.3994104%20C5.93025079%2C15.7377192%206.20475625%2C16.0121085%206.54306506%2C16.0121085%20L7.50046387%2C16.0121085%20C7.83877268%2C16.0121085%208.11316192%2C15.7377192%208.11316192%2C15.3994104%20C8.11316192%2C15.0611016%207.83877268%2C14.7865962%207.50046387%2C14.7865962%20Z%20M10.3598764%2C14.78648%20L9.40247758%2C14.78648%20C9.06416877%2C14.78648%208.78977953%2C15.0609854%208.78977953%2C15.3992942%20C8.78977953%2C15.7000132%209.00658091%2C15.9502278%209.29236408%2C16.0021184%20L9.40247758%2C16.0119923%20L10.3598764%2C16.0119923%20C10.6981852%2C16.0119923%2010.9726907%2C15.737603%2010.9726907%2C15.3992942%20C10.9726907%2C15.0985753%2010.7557975%2C14.8482689%2010.4699939%2C14.7963578%20L10.3598764%2C14.78648%20Z%20M4.64098162%2C12.5527818%20L3.68357119%2C12.5527818%20C3.34528562%2C12.5527818%203.07082665%2C12.8272873%203.07082665%2C13.1655961%20C3.07082665%2C13.5039049%203.345274%2C13.7782942%203.68357119%2C13.7782942%20L4.64098162%2C13.7782942%20C4.97924394%2C13.7782942%205.2537494%2C13.5039049%205.2537494%2C13.1655961%20C5.2537494%2C12.8272873%204.97924394%2C12.5527818%204.64098162%2C12.5527818%20Z%20M7.50046387%2C12.5526656%20L6.54306506%2C12.5526656%20C6.20475625%2C12.5526656%205.93025079%2C12.8271711%205.93025079%2C13.1654799%20C5.93025079%2C13.4661988%206.147144%2C13.7164134%206.43294757%2C13.7683041%20L6.54306506%2C13.7781779%20L7.50046387%2C13.7781779%20C7.83877268%2C13.7781779%208.11316192%2C13.5037887%208.11316192%2C13.1654799%20C8.11316192%2C12.8647609%207.89636054%2C12.6144545%207.61057737%2C12.5625435%20L7.50046387%2C12.5526656%20Z%20M10.3598764%2C12.5525494%20L9.40247758%2C12.5525494%20C9.06416877%2C12.5525494%208.78977953%2C12.8270549%208.78977953%2C13.1653637%20C8.78977953%2C13.5035563%209.06416877%2C13.7780617%209.40247758%2C13.7780617%20L10.3598764%2C13.7780617%20C10.6981852%2C13.7780617%2010.9726907%2C13.5036725%2010.9726907%2C13.1653637%20C10.9726907%2C12.8270549%2010.6981852%2C12.5525494%2010.3598764%2C12.5525494%20Z%20M7.50046387%2C10.3123431%20L6.54306506%2C10.3123431%20C6.20475625%2C10.3123431%205.93025079%2C10.5868486%205.93025079%2C10.9250412%20C5.93025079%2C11.26335%206.20475625%2C11.5378554%206.54306506%2C11.5378554%20L7.50046387%2C11.5378554%20C7.83877268%2C11.5378554%208.11316192%2C11.26335%208.11316192%2C10.9250412%20C8.11316192%2C10.5868486%207.83877268%2C10.3123431%207.50046387%2C10.3123431%20Z%20M4.64098162%2C10.3124593%20L3.68357119%2C10.3124593%20C3.34528562%2C10.3124593%203.07082665%2C10.5869648%203.07082665%2C10.9252736%20C3.07082665%2C11.2258892%203.28767394%2C11.4761842%203.57345915%2C11.528094%20L3.68357119%2C11.5379716%20L4.64098162%2C11.5379716%20C4.97924394%2C11.5379716%205.2537494%2C11.2634662%205.2537494%2C10.9252736%20C5.2537494%2C10.6245546%205.0368562%2C10.3742482%204.75108527%2C10.3223372%20L4.64098162%2C10.3124593%20Z%20M10.3598764%2C10.3122269%20L9.40247758%2C10.3122269%20C9.06416877%2C10.3122269%208.78977953%2C10.5867323%208.78977953%2C10.9249249%20C8.78977953%2C11.2256439%209.00658091%2C11.4759503%209.29236408%2C11.5278614%20L9.40247758%2C11.5377392%20L10.3598764%2C11.5377392%20C10.6981852%2C11.5377392%2010.9726907%2C11.2632337%2010.9726907%2C10.9249249%20C10.9726907%2C10.6243093%2010.7557975%2C10.3740144%2010.4699939%2C10.3221046%20L10.3598764%2C10.3122269%20Z%20M11.1615439%2C3.40482341%20L2.87464008%2C3.40482341%20C2.717906%2C3.40482341%202.58805086%2C3.51230505%202.55414805%2C3.65815834%20L2.54551245%2C3.73396267%20L2.54551245%2C7.70849261%20C2.54551245%2C7.86518685%202.65298555%2C7.99507045%202.7988364%2C8.02898221%20L2.87464008%2C8.03762024%20L11.1615439%2C8.03762024%20C11.3182381%2C8.03762024%2011.4481217%2C7.93012153%2011.4820335%2C7.78428532%20L11.4906715%2C7.70849261%20L11.4906715%2C3.73396267%20C11.4906715%2C3.57723854%2011.3831728%2C3.44736775%2011.2373366%2C3.41346026%20L11.1615439%2C3.40482341%20Z%20M8.44507877%2C4.08582242%20L9.12843699%2C4.75186425%20L6.52691084%2C7.26303138%20L5.0511825%2C5.8368465%20L5.73454072%2C5.17080467%20L6.52691084%2C5.93092448%20L8.44507877%2C4.08582242%20Z%20M11.1614277%2C1.93469675%20L2.874489%2C1.93469675%20C2.69163257%2C1.93469675%202.54534975%2C2.08097957%202.54534975%2C2.26383019%20C2.54534975%2C2.42055929%202.65282284%2C2.55042226%202.79868101%2C2.58432741%20L2.874489%2C2.59296363%20L11.1614277%2C2.59296363%20C11.3442376%2C2.59296363%2011.4905553%2C2.44668081%2011.4905553%2C2.26383019%20C11.4905553%2C2.10709112%2011.3830566%2C1.97723527%2011.2372204%2C1.94333236%20L11.1614277%2C1.93469675%20Z%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
+	background-position: center !important;
+}
+
+.crm-entity-stream-section-icon-new.crm-entity-stream-section-icon-terminal {
+	background-color: #2fc6f8;
+}
+
+.crm-entity-stream-section-icon-restApp {
+	background-color: #2fc6f8;
+	background-position: center -1285px;
+}
+
+.crm-entity-stream-section-icon-sms,
+.crm-entity-stream-section-icon-new {
+	background-color: #2fc6f8;
+	background-position: center -744px;
+}
+
+.crm-entity-stream-section-icon-zoom {
+	background-position: center -1342px;
+}
+
+.crm-entity-stream-section-icon-check {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214px%22%20height%3D%2216px%22%20viewBox%3D%220%200%2014%2016%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M13.1987225%2C0.2%20L13.1987225%2C15.3230572%20L9.049%2C13.299%20L6.69936123%2C14.4455348%20L4.349%2C13.299%20L0.2%2C15.3230572%20L0.2%2C0.2%20L13.1987225%2C0.2%20Z%20M11.3987225%2C2%20L2%2C2%20L2%2C12.4430249%20L4.34968061%2C11.2975264%20L6.69936123%2C12.4430249%20L9.04904184%2C11.2975264%20L11.3987225%2C12.4430249%20L11.3987225%2C2%20Z%20M9.31011746%2C6.69936123%20L9.31011746%2C8.41732939%20L4.08860499%2C8.41732939%20L4.08860499%2C6.69936123%20L9.31011746%2C6.69936123%20Z%20M9.31011746%2C3.56645374%20L9.31011746%2C5.28442191%20L4.08860499%2C5.28442191%20L4.08860499%2C3.56645374%20L9.31011746%2C3.56645374%20Z%22%3E%3C/path%3E%3C/svg%3E');
+	background-position: center;
+}
+
+.crm-entity-stream-section-icon-wait { background-position: center -248px; }
+
+.crm-entity-stream-section.crm-entity-stream-section-notTask .crm-entity-stream-section-icon-info { background-color: #9ece00; }
+
+.crm-entity-stream-section.crm-entity-stream-section-completed .crm-entity-stream-section-icon { background-color: #2fc6f6; }
+
+.crm-entity-stream-section.crm-entity-stream-section-task .crm-entity-stream-section-icon { background-color: #2fc6f6; }
+
+.crm-entity-stream-section.crm-entity-stream-section-createEntity .crm-entity-stream-section-icon { background-color: #2fc6f6; }
+
+.crm-entity-stream-section.crm-entity-stream-section-planned .crm-entity-stream-section-icon { background-color: #9ece00; }
+
+.crm-entity-stream-section.crm-entity-stream-section-today .crm-entity-stream-section-icon { background-color: #2fc6f5; }
+
+.crm-entity-stream-section.crm-entity-stream-section-history .crm-entity-stream-section-icon { background-color: #2fc6f5; }
+
+.crm-entity-stream-section.crm-entity-stream-section-payment .crm-entity-stream-section-icon { background-color: #9ece00; }
+
+.crm-entity-stream-section-shadow .crm-entity-stream-section-icon {
+	background-color: #cfd6da !important;
+	background-image: none;
+}
+
+/*endregion */
+
+/*region Context Menu*/
+.crm-entity-stream-section-context-menu {
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	z-index: 550;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: rgba(0, 0, 0, .12) 1px 2px 0;
+	opacity: 0;
+	cursor: pointer;
+	transition: all 220ms ease;
+}
+
+.crm-entity-stream-section .crm-entity-stream-section-context-menu.active,
+.crm-entity-stream-section:hover .crm-entity-stream-section-context-menu { opacity: 1; }
+
+.crm-entity-stream-section-context-menu:after,
+.crm-entity-stream-section-context-menu:before {
+	position: absolute;
+	top: 55%;
+	left: 50%;
+	width: 8px;
+	height: 2px;
+	background-color: #979797;
+	content: "";
+	transition: all 250ms ease;
+	transform-origin: center;
+}
+
+.crm-entity-stream-section-context-menu:before { margin-left: -2.5px; }
+
+.crm-entity-stream-section-context-menu:before,
+.crm-entity-stream-section-context-menu.active:after { transform: translate(-50%, -50%) rotate(45deg); }
+
+.crm-entity-stream-section-context-menu:after { margin-left: 2.5px; }
+
+.crm-entity-stream-section-context-menu:after,
+.crm-entity-stream-section-context-menu.active:before { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/*endregion */
+
+/*region Event Content Wrapper */
+.crm-entity-stream-section-content {
+	position: relative;
+	z-index: 500;
+	box-sizing: border-box;
+	width: 100%;
+	border-radius: 2px;
+	background-color: #fff;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: all 300ms ease, 1000ms background-color linear;
+}
+
+.crm-entity-stream-section-today-label .crm-entity-stream-section-content,
+.crm-entity-stream-section-history-label .crm-entity-stream-section-content,
+.crm-entity-stream-section-planned-label .crm-entity-stream-section-content {
+	background-color: transparent;
+	box-shadow: none;
+}
+
+.crm-entity-stream-section.crm-entity-stream-section-animate-start .crm-entity-stream-section-content { box-shadow: 0 -2px 10px 0 rgba(0, 0, 0, .12); }
+
+.crm-entity-stream-section-planned.crm-entity-stream-section-updated .crm-entity-stream-section-content { animation: sectionUpdated 1s linear 1; }
+
+@keyframes sectionUpdated {
+	0%, 100% { box-shadow: inset 0 0 0 0 #fffeef }
+	20% { box-shadow: inset 0 0 0 1px #9ece00 }
+}
+
+.crm-entity-stream-section-planned .crm-entity-stream-section-content { background-color: #fffeef; }
+
+.crm-entity-stream-section-planned-shadow .crm-entity-stream-section-content { background-color: #d8dcde; }
+
+.crm-entity-stream-section-shadow .crm-entity-stream-section-content {
+	background-color: #e2e9ed;
+	transition: all 300ms ease;
+}
+
+.crm-entity-stream-section-content-collapsed .crm-entity-stream-content-event {
+	overflow: hidden;
+	max-height: 130px;
+}
+
+.crm-entity-stream-section-content-expand .crm-entity-stream-content-event { padding-bottom: 25px; }
+
+.crm-entity-stream-section-content-expand-btn-container {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+	padding: 48px 0 7px;
+	background: -webkit-linear-gradient(top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 24px, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	background: -moz-linear-gradient(top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 24px, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	background: linear-gradient(top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 24px, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	text-align: center;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00ffffff', endColorstr='#ffffff', GradientType=0);
+}
+
+.crm-entity-stream-section-top-fixed .crm-entity-stream-section-content-expand-btn-container {
+	background: rgb(247, 251, 233);
+	background: -webkit-linear-gradient(top, rgba(247, 251, 233, 0) 0%, rgba(247, 251, 233, 0.7) 24px, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	background: -moz-linear-gradient(top, rgba(247, 251, 233, 0) 0%, rgba(247, 251, 233, 0.7) 24px, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	background: linear-gradient(top, rgba(247, 251, 233, 0) 0%, rgba(247, 251, 233, 0.7) 24px, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f7fbe900', endColorstr='#f7fbe9', GradientType=0);
+}
+
+.crm-entity-stream-section-content-expand-btn {
+	display: inline-block;
+	padding: 0 10px;
+	height: 20px;
+	border-radius: 10px;
+	color: #858c95;
+	vertical-align: middle;
+	text-decoration: none;
+	font: 400 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: 250ms all ease;
+}
+
+.crm-entity-stream-section-content-collapsed .crm-entity-stream-section-content-expand-btn-container { height: 20px; }
+
+.crm-entity-stream-section-content-expand .crm-entity-stream-section-content-expand-btn-container {
+	padding-top: 0;
+	background: rgb(255, 255, 255);
+	background: -webkit-linear-gradient(top, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	background: -moz-linear-gradient(top, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	background: linear-gradient(top, rgba(255, 255, 255, 1) 48px, rgba(255, 255, 255, 1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#ffffff', GradientType=0);
+}
+
+.crm-entity-stream-section-top-fixed .crm-entity-stream-section-content-expand .crm-entity-stream-section-content-expand-btn-container {
+	background: rgb(247, 251, 233);
+	background: -webkit-linear-gradient(top, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	background: -moz-linear-gradient(top, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	background: linear-gradient(top, rgba(247, 251, 233, 1) 48px, rgba(247, 251, 233, 1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f7fbe9', endColorstr='#f7fbe9', GradientType=0);
+}
+
+.crm-entity-stream-section-content-expand-btn:hover { color: #333; }
+
+/*endregion */
+
+/*region Event Content Container */
+.crm-entity-stream-content-event {
+	position: relative;
+	padding: 8px 50px 10px 15px;
+	transition: all 300ms ease, 1000ms background-color linear;
+}
+
+.crm-entity-stream-section-planned .crm-entity-stream-content-event { padding-left: 35px; }
+
+.crm-entity-stream-section-top-fixed .crm-entity-stream-content-event {
+	min-height: 65px;
+	background: #f7fbe9;
+}
+
+.crm-entity-stream-content-detail-planned-action {
+	position: absolute;
+	top: 10px;
+	left: 13px;
+}
+
+/*endregion */
+
+/*region Event Header*/
+.crm-entity-stream-content-header {
+	position: relative;
+	display: flex;
+	box-sizing: border-box;
+	margin-bottom: 3px;
+	padding: 1px 0;
+	max-width: 100%;
+	flex-wrap: wrap;
+	align-content: flex-start;
+}
+
+.crm-entity-stream-section-planned .crm-entity-stream-content-header { padding-right: 0; }
+
+/**/
+
+.crm-entity-stream-content-event-title {
+	overflow: hidden;
+	box-sizing: border-box;
+	margin-right: 5px;
+	max-width: calc(100% - 50px);
+	color: #333;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: bold 13px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin-bottom: 2px;
+}
+
+.crm-entity-stream-section { }
+
+.crm-entity-stream-content-event-title > a {
+	color: #000;
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.crm-entity-stream-content-event-title:hover > a { color: #2067b0; }
+
+/**/
+
+.crm-entity-stream-content-event-time {
+	color: #a8adb4;
+	font: 400 13px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-event-paid,
+.crm-entity-stream-content-event-not-paid,
+.crm-entity-stream-content-event-shipped,
+.crm-entity-stream-content-event-not-shipped,
+.crm-entity-stream-content-event-allowed-delivery,
+.crm-entity-stream-content-event-disallowed-delivery,
+.crm-entity-stream-content-event-done,
+.crm-entity-stream-content-event-process,
+.crm-entity-stream-content-event-skipped,
+.crm-entity-stream-content-event-missing,
+.crm-entity-stream-content-event-successful,
+.crm-entity-stream-content-event-payment-error,
+.crm-entity-stream-content-event-sent {
+	display: inline-block;
+	margin: 0 5px 3px 0;
+	padding: 1px 8px 0;
+	border-radius: 10px;
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 9px;
+	line-height: 21px;
+	transition: 250ms all ease;
+}
+
+.crm-entity-stream-content-event-process,
+.crm-entity-stream-content-event-shipped,
+.crm-entity-stream-content-event-allowed-delivery,
+.crm-entity-stream-content-event-skipped {
+	background-color: #fff6bf;
+	color: #bf9e1b;
+}
+
+.crm-entity-stream-content-event-not-paid,
+.crm-entity-stream-content-event-not-shipped,
+.crm-entity-stream-content-event-disallowed-delivery,
+.crm-entity-stream-content-event-missing,
+.crm-entity-stream-content-event-payment-error {
+	background-color: #ffe8e7;
+	color: #d01515;
+}
+
+.crm-entity-stream-content-event-paid,
+.crm-entity-stream-content-event-successful {
+	background-color: #e3f6c8;
+	color: #589308;
+}
+
+.crm-entity-stream-content-event-sent {
+	background-color: #e8e9eb;
+	color: #7a818c;
+}
+
+.crm-entity-stream-content-event-done {
+	background-color: rgba(47, 198, 246, 0.15);
+	color: #1097C2;
+}
+
+/*endregion*/
+
+/*region Event Detail */
+.crm-entity-stream-content-detail {
+	position: relative;
+	padding: 1px 0;
+	color: #535c69;
+	word-break: break-all;
+	word-break: break-word;
+	font: 400 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bx-ie .crm-entity-stream-content-detail,
+.bx-firefox .crm-entity-stream-content-detail {
+	word-break: break-all;
+	word-break: break-word;
+}
+
+.crm-entity-stream-section-planned .crm-entity-stream-content-detail { padding-right: 0; }
+
+.crm-entity-stream-content-detail > a {
+	border-bottom: 1px solid transparent;
+	transition: 220ms border ease;
+}
+
+.crm-entity-stream-content-detail > a:hover { border-bottom: 1px solid; }
+
+.crm-entity-stream-content-detail-title { margin-bottom: 3px; }
+
+.crm-entity-stream-content-detail-description {
+	overflow-x: hidden;
+	margin-bottom: 3px;
+	word-break: break-all;
+	word-break: break-word;
+}
+
+.crm-entity-stream-content-detail-description .crm-entity-stream-content-detail-description-logo {
+	display: inline-block;
+	margin: 0 3px 0 5px;
+	border-radius: 10px;
+	box-shadow: 0px 2px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+.crm-entity-stream-content-detail-contact-info { margin-bottom: 3px; }
+
+.crm-entity-stream-content-detail-order {
+	font-size: 14px;
+	line-height: 20px;
+	margin-bottom: 6px;
+}
+
+.crm-entity-stream-content-detail-order-destination {
+	margin-left: 5px;
+}
+
+.crm-entity-stream-content-detail-sms-order {
+	border-bottom: 1px solid #edeef0;
+	margin-bottom: 7px;
+}
+
+.crm-entity-stream-content-detail-sms-order .crm-entity-stream-content-detail-sms-fragment {
+	margin: 0 20px 0 42px;
+	border-left-width: 9px;
+	border-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22366%22%20height%3D%2260%22%20viewBox%3D%220%200%20366%2060%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%232FC6F6%22%20d%3D%22M453.208214%2C326.5%20L101.208214%2C326.5%20C100.517858%2C326.5%2099.8928585%2C326.779822%2099.4404475%2C327.232233%20C98.9880365%2C327.684644%2098.7082144%2C328.309644%2098.7082144%2C329%20L98.7082144%2C383%20C98.7082144%2C383.690356%2098.9880365%2C384.315356%2099.4404475%2C384.767767%20C99.8928585%2C385.220178%20100.517858%2C385.5%20101.208214%2C385.5%20L453.208214%2C385.5%20C453.89857%2C385.5%20454.52357%2C385.220178%20454.975981%2C384.767767%20C455.428392%2C384.315356%20455.708214%2C383.690356%20455.708214%2C383%20L455.708214%2C350.611798%20L463.163509%2C344.838693%20L455.708214%2C339.491698%20L455.708214%2C329%20C455.708214%2C328.309644%20455.428392%2C327.684644%20454.975981%2C327.232233%20C454.52357%2C326.779822%20453.89857%2C326.5%20453.208214%2C326.5%20Z%22%20opacity%3D%22.41%22%20transform%3D%22matrix%28-1%200%200%201%20464.208%20-326%29%22/%3E%0A%3C/svg%3E%0A) 22 21 5 9;
+}
+
+.crm-entity-stream-content-detail-sms-order .crm-entity-stream-content-detail-employee {
+	left: 0;
+	width: 32px;
+	height: 32px;
+	top: 17px;
+}
+
+.crm-entity-stream-content-detail-sms-service {
+	color: #80868e;
+	font: 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-sms-service a {
+	color: #80868e;
+	border-bottom: 1px dashed rgba(166, 171, 176, .4);
+}
+
+.crm-entity-stream-content-detail-sms-service a:hover {
+	border-color: rgba(166, 171, 176, .8);
+	color: #80868e;
+}
+
+.crm-entity-stream-content-detail-sms-order .crm-entity-stream-content-detail-sms-service {
+	padding-bottom: 14px;
+}
+
+.crm-entity-stream-content-detail-description-info,
+.crm-entity-stream-content-clicked-description-info {
+	color: #80868e;
+}
+
+.crm-entity-stream-content-detail-description-info {
+	margin: 0 5px 0 15px;
+}
+
+.crm-entity-stream-content-clicked-description-info {
+	margin-right: 5px;
+}
+
+.crm-entity-stream-content-clicked-description-name {
+	color: #000;
+}
+
+.crm-entity-stream-content-detail-notice {
+	padding-top: 13px;
+	margin-top: 18px;
+	border-top: 1px solid #edeef0;
+	position: relative;
+}
+
+.crm-entity-stream-content-detail-payment {
+	display: flex;
+	align-items: center;
+	margin: 10px 0 17px;
+}
+
+.crm-entity-stream-content-detail-payment-text {
+	margin: 0 3px;
+}
+
+.crm-entity-stream-content-detail-payment-value {
+	background-color: #10c13e;
+	border-radius: 22px;
+	margin-right: 15px;
+	padding: 0 15px 0 13px;
+	color: #fff;
+	font: 25px/40px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-payment-value:before {
+	content: '+';
+	opacity: .8;
+}
+
+.crm-entity-stream-content-detail-payment-currency {
+	opacity: .8;
+	font-size: 21px;
+}
+
+.crm-entity-stream-content-detail-payment-logo {
+	width: 100px;
+	height: 45px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.crm-entity-stream-section-payment .crm-entity-stream-content-event {
+	padding-right: 15px;
+}
+
+.crm-entity-stream-section-payment .crm-entity-stream-content-header {
+	padding-right: 50px;
+}
+
+.crm-entity-stream-section-payment .crm-entity-stream-content-detail-notice {
+	padding: 15px 50px 6px 22px;
+}
+
+.crm-entity-stream-section-payment .crm-entity-stream-content-detail-notice:before  {
+	content: '';
+	position: absolute;
+	left: 2px;
+	top: 15px;
+	width: 12px;
+	height: 15px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.435.982a1.4%201.4%200%20011.4%201.392l.01%201.877v9.3a1.4%201.4%200%2001-1.4%201.4h-9.02a1.4%201.4%200%2001-1.4-1.4V2.38a1.4%201.4%200%20011.4-1.4h9.01zm.022%201.507H1.384v10.954h9.102V4.752l-.03-2.263zM9.019%206.83v1.424H2.85V6.83H9.02zm0-2.897v1.406H2.85V3.932H9.02z%22%20opacity%3D%22.648%22/%3E%3C/svg%3E) no-repeat center;
+}
+
+.crm-entity-stream-section-payment .crm-entity-stream-content-detail-description a {
+	margin-right: 5px;
+}
+
+.crm-entity-stream-content-detail-table-row,
+.crm-entity-stream-content-detail-table-cost {
+	display: flex;
+	align-items: center;
+}
+
+.crm-entity-stream-content-detail-cost {
+	margin-left: auto;
+}
+
+.crm-entity-stream-content-detail-table-row {
+	padding-bottom: 12px;
+}
+
+.crm-entity-stream-content-detail-table-row:first-child {
+	border-bottom: 1px solid #edeef0;
+	font-size: 14px;
+	margin: 8px 0 16px;
+	padding-bottom: 7px;
+}
+
+.crm-entity-stream-content-detail-table-row:first-child .crm-entity-stream-content-detail-cost-current {
+	color: #333;
+}
+
+.crm-entity-stream-content-detail-table-row:first-child .crm-entity-stream-content-detail-description,
+.crm-entity-stream-content-detail-table-row:last-child .crm-entity-stream-content-detail-description {
+	opacity: 1;
+}
+
+.crm-entity-stream-content-detail-table-row:last-child {
+	border-top: 1px solid #edeef0;
+	font-size: 14px;
+	color: #333;
+	padding: 18px 0 0;
+}
+
+.crm-entity-stream-content-detail-table-row .crm-entity-stream-content-detail-description {
+	opacity: .7;
+}
+
+.crm-entity-stream-content-detail-date {
+	color: #000;
+	font-size: 14px;
+}
+
+.crm-entity-stream-content-detail-icon {
+	width: 70px;
+	height: 22px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 3px;
+}
+
+.crm-entity-stream-content-detail-cost-prev {
+	text-decoration: line-through;
+	opacity: .7;
+	font-size: 13px;
+	margin-right: 11px;
+}
+
+.crm-entity-stream-content-detail-cost-prev span,
+.crm-entity-stream-content-detail-cost-current span {
+	font-family: 'rubleBitrix', 'OpenSans';
+	vertical-align: middle;
+}
+
+.crm-entity-stream-content-detail-additional {
+	margin-bottom: 3px;
+	color: #a8adb4;
+	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 17px;
+}
+
+/*endregion*/
+
+/*region New comment */
+.crm-entity-stream-section-new { }
+
+.crm-entity-stream-section-content-new {
+	padding: 0;
+	background-color: #fff;
+}
+
+.crm-entity-stream-section-content-new-header {
+	position: relative;
+	bottom: -1px;
+	z-index: 15;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding-right: 70px;
+	height: 49px;
+}
+
+.crm-entity-stream-section-content-new-header:after {
+	content: '';
+	position: absolute;
+	width: 100%;
+	left: 0;
+	bottom: 0;
+	height: 1px;
+	background: rgba(130,139,149,.21);
+}
+
+.crm-entity-stream-section-new-action,
+.crm-entity-stream-section-new-action-more,
+.crm-entity-stream-section-new-action-active {
+	display: block;
+	float: left;
+	position: relative;
+	z-index: 9;
+	margin-right: 3px;
+	margin-left: 18px;
+	height: 47px;
+	border-bottom: 2px solid transparent;
+	color: #555c6d !important;
+	vertical-align: middle;
+	font: 14px/47px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	cursor: pointer;
+	transition: all 300ms ease;
+}
+
+.crm-entity-stream-section-new-action:hover,
+.crm-entity-stream-section-new-action-more:hover,
+.crm-entity-stream-section-new-action-active {
+	z-index: 10;
+	border-color: #0063c6;
+	color: #0063c6 !important;
+}
+
+.crm-entity-stream-section-new-action-more {
+	position: absolute;
+	top: 0;
+	right: 10px;
+	padding-right: 10px;
+}
+
+.crm-entity-stream-section-new-action-more:after {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	margin-top: 2px;
+	border: 3px solid transparent;
+	border-top-color: #555c6d;
+	content: '';
+	transform: translateY(-50%);
+}
+
+.crm-entity-stream-content-new-detail {
+	position: relative;
+	padding-bottom: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-new-detail.focus { padding-bottom: 58px; }
+
+.crm-entity-stream-content-new-comment-btn-container {
+	position: absolute;
+	bottom: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 10px 15px 0;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-new-comment-btn-container {
+	height: 58px;
+	opacity: 1;
+}
+
+.crm-entity-stream-content-new-comment-textarea,
+.crm-entity-stream-content-new-comment-textarea-shadow {
+	display: block;
+	padding: 10px 14px 10px 16px;
+	min-height: 21px;
+	max-width: calc(100% - 30px);
+	width: calc(100% - 30px);
+	outline: none;
+	border: none;
+	color: #000;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	resize: none;
+	transition: 400ms all ease;
+}
+
+.crm-entity-stream-content-new-comment-textarea-shadow {
+	overflow: hidden;
+	padding: 0;
+	min-height: 0;
+	height: 0;
+}
+
+.crm-entity-stream-content-new-comment-textarea:focus { outline: none; }
+
+/*endregion*/
+
+/*region SMS */
+.crm-entity-stream-content-new-sms-btn-container {
+	position: absolute;
+	bottom: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 15px 15px 0;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-new-sms-btn-container {
+	height: 58px;
+	opacity: 1;
+}
+
+.crm-entity-stream-content-sms-conditions {
+	position: relative;
+	padding: 10px 13px;
+	border-bottom: 1px solid #f7f8f8;
+	background-color: #f8fafb;
+	color: #828b95;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+}
+
+.crm-entity-stream-content-sms-conditions-text { padding: 8px 0; }
+
+.crm-entity-stream-content-sms-conditions strong {
+	color: #525c69;
+	font-weight: normal;
+}
+
+.crm-entity-stream-content-sms-conditions a {
+	margin: 0 3px;
+	border-bottom: 1px dashed;
+	color: #0063c6;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-sms-conditions a:hover { border-bottom: 1px solid; }
+
+.crm-entity-stream-content-sms-conditions span { color: #525c69; }
+
+.crm-entity-stream-content-sms-conditions-helper-icon {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 13px;
+	height: 13px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -417px;
+	opacity: .6;
+	cursor: pointer;
+	transition: 220ms all linear;
+}
+
+.crm-entity-stream-content-sms-conditions-helper-icon:hover { opacity: 1; }
+
+.crm-entity-stream-content-new-sms-textarea,
+.crm-entity-stream-content-new-sms-textarea-shadow {
+	display: block;
+	padding: 10px 14px 10px 16px;
+	min-height: 21px;
+	max-width: calc(100% - 30px);
+	width: calc(100% - 30px);
+	outline: none;
+	border: none;
+	color: #000;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	resize: none;
+	transition: 400ms all ease;
+}
+
+.crm-entity-stream-content-new-sms-textarea-shadow {
+	overflow: auto;
+	padding: 0;
+	height: 0;
+}
+
+.crm-entity-stream-content-new-sms-textarea:focus { outline: none; }
+
+.crm-entity-stream-content-new-sms-connect-link {
+	position: absolute;
+	top: 50%;
+	left: 15px;
+	border-bottom: 1px dashed;
+	vertical-align: middle;
+	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transform: translateY(-50%);
+}
+
+.crm-entity-stream-content-new-sms-connect-link:hover { border-bottom-style: solid; }
+
+.crm-entity-stream-content-sms-symbol-counter {
+	position: absolute;
+	top: 50%;
+	right: 10px;
+	color: #b0b7bd;
+	vertical-align: middle;
+	text-align: right;
+	font: 400 12px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transform: translateY(-50%);
+}
+
+.crm-entity-stream-content-sms-symbol-counter-number {
+	margin: 0 5px;
+	color: #89929e;
+}
+
+.crm-entity-stream-content-sms-symbol-counter-number-overhead { color: #d0011b; }
+
+.crm-entity-stream-content-detail-sms { margin-bottom: 10px; }
+
+.crm-entity-stream-content-detail-sms-status {
+	margin-bottom: 5px;
+	padding-bottom: 4px;
+	color: #a8adb4;
+	font: 400 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-sms-status strong {
+	color: #80868e;
+	font-weight: normal;
+}
+
+.crm-entity-stream-content-detail-sms-fragment {
+	position: relative;
+	border-width: 22px 21px 5px 4px;
+	border-style: solid;
+	border-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2251%22%20viewBox%3D%220%200%2026%2051%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%232FC6F6%22%20d%3D%22M1165.63419%2C2673.12695%20L1150.5%2C2673.12695%20L1150.5%2C2668.62695%20C1150.5%2C2667.24624%201149.38071%2C2666.12695%201148%2C2666.12695%20L1144%2C2666.12695%20C1142.61929%2C2666.12695%201141.5%2C2667.24624%201141.5%2C2668.62695%20L1141.5%2C2712.62695%20C1141.5%2C2714.00766%201142.61929%2C2715.12695%201144%2C2715.12695%20L1148%2C2715.12695%20C1149.38071%2C2715.12695%201150.5%2C2714.00766%201150.5%2C2712.62695%20L1150.5%2C2685.92251%20L1165.63419%2C2673.12695%20Z%22%20transform%3D%22translate%28-1141%20-2665%29%22%20opacity%3D%22.41%22/%3E%0A%3C/svg%3E%0A') 22 21 5 4 repeat;
+	color: #000;
+	font: 400 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-section-planned .crm-entity-stream-content-detail-sms-fragment { border-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2251%22%20viewBox%3D%220%200%2026%2051%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23D4D3BD%22%20d%3D%22M1165.63419%2C2673.12695%20L1150.5%2C2673.12695%20L1150.5%2C2668.62695%20C1150.5%2C2667.24624%201149.38071%2C2666.12695%201148%2C2666.12695%20L1144%2C2666.12695%20C1142.61929%2C2666.12695%201141.5%2C2667.24624%201141.5%2C2668.62695%20L1141.5%2C2712.62695%20C1141.5%2C2714.00766%201142.61929%2C2715.12695%201144%2C2715.12695%20L1148%2C2715.12695%20C1149.38071%2C2715.12695%201150.5%2C2714.00766%201150.5%2C2712.62695%20L1150.5%2C2685.92251%20L1165.63419%2C2673.12695%20Z%22%20transform%3D%22translate%28-1141%20-2665%29%22%20opacity%3D%22.41%22/%3E%0A%3C/svg%3E%0A') 22 21 5 4 repeat; }
+
+.crm-entity-stream-content-detail-sms-fragment span,
+.crm-entity-stream-content-detail-sms-fragment a {
+	position: relative;
+	display: block;
+	margin-top: -16px;
+	padding: 4px 12px;
+}
+
+.crm-entity-stream-content-detail-sms-fragment a {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+.crm-entity-stream-content-sms-button,
+.crm-entity-stream-content-sms-salescenter-container-absolute {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	cursor: pointer;
+	padding: 6px 0 ;
+}
+
+.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-sms-salescenter-container-absolute {
+	position: absolute;
+	top: 50%;
+	right: 15px;
+	transform: translateY(-50%);
+	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-sms-file-icon,
+.crm-entity-stream-content-sms-document-icon,
+.crm-entity-stream-content-sms-salescenter-icon {
+	background-size: 12px 15px;
+	width: 12px;
+	height: 15px;
+	margin-right: 5px;
+	margin-top: -2px;
+}
+.crm-entity-stream-content-sms-salescenter-icon {
+	background-image: url(images/icon_salescenter.svg);
+}
+.crm-entity-stream-content-sms-document-icon {
+	background-image: url(images/icon_document.svg);
+}
+.crm-entity-stream-content-sms-file-icon {
+	background-image: url(images/icon_file.svg);
+}
+
+.crm-entity-stream-content-sms-button-text {
+	white-space: nowrap;
+	color: #0063c6;
+}
+
+.crm-entity-stream-content-sms-buttons-container {
+	position: relative;
+	padding: 10px 120px 10px 0;
+	border-bottom: 1px solid #f0f0f0;;
+	background-color: #f8fafb;
+	color: #828b95;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+}
+
+.crm-entity-stream-content-sms-button {
+	padding-left: 18px;
+}
+
+.crm-entity-stream-content-sms-detail-toggle {
+	position: absolute;
+	right: 30px;
+	top: 13px;
+	cursor: pointer;
+	border-bottom: 1px dashed;
+}
+
+.crm-entity-stream-content-sms-file-external-link-popup,
+.crm-entity-stream-content-sms-file-uploader-zone,
+.crm-entity-stream-content-sms-conditions-container.hidden {
+	display: none;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-slider {
+	padding: 0 13px 0 21px;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-container {
+	max-width: 600px;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-inner {
+	background: #fff;
+	padding: 50px 24px 20px 24px;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-desc {
+	padding: 0 0 75px 200px;
+	margin-bottom: 30px;
+	border-bottom: 1px solid #eeeef0;
+	position: relative;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-desc-text {
+	font: 16px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #525c69;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-desc-number {
+	font-weight: 700;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-img-lock {
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22210%22%20height%3D%22210%22%20viewBox%3D%220%200%20210%20210%22%3E%0A%20%20%3Cpath%20fill%3D%22%23469AF9%22%20fill-rule%3D%22evenodd%22%20d%3D%22M154.4034%2C43.8164%20L136.5964%2C43.8164%20C123.3624%2C43.8164%20112.5964%2C54.5824%20112.5964%2C67.8164%20L112.5964%2C76.8164%20L118.5964%2C76.8164%20L118.5964%2C67.8164%20C118.5964%2C57.9164%20126.6964%2C49.8164%20136.5964%2C49.8164%20L154.4034%2C49.8164%20C164.3034%2C49.8164%20172.4034%2C57.9164%20172.4034%2C67.8164%20L172.4034%2C76.8164%20L178.4034%2C76.8164%20L178.4034%2C67.8164%20C178.4034%2C54.5824%20167.6374%2C43.8164%20154.4034%2C43.8164%20Z%20M105.0004%2C204.0004%20C50.3234%2C204.0004%206.0004%2C159.6764%206.0004%2C105.0004%20C6.0004%2C50.3234%2050.3234%2C6.0004%20105.0004%2C6.0004%20C159.6754%2C6.0004%20204.0004%2C50.3234%20204.0004%2C105.0004%20C204.0004%2C159.6764%20159.6754%2C204.0004%20105.0004%2C204.0004%20Z%20M105.0004%2C0.0004%20C47.1024%2C0.0004%200.0004%2C47.1024%200.0004%2C105.0004%20C0.0004%2C162.8974%2047.1024%2C210.0004%20105.0004%2C210.0004%20C162.8974%2C210.0004%20210.0004%2C162.8974%20210.0004%2C105.0004%20C210.0004%2C47.1024%20162.8974%2C0.0004%20105.0004%2C0.0004%20Z%20M93.0004%2C126.1304%20L93.0004%2C135.5004%20C93.0004%2C137.4244%2094.5754%2C139.0004%2096.5004%2C139.0004%20C98.4244%2C139.0004%20100.0004%2C137.4244%20100.0004%2C135.5004%20L100.0004%2C126.1304%20C102.3784%2C124.8734%20104.0004%2C122.3774%20104.0004%2C119.5004%20C104.0004%2C115.3584%20100.6414%2C112.0004%2096.5004%2C112.0004%20C92.3574%2C112.0004%2089.0004%2C115.3584%2089.0004%2C119.5004%20C89.0004%2C122.3774%2090.6224%2C124.8734%2093.0004%2C126.1304%20Z%20M57.0004%2C154.0004%20L136.0004%2C154.0004%20L136.0004%2C89.0004%20L57.0004%2C89.0004%20L57.0004%2C154.0004%20Z%20M136.0004%2C83.0004%20L57.0004%2C83.0004%20C53.6864%2C83.0004%2051.0004%2C85.6864%2051.0004%2C89.0004%20L51.0004%2C154.0004%20C51.0004%2C157.3134%2053.6864%2C160.0004%2057.0004%2C160.0004%20L136.0004%2C160.0004%20C139.3134%2C160.0004%20142.0004%2C157.3134%20142.0004%2C154.0004%20L142.0004%2C89.0004%20C142.0004%2C85.6864%20139.3134%2C83.0004%20136.0004%2C83.0004%20Z%22/%3E%0A%3C/svg%3E%0A)
+	center center no-repeat;
+	background-size: cover;
+	border-radius: 50%;
+	left: 17px;
+	height: 90px;
+	position: absolute;
+	top: 17px;
+	width: 90px;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-img {
+	height: 145px;
+	left: 38px;
+	top: -16px;
+	position: absolute;
+	width: 127px;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-img:before, .crm-entity-stream-content-sms-file-external-link-popup-limit-img:after {
+	position: absolute;
+	width: 49px;
+	height: 35px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22112%22%20height%3D%2280%22%20viewBox%3D%220%200%20112%2080%22%3E%0A%20%20%3Cpath%20fill%3D%22%23C9CCD0%22%20fill-rule%3D%22evenodd%22%20d%3D%22M53.803%2C0.0004%20C34.313%2C0.0004%2018.441%2C15.7864%2018.303%2C35.2444%20C7.907%2C37.1344%200%2C46.2554%200%2C57.1884%20C0%2C69.4854%2010.005%2C79.4904%2022.303%2C79.4904%20L85.303%2C79.4904%20C85.432%2C79.4904%2085.561%2C79.4844%2085.69%2C79.4724%20C92.515%2C79.2684%2098.901%2C76.4794%20103.699%2C71.6004%20C108.58%2C66.6384%20111.268%2C60.0714%20111.268%2C53.1104%20C111.268%2C39.7234%20101.215%2C28.6124%2088.263%2C26.9474%20C86.512%2C19.8884%2082.604%2C13.4854%2077.048%2C8.6684%20C70.601%2C3.0784%2062.345%2C0.0004%2053.803%2C0.0004%20M53.803%2C4.0004%20C69.578%2C4.0004%2082.646%2C15.5984%2084.944%2C30.7324%20C97.278%2C30.7634%20107.268%2C40.7704%20107.268%2C53.1104%20C107.268%2C65.3324%2097.47%2C75.2584%2085.302%2C75.4794%20L85.303%2C75.4904%20L22.303%2C75.4904%20C12.195%2C75.4904%204%2C67.2964%204%2C57.1884%20C4%2C47.0794%2012.195%2C38.8854%2022.303%2C38.8854%20C22.366%2C38.8854%2022.425%2C38.8944%2022.488%2C38.8954%20C22.367%2C37.7794%2022.303%2C36.6464%2022.303%2C35.5004%20C22.303%2C18.1034%2036.406%2C4.0004%2053.803%2C4.0004%22/%3E%0A%3C/svg%3E%0A)
+	no-repeat;
+	content: '';
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-img:before {
+	background-size: 26px auto;
+	background-position: right top;
+	top: 0;
+	right: 0;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-img:after {
+	background-position: center center;
+	background-size: 100%;
+	bottom: 0;
+	left: 0;
+}
+.crm-entity-stream-content-sms-file-external-link-popup-limit-buttons {
+	text-align: center;
+	font-size: 0;
+}
+.crm-entity-stream-content-sms-menu-item-with-lock .menu-popup-item-icon{
+	background-image: url(images/lock.svg);
+	width: 10px;
+	height: 13px;
+}
+/*endregion*/
+
+/*region Label*/
+.crm-entity-stream-section-planned-label,
+.crm-entity-stream-section-today-label,
+.crm-entity-stream-section-history-label { min-height: 22px; }
+
+.crm-entity-stream-section-planned-label:before,
+.crm-entity-stream-section-today-label:before,
+.crm-entity-stream-section-history-label:before { top: 10px; }
+
+.crm-entity-stream-section-planned-label .crm-entity-stream-section-content,
+.crm-entity-stream-section-today-label .crm-entity-stream-section-content,
+.crm-entity-stream-section-history-label .crm-entity-stream-section-content { text-align: center; }
+
+.crm-entity-stream-planned-label,
+.crm-entity-stream-today-label,
+.crm-entity-stream-history-label,
+.crm-entity-stream-filter-label {
+	display: inline-block;
+	padding: 2px 15px;
+	min-height: 18px;
+	border-radius: 11px;
+	color: #fff;
+	font: bold 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-planned-label {
+	background-color: #9ece00;
+}
+
+.crm-entity-stream-today-label {
+	background-color: #2fc6f5;
+}
+
+.crm-entity-stream-filter-label {
+	color: rgba(82, 92, 105, .5);
+	position: absolute;
+	right: 0;
+	padding-left: 27px;
+	background: #fcfdfd url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20width%3D%2210%22%20height%3D%229%22%3E%3Cdefs%3E%3Cpath%20id%3D%22a%22%20d%3D%22M21%206v1.2l-3.75%204.342L16.937%2015l-1.562-.458-.313-3L11%207.2V6h10zm-8%201l3%203-1.333-3H13z%22/%3E%3C/defs%3E%3Cuse%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.5%22%20transform%3D%22translate%28-11%20-6%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3C/svg%3E) no-repeat center left 11px;
+	cursor: pointer;
+	font-size: 10px;
+	text-transform: uppercase;
+	transition: opacity .2s linear;
+	border: none;
+	outline: none;
+}
+
+.crm-entity-stream-filter-label:hover, .crm-entity-stream-filter-label-active {
+	color: #2fc6f6;
+}
+
+.crm-entity-stream-history-label {
+	background-color: #dde5e8;
+	color: #6e7273;
+}
+
+.bitrix24-dark-theme .crm-entity-stream-history-label {
+	background-color: #9d9d9d;
+	color: #fff;
+}
+
+/*endregion*/
+
+/*region Others Elements*/
+.crm-entity-stream-content-detail-action {
+	position: absolute;
+	right: 14px;
+	bottom: 14px;
+	min-width: 21px;
+	height: 21px;
+}
+
+.crm-entity-stream-content-action-reply-btn {
+	display: block;
+	width: 21px;
+	height: 21px;
+	background: url(images/icons-sprite.svg?3) no-repeat center;
+	opacity: .85;
+	cursor: pointer;
+	transition: all 220ms ease;
+}
+
+.crm-entity-stream-content-action-reply-btn:hover { opacity: 1; }
+
+.crm-entity-stream-content-letter-more { margin-left: 5px; }
+
+.crm-entity-stream-content-detail-employee {
+	position: absolute;
+	top: 10px;
+	right: 14px;
+	display: block;
+	overflow: hidden;
+	width: 21px;
+	height: 21px;
+	border-radius: 50%;
+}
+
+.crm-entity-stream-content-detail-employee-robot {
+	position: absolute;
+	top: 10px;
+	right: 14px;
+	display: block;
+	overflow: hidden;
+	width: 21px;
+	height: 21px;
+	border-radius: 50%;
+	background: #535c6a url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2212%22%20viewBox%3D%220%200%2014%2012%22%3E%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M13.9986156%2C6.6570534%20L14.6985216%2C4.33318801%20C14.7595049%2C4.13114149%2014.7080652%2C3.91190863%2014.5635794%2C3.75807234%20C14.4190936%2C3.60423604%2014.2035125%2C3.53916771%2013.9980434%2C3.58737794%20C13.7925744%2C3.63558818%2013.628433%2C3.7897527%2013.5674498%2C3.99179922%20L12.9679522%2C5.98667922%20C11.1041651%2C5.0138991%208.8819815%2C5.01621618%207.02022708%2C5.99288092%20L6.41777628%2C3.99179922%20C6.32350437%2C3.67946236%205.99388283%2C3.50268578%205.68154596%2C3.59695769%20C5.36920909%2C3.6912296%205.19243252%2C4.02085115%205.28670443%2C4.33318801%20L5.9895637%2C6.66620829%20C4.41118003%2C7.92780965%203.49455419%2C9.84054571%203.50002434%2C11.8611652%20C3.50002434%2C15.5077645%206.40891671%2C14.6129478%209.99999601%2C14.6129478%20C13.5910753%2C14.6129478%2016.4999677%2C15.5077645%2016.4999677%2C11.8611652%20C16.5062901%2C9.83513033%2015.5846824%2C7.91770764%2013.9986156%2C6.6570534%20Z%20M9.99408963%2C11.3656199%20C7.43072052%2C11.3656199%205.35167461%2C11.631407%205.35167461%2C10.5449283%20C5.35167461%2C9.45844964%207.43072052%2C8.57633172%209.99408963%2C8.57633172%20C12.5574587%2C8.57633172%2014.6394578%2C9.45756368%2014.6394578%2C10.5449283%20C14.6394578%2C11.632293%2012.5604119%2C11.3656199%209.99408963%2C11.3656199%20Z%20M7.87074587%2C9.39023094%20C7.50476741%2C9.45707826%207.25411915%2C9.79733401%207.29877947%2C10.166677%20C7.34343979%2C10.53602%207.6679646%2C10.8067268%208.03932833%2C10.784416%20C8.41069206%2C10.7621051%208.70047249%2C10.454492%208.70059232%2C10.0824587%20C8.65913211%2C9.66397182%208.28988254%2C9.35595724%207.87074587%2C9.39023094%20Z%20M11.544482%2C10.168486%20C11.5899782%2C10.5377659%2011.9149597%2C10.8078923%2012.286334%2C10.7851176%20C12.6577082%2C10.7623429%2012.9472474%2C10.4545307%2012.9472798%2C10.0824587%20C12.9058315%2C9.66272444%2012.5347188%2C9.35425343%2012.1144802%2C9.39023094%20C11.7486836%2C9.45827766%2011.4989857%2C9.79920617%2011.544482%2C10.168486%20Z%22%20transform%3D%22translate%28-3%20-3%29%22/%3E%3C/svg%3E) no-repeat center;
+	background-size: 13px;
+}
+
+.crm-entity-stream-content-detail-target {
+	overflow: hidden;
+	line-height: 24px;
+}
+
+/*endregion*/
+
+/*region Event: Wait */
+.crm-entity-stream-content-wait-detail {
+	position: relative;
+	overflow: hidden;
+	padding-bottom: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-wait-detail.focus { padding-bottom: 58px; }
+
+.crm-entity-stream-content-wait-conditions {
+	position: relative;
+	padding: 18px 13px;
+	border-bottom: 1px solid #f7f8f8;
+	background-color: #f8fafb;
+	color: #99a0a9;
+	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-wait-conditions a {
+	margin: 0 3px;
+	border-bottom: 1px dashed;
+	color: #0063c6;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-wait-conditions a:hover { border-bottom: 1px solid; }
+
+.crm-entity-stream-content-wait-conditions span { color: #525c69; }
+
+.crm-entity-stream-content-wait-conditions-helper-icon {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 13px;
+	height: 13px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -417px;
+	opacity: .6;
+	cursor: pointer;
+	transition: 220ms all linear;
+}
+
+.crm-entity-stream-content-wait-conditions-helper-icon:hover { opacity: 1; }
+
+.crm-entity-stream-content-wait-comment-textarea {
+	display: block;
+	padding: 10px 14px 10px 16px;
+	min-height: 21px;
+	max-width: calc(100% - 30px);
+	width: calc(100% - 30px);
+	border: none;
+	color: #000;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	resize: none;
+	transition: 400ms all ease;
+}
+
+.crm-entity-stream-content-wait-comment-textarea:focus { outline: none; }
+
+.crm-entity-stream-content-wait-comment-btn-container {
+	position: absolute;
+	bottom: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 15px 15px 0;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-wait-detail.focus .crm-entity-stream-content-wait-comment-btn-container {
+	height: 58px;
+	opacity: 1;
+}
+
+/**/
+.crm-wait-popup-select-block { }
+
+.crm-wait-popup-select-wrapper {
+	padding: 13px 12px 12px;
+	background-color: #f7f8f9;
+}
+
+.crm-wait-popup-settings-title {
+	display: inline-block;
+	margin-right: 10px;
+	color: #80868e;
+	font-size: 13px;
+}
+
+.crm-wait-popup-settings-input {
+	display: inline-block;
+	overflow: hidden;
+	margin: 0 10px 0 0;
+	padding: 0 5px;
+	width: 30px;
+	height: 36px;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	background: #fff;
+	color: #555c6d;
+	vertical-align: middle;
+	text-align: center;
+	text-overflow: ellipsis;
+	font: 400 16px/36px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/*endregion*/
+
+/*region Event: notTask*/
+.crm-entity-stream-section-notTask .crm-entity-stream-content-detail {
+	color: #a8adb4;
+	font: 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif
+}
+
+.crm-entity-stream-section-notTask .crm-entity-stream-content-event,
+.crm-entity-stream-section-notTask .crm-entity-stream-content-detail {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-left: 7px;
+	min-height: 0;
+}
+
+/*endregion*/
+
+/*region Event: newEntity */
+.crm-entity-stream-section-newEntity .crm-entity-stream-content-detail {
+	color: #333;
+	font: 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif
+}
+
+.crm-entity-stream-section-newEntity .crm-entity-stream-content-event,
+.crm-entity-stream-section-newEntity .crm-entity-stream-content-detail {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	min-height: 0;
+}
+
+/*endregion*/
+
+/*region Event: Email */
+.crm-entity-stream-section-email { }
+
+.crm-entity-stream-section-email .crm-entity-stream-content-action-reply-btn { background-position: center -781px; }
+
+.crm-entity-stream-content-read-status-not-delivered,
+.crm-entity-stream-content-read-status-delivered,
+.crm-entity-stream-content-read-status-read {
+	display: inline-block;
+	width: 15px;
+	height: 18px;
+	background: url(images/icons-sprite.svg?3) no-repeat center;
+	vertical-align: middle;
+}
+
+.crm-entity-stream-content-read-status-not-delivered { background-position: center -272px; }
+
+.crm-entity-stream-content-read-status-delivered { background-position: center -335px; }
+
+.crm-entity-stream-content-read-status-read { background-position: center -304px; }
+
+.crm-entity-stream-content-detail-email-read-status {
+	margin-bottom: 5px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #f2f2f4;
+	color: #a8adb4;
+	font: 400 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-email { margin-bottom: 5px; }
+
+.crm-entity-stream-content-detail-email-title {
+	margin-bottom: 3px;
+	color: #525c69;
+	font: bold 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-email-to,
+.crm-entity-stream-content-detail-email-from {
+	color: #b1b7c6;
+	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-email-to {
+	margin-bottom: 5px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid #f2f2f4;
+}
+
+.crm-entity-stream-content-detail-email-address { color: #555c6d; }
+
+.crm-entity-stream-content-detail-email-fragment {
+	color: #000;
+	font: 400 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-email-files { margin-bottom: 5px; }
+
+.crm-entity-stream-content-detail-email-files a {
+	border-bottom: 1px dashed;
+	color: #828b95;
+	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: 300ms all ease;
+}
+
+.crm-entity-stream-content-detail-email-files a:hover {
+	border-bottom: 1px solid;
+	color: #333;
+}
+
+/*endregion*/
+
+/*region IM */
+
+.crm-entity-stream-section-live-im { }
+
+.crm-entity-stream-section-live-im .crm-entity-stream-section-content {
+	border: 1px solid #f5f8f9;
+	border-radius: 20px;
+	background-color: #f5f8f9;
+	cursor: pointer;
+	transition: 250ms linear all;
+}
+
+.crm-entity-stream-section-live-im .crm-entity-stream-section-content:hover {
+	border-color: #9ae1f7;
+	border-radius: 20px;
+	background-color: #f9fbfb;
+}
+
+.crm-entity-stream-section-live-im .crm-entity-stream-content-event {
+	padding: 0 9px;
+	min-height: 40px;
+}
+
+.crm-entity-stream-content-live-im-detail {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	height: 40px;
+	-webkit-box-align: center;
+	align-items: center;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+}
+
+.crm-entity-stream-live-im-users { }
+
+.crm-entity-stream-live-im-user-avatars {
+	height: 26px;
+	white-space: nowrap;
+}
+
+.crm-entity-stream-live-im-user-avatar,
+.bx-ie .crm-entity-stream-live-im-user-avatar {
+	position: relative;
+	display: inline-block;
+	min-width: 22px;
+	width: 22px;
+	height: 22px;
+	border: 2px solid #f5f8f9;
+	border-radius: 50%;
+}
+
+.crm-entity-stream-live-im-user-avatar i {
+	display: block;
+	padding-top: 100%;
+	width: 22px;
+	border-radius: 50%;
+	background-position: center;
+	background-size: 22px;
+	background-repeat: no-repeat;
+}
+
+.crm-entity-stream-live-im-user-avatars .crm-entity-stream-live-im-user-avatar:first-child {
+	z-index: 10;
+	margin-left: 0;
+}
+
+.crm-entity-stream-live-im-user-avatars .crm-entity-stream-live-im-user-avatar:nth-child(2) {
+	z-index: 5;
+	margin-left: -12px;
+}
+
+.crm-entity-stream-live-im-user-avatars .crm-entity-stream-live-im-user-avatar:nth-child(3) {
+	z-index: 1;
+	margin-left: -12px;
+}
+
+.crm-entity-stream-live-im-user-invite-btn {
+	position: relative;
+	top: -2px;
+	z-index: 20;
+	display: inline-block;
+	margin-left: -10px;
+	width: 22px;
+	height: 22px;
+	/*border: 2px solid #f5f8f9;*/
+	border-radius: 50%;
+	background-color: #fff;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .06);
+	cursor: pointer;
+}
+
+.crm-entity-stream-live-im-user-invite-btn::after,
+.crm-entity-stream-live-im-user-invite-btn::before {
+	position: absolute;
+	width: 10px;
+	height: 2px;
+	background-color: #2fc6f6;
+	content: '';
+}
+
+.crm-entity-stream-live-im-user-invite-btn::after {
+	top: 50%;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -5px;
+}
+
+.crm-entity-stream-live-im-user-invite-btn::before {
+	top: 50%;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -5px;
+	transform: rotate(90deg);
+}
+
+.crm-entity-stream-live-im-user-invite-text {
+	padding-left: 6px;
+	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	opacity: .72;
+}
+
+.crm-entity-stream-live-im-user-counter {
+	padding-left: 1px;
+	color: #2fc6f6;
+	font: 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-live-im-separator {
+	min-width: 1px;
+	width: 1px;
+	height: 13px;
+	border-right: 10px solid transparent;
+	border-left: 10px solid transparent;
+	background-color: rgba(216, 216, 216, 0.6);
+	background-clip: content-box;
+}
+
+.crm-entity-stream-live-im-messanger {
+	display: flex;
+	flex: 1;
+	align-items: center;
+}
+
+.crm-entity-stream-live-im-time {
+	padding-right: 5px;
+	color: #525c69;
+	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-live-im-message {
+	position: relative;
+	flex: 1;
+}
+
+.crm-entity-stream-live-im-message-text {
+	position: absolute;
+	top: 50%;
+	right: 10px;
+	left: 10px;
+	transform: translateY(-50%);
+	overflow: hidden;
+	/*padding: 2px 10px;*/
+	/*max-width: 100%;*/
+	color: #525c69;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-live-im-message-counter {
+	padding: 0 5px 0 20px;
+	height: 16px;
+	border-radius: 8px;
+	background: #2fc6f6 no-repeat 8px center url(images/live-im.svg);
+	color: #fff;
+	font: 9px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-live-im-message-show {
+	animation: changeMessageShow 500ms 1;
+}
+
+.crm-entity-stream-live-im-message-hide {
+	animation: changeMessageHide 500ms 1;
+}
+
+@keyframes changeMessageHide {
+	0% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
+@keyframes changeMessageShow {
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+/*endregion*/
+
+/*region Event: IM */
+.crm-entity-stream-section-IM { }
+
+.crm-entity-stream-content-detail-IM { margin-bottom: 10px; }
+
+.crm-entity-stream-content-detail-IM-messages { }
+
+.crm-entity-stream-content-detail-IM-message-incoming,
+.crm-entity-stream-content-detail-IM-message-outgoing {
+	position: relative;
+	margin-bottom: 20px;
+	padding: 7px 11px;
+	border-radius: 4px;
+	color: #555c6d;
+	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-stream-content-detail-IM-message-incoming { background-color: #e0f7fe; }
+
+.crm-entity-stream-content-detail-IM-message-outgoing { background-color: #f3f5f7; }
+
+.crm-entity-stream-content-detail-IM-messages > div:last-child { margin-bottom: 10px; }
+
+.crm-entity-stream-content-detail-IM-message-incoming:after,
+.crm-entity-stream-content-detail-IM-message-outgoing:after {
+	position: absolute;
+	top: 100%;
+	display: block;
+	box-sizing: content-box;
+	width: 0;
+	height: 0;
+	border: 5px solid transparent;
+	content: '';
+}
+
+.crm-entity-stream-content-detail-IM-message-incoming:after {
+	left: 14px;
+	border-top-color: #e0f7fe;
+	border-left-color: #e0f7fe;
+}
+
+.crm-entity-stream-content-detail-IM-message-outgoing:after {
+	right: 14px;
+	border-top-color: #f3f5f7;
+	border-right-color: #f3f5f7;
+}
+
+.crm-entity-stream-section-IM .crm-entity-stream-content-action-reply-btn { background-position: center -840px; }
+
+/*endregion*/
+
+/*region Event: Call */
+.crm-entity-stream-section-call { }
+
+.crm-entity-stream-section-call .crm-entity-stream-content-action-reply-btn { background-position: center -466px; }
+
+.crm-entity-stream-section-sms .crm-entity-stream-content-event-error-tip { cursor: help; }
+
+.crm-entity-stream-content-detail-call {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	margin-bottom: 10px;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.crm-entity-stream-content-detail-call .video-js,
+.crm-entity-stream-content-detail-call .crm-audio-cap-wrap {
+	margin-right: 10px;
+	padding-right: 10px;
+	min-width: 300px;
+}
+
+.crm-entity-stream-content-detail-call-inline {
+	display: flex !important;
+	align-items: center;
+}
+
+.crm-entity-stream-content-detail-call-inline .crm-audio-cap-wrap {
+	margin-right: 0 !important;
+}
+
+.crm-entity-stream-content-detail-call-inline .crm-audio-cap-wrap-container {
+	flex: 1;
+}
+
+.crm-audio-cap-speed-wrapper {
+	margin-left: -11px;
+}
+
+.crm-entity-stream-section-call .crm-entity-stream-content-action-reply-btn { background-position: center -470px; }
+
+.crm-entity-stream-section-call .crm-entity-stream-content-detail-contact-info {
+	color: #525c69;
+	font-size: 13px;
+}
+
+/*endregion*/
+
+/*region Event: Create Entity*/
+.crm-entity-stream-section-createEntity { }
+
+/*endregion*/
+
+/*region Event: Restore Entity*/
+.crm-entity-stream-section-restoreEntity { }
+
+/*endregion*/
+
+/*region Event: Complete*/
+.crm-entity-stream-section-completed { }
+
+/*endregion*/
+
+/*region Event: Meeting*/
+.crm-entity-stream-section-meeting { }
+
+.crm-entity-stream-content-detail-meeting {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	margin-bottom: 10px;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.crm-entity-stream-content-detail-meeting .video-js,
+.crm-entity-stream-content-detail-meeting .crm-audio-cap-wrap {
+	padding-right: 10px;
+	min-width: 300px;
+}
+
+/*endregion*/
+
+/*region Event: Visit*/
+.crm-entity-stream-section-visit { }
+
+.crm-entity-stream-content-detail-visit {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	margin-bottom: 10px;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.vjs-audio .vjs-big-play-button,
+.crm-entity-stream-content-detail-visit .video-js,
+.crm-entity-stream-content-detail-visit .crm-audio-cap-wrap {
+	margin-right: 10px;
+	padding-right: 10px;
+	min-width: 300px;
+}
+
+/*endregion*/
+
+/*region Event: store*/
+.crm-entity-stream-section-store .crm-entity-stream-content-detail-payment-info {
+	color: #525c69;
+	font-size: 12px;
+}
+
+
+/*endregion*/
+
+/*region Event: Task*/
+.crm-entity-stream-section-task { }
+
+/*endregion*/
+
+/*region Event: Comment*/
+.crm-entity-stream-section-comment { }
+
+.crm-entity-stream-section-comment .crm-entity-stream-section-content { border-left: 2px solid #2fc6f6; }
+
+.crm-entity-stream-section-top-fixed .crm-entity-stream-section-content { border-left-color: #bfe059; }
+
+.crm-entity-stream-section-comment.crm-entity-stream-section-animate-start .crm-entity-stream-section-content {
+	border-color: transparent;
+	box-shadow: 0 -2px 10px 0 rgba(0, 0, 0, .12);
+}
+
+.crm-entity-stream-section-comment .crm-entity-stream-content-event {
+	overflow: hidden;
+	padding-left: 13px;
+}
+
+.crm-entity-stream-section-comment .crm-entity-stream-content-event:hover,
+.crm-entity-stream-section-comment .crm-entity-stream-section-files:hover,
+.crm-entity-stream-section-comment .crm-entity-stream-section-files:hover img { cursor: pointer; }
+
+.crm-entity-stream-section-comment-read-only .crm-entity-stream-content-event:hover,
+.crm-entity-stream-section-comment .crm-entity-stream-section-files:hover { cursor: auto; }
+
+.crm-entity-stream-content-detail-comment-edit-field {
+	display: block;
+	padding: 9px;
+	width: 100%;
+	outline: none;
+	border: 1px solid #e2e4e6;
+	color: #333;
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	resize: none;
+	transition: 220ms all linear;
+}
+
+.crm-entity-stream-content-detail-comment-edit-field:focus { border-color: #64a6f3; }
+
+.crm-entity-stream-content-detail-comment-edit-btn-container { padding-top: 10px; }
+
+.crm-entity-stream-section-comment.crm-entity-stream-section-animate-start:before { left: 5px; }
+
+.crm-entity-stream-section-comment.crm-entity-stream-section-animate-start .crm-entity-stream-section-icon { left: 5px; }
+
+.crm-entity-stream-section-comment .crm-entity-stream-section-content { border-radius: 2px 0; }
+
+.crm-entity-stream-section-comment .feed-com-img-wrap img{
+	max-width: 100%;
+	height: auto !important;
+}
+
+table.blogquote {
+	margin: 10px 0;
+	background: #F3F6F7 url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23BBC1C5%22%20fill-rule%3D%22evenodd%22%20d%3D%22M0%2011.813C2.563%2010.6%203.844%209.171%203.844%207.531c-1.104-.121-2.01-.551-2.719-1.29C.417%205.5.063%204.646.063%203.675c0-1.033.348-1.903%201.046-2.612C1.807.354%202.677%200%203.72%200c1.146%200%202.146.46%203%201.382C7.573%202.303%208%203.422%208%204.738%208%208.685%205.74%2011.773%201.219%2014L0%2011.813z%22/%3E%3C/svg%3E) no-repeat 12px 9px;
+	color: #525C69;
+	border: 1px solid #E0E2E3;
+	border-radius: 8px;
+}
+
+table.blogquote td {
+	padding: 4px 40px 8px 27px;
+	height: 18px;
+}
+
+/*endregion*/
+
+/*region Event: Info*/
+.crm-entity-stream-section-content-info { }
+
+.crm-entity-stream-content-detail-info {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	margin: 2px 0;
+	-ms-flex-line-pack: center;
+	align-content: center;
+	-webkit-box-align: center;
+	align-items: center;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+}
+
+.crm-entity-stream-content-detain-info-status {
+	display: inline-block;
+	overflow: hidden;
+	padding: 0 12px;
+	border-radius: 9px;
+	background-color: #e8f1fb;
+	color: #333;
+	vertical-align: middle;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+}
+
+.crm-entity-stream-content-detail-info-separator-icon {
+	display: block;
+	padding: 0 5px;
+	width: 13px;
+	height: 9px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -950px;
+}
+
+/*endregion/*/
+
+/*region Event: Convert*/
+.crm-entity-stream-section-convert { }
+
+.crm-entity-stream-content-detail-convert {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	margin: 0 0 2px;
+	-ms-flex-line-pack: center;
+	align-content: center;
+	-webkit-box-align: center;
+	align-items: center;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+}
+
+.crm-entity-stream-content-detain-convert-status {
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+}
+
+.crm-entity-stream-content-detail-convert-separator-icon {
+	display: block;
+	padding: 0 5px;
+	width: 13px;
+	height: 9px;
+	background: url(images/icons-sprite.svg?3) no-repeat center -950px;
+}
+
+.crm-entity-stream-section-convert .crm-entity-stream-content-detail-status-text {
+	color: #333;
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.crm-entity-stream-section-convert .crm-entity-stream-content-detail-target { font-size: 13px; }
+
+/*endregion/*/
+
+/*region Event: Audio Player Cap */
+.crm-audio-cap-wrap-container {
+	display: inline-block;
+	max-width: 350px;
+}
+
+.crm-audio-cap-wrap-container[hidden] {
+	display: none;
+}
+
+.crm-audio-cap-container {
+	display: flex;
+	white-space: nowrap;
+	overflow: hidden;
+	width: 100%;
+	align-items: center;
+}
+
+.crm-audio-cap-container .crm-audio-cap-wrap {
+	flex: 1;
+	min-width: auto;
+	margin-right: 0 !important;
+}
+
+.crm-audio-cap-wrap {
+	position: relative;
+	box-sizing: border-box;
+	max-width: 350px;
+	height: 31px;
+	border-width: 15.5px 54px 15.5px 40px;
+	border-style: solid;
+	border-radius: 50%;
+	border-image: url(images/player-cap.svg) 14 48 14 36 fill repeat stretch;
+	background-color: #468EE5;
+	cursor: pointer;
+}
+
+.crm-audio-cap-wrap-without-duration-text {
+	border-width: 15.5px 18px 15.5px 40px;
+}
+
+.crm-audio-cap-wrap-unavailable {
+	border-image: url(images/player-cap-grey.svg) 14 47 14 36 fill repeat stretch;
+}
+
+.crm-audio-cap-wrap.crm-audio-cap-wrap-loader {
+	border-image: url(images/player-cap-grey.svg) 14 47 14 36 fill repeat stretch;
+	background: url(images/loader.gif) repeat center;
+}
+
+.crm-audio-cap-time {
+	position: absolute;
+	top: -9px;
+	right: -51px;
+	color: #8f979f;
+	font-size: 11px;
+	width: 51px;
+	text-align: center;
+}
+
+.crm-audio-cap-speed {
+	display: inline-block;
+	white-space: nowrap;
+	padding: 0 10px 0 16px;
+	height: 19px;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 11px;
+	line-height: 19px;
+	color: rgba(82,92,104,.5);
+	border: 1px solid #edeef0;
+	border-left: none;
+	border-radius: 0 10px 10px 0;
+	cursor: pointer;
+	transition: .1s;
+}
+
+.crm-audio-cap-speed:hover {
+	background: #f9f9f9;
+}
+
+.crm-audio-cap-wrap + .crm-audio-cap-speed {
+	vertical-align: middle;
+	margin-left: -10px;
+}
+
+.crm-audio-cap-speed-text {
+	color: rgba(82,92,104,.5);
+}
+
+.crm-audio-cap-speed-text span {
+	display: inline-block;
+	vertical-align: top;
+	font-size: 12px;
+	margin-top: 1px;
+	margin-left: 2px;
+	color: #525c68;
+}
+
+.crm-audio-cap-speed-text span:after {
+	content: '';
+	display: inline-block;
+	vertical-align: top;
+	margin: 8px 0 0 2px;
+	width: 6px;
+	height: 6px;
+	box-sizing: border-box;
+	border: 3px solid transparent;
+	border-top-color: #525c68;
+}
+
+.crm-audio-cap-speed-popup .menu-popup-item-text {
+	color: #525b66;
+}
+
+.crm-audio-cap-speed-popup .menu-popup-item-text span {
+	width: 30px;
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+}
+
+.crm-audio-cap-speed-popup .menu-popup-item-text-active .menu-popup-item-text {
+	padding: 0 15px !important;
+	font-weight: bold !important;
+}
+
+.crm-audio-cap-speed-popup .menu-popup-item-text-active .menu-popup-item-icon {
+	display: none !important;
+}
+
+.crm-audio-cap-speed-popup .menu-popup-item-text-active .menu-popup-item-text:after {
+	content: '';
+	display: inline-block;
+	vertical-align: top;
+	margin: 14px 0 0 7px;
+	width: 11px;
+	height: 7px;
+	box-sizing: border-box;
+	border-bottom: 2px solid #1e67af;
+	border-left: 2px solid #1e67af;
+	transform: rotate(-45deg);
+
+}
+
+.crm-audio-cap-not-rec {
+	position: absolute;
+	top: -15px;
+	right: -47px;
+	bottom: -15px;
+	left: -36px;
+	margin: 0 20px 0 35px;
+	background: #fff;
+	color: #333;
+	vertical-align: middle;
+	font-size: 12px;
+	line-height: 31px;
+}
+
+.crm-entity-steam-audio-encrypt-btn {
+	display: inline-block;
+	box-sizing: border-box;
+	padding: 1px 15px 2px 40px;
+	border: 1px solid #dbe1e6;
+	border-radius: 15px;
+	background: #fff url(images/icons-sprite.svg?3) no-repeat -5px -377px;
+	color: #979da4;
+	vertical-align: middle;
+	font: 11px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-entity-steam-audio-encrypt-btn.locked { background: #fff url(images/icons-sprite.svg?3) no-repeat -5px -888px; }
+
+/* Transcript */
+.crm-audio-transcript-wrap-container {
+	display: inline-block;
+	padding-left: 5px;
+	opacity: .6;
+	cursor: pointer;
+}
+
+.crm-audio-transcript-wrap-container:hover { opacity: 1; }
+
+.crm-audio-transcript-wrap-container-pending {
+	display: inline-block;
+	padding-left: 5px;
+	opacity: .6;
+}
+
+.crm-audio-transcript-icon {
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2031%2031%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Ctitle%3Espeechtotext_hover%3C/title%3E%3Cdefs%3E%3Cellipse%20id%3D%22a%22%20cx%3D%2215.5%22%20cy%3D%2215.5%22%20rx%3D%2215.5%22%20ry%3D%2215.5%22/%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cellipse%20stroke%3D%22%23CDCFD1%22%20cx%3D%2215.5%22%20cy%3D%2215.5%22%20rx%3D%2215%22%20ry%3D%2215%22/%3E%3C/g%3E%3Cpath%20d%3D%22M19.657%2016.41v-6.284H11.06V21.85h3.954c.284%200%20.516.254.516.564%200%20.31-.232.563-.516.563h-4.47c-.283%200-.516-.254-.516-.563V9.564c0-.31.233-.564.516-.564h9.628c.284%200%20.516.253.516.563v6.847c0%20.31-.232.563-.516.563-.283%200-.515-.253-.515-.563zm2.656%201.37c-.215-.206-.542-.188-.73.047l-2.83%203.433-1.418-1.49c-.206-.217-.533-.208-.73.017-.198.226-.19.582.017.798l1.805%201.894c.095.103.224.16.36.16h.018c.138-.01.276-.076.36-.19l3.182-3.863c.198-.244.18-.6-.034-.807zm-4.548-5.497h-4.642c-.284%200-.516.253-.516.563%200%20.31.232.563.516.563h4.642c.284%200%20.516-.255.516-.564%200-.31-.23-.563-.515-.563zm.516%203.658c0-.308-.23-.56-.515-.56h-4.642c-.284%200-.516.252-.516.56%200%20.31.232.564.516.564h4.642c.284%200%20.516-.253.516-.563zm-5.157%202.44c-.284%200-.516.254-.516.563%200%20.31.232.563.516.563H14.5c.282%200%20.514-.253.514-.563%200-.31-.232-.563-.515-.563h-1.377z%22%20fill-rule%3D%22nonzero%22%20fill%3D%22%23777E87%22/%3E%3C/g%3E%3C/svg%3E);
+	background-repeat: no-repeat;
+}
+
+.crm-audio-transcript-conversation {
+	display: inline-block;
+	padding-left: 5px;
+	height: 30px;
+	vertical-align: top;
+	text-align: center;
+	line-height: 30px;
+}
+
+.crm-audio-transcript-icon-pending {
+	position: relative;
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+}
+
+/* Loader */
+.crm-transcript-loader-circular {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	margin: auto;
+	width: 30px;
+	height: 30px;
+	transform-origin: center;
+	-webkit-animation: loaderCircularRotate 2s linear infinite;
+	animation: loaderCircularRotate 2s linear infinite;
+}
+
+.crm-transcript-loader-path {
+	-webkit-animation: loaderCircularDash 1.5s ease-in-out infinite;
+	animation: loaderCircularDash 1.5s ease-in-out infinite;
+	stroke: #2fc6f5;
+	stroke-width: 2;
+	stroke-dasharray: 20, 200;
+	stroke-dashoffset: 0;
+	stroke-linecap: round;
+}
+
+@keyframes loaderCircularRotate {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+@keyframes loaderCircularDash {
+	0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
+	50% { stroke-dasharray: 89, 200; stroke-dashoffset: -35px; }
+	100% { stroke-dasharray: 89, 200; stroke-dashoffset: -124px; }
+}
+
+/*endregion/*/
+
+/*region Event: Files*/
+.crm-entity-stream-section-files { padding: 3px 15px 0; }
+
+.crm-entity-stream-section-top-fixed .crm-entity-stream-section-files { background: #f7fbe9; }
+
+.crm-entity-stream-section-files-inner {
+	padding-top: 9px;
+	border-top: 1px solid #e9eaec;
+}
+
+.crm-entity-stream-section-files-section {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-pack: start;
+	-webkit-box-pack: start;
+	justify-content: flex-start;
+}
+
+.feed-com-files.diskuf-files-entity { padding-bottom: 10px; }
+
+.feed-com-files-title {
+	padding-right: 10px;
+	font-weight: normal;
+	font-size: 13px;
+}
+
+.diskuf-files-entity .feed-com-file-wrap {
+	display: block;
+	padding: 0 0 3px 20px;
+}
+
+/*endregion*/
+
+/*region Event: Scoring*/
+
+.crm-entity-stream-section-scoring .crm-entity-stream-section-content {
+	display: flex;
+	align-items: center;
+	background: #f7f9fa;
+	transition: background .15s linear;
+	border-radius: 20px;
+	font-size: 12px;
+	line-height: 20px;
+	color: #828b95;
+	padding: 6px 11px 5px;
+	cursor: pointer;
+}
+
+.crm-entity-stream-section-scoring:hover .crm-entity-stream-section-content {
+	background: #fff;
+}
+
+.crm-entity-stream-content-scoring-total, .crm-entity-stream-content-scoring-event {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.crm-entity-stream-content-scoring-total-result {
+	color: #525c69;
+	font-weight: 700;
+	margin-right: 8px;
+}
+
+.crm-entity-stream-content-scoring-total {
+	padding: 0 9px 0 17px;
+	margin-right: 12px;
+	position: relative;
+	border-right: 1px solid rgba(82, 92, 105, .18);
+	flex-shrink: 0;
+}
+
+.crm-entity-stream-content-scoring-total:before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 4px;
+	width: 11px;
+	height: 12px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2212%22%3E%3Cpath%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22evenodd%22%20d%3D%22M4.324%202.927l3.017-.865A1.58%201.58%200%200%201%208.848%200a1.582%201.582%200%200%201%20.304%203.134l-.381%202.715A2.84%202.84%200%201%201%205.45%206.96L3.891%205.7a2.303%202.303%200%201%201%20.432-2.772zm.256.762a2.321%202.321%200%200%201-.212%201.363L5.983%206.36a2.827%202.827%200%200%201%201.999-.67l.366-2.607a1.58%201.58%200%200%201-.548-.317l-3.22.923z%22/%3E%3C/svg%3E);
+}
+
+.crm-entity-stream-content-scoring-total-text {
+	margin-right: 5px;
+	white-space: nowrap;
+}
+
+.crm-entity-stream-content-scoring-total-icon {
+	display: block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+}
+
+.crm-entity-stream-content-scoring-total-icon-success {
+	background: #9dcf00;
+}
+
+.crm-entity-stream-content-scoring-total-icon-middle {
+	background: #bfc4ca;
+}
+
+.crm-entity-stream-content-scoring-total-icon-fail {
+	background: #ff5752;
+}
+
+.crm-entity-stream-content-scoring-event-offset {
+	position: relative;
+	margin-right: 5px;
+}
+
+.crm-entity-stream-content-scoring-event-offset:after {
+	/*content: ',';*/
+}
+
+.crm-entity-stream-content-scoring-event-detail {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/*endregion*/
+
+/* Popup menu window */
+.crm-timeline-popup-menu-item-disabled { opacity: .7 }
+
+.crm-timeline-wait {
+	display: block;
+	margin-top: 4px;
+	padding-left: 34px;
+	height: 29px;
+	background: url(/bitrix/js/crm/images/crm-wait.gif) no-repeat center !important;
+	line-height: 29px;
+}
+
+.crm-entity-stream-section-comment.crm-entity-stream-section-animate-start .crm-entity-stream-section-files { display: none; }
+
+.crm-entity-stream-section-comment.crm-entity-stream-section-animate-start .crm-entity-stream-section-files { max-height: 0; }
+
+.document-title-link {
+	cursor: pointer;
+}
+
+.crm-entity-stream-section-filter .crm-entity-stream-section-content {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	overflow: hidden;
+	box-shadow: none;
+}
+
+.crm-entity-stream-section-filter:before {
+	content: none;
+}
+
+.crm-entity-stream-section-filter-show:before {
+	top: 25px;
+	content: '';
+	width: 50%;
+}
+
+.crm-entity-stream-filter-container {
+	position: absolute;
+	top: 32px;
+	width: 100%;
+	margin-top: -30px;
+	overflow: hidden;
+	transition: right .2s linear, opacity .2s linear;
+	opacity: 0;
+	right: -100%;
+}
+
+.crm-entity-stream-filter-close {
+	display: none;
+	width: 39px;
+	height: 39px;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity .2s linear;
+	margin-top: 6px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20width%3D%2210%22%20height%3D%2210%22%3E%3Cdefs%3E%3Cpath%20id%3D%22a%22%20d%3D%22M1182.845%20280l-3.845%203.845%201.154%201.155%203.846-3.846%203.846%203.846%201.154-1.155-3.845-3.845%203.845-3.845-1.154-1.155-3.846%203.845-3.846-3.845-1.154%201.155z%22/%3E%3C/defs%3E%3Cuse%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.7%22%20transform%3D%22translate%28-1179%20-275%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3C/svg%3E) no-repeat center;
+}
+
+.crm-entity-stream-filter-container .main-ui-filter-search {
+	width: 100%;
+	margin-top: 6px;
+	margin-bottom: 0;
+	max-height: 0;
+	min-width: 0;
+}
+
+.crm-entity-stream-filter-container .main-ui-filter-theme-rounded.main-ui-filter-search {
+	transition: max-height .3s linear;
+}
+
+.crm-entity-stream-section-filter-show .main-ui-filter-search {
+	max-height: 60px;
+}
+
+.crm-entity-stream-section-filter-hide .main-ui-filter-search {
+	max-height: 0;
+}
+
+.crm-entity-stream-section-filter-show .crm-entity-stream-filter-container {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	right: 0;
+	opacity: 1;
+}
+
+.crm-entity-stream-section-filter-show .crm-entity-stream-filter-container:hover .crm-entity-stream-filter-close { opacity: .5; }
+
+.crm-entity-stream-filter-container:hover .crm-entity-stream-filter-close:hover { opacity: 1; }
+
+.crm-entity-stream-section-filter-show.crm-entity-stream-section-filter {
+	animation: expandedSearch 250ms forwards;
+	opacity: 1;
+	height: 60px;
+}
+
+.crm-entity-stream-section-filter-show ~ .crm-entity-stream-section-today-label .crm-entity-stream-filter-label,
+.crm-entity-stream-section-filter-show ~ .crm-entity-stream-section-history-label .crm-entity-stream-filter-label {
+	opacity: 0;
+}
+
+.crm-entity-stream-section-filter-show .crm-entity-stream-filter-close {
+	display: block;
+}
+
+.crm-entity-stream-section-filter-hide.crm-entity-stream-section-filter {
+	animation: collapseSearch 250ms forwards;
+}
+
+.crm-entity-stream-section-filter-empty .crm-entity-stream-section-content {
+	background-color: transparent;
+	box-shadow: none;
+}
+
+.crm-entity-stream-filter-empty {
+	min-height: 270px;
+	height: 150px; /* IE*/
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+}
+
+.crm-entity-stream-filter-empty-text {
+	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #a8adb4;
+	max-width: 360px;
+	text-align: center;
+}
+
+.crm-entity-stream-filter-empty-img {
+	width: 53px;
+	height: 66px;
+	margin-bottom: 21px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2253%22%20height%3D%2266%22%3E%3Cg%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.2%22%3E%3Cpath%20fill-rule%3D%22nonzero%22%20d%3D%22M39.484%200H1a1%201%200%200%200-1%201v63.47a1%201%200%200%200%201%201h50.616a1%201%200%200%200%201-1V12.988a1%201%200%200%200-.297-.712L40.187.29A1%201%200%200%200%2039.484%200zm.668%205.568l6.972%206.896h-6.972V5.568zM3.488%2061.982V3.487h33.176v12.465h12.464v46.03H3.488z%22/%3E%3Crect%20width%3D%2226%22%20height%3D%223.7%22%20x%3D%2212%22%20y%3D%2224%22%20rx%3D%22.6%22/%3E%3Crect%20width%3D%2226%22%20height%3D%223.7%22%20x%3D%2212%22%20y%3D%2233%22%20rx%3D%22.6%22/%3E%3Crect%20width%3D%2213%22%20height%3D%223.7%22%20x%3D%2212%22%20y%3D%2242%22%20rx%3D%22.6%22/%3E%3C/g%3E%3C/svg%3E) no-repeat center;
+}
+
+.crm-entity-stream-section-filter-empty:before {
+	top: 310px;
+	background-color: rgba(207, 214, 218, .4);
+}
+
+@keyframes expandedSearch {
+	0% {
+		height: 0;
+	}
+	0%, 50% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+		height: 60px;
+	}
+}
+
+@keyframes collapseSearch {
+	0% {
+		opacity: 1;
+		height: 60px;
+	}
+	20% {
+		opacity: .3;
+	}
+	50%, 100% {
+		opacity: 0;
+	}
+	100% {
+		height: 0;
+	}
+}
+
+/* sms and delivery tiles */
+
+.crm-entity-stream-content-new-detail-tile-title {
+	color: #555C6C;
+	font-size: 18px;
+	line-height: 24px;
+	padding-bottom: 20px;
+	margin-bottom: 8px;
+	border-bottom: 1px solid rgba(82, 92, 105, .1);
+}
+
+.crm-entity-stream-content-new-detail-tile .ui-grid-tile-item::before {
+	padding-top: 55%;
+}
+
+.crm-entity-stream-content-new-detail-tile .ui-grid-tile-item {
+	width: calc(49.5% - 14px);
+	max-width: 218px;
+	min-width: 190px;
+}
+
+.crm-entity-stream-content-new-detail-tile {
+	background: #f7f9fa;
+	padding: 17px 24px 10px;
+}
+
+.crm-entity-stream-content-new-detail-tile .salescenter-smsprovider {
+	margin-bottom: 0;
+}
+
+.salescenter-smsprovider-item-info {
+	position: absolute;
+	top: 10px;
+	right: 11px;
+	width: 13px;
+	height: 13px;
+	border-radius: 50%;
+	cursor: pointer;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23B1B7C5%22%20d%3D%22M6.49%200a6.489%206.489%200%20110%2012.978A6.489%206.489%200%20016.49%200zm.248%204.826H4.444v.875H5.59v3.442l-1.147.001v.86H8.35v-.86h-.98l.001-4.316h-.633v-.002zm-.344-2.849a.977.977%200%2000-.982.972c0%20.537.44.973.982.973a.977.977%200%2000.981-.973.977.977%200%2000-.981-.972z%22%20opacity%3D%22.738%22/%3E%3C/svg%3E) no-repeat center;
+}
+
+.crm-entity-stream-content-new-detail-tile .salescenter-smsprovider-item-add {
+	background: rgba(255, 255, 255, .6);
+	box-shadow: none;
+	border: 1px dashed #dddfe2;
+}
+
+.salescenter-smsprovider-item-add .salescenter-smsprovider-item-image {
+	width: 53px;
+	height: 53px;
+	border-radius: 50%;
+	background: rgba(82, 92, 105, .04);
+	margin: 17px auto 0;
+	transition: background-color .2s linear;
+}
+
+.salescenter-smsprovider-item-add .salescenter-smsprovider-item-image:before,
+.salescenter-smsprovider-item-add .salescenter-smsprovider-item-image:after {
+	content: '';
+	width: 24px;
+	height: 5px;
+	background: #babec3;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.salescenter-smsprovider-item-add .salescenter-smsprovider-item-image:after {
+	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.salescenter-smsprovider-item-add .salescenter-smsprovider-item-title {
+	opacity: .64;
+	transition: opacity .2s linear;
+}
+
+.crm-entity-stream-content-new-detail-tile .salescenter-smsprovider-item-add:hover {
+	box-shadow: none;
+}
+
+.salescenter-smsprovider-item-add:hover .salescenter-smsprovider-item-image {
+	background-color: rgba(82,92,105,.06);
+}
+
+.salescenter-smsprovider-item-add:hover .salescenter-smsprovider-item-title {
+	opacity: .8;
+}
+
+.crm-entity-stream-content-detail-zoom-info {
+	padding: 13px 19px;
+	background: #dcf5fd;
+	border-radius: 20px;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #0c0c0c;
+	line-height: 20px;
+	margin-left: -5px;
+}
+
+.crm-entity-stream-content-detail-zoom-link-wrapper {
+	margin: 7px 0 20px;
+}
+
+.crm-entity-stream-content-detail-zoom-section-wrapper {
+	display: flex;
+	align-items: flex-start;
+	margin: 10px 0 20px;
+	border-bottom: 1px solid #edeef0;
+}
+
+.crm-entity-stream-content-detail-zoom-section-list {
+	display: flex;
+	margin-right: 33px;
+}
+
+.crm-entity-stream-content-detail-zoom-section {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	padding-right: 2px;
+}
+
+.crm-entity-stream-content-detail-zoom-section-inner {
+	display: flex;
+	align-items: center;
+	margin-right: 25px;
+	padding-bottom: 12px;
+	border-bottom: 2px solid transparent;
+}
+
+.crm-entity-stream-content-detail-zoom-section:last-child .crm-entity-stream-content-detail-zoom-section-inner {
+	margin-right: 0;
+}
+
+.crm-entity-stream-content-detail-zoom-section-title, .crm-entity-stream-content-detail-zoom-section-more {
+	color: #2066b0;
+	font-size: 14px;
+	line-height: 20px;
+	transition: border .2s linear;
+	border-bottom:  1px dashed rgba(32, 102, 176, .4);
+	margin-right: 5px;
+}
+
+.crm-entity-stream-content-detail-zoom-section:hover .crm-entity-stream-content-detail-zoom-section-title,
+.crm-entity-stream-content-detail-zoom-section-more:hover {
+	border-color: rgba(32, 102, 176, 1);
+}
+
+.crm-entity-stream-content-detail-zoom-section-time {
+	opacity: .5;
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.crm-entity-stream-content-detail-zoom-section-active .crm-entity-stream-content-detail-zoom-section-title {
+	font-weight: 700;
+	color: #333;
+	border-bottom-color: transparent;
+}
+
+.crm-entity-stream-content-detail-zoom-section-active:hover .crm-entity-stream-content-detail-zoom-section-title {
+	border-bottom-color: transparent;
+}
+
+.crm-entity-stream-content-detail-zoom-section-active .crm-entity-stream-content-detail-zoom-section-time {
+	opacity: .8;
+}
+
+.crm-entity-stream-content-detail-zoom-section-more {
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-detail-zoom-section-active .crm-entity-stream-content-detail-zoom-section-inner {
+	border-bottom-color: #0063C6;
+}
+
+.crm-entity-stream-section-zoom .crm-entity-stream-content-event {
+	padding-bottom: 20px;
+}
+
+.ui-timeline-zoom-editor {
+	position: relative;
+	padding-bottom: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-zoom-btn-container {
+	position: absolute;
+	bottom: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 15px 15px 0;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.ui-timeline-zoom-editor.focus .crm-entity-stream-content-zoom-btn-container {
+	height: 58px;
+	opacity: 1;
+}
+
+.ui-timeline-zoom-editor.focus {
+	padding-bottom: 58px;
+}
+
+.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-zoom-comment-btn-container {
+	height: 47px;
+	opacity: 1;
+}
+
+.crm-entity-stream-content-zoom-comment-btn-container {
+	position: absolute;
+	bottom: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 15px;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.crm-entity-stream-content-new-detail-zoom.focus {
+	padding-bottom: 49px;
+}
+
+.crm-entity-stream-content-new-zoom-field-label {
+	color: #525C69;
+	opacity: .5;
+	font-size: 13px;
+	line-height: 18px;
+	margin-bottom: 5px;
+	display: inline-block;
+}
+
+.crm-entity-stream-content-new-zoom-field {
+	display: flex;
+	align-items: center;
+	width: 419px;
+}
+
+.crm-entity-stream-content-zoom-planner-container {
+	overflow: hidden;
+	width: 100% !important;
+}
+
+.crm-entity-stream-content-zoom-planner-container .calendar-planner-main-container {
+	width: 100% !important;
+}
+
+.crm-entity-stream-content-new-zoom {
+	border-bottom: 1px solid #edeef0;
+	padding-bottom: 15px;
+}
+
+.crm-entity-stream-content-new-zoom-inner {
+	padding: 13px 15px 15px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.crm-entity-stream-content-new-zoom-field + .crm-entity-stream-content-new-zoom-field {
+	margin-top: 13px;
+}
+
+.crm-entity-stream-content-new-zoom-field-inner {
+	width: 100%;
+}
+
+.crm-entity-stream-content-new-zoom-field .ui-ctl {
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-new-zoom-field-block + .crm-entity-stream-content-new-zoom-field-block {
+	margin-left: 15px;
+}
+
+.crm-entity-stream-content-new-zoom-field-sm {
+	width: 105px;
+}
+
+.crm-entity-stream-content-new-zoom-field-xs {
+	width: 50px;
+}
+
+.crm-entity-stream-content-new-zoom-field-block:first-child .ui-ctl-dropdown .ui-ctl-element {
+	padding-top: 0;
+}
+
+.crm-entity-stream-content-new-zoom-chat {
+	padding: 0 15px;
+}
+
+.crm-entity-stream-content-detail-zoom-video-wrap {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	word-break: normal;
+}
+
+.crm-entity-stream-content-detail-zoom-video-wrap .vjs-remaining-time {
+	padding-right: 5px;
+
+}
+.crm-entity-stream-content-detail-zoom-video-wrap[hidden] {
+	display: none;
+}
+.crm-entity-stream-content-detail-zoom-video {
+	background: #eeeff0;
+	width: 251px;
+	height: 141px;
+	margin: 7px 0 11px;
+	text-align: center;
+}
+
+.crm-entity-stream-content-detail-zoom-video-inner {
+	padding-top: 41px;
+}
+
+.crm-entity-stream-content-detail-zoom-video-img {
+	width: 55px;
+	height: 32px;
+	margin: 0 auto 20px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2255%22%20height%3D%2232%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M32.3%200a6.4%206.4%200%20016.4%206.4v19.2a6.4%206.4%200%2001-6.4%206.4H6.7a6.4%206.4%200%2001-6.4-6.4V6.4A6.4%206.4%200%20016.7%200h25.6zm22.4%203.2v25.6l-12.8-5.26V9.177L54.7%203.2z%22%20opacity%3D%22.2%22/%3E%3C/svg%3E) no-repeat center;
+}
+
+.crm-entity-stream-content-detail-zoom-video-text {
+	opacity: .5;
+}
+
+.crm-entity-stream-content-detail-zoom-video-btn {
+	width: 57px;
+	height: 57px;
+	border-radius: 50%;
+	cursor: pointer;
+	opacity: .9;
+	transition: opacity .2s linear;
+	margin: -9px auto 20px;
+	background: #2FC6F6 url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2224%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M17.33%2010.907L2.581.48c-.348-.25-.8-.278-1.175-.073A1.179%201.179%200%2000.803%201.45v20.854c-.004.438.228.842.603%201.047a1.1%201.1%200%20001.176-.076L17.329%2012.85c.312-.218.5-.582.5-.97%200-.39-.188-.754-.5-.972z%22/%3E%3C/svg%3E) no-repeat center left 22px;
+}
+
+.crm-entity-stream-content-detail-zoom-video-btn:hover {
+	opacity: 1;
+}
+
+.crm-entity-stream-content-detail-zoom-desc {
+	color: #7f8892;
+	margin: 10px 0;
+}
+
+.crm-entity-stream-content-detail-zoom .crm-audio-cap-wrap {
+	width: 251px;
+}
+
+.crm-entity-stream-content-detail-zoom-desc-separate {
+	color: #2066b0;
+	margin: 0 4px;
+}
+
+.crm-entity-stream-content-new-zoom-field-control {
+	display: flex;
+}
+
+.crm-entity-stream-content-new-zoom-field-control .ui-ctl + .ui-ctl {
+	margin-left: 8px;
+}
+
+.zoom-error-message {
+	font-size: 13px;
+	margin: 0 15px;
+	box-sizing: border-box;
+	width: auto;
+	padding: 11px;
+}
+/*delivery*/
+
+.crm-entity-stream-section-planned .crm-entity-stream-content-event--delivery {
+	padding-left: 15px;
+}
+
+.crm-entity-stream-content-delivery-row {
+	display: block;
+}
+
+.crm-entity-stream-content-delivery-row--flex {
+	display: flex;
+	align-items: center;
+}
+
+.crm-entity-stream-content-delivery-title {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	overflow: hidden;
+}
+
+.crm-entity-stream-content-delivery-status + .crm-entity-stream-content-delivery-title {
+	padding-left: 5px;
+	margin-left: 15px;
+}
+
+.crm-entity-stream-content-delivery-status + .crm-entity-stream-content-delivery-title:before {
+	content: '';
+	width: 1px;
+	height: 23px;
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	opacity: .17;
+	background: #333;
+}
+
+.crm-entity-stream-content-delivery-icon {
+	min-width: 50px;
+	height: 31px;
+	margin-right: 5px;
+	background: center no-repeat;
+}
+
+span + .crm-entity-stream-content-delivery-title .crm-entity-stream-content-delivery-icon {
+	margin-left: 5px;
+}
+
+.crm-entity-stream-content-delivery-icon--car {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2218%22%20viewBox%3D%220%200%2046%2018%22%3E%0A%20%20%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9.3565622%2C10.6643334%20C11.1839022%2C10.6643334%2012.6652022%2C12.1457334%2012.6652022%2C13.9730334%20C12.6652022%2C15.8004334%2011.1839022%2C17.2817334%209.3565622%2C17.2817334%20C7.5292222%2C17.2817334%206.0478722%2C15.8004334%206.0478722%2C13.9730334%20C6.0478722%2C12.1457334%207.5292222%2C10.6643334%209.3565622%2C10.6643334%20Z%20M36.2186022%2C10.6643334%20C38.0459022%2C10.6643334%2039.5273022%2C12.1457334%2039.5273022%2C13.9730334%20C39.5273022%2C15.8004334%2038.0459022%2C17.2817334%2036.2186022%2C17.2817334%20C34.3912022%2C17.2817334%2032.9099022%2C15.8004334%2032.9099022%2C13.9730334%20C32.9099022%2C12.1457334%2034.3912022%2C10.6643334%2036.2186022%2C10.6643334%20Z%20M26.9993022%2C0.715593401%20C28.6745022%2C1.2585634%2032.3983022%2C3.5481134%2034.4882022%2C5.5361134%20C38.2301022%2C6.5280534%2041.5361022%2C6.9630934%2043.8327022%2C9.0172234%20L44.0275134%2C9.43439682%20C44.7057786%2C10.9323251%2044.9839105%2C12.1321501%2044.7409022%2C14.7063334%20L40.9336022%2C14.7120334%20C40.9720022%2C14.4717334%2040.9915022%2C14.2246334%2040.9915022%2C13.9730334%20C40.9915022%2C11.3370334%2038.8546022%2C9.2001634%2036.2186022%2C9.2001634%20C33.5826022%2C9.2001634%2031.4457022%2C11.3370334%2031.4457022%2C13.9730334%20C31.4457022%2C14.2295334%2031.4659022%2C14.4813334%2031.5048022%2C14.7268334%20L15.4150127%2C14.7296518%20C14.9640797%2C14.7292074%2014.5151484%2C14.7287026%2014.0688022%2C14.7281334%20L14.0882022%2C14.6035334%20C14.1154022%2C14.3972334%2014.1295022%2C14.1868334%2014.1295022%2C13.9730334%20C14.1295022%2C11.3370334%2011.9926022%2C9.2001634%209.3565622%2C9.2001634%20C6.7205622%2C9.2001634%204.5836522%2C11.3370334%204.5836522%2C13.9730334%20C4.5836522%2C14.2142334%204.6015422%2C14.4512334%204.6360722%2C14.6828334%20L4.03165928%2C14.6431907%20C1.99661168%2C14.4823797%200.801048807%2C14.0995247%200.297223198%2C13.7970334%20C-0.0131968017%2C13.6506334%20-0.306130802%2C6.6840234%200.663982198%2C5.8043434%20C1.3218022%2C5.0783634%205.4541722%2C4.4473134%206.6215922%2C4.1014934%20L7.12267586%2C3.75681402%20C8.77969673%2C2.60152599%2011.0866022%2C0.899829116%2013.5433022%2C0.353823401%20C17.0037022%2C-0.122197599%2023.0486022%2C-0.221951599%2026.9993022%2C0.715593401%20Z%20M15.1157022%2C1.4933634%20C14.9566022%2C1.5158834%2014.8047022%2C1.5769634%2014.6805022%2C1.6790434%20L14.501795%2C1.83368556%20C13.8811361%2C2.39790299%2013.0252931%2C3.46298067%2012.3692022%2C5.4316534%20C12.3064022%2C5.6202134%2012.4466022%2C5.8137434%2012.6454022%2C5.8172734%20C15.6353022%2C5.8704134%2018.0051022%2C5.8441734%2020.6460022%2C5.8138134%20C20.8286022%2C5.8117134%2020.9672022%2C5.6486834%2020.9388022%2C5.4683034%20L20.6092334%2C3.43653934%20C20.5156709%2C2.87151646%2020.4113272%2C2.24844423%2020.2962022%2C1.5673234%20C20.2732022%2C1.4307734%2020.1595022%2C1.3273534%2020.0213022%2C1.3188534%20C18.3146022%2C1.2139034%2016.6794022%2C1.2720734%2015.1157022%2C1.4933634%20Z%20M21.8799022%2C1.3862034%20C21.6921022%2C1.3822534%2021.5505022%2C1.5528634%2021.5847022%2C1.7374934%20L22.1020449%2C4.5579719%20C22.1650422%2C4.9069589%2022.2233622%2C5.2328294%2022.2770022%2C5.5355834%20C22.3022022%2C5.6776934%2022.4248022%2C5.7816634%2022.5691022%2C5.7833134%20L25.2687615%2C5.80999451%20C27.0939022%2C5.82339896%2028.9800355%2C5.82429673%2030.9887022%2C5.7902434%20C31.2183022%2C5.7863534%2031.3537022%2C5.5389834%2031.2124022%2C5.3580634%20C29.9485022%2C3.7402534%2027.2028022%2C2.4667634%2025.9392022%2C1.7992234%20C25.9094022%2C1.7834434%2025.8780022%2C1.7732734%2025.8446022%2C1.7682034%20C24.3244022%2C1.5371834%2023.0028022%2C1.4098534%2021.8799022%2C1.3862034%20Z%22%20opacity%3D%22.5%22%20transform%3D%22translate%28.5%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-content-delivery-title-contnet {
+	display: inline-flex;
+	align-items: center;
+	overflow: hidden;
+	margin: 0 0 0 5px;
+	white-space: nowrap;
+}
+
+.crm-entity-stream-content-delivery-title-info {
+	display: flex;
+	flex-direction: column;
+	align-self: center;
+	overflow: hidden;
+	padding-left: 11px;
+}
+
+.crm-entity-stream-content-delivery-title-name,
+.crm-entity-stream-content-delivery-title-param {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	line-height: 15px;
+	font-size: 13px;
+	color: #333;
+}
+
+.crm-entity-stream-content-delivery-title-name {
+	opacity: .5;
+}
+
+.crm-entity-stream-content-delivery-title-param {
+	font-size: 14px;
+}
+
+.crm-entity-stream-content-delivery-title-logo {
+	display: block;
+	width: 31px;
+	height: 31px;
+	min-width: 28px;
+	background-size: 28px;
+}
+
+.crm-entity-stream-content-delivery-order {
+	border-collapse: collapse;
+	margin: 10px 0 0 0;
+}
+
+.crm-entity-stream-content-delivery-order td:nth-child(2) {
+	padding-left: 40px;
+}
+
+.crm-entity-stream-content-delivery-order-item {
+	padding: 5px 0;
+}
+
+.crm-entity-stream-content-delivery-order-item--disabled {
+	opacity: .5;
+}
+
+.crm-entity-stream-content-delivery-order-label {
+	font-size: 12px;
+	color: #868c96;
+	line-height: 16px;
+}
+
+.crm-entity-stream-content-delivery-order-value {
+	font-size: 18px;
+	color: #333;
+	line-height: 26px;
+}
+
+.crm-entity-stream-content-delivery-order-value--sm {
+	font-size: 14px;
+	line-height: 22px;
+}
+
+.crm-entity-stream-content-delivery-order-value--flex {
+	display: flex;
+}
+
+.crm-entity-stream-content-delivery-order-arrow {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 7px;
+	min-width: 16px;
+	max-width: 16px !important;
+	width: 16px;
+	height: 10px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2210%22%20viewBox%3D%220%200%2016%2010%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20points%3D%2210.014%201.056%2013.006%204.048%200%204.048%200%205.541%2013.006%205.541%2010.014%208.533%2011.07%209.589%2015.864%204.795%2011.07%200%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
+}
+
+.crm-entity-stream-content-delivery-order-value--flex .crm-entity-stream-content-delivery-order-arrow {
+	margin: 6px 7px;
+}
+.crm-entity-stream-content-delivery-order-value--flex .crm-entity-stream-content-detail-description--arrow {
+	margin: 4px 7px;
+}
+
+.crm-entity-stream-content-delivery-link {
+	display: inline-block;
+	line-height: normal;
+	text-decoration: none;
+	border-top: 1px solid transparent;
+	border-bottom: 1px dashed rgba(32, 102, 176, .4);
+	color: #2066b0;
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-delivery-link:hover {
+	border-bottom: 1px dashed rgba(32, 102, 176, .8);
+}
+
+span + .crm-entity-stream-content-delivery-link {
+	margin-left: 10px;
+}
+
+span + .crm-entity-stream-content-delivery-phone-ext {
+	margin-left: 10px;
+}
+
+.crm-entity-stream-content-delivery-link--light {
+	color: #9b9b9b;
+	border-bottom: 1px dashed rgba(155, 155, 155, .4);
+}
+
+.crm-entity-stream-content-delivery-link--light:hover {
+	border-bottom: 1px dashed rgba(155, 155, 155, .8);
+}
+
+.crm-entity-stream-content-delivery-status {
+	display: inline-block;
+	position: relative;
+	height: 31px;
+	padding: 0 16px 0 32px;
+	background: rgba(213,162,0,.2);
+	white-space: nowrap;
+	border-radius: 16px;
+	font-size: 14px;
+	line-height: 31px;
+	color: #0c0c0c;
+}
+
+.crm-entity-stream-content-delivery-status--alert {
+	background: rgba(255,87,82,.2);
+}
+
+.crm-entity-stream-content-delivery-status:before {
+	content: '';
+	position: absolute;
+	left: 10px;
+	top: 7px;
+	width: 16px;
+	height: 16px;
+	opacity: 0.37;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20fill%3D%22%23593B00%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.5214929%2C3.00000102%20L10.5217072%2C5.25663479%20C7.56936121%2C5.49992413%205.24911709%2C7.97524107%205.24911709%2C10.9929571%20C5.24911709%2C14.1718782%207.82387507%2C16.7489029%2011%2C16.7489029%20C14.1761249%2C16.7489029%2016.7508829%2C14.1718782%2016.7508829%2C10.9929571%20C16.7508829%2C10.834148%2016.7444571%2C10.676841%2016.7318515%2C10.5212824%20L18.9863347%2C10.5210199%20C18.9954028%2C10.6771734%2019%2C10.8345279%2019%2C10.9929571%20C19%2C15.4151248%2015.418278%2C19%2011%2C19%20C6.581722%2C19%203%2C15.4151248%203%2C10.9929571%20C3%2C6.7315833%206.32598846%2C3.24771956%2010.5214929%2C3.00000102%20Z%22%20transform%3D%22translate%28-3%20-3%29%22/%3E%3C/svg%3E') center no-repeat;
+	animation: .85s crm-entity-stream-content-delivery-status linear infinite;
+}
+
+.crm-entity-stream-content-delivery-status--alert:before {
+	left: 11px;
+	top: 8px;
+	width: 15px;
+	height: 13px;
+	opacity: 1;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2014%2012%22%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M13.8345107%2C10.2700119%20L7.98314845%2C0.559139785%20C7.53230578%2C-0.186379928%206.45795729%2C-0.186379928%206.01670702%2C0.559139785%20L0.165344742%2C10.2700119%20C-0.295090323%2C11.0346476%200.261268714%2C12%201.15336165%2C12%20L12.8560862%2C12%20C13.7385868%2C12%2014.2949458%2C11.0346476%2013.8345107%2C10.2700119%20Z%20M6.125%2C4.17511521%20C6.125%2C3.76036866%206.48916185%2C3.42857143%206.94436416%2C3.42857143%20L7.05563584%2C3.42857143%20C7.51083815%2C3.42857143%207.875%2C3.76036866%207.875%2C4.17511521%20L7.875%2C6.96774194%20C7.875%2C7.38248848%207.51083815%2C7.71428571%207.05563584%2C7.71428571%20L6.94436416%2C7.71428571%20C6.48916185%2C7.71428571%206.125%2C7.38248848%206.125%2C6.96774194%20L6.125%2C4.17511521%20Z%20M7.875%2C9.42857143%20C7.875%2C9.89915966%207.48039216%2C10.2857143%207%2C10.2857143%20C6.51960784%2C10.2857143%206.125%2C9.89915966%206.125%2C9.42857143%20L6.125%2C9.42857143%20C6.125%2C8.95798319%206.51960784%2C8.57142857%207%2C8.57142857%20C7.48039216%2C8.57142857%207.875%2C8.95798319%207.875%2C9.42857143%20L7.875%2C9.42857143%20Z%22/%3E%3C/svg%3E');
+	animation: none;
+}
+
+@keyframes crm-entity-stream-content-delivery-status {
+	from {
+		transform: rotate(0)
+	}
+	to {
+		transform: rotate(360deg)
+	}
+}
+
+.crm-entity-stream-content-delivery-sms {
+	display: flex;
+	margin-top: 20px;
+}
+
+.crm-entity-stream-content-delivery-sms-user {
+	display: block;
+	width: 60px;
+}
+
+.crm-entity-stream-content-delivery-sms-avatar {
+	display: block;
+	margin: 4px auto 2px auto;
+	width: 40px;
+	height: 40px;
+	background: #7b8691 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M72.7856666%2C62.2540935%20C72.7856666%2C59.9430795%2069.7566666%2C57.3030635%2063.7856666%2C55.7650542%20C61.7635193%2C55.2035354%2059.8406739%2C54.3318402%2058.0856666%2C53.1810386%20C57.7026666%2C52.9630373%2057.7606666%2C50.945025%2057.7606666%2C50.945025%20L55.8386666%2C50.6530233%20C55.8386666%2C50.4890223%2055.6746666%2C48.0690076%2055.6746666%2C48.0690076%20C57.9746666%2C47.299003%2057.7376666%2C42.7549755%2057.7376666%2C42.7549755%20C59.1976666%2C43.5619804%2060.1486666%2C39.9709586%2060.1486666%2C39.9709586%20C61.8766666%2C34.9769284%2059.2886666%2C35.2779302%2059.2886666%2C35.2779302%20C60.1106666%2C31.5399076%2059.2886666%2C26.0778745%2059.2886666%2C26.0778745%20C58.1386666%2C15.9618133%2040.8186666%2C18.7078299%2042.8716666%2C22.0128499%20C37.8096666%2C21.0788443%2038.9646666%2C32.5639138%2038.9646666%2C32.5639138%20L40.0646666%2C35.5329318%20C37.9086666%2C36.9249402%2039.4066666%2C38.6119504%2039.4796666%2C40.5529621%20C39.5856666%2C43.4179795%2041.3406666%2C42.8249759%2041.3406666%2C42.8249759%20C41.4496666%2C47.5530045%2043.7866666%2C48.1750083%2043.7866666%2C48.1750083%20C44.2266666%2C51.1440262%2043.9526666%2C50.6390232%2043.9526666%2C50.6390232%20L41.8706666%2C50.8890247%20C41.8989236%2C51.5642186%2041.8438415%2C52.240321%2041.7066666%2C52.9020369%20C39.2576666%2C53.9950435%2038.7356666%2C54.6290473%2036.3006666%2C55.6950538%20C31.6006666%2C57.7480662%2026.4926666%2C60.4180824%2025.5856666%2C64.0121041%20C24.6786666%2C67.6061259%2023.0006666%2C75.9951766%2023.0006666%2C75.9951766%20L76.0006666%2C75.9951766%20L72.7856666%2C62.2540935%20Z%22/%3E%3C/svg%3E%0A') center no-repeat;
+	background-size: cover;
+	border-radius: 100%;
+}
+
+.crm-entity-stream-content-delivery-sms-name {
+	display: block;
+	text-align: center;
+	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 10px;
+	color: #969BA2;
+}
+
+.crm-entity-stream-content-delivery-sms-contnet {
+	flex: 1;
+	position: relative;
+	padding: 0 0 0 22px;
+}
+
+.crm-entity-stream-content-delivery-sms-message {
+	float: left;
+	position: relative;
+	padding: 13px 17px;
+	background: #ddf4fd;
+	border-radius: 20px;
+	font-size: 14px;
+	color: #0c0c0c;
+	line-height: 20px;
+}
+
+.crm-entity-stream-content-delivery-sms-message:before {
+	content: '';
+	width: 19px;
+	height: 17px;
+	position: absolute;
+	top: 20px;
+	left: -12px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%2217%22%20viewBox%3D%220%200%2019%2017%22%3E%3Cpath%20fill%3D%22%23ddf4fd%22%20d%3D%22M0.00637011437%2C12.8138411%20C-0.317530323%2C13.9953315%2011.7965124%2C18.9660587%2016.716914%2C15.5718904%20C21.6373155%2C12.1777221%2014.4385337%2C-4.41509258%2012.7422864%2C1.12094297%20C11.0460392%2C6.65697853%200.330270552%2C11.6323507%200.00637011437%2C12.8138411%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+}
+
+.crm-entity-stream-content-delivery-sms-message a {
+	color: #0b66c3;
+}
+
+.crm-entity-stream-content-delivery-sms-info {
+	clear: both;
+	display: block;
+	padding: 3px 17px;
+	font-size: 12px;
+	color: rgba(128,134,142,.7);
+	line-height: 16px;
+}
+
+.crm-entity-stream-content-delivery-description {
+	margin: 7px 0 3px 0;
+	font-size: 14px;
+	color: #333;
+}
+
+.crm-entity-stream-content-detail-description--path {
+	opacity: .5;
+}
+
+.crm-entity-stream-content-detail-description--arrow {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 7px;
+	min-width: 15px;
+	max-width: 15px !important;
+	width: 15px;
+	height: 9px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2210%22%20viewBox%3D%220%200%2016%2010%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20points%3D%2210.014%201.056%2013.006%204.048%200%204.048%200%205.541%2013.006%205.541%2010.014%208.533%2011.07%209.589%2015.864%204.795%2011.07%200%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
+}
+
+.crm-entity-stream-content-delivery-icon-location {
+	padding-left: 26px;
+}
+
+.crm-entity-stream-content-delivery-icon-location:after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 1px !important;
+	display: block;
+	transform: translateY(-50%);
+	width: 26px;
+	height: 26px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2215%22%20viewBox%3D%220%200%2011%2015%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M5.33179945%2C9.76996262e-15%20C2.37555651%2C9.76996262e-15%203.73034936e-13%2C2.37462593%203.73034936e-13%2C5.33179945%20C3.73034936e-13%2C7.82661049%201.51786538%2C10.9134276%204.55359613%2C14.5922506%20L4.55358269%2C14.5922617%20C4.90510176%2C15.018247%205.53539354%2C15.0786137%205.96137877%2C14.7270946%20C6.01258576%2C14.6848391%206.05945753%2C14.6375892%206.1013003%2C14.5860444%20C9.1428327%2C10.8392746%2010.6635989%2C7.75452626%2010.6635989%2C5.33179945%20C10.6635989%2C2.37462593%208.28804239%2C9.76996262e-15%205.33179945%2C9.76996262e-15%20Z%20M5.33179945%2C7.75458326%20C3.97500329%2C7.75458326%202.90808505%2C6.68859561%202.90808505%2C5.33086886%20C2.90808505%2C3.9740727%203.9740727%2C2.90715446%205.33179945%2C2.90715446%20C6.68859561%2C2.90715446%207.75551385%2C3.97314212%207.75551385%2C5.33086886%20C7.75551385%2C6.68857235%206.68861887%2C7.75458326%205.33179945%2C7.75458326%20Z%22/%3E%3C/svg%3E') center 5px no-repeat;
+}
+
+/*delivery end*/
+
+.crm-entity-stream-section-content .main-buttons {
+	height: 47px;
+}
+.crm-entity-stream-section-content .main-buttons:after {
+	content: '';
+	display: block;
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 1px;
+	width: 100%;
+	z-index: 1;
+	background-color: #e2e3e6;
+}
+.crm-entity-stream-section-content .main-buttons-item-link {
+	font-size: 14px;
+	height: 46px;
+	line-height: 46px;
+	font-family: inherit;
+}
+.crm-entity-stream-section-content .main-buttons-item {
+	border-bottom: 1px solid transparent;
+	height: 46px;
+	line-height: 46px;
+	margin: 0 20px 0 0;
+}
+.crm-entity-stream-section-content .main-buttons-item-active {
+	height: 46px!important;
+	border-bottom: 1px solid #1058d0;
+	z-index: 2;
+}
+.crm-entity-stream-section-content .main-buttons-item-more.main-buttons-item:after {
+	top: 30px;
+}
+.crm-entity-stream-section-content .main-buttons-item.crm-zoom-tariff-lock {
+	padding-left: 13px;
+	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgOSAxMiI+ICA8cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1Miw1IEw5LDUgTDksMTIgTDAsMTIgTDAsNSBMMS4wNTIsNSBMMS4wNTIsMy40MTIgQzEuMTE1MzMxNjcsMS41NTIzMjI3NCAyLjY0MTI0NDY2LDAuMDc3NDkwNDI1MSA0LjUwMiwwLjA3NzQ5MDQyNTEgQzYuMzYyNzU1MzQsMC4wNzc0OTA0MjUxIDcuODg4NjY4MzMsMS41NTIzMjI3NCA3Ljk1MiwzLjQxMiBMNy45NTIsNSBaIE02Ljk5NjQyNzgzLDUgTDcuMDA4LDMuNDEyIEM2LjkwMzAwMjI5LDIuMDc3Mjc1NzMgNS44MzU3NDU5MywxLjAyMTA4MzQ0IDQuNSwwLjkzIEMzLjE2NDI1NDA3LDEuMDIxMDgzNDQgMi4wOTY5OTc3MSwyLjA3NzI3NTczIDEuOTkyLDMuNDEyIEwyLjAwNTA0MDUzLDUgTDYuOTk2NDI3ODMsNSBaIE01LjAxOSw4Ljg3OSBMNS4wMTksMTAuMTY2IEwzLjk4MSwxMC4xNjYgTDMuOTgxLDguODc5IEMzLjc4NzY5NDg0LDguNzI1MzU2MDEgMy42NzUwMzA3Nyw4LjQ5MTkyNzg1IDMuNjc1LDguMjQ1IEMzLjY3NSw3Ljc4OTM2NTA4IDQuMDQ0MzY1MDgsNy40MiA0LjUsNy40MiBDNC45NTU2MzQ5Miw3LjQyIDUuMzI1LDcuNzg5MzY1MDggNS4zMjUsOC4yNDUgQzUuMzI0OTY5MjMsOC40OTE5Mjc4NSA1LjIxMjMwNTE2LDguNzI1MzU2MDEgNS4wMTksOC44NzkgTDUuMDE5LDguODc5IFoiLz48L3N2Zz4=) no-repeat center left;
+}
+.crm-entity-stream-section-content .main-buttons-item-drag-button {
+	top: -1px;
+}
+
+.crm-entity-stream-courier {
+	display: flex;
+	align-items: center;
+	margin: 9px 0 15px 0;
+}
+
+.crm-entity-stream-courier-userpic {
+	display: block;
+	position: relative;
+	width: 22px;
+	height: 22px;
+	margin-right: 14px;
+	border-radius: 100%;
+	border: 1px solid #fff;
+	background: center no-repeat;
+	background-size: cover;
+}
+
+.crm-entity-stream-courier-userpic:after {
+	content: '';
+	position: absolute;
+	top: -3px;
+	right: -3px;
+	bottom: -3px;
+	left: -3px;
+	border-radius: 100%;
+	border: 2px solid #9dcf00;
+}
+
+.crm-entity-stream-courier-icon {
+	display: block;
+	width: 16px;
+	height: 16px;
+	margin-right: 13px;
+	background: center no-repeat;
+	cursor: pointer;
+}
+
+.crm-entity-stream-courier-icon--call {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2216%22%20viewBox%3D%220%200%2014%2016%22%3E%0A%20%20%3Cpath%20fill%3D%22%23559BE6%22%20d%3D%22M39.1067278%2C5.33661658%20C39.5687693%2C4.84542594%2040.1492831%2C4.84542594%2040.6142865%2C5.33342643%20C40.9015816%2C5.63643378%2041.0777202%2C6.02294381%2041.302225%2C6.34818182%20C41.5267594%2C6.67342072%2041.7930849%2C7.08767909%2042.0685328%2C7.38749718%20C42.5542688%2C7.91377236%2042.5542688%2C8.52616647%2042.0714946%2C9.04925239%20C41.7249634%2C9.42561896%2041.6064912%2C9.55958037%2041.2540364%2C9.92637827%20C41.1622204%2C10.0252543%2041.153335%2C10.1049929%2041.2007239%2C10.2261964%20C41.4347065%2C10.8258317%2041.7693905%2C11.3584862%2042.1455397%2C11.8560563%20C42.9037618%2C12.8575749%2043.7597234%2C13.7474587%2044.7815462%2C14.4395915%20C45.0007197%2C14.5863108%2045.2435878%2C14.6947555%2045.4716468%2C14.828716%20C45.5871571%2C14.8988868%2045.6671259%2C14.8765594%2045.7619036%2C14.7713048%20C46.1084348%2C14.3885589%2046.3720355%2C14.2673554%2046.7244903%2C13.8909888%20C47.1865319%2C13.3966089%2047.7670456%2C13.3966089%2048.232049%2C13.8909888%20C48.7977538%2C14.4970035%2049.4523126%2C14.8478533%2050.0150556%2C15.4570573%20C50.4859826%2C15.9673853%2050.4830208%2C16.5925373%2050.009132%2C17.1092447%20C49.689257%2C17.4569053%2049.3486495%2C17.7886186%2049.0465454%2C18.1522273%20C48.6052364%2C18.6848819%2048.0543407%2C18.857118%2047.4205144%2C18.8188433%20C46.4993931%2C18.7646205%2045.6523168%2C18.4360973%2044.8348586%2C18.0086972%20C43.0192722%2C17.0582121%2041.4672864%2C15.7409273%2040.1670539%2C14.0759828%20C39.2044673%2C12.8448161%2038.4107036%2C11.5020163%2037.8894259%2C9.99016972%20C37.6347107%2C9.25976228%2037.4540406%2C8.51021839%2037.5103149%2C7.7160204%20C37.5458565%2C7.22801902%2037.7146794%2C6.81018849%2038.0493634%2C6.46890646%20C38.4107036%2C6.0989184%2038.7513112%2C5.71298315%2039.1067278%2C5.33661658%20Z%20M44.9470693%2C6.9486066%20L45.0276716%2C6.96208358%20C45.8395838%2C7.17250735%2046.575589%2C7.60030058%2047.1791103%2C8.21733643%20C47.7442536%2C8.79747832%2048.1507615%2C9.50074352%2048.3688319%2C10.277305%20C48.4453617%2C10.5498264%2048.2715847%2C10.8296972%2047.9982114%2C10.8774127%20L47.9982114%2C10.8774127%20L47.8729448%2C10.8992886%20C47.6404402%2C10.9398859%2047.4131149%2C10.7971731%2047.3474532%2C10.5655384%20C47.1783462%2C9.96922109%2046.8664815%2C9.42843211%2046.4319258%2C8.98414593%20C45.9688977%2C8.51072063%2045.404462%2C8.18203422%2044.7826856%2C8.01738677%20C44.5512283%2C7.95609995%2044.399414%2C7.73019468%2044.4326127%2C7.48811481%20L44.4326127%2C7.48811481%20L44.4503866%2C7.35836498%20C44.4889912%2C7.0769314%2044.758204%2C6.89223112%2045.0276716%2C6.96208358%20Z%20M44.9504013%2C3.97833712%20L45.032719%2C3.98820433%20C46.601954%2C4.31605272%2048.0217606%2C5.10023045%2049.1672184%2C6.27553412%20C50.2455854%2C7.38471869%2050.9913867%2C8.75168979%2051.342415%2C10.2597922%20C51.4085529%2C10.5440089%2051.2287805%2C10.8268503%2050.948059%2C10.8760426%20L50.948059%2C10.8760426%20L50.8173614%2C10.8989282%20C50.5614156%2C10.9437514%2050.3171728%2C10.7760078%2050.2568417%2C10.5168767%20C49.954501%2C9.21804073%2049.3107804%2C8.03916193%2048.3810673%2C7.08522456%20C47.3945967%2C6.07579988%2046.1716255%2C5.39816552%2044.8208156%2C5.11245194%20C44.5668947%2C5.05876794%2044.3968895%2C4.8127442%2044.4328619%2C4.54930436%20L44.4328619%2C4.54930436%20L44.451533%2C4.41260427%20C44.4906619%2C4.12621839%2044.7565835%2C3.93051713%2045.032719%2C3.98820433%20Z%22%20transform%3D%22translate%28-37.5%20-3.5%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-courier-icon--message {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%2215%22%20viewBox%3D%220%200%2017%2015%22%3E%0A%20%20%3Cpath%20fill%3D%22%235F9CE7%22%20fill-rule%3D%22evenodd%22%20d%3D%22M75.9222107%2C11.2195435%20L75.9222107%2C6.31910319%20C75.9222107%2C5.46702995%2075.2058402%2C4.76987912%2074.3302761%2C4.76987912%20L65.6165287%2C4.76987912%20C64.7409646%2C4.76987912%2064.024594%2C5.46702995%2064.024594%2C6.31910319%20L64.024594%2C11.2154666%20C64.024594%2C12.0675398%2064.7409646%2C12.7646907%2065.6165287%2C12.7646907%20L66.7979117%2C12.7646907%20L66.7979117%2C15.4839866%20C66.7979117%2C15.7612162%2067.0492698%2C15.7530623%2067.5729325%2C15.3209104%20C67.8787516%2C15.0722191%2069.0224309%2C13.7961477%2069.9356987%2C12.7646907%20L74.3302761%2C12.7646907%20C75.2058402%2C12.7687676%2075.9222107%2C12.0716167%2075.9222107%2C11.2195435%20Z%20M77.3717091%2C8.11294157%20L77.3717091%2C11.9126174%20C77.3717091%2C13.1642274%2076.3201944%2C14.1916076%2075.0298895%2C14.1916076%20L70.3462502%2C14.1916076%20L68.6956654%2C15.8672157%20C68.9428342%2C16.0221381%2069.2402746%2C16.1159069%2069.5544722%2C16.1159069%20L73.9490497%2C16.1159069%20C74.8623174%2C17.147364%2076.0101861%2C18.4234354%2076.3118158%2C18.6721266%20C76.8396678%2C19.1042786%2077.0868366%2C19.1083555%2077.0868366%2C18.8352028%20L77.0868366%2C16.1159069%20L78.2682197%2C16.1159069%20C79.1437837%2C16.1159069%2079.8601543%2C15.4187561%2079.8601543%2C14.5666829%20L79.8601543%2C9.66216563%20C79.8643436%2C8.8100924%2079.147973%2C8.11294157%2078.2682197%2C8.11294157%20L77.3717091%2C8.11294157%20Z%22%20transform%3D%22translate%28-63.5%20-4.5%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-courier-icon--arrow {
+	width: 16px;
+	height: 10px;
+	opacity: .5;
+	margin: 0 17px 0 6px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%2210%22%20viewBox%3D%220%200%2017%2010%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20points%3D%22109.788%206.774%20112.78%209.766%2099.774%209.766%2099.774%2011.259%20112.78%2011.259%20109.788%2014.251%20110.843%2015.307%20115.638%2010.513%20110.843%205.718%22%20transform%3D%22translate%28-99.5%20-5.5%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-courier-name {
+	display: inline-block;
+	margin-right: 11px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #2066b0;
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-detail-description--light {
+	color: #868c96;
+	margin-bottom: 0;
+}
+
+.crm-entity-stream-content-cart {
+	display: flex;
+	white-space: nowrap;
+	align-items: center;
+	margin-bottom: 5px;
+}
+
+.crm-entity-stream-content-cart-text {
+	flex: 1;
+}
+
+.crm-entity-stream-content-cart-text span {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #9b9b9b;
+	border-bottom: 1px dashed rgba(155,155,155,.4);
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-cart-text span:hover {
+	border-bottom: 1px dashed rgba(155,155,155,.7);
+}
+
+.crm-entity-stream-content-cart-total {
+	white-space: nowrap;
+}
+
+.crm-entity-stream-content-cart-in {
+	display: inline-block;
+	vertical-align: middle;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #333;
+	margin-right: 20px;
+}
+
+.crm-entity-stream-content-cart-in:last-child {
+	margin-right: 0;
+}
+
+.crm-entity-stream-content-cart-in span {
+	display: inline-block;
+	margin-left: 3px;
+	color: rgba(82,92,105,.5);
+}
+
+.crm-entity-stream-delivery-status {
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	padding: 0 17px 0 36px;
+	margin-right: 20px;
+	height: 41px;
+	line-height: 41px;
+	background: #177ce2;
+	border-radius: 24px;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	color: #fff;
+}
+
+.crm-entity-stream-delivery-status:before {
+	content: '';
+	width: 12px;
+	height: 18px;
+	position: absolute;
+	top: 11px;
+	left: 15px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2219%22%20viewBox%3D%220%200%2014%2019%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M11.7903962%2C0.351908949%20C12.4866623%2C0.351908949%2013.0555706%2C0.880737096%2013.1283306%2C1.55186708%20L13.1361935%2C1.69771788%20L13.1361935%2C8.8328958%20C13.1361935%2C8.87415297%2013.0657821%2C8.99984934%2012.9681436%2C9.1584872%20L12.5666822%2C9.79430207%20C12.483891%2C9.92911151%2012.4187538%2C10.0432306%2012.3960106%2C10.1072128%20L12.3872887%2C10.1453387%20L12.3870562%2C17.3937008%20C12.3870562%2C18.0900753%2011.8582888%2C18.6588897%2011.1871197%2C18.7316366%20L11.0412589%2C18.7394981%20L2.99443696%2C18.7394981%20C2.29812748%2C18.7394981%201.72924659%2C18.2107307%201.65649051%2C17.5395615%20L1.64862803%2C17.3937008%20L1.64862803%2C10.0807219%20C1.64862803%2C10.0386657%201.57805775%2C9.91212493%201.48024051%2C9.75265403%20L1.02044402%2C9.01782672%20C0.966222071%2C8.92567359%200.925394904%2C8.84929153%200.908370192%2C8.80107267%20L0.899665101%2C8.7627005%20L0.899665101%2C1.69771788%20C0.899665101%2C1.00141924%201.42849325%2C0.432528948%202.09962324%2C0.35977157%20L2.24547403%2C0.351908949%20L11.7903962%2C0.351908949%20Z%20M4.64098162%2C14.7868286%20L3.68357119%2C14.7868286%20C3.34528562%2C14.7868286%203.07082665%2C15.0612179%203.07082665%2C15.3995267%20C3.07082665%2C15.7378355%203.345274%2C16.0122247%203.68357119%2C16.0122247%20L4.64098162%2C16.0122247%20C4.97924394%2C16.0122247%205.2537494%2C15.7378355%205.2537494%2C15.3995267%20C5.2537494%2C15.0612179%204.97924394%2C14.7868286%204.64098162%2C14.7868286%20Z%20M7.50046387%2C14.7865962%20L6.54306506%2C14.7865962%20C6.20475625%2C14.7865962%205.93025079%2C15.0611016%205.93025079%2C15.3994104%20C5.93025079%2C15.7377192%206.20475625%2C16.0121085%206.54306506%2C16.0121085%20L7.50046387%2C16.0121085%20C7.83877268%2C16.0121085%208.11316192%2C15.7377192%208.11316192%2C15.3994104%20C8.11316192%2C15.0611016%207.83877268%2C14.7865962%207.50046387%2C14.7865962%20Z%20M10.3598764%2C14.78648%20L9.40247758%2C14.78648%20C9.06416877%2C14.78648%208.78977953%2C15.0609854%208.78977953%2C15.3992942%20C8.78977953%2C15.7000132%209.00658091%2C15.9502278%209.29236408%2C16.0021184%20L9.40247758%2C16.0119923%20L10.3598764%2C16.0119923%20C10.6981852%2C16.0119923%2010.9726907%2C15.737603%2010.9726907%2C15.3992942%20C10.9726907%2C15.0985753%2010.7557975%2C14.8482689%2010.4699939%2C14.7963578%20L10.3598764%2C14.78648%20Z%20M4.64098162%2C12.5527818%20L3.68357119%2C12.5527818%20C3.34528562%2C12.5527818%203.07082665%2C12.8272873%203.07082665%2C13.1655961%20C3.07082665%2C13.5039049%203.345274%2C13.7782942%203.68357119%2C13.7782942%20L4.64098162%2C13.7782942%20C4.97924394%2C13.7782942%205.2537494%2C13.5039049%205.2537494%2C13.1655961%20C5.2537494%2C12.8272873%204.97924394%2C12.5527818%204.64098162%2C12.5527818%20Z%20M7.50046387%2C12.5526656%20L6.54306506%2C12.5526656%20C6.20475625%2C12.5526656%205.93025079%2C12.8271711%205.93025079%2C13.1654799%20C5.93025079%2C13.4661988%206.147144%2C13.7164134%206.43294757%2C13.7683041%20L6.54306506%2C13.7781779%20L7.50046387%2C13.7781779%20C7.83877268%2C13.7781779%208.11316192%2C13.5037887%208.11316192%2C13.1654799%20C8.11316192%2C12.8647609%207.89636054%2C12.6144545%207.61057737%2C12.5625435%20L7.50046387%2C12.5526656%20Z%20M10.3598764%2C12.5525494%20L9.40247758%2C12.5525494%20C9.06416877%2C12.5525494%208.78977953%2C12.8270549%208.78977953%2C13.1653637%20C8.78977953%2C13.5035563%209.06416877%2C13.7780617%209.40247758%2C13.7780617%20L10.3598764%2C13.7780617%20C10.6981852%2C13.7780617%2010.9726907%2C13.5036725%2010.9726907%2C13.1653637%20C10.9726907%2C12.8270549%2010.6981852%2C12.5525494%2010.3598764%2C12.5525494%20Z%20M7.50046387%2C10.3123431%20L6.54306506%2C10.3123431%20C6.20475625%2C10.3123431%205.93025079%2C10.5868486%205.93025079%2C10.9250412%20C5.93025079%2C11.26335%206.20475625%2C11.5378554%206.54306506%2C11.5378554%20L7.50046387%2C11.5378554%20C7.83877268%2C11.5378554%208.11316192%2C11.26335%208.11316192%2C10.9250412%20C8.11316192%2C10.5868486%207.83877268%2C10.3123431%207.50046387%2C10.3123431%20Z%20M4.64098162%2C10.3124593%20L3.68357119%2C10.3124593%20C3.34528562%2C10.3124593%203.07082665%2C10.5869648%203.07082665%2C10.9252736%20C3.07082665%2C11.2258892%203.28767394%2C11.4761842%203.57345915%2C11.528094%20L3.68357119%2C11.5379716%20L4.64098162%2C11.5379716%20C4.97924394%2C11.5379716%205.2537494%2C11.2634662%205.2537494%2C10.9252736%20C5.2537494%2C10.6245546%205.0368562%2C10.3742482%204.75108527%2C10.3223372%20L4.64098162%2C10.3124593%20Z%20M10.3598764%2C10.3122269%20L9.40247758%2C10.3122269%20C9.06416877%2C10.3122269%208.78977953%2C10.5867323%208.78977953%2C10.9249249%20C8.78977953%2C11.2256439%209.00658091%2C11.4759503%209.29236408%2C11.5278614%20L9.40247758%2C11.5377392%20L10.3598764%2C11.5377392%20C10.6981852%2C11.5377392%2010.9726907%2C11.2632337%2010.9726907%2C10.9249249%20C10.9726907%2C10.6243093%2010.7557975%2C10.3740144%2010.4699939%2C10.3221046%20L10.3598764%2C10.3122269%20Z%20M11.1615439%2C3.40482341%20L2.87464008%2C3.40482341%20C2.717906%2C3.40482341%202.58805086%2C3.51230505%202.55414805%2C3.65815834%20L2.54551245%2C3.73396267%20L2.54551245%2C7.70849261%20C2.54551245%2C7.86518685%202.65298555%2C7.99507045%202.7988364%2C8.02898221%20L2.87464008%2C8.03762024%20L11.1615439%2C8.03762024%20C11.3182381%2C8.03762024%2011.4481217%2C7.93012153%2011.4820335%2C7.78428532%20L11.4906715%2C7.70849261%20L11.4906715%2C3.73396267%20C11.4906715%2C3.57723854%2011.3831728%2C3.44736775%2011.2373366%2C3.41346026%20L11.1615439%2C3.40482341%20Z%20M8.44507877%2C4.08582242%20L9.12843699%2C4.75186425%20L6.52691084%2C7.26303138%20L5.0511825%2C5.8368465%20L5.73454072%2C5.17080467%20L6.52691084%2C5.93092448%20L8.44507877%2C4.08582242%20Z%20M11.1614277%2C1.93469675%20L2.874489%2C1.93469675%20C2.69163257%2C1.93469675%202.54534975%2C2.08097957%202.54534975%2C2.26383019%20C2.54534975%2C2.42055929%202.65282284%2C2.55042226%202.79868101%2C2.58432741%20L2.874489%2C2.59296363%20L11.1614277%2C2.59296363%20C11.3442376%2C2.59296363%2011.4905553%2C2.44668081%2011.4905553%2C2.26383019%20C11.4905553%2C2.10709112%2011.3830566%2C1.97723527%2011.2372204%2C1.94333236%20L11.1614277%2C1.93469675%20Z%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
+}
+
+.crm-entity-stream-content-inline {
+	display: inline-flex;
+	vertical-align: middle;
+	align-items: center;
+}
+
+.crm-entity-stream-content-inline-userpic {
+	display: block;
+	width: 32px;
+	height: 32px;
+	margin-right: 8px;
+	border-radius: 100%;
+	background: center no-repeat;
+	background-size: cover;
+}
+
+.crm-entity-stream-content-inline-name {
+	display: flex;
+	align-items: center;
+}
+
+.crm-entity-stream-courier-status {
+	display: flex;
+	align-items: center;
+	margin: 4px 0 22px 0;
+}
+
+.crm-entity-stream-courier-status-value {
+	display: block;
+	position: relative;
+	padding: 0 17px 0 37px;
+	height: 41px;
+	background: #177ce2;
+	border-radius: 24px;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	color: #fff;
+	line-height: 41px;
+}
+
+.crm-entity-stream-courier-status-value:before {
+	content: '';
+	position: absolute;
+	top: 11px;
+	left: 15px;
+	width: 14px;
+	height: 19px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2219%22%20viewBox%3D%220%200%2014%2019%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M11.7903962%2C0.351908949%20C12.4866623%2C0.351908949%2013.0555706%2C0.880737096%2013.1283306%2C1.55186708%20L13.1361935%2C1.69771788%20L13.1361935%2C8.8328958%20C13.1361935%2C8.87415297%2013.0657821%2C8.99984934%2012.9681436%2C9.1584872%20L12.5666822%2C9.79430207%20C12.483891%2C9.92911151%2012.4187538%2C10.0432306%2012.3960106%2C10.1072128%20L12.3872887%2C10.1453387%20L12.3870562%2C17.3937008%20C12.3870562%2C18.0900753%2011.8582888%2C18.6588897%2011.1871197%2C18.7316366%20L11.0412589%2C18.7394981%20L2.99443696%2C18.7394981%20C2.29812748%2C18.7394981%201.72924659%2C18.2107307%201.65649051%2C17.5395615%20L1.64862803%2C17.3937008%20L1.64862803%2C10.0807219%20C1.64862803%2C10.0386657%201.57805775%2C9.91212493%201.48024051%2C9.75265403%20L1.02044402%2C9.01782672%20C0.966222071%2C8.92567359%200.925394904%2C8.84929153%200.908370192%2C8.80107267%20L0.899665101%2C8.7627005%20L0.899665101%2C1.69771788%20C0.899665101%2C1.00141924%201.42849325%2C0.432528948%202.09962324%2C0.35977157%20L2.24547403%2C0.351908949%20L11.7903962%2C0.351908949%20Z%20M4.64098162%2C14.7868286%20L3.68357119%2C14.7868286%20C3.34528562%2C14.7868286%203.07082665%2C15.0612179%203.07082665%2C15.3995267%20C3.07082665%2C15.7378355%203.345274%2C16.0122247%203.68357119%2C16.0122247%20L4.64098162%2C16.0122247%20C4.97924394%2C16.0122247%205.2537494%2C15.7378355%205.2537494%2C15.3995267%20C5.2537494%2C15.0612179%204.97924394%2C14.7868286%204.64098162%2C14.7868286%20Z%20M7.50046387%2C14.7865962%20L6.54306506%2C14.7865962%20C6.20475625%2C14.7865962%205.93025079%2C15.0611016%205.93025079%2C15.3994104%20C5.93025079%2C15.7377192%206.20475625%2C16.0121085%206.54306506%2C16.0121085%20L7.50046387%2C16.0121085%20C7.83877268%2C16.0121085%208.11316192%2C15.7377192%208.11316192%2C15.3994104%20C8.11316192%2C15.0611016%207.83877268%2C14.7865962%207.50046387%2C14.7865962%20Z%20M10.3598764%2C14.78648%20L9.40247758%2C14.78648%20C9.06416877%2C14.78648%208.78977953%2C15.0609854%208.78977953%2C15.3992942%20C8.78977953%2C15.7000132%209.00658091%2C15.9502278%209.29236408%2C16.0021184%20L9.40247758%2C16.0119923%20L10.3598764%2C16.0119923%20C10.6981852%2C16.0119923%2010.9726907%2C15.737603%2010.9726907%2C15.3992942%20C10.9726907%2C15.0985753%2010.7557975%2C14.8482689%2010.4699939%2C14.7963578%20L10.3598764%2C14.78648%20Z%20M4.64098162%2C12.5527818%20L3.68357119%2C12.5527818%20C3.34528562%2C12.5527818%203.07082665%2C12.8272873%203.07082665%2C13.1655961%20C3.07082665%2C13.5039049%203.345274%2C13.7782942%203.68357119%2C13.7782942%20L4.64098162%2C13.7782942%20C4.97924394%2C13.7782942%205.2537494%2C13.5039049%205.2537494%2C13.1655961%20C5.2537494%2C12.8272873%204.97924394%2C12.5527818%204.64098162%2C12.5527818%20Z%20M7.50046387%2C12.5526656%20L6.54306506%2C12.5526656%20C6.20475625%2C12.5526656%205.93025079%2C12.8271711%205.93025079%2C13.1654799%20C5.93025079%2C13.4661988%206.147144%2C13.7164134%206.43294757%2C13.7683041%20L6.54306506%2C13.7781779%20L7.50046387%2C13.7781779%20C7.83877268%2C13.7781779%208.11316192%2C13.5037887%208.11316192%2C13.1654799%20C8.11316192%2C12.8647609%207.89636054%2C12.6144545%207.61057737%2C12.5625435%20L7.50046387%2C12.5526656%20Z%20M10.3598764%2C12.5525494%20L9.40247758%2C12.5525494%20C9.06416877%2C12.5525494%208.78977953%2C12.8270549%208.78977953%2C13.1653637%20C8.78977953%2C13.5035563%209.06416877%2C13.7780617%209.40247758%2C13.7780617%20L10.3598764%2C13.7780617%20C10.6981852%2C13.7780617%2010.9726907%2C13.5036725%2010.9726907%2C13.1653637%20C10.9726907%2C12.8270549%2010.6981852%2C12.5525494%2010.3598764%2C12.5525494%20Z%20M7.50046387%2C10.3123431%20L6.54306506%2C10.3123431%20C6.20475625%2C10.3123431%205.93025079%2C10.5868486%205.93025079%2C10.9250412%20C5.93025079%2C11.26335%206.20475625%2C11.5378554%206.54306506%2C11.5378554%20L7.50046387%2C11.5378554%20C7.83877268%2C11.5378554%208.11316192%2C11.26335%208.11316192%2C10.9250412%20C8.11316192%2C10.5868486%207.83877268%2C10.3123431%207.50046387%2C10.3123431%20Z%20M4.64098162%2C10.3124593%20L3.68357119%2C10.3124593%20C3.34528562%2C10.3124593%203.07082665%2C10.5869648%203.07082665%2C10.9252736%20C3.07082665%2C11.2258892%203.28767394%2C11.4761842%203.57345915%2C11.528094%20L3.68357119%2C11.5379716%20L4.64098162%2C11.5379716%20C4.97924394%2C11.5379716%205.2537494%2C11.2634662%205.2537494%2C10.9252736%20C5.2537494%2C10.6245546%205.0368562%2C10.3742482%204.75108527%2C10.3223372%20L4.64098162%2C10.3124593%20Z%20M10.3598764%2C10.3122269%20L9.40247758%2C10.3122269%20C9.06416877%2C10.3122269%208.78977953%2C10.5867323%208.78977953%2C10.9249249%20C8.78977953%2C11.2256439%209.00658091%2C11.4759503%209.29236408%2C11.5278614%20L9.40247758%2C11.5377392%20L10.3598764%2C11.5377392%20C10.6981852%2C11.5377392%2010.9726907%2C11.2632337%2010.9726907%2C10.9249249%20C10.9726907%2C10.6243093%2010.7557975%2C10.3740144%2010.4699939%2C10.3221046%20L10.3598764%2C10.3122269%20Z%20M11.1615439%2C3.40482341%20L2.87464008%2C3.40482341%20C2.717906%2C3.40482341%202.58805086%2C3.51230505%202.55414805%2C3.65815834%20L2.54551245%2C3.73396267%20L2.54551245%2C7.70849261%20C2.54551245%2C7.86518685%202.65298555%2C7.99507045%202.7988364%2C8.02898221%20L2.87464008%2C8.03762024%20L11.1615439%2C8.03762024%20C11.3182381%2C8.03762024%2011.4481217%2C7.93012153%2011.4820335%2C7.78428532%20L11.4906715%2C7.70849261%20L11.4906715%2C3.73396267%20C11.4906715%2C3.57723854%2011.3831728%2C3.44736775%2011.2373366%2C3.41346026%20L11.1615439%2C3.40482341%20Z%20M8.44507877%2C4.08582242%20L9.12843699%2C4.75186425%20L6.52691084%2C7.26303138%20L5.0511825%2C5.8368465%20L5.73454072%2C5.17080467%20L6.52691084%2C5.93092448%20L8.44507877%2C4.08582242%20Z%20M11.1614277%2C1.93469675%20L2.874489%2C1.93469675%20C2.69163257%2C1.93469675%202.54534975%2C2.08097957%202.54534975%2C2.26383019%20C2.54534975%2C2.42055929%202.65282284%2C2.55042226%202.79868101%2C2.58432741%20L2.874489%2C2.59296363%20L11.1614277%2C2.59296363%20C11.3442376%2C2.59296363%2011.4905553%2C2.44668081%2011.4905553%2C2.26383019%20C11.4905553%2C2.10709112%2011.3830566%2C1.97723527%2011.2372204%2C1.94333236%20L11.1614277%2C1.93469675%20Z%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
+}
+
+.crm-entity-stream-courier-status-courier {
+	display: flex;
+	align-items: center;
+	margin-left: 20px;
+}
+
+.crm-entity-stream-courier-status-courier-userpic {
+	display: block;
+	width: 32px;
+	height: 32px;
+	margin-right: 8px;
+	background: center no-repeat;
+	background-size: cover;
+	border-radius: 100%;
+}
+
+.crm-entity-stream-courier-status-courier-container {
+	display: flex;
+	align-self: center;
+	flex-direction: column;
+}
+
+.crm-entity-stream-courier-status-courier-name {
+	display: flex;
+}
+
+.crm-entity-stream-variable {
+	display: flex;
+	margin: 20px 16px 25px 16px;
+}
+
+.crm-entity-stream-variable-item {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	overflow: hidden;
+	position: relative;
+	padding: 0 15px 0 67px;
+	margin-left: 12px;
+	min-height: 56px;
+	border: 1px solid rgba(130,139,149,.21);
+	border-radius: 2px;
+	align-self: center;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #333;
+	line-height: 14px;
+	cursor: pointer;
+	transition: .1s;
+}
+
+.crm-entity-stream-variable-item:hover {
+	transform: translateY(-1px);
+}
+
+.crm-entity-stream-variable-item:first-child {
+	margin-left: 0;
+}
+
+.crm-entity-stream-variable-item:before {
+	content: '';
+	position: absolute;
+	background: center no-repeat;
+}
+
+.crm-entity-stream-variable-item--delivery:before {
+	top: 12px;
+	left: 18px;
+	width: 36px;
+	height: 28px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236%22%20height%3D%2228%22%20viewBox%3D%220%200%2036%2028%22%3E%0A%20%20%3Cpath%20fill%3D%22%230D6FBF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M13.422521%2C14.7768187%20L13.4402556%2C14.777132%20C13.6836566%2C14.7816924%2013.9301838%2C14.8340494%2014.1665706%2C14.9392956%20L14.1906458%2C14.9499265%20C14.6795327%2C15.0910346%2015.1573546%2C15.2898523%2015.6141789%2C15.5473734%20L15.9238687%2C15.7215383%20L22.3490507%2C18.5823705%20C23.2945979%2C19.0033552%2023.7198397%2C20.1111481%2023.298855%2C21.0566953%20C23.1708922%2C21.3441044%2022.9794738%2C21.5834415%2022.7484442%2C21.7655534%20L22.932597%2C22.243423%20L33.220607%2C17.8765513%20C34.2229513%2C17.4510814%2035.3804235%2C17.9187305%2035.8058934%2C18.9210748%20C36.2313634%2C19.9234192%2035.7637142%2C21.0808914%2034.7613699%2C21.5063613%20L19.8337609%2C27.8427554%20C19.2295258%2C28.099238%2018.5689182%2C28.0311663%2018.0462745%2C27.7170573%20L8.80193923%2C23.6010805%20C8.74775635%2C23.5769567%208.69519745%2C23.5506893%208.64431793%2C23.5224225%20L8.64431793%2C15.8122944%20C10.0616058%2C14.8640622%2011.7744886%2C14.5068732%2013.422521%2C14.7768187%20Z%20M6.5215814%2C14.3039384%20C6.85662977%2C14.3039384%207.12824014%2C14.5755488%207.12824014%2C14.9105971%20L7.12824014%2C24.0104782%20C7.12824014%2C24.3455265%206.85662977%2C24.6171369%206.5215814%2C24.6171369%20L0.606658735%2C24.6171369%20C0.271610367%2C24.6171369%204.40536496e-13%2C24.3455265%204.40536496e-13%2C24.0104782%20L4.40536496e-13%2C14.9105971%20C4.40536496e-13%2C14.5755488%200.271610367%2C14.3039384%200.606658735%2C14.3039384%20L6.5215814%2C14.3039384%20Z%20M4.53886437%2C21.2805139%20C4.042409%2C21.2805139%203.63995241%2C21.6829704%203.63995241%2C22.1794258%20C3.63995241%2C22.6758812%204.042409%2C23.0783378%204.53886437%2C23.0783378%20C5.03531973%2C23.0783378%205.43777632%2C22.6758812%205.43777632%2C22.1794258%20C5.43777632%2C21.6829704%205.03531973%2C21.2805139%204.53886437%2C21.2805139%20Z%20M24.7838853%2C1.59872116e-14%20C25.4514999%2C1.59872116e-14%2025.9969976%2C0.507066777%2026.0667634%2C1.15057965%20L26.0743028%2C1.29042866%20L26.0743028%2C8.13199277%20C26.0743028%2C8.1715522%2026.0067888%2C8.29207614%2025.9131682%2C8.44418603%20L25.528227%2C9.053837%20C25.4488426%2C9.18309901%2025.3863859%2C9.29252211%2025.3645786%2C9.35387144%20L25.3562155%2C9.39042844%20L25.3559927%2C16.3405191%20C25.3559927%2C17.0082377%2024.8489841%2C17.5536453%2024.2054337%2C17.6233987%20L24.1423097%2C17.626%20L18.3730035%2C14.8127165%20C18.4622237%2C14.7096886%2018.5162226%2C14.575334%2018.5162226%2C14.4284056%20C18.5162226%2C14.1040183%2018.2530131%2C13.8409202%2017.9286704%2C13.8409202%20L17.0106575%2C13.8409202%20C16.8724498%2C13.8409202%2016.745353%2C13.8886857%2016.6449903%2C13.9686055%20L15.0593097%2C13.196%20L15.0594526%2C9.32847057%20C15.0594526%2C9.28814502%2014.9917863%2C9.16681144%2014.8979943%2C9.01390279%20L14.4571185%2C8.30931374%20C14.4051278%2C8.22095274%2014.3659807%2C8.14771381%2014.3496565%2C8.10147916%20L14.3413097%2C8.06468602%20L14.3413097%2C1.29042866%20C14.3413097%2C0.622782832%2014.8483764%2C0.0773024724%2015.4918893%2C0.00753907263%20L15.6317383%2C1.59872116e-14%20L24.7838853%2C1.59872116e-14%20Z%20M20.6704844%2C13.8406973%20L19.7524827%2C13.8406973%20C19.4280954%2C13.8406973%2019.1648859%2C14.1039069%2019.1648859%2C14.4282942%20C19.1648859%2C14.7526815%2019.4280954%2C15.0157796%2019.7524827%2C15.0157796%20L20.6704844%2C15.0157796%20C20.9948718%2C15.0157796%2021.2579698%2C14.7526815%2021.2579698%2C14.4282942%20C21.2579698%2C14.1039069%2020.9948718%2C13.8406973%2020.6704844%2C13.8406973%20Z%20M23.4122316%2C13.8405859%20L22.4942299%2C13.8405859%20C22.1698426%2C13.8405859%2021.9067445%2C14.1037954%2021.9067445%2C14.4281828%20C21.9067445%2C14.7165271%2022.1146245%2C14.9564453%2022.3886476%2C15.0062006%20L22.4942299%2C15.0156682%20L23.4122316%2C15.0156682%20C23.736619%2C15.0156682%2023.9998285%2C14.7525701%2023.9998285%2C14.4281828%20C23.9998285%2C14.1398385%2023.7918605%2C13.8998322%2023.5178178%2C13.8500573%20L23.4122316%2C13.8405859%20Z%20M17.9286704%2C11.6988048%20L17.0106575%2C11.6988048%20C16.6862925%2C11.6988048%2016.4231275%2C11.9620144%2016.4231275%2C12.2864017%20C16.4231275%2C12.610789%2016.6862813%2C12.8738871%2017.0106575%2C12.8738871%20L17.9286704%2C12.8738871%20C18.2530131%2C12.8738871%2018.5162226%2C12.610789%2018.5162226%2C12.2864017%20C18.5162226%2C11.9620144%2018.2530131%2C11.6988048%2017.9286704%2C11.6988048%20Z%20M20.6704844%2C11.6986934%20L19.7524827%2C11.6986934%20C19.4280954%2C11.6986934%2019.1648859%2C11.9619029%2019.1648859%2C12.2862903%20C19.1648859%2C12.5746346%2019.3728539%2C12.8145528%2019.6468966%2C12.8643081%20L19.7524827%2C12.8737757%20L20.6704844%2C12.8737757%20C20.9948718%2C12.8737757%2021.2579698%2C12.6106776%2021.2579698%2C12.2862903%20C21.2579698%2C11.997946%2021.0500899%2C11.7579397%2020.7760667%2C11.7081648%20L20.6704844%2C11.6986934%20Z%20M23.4122316%2C11.698582%20L22.4942299%2C11.698582%20C22.1698426%2C11.698582%2021.9067445%2C11.9617915%2021.9067445%2C12.2861788%20C21.9067445%2C12.6104547%2022.1698426%2C12.8736642%2022.4942299%2C12.8736642%20L23.4122316%2C12.8736642%20C23.736619%2C12.8736642%2023.9998285%2C12.6105662%2023.9998285%2C12.2861788%20C23.9998285%2C11.9617915%2023.736619%2C11.698582%2023.4122316%2C11.698582%20Z%20M20.6704844%2C9.55056056%20L19.7524827%2C9.55056056%20C19.4280954%2C9.55056056%2019.1648859%2C9.81377007%2019.1648859%2C10.138046%20C19.1648859%2C10.4624333%2019.4280954%2C10.7256428%2019.7524827%2C10.7256428%20L20.6704844%2C10.7256428%20C20.9948718%2C10.7256428%2021.2579698%2C10.4624333%2021.2579698%2C10.138046%20C21.2579698%2C9.81377007%2020.9948718%2C9.55056056%2020.6704844%2C9.55056056%20Z%20M17.9286704%2C9.55067199%20L17.0106575%2C9.55067199%20C16.6862925%2C9.55067199%2016.4231275%2C9.81388151%2016.4231275%2C10.1382688%20C16.4231275%2C10.4265141%2016.6310515%2C10.6665094%2016.9050766%2C10.7162831%20L17.0106575%2C10.7257543%20L17.9286704%2C10.7257543%20C18.2530131%2C10.7257543%2018.5162226%2C10.4625448%2018.5162226%2C10.1382688%20C18.5162226%2C9.84992455%2018.3082546%2C9.60991828%2018.0342432%2C9.56014336%20L17.9286704%2C9.55067199%20Z%20M23.4122316%2C9.55044912%20L22.4942299%2C9.55044912%20C22.1698426%2C9.55044912%2021.9067445%2C9.81365864%2021.9067445%2C10.1379345%20C21.9067445%2C10.4262788%2022.1146245%2C10.6662851%2022.3886476%2C10.71606%20L22.4942299%2C10.7255314%20L23.4122316%2C10.7255314%20C23.736619%2C10.7255314%2023.9998285%2C10.4623219%2023.9998285%2C10.1379345%20C23.9998285%2C9.84968929%2023.7918605%2C9.60969403%2023.5178178%2C9.55992034%20L23.4122316%2C9.55044912%20Z%20M24.1809104%2C2.9272865%20L16.2350141%2C2.9272865%20C16.0847296%2C2.9272865%2015.9602181%2C3.03034525%2015.9277104%2C3.17019665%20L15.9194301%2C3.24288162%20L15.9194301%2C7.05385897%20C15.9194301%2C7.20410521%2016.0224807%2C7.32864408%2016.1623297%2C7.36116036%20L16.2350141%2C7.36944294%20L24.1809104%2C7.36944294%20C24.3311566%2C7.36944294%2024.4556955%2C7.26636782%2024.4882118%2C7.12653279%20L24.4964944%2C7.05385897%20L24.4964944%2C3.24288162%20C24.4964944%2C3.09260672%2024.3934192%2C2.96808014%2024.2535842%2C2.93556795%20L24.1809104%2C2.9272865%20Z%20M21.5762283%2C3.58026228%20L22.2314662%2C4.21889637%20L19.7369933%2C6.62672854%20L18.3219914%2C5.25923142%20L18.9772293%2C4.62059733%20L19.7369933%2C5.34943807%20L21.5762283%2C3.58026228%20Z%20M24.1807989%2C1.51765581%20L16.2348692%2C1.51765581%20C16.0595374%2C1.51765581%2015.9192741%2C1.65791906%2015.9192741%2C1.83324535%20C15.9192741%2C1.98352502%2016.0223247%2C2.10804411%2016.1621807%2C2.14055405%20L16.2348692%2C2.14883489%20L24.1807989%2C2.14883489%20C24.3560862%2C2.14883489%2024.4963829%2C2.00857164%2024.4963829%2C1.83324535%20C24.4963829%2C1.68295612%2024.3933078%2C1.55844387%2024.2534728%2C1.52593606%20L24.1807989%2C1.51765581%20Z%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-variable-item--terminal:before {
+	top: 14px;
+	left: 23px;
+	width: 29px;
+	height: 26px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2229%22%20height%3D%2226%22%20viewBox%3D%220%200%2029%2026%22%3E%0A%20%20%3Cpath%20fill%3D%22%237DA210%22%20d%3D%22M27.5606484%2C13.5848173%20C27.995454%2C13.852303%2028.296747%2C14.2978606%2028.3479341%2C14.8112116%20L28.3556704%2C14.9671404%20L28.3551515%2C16.5537629%20L21.8693073%2C16.5544979%20C21.3564715%2C16.5544979%2020.9338002%2C16.9405381%2020.876035%2C17.4378767%20L20.8693073%2C17.5544979%20L20.8693073%2C21.4928248%20C20.8693073%2C22.0056607%2021.2553475%2C22.428332%2021.7526862%2C22.4860971%20L21.8693073%2C22.4928248%20L28.3551515%2C22.4927629%20L28.3556704%2C24.3517326%20C28.3556704%2C25.2128439%2027.6536044%2C25.9217073%2026.7615935%2C25.9939391%20L26.6112541%2C26%20L12.9718414%2C26%20C11.8107385%2C26%2010.8601351%2C25.0998793%2010.7796688%2C23.9592756%20L10.7741515%2C23.8023101%20L10.7741515%2C23.786057%20L14.0233629%2C23.7865592%20C15.0777247%2C23.7865592%2015.941528%2C22.9706814%2016.0178772%2C21.9358215%20L16.0233629%2C21.7865592%20L16.0231515%2C13.584057%20L27.5606484%2C13.5848173%20Z%20M13.1666449%2C0%20C14.0084147%2C0%2014.6962119%2C0.639341139%2014.784177%2C1.45072195%20L14.793683%2C1.62705223%20L14.793683%2C10.2533192%20C14.793683%2C10.3031982%2014.7085573%2C10.4551622%2014.5905146%2C10.6469518%20L14.105157%2C11.4156374%20C14.0050642%2C11.5786189%2013.9263149%2C11.7165863%2013.8988189%2C11.7939394%20L13.8882742%2C11.8400327%20L13.8879932%2C20.6031367%20C13.8879932%2C21.4450376%2013.2487255%2C22.1327212%2012.4372974%2C22.2206705%20L12.260955%2C22.2301748%20L2.53253129%2C22.2301748%20C1.69070904%2C22.2301748%201.00294505%2C21.5909071%200.914984615%2C20.779479%20L0.905479061%2C20.6031367%20L0.905479061%2C11.7619124%20C0.905479061%2C11.7110674%200.820161203%2C11.5580825%200.701902391%2C11.3652859%20L0.146018949%2C10.4768964%20C0.0804658545%2C10.3654854%200.031106743%2C10.2731413%200.0105242556%2C10.2148458%20L4.4941828e-13%2C10.1684547%20L4.4941828e-13%2C1.62705223%20C4.4941828e-13%2C0.785243095%200.639341139%2C0.097467736%201.45072195%2C0.00950572883%20L1.62705223%2C0%20L13.1666449%2C0%20Z%20M28.3551515%2C17.7657629%20L28.3551515%2C21.2797629%20L22.1013854%2C21.280568%20L22.1013854%2C17.7667547%20L28.3551515%2C17.7657629%20Z%20M25.0591356%2C18.2636752%20C24.4523672%2C18.2636752%2023.9602907%2C18.7557517%2023.9602907%2C19.3625202%20C23.9602907%2C19.9692886%2024.4523672%2C20.4613651%2025.0591356%2C20.4613651%20C25.6659041%2C20.4613651%2026.1579806%2C19.9692886%2026.1579806%2C19.3625202%20C26.1579806%2C18.7557517%2025.6659041%2C18.2636752%2025.0591356%2C18.2636752%20Z%20M4.52316613%2C17.4514878%20L3.36567881%2C17.4514878%20C2.9566993%2C17.4514878%202.62488467%2C17.7832182%202.62488467%2C18.1922258%20C2.62488467%2C18.6012334%202.95668525%2C18.9329637%203.36567881%2C18.9329637%20L4.52316613%2C18.9329637%20C4.93211754%2C18.9329637%205.26398837%2C18.6012334%205.26398837%2C18.1922258%20C5.26398837%2C17.7832182%204.93211754%2C17.4514878%204.52316613%2C17.4514878%20Z%20M7.9802148%2C17.4512068%20L6.82274152%2C17.4512068%20C6.41373391%2C17.4512068%206.08186309%2C17.7830777%206.08186309%2C18.1920853%20C6.08186309%2C18.6010929%206.41373391%2C18.9328232%206.82274152%2C18.9328232%20L7.9802148%2C18.9328232%20C8.38922241%2C18.9328232%208.72095273%2C18.6010929%208.72095273%2C18.1920853%20C8.72095273%2C17.7830777%208.38922241%2C17.4512068%207.9802148%2C17.4512068%20Z%20M11.4371792%2C17.4510663%20L10.2797059%2C17.4510663%20C9.87069827%2C17.4510663%209.53896795%2C17.7829372%209.53896795%2C18.1919448%20C9.53896795%2C18.5555071%209.80107586%2C18.8580108%2010.1465812%2C18.9207454%20L10.2797059%2C18.9326827%20L11.4371792%2C18.9326827%20C11.8461868%2C18.9326827%2012.1780576%2C18.6009524%2012.1780576%2C18.1919448%20C12.1780576%2C17.8283824%2011.9158387%2C17.5257677%2011.5703087%2C17.4630084%20L11.4371792%2C17.4510663%20Z%20M4.52316613%2C14.7505764%20L3.36567881%2C14.7505764%20C2.9566993%2C14.7505764%202.62488467%2C15.0824472%202.62488467%2C15.4914548%20C2.62488467%2C15.9004624%202.95668525%2C16.2321927%203.36567881%2C16.2321927%20L4.52316613%2C16.2321927%20C4.93211754%2C16.2321927%205.26398837%2C15.9004624%205.26398837%2C15.4914548%20C5.26398837%2C15.0824472%204.93211754%2C14.7505764%204.52316613%2C14.7505764%20Z%20M7.9802148%2C14.7504359%20L6.82274152%2C14.7504359%20C6.41373391%2C14.7504359%206.08186309%2C15.0823067%206.08186309%2C15.4913143%20C6.08186309%2C15.8548766%206.34408201%2C16.1573803%206.689612%2C16.220115%20L6.82274152%2C16.2320522%20L7.9802148%2C16.2320522%20C8.38922241%2C16.2320522%208.72095273%2C15.9003219%208.72095273%2C15.4913143%20C8.72095273%2C15.127752%208.45884482%2C14.8251372%208.1133395%2C14.7623779%20L7.9802148%2C14.7504359%20Z%20M11.4371792%2C14.7502954%20L10.2797059%2C14.7502954%20C9.87069827%2C14.7502954%209.53896795%2C15.0821662%209.53896795%2C15.4911738%20C9.53896795%2C15.9000409%209.87069827%2C16.2319117%2010.2797059%2C16.2319117%20L11.4371792%2C16.2319117%20C11.8461868%2C16.2319117%2012.1780576%2C15.9001814%2012.1780576%2C15.4911738%20C12.1780576%2C15.0821662%2011.8461868%2C14.7502954%2011.4371792%2C14.7502954%20Z%20M7.9802148%2C12.0419372%20L6.82274152%2C12.0419372%20C6.41373391%2C12.0419372%206.08186309%2C12.373808%206.08186309%2C12.7826751%20C6.08186309%2C13.1916827%206.41373391%2C13.5235535%206.82274152%2C13.5235535%20L7.9802148%2C13.5235535%20C8.38922241%2C13.5235535%208.72095273%2C13.1916827%208.72095273%2C12.7826751%20C8.72095273%2C12.373808%208.38922241%2C12.0419372%207.9802148%2C12.0419372%20Z%20M4.52316613%2C12.0420777%20L3.36567881%2C12.0420777%20C2.9566993%2C12.0420777%202.62488467%2C12.3739485%202.62488467%2C12.7829561%20C2.62488467%2C13.1463935%202.88704809%2C13.4489944%203.23255588%2C13.5117521%20L3.36567881%2C13.523694%20L4.52316613%2C13.523694%20C4.93211754%2C13.523694%205.26398837%2C13.1918232%205.26398837%2C12.7829561%20C5.26398837%2C12.4193938%205.00176944%2C12.116779%204.65627893%2C12.0540198%20L4.52316613%2C12.0420777%20Z%20M11.4371792%2C12.0417967%20L10.2797059%2C12.0417967%20C9.87069827%2C12.0417967%209.53896795%2C12.3736675%209.53896795%2C12.7825346%20C9.53896795%2C13.1460969%209.80107586%2C13.4487117%2010.1465812%2C13.5114709%20L10.2797059%2C13.523413%20L11.4371792%2C13.523413%20C11.8461868%2C13.523413%2012.1780576%2C13.1915422%2012.1780576%2C12.7825346%20C12.1780576%2C12.4190972%2011.9158387%2C12.1164963%2011.5703087%2C12.0537386%20L11.4371792%2C12.0417967%20Z%20M25.1972895%2C8.239057%20L26.3052056%2C12.374057%20L16.0231515%2C12.373057%20L16.0231515%2C10.697057%20L25.1972895%2C8.239057%20Z%20M12.4063769%2C3.69090379%20L2.3876996%2C3.69090379%20C2.19821168%2C3.69090379%202.04121978%2C3.82084662%202.00023206%2C3.99717992%20L1.98979182%2C4.08882562%20L1.98979182%2C8.89394145%20C1.98979182%2C9.0833812%202.11972433%2C9.24040751%202.29605468%2C9.28140605%20L2.3876996%2C9.29184923%20L12.4063769%2C9.29184923%20C12.5958166%2C9.29184923%2012.7528429%2C9.16188575%2012.7938415%2C8.9855731%20L12.8042846%2C8.89394145%20L12.8042846%2C4.08882562%20C12.8042846%2C3.89934974%2012.6743212%2C3.74233892%2012.4980085%2C3.70134554%20L12.4063769%2C3.69090379%20Z%20M9.12223261%2C4.51421602%20L9.94839707%2C5.31944536%20L6.80321144%2C8.35538901%20L5.01908962%2C6.6311641%20L5.84525408%2C5.82593476%20L6.80321144%2C6.74490222%20L9.12223261%2C4.51421602%20Z%20M12.4062364%2C1.91355426%20L2.38751694%2C1.91355426%20C2.1664477%2C1.91355426%201.98959511%2C2.09040685%201.98959511%2C2.31146907%20C1.98959511%2C2.50095097%202.11952763%2C2.65795233%202.29586682%2C2.69894288%20L2.38751694%2C2.70938388%20L12.4062364%2C2.70938388%20C12.6272494%2C2.70938388%2012.8041441%2C2.53253129%2012.8041441%2C2.31146907%20C12.8041441%2C2.12197512%2012.6741807%2C1.96498237%2012.497868%2C1.92399452%20L12.4062364%2C1.91355426%20Z%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-entity-stream-courier-userpic-inline {
+	display: inline-block;
+	vertical-align: middle;
+	width: 24px;
+	height: 24px;
+	background-size: cover;
+	border-radius: 100%;
+}

@@ -1,0 +1,65 @@
+.bx-user-info-big {border: solid 1px #C4C4C4; margin: 0px 0px 10px 0px;}
+.bx-user-info-inner-big {padding: 15px; border-top: solid 3px #D8E3E8;}
+
+.bx-user-info-inner-big .bx-user-text {margin-left: 120px; margin-right: 200px;}
+.bx-user-info-inner-big .bx-user-text.no-photo {margin-left: 0px;}
+.bx-user-info-inner-big .bx-user-text .bx-user-name, .bx-user-info-inner .bx-user-text .bx-user-post {margin-bottom: 10px;}
+
+.bx-user-info-inner-big .bx-user-image {float: left; height: 102px; width: 104px; padding-top: 2px; border: solid 1px #C4C4C4; text-align: center; }
+.bx-user-info-inner-big .bx-user-image a {display: block; height: 102px; width: 104px; text-decoration: none;}
+.bx-user-info-inner-big .bx-user-image img {border: 0;}
+.bx-user-info-inner-big .bx-user-image-default {
+	background-image: url(/bitrix/components/bitrix/intranet.system.person/templates/.default/images/nopic_user_100_noborder.gif);
+}
+
+.bx-user-info-inner-big .bx-user-name {font-size: 1.5em; margin: 0px;}
+.bx-user-info-inner-big .bx-user-name nobr {white-space: normal !important;}
+.bx-user-info-inner-big .bx-user-name a {text-decoration: none;}
+.bx-user-info-inner-big .bx-user-name a:hover {text-decoration: underline;}
+
+.bx-users-delimiter {clear: both;}
+
+.bx-user-info-inner-big .bx-user-post {font-weight: bold;}
+.bx-user-info-inner-big .bx-user-properties {color: #6D808F;}
+
+.bx-user-controls {float: right;}
+.bx-user-controls .bx-user-control {
+	border-left: solid 1px #C4C4C4;
+	padding: 5px 0px 5px 10px;
+	margin: 0px;
+	margin-bottom: 10px;
+	width: 160px;
+}
+
+.bx-user-controls .bx-user-control a {text-decoration: none;}
+.bx-user-controls .bx-user-control a:hover {text-decoration: underline;}
+
+.bx-user-controls .bx-user-control ul {list-style-image: none; list-style-position: outside; list-style-type: none; margin: 0; padding: 0;}
+.bx-user-info-inner-big .bx-user-control ul li.bx-icon {
+	padding-top: 3px;
+	height: 20px;
+	display: block;
+	padding-left: 22px;
+	clear: both;
+	background-image: url(/bitrix/components/bitrix/intranet.system.person/templates/.default/images/icons_all.png);
+	background-repeat: no-repeat;
+	white-space:nowrap;
+}
+
+.bx-user-info-inner-big .bx-user-control .bx-icon-message{background-position: 0 0;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-online{background-position: 0 -20px;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-away{background-position: 0 -40px;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-birth{background-position: 0 -60px;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-featured{background-position: 0 -80px;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-edit{background-position: 0 -99px;}
+.bx-user-info-inner-big .bx-user-control .bx-icon-video{background-position: 0 -120px;}
+
+.bx-user-info-inner-big div.bx-user-subtitle {
+	font-size: 1.2em;
+	font-weight: bold;
+	padding: 5px 10px;
+	margin-bottom: 10px;
+	background-color: #FFFFDA;
+	border: solid 1px #E7E7CE;
+}
+.bx-user-info-inner-big .bx-user-subtitle-featured {color: #C30808;}

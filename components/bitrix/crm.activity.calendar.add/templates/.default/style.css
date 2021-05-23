@@ -1,0 +1,20 @@
+span.required {
+    color: red;
+}
+
+.border_red {
+   border: 1px solid red;
+}
+
+div.crm-errors-calendar-err {
+	border: 1px solid #FFD482; 
+	margin: 0; 
+	padding: 0;
+	color:red;
+	background-color:#FFFEEB;
+	margin-bottom: 10px;	
+}
+
+div.crm-errors-calendar-err div { padding: 6px; }
+
+.crm-one-row-text { white-space: nowrap; }

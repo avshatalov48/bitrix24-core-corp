@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_CONTACT_DETAIL_HISTORY_STUB"] = "You are now adding a contact...";
+$MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_GENERAL"] = "All stages and funnels";
+$MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "In progress + won";
+$MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_JUNK"] = "Lost";
+$MESS["CRM_CONTACT_DETAIL_ATTR_REQUIRED_SHORT"] = "Required";
+$MESS["CRM_CONTACT_DETAIL_ATTR_REQUIRED_FULL"] = "Required starting with stage";
+?>

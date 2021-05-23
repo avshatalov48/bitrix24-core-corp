@@ -1,0 +1,17 @@
+<?
+$MESS["CRM_CALL_LIST_SUBJECT"] = "Subject";
+$MESS["CRM_CALL_LIST_DESCRIPTION"] = "Description";
+$MESS["CRM_CALL_LIST_TITLE"] = "Call list";
+$MESS["CRM_CALL_LIST_ENTITY_LEADS"] = "Leads";
+$MESS["CRM_CALL_LIST_ENTITY_CONTACTS"] = "Contacts";
+$MESS["CRM_CALL_LIST_ENTITY_COMPANIES"] = "Companies";
+$MESS["CRM_CALL_LIST_SELECTION_PARAMS"] = "Selection parameters";
+$MESS["CRM_CALL_LIST_STATISTICS"] = "Statistics";
+$MESS["CRM_CALL_LIST_BUTTON_START"] = "Start calling";
+$MESS["CRM_CALL_LIST_BUTTON_CONTINUE"] = "Continue";
+$MESS["CRM_CALL_LIST_COMPLETE"] = "completed #COMPLETE# of #TOTAL#";
+$MESS["CRM_CALL_LIST_HAND_PICKED"] = "selected manually";
+$MESS["CRM_CALL_LIST_PICKED_BY_FILTER"] = "selected according to ";
+$MESS["CRM_CALL_LIST_FILTER"] = "filter";
+$MESS["CRM_CALL_LIST_USE_FORM"] = "Using form";
+?>

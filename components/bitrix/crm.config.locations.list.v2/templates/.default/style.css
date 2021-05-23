@@ -1,0 +1,6 @@
+form[name="filter_CRM_LOC_LIST"] #flt_field_crm_loc_list_PARENT_ID .bx-filter-item-center{
+	overflow: visible;
+}
+form[name="filter_CRM_LOC_LIST"] .bx-filter-content{
+	overflow: visible;
+}

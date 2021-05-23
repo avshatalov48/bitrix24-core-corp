@@ -1,0 +1,120 @@
+@icon-set: url(/bitrix/js/tasks/css/images/media.png);
+
+.bg-image (@y: 0, @x: 0) {
+	background: @icon-set no-repeat @x @y;
+}
+.box-sizing (@value) {
+	-webkit-box-sizing: @value;
+	-moz-box-sizing: @value;
+	box-sizing: @value;
+}
+.height-constraint (@value: 300px)
+{
+	max-height: @value;
+	overflow-y: hidden;
+}
+.display-flex ()
+{
+	display: -ms-inline-flexbox;
+	display: -webkit-inline-flex;
+	display: inline-flex;
+}
+.flex-direction (@value: row)
+{
+	-webkit-flex-direction: @value;
+	-ms-flex-direction: @value;
+	flex-direction: @value;
+}
+.flex-wrap (@value: nowrap)
+{
+	-webkit-flex-wrap: @value;
+	-ms-flex-wrap: @value;
+	flex-wrap: @value;
+}
+.flex-justify-content (@value: start)
+{
+	-webkit-justify-content: flex-@value;
+	-ms-flex-pack: @value;
+	justify-content: flex-@value;
+}
+.flex-align-content (@value: start)
+{
+	-webkit-align-content: flex-@value;
+	-ms-flex-line-pack: @value;
+	align-content: flex-@value;
+}
+.flex-align-items (@value: start)
+{
+	-webkit-align-items: flex-@value;
+	-ms-flex-align: @value;
+	align-items: flex-@value;
+}
+.flex-order (@value: 0)
+{
+	-webkit-order: @value;
+	-ms-flex-order: @value;
+	order: @value;
+}
+.flex ()
+{
+	-webkit-flex: 0 1 auto;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
+}
+
+.tasks-util-proc-popup-content {
+	width: 400px;
+}
+
+.task-message-label {
+	.height-constraint(297px);
+}
+
+.tasks-proc-notification-wrap {
+	&.invisible {
+		height: 0;
+		opacity: 0;
+		overflow: hidden;
+	}
+}
+
+.tasks-proc-notification {
+
+	.display-flex();
+	.flex-direction(row);
+	.flex-wrap(nowrap);
+	.flex-justify-content(start);
+	.flex-align-content(start);
+	.flex-align-items(start);
+}
+
+.tasks-proc-notification-text {
+	.flex-order(0);
+	.flex();
+
+	-webkit-align-self: flex-start;
+	-ms-flex-item-align: start;
+	align-self: flex-start;
+
+	margin-right: 10px;
+}
+.tasks-proc-notification-buttons {
+	.flex-order(1);
+	.flex();
+
+	position: relative;
+
+	-webkit-align-self: auto;
+	-ms-flex-item-align: auto;
+	align-self: auto;
+
+	.tasks-proc-notification-btn-start {
+		margin-right: 25px;
+	}
+
+	.tasks-proc-notification-btn-cancel {
+		position: absolute;
+		top: 5px;
+		right: -6px;
+	}
+}

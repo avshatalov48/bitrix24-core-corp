@@ -1,0 +1,169 @@
+.tasks-interface-toolbar-button-container {
+	min-width: 320px;
+	margin-right: 19px;
+}
+
+.tasks-interface-toolbar-button-container .webform-small-button {
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.tasks-interface-toolbar-button-container .webform-small-button-text {
+	display: inline-block;
+	overflow: hidden;
+	white-space: nowrap;
+	-ms-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	max-width: calc(100% - 15px);
+}
+
+.menu-popup-item-display-none {
+	display: none !important;
+}
+
+.menu-popup .menu-popup-item-disabled {
+	pointer-events: all;
+}
+
+/* Styles are intended for not Bitrix24 templates */
+.tasks-interface-filter-container {
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-webkit-align-items: center;
+	-ms-flex-align: center;
+	align-items: center;
+}
+
+.pagetitle-container-light {
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-flex: 1;
+	-webkit-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+}
+
+.tasks-interface-filter-container .pagetitle-align-right-container {
+	margin-left: auto;
+}
+
+.pagetitle-toolbar-field-view .tasks-interface-filter.pagetitle-container .main-ui-filter-search {
+	margin-right: 12px;
+}
+
+
+/* Project button*/
+.tasks-project-btn-container {
+	padding: 0 12px;
+}
+
+.tasks-project-btn {
+	background: rgba(255, 255, 255, 0.11);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 19.5px;
+	display: flex;
+	padding: 5px 36px 5px 6px;
+	position: relative;
+	box-sizing: border-box;
+	height: 39px;
+	transition: 250ms linear all;
+	cursor: pointer;
+}
+
+
+.tasks-project-btn:hover,
+.tasks-project-btn:active {
+	background: rgba(255, 255, 255, 0.11);
+	border: 1px solid rgba(255, 255, 255, 0.30);
+}
+
+.bitrix24-dark-theme .tasks-project-btn,
+.bitrix24-default-theme .tasks-project-btn {
+	background: rgba(82, 92, 105, 0.04);
+	border: 1px solid rgba(82, 92, 105, 0.22);
+}
+
+.bitrix24-dark-theme .tasks-project-btn:hover,
+.bitrix24-default-theme .tasks-project-btn:hover,
+.bitrix24-dark-theme .tasks-project-btn:active,
+.bitrix24-default-theme .tasks-project-btn:active {
+	background: rgba(207, 212, 216, 0.05);
+	border: 1px solid rgba(82, 92, 105, 0.46);
+}
+
+/* todo: waiting for a new project control
+.tasks-project-btn:after {
+	content: '';
+	opacity: 0;
+	transition: 250ms linear opacity;
+	display: block;
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	right: 13px;
+	top: 50%;
+	margin-top: -8px;
+	background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='16px' height='16px' viewBox='0 0 16 16' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cpath stroke='none' fill='%23FFF' fill-rule='evenodd' opacity='0.3' d='M6.55902556,0.189923637 C10.0765781,0.189923637 12.9281178,3.04146335 12.9281178,6.55901586 C12.9281178,7.84836028 12.5449966,9.04822197 11.8863862,10.050969 L15.1948308,13.3583021 C15.5866713,13.7501427 15.5844236,14.3876894 15.199527,14.772586 L14.7725957,15.1995173 C14.3833488,15.5887642 13.7476583,15.5841676 13.3583118,15.1948211 L10.0509787,11.8863765 C9.04823167,12.5449869 7.84836999,12.9281081 6.55902556,12.9281081 C3.04147306,12.9281081 0.189933339,10.0765684 0.189933339,6.55901586 C0.189933339,3.04146335 3.04147306,0.189923637 6.55902556,0.189923637 Z M6.55902556,2.00966427 C4.04648806,2.00966427 2.00967397,4.04647835 2.00967397,6.55901586 C2.00967397,9.07155336 4.04648806,11.1083674 6.55902556,11.1083674 C9.07156306,11.1083674 11.1083771,9.07155336 11.1083771,6.55901586 C11.1083771,4.04647835 9.07156306,2.00966427 6.55902556,2.00966427 Z' /%3E%3C/svg%3E");
+
+}
+
+.bitrix24-dark-theme .tasks-project-btn:after,
+.bitrix24-default-theme .tasks-project-btn:after {
+	background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='16px' height='16px' viewBox='0 0 16 16' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cpath stroke='none' fill='%23525c69' fill-rule='evenodd' opacity='0.3' d='M6.55902556,0.189923637 C10.0765781,0.189923637 12.9281178,3.04146335 12.9281178,6.55901586 C12.9281178,7.84836028 12.5449966,9.04822197 11.8863862,10.050969 L15.1948308,13.3583021 C15.5866713,13.7501427 15.5844236,14.3876894 15.199527,14.772586 L14.7725957,15.1995173 C14.3833488,15.5887642 13.7476583,15.5841676 13.3583118,15.1948211 L10.0509787,11.8863765 C9.04823167,12.5449869 7.84836999,12.9281081 6.55902556,12.9281081 C3.04147306,12.9281081 0.189933339,10.0765684 0.189933339,6.55901586 C0.189933339,3.04146335 3.04147306,0.189923637 6.55902556,0.189923637 Z M6.55902556,2.00966427 C4.04648806,2.00966427 2.00967397,4.04647835 2.00967397,6.55901586 C2.00967397,9.07155336 4.04648806,11.1083674 6.55902556,11.1083674 C9.07156306,11.1083674 11.1083771,9.07155336 11.1083771,6.55901586 C11.1083771,4.04647835 9.07156306,2.00966427 6.55902556,2.00966427 Z' /%3E%3C/svg%3E");
+}
+*/
+
+.tasks-project-btn:hover:after { opacity: 1; }
+
+.tasks-project-btn-image {
+	height: 27px;
+	border-radius: 13.5px;
+	overflow: hidden;
+	min-width: 27px;
+	width: 27px;
+	background-color: #535c6a;
+	background-size: 27px auto;
+	background-repeat: no-repeat;
+}
+
+.tasks-project-btn-text {
+	color: #fff;
+	padding-left: 13px;
+	min-width: 0;
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	max-width: 240px;
+	text-overflow: ellipsis;
+	font-family: "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 21px;
+}
+
+.bitrix24-dark-theme .tasks-project-btn-text,
+.bitrix24-default-theme .tasks-project-btn-text {
+	color: #525c69;
+}
+
+.menu-popup-item-sort-field-label {
+	padding: 0 6px;
+	background-color: #E5F6FC;
+	border-radius: 7px;
+	height: 14px;
+	line-height: 14px;
+	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: bold;
+	text-transform: uppercase;
+	font-size: 8px;
+	color: #2FC6F6;
+	letter-spacing: 0;
+	text-align: center;
+	display: inline-block;
+	position: relative;
+	top: -7px;
+	margin-left: 5px;
+}

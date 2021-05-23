@@ -1,0 +1,10 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
+$MESS["CRM_PERMISSION_DENIED"] = "Access denied";
+$MESS["CRM_PRESET_ENTITY_TYPE_INVALID"] = "Incorrect template type";
+$MESS["CRM_PRESET_UFIELD_ID"] = "ID";
+$MESS["CRM_PRESET_UFIELD_FIELD_NAME"] = "Name";
+$MESS["CRM_PRESET_UFIELDS_TITLE"] = "Unused custom fields";
+$MESS["CRM_PRESET_UFIELD_FIELD_TITLE"] = "Name";
+$MESS["CRM_PRESET_UFIELD_FIELD_TYPE"] = "Type";
+?>

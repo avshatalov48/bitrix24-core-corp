@@ -1,0 +1,21 @@
+.imconnector-olx-select-zone {
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 11px;
+	height: 39px;
+	width: 70px;
+	outline: none;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	background-color: #fff;
+	color: #333;
+	vertical-align: middle;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 15px/37px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: border-color .3s ease;
+	-webkit-appearance: none;
+	appearance: none;
+	margin-left: 10px;
+}

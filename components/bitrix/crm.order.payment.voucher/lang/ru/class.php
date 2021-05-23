@@ -1,0 +1,13 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль crm не установлен.";
+$MESS["CRM_ORDER_PAYMENT_VOUCHER_TITLE"] = "Платежные документы";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_VOUCHER_TITLE"] = "Документ прихода";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_TITLE"] = "Документ возврата";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_VOUCHER_NUM"] = "Номер документа прихода";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_VOUCHER_DATE"] = "Дата прихода";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_NUM"] = "Номер документа возврата";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_DATE"] = "Дата возврата";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_COMMENT"] = "Комментарий";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_INNER_ACC"] = "Внутренний счёт";
+$MESS["CRM_ORDER_PAYMENT_FIELD_PAY_RETURN_TO"] = "Вернуть на";
+?>

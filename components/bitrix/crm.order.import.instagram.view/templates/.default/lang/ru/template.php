@@ -1,0 +1,23 @@
+<?
+$MESS["CRM_OIIV_SELECT_MEDIA"] = "Выберите публикации для импорта";
+$MESS["CRM_OIIV_SELECT_NO_MEDIA"] = "Доступных для импорта публикаций на данный момент нет";
+$MESS["CRM_OIIV_INSTAGRAM_CONNECTED"] = "подключен";
+$MESS["CRM_OIIV_PRODUCTS_ADDED_SUCCESSFUL"] = "Товары успешно импортированы в Товарный каталог CRM";
+$MESS["CRM_OIIV_PRODUCT_RENAME_SUCCESSFUL"] = "Название товара успешно изменено";
+$MESS["CRM_OIIV_PRODUCT_CHANGE_PRICE_SUCCESSFUL"] = "Цена товара успешно изменена";
+$MESS["CRM_OIIV_STEP_IMPORTED"] = "Импортировано публикаций";
+$MESS["CRM_OIIV_TOTAL_IMPORTED"] = "Импортировано публикаций из профиля всего";
+$MESS["CRM_OIIV_IMPORT_MORE"] = "Импортировать ещё";
+$MESS["CRM_OIIV_IMPORT_FEEDBACK"] = "Обратная связь";
+$MESS["CRM_OIIV_SELECT_ALL"] = "Выбрать всё";
+$MESS["CRM_OIIV_UNSELECT_ALL"] = "Снять всё";
+$MESS["CRM_OIIV_NO_MEDIA"] = "Ничего не найдено";
+$MESS["CRM_OIIV_CREATE_STORE"] = "Создать магазин";
+$MESS["CRM_OIIV_IMPORT"] = "Импортировать";
+$MESS["CRM_OIIV_CANCEL"] = "Отменить";
+$MESS["CRM_OIIV_NO_PRICE"] = "указать цену";
+$MESS["CRM_OIIV_STEP_PROCESS_TITLE"] = "Публикации импортируются";
+$MESS["CRM_OIIV_STEP_READY_TITLE"] = "Готово!";
+$MESS["CRM_OIIV_STEP_STOPPED_TITLE"] = "Импорт остановлен";
+$MESS["CRM_OIIV_STOP"] = "Остановить";
+$MESS["CRM_OIIV_IMPORT_NETWORK_ERROR"] = "Во время импорта произошла непредвиденная ошибка. Попробуйте повторить процедуру импорта еще раз.";

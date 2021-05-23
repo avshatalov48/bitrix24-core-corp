@@ -1,0 +1,35 @@
+<?
+$MESS["CRM_WEBFORM_SCRIPT_BTN_COPY"] = "копировать";
+$MESS["CRM_WEBFORM_SCRIPT_BTN_EDIT"] = "настроить";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_ONPAGE"] = "На странице";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_WINDOW"] = "В окне";
+$MESS["CRM_WEBFORM_SCRIPT_LINK"] = "Ссылка";
+$MESS["CRM_WEBFORM_SCRIPT_INLINE"] = "На странице";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_INLINE"] = "На странице";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_BUTTON"] = "Всплывающее окно - клик по кнопке";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_CLICK"] = "Всплывающее окно - клик по кнопке или ссылке";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_LINK"] = "Всплывающее окно - клик по ссылке";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_DELAY"] = "Всплывающее окно - автопоказ";
+$MESS["CRM_WEBFORM_SCRIPT_SEND_TO_EMAIL"] = "отправить коды на e-mail";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_INLINE"] = "На странице";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_BUTTON"] = "Клик по кнопке";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_CLICK"] = "Клик по кнопке или ссылке";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_LINK"] = "Клик по ссылке";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_DELAY"] = "Автопоказ";
+$MESS["CRM_WEBFORM_SCRIPT_COPY_ONE_LINE"] = "одной строкой";
+$MESS["CRM_WEBFORM_SCRIPT_SCRIPT_ON_SITE"] = "Код на сайт";
+$MESS["CRM_WEBFORM_SCRIPT_SELECTOR"] = "Показать старый код на сайт";
+$MESS["CRM_WEBFORM_SCRIPT_SEC"] = "сек";
+$MESS["CRM_WEBFORM_SCRIPT_HINT_INJECT"] = "Вставьте код перед кнопкой или ссылкой";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_DELAY"] = "Показать с задержкой";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION"] = "Анимация появления";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_TOP"] = "Сверху";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_BOTTOM"] = "Снизу";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION"] = "Положение";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_LEFT"] = "Слева";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_RIGHT"] = "Справа";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_CENTER"] = "По центру";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE"] = "Вид";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_PANEL"] = "Панель";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_POPUP"] = "Окно";
+?>

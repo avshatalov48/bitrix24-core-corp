@@ -1,0 +1,60 @@
+.tasks-scrum-parent-task-kanban-header {
+	width: 99%;
+	color: #333;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 7px 0 7px 10px;
+}
+
+.tasks-scrum-parent-task-kanban .tasks-kanban-border {
+	border-top: none;
+	padding: 0;
+}
+
+.tasks-scrum-kanban-group-header {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+}
+
+.tasks-scrum-kanban-group-header-tick {
+	cursor: pointer;
+}
+
+.tasks-scrum-kanban-group-header-tick .ui-btn.ui-btn-light {
+	--ui-btn-background-hover: transparent;
+	--ui-btn-background-active: transparent;
+	--ui-btn-border-color-hover: transparent;
+}
+
+.tasks-scrum-kanban-group-header-name a {
+	display: block;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	color: #333;
+	letter-spacing: 0.4px;
+	min-width: 1px;
+	max-width: 100%;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	border: none;
+	border-bottom: 1px solid transparent;
+	background: none;
+	outline: none;
+	padding: 0;
+}
+
+.tasks-scrum-kanban-group-header-story-points {
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #525c69;
+	margin-left: auto;
+	padding-right: 10px;
+	cursor: default;
+}

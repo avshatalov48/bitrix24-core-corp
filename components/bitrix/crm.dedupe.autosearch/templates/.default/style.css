@@ -1,0 +1,9 @@
+.ui-hint.notification-hint-inline {
+	line-height: normal;
+	height: auto;
+	width: auto;
+}
+.ui-hint.notification-hint-inline .ui-hint-icon {
+	margin: 0;
+	vertical-align: middle;
+}

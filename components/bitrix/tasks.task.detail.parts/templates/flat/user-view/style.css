@@ -1,0 +1,120 @@
+.task-user-selector.readonly .task-detail-sidebar-info-user,
+.task-user-selector.single .task-detail-sidebar-info-user{
+    padding-right: 12px;
+}
+.task-detail-sidebar-info-user-del {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    position: absolute;
+    top: 9px;
+    right: -6px;
+	display: none;
+}
+
+.bx-touch .task-detail-sidebar-info-user-del,
+.task-detail-sidebar-info-user:hover .task-detail-sidebar-info-user-del {
+	display: block;
+}
+
+.task-detail-sidebar-info-user-del:after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat -2px -17px;
+    position: absolute;
+    margin: auto;
+    top: 6px;
+    left: 6px;
+    opacity: 0.2;
+}
+.task-detail-sidebar-info-user-del:hover:after {
+    opacity: 0.6;
+}
+.task-user-selector.single .task-detail-sidebar-info-user-del {
+    display: none;
+}
+
+.task-user-selector.readonly .task-user-selector-change,
+.task-user-selector.readonly .task-user-selector-add,
+.task-user-selector.readonly .task-detail-sidebar-info-user-del,
+.user-view-empty-false .task-user-selector-add,
+.user-view-empty-true .task-user-selector-change {
+    display: none;
+}
+.imauditor .task-user-selector-enter-auditor,
+.task-user-selector-leave-auditor{
+    display: none;
+}
+.imauditor .task-user-selector-leave-auditor {
+    display: inline;
+}
+
+.task-detail-sidebar-info-user {
+    position: relative;
+    padding: 7px 20px 7px 12px;
+    background: #d5f1fc;
+    overflow: hidden;
+}
+
+.task-detail-sidebar-info-user-extranet,
+.task-detail-sidebar-info-user-mail {
+    background: #ffed8b;
+}
+
+.task-detail-sidebar-info-user-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    float: left;
+    margin-right: 13px;
+    background: url(/bitrix/components/bitrix/main.post.list/templates/.default/images/sprite.png) no-repeat -51px 6px #535c6a;
+}
+
+.task-detail-sidebar-info-user-title {
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.task-detail-sidebar-info-user-name {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 19px;
+}
+
+.task-detail-sidebar-info-user-extranet .task-detail-sidebar-info-user-name,
+.task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name {
+    color: #bf7700;
+}
+
+.task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name:before,
+.task-detail-sidebar-info-user-extranet .task-detail-sidebar-info-user-name:before {
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    width: 13px;
+    height: 14px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -351px;
+    margin-right: 5px;
+}
+
+.task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name:before {
+    background-position: 0 -366px;
+}
+
+.task-detail-sidebar-info-user-name-link {
+	color: #0b66c3;
+	text-decoration: none;
+}
+
+.task-detail-sidebar-info-user-name-link:hover {
+    border-bottom: 1px solid;
+}
+
+.task-detail-sidebar-info-user-pos {
+    font-size: 13px;
+    color: #000;
+}
+
+

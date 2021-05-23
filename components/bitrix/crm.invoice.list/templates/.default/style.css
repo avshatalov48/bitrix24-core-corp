@@ -1,0 +1,62 @@
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.event
+{
+	background: url("images/popup/event.gif")  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.task
+{
+	background: url("images/popup/task.gif")  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.calendar
+{
+	background: url("images/popup/calendar.gif")  0 0 !important;
+}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.bizproc
+{
+	background: url("images/popup/bizproc.gif")  0 0 !important;
+}
+
+a.bizproc {
+	display:block; 
+	padding-right:20px;
+}
+a.bizproc_status_attention {
+	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
+}
+
+a.bizproc_status_inprogress {
+	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
+}
+
+/*span.bx-filter-from { white-space: nowrap !important; }
+span.bx-filter-to { white-space: nowrap !important; }*/
+.filter-field input.filter-date-interval { width:70px !important; }
+span.bx-filter-hellip { margin: 0 2px 0 0 !important; }
+
+div.crm-info-links-wrapper .crm-info-contact-wrapper,
+div.crm-info-links-wrapper .crm-info-contact-wrapper a {
+	color: #2067B0;
+	/*font-size: 11px;*/
+}
+div.crm-info-links-wrapper .crm-info-company-wrapper,
+div.crm-info-links-wrapper .crm-info-company-wrapper a {
+	color: #484848;
+	font-size: 11px;
+}
+div.crm-info-links-wrapper .crm-info-deal-wrapper,
+div.crm-info-links-wrapper .crm-info-deal-wrapper a {
+	color: black;
+	font-size: 11px;
+}
+div.crm-info-links-wrapper .crm-info-quote-wrapper,
+div.crm-info-links-wrapper .crm-info-quote-wrapper a {
+	color: #0f1680;
+	font-size: 11px;
+}
+
+div.bx-crm-view .crm-info-links-wrapper a:link,
+div.bx-crm-view .crm-info-links-wrapper a:visited,
+div.bx-crm-view .crm-info-links-wrapper a:hover,
+div.bx-crm-view .crm-info-links-wrapper a:active { color: inherit; }

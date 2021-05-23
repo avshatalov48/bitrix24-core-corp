@@ -1,0 +1,30 @@
+body .content {
+	background-color: transparent;
+	min-height: 100px;
+}
+
+@media (max-width: 420px) {
+	body .main-wrapper-content-cell {
+		padding: 50px 10px 0;
+	}
+
+	.main-wrapper-content-cell .main-title {
+		height: 50px;
+		line-height: 50px;
+		padding-right: 50px;
+		top: -50px;
+	}
+	.main-wrapper-content-cell .main-title::before {
+		top: 0;
+	}
+	.main-title .main-title-inner {
+		font-size: 20px;
+	}
+	.main-title .title-num {
+		font-size: 20px;
+	}
+
+	body .right-cloud, body .left-cloud, body .bottom-cloud {
+		display: none;
+	}
+}

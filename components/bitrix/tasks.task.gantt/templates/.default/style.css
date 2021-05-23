@@ -1,0 +1,16 @@
+.task-iframe-popup-side-slider .tasks-gantt{
+    margin-left:30px;
+    margin-right:20px;
+}
+
+.modern-page-navigation {
+    font-size: 11px;
+    font-family: "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+    color: #5c6470;
+}
+.modern-page-navigation .modern-page-title {
+    text-transform: uppercase;
+}
+.modern-page-navigation a {
+    text-transform: uppercase;
+}

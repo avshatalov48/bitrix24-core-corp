@@ -1,0 +1,105 @@
+.crm-start-page #workarea-content{
+	background-color: transparent;
+}
+.crm-start-page #workarea-content > .workarea-content-paddings {
+	overflow: hidden;
+	padding: 0;
+}
+.crm-start {
+	display: block;
+	overflow: hidden;
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+}
+
+.crm-start-block-wrapper {
+	display: block;
+	overflow: hidden;
+	margin: 0 -9px;
+}
+
+.crm-start-block-wrapper {
+	display: -ms-flexbox;
+	display: flex;
+	margin: 0 -9px 18px -9px;
+}
+
+.crm-start-block {
+	-ms-flex: 1;
+	flex: 1;
+	margin: 0 9px;
+	padding: 16px 23px;
+	background: #fff;
+	font-size: 14px;
+}
+
+.crm-start-title-wrapper {
+	display: block;
+	overflow: hidden;
+	margin: 0 0 23px 0;
+	padding: 4px 0 20px 0;
+	border-bottom: 1px solid #f0f0f2;
+}
+
+.crm-start-title {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0;
+	padding: 0;
+	font-size: 18px;
+	color: #333;
+}
+
+.crm-start-title-icons {
+	float: right;
+	overflow: hidden;
+	height: 100%;
+}
+
+.crm-start-title-icons-item {
+	display: inline-block;
+	vertical-align: middle;
+	width: 27px;
+	height: 24px;
+	cursor: pointer;
+	background: no-repeat center center;
+	-webkit-transition: .1s;
+	transition: .1s;
+}
+
+.crm-start-title-icons-item-list {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2212%22%20viewBox%3D%220%200%2015%2012%22%3E%0A%20%20%3Cpath%20fill%3D%22%23DCDEE1%22%20fill-rule%3D%22evenodd%22%20d%3D%22M1102%2C219%20L1113%2C219%20L1113%2C221%20L1102%2C221%20L1102%2C219%20Z%20M1102%2C224%20L1113%2C224%20L1113%2C226%20L1102%2C226%20L1102%2C224%20Z%20M1102%2C229%20L1113%2C229%20L1113%2C231%20L1102%2C231%20L1102%2C229%20Z%20M1098%2C219%20L1100%2C219%20L1100%2C221%20L1098%2C221%20L1098%2C219%20Z%20M1098%2C224%20L1100%2C224%20L1100%2C226%20L1098%2C226%20L1098%2C224%20Z%20M1098%2C229%20L1100%2C229%20L1100%2C231%20L1098%2C231%20L1098%2C229%20Z%22%20transform%3D%22translate%28-1098%20-219%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-start-title-icons-item-list:hover {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2212%22%20viewBox%3D%220%200%2015%2012%22%3E%0A%20%20%3Cpath%20fill%3D%22%23999EA6%22%20fill-rule%3D%22evenodd%22%20d%3D%22M1102%2C219%20L1113%2C219%20L1113%2C221%20L1102%2C221%20L1102%2C219%20Z%20M1102%2C224%20L1113%2C224%20L1113%2C226%20L1102%2C226%20L1102%2C224%20Z%20M1102%2C229%20L1113%2C229%20L1113%2C231%20L1102%2C231%20L1102%2C229%20Z%20M1098%2C219%20L1100%2C219%20L1100%2C221%20L1098%2C221%20L1098%2C219%20Z%20M1098%2C224%20L1100%2C224%20L1100%2C226%20L1098%2C226%20L1098%2C224%20Z%20M1098%2C229%20L1100%2C229%20L1100%2C231%20L1098%2C231%20L1098%2C229%20Z%22%20transform%3D%22translate%28-1098%20-219%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-start-block-graph {
+	display: block;
+	min-height: 300px;
+	margin: 0 -10px;
+	position: relative;
+}
+
+.crm-start-lazy-load-preset
+{
+	height: 100%;
+	min-height: 600px;
+	width: 100%;
+	position: relative;
+}
+
+.crm-start-lazy-load-preset > img
+{
+	position: absolute;
+	margin: auto;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.crm-start-lazy-load-preset-disable
+{
+	display: none;
+}

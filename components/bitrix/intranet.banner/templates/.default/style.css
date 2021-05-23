@@ -1,0 +1,16 @@
+div.bx-intranet-bnr {border: solid 1px #C7C7C7; height: 148px;}
+div.bx-intranet-bnr div.bx-intranet-bnr-head {background-color: #EAEAD7; height: 21px;}
+div.bx-intranet-bnr div.bx-intranet-bnr-head .btn-close {
+	display: block; height: 21px; width: 21px; float: right;
+	background-image: url(/bitrix/components/bitrix/intranet.banner/templates/.default/images/close.gif); background-repeat: no-repeat;
+}
+
+div.bx-intranet-bnr div.bx-intranet-bnr-body {margin: 8px;}
+div.bx-intranet-bnr div.bx-intranet-bnr-body .bx-intranet-bnr-content {}
+
+div.bx-intranet-bnr div.bx-intranet-bnr-body .bx-intranet-bnr-margin {margin-left: 85px; padding-left: 10px;}
+
+div.bx-intranet-bnr a.bx-intranet-bnr-icon {display: block; float: left; height: 80px; width: 80px; background-position: center top; background-repeat: no-repeat; border-right: solid 1px #E5E5E5;}
+
+a.bx-bnr-button  {display: block; float: right; background-position: 5px center; background-repeat: no-repeat; border: solid 1px #E5E5E5; font-weight: bold; padding: 5px 7px 5px 25px; color: black; text-decoration: none; white-space: nowrap;}
+a.bx-bnr-button:hover {border: solid 1px #B7B7B7;}

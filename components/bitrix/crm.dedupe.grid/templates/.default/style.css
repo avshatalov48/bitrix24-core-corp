@@ -1,0 +1,50 @@
+.crm-dedupe-grid-container .main-grid-cell-content {
+	display: flex;
+	align-items: center;
+}
+.crm-dedupe-grid-container .main-grid-cell {
+	vertical-align: middle;
+}
+.crm-dedupe-grid-container .main-grid-row-expand {
+
+}
+.crm-dedupe-grid-user {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+.crm-dedupe-grid-user-icon {
+	position: relative;
+	display: inline-block;
+	margin: 0 10px 0 5px;
+	width: 36px;
+	height: 36px;
+	border-radius: 100%;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+.crm-dedupe-grid-user-icon img {
+	width: 22px;
+	height: 22px;
+}
+.crm-dedupe-grid-user-responsible .crm-dedupe-grid-user-icon {
+	min-width: 22px;
+	max-width: 22px;
+	height: 22px;
+	padding-left: 0;
+	margin-right: 8px;
+}
+.crm-dedupe-grid-user-name {
+	display: inline-block;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.crm-dedupe-grid-container .main-grid-row[data-parent-id]:not([data-depth^="0"]) .main-grid-cell {
+	background-color: #f6f8f9;
+}
+
+.crm-dedupe-grid-container .main-grid-row[data-parent-id]:not([data-depth^="0"]) .crm-dedupe-grid-user:not(.crm-dedupe-grid-user-responsible) {
+	padding-left: 30px;
+}

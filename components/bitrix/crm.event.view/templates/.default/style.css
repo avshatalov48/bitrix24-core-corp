@@ -1,0 +1,61 @@
+
+table.bx-interface-grid tr.bx-grid-gutter td {
+	padding:0px !important;
+}
+
+table.bx-interface-grid tr.bx-grid-sorting  td {
+	padding:0px !important;
+}
+
+table.bx-interface-grid tr.bx-grid-footer table.bx-grid-footer {
+}
+table.bx-interface-grid tr.bx-grid-footer table.bx-grid-footer td {
+	 padding: 2px 6px!important;
+}
+
+table.bx-interface-grid tr.bx-grid-head td.bx-sorted {
+    /**background-color: #C0C0C0 !important;**/
+}
+
+table.bx-interface-grid tr.bx-grid-head td {
+    /**background-color: #D9D9D9;
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/listhead.png") !important;**/
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_no.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-up {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_up.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid table.bx-grid-sorting td.bx-sort-down {
+    background-image: url("/bitrix/components/bitrix/main.interface.grid/templates/.default/images/sort_down.gif") !important;
+	background-color: transparent !important;
+}
+
+table.bx-interface-grid td {
+	padding:6px !important;
+}
+
+.event-detail-files { /*overflow: hidden;*/ margin-top: 10px;}
+.event-detail-files * { font-size:12px!important;}
+.event-detail-files-title { float: left; white-space: nowrap; margin-right: 5px; font-weight: bold;}
+.event-detail-files-list { /*overflow:hidden;*/    margin: 0 0 0 0; padding: 0;}
+.event-detail-file {  color: #616161; /*overflow: hidden;*/ margin: 0 0 2px 0;}
+.event-detail-file-number { margin: 0 5px 0 0; float: left;}
+.event-detail-file-info { /*overflow: hidden;*/ display: block; }
+.event-detail-file .event-detail-file-link { color: #0069c4; text-decoration: underline; vertical-align: top; }
+.event-detail-file .event-detail-file-link:hover { color: #1c91e7; }
+.event-detail-file-size { color: #919191; margin: 0 0 0 6px;  vertical-align: top; white-space: nowrap; }
+.crm_notice_message {
+    background: url(./images/info.png) no-repeat 10px 7px #FFFDC3;
+    border: 1px solid #FFCA63;
+    margin: 1.117em 0;
+    padding: 0.4em 1.117em;
+	padding-left: 2.4em;
+	
+}

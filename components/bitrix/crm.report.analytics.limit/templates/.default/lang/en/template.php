@@ -1,0 +1,4 @@
+<?
+$MESS['CRM_ANALYTICS_LIMIT_MASK_TITLE'] = "Current limits";
+$MESS['CRM_ANALYTICS_LIMIT_UPDATE_LINK'] = "Update";
+?>

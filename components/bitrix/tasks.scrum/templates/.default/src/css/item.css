@@ -1,0 +1,200 @@
+.tasks-scrum-item {
+	margin: 10px 0 0;
+	padding: 8px 0 4px 17px;
+	background: #fff;
+	border: 1px solid rgba(82, 92, 105, 0.14);
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+	border-radius: 3px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	color: #333;
+	transition:
+		180ms linear color,
+		180ms linear border-color,
+		180ms linear background-color;
+	position: relative;
+}
+
+.tasks-scrum-subtask-item {
+	margin: 10px 0 0 30px;
+}
+
+.tasks-scrum-item:hover {
+	cursor: pointer;
+	border-color: rgba(82, 92, 105, 0.44);
+}
+
+.tasks-scrum-item.tasks-scrum-item-group-mode {
+	border: 1px solid #d1eef9;
+	background: #e2f8ff;
+}
+
+.tasks-scrum-item.tasks-scrum-item-group-mode:hover {
+	border: 1px solid #8cb6c6;
+}
+
+.tasks-scrum-item-group-mode-container {
+	display: none;
+	position: relative;
+	right: 41px;
+	width: 0;
+}
+
+.tasks-scrum-item-group-mode-container input {
+	cursor: pointer;
+}
+
+.tasks-scrum-item-inner {
+	max-width: 100%;
+	display: flex;
+}
+
+.tasks-scrum-item .task-title-indicators {
+	position: relative;
+	top: 7px;
+}
+
+/*.tasks-scrum-item-edit-mode .tasks-scrum-dragndrop {display: none;}*/
+
+.tasks-scrum-item:hover .tasks-scrum-dragndrop { opacity: .5; }
+
+.tasks-scrum-item:hover .tasks-scrum-dragndrop:hover { opacity: 1; }
+
+.tasks-scrum-item-name {
+	flex: 1;
+	display: flex;
+	align-items: flex-start;
+	max-width: 100%;
+	min-width: 0;
+}
+
+/*.tasks-scrum-item-name-text {
+	text-align: left;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	color: #333;
+	padding: 16px 14px;
+}*/
+
+.tasks-scrum-item-name-field {
+	width: auto !important;
+	min-width: 0;
+	margin-bottom: 3px;
+}
+
+.tasks-scrum-item-name-field div.ui-ctl-element[contenteditable] {
+	padding: 4px 4px 7px;
+	font-size: 15px;
+}
+
+.tasks-scrum-item-params {
+	display: flex;
+	white-space: nowrap;
+	margin-left: auto;
+	padding-right: 6px;
+}
+
+.tasks-scrum-item-responsible {
+	margin-top: 6px;
+	vertical-align: middle;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background-size: cover;
+	margin-right: 10px;
+}
+
+.tasks-scrum-item-subtasks-tick { cursor: pointer; }
+
+.tasks-scrum-item-subtasks-tick .ui-btn.ui-btn-light {
+	--ui-btn-background-hover: transparent;
+	--ui-btn-background-active: transparent;
+	--ui-btn-border-color-hover: transparent;
+}
+
+.tasks-scrum-item-subtasks-btn {
+	height: 20px;
+	padding-top: 5px;
+}
+
+.tasks-scrum-item-subtasks-btn .tasks-scrum-item-subtasks-icon {
+	background: url(images/number-task.svg) no-repeat 0 center;
+	width: 13px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.tasks-scrum-item-subtasks-count {
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82, 92, 105, 0.9);
+	letter-spacing: 0;
+	text-align: center;
+	padding: 0 20px 0 0;
+	font-size: 14px;
+	color: #525c69;
+}
+
+.tasks-scrum-item-story-points {
+	text-align: center;
+}
+
+.tasks-scrum-item-story-points .ui-ctl {
+	width: 100%;
+	text-align: right;
+	padding: 0;
+	vertical-align: middle;
+	min-width: 40px;
+}
+
+.tasks-scrum-item-story-points .ui-ctl .ui-ctl-element {
+	text-align: center;
+	position: relative;
+}
+
+.tasks-scrum-item-story-points .ui-ctl .ui-ctl-element:after {
+	content: "";
+	position: absolute;
+	width: calc(100% - 24px);
+	border-bottom: 1px dashed rgba(82, 92, 105, 0.71);
+	bottom: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.tasks-scrum-item-tags-container {
+	margin-left: 5px;
+	margin-right: 4px;
+	margin-bottom: 10px;
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.tasks-scrum-item-tags-container div {
+	margin-top: 2px;
+	margin-bottom: 2px;
+	padding-bottom: 2px;
+}
+
+.tasks-scrum-item-epic-label {
+	border-radius: 2px;
+	border: none;
+}
+
+.task-title-indicators {
+	margin-right: 10px;
+}
+
+.task-title-indicators .ui-label {
+	margin-right: 1px;
+}
+
+.task-comments-counter {
+	display: inline-flex;
+}
+
+.task-attachment-counter.ui-label + .task-checklist-counter.ui-label,
+.task-checklist-counter.ui-label + .task-attachment-counter.ui-label {
+	margin-left: 0;
+}

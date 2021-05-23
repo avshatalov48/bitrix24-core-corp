@@ -1,0 +1,65 @@
+@icon-set: url(/bitrix/js/tasks/css/images/media.png);
+
+.bg-image (@y: 0, @x: 0) {
+	background: @icon-set no-repeat @x @y;
+}
+
+.task-log-table tr:last-child td {
+	border: none;
+}
+
+th.task-log-column-header {
+	vertical-align: middle;
+	height: 39px;
+	padding: 0 7px;
+	background: #f0f5f6;
+	color: rgba(94,102,117,0.8);
+	border: none;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-align: left;
+}
+
+.task-log-table {
+	width: 100%;
+	table-layout: fixed;
+	color: #333;
+	border-collapse: collapse;
+}
+
+.task-log-type-column { width: 12%; }
+.task-log-date-column { width: 14%; }
+.task-log-message-column { width: 34%; }
+.task-log-errors-column { width: 40%; }
+
+.task-log-date {
+	color: #999999;
+	word-wrap: normal;
+}
+
+.task-log-arrow {
+	color: #000;
+	font-size: 14px;
+	margin: 0 0.5em;
+}
+
+.task-log-column-data {
+	font-size: 13px;
+	vertical-align: top;
+	border-bottom: 1px solid #edeef0;
+	padding: 13px 7px;
+	word-wrap: break-word;
+}
+
+.task-log-message-level-3 {
+	color: red;
+}
+.task-log-message-level-2 {
+	color: #ffa24c;
+}
+
+.task-log-errors {
+	padding-left: 20px;
+	margin-top: 0px;
+}

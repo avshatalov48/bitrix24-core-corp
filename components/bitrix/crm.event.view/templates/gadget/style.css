@@ -1,0 +1,7 @@
+.crm-event-element { margin-bottom: 10px; padding-left: 25px; background: url(images/icon-event.gif) no-repeat 0px 22px; }
+.crm-event-element-type { margin-top: 4px; margin-bottom: 4px; font-size: 13px}
+.crm-event-element-title { color: #7f7f7f; }
+.crm-event-element-name { border-bottom: 1px solid #f2f2f2; }
+.crm-event-element-name-author { color: #444; font-size: 11px; margin-bottom: 10px; }
+.crm-event-element-name-author a { color: #444!important; font-size: 11px; }
+.crm-event-element-name-date { color: #7f7f7f; font-size: 11px; margin-bottom: 2px; }

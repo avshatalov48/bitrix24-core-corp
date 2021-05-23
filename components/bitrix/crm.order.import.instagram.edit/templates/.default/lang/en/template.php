@@ -1,0 +1,33 @@
+<?
+$MESS["CRM_OIIE_DEL_REFERENCE"] = "Disable";
+$MESS["CRM_OIIE_AUTHORIZATION"] = "Authentication";
+$MESS["CRM_OIIE_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "Only a business account can be connected to Bitrix24 online store. Log in using Facebook page admin profile that is linked to a required Instagram business account.";
+$MESS["CRM_OIIE_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR"] = "You don't have a Facebook page with an associated Instagram business account of which you are an administrator.<br>Create a Facebook public page right now or link an Instagram account.";
+$MESS["CRM_OIIE_TO_CREATE_A_PAGE"] = "Create";
+$MESS["CRM_OIIE_SELECT_THE_PAGE"] = "Select a required Instagram business account to connect to your Bitrix24 online store";
+$MESS["CRM_OIIE_INSTAGRAM_TITLE"] = "Connect Instagram";
+$MESS["CRM_OIIE_DESCRIPTION"] = "Configure your catalog to be synchronized with the Instagram business account.<br>New Instagram posts will be added to the catalog as soon as they are published.";
+$MESS["CRM_OIIE_AUTHORIZE"] = "Log in";
+$MESS["CRM_OIIE_INFO"] = "Information";
+$MESS["CRM_OIIE_CHANGE_ANY_TIME"] = "You can change or disable product import anytime";
+$MESS["CRM_OIIE_SETTINGS_CHANGE_SETTING"] = "change";
+$MESS["CRM_OIIE_SETTINGS_TO_CONNECT"] = "Connect";
+$MESS["CRM_OIIE_SETTINGS_DISABLE"] = "disable";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE_TITLE"] = "Confirm disconnect";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE"] = "Product import will be disabled and all your import preferences will be deleted. Previously imported products will not be deleted.<br><br>Continue?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_CHANGE_PAGE_TITLE"] = "Confirm business account change";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_CHANGE_PAGE"] = "Product import will be disconnected from the current Instagram business account and connected to the one you selected. Previously imported products will not be deleted.<br><br>Continue?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DELETE_PAGE_TITLE"] = "Confirm business account disconnect";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DELETE_PAGE"] = "Product import will be disconnected from the current Instagram business account. Previously imported products will not be deleted.<br><br>Continue?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE_BUTTON_CANCEL"] = "Cancel";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTED"] = "Instagram connected";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED"] = "Facebook connected";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED_ACCOUNT"] = "Facebook authentication";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED_PAGE"] = "Facebook page connected";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTED_ACCOUNT"] = "Instagram business account connected";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTION_TITLE"] = "Connect Instagram";
+$MESS["CRM_OIIE_INSTAGRAM_OTHER_ACCOUNTS"] = "Other business accounts";
+$MESS["CRM_OIIE_CREATE_WITHOUT_CONNECTION"] = "Create unconnected online store";
+$MESS["CRM_OIIE_IMPORT_FEEDBACK"] = "Feedback";
+$MESS["CRM_OIIE_RTFM_NOTE"] = "Learn #LINK_START#how it works#LINK_END#";
+?>

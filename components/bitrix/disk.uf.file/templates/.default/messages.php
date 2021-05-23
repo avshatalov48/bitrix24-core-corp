@@ -1,0 +1,4 @@
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+//attention! Necessarily in one line (without line break)!
+?><script type="text/javascript">BX.message({disk_revision_api: '<?= (int)\Bitrix\Disk\Configuration::getRevisionApi() ?>',disk_document_service: '<?= (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode() ?>',wd_service_edit_doc_default: "<?= CUtil::JSEscape($arResult['CLOUD_DOCUMENT']['DEFAULT_SERVICE']) ?>", disk_render_uf: true, 'DISK_UF_FILE_STATUS_PROCESS_LOADING': '<?=GetMessageJS('DISK_UF_FILE_STATUS_PROCESS_LOADING') ?>', 'DISK_UF_FILE_STATUS_SUCCESS_LOADING': '<?=GetMessageJS('DISK_UF_FILE_STATUS_SUCCESS_LOADING') ?>', 'DISK_UF_FILE_STATUS_HAS_LAST_VERSION': '<?=GetMessageJS('DISK_UF_FILE_STATUS_HAS_LAST_VERSION') ?>'});</script><?

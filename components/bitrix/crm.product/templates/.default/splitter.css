@@ -1,0 +1,65 @@
+/* splitter */
+.crm-catalog-scale-btn {
+	cursor: e-resize;
+	height: 100%;
+	top: 0;
+	left: 270px;
+	position: absolute;
+	width: 11px;
+	z-index: 2;
+}
+
+.crm-catalog-scale-btn-inner,
+.bx-crm-goods-drug-btn-inner {
+	background-color: #bdc0c5;
+	border-radius: 5px;
+	cursor: pointer;
+	height: 52px;
+	margin-top: -26px;
+	position: absolute;
+	top: 50%;
+	width: 11px;
+	-webkit-transition: background-color 0.2s linear;
+	transition: background-color 0.2s linear;
+}
+
+.bx-crm-goods-drug-btn-inner {
+	display: inline-block;
+	margin: 0;
+	position: relative;
+}
+
+.crm-catalog-scale-btn-inner:hover,
+.bx-crm-goods-drug-btn-inner:hover {
+	background-color: #9d9fa3;
+}
+
+.crm-catalog-scale-btn-inner:before,
+.bx-crm-goods-drug-btn-inner:before {
+	background: url(images/catalog-popup-sprite.png) no-repeat center -275px;
+	content: '';
+	left: 3px;
+	position: absolute;
+	top: 21px;
+	height: 8px;
+	width: 4px;
+}
+
+.bx-crm-goods-drug-btn-inner:before {
+	background-position: center -295px;
+	left: 4px;
+}
+
+.crm-catalog-close {
+	cursor: auto;
+}
+
+.crm-catalog-close .crm-catalog-scale-btn-inner:before {
+	background-position: center -295px;
+	left: 4px;
+}
+
+.bx-crm-goods-close:before {
+	background-position: center -275px;
+	left: 3px;
+}

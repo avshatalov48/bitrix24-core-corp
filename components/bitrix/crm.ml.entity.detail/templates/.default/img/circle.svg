@@ -1,0 +1,20 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="419" height="387" viewBox="0 0 419 387" fill="#fff" fill-rule="evenodd">
+    <g>
+        <circle id="c1" cx="209" cy="208" r="85" stroke="#fff" stroke-width="12px" transform="rotate(-48 208 205)"
+         fill-opacity="0" stroke-opacity="0.6"  stroke-dasharray="180"></circle>
+        <circle id="c2" cx="209" cy="206" r="115" stroke="#fff" stroke-width="20px" transform="rotate(50 208 205)"
+        fill-opacity="0" stroke-opacity="0.6"  stroke-dasharray="320"></circle>
+        <circle id="c3" cx="208" cy="204" r="147" stroke="#fff" stroke-width="3px" transform="rotate(-140 208 205)"
+         fill-opacity="0" stroke-opacity="0.6" stroke-dasharray="440"></circle>
+        <circle id="c4" cx="208" cy="205" r="179" stroke="#fff" stroke-width="3px" transform="rotate(142 208 205)"
+         fill-opacity="0" stroke-opacity="0.4" stroke-dasharray="376"></circle>
+        <circle id="c5" cx="211" cy="204" r="211" stroke="#fff" stroke-width="1px" transform="rotate(-80 208 205)"
+        fill-opacity="0" stroke-opacity="0.4" stroke-dasharray="500"></circle>
+    </g>
+    <animateTransform xlink:href="#c1" type="rotate" attributeName="transform" from="0 209 208" to="360 209 208" dur="12s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c2" type="rotate" attributeName="transform" from="0 209 206" to="360 209 206" dur="15s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c3" type="rotate" attributeName="transform" from="0 208 204" to="360 208 204" dur="17s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c4" type="rotate" attributeName="transform" from="0 208 205" to="360 208 205" dur="19s" begin="0" repeatCount="indefinite"/>
+    <animateTransform xlink:href="#c5" type="rotate" attributeName="transform" from="0 211 204" to="360 211 204" dur="21s" begin="0" repeatCount="indefinite"/>
+</svg>
+

@@ -1,0 +1,29 @@
+<?
+$MESS["ME_AGENDA"] = "Повестка";
+$MESS["ME_PROTO"] = "Протокол";
+$MESS["ME_PROTO_OUTSIDE"] = "Вопросы вне повестки";
+$MESS["ME_PROTO_ADD"] = "Добавить пункт протокола";
+$MESS["ME_AGENDA_ADD"] = "Добавить вопрос";
+$MESS["ME_AGENDA_ADD_DESCRIPTION"] = "Добавить описание";
+$MESS["ME_AGENDA_TASK"] = "Задача";
+$MESS["ME_AGENDA_ADD_TASK"] = "Сделать задачей";
+$MESS["ME_AGENDA_TASK_ADDED"] = "Связанная задача";
+$MESS["ME_ADD_EX"] = "Добавить из собрания";
+$MESS["ME_TASK_ADD"] = "Добавить из задачи";
+$MESS["ME_AGENDA_DEADLINE_DEFAULT"] = "Срок";
+$MESS["ME_AGENDA_REPORT"] = "Отчет";
+$MESS["ME_AGENDA_HIDE_COMMENTS"] = "Скрыть комментарии";
+$MESS["ME_AGENDA_CONFIRM_AGENDA"] = "Удалить этот пункт из повестки?";
+$MESS["ME_AGENDA_CONFIRM_PROTO"] = "Удалить этот пункт из протокола?";
+$MESS["ME_AGENDA_TT_DRAG"] = "Поменять местами пункты";
+$MESS["ME_AGENDA_TT_SHIFT"] = "Изменить вложенность пунктов";
+$MESS["ME_AGENDA_TT_ADDSUB"] = "Добавить подпункт";
+$MESS["ME_AGENDA_TT_TASKS_C"] = "Прикрепленные задачи";
+$MESS["ME_AGENDA_TT_COMMENTS_C"] = "Комментарии";
+$MESS["ME_AGENDA_TT_DELETE"] = "Удалить";
+$MESS["ME_AGENDA_TT_EDIT"] = "Редактировать";
+$MESS["ME_AGENDA_TT_SAVE"] = "Сохранить";
+$MESS["ME_AGENDA_TT_CANCEL"] = "Отменить";
+$MESS["ME_AGENDA_TT_CHECK"] = "Пометить как исполненное";
+$MESS["ME_AGENDA_NO_RESPONSIBLE"] = "(не назначен)";
+?>

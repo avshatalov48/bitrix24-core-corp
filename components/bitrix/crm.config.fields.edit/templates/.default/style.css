@@ -1,0 +1,13 @@
+.btn-view-fields {background-image:url(images/view_fields.gif);}
+.btn-delete-field {background-image:url(images/delete_field.gif);}
+.btn-add-field {background-image:url(images/add_field.gif);}
+
+.href-action {text-decoration:none;border-bottom:1px dashed #2775C7;}
+.href-action:hover {text-decoration:none;border-bottom:1px dashed #CF1C3E;}
+.href-action:hover {text-decoration:none;border-bottom:1px dashed #CF1C3E;}
+
+.value-input {width:100%;}
+.sort-up {background-image:url(images/sort_up.gif);}
+.sort-down {background-image:url(images/sort_down.gif);}
+.sort-arrow {background-position:left top; background-repeat:no-repeat; display:block; height:16px; width:16px; overflow:hidden; cursor:pointer;}
+.delete-action {background-position:left top; background-repeat:no-repeat; display:block; height:16px; width:16px; overflow:hidden; cursor:pointer; background-image:url(images/delete.gif);}

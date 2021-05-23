@@ -1,0 +1,47 @@
+.tasks-permission-col {
+	float: left;
+}
+.tasks-permission-title {
+	width: 30%;
+	box-sizing: border-box;
+}
+.tasks-permission-value {
+	width: 10%;
+}
+.tasks-permission-delimeter {
+	float: none;
+	clear: both;
+	height: 1px;
+}
+.tasks-permission-header {
+	margin-bottom: 10px;
+	font-weight: bold;
+}
+.tasks-permission-submit {
+	margin-top: 10px;
+}
+.tasks-permission-row-0 {
+	margin-top: 10px;
+}
+.tasks-permission-row-1 .tasks-permission-title {
+	padding-left: 10px;
+}
+.tasks-permission-row-2 .tasks-permission-title {
+	padding-left: 20px;
+}
+.tasks-permission-row-3 .tasks-permission-title {
+	padding-left: 30px;
+}
+
+.tasks-permission-header-link {
+	margin-right: 18px;
+	text-decoration: none;
+	color: #1f67b0;
+	font-size: 13px;
+	border-bottom: 1px dashed rgba(31, 103, 176, .5);
+	cursor: pointer;
+}
+
+.tasks-permission-header-link:hover {
+	border-bottom: 1px dashed rgba(31, 103, 176, .9);
+}

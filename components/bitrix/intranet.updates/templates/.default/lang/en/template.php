@@ -1,0 +1,29 @@
+<?
+$MESS["SUP_ACTIVE"] = "License key is valid";
+$MESS["SUP_ACTIVE_PERIOD"] = "from #DATE_FROM# through #DATE_TO#";
+$MESS["SUP_SERVER"] = "Update server";
+$MESS["SUP_SUBI_CHECK"] = "Last update check performed on";
+$MESS["SUP_SUBI_UPD"] = "Updates last installed on";
+$MESS["UPDATES_BUTTON"] = "Install updates";
+$MESS["SUP_SU_RECOMEND"] = "Recommended updates";
+$MESS["SUP_SU_RECOMEND_MOD"] = "<b>#NUM#</b> for modules";
+$MESS["SUP_SU_RECOMEND_LAN"] = "<b>#NUM#</b> for language files";
+$MESS["SUP_SU_RECOMEND_NO"] = "none";
+$MESS["UPDATES_TITLE"] = "Updates";
+$MESS["SUP_ACTIVE_PERIOD_TO"] = "through #DATE_TO#";
+$MESS["SUP_SUBU_UPDATE"] = "Update the update system";
+$MESS["SUP_SUBU_HINT"] = "A new version of the update system is available. You have to install it before you proceed with updating.";
+$MESS["SUP_SUBU_BUTTON"] = "Install the new SiteUpdate version";
+$MESS["SUP_SU_UPD_BUTTON"] = "Install recommended updates";
+$MESS["SUP_SUB_SUCCESS"] = "Updates have been installed successfully.";
+$MESS["SUP_SUB_ERROR"] = "Some updates have failed to install.";
+$MESS["SUP_SUB_STOP"] = "Stop";
+$MESS["SUP_INITIAL"] = "Initializing...";
+$MESS["SUP_SU_UPD_INSMED1"] = "Install update";
+$MESS["SUP_SUBT_LICENCE"] = "License Agreement";
+$MESS["SUP_SUBT_LICENCE_HINT"] = "You have to accept the new License Agreement before using the update system.";
+$MESS["SUP_SUBT_LICENCE_BUTTON"] = "View License Agreement";
+$MESS["SUP_SUBT_AGREE"] = "I accept the License Agreement";
+$MESS["SUP_APPLY"] = "Apply";
+$MESS["SUP_UPDATES_HINT"] = "Updates for your Bitrix24 are now being installed. Please don't close this page until all the updates have finished installing.";
+?>

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_CONFLICTED_TEXT"] = "Вам потрібно перевірити та вручну здійснити об‘єднання дублікатів: #CONFLICTS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_BUTTON"] = "Приступити до об'єднання";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_LIST_LINK"] = "Список запропонованих варіантів";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT"] = "Автоматично об'єднано дублікатів: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_COMPANY"] = "Автоматично об'єднано дублікатів компаній: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_CONTACT"] = "Автоматично об'єднано дублікатів контактів: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_LEAD"] = "Автоматично об'єднано дублікатів лідів #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_COMPANY"] = "Автоматично об'єднати дублікати компаній не вдалося.";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_CONTACT"] = "Автоматично об'єднати дублікати контактів не вдалося.";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_LEAD"] = "Автоматично об'єднати дублікати лідів не вдалося.";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_CONFLICTS_FOUND"] = "Частину дублікатів ми не об'єднали, їх кількість становить: #CONFLICTS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_INTERVAL_TITLE"] = "Частота перевірки";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_NOTE"] = "Пошук і об'єднання дублікатів будуть здійснюватися автоматично відповідно до зазначених налаштувань.";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_TITLE"] = "Автоматичний пошук дублікатів";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_BUTTON"] = "Включити";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT"] = "Включити автопошук і об'єднання дублікатів за розкладом?";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_COMPANY"] = "Ми знайшли дублікати компаній у CRM: #TOTAL_ENTITIES_COUNT#.<br>Повністю збігаються за обраними полями: #FOUND_ITEMS_COUNT#.";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_CONTACT"] = "Ми знайшли дублікати контактів у CRM: #TOTAL_ENTITIES_COUNT#.<br>Повністю збігаються за обраними полями: #FOUND_ITEMS_COUNT#.";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_LEAD"] = "Ми знайшли дублікати лідів у CRM: #TOTAL_ENTITIES_COUNT#.<br>Повністю збігаються за обраними полями: #FOUND_ITEMS_COUNT#.";

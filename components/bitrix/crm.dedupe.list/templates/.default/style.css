@@ -1,0 +1,949 @@
+.crm-double-set-block {
+	border-bottom: 1px solid #e5e5e5;
+	padding: 0 0 25px 15px;
+	margin-top: 12px;
+}
+
+.crm-double-set-block-radio {
+	padding-left: 15px;
+	margin-top: 12px;
+}
+
+.crm-double-set-text {
+	color: #555555;
+	margin-bottom: 17px;
+	padding-left: 5px;
+}
+
+.crm-double-set-radio-wrap {
+	padding-left: 5px;
+}
+
+.crm-double-set-item {
+	position: relative;
+	padding: 0 0 20px 30px;
+	margin-left: 5px;
+}
+
+.crm-double-set-checkbox {
+	margin: 0;
+	left: 4px;
+	top: 3px;
+	position: absolute;
+}
+
+.crm-double-set-label {
+	color: #555555;
+	font-size: 13px;
+}
+
+.crm-double-add-item {
+	border-bottom: 1px dashed #1a7cba;
+	color: #1a7cba;
+	cursor: pointer;
+	display: inline-block;
+	margin: 3px 0 0 5px;
+}
+
+
+.crm-double-description {
+	color: #555555;
+	font-size: 12px;
+	padding: 25px 0 0 5px;
+}
+
+.crm-double-set-block-radio {
+	margin-top: 30px;
+}
+
+.crm-double-radio {
+	vertical-align: middle;
+	margin: 0 3px 0 0;
+}
+
+.crm-double-set-label {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 2px 20px 0 0;
+}
+
+.crm-double-alert {
+	border: 1px solid;
+	border-color: #ede7d9 #eae4d2 #e5dfc9;
+	border-radius: 2px;
+	-webkit-box-shadow: inset 0 1px 0 #fff;
+	box-shadow: inset 0 1px 0 #fff;
+	background-image: -webkit-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image:    -moz-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image:     -ms-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image:      -o-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image:         linear-gradient(to bottom, #fdfbed, #faf6d9);
+	color: #352c0c;
+	font-size: 13px;
+	max-width: 470px;
+	margin-top: 20px;
+	padding: 11px 15px 10px;
+}
+
+.crm-double-title {
+	border-bottom: 1px solid #ccc;
+	color: #555;
+	font-size: 20px;
+	padding-bottom: 14px;
+}
+
+
+body table.bx-interface-grid-double {
+	border: 0 none;
+	width: 100%;
+}
+body table.bx-interface-grid-double td {
+	color: #555555;
+	font: 13px/20px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	padding: 10px !important;
+	border-left: 0 none;
+	border-right: 0 none;
+	border-top: 0 none;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer table.bx-grid-footer td {
+	padding: 0 15px !important;
+}
+body table.bx-interface-grid-double td.bx-left,
+body table.bx-interface-grid-double td.bx-actions-col {
+	text-align: center;
+	vertical-align: middle;
+}
+body table.bx-interface-grid-double tr.bx-grid-gutter,
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign {
+	display: none;
+}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down,
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
+	background-position: center center;
+	display: table-cell;
+	padding: 0;
+}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up  {background-image: url("./images/bx-sort-up.png") !important;}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down{background-image: url("./images/bx-sort-down.png") !important;}
+body table.bx-interface-grid-double tr.bx-grid-gutter td,
+body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-left,
+body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-right,
+body table.bx-interface-grid-double tr.bx-grid-head td,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-left,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-right,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-sorted{
+	border: 0 none;
+	font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	padding: 0 10px !important;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+body table.bx-interface-grid-double tr.bx-grid-head td {
+	background-color: transparent !important;
+	color: #555555 !important;
+	text-shadow: 0 1px 1px #FFFFFF;
+}
+body table.bx-interface-grid-double tr.bx-grid-head > td          {background: url("./images/bx-grid-head.png") repeat-x scroll left top #E4E4E4 !important;}
+body table.bx-interface-grid-double tr.bx-grid-head > td.bx-sorted{background: url("./images/bx-grid-head-sorted.png") repeat-x scroll left top transparent !important;}
+body table.bx-interface-grid-double tr.bx-grid-head   td.bx-left  {border-radius: 4px 0 0 4px;}
+body table.bx-interface-grid-double tr.bx-grid-head   td.bx-right {border-radius: 0 4px 4px 0;}
+body table.bx-interface-grid-double tr.bx-grid-head td td {
+	cursor: pointer;
+	padding: 0 !important;
+}
+/*body table.bx-interface-grid-double tr.bx-even td.bx-sorted,
+body table.bx-interface-grid-double tr.bx-odd  td.bx-sorted,
+body table.bx-interface-grid-double tr.bx-even td {
+	background: none repeat scroll 0 0 transparent;
+}*/
+/*body table.bx-interface-grid-double tr.bx-even.bx-over td.bx-sorted,
+body table.bx-interface-grid-double tr.bx-odd.bx-over  td.bx-sorted,
+body table.bx-interface-grid-double tr.bx-over td {
+	background-color: #FFFCB1;
+}
+*/
+
+body table.bx-interface-grid-double tr.bx-double-open td,
+body table.bx-interface-grid-double tr.bx-double-children:hover td,
+body table.bx-interface-grid-double tr:hover td{background-color: #eff4f5;}
+/*body table.bx-interface-grid-double tr.bx-double-children:hover td,*/
+body table.bx-interface-grid-double tr.bx-double-children td{background-color: #f4f7f8;}
+body table.bx-interface-grid-double tr.bx-double-functions td,
+body table.bx-interface-grid-double tr.bx-double-functions:hover td{background-color: transparent;}
+
+
+body table.bx-interface-grid-double tr.bx-green    td{background-color: #edf3de !important;}
+body table.bx-interface-grid-double tr.bx-selected td{background-color: #DAEC71}
+body table.bx-interface-grid-double tr.bx-active   td{background-color: #FFF46A}
+
+body table.bx-interface-grid-double tr.bx-grid-footer > td {
+	background: url("./images/bx-grid-footer.png") repeat-x scroll left top transparent !important;
+	border: 0 none;
+	border-radius: 0 0 4px 4px !important;
+	height: 38px;
+	padding: 0 !important;
+	color: #555555;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer td td {
+	background: none repeat scroll 0 0 transparent;
+	border: 0 none;
+	color: #555555;
+	font: 12px/38px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	height: 38px;
+	padding: 0 15px !important;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer td td span {
+	color: #555555 !important;
+	font-weight: normal;
+}
+body table.bx-interface-grid-double tr > td {border-bottom: 1px solid #EDEDED !important;}
+body table.bx-interface-grid-double tr.bx-grid-head td,
+body table.bx-interface-grid-double tr.bx-grid-footer td {border-bottom: 0 none !important;}
+body table.bx-interface-grid-double a.bx-action:hover div,
+body table.bx-interface-grid-double tr.bx-over a.bx-action div,
+body table.bx-interface-grid-double a.bx-action div                 {background-image: url("./images/action.gif");background-position:  center center !important;}
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action div {background:       url("./images/action_head.gif") no-repeat scroll center center transparent;}
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action.pressed div,
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action:hover div {background: url("./images/action_head.gif") no-repeat scroll center center #D2D2D2;}
+
+table.bx-interface-grid-double table.bx-grid-sorting {
+	color: black;
+	width: 100%;
+}
+
+table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign {
+	background-image: url("./images/sort_no.gif");
+	background-position: right 5px;
+	background-repeat: no-repeat;
+	width: 7px;
+}
+
+table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
+	width: 10px;
+}
+
+.reports-description-text{
+	margin: 0;
+	color: #555;
+}
+.crm-double-set-checkbox-wrap{
+	position: relative;
+
+}
+.bx-sl-crm-input-container,
+.bx-sl-crm-input-container-denomination,
+.bx-sl-crm-input-container-communication,
+.bx-sl-crm-input-container-requisite,
+.bx-sl-crm-input-container-bank_detail
+{
+	display: inline-block;
+	background: #e6ecef;
+	margin: 7px 0;
+	padding: 3px;
+	border-radius: 3px;
+	/*margin-right:20px;*/
+}
+
+.bx-sl-crm-input-container-communication,
+.bx-sl-crm-input-container-requisite,
+.bx-sl-crm-input-container-bank_detail
+{
+	background: none;
+}
+
+.crm-double-set-checkbox-wrap .crm-double-set-checkbox{
+	position: relative;
+	margin-right: 5px;
+	border-radius: 3px
+}
+
+.sidebar-block.double{display: inline-block; width: 100%;}
+.sidebar-block.double .sidebar-block-inner{background: #f8fafb;padding: 5px 15px;}
+
+.sidebar-block.double .crm-double-set-radio-wrap{margin: 10px 0;padding-left: 0}
+.sidebar-block.double .crm-double-set-radio{position: relative;bottom: -3px;margin: 0 1px 0 7px;}
+
+.crm-double-title{color: #555;}
+.crm-double-set-label{color: #555;font-weight: bold;}
+.crm-double-set-label[disabled]{color: #a7abad;}
+.crm-double-set-label.fwb{font-weight: bold;color: #555;}
+
+.crm-double-result-search{
+	clear: both;
+	color: #6c6e6f;
+	font-weight: bold;
+	font-size: 13px;
+}
+
+.crm-client-photo-wrapper.empty {
+	 background-image: url("./images/default_avatar.jpg");
+	-webkit-background-size: 39px auto;
+	background-size: 39px auto;
+	width: 39px !important;
+	height: 39px !important;
+}
+
+.bx-double-pagination a{
+    color: #555;
+}
+.bx-double-pagination .modern-page-dots{ border-right: 1px solid #555;}
+.crm-client-photo-wrapper img{
+    width: 50px;
+    height: auto;
+}
+
+.crm-avatar.crm-avatar-user {
+	background: center no-repeat url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20width%3D%2250px%22%20height%3D%2250px%22%20viewBox%3D%220%200%2050%2050%22%20version%3D%221.1%22%3E%0A%20%20%20%20%3Cg%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%20%20%20%20%3Crect%20fill%3D%22%2380868E%22%20x%3D%220%22%20y%3D%220%22%20width%3D%2250%22%20height%3D%2250%22/%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M38.930551%2C41.4357816%20C38.930551%2C39.5055816%2036.7940204%2C31.3401816%2036.7940204%2C31.3401816%20C36.7940204%2C30.1467816%2035.2552449%2C28.7835816%2032.2250408%2C27.9891816%20C31.1984184%2C27.698884%2030.2224907%2C27.2487202%2029.3321429%2C26.6547816%20C29.1374286%2C26.5419816%2029.1670204%2C25.4997816%2029.1670204%2C25.4997816%20L28.1910816%2C25.3491816%20C28.1910816%2C25.2645816%2028.1076327%2C24.0147816%2028.1076327%2C24.0147816%20C29.2753265%2C23.6169816%2029.1551837%2C21.2703816%2029.1551837%2C21.2703816%20C29.8967551%2C21.6873816%2030.3796939%2C19.8303816%2030.3796939%2C19.8303816%20C31.2567959%2C17.2503816%2029.9429184%2C17.4063816%2029.9429184%2C17.4063816%20C30.1727761%2C15.8313541%2030.1727761%2C14.230609%2029.9429184%2C12.6555816%20C29.3587755%2C7.43078157%2020.5640816%2C8.84918157%2021.606898%2C10.5555816%20C19.036551%2C10.0755816%2019.6230612%2C16.0047816%2019.6230612%2C16.0047816%20L20.1805714%2C17.5401816%20C19.0856735%2C18.2601816%2019.8467755%2C19.1307816%2019.8846531%2C20.1327816%20C19.9385102%2C21.6123816%2020.8315918%2C21.3057816%2020.8315918%2C21.3057816%20C20.8866327%2C23.7477816%2022.074449%2C24.0657816%2022.074449%2C24.0657816%20C22.2975714%2C25.5993816%2022.1584898%2C25.3383816%2022.1584898%2C25.3383816%20L21.1014694%2C25.4679816%20C21.1157784%2C25.8167386%2021.087752%2C26.1659565%2021.0180204%2C26.5077816%20C19.7751633%2C27.0693816%2019.5076531%2C27.3987816%2018.2724898%2C27.9477816%20C15.8862041%2C29.0079816%2013.2927755%2C30.3867816%2012.8317347%2C32.2431816%20C12.3706939%2C34.0995816%2011%2C41.4357816%2011%2C41.4357816%20L38.9293673%2C41.4357816%20L38.9293673%2C41.4357816%20L38.9293673%2C41.4357816%20L38.930551%2C41.4357816%20Z%22%20fill%3D%22%23FFF%22/%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E);
+	width: 50px;
+	height: 50px;
+	background-size: 50px;
+}
+
+/* region Auto join */
+#crm-dedupe-list-popup .popup-window-buttons {
+	border-top: 1px solid rgba(82,92,105,.1);
+}
+
+.crm-dedupe-list-popup-content {
+	padding: 0 10px 30px 10px;
+	color: #535C69;
+}
+
+.crm-dedupe-list-popup-content-link {
+	display: inline-block;
+	border-bottom: 1px dashed #2066B0;
+	color: #2066B0;
+	transition: border-bottom .3s;
+}
+
+.crm-dedupe-list-popup-content-link:hover {
+	border-bottom: 1px dashed transparent;
+}
+
+.crm-dedupe-list-popup-text-done {
+	position: relative;
+	display: flex;
+	align-items: center;
+	padding: 0 0 0 35px;
+	min-height: 30px;
+}
+
+.crm-dedupe-list-popup-text-done:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: 28px;
+	height: 29px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2028%2029%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M11.941%2017.738l8.072-8.072%201.175%201.174-8.073%208.072-1.174%201.174-5.148-5.148%201.175-1.174%203.973%203.974zm2%2010.646C6.242%2028.384%200%2022.142%200%2014.442S6.242.5%2013.942.5s13.942%206.242%2013.942%2013.942-6.242%2013.942-13.942%2013.942zm0-1.34c6.96%200%2012.603-5.642%2012.603-12.602S20.902%201.84%2013.942%201.84%201.34%207.482%201.34%2014.442s5.642%2012.602%2012.602%2012.602z%22%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.crm-dedupe-list-start-container {
+	text-align: center;
+}
+
+.crm-dedupe-list-start-title {
+	margin-bottom: 38px;
+	font-size: 37px;
+	color: #525C69;
+}
+
+.crm-dedupe-list-start-title-dark-text {
+	color: #525C69;
+}
+
+.crm-dedupe-list-start-title-light-text {
+	color: #A8ADB4;
+}
+
+.crm-dedupe-list-start-border-field-container {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 26px;
+}
+
+.crm-dedupe-list-start-border-field {
+	display: flex;
+	align-items: center;
+	flex-grow: 0;
+	padding: 5px 30px;
+	min-height: 61px;
+	border: 2px solid rgba(130,139,149,.2);
+	border-radius: 68px;
+	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	box-sizing: border-box;
+}
+
+.crm-dedupe-list-start-text {
+	display: inline-block;
+	margin-right: 6px;
+	color: #525C69;
+}
+
+.crm-dedupe-list-start-link {
+	display: inline-block;
+	color: #0063C6;
+	border-bottom: 1px dashed rgba(0,99,198,.5);
+	transition: border-bottom .3s;
+}
+
+.crm-dedupe-list-start-link:hover {
+	border-bottom: 1px dashed transparent;
+}
+
+.crm-dedupe-list-start-link-grey {
+	border-bottom: 1px dashed rgba(82,92,105,.43);
+	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525C69;
+}
+
+.crm-dedupe-list-start-link-light-grey {
+	border-bottom: 1px dashed rgba(155,155,155,.4);
+	font: 14px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #9B9B9B;
+}
+
+.crm-dedupe-list-start-border-field .crm-dedupe-list-start-link {
+	margin-right: 28px;
+}
+
+.crm-dedupe-list-start-border-field .crm-dedupe-list-start-link:last-child {
+	margin-right: 0;
+}
+
+.crm-dedupe-list-start-icon {
+	position: relative;
+	margin: 0 auto;
+	max-width: 439px;
+	/*max-height: 180px;*/
+}
+
+.crm-dedupe-list-start-icon-cloud {
+	position: absolute;
+	bottom: 16px;
+	left: -20px;
+	display: block;
+	width: 99px;
+	height: 69px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20101%2071%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M77.514%2069.964H24.122c-.457%200-.91-.017-1.358-.05C10.697%2069.637%201%2059.678%201%2047.434a22.608%2022.608%200%200%201%206.54-15.908%2022.275%2022.275%200%200%201%207.438-4.957%2023.855%2023.855%200%200%201%206.83-18.625A23.415%2023.415%200%200%201%2038.449%201c7.991.01%2015.047%204.044%2019.288%2010.2a19.057%2019.057%200%200%201%206.44-1.11c9.976.012%2018.17%207.688%2019.12%2017.503%209.559%202.104%2016.712%2010.699%2016.704%2020.975C99.99%2060.411%2090.473%2070.005%2078.74%2070c-.412%200-.82-.012-1.226-.036z%22%20stroke%3D%22%232FC6F6%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.302%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	opacity: 0;
+}
+
+.crm-dedupe-list-start-icon-cloud.crm-dedupe-list-start-icon-cloud-blue {
+	position: absolute;
+	top: 63px;
+	left: 32px;
+	display: block;
+	width: 43px;
+	height: 30px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2043%2030%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M33.233%2029.985h-23.19c-.199%200-.395-.008-.59-.022C4.212%2029.842%200%2025.512%200%2020.188a9.835%209.835%200%200%201%202.84-6.916%209.674%209.674%200%200%201%203.231-2.155%2010.377%2010.377%200%200%201%202.967-8.098A10.165%2010.165%200%200%201%2016.265%200c3.471.004%206.536%201.758%208.378%204.435a8.27%208.27%200%200%201%202.797-.483c4.333.005%207.892%203.343%208.305%207.61%204.152.915%207.259%204.652%207.255%209.12-.004%205.149-4.138%209.32-9.234%209.318-.18%200-.357-.005-.533-.015z%22%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.117%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	opacity: 0;
+}
+
+.crm-dedupe-list-start-icon-cloud.crm-dedupe-list-start-icon-cloud-blue.crm-dedupe-list-start-icon-cloud-blue-right {
+	position: absolute;
+	top: auto;
+	left: auto;
+	bottom: 55px;
+	right: 12px;
+	width: 37px;
+	height: 26px;
+}
+
+.crm-dedupe-list-start-icon-cloud.crm-dedupe-list-start-icon-cloud-right {
+	position: absolute;
+	top: 53px;
+	left: auto;
+	bottom: auto;
+	right: 63px;
+	width: 30px;
+	height: 21px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2032%2023%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M24.186%2021.99H8.006c-.138%200-.275-.006-.41-.016C3.938%2021.889%201%2018.858%201%2015.132a6.896%206.896%200%200%201%201.982-4.842%206.748%206.748%200%200%201%202.254-1.508%207.276%207.276%200%200%201%202.07-5.668A7.08%207.08%200%200%201%2012.348%201c2.421.003%204.56%201.23%205.845%203.104a5.752%205.752%200%200%201%201.951-.338c3.023.004%205.506%202.34%205.794%205.328%202.897.64%205.065%203.256%205.062%206.383-.003%203.605-2.887%206.524-6.443%206.523-.124%200-.248-.004-.371-.01z%22%20stroke%3D%22%232FC6F6%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.302%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.crm-dedupe-list-start-icon-cloud-left-top {
+	animation: crm-dedupe-list-start-icon-cloud-left-top 3s cubic-bezier(0.215, 0.61, 0.355, 1) .4s forwards;
+}
+
+.crm-dedupe-list-start-icon-cloud-left-bottom {
+	animation: crm-dedupe-list-start-icon-cloud-left-bottom 3s cubic-bezier(0.215, 0.61, 0.355, 1) .4s forwards;
+}
+
+.crm-dedupe-list-start-icon-cloud-right-top {
+	animation: crm-dedupe-list-start-icon-cloud-right-top 3s cubic-bezier(0.215, 0.61, 0.355, 1) .4s forwards;
+}
+
+.crm-dedupe-list-start-icon-cloud-right-bottom {
+	animation: crm-dedupe-list-start-icon-cloud-right-bottom 3s cubic-bezier(0.215, 0.61, 0.355, 1) .4s forwards;
+}
+
+.crm-dedupe-list-start-icon-main {
+	position: relative;
+	display: block;
+	margin: 0 auto 50px auto;
+	width: 247px;
+	height: 246px;
+}
+
+.crm-dedupe-list-start-icon-refresh,
+.crm-dedupe-list-start-icon-refresh-noarrows {
+	position: absolute;
+	top: 19px;
+	left: 20px;
+	display: inline-block;
+	width: 210px;
+	height: 210px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20207%20207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M44.27%20181.734c30.611%2023.007%2073.223%2026.925%20108.48%206.57%2035.6-20.554%2053.515-59.973%2048.41-98.338a2.407%202.407%200%200%201%204.457-.631c5.354%2040.129-13.38%2081.367-50.617%20102.866-36.738%2021.21-81.113%2017.217-113.098-6.617l1.979%2011.223a2.063%202.063%200%201%201-4.064.717l-2.853-16.181a2.058%202.058%200%200%201%20.007-.756%202.056%202.056%200%200%201%201.699-2.04l16.269-2.87a2.056%202.056%200%201%201%20.714%204.05l-11.384%202.007zM160.13%2022.377C129.735%201.058%2088.52-2.089%2054.25%2017.697c-34.9%2020.15-52.805%2058.43-48.684%2096.075a2.407%202.407%200%200%201-4.428.902C-3.348%2075.178%2015.378%2034.943%2052%2013.799c35.901-20.727%2079.093-17.386%20110.892%205.018l-2.254-11.592a2.063%202.063%200%201%201%204.05-.787l3.136%2016.128c.05.258.05.513.006.756a2.056%202.056%200%200%201-1.663%202.07l-16.216%203.152a2.056%202.056%200%200%201-.785-4.036l10.963-2.13z%22%20fill%3D%22%23A6EAFE%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-refresh-animation 2s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+	opacity: 0;
+}
+
+.crm-dedupe-list-start-icon-refresh-noarrows {
+	width: 207px;
+	height: 207px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20207%20207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22nonzero%22%3E%3Cpath%20d%3D%22M64.139%20198.696a2.407%202.407%200%200%201%201.986-4.049c35.71%2014.792%2078.357%207.671%20107.39-21.362%2029.066-29.066%2036.17-71.78%2021.308-107.515a2.407%202.407%200%200%201%204.142-1.763c15.558%2037.375%208.135%2082.057-22.268%20112.46-30.43%2030.43-75.163%2037.84-112.558%2022.23zM141.552%207.75a2.407%202.407%200%200%201-1.295%204.328C104.826-1.985%2062.883%205.318%2034.215%2033.985%205.719%2062.481-1.668%20104.092%2012.055%20139.388a2.407%202.407%200%200%201-4.044%202.017c-14.554-36.99-6.88-80.7%2023.022-110.602C60.91.925%20104.58-6.76%20141.552%207.75z%22%20opacity%3D%22.129%22/%3E%3Cpath%20d%3D%22M126.068%2052.964l-2.163%202.164c-19.324-7.801-42.278-3.87-57.943%2011.795s-19.596%2038.619-11.795%2057.943l-1.639%201.638c-8.735-20.42-4.77-44.978%2011.896-61.644%2016.666-16.666%2041.223-20.631%2061.644-11.896zm29.074%2028.593c9.218%2020.587%205.378%2045.6-11.522%2062.499-16.899%2016.9-41.912%2020.74-62.499%2011.522l1.568-1.567c19.54%208.386%2043.055%204.602%2059.01-11.352%2015.953-15.954%2019.737-39.469%2011.35-59.009l2.093-2.093z%22%20opacity%3D%22.046%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.crm-dedupe-list-start-icon-refresh-noarrows-yellow {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20207%20207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M64.139%20198.696a2.407%202.407%200%200%201%201.986-4.049c35.71%2014.792%2078.357%207.671%20107.39-21.362%2029.066-29.066%2036.17-71.78%2021.308-107.515a2.407%202.407%200%200%201%204.142-1.763c15.558%2037.375%208.135%2082.057-22.268%20112.46-30.43%2030.43-75.163%2037.84-112.558%2022.23zM141.552%207.75a2.407%202.407%200%200%201-1.295%204.328C104.826-1.985%2062.883%205.318%2034.215%2033.985%205.719%2062.481-1.668%20104.092%2012.055%20139.388a2.407%202.407%200%200%201-4.044%202.017c-14.554-36.99-6.88-80.7%2023.022-110.602C60.91.925%20104.58-6.76%20141.552%207.75z%22%20fill%3D%22%23FFA900%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.25%22/%3E%3C/svg%3E');
+}
+
+.crm-dedupe-list-start-icon-zoom {
+	position: absolute;
+	top: 58px;
+	left: 31px;
+	display: inline-block;
+	width: 198px;
+	height: 170px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20196%20170%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Crect%20id%3D%22b%22%20y%3D%226%22%20width%3D%2269%22%20height%3D%2262%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-19.6%25%22%20y%3D%22-16.9%25%22%20width%3D%22139.1%25%22%20height%3D%22143.5%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22a%22%3E%3CfeOffset%20dy%3D%223%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%224%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0744372815%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M28.434%200h92.407a5%205%200%200%201%204.998%205.156l-1.76%2056.307a5%205%200%200%201-2.174%203.97L105%2077H64L27.172%2037.265a5%205%200%200%201-1.315-2.984L23.45%205.415A5%205%200%200%201%2028.434%200z%22%20id%3D%22d%22/%3E%3Cfilter%20x%3D%22-12.7%25%22%20y%3D%22-13.6%25%22%20width%3D%22125.6%25%22%20height%3D%22135.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22c%22%3E%3CfeOffset%20dy%3D%223%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%224%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.305752841%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Crect%20id%3D%22f%22%20x%3D%2255%22%20y%3D%227%22%20width%3D%2257%22%20height%3D%2257%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-17.5%25%22%20y%3D%22-14%25%22%20width%3D%22135.1%25%22%20height%3D%22135.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22e%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M5%200h51.7a5%205%200%200%201%203.797%201.746L77%2021v50a5%205%200%200%201-5%205H5a5%205%200%200%201-5-5V5a5%205%200%200%201%205-5z%22%20id%3D%22h%22/%3E%3Cfilter%20x%3D%22-13%25%22%20y%3D%22-10.5%25%22%20width%3D%22126%25%22%20height%3D%22126.3%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22g%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M45.915%2045.624c-24.935%2024.94-25.098%2065.482-.188%2090.399%2024.91%2024.916%2065.434%2024.76%2090.536-.347%2024.934-24.94%2025.257-65.642.347-90.558-24.904-24.923-65.595-24.6-90.697.508l.002-.002zm84.967%2084.945c-22.12%2022.125-58.058%2022.263-80.01.307-21.95-21.956-21.812-57.904.307-80.028%2022.12-22.125%2058.059-22.263%2080.01-.307%2021.944%2021.962%2021.806%2057.91-.307%2080.028z%22%20id%3D%22j%22/%3E%3Cfilter%20x%3D%22-10.2%25%22%20y%3D%22-6.3%25%22%20width%3D%22120.3%25%22%20height%3D%22120.3%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22i%22%3E%3CfeOffset%20dy%3D%225%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223.5%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.00718422203%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20transform%3D%22translate%288%2048%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23a%29%22%20xlink%3Ahref%3D%22%23b%22/%3E%3Cuse%20fill%3D%22%23A0E8FF%22%20xlink%3Ahref%3D%22%23b%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%288%2048%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23c%29%22%20xlink%3Ahref%3D%22%23d%22/%3E%3Cuse%20fill%3D%22%23A0E8FF%22%20xlink%3Ahref%3D%22%23d%22/%3E%3C/g%3E%3Cg%20opacity%3D%22.5%22%20transform%3D%22translate%2819%2059%29%22%20fill%3D%22%232FC6F6%22%3E%3Crect%20transform%3D%22matrix%28-1%200%200%201%2017%200%29%22%20y%3D%223%22%20width%3D%2217%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3Crect%20transform%3D%22matrix%28-1%200%200%201%2014%200%29%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3Crect%20opacity%3D%22.883%22%20y%3D%2234%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%226%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2216%22%20y%3D%2234%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%226%22/%3E%3Cpath%20d%3D%22M27.81%2045.493c-4.33-3.002-7.452-7.696-8.46-13.156a8%208%200%201%201%208.46%2013.156z%22%20opacity%3D%22.883%22/%3E%3Crect%20x%3D%2214%22%20width%3D%2249.657%22%20height%3D%227%22%20rx%3D%223.5%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%2249.657%22%20height%3D%227%22%20rx%3D%223.5%22/%3E%3C/g%3E%3Cg%3E%3Cg%20transform%3D%22translate%2874%2020%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23e%29%22%20xlink%3Ahref%3D%22%23f%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23f%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2874%2020%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23g%29%22%20xlink%3Ahref%3D%22%23h%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23h%22/%3E%3C/g%3E%3Cg%20opacity%3D%22.536%22%20transform%3D%22translate%2884%2030%29%22%20fill%3D%22%2394B817%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%222%22%20y%3D%2239%22%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%228%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2225%22%20y%3D%2239%22%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%228%22/%3E%3Crect%20x%3D%223.657%22%20y%3D%223%22%20width%3D%2259%22%20height%3D%227%22%20rx%3D%223.5%22/%3E%3Crect%20x%3D%223.657%22%20y%3D%2217%22%20width%3D%2265%22%20height%3D%227%22%20rx%3D%223.5%22/%3E%3Crect%20transform%3D%22matrix%28-1%200%200%201%20150%200%29%22%20x%3D%2263%22%20y%3D%227%22%20width%3D%2224%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3Crect%20transform%3D%22matrix%28-1%200%200%201%20154.686%200%29%22%20x%3D%2267.343%22%20y%3D%2217%22%20width%3D%2220%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3C/g%3E%3C/g%3E%3Cg%20transform%3D%22rotate%28-45%2062.751%2076.408%29%22%3E%3Cpath%20d%3D%22M90.639%2032.618c-24.144%200-43.846%209.847-43.846%2022s19.694%2022%2044%2022c24.144%200%2044-9.847%2044-22%20.006-12.153-19.85-22-44.156-22h.002z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.437%22/%3E%3Crect%20fill%3D%22%2310ADDF%22%20transform%3D%22matrix%281%200%200%20-1%200%20326%29%22%20x%3D%2287%22%20y%3D%22153%22%20width%3D%229%22%20height%3D%2220%22%20rx%3D%224.5%22/%3E%3Cg%20fill-rule%3D%22nonzero%22%20transform%3D%22rotate%2845%2091.129%2090.609%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23i%29%22%20xlink%3Ahref%3D%22%23j%22/%3E%3Cuse%20fill%3D%22%232FC6F6%22%20xlink%3Ahref%3D%22%23j%22/%3E%3C/g%3E%3Cpath%20d%3D%22M90.982%2032.808c-31.96.004-58.045%2025.879-58.05%2057.809-.003%2031.93%2026.065%2057.798%2058.24%2057.794%2031.96-.004%2058.25-25.879%2058.253-57.809.012-31.93-26.27-57.798-58.445-57.794h.002zm.014%20111.813c-29.98.003-54.424-24.255-54.42-54.005.003-29.75%2024.454-54.014%2054.433-54.018%2029.979-.003%2054.424%2024.255%2054.42%2054.005-.012%2029.75-24.463%2054.014-54.433%2054.018z%22%20fill-opacity%3D%22.417%22%20fill%3D%22%23A8ADB4%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.418%22/%3E%3Crect%20fill%3D%22%23A8ADB4%22%20x%3D%2282%22%20y%3D%22168%22%20width%3D%2219%22%20height%3D%2262%22%20rx%3D%226%22/%3E%3Crect%20fill%3D%22%23525C69%22%20opacity%3D%22.115%22%20x%3D%2282%22%20y%3D%22168%22%20width%3D%228%22%20height%3D%2262%22%20rx%3D%224%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-icon-animation .9s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+	opacity: 0;
+	z-index: 3;
+}
+
+.crm-dedupe-list-start-icon-merge {
+	position: absolute;
+	top: 82px;
+	left: 31px;
+	display: inline-block;
+	width: 182px;
+	height: 92px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20182%2092%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Crect%20id%3D%22b%22%20x%3D%2249.211%22%20y%3D%227.263%22%20width%3D%2251%22%20height%3D%2251%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-19.6%25%22%20y%3D%22-15.7%25%22%20width%3D%22139.2%25%22%20height%3D%22139.2%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22a%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M5%20.5h100a5%205%200%200%201%205%205v58a5%205%200%200%201-5%205H5a5%205%200%200%201-5-5v-58a5%205%200%200%201%205-5z%22%20id%3D%22d%22/%3E%3Cfilter%20x%3D%22-10.5%25%22%20y%3D%22-14%25%22%20width%3D%22120.9%25%22%20height%3D%22133.8%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22c%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223.5%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0334353147%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Crect%20id%3D%22f%22%20x%3D%2221.961%22%20y%3D%222.795%22%20width%3D%2222.76%22%20height%3D%2222.76%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-43.9%25%22%20y%3D%22-35.1%25%22%20width%3D%22187.9%25%22%20height%3D%22187.9%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22e%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h45.114a2%202%200%200%201%202%202v26.347a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22h%22/%3E%3Cfilter%20x%3D%22-20.4%25%22%20y%3D%22-26.4%25%22%20width%3D%22140.7%25%22%20height%3D%22165.9%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22g%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Crect%20id%3D%22j%22%20x%3D%2221.961%22%20y%3D%222.795%22%20width%3D%2222.76%22%20height%3D%2222.76%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-43.9%25%22%20y%3D%22-35.1%25%22%20width%3D%22187.9%25%22%20height%3D%22187.9%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22i%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h45.114a2%202%200%200%201%202%202v26.347a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22l%22/%3E%3Cfilter%20x%3D%22-20.4%25%22%20y%3D%22-26.4%25%22%20width%3D%22140.7%25%22%20height%3D%22165.9%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22k%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20transform%3D%22translate%2865.5%207.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23a%29%22%20xlink%3Ahref%3D%22%23b%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23b%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2865.5%207.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23c%29%22%20xlink%3Ahref%3D%22%23d%22/%3E%3Cuse%20fill%3D%22%23F9E900%22%20xlink%3Ahref%3D%22%23d%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2874.447%2017.447%29%22%20fill%3D%22%23E0D100%22%3E%3Crect%20x%3D%221.789%22%20y%3D%2234.895%22%20width%3D%2214.316%22%20height%3D%2214.316%22%20rx%3D%227.158%22/%3E%3Crect%20x%3D%2222.368%22%20y%3D%2234.895%22%20width%3D%2214.316%22%20height%3D%2214.316%22%20rx%3D%227.158%22/%3E%3Crect%20x%3D%223.272%22%20y%3D%222.684%22%20width%3D%2276.053%22%20height%3D%226.263%22%20rx%3D%223.132%22/%3E%3Crect%20x%3D%223.272%22%20y%3D%2215.211%22%20width%3D%2276.053%22%20height%3D%226.263%22%20rx%3D%223.132%22/%3E%3C/g%3E%3Cpath%20d%3D%22M72.143%2042.297L60.131%2031.285a1%201%200%200%200-1.676.717l-.158%207.747h-4.751c-1.945-.024-3.289-.595-4.99-1.834-2.522-1.84-5.168-5.387-8.768-8.81-3.55-3.406-8.682-6.691-15.576-6.645l-4.76-1.49a3.176%203.176%200%200%200-4.125%203.031v.647a5%205%200%200%200%203.508%204.773l5.38%201.681c5.51.031%208.499%202.927%2012.522%207.247%201.723%201.858%203.526%203.902%205.74%205.736-3.45%202.88-5.96%206.215-8.605%208.647-2.921%202.671-5.44%204.258-9.664%204.301h-2.369a4.323%204.323%200%200%200%200%208.646h2.448c9.27.003%2014.906-5.725%2018.819-10.044%202.016-2.21%203.797-4.168%205.455-5.403%201.695-1.241%203.035-1.81%204.983-1.834h4.754l.157%208.144a1%201%200%200%200%201.707.688l12.044-12.044a2%202%200%200%200-.063-2.889z%22%20fill%3D%22%23197CE2%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.735%22/%3E%3Cg%3E%3Cg%20transform%3D%22translate%286.5%2053.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23e%29%22%20xlink%3Ahref%3D%22%23f%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23f%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%286.5%2053.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23g%29%22%20xlink%3Ahref%3D%22%23h%22/%3E%3Cuse%20fill%3D%22%23A0E8FF%22%20xlink%3Ahref%3D%22%23h%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2810.493%2057.493%29%22%20fill%3D%22%2367D7FB%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%22.799%22%20y%3D%2215.573%22%20width%3D%226.389%22%20height%3D%226.389%22%20rx%3D%223.194%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%229.982%22%20y%3D%2215.573%22%20width%3D%226.389%22%20height%3D%226.389%22%20rx%3D%223.194%22/%3E%3Crect%20x%3D%221.46%22%20y%3D%221.198%22%20width%3D%2233.94%22%20height%3D%222.795%22%20rx%3D%221.398%22/%3E%3Crect%20x%3D%221.46%22%20y%3D%226.788%22%20width%3D%2233.94%22%20height%3D%222.795%22%20rx%3D%221.398%22/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cg%20transform%3D%22translate%286.5%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23i%29%22%20xlink%3Ahref%3D%22%23j%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23j%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%286.5%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23k%29%22%20xlink%3Ahref%3D%22%23l%22/%3E%3Cuse%20fill%3D%22%23B3E600%22%20xlink%3Ahref%3D%22%23l%22/%3E%3C/g%3E%3Cg%20opacity%3D%22.536%22%20transform%3D%22translate%2810.493%207.493%29%22%20fill%3D%22%2394B817%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%22.799%22%20y%3D%2215.573%22%20width%3D%226.389%22%20height%3D%226.389%22%20rx%3D%223.194%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%229.982%22%20y%3D%2215.573%22%20width%3D%226.389%22%20height%3D%226.389%22%20rx%3D%223.194%22/%3E%3Crect%20x%3D%221.46%22%20y%3D%221.198%22%20width%3D%2233.94%22%20height%3D%222.795%22%20rx%3D%221.398%22/%3E%3Crect%20x%3D%221.46%22%20y%3D%226.788%22%20width%3D%2233.94%22%20height%3D%222.795%22%20rx%3D%221.398%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-icon-animation .9s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+	opacity: 0;
+	z-index: 3;
+}
+
+.crm-dedupe-list-start-icon-like {
+	position: absolute;
+	top: 67px;
+	left: 48px;
+	display: inline-block;
+	width: 149px;
+	height: 119px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20149%20119%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Crect%20id%3D%22b%22%20x%3D%2240.127%22%20y%3D%225.107%22%20width%3D%2241.586%22%20height%3D%2241.586%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-24%25%22%20y%3D%22-19.2%25%22%20width%3D%22148.1%25%22%20height%3D%22148.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22a%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h85.738a2%202%200%200%201%202%202v51.448a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22d%22/%3E%3Cfilter%20x%3D%22-11.1%25%22%20y%3D%22-14.4%25%22%20width%3D%22122.3%25%22%20height%3D%22136.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22c%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Crect%20id%3D%22f%22%20x%3D%2240.127%22%20y%3D%225.107%22%20width%3D%2241.586%22%20height%3D%2241.586%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-24%25%22%20y%3D%22-19.2%25%22%20width%3D%22148.1%25%22%20height%3D%22148.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22e%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h85.738a2%202%200%200%201%202%202v51.448a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22h%22/%3E%3Cfilter%20x%3D%22-11.1%25%22%20y%3D%22-14.4%25%22%20width%3D%22122.3%25%22%20height%3D%22136.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22g%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M71%20108.5c-29.271%200-53-23.728-53-53%200-29.271%2023.728-53%2053-53%2029.271%200%2053%2023.729%2053%2053%200%2029.272-23.729%2053-53%2053z%22%20id%3D%22j%22/%3E%3Cfilter%20x%3D%22-9.4%25%22%20y%3D%22-7.5%25%22%20width%3D%22118.9%25%22%20height%3D%22118.9%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22i%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0741641171%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20opacity%3D%22.741%22%3E%3Cg%20transform%3D%22translate%286.5%2053.358%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23a%29%22%20xlink%3Ahref%3D%22%23b%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23b%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%286.5%2053.358%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23c%29%22%20xlink%3Ahref%3D%22%23d%22/%3E%3Cuse%20fill%3D%22%23A0E8FF%22%20xlink%3Ahref%3D%22%23d%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2813.796%2060.654%29%22%20fill%3D%22%2367D7FB%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%221.459%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2218.24%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%222.189%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%2212.403%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3C/g%3E%3C/g%3E%3Cg%20opacity%3D%22.741%22%3E%3Cg%20transform%3D%22translate%2853.679%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23e%29%22%20xlink%3Ahref%3D%22%23f%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23f%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2853.679%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23g%29%22%20xlink%3Ahref%3D%22%23h%22/%3E%3Cuse%20fill%3D%22%23B3E600%22%20xlink%3Ahref%3D%22%23h%22/%3E%3C/g%3E%3Cg%20opacity%3D%22.536%22%20transform%3D%22translate%2860.975%2010.796%29%22%20fill%3D%22%2394B817%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%221.459%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2218.24%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%222.189%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%2212.403%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3C/g%3E%3C/g%3E%3Cg%20opacity%3D%22.957%22%20fill-rule%3D%22nonzero%22%20transform%3D%22translate%286%203%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23i%29%22%20xlink%3Ahref%3D%22%23j%22/%3E%3Cuse%20fill%3D%22%232FC6F6%22%20xlink%3Ahref%3D%22%23j%22/%3E%3C/g%3E%3Cpath%20d%3D%22M102.249%2045.545l-13.31.003c-.384%200-.754-.222-.897-.574a6.04%206.04%200%200%201%20.08-4.676%2017.175%2017.175%200%200%200%20.363-9.958c-.905-2.258-1.145-6.382-5.318-6.572a4.304%204.304%200%200%200-3.102%202.122%201.358%201.358%200%200%200-.167.675c.128%202.67.128%204.932%200%206.788-.192%202.784-5.519%209.875-8.905%2014.377a1.32%201.32%200%200%201-.868.529c-1.27.19-3.691.512-4.564.627-.205.027-.324.284-.324.404v25.256c0%20.093.112.295.311.328.684.113%202.394.426%204.12.98%202.17.697%203.976%202.344%207.592%203.564.19.066.401.1.602.1H94.84c2.192-.392%203.824-2.266%203.936-4.516a8.332%208.332%200%200%200-.732-3.634c-.073-.164.023-.336.2-.37%202.177-.396%204.899-4.528%201.547-7.857-.09-.086-.073-.203.046-.234a5.111%205.111%200%200%200%203.697-3.788c.167-.704.107-1.431-.102-2.122a7.204%207.204%200%200%200-1.155-2.284c-.13-.172-.057-.396.152-.464%201.84-.623%203.107-2.382%203.094-4.384.211-1.963-1.366-4.317-3.274-4.32zM60.026%2046.61h-9.622c-.5%200-.881.443-.795.925l5.589%2031.4c.086.482.511.834%201.009.834h3.558c.55%200%20.996-.436.996-.973l.078-31.389a.804.804%200%200%200-.813-.797%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-icon-animation .9s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+	opacity: 0;
+	z-index: 3;
+}
+
+.crm-dedupe-list-start-icon-alert {
+	position: absolute;
+	top: 67px;
+	left: 48px;
+	display: inline-block;
+	width: 149px;
+	height: 117px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20149%20117%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Crect%20id%3D%22b%22%20x%3D%2240.127%22%20y%3D%225.107%22%20width%3D%2241.586%22%20height%3D%2241.586%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-24%25%22%20y%3D%22-19.2%25%22%20width%3D%22148.1%25%22%20height%3D%22148.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22a%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h85.738a2%202%200%200%201%202%202v51.448a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22d%22/%3E%3Cfilter%20x%3D%22-11.1%25%22%20y%3D%22-14.4%25%22%20width%3D%22122.3%25%22%20height%3D%22136.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22c%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Crect%20id%3D%22f%22%20x%3D%2240.127%22%20y%3D%225.107%22%20width%3D%2241.586%22%20height%3D%2241.586%22%20rx%3D%225%22/%3E%3Cfilter%20x%3D%22-24%25%22%20y%3D%22-19.2%25%22%20width%3D%22148.1%25%22%20height%3D%22148.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22e%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.179468969%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M2%200h85.738a2%202%200%200%201%202%202v51.448a2%202%200%200%201-2%202H2a2%202%200%200%201-2-2V2a2%202%200%200%201%202-2z%22%20id%3D%22h%22/%3E%3Cfilter%20x%3D%22-11.1%25%22%20y%3D%22-14.4%25%22%20width%3D%22122.3%25%22%20height%3D%22136.1%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22g%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0957440997%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3Cpath%20d%3D%22M36%2072C16.118%2072%200%2055.883%200%2036%200%2016.118%2016.117%200%2036%200c19.882%200%2036%2016.118%2036%2036%200%2019.883-16.118%2036-36%2036z%22%20id%3D%22j%22/%3E%3Cfilter%20x%3D%22-13.9%25%22%20y%3D%22-11.1%25%22%20width%3D%22127.8%25%22%20height%3D%22127.8%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22i%22%3E%3CfeOffset%20dy%3D%222%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowOffsetOuter1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%223%22%20in%3D%22shadowOffsetOuter1%22%20result%3D%22shadowBlurOuter1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0741641171%200%22%20in%3D%22shadowBlurOuter1%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20transform%3D%22translate%286.5%2053.358%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23a%29%22%20xlink%3Ahref%3D%22%23b%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23b%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%286.5%2053.358%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23c%29%22%20xlink%3Ahref%3D%22%23d%22/%3E%3Cuse%20fill%3D%22%23A0E8FF%22%20xlink%3Ahref%3D%22%23d%22/%3E%3C/g%3E%3Cpath%20d%3D%22M86.976%2099.52L79.585%2087.21c-.57-.945-1.927-.945-2.484%200L69.709%2099.52c-.582.97.121%202.193%201.248%202.193H85.74c1.115%200%201.818-1.223%201.236-2.193zm-9.694-8.022c0-.545.437-.981.982-.981h.133c.545%200%20.982.436.982.981v3.672a.977.977%200%200%201-.982.982h-.133a.977.977%200%200%201-.982-.982v-3.672zm2.29%207.126c0%20.678-.557%201.235-1.235%201.235a1.241%201.241%200%200%201-1.236-1.235c0-.68.557-1.236%201.236-1.236.678%200%201.235.557%201.235%201.236z%22%20fill%3D%22%2367D7FB%22/%3E%3Cg%20transform%3D%22translate%2813.796%2060.654%29%22%20fill%3D%22%2367D7FB%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%221.459%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2218.24%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%222.189%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%2212.403%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3C/g%3E%3Cg%3E%3Cg%20transform%3D%22translate%2853.679%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23e%29%22%20xlink%3Ahref%3D%22%23f%22/%3E%3Cuse%20fill%3D%22%23C5F03F%22%20xlink%3Ahref%3D%22%23f%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2853.679%203.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23g%29%22%20xlink%3Ahref%3D%22%23h%22/%3E%3Cuse%20fill%3D%22%23B3E600%22%20xlink%3Ahref%3D%22%23h%22/%3E%3C/g%3E%3Cpath%20d%3D%22M135.957%2049.94l-7.392-12.31c-.57-.946-1.927-.946-2.484%200l-7.392%2012.31c-.581.97.122%202.194%201.248%202.194h14.784c1.115%200%201.817-1.224%201.236-2.193zm-9.694-8.02c0-.546.436-.982.981-.982h.134c.545%200%20.981.436.981.981v3.672a.977.977%200%200%201-.981.981h-.134a.977.977%200%200%201-.981-.981v-3.672zm2.29%207.124c0%20.679-.557%201.236-1.236%201.236a1.241%201.241%200%200%201-1.236-1.236c0-.678.557-1.236%201.236-1.236.679%200%201.236.558%201.236%201.236z%22%20fill%3D%22%23A2CD0D%22/%3E%3Cg%20opacity%3D%22.536%22%20transform%3D%22translate%2860.975%2010.796%29%22%20fill%3D%22%2394B817%22%3E%3Crect%20opacity%3D%22.883%22%20x%3D%221.459%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20opacity%3D%22.883%22%20x%3D%2218.24%22%20y%3D%2228.454%22%20width%3D%2211.673%22%20height%3D%2211.673%22%20rx%3D%225.837%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%222.189%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3Crect%20x%3D%222.668%22%20y%3D%2212.403%22%20width%3D%2262.014%22%20height%3D%225.107%22%20rx%3D%222.554%22/%3E%3C/g%3E%3C/g%3E%3Cg%3E%3Cg%20opacity%3D%22.866%22%20fill-rule%3D%22nonzero%22%20transform%3D%22translate%2841%2022.5%29%22%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23i%29%22%20xlink%3Ahref%3D%22%23j%22/%3E%3Cuse%20fill%3D%22%23FF5752%22%20xlink%3Ahref%3D%22%23j%22/%3E%3C/g%3E%3Cpath%20d%3D%22M98.375%2068.932L80.031%2038.378c-1.414-2.346-4.782-2.346-6.165%200L55.522%2068.932c-1.444%202.405.3%205.443%203.097%205.443h36.689c2.766%200%204.51-3.038%203.067-5.443zM74.317%2049.024a2.426%202.426%200%200%201%202.436-2.436h.33a2.426%202.426%200%200%201%202.437%202.436v9.112a2.426%202.426%200%200%201-2.436%202.435h-.331a2.426%202.426%200%200%201-2.436-2.435v-9.112zm5.684%2017.682a3.08%203.08%200%200%201-3.068%203.068%203.08%203.08%200%200%201-3.067-3.068%203.08%203.08%200%200%201%203.067-3.067%203.08%203.08%200%200%201%203.068%203.067z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-icon-animation .9s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+	opacity: 0;
+	z-index: 3;
+}
+
+.crm-dedupe-list-start-icon-circle {
+	display: inline-block;
+	width: 247px;
+	height: 246px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20247%20246%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M123.5%20246C55.293%20246%200%20190.932%200%20123%200%2055.069%2055.292%200%20123.5%200%20191.707%200%20247%2055.069%20247%20123c0%2067.932-55.293%20123-123.5%20123zm0-43c44.459%200%2080.5-35.817%2080.5-80s-36.041-80-80.5-80C79.04%2043%2043%2078.817%2043%20123s36.041%2080%2080.5%2080z%22%20fill%3D%22%239CE7FF%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.212%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	animation: crm-dedupe-list-start-icon-circle-animation .5s forwards .4s;
+	opacity: 0;
+}
+
+.crm-dedupe-list-start-icon-circle-yellow {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20248%20247%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M124%20246.5C55.793%20246.5.5%20191.432.5%20123.5.5%2055.569%2055.792.5%20124%20.5c68.207%200%20123.5%2055.069%20123.5%20123%200%2067.932-55.293%20123-123.5%20123zm0-44.5c43.625%200%2078.99-35.145%2078.99-78.5%200-43.354-35.365-78.5-78.99-78.5-43.626%200-78.99%2035.146-78.99%2078.5%200%2043.355%2035.365%2078.5%2078.99%2078.5z%22%20fill%3D%22%23F9E900%22%20fill-rule%3D%22nonzero%22%20opacity%3D%22.246%22/%3E%3C/svg%3E');
+}
+
+.crm-dedupe-list-start-btn {
+	margin-bottom: 37px;
+}
+
+.crm-dedupe-list-start-description {
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82,92,105,.7);
+}
+
+.crm-dedupe-list-start-description p {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 0 5px 0;
+}
+
+.crm-dedupe-list-status-bar {
+	margin: 0 auto 59px auto;
+	max-width: 421px;
+}
+
+.crm-dedupe-list-start-label {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.crm-dedupe-list-start-label-checkbox {
+	margin-right: 10px;
+}
+
+.crm-dedupe-list-start-label-text {
+	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #0B66C3;
+}
+
+.crm-dedupe-list-start-combination .crm-dedupe-list-start-border-field-container {
+	margin-bottom: 5px;
+}
+
+.crm-dedupe-list-start-combination .crm-dedupe-list-start-btn {
+	margin-bottom: 18px;
+}
+
+.crm-dedupe-list-start-combination .crm-dedupe-list-start-title {
+	margin-bottom: 5px;
+}
+
+.crm-dedupe-list-start-combination .ui-title-2 {
+	margin-top: 0;
+}
+
+.crm-dedupe-list-start-combination .crm-dedupe-list-start-description {
+	margin-bottom: 21px;
+}
+
+.crm-dedupe-list-start-helper {
+	display: flex;
+	align-content: center;
+	justify-content: center;
+	margin-bottom: 34px;
+}
+
+.crm-dedupe-list-start-helper-text {
+	align-self: center;
+	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82,92,105,.52);
+}
+
+.crm-dedupe-list-start-next-step .crm-dedupe-list-start-title {
+	margin: 0 0 5px 0;
+}
+
+.crm-dedupe-list-start-next-step .crm-dedupe-list-start-title:nth-child(2) {
+	margin: 0 0 40px 0;
+}
+
+.crm-dedupe-list-start-warning .crm-dedupe-list-start-title {
+	margin-bottom: 12px;
+}
+
+.crm-dedupe-list-start-warning .crm-dedupe-list-start-description {
+	margin-bottom: 32px;
+}
+
+.crm-dedupe-list-start-warning .crm-dedupe-list-start-btn {
+	margin-bottom: 22px;
+}
+
+.crm-dedupe-list-start-done .crm-dedupe-list-start-title {
+	margin: 0 0 11px 0;
+}
+
+.crm-dedupe-list-start-done .crm-dedupe-list-start-title:nth-child(2) {
+	margin: 0 0 32px 0;
+}
+
+@keyframes crm-dedupe-list-start-icon-icon-animation {
+	0% {
+		transform: scale(1.3);
+		opacity: 0;
+	}
+	20% {
+		opacity: 0;
+	}
+	30% {
+		opacity: 0;
+	}
+	40% {
+		opacity: .4;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-refresh-animation {
+	0% {
+		opacity: 0;
+		transform: rotate(0deg);
+	}
+	100% {
+		opacity: 1;
+		transform: rotate(180deg);
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-circle-animation {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-cloud-left-top {
+	0% {
+		left: 59px;
+		opacity: 0;
+	}
+	100% {
+		left: 32px;
+		opacity: 1;
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-cloud-left-bottom {
+	0% {
+		left: -50px;
+		opacity: 0;
+	}
+	100% {
+		left: -20px;
+		opacity: 1;
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-cloud-right-top {
+	0% {
+		right: 78px;
+		opacity: 0;
+	}
+	100% {
+		right: 63px;
+		opacity: 1;
+	}
+}
+
+@keyframes crm-dedupe-list-start-icon-cloud-right-bottom {
+	0% {
+		right: 0;
+		opacity: 0;
+	}
+	100% {
+		right: 12px;
+		opacity: 1;
+	}
+}
+/* endregion */
+
+/* region Grid */
+.crm-dedupe-list-grid-table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525C69;
+}
+
+.crm-dedupe-list-grid-th {
+	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+}
+
+.crm-dedupe-list-grid-tr {
+	height: 70px;
+	border-bottom: 1px solid #eee;
+}
+
+.crm-dedupe-list-grid-tr:last-child {
+	border-bottom: none;
+}
+
+.crm-dedupe-list-grid-tr-head {
+	border-bottom: 2px solid #eee;
+}
+
+.crm-dedupe-list-grid-tr-head .crm-dedupe-list-grid-th:first-child {
+	padding-left: 43px;
+}
+
+.crm-dedupe-list-grid-tr-head.crm-dedupe-list-grid-tr {
+	height: 45px;
+}
+
+.crm-dedupe-list-grid-user {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.crm-dedupe-list-grid-user-btn,
+.crm-dedupe-list-grid-user-drag {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	outline: none;
+}
+
+.crm-dedupe-list-grid-user-btn {
+	width: 24px;
+	height: 24px;
+	cursor: pointer;
+}
+
+.crm-dedupe-list-grid-user-btn:before {
+	content: '';
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%281%201%29%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke%3D%22%23A8ADB4%22%20cx%3D%227%22%20cy%3D%227%22%20r%3D%227%22/%3E%3Cpath%20d%3D%22M8%204v2h2v2H8v2H6V8H4V6h2V4h2z%22%20fill%3D%22%23A8ADB4%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+/*.crm-dedupe-list-grid-user-open-state {*/
+/*	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%281%201%29%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke%3D%22%23A8ADB4%22%20cx%3D%227%22%20cy%3D%227%22%20r%3D%227%22/%3E%3Cpath%20fill%3D%22%23A8ADB4%22%20d%3D%22M4%206h6v2H4z%22/%3E%3C/g%3E%3C/svg%3E');*/
+/*}*/
+
+.crm-dedupe-list-grid-user-drag {
+	width: 14px;
+	height: 24px;
+	opacity: 0;
+	visibility: hidden;
+	cursor: grab;
+}
+
+.crm-dedupe-list-grid-user-drag:active {
+	cursor: grabbing;
+}
+
+.crm-dedupe-list-grid-user-drag:before {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 14px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%206%2014%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M2%2012v2H0v-2h2zm4%200v2H4v-2h2zM2%208v2H0V8h2zm4%200v2H4V8h2zM2%204v2H0V4h2zm4%200v2H4V4h2zM2%200v2H0V0h2zm4%200v2H4V0h2z%22%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.5%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.crm-dedupe-list-grid-user-icon {
+	display: inline-block;
+	padding-left: 5px;
+	margin-right: 10px;
+	min-width: 48px;
+	height: 48px;
+	border-radius: 100%;
+}
+
+.crm-dedupe-list-grid-user-name {
+	display: inline-block;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-dedupe-list-grid-responsible .crm-dedupe-list-grid-user-icon {
+	min-width: 22px;
+	max-width: 22px;
+	height: 22px;
+	padding-left: 0;
+	margin-right: 8px;
+}
+
+.crm-dedupe-list-grid-panel-table {
+	width: 100%;
+	border-collapse: collapse;
+	border-top: 2px solid #eee;
+	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #828B95;
+	text-transform: uppercase;
+}
+
+.crm-dedupe-list-grid-panel-td {
+	height: 45px;
+}
+
+.crm-dedupe-list-grid-panel-page-list {
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+}
+
+.crm-dedupe-list-grid-panel-page-list-item {
+	display: inline-block;
+	list-style: none;
+}
+
+.crm-dedupe-list-grid-panel-page-list-link {
+	display: inline-block;
+	padding: 0 7px;
+}
+
+.crm-dedupe-list-grid-panel-page-btn-box {
+	display: inline-block;
+}
+
+.crm-dedupe-list-grid-panel-page-btn {
+	display: inline-block;
+	border: none;
+	background-color: transparent;
+	text-transform: uppercase;
+	color: #0063c6;
+	outline: none;
+	cursor: pointer;
+}
+
+.crm-dedupe-list-grid-panel-page-btn-arrow-left.crm-dedupe-list-grid-panel-page-btn:before,
+.crm-dedupe-list-grid-panel-page-btn-arrow-right.crm-dedupe-list-grid-panel-page-btn:before {
+	content: '';
+	display: inline-block;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%207%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M2.743%205.485l4.114%204.114-1.371%201.372L0%205.486%205.486%200l1.37%201.371-4.113%204.114z%22%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.3%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.crm-dedupe-list-grid-panel-page-btn-arrow-right.crm-dedupe-list-grid-panel-page-btn:before {
+	transform: rotate(-90deg);
+}
+
+.crm-dedupe-list-grid-panel-name {
+	padding-right: 4px;
+}
+
+.crm-dedupe-list-grid-panel-value {
+	color: #333;
+}
+/* endregion */

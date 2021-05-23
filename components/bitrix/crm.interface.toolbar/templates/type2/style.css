@@ -1,0 +1,12 @@
+.crm-toolbar-menu,
+.crm-toolbar-menu-left,
+.document-toolbar-menu,
+.crm-btn-dropdown-document {
+	min-width: 150px;
+}
+
+.crm-toolbar-menu,
+.crm-toolbar-menu-left,
+.crm-btn-dropdown-document {
+	margin-right: 9px;
+}

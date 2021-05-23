@@ -1,0 +1,13 @@
+.href-action {text-decoration:none;border-bottom:1px dashed #2775C7;}
+.href-action:hover {text-decoration:none;border-bottom:1px dashed #CF1C3E;}
+.href-action:hover {text-decoration:none;border-bottom:1px dashed #CF1C3E;}
+.value-input {width:100%;}
+.delete-action { width: 13px; height: 13px; background:url(images/delete.gif) top left; cursor:pointer; margin-left: 3px}
+.delete-action:hover { width: 13px; height: 13px; background:url(images/delete.gif) bottom left; cursor:pointer; margin-left: 3px}
+table.crm_fm {}
+table.crm_fm td {background: none!important}
+table.crm_fm td.crm_fm_td_value { width: 150px; padding-left: 0px; padding-top:3px}
+table.crm_fm td.crm_fm_td_select { padding-left: 10px }
+a.status-field-add  {font-size: 13px;margin-top: 5px; margin-left: 3px; text-decoration: none; border-bottom: 1px dashed #0069c4;outline:none; margin-bottom: 3px;}
+a.status-field-add:hover  {text-decoration: none; border-bottom: 1px dashed #E00000}
+td.crm_fm_td_delete { padding-left: 0px!important }

@@ -1,0 +1,264 @@
+
+body table.bx-interface-grid-double {
+	border: 0 none;
+	width: 100%;
+}
+body table.bx-interface-grid-double td {
+	color: #555555;
+	font: 13px/20px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	padding: 10px !important;
+	border-left: 0 none;
+	border-right: 0 none;
+	border-top: 0 none;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer table.bx-grid-footer td {
+	padding: 0 15px !important;
+}
+body table.bx-interface-grid-double td.bx-left,
+body table.bx-interface-grid-double td.bx-actions-col {
+	text-align: center;
+	vertical-align: middle;
+}
+body table.bx-interface-grid-double tr.bx-grid-gutter,
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign {
+	display: none;
+}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down,
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
+	background-position: center center;
+	display: table-cell;
+	padding: 0;
+}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-up  {background-image: url("./images/bx-sort-up.png") !important;}
+body table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign.bx-sort-down{background-image: url("./images/bx-sort-down.png") !important;}
+body table.bx-interface-grid-double tr.bx-grid-gutter td,
+body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-left,
+body table.bx-interface-grid-double tr.bx-grid-gutter td.bx-right,
+body table.bx-interface-grid-double tr.bx-grid-head td,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-left,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-right,
+body table.bx-interface-grid-double tr.bx-grid-head td.bx-sorted{
+	border: 0 none;
+	font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	padding: 0 10px !important;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+body table.bx-interface-grid-double tr.bx-grid-head td {
+	background-color: transparent !important;
+	color: #555555 !important;
+	text-shadow: 0 1px 1px #FFFFFF;
+}
+body table.bx-interface-grid-double tr.bx-grid-head > td          {background: url("./images/bx-grid-head.png") repeat-x scroll left top #E4E4E4 !important;}
+body table.bx-interface-grid-double tr.bx-grid-head > td.bx-sorted{background: url("./images/bx-grid-head-sorted.png") repeat-x scroll left top transparent !important;}
+body table.bx-interface-grid-double tr.bx-grid-head   td.bx-left  {border-radius: 4px 0 0 4px;}
+body table.bx-interface-grid-double tr.bx-grid-head   td.bx-right {border-radius: 0 4px 4px 0;}
+body table.bx-interface-grid-double tr.bx-grid-head td td {
+	cursor: pointer;
+	padding: 0 !important;
+}
+
+body table.bx-interface-grid-double tr.bx-double-open td,
+body table.bx-interface-grid-double tr.bx-double-children:hover td,
+body table.bx-interface-grid-double tr:hover td{background-color: #eff4f5;}
+body table.bx-interface-grid-double tr.bx-double-children  td{background-color: #f4f7f8;}
+body table.bx-interface-grid-double tr.bx-double-functions td,
+body table.bx-interface-grid-double tr.bx-double-functions:hover td{background-color: transparent;}
+body table.bx-interface-grid-double tr.bx-green    td{background-color: #edf3de !important;}
+body table.bx-interface-grid-double tr.bx-selected td{background-color: #DAEC71}
+body table.bx-interface-grid-double tr.bx-active   td{background-color: #FFF46A}
+
+body table.bx-interface-grid-double tr.bx-grid-footer > td {
+	background: url("./images/bx-grid-footer.png") repeat-x scroll left top transparent !important;
+	border: 0 none;
+	border-radius: 0 0 4px 4px !important;
+	height: 38px;
+	padding: 0 !important;
+	color: #555555;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer td td {
+	background: none repeat scroll 0 0 transparent;
+	border: 0 none;
+	color: #555555;
+	font: 12px/38px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	height: 38px;
+	padding: 0 15px !important;
+}
+body table.bx-interface-grid-double tr.bx-grid-footer td td span {
+	color: #555555 !important;
+	font-weight: normal;
+}
+body table.bx-interface-grid-double tr > td {border-bottom: 1px solid #EDEDED !important;}
+body table.bx-interface-grid-double tr.bx-grid-head td,
+body table.bx-interface-grid-double tr.bx-grid-footer td {border-bottom: 0 none !important;}
+body table.bx-interface-grid-double a.bx-action:hover div,
+body table.bx-interface-grid-double tr.bx-over a.bx-action div,
+body table.bx-interface-grid-double a.bx-action div                 {background-image: url("./images/action.gif");background-position:  center center !important;}
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action div {background:       url("./images/action_head.gif") no-repeat scroll center center transparent;}
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action.pressed div,
+body table.bx-interface-grid-double tr.bx-grid-head a.bx-action:hover div {background: url("./images/action_head.gif") no-repeat scroll center center #D2D2D2;}
+
+table.bx-interface-grid-double table.bx-grid-sorting {
+	color: black;
+	width: 100%;
+}
+
+table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign {
+	background-image: url("images/sort_no.gif");
+	background-position: right 5px;
+	background-repeat: no-repeat;
+	width: 7px;
+}
+
+table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
+	width: 10px;
+}
+
+table.bx-interface-grid-double div.crm-client-contacts-block-text {
+	height: auto;
+	line-height: normal;
+}
+
+div.crm-client-summary-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 40px;
+  font-size: 14px;
+}
+
+.crm-input-link-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+  color: #000;
+  font-size: 14px;
+}
+
+.crm-input-link-wrapper a {
+	text-decoration: none;
+	border-bottom: 1px dashed;
+}
+
+.crm-client-summary-wrapper-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  padding: 15px 0 5px;
+  display: inline-block;
+}
+
+.bx-crm-hidden-wrapper {
+  padding: 5px 0 15px;
+  display: inline-block;
+}
+
+.bx-crm-multi-field-wrapper {
+  display: inline-block;
+}
+
+
+.bx-crm-hidden-wrapper .bx-crm-multi-field-wrapper {
+  margin-bottom: 10px;
+  display: block;
+}
+
+.bx-double-hidden td {
+  background: #f5fcde !important;
+}
+
+.sidebar-block-text {
+  padding: 10px 0;
+}
+
+.reports-description-text{
+	margin: 0;
+	color: #555;
+}
+.crm-double-set-checkbox-wrap{
+	position: relative;
+
+}
+.bx-sl-crm-input-container{
+	display: inline-block;
+	background: #e6ecef;
+	margin: 7px 0;
+	padding: 3px;
+	border-radius: 3px;
+	margin-right:20px;
+}
+.crm-double-set-checkbox-wrap .crm-double-set-checkbox{
+	position: relative;
+	margin-right: 5px;
+	border-radius: 3px
+}
+
+.sidebar-block.double{display: inline-block; margin: 10px 0}
+.sidebar-block.double .sidebar-block-inner{background: #f8fafb;padding: 5px 15px;}
+.sidebar-block.double p {
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.sidebar-block.double .webform-small-button-text {
+  outline: none;
+}
+
+.sidebar-block.double .crm-double-set-radio-wrap{margin: 10px 0;padding-left: 0}
+.sidebar-block.double .crm-double-set-radio{position: relative;bottom: -3px;margin: 0 1px 0 7px;}
+
+.crm-double-title{color: #555;}
+.crm-double-set-label{color: #555;font-weight: bold;}
+.crm-double-set-label[disabled]{color: #a7abad;}
+.crm-double-set-label.fwb{font-weight: bold;color: #555;}
+.bx-double-access-denied{
+	color: #d34842;
+	font-size: 12px;
+	line-height: 16px;
+	padding-left: 20px;
+	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -21px -3500px;
+}
+
+.crm-double-result-search{
+	clear: both;
+	color: #6c6e6f;
+	font-weight: bold;
+	font-size: 13px;
+}
+
+.bx-help-icon{
+	background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -18px -3549px;
+	width:19px;
+	height:21px;
+	vertical-align: middle;
+	display: inline-block;
+	margin-left: 10px;
+	cursor: pointer;
+}
+.bx-double-pagination a{
+	color: #555;
+}
+.bx-double-pagination .modern-page-dots{ border-right: 1px solid #555;}
+.crm-client-photo-wrapper img{
+	width: 39px;
+	height: auto;
+}
+
+.crm-checkbox-container label,
+.crm-checkbox-container input {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.bx-scroller-control {
+  display: inline-block;
+  width: 16px;
+  cursor: pointer;
+  height: 16px;
+}
+
+.bx-scroller-control.plus {
+  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -20px -3376px;
+}
+
+.bx-scroller-control.minus {
+  background: url("/bitrix/js/crm/images/crm-control-panel-sprite-21.png") no-repeat -20px -3440px;
+}

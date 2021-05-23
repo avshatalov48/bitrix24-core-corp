@@ -1,0 +1,5 @@
+<?
+$MESS["OL_COMPONENT_LIST_ACTIONS_VIEW"] = "Просмотреть";
+$MESS["OL_COMPONENT_LIST_ACTIONS_EDIT"] = "Редактировать";
+$MESS["OL_COMPONENT_LIST_ACTIONS_REMOVE"] = "Удалить линию";
+?>
