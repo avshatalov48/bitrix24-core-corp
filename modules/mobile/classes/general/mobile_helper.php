@@ -401,6 +401,7 @@ class CMobileHelper
 
 		$arUF = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields($arParams["ENTITY_TYPE"], $arParams["ENTITY_ID"], LANGUAGE_ID);
 		$ufCode = $arParams["UF_CODE"];
+		$previewImageSize = (isset($arParams['PREVIEW_IMAGE_SIZE']) && (int)$arParams['PREVIEW_IMAGE_SIZE'] > 0 ? (int)$arParams['PREVIEW_IMAGE_SIZE'] : 144);
 
 		if (
 			!empty($arUF[$ufCode])
@@ -415,7 +416,6 @@ class CMobileHelper
 				)
 				{
 					$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
-					$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
 					$userFieldManager->loadBatchAttachedObject($arUF[$ufCode]["VALUE"]);
 
 					foreach($arUF[$ufCode]["VALUE"] as $attachedId)
@@ -424,10 +424,14 @@ class CMobileHelper
 						if($attachedObject)
 						{
 							$file = $attachedObject->getObject();
+							if (!$file)
+							{
+								continue;
+							}
 
 							$fileName = $file->getName();
 
-							$fileUrl = $urlManager->getUrlUfController('download', array('attachedId' => $attachedId));
+							$fileUrl = \Bitrix\Disk\UrlManager::getUrlUfController('download', array('attachedId' => $attachedId));
 							$fileUrl = str_replace("/bitrix/tools/disk/uf.php", SITE_DIR."mobile/ajax.php", $fileUrl);
 							$fileUrl = $fileUrl.(mb_strpos($fileUrl, "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename=".$fileName;
 
@@ -436,14 +440,14 @@ class CMobileHelper
 								&& ($realFile = $file->getFile())
 							)
 							{
-								$previewImageUrl = $urlManager->getUrlUfController(
+								$previewImageUrl = \Bitrix\Disk\UrlManager::getUrlUfController(
 									'show',
 									array(
 										'attachedId' => $attachedId,
-										'width' => 144,
-										'height' => 144,
+										'width' => $previewImageSize,
+										'height' => $previewImageSize,
 										'exact' => 'Y',
-										'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($attachedId, 144, 144)
+										'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($attachedId, $previewImageSize, $previewImageSize)
 									)
 								);
 							}
@@ -500,8 +504,8 @@ class CMobileHelper
 									$imageResized = CFile::ResizeImageGet(
 										$arFile["ID"],
 										array(
-											"width" => 144,
-											"height" => 144
+											"width" => $previewImageSize,
+											"height" => $previewImageSize
 										),
 										BX_RESIZE_IMAGE_EXACT,
 										false,
@@ -552,8 +556,8 @@ class CMobileHelper
 						$imageResized = CFile::ResizeImageGet(
 							$arFile["ID"],
 							array(
-								"width" => 144,
-								"height" => 144
+								"width" => $previewImageSize,
+								"height" => $previewImageSize
 							),
 							BX_RESIZE_IMAGE_EXACT,
 							false,
@@ -932,7 +936,7 @@ class CMobileHelper
 
 		if ($result)
 		{
-		    if ($unique)
+			if ($unique)
 			{
 				$result = "BXMobileApp.PageManager.loadPageUnique({'url' : '".$result."','bx24ModernStyle' : true, 'data': ".$uniqueParams."});";
 			}

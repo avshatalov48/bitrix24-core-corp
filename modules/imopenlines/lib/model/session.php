@@ -216,15 +216,16 @@ class SessionTable extends DataManager
 			new DatetimeField('DATE_OPERATOR_CLOSE', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_CLOSE_FIELD_NEW'),
 			]),
-			new DatetimeField('DATE_CLOSE', [
-				'title' => Loc::getMessage('SESSION_ENTITY_DATE_CLOSE_FIELD'),
-			]),
 			new DatetimeField('DATE_FIRST_ANSWER', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_FIRST_ANSWER_FIELD_NEW'),
 			]),
 			new DatetimeField('DATE_LAST_MESSAGE', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_LAST_MESSAGE_FIELD'),
 			]),
+			new DatetimeField('DATE_CLOSE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_CLOSE_FIELD'),
+			]),
+			new DatetimeField('DATE_CLOSE_VOTE'),
 			new IntegerField('TIME_BOT', [
 				'title' => Loc::getMessage('SESSION_ENTITY_TIME_BOT_FIELD'),
 				'default_value' => '0',

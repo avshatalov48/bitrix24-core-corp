@@ -153,21 +153,19 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 
 				if ($taskFields)
 				{
-					$allowedActions = \CTaskItem::getAllowedActionsArray($ownerId, $taskFields, true);
-
 					switch ($targetStatus)
 					{
 						case \CTasks::STATE_PENDING:
-							$canChange = ($allowedActions['ACTION_PAUSE'] === true);
+							$action = Tasks\Access\ActionDictionary::ACTION_TASK_PAUSE;
 							break;
 						case \CTasks::STATE_IN_PROGRESS:
-							$canChange = ($allowedActions['ACTION_START'] === true);
+							$action = Tasks\Access\ActionDictionary::ACTION_TASK_START;
 							break;
 						case \CTasks::STATE_COMPLETED:
-							$canChange = ($allowedActions['ACTION_COMPLETE'] === true);
-							$canApprove = ($allowedActions['ACTION_APPROVE'] === true);
 
-							if ($taskFields['TASK_CONTROL'] === 'Y' && ($canChange || $canApprove))
+							$action = Tasks\Access\ActionDictionary::ACTION_TASK_COMPLETE;
+
+							if ($taskFields['TASK_CONTROL'] === 'Y')
 							{
 								$isAdmin = Tasks\Util\User::isSuper($ownerId);
 								$isCreator = ((int) $taskFields['CREATED_BY'] === $ownerId);
@@ -175,26 +173,36 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 								$isCreatorDirector = Tasks\Util\User::isBoss($taskFields['CREATED_BY'], $ownerId);
 
 								if (
-									!$isAdmin &&
-									!$isCreatorDirector &&
-									!$isOnePersonTask &&
-									!$isCreator
+									!$isAdmin
+									&& !$isCreatorDirector
+									&& !$isOnePersonTask
+									&& !$isCreator
 								)
 								{
 									$targetStatus = CTasks::STATE_SUPPOSEDLY_COMPLETED;
+								}
+								elseif ((int) $taskFields['STATUS'] === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+								{
+									$action = Tasks\Access\ActionDictionary::ACTION_TASK_APPROVE;
 								}
 							}
 
 							break;
 						case \CTasks::STATE_SUPPOSEDLY_COMPLETED:
-							$canChange = ($allowedActions['ACTION_COMPLETE'] === true || $allowedActions['ACTION_APPROVE'] === true);
+							$action = Tasks\Access\ActionDictionary::ACTION_TASK_COMPLETE;
 							break;
 						case \CTasks::STATE_DEFERRED:
-							$canChange = ($allowedActions['ACTION_DEFER'] === true);
+							$action = Tasks\Access\ActionDictionary::ACTION_TASK_DEFER;
+							break;
+						default:
+							$action = null;
 							break;
 					}
 
-
+					if ($action)
+					{
+						$canChange = Tasks\Access\TaskAccessController::can($ownerId, $action, $taskId);
+					}
 				}
 			}
 		}

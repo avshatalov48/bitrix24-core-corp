@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/store-settings.bundle.css',
 	'js' => 'dist/store-settings.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'ui.vue',
 		'rest.client',
 		'salescenter.manager',
 		'main.popup',
+		'main.core',
 		'salescenter.component.store-preview',
 		'salescenter.component.mycompany-requisite-settings',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

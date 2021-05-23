@@ -54,20 +54,6 @@ class CRatingRulesIntranet
 		$type = $arConfigs['CONDITION_CONFIG']['SUBORDINATE']['TYPE'];
 
 		$iblockId = COption::GetOptionInt('intranet', 'iblock_structure', 0);
-
-		global $DB;
-
-		$table = 'b_utm_user';
-		$columns = array('FIELD_ID', 'VALUE_INT', 'VALUE_ID');
-		if(!$DB->IndexExists($table, $columns))
-		  $DB->Query("create index ".mb_substr("ix_".mt_rand(0, 1000000)."_".$table."_".implode("_", $columns), 0, 30)." on ".$table."(".implode(", ", $columns).")", true);
-
-		$table = 'b_uts_iblock_'.$iblockId.'_section';
-		$columns = array('UF_HEAD');
-		if(!$DB->IndexExists($table, $columns))
-		  $DB->Query("create index ".mb_substr("ix_".mt_rand(0, 1000000)."_".$table."_".implode("_", $columns), 0, 30)." on ".$table."(".implode(", ", $columns).")", true);
-
-		$iblockId = COption::GetOptionInt('intranet', 'iblock_structure', 0);
 		$fieldId = 0;
 		$arUserFields = $USER_FIELD_MANAGER->GetUserFields("USER");
 		if (isset($arUserFields["UF_DEPARTMENT"]["ID"]))

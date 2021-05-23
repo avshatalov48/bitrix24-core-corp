@@ -20,14 +20,14 @@ if(Loader::includeModule('rest'))
 
 \Bitrix\Main\UI\Extension::load(["ui.icons", "applayout", "ui.hint"]);
 
-if(\Bitrix\Main\ModuleManager::isModuleInstalled('imconnector'))
+if (Loader::includeModule('imopenlines'))
 {
 	if (Loader::includeModule('bitrix24'))
 	{
 		$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 	}
 
-	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/imconnector.connector.settings/templates/.default/script.js');
+	\Bitrix\Main\UI\Extension::load(["imopenlines.create-line"]);
 }
 
 if(!empty($arResult["ADDITIONAL_STYLES"]))
@@ -43,10 +43,6 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 	BX.ready(function() {
 		new BX.ContactCenter.Init(params);
 	})
-
-	BX.message({
-		IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LIMIT_INFO_HELPER: 'limit_contact_center_ol_number',
-	});
 </script>
 <div class="intranet-contact-block">
 	<div class="intranet-contact-wrap" id="intranet-contact-wrap">

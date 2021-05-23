@@ -264,6 +264,7 @@
 				}
 
 				var user = {};
+				var group = {};
 
 				switch (eventData.name)
 				{
@@ -285,6 +286,16 @@
 							IMAGE: user.icon || user.imageUrl || false
 						};
 						this.getFormElement(eventData.name).callback({a_users: [user]});
+						break;
+
+					case 'group':
+						group = eventData.values.group;
+						group = {
+							ID: group.id,
+							NAME: group.name,
+							IMAGE: group.image || false
+						};
+						this.getFormElement(eventData.name).callback({b_groups: [group]});
 						break;
 				}
 			}, this));
@@ -448,6 +459,16 @@
 					for (ii = 0; ii < this.formInterface.elements.length; ii++)
 					{
 						if (this.formInterface.elements[ii].select && this.formInterface.elements[ii].select.name === membersMap[type])
+						{
+							return this.formInterface.elements[ii];
+						}
+					}
+					break;
+
+				case 'group':
+					for (ii = 0; ii < this.formInterface.elements.length; ii++)
+					{
+						if (this.formInterface.elements[ii].select && this.formInterface.elements[ii].select.name === 'data[SE_PROJECT][ID]')
 						{
 							return this.formInterface.elements[ii];
 						}

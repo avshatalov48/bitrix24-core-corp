@@ -65,6 +65,10 @@
 				this.initAvailableActions();
 				this.initAvatarLoader();
 				this.initAppsInstall();
+				if (this.isCloud)
+				{
+					this.initGdpr();
+				}
 
 				var subordinateMoreButton = BX("intranet-user-profile-subordinate-more");
 				if (BX.type.isDomNode(subordinateMoreButton))
@@ -107,6 +111,23 @@
 					this.showActionPopup(BX.proxy_context);
 				}, this));
 			}
+		},
+
+		initGdpr: function ()
+		{
+			var gdprInputs = document.querySelectorAll("[data-role='gdpr-input']");
+			gdprInputs.forEach(
+				function(currentValue, currentIndex, listObj) {
+					BX.bind(currentValue, "change", function () {
+						this.changeGdpr(currentValue);
+					}.bind(this));
+				}.bind(this)
+			);
+
+			var dropdownTarget = document.querySelector('.intranet-user-profile-column-block-title-dropdown');
+			BX.bind(dropdownTarget, "click", function () {
+				this.animateGdprBlock(dropdownTarget);
+			}.bind(this));
 		},
 
 		initAvatarLoader: function()
@@ -197,7 +218,7 @@
 					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
 				}
 				menuItems.push({
-					text: itemText,
+					html: itemText,
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
 						if (this.adminRightsRestricted)
@@ -937,6 +958,40 @@
 					}
 				}
 			}).show();
+		},
+
+		changeGdpr: function (inputNode)
+		{
+			var requestData = {
+				type: inputNode.name,
+				value: inputNode.checked ? "Y" : "N"
+			};
+
+			BX.ajax.runComponentAction(this.componentName, "changeGdpr", {
+				signedParameters: this.signedParameters,
+				mode: 'class',
+				data: requestData
+			}).then(function (response) {
+
+			}, function (response) {
+
+			}.bind(this));
+		},
+
+		animateGdprBlock: function (element)
+		{
+			var sliderTarget = document.querySelector('[data-role="' + element.getAttribute('for') + '"]');
+
+			if(element.classList.contains('intranet-user-profile-column-block-title-dropdown--open'))
+			{
+				element.classList.remove('intranet-user-profile-column-block-title-dropdown--open');
+				sliderTarget.style.height = null;
+			}
+			else
+			{
+				element.classList.add('intranet-user-profile-column-block-title-dropdown--open');
+				sliderTarget.style.height = sliderTarget.firstElementChild.offsetHeight + 'px';
+			}
 		}
 	}
 })();

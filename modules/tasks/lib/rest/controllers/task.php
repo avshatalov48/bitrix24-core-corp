@@ -9,11 +9,12 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Pull\MobileCounter;
 use Bitrix\Tasks\AnalyticLogger;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\UI;
@@ -572,11 +573,24 @@ final class Task extends Base
 
 		if (isset($params['SIFT_THROUGH_FILTER']))
 		{
+			$isSprintKanban = ($params['SIFT_THROUGH_FILTER']['sprintKanban'] === 'Y');
+
 			/** @var Filter $filterInstance */
-			$filterInstance = Filter::getInstance(
-				$params['SIFT_THROUGH_FILTER']['userId'],
-				$params['SIFT_THROUGH_FILTER']['groupId']
-			);
+			if ($isSprintKanban)
+			{
+				$taskService = new TaskService($params['SIFT_THROUGH_FILTER']['userId']);
+				$filterInstance = $taskService->getFilterInstance(
+					$params['SIFT_THROUGH_FILTER']['groupId'],
+					$params['SIFT_THROUGH_FILTER']['isCompletedSprint'] === 'Y'
+				);
+			}
+			else
+			{
+				$filterInstance = Filter::getInstance(
+					$params['SIFT_THROUGH_FILTER']['userId'],
+					$params['SIFT_THROUGH_FILTER']['groupId']
+				);
+			}
 			$filter = array_merge($filter, $filterInstance->process());
 			unset($filter['ONLY_ROOT_TASKS']);
 		}
@@ -945,6 +959,37 @@ final class Task extends Base
 	{
 		UserOption::delete($task->getId(), $this->getCurrentUser()->getId(), UserOption\Option::PINNED);
 		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @return bool
+	 */
+	public function pingAction(\CTaskItem $task): bool
+	{
+		if ($taskData = $task->getData(false))
+		{
+			return $this->pingStatusAction($taskData);
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param array $taskData
+	 * @return bool
+	 */
+	private function pingStatusAction(array $taskData): bool
+	{
+		$taskId = (int)$taskData['ID'];
+		$userId = $this->getCurrentUser()->getId();
+
+		$commentPoster = CommentPoster::getInstance($taskId, $userId);
+		$commentPoster && $commentPoster->postCommentsOnTaskStatusPinged($taskData);
+
+		\CTaskNotifications::sendPingStatusMessage($taskData, $userId);
+
+		return true;
 	}
 
 	/**

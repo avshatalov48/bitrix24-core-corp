@@ -41,6 +41,10 @@ export class TeamSpeedChart
 		xAxis.dataFields.category = 'sprintName';
 		xAxis.renderer.grid.template.location = 0;
 
+		const label = xAxis.renderer.labels.template;
+		label.wrap = true;
+		label.maxWidth = 120;
+
 		const yAxis = this.chart.yAxes.push(new am4charts.ValueAxis());
 		yAxis.min = 0;
 	}

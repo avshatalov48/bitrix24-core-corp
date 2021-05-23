@@ -22,7 +22,7 @@ export class StoryPointsHeader extends EventEmitter
 				${Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS')}
 			</div>
 			<div class="tasks-scrum-sprint-story-point">
-				${this.sprint.getStoryPoints().getPoints()}
+				${this.sprint.getTotalStoryPoints().getPoints()}
 			</div>
 		`;
 
@@ -31,7 +31,7 @@ export class StoryPointsHeader extends EventEmitter
 				${Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_IN_WORK')}
 			</div>
 			<div class="tasks-scrum-sprint-story-point tasks-scrum-sprint-story-point-in-work">
-				${this.sprint.getUncompletedStoryPoints().getPoints()}
+				${this.sprint.getTotalUncompletedStoryPoints().getPoints()}
 			</div>
 		` : '');
 
@@ -40,7 +40,7 @@ export class StoryPointsHeader extends EventEmitter
 				${Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_STORY_POINTS_DONE')}
 			</div>
 			<div class="tasks-scrum-sprint-story-point tasks-scrum-sprint-story-point-done">
-				${this.sprint.getCompletedStoryPoints().getPoints()}
+				${this.sprint.getTotalCompletedStoryPoints().getPoints()}
 			</div>
 		`);
 
@@ -87,6 +87,11 @@ export class StoryPointsHeader extends EventEmitter
 
 	setStoryPoints(storyPoints: string)
 	{
+		if (!this.totalStoryPointsNode)
+		{
+			return;
+		}
+
 		this.getElementByClassName(
 			this.totalStoryPointsNode,
 			'tasks-scrum-sprint-story-point'
@@ -95,6 +100,11 @@ export class StoryPointsHeader extends EventEmitter
 
 	setCompletedStoryPoints(storyPoints: string)
 	{
+		if (!this.doneStoryPointsNode)
+		{
+			return;
+		}
+
 		this.getElementByClassName(
 			this.doneStoryPointsNode,
 			'tasks-scrum-sprint-story-point-done'
@@ -103,6 +113,11 @@ export class StoryPointsHeader extends EventEmitter
 
 	setUncompletedStoryPoints(storyPoints: string)
 	{
+		if (!this.inWorkStoryPointsNode)
+		{
+			return;
+		}
+
 		this.getElementByClassName(
 			this.inWorkStoryPointsNode,
 			'tasks-scrum-sprint-story-point-in-work'

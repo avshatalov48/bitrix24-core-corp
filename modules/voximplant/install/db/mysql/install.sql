@@ -66,6 +66,19 @@ CREATE TABLE IF NOT EXISTS b_voximplant_statistic_index
     FULLTEXT INDEX IXF_VI_STATS_1 (CONTENT)
 );
 
+CREATE TABLE IF NOT EXISTS b_voximplant_statistic_missed
+(
+    ID int(11) NOT NULL,
+    CALL_START_DATE datetime not null,
+    PHONE_NUMBER varchar(20) NOT NULL,
+    PORTAL_USER_ID int(11) NULL,
+    CALLBACK_ID int(11) NULL,
+    CALLBACK_CALL_START_DATE datetime NULL,
+    PRIMARY KEY(ID),
+    KEY IX_VI_ST_1 (PHONE_NUMBER),
+    KEY IX_VI_ST_2 (CALLBACK_ID)
+);
+
 CREATE TABLE IF NOT EXISTS b_voximplant_call
 (
 	ID int(11) NOT NULL auto_increment,

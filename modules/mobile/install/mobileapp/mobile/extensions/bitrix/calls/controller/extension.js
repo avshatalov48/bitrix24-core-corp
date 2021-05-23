@@ -78,6 +78,13 @@
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 			BX.addCustomEvent("onAppPaused", this.onAppPaused.bind(this));
 
+			BX.PULL.subscribe({
+				type: "server",
+				moduleId: "im",
+				command: "callUserNameUpdate",
+				callback: this.onCallUserNameUpdate.bind(this)
+			});
+
 			device.on("proximityChanged", this.onProximitySensorDebounced);
 			JNVIAudioManager.on("changed", this.onAudioDeviceChangedDebounced);
 		}
@@ -217,6 +224,10 @@
 				else if (error instanceof CallJoinedElseWhereError)
 				{
 					navigator.notification.alert(BX.message("MOBILE_CALL_ALREADY_JOINED"));
+				}
+				else if ("code" in error && error.code === "ALREADY_FINISHED")
+				{
+					navigator.notification.alert("MOBILE_CALL_ALREADY_FINISHED");
 				}
 				else
 				{
@@ -643,6 +654,17 @@
 				result.push(this.currentCall.userId);
 			}
 			return result;
+		}
+
+		onCallUserNameUpdate(params)
+		{
+			let {userId, name} = params;
+			if (this.callView)
+			{
+				this.callView.updateUserData({
+					[userId]: {name}
+				})
+			}
 		}
 
 		onAppActive()

@@ -79,9 +79,11 @@ export default class BaseRequester
 			{
 				responseJson.forEach((item) =>
 				{
-					result.push(
-						this.createLocation(item)
-					);
+					let location = this.createLocation(item);
+					if (location)
+					{
+						result.push(location);
+					}
 				});
 			}
 		}
@@ -95,19 +97,70 @@ export default class BaseRequester
 
 	createLocation(responseItem)
 	{
+		const externalId = this.createExternalId(responseItem.osm_type, responseItem.osm_id);
+		if (!externalId)
+		{
+			return null;
+		}
+
 		return new Location({
-			externalId: this.createExternalId(responseItem.osm_type, responseItem.osm_id),
+			externalId: externalId,
 			latitude: responseItem.lat,
 			longitude: responseItem.lon,
-			type: LocationType.UNKNOWN,
+			type: this.convertLocationType(responseItem.type),
 			name: responseItem.display_name,
 			languageId: this.languageId,
 			sourceCode: 'OSM'
 		});
 	}
 
+	// We need this at least for defining the right zoom on map
+	convertLocationType(type: string)
+	{
+		const typeMap = {
+			country: LocationType.COUNTRY,
+			municipality: LocationType.LOCALITY,
+			city: LocationType.LOCALITY,
+			town: LocationType.LOCALITY,
+			village: LocationType.LOCALITY,
+			postal_town: LocationType.LOCALITY,
+			road: LocationType.STREET,
+			street_address: LocationType.ADDRESS_LINE_1,
+			county: LocationType.ADM_LEVEL_4,
+			state_district: LocationType.ADM_LEVEL_3,
+			state: LocationType.ADM_LEVEL_2,
+			region: LocationType.ADM_LEVEL_1,
+			floor: LocationType.FLOOR,
+			postal_code: AddressType.POSTAL_CODE,
+			room: LocationType.ROOM,
+			sublocality: LocationType.SUB_LOCALITY,
+			city_district: LocationType.SUB_LOCALITY_LEVEL_1,
+			district: LocationType.SUB_LOCALITY_LEVEL_1,
+			borough: LocationType.SUB_LOCALITY_LEVEL_1,
+			suburb: LocationType.SUB_LOCALITY_LEVEL_1,
+			subdivision: LocationType.SUB_LOCALITY_LEVEL_1,
+			house_number: LocationType.BUILDING,
+			house_name: LocationType.BUILDING,
+			building: LocationType.BUILDING
+		};
+
+		let result = LocationType.UNKNOWN;
+
+		if(typeof typeMap[type] !== 'undefined')
+		{
+			result = typeMap[type];
+		}
+
+		return result;
+	}
+
 	createExternalId(osmType: string, osmId: string)
 	{
+		if (!osmType || !osmId)
+		{
+			return null;
+		}
+
 		return osmType.substr(0, 1).toLocaleUpperCase() + osmId;
 	}
 }

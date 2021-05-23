@@ -155,7 +155,7 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 
 		if (empty($lastDealsIdList))
 		{
-			$result["ITEMS_LAST"] = array_keys($dealsIdList);
+			$result["ITEMS_LAST"] = array_keys($dealsList);
 		}
 
 		$result['ITEMS'] = $dealsList;

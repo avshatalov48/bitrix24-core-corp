@@ -2,6 +2,7 @@
 
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\ImBot\Log;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\ImBot;
@@ -254,6 +255,30 @@ class SupportBox extends Network implements NetworkBot
 		return parent::onAnswerAdd($command, $params);
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $params
+	 *
+	 * @return ImBot\Error|array
+	 */
+	public static function onReceiveCommand($command, $params)
+	{
+		if ($command === self::COMMAND_OPERATOR_CHANGE_LINE)
+		{
+			Log::write($params, 'NETWORK: operatorChangeLine');
+
+			if (self::updateBotProperties())
+			{
+				//notify
+				self::notifyAdministrators(self::getMessage('CHANGE_CODE', Loc::getMessage('SUPPORT_BOX_CHANGE_LINE_USER')));
+			}
+
+			return ['RESULT' => 'OK'];
+		}
+
+		return parent::onReceiveCommand($command, $params);
+	}
+
 	//endregion
 
 	//region Commands
@@ -490,7 +515,7 @@ class SupportBox extends Network implements NetworkBot
 		if ($botId > 0)
 		{
 			$botData = \Bitrix\Im\Bot::getCache($botId);
-			if ($botData['CLASS'] != ImBot\Bot\Support::class)
+			if ($botData['CLASS'] != 'Bitrix\\ImBot\\Bot\\Support')
 			{
 				$botId = -1;
 			}
@@ -500,7 +525,7 @@ class SupportBox extends Network implements NetworkBot
 			$res = \Bitrix\Im\Model\BotTable::getList([
 				'select' => ['BOT_ID'],
 				'filter' => [
-					'=CLASS' => ImBot\Bot\Support::class
+					'=CLASS' => 'Bitrix\\ImBot\\Bot\\Support'
 				]
 			]);
 			if ($botData = $res->fetch())
@@ -539,14 +564,22 @@ class SupportBox extends Network implements NetworkBot
 
 	/**
 	 * Loads bot settings from controller.
+	 *
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * ]
+	 * </pre>
+	 *
 	 * @return array|null
 	 */
-	public static function getBotSettings()
+	public static function getBotSettings(array $params = [])
 	{
 		static $result;
 		if (empty($result))
 		{
-			$settings = parent::getBotSettings();
+			$settings = parent::getBotSettings($params);
 			if (empty($settings))
 			{
 				return null;
@@ -719,7 +752,8 @@ class SupportBox extends Network implements NetworkBot
 	 *
 	 * @param int $daysDepth
 	 *
-	 * @return \Generator|iterable  <pre>
+	 * @return \Generator|iterable
+	 * <pre>
 	 * [
 	 *   0 => [
 	 *      (int) USER_ID
@@ -1008,7 +1042,9 @@ class SupportBox extends Network implements NetworkBot
 				break;
 			}
 
-			$settings = self::getBotSettings();
+			$settings = self::getBotSettings([
+				'BOT_ID' => self::getBotId()
+			]);
 			if (empty($settings))
 			{
 				break;
@@ -1121,8 +1157,10 @@ class SupportBox extends Network implements NetworkBot
 	}
 
 	/**
-	 * Sends $message to administrator group.
-	 * @param string $message
+	 * Sends $message to administrator group. Only for recent dialogs.
+	 *
+	 * @param string $message Message to send.
+	 *
 	 * @return void
 	 */
 	public static function notifyAdministrators($message): void

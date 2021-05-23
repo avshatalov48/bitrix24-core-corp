@@ -272,6 +272,11 @@ $arUrlRewrite = array(
 		"PATH" => "/marketplace/app/index.php",
 	),
 	array(
+		"CONDITION" => "#^/marketplace/view/quick/#",
+		"RULE" => "",
+		"PATH" => "/marketplace/view/quick/index.php",
+	),
+	array(
 		"CONDITION" => "#^/marketplace/view/([a-zA-Z0-9\\.\\_]+)/.*#",
 		"RULE" => "APP=\$1",
 		"ID" => "bitrix:app.layout",
@@ -725,6 +730,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:rest.marketplace",
 		"PATH" => "/extranet/marketplace/index.php",
+	),
+	array(
+		"CONDITION" => "#^/crm/type/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.router",
+		"PATH" => "/crm/type/index.php",
 	),
 	array(
 		"CONDITION" => "#^/shop/catalog/#",

@@ -1,10 +1,9 @@
-<?
+<?php
 $MESS["IM_B24DISK"] = "Bitrix24.Drive";
 $MESS["IM_CAMERA_ROLL"] = "Take a photo";
 $MESS["IM_CHOOSE_FILE_TITLE"] = "Files";
 $MESS["IM_CHOOSE_PHOTO"] = "Select from gallery";
 $MESS["IM_DIALOG_UNNAMED"] = "Loading...";
-$MESS["IM_LIST_LOADING"] = "Loading...";
 $MESS["IM_EMPTY_BUTTON"] = "Start Conversation";
 $MESS["IM_EMPTY_OL_TEXT_1"] = "Looking for conversations with your clients? They're all here.";
 $MESS["IM_EMPTY_OL_TEXT_2"] = "You'll be notified as soon as a client posts a message to an Open Channel.";
@@ -13,6 +12,7 @@ $MESS["IM_EMPTY_TEXT_CREATE"] = "Click the button below to create a chat, or sel
 $MESS["IM_EMPTY_TEXT_INVITE"] = "Click the button below to invite your colleagues to your Bitrix24!";
 $MESS["IM_LIST_ACTION_ERROR"] = "We could not connect to your Bitrix24, probably due to poor Internet connection. Please try again later.";
 $MESS["IM_LIST_EMPTY"] = "No current conversations";
+$MESS["IM_LIST_LOADING"] = "Loading...";
 $MESS["IM_M_MESSAGE_SEND"] = "Send";
 $MESS["IM_M_TEXTAREA"] = "Compose message...";
 $MESS["IM_PROMO_VIDEO_01042020_MOBILE"] = "Video calls have been improved dramatically!#BR##BR#Try it now!#BR##BR# Use voice and video calls to save time.";
@@ -25,10 +25,10 @@ $MESS["IM_SCOPE_USERS"] = "Employees";
 $MESS["INVITE_RESEND_DONE"] = "Invitation has been sent successfully.";
 $MESS["OL_LIST_EMPTY"] = "No conversations";
 $MESS["OL_SECTION_ANSWERED"] = "Answered";
+$MESS["OL_SECTION_NEW"] = "Unanswered";
 $MESS["OL_SECTION_PIN"] = "Pinned";
-$MESS["OL_SECTION_WORK"] = "Unanswered";
+$MESS["OL_SECTION_WORK_2"] = "In progress";
 $MESS["SEARCH_RECENT"] = "RECENT SEARCH";
 $MESS["U_STATUS_OFFLINE"] = "Offline";
 $MESS["U_STATUS_ONLINE"] = "Online";
 $MESS["WIDGET_CHAT_CREATE_TITLE"] = "New Chat";
-?>

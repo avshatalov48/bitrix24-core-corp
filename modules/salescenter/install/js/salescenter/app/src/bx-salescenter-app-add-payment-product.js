@@ -428,6 +428,7 @@ Vue.component(config.templateAddPaymentProductName,
 				},
 				selectCatalogItem(sender, item)
 				{
+					this.$root.$app.startProgress();
 					if (!sender instanceof BX.UI.Dropdown)
 					{
 						return true;
@@ -438,6 +439,8 @@ Vue.component(config.templateAddPaymentProductName,
 						return true;
 					}
 
+					let quantity = item.attributes && item.attributes.measureRatio ? item.attributes.measureRatio : item.quantity;
+
 					let fields = {
 						name: item.title,
 						productId: item.id,
@@ -445,7 +448,7 @@ Vue.component(config.templateAddPaymentProductName,
 						module: 'catalog',
 						isCustomPrice: 'N',
 						discount: 0,
-						quantity: this.basketItem.quantity > 0 ? this.basketItem.quantity : 1,
+						quantity: quantity,
 						isCreatedProduct: 'N',
 						image: [],
 					};
@@ -513,7 +516,7 @@ Vue.component(config.templateAddPaymentProductName,
 					this.basketItem.quantity = (this.basketItem.quantity * correctionFactor + this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 					this.changeData(this.basketItem);
 
-					this.refreshBasket();
+					this.debouncedRefresh(300);
 				},
 				decrementQuantity()
 				{
@@ -523,7 +526,7 @@ Vue.component(config.templateAddPaymentProductName,
 						this.basketItem.quantity = (this.basketItem.quantity * correctionFactor - this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 						this.changeData(this.basketItem);
 
-						this.refreshBasket();
+						this.debouncedRefresh(300);
 					}
 				},
 				showPopupMenu(target, array, type)
@@ -621,6 +624,7 @@ Vue.component(config.templateAddPaymentProductName,
 						return {
 							id: item.ID,
 							title: item.NAME,
+							quantity: item.MEASURE_RATIO,
 							module: 'salescenter',
 						};
 					});

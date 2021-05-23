@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];

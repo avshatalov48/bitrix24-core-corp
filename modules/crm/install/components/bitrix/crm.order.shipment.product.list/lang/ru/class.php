@@ -18,3 +18,4 @@ $MESS["CRM_ORDER_SPLC_STORE_BARCODE"] = "Штрихкод";
 $MESS["CRM_ORDER_SPLC_WEIGHT"] = "Вес";
 $MESS["CRM_ORDER_SPLC_DIMENSIONS"] = "Габариты";
 $MESS["CRM_ORDER_SPLC_SORTING"] = "Сортировка";
+$MESS["CRM_ORDER_SPLC_ERR_URL_BUILDER_ABSENT"] = "Не найден генератор ссылок.";

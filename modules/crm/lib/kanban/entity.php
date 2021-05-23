@@ -1578,7 +1578,8 @@ abstract class Entity
 					: \FormatDate('x', $data['DATE_UNIX'], $timeFull)
 				)),
 				'fields' => $itemFields
-			]
+			],
+			'rawData' => $data // @todo get only visible values for current user
 		];
 	}
 

@@ -30,7 +30,7 @@ if (defined("BX_COMP_MANAGED_CACHE"))
 	global $CACHE_MANAGER;
 	$CACHE_MANAGER->registerTag("bitrix24_left_menu");
 	$CACHE_MANAGER->registerTag("crm_change_role");
-	$CACHE_MANAGER->registerTag("USER_CARD_".intval($userId / TAGGED_user_card_size));
+	$CACHE_MANAGER->registerTag("USER_NAME_".$userId);
 }
 
 $arMenu = array(

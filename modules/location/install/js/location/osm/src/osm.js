@@ -67,7 +67,7 @@ export default class OSM extends BaseSource
 		this.#geocodingService = props.geocodingService;
 	}
 
-	static get sourceCode(): string
+	get sourceCode(): string
 	{
 		return OSM.#code;
 	}

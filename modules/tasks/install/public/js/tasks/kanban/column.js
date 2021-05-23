@@ -13,28 +13,15 @@
 	BX.Tasks.Kanban.Column = function(options)
 	{
 		BX.Kanban.Column.apply(this, arguments);
-		this.bindEvents();
 
 		this.sortButton = null;
 
 		this.type = (options.type ? options.type : '');
-
-		this.finishStatus = 'FINISH';
 	};
 
 	BX.Tasks.Kanban.Column.prototype = {
 		__proto__: BX.Kanban.Column.prototype,
 		constructor: BX.Tasks.Kanban.Column,
-
-		bindEvents: function()
-		{
-			BX.addCustomEvent("Kanban.Grid:onItemDragStop", function() {
-				if(this.getGrid().isRealtimeMode())
-				{
-					this.hideDragTarget();
-				}
-			}.bind(this));
-		},
 		
 		/**
 		 * Customize title buttons.
@@ -55,6 +42,16 @@
 
 				return this.sortButton;
 			}
+		},
+
+		isRemovable: function()
+		{
+			if (this.getGrid().isScrumGrid())
+			{
+				return (!this.isFinishType() && !this.isNewType())
+			}
+
+			return BX.Kanban.Column.prototype.isRemovable.call(this);
 		},
 
 		/**
@@ -86,9 +83,9 @@
 			var taskCompletePromise = new BX.Promise();
 
 			if (
-				draggableItem.isSprintView &&
-				(this.type === this.finishStatus) &&
-				(draggableItem.getColumn().type !== this.finishStatus)
+				draggableItem.isSprintView
+				&& this.isFinishType()
+				&& (!draggableItem.getColumn().isFinishType())
 			)
 			{
 				if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.ScrumDod === 'undefined')
@@ -119,6 +116,16 @@
 			}.bind(this));
 		},
 
+		isFinishType: function()
+		{
+			return (this.getType() === 'FINISH');
+		},
+
+		isNewType: function()
+		{
+			return (this.getType() === 'NEW');
+		},
+
 		/**
 		 * Hook on sort column button.
 		 * @param {MouseEvent} event
@@ -128,6 +135,54 @@
 		{
 			var menuItems = this.getGridData().sortMenuItems;
 			BX.PopupMenu.show("tasks-kanban-column-sort-" + this.getId(), this.sortButton, menuItems, {});
+		},
+
+		setGrid: function(grid)
+		{
+			BX.Kanban.Column.prototype.setGrid.call(this, grid);
+
+			BX.addCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStop", function() {
+				if(this.getGrid().isRealtimeMode())
+				{
+					this.hideDragTarget();
+				}
+			}.bind(this));
+		},
+
+		handleConfirmButtonClick: function()
+		{
+			var confirmDialog = this.getConfirmDialog();
+			var removeButton = confirmDialog.getButton("main-kanban-confirm-remove-button");
+			if (removeButton.getContainer().classList.contains("popup-window-button-wait"))
+			{
+				//double click protection
+				return;
+			}
+
+			removeButton.addClassName("popup-window-button-wait");
+
+			var promise = this.getGrid().getEventPromise(
+				"Kanban.Grid:onColumnRemovedAsync",
+				null,
+				function(result) {
+
+					if (this.getGrid().isGroupingMode())
+					{
+						this.getGrid().removeColumnsByIdFromNeighborGrids(this.getId());
+					}
+
+					this.getGrid().removeColumn(this);
+					removeButton.removeClassName("popup-window-button-wait");
+					confirmDialog.close();
+
+				}.bind(this),
+				function(error) {
+					confirmDialog.setContent(error);
+					removeButton.getContainer().style.display = "none";
+				}.bind(this)
+			);
+
+			promise.fulfill(this);
 		},
 		
 		/**
@@ -144,7 +199,16 @@
 				gridData.rights.canAddColumn
 			)
 			{
-				BX.Kanban.Column.prototype.handleAddColumnButtonClick.apply(this, arguments);
+				var newColumn = this.getGrid().addColumn({
+					id: 'kanban-new-column-' + BX.util.getRandomString(5),
+					type: 'BX.Tasks.Kanban.DraftColumn',
+					canSort: false,
+					canAddItem: false,
+					droppable: false,
+					targetId: this.getGrid().getNextColumnSibling(this)
+				});
+
+				newColumn.switchToEditMode();
 			}
 			else if (typeof BX.Intranet !== "undefined")
 			{
@@ -195,6 +259,34 @@
 			else
 			{
 				BX.Kanban.Column.prototype.handleAddItemButtonClick.apply(this, arguments);
+			}
+		},
+
+		getTitleContainer: function()
+		{
+			if (this.layout.title)
+			{
+				return this.layout.title;
+			}
+
+			this.layout.title = BX.create("div", {
+				attrs: {
+					className: (this.isChildScrumGrid() ? "" : "main-kanban-column-title")
+				}
+			});
+
+			return this.layout.title;
+		},
+
+		renderTitle: function()
+		{
+			if (this.isChildScrumGrid())
+			{
+				return document.createElement('div');
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.renderTitle.call(this);
 			}
 		},
 
@@ -273,6 +365,98 @@
 		getType: function()
 		{
 			return this.type;
+		},
+
+		/**
+		 * @returns {BX.Tasks.Kanban.Grid}
+		 */
+		getGrid: function()
+		{
+			return this.grid;
+		},
+
+		getAddColumnButton: function ()
+		{
+			if (this.isChildScrumGrid())
+			{
+				return document.createElement('div');
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.getAddColumnButton.call(this);
+			}
+		},
+
+		isGridGroupingMode: function()
+		{
+			return this.getGrid().isGroupingMode();
+		},
+
+		isChildScrumGrid: function()
+		{
+			return this.getGrid().isChildScrumGrid();
+		}
+	};
+
+	BX.Tasks.Kanban.DraftColumn = function(options)
+	{
+		BX.Kanban.DraftColumn.apply(this, arguments);
+	};
+
+	BX.Tasks.Kanban.DraftColumn.prototype = {
+		__proto__: BX.Kanban.DraftColumn.prototype,
+		constructor: BX.Tasks.Kanban.DraftColumn,
+		applyEditMode: function()
+		{
+			if (this.asyncEventStarted)
+			{
+				return;
+			}
+
+			var title = BX.util.trim(this.getTitleTextBox().value);
+			if (!title.length)
+			{
+				title = this.getGrid().getMessage("COLUMN_TITLE_PLACEHOLDER");
+			}
+
+			this.setName(title);
+			this.getContainer().classList.add("main-kanban-column-disabled");
+			this.getTitleTextBox().disabled = true;
+
+			this.asyncEventStarted = true;
+			var promise = this.getGrid().getEventPromise(
+				"Kanban.Grid:onColumnAddedAsync",
+				null,
+				function(result) {
+
+					if (!BX.Kanban.Utils.isValidId(result.targetId))
+					{
+						var targetColumn = this.getGrid().getNextColumnSibling(this);
+						if (targetColumn)
+						{
+							result.targetId = targetColumn.getId();
+						}
+					}
+
+					if (this.getGrid().isGroupingMode())
+					{
+						this.getGrid().getNeighborGrids().forEach(function(neighborGrid) {
+							neighborGrid.addColumn(result);
+						});
+					}
+
+					this.getGrid().removeColumn(this);
+					this.getGrid().addColumn(result);
+
+				}.bind(this),
+				function(error) {
+
+					this.getGrid().removeColumn(this);
+
+				}.bind(this)
+			);
+
+			promise.fulfill(this);
 		}
 	};
 

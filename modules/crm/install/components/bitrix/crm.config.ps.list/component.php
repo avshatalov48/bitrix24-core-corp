@@ -154,14 +154,23 @@ while ($paySystem = $dbPaySystems->fetch())
 	$tmpPS['SORT'] = $tmpPS['~SORT'] = $paySystem['SORT'];
 	$tmpPS["HANDLER"] = $paySystem["ACTION_FILE"];
 
-	$quotePostfix = '';
+	$postfix = '';
 	if (mb_strpos($paySystem["ACTION_FILE"], 'quote') !== false)
-		$quotePostfix = '_QUOTE';
+	{
+		$postfix = '_QUOTE';
+	}
+	elseif (
+		mb_strpos($paySystem["ACTION_FILE"], 'bill') !== false
+		|| mb_strpos($paySystem["ACTION_FILE"], 'invoicedocument') !== false
+	)
+	{
+		$postfix = '_BILL';
+	}
 
 	$tmpPS['DESCRIPTION'] = array(
 		'RETURN' => GetMessage('CRM_PS_DESCRIPTION_RETURN_DEFAULT'),
 		'RESTRICTION' => GetMessage('CRM_PS_DESCRIPTION_RESTRICTION_DEFAULT'),
-		'COMMISSION' => GetMessage('CRM_PS_DESCRIPTION_COMMISSION_DEFAULT'.$quotePostfix),
+		'COMMISSION' => GetMessage('CRM_PS_DESCRIPTION_COMMISSION_DEFAULT_2'.$postfix),
 	);
 
 	$service = PaySystem\Manager::getObjectById($paySystem['ID']);

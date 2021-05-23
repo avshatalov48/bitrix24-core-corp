@@ -146,6 +146,7 @@ return function (RoutingConfigurator $routes) {
 			$routes->any('hook/{any}', new PublicPageController('/marketplace/hook/index.php'));
 			$routes->any('app/{any}', new PublicPageController('/marketplace/app/index.php'));
 
+			$routes->any('view/quick/{any}', new PublicPageController('/marketplace/view/quick/index.php'));
 			$routes->any('view/{APP}/{any}', new PublicPageController('/marketplace/view/index.php'))
 				->where('APP', '[a-zA-Z0-9\\.\\_]+');
 

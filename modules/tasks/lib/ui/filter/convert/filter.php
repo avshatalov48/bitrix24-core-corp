@@ -19,7 +19,7 @@ final class Filter
 		");
 
 		$gridOptions = $gridOptionsRes->Fetch();
-		$gridOptions['VALUE'] = unserialize($gridOptions['VALUE']);
+		$gridOptions['VALUE'] = unserialize($gridOptions['VALUE'], ['allowed_classes' => false]);
 
 		$dbRes = $DB->query(
 			"	SELECT ID, NAME, PARENT, SERIALIZED_FILTER
@@ -32,7 +32,7 @@ final class Filter
 		{
 			while ($arData = $dbRes->fetch())
 			{
-				$fields = self::prepareFilter(unserialize($arData['SERIALIZED_FILTER']));
+				$fields = self::prepareFilter(unserialize($arData['SERIALIZED_FILTER'], ['allowed_classes' => false]));
 				if(!$fields)
 					continue;
 
@@ -265,7 +265,7 @@ final class Filter
 
 		$fieldName = mb_substr($res["FIELD"], 5, -3);	// Cutoff prefix "META:" and suffix "_TS"
 		$operationCode = (int)mb_substr($cOperationType, 1);
-		
+
 		switch($operationCode)
 		{
 			case \CTaskFilterCtrl::OP_DATE_TODAY:

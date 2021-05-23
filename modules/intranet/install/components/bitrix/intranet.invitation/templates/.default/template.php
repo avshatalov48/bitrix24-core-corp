@@ -33,6 +33,32 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ITEMS" => $arResult["MENU_ITEMS"],
 	"TITLE" => Loc::getMessage("INTRANET_INVITE_DIALOG_TITLE")
 ));
+
+if ($arResult["IS_CLOUD"])
+{
+	$APPLICATION->AddViewContent("left-panel", '');
+}
+
+if ($arResult["IS_CLOUD"])
+{
+	$isMaxUsersUnlimited = ($arResult["USER_MAX_COUNT"] == 0);
+
+	$APPLICATION->AddViewContent("left-panel-after", '
+		<div class="invite-limit-counters-container">
+			<div class="invite-limit-counters-row">
+				<div class="invite-limit-counters-block-name">'.Loc::getMessage("INTRANET_INVITE_DIALOG_USER_MAX_COUNT").'</div>
+				<div class="'.($isMaxUsersUnlimited
+					? 'invite-limit-counters-block-value-unlimited' : 'invite-limit-counters-block-value-current').'">'
+					.($isMaxUsersUnlimited ? Loc::getMessage("INTRANET_INVITE_DIALOG_UNLIMITED") : $arResult["USER_MAX_COUNT"])
+				.'</div>
+			</div>
+			<div class="invite-limit-counters-row">
+				<div class="invite-limit-counters-block-name">'.Loc::getMessage("INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT").'</div>
+				<div class="invite-limit-counters-block-value-overflow">'.$arResult["USER_CURRENT_COUNT"].'</div>
+			</div>
+		</div>
+	');
+}
 ?>
 
 <div data-id="<?=$contentContainerId?>" class="popup-window-tabs-box">
@@ -120,15 +146,18 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 												class="ui-ctl-element"
 												name="allow_register_confirm"
 												id="allow_register_confirm"
+												data-role="allowRegisterConfirm"
 												<?if ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] == "Y") echo "checked"?>
-												onchange="BX('intranet-dialog-tab-content-self-whitelist').style.display = this.checked ? 'block' : 'none'"
 												<?if (!$arResult["IS_CURRENT_USER_ADMIN"]) echo "disabled";?>
 											/>
 											<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_FAST_REG_TYPE")?></div>
 										</label>
 									</div>
 
-									<div id="intranet-dialog-tab-content-self-whitelist" <?if ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] == "N"):?>style="display: none" <?endif?>>
+									<div id="intranet-dialog-tab-content-self-whitelist"
+										 data-role="selfWhiteList"
+										 <?if ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] == "N"):?>style="display: none" <?endif?>
+									>
 										<span class="invite-form-ctl-title">
 											<?=Loc::getMessage("INTRANET_INVITE_DIALOG_FAST_REG_DOMAINS")?>
 										</span>

@@ -1,5 +1,5 @@
-import {Menu as MainMenu} from "main.popup";
-import "./css/menu.css";
+import {Menu as MainMenu} from 'main.popup';
+import './css/menu.css';
 
 export default class Menu extends MainMenu
 {
@@ -82,7 +82,7 @@ export default class Menu extends MainMenu
 
 			if(item && item.layout.item)
 			{
-				item.layout.item.classList.add("highlighted");
+				item.layout.item.classList.add('highlighted');
 			}
 		}
 	}
@@ -95,7 +95,7 @@ export default class Menu extends MainMenu
 
 			if(item && item.layout.item)
 			{
-				item.layout.item.classList.remove("highlighted");
+				item.layout.item.classList.remove('highlighted');
 			}
 		}
 	}

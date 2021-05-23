@@ -821,6 +821,7 @@ export class Widget
 					type: SubscriptionType.widgetOpen,
 					data: {}
 				});
+				application.template = this;
 			},
 			destroyed()
 			{
@@ -832,8 +833,7 @@ export class Widget
 				application.templateAttached = false;
 				application.rootNode.innerHTML = '';
 			}
-		}).then(vue => {
-			this.template = vue;
+		}).then(() => {
 			return new Promise((resolve, reject) => resolve());
 		});
 	}
@@ -1050,6 +1050,7 @@ export class Widget
 			generateUniqueName: true,
 			diskFolderId: diskFolderId,
 			previewBlob: message.file.previewBlob,
+			chunkSize: this.localize.isCloud ? Uploader.CLOUD_MAX_CHUNK_SIZE : Uploader.BOX_MIN_CHUNK_SIZE,
 		});
 	}
 
@@ -1267,7 +1268,7 @@ export class Widget
 			let values = JSON.parse(data.params.value);
 
 			let sessionId = parseInt(values.SESSION_ID);
-			if (sessionId !== this.getSessionId())
+			if (sessionId !== this.getSessionId() || this.isSessionClose())
 			{
 				alert(this.localize.BX_LIVECHAT_ACTION_EXPIRED);
 				return false;
@@ -1620,6 +1621,11 @@ export class Widget
 	getSessionId()
 	{
 		return this.controller.getStore().state.widget.dialog.sessionId;
+	}
+
+	isSessionClose()
+	{
+		return this.controller.getStore().state.widget.dialog.sessionClose;
 	}
 
 	getUserHash()

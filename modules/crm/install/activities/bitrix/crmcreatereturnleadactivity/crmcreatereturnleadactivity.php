@@ -137,6 +137,7 @@ class CBPCrmCreateReturnLeadActivity
 		$dialog->setMap(array(
 			'LeadTitle' => array(
 				'Name' => GetMessage('CRM_CRL_LEAD_TITLE'),
+				'Description' => GetMessage('CRM_CRL_LEAD_TITLE'),
 				'FieldName' => 'lead_title',
 				'Type' => 'string'
 			),

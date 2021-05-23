@@ -660,7 +660,10 @@
 	position: relative;
 }
 
-.tasks-checklist-item-number::after { content: '. '; }
+.tasks-checklist-item-number::after {
+	content: '. ';
+	margin-right: 5px;
+}
 
 .tasks-checklist-item-number,
 .tasks-checklist-item-description {

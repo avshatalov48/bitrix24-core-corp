@@ -1,0 +1,2 @@
+<?php
+return ['selector/recipient'];

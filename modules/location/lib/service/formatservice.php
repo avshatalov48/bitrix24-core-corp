@@ -10,7 +10,10 @@ use Bitrix\Location\Infrastructure\Service\Config\Container;
 use Bitrix\Location\Repository\FormatRepository;
 
 /**
- * Class Format
+ * Class FormatService
+ *
+ * Service to work with addresses formats
+ *
  * @package Bitrix\Location\Service
  */
 final class FormatService extends BaseService
@@ -27,6 +30,8 @@ final class FormatService extends BaseService
 	protected $repository;
 
 	/**
+	 * Find format by format code
+	 *
 	 * @param string $formatCode
 	 * @param string $languageId
 	 * @return Entity\Format|null|bool
@@ -48,8 +53,10 @@ final class FormatService extends BaseService
 	}
 
 	/**
+	 * Find all existing formats
+	 *
 	 * @param string $languageId
-	 * @return array|bool|array
+	 * @return array|bool
 	 */
 	public function findAll(string $languageId)
 	{
@@ -68,6 +75,8 @@ final class FormatService extends BaseService
 	}
 
 	/**
+	 * Find default (current) format
+	 *
 	 * @param string $languageId
 	 * @return Entity\Format|bool|null
 	 */
@@ -90,6 +99,8 @@ final class FormatService extends BaseService
 	}
 
 	/**
+	 * Returns default (current) format code
+	 *
 	 * @return string
 	 */
 	public function getDefaultFormatCode(): string
@@ -97,6 +108,10 @@ final class FormatService extends BaseService
 		return $this->defaultFormatCode;
 	}
 
+	/**
+	 * FormatService constructor.
+	 * @param Container $config
+	 */
 	protected function __construct(Container $config)
 	{
 		parent::__construct($config);

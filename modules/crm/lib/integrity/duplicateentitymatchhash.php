@@ -34,4 +34,15 @@ class DuplicateEntityMatchHash
 			array('ENTITY_ID' => $entityID, 'ENTITY_TYPE_ID' => $entityTypeID, 'TYPE_ID' => $typeID, 'SCOPE' => $scope)
 		);
 	}
+
+	public static function setDateModify($entityTypeID, $entityID)
+	{
+		Entity\DuplicateEntityMatchHashTable::setDateModify(
+			array(
+				'ENTITY_ID'=> $entityID,
+				'ENTITY_TYPE_ID' => $entityTypeID,
+			),
+			new Main\Type\DateTime()
+		);
+	}
 }

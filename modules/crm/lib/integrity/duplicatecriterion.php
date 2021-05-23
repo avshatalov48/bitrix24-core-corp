@@ -1,12 +1,14 @@
 <?php
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Main;
-use Bitrix\Crm;
+
 abstract class DuplicateCriterion
 {
 	protected $useStrictComparison = false;
 
 	protected $sortDescendingByEntityTypeId = false;
+
+	protected $limitByAssignedUser = false;
 
 	public function isStrictComparison()
 	{
@@ -43,7 +45,9 @@ abstract class DuplicateCriterion
 
 	public function getActualCount($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck = false, $limit = 0)
 	{
-		$dataSource = DedupeDataSource::create($this->getIndexTypeID(), new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope()));
+		$dedupeParams = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope());
+		$dedupeParams->setLimitByAssignedUser($this->limitByAssignedUser());
+		$dataSource = DedupeDataSource::create($this->getIndexTypeID(), $dedupeParams);
 		return $dataSource->calculateEntityCount($this, array('ROOT_ENTITY_ID' => $rootEntityID, 'LIMIT' => $limit));
 	}
 
@@ -86,6 +90,10 @@ abstract class DuplicateCriterion
 			{
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
+		}
+		if ($this->limitByAssignedUser())
+		{
+			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
 		}
 
 		$limit = isset($options['limit']) ? (int)$options['limit'] : 0;
@@ -155,6 +163,11 @@ abstract class DuplicateCriterion
 			{
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
+		}
+
+		if ($this->limitByAssignedUser())
+		{
+			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
 		}
 
 		if($limit > 0)
@@ -241,5 +254,15 @@ abstract class DuplicateCriterion
 	protected static function setQueryFilter(Main\Entity\Query $query, array $matches)
 	{
 		throw new Main\NotImplementedException('Method injectMatches must be overridden');
+	}
+
+	public function limitByAssignedUser(): bool
+	{
+		return $this->limitByAssignedUser;
+	}
+
+	public function setLimitByAssignedUser(bool $limitByAssignedUser): void
+	{
+		$this->limitByAssignedUser = $limitByAssignedUser;
 	}
 }

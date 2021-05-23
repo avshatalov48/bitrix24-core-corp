@@ -952,7 +952,6 @@ BX.Tasks.lwPopup = {
 
 							if (oGroupObject)
 							{
-								oGroupObject.popupWindow.params.zIndex = 1400;
 								oGroupObject.show();
 							}
 

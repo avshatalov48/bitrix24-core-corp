@@ -9,6 +9,10 @@ class DedupeParams
 	protected $userID = 0;
 	protected $enablePermissionCheck = false;
 	protected $scope = DuplicateIndexType::DEFAULT_SCOPE;
+	protected $limitByAssignedUser = false;
+	protected $indexDate = null;
+	protected $limitByDirtyIndexItems = false;
+	protected $checkChangedOnly = false;
 
 	public function __construct($entityTypeID, $userID, $enablePermissionCheck = false,
 								$scope = DuplicateIndexType::DEFAULT_SCOPE)
@@ -76,5 +80,50 @@ class DedupeParams
 	{
 		if (DuplicateIndexType::checkScopeValue($scope))
 			$this->scope = $scope;
+	}
+
+	public function setLimitByAssignedUser(bool $limitByAssignedUser): void
+	{
+		$this->limitByAssignedUser = $limitByAssignedUser;
+	}
+
+	public function limitByAssignedUser(): bool
+	{
+		return $this->limitByAssignedUser;
+	}
+
+	public function setIndexDate(Main\Type\DateTime $date): void
+	{
+		$this->indexDate = $date;
+	}
+
+	public function clearIndexDate(): void
+	{
+		$this->indexDate = null;
+	}
+
+	public function getIndexDate(): ?Main\Type\DateTime
+	{
+		return $this->indexDate;
+	}
+
+	public function setLimitByDirtyIndexItems(bool $limitByDirtyIndexItems): void
+	{
+		$this->limitByDirtyIndexItems = $limitByDirtyIndexItems;
+	}
+
+	public function limitByDirtyIndexItems(): bool
+	{
+		return $this->limitByDirtyIndexItems;
+	}
+
+	public function setCheckChangedOnly(bool $checkChangedOnly): void
+	{
+		$this->checkChangedOnly = $checkChangedOnly;
+	}
+
+	public function isCheckChangedOnly(): bool
+	{
+		return $this->checkChangedOnly;
 	}
 }

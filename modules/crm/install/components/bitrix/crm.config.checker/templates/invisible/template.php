@@ -3,7 +3,7 @@
 	die();
 }
 $res = \Bitrix\Main\Config\Option::get("crm", "crm_was_imported");
-$res = empty($res) ? [] : unserialize($res);
+$res = empty($res) ? [] : unserialize($res, ['allowed_classes' => false]);
 if (
 	empty($res) ||
 	!is_array($res) ||

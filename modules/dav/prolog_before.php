@@ -2,7 +2,7 @@
 if (mb_strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
 	return;
 
-if ($_SERVER['REQUEST_METHOD'] == 'PROPFIND' || $_SERVER['REQUEST_METHOD'] == 'OPTIONS')
+if ($_SERVER['REQUEST_METHOD'] === 'PROPFIND' || $_SERVER['REQUEST_METHOD'] === 'OPTIONS')
 {
 	if (preg_match("/Livechat-Auth-Id/i", $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
 	{
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'PROPFIND' || $_SERVER['REQUEST_METHOD'] == 'O
 	}
 }
 
-if (\Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false) != 'Y' || !CModule::includeModule('disk'))
+if (\Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false) !== 'Y' || !CModule::includeModule('disk'))
 	return;
 
 if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
@@ -68,7 +68,7 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 	}
 
 	$bNeedInclude = true;
-	if ($_SERVER["REQUEST_METHOD"] == "HEAD")
+	if ($_SERVER["REQUEST_METHOD"] === "HEAD")
 	{
 		$res = mb_strtolower($_SERVER["HTTP_USER_AGENT"]);
 		if (mb_strpos($res, "microsoft") === false &&
@@ -133,5 +133,5 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 }
 
 $app = $GLOBALS["USER"]->GetParam("APPLICATION_ID");
-if ($app == "caldav" || $app == "carddav" || $app == "webdav")
+if ($app === "caldav" || $app === "carddav" || $app === "webdav")
 	die();

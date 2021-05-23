@@ -116,6 +116,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$arParams['GET_AVATARS'] = $arParams['GET_AVATARS'] !== 'Y' ? 'N' : 'Y';
 		$arParams['FORCE_FILTER'] = $arParams['FORCE_FILTER'] !== 'Y' ? 'N' : 'Y';
 		$arParams['PATH_TO_USER'] = $arParams['PATH_TO_USER'] ?? '/company/personal/user/#user_id#/';
+		$arParams['PATH_TO_MERGE'] = $arParams['PATH_TO_MERGE'] ?? '';
 		$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = $arParams['PATH_TO_DEAL_KANBANCATEGORY'] ?? '';
 
 		return $arParams;
@@ -412,6 +413,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'ADDRESS', 'ADDRESS_2', 'ADDRESS_PROVINCE', 'ADDRESS_REGION', 'ADDRESS_CITY',
 			'ADDRESS_COUNTRY', 'ADDRESS_POSTAL_CODE'
 		];
+		$filterHistory = ['STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'];
 		//from main.filter
 		$grid = $this->entity->getFilterOptions();
 		$gridFilter = $this->entity->getGridFilter();
@@ -491,6 +493,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 					elseif (in_array($key, $filterAddress, true))
 					{
 						$filter['=%' . $key] = $search[$key] . '%';
+					}
+					elseif (in_array($key, $filterHistory, true))
+					{
+						$filter['%' . $key] = $search[$key];
 					}
 					elseif ($key === 'STATUS_CONVERTED')
 					{
@@ -656,20 +662,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 		if(!$searchRestriction->isExceeded($entityTypeID))
 		{
+			$searchRestriction->notifyIfLimitAlmostExceed($entityTypeID);
+
 			SearchEnvironment::convertEntityFilterValues(
 				$entityTypeID,
 				$filter
 			);
-
-			if (
-				($limitWarningValue = $searchRestriction->getLimitWarningValue($entityTypeID)) > 0
-			)
-			{
-				$searchRestriction->notifyLimitWarning(
-					$entityTypeID,
-					$limitWarningValue
-				);
-			}
 		}
 		else
 		{
@@ -1829,7 +1827,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					{
 						continue;
 					}
-					if (isset($this->requiredFields[$key]) && !$val)
+					if (isset($this->requiredFields[$key]) && !$val && $val !== '0')
 					{
 						foreach ($this->requiredFields[$key] as $status)
 						{
@@ -2049,7 +2047,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$res = \Bitrix\Main\UserTable::getList(array(
 				'select' => array(
-					'ID', 'NAME', 'LAST_NAME', 'PERSONAL_PHOTO'
+					'ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'PERSONAL_PHOTO'
 				),
 				'filter' => array(
 					'ID' => array_unique($users)
@@ -2168,6 +2166,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 								{
 									$newValue[] = $users[$uid]['html'];
 								}
+							}
+							elseif (empty($newValue))
+							{
+								$newValue[] = [
+									'id' => null,
+									'title' => Loc::getMessage('FORMATNAME_NONAME'),
+									'picture' => null,
+									'link' => null,
+									'html' => null,
+								];
 							}
 						}
 						// tmp, @todo: make more universal
@@ -2662,6 +2670,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['MORE_EDIT_FIELDS'] = $this->getAdditionalEditFields();
 		$this->arResult['FIELDS_DISABLED'] = $this->disableMoreFields;
 		$this->arResult['CATEGORIES'] = [];
+		$this->arResult['IS_RECYCLEBIN_ENABLED'] = $this->isRecyclebinEnabled();
 
 		$isOLinstalled = \Bitrix\Main\ModuleManager::isModuleInstalled('imopenlines');
 		$context = Application::getInstance()->getContext();
@@ -3482,8 +3491,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$ajaxParamsName = ($request->get('version') === 2) ? 'ajaxParams' : 'status_params';
-		$newStateParams = (array)$request->get($ajaxParamsName);
+		$ajaxParamsName = ((int) $request->getPost('version') === 2) ? 'ajaxParams' : 'status_params';
+		$newStateParams = (array)$request->getPost($ajaxParamsName);
 		//add one more item for old column
 		$isStatusChanged = $item[$statusKey] !== $status;
 		if ($isStatusChanged && isset($newStateParams['old_status_lastid']))
@@ -3655,5 +3664,29 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		return $user;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isRecyclebinEnabled(): bool
+	{
+		$entityType = $this->arParams['ENTITY_TYPE'];
+
+		/**
+		 * @todo add support dynamic entity types
+		 */
+		switch($entityType)
+		{
+			case \CCrmOwnerType::DealName:
+				$result = \Bitrix\Crm\Settings\DealSettings::getCurrent()->isRecycleBinEnabled();
+				break;
+			case \CCrmOwnerType::LeadName:
+				$result = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isRecycleBinEnabled();
+				break;
+			default:
+				$result = false;
+		}
+		return $result;
 	}
 }

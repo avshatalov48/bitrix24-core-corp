@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -17,8 +18,6 @@ use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 class TaskModel
 	implements \Bitrix\Tasks\Access\AccessibleTask
 {
-	use DepartmentTrait;
-
 	private const
 		CACHE_MODEL_KEY = 'model';
 
@@ -535,6 +534,23 @@ class TaskModel
 	}
 
 	/**
+	 * @param int $userId
+	 * @param bool $recursive
+	 * @param array $roles
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function isInDepartment(int $userId, bool $recursive = false, array $roles = []): bool
+	{
+		$userDepartments = \CIntranetUtils::GetUserDepartments($userId);
+		if (!is_array($userDepartments))
+		{
+			return false;
+		}
+		return !empty(array_intersect($userDepartments, $this->getDepartments($roles)));
+	}
+
+	/**
 	 * @param bool $withRelations
 	 * @return array|null
 	 */
@@ -545,5 +561,31 @@ class TaskModel
 			return null;
 		}
 		return TaskRegistry::getInstance()->get($this->id, $withRelations);
+	}
+
+	/**
+	 * @param array $roles
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	private function getDepartments(array $roles = []): array
+	{
+		$task = $this->getTask(true);
+		if (!$task)
+		{
+			return [];
+		}
+
+		$res = [];
+		foreach ($task['DEPARTMENTS'] as $role => $deps)
+		{
+			if (!in_array($role, $roles))
+			{
+				continue;
+			}
+			$res = array_merge($res, $deps);
+		}
+
+		return array_unique($res);
 	}
 }

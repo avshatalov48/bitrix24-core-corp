@@ -3,7 +3,9 @@
 
 namespace Bitrix\Tasks\Internals\Registry;
 
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
+use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\TaskObject;
 
 class TaskRegistry
@@ -82,6 +84,14 @@ class TaskRegistry
 			$this->fillMembers([$taskId]);
 		}
 
+		if (
+			$withRelations
+			&& !isset($this->storage[$taskId]['DEPARTMENTS'])
+		)
+		{
+			$this->fillDepartments([$taskId]);
+		}
+
 		return $this->storage[$taskId];
 	}
 
@@ -158,6 +168,7 @@ class TaskRegistry
 		{
 			$this->fillFavorites($foundIds);
 			$this->fillMembers($foundIds);
+			$this->fillDepartments($foundIds);
 		}
 
 		return $this;
@@ -208,7 +219,7 @@ class TaskRegistry
 			$this->storage[$taskId]['MEMBER_LIST'] = [];
 		}
 
-		$members = \Bitrix\Tasks\Internals\Task\MemberTable::query()
+		$members = MemberTable::query()
 			->addSelect('TASK_ID')
 			->addSelect('USER_ID')
 			->addSelect('TYPE')
@@ -249,6 +260,77 @@ class TaskRegistry
 		while ($row = $res->fetch())
 		{
 			$this->storage[$row['TASK_ID']]['IN_FAVORITES'][] = (int) $row['USER_ID'];
+		}
+	}
+
+	/**
+	 * @param array $taskIds
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	private function fillDepartments(array $taskIds)
+	{
+		$userIds = [];
+
+		foreach ($taskIds as $taskId)
+		{
+			$this->storage[$taskId]['DEPARTMENTS'] = [
+				MemberTable::MEMBER_TYPE_RESPONSIBLE => [],
+				MemberTable::MEMBER_TYPE_ORIGINATOR => [],
+				MemberTable::MEMBER_TYPE_ACCOMPLICE => [],
+				MemberTable::MEMBER_TYPE_AUDITOR => [],
+			];
+
+			if (!isset($this->storage[$taskId]['MEMBER_LIST']))
+			{
+				continue;
+			}
+
+			foreach($this->storage[$taskId]['MEMBER_LIST'] as $row)
+			{
+				$userIds[$row['USER_ID']] = $row['USER_ID'];
+			}
+		}
+
+		if (empty($userIds))
+		{
+			return;
+		}
+
+		$userIds = implode(',', $userIds);
+		$res = \Bitrix\Tasks\Util\User::getList(
+			[
+				'filter' => [
+					'@ID' => new SqlExpression($userIds),
+				],
+				'select' => ['ID', 'UF_DEPARTMENT']
+			]
+		);
+
+		$deps = [];
+		foreach ($res as $row)
+		{
+			if (!is_array($row['UF_DEPARTMENT']) || empty($row['UF_DEPARTMENT']))
+			{
+				continue;
+			}
+			$deps[$row['ID']] = $row['UF_DEPARTMENT'];
+		}
+
+		foreach ($taskIds as $taskId)
+		{
+			if (!isset($this->storage[$taskId]['MEMBER_LIST']))
+			{
+				continue;
+			}
+
+			foreach($this->storage[$taskId]['MEMBER_LIST'] as $row)
+			{
+				if (!isset($deps[$row['USER_ID']]))
+				{
+					continue;
+				}
+				$this->storage[$taskId]['DEPARTMENTS'][$row['TYPE']] = array_merge($this->storage[$taskId]['DEPARTMENTS'][$row['TYPE']], $deps[$row['USER_ID']]);
+			}
 		}
 	}
 

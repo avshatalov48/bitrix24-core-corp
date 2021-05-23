@@ -37,7 +37,16 @@ if ($isCompositeMode && !$isIndexPage)
 							<span id="copyright">
 								<?if ($isBitrix24Cloud):?>
 									<a id="bitrix24-logo" target="_blank" class="bitrix24-logo-<?=(LANGUAGE_ID == "ua") ? LANGUAGE_ID : Loc::getDefaultLang(LANGUAGE_ID)?>" href="<?=GetMessage("BITRIX24_URL")?>"></a>
-									<?include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");?>
+									<?
+									$b24Languages = [];
+									include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");
+									if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
+									{
+										array_walk($b24Languages, function(&$lang) {
+											$lang["NAME"] = mb_convert_encoding($lang["NAME"], "HTML-ENTITIES", "UTF-8");
+										});
+									}
+									?>
 									<span class="bx-lang-btn <?=LANGUAGE_ID?>" id="bx-lang-btn" onclick="B24.openLanguagePopup(this)">
 										<span class="bx-lang-btn-icon"><?=$b24Languages[LANGUAGE_ID]["NAME"]?></span>
 									</span>
@@ -160,13 +169,12 @@ if ($isBitrix24Cloud)
 	$APPLICATION->IncludeComponent("bitrix:bitrix24.notify.panel", "", array());
 	//$APPLICATION->IncludeComponent("bitrix:bitrix24.broadcast", "", array());
 }
-$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 
 <?
 if (
 	preg_match("/(MSIE|Trident)/i", $_SERVER["HTTP_USER_AGENT"]) &&
-	CUserOptions::getOption("intranet", "ie11_warning", "N") === "N"
+	CUserOptions::getOption("intranet", "ie11_warning_2", "N") === "N"
 ):
 ?>
 <script type="text/javascript">
@@ -187,7 +195,7 @@ if (
 					}],
 					events: {
 						onClose: function() {
-							BX.userOptions.save("intranet", "ie11_warning", null, "Y");
+							BX.userOptions.save("intranet", "ie11_warning_2", null, "Y");
 							BX.userOptions.send(null);
 						}
 					}

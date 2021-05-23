@@ -7,6 +7,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\UserTable;
 
 Loc::loadLanguageFile(__FILE__);
@@ -459,6 +460,14 @@ class ListsDataManager extends DataManager
 			}
 		}
 		$data['IBLOCK_ID'] = $this->iblockId;
+		if (isset($data['DETAIL_TEXT']))
+		{
+			$data['DETAIL_TEXT'] = Emoji::encode($data['DETAIL_TEXT']);
+		}
+		if (isset($data['NAME']))
+		{
+			$data['NAME'] = Emoji::encode($data['NAME']);
+		}
 
 		return $data;
 	}
@@ -480,6 +489,16 @@ class ListsDataManager extends DataManager
 				unset($data[$fieldDescription['NAME']]);
 			}
 		}
+
+		if (isset($data['TEXT']))
+		{
+			$data['TEXT'] = Emoji::decode($data['TEXT']);
+		}
+		if (isset($data['NAME']))
+		{
+			$data['NAME'] = Emoji::decode($data['NAME']);
+		}
+
 		return $data;
 	}
 

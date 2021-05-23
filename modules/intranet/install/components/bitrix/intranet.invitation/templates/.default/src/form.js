@@ -179,6 +179,8 @@ export default class Form extends EventEmitter
 			return;
 		}
 
+		this.activateButton();
+
 		if (action === "invite")
 		{
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
@@ -214,9 +216,13 @@ export default class Form extends EventEmitter
 		else if (action === "self")
 		{
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
+			this.disableButton();
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitSelf();
+				if (this.isButtonActive())
+				{
+					this.submit.submitSelf();
+				}
 			});
 		}
 		else if (action === "integrator")
@@ -243,6 +249,21 @@ export default class Form extends EventEmitter
 				BX.fireEvent(this.menuItems[0], 'click');
 			});
 		}
+	}
+
+	disableButton()
+	{
+		Dom.addClass(this.button, "ui-btn-disabled");
+	}
+
+	activateButton()
+	{
+		Dom.removeClass(this.button, "ui-btn-disabled");
+	}
+
+	isButtonActive()
+	{
+		return !Dom.hasClass(this.button, "ui-btn-disabled");
 	}
 
 	showSuccessMessage(successText)

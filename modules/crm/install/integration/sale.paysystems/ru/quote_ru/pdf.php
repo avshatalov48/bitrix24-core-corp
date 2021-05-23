@@ -247,7 +247,7 @@ if(!is_array($arBasketItems))
 	$arBasketItems = array();
 
 $arCurFormat = CCurrencyLang::GetCurrencyFormat($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]);
-$currency = trim(str_replace('#', '', $arCurFormat['FORMAT_STRING']));
+$currency = trim(preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']));
 
 $vat = 0;
 $arCols = array();
@@ -256,9 +256,6 @@ $arCells = array();
 $vat = 0;
 if (!empty($arBasketItems))
 {
-	$arCurFormat = CCurrencyLang::GetCurrencyFormat($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]);
-	$currency = trim(str_replace('#', '', $arCurFormat['FORMAT_STRING']));
-
 	$arBasketItems = getMeasures($arBasketItems);
 
 	$arProps = array();

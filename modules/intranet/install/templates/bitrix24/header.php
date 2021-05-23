@@ -36,7 +36,8 @@ CModule::IncludeModule("intranet");
 	"intranet.sidepanel.bitrix24",
 	"socialnetwork.slider",
 	"calendar.sliderloader",
-	"ui.notification"
+	"ui.notification",
+	"ui.info-helper"
 ]);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");
@@ -372,7 +373,8 @@ if ($isBitrix24Cloud)
 						);
 					?>
 					</div>
-					<?
+					<div class="header-personal">
+						<?
 						$profileLink = $isExtranet ? SITE_DIR."contacts/personal" : SITE_DIR."company/personal";
 						$APPLICATION->IncludeComponent(
 							"bitrix:system.auth.form",
@@ -383,7 +385,14 @@ if ($isBitrix24Cloud)
 							),
 							false
 						);
-					?>
+						?>
+						<div class="header-item" id="header-buttons">
+							<?
+							$APPLICATION->IncludeComponent("bitrix:intranet.license.widget", "", []);
+							$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
+							?>
+						</div>
+					</div>
 				</div>
 			</div>
 		</td>

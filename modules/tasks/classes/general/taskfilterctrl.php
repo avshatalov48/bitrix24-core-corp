@@ -74,14 +74,14 @@ interface CTaskFilterCtrlInterface
 
 	/**
 	 * List all available filter presets for given user.
-	 * 
+	 *
 	 * @param boolean $bTreeMode - false by default. If true, than
 	 * children filter presets will be placed at parent presets in '#Children' field.
-	 * 
+	 *
 	 * @return array where keys are filter ids, and values are arrays,
 	 * that contain key 'FilterName' with filter name and key 'ChildrenFilters'
 	 * with array of children filters.
-	 * 
+	 *
 	 * @example of return value
 	 * array (
 	 *  -1 => array(
@@ -93,7 +93,7 @@ interface CTaskFilterCtrlInterface
 	 *      'Name' => "I'm responsible",
 	 *      'Condition' => '...',
 	 *      'Parent' => -1		// 'My tasks' is parent for this filter
-	 * ), 
+	 * ),
 	 * ...
 	 * )
 	 */
@@ -101,9 +101,9 @@ interface CTaskFilterCtrlInterface
 
 
 	/**
-	 * Selects some filter preset. It will be automatically saved for given 
+	 * Selects some filter preset. It will be automatically saved for given
 	 * user (through CUserOptions).
-	 * 
+	 *
 	 * @param integer $presetId. Preset must be exists, otherwise exception will be throwed.
 	 */
 	public function switchFilterPreset($presetId);
@@ -111,7 +111,7 @@ interface CTaskFilterCtrlInterface
 
 	/**
 	 * Get id of preset, currently selected for user (choose are saved in CUserOptions)
-	 * 
+	 *
 	 * @return integer presetd id
 	 */
 	public function getSelectedFilterPresetId();
@@ -119,7 +119,7 @@ interface CTaskFilterCtrlInterface
 
 	/**
 	 * Get selected filter as array for CTasks::GetList()
-	 * 
+	 *
 	 * @return array filter
 	 */
 	public function getSelectedFilterPresetCondition();
@@ -127,7 +127,7 @@ interface CTaskFilterCtrlInterface
 
 	/**
 	 * Get selected filter name
-	 * 
+	 *
 	 * @return array filter
 	 */
 	public function getSelectedFilterPresetName();
@@ -247,7 +247,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 	/**
 	 * Fetch predefined presets and presets from DB.
-	 * 
+	 *
 	 * @return array of fetched filter presets. Includes predefined presets.
 	 *
 	 * @var CDatabase $DB
@@ -459,7 +459,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
 							'STATUS'  => array(
-								CTasks::STATE_SUPPOSEDLY_COMPLETED, 
+								CTasks::STATE_SUPPOSEDLY_COMPLETED,
 								CTasks::STATE_COMPLETED
 							)
 						)
@@ -545,7 +545,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'STATUS'  => array(
-								CTasks::STATE_SUPPOSEDLY_COMPLETED, 
+								CTasks::STATE_SUPPOSEDLY_COMPLETED,
 								CTasks::STATE_COMPLETED
 							)
 						)
@@ -565,7 +565,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 		$arPresets[self::SPEC_PRESET_FAVORITE_TASKS] = array(
 			'Name'      => GetMessage('TASKS_FILTER_PRESET_SPEC_PRESET_FAVORITE_TASKS'),
-			
+
 			// commented out to prevent from figuring in tree list
 			//'Parent'    => self::ROOT_PRESET,
 
@@ -705,8 +705,8 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 	public function getSelectedFilterPresetId()
 	{
 		$rc = (int) CUserOptions::GetOption(
-			self::filterCategoryName, 
-			$this->paramName, 
+			self::filterCategoryName,
+			$this->paramName,
 			(string) self::STD_PRESET_ALIAS_TO_DEFAULT,	// by default
 			$this->loggedInUserId
 		);
@@ -733,8 +733,8 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 		if ($presetId != $curPresetId)
 		{
 			CUserOptions::SetOption(
-				self::filterCategoryName, 
-				$this->paramName, 
+				self::filterCategoryName,
+				$this->paramName,
 				(string) $presetId,
 				$bCommon = false,
 				$this->loggedInUserId
@@ -762,12 +762,12 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 		if ( !$this->checkExistsPresetById($presetId) )
 			return (false);
-		
+
 		// Root preset is pseudo preset, it doesn't have a filter condition
 		if ($presetId === self::ROOT_PRESET)
 			return (false);
 
-		return (array('::SUBFILTER-ROOT' => unserialize($this->arPresets[$presetId]['Condition'])));
+		return (array('::SUBFILTER-ROOT' => unserialize($this->arPresets[$presetId]['Condition'], ['allowed_classes' => false])));
 	}
 
 
@@ -841,7 +841,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 			CTaskAssert::assert($presetId > 0);
 
 			$strUpdate = $DB->PrepareUpdate('b_tasks_filters', $arFields, 'tasks');
-			$strSql = "UPDATE b_tasks_filters SET " . $strUpdate 
+			$strSql = "UPDATE b_tasks_filters SET " . $strUpdate
 				. " WHERE ID=" . (int) $presetId . " AND USER_ID=" . (int) $this->userId;
 
 			$DB->QueryBind($strSql, $arBinds, true);
@@ -878,7 +878,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 		$DB->query(
 			"DELETE FROM b_tasks_filters
-			WHERE ID = " . (int) $presetId 
+			WHERE ID = " . (int) $presetId
 				. " AND USER_ID = " . (int) $this->userId
 		);
 
@@ -1114,7 +1114,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 			return (false);
 
 		$arPresetData = $this->arPresets[$presetId];
-		$arPresetData['Condition'] = unserialize($this->arPresets[$presetId]['Condition']);
+		$arPresetData['Condition'] = unserialize($this->arPresets[$presetId]['Condition'], ['allowed_classes' => false]);
 		$arPresetData['Condition'] = self::convertItemForExport($arPresetData['Condition']);
 
 		return ($arPresetData);

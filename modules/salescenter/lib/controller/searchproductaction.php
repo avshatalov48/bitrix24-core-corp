@@ -2,6 +2,7 @@
 
 namespace Bitrix\SalesCenter\Controller;
 
+use Bitrix\Catalog\MeasureRatioTable;
 use Bitrix\Main;
 
 class SearchProductAction extends Main\Search\SearchAction
@@ -115,6 +116,9 @@ class SearchProductAction extends Main\Search\SearchAction
 
 		if (!empty($products))
 		{
+			$productIds = array_column($products, 'ID');
+			$measureRatios = MeasureRatioTable::getCurrentRatio($productIds);
+
 			foreach ($products as $product)
 			{
 				if (
@@ -133,6 +137,7 @@ class SearchProductAction extends Main\Search\SearchAction
 				{
 					$resultItem->setSubTitle(implode(', ',$product['PROPERTIES']));
 				}
+				$resultItem->setAttribute('measureRatio', $measureRatios[(int)$product['ID']]);
 				$result[] = $resultItem;
 			}
 		}

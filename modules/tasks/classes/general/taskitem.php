@@ -8,8 +8,10 @@
  * @deprecated
  */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
@@ -359,16 +361,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		self::pinInStage($rc);
 
-		$newTaskItem = new CTaskItem( (int) $rc, $executiveUserId);
-
 		try
 		{
+			$newTaskItem = new CTaskItem( (int) $rc, $executiveUserId);
 			if (!isset($parameters['DISABLE_BIZPROC_RUN']))
 			{
 				Bizproc\Listener::onTaskAdd($rc, $newTaskItem->getData());
 			}
 		}
-		catch (TasksException $e)
+		catch (TasksException | CTaskAssertException $e)
 		{
 			static::throwExceptionVerbose();
 		}
@@ -770,11 +771,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$arFields = $arTemplate;
 
 		$arFields['CREATED_DATE'] = \Bitrix\Tasks\UI::formatDateTime($userTime);
-		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES']);
-		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS']);
-		$arFields['TAGS'] = unserialize($arFields['TAGS']);
-		$arFields['FILES'] = unserialize($arFields['FILES']);
-		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON']);
+		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES'], ['allowed_classes' => false]);
+		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS'], ['allowed_classes' => false]);
+		$arFields['TAGS'] = unserialize($arFields['TAGS'], ['allowed_classes' => false]);
+		$arFields['FILES'] = unserialize($arFields['FILES'], ['allowed_classes' => false]);
+		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON'], ['allowed_classes' => false]);
 		$arFields['REPLICATE'] = 'N';
 		$arFields['CHANGED_BY'] = $arFields['CREATED_BY'];
 		$arFields['CHANGED_DATE'] = $arFields['CREATED_DATE'];
@@ -805,7 +806,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$multitaskMode = false;
 		if($parameters['CREATE_MULTITASK'])
 		{
-			$arFields['RESPONSIBLES'] = unserialize($arFields['RESPONSIBLES']);
+			$arFields['RESPONSIBLES'] = unserialize($arFields['RESPONSIBLES'], ['allowed_classes' => false]);
 
 			// copy task to multiple responsibles
 			if ($arFields['MULTITASK'] == 'Y' && !empty($arFields['RESPONSIBLES']))
@@ -2157,40 +2158,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$newTask = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arFields, $arTaskData);
 
-		if (array_key_exists('STATUS', $arFields) && count($arFields) === 1)
-		{
-			$status = (int) $arFields['STATUS'];
-			switch ($status)
-			{
-				case \CTasks::STATE_IN_PROGRESS:
-					$action = ActionDictionary::ACTION_TASK_START;
-					break;
-				case \CTasks::STATE_SUPPOSEDLY_COMPLETED:
-				case \CTasks::STATE_COMPLETED:
-					$action = ActionDictionary::ACTION_TASK_APPROVE;
-					break;
-				case \CTasks::STATE_DEFERRED:
-					$action = ActionDictionary::ACTION_TASK_DEFER;
-					break;
-				case \CTasks::STATE_DECLINED:
-					$action = ActionDictionary::ACTION_TASK_DECLINE;
-					break;
-				case \CTasks::STATE_PENDING:
-					$action = ActionDictionary::ACTION_TASK_PAUSE;
-					break;
-				default:
-					$action = ActionDictionary::ACTION_TASK_SAVE;
-			}
-
-			if (!$this->checkAccess($action))
-			{
-				throw new TasksException(
-					GetMessage('TASKS_ACCESS_DENIED_TO_TASK_UPDATE'),
-					TasksException::TE_ACTION_NOT_ALLOWED
-				);
-			}
-		}
-		elseif ($arGivenFieldsNames === array_intersect($arGivenFieldsNames, $actionChangeDeadlineFields))
+		if ($arGivenFieldsNames === array_intersect($arGivenFieldsNames, $actionChangeDeadlineFields))
 		{
 			if (!$this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
@@ -2362,10 +2330,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		if (
 			isset($arActionArguments['FIELDS']['STATUS'])
 			&& count($arActionArguments['FIELDS']) === 1
-			&& $arActionArguments['FIELDS']['STATUS'] === \CTasks::STATE_COMPLETED
 		)
 		{
-			$actionId = ActionDictionary::ACTION_TASK_COMPLETE;
+			$actionId = ActionDictionary::ACTION_TASK_CHANGE_STATUS;
 		}
 
 		if (
@@ -2411,6 +2378,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			case ActionDictionary::ACTION_TASK_ACCEPT:
 				$arNewFields['STATUS'] = CTasks::STATE_PENDING;
+			break;
+
+			case ActionDictionary::ACTION_TASK_CHANGE_STATUS:
+				$arNewFields['STATUS'] = $arActionArguments['FIELDS']['STATUS'];
 			break;
 
 			case ActionDictionary::ACTION_TASK_DECLINE:
@@ -2481,17 +2452,31 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$arNewFields['STATUS'] = CTasks::STATE_PENDING;
 				$arNewFields['RESPONSIBLE_ID'] = $newResponsibleId;
 
+				$isScrumTask = false;
+				if (Loader::includeModule('socialnetwork'))
+				{
+					$currentGroupId = ($arNewFields['GROUP_ID'] > 0 ? $arNewFields['GROUP_ID'] : $arTaskData['GROUP_ID']);
+					$group = Workgroup::getById($currentGroupId);
+					$isScrumTask = ($group && $group->isScrumProject());
+				}
+
 				if (isset($arTaskData['AUDITORS']) && count($arTaskData['AUDITORS']))
 				{
 					if (!in_array($oldResponsibleId, $arTaskData['AUDITORS']))
 					{
 						$arNewFields['AUDITORS'] = $arTaskData['AUDITORS'];
-						$arNewFields['AUDITORS'][] = $oldResponsibleId;
+						if (!$isScrumTask)
+						{
+							$arNewFields['AUDITORS'][] = $oldResponsibleId;
+						}
 					}
 				}
 				else
 				{
-					$arNewFields['AUDITORS'] = [$oldResponsibleId];
+					if (!$isScrumTask)
+					{
+						$arNewFields['AUDITORS'] = [$oldResponsibleId];
+					}
 				}
 
 				$accessParams = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewFields, $arTaskData);
@@ -2681,7 +2666,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$sub = new CTaskItem($sTaskId, $this->executiveUserId);
 				$sub->update(array('GROUP_ID' => $groupId), array('SUBTASKS_CHANGE_GROUP' => false));
 			}
-			catch(TasksException $e)
+			catch(TasksException | CTaskAssertException $e)
 			{
 				static::disableUpdateBatchMode();
 

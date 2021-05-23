@@ -10,11 +10,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
-if(CModule::IncludeModule("compression"))
-{
-	CCompress::Disable2048Spaces();
-}
-
 $file_id = intval($_POST["file_id"]);
 $element_id = intval($_POST["element_id"]);
 $action = $_POST["action"];

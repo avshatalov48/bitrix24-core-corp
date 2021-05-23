@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_BP_DOCUMENT_ACCOMPLICES"] = "Participants";
 $MESS["TASKS_BP_DOCUMENT_ADD_IN_REPORT"] = "Added to report";
 $MESS["TASKS_BP_DOCUMENT_ALLOW_CHANGE_DEADLINE"] = "Allow deadline change";
@@ -35,6 +35,7 @@ $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_U"] = "Observer";
 $MESS["TASKS_BP_DOCUMENT_MULTITASK"] = "Multitask";
 $MESS["TASKS_BP_DOCUMENT_PARENT_ID"] = "Main task ID";
 $MESS["TASKS_BP_DOCUMENT_RESPONSIBLE_ID"] = "Responsible person";
+$MESS["TASKS_BP_DOCUMENT_RESUME_RESTRICTED"] = "Interrupted due to current plan restrictions";
 $MESS["TASKS_BP_DOCUMENT_SITE_ID"] = "Website";
 $MESS["TASKS_BP_DOCUMENT_STAGE_ID"] = "Stage";
 $MESS["TASKS_BP_DOCUMENT_START_DATE_PLAN"] = "Start date (plan)";
@@ -48,4 +49,3 @@ $MESS["TASKS_BP_DOCUMENT_TAGS"] = "Tags";
 $MESS["TASKS_BP_DOCUMENT_TASK_CONTROL"] = "Accept when completed";
 $MESS["TASKS_BP_DOCUMENT_TIME_ESTIMATE"] = "Estimated time required";
 $MESS["TASKS_BP_DOCUMENT_TITLE"] = "Name";
-?>

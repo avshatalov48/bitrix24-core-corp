@@ -169,6 +169,30 @@ else
 		$APPLICATION->ShowViewContent('crm-grid-filter');
 	}
 
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.dedupe.autosearch',
+		'',
+		array(
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+			'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
+			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST']
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.dedupe.autosearch',
+		'',
+		array(
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+			'PATH_TO_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
+			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_CONTACT_DEDUPELIST']
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
+
 	// menu
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal.menu',
@@ -272,7 +296,8 @@ else
 				'CATEGORY_ID' => $categoryID
 			),
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
-			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY']
+			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
+			'PATH_TO_MERGE' => $arResult['PATH_TO_DEAL_MERGE']
 		),
 		$component
 	);

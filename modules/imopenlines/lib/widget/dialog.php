@@ -11,6 +11,7 @@ namespace Bitrix\Imopenlines\Widget;
 use Bitrix\ImOpenLines\BasicError;
 use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 class Dialog
 {
@@ -151,14 +152,14 @@ class Dialog
 			return false;
 		}
 
-		$chat = \Bitrix\Im\Model\ChatTable::getList(array(
+		$chat = \Bitrix\Im\Model\ChatTable::getList([
 			'select' => ['ID', 'DISK_FOLDER_ID', 'ENTITY_DATA_1', 'ENTITY_DATA_2', 'ENTITY_DATA_3'],
-			'filter' => array(
+			'filter' => [
 				'=ENTITY_TYPE' => 'LIVECHAT',
 				'=ENTITY_ID' => $configId.'|'.$userId
-			),
+			],
 			'limit' => 1
-		))->fetch();
+		])->fetch();
 		if (!$chat)
 		{
 			self::setError(__METHOD__, 'CHAT_ERROR', Loc::getMessage('IMOL_WIDGET_CHAT_NOT_FOUND'), []);
@@ -171,6 +172,7 @@ class Dialog
 		$sessionClosed = true;
 		$sessionStatus = Session::ACTION_NONE;
 		$userVote = self::VOTE_NONE;
+		$dateCloseVote = '';
 
 		$operator = [
 			'ID' => 0,
@@ -193,6 +195,7 @@ class Dialog
 				'ID',
 				'CLOSED',
 				'VOTE',
+				'DATE_CLOSE_VOTE',
 				'STATUS',
 				'OPERATOR_CHAT_ID' => 'CHAT_ID',
 				'CHAT_OPERATOR_ID' => 'CHAT.AUTHOR_ID',
@@ -220,6 +223,14 @@ class Dialog
 			else if ($sessionData['VOTE'] === \Bitrix\Imopenlines\Session::VOTE_DISLIKE)
 			{
 				$userVote = self::VOTE_DISLIKE;
+			}
+
+			if(
+				!empty($sessionData['DATE_CLOSE_VOTE']) &&
+				$sessionData['DATE_CLOSE_VOTE'] instanceof DateTime
+			)
+			{
+				$dateCloseVote = date('c', $sessionData['DATE_CLOSE_VOTE']->getTimestamp());
 			}
 
 			$sessionClosed = $sessionData['CLOSED'] == 'Y';
@@ -250,6 +261,7 @@ class Dialog
 			'SESSION_CLOSE' => $sessionClosed,
 			'SESSION_STATUS' => $sessionStatus,
 			'USER_VOTE' => $userVote,
+			'DATE_CLOSE_VOTE' => $dateCloseVote,
 			'USER_CONSENT' => (bool)$userConsent,
 			'OPERATOR' => $operator,
 			'OPERATOR_CHAT_ID' => $operatorChatId

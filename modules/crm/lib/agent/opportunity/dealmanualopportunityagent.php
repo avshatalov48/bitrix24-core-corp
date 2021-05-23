@@ -80,7 +80,7 @@ class DealManualOpportunityAgent extends \Bitrix\Crm\Agent\AgentBase
 	public function getProgressData()
 	{
 		$s = Option::get('crm', '~CRM_DEAL_MANUAL_OPPORTUNITY_INITIATED_PROGRESS', '');
-		$data = $s !== '' ? unserialize($s) : null;
+		$data = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if (!is_array($data))
 		{
 			$data = array();

@@ -1,6 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 $APPLICATION->AddHeadScript("/bitrix/js/main/admin_tools.js");
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 ?>
 <div class="content-edit-form-notice-successfully" id="backupSuccessBlock" <?if (!isset($_GET['success'])):?>style="display:none"<?endif?>>
 	<span class="content-edit-form-notice-text"><span class="content-edit-form-notice-icon"></span><?=GetMessage('BACKUP_SUCCESS')?></span>

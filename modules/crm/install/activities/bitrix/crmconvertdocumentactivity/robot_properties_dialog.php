@@ -16,17 +16,17 @@ $selectedDealCategory = $dealCategoryId ? $dialog->getCurrentValue($dealCategory
 $disableActivityCompletion = isset($map['DisableActivityCompletion']) ? $map['DisableActivityCompletion'] : null;
 $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurrentValue($disableActivityCompletion['FieldName']) : 'N';
 ?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($items['Name'])?>: </span>
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($items['Name'])?>: </span>
 	<div style="display:inline-block; vertical-align: top">
 		<?foreach ($items['Options'] as $value => $optionLabel):?>
-		<div class="crm-automation-popup-checkbox-item">
-			<label class="crm-automation-popup-chk-label">
+		<div class="bizproc-automation-popup-checkbox-item">
+			<label class="bizproc-automation-popup-chk-label">
 				<input type="checkbox"
 					name="<?=htmlspecialcharsbx($items['FieldName'])?>[]"
 					data-role="crm-cvtd-item-<?=htmlspecialcharsbx(mb_strtolower($value))?>"
 					value="<?=htmlspecialcharsbx($value)?>"
-					class="crm-automation-popup-chk"<?=(in_array($value, $selectedItems)) ? 'checked' : ''?>
+					class="bizproc-automation-popup-chk"<?=(in_array($value, $selectedItems)) ? 'checked' : ''?>
 				>
 				<?=htmlspecialcharsbx($optionLabel)?>
 			</label>
@@ -35,9 +35,9 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 	</div>
 </div>
 <?php if ($dealCategoryId):?>
-<div class="crm-automation-popup-settings" data-role="crm-cvtd-deal-category">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($dealCategoryId['Name'])?>: </span>
-	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($dealCategoryId['FieldName'])?>">
+<div class="bizproc-automation-popup-settings" data-role="crm-cvtd-deal-category">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($dealCategoryId['Name'])?>: </span>
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($dealCategoryId['FieldName'])?>">
 		<?foreach ($dealCategoryId['Options'] as $value => $optionLabel):?>
 			<option value="<?=htmlspecialcharsbx($value)?>"
 				<?=($value == $selectedDealCategory) ? ' selected' : ''?>
@@ -47,12 +47,12 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 </div>
 <?php endif?>
 <?if ($disableActivityCompletion):?>
-<div class="crm-automation-popup-settings">
-	<div class="crm-automation-popup-checkbox">
-		<div class="crm-automation-popup-checkbox-item">
-			<label class="crm-automation-popup-chk-label">
+<div class="bizproc-automation-popup-settings">
+	<div class="bizproc-automation-popup-checkbox">
+		<div class="bizproc-automation-popup-checkbox-item">
+			<label class="bizproc-automation-popup-chk-label">
 				<input type="hidden" name="<?=htmlspecialcharsbx($disableActivityCompletion['FieldName'])?>" value="N">
-				<input type="checkbox" name="<?=htmlspecialcharsbx($disableActivityCompletion['FieldName'])?>" value="Y" class="crm-automation-popup-chk" <?=$disableActivityCompletionValue === 'Y' ? 'checked' : ''?>>
+				<input type="checkbox" name="<?=htmlspecialcharsbx($disableActivityCompletion['FieldName'])?>" value="Y" class="bizproc-automation-popup-chk" <?=$disableActivityCompletionValue === 'Y' ? 'checked' : ''?>>
 				<?=htmlspecialcharsbx($disableActivityCompletion['Name'])?>
 			</label>
 		</div>

@@ -19,6 +19,7 @@ class Duplicate
 	protected $summary = '';
 	protected $isJunk = false;
 	protected $options = null;
+	protected $queueId = null;
 
 	public function __construct(DuplicateCriterion $criterion, array $entities)
 	{
@@ -218,6 +219,14 @@ class Duplicate
 	public function getOption($name, $default = null)
 	{
 		return is_array($this->options) && isset($this->options[$name]) ? $this->options[$name] : $default;
+	}
+	public function setQueueId($queueId)
+	{
+		$this->queueId = $queueId;
+	}
+	public function getQueueId()
+	{
+		return $this->queueId;
 	}
 	private static function includeLangFile()
 	{

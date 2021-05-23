@@ -127,7 +127,7 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 			}
 		});
 
-		BX.addCustomEvent("onImUpdateCounterMessage", function(counter, type) {
+		BX.addCustomEvent("onImUpdateCounterLines", function(counter, type) {
 			var node = null;
 			if (type === 'LINES')
 			{

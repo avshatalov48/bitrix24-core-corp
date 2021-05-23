@@ -44,6 +44,10 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 			'IS_PRIMARY' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
+			),
+			'DATE_MODIFY' => array(
+				'data_type' => 'datetime',
+				'required' => false
 			)
 		);
 	}
@@ -72,58 +76,43 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 
 		$scope = isset($data['SCOPE']) ? $sqlHelper->forSql($data['SCOPE'], 6) : '';
 
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$connection->queryExecute(
-				"INSERT INTO b_crm_dp_entity_hash(ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY)
-					VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}')
-					ON DUPLICATE KEY UPDATE IS_PRIMARY = '{$isPrimary}'"
-			);
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$dbResult = $connection->query(
-				"SELECT 'X' FROM b_crm_dp_entity_hash WHERE ENTITY_ID = {$entityID} AND ENTITY_TYPE_ID = {$entityTypeID} AND TYPE_ID = {$typeID} AND MATCH_HASH = '{$matchHash}' AND SCOPE = '{$scope}'"
-			);
+		$dateModify = (isset($data['DATE_MODIFY']) && $data['DATE_MODIFY'] instanceof Main\Type\DateTime) ? $data['DATE_MODIFY'] : new Main\Type\DateTime();
+		$dateModify = $sqlHelper->convertToDbDateTime($dateModify);
 
-			if(!is_array($dbResult->fetch()))
-			{
-				$connection->queryExecute(
-					"INSERT INTO b_crm_dp_entity_hash(ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY)
-						VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}')"
-				);
-			}
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$connection->queryExecute("MERGE INTO b_crm_dp_entity_hash USING (SELECT {$entityID} ENTITY_ID, {$entityTypeID} ENTITY_TYPE_ID, {$typeID} TYPE_ID, '{$matchHash}' MATCH_HASH, '{$scope}' SCOPE FROM dual)
-				source ON
-				(
-					source.ENTITY_ID = b_crm_dp_entity_hash.ENTITY_ID
-					AND source.ENTITY_TYPE_ID = b_crm_dp_entity_hash.ENTITY_TYPE_ID
-					AND source.TYPE_ID = b_crm_dp_entity_hash.TYPE_ID
-					AND source.MATCH_HASH = b_crm_dp_entity_hash.MATCH_HASH
-					AND source.SCOPE = b_crm_dp_entity_hash.SCOPE
-				)
-				WHEN MATCHED THEN
-					UPDATE SET b_crm_dp_entity_hash.IS_PRIMARY = '{$isPrimary}'
-				WHEN NOT MATCHED THEN
-					INSERT (ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY)
-					VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}')"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$connection->queryExecute(
+			"INSERT INTO b_crm_dp_entity_hash(ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY, DATE_MODIFY)
+				VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}', {$dateModify})
+				ON DUPLICATE KEY UPDATE IS_PRIMARY = '{$isPrimary}'"
+		);
+
 	}
 	public static function deleteByFilter(array $filter)
 	{
+		$conditions = self::buildSqlConditions($filter);
+
+		if(!empty($conditions))
+		{
+			Main\Application::getConnection()->queryExecute('DELETE FROM  b_crm_dp_entity_hash WHERE '.implode(' AND ', $conditions));
+		}
+	}
+
+	public static function setDateModify(array $filter, Main\Type\DateTime $date)
+	{
+		$conditions = self::buildSqlConditions($filter);
+		if(!empty($conditions))
+		{
+			$sqlDate = $date->format('Y-m-d H:i:s');
+			$conditionSql = implode(' AND ', $conditions);
+			Main\Application::getConnection()->queryExecute("UPDATE b_crm_dp_entity_hash SET DATE_MODIFY='{$sqlDate}' WHERE {$conditionSql}");
+		}
+	}
+
+	protected static function buildSqlConditions(array $filter): array
+	{
+		$conditions = [];
+
 		$connection = Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
-
-		$conditions = array();
 
 		$entityID = isset($filter['ENTITY_ID']) ? (int)$filter['ENTITY_ID'] : 0;
 		if($entityID > 0)
@@ -197,9 +186,6 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 			}
 		}
 
-		if(!empty($conditions))
-		{
-			Main\Application::getConnection()->queryExecute('DELETE FROM  b_crm_dp_entity_hash WHERE '.implode(' AND ', $conditions));
-		}
+		return $conditions;
 	}
 }

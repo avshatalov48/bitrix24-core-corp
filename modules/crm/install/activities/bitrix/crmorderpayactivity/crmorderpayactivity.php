@@ -47,7 +47,11 @@ class CBPCrmOrderPayActivity
 				$service = $payment->getPaySystem();
 				if ($service && $service->isRecurring($payment))
 				{
-					$service->repeatRecurrent($payment);
+					$result = $service->repeatRecurrent($payment);
+					if (!$result->isSuccess())
+					{
+						return CBPActivityExecutionStatus::Closed;
+					}
 				}
 			}
 		}

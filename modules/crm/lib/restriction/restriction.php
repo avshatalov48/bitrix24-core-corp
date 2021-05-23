@@ -78,7 +78,7 @@ abstract class Restriction
 		if($this->name !== '')
 		{
 			$s = Main\Config\Option::get('crm', $this->name, '', '');
-			$params = $s !== '' ? unserialize($s) : null;
+			$params = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 			if(is_array($params) && !empty($params))
 			{
 				$this->internalize($params);

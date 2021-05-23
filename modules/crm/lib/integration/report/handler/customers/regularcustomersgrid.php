@@ -22,6 +22,14 @@ class RegularCustomersGrid extends Handler\Deal
 
 	public function prepare()
 	{
+		$filterParameters = $this->getFilterParameters();;
+		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?: 0;
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId))
+		{
+			return false;
+		}
+
 		$query = $this->prepareQuery();
 		return Application::getConnection()->query($query)->fetchAll();
 	}

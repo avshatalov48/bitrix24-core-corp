@@ -85,10 +85,18 @@ BX.CTasksPlannerHandler.prototype.formatTime = function(ts, bSec)
 BX.CTasksPlannerHandler.prototype.draw = function(obPlanner, DATA)
 {
 	if (typeof DATA.MANDATORY_UFS !== 'undefined')
+	{
 		this.MANDATORY_UFS = DATA.MANDATORY_UFS;
+	}
+	if (typeof DATA.TASK_ADD_URL !== 'undefined')
+	{
+		this.TASK_ADD_URL = DATA.TASK_ADD_URL;
+	}
 
-	if(!DATA.TASKS_ENABLED)
+	if (!DATA.TASKS_ENABLED)
+	{
 		return;
+	}
 
 	this.PLANNER = obPlanner;
 
@@ -216,12 +224,11 @@ BX.CTasksPlannerHandler.prototype.draw = function(obPlanner, DATA)
 			}
 
 			children.push(BX.create('a', {
-				attrs: {href: 'javascript:void(0)'},
+				attrs: {href: DATA.TASKS[i].URL},
 				props: {
 					className: 'tm-task-name' + ((strTimer === '') ? ' tm-task-no-timer' : '')
 				},
-				text: DATA.TASKS[i].TITLE,
-				events: {click: BX.proxy(this.showTask, this)}
+				text: DATA.TASKS[i].TITLE
 			}));
 
 			if (strTimer !== '')
@@ -602,19 +609,22 @@ BX.CTasksPlannerHandler.prototype.showTasks = function()
 
 BX.CTasksPlannerHandler.prototype.showTask = function(e)
 {
-	var task_id = BX.proxy_context.parentNode.bx_task_id,
-		tasks = this.DATA_TASKS,
-		arTasks = [];
+	var taskId = BX.proxy_context.parentNode.bx_task_id;
+	var tasks = this.DATA_TASKS;
 
 	if (tasks.length > 0)
 	{
-		for(var i=0; i<tasks.length; i++)
+		var taskViewUrl = '';
+		tasks.forEach(function(task) {
+			if (Number(task.ID) === Number(taskId))
+			{
+				taskViewUrl = task.URL;
+			}
+		});
+		if (taskViewUrl !== '')
 		{
-			arTasks.push(tasks[i].ID);
+			BX.SidePanel.Instance.open(taskViewUrl);
 		}
-
-		taskIFramePopup.tasksList = arTasks;
-		taskIFramePopup.view(task_id);
 	}
 
 	return false;
@@ -686,12 +696,7 @@ BX.CTasksPlannerHandler.prototype.drawTasksForm = function(cb)
 		children = [
 			BX.create('A', {
 				text : BX.message('JS_CORE_PL_TASKS_CREATE'),
-				attrs: {href: 'javascript:void(0)'},
-				events : {
-					click: function(){
-						window['taskIFramePopup'].add({ADD_TO_TIMEMAN : 'Y'});
-					}
-				}
+				attrs: {href: this.TASK_ADD_URL}
 			})
 		];
 	}

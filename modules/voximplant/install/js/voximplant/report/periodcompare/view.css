@@ -1,0 +1,59 @@
+.telephony-report-period-compare-modal {
+	display: inline-block;
+	top: 350px;
+	padding: 15px 16px 0 13px;
+	min-width: 157px;
+	border-left: 3px solid transparent;
+	background: #fff;
+	box-shadow: 0 6px 21px 0 rgba(83,92,105,.15);
+	box-sizing: border-box;
+}
+.telephony-report-period-compare-modal-title {
+	display: block;
+	margin: 0 0 17px 0;
+	padding: 0 0 12px 0;
+	border-bottom: 1px solid rgba(130,139,149,.19);
+	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+.telephony-report-period-compare-modal-subtitle-primary {
+	display: block;
+	margin: 0 0 2px 0;
+	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+	opacity: .84;
+}
+.telephony-report-period-compare-modal-subtitle-secondary {
+	display: block;
+	margin: 0 0 2px 0;
+	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #A8ADB4;
+	opacity: .84;
+}
+.telephony-report-period-compare-modal-main .telephony-report-chart-card-subtitle {
+	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.telephony-report-period-compare-modal-main {}
+.telephony-report-period-compare-modal-content {
+	display: flex;
+	padding: 0 0 18px 0;
+	align-items: baseline;
+	justify-content: space-between;
+}
+.telephony-report-period-compare-modal-value {
+	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+
+.telephony-report-period-compare-modal-percent-value {
+	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-left: 20px;
+}
+
+.telephony-report-period-compare-modal-percent-value.red {
+	color: #FF5752;
+}
+
+.telephony-report-period-compare-modal-percent-value.green {
+	color: green;
+}

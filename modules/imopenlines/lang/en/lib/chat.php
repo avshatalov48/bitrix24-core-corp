@@ -15,6 +15,7 @@ $MESS["IMOL_CHAT_CLOSE_F"] = "#USER# ended current conversation";
 $MESS["IMOL_CHAT_CLOSE_FOR_OPEN_F"] = "#USER# closed the current conversation and started a new one";
 $MESS["IMOL_CHAT_CLOSE_FOR_OPEN_M"] = "#USER# closed the current conversation and started a new one";
 $MESS["IMOL_CHAT_CLOSE_M"] = "#USER# ended current conversation";
+$MESS["IMOL_CHAT_END_BOT_SESSION"] = "Bot has forwarded conversation to an agent";
 $MESS["IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE"] = "The agent you are trying to assign is already assigned to this conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST"] = "There is a concurrent request to accept this conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION"] = "Cannot load session";

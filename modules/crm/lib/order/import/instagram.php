@@ -55,7 +55,7 @@ class Instagram
 
 		if (!empty($option) && CheckSerializedData($option))
 		{
-			$status = @unserialize($option);
+			$status = @unserialize($option, ['allowed_classes' => false]);
 		}
 		else
 		{

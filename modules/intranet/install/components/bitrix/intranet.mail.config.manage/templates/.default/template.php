@@ -1,5 +1,4 @@
 <?php
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 $customDomains = array();
@@ -17,6 +16,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 
 \CJSCore::init(array('socnetlogdest', 'popup', 'fx'));
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $currentUser = $arParams['CURRENT_USER'];
 $currentUser['__id'] = sprintf('U%u', $currentUser['ID']);

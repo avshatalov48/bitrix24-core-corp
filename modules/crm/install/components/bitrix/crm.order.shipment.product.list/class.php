@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Product\Url;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,6 +18,9 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 	private $order = null;
 	/** @var \Bitrix\Crm\Order\Shipment  */
 	private $shipment = null;
+
+	/** @var null|\Bitrix\Catalog\Url\AdminPage\CatalogBuilder  */
+	private $urlBuilder = null;
 
 	private function init()
 	{
@@ -76,6 +81,30 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
 		CUtil::InitJSCore(['ajax', 'tooltip', 'sidepanel']);
+		return true;
+	}
+
+	private function initUrlBuilder(): bool
+	{
+		if (!isset($this->arParams['BUILDER_CONTEXT']))
+		{
+			$this->arParams['BUILDER_CONTEXT'] = '';
+		}
+		if (
+			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+		)
+		{
+			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+		}
+
+		$manager = BuilderManager::getInstance();
+		$this->urlBuilder = $manager->getBuilder($this->arParams['BUILDER_CONTEXT']);
+		if ($this->urlBuilder === null)
+		{
+			$this->errors[] = new Main\Error(Loc::getMessage('CRM_ORDER_SPLC_ERR_URL_BUILDER_ABSENT'));
+			return false;
+		}
 		return true;
 	}
 
@@ -199,6 +228,8 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				array(),
 				$this->order->getUserId()
 			);
+
+			$this->prepareProductUrls($catalogProductsFields);
 		}
 
 		/** @var \Bitrix\Sale\ShipmentItem $item */
@@ -220,6 +251,9 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				if ($basketItem->getField("MODULE") == "catalog" && !empty($catalogProductsFields[$productId]))
 					$params = $catalogProductsFields[$productId];
 
+				AddMessage2Log('Params');
+				AddMessage2Log($params);
+
 				if (intval($basketItem->getField("MEASURE_CODE")) > 0)
 					$params["MEASURE_CODE"] = intval($basketItem->getField("MEASURE_CODE"));
 				elseif (!isset($params["MEASURE_CODE"]))
@@ -230,10 +264,10 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				elseif(!isset($params["MEASURE_TEXT"]))
 					$params["MEASURE_TEXT"] = "";
 
-				if($params["EDIT_PAGE_URL"] <> '')
+/*				if($params["EDIT_PAGE_URL"] <> '')
 				{
 					$params["EDIT_PAGE_URL"] = '/shop/settings/'.str_replace('.php', '/', $params["EDIT_PAGE_URL"]);
-				}
+				} */
 
 				if ($basketItem->isBundleParent())
 				{
@@ -350,6 +384,47 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 
 		return $items;
+	}
+
+	private function prepareProductUrls(array &$list): void
+	{
+		$items = array_filter($list, [__CLASS__, 'filterCatalogProducts']);
+		if (!empty($items))
+		{
+			$iblocks = [];
+			foreach ($items as $id => $row)
+			{
+				$iblockId = ($row['OFFERS_IBLOCK_ID'] > 0 ? $row['OFFERS_IBLOCK_ID'] : $row['IBLOCK_ID']);
+				if (!isset($iblocks[$iblockId]))
+				{
+					$iblocks[$iblockId] = [];
+				}
+				$iblocks[$iblockId][] = $id;
+			}
+			unset($id, $row);
+			foreach ($iblocks as $iblockId => $rows)
+			{
+				$this->urlBuilder->setIblockId($iblockId);
+				$this->urlBuilder->preloadUrlData($this->urlBuilder::ENTITY_ELEMENT, $rows);
+				foreach ($rows as $id)
+				{
+					$url = $this->urlBuilder->getProductDetailUrl($id);
+					if ($url != '')
+					{
+						$list[$id]['EDIT_PAGE_URL'] = $url;
+					}
+				}
+				unset($url, $id);
+				$this->urlBuilder->clearPreloadedUrlData();
+			}
+			unset($iblockId, $rows, $iblocks);
+		}
+		unset($items);
+	}
+
+	private static function filterCatalogProducts(array $row)
+	{
+		return (isset($row['MODULE']) && $row['MODULE'] == 'catalog');
 	}
 
 	private function prepareAdminLink($url)
@@ -558,6 +633,12 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			return;
 		}
 
+		if (!$this->initUrlBuilder())
+		{
+			$this->showErrors();
+			return;
+		}
+
 		$this->arResult['GRID_ID'] = 'crm_order_shipment_product_list';
 		$this->arResult['HEADERS'] = $this->getHeaders();
 		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
@@ -599,4 +680,3 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		$this->IncludeComponentTemplate();
 	}
 }
-?>

@@ -151,7 +151,7 @@ abstract class EntityTimelineBuildAgent extends AgentBase
 		}
 
 		$s = Option::get('crm', $progressName,  '');
-		$data = $s !== '' ? unserialize($s) : null;
+		$data = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($data))
 		{
 			$data = array();

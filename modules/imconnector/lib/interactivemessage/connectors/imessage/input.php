@@ -57,7 +57,7 @@ class Input extends InteractiveMessage\Input
 
 				foreach ($action['timePicker']['items'] as $item)
 				{
-					$values[$item['field_id']] = Crm\Form::prepareFormDateValues($item['field_id'], unserialize($item['option_id'], [DateTime::class]), $formId);
+					$values[$item['field_id']] = Crm\Form::prepareFormDateValues($item['field_id'], unserialize($item['option_id'], ['allowed_classes' => [DateTime::class]]), $formId);
 				}
 
 				if(!empty($values))

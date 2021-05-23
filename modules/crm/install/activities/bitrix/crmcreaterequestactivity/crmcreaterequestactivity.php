@@ -168,12 +168,14 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 		return array(
 			'Subject' => array(
 				'Name' => GetMessage('CRM_CREATE_REQUEST_SUBJECT'),
+				'Description' => GetMessage('CRM_CREATE_REQUEST_SUBJECT'),
 				'FieldName' => 'subject',
 				'Type' => 'string',
 				'Required' => true
 			),
 			'Description' => array(
 				'Name' => GetMessage('CRM_CREATE_REQUEST_DESCRIPTION'),
+				'Description' => GetMessage('CRM_CREATE_REQUEST_DESCRIPTION'),
 				'FieldName' => 'description',
 				'Type' => 'text',
 				'Required' => true

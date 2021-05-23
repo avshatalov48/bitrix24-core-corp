@@ -17,6 +17,7 @@ class Comment
 	public const TYPE_STATUS = 3;
 	public const TYPE_EXPIRED = 4;
 	public const TYPE_EXPIRED_SOON = 5;
+	public const TYPE_PING_STATUS = 6;
 
 	private $authorId = 0;
 	private $type = self::TYPE_DEFAULT;

@@ -36,9 +36,6 @@ else
 
 __IncludeLang(dirname(__FILE__)."/lang/".$lng."/ajax.php");
 
-if(CModule::IncludeModule("compression"))
-	CCompress::Disable2048Spaces();
-
 if(CModule::IncludeModule("socialnetwork"))
 {
 	$bCurrentUserIsAdmin = CSocNetUser::IsCurrentUserModuleAdmin();

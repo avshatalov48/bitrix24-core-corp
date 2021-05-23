@@ -109,6 +109,10 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 							$dup->setOption('enableOverwrite', false);
 							$dup->setRootEntityID($secondaryEntityID);
 						}
+						else
+						{
+							$dup->addEntity(new DuplicateEntity($entityTypeID, $secondaryEntityID));
+						}
 
 						$result->addItem($secondaryEntityMatchHash, $dup);
 						foreach($entry['PRIMARY'] as $primaryEntityID)
@@ -200,6 +204,10 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 				'!@ENTITY_ID',
 				DuplicateIndexMismatch::prepareQueryField($criterion, $entityTypeID, $rootEntityID, $userID)
 			);
+		}
+		if ($this->getParams()->limitByAssignedUser())
+		{
+			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
 		}
 
 		$limit = 0;

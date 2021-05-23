@@ -2,6 +2,7 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Crm\Exclusion\Manager;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\Recyclebin\RecyclingManager;
@@ -64,5 +65,23 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return array_values($entity->getPopupFields($viewType));
+	}
+
+	public function excludeEntityAction(string $entityType, array $ids): void
+	{
+		Loader::includeModule('crm');
+
+		$entity = Kanban\Entity::getInstance($entityType);
+		if(!$entity)
+		{
+			$this->addError(new \Bitrix\Main\Error('Entity not found'));
+			return;
+		}
+
+		$entityTypeId = $entity->getTypeId();
+		foreach ($ids as $id)
+		{
+			Manager::excludeEntity($entityTypeId, $id);
+		}
 	}
 }

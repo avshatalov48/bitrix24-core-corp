@@ -56,6 +56,8 @@ $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + \CTimeZo
 	'ui.label'
 ]);
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 if (!$emptyKanban) {
     $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
     $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');

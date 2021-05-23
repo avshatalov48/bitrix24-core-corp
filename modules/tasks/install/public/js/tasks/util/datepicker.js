@@ -14,6 +14,8 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 		{
 			this.callConstruct(BX.Tasks.Util.Widget);
 
+			this.calendarSettings = this.option('calendarSettings');
+
 			var format = BX.message('FORMAT_DATETIME').replace(':SS', '').replace('/SS', '');
 			if(this.option('displayFormat') == 'system-short')
 			{
@@ -110,7 +112,6 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 
 		onInputClicked: function(node)
 		{
-            // open calendar
 			this.instances.calendar = BX.calendar({
 				node: this.scope(), 
 				form: 'task-edit-form', 
@@ -118,11 +119,15 @@ BX.Tasks.Util.DatePicker = BX.Tasks.Util.Widget.extend({
 				bTime: this.option('displayFormat') == 'system-long',
 				value: this.getInitialValue(),
 				bHideTime: false,
-				bCompatibility: false,
+				bCompatibility: true,
+				bCategoryTimeVisibilityOption: 'tasks.bx.calendar.deadline',
+				bTimeVisibility: (
+					this.calendarSettings ? (this.calendarSettings.deadlineTimeVisibility === 'Y') : false
+				),
 				callback_after: BX.delegate(this.onTimeSelected, this)
 			});
 
-            this.fireEvent('open');
+			this.fireEvent('open');
 		},
 
         closeCalendar: function()

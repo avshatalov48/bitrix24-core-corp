@@ -131,12 +131,14 @@ class FormLanding
 		// site is not exist, create new one
 		if (!$storedSiteId)
 		{
+			Rights::setGlobalOff();
 			$res = \Bitrix\Landing\Site::add([
 				'TITLE' => 'CRM Forms',
 				'TYPE' => $this::SITE_TYPE,
 				'CODE' => \Bitrix\Landing\Site\Type::PSEUDO_SCOPE_CODE_FORMS,
 				'SPECIAL' => 'Y'
 			]);
+			Rights::setGlobalOn();
 			if ($res->isSuccess())
 			{
 				$this->siteId = (int) $res->getId();
@@ -163,7 +165,8 @@ class FormLanding
 					'ID'
 				],
 				'filter' => [
-					'=ID' => $this->siteId
+					'=ID' => $this->siteId,
+					'CHECK_PERMISSIONS' => 'N'
 				]
 			]);
 			if (!$res->fetch())
@@ -187,9 +190,7 @@ class FormLanding
 	 */
 	public function createLanding($formId, $formName = null): ?int
 	{
-		Rights::setGlobalOff();
 		$siteId = $this->getSiteId();
-		Rights::setGlobalOn();
 		if (!$siteId)
 		{
 			return $siteId;
@@ -299,9 +300,7 @@ class FormLanding
 			return null;
 		}
 
-		Rights::setGlobalOff();
 		$siteId = $this->getSiteId();
-		Rights::setGlobalOn();
 		if (!$siteId)
 		{
 			$siteId = 0;

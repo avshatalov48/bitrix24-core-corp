@@ -231,5 +231,5 @@ $APPLICATION->IncludeComponent(
 </body>
 	</html>
 <?
-	\Bitrix\Main\Application::getInstance()->terminate();
+	\CMain::FinalActions();
 }

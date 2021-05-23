@@ -102,3 +102,4 @@ $MESS['CRM_KANBAN_REST_DEMO_MARKET_2'] = 'Готовая CRM из Битрикс
 $MESS['CRM_KANBAN_REST_DEMO_PUBLICATION_2'] = 'Опубликовать свою CRM в Битрикс24.Маркет';
 $MESS['CRM_KANBAN_REST_DEMO_MARKET_SECTOR'] = 'Отраслевые CRM для вашего бизнеса';
 $MESS['CRM_KANBAN_REST_DEMO_SETUP'] = 'Настроить';
+$MESS['CRM_KANBAN_PANEL_MERGE'] = 'Объединить';

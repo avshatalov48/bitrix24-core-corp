@@ -19,8 +19,9 @@ use Bitrix\SalesCenter\OrderFacade;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
-use Bitrix\Crm\EntityAddress;
+use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Delivery\Services\OrderPropsDictionary;
+use Bitrix\Sale\Services\Base\RestrictionManager;
 
 define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
 
@@ -79,6 +80,10 @@ class Order extends Base
 		foreach ($basketItems as $item)
 		{
 			$item = $this->obtainProductFields($item);
+			if (empty($item['productId']) && empty($item['name']))
+			{
+				continue;
+			}
 
 			$orderFacade->addProduct($item);
 			$sortedByCode[$item['code']] = $item;
@@ -87,13 +92,23 @@ class Order extends Base
 		$order = $orderFacade->buildOrder();
 		if ($order === null)
 		{
+			$this->addErrors($orderFacade->getErrors());
 			return ['items' => $basketItems];
 		}
 
 		$discountSum = 0;
+		$baseSum = 0;
 		foreach ($order->getBasket() as $basketItem)
 		{
-			$discountSum += $basketItem->getDiscountPrice() * $basketItem->getQuantity();
+			if ($basketItem->getBasePrice() !== $basketItem->getPrice() && empty($basketItem->getDiscountPrice()))
+			{
+				$discountSum += ($basketItem->getBasePrice() - $basketItem->getPrice()) * $basketItem->getQuantity();
+			}
+			else
+			{
+				$discountSum += $basketItem->getDiscountPrice() * $basketItem->getQuantity();
+			}
+			$baseSum += $basketItem->getBasePrice() * $basketItem->getQuantity();
 		}
 
 		return [
@@ -101,8 +116,9 @@ class Order extends Base
 			'total' => [
 				'discount' => SaleFormatCurrency($discountSum, $order->getCurrency(), true),
 				'result' => SaleFormatCurrency($order->getPrice(), $order->getCurrency(), true),
+				'taxSum' => SaleFormatCurrency($order->getBasket()->getVatSum(), $order->getCurrency(), true),
 				'resultNumeric' => $order->getPrice(),
-				'sum' => SaleFormatCurrency($order->getBasket()->getBasePrice(), $order->getCurrency(), true),
+				'sum' => SaleFormatCurrency($baseSum, $order->getCurrency(), true),
 			]
 		];
 	}
@@ -114,17 +130,138 @@ class Order extends Base
 	 * @param array $deliveryRelatedPropValues
 	 * @param array $deliveryRelatedServiceValues
 	 * @param int $deliveryResponsibleId
-	 * @return array|null
+	 * @return array[]|null
 	 */
 	public function refreshDeliveryAction(
-		array $basketItems,
-		array $options,
-		int $deliveryServiceId,
+		array $basketItems = [],
+		array $options = [],
+		int $deliveryServiceId = 0,
 		array $deliveryRelatedPropValues = [],
 		array $deliveryRelatedServiceValues = [],
 		int $deliveryResponsibleId = 0
 	)
 	{
+		$order = $this->buildOrder(
+			[
+				$basketItems,
+				$options,
+				$deliveryServiceId,
+				$deliveryRelatedPropValues,
+				$deliveryRelatedServiceValues,
+				$deliveryResponsibleId,
+			],
+			[
+				'DELIVERY_CALCULATION',
+				'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
+			]
+		);
+
+		if (!$order || $this->getErrors())
+		{
+			if (!$this->getErrors())
+			{
+				$this->addError(new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_BUILD_ERROR')));
+			}
+
+			return null;
+		}
+
+		return [
+			'deliveryCalculationResult' => ['price' => $order->getDeliveryPrice()],
+		];
+	}
+
+	/**
+	 * @param array $basketItems
+	 * @param array $options
+	 * @param int $deliveryServiceId
+	 * @param array $deliveryRelatedPropValues
+	 * @param array $deliveryRelatedServiceValues
+	 * @param int $deliveryResponsibleId
+	 * @return array|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\SystemException
+	 */
+	public function getCompatibleDeliverySystemsAction(
+		array $basketItems = [],
+		array $options = [],
+		int $deliveryServiceId = 0,
+		array $deliveryRelatedPropValues = [],
+		array $deliveryRelatedServiceValues = [],
+		int $deliveryResponsibleId = 0
+	)
+	{
+		$shipment = null;
+		$order = $this->buildOrder(
+			[
+				$basketItems,
+				$options,
+				$deliveryServiceId,
+				$deliveryRelatedPropValues,
+				$deliveryRelatedServiceValues,
+				$deliveryResponsibleId
+			]
+		);
+		if ($order)
+		{
+			$shipmentCollection = $order->getShipmentCollection()->getNotSystemItems();
+			foreach ($shipmentCollection as $shipment)
+			{
+				break;
+			}
+		}
+
+		$availableServiceIds = [];
+		$activeServices = Delivery\Services\Manager::getActiveList();
+		foreach ($activeServices as $service)
+		{
+			$isCompatible = false;
+
+			if (is_null($shipment))
+			{
+				$isCompatible = true;
+			}
+			else
+			{
+				$serviceObject = Delivery\Services\Manager::getObjectById($service['ID']);
+
+				if ($serviceObject && $serviceObject->isCompatible($shipment))
+				{
+					$isCompatible = true;
+				}
+			}
+
+			if ($isCompatible)
+			{
+				$availableServiceIds[] = $service['ID'];
+			}
+		}
+
+		return [
+			'availableServiceIds' => $availableServiceIds
+		];
+	}
+
+	/**
+	 * @param array $data
+	 * @param null|array $errorsFilter
+	 * @return Sale\Order|null
+	 */
+	private function buildOrder(
+		array $data,
+		?array $errorsFilter = null
+	): ?Sale\Order
+	{
+		list(
+			$basketItems,
+			$options,
+			$deliveryServiceId,
+			$deliveryRelatedPropValues,
+			$deliveryRelatedServiceValues,
+			$deliveryResponsibleId
+		) = $data;
+
 		$this->checkModules();
 
 		if (!empty($this->getErrors()))
@@ -151,15 +288,25 @@ class Order extends Base
 		}
 
 		$order = $orderFacade->buildOrder(true);
-		if ($order === null)
+		if (is_null($errorsFilter))
 		{
-			$this->addErrors($orderFacade->getErrors());
-			return null;
+			return $order;
 		}
 
-		return [
-			'deliveryCalculationResult' => ['price' => $order->getDeliveryPrice()],
-		];
+		$errors = $orderFacade->getErrors();
+		$filteredErrors = [];
+
+		foreach ($errors as $error)
+		{
+			if (empty($errorsFilter) || in_array($error->getCode(), $errorsFilter, true))
+			{
+				$filteredErrors[] = $error;
+			}
+		}
+
+		$this->addErrors($filteredErrors);
+
+		return $order;
 	}
 
 	/**
@@ -245,14 +392,14 @@ class Order extends Base
 				&& (int)$preparedItem['discount'] === 0
 			)
 			{
-				$preparedItem['discountType'] = 'currency';
+				$preparedItem['discountType'] = \Bitrix\Crm\Discount::MONETARY;
 			}
 
-			if ($basketItem->getDiscountPrice() > 0)
+			if (!empty($basketItem->getDiscountPrice()))
 			{
 				if (empty($preparedItem['discountType']))
 				{
-					$preparedItem['discountType'] = 'percent';
+					$preparedItem['discountType'] = \Bitrix\Crm\Discount::PERCENTAGE;
 				}
 
 				if (empty($preparedItem['showDiscount']))
@@ -260,21 +407,16 @@ class Order extends Base
 					$preparedItem['showDiscount'] = 'Y';
 				}
 
-				if ($preparedItem['discountType'] !== 'percent')
-				{
-					$preparedItem['discount'] = (float)$basketItem->getDiscountPrice();
-				}
-				else
-				{
-					$preparedItem['discount'] = roundEx($basketItem->getDiscountPrice() / $basketItem->getBasePrice() * 100, 2);
-				}
+				$preparedItem['discount'] = (float)$basketItem->getDiscountPrice();
+				$preparedItem['discountRate'] = roundEx($basketItem->getDiscountPrice() / $basketItem->getBasePrice() * 100, 2);
 			}
 			else
 			{
 				$preparedItem['discount'] = 0;
 			}
 
-			$resultBasket[$sort] = $preparedItem;
+			$key = $preparedItem['innerId'] ?? $preparedItem['code'];
+			$resultBasket[$key] = $preparedItem;
 		}
 
 		sort($resultBasket);
@@ -472,6 +614,29 @@ class Order extends Base
 
 		$result['CLIENT'] = $clientInfo;
 
+		if (isset($options['context']))
+		{
+			$platformCode = '';
+
+			if ($options['context'] === 'deal')
+			{
+				$platformCode = Crm\Order\TradingPlatform\Deal::TRADING_PLATFORM_CODE;
+			}
+			elseif ($options['context'] === 'sms')
+			{
+				$platformCode = Crm\Order\TradingPlatform\Activity::TRADING_PLATFORM_CODE;
+			}
+
+			if ($platformCode)
+			{
+				$platform = Crm\Order\TradingPlatform\Deal::getInstanceByCode($platformCode);
+				if ($platform->isInstalled())
+				{
+					$result['TRADING_PLATFORM'] = $platform->getId();
+				}
+			}
+		}
+
 		return $result;
 	}
 
@@ -480,10 +645,10 @@ class Order extends Base
 		if (
 			(int)$product['discount'] === 0
 			&&
-			abs($product['price'] - $product['basePrice']) > 1e-10
+			abs($product['priceExclusive'] - $product['basePrice']) > 1e-10
 		)
 		{
-			$product['discount'] = 100 - ($product['price'] / $product['basePrice']) * 100;
+			$product['discount'] = 100 - ($product['priceExclusive'] / $product['basePrice']) * 100;
 			$product['discount'] = (int)$product['discount'];
 		}
 
@@ -640,11 +805,11 @@ class Order extends Base
 			$item = [
 				'PRODUCT_ID' => $product['productId'],
 				'PRODUCT_NAME' => $product['name'],
-				'PRICE' => $product['basePrice'],
-				'PRICE_ACCOUNT' => $product['basePrice'],
-				'PRICE_EXCLUSIVE' => $product['basePrice'],
+				'PRICE' => $product['price'],
+				'PRICE_ACCOUNT' => $product['price'],
+				'PRICE_EXCLUSIVE' => $product['baseExclusive'],
 				'PRICE_NETTO' => $product['basePrice'],
-				'PRICE_BRUTTO' => $product['basePrice'],
+				'PRICE_BRUTTO' => $product['price'],
 				'QUANTITY' => $product['quantity'],
 				'MEASURE_CODE' => $product['measureCode'],
 				'MEASURE_NAME' => $product['measureName'],
@@ -653,29 +818,16 @@ class Order extends Base
 				'SORT' => $sort,
 			];
 
-			$discount = 0;
-			if ((string)$product['discountType'] === 'percent')
+			if (!empty($product['discount']))
 			{
-				if ($product['discount'] > 0)
-				{
-					$discount = $product['basePrice'] * $product['discount'] / 100;
-
-					$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
-					$item['DISCOUNT_RATE'] = $product['discount'];
-					$item['DISCOUNT_SUM'] = $discount;
-				}
-			}
-			elseif ((string)$product['discountType'] === 'currency')
-			{
-				$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
+				$item['DISCOUNT_TYPE_ID'] =
+					(int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY
+						? \Bitrix\Crm\Discount::MONETARY
+						: \Bitrix\Crm\Discount::PERCENTAGE
+				;
+				$item['DISCOUNT_RATE'] = $product['discountRate'];
 				$item['DISCOUNT_SUM'] = $product['discount'];
-
-				$discount = $product['discount'];
 			}
-
-			$item['PRICE'] -= $discount;
-			$item['PRICE_ACCOUNT'] -= $discount;
-			$item['PRICE_EXCLUSIVE'] -= $discount;
 
 			$result[] = $item;
 		}
@@ -1440,7 +1592,7 @@ HTML;
 		 * Check if address is specified so that we do not overwrite it
 		 */
 		$existingAddress = RequisiteAddress::getByOwner(
-			EntityAddress::Delivery,
+			Crm\EntityAddressType::Delivery,
 			\CCrmOwnerType::Requisite,
 			$requisiteId
 		);
@@ -1461,7 +1613,7 @@ HTML;
 		RequisiteAddress::register(
 			\CCrmOwnerType::Requisite,
 			$requisiteId,
-			EntityAddress::Delivery,
+			Crm\EntityAddressType::Delivery,
 			[
 				'LOC_ADDR_ID' => $addressId,
 			]

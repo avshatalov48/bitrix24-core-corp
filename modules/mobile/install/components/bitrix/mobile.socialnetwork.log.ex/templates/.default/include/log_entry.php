@@ -26,7 +26,7 @@ $arComponentParams = array_merge($arParams, [
 			"LOG_DATE" => $arEvent["LOG_DATE"],
 			"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
 		],
-		"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
+		"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
 		"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false)
 	]
 );

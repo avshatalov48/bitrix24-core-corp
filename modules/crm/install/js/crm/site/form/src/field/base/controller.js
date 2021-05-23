@@ -175,7 +175,7 @@ class Controller extends Event
 
 		if (this.required)
 		{
-			if (items.length === 0 || !items[0].selected || items[0].value === '')
+			if (items.length === 0 || !items[0].selected || (items[0].value+'').trim() === '')
 			{
 				return true;
 			}

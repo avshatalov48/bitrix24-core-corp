@@ -133,7 +133,7 @@ class CCrmProductRow extends CAllCrmProductRow
 			return array();
 		}
 
-		return unserialize($s);
+		return unserialize($s, ['allowed_classes' => false]);
 	}
 
 	public static function SaveSettings($ownerType, $ownerID, $settings)

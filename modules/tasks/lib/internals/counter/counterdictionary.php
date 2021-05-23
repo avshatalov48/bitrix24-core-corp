@@ -59,7 +59,10 @@ class CounterDictionary
 		COUNTER_ORIGINATOR_NEW_COMMENTS			= 'originator_new_comments',
 		COUNTER_ORIGINATOR_MUTED_NEW_COMMENTS	= 'originator_muted_new_comments',
 
-		COUNTER_FLAG_COUNTED					= 'flag_computed';
+		COUNTER_PROJECT_EXPIRED					= 'project_expired',
+		COUNTER_PROJECT_COMMENTS				= 'project_comments',
+
+		COUNTER_FLAG_COUNTED					= 'flag_computed_20210203';
 
 	public const MAP_EXPIRED = [
 		MemberTable::MEMBER_TYPE_RESPONSIBLE 	=> self::COUNTER_MY_EXPIRED,

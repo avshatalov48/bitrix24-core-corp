@@ -737,7 +737,7 @@ class CrmWebFormEditTemplate
 		?>
 			<div class="crm-webform-edit-task-options-account-setup-info-description">
 				<br>
-				<?=Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_PRODUCT_TITLE')?>
+				<?=Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_PRODUCT_TITLE1')?>
 			</div>
 			<div data-bx-crm-webform-product="%id%">
 				<div data-bx-crm-webform-product-items="">%settings_items%</div>

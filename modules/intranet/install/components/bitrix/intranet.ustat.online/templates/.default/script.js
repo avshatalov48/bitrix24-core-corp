@@ -1,11 +1,9 @@
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core,rest_client,pull_client) {
+(function (exports,rest_client,main_core,pull_client,ui_graph_circle) {
 	'use strict';
 
-	var Popup =
-	/*#__PURE__*/
-	function () {
+	var Popup = /*#__PURE__*/function () {
 	  function Popup(parent) {
 	    var _this2 = this;
 
@@ -310,11 +308,131 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Popup;
 	}();
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	var Timeman = /*#__PURE__*/function () {
+	  function Timeman(parent) {
+	    babelHelpers.classCallCheck(this, Timeman);
+	    this.parent = parent;
+	    this.signedParameters = this.parent.signedParameters;
+	    this.componentName = this.parent.componentName;
+	    this.isTimemanAvailable = this.parent.isTimemanAvailable;
+	    this.timemanNode = this.parent.timemanNode;
+
+	    if (this.isTimemanAvailable && main_core.Type.isDomNode(this.timemanNode)) {
+	      this.timemanValueNodes = this.timemanNode.querySelectorAll('.intranet-ustat-online-value');
+	      this.timemanTextNodes = this.timemanNode.querySelectorAll('.js-ustat-online-timeman-text');
+	      this.resizeTimemanText();
+	      this.subscribePullEvent();
+	    }
+	  }
+
+	  babelHelpers.createClass(Timeman, [{
+	    key: "resizeTimemanText",
+	    value: function resizeTimemanText() {
+	      if (!main_core.Type.isDomNode(this.timemanNode)) {
+	        return;
+	      }
+
+	      var textSum = 0;
+	      var valueSum = 0;
+
+	      if (main_core.Type.isArrayLike(this.timemanTextNodes)) {
+	        var _iterator = _createForOfIteratorHelper(this.timemanTextNodes),
+	            _step;
+
+	        try {
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            var text = _step.value;
+	            var textItems = text.textContent.length;
+	            textSum += textItems;
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
+	        }
+	      }
+
+	      if (main_core.Type.isArrayLike(this.timemanValueNodes)) {
+	        var _iterator2 = _createForOfIteratorHelper(this.timemanValueNodes),
+	            _step2;
+
+	        try {
+	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	            var value = _step2.value;
+	            var valueItems = value.textContent.length;
+	            valueSum += valueItems;
+	          }
+	        } catch (err) {
+	          _iterator2.e(err);
+	        } finally {
+	          _iterator2.f();
+	        }
+	      }
+
+	      if (textSum >= 17 && valueSum >= 6 || textSum >= 19 && valueSum >= 4) {
+	        main_core.Dom.addClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
+	      } else {
+	        main_core.Dom.removeClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
+	      }
+	    }
+	  }, {
+	    key: "redrawTimeman",
+	    value: function redrawTimeman(data) {
+	      if (data.hasOwnProperty("OPENED")) {
+	        var openedNode = document.querySelector('.js-ustat-online-timeman-opened');
+
+	        if (BX.type.isDomNode(openedNode)) {
+	          openedNode.innerHTML = data["OPENED"];
+	        }
+	      }
+
+	      if (data.hasOwnProperty("CLOSED")) {
+	        var closedNode = document.querySelector('.js-ustat-online-timeman-closed');
+
+	        if (BX.type.isDomNode(closedNode)) {
+	          closedNode.innerHTML = data["CLOSED"];
+	        }
+	      }
+
+	      this.resizeTimemanText();
+	    }
+	  }, {
+	    key: "checkTimeman",
+	    value: function checkTimeman() {
+	      BX.ajax.runComponentAction(this.componentName, "checkTimeman", {
+	        signedParameters: this.signedParameters,
+	        mode: 'class'
+	      }).then(function (response) {
+	        if (response.data) {
+	          this.redrawTimeman(response.data);
+	        }
+	      }.bind(this), function (response) {}.bind(this));
+	    }
+	  }, {
+	    key: "subscribePullEvent",
+	    value: function subscribePullEvent() {
+	      var _this = this;
+
+	      pull_client.PULL.subscribe({
+	        moduleId: 'intranet',
+	        command: 'timemanDayInfo',
+	        callback: function callback(data) {
+	          _this.redrawTimeman(data);
+	        }
+	      });
+	    }
+	  }]);
+	  return Timeman;
+	}();
+
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
-	var UstatOnline =
-	/*#__PURE__*/
-	function () {
+	var UstatOnline = /*#__PURE__*/function () {
 	  function UstatOnline(params) {
 	    var _this = this;
 
@@ -330,6 +448,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.maxOnlineUserCountToday = params.maxOnlineUserCountToday;
 	    this.currentUserId = parseInt(params.currentUserId);
 	    this.isTimemanAvailable = params.isTimemanAvailable === "Y";
+	    this.isFullAnimationMode = params.isFullAnimationMode === "Y";
 	    this.limitOnlineSeconds = params.limitOnlineSeconds;
 	    this.renderingFinished = true;
 	    var users = params.users;
@@ -364,25 +483,32 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 
 	    new Popup(this);
+	    this.timemanObj = new Timeman(this);
 	    var now = new Date();
 	    this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
 	    this.checkOnline();
 
-	    if (this.isTimemanAvailable && main_core.Type.isDomNode(this.timemanNode)) {
-	      this.timemanValueNodes = this.timemanNode.querySelectorAll('.intranet-ustat-online-value');
-	      this.timemanTextNodes = this.timemanNode.querySelectorAll('.js-ustat-online-timeman-text');
-	      this.resizeTimemanText();
+	    if (this.isFullAnimationMode) {
+	      setTimeout(function () {
+	        _this.subscribePullEvent();
+	      }, 3000);
+	      setInterval(function () {
+	        return _this.checkOnline();
+	      }, 60000);
+	    } else {
+	      BX.addCustomEvent(window, "onImUpdateUstatOnline", BX.proxy(this.updateOnlineRestrictedMode, this));
 	    }
-
-	    setTimeout(function () {
-	      _this.subscribePullEvent();
-	    }, 3000);
-	    setInterval(function () {
-	      return _this.checkOnline();
-	    }, 60000);
 	  }
 
 	  babelHelpers.createClass(UstatOnline, [{
+	    key: "updateOnlineRestrictedMode",
+	    value: function updateOnlineRestrictedMode(data) {
+	      this.counter = data.count;
+	      this.maxOnlineUserCountToday = data.count;
+	      this.online = data.users;
+	      this.redrawOnline();
+	    }
+	  }, {
 	    key: "getOfflineDate",
 	    value: function getOfflineDate(date) {
 	      return date ? new Date(date).getTime() + parseInt(this.limitOnlineSeconds) * 1000 : null;
@@ -422,7 +548,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          this.maxOnlineUserCountToday = this.online.length;
 
 	          if (this.isTimemanAvailable) {
-	            this.checkTimeman();
+	            this.timemanObj.checkTimeman();
 	          }
 
 	          this.currentDate = today;
@@ -430,18 +556,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        }
 
 	      return false;
-	    }
-	  }, {
-	    key: "checkTimeman",
-	    value: function checkTimeman() {
-	      BX.ajax.runComponentAction(this.componentName, "checkTimeman", {
-	        signedParameters: this.signedParameters,
-	        mode: 'class'
-	      }).then(function (response) {
-	        if (response.data) {
-	          this.redrawTimeman(response.data);
-	        }
-	      }.bind(this), function (response) {}.bind(this));
 	    }
 	  }, {
 	    key: "setUserOnline",
@@ -691,8 +805,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function subscribePullEvent() {
 	      var _this7 = this;
 
-	      pull_client.PULL.subscribe({
-	        type: pull_client.PullClient.SubscriptionType.Online,
+	      BX.PULL.subscribe({
+	        type: 'online',
 	        callback: function callback(data) {
 	          if (data.command === 'userStatus') {
 	            for (var userId in data.params.users) {
@@ -721,104 +835,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	        }
 	      });
-	      pull_client.PULL.subscribe({
-	        moduleId: 'intranet',
-	        command: 'timemanDayInfo',
-	        callback: function callback(data) {
-	          _this7.redrawTimeman(data);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "redrawTimeman",
-	    value: function redrawTimeman(data) {
-	      if (data.hasOwnProperty("OPENED")) {
-	        var openedNode = document.querySelector('.js-ustat-online-timeman-opened');
-
-	        if (BX.type.isDomNode(openedNode)) {
-	          openedNode.innerHTML = data["OPENED"];
-	        }
-	      }
-
-	      if (data.hasOwnProperty("CLOSED")) {
-	        var closedNode = document.querySelector('.js-ustat-online-timeman-closed');
-
-	        if (BX.type.isDomNode(closedNode)) {
-	          closedNode.innerHTML = data["CLOSED"];
-	        }
-	      }
-
-	      this.resizeTimemanText();
-	    }
-	  }, {
-	    key: "resizeTimemanText",
-	    value: function resizeTimemanText() {
-	      if (!main_core.Type.isDomNode(this.timemanNode)) {
-	        return;
-	      }
-
-	      var textSum = 0;
-	      var valueSum = 0;
-
-	      if (main_core.Type.isArrayLike(this.timemanTextNodes)) {
-	        var _iteratorNormalCompletion = true;
-	        var _didIteratorError = false;
-	        var _iteratorError = undefined;
-
-	        try {
-	          for (var _iterator = this.timemanTextNodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	            var text = _step.value;
-	            var textItems = text.textContent.length;
-	            textSum += textItems;
-	          }
-	        } catch (err) {
-	          _didIteratorError = true;
-	          _iteratorError = err;
-	        } finally {
-	          try {
-	            if (!_iteratorNormalCompletion && _iterator.return != null) {
-	              _iterator.return();
-	            }
-	          } finally {
-	            if (_didIteratorError) {
-	              throw _iteratorError;
-	            }
-	          }
-	        }
-	      }
-
-	      if (main_core.Type.isArrayLike(this.timemanValueNodes)) {
-	        var _iteratorNormalCompletion2 = true;
-	        var _didIteratorError2 = false;
-	        var _iteratorError2 = undefined;
-
-	        try {
-	          for (var _iterator2 = this.timemanValueNodes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-	            var value = _step2.value;
-	            var valueItems = value.textContent.length;
-	            valueSum += valueItems;
-	          }
-	        } catch (err) {
-	          _didIteratorError2 = true;
-	          _iteratorError2 = err;
-	        } finally {
-	          try {
-	            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-	              _iterator2.return();
-	            }
-	          } finally {
-	            if (_didIteratorError2) {
-	              throw _iteratorError2;
-	            }
-	          }
-	        }
-	      }
-
-	      if (textSum >= 17 && valueSum >= 6 || textSum >= 19 && valueSum >= 4) {
-	        main_core.Dom.addClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
-	      } else {
-	        main_core.Dom.removeClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
-	      }
 	    }
 	  }, {
 	    key: "getNumberUserId",
@@ -830,6 +846,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var userId = String(id);
 	      userId = userId.replace('U', '');
 	      return parseInt(userId);
+	    }
+	  }, {
+	    key: "isDocumentVisible",
+	    value: function isDocumentVisible() {
+	      return document.visibilityState === 'visible';
 	    }
 	  }, {
 	    key: "redrawOnline",
@@ -853,6 +874,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      });
 	      var onlineToShow = newUserIds.slice(0, this.maxUserToShow);
 	      var renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
+
+	      if (this.online.length > 100 && renderedUserNodes >= this.maxUserToShow) {
+	        return;
+	      }
 
 	      if (renderedUserNodes) {
 	        for (var item in renderedUserNodes) {
@@ -930,7 +955,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            if (main_core.Type.isDomNode(lastElement)) {
 	              var removedUserId = parseInt(lastElement.getAttribute("data-user-id"));
 	              main_core.Dom.removeClass(lastElement, 'intranet-ustat-online-icon-show');
-	              main_core.Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+
+	              if (_this8.isDocumentVisible()) {
+	                main_core.Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+	              }
+
 	              _this8.userIndex = parseInt(firstElement.style.zIndex);
 	              _this8.userIndex++;
 
@@ -940,10 +969,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                return id !== removedUserId;
 	              });
 	              renderedUserIds.push(item.id);
-	              main_core.Event.bind(lastElement, 'animationend', function (event) {
+
+	              if (_this8.isDocumentVisible()) {
+	                main_core.Event.bind(lastElement, 'animationend', function (event) {
+	                  main_core.Dom.remove(lastElement);
+	                  resolve();
+	                });
+	              } else {
 	                main_core.Dom.remove(lastElement);
 	                resolve();
-	              });
+	              }
 	            } else {
 	              resolve();
 	            }
@@ -969,7 +1004,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 
 	      var userId = this.getNumberUserId(user.id);
-	      var itemsClasses = "ui-icon ui-icon-common-user intranet-ustat-online-icon js-ustat-online-user\n\t\t\t".concat(showAnimation ? ' intranet-ustat-online-icon-show' : '');
+	      var itemsClasses = "ui-icon ui-icon-common-user intranet-ustat-online-icon js-ustat-online-user\n\t\t\t".concat(showAnimation && this.isDocumentVisible() ? ' intranet-ustat-online-icon-show' : '');
 	      this.userItem = BX.create('span', {
 	        attrs: {
 	          className: itemsClasses,
@@ -1008,7 +1043,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var progressPercent = currentUserOnlineCount * 100 / maxUserOnlineCount;
 
 	      if (!this.circle) {
-	        this.circle = new BX.UI.Graph.Circle(circleNode, 68, progressPercent, currentUserOnlineCount);
+	        this.circle = new ui_graph_circle.Circle(circleNode, 42, progressPercent, {
+	          fixCounter: currentUserOnlineCount,
+	          color1: 'rgba(49,205,255,.41)',
+	          color2: 'rgba(85, 208, 224,.32)'
+	        });
 	        this.circle.show();
 	      } else {
 	        this.circle.updateCounter(progressPercent, currentUserOnlineCount);
@@ -1020,5 +1059,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	namespace.UstatOnline = UstatOnline;
 
-}((this.BX.Intranet.UstatOnline = this.BX.Intranet.UstatOnline || {}),BX,BX,BX));
+}((this.BX.Intranet.UstatOnline = this.BX.Intranet.UstatOnline || {}),BX,BX,BX,BX.UI.Graph));
 //# sourceMappingURL=script.js.map

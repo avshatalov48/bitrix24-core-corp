@@ -64,7 +64,7 @@ abstract class RecyclableEntity implements Recyclebin\Internals\Contracts\Recycl
 			$data = isset($item['DATA']) ? $item['DATA'] : '';
 			if(is_string($data))
 			{
-				$data = unserialize($data);
+				$data = unserialize($data, ['allowed_classes' => false]);
 			}
 
 			if(is_array($data))

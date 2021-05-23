@@ -103,6 +103,7 @@ if (is_array($arResult["GROUP"]))
 			canManageTask: <?=CUtil::PhpToJSObject($arResult["CAN"]["manageTask"])?>,
 			pathToTask: "<?=CUtil::JSEscape($pathToTask)?>",
 			currentGroupId: <?=$projectId?>,
+			calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>,
 			messages: {
 				taskInProject: "<?=GetMessageJs("TASKS_QUICK_IN_GROUP")?>"
 			}

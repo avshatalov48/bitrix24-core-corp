@@ -74,6 +74,11 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 				$this->arResult['DEFER_LOAD'] = $this->arParams['DEFER_LOAD'];
 			}
 
+			if (isset($this->arParams['CALENDAR_SETTINGS']))
+			{
+				$this->arResult['CALENDAR_SETTINGS'] = $this->arParams['CALENDAR_SETTINGS'];
+			}
+
 			$this->arParams["PUBLIC_MODE"] = isset($this->arParams["PUBLIC_MODE"])
 				&& ($this->arParams["PUBLIC_MODE"] === true || $this->arParams["PUBLIC_MODE"] === "Y");
 
@@ -305,7 +310,7 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 
 					if ($arTemplate = $rsTemplate->Fetch())
 					{
-						$arTemplate['REPLICATE_PARAMS'] = unserialize($arTemplate['REPLICATE_PARAMS']);
+						$arTemplate['REPLICATE_PARAMS'] = unserialize($arTemplate['REPLICATE_PARAMS'], ['allowed_classes' => false]);
 						$this->arResult['TASK']['FORKED_BY_TEMPLATE'] = $arTemplate;
 					}
 				}

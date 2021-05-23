@@ -82,9 +82,9 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 		$APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 
 		if (isset($arFields['~PARAMS']) && $arFields['~PARAMS'])
-			$arFields['PARAMS'] = unserialize($arFields['~PARAMS']);
+			$arFields['PARAMS'] = unserialize($arFields['~PARAMS'], ['allowed_classes' => false]);
 		elseif (isset($arFields['PARAMS']) && $arFields['PARAMS'])
-			$arFields['PARAMS'] = unserialize($arFields['PARAMS']);
+			$arFields['PARAMS'] = unserialize($arFields['PARAMS'], ['allowed_classes' => false]);
 		else
 			$arFields['PARAMS'] = array();
 

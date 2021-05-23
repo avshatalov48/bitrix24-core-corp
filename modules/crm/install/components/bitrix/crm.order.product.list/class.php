@@ -2,9 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\Product\Price;
-use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 
@@ -24,25 +24,25 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function init()
 	{
-		if(!CModule::IncludeModule('crm'))
+		if(!Loader::includeModule('crm'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
 			return false;
 		}
 
-		if(!CModule::IncludeModule('currency'))
+		if(!Loader::includeModule('currency'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY');
 			return false;
 		}
 
-		if(!CModule::IncludeModule('catalog'))
+		if(!Loader::includeModule('catalog'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
 			return false;
 		}
 
-		if (!CModule::IncludeModule('sale'))
+		if (!Loader::includeModule('sale'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_SALE');
 			return false;
@@ -164,7 +164,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			['id' => 'VAT_RATE', 'name' => Loc::getMessage('CRM_ORDER_PLC_VAT_RATE'), 'sort' => 'VAT_RATE'],
 			['id' => 'DEDUCTED', 'name' => Loc::getMessage('CRM_ORDER_PLC_DEDUCTED'), 'sort' => 'DEDUCTED'],
 			['id' => 'CUSTOM_PRICE', 'name' => Loc::getMessage('CRM_ORDER_PLC_CUSTOM_PRICE'), 'sort' => 'CUSTOM_PRICE'],
-			['id' => 'DIMENSIONS', 'name' => Loc::getMessage('CRM_ORDER_PLC_DIMENSIONS')],
+			['id' => 'DIMENSIONS', 'name' => Loc::getMessage('CRM_ORDER_PLC_DIMENSIONS_EXT')],
 			['id' => 'SORT', 'name' => Loc::getMessage('CRM_ORDER_PLC_SORTING'), 'sort' => 'SORT']
 		];
 	}
@@ -310,6 +310,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			$data = array_intersect_key($values, $flippedVisibleColumns);
 			$data['PROPS'] = $values['PROPS'];
 			$data['TYPE'] = $values['TYPE'];
+			$data['MEASURE_TEXT'] = htmlspecialcharsbx($values['MEASURE_NAME']);
 			$data['FIELDS_VALUES'] = Main\Web\Json::encode(array_filter($values));
 
 			if(isset($flippedVisibleColumns['PRICE_CURRENCY']))
@@ -337,6 +338,18 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 				$data['CURRENCY_NAME_SHORT'] =  $this->getCurrencyNameShort($values['CURRENCY']);
 				$data['FORMATTED_PRICE'] = CCrmCurrency::MoneyToString($values['PRICE'], $values['CURRENCY'], '#');
 				$data['FORMATTED_PRICE_WITH_CURRENCY'] = CCrmCurrency::MoneyToString($values['PRICE'], $values['CURRENCY'], '');
+			}
+
+			if (isset($flippedVisibleColumns['DIMENSIONS']))
+			{
+				if (!isset($values['DIMENSIONS']))
+				{
+					$data['DIMENSIONS'] = '';
+				}
+				else
+				{
+					$data['DIMENSIONS'] = $this->getDimensions($values['DIMENSIONS']);
+				}
 			}
 
 			//we need this data always
@@ -409,6 +422,8 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		{
 			$catalogProducts = \Bitrix\Sale\Helpers\Admin\Product::getData($catalogProductIds, $this->order->getSiteId());
 
+			$this->prepareProductUrls($catalogProducts);
+
 			foreach($rows as $k => $row)
 			{
 				if(isset($catalogProducts[$row['PRODUCT_ID']]))
@@ -428,7 +443,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 						$rows[$k]["VAT_ID"] = $catalogProducts[$row['PRODUCT_ID']]['VAT_ID'];
 
 					if(!empty($catalogProducts[$row['PRODUCT_ID']]['EDIT_PAGE_URL']))
-						$rows[$k]['EDIT_PAGE_URL'] = $this->prepareAdminLink($catalogProducts[$row['PRODUCT_ID']]['EDIT_PAGE_URL']);
+						$rows[$k]['EDIT_PAGE_URL'] = $catalogProducts[$row['PRODUCT_ID']]['EDIT_PAGE_URL'];
 				}
 			}
 		}
@@ -444,6 +459,79 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 		sortByColumn($rows, array("SORT" => SORT_ASC), '', null, false);
 		return $rows;
+	}
+
+	private function getDimensions($dimensions): string
+	{
+		$result = '';
+		if (empty($dimensions))
+		{
+			return $result;
+		}
+		if (!is_array($dimensions))
+		{
+			$dimensions = unserialize($dimensions, ['allowed_classes' => false]);
+		}
+		if (is_array($dimensions))
+		{
+			if (!empty($dimensions['LENGTH']) && !empty($dimensions['WIDTH']) && !empty($dimensions['HEIGHT']))
+			{
+				$result = Loc::getMessage(
+					'CRM_ORDER_PLC_DIMENSIONS_FORMAT',
+					[
+						'#LENGTH#' => $dimensions['LENGTH'],
+						'#WIDTH#' => $dimensions['WIDTH'],
+						'#HEIGHT#' => $dimensions['HEIGHT']
+					]
+				);
+			}
+			else
+			{
+				$result = Loc::getMessage('CRM_ORDER_PLC_DIMENSIONS_EMPTY');
+			}
+		}
+		return $result;
+	}
+
+	private function prepareProductUrls(array &$list): void
+	{
+		$items = array_filter($list, [__CLASS__, 'filterCatalogProducts']);
+		if (!empty($items))
+		{
+			$iblocks = [];
+			foreach ($items as $id => $row)
+			{
+				$iblockId = ($row['OFFERS_IBLOCK_ID'] > 0 ? $row['OFFERS_IBLOCK_ID'] : $row['IBLOCK_ID']);
+				if (!isset($iblocks[$iblockId]))
+				{
+					$iblocks[$iblockId] = [];
+				}
+				$iblocks[$iblockId][] = $id;
+			}
+			unset($id, $row);
+			foreach ($iblocks as $iblockId => $rows)
+			{
+				$this->urlBuilder->setIblockId($iblockId);
+				$this->urlBuilder->preloadUrlData($this->urlBuilder::ENTITY_ELEMENT, $rows);
+				foreach ($rows as $id)
+				{
+					$url = $this->urlBuilder->getProductDetailUrl($id);
+					if ($url != '')
+					{
+						$list[$id]['EDIT_PAGE_URL'] = $url;
+					}
+				}
+				unset($url, $id);
+				$this->urlBuilder->clearPreloadedUrlData();
+			}
+			unset($iblockId, $rows, $iblocks);
+		}
+		unset($items);
+	}
+
+	private static function filterCatalogProducts(array $row)
+	{
+		return (isset($row['MODULE']) && $row['MODULE'] == 'catalog');
 	}
 
 	private function prepareAdminLink($url)
@@ -643,7 +731,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
 		$this->arResult['PATH_TO_ORDER_PRODUCT_LIST'] = $this->arParams['PATH_TO_ORDER_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_ORDER_PRODUCT_LIST', $this->arParams['PATH_TO_ORDER_PRODUCT_LIST'], $APPLICATION->GetCurPage());
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
-		$this->arResult['ORDER_ID'] =$this->order->getId();
+		$this->arResult['ORDER_ID'] = $this->order->getId();
 		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
 		$this->arResult['VAT_RATES'] = $this->getVatRates();
 
@@ -687,16 +775,14 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			$this->arResult['PRICE_BASKET'] = $basket->getBasePrice();
 			$this->arResult["WEIGHT"] = $basket->getWeight();
 
-			$weightKoef = floatval(Main\Config\Option::get('sale', 'weight_koef', 1000, $this->order->getSiteId()));
-			if(floatval($weightKoef) <= 0)
+			$weightKoef = (float)Main\Config\Option::get('sale', 'weight_koef', 1000, $this->order->getSiteId());
+			if ($weightKoef <= 0)
 			{
 				$weightKoef = 1;
 			}
 
-			$this->arResult["WEIGHT_FOR_HUMAN"] = roundEx(
-				floatval(
-					$this->arResult["WEIGHT"]/$weightKoef
-				),
+			$this->arResult["WEIGHT_FOR_HUMAN"] = round(
+				(float)($this->arResult["WEIGHT"]/$weightKoef),
 				SALE_WEIGHT_PRECISION
 			);
 		}
@@ -704,7 +790,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		{
 			$this->arResult['PRICE_BASKET_DISCOUNTED'] = 0;
 			$this->arResult['PRICE_BASKET'] = 0;
-			$this->arResult["WEIGHT_FOR_HUMAN"] = roundEx(floatval(0), SALE_WEIGHT_PRECISION);
+			$this->arResult["WEIGHT_FOR_HUMAN"] = 0;
 		}
 
 		$gridOptions = new \Bitrix\Main\Grid\Options($this->arResult['GRID_ID']);

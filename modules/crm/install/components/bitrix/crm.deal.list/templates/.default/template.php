@@ -23,6 +23,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -31,13 +32,11 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 ?><div id="batchDeletionWrapper"></div><?
 ?><div id="rebuildMessageWrapper"><?
-?><div id="batchActionWrapper"></div><?
 
 if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
 {
@@ -1178,17 +1177,7 @@ $APPLICATION->IncludeComponent(
 				{
 					gridId: gridId,
 					entityTypeId: <?=CCrmOwnerType::Deal?>,
-					container: "batchActionWrapper",
-					stateTemplate: "<?=GetMessageJS('CRM_DEAL_STEPWISE_STATE_TEMPLATE')?>",
-					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_DEAL_MERGE'])?>",
-					messages:
-						{
-							title: "<?=GetMessageJS('CRM_DEAL_LIST_MERGE_PROC_DLG_TITLE')?>",
-							confirmation: "<?=GetMessageJS('CRM_DEAL_LIST_MERGE_PROC_DLG_SUMMARY')?>",
-							summaryCaption: "<?=GetMessageJS('CRM_DEAL_BATCH_MERGE_COMPLETED')?>",
-							summarySucceeded: "<?=GetMessageJS('CRM_DEAL_BATCH_MERGE_COUNT_SUCCEEDED')?>",
-							summaryFailed: "<?=GetMessageJS('CRM_DEAL_BATCH_MERGE_COUNT_FAILED')?>"
-						}
+					mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_DEAL_MERGE'])?>"
 				}
 			);
 

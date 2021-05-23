@@ -17,7 +17,7 @@ $MESS["BITRIX24_THEME_FILE_SIZE_EXCEEDED"] = "Max. file size exceeded (#LIMIT#).
 $MESS["BITRIX24_THEME_WRONG_BG_COLOR"] = "Incorrect background color.";
 $MESS["BITRIX24_THEME_EMPTY_FORM_DATA"] = "Select a background image or color.";
 $MESS["BITRIX24_THEME_UNKNOWN_ERROR"] = "Cannot complete action. Please try again.";
-$MESS["BITRIX24_THEME_SET_AS_DEFAULT"] = "Set as default";
+$MESS["BITRIX24_THEME_DEFAULT_THEME_FOR_ALL"] = "Default theme for all users";
 $MESS["BITRIX24_THEME_DEFAULT_THEME"] = "Default";
 $MESS["BITRIX24_THEME_REMOVE_THEME"] = "Delete theme";
 ?>

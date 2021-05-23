@@ -4,11 +4,12 @@ namespace Bitrix\Location\Entity\Generic;
 
 /**
  * Interface IField
+ * @internal
  */
 interface IField
 {
 	/**
 	 * @return int
 	 */
-	public function getType();
+	public function getType(): int;
 }

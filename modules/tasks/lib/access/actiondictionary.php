@@ -32,6 +32,7 @@ class ActionDictionary
 		ACTION_TASK_PAUSE					= 'task_pause',
 		ACTION_TASK_TIME_TRACKING			= 'task_time_tracking',
 		ACTION_TASK_RATE					= 'task_rate',
+		ACTION_TASK_CHANGE_STATUS			= 'task_change_status',
 
 		ACTION_TASK_ELAPSED_TIME			= 'task_elapsed_time',
 		ACTION_TASK_FAVORITE_ADD			= 'task_favorite_add',

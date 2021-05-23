@@ -1,6 +1,6 @@
 import {Vuex} 							from 'ui.vue.vuex';
 import {Loc} 							from 'main.core';
-import {BlockNumberTitle as Block} 		from 'salescenter.component.stage-block';
+import {Block} 			from 'salescenter.component.stage-block';
 import {Uninstalled as TileUnInstalled} from "./tile-collection/uninstalled";
 import DeliverySelector					from "../../delivery-selector";
 import {StageMixin} 					from "./stage-mixin";
@@ -23,6 +23,16 @@ const DeliveryVuex = {
 		installed: {
 			type: Boolean,
 			required: true
+		},
+		initialCollapseState: {
+			type: Boolean,
+			required: true
+		},
+	},
+	data()
+	{
+		return {
+			selectedDeliveryServiceName: null,
 		}
 	},
 	mixins:[StageMixin, MixinTemplatesType],
@@ -34,6 +44,23 @@ const DeliveryVuex = {
 		},
 	computed:
 		{
+			statusClass()
+			{
+				return {
+					'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false
+				}
+			},
+			configForBlock()
+			{
+				return {
+					counter: this.counter,
+					titleName: this.selectedDeliveryServiceName,
+					installed: this.installed,
+					collapsible: true,
+					checked: this.counterCheckedMixin,
+					showHint: false,
+				}
+			},
 			config()
 			{
 				let deliveryServiceId = null;
@@ -123,25 +150,36 @@ const DeliveryVuex = {
 				order: state => state.orderCreation
 			})
 		},
-	methods:{},
+	methods:{
+		setTitleName(state)
+		{
+			this.selectedDeliveryServiceName = state.deliveryServiceName;
+		},
+		saveCollapsedOption(option)
+		{
+			this.$emit('on-save-collapsed-option', 'delivery', option);
+		},
+	},
 	template: `
 		<stage-block-item
-			:counter="counter"
-			:class="statusClassMixin"
-			:checked="counterCheckedMixin"
+			:config="configForBlock"
+			:class="[statusClassMixin, statusClass]"
+			@on-item-hint.stop.prevent="onItemHint"
+			@on-adjust-collapsed="saveCollapsedOption"
 		>
 			<template v-slot:block-title-title>${Loc.getMessage('SALESCENTER_DELIVERY_BLOCK_TITLE')}</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
-					<template v-if="installed">
-						<div class="salescenter-app-payment-by-sms-item-container-select">
-							<delivery-selector-block :config="config" 
-								v-on:delivery-settings-changed="onSliderClose"/>
-						</div>
-					</template>
-					<template v-else>
+					<template v-if="!installed">
 						<uninstalled-delivery-block :tiles="tiles" 
 								v-on:on-tile-slider-close="onSliderClose"/>
+					</template>
+					<template v-else>
+						<div class="salescenter-app-payment-by-sms-item-container-select">
+							<delivery-selector-block :config="config" 
+								v-on:delivery-settings-changed="onSliderClose"
+								v-on:change="setTitleName" />
+						</div>
 					</template>
 				</div>
 			</template>

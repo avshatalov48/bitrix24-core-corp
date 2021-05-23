@@ -1,6 +1,7 @@
 <?
 return [
 	'db',
+	'chat/readycheck',
 	'chat/tables',
 	'chat/utils',
 	'chat/messengercommon',

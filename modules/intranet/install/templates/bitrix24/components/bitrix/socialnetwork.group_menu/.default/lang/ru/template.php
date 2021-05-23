@@ -40,4 +40,10 @@ $MESS["SONET_SGM_T_MEMBERS"] = "Участники";
 $MESS["SONET_SGM_T_MEMBERS2"] = "Участники: #NUM#";
 $MESS["SONET_SGM_T_SETTINGS"] = "Настройки";
 $MESS["SONET_SGM_T_BUTTON_JOIN"] = "Вступить";
+
+
+$MESS["SONET_TASKS_PRESET_I_DO"] = "Делаю";
+$MESS["SONET_TASKS_PRESET_I_ACCOMPLICES"] = "Помогаю";
+$MESS["SONET_TASKS_PRESET_I_ORIGINATOR"] = "Поручил";
+$MESS["SONET_TASKS_PRESET_I_AUDITOR"] = "Наблюдаю";
 ?>

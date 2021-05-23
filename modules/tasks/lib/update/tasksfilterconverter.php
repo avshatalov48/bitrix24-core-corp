@@ -26,7 +26,7 @@ final class TasksFilterConverter extends Stepper
 		$return = false;
 
 		$params = Option::get("tasks", "tasksfilterconvert", "");
-		$params = ($params !== "" ? @unserialize($params) : array());
+		$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
 		$params = (is_array($params) ? $params : array());
 
 		if (empty($params))
@@ -63,7 +63,7 @@ final class TasksFilterConverter extends Stepper
 
 			while ($arData = $res->Fetch())
 			{
-				$serializedFilter = unserialize($arData['SERIALIZED_FILTER']);
+				$serializedFilter = unserialize($arData['SERIALIZED_FILTER'], ['allowed_classes' => false]);
 				if(!is_array($serializedFilter))
 				{
 					$serializedFilter = array();

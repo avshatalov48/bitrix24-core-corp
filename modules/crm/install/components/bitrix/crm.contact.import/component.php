@@ -1212,7 +1212,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						{
 							$arContact['COMPANY_ID'] = $arRow['ID'];
 						}
-						else
+						elseif (trim($data) !== '')
 						{
 							//Try to create new company
 							$companyEntity = new CCrmCompany(false);

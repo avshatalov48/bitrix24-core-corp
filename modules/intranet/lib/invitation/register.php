@@ -1,11 +1,13 @@
 <?
 namespace Bitrix\Intranet\Invitation;
 
+use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialservices\Network;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork;
@@ -326,7 +328,7 @@ class Register
 
 	public static function transferUser($usersForTransfer, &$errors)
 	{
-		global $APPLICATION;
+		global $APPLICATION, $USER;
 
 		$transferedUserIds = [];
 
@@ -346,6 +348,7 @@ class Register
 			}
 
 			$transferedUserId = \CIntranetInviteDialog::TransferEmailUser($user["ID"], array(
+				"CONFIRM_CODE" => \Bitrix\Main\Security\Random::getString(8),
 				"GROUP_ID" => $userGroups,
 				"UF_DEPARTMENT" => $user["UF_DEPARTMENT"],
 				"SITE_ID" => SITE_ID
@@ -359,10 +362,35 @@ class Register
 				}
 				return false;
 			}
-			else
+
+			$transferedUserIds[] = $transferedUserId;
+			\CIntranetInviteDialog::InviteUser($user, Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"), array('checkB24' => false));
+		}
+
+		if (!empty($transferedUserIds))
+		{
+			foreach($transferedUserIds as $transferedUserId)
 			{
-				$transferedUserIds[] = $transferedUserId;
+				$res = InvitationTable::getList([
+					'filter' => [
+						'USER_ID' => $transferedUserId
+					],
+					'select' => [ 'ID' ]
+				]);
+				while ($invitationFields = $res->fetch())
+				{
+					InvitationTable::update($invitationFields['ID'], [
+						'TYPE' => Invitation::TYPE_EMAIL,
+						'ORIGINATOR_ID' => $USER->getId(),
+						'DATE_CREATE' => new DateTime()
+					]);
+				}
 			}
+
+			Invitation::add([
+				'USER_ID' => $transferedUserIds,
+				'TYPE' => Invitation::TYPE_EMAIL
+			]);
 		}
 
 		return $transferedUserIds;

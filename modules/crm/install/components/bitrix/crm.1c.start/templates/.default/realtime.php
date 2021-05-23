@@ -54,6 +54,9 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 				</div>
 				<hr class="crm-onec-separator">
 				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_REALTIME_INSTALL_INFO2")?></div>
+				<div class="ui-alert ui-alert-xs ui-alert-warning crm-onec-alert-warning">
+					<span class="ui-alert-message"><?=GetMessage("CRM_1C_START_REALTIME_INSTALL_INFO3")?></span>
+				</div>
 			</div>
 		</div>
 		<div class="ui-slider-content-box">

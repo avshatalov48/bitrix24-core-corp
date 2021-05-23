@@ -611,7 +611,12 @@ class CCrmOwnerType
 	{
 		$typeID = intval($typeID);
 		$ID = intval($ID);
-		
+
+		if($ID <= 0)
+		{
+			return '';
+		}
+
 		switch($typeID)
 		{
 			case self::Lead:

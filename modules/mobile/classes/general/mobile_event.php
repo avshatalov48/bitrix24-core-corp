@@ -1,6 +1,8 @@
-<?
+<?php
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Mobile\Tab\Manager;
 use Bitrix\MobileApp\Janative\Entity\Component;
 
@@ -135,7 +137,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 				]);
 		}
 
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('extranet'))
+		if (ModuleManager::isModuleInstalled('extranet'))
 		{
 			$extranetSiteId = \Bitrix\Main\Config\Option::get('extranet', 'extranet_site', false);
 			if ($extranetSiteId)
@@ -158,7 +160,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 
 		// We should add cloud bucket prefixes
 		// to allow URLs that cloud services redirected to
-		if (\Bitrix\Main\Loader::includeModule('clouds'))
+		if (Loader::includeModule('clouds'))
 		{
 			$buckets = CCloudStorageBucket::getAllBuckets();
 			foreach ($buckets as $bucket)
@@ -168,6 +170,24 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 					$this->validUrls[] = "/".$bucket["PREFIX"]."/";
 				}
 			}
+		}
+
+		/*
+		 * @todo need only one endpoint for files in a crm entities
+		 * It's temporary fix of ticket #136389
+		 */
+		if (ModuleManager::isModuleInstalled('crm'))
+		{
+			$this->validUrls = array_merge(
+				$this->validUrls,
+				[
+					'/bitrix/components/bitrix/crm.company.show/show_file.php',
+					'/bitrix/components/bitrix/crm.contact.show/show_file.php',
+					'/bitrix/components/bitrix/crm.deal.show/show_file.php',
+					'/bitrix/components/bitrix/crm.lead.show/show_file.php',
+					'/bitrix/components/bitrix/crm.invoice.show/show_file.php',
+					'/bitrix/components/bitrix/crm.quote.show/show_file.php',
+				]);
 		}
 	}
 

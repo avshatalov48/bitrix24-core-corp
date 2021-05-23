@@ -7,6 +7,7 @@ use Bitrix\Location\Entity\Generic\IField;
 /**
  * Class Field
  * @package Bitrix\Location\Entity\Location;
+ * @internal
  */
 final class Field implements IField
 {
@@ -15,6 +16,11 @@ final class Field implements IField
 	/** @var string  */
 	private $value;
 
+	/**
+	 * Field constructor.
+	 * @param int $type Field type. See \Bitrix\Location\Entity\Location\Type
+	 * @param string $value
+	 */
 	public function __construct(int $type, string $value = '')
 	{
 		$this->type = $type;

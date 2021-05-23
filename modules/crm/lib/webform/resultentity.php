@@ -12,6 +12,7 @@ use Bitrix\Crm\EntityManageFacility;
 use Bitrix\Crm\Integration\UserConsent as CrmIntegrationUserConsent;
 use Bitrix\Crm\Integrity\ActualEntitySelector;
 use Bitrix\Crm\Merger\EntityMerger;
+use Bitrix\Crm\Order\TradingPlatform;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
@@ -788,6 +789,13 @@ class ResultEntity
 			]);
 
 			$orderFacade->addProduct($product);
+		}
+
+		$code = TradingPlatform\WebForm::getCodeByFormId($this->formId);
+		$platform = TradingPlatform\WebForm::getInstanceByCode($code);
+		if ($platform->isInstalled())
+		{
+			$orderFacade->setFields(['TRADING_PLATFORM' => $platform->getId()]);
 		}
 
 		$order = $orderFacade->saveOrder();

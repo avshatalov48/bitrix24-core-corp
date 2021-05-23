@@ -5619,7 +5619,7 @@ class CAllCrmInvoice
 
 							$port = in_array($port, array(80, 443)) ? '' : ':'.$port;
 
-							return $scheme.'://'.$domain.$port.'/pub/pay/'.base64_encode($order->getField('ACCOUNT_NUMBER')).'/'.$payment->getHash().'/';
+							return $scheme.'://'.$domain.$port.'/pub/pay/'.self::base64UrlEncode($order->getField('ACCOUNT_NUMBER')).'/'.$payment->getHash().'/';
 						}
 					}
 				}
@@ -5627,6 +5627,15 @@ class CAllCrmInvoice
 		}
 
 		return '';
+	}
+
+	/**
+	 * @param string $value
+	 * @return string
+	 */
+	protected static function base64UrlEncode(string $value) : string
+	{
+		return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
 	}
 
 	public static function savePdf($invoice_id, &$error = null)

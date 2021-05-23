@@ -720,17 +720,9 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmCompany::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Company))
 {
-	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Company, $arFilter);
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Company);
 
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Company)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Company,
-			$limitWarningValue
-		);
-	}
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Company, $arFilter);
 }
 else
 {

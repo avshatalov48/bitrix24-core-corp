@@ -326,6 +326,7 @@ export class App
 	startProgress(buttonEvent = null)
 	{
 		this.isProgress = true;
+		this.templateEngine.$emit('on-start-progress');
 		this.showLoader();
 		if (Type.isDomNode(buttonEvent))
 		{
@@ -336,6 +337,7 @@ export class App
 	stopProgress(buttonEvent = null)
 	{
 		this.isProgress = false;
+		this.templateEngine.$emit('on-stop-progress');
 		this.hideLoader();
 		if (Type.isDomNode(buttonEvent))
 		{
@@ -457,7 +459,7 @@ export class App
 
 	sendPayment(buttonEvent, skipPublicMessage = 'n')
 	{
-		if(!this.isPaymentCreationAvailable)
+		if (!this.isPaymentCreationAvailable)
 		{
 			this.closeApplication();
 			return null;
@@ -465,7 +467,6 @@ export class App
 		const basket = this.store.getters['orderCreation/getBasket']();
 		const deliveryId = this.store.getters['orderCreation/getDeliveryId'];
 		const delivery = this.store.getters['orderCreation/getDelivery'];
-		const total = this.store.getters['orderCreation/getTotal'];
 		const propertyValues = this.store.getters['orderCreation/getPropertyValues'];
 		const deliveryExtraServicesValues = this.store.getters['orderCreation/getDeliveryExtraServicesValues'];
 		const expectedDelivery = this.store.getters['orderCreation/getExpectedDelivery'];
@@ -479,91 +480,84 @@ export class App
 
 		this.startProgress(buttonEvent);
 
-		this.store.dispatch('orderCreation/refreshBasket', {
-			onsuccess: () => {
-				let data = {
-					dialogId: this.dialogId,
-					sendingMethod: this.sendingMethod,
-					sendingMethodDesc: this.sendingMethodDesc,
-					sessionId: this.sessionId,
-					lineId: this.lineId,
-					ownerTypeId: this.ownerTypeId,
-					ownerId: this.ownerId,
-					skipPublicMessage,
-					deliveryId: deliveryId,
-					deliveryPrice: delivery,
-					expectedDeliveryPrice: expectedDelivery,
-					deliveryResponsibleId: deliveryResponsibleId,
-					personTypeId: personTypeId,
-					propertyValues: propertyValues,
-					deliveryExtraServicesValues: deliveryExtraServicesValues,
-					connector: this.connector,
-				};
-				
-				if (this.stageOnOrderPaid !== null)
-				{
-					data.stageOnOrderPaid = this.stageOnOrderPaid;
-				}
-				
-				BX.ajax.runAction('salescenter.order.createPayment', {
-					data: {
-						basketItems: basket,
-						options: data,
-					},
-					analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
-					getParameters: {
-						dialogId: this.dialogId,
-						context: this.context,
-						connector: this.connector,
-						skipPublicMessage: skipPublicMessage,
-					}
-				}).then((result) =>
-				{
-					this.store.dispatch('orderCreation/resetBasket');
-					this.stopProgress(buttonEvent);
-					if(skipPublicMessage === 'y')
-					{
-						let notify = {
-							content: Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number),
-						};
-						notify.actions = [{
-							title: Loc.getMessage('SALESCENTER_VIEW'),
-							events: {
-								click() {
-									Manager.showOrderAdd(result.data.order.id);
-								},
-							},
-						}];
-						BX.UI.Notification.Center.notify(notify);
-						Manager.showOrdersList({
-							orderId: result.data.order.id,
-							ownerId: this.ownerId,
-							ownerTypeId: this.ownerTypeId,
-						});
-					}
-					else
-					{
-						this.slider.data.set('action', 'sendPayment');
-						this.slider.data.set('order', result.data.order);
+		let data = {
+			dialogId: this.dialogId,
+			sendingMethod: this.sendingMethod,
+			sendingMethodDesc: this.sendingMethodDesc,
+			sessionId: this.sessionId,
+			lineId: this.lineId,
+			ownerTypeId: this.ownerTypeId,
+			ownerId: this.ownerId,
+			skipPublicMessage,
+			deliveryId: deliveryId,
+			deliveryPrice: delivery,
+			expectedDeliveryPrice: expectedDelivery,
+			deliveryResponsibleId: deliveryResponsibleId,
+			personTypeId: personTypeId,
+			propertyValues: propertyValues,
+			deliveryExtraServicesValues: deliveryExtraServicesValues,
+			connector: this.connector,
+		};
 
-						if (result.data.deal)
-						{
-							this.slider.data.set('deal', result.data.deal);
-						}
-						this.closeApplication();
-					}
-				}).catch((data) =>
-				{
-					data.errors.forEach((error) => {
-						alert(error.message);
-					});
-					this.stopProgress(buttonEvent);
-					App.showError(data);
-				});
+		if (this.stageOnOrderPaid !== null)
+		{
+			data.stageOnOrderPaid = this.stageOnOrderPaid;
+		}
+
+		BX.ajax.runAction('salescenter.order.createPayment', {
+			data: {
+				basketItems: basket,
+				options: data,
 			},
-			onfailure: () => {
-				this.stopProgress(buttonEvent);
+			analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
+			getParameters: {
+				dialogId: this.dialogId,
+				context: this.context,
+				connector: this.connector,
+				skipPublicMessage: skipPublicMessage,
 			}
+		}).then((result) =>
+		{
+			this.store.dispatch('orderCreation/resetBasket');
+			this.stopProgress(buttonEvent);
+			if (skipPublicMessage === 'y')
+			{
+				let notify = {
+					content: Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number),
+				};
+				notify.actions = [{
+					title: Loc.getMessage('SALESCENTER_VIEW'),
+					events: {
+						click() {
+							Manager.showOrderAdd(result.data.order.id);
+						},
+					},
+				}];
+				BX.UI.Notification.Center.notify(notify);
+				Manager.showOrdersList({
+					orderId: result.data.order.id,
+					ownerId: this.ownerId,
+					ownerTypeId: this.ownerTypeId,
+				});
+			}
+			else
+			{
+				this.slider.data.set('action', 'sendPayment');
+				this.slider.data.set('order', result.data.order);
+
+				if (result.data.deal)
+				{
+					this.slider.data.set('deal', result.data.deal);
+				}
+				this.closeApplication();
+			}
+		}).catch((data) =>
+		{
+			data.errors.forEach((error) => {
+				alert(error.message);
+			});
+			this.stopProgress(buttonEvent);
+			App.showError(data);
 		});
 	}
 

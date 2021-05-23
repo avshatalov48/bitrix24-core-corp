@@ -3,15 +3,19 @@
 namespace Bitrix\Location\Entity\Address\Normalizer;
 
 /**
- * For building locations names normalizers
+ * Location name normalizers builder
+ *
  * Interface IBuilder
  * @package Bitrix\Location\Entity\Address\Normalizer
+ * @internal
  */
 interface IBuilder
 {
 	/**
+	 * Build normalizer
+	 *
 	 * @param string $lang Language id.
 	 * @return INormalizer
 	 */
-	public static function build($lang);
+	public static function build(string $lang): INormalizer;
 }

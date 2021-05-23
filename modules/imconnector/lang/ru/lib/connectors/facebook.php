@@ -1,0 +1,2 @@
+<?php
+$MESS['IMCONNECTOR_FACEBOOK_NOT_SEND_MESSAGE_CHAT_24_TIME_LIMIT'] = 'Сообщение не может быть доставлено, так как закончилось время. Подробнее об ограничении по времени ответа #A_START#здесь#A_END#';

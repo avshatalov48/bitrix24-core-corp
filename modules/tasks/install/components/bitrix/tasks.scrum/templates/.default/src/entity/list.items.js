@@ -1,5 +1,6 @@
 import {Tag} from 'main.core';
 import {Entity} from './entity';
+import {Item} from '../item/item';
 
 export class ListItems
 {
@@ -7,27 +8,30 @@ export class ListItems
 	{
 		this.entity = entity;
 
-		this.element = null;
+		this.node = null;
 	}
 
 	render(): HTMLElement
 	{
-		this.element = Tag.render`
+		this.node = Tag.render`
 			<div class="tasks-scrum-items-list" data-entity-id="${this.entity.getId()}">
 				${this.entity.isCompleted() ? '' : this.entity.getInput().render()}
-				${[...this.entity.getItems().values()].map((item) => item.render())}
+				${[...this.entity.getItems().values()].map((item: Item) => {
+					item.setEntityType(this.entity.getEntityType());
+					return item.render();
+				})}
 			</div>
 		`;
-		return this.element;
+		return this.node;
 	}
 
-	getElement(): HTMLElement|null
+	getNode(): HTMLElement|null
 	{
-		return this.element;
+		return this.node;
 	}
 
 	setEntityId(entityId: number)
 	{
-		this.element.dataset.entityId = parseInt(entityId, 10);
+		this.node.dataset.entityId = parseInt(entityId, 10);
 	}
 }

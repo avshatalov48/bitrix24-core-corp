@@ -254,7 +254,7 @@ CJSCore::Init(["popup"]);
 			</div>
 		</div>
 		<div class="crm-lead-info-popup-readmore">
-			<a href="javascript:void(0)"  target="_blank" class="crm-lead-info-popup-readmore-link" onclick="BX.Helper.show('redirect=detail&code=5329693');"><?=GetMessage("CRM_TYPE_MORE")?></a>
+			<a href="javascript:void(0)" class="crm-lead-info-popup-readmore-link" onclick="BX.Helper.show('redirect=detail&code=5329693');"><?=GetMessage("CRM_TYPE_MORE")?></a>
 		</div>
 		<div class="crm-lead-info-descript">
 			<div class="crm-lead-info-descript-text"><?=GetMessage("CRM_TYPE_CHANGE")?></div>

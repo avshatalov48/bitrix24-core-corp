@@ -374,28 +374,27 @@ class CTaskReminders
 
 	private function __SendJabberReminder($USER_ID, $arTask)
 	{
-		if (IsModuleInstalled("im") && CModule::IncludeModule("im"))
+		if (!IsModuleInstalled('im') || !CModule::IncludeModule('im'))
 		{
-			$reminderMessage = str_replace(
-				array(
-					"#TASK_TITLE#"
-				),
-				array(
-					$arTask["TITLE"]
-				),
-				GetMessage("TASKS_REMINDER")
-			);
-
-			return CTaskNotifications::sendMessageEx($arTask['ID'], $arTask["CREATED_BY"], array($USER_ID), array(
-				'INSTANT' => $reminderMessage,
-				'EMAIL' => $reminderMessage,
-				'PUSH' => $reminderMessage
-			), array(
-				'NOTIFY_EVENT' => 'reminder',
-			));
+			return false;
 		}
 
-		return false;
+		$reminderMessage = str_replace(['#TASK_TITLE#'], [$arTask['TITLE']], GetMessage('TASKS_REMINDER'));
+
+		return CTaskNotifications::sendMessageEx(
+			$arTask['ID'],
+			$arTask['CREATED_BY'],
+			[$USER_ID],
+			[
+				'INSTANT' => $reminderMessage,
+				'EMAIL' => $reminderMessage,
+				'PUSH' => $reminderMessage,
+			],
+			[
+				'NOTIFY_EVENT' => 'reminder',
+				'EXCLUDE_USERS_WITH_MUTE' => 'N',
+			]
+		);
 	}
 
 

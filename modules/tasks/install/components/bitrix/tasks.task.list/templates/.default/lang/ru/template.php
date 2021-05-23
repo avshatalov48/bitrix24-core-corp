@@ -90,6 +90,8 @@ $MESS["TASKS_LIST_GROUP_ACTION_ADD_FAVORITE"] = "Добавить в избра�
 $MESS["TASKS_LIST_GROUP_ACTION_DELETE_FAVORITE"] = "Убрать из избранного";
 $MESS["TASKS_LIST_GROUP_ACTION_MUTE"] = "Без звука";
 $MESS["TASKS_LIST_GROUP_ACTION_UNMUTE"] = "Включить звук";
+$MESS["TASKS_LIST_GROUP_ACTION_PING"] = "Пинг";
+$MESS["TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION"] = "Пинг-уведомления отправлены";
 $MESS["TASKS_LIST_GROUP_ACTION_MOVE_DEADLINE_RIGHT"] = "Перенести крайний срок вперед";
 $MESS["TASKS_LIST_GROUP_ACTION_MOVE_DEADLINE_LEFT"] = "Перенести крайний срок назад";
 $MESS["TASKS_LIST_GROUP_ACTION_MOVE_DEADLINE_AT_DAY"] = "день";
@@ -115,6 +117,7 @@ $MESS["TASKS_ADD_TASK_TO_TIMEMAN_EX"] = "Добавить в план рабоч
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
 
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
+$MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = 'Пинг-уведомление отправлено';
 
 $MESS["TASKS_ROW_COUNT_TITLE"] = "Всего";
 $MESS["TASKS_SHOW_ROW_COUNT"] = "Показать количество";

@@ -6,7 +6,7 @@
 }
 
 .invite-body .ui-page-slider-workarea-content-padding {
-	padding: 20px 0;
+	padding: 0;
 }
 
 .invite-wrap {
@@ -609,6 +609,10 @@
 
 .js-intranet-invitation-arrow-hide .invite-wrap-decal-arrow {
 	display: none;
+}
+
+.invite-cursor-auto {
+	cursor: auto;
 }
 
 /*endregion*/

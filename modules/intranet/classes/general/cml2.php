@@ -405,7 +405,7 @@ class CUserCMLImport
 		{
 			if($ar["ATTRIBUTES"] <> '')
 			{
-				$attrs = unserialize($ar["ATTRIBUTES"]);
+				$attrs = unserialize($ar["ATTRIBUTES"], ["allowed_classes" => false]);
 				if(is_array($attrs))
 				{
 					if(array_key_exists(GetMessage('IBLOCK_XML2_USER_ATTR_UPDATE_ONLY'), $attrs))
@@ -487,7 +487,7 @@ class CUserCMLImport
 			{
 				if($ar["ATTRIBUTES"] <> '')
 				{
-					$attrs = unserialize($ar["ATTRIBUTES"]);
+					$attrs = unserialize($ar["ATTRIBUTES"], ["allowed_classes" => false]);
 					if(is_array($attrs))
 					{
 						if(array_key_exists(GetMessage('IBLOCK_XML2_USER_ATTR_UPDATE_ONLY'), $attrs))
@@ -980,7 +980,7 @@ class CUserCMLImport
 			{
 				if($ar["ATTRIBUTES"] <> '')
 				{
-					$attrs = unserialize($ar["ATTRIBUTES"]);
+					$attrs = unserialize($ar["ATTRIBUTES"], ["allowed_classes" => false]);
 					if(is_array($attrs))
 					{
 						if(array_key_exists(GetMessage('IBLOCK_XML2_USER_ATTR_UPDATE_ONLY'), $attrs))

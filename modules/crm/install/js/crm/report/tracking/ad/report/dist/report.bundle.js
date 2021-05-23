@@ -6,7 +6,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	'use strict';
 
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-line\">\n\t\t\t\t\t\t\t<div data-role=\"title\"></div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-line\">\n\t\t\t\t\t\t\t<div data-role=\"title\"></div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\">\n\t\t\t\t\t\t\t<div data-role=\"error\" class=\"ui-alert ui-alert-danger\" style=\"display: none;\">\n\t\t\t\t\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t<strong>", ":</strong>\n\t\t\t\t\t\t\t\t\t<span data-role=\"error/text\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div style=\"text-align: center;\">\n\t\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\t\tdata-role=\"error/close\" \n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\t\t\tstyle=\"display: none;\"\n\t\t\t\t\t\t\t\t>", "</button>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -26,8 +26,13 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	      loaderText: null,
 	      loaderProgressBar: null,
 	      loaderActive: false,
+	      error: null,
+	      errorText: null,
+	      errorClose: null,
 	      grid: null
 	    });
+	    babelHelpers.defineProperty(this, "loaded", false);
+	    babelHelpers.defineProperty(this, "statusButtonClassName", 'crm-tracking-report-source-status-disabled');
 	    this.load(options);
 	  }
 
@@ -90,26 +95,51 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        } else {
 	          _this2.build();
 	        }
+	      }).catch(function (_ref3) {
+	        var errors = _ref3.errors;
+
+	        _this2.showError(errors[0]);
+	      });
+	    }
+	  }, {
+	    key: "changeStatus",
+	    value: function changeStatus(id, status) {
+	      var _this3 = this;
+
+	      this.showLoader();
+	      BX.ajax.runAction('crm.api.tracking.ad.report.changeStatus', {
+	        json: {
+	          id: id,
+	          status: status
+	        }
+	      }).then(function () {
+	        _this3.loadGrid();
+	      }).catch(function (_ref4) {
+	        var errors = _ref4.errors;
+
+	        _this3.showError(errors[0]);
 	      });
 	    }
 	  }, {
 	    key: "loadGrid",
 	    value: function loadGrid() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      BX.ajax.runAction('crm.api.tracking.ad.report.getGrid', {
 	        data: babelHelpers.objectSpread({}, this.filter)
-	      }).then(function (_ref3) {
-	        var data = _ref3.data;
+	      }).then(function (_ref5) {
+	        var data = _ref5.data;
 	        //container.innerHTML = data.html;
-	        main_core_events.EventEmitter.subscribe(window, 'Grid::beforeRequest', _this3.onBeforeGridRequest.bind(_this3));
-	        main_core.Runtime.html(_this3.getNode('grid'), data.html);
+	        main_core_events.EventEmitter.subscribe(window, 'Grid::beforeRequest', _this4.onBeforeGridRequest.bind(_this4));
+	        main_core.Runtime.html(_this4.getNode('grid'), data.html);
 
-	        _this3.initActivators();
+	        _this4.initActivators();
 
-	        _this3.hideLoader();
+	        _this4.hideLoader();
 
-	        if (!_this3.filter.level) {
+	        _this4.loaded = true;
+
+	        if (!_this4.filter.level) {
 	          var popupOptions = {
 	            content: main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_SETTINGS_HINT'),
 	            zIndex: 5000,
@@ -118,28 +148,60 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	            offsetTop: -30,
 	            animation: 'fading',
 	            darkMode: true,
-	            bindElement: _this3.ui.hint
+	            bindElement: _this4.ui.hint
 	          };
 	          var popup = new main_popup.Popup(popupOptions);
 	          popup.show();
 	          setTimeout(function () {
 	            return popup.destroy();
-	          }, 7000);
+	          }, 10000);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "initActivators",
 	    value: function initActivators() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      this.getNodes('grid/activator').forEach(function (node) {
 	        var options = JSON.parse(node.dataset.options);
+	        var statusBtn = node.previousElementSibling;
+
+	        if (statusBtn) {
+	          options.enabled ? statusBtn.classList.remove(_this5.statusButtonClassName) : statusBtn.classList.add(_this5.statusButtonClassName);
+	          main_core.Event.bind(statusBtn, 'click', function () {
+	            var popup = new main_popup.Menu({
+	              bindElement: statusBtn,
+	              zIndex: 3010,
+	              items: [{
+	                text: main_core.Text.encode(main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_STATUS_ENABLED')),
+	                onclick: function onclick() {
+	                  _this5.changeStatus(options.parentId, true);
+
+	                  popup.close();
+	                }
+	              }, {
+	                text: main_core.Text.encode(main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_STATUS_PAUSE')),
+	                onclick: function onclick() {
+	                  _this5.changeStatus(options.parentId, false);
+
+	                  popup.close();
+	                }
+	              }]
+	            });
+	            popup.show();
+	          });
+	        }
+
+	        if (options.level === null || options.level === undefined) {
+	          return;
+	        }
+
 	        main_core.Event.bind(node, 'click', function () {
-	          new Report(babelHelpers.objectSpread({}, _this4.filter, {
+	          new Report(babelHelpers.objectSpread({}, _this5.filter, {
 	            level: options.level,
 	            parentId: options.parentId,
-	            gridId: _this4.filter.gridId + '-lvl' + options.level
+	            gridId: _this5.filter.gridId + '-lvl' + options.level
 	          }));
 	        });
 	      });
@@ -170,11 +232,11 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	                onclick: function onclick() {
 	                  popup.close();
 	                  selector.textContent = item.title;
-	                  _this4.filter.parentId = item.parentId;
-	                  _this4.filter.level = item.level;
-	                  _this4.filter.sourceId = item.sourceId;
+	                  _this5.filter.parentId = item.parentId;
+	                  _this5.filter.level = item.level;
+	                  _this5.filter.sourceId = item.sourceId;
 
-	                  _this4.build();
+	                  _this5.build();
 	                }
 	              };
 	            })
@@ -186,12 +248,17 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	  }, {
 	    key: "createUiContainer",
 	    value: function createUiContainer(level) {
-	      var container = main_core.Tag.render(_templateObject(), level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>');
+	      var _this6 = this;
+
+	      var container = main_core.Tag.render(_templateObject(), level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>', main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_ERROR_TITLE'), main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_CLOSE'));
 	      this.ui.container = container;
 	      this.ui.title = this.getNode('title');
 	      this.ui.hint = this.getNode('hint');
 	      this.ui.loader = this.getNode('loader');
 	      this.ui.loaderText = this.getNode('loader/text');
+	      this.ui.error = this.getNode('error');
+	      this.ui.errorText = this.getNode('error/text');
+	      this.ui.errorClose = this.getNode('error/close');
 	      this.ui.grid = this.getNode('grid');
 	      var progressBar = new BX.UI.ProgressBar({
 	        value: 0,
@@ -206,7 +273,17 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        });
 	      }
 
-	      this.getNode('loader/bar').appendChild(progressBar.getContainer());
+	      if (this.ui.errorClose) {
+	        this.ui.errorClose.addEventListener('click', function () {
+	          if (_this6.loaded) {
+	            _this6.hideError();
+	          } else {
+	            BX.SidePanel.Instance.close();
+	          }
+	        });
+	      }
+
+	      this.getNode('loader/bar').insertBefore(progressBar.getContainer(), this.getNode('loader/bar').children[0]);
 	      this.ui.loaderProgressBar = progressBar;
 	      this.setLoaderText(main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_BUILD'));
 	      this.setTitle(main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_TITLE_' + this.filter.level));
@@ -221,7 +298,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	  }, {
 	    key: "animateLoader",
 	    value: function animateLoader() {
-	      var _this5 = this;
+	      var _this7 = this;
 
 	      if (!this.ui.loaderActive) {
 	        return;
@@ -235,17 +312,34 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	      }
 
 	      setTimeout(function () {
-	        return _this5.animateLoader();
+	        return _this7.animateLoader();
 	      }, 100);
+	    }
+	  }, {
+	    key: "showError",
+	    value: function showError(error) {
+	      this.ui.errorClose.style.display = '';
+	      this.ui.error.style.display = '';
+	      this.ui.errorText.textContent = error.message;
+	      this.ui.loaderProgressBar.getContainer().style.display = 'none';
+	    }
+	  }, {
+	    key: "hideError",
+	    value: function hideError() {
+	      this.ui.errorClose.style.display = 'none';
+	      this.ui.error.style.display = 'none';
+	      this.ui.errorText.textContent = '';
+	      this.ui.loaderProgressBar.getContainer().style.display = '';
+	      this.hideLoader();
 	    }
 	  }, {
 	    key: "showLoader",
 	    value: function showLoader() {
-	      var _this6 = this;
+	      var _this8 = this;
 
 	      if (!this.ui.loaderActive) {
 	        setTimeout(function () {
-	          return _this6.animateLoader();
+	          return _this8.animateLoader();
 	        }, 100);
 	      }
 
@@ -282,14 +376,14 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	  }, {
 	    key: "onBeforeGridRequest",
 	    value: function onBeforeGridRequest(grid, eventArgs) {
-	      var _this7 = this;
+	      var _this9 = this;
 
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      eventArgs.method = 'POST';
 
 	      if (!eventArgs.url) {
 	        var parameters = Object.keys(this.filter).forEach(function (key) {
-	          return key + '=' + _this7.filter[key];
+	          return key + '=' + _this9.filter[key];
 	        });
 	        eventArgs.url = '/bitrix/services/main/ajax.php?action=crm.api.tracking.ad.grid.report.get&' + parameters;
 	      }

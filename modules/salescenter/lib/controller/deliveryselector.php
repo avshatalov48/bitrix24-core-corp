@@ -5,10 +5,14 @@ namespace Bitrix\SalesCenter\Controller;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Internals\OrderPropsRelationTable;
 use Bitrix\Sale\Delivery;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
+use Bitrix\SalesCenter\Delivery\Handlers\IRestHandler;
+
+Loc::loadMessages(__FILE__);
 
 class DeliverySelector extends \Bitrix\Main\Engine\Controller
 {
@@ -30,44 +34,78 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 			->getCollection()
 			->getInstalledItems();
 
-		$services = [];
+		$flatServices = [];
 		foreach ($installedHandlers as $installedHandler)
 		{
 			foreach ($activeServices as $service)
 			{
-				$deliveryObj = Delivery\Services\Manager::createObject($service);
+				$isChild = false;
+				if ($service['PARENT_ID']
+					&& ($parentServiceFields = Delivery\Services\Manager::getById($service['PARENT_ID']))
+				)
+				{
+					$serviceClassName = $parentServiceFields['CLASS_NAME'];
+					$isChild = true;
+				}
+				else
+				{
+					$serviceClassName = $service['CLASS_NAME'];
+				}
 
-				if ($installedHandler->isRestHandler()
-					&& $service['CLASS_NAME'] === $installedHandler->getProfileClass()
-					&& $installedHandler->getRestHandlerCode() !== $deliveryObj->getParentService()->getHandlerCode()
+				if ($serviceClassName !== $installedHandler->getHandlerClass())
+				{
+					continue;
+				}
+
+				if (!$isChild && $installedHandler instanceof IRestHandler
+					&& $installedHandler->getRestHandlerCode() !== $service['CONFIG']['MAIN']['REST_CODE']
 				)
 				{
 					continue;
 				}
 
-				$className = $installedHandler->getProfileClass() ?: $installedHandler->getHandlerClass();
-				if ($service['CLASS_NAME'] !== $className)
-				{
-					continue;
-				}
-
-				$name = $service['NAME'];
-				if ($installedHandler->getProfileClass())
-				{
-					$name = $deliveryObj->getNameWithParent();
-				}
-
-				$services[] = [
+				$flatServices[$service['ID']] = [
 					'id' => $service['ID'],
-					'name' => $name,
-					'title' => $installedHandler->getTypeDescription(),
-					'code' => $installedHandler->getCode(),
-					'logo' => $installedHandler->getWorkingImagePath(),
+					'name' => $service['NAME'],
+					'description' => $service['DESCRIPTION'],
+					'title' => $service['ID'] != Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId()
+						? Loc::getMessage('SALESCENTER_CONTROLLER_DELIVERY_SELECTOR_DELIVERY_SERVICE')
+						: '',
+
+					'restrictions' => $this->makeServiceRestrictions($service['CODE']),
+					'code' => $isChild ? $service['CODE'] : $installedHandler->getCode(),
+					'logo' => $isChild
+						? \CFile::getPath($service['LOGOTIP'])
+						: $installedHandler->getWorkingImagePath(),
+					'parentId' => (int)$service['PARENT_ID'],
+					'profiles' => [],
 				];
 			}
 		}
 
-		$deliveryServiceIds = array_column($services, 'id');
+		$deliveryServiceIds = array_keys($flatServices);
+
+		$services = array_filter(
+			$flatServices,
+			function ($service)
+			{
+				return $service['parentId'] === 0;
+			}
+		);
+		foreach ($flatServices as $serviceId => $service)
+		{
+			if ($service['parentId'] === 0)
+			{
+				continue;
+			}
+			if (!isset($services[$service['parentId']]))
+			{
+				continue;
+			}
+			$services[$service['parentId']]['profiles'][] = $service;
+		}
+
+		$services = array_values($services);
 
 		/**
 		 * Related properties
@@ -183,6 +221,36 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 					SITE_ID
 				).'user/#user_id#/',
 		];
+	}
+
+	/**
+	 * @param string|null $serviceCode
+	 * @return array
+	 */
+	private function makeServiceRestrictions(?string $serviceCode): array
+	{
+		$restrictions = [];
+
+		$i = 0;
+		do
+		{
+			$restriction = Loc::getMessage(
+				sprintf(
+					'SALESCENTER_CONTROLLER_DELIVERY_SELECTOR_%s_RESTRICTIONS_%s',
+					$serviceCode,
+					$i
+				)
+			);
+			if ($restriction)
+			{
+				$restrictions[] = $restriction;
+			}
+
+			$i++;
+
+		} while($restriction);
+
+		return $restrictions;
 	}
 
 	/**

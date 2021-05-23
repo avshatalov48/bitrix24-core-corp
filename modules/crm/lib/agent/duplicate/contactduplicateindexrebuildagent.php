@@ -81,7 +81,7 @@ class ContactDuplicateIndexRebuildAgent extends EntityDuplicateIndexRebuildAgent
 	public function getProgressData()
 	{
 		$s = Option::get('crm', '~CRM_REBUILD_CONTACT_DUPLICATE_INDEX_PROGRESS',  '');
-		$data = $s !== '' ? unserialize($s) : null;
+		$data = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($data))
 		{
 			$data = array();

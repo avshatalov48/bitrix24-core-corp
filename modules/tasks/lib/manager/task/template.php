@@ -251,14 +251,14 @@ final class Template extends \Bitrix\Tasks\Manager
 				ActionDictionary::ACTION_TEMPLATE_EDIT => null,
 			];
 
-			$row['ACCOMPLICES'] = unserialize($row['ACCOMPLICES']);
-			$row['AUDITORS'] = unserialize($row['AUDITORS']);
-			$row['RESPONSIBLES'] = unserialize($row['RESPONSIBLES']);
+			$row['ACCOMPLICES'] = unserialize($row['ACCOMPLICES'], ['allowed_classes' => false]);
+			$row['AUDITORS'] = unserialize($row['AUDITORS'], ['allowed_classes' => false]);
+			$row['RESPONSIBLES'] = unserialize($row['RESPONSIBLES'], ['allowed_classes' => false]);
 
-			$row['TAGS'] = unserialize($row['TAGS']);
-			$row['DEPENDS_ON'] = unserialize($row['DEPENDS_ON']);
+			$row['TAGS'] = unserialize($row['TAGS'], ['allowed_classes' => false]);
+			$row['DEPENDS_ON'] = unserialize($row['DEPENDS_ON'], ['allowed_classes' => false]);
 
-			$row['REPLICATE_PARAMS'] = unserialize($row['REPLICATE_PARAMS']);
+			$row['REPLICATE_PARAMS'] = unserialize($row['REPLICATE_PARAMS'], ['allowed_classes' => false]);
 			$row['ALLOWED_ACTIONS'] = $accessController->batchCheck($accessRequest, $templateModel);
 
 			$items[$templateId] = $row;

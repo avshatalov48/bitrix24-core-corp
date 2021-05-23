@@ -1,5 +1,5 @@
 import {Loc} 								from 'main.core';
-import {BlockNumberTitleHint as Block} 		from 'salescenter.component.stage-block';
+import {Block} 			from 'salescenter.component.stage-block';
 import {Uninstalled as TileUnInstalled} 	from "./tile-collection/uninstalled";
 import {Installed as TileInstalled} 		from "./tile-collection/installed";
 import {StageMixin} 						from "./stage-mixin";
@@ -21,7 +21,14 @@ const PaySystem = {
 		installed: {
 			type: Boolean,
 			required: true
-		}
+		},
+		titleItems: {
+			type: Array
+		},
+		initialCollapseState: {
+			type: Boolean,
+			required: true
+		},
 	},
 	mixins:[StageMixin],
 	components:
@@ -34,11 +41,28 @@ const PaySystem = {
 	{
 		onItemHint(e)
 		{
-			BX.Salescenter.Manager.openHowToConfigPaySystem(e);
+			BX.Salescenter.Manager.openHowToConfigDefaultPaySystem(e);
 		},
+		saveCollapsedOption(option)
+		{
+			this.$emit('on-save-collapsed-option', 'pay_system', option);
+		},
+
 	},
 	computed:
 	{
+		configForBlock()
+		{
+			return {
+				counter: this.counter,
+				titleItems: this.installed ? this.titleItems : [],
+				installed: this.installed,
+				collapsible: true,
+				checked: this.counterCheckedMixin,
+				showHint: !this.installed,
+				initialCollapseState: this.initialCollapseState,
+			}
+		},
 		statusClass()
 		{
 			return {
@@ -55,17 +79,18 @@ const PaySystem = {
 
 	template: `
 		<stage-block-item
-			:counter="counter"
-			:class="[statusClassMixin, statusClass]"			
-			:checked="counterCheckedMixin"
-			v-on:on-item-hint="onItemHint"
+			:class="[statusClassMixin, statusClass]"
+			:config="configForBlock"
+			@on-item-hint.stop.prevent="onItemHint"
+			@on-tile-slider-close="onSliderClose"
+			@on-adjust-collapsed="saveCollapsedOption"
 		>
 			<template v-slot:block-title-title>{{title}}</template>
 			<template v-slot:block-hint-title>${Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE')}</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
-					<tile-collection-installed-block 	:tiles="tiles" v-on:on-tile-slider-close="onSliderClose" v-if="installed"/>
-					<tile-collection-uninstalled-block 	:tiles="tiles" v-on:on-tile-slider-close="onSliderClose" v-else />
+					<tile-collection-uninstalled-block 	:tiles="tiles" v-if="!installed"/>
+					<tile-collection-installed-block :tiles="tiles" v-on:on-tile-slider-close="onSliderClose" v-else />
 				</div>
 			</template>
 		</stage-block-item>

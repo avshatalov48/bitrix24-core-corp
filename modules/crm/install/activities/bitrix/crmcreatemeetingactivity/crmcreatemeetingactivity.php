@@ -374,6 +374,7 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 		return array(
 			'Subject' => array(
 				'Name' => GetMessage('CRM_CREATE_MEETING_SUBJECT'),
+				'Description' => GetMessage('CRM_CREATE_MEETING_SUBJECT'),
 				'FieldName' => 'subject',
 				'Type' => 'string'
 			),
@@ -389,11 +390,13 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 			),
 			'Description' => array(
 				'Name' => GetMessage('CRM_CREATE_MEETING_DESCRIPTION'),
+				'Description' => GetMessage('CRM_CREATE_MEETING_DESCRIPTION'),
 				'FieldName' => 'description',
 				'Type' => 'text'
 			),
 			'Location' => array(
 				'Name' => GetMessage('CRM_CREATE_MEETING_LOCATION'),
+				'Description' => GetMessage('CRM_CREATE_MEETING_LOCATION'),
 				'FieldName' => 'location',
 				'Type' => 'string'
 			),

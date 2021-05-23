@@ -43,7 +43,7 @@ use \Bitrix\Crm\Conversion\LeadConversionScheme;
 			<tr>
 				<td colspan="2" class="crm-kanban-popup-border">
 					<span class="crm-kanban-popup-text"><?= Loc::getMessage('CRM_KANBAN_POPUP_COMMENT')?></span>
-					<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100">
 						<textarea class="ui-ctl-element" data-field="comment"></textarea>
 					</div>
 				</td>
@@ -61,13 +61,15 @@ use \Bitrix\Crm\Conversion\LeadConversionScheme;
 					<span class="crm-kanban-popup-text"><?= Loc::getMessage('CRM_KANBAN_POPUP_DATE')?></span>
 				</td>
 				<td>
-					<input class="crm-kanban-popup-input crm-kanban-popup-field" data-field="date" data-default="<?= htmlspecialcharsbx($date)?>" onclick="BX.calendar({node: this, field: this});">
+					<input class="ui-ctl-element" data-field="date" data-default="<?= htmlspecialcharsbx($date)?>" onclick="BX.calendar({node: this, field: this});">
 				</td>
 			</tr>
 			<tr>
 				<td colspan="2" class="crm-kanban-popup-border">
 					<span class="crm-kanban-popup-text"><?= Loc::getMessage('CRM_KANBAN_POPUP_COMMENT')?></span>
-					<textarea class="crm-kanban-popup-textarea crm-kanban-popup-field" data-field="comment"></textarea>
+					<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100">
+						<textarea class="ui-ctl-element" data-field="comment"></textarea>
+					</div>
 				</td>
 			</tr>
 		</table>

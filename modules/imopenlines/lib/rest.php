@@ -1052,6 +1052,7 @@ class Rest extends \IRestService
 			'FORMAT_DATETIME' => $coreMessages['FORMAT_DATETIME'],
 			'AMPM_MODE' => IsAmPmMode(true),
 			'UTF_MODE' => \Bitrix\Main\Application::getInstance()->isUtfMode() ? 'Y' : 'N',
+			'isCloud' => IsModuleInstalled('bitrix24'),
 		];
 
 		return $result;

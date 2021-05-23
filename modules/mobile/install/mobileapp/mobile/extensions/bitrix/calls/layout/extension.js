@@ -790,7 +790,11 @@
 			else
 			{
 				style = (isLandscape) ? Object.assign({}, styles.localVideo, styles.localVideoLandscape) : styles.localVideo;
-				style.marginTop = device.screen.safeArea.top;
+				style.marginTop = (isLandscape ? 5 : 0) + device.screen.safeArea.top;
+				if (isLandscape)
+				{
+					style.marginRight = 5;
+				}
 			}
 			return DraggableView(
 				{
@@ -827,12 +831,13 @@
 					showInFrame && Image({
 						style: {
 							position: "absolute",
+							bottom: 9,
 							alignSelf: "center",
-							bottom: 0,
-							width: 35,
-							height: 32,
+							//left: isLandscape ? 20 : 40,
+							width: 20,
+							height: 16,
 						},
-						resizeMode: "center",
+						resizeMode: "cover",
 						clickable: false,
 						svg: {content: Icons.switchCamera},
 					}),
@@ -1216,12 +1221,13 @@
 
 		renderTopPanel()
 		{
+			let isLandscape = this.state.screenWidth > this.state.screenHeight;
 			return View({
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
 						height: 204,
 						width: "100%",
-						backgroundImage: pathToExtension + "img/top-gradient.png",
+						backgroundImage: isLandscape ? undefined : pathToExtension + "img/top-gradient.png",
 						backgroundResizeMode: "stretch",
 						justifyContent: "flex-start",
 						position: this.state.panelVisible ? "absolute" : "relative", // display: none + position: absolute does not work
@@ -1235,10 +1241,11 @@
 
 		renderBottomPanel()
 		{
+			let isLandscape = this.state.screenWidth > this.state.screenHeight;
 			return View({
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
-						height: 214,
+						height: isLandscape ? 167 : 214,
 						width: "100%",
 						backgroundImage: pathToExtension + "img/1.png",
 						justifyContent: "flex-end",
@@ -1388,11 +1395,12 @@
 
 		renderParticipantsButton()
 		{
+			let isLandscape = this.state.screenWidth > this.state.screenHeight;
 			return View(
 				{
 					style: {
 						display: this.state.showParticipants ? "flex" : "none",
-						marginTop: device.screen.safeArea.top,
+						marginTop: (isLandscape ? 5 : 0) + device.screen.safeArea.top,
 						marginLeft: 16 + device.screen.safeArea.left,
 						...styles.participantsButton,
 					},
@@ -1490,10 +1498,12 @@
 				return null;
 			}
 
+			let isLandscape = this.state.screenWidth > this.state.screenHeight;
+
 			return View(
 				{
 					style: {
-						bottom: 146 + (device.screen.safeArea.bottom > 0 ? Math.min(device.screen.safeArea.bottom, 10) : 0),
+						bottom: (isLandscape ? 99 : 146) + (device.screen.safeArea.bottom > 0 ? Math.min(device.screen.safeArea.bottom, 10) : 0),
 						...styles.userSelector,
 						...(this.state.panelVisible ? {} : {
 							display: "none",

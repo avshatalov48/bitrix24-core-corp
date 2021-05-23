@@ -37,6 +37,8 @@ Loc::loadMessages(__FILE__);
 
 class ConfigTable extends Data\DataManager
 {
+	const MAX_LENGTH_NAME = 255;
+
 	public static function getFilePath()
 	{
 		return __FILE__;
@@ -65,9 +67,9 @@ class ConfigTable extends Data\DataManager
 				'validation' => function (){ return array(new Entity\Validator\Length(null, 255));},
 			)),
 			'PHONE_NAME' => new Entity\StringField('PHONE_NAME', array(
-				'size' => 255,
+				'size' => static::MAX_LENGTH_NAME,
 				'title' => Loc::getMessage('INCOMING_CONFIG_ENTITY_PHONE_NAME_FIELD'),
-				'validation' => function (){ return array(new Entity\Validator\Length(null, 255));},
+				'validation' => function (){ return array(new Entity\Validator\Length(null, static::MAX_LENGTH_NAME));},
 			)),
 			'PHONE_COUNTRY_CODE' => new Entity\StringField('PHONE_COUNTRY_CODE', array(
 				'size' => 50,

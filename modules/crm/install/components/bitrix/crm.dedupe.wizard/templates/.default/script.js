@@ -25,6 +25,10 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 		this._conflictedEntityCount = 0;
 
 		this._resolvedItemCount = 0;
+
+		this._dedupeSettingsPath = '';
+		this._enableCloseConfirmation = false;
+		this._enableEntityListReload = false;
 	};
 	BX.Crm.DedupeWizard.prototype =
 	{
@@ -39,6 +43,7 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._contextId = BX.prop.getString(this._settings, "contextId", "");
 			this._typeInfos = BX.prop.getObject(this._settings, "typeInfos", {});
 			this._config = BX.prop.getObject(this._settings, "config", {});
+			this._dedupeSettingsPath = BX.prop.getString(this._settings, "dedupeSettingsPath", "");
 			this._mergeMode = 'auto';
 			
 			this._steps = BX.prop.getObject(this._settings, "steps", {});
@@ -51,6 +56,11 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 
 				this._steps[key].setWizard(this);
 			}
+			this.bindSliderEvents();
+		},
+		getId: function()
+		{
+			return this._id;
 		},
 		getEntityTypeId: function()
 		{
@@ -69,13 +79,9 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._config = config;
 			BX.onCustomEvent(this, "onConfigChange");
 		},
-		saveConfig: function()
+		getMessage: function(name)
 		{
-			return BX.ajax.runComponentAction(
-				"bitrix:crm.dedupe.wizard",
-				"saveConfiguration",
-				{ data: { guid: this._id, config: this._config } }
-			);
+			return BX.prop.getString(BX.Crm.DedupeWizard.messages, name, name);
 		},
 		getContextId: function()
 		{
@@ -153,6 +159,10 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 		{
 			this._conflictedEntityCount = count;
 		},
+		getDedupeSettingsPath: function()
+		{
+			return this._dedupeSettingsPath;
+		},
 		calculateEntityCount: function(items)
 		{
 			if(!BX.type.isArray(items))
@@ -227,6 +237,92 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 
 			BX.Crm.Page.open(BX.util.add_url_param(this.getMergerUrl(), params));
 		},
+		enableCloseConfirmation: function(enableCloseConfirmation)
+		{
+			this._enableCloseConfirmation = !!enableCloseConfirmation;
+		},
+		enableEntityListReload: function(enableEntityListReload)
+		{
+			this._enableEntityListReload = !!enableEntityListReload;
+		},
+		bindSliderEvents: function()
+		{
+			BX.addCustomEvent("SidePanel.Slider:onClose", this.onSliderClose.bind(this));
+		},
+		reloadEntityList: function()
+		{
+			if (top.BX.CRM && top.BX.CRM.Kanban)
+			{
+				var kanban = top.BX.CRM.Kanban.Grid.getInstance();
+				if (kanban)
+				{
+					kanban.reload();
+				}
+			}
+			if (top.BX.Main.gridManager)
+			{
+				var gridId = 'CRM_' + this.getEntityTypeName() + '_LIST_V12'; // does not support deal categories
+				var grid = top.BX.Main.gridManager.getInstanceById(gridId);
+				if (grid)
+				{
+					grid.reload();
+				}
+			}
+		},
+		onSliderClose: function(event)
+		{
+			var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+			if(slider !== event.getSlider())
+			{
+				return;
+			}
+
+			if(!slider.isOpen())
+			{
+				return;
+			}
+
+			if(!this._enableCloseConfirmation)
+			{
+				if (this._enableEntityListReload)
+				{
+					this.reloadEntityList();
+				}
+				return;
+			}
+
+			event.denyAction();
+
+			var popup = BX.Main.PopupManager.getPopupById('dedupe_wizard_close_confirmation');
+			if (!popup)
+			{
+				popup = BX.Main.PopupManager.create({
+					id: 'dedupe_wizard_close_confirmation',
+					content: this.getMessage('closeConfirmationText'),
+					titleBar: this.getMessage('closeConfirmationTitle'),
+					buttons: [
+						new BX.UI.CloseButton({
+							color: BX.UI.ButtonColor.SUCCESS,
+							events : {
+								click: function(event) {
+									event.getContext().close();
+									this._enableCloseConfirmation = false;
+									top.BX.SidePanel.Instance.getSliderByWindow(window).close();
+								}.bind(this)
+							}
+						}),
+						new BX.UI.CancelButton({
+							events : {
+								click: function(event) {
+									event.getContext().close();
+								}.bind(this)
+							}
+						})
+					]
+				})
+			}
+			popup.show();
+		},
 		onStepStart: function(step)
 		{
 		},
@@ -240,6 +336,10 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._steps[nextStepId].start();
 		}
 	};
+	if(typeof(BX.Crm.DedupeWizard.messages) === "undefined")
+	{
+		BX.Crm.DedupeWizard.messages = {};
+	}
 	BX.Crm.DedupeWizard.create = function(id, settings)
 	{
 		var self = new BX.Crm.DedupeWizard();
@@ -357,6 +457,8 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 		this._configHandler = BX.delegate(this.onConfigButtonClick, this);
 		this._scanStartHandler = BX.delegate(this.onScanStartButtonClick, this);
 		this._isScanRunning = false;
+
+		BX.addCustomEvent(window, 'SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
 	};
 	BX.extend(BX.Crm.DedupeWizardScanning, BX.Crm.DedupeWizardStep);
 
@@ -394,7 +496,8 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 	BX.Crm.DedupeWizardScanning.prototype.adjustConfigurationTitle = function()
 	{
 		var titleElement = BX(BX.prop.getString(this._settings, "configTitleId"));
-		if(!titleElement)
+		var textTitleElement = BX(BX.prop.getString(this._settings, "configTitleTextId"));
+		if(!titleElement && !textTitleElement)
 		{
 			return;
 		}
@@ -422,9 +525,33 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 			}
 		}
 
-		titleElement.innerHTML = BX.util.htmlspecialchars(descriptions.join(", "));
+		if (titleElement)
+		{
+			titleElement.innerHTML = BX.util.htmlspecialchars(descriptions.join(", "));
 
-		BX.bind(titleElement, "click", this._configHandler);
+			BX.bind(titleElement, "click", this._configHandler);
+		}
+		if (textTitleElement)
+		{
+			textTitleElement.textContent = descriptions.join(", ");
+		}
+	};
+	BX.Crm.DedupeWizardScanning.prototype.setIsScanRunning = function(isScanRunning)
+	{
+		this._isScanRunning = !!isScanRunning;
+
+		var editModeContainer = BX(BX.prop.getString(this._settings, "configEditModeContainer"));
+		var viewModeContainer = BX(BX.prop.getString(this._settings, "configViewModeContainer"));
+		if (isScanRunning)
+		{
+			editModeContainer ? editModeContainer.style.display = 'none' : null;
+			viewModeContainer ? viewModeContainer.style.display = '' : null;
+		}
+		else
+		{
+			editModeContainer ? editModeContainer.style.display = '' : null;
+			viewModeContainer ? viewModeContainer.style.display = 'none' : null;
+		}
 	};
 	BX.Crm.DedupeWizardScanning.prototype.onConfigChange = function()
 	{
@@ -439,14 +566,19 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 			return;
 		}
 
-		var dialog = BX.Crm.DedupeWizardConfigurationDialog.create(
-			this._id,
+		BX.SidePanel.Instance.open(
+			this._wizard.getDedupeSettingsPath(),
 			{
-				wizard: this._wizard,
-				scopeInfos: this._wizard.getScopeInfos()
+				allowChangeHistory: false,
+				cacheable: false,
+				width: 600,
+				requestMethod: 'post',
+				requestParams: {
+					'entityTypeId': this._wizard.getEntityTypeId(),
+					'guid': this._wizard.getId()
+				}
 			}
 		);
-		dialog.show();
 	};
 	BX.Crm.DedupeWizardScanning.prototype.onScanStartButtonClick = function(e)
 	{
@@ -482,7 +614,7 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 			return false;
 		}
 
-		this._isScanRunning = true;
+		this.setIsScanRunning(true);
 		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "rebuildIndex", {
 			data:
 				{
@@ -519,15 +651,24 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 					this._wizard.setTotalItemCount(BX.prop.getInteger(data, "FOUND_ITEMS", 0));
 					this._wizard.setTotalEntityCount(BX.prop.getInteger(data, "TOTAL_ENTITIES", 0));
 
-					this._isScanRunning = false;
+					this.setIsScanRunning(false);
+					this._wizard.enableCloseConfirmation(true);
 					window.setTimeout(function(){ this.end(); }.bind(this),  200);
 				}
 			}.bind(this)
 		).catch(
-			function(){ this._isScanRunning = false; }.bind(this)
+			function(){ this.setIsScanRunning(false); }.bind(this)
 		);
 
 		return true;
+	};
+	BX.Crm.DedupeWizardScanning.prototype.onSliderMessage = function(event)
+	{
+		if (event.getEventId() === 'crm::onMergerSettingsChange')
+		{
+			var data = event.getData();
+			this._wizard.setConfig(data.config);
+		}
 	};
 	BX.Crm.DedupeWizardScanning.create = function(id, settings)
 	{
@@ -901,6 +1042,8 @@ if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
 
 	BX.Crm.DedupeWizardMergingFinish.prototype.start = function()
 	{
+		this._wizard.enableEntityListReload(true);
+		this._wizard.enableCloseConfirmation(false);
 		BX.Crm.DedupeWizardMergingFinish.superclass.start.apply(this, arguments);
 		this.layout();
 	};
@@ -915,6 +1058,21 @@ if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
 		{
 			this.getSubtitleWrapper().innerHTML = this.getMessage("duplicatesCompleteEmpty");
 		}
+
+		var backToListLinkId = BX(BX.prop.getString(this._settings, "backToListLinkId"));
+		if(backToListLinkId)
+		{
+			BX.bind(backToListLinkId, "click", this.onListButtonClick.bind(this));
+		}
+	};
+	BX.Crm.DedupeWizardMergingFinish.prototype.onListButtonClick = function(e)
+	{
+		var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+		if(slider && slider.isOpen())
+		{
+			slider.close(false);
+			e.preventDefault();
+		}
 	};
 	BX.Crm.DedupeWizardMergingFinish.create = function(id, settings)
 	{
@@ -924,336 +1082,3 @@ if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
 	};
 }
 
-if(typeof(BX.Crm.DedupeWizardConfigurationDialog) === "undefined")
-{
-	BX.Crm.DedupeWizardConfigurationDialog = function()
-	{
-		this._id = "";
-		this._settings = {};
-		this._wizard = null;
-		this._scope = "";
-		this._selectedTypeNames = [];
-
-		this._wrapper = null;
-		this._scopeSelector = null;
-		this._criterionList = null;
-		this._criterionCheckBoxes = null;
-
-		this._dlg = null;
-		this._slider = null;
-		this._isShown = false;
-
-		this._saveButtonClickHandler = this.onSaveButtonClick.bind(this);
-		this._cancelButtonClickHandler = this.onCancelButtonClick.bind(this);
-	};
-
-	BX.Crm.DedupeWizardConfigurationDialog.prototype =
-	{
-		initialize: function (id, settings)
-		{
-			this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-			this._settings = settings ? settings : {};
-
-			this._wizard = BX.prop.get(this._settings, "wizard");
-
-			var config = this._wizard.getConfig();
-			this._scope = BX.prop.getString(config, "scope", "");
-			this._selectedTypeNames = BX.prop.getArray(config, "typeNames", []);
-		},
-		getMessage: function(name)
-		{
-			return BX.prop.getString(BX.Crm.DedupeWizardConfigurationDialog.messages, name, name);
-		},
-		selectAll: function(selectAll)
-		{
-			if(!this._criterionCheckBoxes)
-			{
-				return;
-			}
-
-			var checked = !!selectAll;
-			for(var i = 0, length = this._criterionCheckBoxes.length; i < length; i++)
-			{
-				this._criterionCheckBoxes[i].checked = checked;
-			}
-		},
-		show: function()
-		{
-			if(this._isShown)
-			{
-				return;
-			}
-
-			BX.SidePanel.Instance.open("crm:dedupe-wizard-configuration",
-				{
-					data: {},
-					cacheable: false,
-					contentCallback: function(slider)
-					{
-						var promise = new BX.Promise();
-						window.setTimeout(
-							function(){ promise.fulfill(this.prepareDialogContent()); }.bind(this),
-							0
-						);
-						return promise;
-					}.bind(this),
-					width: 600,
-					events:
-					{
-						onOpenComplete: this.onSliderOpen.bind(this),
-						onClose: this.onSliderClose.bind(this)
-					}
-				}
-			);
-		},
-		close: function()
-		{
-			if(!this._isShown)
-			{
-				return;
-			}
-
-			if(this._slider)
-			{
-				this._slider.close(true);
-			}
-		},
-		prepareDialogContent: function()
-		{
-			var scopeInfos = this._wizard.getScopeInfos();
-			this._title = BX.create("h1", {
-				attrs: {className: "crm-dedupe-wizard-search-settings-title"},
-				text: this.getMessage("title")
-			});
-			this._wrapper = BX.create("div", { attrs: {className: "crm-dedupe-wizard-search-settings"}});
-			this._content = BX.create("div", { attrs: {className: "crm-dedupe-wizard-search-settings-content"}});
-			this._wrapper.appendChild(this._title);
-			this._wrapper.appendChild(this._content);
-			this._content.appendChild(BX.create("h4", {
-				attrs: {className: "crm-dedupe-wizard-search-settings-subtitle"},
-				text: this.getMessage("scopeCaption")
-			}));
-
-			var scopeSelectorOptions = [];
-
-			for(var scopeKey in scopeInfos)
-			{
-				if(!scopeInfos.hasOwnProperty(scopeKey))
-				{
-					continue;
-				}
-
-				scopeSelectorOptions.push(
-					BX.create("option",
-						{
-							attrs : { value: scopeKey !== "" ? scopeKey : "-", selected: this._scope === scopeKey },
-							text: scopeInfos[scopeKey]
-						}
-					)
-				);
-			}
-
-			this._scopeSelector = BX.create("select",
-				{
-					attrs: { className: "ui-ctl-element" },
-					children: scopeSelectorOptions,
-					events : { click: BX.delegate(this.onScopeChange, this) }
-				}
-			);
-
-			this._content.appendChild(
-				BX.create("div",
-					{
-						props: { className: "ui-ctl ui-ctl-after-icon ui-ctl-dropdown crm-dedupe-wizard-search-settings-input" },
-						children:
-							[
-								BX.create("div", {
-									props: {className: "ui-ctl-after ui-ctl-icon-angle"}
-								}),
-								this._scopeSelector
-							]
-					}
-				)
-			);
-
-			this._content.appendChild(BX.create("h4", {
-				attrs: {className: "crm-dedupe-wizard-search-settings-subtitle"},
-				text: this.getMessage("criterionCaption")
-			}));
-			this._content.appendChild(
-				BX.create("div",
-					{
-						props: { className: "crm-dedupe-wizard-search-settings-control-box" },
-						children:
-							[
-								BX.create("button",
-									{
-										props: { className: "crm-dedupe-wizard-search-settings-control" },
-										text: this.getMessage("selectAll"),
-										events : { click: BX.delegate(this.onSelectAllButtonClick, this) }
-									}
-								),
-								BX.create("button",
-									{
-										props: { className: "crm-dedupe-wizard-search-settings-control" },
-										text: this.getMessage("unselectAll"),
-										events : { click: BX.delegate(this.onUnselectAllButtonClick, this) }
-									}
-								)
-							]
-					}
-				)
-			);
-
-			this._criterionList = BX.create("ul", { attrs: { className: "crm-dedupe-wizard-search-settings-list" } });
-			this._content.appendChild(this._criterionList);
-
-			this._criterionCheckBoxes = [];
-			this.adjustCriterionList();
-
-			BX.bind(BX("ui-button-panel-save"), "click", this._saveButtonClickHandler);
-			BX.bind(BX("ui-button-panel-cancel"), "click", this._cancelButtonClickHandler);
-
-			var buttonPanel = BX("crmDedupeWizardBtnPanel");
-			buttonPanel.style.display = "";
-			this._wrapper.appendChild(buttonPanel);
-
-			return this._wrapper;
-		},
-		adjustCriterionList: function()
-		{
-			while(this._criterionList.firstChild)
-			{
-				this._criterionList.removeChild(this._criterionList.firstChild);
-			}
-			this._criterionCheckBoxes = [];
-
-			var typeInfos = this._wizard.getTypeInfos();
-			for(var extendedId in typeInfos)
-			{
-				if(!typeInfos.hasOwnProperty(extendedId))
-				{
-					continue;
-				}
-
-				var typeInfo = typeInfos[extendedId];
-				if(BX.prop.getString(typeInfo, "SCOPE", "") !== this._scope)
-				{
-					continue;
-				}
-
-				var typeName = BX.prop.getString(typeInfo, "NAME", "");
-				var criterionCheckBox = BX.create("input",
-					{ attrs: { type: "checkbox" }, props: { id: extendedId, name: typeName, className: "crm-dedupe-wizard-search-settings-checkbox" } }
-				);
-
-				if(this._selectedTypeNames.indexOf(typeName) >= 0)
-				{
-					criterionCheckBox.checked = true;
-				}
-
-				this._criterionCheckBoxes.push(criterionCheckBox);
-
-				this._criterionList.appendChild(
-					BX.create("li",
-						{
-							props: { className: "crm-dedupe-wizard-search-settings-list-item" },
-							children:
-								[
-									BX.create("label",
-										{
-											attrs: { for: extendedId },
-											props: { className: "crm-dedupe-wizard-search-settings-label" },
-											children:
-												[
-													criterionCheckBox,
-													document.createTextNode(
-														BX.prop.getString(typeInfo, "DESCRIPTION", "[" + typeName + "]")
-													)
-												]
-										}
-									)
-								]
-						}
-					)
-				);
-			}
-		},
-		onScopeChange: function()
-		{
-			var val = this._scopeSelector.value === "-" ? "" : this._scopeSelector.value;
-			if(this._scope !== val)
-			{
-				this._scope = val;
-				this.adjustCriterionList();
-			}
-		},
-		onSelectAllButtonClick: function(e)
-		{
-			this.selectAll(true);
-		},
-		onUnselectAllButtonClick: function(e)
-		{
-			this.selectAll(false);
-		},
-		onSaveButtonClick: function(e)
-		{
-			this._selectedTypeNames = [];
-			for(var i = 0, length = this._criterionCheckBoxes.length; i < length; i++)
-			{
-				var criterionCheckBox = this._criterionCheckBoxes[i];
-				if(criterionCheckBox.checked)
-				{
-					this._selectedTypeNames.push(criterionCheckBox.name);
-				}
-			}
-
-			var config = this._wizard.getConfig();
-			config["typeNames"] = this._selectedTypeNames;
-			config["scope"] = this._scope;
-
-			this._wizard.setConfig(config);
-			this._wizard.saveConfig().then(function() { this.close(); }.bind(this));
-		},
-		onCancelButtonClick: function(e)
-		{
-			this.close();
-		},
-		onSliderOpen: function(event)
-		{
-			this._slider = event.getSlider();
-			this._isShown = true;
-		},
-		onSliderClose: function(event)
-		{
-			if(this._slider)
-			{
-				BX.unbind(BX("ui-button-panel-save"), "click", this._saveButtonClickHandler);
-				BX.unbind(BX("ui-button-panel-cancel"), "click", this._cancelButtonClickHandler);
-
-				var buttonPanel = BX("crmDedupeWizardBtnPanel");
-				buttonPanel.style.display = "none";
-				if (BX("ui-button-panel-save").classList.contains('ui-btn-wait'))
-				{
-					BX("ui-button-panel-save").classList.remove('ui-btn-wait');
-				}
-				document.body.appendChild(buttonPanel);
-
-				this._slider.destroy();
-				this._slider = null;
-			}
-
-			this._isShown = false;
-		}
-	};
-	if(typeof(BX.Crm.DedupeWizardConfigurationDialog.messages) === "undefined")
-	{
-		BX.Crm.DedupeWizardConfigurationDialog.messages = {};
-	}
-	BX.Crm.DedupeWizardConfigurationDialog.create = function(id, settings)
-	{
-		var self = new BX.Crm.DedupeWizardConfigurationDialog();
-		self.initialize(id, settings);
-		return self;
-	};
-}

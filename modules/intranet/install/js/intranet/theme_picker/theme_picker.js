@@ -1014,7 +1014,7 @@ BX.Intranet.Bitrix24.ThemePickerCheckboxButton = function(themePicker)
 					htmlFor: "theme-dialog-checkbox-input",
 					className: "theme-dialog-checkbox-label"
 				},
-				text: BX.message("BITRIX24_THEME_SET_AS_DEFAULT")
+				text: BX.message("BITRIX24_THEME_DEFAULT_THEME_FOR_ALL")
 			}),
 			(!this.themePicker.canSetDefaultTheme() ? BX.create("span", { props: { className: "tariff-lock" }}) : null)
 
@@ -1237,10 +1237,7 @@ BX.Intranet.Bitrix24.NewThemeDialog.prototype =
 		}
 
 		this.colorPicker = new BX.ColorPicker({
-			onColorSelected: this.handleBgColorSelect.bind(this),
-			popupOptions: {
-				zIndex: this.getPopup().getZindex()
-			}
+			onColorSelected: this.handleBgColorSelect.bind(this)
 		});
 
 		return this.colorPicker;

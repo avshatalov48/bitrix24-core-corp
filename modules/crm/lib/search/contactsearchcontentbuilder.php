@@ -64,8 +64,12 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 			return $map;
 		}
 
-		$map->add($entityID);
-		
+		$isShortIndex = ($options['isShortIndex'] ?? false);
+		if(!$isShortIndex)
+		{
+			$map->add($entityID);
+		}
+
 		$lastName = isset($fields['LAST_NAME']) ? $fields['LAST_NAME'] : '';
 		if($lastName !== '')
 		{
@@ -78,10 +82,15 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 				$map->addTextFragments($customerNumber);
 			}
 		}
-		$map->addField($fields, 'NAME');
-		$map->addField($fields, 'SECOND_NAME');
 
-		if(isset($fields['ASSIGNED_BY_ID']))
+		$map->addField($fields, 'NAME');
+
+		if(!$isShortIndex)
+		{
+			$map->addField($fields, 'SECOND_NAME');
+		}
+
+		if(isset($fields['ASSIGNED_BY_ID']) && !$isShortIndex)
 		{
 			$map->addUserByID($fields['ASSIGNED_BY_ID']);
 		}
@@ -108,32 +117,35 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 			}
 		}
 
-		if(isset($fields['TYPE_ID']))
+		if(isset($fields['TYPE_ID']) && !$isShortIndex)
 		{
 			$map->addStatus('CONTACT_TYPE', $fields['TYPE_ID']);
 		}
 
-		if(isset($fields['COMMENTS']))
+		if(isset($fields['COMMENTS']) && !$isShortIndex)
 		{
 			$map->addHtml($fields['COMMENTS'], 1024);
 		}
 
 		//region Source
-		if(isset($fields['SOURCE_ID']))
+		if(isset($fields['SOURCE_ID']) && !$isShortIndex)
 		{
 			$map->addStatus('SOURCE', $fields['SOURCE_ID']);
 		}
 
-		if(isset($fields['SOURCE_DESCRIPTION']))
+		if(isset($fields['SOURCE_DESCRIPTION']) && !$isShortIndex)
 		{
 			$map->addText($fields['SOURCE_DESCRIPTION'], 1024);
 		}
 		//endregion
 
 		//region UserFields
-		foreach($this->getUserFields($entityID) as $userField)
+		if (!$isShortIndex)
 		{
-			$map->addUserField($userField);
+			foreach($this->getUserFields($entityID) as $userField)
+			{
+				$map->addUserField($userField);
+			}
 		}
 		//endregion
 
@@ -167,6 +179,29 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 	protected function save($entityID, SearchMap $map)
 	{
 		ContactTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
-		//ContactSearchTable::upsert(array('OWNER_ID' => $entityID, 'CONTENT' => $map->getString()));
+	}
+
+	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\ORM\Data\Result
+	{
+		if ($checkExist)
+		{
+			if (\Bitrix\Crm\Entity\Index\ContactTable::getByPrimary(['CONTACT_ID' => $entityId])->fetchObject())
+			{
+				return \Bitrix\Crm\Entity\Index\ContactTable::update(
+					$entityId,
+					['SEARCH_CONTENT' => $map->getString()]
+				);
+			}
+
+			return \Bitrix\Crm\Entity\Index\ContactTable::add([
+				'CONTACT_ID' => $entityId,
+				'SEARCH_CONTENT' => $map->getString()
+			]);
+		}
+
+		return \Bitrix\Crm\Entity\Index\ContactTable::update(
+			$entityId,
+			['SEARCH_CONTENT' => $map->getString()]
+		);
 	}
 }

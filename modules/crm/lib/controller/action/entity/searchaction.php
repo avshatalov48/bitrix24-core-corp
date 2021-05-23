@@ -2,12 +2,20 @@
 
 namespace Bitrix\Crm\Controller\Action\Entity;
 
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Entity\Index\CompanyTable;
+use Bitrix\Crm\Entity\Index\ContactTable;
+use Bitrix\Crm\Entity\Index\DealTable;
+use Bitrix\Crm\Entity\Index\LeadTable;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Controller\EntitySearchScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Service\Container;
 
 use Bitrix\Main;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\ORM\Query\Filter\Helper;
 use Bitrix\Main\Search;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
@@ -22,6 +30,18 @@ Loc::loadMessages(__FILE__);
  */
 class SearchAction extends Search\SearchAction
 {
+	protected const LIMIT = 20;
+
+	protected $limit;
+	protected $userId;
+	protected $permissionSqls = [];
+
+	public function __construct($name, Controller $controller, $config = [])
+	{
+		$this->userId = \CCrmSecurityHelper::GetCurrentUserID();
+		parent::__construct($name, $controller, $config);
+	}
+
 	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null)
 	{
 		if(!is_array($options))
@@ -53,45 +73,72 @@ class SearchAction extends Search\SearchAction
 		//endregion
 
 		$searchRestriction = RestrictionManager::getSearchLimitRestriction();
-		$items = array();
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Lead)
+		$items = [];
+		$priorityIds = [];
+
+		$this->limit = static::LIMIT;
+		$results = [];
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Lead)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::LeadName]))
 		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
-				$filter = array('FIND' => $searchQuery);
-				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Lead, $filter);
+				[$items, $priorityIds] = $this->getSearchByIndexResults(
+					$searchQuery,
+					LeadTable::class,
+					\Bitrix\Crm\LeadTable::class,
+					\CCrmOwnerType::Lead
+				);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
-				$filter = array('LOGIC' => 'OR', '%FULL_NAME' => $searchQuery, '%TITLE' => $searchQuery);
-			}
+				$filter = [
+					'LOGIC' => 'OR',
+					'%FULL_NAME' => $searchQuery,
+					'%TITLE' => $searchQuery,
+				];
 
-			$dbResult = \CCrmLead::GetListEx(
-				array(),
-				$filter,
-				false,
-				array('nTopCount' => 20),
-				array('ID')
-			);
+				$dbResult = \CCrmLead::GetListEx(
+					[],
+					$filter,
+					false,
+					['nTopCount' => static::LIMIT],
+					['ID']
+				);
 
-			if(is_object($dbResult))
-			{
-				while($fields = $dbResult->Fetch())
+				if(is_object($dbResult))
 				{
-					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Lead, 'ENTITY_ID' => $fields['ID']);
+					while($fields = $dbResult->Fetch())
+					{
+						$items[] = [
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
+							'ENTITY_ID' => $fields['ID'],
+						];
+					}
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
+			$this->limit = static::LIMIT - count($results);
 		}
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Contact)
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Contact)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::ContactName]))
+			&& $this->limit > 0
 		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
-				$filter = array('FIND' => $searchQuery);
-				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Contact, $filter);
+				[$items, $priorityIds] = $this->getSearchByIndexResults(
+					$searchQuery,
+					ContactTable::class,
+					\Bitrix\Crm\ContactTable::class,
+					\CCrmOwnerType::Contact
+				);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
@@ -108,92 +155,139 @@ class SearchAction extends Search\SearchAction
 						$filter["__INNER_FILTER_NAME_{$i}"] = array('%FULL_NAME' => $parts[$i]);
 					}
 				}
-			}
 
-			$dbResult = \CCrmContact::GetListEx(
-				array(),
-				$filter,
-				false,
-				array('nTopCount' => 20),
-				array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO')
-			);
+				$dbResult = \CCrmContact::GetListEx(
+					[],
+					$filter,
+					false,
+					['nTopCount' => static::LIMIT],
+					['ID']
+				);
 
-			if(is_object($dbResult))
-			{
-				while($fields = $dbResult->Fetch())
+				if(is_object($dbResult))
 				{
-					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Contact, 'ENTITY_ID' => $fields['ID']);
+					while($fields = $dbResult->Fetch())
+					{
+						$items[] = [
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+							'ENTITY_ID' => $fields['ID'],
+						];
+					}
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
+			$this->limit = static::LIMIT - count($results);
 		}
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Company)
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Company)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::CompanyName]))
+			&& $this->limit > 0
 		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
-				$filter = array('FIND' => $searchQuery);
-				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && mb_strtoupper($options['isMyCompany']) === 'Y'
-					? 'Y' : 'N';
-				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Company, $filter);
+				$isMyCompany = (
+					isset($options['isMyCompany'])
+					&& mb_strtoupper($options['isMyCompany']) === 'Y'
+						? 'Y'
+						: 'N'
+				);
+				$additionalSelectParams = [];
+				$additionalSelectParams['IS_MY_COMPANY'] = $isMyCompany;
+
+				[$items, $priorityIds] = $this->getSearchByIndexResults(
+					$searchQuery,
+					CompanyTable::class,
+					\Bitrix\Crm\CompanyTable::class,
+					\CCrmOwnerType::Company,
+					$additionalSelectParams
+				);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
 				$filter = array('%TITLE' => $searchQuery);
 				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && mb_strtoupper($options['isMyCompany']) === 'Y'
 					? 'Y' : 'N';
-			}
 
-			$dbResult = \CCrmCompany::GetListEx(
-				array(),
-				$filter,
-				false,
-				array('nTopCount' => 20),
-				array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO')
-			);
+				$dbResult = \CCrmCompany::GetListEx(
+					[],
+					$filter,
+					false,
+					[
+						'nTopCount' => static::LIMIT,
+					],
+					['ID']
+				);
 
-			if(is_object($dbResult))
-			{
-				while($fields = $dbResult->Fetch())
+				if(is_object($dbResult))
 				{
-					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Company, 'ENTITY_ID' => $fields['ID']);
+					while($fields = $dbResult->Fetch())
+					{
+						$items[] = [
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+							'ENTITY_ID' => $fields['ID'],
+						];
+					}
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
+			$this->limit = static::LIMIT - count($results);
 		}
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Deal)
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Deal)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::DealName]))
+			&& $this->limit > 0
 		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
-				$filter = array('FIND' => $searchQuery);
-				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Deal, $filter);
+				[$items, $priorityIds] = $this->getSearchByIndexResults(
+					$searchQuery,
+					DealTable::class,
+					\Bitrix\Crm\DealTable::class,
+					\CCrmOwnerType::Deal
+				);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
 				$filter = array('%TITLE' => $searchQuery);
-			}
+				$dbResult = \CCrmDeal::GetListEx(
+					[],
+					$filter,
+					false,
+					['nTopCount' => static::LIMIT],
+					['ID']
+				);
 
-			$dbResult = \CCrmDeal::GetListEx(
-				array(),
-				$filter,
-				false,
-				array('nTopCount' => 20),
-				array('ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_HONORIFIC', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME')
-			);
-
-			if(is_object($dbResult))
-			{
-				while($fields = $dbResult->Fetch())
+				if(is_object($dbResult))
 				{
-					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Deal, 'ENTITY_ID' => $fields['ID']);
+					while($fields = $dbResult->Fetch())
+					{
+						$items[] = [
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+							'ENTITY_ID' => $fields['ID'],
+						];
+					}
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
+			$this->limit = static::LIMIT - count($results);
 		}
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Quote)
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Quote)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::QuoteName]))
+			&& $this->limit > 0
 		)
 		{
+			$items = [];
+			$priorityIds = [];
+
 			if($scope === EntitySearchScope::INDEX)
 			{
 				$filter = array('FIND' => $searchQuery);
@@ -208,7 +302,7 @@ class SearchAction extends Search\SearchAction
 				array(),
 				$filter,
 				false,
-				array('nTopCount' => 20),
+				array('nTopCount' => static::LIMIT),
 				array('ID')
 			);
 
@@ -219,11 +313,20 @@ class SearchAction extends Search\SearchAction
 					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Quote, 'ENTITY_ID' => $fields['ID']);
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
+			$this->limit = static::LIMIT - count($results);
 		}
-		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Invoice)
+
+		if(
+			!$searchRestriction->isExceeded(\CCrmOwnerType::Invoice)
 			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::InvoiceName]))
+			&& $this->limit > 0
 		)
 		{
+			$items = [];
+			$priorityIds = [];
+
 			if($scope === EntitySearchScope::INDEX)
 			{
 				$filter = array('FIND' => $searchQuery);
@@ -238,7 +341,7 @@ class SearchAction extends Search\SearchAction
 				array(),
 				$filter,
 				false,
-				array('nTopCount' => 20),
+				array('nTopCount' => static::LIMIT),
 				array('ID')
 			);
 
@@ -249,8 +352,256 @@ class SearchAction extends Search\SearchAction
 					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Invoice, 'ENTITY_ID' => $fields['ID']);
 				}
 			}
+
+			$results = array_merge($results, self::prepareSearchResults($items, $priorityIds));
 		}
-		return self::prepareSearchResults($items);
+
+		return $results;
+	}
+
+	/**
+	 * @param string $searchQuery
+	 * @param string $indexTableClass
+	 * @param string $entityTableClass
+	 * @param int $entityTypeId
+	 * @param array|null $additionalSelectParams
+	 * @return array
+	 */
+	protected function getSearchByIndexResults(
+		string $searchQuery,
+		string $indexTableClass,
+		string $entityTableClass,
+		int $entityTypeId,
+		?array $additionalSelectParams = []
+	): array
+	{
+		$searchQuery = SearchEnvironment::prepareSearchContent($searchQuery);
+
+		$params = $this->getShortIndexResults(
+			['SEARCH_CONTENT' => $searchQuery],
+			$indexTableClass
+		);
+
+		$items = ($params['items'] ?? []);
+		$priorityIds = $params['ids'];
+
+		$itemsCount = count($items);
+
+		if ($itemsCount < $this->limit)
+		{
+			$filter = $params['filter'];
+
+			if (!empty($additionalSelectParams))
+			{
+				foreach($additionalSelectParams as $name => $value)
+				{
+					$filter->where($name, $value);
+				}
+			}
+
+			$permissionSql = $this->getPermissionSql(\CCrmOwnerType::ResolveName($entityTypeId));
+			if ($permissionSql === false)
+			{
+				return [$items, $priorityIds];
+			}
+
+			if ($permissionSql !== '')
+			{
+				$filter->whereIn('ID', new SqlExpression($permissionSql));
+			}
+
+			$list = call_user_func_array(
+				[
+					$entityTableClass,
+					'getList'
+				],
+				[
+					[
+						'select' => ['ID'],
+						'filter' => $filter,
+						'limit' => $this->limit - $itemsCount,
+					],
+				]
+			);
+			foreach($list as $item)
+			{
+				$items[] = [
+					'ENTITY_TYPE_ID' => $entityTypeId,
+					'ENTITY_ID' => (int)$item['ID'],
+				];
+			}
+		}
+
+		return [$items, $priorityIds];
+	}
+
+	/**
+	 * @param array $filterParams
+	 * @param string $indexTableClass
+	 * @return array
+	 */
+	protected function getShortIndexResults(array $filterParams, string $indexTableClass): array
+	{
+		$filter = Main\Entity\Query::filter();
+		$items = [];
+		$ids = [];
+
+		if (!empty($filterParams['SEARCH_CONTENT']))
+		{
+			$searchContent = trim($filterParams['SEARCH_CONTENT']);
+			if (Search\Content::isIntegerToken($searchContent))
+			{
+				$searchContent = Search\Content::prepareIntegerToken($searchContent);
+			}
+			else
+			{
+				$searchContent = Search\Content::prepareStringToken($searchContent);
+			}
+
+			if (Search\Content::canUseFulltextSearch($searchContent, Search\Content::TYPE_MIXED))
+			{
+				$searchContent = Helper::matchAgainstWildcard($searchContent);
+				$filter->whereMatch('SEARCH_CONTENT', $searchContent);
+				$entityTypeId = \CCrmOwnerType::Undefined;
+
+				if ($indexTableClass === ContactTable::class)
+				{
+					$collection = $this->getItemCollection(
+						$indexTableClass,
+						'CONTACT_ID',
+						$searchContent,
+						\CCrmOwnerType::ContactName
+					);
+
+					$ids = ($collection ? $collection->getContactIdList() : []);
+					$entityTypeId =  \CCrmOwnerType::Contact;
+				}
+				elseif ($indexTableClass === CompanyTable::class)
+				{
+					$collection = $this->getItemCollection(
+						$indexTableClass,
+						'COMPANY_ID',
+						$searchContent,
+						\CCrmOwnerType::CompanyName
+					);
+
+					$ids = ($collection ? $collection->getCompanyIdList() : []);
+					$entityTypeId =  \CCrmOwnerType::Company;
+				}
+				elseif ($indexTableClass === LeadTable::class)
+				{
+					$collection = $this->getItemCollection(
+						$indexTableClass,
+						'LEAD_ID',
+						$searchContent,
+						\CCrmOwnerType::LeadName
+					);
+
+					$ids = ($collection ? $collection->getLeadIdList() : []);
+					$entityTypeId = \CCrmOwnerType::Lead;
+				}
+				elseif ($indexTableClass === DealTable::class)
+				{
+					$collection = $this->getItemCollection(
+						$indexTableClass,
+						'DEAL_ID',
+						$searchContent,
+						\CCrmOwnerType::DealName
+					);
+
+					$ids = ($collection ? $collection->getDealIdList() : []);
+					$entityTypeId =  \CCrmOwnerType::Deal;
+				}
+
+				if ($ids)
+				{
+					foreach($ids as $id)
+					{
+						$items[] = [
+							'ENTITY_TYPE_ID' => $entityTypeId,
+							'ENTITY_ID' => $id
+						];
+					}
+					$filter->whereNotIn('ID', $ids);
+				}
+			}
+		}
+
+		return [
+			'filter' => $filter,
+			'items' => $items,
+			'ids' => $ids
+		];
+	}
+
+	protected function getItemCollection(
+		string $tableClass,
+		string $columnName,
+		string $searchContent,
+		string $entityType
+	)
+	{
+		$permissionSql = $this->getPermissionSql($entityType);
+		if($permissionSql === false)
+		{
+			return [];
+		}
+
+		$query = $tableClass::query()
+			->setSelect([$columnName])
+			->whereMatch('SEARCH_CONTENT', $searchContent)
+			->setLimit($this->limit);
+
+		if ($permissionSql !== '')
+		{
+			$query->addFilter('@'.$columnName, new SqlExpression($permissionSql));
+		}
+
+		return $query->fetchCollection();
+	}
+
+	/**
+	 * @param string $entityType
+	 * @return false|string
+	 */
+	protected function getPermissionSql(string $entityType)
+	{
+		if (isset($this->permissionSqls[$entityType]))
+		{
+			return $this->permissionSqls[$entityType];
+		}
+
+		$permissionSql = '';
+
+		if(!\CCrmPerms::IsAdmin())
+		{
+			if ($entityType === \CCrmOwnerType::DealName)
+			{
+				$entityTypes = array_merge(
+					[
+						\CCrmOwnerType::DealName,
+					],
+					DealCategory::getPermissionEntityTypeList()
+				);
+			}
+			else
+			{
+				$entityTypes = [$entityType];
+			}
+
+			$permissionSql = \CCrmPerms::BuildSqlForEntitySet(
+				$entityTypes,
+				'',
+				'READ',
+				[
+					'RAW_QUERY' => true,
+					'PERMS'=> \CCrmPerms::GetUserPermissions($this->userId)
+				]
+			);
+		}
+
+		$this->permissionSqls[$entityType] = $permissionSql;
+		return $permissionSql;
 	}
 
 	protected function provideLimits($searchQuery, array $options = null)
@@ -335,12 +686,13 @@ class SearchAction extends Search\SearchAction
 
 		return $resultLimit;
 	}
-	public static function prepareSearchResults(array $items)
+	public static function prepareSearchResults(array $items, ?array $priorityIds = [])
 	{
 		/** @var int[] $map */
 		$map = array();
 		/** @var Search\ResultItem[] $results */
 		$results = array();
+		$isSortByTitle = true;
 
 		foreach($items as $item)
 		{
@@ -406,7 +758,7 @@ class SearchAction extends Search\SearchAction
 					array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
 					false,
 					false,
-					array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO')
+					array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'ORIGINATOR_ID')
 				);
 				if(is_object($dbResult))
 				{
@@ -432,6 +784,17 @@ class SearchAction extends Search\SearchAction
 						if(isset($fields['COMPANY_TITLE']))
 						{
 							$resultItem->setSubTitle($fields['COMPANY_TITLE']);
+						}
+						if($icon = \Bitrix\Crm\Integration\Originator::getIcon($fields['ORIGINATOR_ID']))
+						{
+							$resultItem->setAttribute(
+								'icon',
+								[
+									'src' => $icon['SRC'],
+									'width' => $icon['WIDTH'],
+									'height' => $icon['HEIGHT'],
+								]
+							);
 						}
 
 						$results["{$entityTypeName}:{$fields['ID']}"] = $resultItem;
@@ -460,7 +823,7 @@ class SearchAction extends Search\SearchAction
 					array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
 					false,
 					false,
-					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO')
+					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ORIGINATOR_ID')
 				);
 				if(is_object($dbResult))
 				{
@@ -499,6 +862,18 @@ class SearchAction extends Search\SearchAction
 						if(!empty($descriptions))
 						{
 							$resultItem->setSubTitle(implode(', ', $descriptions));
+						}
+
+						if($icon = \Bitrix\Crm\Integration\Originator::getIcon($fields['ORIGINATOR_ID']))
+						{
+							$resultItem->setAttribute(
+								'icon',
+								[
+									'src' => $icon['SRC'],
+									'width' => $icon['WIDTH'],
+									'height' => $icon['HEIGHT'],
+								]
+							);
 						}
 
 						$results["{$entityTypeName}:{$fields['ID']}"] = $resultItem;
@@ -745,11 +1120,8 @@ class SearchAction extends Search\SearchAction
 			}
 		}
 
-		$results = array_values($results);
-		if(count($results) > 1)
-		{
-			Main\Type\Collection::sortByColumn($results, array('title' => SORT_ASC));
-		}
+		self::sortByTitle($results, $priorityIds);
+
 		return $results;
 	}
 
@@ -767,5 +1139,51 @@ class SearchAction extends Search\SearchAction
 			},
 			self::prepareSearchResults($items)
 		);
+	}
+
+	/**
+	 * @param array $results
+	 * @param array $priorityIds
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	protected static function sortByTitle(array &$results, array $priorityIds = []): void
+	{
+		$results = array_values($results);
+		if(count($results) > 1)
+		{
+			if (count($priorityIds))
+			{
+				$priorityResults = [];
+				$otherResults = [];
+				foreach($results as $result)
+				{
+					if (in_array($result['id'], $priorityIds, true))
+					{
+						$priorityResults[] = $result;
+					}
+					else
+					{
+						$otherResults[] = $result;
+					}
+				}
+
+				Main\Type\Collection::sortByColumn(
+					$priorityResults,
+					['title' => SORT_ASC]
+				);
+				Main\Type\Collection::sortByColumn(
+					$otherResults,
+					['title' => SORT_ASC]
+				);
+				$results = array_merge($priorityResults, $otherResults);
+			}
+			else
+			{
+				Main\Type\Collection::sortByColumn(
+					$results,
+					['title' => SORT_ASC]
+				);
+			}
+		}
 	}
 }

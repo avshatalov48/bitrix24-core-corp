@@ -67,6 +67,8 @@ BX.Tasks.QuickForm = function(formContainerId, parameters)
 	this.notification = new BX.Tasks.QuickForm.Notification(this);
 	this.projectSelector = new BX.Tasks.QuickForm.ProjectSelector("task-new-item-project-selector", this);
 	this.userSelector = new BX.Tasks.QuickForm.UserSelector("task-new-item-user-selector", this);
+
+	this.calendarSettings = (this.parameters.calendarSettings ? this.parameters.calendarSettings : {});
 };
 
 BX.Tasks.QuickForm.prototype.submit = function()
@@ -327,7 +329,11 @@ BX.Tasks.QuickForm.prototype.calendar = function(event)
 		field: deadlineInput.name,
 		bTime: true,
 		bSetFocus: false,
-		bCompatibility: false,
+		bCompatibility: true,
+		bCategoryTimeVisibilityOption: 'tasks.bx.calendar.deadline',
+		bTimeVisibility: (
+			this.calendarSettings ? (this.calendarSettings.deadlineTimeVisibility === 'Y') : false
+		),
 		value: BX.CJSTask.ui.getInputDateTimeValue(deadlineInput),
 		bHideTimebar: false
 	});

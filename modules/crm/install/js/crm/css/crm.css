@@ -8003,6 +8003,10 @@ a.crm-client-contacts-block-text-mail:hover{
 	text-decoration: none;
 }
 
+.crm-tooltip-info .bx-ui-tooltip-field-value {
+	position: relative;
+}
+
 .crm-client-contacts-block-text-tel-icon,
 .crm-client-contacts-block-text-mail-icon,
 .crm-client-contacts-block-text-list-icon {

@@ -38,7 +38,7 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 			<a
 				target="_blank"
 				href="javascript: void(0);"
-				onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=\Bitrix\Main\Web\Json::encode($provider)?>)"
+				onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($provider))?>)"
 				class="webform-small-button webform-small-button-transparent">
 				<?=Loc::getMessage('CRM_ADS_RTG_LOGIN')?>
 			</a>

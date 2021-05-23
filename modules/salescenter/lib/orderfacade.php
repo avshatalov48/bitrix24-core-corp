@@ -101,12 +101,14 @@ class OrderFacade
 			'QUANTITY' => (float)$fields['quantity'] > 0 ? (float)$fields['quantity'] : 1,
 			'PRODUCT_PROVIDER_CLASS' => '',
 			'SORT' => (int)$fields['sort'],
-			'PRODUCT_ID' => $fields['productId'] ?? 0,
-			'OFFER_ID' => $fields['productId'],
+			'PRODUCT_ID' => $fields['skuId'] ?? $fields['productId'] ?? 0,
 			'BASE_PRICE' => $fields['basePrice'],
-			'PRICE' => $fields['price'],
+			'PRICE' => $fields['priceExclusive'] ?? $fields['price'],
 			'CUSTOM_PRICE' => $fields['isCustomPrice'] === 'Y' ? 'Y' : 'N',
 			'DISCOUNT_PRICE' => 0,
+			'MEASURE_NAME' => $fields['measureName'],
+			'MEASURE_CODE' => (int)$fields['measureCode'],
+			'MANUALLY_EDITED' => 'Y',
 		];
 
 		if ($fields['module'] === 'catalog')
@@ -117,15 +119,7 @@ class OrderFacade
 
 		if ($fields['discount'] > 0)
 		{
-			if ($fields['discountType'] === 'currency')
-			{
-				$item['DISCOUNT_PRICE'] = $fields['discount'];
-			}
-			else
-			{
-				$item['DISCOUNT_PRICE'] = Sale\PriceMaths::roundPrecision($item['BASE_PRICE'] * $fields['discount'] / 100);
-			}
-
+			$item['DISCOUNT_PRICE'] = $fields['discount'];
 			$item['CUSTOM_PRICE'] = 'Y';
 			$item['PRICE'] = $item['BASE_PRICE'] - $item['DISCOUNT_PRICE'];
 		}
@@ -162,17 +156,6 @@ class OrderFacade
 					$encodedFields['PRODUCT_ID'] = $productId;
 
 					$basketItems[$code]['encodedFields'] = Main\Web\Json::encode($encodedFields);
-
-					if (isset($item['FIELDS_VALUES']))
-					{
-						$fieldsValues = Main\Web\Json::decode($item['FIELDS_VALUES']);
-
-						$fieldsValues['MODULE'] = 'catalog';
-						$fieldsValues['PRODUCT_PROVIDER_CLASS'] = Catalog\Product\Basket::getDefaultProviderName();
-						$fieldsValues['PRODUCT_ID'] = $fieldsValues['OFFER_ID'] = $productId;
-
-						$basketItems[$code]['FIELDS_VALUES'] = Main\Web\Json::encode($fieldsValues);
-					}
 				}
 			}
 		}
@@ -244,10 +227,10 @@ class OrderFacade
 	}
 
 	/**
-	 * @param bool $fallOnAnyError
+	 * @param bool $getErrorsAnyway
 	 * @return Sale\Order
 	 */
-	public function buildOrder($fallOnAnyError = false)
+	public function buildOrder($getErrorsAnyway = false)
 	{
 		$settings =	[
 			'createUserIfNeed' => Order\Builder\SettingsContainer::SET_ANONYMOUS_USER,
@@ -262,13 +245,8 @@ class OrderFacade
 		$order = $director->createOrder($orderBuilder, $this->fields);
 
 		$errors = $orderBuilder->getErrorsContainer()->getErrors();
-		if ($fallOnAnyError && !empty($errors))
-		{
-			$this->errorCollection->add($errors);
-			return null;
-		}
 
-		if (!$order)
+		if (!$order || $getErrorsAnyway)
 		{
 			$this->errorCollection->add($errors);
 		}

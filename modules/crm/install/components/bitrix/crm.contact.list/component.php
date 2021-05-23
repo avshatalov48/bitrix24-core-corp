@@ -765,17 +765,9 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmContact::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Contact))
 {
-	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Contact, $arFilter);
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Contact);
 
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Contact)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Contact,
-			$limitWarningValue
-		);
-	}
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Contact, $arFilter);
 }
 else
 {

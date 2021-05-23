@@ -49,6 +49,7 @@ class Base extends BaseFilter
 			'IM',
 			'TRACKING_SOURCE_ID',
 			'TRACKING_CHANNEL_CODE',
+			'PRODUCT_ROW_PRODUCT_ID',
 		];
 		foreach ($fields as $field)
 		{

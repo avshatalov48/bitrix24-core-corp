@@ -555,6 +555,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			$this->arResult['REST_USE'] = true;
 
 			$this->arResult['USERFIELD_TYPE_ADDITIONAL'] = $this->getAdditionalUserFieldTypeList();
+			$this->arResult['USERFIELD_TYPE_REST_CREATE_URL'] = \Bitrix\Rest\Marketplace\Url::getBookletUrl(
+				'crm_field',
+				'crm_' . $this->configID . '_add_field'
+			);
 			$this->arResult['REST_PLACEMENT_TAB_CONFIG'] = array(
 				'entity' => \CCrmOwnerType::ResolveName($this->entityTypeID),
 				'placement' => \Bitrix\Rest\Api\UserFieldType::PLACEMENT_UF_TYPE,

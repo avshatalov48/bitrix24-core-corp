@@ -163,6 +163,8 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 			$this->arResult['PAYSYSTEM_HANDLER_FULL'] = mb_strtoupper($this->arResult['PAYSYSTEM_HANDLER'].'_'.$this->arResult['PAYSYSTEM_PS_MODE']);
 		}
 
+		$this->arResult['HELPDESK_DOCUMENTATION_CODE'] = $this->getHelpdeskDocumentationCode($className);
+
 		$this->checkAvailabilityCashbox();
 		$this->initBusinessValue($this->arResult['PAYSYSTEM_ID'], $this->arResult['PAYSYSTEM_HANDLER']);
 	}
@@ -422,5 +424,36 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param string $handlerClass
+	 * @return string
+	 */
+	private function getHelpdeskDocumentationCode(string $handlerClass): string
+	{
+		$defaultCode = '10460164';
+
+		try
+		{
+			$reflection = new \ReflectionClass($handlerClass);
+			$className = $reflection->getName();
+		}
+		catch (\ReflectionException $ex)
+		{
+			return $defaultCode;
+		}
+
+		$helpdeskCodeMap = [
+			\Sale\Handlers\PaySystem\SkbHandler::class => '11538458',
+			\Sale\Handlers\PaySystem\BePaidHandler::class => '11538452',
+			\Sale\Handlers\PaySystem\LiqPayHandler::class => '11814321',
+			\Sale\Handlers\PaySystem\UaPayHandler::class => '11825299',
+			\Sale\Handlers\PaySystem\WooppayHandler::class => '12183852',
+			\Sale\Handlers\PaySystem\AlfaBankHandler::class => '12595422',
+			\Sale\Handlers\PaySystem\RoboxchangeHandler::class => '12595360',
+		];
+
+		return $helpdeskCodeMap[$className] ?? $defaultCode;
 	}
 }

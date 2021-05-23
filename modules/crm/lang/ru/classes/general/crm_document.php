@@ -1,4 +1,4 @@
-<?php
+<?
 $MESS["CRM_DOCUMENT_OPERATION_WRITE"] = "Запись";
 $MESS["CRM_DOCUMENT_OPERATION_READ"] = "Чтение";
 $MESS["CRM_DOCUMENT_OPERATION_ADD"] = "Добавление";
@@ -83,3 +83,4 @@ $MESS["CRM_DOCUMENT_FIELD_SOURCE_DESCRIPTION"] = "Дополнительно о�
 $MESS["CRM_DOCUMENT_FIELD_LAST_COMMUNICATION_DATE"] = "Дата последней коммуникации";
 $MESS["CRM_FIELD_ORDER_IDS"] = "Заказы";
 $MESS["CRM_DOCUMENT_RESUME_RESTRICTED"] = "Завершено по тарифным ограничениям";
+?>

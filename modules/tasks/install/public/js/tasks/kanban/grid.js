@@ -12,6 +12,16 @@ BX.namespace("BX.Tasks.Kanban");
  */
 BX.Tasks.Kanban.Grid = function(options)
 {
+	this.ownerId = Number(options.ownerId);
+	this.groupId = Number(options.groupId);
+	this.groupingMode = Boolean(options.isGroupingMode);
+	this.isSprintView = (options.isSprintView === 'Y');
+
+	this.parentTaskId = parseInt(options.parentTaskId, 10);
+	this.parentTaskCompleted = Boolean(options.parentTaskCompleted);
+
+	this.neighborGrids = [];
+
 	BX.Kanban.Grid.apply(this, arguments);
 
 	BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
@@ -32,23 +42,20 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent("onPullEvent-im", BX.delegate(this.tasksTaskPull, this));
 	BX.addCustomEvent("onPullEvent-tasks", BX.delegate(this.tasksTaskPull, this));
 
-	BX.addCustomEvent("Kanban.Grid:multiSelectModeOn", BX.delegate(this.startActionPanel, this));
-	BX.addCustomEvent("Kanban.Grid:multiSelectModeOff", BX.delegate(this.stopActionPanel, this));
-	BX.addCustomEvent("Kanban.Grid:selectItem", BX.delegate(this.setTotalSelectedItems, this));
-	BX.addCustomEvent("Kanban.Grid:unSelectItem", BX.delegate(this.setTotalSelectedItems, this));
-	BX.addCustomEvent("Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanDragMode, this));
-	BX.addCustomEvent("Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
-	BX.addCustomEvent("Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanRealtimeMode, this));
-	BX.addCustomEvent("Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanRealtimeMode, this));
+	BX.addCustomEvent(this, "Kanban.Grid:multiSelectModeOn", BX.delegate(this.startActionPanel, this));
+	BX.addCustomEvent(this, "Kanban.Grid:multiSelectModeOff", BX.delegate(this.stopActionPanel, this));
+	BX.addCustomEvent(this, "Kanban.Grid:selectItem", BX.delegate(this.setTotalSelectedItems, this));
+	BX.addCustomEvent(this, "Kanban.Grid:unSelectItem", BX.delegate(this.setTotalSelectedItems, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanDragMode, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanRealtimeMode, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanRealtimeMode, this));
 
 	if(this.isMultiSelect())
 	{
-		BX.addCustomEvent("Kanban.Grid:onItemDragStartMultiple", BX.delegate(this.setKanbanDragMode, this));
-		BX.addCustomEvent("Kanban.Grid:onItemDragStopMultiple", BX.delegate(this.unSetKanbanDragMode, this));
+		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStartMultiple", BX.delegate(this.setKanbanDragMode, this));
+		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStopMultiple", BX.delegate(this.unSetKanbanDragMode, this));
 	}
-
-	this.ownerId = Number(options.ownerId);
-	this.groupId = Number(options.groupId);
 };
 
 BX.Tasks.Kanban.Grid.prototype = {
@@ -423,6 +430,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		var promise = new BX.Promise();
 
+		if (this.isGroupingMode())
+		{
+			promise.fulfill([]);
+			return promise;
+		}
+
 		this.ajax({
 				action: "getColumnItems",
 				pageId: column.getPagination().getPage() + 1,
@@ -545,6 +558,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				action: "addTask",
 				taskName: item.getData().title,
 				columnId: item.getColumn().getId(),
+				parentTaskId: this.parentTaskId,
 				beforeItemId: (gridData.newTaskOrder === "desc" && nextItem)
 								? nextItem.getId() : 0
 			},
@@ -622,6 +636,8 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						this.removeItem(item);
 					}
+
+					this.updateParentTaskStatus();
 				}
 				else if (data)
 				{
@@ -633,6 +649,88 @@ BX.Tasks.Kanban.Grid.prototype = {
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
+	},
+
+	updateParentTaskStatus: function()
+	{
+		if (!this.isChildScrumGrid())
+		{
+			return;
+		}
+
+		if (!this.isParentTaskCompleted() && !this.isAllChildTasksCompleted())
+		{
+			return;
+		}
+
+		this.ajax({
+			action: (this.isAllChildTasksCompleted() ? 'completeParentTask' : 'renewParentTask'),
+			taskId: this.parentTaskId,
+			finishColumnId: this.getFinishColumn().getId(),
+			newColumnId: this.getNewColumn().getId()
+		}, function(data) {
+			if (data && !data.error)
+			{
+				if (this.isAllChildTasksCompleted())
+				{
+					this.parentTaskCompleted = true;
+					BX.onCustomEvent(this, 'Kanban.Grid:onCompleteParentTask', [this]);
+				}
+				else
+				{
+					this.parentTaskCompleted = false;
+					BX.onCustomEvent(this, 'Kanban.Grid:onRenewParentTask', [this]);
+				}
+			}
+			else if (data)
+			{
+				BX.Kanban.Utils.showErrorDialog(data.error, true);
+			}
+		}.bind(this), function(error) {
+			BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+		}.bind(this));
+	},
+
+	/**
+	 *
+	 * @returns {BX.Tasks.Kanban.Column[]}
+	 */
+	getColumns: function()
+	{
+		return BX.Kanban.Grid.prototype.getColumns.call(this);
+	},
+
+	getFinishColumn: function()
+	{
+		return this.getColumns().find(function(column) {
+			return column.isFinishType();
+		});
+	},
+
+	getNewColumn: function()
+	{
+		return this.getColumns().find(function(column) {
+			return column.isNewType();
+		});
+	},
+
+	isParentTaskCompleted: function()
+	{
+		return this.parentTaskCompleted;
+	},
+
+	isAllChildTasksCompleted: function()
+	{
+		var isAllTasksCompleted = true;
+
+		Object.keys(this.getItems()).forEach(function (itemId) {
+			if (!this.getItems()[itemId].getColumn().isFinishType())
+			{
+				isAllTasksCompleted = false;
+			}
+		}. bind(this));
+
+		return isAllTasksCompleted;
 	},
 
 	/**
@@ -726,6 +824,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 */
 	onApplyFilter: function(filterId, values, filterInstance, promise, params)
 	{
+		if (this.isGroupingMode())
+		{
+			return;
+		}
+
 		this.fadeOut();
 		if (params)
 		{
@@ -880,16 +983,48 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 		switch (command)
 		{
+			case 'task_add':
+				if (this.isScrumGrid())
+				{
+					var taskData = data.AFTER;
+					if (this.isChildScrumGrid())
+					{
+						if (this.isChildTask(taskData))
+						{
+							this.refreshTask(taskId);
+						}
+					}
+					else
+					{
+						if (this.isParentTask(taskData))
+						{
+							this.refreshTask(taskId);
+						}
+					}
+				}
+				break;
 			case "comment_add":
 			case "stage_change":
 			case "task_view":
 				if (taskId)
 				{
+					if (this.isScrumGrid())
+					{
+						if (!this.getItems()[taskId])
+						{
+							return;
+						}
+					}
+
+					var requestParams = this.getData().params;
+
 					BX.ajax.runAction('tasks.task.list', {data: {
 						filter: {ID: taskId},
 						params: {
 							RETURN_ACCESS: 'Y',
 							SIFT_THROUGH_FILTER: {
+								sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
+								isCompletedSprint: (this.isScrumGrid() ? requestParams.IS_COMPLETED_SPRINT : 'N'),
 								userId: this.ownerId,
 								groupId: this.groupId
 							}
@@ -897,21 +1032,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					}}).then(function(response) {
 						if (response.data.tasks.length > 0)
 						{
-							this.ajax({
-									action: "refreshTask",
-									taskId: taskId
-								},
-								function(data)
-								{
-									if (data && !data.error)
-									{
-										this.addItemOrder(data);
-									}
-								}.bind(this),
-								function(error)
-								{
-								}.bind(this)
-							);
+							this.refreshTask(taskId);
 						}
 						else
 						{
@@ -924,11 +1045,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 			case "comment_read_all":
 				Object.values(this.getItems()).forEach(function(item) {
 					var data = item.data;
+					var isExpiredCounts = data.is_expired && !data.completed && !data.completed_supposedly;
 					var counter = item.task_counter;
 					var counterValue = counter.getValue();
-					if (counterValue > 0 && (!data.is_expired || counterValue > 1))
+					if (counterValue > 0 && (!isExpiredCounts || counterValue > 1))
 					{
-						data.counter.value = (data.is_expired ? 1 : 0);
+						data.counter.value = (isExpiredCounts ? 1 : 0);
 						counter.update(data.counter.value);
 						item.render();
 					}
@@ -945,6 +1067,22 @@ BX.Tasks.Kanban.Grid.prototype = {
 			default:
 				break;
 		}
+	},
+
+	refreshTask: function(taskId)
+	{
+		this.ajax({
+				action: 'refreshTask',
+				taskId: taskId
+			},
+			function(data) {
+				if (data && !data.error)
+				{
+					this.addItemOrder(data);
+				}
+			}.bind(this),
+			function(error) {}.bind(this)
+		);
 	},
 
 	/**
@@ -1265,6 +1403,99 @@ BX.Tasks.Kanban.Grid.prototype = {
 		{
 			this.getOuterContainer().classList.remove("tasks-kanban-realtime-mode")
 		}
+	},
+
+	adjustHeight: function()
+	{
+		if (!this.isGroupingMode())
+		{
+			BX.Kanban.Grid.prototype.adjustHeight.call(this);
+		}
+	},
+
+	scrollToRight: function()
+	{
+		this.earTimer = setInterval(function() {
+			this.getGridContainer().scrollLeft += 10;
+			if (this.isGroupingMode())
+			{
+				this.neighborGrids.forEach(function(neighborGrid) {
+					neighborGrid.getGridContainer().scrollLeft += 10;
+				});
+			}
+		}.bind(this), 20);
+	},
+
+	scrollToLeft: function()
+	{
+		this.earTimer = setInterval(function() {
+			this.getGridContainer().scrollLeft -= 10;
+			if (this.isGroupingMode())
+			{
+				this.neighborGrids.forEach(function(neighborGrid) {
+					neighborGrid.getGridContainer().scrollLeft -= 10;
+				});
+			}
+		}.bind(this), 20);
+	},
+
+	/**
+	 * @neighborGrid {BX.Tasks.Kanban.Grid}
+	 */
+	addNeighborGrid: function(neighborGrid)
+	{
+		if (this !== neighborGrid)
+		{
+			this.neighborGrids.push(neighborGrid);
+		}
+	},
+
+	getNeighborGrids: function()
+	{
+		return this.neighborGrids;
+	},
+
+	removeColumnsByIdFromNeighborGrids: function(columnId)
+	{
+		this.neighborGrids.forEach(function(neighborGrid) {
+			neighborGrid.removeColumn(neighborGrid.getColumn(columnId));
+		});
+	},
+
+	isScrumGrid: function()
+	{
+		return this.isSprintView;
+	},
+
+	isGroupingMode: function()
+	{
+		return this.groupingMode;
+	},
+
+	isChildScrumGrid: function()
+	{
+		return (this.parentTaskId > 0);
+	},
+
+	isParentTask: function(taskData)
+	{
+		return !taskData['PARENT_ID'];
+	},
+
+	isChildTask: function(taskData)
+	{
+		return (taskData['PARENT_ID'] === this.parentTaskId);
+	},
+
+	getColumnsWidth: function()
+	{
+		var columnsWidth = 0;
+
+		this.getColumns().forEach(function(column) {
+			columnsWidth += column.getContainer().offsetWidth;
+		});
+
+		return columnsWidth + 'px';
 	}
 };
 

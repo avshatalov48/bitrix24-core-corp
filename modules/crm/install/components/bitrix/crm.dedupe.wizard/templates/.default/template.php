@@ -10,10 +10,17 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-dedupe-wizard-body-modifier');
-\Bitrix\Main\UI\Extension::load(array('sidepanel', 'ui.common', 'ui.forms', 'ui.hint', 'ui.progressbar', 'ui.fonts.opensans', 'ui.icons.b24', 'ui.buttons'));
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+\Bitrix\Main\UI\Extension::load(array(
+	'sidepanel', 'ui.common', 'ui.forms', 'ui.hint', 'ui.progressbar',
+	'ui.fonts.opensans', 'ui.icons.b24', 'ui.buttons', 'ui.notification',
+	'crm_common', 'ls'
+));
+
 $configTitleID = 'configTitle';
+$configTitleTextID = 'configTitleText';
 $configEditButtonID = 'editConfig';
+$configEditModeContainer = 'configEditModeContainer';
+$configViewModeContainer = 'configViewModeContainer';
 $scanButtonID = 'scanButton';
 $mergeButtonID = 'mergeButton';
 $mergeSummaryButtonID = 'mergeSummaryButton';
@@ -23,21 +30,20 @@ $progressBarWrapperID = 'progressBar';
 $mergeProgressBarWrapperID = 'mergeProgressBar';
 $mergeListButtonID = 'mergeListButton';
 $conflictResolvingListButtonID = 'conflictResolvingListButton';
+$backToListLinkId = 'backToEntityList';
 ?>
-<div id="crmDedupeWizardBtnPanel" style="display: none;">
-	<?$APPLICATION->IncludeComponent(
-		'bitrix:ui.button.panel',
-		'',
-		[ 'BUTTONS' => ['save', 'cancel'] ]
-	);?>
-</div>
+
 <div id="scanning" class="crm-dedupe-wizard-start-container" style="display: none">
 	<h1 id="scanningTitle" class="ui-title-1 crm-dedupe-wizard-start-title"><?=GetMessage('CRM_DEDUPE_WIZARD_STEP1_TITLE')?></h1>
 	<div class="crm-dedupe-wizard-start-border-field-container">
-		<div class="crm-dedupe-wizard-start-border-field">
+		<div class="crm-dedupe-wizard-start-border-field" id="<?=$configEditModeContainer?>">
 			<span class="crm-dedupe-wizard-start-text"><?=GetMessage('CRM_DEDUPE_WIZARD_CONFIGURATION_TITLE')?>:</span>
 			<a href="#" id="<?=htmlspecialcharsbx($configTitleID)?>" class="crm-dedupe-wizard-start-link"></a>
 			<a href="#" id="<?=htmlspecialcharsbx($configEditButtonID)?>" class="crm-dedupe-wizard-start-link crm-dedupe-wizard-start-link-grey"><?=GetMessage('CRM_DEDUPE_WIZARD_CHANGE_CONFIGURATION')?></a>
+		</div>
+		<div class="crm-dedupe-wizard-start-border-field" id="<?=$configViewModeContainer?>" style="display: none">
+			<span class="crm-dedupe-wizard-start-text"><?=GetMessage('CRM_DEDUPE_WIZARD_CONFIGURATION_TITLE')?>:</span>
+			<span id="<?=htmlspecialcharsbx($configTitleTextID)?>"></span>
 		</div>
 	</div>
 	<div class="crm-dedupe-wizard-start-icon crm-dedupe-wizard-start-icon-scanning">
@@ -151,7 +157,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 		</div>
 	</div>
 	<?if ($arResult['PATH_TO_ENTITY_LIST']):?>
-	<a href="<?=$arResult['PATH_TO_ENTITY_LIST']?>" class="ui-btn ui-btn-primary"><?=GetMessage('CRM_DEDUPE_WIZARD_BACK_TO_LIST')?></a>
+	<a href="<?=$arResult['PATH_TO_ENTITY_LIST']?>" id="<?=htmlspecialcharsbx($backToListLinkId)?>" class="ui-btn ui-btn-primary"><?=GetMessage('CRM_DEDUPE_WIZARD_BACK_TO_LIST')?></a>
 	<?endif?>
 </div>
 
@@ -159,14 +165,10 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 	BX.ready(
 		function()
 		{
-			BX.Crm.DedupeWizardConfigurationDialog.messages =
-				{
-					title: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SCANNING_CONFIG_TITLE")?>",
-					scopeCaption: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SCANNING_CONFIG_SCOPE")?>",
-					criterionCaption: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SCANNING_CONFIG_CRITERION")?>",
-					selectAll: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SELECT_ALL")?>",
-					unselectAll: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_UNSELECT_ALL")?>"
-				};
+			BX.Crm.DedupeWizard.messages = {
+				closeConfirmationTitle: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SLIDER_CLOSE_CONFIRMATION_TITLE")?>",
+				closeConfirmationText: "<?=GetMessageJS("CRM_DEDUPE_WIZARD_SLIDER_CLOSE_CONFIRMATION_TEXT")?>"
+			};
 			var wizard = BX.Crm.DedupeWizard.create(
 				"<?=$arResult['GUID']?>",
 				{
@@ -178,6 +180,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 					mergerUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_MERGER'])?>",
 					dedupeListUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_DEDUPE_LIST'])?>",
 					contextId: "<?=CUtil::JSEscape($arResult['CONTEXT_ID'])?>",
+					dedupeSettingsPath: "<?=CUtil::JSEscape($arResult['PATH_TO_DEDUPE_SETTINGS'])?>",
 					steps:
 						{
 							scanning: BX.Crm.DedupeWizardScanning.create(
@@ -187,7 +190,10 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 									buttonId: "<?=CUtil::JSEscape($scanButtonID)?>",
 									titleWrapperId: "scanningTitle",
 									configTitleId: "<?=CUtil::JSEscape($configTitleID)?>",
+									configTitleTextId: "<?=CUtil::JSEscape($configTitleTextID)?>",
 									configEditButtonId: "<?=CUtil::JSEscape($configEditButtonID)?>",
+									configEditModeContainer: "<?=CUtil::JSEscape($configEditModeContainer)?>",
+									configViewModeContainer: "<?=CUtil::JSEscape($configViewModeContainer)?>",
 									progressBarWrapperId: "<?=CUtil::JSEscape($progressBarWrapperID)?>",
 									nextStepId: "merging",
 									messages:
@@ -209,7 +215,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 									messages:
 										{
 											duplicatesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_FOUND')?>",
-											matchesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_FOUND')?>"
+											matchesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_FOUND_NEW')?>"
 										}
 								}
 							),
@@ -223,7 +229,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 									messages:
 										{
 											duplicatesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_PROCESSED')?>",
-											matchesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_PROCESSED')?>"
+											matchesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_PROCESSED_NEW')?>"
 										}
 								}
 							),
@@ -239,7 +245,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 									messages:
 										{
 											duplicatesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_CONFLICTED')?>",
-											matchesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_CONFLICTED')?>"
+											matchesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_CONFLICTED_NEW')?>"
 										}
 								}
 							),
@@ -249,6 +255,7 @@ $conflictResolvingListButtonID = 'conflictResolvingListButton';
 									wrapperId: "finish",
 									titleWrapperId: "finishTitle",
 									subtitleWrapperId: "finishSubtitle",
+									backToListLinkId: "<?=CUtil::JSEscape($backToListLinkId)?>",
 									messages:
 										{
 											duplicatesComplete: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE')?>",

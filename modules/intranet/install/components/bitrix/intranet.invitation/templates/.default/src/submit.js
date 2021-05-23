@@ -110,7 +110,12 @@ export class Submit extends EventEmitter
 			"ITEMS": items
 		};
 
-		this.sendAction("invite", requestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "invite",
+			"INVITATION_COUNT": items.length
+		};
+
+		this.sendAction("invite", requestData, analyticsLabel);
 	}
 
 	submitInviteWithGroupDp()
@@ -138,7 +143,12 @@ export class Submit extends EventEmitter
 		};
 		this.getGroupAndDepartmentData(requestData);
 
-		this.sendAction("inviteWithGroupDp", requestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "withGroupOrDepartment",
+			"INVITATION_COUNT": items.length
+		};
+
+		this.sendAction("inviteWithGroupDp", requestData, analyticsLabel);
 	}
 
 	submitSelf()
@@ -179,7 +189,12 @@ export class Submit extends EventEmitter
 		};
 		this.getGroupAndDepartmentData(requestData);
 
-		this.sendAction("extranet", requestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "extranet",
+			"INVITATION_COUNT": items.length
+		};
+
+		this.sendAction("extranet", requestData, analyticsLabel);
 	}
 
 	submitIntegrator()
@@ -190,7 +205,11 @@ export class Submit extends EventEmitter
 			"integrator_email": integratorForm["integrator_email"].value,
 		};
 
-		this.sendAction("inviteIntegrator", obRequestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "integrator"
+		};
+
+		this.sendAction("inviteIntegrator", obRequestData, analyticsLabel);
 	}
 
 	submitMassInvite()
@@ -198,10 +217,13 @@ export class Submit extends EventEmitter
 		const massInviteForm = this.parent.contentBlocks["mass-invite"].querySelector("form");
 
 		const obRequestData = {
-			"ITEMS": massInviteForm["mass_invite_emails"].value,
+			"ITEMS": massInviteForm["mass_invite_emails"].value
 		};
 
-		this.sendAction("massInvite", obRequestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "mass"
+		};
+		this.sendAction("massInvite", obRequestData, analyticsLabel);
 	}
 
 	submitAdd()
@@ -222,10 +244,13 @@ export class Submit extends EventEmitter
 		};
 		this.getGroupAndDepartmentData(requestData);
 
-		this.sendAction("add", requestData);
+		const analyticsLabel = {
+			"INVITATION_TYPE": "add"
+		};
+		this.sendAction("add", requestData, analyticsLabel);
 	}
 
-	sendAction(action, requestData)
+	sendAction(action, requestData, analyticsLabel)
 	{
 		this.disableSubmitButton(true);
 		requestData["userOptions"] = this.parent.userOptions;
@@ -233,7 +258,8 @@ export class Submit extends EventEmitter
 		BX.ajax.runComponentAction(this.parent.componentName, action, {
 			signedParameters: this.parent.signedParameters,
 			mode: "ajax",
-			data: requestData
+			data: requestData,
+			analyticsLabel: analyticsLabel
 		}).then(function (response) {
 
 			this.disableSubmitButton(false);
@@ -281,13 +307,11 @@ export class Submit extends EventEmitter
 
 		if (isDisable)
 		{
-			Dom.addClass(button, "ui-btn-wait");
-			button.style.cursor = "auto";
+			Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 		}
 		else
 		{
-			Dom.removeClass(button, "ui-btn-wait");
-			button.style.cursor = "pointer";
+			Dom.removeClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 		}
 	}
 

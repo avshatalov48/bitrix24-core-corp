@@ -426,7 +426,7 @@
 		{
 			if(!this.parent.scoringEnabled)
 			{
-				BX.Bitrix24.LicenseInfoPopup.show('crm_scoring', BX.message("CRM_SCORING_LICENSE_TITLE"), BX.message("CRM_SCORING_LICENSE_TEXT"), true);
+				BX.UI.InfoHelper.show("limit_AI_scoring");
 				return;
 			}
 

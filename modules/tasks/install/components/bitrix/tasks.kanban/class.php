@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+require_once __DIR__ . '/scrummanager.php';
+
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Config\Option;
 use \Bitrix\Main\Type\DateTime;
@@ -15,8 +17,9 @@ use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
-use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Component\Kanban\ScrumManager;
 use \Bitrix\Tasks\Grid\Row\Content\Date;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Kanban\TimeLineTable;
@@ -30,6 +33,8 @@ use \Bitrix\Tasks\Access\ActionDictionary;
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\TaskService;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 class TasksKanbanComponent extends \CBitrixComponent
 {
@@ -162,7 +167,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$request = $this->request('params');
 		$allowFromRequest = [
 			'USER_ID', 'GROUP_ID', 'GROUP_ID_FORCED',
-			'PERSONAL', 'TIMELINE_MODE', 'SPRINT_ID'
+			'PERSONAL', 'TIMELINE_MODE', 'SPRINT_ID' , 'IS_COMPLETED_SPRINT'
 		];
 		foreach ($allowFromRequest as $code)
 		{
@@ -182,12 +187,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$params['USER_ID'] = !isset($params['USER_ID']) || intval($params['USER_ID']) <= 0 ? $this->userId : intval($params['USER_ID']);
 		$params['GROUP_ID'] = !isset($params['GROUP_ID']) || !$sonetOn ? 0 : max(0, intval($params['GROUP_ID']));
 		$params['SPRINT_ID'] = !isset($params['SPRINT_ID']) ? -1 : intval($params['SPRINT_ID']);
+		$params['IS_COMPLETED_SPRINT'] = ((isset($params['IS_COMPLETED_SPRINT']) && $params['IS_COMPLETED_SPRINT'] == 'Y') ? 'Y' : 'N');
 		$params['~NAME_TEMPLATE'] = !isset($params['~NAME_TEMPLATE'])
 									? \CSite::GetNameFormat(false)
 									: str_replace(array('#NOBR#', '#/NOBR#'), array('', ''), trim($params['~NAME_TEMPLATE']));
 
-		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($params['GROUP_ID']);
-		if ($group && $group->isScrumProject())
+		$scrumManager = new ScrumManager($params['GROUP_ID']);
+		if ($scrumManager->isScrumProject())
 		{
 			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
 			{
@@ -299,7 +305,19 @@ class TasksKanbanComponent extends \CBitrixComponent
 		//			Filter\Task::setUserId($params['USER_ID']);
 		//		}
 
-		$this->filterInstance = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		$filterId = null;
+		if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT)
+		{
+			$taskService = new TaskService($params['USER_ID'], $this->application);
+			$this->filterInstance = $taskService->getFilterInstance(
+				$this->arParams['GROUP_ID'],
+				$this->arParams['IS_COMPLETED_SPRINT'] === 'Y'
+			);
+		}
+		else
+		{
+			$this->filterInstance = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		}
 
 		$this->arParams['DEFAULT_ROLEID'] = $this->filterInstance->getDefaultRoleId();
 		$this->arResult['DEFAULT_PRESET_KEY'] = $this->filterInstance->getDefaultPresetKey();
@@ -355,6 +373,12 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$params['~PATH_TO_TASKS_TASK'] = str_replace('#group_id#', $params['GROUP_ID'], $params['~PATH_TO_GROUP_TASKS_TASK']);
 		}
 		$params['~PATH_TO_TEMPLATES'] = str_replace('#user_id#', $this->userId, $params['~PATH_TO_USER_TASKS_TEMPLATES']);
+
+		$this->arResult['CALENDAR_SETTINGS'] = [];
+		$deadlineTimeSettings = \CUserOptions::getOption('tasks.bx.calendar.deadline', 'time_visibility', []);
+		$this->arResult['CALENDAR_SETTINGS']['deadlineTimeVisibility'] = (
+			(isset($deadlineTimeSettings['visibility']) && $deadlineTimeSettings['visibility'] == 'Y') ? 'Y' : 'N'
+		);
 	}
 
 	/**
@@ -758,7 +782,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'STAGE_ID',
 				'SORTING',
 				'IS_MUTED',
-				'GROUP_ID'
+				'GROUP_ID',
+				'PARENT_ID',
 			]
 		);
 
@@ -901,8 +926,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getListParams()
 	{
+		$nPageSize = (
+			StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT
+				? 1000
+				: $this->arParams['ITEMS_COUNT']
+		);
+
 		$this->listParams['NAV_PARAMS'] = array(
-			'nPageSize' => $this->arParams['ITEMS_COUNT'],
+			'nPageSize' => $nPageSize,
 			'iNumPage' => $this->arParams['ITEMS_PAGE'],
 			'bDescPageNumbering' => false,
 			'NavShowAll' => false,
@@ -1556,8 +1587,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$data = array(
 			// base
 			'id' => $item['ID'],
+			'parentId' => $item['PARENT_ID'],
 			'stage_id' => $item['STAGE_ID'],
-			'groupId' => (int) $item['GROUP_ID'],
+			'groupId' => $item['GROUP_ID'],
 			'name' => $item['TITLE'],
 			'background' => '',
 			'author' => $item['CREATED_BY'],
@@ -1650,9 +1682,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$task = array(
 					$task['id'] => array(
 						'id' => $task['id'],
+						'parentId' => $task['parentId'],
 						'columnId' => $task['stage_id'] > 0 ? $task['stage_id'] : $columnId,
 						'data' => $task,
-						'isSprintView' => ($this->arParams['SPRINT_ID'] > 0 ? 'Y' : 'N')
+						'isSprintView' => ($this->arParams['SPRINT_ID'] > 0 ? 'Y' : 'N'),
+						'calendarSettings' => $this->arResult['CALENDAR_SETTINGS']
 					)
 				);
 
@@ -1745,6 +1779,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				continue;
 			}
 
+			// todo have subtask then not get
 			if ($column['ADDITIONAL_FILTER'])
 			{
 				$filterTmp = array_merge(
@@ -1786,9 +1821,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 				$items[$item['id']] = array(
 					'id' => $item['id'],
+					'parentId' => $item['parentId'],
 					'columnId' => $column['ID'],
 					'data' => $item,
-					'isSprintView' => ($this->arParams['SPRINT_SELECTED'] == 'Y' ? 'Y' : 'N')
+					'isSprintView' => ($this->arParams['SPRINT_SELECTED'] == 'Y' ? 'Y' : 'N'),
+					'calendarSettings' => $this->arResult['CALENDAR_SETTINGS']
 				);
 				if (
 					isset($filterTmp['ID']) &&
@@ -1810,7 +1847,93 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 		$items = $this->sendEvent('KanbanComponentGetItems', $items);
 
+		$this->validateCounters($items);
+
 		return array_values($items);
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isMyList(): bool
+	{
+		return (int)$this->arParams['USER_ID'] === (int)$this->userId;
+	}
+
+	/**
+	 * @param array $items
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function validateCounters(array $items): void
+	{
+		$userId = (int) $this->arParams['USER_ID'];
+		if (!$this->isMyList())
+		{
+			return;
+		}
+
+		$gridValue = count($items);
+
+		if ($gridValue > 0)
+		{
+			return;
+		}
+
+		$filter = $this->filterInstance->getOptions()->getFilter($this->filterInstance->getFilters());
+		if (
+			array_key_exists('STATUS', $filter)
+			&& is_array($filter['STATUS'])
+			&& in_array(CTasks::STATE_IN_PROGRESS, $filter['STATUS'])
+		)
+		{
+			unset($filter['STATUS']);
+		}
+		unset($filter['PRESET_ID']);
+		unset($filter['FILTER_ID']);
+
+		$defaultFilter = [
+			'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+			'FILTER_APPLIED' => true,
+			'FIND' => ''
+		];
+
+		if (
+			array_diff($filter, $defaultFilter)
+			|| array_diff($defaultFilter, $filter)
+		)
+		{
+			return;
+		}
+
+		$groupId = isset($this->arParams['GROUP_ID']) ? (int) $this->arParams['GROUP_ID'] : 0;
+
+		$counter = \Bitrix\Tasks\Internals\Counter::getInstance($userId);
+		$counterValue = $counter->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_EXPIRED, $groupId);
+
+		if ($gridValue === $counterValue)
+		{
+			return;
+		}
+
+		if (\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance()->isInQueue($userId))
+		{
+			return;
+		}
+
+		if (\Bitrix\Tasks\Internals\Counter\Event\EventTable::hasLostEvents())
+		{
+			return;
+		}
+
+		$application = Application::getInstance();
+		$application && $application->addBackgroundJob(
+			['\Bitrix\Tasks\Internals\Counter\CounterService', 'recountForUser'],
+			[$userId],
+			Application::JOB_PRIORITY_LOW - 5
+		);
 	}
 
 	/**
@@ -2375,12 +2498,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT &&
 				Loader::includeModule('socialnetwork'))
 			{
-				$group = Workgroup::getById($params['GROUP_ID']);
-				if ($group)
-				{
-					$responsibleId =$group->getScrumMaster();
-				}
-
+				$scrumManager = new ScrumManager($params['GROUP_ID']);
+				$responsibleId = $scrumManager->getScrumTaskResponsible($params['USER_ID']);
 				$scrumProject = true;
 			}
 
@@ -2392,6 +2511,29 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'GROUP_ID' => $params['GROUP_ID'],
 				'STAGE_ID' => isset($stages[$columnId]) ? $columnId : 0
 			);
+
+			if ($scrumProject)
+			{
+				$parentTaskId = (int)$this->request('parentTaskId');
+				if ($parentTaskId)
+				{
+					try
+					{
+						$taskItemObject = \CTaskItem::getInstance($parentTaskId, $this->userId);
+						$taskInfo = $taskItemObject->getData(false, [
+							'select' => ['TAGS'],
+						]);
+						$fields['PARENT_ID'] = $parentTaskId;
+						$fields['TAGS'] = $taskInfo['TAGS'] ? $taskInfo['TAGS'] : [];
+					}
+					catch (\Exception $exception)
+					{
+						$this->addError('TASK_LIST_TASK_MANDATORY_EXISTS');
+						return [];
+					}
+				}
+			}
+
 			if (isset($stages[$columnId]['TO_UPDATE']))
 			{
 				$fields = array_merge(
@@ -2432,10 +2574,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 					$params['TIMELINE_MODE'] != 'Y'
 				)
 				{
-					TaskStageTable::add(array(
+					if ($params['SPRINT_ID'] > 0)
+					{
+						$kanbanService = new KanbanService();
+						$kanbanService->removeTasksFromKanban($params['SPRINT_ID'], [$newId]);
+					}
+					TaskStageTable::add([
 						'TASK_ID' => $newId,
 						'STAGE_ID' => $columnId
-					));
+					]);
 				}
 				// set sort
 				if ($params['GROUP_ID'] == 0)
@@ -2668,6 +2815,76 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		return array();
+	}
+
+	protected function actionCompleteParentTask(): array
+	{
+		$taskId = (int)$this->request('taskId');
+		$finishColumnId = $this->request('finishColumnId');
+
+		$stages = StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']);
+
+		if (!$taskId || !isset($stages[$finishColumnId]))
+		{
+			return [];
+		}
+
+		$rows = $this->getData(['ID' => $taskId], true);
+		$taskData = array_shift($rows);
+
+		$taskStageTable = TaskStageTable::getList([
+			'filter' => [
+				'TASK_ID' => $taskData['id'],
+				'=STAGE.ENTITY_TYPE' => StagesTable::getWorkMode(),
+				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
+			]
+		]);
+		while ($taskStage = $taskStageTable->fetch())
+		{
+			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $finishColumnId]);
+		}
+
+		$this->completeTask($taskId);
+
+		// bizproc set with mode to another value...
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		return [];
+	}
+
+	protected function actionRenewParentTask(): array
+	{
+		$taskId = (int)$this->request('taskId');
+		$newColumnId = $this->request('newColumnId');
+
+		$stages = StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']);
+
+		if (!$taskId || !isset($stages[$newColumnId]))
+		{
+			return [];
+		}
+
+		$rows = $this->getData(['ID' => $taskId], true);
+		$taskData = array_shift($rows);
+
+		$taskStageTable = TaskStageTable::getList([
+			'filter' => [
+				'TASK_ID' => $taskData['id'],
+				'=STAGE.ENTITY_TYPE' => StagesTable::getWorkMode(),
+				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID'],
+			]
+		]);
+		while ($taskStage = $taskStageTable->fetch())
+		{
+			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $newColumnId]);
+		}
+
+		$this->renewTask($taskId);
+
+		// bizproc set with mode to another value...
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		return [];
 	}
 
 	/**
@@ -2909,11 +3126,26 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function actionApplyFilter()
 	{
-		// filter will be applied in the getList
-		return array(
-			'columns' => $this->getColumns(),
-			'items' => $this->getData()
-		);
+		$columns = $this->getColumns();
+		$items = $this->getData();
+		$parentTasks = [];
+
+		$groupId = (int) $this->arParams['GROUP_ID'];
+
+		$scrumManager = new ScrumManager($groupId);
+		if ($scrumManager->isScrumProject())
+		{
+			// todo get sub tasks
+			$taskRegistry = TaskRegistry::getInstance();
+
+			list($items, $columns, $parentTasks) = $scrumManager->groupBySubTasks($taskRegistry, $items, $columns);
+		}
+
+		return [
+			'columns' => $columns,
+			'items' => $items,
+			'parentTasks' => $parentTasks
+		];
 	}
 
 	/**
@@ -3316,7 +3548,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 						if (!$groupAction)
 						{
 							$message = $e->getMessage();
-							$data = current(unserialize($message));
+							$data = current(unserialize($message, ['allowed_classes' => false]));
 							$this->addError($data['text']);
 							return array();
 						}

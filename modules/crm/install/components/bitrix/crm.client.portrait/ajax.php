@@ -90,7 +90,7 @@ switch ($action)
 
 		$options = \Bitrix\Main\Config\Option::get('crm', $optionName);
 		if ($options !== '')
-			$options = unserialize($options);
+			$options = unserialize($options, ['allowed_classes' => false]);
 
 		if (!is_array($options))
 			$options = array();

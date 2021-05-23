@@ -31,6 +31,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		if ($this->request->get('rebuildResources') === 'y' || $this->request->get('rebuildAll') === 'y')
 		{
 			Webpack\Form::rebuildResources();
+			if (
+				\Bitrix\Main\Loader::includeModule('landing') &&
+				is_callable(['\Bitrix\Landing\Subtype\Form', 'clearCache'])
+			)
+			{
+				\Bitrix\Landing\Subtype\Form::clearCache();
+			}
 		}
 		if ($this->request->get('rebuildForms') === 'y' || $this->request->get('rebuildAll') === 'y')
 		{

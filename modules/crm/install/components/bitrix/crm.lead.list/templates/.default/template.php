@@ -23,6 +23,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -31,7 +32,6 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_conversion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
@@ -44,7 +44,6 @@ use Bitrix\Main\Localization\Loc;
 
 ?><div id="batchConversionWrapper"></div><?
 ?><div id="batchDeletionWrapper"></div><?
-?><div id="batchActionWrapper"></div><?
 
 ?><div id="rebuildMessageWrapper"><?
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
@@ -990,6 +989,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
+		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => [
@@ -1117,17 +1117,7 @@ $APPLICATION->IncludeComponent(
 				{
 					gridId: gridId,
 					entityTypeId: <?=CCrmOwnerType::Lead?>,
-					container: "batchActionWrapper",
-					stateTemplate: "<?=GetMessageJS('CRM_LEAD_STEPWISE_STATE_TEMPLATE')?>",
-					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_LEAD_MERGE'])?>",
-					messages:
-						{
-							title: "<?=GetMessageJS('CRM_LEAD_LIST_MERGE_PROC_DLG_TITLE')?>",
-							confirmation: "<?=GetMessageJS('CRM_LEAD_LIST_MERGE_PROC_DLG_SUMMARY')?>",
-							summaryCaption: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COMPLETED')?>",
-							summarySucceeded: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COUNT_SUCCEEDED')?>",
-							summaryFailed: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COUNT_FAILED')?>"
-						}
+					mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_LEAD_MERGE'])?>"
 				}
 			);
 

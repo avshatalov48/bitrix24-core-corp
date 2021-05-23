@@ -65,6 +65,8 @@ RecentList.init = function()
 
 	this.imagePath = component.path+'images';
 
+	this.ready = false;
+
 	this.list = [];
 	this.callList = [];
 	this.listEmpty = true;
@@ -74,7 +76,7 @@ RecentList.init = function()
 	this.lastMessageDate = null;
 
 	this.haveElementsToLoad = false;
-	this.elementsPerPage = 50;
+	this.elementsLimit = 50;
 	this.isLoadingNextElements = false;
 
 	this.siteId = BX.componentParameters.get('SITE_ID', 's1');
@@ -90,7 +92,6 @@ RecentList.init = function()
 	this.searchMinTokenLength = BX.componentParameters.get('SEARCH_MIN_SIZE', 3);
 
 	this.messageCount = 0;
-	this.messageCountArray = {};
 
 	this.loadMoreAfterErrorInterval = 5000;
 	this.listRequestAfterErrorInterval = 10000;
@@ -160,7 +161,7 @@ RecentList.init = function()
 	}
 	else
 	{
-		BX.addCustomEvent('onAppData', this.refresh({start: true}));
+		ChatReadyCheck.wait().then(() => this.refresh({start: true}));
 	}
 
 	IntranetInvite.init();
@@ -210,9 +211,20 @@ RecentList.init = function()
 			}
 		});
 	});
+	BX.addCustomEvent("onAppPaused", () =>
+	{
+		this.push.manager.clear();
+	});
 
 	BX.addCustomEvent("onAppActive", () => {
 		this.push.actionExecute();
+	});
+
+	BX.addCustomEvent("ImRecent::checkReady", () => {
+		if (this.ready)
+		{
+			BX.postComponentEvent("ImRecent::ready", []);
+		}
 	});
 
 	return true;
@@ -404,7 +416,6 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 				},
 				background: backgroundConfig
 			};
-			console.warn(pageParams);
 		}
 		else
 		{
@@ -579,19 +590,20 @@ RecentList.updateCounter = function(delay)
 	clearTimeout(this.updateCounterTimeout);
 	this.updateCounterTimeout = null;
 
-	this.messageCount = 0;
-	this.messageGroupCount = [];
-	for (let entityId in this.messageCountArray)
-	{
-		if (this.messageCountArray.hasOwnProperty(entityId))
+	this.messageCount = this.list.reduce((sum, element) => {
+		if (element.type === 'notification')
 		{
-			if (this.messageGroupCount.indexOf(entityId) == -1 && this.messageCountArray[entityId] > 0)
-			{
-				this.messageGroupCount.push(entityId);
-			}
-			this.messageCount += this.messageCountArray[entityId];
+			this.notify.counter = element.counter;
+			return sum;
 		}
-	}
+
+		if (element.unread)
+		{
+			sum += 1;
+		}
+
+		return sum + element.counter;
+	}, 0);
 
 	if (this.isRecent())
 	{
@@ -662,8 +674,9 @@ RecentList.dialogOptionInit = function()
 	{
 		dialogList.setSections([
 			{title : '', id : "general", backgroundColor: "#ffffff", sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_NEW"), id : "new", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
 			{title : BX.message("OL_SECTION_PIN"), id : "pinned", backgroundColor: "#f6f6f6", sortItemParams:{order: "asc"}},
-			{title : BX.message("OL_SECTION_WORK"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#e66467", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
+			{title : BX.message("OL_SECTION_WORK_2"), id : "work", backgroundColor: "#ffffff", height: 15, styles : { title: {font: {size:15, color:"#225be5", fontStyle: "medium"}}}, sortItemParams:{order: "asc"}},
 			{title : BX.message("OL_SECTION_ANSWERED"), id : "answered", backgroundColor: "#ffffff", height: 15, styles: { title : {font: {size:15, color:"#6EA44E", fontStyle: "medium"}}}, sortItemParams:{order: "desc"}}
 		]);
 
@@ -692,7 +705,7 @@ RecentList.refresh = function(params)
 
 	if (this.isRecent())
 	{
-		recentParams['LIMIT'] = this.elementsPerPage;
+		recentParams['LIMIT'] = this.elementsLimit;
 
 		if (this.isOpenlinesOperator())
 		{
@@ -714,6 +727,7 @@ RecentList.refresh = function(params)
 	{
 		sendRecentLimit = true;
 		recentParams['LAST_UPDATE'] = this.lastRecentRequest;
+		delete recentParams['LIMIT'];
 	}
 
 	ChatRestRequest.abort('refresh');
@@ -805,16 +819,21 @@ RecentList.refresh = function(params)
 		{
 			this.lastRecentRequest = result.recent.time().date_start;
 			console.info("RecentList.update: recent list", result.recent.data());
-			let originalData = Utils.objectClone(result.recent.data());
 
-			if (this.isRecent() && result.recent.data().items.length < this.elementsPerPage)
+			let items = [];
+
+			if (this.isRecent())
 			{
-				this.haveElementsToLoad = false;
+				items = result.recent.data().items;
+			}
+			else
+			{
+				items = result.recent.data();
 			}
 
 			if (sendRecentLimit)
 			{
-				let recentList = ChatDataConverter.getListFormat(result.recent.data());
+				let recentList = ChatDataConverter.getListFormat(items);
 				if (recentList.length > 0)
 				{
 					let recentIndex = recentList.map(element => element.id);
@@ -828,7 +847,7 @@ RecentList.refresh = function(params)
 			}
 			else
 			{
-				this.list = ChatDataConverter.getListFormat(result.recent.data());
+				this.list = ChatDataConverter.getListFormat(items);
 				this.redraw();
 
 				if (
@@ -851,14 +870,13 @@ RecentList.refresh = function(params)
 
 				if (this.isRecent())
 				{
-					if (originalData.items.length)
-					{
-						this.lastMessageDate = this.getLastMessageDate(originalData.items);
-					}
-
-					if (originalData.items.length === this.elementsPerPage)
+					if (result.recent.data().hasMorePages)
 					{
 						this.drawBottomLoader();
+					}
+					else
+					{
+						this.haveElementsToLoad = false;
 					}
 				}
 			}
@@ -867,49 +885,6 @@ RecentList.refresh = function(params)
 		if (result.counters && !countersError)
 		{
 			let counters = result.counters.data();
-			if (this.isRecent())
-			{
-				this.messageCount = counters['TYPE']['DIALOG']+counters['TYPE']['CHAT'];
-				this.messageCountArray = {};
-				for (let i in counters["DIALOG"])
-				{
-					if (counters["DIALOG"].hasOwnProperty(i))
-					{
-						this.messageCountArray[i] = counters["DIALOG"][i];
-					}
-				}
-				for (let i in counters["CHAT"])
-				{
-					if (counters["CHAT"].hasOwnProperty(i))
-					{
-						this.messageCountArray['chat'+i] = counters["CHAT"][i];
-					}
-				}
-
-				if (!this.isOpenlinesOperator())
-				{
-					this.messageCount += counters['TYPE']['LINES'];
-					for (let i in counters["LINES"])
-					{
-						if (counters["LINES"].hasOwnProperty(i))
-						{
-							this.messageCountArray['chat'+i] = counters["LINES"][i];
-						}
-					}
-				}
-			}
-			else
-			{
-				this.messageCount = counters['TYPE']['LINES'];
-				this.messageCountArray = {};
-				for (let i in counters["LINES"])
-				{
-					if (counters["LINES"].hasOwnProperty(i))
-					{
-						this.messageCountArray['chat'+i] = counters["LINES"][i];
-					}
-				}
-			}
 
 			this.notify.counter = counters['TYPE']['NOTIFY'];
 
@@ -1058,19 +1033,13 @@ RecentList.refresh = function(params)
 
 		if (this.isRecent() && params.start)
 		{
-			BX.postWebEvent("onAppData", {});
-			BX.postComponentEvent("onAppData", []);
+			this.ready = true;
+			BX.postComponentEvent("ImRecent::ready", []);
 		}
 
 	}, false, (xhr) => {
 		ChatRestRequest.register('refresh', xhr);
 	});
-
-	if (this.isRecent() && params.start)
-	{
-		BX.postWebEvent("onAppDataBefore", {});
-		BX.postComponentEvent("onAppDataBefore", []);
-	}
 
 	return true;
 };
@@ -1081,29 +1050,28 @@ RecentList.loadMore = function()
 
 	let recentParams = this.prepareLoadMoreParams();
 
-	BX.rest.callMethod('im.recent.list', recentParams).then(result => {
-		result = result.data().items;
-
-		if (result.length < this.elementsPerPage)
+	BX.rest.callMethod('im.recent.list', recentParams).then(result =>
+	{
+		let hasMorePages = result.data().hasMorePages;
+		if (!hasMorePages)
 		{
 			this.haveElementsToLoad = false;
 		}
 
-		if (result.length > 0)
+		let items = result.data().items;
+		if (items.length > 0)
 		{
-			this.lastMessageDate = this.getLastMessageDate(result);
-
-			let listConverted = this.prepareListWithNewElements(result);
+			let listConverted = this.prepareListWithNewElements(items);
 			if (this.viewLoaded)
 			{
 				dialogList.setItems([...this.callList,...listConverted]);
-				if (result.length === this.elementsPerPage)
+				if (hasMorePages)
 				{
 					this.drawBottomLoader();
 				}
 			}
 
-			this.isLoadingNextElements = false
+			this.isLoadingNextElements = false;
 		}
 		else
 		{
@@ -1134,10 +1102,8 @@ RecentList.prepareLoadMoreParams = function()
 		}
 	}
 
-	if (this.lastMessageDate)
-	{
-		params['LAST_MESSAGE_UPDATE'] = this.lastMessageDate;
-	}
+	params['OFFSET'] = this.list.length;
+	params['LIMIT'] = this.elementsLimit;
 
 	return params;
 };
@@ -1158,7 +1124,6 @@ RecentList.prepareListWithNewElements = function(newItems)
 	let listConverted = [];
 	this.list.forEach((element) => {
 		listConverted.push(ChatDataConverter.getElementFormat(element));
-		this.messageCountArray[element.id] = element.counter;
 	});
 
 	return listConverted;
@@ -1207,19 +1172,6 @@ RecentList.loadMoreAfterTimeout = function()
 	}, this.loadMoreAfterErrorInterval);
 };
 
-RecentList.getLastMessageDate = function(collection)
-{
-	let min = collection[0].date_update;
-	collection.forEach(item => {
-		if (new Date(item.date_update).getTime() < new Date(min).getTime())
-		{
-			min = item.date_update;
-		}
-	});
-
-	return min;
-};
-
 RecentList.clearAllCounters = function()
 {
 	if (this.viewLoaded)
@@ -1244,7 +1196,6 @@ RecentList.clearAllCounters = function()
 		});
 	}
 
-	this.messageCountArray = [];
 	this.notify.counter = 0;
 	this.updateCounter(false);
 	this.cache.update({recent: true});
@@ -1261,10 +1212,6 @@ RecentList.redraw = function()
 		if (this.viewLoaded)
 		{
 			listConverted.push(ChatDataConverter.getElementFormat(element));
-		}
-		if (element.type !== 'notification')
-		{
-			this.messageCountArray[element.id] = element.counter;
 		}
 	});
 
@@ -1454,16 +1401,12 @@ RecentList.setElement = function(elementId, data, immediately)
 		elementId = data.id;
 
 		this.list.push(data);
-		this.messageCountArray[elementId] = data.counter;
-
 		this.queue.add(this.queue.TYPE_ADD, elementId, data);
 	}
 	else
 	{
 		elementId = this.list[index].id;
 		this.list[index] = data;
-		this.messageCountArray[elementId] = data.counter;
-
 		this.queue.add(this.queue.TYPE_UPDATE, elementId, data);
 	}
 
@@ -1500,10 +1443,6 @@ RecentList.updateElement = function(elementId, data, immediately)
 	elementId = this.list[index].id;
 
 	this.list[index] = ChatUtils.objectMerge(this.list[index], data);
-	if (this.list[index].type !== 'notification')
-	{
-		this.messageCountArray[elementId] = this.list[index].counter;
-	}
 
 	this.queue.add(this.queue.TYPE_UPDATE, elementId, this.list[index]);
 
@@ -1528,7 +1467,6 @@ RecentList.deleteElement = function(elementId)
 	elementId = this.list[index].id;
 
 	delete this.list[index];
-	delete this.messageCountArray[elementId];
 	ChatTimer.delete(elementId);
 
 	this.updateCounter(false);
@@ -1746,6 +1684,7 @@ RecentList.cache.init = function ()
 	}
 	else
 	{
+		this.inited = true;
 		this.base.redraw();
 	}
 
@@ -2340,7 +2279,7 @@ RecentList.pull.eventExecute = function(data)
 				id: params.message.recipientId,
 				chat: params.chat[params.chatId],
 				user: params.message.senderId > 0? params.users[params.message.senderId]: {id: 0},
-				lines: params.lines[params.chatId],
+				lines: params.lines,
 				message: params.message,
 				counter: params.counter
 			});
@@ -2649,65 +2588,24 @@ RecentList.pull.eventExecute = function(data)
 	{
 		if (this.base.isRecent())
 		{
-			if (params.chat[params.chatId].type == 'lines' && this.base.isOpenlinesOperator())
+			if (params.lines && this.base.isOpenlinesOperator())
 			{
 				return false;
 			}
 		}
-		else if (params.chat[params.chatId].type != 'lines')
+		else if (!params.lines)
 		{
 			return false;
 		}
 
-		if (params.userInChat[params.chatId].indexOf(this.base.userId) == -1)
-		{
-			this.base.updateElement(params.userId, {
-				user: { idle: false, last_activity_date: new Date()}
-			});
+		let formattedElement = ChatDataConverter.getListElement(params);
+		this.base.setElement(params.id, formattedElement);
 
-			return false;
-		}
-
-		params.message.params = params.message.params ? params.message.params : {};
-		let messageOriginal = Object.assign({}, params.message);
-
-		params.message.text = ChatMessengerCommon.purifyText(params.message.text, params.message.params);
-		params.message.status = params.message.senderId == this.base.userId? 'received': '';
-
-		let formattedElement = this.getFormattedElement({
-			id: params.message.recipientId,
-			chat: params.chat[params.chatId],
-			user: params.message.senderId > 0? params.users[params.message.senderId]: {id: 0},
-			lines: params.lines[params.chatId],
-			message: params.message,
-			counter: params.counter > 0 ? params.counter : 1
-		});
-
-		let addToRecent = params.notify !== true && params.notify.indexOf(this.base.userId) == -1? this.base.getElement(params.message.recipientId): true;
-		if (addToRecent)
-		{
-			this.base.setElement(params.message.recipientId, formattedElement);
-		}
-
-		this.action.writing(params.message.recipientId, false);
-
-		this.base.updateElement(params.userId, {
-			user: { idle: false, last_activity_date: new Date()}
-		});
-
-		this.base.dialogCache.getDialog(params.message.recipientId).then(dialog =>
-		{
-			dialog.unreadList.push(params.message.id);
-			this.base.dialogCache.updateDialog(dialog.id, {unreadList: dialog.unreadList});
-		});
-
-		this.base.dialogCache.addMessage(params.message.recipientId, this.base.dialogCache.getMessageFormat({
-			message: messageOriginal,
-			files: params.files? params.files: {},
-			users: params.users? params.users: {}
-		}));
-
-		if (params.message.senderId != this.base.userId)
+		if (
+			params.message.author_id > 0
+			&& params.message.author_id != this.base.userId
+			&& params.counter > 0
+		)
 		{
 			this.notifier.show({
 				dialogId: formattedElement.id,
@@ -3376,7 +3274,6 @@ RecentList.action.read = function(elementId)
 		}, true);
 	}
 
-	this.base.messageCountArray[element.id] = 0;
 	this.base.updateCounter(false);
 
 	this.base.blockElement(elementId, true, (id, params) => {
@@ -3436,7 +3333,6 @@ RecentList.action.unread = function(elementId)
 		}, true);
 	}
 
-	this.base.messageCountArray[element.id] = 1;
 	this.base.updateCounter(false);
 
 	this.base.blockElement(elementId, true, (id, params) => {

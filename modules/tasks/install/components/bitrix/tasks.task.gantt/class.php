@@ -17,6 +17,7 @@ use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
+use Bitrix\Tasks\Util\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -53,11 +54,10 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 	{
 		parent::getData();
 
-		// TODO вынести надо бы
 		$taskIds = [];
 		$this->arResult['TASKS_LINKS'] = [];
 
-		foreach ($this->arResult['LIST'] as $item)
+		foreach ($this->arResult['LIST'] as $k => $item)
 		{
 			$taskId = $item['ID'];
 
@@ -65,6 +65,9 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 			$this->arResult['LIST'][$taskId]['SE_PARAMETER'] = $taskParameters;
 
 			$taskIds[] = $taskId;
+
+			$this->arResult['GROUP_IDS'][] = $item['GROUP_ID'];
+			$this->arResult['LIST'][$k] = $this->prepareRow($item);
 		}
 
 		$res = ProjectDependenceTable::getListByLegacyTaskFilter($this->listParameters['filter']);
@@ -75,6 +78,130 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 				$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
 			}
 		}
+	}
+
+	/**
+	 * @param array $item
+	 * @return array
+	 */
+	private function prepareRow(array $item): array
+	{
+		$item['TITLE'] = $this->prepareTitle($item);
+		$item['GROUP_NAME'] = htmlspecialcharsbx($item['GROUP_NAME']);
+
+		$item['RESPONSIBLE_NAME'] = htmlspecialcharsbx($item['RESPONSIBLE_NAME']);
+		$item['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($item['RESPONSIBLE_LAST_NAME']);
+		$item['RESPONSIBLE_SECOND_NAME'] = htmlspecialcharsbx($item['RESPONSIBLE_SECOND_NAME']);
+		$item['RESPONSIBLE_LOGIN'] = htmlspecialcharsbx($item['RESPONSIBLE_LOGIN']);
+
+		$item['CREATED_BY_NAME'] = htmlspecialcharsbx($item['CREATED_BY_NAME']);
+		$item['CREATED_BY_LAST_NAME'] = htmlspecialcharsbx($item['CREATED_BY_LAST_NAME']);
+		$item['CREATED_BY_SECOND_NAME'] = htmlspecialcharsbx($item['CREATED_BY_SECOND_NAME']);
+		$item['CREATED_BY_LOGIN'] = htmlspecialcharsbx($item['CREATED_BY_LOGIN']);
+
+		return $item;
+	}
+
+	/**
+	 * @param array $item
+	 * @return string
+	 */
+	private function prepareTitle(array $row): string
+	{
+		$userId = (int) $this->arParams['USER_ID'];;
+
+		$isExpired = ($row['DEADLINE'] && $this->isExpired($this->getDateTimestamp($row['DEADLINE'])));
+		$isDeferred = ($row['REAL_STATUS'] === CTasks::STATE_DEFERRED);
+		$isWaitCtrlCounts = (
+			$row['REAL_STATUS'] === CTasks::STATE_SUPPOSEDLY_COMPLETED
+			&& (int)$row['CREATED_BY'] === $userId
+			&& (int)$row['RESPONSIBLE_ID'] !== $userId
+		);
+		$isCompletedCounts = (
+			$row['REAL_STATUS'] === CTasks::STATE_COMPLETED
+			|| ($row['REAL_STATUS'] === CTasks::STATE_SUPPOSEDLY_COMPLETED && (int)$row['CREATED_BY'] !== $userId)
+		);
+
+		$value = ((int)$row['NEW_COMMENTS_COUNT'] > 0 ? (int)$row['NEW_COMMENTS_COUNT'] : 0);
+		$color = 'success';
+
+		if ($isExpired && !$isCompletedCounts && !$isWaitCtrlCounts && !$isDeferred)
+		{
+			$value++;
+			$color = 'danger';
+		}
+
+		if ($row['IS_MUTED'] === 'Y')
+		{
+			$color = 'gray';
+		}
+
+		$counter = '';
+		if ($value > 0 && $this->isMember($userId, $row))
+		{
+			$counter = "<div class='ui-counter ui-counter-{$color}'><div class='ui-counter-inner'>{$value}</div></div>";
+		}
+
+		$title = htmlspecialcharsbx($row['TITLE']);
+		$counterContainer = "<span class='task-counter-container'>{$counter}</span>";
+
+		return "<span id='changedDate' style='margin-right: 3px'>{$title}</span>".$counterContainer;
+	}
+
+	/**
+	 * @param int $userId
+	 * @param array $row
+	 * @return bool
+	 */
+	private function isMember(int $userId, array $row): bool
+	{
+		$members = array_unique(
+			array_merge(
+				[$row['CREATED_BY'], $row['RESPONSIBLE_ID']],
+				(is_array($row['ACCOMPLICES']) ? $row['ACCOMPLICES'] : []),
+				(is_array($row['AUDITORS']) ? $row['AUDITORS'] : [])
+			)
+		);
+		$members = array_map('intval', $members);
+
+		return in_array($userId, $members, true);
+	}
+
+	/**
+	 * @param int $timestamp
+	 * @return bool
+	 */
+	private function isExpired(int $timestamp): bool
+	{
+		return $timestamp && ($timestamp <= $this->getNow());
+	}
+
+	/**
+	 * @return int
+	 */
+	private function getNow(): int
+	{
+		return (new DateTime())->getTimestamp() + CTimeZone::GetOffset();
+	}
+
+	/**
+	 * @param string $date
+	 * @return int
+	 */
+	private function getDateTimestamp($date): int
+	{
+		$timestamp = MakeTimeStamp($date);
+
+		if ($timestamp === false)
+		{
+			$timestamp = strtotime($date);
+			if ($timestamp !== false)
+			{
+				$timestamp += CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
+			}
+		}
+
+		return $timestamp;
 	}
 
 	protected function getSelect()

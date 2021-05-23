@@ -6,7 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 \Bitrix\Main\Loader::includeModule('ui');
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.buttons.icons", "popup"]);
+\Bitrix\Main\UI\Extension::load(["ui.entity-selector","ui.buttons", "ui.buttons.icons", "popup"]);
+
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 if ($isBitrix24Template)
 {

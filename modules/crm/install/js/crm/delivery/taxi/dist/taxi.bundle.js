@@ -135,6 +135,10 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	    phone: {
 	      required: false,
 	      type: String
+	    },
+	    phoneExt: {
+	      required: false,
+	      type: String
 	    }
 	  },
 	  mixins: [UseLocalize],
@@ -147,7 +151,7 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	      top.BXIM.phoneTo(this.phone);
 	    }
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_DRIVER}}\n\t\t\t</div>\n\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t<span>\n\t\t\t\t\t{{name}}\n\t\t\t\t</span>\n\t\t\t\t<span v-if=\"phone\" @click=\"call\" class=\"crm-entity-stream-content-delivery-link\">\n\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CALL_DRIVER}}\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_DRIVER}}\n\t\t\t</div>\n\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t<span>\n\t\t\t\t\t{{name}}\n\t\t\t\t</span>\n\t\t\t\t<span v-if=\"phone\" @click=\"call\" class=\"crm-entity-stream-content-delivery-link\">\n\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CALL_DRIVER}}\n\t\t\t\t</span>\n\t\t\t\t<span\n\t\t\t\t\tv-if=\"phoneExt\"\n\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-phone-ext\"\n\t\t\t\t>\n\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CALL_DRIVER_PHONE_EXT_CODE}}: {{phoneExt}}\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var CarComponent = {
@@ -173,7 +177,7 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	  mixins: [UseActivity, UseLocalize],
 	  data: function data() {
 	    return {
-	      searchingCar: false,
+	      isMakingRequest: false,
 	      isCancelling: false
 	    };
 	  },
@@ -186,14 +190,14 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	    makeRequest: function makeRequest() {
 	      var _this = this;
 
-	      this.searchingCar = true;
+	      this.isMakingRequest = true;
 	      BX.ajax.runAction('sale.taxidelivery.sendrequest', {
 	        analyticsLabel: 'saleDeliveryTaxiCall',
 	        data: {
 	          shipmentId: this.fields.SHIPMENT_ID
 	        }
 	      }).then(function (result) {}).catch(function (result) {
-	        _this.searchingCar = false;
+	        _this.isMakingRequest = false;
 
 	        _this.showError(result.errors.map(function (item) {
 	          return item.message;
@@ -223,6 +227,20 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	        }).join());
 	      });
 	    },
+	    checkRequestStatus: function checkRequestStatus() {
+	      BX.ajax.runAction('sale.taxidelivery.checkrequeststatus');
+	    },
+	    startCheckingRequestStatus: function startCheckingRequestStatus() {
+	      var _this3 = this;
+
+	      clearTimeout(this._checkRequestStatusTimeoutId);
+	      this._checkRequestStatusTimeoutId = setInterval(function () {
+	        return _this3.checkRequestStatus();
+	      }, 10 * 1000);
+	    },
+	    stopCheckingRequestStatus: function stopCheckingRequestStatus() {
+	      clearTimeout(this._checkRequestStatusTimeoutId);
+	    },
 	    showError: function showError(message) {
 	      BX.loadExt('ui.notification').then(function () {
 	        BX.UI.Notification.Center.notify({
@@ -231,20 +249,20 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	      });
 	    },
 	    showContextMenu: function showContextMenu(event) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var popup = BX.PopupMenu.create('taxi_activity_context_menu_' + this.self.getId(), event.target, [{
 	        id: 'delete',
 	        text: this.getLangMessage('menuDelete'),
 	        onclick: function onclick() {
 	          popup.close();
-	          var deletionDlgId = 'entity_timeline_deletion_' + _this3.self.getId() + '_confirm';
+	          var deletionDlgId = 'entity_timeline_deletion_' + _this4.self.getId() + '_confirm';
 	          var dlg = BX.Crm.ConfirmationDialog.get(deletionDlgId);
 
 	          if (!dlg) {
 	            dlg = BX.Crm.ConfirmationDialog.create(deletionDlgId, {
-	              title: _this3.getLangMessage('removeConfirmTitle'),
-	              content: _this3.getLangMessage('deliveryRemove')
+	              title: _this4.getLangMessage('removeConfirmTitle'),
+	              content: _this4.getLangMessage('deliveryRemove')
 	            });
 	          }
 
@@ -253,7 +271,7 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	              return;
 	            }
 
-	            _this3.self.remove();
+	            _this4.self.remove();
 	          }, function (result) {});
 	        }
 	      }], {
@@ -276,12 +294,19 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	      popup.show();
 	    }
 	  },
+	  created: function created() {
+	    this._checkRequestStatusTimeoutId = null;
+
+	    if (this.isSearchingCar) {
+	      this.startCheckingRequestStatus();
+	    }
+	  },
 	  computed: {
 	    isExpectedPriceReceived: function isExpectedPriceReceived() {
 	      return this.fields.hasOwnProperty('EXPECTED_PRICE_DELIVERY');
 	    },
 	    isSendRequestButtonVisible: function isSendRequestButtonVisible() {
-	      if (this.searchingCar) {
+	      if (this.isMakingRequest) {
 	        return false;
 	      }
 
@@ -297,8 +322,8 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 
 	      return false;
 	    },
-	    isSearchingLabelVisible: function isSearchingLabelVisible() {
-	      return this.searchingCar || this.fields.STATUS && this.fields.STATUS === 'searching';
+	    isSearchingCar: function isSearchingCar() {
+	      return this.isMakingRequest || this.fields.STATUS && this.fields.STATUS === 'searching';
 	    },
 	    isRequestCancellationLinkVisible: function isRequestCancellationLinkVisible() {
 	      return this.fields && this.fields.REQUEST_CANCELLATION_AVAILABLE;
@@ -312,7 +337,16 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	      };
 	    }
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new crm-entity-stream-section-planned\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div @click=\"showContextMenu\" class=\"crm-entity-stream-section-context-menu\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SERVICE}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span v-if=\"statusName\":class=\"statusClass\">\n\t\t\t\t\t\t\t{{statusName}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{this.createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<span v-if=\"isSendRequestButtonVisible\" @click=\"makeRequest\" class=\"ui-btn ui-btn-sm ui-btn-primary\">\n\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SEND_REQUEST}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span v-if=\"isSearchingLabelVisible\" class=\"crm-entity-stream-content-delivery-status\">\n\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SEARCHING_CAR}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-icon crm-entity-stream-content-delivery-icon--car\"></div>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t\t\t\t\t\t<logo v-if=\"fields.DELIVERY_SYSTEM_LOGO\" :logo=\"fields.DELIVERY_SYSTEM_LOGO\"></logo>\n\t\t\t\t\t\t\t\t\t<info\n\t\t\t\t\t\t\t\t\t\tv-if=\"fields.DELIVERY_SYSTEM_NAME || fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t\t:name=\"fields.DELIVERY_SYSTEM_NAME\"\n\t\t\t\t\t\t\t\t\t\t:method=\"fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t></info>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.ADDRESS_FROM && fields.ADDRESS_TO\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<route\n\t\t\t\t\t\t\t\t\t\t\t:from=\"fields.ADDRESS_FROM\"\n\t\t\t\t\t\t\t\t\t\t\t:to=\"fields.ADDRESS_TO\"\n\t\t\t\t\t\t\t\t\t\t></route>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.DELIVERY_PRICE\"></span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-if=\"isExpectedPriceReceived\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.EXPECTED_PRICE_DELIVERY\"></span></span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"this.fields.PERFORMER_NAME\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<performer\n\t\t\t\t\t\t\t\t\t\t\t:name=\"fields.PERFORMER_NAME\"\n\t\t\t\t\t\t\t\t\t\t\t:phone=\"fields.PERFORMER_PHONE\"\n\t\t\t\t\t\t\t\t\t\t></performer>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.PERFORMER_CAR\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<car :car=\"fields.PERFORMER_CAR\"></car>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"isRequestCancellationLinkVisible\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<span @click=\"cancelRequest\" :class=\"cancelRequestButtonStyle\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_CANCEL_REQUEST}}\n\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-planned-action\">\n\t\t\t\t\t\t<input @click=\"completeActivity\" type=\"checkbox\" class=\"crm-entity-stream-planned-apply-btn\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  watch: {
+	    isSearchingCar: function isSearchingCar(value) {
+	      if (value) {
+	        this.startCheckingRequestStatus();
+	      } else {
+	        this.stopCheckingRequestStatus();
+	      }
+	    }
+	  },
+	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new crm-entity-stream-section-planned\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div @click=\"showContextMenu\" class=\"crm-entity-stream-section-context-menu\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SERVICE}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span v-if=\"statusName\":class=\"statusClass\">\n\t\t\t\t\t\t\t{{statusName}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{this.createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<span v-if=\"isSendRequestButtonVisible\" @click=\"makeRequest\" class=\"ui-btn ui-btn-sm ui-btn-primary\">\n\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SEND_REQUEST}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span v-if=\"isSearchingCar\" class=\"crm-entity-stream-content-delivery-status\">\n\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SEARCHING_CAR}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-icon crm-entity-stream-content-delivery-icon--car\"></div>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t\t\t\t\t\t<logo v-if=\"fields.DELIVERY_SYSTEM_LOGO\" :logo=\"fields.DELIVERY_SYSTEM_LOGO\"></logo>\n\t\t\t\t\t\t\t\t\t<info\n\t\t\t\t\t\t\t\t\t\tv-if=\"fields.DELIVERY_SYSTEM_NAME || fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t\t:name=\"fields.DELIVERY_SYSTEM_NAME\"\n\t\t\t\t\t\t\t\t\t\t:method=\"fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t></info>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.ADDRESS_FROM && fields.ADDRESS_TO\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<route\n\t\t\t\t\t\t\t\t\t\t\t:from=\"fields.ADDRESS_FROM\"\n\t\t\t\t\t\t\t\t\t\t\t:to=\"fields.ADDRESS_TO\"\n\t\t\t\t\t\t\t\t\t\t></route>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.DELIVERY_PRICE\"></span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-if=\"isExpectedPriceReceived\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.EXPECTED_PRICE_DELIVERY\"></span></span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"this.fields.PERFORMER_NAME\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<performer\n\t\t\t\t\t\t\t\t\t\t\t:name=\"fields.PERFORMER_NAME\"\n\t\t\t\t\t\t\t\t\t\t\t:phone=\"fields.PERFORMER_PHONE\"\n\t\t\t\t\t\t\t\t\t\t\t:phoneExt=\"fields.PERFORMER_PHONE_EXT\"\n\t\t\t\t\t\t\t\t\t\t></performer>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.PERFORMER_CAR\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<car :car=\"fields.PERFORMER_CAR\"></car>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"isRequestCancellationLinkVisible\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<span @click=\"cancelRequest\" :class=\"cancelRequestButtonStyle\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_DELIVERY_CANCEL_REQUEST}}\n\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-planned-action\">\n\t\t\t\t\t\t<input @click=\"completeActivity\" type=\"checkbox\" class=\"crm-entity-stream-planned-apply-btn\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	var activitycompleted = ui_vue.Vue.extend({
@@ -330,7 +364,7 @@ this.BX.Crm.Delivery = this.BX.Crm.Delivery || {};
 	      return this.fields.hasOwnProperty('EXPECTED_PRICE_DELIVERY');
 	    }
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event crm-entity-stream-content-event--delivery\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SERVICE}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span v-if=\"statusName\" :class=\"statusClass\">\n\t\t\t\t\t\t\t{{statusName}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{this.createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-icon crm-entity-stream-content-delivery-icon--car\"></div>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t\t\t\t\t\t<logo v-if=\"fields.DELIVERY_SYSTEM_LOGO\" :logo=\"fields.DELIVERY_SYSTEM_LOGO\"></logo>\n\t\t\t\t\t\t\t\t\t<info\n\t\t\t\t\t\t\t\t\t\tv-if=\"fields.DELIVERY_SYSTEM_NAME || fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t\t:name=\"fields.DELIVERY_SYSTEM_NAME\"\n\t\t\t\t\t\t\t\t\t\t:method=\"fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t></info>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.ADDRESS_FROM && fields.ADDRESS_TO\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<route\n\t\t\t\t\t\t\t\t\t\t\t:from=\"fields.ADDRESS_FROM\"\n\t\t\t\t\t\t\t\t\t\t\t:to=\"fields.ADDRESS_TO\"\n\t\t\t\t\t\t\t\t\t\t></route>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.DELIVERY_PRICE\"></span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-if=\"isExpectedPriceReceived\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.EXPECTED_PRICE_DELIVERY\"></span></span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"this.fields.PERFORMER_NAME\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<performer\n\t\t\t\t\t\t\t\t\t\t\t:name=\"fields.PERFORMER_NAME\"\n\t\t\t\t\t\t\t\t\t\t\t:phone=\"fields.PERFORMER_PHONE\"\n\t\t\t\t\t\t\t\t\t\t></performer>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.PERFORMER_CAR\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<car :car=\"fields.PERFORMER_CAR\"></car>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event crm-entity-stream-content-event--delivery\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_SERVICE}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span v-if=\"statusName\" :class=\"statusClass\">\n\t\t\t\t\t\t\t{{statusName}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{this.createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-icon crm-entity-stream-content-delivery-icon--car\"></div>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t\t\t\t\t\t<logo v-if=\"fields.DELIVERY_SYSTEM_LOGO\" :logo=\"fields.DELIVERY_SYSTEM_LOGO\"></logo>\n\t\t\t\t\t\t\t\t\t<info\n\t\t\t\t\t\t\t\t\t\tv-if=\"fields.DELIVERY_SYSTEM_NAME || fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t\t:name=\"fields.DELIVERY_SYSTEM_NAME\"\n\t\t\t\t\t\t\t\t\t\t:method=\"fields.DELIVERY_METHOD\"\n\t\t\t\t\t\t\t\t\t></info>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.ADDRESS_FROM && fields.ADDRESS_TO\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<route\n\t\t\t\t\t\t\t\t\t\t\t:from=\"fields.ADDRESS_FROM\"\n\t\t\t\t\t\t\t\t\t\t\t:to=\"fields.ADDRESS_TO\"\n\t\t\t\t\t\t\t\t\t\t></route>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.DELIVERY_PRICE\"></span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-if=\"isExpectedPriceReceived\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"fields.EXPECTED_PRICE_DELIVERY\"></span></span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"this.fields.PERFORMER_NAME\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<performer\n\t\t\t\t\t\t\t\t\t\t\t:name=\"fields.PERFORMER_NAME\"\n\t\t\t\t\t\t\t\t\t\t\t:phone=\"fields.PERFORMER_PHONE\"\n\t\t\t\t\t\t\t\t\t\t\t:phoneExt=\"fields.PERFORMER_PHONE_EXT\"\n\t\t\t\t\t\t\t\t\t\t></performer>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"fields.PERFORMER_CAR\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<car :car=\"fields.PERFORMER_CAR\"></car>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	var UseAuthor = {

@@ -960,8 +960,11 @@ class Order extends Sale\Order
 			Sale\Registry::REGISTRY_TYPE_ORDER => array(
 				Sale\Registry::ENTITY_ORDER => '\Bitrix\Crm\Order\Order',
 				Sale\Registry::ENTITY_PROPERTY => '\Bitrix\Crm\Order\Property',
+				Sale\Registry::ENTITY_SHIPMENT_PROPERTY => '\Bitrix\Crm\Order\ShipmentProperty',
 				Sale\Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Crm\Order\PropertyValue',
 				Sale\Registry::ENTITY_PROPERTY_VALUE_COLLECTION => '\Bitrix\Crm\Order\PropertyValueCollection',
+				Sale\Registry::ENTITY_SHIPMENT_PROPERTY_VALUE_COLLECTION => '\Bitrix\Crm\Order\ShipmentPropertyValueCollection',
+				Sale\Registry::ENTITY_SHIPMENT_PROPERTY_VALUE => '\Bitrix\Crm\Order\ShipmentPropertyValue',
 				Sale\Registry::ENTITY_TAX => '\Bitrix\Crm\Order\Tax',
 				Sale\Registry::ENTITY_DISCOUNT => '\Bitrix\Crm\Order\Discount',
 				Sale\Registry::ENTITY_DISCOUNT_COUPON => '\Bitrix\Crm\Order\DiscountCoupon',

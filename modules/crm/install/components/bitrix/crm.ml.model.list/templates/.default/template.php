@@ -28,8 +28,7 @@ $APPLICATION->SetTitle(Loc::getMessage("CRM_ML_MODEL_LIST_SCORING_TITLE"));
 
 if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24"))
 {
-	$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", []);
-	CBitrix24::initLicenseInfoPopupJS();
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
 
 ?>

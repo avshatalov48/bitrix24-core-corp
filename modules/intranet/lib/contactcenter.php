@@ -802,6 +802,8 @@ class ContactCenter
 			return [];
 		}
 
+		$connectorCode = htmlspecialcharsbx(\CUtil::JSescape($connectorCode));
+
 		$openLineSliderPath = Common::getPublicFolder() . "connector/?ID={$connectorCode}&LINE=#LINE#&action-line=create";
 		$infoConnectors = \Bitrix\ImConnector\InfoConnectors::getInfoConnectorsList();
 
@@ -872,7 +874,7 @@ class ContactCenter
 					"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
 					"ID" => 0,
 					'DELIMITER_BEFORE' => true,
-					"ONCLICK" => "BX.ImConnectorLinesConfigEdit.createLineAction('{$openLineSliderPath}', true);",
+					"ONCLICK" => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}'});",
 				];
 			}
 		}

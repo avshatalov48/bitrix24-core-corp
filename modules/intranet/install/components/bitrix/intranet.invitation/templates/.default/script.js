@@ -117,7 +117,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var requestData = {
 	        "ITEMS": items
 	      };
-	      this.sendAction("invite", requestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "invite",
+	        "INVITATION_COUNT": items.length
+	      };
+	      this.sendAction("invite", requestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "submitInviteWithGroupDp",
@@ -147,7 +151,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        "ITEMS": items
 	      };
 	      this.getGroupAndDepartmentData(requestData);
-	      this.sendAction("inviteWithGroupDp", requestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "withGroupOrDepartment",
+	        "INVITATION_COUNT": items.length
+	      };
+	      this.sendAction("inviteWithGroupDp", requestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "submitSelf",
@@ -189,7 +197,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        "ITEMS": items
 	      };
 	      this.getGroupAndDepartmentData(requestData);
-	      this.sendAction("extranet", requestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "extranet",
+	        "INVITATION_COUNT": items.length
+	      };
+	      this.sendAction("extranet", requestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "submitIntegrator",
@@ -198,7 +210,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var obRequestData = {
 	        "integrator_email": integratorForm["integrator_email"].value
 	      };
-	      this.sendAction("inviteIntegrator", obRequestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "integrator"
+	      };
+	      this.sendAction("inviteIntegrator", obRequestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "submitMassInvite",
@@ -207,7 +222,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var obRequestData = {
 	        "ITEMS": massInviteForm["mass_invite_emails"].value
 	      };
-	      this.sendAction("massInvite", obRequestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "mass"
+	      };
+	      this.sendAction("massInvite", obRequestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "submitAdd",
@@ -221,17 +239,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        "ADD_SEND_PASSWORD": addForm["ADD_SEND_PASSWORD"] && !!addForm["ADD_SEND_PASSWORD"].checked ? addForm["ADD_SEND_PASSWORD"].value : "N"
 	      };
 	      this.getGroupAndDepartmentData(requestData);
-	      this.sendAction("add", requestData);
+	      var analyticsLabel = {
+	        "INVITATION_TYPE": "add"
+	      };
+	      this.sendAction("add", requestData, analyticsLabel);
 	    }
 	  }, {
 	    key: "sendAction",
-	    value: function sendAction(action, requestData) {
+	    value: function sendAction(action, requestData, analyticsLabel) {
 	      this.disableSubmitButton(true);
 	      requestData["userOptions"] = this.parent.userOptions;
 	      BX.ajax.runComponentAction(this.parent.componentName, action, {
 	        signedParameters: this.parent.signedParameters,
 	        mode: "ajax",
-	        data: requestData
+	        data: requestData,
+	        analyticsLabel: analyticsLabel
 	      }).then(function (response) {
 	        this.disableSubmitButton(false);
 
@@ -263,11 +285,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 
 	      if (isDisable) {
-	        main_core.Dom.addClass(button, "ui-btn-wait");
-	        button.style.cursor = "auto";
+	        main_core.Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      } else {
-	        main_core.Dom.removeClass(button, "ui-btn-wait");
-	        button.style.cursor = "pointer";
+	        main_core.Dom.removeClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      }
 	    }
 	  }, {
@@ -300,24 +320,46 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var regenerateButton = this.selfBlock.querySelector("[data-role='selfRegenerateSecretButton']");
 
 	      if (main_core.Type.isDomNode(regenerateButton)) {
-	        main_core.Event.bind(regenerateButton, 'click', BX.delegate(function () {
+	        main_core.Event.bind(regenerateButton, 'click', function () {
+	          _this.parent.activateButton();
+
 	          _this.regenerateSecret(_this.parent.regenerateUrlBase);
-	        }, this));
+	        });
 	      }
 
 	      var copyRegisterUrlButton = this.selfBlock.querySelector("[data-role='copyRegisterUrlButton']");
 
 	      if (main_core.Type.isDomNode(copyRegisterUrlButton)) {
-	        main_core.Event.bind(copyRegisterUrlButton, 'click', BX.delegate(function () {
+	        main_core.Event.bind(copyRegisterUrlButton, 'click', function () {
 	          _this.copyRegisterUrl();
-	        }, this));
+	        });
 	      }
 
 	      var selfToggleSettingsButton = this.selfBlock.querySelector("[data-role='selfToggleSettingsButton']");
 
 	      if (main_core.Type.isDomNode(selfToggleSettingsButton)) {
 	        main_core.Event.bind(selfToggleSettingsButton, 'change', function () {
+	          _this.parent.activateButton();
+
 	          _this.toggleSettings(selfToggleSettingsButton);
+	        });
+	      }
+
+	      var allowRegisterConfirm = this.selfBlock.querySelector("[data-role='allowRegisterConfirm']");
+
+	      if (main_core.Type.isDomNode(allowRegisterConfirm)) {
+	        main_core.Event.bind(allowRegisterConfirm, 'change', function () {
+	          _this.parent.activateButton();
+
+	          _this.toggleWhiteList(allowRegisterConfirm);
+	        });
+	      }
+
+	      var selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
+
+	      if (main_core.Type.isDomNode(selfWhiteList)) {
+	        main_core.Event.bind(selfWhiteList, 'input', function () {
+	          _this.parent.activateButton();
 	        });
 	      }
 	    }
@@ -395,6 +437,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      if (main_core.Type.isDomNode(settingsBlock)) {
 	        main_core.Dom.style(settingsBlock, 'display', inputElement.checked ? 'block' : 'none');
+	      }
+	    }
+	  }, {
+	    key: "toggleWhiteList",
+	    value: function toggleWhiteList(inputElement) {
+	      var selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
+
+	      if (main_core.Type.isDomNode(selfWhiteList)) {
+	        main_core.Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
 	      }
 	    }
 	  }]);
@@ -721,9 +772,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function render() {
 	      this.tagSelector = new ui_entitySelector.TagSelector({
 	        dialogOptions: {
-	          entities: this.entities
-	        },
-	        context: 'INTRANET_INVITATION'
+	          entities: this.entities,
+	          context: 'INTRANET_INVITATION'
+	        }
 	      });
 
 	      if (main_core.Type.isDomNode(this.contentBlock)) {
@@ -906,6 +957,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return;
 	      }
 
+	      this.activateButton();
+
 	      if (action === "invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
@@ -928,8 +981,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	      } else if (action === "self") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
+	        this.disableButton();
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitSelf();
+	          if (_this2.isButtonActive()) {
+	            _this2.submit.submitSelf();
+	          }
 	        });
 	      } else if (action === "integrator") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
@@ -947,6 +1003,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          BX.fireEvent(_this2.menuItems[0], 'click');
 	        });
 	      }
+	    }
+	  }, {
+	    key: "disableButton",
+	    value: function disableButton() {
+	      main_core.Dom.addClass(this.button, "ui-btn-disabled");
+	    }
+	  }, {
+	    key: "activateButton",
+	    value: function activateButton() {
+	      main_core.Dom.removeClass(this.button, "ui-btn-disabled");
+	    }
+	  }, {
+	    key: "isButtonActive",
+	    value: function isButtonActive() {
+	      return !main_core.Dom.hasClass(this.button, "ui-btn-disabled");
 	    }
 	  }, {
 	    key: "showSuccessMessage",

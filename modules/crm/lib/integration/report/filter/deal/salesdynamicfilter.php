@@ -38,6 +38,8 @@ class SalesDynamicFilter extends BaseFilter
 			'ACTIVITY_COUNTER',
 			'TRACKING_SOURCE_ID',
 			'TRACKING_CHANNEL_CODE',
+			'PRODUCT_ROW_PRODUCT_ID',
+			'STAGE_SEMANTIC_ID',
 		];
 
 		foreach ($fields as $field)
@@ -92,6 +94,8 @@ class SalesDynamicFilter extends BaseFilter
 			),
 			'default' => true,
 		];
+
+		$presets['filter_current_month']['default'] = false;
 
 		return $presets;
 	}

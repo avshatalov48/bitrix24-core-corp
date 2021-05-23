@@ -415,40 +415,44 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 							<label for="vi_recording_notice"
 								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_NOTICE") ?></label>
 						</div>
-						<div class="voximplant-number-settings-choice">
-							<input id="vi_transcribe" type="checkbox" name="TRANSCRIBE" value="Y"
-								   class="voximplant-number-settings-checkbox"
-								   <? if ($arResult["ITEM"]["TRANSCRIBE"] == "Y") { ?>checked<? } ?>
-								   <? if (!\Bitrix\Voximplant\Transcript::isEnabled()) { ?>disabled<? } ?>>
-							<label for="vi_transcribe"
-								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE") ?></label>
-							<? if (!\Bitrix\Voximplant\Transcript::isEnabled() || \Bitrix\Voximplant\Transcript::isDemo()): ?>
-								<div class="tel-lock-holder-select"
-									 title="<?= Loc::getMessage("VI_CONFIG_LOCK_ALT") ?>">
-									<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_transcription')"
-										 class="tel-lock <?= (\Bitrix\Voximplant\Transcript::isDemo() ? 'tel-lock-demo' : '') ?>"></div>
-								</div>
-							<? endif; ?>
-						</div>
-						<div class="voximplant-number-settings-inner">
-							<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_TRANSCRIPTION_HINT", array("#URL#" => CVoxImplantMain::getPricesUrl())) ?></div>
-						</div>
-						<div class="voximplant-control-row">
-							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_LANGUAGE") ?></div>
-							<select name="TRANSCRIBE_LANG" class="voximplant-control-select" data-role="transcribe-language-select">
-								<? foreach ($arResult['TRANSCRIBE_LANGUAGES'] as $languageId => $languageName): ?>
-									<option value="<?= htmlspecialcharsbx($languageId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_LANG"] == $languageId ? "selected" : "") ?>><?= htmlspecialcharsbx($languageName) ?></option>
-								<? endforeach ?>
-							</select>
-						</div>
-						<div class="voximplant-control-row tel-set-height-animated" data-role="transcribe-provider-wrap" data-height="120px" style="max-height: <?= $arResult["ITEM"]["TRANSCRIBE_LANG"] == Language::RUSSIAN_RU ? "120px" : "0"?>">
-							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_PROVIDER") ?></div>
-							<select name="TRANSCRIBE_PROVIDER" class="voximplant-control-select">
-								<? foreach ($arResult['TRANSCRIBE_PROVIDERS'] as $providerId => $providerName): ?>
-									<option value="<?= htmlspecialcharsbx($providerId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_PROVIDER"] == $providerId ? "selected" : "") ?>><?= htmlspecialcharsbx($providerName) ?></option>
-								<? endforeach ?>
-							</select>
-						</div>
+
+						<? if ($arResult["SHOW_TRANSCRIPTION"]): ?>
+							<div class="voximplant-number-settings-choice">
+								<input id="vi_transcribe" type="checkbox" name="TRANSCRIBE" value="Y"
+									   class="voximplant-number-settings-checkbox"
+									   <? if ($arResult["ITEM"]["TRANSCRIBE"] == "Y") { ?>checked<? } ?>
+									   <? if (!\Bitrix\Voximplant\Transcript::isEnabled()) { ?>disabled<? } ?>>
+								<label for="vi_transcribe"
+									   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE") ?></label>
+								<? if (!\Bitrix\Voximplant\Transcript::isEnabled() || \Bitrix\Voximplant\Transcript::isDemo()): ?>
+									<div class="tel-lock-holder-select"
+										 title="<?= Loc::getMessage("VI_CONFIG_LOCK_ALT") ?>">
+										<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_transcription')"
+											 class="tel-lock <?= (\Bitrix\Voximplant\Transcript::isDemo() ? 'tel-lock-demo' : '') ?>"></div>
+									</div>
+								<? endif; ?>
+							</div>
+							<div class="voximplant-number-settings-inner">
+								<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_TRANSCRIPTION_HINT", array("#URL#" => CVoxImplantMain::getPricesUrl())) ?></div>
+							</div>
+							<div class="voximplant-control-row">
+								<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_LANGUAGE") ?></div>
+								<select name="TRANSCRIBE_LANG" class="voximplant-control-select" data-role="transcribe-language-select">
+									<? foreach ($arResult['TRANSCRIBE_LANGUAGES'] as $languageId => $languageName): ?>
+										<option value="<?= htmlspecialcharsbx($languageId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_LANG"] == $languageId ? "selected" : "") ?>><?= htmlspecialcharsbx($languageName) ?></option>
+									<? endforeach ?>
+								</select>
+							</div>
+							<div class="voximplant-control-row tel-set-height-animated" data-role="transcribe-provider-wrap" data-height="120px" style="max-height: <?= $arResult["ITEM"]["TRANSCRIBE_LANG"] == Language::RUSSIAN_RU ? "120px" : "0"?>">
+								<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_PROVIDER") ?></div>
+								<select name="TRANSCRIBE_PROVIDER" class="voximplant-control-select">
+									<? foreach ($arResult['TRANSCRIBE_PROVIDERS'] as $providerId => $providerName): ?>
+										<option value="<?= htmlspecialcharsbx($providerId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_PROVIDER"] == $providerId ? "selected" : "") ?>><?= htmlspecialcharsbx($providerName) ?></option>
+									<? endforeach ?>
+								</select>
+							</div>
+						<? endif ?>
+
 					</div>
 				</div>
 

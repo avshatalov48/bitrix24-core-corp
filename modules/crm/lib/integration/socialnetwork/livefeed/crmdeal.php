@@ -12,14 +12,21 @@ final class CrmDeal extends CrmEntity
 
 	public function getEventId()
 	{
-		return array(
+		return [
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Add,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Client,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Progress,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Responsible,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Progress,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Message
-		);
+		];
+	}
+
+	public function getMessageEventId()
+	{
+		return [
+			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Message
+		];
 	}
 
 	public function getCurrentEntityFields()
@@ -68,7 +75,6 @@ final class CrmDeal extends CrmEntity
 		$this->setSourceTitle($entityFields['TITLE']);
 	}
 
-	// $arResult["canGetPostContent"] = ($reflectionClass->getMethod('initSourceFields')->class == $postProviderClassName);
 	public function initSourceFields()
 	{
 		$entityId = $this->getEntityId();
@@ -120,10 +126,24 @@ final class CrmDeal extends CrmEntity
 			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
-				$this->setSourceTitle(truncateText(($logEntry['TITLE'] != '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
+				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
 			}
 		}
 
 		$this->setSourceFields($fields);
+	}
+
+	public function getSuffix()
+	{
+		$logEventId = $this->getLogEventId();
+		if (
+			!empty($logEventId)
+			&& in_array($logEventId, $this->getMessageEventId())
+		)
+		{
+			return 'MESSAGE';
+		}
+
+		return '';
 	}
 }

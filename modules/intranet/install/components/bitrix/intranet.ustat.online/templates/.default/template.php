@@ -75,7 +75,8 @@ $frame = $this->createFrame()->begin();
 			userInnerBlockNode: document.querySelector('.intranet-ustat-online-icon-inner'),
 			circleNode: document.querySelector('.ui-graph-circle'),
 			timemanNode: document.querySelector('.intranet-ustat-online-info'),
-			isTimemanAvailable: '<?=$arResult["IS_FEATURE_TIMEMAN_AVAILABLE"] ? "Y" : "N"?>'
+			isTimemanAvailable: '<?=$arResult["IS_FEATURE_TIMEMAN_AVAILABLE"] ? "Y" : "N"?>',
+			isFullAnimationMode: '<?=$arResult["IS_FULL_ANIMATION_MODE"] ? "Y" : "N"?>'
 		});
 	});
 </script>
@@ -86,12 +87,7 @@ $frame = $this->createFrame()->begin();
 	<div class="intranet-ustat-online-counter">
 		<div class="ui-graph-circle ui-graph-circle-waves-blue ui-graph-circle-bar-progress-green">
 			<div class="ui-graph-circle-wrapper ui-graph-circle-wrapper-animate ui-graph-circle-counter">
-				<svg class="ui-graph-circle-bar ui-graph-circle-bar-animate ui-graph-circle-bar-without-animate" viewport="0 0 34 34" width="68" height="68">
-					<circle r="24" cx="34" cy="34" class="ui-graph-circle-bar-bg"></circle><circle r="24" cx="34" cy="34" stroke-dasharray="150.72" stroke-dashoffset="0" class="ui-graph-circle-bar-progress"></circle>
-				</svg>
-				<div class="ui-graph-circle-waves-wrapper">
-					<div class="ui-graph-circle-waves" style="transform: translateY(-70%);"></div>
-				</div>
+				<canvas class="ui-graph-circle-canvas" height="200" width="200"></canvas>
 			</div>
 		</div>
 	</div>

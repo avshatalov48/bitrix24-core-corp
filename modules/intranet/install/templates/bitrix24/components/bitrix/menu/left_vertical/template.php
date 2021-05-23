@@ -263,7 +263,7 @@ $groupPopupExists = false;
 						<span class="menu-license-all-icon"></span>
 						<span class="menu-license-all-text"></span>
 					</span>
-					<?if ($arResult["IS_DEMO_LICENSE"]):?>
+					<?if ($arResult["IS_DEMO_LICENSE"] && !empty($arResult["DEMO_DAYS"])):?>
 						<span
 							class="menu-license-all menu-license-all-default"
 							onclick="

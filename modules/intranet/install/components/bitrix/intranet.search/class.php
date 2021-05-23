@@ -65,7 +65,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_table', false, SITE_ID);
 			if (!empty($val))
 			{
-				$val = unserialize($val);
+				$val = unserialize($val, ['allowed_classes' => false]);
 				if (
 					is_array($val)
 					&& !empty($val)
@@ -127,7 +127,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_excel', false, SITE_ID);
 			if (!empty($val))
 			{
-				$val = unserialize($val);
+				$val = unserialize($val, ['allowed_classes' => false]);
 				if (
 					is_array($val)
 					&& !empty($val)
@@ -192,7 +192,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_list', false, SITE_ID);
 			if (!empty($val))
 			{
-				$val = unserialize($val);
+				$val = unserialize($val, ['allowed_classes' => false]);
 				if (
 					is_array($val)
 					&& !empty($val)
@@ -270,11 +270,11 @@ class CIntranetSearchComponent extends CBitrixComponent
 
 		if (!array_key_exists("SHOW_FIELDS_TOOLTIP", $arParams))
 		{
-			$arParams["SHOW_FIELDS_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_fields", $arTooltipFieldsDefault));
+			$arParams["SHOW_FIELDS_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_fields", $arTooltipFieldsDefault), ["allowed_classes" => false]);
 		}
 		if (!array_key_exists("USER_PROPERTY_TOOLTIP", $this->arParams))
 		{
-			$arParams["USER_PROPERTY_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_properties", $arTooltipPropertiesDefault));
+			$arParams["USER_PROPERTY_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_properties", $arTooltipPropertiesDefault), ["allowed_classes" => false]);
 		}
 	}
 

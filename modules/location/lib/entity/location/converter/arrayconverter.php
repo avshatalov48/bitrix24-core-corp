@@ -3,12 +3,22 @@
 namespace Bitrix\Location\Entity\Location\Converter;
 
 use Bitrix\Location\Entity;
-use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Location;
 
-class ArrayConverter
+/**
+ * Class ArrayConverter
+ * @package Bitrix\Location\Entity\Location\Converter
+ * @internal
+ */
+final class ArrayConverter
 {
-	public static function convertToArray(Entity\Location $location)
+	/**
+	 * Convert Location to Array
+	 *
+	 * @param Location $location
+	 * @return array
+	 */
+	public static function convertToArray(Entity\Location $location): array
 	{
 		if($address = $location->getAddress())
 		{
@@ -30,7 +40,11 @@ class ArrayConverter
 		];
 	}
 
-	protected static function convertFieldsToArray(array $fieldsValues): array
+	/**
+	 * @param array $fieldsValues
+	 * @return array
+	 */
+	private static function convertFieldsToArray(array $fieldsValues): array
 	{
 		$result = [];
 
@@ -42,7 +56,13 @@ class ArrayConverter
 		return $result;
 	}
 
-	public static function convertParentsToArray(Entity\Location\Parents $parents)
+	/**
+	 * Convert Parents to array
+	 *
+	 * @param Location\Parents $parents
+	 * @return array
+	 */
+	public static function convertParentsToArray(Entity\Location\Parents $parents): array
 	{
 		$result = [];
 
@@ -54,21 +74,13 @@ class ArrayConverter
 		return $result;
 	}
 
-	public static function convertCollectionToArray(Entity\Location\Collection $collection)
-	{
-		$result = [];
-
-		foreach ($collection as $location)
-		{
-			$result[] = self::convertToArray($location);
-		}
-
-		return $result;
-	}
-
 	/**
+	 * Convert Array to Location
+	 *
 	 * @param array $data
 	 * @return Location
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function convertFromArray(array $data): Location
 	{

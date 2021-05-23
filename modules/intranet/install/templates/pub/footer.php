@@ -25,7 +25,16 @@ if (!in_array($logoLang, array('ru', 'ua', 'en')))
 			<div class="content-wrap">
 				<? if (isModuleInstalled('bitrix24')) :
 					\Bitrix\Main\UI\Extension::load("ui.buttons"); ?>
-					<? include_once $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/languages.php'; ?>
+					<?
+					$b24Languages = [];
+					include_once $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/languages.php';
+					if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
+					{
+						array_walk($b24Languages, function(&$lang) {
+							$lang["NAME"] = mb_convert_encoding($lang["NAME"], "HTML-ENTITIES", "UTF-8");
+						});
+					}
+					?>
 					<button class="ui-btn pub-btn-lang ui-btn-light-border ui-btn-sm ui-btn-themes ui-btn-dropdown ui-btn-no-caps" id="bx-lang-btn" onclick="pubLanguage.showSelector(this, <?=CUtil::PhpToJSObject($b24Languages)?>); "><?=$b24Languages[LANGUAGE_ID]["NAME"]?></button>
 				<? endif; ?>
 				<? if (!defined('SKIP_TEMPLATE_B24_SIGN') || !SKIP_TEMPLATE_B24_SIGN): ?>

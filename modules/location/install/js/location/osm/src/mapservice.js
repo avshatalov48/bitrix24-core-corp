@@ -38,6 +38,7 @@ export default class MapService extends MapBase
 	#markerFactoryMethod;
 	#tileLayerFactoryMethod;
 	#locationRepository;
+	#isResizeInvalidated = false;
 
 	constructor(props)
 	{
@@ -235,7 +236,8 @@ export default class MapService extends MapBase
 				this.#timerId = null;
 				this.#map.panTo([lat, lng]);
 				const point = new Point(lat, lng);
-				this.#geocodingService.reverse(point, this.#zoom)
+
+				this.#geocodingService.reverse(point, this.#getReverseZoom())
 					.then(
 						this.#obtainLocationDetails.bind(this)
 					)
@@ -248,6 +250,11 @@ export default class MapService extends MapBase
 			},
 			this.#changeDelay
 		);
+	}
+
+	#getReverseZoom()
+	{
+		return this.#zoom >= 15 ? 18 : this.#zoom;
 	}
 
 	#emitOnLocationChangedEvent(location: ?Location): void
@@ -289,6 +296,11 @@ export default class MapService extends MapBase
 				this.#onMapClick(e.latlng.lat, e.latlng.lng);
 			});
 
+			window.addEventListener('resize', (event) => {
+				this.#isResizeInvalidated = true;
+				this.#invalidateMapSize();
+			});
+
 			this.#marker = this.#markerFactoryMethod(
 				[this.#location.latitude, this.#location.longitude],
 				{
@@ -325,6 +337,22 @@ export default class MapService extends MapBase
 			attribution.addAttribution(this.#attribution);
 			this.#map.addControl(attribution);
 		});
+	}
+
+	#invalidateMapSize()
+	{
+		setTimeout(() => {
+			this.#map.invalidateSize();
+		}, 10);
+	}
+
+	onMapShow()
+	{
+		if(this.#isResizeInvalidated)
+		{
+			this.#isResizeInvalidated = false;
+			this.#invalidateMapSize();
+		}
 	}
 
 	destroy()

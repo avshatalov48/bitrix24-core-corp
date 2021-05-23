@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Intranet\Integration\UI\EntitySelector;
 
@@ -11,6 +11,7 @@ use Bitrix\Socialnetwork\Integration\UI\EntitySelector\UserProvider;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
+use Bitrix\UI\EntitySelector\SearchQuery;
 use Bitrix\UI\EntitySelector\Tab;
 
 class DepartmentProvider extends BaseProvider
@@ -18,6 +19,8 @@ class DepartmentProvider extends BaseProvider
 	public const MODE_USERS_AND_DEPARTMENTS = 'usersAndDepartments';
 	public const MODE_USERS_ONLY = 'usersOnly';
 	public const MODE_DEPARTMENTS_ONLY = 'departmentsOnly';
+
+	private $limit = 100;
 
 	public function __construct(array $options = [])
 	{
@@ -73,6 +76,11 @@ class DepartmentProvider extends BaseProvider
 		];
 	}
 
+	public function getLimit(): int
+	{
+		return $this->limit;
+	}
+
 	public function isAvailable(): bool
 	{
 		if (!$GLOBALS['USER']->isAuthorized())
@@ -100,119 +108,29 @@ class DepartmentProvider extends BaseProvider
 
 	public function fillDialog(Dialog $dialog): void
 	{
-		$parents = [];
-		$departments = self::getStructure();
-		foreach ($departments as $department)
+		$limit = $this->getLimit();
+
+		// Try to select all departments
+		$departments = self::getStructure(['limit' => $limit]);
+		$limitExceeded = $limit <= $departments->count();
+		if ($limitExceeded)
 		{
-			$isRootDepartment = $department->getDepthLevel() === 1;
-			$hideRootDepartment = $isRootDepartment && !$this->options['allowSelectRootDepartment'];
-
-			$availableInRecentTab = true;
-			if ($this->getSelectMode() === self::MODE_USERS_ONLY || $hideRootDepartment)
-			{
-				$availableInRecentTab = false;
-			}
-
-			$item = new Item(
-				[
-					'id' => $department->getId(),
-					'entityId' => 'department',
-					'title' => $department->getName(),
-					'tabs' => 'departments',
-					'searchable' => $availableInRecentTab,
-					'availableInRecentTab' => $availableInRecentTab,
-					'nodeOptions' => [
-						'dynamic' => $this->getSelectMode() !== self::MODE_DEPARTMENTS_ONLY,
-						'open' => $isRootDepartment
-					],
-				]
-			);
-
-			if ($this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY && !$hideRootDepartment)
-			{
-				$item->addChild(
-					new Item(
-						[
-							'id' => $department->getId(),
-							'title' => $department->getName(),
-							'entityId' => 'department',
-							'nodeOptions' => [
-								'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_SELECT_DEPARTMENT'),
-								//'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
-								'renderMode' => 'override'
-							],
-						]
-					)
-				);
-			}
-			elseif ($this->getSelectMode() === self::MODE_USERS_AND_DEPARTMENTS)
-			{
-				if (!$hideRootDepartment)
-				{
-					$item->addChild(
-						new Item(
-							[
-								'id' => $department->getId(),
-								'title' => $department->getName(),
-								'entityId' => 'department',
-								'nodeOptions' => [
-									'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ALL_EMPLOYEES_SUBDIVISIONS'),
-									'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
-									'renderMode' => 'override'
-								],
-							]
-						)
-					);
-				}
-
-				if ($this->options['allowFlatDepartments'])
-				{
-					$item->addChild(
-						new Item(
-							[
-								'id' => $department->getId().':F',
-								'entityId' => 'department',
-								'title' =>
-									$department->getName().' '.
-									Loc::getMessage("INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES")
-								,
-								'nodeOptions' => [
-									'title' => Loc::getMessage("INTRANET_ENTITY_SELECTOR_ONLY_DEPARTMENT_EMPLOYEES"),
-									'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
-									'renderMode' => 'override'
-								],
-							]
-						)
-					);
-
-					// It is not attached to the Department Tab
-					$dialog->addItem(
-						new Item(
-							[
-								'id' => $department->getId().':F',
-								'entityId' => 'department',
-								'title' =>
-									$department->getName().' '.
-									Loc::getMessage("INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES")
-								,
-							]
-						)
-					);
-				}
-			}
-
-			$parentItem = $parents[$department->getIblockSectionId()] ?? null;
-			if ($parentItem)
-			{
-				$parentItem->addChild($item);
-			}
-			else
-			{
-				$dialog->addItem($item);
-			}
-
-			$parents[$department->getId()] = $item;
+			// Select only the first level
+			$departments = self::getStructure(['depthLevel' => 1]);
 		}
+
+		if (!$limitExceeded || $this->getSelectMode() === self::MODE_USERS_ONLY)
+		{
+			// Turn off the user search
+			$entity = $dialog->getEntity('department');
+			if ($entity)
+			{
+				$entity->setDynamicSearch(false);
+			}
+		}
+
+		$forceDynamic = $this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY && !$limitExceeded ? false : null;
+		$this->fillDepartments($dialog, $departments, $forceDynamic);
 
 		$icon =
 			'data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%22'.
@@ -239,6 +157,7 @@ class DepartmentProvider extends BaseProvider
 		$dialog->addTab(new Tab([
 			'id' => 'departments',
 			'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_DEPARTMENTS_TAB_TITLE'),
+			'itemMaxDepth' => 7,
 			'icon' => [
 				'default' => $icon,
 				'selected' => str_replace('ABB1B8', 'fff', $icon),
@@ -246,6 +165,96 @@ class DepartmentProvider extends BaseProvider
 				//'selected' => '/bitrix/js/intranet/entity-selector/src/images/department-tab-icon-selected.svg'
 			]
 		]));
+	}
+
+	private function fillDepartments(Dialog $dialog, EO_Section_Collection $departments, ?bool $forceDynamic = null)
+	{
+		$parents = [];
+		foreach ($departments as $department)
+		{
+			$isRootDepartment =
+				$department->getDepthLevel() === 1 || $department->getId() === self::getRootDepartmentId()
+			;
+			$hideRootDepartment = $isRootDepartment && !$this->options['allowSelectRootDepartment'];
+
+			$availableInRecentTab = true;
+			if ($this->getSelectMode() === self::MODE_USERS_ONLY || $hideRootDepartment)
+			{
+				$availableInRecentTab = false;
+			}
+
+			$item = new Item([
+				'id' => $department->getId(),
+				'entityId' => 'department',
+				'title' => $department->getName(),
+				'tabs' => 'departments',
+				'searchable' => $availableInRecentTab,
+				'availableInRecentTab' => $availableInRecentTab,
+				'nodeOptions' => [
+					'dynamic' => is_bool($forceDynamic) ? $forceDynamic : true,
+					'open' => $isRootDepartment,
+				],
+			]);
+
+			if ($this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY && !$hideRootDepartment)
+			{
+				$item->addChild(new Item([
+					'id' => $department->getId(),
+					'title' => $department->getName(),
+					'entityId' => 'department',
+					'nodeOptions' => [
+						'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_SELECT_DEPARTMENT'),
+						//'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
+						'renderMode' => 'override',
+					],
+				]));
+			}
+			elseif ($this->getSelectMode() === self::MODE_USERS_AND_DEPARTMENTS)
+			{
+				if (!$hideRootDepartment)
+				{
+					$item->addChild(new Item([
+						'id' => $department->getId(),
+						'title' => $department->getName(),
+						'entityId' => 'department',
+						'nodeOptions' => [
+							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ALL_EMPLOYEES_SUBDIVISIONS'),
+							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
+							'renderMode' => 'override',
+						],
+					]));
+				}
+
+				if ($this->options['allowFlatDepartments'])
+				{
+					$item->addChild(new Item([
+						'id' => $department->getId() . ':F',
+						'entityId' => 'department',
+						'title' =>
+							$department->getName() . ' '
+							. Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES')
+						,
+						'nodeOptions' => [
+							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_DEPARTMENT_EMPLOYEES'),
+							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
+							'renderMode' => 'override',
+						],
+					]));
+				}
+			}
+
+			$parentItem = $parents[$department->getIblockSectionId()] ?? null;
+			if ($parentItem)
+			{
+				$parentItem->addChild($item);
+			}
+			else
+			{
+				$dialog->addItem($item);
+			}
+
+			$parents[$department->getId()] = $item;
+		}
 	}
 
 	public function getChildren(Item $parentItem, Dialog $dialog): void
@@ -263,13 +272,20 @@ class DepartmentProvider extends BaseProvider
 			[
 				'ID' => $departmentId,
 				'IBLOCK_ID' => $structureIBlockId,
-				'ACTIVE' => 'Y'
+				'ACTIVE' => 'Y',
 			],
 			false,
 			['UF_HEAD']
 		)->fetch();
 
 		if (!$department)
+		{
+			return;
+		}
+
+		$departments = $this->getStructure(['parentId' => $departmentId]);
+		$this->fillDepartments($dialog, $departments);
+		if ($this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY)
 		{
 			return;
 		}
@@ -298,7 +314,6 @@ class DepartmentProvider extends BaseProvider
 		usort(
 			$items,
 			function(Item $a, Item $b) use ($headId) {
-
 				if ($a->getId() === $headId)
 				{
 					return -1;
@@ -334,7 +349,7 @@ class DepartmentProvider extends BaseProvider
 			{
 				if ($item->getId() === $headId)
 				{
-					$item->getNodeOptions()->set('caption', Loc::getMessage('INTRANET_ENTITY_SELECTOR_MANAGER'));;
+					$item->getNodeOptions()->set('caption', Loc::getMessage('INTRANET_ENTITY_SELECTOR_MANAGER'));
 					break;
 				}
 			}
@@ -343,7 +358,54 @@ class DepartmentProvider extends BaseProvider
 		$dialog->addItems($items);
 	}
 
-	public function getStructure(): EO_Section_Collection
+	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
+	{
+		if ($this->getSelectMode() === self::MODE_USERS_ONLY)
+		{
+			return;
+		}
+
+		$limit = $this->getLimit();
+
+		// Try to select all departments
+		$departments = $this->getStructure([
+			'searchQuery'=> $searchQuery->getQuery(),
+			'limit' => $limit,
+		]);
+
+		$limitExceeded = $limit <= $departments->count();
+		if ($limitExceeded)
+		{
+			$searchQuery->setCacheable(false);
+		}
+
+		foreach ($departments as $department)
+		{
+			$isRootDepartment = $department->getDepthLevel() === 1;
+			$hideRootDepartment = $isRootDepartment && !$this->options['allowSelectRootDepartment'];
+			if ($hideRootDepartment)
+			{
+				continue;
+			}
+
+			$dialog->addItem(new Item([
+				'id' => $department->getId(),
+				'entityId' => 'department',
+				'title' => $department->getName(),
+			]));
+
+			if ($this->getSelectMode() === self::MODE_USERS_AND_DEPARTMENTS && $this->options['allowFlatDepartments'])
+			{
+				$dialog->addItem(new Item([
+					'id' => $department->getId().':F',
+					'entityId' => 'department',
+					'title' => $department->getName() . ' ' . Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES'),
+				]));
+			}
+		}
+	}
+
+	public function getStructure(array $options = []): EO_Section_Collection
 	{
 		$structureIBlockId = self::getStructureIBlockId();
 		if ($structureIBlockId <= 0)
@@ -356,42 +418,78 @@ class DepartmentProvider extends BaseProvider
 			'=ACTIVE' => 'Y',
 		];
 
+		if (!empty($options['searchQuery']) && is_string($options['searchQuery']))
+		{
+			$filter['?NAME'] = $options['searchQuery'];
+		}
+
+		if (!empty($options['parentId']) && is_int($options['parentId']))
+		{
+			$filter['=IBLOCK_SECTION_ID'] = $options['parentId'];
+		}
+
+		$limit = isset($options['limit']) && is_int($options['limit']) ? $options['limit'] : 100;
+
 		if ($this->getOptions()['hideChatBotDepartment'])
 		{
 			$filter['!=XML_ID'] = 'im_bot';
 		}
 
-		$rootDepartmentId = intval(Option::get('main', 'wizard_departament', false, SITE_ID));
+		$rootDepartment = null;
+		$rootDepartmentId = self::getRootDepartmentId();
 		if ($rootDepartmentId > 0)
 		{
-			$rootDepartment = SectionTable::getList(
-				[
-					'select' => ['ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
-					'filter' => [
-						'=ID' => $rootDepartmentId,
-						'=IBLOCK_ID' => $structureIBlockId,
-						'=ACTIVE' => 'Y'
-					]
-				]
-			)->fetchObject();
+			$rootDepartment = SectionTable::getList([
+				'select' => ['ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'],
+				'filter' => [
+					'=ID' => $rootDepartmentId,
+					'=IBLOCK_ID' => $structureIBlockId,
+					'=ACTIVE' => 'Y',
+				],
+			])->fetchObject();
 
 			if ($rootDepartment)
 			{
-				$filter[">=LEFT_MARGIN"] = $rootDepartment->getLeftMargin();
-				$filter["<=RIGHT_MARGIN"] = $rootDepartment->getRightMargin();
+				$filter['>=LEFT_MARGIN'] = $rootDepartment->getLeftMargin();
+				$filter['<=RIGHT_MARGIN'] = $rootDepartment->getRightMargin();
+			}
+		}
+
+		if (!empty($options['depthLevel']) && is_int($options['depthLevel']))
+		{
+			if ($rootDepartment)
+			{
+				$filter['<=DEPTH_LEVEL'] = $options['depthLevel'] + $rootDepartment->getDepthLevel();
+			}
+			else
+			{
+				$filter['<=DEPTH_LEVEL'] = $options['depthLevel'];
 			}
 		}
 
 		return SectionTable::getList([
-			'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
-			'filter' => $filter,
-			'order' => ["LEFT_MARGIN" => "asc"]
+				'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
+				'filter' => $filter,
+				'order' => ['LEFT_MARGIN' => 'asc'],
+				'limit' => $limit,
 		])->fetchCollection();
 	}
 
-	public static function getStructureIBlockId()
+	public static function getStructureIBlockId(): int
 	{
 		return (int)Option::get('intranet', 'iblock_structure', 0);
+	}
+
+	public static function getRootDepartmentId(): int
+	{
+		static $rootDepartmentId = null;
+
+		if ($rootDepartmentId === null)
+		{
+			$rootDepartmentId = (int)Option::get('main', 'wizard_departament', false, SITE_ID);
+		}
+
+		return $rootDepartmentId;
 	}
 
 	public function getDepartments(array $ids, array $options = []): array
@@ -404,7 +502,7 @@ class DepartmentProvider extends BaseProvider
 
 		$query = SectionTable::query();
 		$query->setSelect(['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN']);
-		$query->setOrder(["LEFT_MARGIN" => "asc"]);
+		$query->setOrder(['LEFT_MARGIN' => 'asc']);
 		$query->where('IBLOCK_ID', $structureIBlockId);
 
 		// ids = [1, '1:F', '10:F', '5:F', 5]
@@ -430,9 +528,7 @@ class DepartmentProvider extends BaseProvider
 					continue;
 				}
 
-
 				$isFlatDepartment = is_string($id) && $id[-1] === 'F';
-
 				$availableInRecentTab = false;
 				if ($isFlatDepartment)
 				{
@@ -450,16 +546,19 @@ class DepartmentProvider extends BaseProvider
 					}
 				}
 
-				$titlePostfix = $isFlatDepartment ? ' '.Loc::getMessage("INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES") : '';
-				$items[] = new Item(
-					[
-						'id' => $id,
-						'entityId' => 'department',
-						'title' => $department->getName().$titlePostfix,
-						'availableInRecentTab' => $availableInRecentTab,
-						'searchable' => $availableInRecentTab
-					]
-				);
+				$titlePostfix =
+					$isFlatDepartment
+						? ' ' . Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES')
+						: ''
+				;
+
+				$items[] = new Item([
+					'id' => $id,
+					'entityId' => 'department',
+					'title' => $department->getName() . $titlePostfix,
+					'availableInRecentTab' => $availableInRecentTab,
+					'searchable' => $availableInRecentTab,
+				]);
 			}
 		}
 

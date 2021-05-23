@@ -426,18 +426,35 @@ BX.Voximplant.Start = {
 
 	onConfigureNumbersButtonClick:function()
 	{
+		if (this.menuConfigurations)
+		{
+			this.menuConfigurations.close();
+			return;
+		}
 		var tile = BX.Voximplant.Start.settingsGrid.getItem('numberSettings').getContainer();
 		BX.ajax.runComponentAction("bitrix:voximplant.start", "getConfigurations").then(function(response)
 		{
 			var configurations = response.data;
 			var menuItems = this.buildConfigurationsMenu(configurations);
 
-			var menu = new BX.PopupMenuWindow(
+			this.menuConfigurations = new BX.PopupMenuWindow(
 				'telephony-show-configurations',
 				tile,
-				menuItems
+				menuItems,
+				{
+					events: {
+						onClose: function()
+						{
+							this.menuConfigurations.destroy();
+						}.bind(this),
+						onDestroy: function()
+						{
+							this.menuConfigurations = null;
+						}.bind(this)
+					}
+				}
 			);
-			menu.show();
+			this.menuConfigurations.show();
 		}.bind(this))
 	},
 
@@ -451,8 +468,13 @@ BX.Voximplant.Start = {
 		}
 		else
 		{
+			if (this.menuConfigure)
+			{
+				this.menuConfigure.close();
+				return;
+			}
 			var tile = BX.Voximplant.Start.settingsGrid.getItem('telephonySettings').getContainer();
-			var menu = new BX.PopupMenuWindow(
+			this.menuConfigure = new BX.PopupMenuWindow(
 				'telephony-configure',
 				tile,
 				[
@@ -476,9 +498,21 @@ BX.Voximplant.Start = {
 						text: BX.message("VOX_START_CONFIGURE_BLACK_LIST"),
 						onclick: this.onConfigureBlackListClick.bind(this)
 					}
-				]
+				],
+				{
+					events: {
+						onClose: function()
+						{
+							this.menuConfigure.destroy();
+						}.bind(this),
+						onDestroy: function()
+						{
+							this.menuConfigure = null;
+						}.bind(this)
+					}
+				}
 			);
-			menu.show();
+			this.menuConfigure.show();
 		}
 	},
 
@@ -499,9 +533,12 @@ BX.Voximplant.Start = {
 
 	onSipPhonesButtonClick: function(e)
 	{
-		BX.SidePanel.Instance.open("/telephony/phones.php", {
+		BX.Helper.show("redirect=detail&code=12932720");
+
+		//TODO: remove /telephony/phones.php from intranet
+		/*BX.SidePanel.Instance.open("/telephony/phones.php", {
 			allowChangeHistory: false,
-		});
+		});*/
 	},
 
 	onConfigureUsersClick: function(e)

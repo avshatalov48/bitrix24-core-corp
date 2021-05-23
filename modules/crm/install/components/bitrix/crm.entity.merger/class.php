@@ -66,17 +66,40 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_DEDUPE_LIST'] = isset($this->arParams['~PATH_TO_DEDUPE_LIST'])
 			? $this->arParams['~PATH_TO_DEDUPE_LIST'] : '';
 
-		$this->arResult['DEDUPE_CONFIG'] = [];
-		$typeNames = $this->request->get('typeNames');
-		$typeNames = is_string($typeNames) ? explode(',', $typeNames) : [];
-		if(!empty($typeNames))
-		{
-			$this->arResult['DEDUPE_CONFIG']['typeNames'] = $typeNames;
+		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['~PATH_TO_ENTITY_LIST'])
+			? $this->arParams['~PATH_TO_ENTITY_LIST'] : '';
 
-			$scope = $this->request->get('scope');
-			$this->arResult['DEDUPE_CONFIG']['scope'] = is_string($scope) ? $scope : '';
+		$this->arResult['IS_AUTOMATIC'] = ($this->request->get('is_automatic') === 'yes');
+
+		$this->arResult['DEDUPE_CONFIG'] = [];
+		$autosearchSettings = null;
+		if ($this->arResult['IS_AUTOMATIC'])
+		{
+			$autosearchSettings = Crm\Integrity\AutoSearchUserSettings::getForUserByEntityType($this->entityTypeID, $this->userID);
+			if ($autosearchSettings && $autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING)
+			{
+				$this->arResult['DEDUPE_CONFIG']['typeNames'] = [];
+				$progressData = $autosearchSettings->getProgressData();
+				foreach ($progressData['TYPE_IDS'] as $typeId)
+				{
+					$this->arResult['DEDUPE_CONFIG']['typeNames'][] = Crm\Integrity\DuplicateIndexType::resolveName($typeId);
+				}
+				$this->arResult['DEDUPE_CONFIG']['scope'] = $progressData['CURRENT_SCOPE'];
+			}
 		}
-		//endregion
+		else
+		{
+			$typeNames = $this->request->get('typeNames');
+			$typeNames = is_string($typeNames) ? explode(',', $typeNames) : [];
+			if (!empty($typeNames))
+			{
+				$this->arResult['DEDUPE_CONFIG']['typeNames'] = $typeNames;
+
+				$scope = $this->request->get('scope');
+				$this->arResult['DEDUPE_CONFIG']['scope'] = is_string($scope) ? $scope : '';
+			}
+			//endregion
+		}
 
 		$this->arResult['DEDUPE_QUEUE_INFO'] = [ 'offset' => 0, 'length' => 0 ];
 		if(isset($this->arResult['DEDUPE_CONFIG']) && !empty($this->arResult['DEDUPE_CONFIG']['typeNames']))
@@ -94,7 +117,8 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 			if(!empty($typeIDs))
 			{
 				$enablePermissionCheck = !\CCrmPerms::IsAdmin($this->userID);
-				$list = new Crm\Integrity\DuplicateList(
+				$list = \Bitrix\Crm\Integrity\DuplicateListFactory::create(
+					$this->arResult['IS_AUTOMATIC'],
 					Crm\Integrity\DuplicateIndexType::joinType($typeIDs),
 					$this->entityTypeID,
 					$this->userID,
@@ -115,32 +139,29 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 
 				if($this->arResult['DEDUPE_QUEUE_INFO']['length'] > 0)
 				{
-					$list->setSortTypeID($this->entityTypeID === \CCrmOwnerType::Company
-						? Crm\Integrity\DuplicateIndexType::ORGANIZATION
-						: Crm\Integrity\DuplicateIndexType::PERSON
-					);
-					$list->setSortOrder(SORT_ASC);
+					$list->enableNaturalSort(true);
 
-					$items = $list->getRootItems(0, 1);
-					if(!empty($items))
+					$this->extractEntityIdsFormList($list, 0, $this->entityIDs, $this->dedupeCriterionData);
+
+					if ($this->arResult['IS_AUTOMATIC'] && $autosearchSettings)
 					{
-						$item = $items[0];
-						$rootEntityID = $item->getRootEntityID();
-						$criterion = $item->getCriterion();
-						$entityIDs = $criterion->getEntityIDs(
-							$this->entityTypeID,
-							$rootEntityID,
-							$this->userID,
-							$enablePermissionCheck,
-							['limit' => 50]
-						);
+						$progressData = $autosearchSettings->getProgressData();
+						$successCount = (int)$progressData['MERGE_DATA']['SUCCESS'];
+						$conflictCount = (int)$progressData['MERGE_DATA']['CONFLICT'];
+						$errorCount = (int)$progressData['MERGE_DATA']['ERROR'];
 
-						$this->entityIDs = array_merge([ $rootEntityID ], $entityIDs);
-						$this->dedupeCriterionData = [
-							'matches' => $criterion->getMatches(),
-							'typeId' => $criterion->getIndexTypeID()
-						];
+						$successCount += max(0, $conflictCount + $errorCount - $this->arResult['DEDUPE_QUEUE_INFO']['length']);
+
+						$this->arResult['PROCESSED_COUNT'] = $successCount;
 					}
+				}
+
+				if (!$this->arResult['DEDUPE_QUEUE_INFO']['length'] && $this->arResult['IS_AUTOMATIC'] &&
+					$autosearchSettings && $autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING)
+				{
+					$autosearchSettings
+						->setStatusId(Crm\Integrity\AutoSearchUserSettings::STATUS_NEW)
+						->save();
 				}
 			}
 		}
@@ -223,7 +244,7 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		return $this->arResult['ENTITY_INFOS'];
 	}
 
-	public function prepareDedupeData($typeNames, $scope, $offset)
+	public function prepareDedupeData($typeNames, $scope, $offset, bool $isAutomatic = false)
 	{
 		$this->arResult['DEDUPE_CONFIG'] = [];
 		if(!empty($typeNames))
@@ -242,7 +263,7 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 			}
 		}
 
-		$list = $this->getDedupeQueueList($typeIDs, $scope);
+		$list = $this->getDedupeQueueList($typeIDs, $scope, $isAutomatic);
 		$this->arResult['DEDUPE_QUEUE_INFO'] = [ 'offset' => $offset, 'length' => $list->getRootItemCount() ];
 		if($this->arResult['DEDUPE_QUEUE_INFO']['length'] > 0)
 		{
@@ -252,33 +273,26 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 			);
 			$list->setSortOrder(SORT_ASC);
 
-			$items = $list->getRootItems($offset, 1);
-			if(!empty($items))
-			{
-				$item = $items[0];
-				$rootEntityID = $item->getRootEntityID();
-				$criterion = $item->getCriterion();
-				$entityIDs = $criterion->getEntityIDs(
-					$this->entityTypeID,
-					$rootEntityID,
-					$this->userID,
-					!\CCrmPerms::IsAdmin($this->userID),
-					['limit' => 50]
-				);
-
-				$this->entityIDs = array_merge([ $rootEntityID ], $entityIDs);
-				$this->dedupeCriterionData = [
-					'matches' => $criterion->getMatches(),
-					'typeId' => $criterion->getIndexTypeID()
-				];
-			}
+			$this->extractEntityIdsFormList($list, $offset, $this->entityIDs, $this->dedupeCriterionData);
 
 			$this->arResult['ENTITY_IDS'] = $this->entityIDs;
 			$this->arResult['DEDUPE_CRITERION_DATA'] = $this->dedupeCriterionData;
 		}
+
+		if (!$this->arResult['DEDUPE_QUEUE_INFO']['length'] && $isAutomatic)
+		{
+			$autosearchSettings = Crm\Integrity\AutoSearchUserSettings::getForUserByEntityType($this->entityTypeID, $this->userID);
+
+			if($autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING)
+			{
+				$autosearchSettings
+					->setStatusId(Crm\Integrity\AutoSearchUserSettings::STATUS_NEW)
+					->save();
+			}
+		}
 	}
 
-	public function getDedupeQueueList(array $typeIDs, $scope)
+	public function getDedupeQueueList(array $typeIDs, $scope, bool $isAutomatic = false)
 	{
 		if(empty($typeIDs))
 		{
@@ -286,7 +300,8 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		}
 
 		$enablePermissionCheck = !\CCrmPerms::IsAdmin($this->userID);
-		$list = new Crm\Integrity\DuplicateList(
+		$list = \Bitrix\Crm\Integrity\DuplicateListFactory::create(
+			$isAutomatic,
 			Crm\Integrity\DuplicateIndexType::joinType($typeIDs),
 			$this->entityTypeID,
 			$this->userID,
@@ -301,5 +316,74 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		]);
 
 		return $list;
+	}
+
+	protected function extractEntityIdsFormList($list, $offset, &$entityIds, &$dedupeCriterionData)
+	{
+		$enablePermissionCheck = !\CCrmPerms::IsAdmin($this->userID);
+
+		$iterations = 0;
+		while ($iterations++ < 50)
+		{
+			$items = $list->getRootItems($offset, 1);
+			if (empty($items))
+			{
+				break;
+			}
+			$item = $items[0];
+			$rootEntityID = $item->getRootEntityID();
+			$criterion = $item->getCriterion();
+			$criterionEntityIDs = $criterion->getEntityIDs(
+				$this->entityTypeID,
+				$rootEntityID,
+				$this->userID,
+				$enablePermissionCheck,
+				['limit' => 50]
+			);
+			if (count($criterionEntityIDs))
+			{
+				$rootEntityInfo = [
+					$rootEntityID => []
+				];
+				\CCrmOwnerType::PrepareEntityInfoBatch(
+					$this->entityTypeID,
+					$rootEntityInfo,
+					$enablePermissionCheck,
+					[
+						'ENABLE_EDIT_URL' => false,
+						'ENABLE_RESPONSIBLE' => false,
+						'ENABLE_RESPONSIBLE_PHOTO' => false
+					]
+				);
+				$rootEntityExists = !empty($rootEntityInfo[$rootEntityID]);
+				if ($rootEntityExists || count($criterionEntityIDs) > 1)
+				{
+					$entityIds = $criterionEntityIDs;
+					if ($rootEntityExists)
+					{
+						$entityIds = array_merge([$rootEntityID], $entityIds);
+					}
+					$dedupeCriterionData = [
+						'matches' => $criterion->getMatches(),
+						'typeId' => $criterion->getIndexTypeID(),
+						'queueId' => $item->getQueueId()
+					];
+					break;
+				}
+			}
+
+			//Skip Junk item
+			Crm\Integrity\DuplicateManager::deleteDuplicateIndexItems(
+				[
+					'USER_ID' => $this->userID,
+					'ENTITY_TYPE_ID' => $this->entityTypeID,
+					'TYPE_ID' => $criterion->getIndexTypeID(),
+					'MATCH_HASH' => $criterion->getMatchHash()
+				],
+				$list->isAutomatic()
+			);
+			// Recalculate actual queue length
+			$this->arResult['DEDUPE_QUEUE_INFO']['length'] = $list->getRootItemCount();
+		}
 	}
 }

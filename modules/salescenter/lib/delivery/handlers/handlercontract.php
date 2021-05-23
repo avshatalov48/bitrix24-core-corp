@@ -21,11 +21,6 @@ interface HandlerContract
 	public function getHandlerClass(): string;
 
 	/**
-	 * @return string|null
-	 */
-	public function getProfileClass(): ?string;
-
-	/**
 	 * @return string
 	 */
 	public function getCode(): string;
@@ -43,12 +38,12 @@ interface HandlerContract
 	/**
 	 * @return string|null
 	 */
-	public function getTypeDescription();
+	public function getImagePath();
 
 	/**
-	 * @return string|null
+	 * @return bool
 	 */
-	public function getImagePath();
+	public function doesImageContainName(): bool;
 
 	/**
 	 * @return string|null
@@ -85,16 +80,6 @@ interface HandlerContract
 	 * @return string
 	 */
 	public function getEditLink(int $serviceId): string;
-
-	/**
-	 * @return bool
-	 */
-	public function isRestHandler(): bool;
-
-	/**
-	 * @return string
-	 */
-	public function getRestHandlerCode(): ?string;
 
 	/**
 	 * @return WizardContract|null

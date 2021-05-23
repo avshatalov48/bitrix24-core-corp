@@ -735,34 +735,14 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=7872935', 'openlines_connect');
 	    }
 	  }, {
-	    key: "openHowToConfigPaySystem",
-	    value: function openHowToConfigPaySystem(event) {
+	    key: "openHowToConfigDefaultPaySystem",
+	    value: function openHowToConfigDefaultPaySystem(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=10460164', 'pay_system_connect');
 	    }
 	  }, {
-	    key: "openHowToConfigSkbPaySystem",
-	    value: function openHowToConfigSkbPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11538458', 'pay_system_connect');
-	    }
-	  }, {
-	    key: "openHowToConfigBePaidPaySystem",
-	    value: function openHowToConfigBePaidPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11538452', 'pay_system_connect');
-	    }
-	  }, {
-	    key: "openHowToConfigLiqPayPaySystem",
-	    value: function openHowToConfigLiqPayPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11814321', 'pay_system_connect');
-	    }
-	  }, {
-	    key: "openHowToConfigUaPayPaySystem",
-	    value: function openHowToConfigUaPayPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
-	    }
-	  }, {
-	    key: "openHowToConfigWoopkassaPaySystem",
-	    value: function openHowToConfigWoopkassaPaySystem(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=12183852', 'pay_system_connect');
+	    key: "openHowToConfigPaySystem",
+	    value: function openHowToConfigPaySystem(event, code) {
+	      Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_connect');
 	    }
 	  }, {
 	    key: "openHowToUseOfflineCashBox",
@@ -778,6 +758,16 @@ this.BX = this.BX || {};
 	    key: "openHowToConfigCheckboxCashBox",
 	    value: function openHowToConfigCheckboxCashBox(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=12306679', 'cashbox_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigBusinessRuCashBox",
+	    value: function openHowToConfigBusinessRuCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=12806492', 'cashbox_connect');
+	    }
+	  }, {
+	    key: "openHowToSetupCheckboxCashBoxAndKeys",
+	    value: function openHowToSetupCheckboxCashBoxAndKeys(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=12334663', 'cashbox_connect');
 	    }
 	  }, {
 	    key: "openHowToSell",
@@ -893,6 +883,11 @@ this.BX = this.BX || {};
 	      }
 
 	      var sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
+
+	      if (!sliderOptions.hasOwnProperty('width')) {
+	        sliderOptions.width = 1140;
+	      }
+
 	      return new Promise(function (resolve, reject) {
 	        Manager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());

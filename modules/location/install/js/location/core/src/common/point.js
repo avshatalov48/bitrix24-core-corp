@@ -24,8 +24,13 @@ export default class Point
 		return this.#longitude;
 	}
 
-	toArray()
+	toArray(): Array
 	{
 		return [this.latitude, this.longitude];
+	}
+
+	static fromJson(jsonData): Point
+	{
+		return new Point(jsonData.latitude, jsonData.longitude);
 	}
 }

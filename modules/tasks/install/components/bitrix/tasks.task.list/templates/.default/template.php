@@ -191,11 +191,14 @@ $APPLICATION->IncludeComponent(
 		"SHOW_TOTAL_COUNTER"        => true,
 		"SHOW_PAGESIZE"             => true,
 		"SHOW_ACTION_PANEL"         => true,
+		"SHOW_MORE_BUTTON"			=> true,
+		"ENABLE_NEXT_PAGE"			=> $arResult['ENABLE_NEXT_PAGE'],
+		"CURRENT_PAGE"				=> $arResult['CURRENT_PAGE'],
+		"NAV_PARAM_NAME" 			=> 'page',
 
 		"MESSAGES" => $arResult['MESSAGES'],
 
 		"ENABLE_COLLAPSIBLE_ROWS" => true,
-		"SHOW_MORE_BUTTON" => false,
 		'~NAV_PARAMS'       => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
 		"PAGE_SIZES"        => $arResult['PAGE_SIZES'],
 		"DEFAULT_PAGE_SIZE" => 50,
@@ -217,6 +220,9 @@ $APPLICATION->IncludeComponent(
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
 				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',
 
+				TASKS_LIST_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_PING_NOTIFICATION') ?>',
+				TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION') ?>',
+
 				TASKS_MARK: '<?=GetMessageJS('TASKS_JS_MARK')?>',
 				TASKS_MARK_NONE: '<?=GetMessageJS('TASKS_JS_MARK_NONE')?>',
 				TASKS_MARK_N: '<?=GetMessageJS('TASKS_JS_MARK_N')?>',
@@ -237,6 +243,7 @@ $APPLICATION->IncludeComponent(
 				'groupBySubTasks' => ($arResult['GROUP_BY_SUBTASK'] ? 'true' : 'false'),
 				'taskList' => $arResult['LIST'],
 				'arParams' => $arParams,
+				'calendarSettings' => $arResult['CALENDAR_SETTINGS']
 			])?>);
 
 			new BX.Tasks.Grid.Sorting({
@@ -247,5 +254,6 @@ $APPLICATION->IncludeComponent(
 					TASKS_ACCESS_DENIED: "<?=GetMessageJS("TASKS_ACCESS_DENIED")?>"
 				}
 			});
-		});
+		}
+	);
 </script>

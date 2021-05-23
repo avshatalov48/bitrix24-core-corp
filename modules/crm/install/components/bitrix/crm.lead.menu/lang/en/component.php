@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CONFIG_CHECKER"] = "Check configuration";
 $MESS["CONFIG_CHECKER_TITLE"] = "Check configuration after importing the solution preset";
 $MESS["CRM_LEAD_SL_SUBSCRIBE"] = "Follow";
@@ -39,6 +39,7 @@ $MESS["LEAD_CREATE_ON_BASIS_HINT_TITLE"] = "Generate for this lead";
 $MESS["LEAD_CREATE_ON_BASIS_TITLE"] = "Create a contact, a company and a deal using this lead";
 $MESS["LEAD_CRM_TYPE"] = "CRM mode";
 $MESS["LEAD_DEDUPE"] = "Duplicate control";
+$MESS["LEAD_DEDUPE_AUTOSEARCH"] = "Find and merge duplicates";
 $MESS["LEAD_DEDUPE_TITLE"] = "Duplicate control";
 $MESS["LEAD_DELETE"] = "Delete";
 $MESS["LEAD_DELETE_DLG_BTNTITLE"] = "Delete";
@@ -72,4 +73,4 @@ $MESS["LEAD_SHOW"] = "View";
 $MESS["LEAD_SHOW_TITLE"] = "View Lead";
 $MESS["LEAD_VERTICAL_CRM"] = "Solution presets";
 $MESS["LEAD_VERTICAL_CRM_TITLE"] = "Solution presets";
-?>
+$MESS["LEAD_DEDUPE_HELP"] = "How do I handle duplicate entities?";

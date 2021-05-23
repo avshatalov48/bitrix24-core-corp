@@ -20,15 +20,15 @@ final class Format
 	/** @var string  */
 	private $code = '';
 	/** @var string  */
-	private $languageId = '';
-	/** @var string  */
+	private $languageId;
+	/** @var string Address view template */
 	private $template = '';
-	/** @var string  */
+	/** @var string Address components delimiter */
 	private $delimiter = '';
-	/** @var int  */
+	/** @var int Address field which will store unrecognized address information */
 	private $fieldForUnRecognized = FieldType::UNKNOWN;
 	/** @var FieldCollection */
-	private $fieldCollection = null;
+	private $fieldCollection;
 
 	/**
 	 * Format constructor.
@@ -115,6 +115,7 @@ final class Format
 	/**
 	 * @param FieldCollection $fieldCollection
 	 * @return $this
+	 * @internal
 	 */
 	public function setFieldCollection(FieldCollection $fieldCollection): self
 	{
@@ -124,6 +125,7 @@ final class Format
 
 	/**
 	 * @return FieldCollection
+	 * @internal
 	 */
 	public function getFieldCollection(): FieldCollection
 	{
@@ -131,6 +133,8 @@ final class Format
 	}
 
 	/**
+	 * Convert Format to JSON
+	 *
 	 * @return string
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
@@ -175,13 +179,20 @@ final class Format
 		return $this;
 	}
 
+	/**
+	 * @param int $fieldType
+	 * @return $this
+	 */
 	public function setFieldForUnRecognized(int $fieldType): self
 	{
 		$this->fieldForUnRecognized = $fieldType;
 		return $this;
 	}
 
-	public function getFieldForUnRecognized()
+	/**
+	 * @return int
+	 */
+	public function getFieldForUnRecognized(): int
 	{
 		return $this->fieldForUnRecognized;
 	}

@@ -26,6 +26,12 @@ class Report extends Main\Engine\JsonController
 		];
 	}
 
+	/**
+	 * Build action.
+	 *
+	 * @param Tracking\Ad\ReportBuilder $builder Builder.
+	 * @return array
+	 */
 	public function buildAction(Tracking\Ad\ReportBuilder $builder)
 	{
 		$builder->run();
@@ -37,6 +43,13 @@ class Report extends Main\Engine\JsonController
 		];
 	}
 
+	/**
+	 * List action.
+	 *
+	 * @param Tracking\Ad\ReportBuilder $builder Builder.
+	 * @param array $options
+	 * @return array
+	 */
 	public function listAction(Tracking\Ad\ReportBuilder $builder, array $options = [])
 	{
 		return [
@@ -44,6 +57,19 @@ class Report extends Main\Engine\JsonController
 		];
 	}
 
+	/**
+	 * Get grid action.
+	 *
+	 * @param int $sourceId Source ID.
+	 * @param Main\Type\Date $from Date from.
+	 * @param Main\Type\Date $to Date from.
+	 * @param int $parentId Parent ID.
+	 * @param int $level Level.
+	 * @param string $gridId Grid ID.
+	 * @return Main\Engine\Response\Component|Main\HttpResponse
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentTypeException
+	 */
 	public function getGridAction($sourceId, $from, $to, $parentId, $level, $gridId)
 	{
 		$isGridRequest = !$gridId;
@@ -71,6 +97,21 @@ class Report extends Main\Engine\JsonController
 		return $component;
 	}
 
+	public function changeStatusAction($id, $status)
+	{
+		$result = Tracking\Source\Level\Status::change($id, $status);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+	}
+
+	/**
+	 * Get primary auto-wired parameter.
+	 *
+	 * @return Main\Engine\Autowire\ExactParameter|Main\Engine\AutoWire\Parameter|null
+	 * @throws Main\Engine\AutoWire\BinderArgumentException
+	 */
 	public function getPrimaryAutoWiredParameter()
 	{
 		return new Main\Engine\Autowire\ExactParameter(

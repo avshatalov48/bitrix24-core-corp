@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 			'ENTITY_IDS' => $arResult['VARIABLES']['company_ids'],
 			'PATH_TO_DEDUPE_LIST' => '/crm/company/dedupelist/',
+			'PATH_TO_ENTITY_LIST' => '/crm/company/',
 			'PATH_TO_EDITOR' => '/bitrix/components/bitrix/crm.company.details/ajax.php',
 			'HEADER_TEMPLATE' => GetMessage('CRM_COMPANY_MERGE_HEADER_TEMPLATE'),
 			'RESULT_LEGEND' => GetMessage('CRM_COMPANY_MERGE_RESULT_LEGEND'),

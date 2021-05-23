@@ -49,6 +49,8 @@ const StageBlocksList = {
 				tiles:			this.getTileCollection(
 									this.$root.$app.options.paySystemList.items),
 				installed:			this.$root.$app.options.paySystemList.isSet,
+				titleItems: this.getTitleItems(this.$root.$app.options.paySystemList.items),
+				initialCollapseState: this.$root.$app.options.isPaySystemCollapsed ? this.$root.$app.options.isPaySystemCollapsed === 'Y' : this.$root.$app.options.paySystemList.isSet,
 			},
 			cashbox:{},
 			delivery:{
@@ -58,6 +60,7 @@ const StageBlocksList = {
 				tiles:			this.getTileCollection(
 									this.$root.$app.options.deliveryList.items),
 				installed:			this.$root.$app.options.deliveryList.isInstalled,
+				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled,
 			}
 		};
 
@@ -70,6 +73,8 @@ const StageBlocksList = {
 				tiles:			this.getTileCollection(
 									this.$root.$app.options.cashboxList.items),
 				installed:			this.$root.$app.options.cashboxList.isSet,
+				titleItems: this.getTitleItems(this.$root.$app.options.cashboxList.items),
+				initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet,
 			};
 		}
 
@@ -77,7 +82,8 @@ const StageBlocksList = {
 		{
 			stages.automation = {
 				status:				Status.complete,
-				items:				this.$root.$app.options.dealStageList
+				items:				this.$root.$app.options.dealStageList,
+				initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
 			};
 		}
 
@@ -151,6 +157,19 @@ const StageBlocksList = {
 				return tiles;
 			},
 
+			getTitleItems(items)
+			{
+				let result = [];
+				items.forEach((item) => {
+					if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
+					{
+						result.push(item);
+					}
+				});
+
+				return result;
+			},
+
 			stageRefresh(e, type)
 			{
 				BX.ajax.runComponentAction(
@@ -187,6 +206,7 @@ const StageBlocksList = {
 														:	Status.disabled;
 					this.stages.cashbox.tiles = 		this.getTileCollection(data.items);
 					this.stages.cashbox.installed = 	data.isSet;
+					this.stages.cashbox.titleItems = this.getTitleItems(data.items);
 				}
 				else if(type === 'DELIVERY')
 				{
@@ -206,7 +226,12 @@ const StageBlocksList = {
 			changeProvider(value)
 			{
 				this.$root.$app.sendingMethodDesc.provider = value;
-			}
+			},
+
+			saveCollapsedOption(type, value)
+			{
+				BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
+			},
 		},
 	created()
 	{
@@ -238,20 +263,28 @@ const StageBlocksList = {
 				:counter=	"counter++"
 				:status=  	"stages.paysystem.status"
 				:tiles=  	"stages.paysystem.tiles"
-				:installed=	"stages.paysystem.installed"	
+				:installed=	"stages.paysystem.installed"
+				:titleItems="stages.paysystem.titleItems"
+				:initialCollapseState = "stages.paysystem.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 				
 			<cashbox-block 	v-if="hasStageCashBox"	v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'CASHBOX')"
 				:counter=	"counter++"
 				:status=	"stages.cashbox.status"
 				:tiles=		"stages.cashbox.tiles"
-				:installed=	"stages.cashbox.installed"				
+				:installed=	"stages.cashbox.installed"
+				:titleItems="stages.cashbox.titleItems"
+				:initialCollapseState = "stages.cashbox.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
 			/>	
 			
 			<automation-block v-if="hasStageAutomation"
 				:counter=	"counter++"
 				:status=	"stages.automation.status"
 				:items=		"stages.automation.items"
+				:initialCollapseState = "stages.automation.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			
 			<delivery-block							v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
@@ -259,6 +292,8 @@ const StageBlocksList = {
 				:status=  	"stages.delivery.status"
 				:tiles=  	"stages.delivery.tiles"
 				:installed=	"stages.delivery.installed"
+				:initialCollapseState = "stages.delivery.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			
 			<send-block								v-on:stage-block-send-on-send="onSend"

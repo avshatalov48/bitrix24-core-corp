@@ -36,7 +36,7 @@ class ConfigChecker
 	{
 		if (($res = \Bitrix\Main\Config\Option::get("crm", "crm_was_imported")) )
 		{
-			$options = unserialize($res);
+			$options = unserialize($res, ['allowed_classes' => false]);
 			return $options["CHECKED"] === false;
 		}
 		return false;

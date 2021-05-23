@@ -189,6 +189,7 @@
 	box-sizing: border-box;
 	padding: 10px 12px;
 	height: 100%;
+	max-height: 283px;
 	color: #fff;
 	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
@@ -245,6 +246,7 @@
 }
 
 .crm-card-show-detail-info-main-status table.crm-list-stage-bar-table td.crm-list-stage-passed { padding: 0; }
+.crm-card-show-detail-info-main-status table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar-block { cursor: default; pointer-events: none; }
 
 .crm-card-show-detail-info-progress-bar-line {
 	position: relative;

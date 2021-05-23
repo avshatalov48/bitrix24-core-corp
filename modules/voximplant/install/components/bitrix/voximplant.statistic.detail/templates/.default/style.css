@@ -164,6 +164,8 @@ audio.vjs-tech {display: none;}
 #tel-stat-export-popup {
 	width: 540px;
 }
+
 .tel-stat-download-progress-container {
 	width: 400px;
+	margin: 7px;
 }

@@ -74,6 +74,8 @@ class WidgetImopenlinesPullCommandHandler
 			userVote: VoteType.none,
 		});
 
+		this.store.dispatch('widget/setVoteDateFinish', '');
+
 		this.widget.sendEvent({
 			type: SubscriptionType.sessionStart,
 			data: {
@@ -137,6 +139,11 @@ class WidgetImopenlinesPullCommandHandler
 				});
 			}
 		}
+	}
+
+	handleSessionDateCloseVote(params, extra, command)
+	{
+		this.store.dispatch('widget/setVoteDateFinish', params.dateCloseVote);
 	}
 }
 

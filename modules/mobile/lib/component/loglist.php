@@ -14,6 +14,9 @@ use Bitrix\Mobile\Component\LogList\Processor;
 use Bitrix\Mobile\Component\LogList\Page;
 use Bitrix\Mobile\Component\LogList\Counter;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Main\Application;
+use Bitrix\Main\IO;
+use Bitrix\Mobile\Livefeed;
 
 class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
@@ -241,6 +244,57 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 		return $params;
 	}
 
+	protected function getBackgroundData()
+	{
+		return Livefeed\Helper::getBackgroundData();
+	}
+
+	protected function getBackgroundCommonData()
+	{
+		return [
+			'url' => Application::getInstance()->getPersonalRoot().'/templates/mobile_app/images/lenta/background_common.png'
+		];
+	}
+
+	protected function getMedalsData()
+	{
+		return Livefeed\Helper::getMedalsData();
+	}
+
+	protected function getImportantData()
+	{
+		$mobileSourceDir = Application::getInstance()->getPersonalRoot().'/templates/mobile_app/images/lenta/important';
+		$params = $this->arParams;
+
+		return [
+			'nameTemplate' => $params['NAME_TEMPLATE'],
+			'backgroundUrl' => $mobileSourceDir.'/background_mobile.svg'
+		];
+	}
+
+	protected function getPostFormData()
+	{
+		$sourceDir = Application::getInstance()->getPersonalRoot().'/js/mobile/images/postform';
+
+		return [
+			'attachmentCloseIcon' => $sourceDir.'/icon_close.png',
+			'attachmentArrowRightIcon' => $sourceDir.'/icon_arrow_right.svg',
+			'attachmentFileIconFolder' => $sourceDir.'/file/',
+			'menuMedalIcon' => $sourceDir.'/icon_menu_medal.png',
+			'menuDeleteIcon' => $sourceDir.'/icon_menu_delete.png',
+			'menuUpIcon' => $sourceDir.'/icon_menu_up.png',
+			'menuUpIconDisabled' => $sourceDir.'/icon_menu_up_disabled.png',
+			'menuDownIcon' => $sourceDir.'/icon_menu_down.png',
+			'menuDownIconDisabled' => $sourceDir.'/icon_menu_down_disabled.png',
+			'menuMultiCheckIcon' => $sourceDir.'/icon_menu_multicheck.png',
+			'menuPlusIcon' => $sourceDir.'/icon_menu_plus.png',
+			'keyboardEllipsisIcon' => $sourceDir.'/icon_keyboard_ellipsis.svg',
+			'backgroundIcon' => $sourceDir.'/icon_background.png',
+			'titleIcon' => $sourceDir.'/icon_title.png',
+			'userAvatar' => $sourceDir.'/avatar/user.png',
+		];
+	}
+
 	protected function prepareData()
 	{
 		global $USER;
@@ -374,11 +428,19 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			);
 		}
 
+		$result['BACKGROUND_IMAGES_DATA'] = $this->getBackgroundData();
+		$result['BACKGROUND_COMMON'] = $this->getBackgroundCommonData();
+		$result['MEDALS_LIST'] = $this->getMedalsData();
+		$result['IMPORTANT_DATA'] = $this->getImportantData();
+		$result['POST_FORM_DATA'] = $this->getPostFormData();
+
 		return $result;
 	}
 
 	protected function getEntriesData(&$result)
 	{
+		$params = $this->arParams;
+
 		$result['arLogTmpID'] = [];
 
 		$processorInstance = $this->getProcessorInstance();
@@ -391,11 +453,11 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 			return;
 		}
 
-		$this->getEntryIdList($result);
+		$queryResultData = $this->getEntryIdList($result);
 
 		if (
-			count($result['arLogTmpID']) <= 0
-			&& $logPageProcessorInstance->getNeedSetLogPage() // no log pages for user
+			(int)$queryResultData['countAll'] < (int)$params['PAGE_SIZE']
+			&& !empty($processorInstance->getFilterKey('>=LOG_UPDATE'))
 		)
 		{
 			$processorInstance->setEventsList([]);
@@ -479,13 +541,15 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 						'ENTITY_ID' => $contentId['ENTITY_ID'],
 						'LOG_ID' => $eventFields['ID']
 					]);
-
-					$result['pinnedIdList'][] = $eventFields['ID'];
-					$eventFields['PINNED_PANEL_DATA'] = [
-						'TITLE' => $postProvider->getPinnedTitle(),
-						'DESCRIPTION' => $postProvider->getPinnedDescription()
-					];
-					$processorInstance->appendEventsList($eventFields, 'pinned');
+					if ($postProvider)
+					{
+						$result['pinnedIdList'][] = $eventFields['ID'];
+						$eventFields['PINNED_PANEL_DATA'] = [
+							'TITLE' => $postProvider->getPinnedTitle(),
+							'DESCRIPTION' => $postProvider->getPinnedDescription()
+						];
+						$processorInstance->appendEventsList($eventFields, 'pinned');
+					}
 				}
 			}
 		}
@@ -495,10 +559,14 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 	{
 		$params = $this->arParams;
 
+		$returnResult = [
+			'countAll' => 0
+		];
+
 		$processorInstance = $this->getProcessorInstance();
 		if (!$processorInstance)
 		{
-			return;
+			return $returnResult;
 		}
 
 		$res = \CSocNetLog::getList(
@@ -535,6 +603,10 @@ class LogList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\
 				'type' => 'main',
 			]);
 		}
+
+		$returnResult['countAll'] = $res->selectedRowsCount();
+
+		return $returnResult;
 	}
 
 	protected function getPinnedIdList(&$result)

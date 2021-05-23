@@ -115,11 +115,16 @@
 
 		this.provider = this.getSelectedData(providerFields[0]).VALUE;
 
+		var options = data.OPTIONS;
+		if (!BX.Type.isArray(options))
+		{
+			options = [];
+		}
 		BX.ajax.runAction('documentgenerator.dataprovider.getProviderFields', {
 			data: {
 				provider: data.CLASS,
 				module: this.moduleId,
-				options: data.OPTIONS,
+				options: options,
 				placeholder: placeholder,
 			}
 		}).then(BX.proxy(function(response)

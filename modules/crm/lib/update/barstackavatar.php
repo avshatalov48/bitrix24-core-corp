@@ -28,7 +28,7 @@ class BarStackAvatar extends Stepper
 		$selectedRowsCount = $queryObject->getSelectedRowsCount();
 		while ($userOption = $queryObject->fetch())
 		{
-			$optionValue = unserialize($userOption["VALUE"]);
+			$optionValue = unserialize($userOption["VALUE"], ['allowed_classes' => false]);
 			if (!$optionValue)
 			{
 				continue;

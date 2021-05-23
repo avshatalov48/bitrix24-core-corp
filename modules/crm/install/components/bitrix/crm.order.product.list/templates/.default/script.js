@@ -416,7 +416,6 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 			BX.addCustomEvent(popup, 'onWindowRegister', BX.defer(function(){
 				popup.Get().style.position = 'fixed';
 				popup.Get().style.top = (parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop) + 'px';
-				popup.OVERLAY.style.zIndex = 798;
 			}));
 
 			BX.addCustomEvent(window, 'EntityEditorOrderController:onInnerCancel', BX.defer(function(){

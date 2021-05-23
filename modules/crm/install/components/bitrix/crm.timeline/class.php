@@ -313,7 +313,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 		$this->arResult['SMS_CONFIG']['isDocumentsEnabled'] = $this->arResult['ENABLE_DOCUMENTS'];
 
-        $this->arResult['SHOW_FILES_FEATURE'] = false;
+		$this->arResult['SHOW_FILES_FEATURE'] = false;
 		$this->arResult['ENABLE_FILES'] = (Main\Loader::includeModule('disk') && \Bitrix\Disk\Configuration::isPossibleToShowExternalLinkControl());
 		if($this->arResult['ENABLE_FILES'])
 		{
@@ -332,9 +332,9 @@ class CCrmTimelineComponent extends CBitrixComponent
 				];
 			}
 			else
-            {
-                $this->arResult['SHOW_FILES_FEATURE'] = \Bitrix\Crm\Integration\Bitrix24Manager::isEnabled();
-            }
+			{
+				$this->arResult['SHOW_FILES_FEATURE'] = \Bitrix\Crm\Integration\Bitrix24Manager::isEnabled();
+			}
 		}
 		else
 		{
@@ -731,9 +731,10 @@ class CCrmTimelineComponent extends CBitrixComponent
 				$this->arResult['CHAT_DATA']['USER_INFOS'][$userID] = $userInfo;
 			}
 
-			$messageData = \Bitrix\Im\Chat::getMessages($chatID, null, array('LIMIT' => 1, 'JSON' => 'Y'));
+			$messageData = \Bitrix\Im\Chat::getMessages($chatID, null, ['LIMIT' => 1, 'USER_TAG_SPREAD' => 'Y', 'JSON' => 'Y']);
 			if(isset($messageData['messages']) && is_array($messageData['messages']) && !empty($messageData['messages']))
 			{
+				$messageData['messages'][0]['text'] = preg_replace_callback("/\[USER=([0-9]{1,})\]\[\/USER\]/i", Array('\Bitrix\Im\Text', 'modifyShortUserTag'), $messageData['messages'][0]['text']);
 				$this->arResult['CHAT_DATA']['MESSAGE'] = $messageData['messages'][0];
 			}
 		}

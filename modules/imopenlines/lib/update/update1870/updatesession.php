@@ -35,7 +35,7 @@ final class UpdateSession extends Stepper
 		if (Loader::includeModule(self::$moduleId) && Loader::includeModule('im'))
 		{
 			$params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-			$params = ($params !== "" ? @unserialize($params) : []);
+			$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : []);
 			$params = (is_array($params) ? $params : array());
 			if (empty($params))
 			{

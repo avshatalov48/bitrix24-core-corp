@@ -38,11 +38,6 @@ if (!CModule::IncludeModule('crm'))
 	die();
 }
 
-if (CModule::IncludeModule('compression'))
-{
-	CCompress::Disable2048Spaces();
-}
-
 global $APPLICATION, $DB;
 $curUser = CCrmSecurityHelper::GetCurrentUser();
 if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] != 'POST')

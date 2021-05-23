@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration\Report\View\ColumnFunnel;
 use Bitrix\Crm\Integration\Report\View\ComparePeriods;
 use Bitrix\Crm\Integration\Report\View\ComparePeriodsGrid;
 use Bitrix\Crm\Integration\Report\View\FunnelGrid;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
@@ -152,6 +153,14 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 	public function prepare()
 	{
+		$filterParameters = $this->getFilterParameters();;
+		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?: 0;
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId))
+		{
+			return false;
+		}
+
 		/** @var DropDown $grouping */
 		$groupingField = $this->getFormElement('groupingBy');
 		$groupingValue = $groupingField ? $groupingField->getValue() : null;
@@ -374,7 +383,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 		}
 
-		$filterParameters = $this->getFilterParameters();;
 		$this->addToQueryFilterCase($query, $filterParameters);
 		$this->addTimePeriodToQuery($query, $filterParameters['TIME_PERIOD']);
 		$this->addPermissionsCheck($query);
@@ -501,6 +509,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$amountSum += $dealCountAndSum['SUM'];
 						}
 
+						$stageSemanticId = \CCrmDeal::GetSemanticID($result['STAGE_KEY']);
 						if ($this->isConversionCalculateMode())
 						{
 							$dealCalculatedValue[$result['STAGE_KEY']]['value'] = $result['VALUE'];
@@ -518,12 +527,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 								];
 							}
 
-							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime']['VALUE'] = 0;
-							if ($result['SPENT_TIME'])
+							if (!PhaseSemantics::isFinal($stageSemanticId))
 							{
-								$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime'] = [
-									'VALUE' => $result['SPENT_TIME']
-								];
+								$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime']['VALUE'] = (float)$result['SPENT_TIME'];
 							}
 
 							$dealCalculatedValue[$result['STAGE_KEY']]['title'] = !empty($stageNameListByStageId[$result['STAGE_KEY']]['NAME'])
@@ -549,12 +555,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 								];
 							}
 
-							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime']['VALUE'] = 0;
-							if ($result['SPENT_TIME'])
+							if (!PhaseSemantics::isFinal($stageSemanticId))
 							{
-								$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime'] = [
-									'VALUE' => $result['SPENT_TIME'],
-								];
+								$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['avgSpentTime']['VALUE'] = (float)$result['SPENT_TIME'];
 							}
 
 							$dealCalculatedValue[$result['STAGE_KEY']]['title'] = !empty($stageNameListByStageId[$result['STAGE_KEY']]['NAME'])
@@ -844,12 +847,10 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				case 'dest_selector':
 					$query->addFilter($key, $value['value']);
 					break;
-
 			}
 
 			if ($key === 'STAGE_SEMANTIC_ID')
 			{
-
 				$subQuery = DealStageHistoryWithSupposedTable::query();
 				$subQuery->addSelect('OWNER_ID');
 				if (!empty($filterParameters['TIME_PERIOD']))
@@ -889,7 +890,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 			$isPastPeriodField = $this->getFormElement('pastPeriod');
 
-			if ($isPastPeriodField->getValue())
+			if ($isPastPeriodField && $isPastPeriodField->getValue())
 			{
 				$timePeriodDiffSecs = $this->getTimePeriodDiff();
 				$diffDaysCount = $this->getDayCountFromSecs($timePeriodDiffSecs);
@@ -897,11 +898,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				$fromDateValue->add("-{$diffDaysCount} days");
 			}
 
-			$query->where('FULL_HISTORY.LAST_UPDATE_DATE', '<=', $toDateValue)->where(
-				'FULL_HISTORY.CLOSE_DATE',
-				'>=',
-				$fromDateValue
-			);
+			$query
+				->where('FULL_HISTORY.LAST_UPDATE_DATE', '<=', $toDateValue)
+				->where('FULL_HISTORY.CLOSE_DATE', '>=', $fromDateValue);
 		}
 	}
 
@@ -1117,30 +1116,51 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 		}
 
-		$result = parent::getTargetUrl($baseUri, $params);
+		return parent::getTargetUrl($baseUri, $params);
+	}
 
-		//HACK to clear stage semantic filter from url if it is succeed or failed data
-		switch ($calculateValue)
+	public function prepareEntityListFilter($requestParameters)
+	{
+		$filterParameters = $this->getFilterParameters();
+		$query = DealTable::query();
+		$query->addSelect('ID');
+		$this->addToQueryFilterCase($query, $filterParameters);
+		$this->addTimePeriodToQuery($query, $filterParameters['TIME_PERIOD']);
+
+		foreach ($requestParameters as $parameter => $value)
 		{
-			case self::WHAT_WILL_CALCULATE_DEAL_LOSES_COUNT:
-			case self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM:
-				$uri = new Uri($result);
-				$uri->deleteParams(['STAGE_SEMANTIC_ID']);
-				$uri->addParams(['STAGE_SEMANTIC_ID_FROM_HISTORY' => 'F']);
-				$result = $uri->getUri();
-				break;
-			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
-			case self::WHAT_WILL_CALCULATE_SUCCESS_DEAL_DATA_FOR_FUNNEL:
-			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
-			case self::WHAT_WILL_CALCULATE_DEAL_WON_COUNT:
-				$uri = new Uri($result);
-				$uri->deleteParams(['STAGE_SEMANTIC_ID']);
-				$uri->addParams(['STAGE_SEMANTIC_ID_FROM_HISTORY' => 'S']);
-				$result = $uri->getUri();
-				break;
+			switch ($parameter)
+			{
+				case 'STAGE_SEMANTIC_ID':
+				case 'ASSIGNED_BY_ID':
+					$query->where($parameter, $value);
+					break;
+				case 'STAGE_SEMANTIC_ID_FROM_HISTORY':
+					$query->where('FULL_HISTORY.STAGE_SEMANTIC_ID', $value);
+					$query->where('FULL_HISTORY.IS_SUPPOSED', 'N');
+					break;
+				case 'STAGE_ID_FROM_HISTORY':
+					$query->where('FULL_HISTORY.STAGE_ID', $value);
+					$query->where('FULL_HISTORY.IS_SUPPOSED', 'N');
+					break;
+
+				case 'STAGE_ID_FROM_SUPPOSED_HISTORY':
+					$query->where('FULL_HISTORY.STAGE_ID', $value);
+					break;
+
+			}
 		}
 
-		return $result;
+		$query->setDistinct(true);
+
+		return [
+			'__JOINS' => [
+				[
+					'TYPE' => 'INNER',
+					'SQL' => 'INNER JOIN('.$query->getQuery().') REP ON REP.ID = L.ID'
+				]
+			]
+		];
 	}
 
 	private function getStageColorList($entityId)
@@ -1148,20 +1168,13 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		static $result = [];
 		if (!empty($result[$entityId]))
 		{
-			return $result;
+			return $result[$entityId];
 		}
 
-		$leadStatusColors = (array)unserialize(\COption::GetOptionString('crm', 'CONFIG_STATUS_'.$entityId));
+		$stageInfos = DealCategory::getStageInfos(DealCategory::convertFromStatusEntityID($entityId));
+		$result[$entityId] = array_column($stageInfos, 'COLOR', 'STATUS_ID');
 
-		if ($leadStatusColors)
-		{
-			foreach ($leadStatusColors as $statusKey => $value)
-			{
-				$result[$statusKey] = $value['COLOR'];
-			}
-		}
-
-		return $result;
+		return $result[$entityId];
 	}
 
 	private function getStageList()
@@ -1391,7 +1404,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 
 
-						if ($calculateValue === self::WHAT_WILL_CALCULATE_DEAL_DATA_FOR_FUNNEL)
+						if ($calculateValue === self::WHAT_WILL_CALCULATE_DEAL_DATA_FOR_FUNNEL
+							|| $calculateValue === self::WHAT_WILL_CALCULATE_SUCCESS_DEAL_DATA_FOR_FUNNEL
+						)
 						{
 							if ($this->isConversionCalculateMode())
 							{
@@ -1432,8 +1447,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 						if (isset($data['additionalValues']['avgSpentTime']))
 						{
-
-
 							$config['additionalValues']['thirdAdditionalValue']['titleShort'] = Loc::getMessage(
 								'CRM_REPORT_DEAL_HANDLER_DEAL_SPENT_TIME_SHORT_TITLE'
 							);
@@ -1444,13 +1457,14 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							];
 						}
 
-
+						$stageSemanticId = \CCrmDeal::GetSemanticID($key);
 						$config['additionalValues']['forthAdditionalValue']['titleShort'] = Loc::getMessage(
 							'CRM_REPORT_DEAL_HANDLER_DEAL_CONVERSION_SHORT_TITLE'
 						);
-
-
 						$item['additionalValues']['forthAdditionalValue'] = [
+							'title' => PhaseSemantics::isLost($stageSemanticId) ?
+											Loc::getMessage("CRM_REPORT_DEAL_HANDLER_DEAL_LOSSES_SHORT_TITLE")
+											: Loc::getMessage("CRM_REPORT_DEAL_HANDLER_DEAL_CONVERSION_SHORT_TITLE"),
 							'value' => $calculatedData['amount']['value'] ? round(
 								($data['value'] / $calculatedData['amount']['value']) * 100,
 								2
@@ -1778,8 +1792,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					$resultItem['targetUrl'] = $this->getTargetUrl(
 						'/crm/deal/analytics/list/',
 						[
-							'ASSIGNED_BY_ID_label' => $item['title'],
-							'ASSIGNED_BY_ID_value' => $groupingKey,
 							'ASSIGNED_BY_ID' => $groupingKey,
 						]
 					);

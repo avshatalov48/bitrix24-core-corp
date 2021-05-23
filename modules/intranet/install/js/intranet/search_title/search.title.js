@@ -17,6 +17,7 @@ BX.Intranet.SearchTitle = function(arParams)
 		'CURRENT_TS': parseInt(arParams.CURRENT_TS),
 		'GLOBAL_SEARCH_CATEGORIES': (typeof arParams.GLOBAL_SEARCH_CATEGORIES == 'object' ? arParams.GLOBAL_SEARCH_CATEGORIES : []),
 		'MORE_USERS_URL': arParams.MORE_USERS_URL,
+		'MORE_GROUPS_URL': arParams.MORE_GROUPS_URL || "",
 		'IS_CRM_INSTALLED': arParams.IS_CRM_INSTALLED == "Y"
 	};
 
@@ -48,6 +49,9 @@ BX.Intranet.SearchTitle = function(arParams)
 	};
 	this.searchByAjax = false;
 	this.selectedItemDataId = null;//0;
+	this.timeman = null;
+	this.userBlock = null;
+	this.header = null;
 
 	this.CreateResultWrap = function()
 	{
@@ -295,10 +299,22 @@ BX.Intranet.SearchTitle = function(arParams)
 							}));
 
 							//more items are in a separated block for selecting by keys
-							if (isMoreItems && currentItem.TYPE == "users")
+							if (
+								isMoreItems
+								&& (currentItem.TYPE == "users" || currentItem.TYPE == "sonetgroups")
+							)
 							{
+								if (currentItem.TYPE == "users")
+								{
+									var url = this.arParams.MORE_USERS_URL + this.INPUT.value;
+								}
+								else if (currentItem.TYPE == "sonetgroups")
+								{
+									url = this.arParams.MORE_GROUPS_URL + this.INPUT.value
+								}
+
 								var moreItem = {
-									"URL": this.arParams.MORE_USERS_URL + this.INPUT.value,
+									"URL": url,
 									"ITEM_ID" : currentItem.TYPE + "_more"
 								};
 								var moreBlock = this.BuildMoreBlock(moreItem);
@@ -1538,6 +1554,13 @@ BX.Intranet.SearchTitle = function(arParams)
 		{
 			_this.RESULT.style.display = 'block';
 		}
+
+		BX.onCustomEvent(this, "Intranet.Search.Title:onFocusAction", ["gain"]);
+	};
+
+	this.onFocusLost = function()
+	{
+		BX.onCustomEvent(this, "Intranet.Search.Title:onFocusAction", ["lost"]);
 	};
 
 	this.onKeyUp = function(event)
@@ -1721,9 +1744,9 @@ BX.Intranet.SearchTitle = function(arParams)
 
 		BX.bind(this.INPUT, "focus", BX.proxy(this.onFocusGain, this));
 		//BX.bind(window, "resize", BX.proxy(this.onWindowResize, this));
-		//BX.bind(this.INPUT, "blur", BX.proxy(this.onFocusLost));
+		BX.bind(this.INPUT, "blur", BX.proxy(this.onFocusLost, this));
 		this.INPUT.onkeydown = this.onKeyDown;
-		
+
 		BX.Finder(false, 'searchTitle', [], {}, _this);
 		BX.onCustomEvent(_this, 'initFinderDb', [ this.ITEMS, 'searchTitle', null, ['users', 'sonetgroups', 'menuitems'], _this ]);
 		setTimeout(function() {

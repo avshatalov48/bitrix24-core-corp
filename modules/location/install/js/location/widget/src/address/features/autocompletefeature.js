@@ -9,6 +9,7 @@ export default class AutocompleteFeature extends BaseFeature
 {
 	static searchStartedEvent = 'searchStarted';
 	static searchCompletedEvent = 'searchCompleted';
+	static showOnMapClickedEvent = 'showOnMapClicked';
 
 	#autocomplete;
 	#addressWidget = null;
@@ -28,7 +29,8 @@ export default class AutocompleteFeature extends BaseFeature
 			(event) =>
 			{
 				const data = event.getData();
-				this.#addressWidget.setAddressByFeature(data.address, this);
+
+				this.#addressWidget.setAddressByFeature(data.address, this, data.excludeSetAddressFeatures);
 			});
 
 		this.#autocomplete.onStateChangedEventSubscribe(
@@ -63,6 +65,19 @@ export default class AutocompleteFeature extends BaseFeature
 					}
 				);
 			});
+
+		this.#autocomplete.onShowOnMapClickedEventSubscribe(
+			(event) =>
+			{
+				const data = event.getData();
+				this.#addressWidget.emitFeatureEvent(
+					{
+						feature: this,
+						eventCode: AutocompleteFeature.showOnMapClickedEvent,
+						payload: data
+					}
+				);
+			});
 	}
 
 	resetView(): void
@@ -76,6 +91,7 @@ export default class AutocompleteFeature extends BaseFeature
 		{
 			this.#autocomplete.render({
 				inputNode: this.#addressWidget.inputNode,
+				menuNode: props.autocompleteMenuElement,
 				address: this.#addressWidget.address,
 				mode: this.#addressWidget.mode,
 			});
@@ -90,11 +106,6 @@ export default class AutocompleteFeature extends BaseFeature
 	setAddressWidget(addressWidget)
 	{
 		this.#addressWidget = addressWidget;
-	}
-
-	get autocomplete()
-	{
-		return this.#autocomplete;
 	}
 
 	destroy()

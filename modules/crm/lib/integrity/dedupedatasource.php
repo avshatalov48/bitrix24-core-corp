@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integrity;
-use Bitrix\Main;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 
 abstract class DedupeDataSource
 {
@@ -73,5 +74,40 @@ abstract class DedupeDataSource
 			);
 		}
 		return $this->permissionSql;
+	}
+
+	protected static function getDataManagerClass(int $entityTypeId): string
+	{
+		switch ($entityTypeId)
+		{
+			case \CCrmOwnerType::Lead:
+				$entityClass = \Bitrix\Crm\LeadTable::class;
+				break;
+			case \CCrmOwnerType::Deal:
+				$entityClass = \Bitrix\Crm\DealTable::class;
+				break;
+			case \CCrmOwnerType::Contact:
+				$entityClass = \Bitrix\Crm\ContactTable::class;
+				break;
+			case \CCrmOwnerType::Company:
+				$entityClass = \Bitrix\Crm\CompanyTable::class;
+				break;
+			default:
+				throw new \Bitrix\Main\NotImplementedException("Entity type #{$entityTypeId} has not data manager");
+		}
+		return $entityClass;
+	}
+
+	public static function getAssignedByReferenceField(int $entityTypeId, int $userId): Reference
+	{
+		return new Reference(
+			'ASSIGNED_BY_JOINED_ENTITY',
+			static::getDataManagerClass($entityTypeId),
+			[
+				'=this.ENTITY_ID' => 'ref.ID',
+				'ref.ASSIGNED_BY_ID' => new SqlExpression('?i', $userId)
+			],
+			['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
+		);
 	}
 }

@@ -139,7 +139,9 @@ if($hasNavigationBar)
 		if (
 			preg_match($bindingMenuMask, $arParams['GRID_ID'], $bindingMenuMatches) &&
 			\Bitrix\Main\Loader::includeModule('intranet')
-		) {
+		)
+		{
+			\Bitrix\Main\UI\Extension::load('bizproc.script');
 			$APPLICATION->includeComponent(
 				'bitrix:intranet.binding.menu',
 				'',

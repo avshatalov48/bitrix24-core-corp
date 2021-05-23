@@ -4,6 +4,7 @@ $MESS["BPSNMA_EMPTY_TASKNAME"] = "Свойство 'Название задач�
 $MESS["TASK_EMPTY_GROUP"] = "Персональная задача";
 $MESS["BPSA_TRACK_OK"] = "Создана задача с ID ##VAL#";
 $MESS["BPSA_TRACK_ERROR"] = "При создании задачи произошла ошибка.";
+$MESS["BPSA_CREATED_BY_ERROR"] = "Не указан постановщик задачи.";
 $MESS["BPTA1A_TASKGROUPID"] = "Задача в проекте (группе)";
 $MESS["BPTA1A_TASKCREATEDBY"] = "Постановщик";
 $MESS["BPTA1A_TASKASSIGNEDTO"] = "Ответственный";
@@ -28,7 +29,6 @@ $MESS["BPSA_CYCLING_ERROR"] = "Задача не создана. Подозре�
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Чек-лист";
 $MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
-
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
 ?>

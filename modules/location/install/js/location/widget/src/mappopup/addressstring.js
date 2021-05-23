@@ -16,7 +16,6 @@ export default class AddressString
 		}
 
 		this.#addressFormat = props.addressFormat;
-		this.#address = props.address;
 	}
 
 	set address(address: ?Address): void
@@ -53,14 +52,19 @@ export default class AddressString
 	render(props): Element
 	{
 		this.#address = props.address;
-
-		this.#stringElement = Tag.render`<div class="location-map-address-text">${this.#convertAddressToString(this.#address)}</div>`;
+		const addresStr = this.#convertAddressToString(this.#address);
+		this.#stringElement = Tag.render`<div class="location-map-address-text">${addresStr}</div>`;
 
 		this.#element = Tag.render`
 			<div class="location-map-address-container">
 				<div class="location-map-address-icon"></div>
 				${this.#stringElement}
 			</div>`;
+
+		if(addresStr === '')
+		{
+			this.hide();
+		}
 
 		return this.#element;
 	}

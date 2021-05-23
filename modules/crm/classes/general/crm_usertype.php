@@ -1079,11 +1079,12 @@ class CCrmUserType
 		$typeID = $arUserField['USER_TYPE']['USER_TYPE_ID'];
 		if($typeID === 'file')
 		{
+			$result = null;
 			if(!$isMultiple)
 			{
 				if(CCrmFileProxy::TryResolveFile($data, $file, array('ENABLE_UPLOAD' => true)))
 				{
-					$data = $file;
+					$result = $file;
 				}
 			}
 			elseif(is_array($data))
@@ -1096,8 +1097,9 @@ class CCrmUserType
 						$files[] = $file;
 					}
 				}
-				$data = $files;
+				$result = $files;
 			}
+			$data = $result;
 		}
 		elseif($typeID === 'enumeration')
 		{
@@ -1919,12 +1921,18 @@ class CCrmUserType
 			else if (in_array($userTypeID, array('string', 'double', 'boolean', 'integer', 'datetime', 'file', 'employee'/*, 'enumeration'*/)))
 			{
 				if ($arUserField['USER_TYPE']['BASE_TYPE'] == 'enum')
+				{
 					$arUserField['USER_TYPE']['BASE_TYPE'] = 'select';
+				}
 				$sType = $userTypeID;
 				if($sType === 'employee')
 				{
 					//Fix for #37173
 					$sType = 'user';
+				}
+				if($sType === 'integer')
+				{
+					$sType = 'int';
 				}
 
 				if ($sType === 'datetime')

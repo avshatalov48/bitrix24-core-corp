@@ -827,10 +827,11 @@ final class Task extends \Bitrix\Tasks\Manager
 		unset($task);
 	}
 
-	public static function getList($userId, array $listParameters = array(), array $parameters = array())
+	public static function getList($userId, array $listParameters = [], array $parameters = [])
 	{
 		$data = [];
 		$can = [];
+		$params = [];
 
 		$userId = (int) $userId;
 
@@ -850,8 +851,6 @@ final class Task extends \Bitrix\Tasks\Manager
 				$listParameters['page'],
 				$parameters['PUBLIC_MODE']
 			);
-
-			$params = false;
 			if (!empty($navParams))
 			{
 				$params = ['NAV_PARAMS' => $navParams];

@@ -16,6 +16,14 @@ abstract class FinancialRating extends Deal
 
 	public function prepare()
 	{
+		$filterParameters = $this->getFilterParameters();;
+		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?: 0;
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId))
+		{
+			return false;
+		}
+
 		$mainQuery = $this->prepareQuery();
 		$mainQueryResult = $mainQuery->exec()->fetchAll();
 

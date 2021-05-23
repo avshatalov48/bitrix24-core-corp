@@ -302,6 +302,10 @@
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_action_automatic_message'))
 		},
+		toggleVoteTimeLimitBlock: function()
+		{
+			BX.animationHandler.fadeSlideToggleByClass(BX('imol_action_vote_time_limit'))
+		},
 		toggleAgreementBlock: function()
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_agreement_message_block'))
@@ -586,6 +590,11 @@
 				BX('imol_automatic_message'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleAutomaticMessageBlock
+			);
+			BX.bind(
+				BX('imol_vote_time_limit'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleVoteTimeLimitBlock
 			);
 			BX.bind(
 				BX('imol_check_available'),

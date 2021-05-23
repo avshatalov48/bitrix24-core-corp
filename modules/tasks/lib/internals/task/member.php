@@ -99,4 +99,17 @@ class MemberTable extends Main\Entity\DataManager
 			new Main\Entity\Validator\Length(null, 1),
 		);
 	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function possibleTypes(): array
+	{
+		return [
+			self::MEMBER_TYPE_ORIGINATOR,
+			self::MEMBER_TYPE_RESPONSIBLE,
+			self::MEMBER_TYPE_ACCOMPLICE,
+			self::MEMBER_TYPE_AUDITOR
+		];
+	}
 }

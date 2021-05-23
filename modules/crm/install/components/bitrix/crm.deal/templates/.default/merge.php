@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 			'ENTITY_IDS' => $arResult['VARIABLES']['deal_ids'],
 			'PATH_TO_DEDUPE_LIST' => '',
+			'PATH_TO_ENTITY_LIST' => '/crm/deal/',
 			'PATH_TO_EDITOR' => '/bitrix/components/bitrix/crm.deal.details/ajax.php',
 			'HEADER_TEMPLATE' => GetMessage('CRM_DEAL_MERGE_HEADER_TEMPLATE'),
 			'RESULT_LEGEND' => GetMessage('CRM_DEAL_MERGE_RESULT_LEGEND'),

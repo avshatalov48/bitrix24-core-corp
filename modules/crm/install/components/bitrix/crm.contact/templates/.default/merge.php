@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 			'ENTITY_IDS' => $arResult['VARIABLES']['contact_ids'],
 			'PATH_TO_DEDUPE_LIST' => '/crm/contact/dedupelist/',
+			'PATH_TO_ENTITY_LIST' => '/crm/contact/',
 			'PATH_TO_EDITOR' => '/bitrix/components/bitrix/crm.contact.details/ajax.php',
 			'HEADER_TEMPLATE' => GetMessage('CRM_CONTACT_MERGE_HEADER_TEMPLATE'),
 			'RESULT_LEGEND' => GetMessage('CRM_CONTACT_MERGE_RESULT_LEGEND'),

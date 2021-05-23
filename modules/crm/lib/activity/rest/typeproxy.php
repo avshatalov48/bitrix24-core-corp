@@ -100,7 +100,7 @@ class TypeProxy implements \ICrmRestProxy
 			if ($fileFields)
 			{
 				$fileFields['MODULE_ID'] = 'crm';
-				$fileId = \CFile::saveFile($fileFields, 'crm_act_app_type', true);
+				$fileId = \CFile::saveFile($fileFields, 'crm_act_app_type');
 				if ($fileId)
 				{
 					$fields['ICON_ID'] = $fileId;

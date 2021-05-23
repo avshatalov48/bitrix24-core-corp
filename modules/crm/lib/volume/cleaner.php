@@ -801,7 +801,15 @@ class Cleaner
 
 				if (!empty($this->param['FILTER']))
 				{
-					$filter = unserialize($this->param['FILTER'], [Main\Type\DateTime::class]);
+					$filter = unserialize(
+						$this->param['FILTER'],
+						[
+							'allowed_classes' => [
+								Main\Type\DateTime::class,
+								\DateTime::class
+							]
+						]
+					);
 					if ($filter === false || !is_array($filter))
 					{
 						return false;
@@ -1285,7 +1293,7 @@ class Cleaner
 		);
 		if (!empty($optionSerialized))
 		{
-			return unserialize($optionSerialized, [false]);
+			return unserialize($optionSerialized, ['allowed_classes' => false]);
 		}
 
 		return null;

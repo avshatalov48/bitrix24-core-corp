@@ -8,8 +8,8 @@ include ($dialog->getRuntimeData()['PathToParentClassDir'] . DIRECTORY_SEPARATOR
 ?>
 
 <div id="bca_ccra_requisite_fields">
-	<div class="crm-automation-popup-settings crm-automation-popup-settings-text">
-		<a class="crm-automation-popup-settings-link" data-role="bca-ccra-fields-list">
+	<div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text">
+		<a class="bizproc-automation-popup-settings-link" data-role="bca-ccra-fields-list">
 			<?= GetMessage('CRM_CRA_RBP_ADD_CONDITION') ?>
 		</a>
 	</div>

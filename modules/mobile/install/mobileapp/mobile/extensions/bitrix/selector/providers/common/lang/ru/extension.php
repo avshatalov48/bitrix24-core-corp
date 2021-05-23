@@ -1,0 +1,3 @@
+<?php
+$MESS['PROVIDER_COMMON_PROJECT'] = 'Группа';
+$MESS['PROVIDER_COMMON_DEPARTMENT'] = 'Отдел';

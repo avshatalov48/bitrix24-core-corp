@@ -22,6 +22,7 @@ Vue.component(config.templateName, {
 	data()
 	{
 		return {
+			isFaded: false,
 			isShowPreview: false,
 			isShowPayment: false,
 			isShowPaymentBySms: false,
@@ -54,7 +55,13 @@ Vue.component(config.templateName, {
 	{
 		this.$root.$on("on-show-company-contacts", (value) => {
 			this.showCompanyContacts(value);
-		})
+		});
+		this.$root.$on('on-start-progress', () => {
+			this.startFade();
+		});
+		this.$root.$on('on-stop-progress', () => {
+			this.endFade();
+		});
 	},
 
 	updated()
@@ -97,6 +104,14 @@ Vue.component(config.templateName, {
 
 	methods:
 	{
+		startFade()
+		{
+			this.isFaded = true;
+		},
+		endFade()
+		{
+			this.isFaded = false;
+		},
 		movePanels()
 		{
 			let sidepanel = this.$refs['sidebar'];
@@ -890,7 +905,7 @@ Vue.component(config.templateName, {
 	},
 
 	template: `
-		<div class="salescenter-app-wrapper" :style="{minHeight: getWrapperHeight}">
+		<div class="salescenter-app-wrapper" :class="{'salescenter-app-wrapper-fade': isFaded}" :style="{minHeight: getWrapperHeight}">
 			<div class="ui-sidepanel-sidebar salescenter-app-sidebar" ref="sidebar">
 				<ul class="ui-sidepanel-menu" ref="sidepanelMenu" v-if="this.$root.$app.context !== 'deal'">
 					<li :class="{'salescenter-app-sidebar-menu-active': isPagesOpen}" class="ui-sidepanel-menu-item">
@@ -972,7 +987,7 @@ Vue.component(config.templateName, {
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS}}</div>
 						</a>
 					</li>
-					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
+					<li v-if="this.$root.$app.options.isBitrix24" class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
 						<a class="ui-sidepanel-menu-link" v-on:click="BX.Salescenter.Manager.openFeedbackPayOrderForm(event)">
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT}}</div>
 						</a>
@@ -1040,7 +1055,7 @@ Vue.component(config.templateName, {
 			        <div ref="paymentsLimit" v-show="isShowPayment && !isShowStartInfo"></div>
 				</template>
 				<template v-else>
-			        <component v-if="isShowPayment && !isShowStartInfo" :is="config.templateAddPaymentName"></component>
+			        <component v-if="isShowPayment && !isShowStartInfo" :is="config.templateAddPaymentName" :key="order.basketVersion"></component>
 		        </template>
 		        <template v-if="isShowPaymentBySms && !isShowStartInfo">
 			        <deal-receiving-payment v-on:stage-block-send-on-send="send" :sendAllowed="isAllowedSubmitButton"/>

@@ -10,6 +10,7 @@ BX.Intranet.AI.Center = function(options)
 
 	this.assistantAppId = options.assistantAppId;
 	this.tileManagerId = options.tileManagerId;
+	this.mlInstalled  = options.mlInstalled;
 	this.tileManager = BX.UI.TileList.Manager.getById(this.tileManagerId);
 
 	BX.addCustomEvent(
@@ -65,7 +66,14 @@ BX.Intranet.AI.Center.prototype =
 
 	openScoring: function(tile)
 	{
-		BX.SidePanel.Instance.open(tile.data.url, {cacheable: false, width: 840});
+		if (this.mlInstalled)
+		{
+			BX.SidePanel.Instance.open(tile.data.url, {cacheable: false, width: 840});
+		}
+		else
+		{
+			BX.UI.Dialogs.MessageBox.alert(BX.message('INTRANET_AI_CENTER_ML_REQUIRED'));
+		}
 	},
 
 	handleApplicationInstall: function(installed, eventResult)

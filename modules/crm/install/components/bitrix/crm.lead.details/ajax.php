@@ -89,6 +89,16 @@ elseif($action === 'SAVE')
 		__CrmLeadDetailsEndJsonResponse(array('ERROR'=>'PERMISSION DENIED!'));
 	}
 
+	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+	if (!$diskQuotaRestriction->hasPermission())
+	{
+		__CrmLeadDetailsEndJsonResponse([
+			'ERROR' => $diskQuotaRestriction->getErrorMessage(),
+			'RESTRICTION' => true,
+			'RESTRICTION_ACTION' => $diskQuotaRestriction->prepareInfoHelperScript()
+		]);
+	}
+
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$sourceEntityID =  isset($params['LEAD_ID']) ? (int)$params['LEAD_ID'] : 0;
 
@@ -100,7 +110,17 @@ elseif($action === 'SAVE')
 	//TODO: Implement external mode
 	$isExternal = false;
 
-	$previousFields = !$isNew ? \CCrmLead::GetByID($ID, false) : null;
+	$previousFields = null;
+	if (!$isNew)
+	{
+		$previousFields = \CCrmLead::GetListEx(
+			array(),
+			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+			false,
+			false,
+			array('*', 'UF_*')
+		)->Fetch();
+	}
 
 	$fields = array();
 	$fieldsInfo = \CCrmLead::GetFieldsInfo();

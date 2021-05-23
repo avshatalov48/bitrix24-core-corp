@@ -189,7 +189,7 @@ final class Fields
 				'type' => $type,
 				'placeholder' => $field['PLACEHOLDER'],
 				'value' => $field['VALUE'],
-				'items' => $this->getFieldItems($field),
+				'items' => $this->getFieldItems($field, $data),
 				'bigPic' => !empty($field['SETTINGS_DATA']['BIG_PIC'])
 					? $field['SETTINGS_DATA']['BIG_PIC'] === 'Y'
 					: false,
@@ -199,7 +199,7 @@ final class Fields
 		return $this->cachedResult;
 	}
 
-	protected function getFieldItems(array $field)
+	protected function getFieldItems(array $field, array $data)
 	{
 		$items = is_array($field['ITEMS']) ? $field['ITEMS'] : [];
 		switch ($field['TYPE'])
@@ -308,7 +308,14 @@ final class Fields
 					$items[0]['selected'] = true;
 				}
 				return $items;
+
 			default:
+				$isListableType = isset(WebForm\Helper::getFieldListableTypes()[$field['TYPE']]);
+				if (!$isListableType && (!isset($data['ITEMS']) || !is_array($data['ITEMS'])))
+				{
+					return [];
+				}
+
 				$result = array_map(
 					function ($item)
 					{

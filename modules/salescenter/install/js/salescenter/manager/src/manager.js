@@ -863,34 +863,14 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=7872935', 'openlines_connect');
 	}
 
-	static openHowToConfigPaySystem(event)
+	static openHowToConfigDefaultPaySystem(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=10460164', 'pay_system_connect');
 	}
 
-	static openHowToConfigSkbPaySystem(event)
+	static openHowToConfigPaySystem(event, code)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=11538458', 'pay_system_connect');
-	}
-
-	static openHowToConfigBePaidPaySystem(event)
-	{
-		Manager.openHelper(event, 'redirect=detail&code=11538452', 'pay_system_connect');
-	}
-
-	static openHowToConfigLiqPayPaySystem(event)
-	{
-		Manager.openHelper(event, 'redirect=detail&code=11814321', 'pay_system_connect');
-	}
-
-	static openHowToConfigUaPayPaySystem(event)
-	{
-		Manager.openHelper(event, 'redirect=detail&code=11825299', 'pay_system_connect');
-	}
-
-	static openHowToConfigWoopkassaPaySystem(event)
-	{
-		Manager.openHelper(event, 'redirect=detail&code=12183852', 'pay_system_connect');
+		Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_connect');
 	}
 
 	static openHowToUseOfflineCashBox(event)
@@ -906,6 +886,16 @@ export class Manager
 	static openHowToConfigCheckboxCashBox(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=12306679', 'cashbox_connect');
+	}
+
+	static openHowToConfigBusinessRuCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=12806492', 'cashbox_connect');
+	}
+
+	static openHowToSetupCheckboxCashBoxAndKeys(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=12334663', 'cashbox_connect');
 	}
 
 	static openHowToSell(event)
@@ -1015,6 +1005,10 @@ export class Manager
 		}
 
 		let sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
+		if (!sliderOptions.hasOwnProperty('width'))
+		{
+			sliderOptions.width = 1140;
+		}
 
 		return new Promise((resolve, reject) =>
 		{

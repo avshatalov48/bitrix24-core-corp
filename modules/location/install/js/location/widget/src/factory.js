@@ -1,4 +1,4 @@
-import {BaseSource, LocationRepository, SourceCreationError, Format} from 'location.core';
+import {BaseSource, LocationRepository, SourceCreationError, Format, Location} from 'location.core';
 
 import {OSMFactory} from 'location.osm';
 
@@ -51,13 +51,15 @@ export type FactoryCreateAddressWidgetProps = {
 	 * manual - allow to control open / close map
 	 */
 	mapBehavior: 'auto' | 'manual',
+	popupOptions?: {},
 	popupBindOptions: {
 		forceBindPosition?: boolean,
 		forceLeft?: boolean,
 		forceTop?: boolean,
 		position?: 'right' | 'top' | 'bootom'
 	},
-	presetLocationList?: Array
+	presetLocationsProvider?: Function,
+	presetLocationList?: []
 };
 
 /**
@@ -76,13 +78,18 @@ export default class Factory
 		const sourceParams = props.sourceParams || BX.message('LOCATION_WIDGET_SOURCE_PARAMS');
 		const languageId = props.languageId || BX.message('LOCATION_WIDGET_LANGUAGE_ID');
 		const sourceLanguageId = props.sourceLanguageId || BX.message('LOCATION_WIDGET_SOURCE_LANGUAGE_ID');
+		const userLocation = new Location(JSON.parse(BX.message('LOCATION_WIDGET_USER_LOCATION')));
 
 		const addressFormat = props.addressFormat || new Format(
 			JSON.parse(
 				BX.message('LOCATION_WIDGET_DEFAULT_FORMAT')
 			));
 
-		let presetLocationList = props.presetLocationList || [];
+		const presetLocationsProvider = props.presetLocationsProvider
+			? props.presetLocationsProvider
+			: () => {
+				return props.presetLocationList ? props.presetLocationList : [];
+			};
 
 		const features = [];
 
@@ -114,6 +121,7 @@ export default class Factory
 			}
 		}
 
+		let mapFeature = null;
 		if(source)
 		{
 			if(!props.useFeatures || props.useFeatures.autocomplete !== false)
@@ -122,42 +130,61 @@ export default class Factory
 					this.createAutocompleteFeature({
 						languageId,
 						addressFormat,
-						source
+						source,
+						userLocation: userLocation,
+						presetLocationsProvider,
 					}));
 			}
 
 			if(!props.useFeatures || props.useFeatures.map !== false)
 			{
-				const showPhotos = (sourceParams.hasOwnProperty('showPhotos') && sourceParams.showPhotos === true);
-				const useGeocodingService = (sourceParams.hasOwnProperty('useGeocodingService') && sourceParams.useGeocodingService === true);
-
+				const showPhotos = !!sourceParams.showPhotos;
+				const useGeocodingService = !!sourceParams.useGeocodingService;
 				const DEFAULT_THUMBNAIL_HEIGHT = 80;
 				const DEFAULT_THUMBNAIL_WIDTH = 150;
 				const DEFAULT_MAX_PHOTO_COUNT = showPhotos ? 5 : 0;
 				const DEFAULT_MAP_BEHAVIOR = 'auto';
 
-				features.push(
-					this.createMapFeature({
-						addressFormat,
-						source,
-						popupBindOptions: props.popupBindOptions,
-						thumbnailHeight: props.thumbnailHeight || DEFAULT_THUMBNAIL_HEIGHT,
-						thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
-						maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
-						mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
-						useGeocodingService,
-					}));
+				mapFeature = this.createMapFeature({
+					addressFormat,
+					source,
+					useGeocodingService,
+					popupOptions: props.popupOptions,
+					popupBindOptions: props.popupBindOptions,
+					thumbnailHeight: props.thumbnailHeight || DEFAULT_THUMBNAIL_HEIGHT,
+					thumbnailWidth: props.thumbnailWidth || DEFAULT_THUMBNAIL_WIDTH,
+					maxPhotoCount: props.maxPhotoCount || DEFAULT_MAX_PHOTO_COUNT,
+					mapBehavior: props.mapBehavior || DEFAULT_MAP_BEHAVIOR,
+					userLocation: userLocation
+				});
+
+				features.push(mapFeature);
 			}
 		}
 
-		return new Address({
+		const widget = new Address({
 			features,
 			address: props.address,
 			mode: props.mode,
 			addressFormat,
 			languageId,
-			presetLocationList
 		});
+
+		if(mapFeature)
+		{
+			widget.subscribeOnFeatureEvent((event) => {
+				const data = event.getData();
+
+				if(data.feature instanceof AutocompleteFeature
+					&& data.eventCode === AutocompleteFeature.showOnMapClickedEvent
+				)
+				{
+					mapFeature.showMap();
+				}
+			});
+		}
+
+		return widget;
 	}
 
 	createFieldsFeature(props: {}): FieldsFeature
@@ -175,9 +202,12 @@ export default class Factory
 	createAutocompleteFeature(props: {}): AutocompleteFeature
 	{
 		const autocomplete = new Autocomplete({
+			sourceCode: props.source.sourceCode,
 			languageId: props.languageId,
 			addressFormat: props.addressFormat,
 			autocompleteService: props.source.autocompleteService,
+			userLocation: props.userLocation,
+			presetLocationsProvider: props.presetLocationsProvider,
 		});
 
 		return new AutocompleteFeature({
@@ -187,14 +217,19 @@ export default class Factory
 
 	createMapFeature(props: {}): MapFeature
 	{
-		const popup = new Popup({
+		let popupOptions = {
 			cacheable: true,
 			closeByEsc: true,
-			className: 'location-popup-window',
+			className: `location-popup-window location-source-${props.source.sourceCode}`,
 			animation: 'fading',
 			angle: true,
 			bindOptions: props.popupBindOptions
-		});
+		};
+		if(props.popupOptions)
+		{
+			popupOptions = Object.assign(popupOptions, props.popupOptions);
+		}
+		const popup = new Popup(popupOptions);
 
 		let gallery = null;
 
@@ -215,7 +250,8 @@ export default class Factory
 				popup: popup,
 				gallery: gallery,
 				locationRepository: new LocationRepository(),
-				geocodingService: props.useGeocodingService ? props.source.geocodingService : null
+				geocodingService: props.useGeocodingService ? props.source.geocodingService : null,
+				userLocation: props.userLocation
 			})
 		};
 

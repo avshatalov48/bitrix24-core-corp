@@ -23,9 +23,21 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
+		$status = (int)$task->getStatus();
+		$isDirector = $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR);
+		$isResponsible = $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE);
+		$isAccomplice = $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_ACCOMPLICE);
+
 		if (
-			!in_array($task->getStatus(), [\CTasks::STATE_COMPLETED, \CTasks::STATE_DEFERRED])
+			$status === \CTasks::STATE_SUPPOSEDLY_COMPLETED
+			&& !$isDirector
+			&& ($isResponsible || $isAccomplice)
 		)
+		{
+			return true;
+		}
+
+		if (!in_array($status, [\CTasks::STATE_COMPLETED, \CTasks::STATE_DEFERRED], true))
 		{
 			return false;
 		}
@@ -35,11 +47,7 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
-		if (
-			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			|| $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
-			|| $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_ACCOMPLICE)
-		)
+		if ($isDirector || $isResponsible || $isAccomplice)
 		{
 			return true;
 		}

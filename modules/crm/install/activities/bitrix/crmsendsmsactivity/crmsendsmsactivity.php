@@ -152,6 +152,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		$dialog->setMap(array(
 			'MessageText' => array(
 				'Name' => GetMessage('CRM_SSMSA_MESSAGE_TEXT'),
+				'Description' => GetMessage('CRM_SSMSA_MESSAGE_TEXT'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
 				'Required' => true

@@ -126,7 +126,7 @@ $userMenuSectionsOption = CUserOptions::GetOption("bitrix24", "user_menu_section
 //admin option (items were added to favorite by admin)
 $adminFavoriteOption = COption::GetOptionString("bitrix24", "admin_menu_items");
 if ($adminFavoriteOption)
-	$adminFavoriteOption = unserialize($adminFavoriteOption);
+	$adminFavoriteOption = unserialize($adminFavoriteOption, ["allowed_classes" => false]);
 
 //user menu option
 $userMenuOption = CUserOptions::GetOption("bitrix24", $optionNameUserMenu);

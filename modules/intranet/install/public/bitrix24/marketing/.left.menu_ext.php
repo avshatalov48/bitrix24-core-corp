@@ -84,7 +84,7 @@ if (
 	);
 }
 
-if (\Bitrix\Sender\Security\Access::current()->canViewLetters())
+if (\Bitrix\Sender\Security\Access::current()->canViewTemplates())
 {
 	$aMenuLinks[] = Array(
 		GetMessage('SERVICES_MENU_MARKETING_TEMPLATES'),

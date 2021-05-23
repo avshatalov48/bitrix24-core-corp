@@ -34,7 +34,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return true;
 	}
 
-	public function showPasswordsAction()
+	public function appPasswordsAction()
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_PASSWORDS_TITLE"),
@@ -47,7 +47,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showSecurityAction()
+	public function otpAction()
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"),
@@ -61,7 +61,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showOtpConnectedAction($userId)
+	public function otpConnectedAction($userId)
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"),
@@ -75,7 +75,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showRecoveryCodesAction($componentMode = "")
+	public function recoveryCodesAction($componentMode = "")
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_RECOVERY_CODES_TITLE"),
@@ -90,7 +90,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showSynchronizeAction()
+	public function synchronizeAction()
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SYNCHRONIZE_TITLE"),
@@ -104,7 +104,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showSocnetEmailAction($userId)
+	public function socnetEmailAction($userId)
 	{
 		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SOCNET_EMAIL_TITLE"),
@@ -118,7 +118,7 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 
-	public function showAuthAction($userId)
+	public function authAction($userId)
 	{
 		if (ModuleManager::isModuleInstalled("bitrix24"))
 		{
@@ -147,5 +147,17 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 
 			return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 		}
+	}
+
+	public function mailingAgreementAction()
+	{
+		$additionalParams = [
+			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_MAILING_TITLE"),
+		];
+		$componentName = 'bitrix:bitrix24.mailing.agreement';
+
+		$params = [];
+
+		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 	}
 }

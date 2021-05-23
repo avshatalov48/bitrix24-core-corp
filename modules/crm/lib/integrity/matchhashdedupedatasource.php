@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integrity;
+use Bitrix\Crm\Integrity\Entity\AutomaticDuplicateIndexTable;
 use Bitrix\Main;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 
 abstract class MatchHashDedupeDataSource extends DedupeDataSource
 {
@@ -61,10 +63,21 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 		return  is_array($fields) && isset($fields['QTY']) ? (int)$fields['QTY'] : 0;
 	}
 
+
+	public function getDuplicateByMatchHash(string $matchHash): ?Duplicate
+	{
+		$result = $this->getListInternal(['=MATCH_HASH' => $matchHash],0, 1);
+		return $result->getItem($matchHash);
+	}
+
 	/**
 	* @return DedupeDataSourceResult
 	*/
 	public function getList($offset, $limit)
+	{
+		return $this->getListInternal([], $offset, $limit);
+	}
+	protected function getListInternal(array $filter, $offset, $limit)
 	{
 		$result = new DedupeDataSourceResult();
 
@@ -74,7 +87,9 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 		$scope = $this->getScope();
 		//$userID = $this->getUserID();
 
-		$query = new Main\Entity\Query(Entity\DuplicateEntityMatchHashTable::getEntity());
+		$query = Entity\DuplicateEntityMatchHashTable::query();
+
+		$query->setFilter($filter);
 
 		$query->addSelect('MATCH_HASH');
 		$query->addGroup('MATCH_HASH');
@@ -86,6 +101,16 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 
 		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeID);
 		$query->addFilter('=TYPE_ID', $typeID);
+
+		if ($this->params->getIndexDate())
+		{
+			$query->registerRuntimeField('',
+				new Main\Entity\ExpressionField('MAX_HASH_DATE_MODIFY',
+					new Main\DB\SqlExpression('MAX(?#.?#)', $query->getInitAlias(), 'DATE_MODIFY')
+				)
+			);
+			$query->addFilter('>=MAX_HASH_DATE_MODIFY', $this->params->getIndexDate()->format("Y-m-d H:i:s"));
+		}
 
 		$permissionSql = '';
 		if($enablePermissionCheck)
@@ -100,6 +125,30 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 			{
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
+		}
+		// process only dirty items which already existed into automatic index:
+		if ($this->params->limitByDirtyIndexItems())
+		{
+			$query->registerRuntimeField('', new Reference(
+				'MATCH_HASH_DIRTY_INDEX',
+				AutomaticDuplicateIndexTable::class,
+				[
+					'=this.MATCH_HASH' => 'ref.MATCH_HASH',
+					'=this.ENTITY_TYPE_ID' => 'ref.ENTITY_TYPE_ID',
+					'=this.TYPE_ID' => 'ref.TYPE_ID',
+					'=ref.USER_ID' => new Main\DB\SqlExpression('?i', $this->getUserID()),
+					'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', $this->getEntityTypeID()),
+					'=ref.SCOPE' => new Main\DB\SqlExpression('?s', $this->getScope()),
+					'=ref.IS_DIRTY' => new Main\DB\SqlExpression('?s', 'Y'),
+				],
+				['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
+			));
+		}
+
+		// in automatic mode we are looking for items assigned to current user only:
+		if ($this->params->limitByAssignedUser())
+		{
+			$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
 		}
 
 		if ($scope === DuplicateIndexType::DEFAULT_SCOPE)
@@ -183,6 +232,12 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 					$query->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
 				}
 
+				// in automatic mode we are looking for items assigned to current user only:
+				if ($this->params->limitByAssignedUser())
+				{
+					$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
+				}
+
 				$query->setOffset(0);
 				$query->setLimit(100);
 
@@ -245,6 +300,12 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 				$query->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
 			}
 
+			// in automatic mode we are looking for items assigned to current user only:
+			if ($this->params->limitByAssignedUser())
+			{
+				$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
+			}
+
 			$dbResult = $query->exec();
 			while($fields = $dbResult->fetch())
 			{
@@ -286,6 +347,29 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 		}
 
 		$this->prepareResult($map, $result);
+
+		if ($this->params->limitByAssignedUser())
+		{
+			foreach ($result->getItems() as $duplicate)
+			{
+				/** @var $duplicate Duplicate */
+				$criterion = $duplicate->getCriterion();
+				/** @var $criterion DuplicateCriterion */
+				if ($criterion)
+				{
+					$criterion->setLimitByAssignedUser(true);
+				}
+				$entities = $duplicate->getEntities();
+				foreach ($entities as $entity)
+				{
+					/** @var $entity DuplicateEntity */
+					if ($entity->getCriterion())
+					{
+						$entity->getCriterion()->setLimitByAssignedUser(true);
+					}
+				}
+			}
+		}
 
 		return $result;
 	}

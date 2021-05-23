@@ -5,6 +5,7 @@ BX.Crm.KanbanComponent.currentPopup = null;
 BX.Crm.KanbanComponent.currentData = null;
 BX.Crm.KanbanComponent.successClosePopup = false;
 BX.Crm.KanbanComponent.dropConfirmed = false;
+BX.Crm.KanbanComponent.activePopups = {};
 
 /**
  * Return item to the last position and dec/inc price in column.
@@ -20,7 +21,7 @@ BX.Crm.KanbanComponent.returnItem = function(item)
 
 	data.columnId = lastPosition.columnId;
 	data.targetId = lastPosition.targetId;
-	
+
 	// dec in column and inc in last column
 	item.getColumn().decPrice(price);
 	grid.getColumn(data.columnId).incPrice(price);
@@ -36,9 +37,7 @@ BX.Crm.KanbanComponent.returnItem = function(item)
  */
 BX.Crm.KanbanComponent.clearPopup = function(containerId)
 {
-	var fields = BX.findChild(BX(containerId), {
-		className: "crm-kanban-popup-field"
-	}, true, true);
+	var fields = BX(containerId).querySelectorAll('[data-field]');
 
 	if (fields && fields.length > 0)
 	{
@@ -57,9 +56,7 @@ BX.Crm.KanbanComponent.clearPopup = function(containerId)
  */
 BX.Crm.KanbanComponent.collectFieldsPopup = function(containerId)
 {
-	var fields = BX.findChild(BX(containerId), {
-		className: "crm-kanban-popup-field"
-	}, true, true);
+	var fields = BX(containerId).querySelectorAll('[data-field]');
 	var post = {};
 
 	if (fields && fields.length > 0)
@@ -86,6 +83,11 @@ BX.Crm.KanbanComponent.collectFieldsPopup = function(containerId)
  */
 BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerType)
 {
+	if (BX.Crm.KanbanComponent.activePopups[containerId])
+	{
+		return;
+	}
+
 	if (containerId === "crm_kanban_lead_win")
 	{
 		var itemData = handlerData.item.getData();
@@ -150,7 +152,7 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
 								if (handlerType.toLowerCase() === "column")
 								{
 									var grid = handlerData.item.getGrid();
-									
+
 									grid.setAjaxParams(
 										this.collectFieldsPopup(containerId)
 									);
@@ -167,7 +169,7 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
 									var item = handlerData.getItem();
 									var grid = item.getGrid();
 									var dropZone = handlerData.getDropZone();
-									
+
 									grid.setAjaxParams(
 										this.collectFieldsPopup(containerId)
 									);
@@ -200,6 +202,7 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
 			]
 		}
 	);
+	BX.Crm.KanbanComponent.activePopups[containerId] = true;
 	this.clearPopup(containerId);
 	this.currentPopup.setContent(BX(containerId));
 	this.currentPopup.setTitleBar(BX.data(BX(containerId), "title"));
@@ -221,7 +224,7 @@ BX.Crm.KanbanComponent.leadConvert = function(schema)
 	}
 
 	var id = data.item.getId();
-	
+
 	this.successClosePopup = true;
 	this.currentPopup.close();
 
@@ -244,8 +247,8 @@ BX.Crm.KanbanComponent.leadConvert = function(schema)
 	else
 	{
 		BX.CrmLeadConverter.getCurrent().convert(
-			id, 
-			BX.CrmLeadConversionScheme.createConfig(schema), 
+			id,
+			BX.CrmLeadConversionScheme.createConfig(schema),
 			""
 		);
 	}
@@ -273,7 +276,7 @@ BX.Crm.KanbanComponent.columnPopup = function(data)
 
 		// show popup on lead
 		if (
-			columnData.type === "WIN" && 
+			columnData.type === "WIN" &&
 			gridData.entityType === "LEAD"
 		)
 		{
@@ -298,7 +301,7 @@ BX.Crm.KanbanComponent.columnPopup = function(data)
 };
 
 /**
- * Handler on drop item to the dropZone. 
+ * Handler on drop item to the dropZone.
  * @param {BX.CRM.Kanban.Grid} grid
  * @param {BX.Kanban.DropZoneEvent} dropEvent
  * @returns {void}
@@ -365,6 +368,7 @@ BX.Crm.KanbanComponent.dropPopup = function(grid, dropEvent)
  */
 BX.Crm.KanbanComponent.onPopupClose = function(popupWindow)
 {
+	BX.Crm.KanbanComponent.activePopups[popupWindow.uniquePopupId] = false;
 	// detect lead converter cancel (second step)
 	if (
 		popupWindow &&

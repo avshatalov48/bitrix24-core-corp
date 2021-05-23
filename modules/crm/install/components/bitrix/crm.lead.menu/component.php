@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 	return;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Sender\Rc;
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
@@ -338,9 +339,7 @@ if($arParams['TYPE'] === 'list')
 	if ($bExport)
 	{
 		$entityType = \CCrmOwnerType::LeadName;
-		$stExportId = 'STEXPORT_'.$entityType.'_MANAGER';
-		$randomSequence = new \Bitrix\Main\Type\RandomSequence($stExportId);
-		$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+		$stExportId = 'EXPORT_'.$entityType;
 		$componentName = 'bitrix:crm.lead.list';
 
 		$componentParams = array(
@@ -362,49 +361,64 @@ if($arParams['TYPE'] === 'list')
 			}
 		}
 
-		$arResult['STEXPORT_PARAMS'] = array(
-			'componentName' => $componentName,
-			'siteId' => SITE_ID,
-			'entityType' => $entityType,
-			'stExportId' => $stExportId,
-			'managerId' => $stExportManagerId,
-			'sToken' => 's'.time(),
-			'initialOptions' => array(
+		$arResult['EXPORT_CSV_PARAMS'] = [
+			'id' => $stExportId. '_CSV',
+			'controller' => 'bitrix:crm.api.export',
+			'queue' => [
+				[
+					'action' => 'dispatcher',
+				],
+			],
+			'params' => [
+				'SITE_ID' => SITE_ID,
+				'ENTITY_TYPE' => $entityType,
+				'EXPORT_TYPE' => 'csv',
+				'COMPONENT_NAME' => $componentName,
+				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+					$componentName,
+					$componentParams
+				),
+			],
+			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(
 					'name' => 'EXPORT_ALL_FIELDS',
 					'type' => 'checkbox',
-					'title' => GetMessage('LEAD_EXPORT_OPTION_EXPORT_ALL_FIELDS'),
+					'title' => Loc::getMessage('LEAD_EXPORT_OPTION_EXPORT_ALL_FIELDS'),
 					'value' => 'N'
 				),
 				'EXPORT_PRODUCT_FIELDS' => array(
 					'name' => 'EXPORT_PRODUCT_FIELDS',
 					'type' => 'checkbox',
-					'title' => GetMessage('LEAD_EXPORT_OPTION_EXPORT_PRODUCT_FIELDS'),
+					'title' => Loc::getMessage('LEAD_EXPORT_OPTION_EXPORT_PRODUCT_FIELDS'),
 					'value' => 'N'
 				),
 			),
-			'componentParams' => \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			'messages' => array(
-				'stExportExcelDlgTitle' => GetMessage('LEAD_EXPORT_EXCEL_TITLE'),
-				'stExportExcelDlgSummary' => GetMessage('LEAD_EXPORT_SUMMARY'),
-				'stExportCsvDlgTitle' => GetMessage('LEAD_EXPORT_CSV_TITLE'),
-				'stExportCsvDlgSummary' => GetMessage('LEAD_EXPORT_SUMMARY')
-			)
-		);
+				'DialogTitle' => Loc::getMessage('LEAD_EXPORT_CSV_TITLE'),
+				'DialogSummary' => Loc::getMessage('LEAD_EXPORT_SUMMARY'),
+			),
+			'dialogMaxWidth' => 650,
+		];
+
+		// clone params for excel export
+		$arResult['EXPORT_EXCEL_PARAMS'] = $arResult['EXPORT_CSV_PARAMS'];
+		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
+		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
+		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('LEAD_EXPORT_EXCEL_TITLE');
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('LEAD_EXPORT_CSV_TITLE'),
-			'TEXT' => GetMessage('LEAD_EXPORT_CSV'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('csv')",
+			'TITLE' => Loc::getMessage('LEAD_EXPORT_CSV_TITLE'),
+			'TEXT' => Loc::getMessage('LEAD_EXPORT_CSV'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('LEAD_EXPORT_EXCEL_TITLE'),
-			'TEXT' => GetMessage('LEAD_EXPORT_EXCEL'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('excel')",
+			'TITLE' => Loc::getMessage('LEAD_EXPORT_EXCEL_TITLE'),
+			'TEXT' => Loc::getMessage('LEAD_EXPORT_EXCEL'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
@@ -418,14 +432,26 @@ if($arParams['TYPE'] === 'list')
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
 		{
-			$dedupePath = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
-				? $arParams['PATH_TO_LEAD_DEDUPEWIZARD']
-				: $arParams['PATH_TO_LEAD_DEDUPE'];
+			$dedupePath = CComponentEngine::MakePathFromTemplate(
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
+					? $arParams['PATH_TO_LEAD_DEDUPEWIZARD']
+					: $arParams['PATH_TO_LEAD_DEDUPE']
+			);
 
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('LEAD_DEDUPE'),
 				'TITLE' => GetMessage('LEAD_DEDUPE_TITLE'),
-				'LINK' => CComponentEngine::MakePathFromTemplate($dedupePath, array())
+				'ONCLICK' => 'BX.Crm.Page.openSlider("'.$dedupePath.'", {cacheable: false})'
+			);
+			$arResult['BUTTONS'][] = array(
+				'TEXT' => GetMessage('LEAD_DEDUPE_AUTOSEARCH'),
+				'TITLE' => GetMessage('LEAD_DEDUPE_AUTOSEARCH'),
+				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("LEAD").showSettings()'
+			);
+			$arResult['BUTTONS'][] = array(
+				'HTML' => GetMessage('LEAD_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',
+				'TITLE' => GetMessage('LEAD_DEDUPE_HELP'),
+				'ONCLICK' => 'BX.Helper.show("redirect=detail&code=10649014")'
 			);
 		}
 		else
@@ -436,7 +462,19 @@ if($arParams['TYPE'] === 'list')
 				'ONCLICK' => $restriction->prepareInfoHelperScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
+			$arResult['BUTTONS'][] = array(
+				'TEXT' => GetMessage('LEAD_DEDUPE_AUTOSEARCH'),
+				'TITLE' => GetMessage('LEAD_DEDUPE_AUTOSEARCH'),
+				'ONCLICK' => $restriction->prepareInfoHelperScript(),
+				'MENU_ICON' => 'grid-lock'
+			);
+			$arResult['BUTTONS'][] = array(
+				'HTML' => GetMessage('LEAD_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',
+				'TITLE' => GetMessage('LEAD_DEDUPE_HELP'),
+				'ONCLICK' => 'BX.Helper.show("redirect=detail&code=10649014")'
+			);
 		}
+		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
 	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))

@@ -74,6 +74,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	private $enableSearchHistory = true;
 	/** @var array */
 	private $defaultEntityData = [];
+	/** @var bool */
+	private $isLocationModuleIncluded = false;
 
 	public function __construct($component = null)
 	{
@@ -120,6 +122,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		global $APPLICATION;
 
 		$this->enableOutmodedFields = false;//\Bitrix\Crm\Settings\ContactSettings::getCurrent()->areOutmodedRequisitesEnabled();
+		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
 
 		//region Params
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
@@ -965,16 +968,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							)
 						)
 					),
-					'clientEditorFieldsParams' => [
-						CCrmOwnerType::ContactName => [
-							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite'),
-							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address'),
-						],
-						CCrmOwnerType::CompanyName => [
-							'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite'),
-							'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address'),
-						]
-					]
+					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams()
 				)
 			),
 			array(
@@ -1940,5 +1934,24 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	protected function getFileUrlTemplate(): string
 	{
 		return '/bitrix/components/bitrix/crm.contact.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
+	}
+
+	protected function prepareClientEditorFieldsParams(): array
+	{
+		$result = [
+			CCrmOwnerType::ContactName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
+			],
+			CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
+			]
+		];
+		if ($this->isLocationModuleIncluded)
+		{
+			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
+			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
+		}
+
+		return $result;
 	}
 }

@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Localization\Loc;
 
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
@@ -12,128 +13,134 @@ use Bitrix\Main\Web\Uri;
 
 $request = Context::getCurrent()->getRequest();
 
-if ($arResult["showAll"] == "Y")
+if ($arResult["showAll"] === "Y")
 {
-	$menuItems = array();
+	$menuItems = [];
 
 	if($arResult["PATH_TO_MINE"] <> '')
 	{
 		$link = $arResult["PATH_TO_MINE"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		$menuItems[] = array(
-			"TEXT" => GetMessage("BLOG_MENU_MINE"),
-			"TITLE" => GetMessage("BLOG_MENU_MINE_TITLE"),
+		$menuItems[] = [
+			"TEXT" => Loc::getMessage("BLOG_MENU_MINE"),
+			"TITLE" => Loc::getMessage("BLOG_MENU_MINE_TITLE"),
 			"URL" => $link,
 			"ID" => "view_mine",
-			"IS_ACTIVE" => $arResult["page"] == "mine",
-		);
+			"IS_ACTIVE" => $arResult["page"] === "mine",
+		];
 	}
 
-	if($arResult["show4Me"] == "Y")
+	if($arResult["show4Me"] === "Y")
 	{
 		$link = $arResult["PATH_TO_4ME"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		$menuItems[] = array(
-			"TEXT" => GetMessage("BLOG_MENU_4ME"),
-			"TITLE" => GetMessage("BLOG_MENU_4ME_TITLE"),
+		$menuItems[] = [
+			"TEXT" => Loc::getMessage("BLOG_MENU_4ME"),
+			"TITLE" => Loc::getMessage("BLOG_MENU_4ME_TITLE"),
 			"URL" => $link,
 			"ID" => "view_for_me",
-			"IS_ACTIVE" => $arResult["page"] == "forme",
-		);
+			"IS_ACTIVE" => $arResult["page"] === "forme",
+		];
 	}
 
-	if ($arResult["urlToDraft"] <> '' && intval($arResult["CntToDraft"]) > 0)
+	if (
+		$arResult["urlToDraft"] <> ''
+		&& (int)$arResult["CntToDraft"] > 0
+	)
 	{
 		$link = $arResult["urlToDraft"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		$menuItems[] = array(
-			"TEXT" => GetMessage("BLOG_MENU_DRAFT_MESSAGES"),
+		$menuItems[] = [
+			"TEXT" => Loc::getMessage("BLOG_MENU_DRAFT_MESSAGES"),
 			"URL" => $link,
 			"ID" => "view_draft",
-			"IS_ACTIVE" => $arResult["page"] == "draft",
-		);
+			"IS_ACTIVE" => $arResult["page"] === "draft",
+		];
 	}
 
-	if ($arResult["urlToModeration"] <> '' && intval($arResult["CntToModerate"]) > 0)
+	if (
+		$arResult["urlToModeration"] <> ''
+		&& (int)$arResult["CntToModerate"] > 0
+	)
 	{
 		$link = $arResult["urlToModeration"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		$menuItems[] = array(
-			"TEXT" => GetMessage("BLOG_MENU_MODERATION_MESSAGES"),
+		$menuItems[] = [
+			"TEXT" => Loc::getMessage("BLOG_MENU_MODERATION_MESSAGES"),
 			"URL" => $link,
 			"ID" => "view_moderation",
-			"IS_ACTIVE" => $arResult["page"] == "moderation",
-		);
+			"IS_ACTIVE" => $arResult["page"] === "moderation",
+		];
 	}
 
 	if (
 		$arResult["urlToTags"] <> ''
-		&& intval($arResult["CntTags"]) > 0
+		&& (int)$arResult["CntTags"] > 0
 	)
 	{
 		$link = $arResult["urlToTags"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		$menuItems[] = array(
-			"TEXT" => GetMessage("BLOG_MENU_TAGS"),
+		$menuItems[] = [
+			"TEXT" => Loc::getMessage("BLOG_MENU_TAGS"),
 			"URL" => $link,
 			"ID" => "view_tags",
-			"IS_ACTIVE" => $arResult["page"] == "tags",
-		);
+			"IS_ACTIVE" => $arResult["page"] === "tags",
+		];
 	}
 
 	if (
 		!empty($menuItems)
 		&& (
-			$arResult["show4MeAll"] == "Y"
-			|| $arResult["showAll"] == "Y"
+			$arResult["show4MeAll"] === "Y"
+			|| $arResult["showAll"] === "Y"
 		)
 	)
 	{
 		$link = $arResult["PATH_TO_4ME_ALL"];
-		if ($request->get('IFRAME') == 'Y')
+		if ($request->get('IFRAME') === 'Y')
 		{
 			$uri = new Uri($link);
-			$uri->addParams(array("IFRAME" => "Y"));
+			$uri->addParams([ "IFRAME" => "Y" ]);
 			$link = $uri->getUri();
 		}
 
-		array_unshift($menuItems, array(
-			"TEXT" => GetMessage("BLOG_MENU_4ME_ALL"),
-			"TITLE" => GetMessage("BLOG_MENU_4ME_ALL_TITLE"),
+		array_unshift($menuItems, [
+			"TEXT" => Loc::getMessage("BLOG_MENU_4ME_ALL"),
+			"TITLE" => Loc::getMessage("BLOG_MENU_4ME_ALL_TITLE"),
 			"URL" => $link,
 			"ID" => "view_4me_all",
-			"IS_ACTIVE" => $arResult["page"] == "all",
-		));
+			"IS_ACTIVE" => $arResult["page"] === "all",
+		]);
 	}
 
 	$this->SetViewTarget("above_pagetitle", 150);
@@ -142,11 +149,11 @@ if ($arResult["showAll"] == "Y")
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.interface.buttons",
 		"",
-		array(
+		[
 			"ID" => $menuId,
 			"ITEMS" => $menuItems,
 			"DISABLE_SETTINGS" => true
-		)
+		]
 	);
 
 	$this->EndViewTarget();

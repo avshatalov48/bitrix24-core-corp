@@ -177,7 +177,16 @@ $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/t
 	<script>
 		window.reloadAjaxImconnector = function(urlReload, idReload)
 		{
-			parent.window.opener.BX.ajax.insertToNode(urlReload, idReload);
+			if(
+				parent &&
+				parent.window &&
+				parent.window.opener &&
+				parent.window.opener.BX &&
+				parent.window.opener.BX.ajax
+			)
+			{
+				parent.window.opener.BX.ajax.insertToNode(urlReload, idReload);
+			}
 			window.close();
 		};
 		reloadAjaxImconnector(<?=CUtil::PhpToJSObject($arResult['URL_RELOAD'])?>, <?=CUtil::PhpToJSObject('comp_' . $arResult['RELOAD'])?>);

@@ -438,7 +438,7 @@ class OrderController extends EntityController
 		if($typeID === TimelineType::CREATION)
 		{
 			$data['TITLE'] = Loc::getMessage('CRM_ORDER_CREATION');
-			$title = htmlspecialcharsbx($data['ASSOCIATED_ENTITY']['TITLE']);
+			$title = htmlspecialcharsbx(\CUtil::JSEscape($data['ASSOCIATED_ENTITY']['TITLE']));
 			if (!empty($fields['DATE_INSERT_TIMESTAMP']))
 			{
 				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp($fields['DATE_INSERT_TIMESTAMP'],'SHORT'));

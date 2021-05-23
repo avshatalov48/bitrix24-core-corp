@@ -12,10 +12,8 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Integration\Forum\Task\UserTopic;
-use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Rest\Controllers\Base;
-use Bitrix\Tasks\Util\User;
 
 /**
  * Class Comment
@@ -104,111 +102,33 @@ class Comment extends Base
 	 * @throws SqlQueryException
 	 * @throws SystemException
 	 */
-	public function readAllAction($groupId = null, $userId = null): bool
+	public function readAllAction($groupId = null, $userId = null, string $role = null): bool
 	{
 		$currentUserId = (int)CurrentUser::get()->getId();
 
-		$userId = ((int)$userId === $currentUserId ? 0 : (int)$userId);
 		$groupId = (int)$groupId;
 
-		if ($groupId && $userId)
-		{
-			return false;
-		}
-
+		$groupCondition = '';
 		if ($groupId)
 		{
-			return $this->readAllForGroupAction($groupId);
+			$groupCondition = "AND T.GROUP_ID = {$groupId}";
 		}
 
-		return $this->readAllForUserAction($userId);
-	}
+		$userJoin = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$currentUserId}";
 
-	/**
-	 * @param $userId
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws ArgumentTypeException
-	 * @throws LoaderException
-	 * @throws ObjectPropertyException
-	 * @throws SqlQueryException
-	 * @throws SystemException
-	 */
-	public function readAllForUserAction($userId): bool
-	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-		$userId = ((int)$userId === $currentUserId ? 0 : (int)$userId);
-
-		if ($userId)
+		if (
+			$role
+			&& array_key_exists($role, Counter\Role::ROLE_MAP)
+			&& Counter\Role::ROLE_MAP[$role]
+		)
 		{
-			$userJoin = "INNER JOIN b_tasks_member TMT ON TMT.TASK_ID = T.ID AND TMT.USER_ID = {$userId}";
-			if (!User::isSuper($currentUserId) && !User::isBossRecursively($currentUserId, $userId))
-			{
-				$userJoin .= "\nINNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$currentUserId}";
-			}
-		}
-		else
-		{
-			$userJoin = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$currentUserId}";
+			$userJoin .= " AND TM.TYPE = '". Counter\Role::ROLE_MAP[$role] ."'";
 		}
 
-		$this->onBeforeReadAll($currentUserId);
-		$this->readAll($currentUserId, $userJoin);
-		$this->onAfterReadAll($currentUserId);
-
-		return true;
-	}
-
-	/**
-	 * @param $groupId
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws ArgumentTypeException
-	 * @throws LoaderException
-	 * @throws ObjectPropertyException
-	 * @throws SqlQueryException
-	 * @throws SystemException
-	 */
-	public function readAllForGroupAction($groupId): bool
-	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-		$groupId = (int)$groupId;
-
-		if (!$groupId)
-		{
-			return false;
-		}
-
-		$userJoin = "";
-		$groupCondition = "AND T.GROUP_ID = {$groupId}";
-
-		if (!Group::can($groupId, Group::ACTION_VIEW_ALL_TASKS, $currentUserId))
-		{
-			if (!Group::can($groupId, Group::ACTION_VIEW_OWN_TASKS, $currentUserId))
-			{
-				return false;
-			}
-
-			$userJoin = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$currentUserId}";
-		}
-
-		$this->onBeforeReadAll($currentUserId, $groupId);
 		$this->readAll($currentUserId, $userJoin, $groupCondition);
-		$this->onAfterReadAll($currentUserId, $groupId);
+		$this->onAfterReadAll($currentUserId, $groupId, Counter\Role::ROLE_MAP[$role]);
 
 		return true;
-	}
-
-	/**
-	 * @param int $userId
-	 * @param int $groupId
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	public function onBeforeReadAll(int $userId, int $groupId = 0): void
-	{
-
 	}
 
 	/**
@@ -218,7 +138,7 @@ class Comment extends Base
 	 * @throws ArgumentTypeException
 	 * @throws SqlQueryException
 	 */
-	public function readAll(int $userId, string $userJoin, string $groupCondition = ''): void
+	private function readAll(int $userId, string $userJoin, string $groupCondition = ''): void
 	{
 		UserTopic::onReadAll($userId, $userJoin, $groupCondition);
 		$this->runReadAllSqlRequests($userId, $userJoin, $groupCondition);
@@ -233,7 +153,7 @@ class Comment extends Base
 	 * @throws SqlQueryException
 	 * @throws SystemException
 	 */
-	public function onAfterReadAll(int $userId, int $groupId = 0): void
+	private function onAfterReadAll(int $userId, int $groupId = 0, $role = null): void
 	{
 		Comments\Task::onAfterCommentsReadAll($userId, $groupId);
 
@@ -241,7 +161,8 @@ class Comment extends Base
 			Counter\CounterDictionary::EVENT_AFTER_COMMENTS_READ_ALL,
 			[
 				'USER_ID' => $userId,
-				'GROUP_ID' => $groupId
+				'GROUP_ID' => $groupId,
+				'ROLE' => $role
 			]
 		);
 	}

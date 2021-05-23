@@ -42,6 +42,7 @@ $MESS["TASKS_STATUS_4"] = "Ждет контроля";
 $MESS["TASKS_STATUS_5"] = "Завершена";
 $MESS["TASKS_STATUS_6"] = "Отложена";
 $MESS["TASKS_STATUS_7"] = "Отклонена";
+$MESS["TASKS_STATUS_8"] = "Завершена в активном спринте";
 $MESS["TASKS_PRIORITY"] = "Важность";
 $MESS["TASKS_PRIORITY_1"] = "Нет";
 $MESS["TASKS_PRIORITY_2"] = "Да";
@@ -61,8 +62,9 @@ $MESS["TASKS_FILTER_DATE_START"] = "Дата начала";
 $MESS["TASKS_FILTER_START_DATE_PLAN"] = "Планируемая дата начала";
 $MESS["TASKS_FILTER_END_DATE_PLAN"] = "Планируемая дата завершения";
 $MESS["TASKS_FILTER_COMMENT"] = "Комментарий";
+$MESS["TASKS_FILTER_EPIC"] = "Эпик";
 
-
+$MESS["TASKS_PRESET_MY"] = "Мои";
 $MESS["TASKS_PRESET_I_DO"] = "Делаю";
 $MESS["TASKS_PRESET_I_ACCOMPLICES"] = "Помогаю";
 $MESS["TASKS_PRESET_I_ORIGINATOR"] = "Поручил";

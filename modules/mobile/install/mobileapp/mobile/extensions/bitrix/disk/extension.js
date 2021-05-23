@@ -169,7 +169,12 @@ include("InAppNotifier");
 						{
 							if(item.params.contentType === "image")
 							{
-								this.showImageCollection(item.params.url)
+								if(event === "onSearchItemSelected") {
+									viewer.openImage(item.params.url, item.title);
+								}
+								else {
+									this.showImageCollection(item.params.url)
+								}
 							}
 							else
 							{
@@ -1150,7 +1155,26 @@ include("InAppNotifier");
 
 		showRecentResults()
 		{
-			this.list.setSearchResultItems(this.lastSearchItems, [
+			const prepared = this.lastSearchItems.map(item => {
+				item.type = 'info'
+				item.height = 64
+				item.styles = {
+					image: {
+						image: {borderRadius: 0}
+					},
+					title: {
+						font: {
+							color: "#333333",
+							size: 17,
+							fontStyle: "medium"
+						}
+					}
+				}
+
+				return item;
+			})
+
+			this.list.setSearchResultItems(prepared, [
 				{
 					id: "files",
 					title: this.lastSearchItems.length > 0 ? BX.message("RECENT_SEARCH") : ""

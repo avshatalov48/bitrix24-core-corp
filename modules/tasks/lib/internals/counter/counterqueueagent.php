@@ -22,7 +22,7 @@ class CounterQueueAgent
 		self::$processing = true;
 
 		$queue = CounterQueue::getInstance();
-		$rows = $queue->get(Counter::STEP_LIMIT);
+		$rows = $queue->get(CounterProcessor::STEP_LIMIT);
 
 		if (empty($rows))
 		{
@@ -33,7 +33,7 @@ class CounterQueueAgent
 		foreach ($rows as $row)
 		{
 			$userId = (int) $row['USER_ID'];
-			Counter::getInstance($userId)->recount($row['TYPE'], $row['TASKS']);
+			(new CounterProcessor($userId))->recount($row['TYPE'], $row['TASKS']);
 		}
 
 		$queue->done();

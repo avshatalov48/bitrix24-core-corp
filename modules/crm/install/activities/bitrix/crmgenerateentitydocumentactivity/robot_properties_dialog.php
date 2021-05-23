@@ -13,15 +13,15 @@ $selected = $dialog->getCurrentValue($template['FieldName']);
 \Bitrix\Main\Localization\Loc::loadMessages(__DIR__.'/properties_dialog.php');
 
 ?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($template['Name'])?>: </span>
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($template['Name'])?>: </span>
 	<?if(empty($template['Options']))
 	{
 		?><b style="color: #ff5752;"><?=GetMessage('CRM_GEDA_NO_TEMPLATES');?></b><?
 	}
 	else
 	{?>
-	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($template['FieldName'])?>" id="id_template_id">
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($template['FieldName'])?>" id="id_template_id">
 		<?foreach ($template['Options'] as $value => $optionLabel):?>
 			<option value="<?=htmlspecialcharsbx($value)?>"
 				<?=($value == $selected) ? ' selected' : ''?>
@@ -31,29 +31,29 @@ $selected = $dialog->getCurrentValue($template['FieldName']);
 	<?}
 	?>
 </div>
-<div class="crm-automation-popup-settings">
-	<label class="crm-automation-popup-chk-label">
-		<input type="checkbox" name="<?=$map['UseSubscription']['FieldName'];?>" value="Y" class="crm-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['UseSubscription']['FieldName']) != 'Y' ? '' : ' checked');?>>
+<div class="bizproc-automation-popup-settings">
+	<label class="bizproc-automation-popup-chk-label">
+		<input type="checkbox" name="<?=$map['UseSubscription']['FieldName'];?>" value="Y" class="bizproc-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['UseSubscription']['FieldName']) != 'Y' ? '' : ' checked');?>>
 		<?=htmlspecialcharsbx($map['UseSubscription']['Name'])?>
 	</label>
 </div>
-<div class="crm-automation-popup-settings">
-    <label class="crm-automation-popup-chk-label">
-        <input type="checkbox" name="<?=$map['WithStamps']['FieldName'];?>" value="Y" class="crm-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['WithStamps']['FieldName']) != 'Y' ? '' : ' checked');?>>
+<div class="bizproc-automation-popup-settings">
+    <label class="bizproc-automation-popup-chk-label">
+        <input type="checkbox" name="<?=$map['WithStamps']['FieldName'];?>" value="Y" class="bizproc-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['WithStamps']['FieldName']) != 'Y' ? '' : ' checked');?>>
 		<?=htmlspecialcharsbx($map['WithStamps']['Name'])?>
     </label>
 </div>
-<div class="crm-automation-popup-settings">
-    <label class="crm-automation-popup-chk-label">
-        <input type="checkbox" name="<?=$map['EnablePublicUrl']['FieldName'];?>" value="Y" class="crm-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['EnablePublicUrl']['FieldName']) != 'Y' ? '' : ' checked');?>>
+<div class="bizproc-automation-popup-settings">
+    <label class="bizproc-automation-popup-chk-label">
+        <input type="checkbox" name="<?=$map['EnablePublicUrl']['FieldName'];?>" value="Y" class="bizproc-automation-popup-chk"<?echo ($dialog->getCurrentValue($map['EnablePublicUrl']['FieldName']) != 'Y' ? '' : ' checked');?>>
 		<?=htmlspecialcharsbx($map['EnablePublicUrl']['Name'])?>
     </label>
 </div>
 <?php
 foreach($selectFieldNames as $fieldName): ?>
-    <div class="crm-automation-popup-settings">
-        <span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($map[$fieldName]['Name'])?>: </span>
-        <select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>" id="id_<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>">
+    <div class="bizproc-automation-popup-settings">
+        <span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($map[$fieldName]['Name'])?>: </span>
+        <select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>" id="id_<?=htmlspecialcharsbx($map[$fieldName]['FieldName'])?>">
             <option value=""></option>
             <?php
 			$map[$fieldName]['Options'] = $map[$fieldName]['Options'] ?? [];
@@ -67,10 +67,10 @@ foreach($selectFieldNames as $fieldName): ?>
     <?php
 endforeach;
 ?>
-<div class="crm-automation-popup-settings" id="add_new_field_tr">
+<div class="bizproc-automation-popup-settings" id="add_new_field_tr">
 	<h3><?=GetMessage('BPGEDA_PROP_DIALOG_TEMPLATE_FIELDS');?></h3>
-	<span class="crm-automation-popup-settings-title"><?=GetMessage('BPGEDA_PROP_DIALOG_ADD_FIELD');?>: </span>
-	<select class="crm-automation-popup-settings-dropdown" id="add_new_field_select" style="max-width: 400px;">
+	<span class="bizproc-automation-popup-settings-title"><?=GetMessage('BPGEDA_PROP_DIALOG_ADD_FIELD');?>: </span>
+	<select class="bizproc-automation-popup-settings-dropdown" id="add_new_field_select" style="max-width: 400px;">
 		<option value=""></option>
 		<?
 		if(isset($map['Values']) && isset($map['Values']['TemplateFields']) && is_array($map['Values']['TemplateFields']))
@@ -98,7 +98,7 @@ endforeach;
 	{
 		foreach($values as $name => $value)
 		{?>
-			<div class="crm-automation-popup-settings bp-geda-fields-tr">
+			<div class="bizproc-automation-popup-settings bp-geda-fields-tr">
 				<?=\CBPCrmGenerateEntityDocumentActivity::renderValuePropertyDialog(true, $providerClassName, $name, $map['Values']['TemplateFields'][$name], $value);?>
 			</div>
 		<?}
@@ -120,7 +120,7 @@ endforeach;
 				deleteRowClassName: 'bizproc-automation-popup-settings-delete',
 				openFieldInfoUrlClassName: 'bp-geda-fields-link',
 				addNewFieldButtonNodeId: 'add_new_field_button',
-				fieldTableRowClassName: 'crm-automation-popup-settings',
+				fieldTableRowClassName: 'bizproc-automation-popup-settings',
 				fieldTableRowTagName: 'div',
 				isRobot: true,
 			});

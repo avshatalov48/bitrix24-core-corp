@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
+use Bitrix\Main\UI\PageNavigation;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -43,6 +44,10 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 	private $entityIDs = null;
 	/** @var array */
 	private $entityInfos = null;
+	/** @var bool */
+	private $isAutomatic = false;
+
+	protected $navParamName = 'page';
 
 	public function __construct($component = null)
 	{
@@ -57,7 +62,11 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 	{
 		if($this->indexedTypeScopeMap === null)
 		{
-			$this->indexedTypeScopeMap = Crm\Integrity\DuplicateIndexBuilder::getExistedTypeScopeMap($this->entityTypeID, $this->userID);
+			$this->indexedTypeScopeMap = Crm\Integrity\DuplicateManager::getExistedTypeScopeMap(
+				$this->entityTypeID,
+				$this->userID,
+				$this->isAutomatic
+			);
 		}
 
 		return $this->indexedTypeScopeMap;
@@ -75,14 +84,19 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 
 	protected function prepareEntityInfos()
 	{
-		$this->entityInfos = [];
-		if($this->entityIDs !== null)
+		$this->entityInfos = $this->loadEntityInfos($this->entityIDs);
+		$this->arResult['ENTITY_INFOS'] = $this->entityInfos;
+	}
+	protected function loadEntityInfos($entityIds)
+	{
+		$entityInfos = [];
+		if($entityIds !== null)
 		{
-			foreach($this->entityIDs as $entityID)
+			foreach($entityIds as $entityID)
 			{
-				if(!isset($this->entityInfos[$entityID]))
+				if(!isset($entityInfos[$entityID]))
 				{
-					$this->entityInfos[$entityID] = array();
+					$entityInfos[$entityID] = array();
 				}
 			}
 
@@ -97,21 +111,26 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 				$entityInfoOptions[$this->layoutID === CCrmOwnerType::Company ? 'TREAT_AS_COMPANY' : 'TREAT_AS_CONTACT'] = true;
 			}
 
-			\CCrmOwnerType::PrepareEntityInfoBatch($this->entityTypeID, $this->entityInfos, $this->enablePermissionCheck, $entityInfoOptions);
+			\CCrmOwnerType::PrepareEntityInfoBatch($this->entityTypeID, $entityInfos, $this->enablePermissionCheck, $entityInfoOptions);
+
+			foreach($entityInfos as $entityID => $entityInfo)
+			{
+				$entityInfos[$entityID]['IS_VALID'] = !empty($entityInfo);
+			}
 
 			$multiFieldResult = \CCrmFieldMulti::GetList(
 				array('ID' => 'asc'),
-				array('ENTITY_ID' => $this->entityTypeName, 'ELEMENT_ID' => array_keys($this->entityInfos))
+				array('ENTITY_ID' => $this->entityTypeName, 'ELEMENT_ID' => array_keys($entityInfos))
 			);
 			while($multiField = $multiFieldResult->Fetch())
 			{
 				$entityID = $multiField['ELEMENT_ID'];
 				$key = $multiField['COMPLEX_ID'];
-				if(!isset($this->entityInfos[$entityID][$key]))
+				if(!isset($entityInfos[$entityID][$key]))
 				{
-					$this->entityInfos[$entityID][$key] = [];
+					$entityInfos[$entityID][$key] = [];
 				}
-				$this->entityInfos[$entityID][$key][] = $multiField['VALUE'];
+				$entityInfos[$entityID][$key][] = $multiField['VALUE'];
 			}
 
 			if($this->scope !== Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE)
@@ -134,16 +153,16 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 						$typeName = Crm\Integrity\DuplicateIndexType::resolveName($typeID);
 						if(($typeID & Crm\Integrity\DuplicateIndexType::REQUISITE) === $typeID)
 						{
-							Crm\EntityRequisite::prepareEntityInfoBatch($this->entityTypeID, $this->entityInfos, $scope, $typeName);
+							Crm\EntityRequisite::prepareEntityInfoBatch($this->entityTypeID, $entityInfos, $scope, $typeName);
 						}
 						elseif(($typeID & Crm\Integrity\DuplicateIndexType::BANK_DETAIL) === $typeID)
 						{
-							Crm\EntityBankDetail::prepareEntityInfoBatch($this->entityTypeID, $this->entityInfos, $scope, $typeName);
+							Crm\EntityBankDetail::prepareEntityInfoBatch($this->entityTypeID, $entityInfos, $scope, $typeName);
 						}
 					}
 				}
 			}
-			$this->arResult['ENTITY_INFOS'] = $this->entityInfos;
+			return $entityInfos;
 		}
 	}
 
@@ -203,39 +222,56 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 			? (int)$this->arParams['~ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
 		$this->entityTypeName = $this->arResult['ENTITY_TYPE_NAME'] = CCrmOwnerType::ResolveName($this->entityTypeID);
 
-		$this->scope = isset($this->arParams['~SCOPE']) ? $this->arParams['~SCOPE'] : $this->request->get('scope');
-		if(!is_string($this->scope))
-		{
-			$this->scope = Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
-		}
+		$this->isAutomatic = ($this->request->get('is_automatic') === 'yes');
 
-		$selectedTypes = isset($this->arParams['~TYPES']) ? $this->arParams['~TYPES'] : $this->request->get('types');
-		if(!empty($selectedTypes))
+		$progressData = null;
+		if ($this->isAutomatic)
 		{
-			$this->selectedTypes = Crm\Integrity\DuplicateIndexType::splitType($selectedTypes);
+			$autosearchSettings = \Bitrix\Crm\Integrity\AutoSearchUserSettings::getForUserByEntityType($this->entityTypeID, $this->userID);
+			if ($autosearchSettings && $autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING)
+			{
+				$progressData = $autosearchSettings->getProgressData();
+				$this->scope = $progressData['CURRENT_SCOPE'];
+				$this->selectedTypes = $progressData['TYPE_IDS'];
+			}
 		}
 		else
 		{
-			$typeNames = $this->request->get('typeNames');
-			$typeNames = is_string($typeNames) ? explode(',', $typeNames) : [];
-			$this->selectedTypes = array_map(['\Bitrix\Crm\Integrity\DuplicateIndexType', 'resolveID'], $typeNames);
-		}
+			$this->scope = isset($this->arParams['~SCOPE']) ? $this->arParams['~SCOPE'] : $this->request->get('scope');
 
-		if(empty($this->selectedTypes))
-		{
-			$this->selectedTypes = [
-				Crm\Integrity\DuplicateIndexType::COMMUNICATION_PHONE,
-				Crm\Integrity\DuplicateIndexType::COMMUNICATION_EMAIL
-			];
-
-			if($this->entityTypeID === CCrmOwnerType::Company)
+			$selectedTypes = isset($this->arParams['~TYPES']) ? $this->arParams['~TYPES'] : $this->request->get('types');
+			if (!empty($selectedTypes))
 			{
-				$this->selectedTypes[] = Crm\Integrity\DuplicateIndexType::ORGANIZATION;
+				$this->selectedTypes = Crm\Integrity\DuplicateIndexType::splitType($selectedTypes);
 			}
 			else
 			{
-				$this->selectedTypes[] = Crm\Integrity\DuplicateIndexType::PERSON;
+				$typeNames = $this->request->get('typeNames');
+				$typeNames = is_string($typeNames) ? explode(',', $typeNames) : [];
+				$this->selectedTypes = array_map(['\Bitrix\Crm\Integrity\DuplicateIndexType', 'resolveID'], $typeNames);
 			}
+
+			if (empty($this->selectedTypes))
+			{
+				$this->selectedTypes = [
+					Crm\Integrity\DuplicateIndexType::COMMUNICATION_PHONE,
+					Crm\Integrity\DuplicateIndexType::COMMUNICATION_EMAIL
+				];
+
+				if ($this->entityTypeID === CCrmOwnerType::Company)
+				{
+					$this->selectedTypes[] = Crm\Integrity\DuplicateIndexType::ORGANIZATION;
+				}
+				else
+				{
+					$this->selectedTypes[] = Crm\Integrity\DuplicateIndexType::PERSON;
+				}
+			}
+		}
+
+		if (!is_string($this->scope))
+		{
+			$this->scope = Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
 		}
 		//endregion
 
@@ -288,7 +324,7 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 			$this->arResult['HEADERS'][] = [
 				'id' => 'ORGANIZATION',
 				'name' => Loc::getMessage('CRM_DEDUPE_GRID_COL_ORGANIZATION'),
-				'sort' => 'organization',
+				'sort' => false,
 				'default' => true,
 				'shift' => true,
 				'extras' => [
@@ -302,7 +338,7 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 			$this->arResult['HEADERS'][] = [
 				'id' => 'PERSON',
 				'name' => Loc::getMessage('CRM_DEDUPE_GRID_COL_PERSON'),
-				'sort' => 'person',
+				'sort' => false,
 				'default' => true,
 				'shift' => true,
 				'extras' => [
@@ -322,7 +358,7 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 		$this->arResult['HEADERS'][] = [
 			'id' => 'PHONE',
 			'name' => Loc::getMessage('CRM_DEDUPE_GRID_COL_PHONE'),
-			'sort' => 'communication_phone',
+			'sort' => false,
 			'default' => true,
 			'extras' => [
 				'sortTypeId' => Crm\Integrity\DuplicateIndexType::COMMUNICATION_PHONE,
@@ -333,7 +369,7 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 		$this->arResult['HEADERS'][] = [
 			'id' => 'EMAIL',
 			'name' => Loc::getMessage('CRM_DEDUPE_GRID_COL_EMAIL'),
-			'sort' => 'communication_email',
+			'sort' => false,
 			'default' => true,
 			'extras' => [
 				'sortTypeId' => Crm\Integrity\DuplicateIndexType::COMMUNICATION_EMAIL,
@@ -348,39 +384,6 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 			'default' => true
 		];
 
-		if($this->scope !== Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE)
-		{
-			$typeDescriptions = Crm\Integrity\DuplicateIndexType::getAllDescriptions();
-			foreach($this->typeScopeMap as $typeID => $scopes)
-			{
-				if(($typeID & Crm\Integrity\DuplicateIndexType::REQUISITE) === 0
-					&& ($typeID & Crm\Integrity\DuplicateIndexType::BANK_DETAIL) === 0)
-				{
-					continue;
-				}
-
-				foreach($scopes as $scope)
-				{
-					if ($scope !== $this->scope)
-					{
-						continue;
-					}
-
-					$name = Crm\Integrity\DuplicateIndexType::resolveName($typeID);
-					$this->arResult['HEADERS'][] =[
-						'id' => $name,
-						'name' => isset($typeDescriptions[$typeID][$scope]) ? $typeDescriptions[$typeID][$scope] : $name,
-						'sort' => mb_strtolower($name),
-						'extras' => [
-							'sortTypeId' => $typeID,
-							'typeId' => $typeID,
-							'scope' => $scope
-						]
-					];
-				}
-			}
-		}
-
 		$gridOptions = new Main\Grid\Options($this->guid);
 		//Suppress processing of expanded rows
 		$gridOptions->setExpandedRows([]);
@@ -393,36 +396,13 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 		$this->arResult['SORT'] = $gridSorting['sort'];
 		$this->arResult['SORT_VARS'] = $gridSorting['vars'];
 
-		$sortTypeID = Crm\Integrity\DuplicateIndexType::UNDEFINED;
-		$sortOrder = SORT_ASC;
-		if(!empty($this->arResult['SORT']))
-		{
-			$sortBy = array_keys($this->arResult['SORT'])[0];
-			$sortTypeID= Crm\Integrity\DuplicateIndexType::resolveID($sortBy);
-			$sortOrder = strcasecmp($this->arResult['SORT'][$sortBy], 'DESC') ? SORT_DESC : SORT_ASC;
-		}
-
-		if($sortTypeID === Crm\Integrity\DuplicateIndexType::UNDEFINED)
-		{
-			$sortTypeID = $this->layoutID === CCrmOwnerType::Company
-				? Crm\Integrity\DuplicateIndexType::ORGANIZATION : Crm\Integrity\DuplicateIndexType::PERSON;
-		}
-
-		$gridNavParams = $gridOptions->GetNavParams([ 'nPageSize' => 10 ]);
+		$gridNavParams = $gridOptions->GetNavParams();
 		$gridNavParams['bShowAll'] = false;
 		if(isset($gridNavParams['nPageSize']) && $gridNavParams['nPageSize'] > 100)
 		{
 			$gridNavParams['nPageSize'] = 100;
 		}
-
-		$pageNum = (int)$this->request->get('page');
-		if($pageNum <= 0)
-		{
-			$pageNum = 1;
-		}
-
 		$itemsPerPage = $gridNavParams['nPageSize'];
-		$enableNextPage = false;
 
 		$this->entityIDs = [];
 		if (Main\Grid\Context::isInternalRequest() &&
@@ -451,13 +431,13 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 			$items = null;
 			if(!empty($this->selectedTypes))
 			{
-				$list = new Crm\Integrity\DuplicateList(
+				$list = \Bitrix\Crm\Integrity\DuplicateListFactory::create(
+					$this->isAutomatic,
 					Crm\Integrity\DuplicateIndexType::joinType($this->selectedTypes),
 					$this->entityTypeID,
 					$this->userID,
 					$this->enablePermissionCheck
 				);
-
 				$list->setScope($this->scope);
 				$list->setMatchHash($this->matchHash);
 
@@ -506,37 +486,36 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 				}
 			}
 		}
+		elseif ($this->isAutomatic && !($autosearchSettings &&
+			$autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING))
+		{
+			// empty list
+		}
 		else
 		{
-			$list = new Crm\Integrity\DuplicateList(
+			$list = \Bitrix\Crm\Integrity\DuplicateListFactory::create(
+				$this->isAutomatic,
 				Crm\Integrity\DuplicateIndexType::joinType($this->selectedTypes),
 				$this->entityTypeID,
 				$this->userID,
 				$this->enablePermissionCheck
 			);
-
 			$list->setScope($this->scope);
-			if(Crm\Integrity\DuplicateIndexType::isSingle($sortTypeID))
-			{
-				$list->setSortTypeID($sortTypeID);
-			}
-			$list->setSortOrder($sortOrder);
+			$list->enableNaturalSort(true);
 
-			$items = $list->getRootItems(($pageNum - 1) * $itemsPerPage, $itemsPerPage + 1);
-			if(count($items) > $itemsPerPage)
-			{
-				$enableNextPage = true;
-				array_pop($items);
-			}
+			$totalRowsCount = $list->getRootItemCount();
+			$this->arResult['TOTAL_ROWS_COUNT'] = $totalRowsCount;
 
-			$this->arResult['PAGINATION'] = [
-				'PAGE_NUM' => $pageNum,
-				'ENABLE_NEXT_PAGE' => $enableNextPage,
-				'URL' => $APPLICATION->GetCurPageParam(
-					'',
-					[ 'apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal' ]
-				)
+			$nav = $this->getPageNavigation($totalRowsCount, $itemsPerPage);
+			$this->arResult['NAV_OBJECT'] = $nav;
+			$this->arResult['NAV_PARAMS'] = [
+				'SHOW_ALWAYS' => false,
+				'BASE_LINK' => $APPLICATION->GetCurPageParam(
+					'', ['apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'])
 			];
+			$this->arResult['NAV_PARAM_NAME'] = $this->navParamName;
+
+			$items = $list->getRootItems(($nav->getCurrentPage() - 1) * $itemsPerPage, $itemsPerPage);
 
 			/** @var Bitrix\Crm\Integrity\Duplicate $item **/
 			foreach($items as $item)
@@ -544,6 +523,49 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 				$this->entityIDs[] = $item->getRootEntityID();
 			}
 			$this->prepareEntityInfos();
+
+			$invalidEntityIds = [];
+			foreach ($this->entityIDs as $entityID)
+			{
+				if (!$this->entityInfos[$entityID] ||
+					!$this->entityInfos[$entityID]['IS_VALID'])
+				{
+					$invalidEntityIds[] = $entityID;
+				}
+			}
+
+			if (!empty($invalidEntityIds))
+			{
+				$extraEntityIds = [];
+				/** @var Bitrix\Crm\Integrity\Duplicate $item */
+				foreach ($items as $itemIndex => $item)
+				{
+					if (in_array($item->getRootEntityID(), $invalidEntityIds))
+					{
+						$criterion = $item->getCriterion();
+
+						$items[$itemIndex] = $this
+							->getDuplicateIndexBuilder($criterion->getIndexTypeID())
+							->buildDuplicateByMatchHash($criterion->getMatchHash());
+
+						if (!$items[$itemIndex])
+						{
+							unset($items[$itemIndex]);
+						}
+						else
+						{
+							$this->entityIDs[] = $items[$itemIndex]->getRootEntityID();
+							$extraEntityIds[] = $items[$itemIndex]->getRootEntityID();
+						}
+					}
+				}
+				if (!empty($extraEntityIds))
+				{
+					$extraEntityInfos = $this->loadEntityInfos($extraEntityIds);
+					$this->entityInfos += $extraEntityInfos;
+					$this->arResult['ENTITY_INFOS'] = $this->entityInfos;
+				}
+			}
 
 			$this->arResult['ROW_DATA'] = [];
 			foreach($items as $item)
@@ -574,5 +596,43 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 		}
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function getPageNavigation(int $totalCount, int $pageSize): PageNavigation
+	{
+		$pageNavigation = new PageNavigation($this->navParamName);
+		$pageNavigation
+			->allowAllRecords(false)
+			->setPageSize($pageSize)
+			->setRecordCount($totalCount)
+			->initFromUri();
+
+		return $pageNavigation;
+	}
+
+	protected function getDuplicateIndexBuilder($typeID)
+	{
+		if ($this->isAutomatic)
+		{
+			$builder = Crm\Integrity\DuplicateManager::createAutomaticIndexBuilder(
+				$typeID,
+				$this->entityTypeID,
+				$this->userID,
+				$this->enablePermissionCheck,
+				array('SCOPE' => $this->scope)
+			);
+		}
+		else
+		{
+			$builder = Crm\Integrity\DuplicateManager::createIndexBuilder(
+				$typeID,
+				$this->entityTypeID,
+				$this->userID,
+				$this->enablePermissionCheck,
+				array('SCOPE' => $this->scope)
+			);
+		}
+
+		return $builder;
 	}
 }

@@ -249,10 +249,46 @@
 
 		processUsersResult: function(result)
 		{
+			var requestReaction = null;
+
+			if (
+				BX.type.isNotEmptyObject(result.query)
+				&& BX.type.isNotEmptyString(result.query.data)
+			)
+			{
+				result.query.data.split('&').forEach(function(pair) {
+					var chunks = pair.split('=');
+					if (chunks.length === 2)
+					{
+						var key = chunks[0];
+						var value = chunks[1];
+						if (
+							BX.type.isNotEmptyString(key)
+							&& key === 'REACTION'
+						)
+						{
+							requestReaction = value;
+						}
+
+					}
+				});
+			}
+
+			if (
+				requestReaction !== null
+				&& this.currentReaction !== requestReaction
+				&& !(
+					this.currentReaction === 'all'
+					&& requestReaction === ''
+				)
+			)
+			{
+				return;
+			}
+
 			this.blockScrollRequest = false;
-			var
-				usersData = result.data(),
-				contentNode = BX('like-result-content');
+			var usersData = result.data();
+			var contentNode = BX('like-result-content');
 
 			if (!contentNode)
 			{

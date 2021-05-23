@@ -1179,7 +1179,7 @@ class CCrmSaleHelper
 			);
 			while ($data = $dbRes->Fetch())
 			{
-				$params = unserialize($data['SR_PARAMS']);
+				$params = unserialize($data['SR_PARAMS'], ['allowed_classes' => false]);
 				foreach ($params['PERSON_TYPE_ID'] as $key => $id)
 				{
 					if (isset($map[$id]))

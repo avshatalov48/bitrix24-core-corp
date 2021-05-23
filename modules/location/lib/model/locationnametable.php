@@ -45,8 +45,7 @@ class LocationNameTable extends Main\ORM\Data\DataManager
 				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(1, 1000)),
 
 			(new Fields\StringField('NAME_NORMALIZED'))
-				->configureRequired(true)
-				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(1, 1000)),
+				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(null, 1000)),
 
 			// Ref
 

@@ -26,29 +26,25 @@ if (!$selectedRecipientType)
 	}
 }
 ?>
-<div class="crm-automation-popup-settings">
-	<textarea name="<?=htmlspecialcharsbx($messageText['FieldName'])?>"
-			class="crm-automation-popup-textarea"
-			placeholder="<?=htmlspecialcharsbx($messageText['Name'])?>"
-			data-role="inline-selector-target"
-	><?=htmlspecialcharsbx($dialog->getCurrentValue($messageText['FieldName'], ''))?></textarea>
-	<div class="crm-automation-popup-sms-symbol-counter"><?=GetMessage("CRM_SSMSA_SMS_SYMBOLS")?><?
-		?><span class="crm-automation-popup-sms-symbol-counter-number" data-role="sms-length-counter">0</span><?
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($messageText)?>
+	<div class="bizproc-automation-popup-sms-symbol-counter"><?=GetMessage("CRM_SSMSA_SMS_SYMBOLS")?><?
+		?><span class="bizproc-automation-popup-sms-symbol-counter-number" data-role="sms-length-counter">0</span><?
 		?><?=GetMessage("CRM_SSMSA_SMS_SYMBOLS_FROM")?><?
-		?><span class="crm-automation-popup-sms-symbol-counter-number">200</span>
+		?><span class="bizproc-automation-popup-sms-symbol-counter-number">200</span>
 	</div>
 </div>
 <? if ($selectedRecipientType === CBPCrmSendSmsActivity::RECIPIENT_TYPE_USER):?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title crm-automation-popup-settings-title-autocomplete">
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 		<?=htmlspecialcharsbx($recipientUser['Name'])?>:
 	</span>
 	<?=$dialog->renderFieldControl($recipientUser)?>
 </div>
 <?else:?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($phoneType['Name'])?>:</span>
-	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($phoneType['FieldName'])?>">
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($phoneType['Name'])?>:</span>
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($phoneType['FieldName'])?>">
 		<?foreach ($phoneType['Options'] as $value => $optionLabel):?>
 			<option value="<?=htmlspecialcharsbx($value)?>"
 				<?=($value == $phoneTypeValue) ? ' selected' : ''?>
@@ -57,15 +53,15 @@ if (!$selectedRecipientType)
 	</select>
 </div>
 <?endif;?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title crm-automation-popup-settings-title-top"><?=htmlspecialcharsbx($providerId['Name'])?>:</span>
-	<div class="crm-automation-popup-select crm-automation-popup-select-margin-down-s">
-		<div data-role="provider-label" class="crm-automation-popup-settings-dropdown-flexible crm-automation-popup-settings-dropdown"><?=GetMessage('CRM_SSMSA_RPD_CHOOSE_PROVIDER')?></div>
-		<a data-role="provider-manage-url" href="" class="crm-automation-popup-settings-button-right crm-automation-popup-settings-button" style="visibility: hidden" target="_blank"><?=GetMessage('CRM_SSMSA_RPD_PROVIDER_MANAGE_URL')?></a>
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-top"><?=htmlspecialcharsbx($providerId['Name'])?>:</span>
+	<div class="bizproc-automation-popup-select bizproc-automation-popup-select-margin-down-s">
+		<div data-role="provider-label" class="bizproc-automation-popup-settings-dropdown-flexible bizproc-automation-popup-settings-dropdown"><?=GetMessage('CRM_SSMSA_RPD_CHOOSE_PROVIDER')?></div>
+		<a data-role="provider-manage-url" href="" class="bizproc-automation-popup-settings-button-right bizproc-automation-popup-settings-button" style="visibility: hidden" target="_blank"><?=GetMessage('CRM_SSMSA_RPD_PROVIDER_MANAGE_URL')?></a>
 		<input type="hidden" name="<?=htmlspecialcharsbx($providerId['FieldName'])?>" value="<?=htmlspecialcharsbx($selectedProviderId)?>">
 		<input type="hidden" name="<?=htmlspecialcharsbx($map['MessageFrom']['FieldName'])?>" value="<?=htmlspecialcharsbx($selectedMessageFrom)?>">
 	</div>
-	<div data-role="provider-notice" class="crm-automation-popup-settings-alert" style="display: none"
+	<div data-role="provider-notice" class="bizproc-automation-popup-settings-alert" style="display: none"
 		data-text-demo="<?=htmlspecialcharsbx(GetMessage('CRM_SSMSA_RPD_PROVIDER_IS_DEMO'))?>"
 		data-text-cantuse="<?=htmlspecialcharsbx(GetMessage('CRM_SSMSA_RPD_PROVIDER_CANT_USE'))?>"></div>
 </div>
@@ -238,7 +234,7 @@ if (!$selectedRecipientType)
 				element,
 				menuItems,
 				{
-					zIndex: 200,
+					overlay: { backgroundColor: 'transparent' },
 					autoHide: true,
 					offsetLeft: 40,
 					angle: { position: 'top', offset: 0 },
@@ -256,7 +252,7 @@ if (!$selectedRecipientType)
 			var hasVariables = (origLength !== textLength);
 			smsLengthCounter.innerHTML = hasVariables ?  '&asymp;' + textLength : textLength;
 			var classFn = (!hasVariables && origLength >= 200) ? 'addClass' : 'removeClass';
-			BX[classFn](smsLengthCounter, 'crm-automation-popup-sms-symbol-counter-number-overhead');
+			BX[classFn](smsLengthCounter, 'bizproc-automation-popup-sms-symbol-counter-number-overhead');
 		};
 
 		BX.bind(textareaNode, 'bxchange', updateSmsCounter.bind(textareaNode));

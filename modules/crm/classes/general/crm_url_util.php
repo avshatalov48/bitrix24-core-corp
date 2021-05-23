@@ -175,7 +175,7 @@ class CCrmCallToUrl
 		}
 
 		$s = COption::GetOptionString('crm', 'callto_custom_settings', '');
-		return (self::$CUSTOM_SETTINGS = $s !== '' ? unserialize($s) : array());
+		return (self::$CUSTOM_SETTINGS = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : array());
 	}
 
 	public static function SetCustomSettings($settings)

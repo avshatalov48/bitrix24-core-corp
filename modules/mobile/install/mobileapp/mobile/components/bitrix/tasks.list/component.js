@@ -458,7 +458,7 @@ include('InAppNotifier');
 			this.setCounterValue(this.cache.get().counterValue || 0);
 			this.setVisualCounters();
 
-			BX.addCustomEvent('onAppData', () => this.updateCounters());
+			ChatReadyCheck.wait().then(() => this.updateCounters());
 		}
 
 		updateCounters()
@@ -955,198 +955,6 @@ include('InAppNotifier');
 		}
 	}
 
-	class UserList
-	{
-		static getFormattedName(userData = {})
-		{
-			let name = `${userData.NAME || ''} ${userData.LAST_NAME || ''}`;
-			if (name.trim() === '')
-			{
-				name = userData.EMAIL;
-			}
-
-			return name;
-		}
-
-		constructor(list, responsible, currentUser, handlers)
-		{
-			this.responsible = responsible;
-			this.currentUser = currentUser;
-			this.handlers = handlers;
-
-			this.request = new Request('user.');
-			this.users = new Map();
-			this.usersSort = [];
-			this.cache = Cache.getInstance('tasks.user.list');
-
-			if (!this.loadUsersFromCache())
-			{
-				this.loadUsersFromComponent();
-			}
-
-			this.onUserTypeText = Util.debounce((event) => {
-				if (event.text.length <= 2)
-				{
-					this.loadUsersFromCache();
-					this.list.setItems(this.getList());
-					return;
-				}
-
-				this.list.setItems([{type: 'loading', title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS')}]);
-
-				this.request.call('search', {
-					IMAGE_RESIZE: 'small',
-					SORT: 'LAST_NAME',
-					ORDER: 'ASC',
-					FILTER: {
-						ACTIVE: 'Y',
-						NAME_SEARCH: event.text,
-					},
-				}).then(
-					(response) => {
-						let userList = [];
-
-						if (response.result.length)
-						{
-							userList = response.result.map(item => ({
-								id: item.ID,
-								title: UserList.getFormattedName(item),
-								imageUrl: encodeURI(item.PERSONAL_PHOTO),
-								color: '#5D5C67',
-								useLetterImage: true,
-								sectionCode: 'default',
-							}));
-						}
-						else
-						{
-							userList.push({
-								id: 0,
-								title: BX.message('TASKS_LIST_SEARCH_EMPTY_RESULT'),
-								sectionCode: 'default',
-								type: 'button',
-								unselectable: true,
-							});
-						}
-
-						this.list.setItems(userList);
-					},
-					response => console.log(response)
-				);
-			}, 1000, this);
-
-			list.showUserList(
-				{
-					title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
-					limit: 1, // TODO
-					items: this.getList(),
-					sections: [{id: 'default'}],
-				},
-				(userList) => {
-					this.list = userList;
-					this.list.setListener((event, data) => {
-						const eventHandlers = {
-							onRecipientsReceived: this.onRecipientsReceived,
-							onUserTypeText: this.onUserTypeText,
-						};
-						console.log(`Fire event: ${event}`);
-						if (eventHandlers[event])
-						{
-							eventHandlers[event].apply(this, [data]);
-						}
-					});
-				}
-			);
-		}
-
-		loadUsersFromCache()
-		{
-			const cacheData = this.cache.get();
-			if (cacheData && cacheData.list && cacheData.sort)
-			{
-				cacheData.list.forEach((item) => {
-					if (item.id && this.users.size < 50)
-					{
-						this.users.set(item.id.toString(), item);
-					}
-				});
-				this.usersSort = cacheData.sort;
-
-				return true;
-			}
-
-			return false;
-		}
-
-		loadUsersFromComponent()
-		{
-			const {userList} = result;
-
-			Object.values(userList).forEach((user) => {
-				if (this.users.size < 50)
-				{
-					this.usersSort.push(String(user.id));
-					this.users.set(String(user.id), {
-						id: user.id,
-						title: user.name,
-						imageUrl: user.icon,
-						color: '#f0f0f0',
-						useLetterImage: true,
-						sectionCode: 'default',
-					});
-				}
-			});
-
-			this.saveCache();
-		}
-
-		saveCache()
-		{
-			this.cache.set({
-				list: [...this.users.values()],
-				sort: this.usersSort,
-			});
-		}
-
-		getList()
-		{
-			const users = [];
-
-			this.usersSort.forEach((row) => {
-				users.push(this.users.get(row));
-			});
-
-			return users;
-		}
-
-		onRecipientsReceived(items)
-		{
-			const user = items[0];
-
-			if (this.handlers.onSelect && user.id)
-			{
-				const userId = user.id.toString();
-
-				if (!this.users.has(userId))
-				{
-					this.users.set(userId, {
-						id: user.id,
-						title: user.title,
-						imageUrl: user.imageUrl,
-						color: '#f0f0f0',
-						useLetterImage: true,
-						sectionCode: 'default',
-					});
-				}
-
-				delete this.usersSort[this.usersSort.indexOf(userId)];
-				this.usersSort.unshift(userId);
-
-				this.saveCache();
-				this.handlers.onSelect(items);
-			}
-		}
-	}
-
 	class Options
 	{
 		constructor()
@@ -1314,6 +1122,15 @@ include('InAppNotifier');
 			};
 		}
 
+		static getItemDataFromGroup(group)
+		{
+			return {
+				id: group.id,
+				name: group.title,
+				image: group.imageUrl,
+			};
+		}
+
 		static get selectFields()
 		{
 			return [
@@ -1388,6 +1205,7 @@ include('InAppNotifier');
 			this.cache = TasksListCache.getInstance(`tasks.task.list_v2_${owner}`);
 
 			this.checkDeadlinesUpdate();
+			this.prepareTaskGroupList();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -1774,6 +1592,12 @@ include('InAppNotifier');
 			}
 		}
 
+		onAppPaused()
+		{
+			this.time = new Date();
+			this.pull.setCanExecute(false);
+		}
+
 		onAppActive()
 		{
 			this.canShowSwipeActions = true;
@@ -1784,8 +1608,7 @@ include('InAppNotifier');
 				const minutesPassed = Math.abs(Math.round((now.getTime() - this.time.getTime()) / 60000));
 				if (minutesPassed > 30)
 				{
-					this.filter.updateCounters();
-					this.reload();
+					this.runOnAppActiveRepeatedActions();
 				}
 				else
 				{
@@ -1798,6 +1621,20 @@ include('InAppNotifier');
 			}
 
 			this.checkDeadlinesUpdate();
+		}
+
+		runOnAppActiveRepeatedActions()
+		{
+			this.filter.updateCounters();
+			this.reload();
+
+			this.prepareTaskGroupList();
+		}
+
+		prepareTaskGroupList()
+		{
+			TaskGroupList.loadLastActiveProjects();
+			TaskGroupList.validateLastSearchedProjects();
 		}
 
 		checkDeadlinesUpdate()
@@ -1815,12 +1652,6 @@ include('InAppNotifier');
 						value: response.result,
 					}));
 			}
-		}
-
-		onAppPaused()
-		{
-			this.time = new Date();
-			this.pull.setCanExecute(false);
 		}
 
 		onTabsSelected(tabName)
@@ -2415,10 +2246,6 @@ include('InAppNotifier');
 					this.onChangeDeadlineAction(task);
 					break;
 
-				case 'changeResponsible':
-					this.onChangeResponsibleAction(task);
-					break;
-
 				case 'approve':
 					this.onApproveAction(task);
 					break;
@@ -2435,16 +2262,20 @@ include('InAppNotifier');
 					this.onPauseAction(task);
 					break;
 
-				case 'pin':
-					this.onPinAction(task);
+				case 'renew':
+					this.onRenewAction(task);
 					break;
 
-				case 'unpin':
-					this.onUnpinAction(task);
+				case 'changeResponsible':
+					this.onChangeResponsibleAction(task);
 					break;
 
-				case 'read':
-					this.onReadAction(task);
+				case 'delegate':
+					this.onDelegateAction(task);
+					break;
+
+				case 'changeGroup':
+					this.onChangeGroupAction(task);
 					break;
 
 				case 'mute':
@@ -2465,6 +2296,113 @@ include('InAppNotifier');
 
 				case 'more':
 					this.onMoreAction(task);
+					return;
+
+				case 'pin':
+					this.onPinAction(task);
+					break;
+
+				case 'unpin':
+					this.onUnpinAction(task);
+					break;
+
+				case 'read':
+					this.onReadAction(task);
+					break;
+
+				default:
+					break;
+			}
+
+			this.updateItem(task.id, {});
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onMoreAction(task)
+		{
+			const taskItemData = this.getItemDataFromTask(task);
+			const actionsPopup = dialogs.createPopupMenu();
+			actionsPopup.setData(taskItemData.params.popupActions, [{id: 'default'}], (eventName, item) => {
+				if (eventName === 'onItemSelected')
+				{
+					this.onActionsPopupItemSelected(item, task);
+				}
+			});
+			actionsPopup.setPosition('center');
+			actionsPopup.show();
+		}
+
+		onActionsPopupItemSelected(item, task)
+		{
+			switch (item.id)
+			{
+				case 'changeDeadline':
+					this.onChangeDeadlineAction(task);
+					break;
+
+				case 'approve':
+					this.onApproveAction(task);
+					break;
+
+				case 'disapprove':
+					this.onDisapproveAction(task);
+					break;
+
+				case 'start':
+					this.onStartAction(task);
+					break;
+
+				case 'pause':
+					this.onPauseAction(task);
+					break;
+
+				case 'renew':
+					this.onRenewAction(task);
+					break;
+
+				case 'changeResponsible':
+					this.onChangeResponsibleAction(task);
+					break;
+
+				case 'delegate':
+					this.onDelegateAction(task);
+					break;
+
+				case 'changeGroup':
+					this.onChangeGroupAction(task);
+					break;
+
+				case 'mute':
+					this.onMuteAction(task);
+					break;
+
+				case 'unmute':
+					this.onUnmuteAction(task);
+					break;
+
+				case 'unfollow':
+					this.onUnfollowAction(task);
+					break;
+
+				case 'remove':
+					this.onRemoveAction(task);
+					break;
+
+				case 'pin':
+					this.onPinAction(task);
+					break;
+
+				case 'unpin':
+					this.onUnpinAction(task);
+					break;
+
+				case 'read':
+					this.onReadAction(task);
+					break;
+
+				case 'cancel':
 					return;
 
 				default:
@@ -2555,6 +2493,7 @@ include('InAppNotifier');
 			{
 				task.rawAccess.start = false;
 				task.rawAccess.pause = true;
+				task.rawAccess.renew = false;
 				task.start().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {status: task.status});
 			}
@@ -2569,6 +2508,7 @@ include('InAppNotifier');
 			{
 				task.rawAccess.start = true;
 				task.rawAccess.pause = false;
+				task.rawAccess.renew = false;
 				task.pause().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {status: task.status});
 			}
@@ -2577,11 +2517,43 @@ include('InAppNotifier');
 		/**
 		 * @param {Task} task
 		 */
+		onRenewAction(task)
+		{
+			if (task.isCompletedCounts)
+			{
+				task.rawAccess.start = true;
+				task.rawAccess.pause = false;
+				task.rawAccess.renew = false;
+				task.renew().then(() => this.updateItem(task.id, {
+					status: task.status,
+					activityDate: Date.now(),
+				}));
+				this.updateItem(task.id, {
+					status: task.status,
+					activityDate: Date.now(),
+				});
+			}
+		}
+
+		/**
+		 * @param {Task} task
+		 */
 		onChangeResponsibleAction(task)
 		{
-			return new UserList(this.list, task.responsible, this.currentUser, {
-				onSelect: (items) => {
-					task.responsible = TaskList.getItemDataFromUser(items[0]);
+			// UserList.openPicker({
+			// 	title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
+			// 	allowMultipleSelection: false,
+			// 	listOptions: {
+			// 		users: {
+			// 			hideUnnamed: true,
+			// 			useRecentSelected: true,
+			// 		},
+			// 	},
+			// }).then((users) => {
+
+			new TaskUserList(result.userList, {
+				onSelect: (user) => {
+					task.responsible = TaskList.getItemDataFromUser(user);
 					if (!task.isMember(this.currentUser.id))
 					{
 						this.removeItem(task.id);
@@ -2594,7 +2566,7 @@ include('InAppNotifier');
 							activityDate: Date.now(),
 						});
 					}
-					task.save();
+					void task.save();
 				},
 			});
 		}
@@ -2602,89 +2574,105 @@ include('InAppNotifier');
 		/**
 		 * @param {Task} task
 		 */
-		onMoreAction(task)
+		onDelegateAction(task)
 		{
-			const taskItemData = this.getItemDataFromTask(task);
-			const actionsPopup = dialogs.createPopupMenu();
-			actionsPopup.setData(taskItemData.params.popupActions, [{id: 'default'}], (eventName, item) => {
-				if (eventName === 'onItemSelected')
-				{
-					this.onActionsPopupItemSelected(item, task);
-				}
+			// UserList.openPicker({
+			// 	title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
+			// 	allowMultipleSelection: false,
+			// 	listOptions: {
+			// 		users: {
+			// 			hideUnnamed: true,
+			// 			useRecentSelected: true,
+			// 		},
+			// 	},
+			// }).then((users) => {
+
+			new TaskUserList(result.userList, {
+				onSelect: (user) => {
+					task.responsible = TaskList.getItemDataFromUser(user);
+					this.updateItem(task.id, {
+						responsibleIcon: task.responsible.icon,
+						activityDate: Date.now(),
+					});
+					void task.delegate();
+				},
 			});
-			actionsPopup.setPosition('center');
-			actionsPopup.show();
-		}
-
-		onActionsPopupItemSelected(item, task)
-		{
-			switch (item.id)
-			{
-				case 'pin':
-					this.onPinAction(task);
-					break;
-
-				case 'unpin':
-					this.onUnpinAction(task);
-					break;
-
-				case 'read':
-					this.onReadAction(task);
-					break;
-
-				case 'mute':
-					this.onMuteAction(task);
-					break;
-
-				case 'unmute':
-					this.onUnmuteAction(task);
-					break;
-
-				case 'unfollow':
-					this.onUnfollowAction(task);
-					break;
-
-				case 'remove':
-					this.onRemoveAction(task);
-					break;
-
-				case 'cancel':
-					return;
-
-				default:
-					break;
-			}
-
-			this.updateItem(task.id, {});
 		}
 
 		/**
 		 * @param {Task} task
 		 */
-		onPinAction(task)
+		onChangeGroupAction(task)
 		{
-			this.updateItem(task.id, {isPinned: true});
-			task.pin();
+			new TaskGroupList({
+				onSelect: (group) => {
+					if (Number(task.groupId) === Number(group.id))
+					{
+						return;
+					}
+					task.groupId = Number(group.id);
+					task.group = TaskList.getItemDataFromGroup(group);
+					this.updateItem(task.id, {});
+					void task.save();
+				},
+			});
 		}
 
-		/**
-		 * @param {Task} task
-		 */
-		onUnpinAction(task)
-		{
-			this.updateItem(task.id, {isPinned: false});
-			task.unpin();
-		}
-
-		/**
-		 * @param {Task} task
-		 */
-		onReadAction(task)
-		{
-			this.filter.pseudoUpdateCounters(-task.newCommentsCount, task);
-			this.updateItem(task.id, {newCommentsCount: 0});
-			task.read();
-		}
+		// /**
+		//  * @param {Task} task
+		//  */
+		// onChangeGroupAction(task)
+		// {
+		// 	const selected = {};
+		// 	const selectedGroup = {};
+		//
+		// 	if (Number(task.groupId) > 0)
+		// 	{
+		// 		selectedGroup.id = task.groupId;// (task.groupId + '').split('/').pop();
+		// 		selectedGroup.title = task.group.name;
+		// 		selectedGroup.imageUrl = task.group.image;
+		//
+		// 		selected.groups = [selectedGroup];
+		// 	}
+		//
+		// 	(new RecipientList(['groups']))
+		// 		.open({
+		// 			returnShortFormat: false,
+		// 			allowMultipleSelection: false,
+		// 			title: BX.message('TASKS_LIST_POPUP_RESPONSIBLE'),
+		// 			selected,
+		// 		})
+		// 		.then((recipients) => {
+		// 			if (recipients.groups)
+		// 			{
+		// 				if (recipients.groups.length > 0)
+		// 				{
+		// 					const group = recipients.groups[0];
+		//
+		// 					if (Number(task.groupId) === Number(group.params.id))
+		// 					{
+		// 						return;
+		// 					}
+		//
+		// 					task.groupId = Number(group.params.id);
+		// 					task.group = TaskList.getItemDataFromGroup(group);
+		// 					this.updateItem(task.id, {});
+		// 					void task.save();
+		// 				}
+		// 				else if (Number(task.groupId) > 0)
+		// 				{
+		// 					task.groupId = 0;
+		// 					task.group = {
+		// 						id: 0,
+		// 						name: '',
+		// 						image: '',
+		// 					};
+		// 					this.updateItem(task.id, {});
+		// 					void task.save();
+		// 				}
+		// 			}
+		// 		});
+		// }
 
 		/**
 		 * @param {Task} task
@@ -2745,6 +2733,34 @@ include('InAppNotifier');
 					{title: BX.message('TASKS_CONFIRM_DELETE_NO'), code: 'NO'},
 				],
 			});
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onPinAction(task)
+		{
+			this.updateItem(task.id, {isPinned: true});
+			task.pin();
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onUnpinAction(task)
+		{
+			this.updateItem(task.id, {isPinned: false});
+			task.unpin();
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onReadAction(task)
+		{
+			this.filter.pseudoUpdateCounters(-task.newCommentsCount, task);
+			this.updateItem(task.id, {newCommentsCount: 0});
+			task.read();
 		}
 
 		// popupMenu
@@ -3244,19 +3260,7 @@ include('InAppNotifier');
 
 			this.debounceFunction = this.getDebounceFunction();
 
-			this.initCache();
-		}
-
-		initCache()
-		{
 			this.cache = Cache.getInstance(`tasks.task.search_${this.list.owner.id}`);
-
-			(new Request('mobile.tasks.'))
-				.call('group.last.get')
-				.then((response) => {
-					const cacheKey = Search.cacheKeys.lastActiveProjects;
-					this.cache.update(cacheKey, response.result.slice(0, this.maxProjectCount));
-				});
 		}
 
 		getDebounceFunction()
@@ -3508,10 +3512,17 @@ include('InAppNotifier');
 
 		onSearchShow()
 		{
+			this.fillCacheWithLastActiveProjects();
 			this.loadProjectsFromCache();
 			this.loadTasksFromCache();
 
 			this.renderList(true);
+		}
+
+		fillCacheWithLastActiveProjects()
+		{
+			const cacheKey = Search.cacheKeys.lastActiveProjects;
+			this.cache.update(cacheKey, this.list.lastActiveGroups.slice(0, this.maxProjectCount + 1));
 		}
 
 		loadProjectsFromCache()

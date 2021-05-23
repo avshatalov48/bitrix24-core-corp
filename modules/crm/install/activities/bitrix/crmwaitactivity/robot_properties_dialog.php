@@ -9,19 +9,15 @@ $waitTarget = $map['WaitTarget'];
 $waitDescription = $map['WaitDescription'];
 $runtimeData = $dialog->getRuntimeData();
 ?>
-<div class="crm-automation-popup-settings crm-automation-popup-settings-text">
-	<a class="crm-automation-popup-settings-link"
+<div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text">
+	<a class="bizproc-automation-popup-settings-link"
 		data-role="wait-selector"
 		data-text-after="<?=htmlspecialcharsbx(GetMessage('CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_AFTER'))?>"
 		data-text-before="<?=htmlspecialcharsbx(GetMessage('CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_BEFORE'))?>"
 	>...</a> <?=GetMessage('CRM_WAIT_ACTIVITY_RPD_OR')?> <span><?=GetMessage('CRM_WAIT_ACTIVITY_RPD_OR_CLIENT_ACTIVITY')?></span>
 </div>
-<div class="crm-automation-popup-settings">
-	<textarea name="<?=htmlspecialcharsbx($waitDescription['FieldName'])?>"
-			  class="crm-automation-popup-textarea"
-			  placeholder="<?=htmlspecialcharsbx($waitDescription['Name'])?>"
-			  data-role="inline-selector-target"
-	><?=htmlspecialcharsbx($dialog->getCurrentValue($waitDescription['FieldName'], ''))?></textarea>
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($waitDescription)?>
 </div>
 <input type="hidden" data-role="wait-type" name="<?=htmlspecialcharsbx($waitType['FieldName'])?>" value="<?=htmlspecialcharsbx($dialog->getCurrentValue($waitType['FieldName'], $waitType['Default']))?>">
 <input type="hidden" data-role="wait-duration" name="<?=htmlspecialcharsbx($waitDuration['FieldName'])?>" value="<?=htmlspecialcharsbx($dialog->getCurrentValue($waitDuration['FieldName'], $waitDuration['Default']))?>">
@@ -173,7 +169,7 @@ $runtimeData = $dialog->getRuntimeData();
 					offsetTop: 0,
 					offsetLeft: 36,
 					angle: {position: "top", offset: 0},
-					zIndex: 200,
+					overlay: { backgroundColor: 'transparent' },
 					events:
 						{
 							onPopupClose: BX.delegate(this.onMenuClose, this),
@@ -284,27 +280,27 @@ $runtimeData = $dialog->getRuntimeData();
 		};
 		WaitSelectorController.prototype.prepareDialogContent = function(type)
 		{
-			var container = BX.create("div", { attrs: { className: "crm-automation-popup-wait-select-block" } });
-			var wrapper = BX.create("div", { attrs: { className: "crm-automation-popup-wait-select-wrapper" } });
+			var container = BX.create("div", { attrs: { className: "bizproc-automation-popup-wait-select-block" } });
+			var wrapper = BX.create("div", { attrs: { className: "bizproc-automation-popup-wait-select-wrapper" } });
 			container.appendChild(wrapper);
 
 			this._durationInput = BX.create(
 				"input",
 				{
-					attrs: { type: "text", className: "crm-automation-popup-wait-settings-input", value: waitDurationInput.value },
+					attrs: { type: "text", className: "bizproc-automation-popup-wait-settings-input", value: waitDurationInput.value },
 					events: { keyup: BX.delegate(this.onDurationChange, this) }
 				}
 			);
 
 			this._durationMeasureNode = BX.create(
 				"span",
-				{ attrs: { className: "crm-automation-popup-wait-settings-title" }, text: getDurationText(waitDurationInput.value, false) }
+				{ attrs: { className: "bizproc-automation-popup-wait-settings-title" }, text: getDurationText(waitDurationInput.value, false) }
 			);
 
 			if(type === 'after')
 			{
 				wrapper.appendChild(
-					BX.create("span", { attrs: { className: "crm-automation-popup-wait-settings-title" }, text: this.getMessage("prefixTypeAfter") })
+					BX.create("span", { attrs: { className: "bizproc-automation-popup-wait-settings-title" }, text: this.getMessage("prefixTypeAfter") })
 				);
 				wrapper.appendChild(this._durationInput);
 				wrapper.appendChild(this._durationMeasureNode);
@@ -312,12 +308,12 @@ $runtimeData = $dialog->getRuntimeData();
 			else
 			{
 				wrapper.appendChild(
-					BX.create("span", { attrs: { className: "crm-automation-popup-wait-settings-title" }, text: this.getMessage("prefixTypeBefore") })
+					BX.create("span", { attrs: { className: "bizproc-automation-popup-wait-settings-title" }, text: this.getMessage("prefixTypeBefore") })
 				);
 				wrapper.appendChild(this._durationInput);
 				wrapper.appendChild(this._durationMeasureNode);
 				wrapper.appendChild(
-					BX.create("span", { attrs: { className: "crm-automation-popup-wait-settings-title" }, text: " " + this.getMessage("targetPrefixTypeBefore") })
+					BX.create("span", { attrs: { className: "bizproc-automation-popup-wait-settings-title" }, text: " " + this.getMessage("targetPrefixTypeBefore") })
 				);
 
 				this._target = waitTargetInput.value;
@@ -330,7 +326,7 @@ $runtimeData = $dialog->getRuntimeData();
 				this._targetDateNode = BX.create(
 					"span",
 					{
-						attrs: { className: "crm-automation-popup-settings-link" },
+						attrs: { className: "bizproc-automation-popup-settings-link" },
 						text: getTargetDateCaption(waitTargetInput.value),
 						events: { click: BX.delegate(this.toggleTargetMenu, this) }
 					}

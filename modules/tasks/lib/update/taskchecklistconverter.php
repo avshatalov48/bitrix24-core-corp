@@ -117,7 +117,7 @@ class TaskCheckListConverter extends Stepper
 		$connection = Application::getConnection();
 
 		$params = Option::get("tasks", static::$paramsOptionName);
-		$params = ($params !== ""? unserialize($params) : []);
+		$params = ($params !== ""? unserialize($params, ['allowed_classes' => false]) : []);
 		$params = (is_array($params)? $params : []);
 
 		if (empty($params))

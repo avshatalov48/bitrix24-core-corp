@@ -103,6 +103,12 @@ $MESS["TASKS_SCRUM_TEAM_SPEED_CHART_PLAN_COLUMN"] = "Запланировано"
 $MESS["TASKS_SCRUM_TEAM_SPEED_CHART_DONE_COLUMN"] = "Выполнено";
 $MESS["TASKS_SCRUM_DOD_HEADER"] = "Definition of Done";
 $MESS["TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL"] = "Выполнение пунктов является обязательным";
+$MESS["TASKS_SCRUM_COUNTER_TOTAL"] = "Задачи:";
+$MESS["TASKS_SCRUM_COUNTER_NEW_COMMENTS_PLURAL_0"] = "комментарий";
+$MESS["TASKS_SCRUM_COUNTER_NEW_COMMENTS_PLURAL_1"] = "комментария";
+$MESS["TASKS_SCRUM_COUNTER_NEW_COMMENTS_PLURAL_2"] = "комментариев";
+$MESS["TASKS_SCRUM_NEW_COMMENTS_READ_ALL_TITLE"] = "Прочитать все";
+$MESS["TASKS_SCRUM_SPRINT_STATS_ACTIVE_LAST_LABEL"] = "<b>Последний день</b> до завершения #percent# выполнено";
 
 $MESS["KANBAN_SORT_TITLE_MY"] = "Сортировка:";
 $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";

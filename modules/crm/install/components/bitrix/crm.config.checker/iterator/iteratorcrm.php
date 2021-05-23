@@ -25,7 +25,7 @@ class IteratorCrm extends Iterator
 		$this->title = Loc::getMessage("CRM_CONFIG_CHECKER_TITLE");
 
 		$config = \Bitrix\Main\Config\Option::get("crm", "crm_was_imported");
-		if (!empty($config) && ($config = unserialize($config)) && is_array($config))
+		if (!empty($config) && ($config = unserialize($config, ['allowed_classes' => false])) && is_array($config))
 		{
 			$this->code = $config["CODE"];
 			$this->title = $config["TITLE"];

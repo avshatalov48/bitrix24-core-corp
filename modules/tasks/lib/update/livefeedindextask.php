@@ -30,7 +30,7 @@ final class LivefeedIndexTask extends Stepper
 		$return = false;
 
 		$params = Option::get("tasks", "livefeedindextask", "");
-		$params = ($params !== "" ? @unserialize($params) : array());
+		$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
 		$params = (is_array($params) ? $params : array());
 		if (empty($params))
 		{

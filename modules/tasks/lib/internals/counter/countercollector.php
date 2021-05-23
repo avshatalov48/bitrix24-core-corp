@@ -61,6 +61,7 @@ class CounterCollector
 		return $counters;
 	}
 
+
 	/**
 	 * @param string $taskFilter
 	 * @param array $mutedTasks

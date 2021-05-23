@@ -3,14 +3,14 @@
 	if (typeof this.SocketConnection == 'undefined')
 	{
 		this.SocketConnection = new Connection();
-		this.SocketConnection.start();
+		ChatReadyCheck.wait().then(() => this.SocketConnection.start());
 	}
 	else
 	{
 		SocketConnection.disconnect(1000, "restart");
 		setTimeout(() => {
 			this.SocketConnection = new Connection();
-			this.SocketConnection.start();
+			ChatReadyCheck.wait().then(() => this.SocketConnection.start());
 		}, 2000);
 	}
 
@@ -311,15 +311,11 @@
 			console.info("AppCounters.update: update counters: "+total+"\n", this.counters);
 			Application.setBadges(this.counters);
 
-			if (this.firstSetBadge || this.total != total)
-			{
-				this.total = total;
+			this.total = total;
 
-				if (!Application.isBackground())
-				{
-					Application.setIconBadge(this.total);
-					this.firstSetBadge = false;
-				}
+			if (!Application.isBackground())
+			{
+				Application.setIconBadge(this.total);
 			}
 
 			this.updateCache();
@@ -504,7 +500,7 @@
 			}, "Device", "getDeviceInfo", []);
 	};
 
-	BX.addCustomEvent('onAppData', pushNotificationRegister);
+	ChatReadyCheck.wait().then(() => pushNotificationRegister);
 	setTimeout(pushNotificationRegister, 5000);
 
 	/**
@@ -515,12 +511,12 @@
 	let PushNotifications = {
 		urlByTag: function(tag)
 		{
-			var link = (env.siteDir ? env.siteDir : '/');
-			var result = false;
-			var unique = false;
-			var uniqueParams = {};
+			let link = (env.siteDir ? env.siteDir : '/');
+			let result = false;
+			let unique = false;
+			let uniqueParams = {};
 
-			var params = [];
+			let params = [];
 
 			if (
 				tag.substr(0, 10) == 'BLOG|POST|'
@@ -563,6 +559,11 @@
 				params = tag.split("|");
 				result = link + "mobile/?mobile_action=disk_folder_list&type=group&path=/&entityId=" + params[1];
 			}
+			else if (tag.startsWith('CALENDAR|INVITE'))
+			{
+				params = tag.split("|");
+				result = link + "mobile/calendar/view_event.php?event_id=" + params[2];
+			}
 
 			if (result)
 			{
@@ -579,11 +580,12 @@
 		{
 			let push = Application.getLastNotification();
 			let pushParams = {};
-
+			let data = null;
 			if (typeof (push) !== 'object' || typeof (push.params) === 'undefined')
 			{
 				pushParams =  {'ACTION' : 'NONE'};
 			}
+
 			if(typeof push.params != "undefined")
 			{
 				try
@@ -597,21 +599,28 @@
 
 				if (this.actions.includes(pushParams.ACTION))
 				{
-					var data = this.urlByTag(pushParams.TAG);
-
-					if (
-						typeof (data.LINK) != 'undefined'
-						&& data.LINK.length > 0
-					)
-					{
-						PageManager.openPage({
-							url : data.LINK,
-							unique : data.UNIQUE,
-							data: data.DATA,
-						});
-					}
+					data = this.urlByTag(pushParams.TAG);
 				}
 			}
+			else if(push.id != null) {
+				data = this.urlByTag(push.id);
+			}
+
+			if(data != null)
+			{
+				if ( typeof data.LINK != 'undefined' && data.LINK.length > 0)
+				{
+					PageManager.openPage({
+						url : data.LINK,
+						unique : data.UNIQUE,
+						data: data.DATA,
+					});
+				}
+			}
+
+
+
+
 		},
 		actions: ["post", "tasks", "comment", "mention", "share", "share2users", "sonet_group_event"],
 		init:function(){

@@ -17,7 +17,7 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 		this._typeList = [];
 		this._mainOptionList = [];
 		this._additionOptionList = [];
-		};
+	};
 
 	BX.CrmOrderCheckDetails.Edit.prototype.initialize = function(settings)
 	{
@@ -44,6 +44,9 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 		this._typeBlock = BX('crm-order-check-add-type');
 		this._mainBlock = BX('crm-order-check-add-main-entity');
 		this._additionBlock = BX('crm-order-check-add-addition-entity');
+		this._addCheckButton = BX('add_check_button');
+		this._cancelCheckButton = BX('cancel_check_button');
+		this._isSaving = false;
 
 		this.layout();
 	};
@@ -74,8 +77,8 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 	};
 	BX.CrmOrderCheckDetails.Edit.prototype.layout = function()
 	{
-		BX.bind(BX('add_check_button'), 'click', BX.delegate( this.save, this));
-		BX.bind(BX('cancel_check_button'), 'click', BX.delegate( this.cancel, this));
+		BX.bind(this._addCheckButton, 'click', BX.delegate( this.save, this));
+		BX.bind(this._cancelCheckButton, 'click', BX.delegate( this.cancel, this));
 		this.bindMainBlockSelect();
 		this.bindTypeBlockSelect();
 		this.layoutAdditionBlock();
@@ -346,6 +349,12 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 	};
 	BX.CrmOrderCheckDetails.Edit.prototype.save = function()
 	{
+		if (this._isSaving)
+		{
+			return;
+		}
+		this._isSaving = true;
+		BX.addClass(this._addCheckButton, 'ui-btn-wait');
 		var action = 'SAVE_CHECK';
 		var callback = BX.delegate(this.onSave, this);
 		this.sendData(action, callback);
@@ -471,6 +480,8 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 	{
 		if (BX.type.isNotEmptyString(result.ERROR))
 		{
+			this._isSaving = false;
+			BX.removeClass(this._addCheckButton, 'ui-btn-wait');
 			this.showError(result.ERROR);
 			return;
 		}

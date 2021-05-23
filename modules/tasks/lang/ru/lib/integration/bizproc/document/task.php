@@ -48,4 +48,5 @@ $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_O"] = "Постановщик";
 $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_R"] = "Ответственный";
 $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_A"] = "Соисполнитель";
 $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_U"] = "Наблюдатель";
+$MESS["TASKS_BP_DOCUMENT_RESUME_RESTRICTED"] = "Завершено по тарифным ограничениям";
 ?>

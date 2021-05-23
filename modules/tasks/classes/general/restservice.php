@@ -191,7 +191,7 @@ final class CTaskRestService extends IRestService
 			}
 
 			CTaskAssert::assert(
-				is_array($args) 
+				is_array($args)
 				&& (count($args) == 1)
 			);
 
@@ -215,12 +215,12 @@ final class CTaskRestService extends IRestService
 			$errMsg  = $e->getMessage();
 
 			if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-				$arMessages = unserialize($errMsg);
+				$arMessages = unserialize($errMsg, ['allowed_classes' => false]);
 			else
 			{
 				$arMessages[] = array(
 					'id'   => 'TASKS_ERROR_EXCEPTION_#' . $errCode,
-					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode 
+					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode
 						. '; ' . $errMsg
 						. '; ' . TasksException::renderErrorCode($e)
 				);
@@ -252,7 +252,7 @@ final class CTaskRestService extends IRestService
 		try
 		{
 			CTaskAssert::assert(
-				is_array($args) 
+				is_array($args)
 				&& (count($args) == 2)
 			);
 
@@ -299,12 +299,12 @@ final class CTaskRestService extends IRestService
 			$errMsg  = $e->getMessage();
 
 			if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-				$arMessages = unserialize($errMsg);
+				$arMessages = unserialize($errMsg, ['allowed_classes' => false]);
 			else
 			{
 				$arMessages[] = array(
 					'id'   => 'TASKS_ERROR_EXCEPTION_#' . $errCode,
-					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode 
+					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode
 						. '; ' . $errMsg
 						. '; ' . TasksException::renderErrorCode($e)
 				);
@@ -438,12 +438,12 @@ final class CTaskRestService extends IRestService
 			$errMsg  = $e->getMessage();
 
 			if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-				$arMessages = unserialize($errMsg);
+				$arMessages = unserialize($errMsg, ['allowed_classes' => false]);
 			else
 			{
 				$arMessages[] = array(
 					'id'   => 'TASKS_ERROR_EXCEPTION_#' . $errCode,
-					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode 
+					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode
 						. '; ' . $errMsg
 						. '; ' . TasksException::renderErrorCode($e)
 				);

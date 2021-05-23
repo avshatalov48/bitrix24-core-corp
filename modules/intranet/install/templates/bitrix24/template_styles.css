@@ -89,7 +89,7 @@ input::-ms-clear { display: none; }
 
 #header-inner {
 	margin: 0 auto;
-	padding: 0 346px 0 0;
+	padding: 0 65px 0 0;
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -342,6 +342,15 @@ td.bx-layout-inner-inner-cont {
 	min-width: 203px;
 	padding: 0 19px;
 	position: relative;
+	transition: min-width .2s, width .2s, opacity .1s, padding .2s;
+}
+
+.timeman-container.timeman-container--hide {
+	min-width: 0;
+	width: 0;
+	opacity: 0;
+	padding: 0;
+	overflow: hidden;
 }
 
 .timeman-container-ru { min-width: 203px; }
@@ -574,12 +583,19 @@ td.bx-layout-inner-inner-cont {
 .user-block {
 	cursor: pointer;
 	height: 63px;
-	padding: 0 0 0 17px;
-	position: absolute;
-	right: 66px;
-	top: 0;
-	width: 263px;
-	transition: .1s;
+	padding: 0 23px;
+	max-width: 325px;
+	/*transition: .1s;*/
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	transition: width 1s, opacity 1s, padding 1s;
+}
+
+.user-block--hide {
+	width: 0;
+	overflow: hidden;
+	padding: 0;
 }
 
 .user-block-before { display: none; }
@@ -612,13 +628,14 @@ td.bx-layout-inner-inner-cont {
 	height: 16px;
 	font-weight: bold;
 	margin-top: -2px;
-	max-width: calc(100% - 90px);
+	box-sizing: border-box;
 	overflow: hidden;
 	padding-right: 16px;
 	position: relative;
 	text-overflow: ellipsis;
 	vertical-align: middle;
 	white-space: nowrap;
+	max-width: 220px;
 }
 
 .user-name:after {
@@ -921,7 +938,7 @@ td.bx-layout-inner-inner-cont {
 }
 
 .pagetitle {
-	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
 	margin: 0;
 	padding: 21px 0 21px 5px;
 	display: block;
@@ -4338,3 +4355,8 @@ a.td1:hover {
 }
 
 /*================= END HIDE FEATURES POPUP ==================*/
+
+.header-personal {
+	order: 5;
+	display: flex;
+}

@@ -24,13 +24,13 @@ class UserName extends Content
 	{
 		static $cache = [];
 
-		$userId = (int) $row[static::USER_ROLE];
+		$userId = (int)$row[static::USER_ROLE];
 
 		if (isset($row['MEMBERS'][static::USER_ROLE]))
 		{
 			$user = $row['MEMBERS'][static::USER_ROLE];
 		}
-		else if (isset($cache[$userId]))
+		elseif (isset($cache[$userId]))
 		{
 			$user = $cache[$userId];
 		}
@@ -43,7 +43,7 @@ class UserName extends Content
 				'NAME',
 				'LAST_NAME',
 				'SECOND_NAME',
-				'TITLE'
+				'TITLE',
 			];
 			$users = User::getData([$userId], $select);
 			$user = $users[$userId];
@@ -82,21 +82,27 @@ class UserName extends Content
 		$userNameElement = "<span class='tasks-grid-avatar ui-icon ui-icon-common-user{$userEmptyAvatar}{$userIcon}'><i{$userAvatar}></i></span>"
 			."<span class='tasks-grid-username-inner{$userIcon}'>{$userName}</span>"
 			."<span class='tasks-grid-filter-remove'></span>";
-		$encodedData = Json::encode([static::USER_ROLE => [$user['ID']], static::USER_ROLE.'_label' => [$userName]]);
 
+		$encodedData = Json::encode([
+			static::USER_ROLE => [$user['ID']],
+			static::USER_ROLE.'_label' => [$userName],
+		]);
+
+		$selected = 0;
 		$selector = 'tasks-grid-username';
 		if (
 			isset($parameters['FILTER_FIELDS'][static::USER_ROLE])
 			&& is_array($parameters['FILTER_FIELDS'][static::USER_ROLE])
 			&& count($parameters['FILTER_FIELDS'][static::USER_ROLE]) === 1
-			&& (int) $parameters['FILTER_FIELDS'][static::USER_ROLE][0] === $userId
+			&& (int)$parameters['FILTER_FIELDS'][static::USER_ROLE][0] === $userId
 		)
 		{
+			$selected = 1;
 			$selector .= ' tasks-grid-filter-active';
 		}
 
 		return "<div class='tasks-grid-username-wrapper'>"
-			."<a class='". $selector ."' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData})' href='javascript:void(0)'>{$userNameElement}</a>"
+			."<a class='$selector' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData}, {$selected})' href='javascript:void(0)'>{$userNameElement}</a>"
 			."</div>";
 	}
 }

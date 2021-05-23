@@ -19,6 +19,7 @@ $MESS['IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW'] = 'Обращение направл
 $MESS['IMOL_CHAT_NEXT_IN_QUEUE_NEW'] = 'Обращение перенаправлено на #USER_TO# по правилам очереди';
 $MESS['IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW'] = 'Обращение возвращено в очередь. Нет доступных операторов';
 $MESS['IMOL_CHAT_TO_QUEUE_NEW'] = 'Обращение перенаправлено по правилам очереди';
+$MESS['IMOL_CHAT_END_BOT_SESSION'] = 'Бот передал работу с диалогом оператору';
 $MESS['IMOL_CHAT_TRANSFER_M'] = '#USER_FROM# переадресовал диалог на #USER_TO#';
 $MESS['IMOL_CHAT_TRANSFER_F'] = '#USER_FROM# переадресовала диалог на #USER_TO#';
 $MESS['IMOL_CHAT_MARK_SPAM_M'] = '#USER# пометил текущий диалог как спам';

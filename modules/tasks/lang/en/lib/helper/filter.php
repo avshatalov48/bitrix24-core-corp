@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ALLOW_TIME_TRACKING_N"] = "No";
 $MESS["TASKS_ALLOW_TIME_TRACKING_Y"] = "Yes";
 $MESS["TASKS_FILTER_ACTIVE"] = "Was active";
@@ -63,4 +63,4 @@ $MESS["TASKS_STATUS_4"] = "Pending review";
 $MESS["TASKS_STATUS_5"] = "Completed";
 $MESS["TASKS_STATUS_6"] = "Deferred";
 $MESS["TASKS_STATUS_7"] = "Declined";
-?>
+$MESS["TASKS_STATUS_8"] = "Completed in active sprint";

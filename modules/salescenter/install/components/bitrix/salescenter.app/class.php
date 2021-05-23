@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Catalog\v2\Product\BaseProduct;
+use Bitrix\Catalog\v2\Sku\BaseSku;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Location\Entity\Address\Converter\StringConverter;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Main;
@@ -9,6 +12,7 @@ use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\Web\Json;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
 use Bitrix\SalesCenter\Integration\LandingManager;
@@ -25,13 +29,16 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Rest;
 use \Bitrix\SalesCenter;
-use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Location\Entity\Address;
+use Bitrix\Catalog\v2\Integration\JS\ProductForm;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -100,19 +107,25 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 	public function executeComponent()
 	{
-		if(!\Bitrix\Main\Loader::includeModule("salescenter"))
+		if (!\Bitrix\Main\Loader::includeModule("salescenter"))
 		{
 			ShowError(Loc::getMessage('SALESCENTER_MODULE_ERROR'));
 			Application::getInstance()->terminate();
 		}
 
-		if(!\Bitrix\Main\Loader::includeModule("crm"))
+		if (!\Bitrix\Main\Loader::includeModule("crm"))
 		{
 			ShowError(Loc::getMessage('CRM_MODULE_ERROR'));
 			Application::getInstance()->terminate();
 		}
 
-		if(!Driver::getInstance()->isEnabled())
+		if (!\Bitrix\Main\Loader::includeModule("currency"))
+		{
+			ShowError(Loc::getMessage('CURRENCY_MODULE_ERROR'));
+			Application::getInstance()->terminate();
+		}
+
+		if (!Driver::getInstance()->isEnabled())
 		{
 			$this->arResult['isShowFeature'] = true;
 			$this->includeComponentTemplate('limit');
@@ -139,10 +152,30 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['disableSendButton'] = $this->arParams['disableSendButton'];
 		$this->arResult['ownerTypeId'] = $this->arParams['ownerTypeId'];
 		$this->arResult['ownerId'] = $this->arParams['ownerId'];
+		$this->arResult['isBitrix24'] = Bitrix24Manager::getInstance()->isEnabled();
 		$this->arResult['isPaymentsLimitReached'] = Bitrix24Manager::getInstance()->isPaymentsLimitReached();
 		$this->arResult['urlSettingsCompanyContacts'] = $this->getComponentSliderPath('bitrix:salescenter.company.contacts');
 		$this->arResult['urlSettingsSmsSenders'] = $this->getUrlSmsProviderSetting();
 		$this->arResult['mostPopularProducts'] = $this->getMostPopularProducts();
+		$this->arResult['vatList'] = $this->getProductVatList();
+		$this->arResult['catalogIblockId'] = \CCrmCatalog::GetDefaultID();
+		$this->arResult['basePriceId'] = \CCatalogGroup::GetBaseGroup()['ID'];
+		$this->arResult['showProductDiscounts'] = \CUserOptions::GetOption('catalog.product-form', 'showDiscountBlock', 'Y');
+		$this->arResult['showProductTaxes'] = \CUserOptions::GetOption('catalog.product-form', 'showTaxBlock', 'Y');
+
+		$collapseOptions = CUserOptions::GetOption('salescenter', 'add_payment_collapse_options', []);
+		$this->arResult['isPaySystemCollapsed'] = $collapseOptions['pay_system'] ?? null;
+		$this->arResult['isCashboxCollapsed'] = $collapseOptions['cashbox'] ?? null;
+		$this->arResult['isDeliveryCollapsed'] = $collapseOptions['delivery'] ?? null;
+		$this->arResult['isAutomationCollapsed'] = $collapseOptions['automation'] ?? null;
+		$this->arResult['currencyCode'] = null;
+
+		$baseCurrency = SiteCurrencyTable::getSiteCurrency(SITE_ID);
+		if (empty($baseCurrency))
+		{
+			$baseCurrency = CurrencyManager::getBaseCurrency();
+		}
+		$this->arResult['currencyCode'] = $baseCurrency;
 
 		$clientInfo = $controller->getClientInfo([
 			'sessionId' => $this->arResult['sessionId'],
@@ -170,6 +203,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					Application::getInstance()->terminate();
 				}
 
+				$this->arResult['currencyCode'] = $deal['CURRENCY_ID'];
 				$this->arResult['sendingMethod'] = 'sms';
 				$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType($this->arResult['sendingMethod']);
 
@@ -190,7 +224,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					$products = $orderData['basket'];
 
 					$this->arResult['basket'] = $products;
-					$this->arResult['totals'] = $this->getTotalSumList($products);
+					$this->arResult['totals'] = $this->getTotalSumList(
+						array_column($products, 'fields'),
+						$this->arResult['currencyCode']
+					);
 
 					$this->arResult['timeline'] = $this->getOrderTimeLine((int)$this->arResult['associatedEntityId']);
 
@@ -201,7 +238,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				{
 					$products = $this->getDealProducts($deal['ID']);
 					$this->arResult['basket'] = $products;
-					$this->arResult['totals'] = $this->getTotalSumList($products);
+					$this->arResult['totals'] = $this->getTotalSumList(
+						array_column($products, 'fields'),
+						$this->arResult['currencyCode']
+					);
 				}
 
 				if((int)$this->arResult['associatedEntityTypeId'] !== CCrmOwnerType::Order)
@@ -243,7 +283,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		if (Loader::includeModule('sale')
-			&& Loader::includeModule('currency')
 			&& Loader::includeModule('catalog')
 		)
 		{
@@ -251,13 +290,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['paySystemBannerOptionName'] = 'hide_paysystem_banner';
 			$this->arResult['showPaySystemSettingBanner'] = true;
 
-			$baseCurrency = SiteCurrencyTable::getSiteCurrency(SITE_ID);
-			if (empty($baseCurrency))
-			{
-				$baseCurrency = CurrencyManager::getBaseCurrency();
-			}
-			$this->arResult['currencyCode'] = $baseCurrency;
-			$currencyDescription = \CCurrencyLang::GetFormatDescription($baseCurrency);
+			$currencyDescription = \CCurrencyLang::GetFormatDescription($this->arResult['currencyCode']);
 			$this->arResult['CURRENCIES'][] = [
 				'CURRENCY' => $currencyDescription['CURRENCY'],
 				'FORMAT' => [
@@ -270,7 +303,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				],
 			];
 
-			$this->arResult['currencySymbol'] = \CCrmCurrency::GetCurrencyText($baseCurrency);
+			$this->arResult['currencySymbol'] = \CCrmCurrency::GetCurrencyText($this->arResult['currencyCode']);
 
 			$dbMeasureResult = \CCatalogMeasure::getList(
 				array('CODE' => 'ASC'),
@@ -304,7 +337,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->includeComponentTemplate();
 	}
 
-	protected function getTotalSumList(array $products)
+	protected function getTotalSumList(array $products, $currency): array
 	{
 		$result = [
 			'discount' => 0,
@@ -314,24 +347,18 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		foreach ($products as $product)
 		{
-			$discount = 0;
-			if ($product['discount'] > 0)
-			{
-				if ($product['discountType'] === 'percent')
-				{
-					$discount = $product['basePrice'] * $product['discount'] / 100;
-				}
-				else
-				{
-					$discount = $product['discount'];
-				}
-			}
-
-			$result['discount'] += $discount * $product['quantity'];
+			$result['discount'] += $product['discount'] * $product['quantity'];
 			$result['result'] += $product['price'] * $product['quantity'];
 			$result['sum'] += $product['basePrice'] * $product['quantity'];
 		}
 
+		foreach ($result as $key => $value)
+		{
+			if ($value > 0)
+			{
+				$result[$key] = CCurrencyLang::CurrencyFormat($value, $currency, false);
+			}
+		}
 		return $result;
 	}
 
@@ -434,6 +461,15 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		/** @var Sale\Order $entity */
 		$entity = $orderClass::load($orderId);
 
+		if (!$entity)
+		{
+			return [
+				'basket' => [],
+				'propValues' => [],
+				'shipmentData' => [],
+			];
+		}
+
 		return [
 			'basket' => $this->getOrderProducts($entity),
 			'propValues' => $this->getOrderPropValues($entity),
@@ -450,45 +486,50 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	protected function getOrderProducts(Sale\Order $entity)
 	{
-		$result = [];
 		$basket = $entity->getBasket();
+		$formBuilder = new ProductForm\BasketBuilder();
 
-		/**
-		 * @var int $index
-		 * @var Crm\Order\BasketItem $basketItem
-		 */
+		/** @var Crm\Order\BasketItem $basketItem */
 		foreach ($basket as $index => $basketItem)
 		{
-			$item = [
-				'productId' => $basketItem->getField('PRODUCT_ID'),
-				'code' => $basketItem->getField('PRODUCT_ID'),
-				'name' => $basketItem->getField('NAME'),
-				'sort' => $index,
-				'basePrice' => $basketItem->getField('BASE_PRICE'),
-				'isCustomPrice' => $basketItem->getField('CUSTOM_PRICE'),
-				'module' => 'catalog',
-				'price' => $basketItem->getField('PRICE'),
-				'quantity' => (float)$basketItem->getField('QUANTITY'),
-				'measureCode' => $basketItem->getField('MEASURE_CODE'),
-				'measureName' => $basketItem->getField('MEASURE_NAME'),
-				'taxRate' => $basketItem->getField('VAT_RATE'),
-				'taxIncluded' => $basketItem->getField('VAT_INCLUDED'),
-				'fileControl' => (new \Bitrix\SalesCenter\Controller\Order())->getFileControl(
-					$basketItem->getField('PRODUCT_ID')
-				),
-			];
+			$item = null;
+			$skuId = (int)$basketItem->getField('PRODUCT_ID');
+			if ($skuId > 0)
+			{
+				$item = $formBuilder->loadItemBySkuId($skuId);
+			}
+
+			if ($item === null)
+			{
+				$item = $formBuilder->createItem();
+			}
+
+			$item
+				->setName($basketItem->getField('NAME'))
+				->setPrice($basketItem->getField('PRICE'))
+				->setBasePrice($basketItem->getField('BASE_PRICE'))
+				->setPriceExclusive($basketItem->getField('PRICE'))
+				->setCustomPriceType($basketItem->getField('CUSTOM_PRICE'))
+				->setQuantity($basketItem->getField('QUANTITY'))
+				->setSort($index)
+				->setMeasureCode((int)$basketItem->getField('MEASURE_CODE'))
+				->setMeasureName($basketItem->getField('MEASURE_NAME'))
+			;
 
 			if ($basketItem->getDiscountPrice() > 0)
 			{
-				$item['discountType'] = 'currency';
-				$item['discount'] = $basketItem->getDiscountPrice();
-				$item['showDiscount'] = 'Y';
+				$discountRate = $basketItem->getDiscountPrice() / $basketItem->getField('BASE_PRICE') * 100;
+				$item
+					->setDiscountType(\Bitrix\Crm\Discount::MONETARY)
+					->setDiscountValue($basketItem->getDiscountPrice())
+					->setDiscountRate(round($discountRate, 2))
+				;
 			}
 
-			$result[] = $item;
+			$formBuilder->setItem($item);
 		}
 
-		return $result;
+		return $formBuilder->getFormattedItems();
 	}
 
 	/**
@@ -675,50 +716,88 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	protected function getDealProducts($dealId)
 	{
-		$result = [];
+		$productRows = \CCrmDeal::LoadProductRows($dealId);
+		$formBuilder = new ProductForm\BasketBuilder();
 
-		$productRows = CCrmDeal::LoadProductRows($dealId);
-		foreach ($productRows as $index => $product)
+		foreach ($productRows as $product)
 		{
-			$item = [
-				'productId' => $product['PRODUCT_ID'],
-				'code' => $product['PRODUCT_ID'],
-				'name' => $product['PRODUCT_NAME'],
-				'sort' => $index,
-				'module' => $product['PRODUCT_ID'] > 0 ? 'catalog' : '',
-				'basePrice' => $product['PRICE_BRUTTO'],
-				'isCustomPrice' => 'Y',
-				'price' => $product['PRICE_BRUTTO'],
-				'quantity' => $product['QUANTITY'],
-				'measureCode' => $product['MEASURE_CODE'],
-				'measureName' => $product['MEASURE_NAME'],
-				'taxRate' => $product['TAX_RATE'],
-				'taxIncluded' => $product['TAX_INCLUDED'],
-				'fileControl' => (new \Bitrix\SalesCenter\Controller\Order())->getFileControl(
-					$product['PRODUCT_ID']
-				),
-			];
-
-			if ((int)$product['DISCOUNT_TYPE_ID'] === \Bitrix\Crm\Discount::PERCENTAGE)
+			$item = null;
+			$skuId = (int)$product['PRODUCT_ID'];
+			if ($skuId > 0)
 			{
-				if ($product['DISCOUNT_RATE'] > 0)
-				{
-					$item['discountType'] = 'percent';
-					$item['discount'] = $product['DISCOUNT_RATE'];
-					$item['showDiscount'] = 'Y';
-				}
-			}
-			elseif ((int)$product['DISCOUNT_TYPE_ID'] === \Bitrix\Crm\Discount::MONETARY)
-			{
-				$item['discountType'] = 'currency';
-				$item['discount'] = $product['DISCOUNT_SUM'];
-				$item['showDiscount'] = 'Y';
+				$item = $formBuilder->loadItemBySkuId($skuId);
 			}
 
-			$result[] = $item;
+			if ($item === null)
+			{
+				$item = $formBuilder->createItem();
+			}
+
+			$item
+				->setName($product['PRODUCT_NAME'])
+				->setPrice((float)$product['PRICE'])
+				->setBasePrice((float)$product['PRICE_NETTO'])
+				->setPriceExclusive((float)$product['PRICE_EXCLUSIVE'])
+				->setQuantity((float)$product['QUANTITY'])
+				->setDiscountType((int)$product['DISCOUNT_TYPE_ID'])
+				->setDiscountRate((float)$product['DISCOUNT_RATE'])
+				->setDiscountValue((float)$product['DISCOUNT_SUM'])
+				->setMeasureCode((int)$product['MEASURE_CODE'])
+				->setMeasureName($product['MEASURE_NAME'])
+			;
+
+			$formBuilder->setItem($item);
+			$item->setSort($formBuilder->count() * 100);
 		}
 
-		return $result;
+		return $formBuilder->getFormattedItems();
+	}
+
+	private function loadSkuTree(array $products, int $catalogId): array
+	{
+		$skuTree = \Bitrix\Catalog\v2\IoC\ServiceContainer::make('sku.tree', ['iblockId' => $catalogId]);
+		if (!$skuTree)
+		{
+			return [];
+		}
+
+		return $skuTree->loadWithSelectedOffers($products);
+	}
+
+	private function getImageInputFields(int $catalogId, int $productId, int $skuId): ?array
+	{
+		if (!$productId)
+		{
+			return null;
+		}
+
+		$productRepository = \Bitrix\Catalog\v2\IoC\ServiceContainer::getProductRepository($catalogId);
+		if (!$productRepository)
+		{
+			return null;
+		}
+		/** @var BaseProduct $product */
+		$product = $productRepository->getEntityById($productId);
+		if (!$product)
+		{
+			return null;
+		}
+
+		$skuCollection = $product->getSkuCollection();
+		/** @var BaseSku $sku */
+		$sku = $skuCollection->findById($skuId);
+		if (!$sku)
+		{
+			return null;
+		}
+
+		$variationImageField = new \Bitrix\Catalog\Component\ImageInput($sku);
+		if ($variationImageField->isEmpty())
+		{
+			return null;
+		}
+
+		return $variationImageField->getFormattedField();
 	}
 
 	/**
@@ -791,10 +870,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			]
 		)->fetchAll();
 
-		$defaultAddressTypeId = Crm\RequisiteAddress::getDefaultTypeId();
+		$defaultAddressTypeId = EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId());
 
 		$sortingMap = [
-			Crm\EntityAddress::Delivery => 10,
+			EntityAddressType::Delivery => 10,
 			$defaultAddressTypeId => 20,
 		];
 
@@ -858,8 +937,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		)->fetchAll();
 
 		$sortingMap = [
-			Crm\EntityAddress::Primary => 10,
-			Crm\EntityAddress::Delivery => 20,
+			Crm\EntityAddressType::Primary => 10,
+			Crm\EntityAddressType::Delivery => 20,
 		];
 
 		foreach ($addresses as $address)
@@ -895,15 +974,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function fillAddressToPropertyValue(int $dealId)
 	{
-		if(!Loader::includeModule('location'))
+		$locationsList = [];
+		if(Loader::includeModule('location'))
 		{
-			return;
-		}
-
-		$clientLocationsList = $this->getClientLocationsList($dealId);
-		if (!$clientLocationsList)
-		{
-			return;
+			$locationsList = $this->getClientLocationsList($dealId);
 		}
 
 		$props = Sale\Property::getList(
@@ -919,10 +993,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		foreach ($props as $prop)
 		{
-			$this->arResult['orderPropertyValues'][$prop['ID']] = $clientLocationsList[0]['address'];
+			$this->arResult['orderPropertyValues'][$prop['ID']] = $locationsList[0]['address'];
 
 			$this->arResult['deliveryOrderPropOptions'][$prop['ID']] = [
-				'defaultItems' => $clientLocationsList
+				'defaultItems' => $locationsList,
 			];
 		}
 	}
@@ -935,22 +1009,16 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function fillAddressFromPropertyValue()
 	{
-		if(!Loader::includeModule('location'))
+		$locationsList = [];
+		if(Loader::includeModule('location'))
 		{
-			return;
-		}
+			$locationsList = $this->getMyCompanyLocationsList();
+			$defaultLocationFrom = SalesCenter\Integration\LocationManager::getInstance()->getDefaultLocationFrom();
 
-		$locationsList = $this->getMyCompanyLocationsList();
-		$defaultLocationFrom = SalesCenter\Integration\LocationManager::getInstance()->getDefaultLocationFrom();
-
-		if ($defaultLocationFrom)
-		{
-			array_unshift($locationsList, $defaultLocationFrom);
-		}
-
-		if (!$locationsList)
-		{
-			return;
+			if ($defaultLocationFrom)
+			{
+				array_unshift($locationsList, $defaultLocationFrom);
+			}
 		}
 
 		$props = Sale\Property::getList(
@@ -969,7 +1037,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['orderPropertyValues'][$prop['ID']] = $locationsList[0]['address'];
 
 			$this->arResult['deliveryOrderPropOptions'][$prop['ID']] = [
-				'defaultItems' => $locationsList
+				'defaultItems' => $locationsList,
+				'isFromAddress' => true,
 			];
 		}
 	}
@@ -1298,12 +1367,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$result['isInstalled'] = true;
 			}
 
-			$showTitle = false;
-			if ($handler->isRestHandler())
-			{
-				$showTitle = true;
-			}
-
 			$internalItems[] = [
 				'code' => $handler->getCode(),
 				'name' => $handler->getName(),
@@ -1311,7 +1374,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'img' => $handler->getImagePath(),
 				'info' => $handler->getShortDescription(),
 				'type' => 'delivery',
-				'showTitle' => $showTitle,
+				'showTitle' => !$handler->doesImageContainName(),
 				'width' => 835
 			];
 		}
@@ -1471,49 +1534,43 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 		else
 		{
-			$cashboxHandlers = SaleManager::getCashboxHandlers();
-			/** @var Cashbox\Cashbox $cashboxHandler */
-			foreach ($cashboxHandlers as $cashboxHandler)
+			/** @var Cashbox\Cashbox $handler */
+			foreach ($this->getCashboxHandlerList() as $handler)
 			{
-				$queryParams['handler'] = $cashboxHandler;
+				$queryParams['handler'] = $handler;
 				$cashboxPath->addParams($queryParams);
 
-				$img = '';
-				if (mb_strpos($queryParams['handler'], Cashbox\CashboxAtolFarmV4::class) !== false)
+				if (mb_strpos($handler, Cashbox\CashboxBusinessRu::class) !== false)
 				{
-					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/atol.svg';
-				}
-				elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxOrangeData::class) !== false)
-				{
-					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/orangedata.svg';
-				}
-				elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxCheckbox::class) !== false)
-				{
-					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg';
-				}
-				elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxRest::class) !== false)
-				{
-					$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/offline.svg';
-				}
-
-				if (!mb_strpos($queryParams['handler'], Cashbox\CashboxRest::class))
-				{
-					$name = $cashboxHandler::getName();
-					$result['items'][] = [
-						'name' => $cashboxHandler::getName(),
-						'img' => $img,
-						'link' => $cashboxPath->getLocator(),
-						'info' => Loc::getMessage(
-							'SALESCENTER_APP_CASHBOX_INFO',
-							[
-								'#CASHBOX_NAME#' => $name,
-							]
-						),
-						'type' => 'cashbox',
-						'showTitle' => false,
+					$kkmList = [
+						Cashbox\CashboxBusinessRu::SUPPORTED_KKM_ATOL,
+						Cashbox\CashboxBusinessRu::SUPPORTED_KKM_EVOTOR,
 					];
+					foreach ($kkmList as $kkm)
+					{
+						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/businessru_'.$kkm.'.svg';
+
+						$queryParams['kkm-id'] = $kkm;
+						$cashboxPath->addParams($queryParams);
+
+						$info = $handler::getSupportedKkmModels()[$kkm];
+
+						$result['items'][] = [
+							'name' => $info['NAME'],
+							'img' => $img,
+							'link' => $cashboxPath->getLocator(),
+							'info' => Loc::getMessage(
+								'SALESCENTER_APP_CASHBOX_INFO',
+								[
+									'#CASHBOX_NAME#' => $info['NAME'],
+								]
+							),
+							'type' => 'cashbox',
+							'showTitle' => true,
+						];
+					}
 				}
-				else
+				elseif (mb_strpos($handler, Cashbox\CashboxRest::class) !== false)
 				{
 					$restHandlers = Cashbox\Manager::getRestHandlersList();
 					foreach ($restHandlers as $restHandlerCode => $restHandler)
@@ -1523,7 +1580,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						$name = $restHandler['NAME'];
 						$result['items'][] = [
 							'name' => $name,
-							'img' => $img,
+							'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/offline.svg',
 							'link' => $cashboxPath->getLocator(),
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_CASHBOX_INFO',
@@ -1536,6 +1593,33 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						];
 					}
 				}
+				else
+				{
+					$img = '';
+					if (mb_strpos($queryParams['handler'], Cashbox\CashboxOrangeData::class) !== false)
+					{
+						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/orangedata.svg';
+					}
+					elseif (mb_strpos($queryParams['handler'], Cashbox\CashboxCheckbox::class) !== false)
+					{
+						$img = '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/checkbox.svg';
+					}
+
+					$name = $handler::getName();
+					$result['items'][] = [
+						'name' => $handler::getName(),
+						'img' => $img,
+						'link' => $cashboxPath->getLocator(),
+						'info' => Loc::getMessage(
+							'SALESCENTER_APP_CASHBOX_INFO',
+							[
+								'#CASHBOX_NAME#' => $name,
+							]
+						),
+						'type' => 'cashbox',
+						'showTitle' => false,
+					];
+				}
 			}
 
 			$queryParams['handler'] = 'offline';
@@ -1547,6 +1631,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'info' => Loc::getMessage('SALESCENTER_APP_CASHBOX_OFFLINE_INFO'),
 				'type' => 'cashbox',
 				'showTitle' => true,
+			];
+
+			$result['items'][] = [
+				'name' => Loc::getMessage('SALESCENTER_APP_CASHBOX_ITEM_EXTRA'),
+				'link' => $this->getComponentSliderPath('bitrix:salescenter.cashbox.panel')->getLocator(),
+				'type' => 'more',
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1568,8 +1658,28 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 			$result['isSet'] = false;
 		}
+
 		return $result;
 	}
+
+	protected function getCashboxHandlerList()
+	{
+		$result = [];
+
+		/** @var Cashbox\Cashbox $handler */
+		foreach (SaleManager::getCashboxHandlers() as $handler)
+		{
+			if (mb_strpos($handler, Cashbox\CashboxAtolFarmV4::class) !== false)
+			{
+				continue;
+			}
+
+			$result[] = $handler;
+		}
+
+		return $result;
+	}
+
 
 	/**
 	 * @return bool
@@ -1622,10 +1732,22 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			['ID', 'NAME']
 		);
 
-		$result = [];
+		$products = [];
 		while ($product = $mostPopularProducts->fetch())
 		{
-			$result[] = $product;
+			$products[] = $product;
+		}
+
+		$productIds = array_column($products, 'ID');
+
+		$measureRatios = \Bitrix\Catalog\MeasureRatioTable::getCurrentRatio($productIds);
+
+		$result = [];
+		foreach ($products as $product)
+		{
+			$resultItem = $product;
+			$resultItem['MEASURE_RATIO'] = $measureRatios[(int)$product['ID']];
+			$result[] = $resultItem;
 		}
 
 		return $result;
@@ -1894,7 +2016,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 			return [
 				'provider' => $this->getDefaultSmsProvider(),
-				'text' => $text <> ''? $text:CrmManager::getInstance()->getSmsTemplate(),
+				'text' => $text <> '' ? $text : CrmManager::getInstance()->getSmsTemplate(),
 			];
 		}
 
@@ -1940,6 +2062,19 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$path = getLocalPath('components'.$path.'/slider.php');
 		$path = new \Bitrix\Main\Web\Uri($path);
 		return $path->getLocator();
+	}
+
+	protected function getProductVatList(): array
+	{
+		$productVatList = [];
+		$vatList = CCrmTax::GetVatRateInfos();
+		foreach ($vatList as $vatRow)
+		{
+			$productVatList[] = $vatRow['VALUE'];
+		}
+		unset($vatRow, $vatList);
+		sort($productVatList, SORT_NUMERIC);
+		return $productVatList;
 	}
 
 	protected function getLastSmsMessageByOrderId($orderId = 0)

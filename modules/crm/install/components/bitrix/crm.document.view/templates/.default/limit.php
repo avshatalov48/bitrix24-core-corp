@@ -62,5 +62,5 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 ?>
 </body>
 	</html><?
-	\Bitrix\Main\Application::getInstance()->terminate();
+	\CMain::FinalActions();
 }

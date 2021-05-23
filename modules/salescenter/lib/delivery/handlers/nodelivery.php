@@ -40,14 +40,6 @@ class NoDelivery extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getTypeDescription()
-	{
-		return null;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	protected function getImageName(): string
 	{
 		return 'no_delivery.svg';

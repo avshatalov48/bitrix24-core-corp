@@ -6,7 +6,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
-CUtil::InitJSCore(Array('voximplant.common', 'access', 'sidepanel'));
+CUtil::InitJSCore(Array('voximplant.common', 'access', 'sidepanel', 'ui.dialogs.messagebox'));
 ?>
 
 <div id="vi-permissions-edit">

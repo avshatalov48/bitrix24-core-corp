@@ -1,8 +1,6 @@
 <?php
 $MESS["CRM_TRACKING_SOURCE_BASE_ADS_DESC"] = "%name% ad source";
-$MESS["CRM_TRACKING_SOURCE_BASE_DESC_ANOTHER"] = "Other traffic includes all customers that don't belong to any of the existing sources in the Sales Intelligence.";
 $MESS["CRM_TRACKING_SOURCE_BASE_DESC_OTHER"] = "Other traffic includes all customers that don't belong to any of the existing sources in the Sales Intelligence.";
-$MESS["CRM_TRACKING_SOURCE_BASE_NAME_ANOTHER"] = "Other traffic";
 $MESS["CRM_TRACKING_SOURCE_BASE_NAME_FB"] = "Facebook";
 $MESS["CRM_TRACKING_SOURCE_BASE_NAME_GOOGLE"] = "Google Ads";
 $MESS["CRM_TRACKING_SOURCE_BASE_NAME_INSTAGRAM"] = "Instagram";

@@ -530,7 +530,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			$maps = EntityConversionMapTable::getList(['select' => ['DATA']]);
 			while($map = $maps->fetch())
 			{
-				$data = unserialize($map['DATA']);
+				$data = unserialize($map['DATA'], [
+					'allowed_classes' => false,
+				]);
 				if(!is_array($data) || !isset($data['items']) || !is_array($data['items']) || empty($data['items']))
 				{
 					continue;
@@ -807,7 +809,25 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	public function getSelfCompanyId()
 	{
-		$myCompanyId = DataProviderManager::getInstance()->getValueFromList($this->getMyCompanyId(), true);
+		$options = $this->getOptions();
+		$myCompanyId = null;
+		if (isset($options['VALUES']['MY_COMPANY']))
+		{
+			$myCompanyId = (int) $options['VALUES']['MY_COMPANY'];
+		}
+		if (!$myCompanyId)
+		{
+			$dataProviderManager = DataProviderManager::getInstance();
+			$myCompany = $dataProviderManager->getValueFromList($dataProviderManager->getDataProviderValue($this, 'MY_COMPANY'));
+			if ($myCompany instanceof DataProvider)
+			{
+				$myCompanyId = (int) $myCompany->getSource();
+			}
+			else
+			{
+				$myCompanyId = (int) $myCompany;
+			}
+		}
 		if($myCompanyId > 0)
 		{
 			return $myCompanyId;

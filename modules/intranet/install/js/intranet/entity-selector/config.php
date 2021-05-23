@@ -16,7 +16,7 @@ return [
 				'id' => 'department',
 				'options' => [
 					'dynamicLoad' => true,
-					'dynamicSearch' => false,
+					'dynamicSearch' => true,
 					'itemOptions' => [
 						'default' => [
 							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department.svg',

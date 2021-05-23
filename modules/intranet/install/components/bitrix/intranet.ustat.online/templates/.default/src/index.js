@@ -1,8 +1,9 @@
-import {Popup} from './popup';
-
 import {Type, Dom, Reflection, Event} from 'main.core';
 import {rest} from "rest.client";
-import {PULL, PullClient} from "pull.client";
+import "pull.client";
+import {Popup} from './popup';
+import {Timeman} from './timeman';
+import {Circle} from 'ui.graph.circle';
 
 const namespace = Reflection.namespace('BX.Intranet');
 
@@ -21,6 +22,7 @@ class UstatOnline
 		this.maxOnlineUserCountToday = params.maxOnlineUserCountToday;
 		this.currentUserId = parseInt(params.currentUserId);
 		this.isTimemanAvailable = params.isTimemanAvailable === "Y";
+		this.isFullAnimationMode = params.isFullAnimationMode === "Y";
 		this.limitOnlineSeconds = params.limitOnlineSeconds;
 		this.renderingFinished = true;
 
@@ -64,25 +66,33 @@ class UstatOnline
 		}
 
 		new Popup(this);
+		this.timemanObj = new Timeman(this);
 
 		let now = new Date();
 		this.currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).valueOf();
 
 		this.checkOnline();
 
-		if (this.isTimemanAvailable && Type.isDomNode(this.timemanNode))
+		if (this.isFullAnimationMode)
 		{
-			this.timemanValueNodes = this.timemanNode.querySelectorAll('.intranet-ustat-online-value');
-			this.timemanTextNodes =  this.timemanNode.querySelectorAll('.js-ustat-online-timeman-text');
+			setTimeout(() => {
+				this.subscribePullEvent();
+			}, 3000);
 
-			this.resizeTimemanText();
+			setInterval(() => this.checkOnline(), 60000);
 		}
+		else
+		{
+			BX.addCustomEvent(window, "onImUpdateUstatOnline", BX.proxy(this.updateOnlineRestrictedMode, this));
+		}
+	}
 
-		setTimeout(() => {
-			this.subscribePullEvent();
-		}, 3000);
-
-		setInterval(() => this.checkOnline(), 60000);
+	updateOnlineRestrictedMode(data)
+	{
+		this.counter = data.count;
+		this.maxOnlineUserCountToday = data.count;
+		this.online = data.users;
+		this.redrawOnline();
 	}
 
 	getOfflineDate(date)
@@ -124,7 +134,7 @@ class UstatOnline
 
 			if (this.isTimemanAvailable)
 			{
-				this.checkTimeman();
+				this.timemanObj.checkTimeman();
 			}
 
 			this.currentDate = today;
@@ -133,21 +143,6 @@ class UstatOnline
 		}
 
 		return false;
-	}
-
-	checkTimeman()
-	{
-		BX.ajax.runComponentAction(this.componentName, "checkTimeman", {
-			signedParameters: this.signedParameters,
-			mode: 'class'
-		}).then(function (response) {
-			if (response.data)
-			{
-				this.redrawTimeman(response.data);
-			}
-		}.bind(this), function (response) {
-
-		}.bind(this));
 	}
 
 	setUserOnline(params)
@@ -404,8 +399,8 @@ class UstatOnline
 
 	subscribePullEvent()
 	{
-		PULL.subscribe({
-			type: PullClient.SubscriptionType.Online,
+		BX.PULL.subscribe({
+			type: 'online',
 			callback: (data) =>
 			{
 				if (data.command === 'userStatus')
@@ -439,76 +434,6 @@ class UstatOnline
 				}*/
 			}
 		});
-
-		PULL.subscribe({
-			moduleId: 'intranet',
-			command: 'timemanDayInfo',
-			callback: (data) =>
-			{
-				this.redrawTimeman(data);
-			}
-		});
-	}
-
-	redrawTimeman(data)
-	{
-		if (data.hasOwnProperty("OPENED"))
-		{
-			let openedNode = document.querySelector('.js-ustat-online-timeman-opened');
-			if (BX.type.isDomNode(openedNode))
-			{
-				openedNode.innerHTML = data["OPENED"];
-			}
-		}
-
-		if (data.hasOwnProperty("CLOSED"))
-		{
-			let closedNode = document.querySelector('.js-ustat-online-timeman-closed');
-			if (BX.type.isDomNode(closedNode))
-			{
-				closedNode.innerHTML = data["CLOSED"];
-			}
-		}
-
-		this.resizeTimemanText();
-	}
-
-	resizeTimemanText()
-	{
-		if (!Type.isDomNode(this.timemanNode))
-		{
-			return;
-		}
-
-		let textSum = 0;
-		let valueSum = 0;
-
-		if (Type.isArrayLike(this.timemanTextNodes))
-		{
-			for (let text of this.timemanTextNodes)
-			{
-				let textItems = text.textContent.length;
-				textSum += textItems;
-			}
-		}
-
-		if (Type.isArrayLike(this.timemanValueNodes))
-		{
-			for (let value of this.timemanValueNodes)
-			{
-				let valueItems = value.textContent.length;
-				valueSum += valueItems;
-			}
-		}
-
-		if (textSum >= 17 && valueSum >= 6 || textSum >= 19 && valueSum >= 4)
-		{
-			Dom.addClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
-		}
-		else
-		{
-			Dom.removeClass(this.timemanNode, 'intranet-ustat-online-info-text-resize');
-		}
 	}
 
 	getNumberUserId(id)
@@ -521,6 +446,11 @@ class UstatOnline
 		let userId = String(id);
 		userId = userId.replace('U', '');
 		return parseInt(userId);
+	}
+
+	isDocumentVisible()
+	{
+		return document.visibilityState === 'visible';
 	}
 
 	redrawOnline()
@@ -545,6 +475,11 @@ class UstatOnline
 		const onlineToShow = newUserIds.slice(0, this.maxUserToShow);
 
 		let renderedUserNodes = this.userBlockNode.querySelectorAll(".js-ustat-online-user");
+
+		if (this.online.length > 100 && renderedUserNodes >= this.maxUserToShow)
+		{
+			return;
+		}
 
 		if (renderedUserNodes)
 		{
@@ -636,7 +571,10 @@ class UstatOnline
 						const removedUserId = parseInt(lastElement.getAttribute("data-user-id"));
 
 						Dom.removeClass(lastElement, 'intranet-ustat-online-icon-show');
-						Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+						if (this.isDocumentVisible())
+						{
+							Dom.addClass(lastElement, 'intranet-ustat-online-icon-hide');
+						}
 
 						this.userIndex = parseInt(firstElement.style.zIndex);
 						this.userIndex++;
@@ -645,10 +583,18 @@ class UstatOnline
 						renderedUserIds = renderedUserIds.filter(id => id !== removedUserId);
 						renderedUserIds.push(item.id);
 
-						Event.bind(lastElement, 'animationend', (event) => {
+						if (this.isDocumentVisible())
+						{
+							Event.bind(lastElement, 'animationend', (event) => {
+								Dom.remove(lastElement);
+								resolve();
+							});
+						}
+						else
+						{
 							Dom.remove(lastElement);
 							resolve();
-						});
+						}
 					}
 					else
 					{
@@ -679,7 +625,7 @@ class UstatOnline
 		const userId = this.getNumberUserId(user.id);
 
 		let itemsClasses = `ui-icon ui-icon-common-user intranet-ustat-online-icon js-ustat-online-user
-			${showAnimation ? ' intranet-ustat-online-icon-show' : ''}`;
+			${showAnimation && this.isDocumentVisible() ? ' intranet-ustat-online-icon-show' : ''}`;
 
 		this.userItem = BX.create('span', {
 			attrs: {
@@ -725,7 +671,16 @@ class UstatOnline
 
 		if (!this.circle)
 		{
-			this.circle = new BX.UI.Graph.Circle(circleNode, 68, progressPercent, currentUserOnlineCount);
+			this.circle = new Circle(
+				circleNode,
+				42,
+				progressPercent,
+				{
+					fixCounter: currentUserOnlineCount,
+					color1:'rgba(49,205,255,.41)',
+					color2: 'rgba(85, 208, 224,.32)'
+				}
+			);
 			this.circle.show();
 		}
 		else

@@ -10,6 +10,11 @@
 	align-items: stretch;
 }
 
+.salescenter-app-wrapper-fade {
+	pointer-events: none;
+	opacity: 0.6;
+}
+
 .salescenter-app-wrapper .main-ui-loader {z-index: 1000}
 
 .salescenter-app-left-side {
@@ -107,7 +112,6 @@
 	display: block;
 	position: relative;
 	margin-bottom: 14px;
-	border-bottom: 1px solid #f0f3f5;
 	width : 100%;
 }
 
@@ -722,7 +726,7 @@
 	display: block;
 	position: relative;
 	min-height: 20px;
-	padding: 16px 30px 16px 59px;
+	padding: 16px 30px 5px 59px;
 	margin-bottom: 5px;
 	background: #fff;
 }
@@ -775,10 +779,10 @@
 .salescenter-app-payment-by-sms-item-counter-rounder {
 	display: none;
 	position: absolute;
-	width: 40px;
-	height: 40px;
+	width: 39px;
+	height: 39px;
 	top: 10px;
-	left: 11px;
+	left: 12px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M40%2C0%20L40%2C40%20L0%2C40%20L0%2C0%20L40%2C0%20Z%20M33.0123065%2C33.031034%20C30.3796037%2C35.7735235%2027.1166009%2C37.5090846%2023.6863237%2C38.2294586%20L23.9848323%2C39.708797%20C27.791456%2C38.9091904%2031.2911597%2C36.9812959%2034.0684581%2C34.0877984%20L33.0123065%2C33.031034%20Z%20M6.33423862%2C32.3151611%20L5.227496%2C33.3164065%20C5.58083391%2C33.7243627%205.94342283%2C34.1097121%206.38380451%2C34.5438579%20C8.86363532%2C36.9640551%2011.8542961%2C38.6459333%2015.1010327%2C39.494152%20L15.4671377%2C38.030755%20C12.5047646%2C37.2568208%209.69276892%2C35.7097291%207.33594895%2C33.3840432%20C6.98555989%2C33.0382829%206.65165062%2C32.6816477%206.33423862%2C32.3151611%20Z%20M38.9668933%2C14.4986674%20L37.5442506%2C14.9087391%20C38.5231662%2C18.4552289%2038.4563583%2C22.2442496%2037.3350857%2C25.7640679%20L38.7407553%2C26.2312776%20C39.9501733%2C22.4345378%2040.0272912%2C18.340329%2038.9668933%2C14.4986674%20Z%20M1.30873375%2C13.5824326%20C0.0694023672%2C17.3692865%20-0.0393498312%2C21.4626085%200.990830652%2C25.3127404%20L2.41663033%2C24.9142821%20C1.46614337%2C21.3619175%201.56115179%2C17.5740169%202.71039259%2C14.0620598%20L1.30873375%2C13.5824326%20Z%20M24.7456583%2C0.433428588%20L24.390965%2C1.89975731%20C27.4053965%2C2.66097657%2030.2696331%2C4.22013089%2032.6640542%2C6.58292117%20C32.9791779%2C6.89388199%2033.2809721%2C7.21363878%2033.5694241%2C7.54144705%20L34.6681177%2C6.53098742%20C34.346309%2C6.16529724%2034.0185237%2C5.81969952%2033.6153974%2C5.42232396%20C31.0963609%2C2.96413667%2028.0503537%2C1.26796005%2024.7456583%2C0.433428588%20Z%20M15.8610203%2C0.291203016%20C12.0623576%2C1.12146095%208.57897499%2C3.07687689%205.82269203%2C5.9934581%20L6.88599118%2C7.04271084%20C9.49977116%2C4.27692021%2012.7485867%2C2.51598042%2016.170771%2C1.76812598%20L15.8610203%2C0.291203016%20Z%22/%3E%3C/svg%3E') center center no-repeat;
 	background-color: inherit;
 	border-radius: 100%;
@@ -874,12 +878,48 @@
 
 .salescenter-app-payment-by-sms-item-title {
 	display: flex;
-	/*overflow: hidden;*/
+	position: relative;
 	padding: 0 1px 17px 1px;
 	border-bottom: 1px solid rgba(82,92,105,.1);
 	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
 	font-size: 18px;
 	color: #333;
+	transition: .2s;
+}
+
+.salescenter-app-payment-by-sms-item-title--prod {
+	margin: 11px 11px 2px 11px;
+	padding-right: 0;
+}
+
+.salescenter-app-payment-by-sms-item-title-collapsible {
+	padding: 0 35px 17px 1px;
+	cursor: pointer;
+}
+
+.salescenter-app-payment-by-sms-item-title-collapsible:after {
+	content: '';
+	position: absolute;
+	right: -6px;
+	top: 7px;
+	width: 8px;
+	height: 8px;
+	border: 2px solid #333;
+	border-top: none;
+	border-left: none;
+	transform: rotate(-135deg);
+	opacity: 0.7;
+	transition: .2s;
+}
+
+.salescenter-app-payment-by-sms-item-hide .salescenter-app-payment-by-sms-item-title:after {
+	transform: rotate(45deg);
+	opacity: .7;
+}
+
+.salescenter-app-payment-by-sms-item-hide .salescenter-app-payment-by-sms-item-title:hover:after {
+	opacity: 1;
+	transition: .05s;
 }
 
 .salescenter-app-payment-by-sms-item-title-text {
@@ -928,7 +968,7 @@
 }
 
 .salescenter-app-payment-by-sms-item-title-info--link:hover {
-	border-color: rgba(32, 102, 176, 1);
+	border-bottom: 1px dashed rgba(32, 102, 176, 1);
 }
 
 .salescenter-app-payment-by-sms-item-title-info--link:after {
@@ -941,11 +981,72 @@
 
 .salescenter-app-payment-by-sms-item-container {
 	display: block;
-	padding: 20px 0 10px 0;
+	padding: 0;
+	transition: .2s;
 }
 
-.salescenter-app-payment-by-sms-item-container-offtop {
-	padding-top: 9px;
+.salescenter-app-payment-collapsible-block {
+	max-height: 2000px;
+	padding: 0;
+	opacity: 1;
+	transition: .7s;
+}
+
+.salescenter-app-payment-collapsible-block.salescenter-app-payment-collapsible-block-collapsed {
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	transition: .2s;
+}
+
+.salescenter-app-payment-by-sms-item-hide .salescenter-app-payment-by-sms-item-container {
+	opacity: 0;
+}
+
+.salescenter-app-payment-by-sms-item-hide .salescenter-app-payment-by-sms-item-container {
+	opacity: 0;
+	animation: salescenter-app-payment-by-sms-item-show .15s linear forwards;
+	animation-delay: .2s;
+}
+
+@keyframes salescenter-app-payment-by-sms-item-show {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+.salescenter-app-payment-by-sms-item-container:before,
+.salescenter-app-payment-by-sms-item-container:after {
+	content: '';
+	display: block;
+	overflow: hidden;
+}
+
+.salescenter-app-payment-by-sms-item-container:before {
+	height: 20px;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-container:before {
+	height: 0px;
+}
+
+.salescenter-app-payment-by-sms-item-container:after {
+	height: 26px;
+}
+
+.salescenter-app-payment-by-sms-item-send .salescenter-app-payment-by-sms-item-container:after {
+	height: 16px;
+}
+
+.salescenter-app-payment-by-sms-item-container-offtop:before {
+	height: 9px;
+}
+
+.salescenter-app-payment-by-sms-item-hide .salescenter-app-payment-by-sms-item-title {
+	border-color: transparent;
 }
 
 .salescenter-app-payment-by-sms-item-container--inline {
@@ -1221,7 +1322,8 @@
 .salescenter-app-payment-by-sms-item-container-payment-item-text,
 .salescenter-app-payment-by-sms-item-container-payment-item-text:hover,
 .salescenter-app-payment-by-sms-item-container-payment-item-text-add,
-.salescenter-app-payment-by-sms-item-container-payment-item-text-add:hover {
+.salescenter-app-payment-by-sms-item-container-payment-item-text-add:hover,
+.salescenter-app-payment-by-sms-item-container-payment-title-item-text {
 	display: inline-block;
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 14px;
@@ -1254,6 +1356,20 @@
 
 .salescenter-app-payment-by-sms-item-container-payment-item-text-add + .salescenter-app-payment-by-sms-item-container-payment-item-text-add {
 	margin-left: 15px;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 50%;
+}
+
+.salescenter-app-payment-by-sms-item-container-payment-title-item-text {
+	height: 20px;
+	line-height: 24px;
+	transition: all .2s linear;
+	margin-left: 8px;
 }
 
 .salescenter-app-payment-by-sms-item-container-payment-inline {

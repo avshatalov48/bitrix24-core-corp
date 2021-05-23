@@ -113,6 +113,14 @@ class RolePermission {
 		$role = new \CCrmRole();
 		foreach (self::getAll() as $roleId => $entities)
 		{
+			if (array_key_exists("CONFIG", $entities) && array_key_exists("WRITE", $entities["CONFIG"]))
+			{
+				$perms = reset($entities["CONFIG"]["WRITE"]);
+				if ($perms >= BX_CRM_PERM_ALL)
+				{
+					continue;
+				}
+			}
 			if (array_key_exists($roleId, $permissionSet))
 			{
 				$entities[$entityId] = $permissionSet[$roleId];

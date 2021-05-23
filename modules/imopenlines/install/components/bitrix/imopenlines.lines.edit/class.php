@@ -12,7 +12,8 @@ use \Bitrix\UI\EntitySelector,
 
 use \Bitrix\Im;
 
-use	\Bitrix\ImOpenLines\Tools,
+use	\Bitrix\ImOpenLines\Queue,
+	\Bitrix\ImOpenLines\Tools,
 	\Bitrix\ImOpenLines\Config,
 	\Bitrix\ImOpenLines\Common,
 	\Bitrix\ImOpenLines\QueueManager,
@@ -103,13 +104,16 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 			$post['CONFIG']['WORKTIME_DAYOFF'] = isset($post['CONFIG']['WORKTIME_DAYOFF'])? $post['CONFIG']['WORKTIME_DAYOFF']: [];
 
-			if(empty($post['CONFIG']['LIMITATION_MAX_CHAT']) || !is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1)
+			if(
+				empty($post['CONFIG']['LIMITATION_MAX_CHAT']) ||
+				!is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1
+			)
 			{
 				$post['CONFIG']['MAX_CHAT'] = 0;
 			}
-			elseif($post['CONFIG']['MAX_CHAT'] > 150)
+			elseif($post['CONFIG']['MAX_CHAT'] > Queue::MAX_CHAT)
 			{
-				$post['CONFIG']['MAX_CHAT'] = 150;
+				$post['CONFIG']['MAX_CHAT'] = Queue::MAX_CHAT;
 			}
 			else
 			{
@@ -188,6 +192,15 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					}
 				}
 			}
+
+			if(
+				!isset($post['CONFIG']['VOTE_ENABLE_TIME_LIMIT']) ||
+				$post['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] !== 'Y'
+			)
+			{
+				$post['CONFIG']['VOTE_TIME_LIMIT'] = 0;
+			}
+			unset($post['CONFIG']['VOTE_ENABLE_TIME_LIMIT']);
 
 			$post['CONFIG']['QUEUE'] = $queueList;
 			$post['CONFIG']['QUEUE_USERS_FIELDS'] = $queueUsersFields;
@@ -401,7 +414,9 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					$result['queueUsersFields'][$key] = $userFields;
 				}
 
-				$result['queueItems'] = array_map(function(Item $item) {
+				//TODO ui 20.400.0
+				//$result['queueItems'] = $itemCollections->toArray();
+				$result['queueItems'] = array_map(function(EntitySelector\Item $item) {
 					return $item->jsonSerialize();
 				}, $itemCollections->getAll());
 			}
@@ -847,6 +862,11 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		)
 		{
 			$this->arResult['CONFIG']['KPI_FURTHER_ANSWER_LIST'] = [];
+		}
+
+		if((int)$this->arResult['CONFIG']['VOTE_TIME_LIMIT'] > 0)
+		{
+			$this->arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] = 'Y';
 		}
 
 		//Visible block

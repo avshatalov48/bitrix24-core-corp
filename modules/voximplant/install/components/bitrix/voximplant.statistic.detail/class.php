@@ -5,6 +5,7 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\UI\Filter\NumberType;
 use Bitrix\Voximplant;
 use Bitrix\Voximplant\Security\Permissions;
@@ -31,6 +32,9 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected $showCallCost = true;
 	protected $excelMode = false;
 	protected $enableExport = true;
+	protected $isExternalFilter = false;
+	protected $externalQuery = null;
+	protected $sliderQuery = null;
 
 	protected $pageNumber = -1;
 	protected $pageSize = -1;
@@ -71,6 +75,21 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			else
 			{
 				$this->arResult['ERROR_TEXT'] = Loc::getMessage("TEL_STAT_EXPORT_LOCK_ERROR");
+			}
+		}
+
+		$request = Bitrix\Main\Context::getCurrent()->getRequest();
+		if($request['from_analytics'] === 'Y')
+		{
+			$this->arResult['REPORT_PARAMS'] = $request->getValues();
+			$reportHandler = Voximplant\Integration\Report\ReportHandlerFactory::createWithReportId($request['report_id']);
+			$this->externalQuery = $reportHandler ? $reportHandler->prepareEntityListFilter($request) : null;
+
+			if($this->externalQuery != null)
+			{
+				$this->filterId = 'voximplant_statistic_detail_slider_analytics_filter';
+				$this->isExternalFilter = true;
+				$this->arResult['IS_EXTERNAL_FILTER'] = true;
 			}
 		}
 	}
@@ -157,7 +176,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			"COMMENT" => array(
 				"id" => "COMMENT",
 				"name" => Loc::getMessage("TELEPHONY_FILTER_COMMENT"),
-			)
+			),
 		);
 
 		if(Voximplant\Model\TranscriptLineTable::getEntity()->fullTextIndexEnabled('MESSAGE'))
@@ -458,14 +477,28 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		}
 		else
 		{
-			$idRows = Voximplant\StatisticTable::getList([
-				"select" => ["ID"],
-				"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
-				"filter" => $filter,
-				"order" => $sorting["sort"],
-				"offset" => $nav->getOffset(),
-				"limit" => $nav->getLimit() + 1
-			])->fetchAll();
+			if (!$this->isExternalFilter)
+			{
+				$idRows = Voximplant\StatisticTable::getList(
+					[
+						"select" => ["ID"],
+						"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
+						"filter" => $filter,
+						"order" => $sorting["sort"],
+						"offset" => $nav->getOffset(),
+						"limit" => $nav->getLimit() + 1
+					]
+				)->fetchAll();
+			}
+			else
+			{
+				$this->createReportSliderQuery();
+
+				$this->sliderQuery->setOffset($nav->getOffset());
+				$this->sliderQuery->setLimit($nav->getLimit() + 1);
+
+				$idRows = $this->sliderQuery->exec()->fetchAll();
+			}
 		}
 
 		$idList = array_column($idRows, "ID");
@@ -554,11 +587,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				$t_row = array(
 					"data" => $row,
 					"columns" => array(),
-					"editable" => (
-						!$row['CALL_RECORD_DOWNLOAD_URL'] &&
-						$row['CALL_RECORD_URL'] &&
-						$this->isDownloadLinkActual($row['CALL_START_DATE_RAW'])
-					) ? true : false,
+					"editable" => true,
 					"actions" => $this->getActions($row),
 				);
 				$rows[] = $t_row;
@@ -595,6 +624,37 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			array("id" => "CRM", "name" => GetMessage("TELEPHONY_HEADER_CRM"), "default" => true, "editable" => false),
 			array("id" => "COMMENT", "name" => GetMessage("TELEPHONY_HEADER_COMMENT"), "default" => true, "editable" => false),
 		);
+	}
+
+	public function createReportSliderQuery(): void
+	{
+		$reportEntity = Entity::getInstanceByQuery($this->externalQuery);
+
+		$this->sliderQuery = new Query($reportEntity);
+		$this->sliderQuery->addSelect('ID');
+
+		$filterDefinition = $this->getFilterDefinition();
+		$filter = $this->getFilter($filterDefinition);
+		if ($filter)
+		{
+			$this->sliderQuery->setFilter($filter);
+		}
+
+		if (!$filterDefinition)
+		{
+			return;
+		}
+
+		$runtimeFields = $this->getRuntimeFields($filterDefinition);
+		if (!$runtimeFields)
+		{
+			return;
+		}
+
+		foreach ($runtimeFields as $field)
+		{
+			$this->sliderQuery->registerRuntimeField($field);
+		}
 	}
 
 	function getUserData(array $userIds)
@@ -689,8 +749,8 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		)
 		{
 			$result[] = array(
-				"TITLE" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
-				"TEXT" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
+				"TITLE" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD_RECORD"),
+				"TEXT" => GetMessage("TEL_STAT_ACTION_VOX_DOWNLOAD_RECORD"),
 				"ONCLICK" =>
 					"BX.VoximplantStatisticDetail.Instance.downloadVoxRecords([{historyId: ".CUtil::JSEscape($row["ID"])."}]);"
 			);
@@ -717,6 +777,21 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		return $result;
 	}
 
+	public function isRecordsAlreadyUploadedAction(array $historyIds): bool
+	{
+		$this->init();
+
+		$query = Voximplant\StatisticTable::query();
+		$query->addSelect('CALL_RECORD_ID');
+		$query->addSelect('CALL_WEBDAV_ID');
+		$query->whereIn('ID', array_column($historyIds, 'historyId'));
+		$query->whereNotNull('CALL_RECORD_ID');
+		$query->whereNotNull('CALL_WEBDAV_ID');
+		$recordsInfo = $query->exec()->fetchAll();
+
+		return count($recordsInfo) === count($historyIds);
+	}
+
 	public function downloadRecordAction(int $historyId)
 	{
 		$this->init();
@@ -724,12 +799,19 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		$recordInfo = Voximplant\StatisticTable::getList([
 			'select' => [
 				'CALL_RECORD_URL',
-				'CALL_START_DATE'
+				'CALL_START_DATE',
+				'CALL_RECORD_ID',
+				'CALL_WEBDAV_ID'
 			],
 			'filter' => [
 				'=ID' => $historyId,
 			],
 		])->fetch();
+
+		if ($recordInfo['CALL_RECORD_ID'] && $recordInfo['CALL_WEBDAV_ID'])
+		{
+			return true;
+		}
 
 		$callStartDate = $recordInfo['CALL_START_DATE'];
 		$recordUrl = $recordInfo['CALL_RECORD_URL'];
@@ -772,6 +854,10 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			if ($this->userData[$userId]["PHOTO"])
 			{
 				$userHtml .= '<span class="tel-stat-user-img user-avatar" style="background: url(\'' . $this->userData[$userId]["PHOTO"] . '\') no-repeat center;\"></span>';
+			}
+			else
+			{
+				$userHtml .= '<div class="ui-icon ui-icon-common-user tel-stat-user-img user-avatar"><i></i></div>';
 			}
 			$userHtml .= '<span class="tel-stat-user-name">' . htmlspecialcharsbx($this->userData[$userId]["FIO"]) . '</span></span>';
 		}
@@ -982,15 +1068,23 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	{
 		$this->init();
 
-		$filterDefinition = $this->getFilterDefinition();
-		$cursor = Voximplant\StatisticTable::getList([
-			"select" => [
-				"CNT" => Query::expr()->count("ID")
-			],
-			"runtime" => $this->getRuntimeFields($filterDefinition),
-			"filter" => $this->getFilter($filterDefinition),
-		]);
-		$row = $cursor->fetch();
+		if (!$this->isExternalFilter)
+		{
+			$filterDefinition = $this->getFilterDefinition();
+			$cursor = Voximplant\StatisticTable::getList([
+				"select" => [
+					"CNT" => Query::expr()->count("ID")
+				],
+				"runtime" => $this->getRuntimeFields($filterDefinition),
+				"filter" => $this->getFilter($filterDefinition),
+			]);
+			$row = $cursor->fetch();
+		}
+		else
+		{
+			$this->createReportSliderQuery();
+			$row['CNT'] = count($this->sliderQuery->exec()->fetchAll());
+		}
 
 		return [
 			"rowsCount" => $row['CNT'],

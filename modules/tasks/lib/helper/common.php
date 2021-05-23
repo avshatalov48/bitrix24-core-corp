@@ -2,6 +2,9 @@
 
 namespace Bitrix\Tasks\Helper;
 
+use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\Item\Workgroup;
+
 abstract class Common
 {
 	protected static $instance = null;
@@ -84,6 +87,18 @@ abstract class Common
 	public function getUserId()
 	{
 		return $this->userId;
+	}
+
+	public function isScrumProject(): bool
+	{
+		if (Loader::includeModule('socialnetwork'))
+		{
+			$group = Workgroup::getById($this->getGroupId());
+
+			return ($group && $group->isScrumProject());
+		}
+
+		return false;
 	}
 
 	/**

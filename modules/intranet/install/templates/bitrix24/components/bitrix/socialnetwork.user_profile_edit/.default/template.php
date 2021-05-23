@@ -1,6 +1,7 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 CJSCore::Init(array('fx'));
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $APPLICATION->SetPageProperty("BodyClass", "page-one-column");
 

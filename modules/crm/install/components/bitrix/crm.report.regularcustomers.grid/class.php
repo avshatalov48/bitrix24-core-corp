@@ -144,7 +144,7 @@ class CrmReportRegularCustomersGridComponent extends \CBitrixComponent
 			[
 				"id" => "DEAL_COUNT",
 				"sort" => "DEAL_COUNT",
-				"name" => Loc::getMessage("CRM_REPORT_REGULAR_CUSTOMERS_GRID_DEAL_COUNT"),
+				"name" => Loc::getMessage("CRM_REPORT_REGULAR_CUSTOMERS_GRID_DEAL_CLOSED_COUNT"),
 				"default" => true,
 			],
 			[

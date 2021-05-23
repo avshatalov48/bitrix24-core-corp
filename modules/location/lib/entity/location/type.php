@@ -37,7 +37,7 @@ class Type
 
 	public static function isValueExist(int $value): bool
 	{
-		$values = null;
+		static $values = null;
 
 		if($values === null)
 		{

@@ -9,7 +9,7 @@ $site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 define("SITE_ID", $site_id);
 
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? trim($_REQUEST["action"]) : "";
-$post_id = isset($_REQUEST["post_id"]) ? intval($_REQUEST["post_id"]) : 0;
+$post_id = isset($_REQUEST["post_id"]) ? (int)$_REQUEST["post_id"] : 0;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
@@ -164,125 +164,13 @@ if(!$strError)
 			RemoveEventHandler('socialnetwork', 'OnAfterCBlogUserOptionsSet', $LocalRedirectHandlerId);
 		}
 	}
-	elseif($action == "get_blog_post_data")
+	elseif($action === 'get_blog_post_data')
 	{
-		$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
-
-		$rsLog = CSocNetLog::GetList(
-			array(), 
-			array(
-				"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
-				"SOURCE_ID" => $post_id
-			),
-			false,
-			false,
-			array("ID")
-		);
-		if ($arLog = $rsLog->Fetch())
-		{
-			$arResult["log_id"] = $arLog["ID"];
-			$arResult["post_user_id"] = $arBlogPost["AUTHOR_ID"];
-			$arResult["PostPerm"] = CBlogPost::GetSocNetPostPerms($post_id, true, $GLOBALS["USER"]->GetID(), $arBlogPost["AUTHOR_ID"]);
-			if ($arResult["PostPerm"] >= BLOG_PERMS_FULL)
-			{
-				$arRights = array();
-				$dbRight = CSocNetLogRights::GetList(array(), array("LOG_ID" => $arLog["ID"]));
-				while ($arRight = $dbRight->Fetch())
-				{
-					$arRights[] = $arRight["GROUP_CODE"];
-				}
-
-				$arDestinationAll = CSocNetLogTools::FormatDestinationFromRights($arRights, array(
-					"CHECK_PERMISSIONS_DEST" => "N",
-					"DESTINATION_LIMIT" => 100,
-					"NAME_TEMPLATE" => $_REQUEST["nt"],
-					"SHOW_LOGIN" => $_REQUEST["sl"],
-				));
-
-				$arDestinationAvailable = CSocNetLogTools::FormatDestinationFromRights($arRights, array(
-					"CHECK_PERMISSIONS_DEST" => "Y",
-					"DESTINATION_LIMIT" => 100,
-					"NAME_TEMPLATE" => $_REQUEST["nt"],
-					"SHOW_LOGIN" => $_REQUEST["sl"],
-				));
-
-				if (count($arDestinationAvailable) > 1) // not only author, so delete author
-				{
-					foreach($arDestinationAvailable as $key => $arDest)
-					{
-						if (
-							!empty($arDest["TYPE"])
-							&& $arDest["TYPE"] == "U"
-							&& !empty($arDest["ID"])
-							&& $arDest["ID"] == $arBlogPost["AUTHOR_ID"]
-						)
-						{
-							unset($arDestinationAvailable[$key]);
-							break;
-						}
-					}
-				}
-
-				$arCodeAvailable = array();
-				foreach($arDestinationAvailable as $key => $arDest)
-				{
-					if (
-						!empty($arDest["TYPE"])
-						&& !empty($arDest["ID"])
-					)
-					{
-						$arCodeAvailable[] = $arDest["TYPE"].$arDest["ID"];
-					}
-				}
-
-				$arResult["PostDestination"] = array();
-				$arResult["PostDestinationHidden"] = array();
-
-				foreach($arDestinationAll as $key => $arDest)
-				{
-					if (
-						!empty($arDest["TYPE"])
-						&& !empty($arDest["ID"])
-					)
-					{
-						$destCode = $arDest["TYPE"].$arDest["ID"];
-						if (in_array($destCode, $arCodeAvailable))
-						{
-							$arResult["PostDestination"][] = $arDest;
-						}
-						else
-						{
-							$arResult["PostDestinationHidden"][] = array(
-								'TYPE' => $arDest['TYPE'],
-								'ID' => $arDest['ID']
-							);
-						}
-					}
-					else
-					{
-						$arResult["PostDestination"][] = $arDest;
-					}
-				}
-
-				$arResult["PostDetailText"] = \Bitrix\Main\Text\Emoji::decode(htmlspecialcharsback($arBlogPost["DETAIL_TEXT"]));
-				$bDiskOrWebDavInstalled = (IsModuleInstalled('disk') || IsModuleInstalled('webdav'));
-
-				$ufCode = (
-					$bDiskOrWebDavInstalled
-						? "UF_BLOG_POST_FILE"
-						: "UF_BLOG_POST_DOC"
-				);
-
-				$arResult["PostUFCode"] = $ufCode;
-
-				$arResult["PostFiles"] = CMobileHelper::getUFForPostForm(array(
-					"ENTITY_TYPE" => "BLOG_POST",
-					"ENTITY_ID" => $post_id,
-					"UF_CODE" => $ufCode,
-					"IS_DISK_OR_WEBDAV_INSTALLED" => $bDiskOrWebDavInstalled
-				));
-			}
-		}
+		$arResult = \Bitrix\Mobile\Livefeed\Helper::getBlogPostFullData([
+			'postId' => $post_id,
+			'nameTemplate' => $_REQUEST['nt'],
+			'showLogin' => $_REQUEST['sl']
+		]);
 	}
 	elseif($action == "get_comment_data")
 	{

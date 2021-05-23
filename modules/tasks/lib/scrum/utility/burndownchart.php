@@ -19,9 +19,10 @@ class BurnDownChart
 		$value = 0;
 		foreach ($sprintRanges->getWeekdays() as $dayNumber => $dayTime)
 		{
+			$realDayNumber = $sprintRanges->getRealDayNumber($dayNumber);
 			$value += $averagePointsPerDay;
 			$idealData[] = [
-				'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$dayNumber,
+				'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$realDayNumber,
 				'idealValue' => round(($sumStoryPoints - $value), 2)
 			];
 		}
@@ -42,43 +43,35 @@ class BurnDownChart
 			]
 		];
 
-		$deferredStoryPoints = [];
-		foreach ($sprintRanges->getAllDays() as $dayNumber => $dayTime)
-		{
-			if ($previousWeekday = $sprintRanges->getPreviousWeekdayByDayNumber($dayNumber))
-			{
-				if ($deferredStoryPoints[$previousWeekday] != $completedStoryPointsMap[$dayNumber])
-				{
-					$deferredStoryPoints[$previousWeekday] += (float) $completedStoryPointsMap[$dayNumber];
-				}
-			}
-		}
+		$currentWeekDay = $sprintRanges->getCurrentWeekDay();
 
-		$previousValue = 0;
-		foreach ($sprintRanges->getWeekdays() as $dayNumber => $dayTime)
+		foreach ($completedStoryPointsMap as $dayNumber => $remainStoryPoints)
 		{
-			if (strtotime('today', $dayTime) <= strtotime('today', time()))
+			if (array_key_exists($dayNumber, $sprintRanges->getWeekdays()))
 			{
-				if (isset($deferredStoryPoints[$dayNumber]))
-				{
-					$remainValue = $deferredStoryPoints[$dayNumber];
-				}
-				elseif (isset($completedStoryPointsMap[$dayNumber]))
-				{
-					$remainValue = $completedStoryPointsMap[$dayNumber];
-				}
-				else
-				{
-					$remainValue = $previousValue;
-				}
-				$remainData[] = [
-					'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$dayNumber,
-					'remainValue' => ($previousValue && $previousValue < $remainValue ? $previousValue : $remainValue)
+				$realDayNumber = $sprintRanges->getRealDayNumber($dayNumber);
+				$remainData[$realDayNumber] = [
+					'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$realDayNumber,
+					'remainValue' => $remainStoryPoints
 				];
-				$previousValue = $remainValue;
+			}
+			else
+			{
+				$realDayNumber = $sprintRanges->getRealDayNumber(
+					$sprintRanges->getPreviousWeekdayByDayNumber($dayNumber)
+				);
+				if ($realDayNumber)
+				{
+					$remainData[$realDayNumber]['remainValue'] = $remainStoryPoints;
+				}
+			}
+
+			if ($currentWeekDay && $realDayNumber === $currentWeekDay)
+			{
+				break;
 			}
 		}
 
-		return $remainData;
+		return array_values($remainData);
 	}
 }

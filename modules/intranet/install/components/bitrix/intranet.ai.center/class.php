@@ -45,6 +45,7 @@ class IntranetAiCenter extends \CBitrixComponent
 
 		$app = AI\Center::getAssistantApp();
 		$this->arResult["ASSISTANT_APP_ID"] = is_array($app) && $app["ACTIVE"] === "Y" ? intval($app["ID"]) : 0;
+		$this->arResult["ML_INSTALLED"] = \Bitrix\Main\ModuleManager::isModuleInstalled("ml");
 
 		return true;
 	}

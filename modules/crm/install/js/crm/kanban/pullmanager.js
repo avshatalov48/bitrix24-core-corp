@@ -152,6 +152,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 
+	        item.rawData = paramsItem.rawData;
 	        item.setActivityExistInnerHtml();
 	        item.useAnimation = true;
 	        item.setChangedInPullRequest();

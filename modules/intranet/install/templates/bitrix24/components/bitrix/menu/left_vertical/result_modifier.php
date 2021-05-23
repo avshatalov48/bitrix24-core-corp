@@ -219,7 +219,7 @@ if (is_array($userItems) && !empty($userItems))
 $adminItems = COption::GetOptionString("intranet", "left_menu_items_to_all_".SITE_ID);
 if (!empty($adminItems))
 {
-	$adminItems = unserialize($adminItems);
+	$adminItems = unserialize($adminItems, ["allowed_classes" => false]);
 	foreach ($adminItems as $item)
 	{
 		$counterId = isset($item["COUNTER_ID"]) ? $item["COUNTER_ID"] : "";
@@ -446,7 +446,7 @@ if ($presetId == "custom")
 	$customItems = COption::GetOptionString("intranet", "left_menu_custom_preset_items", "");
 	if ($customItems)
 	{
-		$customItems= unserialize($customItems);
+		$customItems= unserialize($customItems, ["allowed_classes" => false]);
 		if (is_array($customItems))
 		{
 			foreach ($customItems as $item)
@@ -482,7 +482,7 @@ if (!is_array($sortedItemsId) || empty($sortedItemsId))
 		$sortedItemsId = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "");
 		if ($sortedItemsId)
 		{
-			$sortedItemsId = unserialize($sortedItemsId);
+			$sortedItemsId = unserialize($sortedItemsId, ["allowed_classes" => false]);
 		}
 	}
 	else
@@ -582,10 +582,14 @@ if (
 		$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
 		$arResult["HOST_NAME"] = defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME;
 		$arResult["IS_DEMO_LICENSE"] = \CBitrix24::getLicenseFamily() === "demo";
+		$arResult["DEMO_DAYS"] = "";
 		if ($arResult["IS_DEMO_LICENSE"])
 		{
 			$demoStart = COption::GetOptionInt("bitrix24", "DEMO_START");
-			$arResult["DEMO_DAYS"] = FormatDate("ddiff", time(), $demoStart + 30*24*60*60);
+			if ($demoStart > 0)
+			{
+				$arResult["DEMO_DAYS"] = FormatDate("ddiff", time(), $demoStart + 30 * 24 * 60 * 60);
+			}
 		}
 	}
 }

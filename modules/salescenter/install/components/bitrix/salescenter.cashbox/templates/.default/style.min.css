@@ -1,6 +1,12 @@
 #left-panel{padding:0 0 0 21px !important}#workarea-content{background-color:#eef2f4 !important}.salescenter-cashbox-wrapper{display:-webkit-box;display:-ms-flexbox;display:flex;-ms-flex-align:start;-webkit-box-align:start;align-items:flex-start;margin-right:15px}.salescenter-main-header{display:-webkit-box;display:-ms-flexbox;display:flex;-ms-flex-align:start;-webkit-box-align:start;align-items:flex-start}.salescenter-main-header-left-block{padding-right:45px}.salescenter-logo-container{position:relative;min-width:97px;max-width:97px;width:97px;height:97px;border-radius:50%}.salescenter-atol-icon{width:97px}
 .salescenter-atol-icon i {
-	background-image: url(images/atol.svg); background-size:70% auto;background-color:#ec1b2f}.salescenter-orange-icon{width:97px}
+	background-image: url(images/atol.svg); background-size:70% auto;background-color:#ec1b2f}.salescenter-businessru-atol-icon{width:97px}
+.salescenter-businessru-atol-icon i {
+	background-image: url(images/businessru_atol.svg); background-size:70% auto;background-color:#ff142c}.salescenter-businessru-evotor-icon{width:97px}
+.salescenter-businessru-evotor-icon i {
+	background-image: url(images/businessru_evotor.svg); background-size:70% auto;background-color:#e44a21}.salescenter-businessru-shtrihm-icon{width:97px}
+.salescenter-businessru-shtrihm-icon i {
+	background-image: url(images/businessru_shtrihm.svg); background-size:70% auto;background-color:#8f7b66}.salescenter-orange-icon{width:97px}
 .salescenter-orange-icon i {
 	background-image: url(images/orangedata.svg); background-size:70% auto;background-color:#ff9a01}.salescenter-checkbox-icon{width:97px}
 .salescenter-checkbox-icon i {

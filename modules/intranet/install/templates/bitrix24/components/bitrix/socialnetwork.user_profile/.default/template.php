@@ -11,6 +11,7 @@
 use Bitrix\Main\Localization\Loc;
 
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/user_profile.css");
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $bBitrix24 = IsModuleInstalled("bitrix24");
 $bNetwork = $bBitrix24 && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';

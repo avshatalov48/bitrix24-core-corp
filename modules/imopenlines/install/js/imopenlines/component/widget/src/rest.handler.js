@@ -103,6 +103,8 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 			dialogId: 'chat'+data.chatId,
 			diskFolderId: data.diskFolderId,
 		}});
+
+		this.store.dispatch('widget/setVoteDateFinish', data.dateCloseVote);
 	}
 
 	handleImDialogMessagesGetInitSuccess(data)

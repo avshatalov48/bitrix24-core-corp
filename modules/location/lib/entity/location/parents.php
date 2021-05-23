@@ -2,17 +2,19 @@
 
 namespace Bitrix\Location\Entity\Location;
 
-use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Location;
-use Bitrix\Main\ArgumentOutOfRangeException;
 
-/** @internal */
+/**
+ * Class Parents
+ * @package Bitrix\Location\Entity\Location
+ * @internal
+ */
 final class Parents extends Collection
 {
 	/** @var Location[]  */
 	protected $items = [];
 	/** @var Location|null  */
-	protected $descendant = null;
+	protected $descendant;
 
 	/**
 	 * @return Location
@@ -26,34 +28,19 @@ final class Parents extends Collection
 	 * @param Location $descendant
 	 * @return $this
 	 */
-	public function setDescendant(Location $descendant)
+	public function setDescendant(Location $descendant): self
 	{
 		$this->descendant = $descendant;
 		return $this;
 	}
 
 	/**
-	 * @param array $locations
-	 * @throws ArgumentOutOfRangeException
-	 */
-	public function setItems(array $locations)
-	{
-		foreach($locations as $location)
-		{
-			if(!($location instanceof Location))
-			{
-				throw new ArgumentOutOfRangeException('location');
-			}
-
-			$this->addItem($location);
-		}
-	}
-
-	/**
+	 * Check if the Location is in the Parents chain
+	 *
 	 * @param Location $location
 	 * @return bool
 	 */
-	public function isContain(Location $location)
+	public function isContain(Location $location): bool
 	{
 		foreach($this->items as $item)
 		{
@@ -67,13 +54,14 @@ final class Parents extends Collection
 	}
 
 	/**
+	 * Check if the Parents chain and other Parents chain are equal
+	 *
 	 * @param Parents $parents
 	 * @return bool
-	 * todo: case, then something was changed in chains. Partly matching.
 	 */
-	public function isEqualTo(Parents $parents)
+	public function isEqualTo(Parents $parents): bool
 	{
-		if($this->count() != $parents->count())
+		if($this->count() !== $parents->count())
 		{
 			return false;
 		}
@@ -94,6 +82,8 @@ final class Parents extends Collection
 	}
 
 	/**
+	 * Returns Location of given type if it is exists in this Parents chain
+	 *
 	 * @param int $type
 	 * @return Location|null
 	 */

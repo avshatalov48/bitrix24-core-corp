@@ -185,6 +185,7 @@ class CBPCrmWaitActivity extends CBPActivity
 			),
 			'WaitDescription' => array(
 				'Name' => GetMessage('CRM_WAIT_ACTIVITY_WAIT_DESCRIPTION'),
+				'Description' => GetMessage('CRM_WAIT_ACTIVITY_WAIT_DESCRIPTION'),
 				'FieldName' => 'wait_description',
 				'Type' => 'text'
 			),

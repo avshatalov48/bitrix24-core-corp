@@ -278,7 +278,6 @@ else
 		"appmap" => [
 			"main" => ["url" => $siteDir."mobile/index.php?version=".$moduleVersion, "bx24ModernStyle" => true],
 			"menu" => ["url" => $siteDir."mobile/left.php?version=".$moduleVersion],
-			"right" => ["url" => $siteDir."mobile/im/right.php?version=".$moduleVersion],
 			"notification" => ["url" => $siteDir."mobile/im/notify.php"]
 		]
 	];

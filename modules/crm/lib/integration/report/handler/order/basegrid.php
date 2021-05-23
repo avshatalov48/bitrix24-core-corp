@@ -387,6 +387,12 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 	 */
 	public function prepare()
 	{
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Order, 0, $userPermission))
+		{
+			return [];
+		}
+
 		return $this->formatData($this->loadData());
 	}
 

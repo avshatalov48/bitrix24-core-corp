@@ -37,6 +37,11 @@ export default class MapBase extends EventEmitter
 		throw new Error('Must be implemented');
 	}
 
+	onMapShow()
+	{
+
+	}
+
 	destroy()
 	{
 

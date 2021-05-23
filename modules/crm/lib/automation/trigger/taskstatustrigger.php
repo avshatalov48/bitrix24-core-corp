@@ -69,8 +69,7 @@ class TaskStatusTrigger extends BaseTrigger
 
 			return $conditionGroup->evaluateByDocument(
 				$documentType,
-				$documentId,
-				$task
+				$documentId
 			);
 		}
 		return true;

@@ -4,11 +4,11 @@
 
 use Bitrix\Main\Loader;
 
-$arResult["is_ajax_post"] = (intval($_REQUEST["comment_post_id"]) > 0 ? "Y" : "N");
+$arResult["is_ajax_post"] = ((int)$_REQUEST["comment_post_id"] > 0 ? "Y" : "N");
 $arResult["Post"]["IS_IMPORTANT"] = false;
 if (
 	isset($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"])
-	&& (intval($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"]["VALUE"]) > 0)
+	&& ((int)$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"]["VALUE"] > 0)
 )
 {
 	$arResult["Post"]["IS_IMPORTANT"] = true;
@@ -51,7 +51,7 @@ if (
 	}
 }
 
-if (!empty($arParams['TOP_RATING_DATA']))
+if (is_array($arParams['TOP_RATING_DATA']))
 {
 	$arResult['TOP_RATING_DATA'] = $arParams['TOP_RATING_DATA'];
 }
@@ -74,7 +74,26 @@ elseif (!empty($arParams["LOG_ID"]))
 $arResult['MOBILE_API_VERSION'] = (
 	Loader::includeModule('mobileapp')
 		? \CMobile::getApiVersion()
-		: intval($APPLICATION->getPageProperty('api_version'))
+		: (int)$APPLICATION->getPageProperty('api_version')
 );
 
+if (
+	isset($arResult['Post']['BACKGROUND_CODE'])
+	&& $arResult['Post']['BACKGROUND_CODE'] <> ''
+)
+{
+	$backgroundData = \Bitrix\Mobile\Livefeed\Helper::getBackgroundData();
+	if (
+		!is_array($backgroundData)
+		|| !isset($backgroundData['images'])
+		|| !isset($backgroundData['images'][$arResult['Post']['BACKGROUND_CODE']])
+	)
+	{
+		$arResult['Post']['BACKGROUND_CODE'] = '';
+	}
+}
+else
+{
+	$arResult['Post']['BACKGROUND_CODE'] = '';
+}
 ?>

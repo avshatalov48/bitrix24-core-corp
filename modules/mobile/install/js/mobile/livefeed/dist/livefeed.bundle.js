@@ -168,11 +168,17 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, Database);
 	    this.tableName = null;
 	    this.keyName = null;
-	    this.setTableName(main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.tableName) ? params.tableName : 'b_default');
-	    this.setKeyName(main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.keyName) ? params.keyName : 'post_unsent');
+	    this.setTableName(main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.tableName) ? params.tableName : 'livefeed');
+	    this.setKeyName(main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.keyName) ? params.keyName : 'postUnsent');
+	    this.init();
 	  }
 
 	  babelHelpers.createClass(Database, [{
+	    key: "init",
+	    value: function init() {
+	      BXMobileApp.addCustomEvent('Livefeed.Database::clear', this.onClear.bind(this));
+	    }
+	  }, {
 	    key: "setTableName",
 	    value: function setTableName(value) {
 	      this.tableName = value;
@@ -193,58 +199,27 @@ this.BX = this.BX || {};
 	      return this.keyName;
 	    }
 	  }, {
-	    key: "check",
-	    value: function check(callback) {
-	      if (!main_core.Type.isObject(app.db)) {
-	        return false;
-	      }
-
-	      app.db.createTable({
-	        tableName: this.getTableName(),
-	        fields: [{
-	          name: 'KEY',
-	          unique: true
-	        }, 'VALUE'],
-	        success: function success(res) {
-	          callback.success();
-	        },
-	        fail: function fail(e) {
-	          callback.fail();
-	        }
-	      });
+	    key: "onClear",
+	    value: function onClear(params) {
+	      this.delete(params.groupId);
 	    }
 	  }, {
 	    key: "delete",
 	    value: function _delete(groupId) {
-	      var _this = this;
-
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
 
-	      if (!main_core.Type.isObject(app.db)) {
-	        return false;
-	      }
-
-	      this.check({
-	        success: function success() {
-	          app.db.deleteRows({
-	            tableName: _this.getTableName(),
-	            filter: {
-	              KEY: _this.getKeyName() + (groupId ? '_' + groupId : '')
-	            },
-	            success: function success(res) {},
-	            fail: function fail(e) {}
-	          });
-	        },
-	        fail: function fail() {}
+	      app.exec('setStorageValue', {
+	        storageId: this.getTableName(),
+	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
+	        value: {},
+	        callback: function callback(res) {}
 	      });
 	    }
 	  }, {
 	    key: "save",
 	    value: function save(data, groupId) {
-	      var _this2 = this;
-
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
@@ -260,91 +235,31 @@ this.BX = this.BX || {};
 	        }
 	      }
 
-	      if (!main_core.Type.isObject(app.db)) {
-	        return false;
-	      }
-
-	      this.check({
-	        success: function success() {
-	          app.db.getRows({
-	            tableName: _this2.getTableName(),
-	            filter: {
-	              KEY: _this2.getKeyName() + (groupId ? '_' + groupId : '')
-	            },
-	            success: function success(res) {
-	              var text = JSON.stringify(data);
-
-	              if (res.items.length > 0) {
-	                app.db.updateRows({
-	                  tableName: _this2.getTableName(),
-	                  updateFields: {
-	                    VALUE: text
-	                  },
-	                  filter: {
-	                    KEY: _this2.getKeyName() + (groupId ? '_' + groupId : '')
-	                  },
-	                  success: function success(res) {},
-	                  fail: function fail(e) {}
-	                });
-	              } else {
-	                app.db.addRow({
-	                  tableName: _this2.getTableName(),
-	                  insertFields: {
-	                    KEY: _this2.getKeyName() + (groupId ? '_' + groupId : ''),
-	                    VALUE: text
-	                  },
-	                  success: function success(res) {},
-	                  fail: function fail(e) {}
-	                });
-	              }
-	            },
-	            fail: function fail(e) {}
-	          });
-	        },
-	        fail: function fail() {}
+	      app.exec('setStorageValue', {
+	        storageId: this.getTableName(),
+	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
+	        value: data,
+	        callback: function callback(res) {}
 	      });
 	    }
 	  }, {
 	    key: "load",
-	    value: function load(callback, groupId) {
-	      var _this3 = this;
-
+	    value: function load(_callback, groupId) {
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
 
-	      if (!main_core.Type.isObject(app.db)) {
-	        callback.onEmpty();
-	        return null;
-	      }
+	      app.exec('getStorageValue', {
+	        storageId: this.getTableName(),
+	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
+	        callback: function callback(value) {
+	          value = main_core.Type.isPlainObject(value) ? value : main_core.Type.isStringFilled(value) ? JSON.parse(value) : {};
 
-	      this.check({
-	        success: function success() {
-	          app.db.getRows({
-	            tableName: _this3.getTableName(),
-	            filter: {
-	              KEY: _this3.getKeyName() + (groupId ? '_' + groupId : '')
-	            },
-	            success: function success(res) {
-	              if (res.items.length > 0 && res.items[0].VALUE.length > 0) {
-	                var result = JSON.parse(res.items[0].VALUE);
-
-	                if (main_core.Type.isPlainObject(result)) {
-	                  callback.onLoad(result);
-	                } else {
-	                  callback.onEmpty();
-	                }
-	              } else {
-	                callback.onEmpty();
-	              }
-	            },
-	            fail: function fail(e) {
-	              callback.onEmpty();
-	            }
-	          });
-	        },
-	        fail: function fail() {
-	          callback.onEmpty();
+	          if (main_core.Type.isPlainObject(value) && Object.keys(value).length > 0) {
+	            _callback.onLoad(value);
+	          } else {
+	            _callback.onEmpty();
+	          }
 	        }
 	      });
 	    }
@@ -1107,6 +1022,358 @@ this.BX = this.BX || {};
 	  return PostMenu;
 	}();
 
+	var PostFormManager = /*#__PURE__*/function () {
+	  function PostFormManager() {
+	    babelHelpers.classCallCheck(this, PostFormManager);
+	  }
+
+	  babelHelpers.createClass(PostFormManager, [{
+	    key: "show",
+	    value: function show(params) {
+	      var _this = this;
+
+	      var postData = {
+	        type: params.type ? params.type : 'post',
+	        groupId: params.groupId ? parseInt(params.groupId) : 0,
+	        postId: params.postId ? parseInt(params.postId) : 0,
+	        pageId: main_core.Type.isStringFilled(params.pageId) ? params.pageId : ''
+	      };
+	      this.getDatabaseData(postData).then(function (postData) {
+	        return _this.getWorkgroupData(postData);
+	      }).then(function (postData) {
+	        return _this.getPostData(postData);
+	      }).then(function (postData) {
+	        return _this.processPostData(postData);
+	      }).then(function (postData) {
+	        app.exec("openComponent", {
+	          name: "JSStackComponent",
+	          componentCode: "livefeed.postform",
+	          scriptPath: BX.message('MOBILE_EXT_LIVEFEED_COMPONENT_URL'),
+	          params: {
+	            'SERVER_NAME': BX.message('MOBILE_EXT_LIVEFEED_SERVER_NAME'),
+	            'DESTINATION_LIST': Instance.getOption('destinationList', {}),
+	            'DESTINATION_TO_ALL_DENY': Instance.getOption('destinationToAllDeny', false),
+	            'DESTINATION_TO_ALL_DEFAULT': Instance.getOption('destinationToAllDefault', true),
+	            'MODULE_DISK_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') == 'Y' ? 'Y' : 'N',
+	            'MODULE_WEBDAV_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED') == 'Y' ? 'Y' : 'N',
+	            'MODULE_VOTE_INSTALLED': BX.message('MOBILE_EXT_LIVEFEED_VOTE_INSTALLED') == 'Y' ? 'Y' : 'N',
+	            'FILE_ATTACH_PATH': BX.message('MOBILE_EXT_LIVEFEED_FILE_ATTACH_PATH'),
+	            'BACKGROUND_IMAGES_DATA': Instance.getOption('backgroundImagesData', {}),
+	            'BACKGROUND_COMMON': Instance.getOption('backgroundCommon', {}),
+	            'MEDALS_LIST': Instance.getOption('medalsList', {}),
+	            'IMPORTANT_DATA': Instance.getOption('importantData', {}),
+	            'USER_FOLDER_FOR_SAVED_FILES': BX.message('MOBILE_EXT_UTILS_USER_FOLDER_FOR_SAVED_FILES'),
+	            'MAX_UPLOAD_CHUNK_SIZE': BX.message('MOBILE_EXT_UTILS_MAX_UPLOAD_CHUNK_SIZE'),
+	            'POST_FILE_UF_CODE': BX.message('MOBILE_EXT_LIVEFEED_POST_FILE_UF_CODE'),
+	            'POST_FORM_DATA': Instance.getOption('postFormData', {}),
+	            'POST_DATA': postData,
+	            'DEVICE_WIDTH': BX.message('MOBILE_EXT_LIVEFEED_DEVICE_WIDTH'),
+	            'DEVICE_HEIGHT': BX.message('MOBILE_EXT_LIVEFEED_DEVICE_HEIGHT'),
+	            'DEVICE_RATIO': BX.message('MOBILE_EXT_LIVEFEED_DEVICE_RATIO')
+	          },
+	          rootWidget: {
+	            name: "layout",
+	            settings: {
+	              objectName: "postFormLayoutWidget",
+	              modal: true
+	            }
+	          }
+	        }, false);
+	      });
+	    }
+	  }, {
+	    key: "getDatabaseData",
+	    value: function getDatabaseData(postData) {
+	      var promise = new Promise(function (resolve, reject) {
+	        var postId = parseInt(postData.postId);
+
+	        if (postId > 0) {
+	          resolve(postData);
+	          return;
+	        }
+
+	        DatabaseUnsentPostInstance.load({
+	          onLoad: function onLoad(data) {
+	            if (data.contentType !== postData.type) {
+	              resolve(postData);
+	              return;
+	            }
+
+	            postData.groupId = 0;
+
+	            if (!main_core.Type.isPlainObject(postData.post)) {
+	              postData.post = {};
+	            }
+
+	            if (main_core.Type.isStringFilled(data.POST_TITLE)) {
+	              postData.post.PostTitle = data.POST_TITLE;
+	            }
+
+	            if (main_core.Type.isStringFilled(data.POST_MESSAGE)) {
+	              postData.post.PostDetailText = data.POST_MESSAGE;
+	            }
+
+	            if (main_core.Type.isArrayFilled(data.DEST) && main_core.Type.isPlainObject(data.DEST_DATA)) {
+	              postData.post.PostDestination = [];
+	              var patterns = [{
+	                pattern: /^SG(\d+)$/i,
+	                style: 'sonetgroups'
+	              }, {
+	                pattern: /^U(\d+|A)$/i,
+	                style: 'users'
+	              }, {
+	                pattern: /^DR(\d+)$/i,
+	                style: 'department'
+	              }];
+	              data.DEST.forEach(function (item) {
+	                var id = null;
+	                var style = null;
+
+	                for (var i = 0; i < patterns.length; i++) {
+	                  var matches = item.match(patterns[i].pattern);
+
+	                  if (matches) {
+	                    id = matches[1];
+	                    style = item === 'UA' ? 'all-users' : patterns[i].style;
+	                    break;
+	                  }
+	                }
+
+	                if (!main_core.Type.isNull(id)) {
+	                  postData.post.PostDestination.push({
+	                    STYLE: style,
+	                    ID: id,
+	                    TITLE: main_core.Type.isPlainObject(data.DEST_DATA[item]) && main_core.Type.isStringFilled(data.DEST_DATA[item].title) ? data.DEST_DATA[item].title : ''
+	                  });
+	                }
+	              });
+	            }
+
+	            if (main_core.Type.isStringFilled(data.BACKGROUND_CODE)) {
+	              postData.post.PostBackgroundCode = data.BACKGROUND_CODE;
+	            }
+
+	            if (data.IMPORTANT === 'Y') {
+	              postData.post.PostImportantData = {
+	                value: 'Y'
+	              };
+
+	              if (main_core.Type.isStringFilled(data.IMPORTANT_DATE_END)) {
+	                postData.post.PostImportantData.endDate = Date.parse(data.IMPORTANT_DATE_END) / 1000;
+	              }
+	            }
+
+	            if (main_core.Type.isStringFilled(data.GRATITUDE_MEDAL)) {
+	              postData.post.PostGratitudeData = {
+	                gratitude: data.GRATITUDE_MEDAL,
+	                employees: []
+	              };
+
+	              if (Array.isArray(data.GRATITUDE_EMPLOYEES) && main_core.Type.isPlainObject(data.GRATITUDE_EMPLOYEES_DATA)) {
+	                data.GRATITUDE_EMPLOYEES.forEach(function (userId) {
+	                  var userData = data.GRATITUDE_EMPLOYEES_DATA[userId];
+
+	                  if (!main_core.Type.isPlainObject(userData)) {
+	                    return;
+	                  }
+
+	                  postData.post.PostGratitudeData.employees.push({
+	                    id: userData.id,
+	                    imageUrl: main_core.Type.isStringFilled(userData.imageUrl) ? userData.imageUrl : '',
+	                    title: main_core.Type.isStringFilled(userData.title) ? userData.title : '',
+	                    subtitle: main_core.Type.isStringFilled(userData.subtitle) ? userData.subtitle : ''
+	                  });
+	                });
+	              }
+	            }
+
+	            var voteId = 'n0';
+	            var dataKey = 'UF_BLOG_POST_VOTE_' + voteId + '_DATA';
+
+	            if (data.UF_BLOG_POST_VOTE === voteId && main_core.Type.isPlainObject(data[dataKey]) && Array.isArray(data[dataKey].QUESTIONS)) {
+	              postData.post.PostVoteData = {
+	                questions: data[dataKey].QUESTIONS.map(function (question) {
+	                  var result = {
+	                    value: question.QUESTION,
+	                    allowMultiSelect: question.FIELD_TYPE == 1 ? 'Y' : 'N',
+	                    answers: []
+	                  };
+
+	                  if (Array.isArray(question.ANSWERS)) {
+	                    result.answers = question.ANSWERS.map(function (answer) {
+	                      return {
+	                        value: answer.MESSAGE
+	                      };
+	                    });
+	                  }
+
+	                  return result;
+	                })
+	              };
+	            }
+
+	            resolve(postData);
+	          },
+	          onEmpty: function onEmpty() {
+	            resolve(postData);
+	          }
+	        }, postData.groupId);
+	      });
+	      promise.catch(function (error) {
+	        console.error(error);
+	      });
+	      return promise;
+	    }
+	  }, {
+	    key: "getWorkgroupData",
+	    value: function getWorkgroupData(postData) {
+	      var groupId = parseInt(postData.groupId);
+	      var promise = new Promise(function (resolve, reject) {
+	        if (groupId <= 0) {
+	          resolve(postData);
+	          return;
+	        }
+
+	        var promiseData = {
+	          resolve: resolve,
+	          reject: reject
+	        };
+	        var currentDateTime = new Date();
+	        var returnEventName = 'Livefeed::returnWorkgroupData_' + currentDateTime.getTime();
+	        BXMobileApp.addCustomEvent(returnEventName, function (result) {
+	          if (result.success) {
+	            this.resolve(Object.assign(postData, {
+	              group: {
+	                ID: parseInt(result.groupData.ID),
+	                NAME: result.groupData.NAME //							DESCRIPTION: result.groupData.DESCRIPTION
+
+	              }
+	            }));
+	          } else {
+	            this.reject();
+	          }
+	        }.bind(promiseData));
+	        BXMobileApp.onCustomEvent('Livefeed::getWorkgroupData', {
+	          groupId: groupId,
+	          returnEventName: returnEventName
+	        }, true);
+	      });
+	      promise.catch(function (error) {
+	        console.error(error);
+	      });
+	      return promise;
+	    }
+	  }, {
+	    key: "getPostData",
+	    value: function getPostData(postData) {
+	      var postId = parseInt(postData.postId);
+	      var promise = new Promise(function (resolve, reject) {
+	        if (postId <= 0) {
+	          resolve(postData);
+	          return;
+	        }
+
+	        var promiseData = {
+	          resolve: resolve,
+	          reject: reject
+	        };
+	        var currentDateTime = new Date();
+	        var returnEventName = 'Livefeed::returnPostFullData_' + currentDateTime.getTime();
+	        BXMobileApp.addCustomEvent(returnEventName, function (result) {
+	          if (result.success) {
+	            this.resolve(Object.assign(postData, {
+	              post: result.postData
+	            }));
+	          } else {
+	            this.reject();
+	          }
+	        }.bind(promiseData));
+	        BXMobileApp.onCustomEvent('Livefeed::getPostFullData', {
+	          postId: postId,
+	          returnEventName: returnEventName
+	        }, true);
+	      });
+	      promise.catch(function (error) {
+	        console.error(error);
+	      });
+	      return promise;
+	    }
+	  }, {
+	    key: "processPostData",
+	    value: function processPostData(postData) {
+	      var postId = parseInt(postData.postId);
+	      var promise = new Promise(function (resolve, reject) {
+	        if (main_core.Type.isPlainObject(postData.post)) {
+	          if (main_core.Type.isArray(postData.post.PostDestination)) {
+	            postData.recipients = {};
+	            postData.post.PostDestination.forEach(function (item) {
+	              var key = null;
+	              var code = null;
+
+	              switch (item.STYLE) {
+	                case 'users':
+	                  key = 'users';
+	                  code = item.ID;
+	                  break;
+
+	                case 'all-users':
+	                  key = 'users';
+	                  code = 'A';
+	                  break;
+
+	                case 'sonetgroups':
+	                  key = 'groups';
+	                  code = item.ID;
+	                  break;
+
+	                case 'department':
+	                  key = 'departments';
+	                  code = item.ID;
+	                  break;
+
+	                default:
+	              }
+
+	              if (key) {
+	                if (!main_core.Type.isArray(postData.recipients[key])) {
+	                  postData.recipients[key] = [];
+	                }
+
+	                postData.recipients[key].push({
+	                  id: code,
+	                  title: item.TITLE,
+	                  avatar: main_core.Type.isStringFilled(item.AVATAR) ? item.AVATAR : ''
+	                });
+	              }
+	            });
+	          }
+
+	          if (main_core.Type.isArray(postData.post.PostDestinationHidden)) {
+	            postData.hiddenRecipients = [];
+	            postData.post.PostDestinationHidden.forEach(function (item) {
+	              postData.hiddenRecipients.push(item.TYPE + item.ID);
+	            });
+	          }
+	        } else if (main_core.Type.isPlainObject(postData.group)) {
+	          postData.recipients = {
+	            groups: [{
+	              id: postData.group.ID,
+	              title: postData.group.NAME
+	            }]
+	          };
+	        }
+
+	        resolve(postData);
+	      });
+	      promise.catch(function (error) {
+	        console.error(error);
+	      });
+	      return promise;
+	    }
+	  }]);
+	  return PostFormManager;
+	}();
+
 	function _templateObject$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"]);
 
@@ -1416,7 +1683,11 @@ this.BX = this.BX || {};
 	      postItemInformMore: 'post-item-more',
 	      postItemMore: 'post-more-block',
 	      postItemPinnedBlock: 'post-item-pinned-block',
-	      postItemPinActive: 'lenta-item-pin-active'
+	      postItemPinActive: 'lenta-item-pin-active',
+	      postItemGratitudeUsersSmallContainer: 'lenta-block-grat-users-small-cont',
+	      postItemGratitudeUsersSmallHidden: 'lenta-block-grat-users-small-hidden',
+	      postItemImportantUserList: 'post-item-important-list',
+	      addPostButton: 'feed-add-post-button'
 	    };
 	    this.newPostContainer = null;
 	    this.maxScroll = 0;
@@ -1570,6 +1841,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "afterPostAddError",
 	    value: function afterPostAddError(params) {
+	      var _this2 = this;
+
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
@@ -1590,7 +1863,14 @@ this.BX = this.BX || {};
 	      DatabaseUnsentPostInstance.save(params.postData, groupId);
 
 	      params.callback = function () {
-	        app.exec('showPostForm', oMSL.showNewPostForm());
+	        if (BXMobileAppContext.getApiVersion() >= _this2.getApiVersion('layoutPostForm')) {
+	          PostFormManagerInstance.show({
+	            pageId: _this2.getPageId(),
+	            postId: 0
+	          });
+	        } else {
+	          app.exec('showPostForm', oMSL.showNewPostForm());
+	        }
 	      };
 
 	      this.showPostError(params);
@@ -1664,7 +1944,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getEntryContent",
 	    value: function getEntryContent(params) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
@@ -1700,7 +1980,7 @@ this.BX = this.BX || {};
 	            }
 	          }).then(function (responseLogId) {
 	            if (responseLogId.data.logId) {
-	              _this2.insertPost({
+	              _this3.insertPost({
 	                logId: responseLogId.data.logId,
 	                content: response.data.html,
 	                postId: params.postId,
@@ -1711,7 +1991,7 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        } else {
-	          _this2.insertPost({
+	          _this3.insertPost({
 	            logId: logId,
 	            content: response.data.html,
 	            postId: params.postId,
@@ -1741,7 +2021,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "insertPost",
 	    value: function insertPost(params) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var containerNode = document.getElementById(this.nodeId.feedContainer);
 	      var content = params.content;
@@ -1778,6 +2058,22 @@ this.BX = this.BX || {};
 	          {
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemTop));
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemPostBlock)).then(function () {
+	              var pageBlockNode = postContainer.querySelector(".".concat(_this4.class.postItemPostBlock));
+	              var resultBlockNode = contentWrapper.querySelector(".".concat(_this4.class.postItemPostBlock));
+
+	              if (pageBlockNode || resultBlockNode) {
+	                var pageClassList = _this4.filterPostBlockClassList(pageBlockNode.classList);
+
+	                var resultClassList = _this4.filterPostBlockClassList(resultBlockNode.classList);
+
+	                pageClassList.forEach(function (className) {
+	                  pageBlockNode.classList.remove(className);
+	                });
+	                resultClassList.forEach(function (className) {
+	                  pageBlockNode.classList.add(className);
+	                });
+	              }
+
 	              BitrixMobile.LazyLoad.showImages();
 	            });
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemAttachedFileWrap)).then(function () {
@@ -1789,6 +2085,7 @@ this.BX = this.BX || {};
 	          postContainer = postContainer.querySelector("div.".concat(this.class.postItemTopWrap));
 	          var contentPostItemTopWrap = contentWrapper.querySelector("div.".concat(this.class.postItemTopWrap));
 	          main_core.Runtime.html(postContainer, contentPostItemTopWrap.innerHTML).then(function () {
+	            oMSL.checkNodesHeight();
 	            BitrixMobile.LazyLoad.showImages();
 	          });
 	        }
@@ -1798,22 +2095,28 @@ this.BX = this.BX || {};
 	        this.setNewPostContainer(main_core.Tag.render(_templateObject$2(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
-	          var postNode = _this3.getNewPostContainer().querySelector("div.".concat(_this3.class.listPost));
+	          var postNode = _this4.getNewPostContainer().querySelector("div.".concat(_this4.class.listPost));
 
-	          main_core.Dom.style(_this3.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12
+	          main_core.Dom.style(_this4.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12
 	          /*margin-bottom*/
 	          , "px"));
 	          var serverTimestamp = typeof params.serverTimestamp != 'undefined' && parseInt(params.serverTimestamp) > 0 ? parseInt(params.serverTimestamp) : 0;
 
 	          if (serverTimestamp > 0) {
-	            _this3.setOptions({
+	            _this4.setOptions({
 	              frameCacheTs: serverTimestamp
 	            });
 	          }
 
-	          _this3.updateFrameCache({
-	            timestamp: serverTimestamp
-	          });
+	          oMSL.registerBlocksToCheck();
+	          setTimeout(function () {
+	            oMSL.checkNodesHeight();
+	          }, 100);
+	          setTimeout(function () {
+	            _this4.updateFrameCache({
+	              timestamp: serverTimestamp
+	            });
+	          }, 750);
 	        });
 	      }
 
@@ -1841,6 +2144,17 @@ this.BX = this.BX || {};
 	      itemNode.remove();
 	    }
 	  }, {
+	    key: "filterPostBlockClassList",
+	    value: function filterPostBlockClassList(classList) {
+	      var result = [];
+	      Array.from(classList).forEach(function (className) {
+	        if (className === 'info-block-background' || className === 'info-block-background-with-title' || className === 'info-block-gratitude' || className === 'info-block-important' || className === 'ui-livefeed-background' || className.match(/info-block-gratitude-(.+)/i) || className.match(/ui-livefeed-background-(.+)/i)) {
+	          result.push(className);
+	        }
+	      });
+	      return result;
+	    }
+	  }, {
 	    key: "handleInsertPostTransitionEnd",
 	    value: function handleInsertPostTransitionEnd(event) {
 	      if (event.propertyName === 'height') {
@@ -1854,7 +2168,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onLazyLoadImageLoaded",
 	    value: function onLazyLoadImageLoaded(event) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      this.recalcMaxScroll();
 
@@ -1872,7 +2186,7 @@ this.BX = this.BX || {};
 	            postCheckNode.classList.add(this.class.postNewContainerTransform);
 	            main_core.Dom.style(postCheckNode, 'height', "".concat(postNode.scrollHeight, "px"));
 	            setTimeout(function () {
-	              postCheckNode.classList.remove(_this4.class.postNewContainerTransform);
+	              postCheckNode.classList.remove(_this5.class.postNewContainerTransform);
 	              main_core.Dom.style(postCheckNode, 'height', null);
 	            }, 500);
 	          }
@@ -2014,6 +2328,16 @@ this.BX = this.BX || {};
 
 	        e.stopPropagation();
 	        return e.preventDefault();
+	      } else if (e.target.classList.contains(this.class.addPostButton)) {
+	        if (BXMobileAppContext.getApiVersion() >= this.getApiVersion('layoutPostForm')) {
+	          var formManager = new PostFormManager();
+	          formManager.show({
+	            pageId: this.getPageId(),
+	            groupId: this.getOption('groupId', 0)
+	          });
+	        } else {
+	          app.exec('showPostForm', oMSL.showNewPostForm());
+	        }
 	      } else if ((e.target.closest(".".concat(this.class.listWrapper)) || e.target.closest(".".concat(this.class.pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
 	        var detailFromPinned = !!(e.target.classList.contains(this.class.postItemPinnedBlock) || e.target.closest(".".concat(this.class.postItemPinnedBlock)));
 	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this.class.postItemPostContentView) || e.target.closest(".".concat(this.class.postItemPostContentView)) || e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
@@ -2044,8 +2368,24 @@ this.BX = this.BX || {};
 	        }
 	      } else if (e.target.closest(".".concat(this.class.postWrapper))) {
 	        var expand = !!(e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore)) || e.target.classList.contains(this.class.postItemMore) || e.target.closest(".".concat(this.class.postItemMore)));
+	        var postItemGratitudeUsersSmallContainer = null;
 
-	        if (expand) {
+	        if (e.target.classList.contains(this.class.postItemGratitudeUsersSmallContainer)) {
+	          postItemGratitudeUsersSmallContainer = e.target;
+	        } else {
+	          postItemGratitudeUsersSmallContainer = e.target.closest(".".concat(this.class.postItemGratitudeUsersSmallContainer));
+	        }
+
+	        if (expand || main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
+	          if (main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
+	            postItemGratitudeUsersSmallContainer.style.display = 'none';
+	            var postItemGratitudeUsersSmallHidden = postItemGratitudeUsersSmallContainer.parentNode.querySelector(".".concat(this.class.postItemGratitudeUsersSmallHidden));
+
+	            if (postItemGratitudeUsersSmallHidden) {
+	              postItemGratitudeUsersSmallHidden.style.display = 'block';
+	            }
+	          }
+
 	          var logId = this.getOption('logId', 0);
 
 	          var _post2 = new Post({
@@ -2056,6 +2396,46 @@ this.BX = this.BX || {};
 
 	          e.stopPropagation();
 	          return e.preventDefault();
+	        }
+
+	        var importantUserListNode = null;
+
+	        if (e.target.classList.contains(this.class.postItemImportantUserList)) {
+	          importantUserListNode = e.target;
+	        } else {
+	          importantUserListNode = e.target.closest(".".concat(this.class.postItemImportantUserList));
+	        }
+
+	        if (importantUserListNode) {
+	          var inputNode = importantUserListNode.parentNode.querySelector('input');
+	          var postId = 0;
+
+	          if (main_core.Type.isDomNode(inputNode)) {
+	            postId = parseInt(inputNode.getAttribute('bx-data-post-id'));
+	          }
+
+	          if (postId > 0) {
+	            app.exec("openComponent", {
+	              name: "JSStackComponent",
+	              componentCode: "livefeed.important.list",
+	              scriptPath: "/mobileapp/jn/livefeed.important.list/?version=1.0.0",
+	              params: {
+	                POST_ID: postId,
+	                SETTINGS: this.getOption('importantData', {})
+	              },
+	              rootWidget: {
+	                name: 'list',
+	                settings: {
+	                  objectName: "livefeedImportantListWidget",
+	                  title: BX.message('MOBILE_EXT_LIVEFEED_USERS_LIST_TITLE'),
+	                  modal: false,
+	                  backdrop: {
+	                    mediumPositionPercent: 75
+	                  }
+	                }
+	              }
+	            }, false);
+	          }
 	        }
 	      }
 	    }
@@ -2212,6 +2592,21 @@ this.BX = this.BX || {};
 	        });
 	      }
 	    }
+	  }, {
+	    key: "getApiVersion",
+	    value: function getApiVersion(feature) {
+	      var result = 0;
+
+	      switch (feature) {
+	        case 'layoutPostForm':
+	          result = 37;
+	          break;
+
+	        default:
+	      }
+
+	      return result;
+	    }
 	  }]);
 	  return Feed;
 	}();
@@ -2222,6 +2617,7 @@ this.BX = this.BX || {};
 	var DatabaseUnsentPostInstance = new Database();
 	var PublicationQueueInstance = new PublicationQueue();
 	var PostMenuInstance = new PostMenu();
+	var PostFormManagerInstance = new PostFormManager();
 	var PinnedPanelInstance = new PinnedPanel();
 
 	exports.Instance = Instance;
@@ -2230,6 +2626,7 @@ this.BX = this.BX || {};
 	exports.DatabaseUnsentPostInstance = DatabaseUnsentPostInstance;
 	exports.PublicationQueueInstance = PublicationQueueInstance;
 	exports.PostMenuInstance = PostMenuInstance;
+	exports.PostFormManagerInstance = PostFormManagerInstance;
 	exports.PinnedPanelInstance = PinnedPanelInstance;
 
 }((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX,BX.Mobile));

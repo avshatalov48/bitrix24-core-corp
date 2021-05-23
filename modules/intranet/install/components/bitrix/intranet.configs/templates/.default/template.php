@@ -9,6 +9,8 @@ use Bitrix\Location;
 
 \Bitrix\Main\UI\Extension::load(['ui.hint', 'ui.dialogs.messagebox']);
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 ?>
 
 <?if(isset($_GET['success'])): ?>
@@ -680,6 +682,45 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 
+		<?if($arResult['SHOW_YANDEX_MAP_KEY_FIELD']):?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY')?></td>
+				<td class="content-edit-form-field-input">
+					<input class="content-edit-form-field-input-text" name="yandex_map_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['YANDEX_MAP_API_KEY'])?>">
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?endif;?>
+
+		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD']):?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_GOOGLE_API_KEY')?></td>
+				<td class="content-edit-form-field-input">
+					<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<?/*if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):?>
+				<tr>
+					<td colspan="3">
+						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+							<?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
+								'#domain#' => \Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_HOST'])
+							))?>
+						</div>
+					</td>
+				</tr>
+			<?else:?>
+				<tr>
+					<td colspan="3">
+						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+							<?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?>
+						</div>
+					</td>
+				</tr>
+			<?endif;*/?>
+		<?endif;?>
+		
 	<!-- GDPR for Europe-->
 		<?
 		if ($arResult["IS_BITRIX24"])
@@ -690,36 +731,24 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 					<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_HEADER_GDRP')?></div>
 				</td>
 			</tr>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left" colspan="3"><?=GetMessage('CONFIG_GDRP_TITLE1')?></td>
-			</tr>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left">
-					<?=GetMessage('CONFIG_GDRP_LABEL1')?>
-					<?if ($arResult["LICENSE_PREFIX"] == "ru"):?>
-						<?=GetMessage("CONFIG_GDRP_LABEL11")?>
-					<?endif?>
-				</td>
-				<td class="content-edit-form-field-input"><input type="checkbox" name="gdpr_email_info" <?if (COption::GetOptionString("bitrix24", "gdpr_email_info", "Y") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"></td>
-				<td class="content-edit-form-field-error"></td>
-			</tr>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL2')?></td>
-				<td class="content-edit-form-field-input"><input type="checkbox" name="gdpr_email_training" <?if (COption::GetOptionString("bitrix24", "gdpr_email_training", "Y") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"></td>
-				<td class="content-edit-form-field-error"></td>
-			</tr>
 			<?
 			if (!in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
 			{
 			?>
 				<tr>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left" style="padding-top: 27px"><?=GetMessage('CONFIG_GDRP_LABEL3')?></td>
-					<td class="content-edit-form-field-input" style="padding-top: 27px"><input
+					<td class="content-edit-form-field-name content-edit-form-field-name-left">
+						<?=GetMessage('CONFIG_GDRP_LABEL3')?>
+					</td>
+					<td class="content-edit-form-field-input">
+						<input
 							type="checkbox"
 							name="gdpr_data_processing"
 							onchange="BX.Bitrix24.Configs.Functions.onGdprChange(this);"
-							<?if (COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y"):?>checked<?endif?>
-							class="content-edit-form-field-input-selector">
+							<?if (COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y"):?>
+								checked
+							<?endif?>
+							class="content-edit-form-field-input-selector"
+						/>
 					</td>
 					<td class="content-edit-form-field-error"></td>
 				</tr>
@@ -786,42 +815,6 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		}
 		?>
 	<!-- //GDPR for Europe-->
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY')?></td>
-			<td class="content-edit-form-field-input">
-				<input class="content-edit-form-field-input-text" name="yandex_map_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['YANDEX_MAP_API_KEY'])?>">
-			</td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
-
-		<?if($arResult['SHOW_GOOGLE_API_KEY_FIELD']):?>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_GOOGLE_API_KEY')?></td>
-				<td class="content-edit-form-field-input">
-					<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
-				</td>
-				<td class="content-edit-form-field-error"></td>
-			</tr>
-			<?/*if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):?>
-				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
-								'#domain#' => \Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_HOST'])
-							))?>
-						</div>
-					</td>
-				</tr>
-			<?else:?>
-				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?>
-						</div>
-					</td>
-				</tr>
-			<?endif;*/?>
-		<?endif;?>
 	<?
 	if ($arResult["SECURITY_MODULE"])
 	{

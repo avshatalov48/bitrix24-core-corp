@@ -130,6 +130,43 @@
 		});
 	});
 
+	BX.addCustomEvent("Intranet.Search.Title:onFocusAction", function(type)
+	{
+		if (!BX.type.isDomNode(BX("header-buttons")) || !BX("header-buttons").querySelector(".ui-btn"))
+		{
+			return;
+		}
+
+		var timeman = BX('timeman-container');
+		var header = BX('header');
+
+		if (!BX.type.isDomNode(timeman) || !BX.type.isDomNode(header))
+		{
+			return;
+		}
+
+		if (type === "gain")
+		{
+			timeman.style.webkitTransition = 'min-width .2s, width .2s, opacity .1s, padding .2s';
+			header.style.width = header.offsetWidth + 'px';
+			if (document.body.offsetWidth < 1660) {
+				timeman.style.opacity = '0';
+				setTimeout(function() {
+					BX.addClass(timeman, "timeman-container--hide");
+				}.bind(this), 100);
+			}
+		}
+		else if (type === "lost")
+		{
+			timeman.style.webkitTransition = 'min-width .2s, width .2s, opacity .3s, padding .2s';
+			BX.removeClass(timeman, "timeman-container--hide");
+			setTimeout(function() {
+				timeman.style.opacity = '1';
+				header.removeAttribute("style");
+			}.bind(this), 300);
+		}
+	});
+
 //connection status===
 	BX.addCustomEvent("onPullError", BX.delegate(function(error, code) {
 		if (error == 'AUTHORIZE_ERROR')
@@ -964,7 +1001,6 @@ B24.Bitrix24InviteDialog.Init = function(arParams)
 B24.Bitrix24InviteDialog.ShowForm = function(arParams)
 {
 	B24.Bitrix24InviteDialog.Init(arParams);
-	B24.Bitrix24InviteDialog.popup.params.zIndex = (BX.WindowManager? BX.WindowManager.GetZIndex() : 0);
 	B24.Bitrix24InviteDialog.popup.show();
 };
 
@@ -1102,12 +1138,11 @@ B24.showPartnerOrderForm = function (params)
 		offsetTop: 0,
 		overlay: true,
 		height: Math.min(document.documentElement.clientHeight - 100, 740),
-		width: 550,
+		width: 560,
 		draggable: {restrict:true},
 		closeByEsc: true,
 		contentColor: "white",
 		contentNoPaddings: true,
-		closeIcon: { right : "5px", top : "10px"},
 		content:
 			'<script data-b24-form="inline/'+params.id+'/'+params.sec+'" data-skip-moving="true">'+
 				'(function(w,d,u){'+

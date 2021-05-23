@@ -11,12 +11,19 @@ final class CrmCompany extends CrmEntity
 
 	public function getEventId()
 	{
-		return array(
+		return [
 			\CCrmLiveFeedEvent::CompanyPrefix.\CCrmLiveFeedEvent::Add,
 			\CCrmLiveFeedEvent::CompanyPrefix.\CCrmLiveFeedEvent::Denomination,
 			\CCrmLiveFeedEvent::CompanyPrefix.\CCrmLiveFeedEvent::Responsible,
 			\CCrmLiveFeedEvent::CompanyPrefix.\CCrmLiveFeedEvent::Message
-		);
+		];
+	}
+
+	public function getMessageEventId()
+	{
+		return [
+			\CCrmLiveFeedEvent::CompanyPrefix.\CCrmLiveFeedEvent::Message
+		];
 	}
 
 	public function getCurrentEntityFields()
@@ -65,7 +72,6 @@ final class CrmCompany extends CrmEntity
 		$this->setSourceTitle($entityFields['TITLE']);
 	}
 
-	// $arResult["canGetPostContent"] = ($reflectionClass->getMethod('initSourceFields')->class == $postProviderClassName);
 	public function initSourceFields()
 	{
 		$entityId = $this->getEntityId();
@@ -94,7 +100,7 @@ final class CrmCompany extends CrmEntity
 				&& !empty($fields['CURRENT_ENTITY'])
 			) // not-message
 			{
-				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS']);
+				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS'], ['allowed_classes' => false]);
 				if (is_array($logEntry['PARAMS']))
 				{
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);
@@ -117,10 +123,24 @@ final class CrmCompany extends CrmEntity
 			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
-				$this->setSourceTitle(truncateText(($logEntry['TITLE'] != '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
+				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
 			}
 		}
 
 		$this->setSourceFields($fields);
+	}
+
+	public function getSuffix()
+	{
+		$logEventId = $this->getLogEventId();
+		if (
+			!empty($logEventId)
+			&& in_array($logEventId, $this->getMessageEventId())
+		)
+		{
+			return 'MESSAGE';
+		}
+
+		return '';
 	}
 }

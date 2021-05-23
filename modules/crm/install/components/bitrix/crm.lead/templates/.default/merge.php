@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 			'ENTITY_IDS' => $arResult['VARIABLES']['lead_ids'],
 			'PATH_TO_DEDUPE_LIST' => '/crm/lead/dedupelist/',
+			'PATH_TO_ENTITY_LIST' => '/crm/lead/',
 			'PATH_TO_EDITOR' => '/bitrix/components/bitrix/crm.lead.details/ajax.php',
 			'HEADER_TEMPLATE' => GetMessage('CRM_LEAD_MERGE_HEADER_TEMPLATE'),
 			'RESULT_LEGEND' => GetMessage('CRM_LEAD_MERGE_RESULT_LEGEND'),

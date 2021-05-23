@@ -52,7 +52,7 @@ final class FullTasksIndexer extends Stepper
 		$return = false;
 
 		$params = Option::get("tasks", "fulltasksindexing", "");
-		$params = ($params !== ""? @unserialize($params) : []);
+		$params = ($params !== ""? @unserialize($params, ['allowed_classes' => false]) : []);
 		$params = (is_array($params)? $params : []);
 
 		if (empty($params))

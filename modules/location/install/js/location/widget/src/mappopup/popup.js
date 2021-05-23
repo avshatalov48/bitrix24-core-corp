@@ -1,12 +1,11 @@
 import {Popup as MainPopup} from 'main.popup';
+import {Dom} from 'main.core';
 
 /**
  * Popup window, which contains map
  */
 export default class Popup extends MainPopup
 {
-	#detailsPopupPadding = 20;
-
 	getBindElement()
 	{
 		return this.bindElement;
@@ -19,53 +18,64 @@ export default class Popup extends MainPopup
 		position?: 'right' | 'top' | 'bootom'
 	}): void
 	{
-		if(this.bindOptions.position && this.bindOptions.position === 'right')
+		let isCustomPosition, isCustomPositionSuccess;
+
+		if (this.bindOptions.position && this.bindOptions.position === 'right')
 		{
-			const itemRect = this.bindElement.getBoundingClientRect();
-
-			const offsetLeft = itemRect.width;
-			let offsetTop = itemRect.height / 2 + this.#detailsPopupPadding;
-			let angleOffset = itemRect.height / 2;
-
-			const popupWidth = this.getPopupContainer().offsetWidth;
-			const popupHeight = this.getPopupContainer().offsetHeight;
-			const popupBottom = itemRect.top + popupHeight;
-
-			const clientWidth = document.documentElement.clientWidth;
-			const clientHeight = document.documentElement.clientHeight;
-
-			// let's try to fit a this to the browser viewport
-			const exceeded = popupBottom - clientHeight;
-			if(exceeded > 0)
-			{
-				let roundOffset = Math.ceil(exceeded / itemRect.height) * itemRect.height;
-				if(roundOffset > itemRect.top)
-				{
-					// it cannot be higher than the browser viewport.
-					roundOffset -= Math.ceil((roundOffset - itemRect.top) / itemRect.height) * itemRect.height;
-				}
-
-				if(itemRect.bottom > (popupBottom - roundOffset))
-				{
-					// let's sync bottom boundaries.
-					roundOffset -= itemRect.bottom - (popupBottom - roundOffset) + this.#detailsPopupPadding;
-				}
-
-				offsetTop += roundOffset;
-				angleOffset += roundOffset + this.#detailsPopupPadding;
-			}
-
-			if((itemRect.left + offsetLeft + popupWidth) <= clientWidth)
-			{
-				this.setOffset({offsetLeft: offsetLeft, offsetTop: -offsetTop});
-				this.setAngle({position: 'left', offset: angleOffset});
-			}
-			else
-			{
-				this.setAngle(true);
-			}
+			isCustomPosition = true;
+			isCustomPositionSuccess = this.#adjustRightPosition();
 		}
 
-		super.adjustPosition(bindOptions);
+		if (!(isCustomPosition && isCustomPositionSuccess))
+		{
+			super.adjustPosition(bindOptions);
+		}
+	}
+
+	/**
+	 * Adjust the popup in right position
+	 * @returns {boolean} an indicator whether or not we have managed to adjust the popup successfully
+	 */
+	#adjustRightPosition(): boolean
+	{
+		const bindElRect = this.bindElement.getBoundingClientRect();
+		const popupHeight = this.getPopupContainer().offsetHeight;
+		const popupWidth = this.getPopupContainer().offsetWidth;
+
+		/**
+		 * Check if the popup fits in the viewport
+		 */
+		if ((bindElRect.left + bindElRect.width + popupWidth) > document.documentElement.clientWidth)
+		{
+			return false;
+		}
+
+		let angleOffsetY = popupHeight / 2;
+
+		const left = bindElRect.left + bindElRect.width + 10;
+		let top = window.pageYOffset + bindElRect.top + bindElRect.height / 2 - popupHeight / 2;
+
+		if(top < window.pageYOffset)
+		{
+			angleOffsetY -= window.pageYOffset - top;
+			top = window.pageYOffset;
+		}
+		else if(top > window.pageYOffset + document.body.clientHeight - popupHeight)
+		{
+			angleOffsetY += top - (window.pageYOffset + document.body.clientHeight - popupHeight);
+			top = window.pageYOffset + document.body.clientHeight - popupHeight;
+		}
+
+		this.setAngle({position: 'left', offset: angleOffsetY});
+
+		Dom.adjust(this.popupContainer, {
+			style: {
+				top: `${top}px`,
+				left: `${left}px`,
+				zIndex: this.getZindex()
+			}
+		});
+
+		return true;
 	}
 }

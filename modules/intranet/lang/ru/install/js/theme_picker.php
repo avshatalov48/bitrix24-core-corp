@@ -17,6 +17,6 @@ $MESS["BITRIX24_THEME_FILE_SIZE_EXCEEDED"] = "Превышен максимал�
 $MESS["BITRIX24_THEME_WRONG_BG_COLOR"] = "Цвет фона указан неправильно.";
 $MESS["BITRIX24_THEME_EMPTY_FORM_DATA"] = "Укажите картинку фона или цвет фона.";
 $MESS["BITRIX24_THEME_UNKNOWN_ERROR"] = "Невозможно выполнить данную операцию. Повторите попытку.";
-$MESS["BITRIX24_THEME_SET_AS_DEFAULT"] = "Назначить по умолчанию";
+$MESS["BITRIX24_THEME_DEFAULT_THEME_FOR_ALL"] = "Включить всем по умолчанию";
 $MESS["BITRIX24_THEME_DEFAULT_THEME"] = "По умолчанию";
 $MESS["BITRIX24_THEME_REMOVE_THEME"] = "Удалить тему";

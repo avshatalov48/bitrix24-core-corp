@@ -174,11 +174,21 @@ if (!empty($createStatusList))
 		$crmStatus = new \CCrmStatus('INVOICE_STATUS');
 
 		$isSystem = ($statusId === 'N' || $statusId === 'P' || $statusId === 'D');
+		$semantics = null;
+		if($statusId === 'P')
+		{
+			$semantics = 'S';
+		}
+		elseif($statusId === 'D')
+		{
+			$semantics = 'F';
+		}
 		$status = array(
 			'SORT' => $statusSort,
 			'NAME' => $name,
 			'SYSTEM' => ($isSystem ? 'Y' : 'N'),
-			'NAME_INIT' => ($isSystem ? $name : '')
+			'NAME_INIT' => ($isSystem ? $name : ''),
+			'SEMANTICS' => $semantics,
 		);
 
 		if (!in_array($statusId, $arExistStatuses, true))
@@ -1920,7 +1930,7 @@ foreach($arPaySystems as $val)
 		$id = $result->getId();
 	}
 
-	$psParams = unserialize($val['PARAMS']);
+	$psParams = unserialize($val['PARAMS'], ['allowed_classes' => false]);
 	foreach ($psParams as $code => $map)
 	{
 		$tmpMap['PROVIDER_KEY'] = $map['TYPE'];

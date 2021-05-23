@@ -763,7 +763,8 @@ this.BX = this.BX || {};
 	      this._entityId = BX.prop.getInteger(settings, 'entityId', 0);
 	      this._contextId = BX.prop.getString(settings, 'contextId', "");
 	      this._requisiteEditUrl = BX.prop.getString(settings, 'requisiteEditUrl', "");
-	      main_core_events.EventEmitter.subscribe('onLocalStorageSet', this.onExternalEvent.bind(this));
+	      this._onExternalEventListener = this.onExternalEvent.bind(this);
+	      main_core_events.EventEmitter.subscribe('onLocalStorageSet', this._onExternalEventListener);
 	    }
 	  }, {
 	    key: "setRequisiteList",
@@ -925,6 +926,11 @@ this.BX = this.BX || {};
 	    key: "isViewMode",
 	    value: function isViewMode() {
 	      return this._mode === BX.UI.EntityEditorMode.view;
+	    }
+	  }, {
+	    key: "release",
+	    value: function release() {
+	      main_core_events.EventEmitter.unsubscribe('onLocalStorageSet', this._onExternalEventListener);
 	    }
 	  }, {
 	    key: "onExternalEvent",
@@ -1495,6 +1501,13 @@ this.BX = this.BX || {};
 	      return this._requisiteEditor.getSignRequisitePromise(requisite);
 	    }
 	  }, {
+	    key: "release",
+	    value: function release() {
+	      if (this._requisiteEditor) {
+	        this._requisiteEditor.release();
+	      }
+	    }
+	  }, {
 	    key: "onFieldInit",
 	    value: function onFieldInit(event) {
 	      var eventData = event.getData();
@@ -1815,6 +1828,9 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, PresetMenu);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PresetMenu).call(this));
+
+	    _this.setEventNamespace('BX.Crm.RequisitePresetMenu');
+
 	    _this._isShown = false;
 	    _this.menuId = id;
 	    _this.presetList = presetList;
@@ -3353,6 +3369,10 @@ this.BX = this.BX || {};
 	        this._tooltip.close();
 
 	        this._tooltip.removeDebouncedEvents();
+	      }
+
+	      if (this._requisiteEditor) {
+	        this._requisiteEditor.release();
 	      }
 	    }
 	  }, {

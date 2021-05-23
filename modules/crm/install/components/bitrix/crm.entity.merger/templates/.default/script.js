@@ -40,7 +40,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		this._dedupeQueueInfo = null;
 		this._isDedupeQueueEnabled = false;
 		this._isDedupeQueueRequestRunning = false;
-
+		this._isAutomatic = false;
 
 		this._panel = null;
 		this._externalContextId = "";
@@ -68,11 +68,16 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			this._dedupeQueueInfo = BX.prop.getObject(this._settings, "dedupeQueueInfo", {});
 			this._isDedupeQueueEnabled = BX.prop.getInteger(this._dedupeQueueInfo, "length", 0) > 0;
 
+			this._isAutomatic = BX.prop.getBoolean(this._settings, 'isAutomatic', false);
+
 			this.entityWrapper = document.querySelector('.crm-entity-merger-wrapper');
 
 			this._panel = BX.Crm.EntityMergerPanel.create(
 				this._id,
-				{ merger: this }
+				{
+					merger: this,
+					previouslyProcessedCount: BX.prop.getInteger(this._settings, "previouslyProcessedCount", 0)
+				}
 			);
 			this._externalContextId = BX.prop.getString(this._settings, "externalContextId", "");
 			this.loadAllEntityEditors();
@@ -117,6 +122,14 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				{
 					slider.close(false);
 				}
+				else
+				{
+					var pathToList = this.getEntityListUrl();
+					if (pathToList)
+					{
+						location.href = pathToList;
+					}
+				}
 			}.bind(this));
 		},
 		clearSecondaryEditorsLayout: function()
@@ -138,6 +151,18 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			this._entityInfos = [];
 			this._editorIds = [];
 			this._editors = {};
+
+			if(this._editorHeaders)
+			{
+				for(var editorKey in this._editorHeaders)
+				{
+					if(this._editorHeaders.hasOwnProperty(editorKey))
+					{
+						this._editorHeaders[editorKey].release();
+					}
+				}
+			}
+
 			this._editorHeaders = null;
 			this._editorColumns = null;
 			this._editorWrappers = null;
@@ -288,7 +313,8 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 							entityTypeName: this.getEntityTypeName(),
 							typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
 							scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
-							offset: offset
+							offset: offset,
+							isAutomatic: this._isAutomatic ? 1 : 0
 						}
 				}
 			).then(
@@ -359,15 +385,25 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		{
 			return BX.prop.getString(this._settings, "dedupeListUrl", "");
 		},
+		getEntityListUrl: function()
+		{
+			return BX.prop.getString(this._settings, "entityListUrl", "");
+		},
 		openDedupeList: function()
 		{
+			var params = {
+				scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
+				typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", [])
+			};
+			if (this._isAutomatic)
+			{
+				params['is_automatic'] = 'yes';
+			}
+
 			BX.Crm.Page.open(
 				BX.util.add_url_param(
 					this.getDedupeListUrl(),
-					{
-						scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
-						typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", [])
-					}
+					params
 				)
 			);
 		},
@@ -409,6 +445,18 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		{
 			if(!(BX.type.isArray(this._entityIds) && this._entityIds.length > 0))
 			{
+				BX.localStorage.set(
+					"onCrmEntityMergeComplete",
+					{
+						entityTypeId: this.getEntityTypeId(),
+						entityTypeName: this.getEntityTypeName(),
+						context: this._externalContextId,
+						length: this._dedupeQueueInfo["length"],
+						skipped: false
+					},
+					10
+				);
+				this.close();
 				return;
 			}
 
@@ -1221,6 +1269,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 					);
 				}
 			}
+			else
+			{
+				this.setupPrimaryEditor();
+			}
 		},
 		processFieldSourceEntityChange: function(field, editorControl)
 		{
@@ -1490,17 +1542,30 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			}
 
 			BX.onCustomEvent(this, "onPostponeStart");
+			var queueId = BX.prop.getString(this.getDeduplicationCriterionData(), 'queueId', null);
+			if (queueId)
+			{
+				var action = "postponeDedupeItemById";
+				var data = {
+					queueId: queueId
+				};
+			}
+			else
+			{
+				var action = "postponeDedupeItem";
+				var data = {
+					entityTypeName: this.getEntityTypeName(),
+					typeId: BX.prop.getInteger(this._dedupeCriterionData, 'typeId', 0),
+					matches: BX.prop.getObject(this._dedupeCriterionData, 'matches', {}),
+					scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
+					isAutomatic: this._isAutomatic ? 1 : 0
+				};
+			}
 			BX.ajax.runComponentAction(
 				"bitrix:crm.entity.merger",
-				"postponeDedupeItem",
+				action,
 				{
-					data:
-						{
-							entityTypeName: this.getEntityTypeName(),
-							typeId: BX.prop.getInteger(this._dedupeCriterionData, 'typeId', 0),
-							matches: BX.prop.getObject(this._dedupeCriterionData, 'matches', {}),
-							scope: BX.prop.getString(this._dedupeConfig, "scope", "")
-						}
+					data: data
 				}
 			).then(
 				function(response)
@@ -1521,6 +1586,11 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			).catch(
 				function(data)
 				{
+					if (this.hasQueueNotFoundError(data))
+					{
+						this.reloadPage();
+						return;
+					}
 					BX.onCustomEvent(this, "onPostponeError");
 
 					var messages = [];
@@ -1597,20 +1667,37 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			var promise;
 			if(this.isQueueEnabled())
 			{
+				var queueId = BX.prop.getString(this.getDeduplicationCriterionData(), 'queueId', null);
+				if (queueId)
+				{
+					var action = "mergeDedupeQueueById";
+					var data = {
+						queueId: queueId,
+						offset: this._dedupeQueueInfo["offset"],
+						seedEntityIds: secondaryEntityIds,
+						targEntityId: primaryEntityId,
+						map: map
+					};
+				}
+				else
+				{
+					var action = "mergeDedupeQueueItem";
+					var data = {
+						entityTypeName: this.getEntityTypeName(),
+						typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
+						scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
+						offset: this._dedupeQueueInfo["offset"],
+						seedEntityIds: secondaryEntityIds,
+						targEntityId: primaryEntityId,
+						map: map
+					};
+				}
+
 				promise = BX.ajax.runComponentAction(
 					"bitrix:crm.entity.merger",
-					"mergeDedupeQueueItem",
+					action,
 					{
-						data:
-							{
-								entityTypeName: this.getEntityTypeName(),
-								typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
-								scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
-								offset: this._dedupeQueueInfo["offset"],
-								seedEntityIds: secondaryEntityIds,
-								targEntityId: primaryEntityId,
-								map: map
-							}
+						data: data
 					}
 				);
 			}
@@ -1701,6 +1788,11 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			).catch(
 				function(response)
 				{
+					if (this.hasQueueNotFoundError(response))
+					{
+						this.reloadPage();
+						return;
+					}
 					BX.onCustomEvent(this, "onMergeError");
 
 					var messages = [];
@@ -1734,23 +1826,40 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				return;
 			}
 
+			var queueId = BX.prop.getString(criterionData, 'queueId', null);
+			if (queueId)
+			{
+				var action = "markAsNonDuplicatesById";
+				var data = {
+					queueId: queueId,
+					leftEntityID: primaryEntityId,
+					rightEntityID: entityId,
+					matches: BX.prop.getObject(criterionData, 'matches', {}),
+					offset: this._dedupeQueueInfo["offset"]
+				};
+			}
+			else
+			{
+				var action = "markAsNonDuplicates";
+				var data = {
+					entityTypeName: this.getEntityTypeName(),
+					leftEntityID: primaryEntityId,
+					rightEntityID: entityId,
+					indexType: BX.prop.getInteger(criterionData, 'typeId', 0),
+					matches: BX.prop.getObject(criterionData, 'matches', {}),
+					queueInfoParams: {
+						typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
+						scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
+						offset: this._dedupeQueueInfo["offset"],
+						isAutomatic: this._isAutomatic ? 1 : 0
+					}
+				};
+			}
 			BX.ajax.runComponentAction(
 				"bitrix:crm.entity.merger",
-				"markAsNonDuplicates",
+				action,
 				{
-					data:
-						{
-							entityTypeName: this.getEntityTypeName(),
-							leftEntityID: primaryEntityId,
-							rightEntityID: entityId,
-							indexType: BX.prop.getInteger(criterionData, 'typeId', 0),
-							matches: BX.prop.getObject(criterionData, 'matches', {}),
-							queueInfoParams: {
-								typeNames: BX.prop.getArray(this._dedupeConfig, "typeNames", []),
-								scope: BX.prop.getString(this._dedupeConfig, "scope", ""),
-								offset: this._dedupeQueueInfo["offset"]
-							}
-						}
+					data: data
 				}
 			).then(
 				function(response)
@@ -1766,7 +1875,26 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 					this.clearSecondaryEntityLayout(entityId);
 					this.processSecondaryEntityRemoval();
 				}.bind(this)
+			).catch(
+				function(data)
+				{
+					if (this.hasQueueNotFoundError(data))
+					{
+						this.reloadPage();
+					}
+				}.bind(this)
 			);
+		},
+		getPrimaryEntityUrl: function()
+		{
+			for (var editorId in this._editors)
+			{
+				if (this._editors[editorId].getEntityId() == this._primaryEntityId)
+				{
+					return BX.prop.getString(this._editors[editorId]._settings, "entityDetailsUrl", "");
+				}
+			}
+			return '';
 		},
 		openEntityDetails: function(entityId)
 		{
@@ -1783,6 +1911,24 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			}
 
 			BX.Crm.Page.open(url);
+		},
+		hasQueueNotFoundError: function(data)
+		{
+			var errors = BX.prop.getArray(data, "errors", []);
+			return errors.reduce(
+				function(hasQueueNotFoundError, error)
+				{
+					return hasQueueNotFoundError ||
+						BX.prop.getString(error, "code", '') === 'QUEUE_NOT_FOUND';
+				},
+				false
+			);
+		},
+		reloadPage: function()
+		{
+			var loader = new BX.Loader({ target: document.body });
+			loader.show();
+			location.reload();
 		},
 		onExternalEvent: function(params)
 		{
@@ -2106,6 +2252,10 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 
 			BX.cleanNode(this._container);
 			this._hasLayout = false;
+		},
+		release: function()
+		{
+			BX.removeCustomEvent(this._merger, "onPrimaryEntityChange", this._primaryEntityChangeHandler);
 		},
 		onPrimaryEntityChange: function()
 		{
@@ -3478,11 +3628,15 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 		this._remainingElement = null;
 
 		this._mergeButton = null;
+		this._mergeAndEditButton = null;
 		this._postponeButton = null;
+
+		this._editAfterMerge = false;
 
 		this._isLocked = false;
 
 		this._mergeHandler = BX.delegate(this.onMergeButtonClick, this);
+		this._mergeAndEditHandler = BX.delegate(this.onMergeAndEditButtonClick, this);
 		this._postponeHandler = BX.delegate(this.onPostponeButtonClick, this);
 		this._previousButtonHandler = BX.delegate(this.onPreviousButtonClick, this);
 		this._nextButtonHandler = BX.delegate(this.onNextButtonClick, this);
@@ -3517,6 +3671,9 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 
 			this._mergeButton = BX("mergeButton");
 			BX.bind(this._mergeButton, "click", this._mergeHandler);
+
+			this._mergeAndEditButton = BX("mergeWithEditButton");
+			BX.bind(this._mergeAndEditButton, "click", this._mergeAndEditHandler);
 
 			this._postponeButton = BX("postponeButton");
 			BX.bind(this._postponeButton, "click", this._postponeHandler);
@@ -3578,7 +3735,8 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 				var currentQueueLength = this._merger.getDedupeQueueLength();
 				if(this._processedElement)
 				{
-					this._processedElement.innerHTML = this._initialQueueLength - currentQueueLength;
+					this._processedElement.innerHTML = this._initialQueueLength - currentQueueLength +
+						BX.prop.getInteger(this._settings, 'previouslyProcessedCount', 0);
 				}
 
 				if(this._remainingElement)
@@ -3591,6 +3749,15 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 		{
 			if(!this._isLocked)
 			{
+				this._editAfterMerge = false;
+				this._merger.merge();
+			}
+		},
+		onMergeAndEditButtonClick: function(e)
+		{
+			if(!this._isLocked)
+			{
+				this._editAfterMerge = true;
 				this._merger.merge();
 			}
 		},
@@ -3626,7 +3793,8 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 		{
 			this.setLocked(true);
 
-			BX.addClass(this._mergeButton, "ui-btn-clock");
+			BX.addClass(this._editAfterMerge ? this._mergeAndEditButton : this._mergeButton, "ui-btn-clock");
+			BX.addClass(this._editAfterMerge ? this._mergeButton : this._mergeAndEditButton, "ui-btn-disabled");
 			BX.addClass(this._postponeButton, "ui-btn-disabled");
 		},
 		onPostponeStart: function()
@@ -3634,14 +3802,25 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 			this.setLocked(true);
 
 			BX.addClass(this._mergeButton, "ui-btn-disabled");
+			BX.addClass(this._mergeAndEditButton, "ui-btn-disabled");
 			BX.addClass(this._postponeButton, "ui-btn-clock");
 		},
 		onMergeComplete: function()
 		{
 			this.setLocked(false);
 
-			BX.removeClass(this._mergeButton, "ui-btn-clock");
+			BX.removeClass(this._editAfterMerge ? this._mergeAndEditButton : this._mergeButton, "ui-btn-clock");
+			BX.removeClass(this._editAfterMerge ? this._mergeButton : this._mergeAndEditButton, "ui-btn-disabled");
 			BX.removeClass(this._postponeButton, "ui-btn-disabled");
+
+			if (this._editAfterMerge)
+			{
+				var url = this._merger.getPrimaryEntityUrl();
+				if (url.length)
+				{
+					BX.SidePanel.Instance.open(url);
+				}
+			}
 
 			this.adjustLayout();
 		},
@@ -3650,6 +3829,7 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 			this.setLocked(false);
 
 			BX.removeClass(this._mergeButton, "ui-btn-disabled");
+			BX.removeClass(this._mergeAndEditButton, "ui-btn-disabled");
 			BX.removeClass(this._postponeButton, "ui-btn-clock");
 		},
 		onMergeError: function()
@@ -3657,6 +3837,9 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 			this.setLocked(false);
 
 			BX.removeClass(this._mergeButton, "ui-btn-clock");
+			BX.removeClass(this._mergeButton, "ui-btn-disabled");
+			BX.removeClass(this._mergeAndEditButton, "ui-btn-clock");
+			BX.removeClass(this._mergeAndEditButton, "ui-btn-disabled");
 			BX.removeClass(this._postponeButton, "ui-btn-disabled");
 		},
 		onPostponeError: function()
@@ -3664,6 +3847,7 @@ if(typeof BX.Crm.EntityMergerPanel === "undefined")
 			this.setLocked(false);
 
 			BX.removeClass(this._mergeButton, "ui-btn-disabled");
+			BX.removeClass(this._mergeAndEditButton, "ui-btn-disabled");
 			BX.removeClass(this._postponeButton, "ui-btn-clock");
 		},
 		setLocked: function(locked)

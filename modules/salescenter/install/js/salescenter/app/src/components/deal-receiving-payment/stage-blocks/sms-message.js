@@ -1,5 +1,5 @@
 import {Loc, ajax as Ajax} 				from 'main.core';
-import {BlockNumberTitleHint as Block} from 'salescenter.component.stage-block';
+import {Block} from 'salescenter.component.stage-block';
 import
 {
 	Alert,
@@ -83,6 +83,15 @@ const SmsMessage = {
 	},
 	computed:
 		{
+			configForBlock()
+			{
+				return {
+					counter: this.counter,
+					checked: this.counterCheckedMixin,
+					showHint: true,
+				}
+			},
+
 			hasSender()
 			{
 				return this.senders.list.length !== 0;
@@ -102,7 +111,7 @@ const SmsMessage = {
 
 			title()
 			{
-				return Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS').replace('#PHONE#', this.phone);
+				return Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS_2').replace('#PHONE#', this.phone);
 			}
 		},
 	methods:
@@ -152,9 +161,8 @@ const SmsMessage = {
 		},
 	template: `
 		<stage-block-item			
-			:counter="counter"
+			:config="configForBlock"
 			:class="statusClassMixin"
-			:checked="counterCheckedMixin"
 			v-on:on-item-hint="onItemHint"
 		>
 			<template v-slot:block-title-title>{{title}}</template>

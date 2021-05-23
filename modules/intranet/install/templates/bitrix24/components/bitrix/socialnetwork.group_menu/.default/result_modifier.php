@@ -18,7 +18,7 @@ $firstMenuItemCode = false;
 $userOptions = \CUserOptions::getOption("ui", $arResult["menuId"]);
 $urlGeneralSpecific = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_GENERAL"], array("group_id" => $arResult["Group"]["ID"]));
 
-$sampleKeysList = array(
+$sampleKeysList = [
 	'general' => 0,
 	'tasks' => 1,
 	'calendar' => 2,
@@ -28,42 +28,31 @@ $sampleKeysList = array(
 	'microblog' => 6,
 	'blog' => 7,
 	'photo' => 8,
-	'content_search' => 9,
-);
+	'group_lists' => 9,
+	'wiki' => 10,
+	'content_search' => 11,
+	'marketplace' => 12,
+];
 
-$sampleKeysList = (
-	$arResult["Group"]["PROJECT"] == 'Y'
-		? array(
-			'tasks' => 0,
-			'general' => 1,
-			'calendar' => 2,
-			'files' => 3,
-			'chat' => 4,
-			'forum' => 5,
-			'microblog' => 6,
-			'blog' => 7,
-			'photo' => 8,
-			'group_lists' => 9,
-			'wiki' => 10,
-			'content_search' => 11,
-			'marketplace' => 12,
-		)
-		: array(
-			'general' => 0,
-			'tasks' => 1,
-			'calendar' => 2,
-			'files' => 3,
-			'chat' => 4,
-			'forum' => 5,
-			'microblog' => 6,
-			'blog' => 7,
-			'photo' => 8,
-			'group_lists' => 9,
-			'wiki' => 10,
-			'content_search' => 11,
-			'marketplace' => 12,
-		)
-);
+if ($arResult["Group"]["PROJECT"] === 'Y')
+{
+	$sampleKeysList = [
+		'tasks' => 0,
+		'general' => 1,
+		'calendar' => 2,
+		'files' => 3,
+		'chat' => 4,
+		'forum' => 5,
+		'microblog' => 6,
+		'blog' => 7,
+		'photo' => 8,
+		'group_lists' => 9,
+		'wiki' => 10,
+		'content_search' => 11,
+		'marketplace' => 12,
+	];
+}
+
 reset($sampleKeysList);
 $firstKeyDefault = key($sampleKeysList);
 
@@ -156,7 +145,7 @@ if ($this->__component->__parent && $this->__component->__parent->arResult && ar
 
 if ($this->__component->__parent && $this->__component->__parent->arParams && array_key_exists("GROUP_USE_BAN", $this->__component->__parent->arParams))
 	$arParams["GROUP_USE_BAN"] = $this->__component->__parent->arParams["GROUP_USE_BAN"];
-$arParams["GROUP_USE_BAN"] = $arParams["GROUP_USE_BAN"] != "N" ? "Y" : "N";	
+$arParams["GROUP_USE_BAN"] = $arParams["GROUP_USE_BAN"] != "N" ? "Y" : "N";
 
 if (intval($arResult["Group"]["IMAGE_ID"]) <= 0)
 {

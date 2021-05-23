@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/ui.image.input/templates/.default/script.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/ui.image.input/templates/.default/style.css');
 
-\Bitrix\Main\UI\Extension::load(['salescenter.app', 'ui.common', 'currency', 'fileinput', 'ui.entity-editor']);
+\Bitrix\Main\UI\Extension::load(['salescenter.app', 'ui.common', 'currency', 'fileinput', 'ui.entity-editor', 'ui.hint']);
 
 if (\Bitrix\Main\Loader::includeModule('location'))
 {

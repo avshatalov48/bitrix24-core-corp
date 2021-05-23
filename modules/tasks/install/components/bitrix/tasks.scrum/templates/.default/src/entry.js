@@ -1,98 +1,124 @@
-import {ActiveSprint} from './view/active.sprint';
+import {View} from './view/view';
 import {Plan} from './view/plan';
+import {ActiveSprint} from './view/active.sprint';
 import {CompletedSprint} from './view/completed.sprint';
-import {Sprint} from './entity/sprint/sprint';
-
-type View = {
-	name: string,
-	url: string
-}
-
-type Responsible = {
-	name: string,
-	pathToUser: string,
-	photo: {
-		src: string
-	}
-}
 
 type Params = {
-	signedParameters: string,
-	debugMode: string,
-	views: {
-		plan: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		activeSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		completedSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		}
-	},
-	activeView: string,
-	activeSprintId: number,
-	filterId: string,
-	sprints: Array, // todo
-	pathToTask?: string,
-	backlog?: Object, // todo
-	activeSprintData?: Object, //todo
-	tags?: Object, //todo split to epic object and tags array
-	defaultSprintDuration?: number,
-	completedSprint?: Object, //todo
-	defaultResponsible: Responsible
+	viewName: string
 }
 
 export class Entry
 {
 	constructor(params: Params)
 	{
-		this.activeView = params.activeView;
+		this.setParams(params);
 
-		this.scrumView = null;
+		this.buildView(params);
+	}
 
-		switch (this.activeView)
+	setParams(params: Params)
+	{
+		this.setViewName(params.viewName);
+	}
+
+	setViewName(viewName: string)
+	{
+		const availableViews = new Set([
+			'plan',
+			'activeSprint',
+			'completedSprint'
+		]);
+
+		if (!availableViews.has(viewName))
 		{
-			case 'plan':
-				this.scrumView = new Plan(params);
-				break;
-			case 'activeSprint':
-				this.scrumView = new ActiveSprint(params);
-				break;
-			case 'completedSprint':
-				this.scrumView = new CompletedSprint({
-					completedSprint: new Sprint(params.completedSprint),
-					signedParameters: params.signedParameters,
-					sprints: params.sprints,
-					views: params.views
-				});
-				break;
+			throw Error('Invalid value to activeView parameter');
+		}
+
+		this.viewName = viewName;
+	}
+
+	getViewName(): string
+	{
+		return this.viewName;
+	}
+
+	setView(view: View)
+	{
+		if (view instanceof View)
+		{
+			this.view = view;
+		}
+		else
+		{
+			this.view = null;
+		}
+	}
+
+	getView(): View
+	{
+		return this.view;
+	}
+
+	buildView(params: Params)
+	{
+		const viewName = this.getViewName();
+
+		if (viewName === 'plan')
+		{
+			this.setView(new Plan(params));
+		}
+		else if (viewName === 'activeSprint')
+		{
+			this.setView(new ActiveSprint(params));
+		}
+		else if (viewName === 'completedSprint')
+		{
+			this.setView(new CompletedSprint(params));
 		}
 	}
 
 	renderTo(container: HTMLElement)
 	{
-		this.scrumView.renderTo(container);
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().renderTo(container);
+		}
+	}
+
+	renderCountersTo(container: HTMLElement)
+	{
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().renderCountersTo(container);
+		}
 	}
 
 	openEpicEditForm(epicId: number)
 	{
-		this.scrumView.openEpicEditForm(epicId);
+		const view = this.getView();
+		if (view instanceof Plan)
+		{
+			view.openEpicEditForm(epicId);
+		}
 	}
 
 	openEpicViewForm(epicId: number)
 	{
-		this.scrumView.openEpicViewForm(epicId);
+		const view = this.getView();
+		if (view instanceof Plan)
+		{
+			view.openEpicViewForm(epicId);
+		}
 	}
 
 	removeEpic(epicId: number)
 	{
-		this.scrumView.removeEpic(epicId);
+		const view = this.getView();
+		if (view instanceof Plan)
+		{
+			view.removeEpic(epicId);
+		}
 	}
 }

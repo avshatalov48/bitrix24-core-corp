@@ -14,6 +14,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Ui\Filter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
@@ -70,9 +71,12 @@ class TasksToolbarComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = $this->arParams['USER_ID'];
 		$this->arResult['OWNER_ID'] = $this->arParams['OWNER_ID'];
 
+		$this->arResult['ROLE'] = $this->getFilterRole();
+
 		if ($showCounters)
 		{
 			$this->arResult['COUNTERS'] = $this->getCounters();
+			$this->arResult['FOREIGN_COUNTERS'] = $this->getForeignCounters();
 		}
 	}
 
@@ -139,7 +143,18 @@ class TasksToolbarComponent extends TasksBaseComponent
 		$filterOptions = $filterInstance->getOptions();
 		$filter = $filterOptions->getFilter();
 
-		return (array_key_exists('ROLEID', $filter) ? $filter['ROLEID'] : Counter\Role::ALL);
+		$possibleRoles = Counter\Role::getRoles();
+		$role = Counter\Role::ALL;
+
+		if (
+			array_key_exists('ROLEID', $filter)
+			&& array_key_exists($filter['ROLEID'], $possibleRoles)
+		)
+		{
+			$role = $filter['ROLEID'];
+		}
+
+		return $role;
 	}
 
 	/**
@@ -152,6 +167,13 @@ class TasksToolbarComponent extends TasksBaseComponent
 	protected function getCounters(): array
 	{
 		$counterInstance = Counter::getInstance($this->arParams['OWNER_ID']);
-		return $counterInstance->getCounters($this->getFilterRole(), (int) $this->arParams['GROUP_ID']);
+		$counters = $counterInstance->getCounters($this->getFilterRole(), (int) $this->arParams['GROUP_ID']);
+
+		return $counters;
+	}
+
+	protected function getForeignCounters(): array
+	{
+		return [];
 	}
 }

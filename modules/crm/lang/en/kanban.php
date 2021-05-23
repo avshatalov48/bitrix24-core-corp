@@ -68,6 +68,7 @@ $MESS["CRM_KANBAN_PANEL_CLOSE"] = "Close";
 $MESS["CRM_KANBAN_PANEL_DELETE"] = "Delete";
 $MESS["CRM_KANBAN_PANEL_EMAIL"] = "Send message";
 $MESS["CRM_KANBAN_PANEL_IGNORE"] = "Add to exceptions";
+$MESS["CRM_KANBAN_PANEL_MERGE"] = "Merge";
 $MESS["CRM_KANBAN_PANEL_OPEN"] = "Make public";
 $MESS["CRM_KANBAN_PANEL_SEGMENT"] = "Add to segment";
 $MESS["CRM_KANBAN_PANEL_SENDER"] = "Create newsletter";

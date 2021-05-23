@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["COMPANY_ADD"] = "Add";
 $MESS["COMPANY_ADD_ACTIVITY"] = "Add";
 $MESS["COMPANY_ADD_ACTIVITY_TITLE"] = "Add";
@@ -26,6 +26,8 @@ $MESS["COMPANY_BUILD_REQUISITES_TITLE"] = "Create company details";
 $MESS["COMPANY_COPY"] = "Copy";
 $MESS["COMPANY_COPY_TITLE"] = "Copy company";
 $MESS["COMPANY_DEDUPE"] = "Duplicate control";
+$MESS["COMPANY_DEDUPE_AUTOSEARCH"] = "Find and merge duplicates";
+$MESS["COMPANY_DEDUPE_HELP"] = "How do I handle duplicate entities?";
 $MESS["COMPANY_DEDUPE_TITLE"] = "Duplicate control";
 $MESS["COMPANY_DELETE"] = "Delete";
 $MESS["COMPANY_DELETE_DLG_BTNTITLE"] = "Delete";
@@ -70,4 +72,3 @@ $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM:";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Document";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Create document based on company";
-?>

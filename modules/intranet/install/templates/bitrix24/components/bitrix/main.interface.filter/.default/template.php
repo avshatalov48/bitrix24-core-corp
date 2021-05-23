@@ -14,6 +14,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 if(!empty($arParams["FILTER"])):
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $this->SetViewTarget("pagetitle", 100);
 ?>
 

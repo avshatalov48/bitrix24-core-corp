@@ -5,9 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var array $arParams
  * @var array $arResult
  * @var \CBitrixComponentTemplate $this
- * @global CMain $APPLICATION
- * @global CUser $USER
- * @global CDatabase $DB
+ * @var \CBitrixComponent $component
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
  */
 
 global $APPLICATION;
@@ -55,21 +56,36 @@ if (!empty($arResult['BUTTONS']))
 		array('HIDE_ICONS' => 'Y')
 	);
 }
-if (is_array($arResult['STEXPORT_PARAMS']))
+if (is_array($arResult['EXPORT_CSV_PARAMS']))
 {
-	\Bitrix\Main\UI\Extension::load('ui.progressbar');
-	\Bitrix\Main\UI\Extension::load('ui.buttons');
-	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
-	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/export.js');
+	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				BX.Crm.ExportManager.create(
-					"<?=CUtil::JSEscape($arResult['STEXPORT_PARAMS']['managerId'])?>",
-					<?=CUtil::PhpToJSObject($arResult['STEXPORT_PARAMS'])?>
-				);
+				var initFieldAppend = function(actionData)
+				{
+					/**
+					 * @var {FormData} actionData
+					 * @var {BX.UI.StepProcessing.Process} this
+					 */
+					var initialOptions = this.getDialog().getOptionFieldValues();
+					Object.keys(initialOptions).forEach(name => {
+						if (!(initialOptions[name] instanceof File))
+						{
+							actionData.append('INITIAL_OPTIONS['+name+']', initialOptions[name]);
+						}
+					});
+				};
+				BX.UI.StepProcessing.ProcessManager
+					.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_CSV_PARAMS']) ?>)
+					.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart, initFieldAppend)
+				;
+				BX.UI.StepProcessing.ProcessManager
+					.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_EXCEL_PARAMS']) ?>)
+					.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart, initFieldAppend)
+				;
 			}
 		);
 	</script><?

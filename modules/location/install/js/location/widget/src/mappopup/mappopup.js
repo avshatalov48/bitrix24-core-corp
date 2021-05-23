@@ -1,9 +1,10 @@
 import {Tag, Type, Dom, Event} from 'main.core';
-import {Address, Format, ControlMode, MapBase, GeocodingServiceBase, AddressStringConverter} from 'location.core';
+import {Address, Format, Location, ControlMode, MapBase, GeocodingServiceBase, AddressStringConverter} from 'location.core';
 import {EventEmitter} from 'main.core.events';
 import AddressString from './addressstring';
 import './css/mappopup.css';
 import Popup from './popup';
+import AddressRestorer from './addressrestorer'
 
 export default class MapPopup extends EventEmitter
 {
@@ -18,6 +19,7 @@ export default class MapPopup extends EventEmitter
 	#address;
 	#popup;
 	#addressString;
+	#addressRestorer;
 	#addressFormat;
 	#gallery;
 	#locationRepository;
@@ -25,6 +27,8 @@ export default class MapPopup extends EventEmitter
 	#mapInnerContainer;
 	#geocodingService;
 	#contentWrapper;
+	#needRestore = false;
+	#userLocation;
 
 	constructor(props)
 	{
@@ -43,25 +47,7 @@ export default class MapPopup extends EventEmitter
 			this.#geocodingService = props.geocodingService;
 		}
 
-		this.#map.onLocationChangedEventSubscribe( (event) => {
-
-			let data = event.getData(),
-				location = data.location,
-				address = location.toAddress();
-
-			this.#address = address;
-			this.#addressString.address = address;
-
-			if(this.#gallery)
-			{
-				this.#gallery.location = location;
-			}
-
-			this.emit(
-				MapPopup.#onChangedEvent,
-				{ address: address}
-			);
-		});
+		this.#map.onLocationChangedEventSubscribe(this.#onLocationChanged.bind(this));
 
 		if(!(props.popup instanceof Popup))
 		{
@@ -81,17 +67,73 @@ export default class MapPopup extends EventEmitter
 			addressFormat: this.#addressFormat
 		});
 
+		this.#addressRestorer = new AddressRestorer({
+			addressFormat: this.#addressFormat
+		});
+
+		this.#addressRestorer.onRestoreEventSubscribe(this.#onAddressRestore.bind(this));
+
 		if(props.gallery)
 		{
 			this.#gallery = props.gallery;
 		}
 
 		this.#locationRepository = props.locationRepository;
+		this.#userLocation = props.userLocation;
+	}
+
+	#onLocationChanged(event: Event)
+	{
+		let data = event.getData(),
+			location = data.location,
+			address = location.toAddress();
+
+		this.#address = address;
+		this.#addressString.address = address;
+
+		if(this.#needRestore)
+		{
+			if(this.#addressRestorer.isHidden())
+			{
+				this.#addressRestorer.show();
+			}
+		}
+
+		if(this.#gallery)
+		{
+			this.#gallery.location = location;
+		}
+
+		this.emit(
+			MapPopup.#onChangedEvent,
+			{ address: address}
+		);
+	}
+
+	#onAddressRestore(event: Event)
+	{
+		const data = event.getData(),
+			prevAddress = data.address;
+
+		prevAddress.latitude = this.#address.latitude;
+		prevAddress.longitude = this.#address.longitude;
+
+		this.#address = prevAddress;
+		this.#addressString.address = prevAddress;
+
+		this.#addressRestorer.hide();
+		this.#needRestore = false;
+
+		this.emit(
+			MapPopup.#onChangedEvent,
+			{ address: prevAddress}
+		);
 	}
 
 	render(props: object): void
 	{
 		this.#address = props.address;
+		this.#needRestore = true;
 		this.#mode = props.mode;
 		this.#isMapRendered = false;
 		this.#mapInnerContainer = Tag.render`<div class="location-map-inner"></div>`;
@@ -114,6 +156,7 @@ export default class MapPopup extends EventEmitter
 					${gallery}
 				</div>
 				${this.#mode === ControlMode.edit ? this.#addressString.render({address: this.#address}) : ''}
+				${this.#mode === ControlMode.edit ? this.#addressRestorer.render({address: this.#address}) : ''}
 			</div>`;
 
 		Event.bind(this.#contentWrapper, 'click', (e) => e.stopPropagation());
@@ -143,7 +186,9 @@ export default class MapPopup extends EventEmitter
 	set address(address: ?Address): void
 	{
 		this.#address = address;
+		this.#needRestore = true;
 		this.#addressString.address = address;
+		this.#addressRestorer.address = address;
 
 		this.#convertAddressToLocation(address)
 			.then((location) => {
@@ -155,47 +200,63 @@ export default class MapPopup extends EventEmitter
 	{
 		return new Promise((resolve) => {
 
-			let location = address ? address.toLocation() : null;
-
-			if(location)
+			if(address)
 			{
-				if(!location.latitude
-					&& !location.longitude
-					&& address.latitude
-					&& address.longitude
+				let lat;
+				let lon;
+
+				if (address.latitude && address.longitude)
+				{
+					lat = address.latitude;
+					lon = address.longitude;
+				}
+				else if (address.location
+					&& address.location.latitude
+					&& address.location.longitude
 				)
 				{
-					location.latitude = address.latitude;
-					location.longitude = address.longitude;
+					lat = address.location.latitude;
+					lon = address.location.longitude;
 				}
 
-				if(location.latitude && location.longitude)
+				if(lat && lat !== '0' && lon && lon !== '0')
 				{
-					resolve(location);
+					resolve(new Location({
+						latitude: lat,
+						longitude: lon,
+						type: address.getType()
+					}));
 					return;
 				}
-			}
 
-			if(this.#geocodingService)
-			{
-				let addressStr = null;
+				let location = this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null;
 
-				if (address)
+				if(this.#geocodingService)
 				{
+					let addressStr = null;
+
 					addressStr = address.toString(
 						this.#addressFormat,
 						AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
 						AddressStringConverter.CONTENT_TYPE_TEXT
 					);
-				}
 
-				this.#geocodingService.geocode(addressStr)
-					.then((locationsList: Array) =>
-					{
-						let location = locationsList.length === 1 ? locationsList[0] : null;
-						resolve(location);
-					});
+					this.#geocodingService.geocode(addressStr)
+						.then((locationsList: Array) =>
+						{
+							if(locationsList.length === 1)
+							{
+								location = locationsList[0];
+							}
+
+							resolve(location);
+						});
+
+					return;
+				}
 			}
+
+			resolve(this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null);
 		});
 	}
 
@@ -246,18 +307,22 @@ export default class MapPopup extends EventEmitter
 								this.#gallery.location = location;
 							}
 							this.emit(MapPopup.#onShowedEvent);
+							this.#map.onMapShow();
 						});
 
 					this.#isMapRendered = true;
 				}
 				else
 				{
+					this.#map.location = location;
+
 					if(this.#gallery)
 					{
 						this.#gallery.location = location;
 					}
 
 					this.emit(MapPopup.#onShowedEvent);
+					this.#map.onMapShow();
 				}
 			});
 	}
@@ -270,6 +335,14 @@ export default class MapPopup extends EventEmitter
 	close(): void
 	{
 		this.#popup.close();
+
+		this.#needRestore = false;
+
+		if(!this.#addressRestorer.isHidden())
+		{
+			this.#addressRestorer.hide();
+		}
+
 		this.emit(MapPopup.#onClosedEvent)
 	}
 
@@ -303,6 +376,7 @@ export default class MapPopup extends EventEmitter
 		this.#map = null;
 		this.#gallery = null;
 		this.#addressString = null;
+		this.#addressRestorer = null;
 
 		this.#popup.destroy();
 		this.#popup = null;

@@ -726,7 +726,7 @@ class Partner24 extends Network implements NetworkBot
 	}
 
 	/**
-	 * @param array $message
+	 * @param string $message
 	 *
 	 * @return bool
 	 */

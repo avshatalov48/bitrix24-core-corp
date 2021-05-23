@@ -4,30 +4,33 @@ namespace Bitrix\Location\Entity\Address;
 use Bitrix\Main\ArgumentNullException;
 
 /**
+ * The default implementation of IAddressLink
+ *
  * Class AddressLink
  * @package Bitrix\Location\Entity\Address
- * Default implementation of IAddressLink
  */
-class AddressLink implements IAddressLink
+final class AddressLink implements IAddressLink
 {
 	/** @var string */
-	protected $entityId;
+	private $entityId;
+
 	/** @var string  */
-	protected $entityType;
+	private $entityType;
 
 	/**
 	 * AddressLink constructor.
 	 * @param string $entityId
 	 * @param string $entityType
+	 * @throws ArgumentNullException
 	 */
 	public function __construct(string $entityId, string $entityType)
 	{
-		if($entityId == '')
+		if($entityId === '')
 		{
 			throw new ArgumentNullException('entityId');
 		}
 
-		if($entityType == '')
+		if($entityType === '')
 		{
 			throw new ArgumentNullException('entityType');
 		}

@@ -31,26 +31,6 @@ $APPLICATION->SetPageProperty("title", $sTitle);
 $APPLICATION->SetTitle($sTitleShort);
 \Bitrix\Main\UI\Extension::load("ui.notification");
 
-$arGroupsIDs = array();
-
-foreach($arResult["LIST"] as $k=>$arTaskItem)
-{
-	$arResult["LIST"][$k]['TITLE'] = htmlspecialcharsbx($arTaskItem['TITLE']);
-	$arResult["LIST"][$k]['GROUP_NAME'] = htmlspecialcharsbx($arTaskItem['GROUP_NAME']);
-
-	$arResult["LIST"][$k]['RESPONSIBLE_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LAST_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_SECOND_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_LOGIN'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LOGIN']);
-
-	$arResult["LIST"][$k]['CREATED_BY_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LAST_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_SECOND_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_LOGIN'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LOGIN']);
-
-	$arGroupsIDs[]=$arTaskItem['GROUP_ID'];
-}
-
 $arResult["GROUPS"] = array();
 
 $groupByProject =
@@ -61,6 +41,7 @@ $groupByProject =
 if ($groupByProject)
 {
 	$arOpenedProjects = CUserOptions::GetOption("tasks", "opened_projects", array());
+	$arGroupsIDs = $arResult['GROUP_IDS'];
 
 	if (!empty($arGroupsIDs))
 	{

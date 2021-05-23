@@ -16,6 +16,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	private const MARKETPLACE_CATEGORY_SMS = 'crm_robot_sms';
 	private $smsProviderPanelId = 'salescenter-smsprovider';
 	private $smsProviderAppPanelId = 'salescenter-smsprovider-app';
+	private $smsProviderColors = [];
 
 	private const SMSPROVIDER_TITLE_LENGTH_LIMIT = 50;
 
@@ -106,7 +107,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	{
 		$installedApps = $this->getMarketplaceInstalledApps();
 		$zone = $this->getZone();
-		$partnerItemList = [];
+		$itemList = [];
 
 		foreach($marketplaceItemCodeList as $marketplaceItemCode)
 		{
@@ -128,7 +129,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 					$img = $this->getImagePath().'marketplace_default.svg';
 				}
 
-				$partnerItemList[] = [
+				$itemList[] = [
 					'id' => (array_key_exists($marketplaceItemCode, $installedApps)
 						? $installedApps[$marketplaceItemCode]['ID']
 						: $marketplaceApp['ID']
@@ -145,7 +146,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 			}
 		}
 
-		return $partnerItemList;
+		return $itemList;
 	}
 
 	/**
@@ -168,6 +169,32 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 			foreach ($partnerItems['ITEMS'] as $partnerItem)
 			{
 				$result[] = $partnerItem['CODE'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array|string[]
+	 * @throws Main\SystemException
+	 */
+	private function getMarketPlaceRecommendedItemCodeList(): array
+	{
+		$result = [];
+
+		$zone = $this->getZone();
+
+		$recommendedItems = RestManager::getInstance()->getByTag([
+			RestManager::TAG_SMSPROVIDER_SMS,
+			RestManager::TAG_SMSPROVIDER_RECOMMENDED,
+			$zone
+		]);
+		if (!empty($recommendedItems['ITEMS']))
+		{
+			foreach ($recommendedItems['ITEMS'] as $recommendedItem)
+			{
+				$result[] = $recommendedItem['CODE'];
 			}
 		}
 
@@ -217,10 +244,13 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 
 	public function prepareResult()
 	{
+		$this->smsProviderColors = $this->getSmsProviderColors();
+		$menuItems = $this->getMenuItems();
+		$recommendedItems = $this->getRecommendedItems();
 		// sms-provider
 		$this->arResult['smsProviderPanelParams'] = [
 			'id' => $this->smsProviderPanelId,
-			'items' => $this->getMenuItems(),
+			'items' => array_merge($menuItems, $recommendedItems),
 		];
 		// marketplace
 		$this->arResult['smsProviderAppPanelParams'] = [
@@ -236,42 +266,96 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 		$result = [];
 
 		$smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
+		$saleshubItems = SaleManager::getSaleshubSmsProviderItems();
+
+		$disabledSmsProviders = [];
+		$zone = '';
+		if (Main\Loader::includeModule('intranet'))
+		{
+			$zone = \CIntranetUtils::getPortalZone();
+		}
+		if ($zone === 'ua')
+		{
+			$disabledSmsProviders = ['smsru', 'smsastby'];
+		}
 
 		foreach ($smsSenders as $sender)
 		{
-			if($sender['isConfigurable'])
+			$senderId = $sender['id'];
+			if (in_array($senderId, $disabledSmsProviders))
 			{
-				if($sender['id'] == 'smsastby')
+				continue;
+			}
+			if(array_key_exists($senderId, $saleshubItems) && $sender['isConfigurable'])
+			{
+				$saleshubItem = $saleshubItems[$senderId];
+				if (!$saleshubItem['main'])
 				{
-					$itemSelectedColor = '#188A98';
-				}
-				elseif ($sender['id'] == 'smsru')
-				{
-					$itemSelectedColor = '#8EB807';
-				}
-				elseif ($sender['id'] == 'twilio')
-				{
-					$itemSelectedColor = '#F12E45';
-				}
-				else
-				{
-					$itemSelectedColor = '';
+					continue;
 				}
 
+				$itemSelectedColor = $this->smsProviderColors[$sender['id']] ?? '';
+
 				$result[] = [
-					'id' => $sender['id'],
+					'id' => $senderId,
+					'sort' => $saleshubItem['sort'],
 					'title' => $sender['name'],
-					'image' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/'.$sender['id'].'.svg',
+					'image' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/'.$senderId.'.svg',
 					'itemSelectedColor' => $itemSelectedColor,
-					'itemSelectedImage' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/'.$sender['id'].'-active.svg',
+					'itemSelectedImage' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/templates/.default/images/'.$senderId.'-active.svg',
 					'itemSelected' => $sender['canUse'],
 					'data' => [
 						'type' => 'smsprovider',
-						'connectPath' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/slider.php?senderId='.$sender['id'],
+						'connectPath' => '/bitrix/components/bitrix/salescenter.smsprovider.panel/slider.php?senderId='.$senderId,
+						'recommendation' => $saleshubItem['recommendation'],
 					]
 				];
 			}
 		}
+
+		Main\Type\Collection::sortByColumn($result, ['sort' => SORT_ASC]);
+
+		return $result;
+	}
+
+	private function getSmsProviderColors() : array
+	{
+		return [
+			'smsastby' => '#188A98',
+			'smsru' => '#8EB807',
+			'twilio' => '#F12E45',
+		];
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getRecommendedItems(): array
+	{
+		$result = [];
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			$result = array_filter(
+				$this->getMarketplaceItems($this->getMarketPlaceRecommendedItemCodeList()),
+				static function ($item) {
+					return ($item['itemSelected']) === false;
+				}
+			);
+		}
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			foreach ($this->getActionboxItems() as $actionboxItem)
+			{
+				$result[] = $actionboxItem;
+			}
+		}
+
 		return $result;
 	}
 
@@ -294,6 +378,8 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 					return ($item['itemSelected']) === false;
 				}
 			);
+			// reset the keys, otherwise there might be js errors somewhere in tiles
+			$result = array_values($result);
 
 			$result[] = $this->getSmsProviderAppsCount();
 		}

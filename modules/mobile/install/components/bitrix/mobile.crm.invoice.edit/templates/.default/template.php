@@ -15,7 +15,8 @@ $APPLICATION->IncludeComponent(
 		'FORM_ID' => $formId,
 		'THEME_GRID_ID' => $formId,
 		'TABS' => $arResult['FIELDS'],
-		"RESTRICTED_MODE" => $arParams["RESTRICTED_MODE"]
+		'RESTRICTED_MODE' => $arParams['RESTRICTED_MODE'],
+		'COMPONENT_NAME' => 'crm.invoice.show'
 	),
 	$component,
 	array('HIDE_ICONS' => 'Y')

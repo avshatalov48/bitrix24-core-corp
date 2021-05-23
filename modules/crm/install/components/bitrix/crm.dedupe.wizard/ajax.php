@@ -4,6 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
+use Bitrix\Main\HttpResponse;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,10 +24,43 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 
 		return parent::processBeforeAction($action);
 	}
-	public function saveConfigurationAction($guid, array $config)
+
+	public function configureActions()
 	{
-		CUserOptions::SetOption('crm.dedupe.wizard', $guid, $config);
+		return [
+			'getSettingsSliderContent' => [
+				'-prefilters' => [
+					Bitrix\Main\Engine\ActionFilter\Csrf::class,
+				],
+			],
+		];
 	}
+
+	public function getSettingsSliderContentAction(string $entityTypeId, string $guid): HttpResponse
+	{
+		$content = $GLOBALS['APPLICATION']->includeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'RETURN_CONTENT' => true,
+				'POPUP_COMPONENT_NAME' => 'bitrix:crm.dedupe.settings',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [
+					'ENTITY_TYPE_ID' => $entityTypeId,
+					'GUID' => $guid
+				],
+				'BUTTONS' => ['save', 'cancel'],
+				'USE_PADDING' =>false,
+				'IFRAME_MODE' => true
+			]
+		);
+
+		$response = new HttpResponse();
+		$response->setContent($content);
+
+		return $response;
+	}
+
 	public function rebuildIndexAction($contextId, $entityTypeName, array $types, $scope)
 	{
 		if($contextId === '')
@@ -309,39 +343,6 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 					$scope,
 					Crm\Integrity\DuplicateStatus::CONFLICT
 				);
-				/*
-				$queueName = strtolower($entityTypeName).'_dedupe_queue';
-				$result['STATUS'] = 'CONFLICT';
-				$manualMergeData = CUserOptions::GetOption('crm', $queueName, array(), $this->currentUserID);
-				if(!isset($manualMergeData['ITEMS']))
-				{
-					$manualMergeData['ITEMS'] = [];
-				}
-
-				$item = [
-					'ROOT_ENTITY_ID' => $rootEntityID,
-					'ENTITY_IDS' => $entityIDs,
-					'CRITERION' => [ 'TYPE_ID' => $criterionTypeID, 'MATCHES' => $criterionMatches ]
-				];
-
-				$isPresent = false;
-				foreach($manualMergeData['ITEMS'] as $currentItem)
-				{
-					if($item['ROOT_ENTITY_ID'] == $currentItem['ROOT_ENTITY_ID']
-						&& $item['ENTITY_IDS'] == $currentItem['ENTITY_IDS']
-					)
-					{
-						$isPresent = true;
-						break;
-					}
-				}
-
-				if(!$isPresent)
-				{
-					$manualMergeData['ITEMS'][] = $item;
-					CUserOptions::SetOption('crm', $queueName, $manualMergeData, false, $this->currentUserID);
-				}
-				*/
 			}
 			else
 			{

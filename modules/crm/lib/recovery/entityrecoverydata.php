@@ -204,7 +204,7 @@ class EntityRecoveryData
 				}
 			}
 		}
-		$this->data = $data !== '' ? unserialize($data) : array();
+		$this->data = $data !== '' ? unserialize($data, ['allowed_classes' => false]) : array();
 	}
 	protected static function isCompressionEnabled()
 	{

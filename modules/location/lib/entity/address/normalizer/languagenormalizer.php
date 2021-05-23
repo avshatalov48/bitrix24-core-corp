@@ -1,12 +1,14 @@
-<?
+<?php
 namespace Bitrix\Location\Entity\Address\Normalizer;
 
 use Bitrix\Main\IO\File;
 
 /**
- * Normalize due to language specialties
+ * Normalize location name due to language specialties
+ *
  * Class LanguageNormalizer
  * @package Bitrix\Location\Entity\Address\Normalizer
+ * @internal
  */
 class LanguageNormalizer implements INormalizer
 {
@@ -33,7 +35,7 @@ class LanguageNormalizer implements INormalizer
 	}
 
 	/** @inheritdoc */
-	public function normalize($string)
+	public function normalize(string $string): string
 	{
 		$result = $string;
 
@@ -60,7 +62,7 @@ class LanguageNormalizer implements INormalizer
 	 * @param array $letters Replacements
 	 * @return string
 	 */
-	protected function replaceLetters($string, array $letters)
+	protected function replaceLetters(string $string, array $letters): string
 	{
 		$result = $string;
 
@@ -77,15 +79,20 @@ class LanguageNormalizer implements INormalizer
 	 * @param array $titles Replacements
 	 * @return string
 	 */
-	protected function replaceTitles($string, $titles)
+	protected function replaceTitles(string $string, array $titles): string
 	{
 		$result = $string;
 		$implodedTitles = implode('|', $titles);
 		$regexp = '/^('.$implodedTitles.')+\s+(.*?)$/i'.BX_UTF_PCRE_MODIFIER;
 		$result = preg_replace($regexp, '$2', $result);
-		$regexp = '/^(.*?)\s+('.$implodedTitles.')+$/i'.BX_UTF_PCRE_MODIFIER;
-		$result = preg_replace($regexp, '$1', $result);
-		return $result;
+
+		if($result !== null)
+		{
+			$regexp = '/^(.*?)\s+(' . $implodedTitles . ')+$/i' . BX_UTF_PCRE_MODIFIER;
+			$result = preg_replace($regexp, '$1', $result);
+		}
+
+		return $result !== null ? $result : '';
 	}
 
 	/**
@@ -93,23 +100,16 @@ class LanguageNormalizer implements INormalizer
 	 * @param array $aliases Replacements
 	 * @return string
 	 */
-	protected function replaceAliases($string, $aliases)
+	protected function replaceAliases(string $string, array $aliases): string
 	{
-		$result = $string;
-
-		if(isset($aliases[$string]))
-		{
-			$result = $aliases[$string];
-		}
-
-		return $result;
+		return $aliases[$string] ?? $string;
 	}
 
 	/**
 	 * @param string $lang Language id
 	 * @return array Language data.
 	 */
-	protected function loadLangData($lang)
+	protected function loadLangData(string $lang): array
 	{
 		$result = [];
 
@@ -131,7 +131,7 @@ class LanguageNormalizer implements INormalizer
 	 * @param string $lang Language id.
 	 * @return string Path to language data file.
 	 */
-	protected function getLangDataFilePath($lang)
+	protected function getLangDataFilePath(string $lang): string
 	{
 		return $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/location/lang/'.$lang.'/lib/entity/address/normalizer/langnormdata.php';
 	}
@@ -139,7 +139,7 @@ class LanguageNormalizer implements INormalizer
 	/**
 	 * @param array $langData Language data.
 	 */
-	public function setLangData($langData)
+	public function setLangData(array $langData): void
 	{
 		if(is_array($langData['LETTERS']))
 		{

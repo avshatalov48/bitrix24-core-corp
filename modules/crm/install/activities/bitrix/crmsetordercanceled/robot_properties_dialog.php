@@ -6,9 +6,9 @@ $cancelReason = $map['CancelReason'];
 $status = $map['CancelStatusId'];
 $selected = $dialog->getCurrentValue($status['FieldName']);
 ?>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($status['Name'])?>: </span>
-	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($status['FieldName'])?>">
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($status['Name'])?>: </span>
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($status['FieldName'])?>">
 		<?foreach ($status['Options'] as $value => $optionLabel):?>
 			<option value="<?=htmlspecialcharsbx($value)?>"
 				<?=($value == $selected) ? ' selected' : ''?>
@@ -16,10 +16,6 @@ $selected = $dialog->getCurrentValue($status['FieldName']);
 		<?endforeach;?>
 	</select>
 </div>
-<div class="crm-automation-popup-settings">
-	<textarea name="<?=htmlspecialcharsbx($cancelReason['FieldName'])?>"
-			  class="crm-automation-popup-textarea"
-			  placeholder="<?=htmlspecialcharsbx($cancelReason['Name'])?>"
-			  data-role="inline-selector-target"
-	><?=htmlspecialcharsbx($dialog->getCurrentValue($cancelReason['FieldName'], ''))?></textarea>
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($cancelReason)?>
 </div>

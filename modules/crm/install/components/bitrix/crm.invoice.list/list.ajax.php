@@ -257,7 +257,7 @@ elseif ($action === 'REBUILD_STATISTICS')
 	}
 
 	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_INVOICE_STATISTICS_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
+	$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 	$lastItemID = isset($progressData['LAST_ITEM_ID']) ? (int)$progressData['LAST_ITEM_ID'] : 0;
 	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? (int)$progressData['PROCESSED_ITEMS'] : 0;
 	$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? (int)$progressData['TOTAL_ITEMS'] : 0;
@@ -360,7 +360,7 @@ elseif ($action === 'REBUILD_SUM_STATISTICS')
 	}
 
 	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_INVOICE_SUM_STATISTICS_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
+	$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 	$lastItemID = isset($progressData['LAST_ITEM_ID']) ? intval($progressData['LAST_ITEM_ID']) : 0;
 	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? intval($progressData['PROCESSED_ITEMS']) : 0;
 	$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? intval($progressData['TOTAL_ITEMS']) : 0;

@@ -428,6 +428,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function doPreAction()
 	{
+		parent::doPreAction();
+
 		if (
 			$this->exportAs
 			&& !Access\TaskAccessController::can($this->userId, Access\ActionDictionary::ACTION_TASK_EXPORT)
@@ -481,10 +483,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['GROUP_BY_PROJECT'] = $this->isGroupByProjectMode();
 		$this->arResult['GROUP_BY_SUBTASK'] = ($this->arParams['NEED_GROUP_BY_SUBTASKS'] === 'Y');
 		$this->arResult['MESSAGES'] = [];
-
-		$calendarSettings = $this->getCalendarSettings();
-		$this->arResult['CALENDAR_SETTINGS'] = $calendarSettings['CALENDAR_SETTINGS'];
-		$this->arResult['COMPANY_WORKTIME'] = $calendarSettings['COMPANY_WORKTIME'];
 
 		$this->arResult["FILTER"] = $this->filter->getFilters();
 		$this->arResult["PRESETS"] = $this->filter->getPresets();
@@ -549,86 +547,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		return true;
-	}
-
-	private function getCalendarSettings()
-	{
-		$site = CSite::GetByID(SITE_ID)->Fetch();
-
-		$weekDay = $site['WEEK_START'];
-		$weekDaysMap = array(
-			'SU',
-			'MO',
-			'TU',
-			'WE',
-			'TH',
-			'FR',
-			'SA'
-		);
-
-		$wh = array(
-			'HOURS'      => array(
-				'START' => array('H' => 9, 'M' => 0, 'S' => 0),
-				'END'   => array('H' => 19, 'M' => 0, 'S' => 0),
-			),
-			'HOLIDAYS'   => array(),
-			'WEEKEND'    => array('SA', 'SU'),
-			'WEEK_START' => (string)$weekDay != '' && isset($weekDaysMap[$weekDay]) ? $weekDaysMap[$weekDay] : 'MO'
-		);
-
-		if (\Bitrix\Main\Loader::includeModule('calendar'))
-		{
-			$calendarSettings = \CCalendar::GetSettings(array('getDefaultForEmpty' => false));
-
-			if (is_array($calendarSettings['week_holidays']))
-			{
-				$wh['WEEKEND'] = $calendarSettings['week_holidays'];
-			}
-			if ((string)$calendarSettings['year_holidays'] != '')
-			{
-				$holidays = explode(',', $calendarSettings['year_holidays']);
-				if (is_array($holidays) && !empty($holidays))
-				{
-					foreach ($holidays as $day)
-					{
-						$day = trim($day);
-						[$day, $month] = explode('.', $day);
-						$day = intval($day);
-						$month = intval($month);
-
-						if ($day && $month)
-						{
-							$wh['HOLIDAYS'][] = array('M' => $month, 'D' => $day);
-						}
-					}
-				}
-			}
-
-			$time = explode('.', (string)$calendarSettings['work_time_start']);
-			if (intval($time[0]))
-			{
-				$wh['HOURS']['START']['H'] = intval($time[0]);
-			}
-			if (intval($time[1]))
-			{
-				$wh['HOURS']['START']['M'] = intval($time[1]);
-			}
-
-			$time = explode('.', (string)$calendarSettings['work_time_end']);
-			if (intval($time[0]))
-			{
-				$wh['HOURS']['END']['H'] = intval($time[0]);
-			}
-			if (intval($time[1]))
-			{
-				$wh['HOURS']['END']['M'] = intval($time[1]);
-			}
-		}
-
-		return array(
-			'CALENDAR_SETTINGS' => $wh,
-			'COMPANY_WORKTIME'  => $wh['HOURS']
-		);
 	}
 
 	protected function processGroupActions()
@@ -1126,10 +1044,13 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$parameters['TARGET_USER_ID'] = $this->arParams['USER_ID'];
 		$mgrResult = Manager\Task::getList(User::getId(), $getListParameters, $parameters);
 
-		$this->arResult['CURRENT_PAGE'] = (int) $mgrResult['AUX']['OBJ_RES']->PAGEN;
+		$this->arResult['CURRENT_PAGE'] = (int)$mgrResult['AUX']['OBJ_RES']->PAGEN;
 
 		$this->arResult['ENABLE_NEXT_PAGE'] = false;
-		if (count($mgrResult['DATA']) > $this->getPageSize())
+		if (
+			$this->exportAs === false
+			&& (count($mgrResult['DATA']) > $this->getPageSize())
+		)
 		{
 			$this->arResult['ENABLE_NEXT_PAGE'] = true;
 			$keys = array_keys($mgrResult['DATA']);
@@ -1157,10 +1078,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['LIST'] = self::setUserData($this->arResult['LIST']);
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
 
-		if (!$this->needGroupBySubTasks())
-		{
-			$this->validateCounters();
-		}
+		$this->validateCounters();
 
 		if ($listStateIsModified)
 		{
@@ -1187,36 +1105,46 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
-		$filter = $this->filter->getOptions()->getFilter($this->filter->getFilters());
-		if (!$filter)
-		{
-			return;
-		}
-
-		$defaultFilter = [
-			'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-			'PRESET_ID' => $filter['PRESET_ID'],
-			'FILTER_ID' => $filter['FILTER_ID'],
-			'FILTER_APPLIED' => true,
-			'FIND' => ''
-		];
-
-		if (array_diff($filter, $defaultFilter))
-		{
-			return;
-		}
-
-		$gridValue = null;
+		$gridValue = count($this->arResult['LIST']);
 		if (!$this->arResult['ENABLE_NEXT_PAGE'])
 		{
-			$gridValue = $this->arResult['GET_LIST_PARAMS']['NAV_PARAMS']['nPageSize'] * ($this->arResult['CURRENT_PAGE'] - 1) + count($this->arResult['LIST']);
+			$gridValue = $this->arResult['GET_LIST_PARAMS']['NAV_PARAMS']['nPageSize'] * ($this->arResult['CURRENT_PAGE'] - 1) + $gridValue;
 		}
 		else
 		{
 			// @ToDo make inspect
 		}
 
-		if ($gridValue === null)
+		if (
+			$this->needGroupBySubTasks()
+			&& $gridValue > 0
+		)
+		{
+			return;
+		}
+
+		$filter = $this->filter->getOptions()->getFilter($this->filter->getFilters());
+		if (
+			array_key_exists('STATUS', $filter)
+			&& is_array($filter['STATUS'])
+			&& in_array(CTasks::STATE_IN_PROGRESS, $filter['STATUS'])
+		)
+		{
+			unset($filter['STATUS']);
+		}
+		unset($filter['PRESET_ID']);
+		unset($filter['FILTER_ID']);
+
+		$defaultFilter = [
+			'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+			'FILTER_APPLIED' => true,
+			'FIND' => ''
+		];
+
+		if (
+			array_diff($filter, $defaultFilter)
+			|| array_diff($defaultFilter, $filter)
+		)
 		{
 			return;
 		}
@@ -1231,7 +1159,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
+		if ($gridValue && $this->arResult['ENABLE_NEXT_PAGE'])
+		{
+			return;
+		}
+
 		if (\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance()->isInQueue($userId))
+		{
+			return;
+		}
+
+		if (\Bitrix\Tasks\Internals\Counter\Event\EventTable::hasLostEvents())
 		{
 			return;
 		}
@@ -1242,8 +1180,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			[$userId],
 			Application::JOB_PRIORITY_LOW - 5
 		);
-
-		return;
 	}
 
 	private static function setUserData(array $list)

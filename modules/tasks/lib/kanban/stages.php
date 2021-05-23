@@ -519,23 +519,31 @@ class StagesTable extends Entity\DataManager
 		$sort = 100;
 		foreach ($stages as $i => $stage)
 		{
-			if (
-				$stage['TITLE'] ||
-				$stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
-			)
+			if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
 			{
-				$stage['SYSTEM_TYPE'] = '';
+				$systemType = $stage['SYSTEM_TYPE'];
 			}
+			else
+			{
+				if (
+					$stage['TITLE'] ||
+					$stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
+				)
+				{
+					$stage['SYSTEM_TYPE'] = '';
+				}
+				$systemType = ($sort == 100 ? self::SYS_TYPE_NEW : $stage['SYSTEM_TYPE']);
+			}
+
 			$fields = array(
 				'TITLE' => $stage['TITLE'],
 				'COLOR' => $stage['COLOR'],
 				'ENTITY_ID' => $stage['ENTITY_ID'],
 				'ENTITY_TYPE' => $entityType,
 				'SORT' => $sort,
-				'SYSTEM_TYPE' => $sort == 100
-								? self::SYS_TYPE_NEW
-								: $stage['SYSTEM_TYPE']
+				'SYSTEM_TYPE' => $systemType
 			);
+
 			$sort += 100;
 			if ($i > 0)
 			{

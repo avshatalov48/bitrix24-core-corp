@@ -2041,7 +2041,7 @@ class CCrmInvoiceRestService extends IRestService
 
 		$user = CCrmSecurityHelper::GetCurrentUser();
 
-		$opt = unserialize($opt);
+		$opt = unserialize($opt, ['allowed_classes' => false]);
 		$iblockID = intval($opt[CSite::GetDefSite()]['id']);
 		$userSectionID = CWebDavIblock::getRootSectionIdForUser($iblockID, $user->GetID());
 		if(!is_numeric($userSectionID) || $userSectionID <= 0)

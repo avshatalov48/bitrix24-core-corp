@@ -41,13 +41,12 @@ class ConfigTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
+		return [
+			new IntegerField('ID', [
 				'primary' => true,
 				'autocomplete' => true,
 				'title' => Loc::getMessage('CONFIG_ENTITY_ID_FIELD'),
-			),
+			]),
 			new BooleanField('ACTIVE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_ACTIVE_FIELD'),
@@ -97,21 +96,18 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_SOURCE_FIELD'),
 				'default_value' => 'create',
 			]),
-			'QUEUE_TIME' => array(
-				'data_type' => 'integer',
+			new IntegerField('QUEUE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW'),
 				'default_value' => '60',
-			),
-//			'CRM_FORM_TO_USE' => [
-//				'data_type' => 'integer',
+			]),
+//			new IntegerField('CRM_FORM_TO_USE', [
 //				'title' => 'Which CRM-form to use',
 //				'default_value' => '0',
-//			],
-			'NO_ANSWER_TIME' => [
-				'data_type' => 'integer',
+//			]),
+			new IntegerField('NO_ANSWER_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TIME_FIELD'),
 				'default_value' => '60',
-			],
+			]),
 			new StringField('QUEUE_TYPE', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TYPE_FIELD'),
@@ -146,9 +142,12 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
 				'default_value' => 'Y',
 			]),
+			new IntegerField('VOTE_TIME_LIMIT', [
+				'default_value' => '0',
+			]),
 			new BooleanField('VOTE_BEFORE_FINISH', [
 				'values' => ['N', 'Y'],
-				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_BEFORE_FINISH_FIELD'),
 				'default_value' => 'Y',
 			]),
 			new BooleanField('VOTE_CLOSING_DELAY', [
@@ -184,35 +183,31 @@ class ConfigTable extends Main\Entity\DataManager
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
 			]),
-			'AGREEMENT_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('AGREEMENT_ID', [
 				'default_value' => '0',
-			),
+			]),
 			new BooleanField('CATEGORY_ENABLE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CATEGORY_ENABLE_FIELD'),
 				'default_value' => 'N',
 			]),
-			'CATEGORY_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('CATEGORY_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_CATEGORY_ID_FIELD'),
 				'default_value' => '0',
-			),
+			]),
 			new StringField('WELCOME_BOT_JOIN', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_JOIN_FIELD'),
 				'default_value' => 'first',
 			]),
-			'WELCOME_BOT_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('WELCOME_BOT_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_BOT_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'WELCOME_BOT_TIME' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('WELCOME_BOT_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_BOT_TIME_FIELD'),
 				'default_value' => '600',
-			),
+			]),
 			new StringField('WELCOME_BOT_LEFT', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_LEFT_FIELD'),
@@ -237,16 +232,14 @@ class ConfigTable extends Main\Entity\DataManager
 					];
 				}
 			]),
-			'NO_ANSWER_FORM_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('NO_ANSWER_FORM_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_FORM_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'NO_ANSWER_BOT_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('NO_ANSWER_BOT_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_BOT_ID_FIELD'),
 				'default_value' => '0',
-			),
+			]),
 			'NO_ANSWER_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TEXT_FIELD'),
@@ -283,16 +276,14 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_RULE_FIELD'),
 				'default_value' => 'form',
 			]),
-			'WORKTIME_DAYOFF_FORM_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('WORKTIME_DAYOFF_FORM_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_FORM_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'WORKTIME_DAYOFF_BOT_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('WORKTIME_DAYOFF_BOT_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_BOT_ID_FIELD'),
 				'default_value' => '0',
-			),
+			]),
 			'WORKTIME_DAYOFF_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_TEXT_FIELD'),
@@ -302,54 +293,47 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_RULE_FIELD'),
 				'default_value' => 'text',
 			]),
-			'CLOSE_FORM_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('CLOSE_FORM_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_FORM_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'CLOSE_BOT_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('CLOSE_BOT_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_BOT_ID_FIELD'),
 				'default_value' => '0',
-			),
+			]),
 			'CLOSE_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_TEXT_FIELD'),
 			),
-			'FULL_CLOSE_TIME' => array(
-				'data_type' => 'integer',
+			new IntegerField('FULL_CLOSE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_FULL_CLOSE_TIME_FIELD'),
 				'default_value' => '10',
-			),
+			]),
 			new StringField('AUTO_CLOSE_RULE', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_RULE_FIELD'),
 				'default_value' => 'none',
 			]),
-			'AUTO_CLOSE_FORM_ID' => array(
-				'data_type' => 'integer',
+			new IntegerField('AUTO_CLOSE_FORM_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_FORM_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'AUTO_CLOSE_BOT_ID' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('AUTO_CLOSE_BOT_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_BOT_ID_FIELD'),
 				'default_value' => '0',
-			),
-			'AUTO_CLOSE_TIME' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('AUTO_CLOSE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_TIME_FIELD_NEW'),
 				'default_value' => '14400',
-			),
+			]),
 			'AUTO_CLOSE_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_TEXT_FIELD_NEW'),
 			),
-			'AUTO_EXPIRE_TIME' => array(
-				'data_type' => 'integer',
+			new IntegerField('AUTO_EXPIRE_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_EXPIRE_TIME_FIELD'),
 				'default_value' => '86400',
-			),
+			]),
 			'DATE_CREATE' => array(
 				'data_type' => 'datetime',
 				'title' => Loc::getMessage('CONFIG_ENTITY_DATE_CREATE_FIELD'),
@@ -360,11 +344,10 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_DATE_MODIFY_FIELD'),
 				'default_value' => array(__CLASS__, 'getCurrentDate'),
 			),
-			'MODIFY_USER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
+			new IntegerField('MODIFY_USER_ID', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_MODIFY_USER_ID_FIELD'),
-			),
+				'required' => true,
+			]),
 			new BooleanField('TEMPORARY', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_TEMPORARY_FIELD'),
@@ -380,9 +363,7 @@ class ConfigTable extends Main\Entity\DataManager
 				'data_type' => 'Bitrix\ImOpenLines\Model\ConfigStatistic',
 				'reference' => array('=this.ID' => 'ref.CONFIG_ID')
 			),
-			'QUICK_ANSWERS_IBLOCK_ID' => array(
-				'data_type' => 'integer',
-			),
+			new IntegerField('QUICK_ANSWERS_IBLOCK_ID'),
 			'SESSION_PRIORITY' => array(
 				'data_type' => 'integer',
 				'default_value' => 0,
@@ -391,10 +372,9 @@ class ConfigTable extends Main\Entity\DataManager
 				'validation' => [__CLASS__, 'validateText50'],
 				'default_value' => 'ANSWERED_NEW',
 			]),
-			'MAX_CHAT' => array(
-				'data_type' => 'integer',
+			new IntegerField('MAX_CHAT', [
 				'default_value' => '0',
-			),
+			]),
 			new StringField('OPERATOR_DATA', [
 				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_OPERATOR_DATA_FIELD'),
@@ -404,50 +384,44 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_DEFAULT_OPERATOR_DATA_FIELD'),
 				'serialized' => true
 			]),
-			'KPI_FIRST_ANSWER_TIME' => array(
-				'data_type' => 'integer',
+			new IntegerField('KPI_FIRST_ANSWER_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_FIRST_ANSWER_TIME'),
-				'default_value' => 0,
-			),
+				'default_value' => '0',
+			]),
 			new BooleanField('KPI_FIRST_ANSWER_ALERT', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_ALERT'),
 				'default_value' => 'N',
 			]),
-			'KPI_FIRST_ANSWER_LIST' => array(
-				'data_type' => 'string',
+			new StringField('KPI_FIRST_ANSWER_LIST', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_LIST'),
-				'serialized' => true,
-			),
-			'KPI_FIRST_ANSWER_TEXT' => array(
-				'data_type' => 'string',
+				'serialized' => true
+			]),
+			new StringField('KPI_FIRST_ANSWER_TEXT', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_TEXT')
-			),
-			'KPI_FURTHER_ANSWER_TIME' => array(
-				'data_type' => 'integer',
+			]),
+			new IntegerField('KPI_FURTHER_ANSWER_TIME', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_FURTHER_ANSWER_TIME'),
-				'default_value' => 0,
-			),
+				'default_value' => '0',
+			]),
 			new BooleanField('KPI_FURTHER_ANSWER_ALERT', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_ALERT'),
 				'default_value' => 'N',
 			]),
-			'KPI_FURTHER_ANSWER_LIST' => array(
-				'data_type' => 'string',
+			new StringField('KPI_FURTHER_ANSWER_LIST', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_LIST'),
-				'serialized' => true,
-			),
-			'KPI_FURTHER_ANSWER_TEXT' => array(
-				'data_type' => 'string',
+				'serialized' => true
+			]),
+			new StringField('KPI_FURTHER_ANSWER_TEXT', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_TEXT')
-			),
+			]),
 			new BooleanField('KPI_CHECK_OPERATOR_ACTIVITY', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_CHECK_OPERATOR_ACTIVITY'),
 				'default_value' => 'N',
 			])
-		);
+		];
 	}
 
 

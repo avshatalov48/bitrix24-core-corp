@@ -222,7 +222,7 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	if(!empty($product['EDIT_PAGE_URL']))
 	{
-		$productEditUrl = '/shop/settings/'.$product['EDIT_PAGE_URL'].'&'.bitrix_sessid_get();
+		$productEditUrl = $product['EDIT_PAGE_URL'];
 		//$actionEditScript = "BX.SidePanel.Instance.open('".$productEditUrl."'); return;";
 		$name = '<a href="'.$productEditUrl.'" data-product-id="'.$product['PRODUCT_ID'].'" data-product-field="name" class="crm-order-product-info-name-text">'.$name.'</a>';
 		if ((int)$product['TYPE'] === \Bitrix\Crm\Order\BasketItem::TYPE_SET)

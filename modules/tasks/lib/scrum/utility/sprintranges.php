@@ -8,6 +8,7 @@ class SprintRanges
 	private $allDays = [];
 	private $weekdays = [];
 	private $weekendInfo = [];
+	private $currentWeekDay = 0;
 
 	public function getAllDays(): array
 	{
@@ -46,6 +47,11 @@ class SprintRanges
 		$this->weekendInfo = $weekendInfo;
 	}
 
+	public function getRealDayNumber(int $dayNumber): int
+	{
+		return array_search($dayNumber, array_keys($this->getWeekdays())) + 1;
+	}
+
 	public function getPreviousWeekdayByDayNumber(int $dayNumber): int
 	{
 		if (array_key_exists($dayNumber, $this->weekendInfo))
@@ -61,5 +67,15 @@ class SprintRanges
 	public function getLastSprintDayTime(): int
 	{
 		return end($this->weekdays);
+	}
+
+	public function setCurrentWeekDay(int $currentWeekDay)
+	{
+		$this->currentWeekDay = (int)$currentWeekDay;
+	}
+
+	public function getCurrentWeekDay(): int
+	{
+		return $this->currentWeekDay;
 	}
 }

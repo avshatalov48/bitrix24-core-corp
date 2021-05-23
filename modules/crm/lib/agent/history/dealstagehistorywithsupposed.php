@@ -103,7 +103,11 @@ class DealStageHistoryWithSupposed extends Stepper
 
 	private function getHistoryCount()
 	{
-		$result = DealStageHistoryTable::query()->addSelect(Query::expr()->count('ID'), 'CNT')->exec()->fetchRaw();
+		$result = DealStageHistoryTable::query()
+			->addSelect(Query::expr()->count('ID'), 'CNT')
+			->setCacheTtl(86400)
+			->exec()
+			->fetchRaw();
 
 		return $result['CNT'];
 	}

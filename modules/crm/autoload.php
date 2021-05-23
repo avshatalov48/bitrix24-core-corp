@@ -250,8 +250,6 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Crm\AddressTable' => 'lib/address.php',
 		'\Bitrix\Crm\UserField\Types\ElementType' => 'lib/userfield/types/elementtype.php',
 		'\Bitrix\Crm\UtmTable' => 'lib/utm.php',
-		'\Bitrix\Crm\StatusTable' => 'lib/statustable.php',
-		'\Bitrix\Crm\Category\Entity\DealCategoryTable' => 'lib/category/entity/dealcategory.php',
 	)
 );
 

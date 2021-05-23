@@ -32,14 +32,6 @@ class YandexTaxi extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getTypeDescription()
-	{
-		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_TYPE_DESCRIPTION');
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function getShortDescription()
 	{
 		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_SHORT_DESCRIPTION');
@@ -85,7 +77,8 @@ class YandexTaxi extends Base
 		return new \Bitrix\SalesCenter\Delivery\Wizard\YandexTaxi(
 			ServiceContainer::getApi(),
 			ServiceContainer::getRegionFinder(),
-			ServiceContainer::getRegionCoordinatesMapper()
+			ServiceContainer::getRegionCoordinatesMapper(),
+			ServiceContainer::getTariffsChecker()
 		);
 	}
 }

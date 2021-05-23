@@ -1,0 +1,5 @@
+<?
+return [
+	'recipient',
+	'layout/postform'
+];

@@ -20,6 +20,10 @@
 	animation: pagetitle-opacity-show .5s linear forwards;
 }
 
+.grid-mode .workarea-content-paddings {
+	padding: 15px 15px 20px;
+}
+
 @keyframes pagetitle-opacity-show {
 	from {
 		opacity: 0;
@@ -67,6 +71,12 @@
 
 .crm-entity-wrap {
 	position: relative;
+	padding-bottom: 60px;
+}
+
+.crm-entity-section-product-loader {
+	background: url(images/skeleton.svg) no-repeat;
+	height: 446px;
 }
 
 .crm-entity-section-tabs {

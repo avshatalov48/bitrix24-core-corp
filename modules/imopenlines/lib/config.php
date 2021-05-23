@@ -587,6 +587,14 @@ class Config
 		{
 			$fields['VOTE_MESSAGE'] = 'N';
 		}
+		if (isset($params['VOTE_TIME_LIMIT']))
+		{
+			$fields['VOTE_TIME_LIMIT'] = (int)$params['VOTE_TIME_LIMIT'] > 0 ? (int)$params['VOTE_TIME_LIMIT']: 0;
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['VOTE_TIME_LIMIT'] = 0;
+		}
 
 		if (isset($params['VOTE_CLOSING_DELAY']))
 		{
@@ -1397,7 +1405,7 @@ class Config
 					'WELCOME_MESSAGE_TEXT',
 					'VOTE_MESSAGE_1_TEXT', 'VOTE_MESSAGE_1_LIKE', 'VOTE_MESSAGE_1_DISLIKE',
 					'VOTE_MESSAGE_2_TEXT', 'VOTE_MESSAGE_2_LIKE', 'VOTE_MESSAGE_2_DISLIKE',
-					'NO_ANSWER_TEXT', 'WORKTIME_DAYOFF_TEXT', 'CLOSE_TEXT'
+					'NO_ANSWER_TEXT', 'WORKTIME_DAYOFF_TEXT', 'CLOSE_TEXT', 'AUTO_CLOSE_TEXT'
 				];
 
 				foreach ($textFieldsWithEmoji as $textFieldName)
@@ -1740,15 +1748,21 @@ class Config
 		return $configs;
 	}
 
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public static function getOptionList()
 	{
-		$list = Array();
-		$orm = Model\ConfigTable::getList(Array(
-			'select' => Array('ID', 'NAME' => 'LINE_NAME'),
-			'filter' => Array('=ACTIVE' => 'Y'),
-			'cache' => array('ttl' => 86400),
-			'order' => Array('LINE_NAME' => 'ASC'),
-		));
+		$list = [];
+		$orm = Model\ConfigTable::getList([
+			'select' => ['ID', 'NAME' => 'LINE_NAME'],
+			'filter' => ['=ACTIVE' => 'Y'],
+			'cache' => ['ttl' => 86400],
+			'order' => ['LINE_NAME' => 'ASC'],
+		]);
 		while ($config = $orm->fetch())
 		{
 			$list[] = $config;
@@ -1974,11 +1988,7 @@ class Config
 	 * Return queue operator data config type
 	 *
 	 * @param $configId
-	 *
 	 * @return mixed|string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function operatorDataConfig($configId)
 	{

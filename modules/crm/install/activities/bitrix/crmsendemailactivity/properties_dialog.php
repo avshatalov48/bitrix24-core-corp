@@ -16,6 +16,9 @@ if ($dialog->getCurrentValue('message_text_encoded'))
 $emailType = $map['EmailType'];
 $emailTypeValue = $dialog->getCurrentValue($emailType['FieldName'], '');
 
+$emailSelectRule = $map['EmailSelectRule'];
+$emailSelectRuleValue = (string)$dialog->getCurrentValue($emailSelectRule['FieldName']);
+
 $useLinkTracker = $map['UseLinkTracker'];
 
 $messageType = $dialog->getCurrentValue(
@@ -84,6 +87,19 @@ endif;
 			<?
 			foreach ($emailType['Options'] as $key => $option):
 				$selected = ($emailTypeValue === $key) ? 'selected' : '';
+				?>
+				<option value="<?=htmlspecialcharsbx($key)?>" <?=$selected?>><?=htmlspecialcharsbx($option)?></option>
+			<?endforeach;?>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td align="right" width="40%" valign="top"><?=htmlspecialcharsbx($emailSelectRule['Name'])?>:</td>
+	<td width="60%">
+		<select name="<?=htmlspecialcharsbx($emailSelectRule['FieldName'])?>">
+			<?php
+			foreach ($emailSelectRule['Options'] as $key => $option):
+				$selected = ($emailSelectRuleValue === $key) ? 'selected' : '';
 				?>
 				<option value="<?=htmlspecialcharsbx($key)?>" <?=$selected?>><?=htmlspecialcharsbx($option)?></option>
 			<?endforeach;?>

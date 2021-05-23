@@ -4,6 +4,14 @@ namespace Bitrix\Crm\Invoice\Internals;
 
 use	Bitrix\Main\Entity\DataManager,
 	Bitrix\Main\Entity\Validator;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ORM\Fields\Validators\EnumValidator;
+use Bitrix\Sale\Registry;
+
+if (!Loader::includeModule('sale'))
+{
+	return;
+}
 
 /**
  * Class OrderPropsValueTable
@@ -62,7 +70,32 @@ class InvoicePropsValueTable extends DataManager
 				'reference' => array('=this.ORDER_PROPS_ID' => 'ref.ID'),
 				'join_type' => 'LEFT',
 			),
+			'ENTITY_ID' => array(
+				'data_type' => 'integer',
+				'format' => '/^[0-9]{1,11}$/',
+			),
+			'ENTITY_TYPE' => array(
+				'data_type' => 'enum',
+				'required' => true,
+				'validation' => array(__CLASS__, 'validateEntityType'),
+				'values' => static::getEntityTypes()
+			),
 		);
+	}
+
+	public function validateEntityType()
+	{
+		return [
+			new EnumValidator(),
+		];
+	}
+
+	public static function getEntityTypes()
+	{
+		return [
+			Registry::ENTITY_ORDER,
+			Registry::ENTITY_SHIPMENT,
+		];
 	}
 
 	public static function getNameValidators()

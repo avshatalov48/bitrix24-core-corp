@@ -8,10 +8,13 @@ use Bitrix\Location\Entity\Format\Field;
 /**
  * Class ArrayConverter
  * @package Bitrix\Location\Entity\Format\Converter
+ * @internal
  */
-class ArrayConverter
+final class ArrayConverter
 {
 	/**
+	 * Convert Format to Array
+	 *
 	 * @param \Bitrix\Location\Entity\Format $format
 	 * @return array
 	 */
@@ -33,7 +36,7 @@ class ArrayConverter
 	 * @param \Bitrix\Location\Entity\Format $format
 	 * @return array
 	 */
-	public static function convertFieldCollectionToArray(\Bitrix\Location\Entity\Format $format): array
+	private static function convertFieldCollectionToArray(\Bitrix\Location\Entity\Format $format): array
 	{
 		$result = [];
 
@@ -52,6 +55,8 @@ class ArrayConverter
 	}
 
 	/**
+	 * Convert Array to Format
+	 *
 	 * @param array $data
 	 * @param string $languageId
 	 * @return Format

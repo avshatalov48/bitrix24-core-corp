@@ -5,6 +5,7 @@ namespace Bitrix\Location\Entity\Generic;
 /**
  * Class Collection
  * @package Bitrix\Location\Entity\Generic
+ * @internal
  */
 class Collection
 	implements \ArrayAccess, \Countable, \Iterator
@@ -22,7 +23,7 @@ class Collection
 	/**
 	 * @param array $items
 	 */
-	public function setItems(array $items)
+	public function setItems(array $items): void
 	{
 		foreach($items as $item)
 		{
@@ -33,7 +34,7 @@ class Collection
 	/**
 	 * @return array
 	 */
-	public function getItems()
+	public function getItems(): array
 	{
 		return $this->items;
 	}
@@ -131,7 +132,7 @@ class Collection
 	 * @param mixed $item
 	 * @return int
 	 */
-	public function addItem($item)
+	public function addItem($item): int
 	{
 		$this->items[] = $item;
 		end($this->items);

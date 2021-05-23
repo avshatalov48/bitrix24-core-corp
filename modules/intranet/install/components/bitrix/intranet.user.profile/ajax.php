@@ -246,7 +246,9 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 					$file,
 					array("width" => 212, "height" => 212),
 					BX_RESIZE_IMAGE_PROPORTIONAL,
-					false
+					false,
+					false,
+					true
 				);
 
 				return $fileTmp["src"];

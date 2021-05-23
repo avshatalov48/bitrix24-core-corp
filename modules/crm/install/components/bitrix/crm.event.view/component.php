@@ -596,7 +596,7 @@ while ($arEvent = $obRes->Fetch())
 		$arEvent['EVENT_DESC'] = !empty($arEvent['EVENT_TEXT_1'])? ($arEvent['EVENT_TEXT_1']): '';
 	$arEvent['EVENT_DESC'] = nl2br($arEvent['EVENT_DESC']);
 
-	$arEvent['FILES'] = $arEvent['~FILES'] = $arEvent['FILES'] !== '' ? unserialize($arEvent['FILES']) : array();
+	$arEvent['FILES'] = $arEvent['~FILES'] = $arEvent['FILES'] !== '' ? unserialize($arEvent['FILES'], ['allowed_classes' => false]) : array();
 	if (!empty($arEvent['FILES']))
 	{
 		$i=1;

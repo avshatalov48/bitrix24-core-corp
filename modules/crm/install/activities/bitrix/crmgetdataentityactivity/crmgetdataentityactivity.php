@@ -128,6 +128,8 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 						$entityData['STATUS_ID'] = $statusList[$entityData['STATUS_ID']];
 						$sourceList = CCrmStatus::getStatusListEx('SOURCE');
 						$entityData['SOURCE_ID'] = $sourceList[$entityData['SOURCE_ID']];
+						$honorificList = CCrmStatus::getStatusList('HONORIFIC');
+						$entityData['HONORIFIC'] = $honorificList[$entityData['HONORIFIC']];
 
 						$currencyId = !empty($entityData['CURRENCY_ID']) ?
 							$entityData['CURRENCY_ID'] : CCrmCurrency::getBaseCurrencyID();
@@ -167,6 +169,8 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 						$entityData['TYPE_ID'] = $typeList[$entityData['TYPE_ID']];
 						$sourceList = CCrmStatus::getStatusList('SOURCE');
 						$entityData['SOURCE_ID'] = $sourceList[$entityData['SOURCE_ID']];
+						$honorificList = CCrmStatus::getStatusList('HONORIFIC');
+						$entityData['HONORIFIC'] = $honorificList[$entityData['HONORIFIC']];
 
 						$entityData['OPENED'] = $entityData['OPENED'] == 'Y' ?
 							GetMessage('CRM_ACTIVITY_FIELD_MAIN_YES') : GetMessage('CRM_ACTIVITY_FIELD_MAIN_NO');

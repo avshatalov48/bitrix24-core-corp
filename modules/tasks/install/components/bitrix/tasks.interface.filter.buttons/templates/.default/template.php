@@ -13,7 +13,10 @@ use Bitrix\Main\Web\Json;
 Extension::load([
 	'ui.buttons',
 	'ui.buttons.icons',
+	'ui.hint',
 ]);
+
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 Loc::loadMessages(__FILE__);
 
@@ -77,9 +80,13 @@ elseif ($section === 'VIEW_TASK')
 		<?php
 	}
 	$button = $arParams['ADD_BUTTON'];
-	$mutedClass = ($arResult['DATA']['MUTED'] ? 'follow' : 'unfollow');
+	$mutedClass = ($arResult['DATA']['MUTED'] ? 'unfollow' : 'follow');
+	$mutedHint = $arResult['DATA']['MUTED']
+		? Loc::getMessage('TASKS_INTERFACE_FILTER_BUTTONS_MUTE_BUTTON_HINT_UNMUTE')
+		: Loc::getMessage('TASKS_INTERFACE_FILTER_BUTTONS_MUTE_BUTTON_HINT_MUTE');
 	?>
-	<button id="taskViewMute" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-<?=$mutedClass?>"></button>
+	<button id="taskViewMute" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-<?=$mutedClass?>"
+			data-hint="<?= $mutedHint ?>" data-hint-no-icon></button>
 	<button id="taskViewPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<span class="ui-btn-split ui-btn-primary">
 		<a class="ui-btn-main" href="<?=HtmlFilter::encode($button['URL'])?>" id="<?=HtmlFilter::encode($button['ID'])?>-btn">
@@ -95,16 +102,20 @@ elseif ($section === 'VIEW_TASK')
 <script type="text/javascript">
 	BX.ready(function() {
 		BX.message({
-			"POPUP_MENU_CHECKLIST_SECTION": '<?=GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_CHECKLIST_SECTION')?>',
-			"POPUP_MENU_SHOW_COMPLETED": '<?=GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_COMPLETED')?>',
-			"POPUP_MENU_SHOW_ONLY_MINE": '<?=GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_ONLY_MINE')?>'
+			"POPUP_MENU_CHECKLIST_SECTION": '<?= GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_CHECKLIST_SECTION') ?>',
+			"POPUP_MENU_SHOW_COMPLETED": '<?= GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_COMPLETED') ?>',
+			"POPUP_MENU_SHOW_ONLY_MINE": '<?= GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_ONLY_MINE') ?>',
+			"MUTE_BUTTON_HINT_MUTE": '<?= GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_MUTE_BUTTON_HINT_MUTE') ?>',
+			"MUTE_BUTTON_HINT_UNMUTE": '<?= GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_MUTE_BUTTON_HINT_UNMUTE') ?>'
 		});
 
-		new BX.Tasks.InterfaceFilterButtons(<?=Json::encode([
+		new BX.Tasks.InterfaceFilterButtons(<?= Json::encode([
 			'section' => $section,
 			'entityId' => $arResult['ENTITY_ID'],
 			'muted' => $arResult['DATA']['MUTED'],
 			'checklistShowCompleted' => $arResult['DATA']['CHECKLIST_OPTION_SHOW_COMPLETED'],
-		])?>);
+		]) ?>);
+
+		BX.UI.Hint.init();
 	});
 </script>

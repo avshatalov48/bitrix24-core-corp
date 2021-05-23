@@ -152,7 +152,9 @@ class PhaseColorScheme
 	public function load()
 	{
 		$s = Main\Config\Option::get('crm', $this->optionName, '', '');
-		$params = $s !== '' ? unserialize($s) : null;
+		$params = $s !== '' ? unserialize($s, [
+			'allowed_classes' => false,
+		]) : null;
 		if(!is_array($params))
 		{
 			return false;

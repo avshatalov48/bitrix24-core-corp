@@ -1,4 +1,4 @@
-import {Dom, Tag, Type} from 'main.core';
+import {Dom, Tag} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Entity} from '../entity';
 import {Header} from './header';
@@ -7,30 +7,38 @@ import {GroupActionsButton} from '../group.actions.button';
 import {ListItems} from '../list.items';
 import {Item} from '../../item/item';
 
+import type {ItemParams} from '../../item/item';
+
 import '../../css/backlog.css';
 
-type backlogParams = {
-	items?: Array
+export type BacklogParams = {
+	id: number,
+	items?: Array<ItemParams>
 };
 
 export class Backlog extends Entity
 {
-	constructor(backlogData: backlogParams = {})
+	constructor(params: BacklogParams)
 	{
-		super(backlogData);
+		super(params);
 
 		this.setEventNamespace('BX.Tasks.Scrum.Backlog');
 
-		backlogData.items.forEach((itemData) => {
-			const item = new Item(itemData);
-			this.items.set(item.itemId, item);
-		});
+		this.setBacklogParams(params);
 
 		this.header = null;
 		this.epicCreationButton = null;
 	}
 
-	static buildBacklog(backlogData: backlogParams = {}): Backlog
+	setBacklogParams(params: BacklogParams)
+	{
+		params.items.forEach((itemData) => {
+			const item = new Item(itemData);
+			this.items.set(item.itemId, item);
+		});
+	}
+
+	static buildBacklog(backlogData: BacklogParams): Backlog
 	{
 		const backlog = new Backlog(backlogData);
 		backlog.addHeader(new Header(backlog));

@@ -104,6 +104,7 @@ class ReportBuilder extends Builder
 			$row = [
 				'id' => (int) $item['CHILD_ID'],
 				'code' => $item['CODE'],
+				'enabled' => (bool) $item['IS_ENABLED'],
 				'title' => $item['TITLE'],
 				'level' => (int) $item['LEVEL'],
 				'nextLevel' => Tracking\Source\Level\Type::getNextId((int) $item['LEVEL']),
@@ -301,6 +302,7 @@ class ReportBuilder extends Builder
 		$query->addSelect("{$prefix}.LEVEL", 'LEVEL');
 		$query->addSelect("{$prefix}.ID", 'CHILD_ID');
 		$query->addSelect("{$prefix}.PARENT_ID", 'PARENT_ID');
+		$query->addSelect("{$prefix}.IS_ENABLED", 'IS_ENABLED');
 
 		return $query->exec();
 	}

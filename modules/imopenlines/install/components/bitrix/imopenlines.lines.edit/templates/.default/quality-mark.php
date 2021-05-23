@@ -1,5 +1,5 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Imopenlines\Limit;
 ?>
@@ -13,8 +13,8 @@ use \Bitrix\Imopenlines\Limit;
 				   name="CONFIG[VOTE_MESSAGE]"
 				   value="Y"
 				   data-limit="<?=!Limit::canUseVoteClient()?'Y':'N';?>"
-				   <? if ($arResult['CONFIG']['VOTE_MESSAGE'] == "Y") { ?>checked<? } ?>>
-			<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW")?>
+				   <? if ($arResult['CONFIG']['VOTE_MESSAGE'] == 'Y') { ?>checked<? } ?>>
+			<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW')?>
 			<?if(!Limit::canUseVoteClient()):?>
 				<span class="tariff-lock"></span>
 				<script type="text/javascript">
@@ -28,15 +28,15 @@ use \Bitrix\Imopenlines\Limit;
 			<?endif;?>
 		</label>
 	</div>
-	<div id="imol_vote_message_block" <? if ($arResult['CONFIG']['VOTE_MESSAGE'] != "Y") { ?>class="invisible"<? } ?>>
+	<div id="imol_vote_message_block" <? if ($arResult['CONFIG']['VOTE_MESSAGE'] != 'Y') { ?>class="invisible"<? } ?>>
 		<div class="imopenlines-control-checkbox-container">
 			<label class="imopenlines-control-checkbox-label">
 				<input type="checkbox"
 					   class="imopenlines-control-checkbox"
 					   name="CONFIG[VOTE_BEFORE_FINISH]"
 					   value="Y"
-					   <? if ($arResult['CONFIG']['VOTE_BEFORE_FINISH'] == "Y") { ?>checked<? } ?>>
-				<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH")?>
+					   <? if ($arResult['CONFIG']['VOTE_BEFORE_FINISH'] == 'Y') { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH')?>
 			</label>
 		</div>
 		<div class="imopenlines-control-checkbox-container">
@@ -46,9 +46,38 @@ use \Bitrix\Imopenlines\Limit;
 					   <?/*id="imol_vote_message"*/?>
 					   name="CONFIG[VOTE_CLOSING_DELAY]"
 					   value="Y"
-					   <? if ($arResult['CONFIG']['VOTE_CLOSING_DELAY'] == "Y") { ?>checked<? } ?>>
-				<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW")?>
+					   <? if ($arResult['CONFIG']['VOTE_CLOSING_DELAY'] == 'Y') { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW')?>
 			</label>
+		</div>
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   id="imol_vote_time_limit"
+					   class="imopenlines-control-checkbox"
+					   name="CONFIG[VOTE_ENABLE_TIME_LIMIT]"
+					   value="Y"
+					   <? if ($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] == 'Y') { ?>checked<? } ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_ENABLE_VOTE_TIME_LIMIT')?>
+			</label>
+		</div>
+		<div<? if ($arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] != 'Y') { ?> class="invisible"<? } ?> id="imol_action_vote_time_limit">
+			<div class="imopenlines-control-container imopenlines-control-select">
+				<div class="imopenlines-control-subtitle">
+					<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT')?>
+				</div>
+				<div class="imopenlines-control-inner">
+					<select class="imopenlines-control-input" name="CONFIG[VOTE_TIME_LIMIT]">
+						<option value="86400" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '86400') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_1_DAY')?></option>
+						<option value="172800" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '172800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_2_DAY')?></option>
+						<option value="259200" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '259200') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_3_DAY')?></option>
+						<option value="345600" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '345600') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_4_DAY')?></option>
+						<option value="432000" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '432000') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_5_DAY')?></option>
+						<option value="604800" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '604800') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_7_DAY')?></option>
+						<option value="2592000" <?if($arResult['CONFIG']['VOTE_TIME_LIMIT'] == '2592000') { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_30_DAY')?></option>
+					</select>
+				</div>
+			</div>
 		</div>
 		<div class="imopenlines-control-container">
 			<div class="imol-vote-container">

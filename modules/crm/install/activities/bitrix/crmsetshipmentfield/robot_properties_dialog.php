@@ -3,7 +3,7 @@
 
 foreach ($dialog->getMap() as $field):
 ?>
-<div class="crm-automation-popup-settings">
+<div class="bizproc-automation-popup-settings">
 	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 		<?=htmlspecialcharsbx($field['Name'])?>:
 	</span>

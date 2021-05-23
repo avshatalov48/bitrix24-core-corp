@@ -8,6 +8,7 @@ export class PresetMenu extends EventEmitter
 	constructor(id, presetList)
 	{
 		super();
+		this.setEventNamespace('BX.Crm.RequisitePresetMenu');
 		this._isShown = false;
 		this.menuId = id;
 		this.presetList = presetList;

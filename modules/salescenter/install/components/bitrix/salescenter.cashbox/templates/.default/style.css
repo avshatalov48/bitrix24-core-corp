@@ -48,6 +48,30 @@
 	background-color: #EC1B2F;
 }
 
+.salescenter-businessru-atol-icon { width: 97px; }
+
+.salescenter-businessru-atol-icon i {
+	background-image: url(images/businessru_atol.svg);
+	background-size: 70% auto;
+	background-color: #FF142C;
+}
+
+.salescenter-businessru-evotor-icon { width: 97px; }
+
+.salescenter-businessru-evotor-icon i {
+	background-image: url(images/businessru_evotor.svg);
+	background-size: 70% auto;
+	background-color: #E44A21;
+}
+
+.salescenter-businessru-shtrihm-icon { width: 97px; }
+
+.salescenter-businessru-shtrihm-icon i {
+	background-image: url(images/businessru_shtrihm.svg);
+	background-size: 70% auto;
+	background-color: #8F7B66;
+}
+
 .salescenter-orange-icon { width: 97px; }
 
 .salescenter-orange-icon i {

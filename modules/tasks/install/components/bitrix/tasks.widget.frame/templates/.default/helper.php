@@ -19,7 +19,7 @@ $helper->addMethod('templateActionSetState', function($structure, $value) use ($
 	try
 	{
 		$signer = new Signer();
-		$structure = unserialize($signer->unsign($structure, 'tasks.widget.frame.structure'));
+		$structure = unserialize($signer->unsign($structure, 'tasks.widget.frame.structure'), ['allowed_classes' => false]);
 	}
 	catch(\Bitrix\Main\Security\Sign\BadSignatureException $e)
 	{

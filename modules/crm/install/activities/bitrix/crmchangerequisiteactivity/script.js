@@ -145,7 +145,7 @@
 		}
 
 		var titleNode = BX.create('span', {
-			attrs: {className: "crm-automation-popup-settings-title crm-automation-popup-settings-title-autocomplete"},
+			attrs: {className: "bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"},
 			text: this.fieldsMap[fieldId]['Name']
 		});
 
@@ -164,7 +164,7 @@
 
 		this.requisiteFieldsNode.appendChild(BX.create('div', {
 			attrs: {
-				className: "crm-automation-popup-settings",
+				className: "bizproc-automation-popup-settings",
 			},
 			props: {
 				id: conditionId

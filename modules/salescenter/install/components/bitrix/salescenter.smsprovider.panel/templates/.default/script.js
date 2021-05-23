@@ -91,7 +91,8 @@
 							children: [
 								this.getImage(),
 								this.getTitle(),
-								this.getStatus()
+								this.getStatus(),
+								this.getLabel(),
 							],
 						})
 					],
@@ -150,6 +151,28 @@
 			return this.layout.itemSelected;
 		},
 
+		getLabel: function()
+		{
+			if (!this.data.recommendation)
+				return;
+
+			this.layout.itemLabel = BX.create('div', {
+				props: {
+					className: 'salescenter-item-label'
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'salescenter-item-label-text'
+						},
+						text: BX.message('SALESCENTER_CONTROL_PANEL_ITEM_LABEL_RECOMMENDATION')
+					})
+				]
+			});
+
+			return this.layout.itemLabel;
+		},
+
 		setSelected: function()
 		{
 			BX.addClass(this.layout.wrapper, 'salescenter-smsprovider-item-selected');
@@ -198,7 +221,7 @@
 			{
 				hex = hex.replace(/([a-f0-9])/gi, "$1$1");
 			}
-			
+
 			hex = hex.toLowerCase();
 
 			var defaultColors = [

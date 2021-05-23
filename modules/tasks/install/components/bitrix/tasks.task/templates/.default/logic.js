@@ -52,6 +52,8 @@ BX.namespace('Tasks.Component');
 				this.onTitleChange();
 				this.onResponsibleChange();
 				this.checkNoWorkDays(this.getTaskData().MATCH_WORK_TIME === 'Y');
+
+				this.calendarSettings = this.option('calendarSettings');
 			},
 
 			getUser: function()

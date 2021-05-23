@@ -9,7 +9,11 @@ $MESS["TASKS_MESSAGE_IN_REPORT_YES"] = "Да";
 $MESS["TASKS_MESSAGE_IN_REPORT_NO"] = "Нет";
 $MESS["TASKS_MESSAGE_DESCRIPTION"] = "Описание";
 $MESS["TASKS_MESSAGE_ACCOMPLICES"] = "Соисполнители";
+$MESS["TASKS_MESSAGE_ACCOMPLICES_ADDED"] = "Добавлены соисполнители: ";
+$MESS["TASKS_MESSAGE_ACCOMPLICES_REMOVED"] = "Исключены соисполнители: ";
 $MESS["TASKS_MESSAGE_AUDITORS"] = "Наблюдатели";
+$MESS["TASKS_MESSAGE_AUDITORS_ADDED"] = "Добавлены наблюдатели: ";
+$MESS["TASKS_MESSAGE_AUDITORS_REMOVED"] = "Исключены наблюдатели: ";
 $MESS["TASKS_MESSAGE_DEADLINE"] = "Крайний срок";
 $MESS["TASKS_MESSAGE_RESPONSIBLE_ID"] = "Ответственный";
 $MESS["TASKS_MESSAGE_TITLE"] = "Название";
@@ -188,4 +192,31 @@ $MESS["TASKS_SONET_LOG_END_DATE_PLAN"] = "планируемая дата око
 $MESS["TASKS_SONET_LOG_DURATION_PLAN"] = "планируемая длительность";
 $MESS["TASKS_SONET_LOG_EXTRANET_SUFFIX"] = " (экстранет)";
 $MESS["TASKS_IM_ANSWER_SUCCESS"] = "Комментарий успешно опубликован";
+
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена. Завершите задачу или передвиньте срок в течение суток, иначе ваша эффективность будет снижена.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена, ваша эффективность снижена. Завершите задачу или передвиньте срок.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_AUDITOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_AUDITOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
+
+$MESS["TASKS_TASKS_TASK_EXPIRED_SOON_MESSAGE_N"] = "Задачи почти просрочены. Завершите их или передвиньте срок. #TASK_URL_BEGIN#Посмотреть.#URL_END#";
+$MESS["TASKS_TASKS_TASK_EXPIRED_SOON_MESSAGE_EMAIL_N"] = "Задачи почти просрочены. Завершите их или передвиньте срок.";
+$MESS["TASKS_TASKS_TASK_EXPIRED_SOON_MESSAGE_PUSH_N"] = "Задачи почти просрочены. Завершите их или передвиньте срок.";
+$MESS["TASKS_TASKS_TASK_EXPIRED_MESSAGE_N"] = "Задачи просрочены. Завершите их или передвиньте срок. #TASK_URL_BEGIN#Посмотреть.#URL_END#";
+$MESS["TASKS_TASKS_TASK_EXPIRED_MESSAGE_EMAIL_N"] = "Задачи просрочены. Завершите их или передвиньте срок.";
+$MESS["TASKS_TASKS_TASK_EXPIRED_MESSAGE_PUSH_N"] = "Задачи просрочены. Завершите их или передвиньте срок.";
+
+$MESS["TASKS_TASK_PINGED_STATUS_MESSAGE_N"] = "Запрашивает текущий статус задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
+$MESS["TASKS_TASK_PINGED_STATUS_MESSAGE_PUSH_N"] = "Запрашивает текущий статус задачи #TASK_TITLE#.";
+
+$MESS["TASKS_TASKS_TASK_PINGED_STATUS_MESSAGE_N"] = "Запрашивается текущий статус по задачам. #TASK_URL_BEGIN#Посмотреть.#URL_END#";
+$MESS["TASKS_TASKS_TASK_PINGED_STATUS_MESSAGE_EMAIL_N"] = "Запрашивается текущий статус по задачам.";
+$MESS["TASKS_TASKS_TASK_PINGED_STATUS_MESSAGE_PUSH_N"] = "Запрашивается текущий статус по задачам.";
 ?>

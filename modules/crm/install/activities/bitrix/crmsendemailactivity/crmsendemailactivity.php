@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main;
 use Bitrix\Main\Config;
@@ -8,44 +12,54 @@ use Bitrix\Crm;
 
 class CBPCrmSendEmailActivity extends CBPActivity
 {
-	const TEXT_TYPE_BBCODE = 'bbcode';
-	const TEXT_TYPE_HTML = 'html';
-	const ATTACHMENT_TYPE_FILE = 'file';
-	const ATTACHMENT_TYPE_DISK = 'disk';
+	public const TEXT_TYPE_BBCODE = 'bbcode';
+	public const TEXT_TYPE_HTML = 'html';
+	public const ATTACHMENT_TYPE_FILE = 'file';
+	public const ATTACHMENT_TYPE_DISK = 'disk';
+
+	private const SELECT_RULE_FIRST = 'first';
+	private const SELECT_RULE_LAST = 'last';
+	//private const SELECT_RULE_ALL = 'all';
 
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
-			"Title" => "",
-			"Subject" => "",
-			"From" => null, //deprecated, WAF unstable property
-			"MessageFrom" => null,
-			"MessageText" => '',
-			"MessageTextType" => '',
-			"MessageTextEncoded" => 0,
-			"EmailType" => null,
-			"UseLinkTracker" => 'Y',
+		$this->arProperties = [
+			'Title' => '',
+			'Subject' => '',
+			'From' => null, //deprecated, WAF unstable property
+			'MessageFrom' => null,
+			'MessageText' => '',
+			'MessageTextType' => '',
+			'MessageTextEncoded' => 0,
+			'EmailType' => null,
+			'EmailSelectRule' => null,
+			'UseLinkTracker' => 'Y',
 			'AttachmentType' => static::ATTACHMENT_TYPE_FILE,
-			'Attachment' => array()
-		);
+			'Attachment' => [],
+		];
 	}
 
 	public function Execute()
 	{
-		if ($this->MessageText === '' || !CModule::IncludeModule("crm") || !CModule::IncludeModule('subscribe'))
+		if (
+			$this->MessageText === ''
+			|| !CModule::IncludeModule("crm")
+			|| !CModule::IncludeModule('subscribe')
+		)
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($typeName, $ownerId) = explode('_', $this->GetDocumentId()[2]);
+		[$typeName, $ownerId] = explode('_', $this->GetDocumentId()[2]);
 		$ownerTypeId = \CCrmOwnerType::ResolveID($typeName);
 		$ownerId = (int)$ownerId;
 
 		$userId = CCrmBizProcHelper::getDocumentResponsibleId($this->GetDocumentId());
-		if($userId <= 0)
+		if ($userId <= 0)
 		{
 			$this->writeError(GetMessage('CRM_SEMA_NO_RESPONSIBLE'), $userId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -60,6 +74,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		if (!$fromInfo)
 		{
 			$this->writeError(GetMessage('CRM_SEMA_NO_FROM'), $userId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -70,41 +85,53 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$fromEmail = $fromInfo['fromEmail'];
 		$fromEncoded = $fromInfo['fromEncoded'];
 
-		list($to, $comEntityTypeId, $comEntityId) = $this->getToEmail($ownerTypeId, $ownerId);
+		[$to, $comEntityTypeId, $comEntityId] = $this->getToEmail($ownerTypeId, $ownerId);
 
 		if (empty($to))
 		{
 			$this->writeError(GetMessage('CRM_SEMA_NO_ADDRESSER'), $userId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		// Bindings & Communications -->
-		$bindings = [['OWNER_TYPE_ID' => $ownerTypeId, 'OWNER_ID' => $ownerId]];
+		$bindings = [
+			[
+				'OWNER_TYPE_ID' => $ownerTypeId,
+				'OWNER_ID' => $ownerId
+			]
+		];
 		if (!($comEntityTypeId === $ownerTypeId && $comEntityId === $ownerId))
 		{
-			$bindings[] = ['OWNER_TYPE_ID' => $comEntityTypeId, 'OWNER_ID' => $comEntityId];
+			$bindings[] = [
+				'OWNER_TYPE_ID' => $comEntityTypeId,
+				'OWNER_ID' => $comEntityId
+			];
 		}
 
-		$communications = array(array(
-			'TYPE' => 'EMAIL',
-			'VALUE' => $to,
-			'ENTITY_TYPE_ID' => $comEntityTypeId,
-			'ENTITY_ID' => $comEntityId,
-		));
+		$communications = [
+			[
+				'TYPE' => 'EMAIL',
+				'VALUE' => $to,
+				'ENTITY_TYPE_ID' => $comEntityTypeId,
+				'ENTITY_ID' => $comEntityId,
+			]
+		];
 		// <-- Bindings & Communications
 
 		$subject = $this->getSubject();
 		$message = $this->getMessageText();
 		$messageType = $this->MessageTextType;
 
-		if($message !== '')
+		if ($message !== '')
 		{
-			CCrmActivity::AddEmailSignature($message,
+			CCrmActivity::AddEmailSignature(
+				$message,
 				$messageType === self::TEXT_TYPE_HTML ? CCrmContentType::Html : CCrmContentType::BBCode
 			);
 		}
 
-		if($message === '')
+		if ($message === '')
 		{
 			$messageHtml = '';
 		}
@@ -124,16 +151,16 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			if (mb_strpos($messageHtml, '</html>') === false)
 			{
-				$messageHtml = '<html><body>'.$messageHtml.'</body></html>';
+				$messageHtml = '<html><body>' . $messageHtml . '</body></html>';
 			}
 		}
 
 		$now = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
-		if($subject === '')
+		if ($subject === '')
 		{
 			$subject = GetMessage(
 				'CRM_SEMA_DEFAULT_SUBJECT',
-				array('#DATE#'=> $now)
+				['#DATE#' => $now]
 			);
 		}
 
@@ -148,15 +175,15 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			$sanitizer = new CBXSanitizer();
 			$sanitizer->setLevel(CBXSanitizer::SECURE_LEVEL_LOW);
 			$sanitizer->applyDoubleEncode(false);
-			$sanitizer->addTags(array('style' => array()));
+			$sanitizer->addTags(['style' => []]);
 			$description = $sanitizer->SanitizeHtml($description);
 		}
 
-		$activityFields = array(
+		$activityFields = [
 			'AUTHOR_ID' => $userId,
 			'OWNER_ID' => $ownerId,
 			'OWNER_TYPE_ID' => $ownerTypeId,
-			'TYPE_ID' =>  CCrmActivityType::Email,
+			'TYPE_ID' => CCrmActivityType::Email,
 			'SUBJECT' => $subject,
 			'START_TIME' => $now,
 			'END_TIME' => $now,
@@ -168,7 +195,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'DIRECTION' => CCrmActivityDirection::Outgoing,
 			'BINDINGS' => array_values($bindings),
 			'COMMUNICATIONS' => $communications,
-		);
+		];
 
 		if ($this->AttachmentType === static::ATTACHMENT_TYPE_DISK)
 		{
@@ -178,19 +205,19 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		else
 		{
 			$attachmentStorageType = Bitrix\Crm\Integration\StorageType::File;
-			$attachment = array();
+			$attachment = [];
 			$attachmentFiles = (array)$this->ParseValue($this->getRawProperty('Attachment'), 'file');
 			$attachmentFiles = CBPHelper::MakeArrayFlat($attachmentFiles);
 			$attachmentFiles = array_filter($attachmentFiles);
 
-			if($attachmentFiles)
+			if ($attachmentFiles)
 			{
 				foreach ($attachmentFiles as $fileId)
 				{
 					$arRawFile = CFile::MakeFileArray($fileId);
 					if (is_array($arRawFile))
 					{
-						$fileId = intval(CFile::SaveFile($arRawFile, 'crm'));
+						$fileId = (int)CFile::SaveFile($arRawFile, 'crm');
 						if ($fileId > 0)
 						{
 							$attachment[] = $fileId;
@@ -206,17 +233,27 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			$activityFields['STORAGE_ELEMENT_IDS'] = $attachment;
 		}
 
-		if(!($id = CCrmActivity::Add($activityFields, false, false, array('REGISTER_SONET_EVENT' => true))))
+		$addOptions = [
+			'REGISTER_SONET_EVENT' => true,
+			'COMPRESS_DESCRIPTION' => true,
+		];
+
+		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
+		if (!$id)
 		{
 			$this->writeError(CCrmActivity::GetLastErrorMessage(), $userId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$arRawFiles = isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
-			? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
-				$activityFields['STORAGE_ELEMENT_IDS'], $activityFields['STORAGE_TYPE_ID']
-			)
-			: array();
+		$arRawFiles =
+			isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
+				? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
+					$activityFields['STORAGE_ELEMENT_IDS'],
+					$activityFields['STORAGE_TYPE_ID']
+				)
+				: []
+		;
 
 		$urn = CCrmActivity::PrepareUrn($activityFields);
 		$messageId = sprintf(
@@ -227,30 +264,36 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			)
 		);
 
-		\CCrmActivity::update($id, array(
-			//'DESCRIPTION' => $arFields['DESCRIPTION'],
-			'URN'         => $urn,
-			'SETTINGS'    => array(
-				'IS_BATCH_EMAIL'  => Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y' ? false : null,
-				'MESSAGE_HEADERS' => array(
-					'Message-Id' => $messageId,
-					'Reply-To'   => $reply ?: $from,
-				),
-				'EMAIL_META' => array(
-					'__email' => $fromEmail,
-					'from'    => $from,
-					'replyTo' => $reply,
-					'to'      => $to,
-				),
-				'BP_ACTIVITY_ID' => $this->GetName(),
-				'BP_TEMPLATE_ID' => $this->GetWorkflowTemplateId()
-			),
-		), false, false, array('REGISTER_SONET_EVENT' => true));
+		\CCrmActivity::update(
+			$id,
+			[
+				//'DESCRIPTION' => $arFields['DESCRIPTION'],
+				'URN' => $urn,
+				'SETTINGS' => [
+					'IS_BATCH_EMAIL' => Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y' ? false : null,
+					'MESSAGE_HEADERS' => [
+						'Message-Id' => $messageId,
+						'Reply-To' => $reply ?: $from,
+					],
+					'EMAIL_META' => [
+						'__email' => $fromEmail,
+						'from' => $from,
+						'replyTo' => $reply,
+						'to' => $to,
+					],
+					'BP_ACTIVITY_ID' => $this->GetName(),
+					'BP_TEMPLATE_ID' => $this->GetWorkflowTemplateId()
+				],
+			],
+			false,
+			false,
+			['REGISTER_SONET_EVENT' => true]
+		);
 
 		// sending email
-		$rcpt = array(
+		$rcpt = [
 			Mail\Mail::encodeHeaderFrom($to, SITE_CHARSET)
-		);
+		];
 
 		$outgoingSubject = $subject;
 		$outgoingBody = $messageHtml ?: getMessage('CRM_SEMA_DEFAULT_BODY');
@@ -268,15 +311,15 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			}
 		}
 
-		$attachments = array();
+		$attachments = [];
 		foreach ($arRawFiles as $key => $item)
 		{
-			$attachments[] = array(
-				'ID'           => $item['external_id'],
-				'NAME'         => $item['ORIGINAL_NAME'] ?: $item['name'],
-				'PATH'         => $item['tmp_name'],
+			$attachments[] = [
+				'ID' => $item['external_id'],
+				'NAME' => $item['ORIGINAL_NAME'] ?: $item['name'],
+				'PATH' => $item['tmp_name'],
 				'CONTENT_TYPE' => $item['type'],
-			);
+			];
 		}
 
 		$context = new Mail\Context();
@@ -284,28 +327,28 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$context->setPriority(Mail\Context::PRIORITY_LOW);
 
 		$outgoingParams = [
-			'CHARSET'      => SITE_CHARSET,
+			'CHARSET' => SITE_CHARSET,
 			'CONTENT_TYPE' => 'html',
-			'ATTACHMENT'   => $attachments,
-			'TO'           => join(', ', $rcpt),
-			'SUBJECT'      => $outgoingSubject,
-			'BODY'         => $outgoingBody,
-			'HEADER'       => [
-				'From'       => $fromEncoded ?: $fromEmail,
-				'Reply-To'   => $reply ?: $fromEmail,
+			'ATTACHMENT' => $attachments,
+			'TO' => join(', ', $rcpt),
+			'SUBJECT' => $outgoingSubject,
+			'BODY' => $outgoingBody,
+			'HEADER' => [
+				'From' => $fromEncoded ?: $fromEmail,
+				'Reply-To' => $reply ?: $fromEmail,
 				'Message-Id' => $messageId,
 			],
 			'TRACK_READ' => [
 				'MODULE_ID' => 'crm',
-				'FIELDS'    => ['urn' => $urn],
+				'FIELDS' => ['urn' => $urn],
 				'URL_PAGE' => '/pub/mail/read.php',
 			],
 			'TRACK_CLICK' => ($this->UseLinkTracker === 'Y') ? [
-					'MODULE_ID' => 'crm',
-					'FIELDS'    => ['urn' => $urn],
-					'URL_PAGE' => '/pub/mail/click.php',
-					'URL_PARAMS' => [],
-				] : null,
+				'MODULE_ID' => 'crm',
+				'FIELDS' => ['urn' => $urn],
+				'URL_PAGE' => '/pub/mail/click.php',
+				'URL_PARAMS' => [],
+			] : null,
 			'CONTEXT' => $context,
 		];
 
@@ -322,6 +365,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		{
 			$this->writeError(GetMessage('CRM_SEMA_EMAIL_CREATION_CANCELED'), $userId);
 			\CCrmActivity::delete($id);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -338,52 +382,53 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			$outgoingHeader = array_merge(
 				$outgoingParams['HEADER'],
-				array(
-					'To'      => $outgoingParams['TO'],
+				[
+					'To' => $outgoingParams['TO'],
 					'Subject' => $outgoingParams['SUBJECT'],
-				)
+				]
 			);
 
 			$outgoing = new \Bitrix\Mail\DummyMail(array_merge(
 				$outgoingParams,
-				array(
+				[
 					'HEADER' => $outgoingHeader,
-				)
+				]
 			));
 
-			\Bitrix\Mail\Helper::addImapMessage($userImap, (string) $outgoing, $err);
+			\Bitrix\Mail\Helper::addImapMessage($userImap, (string)$outgoing, $err);
 		}
 
 		// Try add event to entity
 		$CCrmEvent = new CCrmEvent();
 
-		$eventText  = '';
+		$eventText = '';
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_SUBJECT').': '.$subject."\n\r";
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_FROM').': '.$from."\n\r";
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_TO').': '.$to."\n\r\n\r";
 		$eventText .= $messageHtml;
 
-		$eventBindings = array();
-		foreach($bindings as $item)
+		$eventBindings = [];
+		foreach ($bindings as $item)
 		{
 			$bindingEntityID = $item['OWNER_ID'];
 			$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
 			$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
 
-			$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
+			$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = [
 				'ENTITY_TYPE' => $bindingEntityTypeName,
 				'ENTITY_ID' => $bindingEntityID
-			);
+			];
 		}
 
 		$CCrmEvent->Add(
-			array(
+			[
 				'ENTITY' => $eventBindings,
 				'EVENT_ID' => 'MESSAGE',
 				'EVENT_TEXT_1' => $eventText,
 				'FILES' => $arRawFiles
-			)
+			]
 		);
+
 		// <-- Sending Email
 
 		return CBPActivityExecutionStatus::Closed;
@@ -418,13 +463,13 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			$fromData = $this->parseFromString($from);
 			$fromEmail = $fromData['email'];
-			$fromEncoded  = $fromData['nameEncoded'];
+			$fromEncoded = $fromData['nameEncoded'];
 		}
 		else
 		{
 			$fromData = $this->parseFromString($from);
 			$fromEmail = $fromData['email'];
-			$fromEncoded  = $fromData['nameEncoded'];
+			$fromEncoded = $fromData['nameEncoded'];
 
 			if (!check_email($fromEmail, true))
 			{
@@ -450,20 +495,20 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		{
 			if ($crmEmail != '' && $crmEmail != $fromEmail)
 			{
-				$reply = $fromEmail . ', ' . $crmEmail;
+				$reply = $fromEmail.', '.$crmEmail;
 			}
 
 			$injectUrn = true;
 		}
 
-		return array(
+		return [
 			'from' => $from,
 			'fromEmail' => $fromEmail,
 			'userImap' => $userImap,
 			'reply' => $reply,
 			'injectUrn' => $injectUrn,
 			'fromEncoded' => $fromEncoded
-		);
+		];
 	}
 
 	private function getToEmail($entityTypeId, $entityId)
@@ -472,6 +517,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$comEntityTypeId = $entityTypeId;
 		$comEntityId = $entityId;
 		$emailType = $this->EmailType;
+		$emailSelectRule = $this->EmailSelectRule;
 
 		if ($entityTypeId == \CCrmOwnerType::Deal)
 		{
@@ -479,9 +525,14 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			$contactId = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
 			$companyId = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
 
-			if($contactId > 0)
+			if ($contactId > 0)
 			{
-				$to = $this->getEntityEmail(\CCrmOwnerType::Contact, $contactId, $emailType);
+				$to = $this->getEntityEmail(
+					\CCrmOwnerType::Contact,
+					$contactId,
+					$emailType,
+					$emailSelectRule
+				);
 				$comEntityTypeId = \CCrmOwnerType::Contact;
 				$comEntityId = $contactId;
 			}
@@ -495,7 +546,12 @@ class CBPCrmSendEmailActivity extends CBPActivity
 					{
 						if ($contId !== $contactId)
 						{
-							$to = $this->getEntityEmail(\CCrmOwnerType::Contact, $contId, $emailType);
+							$to = $this->getEntityEmail(
+								\CCrmOwnerType::Contact,
+								$contId,
+								$emailType,
+								$emailSelectRule
+							);
 							$comEntityTypeId = \CCrmOwnerType::Contact;
 							$comEntityId = $contId;
 							if ($to)
@@ -509,36 +565,51 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			if (empty($to) && $companyId > 0)
 			{
-				$to = $this->getEntityEmail(\CCrmOwnerType::Company, $companyId, $emailType);
+				$to = $this->getEntityEmail(
+					\CCrmOwnerType::Company,
+					$companyId,
+					$emailType,
+					$emailSelectRule
+				);
 				$comEntityTypeId = \CCrmOwnerType::Company;
 				$comEntityId = $companyId;
 			}
 		}
 		elseif ($entityTypeId == \CCrmOwnerType::Order)
 		{
-			$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList(array(
-				'select' => array('ENTITY_ID', 'ENTITY_TYPE_ID'),
-				'filter' => array(
+			$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList([
+				'select' => ['ENTITY_ID', 'ENTITY_TYPE_ID'],
+				'filter' => [
 					'=ORDER_ID' => $entityId,
 					'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
 					'IS_PRIMARY' => 'Y'
-				),
+				],
 				'order' => ['ENTITY_TYPE_ID' => 'ASC']
-			));
+			]);
 			while ($row = $dbRes->fetch())
 			{
-				$to = $this->getEntityEmail($row['ENTITY_TYPE_ID'], $row['ENTITY_ID'], $emailType);
+				$to = $this->getEntityEmail(
+					$row['ENTITY_TYPE_ID'],
+					$row['ENTITY_ID'],
+					$emailType,
+					$emailSelectRule
+				);
 				if ($to)
 				{
-					$comEntityTypeId = (int) $row['ENTITY_TYPE_ID'];
-					$comEntityId = (int) $row['ENTITY_ID'];
+					$comEntityTypeId = (int)$row['ENTITY_TYPE_ID'];
+					$comEntityId = (int)$row['ENTITY_ID'];
 					break;
 				}
 			}
 		}
 		elseif ($entityTypeId == \CCrmOwnerType::Lead)
 		{
-			$to = $this->getEntityEmail($entityTypeId, $entityId, $emailType);
+			$to = $this->getEntityEmail(
+				$entityTypeId,
+				$entityId,
+				$emailType,
+				$emailSelectRule
+			);
 
 			if (empty($to))
 			{
@@ -546,15 +617,25 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
 				$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
 
-				if($entityContactID > 0)
+				if ($entityContactID > 0)
 				{
-					$to = $this->getEntityEmail(\CCrmOwnerType::Contact, $entityContactID, $emailType);
+					$to = $this->getEntityEmail(
+						\CCrmOwnerType::Contact,
+						$entityContactID,
+						$emailType,
+						$emailSelectRule
+					);
 					$comEntityTypeId = \CCrmOwnerType::Contact;
 					$comEntityId = $entityContactID;
 				}
 				if (empty($to) && $entityCompanyID > 0)
 				{
-					$to = $this->getEntityEmail(\CCrmOwnerType::Company, $entityCompanyID, $emailType);
+					$to = $this->getEntityEmail(
+						\CCrmOwnerType::Company,
+						$entityCompanyID,
+						$emailType,
+						$emailSelectRule
+					);
 					$comEntityTypeId = \CCrmOwnerType::Company;
 					$comEntityId = $entityCompanyID;
 				}
@@ -562,31 +643,32 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		}
 		else
 		{
-			$to = $this->getEntityEmail($entityTypeId, $entityId, $emailType);
+			$to = $this->getEntityEmail($entityTypeId, $entityId, $emailType, $emailSelectRule);
 		}
 
 		return [$to, $comEntityTypeId, $comEntityId];
 	}
 
-	private function getEntityEmail($entityTypeId, $entityId, $emailType = null)
+	private function getEntityEmail($entityTypeId, $entityId, $emailType, $emailSelectRule)
 	{
 		$result = '';
-		$filter = array(
+		$filter = [
 			'ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeId),
 			'ELEMENT_ID' => $entityId,
 			'TYPE_ID' => \CCrmFieldMulti::EMAIL
-		);
+		];
 
 		if ($emailType)
 		{
 			$filter['VALUE_TYPE'] = $emailType;
 		}
 
-		$dbResFields = CCrmFieldMulti::GetList(['ID' => 'asc'], $filter);
+		$idDirection = $emailSelectRule === self::SELECT_RULE_LAST ? 'desc' : 'asc';
+		$listResult = CCrmFieldMulti::GetList(['ID' => $idDirection], $filter);
 
-		while($arField = $dbResFields->Fetch())
+		while ($arField = $listResult->Fetch())
 		{
-			if(empty($arField['VALUE']))
+			if (empty($arField['VALUE']))
 			{
 				continue;
 			}
@@ -605,12 +687,12 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		if (preg_match('/(.*)<(.+?)>\s*$/is', $from, $matches))
 		{
-			$fromName  = trim($matches[1], "\"\x20\t\n\r\0\x0b");
+			$fromName = trim($matches[1], "\"\x20\t\n\r\0\x0b");
 			$fromEmail = mb_strtolower(trim($matches[2]));
 
 			if ($fromName != '')
 			{
-				$fromNameEscaped = str_replace(array('\\', '"', '<', '>'), array('/', '\'', '(', ')'), $fromName);
+				$fromNameEscaped = str_replace(['\\', '"', '<', '>'], ['/', '\'', '(', ')'], $fromName);
 				$fromEncoded = sprintf(
 					'%s <%s>',
 					sprintf('=?%s?B?%s?=', SITE_CHARSET, base64_encode($fromNameEscaped)),
@@ -619,12 +701,16 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			}
 		}
 
-		return array('email' => $fromEmail, 'name' => $fromName, 'nameEncoded' => $fromEncoded);
+		return [
+			'email' => $fromEmail,
+			'name' => $fromName,
+			'nameEncoded' => $fromEncoded
+		];
 	}
 
 	private static function makeMailboxesSelectOptions(array $mailboxes)
 	{
-		$options = array();
+		$options = [];
 		foreach ($mailboxes as $mailbox)
 		{
 			$options[] = sprintf(
@@ -632,16 +718,17 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				$mailbox['name'], $mailbox['email']
 			);
 		}
+
 		return $options;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
-		$arErrors = array();
+		$arErrors = [];
 
 		if ($arTestProperties["MessageText"] === "")
 		{
-			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_SEMA_EMPTY_PROP"));
+			$arErrors[] = ["code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_SEMA_EMPTY_PROP")];
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
@@ -652,7 +739,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		if (!CModule::IncludeModule("crm"))
 			return '';
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -661,87 +748,97 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
 			'siteId' => $siteId
-		));
+		]);
 
-		$map = array(
-			'Subject' => array(
+		$map = [
+			'Subject' => [
 				'Name' => GetMessage('CRM_SEMA_EMAIL_SUBJECT'),
+				'Description' => GetMessage('CRM_SEMA_EMAIL_SUBJECT'),
 				'FieldName' => 'subject',
 				'Type' => 'string',
 				'Required' => true
-			),
-			'MessageText' => array(
+			],
+			'MessageText' => [
 				'Name' => GetMessage('CRM_SEMA_MESSAGE_TEXT'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
 				'Required' => true
-			),
-			'MessageTextType' => array(
+			],
+			'MessageTextType' => [
 				'Name' => GetMessage('CRM_SEMA_MESSAGE_TEXT_TYPE'),
 				'FieldName' => 'message_text_type',
 				'Type' => 'select',
-				'Options' => array(
+				'Options' => [
 					self::TEXT_TYPE_BBCODE => 'BBCODE',
 					self::TEXT_TYPE_HTML => 'HTML'
-				),
+				],
 				'Default' => self::TEXT_TYPE_BBCODE
-			),
-			'MessageTextEncoded' => array(
+			],
+			'MessageTextEncoded' => [
 				'Name' => 'MessageTextEncoded',
 				'FieldName' => 'message_text_encoded',
 				'Type' => 'int',
 				'Default' => 0
-			),
-			'AttachmentType' => array(
+			],
+			'AttachmentType' => [
 				'Name' => GetMessage('CRM_SEMA_ATTACHMENT_TYPE'),
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
-				'Options' => array(
+				'Options' => [
 					static::ATTACHMENT_TYPE_FILE => GetMessage('CRM_SEMA_ATTACHMENT_FILE'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('CRM_SEMA_ATTACHMENT_DISK')
-				)
-			),
-			'Attachment' => array(
+				]
+			],
+			'Attachment' => [
 				'Name' => GetMessage('CRM_SEMA_ATTACHMENT'),
 				'FieldName' => 'attachment',
 				'Type' => 'file',
 				'Multiple' => true
-			),
-			'EmailType' => array(
+			],
+			'EmailType' => [
 				'Name' => GetMessage('CRM_SEMA_EMAIL_TYPE'),
 				'FieldName' => 'email_type',
 				'Type' => 'select',
 				'Options' =>
 					['' => GetMessage('CRM_SEMA_EMAIL_TYPE_EMPTY_OPTION')]
 					+ \CCrmFieldMulti::GetEntityTypeList(\CCrmFieldMulti::EMAIL)
-			),
-			'UseLinkTracker' => array(
+			],
+			'EmailSelectRule' => [
+				'Name' => GetMessage('CRM_SEMA_EMAIL_SELECT_RULE'),
+				'FieldName' => 'email_select_rule',
+				'Type' => 'select',
+				'Options' => [
+					self::SELECT_RULE_FIRST => GetMessage('CRM_SEMA_EMAIL_SELECT_RULE_FIRST'),
+					self::SELECT_RULE_LAST => GetMessage('CRM_SEMA_EMAIL_SELECT_RULE_LAST'),
+				],
+			],
+			'UseLinkTracker' => [
 				'Name' => GetMessage('CRM_SEMA_USE_LINK_TRACKER'),
 				'FieldName' => 'use_link_tracker',
 				'Type' => 'bool',
 				'Default' => 'Y'
-			)
-		);
+			]
+		];
 
 		$mailboxes = Main\Mail\Sender::prepareUserMailboxes();
 
 		//deprecated "From"
-		$map['From'] = array(
+		$map['From'] = [
 			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
 			'FieldName' => 'from',
 			'Type' => 'string'
-		);
+		];
 
-		$map['MessageFrom'] = array(
+		$map['MessageFrom'] = [
 			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
 			'FieldName' => 'message_from',
 			'Type' => 'select',
 			'Options' => static::makeMailboxesSelectOptions($mailboxes)
-		);
+		];
 
-		$dialog->setRuntimeData(array(
+		$dialog->setRuntimeData([
 			'mailboxes' => $mailboxes
-		));
+		]);
 
 		$dialog->setMap($map);
 
@@ -750,20 +847,20 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
-		$errors = array();
+		$errors = [];
 
-		$properties = array(
+		$properties = [
 			'Subject' => (string)$arCurrentValues["subject"],
 			'MessageText' => (string)$arCurrentValues["message_text"],
 			'MessageTextType' => (string)$arCurrentValues["message_text_type"],
 			'AttachmentType' => (string)$arCurrentValues["attachment_type"],
 			'MessageFrom' => (string)$arCurrentValues["message_from"],
 			'EmailType' => (string)$arCurrentValues["email_type"],
+			'EmailSelectRule' => (string)$arCurrentValues["email_select_rule"],
 			'UseLinkTracker' => $arCurrentValues["use_link_tracker"] === 'Y' ? 'Y' : 'N',
-
 			'MessageTextEncoded' => 0,
-			'Attachment' => array()
-		);
+			'Attachment' => []
+		];
 
 		if ($properties['AttachmentType'] === static::ATTACHMENT_TYPE_DISK)
 		{
@@ -831,6 +928,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		{
 			$subject = implode(', ', \CBPHelper::MakeArrayFlat($subject));
 		}
+
 		return $subject;
 	}
 
@@ -846,12 +944,13 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		{
 			$message = implode(', ', \CBPHelper::MakeArrayFlat($message));
 		}
+
 		return $message;
 	}
 
 	private static function encodeMessageText($text)
 	{
-		return 'base64,' . base64_encode($text);
+		return 'base64,'.base64_encode($text);
 	}
 
 	public static function decodeMessageText($text)
@@ -859,8 +958,10 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		if (mb_strpos($text, 'base64,') === 0)
 		{
 			$text = mb_substr($text, 7);
+
 			return base64_decode($text);
 		}
+
 		//compatible encode type
 		return htmlspecialcharsback($text);
 	}

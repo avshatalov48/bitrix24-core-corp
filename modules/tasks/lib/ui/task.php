@@ -10,6 +10,7 @@
 namespace Bitrix\Tasks\UI;
 
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Util;
 
 final class Task
@@ -64,32 +65,71 @@ final class Task
 		return Util::replaceUrlParameters($url, array(), $urlParams);
 	}
 
-	public static function makeActionUrl($path, $taskId = 0, $actionId = 'edit', $userId = false)
+	/**
+	 * Returns path for url action.
+	 *
+	 * @return string
+	 */
+	public static function getActionPath(): string
 	{
-		if((string) $path == '')
+		if (Integration\Extranet::isExtranetSite())
+		{
+			$urlPrefix = '/extranet/contacts/personal';
+		}
+		else
+		{
+			$optionPath = (string)\COption::getOptionString('intranet', 'path_task_user_entry');
+			if ($optionPath !== '')
+			{
+				$optionPath = (string)\COption::getOptionString('tasks', 'paths_task_user_action');
+			}
+
+			if ($optionPath !== '')
+			{
+				return $optionPath;
+			}
+
+			// todo: if $siteId is set, use its dir, not SITE_DIR
+			$urlPrefix = (defined(SITE_DIR) ? SITE_DIR : '/').'company/personal';
+		}
+
+		return "{$urlPrefix}/user/#user_id#/tasks/task/#action#/#task_id#/";
+	}
+
+	/**
+	 * Returns url for task action.
+	 *
+	 * @param $path
+	 * @param int $taskId
+	 * @param string $actionId
+	 * @param int $userId
+	 * @return string
+	 */
+	public static function makeActionUrl($path, $taskId = 0, $actionId = 'edit', $userId = 0): string
+	{
+		if ((string)$path === '')
 		{
 			return '';
 		}
 
-		$actionId = $actionId == 'edit' ? 'edit' : 'view';
-		$userId = intval($userId);
-		if(!$userId)
+		$actionId = ($actionId === 'edit' ? 'edit' : 'view');
+		$userId = (int)$userId;
+		if (!$userId)
 		{
-			$userId = \Bitrix\Tasks\Util\User::getId();
+			$userId = Util\User::getId();
 		}
 
-		$map = array(
-			"action" => $actionId,
-			"ACTION" => $actionId,
-			"user_id" => $userId,
-			"USER_ID" => $userId,
-		);
-
-		if($taskId !== false) // special case, leave task placeholder un-replaced
+		$map = [
+			'action' => $actionId,
+			'ACTION' => $actionId,
+			'user_id' => $userId,
+			'USER_ID' => $userId,
+		];
+		// special case, leave task placeholder un-replaced
+		if ($taskId !== false)
 		{
-			$taskId = intval($taskId);
-			$map['task_id'] = $taskId;
-			$map['TASK_ID'] = $taskId;
+			$map['task_id'] = (int)$taskId;
+			$map['TASK_ID'] = (int)$taskId;
 		}
 
 		return \CComponentEngine::MakePathFromTemplate($path, $map);

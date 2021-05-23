@@ -1932,7 +1932,7 @@ class CCrmViewHelper
 			'selectorTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_SELECTOR_TTL'),
 			'checkErrorTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_CHECK_ERROR_TTL'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
-			'checkErrorHelpArticleCode' => '9480255'
+			'checkErrorHelpArticleCode' => '8233923'
 		);
 
 		return '<script type="text/javascript">'
@@ -2024,7 +2024,7 @@ class CCrmViewHelper
 			'selectorTitle' => GetMessage('CRM_LEAD_STATUS_MANAGER_SELECTOR_TTL'),
 			'checkErrorTitle' => GetMessage('CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
-			'checkErrorHelpArticleCode' => '9480255',
+			'checkErrorHelpArticleCode' => '8233923',
 			'conversionCancellationTitle' => GetMessage('CRM_CONFIRMATION_DLG_TTL'),
 			'conversionCancellationContent' => GetMessage('CRM_LEAD_STATUS_MANAGER_CONVERSION_CANCEL_CNT')
 		);

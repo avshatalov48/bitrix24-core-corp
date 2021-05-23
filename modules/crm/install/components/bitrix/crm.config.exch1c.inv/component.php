@@ -322,7 +322,7 @@ $dbExport = ExportOneCCRM::GetList();
 while($arExport = $dbExport->Fetch())
 {
 	$personType1C = "UR";
-	$arExpParams = unserialize($arExport["VARS"]);
+	$arExpParams = unserialize($arExport["VARS"], ['allowed_classes' => false]);
 	foreach($arExpParams as $k => $v)
 	{
 		if ($k === "IS_FIZ")

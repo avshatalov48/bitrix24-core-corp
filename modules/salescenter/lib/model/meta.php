@@ -76,7 +76,7 @@ class Meta extends EO_Meta
 		{
 			try
 			{
-				$meta = unserialize($meta);
+				$meta = unserialize($meta, ['allowed_classes' => false]);
 			}
 			finally
 			{

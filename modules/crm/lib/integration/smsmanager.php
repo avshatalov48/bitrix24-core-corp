@@ -279,7 +279,7 @@ class SmsManager
 	 */
 	public static function getEditorCommon()
 	{
-		return (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'sms_manager_editor', serialize(array('senderId' => null, 'from' => null))));
+		return (array)unserialize(\Bitrix\Main\Config\Option::get('crm', 'sms_manager_editor', serialize(array('senderId' => null, 'from' => null))), ['allowed_classes' => false]);
 	}
 
 	/**

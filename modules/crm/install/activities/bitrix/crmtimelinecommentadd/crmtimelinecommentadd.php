@@ -86,6 +86,7 @@ class CBPCrmTimelineCommentAdd
 		$dialog->setMap(array(
 			'CommentText' => array(
 				'Name' => GetMessage('BPCTLCA_COMMENT_TEXT'),
+				'Description' => GetMessage('BPCTLCA_COMMENT_TEXT'),
 				'FieldName' => 'comment_text',
 				'Type' => 'text',
 				'Required' => true,

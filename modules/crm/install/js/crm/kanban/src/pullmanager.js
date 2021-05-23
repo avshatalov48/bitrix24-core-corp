@@ -95,8 +95,9 @@ export default class PullManager
 					item.data[key] = paramsItem.data[key];
 				}
 			}
-			item.setActivityExistInnerHtml();
 
+			item.rawData = paramsItem.rawData;
+			item.setActivityExistInnerHtml();
 			item.useAnimation = true;
 			item.setChangedInPullRequest();
 			this.grid.insertItem(item);

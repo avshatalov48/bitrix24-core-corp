@@ -15,6 +15,8 @@ use Bitrix\Tasks\Util\Type\DateTime;
  */
 class CounterService
 {
+	private const LOCK_KEY = 'tasks.countlock';
+
 	private static $instance;
 	private static $jobOn 	= false;
 
@@ -23,12 +25,16 @@ class CounterService
 
 	private $registry 		= [];
 
+	private static $hitId;
+
 	/**
 	 * CounterService constructor.
 	 */
 	private function __construct()
 	{
-
+		self::$hitId = $this->generateHid();
+		$this->enableJob();
+		$this->handleLostEvents();
 	}
 
 	/**
@@ -50,19 +56,7 @@ class CounterService
 	 */
 	public static function addEvent(string $type, array $data): void
 	{
-		self::getInstance()->registerEvent(new CounterEvent($type, $data));
-
-		if (!self::$jobOn)
-		{
-			$application = Application::getInstance();
-			$application && $application->addBackgroundJob(
-				['\Bitrix\Tasks\Internals\Counter\CounterService', 'updateCounters'],
-				[],
-				Application::JOB_PRIORITY_LOW - 2
-			);
-
-			self::$jobOn = true;
-		}
+		self::getInstance()->registerEvent($type, $data);
 	}
 
 	/**
@@ -74,7 +68,17 @@ class CounterService
 	 */
 	public static function updateCounters(): void
 	{
-		self::getInstance()->handleEvents();
+		$service = self::getInstance();
+
+		if (empty($service->registry))
+		{
+			Application::getConnection()->unlock(self::LOCK_KEY);
+			return;
+		}
+
+		$service->collectUpdatedData();
+		$service->handleEvents();
+		$service->done();
 	}
 
 	/**
@@ -86,28 +90,159 @@ class CounterService
 	 */
 	public static function recountForUser(int $userId): void
 	{
-		$counter = Counter::getInstance($userId);
-		$counter->recount(CounterDictionary::COUNTER_EXPIRED);
+		(new CounterProcessor($userId))->recount(CounterDictionary::COUNTER_EXPIRED);
 		PushSender::send([$userId]);
 	}
 
 	/**
 	 * @param int $taskId
 	 */
-	public function collectData(int $taskId): void
+	public function collectData(int $taskId, array $resourceData = null): void
 	{
-		if ($taskId && !$this->originData[$taskId])
+		if (!$taskId || array_key_exists($taskId, $this->originData))
+		{
+			return;
+		}
+
+		if (!$resourceData)
 		{
 			$this->originData[$taskId] = (new TaskResource($taskId))->fill();
+			return;
+		}
+
+		$resource = TaskResource::invokeFromArray($resourceData);
+		if (!$resource)
+		{
+			return;
+		}
+
+		$this->originData[$taskId] = $resource;
+	}
+
+	/**
+	 *
+	 */
+	private function done(): void
+	{
+		$ids = [];
+		foreach ($this->registry as $event)
+		{
+			$id = $event->getId();
+			if ($id)
+			{
+				$ids[] = $id;
+			}
+		}
+
+		if (empty($ids))
+		{
+			return;
+		}
+
+		Counter\Event\EventTable::markProcessed([
+			'@ID' => $ids
+		]);
+
+		Application::getConnection()->unlock(self::LOCK_KEY);
+	}
+
+	private function handleLostEvents(): void
+	{
+		if (!Application::getConnection()->lock(self::LOCK_KEY))
+		{
+			return;
+		}
+
+		$events = Counter\Event\EventTable::getLostEvents();
+
+		if (empty($events))
+		{
+			return;
+		}
+
+		foreach ($events as $row)
+		{
+			$event = new CounterEvent(
+				$row['HID'],
+				$row['TYPE']
+			);
+			$event
+				->setId($row['ID'])
+				->setData(Main\Web\Json::decode($row['DATA']));
+			$this->registry[] = $event;
+
+			$taskData = !empty($taskData) ? Main\Web\Json::decode($row['TASK_DATA']) : null;
+			if ($taskData && array_key_exists('ID', $taskData))
+			{
+				$this->collectData((int)$taskData['ID'], $taskData);
+			}
 		}
 	}
 
 	/**
-	 * @param CounterEvent $event
+	 *
 	 */
-	private function registerEvent(CounterEvent $event): void
+	private function enableJob(): void
 	{
+		if (self::$jobOn)
+		{
+			return;
+		}
+
+		$application = Application::getInstance();
+		$application && $application->addBackgroundJob(
+			['\Bitrix\Tasks\Internals\Counter\CounterService', 'updateCounters'],
+			[],
+			Application::JOB_PRIORITY_LOW - 2
+		);
+
+		self::$jobOn = true;
+	}
+
+	/**
+	 * @param string $type
+	 * @param array $data
+	 */
+	private function registerEvent(string $type, array $data): void
+	{
+		$event = new CounterEvent(self::$hitId, $type);
+		$event->setData($data);
+
+		$eventId = $this->saveToDb($event);
+		$event->setId($eventId);
+
 		$this->registry[] = $event;
+	}
+
+	/**
+	 * @param string $type
+	 * @param array $data
+	 * @return int
+	 */
+	private function saveToDb(CounterEvent $event): int
+	{
+		try
+		{
+			$taskId = $event->getTaskId();
+			$taskData = null;
+			if ($taskId && array_key_exists($taskId, $this->originData))
+			{
+				$taskData = $this->originData[$taskId];
+			}
+
+			$res = Counter\Event\EventTable::add([
+				'HID' => self::$hitId,
+				'TYPE' => $event->getType(),
+				'DATA' => Main\Web\Json::encode($event->getData()),
+				'TASK_DATA' => $taskData ? Main\Web\Json::encode($taskData->toArray()) : null,
+			]);
+		}
+		catch (\Exception $e)
+		{
+			return 0;
+		}
+
+		return (int)$res->getId();
 	}
 
 	/**
@@ -115,8 +250,6 @@ class CounterService
 	 */
 	private function handleEvents(): void
 	{
-		$this->collectUpdatedData();
-
 		$deletedTasks = $this->getEventsTasks(CounterDictionary::EVENT_AFTER_TASK_DELETE);
 
 		$toUpdate = [
@@ -124,7 +257,7 @@ class CounterService
 			CounterDictionary::COUNTER_EXPIRED => []
 		];
 		$efficiencyUpdated = [];
-		$readAll = 0;
+		$readAll = null;
 		$toDelete = [];
 
 		foreach ($this->registry as $event)
@@ -133,6 +266,13 @@ class CounterService
 			$userId = $event->getUserId();
 			$taskId = $event->getTaskId();
 			$eventType = $event->getType();
+
+
+			if ($eventType === CounterDictionary::EVENT_AFTER_COMMENTS_READ_ALL)
+			{
+				$readAll = $event;
+				continue;
+			}
 
 			if ($eventType === CounterDictionary::EVENT_AFTER_TASK_DELETE)
 			{
@@ -178,11 +318,6 @@ class CounterService
 			]))
 			{
 				$toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS][] = $taskId;
-			}
-
-			if ($eventType === CounterDictionary::EVENT_AFTER_COMMENTS_READ_ALL)
-			{
-				$readAll = $event->getUserId();
 			}
 
 			/**
@@ -231,35 +366,20 @@ class CounterService
 			}
 		}
 
-		$deletedMembers = $this->handleDeleted($toDelete);
-
-		$taskIds = array_unique(array_merge($toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS], $toUpdate[CounterDictionary::COUNTER_EXPIRED]));
-		$taskIds = array_diff($taskIds, array_keys($toDelete));
-		$members = $this->getTasksMembers($taskIds);
-
-		foreach ($members as $userId => $taskIds)
-		{
-			$counter = Counter::getInstance($userId);
-			if (
-				$userId !== $readAll
-				&& array_intersect($taskIds, $toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS])
-			)
-			{
-				$counter->recount(CounterDictionary::COUNTER_NEW_COMMENTS, $taskIds);
-			}
-			if (array_intersect($taskIds, $toUpdate[CounterDictionary::COUNTER_EXPIRED]))
-			{
-				$counter->recount(CounterDictionary::COUNTER_EXPIRED, $taskIds);
-			}
-		}
-
-		$members = array_keys($members);
+		$readAllUser = 0;
 		if ($readAll)
 		{
-			$counter = Counter::getInstance($readAll);
-			$counter->readAll();
+			$readAllUser = $readAll->getUserId();
+		}
 
-			$members[] = $readAll;
+		$deletedMembers = $this->handleDeleted($toDelete);
+		$members = $this->handleUpdated($toUpdate, $toDelete, $readAllUser);
+
+		if ($readAll)
+		{
+			(new CounterProcessor($readAllUser))->readAll($readAll->getData()['GROUP_ID'], $readAll->getData()['ROLE']);
+
+			$members[] = $readAllUser;
 		}
 
 		PushSender::send(array_unique(array_merge($members, $deletedMembers)));
@@ -268,6 +388,41 @@ class CounterService
 		{
 			$this->updateEfficiency($efficiencyUpdated);
 		}
+	}
+
+	/**
+	 * @param array $toUpdate
+	 * @param array $toDelete
+	 * @param int $readAll
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function handleUpdated(array $toUpdate, array $toDelete, $readAll): array
+	{
+		$taskIds = array_unique(array_merge($toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS], $toUpdate[CounterDictionary::COUNTER_EXPIRED]));
+		$taskIds = array_diff($taskIds, array_keys($toDelete));
+		$members = $this->getTasksMembers($taskIds);
+
+		foreach ($members as $userId => $taskIds)
+		{
+			$counterProcessor = new CounterProcessor($userId);
+			if (
+				$userId !== $readAll
+				&& array_intersect($taskIds, $toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS])
+			)
+			{
+				$counterProcessor->recount(CounterDictionary::COUNTER_NEW_COMMENTS, $taskIds);
+			}
+			if (array_intersect($taskIds, $toUpdate[CounterDictionary::COUNTER_EXPIRED]))
+			{
+				$counterProcessor->recount(CounterDictionary::COUNTER_EXPIRED, $taskIds);
+			}
+		}
+
+		return array_keys($members);
 	}
 
 	/**
@@ -291,14 +446,13 @@ class CounterService
 			/* @var TaskResource $task */
 			foreach ($task->getMemberIds() as $memberId)
 			{
-				$list[$memberId][$taskId] = $taskId;
+				$list[$memberId][$taskId] = $task->getGroupId();
 			}
 		}
 
 		foreach ($list as $memberId => $tasks)
 		{
-			$counter = Counter::getInstance((int) $memberId);
-			$counter->deleteTasks($tasks);
+			(new CounterProcessor((int) $memberId))->deleteTasks($tasks);
 		}
 
 		return array_keys($list);
@@ -376,28 +530,36 @@ class CounterService
 		$restoredTasks 	= $this->getEventsTasks(CounterDictionary::EVENT_AFTER_TASK_RESTORE);
 		$expiredTasks 	= $this->getEventsTasks(CounterDictionary::EVENT_TASK_EXPIRED);
 
+		$processedUsers = [];
+
 		foreach ($ids as $taskId)
 		{
 			if (in_array($taskId, $deletedTasks, true))
 			{
-				$this->updateEfficiencyForDeletedAndAdded($taskId, true);
+				$processedUsers[] = $this->updateEfficiencyForDeletedAndAdded($taskId, true);
 			}
 			elseif (in_array($taskId, $addedTasks, true))
 			{
-				$this->updateEfficiencyForDeletedAndAdded($taskId);
+				$processedUsers[] = $this->updateEfficiencyForDeletedAndAdded($taskId);
 			}
 			elseif (in_array($taskId, $restoredTasks, true))
 			{
-				$this->updateEfficiencyForRestored($taskId);
+				$processedUsers[] = $this->updateEfficiencyForRestored($taskId);
 			}
 			elseif (in_array($taskId, $expiredTasks, true))
 			{
-				$this->updateEfficiencyForExpired($taskId);
+				$processedUsers[] = $this->updateEfficiencyForExpired($taskId);
 			}
 			else
 			{
-				$this->updateEfficiencyForUpdated($taskId);
+				$processedUsers[] = $this->updateEfficiencyForUpdated($taskId);
 			}
+		}
+
+		$processedUsers = array_unique(array_merge(...$processedUsers));
+		foreach ($processedUsers as $userId)
+		{
+			Effective::recountEfficiencyUserCounter($userId);
 		}
 	}
 
@@ -448,19 +610,19 @@ class CounterService
 	/**
 	 * @param int $taskId
 	 * @param bool $isDeleted
-	 * @return bool
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private function updateEfficiencyForDeletedAndAdded(int $taskId, bool $isDeleted = false): bool
+	private function updateEfficiencyForDeletedAndAdded(int $taskId, bool $isDeleted = false): array
 	{
 		/** @var TaskResource $task */
 		$task = ($this->updatedData[$taskId] ?? $this->originData[$taskId]);
 		if (!$task)
 		{
-			return false;
+			return [];
 		}
 
 		$taskMembers = $task->getMembersAsArray();
@@ -489,23 +651,19 @@ class CounterService
 		{
 			Effective::repair($taskId);
 		}
-		foreach ($processedMembers as $userId)
-		{
-			Effective::recountEfficiencyUserCounter($userId);
-		}
 
-		return true;
+		return $processedMembers;
 	}
 
 	/**
 	 * @param int $taskId
-	 * @return bool
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private function updateEfficiencyForRestored(int $taskId): bool
+	private function updateEfficiencyForRestored(int $taskId): array
 	{
 		/** @var TaskResource $task */
 		$task = $this->updatedData[$taskId];
@@ -530,23 +688,19 @@ class CounterService
 			Effective::modify($userId, $type, $taskData, $task->getGroupId(), $task->isExpired(), false);
 			$processedMembers[$userId] = $userId;
 		}
-		foreach ($processedMembers as $userId)
-		{
-			Effective::recountEfficiencyUserCounter($userId);
-		}
 
-		return true;
+		return $processedMembers;
 	}
 
 	/**
 	 * @param int $taskId
-	 * @return bool
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private function updateEfficiencyForExpired(int $taskId): bool
+	private function updateEfficiencyForExpired(int $taskId): array
 	{
 		/** @var TaskResource $task */
 		$task = $this->updatedData[$taskId];
@@ -574,17 +728,13 @@ class CounterService
 				$processedMembers[$userId] = $userId;
 			}
 		}
-		foreach ($processedMembers as $userId)
-		{
-			Effective::recountEfficiencyUserCounter($userId);
-		}
 
-		return true;
+		return $processedMembers;
 	}
 
 	/**
 	 * @param int $taskId
-	 * @return bool
+	 * @return array
 	 * @throws Main\ArgumentException
 	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\ObjectException
@@ -592,12 +742,25 @@ class CounterService
 	 * @throws Main\SystemException
 	 * @throws \Exception
 	 */
-	private function updateEfficiencyForUpdated(int $taskId): bool
+	private function updateEfficiencyForUpdated(int $taskId): array
 	{
+		if (
+			!array_key_exists($taskId, $this->originData)
+			|| !array_key_exists($taskId, $this->updatedData)
+		)
+		{
+			return [];
+		}
+
 		/** @var TaskResource $oldTask */
 		$oldTask = $this->originData[$taskId];
 		/** @var TaskResource $newTask */
 		$newTask = $this->updatedData[$taskId];
+
+		if (!$oldTask || !$newTask)
+		{
+			return [];
+		}
 
 		$oldStatus = $oldTask->getStatus();
 		$newStatus = $newTask->getStatus();
@@ -653,23 +816,28 @@ class CounterService
 		$statesCompleted = [\CTasks::STATE_DEFERRED, \CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
 		$statesInProgress = [\CTasks::STATE_NEW, \CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
 
+		$processedMembers = [];
+
 		// TASK DEFERRED OR COMPLETED
 		if ($statusChanged && in_array($newStatus, $statesCompleted, true))
 		{
 			Effective::repair($taskId);
 			$this->modifyEfficiencyForResponsible($oldResponsibleId, $oldTaskData, $oldGroupId, false);
+			$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 
 			foreach ($oldAccomplices as $userId)
 			{
 				if ($userId !== $oldResponsibleId)
 				{
 					$this->modifyEfficiencyForAccomplice($userId, $oldTaskData, $oldGroupId, false);
+					$processedMembers[$userId] = $userId;
 				}
 			}
 
 			if ($responsibleChanged)
 			{
 				$this->modifyEfficiencyForResponsible($newResponsibleId, $newTaskData, $groupId, false);
+				$processedMembers[$newResponsibleId] = $newResponsibleId;
 			}
 			if ($accomplicesChanged)
 			{
@@ -678,11 +846,12 @@ class CounterService
 					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						$this->modifyEfficiencyForAccomplice($userId, $newTaskData, $groupId, false);
+						$processedMembers[$userId] = $userId;
 					}
 				}
 			}
 
-			return true;
+			return $processedMembers;
 		}
 
 		// TASK RESTARTED
@@ -695,6 +864,7 @@ class CounterService
 			if (!$responsibleChanged)
 			{
 				$this->modifyEfficiencyForResponsible($oldResponsibleId, $oldTaskData, $groupId, $isViolation);
+				$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 				$responsibleModified = true;
 			}
 			if (!$accomplicesChanged)
@@ -704,6 +874,7 @@ class CounterService
 					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						$this->modifyEfficiencyForAccomplice($userId, $oldTaskData, $groupId, $isViolation);
+						$processedMembers[$userId] = $userId;
 					}
 				}
 				$accomplicesModified = true;
@@ -714,7 +885,7 @@ class CounterService
 
 		if (!$canProceed && in_array($oldStatus, $statesCompleted, true))
 		{
-			return true;
+			return $processedMembers;
 		}
 
 		// RESPONSIBLE CHANGED
@@ -736,6 +907,7 @@ class CounterService
 			}
 
 			$this->modifyEfficiencyForResponsible($oldResponsibleId, $oldTaskData, $oldGroupId, false);
+			$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 
 			if ($activeViolations = Effective::checkActiveViolations($taskId, $newResponsibleId))
 			{
@@ -744,10 +916,12 @@ class CounterService
 					['USER_TYPE' => MemberTable::MEMBER_TYPE_RESPONSIBLE, 'GROUP_ID' => $groupId]
 				);
 				$this->modifyEfficiencyForResponsible($newResponsibleId, $newTaskData, $groupId, false);
+				$processedMembers[$newResponsibleId] = $newResponsibleId;
 			}
 			else
 			{
 				$this->modifyEfficiencyForResponsible($newResponsibleId, $newTaskData, $groupId, $isViolation);
+				$processedMembers[$newResponsibleId] = $newResponsibleId;
 			}
 
 			$responsibleModified = true;
@@ -762,6 +936,7 @@ class CounterService
 				{
 					Effective::repair($taskId, $userId, MemberTable::MEMBER_TYPE_ACCOMPLICE);
 					$this->modifyEfficiencyForAccomplice($userId, $oldTaskData, $oldGroupId, false);
+					$processedMembers[$userId] = $userId;
 				}
 			}
 			foreach ($accomplicesIn as $userId)
@@ -769,6 +944,7 @@ class CounterService
 				if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 				{
 					$this->modifyEfficiencyForAccomplice($userId, $newTaskData, $groupId, $isViolation);
+					$processedMembers[$userId] = $userId;
 				}
 			}
 		}
@@ -781,6 +957,7 @@ class CounterService
 			if (!$responsibleModified)
 			{
 				$this->modifyEfficiencyForResponsible($oldResponsibleId, $newTaskData, $groupId, false);
+				$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 				$responsibleModified = true;
 			}
 			if (!$accomplicesModified)
@@ -791,6 +968,7 @@ class CounterService
 					if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 					{
 						$this->modifyEfficiencyForAccomplice($userId, $newTaskData, $groupId, false);
+						$processedMembers[$userId] = $userId;
 					}
 				}
 				$accomplicesModified = true;
@@ -810,6 +988,7 @@ class CounterService
 				if (!$responsibleModified)
 				{
 					$this->modifyEfficiencyForResponsible($oldResponsibleId, $newTaskData, $newGroupId, false);
+					$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 				}
 				if (!$accomplicesModified)
 				{
@@ -819,6 +998,7 @@ class CounterService
 						if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 						{
 							$this->modifyEfficiencyForAccomplice($userId, $newTaskData, $newGroupId, false);
+							$processedMembers[$userId] = $userId;
 						}
 					}
 				}
@@ -828,6 +1008,7 @@ class CounterService
 				if (!$responsibleModified)
 				{
 					$this->modifyEfficiencyForResponsible($oldResponsibleId, $newTaskData, $newGroupId, $isViolation);
+					$processedMembers[$oldResponsibleId] = $oldResponsibleId;
 				}
 				if (!$accomplicesModified)
 				{
@@ -837,13 +1018,14 @@ class CounterService
 						if ($userId !== $oldResponsibleId && $userId !== $newResponsibleId)
 						{
 							$this->modifyEfficiencyForAccomplice($userId, $newTaskData, $newGroupId, $isViolation);
+							$processedMembers[$userId] = $userId;
 						}
 					}
 				}
 			}
 		}
 
-		return true;
+		return $processedMembers;
 	}
 
 	/**
@@ -851,7 +1033,6 @@ class CounterService
 	 * @param array $taskData
 	 * @param int $groupId
 	 * @param bool|null $isViolation
-	 * @param bool $recountEfficiency
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
@@ -861,12 +1042,11 @@ class CounterService
 		int $userId,
 		array $taskData,
 		int $groupId,
-		bool $isViolation = null,
-		bool $recountEfficiency = true
+		bool $isViolation = null
 	): void
 	{
 		$userType = MemberTable::MEMBER_TYPE_RESPONSIBLE;
-		Effective::modify($userId, $userType, $taskData, $groupId, $isViolation, $recountEfficiency);
+		Effective::modify($userId, $userType, $taskData, $groupId, $isViolation, false);
 	}
 
 	/**
@@ -874,7 +1054,6 @@ class CounterService
 	 * @param array $taskData
 	 * @param int $groupId
 	 * @param bool|null $isViolation
-	 * @param bool $recountEfficiency
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectException
 	 * @throws Main\ObjectPropertyException
@@ -884,12 +1063,11 @@ class CounterService
 		int $userId,
 		array $taskData,
 		int $groupId,
-		bool $isViolation = null,
-		bool $recountEfficiency = true
+		bool $isViolation = null
 	): void
 	{
 		$userType = MemberTable::MEMBER_TYPE_ACCOMPLICE;
-		Effective::modify($userId, $userType, $taskData, $groupId, $isViolation, $recountEfficiency);
+		Effective::modify($userId, $userType, $taskData, $groupId, $isViolation, false);
 	}
 
 	/**
@@ -918,5 +1096,13 @@ class CounterService
 			}
 			$this->updatedData[$taskId] = (new TaskResource($taskId))->fill();
 		}
+	}
+
+	/**
+	 * @return string
+	 */
+	private function generateHid(): string
+	{
+		return sha1(microtime(true) . mt_rand(10000, 99999));
 	}
 }

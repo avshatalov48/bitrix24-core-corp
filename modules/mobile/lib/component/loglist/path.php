@@ -48,8 +48,10 @@ class Path
 			$componentParams["PATH_TO_USER_MICROBLOG_POST"] = $componentParams['PATH_TO_USER_BLOG_POST'];
 		}
 
-//		$componentParams['PATH_TO_LOG_ENTRY_EMPTY'] .= (mb_strpos($componentParams['PATH_TO_LOG_ENTRY_EMPTY'], '?') !== false ? '&' : '?').'version='.(defined('MOBILE_MODULE_VERSION') ? MOBILE_MODULE_VERSION : 'default');
-
+/*
+		$mobileContext = new \Bitrix\Mobile\Context();
+		$componentParams['PATH_TO_LOG_ENTRY_EMPTY'] .= (mb_strpos($componentParams['PATH_TO_LOG_ENTRY_EMPTY'], '?') !== false ? '&' : '?') . 'version=' . $mobileContext->version;
+*/
 		return $result;
 	}
 

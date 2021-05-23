@@ -1741,10 +1741,13 @@ class CIntranetUtils
 
 		if (is_null($host))
 		{
+			$ttl = (CACHED_b_lang !== false ? CACHED_b_lang : 0);
+
 			$site = Bitrix\Main\SiteTable::getList(array(
-				'filter' => defined('SITE_ID') ? array('LID' => SITE_ID) : array(),
+				'filter' => defined('SITE_ID') ? array('=LID' => SITE_ID) : array(),
 				'order'  => array('ACTIVE' => 'DESC', 'DEF' => 'DESC', 'SORT' => 'ASC'),
-				'select' => array('SERVER_NAME')
+				'select' => array('SERVER_NAME'),
+				'cache' => [ 'ttl' => $ttl ],
 			))->fetch();
 
 			$host = isModuleInstalled('bitrix24') && defined('BX24_HOST_NAME') ? BX24_HOST_NAME

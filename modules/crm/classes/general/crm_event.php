@@ -657,7 +657,7 @@ class CCrmEvent
 			$dbItemResult = $this->cdb->Query("SELECT ID, FILES FROM b_crm_event WHERE ID = {$eventID}", false, $err_mess.__LINE__);
 			if($itemFields = $dbItemResult->Fetch())
 			{
-				$arFiles = isset($itemFields['FILES']) ? unserialize($itemFields['FILES']) : null;
+				$arFiles = isset($itemFields['FILES']) ? unserialize($itemFields['FILES'], ['allowed_classes' => false]) : null;
 				if(is_array($arFiles))
 				{
 					foreach($arFiles as $iFileId)
@@ -723,7 +723,7 @@ class CCrmEvent
 				$obRes = $this->cdb->Query("SELECT ID, FILES FROM b_crm_event WHERE ID = '$row[EVENT_ID]'", false, $err_mess.__LINE__);
 				if (($aRow = $obRes->Fetch()) !== false)
 				{
-					if (($arFiles = unserialize($aRow['FILES'])) !== false)
+					if (($arFiles = unserialize($aRow['FILES'], ['allowed_classes' => false])) !== false)
 					{
 						foreach ($arFiles as $iFileId)
 							CFile::Delete((int) $iFileId);

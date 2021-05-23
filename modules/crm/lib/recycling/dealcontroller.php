@@ -340,6 +340,8 @@ class DealController extends BaseController
 		}
 		//endregion
 
+		$fields = $this->prepareFields($fields);
+
 		$entity = new \CCrmDeal(false);
 		$newEntityID = $entity->Add(
 			$fields,
@@ -464,5 +466,31 @@ class DealController extends BaseController
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
+	}
+
+	/**
+	 * Set correct values of standard fields
+	 * @param array $fields
+	 * @return array
+	 */
+	protected function prepareFields(array $fields): array
+	{
+		$categoryId = isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
+		if ($categoryId > 0 && !Crm\Category\DealCategory::isEnabled($categoryId))
+		{
+			$categoryId = 0;
+		}
+		$fields['CATEGORY_ID'] = $categoryId;
+
+		if (
+			isset($fields['STAGE_ID'])
+			&& !\CCrmDeal::IsStageExists($fields['STAGE_ID'], $categoryId)
+		)
+		{
+			// if old stage does not exist, STAGE_ID should be empty to be defined automatically
+			unset($fields['STAGE_ID']);
+		}
+
+		return $fields;
 	}
 }

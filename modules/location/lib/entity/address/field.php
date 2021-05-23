@@ -8,11 +8,13 @@ use Bitrix\Location\Entity\Generic\IField;
 /**
  * Class Field
  * @package Bitrix\Location\Entity\Address
+ * @internal
  */
 final class Field implements IField
 {
-	/** @var int  */
-	private $type = FieldType::UNKNOWN;
+	/** @var int See \Bitrix\Location\Entity\Address\FieldType */
+	private $type;
+
 	/** @var string  */
 	private $value = '';
 
@@ -40,7 +42,7 @@ final class Field implements IField
 	}
 
 	/**
-	 * @return int.
+	 * @return int Field type.
 	 * @see Type
 	 */
 	public function getType(): int

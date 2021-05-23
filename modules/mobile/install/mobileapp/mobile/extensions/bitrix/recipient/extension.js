@@ -13,12 +13,30 @@
 		DEPARTMENTS: "departments"
 	};
 
+	const RecipientColorSet = {
+		user: "#d5f1fc",
+		userExtranet: "#ffa900",
+		userAll: "#dbf188",
+		group: "#ade7e4",
+		groupExtranet: "#ffa900",
+		department: "#e2e3e5"
+	};
+
+	const RecipientTitleColorSet = {
+		userExtranet: "#ca8600",
+		groupExtranet: "#ca8600",
+	};
+
+	const RecipientSubtitleColorSet = {
+		userExtranet: "#ca8600",
+		groupExtranet: "#ca8600",
+	};
+
 	/**
 	 *@class RecipientList
 	 */
 	class RecipientList
 	{
-
 		/**
 		 * @param {array<RecipientDataSet>} data
 		 * @param options
@@ -61,13 +79,20 @@
 		createDepartmentsObject(options)
 		{
 			let departmentsList = new DepartmentsList(this.ui);
-			let prepareItems = items => items.map(item =>
-			{
-				item = DepartmentsList.prepareItemForDrawing(item);
-				item.id = `${DepartmentsList.id()}/${item.id}`;
-				item.color = "#e2e3e5";
-				return item;
-			});
+			let prepareItems = (items) => {
+				let result = [];
+				if (Array.isArray(items))
+				{
+					result = items.map(item => {
+						item = DepartmentsList.prepareItemForDrawing(item);
+						item.id = `${DepartmentsList.id()}/${item.id}`;
+						item.color = RecipientUtils.getColor('department');
+						return item;
+					});
+				}
+
+				return result;
+			};
 			departmentsList.setHandlers(
 				{
 					prepareItems(items)
@@ -129,14 +154,30 @@
 			return new GroupList(this.ui)
 				.setHandlers(
 					{
-						prepareItems:function(items)
-						{
-							return items.map(item=>{
+						prepareItems:(items) => {
+							let result = [];
+							if (!Array.isArray(items))
+							{
+								return result;
+							}
+							result = items.map(item=>{
 								item = GroupList.prepareItemForDrawing(item);
 								item.id = `${GroupList.id()}/${item.id}`;
-								item.color = "#ade7e4";
+								item.color = (item.params.extranet ? RecipientUtils.getColor('groupExtranet') : RecipientUtils.getColor('group'));
+								if (item.params.extranet)
+								{
+									item.styles = {
+										title: {
+											font: {
+												color: RecipientUtils.getTitleColor('groupExtranet'),
+											}
+										},
+									};
+								}
+
 								return item;
-							})
+							});
+							return result;
 						},
 						onListFill: function (data)
 						{
@@ -162,6 +203,7 @@
 			let userList = new UserList(this.ui, {
 				filterUserList: (items, loadMore) =>
 				{
+					userList.recent.read();
 					if(userList.searcher.currentQueryString === "" && options.useRecentSelected)
 					{
 						return userList.recent.get();
@@ -196,12 +238,26 @@
 							{
 								if (item.params.id === "A" && options.showAll === true)
 								{
-									item.color = "#dbf188";
+									item.color = RecipientUtils.getColor('userAll');
 									hasAllRecipients = true;
+								}
+								else if (
+									typeof item.params.userType !== 'undefined'
+									&& item.params.userType === 'extranet'
+								)
+								{
+									item.styles = {
+										title: {
+											font: {
+												color: RecipientUtils.getTitleColor('userExtranet'),
+											}
+										},
+									};
+									item.color = RecipientUtils.getColor('userExtranet');
 								}
 								else
 								{
-									item.color = "#d5f1fc";
+									item.color = RecipientUtils.getColor('user');
 								}
 
 								item.id = `users/${item.params.id}`;
@@ -251,7 +307,10 @@
 				}
 			});
 
-			userList.setOptions({disablePagination:true});
+			userList.setOptions({
+				disablePagination: true,
+				filter: (options.filter ? options.filter : {})
+			});
 			userList.recent = {
 				limit:10,
 				read:function(){
@@ -277,7 +336,6 @@
 							lastSelected.unshift(user);
 						}
 					});
-
 
 					while(lastSelected.length > this.limit)
 					{
@@ -408,7 +466,7 @@
 								"subtitle": item.subtitle,
 								"id": id,
 								"params": item.params,
-								"imageUrl": item.imageUrl
+								"imageUrl": item.imageUrl,
 							});
 						}
 
@@ -416,15 +474,27 @@
 					}
 				}
 
-
 				return result;
 			}, initResult);
 
 			BX.onCustomEvent("onRecipientSelected", [rawResult]);
 			this.internalResolve.call(null, result)
 		}
-
 	}
+
+	const RecipientUtils = {
+		getColor(type) {
+			return (RecipientColorSet[type] ? RecipientColorSet[type] : '');
+		},
+		getTitleColor(type) {
+			return (RecipientTitleColorSet[type] ? RecipientTitleColorSet[type] : '');
+		},
+		getSubtitleColor(type) {
+			return (RecipientSubtitleColorSet[type] ? RecipientSubtitleColorSet[type] : '');
+		}
+	};
+
+	this.RecipientUtils = RecipientUtils;
 
 	jnexport(RecipientList);
 })();

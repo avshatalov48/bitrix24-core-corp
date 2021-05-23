@@ -123,11 +123,28 @@ $rating = CRatings::GetRatingVoteResult('TASK', $taskData['ID']);
 $arResult['RATING'] = $templateData['RATING'] = $rating;
 
 // Group
+if (array_key_exists('GROUP', $arResult['DATA']) && is_array($arResult['DATA']['GROUP']))
+{
+	$groups = $arResult['DATA']['GROUP'];
+	foreach ($groups as $id => $data)
+	{
+		$arFileTmp = CFile::ResizeImageGet(
+			$data['IMAGE_ID'],
+			[
+				'width'  => $arParams['AVATAR_SIZE'],
+				'height' => $arParams['AVATAR_SIZE'],
+			],
+			BX_RESIZE_IMAGE_EXACT
+		);
+		$groups[$id]['AVATAR'] = $arFileTmp['src'];
+	}
+	$arResult['DATA']['GROUP'] = $groups;
+}
 $templateData['GROUP_URL_TEMPLATE'] = CComponentEngine::makePathFromTemplate(
 	$arParams['PATH_TO_GROUP'],
 	['group_id' => '{{VALUE}}']
 );
-$templateData['GROUP'] = [];
+$templateData['GROUP'] = null;
 if (
 	$taskData['GROUP_ID']
 	&& isset($arResult['DATA']['GROUP'][$taskData['GROUP_ID']])
@@ -138,6 +155,7 @@ if (
 	$templateData['GROUP'] = [
 		'ID' => $group['ID'],
 		'NAME' => $group['NAME'],
+		'AVATAR' => $group['AVATAR'],
 		'URL' => CComponentEngine::makePathFromTemplate(
 			$arParams['PATH_TO_GROUP'],
 			['group_id' => $taskData['GROUP_ID']]
@@ -357,24 +375,6 @@ foreach ($taskData['ACCOMPLICES'] as $id)
 foreach ($taskData['AUDITORS'] as $id)
 {
 	$taskData['SE_AUDITOR'][$id] = $users[$id];
-}
-
-if (array_key_exists('GROUP', $arResult['DATA']) && is_array($arResult['DATA']['GROUP']))
-{
-	$groups = $arResult['DATA']['GROUP'];
-	foreach ($groups as $id => $data)
-	{
-		$arFileTmp = CFile::ResizeImageGet(
-			$data['IMAGE_ID'],
-			[
-				'width'  => $arParams['AVATAR_SIZE'],
-				'height' => $arParams['AVATAR_SIZE'],
-			],
-			BX_RESIZE_IMAGE_EXACT
-		);
-		$groups[$id]['AVATAR'] = $arFileTmp['src'];
-	}
-	$arResult['DATA']['GROUP'] = $groups;
 }
 
 $checklistItems = (is_array($taskData['SE_CHECKLIST']) ? $taskData['SE_CHECKLIST'] : []);

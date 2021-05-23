@@ -1225,6 +1225,5 @@ BX.AbsenceCalendar.Init = function(arParams)
 BX.AbsenceCalendar.ShowForm = function(arParams)
 {
 	BX.AbsenceCalendar.Init(arParams);
-	BX.AbsenceCalendar.popup.params.zIndex = (BX.WindowManager? BX.WindowManager.GetZIndex() : 0);
 	BX.AbsenceCalendar.popup.show();
 }

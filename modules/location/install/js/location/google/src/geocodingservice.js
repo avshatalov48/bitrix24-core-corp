@@ -88,19 +88,13 @@ export default class GeocodingService extends GeocodingServiceBase
 		return result;
 	}
 
-	geocode(addressString: string): Promise
+	geocodeConcrete(addressString: string): Promise
 	{
 		return new Promise((resolve) => {
 
 			const loaderPromise = this.#getLoaderPromise();
 
 			if(!loaderPromise)
-			{
-				resolve([]);
-				return;
-			}
-
-			if(!addressString)
 			{
 				resolve([]);
 				return;

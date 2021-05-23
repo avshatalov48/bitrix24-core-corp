@@ -20,6 +20,7 @@ class Network extends Base
 	public const COMMAND_OPERATOR_MESSAGE_DELETE = 'operatorMessageDelete';
 	public const COMMAND_OPERATOR_MESSAGE_RECEIVED = 'operatorMessageReceived';
 	public const COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting';
+	public const COMMAND_OPERATOR_CHANGE_LINE = 'operatorChangeLine';
 	public const COMMAND_START_DIALOG_SESSION = 'startDialogSession';
 	public const COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession';
 	public const COMMAND_CHECK_PUBLIC_URL = 'checkPublicUrl';
@@ -65,7 +66,9 @@ class Network extends Base
 	 * Register bot at portal.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\RegisterBot
 	 *
-	 * @param array $params <pre>[
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 * 	(string) CODE
 	 * 	(string) LINE_NAME
 	 * 	(string) LINE_DESC
@@ -75,7 +78,8 @@ class Network extends Base
 	 * 	(array) OPTIONS
 	 * 	(string) OPTIONS['TYPE']
 	 * 	(string) OPTIONS['PARTNER_NAME']
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool|int|string
 	 */
@@ -268,7 +272,8 @@ class Network extends Base
 	 * @param string $text Search string. Openline's name or exact code.
 	 * @param bool $doNotCheckBlackList
 	 *
-	 * @return bool|array <pre>
+	 * @return bool|array Command arguments.
+	 * <pre>
 	 * [
 	 * 	0 => [
 	 * 		(string) CODE,
@@ -349,7 +354,8 @@ class Network extends Base
 	/**
 	 * Sends notify change licence.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientChangeLicence
-	 * @param array $params Command arguments. <pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(string) PREVIOUS_LICENCE_TYPE
 	 * 	(string) PREVIOUS_LICENCE_NAME
@@ -416,7 +422,8 @@ class Network extends Base
 	/**
 	 * Sends finalize session notification.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientRequestFinalizeSession
-	 * @param array $params Command arguments. <pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(string) LICENSE_TYPE
 	 * 	(string) LICENSE_NAME
@@ -476,13 +483,20 @@ class Network extends Base
 	/**
 	 * Loads bot settings from controller.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\SettingsSupport
+	 *
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * ]
+	 * </pre>
+	 *
 	 * @return array|null
 	 */
-	public static function getBotSettings()
+	public static function getBotSettings(array $params = [])
 	{
 		$http = self::instanceHttpClient();
-
-		$result = $http->query('settingsSupport', [],true);
+		$result = $http->query('settingsSupport', $params,true);
 
 		if (isset($result['error']))
 		{
@@ -641,7 +655,8 @@ class Network extends Base
 
 	/**
 	 * @param string $command Text command alias.
-	 * @param array $params Command arguments. <pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) MESSAGE_ID
 	 * 	(int) SESSION_ID
@@ -1206,7 +1221,8 @@ class Network extends Base
 	 * Sends command from user to network line.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientCommandSend
 	 *
-	 * @param array $params Command arguments. <pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) BOT_ID
 	 * 	(int) USER_ID
@@ -1314,7 +1330,8 @@ class Network extends Base
 
 	/**
 	 * @param int $messageId Message Id.
-	 * @param array $messageFields Command arguments. <pre>
+	 * @param array $messageFields Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) BOT_ID
 	 * 	(string) BOT_CODE
@@ -1515,7 +1532,8 @@ class Network extends Base
 
 	/**
 	 * @param int $messageId Message Id.
-	 * @param array $messageFields Command arguments. <pre>
+	 * @param array $messageFields Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) BOT_ID
 	 * 	(string) BOT_CODE
@@ -1652,7 +1670,9 @@ class Network extends Base
 	}
 
 	/**
-	 * @param array $params Command arguments. <pre>[
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 * 	(int) MESSAGE_ID
 	 * 	(int) BOT_ID
 	 * 	(int) DIALOG_ID
@@ -1789,13 +1809,14 @@ class Network extends Base
 	 */
 	public static function onAnswerAdd($command, $params)
 	{
-		return self::onReceiveCommand($command, $params);
+		return static::onReceiveCommand($command, $params);
 	}
 
 
 	/**
 	 * @param int $messageId Message Id.
-	 * @param array $messageFields Event arguments. <pre>
+	 * @param array $messageFields Event arguments.
+	 * <pre>
 	 * [
 	 * 	(string) COMMAND
 	 * 	(string) COMMAND_PARAMS
@@ -2304,13 +2325,16 @@ class Network extends Base
 	 * Display ITR menu.
 	 * @see \Bitrix\Imbot\Bot\MenuBot::showMenu
 	 *
-	 * @param array $params Command arguments. <pre>{
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 *   (int) BOT_ID Bot id.
 	 *   (int) DIALOG_ID Dialog id.
 	 *   (int) MESSAGE_ID Previous message id.
 	 *   (string) COMMAND
 	 *   (string) COMMAND_PARAMS
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @param bool $fullRedraw  Drop previous menu block.
 	 *
@@ -2335,7 +2359,8 @@ class Network extends Base
 			}
 			return null;
 		};
-		$getLast = function ($arr) {
+		$getLast = function ($arr)
+		{
 			return !empty($arr) && is_array($arr) ? end($arr) : null;
 		};
 
@@ -2479,7 +2504,9 @@ class Network extends Base
 	 * Sends result of the user interaction with ITR menu to operator.
 	 * @see \Bitrix\Imbot\Bot\MenuBot::sendMenuResult
 	 *
-	 * @param array $params Command arguments. <pre>{
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 *   (int) BOT_ID Bot id.
 	 *   (int) DIALOG_ID Dialog id.
 	 *   (int) MESSAGE_ID Message id.
@@ -2590,7 +2617,8 @@ class Network extends Base
 	/**
 	 * Sends message to client.
 	 *
-	 * @param array $messageFields Command arguments. <pre>
+	 * @param array $messageFields Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) TO_USER_ID
 	 * 	(int) FROM_USER_ID
@@ -2670,7 +2698,8 @@ class Network extends Base
 
 	/**
 	 * @param int $messageId Message Id.
-	 * @param array $messageFields Command arguments: <pre>
+	 * @param array $messageFields Command arguments.
+	 * <pre>
 	 * [
 	 *  (int) TO_USER_ID
 	 *  (int) FROM_USER_ID
@@ -3046,7 +3075,8 @@ class Network extends Base
 	/**
 	 * Start openlines session.
 	 *
-	 * @param array $params Command arguments:<pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
@@ -3120,7 +3150,9 @@ class Network extends Base
 	/**
 	 * Finalizes openlines session.
 	 *
-	 * @param array $params Command arguments: <pre>[
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
 	 * 	(int) SESSION_ID

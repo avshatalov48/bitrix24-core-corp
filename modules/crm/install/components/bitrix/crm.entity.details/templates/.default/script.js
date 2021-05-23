@@ -63,6 +63,9 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 			this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+
+			BX.addCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this.onFailedValidation.bind(this));
+
 			this.doInitialize();
 		},
 		doInitialize: function()
@@ -457,6 +460,35 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			}
 
 			return tracker.prepareEntityActionParams(action, this._entityTypeId, params);
+		},
+		onFailedValidation: function(sender, eventArgs)
+		{
+			if (
+				typeof BX.Crm.EntityEditor === "undefined"
+				|| !(sender instanceof BX.Crm.EntityEditor)
+				|| sender.getEntityId() !== this.getEntityId()
+			)
+			{
+				return;
+			}
+
+			var main = this._tabManager._items[0];
+			if (main instanceof BX.Crm.EntityDetailTab && !main.isActive())
+			{
+				main.setActive(true);
+
+				for(var i = 1, length = this._tabManager._items.length; i < length; i++)
+				{
+					var currentItem = this._tabManager._items[i];
+					currentItem.setActive(false);
+				}
+
+				var field = eventArgs.getTopmostField();
+				if(field)
+				{
+					setTimeout(function(){field.focus()}, 350);
+				}
+			}
 		}
 	};
 	BX.Crm.EntityDetailManager.items = {};
@@ -760,7 +792,6 @@ if(typeof BX.Crm.OrderDetailManager === "undefined")
 	{
 		BX.addCustomEvent(window, "Crm.EntityProgress.Saved", BX.delegate(this.onProgressSave, this));
 		BX.addCustomEvent(window, "Crm.EntityProgress.onSaveBefore", BX.delegate(this.onProgressSaveBefore, this));
-		BX.addCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", BX.delegate(this.onFailedValidation, this));
 		this._cancelReason = "";
 	};
 	BX.Crm.OrderDetailManager.prototype.onProgressSave = function(sender, eventArgs)
@@ -822,35 +853,6 @@ if(typeof BX.Crm.OrderDetailManager === "undefined")
 
 		eventArgs['STATE_SUCCESS'] = self.isSuccess ? "Y" : "N";
 	};
-	BX.Crm.OrderDetailManager.prototype.onFailedValidation = function(sender, eventArgs)
-	{
-		if (typeof BX.Crm.EntityEditor === "undefined"
-			|| !(sender instanceof BX.Crm.EntityEditor)
-			|| sender.getEntityTypeId() !== BX.CrmEntityType.enumeration.order
-			|| sender.getEntityId() !== this.getEntityId()
-		)
-		{
-			return;
-		}
-
-		var main = this._tabManager._items[0];
-		if (main instanceof BX.Crm.EntityDetailTab && !main.isActive())
-		{
-			main.setActive(true);
-
-			for(var i = 1, length = this._tabManager._items.length; i < length; i++)
-			{
-				var currentItem = this._tabManager._items[i];
-				currentItem.setActive(false);
-			}
-
-			var field = eventArgs.getTopmostField();
-			if(field)
-			{
-				setTimeout(function(){field.focus()}, 350);
-			}
-		}
-	};
 	BX.Crm.OrderDetailManager.prototype.getMessage = function(name)
 	{
 		var m = BX.Crm.OrderDetailManager.messages;
@@ -900,7 +902,7 @@ if(typeof BX.Crm.EntityDetailFactory === "undefined")
 			{
 				return BX.Crm.OrderDetailManager.create(id, settings);
 			}
-			
+
 			return BX.Crm.EntityDetailManager.create(id, settings);
 		}
 	}
@@ -1188,12 +1190,6 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 				throw "Error: Could not find container.";
 			}
 
-			this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
-			if(this._serviceUrl === "")
-			{
-				throw "Error. Could not find service url.";
-			}
-
 			this._tabId = BX.prop.getString(this._settings, "tabId", "");
 			if(this._tabId === "")
 			{
@@ -1201,6 +1197,44 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 			}
 
 			this._params = BX.prop.getObject(this._settings, "componentData", {});
+
+			this._ajaxComponentActionParams = BX.prop.getObject(this._params, "ajaxComponentActionParams", {});
+			this._useAjaxComponentAction = BX.type.isNotEmptyObject(this._ajaxComponentActionParams);
+
+			if (this._useAjaxComponentAction)
+			{
+				this._componentName = BX.prop.getString(this._ajaxComponentActionParams, "componentName", "");
+				if(this._componentName === "")
+				{
+					throw "Error. Could not find component name.";
+				}
+
+				this._actionName = BX.prop.getString(this._ajaxComponentActionParams, "actionName", "");
+				if(this._actionName === "")
+				{
+					throw "Error. Could not find action name.";
+				}
+
+				this._signedParameters = BX.prop.getString(this._ajaxComponentActionParams, "signedParameters", "");
+				if(this._signedParameters === "")
+				{
+					throw "Error. Could not find signed parameters.";
+				}
+
+				this._template = BX.prop.getString(this._params, "template", "");
+				if(this._template === "")
+				{
+					throw "Error. Could not find template.";
+				}
+			}
+			else
+			{
+				this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
+				if(this._serviceUrl === "")
+				{
+					throw "Error. Could not find service url.";
+				}
+			}
 		},
 		getId: function()
 		{
@@ -1229,27 +1263,46 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 			}
 
 			this._isRequestRunning = true;
-			BX.ajax(
-				{
-					url: this._serviceUrl,
-					method: "POST",
-					dataType: "html",
-					data:
+
+			if (this._useAjaxComponentAction)
+			{
+				BX.ajax.runComponentAction(this._componentName, this._actionName, {
+					signedParameters: this._signedParameters,
+					data: {
+						template: this._template
+					}
+				}).then(this._onRequestSuccess.bind(this), this._onRequestFailure.bind(this));
+			}
+			else
+			{
+				BX.ajax(
 					{
-						"LOADER_ID": this._id,
-						"PARAMS": params
-					},
-					onsuccess: BX.delegate(this._onRequestSuccess, this),
-					onfailure: BX.delegate(this._onRequestFailure, this)
-				}
-			);
+						url: this._serviceUrl,
+						method: "POST",
+						dataType: "html",
+						data:
+							{
+								"LOADER_ID": this._id,
+								"PARAMS": params
+							},
+						onsuccess: BX.delegate(this._onRequestSuccess, this),
+						onfailure: BX.delegate(this._onRequestFailure, this)
+					}
+				);
+			}
 
 			return true;
 		},
 		_onRequestSuccess: function(data)
 		{
 			this._isRequestRunning = false;
-			this._container.innerHTML = data;
+			if (this._useAjaxComponentAction)
+			{
+				data = BX.prop.getObject(data, "data", {});
+				data = BX.prop.getString(data, "html", null);
+			}
+
+			BX.html(this._container, data);
 			this._isLoaded = true;
 		},
 		_onRequestFailure: function(data)

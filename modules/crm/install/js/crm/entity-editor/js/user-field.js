@@ -136,15 +136,23 @@ if(typeof BX.Crm.EntityEditorUserField === "undefined")
 	BX.Crm.EntityEditorUserField.prototype.doClearLayout = function(options)
 	{
 		this._innerWrapper = null;
+		this.removeExternalEventsHandlers();
 	};
 	BX.Crm.EntityEditorUserField.prototype.addExternalEventsHandlers = function()
 	{
+		this.removeExternalEventsHandlers();
 		// Handler could be called by UF to trigger _changeHandler in complicated cases
-		BX.removeCustomEvent(window, "onCrmEntityEditorUserFieldExternalChanged", BX.proxy(this.userFieldExternalChangedHandler, this));
 		BX.addCustomEvent(window, "onCrmEntityEditorUserFieldExternalChanged", BX.proxy(this.userFieldExternalChangedHandler, this));
-
-		BX.removeCustomEvent(window, "onCrmEntityEditorUserFieldSetValidator", BX.proxy(this.userFieldSetValidatorHandler, this));
 		BX.addCustomEvent(window, "onCrmEntityEditorUserFieldSetValidator", BX.proxy(this.userFieldSetValidatorHandler, this));
+	};
+	BX.Crm.EntityEditorUserField.prototype.removeExternalEventsHandlers = function()
+	{
+		BX.removeCustomEvent(window, "onCrmEntityEditorUserFieldExternalChanged", BX.proxy(this.userFieldExternalChangedHandler, this));
+		BX.removeCustomEvent(window, "onCrmEntityEditorUserFieldSetValidator", BX.proxy(this.userFieldSetValidatorHandler, this));
+	};
+	BX.Crm.EntityEditorUserField.prototype.release = function()
+	{
+		this.removeExternalEventsHandlers();
 	};
 	//region Context Menu
 	BX.Crm.EntityEditorUserField.prototype.processContextMenuCommand = function(e, command)

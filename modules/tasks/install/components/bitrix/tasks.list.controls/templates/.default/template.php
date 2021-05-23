@@ -1,5 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 if($arParams['USE_TITLE_TARGET'] !== 'N')
 {
 	$arParams["TITLE_TARGET"] = isset($arParams["TITLE_TARGET"]) && mb_strlen($arParams["TITLE_TARGET"]) ? $arParams["TITLE_TARGET"] : "pagetitle";

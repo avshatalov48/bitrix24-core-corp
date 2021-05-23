@@ -40,37 +40,25 @@ class CTaskPlannerMaintance
 			$tasksCount = 0;
 		}
 
-		if ($params['FULL'])
+		if (
+			$params['FULL']
+			&& self::$USER_ID > 0
+			&& is_array($taskIds)
+			&& !empty($taskIds)
+		)
 		{
-			if (self::$USER_ID > 0)
-			{
-				if (is_array($taskIds) && !empty($taskIds))
-				{
-					$tasks = self::getTasks($taskIds);
-				}
-			}
-		}
-		else
-		{
-			$APPLICATION->IncludeComponent(
-				"bitrix:tasks.iframe.popup",
-				".default",
-				array(
-					"ON_TASK_ADDED"   => "BX.DoNothing",
-					"ON_TASK_CHANGED" => "BX.DoNothing",
-					"ON_TASK_DELETED" => "BX.DoNothing",
-				),
-				null,
-				array("HIDE_ICONS" => "Y")
-			);
+			$tasks = self::getTasks($taskIds);
 		}
 
-		CJSCore::RegisterExt('tasks_planner_handler', array(
-			'js'   => '/bitrix/js/tasks/core_planner_handler.js',
-			'css'  => '/bitrix/js/tasks/css/tasks.css',
+		CJSCore::RegisterExt('tasks_planner_handler', [
+			'js' => [
+				'/bitrix/js/tasks/core_planner_handler.js',
+				'/bitrix/js/tasks/task-iframe-popup.js',
+			],
+			'css' => '/bitrix/js/tasks/css/tasks.css',
 			'lang' => BX_ROOT.'/modules/tasks/lang/'.LANGUAGE_ID.'/core_planner_handler.php',
-			'rel'  => array('popup', 'tooltip')
-		));
+			'rel' => ['popup', 'tooltip'],
+		]);
 
 		if (self::$USER_ID > 0)
 		{
@@ -113,18 +101,23 @@ class CTaskPlannerMaintance
 			$taskOnTimer = false;
 		}
 
-		$arResult = array(
-			'DATA' => array(
+		$pathTemplate = \Bitrix\Tasks\Integration\Socialnetwork\UI\Task::getActionPath();
+		$taskAddUrl = \Bitrix\Tasks\UI\Task::makeActionUrl($pathTemplate, 0, 'edit', self::$USER_ID);
+		$taskAddUrl .= '?'.http_build_query(['ADD_TO_TIMEMAN' => 'Y']);
+
+		$arResult = [
+			'DATA' => [
 				'TASKS_ENABLED' => true,
 				'TASKS' => $tasks,
 				'TASKS_COUNT' => $tasksCount,
 				'TASKS_TIMER' => $lastTimer,
 				'TASK_ON_TIMER' => $taskOnTimer,
-				'MANDATORY_UFS' => (CTasksRarelyTools::isMandatoryUserFieldExists() ? 'Y' : 'N')
-			),
-			'STYLES' => array('/bitrix/js/tasks/css/tasks.css'),
-			'SCRIPTS' => array('CJSTask', 'taskQuickPopups', 'tasks_planner_handler', '/bitrix/js/tasks/task-iframe-popup.js')
-		);
+				'MANDATORY_UFS' => (CTasksRarelyTools::isMandatoryUserFieldExists() ? 'Y' : 'N'),
+				'TASK_ADD_URL' => $taskAddUrl,
+			],
+			'STYLES' => ['/bitrix/js/tasks/css/tasks.css'],
+			'SCRIPTS' => ['CJSTask', 'taskQuickPopups', 'tasks_planner_handler'],
+		];
 
 		return ($arResult);
 	}
@@ -327,7 +320,7 @@ class CTaskPlannerMaintance
 
 		if  (!is_array($arIDs) && $arIDs <> '')
 		{
-			$arIDs = unserialize($arIDs);
+			$arIDs = unserialize($arIDs, ['allowed_classes' => false]);
 		}
 
 		$arIDs = array_values($arIDs);

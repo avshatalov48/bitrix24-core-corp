@@ -1491,7 +1491,8 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		var a = BX.create("button",
 			{
 				props: { className: "crm-entity-widget-content-block-inner-pay-button ui-btn ui-btn-sm ui-btn-primary" },
-				text : this.getMessage('payButtonLabel')
+				text : this.getMessage('payButtonLabel'),
+				attrs : {type: 'button'}
 			}
 		);
 
@@ -1537,8 +1538,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				context: 'deal',
 				analyticsLabel: 'salescenterClickButtonPay',
 				ownerTypeId: BX.CrmEntityType.enumeration.deal,
-				ownerId: this._model.getField('ID'),
-				sliderOptions: {width: 1500}
+				ownerId: this._model.getField('ID')
 			}).then(function(result)
 			{
 				if (result)
@@ -8893,6 +8893,13 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			}
 		}
 		return hasValidValue;
+	};
+	BX.Crm.EntityEditorClientLight.prototype.doClearLayout = function()
+	{
+		this.releaseSearchBoxes(this._contactSearchBoxes);
+		this.releasePanels(this._contactPanels);
+		this.releaseSearchBoxes(this._companySearchBoxes);
+		this.releasePanels(this._companyPanels);
 	};
 	BX.Crm.EntityEditorClientLight.prototype.release = function()
 	{

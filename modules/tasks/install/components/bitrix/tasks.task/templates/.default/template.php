@@ -11,6 +11,8 @@ Loc::loadMessages(__FILE__);
 
 \Bitrix\Main\UI\Extension::load("ui.alerts");
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 if (!empty($arResult['ERROR']))
 {
 	foreach ($arResult['ERROR'] as $error)
@@ -995,6 +997,7 @@ if ($taskLimitExceeded)
 			'EVENT_OPTIONS' => $arResult['COMPONENT_DATA']['EVENT_OPTIONS'],
 			'MODULES' => $arResult['COMPONENT_DATA']['MODULES'],
 		),
+		'calendarSettings' => $arResult['CALENDAR_SETTINGS'],
 		'auxData' => array( // currently no more, no less
 			'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
 			'HINT_STATE' => $arResult['AUX_DATA']['HINT_STATE'],

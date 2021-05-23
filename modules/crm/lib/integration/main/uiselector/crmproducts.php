@@ -232,7 +232,7 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 				'ACTIVE' => 'Y'
 			];
 
-			$select = array('ID', 'NAME', 'PRICE', 'CURRENCY_ID');
+			$select = array('ID', 'NAME', 'PRICE', 'CURRENCY_ID', 'DETAIL_PICTURE', 'PREVIEW_PICTURE');
 			$pricesSelect = $vatSelect = [];
 			$select = \CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
 			$res = \CCrmProduct::getList(

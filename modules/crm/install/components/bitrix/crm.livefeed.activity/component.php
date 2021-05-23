@@ -52,7 +52,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 
 				if (!empty($arParams["FIELDS"]["~PARAMS"]))
 				{
-					$arParams["FIELDS"]["PARAMS"] = unserialize(htmlspecialcharsback($arParams["FIELDS"]["~PARAMS"]));
+					$arParams["FIELDS"]["PARAMS"] = unserialize(htmlspecialcharsback($arParams["FIELDS"]["~PARAMS"]), ['allowed_classes' => false]);
 				}
 
 				if (!empty($arParams["FIELDS"]["PARAMS"]))
@@ -348,7 +348,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 			&& !empty($arActivity["STORAGE_ELEMENT_IDS"])
 		)
 		{
-			$arStorageElementID = unserialize($arActivity["STORAGE_ELEMENT_IDS"]);
+			$arStorageElementID = unserialize($arActivity["STORAGE_ELEMENT_IDS"], ['allowed_classes' => false]);
 			if (
 				is_array($arStorageElementID)
 				&& !empty($arStorageElementID)

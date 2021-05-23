@@ -1,5 +1,5 @@
 import {Loc} 						from 'main.core';
-import {BlockNumberTitle as Block} from 'salescenter.component.stage-block';
+import {Block} from 'salescenter.component.stage-block';
 import "../../../bx-salescenter-app-add-payment";
 import {StageMixin} from "./stage-mixin";
 
@@ -19,13 +19,34 @@ const Product = {
 	{
 		'stage-block-item'	:	Block
 	},
+	methods:
+	{
+		onItemHint(e)
+		{
+			BX.Salescenter.Manager.openHowToSell(e);
+		},
+	},
+	computed:
+		{
+			configForBlock()
+			{
+				return {
+					counter: this.counter,
+					checked: this.counterCheckedMixin,
+					showHint: true,
+				}
+			}
+		},
 	template: `
 		<stage-block-item
-			:counter="counter"
+			@on-item-hint.stop.prevent="onItemHint"
+			:config="configForBlock"
 			:class="statusClassMixin"
-			:checked="counterCheckedMixin"
 		>
-			<template v-slot:block-title-title>${Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE')}</template>
+			<template v-slot:block-title-title>					
+				${Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT')}	
+			</template>
+			<template v-slot:block-hint-title>${Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')}</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
 					<div class="salescenter-app-payment-by-sms-item-container-payment">

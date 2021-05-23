@@ -382,7 +382,8 @@ if (
 				}
 			?></div><?
 		}
-	?></div>
+	    ?>
+	</div>
 	<div class="intranet-user-profile-column-right">
 		<?
 		$APPLICATION->IncludeComponent(

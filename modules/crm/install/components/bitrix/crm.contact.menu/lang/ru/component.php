@@ -88,4 +88,6 @@ $MESS["CRM_CONTACT_PORTRAIT"] = "Портрет";
 $MESS["CRM_CONTACT_PORTRAIT_TITLE"] = "Портрет контакта";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Документы";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основе контакта";
+$MESS["CONTACT_DEDUPE_AUTOSEARCH"] = "Автоматический поиск дубликатов";
+$MESS["CONTACT_DEDUPE_HELP"] = "Как работать с дубликатами";
 ?>

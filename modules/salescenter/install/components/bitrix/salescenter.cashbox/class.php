@@ -20,6 +20,8 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 	/** @var Cashbox\Cashbox */
 	protected $handler;
+	protected $kkmId;
+
 	/** @var Main\ErrorCollection */
 	protected $errorCollection;
 	protected $cashboxData;
@@ -32,6 +34,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$this->arResult = [
 			'handler' => $arParams['handler'],
+			'kkm-id' => $arParams['kkm-id'],
 			'id' => $arParams['id'],
 			'page' => $arParams['page'],
 			'isFrame' => $arParams['isFrame'],
@@ -51,12 +54,12 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		$result = new Main\Result();
 		$this->errorCollection = new Main\ErrorCollection();
 
-		if(!Loader::includeModule('salescenter'))
+		if (!Loader::includeModule('salescenter'))
 		{
 			return $result->addError(new Main\Error(Loc::getMessage('SALESCENTER_MODULE_ERROR')));
 		}
 
-		if(!SaleManager::getInstance()->isFullAccess())
+		if (!SaleManager::getInstance()->isFullAccess())
 		{
 			return $result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_SALE_ACCESS_DENIED")));
 		}
@@ -74,7 +77,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		$this->errorCollection = new Main\ErrorCollection();
 
 		$checkResult = $this->checkModule();
-		if(!$checkResult->isSuccess())
+		if (!$checkResult->isSuccess())
 		{
 			$this->errorCollection->add($checkResult->getErrors());
 			$result->addErrors($checkResult->getErrors());
@@ -84,12 +87,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		/** @noinspection PhpIncludeInspection */
 		require_once Main\Application::getDocumentRoot()."/bitrix/modules/sale/lib/cashbox/inputs/file.php";
 
-		if($this->arResult['id'] > 0)
+		if ($this->arResult['id'] > 0)
 		{
 			$data = $this->getData();
 			$this->handler = $data['HANDLER'];
+			$this->kkmId = $data['KKM_ID'];
 
-			if($data['ID'] != $this->arResult['id'])
+			if ($data['ID'] != $this->arResult['id'])
 			{
 				return $result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_CASHBOX")));
 			}
@@ -97,13 +101,17 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		else
 		{
 			$this->handler = $this->arResult['handler'];
+			if (isset($this->arResult['kkm-id']))
+			{
+				$this->kkmId = $this->arResult['kkm-id'];
+			}
 		}
-		if(!$this->handler)
+		if (!$this->handler)
 		{
 			return $result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_HANDLER")));
 		}
 
-		if(!is_a($this->handler, Cashbox\Cashbox::class, true))
+		if (!is_a($this->handler, Cashbox\Cashbox::class, true))
 		{
 			return $result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_HANDLER_EXIST")));
 		}
@@ -133,7 +141,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		{
 			$checkResult = $this->prepare();
 			$this->arResult['addUrl'] = $this->getCurrentPageWithParams('', ['preview', 'id']);
-			if(!$checkResult->isSuccess())
+			if (!$checkResult->isSuccess())
 			{
 				$this->arResult['errors'] = $checkResult->getErrorMessages();
 				$this->arResult['handlerDescription'] = $this->getHandlerDescription();
@@ -143,7 +151,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 			$this->arResult['handlerDescription'] = $this->getHandlerDescription();
 
-			if($this->arResult['preview'])
+			if ($this->arResult['preview'])
 			{
 				$this->addConnectionInfoUrl();
 				$this->includeComponentTemplate('preview');
@@ -187,7 +195,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			$menu[$id] = $page;
 		}
 
-		if($this->arParams['page'] && isset($menu[$this->arParams['page']]))
+		if ($this->arParams['page'] && isset($menu[$this->arParams['page']]))
 		{
 			$menu[$this->arParams['page']]['ACTIVE'] = true;
 		}
@@ -258,7 +266,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'NAME' => $name,
 				'VALUE' => $handler,
 			];
-			if($this->arResult['data']['OFD'] == $handler)
+			if ($this->arResult['data']['OFD'] == $handler)
 			{
 				$item['SELECTED'] = true;
 				$isSelected = true;
@@ -270,7 +278,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			'NAME' => Loc::getMessage('SC_CASHBOX_OFD_ANOTHER'),
 			'VALUE' => '',
 		];
-		if(!$isSelected)
+		if (!$isSelected)
 		{
 			$item['SELECTED'] = true;
 		}
@@ -330,7 +338,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		$requireFields = $this->handler::getGeneralRequiredFields();
 		foreach($fields as &$field)
 		{
-			if(isset($requireFields[$field['name']]))
+			if (isset($requireFields[$field['name']]))
 			{
 				$field['required'] = true;
 			}
@@ -387,7 +395,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	protected function getOfdSettings()
 	{
 		$ofdHandler = $this->arResult['data']['OFD'];
-		if(class_exists($ofdHandler))
+		if (class_exists($ofdHandler))
 		{
 			/** @var Cashbox\Ofd $ofdHandler */
 			return $ofdHandler::getSettings();
@@ -405,9 +413,9 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getData(array $data = [])
 	{
-		if($this->cashboxData === null)
+		if ($this->cashboxData === null)
 		{
-			if(isset($data['id']))
+			if (isset($data['id']))
 			{
 				$cashboxId = intval($data['id']);
 			}
@@ -418,10 +426,10 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 			$result = [];
 
-			if($cashboxId > 0)
+			if ($cashboxId > 0)
 			{
 				$result = Cashbox\Internals\CashboxTable::getById($cashboxId)->fetch();
-				if($result)
+				if ($result)
 				{
 					$result['id'] = $cashboxId;
 				}
@@ -472,17 +480,17 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'elements' => [],
 			];
 			$isFieldsRequired = ($cashboxSetting['REQUIRED'] == 'Y');
-			if(is_array($cashboxSetting['ITEMS']))
+			if (is_array($cashboxSetting['ITEMS']))
 			{
 				foreach($cashboxSetting['ITEMS'] as $itemName => $item)
 				{
 					$name = $prefix.'['.$sectionName.']['.$itemName.']';
 					$value = $item['VALUE'];
-					if(isset($this->arResult['data'][$prefix][$sectionName][$itemName]))
+					if (isset($this->arResult['data'][$prefix][$sectionName][$itemName]))
 					{
 						$value = $this->arResult['data'][$prefix][$sectionName][$itemName];
 					}
-					elseif(!empty($item['VALUE']))
+					elseif (!empty($item['VALUE']))
 					{
 						$data[$name] = $item['VALUE'];
 					}
@@ -492,15 +500,15 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 						'title' => $item['LABEL'],
 						'required' => ($isFieldsRequired || ($item['REQUIRED'] == 'Y')),
 					];
-					if($item['TYPE'] == 'Y/N')
+					if ($item['TYPE'] == 'Y/N')
 					{
 						$field['type'] = 'boolean';
 					}
-					elseif($item['TYPE'] == 'DATABASE_FILE')
+					elseif ($item['TYPE'] == 'DATABASE_FILE')
 					{
 						$field['type'] = 'file';
 						$field['label'] = Loc::getMessage('SC_CASHBOX_FILE_LABEL');
-						if(!empty($value))
+						if (!empty($value))
 						{
 							$field['required'] = false;
 						}
@@ -535,37 +543,34 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$result = new Main\Result();
 
-		if(!$cashbox['KKM_ID'])
-		{
-			$cashbox['KKM_ID'] = '';
-		}
-		if($cashbox['ACTIVE'] != 'Y')
+		if ($cashbox['ACTIVE'] != 'Y')
 		{
 			$cashbox['ACTIVE'] = 'N';
 		}
-		if($cashbox['USE_OFFLINE'] != 'Y')
+		if ($cashbox['USE_OFFLINE'] != 'Y')
 		{
 			$cashbox['USE_OFFLINE'] = 'N';
 		}
-		if(!$cashbox['SORT'])
+		if (!$cashbox['SORT'])
 		{
 			$cashbox['SORT'] = 100;
 		}
-		if(!$cashbox['OFD_SETTINGS'])
+		if (!$cashbox['OFD_SETTINGS'])
 		{
 			$cashbox['OFD_SETTINGS'] = [];
 		}
 		$cashbox['ENABLED'] = 'Y';
 		$cashbox['HANDLER'] = $this->handler;
+		$cashbox['KKM_ID'] = $this->kkmId;
 
 		$handlerList = Cashbox\Cashbox::getHandlerList();
 		/** @noinspection PhpIllegalArrayKeyTypeInspection */
-		if(!isset($handlerList[$cashbox['HANDLER']]))
+		if (!isset($handlerList[$cashbox['HANDLER']]))
 		{
 			$result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_HANDLER_EXIST")));
 		}
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			return $result;
 		}
@@ -574,7 +579,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 		$cashboxObject = Cashbox\Cashbox::create($cashbox);
 		$validateResult = $cashboxObject->validate();
-		if(!$validateResult->isSuccess())
+		if (!$validateResult->isSuccess())
 		{
 			$result->addErrors($validateResult->getErrors());
 		}
@@ -591,7 +596,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	public function saveAction(array $fields)
 	{
 		$result = $this->prepare();
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->errorCollection->add($result->getErrors());
 			return false;
@@ -666,7 +671,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	public function getFormConfigAction(array $fields = [])
 	{
 		$result = $this->prepare();
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->errorCollection->add($result->getErrors());
 			return [];
@@ -689,7 +694,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		}
 		foreach($form['config'] as &$section)
 		{
-			if($section['elements'] && is_array($section['elements']))
+			if ($section['elements'] && is_array($section['elements']))
 			{
 				foreach($section['elements'] as &$element)
 				{
@@ -700,11 +705,11 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		$data = [];
 		foreach($form['data'] as $key => $value)
 		{
-			if(is_array($value))
+			if (is_array($value))
 			{
 				foreach($value as $k1 => $v1)
 				{
-					if(is_array($v1))
+					if (is_array($v1))
 					{
 						foreach($v1 as $k2 => $v2)
 						{
@@ -732,7 +737,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	protected function addPrefixToInputName($prefix, $name)
 	{
 		$pos = mb_strpos($name, '[');
-		if($pos === false)
+		if ($pos === false)
 		{
 			return $prefix.'['.$name.']';
 		}
@@ -749,7 +754,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	protected function listKeysSignedParameters()
 	{
 		return [
-			'handler', 'id',
+			'handler', 'id', 'kkm-id'
 		];
 	}
 
@@ -780,20 +785,20 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$settings = [];
 
-		if($this->handler == '\Bitrix\Sale\Cashbox\CashboxOrangeData')
+		if ($this->handler == '\Bitrix\Sale\Cashbox\CashboxOrangeData')
 		{
 			global $APPLICATION;
 			$files = $this->request->getFile('fields');
 
 			foreach($fields['SETTINGS']['SECURITY'] as $fieldId => $field)
 			{
-				if($files['error']['SETTINGS']['SECURITY'][$fieldId] === 0
+				if ($files['error']['SETTINGS']['SECURITY'][$fieldId] === 0
 					&& $files['tmp_name']['SETTINGS']['SECURITY'][$fieldId]
 				)
 				{
 					$settings['SECURITY'][$fieldId] = '';
 					$content = $APPLICATION->GetFileContent($files['tmp_name']['SETTINGS']['SECURITY'][$fieldId]);
-					if($content)
+					if ($content)
 					{
 						$settings['SECURITY'][$fieldId] = $content;
 					}
@@ -813,21 +818,44 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getHandlerDescription()
 	{
-		switch ($this->handler)
+		$code = $this->handler::getCode();
+		if ($this->kkmId)
 		{
-			case '\Bitrix\Sale\Cashbox\CashboxOrangeData':
+			$code .= '_'.$this->kkmId;
+		}
+		switch ($code)
+		{
+			case 'cashboxorangedata':
 				return [
 					'code' => 'orange',
 					'title' => 'SC_CASHBOX_ORANGE_TITLE',
 					'description' => 'SC_CASHBOX_ORANGE_DESCRITION',
 				];
-			case '\Bitrix\Sale\Cashbox\CashboxCheckbox':
+			case 'cashboxcheckbox':
 				return [
 					'code' => 'checkbox',
 					'title' => 'SC_CASHBOX_CHECKBOX_TITLE',
 					'description' => 'SC_CASHBOX_CHECKBOX_DESCRIPTION',
 				];
-			case '\Bitrix\Sale\Cashbox\CashboxRest':
+			case 'cashboxbusinessru_atol':
+				return [
+					'code' => 'businessru-atol',
+					'title' => 'SC_CASHBOX_BUSINESSRU_ATOL_TITLE',
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+			case 'cashboxbusinessru_shtrih-m':
+				return [
+					'code' => 'businessru-shtrihm',
+					'title' => 'SC_CASHBOX_BUSINESSRU_SHTRIHM_TITLE',
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+			case 'cashboxbusinessru_evotor':
+				return [
+					'code' => 'businessru-evotor',
+					'title' => 'SC_CASHBOX_BUSINESSRU_EVOTOR_TITLE',
+					'description' => 'SC_CASHBOX_BUSINESSRU_DESCRIPTION',
+				];
+			case 'cashboxrest':
 				$handlerName = Cashbox\Manager::getRestHandlersList()[$this->arParams['restHandler']]["NAME"];
 				return [
 					'code' => 'rest',
@@ -851,7 +879,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$this->arResult['id'] = $id;
 		$result = $this->prepare();
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->errorCollection->add($result->getErrors());
 			return;
@@ -860,7 +888,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		$cashbox = Cashbox\Manager::getObjectById($id);
 
 		$deleteResult = Cashbox\Manager::delete($id);
-		if(!$deleteResult->isSuccess())
+		if (!$deleteResult->isSuccess())
 		{
 			$this->errorCollection->add($deleteResult->getErrors());
 		}
@@ -880,7 +908,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 	private function addConnectionInfoUrl()
 	{
-		if($this->handler == '\Bitrix\Sale\Cashbox\CashboxCheckbox')
+		if ($this->handler == '\Bitrix\Sale\Cashbox\CashboxCheckbox')
 		{
 			$this->arResult['connectionInfoUrl'] = 'https://checkbox.in.ua/#get';
 		}

@@ -368,7 +368,7 @@
 			if(this.fileData.name)
 				return this.fileData.name;
 
-			return this.fileEntry.getFileName();
+			return this.fileEntry.getName();
 		},
 		sendChunk: function (data)
 		{

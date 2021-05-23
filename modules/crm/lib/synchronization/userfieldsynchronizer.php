@@ -641,7 +641,7 @@ class UserFieldSynchronizer
 
 		self::$history = array();
 		$s = Main\Config\Option::get('crm', 'crm_uf_sync_history', '', '');
-		$ary = $s !== '' ? unserialize($s) : null;
+		$ary = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(is_array($ary))
 		{
 			foreach($ary as $item)

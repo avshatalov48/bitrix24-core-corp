@@ -178,6 +178,7 @@
 	          sessionClose: true,
 	          sessionStatus: 0,
 	          userVote: VoteType.none,
+	          closeVote: false,
 	          userConsent: false,
 	          operatorChatId: 0,
 	          operator: {
@@ -339,6 +340,10 @@
 	          }
 
 	          if (typeof payload.showForm === 'string' && typeof FormType[payload.showForm] !== 'undefined') {
+	            if (payload.showForm === FormType.like && !!state.dialog.closeVote) {
+	              payload.showForm = FormType.none;
+	            }
+
 	            state.common.showForm = payload.showForm;
 	          }
 
@@ -375,6 +380,14 @@
 
 	          if (typeof payload.userVote === 'string' && typeof payload.userVote !== 'undefined') {
 	            state.dialog.userVote = payload.userVote;
+	          }
+
+	          if (typeof payload.closeVote === 'boolean') {
+	            state.dialog.closeVote = payload.closeVote;
+
+	            if (!!payload.closeVote && state.common.showForm === FormType.like) {
+	              state.common.showForm = FormType.none;
+	            }
 	          }
 
 	          if (typeof payload.operatorChatId === 'number') {
@@ -481,12 +494,61 @@
 	  }, {
 	    key: "getActions",
 	    value: function getActions() {
+	      var _this2 = this;
+
 	      return {
 	        show: function show(_ref) {
 	          var commit = _ref.commit;
 	          commit('common', {
 	            showed: true
 	          });
+	        },
+	        setVoteDateFinish: function setVoteDateFinish(_ref2, payload) {
+	          var commit = _ref2.commit,
+	              dispatch = _ref2.dispatch,
+	              state = _ref2.state;
+
+	          if (!payload) {
+	            clearTimeout(_this2.setVoteDateTimeout);
+	            commit('dialog', {
+	              closeVote: false
+	            });
+	            return true;
+	          }
+
+	          var totalDelay = new Date(payload).getTime() - new Date().getTime();
+	          var dayTimestamp = 10000;
+	          clearTimeout(_this2.setVoteDateTimeout);
+
+	          if (payload) {
+	            if (totalDelay && !state.dialog.closeVote) {
+	              commit('dialog', {
+	                closeVote: false
+	              });
+	            }
+
+	            var delay = totalDelay;
+
+	            if (totalDelay > dayTimestamp) {
+	              delay = dayTimestamp;
+	            }
+
+	            _this2.setVoteDateTimeout = setTimeout(function requestCloseVote() {
+	              delay = new Date(payload).getTime() - new Date().getTime();
+
+	              if (delay > 0) {
+	                if (delay > dayTimestamp) {
+	                  delay = dayTimestamp;
+	                }
+
+	                setTimeout(requestCloseVote, delay);
+	              } else {
+	                commit('dialog', {
+	                  closeVote: true
+	                });
+	              }
+	            }, delay);
+	          }
 	        }
 	      };
 	    }
@@ -759,6 +821,7 @@
 	          diskFolderId: data.diskFolderId
 	        }
 	      });
+	      this.store.dispatch('widget/setVoteDateFinish', data.dateCloseVote);
 	    }
 	  }, {
 	    key: "handleImDialogMessagesGetInitSuccess",
@@ -893,6 +956,7 @@
 	        sessionStatus: 0,
 	        userVote: VoteType.none
 	      });
+	      this.store.dispatch('widget/setVoteDateFinish', '');
 	      this.widget.sendEvent({
 	        type: SubscriptionType.sessionStart,
 	        data: {
@@ -952,6 +1016,11 @@
 	          });
 	        }
 	      }
+	    }
+	  }, {
+	    key: "handleSessionDateCloseVote",
+	    value: function handleSessionDateCloseVote(params, extra, command) {
+	      this.store.dispatch('widget/setVoteDateFinish', params.dateCloseVote);
 	    }
 	  }]);
 	  return WidgetImopenlinesPullCommandHandler;
@@ -1729,8 +1798,6 @@
 	  }, {
 	    key: "attachTemplate",
 	    value: function attachTemplate() {
-	      var _this9 = this;
-
 	      if (this.template) {
 	        this.controller.getStore().commit('widget/common', {
 	          showed: true
@@ -1749,6 +1816,7 @@
 	            type: SubscriptionType.widgetOpen,
 	            data: {}
 	          });
+	          application.template = this;
 	        },
 	        destroyed: function destroyed() {
 	          application.sendEvent({
@@ -1759,8 +1827,7 @@
 	          application.templateAttached = false;
 	          application.rootNode.innerHTML = '';
 	        }
-	      }).then(function (vue) {
-	        _this9.template = vue;
+	      }).then(function () {
 	        return new Promise(function (resolve, reject) {
 	          return resolve();
 	        });
@@ -1788,7 +1855,7 @@
 	  }, {
 	    key: "addMessage",
 	    value: function addMessage() {
-	      var _this10 = this;
+	      var _this9 = this;
 
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
@@ -1823,23 +1890,23 @@
 	        params: params,
 	        sending: !file
 	      }).then(function (messageId) {
-	        if (!_this10.isDialogStart()) {
-	          _this10.controller.getStore().commit('widget/common', {
+	        if (!_this9.isDialogStart()) {
+	          _this9.controller.getStore().commit('widget/common', {
 	            dialogStart: true
 	          });
 	        }
 
-	        _this10.messagesQueue.push({
+	        _this9.messagesQueue.push({
 	          id: messageId,
 	          text: text,
 	          file: file,
 	          sending: false
 	        });
 
-	        if (_this10.getChatId()) {
-	          _this10.processSendMessages();
+	        if (_this9.getChatId()) {
+	          _this9.processSendMessages();
 	        } else {
-	          _this10.requestData();
+	          _this9.requestData();
 	        }
 	      });
 	      return true;
@@ -1860,7 +1927,7 @@
 	  }, {
 	    key: "cancelUploadFile",
 	    value: function cancelUploadFile(fileId) {
-	      var _this11 = this;
+	      var _this10 = this;
 
 	      var element = this.messagesQueue.find(function (element) {
 	        return element.file && element.file.id === fileId;
@@ -1877,12 +1944,12 @@
 	          chatId: this.getChatId(),
 	          id: element.id
 	        }).then(function () {
-	          _this11.controller.getStore().dispatch('files/delete', {
-	            chatId: _this11.getChatId(),
+	          _this10.controller.getStore().dispatch('files/delete', {
+	            chatId: _this10.getChatId(),
 	            id: element.file.id
 	          });
 
-	          _this11.messagesQueue = _this11.messagesQueue.filter(function (el) {
+	          _this10.messagesQueue = _this10.messagesQueue.filter(function (el) {
 	            return el.id !== element.id;
 	          });
 	        });
@@ -1891,11 +1958,11 @@
 	  }, {
 	    key: "processSendMessages",
 	    value: function processSendMessages() {
-	      var _this12 = this;
+	      var _this11 = this;
 
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId().then(function () {
-	          _this12.processSendMessages();
+	          _this11.processSendMessages();
 	        }).catch(function () {
 	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
 	          return false;
@@ -1913,9 +1980,9 @@
 	        element.sending = true;
 
 	        if (element.file) {
-	          _this12.sendMessageWithFile(element);
+	          _this11.sendMessageWithFile(element);
 	        } else {
-	          _this12.sendMessage(element);
+	          _this11.sendMessage(element);
 	        }
 	      });
 	      return true;
@@ -1923,7 +1990,7 @@
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage(message) {
-	      var _this13 = this;
+	      var _this12 = this;
 
 	      this.controller.application.stopWriting();
 	      var quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.getDialogId());
@@ -1956,9 +2023,9 @@
 	        },
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
-	        _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
+	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
 	      }).catch(function (error) {
-	        _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
+	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
 	      });
 	      return true;
 	    }
@@ -1976,7 +2043,8 @@
 	        fileName: message.file.source.file.name,
 	        generateUniqueName: true,
 	        diskFolderId: diskFolderId,
-	        previewBlob: message.file.previewBlob
+	        previewBlob: message.file.previewBlob,
+	        chunkSize: this.localize.isCloud ? im_lib_uploader.Uploader.CLOUD_MAX_CHUNK_SIZE : im_lib_uploader.Uploader.BOX_MIN_CHUNK_SIZE
 	      });
 	    }
 	  }, {
@@ -2003,32 +2071,32 @@
 	  }, {
 	    key: "requestDiskFolderId",
 	    value: function requestDiskFolderId() {
-	      var _this14 = this;
+	      var _this13 = this;
 
 	      if (this.requestDiskFolderPromise) {
 	        return this.requestDiskFolderPromise;
 	      }
 
 	      this.requestDiskFolderPromise = new Promise(function (resolve, reject) {
-	        if (_this14.flagRequestDiskFolderIdSended || _this14.getDiskFolderId()) {
-	          _this14.flagRequestDiskFolderIdSended = false;
+	        if (_this13.flagRequestDiskFolderIdSended || _this13.getDiskFolderId()) {
+	          _this13.flagRequestDiskFolderIdSended = false;
 	          resolve();
 	          return true;
 	        }
 
-	        _this14.flagRequestDiskFolderIdSended = true;
+	        _this13.flagRequestDiskFolderIdSended = true;
 
-	        _this14.controller.restClient.callMethod(im_const.RestMethod.imDiskFolderGet, {
-	          chat_id: _this14.controller.application.getChatId()
+	        _this13.controller.restClient.callMethod(im_const.RestMethod.imDiskFolderGet, {
+	          chat_id: _this13.controller.application.getChatId()
 	        }).then(function (response) {
-	          _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
+	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
 
-	          _this14.flagRequestDiskFolderIdSended = false;
+	          _this13.flagRequestDiskFolderIdSended = false;
 	          resolve();
 	        }).catch(function (error) {
-	          _this14.flagRequestDiskFolderIdSended = false;
+	          _this13.flagRequestDiskFolderIdSended = false;
 
-	          _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
+	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
 
 	          reject();
 	        });
@@ -2038,7 +2106,7 @@
 	  }, {
 	    key: "fileCommit",
 	    value: function fileCommit(params, message) {
-	      var _this15 = this;
+	      var _this14 = this;
 
 	      this.controller.restClient.callMethod(im_const.RestMethod.imDiskFileCommit, {
 	        chat_id: params.chatId,
@@ -2053,16 +2121,16 @@
 	        },
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
-	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
+	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
 	      }).catch(function (error) {
-	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
+	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
 	      });
 	      return true;
 	    }
 	  }, {
 	    key: "getDialogHistory",
 	    value: function getDialogHistory(lastId) {
-	      var _this16 = this;
+	      var _this15 = this;
 
 	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.application.getRequestMessageLimit();
 	      this.controller.restClient.callMethod(im_const.RestMethod.imDialogMessagesGet, {
@@ -2071,13 +2139,13 @@
 	        'LIMIT': limit,
 	        'CONVERT_TEXT': 'Y'
 	      }).then(function (result) {
-	        _this16.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
+	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
 
-	        _this16.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
+	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          count: result.data().messages.length
 	        });
 	      }).catch(function (result) {
-	        _this16.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
+	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          error: result.error().ex
 	        });
 	      });
@@ -2085,7 +2153,7 @@
 	  }, {
 	    key: "getDialogUnread",
 	    value: function getDialogUnread(lastId) {
-	      var _this17 = this;
+	      var _this16 = this;
 
 	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.application.getRequestMessageLimit();
 	      var promise = new BX.Promise();
@@ -2109,20 +2177,20 @@
 	        var _query2;
 
 	        var query = (_query2 = {}, babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
-	          dialog_id: _this17.getDialogId(),
+	          dialog_id: _this16.getDialogId(),
 	          message_id: lastId
 	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
-	          dialog_id: _this17.getDialogId()
+	          dialog_id: _this16.getDialogId()
 	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogMessagesGetUnread, [im_const.RestMethod.imDialogMessagesGet, {
-	          chat_id: _this17.getChatId(),
+	          chat_id: _this16.getChatId(),
 	          first_id: lastId,
 	          limit: limit,
 	          convert_text: 'Y'
 	        }]), _query2);
 
-	        _this17.controller.restClient.callBatch(query, function (response) {
+	        _this16.controller.restClient.callBatch(query, function (response) {
 	          if (!response) {
-	            _this17.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
 	              error: {
 	                error: 'EMPTY_RESPONSE',
 	                error_description: 'Server returned an empty response.'
@@ -2136,19 +2204,19 @@
 	          var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
 	          if (!chatGetResult.error()) {
-	            _this17.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+	            _this16.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 	          }
 
 	          var dialogMessageUnread = response[im_const.RestMethodHandler.imDialogMessagesGetUnread];
 
 	          if (dialogMessageUnread.error()) {
-	            _this17.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
 	              error: dialogMessageUnread.error().ex
 	            });
 	          } else {
-	            _this17.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
+	            _this16.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
 
-	            _this17.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
 	              firstMessageId: dialogMessageUnread.data().messages.length > 0 ? dialogMessageUnread.data().messages[0].id : 0,
 	              count: dialogMessageUnread.data().messages.length
 	            });
@@ -2157,7 +2225,7 @@
 	          promise.fulfill(response);
 	        }, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	          name: im_const.RestMethodHandler.imDialogMessagesGetUnread,
-	          dialog: _this17.getDialogData()
+	          dialog: _this16.getDialogData()
 	        }));
 	      });
 	      return promise;
@@ -2213,7 +2281,7 @@
 	        var values = JSON.parse(data.params.value);
 	        var sessionId = parseInt(values.SESSION_ID);
 
-	        if (sessionId !== this.getSessionId()) {
+	        if (sessionId !== this.getSessionId() || this.isSessionClose()) {
 	          alert(this.localize.BX_LIVECHAT_ACTION_EXPIRED);
 	          return false;
 	        }
@@ -2258,7 +2326,7 @@
 	  }, {
 	    key: "sendDialogVote",
 	    value: function sendDialogVote(result) {
-	      var _this18 = this;
+	      var _this17 = this;
 
 	      if (!this.getSessionId()) {
 	        return false;
@@ -2268,7 +2336,7 @@
 	        'SESSION_ID': this.getSessionId(),
 	        'ACTION': result
 	      }).catch(function (result) {
-	        _this18.controller.getStore().commit('widget/dialog', {
+	        _this17.controller.getStore().commit('widget/dialog', {
 	          userVote: VoteType.none
 	        });
 	      });
@@ -2283,7 +2351,7 @@
 	    key: "sendForm",
 	    value: function sendForm(type, fields) {
 	      var _query3,
-	          _this19 = this;
+	          _this18 = this;
 
 	      im_lib_logger.Logger.info('LiveChatWidgetPrivate.sendForm:', type, fields);
 	      var query = (_query3 = {}, babelHelpers.defineProperty(_query3, RestMethod.widgetFormSend, [RestMethod.widgetFormSend, {
@@ -2293,9 +2361,9 @@
 	      }]), babelHelpers.defineProperty(_query3, RestMethod.widgetUserGet, [RestMethod.widgetUserGet, {}]), _query3);
 	      this.controller.restClient.callBatch(query, function (response) {
 	        if (!response) {
-	          _this19.requestDataSend = false;
+	          _this18.requestDataSend = false;
 
-	          _this19.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	          _this18.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 
 	          return false;
 	        }
@@ -2303,16 +2371,16 @@
 	        var userGetResult = response[RestMethod.widgetUserGet];
 
 	        if (userGetResult.error()) {
-	          _this19.requestDataSend = false;
+	          _this18.requestDataSend = false;
 
-	          _this19.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
+	          _this18.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
 
 	          return false;
 	        }
 
-	        _this19.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+	        _this18.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
-	        _this19.sendEvent({
+	        _this18.sendEvent({
 	          type: SubscriptionType.userForm,
 	          data: {
 	            form: type,
@@ -2550,6 +2618,11 @@
 	    key: "getSessionId",
 	    value: function getSessionId() {
 	      return this.controller.getStore().state.widget.dialog.sessionId;
+	    }
+	  }, {
+	    key: "isSessionClose",
+	    value: function isSessionClose() {
+	      return this.controller.getStore().state.widget.dialog.sessionClose;
 	    }
 	  }, {
 	    key: "getUserHash",
@@ -3876,6 +3949,10 @@
 	      return state.widget.dialog.operator.firstName || state.widget.dialog.operator.lastName;
 	    },
 	    voteActive: function voteActive(state) {
+	      if (!!state.widget.dialog.closeVote) {
+	        return false;
+	      }
+
 	      if (!state.widget.common.vote.beforeFinish && state.widget.dialog.sessionStatus < SessionStatus.waitClient) {
 	        return false;
 	      }

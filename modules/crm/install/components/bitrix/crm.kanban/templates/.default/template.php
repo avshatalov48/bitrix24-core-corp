@@ -93,6 +93,15 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 ));
 
 include 'editors.php';
+
+$isMergeEnabled = ($arParams['PATH_TO_MERGE'] != '');
+
+if ($isMergeEnabled)
+{
+	Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
+}
+
+$gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 ?>
 
 <div id="crm_kanban"></div>
@@ -157,7 +166,8 @@ include 'editors.php';
 			BX.CRM.Kanban.Item.messages =
 			{
 				company: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_COMPANY')) ?>",
-				contact: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_CONTACT')) ?>"
+				contact: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_CONTACT')) ?>",
+				noname: "<?= CUtil::JSEscape(Loc::getMessage('FORMATNAME_NONAME')) ?>"
 			};
 
 			Kanban = new BX.CRM.Kanban.Grid(
@@ -166,6 +176,7 @@ include 'editors.php';
 					itemType: "BX.CRM.Kanban.Item",
 					columnType: "BX.CRM.Kanban.Column",
 					dropZoneType: "BX.CRM.Kanban.DropZone",
+					isRecyclebinEnabled: <?= (!empty($arResult['IS_RECYCLEBIN_ENABLED']) ? 'true' : 'false') ?>,
 					canAddColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
 					canEditColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
 					canRemoveColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
@@ -192,7 +203,7 @@ include 'editors.php';
 								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get();?>"
 							},
 							params: <?= json_encode($arParams['EXTRA'])?>,
-							gridId: "<?= Helper::getGridId($arParams['ENTITY_TYPE_CHR'])?>",
+							gridId: "<?=\CUtil::JSEscape($gridId)?>",
 							showActivity: <?= $arParams['SHOW_ACTIVITY'] == 'Y' ? 'true' : 'false'?>,
 							currency: "<?= $arParams['CURRENCY']?>",
 							lastId: <?= (int)$data['last_id']?>,
@@ -272,6 +283,17 @@ include 'editors.php';
 			);
 
 			new BX.Crm.Kanban.PullManager(Kanban);
+
+			<?if ($isMergeEnabled):?>
+				BX.Crm.BatchMergeManager.create(
+					"<?=\CUtil::JSEscape($gridId)?>",
+					{
+						kanban: Kanban,
+						entityTypeId: "<?=\CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
+						mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_MERGE'])?>"
+					}
+				);
+			<?endif;?>
 		}
 	);
 </script>

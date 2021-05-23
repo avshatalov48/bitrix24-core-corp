@@ -94,6 +94,7 @@ class CBPCrmEventAddActivity
 			),
 			'EventText' => array(
 				'Name' => GetMessage('BPEAA_EVENT_TEXT'),
+				'Description' => GetMessage('BPEAA_EVENT_TEXT'),
 				'FieldName' => 'event_text',
 				'Type' => 'text',
 				'Required' => true,

@@ -1,5 +1,5 @@
 <?php
-$MESS["KANBAN_SORT_ACTUAL"] = "By active state";
+$MESS["KANBAN_SORT_ACTUAL"] = "By activity state";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Recommended";
 $MESS["KANBAN_SORT_ASC"] = "Bottom";
 $MESS["KANBAN_SORT_DESC"] = "Top";
@@ -75,3 +75,4 @@ $MESS["TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER"] = "Task Name #tag/@epic";
 $MESS["TASKS_SCRUM_TASK_LABEL_1"] = "task";
 $MESS["TASKS_SCRUM_TASK_LABEL_2"] = "tasks";
 $MESS["TASKS_SCRUM_TASK_LABEL_3"] = "tasks";
+$MESS["TASKS_SCRUM_COMPLETED_SPRINT_LINK"] = "View Sprint Kanban"; //todo

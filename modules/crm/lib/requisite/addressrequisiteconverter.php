@@ -211,7 +211,7 @@ class AddressRequisiteConverter extends EntityRequisiteConverter
 				continue;
 			}
 
-			$options = unserialize($value);
+			$options = unserialize($value, ['allowed_classes' => false]);
 			if(!is_array($options) || empty($options) || !isset($options['tabs']) || !is_array($options['tabs']))
 			{
 				continue;
@@ -334,7 +334,7 @@ class AddressRequisiteConverter extends EntityRequisiteConverter
 				continue;
 			}
 
-			$options = unserialize($value);
+			$options = unserialize($value, ['allowed_classes' => false]);
 			if(!is_array($options) || empty($options) || !isset($options['views']) || !is_array($options['views']))
 			{
 				continue;

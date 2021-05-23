@@ -71,6 +71,8 @@ this.BX.Location = this.BX.Location || {};
 
 	var _localStorageResCount = new WeakMap();
 
+	var _biasBoundRadius = new WeakMap();
+
 	var _getLocalStoredResults = new WeakSet();
 
 	var _getPredictionPromiseLocalStorage = new WeakSet();
@@ -95,6 +97,8 @@ this.BX.Location = this.BX.Location || {};
 	  /** {GoogleSource} */
 
 	  /** {string} */
+
+	  /** {number} */
 
 	  /** {number} */
 	  function AutocompleteService(props) {
@@ -143,6 +147,11 @@ this.BX.Location = this.BX.Location || {};
 	    _localStorageResCount.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: 30
+	    });
+
+	    _biasBoundRadius.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: 50000
 	    });
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId, props.languageId);
@@ -266,10 +275,17 @@ this.BX.Location = this.BX.Location || {};
 	  var result = _classPrivateMethodGet(this, _getPredictionPromiseLocalStorage, _getPredictionPromiseLocalStorage2).call(this, query, params);
 
 	  if (!result) {
+	    var queryPredictionsParams = {
+	      input: query
+	    };
+
+	    if (params.userCoordinates) {
+	      queryPredictionsParams.location = new google.maps.LatLng(params.userCoordinates[0], params.userCoordinates[1]);
+	      queryPredictionsParams.radius = babelHelpers.classPrivateFieldGet(this, _biasBoundRadius);
+	    }
+
 	    result = new Promise(function (resolve) {
-	      babelHelpers.classPrivateFieldGet(_this4, _googleAutocompleteService).getQueryPredictions({
-	        input: query
-	      }, function (result, status) {
+	      babelHelpers.classPrivateFieldGet(_this4, _googleAutocompleteService).getQueryPredictions(queryPredictionsParams, function (result, status) {
 	        var locationsList = _classPrivateMethodGet(_this4, _convertToLocationsList, _convertToLocationsList2).call(_this4, result, status);
 
 	        _classPrivateMethodGet(_this4, _setPredictionResult, _setPredictionResult2).call(_this4, query, params, result, status);
@@ -715,8 +731,11 @@ this.BX.Location = this.BX.Location || {};
 	    throw new Error('google.maps.Map must be defined');
 	  }
 
-	  var position = _classPrivateMethodGet$1(this, _convertLocationToPosition, _convertLocationToPosition2).call(this, babelHelpers.classPrivateFieldGet(this, _location)),
-	      mapProps = {};
+	  var position = _classPrivateMethodGet$1(this, _convertLocationToPosition, _convertLocationToPosition2).call(this, babelHelpers.classPrivateFieldGet(this, _location));
+
+	  var mapProps = {
+	    gestureHandling: 'greedy'
+	  };
 
 	  var zoom = _classStaticPrivateMethodGet$1(Map, Map, _chooseZoomByLocation).call(Map, babelHelpers.classPrivateFieldGet(this, _location));
 
@@ -967,19 +986,14 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  babelHelpers.createClass(GeocodingService, [{
-	    key: "geocode",
-	    value: function geocode(addressString) {
+	    key: "geocodeConcrete",
+	    value: function geocodeConcrete(addressString) {
 	      var _this2 = this;
 
 	      return new Promise(function (resolve) {
 	        var loaderPromise = _classPrivateMethodGet$3(_this2, _getLoaderPromise$1, _getLoaderPromise2$1).call(_this2);
 
 	        if (!loaderPromise) {
-	          resolve([]);
-	          return;
-	        }
-
-	        if (!addressString) {
 	          resolve([]);
 	          return;
 	        }

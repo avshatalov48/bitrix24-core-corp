@@ -8,7 +8,7 @@
     */
 
 
-  if (typeof exports !== 'undefined' && 'VueRouter' in exports) {
+  if (typeof exports !== 'undefined' && typeof exports.VueRouter !== 'undefined') {
     var currentVersion = '3.4.8';
 
     if (exports.VueRouterVendor.version != currentVersion) {

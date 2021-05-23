@@ -72,7 +72,7 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 
 						if (isset($item['additionalValues']['forthAdditionalValue']))
 						{
-							$column['forthAdditionalTitle'] = $reportResult['config']['additionalValues']['forthAdditionalValue']['titleShort'];
+							$column['forthAdditionalTitle'] = $item['additionalValues']['forthAdditionalValue']['title'] ?? $reportResult['config']['additionalValues']['forthAdditionalValue']['titleShort'];
 							$column['forthAdditionalValue'] = $item['additionalValues']['forthAdditionalValue']['value'];
 							$column['forthAdditionalUnit'] = !empty($item['additionalValues']['forthAdditionalValue']['unitOfMeasurement'])
 								? $item['additionalValues']['forthAdditionalValue']['unitOfMeasurement'] : '';

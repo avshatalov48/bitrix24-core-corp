@@ -30,12 +30,7 @@ class Retraining
 			return static::class . "::run();";
 		}
 
-		$possibleModels = [];
-
-		$possibleModels = array_merge($possibleModels, DealScoring::getModelNames());
-		$possibleModels = array_merge($possibleModels, LeadScoring::getModelNames());
-
-		foreach ($possibleModels as $modelName)
+		foreach (Scoring::getAvailableModelNames() as $modelName)
 		{
 			$model = Scoring::getModelByName($modelName);
 			if(!$model || $model->getState() !== Model::STATE_READY)

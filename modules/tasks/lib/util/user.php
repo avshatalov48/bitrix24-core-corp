@@ -756,7 +756,7 @@ final class User
 					'#FORMATTED_USER_NAME#' => htmlspecialcharsbx($userNames[$item['USER_ID']]),
 					'#DATE_FROM#' => $absenceFrom,
 					'#DATE_TO#' => $absenceTo,
-					'#ABSCENCE_REASON#' => $item['NAME'],
+					'#ABSCENCE_REASON#' => htmlspecialcharsbx($item['NAME']),
 				]);
 			}
 		}

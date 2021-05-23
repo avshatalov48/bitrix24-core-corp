@@ -53,6 +53,7 @@ class SalesFunnelFilter extends Base
 				'IM',
 				'TRACKING_SOURCE_ID',
 				'TRACKING_CHANNEL_CODE',
+				'PRODUCT_ROW_PRODUCT_ID',
 			];
 
 			$fields = $leadFilter->getFields();
@@ -102,8 +103,11 @@ class SalesFunnelFilter extends Base
 		);
 
 		$disabledFieldKeys = [
+			'ACTIVITY_COUNTER',
 			'TRACKING_SOURCE_ID',
 			'TRACKING_CHANNEL_CODE',
+			'PRODUCT_ROW_PRODUCT_ID',
+			'STAGE_SEMANTIC_ID',
 		];
 
 		$fields = $dealFilter->getFields();

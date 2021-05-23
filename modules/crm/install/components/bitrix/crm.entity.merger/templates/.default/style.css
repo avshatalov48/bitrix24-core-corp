@@ -718,10 +718,6 @@ div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
 
 .crm-entity-merger-panel-toggler-name {
 	margin-right: 8px;
-	display: inline-block;
-	font: 12px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #535c69;
-	text-transform: uppercase;
 }
 
 .crm-entity-merger-panel-toggler {

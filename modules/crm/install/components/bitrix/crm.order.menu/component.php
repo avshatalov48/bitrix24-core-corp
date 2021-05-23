@@ -1,9 +1,18 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @var \CBitrixComponent $component
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global CDatabase $DB
+ */
+
+use Bitrix\Main\Localization\Loc;
 use \Bitrix\Crm\Order\Permissions,
 	\Bitrix\Main\Config\Option;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
 	return;
@@ -244,59 +253,69 @@ if($arParams['TYPE'] === 'list')
 	{
 		$arResult['BUTTONS'][] = ['NEWBAR' => true];
 
-		$entityType = CCrmOwnerType::OrderName;
-		$stExportId = 'STEXPORT_'.$entityType.'_MANAGER';
-		$randomSequence = new Bitrix\Main\Type\RandomSequence($stExportId);
-		$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+		$stExportId = 'EXPORT_'.\CCrmOwnerType::OrderName;
 		$componentName = 'bitrix:crm.order.list';
 
-		$componentParams = array(
-			'ORDER_COUNT' => '20',
-			'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
-			'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-			'NAVIGATION_CONTEXT_ID' => $entityType
-		);
-
-		$arResult['STEXPORT_PARAMS'] = array(
-			'componentName' => $componentName,
-			'siteId' => SITE_ID,
-			'entityType' => $entityType,
-			'stExportId' => $stExportId,
-			'managerId' => $stExportManagerId,
-			'sToken' => 's'.time(),
-			'initialOptions' => array(
+		$arResult['EXPORT_CSV_PARAMS'] = [
+			'id' => $stExportId. '_CSV',
+			'controller' => 'bitrix:crm.api.export',
+			'queue' => [
+				[
+					'action' => 'dispatcher',
+				],
+			],
+			'params' => [
+				'SITE_ID' => SITE_ID,
+				'ENTITY_TYPE' => \CCrmOwnerType::OrderName,
+				'EXPORT_TYPE' => 'csv',
+				'COMPONENT_NAME' => $componentName,
+				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+					$componentName,
+					array(
+						'ORDER_COUNT' => '20',
+						'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
+						'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
+						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+						'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::OrderName
+					)
+				),
+			],
+			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(
 					'name' => 'EXPORT_ALL_FIELDS',
 					'type' => 'checkbox',
-					'title' => GetMessage('ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
+					'title' => Loc::getMessage('ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
 					'value' => 'N'
 				),
 			),
-			'componentParams' => \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			'messages' => array(
-				'stExportExcelDlgTitle' => GetMessage('ORDER_EXPORT_EXCEL_TITLE'),
-				'stExportExcelDlgSummary' => GetMessage('ORDER_STEXPORT_SUMMARY'),
-				'stExportCsvDlgTitle' => GetMessage('ORDER_EXPORT_CSV_TITLE'),
-				'stExportCsvDlgSummary' => GetMessage('ORDER_STEXPORT_SUMMARY')
-			)
-		);
+				'DialogTitle' => Loc::getMessage('ORDER_EXPORT_CSV_TITLE'),
+				'DialogSummary' => Loc::getMessage('ORDER_STEXPORT_SUMMARY'),
+			),
+			'dialogMaxWidth' => 650,
+		];
+
+		// clone params for excel export
+		$arResult['EXPORT_EXCEL_PARAMS'] = $arResult['EXPORT_CSV_PARAMS'];
+		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
+		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
+		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('ORDER_EXPORT_EXCEL_TITLE');
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('ORDER_EXPORT_CSV_TITLE'),
-			'TEXT' => GetMessage('ORDER_EXPORT_CSV'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('csv')",
+			'TITLE' => Loc::getMessage('ORDER_EXPORT_CSV_TITLE'),
+			'TEXT' => Loc::getMessage('ORDER_EXPORT_CSV'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('ORDER_EXPORT_EXCEL_TITLE'),
-			'TEXT' => GetMessage('ORDER_EXPORT_EXCEL'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('excel')",
+			'TITLE' => Loc::getMessage('ORDER_EXPORT_EXCEL_TITLE'),
+			'TEXT' => Loc::getMessage('ORDER_EXPORT_EXCEL'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
-		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
+		unset($stExportId);
 	}
 }
 
@@ -312,4 +331,3 @@ if ($qty >= 3)
 }
 
 $this->IncludeComponentTemplate();
-?>

@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Rest;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Disk\File;
 use Bitrix\Faceid\FaceTable;
 use Bitrix\Main\ArgumentException;
@@ -1218,10 +1220,11 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 	{
 		$result = array();
 
+		$requisite = new EntityRequisite();
 		$fieldsInfo = array_flip(
 			array_merge(
 				array('NAME', 'XML_ID'),
-				\Bitrix\Crm\EntityRequisite::getRqFields()
+                $requisite->getRqFields()
 			)
 		);
 
@@ -1492,10 +1495,11 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 	{
 		$result = array();
 
+        $bankDetail = new EntityBankDetail();
 		$fieldsInfo = array_flip(
 			array_merge(
 				array('NAME', 'XML_ID'),
-				\Bitrix\Crm\EntityBankDetail::getRqFields(),
+                $bankDetail->getRqFields(),
 				array('COMMENTS')
 			)
 		);

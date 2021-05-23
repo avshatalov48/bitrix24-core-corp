@@ -118,6 +118,16 @@
 			},
 			{
 				condition: [
+					new RegExp("/marketplace\/view\/quick\/"),
+				],
+				options: {
+					width: 500,
+					allowChangeHistory: false,
+					cacheable: false
+				}
+			},
+			{
+				condition: [
 					new RegExp("/marketplace\/configuration/"),
 					new RegExp("/marketplace\/booklet/"),
 				],
@@ -332,7 +342,9 @@
 			{
 				condition: [
 					new RegExp("/report/analytics"),
-					new RegExp("/report/analytics/\\?analyticBoardKey=(\\w+)")
+					new RegExp("/report/analytics/\\?analyticBoardKey=(\\w+)"),
+					new RegExp("/report/telephony"),
+					new RegExp("/report/telephony/\\?analyticBoardKey=(\\w+)")
 				],
 				options: {
 					cacheable: false,
@@ -450,13 +462,15 @@
 			},
 			{
 				condition: [
-					new RegExp(siteDir + "company/personal/user/[0-9]+/calendar/\\?EVENT_ID=([a-zA-Z0-9_|]+)", "i")
+					new RegExp(siteDir + "company\\/personal\\/user\\/[0-9]+\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?", "i")
 				],
 				handler: function(event, link)
 				{
 					if (BX.Calendar && BX.Calendar.SliderLoader)
 					{
-						var slider = new BX.Calendar.SliderLoader(link.matches[1]);
+						var slider = new BX.Calendar.SliderLoader(link.matches[1], {
+							entryDateFrom: BX.parseDate(link.matches[2]),
+						});
 						slider.show();
 						event.preventDefault();
 					}

@@ -20,7 +20,7 @@ use Bitrix\Report\VisualConstructor\Views\Component\Grid;
  */
 class SalesDynamic
 {
-	const VERSION = 'v24';
+	const VERSION = 'v25';
 	const BOARD_KEY = 'crm_sales_dynamic';
 
 	/**

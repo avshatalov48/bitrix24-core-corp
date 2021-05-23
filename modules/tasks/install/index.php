@@ -1,11 +1,13 @@
-<?
-global $MESS;
+<?php
 
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
 
 Class tasks extends CModule
 {
-	var $MODULE_ID = "tasks";
+	var $MODULE_ID = 'tasks';
 	var $MODULE_VERSION;
 	var $MODULE_VERSION_DATE;
 	var $MODULE_NAME;
@@ -13,77 +15,66 @@ Class tasks extends CModule
 	var $MODULE_CSS;
 	var $errors;
 
-	function tasks()
+	public function __construct()
 	{
-		$arModuleVersion = array();
+		$arModuleVersion = [];
 
 		include(__DIR__.'/version.php');
 
-		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
+		if (is_array($arModuleVersion) && array_key_exists('VERSION', $arModuleVersion))
 		{
-			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
-			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
+			$this->MODULE_VERSION = $arModuleVersion['VERSION'];
+			$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		}
-		else
-		{
-			$this->MODULE_VERSION = TASKS_VERSION;
-			$this->MODULE_VERSION_DATE = TASKS_VERSION_DATE;
-		}
-
-		$this->MODULE_NAME = GetMessage("TASKS_MODULE_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("TASKS_MODULE_DESC");
+		$this->MODULE_NAME = Loc::getMessage('TASKS_MODULE_NAME');
+		$this->MODULE_DESCRIPTION = Loc::getMessage('TASKS_MODULE_DESC');
 	}
 
-
-	function InstallDB($arParams = array())
+	function InstallDB($arParams = [])
 	{
 		global $DB, $APPLICATION;
+
 		$this->errors = false;
 
 		// Database tables creation
-		if(!$DB->Query("SELECT 'x' FROM b_tasks WHERE 1=0", true))
+		if (!$DB->Query("SELECT 'x' FROM b_tasks WHERE 1 = 0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$dbType = mb_strtolower($DB->type);
+			$this->errors = $DB->RunSQLBatch(
+				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/{$dbType}/install.sql"
+			);
 		}
 
-		$errors = self::InstallUserFields();
-		if ( ! empty($errors) )
+		$errors = $this->installUserFields();
+		if (!empty($errors))
 		{
-			if ( ! is_array($this->errors) )
-				$this->errors = array();
-
+			if (!is_array($this->errors))
+			{
+				$this->errors = [];
+			}
 			$this->errors = array_merge($this->errors, $errors);
 		}
 
 		$APPLICATION->ResetException();
-		if($this->errors !== false)
+		if ($this->errors !== false)
 		{
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
 
 		RegisterModule("tasks");
-		RegisterModuleDependences("search", "OnReindex", "tasks", "CTasks", "OnSearchReindex", 200);
+		RegisterModuleDependences('search', 'OnReindex', 'tasks', 'CTasks', 'OnSearchReindex', 200);
+		RegisterModuleDependences('search', 'BeforeIndex', 'tasks', 'CTasksTools', 'FixForumCommentURL', 200);
 		RegisterModuleDependences("main", "OnUserDelete", "tasks", "CTasks", "OnUserDelete");
 		RegisterModuleDependences("im", "OnGetNotifySchema", "tasks", "CTasksNotifySchema", "OnGetNotifySchema");
 		RegisterModuleDependences('main', 'OnBeforeUserDelete', 'tasks', 'CTasks', 'OnBeforeUserDelete');
 		RegisterModuleDependences("pull", "OnGetDependentModule", "tasks", "CTasksPullSchema", "OnGetDependentModule");
-		RegisterModuleDependences(
-			'search',
-			'BeforeIndex',
-			'tasks',
-			'CTasksTools',
-			'FixForumCommentURL',
-			200
-		);
-		RegisterModuleDependences('intranet', 'OnPlannerInit', 'tasks',
-			'CTaskPlannerMaintance', 'OnPlannerInit');
-		RegisterModuleDependences('intranet', 'OnPlannerAction', 'tasks',
-			'CTaskPlannerMaintance', 'OnPlannerAction');
-		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'tasks',
-			'CTaskRestService', 'OnRestServiceBuildDescription');
-		RegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks',
-			'\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
+
+		RegisterModuleDependences('intranet', 'OnPlannerInit', 'tasks', 'CTaskPlannerMaintance', 'OnPlannerInit');
+		RegisterModuleDependences('intranet', 'OnPlannerAction', 'tasks', 'CTaskPlannerMaintance', 'OnPlannerAction');
+
+		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'tasks', 'CTaskRestService', 'OnRestServiceBuildDescription');
+		RegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks', '\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
 
 		RegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
 		RegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
@@ -152,6 +143,8 @@ Class tasks extends CModule
 		//Scrum
 		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', 'Bitrix\Tasks\Scrum\Internal\EntityTable', 'onSocNetGroupDelete');
 		$eventManager->registerEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
+		$eventManager->registerEventHandler('tasks', 'OnTaskAdd', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskAdd');
+		$eventManager->registerEventHandler('tasks', 'OnTaskUpdate', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskUpdate');
 
 		$this->InstallTasks();
 
@@ -164,26 +157,278 @@ Class tasks extends CModule
 		(new \Bitrix\Tasks\Access\Install\AccessInstaller($DB))->install();
 		(new \Bitrix\Tasks\Access\Install\Migration($DB))->migrateTemplateRights();
 
-		static::addAgents();
-		static::runSteppers();
-		static::setOptions();
+		$this->addAgents();
+		$this->runSteppers();
+		$this->setOptions();
 
 		return true;
 	}
 
-	public static function addAgents(): void
+	public function installUserFields($moduleId = 'all'): array
 	{
-		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::sendReminder();','tasks', 'N', 60);
-		CAgent::AddAgent('\Bitrix\Tasks\Util\AgentManager::notificationThrottleRelease();','tasks', 'N', 300);
+		$errors = [];
 
-		CTimeZone::Disable();
-		CAgent::AddAgent('\Bitrix\Tasks\Internals\Effective::agent();', 'tasks', 'N', 86400, '', 'Y', Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime('23:50:00')));
-		CTimeZone::Enable();
+		if (in_array($moduleId, ['all', 'disk'], true))
+		{
+			$errors = $this->installDiskUserFields($errors);
+		}
+		if (in_array($moduleId, ['all', 'mail'], true))
+		{
+			$errors = $this->installMailUserFields($errors);
+		}
+
+		return $errors;
 	}
 
-	public static function runSteppers(): void
+	private function installDiskUserFields(array $errors): array
 	{
-		$map = [
+		if (!IsModuleInstalled('disk'))
+		{
+			return $errors;
+		}
+
+		$errors = $this->createFileField('TASKS_TASK', $errors);
+		$errors = $this->createFileField('TASKS_TASK_TEMPLATE', $errors);
+
+		$errors = $this->createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
+		$errors = $this->createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
+
+		$errors = $this->createScrumItemFileField('TASKS_SCRUM_ITEM', $errors);
+
+		return $errors;
+	}
+
+	private function createFileField(string $entityId, array $errors): array
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = CUserTypeEntity::getList(
+			['ID' => 'ASC'],
+			[
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
+			]
+		);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->add([
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'XML_ID' => 'TASK_WEBDAV_FILES',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' =>  null,
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' =>  null,
+				'EDIT_IN_LIST' =>  null,
+				'IS_SEARCHABLE' =>  'Y',
+				'EDIT_FORM_LABEL' => [
+					'en' => 'Load files',
+					'ru' => 'Load files',
+					'de' => 'Load files',
+				],
+			], false);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		return $errors;
+	}
+
+	private function createChecklistFileField(string $entityId, array $errors): array
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_CHECKLIST_FILES',
+			]
+		);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_CHECKLIST_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		return $errors;
+	}
+
+	private function createScrumItemFileField(string $entityId, array $errors): array
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
+			]
+		);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		return $errors;
+	}
+
+	private function installMailUserFields(array $errors): array
+	{
+		if (!isModuleInstalled('mail'))
+		{
+			return $errors;
+		}
+
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID' => 'TASKS_TASK',
+				'FIELD_NAME' => 'UF_MAIL_MESSAGE',
+			]
+		);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->add([
+				'ENTITY_ID' => 'TASKS_TASK',
+				'FIELD_NAME' => 'UF_MAIL_MESSAGE',
+				'USER_TYPE_ID' => 'mail_message',
+				'XML_ID' => '',
+				'MULTIPLE' => 'N',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		return $errors;
+	}
+
+	private function addAgents(): void
+	{
+		$agents = [
+			[
+				'name' => '\Bitrix\Tasks\Util\AgentManager::sendReminder();',
+				'interval' => 60,
+			],
+			[
+				'name' => '\Bitrix\Tasks\Util\AgentManager::notificationThrottleRelease();',
+				'interval' => 300,
+			],
+			[
+				'name' => '\Bitrix\Tasks\Internals\Effective::agent();',
+				'nextExec' => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime('23:50:00')),
+				'disableTimeZone' => true,
+			],
+		];
+		foreach ($agents as $agent)
+		{
+			$preparedAgent = $this->prepareAgent($agent);
+			$this->addAgent($preparedAgent);
+		}
+	}
+
+	private function prepareAgent(array $agent): array
+	{
+		$defaultData = [
+			'module' => $this->MODULE_ID,
+			'period' => 'N',
+			'interval' => 86400,
+			'dateCheck' => '',
+			'active' => 'Y',
+			'nextExec' => '',
+			'sort' => 100,
+			'userId' => false,
+			'existError' => true,
+			'disableTimeZone' => false,
+		];
+		foreach ($defaultData as $field => $value)
+		{
+			$agent[$field] = ($agent[$field] ?? $value);
+		}
+
+		return $agent;
+	}
+
+	private function addAgent(array $agent): void
+	{
+		if ($agent['disableTimeZone'])
+		{
+			CTimeZone::Disable();
+		}
+
+		CAgent::AddAgent(
+			$agent['name'],
+			$agent['module'],
+			$agent['period'],
+			$agent['interval'],
+			$agent['dateCheck'],
+			$agent['active'],
+			$agent['nextExec'],
+			$agent['sort'],
+			$agent['userId'],
+			$agent['existError']
+		);
+
+		if ($agent['disableTimeZone'])
+		{
+			CTimeZone::Enable();
+		}
+	}
+
+	private function runSteppers(): void
+	{
+		$steppers = [
 			[
 				'class' => \Bitrix\Tasks\Update\EfficiencyRecount::class,
 				'delay' => 300,
@@ -192,16 +437,24 @@ Class tasks extends CModule
 				'class' => \Bitrix\Tasks\Update\ExpiredAgentCreator::class,
 				'delay' => 300,
 			],
-			[
+		];
+
+		if (Option::get('tasks', 'needTaskCheckListConversion', 'Y') === 'Y')
+		{
+			$steppers[] = [
 				'class' => \Bitrix\Tasks\Update\TaskCheckListConverter::class,
 				'delay' => 300,
-			],
-			[
+			];
+		}
+		if (Option::get('tasks', 'needTemplateCheckListConversion', 'Y') === 'Y')
+		{
+			$steppers[] = [
 				'class' => \Bitrix\Tasks\Update\TemplateCheckListConverter::class,
 				'delay' => 300,
-			],
-		];
-		foreach ($map as $stepper)
+			];
+		}
+
+		foreach ($steppers as $stepper)
 		{
 			/** @var Bitrix\Main\Update\Stepper $class */
 			$class = $stepper['class'];
@@ -211,9 +464,9 @@ Class tasks extends CModule
 		}
 	}
 
-	public static function setOptions(): void
+	private function setOptions(): void
 	{
-		$map = [
+		$options = [
 			[
 				'name' => 'task_comment_allow_edit',
 				'value' => 'Y',
@@ -223,7 +476,7 @@ Class tasks extends CModule
 				'value' => 'Y',
 			],
 			[
-				'condition' => COption::GetOptionString('tasks', 'sanitize_level', 'not installed yet ))') === 'not installed yet ))',
+				'condition' => Option::get('tasks', 'sanitize_level', 'not installed yet ))') === 'not installed yet ))',
 				'name' => 'sanitize_level',
 				'value' => CBXSanitizer::SECURE_LEVEL_LOW,
 			],
@@ -232,11 +485,11 @@ Class tasks extends CModule
 				'value' => (new \Bitrix\Main\Type\DateTime())->format('Y-m-d H:i:s'),
 			],
 		];
-		foreach ($map as $option)
+		foreach ($options as $option)
 		{
 			if (!isset($option['condition']) || $option['condition'])
 			{
-				\Bitrix\Main\Config\Option::set('tasks', $option['name'], $option['value']);
+				Option::set('tasks', $option['name'], $option['value']);
 			}
 		}
 	}
@@ -247,15 +500,14 @@ Class tasks extends CModule
 
 		$this->errors = false;
 
-		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
+		if (!array_key_exists('savedata', $arParams) || $arParams['savedata'] !== 'Y')
 		{
-			static::deleteFileField('TASKS_TASK');
-			static::deleteFileField('TASKS_TASK_TEMPLATE');
-			static::deleteMailField();
+			$this->uninstallUserFields();
 
-			static::deleteScrumItemFileField();
-
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$dbType = mb_strtolower($DB->type);
+			$this->errors = $DB->RunSQLBatch(
+				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/{$dbType}/uninstall.sql"
+			);
 		}
 
 		//delete agents
@@ -267,26 +519,18 @@ Class tasks extends CModule
 		}
 
 		UnRegisterModule("tasks");
-		UnRegisterModuleDependences("search", "OnReindex", "tasks", "CTasks", "OnSearchReindex");
+		UnRegisterModuleDependences('search', 'OnReindex', 'tasks', 'CTasks', 'OnSearchReindex');
+		UnRegisterModuleDependences('search', 'BeforeIndex', 'tasks', 'CTasksTools', 'FixForumCommentURL');
 		UnRegisterModuleDependences("main", "OnUserDelete", "tasks", "CTasks", "OnUserDelete");
 		UnRegisterModuleDependences("im", "OnGetNotifySchema", "tasks", "CTasksNotifySchema", "OnGetNotifySchema");
 		UnRegisterModuleDependences('main', 'OnBeforeUserDelete', 'tasks', 'CTasks', 'OnBeforeUserDelete');
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", "tasks", "CTasksPullSchema", "OnGetDependentModule");
-		UnRegisterModuleDependences(
-			'search',
-			'BeforeIndex',
-			'tasks',
-			'CTasksTools',
-			'FixForumCommentURL'
-		);
-		UnRegisterModuleDependences('intranet', 'OnPlannerInit', 'tasks',
-			'CTaskPlannerMaintance', 'OnPlannerInit');
-		UnRegisterModuleDependences('intranet', 'OnPlannerAction', 'tasks',
-			'CTaskPlannerMaintance', 'OnPlannerAction');
-		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'tasks',
-			'CTaskRestService', 'OnRestServiceBuildDescription');
-		UnRegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks',
-			'\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
+
+		UnRegisterModuleDependences('intranet', 'OnPlannerInit', 'tasks', 'CTaskPlannerMaintance', 'OnPlannerInit');
+		UnRegisterModuleDependences('intranet', 'OnPlannerAction', 'tasks', 'CTaskPlannerMaintance', 'OnPlannerAction');
+
+		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'tasks', 'CTaskRestService', 'OnRestServiceBuildDescription');
+		UnRegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks', '\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
 
 		UnRegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onBeforeAdd');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentTopicAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Topic', 'onAfterAdd');
@@ -351,30 +595,23 @@ Class tasks extends CModule
 		$eventManager->unRegisterEventHandler('recyclebin', 'OnModuleSurvey', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'OnModuleSurvey');
 		$eventManager->unRegisterEventHandler('recyclebin', 'onAdditionalDataRequest', 'tasks', '\Bitrix\Tasks\Integration\Recyclebin\Manager', 'onAdditionalDataRequest');
 
+		//Scrum
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', 'Bitrix\Tasks\Scrum\Internal\EntityTable', 'onSocNetGroupDelete');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
+		$eventManager->unRegisterEventHandler('tasks', 'OnTaskAdd', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskAdd');
+		$eventManager->unRegisterEventHandler('tasks', 'OnTaskUpdate', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskUpdate');
+
 		// remove tasks from socnetlog table
 		if (
-			(
-				!array_key_exists("savedata", $arParams)
-				|| $arParams["savedata"] != "Y"
-			)
+			(!array_key_exists('savedata', $arParams) || $arParams['savedata'] !== 'Y')
 			&& IsModuleInstalled('socialnetwork')
 			&& CModule::IncludeModule('socialnetwork')
 		)
 		{
-			$dbRes = CSocNetLog::GetList(
-				array(),
-				array("EVENT_ID" => "tasks"),
-				false,
-				false,
-				array("ID")
-			);
-
-			if ($dbRes)
+			$socNetLogRes = CSocNetLog::GetList([], ['EVENT_ID' => 'tasks'], false, false, ['ID']);
+			while ($log = $socNetLogRes->Fetch())
 			{
-				while ($arRes = $dbRes->Fetch())
-				{
-					CSocNetLog::Delete($arRes["ID"]);
-				}
+				CSocNetLog::Delete($log['ID']);
 			}
 		}
 
@@ -382,226 +619,98 @@ Class tasks extends CModule
 		if (IsModuleInstalled('im') && CModule::IncludeModule('im'))
 		{
 			if (method_exists('CIMNotify', 'DeleteByModule'))
+			{
 				CIMNotify::DeleteByModule('tasks');
+			}
 		}
 
-		// remove comment edit flags
-		COption::RemoveOption('tasks', 'task_comment_allow_edit','');
-		COption::RemoveOption('tasks', 'task_comment_allow_remove', '');
+		$this->removeOptions();
 
 		return true;
 	}
 
-
-	public static function InstallUserFields($moduleId = 'all')
+	public function uninstallUserFields(): void
 	{
-		global $APPLICATION;
+		$this->deleteFileFields('TASKS_TASK');
+		$this->deleteFileFields('TASKS_TASK_TEMPLATE');
 
-		$errors = array();
+		$this->deleteChecklistFileFields('TASKS_TASK_CHECKLIST');
+		$this->deleteChecklistFileFields('TASKS_TASK_TEMPLATE_CHECKLIST');
 
-		if($moduleId === 'all' || $moduleId === 'disk')
-		{
-			$errors = self::installDiskUserFields();
-		}
+		$this->deleteMailFields('TASKS_TASK');
 
-		if (in_array($moduleId, array('all', 'mail')))
-		{
-			if (isModuleInstalled('mail'))
-			{
-				$uf = new \CUserTypeEntity;
-				$res = \CUserTypeEntity::getList(
-					array(),
-					array(
-						'ENTITY_ID' => 'TASKS_TASK',
-						'FIELD_NAME' => 'UF_MAIL_MESSAGE'
-					)
-				);
-				if (!$res->fetch())
-				{
-					$id = $uf->add(array(
-						'ENTITY_ID'     => 'TASKS_TASK',
-						'FIELD_NAME'    => 'UF_MAIL_MESSAGE',
-						'USER_TYPE_ID'  => 'mail_message',
-						'XML_ID'        => '',
-						'MULTIPLE'      => 'N',
-						'MANDATORY'     => 'N',
-						'SHOW_FILTER'   => 'N',
-						'SHOW_IN_LIST'  => 'N',
-						'EDIT_IN_LIST'  => 'N',
-						'IS_SEARCHABLE' => 'N',
-					), false);
-
-					if (!$id && $APPLICATION->getException())
-					{
-						$errors[] = $APPLICATION->getException()->getString();
-					}
-				}
-			}
-		}
-
-		return ($errors);
+		$this->deleteScrumItemFileFields('TASKS_SCRUM_ITEM');
 	}
 
-	public static function installDiskUserFields()
+	private function deleteFileFields(string $entityId): void
 	{
-		$errors = array();
-
-		if(!IsModuleInstalled('disk'))
-		{
-			return $errors;
-		}
-
-		static::createFileField('TASKS_TASK', $errors);
-		static::createFileField('TASKS_TASK_TEMPLATE', $errors);
-
-		static::createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
-		static::createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
-
-		static::createScrumItemFileField($errors);
-
-		return $errors;
-	}
-
-	private static function createFileField($entity, array &$errors)
-	{
-		global $APPLICATION;
-
-		$uf = new CUserTypeEntity;
-		$rsData = CUserTypeEntity::getList(array("ID" => "ASC"), array("ENTITY_ID" => $entity, "FIELD_NAME" => 'UF_TASK_WEBDAV_FILES'));
-		if (!($rsData && ($arRes = $rsData->Fetch())))
-		{
-			$intID = $uf->add(array(
-				'ENTITY_ID'     => $entity,
-				'FIELD_NAME'    => 'UF_TASK_WEBDAV_FILES',
-				'USER_TYPE_ID'  => 'disk_file',
-				'XML_ID'        => 'TASK_WEBDAV_FILES',
-				'MULTIPLE'      => 'Y',
-				'MANDATORY'     =>  null,
-				'SHOW_FILTER'   => 'N',
-				'SHOW_IN_LIST'  =>  null,
-				'EDIT_IN_LIST'  =>  null,
-				'IS_SEARCHABLE' =>  'Y',
-				'EDIT_FORM_LABEL' => array(
-					'en' => 'Load files',
-					'ru' => 'Load files',
-					'de' => 'Load files'
-				)
-			), false);
-
-			if (false == $intID && ($strEx = $APPLICATION->getException()))
-			{
-				$errors[] = $strEx->getString();
-			}
-		}
-	}
-
-	private static function createChecklistFileField($entity, array &$errors)
-	{
-		global $APPLICATION;
-
-		$userField = new CUserTypeEntity();
-		$userFieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID' => $entity, 'FIELD_NAME' => 'UF_CHECKLIST_FILES']);
-
-		if (!$userFieldRes->Fetch())
-		{
-			$userFieldId = $userField->Add([
-				'ENTITY_ID' => $entity,
-				'FIELD_NAME' => 'UF_CHECKLIST_FILES',
-				'USER_TYPE_ID' => 'disk_file',
-				'MULTIPLE' => 'Y',
-				'MANDATORY' => 'N',
-				'SHOW_FILTER' => 'N',
-				'SHOW_IN_LIST' => 'N',
-				'EDIT_IN_LIST' => 'N',
-				'IS_SEARCHABLE' => 'N',
-			], false);
-
-			if (!$userFieldId && $APPLICATION->getException())
-			{
-				$errors[] = $APPLICATION->getException()->getString();
-			}
-		}
-	}
-
-	private static function createScrumItemFileField(array &$errors)
-	{
-		global $APPLICATION;
-
-		$userField = new CUserTypeEntity();
-		$userFieldRes = \CUserTypeEntity::getList([], [
-			'ENTITY_ID' => 'TASKS_SCRUM_ITEM',
-			'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES'
-		]);
-
-		if (!$userFieldRes->Fetch())
-		{
-			$userFieldId = $userField->Add([
-				'ENTITY_ID' => 'TASKS_SCRUM_ITEM',
-				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
-				'USER_TYPE_ID' => 'disk_file',
-				'MULTIPLE' => 'Y',
-				'MANDATORY' => 'N',
-				'SHOW_FILTER' => 'N',
-				'SHOW_IN_LIST' => 'N',
-				'EDIT_IN_LIST' => 'N',
-				'IS_SEARCHABLE' => 'N',
-			], false);
-
-			if (!$userFieldId && $APPLICATION->getException())
-			{
-				$errors[] = $APPLICATION->getException()->getString();
-			}
-		}
-	}
-
-	private static function deleteFileField($entity)
-	{
-		$rsUserType = CUserTypeEntity::getList(
-			array(),
-			array(
-				'ENTITY_ID'  => $entity,
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => $entityId,
 				'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
-			)
+			]
 		);
-
-		if ($arUserType = $rsUserType->fetch())
+		if ($userField = $userFieldRes->Fetch())
 		{
-			$obUserField = new CUserTypeEntity;
-			$obUserField->delete($arUserType['ID']);
+			(new CUserTypeEntity())->delete($userField['ID']);
 		}
 	}
 
-	private static function deleteMailField()
+	private function deleteChecklistFileFields(string $entityId): void
 	{
-		$userType = \CUserTypeEntity::getList(
-			array(),
-			array(
-				'ENTITY_ID'  => 'TASKS_TASK',
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => $entityId,
+				'FIELD_NAME' => 'UF_CHECKLIST_FILES',
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
+		{
+			(new CUserTypeEntity())->delete($userField['ID']);
+		}
+	}
+
+	private function deleteMailFields(string $entityId): void
+	{
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => $entityId,
 				'FIELD_NAME' => 'UF_MAIL_MESSAGE',
-			)
-		)->fetch();
-
-		if ($userType)
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
 		{
-			$userField = new \CUserTypeEntity;
-			$userField->delete($userType['ID']);
+			(new CUserTypeEntity())->delete($userField['ID']);
 		}
 	}
 
-	private static function deleteScrumItemFileField()
+	private function deleteScrumItemFileFields(string $entityId): void
 	{
-		$userType = \CUserTypeEntity::getList(
-			array(),
-			array(
-				'ENTITY_ID'  => 'TASKS_SCRUM_ITEM',
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => $entityId,
 				'FIELD_NAME' => 'UF_SCRUM_ITEM_FILES',
-			)
-		)->fetch();
-
-		if ($userType)
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
 		{
-			$userField = new \CUserTypeEntity;
-			$userField->delete($userType['ID']);
+			(new CUserTypeEntity())->delete($userField['ID']);
+		}
+	}
+
+	private function removeOptions(): void
+	{
+		$options = [
+			'task_comment_allow_edit',
+			'task_comment_allow_remove',
+		];
+		foreach ($options as $name)
+		{
+			Option::delete('tasks', ['name' => $name]);
 		}
 	}
 

@@ -1,4 +1,4 @@
-import {Event, Loc, Runtime, Tag, Text, Dom} from 'main.core';
+import {Event, Loc, Runtime, Tag, Text, Dom, Type} from 'main.core';
 import {Sprint} from './sprint';
 import {SidePanel} from '../../service/side.panel';
 import {RequestSender} from '../../utility/request.sender';
@@ -274,7 +274,7 @@ export class SprintSidePanel
 
 	buildSprintActions(): HTMLElement|string
 	{
-		const uncompletedTasks = this.currentSprint.getUnCompletedTasks();
+		const uncompletedTasks = this.currentSprint.getUncompletedTasks();
 		if (uncompletedTasks === 0)
 		{
 			return '';
@@ -472,9 +472,14 @@ export class SprintSidePanel
 
 	getDifferenceStoryPointsBetweenSprints(firstSprint: Sprint, secondSprint: Sprint): string
 	{
-		const difference = parseFloat(
+		let difference = parseFloat(
 			firstSprint.getTotalStoryPoints().getPoints() - secondSprint.getTotalStoryPoints().getPoints()
 		);
+
+		if (Type.isFloat(difference))
+		{
+			difference = difference.toFixed(1);
+		}
 
 		if (difference === 0)
 		{

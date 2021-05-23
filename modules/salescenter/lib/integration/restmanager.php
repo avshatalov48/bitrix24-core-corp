@@ -13,6 +13,7 @@ class RestManager extends Base
 
 	public const TAG_SMSPROVIDER_SMS = 'sms';
 	public const TAG_SMSPROVIDER_PARTNERS = 'partners';
+	public const TAG_SMSPROVIDER_RECOMMENDED = 'recommended';
 
 	public const TAG_PAYSYSTEM_PAYMENT = 'payment';
 	public const TAG_PAYSYSTEM_MAKE_PAYMENT = 'make_payment';

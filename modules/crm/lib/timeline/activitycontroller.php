@@ -812,7 +812,7 @@ class ActivityController extends EntityController
 			$storageTypeID = isset($fields['STORAGE_TYPE_ID'])
 				? (int)$fields['STORAGE_TYPE_ID'] : Integration\StorageType::Undefined;
 
-			$elementIDs = unserialize($fields['STORAGE_ELEMENT_IDS']);
+			$elementIDs = unserialize($fields['STORAGE_ELEMENT_IDS'], ['allowed_classes' => false]);
 			if(is_array($elementIDs) && !empty($elementIDs))
 			{
 				foreach($elementIDs as $elementID)

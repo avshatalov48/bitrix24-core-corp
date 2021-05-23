@@ -447,6 +447,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
 					'prefix' => 'U',
+					'allowBots' => 'Y'
 				),
 				"default" => true,
 			),

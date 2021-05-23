@@ -158,7 +158,7 @@ if ($orderId > 0)
 		</span>';
 	}
 
-	$strCard = '<div class="bx-ui-tooltip-info-data-cont" id="bx_user_info_data_cont_'.htmlspecialcharsbx($entityId).'"><div class="bx-ui-tooltip-info-data-info">'.$html.'</div></div>';
+	$strCard = '<div class="bx-ui-tooltip-info-data-cont" id="bx_user_info_data_cont_'.htmlspecialcharsbx($entityId).'"><div class="bx-ui-tooltip-info-data-info crm-tooltip-info">'.$html.'</div></div>';
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>
 <a href="'.$pathToOrderDetails.'" target="_blank">'.GetMessage('CRM_ODCA_GO_ORDER').'</a>';

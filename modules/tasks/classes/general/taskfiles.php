@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2013 Bitrix
- * 
+ *
  * @deprecated
  * This entity is no longer supported and used by tasks module. See user fields and disk instead.
  */
@@ -22,7 +22,7 @@ class CTaskFiles
 	 *
 	 * @param array $arFilesIds
 	 * @param integer $userId
-	 * 
+	 *
 	 * @return array $arAccessMap, such as $arAccessMap = array('f' . $fileId => true/false, ...)
 	 */
 	public static function checkFilesAccessibilityByUser($arFilesIds, $userId)
@@ -160,11 +160,11 @@ class CTaskFiles
 	 * This function saves given file temporary.
 	 * After it, if CTaskFiles::Add() called with given FILE_ID,
 	 * this file will be marked as permamently saved.
-	 * 
+	 *
 	 * But if timeout TEMPORARY_FILES_TTL seconds occured,
 	 * this files can be removed by garbage collector.
-	 * 
-	 * Garbage collector runs at probability GC_PROBABILITY at every 
+	 *
+	 * Garbage collector runs at probability GC_PROBABILITY at every
 	 * SaveFileTemporary() call.
 	 *
 	 * @param integer $userId
@@ -172,7 +172,7 @@ class CTaskFiles
 	 * @param string $fileSize
 	 * @param string $fileTmpName
 	 * @param string $fileType
-	 * 
+	 *
 	 * @return int $fileId
 	 */
 	public static function saveFileTemporary($userId, $fileName, $fileSize, $fileTmpName, $fileType)
@@ -259,7 +259,7 @@ class CTaskFiles
 		while ($ar = $rc->Fetch())
 			$arFiles[] = (int) $ar['FILE_ID'];
 
-		// For backward compatibility. Just uploaded files was registered in 
+		// For backward compatibility. Just uploaded files was registered in
 		// $_SESSION["TASKS_UPLOADED_FILES"] in past
 		if (isset($_SESSION['TASKS_UPLOADED_FILES']) && count($_SESSION['TASKS_UPLOADED_FILES']))
 		{
@@ -488,7 +488,7 @@ class CTaskFiles
 
 	/**
 	 * Used for tasks.task.template component
-	 * 
+	 *
 	 * @deprecated
 	 */
 	public static function removeTemporaryStatusForFiles($arFilesIds, $userId)
@@ -799,7 +799,7 @@ class CTaskFiles
 
 		while ($arTemplate = $rsTemplate->Fetch())
 		{
-			$arTemplate['FILES'] = unserialize($arTemplate['FILES']);
+			$arTemplate['FILES'] = unserialize($arTemplate['FILES'], ['allowed_classes' => false]);
 
 			if (is_array($arTemplate['FILES']))
 			{
@@ -820,8 +820,8 @@ class CTaskFiles
 		$arAccessibleTasks = array();	// Tasks that user can access
 		$arTaskFiles       = array();	// Mapped FILE_ID to array of TASK_ID, that contains this file
 
-		// Usage of 'f' prefix prevents createing indexed array, 
-		// but forces associative. So, PHP wouldn't fill in the gaps in 
+		// Usage of 'f' prefix prevents createing indexed array,
+		// but forces associative. So, PHP wouldn't fill in the gaps in
 		// index values.
 		// It should improves perfomance and prevent big memory usage.
 
@@ -839,7 +839,7 @@ class CTaskFiles
 		{
 			$taskId = (int) $arTaskFile['TASK_ID'];
 			$fileId = (int) $arTaskFile['FILE_ID'];
-			
+
 			$arTasksWithFiles[] = $taskId;
 			$arTaskFiles['f' . $fileId][] = $taskId;
 		}

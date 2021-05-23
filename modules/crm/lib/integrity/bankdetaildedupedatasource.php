@@ -122,6 +122,10 @@ class BankDetailDedupeDataSource extends MatchHashDedupeDataSource
 				DuplicateIndexMismatch::prepareQueryField($criterion, $entityTypeID, $rootEntityID, $userID)
 			);
 		}
+		if ($this->getParams()->limitByAssignedUser())
+		{
+			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
+		}
 
 		$limit = 0;
 		if(is_array($options) && isset($options['LIMIT']))

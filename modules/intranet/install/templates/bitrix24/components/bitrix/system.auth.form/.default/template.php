@@ -172,7 +172,7 @@ else
 			<?if (($bindingItems = Binding\Menu::getMenuItems('top_panel', 'user_menu', ['inline' => true, 'context' => ['USER_ID' => $USER->GetID()]]))):?>
 				<?= \CUtil::phpToJSObject($bindingItems);?>,
 			<?endif;?>
-				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&<?=bitrix_sessid_get()?>&backurl=" + encodeURIComponent(B24.getBackUrl()) }
+				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&sessid=" + BX.bitrix_sessid() + "&backurl=" + encodeURIComponent(B24.getBackUrl()) }
 			],
 			{
 				offsetTop: -9,
@@ -219,7 +219,7 @@ else
 
 $frame = $this->createFrame("b24_helper")->begin("");
 
-	$support_bot = 0;
+	$supportBotId = 0;
 	if (\Bitrix\Main\Loader::includeModule("imbot"))
 	{
 		if (
@@ -228,14 +228,14 @@ $frame = $this->createFrame("b24_helper")->begin("");
 			&& \Bitrix\ImBot\Bot\Support24::isEnabled()
 		)
 		{
-			$support_bot = \Bitrix\ImBot\Bot\Support24::getBotId();
+			$supportBotId = (int)\Bitrix\ImBot\Bot\Support24::getBotId();
 		}
 		else if (
-			method_exists('\\Bitrix\\ImBot\\Bot\\Support', 'isEnabled')
-			&& \Bitrix\ImBot\Bot\Support::isEnabled()
+			method_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', 'isEnabled')
+			&& \Bitrix\ImBot\Bot\SupportBox::isEnabled()
 		)
 		{
-			$support_bot = \Bitrix\ImBot\Bot\Support::getBotId();
+			$supportBotId = (int)\Bitrix\ImBot\Bot\SupportBox::getBotId();
 		}
 	}
 
@@ -251,7 +251,7 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		"user_email" => $USER->GetEmail(),
 		"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
 		"is_cloud" => $bitrix24Included ? "1" : "0",
-		"support_bot" => $support_bot,
+		"support_bot" => $supportBotId,
 	];
 	$imBotIncluded = \Bitrix\Main\Loader::includeModule('imbot');
 	if($imBotIncluded)
@@ -273,7 +273,7 @@ $frame = $this->createFrame("b24_helper")->begin("");
 
 	$host = $bitrix24Included && defined("BX24_HOST_NAME") ? BX24_HOST_NAME : CIntranetUtils::getHostName();
 	$notifyData = array(
-		"support_bot" => $support_bot,
+		"support_bot" => $supportBotId,
 		"is_admin" => $isAdmin,
 		"user_id" => $USER->GetID(),
 		"user_email" => $USER->GetEmail(),
@@ -317,8 +317,8 @@ $frame = $this->createFrame("b24_helper")->begin("");
 			});
 		<?endif;?>
 		<?
-		if ($support_bot && $_REQUEST['support_chat'])
-			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$support_bot.');});';
+		if ($supportBotId && $_REQUEST['support_chat'])
+			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$supportBotId.');});';
 		?>
 	</script>
 <?

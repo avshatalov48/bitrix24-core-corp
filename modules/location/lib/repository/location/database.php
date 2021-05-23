@@ -66,7 +66,7 @@ final class Database
 
 		if($result)
 		{
-			$result = Location\Factory\OrmFactory::createLocation($result, $languageId);
+			$result = \Bitrix\Location\Entity\Location\Converter\OrmConverter::createLocation($result, $languageId);
 		}
 
 		return $result;
@@ -76,19 +76,19 @@ final class Database
 	/** @inheritDoc */
 	public function findById(int $id, string $languageId)
 	{
-
-		if((int)$id <= 0)
+		if($id <= 0)
 		{
 			return null;
 		}
 
-		$result = $this->createQuery($languageId)
+		$result = null;
+		$res = $this->createQuery($languageId)
 			->addFilter('=ID', $id)
 			->fetchObject();
 
-		if($result)
+		if($res)
 		{
-			$result =Location\Factory\OrmFactory::createLocation($result, $languageId);
+			$result = \Bitrix\Location\Entity\Location\Converter\OrmConverter::createLocation($res, $languageId);
 		}
 
 		return $result;
@@ -110,7 +110,7 @@ final class Database
 			->addFilter('%NAME.NAME_NORMALIZE', $text)
 			->fetchCollection();
 
-		return Location\Factory\OrmFactory::createCollection($result, $languageId);
+		return \Bitrix\Location\Entity\Location\Converter\OrmConverter::createCollection($result, $languageId);
 	}
 
 	/** @inheritDoc */
@@ -134,7 +134,7 @@ final class Database
 			]
 		])->fetchCollection();
 
-		$result = Location\Factory\OrmFactory::createParentCollection($ormCollection, $languageId);
+		$result = \Bitrix\Location\Entity\Location\Converter\OrmConverter::createParentCollection($ormCollection, $languageId);
 		$result->setDescendant($location);
 		return $result;
 	}

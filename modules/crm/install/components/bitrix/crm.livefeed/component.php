@@ -10,7 +10,7 @@ if (
 	&& !empty($arParams["~FIELDS"]["~PARAMS"])
 )
 {
-	$arEventParams = unserialize($arParams["~FIELDS"]["~PARAMS"]);
+	$arEventParams = unserialize($arParams["~FIELDS"]["~PARAMS"], ['allowed_classes' => false]);
 	if (!is_array($arEventParams))
 	{
 		$arEventParams = array();

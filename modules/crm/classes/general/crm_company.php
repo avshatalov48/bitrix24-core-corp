@@ -1,6 +1,7 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\UtmTable;
@@ -20,6 +21,8 @@ use Bitrix\Crm\Counter\EntityCounterManager;
 
 class CAllCrmCompany
 {
+	use UserFieldPreparer;
+
 	static public $sUFEntityID = 'CRM_COMPANY';
 	const USER_FIELD_ENTITY_ID = 'CRM_COMPANY';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_COMPANY_SPD';
@@ -27,7 +30,7 @@ class CAllCrmCompany
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
-	
+
 	public $cPerms = null;
 	protected $bCheckPermission = true;
 	const TABLE_ALIAS = 'L';
@@ -434,7 +437,7 @@ class CAllCrmCompany
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		$top = (int) $top;
+		$top = (int)$top;
 		if ($top <= 0)
 		{
 			return [];
@@ -442,40 +445,11 @@ class CAllCrmCompany
 
 		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
-		$permissionSql = '';
-		if (!CCrmPerms::IsAdmin())
-		{
-			if (!$userPermissions)
-			{
-				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-			}
-
-			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
-		}
-
-		if ($permissionSql === false)
-		{
-			return [];
-		}
-
-		$query = new Main\Entity\Query(Crm\CompanyTable::getEntity());
-		$query->addSelect('ID');
-		$query->addOrder('ID', $sortType);
-		$query->setLimit($top);
-
-		if ($permissionSql !== '')
-		{
-			$permissionSql = mb_substr($permissionSql, 7);
-			$query->where('ID', 'in', new Main\DB\SqlExpression($permissionSql));
-		}
-
-		$rs = $query->exec();
-		$results = [];
-		while ($field = $rs->fetch())
-		{
-			$results[] = (int) $field['ID'];
-		}
-		return $results;
+		return \Bitrix\Crm\Entity\Company::getInstance()->getTopIDs([
+			'order' => ['ID' => $sortType],
+			'limit' => $top,
+			'userPermissions' => $userPermissions
+		]);
 	}
 
 	public static function GetTotalCount()
@@ -1058,6 +1032,9 @@ class CAllCrmCompany
 			$arFields['TITLE'] = self::GetAutoTitle();
 		}
 
+		$fields = self::GetUserFields();
+		$this->fillEmptyFieldValues($arFields, $fields);
+
 		if (!$this->CheckFields($arFields, false, $options))
 		{
 			$result = false;
@@ -1281,7 +1258,9 @@ class CAllCrmCompany
 			}
 
 			//region Search content index
-			Bitrix\Crm\Search\SearchContentBuilderFactory::create(CCrmOwnerType::Company)->build($ID);
+			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
+				CCrmOwnerType::Company
+			)->build($ID, ['checkExist' => true]);
 			//endregion
 
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
@@ -1787,6 +1766,14 @@ class CAllCrmCompany
 					Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::processBindingsChange($curLeadID);
 				}
 			}
+
+			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
+				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+			if(!$isSystemAction && $enableDupIndexInvalidation)
+			{
+				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Company, $ID);
+			}
+
 			Bitrix\Crm\Statistics\CompanyGrowthStatisticEntry::synchronize($ID, array(
 				'ASSIGNED_BY_ID' => $assignedByID
 			));
@@ -1821,6 +1808,10 @@ class CAllCrmCompany
 						),
 						$assignedByIDs
 					);
+				}
+				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
+				{
+					\Bitrix\Crm\Integrity\DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Company, $ID);
 				}
 			}
 
@@ -2150,17 +2141,17 @@ class CAllCrmCompany
 				}
 			}
 
-			DuplicateEntityRanking::unregisterEntityStatistics(CCrmOwnerType::Company, $ID);
-			DuplicateOrganizationCriterion::unregister(CCrmOwnerType::Company, $ID);
-			DuplicateCommunicationCriterion::unregister(CCrmOwnerType::Company, $ID);
-			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Company, $ID);
-
 			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
 				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
 			if($enableDupIndexInvalidation)
 			{
-				\Bitrix\Crm\Integrity\DuplicateIndexBuilder::markAsJunk(CCrmOwnerType::Company, $ID);
+				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Company, $ID);
 			}
+
+			DuplicateEntityRanking::unregisterEntityStatistics(CCrmOwnerType::Company, $ID);
+			DuplicateOrganizationCriterion::unregister(CCrmOwnerType::Company, $ID);
+			DuplicateCommunicationCriterion::unregister(CCrmOwnerType::Company, $ID);
+			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Company, $ID);
 
 			//Statistics & History -->
 			$leadID = isset($arFields['LEAD_ID']) ? (int)$arFields['LEAD_ID'] : 0;
@@ -3042,4 +3033,3 @@ class CAllCrmCompany
 		return ($result && $result['IS_MY_COMPANY'] === 'Y');
 	}
 }
-?>

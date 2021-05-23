@@ -50,7 +50,7 @@ class QuoteSearchContentRebuildAgent extends EntitySearchContentRebuildAgent
 	public function getProgressData()
 	{
 		$s = Option::get('crm', '~CRM_REBUILD_QUOTE_SEARCH_CONTENT_PROGRESS',  '');
-		$data = $s !== '' ? unserialize($s) : null;
+		$data = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($data))
 		{
 			$data = array();

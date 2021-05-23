@@ -634,7 +634,7 @@
 
 
 
-	if (typeof exports !== 'undefined' && 'Vue' in exports) {
+	if (typeof exports !== 'undefined' && typeof exports.Vue !== 'undefined') {
 	  exports.Vue = exports.Vue;
 	  exports.VueVendor = exports.VueVendor;
 	} else {

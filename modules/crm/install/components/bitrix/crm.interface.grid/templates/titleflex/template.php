@@ -145,7 +145,7 @@ $APPLICATION->IncludeComponent(
 		"ALLOW_ROWS_SORT" => false,
 		"ALLOW_COLUMNS_RESIZE" => true,
 		"ALLOW_HORIZONTAL_SCROLL" => true,
-		"ALLOW_SORT" => true,
+		"ALLOW_SORT" => ($arParams['ALLOW_SORT'] ?? true) === true,
 		"ALLOW_PIN_HEADER" => true,
 		"ACTION_PANEL" => $actionPanel,
 		"SHOW_CHECK_ALL_CHECKBOXES" => isset($arParams['SHOW_CHECK_ALL_CHECKBOXES']) ? (bool)($arParams['SHOW_CHECK_ALL_CHECKBOXES']) : true,
@@ -161,7 +161,8 @@ $APPLICATION->IncludeComponent(
 		"SHOW_PAGESIZE" => isset($arParams['SHOW_PAGESIZE']) ? (bool)($arParams['SHOW_PAGESIZE']) : true,
 		"SHOW_ACTION_PANEL" => isset($arParams['SHOW_ACTION_PANEL']) ? (bool)($arParams['SHOW_ACTION_PANEL']) : true,
 		"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
-		"TOTAL_ROWS_COUNT" => isset($arParams['TOTAL_ROWS_COUNT']) ? (int)$arParams['TOTAL_ROWS_COUNT'] : null
+		"TOTAL_ROWS_COUNT" => isset($arParams['TOTAL_ROWS_COUNT']) ? (int)$arParams['TOTAL_ROWS_COUNT'] : null,
+		"ADVANCED_EDIT_MODE" => (bool)($arParams['ADVANCED_EDIT_MODE'] ?? false),
 	),
 	$component,
 	array('HIDE_ICONS' => 'Y')

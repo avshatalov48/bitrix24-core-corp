@@ -57,6 +57,16 @@ $arDefaultUrlTemplates404 = array(
 	'automation' => 'automation/#category_id#/',
 );
 
+$arDefaultUrlTemplatesContact = array(
+	'merge' => 'merge/',
+	'dedupelist' => 'dedupelist/',
+);
+
+$arDefaultUrlTemplatesCompany = array(
+	'merge' => 'merge/',
+	'dedupelist' => 'dedupelist/',
+);
+
 $arDefaultVariableAliases404 = array(
 
 );
@@ -99,6 +109,37 @@ if ($arParams['SEF_MODE'] == 'Y')
 			$arResult['PATH_TO_DEAL_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
 		else
 			$arResult['PATH_TO_DEAL_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
+	}
+
+	if ($arParams['PATH_TO_CONTACT'] == '')
+	{
+		$arParams['PATH_TO_CONTACT'] = '/crm/contact/';
+	}
+	if ($arParams['PATH_TO_COMPANY'] == '')
+	{
+		$arParams['PATH_TO_COMPANY'] = '/crm/company/';
+	}
+	if ($arParams['PATH_TO_LEAD'] == '')
+	{
+		$arParams['PATH_TO_LEAD'] = '/crm/lead/';
+	}
+	if ($arParams['PATH_TO_INVOICE'] == '')
+	{
+		$arParams['PATH_TO_INVOICE'] = '/crm/invoice/';
+	}
+	foreach ($arDefaultUrlTemplatesContact as $url => $value)
+	{
+		if($arParams['PATH_TO_CONTACT_'.mb_strtoupper($url)] == '')
+			$arResult['PATH_TO_CONTACT_'.mb_strtoupper($url)] =$arParams['PATH_TO_CONTACT'].$value;
+		else
+			$arResult['PATH_TO_CONTACT_'.mb_strtoupper($url)] = $arParams['PATH_TO_CONTACT_'.mb_strtoupper($url)];
+	}
+	foreach ($arDefaultUrlTemplatesCompany as $url => $value)
+	{
+		if($arParams['PATH_TO_COMPANY_'.mb_strtoupper($url)] == '')
+			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] =$arParams['PATH_TO_COMPANY'].$value;
+		else
+			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] = $arParams['PATH_TO_COMPANY_'.mb_strtoupper($url)];
 	}
 }
 else

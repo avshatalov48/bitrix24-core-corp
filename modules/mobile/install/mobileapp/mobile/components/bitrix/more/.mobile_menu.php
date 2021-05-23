@@ -284,7 +284,7 @@ JS
 									object:"list",
 									version:"{$diskComponentVersion}",
 									componentParams:{userId: env.userId, ownerId: "shared_files_s1", entityType:"common"},
-									widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}"}
+									widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
 							});
 						}
 						else 
@@ -322,7 +322,7 @@ JS
 							table_settings: 
 							{
 								useTagsInSearch:"NO",
-								type:"files",
+								type:"files"
 							}
 						});
 JS

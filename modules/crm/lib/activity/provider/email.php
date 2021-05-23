@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm;
@@ -25,13 +26,13 @@ class Email extends Activity\Provider\Base
 
 	public static function getTypes()
 	{
-		return array(
-			array(
+		return [
+			[
 				'NAME' => 'E-mail',
 				'PROVIDER_ID' => static::getId(),
-				'PROVIDER_TYPE_ID' => 'EMAIL'
-			)
-		);
+				'PROVIDER_TYPE_ID' => 'EMAIL',
+			],
+		];
 	}
 
 	public static function getName()
@@ -64,8 +65,10 @@ class Email extends Activity\Provider\Base
 	 */
 	public static function checkForWaitingCompletion(array $activity)
 	{
-		return !(isset($activity['COMPLETED']) && $activity['COMPLETED'] === 'Y')
-			|| isset($activity['DIRECTION']) && $activity['DIRECTION'] == \CCrmActivityDirection::Incoming;
+		$completed = isset($activity['COMPLETED']) && $activity['COMPLETED'] === 'Y';
+		$incoming = isset($activity['DIRECTION']) && $activity['DIRECTION'] == \CCrmActivityDirection::Incoming;
+
+		return !$completed || $incoming;
 	}
 
 	/**
@@ -80,9 +83,9 @@ class Email extends Activity\Provider\Base
 
 	public static function getSupportedCommunicationStatistics()
 	{
-		return array(
-			CommunicationStatistics::STATISTICS_QUANTITY
-		);
+		return [
+			CommunicationStatistics::STATISTICS_QUANTITY,
+		];
 	}
 
 	public static function checkFields($action, &$fields, $id, $params = null)
@@ -97,6 +100,7 @@ class Email extends Activity\Provider\Base
 		{
 			$fields['~DEADLINE'] = $fields['~END_TIME'];
 		}
+
 		return $result;
 	}
 
@@ -111,27 +115,27 @@ class Email extends Activity\Provider\Base
 			EmailSentTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}
 
-		if(!($direction === \CCrmActivityDirection::Outgoing && $parentID > 0))
+		if (!($direction === \CCrmActivityDirection::Outgoing && $parentID > 0))
 		{
 			return;
 		}
 
 		$dbResult = \CCrmActivity::GetList(
-			array(),
-				array('ID'=> $parentID, 'CHECK_PERMISSIONS' => 'N'),
-				false,
-				false,
-				array('ID', 'DIRECTION', 'COMPLETED')
+			[],
+			['ID' => $parentID, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID', 'DIRECTION', 'COMPLETED']
 		);
 		$parentFields = $dbResult->Fetch();
-		if(!is_array($parentFields))
+		if (!is_array($parentFields))
 		{
 			return;
 		}
 
 		$parentCompleted = isset($parentFields['COMPLETED']) && $parentFields['COMPLETED'] === 'Y';
 		$parentDirection = isset($parentFields['DIRECTION']) ? (int)$parentFields['DIRECTION'] : \CCrmActivityDirection::Undefined;
-		if(!$parentCompleted && $parentDirection === \CCrmActivityDirection::Incoming)
+		if (!$parentCompleted && $parentDirection === \CCrmActivityDirection::Incoming)
 		{
 			\CCrmActivity::Complete($parentID, true);
 		}
@@ -146,10 +150,10 @@ class Email extends Activity\Provider\Base
 
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.activity.email', '',
-			array(
+			[
 				'ACTIVITY' => $activity,
 				'ACTION'   => 'view',
-			)
+			]
 		);
 
 		return ob_get_clean();
@@ -163,10 +167,10 @@ class Email extends Activity\Provider\Base
 
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.activity.email', '',
-			array(
+			[
 				'ACTIVITY' => $activity,
 				'ACTION'   => 'create',
-			)
+			]
 		);
 
 		return ob_get_clean();
@@ -175,21 +179,21 @@ class Email extends Activity\Provider\Base
 	public static function prepareEmailInfo(array $fields)
 	{
 		$direction = isset($fields['DIRECTION']) ? (int)$fields['DIRECTION'] : \CCrmActivityDirection::Undefined;
-		if($direction !== \CCrmActivityDirection::Outgoing)
+		if ($direction !== \CCrmActivityDirection::Outgoing)
 		{
 			return null;
 		}
 
 		$settings = isset($fields['SETTINGS'])
-			? (is_array($fields['SETTINGS']) ? $fields['SETTINGS'] : unserialize($fields['SETTINGS']))
-			: array();
-		if(!(isset($settings['IS_BATCH_EMAIL']) && $settings['IS_BATCH_EMAIL'] === false))
+			? (is_array($fields['SETTINGS']) ? $fields['SETTINGS'] : unserialize($fields['SETTINGS'], ['allowed_classes' => false]))
+			: [];
+		if (!(isset($settings['IS_BATCH_EMAIL']) && $settings['IS_BATCH_EMAIL'] === false))
 		{
 			return null;
 		}
 
-		$result = array();
-		if(isset($settings['READ_CONFIRMED']) && $settings['READ_CONFIRMED'] > 0)
+		$result = [];
+		if (isset($settings['READ_CONFIRMED']) && $settings['READ_CONFIRMED'] > 0)
 		{
 			$result['STATUS_TEXT'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_READ');
 		}
@@ -202,6 +206,7 @@ class Email extends Activity\Provider\Base
 
 			$result['STATUS_TEXT'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_EMAIL_STATUS_SENT');
 		}
+
 		return $result;
 	}
 
@@ -221,12 +226,12 @@ class Email extends Activity\Provider\Base
 
 			if (empty($targetActivity))
 			{
-				$res = Activity\MailMetaTable::getList(array(
-					'select' => array('ACTIVITY_ID'),
-					'filter' => array(
-						'=MSG_ID_HASH' => md5(mb_strtolower($inReplyTo))
-					),
-				));
+				$res = Activity\MailMetaTable::getList([
+					'select' => ['ACTIVITY_ID'],
+					'filter' => [
+						'=MSG_ID_HASH' => md5(mb_strtolower($inReplyTo)),
+					],
+				]);
 
 				while ($mailMeta = $res->fetch())
 				{

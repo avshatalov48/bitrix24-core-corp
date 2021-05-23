@@ -712,6 +712,7 @@ $APPLICATION->IncludeComponent(
 		),
 		"SHOW_COPY_URL_LINK" => $arParams['SHOW_COPY_URL_LINK'],
 		"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
+		'CALENDAR_SETTINGS' => $arResult['CALENDAR_SETTINGS'],
 	),
 	null,
 	array("HIDE_ICONS" => "Y")

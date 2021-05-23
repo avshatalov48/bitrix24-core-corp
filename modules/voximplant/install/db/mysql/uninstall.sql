@@ -1,4 +1,5 @@
 DROP TABLE if exists b_voximplant_statistic;
+DROP TABLE if exists b_voximplant_statistic_missed;
 DROP TABLE if exists b_voximplant_statistic_index;
 DROP TABLE if exists b_voximplant_phone;
 DROP TABLE if exists b_voximplant_call;

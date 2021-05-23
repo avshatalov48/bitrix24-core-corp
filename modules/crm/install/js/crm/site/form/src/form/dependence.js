@@ -1,6 +1,7 @@
 import * as Type from "./types";
 import {Controller} from "./controller";
 import {BaseField} from "../field/registry";
+import {Page} from "./pager";
 
 const ConditionEvents = {change: 'change'};
 const Operations = {
@@ -168,12 +169,7 @@ class Manager
 
 
 			// 4. run action
-			this.#form.getFields().forEach(field => {
-				if (dep.action.target !== field.name)
-				{
-					return;
-				}
-
+			this.getFieldsByTarget(dep.action.target).forEach(field => {
 				let actionType = dep.action.type;
 				if (isOpposite)
 				{
@@ -187,6 +183,37 @@ class Manager
 				this.runAction({...dep.action, type: actionType}, field);
 			});
 		});
+	}
+
+	getFieldsByTarget(target: string)
+	{
+		const fields = [];
+		this.#form.pager.pages.forEach((page: Page) => {
+			let currentSectionEquals = false;
+			page.fields.forEach((field: BaseField) => {
+				const equals = target === field.name;
+				if (field.type === 'layout' && field.content.type === 'section')
+				{
+					if (equals)
+					{
+						currentSectionEquals = true;
+					}
+					else
+					{
+						currentSectionEquals = false;
+						return;
+					}
+				}
+				else if (!equals && !currentSectionEquals)
+				{
+					return;
+				}
+
+				fields.push(field);
+			});
+		});
+
+		return fields;
 	}
 
 	runAction(action: Type.DependenceAction, field: BaseField)

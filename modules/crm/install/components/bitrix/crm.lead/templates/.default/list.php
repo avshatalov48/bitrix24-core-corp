@@ -67,6 +67,18 @@ else
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$APPLICATION->IncludeComponent(
+		'bitrix:crm.dedupe.autosearch',
+		'',
+		array(
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
+			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
+			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_LEAD_DEDUPELIST']
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
+
+	$APPLICATION->IncludeComponent(
 		'bitrix:crm.lead.menu',
 		'',
 		array(

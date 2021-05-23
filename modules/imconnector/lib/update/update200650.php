@@ -139,7 +139,7 @@ final class Update200650 extends Stepper
 	public function loadCurrentStatus()
 	{
 		$status = Option::get(self::$moduleId, self::OPTION_NAME, '');
-		$status = ($status !== '' ? @unserialize($status) : []);
+		$status = ($status !== '' ? @unserialize($status, ['allowed_classes' => false]) : []);
 		$status = (is_array($status) ? $status : []);
 
 		if (empty($status))

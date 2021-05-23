@@ -59,6 +59,8 @@ class SalesPeriodCompareFilter extends Report\Filter\Base
 			'ACTIVITY_COUNTER',
 			'TRACKING_SOURCE_ID',
 			'TRACKING_CHANNEL_CODE',
+			'PRODUCT_ROW_PRODUCT_ID',
+			'STAGE_SEMANTIC_ID',
 		];
 
 		foreach ($fields as $field)

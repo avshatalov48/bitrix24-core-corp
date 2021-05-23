@@ -504,6 +504,8 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmQuote::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Quote))
 {
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Quote);
+
 	if(isset($arFilter['FIND']))
 	{
 		if(is_string($arFilter['FIND']))
@@ -515,16 +517,6 @@ if(!$searchRestriction->isExceeded(CCrmOwnerType::Quote))
 			}
 		}
 		unset($arFilter['FIND']);
-	}
-
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Quote)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Quote,
-			$limitWarningValue
-		);
 	}
 }
 else

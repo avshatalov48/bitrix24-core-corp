@@ -1,6 +1,6 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 
-<div class="timeman-container planner-container<?=(IsAmPmMode() ? " am-pm-mode" : "")?>"><?
+<div id="timeman-container" class="timeman-container planner-container<?=(IsAmPmMode() ? " am-pm-mode" : "")?>"><?
 	?><div class="timeman-wrap planner-wrap"><?
 		?><span id="timeman-block" class="timeman-block"><?
 			?><span class="bx-time" id="timeman-timer"></span><?

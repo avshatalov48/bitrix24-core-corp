@@ -379,12 +379,6 @@ if (check_bitrix_sessid())
 					}
 				}
 			}
-
-			if ($arActFields['ACTION_FILE'] === 'alfabankb2b')
-			{
-				global $CACHE_MANAGER;
-				$CACHE_MANAGER->ClearByTag("bitrix24_left_menu");
-			}
 		}
 
 		if ($errorMessage == '')
@@ -400,7 +394,7 @@ if (check_bitrix_sessid())
 		}
 		else
 		{
-			$arActFields['PARAMS'] = unserialize($arActFields['PARAMS']);
+			$arActFields['PARAMS'] = unserialize($arActFields['PARAMS'], ['allowed_classes' => false]);
 			$arResult['PAY_SYSTEM'] = $arActFields;
 			if ($isSidePanel)
 			{
@@ -637,7 +631,7 @@ if (\Bitrix\Main\Loader::includeModule('iblock'))
 	$usedProps = array();
 	if (isset($arPaySys['PARAMS']['USER_COLUMNS']))
 	{
-		$userProps = unserialize($arPaySys['PARAMS']['USER_COLUMNS']['VALUE']);
+		$userProps = unserialize($arPaySys['PARAMS']['USER_COLUMNS']['VALUE'], ['allowed_classes' => false]);
 		if ($userProps)
 		{
 			foreach ($userProps as $propId => $fields)
@@ -705,7 +699,7 @@ foreach ($fieldsByGroups as $group => $fields)
 			{
 				if ($arPaySys['PARAMS'][$idCorr]['VALUE'])
 				{
-					$userColumns = unserialize($arPaySys['PARAMS'][$idCorr]['VALUE']);
+					$userColumns = unserialize($arPaySys['PARAMS'][$idCorr]['VALUE'], ['allowed_classes' => false]);
 					if ($userColumns)
 					{
 						foreach ($userColumns as $id => $columns)

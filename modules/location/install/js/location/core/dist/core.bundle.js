@@ -1437,6 +1437,11 @@ this.BX.Location = this.BX.Location || {};
 	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$2).isFieldExists(type);
 	    }
 	  }, {
+	    key: "hasExternalRelation",
+	    value: function hasExternalRelation() {
+	      return babelHelpers.classPrivateFieldGet(this, _externalId) && babelHelpers.classPrivateFieldGet(this, _sourceCode);
+	    }
+	  }, {
 	    key: "id",
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _id$1);
@@ -1968,6 +1973,9 @@ this.BX.Location = this.BX.Location || {};
 	      throw new Error('Must be implemented');
 	    }
 	  }, {
+	    key: "onMapShow",
+	    value: function onMapShow() {}
+	  }, {
 	    key: "destroy",
 	    value: function destroy() {}
 	  }, {
@@ -2039,7 +2047,16 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(GeocodingServiceBase, [{
 	    key: "geocode",
 	    value: function geocode(addressString) {
-	      throw new Error('Method geocode() must be implemented');
+	      if (!addressString) {
+	        return Promise.resolve([]);
+	      }
+
+	      return this.geocodeConcrete(addressString);
+	    }
+	  }, {
+	    key: "geocodeConcrete",
+	    value: function geocodeConcrete(addressString) {
+	      throw new Error('Method geocodeConcrete() must be implemented');
 	    }
 	  }]);
 	  return GeocodingServiceBase;
@@ -2207,8 +2224,51 @@ this.BX.Location = this.BX.Location || {};
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _longitude$2);
 	    }
+	  }], [{
+	    key: "fromJson",
+	    value: function fromJson(jsonData) {
+	      return new Point(jsonData.latitude, jsonData.longitude);
+	    }
 	  }]);
 	  return Point;
+	}();
+
+	var DistanceCalculator = /*#__PURE__*/function () {
+	  function DistanceCalculator() {
+	    babelHelpers.classCallCheck(this, DistanceCalculator);
+	  }
+
+	  babelHelpers.createClass(DistanceCalculator, null, [{
+	    key: "getDistanceFromLatLonInKm",
+
+	    /**
+	     * @param {number} lat1
+	     * @param {number} lon1
+	     * @param {number} lat2
+	     * @param {number} lon2
+	     * @returns {number}
+	     */
+	    value: function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+	      var R = 6371; // Radius of the earth in km
+
+	      var dLat = DistanceCalculator.deg2rad(lat2 - lat1);
+	      var dLon = DistanceCalculator.deg2rad(lon2 - lon1);
+	      var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(DistanceCalculator.deg2rad(lat1)) * Math.cos(DistanceCalculator.deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+	      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	      return R * c;
+	    }
+	    /**
+	     * @param {number} deg
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: "deg2rad",
+	    value: function deg2rad(deg) {
+	      return deg * (Math.PI / 180);
+	    }
+	  }]);
+	  return DistanceCalculator;
 	}();
 
 	exports.Location = Location;
@@ -2233,6 +2293,7 @@ this.BX.Location = this.BX.Location || {};
 	exports.ErrorPublisher = ErrorPublisher;
 	exports.Limit = Limit;
 	exports.Point = Point;
+	exports.DistanceCalculator = DistanceCalculator;
 
 }((this.BX.Location.Core = this.BX.Location.Core || {}),BX,BX.Location.Core,BX.Event));
 //# sourceMappingURL=core.bundle.js.map

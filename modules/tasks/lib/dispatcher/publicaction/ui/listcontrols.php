@@ -177,7 +177,7 @@ final class ListControls extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		$result = array();
 		if (isset($data[$key]) && checkSerializedData($data[$key]))
 		{
-			$result = unserialize($data[$key]);
+			$result = unserialize($data[$key], ['allowed_classes' => false]);
 			if (!is_array($result))
 			{
 				$result = array();

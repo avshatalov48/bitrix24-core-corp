@@ -148,7 +148,7 @@ abstract class Type
 			return array();
 		}
 
-		$data = unserialize($data);
+		$data = unserialize($data, ['allowed_classes' => false]);
 		return is_array($data) ? $data : array();
 	}
 

@@ -12,6 +12,7 @@ $MESS["SALESCENTER_APP_RECOMMENDATION_TITLE"] = "Рекомендовать";
 $MESS["SALESCENTER_APP_PAYSYSTEM_INFO"] = "Подключение через платежную систему \"#PAYSYSTEM_NAME#\"";
 $MESS["SALESCENTER_APP_PAYSYSTEM_MODE_INFO"] = "Подключение через платежную систему \"#PAYSYSTEM_NAME#\" (#MODE_NAME#)";
 $MESS["SALESCENTER_APP_CASHBOX_INFO"] = "Настройка кассы \"#CASHBOX_NAME#\"";
+$MESS["SALESCENTER_APP_CASHBOX_ITEM_EXTRA"] = "Еще кассы";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_TITLE"] = "Своя офлайн-касса";
 $MESS["SALESCENTER_APP_CASHBOX_OFFLINE_INFO"] = "Настройка офлайн-кассы";
 $MESS["SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS"] = "Клиенту будет отправлено SMS на номер #PHONE#";

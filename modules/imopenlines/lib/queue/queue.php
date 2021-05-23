@@ -546,7 +546,7 @@ abstract class Queue
 					}
 					elseif(!empty($resultOperatorQueue['OPERATOR_LIST']))
 					{
-						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST']);
+						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST'], $this->session['ID']);
 						$this->chat->update(['AUTHOR_ID' => 0]);
 					}
 

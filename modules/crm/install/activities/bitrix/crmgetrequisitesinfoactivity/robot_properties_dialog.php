@@ -14,8 +14,8 @@ if(count($map['CountryId']['Options']) <= 1)
 
 <?php foreach ($map as $field):?>
 	<?php if(array_key_exists('Name', $field)): ?>
-		<div class="crm-automation-popup-settings">
-			<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($field['Name'])?>: </span>
+		<div class="bizproc-automation-popup-settings">
+			<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($field['Name'])?>: </span>
 			<?=$dialog->renderFieldControl($field, $dialog->getCurrentValue($field))?>
 		</div>
 	<?php endif ?>

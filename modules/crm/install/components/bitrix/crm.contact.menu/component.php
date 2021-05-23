@@ -10,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @global CDatabase $DB
  */
 
+use Bitrix\Main\Localization\Loc;
+
 if (!CModule::IncludeModule('crm'))
 	return;
 
@@ -211,7 +213,13 @@ if($arParams['TYPE'] === 'list')
 			'ICON' => 'btn-import'
 		);
 
-		if(LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua')
+		$zone = LANGUAGE_ID;
+		if (CModule::IncludeModule('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+
+		if($zone === 'ru')
 		{
 			$arResult['BUTTONS'][] = array(
 				'HTML' => GetMessage('CRM_CONTACT_IMPORT_YANDEX'),
@@ -228,7 +236,7 @@ if($arParams['TYPE'] === 'list')
 			'ICON' => 'btn-import'
 		);
 
-		if(LANGUAGE_ID === 'ru' || LANGUAGE_ID === 'ua')
+		if($zone === 'ru')
 		{
 			$arResult['BUTTONS'][] = array(
 				'HTML' => GetMessage('CRM_CONTACT_IMPORT_MAILRU'),
@@ -268,10 +276,8 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 		}
 
-		$entityType = CCrmOwnerType::ContactName;
-		$stExportId = 'STEXPORT_'.$entityType.'_MANAGER';
-		$randomSequence = new Bitrix\Main\Type\RandomSequence($stExportId);
-		$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+		$entityType = \CCrmOwnerType::ContactName;
+		$stExportId = 'EXPORT_'.$entityType;
 		$componentName = 'bitrix:crm.contact.list';
 
 		$componentParams = array(
@@ -293,56 +299,70 @@ if($arParams['TYPE'] === 'list')
 			}
 		}
 
-		$arResult['STEXPORT_PARAMS'] = array(
-			'componentName' => $componentName,
-			'siteId' => SITE_ID,
-			'entityType' => $entityType,
-			'stExportId' => $stExportId,
-			'managerId' => $stExportManagerId,
-			'sToken' => 's'.time(),
-			'initialOptions' => array(
+		$arResult['EXPORT_CSV_PARAMS'] = [
+			'id' => $stExportId. '_CSV',
+			'controller' => 'bitrix:crm.api.export',
+			'queue' => [
+				[
+					'action' => 'dispatcher',
+				],
+			],
+			'params' => [
+				'SITE_ID' => SITE_ID,
+				'ENTITY_TYPE' => $entityType,
+				'EXPORT_TYPE' => 'csv',
+				'COMPONENT_NAME' => $componentName,
+				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+					$componentName,
+					$componentParams
+				),
+			],
+			'optionsFields' => array(
 				'REQUISITE_MULTILINE' => array(
 					'name' => 'REQUISITE_MULTILINE',
 					'type' => 'checkbox',
-					'title' => GetMessage('CRM_CONTACT_STEXPORT_OPTION_REQUISITE_MULTILINE'),
+					'title' => Loc::getMessage('CRM_CONTACT_STEXPORT_OPTION_REQUISITE_MULTILINE'),
 					'value' => 'N'
 				),
 				'EXPORT_ALL_FIELDS' => array(
 					'name' => 'EXPORT_ALL_FIELDS',
 					'type' => 'checkbox',
-					'title' => GetMessage('CRM_CONTACT_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
+					'title' => Loc::getMessage('CRM_CONTACT_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
 					'value' => 'N'
 				),
 			),
-			'componentParams' => \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
 			'messages' => array(
-				'stExportExcelDlgTitle' => GetMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE'),
-				'stExportExcelDlgSummary' => GetMessage('CRM_CONTACT_STEXPORT_SUMMARY'),
-				'stExportCsvDlgTitle' => GetMessage('CRM_CONTACT_EXPORT_CSV_TITLE'),
-				'stExportCsvDlgSummary' => GetMessage('CRM_CONTACT_STEXPORT_SUMMARY')
-			)
-		);
+				'DialogTitle' => Loc::getMessage('CRM_CONTACT_EXPORT_CSV_TITLE'),
+				'DialogSummary' => Loc::getMessage('CRM_CONTACT_STEXPORT_SUMMARY'),
+			),
+			'dialogMaxWidth' => 650,
+		];
+
+		// clone params for excel export
+		$arResult['EXPORT_EXCEL_PARAMS'] = $arResult['EXPORT_CSV_PARAMS'];
+		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
+		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
+		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE');
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('CRM_CONTACT_EXPORT_CSV_TITLE'),
-			'TEXT' => GetMessage('CRM_CONTACT_EXPORT_CSV'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('csv')",
+			'TITLE' => Loc::getMessage('CRM_CONTACT_EXPORT_CSV_TITLE'),
+			'TEXT' => Loc::getMessage('CRM_CONTACT_EXPORT_CSV'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => GetMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE'),
-			'TEXT' => GetMessage('CRM_CONTACT_EXPORT_EXCEL'),
-			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('excel')",
+			'TITLE' => Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE'),
+			'TEXT' => Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL'),
+			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
-
-		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
+		unset($entityType, $stExportId);
 
 		if (CModule::IncludeModule('webservice') && class_exists("\\Bitrix\\WebService\\StsSync"))
 		{
@@ -360,6 +380,11 @@ if($arParams['TYPE'] === 'list')
 				'ONCLICK' => \Bitrix\WebService\StsSync::getUrl('contacts', 'contacts_crm', $APPLICATION->GetCurPage(), $sPrefix, GetMessage('CRM_OUTLOOK_TITLE_CONTACTS'), $GUID),
 				'ICON' => 'btn-export'
 			);
+			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
+		}
+		else
+		{
+			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 		}
 	}
 
@@ -368,14 +393,26 @@ if($arParams['TYPE'] === 'list')
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
 		{
-			$dedupePath = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
-				? $arParams['PATH_TO_CONTACT_DEDUPEWIZARD']
-				: $arParams['PATH_TO_CONTACT_DEDUPE'];
+			$dedupePath = CComponentEngine::MakePathFromTemplate(
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
+					? $arParams['PATH_TO_CONTACT_DEDUPEWIZARD']
+					: $arParams['PATH_TO_CONTACT_DEDUPE']
+			);
 
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('CONTACT_DEDUPE'),
 				'TITLE' => GetMessage('CONTACT_DEDUPE_TITLE'),
-				'LINK' => CComponentEngine::MakePathFromTemplate($dedupePath, array())
+				'ONCLICK' => 'BX.Crm.Page.openSlider("'.$dedupePath.'", {cacheable: false})'
+			);
+			$arResult['BUTTONS'][] = array(
+				'TEXT' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
+				'TITLE' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
+				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("CONTACT").showSettings();BX.PopupMenu.getCurrentMenu().close();'
+			);
+			$arResult['BUTTONS'][] = array(
+				'HTML' => GetMessage('CONTACT_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',
+				'TITLE' => GetMessage('CONTACT_DEDUPE_HELP'),
+				'ONCLICK' => 'BX.Helper.show("redirect=detail&code=10649014")'
 			);
 		}
 		else
@@ -386,7 +423,19 @@ if($arParams['TYPE'] === 'list')
 				'ONCLICK' => $restriction->prepareInfoHelperScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
+			$arResult['BUTTONS'][] = array(
+				'TEXT' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
+				'TITLE' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
+				'ONCLICK' => $restriction->prepareInfoHelperScript(),
+				'MENU_ICON' => 'grid-lock'
+			);
+			$arResult['BUTTONS'][] = array(
+				'HTML' => GetMessage('CONTACT_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',
+				'TITLE' => GetMessage('CONTACT_DEDUPE_HELP'),
+				'ONCLICK' => 'BX.Helper.show("redirect=detail&code=10649014")'
+			);
 		}
+		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
 	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))

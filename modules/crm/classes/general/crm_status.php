@@ -4,6 +4,7 @@ if(!defined('CACHED_b_crm_status')) define('CACHED_b_crm_status', 360000);
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Category\DealCategory;
@@ -107,7 +108,8 @@ class CCrmStatus
 			'STATUS' => [
 				'ID' =>'STATUS',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_STATUS'),
-				'SEMANTIC_INFO' => self::GetLeadStatusSemanticInfo()
+				'SEMANTIC_INFO' => self::GetLeadStatusSemanticInfo(),
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
 			],
 			'SOURCE' => ['ID' =>'SOURCE', 'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE')],
 			'CONTACT_TYPE' => ['ID' =>'CONTACT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_CONTACT_TYPE')],
@@ -131,7 +133,9 @@ class CCrmStatus
 			$arEntityType['DEAL_STAGE'] = [
 				'ID' =>'DEAL_STAGE',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_DEAL_STAGE'),
-				'SEMANTIC_INFO' => self::GetDealStageSemanticInfo()
+				'SEMANTIC_INFO' => self::GetDealStageSemanticInfo(),
+				'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory(),
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 			];
 		}
 
@@ -184,7 +188,7 @@ class CCrmStatus
 	{
 		self::$STATUSES[$entityId] = $items;
 	}
-	private static function ClearCachedStatuses($entityId): void
+	public static function ClearCachedStatuses($entityId): void
 	{
 		unset(self::$STATUSES[$entityId]);
 	}
@@ -367,21 +371,14 @@ class CCrmStatus
 			$this->LAST_ERROR = $result->getErrorMessages()[0];
 		}
 
-		$fields = $this->GetStatusById($ID);
-		if(is_array($fields))
-		{
-			CCrmLead::ProcessStatusModification($fields);
-			CCrmDeal::ProcessStatusModification($fields);
-		}
-
-		self::ClearCachedStatuses($this->entityId);
-
 		return $ID;
 	}
 
 	/**
 	 * Deletes status by id.
 	 *
+	 * @deprecated
+	 * @see StatusTable::delete() instead
 	 * @param int $ID
 	 * @return bool
 	 */
@@ -389,19 +386,7 @@ class CCrmStatus
 	{
 		$this->LAST_ERROR = '';
 
-		$fields = StatusTable::getById($ID)->fetch();
-		if(!is_array($fields))
-		{
-			$this->LAST_ERROR = GetMessage('CRM_STATUS_ERR_NOT_FOUND');
-			return false;
-		}
-
-		CCrmLead::ProcessStatusDeletion($fields);
-		CCrmDeal::ProcessStatusDeletion($fields);
-
 		$result = StatusTable::delete($ID);
-
-		self::ClearCachedStatuses($this->entityId);
 
 		if(!$result->isSuccess())
 		{

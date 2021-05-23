@@ -83,7 +83,7 @@ class ThrottleTable extends Main\Entity\DataManager
 		$item = static::getByTaskId($taskId);
 		if($item['ID'])
 		{
-			$last = unserialize($item['STATE_LAST']);
+			$last = unserialize($item['STATE_LAST'], ['allowed_classes' => false]);
 			if(is_array($last) && is_array($stateLast))
 			{
 				$stateLast = array_merge($last, $stateLast);
@@ -126,12 +126,12 @@ class ThrottleTable extends Main\Entity\DataManager
 				$rcpIgnore[$item['AUTHOR_ID']] = true;
 			}
 
-			$stateOrig = unserialize($item['STATE_ORIG']);
+			$stateOrig = unserialize($item['STATE_ORIG'], ['allowed_classes' => false]);
 			if(!is_array($stateOrig))
 			{
 				$stateOrig = array();
 			}
-			$stateLast = unserialize($item['STATE_LAST']);
+			$stateLast = unserialize($item['STATE_LAST'], ['allowed_classes' => false]);
 			if(!is_array($stateLast))
 			{
 				$stateLast = array();

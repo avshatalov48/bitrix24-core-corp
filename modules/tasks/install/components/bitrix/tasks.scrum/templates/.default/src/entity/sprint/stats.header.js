@@ -15,6 +15,8 @@ export class StatsHeader extends EventEmitter
 
 		this.statsCalculator = new StatsCalculator();
 
+		this.weekendDaysTime = sprint.getWeekendDaysTime();
+
 		this.headerNode = null;
 		this.headerClass = 'tasks-scrum-sprint-header-stats';
 
@@ -48,6 +50,7 @@ export class StatsHeader extends EventEmitter
 	{
 		this.setStoryPoints(sprint.getTotalStoryPoints().getPoints());
 		this.setCompletedStoryPoints(sprint.getTotalCompletedStoryPoints().getPoints());
+		this.setUncompletedStoryPoints(sprint.getTotalUncompletedStoryPoints().getPoints());
 		this.setEndDate(sprint.getDateEnd());
 	}
 
@@ -81,6 +84,23 @@ export class StatsHeader extends EventEmitter
 	}
 
 	getCompletedStoryPoints(): number
+	{
+		return this.completedStoryPoints;
+	}
+
+	setUncompletedStoryPoints(storyPoints)
+	{
+		if (Type.isUndefined(storyPoints) || isNaN(parseFloat(storyPoints)))
+		{
+			this.uncompletedStoryPoints = 0;
+		}
+		else
+		{
+			this.uncompletedStoryPoints = parseFloat(storyPoints);
+		}
+	}
+
+	getUncompletedStoryPoints(): number
 	{
 		return this.completedStoryPoints;
 	}

@@ -78,6 +78,9 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 								dedupeConfig: <?=CUtil::PhpToJSObject($arResult['DEDUPE_CONFIG'])?>,
 								dedupeCriterionData: <?=CUtil::PhpToJSObject($arResult['DEDUPE_CRITERION_DATA'])?>,
 								dedupeListUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_DEDUPE_LIST'])?>",
+								entityListUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_ENTITY_LIST'])?>",
+								isAutomatic: <?=($arResult['IS_AUTOMATIC'] ? 'true' : 'false')?>,
+								previouslyProcessedCount: <?=(isset($arResult['PROCESSED_COUNT']) ? (int)$arResult['PROCESSED_COUNT'] : 0)?>,
 								entityEditorUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_EDITOR'])?>",
 								externalContextId: "<?=$arResult['EXTERNAL_CONTEXT_ID']?>",
 								headerTitleTemplate: "<?=CUtil::JSEscape($arResult['HEADER_TEMPLATE'])?>"
@@ -119,11 +122,12 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 					</div>
 					<div class="ui-btn-container ui-btn-container-center">
 					  <input type="submit" class="ui-btn ui-btn-success"  name="merge"  value="'.GetMessage('CRM_ENTITY_MERGER_PROCESS').'" id="mergeButton" >
+					  <input type="button" class="ui-btn ui-btn-light-border" name="merge_with_edit" value="'.GetMessage('CRM_ENTITY_MERGER_MERGE_AND_EDIT').'" id="mergeWithEditButton" title="" >
 					  <input type="button" class="ui-btn ui-btn-link"  name="postpone" value="'.GetMessage('CRM_ENTITY_MERGER_POSTPONE').'" id="postponeButton" title="" >
 					</div>
 					<div class="crm-entity-merger-panel-toggler-container">
 						<div class="crm-entity-merger-panel-toggler-inner">
-							<span id="duplicateListButton" class="crm-entity-merger-panel-toggler-name">'.GetMessage('CRM_ENTITY_MERGER_GO_TO_DUPLICATE_LIST').'</span>
+							<span id="duplicateListButton" class="ui-btn ui-btn-link crm-entity-merger-panel-toggler-name">'.GetMessage('CRM_ENTITY_MERGER_GO_TO_DUPLICATE_LIST').'</span>
 							<button id="queueNavigationButton" class="crm-entity-merger-panel-toggler">
 								<span id="previousButton" class="crm-entity-merger-panel-toggler-arrow"></span>
 								<span id="nextButton" class="crm-entity-merger-panel-toggler-arrow"></span>

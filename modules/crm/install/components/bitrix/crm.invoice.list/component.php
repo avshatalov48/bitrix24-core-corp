@@ -568,6 +568,8 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmInvoice::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Invoice))
 {
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Invoice);
+
 	if(isset($arFilter['FIND']))
 	{
 		if(is_string($arFilter['FIND']))
@@ -579,16 +581,6 @@ if(!$searchRestriction->isExceeded(CCrmOwnerType::Invoice))
 			}
 		}
 		unset($arFilter['FIND']);
-	}
-
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Invoice)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Invoice,
-			$limitWarningValue
-		);
 	}
 }
 else

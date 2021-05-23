@@ -78,12 +78,16 @@ class Router
 					$receivingHandlers = new ReceivingStatusReading($connector, $line, $data);
 					$receivingHandlers->receiving();
 					break;
-				case 'deactivateConnector'://The disconnection of the connector due to the connection with the specified data on a different portal or lines
-					$receivingHandlers = new DeactivateConnector($connector, $line, $data);
+				case 'receivingError':
+					$receivingHandlers = new ReceivingError($connector, $line, $data);
 					$receivingHandlers->receiving();
 					break;
 				case 'receivingStatusBlock':
 					$receivingHandlers = new ReceivingStatusBlock($connector, $line, $data);
+					$receivingHandlers->receiving();
+					break;
+				case 'deactivateConnector'://The disconnection of the connector due to the connection with the specified data on a different portal or lines
+					$receivingHandlers = new DeactivateConnector($connector, $line, $data);
 					$receivingHandlers->receiving();
 					break;
 				default:

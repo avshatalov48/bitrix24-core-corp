@@ -94,7 +94,7 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 		</td>
 		<td></td>
 		<td align="right" style="vertical-align: top;">
-			<b><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_NAME", false)); ?></b>
+			<b><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_NAME", false), ENT_COMPAT, false); ?></b>
 			<?
 			$sellerAddr = CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false);
 			if ($sellerAddr)
@@ -103,7 +103,7 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 					$sellerAddr = implode(', ', $sellerAddr);
 				else
 					$sellerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerAddr));
-				?><br><b><?= htmlspecialcharsbx($sellerAddr) ?></b><?
+				?><br><b><?= htmlspecialcharsbx($sellerAddr, ENT_COMPAT, false) ?></b><?
 			}
 			unset($sellerAddr);
 			$sellerPhone = CSalePaySystemAction::GetParamValue("SELLER_PHONE", false);
@@ -129,7 +129,7 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 			Loc::getMessage('SBLP_Q_UA_TEXT_QUOTE', null, $lng)." ".
 			Loc::getMessage('SBLP_Q_UA_TEXT_NUMBER', null, $lng)." %s ".
 			Loc::getMessage('SBLP_Q_UA_TEXT_FROM', null, $lng)." %s",
-			htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ACCOUNT_NUMBER"]),
+			htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ACCOUNT_NUMBER"], ENT_COMPAT, false),
 			CSalePaySystemAction::GetParamValue("DATE_INSERT", false)
 		); ?></nobr></td>
 		<td></td>
@@ -137,7 +137,7 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 <? if (CSalePaySystemAction::GetParamValue("ORDER_SUBJECT", false)) { ?>
 	<tr>
 		<td></td>
-		<td><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("ORDER_SUBJECT", false)); ?></td>
+		<td><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("ORDER_SUBJECT", false), ENT_COMPAT, false); ?></td>
 		<td></td>
 	</tr>
 <? } ?>
@@ -202,7 +202,7 @@ if(!is_array($arBasketItems))
 	$arBasketItems = array();
 
 $arCurFormat = CCurrencyLang::GetCurrencyFormat($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]);
-$currency = preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']);
+$currency = trim(preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']));
 
 $vat = 0;
 $arCols = array();
@@ -749,7 +749,7 @@ for ($col = 0; $col < $nCols; $col++)
 	{
 		if (isset($cols[$col][$i]))
 		{
-			?><div><? echo ($i < $boldCount ? '<b>' : '').htmlspecialcharsbx($cols[$col][$i]).($i < $boldCount ? '</b>' : ''); ?></div><?
+			?><div><? echo ($i < $boldCount ? '<b>' : '').htmlspecialcharsbx($cols[$col][$i], ENT_COMPAT, false).($i < $boldCount ? '</b>' : ''); ?></div><?
 		}
 	}
 	?></td><?
@@ -777,7 +777,7 @@ if (CSalePaySystemAction::GetParamValue('QUOTE_SIGN_SHOW') == 'Y'):?>
 		<table class="sign">
 			<? if (CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false)) { ?>
 			<tr>
-				<td style="width: 150pt; "><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false)); ?></td>
+				<td style="width: 150pt; "><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false), ENT_COMPAT, false); ?></td>
 				<td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
 					<? if (!$blank) { ?>
 					<?=CFile::ShowImage(CSalePaySystemAction::GetParamValue("SELLER_DIR_SIGN", false), 200, 50); ?>
@@ -785,7 +785,7 @@ if (CSalePaySystemAction::GetParamValue('QUOTE_SIGN_SHOW') == 'Y'):?>
 				</td>
 				<td>
 					<? if (CSalePaySystemAction::GetParamValue("SELLER_DIR", false)) { ?>
-					(<?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_DIR", false)); ?>)
+					(<?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_DIR", false), ENT_COMPAT, false); ?>)
 					<? } ?>
 				</td>
 			</tr>
@@ -793,7 +793,7 @@ if (CSalePaySystemAction::GetParamValue('QUOTE_SIGN_SHOW') == 'Y'):?>
 			<? } ?>
 			<? if (CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false)) { ?>
 			<tr>
-				<td style="width: 150pt; "><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false)); ?></td>
+				<td style="width: 150pt; "><?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false), ENT_COMPAT, false); ?></td>
 				<td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
 					<? if (!$blank) { ?>
 					<?=CFile::ShowImage(CSalePaySystemAction::GetParamValue("SELLER_ACC_SIGN", false), 200, 50); ?>
@@ -801,7 +801,7 @@ if (CSalePaySystemAction::GetParamValue('QUOTE_SIGN_SHOW') == 'Y'):?>
 				</td>
 				<td>
 					<? if (CSalePaySystemAction::GetParamValue("SELLER_ACC", false)) { ?>
-					(<?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_ACC", false)); ?>)
+					(<?=htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("SELLER_ACC", false), ENT_COMPAT, false); ?>)
 					<? } ?>
 				</td>
 			</tr>

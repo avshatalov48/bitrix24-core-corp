@@ -108,13 +108,13 @@
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
+	flex-grow: 0;
 	-ms-flex-align: center;
 	height: 53px;
 	color: #545c6a;
 	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	-webkit-box-align: center;
 	align-items: center;
-	width: 100%;
 }
 
 .tasks-scrum-switcher-views {
@@ -164,11 +164,12 @@
 }
 
 .tasks-scrum-active-sprint-stats {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	white-space: nowrap;
-	margin-left: auto;
+	width: 100%;
+	text-align: center;
+	color: #fff;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: bold;
 }
 
 .tasks-scrum-actions-complete-sprint {

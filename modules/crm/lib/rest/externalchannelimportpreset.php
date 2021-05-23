@@ -106,7 +106,7 @@ class CCrmExternalChannelImportPreset
 	{
 		if(($options = static::getOption()) && $options <> '')
 		{
-			$options = unserialize($options);
+			$options = unserialize($options, ['allowed_classes' => false]);
 		}
 		else
 		{

@@ -38,5 +38,13 @@ $MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM2"] = "Выберите один из
 $MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_METHODS"] = "Подробнее о методах.";
 $MESS["SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM3"] = "Укажите ваш логин, пароль и ключ с портала кассы Checkbox в настройках кассы.";
 $MESS["SC_CASHBOX_CHECKBOX_UKTZED_WARNING"] = "В данный момент мы не поддерживаем печать чеков через кассу Checkbox для подакцизных товаров. Код подакцизных товаров не будет передаваться в чек.";
-
 $MESS["SC_CASHBOX_REST_DESCRITION"] = "Организации или ИП, деятельность которых связана с наличными расчётами или оплатой при помощи банковских карт, обязательно должны применять зарегистрированный кассовый аппарат.";
+
+$MESS["SC_CASHBOX_BUSINESSRU_LINK_CONNECT"] = "Как подключить кассу через Бизнес.РУ";
+$MESS["SC_CASHBOX_BUSINESSRU_ATOL_TITLE"] = "Бизнес.РУ: АТОЛ";
+$MESS["SC_CASHBOX_BUSINESSRU_SHTRIHM_TITLE"] = "Бизнес.РУ: Штрих-М";
+$MESS["SC_CASHBOX_BUSINESSRU_EVOTOR_TITLE"] = "Бизнес.РУ: Эвотор";
+$MESS["SC_CASHBOX_BUSINESSRU_DESCRIPTION"] = "Согласно закону 54-ФЗ бизнес должен выбивать чеки на все расчеты с покупателями, в том числе и на электронные платежи. Подключить облачную или физическую кассу можно через сервис фискализации Бизнес.РУ Онлайн-Чеки.";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM1"] = "Оставьте <a target='_blank' href='https://online-check.business.ru/form-bitrix/'>заявку</a> на подключение или покупку кассы на портале.";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM2"] = "Укажите в настройках кассы логин и пароль от вашей учетной записи Онлайн-Чеки и заполните другие обязательные поля.";
+$MESS["SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM3"] = "Установите галочку \"Разрешить печать чеков\" в настройках платежной системы, если требуется печатать чек.";

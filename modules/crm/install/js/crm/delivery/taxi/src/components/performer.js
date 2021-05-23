@@ -4,6 +4,7 @@ export default {
 	props: {
 		name: {required: true, type: String},
 		phone: {required: false, type: String},
+		phoneExt: {required: false, type: String},
 	},
 	mixins: [UseLocalize],
 	methods: {
@@ -28,6 +29,12 @@ export default {
 				</span>
 				<span v-if="phone" @click="call" class="crm-entity-stream-content-delivery-link">
 					{{localize.TIMELINE_DELIVERY_TAXI_CALL_DRIVER}}
+				</span>
+				<span
+					v-if="phoneExt"
+					class="crm-entity-stream-content-delivery-phone-ext"
+				>
+					{{localize.TIMELINE_DELIVERY_TAXI_CALL_DRIVER_PHONE_EXT_CODE}}: {{phoneExt}}
 				</span>
 			</div>
 		</div>

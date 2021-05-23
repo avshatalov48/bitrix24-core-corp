@@ -18,24 +18,43 @@ export class SelfRegister
 		const regenerateButton = this.selfBlock.querySelector("[data-role='selfRegenerateSecretButton']");
 		if (Type.isDomNode(regenerateButton))
 		{
-			Event.bind(regenerateButton, 'click', BX.delegate(() => {
+			Event.bind(regenerateButton, 'click',() => {
+				this.parent.activateButton();
 				this.regenerateSecret(this.parent.regenerateUrlBase);
-			}, this));
+			});
 		}
 
 		const copyRegisterUrlButton = this.selfBlock.querySelector("[data-role='copyRegisterUrlButton']");
 		if (Type.isDomNode(copyRegisterUrlButton))
 		{
-			Event.bind(copyRegisterUrlButton, 'click', BX.delegate(() => {
+			Event.bind(copyRegisterUrlButton, 'click', () => {
 				this.copyRegisterUrl();
-			}, this));
+			});
 		}
 
 		const selfToggleSettingsButton = this.selfBlock.querySelector("[data-role='selfToggleSettingsButton']");
 		if (Type.isDomNode(selfToggleSettingsButton))
 		{
 			Event.bind(selfToggleSettingsButton, 'change', () => {
+				this.parent.activateButton();
 				this.toggleSettings(selfToggleSettingsButton);
+			});
+		}
+
+		const allowRegisterConfirm = this.selfBlock.querySelector("[data-role='allowRegisterConfirm']");
+		if (Type.isDomNode(allowRegisterConfirm))
+		{
+			Event.bind(allowRegisterConfirm, 'change', () => {
+				this.parent.activateButton();
+				this.toggleWhiteList(allowRegisterConfirm);
+			});
+		}
+
+		const selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
+		if (Type.isDomNode(selfWhiteList))
+		{
+			Event.bind(selfWhiteList, 'input', () => {
+				this.parent.activateButton();
 			});
 		}
 	}
@@ -116,6 +135,15 @@ export class SelfRegister
 		if (Type.isDomNode(settingsBlock))
 		{
 			Dom.style(settingsBlock, 'display', inputElement.checked ? 'block' : 'none');
+		}
+	}
+
+	toggleWhiteList(inputElement)
+	{
+		const selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
+		if (Type.isDomNode(selfWhiteList))
+		{
+			Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
 		}
 	}
 }

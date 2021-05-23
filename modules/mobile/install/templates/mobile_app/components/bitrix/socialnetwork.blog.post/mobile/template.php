@@ -176,7 +176,7 @@ if(!empty($arResult["Post"]))
 			?><script>
 				if (window.arLogTs)
 				{
-					window.arLogTs.entry_<?=(int)$arParams["LOG_ID"]?> = <?=(int)$arParams["LAST_LOG_TS"]?>;
+					window.arLogTs.entry_<?= (int)$arParams['LOG_ID']?> = <?= ((int)$arParams['LAST_LOG_TS'] - (int)$arResult['TZ_OFFSET'])?>;
 				}
 			</script><?
 		}
@@ -555,12 +555,43 @@ if(!empty($arResult["Post"]))
 					$postItemClassList[] = 'post-item-contentview';
 				}
 
-				if ($arParams["EVENT_ID"] === "blog_post_important")
+				if (in_array($arParams["EVENT_ID"], [ 'blog_post_important', 'blog_post_grat']))
 				{
-					$postItemClassList[] = 'info-block-important';
+					$postItemClassList[] = 'info-block-background';
+					if ($arResult["Post"]["MICRO"] !== "Y")
+					{
+						$postItemClassList[] = 'info-block-background-with-title';
+					}
+
+					if ($arParams["EVENT_ID"] === 'blog_post_important')
+					{
+						$postItemClassList[] = 'info-block-important';
+					}
+					elseif (
+						$arParams["EVENT_ID"] === 'blog_post_grat'
+						&& isset($arResult['GRATITUDE'])
+						&& isset($arResult['GRATITUDE']['TYPE'])
+						&& !empty($arResult['GRATITUDE']['TYPE']['XML_ID'])
+					)
+					{
+						$postItemClassList[] = 'info-block-gratitude';
+						$postItemClassList[] = 'info-block-gratitude-'.$arResult['GRATITUDE']['TYPE']['XML_ID'];
+					}
+				}
+				elseif ($arResult['Post']['BACKGROUND_CODE'] !== '')
+				{
+					$postItemClassList[] = 'ui-livefeed-background';
+					$postItemClassList[] = 'post-item-post-block-full';
+					$postItemClassList[] = 'ui-livefeed-background-'.preg_replace(['/(\d+)_/', '/_/'], ['', '-'], $arResult['Post']['BACKGROUND_CODE']);
 				}
 
-				?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arParams["LOG_ID"]?>" bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?
+				?><div
+				 class="<?=implode(' ', $postItemClassList)?>"
+				 id="post_block_check_cont_<?=$arParams["LOG_ID"]?>"
+				 bx-data-has-title="<?=$arResult['Post']['MICRO'] !== 'Y' ? 'Y' : 'N'?>"
+				 bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?
+
+					$importantIcon = ($arParams['EVENT_ID'] === 'blog_post_important' ? '<div class="info-block-important-icon"></div>' : '');
 
 					if (
 						isset($arParams['TARGET'])
@@ -579,7 +610,14 @@ if(!empty($arResult["Post"]))
 							$titleClassList[] = 'lenta-important-block-title';
 						}
 
-						?><div class="<?=implode(' ', $titleClassList)?>" id="post_text_title_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["TITLE"]?></div><?
+						?><div class="post-text-title-container"><?
+							?><div class="<?=implode(' ', $titleClassList)?>" id="post_text_title_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["TITLE"]?></div><?
+							?><?=$importantIcon;?><?
+						?></div><?
+					}
+					else
+					{
+						?><?=$importantIcon?><?
 					}
 
 					$textClassList = [
@@ -595,14 +633,22 @@ if(!empty($arResult["Post"]))
 
 					?><div class="<?=implode(' ', $textClassList)?>" id="post_block_check_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["textFormated"]?></div><?
 
-					if (!empty($arResult["Post"]["IMPORTANT"]))
+					if (!empty($arResult['Post']['IMPORTANT']))
 					{
 						?><div class="post-item-important">
-							<input id="important_post_<?=$arResult["Post"]["ID"]?>" bx-data-post-id="<?=$arResult["Post"]["ID"]?>" type="checkbox" onclick="return __MSLOnPostRead(this, event);" <?if ($arResult["Post"]["IMPORTANT"]["IS_READ"] == "Y"): ?>checked="checked" <? endif;?>/>
-							<span class="checked webform-small-button"><?=GetMessage('BLOG_ALREADY_READ')?></span>
-							<label for="important_post_<?=$arResult["Post"]["ID"]?>" class="unchecked webform-small-button"><?=GetMessage(trim("BLOG_READ_".$arResult["Post"]["IMPORTANT"]["USER"]["PERSONAL_GENDER"]))?></label>
-						</div><?
+							<input id="important_post_<?=$arResult['Post']['ID']?>" bx-data-post-id="<?=$arResult['Post']['ID']?>" type="checkbox" onclick="return __MSLOnPostRead(this, event);" <?if ($arResult['Post']['IMPORTANT']['IS_READ'] === 'Y'): ?>checked="checked" <? endif;?>/>
+							<span class="checked webform-small-button"><?=Loc::getMessage('BLOG_ALREADY_READ')?></span>
+							<label for="important_post_<?=$arResult['Post']['ID']?>" class="unchecked ui-btn ui-btn-md ui-btn-success ui-btn-round"><?=Loc::getMessage(trim('BLOG_READ_'.$arResult['Post']['IMPORTANT']['USER']['PERSONAL_GENDER']))?></label><?
+
+							$readUsersCount = (int)$arResult['Post']['IMPORTANT']['COUNT'];
+
+							?><div class="post-item-important-list"><?
+								?><div class="post-item-important-list-text post-item-important-list-text-current"><?=Loc::getMessage('BLOG_IMPORTANT_READ_LIST_'.($readUsersCount % 10), [ '#NUM#' => $readUsersCount ])?></div><?
+								?><div class="post-item-important-list-text post-item-important-list-text-plus"><?=Loc::getMessage('BLOG_IMPORTANT_READ_LIST_'.(($readUsersCount+1) % 10), [ '#NUM#' => ($readUsersCount+1) ])?></div><?
+							?></div><?
+						?></div><?
 					}
+
 					if (!empty($arResult["images"]))
 					{
 						?><div class="post-item-attached-img-wrap"><?
@@ -616,14 +662,15 @@ if(!empty($arResult["Post"]))
 						?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], oMSL.checkVisibility);</script><?
 					}
 
+					$showPostProperties = ($arResult['POST_PROPERTIES']['SHOW'] === "Y");
 					if(
-						$arResult["POST_PROPERTIES"]["SHOW"] === "Y"
+						$showPostProperties
 						|| !empty($arResult["GRATITUDE"])
 					)
 					{
 						?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arParams["LOG_ID"]?>"><?
 
-						if($arResult["POST_PROPERTIES"]["SHOW"] === "Y")
+						if($showPostProperties)
 						{
 							$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__blogUFfileShowMobile');
 							foreach ($arResult["POST_PROPERTIES"]["DATA"] as $FIELD_NAME => $arPostField)
@@ -659,9 +706,14 @@ if(!empty($arResult["Post"]))
 						{
 							?><div class="lenta-info-block lenta-block-grat"><?
 								?><div class="lenta-block-grat-medal<?=($arResult["GRATITUDE"]["TYPE"]["XML_ID"] <> '' ? " lenta-block-grat-medal-".$arResult["GRATITUDE"]["TYPE"]["XML_ID"] : "")?>"></div><?
-								?><div class="lenta-block-grat-arrow"></div><?
 								?><div class="lenta-block-grat-users"><?
 									$jsIds = "";
+
+									$hiddenBlock = '';
+									$smallGratUsersList = [];
+									$counter = 0;
+									$counterLimit = (count($arResult['GRATITUDE']['USERS_FULL']) === 3 ? 3 : 2);
+
 									foreach($arResult["GRATITUDE"]["USERS_FULL"] as $arGratUser)
 									{
 										$avatarId = "lenta-block-grat-".randString(5);
@@ -669,6 +721,12 @@ if(!empty($arResult["Post"]))
 										{
 											$jsIds .= $jsIds !== "" ? ', "'.$avatarId.'"' : '"'.$avatarId.'"';
 										}
+
+										if ($counter >= $counterLimit)
+										{
+											ob_start();
+										}
+
 										?><div class="lenta-block-grat-user">
 											<div class="lenta-new-grat-avatar">
 												<div class="avatar" id="<?=$avatarId?>"<?if($arGratUser["AVATAR_SRC"]):?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?endif?>></div>
@@ -678,6 +736,55 @@ if(!empty($arResult["Post"]))
 												<div class="lenta-important-block-text"><?=htmlspecialcharsbx($arGratUser["WORK_POSITION"])?></div>
 											</div>
 										</div><?
+
+										if ($counter >= $counterLimit)
+										{
+											$hiddenBlock .= ob_get_clean();
+										}
+
+										if ($counter >= $counterLimit)
+										{
+											$smallGratUsersList[] = $arGratUser;
+										}
+
+										$counter++;
+									}
+
+									if (!empty($smallGratUsersList))
+									{
+										$counterLimit = 6;
+										$moreCount = count($smallGratUsersList) - $counterLimit;
+										if ($moreCount > 0)
+										{
+											$smallGratUsersList = array_slice($smallGratUsersList, 0, $counterLimit);
+										}
+										$smallGratUsersList = array_reverse($smallGratUsersList);
+
+										?><div class="lenta-block-grat-users-small-cont"><?
+											?><div class="lenta-block-grat-users-small"><?
+												$counter = 1;
+												foreach($smallGratUsersList as $arGratUser)
+												{
+													$avatarId = "lenta-block-grat-small-".randString(5);
+
+													if($arGratUser["AVATAR_SRC"])
+													{
+														$jsIds .= $jsIds !== "" ? ', "'.$avatarId.'"' : '"'.$avatarId.'"';
+													}
+
+													?><div class="avatar avatar-small" id="<?=$avatarId?>"<?if($arGratUser["AVATAR_SRC"]):?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?endif?>></div><?
+													$counter++;
+												}
+											?></div><?
+
+											if ($moreCount > 0)
+											{
+												?><div class="lenta-block-grat-users-small-more">+<?=$moreCount?></div><?
+											}
+										?></div><?
+										?><div class="lenta-block-grat-users-small-hidden" style="display: none"><?
+											?><?=$hiddenBlock?><?
+										?></div><?
 									}
 								?></div><?
 							?></div><?
@@ -725,7 +832,7 @@ if(!empty($arResult["Post"]))
 								"arUserField" => $arPostField,
 								"ACTION_PAGE" => str_replace("#log_id#", $arParams["LOG_ID"], $arParams["PATH_TO_LOG_ENTRY"]),
 								"MOBILE" => "Y",
-								"GRID" => ($arResult['Post']['hasInlineDiskFile'] ? 'N' : 'Y'),
+								"GRID" => ($arResult['Post']['hasInlineDiskFile'] || !empty($arResult['Post']['BACKGROUND_CODE']) ? 'N' : 'Y'),
 								"USE_TOGGLE_VIEW" => ($arResult["PostPerm"] >= 'W' ? 'Y' : 'N'),
 								"VIEW_MODE" => ($arParams["IS_LIST"] ? "BRIEF" : "EXTENDED")
 							),

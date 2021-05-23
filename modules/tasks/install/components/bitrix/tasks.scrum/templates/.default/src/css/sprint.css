@@ -34,6 +34,7 @@
 	background-color: #fff;
 	border-radius: 1px;
 	overflow: hidden;
+	display: none;
 }
 
 .tasks-scrum-sprint-header {

@@ -120,11 +120,11 @@ class CCrmDocument
 			}
 			elseif ($arType['USER_TYPE_ID'] === 'address')
 			{
-				//TODO
+				$arResult[$sType]['typeClass'] = \Bitrix\Crm\Integration\BizProc\FieldType\Address::class;
 			}
 			elseif ($arType['USER_TYPE_ID'] === 'url')
 			{
-				//TODO
+				$arResult[$sType]['typeClass'] = \Bitrix\Crm\Integration\BizProc\FieldType\Url::class;
 			}
 		}
 		return $arResult;
@@ -1417,13 +1417,13 @@ class CCrmDocument
 
 			if($arDocumentID['TYPE'] === CCrmOwnerType::LeadName || $arDocumentID['TYPE'] === CCrmOwnerType::DealName)
 			{
+				$objDocument['OBSERVER_IDS'] = [];
 				$observerIds = \Bitrix\Crm\Observer\ObserverManager::getEntityObserverIDs(
 					CCrmOwnerType::ResolveID($arDocumentID['TYPE']),
 					$arDocumentID['ID']
 				);
 				if(count($observerIds) > 0)
 				{
-					$objDocument['OBSERVER_IDS'] = array();
 					foreach ($observerIds as $id)
 					{
 						$objDocument['OBSERVER_IDS'][] = 'user_' . $id;
@@ -1883,6 +1883,8 @@ class CCrmDocument
 		{
 			$results[] = $enumVMap[$fields[$name]];
 		}
+
+		$results = array_unique($results);
 
 		if(!empty($results))
 		{
@@ -2829,9 +2831,18 @@ class CCrmDocument
 	 */
 	public static function onWorkflowStatusChange($documentId, $workflowId, $status, $rootActivity)
 	{
-		if (!$rootActivity || ($rootActivity->getDocumentEventType() & CBPDocumentEventType::Manual) === 0)
+		if (!$rootActivity)
 		{
 			return;
+		}
+
+		if (
+			$status === CBPWorkflowStatus::Running
+			&& !$rootActivity->workflow->isNew()
+			&& !self::isResumeWorkflowAvailable($documentId, $rootActivity->getDocumentEventType())
+		)
+		{
+			throw new Exception(GetMessage('CRM_DOCUMENT_RESUME_RESTRICTED'));
 		}
 
 		if ($status === CBPWorkflowStatus::Running && $rootActivity->workflow->isNew())
@@ -2839,10 +2850,25 @@ class CCrmDocument
 			$status = CBPWorkflowStatus::Created;
 		}
 
-		\Bitrix\Crm\Timeline\BizprocController::getInstance()->onWorkflowStatusChange(
-			$workflowId,
-			$status
-		);
+		if ($rootActivity->getDocumentEventType() === CBPDocumentEventType::Manual)
+		{
+			\Bitrix\Crm\Timeline\BizprocController::getInstance()->onWorkflowStatusChange(
+				$workflowId,
+				$status
+			);
+		}
+	}
+
+	private static function isResumeWorkflowAvailable($documentId, int $eventType): bool
+	{
+		if ($eventType === CBPDocumentEventType::Automation)
+		{
+			$documentInfo = static::GetDocumentInfo($documentId);
+			$entityTypeId = \CCrmOwnerType::ResolveID($documentInfo['TYPE']);
+
+			return \Bitrix\Crm\Automation\Factory::isAutomationAvailable($entityTypeId);
+		}
+		return CBPRuntime::isFeatureEnabled();
 	}
 
 	protected static function normalizeDocumentIdInternal($documentId, $entityTypeName, $entityTypeAbbr)

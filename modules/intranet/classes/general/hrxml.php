@@ -367,7 +367,7 @@ class CUserHRXMLImport
 				);
 				if ($arUser = $rsUser->fetch())
 				{
-					$arUser['UF_WORK_BINDING'] = unserialize($arUser['UF_WORK_BINDING']);
+					$arUser['UF_WORK_BINDING'] = unserialize($arUser['UF_WORK_BINDING'], ["allowed_classes" => false]);
 				}
 				else
 				{

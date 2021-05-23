@@ -13330,18 +13330,19 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 				titleBar: this.message["CRM_LEAD_CONVERT_TITLE"],
 				zIndex: -970,
 				buttons:  [
-					new BX.PopupWindowButton({
+					new BX.UI.Button({
 						text : this.message["CRM_TYPE_CONTINUE"],
-						className : 'popup-window-button-create',
+						id: 'continue',
+						color: BX.UI.Button.Color.SUCCESS,
 						events : { click : function()
 						{
-							var convertButton = BX.proxy_context;
-							if (BX.hasClass(convertButton, "popup-window-button-wait"))
+							var convertButton = BX.PopupWindowManager.getPopupById('confirmLeadConvert').getButton('continue');
+							if (convertButton.isWaiting())
 							{
 								//double click protection
 								return;
 							}
-							BX.addClass(convertButton, "popup-window-button-wait");
+							convertButton.setWaiting();
 
 							BX.loadCSS(
 								'/bitrix/js/crm/css/autorun_proc.css'
@@ -13355,11 +13356,12 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 
 						}.bind(this)}
 					}),
-					new BX.PopupWindowButtonLink({
+					new BX.UI.Button({
 						text : this.message["CRM_TYPE_CANCEL"],
+						color: BX.UI.Button.Color.LINK,
 						events: { click : function()
 						{
-							this.popupWindow.close();
+							this.getContext().close();
 						}}
 					})
 				],

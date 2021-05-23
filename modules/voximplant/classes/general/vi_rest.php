@@ -121,7 +121,8 @@ class CVoxImplantRestService extends IRestService
 					Rest\Helper::EVENT_START_EXTERNAL_CALLBACK => array('voximplant', 'onExternalCallBackStart', array(__CLASS__, 'filterApp'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
 				),
 				CRestUtil::PLACEMENTS => array(
-					Rest\Helper::PLACEMENT_CALL_CARD => array()
+					Rest\Helper::PLACEMENT_CALL_CARD => array(),
+					Bitrix\Voximplant\Integration\Rest\AppPlacement::ANALYTICS_MENU => array()
 				)
 			),
 			'call' => array(
@@ -1450,9 +1451,9 @@ class CVoxImplantRestService extends IRestService
 			{
 				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][SIDE] should be either Client or User');
 			}
-			if((int)$messageFields['START_TIME'] <= 0)
+			if((int)$messageFields['START_TIME'] < 0)
 			{
-				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][START_TIME] should be greater than zero');
+				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][START_TIME] should be greater or equal to zero');
 			}
 			if((int)$messageFields['STOP_TIME'] <= 0)
 			{

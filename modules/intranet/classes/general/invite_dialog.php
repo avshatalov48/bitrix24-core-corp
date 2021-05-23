@@ -1329,31 +1329,9 @@ class CIntranetInviteDialog
 
 	private static function GeneratePassword($SITE_ID, $bExtranetUser)
 	{
-		global $USER;
-
 		$arGroupID = self::getUserGroups($SITE_ID, $bExtranetUser);
-		$arPolicy = $USER->GetGroupPolicy($arGroupID);
 
-		$password_min_length = intval($arPolicy["PASSWORD_LENGTH"]);
-		if($password_min_length <= 0)
-		{
-			$password_min_length = 6;
-		}
-
-		$password_chars = array(
-			"abcdefghijklnmopqrstuvwxyz",
-			"ABCDEFGHIJKLNMOPQRSTUVWXYZ",
-			"0123456789",
-		);
-
-		if($arPolicy["PASSWORD_PUNCTUATION"] === "Y")
-		{
-			$password_chars[] = ",.<>/?;:'\"[]{}\\|`~!@#\$%^&*()-_+=";
-		}
-
-		$password = randString($password_min_length, $password_chars);
-
-		return $password;
+		return \CUser::GeneratePasswordByPolicy($arGroupID);
 	}
 
 	public static function TransferEmailUser($userId, $arParams = array())
@@ -1449,6 +1427,14 @@ class CIntranetInviteDialog
 		)
 		{
 			$arFields["POSITION"] = $arParams["POSITION"];
+		}
+
+		if (
+			isset($arParams["CONFIRM_CODE"])
+			&& $arParams["CONFIRM_CODE"] <> ''
+		)
+		{
+			$arFields["CONFIRM_CODE"] = $arParams["CONFIRM_CODE"];
 		}
 
 		foreach(GetModuleEvents("intranet", "OnTransferEMailUser", true) as $arEvent)
@@ -1681,6 +1667,42 @@ class CIntranetInviteDialog
 		}
 	}
 
+	public static function GetSiteByDepartmentId($arDepartmentId)
+	{
+		if (!is_array($arDepartmentId))
+		{
+			$arDepartmentId = array($arDepartmentId);
+		}
+
+		$dbSitesList = CSite::GetList($b = "SORT", $o = "asc", array("ACTIVE" => "Y")); // cache used
+		while ($arSite = $dbSitesList->GetNext())
+		{
+			$siteRootDepartmentId = COption::GetOptionString("main", "wizard_departament", false, $arSite["LID"], true);
+			if ($siteRootDepartmentId)
+			{
+				if (in_array($siteRootDepartmentId, $arDepartmentId))
+				{
+					return $arSite["LID"];
+				}
+				else
+				{
+					$arSubStructure = CIntranetUtils::getSubStructure($siteRootDepartmentId);
+					$arSiteDepartmentId = array_keys($arSubStructure["DATA"]);
+
+					foreach($arDepartmentId as $userDepartmentId)
+					{
+						if(in_array($userDepartmentId, $arSiteDepartmentId))
+						{
+							return $arSite["LID"];
+						}
+					}
+				}
+			}
+		}
+
+		return SITE_ID;
+	}
+
 	public static function getUserSiteId($arParams = array())
 	{
 		$bExtranet = (
@@ -1706,9 +1728,7 @@ class CIntranetInviteDialog
 		}
 		else
 		{
-			CModule::IncludeModule('socialnetwork');
-			$arSite = CSocNetLogComponent::GetSiteByDepartmentId(intval($arParams["UF_DEPARTMENT"]));
-			$siteId = $arSite["LID"];
+			$siteId = self::GetSiteByDepartmentId($arParams["UF_DEPARTMENT"]);
 		}
 
 		return $siteId;

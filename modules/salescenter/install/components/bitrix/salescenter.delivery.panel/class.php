@@ -136,19 +136,14 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 			];
 
 			$filter = [
-				'=CLASS_NAME' => $handler->getHandlerClass(),
+				'=CLASS_NAME' => $handler->getHandlerClass()
 			];
-
-			if ($handler->isRestHandler())
+			if ($handler instanceof SalesCenter\Delivery\Handlers\IRestHandler)
 			{
 				$filter['%CONFIG'] = $handler->getRestHandlerCode();
 			}
 
-			$existingItems = Table::getList(
-				[
-					'filter' => $filter,
-				]
-			);
+			$existingItems = Table::getList(['filter' => $filter]);
 
 			foreach ($existingItems as $existingItem)
 			{
@@ -161,8 +156,6 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 					'LINK' => $handler->getEditLink($existingItem['ID'])
 				];
 			}
-
-			//$menuItems[] = $this->buildServiceListAdminLink($handler->getHandlerClass());
 
 			$result[] = [
 				'title' => $handler->getName(),

@@ -282,12 +282,6 @@ if (file_exists($langFilename))
 	__IncludeLang($langFilename);
 }
 
-if (CModule::IncludeModule('compression'))
-{
-	CCompress::Disable2048Spaces();
-}
-
-
 session_write_close();
 
 $arParams["USE_AUTH"] = "Y";

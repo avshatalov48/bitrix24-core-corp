@@ -2,18 +2,17 @@
 
 namespace Bitrix\Location\Entity\Format;
 
-use Bitrix\Location\Entity\Address\FieldType;
 use Bitrix\Location\Entity\Generic\IField;
 
 /**
  * Class Field
  * @package Bitrix\Location\Entity\Format
- * todo: validators
+ * @internal
  */
 final class Field implements IField
 {
 	/** @var int  */
-	private $type = FieldType::UNKNOWN;
+	private $type;
 	/** @var int  */
 	private $sort = 100;
 	/** @var string  */
@@ -23,7 +22,7 @@ final class Field implements IField
 
 	/**
 	 * Field constructor.
-	 * @param int $type
+	 * @param int $type Field type. See \Bitrix\Location\Entity\Address\FieldType
 	 */
 	public function __construct(int $type)
 	{
@@ -32,6 +31,7 @@ final class Field implements IField
 
 	/**
 	 * @return int
+	 * @see \Bitrix\Location\Entity\Address\FieldType
 	 */
 	public function getType(): int
 	{
@@ -52,7 +52,7 @@ final class Field implements IField
 	 */
 	public function setSort(int $sort): self
 	{
-		$this->sort = (int)$sort;
+		$this->sort = $sort;
 		return $this;
 	}
 
@@ -70,7 +70,7 @@ final class Field implements IField
 	 */
 	public function setName(string $name): self
 	{
-		$this->name = (string)$name;
+		$this->name = $name;
 		return $this;
 	}
 
@@ -88,7 +88,7 @@ final class Field implements IField
 	 */
 	public function setDescription(string $description): self
 	{
-		$this->description = (string)$description;
+		$this->description = $description;
 		return $this;
 	}
 }

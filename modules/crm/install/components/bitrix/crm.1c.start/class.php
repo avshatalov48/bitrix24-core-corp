@@ -140,7 +140,7 @@ class OnecStartComponent extends CBitrixComponent
 				$appSettings = COption::GetOptionString("rest", "options_".\Bitrix\Rest\AppTable::getByClientId(\CRestUtil::BITRIX_1C_APP_CODE)['CLIENT_ID'], "");
 				if (!empty($appSettings))
 				{
-					$appSettings = unserialize($appSettings);
+					$appSettings = unserialize($appSettings, ['allowed_classes' => false]);
 				}
 
 				$this->arResult['ITEMS'] = array();

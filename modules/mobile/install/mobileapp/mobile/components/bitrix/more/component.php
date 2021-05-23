@@ -118,6 +118,7 @@ else
 	$CACHE_MANAGER->RegisterTag('sonet_user2group_U' . $userId);
 	$CACHE_MANAGER->RegisterTag('mobile_custom_menu' . $userId);
 	$CACHE_MANAGER->RegisterTag('crm_change_role');
+	$CACHE_MANAGER->RegisterTag('bitrix24_left_menu');
 	$CACHE_MANAGER->EndTagCache();
 
 	if ($obCache->StartDataCache())
@@ -125,7 +126,6 @@ else
 		$obCache->EndDataCache($arResult);
 	}
 }
-
 $events = \Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobile", "onMobileMenuStructureBuilt");
 if (count($events) > 0)
 {

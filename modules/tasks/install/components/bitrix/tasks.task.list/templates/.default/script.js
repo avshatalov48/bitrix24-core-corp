@@ -6,6 +6,7 @@ BX.Tasks.GridActions = {
 	registeredTimerNodes: {},
 	defaultPresetId: '',
 	getTotalCountProceed: false,
+	currentGroupAction: null,
 
 	checkCanMove: function()
 	{
@@ -41,7 +42,7 @@ BX.Tasks.GridActions = {
 		}, this));
 	},
 
-	toggleFilter: function (options)
+	toggleFilter: function (options, selected)
 	{
 		var filterManager = BX.Main.filterManager.getById(this.gridId);
 		if (!filterManager)
@@ -49,23 +50,25 @@ BX.Tasks.GridActions = {
 			console.log('BX.Main.filterManager not initialised');
 			return;
 		}
-		var fields = filterManager.getFilterFieldsValues();
-		var filterApi = filterManager.getApi();
 
-		Object.keys(options).forEach(function(key)
+		if (!selected)
 		{
-			if (fields[key] && JSON.stringify(fields[key]) === JSON.stringify(options[key]))
-			{
-				delete fields[key];
-			}
-			else
-			{
-				fields[key] = options[key];
-			}
+			filterManager.getApi().extendFilter(options);
+			return;
+		}
+
+		var filterFields = filterManager.getFilterFields();
+
+		Object.keys(options).forEach(function(optionKey) {
+			filterFields.forEach(function(field) {
+				if (field.getAttribute('data-name') === optionKey)
+				{
+					filterManager.getFields().deleteField(field);
+				}
+			});
 		});
 
-		filterApi.setFields(fields);
-		filterApi.apply();
+		filterManager.getSearch().apply();
 	},
 
 	filter: function(options)
@@ -230,10 +233,25 @@ BX.Tasks.GridActions = {
 		}
 	},
 
+	setCurrentGroupAction: function(groupAction)
+	{
+		this.currentGroupAction = groupAction;
+	},
+
+	processBeforeGroupActionSent: function()
+	{
+		if (this.currentGroupAction === 'ping')
+		{
+			BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION')});
+		}
+		this.currentGroupAction = null;
+	},
+
     confirmGroupAction: function(gridId)
 	{
         BX.Tasks.confirm(BX.message('TASKS_CONFIRM_GROUP_ACTION')).then(function () {
-            BX.Main.gridManager.getById(gridId).instance.sendSelected();
+			this.processBeforeGroupActionSent();
+			BX.Main.gridManager.getById(gridId).instance.sendSelected();
         }.bind(this));
     },
 
@@ -248,7 +266,10 @@ BX.Tasks.GridActions = {
             bTime: true,
             currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset() * 60,
             bHideTimebar: true,
-			bCompatibility: false,
+			bCompatibility: true,
+			bCategoryTimeVisibilityOption: 'tasks.bx.calendar.deadline',
+			bTimeVisibility: (BX.Tasks.GridInstance ?
+				(BX.Tasks.GridInstance.calendarSettings.deadlineTimeVisibility === 'Y') : false),
             callback_after: (function (node, taskId) {
                 return function (value) {
                     var path = BX.CJSTask.ajaxUrl;
@@ -599,6 +620,8 @@ BX(function() {
 		this.groupByGroups = (options.groupByGroups === 'true');
 		this.groupBySubTasks = (options.groupBySubTasks === 'true');
 		this.arParams = options.arParams;
+
+		this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 
 		this.taskList = new Map();
 		this.comments = new Map();

@@ -30,6 +30,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._controlChangeNotifier = null;
 
 		this._entityUpdateHandler = BX.delegate(this.onEntityUpdate, this);
+		this._toolbarMenuBuildHandler = BX.delegate(this.onInterfaceToolbarMenuBuild, this);
+		this._configurationManagerInitializeHandler = BX.delegate(this.onConfigurationManagerInitialize, this);
 
 		this._helpWrapper = null;
 		this.eventsNamespace = 'BX.Crm.EntityEditor';
@@ -69,15 +71,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.initializeManagers = function()
 	{
-		BX.addCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", function(editor, eventArgs) {
-			if(eventArgs.type === 'editor')
-			{
-				eventArgs.configurationFieldManager = BX.Crm.EntityConfigurationManager.create(
-					this._id,
-					{ editor: this }
-				);
-			}
-		}.bind(this));
+		BX.addCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
 
 		BX.Crm.EntityEditor.superclass.initializeManagers.apply(this);
 
@@ -115,7 +109,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.addCustomEvent(
 			window,
 			"Crm.InterfaceToolbar.MenuBuild",
-			BX.delegate(this.onInterfaceToolbarMenuBuild, this)
+			this._toolbarMenuBuildHandler
 		);
 
 		BX.addCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
@@ -123,7 +117,23 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	BX.Crm.EntityEditor.prototype.deattachFromEvents = function()
 	{
 		BX.Crm.EntityEditor.superclass.deattachFromEvents.apply(this);
+
+		BX.removeCustomEvent(
+			window,
+			"Crm.InterfaceToolbar.MenuBuild",
+			this._toolbarMenuBuildHandler
+		);
 		BX.removeCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
+		BX.removeCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
+	};
+	BX.Crm.EntityEditor.prototype.onConfigurationManagerInitialize = function(editor, eventArgs) {
+		if(eventArgs.type === 'editor')
+		{
+			eventArgs.configurationFieldManager = BX.Crm.EntityConfigurationManager.create(
+				this._id,
+				{ editor: this }
+			);
+		}
 	};
 	BX.Crm.EntityEditor.prototype.initializeControlsEditMode = function()
 	{
@@ -720,7 +730,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		var checkErrors = BX.prop.getObject(result, "CHECK_ERRORS", null);
 		var error = BX.prop.getString(result, "ERROR", "");
-		if(checkErrors || error !== "")
+		var hasRestriction = BX.prop.getBoolean(result, 'RESTRICTION', false);
+		if(checkErrors || error !== "" || hasRestriction)
 		{
 			if(checkErrors)
 			{
@@ -756,22 +767,32 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				error = errorMessages.join("<br/>");
 			}
 
-			if(error !== "" && this._toolPanel)
+			var restrictionAction = BX.prop.getString(result, "RESTRICTION_ACTION", "");
+			if (hasRestriction && restrictionAction.length)
 			{
-				this._toolPanel.addError(error);
-			}
-
-			eventParams["checkErrors"] = checkErrors;
-			eventParams["error"] = error;
-
-			if(this._isNew)
-			{
-				BX.onCustomEvent(window, "onCrmEntityCreateError", [eventParams]);
+				eval(restrictionAction);
+				BX.onCustomEvent(window, "BX.Crm.EntityEditor:onRestrictionAction", []);
 			}
 			else
 			{
-				eventParams["entityId"] = this._entityId;
-				BX.onCustomEvent(window, "onCrmEntityUpdateError", [eventParams]);
+				if (error !== "" && this._toolPanel)
+				{
+					this._toolPanel.addError(error);
+				}
+
+				eventParams["checkErrors"] = checkErrors;
+				eventParams["error"] = error;
+
+
+				if (this._isNew)
+				{
+					BX.onCustomEvent(window, "onCrmEntityCreateError", [eventParams]);
+				}
+				else
+				{
+					eventParams["entityId"] = this._entityId;
+					BX.onCustomEvent(window, "onCrmEntityUpdateError", [eventParams]);
+				}
 			}
 
 			this.releaseAjaxForm();

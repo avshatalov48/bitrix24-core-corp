@@ -18,6 +18,7 @@ use Bitrix\Main\Localization\Loc;
 class DealScoring extends Base
 {
 	protected $deals;
+	protected const CACHE_TTL = 86400;
 
 	/**
 	 * Returns available model names for the deal scoring.
@@ -25,22 +26,25 @@ class DealScoring extends Base
 	 */
 	public static function getModelNames()
 	{
+		static $result = [];
+		if (!empty($result))
+		{
+			return $result;
+		}
+
 		$cursor = DealCategoryTable::getList([
 			'select' => ['ID'],
 			'filter' => [
 				'=IS_LOCKED' => 'N'
-			]
+			],
+			'cache' => ['ttl' => static::CACHE_TTL]
 		]);
 
-		$result = [
-			'CRM_DEAL_DEFAULT'
-		];
-
+		$result[] = 'CRM_DEAL_DEFAULT';
 		while ($row = $cursor->fetch())
 		{
 			$result[] = 'CRM_DEAL_CATEGORY_' . $row['ID'];
 		}
-
 		return $result;
 	}
 

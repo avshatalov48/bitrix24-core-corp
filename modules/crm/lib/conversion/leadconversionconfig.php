@@ -71,7 +71,7 @@ class LeadConversionConfig extends EntityConversionConfig
 		}
 
 		$s = Main\Config\Option::get('crm', self::resolveOptionName($typeID), '', '');
-		$params = $s !== '' ? unserialize($s) : null;
+		$params = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($params))
 		{
 			return null;

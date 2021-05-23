@@ -21,7 +21,7 @@ class OrderConversionConfig extends EntityConversionConfig
 	public static function load()
 	{
 		$s = Main\Config\Option::get('crm', 'crm_order_conversion', '', '');
-		$params = $s !== '' ? unserialize($s) : null;
+		$params = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($params))
 		{
 			return null;

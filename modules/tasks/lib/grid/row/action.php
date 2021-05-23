@@ -37,6 +37,10 @@ class Action
 				'onclick' => 'BX.Tasks.GridActions.action("'.strtolower($muteAction).'", '.$taskId.');',
 			],
 			[
+				'text' => GetMessageJS('TASKS_GRID_ROW_ACTION_PING'),
+				'onclick' => "BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_PING_NOTIFICATION')}); BX.Tasks.GridActions.action('ping', {$taskId});",
+			],
+			[
 				'text' => GetMessageJS('TASKS_GRID_ROW_ACTION_VIEW'),
 				'href' => CComponentEngine::MakePathFromTemplate($urlPath, [
 					'user_id' => $userId,

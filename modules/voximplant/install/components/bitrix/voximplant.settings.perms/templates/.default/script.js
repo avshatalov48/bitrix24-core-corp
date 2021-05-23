@@ -63,9 +63,6 @@ BX.ViPermissionEdit.prototype =
 
 		self.confirm(BX.message('VOXIMPLANT_PERM_ROLE_DELETE'), BX.message('VOXIMPLANT_PERM_ROLE_DELETE_CONFIRM'), function(e)
 		{
-			if(!e.confirmed)
-				return;
-
 			BX.showWait();
 			BX.ajax({
 				url: self.ajaxUrl,
@@ -179,48 +176,15 @@ BX.ViPermissionEdit.prototype =
 
 	confirm: function(title, text, callback)
 	{
-		var result = {
-			confirmed: false
-		};
-
-		var popupId = this.elements.main.id + '-confirm-popup';
-
-		var popupWindow = new BX.PopupWindow(popupId, null, {
-			content: text,
-			titleBar: title,
-			closeByEsc: true,
-			buttons: [
-				new BX.PopupWindowButton({
-					text : BX.message('VOXIMPLANT_PERM_ROLE_OK'),
-					className : "popup-window-button-accept",
-					events : {
-						click : function() {
-							popupWindow.close();
-							result.confirmed = true;
-							if(BX.type.isFunction(callback))
-							{
-								callback(result);
-							}
-						}
-					}
-				}),
-				new BX.PopupWindowButtonLink({
-					text : BX.message('VOXIMPLANT_PERM_ROLE_CANCEL'),
-					className : "popup-window-button-link-cancel",
-					events : {
-						click : function() {
-							popupWindow.close();
-							result.confirmed = false;
-							if(BX.type.isFunction(callback))
-							{
-								callback(result);
-							}
-						}
-					}
-				})
-			]
-		});
-		popupWindow.show();
+		BX.UI.Dialogs.MessageBox.confirm(
+			text,
+			title,
+			function(messageBox)
+			{
+				messageBox.close();
+				callback(true);
+			}.bind(this)
+		);
 	},
 
 	notify: function(title, text, callback)

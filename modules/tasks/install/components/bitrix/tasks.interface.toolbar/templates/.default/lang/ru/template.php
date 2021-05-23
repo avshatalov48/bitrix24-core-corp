@@ -1,5 +1,6 @@
 <?
 $MESS["TASKS_COUNTER_TOTAL"] = "Задачи:";
+$MESS["TASKS_COUNTER_FOREIGN"] = "Другие задачи:";
 $MESS["TASKS_COUNTER_TOTAL_EMPL"] = "Задачи сотрудника:";
 $MESS["TASKS_COUNTER_TOTAL_PLURAL_0"] = "задача";
 $MESS["TASKS_COUNTER_TOTAL_PLURAL_1"] = "задачи";

@@ -215,10 +215,13 @@ include('InAppNotifier');
 
 		onPageLoaded()
 		{
-			this.rest.call('Limit.isExceeded').then((response) => {
-				console.log('Limit.isExceeded', response.result);
+			this.rest.call('limit.isExceeded').then((response) => {
+				console.log('limit.isExceeded', response.result);
 				this.taskLimitExceeded = response.result || false;
 			});
+
+			TaskGroupList.loadLastActiveProjects();
+			TaskGroupList.validateLastSearchedProjects();
 		}
 
 		onMobileGridFormDataChange(eventData)
@@ -514,10 +517,6 @@ include('InAppNotifier');
 					this.onChangeDeadlineAction();
 					break;
 
-				case 'changeResponsible':
-					this.onChangeResponsibleAction();
-					break;
-
 				case 'approve':
 					this.onApproveAction();
 					break;
@@ -532,6 +531,22 @@ include('InAppNotifier');
 
 				case 'pause':
 					this.onPauseAction();
+					break;
+
+				case 'renew':
+					this.onRenewAction();
+					break;
+
+				case 'changeResponsible':
+					this.onChangeResponsibleAction();
+					break;
+
+				case 'delegate':
+					this.onDelegateAction();
+					break;
+
+				case 'changeGroup':
+					this.onChangeGroupAction();
 					break;
 
 				case 'mute':
@@ -602,25 +617,13 @@ include('InAppNotifier');
 
 		onChangeResponsibleAction()
 		{
-			UserList.openPicker({
-				title: BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'),
-				allowMultipleSelection: false,
-				listOptions: {
-					users: {
-						hideUnnamed: true,
-						useRecentSelected: true,
-					},
-				},
-			}).then((users) => {
-				if (users.length > 0)
-				{
-					const user = users[0];
-
+			new TaskUserList({}, {
+				onSelect: (user) => {
 					this.updateTask({
 						responsible: {
-							id: user.params.id,
+							id: user.id,
 							name: user.title,
-							icon: user.imageUrl,
+							icon: (user.imageUrl.search('default_avatar.png') < 0 ? user.imageUrl : ''),
 							link: '',
 						},
 						activityDate: Date.now(),
@@ -635,7 +638,42 @@ include('InAppNotifier');
 							user: this.task.responsible,
 						},
 					});
-				}
+				},
+			});
+		}
+
+		onDelegateAction()
+		{
+			this.delegate();
+		}
+
+		onChangeGroupAction()
+		{
+			new TaskGroupList({
+				onSelect: (group) => {
+					if (Number(this.task.groupId) === Number(group.id))
+					{
+						return;
+					}
+
+					this.task.groupId = Number(group.id);
+					this.task.group = {
+						id: group.id,
+						name: group.title,
+						image: group.imageUrl,
+					};
+					this.updateTask({});
+
+					console.log('tasks.view.native::onItemAction::changeGroup');
+					BX.postWebEvent('tasks.view.native::onItemAction', {
+						taskId: this.task.id,
+						taskGuid: this.guid,
+						name: 'group',
+						values: {
+							group: this.task.group,
+						},
+					});
+				},
 			});
 		}
 
@@ -669,6 +707,42 @@ include('InAppNotifier');
 		{
 			switch (item.id)
 			{
+				case 'changeDeadline':
+					this.onChangeDeadlineAction();
+					break;
+
+				case 'approve':
+					this.onApproveAction();
+					break;
+
+				case 'disapprove':
+					this.onDisapproveAction();
+					break;
+
+				case 'start':
+					this.onStartAction();
+					break;
+
+				case 'pause':
+					this.onPauseAction();
+					break;
+
+				case 'renew':
+					this.onRenewAction();
+					break;
+
+				case 'changeResponsible':
+					this.onChangeResponsibleAction();
+					break;
+
+				case 'delegate':
+					this.onDelegateAction();
+					break;
+
+				case 'changeGroup':
+					this.onChangeGroupAction();
+					break;
+
 				case 'mute':
 					this.onMuteAction();
 					break;
@@ -853,11 +927,9 @@ include('InAppNotifier');
 		{
 			this.task.rawAccess.start = false;
 			this.task.rawAccess.pause = true;
+			this.task.rawAccess.renew = false;
 
-			this.updateTask({
-				status: Task.statusList.inprogress,
-				activityDate: Date.now(),
-			});
+			this.updateTask({status: Task.statusList.inprogress});
 			this.redrawTaskPopupMenu();
 
 			this.task.start().then(() => {
@@ -870,6 +942,22 @@ include('InAppNotifier');
 		{
 			this.task.rawAccess.start = true;
 			this.task.rawAccess.pause = false;
+			this.task.rawAccess.renew = false;
+
+			this.updateTask({status: Task.statusList.pending});
+			this.redrawTaskPopupMenu();
+
+			this.task.pause().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+			});
+		}
+
+		onRenewAction()
+		{
+			this.task.rawAccess.start = true;
+			this.task.rawAccess.pause = false;
+			this.task.rawAccess.renew = false;
 
 			this.updateTask({
 				status: Task.statusList.pending,
@@ -877,7 +965,7 @@ include('InAppNotifier');
 			});
 			this.redrawTaskPopupMenu();
 
-			this.task.pause().then(() => {
+			this.task.renew().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
 			});
@@ -941,22 +1029,11 @@ include('InAppNotifier');
 
 		delegate()
 		{
-			UserList.openPicker({
-				allowMultipleSelection: false,
-				listOptions: {
-					users: {
-						hideUnnamed: true,
-						useRecentSelected: true,
-					},
-				},
-			}).then((users) => {
-				if (users.length > 0)
-				{
-					const user = users[0];
-
+			new TaskUserList({}, {
+				onSelect: (user) => {
 					this.updateTask({
 						responsible: {
-							id: user.params.id,
+							id: user.id,
 							name: user.title,
 							icon: user.imageUrl,
 							link: '',
@@ -967,7 +1044,7 @@ include('InAppNotifier');
 						taskId: this.task.id,
 						responsible: true,
 					}, true));
-				}
+				},
 			});
 		}
 

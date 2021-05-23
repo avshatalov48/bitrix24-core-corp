@@ -1,4 +1,5 @@
 import {EventEmitter} from 'main.core.events';
+import {Loc, Tag} from 'main.core';
 import Menu from './menu';
 
 export default class Prompt extends EventEmitter
@@ -7,6 +8,10 @@ export default class Prompt extends EventEmitter
 
 	/** Element */
 	#inputNode;
+
+	/** Element */
+	#menuNode;
+
 	/** {Menu} */
 	#menu;
 
@@ -18,14 +23,20 @@ export default class Prompt extends EventEmitter
 		this.setEventNamespace('BX.Location.Widget.Prompt');
 
 		this.#inputNode = props.inputNode;
+
+		if (props.menuNode)
+		{
+			this.#menuNode = props.menuNode;
+		}
 	}
 
 	#createMenu()
 	{
 		return new Menu({
-			bindElement: this.#inputNode,
+			bindElement: this.#menuNode ? this.#menuNode : this.#inputNode,
 			autoHide: false,
-			closeByEsc: true
+			closeByEsc: true,
+			className: 'location-widget-prompt-menu',
 		});
 	}
 
@@ -49,7 +60,7 @@ export default class Prompt extends EventEmitter
 	{
 		if(locationsList.length > 0)
 		{
-			this.#setMenuItems(locationsList, searchPhrase);
+			this.setMenuItems(locationsList, searchPhrase);
 			this.getMenu().show();
 		}
 	}
@@ -64,7 +75,7 @@ export default class Prompt extends EventEmitter
 	 * @param {string} searchPhrase
 	 * @returns {*}
 	 */
-	#setMenuItems(locationsList: array<Location>, searchPhrase: string): Menu
+	setMenuItems(locationsList: array<Location>, searchPhrase: string): Menu
 	{
 		this.getMenu().clearItems();
 
@@ -78,6 +89,37 @@ export default class Prompt extends EventEmitter
 				);
 			});
 		}
+	}
+
+	/**
+	 * @param {callback} onclick
+	 * @param {string} text
+	 */
+	addShowOnMapMenuItem(onclick: () => void, text: string)
+	{
+		const showOnMapNode = Tag.render`
+			<div data-show-on-map="" tabindex="-1" class="location-map-popup-item--show-on-map">
+				${Loc.getMessage('LOCATION_WIDGET_SHOW_ON_MAP')}
+			</div>
+		`;
+
+		this.getMenu().addMenuItem({
+			className: 'location-map-popup-item--info',
+			text,
+			onclick: (event, item) => {
+				if (event.target === showOnMapNode)
+				{
+					onclick();
+				}
+
+				this.close();
+
+				event.stopPropagation();
+			}
+		});
+
+		//@TODO find out if there is a better way to do the same (i.e. via the html option)
+		this.getMenu().menuItems[this.getMenu().menuItems.length - 1].getContainer().appendChild(showOnMapNode);
 	}
 
 	/**
@@ -123,7 +165,12 @@ export default class Prompt extends EventEmitter
 			.replace(/,+/gi, '')
 			.split(new RegExp(/\s+/g));
 
-		const pattern = new RegExp(`(${spWords.join('|')})`, 'gi');
+		const pattern = new RegExp(
+			BX.util.escapeRegExp(
+				`(${spWords.join('|')})`
+			),
+			'gi'
+		);
 
 		result = locationName.replace(pattern, match => `<strong>${match}</strong>`);
 

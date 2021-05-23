@@ -2,6 +2,7 @@
 
 namespace Bitrix\SalesCenter\Delivery\Wizard;
 
+use Bitrix\Catalog\VatTable;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
@@ -139,19 +140,27 @@ abstract class Base implements WizardContract
 			$currency = CurrencyManager::getBaseCurrency();
 		}
 
+		/** @var \Bitrix\Sale\Delivery\Services\Base $handlerClass */
+		$handlerClass = $this->handler->getHandlerClass();
+
+		$vatRate = $handlerClass::getDefaultVatRate();
+
 		return $result->setData(
 			[
 				'FIELDS' => [
 					'NAME' => $settings['NAME'],
 					'CURRENCY' => $currency,
 					'ACTIVE' => $settings['ACTIVE'],
-					'CLASS_NAME' => $this->handler->getHandlerClass(),
+					'CLASS_NAME' => $handlerClass,
 					'LOGOTIP' => \CFile::SaveFile(
 						\CFile::MakeFileArray(
 							Application::getDocumentRoot() . $this->handler->getWorkingImagePath()
 						),
 						'sale/delivery/logotip'
 					),
+					'VAT_ID' => (!is_null($vatRate) && Loader::includeModule('catalog'))
+						? VatTable::getActiveVatIdByRate($vatRate, true)
+						: null,
 				]
 			]
 		);

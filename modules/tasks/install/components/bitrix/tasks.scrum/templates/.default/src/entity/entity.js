@@ -1,46 +1,35 @@
 import {Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
+
 import {Item} from '../item/item';
-import {Input} from '../utility/input';
-import {StoryPoints} from '../utility/story.points';
 import {GroupActionsButton} from './group.actions.button';
 import {ListItems} from './list.items';
 
+import {Input} from '../utility/input';
+import {StoryPoints} from '../utility/story.points';
+
+import type {Views} from '../view/view';
+
 import '../css/entity.css';
 
-type entityParams = {
+type EntityParams = {
 	id: number,
-	views: {
-		plan: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		activeSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		completedSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		}
-	},
+	views?: Views,
 	numberTasks?: number,
+	isExactSearchApplied: 'Y' | 'N'
 };
 
 export class Entity extends EventEmitter
 {
-	constructor(entityData: entityParams = {})
+	constructor(params: EntityParams)
 	{
-		super(entityData);
+		super(params);
 
-		this.id = (Type.isInteger(entityData.id) ? parseInt(entityData.id, 10) : 0);
+		this.setEventNamespace('BX.Tasks.Scrum.Entity');
 
-		this.views = entityData.views;
+		this.setEntityParams(params);
 
-		this.numberTasks = (Type.isInteger(entityData.numberTasks) ? parseInt(entityData.numberTasks, 10) : 0);
+		this.storyPoints = new StoryPoints();
 
 		this.items = new Map();
 
@@ -48,13 +37,19 @@ export class Entity extends EventEmitter
 		this.groupModeItems = new Map();
 
 		this.node = null;
-
 		this.groupActionsButton = null;
 		this.listItems = null;
 
-		this.storyPoints = new StoryPoints();
-
 		this.input = new Input();
+	}
+
+	setEntityParams(params: EntityParams)
+	{
+		this.setId(params.id);
+		this.setViews(params.views);
+		this.setNumberTasks(params.numberTasks);
+
+		this.exactSearchApplied = (params.isExactSearchApplied === 'Y');
 	}
 
 	addGroupActionsButton(groupActionsButton: GroupActionsButton)
@@ -69,14 +64,14 @@ export class Entity extends EventEmitter
 		this.listItems = listItems;
 	}
 
+	getListItems(): ListItems|null
+	{
+		return this.listItems;
+	}
+
 	getNode(): HTMLElement|null
 	{
 		return this.node;
-	}
-
-	getId()
-	{
-		return this.id;
 	}
 
 	setId(id: number)
@@ -87,6 +82,21 @@ export class Entity extends EventEmitter
 		{
 			this.listItems.setEntityId(this.id);
 		}
+	}
+
+	getId(): number
+	{
+		return this.id;
+	}
+
+	setViews(views)
+	{
+		this.views = (Type.isPlainObject(views) ? views : {});
+	}
+
+	getViews()
+	{
+		return this.views;
 	}
 
 	getEntityType()
@@ -106,12 +116,36 @@ export class Entity extends EventEmitter
 
 	getListItemsNode(): HTMLElement|null
 	{
-		return (this.listItems ? this.listItems.getElement() : null);
+		return (this.listItems ? this.listItems.getNode() : null);
+	}
+
+	isEmpty(): boolean
+	{
+		return (this.items.size === 0);
 	}
 
 	getItems(): Map
 	{
 		return this.items;
+	}
+
+	recalculateItemsSort()
+	{
+		const listItemsNode = this.getListItemsNode();
+		if (!listItemsNode)
+		{
+			return;
+		}
+
+		let sort = 1;
+		listItemsNode.querySelectorAll('.tasks-scrum-item').forEach((node: HTMLElement) => {
+			const item = this.getItems().get(parseInt(node.dataset.itemId, 10));
+			if (item)
+			{
+				item.setSort(sort);
+				sort++;
+			}
+		});
 	}
 
 	getInput(): Input
@@ -149,14 +183,19 @@ export class Entity extends EventEmitter
 		}
 	}
 
-	getNumberTasks(): number
+	isNodeCreated(): boolean
 	{
-		return (this.numberTasks ? this.numberTasks : this.getItems().size);
+		return (this.node !== null);
 	}
 
 	setNumberTasks(numberTasks: number)
 	{
 		this.numberTasks = (Type.isInteger(numberTasks) ? parseInt(numberTasks, 10) : 0);
+	}
+
+	getNumberTasks(): number
+	{
+		return (this.numberTasks ? this.numberTasks : this.getItems().size);
 	}
 
 	addNumberTasks(value: number)
@@ -175,9 +214,19 @@ export class Entity extends EventEmitter
 		}
 	}
 
-	hasInput(): Boolean
+	hasInput(): boolean
 	{
 		return true;
+	}
+
+	setExactSearchApplied(value: boolean)
+	{
+		this.exactSearchApplied = Boolean(value);
+	}
+
+	isExactSearchApplied(): boolean
+	{
+		return this.exactSearchApplied;
 	}
 
 	onAfterAppend()
@@ -223,6 +272,8 @@ export class Entity extends EventEmitter
 		}
 
 		item.onAfterAppend(this.getListItemsNode());
+
+		item.setEntityType(this.getEntityType());
 
 		item.subscribe('updateItem', (baseEvent) => {
 			this.emit('updateItem', baseEvent.getData());
@@ -321,9 +372,9 @@ export class Entity extends EventEmitter
 
 	subtractTotalStoryPoints(item: Item) {}
 
-	getItemByItemId(itemId)
+	getItemByItemId(itemId: number|string): Item|undefined
 	{
-		return this.items.get(parseInt(itemId, 10));
+		return this.items.get((Type.isInteger(itemId) ? parseInt(itemId, 10) : itemId));
 	}
 
 	getStoryPoints(): StoryPoints

@@ -230,6 +230,15 @@ $MESS['IMOL_CONFIG_QUICK_ANSWERS_DESC_NEW'] = 'Быстрые ответы сэ�
 $MESS['IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW'] = 'Отправлять запрос клиенту на оценку качества обслуживания. <a class="bx-helpdesk-link" onclick="top.BX.Helper.show(\'redirect=detail&code=5667405\'); return false;"> Подробнее</a>';
 $MESS['IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW'] = 'Закрывать сессию сразу после оценки клиентом';
 $MESS['IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH'] = 'Разрешить оценку диалога до его окончания';
+$MESS['IMOL_CONFIG_ENABLE_VOTE_TIME_LIMIT'] = 'Ограничить время на получение оценки от клиента';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT'] = 'Сколько времени предоставлять для оценки диалога:';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_1_DAY'] = '1 день';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_2_DAY'] = '2 дня';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_3_DAY'] = '3 дня';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_4_DAY'] = '4 дня ';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_5_DAY'] = '5 дней';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_7_DAY'] = '7 дней';
+$MESS['IMOL_CONFIG_EDIT_VOTE_TIME_LIMIT_30_DAY'] = '30 дней';
 $MESS['IMOL_CONFIG_EDIT_VOTE_MESSAGE_2_TITLE_NEW'] = '2. Настройка текста для оценки качества в других каналах (Viber, Telegram, Facebook, Вконтакте и другие):';
 $MESS['IMOL_CONFIG_EDIT_LANG_NEW'] = 'Настройка языковых предпочтений. <a class="bx-helpdesk-link" onclick="top.BX.Helper.show(\'redirect=detail&code=5484689\')"> Подробнее</a>';
 $MESS['IMOL_CONFIG_EDIT_LANG_EMAIL_TIP_NEW'] = 'Клиент может заказать историю переписки или получить уведомление о новом сообщении от оператора.  Выберите язык, на котором будет отправлено письмо. 

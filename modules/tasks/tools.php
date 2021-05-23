@@ -64,11 +64,11 @@ class TasksException extends \Bitrix\Tasks\Exception
 		// exception extra data goes to log
 		if($this->checkOfType(self::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE) && $message !== false)
 		{
-			$parameters['AUX']['ERROR'] = unserialize($message);
+			$parameters['AUX']['ERROR'] = unserialize($message, ['allowed_classes' => false]);
 		}
 
 		parent::__construct(
-			$message, 
+			$message,
 			$parameters,
 			array(
 				'CODE' => $code
@@ -232,9 +232,9 @@ function tasksFormatName($name, $lastName, $login, $secondName = "", $nameTempla
 {
 	if ($nameTemplate != "")
 	{
-		$result = CUser::FormatName($nameTemplate, array(	"NAME" 			=> $name, 
-															"LAST_NAME" 	=> $lastName, 
-															"SECOND_NAME" 	=> $secondName, 
+		$result = CUser::FormatName($nameTemplate, array(	"NAME" 			=> $name,
+															"LAST_NAME" 	=> $lastName,
+															"SECOND_NAME" 	=> $secondName,
 															"LOGIN"			=> $login),
 			true,
 			$bEscapeSpecChars);
@@ -261,9 +261,9 @@ function tasksFormatNameShort($name, $lastName, $login, $secondName = "", $nameT
 {
 	if ($nameTemplate != "")
 	{
-		$result = CUser::FormatName($nameTemplate, array(	"NAME" 			=> $name, 
-															"LAST_NAME" 	=> $lastName, 
-															"SECOND_NAME" 	=> $secondName, 
+		$result = CUser::FormatName($nameTemplate, array(	"NAME" 			=> $name,
+															"LAST_NAME" 	=> $lastName,
+															"SECOND_NAME" 	=> $secondName,
 															"LOGIN"			=> $login),
 			true,
 			$bEscapeSpecChars);
@@ -713,10 +713,10 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 }
 
 
-function tasksRenderListItem($task, $childrenCount, $arPaths, $depth = 0, 
-	$plain = false, $defer = false, $site_id = SITE_ID, $updatesCount = 0, 
-	$projectExpanded = true, $taskAdded = false, 
-	$componentName = "bitrix:tasks.list.item", $componentTemplate = ".default", 
+function tasksRenderListItem($task, $childrenCount, $arPaths, $depth = 0,
+	$plain = false, $defer = false, $site_id = SITE_ID, $updatesCount = 0,
+	$projectExpanded = true, $taskAdded = false,
+	$componentName = "bitrix:tasks.list.item", $componentTemplate = ".default",
 	$userNameTemplate = "", $arAllowedTaskActions = null, $ynIframe = 'N'
 )
 {
@@ -824,7 +824,7 @@ function templatesRenderListItem($template, $arPaths, $depth = 0, $plain = false
  *
  */
 function tasksRenderJSON(
-	$arTask, $childrenCount, $arPaths, $bParent = false, $bGant = false, 
+	$arTask, $childrenCount, $arPaths, $bParent = false, $bGant = false,
 	$top = false, $nameTemplate = "", $arAdditionalFields = array(), $bSkipJsMenu = false, array $params = array()
 )
 {
@@ -981,14 +981,14 @@ function tasksRenderJSON(
 				echo 'false';
 		?>,
 		childrenCount : <?php echo (int) $childrenCount; ?>,
-		canEditDeadline : <?php 
+		canEditDeadline : <?php
 			if ($arAllowedTaskActions['ACTION_CHANGE_DEADLINE'])
 				echo 'true';
 			else
 				echo 'false';
 		?>,
 		canStartTimeTracking : <?php if ($arAllowedTaskActions['ACTION_START_TIME_TRACKING']):?>true<?php else:?>false<?php endif?>,
-		ALLOW_TIME_TRACKING : <?php 
+		ALLOW_TIME_TRACKING : <?php
 			if (isset($arTask['ALLOW_TIME_TRACKING']) && ($arTask['ALLOW_TIME_TRACKING'] === 'Y'))
 				echo 'true';
 			else
@@ -1034,12 +1034,12 @@ function tasksJSDateObject($date, $top = false)
 {
 	$ts = MakeTimeStamp($date);
 	?>
-	new <?php if ($top):?>top.<?php endif?>Date(<?php 
+	new <?php if ($top):?>top.<?php endif?>Date(<?php
 		echo date("Y", $ts); ?>, <?php
-		echo date("n", $ts) - 1; ?>, <?php 
-		echo date("j", $ts); ?>, <?php 
-		echo date("G", $ts); ?>, <?php 
-		echo (date("i", $ts) + 0); ?>, <?php 
+		echo date("n", $ts) - 1; ?>, <?php
+		echo date("j", $ts); ?>, <?php
+		echo date("G", $ts); ?>, <?php
+		echo (date("i", $ts) + 0); ?>, <?php
 		echo (date("s", $ts) + 0); ?>)
 	<?php
 }
@@ -1095,7 +1095,7 @@ function tasksServerName($server_name = false)
 
 	$server_name_wo_protocol = str_replace(
 		array('http://', 'https://', 'HTTP://', 'HTTPS://'), 	// Yeah, I know: 'hTtpS://', ...
-		array('', '', '', ''), 
+		array('', '', '', ''),
 		$server_name
 	);
 
@@ -1362,7 +1362,7 @@ function __checkForum($forumID)
 
 /**
  * This function is deprecated. See CTaskFiles::removeTemporaryFile()
- * 
+ *
  * @deprecated
  */
 function deleteUploadedFiles($arFileIDs)
@@ -1381,7 +1381,7 @@ function deleteUploadedFiles($arFileIDs)
 
 /**
  * This function is deprecated. See CTaskFiles::saveFileTemporary()
- * 
+ *
  * @deprecated
  */
 function addUploadedFiles($arFileIDs)
@@ -1395,7 +1395,7 @@ function addUploadedFiles($arFileIDs)
 
 /**
  * This function is deprecated.
- * 
+ *
  * @deprecated
  */
 function cleanupUploadedFiles()

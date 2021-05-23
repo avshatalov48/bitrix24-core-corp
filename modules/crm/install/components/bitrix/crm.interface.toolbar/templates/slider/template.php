@@ -63,6 +63,7 @@ $bindingMenuMask = '/(lead|deal|invoice|quote|company|contact).*?([\d]+)/i';
 if (preg_match($bindingMenuMask, $arParams['TOOLBAR_ID'], $bindingMenuMatches) &&
 	\Bitrix\Main\Loader::includeModule('intranet'))
 {
+	\Bitrix\Main\UI\Extension::load('bizproc.script');
 	$APPLICATION->includeComponent(
 		'bitrix:intranet.binding.menu',
 		'',

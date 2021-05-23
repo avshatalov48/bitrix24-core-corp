@@ -33,8 +33,19 @@ $arResult['IS_AUTOMATION_INVOICE_ENABLED'] = \Bitrix\Crm\Automation\Factory::isA
 $arResult['IS_APP_CONFIGURATION_ENABLED'] = \Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl');
 $arResult['SMS_SENDERS'] = array();
 $smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
+
+$disabledSmsProviders = [];
+if ($arResult['BITRIX24'] && LANGUAGE_ID === 'ua')
+{
+	$disabledSmsProviders = ['smsru', 'smsastby'];
+}
+
 foreach ($smsSenders as $sender)
 {
+	if (in_array($sender['id'], $disabledSmsProviders))
+	{
+		continue;
+	}
 	if ($sender['isConfigurable'])
 	{
 		$arResult['SMS_SENDERS'][] = $sender;

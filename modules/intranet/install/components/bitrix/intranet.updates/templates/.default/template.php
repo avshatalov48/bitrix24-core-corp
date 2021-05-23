@@ -2,6 +2,8 @@
 <?
 CUtil::InitJSCore("popup");
 $APPLICATION->AddHeadScript("/bitrix/js/main/admin_tools.js");
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 $bLockControls = false;
 ?>
 <table id="content-edit-form-config" class="content-edit-form" cellspacing="0" cellpadding="0">

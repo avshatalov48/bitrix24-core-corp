@@ -146,7 +146,7 @@ BX.ImMobile = function(params)
 		}
 	}, this));
 
-	this.messenger.popupMessengerBody = document.body;
+	this.messenger.popupMessengerBody = document.body.parentNode;
 	this.messenger.popupMessengerBodyWrap = BX('im-dialog-wrap');
 	BX.addClass(this.messenger.popupMessengerBodyWrap, 'bx-messenger-dialog-wrap');
 	this.messenger.dialogOpen = true;
@@ -272,6 +272,7 @@ BX.ImMobile.prototype.initPageParams = function()
 		ChatDialog.disk.init(data.DIALOG_ID);
 		this.messenger.openMessenger(data.DIALOG_ID);
 		this.messenger.autoScroll();
+		BX.MessengerCommon.readMessage(data.DIALOG_ID);
 	});
 
 };
@@ -927,6 +928,8 @@ BX.ImMobile.prototype.mobileActionReady = function()
 		}
 		else
 		{
+			this.messenger.chat[chatId].owner = this.userId;
+			this.messenger.dialogStatusRedraw();
 			BX.MessengerCommon.linesAnswer(chatId);
 		}
 
@@ -1447,7 +1450,7 @@ BX.ImMessengerMobile = function(BXIM, params)
 	this.popupMessengerConnectionStatusText = null;
 	this.popupMessengerConnectionStatusTimeout = null;
 
-	this.recent = params.recent? params.recent: [];
+	this.recent = [];
 	this.recentListLoad = params.recent? true: false;
 
 	this.recentListTab = null;
@@ -1493,7 +1496,7 @@ BX.ImMessengerMobile.prototype.init = function(params)
 {
 	this.openChatEnable = params.openChatEnable || true;
 	this.updateStateInterval = params.updateStateInterval;
-	this.recent = params.recent || {};
+	this.recent = [];
 	if (!this.users)
 	{
 		this.users = {};
@@ -2991,7 +2994,7 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 			});
 
 			sheetButtons.push({
-				title: BX.message("IM_MENU_TO_POST"),
+				title: BX.message("IM_MENU_TO_POST_2"),
 				callback: BX.delegate(function () { BX.MessengerCommon.shareMessageAjax(messageId, 'POST') }, this)
 			});
 		}

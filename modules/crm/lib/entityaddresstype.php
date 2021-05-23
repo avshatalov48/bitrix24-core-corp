@@ -242,7 +242,7 @@ class EntityAddressType
 		return $result;
 	}
 
-	protected static function getZoneMap() : array
+	public static function getZoneMap() : array
 	{
 		if (self::$zoneMap === null)
 		{

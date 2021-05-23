@@ -7,4 +7,5 @@ $MESS["BPVICA_ERROR_OUTPUT_NUMBER"] = "Phone number is not specified.";
 $MESS["BPVICA_ERROR_NUMBER"] = "Subscriber's number is not specified.";
 $MESS["BPVICA_ERROR_TEXT"] = "Text to speak is not provided.";
 $MESS["BPVICA_ERROR_AUDIO_FILE"] = "Audio file is not specified.";
+$MESS["BPVICA_PROPERTY_TEXT"] = "Convert text to speech";
 ?>

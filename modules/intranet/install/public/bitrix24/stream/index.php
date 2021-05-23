@@ -4,18 +4,6 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public
 $APPLICATION->SetPageProperty("NOT_SHOW_NAV_CHAIN", "Y");
 $APPLICATION->SetPageProperty("title", htmlspecialcharsbx(COption::GetOptionString("main", "site_name", "Bitrix24")));
 
-if (CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed() && CModule::IncludeModule("intranet"))
-{
-	$APPLICATION->AddViewContent(
-		"sidebar",
-		"<div class=\"invite-employees-button\" onclick=\"".CIntranetInviteDialog::ShowInviteDialogLink()."\">".
-			"<span class=\"invite-employees-link\">".GetMessage("BITRIX24_INVITE_ACTION")."</span>".
-			"<span class=\"invite-employees-icon\"></span>".
-		"</div>",
-		10
-	);
-}
-
 GetGlobalID();
 
 $componentDateTimeFormat = CIntranetUtils::getCurrentDateTimeFormat();

@@ -434,7 +434,7 @@ class IBlockElementProperty
 	 */
 	public static function convertFromDB($property, $value)
 	{
-		$unserialize = unserialize($value['VALUE']);
+		$unserialize = unserialize($value['VALUE'], ['allowed_classes' => false]);
 		if($unserialize !== false)
 			$value['VALUE'] = $unserialize;
 		return $value;
@@ -566,7 +566,7 @@ class IBlockElementProperty
 
 			$valueView[mb_strtoupper($defaultType)][] = '[url='.$entityUrl.']'.$entityName.'[/url]';
 		}
-		elseif($defaultType !== '')
+		elseif($value && $defaultType !== '')
 		{
 			$entityName = \CCrmOwnerType::getCaption(
 				\CCrmOwnerType::resolveID($defaultType),
@@ -732,6 +732,7 @@ class IBlockElementProperty
 	{
 		if (is_array($params['VALUE']))
 		{
+			$value = [];
 			foreach ($params['VALUE'] as $element)
 			{
 				$value[] = ['VALUE' => $element];

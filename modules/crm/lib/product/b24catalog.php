@@ -10,10 +10,10 @@ if (Loader::includeModule('catalog'))
 {
 	class B24Catalog extends Catalog
 	{
-		public static function execAgent(): string
+		public static function execAgent(bool $skipB24 = false): string
 		{
 			$result = '';
-			if (!Loader::includeModule('bitrix24'))
+			if (!$skipB24 && !Loader::includeModule('bitrix24'))
 			{
 				return $result;
 			}
@@ -33,14 +33,14 @@ if (Loader::includeModule('catalog'))
 			$fields = parent::getDefaultFieldSettings();
 
 			$code = $fields['CODE'];
-			$code['DEFAULT_VALUE'] = unserialize($code['DEFAULT_VALUE']);
+			$code['DEFAULT_VALUE'] = unserialize($code['DEFAULT_VALUE'], ['allowed_classes' => false]);
 			$code['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
 			//$code['DEFAULT_VALUE']['UNIQUE'] = 'Y'; - unpredictable consequences
 			$code['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';
 			$code['DEFAULT_VALUE']['TRANS_LEN'] = 255;
 
 			$sectionCode = $fields['SECTION_CODE'];
-			$sectionCode['DEFAULT_VALUE'] = unserialize($sectionCode['DEFAULT_VALUE']);
+			$sectionCode['DEFAULT_VALUE'] = unserialize($sectionCode['DEFAULT_VALUE'], ['allowed_classes' => false]);
 			$sectionCode['DEFAULT_VALUE']['TRANSLITERATION'] = 'Y';
 			//$sectionCode['DEFAULT_VALUE']['UNIQUE'] = 'Y'; - unpredictable consequences
 			$sectionCode['DEFAULT_VALUE']['USE_GOOGLE'] = 'N';

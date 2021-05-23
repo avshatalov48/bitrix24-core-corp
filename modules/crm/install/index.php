@@ -321,12 +321,13 @@ Class crm extends CModule
 
 	function InstallDB()
 	{
-		global $DB, $APPLICATION, $USER;
-		global $USER_FIELD_MANAGER;
-
-		require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/crm/include.php');
+		global $DB, $APPLICATION;
 
 		$this->errors = false;
+
+		RegisterModule('crm');
+		\Bitrix\Main\Loader::includeModule('crm');
+
 		if (!$DB->Query("SELECT 'x' FROM b_crm_lead", true))
 		{
 			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/crm/install/db/'.mb_strtolower($DB->type).'/install.sql');
@@ -742,8 +743,6 @@ Class crm extends CModule
 		}
 		//endregion
 
-		RegisterModule('crm');
-
 		//region FULL TEXT INDEXES
 		if($DB->type === "MYSQL")
 		{
@@ -885,6 +884,8 @@ Class crm extends CModule
 			'HandlerOnAfterIBlockElementDelete'
 		);
 
+		$eventManager->registerEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
+
 		$eventManager->registerEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->registerEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
 		$eventManager->registerEventHandler('main', 'OnUserConsentDataProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onDataProviderList');
@@ -955,11 +956,11 @@ Class crm extends CModule
 			'\Bitrix\Crm\Product\Url\Registry',
 			'getBuilderList'
 		);
-		
+
 		$eventManager->registerEventHandler('landing', '\Bitrix\Landing\Internals\Landing::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingDelete');
 		$eventManager->registerEventHandler('landing', 'onBeforeLandingRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingRecycle');
 		$eventManager->registerEventHandler('landing', 'onBeforeSiteRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeSiteRecycle');
-		
+
 		$eventManager->registerEventHandler(
 			'pull',
 			'onGetDependentModule',
@@ -1053,6 +1054,10 @@ Class crm extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Manifest', 'getList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\ConfigChecker', 'onFinish');
 
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormAdd');
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
+
 		$eventManager->registerEventHandler(
 			'location', 'AddressOnUpdate',
 			'crm', '\Bitrix\Crm\EntityAddress', 'onLocationAddressUpdate'
@@ -1063,9 +1068,24 @@ Class crm extends CModule
 		);
 		$eventManager->registerEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\Payment', 'onSalePsInitiatePayError');
 
+		$eventManager->registerEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
+
 		CAgent::AddAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm', 'N', 300);
 		CAgent::AddAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm', 'N', 86400);
 		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 86400);
+
+		\CAgent::AddAgent(
+			'\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\LeadDuplicateIndexRebuildAgent::run();',
+			'crm', 'N', 3600
+		);
+		\CAgent::AddAgent(
+			'\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\ContactDuplicateIndexRebuildAgent::run();',
+			'crm', 'N', 3600
+		);
+		\CAgent::AddAgent(
+			'\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\CompanyDuplicateIndexRebuildAgent::run();',
+			'crm', 'N', 3600
+		);
 
 		if (is_array($this->errors))
 		{
@@ -1168,6 +1188,8 @@ Class crm extends CModule
 			'HandlerOnAfterIBlockElementDelete'
 		);
 
+		$eventManager->unRegisterEventHandler('catalog', 'Bitrix\Catalog\Product\Entity::OnAfterUpdate', 'crm', '\CCrmProduct', 'handlerAfterProductUpdate');
+
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->unRegisterEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
 		$eventManager->unRegisterEventHandler('main', 'OnUserConsentDataProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onDataProviderList');
@@ -1237,6 +1259,10 @@ Class crm extends CModule
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Manifest', 'getList');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\ConfigChecker', 'onFinish');
 
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormAdd');
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
+
 		$eventManager->unregisterEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\Payment', 'onSalePsInitiatePayError');
 
 		$eventManager->unRegisterEventHandler('recyclebin', 'OnModuleSurvey', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'OnModuleSurvey');
@@ -1261,6 +1287,8 @@ Class crm extends CModule
 			'getBuilderList'
 		);
 
+		$eventManager->unRegisterEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
+
 		$eventManager->unRegisterEventHandler(
 			'pull',
 			'onGetDependentModule',
@@ -1275,11 +1303,13 @@ Class crm extends CModule
 		CAgent::RemoveAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm');
 		CAgent::RemoveAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm');
 		CAgent::RemoveAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm');
+		\CAgent::RemoveAgent('\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\LeadDuplicateIndexRebuildAgent::run();', 'crm');
+		\CAgent::RemoveAgent('\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\ContactDuplicateIndexRebuildAgent::run();', 'crm');
+		\CAgent::RemoveAgent('\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\CompanyDuplicateIndexRebuildAgent::run();', 'crm');
 
 		if (!array_key_exists('savedata', $arParams) || $arParams['savedata'] != 'Y')
 		{
 			// delete extra fields for all entities
-			require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/crm/include.php');
 			$arEntityIds = CCrmFields::GetEntityTypes();
 			foreach ($arEntityIds as $entityId => $ar)
 			{
@@ -1470,14 +1500,6 @@ Class crm extends CModule
 				"CONDITION" => "#^/pub/pay/([\\w\\W]+)/([0-9a-zA-Z]+)/([^/]*)#",
 				"RULE" => "account_number=$1&hash=$2",
 				"PATH" => "/pub/payment.php",
-			)
-		);
-
-		CUrlRewriter::Add(
-			array(
-				"CONDITION" => "#^/crm/invoicing/#",
-				"RULE" => "",
-				"PATH" => "/crm/invoicing/index.php",
 			)
 		);
 

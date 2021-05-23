@@ -10,6 +10,7 @@ if(typeof(BX.CrmSocialnetworkIntegration) == 'undefined')
 				BX.CommentAux.postEventTypeList.push('CRM_LOG_LEAD');
 				BX.CommentAux.postEventTypeList.push('CRM_LOG_DEAL');
 				BX.CommentAux.postEventTypeList.push('CRM_ACTIVITY');
+				BX.CommentAux.postEventTypeList.push('CRM_INVOICE');
 				BX.CommentAux.commentEventTypeList.push('CRM_ENTITY_COMMENT');
 			}
 		});

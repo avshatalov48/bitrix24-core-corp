@@ -26,6 +26,8 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 				<div class="salescenter-button-container">
 					<?php if (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxCheckbox')): ?>
 					<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_CHECKBOX_LINK_CONNECT')?></a>
+					<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRu')): ?>
+					<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBusinessRuCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_BUSINESSRU_LINK_CONNECT')?></a>
 					<?php else:?>
 					<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
 					<?php endif; ?>
@@ -58,10 +60,19 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 				<hr class="ui-hr">
 					<ul class="ui-list ui-color-medium ui-list-icon">
 						<li><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM1")?></li>
-						<li><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM2")?> <a href="" onclick="BX.Salescenter.Manager.openHowToConfigCheckboxCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_CHECKBOX_INSTRUCTION_METHODS')?></a></li>
+						<li><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM2")?> <a href="" onclick="BX.Salescenter.Manager.openHowToSetupCheckboxCashBoxAndKeys(event);"><?=Loc::getMessage('SC_CASHBOX_CHECKBOX_INSTRUCTION_METHODS')?></a></li>
 						<li><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_INSTRUCTION_ITEM3")?></li>
 					</ul>
 					<p class="ui-color-medium"><?=Loc::getMessage("SC_CASHBOX_CHECKBOX_UKTZED_WARNING")?></p>
+				</div>
+			<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxBusinessRu')): ?>
+				<div class="ui-title-4"><?=Loc::getMessage("SC_CASHBOX_INSTRUCTION_TITLE")?></div>
+				<hr class="ui-hr">
+					<ul class="ui-list ui-color-medium ui-list-icon">
+						<li><?=Loc::getMessage("SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM1")?></li>
+						<li><?=Loc::getMessage("SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM2")?></li>
+						<li><?=Loc::getMessage("SC_CASHBOX_BUSINESSRU_INSTRUCTION_ITEM3")?></li>
+					</ul>
 				</div>
 			<?php else:?>
 				<div class="ui-title-4"><?=Loc::getMessage("SC_CASHBOX_INSTRUCTION_TITLE")?></div>

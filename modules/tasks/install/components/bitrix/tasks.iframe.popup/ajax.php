@@ -191,7 +191,7 @@ try
 				catch (Exception $e)
 				{
 					if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-						$arErrors = unserialize($e->GetMessage());
+						$arErrors = unserialize($e->GetMessage(), ['allowed_classes' => false]);
 					else
 					{
 						$arErrors[] = array(
@@ -587,7 +587,7 @@ try
 				catch (Exception $e)
 				{
 					if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-						$arErrors = unserialize($e->GetMessage());
+						$arErrors = unserialize($e->GetMessage(), ['allowed_classes' => false]);
 					else
 					{
 						$arErrors[] = array(
@@ -644,7 +644,7 @@ try
 				catch (Exception $e)
 				{
 					if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-						$arErrors = unserialize($e->GetMessage());
+						$arErrors = unserialize($e->GetMessage(), ['allowed_classes' => false]);
 					else
 					{
 						$arErrors[] = array(

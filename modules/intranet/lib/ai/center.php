@@ -81,10 +81,8 @@ class Center
 		}
 
 		$scoringExists = false;
-		$mlInstalled = false;
 		if(Loader::includeModule("ml") && Loader::includeModule("crm") && class_exists("Bitrix\Crm\Ml\Scoring"))
 		{
-			$mlInstalled = true;
 			$modelNames = Scoring::getAvailableModelNames();
 			foreach ($modelNames as $modelName)
 			{
@@ -103,7 +101,7 @@ class Center
 				"name" => Loc::getMessage("INTRANET_AI_CRM_SCORING"),
 				"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-crm",
 				"iconColor" => "#12bff5",
-				"comingSoon" => !$mlInstalled,
+				"comingSoon" => false,
 				"selected" => $scoringExists,
 				"data" => [
 					"url" => "/crm/ml/model/list/"
@@ -142,7 +140,7 @@ class Center
 		$appSettings = Option::get("rest", "options_".$appId, "");
 		if (!empty($appSettings))
 		{
-			$appSettings = unserialize($appSettings);
+			$appSettings = unserialize($appSettings, ["allowed_classes" => false]);
 		}
 
 		return [

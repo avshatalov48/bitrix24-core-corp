@@ -56,6 +56,11 @@ Vue.component('bx-livechat-head',
 		},
 		voteActive(state)
 		{
+			if (!!state.widget.dialog.closeVote)
+			{
+				return false;
+			}
+
 			if (
 				!state.widget.common.vote.beforeFinish
 				&& state.widget.dialog.sessionStatus < SessionStatus.waitClient

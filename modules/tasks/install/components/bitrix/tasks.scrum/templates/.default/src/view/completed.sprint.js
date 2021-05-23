@@ -1,46 +1,41 @@
 import {Event, Text} from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
+
+import {SidePanel} from '../service/side.panel';
+
 import {Sprint} from '../entity/sprint/sprint';
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
-import {SidePanel} from '../service/side.panel';
-import {RequestSender} from '../utility/request.sender';
 
-type CurrentSprint = {
-	sprintId: number,
-	name: string
-}
+import {View} from './view';
+
+import type {Views} from './view';
+import type {SprintParams} from '../entity/sprint/sprint';
 
 type Params = {
-	completedSprint: Sprint,
-	signedParameters: string,
-	views: {
-		plan: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		activeSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		completedSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		}
-	},
-	sprints: Array
+	views: Views,
+	completedSprint: SprintParams,
+	sprints: Array<SprintParams>
 }
 
-export class CompletedSprint
+export class CompletedSprint extends View
 {
 	constructor(params: Params)
 	{
-		this.completedSprint = params.completedSprint;
+		super(params);
 
-		this.requestSender = new RequestSender({
-			signedParameters: params.signedParameters,
-		});
+		this.setEventNamespace('BX.Tasks.Scrum.CompletedSprint');
+
+		this.setParams(params);
+
+		this.initDomNodes();
+		this.bindHandlers();
+		this.createTitle();
+	}
+
+	setParams(params: Params)
+	{
+		this.completedSprint = new Sprint(params.completedSprint);
+
 		this.sidePanel = new SidePanel();
 
 		this.sprints = new Map();
@@ -49,10 +44,6 @@ export class CompletedSprint
 			this.sprints.set(sprint.getId(), sprint);
 		});
 		this.views = params.views;
-
-		this.initDomNodes();
-		this.bindHandlers();
-		this.createTitle();
 	}
 
 	initDomNodes()
@@ -62,9 +53,7 @@ export class CompletedSprint
 
 	bindHandlers()
 	{
-		/* eslint-disable */
-		BX.addCustomEvent('onTasksGroupSelectorChange', this.onSprintSelectorChange.bind(this));
-		/* eslint-enable */
+		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onSprintSelectorChange.bind(this));
 
 		Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
 	}
@@ -75,8 +64,10 @@ export class CompletedSprint
 		this.titleContainer.textContent = Text.encode(this.completedSprint.getName());
 	}
 
-	onSprintSelectorChange(currentSprint: CurrentSprint)
+	onSprintSelectorChange(event: BaseEvent)
 	{
+		const [currentSprint] = event.getCompatData()
+
 		this.completedSprint = this.findSprintBySprintId(currentSprint.sprintId);
 
 		this.titleContainer.textContent = Text.encode(currentSprint.name);

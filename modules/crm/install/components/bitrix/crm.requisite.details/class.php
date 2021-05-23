@@ -906,7 +906,11 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			}
 		}
 
-		$USER_FIELD_MANAGER->EditFormAddFields($this->requisite->getUfId(), $this->rawRequisiteData);
+		$USER_FIELD_MANAGER->EditFormAddFields(
+			$this->requisite->getUfId(),
+			$this->rawRequisiteData,
+			['FORM' => $this->formData]
+		);
 
 		// bank details
 		if (is_array($this->formData['BANK_DETAILS']) && !empty($this->formData['BANK_DETAILS']))

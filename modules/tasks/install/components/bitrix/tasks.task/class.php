@@ -701,7 +701,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			$templates = Util::getOption('propagate_to_sub_templates');
 			if ($templates)
 			{
-				$templates = unserialize($templates);
+				$templates = unserialize($templates, ['allowed_classes' => false]);
 				if (in_array((int)$source['ID'], $templates))
 				{
 					$taskData = $this->arResult['ACTION_RESULT']['task_action']['ARGUMENTS']['data'];

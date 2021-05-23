@@ -43,7 +43,7 @@ if ($component->isDefaultMode())
 
 	$selectorEntityTypes = [];
 
-	$arResult['USE_SYMBOLIC_ID'] = (count($arParams['ENTITY_TYPE']) > 1);
+	$arResult['USE_SYMBOLIC_ID'] = (count($supportedTypes) > 1);
 
 	$arResult['LIST_PREFIXES'] = array_flip(ElementType::getEntityTypeNames());
 

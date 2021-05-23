@@ -6,6 +6,8 @@ use Bitrix\Main\UI;
 
 UI\Extension::load("ui.tooltip");
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 $task = isset($arParams["~TASK"]) ? $arParams["~TASK"] : null;
 if ($task === null)
 {

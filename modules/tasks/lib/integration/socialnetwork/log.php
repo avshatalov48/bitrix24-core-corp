@@ -148,7 +148,7 @@ class Log extends SocialNetwork
 			return;
 		}
 
-		$shareDest = isset($arFields['SHARE_DEST']) ? unserialize($arFields['SHARE_DEST']) : null;
+		$shareDest = isset($arFields['SHARE_DEST']) ? unserialize($arFields['SHARE_DEST'], ['allowed_classes' => false]) : null;
 
 		$isNew = false;
 		if (
@@ -205,14 +205,18 @@ class Log extends SocialNetwork
 		{
 			if (
 				$isNew
-				&& $member['TYPE'] = MemberTable::MEMBER_TYPE_ORIGINATOR
+				&& $member['TYPE'] == MemberTable::MEMBER_TYPE_ORIGINATOR
 				&& $userId == $member['USER_ID']
 			)
 			{
 				continue;
 			}
 
-			$rights['U'.$member['USER_ID']] = 'U'.$member['USER_ID'];
+			$code = "U{$member['USER_ID']}";
+			if (!array_key_exists($code, $rights))
+			{
+				$rights[$code] = $code;
+			}
 		}
 
 		if ($task['GROUP_ID'])

@@ -442,7 +442,7 @@ class Marta extends Base
 		}
 
 		$option = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
-		$messages = unserialize($option);
+		$messages = unserialize($option, ['allowed_classes' => false]);
 
 		$userId = intval($userId);
 		if ($userId)
@@ -510,7 +510,7 @@ class Marta extends Base
 		}
 
 		$option = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
-		$messages = unserialize($option);
+		$messages = unserialize($option, ['allowed_classes' => false]);
 		foreach ($messages as $messageId)
 		{
 			\Bitrix\Im\Bot::updateMessage(Array('BOT_ID' => self::getBotId()), Array(

@@ -3,7 +3,8 @@ namespace Bitrix\ImOpenLines\Im\Messages;
 
 use \Bitrix\Main\Localization\Loc;
 
-use \Bitrix\ImOpenLines\Im,
+use \Bitrix\ImConnector\Library,
+	\Bitrix\ImOpenLines\Im,
 	\Bitrix\ImOpenLines;
 
 Loc::loadMessages(__FILE__);
@@ -18,23 +19,22 @@ class Session
 	 * @param $chatId
 	 * @param $sessionId
 	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function sendMessageStartSession($chatId, $sessionId)
 	{
-		$messageFields = array(
+		$messageFields = [
 			"SYSTEM" => "Y",
 			"TO_CHAT_ID" => $chatId,
 			"MESSAGE" => Loc::getMessage('IMOL_MESSAGE_SESSION_START', [
 				"#LINK#" => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionId, $sessionId)
 			]),
-			"PARAMS" => Array(
+			"PARAMS" => [
 				"CLASS" => "bx-messenger-content-item-ol-start"
-			)
-		);
+			]
+		];
 
-		$result = Im::addMessage($messageFields);
-
-		return $result;
+		return Im::addMessage($messageFields);
 	}
 
 	/**
@@ -42,47 +42,45 @@ class Session
 	 * @param $sessionId
 	 * @param $sessionIdParent
 	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function sendMessageStartSessionByMessage($chatId, $sessionId, $sessionIdParent)
 	{
-		$messageFields = array(
+		$messageFields = [
 			"SYSTEM" => "Y",
 			"TO_CHAT_ID" => $chatId,
 			"MESSAGE" => Loc::getMessage('IMOL_MESSAGE_SESSION_START_BY_MESSAGE', [
 				"#LINK#" => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionId, $sessionId),
 				"#LINK2#" => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionIdParent, $sessionIdParent)
 			]),
-			"PARAMS" => Array(
+			"PARAMS" => [
 				"CLASS" => "bx-messenger-content-item-ol-start"
-			)
-		);
+			]
+		];
 
-		$result = Im::addMessage($messageFields);
-
-		return $result;
+		return Im::addMessage($messageFields);
 	}
 
 	/**
 	 * @param $chatId
 	 * @param $sessionId
 	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function sendMessageReopenSession($chatId, $sessionId)
 	{
-		$messageFields = array(
+		$messageFields = [
 			"SYSTEM" => "Y",
 			"TO_CHAT_ID" => $chatId,
 			"MESSAGE" => Loc::getMessage('IMOL_MESSAGE_SESSION_REOPEN', [
 				"#LINK#" => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionId, $sessionId)
 			]),
-			"PARAMS" => Array(
+			"PARAMS" => [
 				"CLASS" => "bx-messenger-content-item-ol-start"
-			),
-			"RECENT_ADD" => 'N' //TODO: ?
-		);
-		$result = Im::addMessage($messageFields);
-
-		return $result;
+			],
+			"RECENT_ADD" => 'N'
+		];
+		return Im::addMessage($messageFields);
 	}
 
 	/**
@@ -101,14 +99,12 @@ class Session
 				'TO_CHAT_ID' => $chatId,
 				'URL_PREVIEW' => 'N',
 				'MESSAGE' => Loc::getMessage('IMOL_MESSAGE_SESSION_REPLY_TIME_LIMIT_'.$blockReason, [
-					'#A_START#' => '[URL=' . \Bitrix\UI\Util::getArticleUrlByCode('10632966') . ']',
+					'#A_START#' => '[URL=' . \Bitrix\UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
 					'#A_END#' => '[/URL]',
 				]),
 			];
 
-			$result = Im::addMessage($messageFields);
-
-			return $result;
+			return Im::addMessage($messageFields);
 		}
 
 		return null;

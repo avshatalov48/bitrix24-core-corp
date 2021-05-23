@@ -322,7 +322,7 @@ if (typeof(BX.Tasks.SortManager) === "undefined")
 	}
 }
 
-if (typeof BX.Tasks.SprintSelector === "undefined")
+if (typeof BX.Tasks.SprintSelector === 'undefined')
 {
 	BX.Tasks.SprintSelector = function(containerId, sprints, params)
 	{
@@ -331,75 +331,72 @@ if (typeof BX.Tasks.SprintSelector === "undefined")
 			return;
 		}
 
-		var menuSprintItems = [];
-
+		var sprintItems = [];
 		for (var i = 0, c = sprints.length; i < c; i++)
 		{
-			var baseSprintName = (sprints[i]["NAME"] ? sprints[i]["NAME"] : '');
-			var sprintName = (sprints[i]["NAME"] ? sprints[i]["NAME"] + '&nbsp;' : '');
-			var sprintDate = sprints[i]["START_TIME"] + " &mdash; " + sprints[i]["FINISH_TIME"];
+			var baseSprintName = (sprints[i]['NAME'] ? sprints[i]['NAME'] : '');
+			var sprintName = (baseSprintName ? baseSprintName + ' ' : '');
+			var sprintDate = sprints[i]['START_TIME'] + ' - ' + sprints[i]['FINISH_TIME'];
 			if (baseSprintName)
 			{
 				sprintDate = '(' + sprintDate + ')';
 			}
-			menuSprintItems.push({
-				sprintId: sprints[i]["ID"],
-				text: sprintName + sprintDate,
-				sprintName: baseSprintName,
-				sprintDateStart: sprints[i]["START_TIME"],
-				sprintDateEnd: sprints[i]["FINISH_TIME"],
-				className: (params.sprintId === parseInt(sprints[i]["ID"]))
-					? "menu-popup-item-accept"
-					: "menu-popup-item-none",
-				onclick: function(e, menuItem)
-				{
-					BX.onCustomEvent(
-						BX(containerId),
-						"onTasksGroupSelectorChange",
-						[
-							{
-								id: params.groupId,
-								sprintId: menuItem.sprintId,
-								name: menuItem.sprintName
-							}
-						]
-					);
-					// remove and set css-classes
-					var menuItems = menuItem.menuWindow.getMenuItems();
-					for (var i = 0, c = menuItems.length; i < c; i++)
-					{
-						BX.removeClass(
-							menuItems[i].layout.item,
-							"menu-popup-item-accept"
-						);
-					}
-					BX.addClass(
-						menuItem.layout.item,
-						"menu-popup-item-accept"
-					);
-					menuItem.menuWindow.close();
-					var selectorTextNode = containerId.querySelector('.webform-small-button-text');
-					selectorTextNode.innerHTML = BX.util.htmlspecialchars(menuItem.sprintDateStart) +
-						' &mdash; ' + BX.util.htmlspecialchars(menuItem.sprintDateEnd);
+
+			sprintItems.push({
+				id: sprints[i]['ID'],
+				entityId: 'sprint',
+				tabs: 'recents',
+				title: sprintName + sprintDate,
+				customData: {
+					sprintName: baseSprintName,
+					sprintDateStart: sprints[i]['START_TIME'],
+					sprintDateEnd: sprints[i]['FINISH_TIME'],
 				}
 			});
 		}
 
-		var menuSprint = new BX.PopupMenuWindow(
-			"tasks_sprint_menu",
-			BX(containerId),
-			menuSprintItems,
-			{
-				autoHide : true
-			}
-		);
+		var sprintsSelectorDialog = new BX.UI.EntitySelector.Dialog({
+			targetNode: BX(containerId),
+			width: 400,
+			height: 300,
+			multiple: false,
+			dropdownMode: true,
+			enableSearch: true,
+			compactView: true,
+			showAvatars: false,
+			recentTabOptions: {
+				itemOrder: null
+			},
+			items: sprintItems,
+			events: {
+				'Item:onSelect': function(event) {
+					var selectedItem = event.getData().item;
+					BX.onCustomEvent(
+						BX(containerId),
+						'onTasksGroupSelectorChange',
+						[
+							{
+								id: params.groupId,
+								sprintId: selectedItem.id,
+								name: selectedItem.customData.get('sprintName')
+							}
+						]
+					);
+
+					var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
+					selectorTextNode.innerHTML =
+						BX.util.htmlspecialchars(selectedItem.customData.get('sprintDateStart')) +
+						' - ' + BX.util.htmlspecialchars(selectedItem.customData.get('sprintDateEnd'));
+				},
+			},
+		});
 
 		BX.bind(
-			BX(containerId),
+			BX(containerId).querySelector('.webform-small-button'),
 			"click",
 			function()
 			{
-				menuSprint.show();
+				sprintsSelectorDialog.show();
 			}
 		);
 	};

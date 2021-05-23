@@ -48,6 +48,14 @@ BX.CRM.Kanban.Grid = function(options)
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
 	this.bindEvents();
+	BX.CRM.Kanban.Grid.Instance = this;
+};
+
+BX.CRM.Kanban.Grid.Instance = null;
+
+BX.CRM.Kanban.Grid.getInstance = function()
+{
+	return BX.CRM.Kanban.Grid.Instance;
 };
 
 BX.CRM.Kanban.Grid.prototype = {
@@ -245,7 +253,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				'Crm.PartialEditorDialog.Close',
 				function (editor, params)
 				{
-					if (params.isCancelled)
+					if (params.isCancelled && this.itemMoving.item)
 					{
 						this.moveItem(
 							this.itemMoving.item,
@@ -259,7 +267,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			BX.Event.EventEmitter.subscribe(
 				'Crm.Kanban.Column:onItemAdded',
 				function(event){
-					if (this.itemMoving && this.items[this.itemMoving.item.id] !== undefined)
+					if (
+						this.itemMoving
+						&& this.items[this.itemMoving.item.id] !== undefined
+						&& this.itemMoving.item.columnId === this.items[this.itemMoving.item.id].columnId
+					)
 					{
 						this.onItemMoved(
 							event.data.item,
@@ -708,9 +720,10 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * Load new items by interval.
 	 * @param {int} id Entity id (optional).
 	 * @param {boolean} force Force load without filter.
+	 * @param {boolean} forceUpdate Force update entity.
 	 * @returns {void}
 	 */
-	loadNew: function(id, force)
+	loadNew: function(id, force, forceUpdate )
 	{
 		var gridData = this.getData();
 		var entityId = typeof id !== "undefined" ? id : 0;
@@ -767,11 +780,18 @@ BX.CRM.Kanban.Grid.prototype = {
 										existItem.data.price = item.data.price;
 									}
 
-									if (newColumn && newColumn !== existColumn)
+									if (
+										(newColumn && newColumn !== existColumn)
+										|| forceUpdate === true
+									)
 									{
 										this.updateItem(item.id, item);
 										titlesForRender[newColumn.getId()] = newColumn;
 									}
+								}
+								else if (item.id && this.getColumn(item.columnId) === null)
+								{
+									BX.onCustomEvent(this, "Kanban.Column:render");
 								}
 								else if (item.id)
 								{
@@ -1017,23 +1037,38 @@ BX.CRM.Kanban.Grid.prototype = {
 				itemData.required[columnId] = newRequired;
 			}
 
-			if (itemData.required[columnId].length > 0)
+			// if the item was loaded from a pull request, remove the required fields already set there
+			if (item.rawData && typeof item.rawData === 'object')
+			{
+				var requiredFields = itemData.required[columnId];
+				for (var i = 0, c = itemData.required[columnId].length; i < c; i++)
+				{
+					var key = itemData.required[columnId][i];
+					if (
+						!(typeof item.rawData[key] === 'undefined'
+						|| item.rawData[key] === null
+						|| item.rawData[key] === '')
+					)
+					{
+						requiredFields.splice(i, 1);
+					}
+				}
+				itemData.required[columnId] = requiredFields;
+			}
+
+			if (
+				itemData.required[columnId].length > 0
+				&& gridData.entityType !== 'INVOICE'
+			)
 			{
 				this.itemMoving.newColumn = targetColumn;
 				this.itemMoving.newNextSibling = beforeItem;
 				// back to the prev place
-				if (!isDropZone)
-				{
-					this.moveItem(
-						this.itemMoving.item,
-						this.itemMoving.oldColumn,
-						this.itemMoving.oldNextSiblingId
-					);
-				}
-				else
+				if (isDropZone)
 				{
 					this.itemMoving.dropEvent.denyAction();
 				}
+
 				// show editor
 				var context = {};
 				context[((gridData.entityType === "DEAL") ? "STAGE_ID" : "STATUS_ID")] = columnId;
@@ -1098,7 +1133,10 @@ BX.CRM.Kanban.Grid.prototype = {
 		);
 
 		// call handler
-		if (skipHandler !== true)
+		if (
+			skipHandler !== true
+			&& !item.isChangedInPullRequest()
+		)
 		{
 			var handlerData = {
 				grid: this,
@@ -1181,7 +1219,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			);
 		}
 
-		item.dropChangedInPullRequest();
+		if (item.isChangedInPullRequest())
+		{
+			this.clearItemMoving();
+			item.dropChangedInPullRequest();
+		}
 	},
 
 	/**
@@ -1265,7 +1307,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onApplyFilter: function(filterId, values, filterInstance, promise, params)
 	{
-		this.itemMoving = null;
+		this.clearItemMoving();
 		this.fadeOut();
 		if (typeof params !== "undefined")
 		{
@@ -1362,6 +1404,11 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.fadeIn();
 			}.bind(this)
 		);
+	},
+
+	clearItemMoving: function()
+	{
+		this.itemMoving = null
 	},
 
 	/**
@@ -2386,7 +2433,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		var match = sliderUrl.match(new RegExp(maskUrl));
 		if (match && match[1])
 		{
-			this.loadNew(match[1]);
+			this.loadNew(match[1], false, true);
 		}
 	},
 
@@ -2635,6 +2682,26 @@ BX.CRM.Kanban.Grid.prototype = {
 			}.bind(this)
 		});
 
+		// merge
+		if (
+			gridData.entityType === "LEAD" ||
+			gridData.entityType === "DEAL"
+		)
+		{
+
+			this.actionPanel.appendItem({
+				id: "kanban_merge",
+				text: BX.message("CRM_KANBAN_PANEL_MERGE"),
+				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-merge.svg",
+				onclick: function()
+				{
+					BX.CRM.Kanban.Actions.merge(
+						this
+					);
+				}.bind(this)
+			});
+		}
+
 		// call
 		/*this.actionPanel.appendItem({
 			id: "kanban_call",
@@ -2743,6 +2810,14 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.actionPanel.removeItems();
 			this.actionPanel = null;
 		}
+	},
+
+	reload: function ()
+	{
+		this.resetMultiSelectMode();
+		this.stopActionPanel();
+		this.unSetKanbanDragMode();
+		this.onApplyFilter();
 	},
 
 	calculateTotalCheckItems: function()

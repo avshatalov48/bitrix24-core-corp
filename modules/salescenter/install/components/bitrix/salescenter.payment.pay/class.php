@@ -203,41 +203,52 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 				$order = $this->loadOrder();
 				if ($order && $this->checkAuthorized($order))
 				{
-					$paymentCollection = $order->getPaymentCollection();
-					$this->payment = $paymentCollection->getItemById($this->paymentId);
-					$this->arResult['PAYMENT'] = $this->payment->getFieldValues();
-					$dateBillFormatted = $this->arResult['PAYMENT']['DATE_BILL'];
-					if ($this->arResult['PAYMENT']['DATE_BILL'] instanceof Main\Type\Date)
+					if (!$order->isCanceled())
 					{
-						$dateBillFormatted = \CIBlockFormatProperties::DateFormat(
-							$this->arParams['ACTIVE_DATE_FORMAT'],
-							$this->arResult['PAYMENT']['DATE_BILL']->getTimestamp()
+						$paymentCollection = $order->getPaymentCollection();
+						$this->payment = $paymentCollection->getItemById($this->paymentId);
+						$this->arResult['PAYMENT'] = $this->payment->getFieldValues();
+						$dateBillFormatted = $this->arResult['PAYMENT']['DATE_BILL'];
+						if ($this->arResult['PAYMENT']['DATE_BILL'] instanceof Main\Type\Date)
+						{
+							$dateBillFormatted = \CIBlockFormatProperties::DateFormat(
+								$this->arParams['ACTIVE_DATE_FORMAT'],
+								$this->arResult['PAYMENT']['DATE_BILL']->getTimestamp()
+							);
+						}
+						$this->arResult['PAYMENT']['DATE_BILL_FORMATTED'] = $dateBillFormatted;
+						$this->arResult['PAYMENT']['FORMATTED_SUM'] = SaleFormatCurrency($this->payment->getSum(), $this->payment->getField('CURRENCY'));
+						$this->arResult['PAYSYSTEMS_LIST'] = $this->formatPaySystemList($this->payment);
+						$defaultPaySystem = [];
+						foreach ($this->arResult['PAYSYSTEMS_LIST'] as $paySystem)
+						{
+							if (!$defaultPaySystem || $paySystem['ACTION_FILE'] === 'cash')
+							{
+								$defaultPaySystem = $paySystem;
+							}
+							if ((int)$paySystem['ID'] === (int)$this->payment->getPaymentSystemId())
+							{
+								$this->arResult['PAYMENT']['PAY_SYSTEM_INFO'] = $paySystem;
+								break;
+							}
+						}
+
+						if (empty($this->arResult['PAYMENT']['PAY_SYSTEM_INFO']))
+						{
+							$this->arResult['PAYMENT']['PAY_SYSTEM_INFO'] = $defaultPaySystem;
+						}
+
+						$this->prepareConsentSettings($order);
+						$this->prepareCheckFields($this->payment);
+					}
+					else
+					{
+						$this->errorCollection->setError(
+							new Main\Error(
+								Loc::getMessage('SPP_ORDER_CANCELED')
+							)
 						);
 					}
-					$this->arResult['PAYMENT']['DATE_BILL_FORMATTED'] = $dateBillFormatted;
-					$this->arResult['PAYMENT']['FORMATTED_SUM'] = SaleFormatCurrency($this->payment->getSum(), $this->payment->getField('CURRENCY'));
-					$this->arResult['PAYSYSTEMS_LIST'] = $this->formatPaySystemList($this->payment);
-					$defaultPaySystem = [];
-					foreach ($this->arResult['PAYSYSTEMS_LIST'] as $paySystem)
-					{
-						if (!$defaultPaySystem || $paySystem['ACTION_FILE'] === 'cash')
-						{
-							$defaultPaySystem = $paySystem;
-						}
-						if ((int)$paySystem['ID'] === (int)$this->payment->getPaymentSystemId())
-						{
-							$this->arResult['PAYMENT']['PAY_SYSTEM_INFO'] = $paySystem;
-							break;
-						}
-					}
-
-					if (empty($this->arResult['PAYMENT']['PAY_SYSTEM_INFO']))
-					{
-						$this->arResult['PAYMENT']['PAY_SYSTEM_INFO'] = $defaultPaySystem;
-					}
-
-					$this->prepareConsentSettings($order);
-					$this->prepareCheckFields($this->payment);
 				}
 
 				$this->arResult['RETURN_URL'] = (new PaySystem\Context())->getUrl();
@@ -266,10 +277,24 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			'select' => ['ID']
 		))->fetchAll();
 		$salesCenterRestrictionIds = array_column($salesCenterRestrictionIds, 'ID');
-		$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
+
+		if (!$this->isViewMode)
+		{
+			$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
+		}
+		else
+		{
+			$paySystemList = PaySystem\Manager::getList([
+				'filter' => [
+					'!=ACTION_FILE' => ['inner'],
+					'ENTITY_REGISTRY_TYPE' => $payment::getRegistryType(),
+					'ACTIVE' => 'Y',
+				],
+			]);
+		}
 		foreach ($paySystemList as $paySystemElement)
 		{
-			if (!in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
+			if (!$this->isViewMode && !in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
 			{
 				continue;
 			}

@@ -6,22 +6,28 @@ use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Format;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
+/**
+ * Class StringConverter
+ * @package Bitrix\Location\Entity\Address\Converter
+ */
 final class StringConverter
 {
-	const STRATEGY_TYPE_TEMPLATE = 'template';
-	const STRATEGY_TYPE_FIELD_SORT = 'field_sort';
-	const STRATEGY_TYPE_FIELD_TYPE = 'field_type';
+	public const STRATEGY_TYPE_TEMPLATE = 'template';
+	public const STRATEGY_TYPE_FIELD_SORT = 'field_sort';
+	public const STRATEGY_TYPE_FIELD_TYPE = 'field_type';
 
-	const CONTENT_TYPE_HTML = 'html';
-	const CONTENT_TYPE_TEXT = 'text';
+	public const CONTENT_TYPE_HTML = 'html';
+	public const CONTENT_TYPE_TEXT = 'text';
 
 	/**
-	 * Converts addrerss to string with given format
+	 * Convert address to string with given format
+	 *
 	 * @param Address $address
 	 * @param Format $format
 	 * @param string $strategyType
 	 * @param string $contentType
 	 * @return string
+	 * @throws ArgumentOutOfRangeException
 	 */
 	public static function convertToString(Address $address, Format $format, string $strategyType, string $contentType): string
 	{
@@ -29,11 +35,11 @@ final class StringConverter
 		{
 			$result = self::convertToStringTemplate($address, $format, $contentType);
 		}
-		else if($strategyType === self::STRATEGY_TYPE_FIELD_SORT)
+		elseif($strategyType === self::STRATEGY_TYPE_FIELD_SORT)
 		{
 			$result = self::convertToStringByField($address, $format, $contentType);
 		}
-		else if($strategyType === self::STRATEGY_TYPE_FIELD_TYPE)
+		elseif($strategyType === self::STRATEGY_TYPE_FIELD_TYPE)
 		{
 			$fieldSorter = static function(Format\Field $a, Format\Field $b): int
 			{
@@ -67,7 +73,8 @@ final class StringConverter
 	}
 
 	/**
-	 * If format has template
+	 * Convert if format has template
+	 *
 	 * @param Address $address
 	 * @param Format $format
 	 * @param string $contentType
@@ -91,7 +98,7 @@ final class StringConverter
 			{
 				$fields = [];
 
-				// find placeholders wich looks like # ... #
+				// find placeholders which looks like # ... #
 				if(!preg_match('/#([0-9A-Z_]*?)#/', $component, $fields))
 				{
 					continue;
@@ -147,11 +154,12 @@ final class StringConverter
 	}
 
 	/**
-	 * If format has not template
+	 * Convert if format has not template
+	 *
 	 * @param Address $address
 	 * @param Format $format
 	 * @param string $contentType
-	 * @param callable $fieldSorter
+	 * @param callable|null $fieldSorter
 	 * @return string
 	 */
 	protected static function convertToStringByField(Address $address, Format $format, string $contentType, callable $fieldSorter = null): string

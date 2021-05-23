@@ -2,6 +2,7 @@
 return array(
 	'controllers' => array(
 		'value' => array(
+			'defaultNamespace' => '\\Bitrix\\Crm\\Controller',
 			'namespaces' => array(
 				'\\Bitrix\\Crm\\Controller\\DocumentGenerator' => 'documentgenerator',
 				'\\Bitrix\\Crm\\Controller' => 'api',

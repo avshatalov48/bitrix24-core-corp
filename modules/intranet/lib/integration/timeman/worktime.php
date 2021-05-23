@@ -17,7 +17,7 @@ class Worktime
 		$data = Option::get("intranet", "ustat_online_timeman", "");
 		if (!empty($data))
 		{
-			$data = unserialize($data);
+			$data = unserialize($data, ["allowed_classes" => false]);
 		}
 
 		$optionDate = isset($data["date"]) && is_numeric($data["date"]) ? $data["date"] : 0;
@@ -104,7 +104,7 @@ class Worktime
 		$data = Option::get("intranet", "ustat_online_timeman", "");
 		if (!empty($data))
 		{
-			$data = unserialize($data);
+			$data = unserialize($data, ["allowed_classes" => false]);
 
 			$optionDate = isset($data["date"]) && is_numeric($data["date"]) ? $data["date"] : 0;
 			$currentDate = new Date;
@@ -142,7 +142,7 @@ class Worktime
 		$data = Option::get("intranet", "ustat_online_timeman", "");
 		if (!empty($data))
 		{
-			$data = unserialize($data);
+			$data = unserialize($data, ["allowed_classes" => false]);
 
 			$optionDate = isset($data["date"]) && is_numeric($data["date"]) ? $data["date"] : 0;
 			$currentDate = new Date;

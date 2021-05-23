@@ -134,6 +134,8 @@ use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 
+$isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
+
 $CCrmLead = new CCrmLead(false);
 $CCrmBizProc = new CCrmBizProc('LEAD');
 
@@ -326,16 +328,32 @@ if(!$bInternal && isset($_REQUEST['counter']))
 	}
 }
 
+$enableReportFilter = Main\Application::getInstance()->getContext()->getRequest()->getQuery('from_analytics') === 'Y';
 
-$enableReportFilter = Main\Application::getInstance()->getContext()->getRequest()->getQuery('from_analytics');
-
-if ($enableReportFilter === 'Y')
+if ($enableReportFilter)
 {
 	$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
 	$externalFilterId = 'report_board_' . $boardId . '_filter';
+
+	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
+
+	if($reportId != '')
+	{
+		$reportHandler = Crm\Integration\Report\ReportHandlerFactory::createWithReportId($reportId);
+		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest()) : null;
+
+		if(is_array($reportFilter) && !empty($reportFilter))
+		{
+			$arFilter = $reportFilter;
+		}
+		else
+		{
+			$enableReportFilter = false;
+		}
+	}
 }
 
-$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter);
+$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter || $enableReportFilter);
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmLead::$sUFEntityID);
 
@@ -815,17 +833,9 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmLead::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Lead))
 {
-	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Lead, $arFilter);
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Lead);
 
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Lead)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Lead,
-			$limitWarningValue
-		);
-	}
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Lead, $arFilter);
 }
 else
 {
@@ -1807,6 +1817,12 @@ if ($isInGadgetMode)
 	$nTopCount = $arParams['LEAD_COUNT'];
 }
 
+
+if ($isInCalendarMode)
+{
+	$nTopCount = $arParams['DEAL_COUNT'];
+}
+
 if($nTopCount > 0)
 {
 	$arNavParams['nTopCount'] = $nTopCount;
@@ -1955,6 +1971,25 @@ if (!($isInExportMode && $isStExport))
 	}
 }
 //endregion
+
+if ($isInCalendarMode)
+{
+	$arSelect = [
+		'ID', 'TITLE', 'DATE_CREATE'
+	];
+	foreach ($arParams['CALENDAR_MODE_LIST'] as $calendarModeItem)
+	{
+		if ($calendarModeItem['selected'])
+		{
+			list($calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName) =
+				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
+			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
+			{
+				$arSelect[] = $calendarModeItemUserFieldName;
+			}
+		}
+	}
+}
 
 if ($isInExportMode && $isStExport && $pageNum === 1)
 {

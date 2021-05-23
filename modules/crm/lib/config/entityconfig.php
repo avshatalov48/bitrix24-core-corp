@@ -54,7 +54,7 @@ class EntityConfig
 		);
 
 		$fields = $dbResult->fetch();
-		return is_array($fields) && isset($fields['SETTINGS']) ? unserialize($fields['SETTINGS']) : null;
+		return is_array($fields) && isset($fields['SETTINGS']) ? unserialize($fields['SETTINGS'], ['allowed_classes' => false]) : null;
 	}
 	/**
 	 * Register entity settings.

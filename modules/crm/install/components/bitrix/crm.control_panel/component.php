@@ -77,12 +77,12 @@ $arParams['PATH_TO_REPORT_LIST'] = (isset($arParams['PATH_TO_REPORT_LIST']) && $
 $arParams['PATH_TO_DEAL_FUNNEL'] = (isset($arParams['PATH_TO_DEAL_FUNNEL']) && $arParams['PATH_TO_DEAL_FUNNEL'] !== '') ? $arParams['PATH_TO_DEAL_FUNNEL'] : '#SITE_DIR#crm/reports/';
 $arParams['PATH_TO_EVENT_LIST'] = (isset($arParams['PATH_TO_EVENT_LIST']) && $arParams['PATH_TO_EVENT_LIST'] !== '') ? $arParams['PATH_TO_EVENT_LIST'] : '#SITE_DIR#crm/events/';
 $arParams['PATH_TO_PRODUCT_LIST'] = (isset($arParams['PATH_TO_PRODUCT_LIST']) && $arParams['PATH_TO_PRODUCT_LIST'] !== '') ? $arParams['PATH_TO_PRODUCT_LIST'] : '#SITE_DIR#crm/product/index.php';
+$arParams['PATH_TO_PRODUCT_DETAILS'] = (isset($arParams['PATH_TO_PRODUCT_DETAILS']) && $arParams['PATH_TO_PRODUCT_DETAILS'] !== '') ? $arParams['PATH_TO_PRODUCT_DETAILS'] : '#SITE_DIR#shop/catalog/#catalog_id#/product/#product_id#/';
 $arParams['PATH_TO_CATALOG'] = (isset($arParams['PATH_TO_CATALOG']) && $arParams['PATH_TO_CATALOG'] !== '') ? $arParams['PATH_TO_CATALOG'] : '#SITE_DIR#crm/catalog/';
 $arParams['PATH_TO_SETTINGS'] = (isset($arParams['PATH_TO_SETTINGS']) && $arParams['PATH_TO_SETTINGS'] !== '') ? $arParams['PATH_TO_SETTINGS'] : '#SITE_DIR#crm/configs/';
 $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $arParams['PATH_TO_SEARCH_PAGE'] !== '') ? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '') ? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : '#SITE_DIR#marketplace/category/crm/';
 $arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '') ? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
-$arParams['PATH_TO_INVOICING'] = (isset($arParams['PATH_TO_INVOICING']) && $arParams['PATH_TO_INVOICING'] !== '') ? $arParams['PATH_TO_INVOICING'] : '#SITE_DIR#crm/invoicing/';
 $arParams['PATH_TO_BUTTON'] = (isset($arParams['PATH_TO_BUTTON']) && $arParams['PATH_TO_BUTTON'] !== '') ? $arParams['PATH_TO_BUTTON'] : '#SITE_DIR#crm/button/';
 $arParams['PATH_TO_CRMPLUS'] = (isset($arParams['PATH_TO_CRMPLUS']) && $arParams['PATH_TO_CRMPLUS'] !== '') ? $arParams['PATH_TO_CRMPLUS'] : '#SITE_DIR#crm/crmplus/';
 $arParams['PATH_TO_RECYCLE_BIN'] = CrmCheckPath('PATH_TO_RECYCLE_BIN', isset($arParams['PATH_TO_RECYCLE_BIN']) ? $arParams['PATH_TO_RECYCLE_BIN'] : '', '#SITE_DIR#crm/recyclebin/');
@@ -407,13 +407,37 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 {
 	if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
 	{
+		$actions = [];
+
+		$catalogId = CCrmCatalog::EnsureDefaultExists();
+
+		if (
+			CIBlockSectionRights::UserHasRightTo($catalogId, 0, 'section_element_bind')
+			&& \Bitrix\Main\Engine\CurrentUser::get()->CanDoOperation('catalog_price')
+		)
+		{
+			$createUrl = CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_PRODUCT_DETAILS'],
+				[
+					'catalog_id' => $catalogId,
+					'product_id' => 0
+				]
+			);
+
+			$actions[] = [
+				'ID' => 'CREATE',
+				'URL' => $createUrl
+			];
+		}
+
 		$stdItems['CATALOGUE'] = array(
 			'ID' => 'CATALOG',
 			'MENU_ID' => 'menu_crm_catalog',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
-			'ICON' => 'catalog'
+			'ICON' => 'catalog',
+			'ACTIONS' => $actions
 		);
 	}
 	else
@@ -431,6 +455,13 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 
 if (\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
 {
+	$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
+		CCrmOwnerType::Order,
+		Bitrix\Crm\Counter\EntityCounterType::ALL,
+		$currentUserID,
+		$counterExtras
+	);
+
 	$stdItems['ORDER'] = array(
 		'ID' => 'ORDER',
 		'MENU_ID' => 'menu_crm_order',
@@ -440,6 +471,8 @@ if (\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
 			 isset($arParams['PATH_TO_ORDER_INDEX']) && $arParams['PATH_TO_ORDER_INDEX'] !== ''
 				 ? $arParams['PATH_TO_ORDER_INDEX'] : $arParams['PATH_TO_ORDER_LIST']
 		),
+		'COUNTER' => $counter->getValue(),
+		'COUNTER_ID' => $counter->getCode(),
 	);
 }
 
@@ -475,35 +508,6 @@ if($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
 		),
 		'IS_DISABLED' => true
 	);
-
-	if (IsModuleInstalled('bitrix24'))
-	{
-		if (CModule::IncludeModule('sale'))
-		{
-			$dbRes = \Bitrix\Sale\PaySystem\Manager::getList([
-																 'select' => ['ID'],
-																 'filter' => ['ACTION_FILE' => 'alfabankb2b']
-															 ]);
-			while ($data = $dbRes->fetch())
-			{
-				$service = \Bitrix\Sale\PaySystem\Manager::getObjectById($data['ID']);
-				if ($service && $service->isTuned())
-				{
-					$stdItems['INVOICING'] = array(
-						'ID' => 'INVOICING',
-						'MENU_ID' => 'menu_crm_invoicing',
-						'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICING'),
-						'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICING'),
-						'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICING']),
-						'ICON' => 'invoicing',
-						'IS_DISABLED' => true
-					);
-
-					break;
-				}
-			}
-		}
-	}
 }
 
 if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))

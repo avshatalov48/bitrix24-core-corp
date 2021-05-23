@@ -42,7 +42,20 @@ class VisibilityManager
 	 */
 	public static function saveEntityConfiguration($accessCodes, string $fieldName, int $entityTypeId, string $permissionId): void
 	{
-		UserFieldPermissionTable::saveEntityConfiguration($accessCodes, $fieldName, $entityTypeId, $permissionId);
+		$entityTypeMap = [
+			\CCrmOwnerType::Company => 'CRM_COMPANY',
+			\CCrmOwnerType::Contact => 'CRM_CONTACT',
+			\CCrmOwnerType::Deal => 'CRM_DEAL',
+			\CCrmOwnerType::Lead =>'CRM_LEAD'
+		];
+
+		UserFieldPermissionTable::saveEntityConfiguration(
+			$accessCodes,
+			$fieldName,
+			$entityTypeId,
+			$permissionId,
+			$entityTypeMap[$entityTypeId]
+		);
 	}
 
 	/**

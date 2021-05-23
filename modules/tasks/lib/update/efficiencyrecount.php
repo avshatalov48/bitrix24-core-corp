@@ -35,7 +35,7 @@ final class EfficiencyRecount extends Stepper
 		$return = false;
 
 		$params = Option::get("tasks", "efficiencyrecount", "");
-		$params = ($params !== ""? @unserialize($params) : []);
+		$params = ($params !== ""? @unserialize($params, ['allowed_classes' => false]) : []);
 		$params = (is_array($params)? $params : []);
 
 		if (empty($params))

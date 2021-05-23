@@ -17,8 +17,6 @@ class ReceivingStatusBlock
 	 * @param string $connector ID connector.
 	 * @param string $line ID line.
 	 * @param array $data Array of input data.
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function __construct($connector, $line = null, $data = [])
 	{
@@ -60,10 +58,10 @@ class ReceivingStatusBlock
 	}
 
 	/**
-	 * @param $data array An array of data.
+	 * @param array $data An array of data.
 	 * @return Result
 	 */
-	private function sendEvent($data): Result
+	private function sendEvent(array $data): Result
 	{
 		$result = new Result();
 		$data['connector'] = $this->connector;

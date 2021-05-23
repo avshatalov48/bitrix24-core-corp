@@ -118,16 +118,16 @@ a {
 }
 
 .avatar {
-	background: url(images/avatar.png) no-repeat center;
-	background-size: cover;
-	float: left;
-	height:32.5px;
-	width: 32.5px;
-	border-radius: 50%;
-	margin-right: 7px;
-	position: relative;
-	overflow: hidden;
-}
+	 background: url(images/avatar.png) no-repeat center;
+	 background-size: cover;
+	 float: left;
+	 height:32.5px;
+	 width: 32.5px;
+	 border-radius: 50%;
+	 margin-right: 7px;
+	 position: relative;
+	 overflow: hidden;
+ }
 
 .post-item-top .avatar {
 	height:45px;
@@ -210,8 +210,8 @@ a {
 }
 
 .post-destination-more-touch {
-	background-color: #828282;
-	color: red
+	background-color: rgba(47, 198, 246, .2);
+	color: #333333;
 }
 
 /*====================================================LIFE FEED======================================================*/
@@ -326,6 +326,10 @@ a {
 	vertical-align: top;
 	line-height: 30px;
 	padding-right: 3px;
+}
+
+.android .lenta-notifier-text {
+	line-height: 29px;
 }
 
 .lenta-notifier-waiter .lenta-notifier-arrow {
@@ -545,7 +549,8 @@ a {
 .lenta-item-pinned .post-item-description.post-item-description-task,
 .lenta-item-pinned .lenta-info-block-description,
 .lenta-item-pinned .post-item-inform-wrap-tree,
-.lenta-item-pinned .post-item-block-inner.info-block-important {
+.lenta-item-pinned .post-item-block-inner.info-block-background,
+.lenta-item-pinned .ui-livefeed-background {
 	display: none;
 }
 
@@ -937,11 +942,100 @@ a {
 	background: #f4fed5;
 }
 
+.info-block-background.info-block-important {
+	background: url('/bitrix/templates/mobile_app/images/lenta/important/background_mobile.svg') top right repeat-y;
+	background-size: 100% auto;
+}
 .info-block-important .post-item-text,
 .lenta-info-block.info-block-important,
 .post-wrap .post-item-text.lenta-important-block-text {
-	background: #f4fed5;
-	padding: 9px;
+	padding: 9px 0 9px 0;
+}
+
+.info-block-background.info-block-background-with-title .post-text-title-container {
+	padding-top: 17px;
+}
+.info-block-background .post-item-text {
+	padding-top: 17px;
+}
+.info-block-background.info-block-background-with-title .post-item-text {
+	padding-top: 0;
+}
+.info-block-background.info-block-important .post-item-important {
+	margin-bottom: 17px;
+}
+
+.info-block-important-icon {
+	width: 63px;
+	height: 63px;
+	background-image: url("data:image/svg+xml,%3Csvg width='63' height='62' viewBox='0 0 63 62' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M32.1554 58.9768C20.3305 59.4483 9.40552 52.6872 4.55191 41.894C-0.301703 31.1009 1.88995 18.4413 10.0894 9.90793C18.2889 1.37455 30.8509 -1.32042 41.8291 3.09873C52.8073 7.51788 59.9989 18.1644 59.9996 29.9987C60.3047 45.6866 47.843 58.6558 32.1554 58.9768V58.9768Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M31.0023 13.9025C39.8928 13.9025 47.0999 21.1096 47.0999 30C47.0999 38.8905 39.8928 46.0976 31.0023 46.0976C22.1119 46.0976 14.9048 38.8905 14.9048 30C14.9048 21.1096 22.1119 13.9025 31.0023 13.9025ZM33.1656 27.972H29.377V27.9728H27.7516V29.5216H29.377V38.0177H27.7516V39.643H34.253V38.0177L33.1653 38.0175L33.1656 27.972ZM31.1875 20.2474C29.6842 20.2474 28.4655 21.4661 28.4655 22.9694C28.4655 24.4727 29.6842 25.6914 31.1875 25.6914C32.6908 25.6914 33.9095 24.4727 33.9095 22.9694C33.9095 21.4661 32.6908 20.2474 31.1875 20.2474Z' fill='%239DCF00'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0' width='62.0051' height='62' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+	background-repeat: no-repeat;
+	float: right;
+	margin-left: 10px;
+	margin-top: 17px;
+	margin-bottom: 17px;
+}
+
+.post-text-title-container .lenta-important-block-title {
+	float: none;
+	flex: 1;
+	margin-bottom: 0;
+}
+.post-text-title-container .info-block-important-icon {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.info-block-background.info-block-important .post-text-title {
+	padding-top: 10px;
+}
+.info-block-background.info-block-gratitude {
+	background-position: top right;
+	background-repeat: repeat-y;
+	background-size: 100% auto;
+	background-color: #e1f7fe;
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-thumbsup {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/01_thumbsup/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-flowers {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/02_flowers/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-smile {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/03_smile/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-star {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/04_star/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-flag {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/05_flag/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-thefirst {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/06_thefirst/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-gift {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/07_gift/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-crown {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/08_crown/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-heart {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/09_heart/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-cake {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/10_cake/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-drink {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/11_drink/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-money {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/12_money/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-cup {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/13_cup/background_mobile_mono.svg');
+}
+.info-block-background.info-block-gratitude.info-block-gratitude-beer {
+	background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/14_beer/background_mobile_mono.svg');
 }
 
 .lenta-new-employee-icon { float: left }
@@ -968,6 +1062,8 @@ a {
 
 .post-item-inform-wrap-left {
 	display: flex;
+	align-items: center;
+	height: 52px;
 	overflow: hidden;
 }
 
@@ -1324,6 +1420,10 @@ a {
 
 .post-item-top-wrap .post-item-attached-img-wrap {
 	padding: 0 17px 3px 17px;
+}
+
+.info-block-background + .post-item-attached-file-wrap .post-item-attached-img-wrap {
+	padding-top: 17px;
 }
 
 .post-item-attached-img-block {
@@ -1797,6 +1897,13 @@ a {
 	font-size: 14px;
 }
 
+.post-text-title-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+
 .post-item-text {
 	padding: 0 0 16px 0;
 	color: #333333;
@@ -1826,6 +1933,9 @@ a {
 .post-comment-text .bx-smile {
 	vertical-align: text-bottom;
 }
+.ui-livefeed-background .post-item-text .bx-smile {
+	vertical-align: baseline;
+}
 .post-item-important input {display: none; }
 .post-item-important input~.checked:before { content: '\2713'; padding-right: 7px; }
 .post-item-important input~.checked {
@@ -1846,6 +1956,24 @@ a {
 }
 .post-item-important input:checked~.checked { display: inline-block; }
 .post-item-important input:checked~.unchecked { display: none; }
+
+.post-item-important .post-item-important-list-text {
+	display: block;
+	font-size: 12px;
+	color: #828B95;
+}
+
+.post-item-important .post-item-important-list-text.post-item-important-list-text-plus {
+	display: none;
+}
+
+.post-item-important .post-item-important-list-read .post-item-important-list-text.post-item-important-list-text-current {
+	display: none;
+}
+.post-item-important .post-item-important-list-read .post-item-important-list-text.post-item-important-list-text-plus {
+	display: block;
+}
+
 
 .post-item-corner {
 	background-size: 11px 7px;
@@ -2806,7 +2934,12 @@ table.forum-spoiler th {
 	margin-bottom: 14px;
 	color: #000;
 	font-size: 16px;
-	font-weight: bold
+	font-weight: bold;
+}
+
+.info-block-background .post-text-title {
+	font-size: 20px;
+	font-weight: 500;
 }
 
 .post-text-cont {
@@ -3354,7 +3487,7 @@ table.forum-spoiler th {
 	color: #828B95;
 	opacity: .7;
 	line-height: 18px;
-	/*white-space: nowrap;*/
+	white-space: nowrap;
 }
 
 .post-comment-reply,
@@ -4254,8 +4387,8 @@ table.forum-spoiler th {
 	overflow: hidden;
 	min-height: 50px;
 	margin-bottom: 10px;
-	padding: 11px 5px 10px 16px;
-	background:#f9fbe5;
+	padding: 11px 5px 10px 2px;
+/*	background:#f9fbe5;*/
 }
 
 .lenta-info-block.lenta-block-grat {
@@ -4273,27 +4406,112 @@ table.forum-spoiler th {
 
 .lenta-block-grat-users {
 	overflow: hidden;
+	margin-top: 9px;
+}
+
+.lenta-block-grat-users .avatar {
+	width: 44px;
+	height: 44px;
+}
+.lenta-block-grat-users .avatar.avatar-small {
+	box-sizing: padding-box;
+	border-width: 3px;
+	width: 30px;
+	height: 30px;
+	margin: 0;
+	position: relative;
+	margin-left: -11px;
+}
+.lenta-block-grat-users-small .avatar.avatar-small:last-child {
+	margin-left: 0;
+}
+
+.info-block-gratitude .lenta-block-grat-users .avatar.avatar-small { border-color: #E1F7FE; }
+
+.lenta-block-grat-users-small-cont {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+}
+
+.lenta-block-grat-users-small {
+	position: relative;
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	flex-wrap: nowrap;
+	justify-content: flex-end;
+}
+
+.lenta-block-grat-users-small .avatar.avatar-small {
+	border-style: solid;
+}
+
+.lenta-block-grat-users-small-more {
+	margin-left: 4px;
+	display: flex;
+	padding: 3px 7px 3px 7px;
+	border-radius: 10px;
+	background-color: rgba(255,255,255,0.8);
+	color: rgba(82,92,105,0.51);
+	font-size: 12px;
 }
 
 .lenta-block-grat-user {
 	padding-bottom: 10px;
 }
 
-.lenta-block-grat-medal { float: left; width: 32.5px; height: 32.5px; margin: 0 7px 0 0; background-image: url(images/lenta/medals-2.png); background-repeat: no-repeat; background-size: 303px 167px; border-radius: 50%;}
-.lenta-block-grat-medal.lenta-block-grat-medal-heart   { background-position:   -7.5px   -4px; background-color: #fe5857; }
-.lenta-block-grat-medal.lenta-block-grat-medal-gift    { background-position:    -49px   -4px; background-color: #5cd1df; }
-.lenta-block-grat-medal.lenta-block-grat-medal-cup     { background-position:    -90px   -4px; background-color: #ffa800; }
-.lenta-block-grat-medal.lenta-block-grat-medal-money   { background-position:   -131px   -4px; background-color: #05b5ab; }
-.lenta-block-grat-medal.lenta-block-grat-medal-crown   { background-position:   -172px   -4px; background-color: #a7abb0; }
-.lenta-block-grat-medal.lenta-block-grat-medal-drink   { background-position:   -213px   -4px; background-color: #2fc7f7; }
-.lenta-block-grat-medal.lenta-block-grat-medal-cake    { background-position: -254.5px   -4px; background-color: #b47153; }
-.lenta-block-grat-medal.lenta-block-grat-medal-thefirst{ background-position:   -7.5px -126px; background-color: #ffd200; }
-.lenta-block-grat-medal.lenta-block-grat-medal-flag    { background-position:    -49px -126px; background-color: #fb6dba; }
-.lenta-block-grat-medal.lenta-block-grat-medal-star    { background-position:    -90px -126px; background-color: #29ad49; }
-.lenta-block-grat-medal.lenta-block-grat-medal-thumbsup{ background-position:   -131px -126px; background-color: #6e54d1; }
-.lenta-block-grat-medal.lenta-block-grat-medal-beer    { background-position:   -172px -126px; background-color: #ae914b; }
-.lenta-block-grat-medal.lenta-block-grat-medal-flowers { background-position:   -213px -126px; background-color: #ff7b9d; }
-.lenta-block-grat-medal.lenta-block-grat-medal-smile   { background-position: -254.5px -126px; background-color: #bada0b; }
+.lenta-block-grat-medal {
+	float: left;
+	width: 66px;
+	height: 67px;
+	margin: 0 20px 0 0;
+	background-repeat: no-repeat;
+	background-position: top left;
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-thumbsup {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%233886D8'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M41.9869 32.3114C43.5294 32.0999 44.2767 31.468 44.195 30.4905C44.1247 29.6499 43.3207 29.1619 41.9146 29.1462C40.4687 29.13 39.0225 29.142 37.5764 29.1418C36.3481 29.1415 35.1196 29.1418 33.7806 29.1418C33.9525 28.4203 34.0836 27.8976 34.2007 27.3718C34.5656 25.7345 34.9843 24.0995 34.8227 22.4006C34.7103 21.2178 34.0175 20.4527 33.1363 20.5167C31.9186 20.6051 31.9932 21.5211 31.9109 22.4032C31.5825 25.914 30.1781 28.7667 26.8782 30.4406C26.1098 30.8304 25.2184 30.7866 24.4803 31.1466V40.3272C29.5343 41.5257 34.6095 41.4022 39.6811 41.2796C40.199 41.2669 40.7938 41.2149 41.1601 40.6146C41.393 39.6894 40.7975 39.1496 40.0339 38.6672C41.8614 38.3425 42.1508 36.9073 42.0265 36.5784C41.9022 36.2496 41.5703 35.8869 41.268 35.5632C42.2957 35.6551 42.8038 35.1755 43.0538 34.3082C43.3413 33.3104 42.7137 32.8066 41.9869 32.3114M22.5791 41.8724V29.3642C22.8021 29.0658 23.0995 29.1251 23.3557 29.1439C27.2586 29.4303 29.2416 26.3557 29.8155 23.7411C29.957 23.0979 30.0128 22.4306 30.0517 21.771C30.1425 20.2317 30.8792 19.1766 32.2048 18.7566C33.5698 18.3243 35.057 18.837 35.9245 20.0535C37.1019 21.7047 36.8259 23.5351 36.5533 25.3585C36.4675 25.9326 36.3387 26.5001 36.1933 27.2619C37.7997 27.2619 39.3361 27.2565 40.8726 27.2642C41.575 27.2675 42.2859 27.2328 42.9785 27.3254C45.9773 27.7258 46.9717 30.4772 45.0889 33.1058C45.0497 33.6667 44.647 35.826 43.9173 36.3426C44.1758 37.1478 43.4236 38.9412 43.1666 39.3624C43.3045 42.0906 42.0103 43.0751 39.9171 43.1546C34.1451 43.374 28.3682 43.3745 22.5791 41.8724' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-flowers {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23FF7B9D'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M32.7632 26.1944C31.6112 26.1875 30.7084 27.0631 30.7432 28.1538C30.776 29.1859 31.678 30.0974 32.6837 30.1143C33.8049 30.1331 34.6609 29.268 34.6622 28.1145C34.6636 27.0147 33.8587 26.2007 32.7632 26.1944ZM34.0052 45.6267C33.8391 42.6235 37.5798 40.6887 40.6694 42.0099C39.6598 45.3446 37.8291 46.338 34.0052 45.6267ZM32.8647 33.7983C31.4065 35.7472 29.8739 36.1894 28.3594 35.1542C26.7819 34.076 26.6804 32.3991 28.0623 30.2362C26.0219 29.7862 24.8621 28.344 25.2141 26.6938C25.6578 24.6121 27.0103 23.9081 29.6196 24.4004C30.0126 21.6751 30.8616 20.6064 32.6414 20.5951C34.3356 20.5844 35.3468 21.7496 35.7268 24.1858C36.825 24.0056 37.9303 23.692 38.9779 24.4265C39.6197 24.8766 40.0029 25.4781 40.194 26.1963C40.6508 27.9128 39.6243 29.3646 37.5395 30.0106C38.9338 31.9141 38.9353 33.7768 37.5431 34.8726C36.1113 35.9995 34.5426 35.6578 32.8647 33.7983ZM25.0742 41.8728C26.6831 41.4069 28.2352 41.4171 29.7176 42.2399C31.0252 42.9657 31.6051 44.1442 31.6956 45.6597C27.8693 46.0633 26.1418 45.6125 25.0742 41.8728ZM38.3009 39.643C36.6169 39.685 35.1836 40.3672 33.7963 41.3037V37.244C38.0125 38.31 41.3667 35.4023 40.4865 30.8312C43.5012 28.0653 42.7051 22.492 37.2704 21.754C35.3565 17.6041 29.8595 17.4034 27.8238 22.0667C23.2021 22.8005 21.582 27.8319 25.1143 31.2939C24.6197 35.1378 27.1079 38.2731 31.6269 37.5434V41.0703C28.6701 39.0812 25.7059 39.3892 22.5789 40.5058C22.8653 42.0192 23.2699 43.3917 24.0332 44.669C25.2701 46.7384 27.0169 47.7871 29.4684 47.7272C31.912 47.6678 34.3581 47.7135 36.8033 47.7287C38.2255 47.7375 39.4042 47.2051 40.4319 46.2437C42.0907 44.6912 42.7034 42.6726 43.162 40.5107C41.5179 39.9742 39.9596 39.6014 38.3009 39.643Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-smile {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23BADA0B'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.4483 31.2244C38.5724 31.2973 39.4984 30.4561 39.5407 29.3241C39.5815 28.2327 38.7945 27.3588 37.7141 27.2965C36.5736 27.2305 35.6496 28.0591 35.6114 29.1821C35.5752 30.2481 36.3919 31.1562 37.4483 31.2244ZM28.7736 31.2278C29.9021 31.2288 30.7625 30.3403 30.7398 29.197C30.718 28.1122 29.8766 27.2913 28.7855 27.2906C27.6494 27.2896 26.7758 28.1808 26.8066 29.3092C26.8355 30.3742 27.7096 31.2269 28.7736 31.2278ZM38.4728 34.1419C37.5273 36.5822 35.8494 38.0779 33.1685 38.0789C30.492 38.0799 28.8474 36.5284 27.8779 34.1573C27.511 34.2575 27.2395 34.3342 26.9668 34.4054C26.6584 34.486 26.3172 34.4968 26.1218 34.808C27.2444 38.3197 30.2479 40.3239 33.9585 40.0408C36.9366 39.814 39.7552 37.3715 40.2334 34.5496C39.9061 34.4416 39.5718 34.3118 39.2266 34.2242C38.9982 34.1668 38.7544 34.1702 38.4728 34.1419ZM33.2054 43.5674C27.1683 43.5821 22.3378 38.7917 22.2965 32.749C22.2551 26.6724 27.1211 21.7419 33.1675 21.7349C39.1814 21.7275 44.1401 26.6968 44.1196 32.7099C44.0993 38.6983 39.2196 43.553 33.2054 43.5674ZM33.1573 19.7632C26.0743 19.7688 20.2483 25.6139 20.2632 32.6996C20.2781 39.7731 26.1499 45.6227 33.212 45.6002C40.2977 45.5775 46.1149 39.7294 46.098 32.6451C46.0812 25.5467 40.2659 19.758 33.1573 19.7632Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-star {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%2329AD49'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.4075 39.7723C29.2234 38.926 30.8479 38.1687 32.4851 37.4054C34.1194 38.1669 35.7437 38.9237 37.5633 39.7713C37.3321 37.7917 37.1245 36.0137 36.9099 34.1749C38.1218 32.8539 39.3489 31.516 40.7151 30.0269C38.7079 29.6264 36.9571 29.2769 35.222 28.931C34.3062 27.2849 33.4236 25.6985 32.4815 24.005C31.5105 25.7537 30.6187 27.3604 29.7448 28.935C27.9231 29.3001 26.1873 29.6484 24.2431 30.0385C25.6409 31.547 26.8609 32.864 28.0617 34.16C27.8459 36.0122 27.6386 37.7912 27.4075 39.7723ZM36.5385 27.1184C39.1888 27.6385 41.814 28.1533 44.7143 28.7223C42.78 30.8152 40.9744 32.7681 39.0618 34.8376C39.3684 37.4735 39.6862 40.2049 40.0332 43.1868C37.3881 41.9468 34.9688 40.8128 32.4868 39.6495C30.0589 40.788 27.6065 41.9385 24.9279 43.1949C25.2753 40.273 25.5914 37.6158 25.9191 34.858C24.1027 32.8897 22.2631 30.8962 20.2632 28.7289C23.1264 28.1634 25.7742 27.6405 28.4349 27.1151C29.7693 24.6911 31.0817 22.307 32.4823 19.7632C33.8566 22.2558 35.1612 24.6212 36.5385 27.1184Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-flag {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23FB6DBA'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.4214 30.4485C38.4223 28.7486 39.3687 27.1418 40.3876 25.4111H27.2009V35.5072H40.3989C39.355 33.7337 38.4071 32.1228 37.4214 30.4485V30.4485ZM24.8947 23.2369C31.0155 23.2369 37.2843 23.2364 43.2955 23.239C43.4968 23.239 43.6982 23.2696 44.0777 23.3003C42.6381 25.7226 41.267 28.0295 39.8341 30.4405C41.2252 32.7896 42.6125 35.1321 44.1161 37.6703H27.1253V43.6508C26.4359 43.9685 25.5862 43.8301 24.8947 43.7953V23.2369Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-thefirst {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23F7CC00'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M30.4925 30.9294L32.5153 30.0546V37.8277H34.3766V26.9115C32.71 27.7309 31.1634 28.4909 29.6027 29.2579C29.8882 29.927 30.4925 30.9294 30.4925 30.9294M32.9663 42.7571C27.3027 42.7011 22.7096 38.0824 22.7314 32.4648C22.7531 26.8501 27.4179 22.2179 33.0316 22.2362C38.7084 22.2551 43.3149 26.9474 43.2584 32.6535C43.2034 38.1955 38.5012 42.8116 32.9663 42.7571M32.981 20.277C26.2304 20.2819 20.7786 25.7191 20.77 32.4548C20.7615 39.2701 26.2101 44.7288 33.0152 44.723C39.7626 44.7171 45.2178 39.2775 45.23 32.5435C45.2425 25.7345 39.7878 20.2719 32.981 20.277' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-gift {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%235CD1DF'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M31.9713 25.9714C31.0148 24.1582 30.2882 22.5219 28.4668 21.7874C27.7225 21.487 27.1346 21.6611 26.6787 22.3017C26.2192 22.9475 26.4398 23.4989 26.9117 24.0383C28.2001 25.5124 29.9605 25.7072 31.9713 25.9714V25.9714ZM34.5301 25.9242C36.5018 25.7757 38.1755 25.4587 39.4796 24.1328C40.0434 23.5594 40.1929 22.8778 39.6894 22.1749C39.2005 21.4929 38.5385 21.5133 37.8611 21.8245C36.1489 22.6113 35.3897 24.1621 34.5301 25.9242V25.9242ZM43.1526 28.9376H34.1955C34.2547 29.8089 34.0423 30.5958 34.3285 31.3546H43.1548C43.2771 30.5099 43.2853 29.7617 43.1526 28.9376V28.9376ZM32.2719 28.9318H23.2476C23.1798 29.796 23.089 30.5736 23.3057 31.3826H32.2911C32.3611 30.5406 32.4051 29.7663 32.2719 28.9318V28.9318ZM25.0626 41.5908H32.276V33.5501H25.0626V41.5908ZM34.2957 41.6153H41.4247V33.5281H34.2957V41.6153ZM23.1598 43.4533V33.5116C23.1598 33.5116 22.0096 33.4064 21.421 33.3525V27.079H27.6065C26.6326 26.1671 25.642 25.6563 25.0862 24.6892C24.4038 23.5019 24.4127 22.2439 25.1942 21.1439C25.9429 20.09 27.2128 19.5583 28.3879 19.8363C29.6936 20.1454 30.789 20.8295 31.6232 21.8695C32.193 22.5797 32.6665 23.3676 33.2171 24.1703C33.7254 23.4265 34.1985 22.6583 34.7477 21.949C35.5647 20.8937 36.6321 20.2022 37.9483 19.8809C39.3094 19.5486 40.3619 20.0347 41.1638 21.0779C41.9769 22.1358 42.0865 23.3142 41.4456 24.5118C40.8928 25.5451 39.9586 26.2091 38.7396 27.0089H45.1053V33.2558L43.3961 33.499V43.4533H23.1598Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-crown {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23B1B4B8'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M42.0805 29.3977C42.8872 29.2688 43.4769 28.8528 43.4952 28.0012C43.515 27.0911 42.9378 26.5455 42.0522 26.5404C41.2238 26.5357 40.6551 27.0596 40.6304 27.9017C40.6037 28.8149 41.2015 29.2684 42.0805 29.3977M23.7222 29.3952C24.5558 29.2662 25.1344 28.8333 25.1447 27.9855C25.1557 27.0779 24.5724 26.5345 23.6863 26.5406C22.8608 26.546 22.2946 27.0701 22.2796 27.9166C22.2633 28.8328 22.8659 29.2757 23.7222 29.3952M32.8746 27.5844C33.8625 27.5922 34.7173 26.7789 34.7134 25.8349C34.7097 24.8838 33.8696 24.0561 32.9005 24.049C31.9332 24.0417 31.0806 24.8576 31.0617 25.8085C31.0429 26.7545 31.8821 27.5763 32.8746 27.5844M24.2376 31.0971C24.1784 31.0413 24.103 30.9086 24.1671 31.1567C24.3951 34.0233 25.0956 36.8056 25.5568 39.6084H40.2354C40.7133 36.8992 41.181 34.2489 41.6572 31.55C41.2106 31.6026 41.1558 31.8822 41.0242 32.0655C39.1027 34.7451 36.2978 34.6647 34.4774 31.9096C33.7118 30.7512 33.444 29.3977 32.8585 28.0151C32.5312 29.5639 32.1379 30.9237 31.3917 32.1577C30.2321 34.0746 28.2595 34.5357 26.3554 33.4073C25.3949 32.8385 24.9603 31.8497 24.2376 31.0971M26.2918 30.386C26.7979 31.3786 27.4986 32.1843 28.4936 31.9658C29.9892 31.6373 30.1751 30.163 30.5911 28.9943C28.7088 26.5034 28.6323 24.631 30.3016 23.0974C31.7911 21.7292 34.043 21.7409 35.5095 23.1242C37.134 24.6572 37.0563 26.5807 35.2419 28.911C35.7949 30.0811 36.0867 31.4576 37.5095 32.0294C38.5316 31.9849 39.1724 31.4402 39.5865 30.6248C39.6227 30.1542 39.2668 29.9328 39.0971 29.6206C38.2305 28.0258 38.6263 26.2346 40.1001 25.1866C41.5244 24.1744 43.4439 24.4073 44.6289 25.7369C45.8163 27.0696 45.8586 29.0146 44.5054 30.2366C43.4451 31.1938 43.5583 32.4315 43.3164 33.5794C42.8979 35.5623 42.6243 37.5756 42.2608 39.5707C41.9839 41.0902 41.305 41.6375 39.7521 41.6392C35.1906 41.6436 30.6291 41.6431 26.067 41.6394C24.4496 41.6382 23.786 41.0853 23.4977 39.4959C23.0853 37.2209 22.6431 34.9502 22.2977 32.6652C22.1476 31.6703 21.8817 30.8511 21.1308 30.0968C19.9407 28.9014 20.0128 27.0393 21.1152 25.7701C22.2505 24.4633 24.091 24.181 25.5365 25.0923C26.9894 26.0077 27.5272 27.8098 26.8059 29.361C26.6533 29.689 26.4819 30.0085 26.2918 30.386' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-heart {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23FF5752'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M32.5714 28.6131C32.0782 28.0963 31.6405 27.5734 31.1356 27.1257C30.6308 26.6775 30.095 26.241 29.51 25.9104C27.7718 24.9283 25.9755 25.1724 24.6094 26.5461C23.0313 28.134 23.3225 29.9822 24.0905 31.7597C25.95 36.0616 29.2035 39.2711 32.5609 42.4429C34.9967 40.3002 37.0911 38.0237 38.913 35.5039C40.0348 33.953 41.0241 32.3278 41.4685 30.4225C41.8748 28.6805 41.5027 27.2183 40.0371 26.127C38.5733 25.0365 37.049 25.1018 35.5002 25.9647C34.3279 26.6178 33.4887 27.6404 32.5714 28.6131M32.5553 45.1992C28.3819 41.4639 24.404 37.6574 22.1581 32.4479C21.188 30.1977 21.0407 27.9083 22.5423 25.7749C24.136 23.5105 27.1098 22.672 29.6882 23.712C30.725 24.1301 31.6293 24.7538 32.5241 25.5436C33.3481 24.9622 34.1194 24.3115 35.0375 23.8855C37.3489 22.8126 39.5154 23.0745 41.4851 24.6428C43.3979 26.1655 43.9972 28.2019 43.5247 30.564C43.0209 33.0828 41.6929 35.2021 40.1972 37.2278C38.0166 40.1813 35.4433 42.7575 32.5553 45.1992' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-cake {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23B47153'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M24.9085 24.1507C25.6939 24.8139 26.5666 24.8063 27.3617 24.1631C28.1131 23.5555 28.3171 22.7635 27.8509 21.8788C27.4339 21.0871 26.8792 20.4009 26.1349 19.7683C25.4094 20.3882 24.8716 21.0878 24.434 21.8646C23.9341 22.7527 24.1819 23.5371 24.9085 24.1507V24.1507ZM31.7726 24.1654C32.5675 24.8266 33.4397 24.7975 34.2253 24.1504C34.971 23.5362 35.1574 22.741 34.6868 21.859C34.282 21.0998 33.7491 20.4376 32.9789 19.7632C32.2564 20.4166 31.6953 21.0966 31.2687 21.8852C30.7827 22.7838 31.042 23.5574 31.7726 24.1654V24.1654ZM38.6344 24.1768C39.4359 24.8322 40.3113 24.7904 41.0871 24.1377C41.8243 23.5181 42.007 22.7148 41.5266 21.8395C41.1138 21.0871 40.5906 20.4156 39.8534 19.7952C39.0766 20.362 38.5933 21.0651 38.1592 21.7933C37.6135 22.708 37.8486 23.5344 38.6344 24.1768V24.1768ZM42.7552 40.2224H22.3685C22.0413 39.3114 22.325 38.3483 22.2019 37.368C24.6762 38.3761 25.3953 38.2771 26.6852 36.7955C28.2261 38.8193 30.7059 38.8697 32.5212 36.8371C34.2329 38.8359 36.4762 38.8384 38.3152 36.9063C39.8339 38.3106 40.4903 38.3852 42.7552 37.3573V40.2224ZM22.2636 33.5369H42.6901V34.9696C41.7788 34.8654 41.4953 36.0062 40.4429 36.1189C40.0489 34.9749 39.5144 34.0441 38.1267 34.1736C36.9309 34.2851 36.5327 35.1436 36.2898 36.118C35.7253 36.4484 35.1848 36.4624 34.5633 36.138C34.2901 35.071 33.8051 34.1186 32.4185 34.1678C31.1604 34.2123 30.6947 35.07 30.4543 36.1182C29.8986 36.4717 29.3602 36.4533 28.7319 36.1385C28.4577 35.2067 28.0921 34.2553 26.8364 34.1707C25.4706 34.0786 24.9051 34.9788 24.6004 36.0485C23.4965 36.1693 23.3165 34.7378 22.2636 35.1108V33.5369ZM44.6999 31.4662H40.7811V25.6508C40.0907 25.653 39.5068 25.5254 38.8218 25.7581V31.395H33.9225V25.6963C33.2298 25.6076 32.6467 25.5482 31.9629 25.7652V31.3733H27.0641V25.6432C26.3875 25.6459 25.8289 25.5362 25.1225 25.7682V31.4759H20.2778C20.2778 34.6383 20.2318 37.643 20.303 40.645C20.3277 41.6761 21.0793 42.2259 22.1178 42.2515C23.2172 42.2789 24.3179 42.2598 25.4182 42.2598C31.123 42.2601 36.8277 42.2545 42.5326 42.2645C43.6318 42.2664 44.6246 41.9286 44.6652 40.746C44.7693 37.7061 44.6999 34.6606 44.6999 31.4662V31.4662Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-drink {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%232FC6F6'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M23.5819 29.7756C23.2786 28.945 23.1761 28.2789 23.5305 27.6164C23.8741 26.9745 24.5057 26.7257 25.1748 26.5159C24.3322 25.4387 23.3047 25.0872 22.3709 25.5785C21.4249 26.0759 20.877 26.8843 21.1318 27.9816C21.3977 29.1261 22.1606 29.7526 23.5819 29.7756M42.6972 28.66H25.4028C28.4163 30.992 31.2259 33.1665 34.0543 35.3553C36.9286 33.1286 39.6907 30.9888 42.6972 28.66M27.357 26.5944H39.2926C41.0837 24.1773 43.1592 22.0267 45.1002 19.7632C45.7117 20.089 46.116 20.4779 46.5773 21.001C45.03 22.805 43.3637 24.8139 41.835 26.5966C42.1777 26.5861 42.3966 26.6206 42.5761 26.612C43.5897 26.5629 44.3714 26.9603 44.6881 27.9237C45.0188 28.9296 44.5903 29.7086 43.7494 30.3508C40.8378 32.574 37.9549 34.8346 35.0739 37.0708V43.211H39.7445C39.9669 43.9179 39.9292 44.4985 39.802 45.1485H28.2395V43.2958H32.9686V37.0151C30.4919 35.1006 27.9846 33.1624 25.5358 31.2694C22.4059 32.1694 20.2763 31.3897 19.3877 29.0963C18.5879 27.0324 19.5398 24.7026 21.5689 23.7581C23.8101 22.7146 26.1965 23.8488 27.357 26.5944' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-money {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%2305B5AB'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M32.9291 33.5381C32.9291 33.5381 31.4359 33.1529 31.18 32.2991C31.1791 30.0302 34.9552 30.0482 35.7751 32.2949C36.31 32.2306 36.8745 32.1524 37.4566 32.0685C37.1511 30.1548 35.456 29.277 34.2738 29.0272C34.2322 28.2161 34.127 27.1677 34.127 27.1677H32.2291C32.1738 27.8507 32.1229 28.4791 32.0738 29.0888C31.7372 29.2264 31.4689 29.3217 31.2128 29.443C30.0689 29.9844 29.2593 30.828 29.2133 32.1341C29.1656 33.4919 29.9287 34.4152 31.1037 35.0229C31.5765 35.2673 32.0723 35.4282 32.603 35.5064C33.2434 35.601 33.8969 35.6773 34.5088 35.8736C35.1815 36.0894 35.8166 36.4722 35.8042 37.3019C35.7917 38.142 35.1286 38.4485 34.4487 38.6629C32.7901 39.186 31.3424 38.6905 30.2487 37.2048C29.6116 37.3038 29.2518 37.3548 28.5016 37.5057C28.8697 39.5102 30.3634 40.2479 32.0126 40.751C32.1321 41.51 32.2112 42.7112 32.2112 42.7112C32.2112 42.7112 33.4292 42.8327 34.0591 42.6449C34.0908 42.0563 34.1229 41.4643 34.1574 40.8316C34.5399 40.7133 34.8894 40.6248 35.2245 40.498C36.6551 39.9565 37.685 39.0472 37.8213 37.4312C37.9372 36.0623 36.9701 34.7503 35.4177 34.0884C34.6255 33.7506 32.9291 33.5381 32.9291 33.5381ZM27.9882 43.7994C24.4033 42.4037 22.5675 38.7221 23.7322 35.0613C24.9629 31.193 27.1683 27.9198 30.1078 25.1686C31.9972 25.1686 36.0651 25.1588 36.0651 25.1588C36.0651 25.1588 36.6221 25.5492 37.0154 25.9518C39.2885 28.2787 41.0278 30.9659 42.2294 33.9786C44.1132 38.7013 41.9029 43.0505 36.9845 44.2485C33.9617 44.985 30.9291 44.9447 27.9882 43.7994ZM37.1592 19.4129C36.6568 20.6699 36.1791 21.8654 35.6792 23.1163H30.6459C30.1814 21.9732 29.6842 20.7505 29.1402 19.4129H37.1592ZM38.2185 24.3683C37.9949 24.1464 37.8886 23.9751 37.6527 23.5467C38.4344 21.5741 39.2377 19.5459 40.0692 17.4474H26.2291C27.0854 19.5894 27.8975 21.6208 28.7415 23.7318C25.6348 26.6905 23.3597 30.0788 21.9902 34.0295C20.2517 39.0445 22.5995 43.9591 27.6037 45.7601C30.9998 46.9824 34.4766 47.0212 37.9308 46.0175C43.6101 44.3675 46.2516 39.0538 44.1489 33.5188C42.8321 30.0526 40.8593 26.9892 38.2185 24.3683Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-cup {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23FFA800'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20.1428 27.0467C20.1563 29.94 21.8898 32.1225 24.3995 32.3545C23.5069 30.6427 23.0358 28.8221 22.6744 26.98C21.7461 26.973 20.9395 26.8688 20.1428 27.0467V27.0467ZM43.0636 26.9994C42.7227 28.9112 42.1402 30.7269 41.2396 32.5007C44.1826 31.7363 45.8038 29.6408 45.542 26.9994H43.0636ZM30.2577 45.4927H35.5095C35.7001 44.7564 35.3434 44.2658 34.9206 43.8796C33.4384 42.5256 33.6148 41.0293 34.4524 39.4493C35.2365 37.9696 36.2703 36.6556 37.2339 35.2958C38.7427 33.1671 40.1255 30.9734 40.7979 28.4161C41.0802 27.3419 41.3511 26.2569 41.0613 25.182H24.6352C24.469 26.6543 24.7756 27.9687 25.1874 29.2686C26.0807 32.0882 27.7785 34.4547 29.4509 36.8356C30.2533 37.978 31.088 39.1028 31.6111 40.4114C32.2982 42.1304 32.0773 43.0964 30.7437 44.3465C30.4336 44.637 30.0797 44.9103 30.2577 45.4927V45.4927ZM18.0152 25.0293H22.4815C22.4815 25.0293 22.4759 23.8114 22.7381 23.2368H43.0935C43.1439 23.8067 43.1908 24.3323 43.2486 24.9826H47.6029C48.3336 27.4827 46.7917 31.5717 44.6373 33.0155C43.3391 33.8855 41.915 34.5039 40.4209 34.949C39.8323 35.1244 39.4116 35.4375 39.0707 35.9552C38.2178 37.2514 37.298 38.5035 36.4402 39.797C36.0351 40.4074 35.6684 41.058 35.7563 41.969C37.4063 43.3506 37.8281 45.2288 37.5001 47.4164H28.3345C27.8723 45.1626 28.2239 44.0949 29.9404 42.5186C30.205 41.806 29.9126 41.1669 29.5818 40.5476C28.6273 38.7612 27.3189 37.2085 26.2317 35.5093C25.9993 35.146 25.6123 35.0726 25.2537 34.9329C24.4231 34.6095 23.5738 34.3232 22.7717 33.9391C19.3234 32.2875 17.5708 29.0562 18.0152 25.0293V25.0293Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+.lenta-block-grat-medal.lenta-block-grat-medal-beer {
+	background-image: url("data:image/svg+xml,%3Csvg width='66' height='67' viewBox='0 0 66 67' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 63.5C50.1208 63.5 64 49.6208 64 32.5C64 15.3792 50.1208 1.5 33 1.5C15.8792 1.5 2 15.3792 2 32.5C2 49.6208 15.8792 63.5 33 63.5Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M33 54.5C45.1503 54.5 55 44.6503 55 32.5C55 20.3497 45.1503 10.5 33 10.5C20.8497 10.5 11 20.3497 11 32.5C11 44.6503 20.8497 54.5 33 54.5Z' fill='%23AE914B'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M35.5421 31.8082V39.4285H37.3601V31.7202C36.6938 31.7014 36.1019 31.5715 35.5421 31.8082ZM31.6263 31.795V39.4517C32.2972 39.4986 32.8825 39.582 33.435 39.4053V31.7202C32.7873 31.6933 32.228 31.595 31.6263 31.795ZM27.7464 31.7742V39.4593C28.3929 39.4925 28.9512 39.5832 29.5431 39.3945V31.7329C28.8879 31.6796 28.3031 31.6055 27.7464 31.7742ZM44.2865 36.0121C44.2794 37.9899 43.4662 38.6802 41.4129 38.4111V27.8821C43.4596 27.614 44.2809 28.3129 44.2867 30.2831C44.2924 32.1927 44.2934 34.1025 44.2865 36.0121ZM39.3936 40.0418C39.3862 41.7329 38.7038 42.4271 37.0377 42.4327C33.9846 42.443 30.9312 42.4476 27.878 42.43C26.5445 42.4225 25.7296 41.7241 25.7168 40.4708C25.6789 36.7724 25.7032 33.0732 25.7032 29.2239C28.433 30.1848 30.7619 29.7238 32.8905 28.1058C33.1168 27.9337 33.3513 27.7785 33.6605 27.7793C35.5242 27.7837 37.388 27.7812 39.3963 27.7812V32.596C39.3963 35.0779 39.4043 37.5597 39.3936 40.0418ZM28.3117 22.8806C31.1618 22.8777 34.0117 22.8759 36.8619 22.8808C38.8496 22.8847 39.5298 23.6719 39.2921 25.8027H32.7232C31.3854 26.7946 30.0988 27.8712 28.2652 27.7793C26.241 27.6778 25.6819 27.1728 25.6995 25.2678C25.7154 23.5198 26.409 22.8823 28.3117 22.8806ZM46.2361 29.7421C46.2009 27.5199 44.612 25.9322 42.3878 25.812C42.074 25.7946 41.7374 25.9048 41.4288 25.6751C41.4065 25.569 41.3662 25.4551 41.3603 25.3397C41.2072 22.2707 39.8116 20.9272 36.765 20.9253C33.8339 20.9233 30.9028 20.9157 27.9719 20.9275C25.3708 20.938 23.7545 22.5212 23.7472 25.0901C23.7333 30.135 23.7335 35.18 23.7472 40.2251C23.7543 42.7969 25.3668 44.378 27.9685 44.388C30.8996 44.3995 33.8305 44.3919 36.7616 44.3905C39.5628 44.389 40.8356 43.3528 41.4359 40.5106C41.7198 40.4979 41.9201 40.4867 42.1205 40.4803C44.6659 40.3984 46.2229 38.8438 46.2407 36.3331C46.2566 34.136 46.2703 31.9385 46.2361 29.7421Z' fill='white'/%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0.5' width='66' height='66' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
 
 .lenta-block-grat .lenta-important-block-text {
 	min-height: 15px;
@@ -4308,6 +4526,47 @@ table.forum-spoiler th {
 	font-size: 15px;
 	font-weight: normal;
 	color: #333333;
+}
+
+.ui-livefeed-background {
+	background-repeat: no-repeat;
+	background-position: center center;
+	height: 100vw;
+	background-size: cover;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ui-livefeed-background .post-more-block,
+.ui-livefeed-background .post-text-title-container {
+	display: none;
+}
+
+.ui-livefeed-background .post-item-text {
+	padding: 0 24px 0 24px;
+}
+.ui-livefeed-background .post-item-text,
+.ui-livefeed-background .post-item-text a,
+.ui-livefeed-background .post-item-text a:hover {
+	font-size: 26px;
+	line-height: 39px;
+	font-weight: 500;
+	color: #FFFFFF;
+	text-align: center;
+}
+
+.ui-livefeed-background .post-item-text a,
+.ui-livefeed-background .post-item-text a:hover {
+	text-decoration: underline;
+}
+
+.ui-livefeed-background + .post-item-attached-file-wrap {
+	padding-top: 10px;
+}
+
+.ui-livefeed-background .urlpreview-mobile {
+	display: none;
 }
 
 /*=====================================================TASKS FILTER===============================================================================*/

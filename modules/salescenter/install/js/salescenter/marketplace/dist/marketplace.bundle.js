@@ -25,15 +25,22 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(AppLocal, [{
 	    key: "open",
 	    value: function open(tile) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      this.openLink(tile.link, options, {
+	        data: {
+	          type: tile.getType()
+	        }
+	      });
+	    }
+	  }, {
+	    key: "openLink",
+	    value: function openLink(link) {
 	      var _this2 = this;
 
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      salescenter_manager.Manager.openSlider(tile.link, options).then(function () {
-	        return _this2.emit(EventTypes.AppLocalSliderClose, new main_core_events.BaseEvent({
-	          data: {
-	            type: tile.getType()
-	          }
-	        }));
+	      var eventOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	      salescenter_manager.Manager.openSlider(link, options).then(function () {
+	        return _this2.emit(EventTypes.AppLocalSliderClose, new main_core_events.BaseEvent(eventOptions));
 	      });
 	    }
 	  }]);
@@ -146,8 +153,8 @@ this.BX = this.BX || {};
 	  }
 
 	  babelHelpers.createClass(AppSlider, [{
-	    key: "open",
-	    value: function open(tile) {
+	    key: "openAppLocal",
+	    value: function openAppLocal(tile) {
 	      var _this2 = this;
 
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -169,9 +176,23 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "openAppLocalLink",
+	    value: function openAppLocalLink(link) {
+	      var _this3 = this;
+
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var system = new AppLocal();
+	      system.openLink(link, options);
+	      system.subscribe(EventTypes.AppLocalSliderClose, function (e) {
+	        return _this3.emit(EventTypes.AppSliderSliderClose, new main_core_events.BaseEvent({
+	          data: e.data
+	        }));
+	      });
+	    }
+	  }, {
 	    key: "openApp",
 	    value: function openApp(tile) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -181,7 +202,7 @@ this.BX = this.BX || {};
 	        var uninstalled = new AppUninstalled();
 	        uninstalled.open(tile, options);
 	        uninstalled.subscribe(EventTypes.AppUninstalledSliderClose, function () {
-	          return _this3.emit(EventTypes.AppSliderSliderClose, new main_core_events.BaseEvent({
+	          return _this4.emit(EventTypes.AppSliderSliderClose, new main_core_events.BaseEvent({
 	            data: {
 	              type: Tile.Marketplace.type()
 	            }

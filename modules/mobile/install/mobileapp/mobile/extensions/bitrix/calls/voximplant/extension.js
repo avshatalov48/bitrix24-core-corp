@@ -561,6 +561,12 @@
 					client.on(VIClient.Events.LogMessage, this.__onSDKLogMessageHandler);
 					try
 					{
+						if (typeof(JNVICameraManager.setResolutionConstraints) === 'function')
+						{
+							//JNVICameraManager.setResolutionConstraints(1280, 720);
+							JNVICameraManager.setResolutionConstraints(960, 540); //force 16:9 aspect ratio
+						}
+
 						this.voximplantCall = client.callConference(
 							"bx_conf_" + this.id,
 							{sendVideo: this.videoEnabled, receiveVideo: true},

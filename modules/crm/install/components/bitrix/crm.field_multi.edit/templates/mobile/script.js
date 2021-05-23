@@ -16,7 +16,7 @@ if(typeof(BX.CrmFieldMultiEditor) === "undefined")
 		initialize: function(id, mnemonic, typeName, container, referenceNames, defaultTypeValue)
 		{
 			this.id = id ? id : "";
-			this.mnemonic = mnemonic ? mnemonic : ""; 
+			this.mnemonic = mnemonic ? mnemonic : "";
 			this.typeName = typeName ? typeName : "";
 			this.referenceNames = referenceNames ? referenceNames : {};
 			this.referenceSelectorNames = referenceNames ? BX.util.array_keys(referenceNames) : {};
@@ -82,6 +82,9 @@ if(typeof(BX.CrmFieldMultiEditor) === "undefined")
 											{
 												type: "text",
 												name: this.mnemonic + "[" + this.typeName + "]" + "[n" + (itemCount + 1) + "][VALUE]"
+											},
+											dataset: {
+												role: 'entity-input-value'
 											}
 										})
 									]

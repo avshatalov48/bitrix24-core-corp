@@ -93,6 +93,11 @@ BX.Crm.Widget.Custom.SaleTarget.UserSelector = (function(BX)
 							active: true
 						};
 
+						if (user.title === '&nbsp;')
+						{
+							user.title = '';
+						}
+
 						addCallback(user);
 						BX.SocNetLogDestination.closeDialog();
 					}

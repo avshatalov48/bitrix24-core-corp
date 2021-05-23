@@ -18,7 +18,6 @@ class Factory
 	{
 		switch($className)
 		{
-			//case '\Sale\Handlers\Delivery\YandextaxiHandler':
 			case '\\' . \Sale\Handlers\Delivery\YandextaxiHandler::class:
 				return new YandexTaxi();
 				break;

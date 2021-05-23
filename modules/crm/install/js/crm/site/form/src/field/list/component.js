@@ -92,7 +92,9 @@ const FieldListItem = {
 	mixins: [fieldListMixin],
 	props: ['field', 'item', 'itemSubComponent'],
 	template: `
-		<div class="b24-form-control-container b24-form-control-icon-after">
+		<div class="b24-form-control-container b24-form-control-icon-after"
+			@click.self="toggleSelector"
+		>
 			<input readonly="" type="text" class="b24-form-control"
 				:value="itemLabel"
 				:class="classes"

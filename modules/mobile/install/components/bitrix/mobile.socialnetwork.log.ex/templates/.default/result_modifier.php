@@ -7,16 +7,13 @@ $arResult['TOP_RATING_DATA'] = (
 	&& !empty($arResult["arLogTmpID"])
 		? \Bitrix\Socialnetwork\ComponentHelper::getLivefeedRatingData([
 			'topCount' => 10,
-			'logId' => array_unique($arResult["arLogTmpID"]),
+			'logId' => array_unique(array_merge($arResult["arLogTmpID"], $arResult["pinnedIdList"])),
 		])
 		: []
 );
 
 $arResult['TARGET'] = (isset($arParams['TARGET']) ? $arParams['TARGET'] : '');
-/*
-AddMessage2Log('reload: '.$arResult["RELOAD"]);
-AddMessage2Log('ajax_call: '.$arResult["AJAX_CALL"]);
-*/
+
 $arResult['PAGE_MODE'] = 'first';
 if ($arResult["RELOAD"])
 {

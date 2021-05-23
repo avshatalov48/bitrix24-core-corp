@@ -11,6 +11,8 @@ use Bitrix\Crm\Ml\FeatureBuilder;
 
 class Telephony extends Base
 {
+	const MAX_WORDS_TRANSCRIPTION = 100;
+
 	public function getFeatureMap()
 	{
 		return [
@@ -136,7 +138,7 @@ class Telephony extends Base
 
 				if(count($messages) > 0)
 				{
-					$result["CALLS_TRANSCRIPTION"] = join(" ", $messages);
+					$result["CALLS_TRANSCRIPTION"] = join(" ", array_slice($messages, 0, static::MAX_WORDS_TRANSCRIPTION));
 				}
 			}
 		}

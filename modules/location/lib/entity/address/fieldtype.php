@@ -6,10 +6,11 @@ use Bitrix\Location\Entity\Location;
 
 /**
  * Address Fields types
- * Class Type
+ *
+ * Class FieldType
  * @package Bitrix\Location\Entity\Address
  */
-class FieldType extends Location\Type
+final class FieldType extends Location\Type
 {
 	public const POSTAL_CODE = 50;
 

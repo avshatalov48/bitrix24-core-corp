@@ -55,9 +55,9 @@ export class Selector
 	{
 		this.tagSelector = new TagSelector({
 			dialogOptions: {
-				entities: this.entities
-			},
-			context: 'INTRANET_INVITATION'
+				entities: this.entities,
+				context: 'INTRANET_INVITATION'
+			}
 		});
 
 		if (Type.isDomNode(this.contentBlock))

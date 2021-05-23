@@ -33,7 +33,7 @@ $dbRes = UserTable::getList([
 		'!ID' => [$userId],
 		'IS_REAL_USER' => 'Y',
 	],
-	'limit' => 50,
+	'limit' => 20,
 ]);
 while ($user = $dbRes->fetch())
 {

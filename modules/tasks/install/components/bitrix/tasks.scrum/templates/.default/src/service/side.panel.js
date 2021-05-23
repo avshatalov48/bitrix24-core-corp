@@ -1,4 +1,3 @@
-import {Dom} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
 
 export class SidePanel extends EventEmitter
@@ -30,16 +29,6 @@ export class SidePanel extends EventEmitter
 			const sidePanel = sliderEvent.getSlider();
 			this.emit('onCloseSidePanel', sidePanel);
 		});
-
-		/* eslint-disable */
-		BX.addCustomEvent(window, 'onAfterPopupShow', (popupWindow) => {
-			const topSlider = this.sidePanelManager.getTopSlider();
-			const topSidePanelZIndex = (topSlider ? topSlider.getZindex() : 1000);
-			const popupWindowZIndex = popupWindow.getZindex();
-			const zIndex = (topSidePanelZIndex > popupWindowZIndex ? topSidePanelZIndex + 1 : popupWindowZIndex + 1);
-			Dom.style(popupWindow.getPopupContainer(), 'zIndex', zIndex);
-		});
-		/* eslint-enable */
 	}
 
 	isPreviousSidePanelExist(currentSidePanel): Boolean
@@ -49,12 +38,18 @@ export class SidePanel extends EventEmitter
 
 	reloadTopSidePanel()
 	{
-		this.sidePanelManager.getTopSlider().reload();
+		if (this.sidePanelManager.getTopSlider())
+		{
+			this.sidePanelManager.getTopSlider().reload();
+		}
 	}
 
 	closeTopSidePanel()
 	{
-		this.sidePanelManager.getTopSlider().close();
+		if (this.sidePanelManager.getTopSlider())
+		{
+			this.sidePanelManager.getTopSlider().close();
+		}
 	}
 
 	reloadPreviousSidePanel(currentSidePanel)

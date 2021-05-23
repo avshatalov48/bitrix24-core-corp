@@ -21,7 +21,7 @@ $template = $arResult['ITEM'];
 if ($arParams['SET_TITLE'] != 'N')
 {
 	$title = $template['TITLE'];
-	$helper->setTitle($title);
+	$helper->setTitle(htmlspecialcharsbx($title));
 	$helper->addBodyClass('no-paddings task-detail-page');
 }
 

@@ -107,6 +107,10 @@ class CCRMLeadRest
 
 		$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmLead::$sUFEntityID);
 		$arFields = array_merge($arFields, $CCrmUserType->PrepareExternalFormFields($arData, ','));
+		global $USER_FIELD_MANAGER;
+		$USER_FIELD_MANAGER->EditFormAddFields(CCrmLead::USER_FIELD_ENTITY_ID, $arFields, [
+			'FORM' => $arFields
+		]);
 		$arFields['FM'] = CCrmFieldMulti::PrepareFields($arData);
 
 		$DB->StartTransaction();

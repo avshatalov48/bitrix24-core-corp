@@ -1,15 +1,70 @@
-import {Dom, Tag, Text} from "main.core";
+import {Dom, Tag, Text, Type} from 'main.core';
+
+type Params = {
+	itemId: number|string,
+	attachedFilesCount: number,
+	checkListComplete: number,
+	checkListAll: number,
+	newCommentsCount: number
+}
 
 export class TaskCounts
 {
-	constructor(options)
+	constructor(params: Params)
 	{
-		this.itemId = (options.itemId ? options.itemId : Text.getRandom());
+		this.setItemId(params.itemId);
+		this.setAttachedFilesCount(params.attachedFilesCount);
+		this.setCheckListComplete(params.checkListComplete);
+		this.setCheckListAll(params.checkListAll);
+		this.setNewCommentsCount(params.newCommentsCount);
+	}
 
-		this.attachedFilesCount = (options.attachedFilesCount ? parseInt(options.attachedFilesCount, 10) : 0);
-		this.checkListComplete = (options.checkListComplete ? parseInt(options.checkListComplete, 10) : 0);
-		this.checkListAll = (options.checkListAll ? parseInt(options.checkListAll, 10) : 0);
-		this.newCommentsCount = (options.newCommentsCount ? parseInt(options.newCommentsCount, 10) : 0);
+	setItemId(itemId: number|string)
+	{
+		this.itemId = (
+			Type.isInteger(itemId) ? parseInt(itemId, 10) :
+				(Type.isString(itemId) && itemId) ? itemId : Text.getRandom()
+		);
+	}
+
+	setAttachedFilesCount(count: number)
+	{
+		this.attachedFilesCount = (Type.isInteger(count) ? parseInt(count, 10) : 0);
+	}
+
+	getAttachedFilesCount(): number
+	{
+		return this.attachedFilesCount;
+	}
+
+	setCheckListComplete(count: number)
+	{
+		this.checkListComplete = (Type.isInteger(count) ? parseInt(count, 10) : 0);
+	}
+
+	getCheckListComplete(): number
+	{
+		return this.checkListComplete;
+	}
+
+	setCheckListAll(count: number)
+	{
+		this.checkListAll = (Type.isInteger(count) ? parseInt(count, 10) : 0);
+	}
+
+	getCheckListAll(): number
+	{
+		return this.checkListAll;
+	}
+
+	setNewCommentsCount(count: number)
+	{
+		this.newCommentsCount = (Type.isInteger(count) ? parseInt(count, 10) : 0);
+	}
+
+	getNewCommentsCount(): number
+	{
+		return this.newCommentsCount;
 	}
 
 	renderIndicators(): ?HTMLElement|string

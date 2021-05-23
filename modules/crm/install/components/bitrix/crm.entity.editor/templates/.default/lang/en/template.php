@@ -14,6 +14,7 @@ $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC"] = "Enable deal total auto c
 $MESS["CRM_EDITOR_PAYMENT_NOT_PAID"] = "Unpaid";
 $MESS["CRM_EDITOR_PAYMENT_PAID"] = "Paid";
 $MESS["CRM_EDITOR_PHONE"] = "Phone";
+$MESS["CRM_EDITOR_PLACEMENT_CAUTION"] = "Abort external system?";
 $MESS["CRM_EDITOR_REQUISITES"] = "Details";
 $MESS["CRM_EDITOR_SAVE_ERROR_CONTENT"] = "Cannot save because an error occurred.";
 $MESS["CRM_EDITOR_SAVE_ERROR_TITLE"] = "Error";

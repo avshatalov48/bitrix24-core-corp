@@ -1,4 +1,4 @@
-import {BlockCounter as Block} 	from 'salescenter.component.stage-block';
+import {Block} 	from 'salescenter.component.stage-block';
 import {
 	SendModeEnabled as Enabled,
 	SendModeDisabled as Disabled
@@ -30,6 +30,13 @@ const Send = {
 					'salescenter-app-payment-by-sms-item'			:	true,
 					'salescenter-app-payment-by-sms-item-send'		:	true,
 				};
+			},
+
+			configForBlock()
+			{
+				return {
+					counter: ''
+				}
 			}
 		},
 	methods:
@@ -46,6 +53,7 @@ const Send = {
 	template: `
 		<stage-block-item
 			:class="classes"
+			:config="configForBlock"
 		>
 			<template v-slot:block-container>
 				<send-mode-enabled-block				v-if="allowed"

@@ -76,7 +76,7 @@ if ((int)$arEvent["SOURCE_ID"] > 0)
 		"USE_FOLLOW" => $arParams["USE_FOLLOW"],
 		"USE_FAVORITES" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] === "Y" ? "N" : "Y"),
 		"GROUP_READ_ONLY" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] === "Y" ? "Y" : "N"),
-		"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
+		"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
 		"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false),
 		"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && $arParams["SITE_TEMPLATE_ID"] <> '' ? $arParams["SITE_TEMPLATE_ID"] : "")
 	];

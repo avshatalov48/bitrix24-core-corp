@@ -319,7 +319,7 @@
 					let data = response.data();
 					if (data.call.END_DATE)
 					{
-						BX.postComponentEvent("CallEvents::inactive", [callId], "im.recent");
+						BX.postComponentEvent("CallEvents::inactive", [id], "im.recent");
 						return reject({
 							code: "ALREADY_FINISHED"
 						});

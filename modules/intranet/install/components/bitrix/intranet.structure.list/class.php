@@ -59,7 +59,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 		$tmpVal = COption::GetOptionString("socialnetwork", "user_property_searchable", false, SITE_ID);
 		if ($tmpVal)
 		{
-			$arPropertySearchable = unserialize($tmpVal);
+			$arPropertySearchable = unserialize($tmpVal,  ["allowed_classes" => false]);
 			if (!empty($arPropertySearchable))
 			{
 				foreach ($arPropertySearchable as $ufCode)

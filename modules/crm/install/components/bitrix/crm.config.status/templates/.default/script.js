@@ -1115,17 +1115,21 @@ BX.CrmConfigStatusClass = (function ()
 			for(var i in this.data[k])
 			{
 				newTotalNumberFields++;
-				var newSort = parseInt(this.data[k][i].SORT),
-					oldSort = parseInt(this.oldData[k][i].SORT),
-					newName = this.data[k][i].NAME.toLowerCase(),
-					oldName = this.oldData[k][i].NAME.toLowerCase(),
-					newColor = this.data[k][i].COLOR.toLowerCase(),
-					oldColor = this.oldData[k][i].COLOR.toLowerCase();
 
-				if((newSort !== oldSort) || (newName !== oldName) || (newColor !== oldColor))
+				if (this.oldData[k] && this.oldData[k][i])
 				{
-					changes = true;
-					break;
+					var newSort = parseInt(this.data[k][i].SORT),
+						oldSort = parseInt(this.oldData[k][i].SORT),
+						newName = this.data[k][i].NAME.toLowerCase(),
+						oldName = this.oldData[k][i].NAME.toLowerCase(),
+						newColor = this.data[k][i].COLOR.toLowerCase(),
+						oldColor = this.oldData[k][i].COLOR.toLowerCase();
+
+					if ((newSort !== oldSort) || (newName !== oldName) || (newColor !== oldColor))
+					{
+						changes = true;
+						break;
+					}
 				}
 			}
 		}

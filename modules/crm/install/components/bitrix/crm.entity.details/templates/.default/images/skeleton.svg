@@ -1,0 +1,74 @@
+<svg version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+    <svg>
+        <g fill="#FFF">
+            <rect width="100%" height="57"/>
+            <rect width="100%" height="45" y="60"/>
+            <rect width="100%" height="61" y="108"/>
+            <rect width="100%" height="42" y="173"/>
+            <rect width="100%" height="228" y="218"/>
+        </g>
+        <g transform="translate(9 10)">
+            <rect width="152" height="36" x=".5" y=".5" fill="#3BC8F5" stroke="#3BC8F5" rx="2"/>
+            <rect width="141" height="36" x="163.5" y=".5" stroke="#C6CDD3" fill="#fff" rx="2"/>
+            <rect width="36" height="36" x="100%" y=".5" stroke="#C6CDD3" fill="#fff" rx="2" transform="translate(-60, 0)"/>
+
+        </g>
+
+        <rect width="311" height="36" x="90.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+        <rect width="114" height="36" x="504.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+        <rect width="114" height="36" x="645.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+        <rect width="114" height="36" x="786.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+        <rect width="114" height="36" x="1110.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+        <rect width="40" height="36" x="412.5" y="120.5" fill="#FFF" stroke="#C6CDD3" rx="2"/>
+
+        <rect width="13" height="13" x=".5" y=".5" fill="#FFF" stroke="#A8ADB4" rx="2" transform="translate(953 131)"/>
+    </svg>
+
+    <svg>
+        <g id="content">
+            <path fill="#FFF" transform="translate(9 10)" d="M18,14.0058587 C18,12.8980535 18.8987073,12 19.9985999,12 L134.0014,12 C135.105196,12 136,12.8970601 136,14.0058587 L136,23.9941413 C136,25.1019465 135.101293,26 134.0014,26 L19.9985999,26 C18.8948037,26 18,25.1029399 18,23.9941413 L18,14.0058587 Z" opacity=".2"/>
+            <rect width="100" transform="translate(9 10)" height="14" x="185" y="12" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="14" height="14" y="12" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-40, 10)"/>
+            <rect width="13" height="13" x="20" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="13" height="13" x="20" y="236" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="13" height="13" x="203" y="236" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="13" height="13" x="20" y="132" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="13" height="13" x="47" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="121" height="13" x="90" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="121" height="13" x="49" y="236" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="121" height="13" x="232" y="236" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="215" height="13" x="100%" y="296" fill="#9EA6AD" opacity=".2" rx="2" transform="translate(-368, 0)"/>
+            <rect width="41" height="13" y="296" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-60, 0)"/>
+            <rect width="215" height="13" x="100%" y="315" fill="#9EA6AD" opacity=".2" rx="2" transform="translate(-368, 0)"/>
+            <rect width="41" height="13" y="315" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-60, 0)"/>
+            <rect width="215" height="13" x="100%" y="334" fill="#9EA6AD" opacity=".2" rx="2" transform="translate(-368, 0)"/>
+            <rect width="41" height="13" y="334" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-60, 0)"/>
+            <rect width="215" height="13" x="100%" y="353" fill="#9EA6AD" opacity=".2" rx="2" transform="translate(-368, 0)"/>
+            <rect width="41" height="13" y="353" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-60, 0)"/>
+            <rect width="159" height="16" y="395" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-368, 0)"/>
+            <rect width="48" height="16" y="395" fill="#9EA6AD" opacity=".2" rx="2" x="100%" transform="translate(-66, 0)"/>
+            <rect width="121" height="13" x="20" y="188" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="71" height="13" x="504" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="71" height="13" x="645" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="71" height="13" x="786" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="71" height="13" x="1110" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+            <rect width="71" height="13" x="953" y="76" fill="#9EA6AD" opacity=".2" rx="2"/>
+        </g>
+    </svg>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#mask)" height="1200"/>
+
+    <mask id="mask" fill="white">
+        <use xlink:href="#content"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#9EA6AD" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#9EA6AD" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#9EA6AD" stop-opacity="1" offset="50%"/>
+        <stop stop-color="#9EA6AD" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+</svg>

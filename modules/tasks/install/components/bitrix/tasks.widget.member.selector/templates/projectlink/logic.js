@@ -25,6 +25,7 @@ BX.namespace('Tasks.Component');
 			{
 				this.bindDelegateControl('deselect', 'click', this.onDeSelect.bind(this));
 				this.bindDelegateControl('open-form', 'click', this.onOpenForm.bind(this));
+				this.bindDelegateControl('item-link', 'click', this.onProjectClick.bind(this));
 			},
 
 			onDeSelect: function()
@@ -42,7 +43,9 @@ BX.namespace('Tasks.Component');
 					BX.addClass(this.control('open-form'), 'invisible');
 
 					this.control('item-link').innerHTML = BX.util.htmlspecialchars(text);
-					this.control('item-link').setAttribute('href', this.option('path').SG.toString().replace('{{ID}}', id));
+					this.control('item-link').setAttribute('href', this.getProjectLink(id));
+
+					this.option('groupId', id);
 				}
 				else
 				{
@@ -56,6 +59,24 @@ BX.namespace('Tasks.Component');
 			onOpenForm: function()
 			{
 				this.getSelector().open();
+			},
+
+			onProjectClick: function()
+			{
+				BX.PreventDefault();
+				if (BX.SidePanel && typeof(BXDesktopSystem) != "undefined")
+				{
+					window.open(this.getProjectLink(this.option('groupId')))
+				}
+				else
+				{
+					window.top.location.href = this.getProjectLink(this.option('groupId'));
+				}
+			},
+
+			getProjectLink: function(groupId)
+			{
+				return this.option('path').SG.toString().replace('{{ID}}', groupId);
 			},
 
 			saveId: function(groupId)

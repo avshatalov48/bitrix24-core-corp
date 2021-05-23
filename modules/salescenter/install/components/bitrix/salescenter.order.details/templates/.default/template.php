@@ -2,8 +2,9 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
-use Bitrix\Main\Localization\Loc,
-	Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Text\HtmlFilter;
 
 Extension::load("ui.fonts.ruble");
 
@@ -129,7 +130,7 @@ else
 						<?php foreach ($arResult['SHIPMENT'] as $shipment): ?>
 							<tr class="order-total-delivery-row">
 								<td class="order-total-item">
-									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= $shipment['DELIVERY_NAME'] ?>)
+									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= HtmlFilter::encode($shipment['DELIVERY_NAME']) ?>)
 								</td>
 								<?
 								$deliveryText = Loc::getMessage('SOD_FREE');

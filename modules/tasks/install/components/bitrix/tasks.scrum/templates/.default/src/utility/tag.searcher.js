@@ -1,18 +1,9 @@
 import {Dialog} from 'ui.entity-selector';
-import {Loc, Tag, Text, Type} from 'main.core';
+import {Loc, Tag, Text} from 'main.core';
 import {Input} from './input';
 import {EventEmitter} from 'main.core.events';
 
-type EpicInfoType = {
-	color: string
-}
-
-type EpicType = {
-	id: number,
-	name: string,
-	description?: string,
-	info?: EpicInfoType
-}
+import type {EpicType} from '../item/item';
 
 export class TagSearcher extends EventEmitter
 {
@@ -151,13 +142,13 @@ export class TagSearcher extends EventEmitter
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
 					const selectedItem = event.getData().item;
-					const tag = selectedItem.title;
+					const tag = selectedItem.getTitle();
 					this.emit('attachTagToTask', tag);
 				},
 				'Item:onDeselect': (event) => {
 					choiceWasMade = true;
 					const deselectedItem = event.getData().item;
-					const tag = deselectedItem.title;
+					const tag = deselectedItem.getTitle();
 					this.emit('deAttachTagToTask', tag);
 				},
 			},
@@ -165,9 +156,12 @@ export class TagSearcher extends EventEmitter
 				events: {
 					onInput: (event) => {
 						const selector = event.getData().selector;
-						const dialog = selector.getDialog();
-						const label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
-						label.textContent = Text.encode(selector.getTextBoxValue());
+						if (selector)
+						{
+							const dialog = selector.getDialog();
+							const label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
+							label.textContent = Text.encode(selector.getTextBoxValue());
+						}
 					},
 				}
 			},
@@ -224,7 +218,7 @@ export class TagSearcher extends EventEmitter
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
 					const selectedItem = event.getData().item;
-					const epicId = selectedItem.id;
+					const epicId = selectedItem.getId();
 					this.emit('updateItemEpic', epicId);
 				},
 				'Item:onDeselect': (event) => {
@@ -275,7 +269,7 @@ export class TagSearcher extends EventEmitter
 				events: {
 					'Item:onSelect': (event) => {
 						const selectedItem = event.getData().item;
-						const selectedHashTag = '#' + selectedItem.title;
+						const selectedHashTag = '#' + selectedItem.getTitle();
 						const hashTags = TagSearcher.getHashTagsFromText(input.value);
 						const enteredHashTag = (hashTags.length > 0 ? hashTags.pop().trim() : '');
 						input.value = input.value.replace(
@@ -329,12 +323,12 @@ export class TagSearcher extends EventEmitter
 				events: {
 					'Item:onSelect': (event) => {
 						const selectedItem = event.getData().item;
-						const selectedHashEpic = '@' + selectedItem.title;
+						const selectedHashEpic = '@' + selectedItem.getTitle();
 						input.value = input.value.replace(new RegExp('(?:^|\\s)(?:@)([^\\s]*)','g'),'');
 						input.value = input.value + ' ' + selectedHashEpic
 						input.focus();
 						selectedItem.deselect();
-						inputObject.setEpicId(selectedItem.id);
+						inputObject.setEpicId(selectedItem.getId());
 					}
 				}
 			});

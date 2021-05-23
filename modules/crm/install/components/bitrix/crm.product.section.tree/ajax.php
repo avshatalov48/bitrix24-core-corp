@@ -52,12 +52,6 @@ class CrmProductSectionTreeController
 		}
 	}
 
-	public function end()
-	{
-		include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
-		exit;
-	}
-
 	protected function getUser()
 	{
 		global $USER;
@@ -77,9 +71,7 @@ class CrmProductSectionTreeController
 		while(ob_end_clean());
 
 		header('Content-Type:application/json; charset=UTF-8');
-		echo Json::encode($response);
-
-		$this->end();
+		\CMain::FinalActions(Json::encode($response));
 	}
 
 	protected function sendJsonAccessDeniedResponse($message = '')

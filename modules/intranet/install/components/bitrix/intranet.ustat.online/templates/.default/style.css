@@ -23,7 +23,7 @@
 	color: #fff;
 	text-transform: uppercase;
 	background-color: #ff5752;
-	z-index: 1;
+	z-index: 3;
 }
 
 .intranet-ustat-online-counter {
@@ -33,6 +33,18 @@
 	margin-right: 10px;
 	width: 52px;
 	height: 52px;
+}
+
+.intranet-ustat-online-counter .ui-graph-circle-wrapper {
+	position: relative;
+	width: 46px;
+	height: 46px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	box-shadow: 0 0 0 3px #47e4c2;
+	overflow: hidden;
+	box-sizing: border-box;
+	z-index: 2;
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-number {
@@ -50,27 +62,22 @@
 	stroke-width: 3px;
 }
 
-.intranet-ustat-online-counter .ui-graph-circle-waves-wrapper {
+.intranet-ustat-online-counter .ui-graph-circle-waves-wrapper,
+.intranet-ustat-online-counter .ui-graph-circle-canvas {
+	position: absolute;
 	top: 13px;
 	left: 13px;
 	width: 42px;
 	height: 42px;
 }
 
+.intranet-ustat-online-counter .ui-graph-circle-canvas {
+	left: 0;
+}
+
 .intranet-ustat-online-counter .ui-graph-circle-counter .ui-graph-circle-number {
 	margin-top: 0;
 }
-
-/*.intranet-ustat-online-counter .ui-graph-circle {*/
-/*    font-size: 56px;*/
-/*    transform: perspective(1px) scale3d(.28, .28, 1) translateZ(0);*/
-/*    -webkit-font-smoothing: subpixel-antialiased;*/
-/*    -webkit-backface-visibility: hidden;*/
-/*    backface-visibility: hidden;*/
-/*    -webkit-perspective: 1000;*/
-/*    transform-style: preserve-3d;*/
-/*    will-change: transform;*/
-/*}*/
 
 .intranet-ustat-online-icon-box {
 	display: flex;

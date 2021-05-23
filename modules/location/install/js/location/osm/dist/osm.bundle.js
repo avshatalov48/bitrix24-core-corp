@@ -3,20 +3,34 @@ this.BX.Location = this.BX.Location || {};
 (function (exports,main_core,location_core) {
 	'use strict';
 
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
 	var _requester = new WeakMap();
+
+	var _biasBoundRadius = new WeakMap();
+
+	var _getBoundsFromLatLng = new WeakSet();
 
 	var AutocompleteService = /*#__PURE__*/function (_AutocompleteServiceB) {
 	  babelHelpers.inherits(AutocompleteService, _AutocompleteServiceB);
 
+	  /** {number} Radius in kilometers */
 	  function AutocompleteService(params) {
 	    var _this;
 
 	    babelHelpers.classCallCheck(this, AutocompleteService);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteService).call(this));
 
+	    _getBoundsFromLatLng.add(babelHelpers.assertThisInitialized(_this));
+
 	    _requester.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
+	    });
+
+	    _biasBoundRadius.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: 50
 	    });
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _requester, params.requester);
@@ -26,14 +40,32 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.createClass(AutocompleteService, [{
 	    key: "autocomplete",
 	    value: function autocomplete(text, params) {
-	      return babelHelpers.classPrivateFieldGet(this, _requester).request({
+	      var queryParams = {
 	        query: text,
 	        params: params
-	      });
+	      };
+
+	      if (params.userCoordinates) {
+	        queryParams.viewbox = _classPrivateMethodGet(this, _getBoundsFromLatLng, _getBoundsFromLatLng2).call(this, params.userCoordinates[0], params.userCoordinates[1]);
+	      }
+
+	      return babelHelpers.classPrivateFieldGet(this, _requester).request(queryParams);
 	    }
 	  }]);
 	  return AutocompleteService;
 	}(location_core.AutocompleteServiceBase);
+
+	var _getBoundsFromLatLng2 = function _getBoundsFromLatLng2(lat, lng) {
+	  var latChange = babelHelpers.classPrivateFieldGet(this, _biasBoundRadius) / 111.2;
+	  var lonChange = Math.abs(Math.cos(lat * (Math.PI / 180)));
+	  var bounds = {
+	    latA: lat - latChange,
+	    lonA: lng - lonChange,
+	    latB: lat + latChange,
+	    lonB: lng + lonChange
+	  };
+	  return "".concat(bounds.lonA, ",").concat(bounds.latA, ",").concat(bounds.lonB, ",").concat(bounds.latB);
+	};
 
 	/* @preserve
 	 * Leaflet 1.6.0+Detached: 0c81bdf904d864fd12a286e3d1979f47aba17991.0c81bdf, a JS library for interactive maps. http://leafletjs.com
@@ -13205,7 +13237,7 @@ this.BX.Location = this.BX.Location || {};
 	  return TokenContainer;
 	}();
 
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _tokenContainer = new WeakMap();
 
@@ -13286,7 +13318,7 @@ this.BX.Location = this.BX.Location || {};
 	        }
 
 	        if (response.status === 401 && !isUnAuth) {
-	          _classPrivateMethodGet(_this2, _processUnauthorizedResponse, _processUnauthorizedResponse2).call(_this2, url, img, done);
+	          _classPrivateMethodGet$1(_this2, _processUnauthorizedResponse, _processUnauthorizedResponse2).call(_this2, url, img, done);
 
 	          return null;
 	        }
@@ -13362,7 +13394,7 @@ this.BX.Location = this.BX.Location || {};
 
 	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
 
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * Class for the autocomplete locations and addresses inputs
 	 */
@@ -13401,6 +13433,8 @@ this.BX.Location = this.BX.Location || {};
 
 	var _locationRepository = new WeakMap();
 
+	var _isResizeInvalidated = new WeakMap();
+
 	var _adjustZoom = new WeakSet();
 
 	var _onMapClick = new WeakSet();
@@ -13409,9 +13443,13 @@ this.BX.Location = this.BX.Location || {};
 
 	var _createTimer = new WeakSet();
 
+	var _getReverseZoom = new WeakSet();
+
 	var _emitOnLocationChangedEvent = new WeakSet();
 
 	var _onMarkerUpdatePosition = new WeakSet();
+
+	var _invalidateMapSize = new WeakSet();
 
 	var MapService = /*#__PURE__*/function (_MapBase) {
 	  babelHelpers.inherits(MapService, _MapBase);
@@ -13437,9 +13475,13 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classCallCheck(this, MapService);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MapService).call(this, props));
 
+	    _invalidateMapSize.add(babelHelpers.assertThisInitialized(_this));
+
 	    _onMarkerUpdatePosition.add(babelHelpers.assertThisInitialized(_this));
 
 	    _emitOnLocationChangedEvent.add(babelHelpers.assertThisInitialized(_this));
+
+	    _getReverseZoom.add(babelHelpers.assertThisInitialized(_this));
 
 	    _createTimer.add(babelHelpers.assertThisInitialized(_this));
 
@@ -13534,6 +13576,11 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
+	    _isResizeInvalidated.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: false
+	    });
+
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId, props.languageId);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId, props.sourceLanguageId);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _geocodingService, props.geocodingService);
@@ -13567,7 +13614,12 @@ this.BX.Location = this.BX.Location || {};
 	          resolve();
 	        });
 	        babelHelpers.classPrivateFieldGet(_this2, _map).on('click', function (e) {
-	          _classPrivateMethodGet$1(_this2, _onMapClick, _onMapClick2).call(_this2, e.latlng.lat, e.latlng.lng);
+	          _classPrivateMethodGet$2(_this2, _onMapClick, _onMapClick2).call(_this2, e.latlng.lat, e.latlng.lng);
+	        });
+	        window.addEventListener('resize', function (event) {
+	          babelHelpers.classPrivateFieldSet(_this2, _isResizeInvalidated, true);
+
+	          _classPrivateMethodGet$2(_this2, _invalidateMapSize, _invalidateMapSize2).call(_this2);
 	        });
 	        babelHelpers.classPrivateFieldSet(_this2, _marker, babelHelpers.classPrivateFieldGet(_this2, _markerFactoryMethod).call(_this2, [babelHelpers.classPrivateFieldGet(_this2, _location).latitude, babelHelpers.classPrivateFieldGet(_this2, _location).longitude], {
 	          draggable: babelHelpers.classPrivateFieldGet(_this2, _mode) === location_core.ControlMode.edit,
@@ -13575,7 +13627,7 @@ this.BX.Location = this.BX.Location || {};
 	        }));
 	        babelHelpers.classPrivateFieldGet(_this2, _marker).addTo(babelHelpers.classPrivateFieldGet(_this2, _map));
 	        babelHelpers.classPrivateFieldGet(_this2, _marker).on('move', function (e) {
-	          _classPrivateMethodGet$1(_this2, _onMarkerUpdatePosition, _onMarkerUpdatePosition2).call(_this2, e.latlng.lat, e.latlng.lng);
+	          _classPrivateMethodGet$2(_this2, _onMarkerUpdatePosition, _onMarkerUpdatePosition2).call(_this2, e.latlng.lat, e.latlng.lng);
 	        });
 	        babelHelpers.classPrivateFieldGet(_this2, _map).setView([babelHelpers.classPrivateFieldGet(_this2, _location).latitude, babelHelpers.classPrivateFieldGet(_this2, _location).longitude], _classStaticPrivateMethodGet(MapService, MapService, _chooseZoomByLocation).call(MapService, babelHelpers.classPrivateFieldGet(_this2, _location)));
 	        var tile = babelHelpers.classPrivateFieldGet(_this2, _tileLayerFactoryMethod).call();
@@ -13591,6 +13643,15 @@ this.BX.Location = this.BX.Location || {};
 	        attribution.addAttribution(babelHelpers.classPrivateFieldGet(_this2, _attribution));
 	        babelHelpers.classPrivateFieldGet(_this2, _map).addControl(attribution);
 	      });
+	    }
+	  }, {
+	    key: "onMapShow",
+	    value: function onMapShow() {
+	      if (babelHelpers.classPrivateFieldGet(this, _isResizeInvalidated)) {
+	        babelHelpers.classPrivateFieldSet(this, _isResizeInvalidated, false);
+
+	        _classPrivateMethodGet$2(this, _invalidateMapSize, _invalidateMapSize2).call(this);
+	      }
 	    }
 	  }, {
 	    key: "destroy",
@@ -13663,7 +13724,7 @@ this.BX.Location = this.BX.Location || {};
 	        babelHelpers.classPrivateFieldGet(this, _marker).remove();
 	      }
 
-	      _classPrivateMethodGet$1(this, _adjustZoom, _adjustZoom2).call(this);
+	      _classPrivateMethodGet$2(this, _adjustZoom, _adjustZoom2).call(this);
 	    },
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _location);
@@ -13711,7 +13772,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldGet(this, _marker).setLatLng([lat, lng]);
 
-	    _classPrivateMethodGet$1(this, _createTimer, _createTimer2).call(this, lat, lng);
+	    _classPrivateMethodGet$2(this, _createTimer, _createTimer2).call(this, lat, lng);
 	  }
 	};
 
@@ -13740,10 +13801,14 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classPrivateFieldSet(_this3, _timerId, null);
 	    babelHelpers.classPrivateFieldGet(_this3, _map).panTo([lat, lng]);
 	    var point = new location_core.Point(lat, lng);
-	    babelHelpers.classPrivateFieldGet(_this3, _geocodingService).reverse(point, babelHelpers.classPrivateFieldGet(_this3, _zoom)).then(_classPrivateMethodGet$1(_this3, _obtainLocationDetails, _obtainLocationDetails2).bind(_this3)).then(_classPrivateMethodGet$1(_this3, _emitOnLocationChangedEvent, _emitOnLocationChangedEvent2).bind(_this3)).catch(function (response) {
+	    babelHelpers.classPrivateFieldGet(_this3, _geocodingService).reverse(point, _classPrivateMethodGet$2(_this3, _getReverseZoom, _getReverseZoom2).call(_this3)).then(_classPrivateMethodGet$2(_this3, _obtainLocationDetails, _obtainLocationDetails2).bind(_this3)).then(_classPrivateMethodGet$2(_this3, _emitOnLocationChangedEvent, _emitOnLocationChangedEvent2).bind(_this3)).catch(function (response) {
 	      location_core.ErrorPublisher.getInstance().notify(response.errors);
 	    });
 	  }, babelHelpers.classPrivateFieldGet(this, _changeDelay)));
+	};
+
+	var _getReverseZoom2 = function _getReverseZoom2() {
+	  return babelHelpers.classPrivateFieldGet(this, _zoom) >= 15 ? 18 : babelHelpers.classPrivateFieldGet(this, _zoom);
 	};
 
 	var _emitOnLocationChangedEvent2 = function _emitOnLocationChangedEvent2(location) {
@@ -13756,8 +13821,16 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onMarkerUpdatePosition2 = function _onMarkerUpdatePosition2(lat, lng) {
 	  if (!babelHelpers.classPrivateFieldGet(this, _isUpdating) && babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit) {
-	    _classPrivateMethodGet$1(this, _createTimer, _createTimer2).call(this, lat, lng);
+	    _classPrivateMethodGet$2(this, _createTimer, _createTimer2).call(this, lat, lng);
 	  }
+	};
+
+	var _invalidateMapSize2 = function _invalidateMapSize2() {
+	  var _this4 = this;
+
+	  setTimeout(function () {
+	    babelHelpers.classPrivateFieldGet(_this4, _map).invalidateSize();
+	  }, 10);
 	};
 
 	var _searchRequester = new WeakMap();
@@ -13789,8 +13862,8 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  babelHelpers.createClass(GeocodingService, [{
-	    key: "geocode",
-	    value: function geocode(addressString) {
+	    key: "geocodeConcrete",
+	    value: function geocodeConcrete(addressString) {
 	      return babelHelpers.classPrivateFieldGet(this, _searchRequester).request({
 	        query: addressString
 	      });
@@ -13896,8 +13969,13 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  babelHelpers.createClass(OSM, [{
+	    key: "sourceCode",
+	    get: function get() {
+	      return _classStaticPrivateFieldSpecGet$1(OSM, OSM, _code);
+	    } // todo: move
+
+	  }, {
 	    key: "map",
-	    // todo: move
 	    get: function get() {
 	      return this.mapService;
 	    }
@@ -13921,11 +13999,6 @@ this.BX.Location = this.BX.Location || {};
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _languageId$1);
 	    }
-	  }], [{
-	    key: "sourceCode",
-	    get: function get() {
-	      return _classStaticPrivateFieldSpecGet$1(OSM, OSM, _code);
-	    }
 	  }]);
 	  return OSM;
 	}(location_core.BaseSource);
@@ -13935,7 +14008,7 @@ this.BX.Location = this.BX.Location || {};
 	  value: 'OSM'
 	};
 
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _processUnauthorizedResponse$1 = new WeakSet();
 
@@ -13973,7 +14046,7 @@ this.BX.Location = this.BX.Location || {};
 	        }
 
 	        if (response.status === 401 && !params.isUnAuth) {
-	          return _classPrivateMethodGet$2(_this, _processUnauthorizedResponse$1, _processUnauthorizedResponse2$1).call(_this, params);
+	          return _classPrivateMethodGet$3(_this, _processUnauthorizedResponse$1, _processUnauthorizedResponse2$1).call(_this, params);
 	        }
 
 	        console.error("Response status: ".concat(response.status));
@@ -14003,7 +14076,11 @@ this.BX.Location = this.BX.Location || {};
 
 	        if (responseJson.length > 0) {
 	          responseJson.forEach(function (item) {
-	            result.push(_this3.createLocation(item));
+	            var location = _this3.createLocation(item);
+
+	            if (location) {
+	              result.push(location);
+	            }
 	          });
 	        }
 	      } else if (babelHelpers.typeof(responseJson) === 'object') {
@@ -14015,19 +14092,67 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "createLocation",
 	    value: function createLocation(responseItem) {
+	      var externalId = this.createExternalId(responseItem.osm_type, responseItem.osm_id);
+
+	      if (!externalId) {
+	        return null;
+	      }
+
 	      return new location_core.Location({
-	        externalId: this.createExternalId(responseItem.osm_type, responseItem.osm_id),
+	        externalId: externalId,
 	        latitude: responseItem.lat,
 	        longitude: responseItem.lon,
-	        type: location_core.LocationType.UNKNOWN,
+	        type: this.convertLocationType(responseItem.type),
 	        name: responseItem.display_name,
 	        languageId: this.languageId,
 	        sourceCode: 'OSM'
 	      });
+	    } // We need this at least for defining the right zoom on map
+
+	  }, {
+	    key: "convertLocationType",
+	    value: function convertLocationType(type) {
+	      var typeMap = {
+	        country: location_core.LocationType.COUNTRY,
+	        municipality: location_core.LocationType.LOCALITY,
+	        city: location_core.LocationType.LOCALITY,
+	        town: location_core.LocationType.LOCALITY,
+	        village: location_core.LocationType.LOCALITY,
+	        postal_town: location_core.LocationType.LOCALITY,
+	        road: location_core.LocationType.STREET,
+	        street_address: location_core.LocationType.ADDRESS_LINE_1,
+	        county: location_core.LocationType.ADM_LEVEL_4,
+	        state_district: location_core.LocationType.ADM_LEVEL_3,
+	        state: location_core.LocationType.ADM_LEVEL_2,
+	        region: location_core.LocationType.ADM_LEVEL_1,
+	        floor: location_core.LocationType.FLOOR,
+	        postal_code: location_core.AddressType.POSTAL_CODE,
+	        room: location_core.LocationType.ROOM,
+	        sublocality: location_core.LocationType.SUB_LOCALITY,
+	        city_district: location_core.LocationType.SUB_LOCALITY_LEVEL_1,
+	        district: location_core.LocationType.SUB_LOCALITY_LEVEL_1,
+	        borough: location_core.LocationType.SUB_LOCALITY_LEVEL_1,
+	        suburb: location_core.LocationType.SUB_LOCALITY_LEVEL_1,
+	        subdivision: location_core.LocationType.SUB_LOCALITY_LEVEL_1,
+	        house_number: location_core.LocationType.BUILDING,
+	        house_name: location_core.LocationType.BUILDING,
+	        building: location_core.LocationType.BUILDING
+	      };
+	      var result = location_core.LocationType.UNKNOWN;
+
+	      if (typeof typeMap[type] !== 'undefined') {
+	        result = typeMap[type];
+	      }
+
+	      return result;
 	    }
 	  }, {
 	    key: "createExternalId",
 	    value: function createExternalId(osmType, osmId) {
+	      if (!osmType || !osmId) {
+	        return null;
+	      }
+
 	      return osmType.substr(0, 1).toLocaleUpperCase() + osmId;
 	    }
 	  }]);
@@ -14055,7 +14180,13 @@ this.BX.Location = this.BX.Location || {};
 	    key: "createUrl",
 	    value: function createUrl(params) {
 	      var limit = 5;
-	      return "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.search\n\t\t\t&params[q]=").concat(params.query, "\n\t\t\t&params[format]=json\n\t\t\t&params[limit]=").concat(limit, "\n\t\t\t&params[accept-language]=").concat(this.languageId);
+	      var result = "".concat(this.serviceUrl, "/?\n\t\t\taction=osmgateway.location.search\n\t\t\t&params[q]=").concat(encodeURIComponent(params.query), "\n\t\t\t&params[format]=json\n\t\t\t&params[limit]=").concat(limit, "\n\t\t\t&params[accept-language]=").concat(this.languageId);
+
+	      if (params.viewbox) {
+	        result += "&params[viewbox]=".concat(params.viewbox);
+	      }
+
+	      return result;
 	    }
 	  }]);
 	  return SearchRequester;

@@ -85,7 +85,8 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 			urls: {
 				group: '<?=CUtil::JSEscape(!empty($arResult["Urls"]["General"]) ? $arResult["Urls"]["General"] : $arResult["Urls"]["View"])?>',
 				groupsList: '<?=CUtil::JSEscape($arResult["Urls"]["GroupsList"])?>'
-			}
+			},
+			pageId: '<?= $arParams['PAGE_ID'] ?>'
 		});
 	});
 </script><?
@@ -180,12 +181,12 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 				{
 					if (
 						!$val
-						|| $key == "content_search")
+						|| $key === "content_search")
 					{
 						continue;
 					}
 
-					if ($key == 'general')
+					if ($key === 'general')
 					{
 						$menuItems[] = array(
 							"TEXT" => GetMessage("SONET_UM_GENERAL"),
@@ -196,10 +197,20 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 					}
 					else
 					{
+						$isDisabled = false;
+						if (
+							$arResult["Group"]["PROJECT"] === 'Y'
+							&& !in_array($key, ['general', 'tasks', 'calendar', 'files'])
+						)
+						{
+							$isDisabled = true;
+						}
+
 						$item = array(
 							"TEXT" => $arResult["Title"][$key],
 							"ID" => $key,
 							"IS_ACTIVE" => ($arParams["PAGE_ID"] == "group_".$key),
+							"IS_DISABLED" => $isDisabled
 						);
 
 						if (
@@ -214,7 +225,57 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 							$item["URL"] = $arResult["Urls"][$key];
 						}
 
+						if (
+							$key !== 'tasks'
+							|| $arResult["Group"]["PROJECT"] !== 'Y'
+						)
+						{
+							$menuItems[] = $item;
+							continue;
+						}
+
+						// tasks by role
+						$isActive = ($arParams["PAGE_ID"] === "group_".$key);
+						$fState = filter_input(INPUT_GET, 'F_STATE');
+
+						$item['URL'] =  $arResult["Urls"][$key] . '?F_CANCEL=Y&F_STATE=sR';
+						$item['IS_ACTIVE'] = $isActive && (!$fState || $fState === 'sR');
+						$item['CLASS'] = 'tasks_role_link';
+						$item['ID'] = 'view_role_view_all';
 						$menuItems[] = $item;
+
+						$menuItems[] = [
+							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_DO"),
+							'URL' => $arResult["Urls"][$key] . '?F_CANCEL=Y&F_STATE=sR400&clear_filter=Y',
+							'ID' => 'view_role_responsible',
+							'CLASS' => 'tasks_role_link',
+							'IS_ACTIVE' => $isActive && $fState === 'sR400',
+							'PARENT_ITEM_ID' => 'view_role_view_all',
+						];
+						$menuItems[] = [
+							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_ACCOMPLICES"),
+							'URL' => $arResult["Urls"][$key] . '?F_CANCEL=Y&F_STATE=sR800&clear_filter=Y',
+							'ID' => 'view_role_accomplice',
+							'CLASS' => 'tasks_role_link',
+							'IS_ACTIVE' => $isActive && $fState === 'sR800',
+							'PARENT_ITEM_ID' => 'view_role_view_all',
+						];
+						$menuItems[] = [
+							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_ORIGINATOR"),
+							'URL' => $arResult["Urls"][$key] . '?F_CANCEL=Y&F_STATE=sRg00&clear_filter=Y',
+							'ID' => 'view_role_originator',
+							'CLASS' => 'tasks_role_link',
+							'IS_ACTIVE' => $isActive && $fState === 'sRg00',
+							'PARENT_ITEM_ID' => 'view_role_view_all',
+						];
+						$menuItems[] = [
+							'TEXT' => GetMessage("SONET_TASKS_PRESET_I_AUDITOR"),
+							'URL' => $arResult["Urls"][$key] . '?F_CANCEL=Y&F_STATE=sRc00&clear_filter=Y',
+							'ID' => 'view_role_auditor',
+							'CLASS' => 'tasks_role_link',
+							'IS_ACTIVE' => $isActive && $fState === 'sRc00',
+							'PARENT_ITEM_ID' => 'view_role_view_all',
+						];
 					}
 				}
 

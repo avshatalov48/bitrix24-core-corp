@@ -7,11 +7,18 @@ export default class SearchRequester extends BaseRequester
 	{
 		const limit = 5;
 
-		return `${this.serviceUrl}/?
+		let result = `${this.serviceUrl}/?
 			action=osmgateway.location.search
-			&params[q]=${params.query}
+			&params[q]=${encodeURIComponent(params.query)}
 			&params[format]=json
 			&params[limit]=${limit}
 			&params[accept-language]=${this.languageId}`;
+
+		if(params.viewbox)
+		{
+			result += `&params[viewbox]=${params.viewbox}`;
+		}
+
+		return result;
 	}
 }

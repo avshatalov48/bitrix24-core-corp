@@ -301,14 +301,17 @@ class OrderBuilderCrm extends OrderBuilder
 	}
 	protected function setTradeBindingCollection()
 	{
-		$platform = $this->formData['TRADING_PLATFORM'];
+		$platformId = (int)$this->formData['TRADING_PLATFORM'];
 		$tradeCollection = $this->order->getTradeBindingCollection();
 		$tradeCollection->clearCollection();
 
-		if($platform <> '')
+		if ($platformId)
 		{
-			$instance = TradingPlatform\Landing\Landing::getInstanceByCode($platform);
-			$tradeCollection->createItem($instance);
+			$platform = TradingPlatform\Manager::getObjectById($platformId);
+			if ($platform)
+			{
+				$tradeCollection->createItem($platform);
+			}
 		}
 
 		return $this;

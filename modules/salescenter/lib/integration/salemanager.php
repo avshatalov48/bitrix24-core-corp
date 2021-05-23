@@ -16,6 +16,8 @@ use Bitrix\Sale\Payment;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\SalesCenter;
+use Bitrix\Salescenter\Analytics;
+use Bitrix\Salescenter\SaleshubItem;
 
 class SaleManager extends Base
 {
@@ -120,11 +122,20 @@ class SaleManager extends Base
 		{
 			/** @var Payment $payment */
 			$payment = $event->getParameter('payment');
+			$order = $payment->getOrder();
 
-			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), self::getPaySystemTag($payment), 'pay_system');
+			$constructor = new Analytics\LabelConstructor();
+
+			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $constructor->getPaySystemTag($payment), 'pay_system');
 			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $payment->getSum(), 'amount');
 			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $payment->getField('CURRENCY'), 'currency');
-			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), self::getContextTag($payment->getOrder()), 'context');
+			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $constructor->getContextLabel($order), 'context');
+
+			if ($order instanceof Crm\Order\Order)
+			{
+				AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $constructor->getChannelLabel($order), 'channel');
+				AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $constructor->getChannelNameLabel($order), 'channel_name');
+			}
 		}
 		finally
 		{
@@ -142,102 +153,15 @@ class SaleManager extends Base
 	 */
 	public static function OnSaleOrderSaved(Event $event)
 	{
-		/** @var Sale\Order $payment */
+		/** @var Crm\Order\Order $order */
 		$order = $event->getParameter('ENTITY');
 
 		if ($order->isNew())
 		{
-			AddEventToStatFile('salescenter', 'orderCreate', $order->getId(), self::getContextTag($order), 'context');
-		}
-	}
+			$constructor = new Analytics\LabelConstructor();
 
-	/**
-	 * @param Payment $payment
-	 * @return string
-	 */
-	private static function getPaySystemTag(Payment $payment) : string
-	{
-		$service = $payment->getPaySystem();
-
-		if ($service === null)
-		{
-			return '';
+			AddEventToStatFile('salescenter', 'orderCreate', $order->getId(), $constructor->getContextLabel($order), 'context');
 		}
-
-		$tag = $service->getField('ACTION_FILE');
-		if ($service->getField('PS_MODE'))
-		{
-			$tag .= ':'.$service->getField('PS_MODE');
-		}
-
-		return $tag;
-	}
-
-	/**
-	 * @param Sale\Order $order
-	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private static function getContextTag(Sale\Order $order) : string
-	{
-		/** @var Sale\TradeBindingEntity $item */
-		foreach ($order->getTradeBindingCollection() as $item)
-		{
-			/** @var Sale\TradingPlatform\Platform $platform */
-			$platform = $item->getTradePlatform();
-			if ($platform)
-			{
-				$info = $platform->getInfo();
-				if (isset($info['XML_ID']))
-				{
-					return self::getValueByXmlId((string)$info['XML_ID']);
-				}
-			}
-		}
-
-		if (
-			$order->getField('ID_1C')
-			&& $order->getField('EXTERNAL_ORDER') === 'Y'
-		)
-		{
-			return '1c';
-		}
-
-		return '';
-	}
-
-	/**
-	 * @param string $xmlId
-	 * @return string
-	 */
-	private static function getValueByXmlId(string $xmlId) : string
-	{
-		if (mb_strpos($xmlId, 'clothes') !== false)
-		{
-			return 'clothes';
-		}
-		elseif (mb_strpos($xmlId, 'instagram') !== false)
-		{
-			return 'instagram';
-		}
-		elseif (mb_strpos($xmlId, 'chats') !== false)
-		{
-			return 'chats';
-		}
-		elseif (mb_strpos($xmlId, 'mini-one-element') !== false)
-		{
-			return 'mini-one-element';
-		}
-		elseif (mb_strpos($xmlId, 'mini-catalog') !== false)
-		{
-			return 'mini-catalog';
-		}
-
-		return $xmlId;
 	}
 
 	public static function OnCheckPrintError(Event $event): EventResult
@@ -597,6 +521,7 @@ class SaleManager extends Base
 			$result = array_merge($result, [
 				'\Bitrix\Sale\Cashbox\CashboxAtolFarmV4',
 				'\Bitrix\Sale\Cashbox\CashboxOrangeData',
+				'\Bitrix\Sale\Cashbox\CashboxBusinessRu',
 			]);
 		}
 		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))
@@ -874,6 +799,46 @@ class SaleManager extends Base
 				{
 					$result[$paysystemItem['HANDLER']] = $values;
 				}
+			}
+
+			if($result)
+			{
+				$cache->startDataCache();
+				$cache->endDataCache($result);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getSaleshubSmsProviderItems(): array
+	{
+		$cacheTTL = 86400;
+		$cacheId = "salescenter_smsprovider_items";
+		$cachePath = "/salescenter/saleshubsmsprovideritems/";
+		$cache = Main\Application::getInstance()->getCache();
+		if($cache->initCache($cacheTTL, $cacheId, $cachePath))
+		{
+			$result = $cache->getVars();
+		}
+		else
+		{
+			$result = [];
+			$smsProviderItems = SaleshubItem::getSmsProviderItems();
+			foreach ($smsProviderItems as $providerItem)
+			{
+				$providerId = $providerItem['PROVIDER'];
+
+				$values = [
+					'recommendation' => $providerItem['RECOMMENDATION'] === 'Y',
+					'sort' => $providerItem['SORT'],
+					'main' => $providerItem['MAIN'] === 'Y',
+				];
+
+				$result[$providerId] = $values;
 			}
 
 			if($result)

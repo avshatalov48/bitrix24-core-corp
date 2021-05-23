@@ -19,7 +19,7 @@ if (empty($arResult["EMAIL_FORWARD_TO"]))
 	if (!empty($arResult["EMAIL_FORWARD_TO"]['BLOG_POST']))
 	{
 	?><div class="intranet-socnet-email-tr">
-		<div class="intranet-socnet-email-td"><?=GetMessage("INTRANET_SOCNET_EMAIL_SETTINGS_STREAM").":"?></div>
+		<div class="intranet-socnet-email-td"><?=GetMessage("INTRANET_SOCNET_EMAIL_SETTINGS_STREAM2").":"?></div>
 		<div class="intranet-socnet-email-td">
 			<input
 				type="text"

@@ -1,10 +1,13 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\Main\Loader;
 use \Bitrix\Main\UserTable,
 	\Bitrix\Main\Localization\Loc;
 use \Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\Input\ReceivingMessage;
+use \Bitrix\ImOpenLines,
+	\Bitrix\ImOpenLines\Im\Messages;
 
 /**
  * Class Connector
@@ -200,6 +203,68 @@ class Base
 				$file,
 				Library::MODULE_ID
 			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $paramsError
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function receivedError($paramsError): bool
+	{
+		$result = false;
+
+		if($paramsError['code'] === Library::ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT)
+		{
+			$result = $this->receivedErrorNotSendMessageChat($paramsError);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $paramsError
+	 * @param string $message
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function receivedErrorNotSendMessageChat($paramsError, $message = ''): bool
+	{
+		$result = false;
+
+		if(
+			!empty($paramsError['chatId']) &&
+			$paramsError['chatId'] > 0 &&
+			Loader::includeModule('imopenlines')
+		)
+		{
+			$messageExternalError = '';
+			if(!empty($paramsError['messageConnector']))
+			{
+				$messageExternalError = $paramsError['messageConnector'];
+			}
+
+			if (
+				!empty($paramsError['messageId']) &&
+				$paramsError['messageId'] > 0 &&
+				Loader::includeModule('im')
+			)
+			{
+				\CIMMessageParam::Set((int)$paramsError['messageId'], ['SENDING_TS' => (time() - 86400)]);
+				\CIMMessageParam::SendPull((int)$paramsError['messageId'], ['SENDING_TS']);
+			}
+
+			if(empty($message))
+			{
+				$message = Loc::getMessage('IMCONNECTOR_MESSAGE_ERROR_NOT_SEND_CHAT');
+			}
+
+			Messages\Error::addErrorNotSendChat((int)$paramsError['chatId'], $message, $messageExternalError);
+
+			$result = true;
 		}
 
 		return $result;

@@ -71,4 +71,14 @@ $MESS["BLOG_ALREADY_READ"] = "С сообщением ознакомлен";
 $MESS["BLOG_READ_"] = "Прочитано";
 $MESS["BLOG_READ_F"] = "Я прочитала";
 $MESS["BLOG_READ_M"] = "Я прочитал";
+$MESS["BLOG_IMPORTANT_READ_LIST_0"] = "Уже подтвердили прочтение #NUM# пользователей";
+$MESS["BLOG_IMPORTANT_READ_LIST_1"] = "Уже подтвердил прочтение #NUM# пользователь";
+$MESS["BLOG_IMPORTANT_READ_LIST_2"] = "Уже подтвердили прочтение #NUM# пользователя";
+$MESS["BLOG_IMPORTANT_READ_LIST_3"] = "Уже подтвердили прочтение #NUM# пользователя";
+$MESS["BLOG_IMPORTANT_READ_LIST_4"] = "Уже подтвердили прочтение #NUM# пользователя";
+$MESS["BLOG_IMPORTANT_READ_LIST_5"] = "Уже подтвердили прочтение #NUM# пользователей";
+$MESS["BLOG_IMPORTANT_READ_LIST_6"] = "Уже подтвердили прочтение #NUM# пользователей";
+$MESS["BLOG_IMPORTANT_READ_LIST_7"] = "Уже подтвердили прочтение #NUM# пользователей";
+$MESS["BLOG_IMPORTANT_READ_LIST_8"] = "Уже подтвердили прочтение #NUM# пользователей";
+$MESS["BLOG_IMPORTANT_READ_LIST_9"] = "Уже подтвердили прочтение #NUM# пользователей";
 ?>

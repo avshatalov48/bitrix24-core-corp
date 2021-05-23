@@ -120,7 +120,7 @@ if (COption::GetOptionString("intranet", "left_menu_admin_converted", "N") !== "
 
 	if (!empty($oldItemsAdmin))
 	{
-		$oldItemsAdmin = unserialize($oldItemsAdmin);
+		$oldItemsAdmin = unserialize($oldItemsAdmin, ["allowed_classes" => false]);
 		if (is_array($oldItemsAdmin) && !empty($oldItemsAdmin))
 		{
 			foreach ($oldItemsAdmin as $id)

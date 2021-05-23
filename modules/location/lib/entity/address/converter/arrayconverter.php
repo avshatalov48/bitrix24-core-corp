@@ -5,8 +5,20 @@ namespace Bitrix\Location\Entity\Address\Converter;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Location;
 
+/**
+ * Class ArrayConverter
+ * @package Bitrix\Location\Entity\Address\Converter
+ * @internal
+ */
 final class ArrayConverter
 {
+	/**
+	 * Convert Address to Array
+	 *
+	 * @param Address $address
+	 * @param bool $convertLocation
+	 * @return array
+	 */
 	public static function convertToArray(Address $address, $convertLocation = true): array
 	{
 		$result = [
@@ -20,19 +32,26 @@ final class ArrayConverter
 
 		if($convertLocation && $location = $address->getLocation())
 		{
-			$result['location'] = \Bitrix\Location\Entity\Location\Converter\ArrayConverter::convertToArray($location);
+			$result['location'] = Location\Converter\ArrayConverter::convertToArray($location);
 		}
 
 		return $result;
 	}
 
+	/**
+	 * Convert Array to Address
+	 *
+	 * @param array $data
+	 * @return Address
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function convertFromArray(array $data): Address
 	{
 		$result = (new Address((string)$data['languageId']))
 			->setId((int)$data['id'])
 			->setLatitude((string)$data['latitude'])
 			->setLongitude((string)$data['longitude']);
-
 
 		if(is_array($data['fieldCollection']))
 		{
@@ -41,7 +60,6 @@ final class ArrayConverter
 				$result->setFieldValue((int)$itemType, (string)$itemValue);
 			}
 		}
-
 
 		if(is_array($data['links']))
 		{
@@ -62,6 +80,10 @@ final class ArrayConverter
 		return $result;
 	}
 
+	/**
+	 * @param array $fieldsValues
+	 * @return array
+	 */
 	protected static function convertFieldsToArray(array $fieldsValues): array
 	{
 		$result = [];
@@ -74,6 +96,10 @@ final class ArrayConverter
 		return $result;
 	}
 
+	/**
+	 * @param Address $address
+	 * @return array
+	 */
 	protected static function convertLinksToArray(Address $address): array
 	{
 		$result = [];

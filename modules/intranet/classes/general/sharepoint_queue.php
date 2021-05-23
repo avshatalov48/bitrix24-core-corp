@@ -62,10 +62,10 @@ class CAllIntranetSharepointQueue
 		if (is_array($res))
 		{
 			if ($res['SP_METHOD_PARAMS'] <> '')
-				$res['SP_METHOD_PARAMS'] = unserialize($res['SP_METHOD_PARAMS']);
+				$res['SP_METHOD_PARAMS'] = unserialize($res['SP_METHOD_PARAMS'], ["allowed_classes" => false]);
 
 			if ($res['CALLBACK'] <> '')
-				$res['CALLBACK'] = unserialize($res['CALLBACK']);
+				$res['CALLBACK'] = unserialize($res['CALLBACK'], ["allowed_classes" => false]);
 		}
 
 		return $res;

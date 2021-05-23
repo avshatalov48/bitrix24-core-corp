@@ -92,7 +92,7 @@ class DuplicateControl
 			$s = \Bitrix\Main\Config\Option::get('crm', 'dup_ctrl');
 			if(is_string($s) && $s !== '')
 			{
-				$ary = unserialize($s);
+				$ary = unserialize($s, ['allowed_classes' => false]);
 				if(is_array($ary))
 				{
 					self::$currentSettings = &$ary;

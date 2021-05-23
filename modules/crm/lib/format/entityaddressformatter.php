@@ -121,7 +121,7 @@ class EntityAddressFormatter
 		$str = \COption::GetOptionString('crm', 'ent_addr_frmt_cfg', '');
 		if($str !== '')
 		{
-			self::$config = unserialize($str);
+			self::$config = unserialize($str, ['allowed_classes' => false]);
 		}
 
 		if(!is_array(self::$config))

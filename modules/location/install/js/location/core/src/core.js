@@ -26,6 +26,8 @@ import ErrorPublisher from './common/errorpublisher';
 import Limit from './common/limit';
 import Point from './common/point';
 
+import DistanceCalculator from './common/distancecalculator';
+
 export {
 	Location,
 	Address,
@@ -54,5 +56,7 @@ export {
 
 	ErrorPublisher,
 	Limit,
-	Point
+	Point,
+
+	DistanceCalculator
 };

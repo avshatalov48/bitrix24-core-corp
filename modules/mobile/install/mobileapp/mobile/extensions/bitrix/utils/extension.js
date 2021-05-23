@@ -48,8 +48,20 @@
 	};
 
 	let Utils = {
-		md5: function (string)
+		md5: function (any)
 		{
+			let string = null;
+			if (typeof any === "object")
+			{
+				string = JSON.stringify(any)
+			}
+			else if (typeof any === "string")
+			{
+				string = any
+			}
+
+			if (string === null)
+				return null;
 
 			function RotateLeft(lValue, iShiftBits)
 			{
@@ -441,7 +453,8 @@
 		}
 	};
 
-	this.Utils = Utils;
+	window.Utils = Utils;
+	window.CommonUtils = Utils; //alias
 
 	Object.toMD5 = function (object)
 	{

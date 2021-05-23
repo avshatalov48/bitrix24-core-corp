@@ -2,8 +2,6 @@
 
 namespace Bitrix\Location\Service;
 
-use Bitrix\Location\Entity\Generic\Collection;
-use Bitrix\Location\Common\Point;
 use Bitrix\Location\Exception\RuntimeException;
 use Bitrix\Location\Common\BaseService;
 use Bitrix\Main\Result;
@@ -12,7 +10,10 @@ use \Bitrix\Location\Repository\LocationRepository;
 use \Bitrix\Location\Infrastructure\Service\Config;
 
 /**
- * Class Location *
+ * Class LocationService
+ *
+ * Service to work with locations
+ *
  * @package Bitrix\Location\Service
  */
 final class LocationService extends BaseService
@@ -26,18 +27,20 @@ final class LocationService extends BaseService
 	protected $repository = null;
 
 	/**
-	 * @param int $id
+	 * Find Location by locationId
+	 *
+	 * @param int $locationId
 	 * @param string $languageId
 	 * @param int $searchScope
 	 * @return Entity\Location|null|bool
 	 */
-	public function findById(int $id, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
+	public function findById(int $locationId, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
 	{
 		$result = false;
 
 		try
 		{
-			$result = $this->repository->findById($id, $languageId, $searchScope);
+			$result = $this->repository->findById($locationId, $languageId, $searchScope);
 		}
 		catch (RuntimeException $exception)
 		{
@@ -48,6 +51,8 @@ final class LocationService extends BaseService
 	}
 
 	/**
+	 * Find location by externalId
+	 *
 	 * @param string $externalId
 	 * @param string $sourceCode
 	 * @param string $languageId
@@ -71,54 +76,13 @@ final class LocationService extends BaseService
 	}
 
 	/**
-	 * @param Point $point
-	 * @param string $languageId
-	 * @param int $searchScope
-	 * @return Collection|bool
-	 */
-	public function findByPoint(Point $point, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
-	{
-		$result = false;
-
-		try
-		{
-			$result = $this->repository->findByPoint($point, $languageId, $searchScope);
-		}
-		catch (RuntimeException $exception)
-		{
-			$this->processException($exception);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param string $text
-	 * @param string $languageId
-	 * @param int $searchScope
-	 * @return Entity\Location\Collection|bool
-	 */
-	public function findByText(string $text, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
-	{
-		$result = false;
-
-		try
-		{
-			$result = $this->repository->findByText($text, $languageId, $searchScope);
-		}
-		catch (RuntimeException $exception)
-		{
-			$this->processException($exception);
-		}
-
-		return $result;
-	}
-
-	/**
+	 * Find Location parents
+	 *
 	 * @param Entity\Location $location
 	 * @param string $languageId
 	 * @param int $searchScope
 	 * @return Entity\Location\Parents|bool
+	 * @internal
 	 */
 	public function findParents(Entity\Location $location, string $languageId, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
 	{
@@ -137,23 +101,32 @@ final class LocationService extends BaseService
 	}
 
 	/**
+	 * Save Location
+	 *
 	 * @param Entity\Location $location
 	 * @return Result
 	 */
-	public function save(Entity\Location $location)
+	public function save(Entity\Location $location): Result
 	{
 		return $this->repository->save($location);
 	}
 
 	/**
+	 * Delete Location
+	 *
 	 * @param Entity\Location $location
 	 * @return Result
 	 */
-	public function delete(Entity\Location $location)
+	public function delete(Entity\Location $location): Result
 	{
 		return $this->repository->delete($location);
 	}
 
+	/**
+	 * LocationService constructor.
+	 *
+	 * @param Config\Container $config
+	 */
 	protected function __construct(Config\Container $config)
 	{
 		$this->setRepository($config->get('repository'));
@@ -161,10 +134,13 @@ final class LocationService extends BaseService
 	}
 
 	/**
+	 * Save parents from the location
+	 *
 	 * @param Entity\Location\Parents $parents
 	 * @return Result
+	 * @internal
 	 */
-	public function saveParents(Entity\Location\Parents $parents)
+	public function saveParents(Entity\Location\Parents $parents): Result
 	{
 		return $this->repository->saveParents($parents);
 	}

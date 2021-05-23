@@ -107,10 +107,14 @@ class Task extends Activity\Provider\Base
 			return false;
 		}
 
+		$itemIterator = \CTasks::getByID($entityId, false);
+		$task = $itemIterator->fetch();
+
 		$taskFields = array();
-		if (isset($activity['SUBJECT']))
+		if (isset($activity['SUBJECT']) && $activity['SUBJECT'] !== $task['TITLE'])
 		{
 			$taskFields['TITLE'] = $activity['SUBJECT'];
+			$taskFields['DESCRIPTION'] = $task['DESCRIPTION']; //for TAGS save
 		}
 		if (isset($activity['END_TIME'] ))
 		{

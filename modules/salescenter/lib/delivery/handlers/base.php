@@ -103,6 +103,14 @@ abstract class Base implements HandlerContract
 	/**
 	 * @inheritDoc
 	 */
+	public function doesImageContainName(): bool
+	{
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function getInstalledImagePath()
 	{
 		return $this->getImagesPath() . sprintf('installed_%s', $this->getImageName());
@@ -153,30 +161,6 @@ abstract class Base implements HandlerContract
 	 * @inheritDoc
 	 */
 	public function getWizard()
-	{
-		return null;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function isRestHandler(): bool
-	{
-		return false;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function getRestHandlerCode(): ?string
-	{
-		return null;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function getProfileClass(): ?string
 	{
 		return null;
 	}

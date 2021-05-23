@@ -20,7 +20,17 @@ export class RequestSender
 		return this.signedParameters;
 	}
 
-	sendRequest(data = {}, action): Promise
+	sendRequest(action: string, data = {}): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(action, {
+				signedParameters: this.signedParameters,
+				data: data
+			}).then(resolve, reject);
+		});
+	}
+
+	sendRequestToComponent(data = {}, action): Promise
 	{
 		data.debugMode = this.debugMode;
 		return new Promise((resolve, reject) => {
@@ -34,112 +44,117 @@ export class RequestSender
 
 	batchUpdateItem(data): Promise
 	{
-		return this.sendRequest(data, 'batchUpdateItem');
+		return this.sendRequestToComponent(data, 'batchUpdateItem');
 	}
 
 	batchRemoveItem(data): Promise
 	{
-		return this.sendRequest(data, 'batchRemoveItem');
+		return this.sendRequestToComponent(data, 'batchRemoveItem');
 	}
 
 	updateItemSort(data): Promise
 	{
-		return this.sendRequest(data, 'updateItemSort');
+		return this.sendRequestToComponent(data, 'updateItemSort');
 	}
 
 	updateSprintSort(data): Promise
 	{
-		return this.sendRequest(data, 'updateSprintSort');
+		return this.sendRequestToComponent(data, 'updateSprintSort');
 	}
 
 	createSprint(data): Promise
 	{
-		return this.sendRequest(data, 'createSprint');
+		return this.sendRequestToComponent(data, 'createSprint');
 	}
 
 	startSprint(data): Promise
 	{
-		return this.sendRequest(data, 'startSprint');
+		return this.sendRequestToComponent(data, 'startSprint');
 	}
 
 	completeSprint(data): Promise
 	{
-		return this.sendRequest(data, 'completeSprint');
+		return this.sendRequestToComponent(data, 'completeSprint');
 	}
 
 	createTask(data): Promise
 	{
-		return this.sendRequest(data, 'createTask');
+		return this.sendRequestToComponent(data, 'createTask');
 	}
 
 	updateItem(data): Promise
 	{
-		return this.sendRequest(data, 'updateItem');
+		return this.sendRequestToComponent(data, 'updateItem');
 	}
 
 	removeItem(data): Promise
 	{
-		return this.sendRequest(data, 'removeItem');
+		return this.sendRequestToComponent(data, 'removeItem');
 	}
 
 	changeTaskResponsible(data): Promise
 	{
-		return this.sendRequest(data, 'changeTaskResponsible');
+		return this.sendRequestToComponent(data, 'changeTaskResponsible');
+	}
+
+	getCurrentState(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getCurrentState');
 	}
 
 	removeSprint(data): Promise
 	{
-		return this.sendRequest(data, 'removeSprint');
+		return this.sendRequestToComponent(data, 'removeSprint');
 	}
 
 	changeSprintName(data): Promise
 	{
-		return this.sendRequest(data, 'changeSprintName');
+		return this.sendRequestToComponent(data, 'changeSprintName');
 	}
 
 	changeSprintDeadline(data): Promise
 	{
-		return this.sendRequest(data, 'changeSprintDeadline');
+		return this.sendRequestToComponent(data, 'changeSprintDeadline');
 	}
 
 	getSprintCompletedItems(data): Promise
 	{
-		return this.sendRequest(data, 'getSprintCompletedItems');
+		return this.sendRequestToComponent(data, 'getSprintCompletedItems');
 	}
 
 	getEpicDescriptionEditor(data): Promise
 	{
-		return this.sendRequest(data, 'getEpicDescriptionEditor');
+		return this.sendRequestToComponent(data, 'getEpicDescriptionEditor');
 	}
 
 	getEpicDescription(data): Promise
 	{
-		return this.sendRequest(data, 'getEpicDescription');
+		return this.sendRequestToComponent(data, 'getEpicDescription');
 	}
 
 	getEpicFiles(data): Promise
 	{
-		return this.sendRequest(data, 'getEpicFiles');
+		return this.sendRequestToComponent(data, 'getEpicFiles');
 	}
 
 	getAddEpicFormButtons(data): Promise
 	{
-		return this.sendRequest(data, 'getAddEpicFormButtons');
+		return this.sendRequestToComponent(data, 'getAddEpicFormButtons');
 	}
 
 	getViewEpicFormButtonsAction(data): Promise
 	{
-		return this.sendRequest(data, 'getViewEpicFormButtons');
+		return this.sendRequestToComponent(data, 'getViewEpicFormButtons');
 	}
 
 	createEpic(data): Promise
 	{
-		return this.sendRequest(data, 'createEpic');
+		return this.sendRequestToComponent(data, 'createEpic');
 	}
 
 	getEpicsList(data): Promise
 	{
-		return this.sendRequest(data, 'getEpicsList');
+		return this.sendRequestToComponent(data, 'getEpicsList');
 	}
 
 	getEpicListUrl(): string
@@ -149,97 +164,117 @@ export class RequestSender
 
 	attachFilesToTask(data): Promise
 	{
-		return this.sendRequest(data, 'attachFilesToTask');
+		return this.sendRequestToComponent(data, 'attachFilesToTask');
 	}
 
 	attachTagToTask(data): Promise
 	{
-		return this.sendRequest(data, 'attachTagToTask');
+		return this.sendRequestToComponent(data, 'attachTagToTask');
 	}
 
 	batchAttachTagToTask(data): Promise
 	{
-		return this.sendRequest(data, 'batchAttachTagToTask');
+		return this.sendRequestToComponent(data, 'batchAttachTagToTask');
 	}
 
 	deAttachTagToTask(data): Promise
 	{
-		return this.sendRequest(data, 'deAttachTagToTask');
+		return this.sendRequestToComponent(data, 'deAttachTagToTask');
 	}
 
 	batchDeattachTagToTask(data): Promise
 	{
-		return this.sendRequest(data, 'batchDeattachTagToTask');
+		return this.sendRequestToComponent(data, 'batchDeattachTagToTask');
 	}
 
 	updateItemEpic(data): Promise
 	{
-		return this.sendRequest(data, 'updateItemEpic');
+		return this.sendRequestToComponent(data, 'updateItemEpic');
 	}
 
 	batchUpdateItemEpic(data): Promise
 	{
-		return this.sendRequest(data, 'batchUpdateItemEpic');
+		return this.sendRequestToComponent(data, 'batchUpdateItemEpic');
 	}
 
 	getEpic(data): Promise
 	{
-		return this.sendRequest(data, 'getEpic');
+		return this.sendRequestToComponent(data, 'getEpic');
 	}
 
 	editEpic(data): Promise
 	{
-		return this.sendRequest(data, 'editEpic');
+		return this.sendRequestToComponent(data, 'editEpic');
 	}
 
 	removeEpic(data): Promise
 	{
-		return this.sendRequest(data, 'removeEpic');
+		return this.sendRequestToComponent(data, 'removeEpic');
 	}
 
 	applyFilter(data): Promise
 	{
-		return this.sendRequest(data, 'applyFilter');
+		return this.sendRequestToComponent(data, 'applyFilter');
 	}
 
 	getSprintStartButtons(data): Promise
 	{
-		return this.sendRequest(data, 'getSprintStartButtons');
+		return this.sendRequestToComponent(data, 'getSprintStartButtons');
 	}
 
 	getSprintCompleteButtons(data): Promise
 	{
-		return this.sendRequest(data, 'getSprintCompleteButtons');
+		return this.sendRequestToComponent(data, 'getSprintCompleteButtons');
 	}
 
 	getBurnDownChartData(data): Promise
 	{
-		return this.sendRequest(data, 'getBurnDownChartData');
+		return this.sendRequestToComponent(data, 'getBurnDownChartData');
 	}
 
 	getTeamSpeedChartData(data): Promise
 	{
-		return this.sendRequest(data, 'getTeamSpeedChartData');
+		return this.sendRequestToComponent(data, 'getTeamSpeedChartData');
 	}
 
 	getDodPanelData(data): Promise
 	{
-		return this.sendRequest(data, 'getDodPanelData');
+		return this.sendRequestToComponent(data, 'getDodPanelData');
 	}
 
 	getDodComponent(data): Promise
 	{
-		return this.sendRequest(data, 'getDodComponent');
+		return this.sendRequestToComponent(data, 'getDodComponent');
 	}
 
 	getDodButtons(data): Promise
 	{
-		return this.sendRequest(data, 'getDodButtons');
+		return this.sendRequestToComponent(data, 'getDodButtons');
 	}
 
 	saveDod(data): Promise
 	{
-		return this.sendRequest(data, 'saveDod');
+		return this.sendRequestToComponent(data, 'saveDod');
+	}
+
+	readAllTasksComment(data): Promise
+	{
+		return this.sendRequest('tasks.task.comment.readAll', data);
+	}
+
+	updateBorderColorToLinkedItems(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'updateBorderColorToLinkedItems');
+	}
+
+	getAllUsedItemBorderColors(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getAllUsedItemBorderColors');
+	}
+
+	getSubTaskItems(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getSubTaskItems');
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

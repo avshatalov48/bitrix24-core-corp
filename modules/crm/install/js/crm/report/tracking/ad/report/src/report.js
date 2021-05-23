@@ -23,8 +23,14 @@ class Report
 		loaderText: null,
 		loaderProgressBar: null,
 		loaderActive: false,
+		error: null,
+		errorText: null,
+		errorClose: null,
 		grid: null,
 	};
+
+	loaded: boolean = false;
+	statusButtonClassName: string = 'crm-tracking-report-source-status-disabled';
 
 	constructor(options)
 	{
@@ -92,7 +98,29 @@ class Report
 				{
 					this.build();
 				}
-			});
+			})
+			.catch(({errors}) => {
+				this.showError(errors[0]);
+			})
+		;
+	}
+
+	changeStatus (id, status)
+	{
+		this.showLoader();
+		BX.ajax.runAction(
+			'crm.api.tracking.ad.report.changeStatus',
+			{
+				json: { id, status }
+			}
+		)
+			.then(() => {
+				this.loadGrid();
+			})
+			.catch(({errors}) => {
+				this.showError(errors[0]);
+			})
+		;
 	}
 
 	loadGrid ()
@@ -116,6 +144,7 @@ class Report
 				Runtime.html(this.getNode('grid'), data.html)
 				this.initActivators();
 				this.hideLoader();
+				this.loaded = true;
 
 				if (!this.filter.level)
 				{
@@ -140,6 +169,43 @@ class Report
 	{
 		this.getNodes('grid/activator').forEach((node) => {
 			const options = JSON.parse(node.dataset.options);
+			const statusBtn = node.previousElementSibling;
+			if (statusBtn)
+			{
+				options.enabled
+					? statusBtn.classList.remove(this.statusButtonClassName)
+					: statusBtn.classList.add(this.statusButtonClassName)
+				;
+				Event.bind(statusBtn, 'click', () => {
+					const popup = new Menu({
+						bindElement: statusBtn,
+						zIndex: 3010,
+						items: [
+							{
+								text: Text.encode(Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_STATUS_ENABLED')),
+								onclick: () => {
+									this.changeStatus(options.parentId, true);
+									popup.close();
+								},
+							},
+							{
+								text: Text.encode(Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_STATUS_PAUSE')),
+								onclick: () => {
+									this.changeStatus(options.parentId, false);
+									popup.close();
+								},
+							},
+						],
+					});
+					popup.show();
+				});
+			}
+
+			if (options.level === null || options.level === undefined)
+			{
+				return;
+			}
+
 			Event.bind(node, 'click', () => {
 				new Report({
 					...this.filter,
@@ -207,7 +273,21 @@ class Report
 				<div class="crm-report-tracking-panel-body">
 					<div data-role="loader" class="crm-report-tracking-panel-loader">
 						<div data-role="loader/text" class="crm-report-tracking-panel-loader-text"></div>
-						<div data-role="loader/bar" class="crm-report-tracking-panel-loader-bar"></div>
+						<div data-role="loader/bar" class="crm-report-tracking-panel-loader-bar">
+							<div data-role="error" class="ui-alert ui-alert-danger" style="display: none;">
+								<span class="ui-alert-message">
+									<strong>${Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_ERROR_TITLE')}:</strong>
+									<span data-role="error/text"></span>
+								</span>
+							</div>
+							<div style="text-align: center;">
+								<button 
+									data-role="error/close" 
+									class="ui-btn ui-btn-light-border"
+									style="display: none;"
+								>${Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_CLOSE')}</button>
+							</div>
+						</div>
 					</div>
 					<div data-role="grid"></div>
 				</div>
@@ -219,6 +299,9 @@ class Report
 		this.ui.hint = this.getNode('hint');
 		this.ui.loader = this.getNode('loader');
 		this.ui.loaderText = this.getNode('loader/text');
+		this.ui.error = this.getNode('error');
+		this.ui.errorText = this.getNode('error/text');
+		this.ui.errorClose = this.getNode('error/close');
 		this.ui.grid = this.getNode('grid');
 
 		const progressBar = new BX.UI.ProgressBar({
@@ -232,8 +315,21 @@ class Report
 		{
 			this.ui.hint.addEventListener('click', () => BX.Helper.show("redirect=detail&code=12526974"));
 		}
+		if (this.ui.errorClose)
+		{
+			this.ui.errorClose.addEventListener('click', () => {
+				if (this.loaded)
+				{
+					this.hideError();
+				}
+				else
+				{
+					BX.SidePanel.Instance.close();
+				}
+			});
+		}
 
-		this.getNode('loader/bar').appendChild(progressBar.getContainer());
+		this.getNode('loader/bar').insertBefore(progressBar.getContainer(), this.getNode('loader/bar').children[0]);
 		this.ui.loaderProgressBar = progressBar;
 		this.setLoaderText(Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_BUILD'));
 
@@ -263,6 +359,24 @@ class Report
 		}
 
 		setTimeout(() => this.animateLoader(), 100);
+	}
+
+	showError (error: Error)
+	{
+		this.ui.errorClose.style.display = '';
+		this.ui.error.style.display = '';
+		this.ui.errorText.textContent = error.message;
+		this.ui.loaderProgressBar.getContainer().style.display = 'none';
+	}
+
+	hideError ()
+	{
+		this.ui.errorClose.style.display = 'none';
+		this.ui.error.style.display = 'none';
+		this.ui.errorText.textContent = '';
+		this.ui.loaderProgressBar.getContainer().style.display = '';
+
+		this.hideLoader();
 	}
 
 	showLoader ()

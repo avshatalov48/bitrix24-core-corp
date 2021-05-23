@@ -9,6 +9,7 @@ use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Scrum\Internal\Fields\InfoField;
 
 class ItemTable extends Entity\DataManager
 {
@@ -27,8 +28,13 @@ class ItemTable extends Entity\DataManager
 	private $modifiedBy;
 	private $storyPoints;
 	private $sourceId;
-	private $info = [];
 
+	/**
+	 * @var ItemInfoColumn
+	 */
+	private $info;
+
+	private $tmpId = '';
 	private $children = [];
 
 	public static function createItemObject(array $fields = []): ItemTable
@@ -92,15 +98,19 @@ class ItemTable extends Entity\DataManager
 
 		$sourceId = new Fields\IntegerField('SOURCE_ID');
 
-		$info = new Fields\ArrayField('INFO');
+		$info = new InfoField('INFO');
 		$info->configureRequired(false);
-		$info->configureSerializeCallback(function($value)
+		$info->configureSerializeCallback(function(ItemInfoColumn $itemInfoColumn)
 		{
-			return is_array($value) ? Json::encode($value) : null;
+			$value = Json::encode($itemInfoColumn->getInfoData());
+			return ($value ? $value : null);
 		});
 		$info->configureUnserializeCallback(function($value)
 		{
-			return is_string($value) && !empty($value) ? Json::decode($value) : [];
+			$value = (is_string($value) && !empty($value) ? Json::decode($value) : []);
+			$itemInfoColumn = new ItemInfoColumn();
+			$itemInfoColumn->setInfoData($value);
+			return $itemInfoColumn;
 		});
 
 		return [
@@ -406,14 +416,24 @@ class ItemTable extends Entity\DataManager
 		$this->itemType = $itemType;
 	}
 
-	public function getInfo(): array
+	public function getInfo(): ItemInfoColumn
 	{
-		return $this->info;
+		return ($this->info ? $this->info : new ItemInfoColumn());
 	}
 
-	public function setInfo(array $info): void
+	public function setInfo(ItemInfoColumn $info): void
 	{
 		$this->info = $info;
+	}
+
+	public function getTmpId(): string
+	{
+		return $this->tmpId;
+	}
+
+	public function setTmpId(string $tmpId): void
+	{
+		$this->tmpId = $tmpId;
 	}
 
 	public function getChildren(): array

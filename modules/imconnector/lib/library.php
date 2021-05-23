@@ -36,6 +36,9 @@ class Library
 
 	const SCOPE_REST_IMCONNECTOR = 'imopenlines';
 
+	public const BLOCK_REASON_DEFAULT = 'DEFAULT';
+	public const BLOCK_REASON_USER = 'USER';
+
 	//Components
 	const CACHE_DIR_COMPONENT = "/imconnector/component/";
 	const CACHE_TIME_COMPONENT = "86400"; //One day
@@ -71,6 +74,7 @@ class Library
 	const ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR = 'FAILED_TO_SAVE_SETTINGS_CONNECTOR';//Failed to save settings connector
 	const ERROR_FAILED_TO_TEST_CONNECTOR = 'FAILED_TO_TEST_CONNECTOR';//Failed to test the connection of the connector
 	const ERROR_FAILED_REGISTER_CONNECTOR = 'FAILED_REGISTER_CONNECTOR';//Failed to register connector
+	const ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT = 'CONNECTOR_NOT_SEND_MESSAGE_CHAT';
 
 	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR = 'APPLICATION_REGISTRATION_ERROR';//Application registration error
 	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT = 'APPLICATION_REGISTRATION_ERROR_POINT';
@@ -97,6 +101,7 @@ class Library
 	const EVENT_RECEIVED_STATUS_DELIVERY = "OnReceivedStatusDelivery";
 	const EVENT_RECEIVED_STATUS_READING = "OnReceivedStatusReading";
 
+	public const EVENT_RECEIVED_ERROR = 'OnReceivedError';
 	public const EVENT_RECEIVED_STATUS_BLOCK = 'OnReceivedStatusBlock';
 	public const EVENT_RECEIVED_TYPING_STATUS = 'OnReceivedStatusWrites';
 
@@ -112,20 +117,24 @@ class Library
 
 	const EVENT_DELETE_LINE = 'OnDeleteLine';
 
+	public const CODE_ID_ARTICLE_TIME_LIMIT = '10632966';
 	public const TIME_LIMIT_RESTRICTIONS = [
 		'facebook' => [
 			'LIMIT_START_DATE' => 1583280001, //04 Mar 2020 00:00:01
-			'BLOCK_DATE' => 86400,
-			'BLOCK_REASON' => 'DEFAULT'
+			'BLOCK_DATE' => null,
+			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
 		],
 		'whatsappbytwilio' => [
 			'LIMIT_START_DATE' => 1575158401,
 			'BLOCK_DATE' => 86400,
-			'BLOCK_REASON' => 'DEFAULT'
+			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
 		],
 	];
 
 	public const AUTO_DELETE_BLOCK = [
+		'facebook',
+		'whatsappbytwilio',
+
 		'imessage',
 		'vkgroup',
 		'ok'

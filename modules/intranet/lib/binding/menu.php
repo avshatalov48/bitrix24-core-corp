@@ -597,6 +597,7 @@ class Menu
 	public static function getMenuItems($sectionCode, $menuCode, array $params = [])
 	{
 		static $bindings = [];
+		static $extLoaded = [];
 
 		$inline = (isset($params['inline']) && $params['inline'] === true);
 		$context = (isset($params['context']) && is_array($params['context']))
@@ -604,7 +605,23 @@ class Menu
 
 		if (!$bindings)
 		{
-			$bindings = self::getBindings();
+			$cache = new \CPHPCache;
+			$cacheManager = $GLOBALS['CACHE_MANAGER'];
+			$cacheTag = 'intranet_menu_binding';
+			$cacheDir = '/intranet/menu_binding';
+			if ($cache->initCache(8640000, $cacheTag, $cacheDir))
+			{
+				[$bindings, self::$needProvider] = $cache->getVars();
+			}
+			else
+			{
+				$cache->startDataCache();
+				$cacheManager->startTagCache($cacheDir);
+				$cacheManager->registerTag($cacheTag);
+				$bindings = self::getBindings();
+				$cacheManager->endTagCache();
+				$cache->endDataCache([$bindings, self::$needProvider]);
+			}
 		}
 
 		if (is_string($sectionCode) && is_string($menuCode))
@@ -630,13 +647,23 @@ class Menu
 					else
 					{
 						$returnItems[] = [
-							'text' => Loc::getMessage('INTRANET_BIND_MENU_SECTION_'.mb_strtoupper($globalSectionCode)),
+							'text' => Loc::getMessage('INTRANET_BIND_MENU_SECTION_' . mb_strtoupper($globalSectionCode)),
 							'delimiter' => true
 						];
 					}
 					$existItems = false;
 					foreach ($bindings[$sectionCode]['items'][$menuCode] as $item)
 					{
+						if (isset($item['extension']))
+						{
+							if (!isset($extLoaded[$item['extension']]))
+							{
+								$extLoaded[$item['extension']] = true;
+								\Bitrix\Main\UI\Extension::load(
+									$item['extension']
+								);
+							}
+						}
 						if ($item['sectionCode'] == $globalSectionCode)
 						{
 							$existItems = true;
@@ -654,7 +681,7 @@ class Menu
 					$returnItems = self::setItemsProvider($returnItems, $context);
 				}
 				// marketplace item
-				$marketCode = mb_strtoupper($sectionCode.'@'.$menuCode);
+				$marketCode = mb_strtoupper($sectionCode . '@' . $menuCode);
 				$placementMap = array_flip(self::REST_PLACEMENT_MAP);
 				if (isset($placementMap[$marketCode]))
 				{

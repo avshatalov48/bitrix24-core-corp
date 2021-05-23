@@ -289,6 +289,10 @@ if(typeof BX.Crm.EntityEditorControllerFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorProductRowProxy.create(controllerId, settings);
 				}
+				else if(type === "product_list")
+				{
+					return BX.Crm.EntityProductListController.create(controllerId, settings);
+				}
 				else if(type === "order_controller")
 				{
 					return BX.Crm.EntityEditorOrderController.create(controllerId, settings);

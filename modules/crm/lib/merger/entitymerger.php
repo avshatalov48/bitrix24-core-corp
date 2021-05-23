@@ -21,6 +21,7 @@ abstract class EntityMerger
 	protected $enablePermissionCheck = false;
 	protected $conflictResolutionMode = ConflictResolutionMode::UNDEFINED;
 	protected $map = null;
+	protected $isAutomatic = false;
 
 	/**
 	 * @param int $entityTypeID Entity Type ID.
@@ -115,6 +116,15 @@ abstract class EntityMerger
 	public function setMap(array $map)
 	{
 		$this->map = $map;
+	}
+
+	public function isAutomatic():bool
+	{
+		return $this->isAutomatic;
+	}
+	public function setIsAutomatic(bool $isAutomatic): void
+	{
+		$this->isAutomatic = $isAutomatic;
 	}
 
 	public static function getDefaultConflictResolutionMode()
@@ -478,7 +488,8 @@ abstract class EntityMerger
 					array('ROOT_ENTITY_ID' => $targID)
 				);
 			}
-			Integrity\DuplicateIndexBuilder::markAsJunk($this->entityTypeID, $seedID);
+
+			Integrity\DuplicateManager::markDuplicateIndexAsJunk($this->entityTypeID, $seedID);
 
 			//region Send event
 			$event = new Main\Event(
@@ -612,7 +623,8 @@ abstract class EntityMerger
 		{
 			$this->processEntityDeletion($entityTypeID, $seedID, $matches);
 		}
-		Integrity\DuplicateIndexBuilder::markAsJunk($entityTypeID, $seedID);
+
+		Integrity\DuplicateManager::markDuplicateIndexAsJunk($entityTypeID, $seedID);
 
 		//region Send event
 		$event = new Main\Event(
@@ -800,7 +812,7 @@ abstract class EntityMerger
 					}
 				}
 				$result['VALUE'] = array_values($multiFieldMap);
-				$result['SOURCE_ENTITY_IDS'] = array_unique($sourceEntityIDs, SORT_NUMERIC);
+				$result['SOURCE_ENTITY_IDS'] = array_values(array_unique($sourceEntityIDs, SORT_NUMERIC));
 			}
 			else
 			{
@@ -1560,6 +1572,38 @@ abstract class EntityMerger
 		return new ConflictResolver\Base($fieldId);
 	}
 
+	protected static function getUserDefinedConflictResolver(int $entityTypeId, string $fieldId, string $type)
+	{
+		$event = new Main\Event(
+			'crm',
+			'onGetFieldConflictResolver',
+			[
+			'entityTypeId' => $entityTypeId,
+			'fieldId' => $fieldId,
+			'type' =>$type
+			]
+		);
+		$event->send();
+		/** @var @var \Bitrix\Main\EventResult $eventResult */
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === Main\EventResult::SUCCESS)
+			{
+				$parameters = $eventResult->getParameters();
+				if (
+					is_array($parameters)
+					&& isset($parameters['conflictResolver'])
+					&& ($parameters['conflictResolver'] instanceof ConflictResolver\Base)
+				)
+				{
+					return $parameters['conflictResolver'];
+				}
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * Merge user fields.
 	 * @param array &$seed Seed entity fields.
@@ -2005,6 +2049,7 @@ abstract class EntityMerger
 							if($typeID === 'file')
 							{
 								$diffValues = self::prepareFileInfos($diffValues);
+								$targ[$fieldID] = self::prepareFileInfos($targ[$fieldID]);
 							}
 							$targ[$fieldID] = array_merge($targ[$fieldID], $diffValues);
 						}
@@ -2016,10 +2061,25 @@ abstract class EntityMerger
 					}
 					else
 					{
-						$value = $seedValues[0];
-						$targ[$fieldID] = $typeID === 'file'
-							? self::prepareFileInfos($value) : $value;
+						if ($typeID === 'file')
+						{
+							$fileInfos = self::prepareFileInfos($seedValues);
+							$targ[$fieldID] = $fileInfos[0];
+						}
+						else
+						{
+							$targ[$fieldID] = $seedValues[0];
+						}
 					}
+				}
+				elseif (
+					empty($seedValues) &&
+					$typeID === 'file'
+				)
+				{
+					// file field value should be empty if it was not changed
+					// in other case value will be deleted in \Bitrix\Main\UserField\Types\FileType::onBeforeSave()
+					unset($targ[$fieldID]);
 				}
 
 				continue;
@@ -2278,7 +2338,14 @@ abstract class EntityMerger
 					? $map[$typeID]['SOURCE_ENTITY_IDS'] : array();
 				if(!in_array($targID, $sourceIDs))
 				{
-					unset($targ[$typeID]);
+					foreach ($fields as $fieldId => $field)
+					{
+						if (!preg_match('/n\d+/', (string)$fieldId)) // if not a new value
+						{
+							$fields[$fieldId]['VALUE'] = ''; // empty value will be removed from DB
+						}
+					}
+
 					continue;
 				}
 			}
@@ -2449,7 +2516,12 @@ abstract class EntityMerger
 	{
 		$results = array();
 
-		foreach(Integrity\DuplicateIndexBuilder::getExistedTypeScopeMap($entityTypeID, $this->userID) as $typeID => $scopes)
+		$existedTypeScopeMap = Integrity\DuplicateManager::getExistedTypeScopeMap(
+			(int)$entityTypeID,
+			(int)$this->userID,
+			$this->isAutomatic()
+		);
+		foreach($existedTypeScopeMap as $typeID => $scopes)
 		{
 			if($typeID === Integrity\DuplicateIndexType::PERSON)
 			{
@@ -2513,14 +2585,29 @@ abstract class EntityMerger
 			{
 				foreach ($matchesByHash as $matches)
 				{
-					$builder = Integrity\DuplicateManager::createIndexBuilder(
-						$typeID,
-						$entityTypeID,
-						$this->userID,
-						$this->enablePermissionCheck,
-						array('SCOPE' => $scope)
-					);
-					$builder->processEntityDeletion(Integrity\DuplicateManager::createCriterion($typeID, $matches), $entityID, $params);
+					$criterion = Integrity\DuplicateManager::createCriterion($typeID, $matches);
+					if ($this->isAutomatic())
+					{
+						$builder = Integrity\DuplicateManager::createAutomaticIndexBuilder(
+							$typeID,
+							$entityTypeID,
+							$this->userID,
+							$this->enablePermissionCheck,
+							array('SCOPE' => $scope)
+						);
+						$criterion->setLimitByAssignedUser(true);
+					}
+					else
+					{
+						$builder = Integrity\DuplicateManager::createIndexBuilder(
+							$typeID,
+							$entityTypeID,
+							$this->userID,
+							$this->enablePermissionCheck,
+							array('SCOPE' => $scope)
+						);
+					}
+					$builder->processEntityDeletion($criterion, $entityID, $params);
 				}
 			}
 		}

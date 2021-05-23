@@ -235,6 +235,12 @@ body {
 
 .bx-placeholder {
 	border-bottom: 15px solid #eef2f4;
+	max-width: none;
+}
+
+.bx-placeholder-wrap {
+	background: #fff;
+	padding-top: 1px;
 }
 
 .pagetitle-container .webform-small-button:last-of-type,

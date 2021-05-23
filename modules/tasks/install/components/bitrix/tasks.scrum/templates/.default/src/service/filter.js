@@ -1,8 +1,6 @@
 import {Dom} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {Plan} from '../view/plan';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 import {RequestSender} from '../utility/request.sender';
-import {Sprint} from '../entity/sprint/sprint';
 
 type ListTypeItem = {
 	NAME: string,
@@ -16,7 +14,6 @@ type ValueTypeField = {
 
 type Params = {
 	filterId: string,
-	scrumManager?: Plan,
 	requestSender?: RequestSender
 }
 
@@ -29,8 +26,9 @@ export class Filter extends EventEmitter
 		this.setEventNamespace('BX.Tasks.Scrum.Filter');
 
 		this.filterId = params.filterId;
-		this.scrumManager = params.scrumManager;
 		this.requestSender = params.requestSender;
+
+		this.searchFieldApplied = false;
 
 		this.initUiFilterManager();
 		this.bindHandlers();
@@ -45,9 +43,12 @@ export class Filter extends EventEmitter
 
 	bindHandlers()
 	{
-		/* eslint-disable */
-		BX.addCustomEvent('BX.Main.Filter:apply', this.onApplyFilter.bind(this));
-		/* eslint-enable */
+		EventEmitter.subscribe('BX.Main.Filter:apply', this.onApplyFilter.bind(this));
+	}
+
+	isSearchFieldApplied(): boolean
+	{
+		return this.searchFieldApplied;
 	}
 
 	getSearchContainer(): HTMLElement
@@ -64,9 +65,20 @@ export class Filter extends EventEmitter
 		}
 	}
 
-	onApplyFilter(filterId, values, filterInstance, promise, params)
+	onApplyFilter(event: BaseEvent)
 	{
-		if (this.filterId !== filterId || !this.scrumManager)
+		const [filterId, values, filterInstance, promise, params] = event.getCompatData();
+
+		if (filterInstance.getSearch().getSearchString())
+		{
+			this.searchFieldApplied = true;
+		}
+		else
+		{
+			this.searchFieldApplied = false;
+		}
+
+		if (this.filterId !== filterId)
 		{
 			return;
 		}
@@ -84,6 +96,11 @@ export class Filter extends EventEmitter
 
 		const fieldInstances = this.filterManager.getField(name);
 		const fieldOptions = this.filterManager.getFieldByName(name);
+
+		if (!fieldInstances || !fieldOptions)
+		{
+			return;
+		}
 
 		fieldInstances.options.ITEMS.push(item);
 		fieldOptions.ITEMS.push(item);
@@ -106,6 +123,24 @@ export class Filter extends EventEmitter
 		filterApi.apply();
 	}
 
+	setValuesToField(values: ValueTypeField[], resetFields = false)
+	{
+		const filterApi = this.filterManager.getApi();
+
+		let filterFieldsValues = {};
+		if (!resetFields)
+		{
+			filterFieldsValues = this.filterManager.getFilterFieldsValues();
+		}
+
+		values.forEach((value) => {
+			filterFieldsValues[value.name] = value.value;
+		});
+
+		filterApi.setFields(filterFieldsValues);
+		filterApi.apply();
+	}
+
 	getValueFromField(value: ValueTypeField): string
 	{
 		const filterFieldsValues = this.filterManager.getFilterFieldsValues();
@@ -115,6 +150,11 @@ export class Filter extends EventEmitter
 	resetFilter()
 	{
 		this.filterManager.resetFilter();
+	}
+
+	applyFilter()
+	{
+		this.filterManager.applyFilter();
 	}
 
 	isNodeInViewport(element: HTMLElement): boolean

@@ -2,11 +2,13 @@
 
 namespace Bitrix\Location\Entity\Format;
 
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\SystemException;
 
 /**
  * Class FieldCollection
  * @package Bitrix\Location\Entity\Format
+ * @internal
  */
 final class FieldCollection extends \Bitrix\Location\Entity\Generic\FieldCollection
 {
@@ -14,19 +16,29 @@ final class FieldCollection extends \Bitrix\Location\Entity\Generic\FieldCollect
 	protected $items = [];
 
 	/**
-	 * @param mixed $item
+	 * Add Format field to collection
+	 * @param Field $field
 	 * @return int
 	 * @throws SystemException
 	 */
-	public function addItem($item)
+	public function addItem($field): int
 	{
-		$result = parent::addItem($item);
+		if(!($field instanceof Field))
+		{
+			throw new ArgumentTypeException('field must be the instance of Field');
+		}
 
+		$result = parent::addItem($field);
+
+		/*
+		 * Sort fields due to sort
+		 * @todo: what about performance?
+		 */
 		usort(
 			$this->items,
 			function (Field $a, Field $b)
 			{
-				if ($a->getSort() == $b->getSort())
+				if ($a->getSort() === $b->getSort())
 				{
 					return 0;
 				}

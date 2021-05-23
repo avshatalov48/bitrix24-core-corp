@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_0"] = "Never";
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_1"] = "Daily";
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_7"] = "Once a week";
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_14"] = "Once every two weeks";
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_30"] = "Once a month";
+$MESS["CRM_DP_AUTOSEARCH_INTERVAL_182"] = "Once every six months";

@@ -37,7 +37,7 @@ class ArraySetting extends Setting
 		}
 
 		$value = Main\Config\Option::get('crm', $this->name, '', '');
-		$this->value = $value !== '' ? unserialize($value) : $this->default;
+		$this->value = $value !== '' ? unserialize($value, ['allowed_classes' => false]) : $this->default;
 		return $this->value;
 	}
 }

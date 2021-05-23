@@ -201,7 +201,270 @@ class EntityAddress
 		];
 	}
 
-	protected static function resetLocationAddressLink($address, $typeID, $entityTypeID, $entityID,
+	private static function prepareLocationAddress(
+		Address $locationAddress,
+		int $typeId, int $entityTypeId, int $entityId,
+		int $prevLocationAddressId
+	) : Address
+	{
+		$locationAddressId = $locationAddress->getId();
+
+		// Processing of the previous location-address, if the identifier is not equal to the current one,
+		// removal of links, if necessary, of the address itself.
+		if ($prevLocationAddressId > 0 && $locationAddressId !== $prevLocationAddressId)
+		{
+			// Check the existence of a location address
+			$prevLocationAddress = Address::load((int)$prevLocationAddressId);
+			if ($prevLocationAddress instanceof Address)
+			{
+				// Clearing links
+				$isPrevLocationAddressessLinksModified = self::cleanLocationAddressLinks(
+					$prevLocationAddress,
+					$typeId, $entityTypeId, $entityId
+				);
+				// If there are no links left, then delete the location-address
+				if (!$prevLocationAddress->hasLinks())
+				{
+					$prevLocationAddress->delete();
+				}
+				else if ($isPrevLocationAddressessLinksModified)
+				{
+					$result = $prevLocationAddress->save();
+					if (!$result->isSuccess())
+					{
+						throw new Main\SystemException(
+							implode(PHP_EOL, $result->getErrorMessages())
+						);
+					}
+				}
+			}
+		}
+
+		// Checking location-address links
+		self::cleanLocationAddressLinks($locationAddress, $typeId, $entityTypeId, $entityId);
+		// If, after verification, links remain, then clone the location-address
+		if ($locationAddress->hasLinks())
+		{
+			$locationAddress->setId(0);
+		}
+
+		// Set link to the current crm-address
+		$linkIdentifier = static::getLocationAddressLinkIndentifier($typeId, $entityTypeId, $entityId);
+		$locationAddress->setLinks(
+			new AddressLinkCollection(
+				[
+					new Address\AddressLink(
+						$linkIdentifier['entityId'],
+						$linkIdentifier['entityType']
+					)
+				]
+			)
+		);
+
+		$result = $locationAddress->save();
+		if (!$result->isSuccess())
+		{
+			throw new Main\SystemException(
+				implode(PHP_EOL, $result->getErrorMessages())
+			);
+		}
+
+		// Clearing lost links and addresses
+		// I did not want to do this in this way, but there are no others yet.
+		// Could be:
+		//   Address\AddressLink::deleteByIdentifiers($linkIdentifier['entityType'], $linkIdentifier['entityId']);
+		/** @var $locationAddress Address */
+		foreach (
+			AddressService::getInstance()->findByLinkedEntity(
+				$linkIdentifier['entityId'],
+				$linkIdentifier['entityType']
+			) as $address
+		)
+		{
+			$modified = false;
+			/** @var $addressLinks Address\AddressLinkCollection */
+			$addressLinks = $address->getLinks();
+			/** @var $link Address\AddressLink */
+			foreach ($addressLinks as $offset => $link)
+			{
+				if ($address->getId() !== $locationAddress->getId()
+					&& $link->getAddressLinkEntityType() === $linkIdentifier['entityType']
+					&& $link->getAddressLinkEntityId() === $linkIdentifier['entityId'])
+				{
+					unset($addressLinks[$offset]);
+					$modified = true;
+				}
+			}
+			if (count($addressLinks) > 0)
+			{
+				if ($modified)
+				{
+					$address->setLinks($addressLinks);
+					$address->save();
+				}
+			}
+			else
+			{
+				$address->delete();
+			}
+		}
+
+		return $locationAddress;
+	}
+
+	/**
+	 * The method removes links that are incorrect or refer to non-existent addresses,
+	 * and links to the crm-address corresponding to the parameters. If unknown links
+	 * are found that do not refer to the address, they will not be deleted
+	 *
+	 * @param Address $locationAddress Location-address where you want to clear links
+	 * @param int $typeId crm-address type
+	 * @param int $entityTypeId The identifier of the CRM entity type that the crm-address belongs to
+	 * @param int $entityId The identifier of the CRM entity that the crm-address belongs to
+	 * @return bool Sign of modification of location-address links
+	 */
+	private static function cleanLocationAddressLinks(
+		Address $locationAddress,
+		int $typeId, int $entityTypeId, int $entityId
+	) : bool
+	{
+		$locationAddressessLinksModified = false;
+
+		$isContactCompanyCompatibility = (
+			$entityTypeId === \CCrmOwnerType::Company
+			|| $entityTypeId === \CCrmOwnerType::Contact
+		);
+
+		$requisite = EntityRequisite::getSingleInstance();
+		$locationAddressessLinks = $locationAddress->getLinks();
+		/** @var $link Address\AddressLink */
+		foreach ($locationAddressessLinks as $offset => $link)
+		{
+			// If the link refers to the current address or to a non-existent entity, then delete
+			$matches = [];
+			if (preg_match('/CRM_(\w+)_ADDRESS/', $link->getAddressLinkEntityType(), $matches))
+			{
+				$removeLink = false;
+				$linkEntityTypeName = $matches[1];
+				$linkEntityTypeId = \CCrmOwnerType::ResolveID($linkEntityTypeName);
+				if ($linkEntityTypeId === \CCrmOwnerType::Lead
+					|| $linkEntityTypeId === \CCrmOwnerType::Requisite)
+				{
+					$matches = [];
+					if (preg_match('/(\d+)\.(\d+)\.(\d+)/', $link->getAddressLinkEntityId(), $matches))
+					{
+						$linkAddrTypeId = (int)$matches[1];
+						$linkAddrEntityTypeId = (int)$matches[2];
+						$linkAddrEntityId = (int)$matches[3];
+						$linkEntityTypeId = 0;
+						$linkEntityId = 0;
+						if ($isContactCompanyCompatibility)
+						{
+							if ($linkAddrEntityTypeId === \CCrmOwnerType::Requisite && $linkAddrEntityId > 0)
+							{
+								$res = $requisite->getList(
+									array(
+										'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+										'filter' => ['=ID' => $linkAddrEntityId]
+									)
+								);
+								if ($row = $res->fetch())
+								{
+									$linkEntityTypeId = (int)$row['ENTITY_TYPE_ID'];
+									$linkEntityId = (int)$row['ENTITY_ID'];
+								}
+								else
+								{
+									$removeLink = true;
+								}
+							}
+							else
+							{
+								$removeLink = true;
+							}
+						}
+						if (EntityAddressType::isDefined($linkAddrTypeId)
+							&& \CCrmOwnerType::IsDefined($linkAddrEntityTypeId)
+							&& $linkAddrEntityId > 0
+							&& ($linkEntityTypeId === \CCrmOwnerType::Undefined
+								|| \CCrmOwnerType::IsDefined($linkEntityTypeId))
+							&& $linkEntityId >= 0)
+						{
+							if (!$removeLink
+								&& $typeId === $linkAddrTypeId
+								&& ($isContactCompanyCompatibility ?
+									$entityTypeId === $linkEntityTypeId :
+									$entityTypeId === $linkAddrEntityTypeId)
+								&& ($isContactCompanyCompatibility ?
+									$entityId === $linkEntityId :
+									$entityId === $linkAddrEntityId))
+							{
+								// Link refers to the current address
+								$removeLink = true;
+							}
+							if (!$removeLink)
+							{
+								// Checking a link to a non-existent entity
+								$checkEntityTypeId = ($isContactCompanyCompatibility ?
+									$linkEntityTypeId : $linkAddrEntityTypeId);
+								$checkEntityId = ($isContactCompanyCompatibility ?
+									$linkEntityId : $linkAddrEntityId);
+								$info = [];
+								if ($checkEntityId <= 0)
+								{
+									$removeLink = true;
+								}
+								else
+								{
+									if ($checkEntityTypeId === \CCrmOwnerType::Requisite)
+									{
+										if (!$requisite->exists($checkEntityId))
+										{
+											$removeLink = true;
+										}
+									}
+									else
+									{
+										if (!\CCrmOwnerType::TryGetInfo($checkEntityTypeId, $checkEntityId, $info))
+										{
+											$removeLink = true;
+										}
+									}
+								}
+								unset($checkEntityTypeId, $checkEntityId);
+							}
+						}
+						else
+						{
+							$removeLink = true;
+						}
+						unset(
+							$linkAddrTypeId, $linkAddrEntityTypeId, $linkAddrEntityId,
+							$linkEntityTypeId, $linkTypeId, $res, $row
+						);
+					}
+					else
+					{
+						$removeLink = true;
+					}
+				}
+				else
+				{
+					$removeLink = true;
+				}
+				if ($removeLink)
+				{
+					unset($locationAddressessLinks[$offset]);
+					$locationAddressessLinksModified = true;
+				}
+			}
+		}
+
+		return $locationAddressessLinksModified;
+	}
+
+	/** @deprecated */
+	protected static function resetLocationAddressLink($address, $typeId, $entityTypeId, $entityId,
 		$prevEntityTypeId = null, $prevEntityId = null)
 	{
 		if (!($address instanceof Address))
@@ -209,62 +472,62 @@ class EntityAddress
 			throw new Main\ArgumentException('Must be instance of '.Address::class, 'address');
 		}
 
-		if(!is_int($entityTypeID))
+		if(!is_int($entityTypeId))
 		{
-			$entityTypeID = (int)$entityTypeID;
+			$entityTypeId = (int)$entityTypeId;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!\CCrmOwnerType::IsDefined($entityTypeId))
 		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
+			throw new Main\ArgumentOutOfRangeException('entityTypeId',
 				\CCrmOwnerType::FirstOwnerType,
 				\CCrmOwnerType::LastOwnerType
 			);
 		}
 
-		if(!is_int($entityID))
+		if(!is_int($entityId))
 		{
-			$entityID = (int)$entityID;
+			$entityId = (int)$entityId;
 		}
 
-		if($entityID <= 0)
+		if($entityId <= 0)
 		{
-			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
+			throw new Main\ArgumentException('Must be greater than zero', 'entityId');
 		}
 
-		if(!is_int($typeID))
+		if(!is_int($typeId))
 		{
-			$typeID = (int)$typeID;
+			$typeId = (int)$typeId;
 		}
 
-		$linkIdentifier = static::getLocationAddressLinkIndentifier($typeID, $entityTypeID, $entityID);
-		$prevLinkIdentifier = null;
+		$linkIdentifier = static::getLocationAddressLinkIndentifier($typeId, $entityTypeId, $entityId);
+		$linkIdentifierInDB = null;
 		if ($prevEntityTypeId > 0 && $prevEntityId > 0)
 		{
-			$prevLinkIdentifier = static::getLocationAddressLinkIndentifier($typeID, $prevEntityTypeId, $prevEntityId);
+			$linkIdentifierInDB = static::getLocationAddressLinkIndentifier($typeId, $prevEntityTypeId, $prevEntityId);
 		}
-		/** @var $links Address\AddressLink[] */
-		$links = $address->getLinks();
-		$linksCount = count($links);
-		if ($linksCount === 0)
+		/** @var $addressLinks Address\AddressLink[] */
+		$addressLinks = $address->getLinks();
+		$addressLinksCount = count($addressLinks);
+		if ($addressLinksCount === 0)
 		{
 			$address->addLink($linkIdentifier['entityId'], $linkIdentifier['entityType']);
 		}
-		else if ($linksCount === 1)
+		else if ($addressLinksCount === 1)
 		{
-			$prevLinkEntityId = $links[0]->getAddressLinkEntityId();
+			$prevLinkEntityId = $addressLinks[0]->getAddressLinkEntityId();
 			$linkEntityId = $linkIdentifier['entityId'];
 			$targetLinkIdentifier = null;
-			if ($prevLinkIdentifier)
+			if ($linkIdentifierInDB)
 			{
-				$isEntityTypeAreDifferent = ($links[0]->getAddressLinkEntityType() !== $prevLinkIdentifier['entityType']);
-				$isEntityIdAreDifferent = ($links[0]->getAddressLinkEntityId() !== $prevLinkIdentifier['entityId']);
-				$targetLinkIdentifier = $prevLinkIdentifier;
+				$isEntityTypeAreDifferent = ($addressLinks[0]->getAddressLinkEntityType() !== $linkIdentifierInDB['entityType']);
+				$isEntityIdAreDifferent = ($addressLinks[0]->getAddressLinkEntityId() !== $linkIdentifierInDB['entityId']);
+				$targetLinkIdentifier = $linkIdentifierInDB;
 			}
 			else
 			{
-				$isEntityTypeAreDifferent = ($links[0]->getAddressLinkEntityType() !== $linkIdentifier['entityType']);
-				$isEntityIdAreDifferent = ($links[0]->getAddressLinkEntityId() !== $linkIdentifier['entityId']);
+				$isEntityTypeAreDifferent = ($addressLinks[0]->getAddressLinkEntityType() !== $linkIdentifier['entityType']);
+				$isEntityIdAreDifferent = ($addressLinks[0]->getAddressLinkEntityId() !== $linkIdentifier['entityId']);
 				$targetLinkIdentifier = $linkIdentifier;
 			}
 			$prevIdComponents = [];
@@ -294,8 +557,8 @@ class EntityAddress
 			if ($isEntityTypeAreDifferent || $isEntityIdAreDifferent && !$isOnlyAddressTypeDifferent)
 			{
 				throw new Main\SystemException(
-					'Location address has incorrect link "'.$links[0]->getAddressLinkEntityType().', '.
-					$links[0]->getAddressLinkEntityId().'". Must be "'.$targetLinkIdentifier['entityType'].', '.
+					'Location address has incorrect link "'.$addressLinks[0]->getAddressLinkEntityType().', '.
+					$addressLinks[0]->getAddressLinkEntityId().'". Must be "'.$targetLinkIdentifier['entityType'].', '.
 					$targetLinkIdentifier['entityId'].'".', 1010
 				);
 			}
@@ -604,7 +867,7 @@ class EntityAddress
 	}
 
 	/**
-    * @deprecated Old functionality
+	* @deprecated Old functionality
 	*
 	* @return int
 	*/
@@ -695,72 +958,14 @@ class EntityAddress
 		return $result;
 	}
 
-	private static function checkNeedForCompatibleRegister($addressFields)
+	private static function isAddressExists($addressFields) : bool
 	{
-		$result = true;
+		$result = false;
 
-		if (static::isEmpty($addressFields))
-		{
-			$isAddressExists = false;
-			$address = new self();
-			if ($addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company
-				|| $addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
-			{
-				$res = $address->getList(
-					[
-						'filter' => [
-							'TYPE_ID' => $addressFields['TYPE_ID'],
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-							'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-							'ANCHOR_ID' => $addressFields['ENTITY_ID'],
-							'IS_DEF' => 1
-						],
-						'select' => ['TYPE_ID'],
-						'limit' => 1
-					]
-				);
-			}
-			else
-			{
-				$res = AddressTable::getByPrimary(
-					[
-						'ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-						'ENTITY_ID' => $addressFields['ENTITY_ID'],
-						'TYPE_ID' => $addressFields['TYPE_ID']
-					],
-					['select' => ['TYPE_ID']]
-				);
-			}
-			$row = $res->fetch();
-			if (is_array($row))
-			{
-				$isAddressExists = true;
-			}
-
-			if (!$isAddressExists)
-			{
-				$result = false;
-				if (isset($addressFields['LOC_ADDR_ID']) && $addressFields['LOC_ADDR_ID'] > 0)
-				{
-					static::deleteLocationAddress((int)$addressFields['LOC_ADDR_ID']);
-				}
-			}
-		}
-
-		return $result;
-	}
-
-	private static function applyCompatibility(array $addressFields)
-	{
-		$result = $addressFields;
-
+		$address = new self();
 		if ($addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company
 			|| $addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
 		{
-			$requisite = EntityRequisite::getSingleInstance();
-			$isDefaultRequisite = true;
-			$requisiteId = 0;
-			$address = new self();
 			$res = $address->getList(
 				[
 					'filter' => [
@@ -770,134 +975,175 @@ class EntityAddress
 						'ANCHOR_ID' => $addressFields['ENTITY_ID'],
 						'IS_DEF' => 1
 					],
-					'select' => ['ENTITY_ID'],
+					'select' => ['TYPE_ID'],
 					'limit' => 1
 				]
 			);
-			$row = $res->fetch();
-			if (is_array($row) && isset($row['ENTITY_ID']))
+		}
+		else
+		{
+			$res = AddressTable::getByPrimary(
+				[
+					'ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
+					'ENTITY_ID' => $addressFields['ENTITY_ID'],
+					'TYPE_ID' => $addressFields['TYPE_ID']
+				],
+				['select' => ['TYPE_ID']]
+			);
+		}
+		$row = $res->fetch();
+		if (is_array($row))
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	private static function applyCompatibility(array $addressFields)
+	{
+		$result = $addressFields;
+
+		$requisite = EntityRequisite::getSingleInstance();
+		$isDefaultRequisite = true;
+		$requisiteId = 0;
+		$address = new self();
+		$res = $address->getList(
+			[
+				'filter' => [
+					'TYPE_ID' => $addressFields['TYPE_ID'],
+					'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+					'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
+					'ANCHOR_ID' => $addressFields['ENTITY_ID'],
+					'IS_DEF' => 1
+				],
+				'select' => ['ENTITY_ID'],
+				'limit' => 1
+			]
+		);
+		$row = $res->fetch();
+		if (is_array($row) && isset($row['ENTITY_ID']))
+		{
+			$requisiteId = (int)$row['ENTITY_ID'];
+			if (!$requisite->exists($requisiteId))
 			{
-				$requisiteId = (int)$row['ENTITY_ID'];
-				if (!$requisite->exists($requisiteId))
-				{
-					$requisiteId = 0;
-				}
+				$requisiteId = 0;
 			}
-			if ($requisiteId <= 0)
+		}
+		if ($requisiteId <= 0)
+		{
+			$settings = $requisite->loadSettings($addressFields['ENTITY_TYPE_ID'], $addressFields['ENTITY_ID']);
+			if (is_array($settings))
 			{
-				$settings = $requisite->loadSettings($addressFields['ENTITY_TYPE_ID'], $addressFields['ENTITY_ID']);
-				if (is_array($settings))
+				if (isset($settings['REQUISITE_ID_SELECTED']) && $settings['REQUISITE_ID_SELECTED'] > 0)
 				{
-					if (isset($settings['REQUISITE_ID_SELECTED']) && $settings['REQUISITE_ID_SELECTED'] > 0)
+					$defRequisiteId = (int)$settings['REQUISITE_ID_SELECTED'];
+					if ($requisite->exists($defRequisiteId))
 					{
-						$defRequisiteId = (int)$settings['REQUISITE_ID_SELECTED'];
-						if ($requisite->exists($defRequisiteId))
-						{
-							$requisiteId = $defRequisiteId;
-						}
+						$requisiteId = $defRequisiteId;
 					}
 				}
-				unset($settings, $defRequisiteId);
 			}
-			if ($requisiteId <= 0)
+			unset($settings, $defRequisiteId);
+		}
+		if ($requisiteId <= 0)
+		{
+			$isDefaultRequisite = false;
+			$res = $requisite->getList(
+				array(
+					'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
+					'select' => ['ID'],
+					'filter' => [
+						'=ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
+						'=ENTITY_ID' => $addressFields['ENTITY_ID']
+					],
+					'limit' => 1
+				)
+			);
+			if ($row = $res->fetch())
 			{
-				$isDefaultRequisite = false;
-				$res = $requisite->getList(
-					array(
-						'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
-						'select' => ['ID'],
-						'filter' => [
-							'=ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-							'=ENTITY_ID' => $addressFields['ENTITY_ID']
-						],
-						'limit' => 1
-					)
-				);
-				if ($row = $res->fetch())
-				{
-					$requisiteId = (int)$row['ID'];
-				}
+				$requisiteId = (int)$row['ID'];
 			}
-			if ($requisiteId <= 0)
+		}
+		if ($requisiteId <= 0)
+		{
+			$presetId = EntityRequisite::getDefaultPresetId($addressFields['ENTITY_TYPE_ID']);
+			$requisiteAddResult = $requisite->add(
+				array(
+					'ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
+					'ENTITY_ID' => $addressFields['ENTITY_ID'],
+					'PRESET_ID' => $presetId,
+					'NAME' => \CCrmOwnerType::GetCaption(
+						$addressFields['ENTITY_TYPE_ID'],
+						$addressFields['ENTITY_ID'],
+						false
+					),
+					'SORT' => 500,
+					'ACTIVE' => 'Y',
+					'ADDRESS_ONLY' => 'Y'
+				)
+			);
+			if($requisiteAddResult->isSuccess())
 			{
-				$presetId = EntityRequisite::getDefaultPresetId($addressFields['ENTITY_TYPE_ID']);
-				$requisiteAddResult = $requisite->add(
-					array(
-						'ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
-						'ENTITY_ID' => $addressFields['ENTITY_ID'],
-						'PRESET_ID' => $presetId,
-						'NAME' => \CCrmOwnerType::GetCaption(
-							$addressFields['ENTITY_TYPE_ID'],
-							$addressFields['ENTITY_ID'],
-							false
-						),
-						'SORT' => 500,
-						'ACTIVE' => 'Y',
-						'ADDRESS_ONLY' => 'Y'
-					)
+				$requisiteId = (int)$requisiteAddResult->getId();
+			}
+			else
+			{
+				throw new Main\SystemException(
+					'Cannot create a '.mb_strtolower(\CCrmOwnerType::ResolveName($addressFields['ENTITY_TYPE_ID'])).
+					' details item (ID: '.$addressFields['ENTITY_ID'].'})'
 				);
-				if($requisiteAddResult->isSuccess())
+			}
+		}
+		if (!$isDefaultRequisite)
+		{
+			EntityRequisite::setDef(
+				$addressFields['ENTITY_TYPE_ID'],
+				$addressFields['ENTITY_ID'],
+				$requisiteId,
+				0,
+				true
+			);
+		}
+		$result['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
+		$result['ENTITY_ID'] = $requisiteId;
+		$result['ANCHOR_TYPE_ID'] = $addressFields['ENTITY_TYPE_ID'];
+		$result['ANCHOR_ID'] = $addressFields['ENTITY_ID'];
+		// Modify address link
+		if (isset($addressFields['LOC_ADDR_ID']) && $addressFields['LOC_ADDR_ID'] > 0)
+		{
+			$locationAddress = Address::load((int)$addressFields['LOC_ADDR_ID']);
+			if ($locationAddress instanceof Address)
+			{
+				$addressLinks = $locationAddress->getLinks();
+				$isLinksModified = false;
+				/** @var $link Address\AddressLink */
+				foreach ($addressLinks as $offset => $link)
 				{
-					$requisiteId = (int)$requisiteAddResult->getId();
-				}
-				else
-				{
-					throw new Main\SystemException(
-						'Cannot create a '.mb_strtolower(\CCrmOwnerType::ResolveName($addressFields['ENTITY_TYPE_ID'])).
-						' details item (ID: '.$addressFields['ENTITY_ID'].'})'
+					$prevLinkIdentifier = static::getLocationAddressLinkIndentifier(
+						$addressFields['TYPE_ID'],
+						$addressFields['ENTITY_TYPE_ID'],
+						$addressFields['ENTITY_ID']
 					);
+					$linkIdentifier = static::getLocationAddressLinkIndentifier(
+						$result['TYPE_ID'],
+						$result['ENTITY_TYPE_ID'],
+						$result['ENTITY_ID']
+					);
+					if ($link->getAddressLinkEntityType() === $prevLinkIdentifier['entityType']
+						&& $link->getAddressLinkEntityId() === $prevLinkIdentifier['entityId'])
+					{
+						$addressLinks[$offset] = new Address\AddressLink(
+							$linkIdentifier['entityId'],
+							$linkIdentifier['entityType']
+						);
+						$isLinksModified = true;
+					}
 				}
-			}
-			if (!$isDefaultRequisite)
-			{
-				EntityRequisite::setDef(
-					$addressFields['ENTITY_TYPE_ID'],
-					$addressFields['ENTITY_ID'],
-					$requisiteId,
-					0,
-					true
-				);
-			}
-			$result['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
-			$result['ENTITY_ID'] = $requisiteId;
-			$result['ANCHOR_TYPE_ID'] = $addressFields['ENTITY_TYPE_ID'];
-			$result['ANCHOR_ID'] = $addressFields['ENTITY_ID'];
-			// Modify address link
-			if (isset($addressFields['LOC_ADDR_ID']) && $addressFields['LOC_ADDR_ID'] > 0)
-			{
-				$locationAddress = Address::load((int)$addressFields['LOC_ADDR_ID']);
-				if ($locationAddress instanceof Address)
+				if ($isLinksModified)
 				{
-					$addressLinks = $locationAddress->getLinks();
-					$isLinksModified = false;
-					/** @var $link Address\AddressLink */
-					foreach ($addressLinks as $offset => $link)
-					{
-						$prevLinkIdentifier = static::getLocationAddressLinkIndentifier(
-							$addressFields['TYPE_ID'],
-							$addressFields['ENTITY_TYPE_ID'],
-							$addressFields['ENTITY_ID']
-						);
-						$linkIdentifier = static::getLocationAddressLinkIndentifier(
-							$result['TYPE_ID'],
-							$result['ENTITY_TYPE_ID'],
-							$result['ENTITY_ID']
-						);
-						if ($link->getAddressLinkEntityType() === $prevLinkIdentifier['entityType']
-							&& $link->getAddressLinkEntityId() === $prevLinkIdentifier['entityId'])
-						{
-							$addressLinks[$offset] = new Address\AddressLink(
-								$linkIdentifier['entityId'],
-								$linkIdentifier['entityType']
-							);
-							$isLinksModified = true;
-						}
-					}
-					if ($isLinksModified)
-					{
-						$locationAddress->setLinks($addressLinks);
-						$locationAddress->save();
-					}
+					$locationAddress->setLinks($addressLinks);
+					$locationAddress->save();
 				}
 			}
 		}
@@ -950,9 +1196,6 @@ class EntityAddress
 		$isContactCompanyCompatibility = ($entityTypeID === \CCrmOwnerType::Company
 			|| $entityTypeID === \CCrmOwnerType::Contact);
 
-		$isDef = $isContactCompanyCompatibility || ($entityTypeID === \CCrmOwnerType::Requisite && isset($data['IS_DEF'])
-				&& ($data['IS_DEF'] === true || $data['IS_DEF'] === 'Y' || $data['IS_DEF'] === '1'));
-
 		if (isset($data['LANGUAGE_ID']) && is_string($data['LANGUAGE_ID']) && mb_strlen($data['LANGUAGE_ID']) === 2)
 		{
 			$languageId = $data['LANGUAGE_ID'];
@@ -962,159 +1205,99 @@ class EntityAddress
 			$languageId = static::getDefaultLanguageId();
 		}
 
-		// Previous location address
-		$prevAddressId = 0;
+		//region Get previous location address info
+		$prevLocationAddressId = 0;
 		$prevIsDef = false;
-		$prevEntityTypeId = null;
-		$prevEntityId = null;
 		if ($isContactCompanyCompatibility)
 		{
 			$res = AddressTable::getList(
-				['filter' => [
-					'=TYPE_ID' => $typeID,
-					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-					'=ANCHOR_TYPE_ID' => $entityTypeID,
-					'=ANCHOR_ID' => $entityID,
-					'=IS_DEF' => 1
-				]]
+				[
+					'filter' => [
+						'=TYPE_ID' => $typeID,
+						'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+						'=ANCHOR_TYPE_ID' => $entityTypeID,
+						'=ANCHOR_ID' => $entityID,
+						'=IS_DEF' => 1
+					],
+					'limit' => 1
+				]
 			);
 		}
 		else
 		{
 			$res = AddressTable::getList(
-				['filter' => [
-					'=TYPE_ID' => $typeID,
-					'=ENTITY_TYPE_ID' => $entityTypeID,
-					'=ENTITY_ID' => $entityID
-				]]
+				[
+					'filter' => [
+						'=TYPE_ID' => $typeID,
+						'=ENTITY_TYPE_ID' => $entityTypeID,
+						'=ENTITY_ID' => $entityID
+					]
+				]
 			);
 		}
 		if ($row = $res->fetch())
 		{
-			$prevAddressId = (int)$row['LOC_ADDR_ID'];
+			$prevLocationAddressId = (int)$row['LOC_ADDR_ID'];
 			$prevIsDef = (bool)$row['IS_DEF'];
-			$prevEntityTypeId = (int)$row['ENTITY_TYPE_ID'];
-			$prevEntityId = (int)$row['ENTITY_ID'];
 		}
 		unset($res, $row);
+		//endregion Previous location address info
+
+		$isDef = (
+			$prevIsDef || $isContactCompanyCompatibility
+			|| ($entityTypeID === \CCrmOwnerType::Requisite && isset($data['IS_DEF'])
+				&& ($data['IS_DEF'] === true || $data['IS_DEF'] === 'Y' || $data['IS_DEF'] === '1'))
+		);
+		unset($prevIsDef);
 
 		/** @var $locationAddress Address */
 		$locationAddress = null;
-		$isLocationAddressLost = false;
-		if (static::isLocationModuleIncluded()
-			&& isset($data['LOC_ADDR'])
-			&& $data['LOC_ADDR'] instanceof Address)
+		if (static::isLocationModuleIncluded())
 		{
-			$addr = $data['LOC_ADDR'];
-			static::resetLocationAddressLink(
-				$addr,
-				$typeID,
-				$entityTypeID,
-				$entityID,
-				$prevEntityTypeId,
-				$prevEntityId
-			);
-			if ($addr->save()->isSuccess())
+			if (isset($data['LOC_ADDR']) && $data['LOC_ADDR'] instanceof Address)
 			{
-				$locationAddress = $addr;
-			}
-			unset($addr);
-		}
-		if (static::isLocationModuleIncluded()
-			&& !$locationAddress
-			&& isset($data['LOC_ADDR_ID']) && $data['LOC_ADDR_ID'] > 0)
-		{
-			$addr = Address::load((int)$data['LOC_ADDR_ID']);
-			if ($addr instanceof Address)
-			{
-				try
-				{
-					static::resetLocationAddressLink(
-						$addr,
-						$typeID,
-						$entityTypeID,
-						$entityID,
-						$prevEntityTypeId,
-						$prevEntityId
-					);
-				}
-				catch (Main\SystemException $e)
-				{
-					if ($isContactCompanyCompatibility && $e->getCode() === 1010)
-					{
-						$isLocationAddressLost = true;
-					}
-					else
-					{
-						throw $e;
-					}
-				}
-				if ($isLocationAddressLost)
-				{
-					$addr->setId(0);
-					$linkIdentifier = static::getLocationAddressLinkIndentifier($typeID, $entityTypeID, $entityID);
-					$addr->setLinks(
-						new AddressLinkCollection(
-							[
-								new Address\AddressLink(
-									$linkIdentifier['entityId'],
-									$linkIdentifier['entityType']
-								)
-							]
-						)
-					);
-					unset($linkIdentifier);
-					if ($addr->save()->isSuccess())
-					{
-						$locationAddress = $addr;
-					}
-					unset($addr);
-				}
-				else
-				{
-					$locationAddress = $addr;
-				}
-			}
-			unset($addr);
-		}
-
-		if (!$isLocationAddressLost && static::isLocationModuleIncluded() && $prevAddressId > 0)
-		{
-			if ($locationAddress)
-			{
-				if ($prevAddressId !== $locationAddress->getId())
-				{
-					static::deleteLocationAddress($prevAddressId);
-				}
+				$locationAddress = static::prepareLocationAddress(
+					$data['LOC_ADDR'],
+					$typeID, $entityTypeID, $entityID,
+					$prevLocationAddressId
+				);
+				$data = array_replace($data, static::getFieldsByLocationAddress($locationAddress));
 			}
 			else
 			{
-				$addr = Address::load($prevAddressId);
-				if ($addr instanceof Address)
+				$locationAddressId = 0;
+				if (isset($data['LOC_ADDR_ID']) && $data['LOC_ADDR_ID'] > 0)
 				{
-					$locationAddress = $addr;
+					$locationAddressId = (int)$data['LOC_ADDR_ID'];
 				}
-				unset($addr);
-			}
-		}
-		unset($prevAddressId);
-
-		if ($locationAddress
-			&& ($isContactCompanyCompatibility
-				|| isset($options['updateLocationAddress']) && $options['updateLocationAddress']))
-		{
-			if (static::updateLocationAddressFields($locationAddress, $data))
-			{
-				if (!$locationAddress->save()->isSuccess())
+				if ($locationAddressId <= 0 && $prevLocationAddressId > 0)
 				{
-					$locationAddress = null;
+					$locationAddressId = $prevLocationAddressId;
+					$prevLocationAddressId = 0;
 				}
+				if ($locationAddressId > 0)
+				{
+					$addr = Address::load($locationAddressId);
+					if ($addr instanceof Address)
+					{
+						if (static::isSet($data))
+						{
+							static::updateLocationAddressFields($addr, $data);
+						}
+						else
+						{
+							$data = array_replace($data, static::getFieldsByLocationAddress($addr));
+						}
+						$locationAddress = static::prepareLocationAddress(
+							$addr,
+							$typeID, $entityTypeID, $entityID,
+							$prevLocationAddressId
+						);
+					}
+					unset($addr);
+				}
+				unset($locationAddressId);
 			}
-		}
-
-		if ($locationAddress)
-		{
-			$data = static::getFieldsByLocationAddress($locationAddress);
 		}
 
 		$country = isset($data['COUNTRY']) ? $data['COUNTRY'] : '';
@@ -1138,30 +1321,30 @@ class EntityAddress
 			'PROVINCE' => isset($data['PROVINCE']) ? $data['PROVINCE'] : '',
 			'COUNTRY' => $country,
 			'COUNTRY_CODE' => $countryCode,
-			'LOC_ADDR_ID' => ($locationAddress && isset($data['LOC_ADDR_ID'])) ? (int)$data['LOC_ADDR_ID'] : 0,
-			'IS_DEF' => $prevIsDef
+			'LOC_ADDR_ID' => $locationAddress ? $locationAddress->getId() : 0,
+			'IS_DEF' => $isDef
 		);
 
-		if (!$locationAddress)
+		if (!static::isEmpty($fields) || self::isAddressExists($fields))
 		{
-			if (static::isLocationModuleIncluded())
+			if (!$locationAddress && static::isLocationModuleIncluded())
 			{
-				$locationAddress = static::getLocationAddressByFields($fields, $languageId);
-				static::resetLocationAddressLink($locationAddress, $typeID, $entityTypeID, $entityID, $prevEntityTypeId, $prevEntityId);
+				$addr = static::getLocationAddressByFields($fields, $languageId);
+				if ($addr instanceof Address)
+				{
+					$locationAddress = static::prepareLocationAddress(
+						$addr,
+						$typeID, $entityTypeID, $entityID,
+						$prevLocationAddressId
+					);
+				}
+				$fields['LOC_ADDR_ID'] = $locationAddress ? $locationAddress->getId() : 0;
 			}
-			if (static::isLocationModuleIncluded() && $locationAddress && $locationAddress->save()->isSuccess())
-			{
-				$fields['LOC_ADDR_ID'] = $locationAddress->getId();
-			}
-			else
-			{
-				$fields['LOC_ADDR_ID'] = 0;
-			}
-		}
 
-		if (self::checkNeedForCompatibleRegister($fields))
-		{
-			$fields = self::applyCompatibility($fields);
+			if ($isContactCompanyCompatibility)
+			{
+				$fields = self::applyCompatibility($fields);
+			}
 
 			AddressTable::upsert($fields);
 			if ($isDef)
@@ -1173,6 +1356,10 @@ class EntityAddress
 			$event = new Main\Event('crm', 'OnAfterAddressRegister', array('fields' => $fields));
 			$event->send();
 			//endregion Send event
+		}
+		else if (isset($fields['LOC_ADDR_ID']) && $fields['LOC_ADDR_ID'] > 0)
+		{
+			static::deleteLocationAddress((int)$fields['LOC_ADDR_ID']);
 		}
 	}
 	public static function unregister($entityTypeID, $entityID, $typeID)
@@ -1376,6 +1563,37 @@ class EntityAddress
 			);
 		}
 		return self::$typeInfos;
+	}
+
+	/**
+	 * Check if address fields are set
+	 * @param array $fields
+	 * @return bool
+	 */
+	public static function isSet(array $fields): bool
+	{
+		$dataFields = [
+			'ADDRESS_1',
+			'ADDRESS_2',
+			'CITY',
+			'POSTAL_CODE',
+			'REGION',
+			'PROVINCE',
+			'COUNTRY',
+		];
+
+		$result = false;
+
+		foreach ($dataFields as $fieldName)
+		{
+			if (array_key_exists($fieldName, $fields))
+			{
+				$result = true;
+				break;
+			}
+		}
+
+		return $result;
 	}
 
 	/**

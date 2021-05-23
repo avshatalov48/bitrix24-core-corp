@@ -9,6 +9,7 @@ use Sale\Handlers\Delivery\YandexTaxi\Api\Api;
 use Sale\Handlers\Delivery\YandexTaxi\Api\RequestEntity\TariffsOptions;
 use Sale\Handlers\Delivery\YandexTaxi\Common\RegionCoordinatesMapper;
 use Sale\Handlers\Delivery\YandexTaxi\Common\RegionFinder;
+use Sale\Handlers\Delivery\YandexTaxi\TariffsChecker;
 
 Loc::loadMessages(__FILE__);
 
@@ -27,17 +28,22 @@ class YandexTaxi extends Base
 	/** @var RegionCoordinatesMapper */
 	private $regionCoordinatesMapper;
 
+	/** @var TariffsChecker */
+	private $tariffsChecker;
+
 	/**
 	 * YandexTaxi constructor.
 	 * @param Api $api
 	 * @param RegionFinder $regionFinder
 	 * @param RegionCoordinatesMapper $regionCoordinatesMapper
+	 * @param TariffsChecker $tariffsChecker
 	 */
-	public function __construct(Api $api, RegionFinder $regionFinder, RegionCoordinatesMapper $regionCoordinatesMapper)
+	public function __construct(Api $api, RegionFinder $regionFinder, RegionCoordinatesMapper $regionCoordinatesMapper, TariffsChecker $tariffsChecker)
 	{
 		$this->api = $api;
 		$this->regionFinder = $regionFinder;
 		$this->regionCoordinatesMapper = $regionCoordinatesMapper;
+		$this->tariffsChecker = $tariffsChecker;
 	}
 
 	/**
@@ -99,13 +105,11 @@ class YandexTaxi extends Base
 				return $validationResult->addError(new Error('Unexpected region'));
 			}
 
-			$tariffsResult = $this->api->getTariffs(
-				(new TariffsOptions)->setStartPoint(
-					$this->regionCoordinatesMapper->getRegionCoordinates($currentRegion)
-				)
+			$availableTariffs = $this->tariffsChecker->getAvailableTariffs(
+				$this->regionCoordinatesMapper->getRegionCoordinates($currentRegion)
 			);
 
-			if (!$tariffsResult->isSuccess())
+			if (is_null($availableTariffs))
 			{
 				return $validationResult->addError(
 					new Error(
@@ -114,7 +118,7 @@ class YandexTaxi extends Base
 				);
 			}
 
-			if (!in_array('express', $tariffsResult->getTariffs()))
+			if (empty($availableTariffs))
 			{
 				return $validationResult->addError(
 					new Error(

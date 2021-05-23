@@ -30,9 +30,6 @@ class CommentReader
 	 *
 	 * @param int $taskId
 	 * @param int $commentId
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected function __construct(int $taskId, int $commentId)
 	{
@@ -46,9 +43,6 @@ class CommentReader
 	 * @param int $taskId
 	 * @param int $commentId
 	 * @return static
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function getInstance(int $taskId, int $commentId = 0): self
 	{
@@ -59,22 +53,12 @@ class CommentReader
 		return self::$instances[$taskId];
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
 	private function fillData(): void
 	{
 		$this->fillTaskData();
 		$this->fillCommentData();
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
 	private function fillTaskData(): void
 	{
 		if (!$this->taskId)
@@ -155,7 +139,7 @@ class CommentReader
 			[$code, $replaces] = $part;
 			switch ($code)
 			{
-				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE':
+				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE_V2':
 				case 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2':
 					foreach ($this->members as $member)
 					{
@@ -184,6 +168,7 @@ class CommentReader
 					break;
 
 				case 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2':
+				case 'COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS':
 					$rolesToSkip = [
 						MemberTable::MEMBER_TYPE_RESPONSIBLE,
 						MemberTable::MEMBER_TYPE_ACCOMPLICE,
@@ -205,6 +190,7 @@ class CommentReader
 					break;
 
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_V2':
+				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_NO_MEMBERS_V2':
 					$members = $this->getMembersByRole();
 					$createdBy = current($members[MemberTable::MEMBER_TYPE_ORIGINATOR]);
 					$responsibleMembers = array_merge(
@@ -320,6 +306,38 @@ class CommentReader
 		}
 
 		return array_intersect_key(static::$userNames, array_flip($users));
+	}
+
+	/**
+	 * Checks if comment contains codes from $codes (all codes from $codes if $all).
+	 *
+	 * @param array $codes
+	 * @param bool $all
+	 * @return bool
+	 */
+	public function isContainCodes(array $codes, bool $all = false): bool
+	{
+		$commentCodes = [];
+
+		foreach ($this->comment->getData() as $part)
+		{
+			if (!is_array($part) || empty($part))
+			{
+				continue;
+			}
+
+			[$code, ] = $part;
+			$commentCodes[] = $code;
+		}
+
+		if ($all)
+		{
+			$intersection = array_intersect($commentCodes, $codes);
+
+			return (!empty($intersection) && count($intersection) === count($codes));
+		}
+
+		return !empty(array_intersect($commentCodes, $codes));
 	}
 
 	/**

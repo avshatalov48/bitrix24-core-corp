@@ -22,6 +22,10 @@ class CAllCrmActivity
 	//const UF_WEBDAV_FIELD_NAME = 'UF_CRM_ACTIVITY_WDAV';
 	const COMMUNICATION_TABLE_ALIAS = 'AC';
 
+	private const COMPRESS_DESCRIPTION_PREFIX = '@gzcompressed@:';
+	private const COMPRESS_DESCRIPTION_PREFIX_LENGTH = 15; //strlen(self::COMPRESS_DESCRIPTION_PREFIX);
+	private const COMPRESS_DESCRIPTION_MIN_LENGTH = 256;
+
 	private static $FIELDS = null;
 	private static $FIELD_INFOS = null;
 	private static $COMM_FIELD_INFOS = null;
@@ -117,12 +121,21 @@ class CAllCrmActivity
 		}
 
 		self::NormalizeDateTimeFields($arFields);
+
+		//$description = $arFields['DESCRIPTION'];
+		//if ($description && !empty($options['COMPRESS_DESCRIPTION']))
+		//{
+		//	$arFields['DESCRIPTION'] = static::compressDescription($arFields['DESCRIPTION']);
+		//}
+
 		$ID = $DB->Add(CCrmActivity::TABLE_NAME, $arFields, array('DESCRIPTION', 'STORAGE_ELEMENT_IDS', 'SETTINGS', 'PROVIDER_PARAMS', 'PROVIDER_DATA'));
 		if(is_string($ID) && $ID !== '')
 		{
 			//MS SQL RETURNS STRING INSTEAD INT
 			$ID = intval($ID);
 		}
+
+		//$arFields['DESCRIPTION'] = $description;
 
 		if($ID === false)
 		{
@@ -139,8 +152,8 @@ class CAllCrmActivity
 		}
 
 		$arFields['ID'] = $ID;
-		$arFields['SETTINGS'] = isset($arFields['SETTINGS']) ? unserialize($arFields['SETTINGS']) : array();
-		$arFields['PROVIDER_PARAMS'] = isset($arFields['PROVIDER_PARAMS']) ? unserialize($arFields['PROVIDER_PARAMS']) : array();
+		$arFields['SETTINGS'] = isset($arFields['SETTINGS']) ? unserialize($arFields['SETTINGS'], ['allowed_classes' => false]) : array();
+		$arFields['PROVIDER_PARAMS'] = isset($arFields['PROVIDER_PARAMS']) ? unserialize($arFields['PROVIDER_PARAMS'], ['allowed_classes' => false]) : array();
 
 		CCrmActivity::DoSaveElementIDs($ID, $arFields['STORAGE_TYPE_ID'], $storageElementIDs);
 
@@ -504,8 +517,8 @@ class CAllCrmActivity
 			));
 		}
 
-		$arFields['SETTINGS'] = isset($arFields['SETTINGS']) ? unserialize($arFields['SETTINGS']) : array();
-		$arFields['PROVIDER_PARAMS'] = isset($arFields['PROVIDER_PARAMS']) ? unserialize($arFields['PROVIDER_PARAMS']) : array();
+		$arFields['SETTINGS'] = isset($arFields['SETTINGS']) ? unserialize($arFields['SETTINGS'], ['allowed_classes' => false]) : array();
+		$arFields['PROVIDER_PARAMS'] = isset($arFields['PROVIDER_PARAMS']) ? unserialize($arFields['PROVIDER_PARAMS'], ['allowed_classes' => false]) : array();
 
 		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 
@@ -2026,10 +2039,13 @@ class CAllCrmActivity
 		//Ignore RESTRICT_BY_IDS. We can not apply filter by activity ID for Lead, Deal, Contact or Company
 		unset($permOptions['RESTRICT_BY_IDS']);
 
-		$entitiesSql[strval(CCrmOwnerType::Lead)] = CCrmLead::BuildPermSql($aliasPrefix, $permType, $permOptions);
-		$entitiesSql[strval(CCrmOwnerType::Deal)] = CCrmDeal::BuildPermSql($aliasPrefix, $permType, $permOptions);
-		$entitiesSql[strval(CCrmOwnerType::Contact)] = CCrmContact::BuildPermSql($aliasPrefix, $permType, $permOptions);
-		$entitiesSql[strval(CCrmOwnerType::Company)] = CCrmCompany::BuildPermSql($aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Lead] = CCrmLead::BuildPermSql($aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Deal] = CCrmDeal::BuildPermSql($aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Contact] = CCrmContact::BuildPermSql($aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Company] = CCrmCompany::BuildPermSql($aliasPrefix, $permType, $permOptions);
+		$entitiesSql[(string)CCrmOwnerType::Order] =
+			CCrmPerms::BuildSql(CCrmOwnerType::OrderName, $aliasPrefix, $permType, $permOptions);
+
 		//Invoice does not have activities
 		//$entitiesSql[strval(CCrmOwnerType::Invoice)] = CCrmInvoice::BuildPermSql($aliasPrefix, $permType, $permOptions);
 
@@ -2037,7 +2053,7 @@ class CAllCrmActivity
 		{
 			if(!is_string($entitySql))
 			{
-				//If $entityPermSql is not string - acces denied. Clear permission SQL and related records will be ignored.
+				//If $entityPermSql is not string - access denied. Clear permission SQL and related records will be ignored.
 				unset($entitiesSql[$entityTypeID]);
 				continue;
 			}
@@ -2866,7 +2882,7 @@ class CAllCrmActivity
 		{
 			if($enableSettings)
 			{
-				$arRes['ENTITY_SETTINGS'] = isset($arRes['ENTITY_SETTINGS']) && $arRes['ENTITY_SETTINGS'] !== '' ? unserialize($arRes['ENTITY_SETTINGS']) : array();
+				$arRes['ENTITY_SETTINGS'] = isset($arRes['ENTITY_SETTINGS']) && $arRes['ENTITY_SETTINGS'] !== '' ? unserialize($arRes['ENTITY_SETTINGS'], ['allowed_classes' => false]) : array();
 			}
 			else
 			{
@@ -2925,7 +2941,7 @@ class CAllCrmActivity
 
 			if(isset($comm['ENTITY_SETTINGS']))
 			{
-				$settings = unserialize($comm['ENTITY_SETTINGS']);
+				$settings = unserialize($comm['ENTITY_SETTINGS'], ['allowed_classes' => false]);
 			}
 			else
 			{
@@ -3098,7 +3114,7 @@ class CAllCrmActivity
 						'SHOW_URL' => CCrmOwnerType::GetEntityShowPath($entityTypeID, $entityID, false)
 					);
 
-					$settings = isset($comm['ENTITY_SETTINGS']) ? unserialize($comm['ENTITY_SETTINGS']) : array();
+					$settings = isset($comm['ENTITY_SETTINGS']) ? unserialize($comm['ENTITY_SETTINGS'], ['allowed_classes' => false]) : array();
 					if(empty($settings))
 					{
 						$customComm = array('ENTITY_ID' => $entityID, 'ENTITY_TYPE_ID' => $entityTypeID);
@@ -3559,7 +3575,7 @@ class CAllCrmActivity
 		}
 		elseif(is_string($field) && $field !== '')
 		{
-			$result = unserialize($field);
+			$result = unserialize($field, ['allowed_classes' => false]);
 		}
 		else
 		{
@@ -4080,7 +4096,7 @@ class CAllCrmActivity
 				{
 					if($remindData !== '')
 					{
-						$remindData = unserialize($remindData);
+						$remindData = unserialize($remindData, ['allowed_classes' => false]);
 					}
 
 					if(!is_array($remindData))
@@ -4567,6 +4583,11 @@ class CAllCrmActivity
 					$template = CSite::GetNameFormat(false);
 					$oldText = CUser::FormatName($template, $arOldUser);
 					$newText = CUser::FormatName($template, $arNewUser);
+				}
+				elseif($fieldName === 'LOCATION' && \Bitrix\Main\Loader::includeModule('calendar'))
+				{
+					$oldText = \CCalendar::GetTextLocation($oldText);
+					$newText = \CCalendar::GetTextLocation($newText);
 				}
 			}
 		}
@@ -7063,6 +7084,26 @@ class CAllCrmActivity
 		}
 	}
 
+	public static function compressDescription(string $description): string
+	{
+		if (!function_exists('gzcompress') || !isset($description[self::COMPRESS_DESCRIPTION_MIN_LENGTH]))
+		{
+			return $description;
+		}
+
+		return self::COMPRESS_DESCRIPTION_PREFIX . gzcompress($description, 9);
+	}
+
+	public static function uncompressDescription(string $compressed): string
+	{
+		if (!function_exists('gzuncompress') || strpos($compressed, self::COMPRESS_DESCRIPTION_PREFIX) !== 0)
+		{
+			return $compressed;
+		}
+		$result = gzuncompress(substr($compressed, self::COMPRESS_DESCRIPTION_PREFIX_LENGTH));
+
+		return $result !== false ? $result : $compressed;
+	}
 }
 
 class CCrmActivityType
@@ -7916,18 +7957,23 @@ class CCrmActivityDbResult extends CDBResult
 		{
 			if(array_key_exists('SETTINGS', $result))
 			{
-				$result['SETTINGS'] = is_string($result['SETTINGS']) ? unserialize($result['SETTINGS']) : array();
+				$result['SETTINGS'] = is_string($result['SETTINGS']) ? unserialize($result['SETTINGS'], ['allowed_classes' => false]) : array();
 			}
 
 			if(array_key_exists('PROVIDER_PARAMS', $result))
 			{
-				$result['PROVIDER_PARAMS'] = is_string($result['PROVIDER_PARAMS']) ? unserialize($result['PROVIDER_PARAMS']) : array();
+				$result['PROVIDER_PARAMS'] = is_string($result['PROVIDER_PARAMS']) ? unserialize($result['PROVIDER_PARAMS'], ['allowed_classes' => false]) : array();
 			}
 
 			if($this->selectCommunications)
 			{
 				$result['COMMUNICATIONS'] = CCrmActivity::GetCommunications($result['ID']);
 			}
+
+			//if (!empty($result['DESCRIPTION']))
+			//{
+			//	$result['DESCRIPTION'] = \CCrmActivity::uncompressDescription($result['DESCRIPTION']);
+			//}
 		}
 		return $result;
 	}

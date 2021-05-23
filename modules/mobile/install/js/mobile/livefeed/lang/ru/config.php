@@ -47,6 +47,7 @@ $MESS["MOBILE_EXT_LIVEFEED_ALERT_ERROR_POST_NOT_FOUND_TEXT"] = "Запись н�
 $MESS["MOBILE_EXT_LIVEFEED_ALERT_ERROR_BUTTON"] = "Вернуться";
 $MESS["MOBILE_EXT_LIVEFEED_POST_MENU_PINNED_Y"] = "Открепить";
 $MESS["MOBILE_EXT_LIVEFEED_POST_MENU_PINNED_N"] = "Закрепить";
+$MESS["MOBILE_EXT_LIVEFEED_USERS_LIST_TITLE"] = "Пользователи";
 $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE"] = "Пост был закреплён";
 $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION"] = "Теперь он находится вверху ленты";
 $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON"] = "отменить";

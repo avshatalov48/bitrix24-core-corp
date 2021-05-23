@@ -5,11 +5,12 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Utility\SprintRanges;
-use Bitrix\Tasks\Util\Calendar as TaskCalendar;
-use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
+use Bitrix\Tasks\Util;
 
 class SprintService implements Errorable
 {
@@ -39,6 +40,9 @@ class SprintService implements Errorable
 			if ($result->isSuccess())
 			{
 				$sprint->setId($result->getId());
+
+				$pushService = new PushService();
+				$pushService->sendAddSprintEvent($sprint);
 			}
 			else
 			{
@@ -61,17 +65,22 @@ class SprintService implements Errorable
 
 			if ($result->isSuccess())
 			{
+				$pushService = new PushService();
+				$pushService->sendUpdateSprintEvent($sprint);
+
 				return true;
 			}
 			else
 			{
 				$this->setErrors($result, self::ERROR_COULD_NOT_UPDATE_SPRINT);
+
 				return false;
 			}
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_UPDATE_SPRINT));
+
 			return false;
 		}
 	}
@@ -87,11 +96,8 @@ class SprintService implements Errorable
 
 			if ($result->isSuccess())
 			{
-				$kanbanService->addTasksToKanban($sprint->getId(), $sprint->getTaskIds());
-				if ($kanbanService->getErrors())
-				{
-					$this->errorCollection->add($kanbanService->getErrors());
-				}
+				$pushService = new PushService();
+				$pushService->sendUpdateSprintEvent($sprint);
 			}
 			else
 			{
@@ -117,6 +123,9 @@ class SprintService implements Errorable
 			$sprint->setSort(0);
 
 			$result = EntityTable::update($sprint->getId(), $sprint->getFieldsToUpdateEntity());
+
+			$pushService = new PushService();
+			$pushService->sendUpdateSprintEvent($sprint);
 
 			if (!$result->isSuccess())
 			{
@@ -154,7 +163,7 @@ class SprintService implements Errorable
 			]);
 			if ($sprintData = $queryObject->fetch())
 			{
-				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+				$sprint = EntityTable::createEntityObject($sprintData);
 				if ($itemService)
 				{
 					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
@@ -197,9 +206,10 @@ class SprintService implements Errorable
 	 *
 	 * @param int $groupId Scrum group id.
 	 * @param ItemService|null $itemService Item service object, if you need to fill with items.
+	 * @param Filter|null $filterInstance
 	 * @return EntityTable []
 	 */
-	public function getSprintsByGroupId(int $groupId, ItemService $itemService = null): array
+	public function getSprintsByGroupId(int $groupId, ItemService $itemService = null, $filterInstance = null): array
 	{
 		$sprints = [];
 
@@ -214,11 +224,14 @@ class SprintService implements Errorable
 			]);
 			while ($sprintData = $queryObject->fetch())
 			{
-				$sprint = EntityTable::createEntityObject();
+				$sprint = EntityTable::createEntityObject($sprintData);
 
-				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+				$shouldGetItems = (
+					!$sprint->isCompletedSprint() ||
+					($filterInstance && $filterInstance->isSearchFieldApplied())
+				);
 
-				if ($itemService)
+				if ($itemService && $shouldGetItems)
 				{
 					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
 				}
@@ -257,9 +270,7 @@ class SprintService implements Errorable
 			]);
 			while ($sprintData = $queryObject->fetch())
 			{
-				$sprint = EntityTable::createEntityObject();
-
-				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+				$sprint = EntityTable::createEntityObject($sprintData);
 
 				if ($itemService)
 				{
@@ -300,7 +311,7 @@ class SprintService implements Errorable
 			]);
 			if ($sprintData = $queryObject->fetch())
 			{
-				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+				$sprint = EntityTable::createEntityObject($sprintData);
 			}
 		}
 		catch (\Exception $exception)
@@ -324,7 +335,7 @@ class SprintService implements Errorable
 			]);
 			if ($sprintData = $queryObject->fetch())
 			{
-				$sprint = $this->fillSprintObjectByTableData($sprint, $sprintData);
+				$sprint = EntityTable::createEntityObject($sprintData);
 			}
 		}
 		catch (\Exception $exception)
@@ -342,17 +353,22 @@ class SprintService implements Errorable
 			$result = EntityTable::delete($sprint->getId());
 			if ($result->isSuccess())
 			{
+				$pushService = new PushService();
+				$pushService->sendRemoveSprintEvent($sprint);
+
 				return true;
 			}
 			else
 			{
 				$this->setErrors($result, self::ERROR_COULD_NOT_REMOVE_SPRINT);
+
 				return false;
 			}
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_REMOVE_SPRINT));
+
 			return false;
 		}
 	}
@@ -414,38 +430,56 @@ class SprintService implements Errorable
 	 * The method returns object with info about the time sprint days of the sprint.
 	 *
 	 * @param EntityTable $sprint
-	 * @param TaskCalendar $calendar
+	 * @param Util\Calendar $calendar
 	 * @return SprintRanges
 	 * @throws \Bitrix\Main\ArgumentTypeException
 	 */
-	public function getSprintRanges(EntityTable $sprint, TaskCalendar $calendar): SprintRanges
+	public function getSprintRanges(EntityTable $sprint, Util\Calendar $calendar): SprintRanges
 	{
 		$info = [
 			'all' => [],
 			'weekdays' => [],
-			'weekendInfo' => []
+			'weekendInfo' => [],
+			'currentWeekDay' => 0,
 		];
 
 		$start = (new \DateTime())->setTimestamp($sprint->getDateStart()->getTimestamp());
 		$end = (new \DateTime())->setTimestamp($sprint->getDateEnd()->getTimestamp());
 
+		$currentDateTime = new \Datetime();
+
 		$period = new \DatePeriod($start, new \DateInterval('P1D'), $end);
-		$dayNumber = 0;
+		$weekDayNumber = 0;
 		foreach ($period as $key => $value)
 		{
+			$dayNumber = $key + 1;
 			$value->add(new \DateInterval('PT9H'));
-			if ($calendar->isWeekend(TasksDateTime::createFromTimestamp($value->getTimestamp())))
+			if ($calendar->isWeekend(Util\Type\DateTime::createFromTimestamp($value->getTimestamp())))
 			{
-				$info['weekendInfo'][$key + 1] = [
-					'weekendNumber' => $key + 1,
-					'previousWeekday' => ($dayNumber ? $dayNumber : 1)
+				$info['weekendInfo'][$dayNumber] = [
+					'weekendNumber' => $dayNumber,
+					'previousWeekday' => ($weekDayNumber ? $weekDayNumber : 1)
 				];
 			}
 			else
 			{
-				$info['weekdays'][++$dayNumber] = $value->getTimestamp();
+				$weekDayNumber = $dayNumber;
+				$info['weekdays'][$dayNumber] = $value->getTimestamp();
+
+				$weekDayRange = [
+					'start' => strtotime('today', $value->getTimestamp()),
+					'end' => strtotime('tomorrow', $value->getTimestamp()) - 1,
+				];
+				$currentDayRange = [
+					'start' => strtotime('today', $currentDateTime->getTimestamp()),
+					'end' => strtotime('tomorrow', $currentDateTime->getTimestamp()) - 1,
+				];
+				if ($this->isTimeOverlapping($weekDayRange, $currentDayRange))
+				{
+					$info['currentWeekDay'] = $dayNumber;
+				}
 			}
-			$info['all'][$key + 1] = $value->getTimestamp();
+			$info['all'][$dayNumber] = $value->getTimestamp();
 		}
 
 		$sprintRanges = new SprintRanges();
@@ -453,6 +487,7 @@ class SprintService implements Errorable
 		$sprintRanges->setAllDays($info['all']);
 		$sprintRanges->setWeekdays($info['weekdays']);
 		$sprintRanges->setWeekendInfo($info['weekendInfo']);
+		$sprintRanges->setCurrentWeekDay($info['currentWeekDay']);
 
 		return $sprintRanges;
 	}
@@ -500,34 +535,28 @@ class SprintService implements Errorable
 		{
 			foreach ($taskCompleteTimeDayRanges as $completedTaskId => $taskCompleteTimeDayRange)
 			{
-				$isOverlapping = (
-					(
-						$sprintDayRange['start'] <= $taskCompleteTimeDayRange['end'] &&
-						$sprintDayRange['start'] >= $taskCompleteTimeDayRange['start']
-					) ||
-					(
-						$sprintDayRange['end'] <= $taskCompleteTimeDayRange['end'] &&
-						$sprintDayRange['end'] >= $taskCompleteTimeDayRange['start']
-					)
-				);
-				if ($isOverlapping)
+				if ($this->isTimeOverlapping($sprintDayRange, $taskCompleteTimeDayRange))
 				{
 					$mapCompletedTasks[$dayNumber][] = $completedTaskId;
 				}
 			}
 		}
 
-		$maxDayNumber = count($sprintRanges->getWeekdays());
-		foreach ($mapCompletedTasks as $dayNumber => $completedTasks)
-		{
-			if ($dayNumber > $maxDayNumber)
-			{
-				$mapCompletedTasks[$maxDayNumber] = array_merge($mapCompletedTasks[$maxDayNumber], $completedTasks);
-				unset($mapCompletedTasks[$dayNumber]);
-			}
-		}
-
 		return $mapCompletedTasks;
+	}
+
+	private function isTimeOverlapping(array $firstRange, array $secondRange): bool
+	{
+		return (
+			(
+				$firstRange['start'] <= $secondRange['end'] &&
+				$firstRange['start'] >= $secondRange['start']
+			)
+			|| (
+				$firstRange['end'] <= $secondRange['end'] &&
+				$firstRange['end'] >= $secondRange['start']
+			)
+		);
 	}
 
 	public function getCompletedStoryPointsMap(
@@ -554,6 +583,38 @@ class SprintService implements Errorable
 		return $mapCompletedStoryPoints;
 	}
 
+	/**
+	 * The method returns an array of data in the required format for the client app.
+	 *
+	 * @param EntityTable $sprint Data object.
+	 * @return array
+	 */
+	public function getSprintData(EntityTable $sprint): array
+	{
+		$info = $sprint->getInfo();
+
+		return [
+			'id' => $sprint->getId(),
+			'tmpId' => $sprint->getTmpId(),
+			'name' => $sprint->getName(),
+			'sort' => $sprint->getSort(),
+			'dateStart' => $sprint->getDateStart()->getTimestamp(),
+			'dateEnd' => $sprint->getDateEnd()->getTimestamp(),
+			'weekendDaysTime' => $this->getWeekendDaysTime($sprint),
+			'totalStoryPoints' => $sprint->getStoryPoints(),
+			'totalCompletedStoryPoints' => '',
+			'totalUncompletedStoryPoints' => '',
+			'completedTasks' => 0,
+			'uncompletedTasks' => 0,
+			'status' => $sprint->getStatus(),
+			'numberTasks' => 0,
+			'items' => [],
+			'views' => [],
+			'info' => $info->getInfoData(),
+			'isExactSearchApplied' => 'N'
+		];
+	}
+
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
@@ -564,36 +625,22 @@ class SprintService implements Errorable
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
-	private function fillSprintObjectByTableData(EntityTable $sprint, array $sprintData): EntityTable
-	{
-		$sprint->setId($sprintData['ID']);
-		$sprint->setGroupId($sprintData['GROUP_ID']);
-		$sprint->setEntityType($sprintData['ENTITY_TYPE']);
-		$sprint->setName($sprintData['NAME']);
-		if ($sprintData['SORT'])
-		{
-			$sprint->setSort($sprintData['SORT']);
-		}
-		$sprint->setCreatedBy($sprintData['CREATED_BY']);
-		$sprint->setModifiedBy($sprintData['MODIFIED_BY']);
-		if ($sprintData['DATE_START'])
-		{
-			$sprint->setDateStart($sprintData['DATE_START']);
-		}
-		if ($sprintData['DATE_END'])
-		{
-			$sprint->setDateEnd($sprintData['DATE_END']);
-		}
-		$sprint->setStatus($sprintData['STATUS']);
-		if ($sprintData['INFO'])
-		{
-			$sprint->setInfo($sprintData['INFO']);
-		}
-		return $sprint;
-	}
-
 	private function setErrors(Result $result, string $code): void
 	{
 		$this->errorCollection->setError(new Error(implode('; ', $result->getErrorMessages()), $code));
+	}
+
+	private function getWeekendDaysTime(EntityTable $sprint): int
+	{
+		try
+		{
+			$calendar = new Util\Calendar();
+			$sprintRanges = $this->getSprintRanges($sprint, $calendar);
+			$amountOfDays = count($sprintRanges->getWeekendInfo());
+			return ($amountOfDays * 86400);
+		}
+		catch (Exception $exception) {}
+
+		return 0;
 	}
 }

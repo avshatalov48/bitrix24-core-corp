@@ -27,13 +27,14 @@
 	/*-webkit-box-align: stretch;*/
 	/*-ms-flex-align: stretch;*/
 	/*align-items: stretch;*/
-	height: 34px;
+	min-height: 34px;
 	box-sizing: border-box;
+	right: auto
 }
 
 .tasks-scrum-actions-panel-btn {
 	position: relative;
-	height: 18px;
+	padding: 1px 0;
 	box-sizing: border-box;
 	cursor: pointer;
 	white-space: nowrap;
@@ -112,8 +113,8 @@
 	content: '';
 	display: block;
 	position: absolute;
-	top: 0;
-	bottom: 0;
+	top: 8px;
+	bottom: 8px;
 	left: 13px;
 	width: 1px;
 	background-color: #e3e4e7;

@@ -218,11 +218,13 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 		$calendarDateTo = \CCalendar::Date(mktime(0, 0, 0, date("m") + 2, 0, date("Y")), false);
 	}
 
+	$dealCount = COption::GetOptionInt('crm', 'deal_calendar_count_limit', 3000);
+	$dealCount = $dealCount > 0 ? $dealCount : 3000;
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal.list',
 		'calendar',
 		array(
-			'DEAL_COUNT' => '3000',
+			'DEAL_COUNT' => $dealCount,
 			'INTERNAL_SORT' => ['id' => 'asc'],
 			'IS_RECURRING' => $arResult['IS_RECURRING'],
 			'PATH_TO_DEAL_RECUR_SHOW' => $arResult['PATH_TO_DEAL_RECUR_SHOW'],
@@ -249,6 +251,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 				'CALENDAR_DATE_TO' => $calendarDateTo,
 				'CALENDAR_FIELD' => $filterSelect
 			),
+			'CALENDAR_MODE' => 'Y',
 			'CALENDAR_MODE_LIST' => $modeList,
 			'ENABLE_BIZPROC' => 'N'
 		),

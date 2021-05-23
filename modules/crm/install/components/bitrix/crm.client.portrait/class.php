@@ -442,7 +442,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 		{
 			$this->manualTargetOptions = \Bitrix\Main\Config\Option::get('crm', 'portrait_'.mb_strtolower($this->getEntityType()));
 			if ($this->manualTargetOptions !== '')
-				$this->manualTargetOptions = unserialize($this->manualTargetOptions);
+				$this->manualTargetOptions = unserialize($this->manualTargetOptions, ['allowed_classes' => false]);
 
 			if (!is_array($this->manualTargetOptions))
 				$this->manualTargetOptions = array();

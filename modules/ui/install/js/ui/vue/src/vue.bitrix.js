@@ -688,7 +688,7 @@ class BitrixVue
 let Vue;
 let VueVendor;
 
-if (typeof exports !== 'undefined' && ('Vue' in exports))
+if (typeof exports !== 'undefined' && typeof exports.Vue !== 'undefined')
 {
 	Vue = exports.Vue;
 	VueVendor = exports.VueVendor;

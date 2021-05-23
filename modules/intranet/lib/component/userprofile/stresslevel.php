@@ -39,7 +39,7 @@ class StressLevel implements \Bitrix\Main\Errorable
 	{
 		$result = [
 			'AVAILABLE' => (
-				Option::get('intranet', 'stresslevel_available', 'Y') == 'Y'
+				Option::get('intranet', 'stresslevel_available', 'Y') === 'Y'
 				&& (
 					!Loader::includeModule('bitrix24')
 					|| \Bitrix\Bitrix24\Release::isAvailable('stresslevel')

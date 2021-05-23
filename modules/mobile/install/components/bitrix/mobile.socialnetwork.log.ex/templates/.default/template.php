@@ -6,11 +6,14 @@
 /** @global CDatabase $DB */
 /** @global CMain $APPLICATION */
 
-use \Bitrix\Main\Data\AppCacheManifest;
-use \Bitrix\Main\Page\Asset;
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\UI;
+use Bitrix\Main\Data\AppCacheManifest;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Page\AssetMode;
+use Bitrix\Main\Loader;
+use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
+
+$mobileContext = new \Bitrix\Mobile\Context();
 
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.ex/templates/.default/mobile_files.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.ex/templates/.default/script_attached.js");
@@ -26,37 +29,40 @@ if (
 )
 {
 	$APPLICATION->AddHeadScript("/bitrix/components/bitrix/voting.uf/templates/.default/script.js");
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
 }
 else if (IsModuleInstalled("vote"))
 {
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH.'/components/bitrix/voting.current/.userfield/style.css').'" type="text/css" rel="stylesheet" />');
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH.'/components/bitrix/voting.current/.userfield/style.css').'" type="text/css" rel="stylesheet" />');
 }
 
 if ($arParams["EMPTY_PAGE"] === "Y")
 {
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/rating.vote/templates/like_react/style.css').'" type="text/css" rel="stylesheet" />');
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/icons/base/ui.icons.base.css').'" type="text/css" rel="stylesheet" />');
-	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/icons/b24/ui.icons.b24.css').'" type="text/css" rel="stylesheet" />');
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/rating.vote/templates/like_react/style.css').'" type="text/css" rel="stylesheet" />');
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/icons/base/ui.icons.base.css').'" type="text/css" rel="stylesheet" />');
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/icons/b24/ui.icons.b24.css').'" type="text/css" rel="stylesheet" />');
 }
 
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/log_mobile.js");
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/bizproc_mobile.js");
 $APPLICATION->SetUniqueJS('live_feed_mobile');
 $APPLICATION->SetUniqueCSS('live_feed_mobile');
-CUtil::InitJSCore(array('date', 'ls', 'fx', 'comment_aux', 'content_view'));
+
+$coreExtList = [ 'date', 'ls', 'fx', 'comment_aux', 'content_view' ];
+if (Loader::includeModule('tasks'))
+{
+	$coreExtList[] = 'tasks';
+	$coreExtList[] = 'tasks_util_query';
+}
+CUtil::InitJSCore($coreExtList);
 
 UI\Extension::load([
 	'mobile.livefeed',
 	'mobile.diskfile',
 	'ui.buttons',
-	'main.rating'
+	'main.rating',
+	'ui.livefeed.background'
 ]);
-
-if (Loader::includeModule('tasks'))
-{
-	CUtil::InitJSCore(array('tasks', 'tasks_util_query'));
-}
 
 if (!empty($arResult['TARGET']))
 {
@@ -71,7 +77,7 @@ else
 {
 	if (
 		$arParams["LOG_ID"] <= 0
-		&& $arParams["EMPTY_PAGE"] != "Y"
+		&& $arParams["EMPTY_PAGE"] !== "Y"
 		&& !$arResult["AJAX_CALL"]
 	)
 	{
@@ -89,6 +95,7 @@ else
 	AppCacheManifest::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
 	AppCacheManifest::getInstance()->addAdditionalParam("UserID", $arResult['currentUserId']);
 	AppCacheManifest::getInstance()->addAdditionalParam("version", "v8");
+	AppCacheManifest::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
 
 	?><script>
 		BX.message({
@@ -105,13 +112,12 @@ else
 	</script><?
 
 	if (
-		$arParams["EMPTY_PAGE"] != "Y"
+		$arParams["EMPTY_PAGE"] !== "Y"
 		&& !$arResult["AJAX_CALL"]
 		&& !$arResult["RELOAD"]
-		&& intval($arParams["GROUP_ID"]) <= 0
-		&& intval($arParams["LOG_ID"]) <= 0
-		&& $_REQUEST["empty_get_comments"] != "Y"
-		&& $_REQUEST["empty_get_comments"] != "Y"
+		&& (int)$arParams["GROUP_ID"] <= 0
+		&& (int)$arParams["LOG_ID"] <= 0
+		&& $_REQUEST["empty_get_comments"] !== "Y"
 	)
 	{
 		?><script>
@@ -155,7 +161,7 @@ else
 		if ($arResult["RELOAD_JSON"])
 		{
 			CJSCore::Init(array("fc"), false);
-			Asset::getInstance()->startTarget('livefeed_ajax', \Bitrix\Main\Page\AssetMode::STANDARD);
+			Asset::getInstance()->startTarget('livefeed_ajax', AssetMode::STANDARD);
 		}
 		?><script>
 			var bGlobalReload = true;
@@ -232,7 +238,14 @@ else
 			bShowExpertMode: <?=($arResult["SHOW_EXPERT_MODE"] === "Y" ? "true" : "false")?>,
 			bExpertMode: <?=($arResult["EXPERT_MODE"] === "Y" ? "true" : "false")?>,
 			ftMinTokenSize: <?=(int)$arResult["ftMinTokenSize"]?>,
-			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>'
+			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
+			destinationToAllDeny: <?=($arResult["bDenyToAll"]) ? 'true' : 'false'?>,
+			destinationToAllDefault: <?=($arResult["bDefaultToAll"]) ? 'true' : 'false'?>,
+			backgroundImagesData: <?=CUtil::PhpToJSObject($arResult["BACKGROUND_IMAGES_DATA"])?>,
+			backgroundCommon: <?=CUtil::PhpToJSObject($arResult["BACKGROUND_COMMON"])?>,
+			medalsList: <?=CUtil::PhpToJSObject($arResult["MEDALS_LIST"])?>,
+			importantData: <?=CUtil::PhpToJSObject($arResult["IMPORTANT_DATA"])?>,
+			postFormData: <?=CUtil::PhpToJSObject($arResult["POST_FORM_DATA"])?>
 		};
 
 		BX.ready(function() {
@@ -453,7 +466,7 @@ else
 
 	if ($arParams["NEW_LOG_ID"] <= 0)
 	{
-		?><div class="feed-add-post-button" style="" id="feed-add-post-button" onclick="app.exec('showPostForm', oMSL.showNewPostForm());"></div><?
+		?><div class="feed-add-post-button" id="feed-add-post-button"></div><?
 		?><div class="lenta-wrapper" id="lenta_wrapper"><?
 			?><div class="post-comment-block-scroll post-comment-block-scroll-top" style="" id="post-scroll-button-top" onclick="oMSL.scrollTo('top');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?
 			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom" style="" id="post-scroll-button-bottom" onclick="oMSL.scrollTo('bottom');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><? // scroll
@@ -522,6 +535,7 @@ else
 		AppCacheManifest::getInstance()->addAdditionalParam("MobileAPIVersion", CMobile::getApiVersion());
 		AppCacheManifest::getInstance()->addAdditionalParam("MobilePlatform", CMobile::getPlatform());
 		AppCacheManifest::getInstance()->addAdditionalParam("version", "v6");
+		AppCacheManifest::getInstance()->addAdditionalParam("MobileModuleVersion", $mobileContext->version);
 
 		?><div class="post-wrap" id="lenta_item"><?
 			?><div id="post_log_id" data-log-id="" data-ts="" style="display: none;"></div><?
@@ -645,9 +659,6 @@ else
 		$res = array(
 			'ERROR_MESSAGE' => Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND')
 		);
-
-		if(CModule::IncludeModule("compression"))
-			CCompress::DisableCompression();
 
 		CMain::FinalActions(CUtil::PhpToJSObject($res));
 		die();
@@ -785,9 +796,6 @@ else
 				$res["COUNTER_SERVER_TIME_UNIX"] = $arResult["COUNTER_SERVER_TIME_UNIX"];
 			}
 
-			if(CModule::IncludeModule("compression"))
-				CCompress::DisableCompression();
-
 			CMain::FinalActions(CUtil::PhpToJSObject($res));
 			die();
 		}
@@ -923,7 +931,7 @@ else
 					}
 
 					Asset::getInstance()->stopTarget('livefeed_ajax');
-					$resources = \Bitrix\Main\Page\Asset::getInstance()->getAssetInfo('livefeed_ajax', \Bitrix\Main\Page\AssetMode::STANDARD);
+					$resources = Asset::getInstance()->getAssetInfo('livefeed_ajax', AssetMode::STANDARD);
 					$files1 = array(
 						"FULL_FILE_LIST" => array(),
 						"FILE_TIMESTAMPS" => array(),
@@ -1035,18 +1043,12 @@ else
 						$res["COUNTER_SERVER_TIME_UNIX"] = $arResult["COUNTER_SERVER_TIME_UNIX"];
 					}
 
-					if(CModule::IncludeModule("compression"))
-						CCompress::DisableCompression();
-
 					CMain::FinalActions(CUtil::PhpToJSObject($res));
 					die();
 				});
 			}
 			else
 			{
-				if(CModule::IncludeModule("compression"))
-					CCompress::DisableCompression();
-
 				CMain::FinalActions();
 				die();
 			}
@@ -1062,7 +1064,7 @@ else
 
 	if (
 		$arParams["LOG_ID"] <= 0
-		&& $arParams["EMPTY_PAGE"] != "Y"
+		&& $arParams["EMPTY_PAGE"] !== "Y"
 		&& !$arResult["AJAX_CALL"]
 	)
 	{

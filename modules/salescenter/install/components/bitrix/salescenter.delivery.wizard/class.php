@@ -50,7 +50,7 @@ class SalesCenterDeliveryWizard extends CBitrixComponent
 			),
 		];
 
-		if ($restHandlerCode && $handler->isRestHandler())
+		if ($restHandlerCode)
 		{
 			$this->arResult['restHandler'] = Services\Manager::getRestHandlerList()[$restHandlerCode];
 

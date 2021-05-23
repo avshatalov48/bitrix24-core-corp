@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,rest_client,ui_notification,main_loader,salescenter_component_stageBlock_send,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,Tile,salescenter_manager,currency,ui_dropdown,ui_common,ui_alerts,main_core_events,main_popup,ui_vue_vuex,ui_vue,DeliverySelector,salescenter_component_stageBlock_smsMessage,main_core,salescenter_component_stageBlock,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,TimeLineItem) {
+(function (exports,rest_client,ui_notification,main_loader,salescenter_component_stageBlock_send,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,Tile,salescenter_manager,catalog_productForm,currency,ui_dropdown,ui_common,ui_alerts,main_popup,main_core_events,ui_vue_vuex,ui_vue,DeliverySelector,salescenter_component_stageBlock_smsMessage,main_core,salescenter_component_stageBlock,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,TimeLineItem) {
 	'use strict';
 
 	DeliverySelector = DeliverySelector && DeliverySelector.hasOwnProperty('default') ? DeliverySelector['default'] : DeliverySelector;
@@ -100,6 +100,7 @@ this.BX = this.BX || {};
 	        showPaySystemSettingBanner: false,
 	        selectedProducts: [],
 	        basket: [],
+	        basketVersion: 0,
 	        propertyValues: [],
 	        deliveryExtraServicesValues: [],
 	        expectedDelivery: null,
@@ -107,6 +108,7 @@ this.BX = this.BX || {};
 	        personTypeId: null,
 	        deliveryId: null,
 	        delivery: null,
+	        isEnabledSubmit: false,
 	        errors: [],
 	        total: {
 	          sum: null,
@@ -120,168 +122,49 @@ this.BX = this.BX || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      return {
-	        refreshBasket: function refreshBasket(_ref, payload) {
-	          var commit = _ref.commit,
-	              dispatch = _ref.dispatch,
-	              state = _ref.state;
-
-	          if (this.updateTimer) {
-	            clearTimeout(this.updateTimer);
-	          }
-
-	          this.updateTimer = setTimeout(function () {
-	            var currentProcessingId = Math.random() * 100000;
-	            commit('setProcessingId', currentProcessingId);
-	            BX.ajax.runAction("salescenter.api.order.refreshBasket", {
-	              data: {
-	                basketItems: state.basket
-	              }
-	            }).then(function (result) {
-	              if (currentProcessingId === state.processingId) {
-	                var data = BX.prop.getObject(result, "data", {});
-	                dispatch('processRefreshRequest', {
-	                  total: BX.prop.getObject(data, "total", {
-	                    sum: 0,
-	                    discount: 0,
-	                    result: 0,
-	                    resultNumeric: 0
-	                  }),
-	                  basket: BX.prop.get(data, "items", [])
-	                });
-
-	                if (payload && payload.onsuccess) {
-	                  payload.onsuccess();
-	                }
-	              }
-	            }).catch(function (result) {
-	              if (currentProcessingId === state.processingId) {
-	                var data = BX.prop.getObject(result, "data", {});
-	                dispatch('processRefreshRequest', {
-	                  errors: BX.prop.get(result, "errors", []),
-	                  basket: BX.prop.get(data, "items", [])
-	                });
-
-	                if (payload && payload.onfailure) {
-	                  payload.onfailure();
-	                }
-	              }
-	            });
-	          }, 0);
-	        },
-	        processRefreshRequest: function processRefreshRequest(_ref2, payload) {
-	          var commit = _ref2.commit,
-	              dispatch = _ref2.dispatch;
-
-	          if (BX.type.isArray(payload.basket)) {
-	            payload.basket.forEach(function (basketItem) {
-	              commit('updateBasketItem', {
-	                index: basketItem.sort,
-	                fields: basketItem
-	              });
-	            });
-	            commit('setSelectedProducts');
-	          }
-
-	          if (BX.type.isObject(payload.total)) {
-	            commit('setTotal', payload.total);
-	          }
-
-	          if (BX.type.isArray(payload.errors)) {
-	            commit('setErrors', payload.errors);
-	          } else {
-	            commit('clearErrors');
-	          }
-
-	          commit('setProcessingId', null);
-	        },
-	        resetBasket: function resetBasket(_ref3) {
-	          var commit = _ref3.commit;
+	        resetBasket: function resetBasket(_ref) {
+	          var commit = _ref.commit;
 	          commit('clearBasket');
-	          commit('setTotal', {
-	            sum: null,
-	            discount: null,
-	            result: null,
-	            resultNumeric: null
-	          });
-	          commit('addBasketItem');
 	        },
-	        deleteBasketItem: function deleteBasketItem(_ref4, payload) {
-	          var commit = _ref4.commit,
-	              state = _ref4.state,
-	              dispatch = _ref4.dispatch;
-	          commit('deleteBasketItem', payload);
-
-	          if (state.basket.length > 0) {
-	            state.basket.forEach(function (item, i) {
-	              commit('updateBasketItem', {
-	                index: i,
-	                fields: {
-	                  sort: i
-	                }
-	              });
-	            });
-	          }
-
-	          dispatch('refreshBasket');
-	        },
-	        removeItem: function removeItem(_ref5, payload) {
-	          var commit = _ref5.commit,
-	              state = _ref5.state,
-	              dispatch = _ref5.dispatch;
-	          commit('deleteBasketItem', payload);
-
-	          if (state.basket.length === 0) {
-	            commit('addBasketItem');
-	          } else {
-	            state.basket.forEach(function (item, i) {
-	              commit('updateBasketItem', {
-	                index: i,
-	                fields: {
-	                  sort: i
-	                }
-	              });
-	            });
-	          }
-
-	          dispatch('refreshBasket');
-	        },
-	        changeBasketItem: function changeBasketItem(_ref6, payload) {
-	          var commit = _ref6.commit,
-	              dispatch = _ref6.dispatch;
-	          commit('updateBasketItem', payload);
-	          commit('setSelectedProducts');
-	        },
-	        setCurrency: function setCurrency(_ref7, payload) {
-	          var commit = _ref7.commit;
+	        setCurrency: function setCurrency(_ref2, payload) {
+	          var commit = _ref2.commit;
 	          var currency$$1 = payload || '';
 	          commit('setCurrency', currency$$1);
 	        },
-	        setDeliveryId: function setDeliveryId(_ref8, payload) {
-	          var commit = _ref8.commit;
+	        enableSubmitButton: function enableSubmitButton(_ref3, payload) {
+	          var commit = _ref3.commit;
+	          commit('setSubmitButtonStatus', true);
+	        },
+	        disableSubmitButton: function disableSubmitButton(_ref4, payload) {
+	          var commit = _ref4.commit;
+	          commit('setSubmitButtonStatus', false);
+	        },
+	        setDeliveryId: function setDeliveryId(_ref5, payload) {
+	          var commit = _ref5.commit;
 	          commit('setDeliveryId', payload);
 	        },
-	        setDelivery: function setDelivery(_ref9, payload) {
-	          var commit = _ref9.commit;
+	        setDelivery: function setDelivery(_ref6, payload) {
+	          var commit = _ref6.commit;
 	          commit('setDelivery', payload);
 	        },
-	        setPropertyValues: function setPropertyValues(_ref10, payload) {
-	          var commit = _ref10.commit;
+	        setPropertyValues: function setPropertyValues(_ref7, payload) {
+	          var commit = _ref7.commit;
 	          commit('setPropertyValues', payload);
 	        },
-	        setDeliveryExtraServicesValues: function setDeliveryExtraServicesValues(_ref11, payload) {
-	          var commit = _ref11.commit;
+	        setDeliveryExtraServicesValues: function setDeliveryExtraServicesValues(_ref8, payload) {
+	          var commit = _ref8.commit;
 	          commit('setDeliveryExtraServicesValues', payload);
 	        },
-	        setExpectedDelivery: function setExpectedDelivery(_ref12, payload) {
-	          var commit = _ref12.commit;
+	        setExpectedDelivery: function setExpectedDelivery(_ref9, payload) {
+	          var commit = _ref9.commit;
 	          commit('setExpectedDelivery', payload);
 	        },
-	        setDeliveryResponsibleId: function setDeliveryResponsibleId(_ref13, payload) {
-	          var commit = _ref13.commit;
+	        setDeliveryResponsibleId: function setDeliveryResponsibleId(_ref10, payload) {
+	          var commit = _ref10.commit;
 	          commit('setDeliveryResponsibleId', payload);
 	        },
-	        setPersonTypeId: function setPersonTypeId(_ref14, payload) {
-	          var commit = _ref14.commit;
+	        setPersonTypeId: function setPersonTypeId(_ref11, payload) {
+	          var commit = _ref11.commit;
 	          commit('setPersonTypeId', payload);
 	        }
 	      };
@@ -296,9 +179,7 @@ this.BX = this.BX || {};
 	          };
 	        },
 	        isAllowedSubmit: function isAllowedSubmit(state) {
-	          return state.basket.filter(function (basketItem) {
-	            return basketItem.module === 'catalog' && parseInt(basketItem.productId) > 0 || basketItem.module !== 'catalog' && BX.type.isNotEmptyString(basketItem.name) && parseFloat(basketItem.quantity) > 0;
-	          }).length > 0;
+	          return state.isEnabledSubmit;
 	        },
 	        getTotal: function getTotal(state) {
 	          return state.total;
@@ -330,33 +211,15 @@ this.BX = this.BX || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      return {
-	        addBasketItem: function addBasketItem(state, payload) {
-	          var item = OrderCreationModel.getBasketItemState();
-	          item.sort = state.basket.length;
-	          state.basket.push(item);
-	        },
-	        updateBasketItem: function updateBasketItem(state, payload) {
-	          if (typeof state.basket[payload.index] === 'undefined') {
-	            ui_vue.Vue.set(state.basket, payload.index, OrderCreationModel.getBasketItemState());
-	          }
-
-	          state.basket[payload.index] = Object.assign(state.basket[payload.index], payload.fields);
-	        },
-	        clearBasket: function clearBasket(state) {
-	          state.basket = [];
-	        },
-	        deleteBasketItem: function deleteBasketItem(state, payload) {
-	          state.basket.splice(payload.index, 1);
-	        },
-	        setSelectedProducts: function setSelectedProducts(state) {
-	          state.selectedProducts = state.basket.filter(function (basketItem) {
-	            return basketItem.module === 'catalog' && parseInt(basketItem.productId) > 0;
-	          }).map(function (filtered) {
-	            return filtered.productId;
-	          });
+	        setBasket: function setBasket(state, payload) {
+	          state.basket = payload;
 	        },
 	        setTotal: function setTotal(state, payload) {
 	          state.total = Object.assign(state.total, payload);
+	        },
+	        clearBasket: function clearBasket(state, payload) {
+	          state.basket = [];
+	          state.basketVersion++;
 	        },
 	        setErrors: function setErrors(state, payload) {
 	          state.errors = payload;
@@ -396,35 +259,13 @@ this.BX = this.BX || {};
 	        },
 	        hideBanner: function hideBanner(state) {
 	          state.showPaySystemSettingBanner = false;
+	        },
+	        enableSubmit: function enableSubmit(state) {
+	          state.isEnabledSubmit = true;
+	        },
+	        disableSubmit: function disableSubmit(state) {
+	          state.isEnabledSubmit = false;
 	        }
-	      };
-	    }
-	  }], [{
-	    key: "getBasketItemState",
-	    value: function getBasketItemState() {
-	      return {
-	        productId: null,
-	        code: null,
-	        name: '',
-	        sort: 0,
-	        price: 0,
-	        basePrice: 0,
-	        quantity: 0,
-	        showDiscount: '',
-	        discount: 0,
-	        discountInfos: [],
-	        discountType: 'percent',
-	        module: null,
-	        measureCode: 0,
-	        measureName: '',
-	        measureRatio: 1,
-	        taxRate: 0,
-	        taxIncluded: 'N',
-	        isCustomPrice: 'N',
-	        isCreatedProduct: 'N',
-	        encodedFields: null,
-	        image: [],
-	        errors: []
 	      };
 	    }
 	  }]);
@@ -470,7 +311,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockCounter,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'send-mode-enabled-block': salescenter_component_stageBlock_send.SendModeEnabled,
 	    'send-mode-disabled-block': salescenter_component_stageBlock_send.SendModeDisabled
 	  },
@@ -480,6 +321,11 @@ this.BX = this.BX || {};
 	        'salescenter-app-payment-by-sms-item-disabled': this.allowed === false,
 	        'salescenter-app-payment-by-sms-item': true,
 	        'salescenter-app-payment-by-sms-item-send': true
+	      };
+	    },
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: ''
 	      };
 	    }
 	  },
@@ -491,7 +337,7 @@ this.BX = this.BX || {};
 	      this.$emit('stage-block-send-on-send', event);
 	    }
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"classes\"\n\t\t>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<send-mode-enabled-block\t\t\t\tv-if=\"allowed\"\n\t\t\t\t\t:resend=\"resend\" \n\t\t\t\t\tv-on:stage-block-send-mode-enabled-send=\"onSend\"\n\t\t\t\t\tv-on:stage-block-send-mode-enabled-see-client=\"openWhatClientSee\"\n\t\t\t\t/>\n\t\t\t\t<send-mode-disabled-block \t\t\t\tv-else\n\t\t\t\t\t:resend=\"resend\" \n\t\t\t\t\tv-on:stage-block-send-mode-disabled-send=\"onSend\"\n\t\t\t\t/>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t"
+	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"classes\"\n\t\t\t:config=\"configForBlock\"\n\t\t>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<send-mode-enabled-block\t\t\t\tv-if=\"allowed\"\n\t\t\t\t\t:resend=\"resend\" \n\t\t\t\t\tv-on:stage-block-send-mode-enabled-send=\"onSend\"\n\t\t\t\t\tv-on:stage-block-send-mode-enabled-see-client=\"openWhatClientSee\"\n\t\t\t\t/>\n\t\t\t\t<send-mode-disabled-block \t\t\t\tv-else\n\t\t\t\t\t:resend=\"resend\" \n\t\t\t\t\tv-on:stage-block-send-mode-disabled-send=\"onSend\"\n\t\t\t\t/>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t"
 	};
 
 	var TileCollectionMixins = {
@@ -580,7 +426,7 @@ this.BX = this.BX || {};
 
 	      var slider = new salescenter_marketplace.AppSlider();
 	      var tile = this.getTileByIndex(inx);
-	      slider.open(tile, this.getOptionSlider);
+	      slider.openAppLocal(tile, this.getOptionSlider);
 	      slider.subscribe(salescenter_marketplace.EventTypes.AppSliderSliderClose, function (e) {
 	        return _this.$emit('on-tile-slider-close', {
 	          data: e.data
@@ -675,11 +521,18 @@ this.BX = this.BX || {};
 	    installed: {
 	      type: Boolean,
 	      required: true
+	    },
+	    titleItems: {
+	      type: Array
+	    },
+	    initialCollapseState: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  mixins: [StageMixin],
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitleHint,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'tile-collection-installed-block': Installed,
 	    'tile-collection-uninstalled-block': Uninstalled
 	  },
@@ -691,14 +544,28 @@ this.BX = this.BX || {};
 	    },
 	    title: function title() {
 	      return this.installed === true ? main_core.Loc.getMessage('SALESCENTER_CASHBOX_SET_BLOCK_TITLE') : main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_TITLE');
+	    },
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        titleItems: this.installed ? this.titleItems : [],
+	        installed: this.installed,
+	        collapsible: true,
+	        checked: this.counterCheckedMixin,
+	        showHint: !this.installed,
+	        initialCollapseState: this.initialCollapseState
+	      };
 	    }
 	  },
 	  methods: {
 	    onItemHint: function onItemHint(e) {
 	      BX.Salescenter.Manager.openHowToConfigCashBox(e);
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(option) {
+	      this.$emit('on-save-collapsed-option', 'cashbox', option);
 	    }
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-installed-block \t:tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-if=\"installed\"/>\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t:config=\"configForBlock\"\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t@on-tile-slider-close=\"onSliderClose\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-if=\"!installed\"/>\n\t\t\t\t\t<tile-collection-installed-block :tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	ui_vue.Vue.component(config.templateAddPaymentProductName, {
@@ -1069,6 +936,8 @@ this.BX = this.BX || {};
 	    selectCatalogItem: function selectCatalogItem(sender, item) {
 	      var _this6 = this;
 
+	      this.$root.$app.startProgress();
+
 	      if (!sender instanceof BX.UI.Dropdown) {
 	        return true;
 	      }
@@ -1077,6 +946,7 @@ this.BX = this.BX || {};
 	        return true;
 	      }
 
+	      var quantity = item.attributes && item.attributes.measureRatio ? item.attributes.measureRatio : item.quantity;
 	      var fields = {
 	        name: item.title,
 	        productId: item.id,
@@ -1084,7 +954,7 @@ this.BX = this.BX || {};
 	        module: 'catalog',
 	        isCustomPrice: 'N',
 	        discount: 0,
-	        quantity: this.basketItem.quantity > 0 ? this.basketItem.quantity : 1,
+	        quantity: quantity,
 	        isCreatedProduct: 'N',
 	        image: []
 	      };
@@ -1147,14 +1017,14 @@ this.BX = this.BX || {};
 	      var correctionFactor = this.calculateCorrectionFactor(this.basketItem.quantity, this.basketItem.measureRatio);
 	      this.basketItem.quantity = (this.basketItem.quantity * correctionFactor + this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 	      this.changeData(this.basketItem);
-	      this.refreshBasket();
+	      this.debouncedRefresh(300);
 	    },
 	    decrementQuantity: function decrementQuantity() {
 	      if (this.basketItem.quantity > this.basketItem.measureRatio) {
 	        var correctionFactor = this.calculateCorrectionFactor(this.basketItem.quantity, this.basketItem.measureRatio);
 	        this.basketItem.quantity = (this.basketItem.quantity * correctionFactor - this.basketItem.measureRatio * correctionFactor) / correctionFactor;
 	        this.changeData(this.basketItem);
-	        this.refreshBasket();
+	        this.debouncedRefresh(300);
 	      }
 	    },
 	    showPopupMenu: function showPopupMenu(target, array, type) {
@@ -1244,6 +1114,7 @@ this.BX = this.BX || {};
 	        return {
 	          id: item.ID,
 	          title: item.NAME,
+	          quantity: item.MEASURE_RATIO,
 	          module: 'salescenter'
 	        };
 	      });
@@ -1555,47 +1426,132 @@ this.BX = this.BX || {};
 	  mounted: function mounted() {
 	    if (parseInt(this.$root.$app.options.associatedEntityId) > 0) {
 	      this.$root.$emit("on-change-editable", false);
+
+	      if (this.productForm) {
+	        this.productForm.setEditable(false);
+	      }
+	    }
+
+	    if (this.productForm) {
+	      var formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
+	      formWrapper.appendChild(this.productForm.layout());
 	    }
 	  },
 	  created: function created() {
-	    var _this = this;
-
+	    this.refreshId = null;
 	    this.currencySymbol = this.$root.$app.options.currencySymbol;
 	    var defaultCurrency = this.$root.$app.options.currencyCode || '';
 	    this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
 
-	    if (BX.type.isArray(this.$root.$app.options.basket) && this.$root.$app.options.basket.length > 0) {
-	      this.$root.$app.options.basket.forEach(function (fields) {
-	        _this.$store.dispatch('orderCreation/changeBasketItem', {
-	          index: fields.sort,
-	          fields: fields
-	        });
+	    if (main_core.Type.isArray(this.$root.$app.options.basket)) {
+	      var fields = [];
+	      this.$root.$app.options.basket.forEach(function (item) {
+	        fields.push(item.fields);
 	      });
-
-	      if (typeof this.$root.$app.options.totals !== "undefined") {
-	        this.$store.commit('orderCreation/setTotal', {
-	          sum: this.$root.$app.options.totals.sum,
-	          discount: this.$root.$app.options.totals.discount,
-	          result: this.$root.$app.options.totals.result,
-	          resultNumeric: parseFloat(this.$root.$app.options.totals.result)
-	        });
-	      }
-	    } else {
-	      this.addBasketItemForm();
-	      this.$store.commit('orderCreation/setTotal', {
-	        sum: 0,
-	        discount: 0,
-	        result: 0
-	      });
+	      this.$store.commit('orderCreation/setBasket', fields);
 	    }
+
+	    this.productForm = new catalog_productForm.ProductForm({
+	      currencySymbol: this.currencySymbol,
+	      currency: defaultCurrency,
+	      iblockId: this.$root.$app.options.catalogIblockId,
+	      basePriceId: this.$root.$app.options.basePriceId,
+	      basket: main_core.Type.isArray(this.$root.$app.options.basket) ? this.$root.$app.options.basket : [],
+	      totals: this.$root.$app.options.totals,
+	      taxList: this.$root.$app.options.vatList,
+	      measures: this.$root.$app.options.measures,
+	      showDiscountBlock: this.$root.$app.options.showProductDiscounts,
+	      showTaxBlock: this.$root.$app.options.showProductTaxes
+	    });
+	    this.currencySymbol = this.$root.$app.options.currencySymbol;
+	    var onChangeWithDebounce = main_core.Runtime.debounce(this.onBasketChange, 500, this);
+	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', onChangeWithDebounce);
 
 	    if (this.$root.$app.options.showPaySystemSettingBanner) {
 	      this.$store.commit('orderCreation/showBanner');
 	    }
+
+	    if (main_core.Type.isArray(this.$root.$app.options.basket)) {
+	      this.$store.commit('orderCreation/enableSubmit');
+	    }
 	  },
 	  methods: {
+	    onBasketChange: function onBasketChange(event) {
+	      var _this = this;
+
+	      var data = event.getData();
+
+	      if (!main_core.Type.isArray(data.basket)) {
+	        return;
+	      }
+
+	      var fields = [];
+	      data.basket.forEach(function (item) {
+	        fields.push(item.fields);
+	      });
+	      this.$store.commit('orderCreation/setBasket', fields);
+
+	      if (data.basket.length <= 0) {
+	        this.$store.commit('orderCreation/disableSubmit');
+	        return;
+	      }
+
+	      this.$store.commit('orderCreation/enableSubmit');
+	      var requestId = main_core.Text.getRandom(20);
+	      this.refreshId = requestId;
+	      BX.ajax.runAction("salescenter.api.order.refreshBasket", {
+	        data: {
+	          basketItems: fields
+	        }
+	      }).then(function (result) {
+	        if (_this.refreshId !== requestId) {
+	          return;
+	        }
+
+	        var data = BX.prop.getObject(result, "data", {});
+
+	        _this.processRefreshRequest({
+	          total: BX.prop.getObject(data, "total", {
+	            sum: 0,
+	            discount: 0,
+	            result: 0,
+	            resultNumeric: 0
+	          }),
+	          basket: BX.prop.get(data, "items", [])
+	        });
+	      }).catch(function (result) {
+	        var data = BX.prop.getObject(result, "data", {});
+
+	        _this.processRefreshRequest({
+	          errors: BX.prop.get(result, "errors", []),
+	          basket: BX.prop.get(data, "items", [])
+	        });
+	      });
+	    },
+	    processRefreshRequest: function processRefreshRequest(data) {
+	      if (this.productForm) {
+	        this.productForm.setData(data);
+
+	        if (main_core.Type.isArray(data.basket)) {
+	          this.$store.commit('orderCreation/setBasket', data.basket);
+	        }
+
+	        if (main_core.Type.isObject(data.total)) {
+	          this.$store.commit('orderCreation/setTotal', data.total);
+	        }
+	      }
+	    },
 	    refreshBasket: function refreshBasket() {
-	      this.$store.dispatch('orderCreation/refreshBasket');
+	      var _this2 = this;
+
+	      var timeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 300;
+	      this.$root.$app.startProgress();
+	      this.$store.dispatch('orderCreation/refreshBasket', {
+	        timeout: timeout,
+	        onsuccess: function onsuccess() {
+	          _this2.$root.$app.stopProgress();
+	        }
+	      });
 	    },
 	    changeBasketItem: function changeBasketItem(item) {
 	      this.$store.dispatch('orderCreation/changeBasketItem', {
@@ -1610,7 +1566,9 @@ this.BX = this.BX || {};
 	      this.refreshBasket();
 	    },
 	    addBasketItemForm: function addBasketItemForm() {
-	      this.$store.commit('orderCreation/addBasketItem');
+	      if (this.productForm) {
+	        this.productForm.addProduct();
+	      }
 	    },
 	    hideBanner: function hideBanner() {
 	      this.$store.commit('orderCreation/hideBanner');
@@ -1643,7 +1601,7 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t<div class=\"salescenter-app-payment-side\">\n\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t<div v-for=\"(item, index) in order.basket\" class=\"salescenter-app-form-wrapper\" :key=\"index\">\n\t\t\t\t<".concat(config.templateAddPaymentProductName, " \n\t\t\t\t\t:basketItem=\"item\" \n\t\t\t\t\t:basketItemIndex=\"index\"  \n\t\t\t\t\t:countItems=\"countItems\"\n\t\t\t\t\t:selectedProductIds=\"order.selectedProducts\"\n\t\t\t\t\t@changeBasketItem=\"changeBasketItem\" \n\t\t\t\t\t@removeItem=\"removeItem\" \n\t\t\t\t\t@refreshBasket=\"refreshBasket\" \n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-result-container\"  style=\"padding-right: 15px\">\n\t\t\t\t<table class=\"salescenter-app-payment-side-table\">\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t<component :is=\"'basket-item-add-block'\" v-if=\"editable\"\n\t\t\t\t\t\t\t\tv-on:on-refresh-basket=\"refreshBasket\"\n\t\t\t\t\t\t\t\tv-on:on-add-basket-item=\"addBasketItemForm\"\n\t\t\t\t\t\t\t\tv-on:on-change-basket-item=\"changeBasketItem\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<template v-slot:product-add-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT}}</template>\n\t\t\t\t\t\t\t\t<template v-slot:product-add-from-catalog-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT_FROM_CATALOG}}</template>\n\t\t\t\t\t\t\t</component>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"text-align: right;\">\n\t\t\t\t\t\t<td>{{localize.SALESCENTER_PRODUCT_TOTAL_SUM}}:</td>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<span :class=\"total.result !== total.sum ? 'salescenter-app-text-line-through' : ''\" v-html=\"total.sum\"></span>\n\t\t\t\t\t\t\t<span class=\"salescenter-app-result-grid-item-currency-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"text-align: right;\">\n\t\t\t\t\t\t<td class=\"salescenter-app-result-grid-benefit salescenter-app-payment-side-table-td-border\">{{localize.SALESCENTER_PRODUCT_TOTAL_DISCOUNT}}:</td>\n\t\t\t\t\t\t<td class=\"salescenter-app-payment-side-table-td-border\">\n\t\t\t\t\t\t\t<span v-html=\"total.discount\"></span>\n\t\t\t\t\t\t\t<span class=\"salescenter-app-result-grid-item-currency-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"text-align: right;\">\n\t\t\t\t\t\t<td class=\"salescenter-app-result-grid-total-big\">{{localize.SALESCENTER_PRODUCT_PRODUCTS_PRICE}}:</td>\n\t\t\t\t\t\t<td class=\"salescenter-app-result-grid-total-big\">\n\t\t\t\t\t\t\t<span v-html=\"total.result\"></span>\n\t\t\t\t\t\t\t<span class=\"salescenter-app-result-grid-item-currency-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-banner\"  v-if=\"isShowedBanner\">\n\t\t\t\t<div class=\"salescenter-app-banner-inner\">\n\t\t\t\t\t<div class=\"salescenter-app-banner-title\">{{localize.SALESCENTER_BANNER_TITLE}}</div>\n\t\t\t\t\t<div class=\"salescenter-app-banner-content\">\n\t\t\t\t\t\t<div class=\"salescenter-app-banner-text\">{{localize.SALESCENTER_BANNER_TEXT}}</div>\n\t\t\t\t\t\t<div class=\"salescenter-app-banner-btn-block\">\n\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-primary salescenter-app-banner-btn-connect\" @click=\"openControlPanel\">{{localize.SALESCENTER_BANNER_BTN_CONFIGURE}}</button>\n\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-link salescenter-app-banner-btn-hide\" @click=\"hideBanner\">{{localize.SALESCENTER_BANNER_BTN_HIDE}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-app-banner-close\" @click=\"hideBanner\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n")
+	  template: "\n\t<div class=\"salescenter-app-payment-side\">\n\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t<div class=\"salescenter-app-form-wrapper\"></div>\n\t\t\t<div class=\"salescenter-app-banner\" v-if=\"isShowedBanner\">\n\t\t\t\t<div class=\"salescenter-app-banner-inner\">\n\t\t\t\t\t<div class=\"salescenter-app-banner-title\">{{localize.SALESCENTER_BANNER_TITLE}}</div>\n\t\t\t\t\t<div class=\"salescenter-app-banner-content\">\n\t\t\t\t\t\t<div class=\"salescenter-app-banner-text\">{{localize.SALESCENTER_BANNER_TEXT}}</div>\n\t\t\t\t\t\t<div class=\"salescenter-app-banner-btn-block\">\n\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-primary salescenter-app-banner-btn-connect\" @click=\"openControlPanel\">{{localize.SALESCENTER_BANNER_BTN_CONFIGURE}}</button>\n\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-link salescenter-app-banner-btn-hide\" @click=\"hideBanner\">{{localize.SALESCENTER_BANNER_BTN_HIDE}}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-app-banner-close\" @click=\"hideBanner\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\t\t\n\t</div>\n"
 	});
 
 	var Product = {
@@ -1659,11 +1617,30 @@ this.BX = this.BX || {};
 	  },
 	  mixins: [StageMixin],
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitle
+	    'stage-block-item': salescenter_component_stageBlock.Block
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t\t\t\t<bx-salescenter-app-add-payment/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  methods: {
+	    onItemHint: function onItemHint(e) {
+	      BX.Salescenter.Manager.openHowToSell(e);
+	    }
+	  },
+	  computed: {
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        checked: this.counterCheckedMixin,
+	        showHint: true
+	      };
+	    }
+	  },
+	  template: "\n\t\t<stage-block-item\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>\t\t\t\t\t\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'), "\t\n\t\t\t</template>\n\t\t\t<template v-slot:block-hint-title>").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t\t\t\t<bx-salescenter-app-add-payment/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var DeliverySelector$1 = {
 	  props: {
 	    config: {
@@ -1674,21 +1651,110 @@ this.BX = this.BX || {};
 	  components: {
 	    'delivery-selector': DeliverySelector
 	  },
+	  data: function data() {
+	    return {
+	      availableServiceIds: []
+	    };
+	  },
 	  methods: {
 	    onChange: function onChange(payload) {
+	      var fromPropId = this.getAddressFromPropId();
+	      var prevFrom = this.getPrevFrom(fromPropId);
+	      var newFrom = this.getNewFrom(fromPropId, payload.relatedPropsValues);
 	      this.$store.dispatch('orderCreation/setDelivery', payload.deliveryPrice);
 	      this.$store.dispatch('orderCreation/setDeliveryId', payload.deliveryServiceId);
 	      this.$store.dispatch('orderCreation/setPropertyValues', payload.relatedPropsValues);
 	      this.$store.dispatch('orderCreation/setDeliveryExtraServicesValues', payload.relatedServicesValues);
 	      this.$store.dispatch('orderCreation/setExpectedDelivery', payload.estimatedDeliveryPrice);
 	      this.$store.dispatch('orderCreation/setDeliveryResponsibleId', payload.responsibleUser ? payload.responsibleUser.id : null);
+
+	      if (prevFrom !== newFrom) {
+	        this.refreshAvailableServiceIds();
+	      }
+
+	      this.$emit('change', payload);
+	    },
+	    getAddressFromPropId: function getAddressFromPropId() {
+	      for (var propId in this.$root.$app.options.deliveryOrderPropOptions) {
+	        if (this.$root.$app.options.deliveryOrderPropOptions.hasOwnProperty(propId)) {
+	          if (this.$root.$app.options.deliveryOrderPropOptions[propId].hasOwnProperty('isFromAddress')) {
+	            return propId;
+	          }
+	        }
+	      }
+
+	      return null;
+	    },
+	    getPrevFrom: function getPrevFrom(fromPropId) {
+	      var _iterator = _createForOfIteratorHelper(this.order.propertyValues),
+	          _step;
+
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var prop = _step.value;
+
+	          if (prop.id === fromPropId) {
+	            return prop.value;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+
+	      return null;
+	    },
+	    getNewFrom: function getNewFrom(fromPropId, relatedPropsValues) {
+	      var _iterator2 = _createForOfIteratorHelper(relatedPropsValues),
+	          _step2;
+
+	      try {
+	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	          var prop = _step2.value;
+
+	          if (prop.id === fromPropId) {
+	            return prop.value;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator2.e(err);
+	      } finally {
+	        _iterator2.f();
+	      }
+
+	      return null;
 	    },
 	    onSettingsChanged: function onSettingsChanged() {
 	      this.$emit('delivery-settings-changed');
+	    },
+	    refreshAvailableServiceIds: function refreshAvailableServiceIds() {
+	      var _this = this;
+
+	      main_core.ajax.runAction('salescenter.order.getCompatibleDeliverySystems', {
+	        data: {
+	          basketItems: this.config.basket ? this.config.basket : [],
+	          options: {
+	            sessionId: this.config.sessionId,
+	            ownerTypeId: this.config.ownerTypeId,
+	            ownerId: this.config.ownerId
+	          },
+	          deliveryServiceId: this.order.deliveryId,
+	          deliveryRelatedPropValues: this.order.propertyValues,
+	          deliveryRelatedServiceValues: this.order.deliveryExtraServicesValues,
+	          deliveryResponsibleId: this.order.deliveryResponsibleId
+	        }
+	      }).then(function (result) {
+	        var data = BX.prop.getObject(result, "data", {});
+	        _this.availableServiceIds = data.availableServiceIds ? data.availableServiceIds : [];
+	      }).catch(function (result) {
+	        _this.availableServiceIds = [];
+	      });
 	    }
 	  },
 	  created: function created() {
 	    this.$store.dispatch('orderCreation/setPersonTypeId', this.config.personTypeId);
+	    this.refreshAvailableServiceIds();
 	  },
 	  computed: babelHelpers.objectSpread({
 	    localize: function localize() {
@@ -1739,7 +1805,7 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t\t<delivery-selector\n\t\t\t:editable=\"this.config.editable\"\n\t\t\t:init-is-calculated=\"config.isExistingItem\"\t\t\n\t\t\t:init-estimated-delivery-price=\"config.expectedDeliveryPrice\"\t\t\n\t\t\t:init-entered-delivery-price=\"config.deliveryPrice\"\n\t\t\t:init-delivery-service-id=\"config.deliveryServiceId\"\n\t\t\t:init-related-services-values=\"config.relatedServicesValues\"\n\t\t\t:init-related-props-values=\"config.relatedPropsValues\"\n\t\t\t:init-related-props-options=\"config.relatedPropsOptions\"\n\t\t\t:init-responsible-id=\"config.responsibleId\"\n\t\t\t:person-type-id=\"config.personTypeId\"\n\t\t\t:action=\"'salescenter.api.order.refreshDelivery'\"\n\t\t\t:action-data=\"actionData\"\n\t\t\t:external-sum=\"productsPrice\"\n\t\t\t:external-sum-label=\"sumTitle\"\n\t\t\t:currency=\"config.currency\"\n\t\t\t:currency-symbol=\"config.currencySymbol\"\n\t\t\t@change=\"onChange\"\n\t\t\t@settings-changed=\"onSettingsChanged\"\n\t\t></delivery-selector>\n\t"
+	  template: "\n\t\t<delivery-selector\n\t\t\t:editable=\"this.config.editable\"\n\t\t\t:available-service-ids=\"availableServiceIds\"\n\t\t\t:init-is-calculated=\"config.isExistingItem\"\t\t\n\t\t\t:init-estimated-delivery-price=\"config.expectedDeliveryPrice\"\t\t\n\t\t\t:init-entered-delivery-price=\"config.deliveryPrice\"\n\t\t\t:init-delivery-service-id=\"config.deliveryServiceId\"\n\t\t\t:init-related-services-values=\"config.relatedServicesValues\"\n\t\t\t:init-related-props-values=\"config.relatedPropsValues\"\n\t\t\t:init-related-props-options=\"config.relatedPropsOptions\"\n\t\t\t:init-responsible-id=\"config.responsibleId\"\n\t\t\t:person-type-id=\"config.personTypeId\"\n\t\t\t:action=\"'salescenter.api.order.refreshDelivery'\"\n\t\t\t:action-data=\"actionData\"\n\t\t\t:external-sum=\"productsPrice\"\n\t\t\t:external-sum-label=\"sumTitle\"\n\t\t\t:currency=\"config.currency\"\n\t\t\t:currency-symbol=\"config.currencySymbol\"\n\t\t\t@change=\"onChange\"\n\t\t\t@settings-changed=\"onSettingsChanged\"\n\t\t></delivery-selector>\n\t"
 	};
 
 	var DeliveryVuex = {
@@ -1759,15 +1825,39 @@ this.BX = this.BX || {};
 	    installed: {
 	      type: Boolean,
 	      required: true
+	    },
+	    initialCollapseState: {
+	      type: Boolean,
+	      required: true
 	    }
+	  },
+	  data: function data() {
+	    return {
+	      selectedDeliveryServiceName: null
+	    };
 	  },
 	  mixins: [StageMixin, MixinTemplatesType],
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitle,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'delivery-selector-block': DeliverySelector$1,
 	    'uninstalled-delivery-block': Uninstalled
 	  },
 	  computed: babelHelpers.objectSpread({
+	    statusClass: function statusClass() {
+	      return {
+	        'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false
+	      };
+	    },
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        titleName: this.selectedDeliveryServiceName,
+	        installed: this.installed,
+	        collapsible: true,
+	        checked: this.counterCheckedMixin,
+	        showHint: false
+	      };
+	    },
 	    config: function config() {
 	      var deliveryServiceId = null;
 
@@ -1838,8 +1928,15 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  methods: {},
-	  template: "\n\t\t<stage-block-item\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_DELIVERY_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<template v-if=\"installed\">\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select\">\n\t\t\t\t\t\t\t<delivery-selector-block :config=\"config\" \n\t\t\t\t\t\t\t\tv-on:delivery-settings-changed=\"onSliderClose\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<uninstalled-delivery-block :tiles=\"tiles\" \n\t\t\t\t\t\t\t\tv-on:on-tile-slider-close=\"onSliderClose\"/>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  methods: {
+	    setTitleName: function setTitleName(state) {
+	      this.selectedDeliveryServiceName = state.deliveryServiceName;
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(option) {
+	      this.$emit('on-save-collapsed-option', 'delivery', option);
+	    }
+	  },
+	  template: "\n\t\t<stage-block-item\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_DELIVERY_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<template v-if=\"!installed\">\n\t\t\t\t\t\t<uninstalled-delivery-block :tiles=\"tiles\" \n\t\t\t\t\t\t\t\tv-on:on-tile-slider-close=\"onSliderClose\"/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select\">\n\t\t\t\t\t\t\t<delivery-selector-block :config=\"config\" \n\t\t\t\t\t\t\t\tv-on:delivery-settings-changed=\"onSliderClose\"\n\t\t\t\t\t\t\t\tv-on:change=\"setTitleName\" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var PaySystem = {
@@ -1859,20 +1956,41 @@ this.BX = this.BX || {};
 	    installed: {
 	      type: Boolean,
 	      required: true
+	    },
+	    titleItems: {
+	      type: Array
+	    },
+	    initialCollapseState: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  mixins: [StageMixin],
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitleHint,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'tile-collection-installed-block': Installed,
 	    'tile-collection-uninstalled-block': Uninstalled
 	  },
 	  methods: {
 	    onItemHint: function onItemHint(e) {
-	      BX.Salescenter.Manager.openHowToConfigPaySystem(e);
+	      BX.Salescenter.Manager.openHowToConfigDefaultPaySystem(e);
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(option) {
+	      this.$emit('on-save-collapsed-option', 'pay_system', option);
 	    }
 	  },
 	  computed: {
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        titleItems: this.installed ? this.titleItems : [],
+	        installed: this.installed,
+	        collapsible: true,
+	        checked: this.counterCheckedMixin,
+	        showHint: !this.installed,
+	        initialCollapseState: this.initialCollapseState
+	      };
+	    },
 	    statusClass: function statusClass() {
 	      return {
 	        'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false
@@ -1882,7 +2000,7 @@ this.BX = this.BX || {};
 	      return this.installed === true ? main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_SET_BLOCK_TITLE') : main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE');
 	    }
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\t\t\t\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-installed-block \t:tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-if=\"installed\"/>\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t:config=\"configForBlock\"\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t@on-tile-slider-close=\"onSliderClose\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-if=\"!installed\"/>\n\t\t\t\t\t<tile-collection-installed-block :tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var SmsMessage = {
@@ -1922,7 +2040,7 @@ this.BX = this.BX || {};
 	  },
 	  mixins: [StageMixin],
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitleHint,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'sms-alert-block': salescenter_component_stageBlock_smsMessage.Alert,
 	    'sms-configure-block': salescenter_component_stageBlock_smsMessage.Configure,
 	    'sms-sender-list-block': salescenter_component_stageBlock_smsMessage.SenderList,
@@ -1952,6 +2070,13 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  computed: {
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        checked: this.counterCheckedMixin,
+	        showHint: true
+	      };
+	    },
 	    hasSender: function hasSender() {
 	      return this.senders.list.length !== 0;
 	    },
@@ -1964,7 +2089,7 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    title: function title() {
-	      return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS').replace('#PHONE#', this.phone);
+	      return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS_2').replace('#PHONE#', this.phone);
 	    }
 	  },
 	  methods: {
@@ -2003,7 +2128,7 @@ this.BX = this.BX || {};
 	      this.$emit('stage-block-sms-send-on-change-provider', value);
 	    }
 	  },
-	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" :class=\"containerClass\">\n\t\t\t\t\t<template v-if=\"hasSender\">\n\t\t\t\t\t\t<sms-alert-block v-if=\"hasPhone === false\">\n\t\t\t\t\t\t\t<template v-slot:sms-alert-text>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY'), "</template>\n\t\t\t\t\t\t</sms-alert-block>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<sms-configure-block \n\t\t\t\t\t\t\t:url=\"senders.settings.url\"\n\t\t\t\t\t\t\tv-on:on-configure=\"smsSenderConfigure\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:sms-configure-text-alert>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_NOT_CONFIGURED'), "</template>\n\t\t\t\t\t\t\t<template v-slot:sms-configure-text-setting>").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'), "</template>\n\t\t\t\t\t\t</sms-configure-block>\n\t\t\t\t\t</template> \n\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<sms-message-editor-block :editor=\"editor\"/>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t:list=\"items\"\n\t\t\t\t\t\t\t\t:selected=\"getFirstSender()\"\n\t\t\t\t\t\t\t\t:settingUrl=\"senders.settings.url\"\n\t\t\t\t\t\t\t\tv-on:on-configure=\"smsSenderConfigure\"\n\t\t\t\t\t\t\t\tv-on:on-selected=\"setSelectedSender\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "</template>\n\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" :class=\"containerClass\">\n\t\t\t\t\t<template v-if=\"hasSender\">\n\t\t\t\t\t\t<sms-alert-block v-if=\"hasPhone === false\">\n\t\t\t\t\t\t\t<template v-slot:sms-alert-text>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY'), "</template>\n\t\t\t\t\t\t</sms-alert-block>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<sms-configure-block \n\t\t\t\t\t\t\t:url=\"senders.settings.url\"\n\t\t\t\t\t\t\tv-on:on-configure=\"smsSenderConfigure\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:sms-configure-text-alert>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_NOT_CONFIGURED'), "</template>\n\t\t\t\t\t\t\t<template v-slot:sms-configure-text-setting>").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'), "</template>\n\t\t\t\t\t\t</sms-configure-block>\n\t\t\t\t\t</template> \n\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<sms-message-editor-block :editor=\"editor\"/>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t:list=\"items\"\n\t\t\t\t\t\t\t\t:selected=\"getFirstSender()\"\n\t\t\t\t\t\t\t\t:settingUrl=\"senders.settings.url\"\n\t\t\t\t\t\t\t\tv-on:on-configure=\"smsSenderConfigure\"\n\t\t\t\t\t\t\t\tv-on:on-selected=\"setSelectedSender\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "</template>\n\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var Automation = {
@@ -2019,6 +2144,10 @@ this.BX = this.BX || {};
 	    items: {
 	      type: Array,
 	      required: true
+	    },
+	    initialCollapseState: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  mixins: [StageMixin],
@@ -2028,7 +2157,7 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  components: {
-	    'stage-block-item': salescenter_component_stageBlock.BlockNumberTitle,
+	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'stage-item-list': salescenter_component_stageBlock_automation.StageList
 	  },
 	  methods: {
@@ -2041,12 +2170,37 @@ this.BX = this.BX || {};
 	    },
 	    setStageOnOrderPaid: function setStageOnOrderPaid(e) {
 	      this.$root.$app.stageOnOrderPaid = e.data;
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(option) {
+	      this.$emit('on-save-collapsed-option', 'automation', option);
+	    },
+	    updateSelectedStage: function updateSelectedStage(e) {
+	      var newStageId = e.data;
+	      this.stages.forEach(function (stage) {
+	        stage.selected = stage.id === newStageId;
+	      });
+	    }
+	  },
+	  computed: {
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        checked: this.counterCheckedMixin,
+	        collapsible: true,
+	        initialCollapseState: this.initialCollapseState,
+	        titleName: this.selectedStage.name
+	      };
+	    },
+	    selectedStage: function selectedStage() {
+	      return this.stages.find(function (stage) {
+	        return stage.selected;
+	      });
 	    }
 	  },
 	  created: function created() {
 	    this.loadStageCollection();
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:counter=\"counter\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t:checked=\"counterCheckedMixin\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<stage-item-list \n\t\t\t\t\t\tv-on:on-choose-select-option=\"\"\n\t\t\t\t\t\t:stages=\"stages\">\n\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT'), "</template>\n\t\t\t\t\t</stage-item-list>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<stage-item-list \n\t\t\t\t\t\tv-on:on-choose-select-option=\"updateSelectedStage($event); setStageOnOrderPaid($event)\"\n\t\t\t\t\t\t:stages=\"stages\">\n\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT'), "</template>\n\t\t\t\t\t</stage-item-list>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var TimeLine = {
@@ -2092,13 +2246,16 @@ this.BX = this.BX || {};
 	      paysystem: {
 	        status: this.$root.$app.options.paySystemList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.paySystemList.items),
-	        installed: this.$root.$app.options.paySystemList.isSet
+	        installed: this.$root.$app.options.paySystemList.isSet,
+	        titleItems: this.getTitleItems(this.$root.$app.options.paySystemList.items),
+	        initialCollapseState: this.$root.$app.options.isPaySystemCollapsed ? this.$root.$app.options.isPaySystemCollapsed === 'Y' : this.$root.$app.options.paySystemList.isSet
 	      },
 	      cashbox: {},
 	      delivery: {
 	        status: this.$root.$app.options.deliveryList.isInstalled ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
-	        installed: this.$root.$app.options.deliveryList.isInstalled
+	        installed: this.$root.$app.options.deliveryList.isInstalled,
+	        initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled
 	      }
 	    };
 
@@ -2106,14 +2263,17 @@ this.BX = this.BX || {};
 	      stages.cashbox = {
 	        status: this.$root.$app.options.cashboxList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.cashboxList.items),
-	        installed: this.$root.$app.options.cashboxList.isSet
+	        installed: this.$root.$app.options.cashboxList.isSet,
+	        titleItems: this.getTitleItems(this.$root.$app.options.cashboxList.items),
+	        initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet
 	      };
 	    }
 
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
-	        items: this.$root.$app.options.dealStageList
+	        items: this.$root.$app.options.dealStageList,
+	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
 
@@ -2170,6 +2330,15 @@ this.BX = this.BX || {};
 	      });
 	      return tiles;
 	    },
+	    getTitleItems: function getTitleItems(items) {
+	      var result = [];
+	      items.forEach(function (item) {
+	        if (![Tile.More.type(), Tile.Offer.type()].includes(item.type)) {
+	          result.push(item);
+	        }
+	      });
+	      return result;
+	    },
 	    stageRefresh: function stageRefresh(e, type) {
 	      BX.ajax.runComponentAction("bitrix:salescenter.app", "getAjaxData", {
 	        mode: "class",
@@ -2191,6 +2360,7 @@ this.BX = this.BX || {};
 	        this.stages.cashbox.status = data.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled;
 	        this.stages.cashbox.tiles = this.getTileCollection(data.items);
 	        this.stages.cashbox.installed = data.isSet;
+	        this.stages.cashbox.titleItems = this.getTitleItems(data.items);
 	      } else if (type === 'DELIVERY') {
 	        this.stages.delivery.status = data.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled;
 	        this.stages.delivery.tiles = this.getTileCollection(data.items);
@@ -2202,6 +2372,9 @@ this.BX = this.BX || {};
 	    },
 	    changeProvider: function changeProvider(value) {
 	      this.$root.$app.sendingMethodDesc.provider = value;
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(type, value) {
+	      BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
 	    }
 	  },
 	  created: function created() {
@@ -2210,18 +2383,19 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<sms-message-block \t\t\t\t\t\tv-on:stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\t\t\t\"counter++\"\n\t\t\t\t:status=\t\t\t\"stages.message.status\"\n\t\t\t\t:items=\t\t\t\t\"stages.message.items\"\n\t\t\t\t:manager=\t\t\t\"stages.message.manager\"\n\t\t\t\t:phone=\t\t\t\t\"stages.message.phone\"\n\t\t\t\t:senderSettingsUrl=\t\"stages.message.senderSettingsUrl\"\n\t\t\t\t:editorTemplate=\t\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\t\t\t\"stages.message.editorUrl\"\n\t\t\t/>\n\t\t\t\t\n\t\t\t<product-block \n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status= \t\"stages.product.status\"\t\t\t\t\n\t\t\t/>\n\t\t\t\n\t\t\t<paysystem-block\t\t\t\t\t\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=  \t\"stages.paysystem.status\"\n\t\t\t\t:tiles=  \t\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\t\"stages.paysystem.installed\"\t\n\t\t\t/>\n\t\t\t\t\n\t\t\t<cashbox-block \tv-if=\"hasStageCashBox\"\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=\t\"stages.cashbox.status\"\n\t\t\t\t:tiles=\t\t\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\t\"stages.cashbox.installed\"\t\t\t\t\n\t\t\t/>\t\n\t\t\t\n\t\t\t<automation-block v-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=\t\"stages.automation.status\"\n\t\t\t\t:items=\t\t\"stages.automation.items\"\n\t\t\t/>\n\t\t\t\n\t\t\t<delivery-block\t\t\t\t\t\t\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=  \t\"stages.delivery.status\"\n\t\t\t\t:tiles=  \t\"stages.delivery.tiles\"\n\t\t\t\t:installed=\t\"stages.delivery.installed\"\n\t\t\t/>\n\t\t\t\n\t\t\t<send-block\t\t\t\t\t\t\t\tv-on:stage-block-send-on-send=\"onSend\"\n\t\t\t\t:allowed=\t\"sendAllowed\" \n\t\t\t\t:resend=\t\"editableMixin\"\n\t\t\t/>\n\t\t\t\n\t\t\t<timeline-block  v-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems= \"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<sms-message-block \t\t\t\t\t\tv-on:stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\t\t\t\"counter++\"\n\t\t\t\t:status=\t\t\t\"stages.message.status\"\n\t\t\t\t:items=\t\t\t\t\"stages.message.items\"\n\t\t\t\t:manager=\t\t\t\"stages.message.manager\"\n\t\t\t\t:phone=\t\t\t\t\"stages.message.phone\"\n\t\t\t\t:senderSettingsUrl=\t\"stages.message.senderSettingsUrl\"\n\t\t\t\t:editorTemplate=\t\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\t\t\t\"stages.message.editorUrl\"\n\t\t\t/>\n\t\t\t\t\n\t\t\t<product-block \n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status= \t\"stages.product.status\"\t\t\t\t\n\t\t\t/>\n\t\t\t\n\t\t\t<paysystem-block\t\t\t\t\t\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=  \t\"stages.paysystem.status\"\n\t\t\t\t:tiles=  \t\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\t\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState = \"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t\t\n\t\t\t<cashbox-block \tv-if=\"hasStageCashBox\"\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=\t\"stages.cashbox.status\"\n\t\t\t\t:tiles=\t\t\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\t\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState = \"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\t\n\t\t\t\n\t\t\t<automation-block v-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=\t\"stages.automation.status\"\n\t\t\t\t:items=\t\t\"stages.automation.items\"\n\t\t\t\t:initialCollapseState = \"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t\n\t\t\t<delivery-block\t\t\t\t\t\t\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=  \t\"stages.delivery.status\"\n\t\t\t\t:tiles=  \t\"stages.delivery.tiles\"\n\t\t\t\t:installed=\t\"stages.delivery.installed\"\n\t\t\t\t:initialCollapseState = \"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t\n\t\t\t<send-block\t\t\t\t\t\t\t\tv-on:stage-block-send-on-send=\"onSend\"\n\t\t\t\t:allowed=\t\"sendAllowed\" \n\t\t\t\t:resend=\t\"editableMixin\"\n\t\t\t/>\n\t\t\t\n\t\t\t<timeline-block  v-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems= \"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	ui_vue.Vue.component(config.templateName, {
 	  mixins: [MixinTemplatesType],
 	  data: function data() {
 	    return {
+	      isFaded: false,
 	      isShowPreview: false,
 	      isShowPayment: false,
 	      isShowPaymentBySms: false,
@@ -2254,6 +2428,12 @@ this.BX = this.BX || {};
 	    this.$root.$on("on-show-company-contacts", function (value) {
 	      _this.showCompanyContacts(value);
 	    });
+	    this.$root.$on('on-start-progress', function () {
+	      _this.startFade();
+	    });
+	    this.$root.$on('on-stop-progress', function () {
+	      _this.endFade();
+	    });
 	  },
 	  updated: function updated() {
 	    this.renderErrors();
@@ -2281,7 +2461,7 @@ this.BX = this.BX || {};
 	      var paymentsLimitStartNode = this.$root.$nodes.paymentsLimit;
 	      var paymentsLimitNode = this.$refs['paymentsLimit'];
 
-	      var _iterator = _createForOfIteratorHelper(paymentsLimitStartNode.children),
+	      var _iterator = _createForOfIteratorHelper$1(paymentsLimitStartNode.children),
 	          _step;
 
 	      try {
@@ -2299,6 +2479,12 @@ this.BX = this.BX || {};
 	    this.movePanels();
 	  },
 	  methods: {
+	    startFade: function startFade() {
+	      this.isFaded = true;
+	    },
+	    endFade: function endFade() {
+	      this.isFaded = false;
+	    },
 	    movePanels: function movePanels() {
 	      var sidepanel = this.$refs['sidebar'];
 	      var leftPanel = this.$root.$nodes.leftPanel;
@@ -2956,7 +3142,7 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t\t<div class=\"salescenter-app-wrapper\" :style=\"{minHeight: getWrapperHeight}\">\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\" v-if=\"this.$root.$app.context !== 'deal'\">\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\" v-if=\"this.$root.$app.context === 'deal'\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPaymentBySms}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentBySmsForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_SEND_BY_SMS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"showCompanyContacts(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"BX.Salescenter.Manager.openFeedbackPayOrderForm(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"BX.Salescenter.Manager.openHowPayDealWorks(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_HOW_WORKS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-start-wrapper\">\n\t\t\t\t\t\t<div class=\"ui-title-1 ui-text-center ui-color-medium\" style=\"margin-bottom: 20px;\">{{localize.SALESCENTER_INFO_TEXT_TOP_2}}</div>\n\t\t\t\t\t\t<div class=\"ui-hr ui-mv-25\"></div>\n\t\t\t\t\t\t<template v-if=\"this.isOrderPublicUrlExists\">\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_PUBLIC}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"openConnectedSite\">{{localize.SALESCENTER_INFO_PUBLIC}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"isOrderPageDeleted\">\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_ORDER_PAGE_DELETED}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"checkRecycle\">{{localize.SALESCENTER_CHECK_RECYCLE}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_2}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"connect\">{{localize.SALESCENTER_INFO_CREATE}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-link ui-btn-lg\" @click=\"BX.Salescenter.Manager.openHowPayDealWorks(event)\">{{localize.SALESCENTER_HOW}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t        <component v-if=\"isShowPayment && !isShowStartInfo\" :is=\"config.templateAddPaymentName\"></component>\n\t\t        </template>\n\t\t        <template v-if=\"isShowPaymentBySms && !isShowStartInfo\">\n\t\t\t        <deal-receiving-payment v-on:stage-block-send-on-send=\"send\" :sendAllowed=\"isAllowedSubmitButton\"/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\" v-if=\"editable\">{{localize.SALESCENTER_SEND}}</button>\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\" v-else>{{localize.SALESCENTER_RESEND}}</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-wrapper\" :class=\"{'salescenter-app-wrapper-fade': isFaded}\" :style=\"{minHeight: getWrapperHeight}\">\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\" v-if=\"this.$root.$app.context !== 'deal'\">\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\" v-if=\"this.$root.$app.context === 'deal'\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPaymentBySms}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentBySmsForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_SEND_BY_SMS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"showCompanyContacts(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.options.isBitrix24\" class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"BX.Salescenter.Manager.openFeedbackPayOrderForm(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" v-on:click=\"BX.Salescenter.Manager.openHowPayDealWorks(event)\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_HOW_WORKS}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-start-wrapper\">\n\t\t\t\t\t\t<div class=\"ui-title-1 ui-text-center ui-color-medium\" style=\"margin-bottom: 20px;\">{{localize.SALESCENTER_INFO_TEXT_TOP_2}}</div>\n\t\t\t\t\t\t<div class=\"ui-hr ui-mv-25\"></div>\n\t\t\t\t\t\t<template v-if=\"this.isOrderPublicUrlExists\">\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_PUBLIC}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"openConnectedSite\">{{localize.SALESCENTER_INFO_PUBLIC}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"isOrderPageDeleted\">\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_ORDER_PAGE_DELETED}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"checkRecycle\">{{localize.SALESCENTER_CHECK_RECYCLE}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"salescenter-title-5 ui-title-5 ui-text-center ui-color-medium\">{{localize.SALESCENTER_INFO_TEXT_BOTTOM_2}}</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-primary ui-btn-lg\" @click=\"connect\">{{localize.SALESCENTER_INFO_CREATE}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div style=\"padding-top: 5px;\" class=\"ui-text-center\">\n\t\t\t\t\t\t\t\t<div class=\"ui-btn ui-btn-link ui-btn-lg\" @click=\"BX.Salescenter.Manager.openHowPayDealWorks(event)\">{{localize.SALESCENTER_HOW}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t        <component v-if=\"isShowPayment && !isShowStartInfo\" :is=\"config.templateAddPaymentName\" :key=\"order.basketVersion\"></component>\n\t\t        </template>\n\t\t        <template v-if=\"isShowPaymentBySms && !isShowStartInfo\">\n\t\t\t        <deal-receiving-payment v-on:stage-block-send-on-send=\"send\" :sendAllowed=\"isAllowedSubmitButton\"/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\" v-if=\"editable\">{{localize.SALESCENTER_SEND}}</button>\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\" v-else>{{localize.SALESCENTER_RESEND}}</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	var App = /*#__PURE__*/function () {
@@ -3227,6 +3413,7 @@ this.BX = this.BX || {};
 	    value: function startProgress() {
 	      var buttonEvent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      this.isProgress = true;
+	      this.templateEngine.$emit('on-start-progress');
 	      this.showLoader();
 
 	      if (main_core.Type.isDomNode(buttonEvent)) {
@@ -3238,6 +3425,7 @@ this.BX = this.BX || {};
 	    value: function stopProgress() {
 	      var buttonEvent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      this.isProgress = false;
+	      this.templateEngine.$emit('on-stop-progress');
 	      this.hideLoader();
 
 	      if (main_core.Type.isDomNode(buttonEvent)) {
@@ -3371,7 +3559,6 @@ this.BX = this.BX || {};
 	      var basket = this.store.getters['orderCreation/getBasket']();
 	      var deliveryId = this.store.getters['orderCreation/getDeliveryId'];
 	      var delivery = this.store.getters['orderCreation/getDelivery'];
-	      var total = this.store.getters['orderCreation/getTotal'];
 	      var propertyValues = this.store.getters['orderCreation/getPropertyValues'];
 	      var deliveryExtraServicesValues = this.store.getters['orderCreation/getDeliveryExtraServicesValues'];
 	      var expectedDelivery = this.store.getters['orderCreation/getExpectedDelivery'];
@@ -3383,90 +3570,83 @@ this.BX = this.BX || {};
 	      }
 
 	      this.startProgress(buttonEvent);
-	      this.store.dispatch('orderCreation/refreshBasket', {
-	        onsuccess: function onsuccess() {
-	          var data = {
-	            dialogId: _this7.dialogId,
-	            sendingMethod: _this7.sendingMethod,
-	            sendingMethodDesc: _this7.sendingMethodDesc,
-	            sessionId: _this7.sessionId,
-	            lineId: _this7.lineId,
-	            ownerTypeId: _this7.ownerTypeId,
-	            ownerId: _this7.ownerId,
-	            skipPublicMessage: skipPublicMessage,
-	            deliveryId: deliveryId,
-	            deliveryPrice: delivery,
-	            expectedDeliveryPrice: expectedDelivery,
-	            deliveryResponsibleId: deliveryResponsibleId,
-	            personTypeId: personTypeId,
-	            propertyValues: propertyValues,
-	            deliveryExtraServicesValues: deliveryExtraServicesValues,
-	            connector: _this7.connector
-	          };
+	      var data = {
+	        dialogId: this.dialogId,
+	        sendingMethod: this.sendingMethod,
+	        sendingMethodDesc: this.sendingMethodDesc,
+	        sessionId: this.sessionId,
+	        lineId: this.lineId,
+	        ownerTypeId: this.ownerTypeId,
+	        ownerId: this.ownerId,
+	        skipPublicMessage: skipPublicMessage,
+	        deliveryId: deliveryId,
+	        deliveryPrice: delivery,
+	        expectedDeliveryPrice: expectedDelivery,
+	        deliveryResponsibleId: deliveryResponsibleId,
+	        personTypeId: personTypeId,
+	        propertyValues: propertyValues,
+	        deliveryExtraServicesValues: deliveryExtraServicesValues,
+	        connector: this.connector
+	      };
 
-	          if (_this7.stageOnOrderPaid !== null) {
-	            data.stageOnOrderPaid = _this7.stageOnOrderPaid;
+	      if (this.stageOnOrderPaid !== null) {
+	        data.stageOnOrderPaid = this.stageOnOrderPaid;
+	      }
+
+	      BX.ajax.runAction('salescenter.order.createPayment', {
+	        data: {
+	          basketItems: basket,
+	          options: data
+	        },
+	        analyticsLabel: this.context === 'deal' ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
+	        getParameters: {
+	          dialogId: this.dialogId,
+	          context: this.context,
+	          connector: this.connector,
+	          skipPublicMessage: skipPublicMessage
+	        }
+	      }).then(function (result) {
+	        _this7.store.dispatch('orderCreation/resetBasket');
+
+	        _this7.stopProgress(buttonEvent);
+
+	        if (skipPublicMessage === 'y') {
+	          var notify = {
+	            content: main_core.Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number)
+	          };
+	          notify.actions = [{
+	            title: main_core.Loc.getMessage('SALESCENTER_VIEW'),
+	            events: {
+	              click: function click() {
+	                salescenter_manager.Manager.showOrderAdd(result.data.order.id);
+	              }
+	            }
+	          }];
+	          BX.UI.Notification.Center.notify(notify);
+	          salescenter_manager.Manager.showOrdersList({
+	            orderId: result.data.order.id,
+	            ownerId: _this7.ownerId,
+	            ownerTypeId: _this7.ownerTypeId
+	          });
+	        } else {
+	          _this7.slider.data.set('action', 'sendPayment');
+
+	          _this7.slider.data.set('order', result.data.order);
+
+	          if (result.data.deal) {
+	            _this7.slider.data.set('deal', result.data.deal);
 	          }
 
-	          BX.ajax.runAction('salescenter.order.createPayment', {
-	            data: {
-	              basketItems: basket,
-	              options: data
-	            },
-	            analyticsLabel: _this7.context === 'deal' ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
-	            getParameters: {
-	              dialogId: _this7.dialogId,
-	              context: _this7.context,
-	              connector: _this7.connector,
-	              skipPublicMessage: skipPublicMessage
-	            }
-	          }).then(function (result) {
-	            _this7.store.dispatch('orderCreation/resetBasket');
-
-	            _this7.stopProgress(buttonEvent);
-
-	            if (skipPublicMessage === 'y') {
-	              var notify = {
-	                content: main_core.Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number)
-	              };
-	              notify.actions = [{
-	                title: main_core.Loc.getMessage('SALESCENTER_VIEW'),
-	                events: {
-	                  click: function click() {
-	                    salescenter_manager.Manager.showOrderAdd(result.data.order.id);
-	                  }
-	                }
-	              }];
-	              BX.UI.Notification.Center.notify(notify);
-	              salescenter_manager.Manager.showOrdersList({
-	                orderId: result.data.order.id,
-	                ownerId: _this7.ownerId,
-	                ownerTypeId: _this7.ownerTypeId
-	              });
-	            } else {
-	              _this7.slider.data.set('action', 'sendPayment');
-
-	              _this7.slider.data.set('order', result.data.order);
-
-	              if (result.data.deal) {
-	                _this7.slider.data.set('deal', result.data.deal);
-	              }
-
-	              _this7.closeApplication();
-	            }
-	          }).catch(function (data) {
-	            data.errors.forEach(function (error) {
-	              alert(error.message);
-	            });
-
-	            _this7.stopProgress(buttonEvent);
-
-	            App.showError(data);
-	          });
-	        },
-	        onfailure: function onfailure() {
-	          _this7.stopProgress(buttonEvent);
+	          _this7.closeApplication();
 	        }
+	      }).catch(function (data) {
+	        data.errors.forEach(function (error) {
+	          alert(error.message);
+	        });
+
+	        _this7.stopProgress(buttonEvent);
+
+	        App.showError(data);
 	      });
 	    }
 	  }, {
@@ -3538,5 +3718,5 @@ this.BX = this.BX || {};
 
 	exports.App = App;
 
-}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX,BX,BX.Salescenter.Component.StageBlock.Send,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Salescenter.Tile,BX.Salescenter,BX,BX,BX,BX.UI,BX.Event,BX.Main,BX,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX,BX.Salescenter.Component,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX.Salescenter));
+}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX,BX,BX.Salescenter.Component.StageBlock.Send,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Salescenter.Tile,BX.Salescenter,BX.Catalog,BX,BX,BX,BX.UI,BX.Main,BX.Event,BX,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX,BX.Salescenter.Component,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX.Salescenter));
 //# sourceMappingURL=app.bundle.js.map

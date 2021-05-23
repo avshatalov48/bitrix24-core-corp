@@ -16,13 +16,20 @@ final class CrmContact extends CrmEntity
 
 	public function getEventId()
 	{
-		return array(
+		return [
 			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Add,
 			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Owner,
 			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Denomination,
 			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Responsible,
 			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Message
-		);
+		];
+	}
+
+	public function getMessageEventId()
+	{
+		return [
+			\CCrmLiveFeedEvent::ContactPrefix.\CCrmLiveFeedEvent::Message
+		];
 	}
 
 	public function getCurrentEntityFields()
@@ -76,7 +83,6 @@ final class CrmContact extends CrmEntity
 		]));
 	}
 
-	// $arResult["canGetPostContent"] = ($reflectionClass->getMethod('initSourceFields')->class == $postProviderClassName);
 	public function initSourceFields()
 	{
 		$entityId = $this->getEntityId();
@@ -135,4 +141,17 @@ final class CrmContact extends CrmEntity
 		$this->setSourceFields($fields);
 	}
 
+	public function getSuffix()
+	{
+		$logEventId = $this->getLogEventId();
+		if (
+			!empty($logEventId)
+			&& in_array($logEventId, $this->getMessageEventId())
+		)
+		{
+			return 'MESSAGE';
+		}
+
+		return '';
+	}
 }

@@ -65,6 +65,95 @@ class DuplicateManager
 
 		return new DuplicateIndexBuilder($typeID, new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope));
 	}
+	/**
+	 * @return DuplicateIndexBuilder
+	 */
+	public static function createAutomaticIndexBuilder($typeID, $entityTypeID, $userID, $enablePermissionCheck = false, $options = null)
+	{
+		$scope = self::parseScopeOption($options);
+		$params = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope);
+
+		if (isset($options['LAST_INDEX_DATE']) && $options['LAST_INDEX_DATE'] instanceof Main\Type\DateTime)
+		{
+			$params->setIndexDate($options['LAST_INDEX_DATE']);
+		}
+		if (isset($options['CHECK_CHANGED_ONLY']) && $options['CHECK_CHANGED_ONLY'])
+		{
+			$params->setCheckChangedOnly(true);
+		}
+		return new AutomaticDuplicateIndexBuilder($typeID, $params);
+	}
+	public static function setDuplicateIndexItemStatus(
+		$userID,
+		$entityTypeID,
+		$typeID,
+		$matchHash,
+		$scope,
+		$statusID,
+		$isAutomatic
+	)
+	{
+		if ($isAutomatic)
+		{
+			AutomaticDuplicateIndexBuilder::setStatusID(
+				$userID,
+			$entityTypeID,
+				$typeID,
+				$matchHash,
+			$scope,
+				$statusID
+		);
+		}
+		else
+		{
+			DuplicateIndexBuilder::setStatusID(
+				$userID,
+				$entityTypeID,
+				$typeID,
+				$matchHash,
+				$scope,
+				$statusID
+			);
+		}
+	}
+	public static function deleteDuplicateIndexItems($filter, $isAutomatic)
+	{
+		if ($isAutomatic)
+		{
+			Entity\AutomaticDuplicateIndexTable::deleteByFilter($filter);
+		}
+		else
+		{
+			Entity\DuplicateIndexTable::deleteByFilter($filter);
+		}
+	}
+
+	public static function getExistedTypeScopeMap(int $entityTypeId, int $userId, bool $isAutomatic)
+	{
+		if ($isAutomatic)
+		{
+			return AutomaticDuplicateIndexBuilder::getExistedTypeScopeMap($entityTypeId, $userId);
+		}
+		else
+		{
+			return DuplicateIndexBuilder::getExistedTypeScopeMap($entityTypeId, $userId);
+		}
+	}
+
+	public static function markDuplicateIndexAsJunk($entityTypeID, $entityID)
+	{
+		DuplicateIndexBuilder::markAsJunk($entityTypeID, $entityID);
+		AutomaticDuplicateIndexBuilder::markAsDirty($entityTypeID, $entityID);
+	}
+	public static function markDuplicateIndexAsDirty($entityTypeID, $entityID)
+	{
+		AutomaticDuplicateIndexBuilder::markAsDirty($entityTypeID, $entityID);
+	}
+
+	public static function onChangeEntityAssignedBy($entityTypeID, $entityID)
+	{
+		DuplicateEntityMatchHash::setDateModify($entityTypeID, $entityID);
+	}
 	public static function removeIndexes(array $typeIDs, $entityTypeID, $userID, $enablePermissionCheck = false, $options = null)
 	{
 		$scope = self::parseScopeOption($options);

@@ -169,6 +169,55 @@ class CVoxImplantHistory
 
 		$arFields['ID'] = $insertResult->getId();
 
+		//recording a missed call
+		if (
+			$arFields["CALL_FAILED_CODE"] == 304
+			&& (
+				$call->getIncoming() == \CVoxImplantMain::CALL_INCOMING
+				|| $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT
+			)
+		)
+		{
+			$missedCall = [
+				'ID' => $arFields['ID'],
+				'CALL_START_DATE' => $arFields['CALL_START_DATE'],
+				'PHONE_NUMBER' => $arFields['PHONE_NUMBER'],
+				'PORTAL_USER_ID' => $arFields['PORTAL_USER_ID']
+			];
+
+			$insertMissedCallResult = VI\Model\StatisticMissedTable::add($missedCall);
+			if (!$insertMissedCallResult)
+			{
+				static::releaseLock($callId);
+				return false;
+			}
+		} //if our call answering any missed calls
+		elseif (
+			$arFields["CALL_FAILED_CODE"] == 200
+			&& $call->getIncoming() == \CVoxImplantMain::CALL_OUTGOING
+		)
+		{
+			$missedCalls = VI\Model\StatisticMissedTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=PHONE_NUMBER' => $arFields['PHONE_NUMBER'],
+					'=CALLBACK_ID' => null
+				],
+			])->fetchAll();
+
+			if ($missedCalls)
+			{
+				foreach ($missedCalls as $missedCall)
+				{
+					VI\Model\StatisticMissedTable::update($missedCall['ID'], [
+							'CALLBACK_ID' => $arFields['ID'],
+							'CALLBACK_CALL_START_DATE' => $arFields['CALL_START_DATE']
+						]
+					);
+				}
+			}
+		}
+
 		if (!$call->isInternalCall() && $call->isCrmEnabled())
 		{
 			if($call->getCrmActivityId() > 0 && CVoxImplantCrmHelper::shouldAttachCallToActivity($arFields, $call->getCrmActivityId()))

@@ -57,6 +57,12 @@
 		border-radius: 10px 10px 0 0;
 		max-height: 85vh;
 		min-height: 50vh;
+		max-width: 100%;
+	}
+
+	.b24-form-dropdown-title {
+		text-overflow: ellipsis;
+		max-width: calc(100% - 70px);
 	}
 
 	.b24-form-dropdown-header { display: block; }

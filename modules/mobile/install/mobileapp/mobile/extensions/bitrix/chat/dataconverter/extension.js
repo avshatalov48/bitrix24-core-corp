@@ -94,7 +94,17 @@ ChatDataConverter.getElementFormat = function(element)
 		item.color = element.chat.color;
 		if (this.listType == 'lines' && element.chat.type == 'lines')
 		{
-			if (element.lines.status < 40)
+			if (element.lines.status < 10)
+			{
+				item.sectionCode = 'new';
+				let session = ChatMessengerCommon.linesGetSession(element.chat);
+				if (session && session.dateCreate)
+				{
+					item.sortValues.order = session.dateCreate;
+					item.params.date = session.dateCreate;
+				}
+			}
+			else if (element.lines.status < 40)
 			{
 				item.sectionCode = 'work';
 				let session = ChatMessengerCommon.linesGetSession(element.chat);
@@ -797,25 +807,14 @@ ChatDataConverter.getListFormat = function (list)
 	let result = [];
 	let resultIndex = {};
 
-	if (list.items)
+	list.forEach((element) =>
 	{
-		list = [...list.items, ...list.pinned];
-	}
-
-	list.forEach((element) => {
-		if (!element) return;
-
-		element.user = this.getUserDataFormat(element.user);
-
-		if (typeof element.message != 'undefined')
+		if (!element)
 		{
-			element.message.date = new Date(element.message.date);
+			return;
 		}
 
-		if (typeof element.chat != 'undefined')
-		{
-			element.chat.date_create = new Date(element.chat.date_create);
-		}
+		element = this.getListElement(element);
 
 		if (resultIndex[element.id] !== undefined)
 		{
@@ -977,6 +976,30 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 
 	return item;
 };
+
+
+
+ChatDataConverter.getListElement = function(element)
+{
+	if (!element)
+	{
+		return null;
+	}
+
+	element.user = this.getUserDataFormat(element.user);
+
+	if (typeof element.message != 'undefined')
+	{
+		element.message.date = new Date(element.message.date);
+	}
+
+	if (typeof element.chat != 'undefined')
+	{
+		element.chat.date_create = new Date(element.chat.date_create);
+	}
+
+	return element;
+}
 
 ChatDataConverter.getListElementByUser = function(element)
 {

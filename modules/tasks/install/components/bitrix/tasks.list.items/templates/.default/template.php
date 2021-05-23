@@ -6,6 +6,8 @@ use Bitrix\Main\UI;
 
 UI\Extension::load("ui.tooltip");
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 $bShowInPopup = false;
 if (COption::GetOptionString('tasks', 'use_task_view_popup_in_list') === 'Y')
 {

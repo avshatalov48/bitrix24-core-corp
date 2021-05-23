@@ -221,6 +221,7 @@ class CBPCrmControlNotifyActivity
 		$dialog->setMap(array(
 			'MessageText' => array(
 				'Name' => GetMessage('CRM_CTRNA_MESSAGE'),
+				'Description' => GetMessage('CRM_CTRNA_MESSAGE'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
 				'Required' => true

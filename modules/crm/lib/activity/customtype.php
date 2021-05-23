@@ -131,7 +131,7 @@ class CustomType
 				}
 				else
 				{
-					$effectiveSort[$fieldID] = strcasecmp($order, 'DESC') ? SORT_DESC : SORT_ASC;
+					$effectiveSort[$fieldID] = strcasecmp($order, 'DESC') === 0 ? SORT_DESC : SORT_ASC;
 				}
 			}
 			if(!empty($effectiveSort))

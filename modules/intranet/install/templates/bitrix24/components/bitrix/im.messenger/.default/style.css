@@ -456,6 +456,9 @@
 	text-align: center;
 	opacity: .9;
 }
+.bx-im-users-wrap .bx-messenger-cl-status-muted .bx-messenger-cl-count {
+    background-color: #888888;
+}
 
 .bx-im-users-wrap .bx-messenger-cl-count-digit {
 	padding: 0 3px;

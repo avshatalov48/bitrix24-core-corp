@@ -1,22 +1,23 @@
 <?php
 namespace Bitrix\ImOpenLines\Integrations\Report\Handlers;
 
-use Bitrix\ImConnector\Connector;
 use Bitrix\ImOpenLines\Config;
-use Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\DialogStatTable;
+use Bitrix\ImConnector\Connector;
 use Bitrix\ImOpenLines\Model\QueueTable;
-use Bitrix\Main\DB\Result;
-use Bitrix\Main\Entity\Query;
+use Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\DialogStatTable;
+use Bitrix\ImOpenLines\Integrations\Report\VisualConstructor\Fields\Valuable\DropDownResponsible;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Report\VisualConstructor\Fields\Div;
+use Bitrix\Report\VisualConstructor\Helper\Util;
+use Bitrix\Report\VisualConstructor\Handler\BaseReport;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\DropDown;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\TimePeriod;
-use Bitrix\Report\VisualConstructor\Handler\BaseReport;
-use Bitrix\Report\VisualConstructor\Helper\Util;
 
 /**
  * Class Base
@@ -29,48 +30,57 @@ abstract class Base extends BaseReport
 	const GROUP_BY_LINE = 'LINE';
 	const GROUP_BY_CHANEL = 'CHANEL';
 
-
 	/**
 	 *  Collect form elements for specific widget configuration form
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function collectFormElements()
 	{
+		$listOpenLinesOptions = $this->getOpenLinesOptions();
+		$listChanelOptions = $this->getChanelOptions();
+		$listResponsibleOptions = $this->getResponsibleOptions();
+		$listLinesResponsibleOptions = $this->getLinesResponsibleOptions();
+
 		parent::collectFormElements();
 		$rowContainer = new Div();
 		$rowContainer->addClass('report-configuration-row');
 		$whatWillCalculateField = $this->getFormElement('calculate');
 
-
 		$openLineSelect = new DropDown('filterOpenLine');
 		$openLineSelect->setLabel(Loc::getMessage('FILTER_BY_OPEN_LINE'));
-		$openLineSelect->addOptions($this->getOpenLinesOptions());
+		$openLineSelect->addOptions($listOpenLinesOptions);
 		$this->addFormElementBefore($openLineSelect, $whatWillCalculateField);
 
 		$channelSelect = new DropDown('filterByChanel');
-		$channelSelect->addOptions($this->getChanelOptions());
 		$channelSelect->setLabel(Loc::getMessage('FILTER_BY_CHANNEL'));
+		$channelSelect->addOptions($listChanelOptions);
 		$this->addFormElementBefore($channelSelect, $whatWillCalculateField);
 
-
-		$responsibleSelect = new DropDown('filterByResponsible');
+		$responsibleSelect = new DropDownResponsible('filterByResponsible');
 		$responsibleSelect->setLabel(Loc::getMessage('FILTER_BY_RESPONSIBLE'));
-		$responsibleSelect->addOptions($this->getResponsibleOptions());
+		$responsibleSelect->addOptions($listResponsibleOptions);
+		$responsibleSelect->setLinesOperators($listLinesResponsibleOptions);
+		$responsibleSelect->setOpenLines($openLineSelect);
 		$this->addFormElementBefore($responsibleSelect, $whatWillCalculateField);
 
 		if ($previewBlock = $this->getWidgetHandler()->getFormElement('view_type'))
 		{
-			$previewBlock->addJsEventListener($openLineSelect, $openLineSelect::JS_EVENT_ON_CHANGE, array(
+			$previewBlock->addJsEventListener($openLineSelect, $openLineSelect::JS_EVENT_ON_CHANGE, [
 				'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
 				'action' => 'reloadWidgetPreview'
-			));
-			$previewBlock->addJsEventListener($channelSelect, $channelSelect::JS_EVENT_ON_CHANGE, array(
+			]);
+			$previewBlock->addJsEventListener($channelSelect, $channelSelect::JS_EVENT_ON_CHANGE, [
 				'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
 				'action' => 'reloadWidgetPreview'
-			));
-			$previewBlock->addJsEventListener($responsibleSelect, $responsibleSelect::JS_EVENT_ON_CHANGE, array(
+			]);
+			$previewBlock->addJsEventListener($responsibleSelect, $responsibleSelect::JS_EVENT_ON_CHANGE, [
 				'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
 				'action' => 'reloadWidgetPreview'
-			));
+			]);
 		}
 
 	}
@@ -122,12 +132,12 @@ abstract class Base extends BaseReport
 	}
 
 	/**
-	 * @return array
+	 * @return array[]
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function getResponsibleOptions()
+	protected function getResponsible()
 	{
 		static $result = null;
 		if ($result !== null)
@@ -135,18 +145,28 @@ abstract class Base extends BaseReport
 			return $result;
 		}
 
+		$operatorIds = [];
+		$operatorsLines = [];
+		$result = [
+			'operatorsName' => [],
+			'operatorsLines' => []
+		];
+
 		$queueResults = QueueTable::getList([
-			'select' => ['USER_ID'],
+			'select' => [
+				'ID',
+				'USER_ID',
+				'CONFIG_ID'
+			],
 			'order' => [
-				'SORT' => 'ASC',
-				'ID' => 'ASC'
+				'USER_ID' => 'ASC'
 			]
 		])->fetchAll();
-		$operatorIds = [];
-		$result = [];
+
 		foreach ($queueResults as $resultRow)
 		{
-			$operatorIds[] = (int)$resultRow['USER_ID'];
+			$operatorIds[$resultRow['ID']] = (int)$resultRow['USER_ID'];
+			$operatorsLines[$resultRow['CONFIG_ID']][(int)$resultRow['USER_ID']] = '';
 		}
 
 		if (!$operatorIds)
@@ -158,9 +178,6 @@ abstract class Base extends BaseReport
 		$userQuery->addSelect('ID');
 		$userQuery->addSelect('NAME');
 		$userQuery->addSelect('LAST_NAME');
-		$userQuery->addSelect('SECOND_NAME');
-		$userQuery->addSelect('LOGIN');
-		$userQuery->addSelect('PERSONAL_PHOTO');
 		$userQuery->whereIn('ID', $operatorIds);
 		$users = $userQuery->exec()->fetchAll();
 
@@ -171,9 +188,42 @@ abstract class Base extends BaseReport
 				'LAST_NAME' => $user['LAST_NAME']
 			]);
 
-			$result[$user['ID']] = $name;
+			$result['operatorsName'][$user['ID']] = $name;
 		}
+		foreach ($operatorsLines as $idLines => $operators)
+		{
+			foreach ($operators as $id => $name)
+			{
+				if(isset($result['operatorsName'][$id]))
+				{
+					$result['operatorsLines'][$idLines][$id] = $result['operatorsName'][$id];
+				}
+			}
+		}
+
 		return $result;
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function getResponsibleOptions()
+	{
+		return $this->getResponsible()['operatorsName'];
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function getLinesResponsibleOptions()
+	{
+		return $this->getResponsible()['operatorsLines'];
 	}
 
 	/**

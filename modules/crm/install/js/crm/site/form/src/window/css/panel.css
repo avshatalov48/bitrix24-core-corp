@@ -15,7 +15,6 @@
 @media (max-width: 767px) {
 	.b24-window-panel {
 		height: -webkit-fill-available;
-		height: -moz-fill-available;
 	}
 }
 

@@ -33,7 +33,7 @@ class PSRequisiteConverter
 		if (self::$progressData === null)
 		{
 			$progressData = \COption::GetOptionString('crm', '~CRM_PS_REQUISITES_TRANSFER_PROGRESS', '');
-			$progressData = $progressData !== '' ? unserialize($progressData) : array();
+			$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 			if (!is_array($progressData))
 				$progressData = array();
 			self::$progressData = $progressData;

@@ -6,12 +6,15 @@ use Bitrix\Location\Entity;
 use Bitrix\Location\Entity\Address\Normalizer\Builder;
 
 /**
- * Class Location
- * @package Bitrix\Location\Converter\ToDBFields
+ * Class DbFieldConverter
+ * @package Bitrix\Location\Entity\Location\Converter
+ * @internal
  */
-class DbFieldConverter
+final class DbFieldConverter
 {
 	/**
+	 * Convert Location to DB fields
+	 *
 	 * @param Entity\Location $location
 	 * @return array
 	 */
@@ -24,38 +27,27 @@ class DbFieldConverter
 			$result['ID'] = $location->getId();
 		}
 
-		$result['CODE'] = (string)$location->getCode();
-		$result['EXTERNAL_ID'] = (string)$location->getExternalId();
-		$result['SOURCE_CODE'] = (string)$location->getSourceCode();
-		$result['TYPE'] = (int)$location->getType();
-		$result['LATITUDE'] = (string)$location->getLatitude();
-		$result['LONGITUDE'] = (string)$location->getLongitude();
+		$result['CODE'] = $location->getCode();
+		$result['EXTERNAL_ID'] = $location->getExternalId();
+		$result['SOURCE_CODE'] = $location->getSourceCode();
+		$result['TYPE'] = $location->getType();
+		$result['LATITUDE'] = $location->getLatitude();
+		$result['LONGITUDE'] = $location->getLongitude();
 
 		return $result;
 	}
 
-	public static function convertFieldsToDbField(Entity\Address $address): array
-	{
-		$result = [];
-
-		/** @var Entity\Address\Field $field */
-		foreach ($address->getAllFieldsValues() as $type => $value)
-		{
-			$result[] = [
-				'TYPE' => $type,
-				'VALUE' => $value,
-				'ADDRESS_ID' => $address->getId()
-			];
-		}
-
-		return $result;
-	}
-
-	public static function convertNameToDbFields(Entity\Location $location)
+	/**
+	 * Convert LocationName to DB fields
+	 *
+	 * @param Entity\Location $location
+	 * @return array
+	 */
+	public static function convertNameToDbFields(Entity\Location $location): array
 	{
 		$normalizer = Builder::build($location->getLanguageId());
 
-		$result = [
+		return [
 			'NAME' => $location->getName(),
 			'LANGUAGE_ID' => $location->getLanguageId(),
 			'LOCATION_ID' => $location->getId(),
@@ -63,7 +55,5 @@ class DbFieldConverter
 				$location->getName()
 			)
 		];
-
-		return $result;
 	}
 }

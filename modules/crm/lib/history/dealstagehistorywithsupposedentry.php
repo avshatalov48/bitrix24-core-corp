@@ -127,7 +127,7 @@ class DealStageHistoryWithSupposedEntry
 
 		if (!is_null($fromDate))
 		{
-			$dealHistoryQuery->where('HISTORY.CREATED_TIME', '>', $fromDate);
+			$dealHistoryQuery->where('HISTORY.CREATED_TIME', '>=', $fromDate);
 		}
 
 		$dealHistory = $dealHistoryQuery->exec()->fetchAll();

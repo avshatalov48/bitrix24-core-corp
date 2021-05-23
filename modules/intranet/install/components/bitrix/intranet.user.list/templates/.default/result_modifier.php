@@ -273,7 +273,7 @@ foreach($arResult['ROWS'] as $key => $row)
 						"'.htmlspecialcharsbx(str_replace(['#ID#', '#USER_ID#'], $userFields['ID'], $arParams['PATH_TO_USER'])).'",
 						{
 							cacheable: false,
-							allowChangeHistory: false,
+							allowChangeHistory: true,
 							contentClassName: "bitrix24-profile-slider-content",
 							loader: "intranet:profile",
 							width: 1100

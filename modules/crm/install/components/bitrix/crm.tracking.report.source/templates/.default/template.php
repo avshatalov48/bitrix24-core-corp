@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 /** @var CAllMain $APPLICATION */
@@ -93,15 +94,22 @@ foreach ($arResult['ROWS'] as $item)
 		$rowData[$columnId] = "<span>$value</span>";
 	}
 
-	if ($item['nextLevel'] !== null)
-	{
-		$rowData['title'] = '<div data-role="grid/activator" data-options="'
-			. htmlspecialcharsbx(Json::encode(['level' => $item['nextLevel'], 'parentId' => $item['id']]))
-			. '">'
-			. '<span class="crm-tracking-report-source-link">' . htmlspecialcharsbx($item['title']) . '</span>'
-			. '</div>'
-		;
-	}
+	$rowData['title'] = '<div class="crm-tracking-report-source-title">'
+		. (Option::get('crm', 'tracking_ad_manage', 'N') === 'Y'
+				? '<div class="crm-tracking-report-source-status"><div></div></div>'
+				: ''
+		)
+		. '<div data-role="grid/activator" data-options="'
+		. htmlspecialcharsbx(Json::encode(['level' => $item['nextLevel'], 'parentId' => $item['id'], 'enabled' => $item['enabled']]))
+		. '">'
+		. ($item['nextLevel'] !== null
+			? '<span class="crm-tracking-report-source-link">' . htmlspecialcharsbx($item['title']) . '</span>'
+			: htmlspecialcharsbx($item['title'])
+		)
+		. '</div></div>'
+	;
+
+	//$rowData['title'] = '<div><span class="" title="">' . ((int) $item['enabled']) . '</span>' . $rowData['title'] . '</div>';
 
 	$rows[] = [
 		'id' => $item['id'],

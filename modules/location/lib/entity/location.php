@@ -10,11 +10,12 @@ use Bitrix\Location\Entity\Location\Type;
 use Bitrix\Location\Entity\Location\Parents;
 use Bitrix\Location\Service;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class Location
- * Aggregate
- * @package Bitrix\Location
+ *
+ * @package Bitrix\Location\Entity
  */
 final class Location
 	implements \Serializable, IPoint
@@ -41,33 +42,41 @@ final class Location
 	/** @var FieldCollection */
 	private $fieldCollection;
 
-	//todo: seems like cycling. May be move?
-	/** @var Address  */
+	/** @var Address Location could contain the Address*/
 	protected $address = null;
 
-	/** @var Parents (lazy load) */
+	/** @var Parents Location parents */
 	protected $parents = null;
 
+	/**
+	 * Location constructor.
+	 */
 	public function __construct()
 	{
 		$this->fieldCollection = new FieldCollection();
 	}
 
 	/**
+	 * Check if this Location is parent of the other Location
+	 *
 	 * @param Location $childCandidate
 	 * @return bool
 	 */
 	public function isParentOf(Location $childCandidate): bool
 	{
-		if(!($candidateParents = $childCandidate->getParents()))
+		$candidateParents = $childCandidate->getParents();
+
+		if(!$candidateParents)
 		{
 			return false;
 		}
 
-		return $childCandidate->getParents()->isContain($this);
+		return $candidateParents->isContain($this);
 	}
 
 	/**
+	 * Check if this Location is parent of the other Location
+	 *
 	 * @param Location $parentCandidate
 	 * @return bool
 	 */
@@ -84,6 +93,8 @@ final class Location
 	}
 
 	/**
+	 * Check if this Location and the other Location are the same
+	 *
 	 * @param Location $location
 	 * @return bool
 	 */
@@ -94,8 +105,8 @@ final class Location
 			return $this->getId() === $location->getId();
 		}
 
-		if($this->getExternalId() <> '' || $location->getExternalId() <> ''
-			|| $this->getSourceCode() <> '' || $location->getSourceCode() <> '')
+		if($this->getExternalId() !== '' || $location->getExternalId() !== ''
+			|| $this->getSourceCode() !== '' || $location->getSourceCode() !== '')
 		{
 
 			if($this->getExternalId() === $location->getExternalId()
@@ -153,6 +164,7 @@ final class Location
 
 	/**
 	 * @return Parents|bool
+	 * @internal
 	 */
 	public function getParents()
 	{
@@ -160,7 +172,11 @@ final class Location
 		return $this->parents;
 	}
 
-	public function loadParents()
+	/**
+	 * Load Location parents
+	 * @internal
+	 */
+	public function loadParents(): void
 	{
 		if($this->parents === null)
 		{
@@ -171,22 +187,29 @@ final class Location
 	/**
 	 * @param int $level
 	 * @return mixed
+	 * @internal
 	 */
-	public function getParentByLevel(int $level):? Location
+	public function getParentByLevel(int $level): ?Location
 	{
 		$parents = $this->getParents();
-		return !!$parents ? $parents[$level] : null;
+		return (bool)$parents ? $parents[$level] : null;
 	}
 
-	public function getParentByType(int $type):? Location
+	/**
+	 * @param int $type
+	 * @return Location|null
+	 * @internal
+	 */
+	public function getParentByType(int $type): ?Location
 	{
 		$parents = $this->getParents();
-		return !!$parents ? $parents->getItemByType($type) : null;
+		return (bool)$parents ? $parents->getItemByType($type) : null;
 	}
 
 	/**
 	 * @param Parents $parents
 	 * @return $this
+	 * @internal
 	 */
 	public function setParents(Parents $parents): self
 	{
@@ -239,7 +262,13 @@ final class Location
 		return $this->name;
 	}
 
-	public function getNameWithParents()
+	/**
+	 * Return Location name imploded with parents names
+	 *
+	 * @return string
+	 * @todo: customize delimiter and the names order
+	 */
+	public function getNameWithParents(): string
 	{
 		$result = $this->getName();
 
@@ -343,6 +372,7 @@ final class Location
 
 	/**
 	 * @return int
+	 * @see \Bitrix\Location\Entity\Location\Type
 	 */
 	public function getType(): int
 	{
@@ -352,8 +382,10 @@ final class Location
 	/**
 	 * @param int $type
 	 * @return $this
+	 * @see \Bitrix\Location\Entity\Location\Types
+	 * @throws ArgumentOutOfRangeException
 	 */
-	public function setType(int $type)
+	public function setType(int $type): self
 	{
 		if(!Type::isValueExist($type))
 		{
@@ -365,8 +397,10 @@ final class Location
 	}
 
 	/**
-	 * Copy data from other location
+	 * Copy data from other Location
+	 *
 	 * @param Location $otherLocation
+	 * @internal
 	 */
 	public function copyDataFrom(Location $otherLocation): void
 	{
@@ -379,7 +413,6 @@ final class Location
 			->setLanguageId($otherLocation->getLanguageId())
 			->setLatitude($otherLocation->getLatitude())
 			->setLongitude($otherLocation->getLongitude());
-			//->setParents($otherLocation->getParents());
 
 			if($address = $otherLocation->getAddress())
 			{
@@ -424,14 +457,18 @@ final class Location
 	}
 
 	/**
+	 * Save Location
+	 *
 	 * @return \Bitrix\Main\Result
 	 */
-	public function save()
+	public function save(): \Bitrix\Main\Result
 	{
 		return Service\LocationService::getInstance()->save($this);
 	}
 
 	/**
+	 * Load the Location
+	 *
 	 * @param int $id
 	 * @param string $languageId
 	 * @return Location|bool|null
@@ -442,14 +479,18 @@ final class Location
 	}
 
 	/**
+	 * Delete the Location
+	 *
 	 * @return \Bitrix\Main\Result
 	 */
-	public function delete()
+	public function delete(): \Bitrix\Main\Result
 	{
 		return Service\LocationService::getInstance()->delete($this);
 	}
 
 	/**
+	 * Serialize the Location
+	 *
 	 * @return string
 	 */
 	public function serialize()
@@ -460,6 +501,8 @@ final class Location
 	}
 
 	/**
+	 * Unserialize the Location
+	 *
 	 * @param string $serialized
 	 */
 	public function unserialize($serialized)
@@ -470,16 +513,40 @@ final class Location
 			));
 	}
 
-	public function toArray()
+	/**
+	 * Convert the Location to an Array
+	 *
+	 * @return array
+	 */
+	public function toArray(): array
 	{
 		return ArrayConverter::convertToArray($this);
 	}
 
+	public function toJson(): string
+	{
+		return Json::encode($this->toArray());
+	}
+
+	/**
+	 * Create Location from the Array
+	 *
+	 * @param array $location
+	 * @return Location
+	 */
 	public static function fromArray(array $location): Location
 	{
 		return ArrayConverter::convertFromArray($location);
 	}
 
+	/**
+	 * Set the Location field value
+	 *
+	 * @param int $type Location type. See \Bitrix\Location\Entity\Location\Type
+	 * @param string $value
+	 * @return $this
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function setFieldValue(int $type, string $value): self
 	{
 		if($field = $this->fieldCollection->getItemByType($type))
@@ -496,6 +563,11 @@ final class Location
 		return $this;
 	}
 
+	/**
+	 * Return all fields values
+	 *
+	 * @return array
+	 */
 	public function getAllFieldsValues(): array
 	{
 		$result = [];
@@ -508,6 +580,10 @@ final class Location
 		return $result;
 	}
 
+	/**
+	 * @param int $type Location type. See \Bitrix\Location\Entity\Location\Type
+	 * @return string|null
+	 */
 	public function getFieldValue(int $type): ?string
 	{
 		$result = null;
@@ -520,11 +596,21 @@ final class Location
 		return $result;
 	}
 
+	/**
+	 * Check if the Location field exists
+	 *
+	 * @param int $type Location type. See \Bitrix\Location\Entity\Location\Type
+	 * @return bool
+	 */
 	public function isFieldExist(int $type): bool
 	{
 		return (bool)$this->fieldCollection->getItemByType($type);
 	}
 
+	/**
+	 * @return FieldCollection
+	 * @internal
+	 */
 	public function getFieldCollection(): FieldCollection
 	{
 		return $this->fieldCollection;

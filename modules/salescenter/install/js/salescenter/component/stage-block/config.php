@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/stage-block.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'salescenter.marketplace',
 	],
 	'skip_core' => true,
 ];

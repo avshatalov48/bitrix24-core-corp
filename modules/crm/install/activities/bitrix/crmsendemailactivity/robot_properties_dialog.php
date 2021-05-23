@@ -13,6 +13,9 @@ $messageType = $dialog->getCurrentValue(
 );
 $emailType = $map['EmailType'];
 $emailTypeValue = (string)$dialog->getCurrentValue($emailType['FieldName'], '');
+$emailSelectRule = $map['EmailSelectRule'];
+$emailSelectRuleValue = (string)$dialog->getCurrentValue($emailSelectRule['FieldName']);
+
 $attachmentType = isset($map['AttachmentType']) ? $map['AttachmentType'] : null;
 $attachment = isset($map['Attachment']) ? $map['Attachment'] : null;
 $from = isset($map['MessageFrom']) ? $map['MessageFrom'] : null;
@@ -27,23 +30,19 @@ if ($from):?>
 	$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
 ?>
 </div>
-<div class="crm-automation-popup-settings crm-automation-popup-settings-text">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($from['Name'])?>:</span>
+<div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($from['Name'])?>:</span>
 	<input type="hidden" name="<?=htmlspecialcharsbx($from['FieldName'])?>" value="<?=htmlspecialcharsbx($fromValue)?>" data-role="mailbox-selector-value">
-	<a class="crm-automation-popup-settings-link" data-role="mailbox-selector"></a>
+	<a class="bizproc-automation-popup-settings-link" data-role="mailbox-selector"></a>
 </div>
 <?
 endif;
 ?>
-<div class="crm-automation-popup-settings">
-	<input name="<?=htmlspecialcharsbx($subject['FieldName'])?>" type="text" class="crm-automation-popup-input"
-		value="<?=htmlspecialcharsbx($dialog->getCurrentValue($subject['FieldName']))?>"
-		placeholder="<?=htmlspecialcharsbx($subject['Name'])?>"
-		data-role="inline-selector-target"
-	>
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($subject)?>
 </div>
-<div class="crm-automation-popup-settings" data-role="inline-selector-html">
-	<div class="crm-automation-popup-select"><?php
+<div class="bizproc-automation-popup-settings" data-role="inline-selector-html">
+	<div class="bizproc-automation-popup-select"><?php
 	$emailEditor = new CHTMLEditor;
 
 	$content = $dialog->getCurrentValue($messageText['FieldName'], '');
@@ -109,12 +108,23 @@ endif;
 <input type="hidden" name="<?=htmlspecialcharsbx($map['MessageTextType']['FieldName'])?>"
 	value="<?=htmlspecialcharsbx(\CBPCrmSendEmailActivity::TEXT_TYPE_HTML)?>">
 
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($emailType['Name'])?>:</span>
-	<select class="crm-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($emailType['FieldName'])?>">
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($emailType['Name'])?>:</span>
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($emailType['FieldName'])?>">
 		<?foreach ($emailType['Options'] as $value => $optionLabel):?>
 			<option value="<?=htmlspecialcharsbx($value)?>"
 				<?=($value == $emailTypeValue) ? ' selected' : ''?>
+			><?=htmlspecialcharsbx($optionLabel)?></option>
+		<?endforeach;?>
+	</select>
+</div>
+
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($emailSelectRule['Name'])?>:</span>
+	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($emailSelectRule['FieldName'])?>">
+		<?php foreach ($emailSelectRule['Options'] as $value => $optionLabel):?>
+			<option value="<?=htmlspecialcharsbx($value)?>"
+				<?= ($value === $emailSelectRuleValue) ? ' selected' : '' ?>
 			><?=htmlspecialcharsbx($optionLabel)?></option>
 		<?endforeach;?>
 	</select>
@@ -147,7 +157,7 @@ endif;
 	}
 	$configAttributeValue = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($config));
 ?>
-<div class="crm-automation-popup-settings" data-role="file-selector" data-config="<?=$configAttributeValue?>"></div>
+<div class="bizproc-automation-popup-settings" data-role="file-selector" data-config="<?=$configAttributeValue?>"></div>
 <?if ($from):?>
 <script>
 
@@ -236,7 +246,7 @@ endif;
 						autoHide: true,
 						offsetLeft: (BX.pos(this)['width'] / 2),
 						angle: { position: 'top', offset: 0 },
-						zIndex: 200,
+						overlay: { backgroundColor: 'transparent' },
 						events:
 						{
 							onPopupClose: function()
@@ -255,10 +265,10 @@ endif;
 </script>
 <?endif;?>
 
-<div class="crm-automation-popup-checkbox">
-	<div class="crm-automation-popup-checkbox-item">
-		<label class="crm-automation-popup-chk-label">
-			<input type="checkbox" name="<?=htmlspecialcharsbx($map['UseLinkTracker']['FieldName'])?>" value="Y" class="crm-automation-popup-chk" <?=$dialog->getCurrentValue($map['UseLinkTracker']) === 'Y' ? 'checked' : ''?>>
+<div class="bizproc-automation-popup-checkbox">
+	<div class="bizproc-automation-popup-checkbox-item">
+		<label class="bizproc-automation-popup-chk-label">
+			<input type="checkbox" name="<?=htmlspecialcharsbx($map['UseLinkTracker']['FieldName'])?>" value="Y" class="bizproc-automation-popup-chk" <?=$dialog->getCurrentValue($map['UseLinkTracker']) === 'Y' ? 'checked' : ''?>>
 			<?=htmlspecialcharsbx($map['UseLinkTracker']['Name'])?>
 		</label>
 	</div>

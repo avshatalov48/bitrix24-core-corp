@@ -1017,22 +1017,22 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 					availableRates: [
 						{
 							rate: 1,
-							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1')
+							html: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1')
 								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">1x</span>')
 						},
 						{
 							rate: 1.5,
-							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5')
+							html: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5')
 								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">1.5x</span>')
 						},
 						{
 							rate: 2,
-							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2')
+							html: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_2')
 								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">2x</span>')
 						},
 						{
 							rate: 3,
-							text: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3')
+							html: BX.Loc.getMessage('CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_3')
 								.replace('#RATE#', '<span class="crm-audio-cap-speed-param">3x</span>')
 						}
 					],
@@ -8084,6 +8084,12 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 		this._editor = null;
 		this._commentMessage = '';
 		this._mode = BX.Crm.TimelineEditorMode.view;
+		this._streamContentEventBlock = '';
+		this._playerWrappers = {};
+		BX.Event.EventEmitter.subscribe(
+			"BX.Disk.Files:onShowFiles",
+			BX.delegate(this.addPlayer, this)
+		);
 	};
 	BX.extend(BX.CrmHistoryItemComment, BX.CrmHistoryItem);
 	BX.CrmHistoryItemComment.prototype.doInitialize = function()
@@ -8095,6 +8101,60 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 	{
 		return this.getMessage("comment");
 	};
+	BX.CrmHistoryItemComment.prototype.onPlayerDummyClick = function(file)
+	{
+		var playerWrapper = this._playerWrappers[file.id];
+		var stubNode = playerWrapper.querySelector(".crm-audio-cap-wrap");
+		if (stubNode)
+		{
+			BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
+		}
+		this._history.getManager().getAudioPlaybackRateSelector().addPlayer(
+			this._history.getManager().loadMediaPlayer(
+				"history_" + this.getId() + '_' + file.id,
+				file.url,
+				'audio/mp3',
+				playerWrapper,
+				null,
+				{
+					playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
+				}
+			)
+		);
+	};
+	BX.CrmHistoryItemComment.prototype.addPlayer = function(event)
+	{
+		if (event.data.entityValueId === parseInt(this.getId(), 10))
+		{
+			this.files = event.data.files;
+			event.data.files.forEach(function(file){
+				if (file.extension === 'mp3')
+				{
+					var callInfoWrapper = BX.create("DIV",
+						{
+							attrs: {
+								className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline"
+							}
+						}
+					);
+					this._streamContentEventBlock.appendChild(callInfoWrapper);
+					this._playerWrappers[file.id] = this._history.getManager().renderAudioDummy(
+						null,
+						this.onPlayerDummyClick.bind(this, file)
+					);
+
+					this._playerWrappers[file.id].firstElementChild.classList.add("crm-audio-cap-wrap-without-duration-text");
+
+					callInfoWrapper.appendChild(
+						this._playerWrappers[file.id]
+					);
+					callInfoWrapper.appendChild(
+						this._history.getManager().getAudioPlaybackRateSelector().render()
+					);
+				}
+			}.bind(this));
+		}
+	},
 	BX.CrmHistoryItemComment.prototype.prepareContent = function()
 	{
 		var comment = this.getTextDataParam("COMMENT", "");
@@ -8125,10 +8185,10 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 		}
 		//endregion
 
-		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		this._streamContentEventBlock = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
 		var header = this.prepareHeaderLayout();
 
-		content.appendChild(header);
+		this._streamContentEventBlock.appendChild(header);
 
 		if (!this.isReadOnly())
 			wrapper.appendChild(this.prepareFixedSwitcherLayout());
@@ -8186,7 +8246,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 			detailChildren.push(buttons);
 		}
 
-		content.appendChild(
+		this._streamContentEventBlock.appendChild(
 			BX.create("DIV",
 				{
 					attrs: { className: "crm-entity-stream-content-detail" },
@@ -8199,7 +8259,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 		var authorNode = this.prepareAuthorLayout();
 		if(authorNode)
 		{
-			content.appendChild(authorNode);
+			this._streamContentEventBlock.appendChild(authorNode);
 		}
 		//endregion
 		var cleanText = this.getTextDataParam("TEXT", "");
@@ -8209,7 +8269,14 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 			this._isCollapsed = false;
 
 			wrapper.appendChild(
-				BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+				BX.create("DIV", {
+					attrs: {
+						className: "crm-entity-stream-section-content"
+					},
+					children: [
+						this._streamContentEventBlock
+					]
+				})
 			);
 		}
 		else
@@ -8222,7 +8289,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 						attrs: { className: "crm-entity-stream-section-content crm-entity-stream-section-content-collapsed" },
 						children:
 						[
-							content
+							this._streamContentEventBlock
 						]
 					}
 				)
@@ -9260,7 +9327,7 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 				var linkAttrs = { attrs: { href: showUrl }, text: title };
 				if (htmlTitle !== "")
 				{
-					linkAttrs = { attrs: { href: showUrl }, html: BX.util.htmlspecialchars(htmlTitle) };
+					linkAttrs = { attrs: { href: showUrl }, html: htmlTitle };
 				}
 				nodes.push(BX.create("A", linkAttrs));
 			}
@@ -11525,7 +11592,7 @@ if(typeof(BX.CrmHistoryItemActivityRestApplication) === "undefined")
 		{
 			if (iconNode)
 			{
-				iconNode.style.backgroundImage = "url(" +  entityData['APP_TYPE']['ICON_SRC'] + ")";
+				iconNode.style.backgroundImage = "url('" +  entityData['APP_TYPE']['ICON_SRC'] + "')";
 				iconNode.style.backgroundPosition = "center center";
 			}
 		}
@@ -13146,7 +13213,7 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 			var legend = BX.prop.getString(entityData, "LEGEND");
 			if(legend !== "")
 			{
-				descriptionNode.appendChild(BX.create("SPAN", { html: " " + legend }));
+				descriptionNode.appendChild(BX.create("SPAN", { text: " " + legend }));
 			}
 
 			var sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
@@ -15508,7 +15575,7 @@ if(typeof(BX.CrmScheduleItemActivityRestApplication) === "undefined")
 			var iconNode = wrapper.querySelector('[class="'+this.getIconClassName()+'"]');
 			if (iconNode)
 			{
-				iconNode.style.backgroundImage = "url(" +  data['APP_TYPE']['ICON_SRC'] + ")";
+				iconNode.style.backgroundImage = "url('" +  data['APP_TYPE']['ICON_SRC'] + "')";
 				iconNode.style.backgroundPosition = "center center";
 			}
 		}
@@ -16986,6 +17053,7 @@ if(typeof(BX.CrmTimelineAudioPlaybackRateSelector) === "undefined")
 		return this.availableRates.map(function(item) {
 			return {
 				text: (item.text || item) + '',
+				html: (item.html || item) + '',
 				className: (this.isRateCurrent(item, selectedRate)) ? 'menu-popup-item-text-active' : null,
 				onclick: function() {
 					this.setRate(item.rate || item)

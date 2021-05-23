@@ -32,25 +32,18 @@ class LocationManager extends Base
 	{
 		$address = Address::load((int)$addressId);
 
-		if (!$address
-			|| (
-				!(float)$address->getLatitude()
-				&& !(float)$address->getLongitude()
-			)
-		)
+		if (!$address)
 		{
 			return null;
 		}
 
+		$result = [];
 		$location = $address->getLocation();
-		if (!$location)
+		if ($location)
 		{
-			return null;
+			$result = $location->toArray();
+			unset($result['id']);
 		}
-
-		$result = $location->toArray();
-
-		unset($result['id']);
 
 		$result['name'] = $address->toString(
 			FormatService::getInstance()->findDefault(LANGUAGE_ID),
@@ -127,7 +120,7 @@ class LocationManager extends Base
 			return null;
 		}
 
-		$locationArray = unserialize($defaultLocationFrom);
+		$locationArray = unserialize($defaultLocationFrom, ['allowed_classes' => false]);
 
 		if (!$locationArray)
 		{

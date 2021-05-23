@@ -250,13 +250,13 @@
 										props : {
 											'className' : "imconnector-field-user-name"
 										},
-										html : BX.util.htmlspecialchars(item.getTitle())
+										text : item.getTitle()
 									}),
 								BX.create("div", {
 									props : {
 										'className' : "imconnector-field-user-desc"
 									},
-									html : item.getCustomData().get('position') ? BX.util.htmlspecialchars(item.getCustomData().get('position')) : ""
+									text: item.getCustomData().get('position') || ''
 								})
 							]
 						}),

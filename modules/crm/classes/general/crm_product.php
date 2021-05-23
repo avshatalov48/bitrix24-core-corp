@@ -12,6 +12,9 @@ class CCrmProduct
 {
 	const CACHE_NAME = 'CRM_CATALOG_PRODUCT_CACHE';
 	const TABLE_ALIAS = 'P';
+
+	protected const EVENT_ON_AFTER_UPDATE = 'OnAfterCrmProductUpdate';
+
 	protected static $LAST_ERROR = '';
 	protected static $FIELD_INFOS = null;
 	private static $defaultCatalogId = null;
@@ -20,6 +23,8 @@ class CCrmProduct
 	private static $arVatRates = array();
 
 	private static $allowElementHandlers = 0;
+
+	protected static $catalogIncluded = null;
 
 	public static function getDefaultCatalogId()
 	{
@@ -36,17 +41,29 @@ class CCrmProduct
 		if (self::$selectedPriceTypeId === null)
 		{
 			$priceTypeId = (int)Main\Config\Option::get('crm', 'selected_catalog_group_id');
-			if ($priceTypeId < 1)
+			if (Loader::includeModule('catalog'))
 			{
-				if (Loader::includeModule('catalog'))
+				if ($priceTypeId > 0)
 				{
-					$arBaseCatalogGroup = CCatalogGroup::GetBaseGroup();
-					if (!empty($arBaseCatalogGroup))
-					{
-						$priceTypeId = (int)$arBaseCatalogGroup['ID'];
-					}
-					unset($arBaseCatalogGroup);
+					$list = \CCatalogGroup::GetListArray();
+					$getPriceType = !isset($list[$priceTypeId]);
+					unset($list);
 				}
+				else
+				{
+					$getPriceType = true;
+				}
+				if ($getPriceType)
+				{
+					$baseCatalogGroup = \CCatalogGroup::GetBaseGroup();
+					if (!empty($baseCatalogGroup))
+					{
+						$priceTypeId = (int)$baseCatalogGroup['ID'];
+						Main\Config\Option::set('crm', 'selected_catalog_group_id', $priceTypeId, '');
+					}
+					unset($baseCatalogGroup);
+				}
+				unset($getPriceType);
 			}
 			self::$selectedPriceTypeId = $priceTypeId;
 		}
@@ -618,7 +635,7 @@ class CCrmProduct
 
 		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 
-		foreach (GetModuleEvents("crm", "OnAfterCrmProductUpdate", true) as $arEvent)
+		foreach (GetModuleEvents("crm", self::EVENT_ON_AFTER_UPDATE, true) as $arEvent)
 			ExecuteModuleEventEx($arEvent, array($ID, $arFields));
 
 		return true;
@@ -668,6 +685,57 @@ class CCrmProduct
 		}
 
 		return $result;
+	}
+
+	public static function handlerAfterProductUpdate(Main\Event $event): void
+	{
+		if (self::$catalogIncluded === null)
+		{
+			self::$catalogIncluded = Loader::includeModule('catalog');
+		}
+
+		$id = $event->getParameter('id');
+		$fields = $event->getParameter('fields');
+
+		if (isset($fields['ID']))
+		{
+			unset($fields['ID']);
+		}
+
+		$datetimeFields = array('TIMESTAMP_X', 'DATE_CREATE', 'ACTIVE_FROM', 'TO');
+		foreach ($datetimeFields as $fieldName)
+		{
+			if (isset($fields[$fieldName]) && $fields[$fieldName] instanceof Main\Type\DateTime)
+			{
+				$fields[$fieldName] = $fields[$fieldName]->toString();
+			}
+		}
+		unset($fieldName);
+		if (isset($fields['PRICES']))
+		{
+			$crmPriceType = self::getSelectedPriceTypeId();
+			if (self::$catalogIncluded && is_array($fields['PRICES']))
+			{
+				foreach ($fields['PRICES'] as $price)
+				{
+					if (isset($price['CATALOG_GROUP_ID']) && $price['CATALOG_GROUP_ID'] == $crmPriceType)
+					{
+						$fields['PRICE'] = $price['PRICE'];
+						$fields['CURRENCY'] = $price['CURRENCY'];
+						break;
+					}
+				}
+				unset($price);
+			}
+			unset($fields['PRICES']);
+		}
+
+		foreach (GetModuleEvents("crm", self::EVENT_ON_AFTER_UPDATE, true) as $crmEvent)
+		{
+			ExecuteModuleEventEx($crmEvent, array($id, $fields));
+		}
+		unset($crmEvent);
+		unset($fields, $id);
 	}
 	//<-- CRUD
 
@@ -1463,7 +1531,7 @@ class CCrmProduct
 	 * @param int $ID
 	 * @return bool
 	 */
-	public static function handlerOnBeforeIBlockElementDelete($ID)
+	public static function handlerOnBeforeIBlockElementDelete($ID): bool
 	{
 		if (!self::allowedElementHandlers())
 		{
@@ -1475,12 +1543,29 @@ class CCrmProduct
 		{
 			return true;
 		}
-		if (!CCrmCatalog::Exists($iblockId))
+
+		$parentIblockId = 0;
+		if (self::$catalogIncluded === null)
 		{
-			return true;
+			self::$catalogIncluded = Loader::includeModule('catalog');
+		}
+		if (self::$catalogIncluded)
+		{
+			$catalog = CCatalogSku::GetInfoByOfferIBlock($iblockId);
+			if (!empty($catalog))
+			{
+				$parentIblockId = $catalog['PRODUCT_IBLOCK_ID'];
+			}
+		}
+		if (
+			CCrmCatalog::Exists($iblockId)
+			|| ($parentIblockId > 0 && CCrmCatalog::Exists($parentIblockId))
+		)
+		{
+			return self::IsAllowedDelete($ID);
 		}
 
-		return self::IsAllowedDelete($ID);
+		return true;
 	}
 
 	/**

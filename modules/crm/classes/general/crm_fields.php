@@ -195,7 +195,7 @@ class CCrmFields
 					'name' => GetMessage('CRM_FIELDS_DEFAULT_VALUE'),
 					'type' => 'text',
 				);
-			break;
+				break;
 
 			case 'boolean':
 				$arFields[] = array(
@@ -212,48 +212,48 @@ class CCrmFields
 					'name' => GetMessage('CRM_FIELDS_TYPE_B_DISPLAY'),
 					'type' => 'list',
 					'items' => array(
-						'CHECKBOX' 	=> GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_CHECKBOX'),
-						'RADIO'		=> GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_RADIO'),
-						'DROPDOWN' 	=> GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_DROPDOWN'),
+						'CHECKBOX' => GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_CHECKBOX'),
+						'RADIO' => GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_RADIO'),
+						'DROPDOWN' => GetMessage('CRM_FIELDS_TYPE_B_DISPLAY_DROPDOWN'),
 					),
 				);
-			break;
+				break;
 
 			case 'datetime':
 			case 'date':
-			{
-				$arFields[] = array(
-					'id' => 'DT_TYPE',
-					'name' => GetMessage('CRM_FIELDS_TYPE_DT_TYPE'),
-					'type' => 'list',
-					'items' => array(
-						'NONE' 	=> GetMessage('CRM_FIELDS_TYPE_DT_TYPE_NONE'),
-						'NOW'	=> GetMessage($entityType === 'datetime'
-							? 'CRM_FIELDS_TYPE_DT_TYPE_NOW' : 'CRM_FIELDS_TYPE_DATE_TYPE_NOW'),
-						'FIXED' => GetMessage('CRM_FIELDS_TYPE_DT_TYPE_FIXED'),
-					),
-				);
+				{
+					$arFields[] = array(
+						'id' => 'DT_TYPE',
+						'name' => GetMessage('CRM_FIELDS_TYPE_DT_TYPE'),
+						'type' => 'list',
+						'items' => array(
+							'NONE' => GetMessage('CRM_FIELDS_TYPE_DT_TYPE_NONE'),
+							'NOW' => GetMessage($entityType === 'datetime'
+								? 'CRM_FIELDS_TYPE_DT_TYPE_NOW' : 'CRM_FIELDS_TYPE_DATE_TYPE_NOW'),
+							'FIXED' => GetMessage('CRM_FIELDS_TYPE_DT_TYPE_FIXED'),
+						),
+					);
 
-				if($entityType === 'datetime')
-				{
-					$arFields[] = array(
-						'id' => 'DT_DEFAULT_VALUE',
-						'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
-						'type' => 'date',
-						'params' => array('size' => 25)
-					);
+					if ($entityType === 'datetime')
+					{
+						$arFields[] = array(
+							'id' => 'DT_DEFAULT_VALUE',
+							'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
+							'type' => 'date',
+							'params' => array('size' => 25)
+						);
+					}
+					else
+					{
+						$arFields[] = array(
+							'id' => 'DT_DEFAULT_VALUE',
+							'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
+							'type' => 'date_short',
+							'params' => array('size' => 10)
+						);
+					}
 				}
-				else
-				{
-					$arFields[] = array(
-						'id' => 'DT_DEFAULT_VALUE',
-						'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
-						'type' => 'date_short',
-						'params' => array('size' => 10)
-					);
-				}
-			}
-			break;
+				break;
 
 			case 'enumeration':
 				$arFields[] = array(
@@ -276,7 +276,7 @@ class CCrmFields
 					'name' => GetMessage('CRM_FIELDS_TYPE_E_CAPTION_NO_VALUE'),
 					'type' => 'text',
 				);
-			break;
+				break;
 			case 'money':
 				if (Loader::includeModule('currency'))
 				{
@@ -312,8 +312,8 @@ class CCrmFields
 				}
 				break;
 			case 'iblock_section':
-				$id = isset($fieldValue['IB_IBLOCK_ID'])? $fieldValue['IB_IBLOCK_ID']: 0;
-				$bActiveFilter = isset($fieldValue['IB_ACTIVE_FILTER']) && $fieldValue['IB_ACTIVE_FILTER'] == 'Y'? 'Y': 'N';
+				$id = isset($fieldValue['IB_IBLOCK_ID']) ? (int)$fieldValue['IB_IBLOCK_ID'] : 0;
+				$bActiveFilter = isset($fieldValue['IB_ACTIVE_FILTER']) && $fieldValue['IB_ACTIVE_FILTER'] == 'Y' ? 'Y' : 'N';
 
 				$arFields[] = array(
 					'id' => 'IB_IBLOCK_TYPE_ID',
@@ -322,33 +322,47 @@ class CCrmFields
 					'value' => GetIBlockDropDownList($id, 'IB_IBLOCK_TYPE_ID', 'IB_IBLOCK_ID')
 				);
 
-				$arFilter = Array("IBLOCK_ID"=>$id);
-				if($bActiveFilter === "Y")
-					$arFilter["GLOBAL_ACTIVE"] = "Y";
+				$arDefault = Array('' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE_ANY'));
+				$found = false;
+				if ($id > 0)
+				{
+					$arFilter = Array("IBLOCK_ID" => $id);
+					if ($bActiveFilter === "Y")
+						$arFilter["GLOBAL_ACTIVE"] = "Y";
 
-				$rs = CIBlockElement::GetList(
-					array("SORT" => "DESC", "NAME"=>"ASC"),
-					$arFilter,
-					false,
-					false,
-					array("ID", "NAME")
-				);
-				$rsSections = CIBlockSection::GetList(
-					Array("left_margin"=>"asc"),
-					$arFilter,
-					false,
-					array("ID", "DEPTH_LEVEL", "NAME")
-				);
-				$arDefault = Array(''=>GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE_ANY'));
-				while($arSection = $rsSections->GetNext())
-					$arDefaul[$arSection["ID"]] = str_repeat("&nbsp;.&nbsp;", $arSection["DEPTH_LEVEL"]).$arSection["NAME"];
+					$rsSections = CIBlockSection::GetList(
+						Array("LEFT_MARGIN" => "ASC"),
+						$arFilter,
+						false,
+						array("ID", "DEPTH_LEVEL", "NAME", "LEFT_MARGIN")
+					);
 
-				$arFields[] = array(
-					'id' => 'IB_DEFAULT_VALUE',
-					'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
-					'items' => $arDefault,
-					'type' => 'list',
-				);
+					while ($arSection = $rsSections->Fetch())
+					{
+						$arDefault[$arSection["ID"]] = str_repeat(". ", $arSection["DEPTH_LEVEL"] - 1).$arSection["NAME"];
+						$found = true;
+					}
+					unset($arSection, $rsSections);
+				}
+
+				if ($found)
+				{
+					$arFields[] = array(
+						'id' => 'IB_DEFAULT_VALUE',
+						'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
+						'items' => $arDefault,
+						'type' => 'list',
+					);
+				}
+				else
+				{
+					$arFields[] = array(
+						'id' => 'IB_DEFAULT_VALUE',
+						'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
+						'type' => 'text',
+					);
+				}
+				unset($arDefault);
 
 				$arFields[] = array(
 					'id' => 'IB_DISPLAY',
@@ -373,7 +387,7 @@ class CCrmFields
 
 
 			case 'iblock_element':
-				$id = isset($fieldValue['IB_IBLOCK_ID'])? $fieldValue['IB_IBLOCK_ID']: 0;
+				$id = isset($fieldValue['IB_IBLOCK_ID'])? (int)$fieldValue['IB_IBLOCK_ID']: 0;
 				$bActiveFilter = isset($fieldValue['IB_ACTIVE_FILTER']) && $fieldValue['IB_ACTIVE_FILTER'] == 'Y'? 'Y': 'N';
 
 				$arFields[] = array(
@@ -383,28 +397,48 @@ class CCrmFields
 					'value' => GetIBlockDropDownList($id, 'IB_IBLOCK_TYPE_ID', 'IB_IBLOCK_ID')
 				);
 
-				$arFilter = Array("IBLOCK_ID"=>$id);
-				if($bActiveFilter === "Y")
-					$arFilter["ACTIVE"] = "Y";
-
-				$rs = CIBlockElement::GetList(
-					array("SORT" => "DESC", "NAME"=>"ASC"),
-					$arFilter,
-					false,
-					false,
-					array("ID", "NAME")
-				);
-
 				$arDefault = Array(''=>GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE_ANY'));
-				while($ar = $rs->GetNext())
-					$arDefault[$ar["ID"]] = $ar["NAME"];
+				$found = false;
+				if ($id > 0)
+				{
+					$arFilter = Array("IBLOCK_ID" => $id);
+					if ($bActiveFilter === "Y")
+						$arFilter["ACTIVE"] = "Y";
 
-				$arFields[] = array(
-					'id' => 'IB_DEFAULT_VALUE',
-					'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
-					'items' => $arDefault,
-					'type' => 'list',
-				);
+					$rs = CIBlockElement::GetList(
+						array("SORT" => "DESC", "NAME" => "ASC"),
+						$arFilter,
+						false,
+						false,
+						array("ID", "NAME", "SORT")
+					);
+
+					while ($ar = $rs->Fetch())
+					{
+						$found = true;
+						$arDefault[$ar["ID"]] = $ar["NAME"];
+					}
+					unset($sr, $rs);
+				}
+
+				if ($found)
+				{
+					$arFields[] = array(
+						'id' => 'IB_DEFAULT_VALUE',
+						'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
+						'items' => $arDefault,
+						'type' => 'list',
+					);
+				}
+				else
+				{
+					$arFields[] = array(
+						'id' => 'IB_DEFAULT_VALUE',
+						'name' => GetMessage('CRM_FIELDS_TYPE_IB_DEFAULT_VALUE'),
+						'type' => 'text',
+					);
+				}
+				unset($arDefault);
 
 				$arFields[] = array(
 					'id' => 'IB_DISPLAY',

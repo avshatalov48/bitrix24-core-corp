@@ -1,6 +1,7 @@
 <?php
 $MESS["BPCDA_FIELD_REQUIED"] = "The field '#FIELD#' is required.";
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Checklist";
+$MESS["BPSA_CREATED_BY_ERROR"] = "Task creator not specified.";
 $MESS["BPSA_CYCLING_ERROR"] = "Task was not created because one or more actions may cause infinite recursion.";
 $MESS["BPSA_TRACK_CLOSED"] = "Task closed on #DATE#";
 $MESS["BPSA_TRACK_DELETED"] = "Task has been deleted.";

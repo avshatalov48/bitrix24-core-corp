@@ -1,0 +1,16 @@
+.telephony-report-call-activity-grid-value {
+	display: inline-block;
+}
+
+.telephony-report-call-activity-grid-value-clickable {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	border-bottom: 1px dashed transparent;
+	transition: ease-in .2s;
+}
+
+.telephony-report-call-activity-grid-value-clickable:hover {
+	color: #2066B0;
+	border-bottom: 1px dashed #2066B0;
+}

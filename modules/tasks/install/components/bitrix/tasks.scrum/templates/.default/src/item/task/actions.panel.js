@@ -29,16 +29,9 @@ export class ActionsPanel
 	{
 		Dom.remove(document.getElementById(this.actionPanelNodeId));
 
-		const actionsPanelContainer = this.createActionPanel();
+		const actionsPanelContainer = this.calculatePanelPosition(this.createActionPanel());
+
 		this.setBlockBlurNode(actionsPanelContainer);
-
-		const position = Dom.getPosition(this.bindElement);
-
-		actionsPanelContainer.style.top = `${position.top}px`;
-		actionsPanelContainer.style.left = `${position.left}px`;
-		actionsPanelContainer.style.width = `${position.width}px`;
-
-		actionsPanelContainer.style.zIndex = 1100;
 
 		Dom.append(actionsPanelContainer, document.body);
 
@@ -318,5 +311,41 @@ export class ActionsPanel
 				this.itemList.decomposition.callback
 			);
 		}
+	}
+
+	calculatePanelPosition(panel: HTMLElement)
+	{
+		const position = Dom.getPosition(this.bindElement);
+
+		const top = `${position.top}px`;
+		let left = `${position.left}px`;
+
+		const fakePanel = panel.cloneNode(true);
+		fakePanel.style.visibility = 'hidden';
+		fakePanel.style.top = `${position.top}px`;
+		fakePanel.style.left = `${position.left}px`;
+
+		Dom.append(fakePanel, document.body);
+		if (this.isPanelWiderThanViewport(fakePanel))
+		{
+			const fakePanelRect = fakePanel.getBoundingClientRect();
+			const windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+			left = `${fakePanelRect.left - (fakePanelRect.right - windowWidth + 40)}px`;
+		}
+		Dom.remove(fakePanel);
+
+		panel.style.top = top;
+		panel.style.left = left;
+		panel.style.zIndex = 1100;
+
+		return panel;
+	}
+
+	isPanelWiderThanViewport(element: HTMLElement): boolean
+	{
+		const rect = element.getBoundingClientRect();
+		const windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+
+		return (rect.right > windowWidth);
 	}
 }

@@ -348,6 +348,50 @@ class Ad
 	 */
 	public function getExpensesReport(Main\Type\Date $dateFrom = null, Main\Type\Date $dateTo = null)
 	{
+		$checkResult = $this->checkDetalizationSupporting();
+		if ($checkResult)
+		{
+			return $checkResult;
+		}
+
+		return $this->account->getExpensesReport($this->accountId, $dateFrom, $dateTo);
+	}
+
+	public function manageKeyword($groupId, $id, $active = true)
+	{
+		$checkResult = $this->checkDetalizationSupporting();
+		if ($checkResult)
+		{
+			return $checkResult;
+		}
+
+		return $this->account->manageAdKeyword($this->accountId, $groupId, $id, $active);
+	}
+
+	public function manageGroup($id, $active = true)
+	{
+		$checkResult = $this->checkDetalizationSupporting();
+		if ($checkResult)
+		{
+			return $checkResult;
+		}
+
+		return $this->account->manageAdGroup($this->accountId, $id, $active);
+	}
+
+	public function manageCampaign($id, $active = true)
+	{
+		$checkResult = $this->checkDetalizationSupporting();
+		if ($checkResult)
+		{
+			return $checkResult;
+		}
+
+		return $this->account->manageAdCampaign($this->accountId, $id, $active);
+	}
+
+	protected function checkDetalizationSupporting()
+	{
 		if (!$this->isConnected())
 		{
 			return (new Main\Result())->addError(new Main\Error('Ads account not connected.'));
@@ -355,7 +399,7 @@ class Ad
 
 		if (!$this->isSupportExpensesReport())
 		{
-			return (new Main\Result())->addError(new Main\Error('Expenses report not supported.'));
+			return (new Main\Result())->addError(new Main\Error('Detalization not supported.'));
 		}
 
 		if ($this->account->hasAccounts())
@@ -366,6 +410,6 @@ class Ad
 			}
 		}
 
-		return $this->account->getExpensesReport($this->accountId, $dateFrom, $dateTo);
+		return null;
 	}
 }

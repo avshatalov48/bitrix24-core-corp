@@ -20,6 +20,8 @@ else
 		$this->SetViewTarget('below_pagetitle', 0);
 	}
 
+	$applyFilter = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('apply_filter') === 'Y';
+
 	if($isBitrix24Template)
 	{
 		$this->EndViewTarget();
@@ -62,6 +64,7 @@ else
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 				'DISABLE_NAVIGATION_BAR' => 'Y',
+				'HIDE_FILTER' => !$applyFilter
 			]
 		]
 	);

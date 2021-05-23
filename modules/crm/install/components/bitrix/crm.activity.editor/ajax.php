@@ -125,7 +125,7 @@ function GetCrmActivityCommunicationsPage($ID, $pageSize, $pageNumber)
 	$communicationData = array();
 	while($result = $dbRes->Fetch())
 	{
-		$result['ENTITY_SETTINGS'] = isset($result['ENTITY_SETTINGS']) && $result['ENTITY_SETTINGS'] !== '' ? unserialize($result['ENTITY_SETTINGS']) : array();
+		$result['ENTITY_SETTINGS'] = isset($result['ENTITY_SETTINGS']) && $result['ENTITY_SETTINGS'] !== '' ? unserialize($result['ENTITY_SETTINGS'], ['allowed_classes' => false]) : array();
 		CCrmActivity::PrepareCommunicationInfo($result);
 		$communicationData[] = array(
 			'id' => $result['ID'],
@@ -2886,7 +2886,7 @@ elseif($action == 'GET_ACTIVITIES')
 			}
 		}
 
-		$arRes['SETTINGS'] = isset($arRes['~SETTINGS']) ? unserialize($arRes['~SETTINGS']) : array();
+		$arRes['SETTINGS'] = isset($arRes['~SETTINGS']) ? unserialize($arRes['~SETTINGS'], ['allowed_classes' => false]) : array();
 		$arRes['COMMUNICATIONS'] = CCrmActivity::GetCommunications($arRes['~ID']);
 
 		$commData = array();

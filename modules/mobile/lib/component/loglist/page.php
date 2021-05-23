@@ -128,7 +128,7 @@ class Page
 			if ($logPageFields = $res->fetch())
 			{
 				$this->setDateLastPageStart($logPageFields['PAGE_LAST_DATE']);
-				$processorInstance->setFilterKey('>=LOG_UPDATE', convertTimeStamp(makeTimeStamp($logPageFields['PAGE_LAST_DATE'], \CSite::getDateFormat('FULL')) - 60*60*24*4, 'FULL'));
+				$processorInstance->setFilterKey('>=LOG_UPDATE', convertTimeStamp(makeTimeStamp($logPageFields['PAGE_LAST_DATE'], \CSite::getDateFormat('FULL')) - 60*60*24*1, 'FULL'));
 			}
 			elseif (
 				$groupCode !== '**'

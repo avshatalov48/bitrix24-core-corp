@@ -516,11 +516,11 @@ class FileType extends Volume\Base
 			}
 			if ($this->getFilterValue('FOLDER_ID'))
 			{
-				$sql .= ' AND (destinationTbl.FOLDER_ID = sourceQuery.FOLDER_ID OR (destinationTbl.FOLDER_ID IS NULL AND sourceQuery.FOLDER_ID IS NULL)) ';
+				$sql .= ' AND IFNULL(destinationTbl.FOLDER_ID, -1) = IFNULL(sourceQuery.FOLDER_ID, -1) ';
 			}
 			if ($this->getFilterValue('PARENT_ID'))
 			{
-				$sql .= ' AND (destinationTbl.PARENT_ID = sourceQuery.PARENT_ID OR (destinationTbl.PARENT_ID IS NULL AND sourceQuery.PARENT_ID IS NULL)) ';
+				$sql .= ' AND IFNULL(destinationTbl.PARENT_ID, -1) = IFNULL(sourceQuery.PARENT_ID, -1) ';
 			}
 
 			$connection->queryExecute($sql);

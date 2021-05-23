@@ -712,7 +712,7 @@ $arParamsGroup['HRXML'] = array(
 			case 'LIST':
 				$bMultiple = $arParam['MULTIPLE'] == 'Y';
 				if ($bMultiple && $value && !is_array($value))
-					$value = unserialize($value); ?>
+					$value = unserialize($value, ["allowed_classes" => false]); ?>
 				<select name="IMPORT[<?=$key; ?>]<? if ($bMultiple) { ?>[]<? } ?>"<? if ($bMultiple) { ?> multiple="multiple" size="10"<? } ?>>
 				<? foreach ($arParam['VALUES'] as $val => $title) { ?>
 				<option value="<?=htmlspecialcharsbx($val); ?>"<? if (in_array($val, (array) $value)) { ?> selected="selected"<? } ?>><?=htmlspecialcharsbx($title); ?></option>

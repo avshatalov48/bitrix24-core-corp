@@ -1,22 +1,18 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2021 Bitrix
- */
-
 namespace Bitrix\Tasks\Integration\Pull;
 
+use Bitrix\Main;
+use Bitrix\Pull\Event;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Loader;
-
+/**
+ * Class PushService
+ *
+ * @package Bitrix\Tasks\Integration\Pull
+ */
 class PushService
 {
-
 	private static $instance;
-	private static $jobOn = false;
+	private static $isJobOn = false;
 
 	private $registry = [];
 
@@ -47,53 +43,72 @@ class PushService
 	 */
 	public static function addEvent($recipients, array $params): void
 	{
-		self::getInstance()->registerEvent($recipients, $params);
+		$parameters = [
+			'RECIPIENTS' => $recipients,
+			'PARAMS' => $params,
+		];
+		self::getInstance()->registerEvent($parameters);
+		self::getInstance()->addBackgroundJob();
+	}
 
-		if (!self::$jobOn)
-		{
-			$application = Application::getInstance();
-			$application && $application->addBackgroundJob(
-				['\Bitrix\Tasks\Integration\Pull\PushService', 'proceed'],
-				[],
-				0
-			);
-
-			self::$jobOn = true;
-		}
+	public static function addEventByTag(string $tag, array $params): void
+	{
+		$parameters = [
+			'TAG' => $tag,
+			'PARAMS' => $params,
+		];
+		self::getInstance()->registerEvent($parameters);
+		self::getInstance()->addBackgroundJob();
 	}
 
 	/**
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws Main\LoaderException
 	 */
-	public static function proceed()
+	public static function proceed(): void
 	{
-		if (!Loader::includeModule('pull'))
+		if (!Main\Loader::includeModule('pull'))
 		{
 			return;
 		}
+
 		self::getInstance()->sendEvents();
 	}
 
-	/**
-	 * @param $recipients
-	 * @param array $params
-	 */
-	private function registerEvent($recipients, array $params)
+	private function addBackgroundJob(): void
 	{
-		$this->registry[] = [
-			'RECIPIENTS' => $recipients,
-			'PARAMS' => $params
-		];
+		if (!self::$isJobOn)
+		{
+			$application = Main\Application::getInstance();
+			$application && $application->addBackgroundJob([__CLASS__, 'proceed'], [], 0);
+
+			self::$isJobOn = true;
+		}
 	}
 
 	/**
-	 *
+	 * @param array $parameters
 	 */
-	private function sendEvents()
+	private function registerEvent(array $parameters): void
+	{
+		$this->registry[] = [
+			'TAG' => $parameters['TAG'],
+			'RECIPIENTS' => $parameters['RECIPIENTS'],
+			'PARAMS' => $parameters['PARAMS'],
+		];
+	}
+
+	private function sendEvents(): void
 	{
 		foreach ($this->registry as $event)
 		{
-			\Bitrix\Pull\Event::add($event['RECIPIENTS'], $event['PARAMS']);
+			if (isset($event['TAG']) && $event['TAG'] !== '')
+			{
+				\CPullWatch::AddToStack($event['TAG'], $event['PARAMS']);
+			}
+			else
+			{
+				Event::add($event['RECIPIENTS'], $event['PARAMS']);
+			}
 		}
 	}
 

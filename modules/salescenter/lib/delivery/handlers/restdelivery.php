@@ -12,7 +12,7 @@ Loc::loadMessages(__FILE__);
  * Class RestDelivery
  * @package Bitrix\SalesCenter\Delivery\Handlers
  */
-class RestDelivery extends Base
+class RestDelivery extends Base implements IRestHandler
 {
 	/** @var string */
 	private $restHandlerCode;
@@ -52,14 +52,6 @@ class RestDelivery extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getProfileClass(): ?string
-	{
-		return '\\' . \Sale\Handlers\Delivery\RestProfile::class;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function getName()
 	{
 		return $this->restHandler['NAME'];
@@ -76,17 +68,17 @@ class RestDelivery extends Base
 	/**
 	 * @inheritDoc
 	 */
-	public function getTypeDescription()
+	protected function getImageName(): string
 	{
-		return $this->restHandler['DESCRIPTION'];
+		return 'rest_delivery.svg';
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	protected function getImageName(): string
+	public function doesImageContainName(): bool
 	{
-		return 'rest_delivery.svg';
+		return false;
 	}
 
 	/**
@@ -168,13 +160,5 @@ class RestDelivery extends Base
 		)->fetch();
 
 		return $active ? true : false;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function isRestHandler(): bool
-	{
-		return true;
 	}
 }

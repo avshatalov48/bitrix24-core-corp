@@ -120,7 +120,7 @@ let TileCollectionMixins = {
 				let slider = new AppSlider();
 				let tile = this.getTileByIndex(inx);
 
-				slider.open(tile, this.getOptionSlider);
+				slider.openAppLocal(tile, this.getOptionSlider);
 				slider.subscribe(EventTypes.AppSliderSliderClose,
 					(e) => this.$emit('on-tile-slider-close', {data: e.data})
 				);

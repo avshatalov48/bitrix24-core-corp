@@ -195,4 +195,9 @@ export default class Location
 	{
 		return this.#fieldCollection.isFieldExists(type);
 	}
+
+	hasExternalRelation(): boolean
+	{
+		return (this.#externalId && this.#sourceCode);
+	}
 }

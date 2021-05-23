@@ -166,3 +166,31 @@
 .salescenter-smsprovider-integration-hide {
 	display: none;
 }
+
+.salescenter-item-label {
+	position: absolute;
+	top: 6px;
+	left: -1px;
+	height: 16px;
+	background: #2FC6F6;
+}
+
+.salescenter-item-label:after {
+	content: '';
+	position: absolute;
+	border-right: 5px solid transparent;
+	border-left: 4px solid #2FC6F6;
+	border-bottom: 8px solid #2FC6F6;
+	border-top: 8px solid #2FC6F6;
+}
+
+.salescenter-item-label-text {
+	overflow: hidden;
+	color: #FFFFFF;
+	text-transform: uppercase;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 8px/11px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	padding-left: 6px;
+	display: inline-block;
+}

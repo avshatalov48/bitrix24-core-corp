@@ -52,9 +52,6 @@ global $APPLICATION, $DBType, $DB;
 IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/functions.php');
-require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/classes/general/crm_usertypecrmstatus.php');
-require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/classes/general/crm_usertypecrm.php');
-
 require_once __DIR__.'/autoload.php';
 
 CJSCore::RegisterExt('crm_common', array(

@@ -204,7 +204,7 @@ if ($errorMessage):?>
 </tr>
 <? if (!Main\Loader::includeModule('bitrix24')): ?>
 <tr>
-	<td width="40%"><?=\Bitrix\ImBot\Bot\Properties::getLangMessage('IMBOT_SUPPORT_BOT_NAME')?>:</td>
+	<td width="40%"><?= Loc::getMessage('IMBOT_SUPPORT_BOT_NAME') ?>:</td>
 	<td width="60%"><input type="checkbox" name="BOT_SUPPORT" value="Y" <?=(\Bitrix\ImBot\Bot\SupportBox::getBotId()? 'checked':'')?> /></td>
 </tr>
 <?endif;?>

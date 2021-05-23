@@ -250,8 +250,18 @@ elseif (!empty($arResult['URL_RELOAD']))
 	<script>
 		window.reloadAjaxImconnector = function (urlReload)
 		{
-			parent.window.opener.location.href = urlReload; //parent.window.opener construction is used for both frame and page mode as universal
-			parent.window.opener.addPreloader();
+			if(
+				parent &&
+				parent.window &&
+				parent.window.opener
+			)
+			{
+				if(parent.window.opener.location)
+				{
+					parent.window.opener.location.href = urlReload; //parent.window.opener construction is used for both frame and page mode as universal
+				}
+				parent.window.opener.addPreloader();
+			}
 			window.close();
 		};
 		reloadAjaxImconnector(<?=CUtil::PhpToJSObject($arResult['URL_RELOAD'])?>);
@@ -268,7 +278,15 @@ else
 	<script>
 		window.reloadAjaxImconnector = function (urlReload, idReload)
 		{
-			parent.window.opener.BX.ajax.insertToNode(urlReload, idReload);
+			if(
+				parent &&
+				parent.window &&
+				parent.window.opener.BX &&
+				parent.window.opener.BX.ajax
+			)
+			{
+				parent.window.opener.BX.ajax.insertToNode(urlReload, idReload);
+			}
 			window.close();
 		};
 		reloadAjaxImconnector(<?=CUtil::PhpToJSObject($arResult['URL_RELOAD'])?>, <?=CUtil::PhpToJSObject('comp_' . $arResult['RELOAD'])?>);

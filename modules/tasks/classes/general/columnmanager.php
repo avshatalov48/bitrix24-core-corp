@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2014 Bitrix
- * 
+ *
  * @access private
  */
 // DEPRECATED
@@ -367,7 +367,7 @@ class CTaskColumnManager
 		CTaskAssert::assert(isset($arPresets[$presetId]));
 		$arPreset = $arPresets[$presetId];
 
-		return (unserialize($arPreset['SERIALIZED_COLUMNS']));
+		return (unserialize($arPreset['SERIALIZED_COLUMNS'], ['allowed_classes' => false]));
 	}
 }
 

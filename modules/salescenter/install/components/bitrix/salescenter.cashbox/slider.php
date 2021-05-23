@@ -77,6 +77,7 @@ else
 			'POPUP_COMPONENT_PARAMS' => [
 				'id' => $request->get('id'),
 				'handler' => $request->get('handler'),
+				'kkm-id' => $request->get('kkm-id'),
 				'page' => $request->get('page'),
 				'isFrame' => $request->get('IFRAME') === 'Y',
 				'preview' => $request->get('preview') === 'y',

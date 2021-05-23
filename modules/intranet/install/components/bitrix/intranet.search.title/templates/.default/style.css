@@ -5,14 +5,16 @@
 	padding: 18px 0;
 }
 
-
 .header-search {
 	position: relative;
 	height: 34px;
-	flex:1;
+	/*flex:1;*/
 	order: 3;
 	/*top: 15px;*/
 	overflow: hidden;
+	width: 100%;
+	transition: width .2s;
+	margin-left: 10px;
 }
 
 .header-search-inner {

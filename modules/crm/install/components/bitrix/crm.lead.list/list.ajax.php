@@ -360,7 +360,7 @@ elseif ($action === 'REBUILD_DUPLICATE_INDEX')
 	}
 
 	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_DUP_INDEX_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
+	$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 
 	if(empty($progressData) && intval(\Bitrix\Crm\BusinessTypeTable::getCount()) === 0)
 	{
@@ -464,7 +464,7 @@ elseif ($action === 'REBUILD_STATISTICS')
 	}
 
 	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_STATISTICS_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
+	$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 	$lastItemID = isset($progressData['LAST_ITEM_ID']) ? intval($progressData['LAST_ITEM_ID']) : 0;
 	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? intval($progressData['PROCESSED_ITEMS']) : 0;
 	$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? intval($progressData['TOTAL_ITEMS']) : 0;
@@ -561,7 +561,7 @@ elseif ($action === 'REBUILD_SUM_STATISTICS')
 	}
 
 	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SUM_STATISTICS_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
+	$progressData = $progressData !== '' ? unserialize($progressData, ['allowed_classes' => false]) : array();
 	$lastItemID = isset($progressData['LAST_ITEM_ID']) ? intval($progressData['LAST_ITEM_ID']) : 0;
 	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? intval($progressData['PROCESSED_ITEMS']) : 0;
 	$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? intval($progressData['TOTAL_ITEMS']) : 0;
@@ -943,12 +943,26 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 	}
 	else
 	{
-		$filter = isset($params['FILTER']) && is_array($params['FILTER']) ? $params['FILTER'] : array();
+		$filter = isset($params['FILTER']) && is_array($params['FILTER']) ? $params['FILTER'] : [];
+
 		if(empty($filter))
 		{
+			$entityTypeId = CCrmOwnerType::Lead;
+
 			$filterOptions = new \Bitrix\Main\UI\Filter\Options($gridID);
 			$filter = $filterOptions->getFilter();
+
+			$entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+				\Bitrix\Crm\Filter\Factory::createEntitySettings($entityTypeId, $gridID)
+			);
+			$entityFilter->prepareListFilterParams($filter);
+
+			\Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeId, $filter);
+			\CCrmEntityHelper::PrepareMultiFieldFilter($filter, [], '=%', false);
+			$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($entityTypeId);
+			$entity->prepareFilter($filter);
 		}
+
 		$progressData['FILTER'] = $filter;
 		$progressData['TOTAL_ENTITIES'] = \CCrmLead::GetListEx(
 			array(),

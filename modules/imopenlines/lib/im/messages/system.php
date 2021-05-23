@@ -1,5 +1,5 @@
 <?php
-namespace Bitrix\ImOpenLines\Im;
+namespace Bitrix\ImOpenLines\Im\Messages;
 
 /**
  * Class System

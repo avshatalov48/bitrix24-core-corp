@@ -85,10 +85,14 @@ if (Loader::includeModule('catalog'))
 			if ($this->isUiCatalog())
 			{
 				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = self::PATH_DETAIL_CARD_PREFIX
-					.'#IBLOCK_ID#/product/#ENTITY_ID#/';
+					.'#IBLOCK_ID#/product/#ENTITY_ID#/'
+					.'?#ADDITIONAL_PARAMETERS#';
 				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = self::PATH_DETAIL_CARD_PREFIX
 					.'#IBLOCK_ID#/product/0/copy/#ENTITY_ID#/';
 				$this->urlTemplates[self::PAGE_ELEMENT_SAVE] = $this->urlTemplates[self::PAGE_ELEMENT_DETAIL];
+				$this->urlTemplates[self::PAGE_OFFER_DETAIL] = '/shop/catalog/'
+					.'#PRODUCT_IBLOCK_ID#/product/#PRODUCT_ID#/'
+					.'variation/#ENTITY_ID#/';
 			}
 			else
 			{
@@ -103,6 +107,7 @@ if (Loader::includeModule('catalog'))
 					.'cat_product_edit.php'
 					.'?#BASE_PARAMS#'
 					.'#ADDITIONAL_PARAMETERS#';
+				$this->urlTemplates[self::PAGE_OFFER_DETAIL] = $this->urlTemplates[self::PAGE_ELEMENT_DETAIL];
 			}
 			$this->urlTemplates[self::PAGE_ELEMENT_SEARCH] = '/bitrix/tools/iblock/element_search.php'
 				.'?#LANGUAGE#'

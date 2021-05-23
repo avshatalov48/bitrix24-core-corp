@@ -48,7 +48,10 @@ class CCrmInvoiceEvent extends CSaleOrderChange
 			{
 				if (isset($arInfo["FUNCTION"]) && is_callable(array("CCrmInvoiceEventFormat", $arInfo["FUNCTION"])))
 				{
-					$arResult = call_user_func_array(array("CCrmInvoiceEventFormat", $arInfo["FUNCTION"]), array(unserialize($data)));
+					$arResult = call_user_func_array(
+						["CCrmInvoiceEventFormat", $arInfo["FUNCTION"]],
+						[unserialize($data, ['allowed_classes' => ['Bitrix\Main\Type\Date', 'Bitrix\Main\Type\DateTime', 'DateTime']])]
+					);
 					$arResult["NAME"] = self::getName($type);
 					return $arResult;
 				}

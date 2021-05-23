@@ -30,6 +30,7 @@ $arParams["ID"] = (int)$arParams["ID"] ?: (int)$_REQUEST["ID"];
 /********************************************************************
  * /Input params
  ********************************************************************/
+$account = new CVoxImplantAccount();
 $arResult = array(
 	"ITEM" => Bitrix\Voximplant\ConfigTable::getById($arParams["ID"])->fetch(),
 	"QUEUES" => \Bitrix\Voximplant\Model\QueueTable::getList(array('select' => array('ID', 'NAME')))->fetchAll(),
@@ -43,6 +44,11 @@ $arResult = array(
 	"SHOW_IVR" => true,
 	"SHOW_MELODIES" => true,
 	"SHOW_RULE_VOICEMAIL" => true,
+	"SHOW_TRANSCRIPTION" => !in_array(
+		$account->GetAccountLang(false),
+		\Bitrix\Voximplant\Transcript::getHiddenRegions(),
+		true
+	),
 );
 $melodies = array("MELODY_WELCOME", "MELODY_WAIT", "MELODY_HOLD", "MELODY_VOICEMAIL", "WORKTIME_DAYOFF_MELODY", "MELODY_RECORDING", "MELODY_VOTE", "MELODY_VOTE_END", "MELODY_ENQUEUE");
 if ($arResult["ITEM"])

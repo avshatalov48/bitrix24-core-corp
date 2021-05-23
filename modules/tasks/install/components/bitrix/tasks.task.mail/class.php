@@ -46,52 +46,99 @@ class TasksMailTaskComponent extends TasksTaskComponent
 
 	protected function processExecutionStart()
 	{
-		if(!static::checkTasksModule())
+		if (!static::checkTasksModule())
 		{
 			return false;
 		}
 
 		parent::processExecutionStart();
 
-		// todo: remove this mess below when $GLOBALS['USER'] problem in disk`s BaseComponent::getUser() get fixed
+		$taskId = (int)$this->arParams['ID'];
+		$userId = (int)$this->arParams['USER_ID'];
 
-		$taskId = intval($this->arParams['ID']);
-		$userId = intval($this->arParams['USER_ID']);
-
-		if(!$taskId || !$userId)
+		if (!$taskId || !$userId)
 		{
 			return false;
 		}
 
-		$this->replaceUser = !\Bitrix\Tasks\Util\User::getId() && \Bitrix\Tasks\Integration\Forum::includeModule();
-		if($this->replaceUser)
+		$currentUserId = \Bitrix\Tasks\Util\User::getId();
+		$this->replaceUser = !$currentUserId;
+
+		try
 		{
-			try
-			{
-				$taskData = CTaskItem::getInstance($taskId, $userId)->getData(false);
-			}
-			catch(TasksException $e) // todo: get rid of catching TasksException when refactor exception mechanism
-			{
-				$this->replaceUser = false;
+			$taskData = CTaskItem::getInstance($taskId, $userId)->getData(false);
 
-				if($e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
-				{
-					$this->errors->add('ACCESS_DENIED.NO_TASK', 'Task not found or not accessible');
-					return false;
-				}
-			}
-			catch(\Bitrix\Tasks\Exception $e)
+			if ($this->replaceUser || $currentUserId !== (int)$taskData['CREATED_BY'])
 			{
-				$this->replaceUser = false;
+				$this->replaceUser = true;
+				$this->prevUser = $GLOBALS['USER'];
+				$GLOBALS['USER'] = $this->makeFakeCUserClass($taskData['CREATED_BY']);
+			}
+		}
+		catch (TasksException $e) // todo: get rid of catching TasksException when refactor exception mechanism
+		{
+			$this->replaceUser = false;
 
-				$this->errors->add('INTERNAL_ERROR', $e->getMessageFriendly()); // todo: replace 'INTERNAL_ERROR' when invent symbolic code mechanism
+			if ($e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
+			{
+				$this->errors->add(
+					'ACCESS_DENIED.NO_TASK',
+					'Task not found or not accessible'
+				);
+
 				return false;
 			}
-			$this->prevUser = $GLOBALS['USER'];
-			$GLOBALS['USER'] = new \Bitrix\Forum\Comments\User($taskData['CREATED_BY']); // dont pass admin id here, its too far dangerous
+		}
+		catch (\Bitrix\Tasks\Exception $e)
+		{
+			$this->replaceUser = false;
+			// todo: replace 'INTERNAL_ERROR' when invent symbolic code mechanism
+			$this->errors->add('INTERNAL_ERROR', $e->getMessageFriendly());
+
+			return false;
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param int $userId
+	 * @return CUser
+	 */
+	protected function makeFakeCUserClass(int $userId): CUser
+	{
+		$settings = [
+			'id' => $userId,
+			'user_group' => [],
+		];
+
+		$userGroupResult = CUser::GetUserGroupEx($userId);
+		while ($userGroup = $userGroupResult->Fetch())
+		{
+			$settings['user_group'][] = $userGroup['GROUP_ID'];
+		}
+
+		$fakeCUserClass = new class extends CUser {
+			protected static $settings = [];
+
+			public static function init($settings)
+			{
+				static::$settings = $settings;
+			}
+
+			public function GetID()
+			{
+				return static::$settings['id'];
+			}
+
+			public static function GetUserGroup($ID)
+			{
+				return static::$settings['user_group'];
+			}
+		};
+		$fakeCUserClass::init($settings);
+
+		return $fakeCUserClass;
 	}
 
 	protected function processExecutionEnd()

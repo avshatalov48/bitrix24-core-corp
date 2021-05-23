@@ -27,7 +27,7 @@ class Queue
 {
 	public const USER_DATA_CACHE_TIME = 86400;
 	public const UNDISTRIBUTED_QUEUE_TIME = 3600;
-	public const MAX_CHAT = 150;
+	public const MAX_CHAT = 1000;
 
 	//Session check reason return values
 	//if you add a new return reason, you need to add a list of possible values here: \Bitrix\ImOpenLines\Model\SessionCheckTable::getMap
@@ -271,6 +271,22 @@ class Queue
 			$query->setOrder($params['order']);
 		}
 
+		if(
+			!empty($params['cache']) &&
+			isset($params['cache']['ttl'])
+		)
+		{
+			$query->setCacheTtl($params['cache']['ttl']);
+
+			if(
+				isset($params['cache']['cacheJoins']) &&
+				$params['cache']['cacheJoins'] === true
+			)
+			{
+				$query->cacheJoins(true);
+			}
+		}
+
 		return $query->exec();
 	}
 
@@ -280,10 +296,6 @@ class Queue
 	 * @param $userId
 	 * @param $lineId
 	 * @return array|bool|false
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getQueueOperatorData($userId, $lineId)
 	{
@@ -343,11 +355,7 @@ class Queue
 	 *
 	 * @param $lineId
 	 * @param $userArray
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return array|false|mixed
 	 */
 	public static function setQueueUserData($lineId, $userArray)
 	{
@@ -416,9 +424,6 @@ class Queue
 	 * @param $lineId
 	 *
 	 * @return mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getDefaultOperatorData($lineId)
 	{

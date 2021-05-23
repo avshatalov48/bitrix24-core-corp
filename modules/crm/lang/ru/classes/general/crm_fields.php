@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_FIELDS_LEAD"] = "Лид";
 $MESS["CRM_FIELDS_LEAD_DESC"] = "Пользовательские поля для \"Лидов\"";
 $MESS["CRM_FIELDS_CONTACT"] = "Контакт";
@@ -63,7 +63,7 @@ $MESS["CRM_FIELDS_TYPE_IB_DISPLAY"] = "Внешний вид";
 $MESS["CRM_FIELDS_TYPE_IB_DISPLAY_LIST"] = "Список";
 $MESS["CRM_FIELDS_TYPE_IB_DISPLAY_CHECKBOX"] = "Флажки";
 $MESS["CRM_FIELDS_TYPE_IB_LIST_HEIGHT"] = "Высота списка";
-$MESS["CRM_FIELDS_TYPE_IB_ACTIVE_FILTER"] = "Показывать только активные элементы";
+$MESS["CRM_FIELDS_TYPE_IB_ACTIVE_FILTER"] = "Показывать элементы с включенным флагом активности";
 $MESS["CRM_FIELDS_TEXT_ROW_COUNT"] = "Количество строк в поле ввода";
 $MESS["CRM_FIELDS_TYPE_E_CAPTION_NO_VALUE"] = "Подпись при отсутствии значения";
 $MESS["CRM_FIELDS_TYPE_MONEY"] = "Деньги";
@@ -71,4 +71,3 @@ $MESS["CRM_FIELDS_TYPE_URL"] = "Ссылка";
 $MESS["CRM_FIELDS_TYPE_E_DISPLAY_UI"] = "Набираемый список";
 $MESS["CRM_FIELDS_TYPE_ADDRESS"] = "Адрес Google карты";
 $MESS["CRM_FIELDS_TYPE_RESOURCEBOOKING"] = "Бронирование ресурсов";
-?>

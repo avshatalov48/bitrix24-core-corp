@@ -3,12 +3,16 @@
 namespace Bitrix\ImOpenLines\Controller\Widget\Filter;
 
 use Bitrix\Imopenlines\Widget\User;
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\ActionFilter\Base;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 
 use Bitrix\Main\EventResult;
+use Bitrix\Main\UserTable;
+use Bitrix\Main\Web\Cookie;
+use CUser;
 
 class Authorization extends Base
 {
@@ -16,15 +20,20 @@ class Authorization extends Base
 
 	public function onBeforeAction(Event $event)
 	{
+		$request = $this->action->getController()->getRequest();
+		if (!$request)
+		{
+			return null;
+		}
+
 		//for preflight CORS request
-		$requestMethod = $this->action->getController()->getRequest()->getRequestMethod();
+		$requestMethod = $request->getRequestMethod();
 		if ($requestMethod === 'OPTIONS')
 		{
 			return null;
 		}
 
-		$authCode = Context::getCurrent()->getRequest()->getHeader('livechat-auth-id');
-
+		$authCode = $request->getHeader('livechat-auth-id');
 		if ($authCode === null)
 		{
 			$this->addError(new Error('LiveChat: user auth failed [code is empty'));
@@ -45,7 +54,7 @@ class Authorization extends Base
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 
-		$session = \Bitrix\Main\Application::getInstance()->getSession();
+		$session = Application::getInstance()->getSession();
 		if ($session['LIVECHAT']['AUTH_ERROR_COUNTER'] > 3)
 		{
 			$this->addError(new Error('LiveChat: user auth blocked'));
@@ -61,7 +70,7 @@ class Authorization extends Base
 			{
 				if ($USER->GetParam('XML_ID') === $xmlId)
 				{
-					\CUser::SetLastActivityDate($USER->GetID(), true);
+					CUser::SetLastActivityDate($USER->GetID(), true);
 				}
 
 				return null;
@@ -70,7 +79,7 @@ class Authorization extends Base
 			return null;
 		}
 
-		$userData = \Bitrix\Main\UserTable::getList([
+		$userData = UserTable::getList([
 			'select' => ['ID', 'EXTERNAL_AUTH_ID'],
 			'filter' => ['=XML_ID' => $xmlId]
 		])->fetch();
@@ -78,7 +87,7 @@ class Authorization extends Base
 		if($userData && $userData['EXTERNAL_AUTH_ID'] === User::EXTERNAL_AUTH_ID)
 		{
 			self::authorizeById($userData['ID']);
-			\CUser::SetLastActivityDate($USER->GetID(), true);
+			CUser::SetLastActivityDate($USER->GetID(), true);
 		}
 
 		if (
@@ -103,7 +112,7 @@ class Authorization extends Base
 			return false;
 		}
 
-		$context = \Bitrix\Main\Context::getCurrent();
+		$context = Context::getCurrent();
 
 		if ($USER->GetID() != $userId)
 		{
@@ -112,7 +121,7 @@ class Authorization extends Base
 
 		$authCode = str_replace(self::AUTH_TYPE.'|', '', $USER->GetParam("XML_ID"));
 
-		$cookie = new \Bitrix\Main\Web\Cookie('LIVECHAT_HASH', $authCode, null, false);
+		$cookie = new Cookie('LIVECHAT_HASH', $authCode, null, false);
 		$cookie->setHttpOnly(false);
 		$context->getResponse()->addCookie($cookie);
 

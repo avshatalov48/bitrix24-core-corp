@@ -1,6 +1,7 @@
 <?php
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $crDomainSetup = !empty($arResult['SETTINGS']) && $arResult['SETTINGS']['type'] == 'crdomain'
 	&& !empty($arResult['STATUS']['stage']) && in_array($arResult['STATUS']['stage'], array('owner-check', 'mx-check'));

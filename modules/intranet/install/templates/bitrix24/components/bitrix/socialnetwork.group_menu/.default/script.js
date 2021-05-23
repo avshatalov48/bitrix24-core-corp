@@ -16,7 +16,8 @@
 		favoritesValue: null,
 		canInitiate: null,
 		canModify: null,
-		editFeaturesAllowed: true
+		editFeaturesAllowed: true,
+		pageId: null,
 	};
 
 	BX.BXSGM24.init = function(params) {
@@ -32,6 +33,7 @@
 		this.favoritesValue = !!params.favoritesValue;
 		this.canInitiate = !!params.canInitiate;
 		this.canModify = !!params.canModify;
+		this.pageId = params.pageId;
 
 		if (typeof params.urls != 'undefined')
 		{
@@ -131,6 +133,93 @@
 				}
 			}
 		}, this));
+
+		this.bindEvents();
+	};
+
+	BX.BXSGM24.bindEvents = function()
+	{
+		if (this.pageId !== 'group_tasks')
+		{
+			return;
+		}
+
+		try
+		{
+			var elements = document.getElementsByClassName("tasks_role_link");
+			if (elements.length)
+			{
+				for (var key = 0; key < elements.length; key++)
+				{
+					BX.bind(elements[key], 'click', function(event) {
+						event.preventDefault();
+
+						var targetClass = event.target.className;
+						var roleId = (this.dataset.id == 'view_all' ? '' : this.dataset.id);
+						var url = this.dataset.url;
+
+						if (
+							(targetClass === 'main-buttons-item-sublink ' && roleId === '')
+							|| targetClass === 'main-buttons-item-edit-button'
+						)
+						{
+							return;
+						}
+
+						BX.onCustomEvent('Tasks.TopMenu:onItem', [roleId, url]);
+
+						var elements = document.getElementsByClassName('tasks_role_link');
+						if (elements.length)
+						{
+							for (var key = 0; key < elements.length; key++)
+							{
+								BX.removeClass(elements[key], 'main-buttons-item-active');
+							}
+						}
+						BX.addClass(this, 'main-buttons-item-active');
+					});
+				}
+			}
+		}
+		catch(e){}
+
+		BX.addCustomEvent('BX.Main.Filter:apply', function(filterId, data, ctx) {
+			this.onFilterApply(filterId, data, ctx);
+		}.bind(this));
+	};
+
+	BX.BXSGM24.onFilterApply = function(filterId, data, ctx)
+	{
+		try
+		{
+			var roleId = ctx.getFilterFieldsValues().ROLEID;
+			var el = document.querySelectorAll('.tasks_role_link');
+
+			for (var i = 0; i < el.length; i++)
+			{
+				BX.removeClass(el[i], 'main-buttons-item-active');
+			}
+
+			if (
+				typeof roleId === 'undefined'
+				|| !roleId
+			)
+			{
+				roleId = 'view_role_view_all';
+			}
+
+			BX.addClass(BX('group_panel_menu_' + this.groupId + '_' + roleId), 'main-buttons-item-active');
+
+			var toolbar = BX.Tasks.Component.TasksToolbar.getInstance();
+			if (toolbar)
+			{
+				toolbar.rerender(roleId);
+			}
+		}
+		catch (e)
+		{
+
+		}
 	};
 
 	BX.BXSGM24.sendJoinRequest = function(event)

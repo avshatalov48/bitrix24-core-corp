@@ -46,7 +46,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 							<option value="<?= $k ?>"<?= ($k == $arResult["ITEM"]["TYPE"] ? " selected" : "") ?>><?= GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_".mb_strtoupper($k)) ?></option>
 						<? endforeach; ?>
 					</select>
-					<span data-hint="<?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP"))?><br><br><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"))?><br><i><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"))?></i>"></span>
+					<span data-hint-html data-hint="<?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP"))?><br><br><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"))?><br><i><?=htmlspecialcharsbx(GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"))?></i>"></span>
 					<? if (!CVoxImplantAccount::IsPro() || CVoxImplantAccount::IsDemo()): ?>
 						<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 							<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_to_all')"

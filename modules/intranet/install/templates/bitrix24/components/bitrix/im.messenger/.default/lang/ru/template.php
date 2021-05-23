@@ -8,7 +8,6 @@ $MESS["IM_MESSENGER_GO_TO_APPS"] = "Перейти к загрузке прил�
 $MESS["IM_MESSENGER_GO_TO_APPS_LINK"] = "https://www.bitrix24.ru/features/apps.php";
 $MESS["IM_MESSENGER_OPEN_OL"] = "Открыть чат Открытой линии";
 $MESS["IM_MESSENGER_OPEN_EMAIL"] = "Перейти к электронной почте";
-$MESS["IM_MESSENGER_OPEN_LF"] = "Перейти к живой ленте";
 $MESS["IM_MESSENGER_OPEN_NETWORK"] = "Перейти в Битрикс24 Network";
 $MESS["IM_MESSENGER_OPEN_MOBILE"] = "Скачать бесплатное мобильное приложение";
 $MESS["IM_MESSENGER_ONLINE"] = "Онлайн";

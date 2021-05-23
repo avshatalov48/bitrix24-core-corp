@@ -91,17 +91,31 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		$entityTypeName = isset($params['ENTITY_TYPE_ID']) ? \CCrmOwnerType::ResolveName($params['ENTITY_TYPE_ID']) : '';
 		if($entityTypeName !== '')
 		{
+
+			$params['TITLE'] = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_TITLE");
+
 			/*
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_LEAD_TITLE
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_DEAL_TITLE
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_CONTACT_TITLE
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_COMPANY_TITLE
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_QUOTE_TITLE
-			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_INVOICE_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_LEAD_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_DEAL_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_CONTACT_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_COMPANY_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_QUOTE_TITLE
+			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_INVOICE_TITLE
 			 */
-			$title = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_TITLE");
-			$title = $params['GLOBAL_SEARCH'] ? str_replace('<br>', '', $title) : $title;
-			$params['TITLE'] = $title;
+			$helpdeskLink = '';
+			if (Main\Loader::includeModule('ui'))
+			{
+				$helpdeskUrl = \Bitrix\UI\Util::getArticleUrlByCode('9745327');
+				$helpdeskLink = '<a href="'.$helpdeskUrl.'">' . Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').'</a>';
+			}
+			$content = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_{$entityTypeName}_CONTENT");
+			$content .= '<br><br>';
+			$content .= Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_CONTENT2", [
+				'#HELPDESK_LINK#' => $helpdeskLink
+			]);
+
+			$params['CONTENT'] = $content;
+
 			if (!$params['GLOBAL_SEARCH'])
 			{
 				$params['ANALYTICS_LABEL'] = 'CRM_' . $entityTypeName . '_FILTER_LIMITS';
@@ -163,6 +177,15 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				"NOTIFY_MESSAGE_OUT" => $messageOut
 			);
 			\CIMNotify::Add($notificationFields);
+		}
+	}
+
+	public function notifyIfLimitAlmostExceed(int $entityTypeId, int $userId = null)
+	{
+		$limitWarningValue = $this->getLimitWarningValue($entityTypeId, $userId);
+		if ($limitWarningValue > 0)
+		{
+			$this->notifyLimitWarning($entityTypeId, $limitWarningValue, $userId);
 		}
 	}
 

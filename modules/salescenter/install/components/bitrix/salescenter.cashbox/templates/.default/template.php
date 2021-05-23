@@ -67,7 +67,7 @@ Extension::load([
 								</div>
 								<div class="salescenter-main-header-right-block">
 									<div class="salescenter-main-header-title-container">
-										<div class="ui-title-3" style="margin-bottom: 0;"><?=htmlspecialcharsbx($arResult['handlerDescription']['title'])?></div>
+										<div class="ui-title-3" style="margin-bottom: 0;"><?=Loc::getMessage($arResult['handlerDescription']['title']);?></div>
 										<div class="salescenter-main-header-feedback-container">
 											<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 										</div>

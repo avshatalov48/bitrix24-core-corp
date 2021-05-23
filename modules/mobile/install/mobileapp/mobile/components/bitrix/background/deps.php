@@ -8,6 +8,7 @@ return [
 	"task", // task background processes (view, .etc)
 	"disk/background", // task background processes (view, .etc)
 	"rest",
+	'livefeed',
 	'livefeed/publicationqueue',
 	'comments/uploadqueue',
 ];

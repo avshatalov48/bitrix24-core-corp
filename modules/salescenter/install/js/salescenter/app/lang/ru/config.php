@@ -101,7 +101,6 @@ $MESS["SALESCENTER_SENDER_LIST_CONTENT_SETTINGS"] = "Подключить еще
 $MESS["SALESCENTER_SMS_MESSAGE_HINT"] = "Полный адрес ссылки будет показан после отправки";
 $MESS["SALESCENTER_JS_POPUP_CLOSE"] = "Закрыть";
 $MESS["SALESCENTER_PRODUCT_NAME_PLACEHOLDER"] = "Найти или создать новый товар";
-
-
-
-$MESS["SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS"] = "Клиенту будет отправлено SMS на номер #PHONE#";
+$MESS["SALESCENTER_APP_CONTACT_BLOCK_TITLE_SMS_2"] = "Клиент получит SMS на номер #PHONE#";
+$MESS["SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT"] = "Как это работает";
+$MESS["SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT"] = "Выберите товары для оплаты";

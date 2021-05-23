@@ -110,32 +110,33 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		try
 		{
 			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+
+			if($callList->getEntityTypeId() != CCrmOwnerType::Undefined && $callList->getEntityTypeId() != $entityTypeId)
+			{
+				$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_ERROR_WRONG_ITEM_TYPE')));
+				return $result;
+			}
+
+			$callList->setEntityTypeId($entityTypeId);
+			$callList->setFilterParameters(null);
+
+			if(is_array($entityIds) && count($entityIds) > 0)
+			{
+				$callList->addEntities($entityIds);
+			}
+			else if($gridId != '')
+			{
+				$callList->addEntitiesFromGrid($gridId);
+			}
+
+			$callList->persist();
 		}
 		catch (Main\SystemException $e)
 		{
 			$result->addError(new Main\Error($e->getMessage()));
 			return $result;
 		}
-		
-		if($callList->getEntityTypeId() != CCrmOwnerType::Undefined && $callList->getEntityTypeId() != $entityTypeId)
-		{
-			$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_ERROR_WRONG_ITEM_TYPE')));
-			return $result;
-		}
 
-		$callList->setEntityTypeId($entityTypeId);
-		$callList->setFilterParameters(null);
-
-		if(is_array($entityIds) && count($entityIds) > 0)
-		{
-			$callList->addEntities($entityIds);
-		}
-		else if($gridId != '')
-		{
-			$callList->addEntitiesFromGrid($gridId);
-		}
-
-		$callList->persist();
 		$message = Loc::getMessage('CRM_CALL_LIST_ENTITIES_ADDED', array('#ENTITIES#' => static::getEntityCaption($entityTypeId, true)));
 		$result->setData(array(
 			'MESSAGE' => $message

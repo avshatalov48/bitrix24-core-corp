@@ -18,6 +18,14 @@ abstract class Rating extends Deal
 
 	public function prepare()
 	{
+		$filterParameters = $this->getFilterParameters();;
+		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?: 0;
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId))
+		{
+			return false;
+		}
+
 		$result = [];
 		$mainQuery = $this->prepareQuery();
 		$mainQuery->where("STAGE_SEMANTIC_ID", PhaseSemantics::SUCCESS);

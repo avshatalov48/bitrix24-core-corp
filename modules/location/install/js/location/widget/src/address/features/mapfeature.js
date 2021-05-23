@@ -2,7 +2,7 @@ import {Type} from 'main.core';
 import {Address} from 'location.core';
 import MapPopup from '../../mappopup/mappopup';
 import BaseFeature from './basefeature';
-import State from "../../state";
+import State from '../../state';
 
 /**
  * Complex address widget

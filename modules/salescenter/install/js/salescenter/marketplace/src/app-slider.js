@@ -13,7 +13,7 @@ class AppSlider extends EventEmitter {
 		this.setEventNamespace('BX.Salescenter.AppSlider');
 	}
 
-	open(tile: Tile.Base, options = {})
+	openAppLocal(tile: Tile.Base, options = {})
 	{
 		if (tile.hasOwnProperty('width'))
 		{
@@ -33,6 +33,16 @@ class AppSlider extends EventEmitter {
 				(e) => this.emit(EventTypes.AppSliderSliderClose, new BaseEvent({data: e.data}))
 			);
 		}
+	}
+
+	openAppLocalLink(link, options = {})
+	{
+		let system = new AppLocal();
+		system.openLink(link, options);
+		system.subscribe(
+			EventTypes.AppLocalSliderClose,
+			(e) => this.emit(EventTypes.AppSliderSliderClose, new BaseEvent({data: e.data}))
+		);
 	}
 
 	openApp(tile: Tile.Marketplace, options = {})

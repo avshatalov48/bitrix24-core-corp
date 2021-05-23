@@ -257,8 +257,11 @@ export default class Map extends MapBase
 			throw new Error('google.maps.Map must be defined');
 		}
 
-		let position = this.#convertLocationToPosition(this.#location),
-			mapProps = {};
+		let position = this.#convertLocationToPosition(this.#location);
+
+		let mapProps = {
+			gestureHandling: 'greedy',
+		};
 
 		let zoom = Map.#chooseZoomByLocation(this.#location);
 

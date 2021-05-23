@@ -23,6 +23,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -30,11 +31,9 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 ?><div id="batchDeletionWrapper"></div><?
-?><div id="batchActionWrapper"></div><?
 
 if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 	?><div id="convertCompanyAddressesWrapper"></div><?
@@ -949,17 +948,7 @@ $APPLICATION->IncludeComponent(
 				{
 					gridId: gridId,
 					entityTypeId: <?=CCrmOwnerType::Company?>,
-					container: "batchActionWrapper",
-					stateTemplate: "<?=GetMessageJS('CRM_COMPANY_STEPWISE_STATE_TEMPLATE')?>",
-					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_COMPANY_MERGE'])?>",
-					messages:
-						{
-							title: "<?=GetMessageJS('CRM_COMPANY_LIST_MERGE_PROC_DLG_TITLE')?>",
-							confirmation: "<?=GetMessageJS('CRM_COMPANY_LIST_MERGE_PROC_DLG_SUMMARY')?>",
-							summaryCaption: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COMPLETED')?>",
-							summarySucceeded: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COUNT_SUCCEEDED')?>",
-							summaryFailed: "<?=GetMessageJS('CRM_COMPANY_BATCH_MERGE_COUNT_FAILED')?>"
-						}
+					mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_COMPANY_MERGE'])?>"
 				}
 			);
 

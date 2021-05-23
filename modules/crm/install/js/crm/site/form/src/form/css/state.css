@@ -8,25 +8,18 @@
 }
 
 .b24-form-state-container .b24-form-loader,
-.b24-form-state-container .b24-form-success,
-.b24-form-state-container .b24-form-error,
-.b24-form-state-container .b24-form-warning {
+.b24-form-state-container .b24-form-state {
 	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: -5px;
 	right: 0;
 	background-color: #fff;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: end;
-	-ms-flex-align: end;
-	align-items: flex-end;
-	-webkit-box-pack: center;
-	-ms-flex-pack: center;
+	flex-direction: column;
+	align-items: center;
 	justify-content: center;
-	padding-bottom: 15px;
+    overflow: hidden;
 	z-index: 15;
 }
 
@@ -38,6 +31,9 @@ div.b24-form-loader {
 }
 
 .b24-form-loader-icon {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
 	display: inline-block;
 	width: 263px;
 	height: 174px;
@@ -66,9 +62,12 @@ div.b24-form-loader {
 /*region b24-form-success*/
 .b24-form-state-container .b24-form-success { background-color: #a0be47; }
 
-.b24-form-success-inner {
+.b24-form-state-inner {
+	position: absolute;
+	top: 50%;
 	max-width: 330px;
 	text-align: center;
+	transform: translateY(-50%);
 }
 
 .b24-form-success-icon {
@@ -80,7 +79,7 @@ div.b24-form-loader {
 	background-repeat: no-repeat;
 }
 
-.b24-form-success-text {
+.b24-form-success .b24-form-state-text {
 	display: block;
 	margin: 0 0 27px;
 	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -90,18 +89,13 @@ div.b24-form-loader {
 	opacity: .8;
 }
 
-.b24-form-success-text p { margin: 0; }
+.b24-form-success .b24-form-state-text p { margin: 0; }
 
 /*endregion*/
 
 /*region b24-form-error*/
 .b24-form-state-container .b24-form-error {
 	background-color: #f25830;
-}
-
-.b24-form-error-inner {
-	max-width: 285px;
-	text-align: center;
 }
 
 .b24-form-error-icon {
@@ -113,7 +107,7 @@ div.b24-form-loader {
 	background-repeat: no-repeat;
 }
 
-.b24-form-error-text p {
+.b24-form-error .b24-form-state-text {
 	display: block;
 	margin: 0 0 30px;
 	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -132,11 +126,6 @@ div.b24-form-loader {
 /*region b24-form-warning*/
 .b24-form-state-container .b24-form-warning { background-color: #fff; }
 
-.b24-form-warning-inner {
-	max-width: 330px;
-	text-align: center;
-}
-
 .b24-form-warning-icon {
 	display: inline-block;
 	margin: 0 0 28px;
@@ -146,7 +135,7 @@ div.b24-form-loader {
 	background-repeat: no-repeat;
 }
 
-.b24-form-warning-text {
+.b24-form-warning .b24-form-state-text {
 	margin: 0 0 35px;
 	font: 400 17px/25px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font: 400 17px/25px var(--b24-font-family);
@@ -154,4 +143,16 @@ div.b24-form-loader {
 	opacity: .8;
 }
 
+/*endregion*/
+
+/*region b24-form-state*/
+.b24-form-state--sticky .b24-form-success-inner,
+.b24-form-state--stiky .b24-form-error-inner {
+	position: sticky;
+}
+
+.b24-form-inner-box {
+	width: 100%;
+	flex: 1;
+}
 /*endregion*/

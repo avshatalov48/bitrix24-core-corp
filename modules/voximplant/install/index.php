@@ -161,6 +161,14 @@ Class voximplant extends CModule
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayStart', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onAfterTMDayStart');
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayContinue', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onAfterTMDayContinue');
 
+		//telephony analytics, visualconstructor events
+		$eventManager->registerEventHandler('report', 'onReportCategoryCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onReportCategoriesCollect');
+		$eventManager->registerEventHandler('report', 'onReportsCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onReportHandlerCollect');
+		$eventManager->registerEventHandler('report', 'onReportViewCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onViewsCollect');
+		$eventManager->registerEventHandler('report', 'onDefaultBoardsCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
+		$eventManager->registerEventHandler('report', 'onAnalyticPageCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageCollect');
+		$eventManager->registerEventHandler('report', 'onAnalyticPageBatchCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
+
 		if (!IsModuleInstalled('bitrix24'))
 		{
 			CAgent::AddAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant", "N", 300);
@@ -184,6 +192,7 @@ Class voximplant extends CModule
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
+			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/voximplant", true, true);
 		}
 		return true;
 	}
@@ -589,6 +598,14 @@ Class voximplant extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnUserSetLastActivityDate', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onUserSetLastActivityDate');
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayStart', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onAfterTMDayStart');
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayContinue', 'voximplant', '\Bitrix\Voximplant\CallQueue', 'onAfterTMDayContinue');
+
+		//telephony analytics, visualconstructor events
+		$eventManager->unRegisterEventHandler('report', 'onReportCategoryCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onReportCategoriesCollect');
+		$eventManager->unRegisterEventHandler('report', 'onReportsCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onReportHandlerCollect');
+		$eventManager->unRegisterEventHandler('report', 'onReportViewCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onViewsCollect');
+		$eventManager->unRegisterEventHandler('report', 'onDefaultBoardsCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
+		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageCollect');
+		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageBatchCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
 
 		CAgent::RemoveAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant");
 		CAgent::RemoveAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::finishStaleCalls();", "voximplant");

@@ -509,7 +509,14 @@ ChatDialog.message.init = function(callback)
 		});
 
 		BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.recent');
-		BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.openlines.recent');
+
+		if (
+			this.base.dialogId.toString().substr(0, 4) === 'chat'
+			&& BXIM.messenger.chat[this.base.dialogId.toString().substr(4)].owner != 0
+		)
+		{
+			BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.openlines.recent');
+		}
 
 		if (this.dialogCache.dialogs.has(this.base.dialogId.toString()))
 		{

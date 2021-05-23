@@ -12,8 +12,8 @@ $yandexTaxiWizard = $handler->getWizard();
 $currentRegion = $yandexTaxiWizard->getYandexTaxiRegionFinder()->getCurrentRegion();
 
 $signUpLink = ($currentRegion === 'kz')
-	? 'https://forms.yandex.ru/surveys/10019070.60ddd556d74d7be7008fd08cb09e7860f4e2edef/?utm_campaign=module&utm_module=bitrix24'
-	: 'https://taxi.yandex.ru/business/registration?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24&#form';
+	? 'https://forms.yandex.ru/surveys/10019070.60ddd556d74d7be7008fd08cb09e7860f4e2edef/?ya_medium=module&ya_campaign=bitrix24'
+	: 'https://logistics.yandex.com/business/self-registration?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24#form';
 
 ?>
 

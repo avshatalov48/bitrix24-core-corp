@@ -13,8 +13,8 @@ foreach (['Responsible', 'ModifiedBy'] as $propertyKey):
 		continue;
 	}
 	?>
-	<div class="crm-automation-popup-settings">
-		<span class="crm-automation-popup-settings-title crm-automation-popup-settings-title-autocomplete">
+	<div class="bizproc-automation-popup-settings">
+		<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 			<?=htmlspecialcharsbx($map[$propertyKey]['Name'])?>:
 		</span>
 		<?=$dialog->renderFieldControl($map[$propertyKey])?>

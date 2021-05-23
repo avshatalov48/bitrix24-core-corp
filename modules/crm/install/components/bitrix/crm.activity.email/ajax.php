@@ -572,7 +572,7 @@ class CrmActivityEmailAjax
 						'COMMON'   => $public ? 'Y' : 'N',
 					))->fetch();
 					if (!empty($entry['VALUE']))
-						$confirmed = unserialize($entry['VALUE']);
+						$confirmed = unserialize($entry['VALUE'], ['allowed_classes' => false]);
 
 					if (empty($confirmed) || !is_array($confirmed))
 						$confirmed = array();

@@ -12,7 +12,7 @@ use Bitrix\Main\PhoneNumber;
 
 Loc::loadMessages(__FILE__);
 
-Loader::includeModule("intranet");
+Loader::includeModule('intranet');
 
 class CIntranetUserListComponent extends UserList
 {
@@ -296,7 +296,7 @@ class CIntranetUserListComponent extends UserList
 			$gridUFManager = new \Bitrix\Main\Grid\Uf\User();
 			$gridUFManager->addUFHeaders($columns);
 
-			foreach($columns as $column)
+			foreach ($columns as $column)
 			{
 				$fieldId = (isset($column['fieldId']) ? $column['fieldId'] : $column['id']);
 				if (
@@ -310,7 +310,7 @@ class CIntranetUserListComponent extends UserList
 
 			$defaultSelectedGridHeaders = $this->getDefaultGridSelectedHeaders();
 
-			foreach($result as $key => $column)
+			foreach ($result as $key => $column)
 			{
 				if (
 					!$column['default']
@@ -329,7 +329,7 @@ class CIntranetUserListComponent extends UserList
 	{
 		$result = [];
 		$gridHeaders = $this->getGridHeaders();
-		foreach($gridHeaders as $header)
+		foreach ($gridHeaders as $header)
 		{
 			if (!empty($header['default']))
 			{
@@ -393,7 +393,7 @@ class CIntranetUserListComponent extends UserList
 
 		$defaultFilterIds = $entityFilter->getDefaultFieldIDs();
 		$defaultFieldsValues = [];
-		foreach($defaultFilterIds as $fieldId)
+		foreach ($defaultFilterIds as $fieldId)
 		{
 			switch ($fields[$fieldId])
 			{
@@ -469,7 +469,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (!empty($gridSort['sort']))
 		{
-			foreach($gridSort['sort'] as $by => $order)
+			foreach ($gridSort['sort'] as $by => $order)
 			{
 				switch($by)
 				{
@@ -516,7 +516,7 @@ class CIntranetUserListComponent extends UserList
 	private function initAvailableEntityFields()
 	{
 		$entityFields = \Bitrix\Intranet\UserTable::getEntity()->getFields();
-		foreach($entityFields as $entityField)
+		foreach ($entityFields as $entityField)
 		{
 			$this->availableEntityFields[] = $entityField->getName();
 		}
@@ -532,10 +532,10 @@ class CIntranetUserListComponent extends UserList
 	}
 
 
-	private function addQueryOrder(\Bitrix\Main\Entity\Query &$query, \Bitrix\Main\Grid\Options $gridOptions)
+	private function addQueryOrder(\Bitrix\Main\Entity\Query $query, \Bitrix\Main\Grid\Options $gridOptions)
 	{
 		$orderFields = $this->getOrder($gridOptions);
-		foreach($orderFields as $fieldName => $value)
+		foreach ($orderFields as $fieldName => $value)
 		{
 			if (!$this->checkQueryFieldName($fieldName))
 			{
@@ -545,7 +545,7 @@ class CIntranetUserListComponent extends UserList
 		}
 	}
 
-	private function addQueryFilter(\Bitrix\Main\Entity\Query &$query, array $gridFilter)
+	private function addQueryFilter(\Bitrix\Main\Entity\Query $query, array $gridFilter)
 	{
 		global $USER;
 
@@ -553,15 +553,15 @@ class CIntranetUserListComponent extends UserList
 
 		$departmentId = $flatDepartmentId = false;
 
-		foreach($filter as $fieldName => $value)
+		foreach ($filter as $fieldName => $value)
 		{
-			if ($fieldName == '=UF_DEPARTMENT')
+			if ($fieldName === '=UF_DEPARTMENT')
 			{
-				$departmentId = intval($filter[$fieldName]);
+				$departmentId = (int)$filter[$fieldName];
 				unset($filter[$fieldName]);
 				continue;
 			}
-			elseif ($fieldName == '=UF_DEPARTMENT_FLAT')
+			elseif ($fieldName === '=UF_DEPARTMENT_FLAT')
 			{
 				$query->addFilter('=UF_DEPARTMENT', $value);
 				unset($filter[$fieldName]);
@@ -620,9 +620,9 @@ class CIntranetUserListComponent extends UserList
 				{
 					$subQuery = new \Bitrix\Main\Entity\Query(UserToGroupTable::getEntity());
 					$subQuery->addSelect('USER_ID');
-					$subQuery->addFilter("=ROLE", UserToGroupTable::ROLE_USER);
-					$subQuery->addFilter("@GROUP_ID", $workgroupIdList);
-					$subQuery->addGroup("USER_ID");
+					$subQuery->addFilter('=ROLE', UserToGroupTable::ROLE_USER);
+					$subQuery->addFilter('@GROUP_ID', $workgroupIdList);
+					$subQuery->addGroup('USER_ID');
 
 					$query->addFilter(null, [
 						'LOGIC' => 'OR',
@@ -639,26 +639,67 @@ class CIntranetUserListComponent extends UserList
 					$query->addFilter('!UF_DEPARTMENT', false);
 				}
 			}
-			elseif (empty($workgroupIdList))
-			{
-				return false;
-			}
 			else
 			{
-				$query->registerRuntimeField(
-					'',
-					new \Bitrix\Main\Entity\ReferenceField(
-						'UG',
-						\Bitrix\Socialnetwork\UserToGroupTable::getEntity(),
-						array(
-							'=ref.USER_ID' => 'this.ID',
-						),
-						array('join_type' => 'INNER')
-					)
-				);
+				$res = \Bitrix\Main\UserTable::getList([
+					'filter' => [
+						'!UF_DEPARTMENT' => false,
+						'=UF_PUBLIC' => true,
+					],
+					'select' => [ 'ID' ]
+				]);
 
-				$query->addFilter("<=UG.ROLE", UserToGroupTable::ROLE_USER);
-				$query->addFilter("@UG.GROUP_ID", $workgroupIdList);
+				$publicUserIdList = [];
+				while($userFields = $res->fetch())
+				{
+					$publicUserIdList[] = (int)$userFields['ID'];
+				}
+
+				if (
+					empty($workgroupIdList)
+					&& empty($publicUserIdList)
+				)
+				{
+					return false;
+				}
+
+				if (!empty($workgroupIdList))
+				{
+					$query->registerRuntimeField(
+						'',
+						new \Bitrix\Main\Entity\ReferenceField(
+							'UG',
+							\Bitrix\Socialnetwork\UserToGroupTable::getEntity(),
+							array(
+								'=ref.USER_ID' => 'this.ID',
+							),
+							array('join_type' => 'INNER')
+						)
+					);
+
+					if (!empty($publicUserIdList))
+					{
+						$query->addFilter(null, [
+							'LOGIC' => 'OR',
+							[
+								'<=UG.ROLE' => UserToGroupTable::ROLE_USER,
+								'@UG.GROUP_ID' => $workgroupIdList
+							],
+							[
+								'@ID' => $publicUserIdList
+							],
+						]);
+					}
+					else
+					{
+						$query->addFilter('<=UG.ROLE', UserToGroupTable::ROLE_USER);
+						$query->addFilter('@UG.GROUP_ID', $workgroupIdList);
+					}
+				}
+				else
+				{
+					$query->addFilter('@ID', $publicUserIdList);
+				}
 			}
 		}
 
@@ -692,9 +733,9 @@ class CIntranetUserListComponent extends UserList
 							array('join_type' => 'INNER')
 						)
 					);
-					$query->addFilter("=DEPARTMENT.IBLOCK_ID", $iblockId);
-					$query->addFilter(">=DEPARTMENT.LEFT_MARGIN", $section['LEFT_MARGIN']);
-					$query->addFilter("<=DEPARTMENT.RIGHT_MARGIN", $section['RIGHT_MARGIN']);
+					$query->addFilter('=DEPARTMENT.IBLOCK_ID', $iblockId);
+					$query->addFilter('>=DEPARTMENT.LEFT_MARGIN', $section['LEFT_MARGIN']);
+					$query->addFilter('<=DEPARTMENT.RIGHT_MARGIN', $section['RIGHT_MARGIN']);
 				}
 			}
 		}
@@ -702,34 +743,35 @@ class CIntranetUserListComponent extends UserList
 		return true;
 	}
 
-	private function addQuerySelect(\Bitrix\Main\Entity\Query &$query, \Bitrix\Main\Grid\Options $gridOptions)
+	private function addQuerySelect(\Bitrix\Main\Entity\Query $query, \Bitrix\Main\Grid\Options $gridOptions)
 	{
 		$selectFields = $this->getSelect($gridOptions);
-		foreach($selectFields as $fieldName)
+		foreach ($selectFields as $fieldName)
 		{
 			if (!$this->checkQueryFieldName($fieldName))
 			{
 				continue;
 			}
+
 			$query->addSelect($fieldName);
 		}
 	}
 
 	private function addFilterInteger(&$filter, array $params = [])
 	{
-		$filterFieldName = (isset($params['FILTER_FIELD_NAME']) ? $params['FILTER_FIELD_NAME'] : '');
-		$value = (isset($params['VALUE']) ?  $params['VALUE'] : '');
+		$filterFieldName = ($params['FILTER_FIELD_NAME'] ?? '');
+		$value = ($params['VALUE'] ?? '');
 
 		if (
 			$filterFieldName == ''
-			|| intval($value) <= 0
+			|| (int)$value <= 0
 		)
 		{
 			return;
 		}
 
 		$fieldName = (isset($params['FIELD_NAME']) && $params['FIELD_NAME'] <> '' ? $params['FIELD_NAME'] : $filterFieldName);
-		$operation = (isset($params['OPERATION']) ?  $params['OPERATION'] : '=');
+		$operation = ($params['OPERATION'] ?? '=');
 
 		if (
 			in_array($fieldName, $this->arParams['USER_PROPERTY_LIST'])
@@ -742,8 +784,8 @@ class CIntranetUserListComponent extends UserList
 
 	private function addFilterString(&$filter, array $params = [])
 	{
-		$filterFieldName = (isset($params['FILTER_FIELD_NAME']) ? $params['FILTER_FIELD_NAME'] : '');
-		$value = (isset($params['VALUE']) ?  $params['VALUE'] : '');
+		$filterFieldName = ($params['FILTER_FIELD_NAME'] ?? '');
+		$value = ($params['VALUE'] ?? '');
 
 		if (
 			$filterFieldName == ''
@@ -754,7 +796,7 @@ class CIntranetUserListComponent extends UserList
 		}
 
 		$fieldName = (isset($params['FIELD_NAME']) && $params['FIELD_NAME'] <> '' ? $params['FIELD_NAME'] : $filterFieldName);
-		$operation = (isset($params['OPERATION']) ?  $params['OPERATION'] : '%=');
+		$operation = ($params['OPERATION'] ?? '%=');
 
 		if (in_array($fieldName, $this->arParams['USER_PROPERTY_LIST']))
 		{
@@ -764,9 +806,9 @@ class CIntranetUserListComponent extends UserList
 
 	private function addFilterDateTime(&$filter, array $params = [])
 	{
-		$filterFieldName = (isset($params['FILTER_FIELD_NAME']) ? $params['FILTER_FIELD_NAME'] : '');
-		$valueFrom = (isset($params['VALUE_FROM']) ?  $params['VALUE_FROM'] : '');
-		$valueTo = (isset($params['VALUE_TO']) ?  $params['VALUE_TO'] : '');
+		$filterFieldName = ($params['FILTER_FIELD_NAME'] ?? '');
+		$valueFrom = ($params['VALUE_FROM'] ?? '');
+		$valueTo = ($params['VALUE_TO'] ?? '');
 
 		if (
 			$filterFieldName == ''
@@ -813,11 +855,11 @@ class CIntranetUserListComponent extends UserList
 		}
 		elseif (!empty($gridFilter['FIRED']))
 		{
-			if ($gridFilter['FIRED'] == 'Y')
+			if ($gridFilter['FIRED'] === 'Y')
 			{
 				$result['=ACTIVE'] = 'N';
 			}
-			elseif ($gridFilter['FIRED'] == 'N')
+			elseif ($gridFilter['FIRED'] === 'N')
 			{
 				$result['=ACTIVE'] = 'Y';
 			}
@@ -854,7 +896,7 @@ class CIntranetUserListComponent extends UserList
 			&& Filter\UserDataProvider::getInvitedAvailability()
 		)
 		{
-			if ($gridFilter['INVITED'] == 'Y')
+			if ($gridFilter['INVITED'] === 'Y')
 			{
 				$result['!CONFIRM_CODE'] = false;
 			}
@@ -864,7 +906,7 @@ class CIntranetUserListComponent extends UserList
 			}
 		}
 		elseif (
-			$gridFilter['PRESET_ID'] == 'company'
+			$gridFilter['PRESET_ID'] === 'company'
 			|| !Filter\UserDataProvider::getInvitedAvailability()
 		)
 		{
@@ -873,7 +915,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			!empty($gridFilter['INTEGRATOR'])
-			&& $gridFilter['INTEGRATOR'] == 'Y'
+			&& $gridFilter['INTEGRATOR'] === 'Y'
 			&& method_exists('Bitrix\Main\Filter\UserDataProvider', 'getIntegratorAvailability')
 			&& Filter\UserDataProvider::getIntegratorAvailability()
 			&& Loader::includeModule('bitrix24')
@@ -888,7 +930,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			!empty($gridFilter['ADMIN'])
-			&& $gridFilter['ADMIN'] == 'Y'
+			&& $gridFilter['ADMIN'] === 'Y'
 			&& method_exists('Bitrix\Main\Filter\UserDataProvider', 'getAdminAvailability')
 			&& Filter\UserDataProvider::getAdminAvailability()
 		)
@@ -910,7 +952,7 @@ class CIntranetUserListComponent extends UserList
 		)
 		{
 			$result['IS_ONLINE'] = (
-				$gridFilter['IS_ONLINE'] == 'Y'
+				$gridFilter['IS_ONLINE'] === 'Y'
 					? 'Y'
 					: 'N'
 			);
@@ -952,7 +994,7 @@ class CIntranetUserListComponent extends UserList
 					$gridFilter['DEPARTMENT']
 					&& preg_match('/^DR(\d+)$/', $gridFilter['DEPARTMENT'], $matches)
 						? $matches[1]
-						: ($gridFilter['DEPARTMENT'] && intval($gridFilter['DEPARTMENT'] > 0) ? $gridFilter['DEPARTMENT'] : false)
+						: ($gridFilter['DEPARTMENT'] && (int)($gridFilter['DEPARTMENT'] > 0) ? $gridFilter['DEPARTMENT'] : false)
 				)
 			],
 			[
@@ -1106,24 +1148,24 @@ class CIntranetUserListComponent extends UserList
 			[
 				'FILTER_FIELD_NAME' => 'DATE_REGISTER',
 				'FIELD_NAME' => 'DATE_REGISTER',
-				'VALUE_FROM' => (isset($gridFilter['DATE_REGISTER_from']) ? $gridFilter['DATE_REGISTER_from'] : false),
-				'VALUE_TO' => (isset($gridFilter['DATE_REGISTER_to']) ? $gridFilter['DATE_REGISTER_to'] : false)
+				'VALUE_FROM' => ($gridFilter['DATE_REGISTER_from'] ?? false),
+				'VALUE_TO' => ($gridFilter['DATE_REGISTER_to'] ?? false)
 			],
 			[
 				'FILTER_FIELD_NAME' => 'LAST_ACTIVITY_DATE',
 				'FIELD_NAME' => 'LAST_ACTIVITY_DATE',
-				'VALUE_FROM' => (isset($gridFilter['LAST_ACTIVITY_DATE_from']) ? $gridFilter['LAST_ACTIVITY_DATE_from'] : false),
-				'VALUE_TO' => (isset($gridFilter['LAST_ACTIVITY_DATE_to']) ? $gridFilter['LAST_ACTIVITY_DATE_to'] : false)
+				'VALUE_FROM' => ($gridFilter['LAST_ACTIVITY_DATE_from'] ?? false),
+				'VALUE_TO' => ($gridFilter['LAST_ACTIVITY_DATE_to'] ?? false)
 			],
 			[
 				'FILTER_FIELD_NAME' => 'BIRTHDAY',
 				'FIELD_NAME' => 'PERSONAL_BIRTHDAY',
-				'VALUE_FROM' => (isset($gridFilter['BIRTHDAY_from']) ? $gridFilter['BIRTHDAY_from'] : false),
-				'VALUE_TO' => (isset($gridFilter['BIRTHDAY_to']) ? $gridFilter['BIRTHDAY_to'] : false)
+				'VALUE_FROM' => ($gridFilter['BIRTHDAY_from'] ?? false),
+				'VALUE_TO' => ($gridFilter['BIRTHDAY_to'] ?? false)
 			]
 		];
 
-		foreach($integerFieldsList as $field)
+		foreach ($integerFieldsList as $field)
 		{
 			$value = false;
 
@@ -1139,7 +1181,7 @@ class CIntranetUserListComponent extends UserList
 				&& $field['VALUE'] <> ''
 			)
 			{
-				$value = intval($field['VALUE']);
+				$value = (int)$field['VALUE'];
 			}
 
 			if ($value !== false)
@@ -1147,26 +1189,26 @@ class CIntranetUserListComponent extends UserList
 				$this->addFilterInteger($result, [
 					'FILTER_FIELD_NAME' => $field['FILTER_FIELD_NAME'],
 					'FIELD_NAME' => $field['FIELD_NAME'],
-					'OPERATION' => (isset($field['OPERATION']) ? $field['OPERATION'] : '='),
+					'OPERATION' => ($field['OPERATION'] ?? '='),
 					'VALUE' => $value
 				]);
 			}
 		}
 
-		foreach($stringFieldsList as $field)
+		foreach ($stringFieldsList as $field)
 		{
 			if ($field['VALUE'] <> '')
 			{
 				$this->addFilterString($result, [
 					'FILTER_FIELD_NAME' => $field['FILTER_FIELD_NAME'],
 					'FIELD_NAME' => $field['FIELD_NAME'],
-					'OPERATION' => (isset($field['OPERATION']) ? $field['OPERATION'] : '%='),
+					'OPERATION' => ($field['OPERATION'] ?? '%='),
 					'VALUE' => $field['VALUE']
 				]);
 			}
 		}
 
-		foreach($dateFieldsList as $field)
+		foreach ($dateFieldsList as $field)
 		{
 			if (
 				!empty($field['VALUE_FROM'])
@@ -1176,8 +1218,8 @@ class CIntranetUserListComponent extends UserList
 				$this->addFilterDateTime($result, [
 					'FILTER_FIELD_NAME' => $field['FILTER_FIELD_NAME'],
 					'FIELD_NAME' => $field['FIELD_NAME'],
-					'VALUE_FROM' => (isset($field['VALUE_FROM']) ? $field['VALUE_FROM'] : $gridFilter[$field['FILTER_FIELD_NAME']]),
-					'VALUE_TO' => (isset($field['VALUE_TO']) ? $field['VALUE_TO'] : $gridFilter[$field['FILTER_FIELD_NAME']])
+					'VALUE_FROM' => ($field['VALUE_FROM'] ?? $gridFilter[$field['FILTER_FIELD_NAME']]),
+					'VALUE_TO' => ($field['VALUE_TO'] ?? $gridFilter[$field['FILTER_FIELD_NAME']])
 				]);
 			}
 		}
@@ -1185,7 +1227,7 @@ class CIntranetUserListComponent extends UserList
 		$ufList = $USER_FIELD_MANAGER->getUserFields(\Bitrix\Main\UserTable::getUfId(), 0, LANGUAGE_ID, false);
 		$ufCodesList = array_keys($ufList);
 
-		foreach($gridFilter as $key => $value)
+		foreach ($gridFilter as $key => $value)
 		{
 			if (
 				preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $key, $match)
@@ -1209,8 +1251,8 @@ class CIntranetUserListComponent extends UserList
 				!empty($ufList[$key])
 				&& !empty($ufList[$key]['SHOW_FILTER'])
 				&& !empty($ufList[$key]['USER_TYPE_ID'])
-				&& $ufList[$key]['USER_TYPE_ID'] == 'string'
-				&& $ufList[$key]['SHOW_FILTER'] == 'E'
+				&& $ufList[$key]['USER_TYPE_ID'] === 'string'
+				&& $ufList[$key]['SHOW_FILTER'] === 'E'
 			)
 			{
 				$result[$key] = $value.'%';
@@ -1235,7 +1277,7 @@ class CIntranetUserListComponent extends UserList
 				&& !empty($matchesPhones[0])
 			)
 			{
-				foreach($matchesPhones[0] as $phone)
+				foreach ($matchesPhones[0] as $phone)
 				{
 					$convertedPhone = PhoneNumber\Parser::getInstance()
 						->parse($phone)
@@ -1266,7 +1308,7 @@ class CIntranetUserListComponent extends UserList
 			$gridColumns = $this->getDefaultGridHeaders();
 		}
 
-		foreach($gridColumns as $column)
+		foreach ($gridColumns as $column)
 		{
 			switch($column)
 			{
@@ -1342,7 +1384,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			!isset($params['EXPORT_MODE'])
-			|| $params['EXPORT_MODE'] != 'Y'
+			|| $params['EXPORT_MODE'] !== 'Y'
 		)
 		{
 			$params['EXPORT_MODE'] = 'N';
@@ -1365,7 +1407,7 @@ class CIntranetUserListComponent extends UserList
 		{
 			$params['USER_PROPERTY_LIST'] = $this->getUserPropertyList();
 		}
-		elseif ($params['EXPORT_MODE'] != 'Y')
+		elseif ($params['EXPORT_MODE'] !== 'Y')
 		{
 			$this->setUserPropertyList($params['USER_PROPERTY_LIST']);
 		}
@@ -1404,7 +1446,7 @@ class CIntranetUserListComponent extends UserList
 			}
 		);
 
-		if(empty($usedFields))
+		if (empty($usedFields))
 		{
 			$usedFields = $entityFilter->getDefaultFieldIDs();
 		}
@@ -1412,9 +1454,9 @@ class CIntranetUserListComponent extends UserList
 		$navParams = $gridOptions->getNavParams();
 		$pageSize = $navParams['nPageSize'];
 
-		$nav = new \Bitrix\Main\UI\PageNavigation("page");
+		$nav = new \Bitrix\Main\UI\PageNavigation('page');
 
-		if ($this->arParams['EXPORT_MODE'] == 'Y')
+		if ($this->arParams['EXPORT_MODE'] === 'Y')
 		{
 			$nav->allowAllRecords(true)->setPageSize(0);
 		}
@@ -1478,16 +1520,16 @@ class CIntranetUserListComponent extends UserList
 			$row['CAN_EDIT'] = $row['CAN_DELETE'] = false;
 
 			$rowsList[] = [
-				"id" => $user['ID'],
-				"data" => $row,
-				"columns" => [],
-				"editable" => true,
-				"actions" => \Bitrix\Intranet\Component\UserList::getActions([
+				'id' => $user['ID'],
+				'data' => $row,
+				'columns' => [],
+				'editable' => true,
+				'actions' => \Bitrix\Intranet\Component\UserList::getActions([
 					'USER_FIELDS' => $user,
 					'PATH_TO_USER' => $this->arParams['PATH_TO_USER']
 				]),
-				"columnClasses" => (
-					$user['USER_TYPE'] == 'extranet'
+				'columnClasses' => (
+					$user['USER_TYPE'] === 'extranet'
 						? [
 						'FULL_NAME' => 'intranet-user-list-full-name-extranet'
 					]
@@ -1511,7 +1553,7 @@ class CIntranetUserListComponent extends UserList
 	{
 		$this->arResult = $this->prepareData();
 
-		if ($this->arParams['EXPORT_MODE'] != 'Y')
+		if ($this->arParams['EXPORT_MODE'] !== 'Y')
 		{
 			$this->includeComponentTemplate();
 		}
@@ -1519,11 +1561,11 @@ class CIntranetUserListComponent extends UserList
 		{
 			while(ob_get_clean());
 
-			header("HTTP/1.1 200 OK");
-			header("Content-Transfer-Encoding: binary");
-			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-			header("Expires: 0");
-			header("Pragma: public");
+			header('HTTP/1.1 200 OK');
+			header('Content-Transfer-Encoding: binary');
+			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+			header('Expires: 0');
+			header('Pragma: public');
 
 			$this->IncludeComponentTemplate($this->arParams['EXPORT_TYPE']);
 
@@ -1532,4 +1574,3 @@ class CIntranetUserListComponent extends UserList
 
 	}
 }
-?>

@@ -21,65 +21,6 @@ $arResult = Array();
 $arSettings = CIMSettings::Get();
 $arResult['SETTINGS'] = $arSettings['settings'];
 
-$CIMMessage = new CIMMessage();
-$arResult['MESSAGE'] = $CIMMessage->GetUnreadMessage(Array('USE_TIME_ZONE' => 'N', 'ORDER' => 'ASC'));
-
-$CIMChat = new CIMChat();
-$arChatMessage = $CIMChat->GetUnreadMessage(Array('USE_TIME_ZONE' => 'N', 'ORDER' => 'ASC'));
-if ($arChatMessage['result'])
-{
-	foreach ($arChatMessage['message'] as $id => $ar)
-	{
-		$ar['recipientId'] = 'chat'.$ar['recipientId'];
-		$arResult['MESSAGE']['message'][$id] = $ar;
-	}
-
-	foreach ($arChatMessage['usersMessage'] as $chatId => $ar)
-		$arResult['MESSAGE']['usersMessage']['chat'.$chatId] = $ar;
-
-	foreach ($arChatMessage['unreadMessage'] as $chatId => $ar)
-		$arResult['MESSAGE']['unreadMessage']['chat'.$chatId] = $ar;
-
-	foreach ($arChatMessage['users'] as $key => $value)
-		$arResult['MESSAGE']['users'][$key] = $value;
-
-	foreach ($arChatMessage['userInGroup'] as $key => $value)
-		$arResult['MESSAGE']['userInGroup'][$key] = $value;
-
-	foreach ($arChatMessage['files'] as $key => $value)
-		$arResult['MESSAGE']['files'][$key] = $value;
-
-	if ($arParams['DESKTOP'] == 'Y')
-	{
-		foreach ($arChatMessage['chat'] as $key => $value)
-			$arResult['CHAT']['chat'][$key] = $value;
-	}
-	else
-	{
-		foreach ($arChatMessage['chat'] as $key => $value)
-		{
-			$value['fake'] = true;
-			$arResult['CHAT']['chat'][$key] = $value;
-		}
-	}
-
-	foreach ($arChatMessage['userInChat'] as $key => $value)
-		$arResult['CHAT']['userInChat'][$key] = $value;
-
-	foreach ($arChatMessage['userChatBlockStatus'] as $key => $value)
-		$arResult['CHAT']['userChatBlockStatus'][$key] = $value;
-}
-if (!isset($arResult['CONTACT_LIST']['users'][$USER->GetID()]))
-{
-	$arUsers = CIMContactList::GetUserData(array(
-		'ID' => $USER->GetID(),
-		'DEPARTMENT' => 'N',
-		'USE_CACHE' => 'Y',
-		'SHOW_ONLINE' => 'N'
-	));
-	$arResult['CONTACT_LIST']['users'][$USER->GetID()] = $arUsers['users'][$USER->GetID()];
-}
-
 $jsInit = array('im_mobile_dialog', 'uploader', 'mobile.pull.client');
 CJSCore::Init($jsInit);
 
@@ -98,5 +39,3 @@ if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();
 
 return $arResult;
-
-?>

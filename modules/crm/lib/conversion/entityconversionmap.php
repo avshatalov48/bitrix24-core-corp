@@ -292,7 +292,7 @@ class EntityConversionMap
 			return null;
 		}
 
-		$params = isset($result['DATA']) ? unserialize($result['DATA']) : null;
+		$params = isset($result['DATA']) ? unserialize($result['DATA'], ['allowed_classes' => false]) : null;
 		if(!is_array($params))
 		{
 			return null;

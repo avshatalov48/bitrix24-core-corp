@@ -267,12 +267,19 @@
 		getParameters.action = action;
 		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
 		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
+		let prepareData = true;
+		if (config.json) {
+			prepareData = false;
+			config.data = JSON.stringify(config.json);
+		}
 		config = {
 			url: url,
 			method:"POST",
 			dataType:"json",
 			data: config.data,
+			prepareData: prepareData
 		};
+
 		let ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
 		return ajaxPromise;

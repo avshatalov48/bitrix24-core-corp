@@ -5,13 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 $map = $dialog->getMap();
 $messageText = $map['MessageText'];
 ?>
-<div class="crm-automation-popup-settings">
-	<textarea name="<?=htmlspecialcharsbx($messageText['FieldName'])?>"
-			class="crm-automation-popup-textarea"
-			placeholder="<?=htmlspecialcharsbx($messageText['Name'])?>"
-			data-role="inline-selector-target"><?
-		echo htmlspecialcharsbx($dialog->getCurrentValue($messageText['FieldName'], $messageText['Default']))
-	?></textarea>
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($messageText)?>
 </div>
 <div class="bizproc-automation-popup-checkbox">
 	<div class="bizproc-automation-popup-checkbox-item" data-role="help">

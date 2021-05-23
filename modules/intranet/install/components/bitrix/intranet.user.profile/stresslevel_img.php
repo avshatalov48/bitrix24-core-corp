@@ -15,11 +15,6 @@ use Bitrix\Main\Loader;
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-if(Loader::includeModule("compression"))
-{
-	CCompress::Disable2048Spaces();
-}
-
 if (Loader::includeModule('intranet'))
 {
 	$stressLevelInstance = new \Bitrix\Intranet\Component\UserProfile\StressLevel\Img();

@@ -109,6 +109,7 @@ class CBPCrmSetOrderCanceled
 			],
 			'CancelReason' => [
 				'Name' => GetMessage('CRM_SOCCL_COMMENT_NAME'),
+				'Description' => GetMessage('CRM_SOCCL_COMMENT_NAME'),
 				'FieldName' => 'cancel_reason',
 				'Type' => 'text'
 			]

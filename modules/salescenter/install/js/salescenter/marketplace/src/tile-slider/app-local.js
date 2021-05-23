@@ -13,8 +13,13 @@ class AppLocal extends EventEmitter {
 
 	open(tile: Tile.Base, options = {})
 	{
-		Manager.openSlider(tile.link, options).then(
-			() => this.emit(EventTypes.AppLocalSliderClose, new BaseEvent({data:{type: tile.getType()}})));
+		this.openLink(tile.link, options, {data:{type: tile.getType()}});
+	}
+
+	openLink(link, options = {}, eventOptions = {})
+	{
+		Manager.openSlider(link, options).then(
+			() => this.emit(EventTypes.AppLocalSliderClose, new BaseEvent(eventOptions)));
 	}
 }
 

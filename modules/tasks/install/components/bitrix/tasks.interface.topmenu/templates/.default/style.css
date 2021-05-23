@@ -12,6 +12,14 @@
 	content: '%';
 }
 
+#tasks_panel_menu_group_view_effective .main-buttons-item-counter {
+    background: #4fc3f7;
+}
+
+#tasks_panel_menu_group_view_effective .main-buttons-item-counter::after {
+    content: '%';
+}
+
 .tasks-tariff-lock {
 	padding-right: 20px;
 }

@@ -129,6 +129,7 @@ use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Main\Context;
 
+$isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
 
 $CCrmDeal = new CCrmDeal(false);
 $CCrmBizProc = new CCrmBizProc('DEAL');
@@ -985,17 +986,9 @@ $USER_FIELD_MANAGER->AdminListAddFilter(CCrmDeal::$sUFEntityID, $arFilter);
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Deal))
 {
-	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Deal, $arFilter);
+	$searchRestriction->notifyIfLimitAlmostExceed(CCrmOwnerType::Deal);
 
-	if (
-		($limitWarningValue = $searchRestriction->getLimitWarningValue(CCrmOwnerType::Deal)) > 0
-	)
-	{
-		$searchRestriction->notifyLimitWarning(
-			CCrmOwnerType::Deal,
-			$limitWarningValue
-		);
-	}
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Deal, $arFilter);
 }
 else
 {
@@ -2029,6 +2022,26 @@ if ($isInGadgetMode)
 		'CONTACT_ID',  'CONTACT_HONORIFIC', 'CONTACT_NAME', 'CONTACT_SECOND_NAME',
 		'CONTACT_LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE'
 	);
+	$nTopCount = $arParams['DEAL_COUNT'];
+}
+
+if ($isInCalendarMode)
+{
+	$arSelect = [
+		'ID', 'TITLE', 'DATE_CREATE', 'CLOSEDATE'
+	];
+	foreach ($arParams['CALENDAR_MODE_LIST'] as $calendarModeItem)
+	{
+		if ($calendarModeItem['selected'])
+		{
+			list($calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName) =
+				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
+			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
+			{
+				$arSelect[] = $calendarModeItemUserFieldName;
+			}
+		}
+	}
 	$nTopCount = $arParams['DEAL_COUNT'];
 }
 

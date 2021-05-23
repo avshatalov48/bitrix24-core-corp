@@ -13,6 +13,7 @@
 	display: inline-block;
 	vertical-align: middle;
 	cursor: pointer;
+	margin-bottom: 3px;
 }
 
 .tasks-scrum-entity-title-btn-task .tasks-scrum-entity-tasks-icon {

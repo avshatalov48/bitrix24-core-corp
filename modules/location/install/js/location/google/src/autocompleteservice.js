@@ -14,6 +14,8 @@ export default class AutocompleteService extends AutocompleteServiceBase
 	#localStorageKey = 'locationGoogleAutocomplete';
 	/** {number} */
 	#localStorageResCount = 30;
+	/** {number} */
+	#biasBoundRadius = 50000;
 
 	constructor(props)
 	{
@@ -116,12 +118,27 @@ export default class AutocompleteService extends AutocompleteServiceBase
 
 		if(!result)
 		{
+			let queryPredictionsParams = {
+				input: query,
+			};
+			if(params.userCoordinates)
+			{
+				queryPredictionsParams.location = new google.maps.LatLng(
+					params.userCoordinates[0],
+					params.userCoordinates[1]
+				);
+				queryPredictionsParams.radius = this.#biasBoundRadius;
+			}
+
 			result = new Promise((resolve) => {
-					this.#googleAutocompleteService.getQueryPredictions({input: query}, (result, status) => {
-						let locationsList = this.#convertToLocationsList(result, status);
-						this.#setPredictionResult(query, params, result, status);
-						resolve(locationsList);
-					});
+					this.#googleAutocompleteService.getQueryPredictions(
+						queryPredictionsParams,
+						(result, status) => {
+							let locationsList = this.#convertToLocationsList(result, status);
+							this.#setPredictionResult(query, params, result, status);
+							resolve(locationsList);
+						}
+					);
 				}
 			);
 		}

@@ -367,6 +367,7 @@ class CBPCrmCreateCallActivity extends CBPActivity
 		return array(
 			'Subject' => array(
 				'Name' => GetMessage('CRM_CREATE_CALL_SUBJECT'),
+				'Description' => GetMessage('CRM_CREATE_CALL_SUBJECT'),
 				'FieldName' => 'subject',
 				'Type' => 'string'
 			),
@@ -382,6 +383,7 @@ class CBPCrmCreateCallActivity extends CBPActivity
 			),
 			'Description' => array(
 				'Name' => GetMessage('CRM_CREATE_CALL_DESCRIPTION'),
+				'Description' => GetMessage('CRM_CREATE_CALL_DESCRIPTION'),
 				'FieldName' => 'description',
 				'Type' => 'text'
 			),

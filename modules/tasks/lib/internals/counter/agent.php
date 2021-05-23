@@ -103,6 +103,8 @@ class Agent
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
 		$commentPoster && $commentPoster->postCommentsOnTaskExpired($taskData);
 
+		\CTaskNotifications::sendExpiredMessage($taskData);
+
 		$event = new Event('tasks', self::EVENT_TASK_EXPIRED, [
 			'TASK_ID' => $taskId,
 			'TASK' => $taskData,
@@ -143,6 +145,8 @@ class Agent
 
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
 		$commentPoster && $commentPoster->postCommentsOnTaskExpiredSoon($taskData);
+
+		\CTaskNotifications::sendExpiredSoonMessage($taskData);
 
 		$event = new Event('tasks', self::EVENT_TASK_EXPIRED_SOON, [
 			'TASK_ID' => $taskId,

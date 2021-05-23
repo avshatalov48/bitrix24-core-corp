@@ -211,9 +211,12 @@
 .crm-onec-header-futures-icon.icon-5 { background-image: url(images/btn_5.svg); }
 
 .crm-onec-install-description {
-	margin-bottom: 20px;
 	color: #000;
 	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-onec-alert-warning {
+	margin-top: 10px;
 }
 
 .ui-alert-tracker {

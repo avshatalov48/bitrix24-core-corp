@@ -1,6 +1,7 @@
-import {Event} from 'main.core';
+import {Event, Type} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
-import {LocationRepository, AutocompleteServiceBase, Format, Address, Location, AddressType, AddressStringConverter, ErrorPublisher} from 'location.core';
+import {LocationRepository, AutocompleteServiceBase, Format, Address, Location, DistanceCalculator,
+	AddressStringConverter, ErrorPublisher} from 'location.core';
 import Prompt from './prompt';
 import State from '../state';
 import {Loc} from 'main.core';
@@ -14,6 +15,7 @@ export default class Autocomplete extends EventEmitter
 	static #onStateChangedEvent = 'onStateChanged';
 	static #onSearchStartedEvent = 'onSearchStarted';
 	static #onSearchCompletedEvent = 'onSearchCompleted';
+	static #onShowOnMapClickedEvent = 'onShowOnMapClicked';
 
 	/** {Address} */
 	#address;
@@ -23,8 +25,14 @@ export default class Autocomplete extends EventEmitter
 	#languageId;
 	/** {Format} */
 	#addressFormat;
+	/** {String} */
+	#sourceCode;
 	/** {LocationRepository} */
 	#locationRepository;
+	/** {Location} */
+	#userLocation;
+	/** {Function} */
+	#presetLocationsProvider;
 	/** {Prompt} */
 	#prompt;
 	/** {AutocompleteServiceBase} */
@@ -54,6 +62,8 @@ export default class Autocomplete extends EventEmitter
 
 	#isAutocompleteRequestStarted = false;
 
+	#maxFirstItemUserDistanceKm = 100;
+
 	constructor(props)
 	{
 		super(props);
@@ -80,8 +90,11 @@ export default class Autocomplete extends EventEmitter
 		}
 
 		this.#languageId = props.languageId;
+		this.#sourceCode = props.sourceCode;
 		this.#address = props.address;
+		this.#presetLocationsProvider = props.presetLocationsProvider;
 		this.#locationRepository = props.locationRepository || new LocationRepository();
+		this.#userLocation = props.userLocation;
 		this.#promptDelay = props.promptDelay || 500;
 		this.#maxPromptDelay = props.maxPromptDelay || 1500;
 		this.#minCharsCountToAutocomplete = props.minCharsCountToAutocomplete || 3;
@@ -113,33 +126,68 @@ export default class Autocomplete extends EventEmitter
 		this.#inputNode.addEventListener('keyup', this.#onInputKeyUp.bind(this));
 		this.#inputNode.addEventListener('focus', this.#onInputFocus.bind(this));
 		this.#inputNode.addEventListener('focusout', this.#onInputFocusOut.bind(this));
-
+		this.#inputNode.addEventListener('click', this.#onInputClick.bind(this));
 
 		this.#prompt = new Prompt({
-			inputNode: props.inputNode
+			inputNode: props.inputNode,
+			menuNode: props.menuNode,
 		});
 
 		this.#prompt.subscribe(Prompt.onItemSelectedEvent, this.#onPromptItemSelected.bind(this));
 		document.addEventListener('click', this.#onDocumentClick.bind(this));
 	}
 
-	#onInputFocusOut()
+	#onInputClick(e: MouseEvent)
+	{
+		let value = this.#inputNode.value;
+
+		if(value.length === 0)
+		{
+			this.#showPresetLocations();
+		}
+	}
+
+	#showPresetLocations()
+	{
+		let presetLocationList = this.#presetLocationsProvider();
+
+		this.#prompt.setMenuItems(presetLocationList, '');
+
+		this.#prompt.addShowOnMapMenuItem(
+			this.#getShowOnMapHandler(null),
+			Loc.getMessage(
+				(presetLocationList.length > 0)
+					? 'LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'
+					: 'LOCATION_WIDGET_START_PRINTING_OR_SHOW_ON_MAP'
+			)
+		);
+
+		this.#prompt.getMenu().show();
+	}
+
+	#onInputFocusOut(e: Event)
 	{
 		if(this.#isDestroyed)
 		{
 			return;
 		}
 
-		if(this.#state === State.DATA_INPUTTING)
-		{
-			this.#setState(State.DATA_SELECTED);
-			this.#setAddressFromInput();
-		}
+		// If we have selected item from prompt, the focusOut event will be first.
+		setTimeout(() => {
+			if(this.#state === State.DATA_INPUTTING)
+			{
+				this.#setState(State.DATA_SUPPOSED);
+				this.#setAddressFromInput();
+			}
+		}, 200);
 
 		if(this.#prompt)
 		{
 			this.#prompt.close();
 		}
+
+		// Let's prevent other onInputFocusOut handlers.
+		e.stopImmediatePropagation();
 	}
 
 	#onInputFocus()
@@ -149,10 +197,20 @@ export default class Autocomplete extends EventEmitter
 			return;
 		}
 
-		if(this.#address && (!this.#address.location) && this.#inputNode.value.length > 0)
+		if(this.#address
+			&& (!this.#address.location || !this.#address.location.hasExternalRelation())
+			&& this.#inputNode.value.length > 0
+		)
 		{
-			this.showPrompt(this.#inputNode.value, {});
+			this.showPrompt(this.#inputNode.value, this.#makeParams());
 		}
+	}
+
+	#makeParams(): Object
+	{
+		return {
+			userCoordinates: this.#userLocation ? [this.#userLocation.latitude, this.#userLocation.longitude] : null
+		};
 	}
 
 	/**
@@ -186,14 +244,6 @@ export default class Autocomplete extends EventEmitter
 	get address(): ?Address
 	{
 		return this.#address;
-	}
-
-	/**
-	 * @returns {Prompt}
-	 */
-	get prompt(): ?Prompt
-	{
-		return this.#prompt;
 	}
 
 	#setAddressFromInput()
@@ -262,6 +312,14 @@ export default class Autocomplete extends EventEmitter
 	}
 
 	/**
+	 * @param {Function} listener
+	 */
+	onShowOnMapClickedEventSubscribe(listener: Function): void
+	{
+		this.subscribe(Autocomplete.#onShowOnMapClickedEvent, listener);
+	}
+
+	/**
 	 * Is called when autocompleteService returned location list
 	 * @param {array} locationsList
 	 * @param {object} params
@@ -270,7 +328,14 @@ export default class Autocomplete extends EventEmitter
 	{
 		if(Array.isArray(locationsList) && locationsList.length > 0)
 		{
-			this.#prompt.show(locationsList, this.#searchPhrase.requested);
+			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested);
+
+			this.#prompt.addShowOnMapMenuItem(
+				this.#getShowOnMapHandler(locationsList[0]),
+				Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP')
+			);
+
+			this.#prompt.getMenu().show();
 		}
 		else
 		{
@@ -289,16 +354,50 @@ export default class Autocomplete extends EventEmitter
 				this.#prompt.getMenu().addMenuItem(
 					{
 						id: 'notFound',
-						html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_RESULTS_NOT_FOUND')}</span>`,
+						html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND')}</span>`,
 						onclick: (event, item) => {
 							this.#prompt.close();
 						}
 					}
 				);
 
+				this.#prompt.addShowOnMapMenuItem(
+					this.#getShowOnMapHandler(null),
+					Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP')
+				);
+
 				this.#prompt.getMenu().show();
 			}
 		}
+	}
+
+	#getShowOnMapHandler(location: ?Location)
+	{
+		return () => {
+
+			if (location && this.#userLocation
+				&& location.latitude && location.longitude
+				&& this.#userLocation.latitude
+				&& this.#userLocation.longitude
+			)
+			{
+				let firstItemUserDistance = DistanceCalculator.getDistanceFromLatLonInKm(
+					location.latitude,
+					location.longitude,
+					this.#userLocation.latitude,
+					this.#userLocation.longitude
+				);
+
+				if (firstItemUserDistance <= this.#maxFirstItemUserDistanceKm)
+				{
+					this.#fulfillSelection(location);
+
+					return;
+				}
+			}
+
+			this.emit(Autocomplete.#onShowOnMapClickedEvent);
+		};
 	}
 
 	static #splitPhrase(phrase: string): Object
@@ -346,38 +445,58 @@ export default class Autocomplete extends EventEmitter
 	/**
 	 * Fulfill selected location
 	 * @param {Location} location
-	 * @returns {*}
+	 * @returns {Promise}
 	 */
 	#fulfillSelection(location: ?Location): void
 	{
 		let result;
 		this.#setState(State.DATA_SELECTED);
-
 		if(location)
 		{
-			result = this.#getLocationDetails(location)
-				.then((location: ?Location) => {
-					this.#onLocationSelect(location);
-					return true;
-				},
-				response => ErrorPublisher.getInstance().notify(response.errors)
-			);
+			if (location.hasExternalRelation() && this.#sourceCode === location.sourceCode)
+			{
+				result = this.#getLocationDetails(location)
+					.then((location: ?Location) => {
+							this.#onLocationSelect(location);
+							return true;
+						},
+						response => ErrorPublisher.getInstance().notify(response.errors)
+					);
+			}
+			else
+			{
+				result = new Promise((resolve) => {
+					setTimeout(() => {
+						this.#onLocationSelect(location);
+						resolve();
+					}, 0);
+				});
+			}
 		}
 		else
 		{
 			result = new Promise((resolve) => {
-				this.#onLocationSelect(null);
-				resolve();
+				setTimeout(() => {
+					this.#onLocationSelect(null);
+					resolve();
+				}, 0);
 			});
 		}
 
 		return result;
 	}
 
-	#onAddressChangedEventEmit()
+	#onAddressChangedEventEmit(excludeSetAddressFeatures: Array = [])
 	{
 		this.#addressString = this.#address ? this.#convertAddressToString(this.#address) : '';
-		this.emit(Autocomplete.#onAddressChangedEvent, {address: this.#address});
+		this.emit(
+			Autocomplete.#onAddressChangedEvent,
+			{
+
+				address: this.#address,
+				excludeSetAddressFeatures
+			}
+		);
 	}
 
 	/**
@@ -394,14 +513,14 @@ export default class Autocomplete extends EventEmitter
 			location.sourceCode,
 			location.languageId
 		)
-		.then((location: ?Location) => {
-				this.#setState(State.DATA_LOADED);
-			return location;
-		},
-			(response) => {
-				ErrorPublisher.getInstance().notify(response.errors);
-			}
-		);
+			.then((location: ?Location) => {
+					this.#setState(State.DATA_LOADED);
+					return location;
+				},
+				(response) => {
+					ErrorPublisher.getInstance().notify(response.errors);
+				}
+			);
 	}
 
 	#convertStringToAddress(addressString: string)
@@ -465,15 +584,15 @@ export default class Autocomplete extends EventEmitter
 					{
 						this.#fulfillSelection(this.#prompt.getChosenItem())
 							.then(() => {
-								this.#prompt.close();
-							},
-							error => BX.debug(error)
-						);
+									this.#prompt.close();
+								},
+								error => BX.debug(error)
+							);
 					}
 					return;
 				case 'Tab':
 				case 'Escape':
-					this.#setState(State.DATA_SELECTED);
+					this.#setState(State.DATA_SUPPOSED);
 					this.#setAddressFromInput();
 					this.#prompt.close();
 					return;
@@ -490,7 +609,12 @@ export default class Autocomplete extends EventEmitter
 
 		if(this.#addressString.trim() !== this.#getInputValue().trim())
 		{
-			this.showPrompt(this.#inputNode.value, {});
+			this.showPrompt(this.#inputNode.value, this.#makeParams());
+		}
+
+		if(this.#inputNode.value.length === 0)
+		{
+			this.#showPresetLocations();
 		}
 	}
 
@@ -555,30 +679,30 @@ export default class Autocomplete extends EventEmitter
 	{
 		return setTimeout(() => {
 
-			// to avoid multiple parallel requests, if server responses are too slow.
-			if(this.#isAutocompleteRequestStarted)
-			{
-				clearTimeout(this.#timerId);
-				this.#timerId = this.#createTimer(searchPhrase, params, promptDelay);
-				return;
-			}
+				// to avoid multiple parallel requests, if server responses are too slow.
+				if(this.#isAutocompleteRequestStarted)
+				{
+					clearTimeout(this.#timerId);
+					this.#timerId = this.#createTimer(searchPhrase, params, promptDelay);
+					return;
+				}
 
-			this.emit(Autocomplete.#onSearchStartedEvent);
-			this.#isAutocompleteRequestStarted = true;
-			this.#autocompleteService.autocomplete(searchPhrase, params)
-				.then(
-					(locationsList: Array<Location>) => {
-						this.#timerId = null;
-						this.#onPromptsReceived(locationsList, params);
-						this.emit(Autocomplete.#onSearchCompletedEvent);
-						this.#isAutocompleteRequestStarted = false;
-					},
-					(error) => {
-						this.emit(Autocomplete.#onSearchCompletedEvent);
-						this.#isAutocompleteRequestStarted = false;
-						BX.debug(error);
-					}
-				);
+				this.emit(Autocomplete.#onSearchStartedEvent);
+				this.#isAutocompleteRequestStarted = true;
+				this.#autocompleteService.autocomplete(searchPhrase, params)
+					.then(
+						(locationsList: Array<Location>) => {
+							this.#timerId = null;
+							this.#onPromptsReceived(locationsList, params);
+							this.emit(Autocomplete.#onSearchCompletedEvent);
+							this.#isAutocompleteRequestStarted = false;
+						},
+						(error) => {
+							this.emit(Autocomplete.#onSearchCompletedEvent);
+							this.#isAutocompleteRequestStarted = false;
+							BX.debug(error);
+						}
+					);
 			},
 			promptDelay
 		);
@@ -606,6 +730,7 @@ export default class Autocomplete extends EventEmitter
 			this.#inputNode.removeEventListener('keyup', this.#onInputKeyUp);
 			this.#inputNode.removeEventListener('focus', this.#onInputFocus);
 			this.#inputNode.removeEventListener('focusout', this.#onInputFocusOut);
+			this.#inputNode.removeEventListener('click', this.#onInputClick);
 		}
 
 		document.removeEventListener('click', this.#onDocumentClick);

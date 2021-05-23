@@ -15,16 +15,6 @@ export default class MapFeatureAuto extends MapFeature
 
 	#isDestroyed = false;
 
-	#onInputFocus(e: KeyboardEvent)
-	{
-		if(this.#isDestroyed)
-		{
-			return;
-		}
-
-		this.map.bindElement = this.mapBindElement;
-	}
-
 	/**
 	 * Render Widget
 	 * @param {AddressRenderProps} props
@@ -43,31 +33,44 @@ export default class MapFeatureAuto extends MapFeature
 		this.map.onMouseOutSubscribe(this.#processOnMouseOut.bind(this));
 	}
 
-	#onControlWrapperClick()
+	#onControlWrapperClick(event)
 	{
 		if(this.#isDestroyed)
 		{
 			return;
 		}
 
-		if(this.map.isShown())
+		if (this.addressWidget.mode === ControlMode.view)
 		{
-			this.closeMap();
+			if(this.map.isShown())
+			{
+				this.closeMap();
+			}
+			else
+			{
+				clearTimeout(this.#showMapTimerId);
+			}
 		}
 		else
 		{
-			clearTimeout(this.#showMapTimerId);
+			if(this.addressWidget.address && !this.map.isShown() && event.target === this.addressWidget.inputNode)
+			{
+				this.showMap();
+			}
 		}
 	}
 
-	#onDocumentClick()
+	#onDocumentClick(event)
 	{
 		if(this.#isDestroyed)
 		{
 			return;
 		}
 
-		this.closeMap();
+		if (this.addressWidget.inputNode !== event.target)
+		{
+			this.closeMap();
+		}
 	}
 
 	#processOnMouseOver()
@@ -77,9 +80,13 @@ export default class MapFeatureAuto extends MapFeature
 			return;
 		}
 
-		this.#isMouseOver = true;
 		clearTimeout(this.#showMapTimerId);
 		clearTimeout(this.#closeMapTimerId);
+
+		if (this.addressWidget.mode !== ControlMode.view)
+		{
+			return;
+		}
 
 		if(this.addressWidget.address && !this.map.isShown())
 		{
@@ -98,10 +105,13 @@ export default class MapFeatureAuto extends MapFeature
 			return;
 		}
 
-		this.#isMouseOver = false;
-
 		clearTimeout(this.#showMapTimerId);
 		clearTimeout(this.#closeMapTimerId);
+
+		if (this.addressWidget.mode !== ControlMode.view)
+		{
+			return;
+		}
 
 		if(this.addressWidget.mode === ControlMode.view && this.map.isShown())
 		{
@@ -128,7 +138,7 @@ export default class MapFeatureAuto extends MapFeature
 
 		this.map.address = address;
 
-		if(address)
+		if(address && this.addressWidget.state !== State.DATA_SUPPOSED)
 		{
 			this.showMap();
 		}
@@ -152,7 +162,6 @@ export default class MapFeatureAuto extends MapFeature
 
 		this.#showMapTimerId = null;
 		this.#closeMapTimerId = null;
-		this.#isMouseOver = false;
 
 		super.destroy();
 		this.#isDestroyed = true;

@@ -8,7 +8,7 @@ use Bitrix\Main\Error;
 
 Loc::loadMessages(__FILE__);
 
-Loader::includeModule("intranet");
+Loader::includeModule('intranet');
 
 class CIntranetUserProfileComponent extends UserProfile
 {
@@ -17,9 +17,9 @@ class CIntranetUserProfileComponent extends UserProfile
 
 	private function checkRequiredParams()
 	{
-		if (intval($this->arParams["ID"]) <= 0)
+		if ((int)$this->arParams['ID'] <= 0)
 		{
-			$this->errorCollection->setError(new Error(Loc::getMessage("INTRANET_USER_PROFILE_NO_USER_ERROR")));
+			$this->errorCollection->setError(new Error(Loc::getMessage('INTRANET_USER_PROFILE_NO_USER_ERROR')));
 			return false;
 		}
 
@@ -37,10 +37,9 @@ class CIntranetUserProfileComponent extends UserProfile
 		}
 
 		$isAdminRights = (
-			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
+			(Loader::includeModule('bitrix24') && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId()))
 			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
-		)
-			? true : false;
+		);
 
 		$this->arResult["IS_CURRENT_USER_ADMIN"] = $isAdminRights;
 
@@ -76,7 +75,7 @@ class CIntranetUserProfileComponent extends UserProfile
 			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
 			|| (
 				isset($this->arParams["ALLOWALL_USER_PROFILE_FIELDS"])
-				&& $this->arParams["ALLOWALL_USER_PROFILE_FIELDS"] == 'Y'
+				&& $this->arParams["ALLOWALL_USER_PROFILE_FIELDS"] === 'Y'
 			)
 		);
 
@@ -148,4 +147,3 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->includeComponentTemplate();
 	}
 }
-?>

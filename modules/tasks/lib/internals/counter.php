@@ -3,16 +3,12 @@
 namespace Bitrix\Tasks\Internals;
 
 use Bitrix\Main;
-use Bitrix\Main\Application;
-use Bitrix\Tasks\Internals\Counter\CounterCollector;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\Internals\Counter\CounterQueue;
-use Bitrix\Tasks\Internals\Counter\CounterQueueAgent;
-use Bitrix\Tasks\Internals\Counter\CounterTable;
-use Bitrix\Tasks\Internals\Counter\Exception\UnknownCounterException;
+use Bitrix\Tasks\Internals\Counter\CounterProcessor;
+use Bitrix\Tasks\Internals\Counter\CounterService;
+use Bitrix\Tasks\Internals\Counter\CounterState;
 use Bitrix\Tasks\Util\User;
 use CTasks;
-use CUserCounter;
 use Bitrix\Tasks\Util\Collection;
 
 /**
@@ -22,15 +18,10 @@ use Bitrix\Tasks\Util\Collection;
  */
 class Counter
 {
-	public const STEP_LIMIT = 2000;
-
 	private static $instance;
 
 	private $userId;
-	private $state = [];
-	private $counters = [];
-
-	private $collector;
+	private $processor;
 
 	/**
 	 * @param $userId
@@ -67,16 +58,12 @@ class Counter
 	{
 		$this->userId = (int)$userId;
 
-		$this->loadCounters();
-
-		if (!$this->isCounted())
+		if ($this->userId && !$this->getState()->isCounted())
 		{
-			if (!empty($this->state))
-			{
-				$this->dropAll();
-			}
-			$this->recountAll();
+			$this->getProcessor()->recountAll();
 		}
+
+		CounterService::getInstance();
 	}
 
 	/**
@@ -84,7 +71,7 @@ class Counter
 	 */
 	public function getRawCounters(): array
 	{
-		return $this->counters;
+		return $this->getState()->getRawCounters();
 	}
 
 	/**
@@ -253,7 +240,7 @@ class Counter
 				break;
 
 			default:
-				$value = $this->getInternal($name, $groupId);
+				$value = $this->getState()->getValue($name, $groupId);
 				break;
 		}
 
@@ -268,7 +255,7 @@ class Counter
 	{
 		$res = array_fill_keys($taskIds, 0);
 
-		foreach ($this->state as $row)
+		foreach ($this->getState() as $row)
 		{
 			if (!in_array($row['TASK_ID'], $taskIds))
 			{
@@ -284,153 +271,6 @@ class Counter
 		}
 
 		return $res;
-	}
-
-	/**
-	 * @throws Main\DB\SqlQueryException
-	 */
-	public function readAll(): void
-	{
-		$this->reset(CounterDictionary::MAP_COMMENTS);
-		$this->reset(CounterDictionary::MAP_MUTED_COMMENTS);
-		$this->loadCounters();
-	}
-
-	/**
-	 * @param array $tasks
-	 * @throws Main\DB\SqlQueryException
-	 */
-	public function deleteTasks(array $tasks): void
-	{
-		$this->reset(CounterDictionary::MAP_EXPIRED, $tasks);
-		$this->reset(CounterDictionary::MAP_MUTED_EXPIRED, $tasks);
-		$this->reset(CounterDictionary::MAP_COMMENTS, $tasks);
-		$this->reset(CounterDictionary::MAP_MUTED_COMMENTS, $tasks);
-		$this->loadCounters();
-	}
-
-	/**
-	 * @param array $taskIds
-	 * @throws Main\Db\SqlQueryException
-	 */
-	public function recount(string $counter, array $taskIds = []): void
-	{
-		if (!array_key_exists($counter, CounterDictionary::MAP_COUNTERS))
-		{
-			throw new UnknownCounterException();
-		}
-
-		if (empty($taskIds))
-		{
-			$taskIds = $this->getUserTasks();
-		}
-
-		if (count($taskIds) > self::STEP_LIMIT)
-		{
-			$chunks = array_chunk($taskIds, self::STEP_LIMIT);
-
-			/**
-			 * the first one will be return for immediately counting
-			 */
-			$taskIds = array_shift($chunks);
-
-			foreach ($chunks as $i => $rows)
-			{
-				$this->addToQueue($counter, $rows);
-			}
-
-			(new CounterQueueAgent())->addAgent();
-		}
-
-		$counters = $this->getCollector()->recount($counter, $taskIds);
-
-		$counterTypes = CounterDictionary::MAP_COUNTERS[$counter];
-		if ($counter === CounterDictionary::COUNTER_EXPIRED)
-		{
-			$counterTypes = array_merge(array_values(CounterDictionary::MAP_EXPIRED), CounterDictionary::MAP_MUTED_EXPIRED);
-		}
-		else if ($counter === CounterDictionary::COUNTER_NEW_COMMENTS)
-		{
-			$counterTypes = array_merge(array_values(CounterDictionary::MAP_COMMENTS), CounterDictionary::MAP_MUTED_COMMENTS);
-		}
-
-		$this->reset($counterTypes, $taskIds);
-		$this->batchInsert($counters);
-		$this->updateState($counters, $counterTypes, $taskIds);
-	}
-
-	/**
-	 * @param string $counter
-	 * @param array $taskIds
-	 * @throws Main\Db\SqlQueryException
-	 */
-	private function addToQueue(string $counter, array $taskIds)
-	{
-		CounterQueue::getInstance()->add($this->userId, $counter, $taskIds);
-	}
-
-	/**
-	 *
-	 */
-	private function recountAll(): void
-	{
-		$this->recount(CounterDictionary::COUNTER_EXPIRED);
-		$this->recount(CounterDictionary::COUNTER_NEW_COMMENTS);
-		$this->saveMark();
-	}
-
-	/**
-	 * @throws Main\Db\SqlQueryException
-	 */
-	private function dropAll(): void
-	{
-		$sql = "
-			DELETE FROM ". CounterTable::getTableName() ."
-			WHERE `USER_ID` = {$this->userId}
-		";
-		Application::getConnection()->query($sql);
-	}
-
-	/**
-	 *
-	 */
-	private function saveMark(): void
-	{
-		$sql = "
-			INSERT INTO ". CounterTable::getTableName() ."
-			(`USER_ID`, `TASK_ID`, `GROUP_ID`, `TYPE`, `VALUE`)
-			VALUES ({$this->userId}, 0, 0, '". CounterDictionary::COUNTER_FLAG_COUNTED ."', 1)
-		";
-		Application::getConnection()->query($sql);
-	}
-
-
-	/**
-	 * @param string $name
-	 * @param int|null $groupId
-	 * @return int
-	 */
-	private function getInternal(string $name, int $groupId = null): int
-	{
-		if ($groupId > 0)
-		{
-			if (
-				!array_key_exists($name, $this->counters)
-				|| !array_key_exists($groupId, $this->counters[$name])
-			)
-			{
-				return 0;
-			}
-
-			return $this->counters[$name][$groupId];
-		}
-
-		if (!array_key_exists($name, $this->counters))
-		{
-			return 0;
-		}
-
-		return array_sum($this->counters[$name]);
 	}
 
 	/**
@@ -461,213 +301,22 @@ class Counter
 	}
 
 	/**
-	 * @throws Main\DB\SqlQueryException
+	 * @return CounterProcessor
 	 */
-	private function loadCounters(): void
+	private function getProcessor(): CounterProcessor
 	{
-		$res = Application::getConnection()->query("
-			SELECT 
-				`VALUE`,
-			   	TASK_ID,
-		   		GROUP_ID,
-			   	`TYPE`
-			FROM ". CounterTable::getTableName(). "
-			WHERE
-				USER_ID = {$this->userId}
-		");
-		$rows = $res->fetchAll();
-
-		$this->updateState($rows);
+		if (!$this->processor)
+		{
+			$this->processor = new CounterProcessor($this->userId);
+		}
+		return $this->processor;
 	}
 
 	/**
-	 * @param array $rawCounters
+	 * @return CounterState
 	 */
-	private function updateState(array $rawCounters, array $types = [], array $taskIds = []): void
+	private function getState(): CounterState
 	{
-		if (empty($taskIds) && empty($types))
-		{
-			$this->state = [];
-		}
-		foreach ($this->state as $k => $row)
-		{
-			if (
-				!empty($taskIds)
-				&& !in_array($row['TASK_ID'], $taskIds)
-			)
-			{
-				continue;
-			}
-
-			if (
-				!empty($types)
-				&& !in_array($row['TYPE'], $types)
-			)
-			{
-				continue;
-			}
-			unset($this->state[$k]);
-		}
-
-		$this->state = array_merge($this->state, $rawCounters);
-
-		$this->updateRawCounters();
-		$this->updateUserCounters([CounterDictionary::COUNTER_TOTAL]);
-	}
-
-	/**
-	 *
-	 */
-	private function updateRawCounters(): void
-	{
-		$this->counters = [];
-		$counters = [];
-		foreach ($this->state as $item)
-		{
-			if ($item['TYPE'] === CounterDictionary::COUNTER_FLAG_COUNTED)
-			{
-				continue;
-			}
-			if (in_array($item['TYPE'], CounterDictionary::MAP_EXPIRED))
-			{
-				$counters[CounterDictionary::COUNTER_EXPIRED][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
-			}
-
-			if (in_array($item['TYPE'], CounterDictionary::MAP_COMMENTS))
-			{
-				$counters[CounterDictionary::COUNTER_NEW_COMMENTS][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
-			}
-
-			$counters[$item['TYPE']][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
-		}
-
-		foreach ($counters as $type => $groups)
-		{
-			foreach ($groups as $group => $values)
-			{
-				$this->counters[$type][$group] = array_sum($values);
-			}
-		}
-	}
-
-	/**
-	 * @param array $names
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private function updateUserCounters(array $names): void
-	{
-		foreach ($names as $name)
-		{
-			CUserCounter::Set($this->userId, Counter\CounterDictionary::getCounterId($name), $this->get($name), '**', '', false);
-		}
-	}
-
-	/**
-	 * @return CounterCollector
-	 */
-	private function getCollector(): CounterCollector
-	{
-		if (!$this->collector)
-		{
-			$this->collector = new CounterCollector($this->userId);
-		}
-		return $this->collector;
-	}
-
-	/**
-	 * @param array $data
-	 * @param array $clearTypes
-	 * @throws Main\Db\SqlQueryException
-	 */
-	private function batchInsert(array $data): void
-	{
-		$req = [];
-		foreach ($data as $row)
-		{
-			$row['TYPE'] = "'". $row['TYPE'] ."'";
-			$req[] = implode(',', $row);
-		}
-
-		if (empty($req))
-		{
-			return;
-		}
-
-		$sql = "
-			INSERT INTO ". CounterTable::getTableName(). "
-			(`USER_ID`, `TASK_ID`, `GROUP_ID`, `TYPE`, `VALUE`)
-			VALUES
-			(". implode("),(", $req) .")
-		";
-
-		Application::getConnection()->query($sql);
-	}
-
-	/**
-	 * @param array $types
-	 * @param array $tasksIds
-	 * @throws Main\Db\SqlQueryException
-	 */
-	private function reset(array $types, array $tasksIds = []): void
-	{
-		$where = "AND `TYPE` IN ('". implode("','", $types) ."')";
-
-		if (!empty($tasksIds))
-		{
-			$where .= " AND TASK_ID IN (". implode(",", $tasksIds) .")";
-		}
-
-		$sql = "
-			DELETE
-			FROM ". CounterTable::getTableName(). "
-			WHERE
-				`USER_ID` = {$this->userId}
-				{$where}
-		";
-
-		Application::getConnection()->query($sql);
-	}
-
-	/**
-	 * @return array
-	 * @throws Main\Db\SqlQueryException
-	 */
-	private function getUserTasks(): array
-	{
-		$sql = "
-			SELECT DISTINCT(TASK_ID)
-			FROM `b_tasks_member`
-			WHERE USER_ID = {$this->userId}
-		";
-		$res = Application::getConnection()->query($sql);
-		$ids = [];
-		while ($row = $res->fetch())
-		{
-			$ids[] = $row['TASK_ID'];
-		}
-		return $ids;
-	}
-
-	/**
-	 * @return bool
-	 */
-	private function isCounted(): bool
-	{
-		if (empty($this->state))
-		{
-			return false;
-		}
-
-		foreach ($this->state as $row)
-		{
-			if ($row['TYPE'] === CounterDictionary::COUNTER_FLAG_COUNTED)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return CounterState::getInstance($this->userId);
 	}
 }

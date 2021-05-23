@@ -282,13 +282,22 @@ final class CCrmRestService extends IRestService
 		'crm.requisite.link.get',
 		'crm.requisite.link.register',
 		'crm.requisite.link.unregister',
-		//
+		//endregion Requisite
+		//region Address
 		'crm.address.fields',
 		'crm.address.add',
 		'crm.address.update',
 		'crm.address.list',
 		'crm.address.delete',
-		//endregion Requisite
+		'crm.address.getzoneid',
+		'crm.address.setzoneid',
+		//endregion Address
+		//region Address type
+		'crm.addresstype.getavailable',
+		'crm.addresstype.getzonemap',
+		'crm.addresstype.getdefaultbyzone',
+		'crm.addresstype.getbyzonesorvalues',
+		//endregion Address type
 		//region Measures
 		'crm.measure.fields',
 		'crm.measure.add',
@@ -584,6 +593,10 @@ final class CCrmRestService extends IRestService
 			elseif($typeName === 'ADDRESS')
 			{
 				$proxy = self::$PROXIES[$typeName] = new CCrmAddressRestProxy();
+			}
+			elseif($typeName === 'ADDRESSTYPE')
+			{
+				$proxy = self::$PROXIES[$typeName] = new CCrmAddressTypeRestProxy();
 			}
 			elseif($typeName === 'ACTIVITY')
 			{
@@ -3129,7 +3142,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 
 		$user = CCrmSecurityHelper::GetCurrentUser();
 
-		$opt = unserialize($opt);
+		$opt = unserialize($opt, ['allowed_classes' => false]);
 		$iblockID = intval($opt[CSite::GetDefSite()]['id']);
 		$userSectionID = CWebDavIblock::getRootSectionIdForUser($iblockID, $user->GetID());
 		if(!is_numeric($userSectionID) || $userSectionID <= 0)
@@ -5255,6 +5268,13 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
+			return false;
+		}
+
 		if(isset($fields['COMMENTS']))
 		{
 			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
@@ -5381,6 +5401,13 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 		if(!CCrmLead::Exists($ID))
 		{
 			$errors[] = 'Lead is not found';
+			return false;
+		}
+
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
 
@@ -5643,6 +5670,13 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
+			return false;
+		}
+
 		if(isset($fields['COMMENTS']))
 		{
 			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
@@ -5767,6 +5801,13 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 		elseif(!CCrmDeal::CheckUpdatePermission($ID, $userPermissions, $categoryID))
 		{
 			$errors[] = 'Access denied.';
+			return false;
+		}
+
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
 
@@ -7267,6 +7308,13 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
+			return false;
+		}
+
 		if(isset($fields['COMMENTS']))
 		{
 			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
@@ -7388,6 +7436,13 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		if(!CCrmCompany::Exists($ID))
 		{
 			$errors[] = 'Company is not found';
+			return false;
+		}
+
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
 
@@ -7560,6 +7615,13 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
+			return false;
+		}
+
 		if(isset($fields['COMMENTS']))
 		{
 			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
@@ -7676,6 +7738,13 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		if(!CCrmContact::Exists($ID))
 		{
 			$errors[] = 'Contact is not found';
+			return false;
+		}
+
+		$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
 
@@ -11923,6 +11992,12 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		if (!$this->entityExists($entityTypeID, $entityID))
+		{
+			$errors[] = 'Entity not found.';
+			return false;
+		}
+
 		$entity = self::getEntity();
 
 		$result = $entity->add($fields);
@@ -12194,6 +12269,18 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 		}
 
 		return parent::processEntityEvent(CCrmOwnerType::Requisite, $arParams, $arHandler);
+	}
+
+	protected function entityExists(int $entityTypeId, int $entityId): bool
+	{
+		switch ($entityTypeId)
+		{
+			case CCrmOwnerType::Contact:
+				return CCrmContact::Exists($entityId);
+			case CCrmOwnerType::Company:
+				return CCrmCompany::Exists($entityId);
+		}
+		return false;
 	}
 }
 
@@ -12948,6 +13035,18 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 
 			return true;
 		}
+		elseif($name === 'GETZONEID')
+		{
+			return EntityAddress::getZoneId();
+		}
+		elseif($name === 'SETZONEID')
+		{
+			$zoneId = $this->resolveParam($arParams, 'ID');
+
+			EntityAddress::setZoneId($zoneId);
+
+			return true;
+		}
 
 		throw new RestException("Resource '{$name}' is not supported in current context.");
 	}
@@ -13048,6 +13147,81 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 			default:
 				throw new RestException("The Event \"{$eventName}\" is not supported in current context");
 		}
+	}
+}
+
+class CCrmAddressTypeRestProxy extends CCrmRestProxyBase
+{
+	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
+	{
+		$name = mb_strtoupper($name);
+
+		if ($name === 'GETAVAILABLE')
+		{
+			$result = [];
+			$descriptions = EntityAddressType::getDescriptions(EntityAddressType::getAvailableIds());
+			foreach($descriptions as $k => $v)
+			{
+				$result[] = array('ID' => $k, 'NAME' => $v);
+			}
+			return $result;
+		}
+		else if ($name === 'GETZONEMAP')
+		{
+			$result = [];
+
+			foreach (EntityAddressType::getZoneMap() as $zoneId => $zoneInfo)
+			{
+				$info = ['ID' => $zoneId];
+				foreach ($zoneInfo as $paramName => $paramValue)
+				{
+					$info[mb_strtoupper($paramName)] = $paramValue;
+				}
+				$result[] = $info;
+			}
+
+			return $result;
+		}
+		else if ($name === 'GETDEFAULTBYZONE')
+		{
+			$addressZoneId = (string)$this->resolveParam($arParams, 'ID');
+
+			return EntityAddressType::getDefaultIdByZone($addressZoneId);
+		}
+		else if ($name === 'GETBYZONESORVALUES')
+		{
+			$zoneIds = $this->resolveArrayParam($arParams, 'ID');
+			$values = $this->resolveArrayParam($arParams, 'VALUE');
+
+			if (!is_array($zoneIds))
+			{
+				$zoneIds = [$zoneIds];
+			}
+
+			foreach ($zoneIds as $k => $v)
+			{
+				$zoneIds[$k] = (string)$zoneIds[$k];
+			}
+
+			if (!is_array($values))
+			{
+				$values = [$values];
+			}
+
+			foreach ($values as $k => $v)
+			{
+				$values[$k] = (int)$values[$k];
+			}
+
+			$result = [];
+			foreach (EntityAddressType::getDescriptionsByZonesOrValues($zoneIds, $values) as $typeId => $description)
+			{
+				$result[] = ['ID' => $typeId, 'NAME' => $description];
+			}
+			return $result;
+		}
+
+		throw new RestException("Resource '{$name}' is not supported in current context.");
 	}
 }
 

@@ -22,3 +22,7 @@ $MESS["SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER"] = "Ответств�
 $MESS["SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL"] = "Идёт расчет стоимости";
 $MESS["SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT"] = "отправлен запрос в службу доставки";
 $MESS["SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE"] = "Добавить ещё";
+$MESS["SALE_DELIVERY_SERVICE_SELECTOR_CLARIFY_ADDRESS"] = "Уточните адрес";
+$MESS["SALE_DELIVERY_SERVICE_SELECTOR_SHIPPING_SERVICES"] = "варианты доставки";
+$MESS["SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD"] = "Способ доставки";
+$MESS["SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE"] = "Выгодно";

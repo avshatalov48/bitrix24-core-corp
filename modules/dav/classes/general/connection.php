@@ -186,7 +186,7 @@ class CAllDavConnection
 	public static function Delete($id)
 	{
 		global $DB;
-		return $DB->Query("DELETE FROM b_dav_connections WHERE ID = ".intval($id)." ", true);
+		return $DB->Query("DELETE FROM b_dav_connections WHERE ID = ".(int) $id." ", true);
 	}
 
 	public static function GetById($id)

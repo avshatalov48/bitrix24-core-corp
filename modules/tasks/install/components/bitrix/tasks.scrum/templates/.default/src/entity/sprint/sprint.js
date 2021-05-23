@@ -9,86 +9,68 @@ import {ListItems} from '../list.items';
 import {StoryPointsHeader} from './story.points.header';
 import {StoryPoints} from '../../utility/story.points';
 
+import type {EpicType, ItemParams} from '../../item/item';
+import type {Views} from '../../view/view';
+
 import '../../css/sprint.css';
 
 type SprintInfo = {
 	sprintGoal?: string
 }
 
-type SprintParams = {
+export type SprintParams = {
 	id: number,
-	name?: string,
+	tmpId: string,
+	name: string,
 	sort: number,
 	dateStart?: number,
 	dateEnd?: number,
+	weekendDaysTime?: number,
 	defaultSprintDuration: number,
 	totalStoryPoints?: string,
 	totalCompletedStoryPoints?: string,
 	totalUncompletedStoryPoints?: string,
-	numberTasks?: number,
 	completedTasks?: number,
-	unCompletedTasks?: number,
+	uncompletedTasks?: number,
 	status?: string,
-	items?: Array,
-	info?: SprintInfo
+	numberTasks?: number,
+	items?: Array<ItemParams>,
+	info?: SprintInfo,
+	views: Views
 };
-
-type EpicInfoType = {
-	color: string
-}
-
-type EpicType = {
-	id: number,
-	name: string,
-	description: string,
-	info: EpicInfoType
-}
 
 export class Sprint extends Entity
 {
-	constructor(sprintData: SprintParams = {})
+	constructor(params: SprintParams)
 	{
-		super(sprintData);
+		super(params);
 
 		this.setEventNamespace('BX.Tasks.Scrum.Sprint');
 
-		this.name = sprintData.name;
-		this.dateStart = (Type.isInteger(sprintData.dateStart) ? parseInt(sprintData.dateStart, 10) : 0);
-		this.dateEnd = (Type.isInteger(sprintData.dateEnd) ? parseInt(sprintData.dateEnd, 10) : 0);
-		this.status = (sprintData.status ? sprintData.status : 'planned');
-		this.sort = (Type.isInteger(sprintData.sort) ? parseInt(sprintData.sort, 10) : 1);
-
-		this.totalStoryPoints = new StoryPoints();
-		this.totalStoryPoints.addPoints(sprintData.totalStoryPoints);
-		this.totalCompletedStoryPoints = new StoryPoints();
-		this.totalCompletedStoryPoints.addPoints(sprintData.totalCompletedStoryPoints);
-		this.totalUncompletedStoryPoints = new StoryPoints();
-		this.totalUncompletedStoryPoints.addPoints(sprintData.totalUncompletedStoryPoints);
-
-		this.completedStoryPoints = new StoryPoints();
-		this.uncompletedStoryPoints = new StoryPoints();
-
-		this.completedTasks = (Type.isInteger(sprintData.completedTasks) ? parseInt(sprintData.completedTasks, 10) : 0);
-		this.unCompletedTasks = Type.isInteger(sprintData.unCompletedTasks) ?
-			parseInt(sprintData.unCompletedTasks, 10) : 0;
-
-		this.defaultSprintDuration = Type.isInteger(sprintData.defaultSprintDuration) ?
-			parseInt(sprintData.defaultSprintDuration, 10) : 0;
-
-		if (sprintData.items)
-		{
-			sprintData.items.forEach((itemData) => {
-				const item = new Item(itemData);
-				item.setDisableStatus(this.isDisabled());
-				this.items.set(item.itemId, item);
-			});
-		}
-
-		this.info = sprintData.info;
+		this.setSprintParams(params);
 
 		this.sprintHeader = null;
 		this.eventsHeader = null;
 		this.storyPointsHeader = null;
+	}
+
+	setSprintParams(params: SprintParams)
+	{
+		this.setTmpId(params.tmpId);
+		this.setName(params.name);
+		this.setSort(params.sort);
+		this.setDateStart(params.dateStart);
+		this.setDateEnd(params.dateEnd);
+		this.setWeekendDaysTime(params.weekendDaysTime);
+		this.setDefaultSprintDuration(params.defaultSprintDuration);
+		this.setStatus(params.status);
+		this.setTotalStoryPoints(params.totalStoryPoints);
+		this.setTotalCompletedStoryPoints(params.totalCompletedStoryPoints);
+		this.setTotalUncompletedStoryPoints(params.totalUncompletedStoryPoints);
+		this.setCompletedTasks(params.completedTasks);
+		this.setUncompletedTasks(params.uncompletedTasks);
+		this.setItems(params.items);
+		this.setInfo(params.info);
 	}
 
 	static buildSprint(sprintData: SprintParams = {}): Sprint
@@ -105,7 +87,7 @@ export class Sprint extends Entity
 	addSprintHeader(sprintHeader: SprintHeader)
 	{
 		this.sprintHeader = sprintHeader;
-		this.sprintHeader.initStyle();
+		this.sprintHeader.initStyle(this);
 
 		this.sprintHeader.subscribe('changeName', this.onChangeName.bind(this));
 		this.sprintHeader.subscribe('removeSprint', this.onRemoveSprint.bind(this));
@@ -131,23 +113,23 @@ export class Sprint extends Entity
 	{
 		if (this.sprintHeader)
 		{
-			this.sprintHeader.initStyle();
+			this.sprintHeader.initStyle(this);
 		}
 	}
 
 	isActive(): boolean
 	{
-		return (this.status === 'active');
+		return (this.getStatus() === 'active');
 	}
 
 	isPlanned(): boolean
 	{
-		return (this.status === 'planned');
+		return (this.getStatus() === 'planned');
 	}
 
 	isCompleted(): boolean
 	{
-		return (this.status === 'completed');
+		return (this.getStatus() === 'completed');
 	}
 
 	isDisabled(): boolean
@@ -157,17 +139,18 @@ export class Sprint extends Entity
 
 	isExpired(): boolean
 	{
-		const sprintEndTime = new Date(this.dateEnd * 1000).getTime();
-
-		const currentTime = new Date();
-		currentTime.setHours(currentTime.getHours() + 8);
-
-		return (this.isActive() && (sprintEndTime < currentTime.getTime()));
+		const sprintEnd = new Date(this.dateEnd * 1000);
+		return (this.isActive() && (sprintEnd.getTime() < (new Date()).getTime()));
 	}
 
 	hasInput(): boolean
 	{
 		return !this.isDisabled();
+	}
+
+	getEntityType()
+	{
+		return 'sprint';
 	}
 
 	setItem(newItem: Item)
@@ -183,14 +166,14 @@ export class Sprint extends Entity
 		this.updateStoryPoints();
 	}
 
-	getSort()
+	setName(name)
 	{
-		return this.sort;
-	}
+		this.name = (Type.isString(name) ? name : '');
 
-	setSort(sort)
-	{
-		this.sort = parseInt(sort, 10);
+		if (this.isNodeCreated() && this.sprintHeader)
+		{
+			this.sprintHeader.updateNameNode(this.name);
+		}
 	}
 
 	getName()
@@ -198,9 +181,49 @@ export class Sprint extends Entity
 		return this.name;
 	}
 
+	setTmpId(tmpId: string)
+	{
+		this.tmpId = (Type.isString(tmpId) ? tmpId : '');
+	}
+
+	getTmpId(): string
+	{
+		return this.tmpId;
+	}
+
+	setSort(sort)
+	{
+		this.sort = (Type.isInteger(sort) ? parseInt(sort, 10) : 1);
+	}
+
+	getSort()
+	{
+		return this.sort;
+	}
+
+	setDateStart(dateStart)
+	{
+		this.dateStart = (Type.isInteger(dateStart) ? parseInt(dateStart, 10) : 0);
+
+		if (this.isNodeCreated() && this.sprintHeader)
+		{
+			this.sprintHeader.updateDateStartNode(this.dateStart);
+		}
+	}
+
 	getDateStart(): number
 	{
 		return parseInt(this.dateStart, 10);
+	}
+
+	setDateEnd(dateEnd)
+	{
+		this.dateEnd = (Type.isInteger(dateEnd) ? parseInt(dateEnd, 10) : 0);
+
+		if (this.isNodeCreated() && this.sprintHeader)
+		{
+			this.sprintHeader.updateDateEndNode(this.dateEnd);
+		}
 	}
 
 	getDateEnd(): number
@@ -208,9 +231,25 @@ export class Sprint extends Entity
 		return parseInt(this.dateEnd, 10);
 	}
 
-	getEntityType()
+	setWeekendDaysTime(weekendDaysTime)
 	{
-		return 'sprint';
+		this.weekendDaysTime = (Type.isInteger(weekendDaysTime) ? parseInt(weekendDaysTime, 10) : 0);
+	}
+
+	getWeekendDaysTime(): number
+	{
+		return this.weekendDaysTime;
+	}
+
+	getStoryPoints(): StoryPoints
+	{
+		return this.totalStoryPoints;
+	}
+
+	setTotalStoryPoints(totalStoryPoints)
+	{
+		this.totalStoryPoints = new StoryPoints();
+		this.totalStoryPoints.addPoints(totalStoryPoints);
 	}
 
 	getTotalStoryPoints(): StoryPoints
@@ -218,9 +257,21 @@ export class Sprint extends Entity
 		return this.totalStoryPoints;
 	}
 
+	setTotalCompletedStoryPoints(totalCompletedStoryPoints)
+	{
+		this.totalCompletedStoryPoints = new StoryPoints();
+		this.totalCompletedStoryPoints.addPoints(totalCompletedStoryPoints);
+	}
+
 	getTotalCompletedStoryPoints(): StoryPoints
 	{
 		return this.totalCompletedStoryPoints;
+	}
+
+	setTotalUncompletedStoryPoints(totalUncompletedStoryPoints)
+	{
+		this.totalUncompletedStoryPoints = new StoryPoints();
+		this.totalUncompletedStoryPoints.addPoints(totalUncompletedStoryPoints);
 	}
 
 	getTotalUncompletedStoryPoints(): StoryPoints
@@ -228,14 +279,23 @@ export class Sprint extends Entity
 		return this.totalUncompletedStoryPoints;
 	}
 
-	getCompletedStoryPoints(): StoryPoints
+	setItems(items)
 	{
-		return this.completedStoryPoints;
+		if (!Type.isArray(items))
+		{
+			return;
+		}
+
+		items.forEach((itemParams: ItemParams) => {
+			const item = new Item(itemParams);
+			item.setDisableStatus(this.isDisabled());
+			this.items.set(item.itemId, item);
+		});
 	}
 
-	getUncompletedStoryPoints(): StoryPoints
+	setInfo(info: SprintInfo)
 	{
-		return this.uncompletedStoryPoints;
+		this.info = (Type.isPlainObject(info) ? info : {sprintGoal: ''});
 	}
 
 	addNumberTasks(value: number)
@@ -260,7 +320,7 @@ export class Sprint extends Entity
 
 	setCompletedTasks(completedTasks)
 	{
-		this.completedTasks = parseInt(completedTasks, 10);
+		this.completedTasks = (Type.isInteger(completedTasks) ? parseInt(completedTasks, 10) : 0);
 	}
 
 	getCompletedTasks(): number
@@ -268,14 +328,19 @@ export class Sprint extends Entity
 		return this.completedTasks;
 	}
 
-	setUnCompletedTasks(unCompletedTasks)
+	setUncompletedTasks(uncompletedTasks)
 	{
-		this.unCompletedTasks = parseInt(unCompletedTasks, 10);
+		this.uncompletedTasks = (Type.isInteger(uncompletedTasks) ? parseInt(uncompletedTasks, 10) : 0);
 	}
 
-	getUnCompletedTasks(): number
+	getUncompletedTasks(): number
 	{
-		return this.unCompletedTasks;
+		return this.uncompletedTasks;
+	}
+
+	setDefaultSprintDuration(defaultSprintDuration)
+	{
+		this.defaultSprintDuration = (Type.isInteger(defaultSprintDuration) ? parseInt(defaultSprintDuration, 10) : 0);
 	}
 
 	getDefaultSprintDuration()
@@ -315,7 +380,14 @@ export class Sprint extends Entity
 
 	setStatus(status)
 	{
-		this.status = status;
+		const availableStatus = new Set([
+			'planned',
+			'active',
+			'completed'
+		]);
+
+		this.status = (availableStatus.has(status) ? status : 'planned');
+
 		this.initStyle();
 
 		this.items.forEach((item) => {
@@ -324,8 +396,50 @@ export class Sprint extends Entity
 
 		if (this.isDisabled())
 		{
-			this.input.removeYourself();
-			this.groupActionsButton.removeYourself();
+			if (this.input)
+			{
+				this.input.removeYourself();
+			}
+			if (this.groupActionsButton)
+			{
+				this.groupActionsButton.removeYourself();
+			}
+		}
+	}
+
+	getStatus(): string
+	{
+		return this.status;
+	}
+
+	updateYourself(tmpSprint: Sprint)
+	{
+		if (tmpSprint.getName() !== this.getName())
+		{
+			this.setName(tmpSprint.getName());
+		}
+		if (tmpSprint.getDateStart() !== this.getDateStart())
+		{
+			this.setDateStart(tmpSprint.getDateStart());
+		}
+		if (tmpSprint.getDateEnd() !== this.getDateEnd())
+		{
+			this.setDateEnd(tmpSprint.getDateEnd());
+		}
+
+		this.setTotalStoryPoints(tmpSprint.getTotalStoryPoints().getPoints());
+		this.setTotalCompletedStoryPoints(tmpSprint.getTotalCompletedStoryPoints().getPoints());
+		this.setTotalUncompletedStoryPoints(tmpSprint.getTotalUncompletedStoryPoints().getPoints());
+
+		if (tmpSprint.getStatus() !== this.getStatus())
+		{
+			this.setStatus(tmpSprint.getStatus());
+		}
+
+		if (this.node)
+		{
+			this.addStoryPointsHeader(new StoryPointsHeader(this));
+			Dom.replace(this.node.querySelector('.tasks-scrum-sprint-header-event-params'), this.renderParams());
 		}
 	}
 
@@ -347,9 +461,7 @@ export class Sprint extends Entity
 							${this.eventsHeader ? '' : ''/*todo*/}
 							${this.isCompleted() ? this.renderLinkToCompletedSprint() : ''}
 						</div>
-						<div class="tasks-scrum-sprint-header-event-params">
-							${this.storyPointsHeader ? this.storyPointsHeader.render() : ''}
-						</div>
+						${this.renderParams()}
 					</div>
 					<div class="tasks-scrum-sprint-actions">
 						${this.groupActionsButton  && !this.isDisabled() ? this.groupActionsButton.render() : ''}
@@ -364,10 +476,19 @@ export class Sprint extends Entity
 		return this.node;
 	}
 
+	renderParams(): HTMLElement
+	{
+		return Tag.render`
+			<div class="tasks-scrum-sprint-header-event-params">
+				${this.storyPointsHeader ? this.storyPointsHeader.render() : ''}
+			</div>
+		`;
+	}
+
 	renderLinkToCompletedSprint(): HTMLElement
 	{
 		return Tag.render`
-			<a href="${Text.encode(this.views.completedSprint.url)}">
+			<a href="${Text.encode(this.getViews().completedSprint.url)}">
 				${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_LINK')}
 			</a>
 		`;
@@ -375,12 +496,7 @@ export class Sprint extends Entity
 
 	onAfterAppend()
 	{
-		this.contentNode = this.node.querySelector('.tasks-scrum-sprint-content');
-
-		if (!this.isCompleted())
-		{
-			this.showContent();
-		}
+		this.updateVisibility();
 
 		if (this.sprintHeader)
 		{
@@ -394,21 +510,27 @@ export class Sprint extends Entity
 	{
 		super.updateStoryPoints();
 
-		this.completedStoryPoints.clearPoints();
-		[...this.getItems().values()].map((item: Item) => {
-			if (item.isCompleted())
-			{
-				this.completedStoryPoints.addPoints(item.getStoryPoints().getPoints());
-			}
-		});
-
-		this.uncompletedStoryPoints.clearPoints();
-		[...this.getItems().values()].map((item: Item) => {
-			if (!item.isCompleted())
-			{
-				this.uncompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
-			}
-		});
+		if (!this.isCompleted())
+		{
+			this.totalStoryPoints.clearPoints();
+			[...this.getItems().values()].map((item: Item) => {
+				this.totalStoryPoints.addPoints(item.getStoryPoints().getPoints());
+			});
+			this.totalCompletedStoryPoints.clearPoints();
+			[...this.getItems().values()].map((item: Item) => {
+				if (item.isCompleted())
+				{
+					this.totalCompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+				}
+			});
+			this.totalUncompletedStoryPoints.clearPoints();
+			[...this.getItems().values()].map((item: Item) => {
+				if (!item.isCompleted())
+				{
+					this.totalUncompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+				}
+			});
+		}
 
 		if (this.storyPointsHeader)
 		{
@@ -426,37 +548,6 @@ export class Sprint extends Entity
 				this.storyPointsHeader.setStoryPoints(this.storyPoints.getPoints());
 			}
 		}
-
-		if (this.isPlanned())
-		{
-			this.getTotalStoryPoints().setPoints(this.storyPoints.getPoints());
-			this.getTotalCompletedStoryPoints().setPoints(this.completedStoryPoints.getPoints());
-		}
-
-		if (this.sprintHeader)
-		{
-			this.sprintHeader.updateStatsHeader();
-		}
-	}
-
-	updateTotalStoryPoints(item: Item)
-	{
-		if (!this.isActive())
-		{
-			return;
-		}
-
-		const differencePoints = item.getStoryPoints().getDifferencePoints();
-		if (differencePoints > 0)
-		{
-			this.addTotalStoryPoints(item);
-		}
-		else
-		{
-			this.subtractTotalStoryPoints(item);
-		}
-
-		this.updateActiveSprintStoryPointsHeader();
 
 		if (this.sprintHeader)
 		{
@@ -515,9 +606,22 @@ export class Sprint extends Entity
 			});
 		});
 
-		item.subscribe('updateActiveSprintStoryPoints', (baseEvent: BaseEvent) => {
-			this.updateTotalStoryPoints(baseEvent.getTarget())
+		item.subscribe('updateCompletedStatus', (baseEvent: BaseEvent) => {
+			[...this.getItems().values()].map((item: Item) => {
+				if (item.isCompleted())
+				{
+					this.setCompletedTasks(this.getCompletedTasks() + 1);
+				}
+				else
+				{
+					this.setUncompletedTasks(this.getUncompletedTasks() - 1);
+				}
+			});
 		});
+
+		item.subscribe('toggleSubTasks', (baseEvent: BaseEvent) => {
+			this.emit('toggleSubTasks', baseEvent.getTarget());
+		})
 	}
 
 	onChangeName (baseEvent)
@@ -570,6 +674,19 @@ export class Sprint extends Entity
 		this.removeYourself();
 	}
 
+	removeSprint()
+	{
+		[...this.items.values()].map((item) => {
+			this.emit('moveToBacklog', {
+				sprint: this,
+				item: item
+			});
+		});
+
+		Dom.remove(this.node);
+		this.node = null;
+	}
+
 	onChangeSprintDeadline(baseEvent)
 	{
 		const requestData = baseEvent.getData();
@@ -602,7 +719,7 @@ export class Sprint extends Entity
 
 	toggleVisibilityContent()
 	{
-		if (this.contentNode.style.display === 'block')
+		if (this.getContentNode().style.display === 'block')
 		{
 			this.hideContent();
 		}
@@ -618,12 +735,73 @@ export class Sprint extends Entity
 
 	showContent()
 	{
-		this.contentNode.style.display = 'block';
+		if (this.getContentNode())
+		{
+			this.getContentNode().style.display = 'block';
+		}
 	}
 
 	hideContent()
 	{
-		this.contentNode.style.display = 'none';
+		if (this.getContentNode())
+		{
+			this.getContentNode().style.display = 'none';
+		}
+	}
+
+	updateVisibility()
+	{
+		if (this.isCompleted())
+		{
+			if (this.isEmpty())
+			{
+				this.hideContent();
+			}
+			else
+			{
+				this.showContent();
+			}
+
+			this.showSprint();
+
+			if (this.isExactSearchApplied())
+			{
+				if (this.isEmpty())
+				{
+					this.hideSprint();
+				}
+			}
+		}
+		else
+		{
+			this.showContent();
+
+			if (this.isExactSearchApplied())
+			{
+				if (this.isEmpty())
+				{
+					this.hideSprint();
+				}
+				else
+				{
+					this.showSprint();
+				}
+			}
+			else
+			{
+				this.showSprint();
+			}
+		}
+	}
+
+	showSprint()
+	{
+		this.node.style.display = 'block';
+	}
+
+	hideSprint()
+	{
+		this.node.style.display = 'none';
 	}
 
 	onActivateGroupMode(baseEvent: BaseEvent)
@@ -638,5 +816,13 @@ export class Sprint extends Entity
 		super.onDeactivateGroupMode(baseEvent);
 
 		Dom.removeClass(this.node.querySelector('.tasks-scrum-sprint-items'), 'tasks-scrum-sprint-items-group-mode');
+	}
+
+	getContentNode(): HTMLElement
+	{
+		if (this.node)
+		{
+			return this.node.querySelector('.tasks-scrum-sprint-content');
+		}
 	}
 }

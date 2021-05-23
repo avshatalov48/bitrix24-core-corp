@@ -28,6 +28,8 @@ BX.namespace("Tasks.Component");
 		this.query = new BX.Tasks.Util.Query();
 		this.taskLimitExceeded = this.parameters.taskLimitExceeded;
 
+		this.calendarSettings = (this.parameters.calendarSettings ? this.parameters.calendarSettings : {});
+
 		this.initDeadline();
 		this.initReminder();
 		this.initMark();
@@ -433,7 +435,11 @@ BX.Tasks.Component.TaskViewSidebar.prototype.syncAuditor = function()
 			bTime: true,
 			value: this.deadline ? this.deadline : today,
 			bHideTimebar: false,
-			bCompatibility: false,
+			bCompatibility: true,
+			bCategoryTimeVisibilityOption: 'tasks.bx.calendar.deadline',
+			bTimeVisibility: (
+				this.calendarSettings ? (this.calendarSettings.deadlineTimeVisibility === 'Y') : false
+			),
 			callback_after: BX.proxy(function(value, time) {
 				this.setDeadline(value);
 			}, this)

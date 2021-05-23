@@ -171,6 +171,16 @@ elseif($action === 'SAVE')
 		__CrmDealDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
 	}
 
+	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+	if (!$diskQuotaRestriction->hasPermission())
+	{
+		__CrmDealDetailsEndJsonResonse([
+			'ERROR' => $diskQuotaRestriction->getErrorMessage(),
+			'RESTRICTION' => true,
+			'RESTRICTION_ACTION' => $diskQuotaRestriction->prepareInfoHelperScript()
+		]);
+	}
+
 	$sourceEntityID =  isset($params['DEAL_ID']) ? (int)$params['DEAL_ID'] : 0;
 	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])
 		|| mb_strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
@@ -181,7 +191,17 @@ elseif($action === 'SAVE')
 	//TODO: Implement external mode
 	$isExternal = false;
 
-	$previousFields = !$isNew ? \CCrmDeal::GetByID($ID, false) : null;
+	$previousFields = null;
+	if (!$isNew)
+	{
+		$previousFields = \CCrmDeal::GetListEx(
+			array(),
+			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+			false,
+			false,
+			array('*', 'UF_*')
+		)->Fetch();
+	}
 
 	$fields = array();
 	$fieldsInfo = \CCrmDeal::GetFieldsInfo();

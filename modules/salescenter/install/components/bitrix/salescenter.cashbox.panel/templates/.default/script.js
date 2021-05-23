@@ -205,7 +205,7 @@
 			{
 				var sliderOptions = {
 					allowChangeHistory: false,
-					width: 1000,
+					width: 1050,
 					events: {
 						onCloseComplete: function (e)
 						{

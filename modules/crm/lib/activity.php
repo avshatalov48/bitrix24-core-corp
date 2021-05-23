@@ -140,6 +140,10 @@ class ActivityTable extends Entity\DataManager
 			'SUBJECT' => array(
 				'data_type' => 'string'
 			),
+			'DESCRIPTION' => array(
+				'data_type' => 'string',
+				'fetch_data_modification' => [static::class, 'getDescriptionFetchModification'],
+			),
 			'COMPLETED' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y')
@@ -289,5 +293,15 @@ class ActivityTable extends Entity\DataManager
 	{
 		$result = Loc::getMessage("CRM_ACTIVITY_ENTITY_{$fieldName}_FIELD");
 		return is_string($result) ? $result : '';
+	}
+
+	public static function getDescriptionFetchModification(): array
+	{
+		return [
+			//function ($value) {
+			//
+			//	return \CCrmActivity::uncompressDescription($value);
+			//}
+		];
 	}
 }

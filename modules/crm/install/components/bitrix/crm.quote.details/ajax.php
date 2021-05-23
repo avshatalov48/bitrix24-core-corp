@@ -94,6 +94,16 @@ elseif($action === 'SAVE')
 		__CrmQuoteDetailsEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
 	}
 
+	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
+	if (!$diskQuotaRestriction->hasPermission())
+	{
+		__CrmQuoteDetailsEndJsonResonse([
+			'ERROR' => $diskQuotaRestriction->getErrorMessage(),
+			'RESTRICTION' => true,
+			'RESTRICTION_ACTION' => $diskQuotaRestriction->prepareInfoHelperScript()
+		]);
+	}
+
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$sourceEntityID =  isset($params['LEAD_ID']) ? (int)$params['LEAD_ID'] : 0;
 

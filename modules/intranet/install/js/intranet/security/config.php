@@ -7,7 +7,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 return array(
 	'css' => array(),
 	'js' => array(
-		'/bitrix/js/intranet/security/intranet.security.js'
+		'dist/security.bundle.js'
 	),
-	'rel' => array()
+	'rel' => [
+		'main.core',
+	],
+	'skip_core' => false,
 );

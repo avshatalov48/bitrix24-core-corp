@@ -37,6 +37,7 @@ class FieldSynchronizer
 	const FIELD_TYPE_DATE = 'date';
 	const FIELD_TYPE_DATETIME = 'datetime';
 	const FIELD_TYPE_LOCATION = 'location';
+	const FIELD_TYPE_ADDRESS = 'address';
 
 	protected static $statusTypes = null;
 	protected static $countryId = null;
@@ -70,6 +71,7 @@ class FieldSynchronizer
 			self::FIELD_TYPE_STRING => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_STRING'),
 			self::FIELD_TYPE_TYPED_STRING => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_TYPED_STRING'),
 			self::FIELD_TYPE_LOCATION => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_LOCATION'),
+			self::FIELD_TYPE_ADDRESS => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_ADDRESS'),
 		);
 	}
 
@@ -1058,6 +1060,9 @@ class FieldSynchronizer
 			case 'LOCATION':
 				$crmType = self::FIELD_TYPE_LOCATION;
 				break;
+			case 'ADDRESS':
+				$crmType = self::FIELD_TYPE_ADDRESS;
+				break;
 			default:
 				$crmType = self::FIELD_TYPE_STRING;
 		}
@@ -1081,6 +1086,8 @@ class FieldSynchronizer
 				$saleType = 'FILE'; break;
 			case self::FIELD_TYPE_LOCATION:
 				$saleType = 'LOCATION'; break;
+			case self::FIELD_TYPE_ADDRESS:
+				$saleType = 'ADDRESS'; break;
 			case self::FIELD_TYPE_STRING:
 			case self::FIELD_TYPE_TEXT:
 			default:

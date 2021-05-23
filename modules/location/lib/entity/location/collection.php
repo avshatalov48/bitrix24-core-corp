@@ -3,49 +3,33 @@
 namespace Bitrix\Location\Entity\Location;
 
 use Bitrix\Location\Entity\Location;
-use Bitrix\Location\Service;
-use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Result;
 
 /**
- * Class LocationCollection
+ * Class Collection
  * @package Bitrix\Location\Entity\Location
- * todo: groups
+ * @internal
  */
 class Collection extends \Bitrix\Location\Entity\Generic\Collection
 {
 	/** @var Location[]  */
 	protected $items = [];
 
-
-	/**
-	 * LocationCollection constructor.
-	 * @param Location[] $locations
-	 */
-	public function  __construct(array  $locations = [])
+	public function addItem($location): int
 	{
-
-		foreach($locations as $location)
+		if(!($location instanceof Location))
 		{
-			if(!($location instanceof Location))
-			{
-				throw new ArgumentOutOfRangeException('location');
-			}
+			throw new ArgumentTypeException('location must be the instance of Location');
 		}
 
-		parent::__construct($locations);
+		return parent::addItem($location);
 	}
 
 	/**
-	 * Saves all locations from the collection.
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 * todo: batch saving
 	 */
-	public function save()
+	public function save(): Result
 	{
 		$result = new Result();
 

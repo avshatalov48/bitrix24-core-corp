@@ -45,21 +45,19 @@ else
 		$itemList[] = $item;
 	}
 
-	$postfix = $this->randString();
-
 	$arResult['params'] = [
 		'isMulti' => ($arResult['userField']['MULTIPLE'] === 'Y'),
 		'fieldName' => $arResult['fieldName']
 	];
 
-	$arResult['valueContainerId'] = $arResult['fieldName'] . '_value_' . $postfix;
+	$arResult['valueContainerId'] = $arResult['fieldName'] . '_value_';
 
 	$arResult['spanAttrList'] = [
 		'id' => $arResult['valueContainerId'],
 		'style' => 'display: none'
 	];
 
-	$arResult['controlNodeId'] = $arResult['userField']['FIELD_NAME'] . '_control_' . $postfix;
+	$arResult['controlNodeId'] = $arResult['userField']['FIELD_NAME'] . '_control_';
 
 	$arResult['attrList'] = [];
 

@@ -209,6 +209,10 @@ export class EntityEditorClientRequisites
 			this._tooltip.close();
 			this._tooltip.removeDebouncedEvents();
 		}
+		if (this._requisiteEditor)
+		{
+			this._requisiteEditor.release();
+		}
 	}
 
 	loadEntity()

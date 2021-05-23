@@ -9,7 +9,6 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Rule\Traits\ChecklistTrait;
@@ -182,6 +181,19 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		foreach ($fields as $field)
 		{
+			if ($field === 'ATTACHMENTS')
+			{
+				$oldAttachments = array_keys($old['ATTACHMENTS']);
+				$newAttachments = array_keys($new['ATTACHMENTS']);
+
+				if (count(array_intersect($oldAttachments, $newAttachments)) !== count($oldAttachments))
+				{
+					return true;
+				}
+
+				continue;
+			}
+
 			if ($old[$field] != $new[$field])
 			{
 				return true;

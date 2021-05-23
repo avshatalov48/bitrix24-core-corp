@@ -192,7 +192,6 @@ class StreamStatistics extends DataSource
 		}
 		elseif($group === self::GROUP_BY_USER)
 		{
-			$userIDs = array();
 			while($ary = $dbResult->fetch())
 			{
 				if($useAlias && isset($ary[$nameAlias]))
@@ -200,23 +199,9 @@ class StreamStatistics extends DataSource
 					$ary[$name] = $ary[$nameAlias];
 					unset($ary[$nameAlias]);
 				}
-
-				$userID = $ary['RESPONSIBLE_ID'] = (int)$ary['RESPONSIBLE_ID'];
-				if($userID > 0 && !isset($userIDs[$userID]))
-				{
-					$userIDs[$userID] = true;
-				}
 				$result[] = $ary;
 			}
-			$userNames = self::prepareUserNames(array_keys($userIDs));
-			foreach($result as &$item)
-			{
-				$userID = $item['RESPONSIBLE_ID'];
-				$item['USER_ID'] = $userID;
-				$item['USER'] = isset($userNames[$userID]) ? $userNames[$userID] : "[{$userID}]";
-				unset($item['RESPONSIBLE_ID']);
-			}
-			unset($item);
+			self::parseUserInfo($result, ['RESPONSIBLE_ID' => 'USER']);
 		}
 		else
 		{

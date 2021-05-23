@@ -2340,7 +2340,10 @@ JCEC.prototype.ResizeDialogWin = function(div, w, h)
 JCEC.prototype.InitDialogCore = function()
 {
 	// Move div with dialogs to body
-	document.body.appendChild(BX(this.id + "_dialogs_cont"));
+	var container = BX(this.id + "_dialogs_cont");
+	Array.from(container.children).forEach(function(element) {
+		document.body.appendChild(element);
+	});
 
 	this.BXECDialogCore = function(arParams)
 	{
@@ -2430,17 +2433,9 @@ JCEC.prototype.InitDialogCore = function()
 
 			this.pWnd.style.zIndex = arParams.zIndex;
 
-
 			jsFloatDiv.Show(this.pWnd, pos.left, pos.top, 5, false, false);
 			if (arParams.bClickClose)
 				setTimeout(function(){BX.bind(document, "click", window[_this.onclick_k]);}, 200);
-			if(!this._shad) // FF2 bug fix
-			{
-				this._shad = BX(arParams.shadow_id);
-				this.pWnd.parentNode.appendChild(this._shad);
-				if (arParams.zIndex)
-					this._shad.style.zIndex - 5;
-			}
 		};
 
 		this.Close = function()

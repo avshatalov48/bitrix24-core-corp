@@ -265,7 +265,7 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName
 				),
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED_INVOICE_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_CONTACT => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT'),
@@ -282,7 +282,7 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT_INVOICE_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_DEAL => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL'),
@@ -301,7 +301,7 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_QUOTE => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE'),
@@ -320,7 +320,7 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1')
 			),
 		);
 
@@ -362,7 +362,12 @@ class Entity
 		$map = static::getMap();
 		foreach($map as $entityName => $entity)
 		{
-			$result[$entityName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::ResolveID($entityName));
+			$entityId = \CCrmOwnerType::ResolveID($entityName);
+			if ($entityId === \CCrmOwnerType::Invoice)
+			{
+				$entityId = \CCrmOwnerType::Order;
+			}
+			$result[$entityName] = \CCrmOwnerType::GetDescription($entityId);
 		}
 
 		return $result;

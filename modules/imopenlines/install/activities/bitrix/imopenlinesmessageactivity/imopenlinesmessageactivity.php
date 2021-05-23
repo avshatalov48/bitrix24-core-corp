@@ -169,6 +169,7 @@ class CBPImOpenLinesMessageActivity
 		$dialog->setMap(array(
 			'MessageText' => array(
 				'Name' => GetMessage('IMOL_MA_MESSAGE'),
+				'Description' => GetMessage('IMOL_MA_MESSAGE'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
 				'Required' => true

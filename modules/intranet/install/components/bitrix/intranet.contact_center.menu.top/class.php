@@ -79,6 +79,18 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 			}
 		}
 
+		if (
+			CModule::IncludeModule('voximplant') &&
+			CModule::IncludeModule('report')
+		)
+		{
+			$result[] = [
+				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_TELEPHONY_STATISTICS'),
+				'URL' => '/report/telephony/?analyticBoardKey=telephony_calls_dynamics',
+				'ID' => 'menu_contact_center_telephony_statistics'
+			];
+		}
+
 		return $result;
 	}
 

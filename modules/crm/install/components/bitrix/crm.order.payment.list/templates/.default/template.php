@@ -311,11 +311,6 @@ if($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if($arResult['ADD_EVENT_NAME'] !== '')
-	{
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
-	}
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		'',

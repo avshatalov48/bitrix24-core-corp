@@ -296,7 +296,7 @@ class Util
 			default:
 				return false;
 		}
-		if (($result = @unserialize($value)) === false)
+		if (($result = @unserialize($value, ['allowed_classes' => false])) === false)
 		{
 			$result = null;
 			return false;

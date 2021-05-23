@@ -310,18 +310,27 @@ class Transcript
 	public static function isDemo()
 	{
 		if(!Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		$licensePrefix = \CBitrix24::getLicensePrefix();
 		if(in_array($licensePrefix, static::getAllowedRegions()))
+		{
 			return false;
+		}
 
 		return \CVoxImplantAccount::IsDemo();
 	}
 
 	public static function getAllowedRegions()
 	{
-		return array('ru', 'ua', 'kz', 'by');
+		return ['ru'];
+	}
+
+	public static function getHiddenRegions()
+	{
+		return ['ua', 'kz', 'by'];
 	}
 
 	/**

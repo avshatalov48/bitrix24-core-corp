@@ -880,8 +880,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					AND destinationTbl.OWNER_ID = {$ownerId}
 					AND destinationTbl.STORAGE_ID = sourceQuery.STORAGE_ID
 					AND destinationTbl.FOLDER_ID = sourceQuery.FOLDER_ID
-					AND (destinationTbl.PARENT_ID = sourceQuery.PARENT_ID 
-						OR (destinationTbl.PARENT_ID IS NULL AND sourceQuery.PARENT_ID IS NULL))
+					AND IFNULL(destinationTbl.PARENT_ID, -1) = IFNULL(sourceQuery.PARENT_ID, -1)
 			";
 		}
 		else

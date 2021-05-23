@@ -100,33 +100,6 @@ class Company extends EntityBase
 		);
 	}
 
-	public function getTopIDs(array $params)
-	{
-		$order = isset($params['order']) && is_array($params['order']) ? $params['order'] : array('ID' => 'ASC');
-		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : array();
-		$enablePermissionCheck = isset($params['enablePermissionCheck']) ? (bool)$params['enablePermissionCheck'] : true;
-		if(!$enablePermissionCheck)
-		{
-			$filter['CHECK_PERMISSIONS'] = 'N';
-		}
-		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
-
-		$dbResult = \CCrmCompany::GetListEx(
-			$order,
-			$filter,
-			false,
-			$limit > 0 ? array('nTopCount' => $limit) : false,
-			array('ID')
-		);
-
-		$results = array();
-		while($fields = $dbResult->Fetch())
-		{
-			$results[] = (int)$fields['ID'];
-		}
-		return $results;
-	}
-
 	public function getCount(array $params)
 	{
 		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : array();

@@ -511,7 +511,27 @@ class CCrmCurrency
 			return array();
 		}
 
-		return CCurrencyLang::GetFormatDescription($currencyID);
+		$result = CCurrencyLang::GetFormatDescription($currencyID);
+		// TODO: remove after currency stable
+		if (!isset($result['TEMPLATE']))
+		{
+			$result['TEMPLATE'] = [
+				'SINGLE' => $result['FORMAT_STRING'],
+				'PARTS' => [
+					0 => '#'
+				],
+				'VALUE_INDEX' => 0
+			];
+			$parts = CCurrencyLang::getParsedCurrencyFormat($currencyID);
+			if (!empty($parts))
+			{
+				$result['TEMPLATE']['PARTS'] = $parts;
+				$result['TEMPLATE']['VALUE_INDEX'] = (int)array_search('#', $parts);
+			}
+			unset($parts);
+		}
+
+		return $result;
 	}
 
 	public static function GetCurrencyText($currencyID)

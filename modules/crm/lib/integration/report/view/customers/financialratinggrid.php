@@ -42,15 +42,19 @@ class FinancialRatingGrid extends Base
 			$value = $resultItem['value'];
 			if($value['ownerType'] == \CCrmOwnerType::ContactName)
 			{
-				$contacts[$value['ownerId']] = [];
+				$contacts[$value['ownerId']] = [
+					'TITLE' => \CCrmViewHelper::GetHiddenEntityCaption(\CCrmOwnerType::Contact)
+				];
 			}
 			else
 			{
-				$companies[$value['ownerId']] = [];
+				$companies[$value['ownerId']] = [
+					'TITLE' => \CCrmViewHelper::GetHiddenEntityCaption(\CCrmOwnerType::Company)
+				];
 			}
 		}
-		\CCrmOwnerType::PrepareEntityInfoBatch(\CCrmOwnerType::Contact, $contacts, false);
-		\CCrmOwnerType::PrepareEntityInfoBatch(\CCrmOwnerType::Company, $companies, false);
+		\CCrmOwnerType::PrepareEntityInfoBatch(\CCrmOwnerType::Contact, $contacts, true);
+		\CCrmOwnerType::PrepareEntityInfoBatch(\CCrmOwnerType::Company, $companies, true);
 
 		foreach ($contacts as $contactId => $contactFields)
 		{

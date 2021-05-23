@@ -1,0 +1,3 @@
+<?php
+$MESS["TELEPHONY_REPORT_AVG_CALL_TIME"] = "Среднее время звонка";
+$MESS["TELEPHONY_REPORT_AVG_CALL_TIME_MIN"] = "мин";

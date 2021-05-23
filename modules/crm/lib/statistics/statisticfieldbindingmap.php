@@ -59,7 +59,7 @@ class StatisticFieldBindingMap
 		$s = Main\Config\Option::get('crm', $this->typeName);
 		if(is_string($s) && $s !== '')
 		{
-			$items = unserialize($s);
+			$items = unserialize($s, ['allowed_classes' => false]);
 			if(is_array($items))
 			{
 				foreach($items as $item)

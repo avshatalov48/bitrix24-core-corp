@@ -121,7 +121,8 @@ BX.Tasks.Shared.Form.ProjectPlan = BX.Tasks.Util.Widget.extend({
 				{
 					var d = new BX.Tasks.Util.DatePicker({
 						scope: scope,
-						defaultTime: cwt.HOURS.END
+						defaultTime: cwt.HOURS.END,
+						calendarSettings: this.optionP('calendarSettings')
 					});
 					d.bindEvent('change', BX.delegate(this.onDeadLineChange, this));
 

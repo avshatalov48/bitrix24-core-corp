@@ -26,6 +26,7 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
+use Bitrix\Recyclebin\Recyclebin;
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 
@@ -211,7 +212,7 @@ if (Loader::includeModule('recyclebin'))
 				{
 					foreach ($taskData as $value)
 					{
-						$data = unserialize($value['DATA']);
+						$data = unserialize($value['DATA'], ['allowed_classes' => false]);
 						$action = $value['ACTION'];
 
 						self::restoreAdditionalData($taskId, $action, $data);
@@ -471,6 +472,15 @@ if (Loader::includeModule('recyclebin'))
 					],
 				],
 			];
+		}
+
+		public static function isInTheRecycleBin(int $taskId): bool
+		{
+			$taskId = (int) $taskId;
+
+			$recycleBinEntityId = Recyclebin::findId('tasks', Manager::TASKS_RECYCLEBIN_ENTITY, $taskId);
+
+			return (!empty($recycleBinEntityId));
 		}
 	}
 }

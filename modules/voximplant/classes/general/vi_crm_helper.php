@@ -683,7 +683,7 @@ class CVoxImplantCrmHelper
 		$communicationsUpdated = false;
 		foreach ($communications as $k => $communication)
 		{
-			if($communication['TYPE'] === \Bitrix\Crm\CommunicationType::PHONE_NAME && $communication['VALUE'] == '')
+			if ($communication['TYPE'] === \Bitrix\Crm\CommunicationType::PHONE_NAME)
 			{
 				$communications[$k]['VALUE'] = $statisticRecord['PHONE_NUMBER'];
 				$communicationsUpdated = true;

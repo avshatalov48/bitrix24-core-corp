@@ -136,7 +136,7 @@ class ThemePicker
 			return true;
 		}
 
-		if (\CBitrix24::isLicensePaid())
+		if (\CBitrix24::isLicensePaid() || \CBitrix24::IsNfrLicense())
 		{
 			return true;
 		}
@@ -600,7 +600,7 @@ class ThemePicker
 		$themeOptions = Option::get("intranet", $this->getDefaultThemeOptionName(), null);
 		if (is_string($themeOptions))
 		{
-			$defaultTheme = @unserialize($themeOptions);
+			$defaultTheme = @unserialize($themeOptions, ["allowed_classes" => false]);
 			if (is_array($defaultTheme) && isset($defaultTheme["userId"]) && isset($defaultTheme["themeId"]))
 			{
 				if ($this->isCustomThemeId($defaultTheme["themeId"]))

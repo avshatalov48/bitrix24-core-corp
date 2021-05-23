@@ -28,39 +28,22 @@ else
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.order.menu',
-		'',
-		array(
-			'PATH_TO_ORDER_LIST' => $arResult['PATH_TO_ORDER_LIST'],
-			'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
-			'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
-			'PATH_TO_ORDER_IMPORT' => $arResult['PATH_TO_ORDER_IMPORT'],
-			'PATH_TO_ORDER_PAYMENT' => $arResult['PATH_TO_ORDER_PAYMENT'],
-			'ELEMENT_ID' => $arResult['VARIABLES']['order_id'],
-			'TYPE' => 'list'
-		),
-		$component
-	);
-
-	/*
-	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
-	{
+	$this->SetViewTarget('pagetitle');
 		$APPLICATION->IncludeComponent(
-			'bitrix:app.placement',
-			'menu',
+			'bitrix:crm.order.menu',
+			'',
 			array(
-				'PLACEMENT' => "CRM_ORDER_LIST_MENU",
-				"PLACEMENT_OPTIONS" => array(),
-				'INTERFACE_EVENT' => 'onCrmOrderListInterfaceInit',
-				'MENU_EVENT_MODULE' => 'crm',
-				'MENU_EVENT' => 'onCrmOrderListItemBuildMenu',
+				'PATH_TO_ORDER_LIST' => $arResult['PATH_TO_ORDER_LIST'],
+				'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
+				'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
+				'PATH_TO_ORDER_IMPORT' => $arResult['PATH_TO_ORDER_IMPORT'],
+				'PATH_TO_ORDER_PAYMENT' => $arResult['PATH_TO_ORDER_PAYMENT'],
+				'ELEMENT_ID' => $arResult['VARIABLES']['order_id'],
+				'TYPE' => 'list'
 			),
-			null,
-			array('HIDE_ICONS' => 'Y')
+			$component
 		);
-	}
-	*/
+	$this->EndViewTarget();
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',

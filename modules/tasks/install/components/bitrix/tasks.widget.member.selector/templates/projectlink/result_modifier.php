@@ -70,10 +70,11 @@ foreach($arParams['DATA'] as $i => $item)
 }
 $arResult['DATA'] = $group;
 
-$arResult['JS_DATA'] = array(
-	'path' => array(
+$arResult['JS_DATA'] = [
+	'path' => [
 		'SG' => $gUrl,
-	),
+	],
 	'entityId' => $arParams['ENTITY_ID'],
-	'entityRoute' => $arParams['ENTITY_ROUTE']
-);
+	'entityRoute' => $arParams['ENTITY_ROUTE'],
+	'groupId' => (empty($group) ? 0 : $group['ID']),
+];

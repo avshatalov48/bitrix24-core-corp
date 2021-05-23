@@ -10,3 +10,4 @@ $MESS["CRM_ENTITY_MERGER_ENTITIES_NOT_FOUND"] = "Отсутствуют данн
 $MESS["CRM_ENTITY_MERGER_MARK_AS_NON_DUPLICATE"] = "не дубликат";
 $MESS["CRM_ENTITY_MERGER_RESULT_TITLE"] = "Результат объединения";
 $MESS["CRM_ENTITY_MERGER_OPEN_ENTITY"] = "открыть";
+$MESS["CRM_ENTITY_MERGER_MERGE_AND_EDIT"] = "Объединить и отредактировать";

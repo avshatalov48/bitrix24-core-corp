@@ -642,6 +642,17 @@ a.tasks-kanban-item-super-blue:hover,
 	transition: 200ms;
 }
 
+.tasks-kanban-item-story-points {
+	position: absolute;
+	height: 20px;
+	right: 10px;
+	bottom: 7px;
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #525c69;
+	cursor: default;
+}
+
 .main-kanban-item-drag .tasks-kanban-item-control {
 	display: none !important;
 }

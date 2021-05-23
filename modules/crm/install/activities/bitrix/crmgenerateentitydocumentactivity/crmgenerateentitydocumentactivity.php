@@ -452,15 +452,46 @@ class CBPCrmGenerateEntityDocumentActivity
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
 		$errors = [];
+
+		$useSubscription = $arCurrentValues['use_subscription'] ?? null;
+		if(!empty($useSubscription))
+		{
+			$useSubscription = $useSubscription === 'Y' ? 'Y' : 'N';
+		}
+		else
+		{
+			$useSubscription = $arCurrentValues['use_subscription_text'] ?? 'N';
+		}
+
+		$enablePublicUrl = $arCurrentValues['public_url'] ?? null;
+		if(!empty($enablePublicUrl))
+		{
+			$enablePublicUrl = $enablePublicUrl === 'N' ? 'N' : 'Y';
+		}
+		else
+		{
+			$enablePublicUrl = $arCurrentValues['public_url_text'] ?? 'N';
+		}
+
+		$withStamps = $arCurrentValues['with_stamps'] ?? null;
+		if(!empty($withStamps))
+		{
+			$withStamps = $withStamps === 'Y' ? 'Y' : 'N';
+		}
+		else
+		{
+			$withStamps = $arCurrentValues['with_stamps_text'] ?? 'N';
+		}
+
 		$properties = [
-			'TemplateId' => $arCurrentValues['template_id'],
-			'UseSubscription' => ($arCurrentValues['use_subscription'] === 'Y') ? 'Y' : 'N',
-			'EnablePublicUrl' => ($arCurrentValues['public_url'] === 'N') ? 'N' : 'Y',
-			'WithStamps' => $arCurrentValues['with_stamps'],
+			'TemplateId' => !empty($arCurrentValues['template_id']) ? $arCurrentValues['template_id'] : $arCurrentValues['template_id_text'],
+			'UseSubscription' => $useSubscription,
+			'EnablePublicUrl' => $enablePublicUrl,
+			'WithStamps' => $withStamps,
 			'Values' => $arCurrentValues['Values'],
-			'MyCompanyId' => $arCurrentValues['my_company_id'],
-			'MyCompanyRequisiteId' => $arCurrentValues['my_company_requisite_id'],
-			'MyCompanyBankDetailId' => $arCurrentValues['my_company_bank_detail_id'],
+			'MyCompanyId' => !empty($arCurrentValues['my_company_id']) ? $arCurrentValues['my_company_id'] : $arCurrentValues['my_company_id_text'],
+			'MyCompanyRequisiteId' => !empty($arCurrentValues['my_company_requisite_id']) ? $arCurrentValues['my_company_requisite_id'] : $arCurrentValues['my_company_requisite_id_text'],
+			'MyCompanyBankDetailId' => !empty($arCurrentValues['my_company_bank_detail_id']) ? $arCurrentValues['my_company_bank_detail_id'] : $arCurrentValues['my_company_bank_detail_id_text'],
 		];
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));

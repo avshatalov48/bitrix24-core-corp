@@ -172,6 +172,7 @@ $MESS["CRM_EDITOR_EMAIL"] = "E-mail";
 $MESS["CRM_EDITOR_WEB"] = "Сайт";
 $MESS["CRM_EDITOR_ADDRESS"] = "Адрес";
 $MESS["CRM_EDITOR_REQUISITES"] = "Реквизиты";
+$MESS["CRM_EDITOR_PLACEMENT_CAUTION"] = "Прервать работу внешней системы?";
 $MESS["CRM_ENTITY_ED_NO_REQUISITE_STUB"] = "Реквизиты не заполнены";
 $MESS["CRM_ENTITY_ED_PAYMENT_SAVE_CHANGES"] = "Сохранить изменения";
 $MESS["CRM_ENTITY_ED_PAYMENT_SAVE_CONFIRM"] = "Хотите ли Вы сохранить изменения сделанные в форме заказа?";

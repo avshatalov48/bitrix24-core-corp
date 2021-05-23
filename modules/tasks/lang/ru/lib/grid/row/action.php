@@ -1,10 +1,9 @@
 <?php
-$MESS["TASKS_GRID_ROW_ACTION_PIN"] = "Закрепить";
-$MESS["TASKS_GRID_ROW_ACTION_UNPIN"] = "Открепить";
 $MESS["TASKS_GRID_ROW_ACTION_MUTE"] = "Без звука";
 $MESS["TASKS_GRID_ROW_ACTION_UNMUTE"] = "Включить звук";
 $MESS["TASKS_GRID_ROW_ACTION_PIN"] = "Закрепить";
 $MESS["TASKS_GRID_ROW_ACTION_UNPIN"] = "Открепить";
+$MESS["TASKS_GRID_ROW_ACTION_PING"] = "Пинг";
 $MESS["TASKS_GRID_ROW_ACTION_VIEW"] = "Просмотреть";
 $MESS["TASKS_GRID_ROW_ACTION_EDIT"] = "Редактировать";
 $MESS["TASKS_GRID_ROW_ACTION_ADD_SUB_TASK"] = "Добавить подзадачу";

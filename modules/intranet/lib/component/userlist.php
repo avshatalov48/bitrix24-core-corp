@@ -526,7 +526,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 		$val = Option::get('intranet', 'user_list_user_property_available', false, SITE_ID);
 		if (!empty($val))
 		{
-			$val = unserialize($val);
+			$val = unserialize($val, ["allowed_classes" => false]);
 			if (
 				is_array($val)
 				&& !empty($val)

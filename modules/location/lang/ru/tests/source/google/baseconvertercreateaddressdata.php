@@ -20,7 +20,7 @@ return array(
 			FieldType::STREET => 'Тверская улица',
 			FieldType::BUILDING => '16',
 			FieldType::ADDRESS_LINE_1 => 'Тверская улица, 16',
-			FieldType::ADDRESS_LINE_2 => 'ТЦ "Галерея актер"',
+			//FieldType::ADDRESS_LINE_2 => 'ТЦ "Галерея актер"',
 			FieldType::POSTAL_CODE => '125009'
 		),
 

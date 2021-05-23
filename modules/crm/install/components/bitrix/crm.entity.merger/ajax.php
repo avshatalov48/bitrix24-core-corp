@@ -1,6 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Integrity\DuplicateList;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -41,7 +42,7 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 		return $this->component;
 	}
 
-	public function getDedupeQueueItemAction($entityTypeName, array $typeNames, $scope, $offset)
+	public function getDedupeQueueItemAction($entityTypeName, array $typeNames, $scope, $offset, bool $isAutomatic=false)
 	{
 		$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 		$offset = (int)$offset;
@@ -50,7 +51,7 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		$component = $this->getComponent();
 		$component->setEntityTypeID($entityTypeID);
-		$component->prepareDedupeData($typeNames, $scope, $offset);
+		$component->prepareDedupeData($typeNames, $scope, $offset, $isAutomatic);
 		$component->prepareEntityInfos();
 
 		$result['ENTITY_IDS'] = $component->arResult['ENTITY_IDS'];
@@ -61,7 +62,27 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		return $result;
 	}
-	public function mergeDedupeQueueItemAction($entityTypeName, array $typeNames, $scope, $offset, array $seedEntityIds, $targEntityId, array $map)
+
+	public function mergeDedupeQueueByIdAction(string $queueId, array $seedEntityIds, $targEntityId, array $map, $offset)
+	{
+		$queueInfo = $this->getQueue($queueId);
+		if (!$queueInfo)
+		{
+			return false;
+		}
+		return $this->mergeDedupeQueueItemAction(
+			CCrmOwnerType::ResolveName($queueInfo->getEntityTypeId()),
+			explode('|', Crm\Integrity\DuplicateIndexType::resolveName($queueInfo->getTypeId())),
+			$queueInfo->getScope(),
+			$offset,
+			$seedEntityIds,
+			$targEntityId,
+			$map,
+			true
+		);
+	}
+
+	public function mergeDedupeQueueItemAction($entityTypeName, array $typeNames, $scope, $offset, array $seedEntityIds, $targEntityId, array $map, bool $isAutomatic = false)
 	{
 		$typeIDs = array();
 		foreach($typeNames as $typeName)
@@ -77,15 +98,30 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		$component = $this->getComponent();
 		$component->setEntityTypeID($entityTypeID);
-		$list = $component->getDedupeQueueList($typeIDs, $scope);
-		if($this->mergeAction($entityTypeName, $seedEntityIds, $targEntityId, $map))
+		$list = $component->getDedupeQueueList($typeIDs, $scope, $isAutomatic);
+		if($this->mergeAction($entityTypeName, $seedEntityIds, $targEntityId, $map, $isAutomatic))
 		{
-			return ['QUEUE_INFO' => [ 'length' => $list ? $list->getRootItemCount() : 0, 'offset' => (int)$offset ] ];
+			return $this->getQueueResponseData($list, $offset);
 		}
 
 		return false;
 	}
-	public function postponeDedupeItemAction($entityTypeName, $typeId, array $matches, $scope)
+
+	public function postponeDedupeItemByIdAction(string $queueId)
+	{
+		$queueInfo = $this->getQueue($queueId);
+		if (!$queueInfo)
+		{
+			return false;
+		}
+		$queueInfo
+			->setStatusId(Crm\Integrity\DuplicateStatus::POSTPONED)
+			->save();
+
+		return true;
+	}
+
+	public function postponeDedupeItemAction($entityTypeName, $typeId, array $matches, $scope, bool $isAutomatic = false)
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
@@ -103,17 +139,53 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		$criterion = Crm\Integrity\DuplicateManager::createCriterion($typeId, $matches);
 
-		\Bitrix\Crm\Integrity\DuplicateIndexBuilder::setStatusID(
+		\Bitrix\Crm\Integrity\DuplicateManager::setDuplicateIndexItemStatus(
 			$this->currentUserId,
 			$entityTypeID,
 			$criterion->getIndexTypeID(),
 			$criterion->getMatchHash(),
 			$scope,
-			Crm\Integrity\DuplicateStatus::POSTPONED
+			Crm\Integrity\DuplicateStatus::POSTPONED,
+			$isAutomatic
 		);
 
 		return true;
 	}
+
+	public function markAsNonDuplicatesByIdAction(string $queueId, $leftEntityID, $rightEntityID, array $matches, $offset)
+	{
+		$queueInfo = $this->getQueue($queueId);
+		if (!$queueInfo)
+		{
+			return false;
+		}
+		$autosearchSettings = Crm\Integrity\AutoSearchUserSettings::getForUserByEntityType($queueInfo->getEntityTypeId(), $this->currentUserId);
+		if (!$autosearchSettings)
+		{
+			$this->addError(new Main\Error('Duplicate automatic search is disabled.'));
+			return false;
+		}
+		$typeNames = [];
+		$progressData = $autosearchSettings->getProgressData();
+		foreach ($progressData['TYPE_IDS'] as $typeId)
+		{
+			$typeNames[] = Crm\Integrity\DuplicateIndexType::resolveName($typeId);
+		}
+		return $this->markAsNonDuplicatesAction(
+			CCrmOwnerType::ResolveName($queueInfo->getEntityTypeId()),
+			$leftEntityID,
+			$rightEntityID,
+			$queueInfo->getTypeId(),
+			$matches,
+			[
+				'typeNames' => $typeNames,
+				'scope' => $queueInfo->getScope(),
+				'offset' => $offset,
+				'isAutomatic' => true
+			]
+		);
+	}
+
 	public function markAsNonDuplicatesAction($entityTypeName, $leftEntityID, $rightEntityID, $indexType, array $matches, array $queueInfoParams = [])
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
@@ -154,11 +226,36 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 		$enablePermissionCheck = !CCrmPerms::IsAdmin($this->currentUserId);
 		$merger = Crm\Merger\EntityMerger::create($entityTypeID, $this->currentUserId, $enablePermissionCheck);
 
+		$typeNames = $queueInfoParams['typeNames'] ?: '';
+		$scope = $queueInfoParams['scope'] ?: '';
+		$offset = $queueInfoParams['offset'] ?: 0;
+		$isAutomatic = $queueInfoParams['isAutomatic'] ?: false;
+
 		$criterion = Crm\Integrity\DuplicateManager::createCriterion($indexType, $matches);
 		try
 		{
 			$merger->registerCriterionMismatch($criterion, $leftEntityID, $rightEntityID);
-			$builder = Crm\Integrity\DuplicateManager::createIndexBuilder($indexType, $entityTypeID, $this->currentUserId, $enablePermissionCheck);
+			if ($isAutomatic)
+			{
+				$builder = Crm\Integrity\DuplicateManager::createAutomaticIndexBuilder(
+					$indexType,
+					$entityTypeID,
+					$this->currentUserId,
+					$enablePermissionCheck,
+					array('SCOPE' => $scope)
+				);
+				$criterion->setLimitByAssignedUser(true);
+			}
+			else
+			{
+				$builder = Crm\Integrity\DuplicateManager::createIndexBuilder(
+					$indexType,
+					$entityTypeID,
+					$this->currentUserId,
+					$enablePermissionCheck,
+					array('SCOPE' => $scope)
+				);
+			}
 			$builder->processMismatchRegistration($criterion);
 		}
 		catch(Exception $e)
@@ -177,10 +274,6 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 			return true;
 		}
 
-		$typeNames = $queueInfoParams['typeNames'];
-		$scope = $queueInfoParams['scope'];
-		$offset = $queueInfoParams['offset'];
-
 		$typeIDs = array();
 		foreach($typeNames as $typeName)
 		{
@@ -195,10 +288,11 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 
 		$component = $this->getComponent();
 		$component->setEntityTypeID($entityTypeID);
-		$list = $component->getDedupeQueueList($typeIDs, $scope);
-		return ['QUEUE_INFO' => [ 'length' => $list ? $list->getRootItemCount() : 0, 'offset' => (int)$offset ] ];
+		$list = $component->getDedupeQueueList($typeIDs, $scope, $isAutomatic);
+
+		return $this->getQueueResponseData($list, $offset);
 	}
-	public function mergeAction($entityTypeName, array $seedEntityIds, $targEntityId, array $map)
+	public function mergeAction($entityTypeName, array $seedEntityIds, $targEntityId, array $map, bool $isAutomatic = false)
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
@@ -222,6 +316,7 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 		$enablePermissionCheck = !\CCrmPerms::IsAdmin($this->currentUserId);
 		$merger = Crm\Merger\EntityMerger::create($entityTypeID, $this->currentUserId, $enablePermissionCheck);
 		$merger->setConflictResolutionMode(Crm\Merger\ConflictResolutionMode::ASK_USER);
+		$merger->setIsAutomatic($isAutomatic);
 		if($map !== null)
 		{
 			$merger->setMap($map);
@@ -506,5 +601,44 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 				$fieldData[$multiFieldTypeId]['VALUE']
 			);
 		}
+	}
+
+	protected function getQueue(string $queueId)
+	{
+		if ($queueId == '')
+		{
+			$this->addError(new Main\Error('Queue is not found.', 'QUEUE_NOT_FOUND'));
+			return null;
+		}
+		$queue = Crm\Integrity\Entity\AutomaticDuplicateIndexTable::getById($queueId)->fetchObject();
+		if (!$queue || $queue->getUserId() != $this->currentUserId)
+		{
+			$this->addError(new Main\Error('Queue is not found.', 'QUEUE_NOT_FOUND'));
+			return null;
+		}
+		return $queue;
+	}
+
+	/**
+	 * @param DuplicateList $list
+	 * @param $offset
+	 * @return array[]
+	 * @throws Main\NotSupportedException
+	 */
+	protected function getQueueResponseData($list, $offset)
+	{
+		$length = $list ? $list->getRootItemCount() : 0;
+		$offset = (int)$offset;
+		if ($offset >= $length && $list->isAutomatic())
+		{
+			$autosearchSettings = Crm\Integrity\AutoSearchUserSettings::getForUserByEntityType($list->getEntityTypeID(), $this->currentUserId);
+			if($autosearchSettings->getStatusId() === Crm\Integrity\AutoSearchUserSettings::STATUS_CONFLICTS_RESOLVING)
+			{
+				$autosearchSettings
+					->setStatusId(Crm\Integrity\AutoSearchUserSettings::STATUS_NEW)
+					->save();
+			}
+		}
+		return ['QUEUE_INFO' => [ 'length' => $length, 'offset' => $offset ] ];
 	}
 }

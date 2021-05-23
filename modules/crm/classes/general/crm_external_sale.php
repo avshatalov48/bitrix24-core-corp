@@ -74,7 +74,7 @@ class CCrmExternalSale
 			$result["PERIOD"] = 7;
 		$result["ERRORS"] = intval($id["IMPORT_ERRORS"]);
 
-		$result["SYNC_DATA"] = isset($id["SYNC_DATA"]) && $id["SYNC_DATA"] !== "" ? unserialize($id["SYNC_DATA"]) : array();
+		$result["SYNC_DATA"] = isset($id["SYNC_DATA"]) && $id["SYNC_DATA"] !== "" ? unserialize($id["SYNC_DATA"], ['allowed_classes' => false]) : array();
 
 		return $result;
 	}

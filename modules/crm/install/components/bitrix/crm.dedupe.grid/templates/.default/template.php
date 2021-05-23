@@ -87,22 +87,7 @@ foreach($arResult['ROW_DATA'] as $rowItem)
 	$arResult['ROWS'][] = $row;
 }
 
-//region Navigation
-$navigationHtml = '';
-$navigationObject = null;
-if(isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
-{
-	ob_start();
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.pagenavigation',
-		'',
-		$arResult['PAGINATION'],
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
-	$navigationHtml = ob_get_contents();
-	ob_end_clean();
-}?>
+?>
 
 <div class="crm-dedupe-grid-container">
 <?php
@@ -115,16 +100,18 @@ $APPLICATION->IncludeComponent(
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['ROWS'],
-		'NAV_STRING' => $navigationHtml,
-		'NAV_PARAM_NAME' => 'page',
-		'CURRENT_PAGE' => isset($pagination['PAGE_NUM']) ? (int)$pagination['PAGE_NUM'] : 1,
-		'ENABLE_NEXT_PAGE' => isset($pagination['ENABLE_NEXT_PAGE']) ? (bool)$pagination['ENABLE_NEXT_PAGE'] : false,
+		'NAV_OBJECT' => $arResult['NAV_OBJECT'],
+		'NAV_PARAMS' => $arResult['NAV_PARAMS'],
+		'NAV_PARAM_NAME' => $arResult['NAV_PARAM_NAME'],
 		'AJAX_MODE' => 'Y',
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
 		'PRESERVE_HISTORY' => false,
 		'ENABLE_COLLAPSIBLE_ROWS' => true,
 		'SHOW_PAGESIZE' => true,
+		'SHOW_ROW_CHECKBOXES' => false,
+		'SHOW_SELECTED_COUNTER' => false,
+		'TOTAL_ROWS_COUNT' => $arResult['TOTAL_ROWS_COUNT'],
 		'PAGE_SIZES' => [
 			[ 'NAME' => '5', 'VALUE' => '5' ],
 			[ 'NAME' => '10', 'VALUE' => '10' ],

@@ -98,11 +98,18 @@ BX.Tasks.InterfaceFilterButtons.prototype = {
 		};
 
 		BX.ajax.runAction(action, config).then(function() {
-			var oldClass = (this.muted ? 'ui-btn-icon-follow' : 'ui-btn-icon-unfollow');
-			var newClass = (this.muted ? 'ui-btn-icon-unfollow' : 'ui-btn-icon-follow');
+			var oldClass = (this.muted ? 'ui-btn-icon-unfollow' : 'ui-btn-icon-follow');
+			var newClass = (this.muted ? 'ui-btn-icon-follow' : 'ui-btn-icon-unfollow');
+			var muteHint = (this.muted ? BX.message('MUTE_BUTTON_HINT_MUTE') : BX.message('MUTE_BUTTON_HINT_UNMUTE'));
 
 			BX.removeClass(this.muteButton, oldClass);
 			BX.addClass(this.muteButton, newClass);
+
+			this.muteButton.setAttribute('data-hint', muteHint);
+			this.muteButton.removeAttribute('data-hint-init');
+			BX.UI.Hint.init();
+			BX.UI.Hint.hide();
+			BX.UI.Hint.show(this.muteButton, muteHint);
 
 			this.muted = !this.muted;
 			this.muteInProgress = false;

@@ -1792,7 +1792,7 @@ class CCrmPaySystem
 		while($arPaySys = $dbPaySystems->Fetch())
 		{
 			$params = $arPaySys['PSA_PARAMS'];
-			$params = unserialize($arPaySys['PSA_PARAMS']);
+			$params = unserialize($arPaySys['PSA_PARAMS'], ['allowed_classes' => false]);
 
 			if(trim($params['SELLER_NAME']['VALUE']) <> '')
 			{

@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main;
+use Bitrix\Main\Engine\Router;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 
@@ -25,12 +27,20 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 	/** @var  CCrmPerms|null */
 	private $userPermissions = null;
 
-	public function executeComponent()
+	protected function initUser(): void
 	{
 		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
 		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	}
 
+	protected function initEntityType(): void
+	{
 		$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'] = isset($this->arParams['ENTITY_TYPE_ID']) ? (int)$this->arParams['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
+		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+	}
+
+	protected function checkPermissions(): bool
+	{
 
 		$hasReadPermission = Crm\Security\EntityAuthorization::checkReadPermission(
 			$this->entityTypeID,
@@ -48,39 +58,20 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			$this->userPermissions
 		);
 
-		if (!($hasReadPermission && $hasUpdatePermission && $hasDeletePermission &&
-			Crm\Restriction\RestrictionManager::isDuplicateControlPermitted()))
-		{
-			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-			return;
-		}
+		return ($hasReadPermission && $hasUpdatePermission && $hasDeletePermission &&
+			Crm\Restriction\RestrictionManager::isDuplicateControlPermitted());
+	}
 
-		$enableFlag = $this->request->get('enable');
-		if(is_string($enableFlag) && $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-		{
-			Crm\Settings\LayoutSettings::getCurrent()->enableDedupeWizard(strcasecmp($enableFlag, 'Y') == 0);
-		}
-
+	protected function initGuid(): void
+	{
 		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID']) ? $this->arParams['GUID'] : 'entity_merger';
-		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+	}
 
-		$this->arResult['CONTEXT_ID'] = isset($this->arParams['CONTEXT_ID']) ? $this->arParams['CONTEXT_ID'] : $this->entityTypeName;
-
-		$this->arResult['PATH_TO_MERGER'] = isset($this->arParams['PATH_TO_MERGER']) ? $this->arParams['PATH_TO_MERGER'] : '';
-		if($this->arResult['PATH_TO_MERGER'] !== '')
-		{
-			$this->arResult['PATH_TO_MERGER'] = \CHTTP::urlAddParams($this->arResult['PATH_TO_MERGER'], array('queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'));
-		}
-
-		$this->arResult['PATH_TO_DEDUPE_LIST'] = isset($this->arParams['PATH_TO_DEDUPE_LIST'])
-			? $this->arParams['PATH_TO_DEDUPE_LIST'] : '';
-
-		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['PATH_TO_ENTITY_LIST'])
-			? $this->arParams['PATH_TO_ENTITY_LIST'] : '';
-		
+	protected function initTypesAndScopes(): void
+	{
 		$indexedTypeScopeMap = array();
 		foreach(Crm\Integrity\DuplicateIndexBuilder::getExistedTypeScopeMap($this->entityTypeID, $this->userID) as
-		        $typeID => $scopes
+				$typeID => $scopes
 		)
 		{
 			$indexedTypeScopeMap[$typeID] = array_fill_keys($scopes, true);
@@ -117,30 +108,10 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			}
 		}
 
-		$config = CUserOptions::GetOption('crm.dedupe.wizard', $this->guid, null);
-		if(!$config)
-		{
-			$config = array(
-				'scope' => Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE,
-				'typeNames' => array()
-			);
-
-			if($this->entityTypeID === CCrmOwnerType::Contact || $this->entityTypeID === CCrmOwnerType::Lead)
-			{
-				$config['typeNames'][] = Crm\Integrity\DuplicateIndexType::PERSON_NAME;
-			}
-			if($this->entityTypeID === CCrmOwnerType::Company)
-			{
-				$config['typeNames'][] = Crm\Integrity\DuplicateIndexType::ORGANIZATION_NAME;
-			}
-
-			$config['typeNames'][] = Crm\Integrity\DuplicateIndexType::COMMUNICATION_PHONE_NAME;
-			$config['typeNames'][] = Crm\Integrity\DuplicateIndexType::COMMUNICATION_EMAIL_NAME;
-		}
-		$this->arResult['CONFIG'] = $config;
+		$this->arResult['CONFIG'] = (new \Bitrix\Crm\Integrity\DedupeConfig())->get($this->guid, $this->entityTypeID);
 
 		$this->arResult['DEFAULT_SCOPE'] = Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
-		$this->arResult['CURRENT_SCOPE'] = $config['scope'];
+		$this->arResult['CURRENT_SCOPE'] = $this->arResult['CONFIG']['scope'];
 
 		$scopeListItems = array(
 			$this->arResult['DEFAULT_SCOPE'] => Loc::getMessage('CRM_DEDUPE_WIZARD_DEFAULT_SCOPE_TITLE')
@@ -260,6 +231,48 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		$this->arResult['ENABLE_LAYOUT'] = $enableLayout;
 		$this->arResult['LAYOUT_ID'] = $layoutID;
 		$this->arResult['TYPE_INFOS'] = $typeInfos;
+	}
+
+	public function executeComponent()
+	{
+		$this->initUser();
+		$this->initEntityType();
+
+		if (!$this->checkPermissions())
+		{
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
+		}
+
+		$enableFlag = $this->request->get('enable');
+		if(is_string($enableFlag) && $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		{
+			Crm\Settings\LayoutSettings::getCurrent()->enableDedupeWizard(strcasecmp($enableFlag, 'Y') == 0);
+		}
+
+		$this->initGuid();
+
+		$this->arResult['CONTEXT_ID'] = isset($this->arParams['CONTEXT_ID']) ? $this->arParams['CONTEXT_ID'] : $this->entityTypeName;
+
+		$this->arResult['PATH_TO_MERGER'] = isset($this->arParams['PATH_TO_MERGER']) ? $this->arParams['PATH_TO_MERGER'] : '';
+		if($this->arResult['PATH_TO_MERGER'] !== '')
+		{
+			$this->arResult['PATH_TO_MERGER'] = \CHTTP::urlAddParams($this->arResult['PATH_TO_MERGER'], array('queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'));
+		}
+
+		$this->arResult['PATH_TO_DEDUPE_LIST'] = isset($this->arParams['PATH_TO_DEDUPE_LIST'])
+			? $this->arParams['PATH_TO_DEDUPE_LIST'] : '';
+
+		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['PATH_TO_ENTITY_LIST'])
+			? $this->arParams['PATH_TO_ENTITY_LIST'] : '';
+
+		$this->arResult['PATH_TO_DEDUPE_SETTINGS'] =
+			UrlManager::getInstance()->create('getSettingsSliderContent', [
+				'c' => $this->getName(),
+				'mode' => Router::COMPONENT_MODE_AJAX,
+			]);
+
+		$this->initTypesAndScopes();
 
 		$this->includeComponentTemplate();
 	}

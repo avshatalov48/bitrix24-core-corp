@@ -7,4 +7,5 @@ $MESS['BPVICA_ERROR_OUTPUT_NUMBER'] = 'Не указан номер для со�
 $MESS['BPVICA_ERROR_NUMBER'] = 'Не указан номер абонента';
 $MESS['BPVICA_ERROR_TEXT'] = 'Не указан произносимый текст';
 $MESS['BPVICA_ERROR_AUDIO_FILE'] = 'Не указан аудиофайл';
+$MESS['BPVICA_PROPERTY_TEXT'] = 'Произносимый текст';
 ?>

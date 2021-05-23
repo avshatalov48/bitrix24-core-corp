@@ -187,6 +187,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    //region edit
 	    updateTemplate: function updateTemplate(text) {
 	      this.text = text;
+	      this.$root.$app.sendingMethodDesc.text = text;
 	    },
 	    showPopupHint: function showPopupHint(target, message, timer) {
 	      var _this = this;

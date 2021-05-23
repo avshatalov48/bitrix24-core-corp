@@ -23,7 +23,8 @@ export class EntityEditorRequisiteEditor
 		this._contextId = BX.prop.getString(settings, 'contextId', "");
 		this._requisiteEditUrl = BX.prop.getString(settings, 'requisiteEditUrl', "");
 
-		EventEmitter.subscribe('onLocalStorageSet', this.onExternalEvent.bind(this));
+		this._onExternalEventListener = this.onExternalEvent.bind(this);
+		EventEmitter.subscribe('onLocalStorageSet', this._onExternalEventListener);
 	}
 
 	setRequisiteList(requisiteList)
@@ -187,6 +188,11 @@ export class EntityEditorRequisiteEditor
 	isViewMode()
 	{
 		return this._mode === BX.UI.EntityEditorMode.view;
+	}
+
+	release()
+	{
+		EventEmitter.unsubscribe('onLocalStorageSet', this._onExternalEventListener);
 	}
 
 	onExternalEvent(event)

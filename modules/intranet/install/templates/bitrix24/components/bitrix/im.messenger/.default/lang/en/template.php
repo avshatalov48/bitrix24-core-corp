@@ -26,7 +26,6 @@ $MESS["IM_MESSENGER_GO_TO_APPS_LINK"] = "https://www.bitrix24.com/apps/mobile-an
 $MESS["IM_MESSENGER_ONLINE"] = "Online";
 $MESS["IM_MESSENGER_OPEN_CALL2"] = "Make a call";
 $MESS["IM_MESSENGER_OPEN_EMAIL"] = "View e-mail";
-$MESS["IM_MESSENGER_OPEN_LF"] = "View Activity Stream";
 $MESS["IM_MESSENGER_OPEN_MESSENGER"] = "Open Chat and Calls";
 $MESS["IM_MESSENGER_OPEN_MESSENGER_CP"] = "Open Web Messenger";
 $MESS["IM_MESSENGER_OPEN_MOBILE"] = "Download free mobile app";

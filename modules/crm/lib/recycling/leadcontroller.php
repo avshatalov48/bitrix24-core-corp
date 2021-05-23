@@ -334,6 +334,8 @@ class LeadController extends BaseController
 		}
 		//endregion
 
+		$fields = $this->prepareFields($fields);
+
 		$entity = new \CCrmLead(false);
 		$newEntityID = $entity->Add(
 			$fields,
@@ -444,5 +446,24 @@ class LeadController extends BaseController
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
+	}
+
+	/**
+	 * Set correct values of standard fields
+	 * @param array $fields
+	 * @return array
+	 */
+	protected function prepareFields(array $fields): array
+	{
+		if (
+			isset($fields['STATUS_ID'])
+			&& !\CCrmLEad::IsStatusExists($fields['STATUS_ID'])
+		)
+		{
+			// if old status does not exist, STATUS_ID should be empty to be defined automatically
+			unset($fields['STATUS_ID']);
+		}
+
+		return $fields;
 	}
 }

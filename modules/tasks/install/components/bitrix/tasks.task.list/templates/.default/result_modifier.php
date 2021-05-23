@@ -376,6 +376,26 @@ if (!function_exists('prepareGroupActionItems'))
 			[
 				'NAME' => Loc::getMessage('TASKS_LIST_CHOOSE_ACTION'),
 				'VALUE' => 'none',
+				'ONCHANGE' => [
+					[
+						'ACTION' => Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction(null)"],
+						],
+					],
+				],
+			],
+			[
+				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_PING'),
+				'VALUE' => 'ping',
+				'ONCHANGE' => [
+					[
+						'ACTION' => Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('ping')"],
+						],
+					],
+				],
 			],
 		];
 
@@ -403,6 +423,12 @@ if (!function_exists('prepareGroupActionItems'))
 							],
 						],
 					],
+					[
+						'ACTION' => Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setsprint')"],
+						],
+					],
 				],
 			];
 		}
@@ -412,6 +438,12 @@ if (!function_exists('prepareGroupActionItems'))
 			'VALUE' => 'complete',
 			'ONCHANGE' => [
 				['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('complete')"],
+					],
+				],
 			],
 		];
 
@@ -429,6 +461,12 @@ if (!function_exists('prepareGroupActionItems'))
 							'VALUE' => '',
 							'TIME' => true,
 						],
+					],
+				],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setdeadline')"],
 					],
 				],
 			],
@@ -463,6 +501,12 @@ if (!function_exists('prepareGroupActionItems'))
 							],
 						],
 					],
+				],
+			],
+			[
+				'ACTION' => Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
+					['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('changedeadline')"],
 				],
 			],
 		];
@@ -501,6 +545,12 @@ if (!function_exists('prepareGroupActionItems'))
 								],
 							],
 						],
+					],
+				],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('settaskcontrol')"],
 					],
 				],
 			],
@@ -562,6 +612,12 @@ if (!function_exists('prepareGroupActionItems'))
 							['JS' => "BX.Tasks.GridActions.initPopupBalloon('user','action_set_{$key}_text','action_set_{$key}');"],
 						],
 					],
+					[
+						'ACTION' => Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('changeuser')"],
+						],
+					],
 				],
 			];
 		}
@@ -571,6 +627,12 @@ if (!function_exists('prepareGroupActionItems'))
 			'VALUE' => 'mute',
 			'ONCHANGE' => [
 				['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('mute')"],
+					],
+				],
 			],
 		];
 
@@ -579,6 +641,12 @@ if (!function_exists('prepareGroupActionItems'))
 			'VALUE' => 'unmute',
 			'ONCHANGE' => [
 				['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('unmute')"],
+					],
+				],
 			],
 		];
 
@@ -592,6 +660,12 @@ if (!function_exists('prepareGroupActionItems'))
 				'VALUE' => 'addtofavorite',
 				'ONCHANGE' => [
 					['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+					[
+						'ACTION' => Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('addtofavorite')"],
+						],
+					],
 				],
 			];
 		}
@@ -601,6 +675,12 @@ if (!function_exists('prepareGroupActionItems'))
 			'VALUE' => 'removefromfavorite',
 			'ONCHANGE' => [
 				['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('removefromfavorite')"],
+					],
+				],
 			],
 		];
 
@@ -629,6 +709,12 @@ if (!function_exists('prepareGroupActionItems'))
 						['JS' => "BX.Tasks.GridActions.initPopupBalloon('group','action_set_group_search','action_set_group_id');"],
 					],
 				],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setgroup')"],
+					],
+				],
 			],
 		];
 
@@ -637,6 +723,12 @@ if (!function_exists('prepareGroupActionItems'))
 			'VALUE' => 'delete',
 			'ONCHANGE' => [
 				['ACTION' => Grid\Panel\Actions::RESET_CONTROLS],
+				[
+					'ACTION' => Grid\Panel\Actions::CALLBACK,
+					'DATA' => [
+						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('delete')"],
+					],
+				],
 			],
 		];
 

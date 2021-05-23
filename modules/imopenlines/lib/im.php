@@ -8,9 +8,12 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Type\DateTime,
 	\Bitrix\Im\Model\ChatTable,
 	\Bitrix\Main\ORM\Query\Query,
+	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\DB\SqlExpression,
 	\Bitrix\Main\Entity\ReferenceField,
 	\Bitrix\Main\ORM\Fields\ExpressionField;
+
+Loc::loadMessages(__FILE__);
 
 class Im
 {
@@ -36,7 +39,7 @@ class Im
 			if (!$result)
 			{
 				$errorMessage = 'Unknown error';
-				if ($e = $GLOBALS["APPLICATION"]->GetException())
+				if ($e = $GLOBALS['APPLICATION']->GetException())
 				{
 					$errorMessage = $e->GetString();
 				}
@@ -45,6 +48,58 @@ class Im
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param $chatId
+	 * @param $message
+	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function addAutomaticSystemMessage($chatId, $message)
+	{
+		return self::addMessage([
+			'TO_CHAT_ID' => $chatId,
+			'MESSAGE' => $message,
+			'SYSTEM' => 'Y',
+			'IMPORTANT_CONNECTOR' => 'Y',
+			'PARAMS' => [
+				'CLASS' => 'bx-messenger-content-item-ol-output',
+			]
+		]);
+	}
+
+	/**
+	 * @param $chatId
+	 * @param int $timeLimitVote
+	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function addCloseVoteMessage($chatId, $timeLimitVote = 0)
+	{
+		$timeLimitVote = (int)$timeLimitVote;
+
+		$message = Loc::getMessage('IMOL_IM_CLOSE_VOTE_MESSAGE_NO_DAY');
+
+		if(
+			!empty($timeLimitVote) &&
+			$timeLimitVote > 0
+		)
+		{
+			$message = Loc::getMessage('IMOL_IM_CLOSE_VOTE_MESSAGE', ['#DAYS#' => \FormatDate('ddiff', time() - $timeLimitVote)]);
+		}
+
+		return self::addMessage([
+			'TO_CHAT_ID' => $chatId,
+			'MESSAGE' => $message,
+			'SYSTEM' => 'Y',
+			'IMPORTANT_CONNECTOR' => 'Y',
+			'NO_SESSION_OL' => 'Y',
+			'RECENT_ADD' => 'N',
+			'PARAMS' => [
+				'CLASS' => 'bx-messenger-content-item-ol-output',
+			]
+		]);
 	}
 
 	/**
@@ -112,7 +167,7 @@ class Im
 
 				$fields['NO_SESSION_OL'] = 'Y';
 
-				$result[$rowChat["ENTITY_ID"]] = \CIMMessenger::Add($fields);
+				$result[$rowChat['ENTITY_ID']] = \CIMMessenger::Add($fields);
 			}
 		}
 
@@ -136,7 +191,7 @@ class Im
 			if (!$result)
 			{
 				$errorMessage = 'Unknown error';
-				if ($e = $GLOBALS["APPLICATION"]->GetException())
+				if ($e = $GLOBALS['APPLICATION']->GetException())
 				{
 					$errorMessage = $e->GetString();
 				}
@@ -193,8 +248,8 @@ class Im
 					$query->registerRuntimeField('', new ReferenceField(
 						'IM_STATUS',
 						'\Bitrix\Im\Model\StatusTable',
-						["=ref.USER_ID" => "this.ID"],
-						["join_type"=>"left"]
+						['=ref.USER_ID' => 'this.ID'],
+						['join_type'=>'left']
 					));
 
 					$query->registerRuntimeField('',

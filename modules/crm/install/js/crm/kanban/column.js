@@ -40,6 +40,7 @@
 		isKeyMetaPressed: false,
 		clickStatus: null,
 		animationDuration: 800,
+		cancelEditHandler: null,
 
 		/**
 		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
@@ -506,7 +507,7 @@
 			else
 			{
 				this.getLoader().hide();
-				BX.removeClass(this.quickFormSaveButton, "ui-btn-wait");
+				this.hideQuickEditorLoader();
 			}
 
 			// catch editor instance after load
@@ -531,8 +532,7 @@
 					{
 						if (typeof params.error !== "undefined")
 						{
-							this.quickFormSaveButton.classList.remove("ui-btn-wait");
-							this.editorNode.classList.remove("crm-kanban-quick-form-wait");
+							this.hideQuickEditorLoader();
 
 							if (
 								this.editorOpen
@@ -554,9 +554,15 @@
 									formDataEntry = formDataEntries.next(),
 									pair;
 
-								while (!formDataEntry.done) {
+								var fieldNames = Object.keys(params.checkErrors);
+
+								while (!formDataEntry.done)
+								{
 									pair = formDataEntry.value;
-									presetValues[pair[0]] = pair[1];
+									if (fieldNames.indexOf(pair[0]) === -1)
+									{
+										presetValues[pair[0]] = pair[1];
+									}
 									formDataEntry = formDataEntries.next();
 								}
 
@@ -568,7 +574,7 @@
 									{
 										entityTypeId: gridData.entityTypeInt,
 										entityId: 0,
-										fieldNames: Object.keys(params.checkErrors),
+										fieldNames: fieldNames,
 										context: context,
 										values: [],
 										presetValues: presetValues,
@@ -583,14 +589,24 @@
 					}.bind(this)
 				);
 
+				if (!this.cancelEditHandler)
+				{
+					this.cancelEditHandler = function(params)
+					{
+						this.hideQuickEditorLoader();
+					}.bind(this);
+				}
+
 				BX.addCustomEvent(
 					window,
 					"BX.Crm.EntityEditor:onFailedValidation",
-					function(params)
-					{
-						this.quickFormSaveButton.classList.remove("ui-btn-wait");
-						this.editorNode.classList.remove("crm-kanban-quick-form-wait");
-					}.bind(this)
+					this.cancelEditHandler
+				);
+
+				BX.addCustomEvent(
+					window,
+					"BX.Crm.EntityEditor:onRestrictionAction",
+					this.cancelEditHandler
 				);
 
 				BX.addCustomEvent(
@@ -612,9 +628,7 @@
 
 						if(this.editorOpen)
 						{
-							this.quickFormSaveButton.classList.remove("ui-btn-wait");
-							this.editorNode.classList.remove("crm-kanban-quick-form-wait");
-
+							this.hideQuickEditorLoader();
 							entityData.isCancelled = true;
 						}
 					}.bind(this)
@@ -657,8 +671,7 @@
 						&& this.isKeyMetaPressed && this.editorOpen)
 					{
 						this.processQuickEditor();
-						this.quickFormSaveButton.classList.add("ui-btn-wait");
-						this.editorNode.classList.add("crm-kanban-quick-form-wait");
+						this.showQuickEditorLoader();
 						BX.PreventDefault(ev);
 					}
 				}.bind(this));
@@ -693,6 +706,18 @@
 		isEditorOpen: function()
 		{
 			return this.editorOpen;
+		},
+
+		showQuickEditorLoader: function()
+		{
+			this.quickFormSaveButton.classList.add("ui-btn-wait");
+			this.editorNode.classList.add("crm-kanban-quick-form-wait");
+		},
+
+		hideQuickEditorLoader: function()
+		{
+			this.quickFormSaveButton.classList.remove("ui-btn-wait");
+			this.editorNode.classList.remove("crm-kanban-quick-form-wait");
 		},
 
 		/**
@@ -881,8 +906,7 @@
 							events: {
 								click: function(ev) {
 									this.processQuickEditor();
-									this.quickFormSaveButton.classList.add("ui-btn-wait");
-									this.editorNode.classList.add("crm-kanban-quick-form-wait");
+									this.showQuickEditorLoader();
 									BX.PreventDefault(ev);
 								}.bind(this)
 							}

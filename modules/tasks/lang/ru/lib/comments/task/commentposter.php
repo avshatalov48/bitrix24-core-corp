@@ -5,12 +5,17 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL'] = "Поставлена
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_DEADLINE'] = "Поставлена задача для #RESPONSIBLE#.\nНеобходимо указать крайний срок.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL_DEADLINE'] = "Поставлена задача для #RESPONSIBLE#.\nТребуется контроль постановщика после завершения.\nНеобходимо указать крайний срок.";
 
+$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2_NO_MEMBERS'] = "Задача просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2_NO_MEMBERS'] = "Задача почти просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
+
 $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED'] = "Задача просрочена.\nЭффективность снижена.\nНеобходимо изменить крайний срок или завершить задачу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2'] = "#MEMBERS# задача просрочена, #EFFICIENCY_START#эффективность#EFFICIENCY_END# снижена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
-$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_V2_NO_MEMBERS'] = "Задача просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS_V2'] = "Задача просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON'] = "Задача почти просрочена.\nЕсли не передвинуть срок, через сутки задача будет просрочена и снизит эффективность.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2'] = "#MEMBERS# задача почти просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END# в течение суток, иначе #EFFICIENCY_START#эффективность#EFFICIENCY_END# будет снижена.";
-$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2_NO_MEMBERS'] = "Задача почти просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS_V2'] = "Задача почти просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
+
+$MESS['COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS'] = "#MEMBERS# сообщите текущий статус задачи.";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_REDO'] = "Задача отправлена на доработку.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW'] = "#AUTHOR# возобновил(а) задачу.";
@@ -20,9 +25,11 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4'] = "Задача завер�
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5'] = "Задача завершена.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_6'] = "#AUTHOR# отложил(а) задачу.";
 
+$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_V2_NO_MEMBERS'] = "Задача возвращена в работу.";
+
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_REDO_V2'] = "Задача отправлена на доработку.\n#MEMBERS# необходимо доделать задачу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_V2'] = "#MEMBERS# задача возвращена в работу.";
-$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_V2_NO_MEMBERS'] = "Задача возвращена в работу.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_NO_MEMBERS_V2'] = "Задача возвращена в работу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_PAUSE_V2'] = "Работа по задаче приостановлена.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_3_V2'] = "Работа по задаче начата.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4_V2'] = "Задача завершена.\n#CREATOR# необходимо #TASK_APPROVE_START#принять задачу#TASK_APPROVE_END# или #TASK_DISAPPROVE_START#отправить на доработку#TASK_DISAPPROVE_END#.";
@@ -52,6 +59,7 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ACCOMPLICES'] = "#NEW_VA
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS'] = "#NEW_VALUE# вы добавлены наблюдателем.";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE'] = "Изменен крайний срок: #NEW_VALUE#";
+$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE_V2'] = "Крайний срок изменен на: #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_START_DATE_PLAN'] = "Планируемая дата начала: #OLD_VALUE# &rarr; #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_END_DATE_PLAN'] = "Планируемая дата завершения: #OLD_VALUE# &rarr; #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_TIME_ESTIMATE'] = "Время на выполнение задачи: #OLD_VALUE# &rarr; #NEW_VALUE#";

@@ -16,7 +16,9 @@ CJSCore::Init([
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.progressbar',
-	'ui.notification'
+	'ui.notification',
+	'ui.icons.b24',
+	'ui.hint'
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/components/bitrix/voximplant.statistic.detail/player/skins/audio/audio.css");
@@ -36,26 +38,50 @@ if($isBitrix24Template)
 	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
 
+$inReportSlider = ($arResult['IS_EXTERNAL_FILTER'] && $arResult['REPORT_PARAMS']['from_analytics'] === 'Y');
+
+if ($inReportSlider)
+{
+	$APPLICATION->SetTitle(Loc::getMessage('TEL_STAT_DETAIL_SLIDER_TITLE'));
+
+	foreach ($arResult['HEADERS'] as $key => $header)
+	{
+		switch ($header['id'])
+		{
+			case 'COST_TEXT':
+			case 'CALL_VOTE':
+			case 'COMMENT':
+				$arResult['HEADERS'][$key]['default'] = false;
+				break;
+		}
+	}
+}
+
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.filter",
 	"",
-	array(
+	[
 		"GRID_ID" => $arResult["GRID_ID"],
 		"FILTER_ID" => $arResult["FILTER_ID"],
 		"FILTER" => $arResult["FILTER"],
 		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"],
 		"ENABLE_LIVE_SEARCH" => false,
+		"DISABLE_SEARCH" => $inReportSlider,
 		"ENABLE_LABEL" => true
-	),
+	],
 	$component,
-	array()
+	[]
 );
 
+if (!$inReportSlider)
+{
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
 		<button id="vi-stat-export" class="ui-btn ui-btn-md ui-btn-themes ui-btn-light-border <?=($arResult['ENABLE_EXPORT'] ? '' : 'ui-btn-disabled')?>"><?=GetMessage("TEL_STAT_EXPORT_TO_EXCEL")?></button>
 	</div>
 <?
+}
+
 if($isBitrix24Template)
 {
 	?></div><?
@@ -75,28 +101,31 @@ $totalContainer = '
 ';
 ?><div id="tel-stat-grid-container"><?
 
-	$actionPanel = [
-		"GROUPS" => [
-			"TYPE" => [
-				"ITEMS" => [
-					[
-						"ID" => "download_records",
-						"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-						"TEXT" => Loc::getMessage("TEL_STAT_ACTION_DOWNLOAD"),
-						"VALUE" => "create_download_records_list",
-						"ONCHANGE" => [
-							[
-								"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-								"DATA" => [
-									['JS' => "BX.VoximplantStatisticDetail.Instance.downloadSelectedVoxRecords()"]
+	if (!$inReportSlider)
+	{
+		$actionPanel = [
+			"GROUPS" => [
+				"TYPE" => [
+					"ITEMS" => [
+						[
+							"ID" => "download_records",
+							"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+							"TEXT" => Loc::getMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
+							"VALUE" => "create_download_records_list",
+							"ONCHANGE" => [
+								[
+									"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+									"DATA" => [
+										['JS' => "BX.VoximplantStatisticDetail.Instance.downloadSelectedVoxRecords()"]
+									]
 								]
-							]
+							],
 						],
 					],
-				],
-			]
-		],
-	];
+				]
+			],
+		];
+	}
 
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.grid",
@@ -112,9 +141,9 @@ $totalContainer = '
 			"ALLOW_PIN_HEADER" => true,
 			"SHOW_PAGINATION" => true,
 			"SHOW_PAGESIZE" => true,
-			"SHOW_ROW_CHECKBOXES" => true,
+			"SHOW_ROW_CHECKBOXES" => !$inReportSlider,
 			"SHOW_CHECK_ALL_CHECKBOXES" => false,
-			"SHOW_SELECTED_COUNTER" => true,
+			"SHOW_SELECTED_COUNTER" => !$inReportSlider,
 			"PAGE_SIZES" => array(
 				array("NAME" => "10", "VALUE" => "10"),
 				array("NAME" => "20", "VALUE" => "20"),
@@ -132,7 +161,8 @@ $totalContainer = '
 		$component, array("HIDE_ICONS" => "Y")
 	);
 ?></div><?
-\Bitrix\Voximplant\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
+
+	\Bitrix\Voximplant\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
 ?>
 
 <script>
@@ -148,7 +178,11 @@ $totalContainer = '
 		"TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR": '<?=GetMessageJS("TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR")?>',
 		"TEL_STAT_CANCEL": '<?=GetMessageJS("TEL_STAT_CANCEL")?>',
 		"TEL_STAT_LOADING": '<?=GetMessageJS("TEL_STAT_LOADING")?>',
-		"TEL_STAT_OUT_OF": '<?=GetMessageJS("TEL_STAT_OUT_OF")?>'
+		"TEL_STAT_OUT_OF": '<?=GetMessageJS("TEL_STAT_OUT_OF")?>',
+		"TEL_STAT_RECORDS_ALREADY_DOWNLOADED": '<?=GetMessageJS("TEL_STAT_RECORDS_ALREADY_DOWNLOADED")?>',
+		"TEL_STAT_RECORDS_ALREADY_DOWNLOADED_TITLE": '<?=GetMessageJS("TEL_STAT_RECORDS_ALREADY_DOWNLOADED_TITLE")?>',
+		"TEL_STAT_RECORDS_DOWNLOADED_AVAILABLE": '<?=GetMessageJS("TEL_STAT_RECORDS_DOWNLOADED_AVAILABLE")?>',
+		"TEL_STAT_ACTION_VOX_DOWNLOAD_HINT": '<?=GetMessageJS("TEL_STAT_ACTION_VOX_DOWNLOAD_HINT")?>'
 	});
 
 	BX.ready(function() {
@@ -157,7 +191,8 @@ $totalContainer = '
 			exportButton: BX('vi-stat-export'),
 			exportAllowed: <?= $arResult["ENABLE_EXPORT"] ? 'true' : 'false' ?>,
 			exportParams: <?= CUtil::PhpToJSObject($arResult['EXPORT_PARAMS'])?>,
-			exportType: 'excel'
+			exportType: 'excel',
+			reportParams: <?= CUtil::PhpToJSObject($arResult['REPORT_PARAMS'])?>
 		});
 	});
 </script>

@@ -146,13 +146,18 @@ BX.namespace('Tasks.Component');
 			{
 				var templates = this.option('templates');
 				var counters = this.option('counters');
+				var foreign_counters = this.option('foreign_counters');
 				var messages = this.option('messages');
 				var classes = this.option('classes');
 				var buttons = this.option('buttons');
 
 				var html = [];
 
-				if (typeof counters.total === "object" && "counter" in counters.total && counters.total.counter > 0)
+				if (
+					typeof counters.total === "object"
+					&& "counter" in counters.total
+					&& counters.total.counter > 0
+				)
 				{
 					html.push(
 						templates.total
@@ -177,12 +182,62 @@ BX.namespace('Tasks.Component');
 						}
 					}.bind(this));
 				}
-				else
+
+				if (
+					(
+						typeof foreign_counters.foreign_expired === "object"
+						&& "counter" in foreign_counters.foreign_expired
+						&& foreign_counters.foreign_expired.counter > 0
+					)
+					||
+					(
+						typeof foreign_counters.foreign_comments === "object"
+						&& "counter" in foreign_counters.foreign_comments
+						&& foreign_counters.foreign_comments.counter > 0
+					)
+				)
+				{
+					html.push(
+						templates.foreign
+							.replace('#TEXT#', messages.foreign)
+					);
+
+					Object.keys(foreign_counters).forEach(function(key) {
+						var counter = foreign_counters[key];
+						if (counter.counter > 0)
+						{
+							html.push(
+								templates.counter
+									.replace('#COUNTER#', counter.counter)
+									.replace('#COUNTER#', counter.counter)
+									.replace('#COUNTER_ID#', key)
+									.replace('#COUNTER_CODE#', counter.code)
+									.replace('#TEXT#', messages[key + '_' + this.getPluralForm(counter.counter)])
+									.replace('#CLASS#', classes[key])
+									.replace('#BUTTON#', (buttons[key] || ''))
+							);
+						}
+					}.bind(this));
+				}
+
+				if (!html.length)
 				{
 					html.push(templates.empty.replace('#TEXT#', messages.empty));
 				}
 
 				this.scope().innerHTML = html.join('');
+
+				var filterId = this.option('filterId') || null;
+				var roleId = this.option('roleId') || 'view_all';
+				if (filterId)
+				{
+					var filterObject = BX.Main.filterManager.getById(filterId);
+					if (filterObject)
+					{
+						var fields = filterObject.getFilterFieldsValues();
+						roleId = fields.ROLEID || roleId;
+					}
+				}
 
 				var elements = this.scope().getElementsByClassName("tasks-counter-container");
 				Object.values(elements).forEach(function(element) {
@@ -199,7 +254,8 @@ BX.namespace('Tasks.Component');
 						BX.bind(element.nextSibling, 'click', function() {
 							BX.ajax.runAction('tasks.task.comment.readAll', {data: {
 								groupId: this.option('groupId') || 0,
-								userId: this.option('ownerId')
+								userId: this.option('ownerId'),
+								role: roleId
 							}});
 						}.bind(this));
 					}

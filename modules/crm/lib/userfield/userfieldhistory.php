@@ -41,7 +41,7 @@ class UserFieldHistory
 
 		self::$items = array();
 		$s = Main\Config\Option::get('crm', 'crm_uf_history', '', '');
-		$ary = $s !== '' ? unserialize($s) : null;
+		$ary = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(is_array($ary))
 		{
 			foreach($ary as $k => $v)

@@ -175,7 +175,7 @@ class All extends Queue
 				{
 					if(!empty($resultOperatorQueue['OPERATOR_LIST']))
 					{
-						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST']);
+						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST'], $this->session['ID']);
 						$this->chat->update(['AUTHOR_ID' => 0]);
 					}
 					elseif(
@@ -199,7 +199,7 @@ class All extends Queue
 				}
 				else
 				{
-					$this->chat->setOperators();
+					$this->chat->setOperators([], $this->session['ID']);
 					$this->chat->update(['AUTHOR_ID' => 0]);
 					$updateSessionCheck['UNDISTRIBUTED'] = 'Y';
 				}

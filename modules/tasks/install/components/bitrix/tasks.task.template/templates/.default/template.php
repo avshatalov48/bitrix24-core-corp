@@ -8,6 +8,8 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Bitrix24;
 
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
@@ -516,12 +518,12 @@ $APPLICATION->RestartBuffer();
 			}
 
 			$users = Util::getOption('propagate_to_sub_templates_users');
-			if ($users && in_array($arParams['USER_ID'], unserialize($users)))
+			if ($users && in_array($arParams['USER_ID'], unserialize($users, ['allowed_classes' => false])))
 			{
 				$templates = Util::getOption('propagate_to_sub_templates');
 				if ($templates)
 				{
-					$templates = unserialize($templates);
+					$templates = unserialize($templates, ['allowed_classes' => false]);
 					$value = (in_array($arParams['ID'], $templates));
 
 					$options[] = [

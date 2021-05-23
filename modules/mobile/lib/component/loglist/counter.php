@@ -115,6 +115,9 @@ class Counter
 			}
 			elseif ($result['COUNTER_TYPE'] == \CUserCounter::LIVEFEED_CODE)
 			{
+				$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
+				$pool->useMasterOnly(true);
+
 				\CUserCounter::clearByUser(
 					$result['currentUserId'],
 					[ SITE_ID, \CUserCounter::ALL_SITES ],
@@ -122,6 +125,8 @@ class Counter
 					false,
 					false
 				);
+
+				$pool->useMasterOnly(false);
 
 				$result['COUNTER_TO_CLEAR'] = $result['COUNTER_TYPE'];
 			}

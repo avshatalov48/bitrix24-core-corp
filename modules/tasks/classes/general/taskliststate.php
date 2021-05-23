@@ -132,7 +132,7 @@ class CTaskListState
 			serialize(false),
 			$this->userId
 		);
-		$state = unserialize($rc);
+		$state = unserialize($rc, ['allowed_classes' => false]);
 		if (is_array($state))
 		{
 			$this->state = array_merge($this->state, $state);
@@ -152,7 +152,7 @@ class CTaskListState
 				serialize(false),
 				$this->userId
 			);
-			$state = unserialize($rc);
+			$state = unserialize($rc, ['allowed_classes' => false]);
 			if (is_array($state))
 			{
 				$this->state = array_merge($this->state, $state);
@@ -194,7 +194,7 @@ class CTaskListState
 				$this->userId
 			);
 
-			$this->state = unserialize($newState);
+			$this->state = unserialize($newState, ['allowed_classes' => false]);
 		}
 	}
 

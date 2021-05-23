@@ -46,14 +46,20 @@ export class SprintDate extends EventEmitter
 
 	updateDateStartNode(timestamp)
 	{
-		const dateStartNode = this.node.querySelector('.tasks-scrum-sprint-date-start');
-		dateStartNode.textContent = BX.date.format('j F', timestamp);
+		if (this.node)
+		{
+			const dateStartNode = this.node.querySelector('.tasks-scrum-sprint-date-start');
+			dateStartNode.textContent = BX.date.format('j F', timestamp);
+		}
 	}
 
 	updateDateEndNode(timestamp)
 	{
-		const dateEndNode = this.node.querySelector('.tasks-scrum-sprint-date-end');
-		dateEndNode.textContent = BX.date.format('j F', timestamp);
+		if (this.node)
+		{
+			const dateEndNode = this.node.querySelector('.tasks-scrum-sprint-date-end');
+			dateEndNode.textContent = BX.date.format('j F', timestamp);
+		}
 	}
 
 	onAfterAppend()

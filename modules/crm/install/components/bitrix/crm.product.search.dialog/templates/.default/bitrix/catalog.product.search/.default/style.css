@@ -1,3 +1,7 @@
+.bx-core-adm-dialog span {
+	vertical-align: middle !important;
+}
+
 .crm-search-tag-del {
 	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAICAMAAAAC2hU0AAAABGdBTUEAALGPC/xhBQAAAEhQTFRF////AAAAY3GIZ3aKZ3WJZXSKN0JQOkRUOkVUOkZUZnaKUGN9aHaKZXWKYnGIUGJ7SllwUGJ9ZHKIZnSKZXSJZHOISlpwO0VVjr8QCAAAAAJ0Uk5TfQDsAsqDAAAAPElEQVQI1w3KRxaAMAzEUA0dEkqaff+b4o0W/4lvSBpG9q6+L9D8PWYQaStRVS8+iee8WL1id2Az4pDgB0mAAgfRKN1bAAAAAElFTkSuQmCC") no-repeat center !important;
 }

@@ -62,6 +62,7 @@ const MessageEditor = {
 		updateTemplate(text)
 		{
 			this.text = text;
+			this.$root.$app.sendingMethodDesc.text = text;
 		},
 
 		showPopupHint(target, message, timer)

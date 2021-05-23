@@ -463,7 +463,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'loader' => array(
 					'serviceUrl' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
 					'componentData' => $this->arResult['PRODUCT_COMPONENT_DATA']
-				)
+				),
+				'html' => '<div class="crm-entity-section-product-loader"></div>'
 			);
 		}
 		else
@@ -584,7 +585,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 						'params' => array(
 							'INTERNAL_FILTER' => array('ORDER_ID' => $this->entityID),
 							'ENABLE_TOOLBAR' => true,
-							'PATH_TO_ORDER_SHIPMENT_LIST' => '/bitrix/components/bitrix/crm.order.shipment.list/class.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get()
+							'PATH_TO_ORDER_SHIPMENT_LIST' => '/bitrix/components/bitrix/crm.order.shipment.list/class.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
+							'BUILDER_CONTEXT' => $this->arResult['BUILDER_CONTEXT']
 						)
 					)
 				)
@@ -764,21 +766,20 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		//endregion
 
 		$tradingPlatforms = [];
-		if(\Bitrix\Main\Loader::includeModule('landing'))
+		if (Main\Loader::includeModule('sale'))
 		{
-			$platformData = \Bitrix\Landing\Site::getList([
-				'filter' => ['=TYPE' => 'STORE'],
-				'select' => ['ID', 'TITLE']
+			$dbRes = Sale\TradingPlatform\Manager::getList([
+				'select' => ['ID', 'NAME'],
+				'filter' => ['=ACTIVE' => 'Y']
 			]);
+			while ($platform = $dbRes->fetch())
+			{
+				if (!$tradingPlatforms)
+				{
+					$tradingPlatforms[] = Loc::getMessage('CRM_ORDER_STORE_NOT_CHOSEN');
+				}
 
-			while ($platform = $platformData->fetch())
-			{
-				$code = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($platform['ID']);
-				$tradingPlatforms[$code] = $platform['TITLE']." [".$platform['ID']."]";
-			}
-			if (count($tradingPlatforms) > 0)
-			{
-				array_unshift($tradingPlatforms, Loc::getMessage('CRM_ORDER_STORE_NOT_CHOSEN'));
+				$tradingPlatforms[$platform['ID']] = $platform['NAME']." [".$platform['ID']."]";
 			}
 		}
 
@@ -1111,7 +1112,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$this->entityData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
 
 			//region Default Responsible
-			if($this->userID > 0)
+			if (!Crm\Settings\OrderSettings::getCurrent()->getDefaultResponsibleId())
 			{
 				$this->entityData['RESPONSIBLE_ID'] = $this->userID;
 			}
@@ -1197,27 +1198,13 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				unset($this->entityData['ID'], $this->entityData['ACCOUNT_NUMBER']);
 			}
 			$this->entityData['OLD_USER_ID'] = $this->entityData['USER_ID'];
-			$platforms = [];
-			$platformsData = \Bitrix\Sale\TradingPlatformTable::getList([
-				'select' => ['CODE', 'ID', 'CLASS']
-			]);
-			while ($platform = $platformsData->fetch())
-			{
-				$platforms[$platform['ID']] = [
-					'CODE' => $platform['CODE'],
-					'CLASS' => $platform['CLASS']
-				];
-			}
 
 			$tradingCollection = $this->order->getTradeBindingCollection();
-			/** @var \Bitrix\Sale\TradeBindingEntity $item */
+
+			/** @var Sale\TradeBindingEntity $item */
 			foreach ($tradingCollection as $item)
 			{
-				$platformId = $item->getField('TRADING_PLATFORM_ID');
-				if (!empty($platforms[$platformId]) && $platforms[$platformId]['CLASS'] === "\\".\Bitrix\Sale\TradingPlatform\Landing\Landing::class)
-				{
-					$this->entityData['TRADING_PLATFORM'] = $platforms[$platformId]['CODE'];
-				}
+				$this->entityData['TRADING_PLATFORM'] = $item->getField('TRADING_PLATFORM_ID');
 			}
 			//endregion
 		}

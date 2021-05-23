@@ -580,6 +580,9 @@ var CrmFormEditor = function(params)
 			case 'location':
 				saleType = 'LOCATION';
 				break;
+			case 'address':
+				saleType = 'ADDRESS';
+				break;
 			case 'string':
 			case 'text':
 			default:
@@ -628,6 +631,9 @@ var CrmFormEditor = function(params)
 				break;
 			case 'LOCATION':
 				crmType = 'location';
+				break;
+			case 'ADDRESS':
+				crmType = 'address';
 				break;
 			default:
 				crmType = 'STRING';

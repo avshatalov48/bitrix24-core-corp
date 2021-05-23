@@ -1,10 +1,12 @@
+import {Vue} from 'ui.vue';
 import ClosableDirective from '../closabledirective';
 import {Location} from 'location.core';
 import {State, AutocompleteFeature} from 'location.widget'
-
+import 'ui.notification';
 import '../css/address.css';
 
-export default {
+export default
+{
 	directives: {
 		closable: ClosableDirective
 	},
@@ -14,79 +16,91 @@ export default {
 		settings: {},
 		options: {required: false},
 		editable: {type: Boolean, default: true},
+		isStartMarker: {type: Boolean, required: true},
 	},
 	data()
 	{
 		return {
+			value: null,
 			enterTookPlace: false,
+			rightIcon: null,
 			isEntering: false,
 			isLoading: false,
 			editMode: false,
-			value: null,
 			addressWidgetState: null,
+			enteredAddresses: [],
 		}
 	},
 	methods: {
-		onInputClicked()
+		switchToEditMode()
 		{
 			if (!this.editable)
 			{
 				return;
 			}
 
-			if (this.value)
-			{
-				this.showMap();
-			}
-			else
-			{
-				this.closeMap();
-			}
-		},
-		onTextClicked()
-		{
-			if (!this.editable)
-			{
-				return;
-			}
-
+			this.showMap();
 			this.editMode = true;
 		},
-		onClearClicked()
+		clarifyAddress()
+		{
+			setTimeout(() => {
+				this.$refs['input-node'].focus();
+				this.$refs['input-node'].click();
+				this.$refs['input-node'].click();
+			}, 0);
+		},
+		clearAddress()
 		{
 			if (!this.editable)
 			{
 				return;
 			}
-
 			this.addressWidget.address = null;
 			this.changeValue(null);
+			this.clarifyAddress();
+		},
+		onControlClicked()
+		{
 			this.closeMap();
 		},
-		onInputFocus()
+		onControlFocus()
 		{
 			this.enterTookPlace = true;
 			this.isEntering = true;
 		},
-		onInputBlur()
+		onControlBlur()
 		{
-			this.isEntering = false;
+			setTimeout(() => {
+				this.isEntering = false;
+			}, 200)
+
+			this.editMode = false;
 
 			this.closeMap();
-		},
-		onInputEnterKeyDown()
-		{
-			this.isEntering = false;
 		},
 		changeValue(newValue)
 		{
 			this.value = newValue;
+
+			this.syncRightIcon();
 
 			this.$emit('change', this.value);
 
 			if (this.onChangeCallback)
 			{
 				this.onChangeCallback();
+			}
+		},
+		syncRightIcon()
+		{
+			if (this.$refs['input-node'].value.length === 0)
+			{
+				this.rightIcon = 'search';
+			}
+			else
+			{
+				this.rightIcon = 'clear';
 			}
 		},
 		buildAddress(value)
@@ -99,6 +113,44 @@ export default {
 			{
 				return null;
 			}
+		},
+		isValueValid(value)
+		{
+			return (
+				value
+				&& value.latitude
+				&& value.longitude
+				&& !(value.latitude === '0' && value.longitude === '0')
+			);
+		},
+		getPresetLocationsProvider()
+		{
+			return () => {
+				let result = this.options && this.options.hasOwnProperty('defaultItems')
+					? this.options.defaultItems.map((item) => new Location(item))
+					: [];
+
+
+				for (let enteredAddress of this.enteredAddresses)
+				{
+					let location = enteredAddress.toLocation();
+					if (!location)
+					{
+						continue;
+					}
+
+					location.name = BX.Location.Core.AddressStringConverter.convertAddressToString(
+						enteredAddress,
+						this.addressWidget.addressFormat,
+						BX.Location.Core.AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
+						BX.Location.Core.AddressStringConverter.CONTENT_TYPE_TEXT
+					);
+
+					result.push(location);
+				}
+
+				return result;
+			};
 		},
 		/**
 		 * Map Feature Methods
@@ -137,8 +189,6 @@ export default {
 			{
 				map.closeMap();
 			}
-
-			this.editMode = false;
 		},
 	},
 	computed: {
@@ -150,7 +200,6 @@ export default {
 			}
 
 			let address = this.buildAddress(this.value);
-
 			if (!address)
 			{
 				return '';
@@ -167,49 +216,86 @@ export default {
 		},
 		wrapperClass()
 		{
-			let showDangerIndicator = (
+			return {
+				'ui-ctl': true,
+				'ui-ctl-textbox': true,
+				'ui-ctl-danger': this.needsClarification,
+				'ui-ctl-w100': true,
+				'ui-ctl-after-icon': true,
+				'sale-address-control-top-margin-5 sale-address-control-top-margin-width-820': this.isEditMode
+			}
+		},
+		mapMarkerClass()
+		{
+			return {
+				'salescenter-delivery-path-icon': true,
+				'salescenter-delivery-path-icon--green': !this.isStartMarker
+			};
+		},
+		rightIconClass()
+		{
+			return {
+				'ui-ctl-after': true,
+				'ui-ctl-icon-btn': true,
+				'ui-ctl-icon-search': (this.rightIcon === 'search'),
+				'ui-ctl-icon-clear': (this.rightIcon === 'clear'),
+				'sale-address-control-path-input-clear': true,
+			};
+		},
+		needsClarification()
+		{
+			return (
 				!this.isEntering
 				&& this.enterTookPlace
 				&& !this.value
 				&& this.addressWidgetState !== State.DATA_LOADING
 			);
-
-			return {
-				'ui-ctl': true,
-				'ui-ctl-textbox': true,
-				'ui-ctl-danger': showDangerIndicator,
-				'ui-ctl-w100': true,
-				'ui-ctl-after-icon': true,
-				'sale-address-control-top-margin-5 sale-address-control-top-margin-width-820': this.isEditMode
-			}
+		},
+		localize()
+		{
+			return Vue.getFilteredPhrases('SALE_DELIVERY_SERVICE_SELECTOR_');
 		},
 	},
 	mounted()
 	{
 		if (this.initValue)
 		{
-			this.value = this.initValue;
-		}
+			let initValue = null;
+			let address = JSON.parse(this.initValue);
 
-		let presetLocationList = this.options && this.options.hasOwnProperty('defaultItems')
-			? this.options.defaultItems.map((item) => new Location(item))
-			: [];
+			if (this.isValueValid(address))
+			{
+				initValue = this.initValue;
+			}
+			else
+			{
+				/**
+				 * Simulate invalid input
+				 */
+				this.isEntering = false;
+				this.enterTookPlace = true;
+			}
+
+			this.changeValue(initValue);
+		}
 
 		this.addressWidget = (new BX.Location.Widget.Factory).createAddressWidget({
 			address: this.initValue ? this.buildAddress(this.initValue) : null,
-			mapBehavior: 'manual',
-			popupBindOptions: {
-				position: 'right'
-			},
 			mode: BX.Location.Core.ControlMode.edit,
+			mapBehavior: 'manual',
 			useFeatures: {
 				fields: false,
 				map: true,
 				autocomplete: true
 			},
-			presetLocationList
+			popupOptions: {
+				offsetLeft: 14,
+			},
+			popupBindOptions: {
+				forceBindPosition: true,
+			},
+			presetLocationsProvider: this.getPresetLocationsProvider()
 		});
-
 
 		/**
 		 * Redefine native onInputKeyup
@@ -238,15 +324,16 @@ export default {
 			this.editMode = true;
 
 			let address = data.address;
+			let value = address.toJson();
 
-			if (!address.latitude || !address.longitude)
+			if (!this.isValueValid(address))
 			{
 				this.changeValue(null);
-				this.closeMap();
 			}
 			else
 			{
-				this.changeValue(address.toJson());
+				this.enteredAddresses.push(address);
+				this.changeValue(value);
 				this.showMap();
 			}
 		});
@@ -276,8 +363,29 @@ export default {
 
 			if (data.feature instanceof AutocompleteFeature)
 			{
-				this.isLoading = (data.eventCode === AutocompleteFeature.searchStartedEvent);
+				if (data.eventCode === AutocompleteFeature.searchStartedEvent)
+				{
+					this.isLoading = true;
+				}
+				else if (data.eventCode === AutocompleteFeature.searchCompletedEvent)
+				{
+					this.isLoading = false;
+				}
 			}
+		});
+
+		this.addressWidget.subscribeOnErrorEvent((event) => {
+			let data = event.getData();
+			let errors = data.errors;
+			let errorMessage = errors
+				.map((error) => error.message + (error.code.length ? `${error.code}` : ''))
+				.join(', ');
+
+			this.isLoading = false;
+
+			BX.UI.Notification.Center.notify({
+				content: errorMessage,
+			});
 		});
 
 		/**
@@ -285,48 +393,69 @@ export default {
 		 */
 		this.addressWidget.render({
 			inputNode: this.$refs['input-node'],
-			mapBindElement: this.$refs['input-node'],
-			controlWrapper: this.$refs['control-wrapper'],
+			autocompleteMenuElement: this.$refs['autocomplete-menu'],
+			mapBindElement: this.$refs['map-marker'],
+			controlWrapper: this.$refs['autocomplete-menu'],
 		});
+
+		this.syncRightIcon();
 	},
 	template: `
-		<div
-			v-closable="{
-				exclude: ['input-node'],
-				handler: 'onInputBlur'
-			}"
-			class="ui-ctl-w100"
-		>
-			<div :class="wrapperClass" ref="control-wrapper">
+		<div class="salescenter-delivery-path-control">
+			<div ref="map-marker" :class="mapMarkerClass"></div>
 				<div
-					v-show="!isLoading && isEditMode"
-					@click="onClearClicked"
-					class="ui-ctl-after ui-ctl-icon-btn ui-ctl-icon-clear"
-				></div>
-				<div
-					v-show="isLoading"
-					class="ui-ctl-after ui-ctl-icon-loader"
-				></div>
-				<input
-					v-show="isEditMode"
-					@click="onInputClicked"
-					@focus="onInputFocus"
-					@keydown.enter="onInputEnterKeyDown"
-					:disabled="!editable"
-					ref="input-node"
-					type="text"
-					class="ui-ctl-element"
-				/>
-				<span
-					v-show="!isEditMode"
-					@click="onTextClicked"
-					type="text"
-					class="ui-ctl-element ui-ctl-textbox sale-address-control-path-input"
-					contenteditable="false"
-					v-html="addressFormatted"
-				></span>
-				<input v-model="value" :name="name" type="hidden" />
-			</div>					
+					v-closable="{
+						exclude: ['input-node'],
+						handler: 'onControlBlur'
+					}"
+					class="ui-ctl-w100"
+				>
+					<div :class="wrapperClass">
+						<div
+							v-show="isLoading"
+							class="ui-ctl-after ui-ctl-icon-loader"
+						></div>
+						<div
+							v-show="isEditMode" 
+							ref="autocomplete-menu"
+							class="sale-address-control-path-input-wrapper"
+						>
+							<input
+								@click="onControlClicked"
+								@focus="onControlFocus"
+								:disabled="!editable"
+								ref="input-node"
+								type="text"
+								class="ui-ctl-element"
+							/>
+							<div
+								v-show="!isLoading && isEditMode"
+								@click="clearAddress"
+								@mouseover.stop.prevent=""
+								:class="rightIconClass"
+							></div>
+							<span
+								v-show="needsClarification"
+								@mouseover.stop.prevent=""
+								@click="clarifyAddress"
+								class="sale-address-control-path-input--alert"
+							>
+								{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLARIFY_ADDRESS}}
+							</span>
+						</div>
+						<div v-show="!isEditMode"class="sale-address-control-path-input-wrapper">
+							<span
+								@click="switchToEditMode"
+								type="text"
+								class="ui-ctl-element ui-ctl-textbox sale-address-control-path-input"
+								contenteditable="false"
+								v-html="addressFormatted"
+							></span>
+						</div>
+						<input v-model="value" :name="name" type="hidden" />
+					</div>
+				</div>
+			</div>
 		</div>
 	`
 };

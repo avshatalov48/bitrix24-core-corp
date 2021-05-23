@@ -715,7 +715,7 @@ class CVoxImplantPhone
 
 		if($configName == '')
 		{
-			$configName = static::generateConfigName($arPhones);
+			$configName = static::generateConfigName($arPhones, VI\ConfigTable::MAX_LENGTH_NAME);
 		}
 
 		// assuming, that all numbers are from the same country
@@ -752,7 +752,7 @@ class CVoxImplantPhone
 		}
 	}
 
-	public static function generateConfigName($rentedPhones)
+	public static function generateConfigName($rentedPhones, $maxLength = 0)
 	{
 		if(count($rentedPhones) === 1)
 		{
@@ -777,7 +777,12 @@ class CVoxImplantPhone
 			}
 			else
 			{
-				return Loc::getMessage("VI_PHONE_GROUP") . ": " . join(", ", array_keys($rentedPhones));
+				$result = Loc::getMessage("VI_PHONE_GROUP") . ": " . join(", ", array_keys($rentedPhones));
+				if ($maxLength > 0 && mb_strlen($result) > $maxLength)
+				{
+					$result = mb_substr($result, 0, $maxLength - 3) . "...";
+				}
+				return $result;
 			}
 		}
 	}

@@ -707,7 +707,7 @@ class Event
 
 			if ($success)
 			{
-				$files = unserialize($event['FILES'], [false]);
+				$files = unserialize($event['FILES'], ['allowed_classes' => false]);
 				if (is_array($files))
 				{
 					for ($i = count($files) - 1; $i >= 0; $i--)
@@ -743,7 +743,7 @@ class Event
 		$eventRes = Crm\EventTable::getByPrimary($eventId);
 		if ($event = $eventRes->fetch())
 		{
-			$files = unserialize($event['FILES'], [false]);
+			$files = unserialize($event['FILES'], ['allowed_classes' => false]);
 			if (is_array($files))
 			{
 				for ($i = count($files) - 1; $i >= 0; $i--)

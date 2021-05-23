@@ -752,5 +752,3 @@ if(!empty($arResult['FIELD_ID']))
 {
 	$APPLICATION->AddChainItem($fieldEditlabel, $arResult['~FIELD_EDIT_URL']);
 }
-
-?>

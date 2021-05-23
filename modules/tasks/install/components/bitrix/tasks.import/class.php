@@ -709,7 +709,7 @@ class TasksImportComponent extends TasksBaseComponent
 	 */
 	private function checkFileHashName(string $fileHashName): bool
 	{
-		if (!preg_match('/[0-9a-f]{32}\.tmp/i', $fileHashName))
+		if (!preg_match('/^[0-9a-f]{32}\.tmp$/i', $fileHashName))
 		{
 			$this->arResult['ERRORS']['FILE_LABEL'] = Loc::getMessage('TASKS_IMPORT_ERRORS_FILE_PATH');
 			return false;

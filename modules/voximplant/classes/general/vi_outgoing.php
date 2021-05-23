@@ -95,7 +95,7 @@ class CVoxImplantOutgoing
 	 * @param string $phoneNumber Dialed number.
 	 * @return string Returns search_id of the line if found or false otherwise.
 	 */
-	public static function findLineId($phoneNumber)
+	public static function findLineId(string $phoneNumber)
 	{
 		$phoneNumber = CVoxImplantPhone::stripLetters($phoneNumber);
 
@@ -513,7 +513,7 @@ class CVoxImplantOutgoing
 		if($numberConfig['PORTAL_MODE'] === CVoxImplantConfig::MODE_SIP)
 			$phoneNormalized = $number;
 		else
-			$phoneNormalized = CVoxImplantPhone::Normalize($number);
+			$phoneNormalized = CVoxImplantPhone::stripLetters($number);
 
 		if (!$phoneNormalized)
 		{
@@ -588,7 +588,7 @@ class CVoxImplantOutgoing
 		if($numberConfig['PORTAL_MODE'] === CVoxImplantConfig::MODE_SIP)
 			$phoneNormalized = $number;
 		else
-			$phoneNormalized = CVoxImplantPhone::Normalize($number);
+			$phoneNormalized = CVoxImplantPhone::stripLetters($number);
 
 		if (!$phoneNormalized)
 		{
@@ -662,7 +662,7 @@ class CVoxImplantOutgoing
 			return $result;
 		}
 
-		$phoneNormalized = CVoxImplantPhone::Normalize($number, 0);
+		$phoneNormalized = CVoxImplantPhone::stripLetters($number);
 		if (!$phoneNormalized)
 		{
 			$result->addError(new Error('Phone number is not correct'));

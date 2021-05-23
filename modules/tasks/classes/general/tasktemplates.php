@@ -374,7 +374,7 @@ class CTaskTemplates
 			if ($arFields['FILES'] !== false)
 			{
 				// There is must be serialized array
-				$arFilesIds = unserialize($arFields['FILES']);
+				$arFilesIds = unserialize($arFields['FILES'], ['allowed_classes' => false]);
 
 				if (is_array($arFilesIds))
 				{
@@ -508,7 +508,7 @@ class CTaskTemplates
 
 				$ID = $DB->Add("b_tasks_template", $arFields, $arBinds, "tasks");
 				if (isset($arFields['FILES']))
-					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES']), $arParams['USER_ID']);
+					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES'], ['allowed_classes' => false]), $arParams['USER_ID']);
 
 				$USER_FIELD_MANAGER->Update("TASKS_TASK_TEMPLATE", $ID, $arFields, $arParamsForCheckFields['USER_ID']);
 
@@ -524,7 +524,7 @@ class CTaskTemplates
 					// Set up new agent
 					if ($arFields['REPLICATE'] === 'Y')
 					{
-						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS']), $ID); // localtime
+						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID); // localtime
 						if ($nextTime)
 						{
 							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
@@ -669,7 +669,7 @@ class CTaskTemplates
 				}
 
 				if (isset($arFields['FILES']))
-					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES']), $arParams['USER_ID']);
+					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES'], ['allowed_classes' => false]), $arParams['USER_ID']);
 
 				$USER_FIELD_MANAGER->Update("TASKS_TASK_TEMPLATE", $ID, $arFields, $userID);
 
@@ -698,7 +698,7 @@ class CTaskTemplates
 					// Set up new agent
 					if ($arFields['REPLICATE'] === 'Y')
 					{
-						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS']), $ID);
+						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID);
 						if ($nextTime)
 						{
 							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
@@ -903,7 +903,7 @@ class CTaskTemplates
 		// delete files
 		if ($template["FILES"])
 		{
-			$files = unserialize($template["FILES"]);
+			$files = unserialize($template["FILES"], ['allowed_classes' => false]);
 			if (is_array($files))
 			{
 				$filesToDelete = array();

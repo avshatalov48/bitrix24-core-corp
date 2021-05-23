@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector;
 
+use Bitrix\ImConnector\Connectors\WeChat;
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Context,
 	\Bitrix\Main\Page\Asset,
@@ -12,7 +13,6 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc;
 use \Bitrix\ImOpenLines\Network,
 	\Bitrix\ImOpenLines\LiveChatManager;
-use \Bitrix\ImConnector\Model\InfoConnectorsTable;
 use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
@@ -134,7 +134,10 @@ class Connector
 		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
 		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
 		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE');
-		$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+		if (WeChat::isEnabled())
+		{
+			$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+		}
 		$connectors['yandex'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_YANDEX');
 		$connectors['vkgroup'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
 		$connectors['ok'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OK');
@@ -1484,7 +1487,8 @@ class Connector
 	{
 		$result = null;
 
-		if (isset(Library::TIME_LIMIT_RESTRICTIONS[$connectorId])
+		if (
+			isset(Library::TIME_LIMIT_RESTRICTIONS[$connectorId])
 			&& Library::TIME_LIMIT_RESTRICTIONS[$connectorId]['LIMIT_START_DATE'] < (new DateTime())->getTimestamp()
 		)
 		{

@@ -41,8 +41,8 @@ if ( ! ($loggedInUserId >= 1) )
 
 if (
 	($_SERVER['REQUEST_METHOD'] === 'POST')
-	&& check_bitrix_sessid() 
-	&& isset($_POST, $_POST['module'], $_POST['action']) 
+	&& check_bitrix_sessid()
+	&& isset($_POST, $_POST['module'], $_POST['action'])
 	&& ($_POST['module'] === 'tasks')
 )
 {
@@ -422,7 +422,7 @@ if ((isset($_GET["VIEW"]) && $_GET["VIEW"] == "1") || $bExcel)
 	catch (TasksException $e)
 	{
 		CTaskAssert::logError('[0xe9474b52] ');
-	}		
+	}
 }
 elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "2")
 {
@@ -439,7 +439,7 @@ elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "2")
 	catch (TasksException $e)
 	{
 		CTaskAssert::logError('[0x24311058] ');
-	}		
+	}
 }
 elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "0")
 {
@@ -456,7 +456,7 @@ elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "0")
 	catch (TasksException $e)
 	{
 		CTaskAssert::logError('[0xaf10900e] ');
-	}		
+	}
 }
 elseif (isset($arParams['VIEW_MODE']))
 {
@@ -1109,8 +1109,8 @@ $sortInOptions = CUserOptions::GetOption(
 );
 
 $arResult['SUPPORTED_FIELDS_FOR_SORT'] = array(
-	'ID', 'TITLE', 'DEADLINE', 'CREATED_BY', 'RESPONSIBLE_ID', 
-	'PRIORITY', 'MARK', 'TIME_ESTIMATE', 'ALLOW_TIME_TRACKING', 
+	'ID', 'TITLE', 'DEADLINE', 'CREATED_BY', 'RESPONSIBLE_ID',
+	'PRIORITY', 'MARK', 'TIME_ESTIMATE', 'ALLOW_TIME_TRACKING',
 	'CREATED_DATE', 'CHANGED_DATE',
 	'CLOSED_DATE', 'SORTING', 'REAL_STATUS', 'STATUS_COMPLETE'
 );
@@ -1153,7 +1153,7 @@ else
 	}
 	else
 	{
-		$arOrder = unserialize($sortInOptions);
+		$arOrder = unserialize($sortInOptions, ['allowed_classes' => false]);
 	}
 }
 CPageOption::SetOptionString("main", "nav_page_in_session", "N");
@@ -1296,7 +1296,7 @@ try
 		// basic task's data:
 		'ID', 'TITLE', 'PRIORITY', 'STATUS', 'REAL_STATUS', 'MULTITASK',
 		'DATE_START', 'GROUP_ID', 'DEADLINE',
-		'ALLOW_TIME_TRACKING', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS', 
+		'ALLOW_TIME_TRACKING', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS',
 		'COMMENTS_COUNT', 'FILES', 'MARK', 'ADD_IN_REPORT', 'SUBORDINATE',
 		'CREATED_DATE', 'VIEWED_DATE', 'FORUM_TOPIC_ID', 'END_DATE_PLAN',
 		'START_DATE_PLAN', 'CLOSED_DATE', 'PARENT_ID', 'ALLOW_CHANGE_DEADLINE',
@@ -1305,7 +1305,7 @@ try
 		'CREATED_BY', 'CREATED_BY_NAME', 'CREATED_BY_LAST_NAME', 'CREATED_BY_SECOND_NAME',
 		'CREATED_BY_LOGIN', 'CREATED_BY_WORK_POSITION', 'CREATED_BY_PHOTO',
 		// RESPONSIBLE data:
-		'RESPONSIBLE_ID', 'RESPONSIBLE_NAME', 'RESPONSIBLE_LAST_NAME', 'RESPONSIBLE_SECOND_NAME', 
+		'RESPONSIBLE_ID', 'RESPONSIBLE_NAME', 'RESPONSIBLE_LAST_NAME', 'RESPONSIBLE_SECOND_NAME',
 		'RESPONSIBLE_LOGIN', 'RESPONSIBLE_WORK_POSITION', 'RESPONSIBLE_PHOTO',
 		'FAVORITE',
 		// extra data

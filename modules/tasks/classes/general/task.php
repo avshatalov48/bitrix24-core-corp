@@ -21,7 +21,6 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
-use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
@@ -39,9 +38,8 @@ use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
-use Bitrix\Tasks\Scrum\Service\BacklogService;
-use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Util\Calendar;
 use Bitrix\Tasks\Util\Replicator;
 use Bitrix\Tasks\Util\Type;
@@ -749,18 +747,7 @@ class CTasks
 							array('SPAWNED_BY_AGENT' => $spawnedByAgent)
 						);
 
-						foreach ($arFields['AUDITORS'] as $userId)
-						{
-							UserOption::add($ID, $userId, UserOption\Option::MUTED);
-						}
-
-						$participants = array_unique(
-							array_merge(
-								[$arFields['CREATED_BY'], $arFields['RESPONSIBLE_ID']],
-								$arFields['ACCOMPLICES'],
-								$arFields['AUDITORS']
-							)
-						);
+						UserOption\Task::onTaskAdd($arFields);
 
 						Counter\CounterService::addEvent(
 							Counter\CounterDictionary::EVENT_AFTER_TASK_ADD,
@@ -801,6 +788,14 @@ class CTasks
 						CTasks::Index($mergedFields, $arFields["TAGS"]); // search index
 						SearchIndex::setTaskSearchIndex($ID, $mergedFields);
 
+						$participants = array_unique(
+							array_merge(
+								[$arFields['CREATED_BY'], $arFields['RESPONSIBLE_ID']],
+								$arFields['ACCOMPLICES'],
+								$arFields['AUDITORS']
+							)
+						);
+
 						// clear cache
 						if ($arFields["GROUP_ID"])
 						{
@@ -810,10 +805,10 @@ class CTasks
 						{
 							$CACHE_MANAGER->ClearByTag("tasks_user_".$userId);
 						}
-
 						$cache = Cache::createInstance();
 						$cache->clean(\CTasks::CACHE_TASKS_COUNT, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
 
+						// adding service comment
 						$addComment = null;
 						$commentPoster = CommentPoster::getInstance($ID, $occurAsUserId);
 						if ($commentPoster)
@@ -872,12 +867,6 @@ class CTasks
 						if ($arFields['GROUP_ID'] && CModule::IncludeModule("socialnetwork"))
 						{
 							CSocNetGroup::SetLastActivity($arFields['GROUP_ID']);
-
-							$group = Workgroup::getById($arFields['GROUP_ID']);
-							if ($group && $group->isScrumProject())
-							{
-								$this->createScrumItem($ID, $arFields);
-							}
 						}
 					}
 				}
@@ -1531,20 +1520,15 @@ class CTasks
 						$addedParticipants = array_unique(array_diff($newParticipants, $oldParticipants));
 						$removedParticipants = array_unique(array_diff($oldParticipants, $newParticipants));
 
-						$viewedDate = Bitrix\Tasks\Comments\Task::getLastCommentTime($ID);
-
-						foreach ($addedParticipants as $userId)
+						if ($viewedDate = Bitrix\Tasks\Comments\Task::getLastCommentTime($ID))
 						{
-							if ($viewedDate)
+							foreach ($addedParticipants as $userId)
 							{
 								ViewedTable::set($ID, $userId, $viewedDate);
 							}
-
-							if ($newAuditors && is_array($newAuditors) && in_array($userId, $newAuditors))
-							{
-								UserOption::add($ID, $userId, UserOption\Option::MUTED);
-							}
 						}
+
+						UserOption\Task::onTaskUpdate($arTask, $arFields);
 
 						if (!array_key_exists('FORCE_RECOUNT_COUNTER', $arParams))
 						{
@@ -1558,11 +1542,6 @@ class CTasks
 							);
 						}
 
-						foreach ($removedParticipants as $userId)
-						{
-							UserOption::deleteByTaskIdAndUserId($ID, $userId);
-						}
-
 						foreach ($participants as $userId)
 						{
 							static::addCacheIdToClear("tasks_user_".$userId);
@@ -1570,7 +1549,8 @@ class CTasks
 						static::clearCache();
 
 						$updateComment = false;
-						$changesForUpdate = static::getChangesForUpdate($changes);
+						$fieldsForComments = array_key_exists('FIELDS_FOR_COMMENTS', $arParams) ? $arParams['FIELDS_FOR_COMMENTS'] : null;
+						$changesForUpdate = static::getChangesForUpdate($changes, $fieldsForComments);
 						if (!empty($changesForUpdate))
 						{
 							$commentPoster = CommentPoster::getInstance($ID, $occurAsUserId);
@@ -1640,34 +1620,6 @@ class CTasks
 
 						Integration\Bizproc\Listener::onTaskUpdate($ID, $arFields, $arTaskCopy);
 
-						if (isset($arFields['GROUP_ID']) && CModule::IncludeModule("socialnetwork"))
-						{
-							$currentGroupId = ($arFields['GROUP_ID'] > 0 ? $arFields['GROUP_ID'] : $arTask['GROUP_ID']);
-							$group = Workgroup::getById($currentGroupId);
-							if ($group && $group->isScrumProject())
-							{
-								if ($arFields['GROUP_ID'] > 0)
-								{
-									$oldGroupId = (int) $arTask['GROUP_ID'];
-									if ($oldGroupId && $arFields['GROUP_ID'] != $oldGroupId)
-									{
-										$this->updateScrumItem(
-											$ID,
-											array_merge($arTask, ['GROUP_ID' => $arFields['GROUP_ID']])
-										);
-									}
-									if (!$oldGroupId)
-									{
-										$this->createScrumItem($ID, $arFields);
-									}
-								}
-								else
-								{
-									$this->deleteScrumItem($ID);
-								}
-							}
-						}
-
 						return true;
 					}
 				}
@@ -1718,10 +1670,18 @@ class CTasks
 	 * @param $changes
 	 * @return array
 	 */
-	private static function getChangesForUpdate($changes): array
+	private static function getChangesForUpdate($changes, $fields): array
 	{
-		$fields = ['STATUS', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS', 'DEADLINE'];
-		return array_intersect_key($changes, array_flip($fields));
+		if (!is_array($fields))
+		{
+			$fields = ['STATUS', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS', 'DEADLINE'];
+		}
+		if (!empty($fields))
+		{
+			$fields = array_flip($fields);
+		}
+
+		return array_intersect_key($changes, $fields);
 	}
 
 	/**
@@ -1843,7 +1803,7 @@ class CTasks
 					$parentTask->getData(false, ['select' => ['ID'], 'bSkipExtraData' => true]);
 				}
 				/** @noinspection PhpDeprecationInspection */
-				catch (\TasksException $e)
+				catch (\TasksException | \CTaskAssertException $e)
 				{
 					/** @noinspection PhpDeprecationInspection */
 					if ($e->getCode() == \TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
@@ -2513,13 +2473,20 @@ class CTasks
 					break;
 
 				case 'REAL_STATUS':
-					$arSqlSearch[] = CTasks::FilterCreate(
+					$val = self::removeStatusValueForActiveSprint($val);
+					$realStatusFilter = CTasks::FilterCreate(
 						$sAliasPrefix."T.STATUS",
 						$val,
 						"number",
 						$bFullJoin,
 						$cOperationType
 					);
+					if ($realStatusFilter && self::containCompletedInActiveSprintStatus($arFilter))
+					{
+						$realStatusFilter = $realStatusFilter .
+							" OR ({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))";
+					}
+					$arSqlSearch[] = $realStatusFilter;
 					break;
 
 				case 'DEADLINE_COUNTED':
@@ -3167,6 +3134,47 @@ class CTasks
 		return ('('.$sql.')');
 	}
 
+	private static function removeStatusValueForActiveSprint($values)
+	{
+		if (is_array($values))
+		{
+			foreach ($values as $key => $value)
+			{
+				if ($value == EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT)
+				{
+					unset($values[$key]);
+				}
+			}
+		}
+
+		return $values;
+	}
+
+	private static function containCompletedInActiveSprintStatus($filter): bool
+	{
+		$filterValues = static::getFilteredValues($filter);
+		foreach ($filterValues as $filterValue)
+		{
+			if (array_key_exists('REAL_STATUS', $filterValue))
+			{
+				if (!is_array($filterValue['REAL_STATUS']))
+				{
+					$filterValue['REAL_STATUS'] = [$filterValue['REAL_STATUS']];
+				}
+				foreach ($filterValue['REAL_STATUS'] as $realStatus)
+				{
+					if ($realStatus == EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT)
+					{
+						return true;
+					}
+				}
+
+			}
+		}
+
+		return false;
+	}
+
 	private static function getSqlForTimestamps($key, $val, $userID, $sAliasPrefix, $bGetZombie)
 	{
 		static $ts = null;        // some fixed timestamp of "now" (for consistency)
@@ -3463,6 +3471,38 @@ class CTasks
 		}
 
 		return array_unique($filteredKeys);
+	}
+
+	private static function getFilteredValues($filter): array
+	{
+		$filteredValues = [];
+
+		if (is_array($filter))
+		{
+			foreach ($filter as $key => $value)
+			{
+				if ($key === '::LOGIC' || $key === '::MARKERS')
+				{
+					continue;
+				}
+
+				if (static::isSubFilterKey($key))
+				{
+					$filteredValues = array_merge($filteredValues, self::getFilteredValues($value));
+					continue;
+				}
+
+				$operationFilter = CTasks::MkOperationFilter($key);
+				$operationField = $operationFilter['FIELD'];
+
+				if ($operationField !== '')
+				{
+					$filteredValues[] = [mb_strtoupper($operationField) => $value];
+				}
+			}
+		}
+
+		return $filteredValues;
 	}
 
 	public static function isSubFilterKey($key)
@@ -4892,6 +4932,7 @@ class CTasks
 			'FORUM_MESSAGE',
 			'USER_OPTION',
 			'COUNTERS',
+			'SCRUM'
 		];
 
 		foreach ($possibleJoins as $join)
@@ -5043,6 +5084,26 @@ class CTasks
 							ON {$joinAlias}TSC.USER_ID = {$userId}
 							AND {$joinAlias}TSC.TYPE IN ('my_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'originator_new_comments', 'my_muted_new_comments', 'accomplices_muted_new_comments', 'auditor_muted_new_comments', 'originator_muted_new_comments') 
 							AND {$joinAlias}TSC.TASK_ID = {$sourceAlias}.ID";
+					}
+					break;
+				case 'SCRUM':
+					if (
+						in_array('REAL_STATUS', $filterKeys, true) &&
+						self::containCompletedInActiveSprintStatus($filter)
+					)
+					{
+						$scrumEntityTableName = EntityTable::getTableName();
+						$activeSprintStatus = EntityTable::SPRINT_ACTIVE;
+						$relatedJoins[$join] = "LEFT JOIN {$scrumEntityTableName} {$joinAlias}TSE 
+							ON {$joinAlias}TSE.GROUP_ID = {$sourceAlias}.GROUP_ID
+							AND {$joinAlias}TSE.STATUS = '{$activeSprintStatus}'
+						";
+
+						$scrumItemTableName = ItemTable::getTableName();
+						$relatedJoins[$join] .= "LEFT JOIN {$scrumItemTableName} {$joinAlias}TSI
+							ON {$joinAlias}TSI.SOURCE_ID = {$sourceAlias}.ID
+							AND {$joinAlias}TSI.ENTITY_ID = {$joinAlias}TSE.ID
+						";
 					}
 					break;
 			}
@@ -7737,52 +7798,5 @@ class CTasks
 				)
 			)
 		));
-	}
-
-	private function createScrumItem(int $taskId, array $fields): void
-	{
-		$backlogService = new BacklogService();
-		$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
-		if (!$backlogService->getErrors() && !$backlog->isEmpty())
-		{
-			$itemService = new ItemService();
-
-			$scrumItem = ItemTable::createItemObject();
-			$scrumItem->setName($fields['TITLE']);
-			$scrumItem->setCreatedBy($fields['CREATED_BY']);
-			$scrumItem->setEntityId($backlog->getId());
-			$scrumItem->setSourceId($taskId);
-
-			$itemService->createTaskItem($scrumItem);
-		}
-	}
-
-	private function updateScrumItem(int $taskId, $fields): void
-	{
-		$backlogService = new BacklogService();
-		$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
-		if (!$backlogService->getErrors() && !$backlog->isEmpty())
-		{
-			$itemService = new ItemService();
-			$scrumItem = $itemService->getItemBySourceId($taskId);
-			if (!$itemService->getErrors() && !$scrumItem->isEmpty())
-			{
-				$scrumItem->setEntityId($backlog->getId());
-				$scrumItem->setSort(0);
-				$scrumItem->setParentId(0);
-				$scrumItem->setModifiedBy($fields['CHANGED_BY']);
-				$itemService->changeItem($scrumItem);
-			}
-		}
-	}
-
-	private function deleteScrumItem(int $taskId): void
-	{
-		$itemService = new ItemService();
-		$scrumItem = $itemService->getItemBySourceId($taskId);
-		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
-		{
-			$itemService->removeItem($scrumItem);
-		}
 	}
 }

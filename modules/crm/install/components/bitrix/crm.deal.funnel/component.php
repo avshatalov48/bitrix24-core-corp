@@ -216,11 +216,17 @@ else
 	);
 }
 
-$i = 0;
 foreach ($arResult['CURRENCY_LIST'] as $k => $v)
 {
-	$arResult['HEADERS'][] = array('id' => $k, 'name' => GetMessage('CRM_COLUMN_SUMM', array('#CURRENCY#' => htmlspecialcharsbx($v))), 'sort' => false, 'default' => $i == 0, 'editable' => false, 'align' => 'right');
-	$i++;
+
+	$arResult['HEADERS'][] = [
+		'id' => $k,
+		'name' => GetMessage('CRM_COLUMN_SUMM', ['#CURRENCY#' => htmlspecialcharsbx($v)]),
+		'sort' => false,
+		'default' => ($k == CCrmCurrency::GetAccountCurrencyID()),
+		'editable' => false,
+		'align' => 'right'
+	];
 }
 
 $CGridOptions = new CCrmGridOptions($arResult['GRID_ID']);

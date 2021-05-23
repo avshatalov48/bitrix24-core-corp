@@ -66,6 +66,7 @@ $className =
 		'CURRENT_TS':  <?=time()?>,
 		'GLOBAL_SEARCH_CATEGORIES': <?=CUtil::PhpToJSObject($arResult["GLOBAL_SEARCH_CATEGORIES"])?>,
 		'MORE_USERS_URL': '<?=SITE_DIR."company/?apply_filter=Y&with_preset=Y&FIND="?>',
+		'MORE_GROUPS_URL': '<?=SITE_DIR."workgroups/?apply_filter=Y&with_preset=Y&FIND="?>',
 		'IS_CRM_INSTALLED': '<?=IsModuleInstalled("crm") ? "Y" : "N"?>'
 	});
 </script>

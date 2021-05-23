@@ -298,7 +298,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 				$templates = Util::getOption('propagate_to_sub_templates');
 				if ($templates)
 				{
-					$templates = unserialize($templates);
+					$templates = unserialize($templates, ['allowed_classes' => false]);
 					$templateId = $op->getResult()->getData()['ID'];
 					$propagateToSubTemplates = $op->getArguments()['data']['PROPAGATE_TO_SUB_TEMPLATES'];
 

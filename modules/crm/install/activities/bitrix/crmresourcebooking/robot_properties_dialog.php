@@ -14,7 +14,7 @@ $map = $dialog->getMap();
 	?>
 </div>
 
-<div class="crm-automation-popup-settings">
+<div class="bizproc-automation-popup-settings">
 	<?=$dialog->renderFieldControl($map['ResourceName'])?>
 </div>
 

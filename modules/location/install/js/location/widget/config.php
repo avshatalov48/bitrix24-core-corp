@@ -47,6 +47,12 @@ return [
 		$format = Service\FormatService::getInstance()->findDefault(LANGUAGE_ID);
 		$format  = $format ? $format->toJson() : '';
 
+		/*
+		 * Here it could be a performance problem due to custom handlers.
+		 * Make an option, or receive via ajax request.
+		 */
+		$userLocation = \Bitrix\Location\Infrastructure\UserLocation::findUserLocation();
+
 		return [
 			'lang_additional' => [
 				'LOCATION_WIDGET_SOURCE_CODE' => $sourceCode,
@@ -54,6 +60,7 @@ return [
 				'LOCATION_WIDGET_DEFAULT_FORMAT' => $format,
 				'LOCATION_WIDGET_LANGUAGE_ID' => LANGUAGE_ID,
 				'LOCATION_WIDGET_SOURCE_LANGUAGE_ID' => $sourceLanguageId,
+				'LOCATION_WIDGET_USER_LOCATION' => $userLocation->toJson()
 			]
 		];
 	}

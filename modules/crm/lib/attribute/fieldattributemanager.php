@@ -33,9 +33,14 @@ class FieldAttributeManager
 				$categoryID = \CCrmDeal::GetCategoryID($entityID);
 			}
 
-			return $categoryID > 0 ? "category_{$categoryID}" : "";
+			return static::getEntityScopeByCategory($categoryID);
 		}
 		return "";
+	}
+
+	public static function getEntityScopeByCategory(?int $categoryId = 0): string
+	{
+		return $categoryId > 0 ? "category_{$categoryId}" : "";
 	}
 
 	public static function processPhaseDeletion($phaseID, $entityTypeID, $entityScope)

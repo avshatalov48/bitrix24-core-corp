@@ -791,6 +791,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			BX.removeCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
 			BX.removeCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
 			BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+			this.releaseRowCountLoader();
 		},
 		getId: function()
 		{
@@ -1571,13 +1572,16 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		},
 		onGridReload: function()
 		{
+			this.releaseRowCountLoader();
+			this.initializeRowCountLoader();
+		},
+		releaseRowCountLoader: function()
+		{
 			if(this._rowCountLoader)
 			{
 				this._rowCountLoader.release();
 				this._rowCountLoader = null;
 			}
-
-			this.initializeRowCountLoader();
 		},
 		onApplyCounterFilter: function(sender, eventArgs)
 		{

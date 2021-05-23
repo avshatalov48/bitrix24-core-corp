@@ -1,6 +1,5 @@
 <?php
 $MESS["BX24_INVITE_DIALOG_ADDED"] = "<b>Congratulations!</b><br><br>An enrollment notification has been sent to the specified user.<br><br>To see who was invited, please <a style=\"white-space:nowrap;\" href=\"#SITE_DIR#company/?show_user=inactive\">open the employee list</a>.";
-$MESS["BX24_INVITE_DIALOG_EMAIL_ERROR"] = "Incorrect email format";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMAIL"] = "Incorrect email format";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMAIL_OR_PHONE"] = "Incorrect email or phone number format";
 $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_NO_SONET_GROUP_ADD"] = "Please select a group to add external users to";

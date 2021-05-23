@@ -16,15 +16,11 @@ if ($dialog->getCurrentValue($map['ToHead']['FieldName']) !== 'N')
 	$toUsers[] = 'CONTROL_HEAD';
 }
 ?>
-<div class="crm-automation-popup-settings">
-	<textarea name="<?=htmlspecialcharsbx($messageText['FieldName'])?>"
-			class="crm-automation-popup-textarea"
-			placeholder="<?=htmlspecialcharsbx($messageText['Name'])?>"
-			data-role="inline-selector-target"
-	><?=htmlspecialcharsbx($dialog->getCurrentValue($messageText['FieldName'], $messageText['Default']))?></textarea>
+<div class="bizproc-automation-popup-settings">
+	<?= $dialog->renderFieldControl($messageText)?>
 </div>
-<div class="crm-automation-popup-settings">
-	<span class="crm-automation-popup-settings-title crm-automation-popup-settings-title-autocomplete">
+<div class="bizproc-automation-popup-settings">
+	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 		<?=htmlspecialcharsbx($map['ToUsers']['Name'])?>:
 	</span>
 	<?=$dialog->renderFieldControl($map['ToUsers'], $toUsers)?>

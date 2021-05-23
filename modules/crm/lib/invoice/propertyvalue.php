@@ -16,9 +16,7 @@ if (!Main\Loader::includeModule('sale'))
  */
 class PropertyValue extends Sale\PropertyValue
 {
-	/**
-	 * @throws Main\NotImplementedException
-	 */
+	/** @inherit  */
 	public static function getRegistryType()
 	{
 		return REGISTRY_TYPE_CRM_INVOICE;

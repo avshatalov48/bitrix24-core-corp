@@ -14,14 +14,20 @@ $component = $this->getComponent();
 
 $fieldName = $arParams['userField']['FIELD_NAME'];
 $formName = (isset($arParams['form_name']) ? (string)$arParams['form_name'] : '');
-$fieldUID = mb_strtolower(str_replace('_', '-', $fieldName));
+
+$randString = $this->randString();
+if ($component->isAjaxRequest())
+{
+	$randString .= time();
+}
+
+$fieldUID = mb_strtolower(str_replace('_', '-', $fieldName)) . $randString;
 if($formName !== '')
 {
 	$fieldUID = mb_strtolower(str_replace('_', '-', $formName)).'-' . $fieldUID;
 }
 $fieldUID = CUtil::JSescape($fieldUID);
 
-$randString = $this->randString();
 $jsObject = 'CrmEntitySelector_' . $randString;
 
 if($arResult['PERMISSION_DENIED'])

@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_TITLE"] = "Объединение лидов";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION"] = "Будет произведено объединение выбранных лидов. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION"] = "Объединение лидов завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED"] = "Успешно объединено: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED"] = "Не удалось объединить: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE"] = "Объединение контактов";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION"] = "Будет произведено объединение выбранных контактов. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION"] = "Объединение контактов завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED"] = "Успешно объединено: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED"] = "Не удалось объединить: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE"] = "Объединение компаний";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION"] = "Будет произведено объединение выбранных компаний. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION"] = "Объединение компаний завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED"] = "Успешно объединено: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED"] = "Не удалось объединить: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_TITLE"] = "Объединение сделок";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION"] = "Будет произведено объединение выбранных сделок. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION"] = "Объединение сделок завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED"] = "Успешно объединено: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED"] = "Не удалось объединить: #number#.";

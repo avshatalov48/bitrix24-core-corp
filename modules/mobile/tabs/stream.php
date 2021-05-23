@@ -49,6 +49,8 @@ class Stream implements Tabable
 			"imageUrl" => "favorite/stream.png",
 			"title" => $this->getTitle(),
 			"params" => [
+				"useSearchBar"=>true,
+				"titleParams"=>["useLargeTitleMode"=>true, "text"=>$this->getTitle()],
 				"url" => $this->context->siteDir . "mobile/index.php?version=" . $this->context->version,
 				"counter"=>"**"
 			],

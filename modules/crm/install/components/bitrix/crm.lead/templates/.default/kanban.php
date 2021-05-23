@@ -95,6 +95,17 @@ else
 	);
 	$this->EndViewTarget();
 
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.dedupe.autosearch',
+		'',
+		array(
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
+			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
+			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_LEAD_DEDUPELIST']
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
 
 	// menu
 	$APPLICATION->IncludeComponent(
@@ -178,7 +189,8 @@ else
 		array(
 			'ENTITY_TYPE' => $entityType,
 			'SHOW_ACTIVITY' => 'Y',
-			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT']
+			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
+			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE']
 		),
 		$component
 	);

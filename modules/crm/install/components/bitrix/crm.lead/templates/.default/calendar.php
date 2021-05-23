@@ -181,11 +181,13 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 		}
 	}
 
+	$leadCount = COption::GetOptionInt('crm', 'lead_calendar_count_limit', 3000);
+	$leadCount = $leadCount > 0 ? $leadCount : 3000;
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.lead.list',
 		'calendar',
 		array(
-			'LEAD_COUNT' => '3000',
+			'LEAD_COUNT' => $leadCount,
 			'INTERNAL_SORT' => ['id' => 'asc'],
 			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
 			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
@@ -200,6 +202,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 				'CALENDAR_DATE_TO' => $calendarDateTo,
 				'CALENDAR_FIELD' => $filterSelect
 			),
+			'CALENDAR_MODE' => 'Y',
 			'CALENDAR_MODE_LIST' => $modeList,
 			'ENABLE_BIZPROC' => 'N'
 		),

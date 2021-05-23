@@ -1,12 +1,14 @@
-<?
+<?php
 namespace Bitrix\Location\Entity\Address\Normalizer;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
 
 /**
  * Normalize Locations names for search and mapping purposes.
+ *
  * Class Normalizer
  * @package Bitrix\Location\Entity\Address\Normalizer
+ * @internal
  */
 class Normalizer implements INormalizer
 {
@@ -16,6 +18,7 @@ class Normalizer implements INormalizer
 	/**
 	 * Normalizer constructor.
 	 * @param INormalizer[] $normalizers
+	 * @throws ArgumentOutOfRangeException
 	 */
 	public function __construct(array $normalizers)
 	{
@@ -29,13 +32,8 @@ class Normalizer implements INormalizer
 	 * @param INormalizer $normalizer
 	 * @throws ArgumentOutOfRangeException
 	 */
-	protected function addNormalizer($normalizer)
+	protected function addNormalizer(INormalizer $normalizer): void
 	{
-		if(!($normalizer instanceof INormalizer))
-		{
-			throw new ArgumentOutOfRangeException('Normalizer does not implements INormalizer');
-		}
-
 		$this->normalizers[] = $normalizer;
 	}
 
@@ -43,11 +41,10 @@ class Normalizer implements INormalizer
 	 * @param string $string
 	 * @return string
 	 */
-	public function normalize($string)
+	public function normalize(string $string): string
 	{
 		$result = $string;
 
-		/** @var INormalizer $normalizer */
 		foreach($this->normalizers as $normalizer)
 		{
 			$result = $normalizer->normalize($result);

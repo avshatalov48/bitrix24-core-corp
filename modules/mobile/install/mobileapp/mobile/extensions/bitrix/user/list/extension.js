@@ -72,17 +72,26 @@
 			if(enableEventListener)
 				this.list.setListener((event, data) => reflectFunction(this.eventHandlers, event, this).call(this, data));
 
-			this.searcher = new UserSearcher(this.list, this._delegate);
+			this.searcher = new UserSearcher(this.list, this._delegate, this.options.filter);
 			this.searcher.resultHandler = this.onSearchResult.bind(this);
+
+			let filter = {
+				ACTIVE: "Y",
+				HAS_DEPARTAMENT: "Y"
+			};
+			if (this.options.filter)
+			{
+				Object.assign(filter, this.options.filter)
+			}
 			this.request = new RequestExecutor("user.search",
 				{
 					"IMAGE_RESIZE": "small",
 					"SORT": "LAST_NAME",
 					"ORDER": "ASC",
-					"FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT": "Y"}
+					"FILTER": filter
 				})
 				.setCacheHandler(data =>{
-					this.items = Utils.prepareListForDraw(data);
+					this.items = UserListUtils.prepareListForDraw(data);
 					this.draw();
 				})
 				.setHandler(this.answerHandler.bind(this));
@@ -128,7 +137,7 @@
 				return;
 			}
 
-			let listData = Utils.prepareListForDraw(users);
+			let listData = UserListUtils.prepareListForDraw(users);
 			let modifiedListData = this.prepareItems(listData, loadMore);
 
 			if (loadMore === false)
@@ -396,14 +405,24 @@
 		 *
 		 * @param {BaseList} list
 		 * @param {UserListDelegate} delegate
+		 * @param listFilter
 		 */
-		constructor(list = null, delegate = null)
+		constructor(list = null, delegate = null, listFilter = {})
 		{
+			let filter = {
+				ACTIVE: "Y",
+				HAS_DEPARTAMENT: "Y"
+			};
+			if (listFilter)
+			{
+				Object.assign(filter, listFilter)
+			}
+
 			this.searchRequest = new DelayedRestRequest("user.search",
 				{
-					"SORT": "LAST_NAME",
-					"ORDER": "ASC",
-					"FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT": "Y"}
+					SORT: "LAST_NAME",
+					ORDER: "ASC",
+					FILTER: filter
 				});
 			this.resultHandler = null;
 			this.delegate = delegate;
@@ -569,28 +588,75 @@
 			Application.storage.setObject("users_last_search", {items: this.lastSearchItems});
 		}
 
-		postProgressing(searchResult, query)
+		postProgressing(items, query)
 		{
-			let finalResult = searchResult
-				.map(result =>
-				{
-					let weight = 0;
-					for (let key in this.searchFieldWeights)
+			try
+			{
+				query = query.toLowerCase()
+				let queryWords = query.split(" ");
+				let shouldMatch = queryWords.length;
+				let searchFields = Object.keys(this.searchFieldWeights);
+				let result = items.map(item => {
+					let sort = 0;
+					let matchCount = 0;
+					let matchedWords = [];
+					if (searchFields.length > 0 && query)
 					{
-						if (result[key] && result[key].toUpperCase().indexOf(query.toUpperCase()) === 0)
+						searchFields.reverse().forEach(name =>
 						{
-							weight = this.searchFieldWeights[key];
-						}
+
+							let field = item[name];
+							if (field)
+							{
+								let fieldWords = field.toLowerCase().split(" ");
+								let findHandler = (word) => {
+									let items = queryWords.filter(queryWord =>
+									{
+										let match = word.indexOf(queryWord) === 0
+											&& !matchedWords.includes(queryWord)
+										if (match) {
+											matchedWords.push(queryWord)
+										}
+
+										return match;
+									})
+
+									return items.length > 0;
+
+								}
+
+								let result = fieldWords.filter(findHandler);
+								if (result.length > 0)
+								{
+									sort += searchFields.indexOf(name) + 1;
+								}
+							}
+						})
+					}
+					else
+					{
+						sort = 1;
 					}
 
-					result.weight = weight;
-					return result;
+					item.sort = (matchedWords.length >= shouldMatch) ? sort + matchCount: -1;
+					return item;
 				})
-				.filter(result => result.weight !== 0)
-				.sort((resultOne, resultTwo) => (resultTwo.weight < resultOne.weight) ? -1 : 0)
-			;
+					.filter(item => item.sort >= 0)
+					.sort((item1, item2) =>
+					{
+						if (item1.sort > item2.sort) return -1
+						if (item1.sort < item2.sort) return 1
+						return 0
+					})
 
-			return Utils.prepareListForDraw(finalResult);
+				return UserListUtils.prepareListForDraw(result);
+
+			}
+			catch (e)
+			{
+				console.error(e);
+				return UserListUtils.prepareListForDraw(items);
+			}
 		}
 
 		get searchFieldWeights()
@@ -606,108 +672,6 @@
 	/**
 	 * Search utils
 	 */
-
-	/**
-	 * @class UserListUtilss
-	 * @type {{getFormattedName: (function(*=, *=): any), prepareListForDraw: (function(*=): []), getFormattedHumanName: (function(*, *=): *)}}
-	 */
-	let Utils = {
-		prepareListForDraw: function (list)
-		{
-			let result = [];
-			let userFormatFunction = user => ({
-				title: Utils.getFormattedName(user),
-				subtitle: user.WORK_POSITION,
-				hasName: (Utils.getFormattedHumanName(user) !== ""),
-				sectionCode: "people",
-				color: "#5D5C67",
-				useLetterImage: true,
-				id: user.ID,
-				imageUrl: (user.PERSONAL_PHOTO === null ? undefined : encodeURI(user.PERSONAL_PHOTO)),
-				sortValues: {
-					name: user.LAST_NAME
-				},
-				params: {
-					id: user.ID,
-					profileUrl: "/mobile/users/?user_id=" + user.ID
-				},
-			});
-
-			if (list)
-			{
-				result = list
-					.filter(user => user["UF_DEPARTMENT"] !== false && Utils.getFormattedHumanName(user))
-					.map(userFormatFunction);
-				let unknownUsers = list
-					.filter(user => user["UF_DEPARTMENT"] !== false && !Utils.getFormattedHumanName(user))
-					.map(userFormatFunction)
-					.sort((u1, u2) => u1.title > u2.title ? 1 : (u1.title === u2.title ? 0 : -1));
-				result = unknownUsers.concat(result);
-			}
-
-			return result;
-
-		},
-		getFormattedName: function (userData, format = null)
-		{
-			let name = Utils.getFormattedHumanName(userData, format);
-			if (name === "")
-			{
-				if (userData.EMAIL)
-				{
-					name = userData.EMAIL;
-				}
-				else if (userData.PERSONAL_MOBILE)
-				{
-					name = userData.PERSONAL_MOBILE;
-				}
-				else if (userData.PERSONAL_PHONE)
-				{
-					name = userData.PERSONAL_PHONE;
-				}
-				else
-				{
-					name = BX.message("USER_LIST_NO_NAME")
-				}
-			}
-
-			return name !== "" ? name : userData.EMAIL;
-
-		},
-		getFormattedHumanName:function(userData, format = null){
-			let replace = {
-				"#NAME#": userData.NAME,
-				"#LAST_NAME#": userData.LAST_NAME,
-				"#SECOND_NAME#": userData.SECOND_NAME,
-
-			};
-
-			if (format == null)
-			{
-				format = "#NAME# #LAST_NAME#";
-			}
-
-			if (userData.LAST_NAME)
-			{
-				replace["#LAST_NAME_SHORT#"] = userData.LAST_NAME[0].toUpperCase() + ".";
-			}
-			if (userData.SECOND_NAME)
-			{
-				replace["#SECOND_NAME_SHORT#"] = userData.SECOND_NAME[0].toUpperCase() + ".";
-			}
-			if (userData.NAME)
-			{
-				replace["#NAME_SHORT#"] = userData.NAME[0].toUpperCase() + ".";
-			}
-
-			return format
-				.replace(/#NAME#|#LAST_NAME#|#SECOND_NAME#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#NAME_SHORT#/gi,
-					match => (typeof replace[match] != "undefined" && replace[match] != null) ? replace[match] : "")
-				.trim();
-		}
-
-
-	};
 
 	let SearchUtils = {
 		Const: {

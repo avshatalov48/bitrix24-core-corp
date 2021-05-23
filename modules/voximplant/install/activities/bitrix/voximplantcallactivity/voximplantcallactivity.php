@@ -194,7 +194,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 				'Default' => CVoxImplantConfig::GetPortalNumber(),
 				'Options' => $outputNumber
 			),
-			"Number"        => array(
+			"Number" => array(
 				'Type' => 'string',
 				'FieldName' => "number",
 				'Required' => true
@@ -206,6 +206,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 				'Default' => 'N'
 			),
 			"Text" => array(
+				'Description' => GetMessage('BPVICA_PROPERTY_TEXT'),
 				'Type' => 'text',
 				'FieldName' => "text",
 				'Required' => true
@@ -229,6 +230,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 				'Options' => $voiceVolume
 			),
 			"AudioFile"     => array(
+				'Description' => 'https://',
 				'Type' => 'string',
 				'FieldName' => "audio_file",
 			),

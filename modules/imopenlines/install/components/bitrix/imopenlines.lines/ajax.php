@@ -25,7 +25,7 @@ class ImOpenLinesListAjaxController
 	protected $action = null;
 	protected $responseData = array();
 	protected $requestData = array();
-	
+
 	/** @var \Bitrix\ImOpenlines\Security\Permissions */
 	protected $userPermissions;
 
@@ -45,22 +45,22 @@ class ImOpenLinesListAjaxController
 	protected function create()
 	{
 		if(!$this->userPermissions->canPerform(
-			\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES, 
+			\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES,
 			\Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY
 		))
 		{
 			$this->errors[] = Loc::getMessage('OL_PERMISSION_CREATE_LINE');
 			return;
 		}
-		
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		if(!$configManager->canActivateLine())
+
+		if(!\Bitrix\ImOpenLines\Config::canActivateLine())
 		{
 			$this->responseData['limited'] = true;
 			$this->errors[] = '';
 			return;
 		}
-		
+
+		$configManager = new \Bitrix\ImOpenLines\Config();
 		$this->responseData['config_id'] = $configManager->create();
 	}
 
@@ -78,7 +78,6 @@ class ImOpenLinesListAjaxController
 			$this->errors[] = '';
 			return;
 		}
-		
 
 		$configManager->setActive($this->requestData['CONFIG_ID'], true);
 	}

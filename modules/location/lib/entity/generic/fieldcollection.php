@@ -7,6 +7,7 @@ use Bitrix\Main\SystemException;
 /**
  * Class FieldCollection
  * @package Bitrix\Location\Entity\Generic
+ * @internal
  */
 abstract class FieldCollection extends Collection
 {
@@ -17,7 +18,7 @@ abstract class FieldCollection extends Collection
 	 * @param int $type
 	 * @return bool
 	 */
-	public function isItemExist(int $type)
+	public function isItemExist(int $type): bool
 	{
 		foreach($this->items as $item)
 		{
@@ -50,7 +51,7 @@ abstract class FieldCollection extends Collection
 	/**
 	 * @return IField[]
 	 */
-	public function getSortedItems()
+	public function getSortedItems(): array
 	{
 		$result = $this->items;
 
@@ -74,7 +75,7 @@ abstract class FieldCollection extends Collection
 	 * @return int
 	 * @throws SystemException
 	 */
-	public function addItem($item)
+	public function addItem($item): int
 	{
 		if($this->isItemExist($item->getType()))
 		{
@@ -83,5 +84,4 @@ abstract class FieldCollection extends Collection
 
 		return parent::addItem($item);
 	}
-
 }

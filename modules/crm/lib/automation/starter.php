@@ -127,7 +127,7 @@ class Starter
 		$diff = [];
 		foreach ($actual as $key => $field)
 		{
-			if ($key !== 'ID' && (!isset($previous[$key]) || $previous[$key] != $field))
+			if ($key !== 'ID' && (!array_key_exists($key, $previous) || $previous[$key] != $field))
 			{
 				$diff[] = $key;
 			}

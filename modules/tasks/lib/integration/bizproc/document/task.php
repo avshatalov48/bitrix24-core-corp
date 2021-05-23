@@ -7,6 +7,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 if (!Main\Loader::includeModule('bizproc'))
 {
@@ -782,6 +783,25 @@ class Task implements \IBPWorkflowDocument
 	public static function isFeatureEnabled($documentType, $feature)
 	{
 		return in_array($feature, [\CBPDocumentService::FEATURE_SET_MODIFIED_BY]);
+	}
+
+	/**
+	 * @param string $documentId
+	 * @param string $workflowId
+	 * @param int $status
+	 * @param null|\CBPActivity $rootActivity
+	 */
+	public static function onWorkflowStatusChange($documentId, $workflowId, $status, $rootActivity)
+	{
+		if (
+			$rootActivity
+			&& $status === \CBPWorkflowStatus::Running
+			&& !$rootActivity->workflow->isNew()
+			&& TaskLimit::isLimitExceeded()
+		)
+		{
+			throw new \Exception(Loc::getMessage('TASKS_BP_DOCUMENT_RESUME_RESTRICTED'));
+		}
 	}
 
 	// Old & deprecated below

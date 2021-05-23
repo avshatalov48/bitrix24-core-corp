@@ -144,11 +144,6 @@ JCEmployeeSelectControl.prototype._ShowWindow = function(result)
 	this.div.className = "settings-float-form" + (this.arParams.WIN && this.arParams.WIN.className ? ' ' + this.arParams.WIN.className : '');
 
 	this.div.style.position = 'absolute';
-	this.div.style.zIndex = '2200';
-	if(!!BX.WindowManager && !!BX.WindowManager.Get())
-	{
-		this.div.style.zIndex = BX.WindowManager.GetZIndex();
-	}
 
 	this.div.innerHTML = result;
 

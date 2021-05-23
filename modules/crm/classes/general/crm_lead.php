@@ -602,7 +602,7 @@ class CAllCrmLead
 
 	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
 	{
-		$top = (int) $top;
+		$top = (int)$top;
 		if ($top <= 0)
 		{
 			return [];
@@ -610,40 +610,11 @@ class CAllCrmLead
 
 		$sortType = mb_strtoupper($sortType) !== 'DESC' ? 'ASC' : 'DESC';
 
-		$permissionSql = '';
-		if (!CCrmPerms::IsAdmin())
-		{
-			if (!$userPermissions)
-			{
-				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-			}
-
-			$permissionSql = self::BuildPermSql('L', 'READ', ['PERMS' => $userPermissions]);
-		}
-
-		if ($permissionSql === false)
-		{
-			return [];
-		}
-
-		$query = new Bitrix\Main\Entity\Query(Crm\LeadTable::getEntity());
-		$query->addSelect('ID');
-		$query->addOrder('ID', $sortType);
-		$query->setLimit($top);
-
-		if ($permissionSql !== '')
-		{
-			$permissionSql = mb_substr($permissionSql, 7);
-			$query->where('ID', 'in', new Bitrix\Main\DB\SqlExpression($permissionSql));
-		}
-
-		$rs = $query->exec();
-		$results = [];
-		while ($field = $rs->fetch())
-		{
-			$results[] = (int) $field['ID'];
-		}
-		return $results;
+		return \Bitrix\Crm\Entity\Lead::getInstance()->getTopIDs([
+			'order' => ['ID' => $sortType],
+			'limit' => $top,
+			'userPermissions' => $userPermissions
+		]);
 	}
 
 	public static function GetTotalCount()
@@ -1300,7 +1271,7 @@ class CAllCrmLead
 			$arFields['BIRTHDAY_SORT'] = \Bitrix\Crm\BirthdayReminder::prepareSorting('');
 		}
 
-		if(!isset($arFields['STATUS_ID']) || $arFields['STATUS_ID'] === '')
+		if(!isset($arFields['STATUS_ID']) || (string)$arFields['STATUS_ID'] === '')
 		{
 			$arFields['STATUS_ID'] = self::GetStartStatusID(
 				$this->bCheckPermission
@@ -1660,7 +1631,9 @@ class CAllCrmLead
 		}
 
 		//region Search content index
-		Bitrix\Crm\Search\SearchContentBuilderFactory::create(CCrmOwnerType::Lead)->build($ID);
+		Bitrix\Crm\Search\SearchContentBuilderFactory::create(
+			CCrmOwnerType::Lead
+		)->build($ID, ['checkExist' => true]);
 		//endregion
 
 		if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
@@ -2593,6 +2566,13 @@ class CAllCrmLead
 			}
 			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Lead, $ID, array_merge($arRow, $arFields));
 
+			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
+				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+			if(!$isSystemAction && $enableDupIndexInvalidation)
+			{
+				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Lead, $ID);
+			}
+
 			if($bResult && (isset($arFields['ASSIGNED_BY_ID']) || isset($arFields['STATUS_ID'])))
 			{
 				$assignedByIDs = array();
@@ -2621,6 +2601,11 @@ class CAllCrmLead
 						),
 						$assignedByIDs
 					);
+				}
+
+				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
+				{
+					\Bitrix\Crm\Integrity\DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Lead, $ID);
 				}
 			}
 
@@ -2979,6 +2964,13 @@ class CAllCrmLead
 				Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::unregister($ID);
 			}
 
+			$enableDupIndexInvalidation = is_array($arOptions) && isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
+				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+			if($enableDupIndexInvalidation)
+			{
+				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Lead, $ID);
+			}
+
 			DuplicateEntityRanking::unregisterEntityStatistics(CCrmOwnerType::Lead, $ID);
 			DuplicatePersonCriterion::unregister(CCrmOwnerType::Lead, $ID);
 			DuplicateOrganizationCriterion::unregister(CCrmOwnerType::Lead, $ID);
@@ -2999,13 +2991,6 @@ class CAllCrmLead
 					),
 					array($assignedByID)
 				);
-			}
-
-			$enableDupIndexInvalidation = is_array($arOptions) && isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
-				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
-			if($enableDupIndexInvalidation)
-			{
-				Bitrix\Crm\Integrity\DuplicateIndexBuilder::markAsJunk(CCrmOwnerType::Lead, $ID);
 			}
 
 			if($isConverted)
@@ -4515,6 +4500,10 @@ class CAllCrmLead
 			$entity->Update($fields['ID'], $fields);
 		}
 	}
+	/**
+	 * @deprecated
+	 * @param array $fields
+	 */
 	public static function ProcessStatusModification(array $fields)
 	{
 		$entityID = isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
@@ -4530,6 +4519,11 @@ class CAllCrmLead
 			);
 		}
 	}
+
+	/**
+	 * @deprecated
+	 * @param array $fields
+	 */
 	public static function ProcessStatusDeletion(array $fields)
 	{
 		$entityID = isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';

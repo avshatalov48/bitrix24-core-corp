@@ -20,6 +20,11 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 
 	BX.extend(BX.Crm.EntityEditorOrderController, BX.UI.EntityEditorController);
 
+	BX.Crm.EntityEditorOrderController.prototype.isProductListLoaded = function()
+	{
+		return this._productList !== null;
+	}
+
 	BX.Crm.EntityEditorOrderController.prototype.setProductList = function(productList)
 	{
 		this._productList = productList;
@@ -431,7 +436,6 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 
 		if(options.needProductComponentParams)
 		{
-			//todo: check if component is loaded
 			var context = this._editor.getContext();
 
 			if(context.PRODUCT_COMPONENT_DATA)
@@ -1716,7 +1720,6 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 			if(message)
 			{
-				message = BX.util.htmlspecialchars(message);
 				this.showError(message);
 				this._editor._toolPanel.addError(message);
 			}
@@ -2294,7 +2297,10 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 					this.getOrderController().ajax(
 						'setPaymentPaidField',
 						{ data: { FIELDS: eventArgs } },
-						{ skipMarkAsChanged: true }
+						{
+							skipMarkAsChanged: true,
+							needProductComponentParams: this.getOrderController().isProductListLoaded()
+						}
 					);
 				}
 			}
@@ -2540,7 +2546,10 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 									PAYMENT_ID: _this.getItemField(index, 'ID')
 								}
 							}},
-							{ skipMarkAsChanged: true }
+							{
+								skipMarkAsChanged: true,
+								needProductComponentParams: _this.getOrderController().isProductListLoaded()
+							}
 						);
 					}
 				}
@@ -3092,7 +3101,6 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 
 			if(message)
 			{
-				message = BX.util.htmlspecialchars(message);
 				this.showError(message);
 			}
 		}
@@ -3158,7 +3166,7 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 								props: {
 									className: 'ui-btn ui-btn-light-border',
 								},
-								style: {marginTop: '10px', marginBottom: '5px'},
+								style: {marginLeft: '10px', marginBottom: '3px'},
 								events: {
 									click: function () {
 										_this.getOrderController().onDataChanged();
@@ -3663,7 +3671,8 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 					}
 				},
 				{
-					skipMarkAsChanged: true
+					skipMarkAsChanged: true,
+					needProductComponentParams: this.getOrderController().isProductListLoaded()
 				}
 			);
 		}

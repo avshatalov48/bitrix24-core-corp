@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/automation.bundle.css',
 	'js' => 'dist/automation.bundle.js',
 	'rel' => [
-		'main.popup',
 		'main.core',
+		'main.popup',
 	],
 	'skip_core' => false,
 ];

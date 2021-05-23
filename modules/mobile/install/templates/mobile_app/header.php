@@ -12,9 +12,9 @@ use Bitrix\Main\Page\AssetShowTargetType;
 $platform = "android";
 if (CModule::IncludeModule("mobileapp"))
 {
-	$platform = CMobile::$platform;
 	if(!defined("SKIP_MOBILEAPP_INIT"))
 		CMobile::Init();
+	$platform = CMobile::$platform;
 }
 else
 {
@@ -27,17 +27,12 @@ if(CModule::IncludeModule("mobile"))
 	CJSCore::Init(array("mobile_ui"));
 }
 
-define("MOBILE_MODULE_VERSION", "20.5.650.1");
-$moduleVersion = (defined("MOBILE_MODULE_VERSION") ? MOBILE_MODULE_VERSION : "default");
-if(array_key_exists("IS_WKWEBVIEW", $_COOKIE) && $_COOKIE["IS_WKWEBVIEW"] == "Y")
-{
-	$moduleVersion .= "_wkwebview";
-}
+$mobileContext = new \Bitrix\Mobile\Context();
+$moduleVersion = $mobileContext->version;
 
 $APPLICATION->IncludeComponent("bitrix:mobile.data", "", Array(
 	"START_PAGE" => SITE_DIR . "mobile/index.php?version=" . $moduleVersion,
 	"MENU_PAGE" => SITE_DIR . "mobile/left.php?version=" . $moduleVersion,
-	"CHAT_PAGE" => SITE_DIR . "mobile/im/right.php?version=" . $moduleVersion
 ), false, Array("HIDE_ICONS" => "Y"));
 ?><!DOCTYPE html>
 <html<?$APPLICATION->ShowProperty("manifest"); ?> class="<?= $platform; ?>">

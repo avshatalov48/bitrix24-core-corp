@@ -26,12 +26,9 @@ final class SaleshubItem
 	public static function getPaysystemItems(): array
 	{
 		$result = [];
-		$postData = self::encode([
-			'source' => 'paysystem'
-		]);
 
 		$httpClient = new Main\Web\HttpClient();
-		$response = $httpClient->post(self::getDomain(), $postData);
+		$response = $httpClient->get(self::getDomain() . '?source=paysystem');
 		if ($response === false)
 		{
 			return $result;
@@ -40,6 +37,33 @@ final class SaleshubItem
 		if ($httpClient->getStatus() === 200)
 		{
 			$response = self::decode($response);
+		}
+
+		if (is_array($response) && count($response) > 0)
+		{
+			foreach ($response as $item)
+			{
+				$result[] = $item;
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getSmsProviderItems(): array
+	{
+		$result = [];
+
+		$httpClient = new Main\Web\HttpClient();
+		$response = $httpClient->get(self::getDomain() . '?source=smsprovider');
+		if ($response === false)
+		{
+			return $result;
+		}
+
+		if ($httpClient->getStatus() === 200)
+		{
+			$result = self::decode($response);
 		}
 
 		if (is_array($response) && count($response) > 0)

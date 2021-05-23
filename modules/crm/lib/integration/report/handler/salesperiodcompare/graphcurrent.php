@@ -28,7 +28,7 @@ class GraphCurrent extends BaseGraph
 		$filterParameters = $this->getFilterParameters();
 		if(isset($filterParameters['TIME_PERIOD']))
 		{
-			$minDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD']['from']);
+			$minDate =  new Date($filterParameters['TIME_PERIOD']['from']);
 		}
 
 		reset($normalizedData);

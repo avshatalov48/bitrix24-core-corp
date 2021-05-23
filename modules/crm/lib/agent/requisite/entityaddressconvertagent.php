@@ -111,7 +111,7 @@ abstract class EntityAddressConvertAgent extends AgentBase
 	public function getProgressData()
 	{
 		$s = Option::get('crm', static::$optionName.'_PROGRESS',  '');
-		$data = $s !== '' ? unserialize($s) : null;
+		$data = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
 		if(!is_array($data))
 		{
 			$data = array();

@@ -16,7 +16,10 @@ use Bitrix\Main\ORM\Data\Result;
 Loc::loadMessages(__FILE__);
 
 /**
- * Class Address
+ * Class AddressService
+ *
+ * Service to work with addresses
+ *
  * @package Bitrix\Location\Service
  */
 final class AddressService extends BaseService
@@ -30,6 +33,8 @@ final class AddressService extends BaseService
 	protected $repository;
 
 	/**
+	 * Find Address by addressId.
+	 *
 	 * @param int $addressId
 	 * @return Entity\Address|bool|null
 	 * @throws \Bitrix\Main\ArgumentException
@@ -53,6 +58,8 @@ final class AddressService extends BaseService
 	}
 
 	/**
+	 * Find Address by linked entity
+	 *
 	 * @param string $entityId
 	 * @param string $entityType
 	 * @return Entity\Address\AddressCollection
@@ -77,8 +84,14 @@ final class AddressService extends BaseService
 	}
 
 	/**
+	 * Save Address
+	 *
 	 * @param Entity\Address $address
 	 * @return \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\Result|\Bitrix\Main\ORM\Data\UpdateResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function save(Entity\Address $address)
 	{
@@ -96,21 +109,26 @@ final class AddressService extends BaseService
 	}
 
 	/**
+	 * Delete Address
+	 *
 	 * @param int $addressId
 	 * @return \Bitrix\Main\ORM\Data\DeleteResult
 	 * @throws \Exception
 	 */
-	public function delete(int $addressId)
+	public function delete(int $addressId): \Bitrix\Main\ORM\Data\DeleteResult
 	{
 		return $this->repository->delete($addressId);
 	}
 
 	/**
+	 * Check if Address count limit is reached
+	 *
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
+	 * @internal
 	 */
 	public function isLimitReached(): bool
 	{

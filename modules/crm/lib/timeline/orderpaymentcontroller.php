@@ -348,7 +348,7 @@ class OrderPaymentController extends EntityController
 			}
 
 			$fields = $settings['FIELDS'];
-			$title = $data['ASSOCIATED_ENTITY']['TITLE'];
+			$title = htmlspecialcharsbx(\CUtil::JSEscape($data['ASSOCIATED_ENTITY']['TITLE']));
 			if (!empty($fields['DATE_BILL_TIMESTAMP']))
 			{
 				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp($fields['DATE_BILL_TIMESTAMP'],'SHORT'));

@@ -37,7 +37,79 @@ abstract class EntityBase
 		throw new Main\NotImplementedException('Method "update" must be overridden');
 	}
 
-	abstract public function getTopIDs(array $params);
+	/**
+	 * Get ids according to $params
+	 *
+	 * @param array $params
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getTopIDs(array $params)
+	{
+		$order = isset($params['order']) && is_array($params['order']) ? $params['order'] : ['ID' => 'ASC'];
+		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : [];
+		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
+		$enablePermissionCheck = isset($params['enablePermissionCheck']) ? (bool)$params['enablePermissionCheck'] : true;
+
+		static $cache;
+		$cacheKey = md5(serialize($params));
+		if (isset($cache[$cacheKey]))
+		{
+			return $cache[$cacheKey];
+		}
+		$cache[$cacheKey] = [];
+
+		$permissionSql = '';
+		if ($enablePermissionCheck)
+		{
+			/** @var \CCrmPerms $userPermissions */
+			$userPermissions = $params['userPermissions'] ?? \CCrmPerms::GetCurrentUserPermissions();
+			$permissionSql = \CCrmPerms::BuildSql(
+				\CCrmOwnerType::ResolveName($this->getEntityTypeID()),
+				'',
+				'READ',
+				[
+					'RAW_QUERY' => true,
+					'PERMS' => $userPermissions,
+				]
+			);
+		}
+		if ($permissionSql === false) // Access denied
+		{
+			return $cache[$cacheKey];
+		}
+		elseif (
+			$permissionSql !== '' // need to check permissions
+			&& empty($filter)  // and has not any filters
+			&& count($order) === 1 // and ordered only by ID
+			&& isset($order['ID'])
+		)
+		{
+			$cache[$cacheKey] = $this->getTopIdsFromPermissions($userPermissions, $limit, $order['ID']);
+			return $cache[$cacheKey];
+		}
+
+		$query = new \Bitrix\Main\Entity\Query($this->getDbEntity());
+		$query->addSelect('ID');
+		$query->setOrder($order);
+		$query->setFilter($filter);
+		$query->setLimit($limit);
+
+		if ($permissionSql !== '')
+		{
+			$query->addFilter('@ID', new Main\DB\SqlExpression($permissionSql));
+		}
+
+		$dbResult = $query->exec();
+		while ($fields = $dbResult->fetch())
+		{
+			$cache[$cacheKey][] = (int)$fields['ID'];
+		}
+		return $cache[$cacheKey];
+	}
+
 	abstract public function getCount(array $params);
 	abstract public function delete($entityID, array $options = array());
 	public function cleanup($entityID)
@@ -56,6 +128,13 @@ abstract class EntityBase
 		return is_array($this->getByID($entityID));
 	}
 
+	/**
+	 * Get id of last created item
+	 *
+	 * @param int $userID
+	 * @param bool $enablePermissionCheck
+	 * @return int|mixed
+	 */
 	public function getLastID($userID = 0, $enablePermissionCheck = true)
 	{
 		if ($userID <= 0)
@@ -68,82 +147,63 @@ abstract class EntityBase
 		{
 			$enablePermissionCheck = false;
 		}
+		$topIds = $this->getTopIDs([
+			'enablePermissionCheck' => $enablePermissionCheck,
+			'userPermissions' => $userPermissions,
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		]);
 
-		$query = new Main\Entity\Query($this->getDbEntity());
-		if (!$enablePermissionCheck)
-		{
-			$query->addSelect('ID');
-			$query->addOrder('ID', 'DESC');
-			$query->setLimit(1);
-		}
-		else
-		{
-			$permissionSql = $this->buildPermissionSql([
-				'alias' => 'L',
-				'permissionType' => 'READ',
-				'options' => ['PERMS' => $userPermissions]
-			]);
-
-			$query->addSelect('ID');
-			if (!is_string($permissionSql))
-			{
-				return 0;
-			}
-			elseif ($permissionSql === '')
-			{
-				$query->addOrder('ID', 'DESC');
-				$query->setLimit(1);
-			}
-			else
-			{
-				$permissionSql = mb_substr($permissionSql, 7);
-				$query->addOrder('ID', 'DESC');
-				$query->setLimit(1);
-				$query->where('ID', 'in', new \Bitrix\Main\DB\SqlExpression($permissionSql));
-			}
-		}
-
-		$dbResult = $query->exec();
-		$field = $dbResult->fetch();
-		return is_array($field) ? (int)$field['ID'] : 0;
+		return (is_array($topIds) && isset($topIds[0])) ? $topIds[0] : 0;
 	}
 
+	/**
+	 * Get ids of last created items
+	 *
+	 * @param $offsetID
+	 * @param string $order
+	 * @param int $limit
+	 * @param int $userID
+	 * @param bool $enablePermissionCheck
+	 * @return array
+	 */
 	public function getNewIDs($offsetID, $order = 'DESC', $limit = 100, $userID = 0, $enablePermissionCheck = true)
 	{
-		if($userID <= 0)
+		if ($userID <= 0)
 		{
 			$userID = EntityAuthorization::getCurrentUserID();
 		}
 		$userPermissions = EntityAuthorization::getUserPermissions($userID);
 
-		if($enablePermissionCheck && EntityAuthorization::isAdmin($userID))
+		if ($enablePermissionCheck && EntityAuthorization::isAdmin($userID))
 		{
 			$enablePermissionCheck = false;
 		}
+		$order = mb_strtoupper($order) !== 'DESC' ? 'ASC' : 'DESC';
 
-		$query = new Main\Entity\Query($this->getDbEntity());
-		$query->addSelect('ID');
-
-		if($offsetID > 0)
+		$filter = [];
+		if ($offsetID > 0)
 		{
-			$query->addFilter('>ID', $offsetID);
+			$filter = ['>ID' => $offsetID];
 		}
-		$query->addOrder('ID', $order);
+		$topIds = $this->getTopIDs([
+			'enablePermissionCheck' => false,
+			'order' => ['ID' => $order],
+			'filter' => $filter,
+			'limit' => $limit,
+		]);
 
-		$query->setLimit($limit);
-
-		$results = array();
-		$dbResult = $query->exec();
-		while($fields = $dbResult->fetch())
+		$results = [];
+		foreach ($topIds as $id)
 		{
-			$ID = (int)$fields['ID'];
-			if($enablePermissionCheck && !$this->checkReadPermission($ID, $userPermissions))
+			if ($enablePermissionCheck && !$this->checkReadPermission($id, $userPermissions))
 			{
 				continue;
 			}
 
-			$results[] = $ID;
+			$results[] = $id;
 		}
+
 		return $results;
 	}
 
@@ -268,5 +328,34 @@ abstract class EntityBase
 				}
 			}
 		}
+	}
+
+	private function getTopIdsFromPermissions(\CCrmPerms $userPermissions, $limit, $sortOrder = 'asc'): array
+	{
+		$result = [];
+
+		$permissionSql = \CCrmPerms::BuildSql(
+			\CCrmOwnerType::ResolveName($this->getEntityTypeID()),
+			'',
+			'READ',
+			[
+				'RAW_QUERY' => [
+					'TOP' => $limit,
+					'SORT_TYPE' => $sortOrder
+				],
+				'PERMS' => $userPermissions,
+			]
+		);
+		if ($permissionSql === false || $permissionSql === '')
+		{
+			throw new \Bitrix\Main\NotSupportedException('Unable to get top ids from permissions');
+		}
+		$dbResult = \Bitrix\Main\Application::getConnection()->query($permissionSql);
+		while ($fields = $dbResult->fetch())
+		{
+			$result[] = (int)$fields['ENTITY_ID'];
+		}
+
+		return $result;
 	}
 }

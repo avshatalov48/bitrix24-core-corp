@@ -495,6 +495,11 @@ class Scoring
 	 */
 	public static function getModelByName($modelName)
 	{
+		static $cache = [];
+		if (isset($cache[$modelName]))
+		{
+			return $cache[$modelName];
+		}
 		$possibleModels = [Model\LeadScoring::class, Model\DealScoring::class];
 
 		foreach ($possibleModels as $model)
@@ -503,7 +508,8 @@ class Scoring
 
 			if(in_array($modelName, $possibleNames))
 			{
-				return new $model($modelName);
+				$cache[$modelName] = new $model($modelName);
+				return $cache[$modelName];
 			}
 		}
 

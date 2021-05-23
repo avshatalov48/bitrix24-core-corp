@@ -84,7 +84,7 @@
 			{
 				if(top.BX.Helper)
 				{
-					top.BX.Helper.show("redirect=detail&code=10071417");
+					top.BX.Helper.show("redirect=detail&code=10393548");
 				}
 			})
 		}

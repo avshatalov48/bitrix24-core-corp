@@ -14,7 +14,10 @@ export default {
 			exclude.forEach(refName => {
 				if (!clickedOnExcludedEl) {
 					const excludedEl = vnode.context.$refs[refName];
-					clickedOnExcludedEl = excludedEl.contains(e.target);
+					if (excludedEl)
+					{
+						clickedOnExcludedEl = excludedEl.contains(e.target);
+					}
 				}
 			});
 
@@ -35,7 +38,7 @@ export default {
 	},
 
 	unbind () {
-		document.removeEventListener('click', handleOutsideClick);
+		document.removeEventListener('mousedown', handleOutsideClick);
 		document.removeEventListener('touchstart', handleOutsideClick);
 	}
 };

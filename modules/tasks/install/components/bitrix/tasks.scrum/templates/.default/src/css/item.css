@@ -15,6 +15,10 @@
 	position: relative;
 }
 
+.tasks-scrum-subtask-item {
+	margin: 10px 0 0 30px;
+}
+
 .tasks-scrum-item:hover {
 	cursor: pointer;
 	border-color: rgba(82, 92, 105, 0.44);
@@ -27,14 +31,6 @@
 
 .tasks-scrum-item.tasks-scrum-item-group-mode:hover {
 	border: 1px solid #8cb6c6;
-}
-
-.tasks-scrum-item.tasks-scrum-item-decomposition-mode {
-	border: 1px solid #7bd500;
-}
-
-.tasks-scrum-item.tasks-scrum-item-decomposition-mode:hover {
-	border: 1px solid #7bd500;
 }
 
 .tasks-scrum-item-group-mode-container {
@@ -98,8 +94,6 @@
 	padding-right: 6px;
 }
 
-/*.tasks-scrum-item-story-points-field .ui-ctl-element {padding-top: 10px !important;}*/
-
 .tasks-scrum-item-responsible {
 	margin-top: 6px;
 	vertical-align: middle;
@@ -110,8 +104,38 @@
 	margin-right: 10px;
 }
 
+.tasks-scrum-item-subtasks-tick { cursor: pointer; }
+
+.tasks-scrum-item-subtasks-tick .ui-btn.ui-btn-light {
+	--ui-btn-background-hover: transparent;
+	--ui-btn-background-active: transparent;
+	--ui-btn-border-color-hover: transparent;
+}
+
+.tasks-scrum-item-subtasks-btn {
+	height: 20px;
+	padding-top: 5px;
+}
+
+.tasks-scrum-item-subtasks-btn .tasks-scrum-item-subtasks-icon {
+	background: url(images/number-task.svg) no-repeat 0 center;
+	width: 13px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.tasks-scrum-item-subtasks-count {
+	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: rgba(82, 92, 105, 0.9);
+	letter-spacing: 0;
+	text-align: center;
+	padding: 0 20px 0 0;
+	font-size: 14px;
+	color: #525c69;
+}
+
 .tasks-scrum-item-story-points {
-	/*padding: 7px 0;*/
 	text-align: center;
 }
 

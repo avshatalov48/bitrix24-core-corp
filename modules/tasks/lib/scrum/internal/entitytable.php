@@ -12,6 +12,7 @@ use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Scrum\Internal\Fields\InfoField;
 
 class EntityTable extends Entity\DataManager
 {
@@ -21,6 +22,8 @@ class EntityTable extends Entity\DataManager
 	const SPRINT_ACTIVE = 'active';
 	const SPRINT_PLANNED = 'planned';
 	const SPRINT_COMPLETED = 'completed';
+
+	const STATE_COMPLETED_IN_ACTIVE_SPRINT = 'completedInActiveSprint';
 
 	private $id;
 	private $groupId;
@@ -39,13 +42,20 @@ class EntityTable extends Entity\DataManager
 	private $info;
 
 	private $children = [];
-	private $taskIds = [];
 
+	private $tmpId = '';
 	private $storyPoints;
 
-	public static function createEntityObject(): EntityTable
+	public static function createEntityObject(array $fields = []): EntityTable
 	{
-		return new self();
+		$entityObject = new self();
+
+		if ($fields)
+		{
+			$entityObject = self::fillItemObjectByData($entityObject, $fields);
+		}
+
+		return $entityObject;
 	}
 
 	public static function getTableName()
@@ -103,7 +113,7 @@ class EntityTable extends Entity\DataManager
 			self::SPRINT_COMPLETED
 		]);
 
-		$info = new Fields\ArrayField('INFO');
+		$info = new InfoField('INFO');
 		$info->configureRequired(false);
 		$info->configureSerializeCallback(function(EntityInfoColumn $entityInfoColumn)
 		{
@@ -303,6 +313,16 @@ class EntityTable extends Entity\DataManager
 		$this->id = (int) $id;
 	}
 
+	public function getTmpId(): string
+	{
+		return $this->tmpId;
+	}
+
+	public function setTmpId(string $tmpId): void
+	{
+		$this->tmpId = $tmpId;
+	}
+
 	public function getGroupId(): int
 	{
 		return $this->groupId ? $this->groupId : 0;
@@ -375,7 +395,16 @@ class EntityTable extends Entity\DataManager
 
 	public function getDateEnd(): Datetime
 	{
-		return ($this->dateEnd ? $this->dateEnd : new Datetime());
+		$currentDateTime = new Datetime();
+
+		if ($this->dateEnd)
+		{
+			return $this->dateEnd;
+		}
+		else
+		{
+			return $currentDateTime;
+		}
 	}
 
 	public function setDateEnd(Datetime $dateEnd): void
@@ -425,16 +454,6 @@ class EntityTable extends Entity\DataManager
 				$this->children[] = $child;
 			}
 		}
-	}
-
-	public function getTaskIds(): array
-	{
-		return $this->taskIds;
-	}
-
-	public function setTaskIds(array $taskIds): void
-	{
-		$this->taskIds = $taskIds;
 	}
 
 	public function getStoryPoints()
@@ -493,5 +512,55 @@ class EntityTable extends Entity\DataManager
 		{
 			throw new ArgumentNullException('CREATED_BY');
 		}
+	}
+
+	private static function fillItemObjectByData(EntityTable $entity, array $entityData): EntityTable
+	{
+		if ($entityData['ID'])
+		{
+			$entity->setId($entityData['ID']);
+		}
+		if ($entityData['GROUP_ID'])
+		{
+			$entity->setGroupId($entityData['GROUP_ID']);
+		}
+		if ($entityData['ENTITY_TYPE'])
+		{
+			$entity->setEntityType($entityData['ENTITY_TYPE']);
+		}
+		if ($entityData['NAME'])
+		{
+			$entity->setName($entityData['NAME']);
+		}
+		if ($entityData['SORT'])
+		{
+			$entity->setSort($entityData['SORT']);
+		}
+		if ($entityData['CREATED_BY'])
+		{
+			$entity->setCreatedBy($entityData['CREATED_BY']);
+		}
+		if ($entityData['MODIFIED_BY'])
+		{
+			$entity->setModifiedBy($entityData['MODIFIED_BY']);
+		}
+		if ($entityData['DATE_START'])
+		{
+			$entity->setDateStart($entityData['DATE_START']);
+		}
+		if ($entityData['DATE_END'])
+		{
+			$entity->setDateEnd($entityData['DATE_END']);
+		}
+		if ($entityData['STATUS'])
+		{
+			$entity->setStatus($entityData['STATUS']);
+		}
+		if ($entityData['INFO'])
+		{
+			$entity->setInfo($entityData['INFO']);
+		}
+
+		return $entity;
 	}
 }

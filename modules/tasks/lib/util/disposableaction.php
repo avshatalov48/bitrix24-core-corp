@@ -76,7 +76,7 @@ class DisposableAction
 		foreach($tasks as $taskId => $taskData)
 		{
 			$name = 'CTasks::RepeatTaskByTemplateId('.$taskData['TT_ID'].');';
-			$rParams = unserialize($taskData['REPLICATE_PARAMS']);
+			$rParams = unserialize($taskData['REPLICATE_PARAMS'], ['allowed_classes' => false]);
 
 			$endDate = (string) $rParams['END_DATE'];
 			if($endDate != '' && MakeTimeStamp($endDate) < time())

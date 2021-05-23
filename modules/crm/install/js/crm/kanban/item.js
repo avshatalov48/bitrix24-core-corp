@@ -336,7 +336,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 				if ((code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID") && this.data.fields[i].value.picture)
 				{
-					userPic = " style=\"background-image: url(" + this.data.fields[i].value.picture + ")\"";
+					userPic = " style=\"background-image: url(" + encodeURI(this.data.fields[i].value.picture) + ")\"";
 				}
 
 				var params = {
@@ -345,41 +345,57 @@ BX.CRM.Kanban.Item.prototype = {
 					}
 				};
 
-				if (
-					this.data.fields[i].html === true
-					|| this.data.fields[i].type === "money"
-					|| code === 'ORDER_STAGE'
-				)
+				if (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
 				{
-					if (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
+					if (this.data.fields[i].html === true)
 					{
-						params['html'] = "<div class=\"crm-kanban-item-fields-item-value-user\">" +
-							"<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>" +
-							"<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>" +
-							"</div>";
-					}
-					else if (code === 'ORDER_STAGE')
-					{
-						var cssPostfix = '';
-						if (this.data.fields[i].value.code === 'PAID')
-						{
-							cssPostfix = 'paid';
-						}
-						else if (this.data.fields[i].value.code === 'SENT_NO_VIEWED')
-						{
-							cssPostfix = 'send';
-						}
-						else if (this.data.fields[i].value.code === 'VIEWED_NO_PAID')
-						{
-							cssPostfix = 'seen';
-						}
+						var itemUserPic = '';
+						var itemUserName = '';
 
-						params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-'+cssPostfix+'">'+this.data.fields[i].value.title+'</div>'
+						if (this.data.fields[i].value.link === '')
+						{
+							itemUserPic = "<span class=\"crm-kanban-item-fields-item-value-userpic\"></span>";
+							itemUserName = "<span class=\"crm-kanban-item-fields-item-value-name\">" + this.data.fields[i].value.title + "</span>";
+						}
+						else
+						{
+							itemUserPic = "<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>";
+							itemUserName = "<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>";
+						}
+						params['html'] = "<div class=\"crm-kanban-item-fields-item-value-user\">"
+							+ itemUserPic
+							+ itemUserName
+							+ "</div>";
 					}
 					else
 					{
-						params['html'] = this.data.fields[i].value;
+						params['text'] = this.getMessage('noname');
 					}
+				}
+				else if(code === 'ORDER_STAGE')
+				{
+					var cssPostfix = '';
+					if (this.data.fields[i].value.code === 'PAID')
+					{
+						cssPostfix = 'paid';
+					}
+					else if (this.data.fields[i].value.code === 'SENT_NO_VIEWED')
+					{
+						cssPostfix = 'send';
+					}
+					else if (this.data.fields[i].value.code === 'VIEWED_NO_PAID')
+					{
+						cssPostfix = 'seen';
+					}
+
+					params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-'+cssPostfix+'">'+this.data.fields[i].value.title+'</div>'
+				}
+				else if(
+					this.data.fields[i].type === "money"
+					|| this.data.fields[i].html === true
+				)
+				{
+					params['html'] = this.data.fields[i].value;
 				}
 				else
 				{
@@ -1534,6 +1550,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 	onDragDrop: function(itemNode, x, y)
 	{
+		this.dropChangedInPullRequest();
 		this.hideDragTarget();
 
 		var draggableItem,
@@ -1541,6 +1558,7 @@ BX.CRM.Kanban.Item.prototype = {
 			success;
 
 		draggableItem = this.getGrid().getItemByElement(itemNode);
+		draggableItem.dropChangedInPullRequest();
 
 		event = new BX.Kanban.DragEvent();
 		event.setItem(draggableItem);

@@ -12,7 +12,7 @@ export default class GeocodingService extends GeocodingServiceBase
 		this.#reverseRequester = params.reverseRequester;
 	}
 
-	geocode(addressString: string): Promise
+	geocodeConcrete(addressString: string): Promise
 	{
 		return this.#searchRequester.request({query: addressString});
 	}

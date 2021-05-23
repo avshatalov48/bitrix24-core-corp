@@ -114,7 +114,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 		}
 	}
 
-	$messagesFromUser = unserialize($arParams["~MESSAGES_FROM_USERS"]);
+	$messagesFromUser = unserialize($arParams["~MESSAGES_FROM_USERS"], ["allowed_classes" => false]);
 
 	foreach ($messagesFromUser as $userId => $message)
 	{

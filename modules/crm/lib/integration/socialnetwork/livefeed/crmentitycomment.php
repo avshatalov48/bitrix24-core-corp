@@ -251,30 +251,51 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 		if (!empty($logEventId))
 		{
 			$providerCrmLead = new CrmLead();
+			if (in_array($logEventId, $providerCrmLead->getMessageEventId()))
+			{
+				return 'LEAD_MESSAGE';
+			}
 			if (in_array($logEventId, $providerCrmLead->getEventId()))
 			{
 				return 'LEAD';
 			}
+
 			$providerCrmContact = new CrmContact();
+			if (in_array($logEventId, $providerCrmContact->getMessageEventId()))
+			{
+				return 'CONTACT_MESSAGE';
+			}
 			if (in_array($logEventId, $providerCrmContact->getEventId()))
 			{
 				return 'CONTACT';
 			}
+
 			$providerCrmCompany = new CrmCompany();
+			if(in_array($logEventId, $providerCrmCompany->getMessageEventId()))
+			{
+				return 'COMPANY_MESSAGE';
+			}
 			if (in_array($logEventId, $providerCrmCompany->getEventId()))
 			{
 				return 'COMPANY';
 			}
+
 			$providerCrmDeal = new CrmDeal();
+			if (in_array($logEventId, $providerCrmDeal->getMessageEventId()))
+			{
+				return 'DEAL_MESSAGE';
+			}
 			if (in_array($logEventId, $providerCrmDeal->getEventId()))
 			{
 				return 'DEAL';
 			}
+
 			$providerCrmInvoice = new CrmInvoice();
 			if (in_array($logEventId, $providerCrmInvoice->getEventId()))
 			{
 				return 'INVOICE';
 			}
+
 			$providerCrmActivity = new CrmActivity();
 			if (in_array($logEventId, $providerCrmActivity->getEventId()))
 			{

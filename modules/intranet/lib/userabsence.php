@@ -80,7 +80,7 @@ class UserAbsence
 		$vacationTypesOption = Option::get('intranet', 'vacation_types', null);
 		if ($vacationTypesOption)
 		{
-			$defaultVacationTypes = unserialize($vacationTypesOption);
+			$defaultVacationTypes = unserialize($vacationTypesOption, ["allowed_classes" => false]);
 		}
 
 		self::$activeVacationTypes = $defaultVacationTypes;

@@ -363,75 +363,13 @@ abstract class Base extends BaseReport
 	{
 		$uri = new Uri($baseUri);
 		$uri->addParams([
-			'apply_filter' => 'Y',
 			'from_analytics' => 'Y',
-			'board_id' => $this->getWidgetHandler()->getWidget()->getBoardId()
+			'report_id' => $this->getReport()->getGId()
 		]);
+
 		if (!empty($params))
 		{
 			$uri->addParams($params);
-		}
-
-		$filterParameters = $this->getFilterParameters();
-
-		foreach ($filterParameters as $key => $filterParameter)
-		{
-			if ($key === 'FIND')
-			{
-				$uri->addParams([$key => $filterParameter]);
-				continue;
-			}
-
-			switch ($filterParameter['type'])
-			{
-				case 'none':
-				case 'list':
-				case 'text':
-				case 'checkbox':
-					$uri->addParams([$key => $filterParameter['value']]);
-					break;
-				case 'date':
-					if ($key === 'TIME_PERIOD')
-					{
-						$key = 'ACTIVE_TIME_PERIOD';
-					}
-					/** @var DateTime $from */
-					$from = new DateTime($filterParameter['from']);
-					$fromString = $from->format($from::getFormat());
-
-					/** @var DateTime $to */
-					$to = new DateTime($filterParameter['to']);
-					$toString = $to->format($to::getFormat());
-
-					$uri->addParams([$key . '_datesel' => $filterParameter['datesel']]);
-					$uri->addParams([$key . '_month' => $filterParameter['month']]);
-					$uri->addParams([$key . '_year' => $filterParameter['year']]);
-					$uri->addParams([$key . '_quarter' => $filterParameter['quarter']]);
-					$uri->addParams([$key . '_days' => $filterParameter['days']]);
-					$uri->addParams([$key . '_from' => $fromString]);
-					$uri->addParams([$key . '_to' => $toString]);
-					break;
-				case 'diapason':
-					$uri->addParams([$key . '_numsel' => $filterParameter['numsel']]);
-					$uri->addParams([$key . '_from' => $filterParameter['from']]);
-					$uri->addParams([$key . '_to' => $filterParameter['to']]);
-					break;
-				case 'custom_entity':
-					$uri->addParams([$key . '_label' => $filterParameter['label']]);
-					if($filterParameter['selectorEntityType'] === 'crm_entity')
-					{
-						$uri->addParams([$key => $filterParameter['encodedValue']]);
-					}
-					else
-					{
-						$uri->addParams([$key => $filterParameter['value']]);
-					}
-					break;
-				case 'dest_selector':
-					$uri->addParams([$key . '_label' => $filterParameter['label']]);
-					$uri->addParams([$key => $filterParameter['value']]);
-					break;
-			}
 		}
 		return $uri->getUri();
 	}

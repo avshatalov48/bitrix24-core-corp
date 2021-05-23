@@ -199,7 +199,7 @@ class Helper
 				{
 					$cursor = PhoneTable::getList(array(
 						'filter' => array(
-							'=PHONE_NUMBER' => $number,
+							'=PHONE_NUMBER' => \CVoxImplantPhone::Normalize($number),
 						)
 					));
 					$result = ($cursor->fetch() !== false);					

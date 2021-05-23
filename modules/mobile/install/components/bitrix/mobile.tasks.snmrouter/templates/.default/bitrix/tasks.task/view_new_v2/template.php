@@ -306,15 +306,18 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 								$arResult["AUX_DATA"]["USER_FIELDS"]["UF_CRM_TASK"],
 								array("FIELD_NAME" => "data[UF_CRM_TASK]"))
 						) : null),
-						($task["GROUP_ID"] > 0 && is_array($arResult["TEMPLATE_DATA"]["GROUP"]) ?
-							array(
-								"type" => ($can["EDIT"] ? "select-group" : "group"),
-								"id" => "data[SE_PROJECT][ID]",
-								"class" => "mobile-grid-field-taskgroups",
-								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_GROUP_ID"),
-								"item" => reset($arResult["DATA"]["GROUP"]),
-								"value" => $task["GROUP_ID"]
-							) : null),
+						(
+							($task["GROUP_ID"] > 0 && is_array($templateData["GROUP"])) || $can["EDIT"]
+								? [
+									"type" => ($can["EDIT"] ? "select-group" : "group"),
+									"id" => "data[SE_PROJECT][ID]",
+									"class" => "mobile-grid-field-taskgroups",
+									"name" => GetMessage("MB_TASKS_TASK_SETTINGS_GROUP_ID"),
+									"item" => $templateData['GROUP'],
+									"value" => ($task["GROUP_ID"] > 0 ? $task["GROUP_ID"] : '0'),
+								]
+								: null
+						),
 						(!empty($task["SE_TAGS"]) ?
 							array(
 								"type" => ($can["EDIT"] ? "text" : "label"),

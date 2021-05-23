@@ -78,7 +78,7 @@ class CrmConfigExternalPluginsComponent extends \CBitrixComponent
 	{
 		if ($this->id != '')
 		{
-			if ($plugins = unserialize(Option::get('crm', 'config_external_plugins')))
+			if ($plugins = unserialize(Option::get('crm', 'config_external_plugins'), ['allowed_classes' => false]))
 			{
 				if (is_array($plugins) && isset($plugins[$this->id]))
 				{
@@ -112,7 +112,7 @@ class CrmConfigExternalPluginsComponent extends \CBitrixComponent
 			return;
 		}
 
-		$plugins = unserialize(Option::get('crm', 'config_external_plugins'));
+		$plugins = unserialize(Option::get('crm', 'config_external_plugins'), ['allowed_classes' => false]);
 		if (!is_array($plugins))
 		{
 			$plugins = array();

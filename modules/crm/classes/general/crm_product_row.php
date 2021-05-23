@@ -7,6 +7,9 @@ class CAllCrmProductRow
 	const TAX_MODE = 1;
 	const LD_TAX_MODE = 1;
 
+	public const PRODUCT_ORDER_DELIVERY = 'OrderDelivery';
+	public const PRODUCT_ORDER_DISCOUNT = 'OrderDiscount';
+
 	protected static $LAST_ERROR = '';
 	protected static $FIELD_INFOS = null;
 
@@ -14,10 +17,12 @@ class CAllCrmProductRow
 	{
 		return doubleval($exclusivePrice) * (1 + (doubleval($taxRate) / 100));
 	}
+
 	public static function CalculateExclusivePrice($inclusivePrice, $taxRate)
 	{
 		return doubleval($inclusivePrice) / (1 + (doubleval($taxRate) / 100));
 	}
+
 	// CRUD -->
 	public static function Add($arFields, $checkPerms = true, $regEvent = true)
 	{
@@ -458,6 +463,19 @@ class CAllCrmProductRow
 		);
 	}
 
+	public static function GetProductTypeName(string $type): ?string
+	{
+		if ($type == self::PRODUCT_ORDER_DISCOUNT)
+		{
+			return GetMessage('CRM_PRODUCT_ROW_DISCOUNT');
+		}
+		elseif ($type == self::PRODUCT_ORDER_DELIVERY)
+		{
+			return GetMessage('CRM_PRODUCT_ROW_DELIVERY');
+		}
+		return null;
+	}
+
 	//Check fields before ADD and UPDATE.
 	private static function CheckFields($sAction, &$arFields, $ID)
 	{
@@ -525,34 +543,24 @@ class CAllCrmProductRow
 
 	public static function ResolveOwnerTypeName($ownerType)
 	{
-		if(!is_string($ownerType))
+		if (!is_string($ownerType))
 		{
 			return '';
 		}
 
 		$ownerType = mb_strtoupper($ownerType);
-		if($ownerType === 'D')
+		$result = '';
+		switch ($ownerType)
 		{
-			return CCrmOwnerType::DealName;
+			case CCrmOwnerTypeAbbr::Deal:
+			case CCrmOwnerTypeAbbr::Order:
+			case CCrmOwnerTypeAbbr::Quote:
+			case CCrmOwnerTypeAbbr::Lead:
+			case CCrmOwnerTypeAbbr::Invoice:
+				$result = CCrmOwnerTypeAbbr::ResolveName($ownerType);
+				break;
 		}
-		if($ownerType === 'O')
-		{
-			return CCrmOwnerType::OrderName;
-		}
-		elseif($ownerType == 'Q')
-		{
-			return CCrmOwnerType::QuoteName;
-		}
-		elseif($ownerType === 'L')
-		{
-			return CCrmOwnerType::LeadName;
-		}
-		elseif($ownerType == 'I')
-		{
-			return CCrmOwnerType::InvoiceName;
-		}
-
-		return '';
+		return $result;
 	}
 
 	/**
@@ -568,15 +576,15 @@ class CAllCrmProductRow
 		$ownerType = mb_strtoupper(strval($ownerType));
 		$ownerID = intval($ownerID);
 
-		if($ownerType === 'D')
+		if($ownerType === CCrmOwnerTypeAbbr::Deal)
 		{
 			CCrmDeal::SynchronizeProductRows($ownerID, $checkPerms);
 		}
-		elseif($ownerType === CCrmQuote::OWNER_TYPE)
+		elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
 		{
 			CCrmQuote::SynchronizeProductRows($ownerID, $checkPerms);
 		}
-		elseif($ownerType === 'L')
+		elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
 		{
 			CCrmLead::SynchronizeProductRows($ownerID, $checkPerms);
 		}
@@ -754,7 +762,7 @@ class CAllCrmProductRow
 		$owner = null;
 		if (!is_array($accountContext))
 		{
-			if($ownerType === 'D')
+			if($ownerType === CCrmOwnerTypeAbbr::Deal)
 			{
 				$dbResult = CCrmDeal::GetListEx(
 					array(),
@@ -768,7 +776,7 @@ class CAllCrmProductRow
 					$owner = $dbResult->Fetch();
 				}
 			}
-			elseif($ownerType === 'L')
+			elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
 			{
 				$dbResult = CCrmLead::GetListEx(
 					array(),
@@ -782,7 +790,7 @@ class CAllCrmProductRow
 					$owner = $dbResult->Fetch();
 				}
 			}
-			elseif($ownerType === CCrmQuote::OWNER_TYPE)
+			elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
 			{
 				$dbResult = CCrmQuote::GetList(
 					array(),
@@ -1141,7 +1149,7 @@ class CAllCrmProductRow
 	protected static function UpdateTotalInfo($ownerType, $ownerID, $totalInfo = array())
 	{
 		$result = array();
-		
+
 		if (!is_array($totalInfo))
 			$totalInfo = array();
 
@@ -1157,15 +1165,15 @@ class CAllCrmProductRow
 			$owner = null;
 			if (!isset($totalInfo['CURRENCY']) || !isset($totalInfo['PERSON_TYPE_ID']))
 			{
-				if($ownerType === 'D')
+				if($ownerType === CCrmOwnerTypeAbbr::Deal)
 				{
 					$owner = CCrmDeal::GetByID($ownerID, false);
 				}
-				elseif($ownerType === CCrmQuote::OWNER_TYPE)
+				elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
 				{
 					$owner = CCrmQuote::GetByID($ownerID, false);
 				}
-				elseif($ownerType === 'L')
+				elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
 				{
 					$owner = CCrmLead::GetByID($ownerID, false);
 				}
@@ -1243,9 +1251,12 @@ class CAllCrmProductRow
 
 	public static function LoadTotalInfo($ownerType, $ownerID)
 	{
-		$result = array();
+		return static::PrepareTotalInfoFromSettings(CCrmProductRow::LoadSettings($ownerType, $ownerID));
+	}
 
-		$settings = CCrmProductRow::LoadSettings($ownerType, $ownerID);
+	public static function PrepareTotalInfoFromSettings(array $settings): array
+	{
+		$result = array();
 
 		$taxMode = isset($settings['TAX_MODE']) ? intval($settings['TAX_MODE']) : 0;
 		if ($taxMode !== self::TAX_MODE && $taxMode !== self::LD_TAX_MODE)
@@ -1263,15 +1274,15 @@ class CAllCrmProductRow
 	{
 		$result = array();
 		$owner = null;
-		if($ownerType === 'D')
+		if($ownerType === CCrmOwnerTypeAbbr::Deal)
 		{
 			$owner = CCrmDeal::GetByID($ownerID, false);
 		}
-		elseif($ownerType === CCrmQuote::OWNER_TYPE)
+		elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
 		{
 			$owner = CCrmQuote::GetByID($ownerID, false);
 		}
-		elseif($ownerType === 'L')
+		elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
 		{
 			$owner = CCrmLead::GetByID($ownerID, false);
 		}
@@ -1373,7 +1384,9 @@ class CAllCrmProductRow
 				$productName = $arPresentRow['ORIGINAL_PRODUCT_NAME'];
 			}
 
-			if($arPresentRow['PRICE'] !== $arRow['PRICE'])
+			$price = round(doubleval($arRow['PRICE']), 2);
+			$presentPrice = round(doubleval($arPresentRow['PRICE']), 2);
+			if($presentPrice !== $price)
 			{
 				// Product price was changed
 				$arEvents[] = array(
@@ -1383,7 +1396,9 @@ class CAllCrmProductRow
 				);
 			}
 
-			if($arPresentRow['QUANTITY'] !== $arRow['QUANTITY'])
+			$quantity = round(doubleval($arRow['QUANTITY']), 4);
+			$presentQuantity = round(doubleval($arPresentRow['QUANTITY']), 4);
+			if($presentQuantity !== $quantity)
 			{
 				// Product  quantity was changed
 				$arEvents[] = array(
@@ -1406,7 +1421,9 @@ class CAllCrmProductRow
 			}
 			unset($discountSum, $presentDiscountSum);
 
-			if($arPresentRow['TAX_RATE'] !== $arRow['TAX_RATE'])
+			$taxRate = round(doubleval($arRow['TAX_RATE']), 2);
+			$presentTaxRate = round(doubleval($arPresentRow['TAX_RATE']), 2);
+			if($presentTaxRate !== $taxRate)
 			{
 				// Product  tax was changed
 				$arEvents[] = array(

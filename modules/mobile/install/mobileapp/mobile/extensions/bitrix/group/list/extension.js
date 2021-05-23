@@ -22,11 +22,13 @@
 				color: "#5D5C67",
 				useLetterImage: true,
 				id: group.GROUP_ID,
+				imageUrl: (typeof group.GROUP_IMAGE === 'undefined' || group.GROUP_IMAGE == null || group.GROUP_IMAGE.length <= 0 ? undefined : encodeURI(group.GROUP_IMAGE)),
 				sortValues: {
-					name: group.GROUP_NAME
+					name: group.GROUP_NAME,
 				},
 				params: {
 					id: group.GROUP_ID,
+					extranet: (typeof group.IS_EXTRANET !== 'undefined' && group.IS_EXTRANET === 'Y')
 				},
 			}
 

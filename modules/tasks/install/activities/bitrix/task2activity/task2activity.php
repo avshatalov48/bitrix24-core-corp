@@ -149,7 +149,7 @@ class CBPTask2Activity
 				$this->WriteToTrackingService(GetMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR',
 					['#TASK_ID#' => $parentId]
 				));
-				return CBPActivityExecutionStatus::Closed;
+				return false;
 			}
 			elseif(empty($arFieldsChecked['GROUP_ID']))
 			{
@@ -224,6 +224,16 @@ class CBPTask2Activity
 			}
 		}
 
+		if (empty($arFieldsChecked['CREATED_BY']))
+		{
+			$this->WriteToTrackingService(
+				GetMessage("BPSA_CREATED_BY_ERROR"),
+				0,
+				CBPTrackingType::Error
+			);
+			return false;
+		}
+
 		$allDateFields = array_merge(
 			['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'],
 			array_keys(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser('datetime'))
@@ -263,7 +273,7 @@ class CBPTask2Activity
 			// todo: incapsulate this
 			if($e->checkOfType(TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE))
 			{
-				$errors = unserialize($e->getMessage());
+				$errors = unserialize($e->getMessage(), ['allowed_classes' => false]);
 			}
 		}
 
@@ -305,8 +315,13 @@ class CBPTask2Activity
 					{
 						$checkListItem = implode(', ', \CBPHelper::MakeArrayFlat($checkListItem));
 					}
+					$checkListItem = mb_substr(trim((string)$checkListItem), 0, 255);
+					if ($checkListItem === '')
+					{
+						continue;
+					}
 
-					\CTaskCheckListItem::add($taskItem, ['TITLE' => mb_substr((string)$checkListItem, 0, 255)]);
+					\CTaskCheckListItem::add($taskItem, ['TITLE' => $checkListItem]);
 				}
 			}
 		}
@@ -390,7 +405,7 @@ class CBPTask2Activity
 			return;
 		}
 
-		list($documentType, $documentId) = explode('_', $this->GetDocumentId()[2]);
+		list($documentType, $documentId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 
 		$documentStage = $this->getDocumentStage($documentType);
 
@@ -437,9 +452,20 @@ class CBPTask2Activity
 		{
 			case CCrmOwnerType::LeadName:
 				return $document['STATUS_ID'];
+
+			case CCrmOwnerType::Quote:
 			case CCrmOwnerType::DealName:
 				return $document['STAGE_ID'];
+
 			default:
+				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
+				if(
+					method_exists(CCrmOwnerType::class, 'isPossibleDynamicTypeId')
+					&& CCrmOwnerType::isPossibleDynamicTypeId($documentTypeId)
+				)
+				{
+					return $document['STAGE_ID'];
+				}
 				return '';
 		}
 	}

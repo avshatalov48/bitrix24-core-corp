@@ -3,6 +3,7 @@ namespace Bitrix\ImBot\Bot;
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 use Bitrix\Im;
 use Bitrix\ImBot;
 
@@ -54,6 +55,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	public const OPTION_BOT_FREE_DAYS = 'support24_free_days';
 	public const OPTION_BOT_FREE_START_DATE = 'support24_free_start_date';
 	public const OPTION_BOT_FREE_FOR_ALL = 'support24_free_for_all';
+	public const OPTION_BOT_PAID_FOR_ALL = 'support24_paid_for_all';
 	public const OPTION_BOT_FREE_NAME = 'support24_free_name';
 	public const OPTION_BOT_FREE_DESC = 'support24_free_desc';
 	public const OPTION_BOT_FREE_AVATAR = 'support24_free_avatar';
@@ -95,25 +97,25 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			return false;
 		}
 
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ID, $botId);
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_SUPPORT_LEVEL, self::getSupportLevel());
+		Option::set(self::MODULE_ID, self::OPTION_BOT_ID, $botId);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_SUPPORT_LEVEL, self::getSupportLevel());
 
 		self::updateBotProperties();
 
 		$eventManager = Main\EventManager::getInstance();
 		$eventManager->registerEventHandlerCompatible(
-			"main",
-			"OnAfterSetOption_~controller_group_name",
+			'main',
+			'OnAfterSetOption_~controller_group_name',
 			self::MODULE_ID,
 			__CLASS__,
-			"onAfterLicenseChange"/** @see ImBot\Bot\Support24::onAfterLicenseChange */
+			'onAfterLicenseChange'/** @see ImBot\Bot\Support24::onAfterLicenseChange */
 		);
 		$eventManager->registerEventHandlerCompatible(
-			"main",
-			"OnAfterUserAuthorize",
+			'main',
+			'OnAfterUserAuthorize',
 			self::MODULE_ID,
 			__CLASS__,
-			"onAfterUserAuthorize"/** @see ImBot\Bot\Support24::onAfterUserAuthorize */
+			'onAfterUserAuthorize'/** @see ImBot\Bot\Support24::onAfterUserAuthorize */
 		);
 
 		self::scheduleAction(1, self::SCHEDULE_ACTION_WELCOME, '', 10);
@@ -169,7 +171,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				$result = $result['result'];
 				if ($result)
 				{
-					Main\Config\Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$code.'_bot_id']);
+					Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$code.'_bot_id']);
 				}
 			}
 		}
@@ -183,22 +185,22 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		{
 			self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
 
-			Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ID, 0);
+			Option::set(self::MODULE_ID, self::OPTION_BOT_ID, 0);
 
 			$eventManager = Main\EventManager::getInstance();
 			$eventManager->unregisterEventHandler(
-				"main",
-				"OnAfterSetOption_~controller_group_name",
+				'main',
+				'OnAfterSetOption_~controller_group_name',
 				self::MODULE_ID,
 				__CLASS__,
-				"onAfterLicenseChange"
+				'onAfterLicenseChange'/** @see ImBot\Bot\Support24::onAfterLicenseChange */
 			);
 			$eventManager->unregisterEventHandler(
-				"main",
-				"OnAfterUserAuthorize",
+				'main',
+				'OnAfterUserAuthorize',
 				self::MODULE_ID,
 				__CLASS__,
-				"onAfterUserAuthorize"
+				'onAfterUserAuthorize'/** @see ImBot\Bot\Support24::onAfterUserAuthorize */
 			);
 		}
 
@@ -285,11 +287,11 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		{
 			if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
 			{
-				$code = Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
+				$code = Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
 			}
 			else
 			{
-				$code = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
+				$code = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 			}
 		}
 		else
@@ -322,7 +324,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function getBotId()
 	{
-		return Main\Config\Option::get('imbot', self::OPTION_BOT_ID, 0);
+		return Option::get('imbot', self::OPTION_BOT_ID, 0);
 	}
 
 	/**
@@ -332,7 +334,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_NAME : self::OPTION_BOT_PAID_NAME;
-		return Main\Config\Option::get('imbot', $optionName, '');
+		return Option::get('imbot', $optionName, '');
 	}
 
 	/**
@@ -342,7 +344,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_DESC : self::OPTION_BOT_PAID_DESC;
-		return Main\Config\Option::get('imbot', $optionName, '');
+		return Option::get('imbot', $optionName, '');
 	}
 
 	/**
@@ -352,7 +354,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_AVATAR : self::OPTION_BOT_PAID_AVATAR;
-		return Main\Config\Option::get('imbot', $optionName, '');
+		return Option::get('imbot', $optionName, '');
 	}
 
 	/**
@@ -376,7 +378,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 				self::OPTION_BOT_FREE_MENU : self::OPTION_BOT_PAID_MENU;
 
-			$json = Main\Config\Option::get('imbot', $optionName, '');
+			$json = Option::get('imbot', $optionName, '');
 
 			$structure = [];
 			if ($json)
@@ -399,7 +401,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function getFreeSupportLifeTime()
 	{
-		return (int)Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_DAYS, 16);
+		return (int)Option::get('imbot', self::OPTION_BOT_FREE_DAYS, 16);
 	}
 
 	/**
@@ -407,10 +409,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function isFreeSupportLifeTimeExpired()
 	{
-		$generationDate = (int)Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
+		$generationDate = (int)Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
 		if ($generationDate == 0)
 		{
-			Main\Config\Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
+			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
 			return true;
 		}
 
@@ -442,7 +444,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function isActiveFreeSupportForAll()
 	{
-		return (bool)Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_FOR_ALL, false);
+		return (bool)Option::get('imbot', self::OPTION_BOT_FREE_FOR_ALL, false);
 	}
 
 	/**
@@ -589,7 +591,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function isActivePaidSupport()
 	{
-		return (bool)Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_ACTIVE, false);
+		return (bool)Option::get('imbot', self::OPTION_BOT_PAID_ACTIVE, false);
 	}
 
 	/**
@@ -597,7 +599,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function isActivePaidSupportForAll()
 	{
-		return (bool)Main\Config\Option::get('imbot', 'support24_paid_for_all', false);
+		return (bool)Option::get('imbot', self::OPTION_BOT_PAID_FOR_ALL, false);
 	}
 
 	/**
@@ -806,11 +808,11 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	{
 		if (!empty($messageFields['DIALOG_ID']))
 		{
-			self::startDialogSession([
-				'BOT_ID' => static::getBotId(),
-				'DIALOG_ID' => (int)$messageFields['DIALOG_ID'],
-				'GREETING_SHOWN' => 'Y',
-			]);
+				self::startDialogSession([
+					'BOT_ID' => static::getBotId(),
+					'DIALOG_ID' => (int)$messageFields['DIALOG_ID'],
+					'GREETING_SHOWN' => 'Y',
+				]);
 			self::stopMenuTrack((int)$messageFields['DIALOG_ID']);
 		}
 
@@ -899,42 +901,42 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		if ($allowShowMenu)
 		{
 			if (!self::isMenuTrackFinished((int)$messageFields['FROM_USER_ID']))
+		{
+			$prevMenuState = self::getMenuState((int)$messageFields['FROM_USER_ID']);
+			$lastMenuItemId = is_array($prevMenuState['track']) ? end($prevMenuState['track']) : null;
+
+			if (!$lastMenuItemId && !empty($warningRestrictionMessage))
 			{
-				$prevMenuState = self::getMenuState((int)$messageFields['FROM_USER_ID']);
-				$lastMenuItemId = is_array($prevMenuState['track']) ? end($prevMenuState['track']) : null;
-
-				if (!$lastMenuItemId && !empty($warningRestrictionMessage))
-				{
-					// show restriction warning message first
+				// show restriction warning message first
 					self::sendMessage(array(
-						'DIALOG_ID' => $messageFields['FROM_USER_ID'],
-						'MESSAGE' => $warningRestrictionMessage,
-						'SYSTEM' => 'N',
-						'URL_PREVIEW' => 'N',
-					));
-				}
+					'DIALOG_ID' => $messageFields['FROM_USER_ID'],
+					'MESSAGE' => $warningRestrictionMessage,
+					'SYSTEM' => 'N',
+					'URL_PREVIEW' => 'N',
+				));
+			}
 
-				if ($lastMenuItemId !== self::COMMAND_MENU_EXIT)
-				{
-					$menuState = self::showMenu(
-						[
-							'BOT_ID' => self::getBotId(),
-							'DIALOG_ID' => $messageFields['FROM_USER_ID'],
-						],
-						true
-					);
+			if ($lastMenuItemId !== self::COMMAND_MENU_EXIT)
+			{
+				$menuState = self::showMenu(
+					[
+						'BOT_ID' => self::getBotId(),
+						'DIALOG_ID' => $messageFields['FROM_USER_ID'],
+					],
+					true
+				);
 					$menuState['messages'][] = $messageId;
-					self::saveMenuState(
-						(int)$messageFields['FROM_USER_ID'],
-						$menuState
-					);
+				self::saveMenuState(
+					(int)$messageFields['FROM_USER_ID'],
+					$menuState
+				);
 
 					if (!self::isMenuTrackFinished((int)$messageFields['FROM_USER_ID'], $menuState))
-					{
-						return false;//continue menu travel
-					}
+				{
+					return false;//continue menu travel
 				}
 			}
+		}
 		}
 		elseif (!empty($warningRestrictionMessage))
 		{
@@ -1116,11 +1118,15 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	/**
 	 * Checks if starting message at this dialog has been sent.
 	 *
-	 * @param array $params <pre>[
+	 * @param array $params
+	 * <pre>
+	 * [
 	 * 	(int) BOT_ID Bot id.
 	 * 	(int) DIALOG_ID Dialg id.
 	 * 	(int) USER_ID User id.
-	 * ]</pre>
+	 * ]
+	 * </pre>
+	 *
 	 * @return bool
 	 */
 	public static function allowSendStartMessage(array $params)
@@ -1178,56 +1184,64 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	public static function onAfterLicenseChange()
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!Main\Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (!self::getBotId())
+		{
 			return false;
+		}
 
-		$previousDemoState = Main\Config\Option::get('imbot', self::OPTION_BOT_DEMO_ACTIVE, false);
+		$previousDemoState = Option::get('imbot', self::OPTION_BOT_DEMO_ACTIVE, false);
 
-		$previousSupportLevel = Main\Config\Option::get('imbot', self::OPTION_BOT_SUPPORT_LEVEL, "free");
+		$previousSupportLevel = Option::get('imbot', self::OPTION_BOT_SUPPORT_LEVEL, self::SUPPORT_LEVEL_FREE);
 		$currentSupportLevel = self::getSupportLevel();
 
 		$isPreviousSupportLevelPartner = $previousSupportLevel === self::SUPPORT_LEVEL_PARTNER;
 
+		$previousLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
+		$previousZone = \CBitrix24::getPortalZone(\CBitrix24::LICENSE_TYPE_PREVIOUS);
+		$currentZone = \CBitrix24::getPortalZone(\CBitrix24::LICENSE_TYPE_CURRENT);
+
 		$currentDemoState = $currentLicence == 'demo';
-		Main\Config\Option::set('imbot', self::OPTION_BOT_DEMO_ACTIVE, $currentDemoState);
+		Option::set('imbot', self::OPTION_BOT_DEMO_ACTIVE, $currentDemoState);
 
 		$isSupportLevelChange = $previousSupportLevel != $currentSupportLevel;
 		$isDemoLevelChange = $previousDemoState != $currentDemoState;
+		$isZoneChanges = $previousZone != $currentZone;
 
-		if (!$isSupportLevelChange && !$isDemoLevelChange)
+		if (!$isSupportLevelChange && !$isDemoLevelChange && !$isZoneChanges)
 		{
 			return true;
 		}
 
 		if ($isSupportLevelChange)
 		{
-			Main\Config\Option::set('imbot', self::OPTION_BOT_SUPPORT_LEVEL, $currentSupportLevel);
+			Option::set('imbot', self::OPTION_BOT_SUPPORT_LEVEL, $currentSupportLevel);
 		}
-
-		$previousLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
-		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
 		if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
 		{
-			$previousCode = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
+			$previousCode = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
 		}
 		else
 		{
-			$previousCode = Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
+			$previousCode = Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 		}
 
 		if ($isPreviousSupportLevelPartner)
 		{
-			$previousCode = Main\Config\Option::get("bitrix24", "partner_ol", "");
+			$previousCode = Option::get("bitrix24", "partner_ol", "");
 		}
 
 		if ($isSupportLevelChange)
@@ -1235,9 +1249,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
 		}
 
-		if ($currentLicence == 'demo')
+		if ($currentDemoState)
 		{
-			Main\Config\Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
+			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
 		}
 
 		self::updateBotProperties();
@@ -1246,10 +1260,11 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			'BUSINESS_USERS' => self::getBusinessUsers(),
 			'IS_SUPPORT_LEVEL_CHANGE' => $isSupportLevelChange,
 			'IS_DEMO_LEVEL_CHANGE' => $isDemoLevelChange,
+			'IS_SUPPORT_CODE_CHANGE' => $isZoneChanges,
 		]);
 
-		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Option::set('imbot', "network_".$previousCode."_bot_id", 0);
+		Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
 
 		$http = self::instanceHttpClient();
 		$http->query(
@@ -1279,17 +1294,19 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	public static function onAfterSupportCodeChange($previousFreeCode = '', $previousPaidCode = '')
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!Main\Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (!self::getBotId())
+		{
 			return false;
-
-		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
-
-		$previousSupportLevel = self::getSupportLevel() == self::SUPPORT_LEVEL_PAID? self::SUPPORT_LEVEL_FREE: self::SUPPORT_LEVEL_PAID;
+		}
 
 		if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
 		{
@@ -1298,8 +1315,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				return false;
 			}
 
+			$previousSupportLevel = self::SUPPORT_LEVEL_FREE;
 			$previousCode = $previousPaidCode;
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
 		}
 		else
 		{
@@ -1308,8 +1326,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				return false;
 			}
 
+			$previousSupportLevel = self::SUPPORT_LEVEL_PAID;
 			$previousCode = $previousFreeCode;
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 		}
 
 		self::updateBotProperties();
@@ -1319,8 +1338,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			'IS_SUPPORT_CODE_CHANGE' => true,
 		]);
 
-		Main\Config\Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		Main\Config\Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Option::set('imbot', "network_".$previousCode."_bot_id", 0);
+		Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+
+		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
 		$http = self::instanceHttpClient();
 		$http->query(
@@ -1593,7 +1614,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 	/**
 	 * Sends finalize session notification.
-	 * @param array $params <pre>
+	 * @param array $params Command arguments.
+	 * <pre>
 	 * [
 	 * 	(string) MESSAGE
 	 * ]
@@ -1616,11 +1638,11 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 		if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
 		{
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_PAID_CODE, "");
 		}
 		else
 		{
-			$currentCode = Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
+			$currentCode = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 		}
 
 		$message = $params['MESSAGE'] ?? '';
@@ -1721,8 +1743,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$botCache = Im\Bot::getCache(self::getBotId());
 		if ($botCache['APP_ID'] !== self::getBotCode())
 		{
-			Main\Config\Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id", 0);
-			Main\Config\Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.self::getBotCode()."_bot_id", self::getBotId());
+			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id", 0);
+			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.self::getBotCode()."_bot_id", self::getBotId());
 		}
 
 		$botParams = [
@@ -1757,7 +1779,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 * Sends message to client.
 	 * @inheritDoc
 	 *
-	 * @param array $messageFields <pre>
+	 * @param array $messageFields Command arguments.
+	 * <pre>
 	 * [
 	 * 	(int) TO_USER_ID
 	 * 	(int) FROM_USER_ID
@@ -1768,7 +1791,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 * 	(array | Im\Bot\Keyboard) KEYBOARD
 	 * 	(string) SYSTEM - N|Y
 	 * 	(string) URL_PREVIEW  - N|Y
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @return array
 	 */
@@ -1978,7 +2002,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				return true;
 			}
 
-			$generationDate = (int)Main\Config\Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
+			$generationDate = (int)Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
 			$currentDay = floor((time() - $generationDate) / 86400) + 1;
 
 			self::scheduleAction($userId, self::SCHEDULE_ACTION_INVOLVEMENT, '', 24*60);
@@ -2119,7 +2143,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			self::OPTION_BOT_FREE_MESSAGES : self::OPTION_BOT_PAID_MESSAGES;
 
 		$messages = unserialize(
-			Main\Config\Option::get('imbot', $optionCode, "a:0:{}"),
+			Option::get('imbot', $optionCode, "a:0:{}"),
 			['allowed_classes' => false]
 		);
 

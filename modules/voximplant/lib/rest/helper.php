@@ -20,6 +20,7 @@ use Bitrix\Voximplant\Model\CallTable;
 use Bitrix\Voximplant\HttpClientFactory;
 use Bitrix\Voximplant\Integration\Im;
 use Bitrix\Voximplant\Model\ExternalLineTable;
+use Bitrix\Voximplant\Model\StatisticMissedTable;
 use Bitrix\Voximplant\PhoneTable;
 use Bitrix\Voximplant\Result;
 use Bitrix\Voximplant\Security;
@@ -499,6 +500,56 @@ class Helper
 			return $result;
 		}
 		$statisticRecord['ID'] = $insertResult->getId();
+
+		//recording a missed call
+		if (
+			$statisticRecord["CALL_FAILED_CODE"] == 304
+			&& (
+				$call->getIncoming() == \CVoxImplantMain::CALL_INCOMING
+				|| $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT
+			)
+		)
+		{
+			$missedCall = [
+				'ID' => $statisticRecord['ID'],
+				'CALL_START_DATE' => $statisticRecord['CALL_START_DATE'],
+				'PHONE_NUMBER' => $statisticRecord['PHONE_NUMBER'],
+				'PORTAL_USER_ID' => $statisticRecord['PORTAL_USER_ID']
+			];
+
+			$insertMissedCallResult = StatisticMissedTable::add($missedCall);
+			if(!$insertMissedCallResult->isSuccess())
+			{
+				$result->addError(new Error('Unexpected database error'));
+				$result->addErrors($insertMissedCallResult->getErrors());
+				return $result;
+			}
+		} //if our call answering any missed calls
+		elseif (
+			$statisticRecord["CALL_FAILED_CODE"] == 200
+			&& $call->getIncoming() == \CVoxImplantMain::CALL_OUTGOING
+		)
+		{
+			$missedCalls = StatisticMissedTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=PHONE_NUMBER' => $statisticRecord['PHONE_NUMBER'],
+					'=CALLBACK_ID' => null
+				],
+			])->fetchAll();
+
+			if ($missedCalls)
+			{
+				foreach ($missedCalls as $missedCall)
+				{
+					StatisticMissedTable::update($missedCall['ID'], [
+							'CALLBACK_ID' => $statisticRecord['ID'],
+							'CALLBACK_CALL_START_DATE' => $statisticRecord['CALL_START_DATE']
+						]
+					);
+				}
+			}
+		}
 
 		$hasRecord = ($fields['RECORD_URL'] != '');
 		if($hasRecord)

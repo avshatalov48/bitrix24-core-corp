@@ -3,11 +3,15 @@ import {config} from './config';
 import {Vue} from 'ui.vue';
 import {Vuex} from 'ui.vue.vuex';
 import {Manager} from 'salescenter.manager';
+import {ProductForm} from 'catalog.product-form';
 import "currency";
 
 import "./bx-salescenter-app-add-payment-product";
 import {MixinTemplatesType} from "./components/deal-receiving-payment/templates-type-mixin";
 import {BasketItemAddBlock} from "./components/basket-item-add";
+import {Runtime, Type, Text} from "main.core";
+import {EventEmitter} from "main.core.events";
+import type {BaseEvent} from "main.core.events";
 
 Vue.component(config.templateAddPaymentName,
 {
@@ -24,56 +28,146 @@ Vue.component(config.templateAddPaymentName,
 		if(parseInt(this.$root.$app.options.associatedEntityId)>0)
 		{
 			this.$root.$emit("on-change-editable", false);
+			if (this.productForm)
+			{
+				this.productForm.setEditable(false);
+			}
+		}
+		if (this.productForm)
+		{
+			const formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
+			formWrapper.appendChild(this.productForm.layout());
 		}
 	},
 	created()
 	{
+		this.refreshId = null;
 		this.currencySymbol = this.$root.$app.options.currencySymbol;
 
 		const defaultCurrency = this.$root.$app.options.currencyCode || '';
 
 		this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
-
-		if (BX.type.isArray(this.$root.$app.options.basket) && this.$root.$app.options.basket.length>0)
+		if (Type.isArray(this.$root.$app.options.basket))
 		{
-			this.$root.$app.options.basket.forEach((fields) => {
-				this.$store.dispatch('orderCreation/changeBasketItem', {
-					index : fields.sort,
-					fields : fields
-				});
+			const fields = [];
+			this.$root.$app.options.basket.forEach((item) => {
+				fields.push(item.fields);
 			});
-
-			if (typeof (this.$root.$app.options.totals) !== "undefined")
-			{
-				this.$store.commit('orderCreation/setTotal', {
-					sum: this.$root.$app.options.totals.sum,
-					discount: this.$root.$app.options.totals.discount,
-					result: this.$root.$app.options.totals.result,
-					resultNumeric: parseFloat(this.$root.$app.options.totals.result),
-				});
-			}
+			this.$store.commit('orderCreation/setBasket', fields);
 		}
-		else
-		{
-			this.addBasketItemForm();
 
-			this.$store.commit('orderCreation/setTotal', {
-				sum: 0,
-				discount: 0,
-				result: 0,
-			});
-		}
+		this.productForm = new ProductForm({
+			currencySymbol: this.currencySymbol,
+			currency: defaultCurrency,
+			iblockId: this.$root.$app.options.catalogIblockId,
+			basePriceId: this.$root.$app.options.basePriceId,
+			basket: Type.isArray(this.$root.$app.options.basket) ? this.$root.$app.options.basket : [],
+			totals: this.$root.$app.options.totals,
+			taxList: this.$root.$app.options.vatList,
+			measures: this.$root.$app.options.measures,
+			showDiscountBlock: this.$root.$app.options.showProductDiscounts,
+			showTaxBlock: this.$root.$app.options.showProductTaxes,
+		});
+
+		this.currencySymbol = this.$root.$app.options.currencySymbol;
+
+		const onChangeWithDebounce = Runtime.debounce(this.onBasketChange, 500, this);
+		EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', onChangeWithDebounce);
 
 		if (this.$root.$app.options.showPaySystemSettingBanner)
 		{
 			this.$store.commit('orderCreation/showBanner');
 		}
+
+		if (Type.isArray(this.$root.$app.options.basket))
+		{
+			this.$store.commit('orderCreation/enableSubmit');
+		}
 	},
 	methods:
 	{
-		refreshBasket()
+		onBasketChange(event: BaseEvent)
 		{
-			this.$store.dispatch('orderCreation/refreshBasket');
+			const data = event.getData();
+			if (!Type.isArray(data.basket))
+			{
+				return;
+			}
+			const fields = [];
+			data.basket.forEach((item) => {
+				fields.push(item.fields);
+			});
+			this.$store.commit('orderCreation/setBasket', fields);
+
+			if (data.basket.length <= 0)
+			{
+				this.$store.commit('orderCreation/disableSubmit');
+				return;
+			}
+
+			this.$store.commit('orderCreation/enableSubmit');
+
+			const requestId = Text.getRandom(20);
+			this.refreshId = requestId;
+			BX.ajax.runAction(
+				"salescenter.api.order.refreshBasket",
+				{
+					data: {basketItems: fields}
+				}
+			)
+			.then((result) => {
+				if (this.refreshId !== requestId)
+				{
+					return;
+				}
+				
+				const data = BX.prop.getObject(result,"data", {});
+				this.processRefreshRequest({
+					total: BX.prop.getObject(
+						data,
+						"total",
+						{
+							sum: 0,
+							discount: 0,
+							result: 0,
+							resultNumeric: 0,
+						}
+					),
+					basket: BX.prop.get(data,"items",[])
+				});
+			})
+			.catch((result) => {
+				const data = BX.prop.getObject(result,"data", {});
+				this.processRefreshRequest({
+					errors: BX.prop.get(result,"errors", []),
+					basket: BX.prop.get(data,"items",[])
+				});
+			});
+		},
+		processRefreshRequest(data)
+		{
+			if (this.productForm)
+			{
+				this.productForm.setData(data);
+				if (Type.isArray(data.basket))
+				{
+					this.$store.commit('orderCreation/setBasket', data.basket);
+				}
+				if (Type.isObject(data.total))
+				{
+					this.$store.commit('orderCreation/setTotal', data.total);
+				}
+			}
+		},
+		refreshBasket(timeout = 300)
+		{
+			this.$root.$app.startProgress();
+			this.$store.dispatch('orderCreation/refreshBasket', {
+				timeout,
+				onsuccess: () => {
+					this.$root.$app.stopProgress();
+				},
+			});
 		},
 		changeBasketItem(item)
 		{
@@ -91,7 +185,10 @@ Vue.component(config.templateAddPaymentName,
 		},
 		addBasketItemForm()
 		{
-			this.$store.commit('orderCreation/addBasketItem');
+			if (this.productForm)
+			{
+				this.productForm.addProduct();
+			}
 		},
 		hideBanner()
 		{
@@ -137,55 +234,8 @@ Vue.component(config.templateAddPaymentName,
 	template: `
 	<div class="salescenter-app-payment-side">
 		<div class="salescenter-app-page-content">
-			<div v-for="(item, index) in order.basket" class="salescenter-app-form-wrapper" :key="index">
-				<${config.templateAddPaymentProductName} 
-					:basketItem="item" 
-					:basketItemIndex="index"  
-					:countItems="countItems"
-					:selectedProductIds="order.selectedProducts"
-					@changeBasketItem="changeBasketItem" 
-					@removeItem="removeItem" 
-					@refreshBasket="refreshBasket" 
-				/>
-			</div>
-			<div class="salescenter-app-result-container"  style="padding-right: 15px">
-				<table class="salescenter-app-payment-side-table">
-					<tr>
-						<td colspan="2">
-							<component :is="'basket-item-add-block'" v-if="editable"
-								v-on:on-refresh-basket="refreshBasket"
-								v-on:on-add-basket-item="addBasketItemForm"
-								v-on:on-change-basket-item="changeBasketItem"
-							>
-								<template v-slot:product-add-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT}}</template>
-								<template v-slot:product-add-from-catalog-title>{{localize.SALESCENTER_PRODUCT_ADD_PRODUCT_FROM_CATALOG}}</template>
-							</component>
-						</td>
-					</tr>
-					<tr style="text-align: right;">
-						<td>{{localize.SALESCENTER_PRODUCT_TOTAL_SUM}}:</td>
-						<td>
-							<span :class="total.result !== total.sum ? 'salescenter-app-text-line-through' : ''" v-html="total.sum"></span>
-							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
-						</td>
-					</tr>
-					<tr style="text-align: right;">
-						<td class="salescenter-app-result-grid-benefit salescenter-app-payment-side-table-td-border">{{localize.SALESCENTER_PRODUCT_TOTAL_DISCOUNT}}:</td>
-						<td class="salescenter-app-payment-side-table-td-border">
-							<span v-html="total.discount"></span>
-							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
-						</td>
-					</tr>
-					<tr style="text-align: right;">
-						<td class="salescenter-app-result-grid-total-big">{{localize.SALESCENTER_PRODUCT_PRODUCTS_PRICE}}:</td>
-						<td class="salescenter-app-result-grid-total-big">
-							<span v-html="total.result"></span>
-							<span class="salescenter-app-result-grid-item-currency-symbol" v-html="currencySymbol"></span>
-						</td>
-					</tr>
-				</table>
-			</div>
-			<div class="salescenter-app-banner"  v-if="isShowedBanner">
+			<div class="salescenter-app-form-wrapper"></div>
+			<div class="salescenter-app-banner" v-if="isShowedBanner">
 				<div class="salescenter-app-banner-inner">
 					<div class="salescenter-app-banner-title">{{localize.SALESCENTER_BANNER_TITLE}}</div>
 					<div class="salescenter-app-banner-content">
@@ -198,7 +248,7 @@ Vue.component(config.templateAddPaymentName,
 					<div class="salescenter-app-banner-close" @click="hideBanner"></div>
 				</div>
 			</div>
-		</div>
+		</div>		
 	</div>
 `,
 });

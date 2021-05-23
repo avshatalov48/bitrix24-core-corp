@@ -153,7 +153,7 @@ class CCrmFileProxy
 		}
 		elseif(is_string($event['FILES']) && $event['FILES'] !== '')
 		{
-			$eventFiles = unserialize($event['FILES']);
+			$eventFiles = unserialize($event['FILES'], ['allowed_classes' => false]);
 		}
 		else
 		{

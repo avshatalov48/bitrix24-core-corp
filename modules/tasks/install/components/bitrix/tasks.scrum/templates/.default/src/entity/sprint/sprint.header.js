@@ -16,6 +16,8 @@ export class SprintHeader extends EventEmitter
 
 		this.sprint = sprint;
 
+		this.node = null;
+
 		this.statsHeader = null;
 		this.sprintDate = null;
 	}
@@ -41,8 +43,10 @@ export class SprintHeader extends EventEmitter
 		});
 	}
 
-	initStyle()
+	initStyle(sprint: Sprint)
 	{
+		this.sprint = sprint;
+
 		if (this.sprint.isActive())
 		{
 			this.headerClass = 'tasks-scrum-sprint-header-active';
@@ -53,6 +57,7 @@ export class SprintHeader extends EventEmitter
 		{
 			this.headerClass = 'tasks-scrum-sprint-header-completed';
 			Dom.remove(this.buttonNode);
+			this.sprint.hideContent();
 		}
 		else if (this.sprint.isPlanned())
 		{
@@ -61,31 +66,32 @@ export class SprintHeader extends EventEmitter
 			this.buttonText = Loc.getMessage('TASKS_SCRUM_SPRINT_TITLE_START_BUTTON');
 		}
 
-		if (this.headerNode)
+		if (this.node)
 		{
+			this.addHeaderStats(StatsHeaderBuilder.build(this.sprint));
+			this.addHeaderDate(new SprintDate(this.sprint));
+
 			if (this.sprint.isDisabled())
 			{
-				Dom.remove(this.headerNode.querySelector('.tasks-scrum-sprint-header-remove'));
+				Dom.remove(this.node.querySelector('.tasks-scrum-sprint-header-remove'));
 			}
 
-			this.headerNode.className = '';
-			Dom.addClass(this.headerNode, 'tasks-scrum-sprint-header ' + this.headerClass);
+			this.node.className = '';
+			Dom.addClass(this.node, 'tasks-scrum-sprint-header ' + this.headerClass);
 
 			const button = this.buttonNode.querySelector('button');
 			button.className = '';
 			Dom.addClass(button, this.buttonClass);
 			button.firstChild.replaceWith(this.buttonText);
+
+			Dom.replace(this.node.querySelector('.tasks-scrum-sprint-header-params'), this.renderParams());
 		}
 	}
 
 	render(): HTMLElement
 	{
-		this.headerNodeId = 'tasks-scrum-sprint-header-' + this.sprint.getId();
-
-		const tickAngleClass = (this.sprint.isCompleted() ? 'ui-btn-icon-angle-down' : 'ui-btn-icon-angle-up');
-
-		return Tag.render`
-			<div id="${this.headerNodeId}" class="tasks-scrum-sprint-header ${this.headerClass}">
+		this.node = Tag.render`
+			<div class="tasks-scrum-sprint-header ${this.headerClass}">
 				${this.renderDragnDrop()}
 				<div class="tasks-scrum-sprint-header-name-container">
 					<div class="tasks-scrum-sprint-header-name">
@@ -94,18 +100,29 @@ export class SprintHeader extends EventEmitter
 				</div>
 				<div class="tasks-scrum-sprint-header-edit"></div>
 				${this.renderRemove()}
-				<div class="tasks-scrum-sprint-header-params">
-					${this.renderStatsHeader()}
-					${this.sprintDate ? this.sprintDate.createDate(
-						this.sprint.getDateStart(), this.sprint.getDateEnd()) : ''}
-					${this.createButton()}
-					<div class="tasks-scrum-sprint-header-tick">
-						<div class="ui-btn ui-btn-sm ui-btn-light ${tickAngleClass}"></div>
-					</div>
+				${this.renderParams()}
+			</div>
+		`;
+
+		return this.node;
+	};
+
+	renderParams(): HTMLElement
+	{
+		const tickAngleClass = (this.sprint.isCompleted() ? 'ui-btn-icon-angle-down' : 'ui-btn-icon-angle-up');
+
+		return Tag.render`
+			<div class="tasks-scrum-sprint-header-params">
+				${this.renderStatsHeader()}
+				${this.sprintDate ? this.sprintDate.createDate(
+				this.sprint.getDateStart(), this.sprint.getDateEnd()) : ''}
+				${this.createButton()}
+				<div class="tasks-scrum-sprint-header-tick">
+					<div class="ui-btn ui-btn-sm ui-btn-light ${tickAngleClass}"></div>
 				</div>
 			</div>
 		`;
-	};
+	}
 
 	getStatsHeader(): StatsHeader
 	{
@@ -139,6 +156,14 @@ export class SprintHeader extends EventEmitter
 	renderStatsHeader(): HTMLElement
 	{
 		return (this.statsHeader ? this.statsHeader.render() : '');
+	}
+
+	updateNameNode(name: string)
+	{
+		if (this.node)
+		{
+			this.node.querySelector('.tasks-scrum-sprint-header-name').textContent = Text.encode(name);
+		}
 	}
 
 	updateStatsHeader()
@@ -181,21 +206,19 @@ export class SprintHeader extends EventEmitter
 
 	onAfterAppend()
 	{
-		this.headerNode = document.getElementById(this.headerNodeId);
-
 		if (!this.sprint.isCompleted())
 		{
 			this.buttonNode = document.getElementById(this.buttonNodeId);
 			Event.bind(this.buttonNode, 'click', this.onButtonClick.bind(this));
 		}
 
-		const nameNode = this.headerNode.querySelector('.tasks-scrum-sprint-header-name-container');
-		const editButtonNode = this.headerNode.querySelector('.tasks-scrum-sprint-header-edit');
+		const nameNode = this.node.querySelector('.tasks-scrum-sprint-header-name-container');
+		const editButtonNode = this.node.querySelector('.tasks-scrum-sprint-header-edit');
 		Event.bind(editButtonNode, 'click', () => this.emit('changeName', nameNode));
 
 		if (this.sprint.isPlanned())
 		{
-			const removeNode = this.headerNode.querySelector('.tasks-scrum-sprint-header-remove');
+			const removeNode = this.node.querySelector('.tasks-scrum-sprint-header-remove');
 			Event.bind(removeNode, 'click', () => {
 				MessageBox.confirm(
 					Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_SPRINT'),
@@ -208,7 +231,7 @@ export class SprintHeader extends EventEmitter
 			});
 		}
 
-		const tickButtonNode = this.headerNode.querySelector('.tasks-scrum-sprint-header-tick');
+		const tickButtonNode = this.node.querySelector('.tasks-scrum-sprint-header-tick');
 		Event.bind(tickButtonNode, 'click', () => {
 			tickButtonNode.firstElementChild.classList.toggle('ui-btn-icon-angle-up');
 			tickButtonNode.firstElementChild.classList.toggle('ui-btn-icon-angle-down');

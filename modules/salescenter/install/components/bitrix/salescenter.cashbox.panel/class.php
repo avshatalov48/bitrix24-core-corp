@@ -139,6 +139,66 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 						'recommendation' => true,
 					],
 				],
+				[
+					'id' => 'businessru-atol',
+					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_ATOL'),
+					'image' => $this->getImagePath() . 'businessru_atol.svg',
+					'itemSelectedColor' => '#FF142C',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_atol_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
+						'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_ATOL,
+						'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+							'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_ATOL,
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+						'recommendation' => false,
+					],
+				],
+				[
+					'id' => 'businessru-shtrihm',
+					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_SHTRIHM'),
+					'image' => $this->getImagePath() . 'businessru_shtrihm.svg',
+					'itemSelectedColor' => '#8F7B66',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_shtrihm_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
+						'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_SHTRIHM,
+						'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+							'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_SHTRIHM,
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+						'recommendation' => false,
+					],
+				],
+				[
+					'id' => 'businessru-evotor',
+					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_EVOTOR'),
+					'image' => $this->getImagePath() . 'businessru_evotor.svg',
+					'itemSelectedColor' => '#E44A21',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_evotor_s.svg',
+					'itemSelected' => false,
+					'data' => [
+						'type' => 'cashbox',
+						'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_EVOTOR,
+						'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => '\\'.Sale\Cashbox\CashboxBusinessRu::class,
+							'kkm-id' => Sale\Cashbox\CashboxBusinessRu::SUPPORTED_KKM_EVOTOR,
+							'preview' => 'y',
+						]),
+						'showMenu' => false,
+						'recommendation' => false,
+					],
+				],
 			]);
 		}
 		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))
@@ -168,7 +228,6 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			$restHandlerDescription = [
 				'id' => $restHandlerCode,
 				'title' => $restHandlerConfig['NAME'],
-				// TODO: image
 				'image' => $this->getImagePath().'offline.svg',
 				'itemSelectedColor' => '#359FD0',
 				'itemSelectedImage' => $this->getImagePath().'offline_s.svg',
@@ -189,56 +248,71 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 		}
 
 		$filter = SaleManager::getInstance()->getCashboxFilter(false);
-		$cashboxList = Sale\Cashbox\Internals\CashboxTable::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'HANDLER', 'SETTINGS'],
+		$dbRes = Sale\Cashbox\Internals\CashboxTable::getList([
+			'select' => ['ID', 'ACTIVE', 'NAME', 'KKM_ID', 'HANDLER', 'SETTINGS'],
 			'filter' => $filter,
 		]);
-		while($cashbox = $cashboxList->fetch())
+
+		while($cashbox = $dbRes->fetch())
 		{
-			if(!isset($cashboxes[$cashbox['HANDLER']]))
+			$code = $cashbox['HANDLER']::getCode();
+			if ($cashbox['KKM_ID'])
 			{
-				$cashboxes[$cashbox['HANDLER']] = [];
+				$code .= '_'.$cashbox['KKM_ID'];
 			}
 
-			$isRestCashbox = $cashbox['HANDLER'] === '\Bitrix\Sale\Cashbox\CashboxRest';
+			if(!isset($cashboxes[$code]))
+			{
+				$cashboxes[$code] = [];
+			}
+
+			$isRestCashbox = $cashbox['HANDLER'] === '\\'.Sale\Cashbox\CashboxRest::class;
 			if ($isRestCashbox)
 			{
 				$restHandlerCode = $cashbox['SETTINGS']['REST']['REST_CODE'];
-				if(!isset($cashboxes[$cashbox['HANDLER']][$restHandlerCode]))
+				if(!isset($cashboxes[$code][$restHandlerCode]))
 				{
-					$cashboxes[$cashbox['HANDLER']][$restHandlerCode] = [];
+					$cashboxes[$code][$restHandlerCode] = [];
 				}
-				$cashboxes[$cashbox['HANDLER']][$restHandlerCode][] = $cashbox;
+
+				$cashboxes[$code][$restHandlerCode][] = $cashbox;
 			}
 			else
 			{
-				$cashboxes[$cashbox['HANDLER']][] = $cashbox;
+				$cashboxes[$code][] = $cashbox;
 			}
 		}
 
 		foreach($cashboxDescriptions as &$cashboxDescription)
 		{
-			$isRestCashbox = $cashboxDescription['data']['handler'] === '\\Bitrix\\Sale\\Cashbox\\CashboxRest';
+			$isRestCashbox = $cashboxDescription['data']['handler'] === '\\'.Sale\Cashbox\CashboxRest::class;
+
+			$code = $cashboxDescription['data']['handler']::getCode();
+			if (isset($cashboxDescription['data']['kkm-id']))
+			{
+				$code .= '_'.$cashboxDescription['data']['kkm-id'];
+			}
 
 			if ($isRestCashbox)
 			{
 				$restHandlerCode = $cashboxDescription['id'];
-				$handlerCashboxes = $cashboxes[$cashboxDescription['data']['handler']][$restHandlerCode];
+				$handlerCashboxes = $cashboxes[$code][$restHandlerCode];
 			}
 			else
 			{
-				$handlerCashboxes = $cashboxes[$cashboxDescription['data']['handler']];
+				$handlerCashboxes = $cashboxes[$code];
 			}
 
-			if(isset($handlerCashboxes) && is_array($handlerCashboxes))
+			if (isset($handlerCashboxes) && is_array($handlerCashboxes))
 			{
-				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($handlerCashboxes);
+				$cashboxDescription['data']['menuItems'] = $this->getCashboxMenu($cashboxDescription['data'], $handlerCashboxes);
 				foreach($handlerCashboxes as $handlerCashbox)
 				{
 					if($handlerCashbox['ACTIVE'] === 'Y')
 					{
 						$cashboxDescription['itemSelected'] = true;
 					}
+
 					$cashboxDescription['data']['showMenu'] = true;
 				}
 			}
@@ -277,7 +351,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 	 * @param array $cashboxes
 	 * @return array
 	 */
-	private function getCashboxMenu(array $cashboxes): array
+	private function getCashboxMenu(array $cashboxData, array $cashboxes): array
 	{
 		$result = [];
 
@@ -286,7 +360,13 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			$isRestHandler = $cashbox['HANDLER'] === '\Bitrix\Sale\Cashbox\CashboxRest';
 			if(empty($result))
 			{
-				$addUrlParams = ['handler' => $cashbox['HANDLER']];
+				$addUrlParams = [
+					'handler' => $cashboxData['handler'],
+				];
+				if (isset($cashboxData['kkm-id']))
+				{
+					$addUrlParams['kkm-id'] = $cashboxData['kkm-id'];
+				}
 				if ($isRestHandler)
 				{
 					$addUrlParams['restHandler'] = $cashbox['SETTINGS']['REST']['REST_CODE'];
@@ -376,11 +456,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 		$cashboxItems = $this->getCashboxItems();
 
-		$isRestHandler = $handler === '\Bitrix\Sale\Cashbox\CashboxRest';
-
 		foreach($cashboxItems as $cashboxItem)
 		{
-			if((!$isRestHandler && $cashboxItem['data']['handler'] == $handler) || ($isRestHandler && $cashboxItem["id"] === $cashboxId))
+			if ($cashboxItem["id"] === $cashboxId)
 			{
 				$result['itemSelected'] = $cashboxItem['itemSelected'];
 				$result['menuItems'] = $cashboxItem['data']['menuItems'];

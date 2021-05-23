@@ -412,6 +412,14 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		return this._requisiteEditor.getSignRequisitePromise(requisite);
 	}
 
+	release()
+	{
+		if (this._requisiteEditor)
+		{
+			this._requisiteEditor.release();
+		}
+	}
+
 	onFieldInit(event)
 	{
 		let eventData = event.getData();

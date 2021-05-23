@@ -2476,7 +2476,7 @@ class EntityRequisite
 		$settingsValue = is_array($fields) && isset($fields['SETTINGS']) ? $fields['SETTINGS'] : '';
 		$settings = null;
 		if (!empty($settingsValue))
-			$settings = unserialize($settingsValue);
+			$settings = unserialize($settingsValue, ['allowed_classes' => false]);
 		if (is_array($settings))
 			$result = $settings;
 
@@ -6296,7 +6296,7 @@ class EntityRequisite
 
 		$optionValue = Main\Config\Option::get('crm', 'requisite_default_presets');
 		if ($optionValue !== '')
-			$optionValue = unserialize($optionValue);
+			$optionValue = unserialize($optionValue, ['allowed_classes' => false]);
 		if (!is_array($optionValue))
 			$optionValue = array();
 
@@ -6349,7 +6349,7 @@ class EntityRequisite
 
 		$optionValue = Main\Config\Option::get('crm', 'requisite_default_presets');
 		if ($optionValue !== '')
-			$optionValue = unserialize($optionValue);
+			$optionValue = unserialize($optionValue, ['allowed_classes' => false]);
 		if (!is_array($optionValue))
 			$optionValue = array();
 

@@ -394,6 +394,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 		pathToTasks: "<?=CUtil::JSEscape($arParams["PATH_TO_TASKS"])?>",
 		stageId: <?=$taskData["STAGE_ID"]?>,
 		stages: <?= \CUtil::PhpToJSObject(array_values($stages), false, false, true)?>,
-		taskLimitExceeded: <?=CUtil::PhpToJSObject($taskLimitExceeded)?>
+		taskLimitExceeded: <?=CUtil::PhpToJSObject($taskLimitExceeded)?>,
+		calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>
 	});
 </script>

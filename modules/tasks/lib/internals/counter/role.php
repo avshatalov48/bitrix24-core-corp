@@ -2,13 +2,23 @@
 
 namespace Bitrix\Tasks\Internals\Counter;
 
+use Bitrix\Tasks\Internals\Task\MemberTable;
+
 class Role
 {
-	const ALL = 'view_all';
-	const RESPONSIBLE = 'view_role_responsible';
-	const ACCOMPLICE = 'view_role_accomplice';
-	const AUDITOR = 'view_role_auditor';
-	const ORIGINATOR = 'view_role_originator';
+	public const ALL = 'view_all';
+	public const RESPONSIBLE = 'view_role_responsible';
+	public const ACCOMPLICE = 'view_role_accomplice';
+	public const AUDITOR = 'view_role_auditor';
+	public const ORIGINATOR = 'view_role_originator';
+
+	public const ROLE_MAP = [
+		self::ALL => null,
+		self::RESPONSIBLE => MemberTable::MEMBER_TYPE_RESPONSIBLE,
+		self::ACCOMPLICE => MemberTable::MEMBER_TYPE_ACCOMPLICE,
+		self::AUDITOR => MemberTable::MEMBER_TYPE_AUDITOR,
+		self::ORIGINATOR => MemberTable::MEMBER_TYPE_ORIGINATOR
+	];
 
 	public static function getRoles()
 	{
@@ -29,14 +39,17 @@ class Role
 		return $roles;
 	}
 
-	private static function getKnownRoles()
+	/**
+	 * @return string[]
+	 */
+	private static function getKnownRoles(): array
 	{
-		return array(
+		return [
 			\CTaskListState::VIEW_ROLE_RESPONSIBLE => self::RESPONSIBLE,
 			\CTaskListState::VIEW_ROLE_ACCOMPLICE => self::ACCOMPLICE,
 			\CTaskListState::VIEW_ROLE_ORIGINATOR => self::ORIGINATOR,
 			\CTaskListState::VIEW_ROLE_AUDITOR => self::AUDITOR
-		);
+		];
 	}
 
 	// \CTaskListState::getKnownRoles

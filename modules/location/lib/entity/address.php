@@ -111,6 +111,7 @@ final class Address implements IPoint
 
 	/**
 	 * @return FieldCollection
+	 * @internal
 	 */
 	public function getFieldCollection(): FieldCollection
 	{
@@ -120,6 +121,7 @@ final class Address implements IPoint
 	/**
 	 * @param FieldCollection $fieldCollection
 	 * @return Address
+	 * @internal
 	 */
 	public function setFieldCollection(FieldCollection $fieldCollection): Address
 	{
@@ -147,9 +149,11 @@ final class Address implements IPoint
 	}
 
 	/**
-	 * @param int $type
-	 * @param string $value
+	 * Set address field value
+	 * @param int $type Field type. See \Bitrix\Location\Entity\Address\FieldType
+	 * @param string $value Field value
 	 * @return $this
+	 * @throws SystemException
 	 */
 	public function setFieldValue(int $type, string $value): self
 	{
@@ -169,6 +173,8 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Get all fields values from the address
+	 *
 	 * @return array
 	 */
 	public function getAllFieldsValues(): array
@@ -184,7 +190,9 @@ final class Address implements IPoint
 	}
 
 	/**
-	 * @param int $type
+	 * Get address field value
+	 *
+	 * @param int $type Field type. See \Bitrix\Location\Entity\Address\FieldType
 	 * @return string|null
 	 */
 	public function getFieldValue(int $type): ?string
@@ -200,7 +208,9 @@ final class Address implements IPoint
 	}
 
 	/**
-	 * @param int $type
+	 * Check if field exist
+	 *
+	 * @param int $type Field type. See \Bitrix\Location\Entity\Address\FieldType
 	 * @return bool
 	 */
 	public function isFieldExist(int $type): bool
@@ -209,6 +219,8 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Load the Address
+	 *
 	 * @param int $id
 	 * @return Address|bool|null
 	 * @throws SystemException
@@ -221,7 +233,13 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Save the Address
+	 *
 	 * @return \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\Result|\Bitrix\Main\ORM\Data\UpdateResult
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
 	 */
 	public function save()
 	{
@@ -229,6 +247,8 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Delete the address
+	 *
 	 * @return \Bitrix\Main\ORM\Data\DeleteResult
 	 * @throws \Exception
 	 */
@@ -238,6 +258,8 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Convert the Address to JSON
+	 *
 	 * @return string Json
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
@@ -247,6 +269,8 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Convert the Address to Array
+	 *
 	 * @return array
 	 */
 	public function toArray(): array
@@ -255,16 +279,20 @@ final class Address implements IPoint
 	}
 
 	/**
+	 * Create the Address from JSON
+	 *
 	 * @param string $jsonData
 	 * @return Address
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function fromJson($jsonData): Address
+	public static function fromJson(string $jsonData): Address
 	{
 		return ArrayConverter::convertFromArray(Json::decode($jsonData));
 	}
 
 	/**
+	 * Create the Address from Array
+	 *
 	 * @param array $arrayData
 	 * @return Address
 	 */
@@ -299,17 +327,19 @@ final class Address implements IPoint
 
 	/**
 	 * Link entity to address
+	 *
 	 * @param string $entityId
 	 * @param string $entityType
+	 * @throws ArgumentNullException
 	 */
 	public function addLink(string $entityId, string $entityType): void
 	{
-		if($entityId == '')
+		if($entityId === '')
 		{
 			throw new ArgumentNullException('entityId');
 		}
 
-		if($entityType == '')
+		if($entityType === '')
 		{
 			throw new ArgumentNullException('entityType');
 		}
@@ -320,7 +350,8 @@ final class Address implements IPoint
 	}
 
 	/**
-	 * Returns information is Address has links or not
+	 * Check if Address has links or not
+	 *
 	 * @return bool
 	 */
 	public function hasLinks(): bool
@@ -329,11 +360,13 @@ final class Address implements IPoint
 	}
 
 	/**
-	 * Converts Address to String
-	 * @param Format $format
-	 * @param string $strategyType
-	 * @param string $contentType
+	 * Convert Address to String
+	 *
+	 * @param Format $format Address format
+	 * @param string $strategyType See StringConverter::STRATEGY_*
+	 * @param string $contentType See StringConverter::CONTENT_TYPE_*
 	 * @return string
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function toString(
 		Format $format,

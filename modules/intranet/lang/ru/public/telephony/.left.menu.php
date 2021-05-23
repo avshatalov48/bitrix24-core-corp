@@ -2,4 +2,5 @@
 $MESS["SERVICES_MENU_TELEPHONY_DETAIL"] = "Детализация звонков";
 $MESS["SERVICES_MENU_TELEPHONY_MY_LINES"] = "Мои номера";
 $MESS["SERVICES_MENU_TELEPHONY_CONNECT"] = "Подключение";
+$MESS["SERVICES_MENU_TELEPHONY_ANALYTICS"] = "Статистика звонков";
 ?>

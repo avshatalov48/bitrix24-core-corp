@@ -893,7 +893,7 @@ if($enableWebStore)
 	$strAdditionalInfoHtml = '';
 	if ($isExternal &&  isset($arResult['ELEMENT']['ADDITIONAL_INFO']))
 	{
-		$arAdditionalInfo = unserialize($arResult['ELEMENT']['~ADDITIONAL_INFO']);
+		$arAdditionalInfo = unserialize($arResult['ELEMENT']['~ADDITIONAL_INFO'], ['allowed_classes' => false]);
 		if (is_array($arAdditionalInfo) && count($arAdditionalInfo) > 0)
 		{
 			foreach ($arAdditionalInfo as $k => $v)

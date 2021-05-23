@@ -127,7 +127,7 @@ class LeadStatusHistoryWithSupposedEntry
 
 		if (!is_null($fromDate))
 		{
-			$leadHistoryQuery->where('HISTORY.CREATED_TIME', '>', $fromDate);
+			$leadHistoryQuery->where('HISTORY.CREATED_TIME', '>=', $fromDate);
 		}
 
 		$leadHistory = $leadHistoryQuery->exec()->fetchAll();
@@ -137,8 +137,6 @@ class LeadStatusHistoryWithSupposedEntry
 
 	private static function prepareHistoriesFromExistHistory($existHistory)
 	{
-
-
 		$sortedAllStatuses = self::getExistStatusIdList();
 		$unSuccessStatusList = self::getLeadUnSuccessStatusList();
 

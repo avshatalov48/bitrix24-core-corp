@@ -41,7 +41,7 @@ class CCrmExternalSaleProxy
 
 			if (isset($arResult['COOKIE']) && !empty($arResult['COOKIE']))
 			{
-				$cookies = unserialize($arResult['COOKIE']);
+				$cookies = unserialize($arResult['COOKIE'], ['allowed_classes' => false]);
 				$this->cookies = is_array($cookies) ? $cookies : array();
 			}
 		}

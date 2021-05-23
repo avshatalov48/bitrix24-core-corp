@@ -136,7 +136,7 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 
 	public function executeComponent()
 	{
-		global $APPLICATION, $USER;
+		global $APPLICATION;
 
 		\CPageOption::setOptionString('main', 'nav_page_in_session', 'N');
 		$APPLICATION->setPageProperty('BodyClass', ($this->arParams['LOG_ID'] > 0 || $this->arParams['EMPTY_PAGE'] === 'Y' ? 'post-card' : 'lenta-page'));

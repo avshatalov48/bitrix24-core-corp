@@ -837,6 +837,7 @@ else
 
 	$template =& $this->GetTemplate();
 	$APPLICATION->AddHeadScript($template->GetFolder().'/structure.js');
+	$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 	if (!defined('INTRANET_ISV_MUL_INCLUDED'))
 	{

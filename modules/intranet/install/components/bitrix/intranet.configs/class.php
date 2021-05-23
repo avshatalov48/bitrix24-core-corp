@@ -875,9 +875,6 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		//gdpr
 		if ($this->arResult["IS_BITRIX24"])
 		{
-			COption::SetOptionString("bitrix24", "gdpr_email_info", isset($_POST["gdpr_email_info"]) ? "Y" : "N");
-			COption::SetOptionString("bitrix24", "gdpr_email_training", isset($_POST["gdpr_email_training"]) ? "Y" : "N");
-
 			if (!in_array($this->arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
 			{
 				$gdprLegalName = trim($_POST["gdpr_legal_name"]);
@@ -1003,6 +1000,20 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = true;
 		}
 
+		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = true;
+		$portalPrefix = '';
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			$portalPrefix = $this->arResult['LICENSE_PREFIX'];
+		}
+		elseif (Loader::includeModule('intranet'))
+		{
+			$portalPrefix = CIntranetUtils::getPortalZone();
+		}
+
+		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = ($portalPrefix !== 'ua');
+
 		$this->arResult["DATE_FORMATS"] = array("DD.MM.YYYY", "DD/MM/YYYY", "MM.DD.YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "YYYY-MM-DD");
 		$this->arResult["TIME_FORMATS"] = array("HH:MI:SS", "H:MI:SS T");
 		$this->arResult["NAME_FORMATS"] = CSite::GetNameTemplates();
@@ -1050,7 +1061,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$optionList = array();
 			foreach($documentHandlersManager->getHandlersForView() as $handler)
 			{
-				$optionList[$handler->getCode()] = $handler->getName();
+				$optionList[$handler::getCode()] = $handler::getName();
 			}
 			unset($handler);
 			$this->arResult["DISK_VIEWER_SERVICE"] = $optionList;
@@ -1075,7 +1086,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			));
 			if ($arIpRights = $dbIpRights->Fetch())
 			{
-				$this->arResult["IP_RIGHTS"] = unserialize($arIpRights["VALUE"]);
+				$this->arResult["IP_RIGHTS"] = unserialize($arIpRights["VALUE"], ["allowed_classes" => false]);
 			}
 		}
 	}
@@ -1136,7 +1147,10 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		$this->arResult['STRESSLEVEL_AVAILABLE'] = COption::GetOptionString("intranet", "stresslevel_available", "Y");
 
-		$this->arResult['YANDEX_MAP_API_KEY'] = \Bitrix\Main\Config\Option::get('fileman', 'yandex_map_api_key');
+		if($this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'])
+		{
+			$this->arResult['YANDEX_MAP_API_KEY'] = \Bitrix\Main\Config\Option::get('fileman', 'yandex_map_api_key');
+		}
 
 		if($this->arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 		{
@@ -1170,10 +1184,10 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		$defaultRightsSerialized = 'a:1:{i:0;s:2:"AU";}';
 		$val = COption::GetOptionString("socialnetwork", "livefeed_toall_rights", $defaultRightsSerialized);
-		$arToAllRights = unserialize($val);
+		$arToAllRights = unserialize($val, ["allowed_classes" => false]);
 		if (!$arToAllRights)
 		{
-			$arToAllRights = unserialize($defaultRightsSerialized);
+			$arToAllRights = unserialize($defaultRightsSerialized, ["allowed_classes" => false]);
 		}
 		$this->arResult['arToAllRights'] = \IntranetConfigsComponent::processOldAccessCodes($arToAllRights);
 

@@ -10,7 +10,6 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\LeadTable;
-use Bitrix\SalesCenter;
 use Bitrix\Main;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Automation;
@@ -22,6 +21,7 @@ use Bitrix\Crm\Timeline;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Salescenter\Analytics;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -629,6 +629,12 @@ class CrmManager extends Base
 
 		if($result->isSuccess())
 		{
+			$channel = new Order\SendingChannels\Sms($sendingInfo['provider']);
+			$manager = new Order\SendingChannels\Manager();
+			$manager->bindChannelToOrder($order, $channel);
+
+			$this->addAnalyticsOnSendOrderBySms($order);
+
 			$this->addTimelineEntryOnSend($order, ['DESTINATION' => 'SMS']);
 
 			Sms::addActivity([
@@ -649,6 +655,15 @@ class CrmManager extends Base
 		}
 
 		return $result->isSuccess();
+	}
+
+	protected function addAnalyticsOnSendOrderBySms(Order\Order $order)
+	{
+		$constructor = new Analytics\LabelConstructor();
+
+		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getContextLabel($order), 'context');
+		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getChannelLabel($order), 'channel');
+		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getChannelNameLabel($order), 'channel_name');
 	}
 
 	/**

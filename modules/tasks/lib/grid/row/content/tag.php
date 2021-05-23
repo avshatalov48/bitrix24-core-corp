@@ -30,19 +30,23 @@ class Tag extends Content
 		foreach ($row['TAG'] as $tag)
 		{
 			$safeTag = htmlspecialcharsbx($tag);
-			$encodedData = Json::encode(['TAG' => $safeTag]);
+			$encodedData = Json::encode([
+				'TAG' => $safeTag,
+			]);
 
+			$selected = 0;
 			$selector = 'tasks-grid-tag';
 			if (
 				isset($parameters['FILTER_FIELDS']['TAG'])
 				&& $parameters['FILTER_FIELDS']['TAG'] === $safeTag
 			)
 			{
+				$selected = 1;
 				$selector .= ' tasks-grid-filter-active';
 			}
 
-			$tags[]
-				= "<a class='". $selector ."' href='javascript:void(0)' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData})'>"
+			$tags[] =
+				"<a class='{$selector}' href='javascript:void(0)' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData}, {$selected})'>"
 				. "#{$safeTag}"
 				. "</a>";
 		}

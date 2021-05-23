@@ -28,7 +28,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		$menuItems = array();
 		$isOwnProfile = $this->arParams["USER_ID"] === $USER->GetID();
 		$isAdminRights = (
-			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
+			$this->arResult["IS_CLOUD"] && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
 			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
 		)
 			? true : false;
@@ -37,7 +37,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		{
 			$authManager = new \CSocServAuthManager();
 			$activeSocServ = $authManager->GetActiveAuthServices(array());
-			if (Loader::includeModule('bitrix24'))
+			if ($this->arResult["IS_CLOUD"])
 			{
 				$isNeedSocServTab = false;
 				if (isset($activeSocServ['zoom'])				)
@@ -75,8 +75,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			$menuItems["auth"] = array(
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_AUTH_TITLE_2"),
 				"ATTRIBUTES" => Array(
-					"href" => "?page=auth",
-					"data-role" => "auth",
+					"data-action" => "auth",
 				),
 				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "auth" ? true : false
 			);
@@ -87,28 +86,28 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			$menuItems["synchronize"] = array(
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_SYNCHRONIZE_TITLE"),
 				"ATTRIBUTES" => Array(
-					"data-role" => "synchronize",
+					"data-action" => "synchronize",
 				),
 				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "synchronize" ? true : false
 			);
 
-			$menuItems["app_passwords"] = array(
+			$menuItems["appPasswords"] = array(
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_PASSWORDS_TITLE"),
 				"ATTRIBUTES" => Array(
-					"data-role" => "app_passwords",
+					"data-action" => "appPasswords",
 				),
-				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "app_passwords" ? true : false
+				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "appPasswords" ? true : false
 			);
 		}
 
 		if ($this->arResult["OTP"]["IS_ENABLED"] == "Y")
 		{
-			$menuItems["security"] = array(
+			$menuItems["otpConnected"] = array(
 				"NAME"       => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"),
 				"ATTRIBUTES" => Array(
-					"data-role" => "security",
+					"data-action" => "otpConnected",
 				),
-				"ACTIVE"     => isset($_GET["page"]) && $_GET["page"] === "security" ? true : false
+				"ACTIVE"     => isset($_GET["page"]) && $_GET["page"] === "otpConnected" ? true : false
 			);
 		}
 
@@ -117,7 +116,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			$menuItems["socnet_email"] = array(
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_SOCNET_EMAIL_TITLE"),
 				"ATTRIBUTES" => Array(
-					"data-role" => "socnet_email",
+					"data-action" => "socnetEmail",
 				),
 				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "socnet_email" ? true : false
 			);
@@ -128,10 +127,21 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 				$menuItems["socserv"] = array(
 					"NAME"       => Loc::getMessage("INTRANET_USER_PROFILE_SOCSERV_TITLE"),
 					"ATTRIBUTES" => Array(
-						"data-role" => "socserv",
+						"data-action" => "socserv",
 						"data-url" => $socservPageUrl
 					),
 					"ACTIVE"     => isset($_GET["page"]) && $_GET["page"] === "socserv" ? true : false
+				);
+			}
+
+			if ($this->arResult["IS_CLOUD"])
+			{
+				$menuItems["mailingAgreement"] = array(
+					"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_MAILING_AGREEMENT_TITLE"),
+					"ATTRIBUTES" => Array(
+						"data-action" => "mailingAgreement",
+					),
+					"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "mailingAgreement" ? true : false
 				);
 			}
 		}
@@ -142,6 +152,8 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 	public function executeComponent()
 	{
 		\CJSCore::Init("loader");
+
+		$this->arResult["IS_CLOUD"] = Loader::includeModule("bitrix24");
 
 		//otp
 		if (\Bitrix\Main\Loader::includeModule("security") && Bitrix\Security\Mfa\Otp::isOtpEnabled())
@@ -158,8 +170,8 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 
 		if (
 			isset($_GET["page"])
-			&& in_array($_GET["page"], array("auth", "synchronize", "app_passwords", "security", "socnet_email",
-				"otp", "recovery_codes", "socserv")
+			&& in_array($_GET["page"], array("auth", "synchronize", "appPasswords", "otpConnected", "socnetEmail",
+				"otp", "recoveryCodes", "socserv", "mailingAgreement")
 			)
 		)
 		{

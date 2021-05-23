@@ -2329,7 +2329,7 @@ class CEventCalendar
 		$str = CUserOptions::GetOption("intranet", $this->sSPTrackingUsersKey, false, $this->userId);
 		if ($str === false || !checkSerializedData($str))
 			return array();
-		return unserialize($str);
+		return unserialize($str, ["allowed_classes" => false]);
 	}
 
 	function SetTrackingUsers($arUserIds = array())
@@ -2431,7 +2431,7 @@ class CEventCalendar
 		if (!class_exists('CUserOptions'))
 			return;
 		$str = CUserOptions::GetOption("intranet", $this->sSPCalKey, false, $this->userId);
-		$arIds = $str !== false && checkSerializedData($str) ? unserialize($str) : array();
+		$arIds = $str !== false && unserialize($str, ["allowed_classes" => false]);
 
 		if ($str === false && count($this->arSPCalsDisplayedDef) > 0) // Set default displayed calendars
 			$arIds = array_merge($arIds, $this->arSPCalsDisplayedDef);
@@ -4446,7 +4446,7 @@ END:VEVENT'."\n";
 		else
 			$Settings = false;
 
-		$UserSettings = $Settings && checkSerializedData($Settings) ? unserialize($Settings) : $DefSettings;
+		$UserSettings = $Settings && checkSerializedData($Settings) ? unserialize($Settings, ["allowed_classes" => false]) : $DefSettings;
 		if (!$bStatic)
 			$this->UserSettings = $UserSettings;
 
@@ -8378,8 +8378,8 @@ class CECCalendar
 		if (class_exists('CUserOptions'))
 		{
 			$str = CUserOptions::GetOption("intranet", "ec_hidden_calendars", false, $userId);
-			if ($str !== false && checkSerializedData($str))
-				$res = unserialize($str);
+			if ($str !== false)
+				$res = unserialize($str, ["allowed_classes" => false]);
 		}
 		return $res;
 	}

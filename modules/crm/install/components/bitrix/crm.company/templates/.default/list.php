@@ -75,6 +75,18 @@ else
 	if ($_REQUEST['IFRAME'] !== 'Y')
 	{
 		$APPLICATION->IncludeComponent(
+			'bitrix:crm.dedupe.autosearch',
+			'',
+			array(
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+				'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
+				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST']
+			),
+			$component,
+			array('HIDE_ICONS' => 'Y')
+		);
+
+		$APPLICATION->IncludeComponent(
 			'bitrix:crm.company.menu',
 			'',
 			array(

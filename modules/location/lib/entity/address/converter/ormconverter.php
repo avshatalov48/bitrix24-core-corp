@@ -3,7 +3,6 @@
 namespace Bitrix\Location\Entity\Address\Converter;
 
 use Bitrix\Location\Entity\Address;
-use Bitrix\Location\Entity\Location\Type;
 use Bitrix\Location\Model\EO_Address;
 use Bitrix\Location\Model\EO_AddressField;
 use Bitrix\Location\Model\EO_Address_Collection;
@@ -11,23 +10,19 @@ use Bitrix\Location\Model\EO_AddressField_Collection;
 use Bitrix\Location\Model\EO_AddressLink;
 use Bitrix\Location\Model\EO_AddressLink_Collection;
 
+/**
+ * Class OrmConverter
+ * @package Bitrix\Location\Entity\Address\Converter
+ * @internal
+ */
 final class OrmConverter
 {
-	public static function convertToOrm(Address $address): EO_Address
-	{
-		$ormAddress = new EO_Address();
-		$addressId = $address->getId();
-		$ormAddress->setId($addressId)
-			->setLatitude($address->getLatitude())
-			->setLongitude($address->getLongitude())
-			->setLanguageId($address->getLanguageId());
-
-		if($location = $address->getLocation())
-		{
-			$ormAddress->setLocationId($location->getId());
-		}
-	}
-
+	/**
+	 * Convert Address links to ORM collection
+	 *
+	 * @param Address $address
+	 * @return EO_AddressLink_Collection
+	 */
 	public static function convertLinksToOrm(Address $address): EO_AddressLink_Collection
 	{
 		$result = new EO_AddressLink_Collection();
@@ -46,11 +41,16 @@ final class OrmConverter
 		return $result;
 	}
 
+	/**
+	 * Convert Address fields to ORM objects
+	 *
+	 * @param Address $address
+	 * @return EO_AddressField_Collection
+	 */
 	public static function convertFieldsToOrm(Address $address): EO_AddressField_Collection
 	{
 		$result = new EO_AddressField_Collection();
 		$normalizer = Address\Normalizer\Builder::build($address->getLanguageId());
-		$parents = null;
 
 		/** @var Address\Field $field */
 		foreach ($address->getFieldCollection() as $field)
@@ -68,6 +68,14 @@ final class OrmConverter
 		return $result;
 	}
 
+	/**
+	 * Convert ORM objects to Address
+	 *
+	 * @param EO_Address $ormAddress
+	 * @return Address
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function convertFromOrm(EO_Address $ormAddress): Address
 	{
 		$result = new Address($ormAddress->getLanguageId());
@@ -78,12 +86,12 @@ final class OrmConverter
 		/** @var Address\Field $field */
 		foreach ($ormAddress->getFields() as $field)
 		{
-			$result->setFieldValue((int)$field->getType(), (string)$field->getValue());
+			$result->setFieldValue($field->getType(), $field->getValue());
 		}
 
 		if($ormLocation = $ormAddress->getLocation())
 		{
-			$location = \Bitrix\Location\Entity\Location\Factory\OrmFactory::createLocation(
+			$location = \Bitrix\Location\Entity\Location\Converter\OrmConverter::createLocation(
 				$ormLocation,
 				$ormAddress->getLanguageId()
 			);
@@ -106,10 +114,20 @@ final class OrmConverter
 		return $result;
 	}
 
+	/**
+	 * Convert ORM address collection to AddressCollection
+	 *
+	 * @param EO_Address_Collection $collection
+	 * @return Address\AddressCollection
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function convertCollectionFromOrm(EO_Address_Collection $collection): Address\AddressCollection
 	{
 		$result = new Address\AddressCollection();
 
+		/** @var  EO_Address $item */
 		foreach ($collection as $item)
 		{
 			$result->addItem(self::convertFromOrm($item));

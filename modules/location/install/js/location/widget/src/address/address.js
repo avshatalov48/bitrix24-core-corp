@@ -1,10 +1,9 @@
 import {Type, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import {Address as AddressEntity, AddressType, ControlMode, Format,
-		AddressStringConverter, LocationRepository, ErrorPublisher, Location} from 'location.core';
+import {Address as AddressEntity, ControlMode, Format,
+	AddressStringConverter, LocationRepository, ErrorPublisher} from 'location.core';
 import State from '../state';
 import BaseFeature from './features/basefeature';
-import AutocompleteFeature from './features/autocompletefeature';
 import {FeatureEvent} from './featurevent';
 
 /**
@@ -17,7 +16,6 @@ export type AddressConstructorProps = {
 	address?: AddressEntity,
 	needWarmBackendAfterAddressChanged?: boolean,
 	locationRepository?: LocationRepository,
-	presetLocationList?: Array
 };
 
 /**
@@ -28,8 +26,10 @@ export type AddressRenderProps = {
 	inputNode: Element,
 	/** Control wrapper witch could be used for mouseover event etc. */
 	controlWrapper: Element,
-	/** If map feature is used it could be used ti bind map popup */
-	mapBindElement: ?Element
+	/** If map feature is used it could be used to bind map popup */
+	mapBindElement: ?Element,
+	/** If autocomplete feature is used it could be used to bind menu node */
+	autocompleteMenuElement: ?Element
 };
 
 /**
@@ -62,8 +62,6 @@ export default class Address extends EventEmitter
 
 	#needWarmBackendAfterAddressChanged = true;
 	#locationRepository;
-
-	#presetLocationList = [];
 
 	/**
 	 * Constructor
@@ -129,33 +127,16 @@ export default class Address extends EventEmitter
 			this.#locationRepository = new LocationRepository();
 		}
 
-		if(props.presetLocationList)
-		{
-			if(!Type.isArray(props.presetLocationList))
-			{
-				throw new TypeError('Preset location list must be an array');
-			}
-
-			for (let location of props.presetLocationList)
-			{
-				if(!(location instanceof Location))
-				{
-					BX.debug('location must be instance of Location');
-				}
-
-				this.#presetLocationList.push(location);
-			}
-		}
-
 		this.#state = State.INITIAL;
 	}
 
 	/**
 	 * @param {AddressEntity} address
 	 * @param {BaseFeature} sourceFeature
+	 * @param {Array} excludeFeatures
 	 * @internal
 	 */
-	setAddressByFeature(address: AddressEntity, sourceFeature: BaseFeature): void
+	setAddressByFeature(address: AddressEntity, sourceFeature: BaseFeature, excludeFeatures: Array = []): void
 	{
 		const addressId = this.#address ? this.#address.id : 0;
 		this.#address = address;
@@ -168,7 +149,12 @@ export default class Address extends EventEmitter
 		this.#isAddressChangedByFeature = true;
 		this.#setInputValue(address);
 
-		this.#executeFeatureMethod('setAddress', [address], sourceFeature);
+		this.#executeFeatureMethod(
+			'setAddress',
+			[address],
+			sourceFeature,
+			excludeFeatures
+		);
 
 		if(this.#state !== State.DATA_INPUTTING)
 		{
@@ -204,13 +190,23 @@ export default class Address extends EventEmitter
 		return this.#features;
 	}
 
-	#executeFeatureMethod(method, params = [], excludeFeature = null)
+	#executeFeatureMethod(method, params = [], sourceFeature = null, excludeFeatures = [])
 	{
 		let result;
 
 		for(let feature of this.#features)
 		{
-			if(feature !== excludeFeature)
+			let isExcluded = false;
+			for(let excludeFeature of excludeFeatures)
+			{
+				if(feature instanceof excludeFeature)
+				{
+					isExcluded = true;
+					break;
+				}
+			}
+
+			if(!isExcluded && feature !== sourceFeature)
 			{
 				result = feature[method].apply(feature, params);
 			}
@@ -250,28 +246,6 @@ export default class Address extends EventEmitter
 		}
 	}
 
-	#onInputClick(e: MouseEvent)
-	{
-		let value = this.#inputNode.value;
-
-		if(value.length === 0 && this.#presetLocationList.length > 0)
-		{
-			this.#showPresetLocations();
-		}
-	}
-
-	#showPresetLocations()
-	{
-		let autocompleteFeature = this.#getAutocompleteFeature();
-
-		if (!autocompleteFeature.autocomplete || !autocompleteFeature.autocomplete.prompt)
-		{
-			return;
-		}
-
-		autocompleteFeature.autocomplete.prompt.show(this.#presetLocationList, '');
-	}
-
 	#convertAddressToString(address: ?Address): string
 	{
 		if(!address)
@@ -301,7 +275,7 @@ export default class Address extends EventEmitter
 		}
 	}
 
-	#onInputFocusOut(e: KeyboardEvent)
+	#onInputFocusOut(e: Event)
 	{
 		// Seems that we don't have any autocompleter feature
 		if(this.#isInputNodeValueUpdated && !this.#isAddressChangedByFeature)
@@ -319,8 +293,6 @@ export default class Address extends EventEmitter
 
 	onInputKeyup(e: KeyboardEvent)
 	{
-		let value = this.#inputNode.value;
-
 		switch (e.code)
 		{
 			case 'Tab':
@@ -331,11 +303,6 @@ export default class Address extends EventEmitter
 				break;
 			default:
 				this.#isInputNodeValueUpdated = true;
-		}
-
-		if(value.length === 0 && this.#presetLocationList.length > 0)
-		{
-			this.#showPresetLocations();
 		}
 	}
 
@@ -366,13 +333,17 @@ export default class Address extends EventEmitter
 
 			this.#inputNode = props.inputNode;
 			this.#setInputValue(this.#address);
-			Event.bind(this.#inputNode, 'focus', this.#onInputFocus.bind(this));
-			Event.bind(this.#inputNode, 'focusout', this.#onInputFocusOut.bind(this));
-			Event.bind(this.#inputNode, 'keyup', this.onInputKeyup.bind(this));
-			Event.bind(this.#inputNode, 'click', this.#onInputClick.bind(this));
 		}
 
 		this.#executeFeatureMethod('render', [props]);
+
+		// We can prevent these events in features if need
+		if(this.#mode === ControlMode.edit)
+		{
+			Event.bind(this.#inputNode, 'focus', this.#onInputFocus.bind(this));
+			Event.bind(this.#inputNode, 'focusout', this.#onInputFocusOut.bind(this));
+			Event.bind(this.#inputNode, 'keyup', this.onInputKeyup.bind(this));
+		}
 	}
 
 	get controlWrapper()
@@ -441,22 +412,6 @@ export default class Address extends EventEmitter
 		);
 	}
 
-	#getAutocompleteFeature()
-	{
-		let result = null;
-
-		for( let feature of this.#features)
-		{
-			if(feature instanceof AutocompleteFeature)
-			{
-				result = feature;
-				break;
-			}
-		}
-
-		return result;
-	}
-
 	subscribeOnStateChangedEvent(listener: Function): void
 	{
 		this.subscribe(Address.onStateChangedEvent, listener);
@@ -488,7 +443,6 @@ export default class Address extends EventEmitter
 		Event.unbind(this.#inputNode, 'focus', this.#onInputFocus);
 		Event.unbind(this.#inputNode, 'focusout', this.#onInputFocusOut);
 		Event.unbind(this.#inputNode, 'keyup', this.onInputKeyup);
-		Event.unbind(this.#inputNode, 'click', this.onInputClick);
 
 		this.#executeFeatureMethod('destroy');
 		this.#destroyFeatures();

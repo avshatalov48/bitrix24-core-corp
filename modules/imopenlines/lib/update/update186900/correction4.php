@@ -34,7 +34,7 @@ final class Correction4 extends Stepper
 		if (Loader::includeModule(self::$moduleId))
 		{
 			$params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-			$params = ($params !== "" ? @unserialize($params) : []);
+			$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : []);
 			$params = (is_array($params) ? $params : []);
 			if (empty($params))
 			{

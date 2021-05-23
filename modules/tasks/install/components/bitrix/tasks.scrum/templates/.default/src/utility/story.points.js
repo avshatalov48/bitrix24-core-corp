@@ -36,7 +36,14 @@ export class StoryPoints
 		const currentStoryPoints = (this.storyPoints !== '' ? parseFloat(this.storyPoints) : 0);
 		const inputStoryPoints = parseFloat(storyPoints);
 
-		this.storyPoints = String((currentStoryPoints + inputStoryPoints));
+		let result = (currentStoryPoints + inputStoryPoints);
+
+		if (Type.isFloat(result))
+		{
+			result = result.toFixed(1);
+		}
+
+		this.storyPoints = String(result);
 	}
 
 	subtractPoints(storyPoints: string)
@@ -49,7 +56,14 @@ export class StoryPoints
 		const currentStoryPoints = (this.storyPoints !== '' ? parseFloat(this.storyPoints) : 0);
 		const inputStoryPoints = parseFloat(storyPoints);
 
-		this.storyPoints = String((currentStoryPoints - inputStoryPoints));
+		let result = (currentStoryPoints - inputStoryPoints);
+
+		if (Type.isFloat(result))
+		{
+			result = result.toFixed(1);
+		}
+
+		this.storyPoints = String(result);
 	}
 
 	clearPoints()

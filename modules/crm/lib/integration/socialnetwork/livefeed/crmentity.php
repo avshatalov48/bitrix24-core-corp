@@ -81,7 +81,7 @@ class CrmEntity extends Provider
 				&& !empty($fields['CURRENT_ENTITY'])
 			) // not-message
 			{
-				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS']);
+				$logEntry['PARAMS'] = unserialize($logEntry['PARAMS'], ['allowed_classes' => false]);
 				if (is_array($logEntry['PARAMS']))
 				{
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);

@@ -183,7 +183,17 @@ abstract class SearchContentBuilder
 		$fields = $this->prepareEntityFields($entityID);
 		if(is_array($fields))
 		{
-			$this->save($entityID, $this->prepareSearchMap($fields, $options));
+			if (!isset($options['onlyShortIndex']) || !$options['onlyShortIndex'])
+			{
+				$this->save($entityID, $this->prepareSearchMap($fields, $options));
+			}
+
+			$options['isShortIndex'] = true;
+			$this->saveShortIndex(
+				(int)$entityID,
+				$this->prepareSearchMap($fields, $options),
+				($options['checkExist'] ?? false)
+			);
 		}
 	}
 
@@ -196,7 +206,20 @@ abstract class SearchContentBuilder
 			if(is_array($fields))
 			{
 				$this->save($entityID, $this->prepareSearchMap($fields));
+
+				$options['isShortIndex'] = true;
+				$this->saveShortIndex(
+					(int)$entityID,
+					$this->prepareSearchMap($fields, $options),
+					($options['checkExist'] ?? false)
+				);
 			}
 		}
+	}
+
+	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\ORM\Data\Result
+	{
+		// not implemented by default
+		return new \Bitrix\Main\ORM\Data\Result();
 	}
 }
