@@ -286,26 +286,31 @@ class UserProvider extends BaseProvider
 	{
 		$atom = '=_0-9a-z+~\'!\$&*^`|\\#%/?{}-';
 		$isEmailLike = (bool)preg_match('#^['.$atom.']+(\\.['.$atom.']+)*@#i', $searchQuery->getQuery());
+		$limit = 100;
 
 		if ($isEmailLike)
 		{
-			$dialog->addItems(
-				$this->getUserItems([
-					'searchByEmail' => $searchQuery->getQuery(),
-					'myEmailUsers' => false,
-					'limit' => 100
-				])
-			);
+			$items = $this->getUserItems([
+				'searchByEmail' => $searchQuery->getQuery(),
+				'myEmailUsers' => false,
+				'limit' => $limit
+			]);
 		}
 		else
 		{
-			$dialog->addItems(
-				$this->getUserItems([
-					'searchQuery' => $searchQuery->getQuery(),
-					'limit' => 100
-				])
-			);
+			$items = $this->getUserItems([
+				'searchQuery' => $searchQuery->getQuery(),
+				'limit' => $limit
+			]);
 		}
+
+		$limitExceeded = $limit <= count($items);
+		if ($limitExceeded)
+		{
+			$searchQuery->setCacheable(false);
+		}
+
+		$dialog->addItems($items);
 	}
 
 	public function handleBeforeItemSave(Item $item): void

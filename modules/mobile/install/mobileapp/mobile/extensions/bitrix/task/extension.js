@@ -110,6 +110,7 @@
 			const urlPrefix = `${pathToExtension}images/mobile-task-popup-`;
 			const urlPostfix = '.png';
 			const names = {
+				ping: 'ping',
 				changeDeadline: 'deadline',
 				approve: 'approve',
 				disapprove: 'disapprove',
@@ -678,6 +679,7 @@
 				changePin: true,
 				changeMute: true,
 				read: true,
+				ping: true,
 			};
 		}
 
@@ -867,6 +869,30 @@
 					.then(
 						(response) => {
 							console.log(response.result.task);
+							this.error = false;
+
+							resolve();
+						},
+						(response) => {
+							console.log(response);
+							this.error = true;
+
+							reject();
+						}
+					);
+			});
+		}
+
+		ping()
+		{
+			return new Promise((resolve, reject) => {
+				(new Request())
+					.call('ping', {
+						taskId: this.id,
+					})
+					.then(
+						(response) => {
+							console.log(response.result);
 							this.error = false;
 
 							resolve();
@@ -1356,6 +1382,34 @@
 					color: '#FF5752',
 					position: 'right',
 				},
+				changeResponsible: {
+					identifier: 'changeResponsible',
+					title: BX.message(`${titlePrefix}_CHANGE_RESPONSIBLE`),
+					iconName: 'action_userlist',
+					color: '#2F72B9',
+					position: 'right',
+				},
+				delegate: {
+					identifier: 'delegate',
+					title: BX.message(`${titlePrefix}_DELEGATE`),
+					iconName: 'action_userlist',
+					color: '#2F72B9',
+					position: 'right',
+				},
+				ping: {
+					identifier: 'ping',
+					title: BX.message(`${titlePrefix}_PING`),
+					iconName: 'action_ping',
+					color: '#00B4AC',
+					position: 'right',
+				},
+				changeGroup: {
+					identifier: 'changeGroup',
+					title: BX.message(`${titlePrefix}_CHANGE_GROUP`),
+					iconName: 'action_project',
+					color: '#1BA09B',
+					position: 'right',
+				},
 				start: {
 					identifier: 'start',
 					title: BX.message(`${titlePrefix}_START`),
@@ -1375,27 +1429,6 @@
 					title: BX.message(`${titlePrefix}_RENEW`),
 					iconName: 'action_reload',
 					color: '#00B4AC',
-					position: 'right',
-				},
-				changeResponsible: {
-					identifier: 'changeResponsible',
-					title: BX.message(`${titlePrefix}_CHANGE_RESPONSIBLE`),
-					iconName: 'action_userlist',
-					color: '#2F72B9',
-					position: 'right',
-				},
-				delegate: {
-					identifier: 'delegate',
-					title: BX.message(`${titlePrefix}_DELEGATE`),
-					iconName: 'action_userlist',
-					color: '#2F72B9',
-					position: 'right',
-				},
-				changeGroup: {
-					identifier: 'changeGroup',
-					title: BX.message(`${titlePrefix}_CHANGE_GROUP`),
-					iconName: 'action_project',
-					color: '#1BA09B',
 					position: 'right',
 				},
 				changeMute: {

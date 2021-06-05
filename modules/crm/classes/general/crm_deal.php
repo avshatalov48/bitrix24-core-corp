@@ -562,8 +562,8 @@ class CAllCrmDeal
 						$sqlData['FROM'][] = $ufSelectSql->GetJoin($alias.'.ID');
 					}
 
-					$sqlData['WHERE'][] = CDatabase::ForSql($ufName)." <= ".$DB->CharToDateFunction($arFilter['CALENDAR_DATE_TO'], 'SHORT');
-					$sqlData['WHERE'][] = CDatabase::ForSql($ufName)." >= ".$DB->CharToDateFunction($arFilter['CALENDAR_DATE_FROM'], 'SHORT');
+					$sqlData['WHERE'][] = $DB->ForSql($ufName)." <= ".$DB->CharToDateFunction($arFilter['CALENDAR_DATE_TO'], 'SHORT');
+					$sqlData['WHERE'][] = $DB->ForSql($ufName)." >= ".$DB->CharToDateFunction($arFilter['CALENDAR_DATE_FROM'], 'SHORT');
 				}
 			}
 		}
@@ -1954,7 +1954,8 @@ class CAllCrmDeal
 					$item,
 					[
 						'TYPE' => self::$TYPE_NAME,
-						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID)
+						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID),
+						'SKIP_CURRENT_USER' => ($userID !== 0),
 					]
 				);
 			}
@@ -3241,7 +3242,8 @@ class CAllCrmDeal
 					$item,
 					[
 						'TYPE' => self::$TYPE_NAME,
-						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID)
+						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID),
+						'SKIP_CURRENT_USER' => ($userID !== 0),
 					]
 				);
 			}
@@ -3468,7 +3470,8 @@ class CAllCrmDeal
 				$item,
 				[
 					'TYPE' => self::$TYPE_NAME,
-					'CATEGORY_ID' => $categoryID
+					'CATEGORY_ID' => $categoryID,
+					'SKIP_CURRENT_USER' => ($iUserId !== 0),
 				]
 			);
 		}
@@ -3607,7 +3610,7 @@ class CAllCrmDeal
 		{
 			$arUser = Array();
 			$dbUsers = CUser::GetList(
-				($sort_by = 'last_name'), ($sort_dir = 'asc'),
+				'last_name', 'asc',
 				array('ID' => implode('|', array(intval($arFieldsOrig['ASSIGNED_BY_ID']), intval($arFieldsModif['ASSIGNED_BY_ID'])))),
 				array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL'))
 			);

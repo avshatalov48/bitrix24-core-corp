@@ -79,7 +79,7 @@ $sorting = new CAdminSorting($tableID, "ID", "ASC");
 $adminList = new CAdminList($tableID, $sorting);
 
 $groups = array();
-$groupList = CGroup::GetList($o = "sort", $b = "asc");
+$groupList = CGroup::GetList();
 while ($group = $groupList->GetNext())
 {
 	$groups[$group['ID']] = $group['NAME'];
@@ -308,7 +308,7 @@ if ($USER->CanDoOperation("controller_auth_manage"))
 					<td width="40%"><? echo Loc::getMessage("CONTROLLER_GROUP_MAP_".$controlName) ?>:</td>
 					<td width="60%">
 						<?if ($controlName === "CONTROLLER_GROUP_ID"):?>
-							<? $groupList = CGroup::GetList($o = "sort", $b = "asc"); ?>
+							<? $groupList = CGroup::GetList(); ?>
 							<select name="FIELDS[new][<? echo $controlName ?>]">
 								<option value=""></option>
 								<? foreach ($groups as $groupId => $groupName): ?>

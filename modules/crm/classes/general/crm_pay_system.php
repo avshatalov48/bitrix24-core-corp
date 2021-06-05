@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -6,6 +6,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 
 IncludeModuleLangFile(__FILE__);
+
 class CCrmPaySystem
 {
 	const DEFAULT_HANDLER_GROUP = 'PS_OTHER';
@@ -1394,17 +1395,16 @@ class CCrmPaySystem
 		return $res;
 	}
 
-	public static function getPersonTypeIDs()
+	public static function getDefaultSiteId(): string
 	{
-		if (!CModule::IncludeModule('sale'))
-			return array();
 
-		static $arPTIDs = array();
+		$siteId = '';
 
-		if(!empty($arPTIDs))
-			return $arPTIDs;
+		if (defined('SITE_ID'))
+		{
+			$siteId = SITE_ID;
+		}
 
-		$siteId = SITE_ID;
 		if (defined("ADMIN_SECTION"))
 		{
 			$siteIterator = Bitrix\Main\SiteTable::getList(array(
@@ -1416,6 +1416,28 @@ class CCrmPaySystem
 				$siteId = $defaultSite['LID'];
 			}
 			unset($defaultSite, $siteIterator);
+		}
+
+		return $siteId;
+	}
+
+	public static function getPersonTypeIDs(?string $siteId = null)
+	{
+		if (!CModule::IncludeModule('sale'))
+		{
+			return array();
+		}
+
+		static $arPTIDs = array();
+
+		if ($siteId === null)
+		{
+			$siteId = static::getDefaultSiteId();
+		}
+
+		if (!empty($arPTIDs[$siteId]))
+		{
+			return $arPTIDs[$siteId];
 		}
 
 		$dbRes = \Bitrix\Crm\Invoice\PersonType::getList([
@@ -1430,16 +1452,20 @@ class CCrmPaySystem
 			]
 		]);
 
-		while($arPT = $dbRes->fetch())
+		while ($arPT = $dbRes->fetch())
 		{
-			if($arPT['CODE'] == 'CRM_COMPANY')
-				$arPTIDs['COMPANY'] = $arPT['ID'];
+			if ($arPT['CODE'] === 'CRM_COMPANY')
+			{
+				$arPTIDs[$siteId]['COMPANY'] = $arPT['ID'];
+			}
 
-			if($arPT['CODE'] == 'CRM_CONTACT')
-				$arPTIDs['CONTACT'] = $arPT['ID'];
+			if ($arPT['CODE'] === 'CRM_CONTACT')
+			{
+				$arPTIDs[$siteId]['CONTACT'] = $arPT['ID'];
+			}
 		}
 
-		return $arPTIDs;
+		return $arPTIDs[$siteId];
 	}
 
 	public static function getPersonTypesList($getEmpty = false)
@@ -2209,7 +2235,7 @@ class CCrmPaySystem
 	 * @param \Bitrix\Main\Event $event
 	 * @return array
 	 */
-	public function getHandlerDescriptionEx(\Bitrix\Main\Event $event)
+	public static function getHandlerDescriptionEx(\Bitrix\Main\Event $event)
 	{
 		$parameters = $event->getParameters();
 
@@ -2230,5 +2256,3 @@ class CCrmPaySystem
 		return array();
 	}
 }
-
-?>

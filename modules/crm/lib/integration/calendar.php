@@ -8,6 +8,9 @@ use Bitrix\Ui\EntityForm\Scope;
 
 class Calendar
 {
+    public const EVENT_FIELD_NAME = 'UF_CRM_CAL_EVENT';
+    public const USER_FIELD_ENTITY_ID = 'CALENDAR_EVENT';
+
 	private static
 		$isResourceBookingEnabled,
 		$fieldsMap = array();
@@ -413,6 +416,4 @@ class Calendar
 		}
 		return $js;
 	}
-
-
 }

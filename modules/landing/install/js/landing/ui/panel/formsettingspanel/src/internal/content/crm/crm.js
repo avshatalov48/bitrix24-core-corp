@@ -6,7 +6,6 @@ import {BaseEvent} from 'main.core.events';
 import {FormSettingsForm} from 'landing.ui.form.formsettingsform';
 import {MessageCard} from 'landing.ui.card.messagecard';
 import {Text} from 'main.core';
-import OrderField from './internal/orderfield/orderfield';
 import StageField from './internal/stagefield/stagefield';
 
 import messageIcon from './images/message-icon.svg';

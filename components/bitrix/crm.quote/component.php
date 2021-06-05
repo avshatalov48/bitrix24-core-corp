@@ -29,6 +29,7 @@ if (!CModule::IncludeModule('sale'))
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
 
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
@@ -99,6 +100,8 @@ else
 	$arResult['PATH_TO_QUOTE_PAYMENT'] = $APPLICATION->GetCurPage()."?{$arVariableAliases['quote_id']}=#quote_id#&payment";
 }
 
+$arResult['PATH_TO_QUOTE_DETAILS'] = Container::getInstance()->getRouter()->getItemDetailUrlCompatibleTemplate(\CCrmOwnerType::Quote);
+
 $arResult = array_merge(
 	array(
 		'VARIABLES' => $arVariables,
@@ -143,30 +146,25 @@ if($componentPage === 'index')
 	$componentPage = 'list';
 }
 
-/*
-if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
-	&& ($componentPage === 'edit' || $componentPage === 'show')
-)
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+if ($request->get('enableFactory') !== null)
 {
-	$redirectUrl = CComponentEngine::MakePathFromTemplate(
-		$arResult['PATH_TO_QUOTE_DETAILS'],
-		array('quote_id' => $arResult['VARIABLES']['quote_id'])
-	);
+	Crm\Settings\QuoteSettings::getCurrent()->setFactoryEnabled($request->get('enableFactory') === 'y');
+}
 
-	if(isset($_SERVER['QUERY_STRING']))
-	{
-		parse_str($_SERVER['QUERY_STRING'], $queryParams);
-		if(!empty($queryParams))
-		{
-			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, array('encode' => true));
-		}
-	}
-	LocalRedirect($redirectUrl, '301 Moved Permanently');
+if (
+		($componentPage === 'edit' || $componentPage === 'show' || $componentPage === 'details')
+		&& \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote)
+	)
+{
+	$url = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Quote, (int) $arResult['VARIABLES']['quote_id']);
+
+	$url->addParams($request->getQueryList()->toArray());
+
+	LocalRedirect($url, false, '301 Moved Permanently');
 }
 else
 {
 	$this->IncludeComponentTemplate($componentPage);
 }
-*/
-$this->IncludeComponentTemplate($componentPage);
 ?>

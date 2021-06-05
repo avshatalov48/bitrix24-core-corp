@@ -175,17 +175,12 @@ class License extends \Bitrix\Main\Engine\Controller
 		$licenseType = \CBitrix24::getLicenseType();
 		$licenseFamily = \CBitrix24::getLicenseFamily();
 		$licensePrefix = \CBitrix24::getLicensePrefix();
+		$isRusZone = in_array($licensePrefix, ['ru', 'ua', 'by', 'kz']);
 		$licenseTill = Option::get('main', '~controller_group_till');
 		$licenseTillMessage = '';
 		$daysLeftMessage = '';
 		$daysLeft = 0;
 		$isLicenseDateUnlimited = \CBitrix24::isLicenseDateUnlimited();
-		$isAutoPay = false;
-
-		if (\CBitrix24::IsLicensePaid())
-		{
-			$isAutoPay = Option::get('bitrix24', '~autopay', 'N') === 'Y';
-		}
 
 		$date= new Date;
 		$currentDate = $date->getTimestamp();
@@ -250,19 +245,19 @@ class License extends \Bitrix\Main\Engine\Controller
 				'isDemoExpired' => $demoDaysLeft < 14,
 				'isAlmostExpired' => (
 					$licenseFamily !== 'project'
-					&& !$isAutoPay
+					&& $isRusZone
 					&& $daysLeft > 0
 					&& $daysLeft < 14
 					&& !$isLicenseDateUnlimited
 				),
 				'isExpired' => (
-				$licenseFamily !== 'project'
-				&& $isAutoPay ? $daysLeft < 0 : $daysLeft <= 0
+					$licenseFamily !== 'project'
+					&& ($isAutoPay ? $daysLeft < 0 : $daysLeft <= 0)
 					&& !$isLicenseDateUnlimited
 				),
 				'daysLeft' => $daysLeft,
 				'daysLeftMessage' => $daysLeftMessage,
-				'isAutoPay' => $isAutoPay,
+				'isRusZone' => $isRusZone,
 			],
 			'market' => [
 				'isMarketAvailable' => $licensePrefix === 'ru',
@@ -311,10 +306,5 @@ class License extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $licenseData;
-	}
-
-	public function analyticsLabelAction()
-	{
-
 	}
 }

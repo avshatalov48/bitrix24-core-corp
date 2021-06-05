@@ -244,7 +244,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			'SELECT' => [ 'UF_DEPARTMENT', 'UF_PHONE_INNER', 'UF_SKYPE', 'UF_SKYPE_LINK', 'UF_ZOOM', 'UF_PUBLIC' ]
 		];
 
-		$dbUser = \CUser::GetList(($by="id"), ($order="asc"), $filter, $params);
+		$dbUser = \CUser::GetList("id", "asc", $filter, $params);
 		$user = $dbUser->fetch();
 
 		foreach ($user as $field => $value)
@@ -574,8 +574,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				$user['DEPARTMENTS'][$department['ID']] = $department;
 
 				$dbUsers = \CUser::GetList(
-					$o = "",
-					$b = "",
+					"",
+					"",
 					[
 						'!ID' => $user['ID'],
 						'UF_DEPARTMENT' => $department['ID'],

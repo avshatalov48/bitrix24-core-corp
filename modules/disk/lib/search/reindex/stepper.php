@@ -160,7 +160,7 @@ abstract class Stepper extends \Bitrix\Main\Update\Stepper
 	public function loadCurrentStatus()
 	{
 		$status = Option::get(static::getModuleId(), static::getName(), 'default');
-		$status = ($status !== 'default'? @unserialize($status) : []);
+		$status = ($status !== 'default'? @unserialize($status, ['allowed_classes' => false]) : []);
 		$status = (is_array($status) ? $status : []);
 
 		if (empty($status))

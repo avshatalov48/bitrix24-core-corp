@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Ui;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\BitrixHandler;
 use Bitrix\Disk\Document\GoogleViewerHandler;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main\ArgumentException;
@@ -15,11 +16,14 @@ use Bitrix\Main\Web\MimeType;
 
 final class FileAttributes extends ItemAttributes
 {
-	const ATTRIBUTE_OBJECT_ID          = 'data-object-id';
-	const ATTRIBUTE_ATTACHED_OBJECT_ID = 'data-attached-object-id';
+	public const ATTRIBUTE_OBJECT_ID = 'data-object-id';
+	public const ATTRIBUTE_VERSION_ID = 'data-version-id';
+	public const ATTRIBUTE_ATTACHED_OBJECT_ID = 'data-attached-object-id';
 
-	const JS_TYPE                      = 'cloud-document';
-	const JS_TYPE_CLASS_CLOUD_DOCUMENT = 'BX.Disk.Viewer.DocumentItem';
+	public const JS_TYPE = 'cloud-document';
+
+	public const JS_TYPE_CLASS_CLOUD_DOCUMENT = 'BX.Disk.Viewer.DocumentItem';
+	public const JS_TYPE_CLASS_ONLYOFFICE = 'BX.Disk.Viewer.OnlyOfficeItem';
 
 	public static function tryBuildByFileId($fileId, $sourceUri)
 	{
@@ -31,6 +35,13 @@ final class FileAttributes extends ItemAttributes
 		{
 			return FileAttributes::buildAsUnknownType($sourceUri);
 		}
+	}
+
+	public function setVersionId($versionId)
+	{
+		$this->setAttribute(self::ATTRIBUTE_VERSION_ID, $versionId);
+
+		return $this;
 	}
 
 	public function setObjectId($objectId)
@@ -53,7 +64,16 @@ final class FileAttributes extends ItemAttributes
 
 		if (self::isSetViewDocumentInClouds() && self::isAllowedUseClouds($this->fileData['CONTENT_TYPE']))
 		{
-			$this->attributes['data-viewer-type-class'] = self::JS_TYPE_CLASS_CLOUD_DOCUMENT;
+			$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+			if ($documentHandler instanceof OnlyOfficeHandler)
+			{
+				$this->attributes['data-viewer-type-class'] = self::JS_TYPE_CLASS_ONLYOFFICE;
+			}
+			else
+			{
+				$this->attributes['data-viewer-type-class'] = self::JS_TYPE_CLASS_CLOUD_DOCUMENT;
+			}
+
 			$this->setExtension('disk.viewer.document-item');
 
 			Extension::load('disk.viewer.document-item');

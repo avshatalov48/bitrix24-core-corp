@@ -3818,10 +3818,11 @@ class CAllCrmActivity
 
 			$ownerTypeName = '';
 			$ownerID = 0;
-			if(preg_match('/^([A-Z]+)_([0-9]+)$/', mb_strtoupper(trim($value)), $match) === 1)
+			$parseResult = \CCrmOwnerType::ParseEntitySlug(mb_strtoupper(trim($value)));
+			if(is_array($parseResult))
 			{
-				$ownerTypeName = CCrmOwnerTypeAbbr::ResolveName($match[1]);
-				$ownerID = intval($match[2]);
+				$ownerTypeName = \CCrmOwnerType::ResolveName($parseResult['ENTITY_TYPE_ID']);
+				$ownerID = $parseResult['ENTITY_ID'];
 			}
 			elseif($defaultTypeName !== '')
 			{
@@ -4551,8 +4552,8 @@ class CAllCrmActivity
 					$arNewUser = array();
 
 					$dbUser = CUser::GetList(
-						($by='id'),
-						($order='asc'),
+						'id',
+						'asc',
 						array('ID'=> "{$oldID}|{$newID}"),
 						array(
 							'FIELDS'=> array(
@@ -7939,9 +7940,9 @@ class CCrmActivityDbResult extends CDBResult
 {
 	private $selectFields = null;
 	private $selectCommunications = false;
-	function CCrmActivityDbResult($res, $selectFields = array())
+	public function __construct($res, $selectFields = array())
 	{
-		parent::CDBResult($res);
+		parent::__construct($res);
 
 		if(!is_array($selectFields))
 		{

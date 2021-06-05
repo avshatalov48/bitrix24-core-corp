@@ -153,7 +153,7 @@ final class Storage extends Base
 		$diskSecurityContext = new Disk\Security\DiskSecurityContext($user);
 		if(Loader::includeModule('socialnetwork'))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if(\CSocnetUser::isCurrentUserModuleAdmin())
 			{
 				$diskSecurityContext = new Disk\Security\FakeSecurityContext($user);

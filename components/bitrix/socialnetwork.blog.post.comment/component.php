@@ -1,10 +1,12 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\ModuleManager;
-use \Bitrix\Socialnetwork\ComponentHelper;
-use \Bitrix\Blog\Item\Permissions;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Blog\Item\Permissions;
+use Bitrix\Socialnetwork\Helper\Mention;
 
 global $USER_FIELD_MANAGER, $CACHE_MANAGER, $DB;
 
@@ -1051,22 +1053,20 @@ if(
 									"BODY" => $text4im
 								);
 
-								preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST['comment'], $arMention);
+								$arMention = Mention::getUserIds($_POST['comment']);
 
 								if (!empty($arMention))
 								{
-									$arFieldsIM["MENTION_ID"] = $arMention[1];
+									$arFieldsIM['MENTION_ID'] = $arMention;
 									if (
-										$arParams["MOBILE"] == "Y"
-										&& $_POST["act"] != "edit"
-										&& is_array($arMention[1])
-										&& !empty($arMention[1])
+										$arParams['MOBILE'] === 'Y'
+										&& $_POST['act'] !== 'edit'
 									)
 									{
-										$arMentionedDestCode = array();
-										foreach($arMention[1] as $val)
+										$arMentionedDestCode = [];
+										foreach($arMention as $val)
 										{
-											$arMentionedDestCode[] = "U".$val;
+											$arMentionedDestCode[] = 'U' . $val;
 										}
 
 										\Bitrix\Main\FinderDestTable::merge(array(
@@ -1397,41 +1397,27 @@ if(
 								)
 								{
 									$arUserIdToShare = $arNewRights = array();
+									$arMentionedUserId = Mention::getUserIds($_POST['comment']);
 
-									preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST['comment'], $arMention);
-
-									$arMentionedUserId = array();
-									if (
-										!empty($arMention)
-										&& !empty($arMention[1])
-										&& is_array($arMention[1])
-									)
+									foreach($arMentionedUserId as $val)
 									{
-										$arMentionedUserId = $arMention[1];
-									}
-
-									if (!empty($arMentionedUserId))
-									{
-										foreach($arMentionedUserId as $val)
+										$val = intval($val);
+										if (
+											intval($val) > 0
+											&& $val != $arOldComment["AUTHOR_ID"]
+											&& $val != $arPost["AUTHOR_ID"]
+										)
 										{
-											$val = intval($val);
-											if (
-												intval($val) > 0
-												&& $val != $arOldComment["AUTHOR_ID"]
-												&& $val != $arPost["AUTHOR_ID"]
-											)
-											{
-												$postPerm = CBlogPost::getSocNetPostPerms(array(
-													"POST_ID" => $arPost["ID"],
-													"NEED_FULL" => true,
-													"USER_ID" => $val,
-													"IGNORE_ADMIN" => true
-												));
+											$postPerm = CBlogPost::getSocNetPostPerms(array(
+												"POST_ID" => $arPost["ID"],
+												"NEED_FULL" => true,
+												"USER_ID" => $val,
+												"IGNORE_ADMIN" => true
+											));
 
-												if ($postPerm < Permissions::PREMODERATE)
-												{
-													$arUserIdToShare[] = $val;
-												}
+											if ($postPerm < Permissions::PREMODERATE)
+											{
+												$arUserIdToShare[] = $val;
 											}
 										}
 									}

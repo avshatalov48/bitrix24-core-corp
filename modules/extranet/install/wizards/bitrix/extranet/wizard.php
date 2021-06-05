@@ -270,13 +270,7 @@ class SiteSettingsStep extends CWizardStep
 		if (COption::GetOptionString("extranet", "extranet_site") <> '')
 		{
 			$siteId = COption::GetOptionString("extranet", "extranet_site");
-			$rsSites = CSite::GetList(
-				$by="sort",
-				$order="desc",
-				array(
-					"ID" => $siteId
-				)
-			);
+			$rsSites = CSite::GetList("sort", "desc", array("ID" => $siteId));
 			if ($arSite = $rsSites->Fetch())
 			{
 				$siteName = $arSite["NAME"];
@@ -409,7 +403,7 @@ class SiteSettingsStep extends CWizardStep
 			}
 			else
 			{
-				$rsSites = CSite::GetList($by="sort", $order="desc", array());
+				$rsSites = CSite::GetList("sort", "desc");
 				while($arSite = $rsSites->Fetch())
 				{
 					if (trim($arSite["DIR"], "/") == trim($siteFolder, "/"))
@@ -784,7 +778,7 @@ class DataInstallStep extends CWizardStep
 				__IncludeLang(WIZARD_SERVICE_ABSOLUTE_PATH."/lang/en/".$serviceStage);
 		}
 
-		$dbGroups = CGroup::GetList($by="id", $order="asc", Array("ACTIVE" => "Y"));
+		$dbGroups = CGroup::GetList("id", "asc", Array("ACTIVE" => "Y"));
 		while($arGroup = $dbGroups->Fetch())
 			define("WIZARD_".$arGroup["STRING_ID"]."_GROUP", $arGroup["ID"]);
 

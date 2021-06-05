@@ -1,10 +1,14 @@
 <?php
 namespace Bitrix\Crm\Controller;
+use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
 
 class Entity extends Main\Engine\Controller
 {
+	public const ITEMS_LIMIT = 20;
+
 	public function configureActions()
 	{
 		return array(
@@ -51,9 +55,9 @@ class Entity extends Main\Engine\Controller
 		);
 
 		$qty = count($values);
-		if($qty > 20)
+		if($qty > static::ITEMS_LIMIT)
 		{
-			$values = array_slice($values, $qty - 20);
+			$values = array_slice($values, $qty - static::ITEMS_LIMIT);
 		}
 
 		\CUserOptions::SetOption($category, $code, $values);
@@ -100,9 +104,9 @@ class Entity extends Main\Engine\Controller
 		}
 
 		$qty = count($items);
-		if($qty < 20 && isset($options['EXPAND_ENTITY_TYPE_ID']))
+		if($qty < static::ITEMS_LIMIT && isset($options['EXPAND_ENTITY_TYPE_ID']))
 		{
-			self::expandItems($items, $options['EXPAND_ENTITY_TYPE_ID'], 20 - $qty);
+			self::expandItems($items, $options['EXPAND_ENTITY_TYPE_ID'], static::ITEMS_LIMIT - $qty);
 		}
 
 		return $items;
@@ -113,7 +117,7 @@ class Entity extends Main\Engine\Controller
 	 * @param int $entityTypeID Entity Type ID.
 	 * @param int $limit Limit of new items.
 	 */
-	protected static function expandItems(array &$items, $entityTypeID, $limit = 20)
+	protected static function expandItems(array &$items, $entityTypeID, $limit = self::ITEMS_LIMIT)
 	{
 		$map = array();
 		foreach($items as $item)
@@ -146,6 +150,34 @@ class Entity extends Main\Engine\Controller
 		elseif($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			$entityIDs = \CCrmDeal::GetTopIDs($limit, 'DESC', $userPermissions);
+		}
+		elseif($entityTypeID === \CCrmOwnerType::Order)
+		{
+			$orders = Order::getList([
+				'select' => ['ID'],
+				'limit' => $limit
+			])->fetchCollection();
+
+			$entityIDs = $orders->getIdList();
+		}
+		elseif(
+			$entityTypeID === \CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID)
+		)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeID);
+			if ($factory)
+			{
+				$list = $factory->getItemsFilteredByPermissions([
+					'order' => ['ID' => 'DESC'],
+					'limit' => $limit
+				]);
+
+				foreach ($list as $item)
+				{
+					$entityIDs[] = $item->getId();
+				}
+			}
 		}
 
 		if(!is_array($entityIDs))

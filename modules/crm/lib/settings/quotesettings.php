@@ -1,27 +1,23 @@
 <?php
 namespace Bitrix\Crm\Settings;
-use Bitrix\Main;
+
+use Bitrix\Crm\Service\Container;
+
 class QuoteSettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 
-	/** @var QuoteSettings  */
-	private static $current = null;
-	/** @var BooleanSetting  */
-	private $enableViewEvent = null;
-	/** @var BooleanSetting  */
-	private $isOpened = null;
-	/** @var IntegerSetting */
-	private $defaultListView = null;
-	/** @var EntityViewSettings */
-	private $entityListView = null;
+	private static $current;
+	private $enableViewEvent;
+	private $isOpened;
+	private $isFactoryEnabled;
 
-	function __construct()
+	public function __construct()
 	{
-		$this->defaultListView = new IntegerSetting('quote_default_list_view', self::VIEW_KANBAN);
 		$this->isOpened = new BooleanSetting('quote_opened_flag', true);
 		$this->enableViewEvent = new BooleanSetting('quote_enable_view_event', true);
+		$this->isFactoryEnabled = new BooleanSetting('quote_enable_factory', false);
 	}
 	/**
 	 * Get current instance
@@ -52,39 +48,54 @@ class QuoteSettings
 	{
 		$this->isOpened->set($opened);
 	}
+
+	/**
+	 * Return true if new interface and api through Service\Factory is used to process quotes.
+	 *
+	 * @return bool
+	 */
+	public function isFactoryEnabled(): bool
+	{
+		return $this->isFactoryEnabled->get();
+	}
+
+	/**
+	 * Set state of isFactoryEnabled setting.
+	 *
+	 * @param bool $isEnabled
+	 */
+	public function setFactoryEnabled(bool $isEnabled): void
+	{
+		$this->isFactoryEnabled->set($isEnabled);
+	}
+
 	/**
 	 * Get current list view ID
 	 * @return int
+	 * @deprecated Use \Bitrix\Crm\Service\Router::getCurrentListView instead
 	 */
 	public function getCurrentListViewID()
 	{
-		if($this->entityListView === null)
-		{
-			$this->entityListView = new EntityViewSettings();
-		}
-
-		$viewID = $this->entityListView->getViewID(\CCrmOwnerType::Quote);
-		if($viewID === EntityViewSettings::UNDEFINED)
-		{
-			$viewID = $this->getDefaultListViewID();
-		}
-		return $viewID;
+		$view = Container::getInstance()->getRouter()->getCurrentListView(\CCrmOwnerType::Quote);
+		return EntityViewSettings::resolveID($view);
 	}
 	/**
 	 * Get default list view ID
 	 * @return int
+	 * @deprecated Use \Bitrix\Crm\Service\Factory::getDefaultListView instead
 	 */
 	public function getDefaultListViewID()
 	{
-		return $this->defaultListView->get();
+		return Container::getInstance()->getRouter()->getDefaultListView(\CCrmOwnerType::Quote);
 	}
 	/**
 	 * Set default list view ID
 	 * @param int $viewID View ID.
 	 * @return void
+	 * @deprecated Use \Bitrix\Crm\Service\Factory::setDefaultListView instead
 	 */
 	public function setDefaultListViewID($viewID)
 	{
-		$this->defaultListView->set($viewID);
+		Container::getInstance()->getRouter()->setDefaultListView(\CCrmOwnerType::Quote, $viewID);
 	}
 }

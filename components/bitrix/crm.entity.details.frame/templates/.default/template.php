@@ -10,83 +10,88 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if($arResult['IFRAME'])
 {
-	$APPLICATION->RestartBuffer();
-	\CJSCore::init();
-	\Bitrix\Main\UI\Extension::load("ui.hint");
-	?><!DOCTYPE html>
-	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
-	<head>
-		<script data-skip-moving="true">
-			// Prevent loading page without header and footer
-			if(window === window.top)
-			{
-				window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('', array('IFRAME'))); ?>";
-			}
-		</script>
-
-		<?
-		//The fastest way to close Slider Loader.
-		Bitrix\Main\Page\Asset::getInstance()->setJsToBody(true);
-		Bitrix\Main\Page\Asset::getInstance()->addString('
-			<script>
-				BX.ready(function() {
-					var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
-					if(!slider)
-					{
-						return;
-					}
-					
-				    slider.closeLoader();
-				    slider.setCacheable(false);
-				    if(slider.setPrintable)
-				    {
-				        slider.setPrintable(true);
-				    }
-				});
+	// TODO: Change this workaround and solve the problem with toolbar properly
+	// Don't change header if there is ui.sidepanel.wrapper (which is used on custom entity pages)
+	if (!(\CCrmOwnerType::isPossibleDynamicTypeId($arResult['ENTITY_TYPE_ID'])))
+	{
+		$APPLICATION->RestartBuffer();
+		\CJSCore::init();
+		\Bitrix\Main\UI\Extension::load("ui.hint");
+		?><!DOCTYPE html>
+		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
+		<head>
+			<script data-skip-moving="true">
+				// Prevent loading page without header and footer
+				if(window === window.top)
+				{
+					window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('', array('IFRAME'))); ?>";
+				}
 			</script>
-		', false, \Bitrix\Main\Page\AssetLocation::AFTER_CSS);
-		?>
 
-		<?$APPLICATION->ShowHead();?>
-		<title><?$APPLICATION->ShowTitle()?></title>
-		<style>.crm-iframe-popup,
-			.crm-iframe-popup.crm-form-page,
-			.crm-iframe-popup.crm-detail-page{
-				background: #eef2f4 !important;
-				padding: 0 15px 21px 21px;
-			}
-		</style>
-	</head>
-	<body class="crm-iframe-popup crm-detail-page template-<?= SITE_TEMPLATE_ID ?> <? if(!$arResult['IFRAME_USE_SCROLL']):?>crm-iframe-popup-no-scroll<?endif ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
-
-	<div class="crm-iframe-header">
-		<div class="pagetitle-wrap">
-			<div class="pagetitle-inner-container">
-				<div class="pagetitle-menu" id="pagetitle-menu"><?
-					$APPLICATION->ShowViewContent("pagetitle");
-					$APPLICATION->ShowViewContent("inside_pagetitle");
-				?></div>
-				<div class="pagetitle">
-					<span id="pagetitle_icon"></span>
-					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle()?></span>
-					<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">
-						<?if($arResult['ENABLE_TITLE_EDIT'] && $arResult['ENTITY_ID'] > 0)
+			<?
+			//The fastest way to close Slider Loader.
+			Bitrix\Main\Page\Asset::getInstance()->setJsToBody(true);
+			Bitrix\Main\Page\Asset::getInstance()->addString('
+				<script>
+					BX.ready(function() {
+						var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
+						if(!slider)
 						{
-							?><span id="pagetitle_edit" class="pagetitle-edit-button"></span><?
+							return;
 						}
-						?><span id="page_url_copy_btn" class="crm-page-link-btn"></span>
-					</span>	<?
-					?><div id="pagetitle_sub" class="pagetitle-sub"><?
-						$APPLICATION->ShowViewContent('crm_details_legend');
+						
+						slider.closeLoader();
+						slider.setCacheable(false);
+						if(slider.setPrintable)
+						{
+							slider.setPrintable(true);
+						}
+					});
+				</script>
+			', false, \Bitrix\Main\Page\AssetLocation::AFTER_CSS);
+			?>
+
+			<?$APPLICATION->ShowHead();?>
+			<title><?$APPLICATION->ShowTitle()?></title>
+			<style>.crm-iframe-popup,
+				.crm-iframe-popup.crm-form-page,
+				.crm-iframe-popup.crm-detail-page{
+					background: #eef2f4 !important;
+					padding: 0 15px 21px 21px;
+				}
+			</style>
+		</head>
+		<body class="crm-iframe-popup crm-detail-page template-<?= SITE_TEMPLATE_ID ?> <? if(!$arResult['IFRAME_USE_SCROLL']):?>crm-iframe-popup-no-scroll<?endif ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
+
+		<div class="crm-iframe-header">
+			<div class="pagetitle-wrap">
+				<div class="pagetitle-inner-container">
+					<div class="pagetitle-menu" id="pagetitle-menu"><?
+						$APPLICATION->ShowViewContent("pagetitle");
+						$APPLICATION->ShowViewContent("inside_pagetitle");
 					?></div>
+					<div class="pagetitle">
+						<span id="pagetitle_icon"></span>
+						<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle()?></span>
+						<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">
+							<?if($arResult['ENABLE_TITLE_EDIT'] && $arResult['ENTITY_ID'] > 0)
+							{
+								?><span id="pagetitle_edit" class="pagetitle-edit-button"></span><?
+							}
+							?><span id="page_url_copy_btn" class="crm-page-link-btn"></span>
+						</span>	<?
+						?><div id="pagetitle_sub" class="pagetitle-sub"><?
+							$APPLICATION->ShowViewContent('crm_details_legend');
+						?></div>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
 
-	<div class="crm-iframe-workarea" id="crm-content-outer">
-	<div class="crm-iframe-sidebar"><?$APPLICATION->ShowViewContent("sidebar"); ?></div>
-	<div class="crm-iframe-content"><?
+		<div class="crm-iframe-workarea" id="crm-content-outer">
+		<div class="crm-iframe-sidebar"><?$APPLICATION->ShowViewContent("sidebar"); ?></div>
+		<div class="crm-iframe-content"><?
+	}
 }
 else
 {
@@ -178,14 +183,6 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Deal)
 		)
 	);
 }
-elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Quote)
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.quote.details',
-		'',
-		array('ENTITY_ID' => $arResult['ENTITY_ID'])
-	);
-}
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Order)
 {
 	$APPLICATION->IncludeComponent(
@@ -241,6 +238,17 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderPayment)
 		)
 	);
 }
+elseif(\CCrmOwnerType::isPossibleDynamicTypeId($arResult['ENTITY_TYPE_ID']))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.item.details',
+		'',
+		[
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
+		]
+	);
+}
 else
 {
 	ShowError(
@@ -253,10 +261,13 @@ else
 
 if($arResult['IFRAME'])
 {
-			?></div>
-		</div>
-		</body>
-	</html><?
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
-	die();
+	if (!(\CCrmOwnerType::isPossibleDynamicTypeId($arResult['ENTITY_TYPE_ID'])))
+	{
+				?></div>
+			</div>
+			</body>
+		</html><?
+		require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
+		die();
+	}
 }

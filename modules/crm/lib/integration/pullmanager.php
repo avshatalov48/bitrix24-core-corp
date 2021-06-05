@@ -112,9 +112,19 @@ class PullManager
 	 */
 	protected function sendItemEvent(string $eventName, array $item, ?array $params = null): bool
 	{
-		$tag = $this->getKanbanTag($params['TYPE'], $params);
+		$kanbanTag = $this->getKanbanTag($params['TYPE'], $params);
 		$eventParams = $this->prepareItemEventParams($item, $eventName);
-		return $this->sendKanbanEvent($item, $tag, $eventParams);
+		$eventParams['skipCurrentUser'] = (!isset($params['SKIP_CURRENT_USER']) || $params['SKIP_CURRENT_USER'] === true);
+
+		$isKanbanEventSent = $this->sendKanbanEvent($item, $kanbanTag, $eventParams);
+
+		$itemEventName = static::getItemEventName(static::EVENT_ITEM_UPDATED, (string)$params['TYPE'], (int)$item['id']);
+		if ($itemEventName)
+		{
+			return $this->sendEvent($itemEventName, $eventParams);
+		}
+
+		return $isKanbanEventSent;
 	}
 
 	/**
@@ -189,6 +199,16 @@ class PullManager
 		return $eventName;
 	}
 
+	protected static function getItemEventName(string $eventName, string $entityType, int $itemId): ?string
+	{
+		if (!empty($entityType) && $itemId > 0)
+		{
+			return $eventName . '_' . $entityType . '_' . $itemId;
+		}
+
+		return null;
+	}
+
 	/**
 	 * @param $item
 	 * @param string $eventId
@@ -200,8 +220,12 @@ class PullManager
 		$params['eventId'] = $eventId;
 		$userIds = $this->getSubscribedUserIdsWithItemPermissions($item, $eventId);
 
-		$currentUser = CurrentUser::get()->getId();
-		unset($userIds[$currentUser]);
+		if ($params['skipCurrentUser'])
+		{
+			$currentUser = CurrentUser::get()->getId();
+			unset($userIds[$currentUser]);
+		}
+		unset($params['skipCurrentUser']);
 
 		return $this->sendEvent($eventId, $params, $userIds);
 	}
@@ -259,7 +283,11 @@ class PullManager
 			'_',
 			str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName)
 		);
-		$type = $typeWithCategoryId[0];
+		$type = (
+			$typeWithCategoryId[0] === 'DYNAMIC'
+				? $typeWithCategoryId[0] . '_' . $typeWithCategoryId[1]
+				: $typeWithCategoryId[0]
+		);
 
 		$result = [];
 		if($entity = Entity::getInstance($type))
@@ -289,6 +317,22 @@ class PullManager
 	public function subscribeOnKanbanUpdate(string $entityType, ?array $params = null): ?string
 	{
 		return $this->subscribeOnEvent($this->getKanbanTag($entityType, $params));
+	}
+
+	public function subscribeOnItemUpdate(int $entityTypeId, int $itemId): ?string
+	{
+		$eventName = static::getItemEventName(
+			static::EVENT_ITEM_UPDATED,
+			\CCrmOwnerType::ResolveName($entityTypeId),
+			$itemId
+		);
+
+		if ($eventName)
+		{
+			return $this->subscribeOnEvent($eventName);
+		}
+
+		return null;
 	}
 
 	protected function subscribeOnEvent(string $tag, bool $immediate = true): ?string

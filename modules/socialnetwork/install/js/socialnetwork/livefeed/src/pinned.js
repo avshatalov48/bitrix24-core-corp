@@ -264,6 +264,7 @@ class PinnedPanel
 			}
 		});
 
+		EventEmitter.incrementMaxListeners('OnUCCommentWasPulled');
 		EventEmitter.subscribe('OnUCCommentWasPulled', (event: BaseEvent) =>
 		{
 			const [ id, data, params ] = event.getData();

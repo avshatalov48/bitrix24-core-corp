@@ -89,6 +89,12 @@ class CrmAutomationComponent extends \CBitrixComponent
 		if (!Factory::canUseBizprocDesigner())
 			return '';
 
+		// full designer is not available for now
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return null;
+		}
+
 		$siteDir = isset($this->arParams['SITE_DIR']) ? (string)$this->arParams['SITE_DIR'] : SITE_DIR;
 		$siteDir = rtrim($siteDir, '/');
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
@@ -120,6 +126,15 @@ class CrmAutomationComponent extends \CBitrixComponent
 			case CCrmOwnerType::Lead:
 				$statusId = 'STATUS';
 				break;
+		}
+
+		if ($statusId === '')
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory((int)$entityTypeId);
+			if ($factory)
+			{
+				$statusId = $factory->getStagesEntityId((int) $categoryId);
+			}
 		}
 
 		return CComponentEngine::MakePathFromTemplate(

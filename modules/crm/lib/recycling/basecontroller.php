@@ -332,8 +332,10 @@ abstract class BaseController
 	protected function suspendTimeline($entityID, $recyclingEntityID)
 	{
 		Crm\Timeline\TimelineManager::transferOwnership(
-			$this->getEntityTypeID(), $entityID,
-			$this->getSuspendedEntityTypeID(), $recyclingEntityID
+			$this->getEntityTypeID(),
+			$entityID,
+			$this->getSuspendedEntityTypeID(),
+			$recyclingEntityID
 		);
 	}
 
@@ -839,4 +841,27 @@ abstract class BaseController
 		}
 		return $data;
 	}
+
+	//region Custom relations
+	protected function suspendCustomRelations(int $entityId, int $recyclingEntityId): void
+	{
+		Crm\Relation\EntityRelationTable::rebind(
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $entityId),
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId)
+		);
+	}
+
+	protected function recoverCustomRelations(int $recyclingEntityId, int $newEntityId): void
+	{
+		Crm\Relation\EntityRelationTable::rebind(
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId),
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $newEntityId)
+		);
+	}
+
+	protected function eraseSuspendedCustomRelations(int $recyclingEntityId): void
+	{
+		Crm\Relation\EntityRelationTable::deleteByItem($this->getSuspendedEntityTypeID(), $recyclingEntityId);
+	}
+	//endregion
 }

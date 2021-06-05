@@ -882,18 +882,21 @@ class LeadConverter extends EntityConverter
 						}
 						//endregion
 
-						//region BizProcess
-						$arErrors = array();
-						\CCrmBizProcHelper::AutoStartWorkflows(
-							\CCrmOwnerType::Lead,
-							$this->entityID,
-							\CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-						//endregion
+						if (!$this->shouldSkipBizProcAutoStart())
+						{
+							//region BizProcess
+							$arErrors = array();
+							\CCrmBizProcHelper::AutoStartWorkflows(
+								\CCrmOwnerType::Lead,
+								$this->entityID,
+								\CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+							//endregion
+						}
 
 						//region Automation
-						$starter = new 	Crm\Automation\Starter(\CCrmOwnerType::Lead, $this->entityID);
+						$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $this->entityID);
 						$starter->runOnUpdate($fields, $presentFields);
 						//end region
 					}

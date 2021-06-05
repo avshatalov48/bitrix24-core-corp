@@ -14,7 +14,7 @@ if (!IsModuleInstalled("mobile"))
 	return;
 }
 
-if (WIZARD_IS_RERUN !== true)	
+if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true)
 {
 	$arAppTempalate = Array(
 		"SORT" => 1,

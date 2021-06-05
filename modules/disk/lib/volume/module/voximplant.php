@@ -189,7 +189,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 					\Bitrix\Disk\Volume\Cleaner::isCronRun()
 				)
 				{
-					$sites = \CSite::GetList($by = 'sort', $order = 'desc', array('DEF' => 'Y'));
+					$sites = \CSite::GetList('sort', 'desc', array('DEF' => 'Y'));
 					if ($site = $sites->Fetch())
 					{
 						$siteID = $site['LID'];

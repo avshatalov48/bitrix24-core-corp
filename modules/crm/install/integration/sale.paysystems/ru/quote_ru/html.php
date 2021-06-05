@@ -197,12 +197,11 @@ $currency = trim(preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING
 
 $vat = 0;
 $arCols = array();
+$arCells = array();
+$arProps = array();
 if (!empty($arBasketItems))
 {
 	$arBasketItems = getMeasures($arBasketItems);
-
-	$arCells = array();
-	$arProps = array();
 
 	$columnList = array('NUMBER', 'NAME', 'QUANTITY', 'MEASURE', 'PRICE', 'VAT_RATE', 'DISCOUNT', 'SUM');
 	$vatRateColumn = 0;

@@ -1181,7 +1181,7 @@
 	border-radius: var(--border-radius);
 	position: relative;
 	overflow: hidden;
-	height: 90px;
+	height: 90px; /* keep in sync with SIDE_USER_HEIGHT (call/view.js) */
 	cursor: pointer;
 	flex-shrink: 0;
 	box-sizing: border-box;
@@ -1817,7 +1817,7 @@
 }
 
 .bx-messenger-videocall-user-block .bx-messenger-videocall-user {
-	width: 160px;
+	width: 160px; /* keep in sync with SIDE_USER_WIDTH (call/view.js) */
 }
 
 .bx-messenger-videocall-ear {
@@ -3076,6 +3076,74 @@ display: inline-block;
 	background-size: contain;
 }
 /* endregion: icons */
+
+/* region: call-muted */
+
+.bx-call-view-popup-call-muted {
+	border-radius: 27.5px;
+	color: white;
+	line-height: 22px;
+	background-color: rgba(0,0,0,0.62) !important;
+}
+
+.bx-call-view-popup-call-muted > .popup-window-angly:before {
+	background-color: rgba(0,0,0,0.62) !important;
+}
+
+.bx-call-view-popup-call-muted-body {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.bx-call-view-popup-call-muted-icon-mic {
+	display: inline-block;
+	width: 23px;
+	height: 23px;
+	margin-left: 8px;
+	background-image: url("data:image/svg+xml,%3Csvg width='23' height='23' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle fill='%23FF5752' cx='11.646' cy='11.109' r='11.085'/%3E%3Cpath d='M8.146 10.546a.713.713 0 01.701.643l.004.078c-.004.37.202 1.08.583 1.631.548.793 1.389 1.252 2.639 1.252.46 0 .866-.064 1.221-.186l1.082 1.082c-.451.233-.966.401-1.544.48l-.001.937h.309a.642.642 0 010 1.284H10.99a.642.642 0 110-1.284h.308v-.938c-2.576-.348-3.893-2.42-3.873-4.274a.713.713 0 01.72-.705zm.028-5.058l9.17 9.17a.605.605 0 01-.856.855l-9.17-9.17a.605.605 0 01.856-.855zm1.947 5.302l2.132 2.133a1.944 1.944 0 01-2.13-1.935l-.002-.198zm5.857-.244a.713.713 0 01.727.698c.007.331-.032.674-.116 1.014l-1.26-1.26a.713.713 0 01.649-.452zm-3.913-5.599c1.074 0 1.944.87 1.944 1.944v2.787l-3.675-3.672a1.943 1.943 0 011.731-1.059z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.bx-call-view-popup-call-muted-text {
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: white;
+	margin: 0 13px;
+}
+
+.bx-call-view-popup-call-muted-body .ui-btn.ui-btn-light-border {
+	--ui-btn-color: rgba(255, 255, 255, .9);
+	--ui-btn-color-hover: white;
+	--ui-btn-background: rgba(255, 255, 255, .15);
+	--ui-btn-background-hover: rgba(255, 255, 255, .27);
+	--ui-btn-border-color: rgba(255, 255, 255, .23);
+	--ui-btn-border-color-hover: rgba(255, 255, 255, .41);
+	--ui-btn-icon: url("data:image/svg+xml,%3Csvg width='10' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.552 5.6a.713.713 0 01.728.697c.038 1.808-1.294 3.93-3.874 4.281v.938h.308a.642.642 0 010 1.284H3.566a.642.642 0 110-1.284h.308v-.938C1.296 10.23-.02 8.158 0 6.304a.713.713 0 011.422-.062l.003.078c-.004.37.203 1.08.584 1.631.547.793 1.388 1.252 2.639 1.252 1.243 0 2.081-.468 2.63-1.276.35-.516.553-1.171.575-1.524l.002-.076a.713.713 0 01.697-.728zM4.64 0c1.074 0 1.944.87 1.944 1.944V6.04a1.944 1.944 0 01-3.887 0V1.944C2.697.87 3.567 0 4.64 0z' fill='%23FFF' fill-rule='nonzero'/%3E%3C/svg%3E%0A");
+	padding-left: 26px;
+}
+
+.bx-call-view-popup-call-muted-button-icon {
+	display: inline-block;
+	width: 10px;
+	height: 13px;
+	background-image: url("data:image/svg+xml,%3Csvg width='10' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.552 5.6a.713.713 0 01.728.697c.038 1.808-1.294 3.93-3.874 4.281v.938h.308a.642.642 0 010 1.284H3.566a.642.642 0 110-1.284h.308v-.938C1.296 10.23-.02 8.158 0 6.304a.713.713 0 011.422-.062l.003.078c-.004.37.203 1.08.584 1.631.547.793 1.388 1.252 2.639 1.252 1.243 0 2.081-.468 2.63-1.276.35-.516.553-1.171.575-1.524l.002-.076a.713.713 0 01.697-.728zM4.64 0c1.074 0 1.944.87 1.944 1.944V6.04a1.944 1.944 0 01-3.887 0V1.944C2.697.87 3.567 0 4.64 0z' fill='%23FFF' fill-rule='nonzero'/%3E%3C/svg%3E%0A");
+}
+
+.bx-call-view-popup-call-muted-close {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	padding: 9px;
+	margin-left: 8px;
+	background: url("data:image/svg+xml,%3Csvg width='8' height='8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 4l3 3-1 1-3-3-3 3-1-1 3-3-3-3 1-1 3 3 3-3 1 1z' fill='%23FFF' fill-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
+	opacity: 0.35;
+	cursor: pointer;
+}
+
+.bx-call-view-popup-call-muted-close:hover {
+	opacity: 0.9;
+}
+
+/* endregion: call-muted */
 
 @media screen and (max-width: 850px) {
 	.bx-messenger-videocall-top-button-text {

@@ -101,8 +101,8 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 				if ($actorUserId)
 				{
 					$rsUser = CUser::GetList(
-						$by = 'id',
-						$order = 'asc',
+						'id',
+						'asc',
 						array('ID_EQUAL_EXACT' => (int) $actorUserId),
 						array(
 							'FIELDS' => array(

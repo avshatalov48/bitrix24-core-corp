@@ -7,7 +7,13 @@ class FieldChangedTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		return in_array($entityTypeId, [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead], true);
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return parent::isSupported($entityTypeId);
+		}
+
+		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::Quote];
+		return in_array($entityTypeId, $supported, true);
 	}
 
 	public static function getCode()

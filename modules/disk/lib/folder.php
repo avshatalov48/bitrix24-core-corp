@@ -165,7 +165,7 @@ class Folder extends BaseObject
 
 		$data['NAME'] = $this->resolveFileName($fileArray, $data);
 
-		$this->checkRequiredInputParams($data, array(
+		static::checkRequiredInputParams($data, array(
 			'NAME', 'CREATED_BY'
 		));
 
@@ -181,7 +181,7 @@ class Folder extends BaseObject
 
 		$fileArray['type'] = TypeFile::normalizeMimeType($fileArray['type'], $data['NAME']);
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileId = CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 		if(!$fileId)
 		{
@@ -189,7 +189,7 @@ class Folder extends BaseObject
 			return null;
 		}
 		/** @var array $fileArray */
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileArray = CFile::getFileArray($fileId);
 
 		$data['NAME'] = Ui\Text::correctFilename($data['NAME']);
@@ -239,7 +239,7 @@ class Folder extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		$this->checkRequiredInputParams($data, array(
+		static::checkRequiredInputParams($data, array(
 			'NAME', 'CREATED_BY', 'MIME_TYPE'
 		));
 
@@ -266,7 +266,7 @@ class Folder extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		$this->checkRequiredInputParams($data, array(
+		static::checkRequiredInputParams($data, array(
 			'NAME'
 		));
 
@@ -450,7 +450,7 @@ class Folder extends BaseObject
 			$url = $folderUrlList[$storageId];
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		\CSocNetSubscription::notifyGroup(array(
 			'LOG_ID' => false,
 			'GROUP_ID' => array($groupId),
@@ -476,7 +476,7 @@ class Folder extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		$this->checkRequiredInputParams($data, array(
+		static::checkRequiredInputParams($data, array(
 			'NAME'
 		));
 
@@ -543,7 +543,7 @@ class Folder extends BaseObject
 			$data['NAME'] = $object->getName();
 		}
 
-		$this->checkRequiredInputParams($data, array(
+		static::checkRequiredInputParams($data, array(
 			'NAME'
 		));
 

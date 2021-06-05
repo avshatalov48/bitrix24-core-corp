@@ -9,7 +9,7 @@ $arEventTypes = array(
 
 foreach($arEventTypes as $event)
 {
-	$rsMess = CEventMessage::GetList($by="", $order="desc", array("TYPE_ID" => $event));
+	$rsMess = CEventMessage::GetList('id', 'desc', array("TYPE_ID" => $event));
 	if ($arMess = $rsMess->Fetch())
 	{
 		$em = new CEventMessage;

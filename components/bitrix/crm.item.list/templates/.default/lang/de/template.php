@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_ITEM_LIST_ADD_CHILDREN_ELEMENT"] = "#CHILDREN_ELEMENT# hinzufügen";

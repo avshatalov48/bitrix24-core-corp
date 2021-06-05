@@ -53,6 +53,19 @@ abstract class EntityBase
 		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
 		$enablePermissionCheck = isset($params['enablePermissionCheck']) ? (bool)$params['enablePermissionCheck'] : true;
 
+		if (
+			!$this->areFieldsCompatibleWithOrm(array_keys($order))
+			|| !$this->areFieldsCompatibleWithOrm(array_keys($filter))
+		)
+		{
+			if (!$enablePermissionCheck)
+			{
+				$filter['CHECK_PERMISSIONS'] = 'N';
+			}
+
+			return $this->getTopIdsInCompatibilityMode($limit, $order, $filter);
+		}
+
 		static $cache;
 		$cacheKey = md5(serialize($params));
 		if (isset($cache[$cacheKey]))
@@ -109,6 +122,32 @@ abstract class EntityBase
 		}
 		return $cache[$cacheKey];
 	}
+
+	protected function areFieldsCompatibleWithOrm(array $fields): bool
+	{
+		$dbEntity = $this->getDbEntity();
+		$sqlWhere = new \CSQLWhere();
+		try
+		{
+			foreach ($fields as $field)
+			{
+				$field = $sqlWhere->makeOperation($field)['FIELD']; // remove filter operations like >, <, % etc
+				\Bitrix\Main\ORM\Query\Chain::getChainByDefinition($dbEntity, $field);
+			}
+		}
+		catch (\Bitrix\Main\SystemException $e) // Unknown field definition
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	protected abstract function getTopIdsInCompatibilityMode(
+		int $limit,
+		array $order = [],
+		array $filter = []
+	): array;
 
 	abstract public function getCount(array $params);
 	abstract public function delete($entityID, array $options = array());

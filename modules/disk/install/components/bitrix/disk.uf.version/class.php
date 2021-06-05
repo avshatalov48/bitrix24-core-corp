@@ -110,6 +110,7 @@ class CDiskUfVersionComponent extends BaseComponent
 			$attr = FileAttributes::buildByFileId($attachedModel->getFileId(), $sourceUri)
 				->setObjectId($attachedModel->getObjectId())
 				->setAttachedObjectId($attachedModel->getId())
+				->setVersionId($attachedModel->getVersionId())
 				->setTitle($version->getName())
 				->addAction([
 					'type' => 'download',

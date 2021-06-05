@@ -9,7 +9,7 @@ use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 
-class Lead extends ProductsDataProvider implements Nameable
+class Lead extends ProductsDataProvider
 {
 	protected $contacts;
 	protected $honorific;
@@ -227,14 +227,6 @@ class Lead extends ProductsDataProvider implements Nameable
 	public function getCrmOwnerType()
 	{
 		return \CCrmOwnerType::Lead;
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getCrmProductOwnerType()
-	{
-		return 'L';
 	}
 
 	/**

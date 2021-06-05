@@ -455,6 +455,16 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'params' => $productsParams
 		);
 
+		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+		$this->arResult['TABS'] = array_merge(
+			$this->arResult['TABS'],
+			$relationManager->getRelationTabsForDynamicChildren(
+				\CCrmOwnerType::Order,
+				$this->entityID,
+				($this->entityID === 0)
+			)
+		);
+
 		if ($this->mode !== ComponentMode::COPING && $this->mode !== ComponentMode::CREATION)
 		{
 			$this->arResult['TABS'][] = array(

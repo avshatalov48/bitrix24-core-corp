@@ -945,8 +945,8 @@ class CIntranetInviteDialog
 		else
 		{
 			$rsGroups = CGroup::GetList(
-				$o="",
-				$b="",
+				'',
+				'',
 				array(
 					"STRING_ID" => "EMPLOYEES_".$SITE_ID
 				)
@@ -964,8 +964,8 @@ class CIntranetInviteDialog
 	{
 		$arGroups = array(1);
 		$rsGroups = CGroup::GetList(
-			$o="",
-			$b="",
+			'',
+			'',
 			array(
 				"STRING_ID" => "PORTAL_ADMINISTRATION_".$SITE_ID
 			)
@@ -1124,8 +1124,8 @@ class CIntranetInviteDialog
 		$USER_ID = intval($USER_ID);
 
 		$rsUser = CUser::GetList(
-			($o = "ID"),
-			($b = "DESC"),
+			"ID",
+			"DESC",
 			array("ID_EQUAL_EXACT" => $USER_ID),
 			array("SELECT" => array("UF_DEPARTMENT"))
 		);
@@ -1144,8 +1144,8 @@ class CIntranetInviteDialog
 		$USER_ID = intval($USER_ID);
 
 		$rsUser = CUser::GetList(
-			($o = "ID"),
-			($b = "DESC"),
+			"ID",
+			"DESC",
 			array("ID_EQUAL_EXACT" => $USER_ID)
 		);
 
@@ -1347,8 +1347,8 @@ class CIntranetInviteDialog
 		}
 
 		$dbUser = CUser::GetList(
-			$o = "ID",
-			$b = "ASC",
+			"ID",
+			"ASC",
 			array(
 				"=EMAIL" => $arUser["EMAIL"],
 				"EXTERNAL_AUTH_ID" => "",
@@ -1486,8 +1486,8 @@ class CIntranetInviteDialog
 		}
 
 		$dbUser = CUser::GetList(
-			$o = "ID",
-			$b = "ASC",
+			"ID",
+			"ASC",
 			array(
 				"=EMAIL" => $arUser["EMAIL"],
 				"=EXTERNAL_AUTH_ID" => 'socservices',
@@ -1674,7 +1674,7 @@ class CIntranetInviteDialog
 			$arDepartmentId = array($arDepartmentId);
 		}
 
-		$dbSitesList = CSite::GetList($b = "SORT", $o = "asc", array("ACTIVE" => "Y")); // cache used
+		$dbSitesList = CSite::GetList("SORT", "asc", array("ACTIVE" => "Y")); // cache used
 		while ($arSite = $dbSitesList->GetNext())
 		{
 			$siteRootDepartmentId = COption::GetOptionString("main", "wizard_departament", false, $arSite["LID"], true);

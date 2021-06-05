@@ -102,6 +102,12 @@
 	padding: 10px 15px;
 	background: #eef4f4;
 }
+.imconnector-livechat-public-link-code {
+	background: #ececec;
+	padding: 4px 10px;
+	display: inline-block;
+	border-radius: 10px;
+}
 
 .imconnector-livechat-public-link-header-item,
 .imconnector-livechat-public-link-inner-header-item {

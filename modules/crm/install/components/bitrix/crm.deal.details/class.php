@@ -772,6 +772,16 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			'html' => ob_get_clean()
 		);
 
+		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+		$this->arResult['TABS'] = array_merge(
+			$this->arResult['TABS'],
+			$relationManager->getRelationTabsForDynamicChildren(
+				\CCrmOwnerType::Deal,
+				$this->entityID,
+				($this->entityID === 0)
+			)
+		);
+
 		if ($this->entityData['IS_RECURRING'] !== "Y")
 		{
 			if($this->entityID > 0)
@@ -1844,7 +1854,6 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					$this->entityData['TYPE_ID'] = $this->defaultEntityData['TYPE_ID'];
 				}
 			}
-			unset($by, $order);
 
 			if(isset($this->arResult['INITIAL_DATA']) && !empty($this->arResult['INITIAL_DATA']))
 			{
@@ -1864,7 +1873,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 
 			if(isset($this->entityData['COMPANY_ID']) && !isset($this->entityData['CONTACT_ID']))
 			{
-				$contactIDs = Crm\Component\EntityDetails\BaseComponent::prepareLastBoundEntityIDs(
+				$contactIDs = static::prepareLastBoundEntityIDs(
 					CCrmOwnerType::Contact,
 					CCrmOwnerType::Deal,
 					array(
@@ -2003,10 +2012,9 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
-			$by = 'ID';
-			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by, $order,
+				'ID',
+				'ASC',
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -2015,7 +2023,6 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
-			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{
@@ -2138,14 +2145,12 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		{
 			$this->entityData['OBSERVER_INFOS'] = array();
 
-			$by = 'ID';
-			$order = 'ASC';
 			$userDbResult = \CUser::GetList(
-				$by, $order,
+				'ID',
+				'ASC',
 				array('ID' => implode('||', $this->entityData['OBSERVER_IDS'])),
 				array('FIELDS' => array('ID', 'PERSONAL_PHOTO', 'WORK_POSITION', 'NAME', 'SECOND_NAME', 'LAST_NAME'))
 			);
-			unset($by, $order);
 
 			$observerMap = array();
 			while($userData = $userDbResult->Fetch())
@@ -3246,6 +3251,72 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 	protected function getFileUrlTemplate(): string
 	{
 		return '/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
+	}
+
+	public static function prepareLastBoundEntityIDs(int $entityTypeID, int $ownerEntityTypeID, array $params = null): array
+	{
+		if($params === null)
+		{
+			$params = array();
+		}
+
+		$userID = (isset($params['userID']) && $params['userID'] > 0)
+			? (int)$params['userID'] : \CCrmSecurityHelper::GetCurrentUserID();
+		$userPermissions = $params['userPermissions'] ?? \CCrmPerms::GetCurrentUserPermissions();
+
+		$results = array();
+		if($ownerEntityTypeID === \CCrmOwnerType::Deal && \CCrmDeal::CheckReadPermission(0, $userPermissions))
+		{
+			if($entityTypeID === \CCrmOwnerType::Contact)
+			{
+				$companyID = isset($params['companyID']) ? (int)$params['companyID'] : 0;
+				if($companyID > 0)
+				{
+					$dbResult = \CCrmDeal::GetListEx(
+						array('ID' => 'DESC'),
+						array(
+							'=COMPANY_ID' => $companyID,
+							'=ASSIGNED_BY_ID' => $userID,
+							'CHECK_PERMISSIONS' => 'N'
+						),
+						false,
+						array('nTopCount' => 5),
+						array('ID')
+					);
+
+					$ownerIDs = array();
+					while($ary = $dbResult->Fetch())
+					{
+						$ownerIDs[] = (int)$ary['ID'];
+					}
+
+					$dealsContacts = Crm\Binding\DealContactTable::getDealsContactIds($ownerIDs);
+					foreach ($ownerIDs as $dealId)
+					{
+						$contactIds = $dealsContacts[$dealId] ?? [];
+						foreach ($contactIds as $contactId)
+						{
+							if(\CCrmContact::CheckReadPermission($contactId, $userPermissions))
+							{
+								$results[] = $contactId;
+							}
+						}
+
+						if(!empty($results))
+						{
+							break;
+						}
+					}
+
+					if(empty($results))
+					{
+						$results = Crm\Binding\ContactCompanyTable::getCompanyContactIDs($companyID);
+					}
+				}
+			}
+		}
+
+		return $results;
 	}
 
 	protected function prepareClientEditorFieldsParams(): array

@@ -155,16 +155,16 @@ final class ObjectLock extends Internals\Model
 		{
 			$uuid = md5(microtime().getmypid());
 
-			$uuid{12} = '4';
-			$n = 8 + (ord($uuid{16}) & 3);
+			$uuid[12] = '4';
+			$n = 8 + (ord($uuid[16]) & 3);
 			$hex = '0123456789abcdef';
-			$uuid{16} = mb_substr($hex, $n, 1);
+			$uuid[16] = substr($hex, $n, 1);
 
-			return mb_substr($uuid, 0, 8).'-'.
-				mb_substr($uuid, 8, 4).'-'.
-				mb_substr($uuid, 12, 4).'-'.
-				mb_substr($uuid, 16, 4).'-'.
-				mb_substr($uuid, 20);
+			return substr($uuid, 0, 8).'-'.
+				substr($uuid, 8, 4).'-'.
+				substr($uuid, 12, 4).'-'.
+				substr($uuid, 16, 4).'-'.
+				substr($uuid, 20);
 		}
 	}
 
@@ -198,6 +198,20 @@ final class ObjectLock extends Internals\Model
 		}
 
 		return false;
+	}
+
+	public function shouldProcessAutoUnlock(): bool
+	{
+		$minutesToAutoReleaseObjectLock = Configuration::getMinutesToAutoReleaseObjectLock();
+		if (!$minutesToAutoReleaseObjectLock || $minutesToAutoReleaseObjectLock < 0)
+		{
+			return false;
+		}
+
+		$seconds = (int)$minutesToAutoReleaseObjectLock * 60;
+		$now = (new Datetime())->getTimestamp();
+
+		return ($now - $this->getCreateTime()->getTimestamp()) > $seconds;
 	}
 
 	/**

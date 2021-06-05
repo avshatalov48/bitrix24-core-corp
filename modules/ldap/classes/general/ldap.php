@@ -25,20 +25,14 @@ class CLDAP
 
 	protected $isTlsStarted = false;
 
-	function Connect($arFields = Array())
+	public function __construct($arFields = [])
+	{
+		$this->arFields = $arFields;
+	}
+
+	public function Connect()
 	{
 		global $APPLICATION;
-
-		if(!isset($this) || !is_object($this))
-		{
-			$ldap = new CLDAP();
-			$ldap->arFields = $arFields;
-
-			if($ldap->Connect())
-				return $ldap;
-
-			return false;
-		}
 
 		if($this->conn = @ldap_connect($this->arFields["SERVER"], $this->arFields['PORT']))
 		{
@@ -66,7 +60,7 @@ class CLDAP
 		return false;
 	}
 
-	function BindAdmin()
+	public function BindAdmin()
 	{
 		if($this->arFields["ADMIN_LOGIN"] == '')
 			return false;
@@ -77,7 +71,7 @@ class CLDAP
 		);
 	}
 
-	function Bind($login, $password)
+	public function Bind($login, $password)
 	{
 		if(!$this->conn)
 			return false;
@@ -123,12 +117,12 @@ class CLDAP
 		return true;
 	}
 
-	function Disconnect()
+	public function Disconnect()
 	{
 		ldap_close($this->conn);
 	}
 
-	function RootDSE()
+	public function RootDSE()
 	{
 		$values = $this->_RootDSE('namingcontexts');
 		if ($values == false)
@@ -136,7 +130,7 @@ class CLDAP
 		return $this->WorkAttr($values);
 	}
 
-	function _RootDSE($filtr)
+	public function _RootDSE($filtr)
 	{
 		$sr = ldap_read($this->conn, '', 'objectClass=*', Array($filtr), 0);
 		//$sr = ldap_read($this->conn, '', 'objectClass=*');
@@ -150,7 +144,7 @@ class CLDAP
 		return $values;
 	}
 
-	function WorkAttr($values)
+	public function WorkAttr($values)
 	{
 		global $APPLICATION;
 
@@ -171,7 +165,7 @@ class CLDAP
 		return $values;
 	}
 
-	function QueryArray($str = '(ObjectClass=*)', $fields = false)
+	public function QueryArray($str = '(ObjectClass=*)', $fields = false)
 	{
 		global $APPLICATION;
 
@@ -263,7 +257,7 @@ class CLDAP
 		return $info;
 	}
 
-	function Query($str = '(ObjectClass=*)', $fields = false)
+	public function Query($str = '(ObjectClass=*)', $fields = false)
 	{
 		$info = $this->QueryArray($str, $fields);
 		$info = is_array($info) ? $info : [];
@@ -284,7 +278,7 @@ class CLDAP
 	}
 
 	// query for group list from AD - server
-	function GetGroupListArray($query = '')
+	public function GetGroupListArray($query = '')
 	{
 		$group_filter = $this->arFields['GROUP_FILTER'];
 		if(trim($group_filter) <> '' && mb_substr(trim($group_filter), 0, 1) != '(')
@@ -336,7 +330,7 @@ class CLDAP
 		return $this->groupsLists[$query];
 	}
 
-	function GetGroupList($query = '')
+	public function GetGroupList($query = '')
 	{
 		$arGroups = $this->GetGroupListArray($query);
 		$result = new CDBResult();
@@ -362,7 +356,7 @@ class CLDAP
 		return ApplicationPasswordTable::findPassword($externalUserId, $password, $isPasswordOriginal) !== false;
 	}
 
-	function OnUserLogin(&$arArgs)
+	public static function OnUserLogin(&$arArgs)
 	{
 		global $APPLICATION;
 
@@ -491,7 +485,7 @@ class CLDAP
 	}
 
 	// this function is called on user logon (either normal or ntlm) to find user in ldap
-	function FindUser($LOGIN, $PASSWORD = false)
+	public function FindUser($LOGIN, $PASSWORD = false)
 	{
 		$login_field = $LOGIN;
 		$password_field = $PASSWORD;
@@ -524,7 +518,7 @@ class CLDAP
 	 * @param array $arLdapUser User params received from ldap.
 	 * @return mixed.
 	 */
-	function getLdapValueByBitrixFieldName($fieldName, $arLdapUser)
+	public function getLdapValueByBitrixFieldName($fieldName, $arLdapUser)
 	{
 		global $USER_FIELD_MANAGER;
 		if(!isset($this->arFields["FIELD_MAP"][$fieldName]))
@@ -658,7 +652,7 @@ class CLDAP
 	}
 
 	// converts LDAP values to those suitable for user fields
-	function GetUserFields($arLdapUser, &$departmentCache=FALSE)
+	public function GetUserFields($arLdapUser, &$departmentCache=FALSE)
 	{
 		global $APPLICATION;
 
@@ -775,7 +769,7 @@ class CLDAP
 	// returns array:
 	// 'ID' - department id
 	// 'IS_HEAD' - true if this user is head of the department, false if not
-	function GetDepartmentIdForADUser($department, $managerDN, $username, &$cache=FALSE, $iblockId = FALSE, $names = FALSE)
+	public function GetDepartmentIdForADUser($department, $managerDN, $username, &$cache=FALSE, $iblockId = FALSE, $names = FALSE)
 	{
 		global $USER_FIELD_MANAGER;
 
@@ -952,7 +946,7 @@ class CLDAP
 
 
 	// get user list (with attributes) from AD server
-	function GetUserList($arFilter = Array())
+	public function GetUserList($arFilter = Array())
 	{
 		$query = '';
 		foreach($arFilter as $key=>$value)
@@ -989,7 +983,7 @@ class CLDAP
 		return $arResult;
 	}
 
-	function GetUserArray($cn)
+	public function GetUserArray($cn)
 	{
 		$user_filter = $this->arFields['USER_FILTER'];
 
@@ -1002,14 +996,14 @@ class CLDAP
 		return $this->QueryArray($query);
 	}
 
-	function specialchars($str)
+	public function specialchars($str)
 	{
 		$from = Array("\\", ',', '+', '"', '<', '>', ';', "\n", "\r", '=', '*');
 		$to = Array('\5C', '\2C', '\2B', '\22', '\3C', '\3E', '\3B', '\0A', '\0D', '\3D', '\*');
 		return str_replace($from, $to, $str);
 	}
 
-	function OnExternalAuthList()
+	public static function OnExternalAuthList()
 	{
 		$arResult = Array();
 		$db_ldap_serv = CLdapServer::GetList();
@@ -1023,7 +1017,7 @@ class CLDAP
 		return $arResult;
 	}
 
-	static function NTLMAuth()
+	public static function NTLMAuth()
 	{
 		global $USER;
 
@@ -1099,7 +1093,7 @@ class CLDAP
 	 * @param $arUserGroups - full array with uppergroups
 	 * @param $arAllGroups - list of all ldap groups
 	 */
-	function GetAllMemberOf($arFindGroups, &$arUserGroups, $arAllGroups)
+	public function GetAllMemberOf($arFindGroups, &$arUserGroups, $arAllGroups)
 	{
 		if(!$arFindGroups || $arFindGroups=='')
 			return;
@@ -1117,7 +1111,7 @@ class CLDAP
 		}
 	}
 
-	function GetGroupMaps()
+	public function GetGroupMaps()
 	{
 		global $DB;
 
@@ -1139,7 +1133,7 @@ class CLDAP
 	}
 
 	//Need this to delete old photo
-	static function PrepareUserPhoto($uid, &$arLdapUser)
+	public static function PrepareUserPhoto($uid, &$arLdapUser)
 	{
 		if(!isset($arLdapUser["PERSONAL_PHOTO"]))
 			return false;
@@ -1159,7 +1153,7 @@ class CLDAP
 	}
 
 	// update user info, using previously loaded data from AD, make additional calls to AD if needed
-	function SetUser($arLdapUser, $bAddNew = true)
+	public function SetUser($arLdapUser, $bAddNew = true)
 	{
 		global $USER;
 
@@ -1192,7 +1186,7 @@ class CLDAP
 			$ldapUserID = 0;
 			$bitrixUserId = 0;
 			$res = CUser::GetList(
-				$O="", $B="",
+				"", "",
 				array('LOGIN_EQUAL_EXACT' => $arLdapUser['LOGIN']),
 				array('FIELDS' => array('ID', 'EXTERNAL_AUTH_ID', 'ACTIVE'))
 			);

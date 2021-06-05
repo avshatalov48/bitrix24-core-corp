@@ -238,7 +238,7 @@ class CTaskLog
 				if ($key == "FILES") {
 					$arDeleted = array_diff($currentFields[$key], $newFields[$key]);
 					if (sizeof($arDeleted) > 0) {
-						/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 						$rsFiles = CFile::GetList(array(), array("@ID" => implode(",", $arDeleted)));
 						$arFilesNames = array();
 						while ($arFile = $rsFiles->Fetch()) {
@@ -251,7 +251,7 @@ class CTaskLog
 
 					$arNew = array_diff($newFields[$key], $currentFields[$key]);
 					if (sizeof($arNew) > 0) {
-						/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 						$rsFiles = CFile::GetList(array(), array("@ID" => implode(",", $arNew)));
 						$arFilesNames = array();
 						while ($arFile = $rsFiles->Fetch()) {

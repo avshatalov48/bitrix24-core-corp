@@ -46,6 +46,12 @@ if(typeof BX.Crm.EntityFieldAttributeManager === "undefined")
 		},
 		getEntityPhases: function()
 		{
+			var entityPhases = BX.prop.getArray(this._settings, 'entityPhases', null);
+			if(entityPhases)
+			{
+				return entityPhases;
+			}
+
 			var progressManager;
 
 			if (typeof(BX.CrmProgressManager) !== "undefined"
@@ -331,7 +337,7 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 								backgroundColor = layout.getBackgroundColor(semantics);
 							}
 						}
-						var color = BX.Crm.EntityDetailProgressStep.calculateTextColor(backgroundColor);
+						var color = BX.Crm.EntityFieldAttributeConfigurator.calculateTextColor(backgroundColor);
 						return(
 							{
 								text: BX.prop.getString(phase, "name", phaseId),
@@ -717,6 +723,36 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 			this.setEnabled(this._switchCheckBox.checked);
 			this.adjust();
 		}
+	};
+	BX.Crm.EntityFieldAttributeConfigurator.calculateTextColor = function(baseColor)
+	{
+		var r, g, b;
+		if ( baseColor > 7 )
+		{
+			var hexComponent = baseColor.split("(")[1].split(")")[0];
+			hexComponent = hexComponent.split(",");
+			r = parseInt(hexComponent[0]);
+			g = parseInt(hexComponent[1]);
+			b = parseInt(hexComponent[2]);
+		}
+		else
+		{
+			if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(baseColor))
+			{
+				var c = baseColor.substring(1).split('');
+				if(c.length === 3)
+				{
+					c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+				}
+				c = '0x'+c.join('');
+				r = ( c >> 16 ) & 255;
+				g = ( c >> 8 ) & 255;
+				b =  c & 255;
+			}
+		}
+
+		var y = 0.21 * r + 0.72 * g + 0.07 * b;
+		return ( y < 145 ) ? "#fff" : "#333";
 	};
 	BX.Crm.EntityFieldAttributeConfigurator.create = function(id, settings)
 	{

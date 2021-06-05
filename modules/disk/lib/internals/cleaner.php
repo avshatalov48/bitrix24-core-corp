@@ -9,6 +9,7 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Rights\Table\RightSetupSessionTable;
+use Bitrix\Disk\ObjectLock;
 use Bitrix\Disk\ObjectTtl;
 use Bitrix\Disk\ShowSession;
 use Bitrix\Disk\SystemUser;
@@ -20,8 +21,8 @@ use Bitrix\Main\Type\DateTime;
 
 final class Cleaner
 {
-	const DELETE_TYPE_PORTION = 2;
-	const DELETE_TYPE_TIME    = 3;
+	public const DELETE_TYPE_PORTION = 2;
+	public const DELETE_TYPE_TIME    = 3;
 
 	/**
 	 * Returns the fully qualified name of this class.
@@ -65,7 +66,57 @@ final class Cleaner
 		unset($showSession);
 
 
-		return static::className() . "::deleteShowSession({$type}, {$limit});";
+		return self::class  . "::deleteShowSession({$type}, {$limit});";
+	}
+
+	/**
+	 * Releases object locks which are expired by module settings.
+	 *
+	 * @return void
+	 */
+	public static function releaseObjectLocks()
+	{
+		if (!Configuration::isEnabledObjectLock())
+		{
+			return;
+		}
+
+		$minutesToAutoReleaseObjectLock = Configuration::getMinutesToAutoReleaseObjectLock();
+		if (!$minutesToAutoReleaseObjectLock || $minutesToAutoReleaseObjectLock < 0)
+		{
+			return;
+		}
+
+		foreach(ObjectLock::getModelList([
+			'filter' => [
+				'=IS_READY_AUTO_UNLOCK' => true,
+			],
+			'with' => ['OBJECT'],
+			'limit' => 100,
+		]) as $lock)
+		{
+			if (!$lock->shouldProcessAutoUnlock())
+			{
+				continue;
+			}
+
+			$baseObject = $lock->getObject();
+			if ($baseObject instanceof File)
+			{
+				$baseObject->unlock(SystemUser::SYSTEM_USER_ID);
+			}
+			else
+			{
+				$lock->delete(SystemUser::SYSTEM_USER_ID);
+			}
+		}
+	}
+
+	public static function releaseObjectLocksAgent(): string
+	{
+		self::releaseObjectLocks();
+
+		return self::class . "::releaseObjectLocksAgent();";
 	}
 
 	/**
@@ -110,7 +161,7 @@ final class Cleaner
 			return '';
 		}
 
-		return static::className() . "::deleteUnnecessaryFiles({$type}, {$limit});";
+		return self::class  . "::deleteUnnecessaryFiles({$type}, {$limit});";
 	}
 
 	public static function deleteVersionsByTtlAgent($type = self::DELETE_TYPE_PORTION, $limit = 10): string
@@ -370,7 +421,7 @@ final class Cleaner
 			return '';
 		}
 
-		return static::className() . "::deleteByTtl({$type}, {$limit});";
+		return self::class  . "::deleteByTtl({$type}, {$limit});";
 	}
 
 	/**
@@ -392,7 +443,7 @@ final class Cleaner
 			  DELETE FROM {$tableName} WHERE STATUS = {$statusFinished} AND NOW() > {$deathTime}
 		");
 
-		return static::className() . "::deleteRightSetupSession();";
+		return self::class  . "::deleteRightSetupSession();";
 	}
 
 	public static function emptyOldDeletedLogEntries()
@@ -401,7 +452,7 @@ final class Cleaner
 		$tableClass = $deletedLogManager->getLogTable();
 		$tableClass::deleteOldEntries();
 
-		return static::className() . "::emptyOldDeletedLogEntries();";
+		return self::class  . "::emptyOldDeletedLogEntries();";
 	}
 
 
@@ -453,7 +504,7 @@ final class Cleaner
 					'ENTITY_MISC_DATA' => $row['ENTITY_MISC_DATA'],
 				), array());
 
-				$data = unserialize($row['ENTITY_MISC_DATA']);
+				$data = unserialize($row['ENTITY_MISC_DATA'], ['allowed_classes' => false]);
 				if(is_array($data) && !empty($data['BASE_URL']))
 				{
 					$storage->changeBaseUrl($data['BASE_URL']);
@@ -466,7 +517,7 @@ final class Cleaner
 			return '';
 		}
 
-		return static::className(). '::restoreMissingRootFolder();';
+		return self::class . '::restoreMissingRootFolder();';
 	}
 
 
@@ -539,6 +590,6 @@ final class Cleaner
 			return '';
 		}
 
-		return static::className(). "::deleteUnregisteredVersionFiles('{$limit}', '{$fromDate}', '{$timeLimit}');";
+		return self::class . "::deleteUnregisteredVersionFiles('{$limit}', '{$fromDate}', '{$timeLimit}');";
 	}
 }

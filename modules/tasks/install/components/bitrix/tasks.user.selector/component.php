@@ -151,7 +151,7 @@ if (sizeof($arParams["VALUE"]))
 	if (IsModuleInstalled('bitrix24'))
 		$arFilter['!LAST_LOGIN'] = false;
 
-	$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+	$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
 
 	while ($arRes = $dbRes->GetNext())
 		$arListedUsers[] = $arRes;
@@ -172,7 +172,7 @@ if (sizeof($arParams["VALUE"]))
 			if (IsModuleInstalled('bitrix24'))
 				$arFilterExtranetUsers['!LAST_LOGIN'] = false;
 
-			$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilterExtranetUsers, array('SELECT' => array('UF_DEPARTMENT')));
+			$dbRes = CUser::GetList('last_name', 'asc', $arFilterExtranetUsers, array('SELECT' => array('UF_DEPARTMENT')));
 			while ($arRes = $dbRes->GetNext())
 				$arListedUsers[] = $arRes;
 		}

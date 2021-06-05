@@ -118,7 +118,7 @@ class CTasksRarelyTools
 		}
 		else
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$rsUserType = CUserTypeEntity::GetList(
 				array(),
 				array(

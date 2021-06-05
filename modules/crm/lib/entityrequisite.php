@@ -1673,7 +1673,7 @@ class EntityRequisite
 			'LIST_FILTER_LABEL' => array()
 		);
 
-		$langDbResult = \CLanguage::GetList($by = '', $order = '');
+		$langDbResult = \CLanguage::GetList();
 		while($lang = $langDbResult->Fetch())
 		{
 			$lid = $lang['LID'];
@@ -2534,6 +2534,31 @@ class EntityRequisite
 		}
 	}
 
+	public function getEntityRequisiteBindings(int $entityTypeId, int $entityId, ?int $companyId, ?int $contactId): array
+	{
+		$entityList = [];
+		$entityList[] = [
+			'ENTITY_TYPE_ID' => $entityTypeId,
+			'ENTITY_ID' => $entityId,
+		];
+		if($companyId > 0)
+		{
+			$entityList[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_ID' => $companyId,
+			];
+		}
+		if($contactId > 0)
+		{
+			$entityList[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'ENTITY_ID' => $contactId,
+			];
+		}
+
+		return (array) $this->getDefaultRequisiteInfoLinked($entityList);
+	}
+
 	public function getDefaultRequisiteInfoLinked($entityList)
 	{
 		$requisiteIdLinked = 0;
@@ -2960,7 +2985,7 @@ class EntityRequisite
 				$requisiteFields['ENTITY_TYPE_ID'] = $entityTypeId;
 				$requisiteFields['ENTITY_ID'] = $entityId;
 
-				if($requisiteID > 0)
+				if((int)$requisiteID > 0)
 				{
 					$requisite->update($requisiteID, $requisiteFields);
 				}
@@ -2993,25 +3018,25 @@ class EntityRequisite
 					{
 						if (isset($bankDetailFields['isDeleted']) && $bankDetailFields['isDeleted'] === true)
 						{
-							if ($pseudoID > 0)
+							if ((int)$pseudoID > 0)
 							{
 								$bankDetail->delete($pseudoID);
 							}
 							continue;
 						}
 
-						if ($pseudoID > 0)
+						if ((int)$pseudoID > 0)
 						{
 							$bankDetail->update($pseudoID, $bankDetailFields);
 						}
 						else
 						{
-							if ($requisiteID <= 0 && isset($addedRequisites[$requisiteID]))
+							if ((int)$requisiteID <= 0 && isset($addedRequisites[$requisiteID]))
 							{
 								$requisiteID = $addedRequisites[$requisiteID];
 							}
 
-							if ($requisiteID > 0)
+							if ((int)$requisiteID > 0)
 							{
 								$bankDetailFields['ENTITY_ID'] = $requisiteID;
 								$bankDetailFields['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;

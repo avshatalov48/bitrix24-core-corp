@@ -1,5 +1,6 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 ?>
 
 <?
@@ -28,7 +29,7 @@ var str = '';
 <table cellspacing="0" cellpadding="0" border="0" width="100%"  class="bx-edit-table">
 <tr class="bx-after-heading">
 	<td class="bx-field-value bx-padding" style="width: 96px">
-		<?=GetMessage('CRM_EVENT_TITLE_'.$arResult['ENTITY_TYPE'])?>:
+		<?= $arResult['ENTITY_TYPE_CAPTION'] ? htmlspecialcharsbx($arResult['ENTITY_TYPE_CAPTION']) : GetMessage('CRM_EVENT_TITLE_'.$arResult['ENTITY_TYPE']) ?>:
 	</td>
 	<td class="bx-field-value bx-padding" style="">
 		<i><?=htmlspecialcharsbx($arResult['ENTITY_TITLE'])?></i>
@@ -111,6 +112,16 @@ var str = '';
 	</td>
 	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
 		<?=SelectBoxFromArray('STATUS_ID', $arResult['STATUS_LIST'], $arResult['STATUS_ID'])?>
+	</td>
+</tr>
+<?endif;?>
+<?if (!empty($arResult['FACTORY_STAGE_LIST'])):?>
+<tr>
+	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
+		<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_FIELD_STAGE_ID')?>:
+	</td>
+	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
+		<?=SelectBoxFromArray('STAGE_ID', $arResult['FACTORY_STAGE_LIST'], $arResult['STAGE_ID'])?>
 	</td>
 </tr>
 <?endif;?>

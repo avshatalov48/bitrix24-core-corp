@@ -304,24 +304,26 @@ if(is_array($sort) && count($sort) > 0)
 	{
 		usort(
 			$currencies,
-			create_function(
-				'$a,$b',
-				$order === 'asc'
-					? "return \$a['SORT'] > \$b['SORT'];"
-					: "return \$b['SORT'] > \$a['SORT'];"
-			)
+			function ($a, $b) use ($order) {
+				if ($order === 'asc')
+				{
+					return $a['SORT'] > $b['SORT'];
+				}
+				return $b['SORT'] > $a['SORT'];
+			}
 		);
 	}
 	elseif($by === 'ID' || $by === 'NAME')
 	{
 		usort(
 			$currencies,
-			create_function(
-				'$a,$b',
-				$order === 'asc'
-					? "return strcmp(\$a['$by'],\$b['$by']);"
-					: "return strcmp(\$b['$by'],\$a['$by']);"
-			)
+			function ($a, $b) use ($order, $by) {
+				if ($order === 'asc')
+				{
+					return strcmp($a[$by], $b[$by]);
+				}
+				return strcmp($b[$by], $a[$by]);
+			}
 		);
 	}
 }

@@ -42,3 +42,4 @@ $arResult['entityTypeContact'] = $entityTypeContact;
 $arResult['entityTypeCompany'] = $entityTypeCompany;
 $arResult['entityTypeDeal'] = $entityTypeDeal;
 $arResult['entityTypeOrder'] = $entityTypeOrder;
+$arResult['dynamicTypes'] = \Bitrix\Crm\UserField\Types\ElementType::getUseInUserfieldTypes();

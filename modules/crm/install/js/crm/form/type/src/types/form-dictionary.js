@@ -76,12 +76,18 @@ type DepGroup = {
 	types: Array<EnumInt>;
 };
 type DepField = {
+	disallowed: Array<string>;
 	types: Array<string>;
+};
+type DepConditionOperation = {
+	id: string;
+	name: string;
+	fieldTypes: Array<string>;
 };
 
 type DepCondition = {
 	events: Array<EnumString>;
-	operations: Array<EnumString>;
+	operations: Array<DepConditionOperation>;
 };
 
 type DepAction = {

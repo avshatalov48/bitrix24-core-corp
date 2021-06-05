@@ -7,6 +7,7 @@ $MESS["LOCATION_REPO_FRMT_BR_DESCR"] = "Avenida Presidente Affonso Camargo, 749<
 $MESS["LOCATION_REPO_FRMT_BR_NAME"] = "Brazil";
 $MESS["LOCATION_REPO_FRMT_BUILDING"] = "House no.";
 $MESS["LOCATION_REPO_FRMT_COUNTRY"] = "Country";
+$MESS["LOCATION_REPO_FRMT_DE_NAME"] = "Germany";
 $MESS["LOCATION_REPO_FRMT_EU_DESCR"] = "Musterstr. 321<br/>54321 Musterstadt<br/>Deutschland";
 $MESS["LOCATION_REPO_FRMT_EU_NAME"] = "Europe";
 $MESS["LOCATION_REPO_FRMT_LOCALITY"] = "City";

@@ -25,7 +25,7 @@ if (CModule::IncludeModule("forum"))
 		$arForums[$ar["ID"]] = "[".$ar["ID"]."] ".$ar["NAME"];
 }
 
-$dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+$dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
 $arSites = array();
 $aSubTabs = array();
 while ($site = $dbSites->Fetch())
@@ -119,7 +119,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td colspan="2">
 <?php
-$dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+$dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
 $subTabControl->Begin();
 foreach ($arSites as $site)
 {

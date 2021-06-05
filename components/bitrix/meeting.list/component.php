@@ -99,7 +99,8 @@ $dbRes = CMeeting::GetList(
 	array('ID', 'TITLE', 'CURRENT_STATE', 'DATE_START', 'OWNER_ID', 'PLACE')
 );
 
-$arResult["NAV_STRING"] = $dbRes->GetPageNavStringEx($navComponentObject = null, $arParams["PAGER_TITLE"]);
+$navComponentObject = null;
+$arResult["NAV_STRING"] = $dbRes->GetPageNavStringEx($navComponentObject, $arParams["PAGER_TITLE"]);
 
 while ($arRes = $dbRes->GetNext())
 {

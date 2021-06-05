@@ -273,18 +273,6 @@ function __MSLOnFeedInit(params)
 	oMSL.appCacheDebug = !!params.appCacheDebug;
 	oMSL.pageType = (logID <= 0 && !bEmptyPage ? 'list' : 'detail');
 
-	if (!bAjaxCall)
-	{
-/*
-		BX.ready(function()
-		{
-			window.onerror = function(message, url, linenumber) {
-				__MSLSendError(message, url, linenumber);
-			}
-		});
-*/
-	}
-
 	if (
 		logID <= 0
 		&& !bEmptyPage
@@ -655,17 +643,7 @@ function __MSLOnFeedInit(params)
 					{
 						if (!bFiltered)
 						{
-/*
-								app.addButtons({
-									addPostButton:{
-										type: "edit",
-										style:"custom",
-										callback:function(){
-											app.exec('showPostForm', oMSL.showNewPostForm());
-										}
-									}
-								});
-*/
+
 						}
 						else
 						{
@@ -758,15 +736,14 @@ function __MSLOnFeedInit(params)
 				oMSL.onLogEntryPostUpdated(data);
 			});
 
-
-
-
 			BX.MobileUI.addLivefeedLongTapHandler(BX("lenta_wrapper_global"), {
 				likeNodeClass: "post-item-informer-like",
 				copyItemClass: "post-item-copyable",
 				copyTextClass: "post-item-copytext"
 			});
 		}
+
+		BX.MobileLivefeed.RatingInstance.emit('onFeedInit');
 	}
 	else if (bEmptyPage)
 	{
@@ -884,6 +861,7 @@ function __MSLOnFeedInit(params)
 			});
 		});
 	}
+
 	if (!bAjaxCall)
 	{
 		BX.ready(function()
@@ -6261,6 +6239,14 @@ BitrixMSL.prototype.getComments = function(params)
 
 				oMSL.iLastActivityDate = Math.round(new Date().getTime() / 1000);
 				oMSL.checkScrollButton();
+
+				if (
+					typeof get_data.TS !== 'undefined'
+					&& BX('post_log_id')
+				)
+				{
+					BX('post_log_id').setAttribute('data-ts', get_data.TS);
+				}
 			}
 			else
 			{
@@ -7814,10 +7800,7 @@ BitrixMSL.prototype.searchBarEventCallback = function(params)
 {
 	var text = (BX.type.isPlainObject(params) && BX.type.isNotEmptyString(params.text) ? params.text : '');
 
-	if (
-		text.length >= this.ftMinTokenSize
-//		|| this.findTextMode
-	)
+	if (text.length >= this.ftMinTokenSize)
 	{
 		app.exec("showSearchBarProgress");
 		__MSLRefresh(true, {
@@ -7848,7 +7831,12 @@ BitrixMSL.prototype.searchBarEventCallback = function(params)
 					&& params.items[key].ID == 'framecache-block-feed'
 				)
 				{
-					BX.html(BX('bxdynamic_feed_refresh'), params.items[key].CONTENT);
+					BX.html(BX('bxdynamic_feed_refresh'), params.items[key].CONTENT).then(function() {
+						BX.processHTML(this.content, true);
+					}.bind({
+						content: params.items[key].CONTENT
+					}));
+
 					__MSLDetailMoveTop();
 					setTimeout(function(){
 						BitrixMobile.LazyLoad.showImages();

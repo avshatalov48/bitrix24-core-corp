@@ -487,7 +487,7 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 	 * @param int $entityTypeId
 	 * @param bool $plural
 	 */
-	protected function getEntityCaption($entityTypeId, $plural)
+	protected static function getEntityCaption($entityTypeId, $plural)
 	{
 		if ($plural)
 		{

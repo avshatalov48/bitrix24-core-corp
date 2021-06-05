@@ -124,8 +124,8 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		if ($matches[2] > 0 && (!is_array($arUsersToFilter) || in_array($matches[2], $arUsersToFilter)))
 		{
 			$dbRes = CUser::GetList(
-				($by='id'),
-				($order='asc'),
+				'id',
+				'asc',
 				array('ID'=> $matches[2]),
 				array(
 					'FIELDS'=> array('ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'EMAIL'),
@@ -161,7 +161,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		$arFilter['!UF_DEPARTMENT'] = false;
 
 	$dbRes = CUser::GetList(
-		$by = 'last_name', $order = 'asc',
+		'last_name', 'asc',
 		$arFilter,
 		array(
 			'FIELDS'=> array('ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'EMAIL'),

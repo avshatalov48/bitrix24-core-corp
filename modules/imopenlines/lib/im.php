@@ -25,7 +25,6 @@ class Im
 	/**
 	 * @param $fields
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function addMessage($fields)
 	{
@@ -54,7 +53,6 @@ class Im
 	 * @param $chatId
 	 * @param $message
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function addAutomaticSystemMessage($chatId, $message)
 	{
@@ -73,7 +71,6 @@ class Im
 	 * @param $chatId
 	 * @param int $timeLimitVote
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function addCloseVoteMessage($chatId, $timeLimitVote = 0)
 	{
@@ -105,9 +102,6 @@ class Im
 	/**
 	 * @param $messages
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function addMessagesNewsletter($messages): array
 	{
@@ -177,7 +171,6 @@ class Im
 	/**
 	 * @param $fields
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function addMessageLiveChat($fields)
 	{
@@ -216,10 +209,6 @@ class Im
 	 *
 	 * @param $id
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function userIsOnline($id)
 	{

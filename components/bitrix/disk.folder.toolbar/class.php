@@ -122,8 +122,8 @@ class CDiskFolderToolbarComponent extends DiskComponent
 					$defaultDocumentHandler = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager()->getDefaultServiceForCurrentUser();
 					if($defaultDocumentHandler)
 					{
-						$documentHandlerName = $defaultDocumentHandler->getName();
-						$documentHandlerCode = $defaultDocumentHandler->getCode();
+						$documentHandlerName = $defaultDocumentHandler::getName();
+						$documentHandlerCode = $defaultDocumentHandler::getCode();
 					}
 				}
 
@@ -133,8 +133,8 @@ class CDiskFolderToolbarComponent extends DiskComponent
 					$this->arResult['CLOUD_DOCUMENT'] = array(
 						'DEFAULT_SERVICE' => $documentHandlerCode,
 						'DEFAULT_SERVICE_LABEL' => $documentHandlerName,
-						'CREATE_BLANK_FILE_URL' => $urlManager->getUrlToStartCreateUfFileByService('docx', $documentHandlerCode),
-						'RENAME_BLANK_FILE_URL' => $urlManager->getUrlDocumentController('rename', array('document_action' => 'rename')),
+						'CREATE_BLANK_FILE_URL' => $urlManager::getUrlToStartCreateUfFileByService('docx', $documentHandlerCode),
+						'RENAME_BLANK_FILE_URL' => $urlManager::getUrlDocumentController('rename', array('document_action' => 'rename')),
 					);
 
 					$this->arResult['BUTTONS'][] = array(
@@ -281,7 +281,7 @@ class CDiskFolderToolbarComponent extends DiskComponent
 		{
 			return $this->isArchivedGroupStorage;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$group = CSocNetGroup::getByID($this->storage->getEntityId());
 		if(
 			!empty($group['CLOSED']) && $group['CLOSED'] === 'Y' && 

@@ -17,7 +17,6 @@ class Error
 	 * @param $message
 	 * @param string $messageExternalError
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function addErrorNotSendChat($chatId, $message, $messageExternalError = '')
 	{

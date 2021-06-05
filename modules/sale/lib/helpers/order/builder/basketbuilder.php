@@ -683,7 +683,7 @@ abstract class BasketBuilder
 		return $item;
 	}
 
-	public function getCatalogMeasures()
+	public static function getCatalogMeasures()
 	{
 		static $result = null;
 		$catalogIncluded = null;

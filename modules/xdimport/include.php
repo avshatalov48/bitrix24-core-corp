@@ -1,4 +1,5 @@
-<?
+<?php
+
 global $DBType;
 
 IncludeModuleLangFile(__FILE__);
@@ -11,8 +12,9 @@ if (!IsModuleInstalled("socialnetwork"))
 define("XDI_DEBUG", false);
 define("XDI_XML_ERROR_DEBUG", false);
 define("XDI_XML_DEBUG", false);
+define("SONET_SUBSCRIBE_ENTITY_PROVIDER", "P");
 
-$db_type = strtolower($DB->type);
+$db_type = mb_strtolower($DB->type);
 CModule::AddAutoloadClasses(
 	"xdimport",
 	array(
@@ -31,7 +33,6 @@ class CXDILFEventHandlers
 {
 	public static function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetAllowedSubscribeEntityTypes)
 	{
-		define("SONET_SUBSCRIBE_ENTITY_PROVIDER", "P");
 		$arSocNetAllowedSubscribeEntityTypes[] = SONET_SUBSCRIBE_ENTITY_PROVIDER;
 
 		global $arSocNetAllowedSubscribeEntityTypesDesc;
@@ -75,6 +76,7 @@ class CXDILFEventHandlers
 			"FULL_SET" => array("data", "data_comment"),
 			"COMMENT_EVENT" => array(
 				"EVENT_ID" => "data_comment",
+				"ADD_CALLBACK" => [ '\Bitrix\XDImport\Integration\Socialnetwork\LogComment', 'setSource' ],
 				"UPDATE_CALLBACK" => "NO_SOURCE",
 				"DELETE_CALLBACK" => "NO_SOURCE",
 				"CLASS_FORMAT" => "CXDILFEventHandlers",
@@ -85,7 +87,7 @@ class CXDILFEventHandlers
 		);
 	}
 
-	function FormatEvent_Data($arFields, $arParams, $bMail = false)
+	public static function FormatEvent_Data($arFields, $arParams, $bMail = false)
 	{
 		$arResult = array(
 			"EVENT" => $arFields,
@@ -97,39 +99,31 @@ class CXDILFEventHandlers
 			return $arResult;
 		}
 
-		if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER)
+		if ($arFields['ENTITY_TYPE'] === SONET_SUBSCRIBE_ENTITY_PROVIDER)
 		{
-			$arResult["ENTITY"] = CXDILFEventHandlers::GetEntity_Data($arFields, $bMail);
-			$rsRight = CSocNetLogRights::GetList(array(), array("LOG_ID" => $arFields["ID"]));
-			$arRights = array();
-			while ($arRight = $rsRight->Fetch())
-			{
-				$arRights[] = $arRight["GROUP_CODE"];
-			}
-
-			$arDestination = CSocNetLogTools::FormatDestinationFromRights($arRights, $arParams, $iMoreCount);
+			$arResult['ENTITY'] = self::GetEntity_Data($arFields, $bMail);
 		}
-		elseif (in_array($arFields["ENTITY_TYPE"], array(SONET_SUBSCRIBE_ENTITY_GROUP, SONET_SUBSCRIBE_ENTITY_USER)))
+		else if (in_array($arFields['ENTITY_TYPE'], [ SONET_SUBSCRIBE_ENTITY_GROUP, SONET_SUBSCRIBE_ENTITY_USER ], true))
 		{
-			$arResult["ENTITY"] = CSocNetLogTools::FormatEvent_GetEntity($arFields, $arParams, $bMail);
-
-			if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
-			{
-				$arDestination = array(
-					array(
-						"STYLE" => "sonetgroups",
-						"TITLE" => $arResult["ENTITY"]["FORMATTED"]["NAME"],
-						"URL" => $arResult["ENTITY"]["FORMATTED"]["URL"],
-						"IS_EXTRANET" => (is_array($GLOBALS["arExtranetGroupID"]) && in_array($arFields["ENTITY_ID"], $GLOBALS["arExtranetGroupID"]))
-					)
-				);
-				$arResult["ENTITY"]["FORMATTED"] = array(
-					"NAME" => $arResult["EVENT"]["TITLE"]
-				);
-			}
+			$arResult['ENTITY'] = \CSocNetLogTools::FormatEvent_GetEntity($arFields, $arParams, $bMail);
 		}
 
-		$arEventParams = \Bitrix\XDImport\Internals\Utils::getParamsFromString(strlen($arFields["~PARAMS"]) > 0 ? $arFields["~PARAMS"] : $arFields["PARAMS"]);
+		if ($arFields['ENTITY_TYPE'] === SONET_SUBSCRIBE_ENTITY_GROUP)
+		{
+			$arResult['ENTITY']['FORMATTED'] = [
+				'NAME' => $arResult['EVENT']['TITLE']
+			];
+		}
+
+		$rsRight = \CSocNetLogRights::GetList([], [ 'LOG_ID' => $arFields['ID'] ]);
+		$arRights = [];
+		while ($arRight = $rsRight->fetch())
+		{
+			$arRights[] = $arRight['GROUP_CODE'];
+		}
+		$arDestination = \CSocNetLogTools::FormatDestinationFromRights($arRights, $arParams, $iMoreCount);
+
+		$arEventParams = \Bitrix\XDImport\Internals\Utils::getParamsFromString($arFields["~PARAMS"] <> '' ? $arFields["~PARAMS"] : $arFields["PARAMS"]);
 
 		if (
 			is_array($arEventParams)
@@ -148,12 +142,12 @@ class CXDILFEventHandlers
 			&& is_array($arEventParams)
 			&& count($arEventParams) > 0
 			&& array_key_exists("ENTITY_NAME", $arEventParams)
-			&& strlen($arEventParams["ENTITY_NAME"]) > 0
+			&& $arEventParams["ENTITY_NAME"] <> ''
 		)
 		{
 			$title_tmp = (
 				!$bMail
-				&& strlen($arFields["URL"]) > 0
+				&& $arFields["URL"] <> ''
 					? '<a href="'.$arFields["URL"].'">'.$arEventParams["ENTITY_NAME"].'</a>'
 					: $arEventParams["ENTITY_NAME"]
 			);
@@ -162,7 +156,7 @@ class CXDILFEventHandlers
 		{
 			$title_tmp = (
 				!$bMail
-				&& strlen($arFields["URL"]) > 0
+				&& $arFields["URL"] <> ''
 					? '<a href="'.$arFields["URL"].'">'.$arFields["TITLE"].'</a>'
 					: $arFields["TITLE"]
 			);
@@ -176,7 +170,7 @@ class CXDILFEventHandlers
 
 		$url = false;
 
-		if (strlen($arFields["URL"]) > 0)
+		if ($arFields["URL"] <> '')
 		{
 			$url = $arFields["URL"];
 		}
@@ -229,7 +223,7 @@ class CXDILFEventHandlers
 			$arResult["EVENT_FORMATTED"]["LOG_DATE_FORMAT"] = ConvertTimeStamp($arEventParams["SOURCE_TIMESTAMP"], "FULL");
 		}
 
-		if (strlen($url) > 0)
+		if ($url <> '')
 		{
 			$arResult["EVENT_FORMATTED"]["URL"] = $url;
 		}
@@ -291,7 +285,7 @@ class CXDILFEventHandlers
 		return $arResult;
 	}
 
-	function FormatComment_Data($arFields, $arParams, $bMail = false, $arLog = array())
+	public static function FormatComment_Data($arFields, $arParams, $bMail = false, $arLog = array())
 	{
 		$arResult = array(
 			"EVENT_FORMATTED" => array(),
@@ -304,7 +298,7 @@ class CXDILFEventHandlers
 
 		if ($arLog["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER)
 		{
-			$arResult["ENTITY"] = CXDILFEventHandlers::GetEntity_Data($arLog, $bMail);
+			$arResult["ENTITY"] = \CXDILFEventHandlers::GetEntity_Data($arLog, $bMail);
 		}
 		elseif (in_array($arLog["ENTITY_TYPE"], array(SONET_SUBSCRIBE_ENTITY_GROUP, SONET_SUBSCRIBE_ENTITY_USER)))
 		{
@@ -320,7 +314,7 @@ class CXDILFEventHandlers
 		if (
 			!$bMail
 			&& array_key_exists("URL", $arLog)
-			&& strlen($arLog["URL"]) > 0
+			&& $arLog["URL"] <> ''
 		)
 			$news_tmp = '<a href="'.$arLog["URL"].'">'.$arLog["TITLE"].'</a>';
 		else
@@ -342,7 +336,7 @@ class CXDILFEventHandlers
 		if ($bMail)
 		{
 			$url = CSocNetLogTools::FormatEvent_GetURL($arLog, true);
-			if (strlen($url) > 0)
+			if ($url <> '')
 			{
 				$arResult["EVENT_FORMATTED"]["URL"] = $url;
 			}
@@ -426,10 +420,10 @@ class CXDILFEventHandlers
 		return $arResult;
 	}
 
-	function GetEntity_Data($arFields, $bMail)
+	public static function GetEntity_Data($arFields, $bMail)
 	{
 		$arEntity = array();
-		$arEventParams = unserialize(strlen($arFields["~PARAMS"]) > 0 ? $arFields["~PARAMS"] : $arFields["PARAMS"]);
+		$arEventParams = unserialize($arFields["~PARAMS"] <> '' ? $arFields["~PARAMS"] : $arFields["PARAMS"], [ 'allowed_classes' => false ]);
 
 		global $arProviders;
 
@@ -465,6 +459,4 @@ class CXDILFEventHandlers
 
 		return $arEntity;
 	}
-
 }
-?>

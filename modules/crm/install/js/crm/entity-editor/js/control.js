@@ -1552,18 +1552,29 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 							for (i in this._editor._controllers)
 							{
-								if (this._editor._controllers.hasOwnProperty(i)
-									&& this._editor._controllers[i]._id === 'PRODUCT_ROW_PROXY'
-								)
+								if (!this._editor._controllers.hasOwnProperty(i))
+								{
+									continue;
+								}
+
+								if (this._editor._controllers[i]._id === 'PRODUCT_ROW_PROXY')
 								{
 									editor = this._editor._controllers[i]._externalEditor;
+									if (editor)
+									{
+										editor.reinitialize(deal.PRODUCT_LIST);
+									}
 									break;
 								}
-							}
-
-							if (editor)
-							{
-								editor.reinitialize(deal.PRODUCT_LIST);
+								else if (this._editor._controllers[i]._id === 'PRODUCT_LIST')
+								{
+									var controller = this._editor._controllers[i];
+									if (controller)
+									{
+										controller.reinitializeProductList();
+									}
+									break;
+								}
 							}
 						}
 					}
@@ -3261,6 +3272,7 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 		this._uploaderName = "entity_editor_storage_" + this._id.toLowerCase();
 		this._dataContainer = null;
 		this._uploaderContainer = null;
+		this._uploader = null;
 	};
 
 	BX.extend(BX.Crm.EntityEditorFileStorage, BX.Crm.EntityEditorField);
@@ -3284,6 +3296,14 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 	BX.Crm.EntityEditorFileStorage.prototype.hasContentToDisplay = function()
 	{
 		return(this.getStorageElementInfos().length > 0);
+	};
+	BX.Crm.EntityEditorFileStorage.prototype.getModeSwitchType = function()
+	{
+		return BX.UI.EntityEditorModeSwitchType.content;
+	};
+	BX.Crm.EntityEditorFileStorage.prototype.getContentWrapper = function()
+	{
+		return this._uploaderContainer;
 	};
 	BX.Crm.EntityEditorFileStorage.prototype.layout = function(options)
 	{
@@ -3320,11 +3340,15 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 		);
 		this._wrapper.appendChild(this._uploaderContainer);
 
+		// we have to import into document or file uploading is not going to start by clicking
+		this.registerLayout(options);
+
 		var storageTypeId = this.getStorageTypeId();
 		if(storageTypeId === BX.UI.EditorFileStorageType.diskfile)
 		{
-			var uploader = this.prepareDiskUploader();
+			var uploader = this.getDiskUploader();
 
+			uploader.cleanLayout();
 			uploader.setMode(this._mode);
 			uploader.clearValues();
 			uploader.setValues(this.getStorageElementInfos());
@@ -3341,30 +3365,32 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 			this.initializeDragDropAbilities();
 		}
 
-		this.registerLayout(options);
+		this.subscribeOnUploaderChange();
+
 		this._hasLayout = true;
 	};
 	BX.Crm.EntityEditorFileStorage.prototype.doClearLayout = function(options)
 	{
 		this._dataContainer = this._uploaderContainer = null;
+		this.unSubscribeOnUploaderChange();
 	};
-	BX.Crm.EntityEditorFileStorage.prototype.prepareDiskUploader = function()
+	BX.Crm.EntityEditorFileStorage.prototype.getDiskUploader = function()
 	{
-		var uploader = null;
+		if(this._uploader)
+		{
+			return this._uploader;
+		}
+
 		if(typeof(BX.CrmDiskUploader) !== "undefined" &&
 			typeof(BX.CrmDiskUploader.items[this._uploaderName]) !== "undefined"
 		)
 		{
-			uploader = BX.CrmDiskUploader.items[this._uploaderName];
+			this._uploader = BX.CrmDiskUploader.items[this._uploaderName];
 		}
 
-		if(uploader)
+		if(!this._uploader)
 		{
-			uploader.cleanLayout();
-		}
-		else
-		{
-			uploader = BX.CrmDiskUploader.create(
+			this._uploader = BX.CrmDiskUploader.create(
 				this._uploaderName,
 				{
 					msg :
@@ -3380,7 +3406,23 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 			)
 		}
 
-		return uploader;
+		return this._uploader;
+	};
+	BX.Crm.EntityEditorFileStorage.prototype.subscribeOnUploaderChange = function()
+	{
+		if(this._uploader)
+		{
+			this._uploader.subscribe('addItem', this._changeHandler);
+			this._uploader.subscribe('removeItem', this._changeHandler);
+		}
+	};
+	BX.Crm.EntityEditorFileStorage.prototype.unSubscribeOnUploaderChange = function()
+	{
+		if(this._uploader)
+		{
+			this._uploader.unsubscribe('addItem', this._changeHandler);
+			this._uploader.unsubscribe('removeItem', this._changeHandler);
+		}
 	};
 	BX.Crm.EntityEditorFileStorage.prototype.getDiskUploaderValues = function()
 	{
@@ -9887,6 +9929,10 @@ if(typeof BX.Crm.EntityEditorClient === "undefined")
 
 if(typeof BX.Crm.EntityEditorEntity === "undefined")
 {
+	/**
+	 * @extends BX.Crm.EntityEditorField
+	 * @constructor
+	 */
 	BX.Crm.EntityEditorEntity = function()
 	{
 		BX.Crm.EntityEditorEntity.superclass.constructor.apply(this);
@@ -9898,28 +9944,160 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 		this._entitySelectButton = null;
 		this._entitySelector = null;
 
+		this._editorWrapper = null;
 		this._entityWrapper = null;
 		this._dataInput = null;
+		this._requisiteIdInput = null;
+		this._bankDetailIdInput = null;
 		this._skeleton = null;
+		this._requisiteFieldNames = null;
+		/**
+		 * @type {BX.Crm.EntityEditorRequisiteTooltip}
+		 * @protected
+		 */
+		this._tooltip = null;
+		/**
+		 * @type {BX.Crm.RequisiteList}
+		 * @protected
+		 */
+		this._requisiteList = null;
+		/**
+		 * @type {BX.Crm.ClientEditorEntityPanel}
+		 * @protected
+		 */
+		this._item = null;
+		/**
+		 * @type {BX.Crm.EntityEditorRequisiteEditor}
+		 * @protected
+		 */
+		this._requisiteEditor = null;
 	};
 	BX.extend(BX.Crm.EntityEditorEntity, BX.Crm.EntityEditorField);
 	BX.Crm.EntityEditorEntity.prototype.doInitialize = function()
 	{
 		BX.Crm.EntityEditorEntity.superclass.doInitialize.apply(this);
 
-		this._loaderConfig = this._schemeElement.getDataObjectParam("loader", {});
 		this.initializeFromModel();
+		if(this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false))
+		{
+			this._requisiteFieldNames = this._schemeElement.getDataObjectParam("requisiteFieldNames", {
+				requisiteId: 'MC_REQUISITE_ID',
+				bankDetailId: 'MC_BANK_DETAIL_ID',
+			});
+		}
 	};
 	BX.Crm.EntityEditorEntity.prototype.initializeFromModel = function()
 	{
 		var entityInfo = this._model.getSchemeField(this._schemeElement, "info", null);
-		if(entityInfo)
+		if (entityInfo)
 		{
-			this.setEntity(BX.CrmEntityInfo.create(entityInfo));
+			entityInfo = BX.CrmEntityInfo.create(entityInfo);
 		}
-		else
+
+		this.setEntity(entityInfo);
+		this.setEntityTypeName(this._schemeElement.getDataStringParam("entityTypeName", ""));
+	};
+	BX.Crm.EntityEditorEntity.prototype.initializeTooltip = function()
+	{
+		if(!this._entityInfo || !this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false))
 		{
-			this.setEntityTypeName(this._schemeElement.getDataStringParam("entityTypeName", ""));
+			return;
+		}
+		if(
+			!this._tooltip
+			&& BX.Crm.EntityEditorRequisiteTooltip
+		)
+		{
+			this._tooltip = BX.Crm.EntityEditorRequisiteTooltip.create(
+				this.getId() + '_rq',
+				{
+					readonly: true,
+					canChangeDefaultRequisite: !this.isReadOnly(),
+				}
+			);
+			BX.Event.EventEmitter.subscribe(this._tooltip, 'onSetSelectedRequisite', this.onSetSelectedRequisite.bind(this));
+			BX.Event.EventEmitter.subscribe(this._tooltip, 'onEditRequisite', this.onEditRequisite.bind(this));
+		}
+		if(this._tooltip)
+		{
+			this._requisiteList = BX.Crm.RequisiteList.create(this._entityInfo.getRequisites());
+			this._requisiteEditor = BX.Crm.EntityEditorRequisiteEditor.create(this._id + '_rq_editor', {
+				entityTypeId: this._entityInfo.getTypeId(),
+				entityId: this._entityInfo.getId(),
+				contextId: this._editor.getContextId(),
+				requisiteEditUrl: BX.prop.get(this._editor._settings, "requisiteEditUrl")
+			});
+			this._tooltip.setRequisites(this._requisiteList);
+			this._requisiteEditor.setRequisiteList(this._requisiteList);
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.bindTitleMouseEvents = function()
+	{
+		if(this._tooltip && this._item && this._item._hasLayout)
+		{
+			BX.Event.bind(this._item.getTitleLink(), 'mouseenter', this.onTitleMouseEnter.bind(this));
+			BX.Event.bind(this._item.getTitleLink(), 'mouseleave', this.onTitleMouseLeave.bind(this));
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.onTitleMouseEnter = function()
+	{
+		if(this._tooltip && this._item)
+		{
+			this._tooltip.setBindElement(this._item.getTitleLink(), this._wrapper);
+			this._tooltip.showDebounced();
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.onTitleMouseLeave = function()
+	{
+		if(this._tooltip)
+		{
+			this._tooltip.closeDebounced();
+			this._tooltip.cancelShowDebounced();
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.onEditRequisite = function(event)
+	{
+		var params = event.getData();
+		var requisite = this._requisiteList.getById(params.id);
+		if (requisite)
+		{
+			this._requisiteEditor.open(requisite, {});
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.getSelectedRequisiteAndBankDetailId = function()
+	{
+		var result = {
+			requisiteId: 0,
+			bankDetailId: 0
+		};
+		if(!this._requisiteList)
+		{
+			return result;
+		}
+		var requisite = this._requisiteList.getSelected();
+		if(requisite)
+		{
+			result.requisiteId = requisite.getRequisiteId();
+			var bankDetail = requisite.getBankDetailById(requisite.getSelectedBankDetailId());
+			if(bankDetail)
+			{
+				result.bankDetailId = bankDetail.id;
+			}
+		}
+
+		return result;
+	};
+	BX.Crm.EntityEditorEntity.prototype.onSetSelectedRequisite = function(event)
+	{
+		var data = event.getData();
+		var requisiteIndex = BX.prop.getInteger(data, "id", 0);
+		var bankDetailIndex = BX.prop.getInteger(data, "bankDetailId", 0);
+
+		this._requisiteList.setSelected(requisiteIndex, bankDetailIndex);
+
+		if(this.getOwnerId() > 0)
+		{
+			this._editor.saveControl(this);
 		}
 	};
 	BX.Crm.EntityEditorEntity.prototype.getOwnerTypeName = function()
@@ -9970,6 +10148,10 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 		{
 			this._entityInfo = entityInfo;
 			this.setEntityTypeName(this._entityInfo.getTypeName());
+			var enableCommunications = (
+				this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.contact
+				|| this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.company
+			);
 			this._item = BX.Crm.ClientEditorEntityPanel.create(
 				this._id +  "_" + this._entityInfo.getId().toString(),
 				{
@@ -9979,43 +10161,29 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 					enableRequisite: true,
 					//requisiteBinding: BX.prop.getObject(this._settings, "requisiteBinding", {}),
 					mode: this._mode,
-					onDelete: BX.delegate(this.onItemDelete, this)
+					onDelete: BX.delegate(this.onItemDelete, this),
+					enableCommunications: enableCommunications
 				}
 			);
+
+			this.initializeTooltip();
 
 			if(this._hasLayout)
 			{
 				this._item.setContainer(this._entityWrapper);
 				this._item.layout();
+
+				this.bindTitleMouseEvents();
 			}
-		}
-	};
-	BX.Crm.EntityEditorEntity.prototype.setupEntity = function(entityId)
-	{
-		if(this._entityInfo && this._entityInfo.getId() === entityId)
-		{
-			return;
-		}
-
-		this.setEntity(null);
-
-		var entityLoader = BX.prop.getObject(this._loaderConfig, this._entityTypeName, null);
-		if(entityLoader)
-		{
-			this.showSkeleton();
-
-			BX.CrmDataLoader.create(
-				this._id,
-				{
-					serviceUrl: entityLoader["url"],
-					action: entityLoader["action"],
-					params: { "ENTITY_TYPE_NAME": this._entityTypeName, "ENTITY_ID": entityId }
-				}
-			).load(BX.delegate(this.onEntityInfoLoad, this));
 		}
 	};
 	BX.Crm.EntityEditorEntity.prototype.showSkeleton = function()
 	{
+		if (this._item)
+		{
+			this._item.clearLayout();
+		}
+
 		if(!this._skeleton)
 		{
 			this._skeleton = BX.Crm.ClientEditorEntitySkeleton.create(this._id, { container: this._entityWrapper });
@@ -10028,21 +10196,17 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 		{
 			this._skeleton.clearLayout();
 		}
-	};
-	BX.Crm.EntityEditorEntity.prototype.onEntityInfoLoad = function(sender, result)
-	{
-		var entityData = BX.prop.getObject(result, "DATA", null);
-		if(entityData)
-		{
-			this.hideSkeleton();
 
-			var entityInfo = BX.CrmEntityInfo.create(entityData);
-			this.setEntity(entityInfo);
+		if (this._item)
+		{
+			this._item.setContainer(this._entityWrapper);
+			this._item.layout();
 		}
 	};
 	BX.Crm.EntityEditorEntity.prototype.onItemDelete = function(item)
 	{
 		this.setEntity(null);
+		this.markAsChanged();
 	};
 	BX.Crm.EntityEditorEntity.prototype.reset = function()
 	{
@@ -10054,6 +10218,19 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 		{
 			this.initializeFromModel();
 		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.getContentWrapper = function()
+	{
+		return this._entityWrapper;
+	};
+	BX.Crm.EntityEditorEntity.prototype.getModeSwitchType = function(mode)
+	{
+		var result = BX.UI.EntityEditorModeSwitchType.common;
+		if(mode === BX.UI.EntityEditorMode.edit)
+		{
+			result |= BX.UI.EntityEditorModeSwitchType.button|BX.UI.EntityEditorModeSwitchType.content;
+		}
+		return result;
 	};
 	BX.Crm.EntityEditorEntity.prototype.doSetMode = function(mode)
 	{
@@ -10070,31 +10247,10 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 			return;
 		}
 
-		var name = this.getName();
-		var title = this._schemeElement.getTitle();
-		var value = this.getValue();
+		this.prepareLayout();
 
 		var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 
-		this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
-
-		if(isViewMode && !this._item)
-		{
-			//There is nothing to show
-			this.registerLayout(options);
-			this._hasLayout = true;
-			return;
-		}
-
-		var innerWrapper = BX.create("div",{ props: { className: "crm-entity-widget-clients-block" } });
-		this._wrapper.appendChild(innerWrapper);
-		innerWrapper.appendChild(this.createTitleNode(title));
-
-		var editorWrapper = BX.create("div",{ props: { className: !isViewMode ? "crm-entity-widget-content-block-clients" : "" } });
-		innerWrapper.appendChild(editorWrapper);
-
-		this._entityWrapper = BX.create("div", { props: { className: "crm-entity-widget-clients-container" } });
-		editorWrapper.appendChild(this._entityWrapper);
 		if(!isViewMode)
 		{
 			this._entitySelectButton = BX.create("span",
@@ -10114,29 +10270,131 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 
 			this._entityWrapper.appendChild(actionWrapper);
 
-			this._dataInput = BX.create("input", { attrs: { name: name, type: "hidden", value: value } });
-			this._entityWrapper.appendChild(this._dataInput);
+			this.appendInputs();
 		}
 
-		if(this._item)
+		this.layoutItem();
+
+		if(this.isContextMenuEnabled())
 		{
-			this._item.setContainer(this._entityWrapper);
-			this._item.layout();
+			this._wrapper.appendChild(this.createContextMenuButton());
+		}
+		if(this.isDragEnabled())
+		{
+			this.initializeDragDropAbilities();
 		}
 
 		this.registerLayout(options);
 		this._hasLayout = true;
 	};
-	BX.Crm.EntityEditorEntity.prototype.clearLayout = function()
+	BX.Crm.EntityEditorEntity.prototype.prepareLayout = function()
+	{
+		if(this._hasLayout)
+		{
+			return;
+		}
+
+		if (!this._wrapper)
+		{
+			this._wrapper = BX.create("div", { props: { className: "ui-entity-editor-content-block" } });
+		}
+		this.adjustWrapper();
+
+		if(this.isDragEnabled())
+		{
+			this._wrapper.appendChild(this.createDragButton());
+		}
+
+		this._wrapper.appendChild(this.createTitleNode(this._schemeElement.getTitle()));
+
+		this._editorWrapper = BX.create("div");
+		this._wrapper.appendChild(this._editorWrapper);
+
+		this._entityWrapper = BX.create("div");
+		this._editorWrapper.appendChild(this._entityWrapper);
+	};
+	BX.Crm.EntityEditorEntity.prototype.appendInputs = function()
+	{
+		if(this._hasLayout || !this._entityWrapper)
+		{
+			return;
+		}
+		this._dataInput = BX.create("input", {
+			attrs: {
+				name: this.getName(),
+				type: "hidden",
+				value: this.getValue()
+			}
+		});
+		this._entityWrapper.appendChild(this._dataInput);
+		if(this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false))
+		{
+			this._requisiteIdInput = BX.create("input", {
+				attrs: {
+					name: this._requisiteFieldNames.requisiteId,
+					type: "hidden",
+					value: this._model.getIntegerField(this._requisiteFieldNames.requisiteId, 0)
+				}
+			});
+			this._bankDetailIdInput = BX.create("input", {
+				attrs: {
+					name: this._requisiteFieldNames.bankDetailId,
+					type: "hidden",
+					value: this._model.getIntegerField(this._requisiteFieldNames.bankDetailId, 0)
+				}
+			});
+			this._entityWrapper.appendChild(this._requisiteIdInput);
+			this._entityWrapper.appendChild(this._bankDetailIdInput);
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.layoutItem = function()
+	{
+		var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
+
+		if(this._item)
+		{
+			this._item.setContainer(this._entityWrapper);
+			this._item.layout();
+
+			this.bindTitleMouseEvents();
+		}
+		else if (isViewMode)
+		{
+			var emptyItemNode = BX.create("div",
+				{
+					props: { className: "crm-entity-widget-content-block-inner" },
+					text: this.getMessage("isEmpty")
+				}
+			);
+			this._entityWrapper.appendChild(emptyItemNode);
+		}
+	};
+	BX.Crm.EntityEditorEntity.prototype.clearLayout = function(options)
 	{
 		if(this._item)
 		{
 			this._item.clearLayout();
 		}
 
-		this._wrapper = BX.remove(this._wrapper);
+		if(!BX.prop.getBoolean(options, "preservePosition", false))
+		{
+			this._wrapper = BX.remove(this._wrapper);
+		}
+		else
+		{
+			BX.removeClass(this._wrapper, "ui-entity-editor-content-block-click-editable");
+			BX.removeClass(this._wrapper, "ui-entity-editor-content-block-click-empty");
+			this._wrapper = BX.cleanNode(this._wrapper);
+			if(this.hasError())
+			{
+				this.clearError();
+			}
+		}
+
 		this._entityWrapper = null;
 		this._dataInput = null;
+		this._requisiteIdInput = null;
+		this._bankDetailIdInput = null;
 
 		if(this._entitySelector)
 		{
@@ -10159,31 +10417,68 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 
 		if(!this._entitySelector)
 		{
-			this._entitySelector = BX.Crm.EntityEditorCrmSelector.create(
-				this._id,
-				{
-					entityTypeIds: [ BX.CrmEntityType.resolveId(this._entityTypeName) ],
-					enableMyCompanyOnly: this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false),
-					callback: BX.delegate(this.onEntitySelect, this)
-				}
-			);
+			this._entitySelector = this.createEntitySelector();
 		}
-		this._entitySelector.open(this._entitySelectButton);
+
+		this._entitySelector.open();
 	};
-	BX.Crm.EntityEditorEntity.prototype.onEntitySelect = function(sender, item)
+	BX.Crm.EntityEditorEntity.prototype.createEntitySelector = function()
 	{
-		var id = BX.prop.getInteger(item, "entityId", 0);
-		if(this._entityInfo && this._entityInfo.getId() === id)
+		var entityTypeName = this._entityTypeName;
+		var parentEntityTypeId = this._schemeElement.getDataIntegerParam(
+			'parentEntityTypeId',
+			null
+		);
+		if (parentEntityTypeId && BX.CrmEntityType.isDynamicTypeByTypeId(parentEntityTypeId))
+		{
+			entityTypeName = 'DYNAMIC';
+		}
+
+		return BX.Crm.EntitySelector.create(
+			this._id,
+			{
+				target: this._entitySelectButton,
+				entityTypeName: entityTypeName,
+				loader: this._schemeElement.getDataObjectParam("loader", null),
+				onSelectCallback: BX.delegate(this.onEntitySelect, this),
+				onBeforeEntityLoadCallback: BX.delegate(this.showSkeleton, this),
+				onAfterEntityLoadCallback: BX.delegate(this.hideSkeleton, this),
+				enableMyCompanyOnly: this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false),
+				withRequisites: this._schemeElement.getDataBooleanParam("withRequisites", false),
+				enableSearch: this._schemeElement.getDataBooleanParam("enableSearch", true),
+				context: this._schemeElement.getDataStringParam("context", null),
+				parentEntityTypeId: parentEntityTypeId,
+			}
+		);
+	};
+	/**
+	 * @param {BX.CrmEntityInfo} entityInfo
+	 */
+	BX.Crm.EntityEditorEntity.prototype.onEntitySelect = function(entityInfo)
+	{
+		if(this._entitySelector)
+		{
+			this._entitySelector.close();
+		}
+
+		if(this._entityInfo && this._entityInfo.getId() === entityInfo.getId())
 		{
 			return;
 		}
 
-		this._entitySelector.close();
-		this.setupEntity(id);
+		this.setEntity(entityInfo);
+
+		this.markAsChanged();
 	};
 	BX.Crm.EntityEditorEntity.prototype.save = function()
 	{
 		this._model.setField(this.getName(), this._entityInfo ? this._entityInfo.getId() : 0);
+		if(this._requisiteList)
+		{
+			var selectedData = this.getSelectedRequisiteAndBankDetailId();
+			this._model.setField(this._requisiteFieldNames.requisiteId, selectedData.requisiteId);
+			this._model.setField(this._requisiteFieldNames.bankDetailId, selectedData.bankDetailId);
+		}
 	};
 	BX.Crm.EntityEditorEntity.prototype.onBeforeSubmit = function()
 	{
@@ -10191,10 +10486,36 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 		{
 			this._dataInput.value = this._model.getField(this.getName(), "");
 		}
+		if(this._requisiteList)
+		{
+			if(this._requisiteIdInput)
+			{
+				this._requisiteIdInput.value = this._model.getField(this._requisiteFieldNames.requisiteId, "");
+			}
+			if(this._bankDetailIdInput)
+			{
+				this._bankDetailIdInput.value = this._model.getField(this._requisiteFieldNames.bankDetailId, "");
+			}
+		}
 	};
+	BX.Crm.EntityEditorEntity.prototype.prepareSaveData = function(data)
+	{
+		BX.Crm.EntityEditorEntity.superclass.prepareSaveData.call(this, data);
+		if(this._requisiteList)
+		{
+			data[this._requisiteFieldNames.requisiteId] = this._model.getField(this._requisiteFieldNames.requisiteId, "");
+			data[this._requisiteFieldNames.bankDetailId] = this._model.getField(this._requisiteFieldNames.bankDetailId, "");
+		}
+	}
 	BX.Crm.EntityEditorEntity.prototype.getMessage = function(name)
 	{
-		return BX.prop.getString(BX.Crm.EntityEditorEntity.messages, name, name);
+		var ownMessage = BX.prop.getString(BX.Crm.EntityEditorEntity.messages, name, null);
+		if (ownMessage)
+		{
+			return ownMessage;
+		}
+
+		return BX.Crm.EntityEditorEntity.superclass.getMessage.call(this, name);
 	};
 	if(typeof(BX.Crm.EntityEditorEntity.messages) === "undefined")
 	{
@@ -10203,6 +10524,243 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 	BX.Crm.EntityEditorEntity.create = function(id, settings)
 	{
 		var self = new BX.Crm.EntityEditorEntity();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
+{
+	/**
+	 * @extends BX.Crm.EntityEditorEntity
+	 * @constructor
+	 */
+	BX.Crm.EntityEditorEntityTag = function()
+	{
+		BX.Crm.EntityEditorEntityTag.superclass.constructor.apply(this);
+
+		this._selectorNode = null;
+		this._selectorSearchNode = null;
+		this._selectorDialog = null;
+		this._lastSearchQuery = null;
+		this.onItemSelect = this.onItemSelect.bind(this);
+	};
+	BX.extend(BX.Crm.EntityEditorEntityTag, BX.Crm.EntityEditorEntity);
+	BX.Crm.EntityEditorEntityTag.prototype.layout = function(options)
+	{
+		if(this._hasLayout)
+		{
+			return;
+		}
+
+		var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
+
+		this.prepareLayout();
+
+		var iconClassName = 'ui-ctl-before ui-icon-border';
+		if (this._entityTypeName.toLowerCase().indexOf('dynamic') !== -1)
+		{
+			iconClassName += ' ui-ctl-icon-crm-dynamic';
+		}
+		else
+		{
+			iconClassName += ' ui-ctl-icon-crm-' + this._entityTypeName.toLowerCase();
+		}
+		this._selectorNode = BX.create('div', {
+			attrs: {
+				className: 'ui-ctl ui-ctl-before-icon crm-entity-selector-container',
+			},
+			children: [
+				BX.create('div', {
+					attrs: {
+						className: iconClassName
+					}
+				})
+			]
+		});
+
+		this._selectorSearchNode = BX.create('input', {
+			attrs: {
+				type: 'text',
+				className: 'ui-ctl-element ui-ctl-textbox',
+				value: this._entityInfo ? this._entityInfo.getTitle() : ''
+			},
+			events: {
+				click: function() {
+					this.getSelectorDialog().show();
+				}.bind(this),
+				input: function(event) {
+					var value = event.target.value;
+					if(value !== this._lastSearchQuery)
+					{
+						this._lastSearchQuery = value;
+						this.getSelectorDialog().search(value);
+					}
+				}.bind(this)
+			}
+		});
+
+		this._selectorNode.appendChild(this._selectorSearchNode);
+		this.getSelectorDialog().setTargetNode(this._selectorSearchNode);
+
+		this._editorWrapper.appendChild(this._selectorNode);
+
+		if(isViewMode)
+		{
+			BX.hide(this._selectorNode);
+			BX.show(this._entityWrapper);
+		}
+		else
+		{
+			BX.show(this._selectorNode);
+			BX.hide(this._entityWrapper);
+
+			this.appendInputs();
+		}
+
+		this.layoutItem();
+
+		if(this.isContextMenuEnabled())
+		{
+			this._wrapper.appendChild(this.createContextMenuButton());
+		}
+		if(this.isDragEnabled())
+		{
+			this.initializeDragDropAbilities();
+		}
+
+		this.registerLayout(options);
+		this._hasLayout = true;
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.clearLayout = function(options)
+	{
+		this._selectorDialog = null;
+
+		BX.Crm.EntityEditorEntityTag.superclass.clearLayout.call(this, options);
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.getModeSwitchType = function()
+	{
+		return BX.UI.EntityEditorModeSwitchType.content;
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.getSelectorDialog = function()
+	{
+		if(!this._selectorDialog)
+		{
+			var parentEntityTypeId = this._schemeElement.getDataIntegerParam("parentEntityTypeId", null);
+
+			var entityId = (
+				BX.CrmEntityType.isDynamicTypeByTypeId(parentEntityTypeId)
+				? 'dynamic'
+				:  this._entityTypeName.toLowerCase()
+			);
+
+			this._selectorDialog = new BX.UI.EntitySelector.Dialog({
+				context: this._schemeElement.getDataStringParam("context", null),
+				targetNode: this._selectorNode,
+				multiple: false,
+				entities: [
+					{
+						id: entityId,
+						dynamicLoad: true,
+						dynamicSearch: this._schemeElement.getDataBooleanParam("enableSearch", true),
+						options: {
+							enableMyCompanyOnly: this._schemeElement.getDataBooleanParam("enableMyCompanyOnly", false),
+							withRequisites: this._schemeElement.getDataBooleanParam("withRequisites", false),
+							entityTypeId: this._schemeElement.getDataIntegerParam("parentEntityTypeId", null),
+						},
+					},
+				],
+				id: this._id,
+				events: {
+					'Item:onSelect': this.onItemSelect,
+					'Item:onDeselect': function(event) {
+						this.onItemDeselect(event);
+					}.bind(this),
+				},
+				clearSearchOnSelect: true,
+				hideOnSelect: true,
+				hideOnDeselect: true,
+				showAvatars: false,
+				height: 200,
+				preselectedItems: [
+					this._entityInfo ? [entityId, this._entityInfo.getId()] : null
+				]
+			});
+		}
+
+		return this._selectorDialog;
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.onItemSelect = function(event)
+	{
+		var entityInfo;
+		var item = event.getData().item;
+		if(item && item.customData)
+		{
+			entityInfo = item.customData.get('entityInfo');
+			if(entityInfo)
+			{
+				entityInfo = BX.CrmEntityInfo.create(entityInfo);
+			}
+		}
+
+		if(entityInfo)
+		{
+			this.onEntitySelect(entityInfo);
+			this._selectorSearchNode.value = entityInfo.getTitle();
+		}
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.onItemDeselect = function(event)
+	{
+		event.getData().item.getDialog().targetNode.value = '';
+		this.onItemDelete({});
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.getMessage = function(name)
+	{
+		var ownMessage = BX.prop.getString(BX.Crm.EntityEditorEntityTag.messages, name, null);
+		if (ownMessage)
+		{
+			return ownMessage;
+		}
+
+		return BX.Crm.EntityEditorEntityTag.superclass.getMessage.call(this, name);
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.validate = function(result)
+	{
+		if(!(this._mode === BX.UI.EntityEditorMode.edit && this._selectorDialog))
+		{
+			throw 'BX.Crm.EntityEditorEntityTag. Invalid validation context';
+		}
+
+		if(!this.isEditable())
+		{
+			return true;
+		}
+
+		this.clearError();
+
+		if(this.hasValidators())
+		{
+			return this.executeValidators(result);
+		}
+
+		var isValid = (
+			!(this.isRequired() || this.isRequiredByAttribute())
+			|| BX.util.trim(this._selectorSearchNode.value) !== ''
+		);
+
+		if(!isValid)
+		{
+			result.addError(BX.UI.EntityValidationError.create({ field: this }));
+			this.showRequiredFieldError(this._selectorDialog);
+		}
+	 	return isValid;
+	};
+	if(typeof(BX.Crm.EntityEditorEntityTag.messages) === "undefined")
+	{
+		BX.Crm.EntityEditorEntityTag.messages = {};
+	}
+	BX.Crm.EntityEditorEntityTag.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorEntityTag();
 		self.initialize(id, settings);
 		return self;
 	};

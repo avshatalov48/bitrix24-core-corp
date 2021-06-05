@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use \Bitrix\Bizproc\Activity\PropertiesDialog;
 
@@ -16,21 +20,21 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 	public function Execute()
 	{
-		if(!CModule::IncludeModule('crm') || !CModule::IncludeModule('tasks'))
+		if (!CModule::IncludeModule('crm') || !CModule::IncludeModule('tasks'))
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($entityTypeName, $entityId) = explode('_', $this->GetDocumentId()[2]);
+		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 		$stages = $this->getStages($entityTypeName, $entityId);
 
-		if($stages && array_diff((array) $this->TargetStatus, $stages))
+		if ($stages && array_diff((array)$this->TargetStatus, $stages))
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_CTA_INCORRECT_STAGE'));
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		foreach ((array) $this->TargetStatus as $ownerStatus)
+		foreach ((array)$this->TargetStatus as $ownerStatus)
 		{
 			$this->completeTasks($entityTypeName, $entityId, $ownerStatus);
 		}
@@ -44,10 +48,15 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			case CCrmOwnerType::LeadName:
 				return $this->getLeadStages();
+
 			case CCrmOwnerType::DealName:
 				return $this->getDealStages($entityId);
+
 			default:
-				return [];
+				$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
+				$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+
+				return !is_null($factory) ? $this->getItemStages($factory->getItem($entityId)) : [];
 		}
 	}
 
@@ -60,7 +69,10 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 	{
 		$dbRes = CCrmDeal::GetListEx(
 			[],
-			['=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'],
+			[
+				'=ID' => $entityId,
+				'CHECK_PERMISSIONS' => 'N'
+			],
 			false,
 			false,
 			['CATEGORY_ID']
@@ -72,25 +84,32 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return array_keys(\Bitrix\Crm\Category\DealCategory::getStageList($categoryId));
 	}
 
+	protected function getItemStages(Bitrix\Crm\Item $item): array
+	{
+		$target = new \Bitrix\Crm\Automation\Target\ItemTarget($item->getEntityTypeId());
+		$target->setEntityById($item->getId());
+		return $target->getEntityStatuses();
+	}
+
 	protected function completeTasks(string $ownerType, int $ownerId, string $ownerStage): void
 	{
 		$dbResult = \CCrmActivity::GetList(
-			array(),
-			array(
+			[],
+			[
 				'TYPE_ID' => \CCrmActivityType::Task,
 				'COMPLETED' =>'N',
 				'CHECK_PERMISSIONS' => 'N',
 				'OWNER_ID' => $ownerId,
 				'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($ownerType)
-			),
+			],
 			false,
 			false,
-			array('ID', 'SETTINGS')
+			['ID', 'SETTINGS']
 		);
 
-		while($activity = $dbResult->Fetch())
+		for ($activity = $dbResult->Fetch(); $activity; $activity = $dbResult->Fetch())
 		{
-			if(is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
+			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
 			{
 				CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
 			}
@@ -99,7 +118,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
-		if(!CModule::IncludeModule('crm') || !CModule::IncludeModule('tasks'))
+		if (!CModule::IncludeModule('crm') || !CModule::IncludeModule('tasks'))
 		{
 			return '';
 		}
@@ -131,7 +150,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		foreach ($map as $fieldId => $fieldProperties)
 		{
 			$field = $documentService->getFieldTypeObject($documentType, $fieldProperties);
-			if(!$field)
+			if (!$field)
 			{
 				continue;
 			}
@@ -143,8 +162,12 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			);
 		}
 
-		$errors = static::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if(count($errors) > 0)
+		$errors = static::ValidateProperties(
+			$properties,
+			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+		);
+
+		if ($errors)
 		{
 			return false;
 		}
@@ -155,11 +178,11 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return true;
 	}
 
-	public static function ValidateProperties($testProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		$errors = [];
 
-		if(CBPHelper::isEmptyValue($testProperties['TargetStatus']))
+		if (CBPHelper::isEmptyValue($testProperties['TargetStatus']))
 		{
 			$errors[] = [
 				'code' => 'NotExist',
@@ -191,19 +214,33 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 	public static function getDocumentStatuses(string $documentType)
 	{
-		if(!CModule::IncludeModule('crm'))
+		if (!CModule::IncludeModule('crm'))
 		{
 			return [];
 		}
 
-		switch($documentType)
+		switch ($documentType)
 		{
 			case CCrmOwnerType::DealName:
 				return \Bitrix\Crm\Category\DealCategory::getFullStageList();
+
 			case CCrmOwnerType::LeadName:
 				return CCrmStatus::GetStatusList('STATUS');
+
 			default:
-				return [];
+				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
+
+				$target = new \Bitrix\Crm\Automation\Target\ItemTarget($documentTypeId);
+				$statuses = [];
+
+				if ($target->isAvailable())
+				{
+					foreach ($target->getStatusInfos() as $statusName => $statusInfo)
+					{
+						$statuses[$statusName] = $statusInfo['NAME'];
+					}
+				}
+				return $statuses;
 		}
 	}
 }

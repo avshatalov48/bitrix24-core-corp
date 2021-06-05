@@ -258,7 +258,11 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		}
 
-		if (this.fieldsWrapper && data.fields && gridData.entityType === "ORDER")
+		if (
+			this.fieldsWrapper
+			&& data.fields
+			&& this.getGrid().getTypeInfoParam('doLayoutFieldsInItemRender')
+		)
 		{
 			this.fieldsWrapper.innerHTML = null;
 			this.layoutFields();
@@ -279,11 +283,8 @@ BX.CRM.Kanban.Item.prototype = {
 					className: "crm-kanban-item-fields"
 				}
 			});
-			if (
-				gridData.entityType !== "LEAD" &&
-				gridData.entityType !== "DEAL" &&
-				gridData.entityType !== "ORDER"
-			)
+
+			if (this.getGrid().getTypeInfoParam('useRequiredVisibleFields'))
 			{
 				this.switchVisible(this.link, true);
 				this.switchVisible(this.date, true);
@@ -784,8 +785,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		this.container = BX.create("div", {
 			props: {
-				className: (gridData.entityType === "INVOICE" || gridData.entityType === "QUOTE")
-							? "crm-kanban-item crm-kanban-item-invoice" : "crm-kanban-item"
+				className: this.getGrid().getTypeInfoParam('kanbanItemClassName')
 			},
 			events: {
 				click: function(e)
@@ -1450,15 +1450,18 @@ BX.CRM.Kanban.Item.prototype = {
 
 	setActivityExistInnerHtml: function()
 	{
-		var data = this.getData();
-		var column = this.getColumn();
-		var columnData = column.getData();
-		this.activityExist.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
-			(
-				(data.activityErrorTotal && columnData.type === "PROGRESS")
-					? " <span>" + data.activityErrorTotal + "</span>"
-					: ""
-			);
+		if (this.activityExist !== undefined)
+		{
+			var data = this.getData();
+			var column = this.getColumn();
+			var columnData = column.getData();
+			this.activityExist.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
+				(
+					(data.activityErrorTotal && columnData.type === "PROGRESS")
+						? " <span>" + data.activityErrorTotal + "</span>"
+						: ""
+				);
+		}
 	},
 
 	/**

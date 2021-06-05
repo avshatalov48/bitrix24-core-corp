@@ -251,7 +251,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		//region Chat
 		$this->arResult['CHAT_DATA'] = array();
 		$this->arResult['CHAT_DATA']['ENABLED'] = $this->entityID > 0
-			&& in_array($this->entityTypeID, array(CCrmOwnerType::Lead, CCrmOwnerType::Deal))
+			&& \Bitrix\Crm\Integration\Im\Chat::isEntitySupported($this->entityTypeID)
 			&& Main\ModuleManager::isModuleInstalled('im');
 		if($this->arResult['CHAT_DATA']['ENABLED'])
 		{

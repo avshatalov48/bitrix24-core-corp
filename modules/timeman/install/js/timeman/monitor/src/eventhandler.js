@@ -1,13 +1,19 @@
-import { ProgramManager } from './model/programmanager';
-import { Logger } from './lib/logger';
+import {Logger} from './lib/logger';
+import {Debug} from "./lib/debug";
+import {Entity} from './model/entity';
+import {EntityType} from 'timeman.const';
+import {Loc} from 'main.core';
 
 class EventHandler
 {
-	init()
+	init(store)
 	{
 		this.enabled = false;
+		this.store = store;
 
-		this.lastApp = {
+		this.preFinishInterval = null;
+
+		this.lastCaught = {
 			name: null,
 			url: null
 		}
@@ -20,18 +26,112 @@ class EventHandler
 			return;
 		}
 
-		if (name === '')
+		const type = this.getEntityTypeByEvent({process, name, title, url});
+
+		let isBitrix24Desktop = false;
+		if (type === EntityType.app)
 		{
-			name = this.getNameByProcess(process);
+			if (['Bitrix24.exe', 'Bitrix24'].includes(this.getNameByProcess(process)))
+			{
+				isBitrix24Desktop = true;
+			}
 		}
 
-		if (!this.isNewEvent(name, url))
+		if (type !== EntityType.absence)
 		{
-			return;
+			if (type === EntityType.app)
+			{
+				switch (name)
+				{
+					case 'Application Frame Host':
+						name = title
+						break;
+
+					case 'StartMenuExperienceHost':
+					case 'Search application':
+						name = Loc.getMessage('TIMEMAN_PWT_WINDOWS_START_ALIAS');
+						break;
+
+					case 'Windows Shell Experience Host':
+						name = Loc.getMessage('TIMEMAN_PWT_WINDOWS_NOTIFICATIONS_ALIAS');
+						break;
+				}
+			}
+
+			if (name === '')
+			{
+				name = this.getNameByProcess(process);
+			}
+
+			if (!this.isNewEvent(name, url))
+			{
+				return;
+			}
+
+			this.lastCaught = {
+				name,
+				url
+			};
 		}
 
-		ProgramManager.add(name, title, url);
-		this.lastApp = { name, url };
+		this.store.dispatch('monitor/addHistory', new Entity({type, name, title, url, isBitrix24Desktop}));
+	}
+
+	catchAbsence(away)
+	{
+		if (away)
+		{
+			this.store.dispatch(
+				'monitor/addHistory',
+				new Entity({
+					type: EntityType.absence
+				})
+			);
+
+			this.lastCaught = {
+				name: EntityType.absence,
+				url: null
+			};
+		}
+		else
+		{
+			if (this.isWorkingDayStarted() && this.isTrackerGetActiveAppAvailable())
+			{
+				BXDesktopSystem.TrackerGetActiveApp();
+			}
+		}
+	}
+
+	catchAppClose()
+	{
+		Logger.warn('Application shutdown recognized. The last interval is finished.');
+		Debug.log('Application shutdown recognized. The last interval is finished.');
+
+		this.store.dispatch('monitor/finishLastInterval');
+	}
+
+	getEntityTypeByEvent(event)
+	{
+		let type = EntityType.unknown;
+
+		if (event.url === 'unknown')
+		{
+			type = EntityType.unknown;
+		}
+		else if (event.url === 'incognito')
+		{
+			type = EntityType.incognito;
+		}
+		else if (event.url)
+		{
+			type = EntityType.site
+		}
+		else if (event.process !== '')
+		{
+			type = EntityType.app
+		}
+
+		return type;
 	}
 
 	getNameByProcess(process)
@@ -46,20 +146,25 @@ class EventHandler
 	{
 		if (this.url === '')
 		{
-			if (this.lastApp.name === name)
+			if (this.lastCaught.name === name)
 			{
 				return false;
 			}
 		}
 		else
 		{
-			if (this.lastApp.name === name && this.lastApp.url === url)
+			if (this.lastCaught.name === name && this.lastCaught.url === url)
 			{
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	isTrackerGetActiveAppAvailable()
+	{
+		return (BX.desktop.getApiVersion() >= 56);
 	}
 
 	start()
@@ -77,19 +182,20 @@ class EventHandler
 			(process, name, title, url) => this.catch(process, name, title, url)
 		);
 
-		BXDesktopSystem.ListScreenMedia((window) =>
-		{
-			for (let index = 1; index < window.length; index++)
-			{
-				if (window[index].id.includes('screen'))
-				{
-					continue;
-				}
+		BX.desktop.addCustomEvent(
+			'BXExitApplication',
+			this.catchAppClose
+		);
 
-				ProgramManager.add(window[index].process, '', '');
-				return true;
-			}
-		});
+		if (this.isTrackerGetActiveAppAvailable())
+		{
+			BXDesktopSystem.TrackerGetActiveApp();
+		}
+
+		this.preFinishInterval = setInterval(
+			() => this.store.dispatch('monitor/preFinishLastInterval'),
+			60000
+		);
 
 		Logger.log('EventHandler started');
 	}
@@ -103,8 +209,10 @@ class EventHandler
 		}
 
 		this.enabled = false;
-		ProgramManager.finishLastInterval();
-		BX.desktop.setLocalConfig('bx_timeman_monitor_history', ProgramManager.history);
+
+		this.preFinishInterval = null;
+
+		this.store.dispatch('monitor/finishLastInterval');
 
 		Logger.log('EventHandler stopped');
 	}

@@ -140,7 +140,7 @@ class Chat
 			$this->isDataLoaded = true;
 			return true;
 		}
-		else if ($params['ONLY_LOAD'] == 'Y')
+		elseif ($params['ONLY_LOAD'] == 'Y')
 		{
 			return false;
 		}
@@ -732,10 +732,6 @@ class Chat
 	 */
 	protected function transferToOperator($params, $session, $mode, $selfExit, $skipCheck)
 	{
-				//test
-						define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/log.txt");
-						AddMessage2Log(var_export([$params, $session, $mode, $selfExit, $skipCheck],1));
-						//END test
 		$result = false;
 
 		if($this->isDataLoaded())
@@ -1298,7 +1294,7 @@ class Chat
 
 	/**
 	 * @param $userId
-	 * @return bool
+	 * @return Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\Db\SqlQueryException
 	 * @throws Main\LoaderException
@@ -1308,7 +1304,7 @@ class Chat
 	 */
 	public function markSpamAndFinish($userId)
 	{
-		$result = false;
+		$result = new Result();
 
 		$session = new Session();
 
@@ -1359,13 +1355,18 @@ class Chat
 					$session->finish();
 
 					$queueManager->stopLock();
-					$result = true;
+					$result->setResult(true);
 				}
+			}
+			else
+			{
+				$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 			}
 		}
 		else
 		{
 			$this->validationAction();
+			$result->addError(new Error('Session or chat failed to load', 'NOT_LOAD_SESSION_OR_CHAT', __METHOD__, ['USER_ID' => $userId]));
 		}
 
 		return $result;
@@ -2775,7 +2776,7 @@ class Chat
 	 * @param $entityId
 	 * @return array
 	 */
-	public static function parseLinesChatEntityId($entityId)
+	public static function parseLinesChatEntityId($entityId): array
 	{
 		$result = [
 			'connectorId' => null,

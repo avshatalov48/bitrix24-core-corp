@@ -469,7 +469,7 @@ class RightsManager implements IErrorable
 	{
 		if(!isset($this->operationsByTask[$taskId]))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$this->operationsByTask[$taskId] = \CTask::getOperations($taskId, true);
 		}
 		return $this->operationsByTask[$taskId];

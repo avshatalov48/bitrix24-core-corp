@@ -19,6 +19,9 @@ use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\File;
 use Bitrix\Disk\TypeFile;
+use Bitrix\Socialnetwork\Helper\Mention;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\ArgumentException;
 
 Loc::loadMessages(__FILE__);
 
@@ -112,11 +115,7 @@ class ComponentHelper
 					$result["DETAIL_TEXT"]
 				);
 
-				$result["DETAIL_TEXT_FORMATTED"] = preg_replace(
-					"/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is".BX_UTF_PCRE_MODIFIER,
-					"\\2",
-					$result["DETAIL_TEXT_FORMATTED"]
-				);
+				$result['DETAIL_TEXT_FORMATTED'] = Mention::clear($result['DETAIL_TEXT_FORMATTED']);
 
 				$p = new \blogTextParser();
 				$p->arUserfields = [];
@@ -530,11 +529,7 @@ class ComponentHelper
 				$comment["POST_TEXT"]
 			);
 
-			$comment["POST_TEXT_FORMATTED"] = preg_replace(
-				"/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is".BX_UTF_PCRE_MODIFIER,
-				"\\2",
-				$comment["POST_TEXT_FORMATTED"]
-			);
+			$comment['POST_TEXT_FORMATTED'] = Mention::clear($comment['POST_TEXT_FORMATTED']);
 
 			if ($p)
 			{
@@ -1014,7 +1009,7 @@ class ComponentHelper
 			$ideaBlogGroupIdList = array();
 			if (ModuleManager::isModuleInstalled("idea"))
 			{
-				$res = \CSite::getList($by="sort", $order="desc", Array("ACTIVE" => "Y"));
+				$res = \CSite::getList("sort", "desc", Array("ACTIVE" => "Y"));
 				while ($site = $res->fetch())
 				{
 					$val = Option::get("idea", "blog_group_id", false, $site["LID"]);
@@ -3165,8 +3160,8 @@ class ComponentHelper
 		}
 
 		$res = \CUser::getList(
-			$o = "ID",
-			$b = "ASC",
+			"ID",
+			"ASC",
 			[
 				"=EMAIL" => $userEmail,
 				"!EXTERNAL_AUTH_ID" => [ "bot", "controller", "replica", "shop", "imconnector", "sale", "saleanonymous" ]
@@ -3791,11 +3786,7 @@ class ComponentHelper
 				'socnetRights' => $socnetPerms,
 			);
 
-			preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $postFields["DETAIL_TEXT"], $matches);
-			if (!empty($matches))
-			{
-				$notificationParamsList["mentionList"] = $matches[1];
-			}
+			$notificationParamsList['mentionList'] = Mention::getUserIds($postFields['DETAIL_TEXT']);
 
 			self::notifyBlogPostCreated($notificationParamsList);
 
@@ -4068,7 +4059,7 @@ class ComponentHelper
 		}
 		if (!empty($mentionList))
 		{
-			$IMNotificationFields["MENTION_ID"] = $mentionList[1];
+			$IMNotificationFields["MENTION_ID"] = $mentionList;
 		}
 
 		$userIdSentList = \CBlogPost::notifyIm($IMNotificationFields);
@@ -5031,5 +5022,144 @@ class ComponentHelper
 	public static function checkLivefeedTasksAllowed()
 	{
 		return Option::get('socialnetwork', 'livefeed_allow_tasks', true);
+	}
+
+	public static function convertSelectorRequestData(array &$postFields = [], array $params = []): void
+	{
+		$perms = (isset($params['perms']) ? (string)$params['perms'] : '');
+		$crm = (isset($params['crm']) ? (bool)$params['crm'] : false);
+
+		$mapping = [
+			'DEST_DATA' => 'DEST_CODES',
+			'GRAT_DEST_DATA' => 'GRAT_DEST_CODES',
+		];
+
+		foreach ($mapping as $from => $to)
+		{
+			if (isset($postFields[$from]))
+			{
+				try
+				{
+					$entities = Json::decode($postFields[$from]);
+				}
+				catch (ArgumentException $e)
+				{
+					$entities = [];
+				}
+
+				$postFields[$to] = array_merge((isset($postFields[$to]) ? $postFields[$to] : []), \Bitrix\Main\UI\EntitySelector\Converter::convertToFinderCodes($entities));
+			}
+		}
+
+		$mapping = [
+			'DEST_CODES' => 'SPERM',
+			'GRAT_DEST_CODES' => 'GRAT',
+			'EVENT_DEST_CODES' => 'EVENT_PERM'
+		];
+
+		foreach ($mapping as $from => $to)
+		{
+			if (isset($postFields[$from]))
+			{
+				if (
+					!isset($postFields[$to])
+					|| !is_array($postFields[$to])
+				)
+				{
+					$postFields[$to] = [];
+				}
+
+				foreach ($postFields[$from] as $destCode)
+				{
+					if ($destCode === 'UA')
+					{
+						if (empty($postFields[$to]['UA']))
+						{
+							$postFields[$to]['UA'] = [];
+						}
+						$postFields[$to]['UA'][] = 'UA';
+					}
+					elseif (preg_match('/^UE(.+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['UE']))
+						{
+							$postFields[$to]['UE'] = [];
+						}
+						$postFields[$to]['UE'][] = $matches[1];
+					}
+					elseif (preg_match('/^U(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['U']))
+						{
+							$postFields[$to]['U'] = [];
+						}
+						$postFields[$to]['U'][] = 'U' . $matches[1];
+					}
+					elseif (
+						$from === 'DEST_CODES'
+						&& preg_match('/^UP(\d+)$/i', $destCode, $matches)
+						&& Loader::includeModule('blog')
+						&& $perms === BLOG_PERMS_FULL
+					)
+					{
+						if (empty($postFields[$to]['UP']))
+						{
+							$postFields[$to]['UP'] = [];
+						}
+						$postFields[$to]['UP'][] = 'UP' . $matches[1];
+					}
+					elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['SG']))
+						{
+							$postFields[$to]['SG'] = [];
+						}
+						$postFields[$to]['SG'][] = 'SG' . $matches[1];
+					}
+					elseif (preg_match('/^DR(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['DR']))
+						{
+							$postFields[$to]['DR'] = [];
+						}
+						$postFields[$to]['DR'][] = 'DR' . $matches[1];
+					}
+					elseif ($crm && preg_match('/^CRMCONTACT(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['CRMCONTACT']))
+						{
+							$postFields[$to]['CRMCONTACT'] = [];
+						}
+						$postFields[$to]['CRMCONTACT'][] = 'CRMCONTACT' . $matches[1];
+					}
+					elseif ($crm && preg_match('/^CRMCOMPANY(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['CRMCOMPANY']))
+						{
+							$postFields[$to]['CRMCOMPANY'] = [];
+						}
+						$postFields[$to]['CRMCOMPANY'][] = 'CRMCOMPANY' . $matches[1];
+					}
+					elseif ($crm && preg_match('/^CRMLEAD(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['CRMLEAD']))
+						{
+							$postFields[$to]['CRMLEAD'] = [];
+						}
+						$postFields[$to]['CRMLEAD'][] = 'CRMLEAD' . $matches[1];
+					}
+					elseif ($crm && preg_match('/^CRMDEAL(\d+)$/i', $destCode, $matches))
+					{
+						if (empty($postFields[$to]['CRMDEAL']))
+						{
+							$postFields[$to]['CRMDEAL'] = [];
+						}
+						$postFields[$to]['CRMDEAL'][] = 'CRMDEAL' . $matches[1];
+					}
+				}
+
+				unset($postFields[$from]);
+			}
+		}
 	}
 }

@@ -67,7 +67,8 @@ class CBPCrmSetCompanyField
 	{
 		$id = null;
 
-		list($entityType, $entityId) = explode('_', $this->GetDocumentId()[2]);
+		list($entityType, $entityId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
 
 		if ($entityType === \CCrmOwnerType::LeadName)
 		{
@@ -78,6 +79,15 @@ class CBPCrmSetCompanyField
 		{
 			$entity = \CCrmDeal::GetByID($entityId, false);
 			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
+		}
+		else
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			if (isset($factory) && $factory->isAutomationEnabled())
+			{
+				$entity = $factory->getItem($entityId);
+				$id = (int)$entity->getCompanyId();
+			}
 		}
 
 		return $id ? CCrmBizProcHelper::ResolveDocumentId(\CCrmOwnerType::Company, $id) : null;

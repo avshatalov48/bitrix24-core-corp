@@ -12,7 +12,7 @@ Class controller extends CModule
 	var $MODULE_GROUP_RIGHTS = "N";
 	var $errors = false;
 
-	function controller()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -109,9 +109,7 @@ Class controller extends CModule
 			if (IsModuleInstalled('bizproc'))
 			{
 				CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/bizproc/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/templates", true, true);
-				$b = "";
-				$o = "";
-				$langs = CLanguage::GetList($b, $o);
+				$langs = CLanguage::GetList();
 				while ($lang = $langs->Fetch())
 				{
 					CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/lang/".$lang["LID"]."/install/bizproc/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/lang/".$lang["LID"]."/templates", true, true);

@@ -122,15 +122,15 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			<? endif ?>
 		</div>
 
-		<? if(count($arResult['MENU']['MAIN'])): ?>
+		<? if(!empty($arResult['MENU']['MAIN']) && is_array($arResult['MENU']['MAIN'])): ?>
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_TELEPHONY") ?></div>
 			<div id="voximplant-grid-block" class="voximplant-grid"></div>
 		<? endif ?>
-		<? if(count($arResult['MENU']['SETTINGS'])): ?>
+		<? if(!empty($arResult['MENU']['SETTINGS']) && is_array($arResult['MENU']['SETTINGS'])): ?>
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_TELEPHONY_SETTINGS") ?></div>
 			<div id="voximplant-grid-settings-block" class="voximplant-grid"></div>
 		<? endif ?>
-		<? if(count($arResult['MENU']['PARTNERS'])): ?>
+		<? if(!empty($arResult['MENU']['PARTNERS']) && is_array($arResult['MENU']['PARTNERS'])): ?>
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_PARTNERS") ?></div>
 			<div id="marketplace-grid-block" class="voximplant-grid"></div>
 		<? endif ?>

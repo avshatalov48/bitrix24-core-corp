@@ -1,158 +1,239 @@
 <?php
 namespace Bitrix\Timeman\Monitor\History;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable;
+use Bitrix\Timeman\Model\Monitor\MonitorCommentTable;
+use Bitrix\Timeman\Model\Monitor\MonitorEntityTable;
+use Bitrix\Timeman\Model\Monitor\MonitorUserLogTable;
 use Bitrix\Timeman\Monitor\Group\EntityType;
-use Bitrix\Timeman\Monitor\Group\Group;
-use Bitrix\Timeman\Monitor\Group\UserAccess;
+use Bitrix\Timeman\Monitor\Utils\User;
 
 class History
 {
-	private $dateStart;
-	private $dateFinish;
-	private $userId;
-	private $history;
-
-	public function __construct(int $userId, Date $dateStart, Date $dateFinish)
+	public static function getForPeriod(int $userId, Date $dateStart, Date $dateFinish): array
 	{
-		$this->userId = $userId;
-		$this->dateStart = $dateStart;
-		$this->dateFinish = $dateFinish;
-		$this->history = UserLog::getForPeriod($this->userId, $this->dateStart, $this->dateFinish);
-	}
+		$query = MonitorUserLogTable::query();
 
-	public function get(): array
-	{
-		return $this->history;
-	}
+		$query->setSelect([
+			'TYPE' => 'entity.TYPE',
+			'TITLE' => 'entity.TITLE',
+			'ENTITY_ID',
+			'TIME_SPEND',
+			'COMMENT' => 'monitor_comment.COMMENT',
+			'ABSENCE_TIME_START' => 'absence.TIME_START'
+		]);
 
-	public function applyGroup(Group $group): void
-	{
-		$groupAccess = $group->getAccesses();
-		$userAccess = UserAccess::getAccessForUser($this->userId);
-		$maskGroup = $group->getMasks();
+		$query->registerRuntimeField(new ReferenceField(
+			'entity',
+			MonitorEntityTable::class,
+			Join::on('this.ENTITY_ID', 'ref.ID')
+		));
 
-		foreach ($this->history as $key => $historyEntry)
+		$query->registerRuntimeField(new ReferenceField(
+			'monitor_comment',
+			MonitorCommentTable::class,
+			Join::on('this.ID', 'ref.USER_LOG_ID')
+				->whereColumn('this.USER_ID', 'USER_ID')
+		));
+
+		$query->registerRuntimeField(new ReferenceField(
+			'absence',
+			MonitorAbsenceTable::class,
+			Join::on('this.ID', 'ref.USER_LOG_ID')
+		));
+
+		$query->addFilter('=USER_ID', $userId);
+		$query->whereBetween('DATE_LOG', $dateStart, $dateFinish);
+
+		$history = $query->exec()->fetchAll();
+
+		foreach ($history as $index => $entity)
 		{
-			if ($historyEntry['SITE_ID'])
+			if ($entity['ABSENCE_TIME_START'])
 			{
-				if($userAccess[EntityType::SITE][$historyEntry['SITE_ID']])
-				{
-					$this->history[$key]['GROUP_CODE'] = $userAccess[EntityType::SITE][(int)$historyEntry['SITE_ID']]['GROUP_CODE'];
-					continue;
-				}
-
-				$hostGroup = self::getHostGroupByMasks($historyEntry['SITE_HOST'], $maskGroup);
-				if ($hostGroup)
-				{
-					$this->history[$key]['GROUP_CODE'] = $hostGroup['GROUP_CODE'];
-					$this->history[$key]['ADDED_BY_MASK'] = true;
-				}
-				elseif (array_key_exists((int)$historyEntry['SITE_ID'], $groupAccess[EntityType::SITE]))
-				{
-					$this->history[$key]['GROUP_CODE'] = $groupAccess[EntityType::SITE][(int)$historyEntry['SITE_ID']];
-				}
-			}
-			elseif ($historyEntry['APP_ID'])
-			{
-				if($userAccess[EntityType::APP][$historyEntry['APP_ID']])
-				{
-					$this->history[$key]['GROUP_CODE'] = $userAccess[EntityType::APP][(int)$historyEntry['APP_ID']]['GROUP_CODE'];
-					continue;
-				}
-
-				if (array_key_exists((int)$historyEntry['APP_ID'], $groupAccess[EntityType::APP]))
-				{
-					$this->history[$key]['GROUP_CODE'] = $groupAccess[EntityType::APP][(int)$historyEntry['APP_ID']];
-				}
-			}
-		}
-	}
-
-	public static function getHostGroupByMasks($host, $masks)
-	{
-		foreach ($masks as $mask => $groupCode)
-		{
-			$isHostMatchesMask = (mb_substr($host, mb_strlen($host) - mb_strlen($mask)) === $mask);
-			if ($isHostMatchesMask)
-			{
-				return [
-					'MASK' => $mask,
-					'GROUP_CODE' => $groupCode
-				];
+				$history[$index]['TITLE'] =
+					$entity['TITLE']
+					. ' '
+					. Loc::getMessage('TIMEMAN_MONITOR_HISTORY_FROM_TIME')
+					. ' '
+					. DateTime::createFromUserTime($entity['ABSENCE_TIME_START'])->format('H:i')
+				;
 			}
 		}
 
-		return false;
+		return $history;
 	}
 
-	public static function record($history): bool
+	public static function record(array $queue): bool
 	{
-		UserLog::add($history);
-		UserPage::add($history);
-
-		$sites = self::getSitesForAdd($history);
-		if ($sites)
+		if (!$queue)
 		{
-			Site::add($sites);
+			return true;
 		}
 
-		$apps = self::getAppsForAdd($history);
-		if ($apps)
+		foreach ($queue as $history)
 		{
-			App::add($apps);
+			if (is_array($history['historyPackage']))
+			{
+				$entities = self::getEntities($history);
+				if ($entities)
+				{
+					$entitiesWithIds = Entity::record($entities);
+					$history = self::addEntityIdsToHistory($entitiesWithIds, $history);
+				}
+
+				$history = UserLog::record($history);
+
+				$comments = self::getComments($history);
+				if ($comments)
+				{
+					Comment::record($comments);
+				}
+
+				$absence = self::getAbsence($history);
+				if ($absence)
+				{
+					Absence::record($absence);
+				}
+			}
+
+			if (is_array($history['chartPackage']))
+			{
+				UserChart::record($history);
+			}
 		}
 
 		return true;
 	}
 
-	private static function getSitesForAdd($history): array
+	public static function deleteForCurrentUser(string $dateLog, string $desktopCode): bool
 	{
-		$sites = [];
-		foreach ($history as $entries)
-		{
-			foreach ($entries as $entry)
-			{
-				if (!$entry['siteCode'])
-				{
-					continue;
-				}
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
 
-				if (!in_array(['code' => $entry['siteCode'], 'host' => $entry['host']], $sites, true))
-				{
-					$sites[] = [
-						'code' => $entry['siteCode'],
-						'host' => $entry['host']
-					];
-				}
-			}
-		}
+		$dateLog = $sqlHelper->forSql($dateLog);
+		$desktopCode = $sqlHelper->forSql($desktopCode);
+		$userId = User::getCurrentUserId();
 
-		return $sites;
+		$deleteAbsenceQuery = "
+			DELETE FROM b_timeman_monitor_absence WHERE USER_LOG_ID IN (
+				SELECT ID
+				FROM b_timeman_monitor_user_log
+				WHERE DATE_LOG = '{$dateLog}' 
+				  and USER_ID = {$userId} 
+				  and DESKTOP_CODE = '{$desktopCode}'
+			);
+		";
+
+		$connection->query($deleteAbsenceQuery);
+
+		$deleteCommentsQuery = "
+			DELETE FROM b_timeman_monitor_comment WHERE USER_LOG_ID IN (
+				SELECT ID
+				FROM b_timeman_monitor_user_log
+				WHERE DATE_LOG = '{$dateLog}' 
+				  and USER_ID = {$userId} 
+				  and DESKTOP_CODE = '{$desktopCode}'
+			);
+		";
+
+		$connection->query($deleteCommentsQuery);
+
+		$deleteUserLogQuery = "
+			DELETE FROM b_timeman_monitor_user_log 
+			WHERE DATE_LOG = '{$dateLog}' 
+			  and USER_ID = {$userId} 
+			  and DESKTOP_CODE = '{$desktopCode}'
+		";
+
+		$connection->query($deleteUserLogQuery);
+
+		$deleteUserChartQuery = "
+			DELETE FROM b_timeman_monitor_user_chart 
+			WHERE DATE_LOG = '{$dateLog}' 
+			  and USER_ID = {$userId} 
+			  and DESKTOP_CODE = '{$desktopCode}'
+		";
+
+		$connection->query($deleteUserChartQuery);
+
+		return true;
 	}
 
-	private static function getAppsForAdd($history): array
+	private static function getEntities(array $history): array
 	{
-		$apps = [];
-		foreach ($history as $entries)
+		$entities = [];
+		foreach ($history['historyPackage'] as $entity)
 		{
-			foreach ($entries as $entry)
-			{
-				if (!$entry['appCode'])
-				{
-					continue;
-				}
-
-				if (!in_array(['code' => $entry['appCode'], 'name' => $entry['appName']], $apps, true))
-				{
-					$apps[] = [
-						'code' => $entry['appCode'],
-						'name' => $entry['appName']
-					];
-				}
-			}
+			$entities[] = [
+				'TYPE' => $entity['type'],
+				'TITLE' => $entity['title'],
+				'PUBLIC_CODE' => $entity['publicCode']
+			];
 		}
 
-		return $apps;
+		return $entities;
+	}
+
+	private static function getComments(array $history): array
+	{
+		$comments = [];
+		foreach ($history['historyPackage'] as $entity)
+		{
+			if ($entity['comment'] === '' || $entity['comment'] === null)
+			{
+				continue;
+			}
+
+			$comments[] = [
+				'USER_LOG_ID' => $entity['USER_LOG_ID'],
+				'USER_ID' => User::getCurrentUserId(),
+				'COMMENT' => $entity['comment'],
+			];
+		}
+
+		return $comments;
+	}
+
+	private static function getAbsence(array $history): array
+	{
+		$absence = [];
+		foreach ($history['historyPackage'] as $entity)
+		{
+			if ($entity['type'] !== EntityType::ABSENCE)
+			{
+				continue;
+			}
+
+			$absence[] = [
+				'USER_LOG_ID' => $entity['USER_LOG_ID'],
+				'TIME_START' => new DateTime($entity['timeStart'], \DateTime::ATOM),
+			];
+		}
+
+		return $absence;
+	}
+
+	private static function addEntityIdsToHistory(array $entitiesWithIds, array $history): array
+	{
+		foreach ($history['historyPackage'] as $index => $entry)
+		{
+			$entityWithIdIndex = array_search(
+				$entry['publicCode'],
+				array_column($entitiesWithIds, 'PUBLIC_CODE'),
+				true
+			);
+
+			$history['historyPackage'][$index]['ENTITY_ID'] = $entitiesWithIds[$entityWithIdIndex]['ENTITY_ID'];
+		}
+
+		return $history;
 	}
 }

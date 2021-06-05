@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\UserField\DataModifiers;
 
+use Bitrix\Crm\Security\EntityAuthorization;
 use CComponentEngine;
 use CCrmCompany;
 use CCrmContact;
@@ -15,6 +16,7 @@ use CFile;
 use COption;
 use CDBResult;
 use Bitrix\Crm\Order\Permissions\Order;
+use Bitrix\Crm\Service\Container;
 
 /**
  * Class Element
@@ -22,6 +24,15 @@ use Bitrix\Crm\Order\Permissions\Order;
  */
 class Element
 {
+	private const TYPES = [
+		CCrmOwnerType::LeadName,
+		CCrmOwnerType::ContactName,
+		CCrmOwnerType::CompanyName,
+		CCrmOwnerType::DealName,
+		CCrmOwnerType::QuoteName,
+		CCrmOwnerType::OrderName,
+		'PRODUCT'
+	];
 	private const ELEMENTS_LIMIT = 50;
 
 	public static function removeItemFromResultList(&$result, $params, $item): void
@@ -973,6 +984,46 @@ class Element
 		}
 	}
 
+	public static function setDynamics(array &$result, array $params, $userPermissions): void
+	{
+		foreach($params['ENTITY_TYPE'] as $entityTypeName)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+			if (($factory = Container::getInstance()->getFactory($entityTypeId)) === null)
+			{
+				continue;
+			}
+
+			if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			{
+				$result['ENTITY_TYPE'][$entityTypeId] = mb_strtolower($entityTypeName);
+
+				$list = $factory->getItemsFilteredByPermissions([
+					'order' => ['ID' => 'DESC'],
+					'limit' => self::ELEMENTS_LIMIT
+				]);
+
+				foreach ($list as $item)
+				{
+					$sid = (
+					$result['PREFIX'] === 'Y'
+						? \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $item->getId()
+						: $item->getId()
+					);
+
+					$result['ELEMENT'][] = [
+						'title' => (str_replace([';', ','], ' ', $item->getTitle())),
+						'desc' => '',
+						'id' => $sid,
+						'url' => null,
+						'type' => mb_strtolower($entityTypeName)
+					];
+				}
+			}
+		}
+	}
+
 	/**
 	 * @param array|null $settings
 	 * @return array
@@ -981,141 +1032,33 @@ class Element
 	{
 		$supportedTypes = [];
 
-		if(
-			isset($settings[CCrmOwnerType::LeadName])
-			&&
-			$settings[CCrmOwnerType::LeadName] === 'Y'
-		)
+		foreach ($settings as $entityTypeName => $status)
 		{
-			$supportedTypes[] = CCrmOwnerType::LeadName;
-		}
-
-		if(
-			isset($settings[CCrmOwnerType::ContactName])
-			&&
-			$settings[CCrmOwnerType::ContactName] === 'Y'
-		)
-		{
-			$supportedTypes[] = CCrmOwnerType::ContactName;
-		}
-
-		if(
-			isset($settings[CCrmOwnerType::CompanyName])
-			&&
-			$settings[CCrmOwnerType::CompanyName] === 'Y'
-		)
-		{
-			$supportedTypes[] = CCrmOwnerType::CompanyName;
-		}
-
-		if(
-			isset($settings[CCrmOwnerType::DealName])
-			&&
-			$settings[CCrmOwnerType::DealName] === 'Y'
-		)
-		{
-			$supportedTypes[] = CCrmOwnerType::DealName;
-		}
-
-		if(
-			isset($settings[CCrmOwnerType::QuoteName])
-			&&
-			$settings[CCrmOwnerType::QuoteName] === 'Y'
-		)
-		{
-			$supportedTypes[] = CCrmOwnerType::QuoteName;
-		}
-
-		if(
-			isset($settings[CCrmOwnerType::OrderName])
-			&&
-			$settings[CCrmOwnerType::OrderName] === 'Y'
-		)
-		{
-			$supportedTypes[] = CCrmOwnerType::OrderName;
-		}
-
-		if(
-			isset($settings['PRODUCT'])
-			&&
-			$settings['PRODUCT'] === 'Y'
-		)
-		{
-			$supportedTypes[] = 'PRODUCT';
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+			if ($entityTypeId && $status === 'Y')
+			{
+				$supportedTypes[$entityTypeId] = \CCrmOwnerType::ResolveName($entityTypeId);
+			}
 		}
 
 		return $supportedTypes;
 	}
 
 	/**
+	 * @todo remove $userPermissions later, now only for compatibility with the Mobile module
 	 * @param array $supportedTypes
-	 * @param $userPermissions
+	 * @param array $userPermissions
 	 * @return array
 	 */
-	public static function getEntityTypes(array $supportedTypes, $userPermissions): array
+	public static function getEntityTypes(array $supportedTypes, $userPermissions = null): array
 	{
 		$entityTypes = [];
-		if(
-			in_array(CCrmOwnerType::LeadName, $supportedTypes, true)
-			&&
-			CCrmLead::CheckReadPermission(0, $userPermissions)
-		)
+		foreach ($supportedTypes as $typeId => $type)
 		{
-			$entityTypes[] = CCrmOwnerType::LeadName;
-		}
-
-		if(
-			in_array(CCrmOwnerType::ContactName, $supportedTypes, true)
-			&&
-			CCrmContact::CheckReadPermission(0, $userPermissions)
-		)
-		{
-			$entityTypes[] = CCrmOwnerType::ContactName;
-		}
-
-		if(
-			in_array(CCrmOwnerType::CompanyName, $supportedTypes, true)
-			&&
-			CCrmCompany::CheckReadPermission(0, $userPermissions)
-		)
-		{
-			$entityTypes[] = CCrmOwnerType::CompanyName;
-		}
-
-		if(
-			in_array(CCrmOwnerType::DealName, $supportedTypes, true)
-			&&
-			CCrmDeal::CheckReadPermission(0, $userPermissions)
-		)
-		{
-			$entityTypes[] = CCrmOwnerType::DealName;
-		}
-
-		if(
-			in_array(CCrmOwnerType::QuoteName, $supportedTypes, true)
-			&&
-			CCrmQuote::CheckReadPermission(0, $userPermissions)
-		)
-		{
-			$entityTypes[] = CCrmOwnerType::QuoteName;
-		}
-
-		if(
-			in_array(CCrmOwnerType::OrderName, $supportedTypes, true)
-			&&
-			Order::CheckReadPermission(0, $userPermissions)
-		)
-		{
-			$entityTypes[] = CCrmOwnerType::OrderName;
-		}
-
-		if(
-			in_array('PRODUCT', $supportedTypes, true)
-			&&
-			CCrmProduct::CheckReadPermission()
-		)
-		{
-			$entityTypes[] = 'PRODUCT';
+			if(EntityAuthorization::checkReadPermission($typeId, 0))
+			{
+				$entityTypes[$typeId] = $type;
+			}
 		}
 
 		return $entityTypes;

@@ -827,7 +827,7 @@ class CCrmDocumentDeal extends CCrmDocument
 		}
 	}
 
-	public function getDocumentName($documentId)
+	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		$dbRes = CCrmDeal::GetListEx([], ['=ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'],

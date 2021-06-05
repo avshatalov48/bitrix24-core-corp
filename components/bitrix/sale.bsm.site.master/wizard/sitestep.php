@@ -951,7 +951,7 @@ class SiteStep extends \CWizardStep
 	private function createWizardIndex($siteId, $wizardName, $path)
 	{
 		/** @noinspection PhpUndefinedClassInspection */
-		$siteResult = \CSite::GetList($by="sort", $order="asc", ["ID" => $siteId]);
+		$siteResult = \CSite::GetList("sort", "asc", ["ID" => $siteId]);
 		$siteData = $siteResult->GetNext();
 
 		$indexContent = '<'.'?'.

@@ -203,7 +203,7 @@ class CDavVirtualFileSystemResult extends CDBResult
 {
 	public function __construct($res)
 	{
-		parent::CDBResult($res);
+		parent::__construct($res);
 	}
 
 	public function Fetch()

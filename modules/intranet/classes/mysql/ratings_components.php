@@ -1,10 +1,12 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/intranet/classes/general/ratings_components.php");
+
 IncludeModuleLangFile(__FILE__);
 
 class CRatingsComponentsIntranet extends CAllRatingsComponentsIntranet
 {
-	function CalcSubordinateBonus($arConfigs)
+	public static function CalcSubordinateBonus($arConfigs)
 	{
 		global $DB;
 
@@ -39,4 +41,3 @@ class CRatingsComponentsIntranet extends CAllRatingsComponentsIntranet
 		return true;
 	}
 }
-?>

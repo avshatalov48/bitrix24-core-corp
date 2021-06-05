@@ -56,13 +56,13 @@ while ($arStatusList = $dbStatusList->GetNext())
 }
 
 $arCurrency = Array();
-$dbCur = CCurrency::GetList(($b="sort"), ($order1="asc"), LANGUAGE_ID);
+$dbCur = CCurrency::GetList("sort", "asc", LANGUAGE_ID);
 while($arCur = $dbCur->GetNext())
 {
 	$arCurrency[$arCur["CURRENCY"]] = $arCur["FULL_NAME"];
 }
 
-$dbSite = CSite::GetList($by="sort", $order="desc", Array("ACTIVE" => "Y"));
+$dbSite = CSite::GetList("sort", "desc", Array("ACTIVE" => "Y"));
 while($arSites = $dbSite->GetNext())
 {
 	$arSite[$arSites["LID"]] = $arSites["NAME"];

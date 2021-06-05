@@ -856,7 +856,7 @@ abstract class CDavExchangeClient
 	{
 		$arResult = array();
 
-		$dbLang = CLanguage::GetList($b = "", $o = "", array());
+		$dbLang = CLanguage::GetList();
 		while ($arLang = $dbLang->Fetch())
 		{
 			$MESS = array();

@@ -32,7 +32,7 @@ function RegisterNewUser($SITE_ID, $arFields)
 				"=EMAIL"=>$email
 			);
 
-			$rsUser = CUser::GetList(($by="id"), ($order="asc"), $arFilter);
+			$rsUser = CUser::GetList("id", "asc", $arFilter);
 			$bFound = false;
 			while ($arUser = $rsUser->GetNext())
 			{
@@ -82,7 +82,7 @@ function RegisterNewUser($SITE_ID, $arFields)
 	if (!empty($arEmailToRegister))
 	{
 		$arGroups = array();
-		$rsGroups = CGroup::GetList($o="", $b="", array(
+		$rsGroups = CGroup::GetList('', '', array(
 			"STRING_ID" => "EMPLOYEES_".$SITE_ID,
 		));
 		while($arGroup = $rsGroups->Fetch())
@@ -151,8 +151,8 @@ function ReinviteUser($SITE_ID, $USER_ID)
 	$USER_ID = intval($USER_ID);
 
 	$rsUser = CUser::GetList(
-		$o="ID",
-		$b="DESC",
+		"ID",
+		"DESC",
 		array("ID_EQUAL_EXACT" => $USER_ID)
 	);
 	if($arUser = $rsUser->Fetch())

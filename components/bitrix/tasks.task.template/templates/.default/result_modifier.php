@@ -147,60 +147,62 @@ foreach($ufFields as $fieldCode => $field)
 	}
 }
 
-$arResult['TEMPLATE_DATA']['BLOCKS'] = array(
-	'SE_CHECKLIST' => array(
-		'FILLED' => array_key_exists('SE_CHECKLIST', $template)
-					&& is_object($template['SE_CHECKLIST'])
-					&& !$template['SE_CHECKLIST']->isEmpty(),
-	),
-	'SE_RESPONSIBLE' => array(
+$arResult['TEMPLATE_DATA']['BLOCKS'] = [
+	'SE_CHECKLIST' => [
+		'FILLED' =>
+			$template->get('SE_CHECKLIST')
+			&& is_object($template['SE_CHECKLIST'])
+			&& !$template['SE_CHECKLIST']->isEmpty()
+		,
+	],
+	'SE_RESPONSIBLE' => [
 		'FILLED' => true, // responsible always filled and thus visible
-	),
-	'SE_ORIGINATOR' => array(
-		'FILLED' => $template['CREATED_BY'] != Util\User::getId(),
-	),
-	'SE_AUDITOR' => array(
+	],
+	'SE_ORIGINATOR' => [
+		'FILLED' => (int)$template['CREATED_BY'] !== Util\User::getId(),
+	],
+	'SE_AUDITOR' => [
 		'FILLED' => $template['AUDITORS'] && !$template['AUDITORS']->isEmpty(),
-	),
-	'SE_ACCOMPLICE' => array(
+	],
+	'SE_ACCOMPLICE' => [
 		'FILLED' => $template['ACCOMPLICES'] && !$template['ACCOMPLICES']->isEmpty(),
-	),
-	'DATE_PLAN' => array(
+	],
+	'DATE_PLAN' => [
 		'FILLED' => $template['DEADLINE_AFTER'] || $template['START_AFTER'] || $template['DURATION'],
-	),
-	'OPTIONS' => array(
+	],
+	'OPTIONS' => [
 		'FILLED' => false,
-	),
+	],
 
 	// dynamic
-	'PROJECT' => array(
-		'FILLED' => intval($template['GROUP_ID']) > 0,
-	),
-	'TIME_MANAGER' => array(
-		'FILLED' => intval($template['TIME_ESTIMATE']) > 0,
-	),
-	'REPLICATION' => array(
-		'FILLED' => $template['REPLICATE'] == 'Y',
-	),
-	'CRM' => array(
+	'PROJECT' => [
+		'FILLED' => (int)$template['GROUP_ID'] > 0,
+	],
+	'TIME_MANAGER' => [
+		'FILLED' => (int)$template['TIME_ESTIMATE'] > 0,
+	],
+	'REPLICATION' => [
+		'FILLED' => $template['REPLICATE'] === 'Y',
+	],
+	'CRM' => [
 		'FILLED' => !Util\UserField::isValueEmpty($crm),
-	),
-	'PARENT' => array(
-		'FILLED' => intval($template['PARENT_ID']) || intval($template['BASE_TEMPLATE_ID']),
-	),
-	'TAG' => array(
+	],
+	'PARENT' => [
+		'FILLED' => (int)$template['PARENT_ID'] || (int)$template['BASE_TEMPLATE_ID'],
+	],
+	'TAG' => [
 		'FILLED' => $template['SE_TAG'] && !$template['SE_TAG']->isEmpty(),
-	),
-	'USER_FIELDS' => array(
+	],
+	'USER_FIELDS' => [
 		'FILLED' => $ufFilled,
-	),
-	'RELATED_TASK' => array(
-		'FILLED' => $template['DEPENDS_ON'] && !$template['DEPENDS_ON']->isEmpty()
-	),
-	'ACCESS' => array(
-		'FILLED' => true
-	),
-);
+	],
+	'RELATED_TASK' => [
+		'FILLED' => $template['DEPENDS_ON'] && !$template['DEPENDS_ON']->isEmpty(),
+	],
+	'ACCESS' => [
+		'FILLED' => true,
+	],
+];
 
 $arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'] = $arResult['COMPONENT_DATA']['ACTION']['SUCCESS'] && !$arParams['REDIRECT_ON_SUCCESS'] && !$arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE'];
 

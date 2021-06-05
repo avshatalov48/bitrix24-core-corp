@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
-(function (exports,location_core) {
+(function (exports) {
 	'use strict';
 
 	/* @preserve
@@ -13543,5 +13543,5 @@ this.BX.Location = this.BX.Location || {};
 	exports.Leaflet = leafletSrc_esm;
 	exports.TileLayerAuth = TileLayerAuth;
 
-}((this.BX.Location.OSM = this.BX.Location.OSM || {}),BX.Location.Core));
+}((this.BX.Location.OSM = this.BX.Location.OSM || {})));
 //# sourceMappingURL=leaflet.bundle.js.map

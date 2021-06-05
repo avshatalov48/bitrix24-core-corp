@@ -15,7 +15,7 @@ class timeman extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "N";
 
-	function timeman()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

@@ -398,7 +398,7 @@ class Invoice extends \CCrmDocument
 		return Loc::getMessage('CRM_BP_DOCUMENT_INVOICE_ENTITY_NAME');
 	}
 
-	public function getDocumentName($documentId)
+	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		return \CCrmOwnerType::GetCaption(\CCrmOwnerType::Invoice, $arDocumentID['ID'], false);

@@ -245,7 +245,7 @@ if (!empty($maxUsersActivity))
 
 // user info
 $result = CUser::GetList(
-	($dummy=''), ($dummy=''), array("ID" => join('|', array($arParams['USER_ID'], $USER->getId()))),
+	'', '', array("ID" => join('|', array($arParams['USER_ID'], $USER->getId()))),
 	array("FIELDS" => array("ID", "LAST_NAME", "NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "PERSONAL_GENDER"))
 );
 

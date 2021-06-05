@@ -388,8 +388,12 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 
 			if(historyItemData !== null)
 			{
-				historyItem = this.addHistoryItem(historyItemData);
-				BX.CrmTimelineItemExpand.create(historyItem.getWrapper(), null).run();
+				historyItem = this._history.findItemById(BX.prop.getString(historyItemData, "ID"));
+				if (!historyItem)
+				{
+					historyItem = this.addHistoryItem(historyItemData);
+					BX.CrmTimelineItemExpand.create(historyItem.getWrapper(), null).run();
+				}
 			}
 		},
 		processActivityExternalUpdate: function(params)
@@ -9374,6 +9378,11 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 	BX.CrmHistoryItemCreation.prototype.getMessage = function(name)
 	{
 		var m = BX.CrmHistoryItemCreation.messages;
+		// Provokes to use this.getTextDataParam("TITLE") for dynamic type
+		if (BX.CrmEntityType.isDynamicTypeByName(name.toUpperCase()))
+		{
+			return '';
+		}
 		return m.hasOwnProperty(name) ? m[name] : name;
 	};
 	if(typeof(BX.CrmHistoryItemCreation.messages) === "undefined")

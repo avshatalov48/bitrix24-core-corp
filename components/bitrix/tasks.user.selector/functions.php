@@ -111,8 +111,8 @@ function TasksGetDepartmentUsers($SECTION_ID, $SITE_ID, $arSubDeps, $arManagers,
 				if (($arSection = $dbRes->Fetch()) && $arSection['UF_HEAD'] > 0)
 				{
 					$dbUsers = CUser::GetList(
-						$sort_by  = 'last_name',
-						$sort_dir = 'asc',
+						'last_name',
+						'asc',
 						array(
 							'ID'     => $arSection['UF_HEAD'],
 							'ACTIVE' => $filterACTIVE),
@@ -162,11 +162,11 @@ function TasksGetDepartmentUsers($SECTION_ID, $SITE_ID, $arSubDeps, $arManagers,
 		}
 
 		$dbRes = CUser::GetList(
-			$by = 'last_name',
-			$order = 'asc',
+			'last_name',
+			'asc',
 			$arFilter,
 			array('SELECT' => $arCUserRequestedFields)
-			);
+		);
 		while ($arRes = $dbRes->GetNext())
 		{
 			$arPhoto = array('IMG' => '');

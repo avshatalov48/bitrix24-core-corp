@@ -29,7 +29,7 @@ return [
 			'ROBOTS_USE' => 'N',
 			'THEMEFONTS_CODE' => 'g-font-open-sans',
 			'THEMEFONTS_CODE_H' => 'g-font-montserrat',
-			'THEMEFONTS_SIZE' => '1',
+			'THEMEFONTS_SIZE' => '1.14286',
 			'THEMEFONTS_USE' => 'Y',
 			'COPYRIGHT_SHOW' => 'Y',
 			'B24BUTTON_CODE' => $buttons[0],

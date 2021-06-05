@@ -886,7 +886,7 @@ final class FromTemplate extends Util\Replicator\Task
 		$name = 'CTasks::RepeatTaskByTemplateId('.$templateId.');';
 
 		// First, remove all agents for this template
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		self::unInstallAgent($templateId);
 
 		// Set up new agent
@@ -900,7 +900,7 @@ final class FromTemplate extends Util\Replicator\Task
 
 				if($nextTime)
 				{
-					/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 					\CAgent::addAgent(
 						$name,
 						'tasks',
@@ -963,13 +963,13 @@ final class FromTemplate extends Util\Replicator\Task
 
 	public static function unInstallAgent($id)
 	{
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		\CAgent::removeAgent('CTasks::RepeatTaskByTemplateId('.$id.');', 'tasks');
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		\CAgent::removeAgent('CTasks::RepeatTaskByTemplateId('.$id.', 0);', 'tasks');
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		\CAgent::removeAgent('CTasks::RepeatTaskByTemplateId('.$id.', 1);', 'tasks');
 	}
 

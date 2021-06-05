@@ -1,6 +1,16 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
+$MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Are you sure you want to proceed?";
+$MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Open Channels";
+$MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Select action";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Assign responsible person";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE"] = "End";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE_TITLE"] = "Multiple conversations are now being closed.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM"] = "Force end";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM_TITLE"] = "Multiple conversations are now being force closed.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER"] = "Forward";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE"] = "Multiple conversations are now being forwarded.";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER"] = "Connect";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER_AND_CLOSE"] = "Take on and end conversation";
 $MESS["OL_COMPONENT_TABLE_ACTION_ASSIGN"] = "Transfer conversation to me";
@@ -85,5 +95,7 @@ $MESS["OL_STATS_HEADER_VOTE_HEAD_1"] = "Supervisor rating";
 $MESS["OL_STATS_HEADER_VOTE_HEAD_WO"] = "Not rated";
 $MESS["OL_STATS_HEADER_WORKTIME_TEXT"] = "Business hours";
 $MESS["OL_STATS_VOTE_AS_HEAD_BUTTON"] = "Rate";
+$MESS["OL_STAT_EXCEL_ACTIONS_BODY"] = "A group action will be applied to conversations. This may take a while.";
+$MESS["OL_STAT_EXCEL_ACTIONS_TITLE"] = "Group action";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_BODY"] = "You are going to export conversations to a Microsoft Excel file. This operation may take quite a while to complete for a large set of data.";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_TITLE"] = "Export to Microsoft Excel";

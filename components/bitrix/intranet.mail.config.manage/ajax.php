@@ -167,7 +167,7 @@ class CIntranetMailConfigManageAjax
 			if ($error === false && $userId)
 			{
 				$dbUser = CUser::getList(
-					$by = 'ID', $order = 'ASC',
+					'ID', 'ASC',
 					array('ID_EQUAL_EXACT' => $userId),
 					array('FIELDS' => 'ID')
 				);

@@ -26,10 +26,46 @@ class CAllCrmQuote
 	public $LAST_ERROR = '';
 	public $cPerms = null;
 	protected $bCheckPermission = true;
+	protected $lastErrors;
 
 	const TABLE_ALIAS = 'Q';
 	const OWNER_TYPE = self::TABLE_ALIAS;
 	private static $FIELD_INFOS = null;
+
+	/**
+	 * Returns true if this class should invoke Service\Operation instead old API.
+	 * For a start it will return false by default. Please use this period to test your customization on compatibility with new API.
+	 * Later it will return true by default.
+	 * In several months this class will be declared as deprecated and old code will be deleted completely.
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public function isUseOperation(): bool
+	{
+		return Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled();
+	}
+
+	protected function prepareOperation(Crm\Service\Operation $operation, ?array $options = []): Crm\Service\Operation
+	{
+		if (!$this->bCheckPermission)
+		{
+			$operation->disableCheckAccess();
+		}
+		$disableUserFieldsCheck = $options['DISABLE_USER_FIELD_CHECK'] ?? false;
+		if ($disableUserFieldsCheck === true)
+		{
+			$operation->disableCheckFields();
+		}
+		$disableRequiredUserFieldsCheck = $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] ?? false;
+		if ($disableRequiredUserFieldsCheck === true)
+		{
+			$operation->disableCheckRequiredUserFields();
+		}
+
+		return $operation;
+	}
 
 	public function __construct($bCheckPermission = true)
 	{
@@ -39,6 +75,40 @@ class CAllCrmQuote
 
 	public function Add(&$arFields, $bUpdateSearch = true, $options = array())
 	{
+		$this->lastErrors = null;
+		if($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			if(!$factory)
+			{
+				throw new Error('No factory for quote');
+			}
+			$item = $factory->createItem();
+			$item->setFromCompatibleData($arFields);
+
+			if(is_array($options) && isset($options['CURRENT_USER']))
+			{
+				Crm\Service\Container::getInstance()->getContext()->setUserId($options['CURRENT_USER']);
+			}
+
+			$operation = $this->prepareOperation($factory->getAddOperation($item), $options);
+
+			$result = $operation->launch();
+			if($result->isSuccess())
+			{
+				$arFields = $item->getCompatibleData();
+
+				return $item->getId();
+			}
+
+			$this->lastErrors = $result->getErrorCollection();
+
+			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
+			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+			return false;
+		}
+
 		global $DB;
 
 		if(!is_array($options))
@@ -523,6 +593,38 @@ class CAllCrmQuote
 
 	public function Update($ID, &$arFields, $bCompare = true, $bUpdateSearch = true, $options = array())
 	{
+		$this->lastErrors = null;
+		if($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			if(!$factory)
+			{
+				throw new Error('No factory for quote');
+			}
+			$item = $factory->getItem($ID);
+			if(!$item)
+			{
+				return false;
+			}
+			$item->setFromCompatibleData($arFields);
+
+			$operation = $this->prepareOperation($factory->getUpdateOperation($item), $options);
+
+			$result = $operation->launch();
+			if($result->isSuccess())
+			{
+				$arFields = $item->getCompatibleData();
+
+				return true;
+			}
+
+			$this->lastErrors = $result->getErrorCollection();
+			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
+			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+			return false;
+		}
+
 		global $DB;
 
 		$this->LAST_ERROR = '';
@@ -907,6 +1009,37 @@ class CAllCrmQuote
 
 	public function Delete($ID, $options = array())
 	{
+		$this->lastErrors = null;
+		if($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			if(!$factory)
+			{
+				throw new Error('No factory for quote');
+			}
+			$item = $factory->getItem($ID);
+			if(!$item)
+			{
+				return false;
+			}
+
+			if(is_array($options) && isset($options['CURRENT_USER']))
+			{
+				Crm\Service\Container::getInstance()->getContext()->setUserId($options['CURRENT_USER']);
+			}
+
+			$operation = $this->prepareOperation($factory->getDeleteOperation($item), $options);
+
+			$result = $operation->launch();
+
+			if (!$result->isSuccess())
+			{
+				$this->lastErrors = $result->getErrorCollection();
+			}
+
+			return $result->isSuccess();
+		}
+
 		global $DB, $APPLICATION;
 
 		$ID = (int)$ID;
@@ -1539,7 +1672,7 @@ class CAllCrmQuote
 			{
 				$arUser = Array();
 				$dbUsers = CUser::GetList(
-					($sort_by = 'last_name'), ($sort_dir = 'asc'),
+					'last_name', 'asc',
 					array('ID' => implode('|', array(intval($origAssignedById), intval($modifAssignedById)))),
 					array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL'))
 				);
@@ -2372,48 +2505,7 @@ class CAllCrmQuote
 			$arStatus = CCrmStatus::GetStatus('QUOTE_STATUS');
 			if (empty($arStatus))
 			{
-				$CCrmStatus = new CCrmStatus('QUOTE_STATUS');
-				$arAdd = Array(
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_DRAFT'),
-						'STATUS_ID' => 'DRAFT',
-						'SORT' => 10,
-						'SYSTEM' => 'Y'
-					),
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_SENT'),
-						'STATUS_ID' => 'SENT',
-						'SORT' => 20,
-						'SYSTEM' => 'N'
-					),
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_RECEIVED'),
-						'STATUS_ID' => 'RECEIVED',
-						'SORT' => 30,
-						'SYSTEM' => 'N'
-					),
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_APPROVED'),
-						'STATUS_ID' => 'APPROVED',
-						'SORT' => 40,
-						'SYSTEM' => 'Y'
-					),
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_UNANSWERED'),
-						'STATUS_ID' => 'UNANSWERED',
-						'SORT' => 50,
-						'SYSTEM' => 'N'
-					),
-					Array(
-						'NAME' => GetMessage('CRM_QUOTE_STATUS_DECLAINED'),
-						'STATUS_ID' => 'DECLAINED',
-						'SORT' => 60,
-						'SYSTEM' => 'Y'
-					)
-				);
-				foreach($arAdd as $ar)
-					$CCrmStatus->Add($ar);
-				$stackCacheManager->Clear('b_crm_status', 'QUOTE_STATUS');
+				CCrmStatus::InstallDefault('QUOTE_STATUS');
 			}
 			unset($arStatus);
 		}
@@ -3097,9 +3189,7 @@ class CAllCrmQuote
 
 		if (empty($arSite))
 		{
-			$by="sort";
-			$order="asc";
-			$rsSite = $site->GetList($by, $order);
+			$rsSite = $site->GetList();
 			while ($_arSite = $rsSite->Fetch())
 				$arSite[] = $_arSite['ID'];
 		}
@@ -4461,6 +4551,11 @@ class CAllCrmQuote
 		);
 
 		return (bool) $queryObject->fetch();
+	}
+
+	public function getLastErrors(): ?\Bitrix\Main\ErrorCollection
+	{
+		return $this->lastErrors;
 	}
 }
 

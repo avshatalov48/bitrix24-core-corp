@@ -112,8 +112,8 @@ if ($this->StartResultCache(false, $cacheID))
 	if (count($arResult['ENTRIES']) > 0)
 	{
 		$dbUsers = CUser::GetList(
-			$by = 'id', 
-			$order = 'asc', 
+			'id',
+			'asc',
 			array(
 				'ID' => implode('|', $arUserIDs), 
 				'!UF_DEPARTMENT' => false,

@@ -274,11 +274,9 @@ class CTasks
 		{
 			$responsibleId = (int)$arFields['RESPONSIBLE_ID'];
 
-			$by = 'id';
-			$order = 'asc';
 			$userResult = CUser::GetList(
-				$by,
-				$order,
+				'id',
+				'asc',
 				['ID_EQUAL_EXACT' => $responsibleId],
 				[
 					'FIELDS' => ['ID'],
@@ -4380,8 +4378,8 @@ class CTasks
 					$arFilter['!LAST_LOGIN'] = false;
 
 				$dbUser = CUser::GetList(
-					$by = 'ID',
-					$order = 'ASC',
+					'ID',
+					'ASC',
 					$arFilter,
 					array('FIELDS' => $arSelectFields)    // selects only $arSelectFields fields
 				);
@@ -4458,8 +4456,8 @@ class CTasks
 		}
 
 		$dbRes = CUser::GetList(
-			$by = 'ID',
-			$order = 'ASC',
+			'ID',
+			'ASC',
 			array('ID' => $employeeID1),
 			array('SELECT' => array('UF_DEPARTMENT'))
 		);
@@ -6232,7 +6230,7 @@ class CTasks
 	}
 
 
-	function GetDeparmentSql($arDepsIDs, $sAliasPrefix="", $arParams = array(), $behaviour = array())
+	public static function GetDeparmentSql($arDepsIDs, $sAliasPrefix="", $arParams = array(), $behaviour = array())
 	{
 		if (!is_array($arDepsIDs))
 		{
@@ -6302,7 +6300,7 @@ class CTasks
 	 *
 	 * @deprecated
 	 */
-	function AddAccomplices($ID, $arAccompleces = array())
+	public static function AddAccomplices($ID, $arAccompleces = array())
 	{
 		if ($arAccompleces)
 		{
@@ -6326,7 +6324,7 @@ class CTasks
 	 *
 	 * @deprecated
 	 */
-	function AddAuditors($ID, $arAuditors = array())
+	public static function AddAuditors($ID, $arAuditors = array())
 	{
 		if ($arAuditors)
 		{
@@ -6420,7 +6418,7 @@ class CTasks
 	 * @param array $sourceTags
 	 * @param null $effectiveUserId
 	 */
-	public function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null): void
+	public static function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null): void
 	{
 		$tagHandler = new CTaskTags();
 		$tagHandler::DeleteByTaskID($taskId);
@@ -6474,14 +6472,14 @@ class CTasks
 	}
 
 
-	function Index($arTask, $tags)
+	public static function Index($arTask, $tags)
 	{
 		$arTask['SE_TAG'] = $tags;
 		Integration\Search\Task::index($arTask);
 	}
 
 
-	function OnSearchReindex($NS=array(), $oCallback=NULL, $callback_method="")
+	public static function OnSearchReindex($NS=array(), $oCallback=NULL, $callback_method="")
 	{
 		$arResult = array();
 		$arOrder  = array('ID' => 'ASC');
@@ -6914,7 +6912,7 @@ class CTasks
 		$event->send();
 	}
 
-	function GetUpdatesCount($arViewed)
+	public static function GetUpdatesCount($arViewed)
 	{
 		global $DB;
 		if ($userID = User::getId())
@@ -6988,7 +6986,7 @@ class CTasks
 	}
 
 
-	function CanCurrentUserViewTopic($topicID)
+	public static function CanCurrentUserViewTopic($topicID)
 	{
 		$isSocNetModuleIncluded = CModule::IncludeModule("socialnetwork");
 
@@ -7033,7 +7031,7 @@ class CTasks
 					return true;
 
 
-				$dbRes = CUser::GetList($by='ID', $order='ASC', array('ID' => $arTask["RESPONSIBLE_ID"]), array('SELECT' => array('UF_DEPARTMENT')));
+				$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $arTask["RESPONSIBLE_ID"]), array('SELECT' => array('UF_DEPARTMENT')));
 
 				if (($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT']) && count($arRes['UF_DEPARTMENT']) > 0)
 					if (in_array(User::getId(), array_keys(CTasks::GetDepartmentManagers($arRes['UF_DEPARTMENT'], $arTask["RESPONSIBLE_ID"]))))
@@ -7066,7 +7064,7 @@ class CTasks
 
 		if (!isset($cache[$USER_ID]))
 		{
-			$dbRes = CUser::GetList($by='ID', $order='ASC', array('ID' => $USER_ID), array('SELECT' => array('UF_DEPARTMENT')));
+			$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $USER_ID), array('SELECT' => array('UF_DEPARTMENT')));
 
 			if ($arRes = $dbRes->Fetch())
 				$cache[$USER_ID] = $arRes['UF_DEPARTMENT'];

@@ -18,7 +18,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_bef
 
 <?
 
-$dbRes = CSite::GetList($b='SORT', $o='ASC', array('DEF'=>'Y'));
+$dbRes = CSite::GetList('SORT', 'ASC', array('DEF'=>'Y'));
 if ($arRes = $dbRes->Fetch())
 {
 	if (!CModule::IncludeModule('extranet') || (CModule::IncludeModule('extranet') && !CExtranet::IsExtranetSite($arRes['ID'])))

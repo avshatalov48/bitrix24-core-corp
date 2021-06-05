@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\Upload\GoogleResumableUpload;
 use Bitrix\Disk\Internals\Error\Error;
@@ -16,7 +17,7 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
-class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable
+class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, CloudImportInterface
 {
 	const API_URL_V2        = 'https://www.googleapis.com/drive/v2';
 	const API_URL_V3        = 'https://www.googleapis.com/drive/v3';

@@ -250,7 +250,7 @@ class CLdapServer
 			$arFields["FIELD_MAP"] = serialize($arFields["FIELD_MAP"]);
 		}
 
-		$ID = CDatabase::Add("b_ldap_server", $arFields);
+		$ID = $DB->Add("b_ldap_server", $arFields);
 
 		if(is_set($arFields, 'GROUPS'))
 			CLdapServer::SetGroupMap($ID, $arFields['GROUPS']);
@@ -477,7 +477,7 @@ class CLdapServer
 		$arUsers = Array();
 
 		CTimeZone::Disable();
-		$dbUsers = CUser::GetList(($o=""), ($b=""), Array("EXTERNAL_AUTH_ID"=>"LDAP#".$ldap_server_id));
+		$dbUsers = CUser::GetList('', '', Array("EXTERNAL_AUTH_ID"=>"LDAP#".$ldap_server_id));
 		CTimeZone::Enable();
 
 		while($arUser = $dbUsers->Fetch())

@@ -5,6 +5,9 @@ namespace Bitrix\Location\Entity;
 use Bitrix\Location\Entity\Address\FieldType;
 use Bitrix\Location\Entity\Format\Converter\ArrayConverter;
 use Bitrix\Location\Entity\Format\FieldCollection;
+use Bitrix\Location\Entity\Format\Template;
+use Bitrix\Location\Entity\Format\TemplateCollection;
+use Bitrix\Location\Entity\Format\TemplateType;
 use Bitrix\Main\Web\Json;
 
 /**
@@ -21,14 +24,14 @@ final class Format
 	private $code = '';
 	/** @var string  */
 	private $languageId;
-	/** @var string Address view template */
-	private $template = '';
 	/** @var string Address components delimiter */
 	private $delimiter = '';
 	/** @var int Address field which will store unrecognized address information */
 	private $fieldForUnRecognized = FieldType::UNKNOWN;
 	/** @var FieldCollection */
 	private $fieldCollection;
+	/** @var TemplateCollection */
+	private $templateCollection;
 
 	/**
 	 * Format constructor.
@@ -38,6 +41,7 @@ final class Format
 	{
 		$this->languageId = $languageId;
 		$this->fieldCollection = new FieldCollection();
+		$this->templateCollection = new TemplateCollection();
 	}
 
 	/**
@@ -144,20 +148,30 @@ final class Format
 	}
 
 	/**
-	 * @return string
+	 * @param string $type See TemplateType
+	 * @return Template|null
 	 */
-	public function getTemplate(): string
+	public function getTemplate(string $type = TemplateType::DEFAULT): ?Template
 	{
-		return $this->template;
+		return $this->templateCollection->getTemplate($type);
 	}
 
 	/**
-	 * @param string $template
+	 * @return TemplateCollection
+	 * @internal
+	 */
+	public function getTemplateCollection(): TemplateCollection
+	{
+		return $this->templateCollection;
+	}
+
+	/**
+	 * @param TemplateCollection $templateCollection
 	 * @return $this
 	 */
-	public function setTemplate(string $template): self
+	public function setTemplateCollection(TemplateCollection $templateCollection): self
 	{
-		$this->template = $template;
+		$this->templateCollection = $templateCollection;
 		return $this;
 	}
 

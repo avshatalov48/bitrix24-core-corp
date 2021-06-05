@@ -95,7 +95,7 @@ class Group extends Disk
 		{
 			return null;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$this->group = \CSocNetGroup::getByID($this->entityId);
 		if (!is_array($this->group))
 		{

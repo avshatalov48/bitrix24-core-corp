@@ -6,7 +6,7 @@ if (!defined("WIZARD_TEMPLATE_ID"))
 	return;
 
 //Attach template to  site
-$obSite = CSite::GetList($by = "def", $order = "desc", Array("LID" => WIZARD_SITE_ID));
+$obSite = CSite::GetList("def", "desc", Array("LID" => WIZARD_SITE_ID));
 if ($arSite = $obSite->Fetch())
 {
 	$arTemplates = Array();

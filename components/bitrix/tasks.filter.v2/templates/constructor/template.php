@@ -8,7 +8,7 @@ $loggedInUserId = (int) $GLOBALS['USER']->GetID();
 $loggedInUserFormattedName = '';
 
 $rsUser = CUser::GetList(
-	$by = 'ID', $order = 'ASC', 
+	'ID', 'ASC',
 	array('ID' => $loggedInUserId), 
 	array('FIELDS' => array('NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'))
 );

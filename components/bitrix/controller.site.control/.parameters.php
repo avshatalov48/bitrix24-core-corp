@@ -5,7 +5,7 @@ if(!CModule::IncludeModule("controller"))
 	return;
 
 $arUGroupsEx = Array();
-$dbUGroups = CGroup::GetList($by = "c_sort", $order = "asc");
+$dbUGroups = CGroup::GetList();
 while($arUGroups = $dbUGroups -> Fetch())
 {
 	$arUGroupsEx[$arUGroups["ID"]] = $arUGroups["NAME"];

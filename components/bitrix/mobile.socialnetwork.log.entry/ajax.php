@@ -1367,8 +1367,8 @@ if(CModule::IncludeModule("socialnetwork"))
 		);
 
 		$rsUser = CUser::GetList(
-			($by="last_name"),
-			($order="asc"),
+			"last_name",
+			"asc",
 			array(
 				"ID" => intval($USER->GetId())
 			),

@@ -14,7 +14,7 @@ class sender extends CModule
 
 	var $errors;
 
-	function sender()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

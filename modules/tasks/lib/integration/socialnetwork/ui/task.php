@@ -143,8 +143,8 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			if ($actorUserId)
 			{
 				$rsUser = \CUser::GetList(
-					$by = 'id',
-					$order = 'asc',
+					'id',
+					'asc',
 					array('ID_EQUAL_EXACT' => (int) $actorUserId),
 					array(
 						'FIELDS' => array(
@@ -203,8 +203,8 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			&& in_array($arFields["PARAMS"]["CREATED_BY"], $GLOBALS["arExtranetUserID"]) ? Loc::getMessage("TASKS_SONET_LOG_EXTRANET_SUFFIX") : "");
 
 			$rsUser = \CUser::GetList(
-				$by = 'id',
-				$order = 'asc',
+				'id',
+				'asc',
 				array('ID_EQUAL_EXACT' => (int) $arFields['PARAMS']['CREATED_BY']),
 				array(
 					'FIELDS' => array(

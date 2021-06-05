@@ -6214,7 +6214,7 @@ namespace Bitrix\Crm\Config\Entity {
 	 */
 	class EO_EntityConfig_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Crm\ContactTable:crm/lib/contact.php:2c150f8600a83806b5e93fb59abd7fd1 */
+/* ORMENTITYANNOTATION:Bitrix\Crm\ContactTable:crm/lib/contacttable.php:2c150f8600a83806b5e93fb59abd7fd1 */
 namespace Bitrix\Crm {
 	/**
 	 * EO_Contact
@@ -6832,7 +6832,7 @@ namespace Bitrix\Crm {
 	 */
 	class EO_Contact_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Crm\Conversion\Entity\EntityConversionMapTable:crm/lib/conversion/entity/entityconversionmap.php:561d31a72224f20f7bcb5d8e3fc925cf */
+/* ORMENTITYANNOTATION:Bitrix\Crm\Conversion\Entity\EntityConversionMapTable:crm/lib/conversion/entity/entityconversionmaptable.php:561d31a72224f20f7bcb5d8e3fc925cf */
 namespace Bitrix\Crm\Conversion\Entity {
 	/**
 	 * EO_EntityConversionMap
@@ -23033,7 +23033,7 @@ namespace Bitrix\Crm\Ml\Internals {
 	 */
 	class EO_PredictionQueue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Crm\Observer\Entity\ObserverTable:crm/lib/observer/entity/observer.php:c47bd4d9d9cfd0a18e9e078f91359d25 */
+/* ORMENTITYANNOTATION:Bitrix\Crm\Observer\Entity\ObserverTable:crm/lib/observer/entity/observertable.php:c47bd4d9d9cfd0a18e9e078f91359d25 */
 namespace Bitrix\Crm\Observer\Entity {
 	/**
 	 * EO_Observer
@@ -33981,6 +33981,12 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Status resetSort()
 	 * @method \Bitrix\Crm\EO_Status unsetSort()
 	 * @method \int fillSort()
+	 * @method string getSemantics()
+	 * @method \Bitrix\Crm\EO_Status setSemantics(string $semantics)
+	 * @method bool hasSemantics()
+	 * @method string getColor()
+	 * @method \Bitrix\Crm\EO_Status setColor(string $color)
+	 * @method bool hasColor()
 	 *
 	 * Common methods:
 	 * ---------------

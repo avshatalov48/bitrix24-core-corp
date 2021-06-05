@@ -14,7 +14,17 @@ isset($userField['SETTINGS']) && is_array($userField['SETTINGS'])
 
 foreach($settings as $entityTypeName => $flag)
 {
-	if(mb_strtoupper($flag) === 'Y')
+	if ($entityTypeName === \CCrmOwnerType::CommonDynamicName)
+	{
+		foreach ($settings[$entityTypeName] as $dynamicTypeId => $dynamicTypeFlag)
+		{
+			if (mb_strtoupper($dynamicTypeFlag) === 'Y')
+			{
+				$entityTypeMap[$dynamicTypeId] = true;
+			}
+		}
+	}
+	elseif(mb_strtoupper($flag) === 'Y')
 	{
 		$entityTypeMap[CCrmOwnerType::ResolveID($entityTypeName)] = true;
 	}

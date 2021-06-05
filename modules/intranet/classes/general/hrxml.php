@@ -360,8 +360,8 @@ class CUserHRXMLImport
 			else
 			{
 				$rsUser = CUser::GetList(
-					$by = "ID",
-					$order = "desc",
+					"ID",
+					"desc",
 					array('XML_ID' => $PersonID),
 					array('FIELDS' => array('ID', 'ACTIVE'), 'SELECT' => array('UF_DEPARTMENT', 'UF_WORK_BINDING'))
 				);
@@ -623,8 +623,8 @@ class CUserHRXMLImport
 					$arHistoryPROP['POST'] = $arUserFields['WORK_POSITION'];
 
 				$rsUser = CUser::GetList(
-					$by = "ID",
-					$order = "desc",
+					"ID",
+					"desc",
 					array('XML_ID' => $arUserFields['XML_ID']),
 					array('FIELDS' => array('ID', 'ACTIVE'))
 				);
@@ -721,8 +721,8 @@ class CUserHRXMLImport
 
 				$arTimePROP = array();
 				$rsUser = CUser::GetList(
-					$by = "ID",
-					$order = "desc",
+					"ID",
+					"desc",
 					$arUserFields,
 					array('FIELDS' => array('ID'))
 				);
@@ -973,7 +973,7 @@ class CUserHRXMLImport
 		$company_name = COption::GetOptionString("main", "site_name", "");
 		if ($company_name == '')
 		{
-			$dbrs = CSite::GetList($o, $b, array("DEFAULT" => "Y"));
+			$dbrs = CSite::GetList('', '', array("DEFAULT" => "Y"));
 			if ($ars = $dbrs->Fetch())
 				$company_name = $ars["NAME"];
 		}

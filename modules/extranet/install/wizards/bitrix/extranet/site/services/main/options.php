@@ -2,7 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
-if (WIZARD_IS_RERUN === true)
+if (defined("WIZARD_IS_RERUN") && WIZARD_IS_RERUN === true)
 	return;
 
 CGroup::SetSubordinateGroups(WIZARD_EXTRANET_ADMIN_GROUP, Array(WIZARD_EXTRANET_GROUP));
@@ -25,7 +25,7 @@ COption::SetOptionString("tasks", "paths_task_group_action", WIZARD_SITE_DIR."wo
 
 $arSites = array();
 $arSitesID = array();
-$rsSites = CSite::GetList($by="sort", $order="desc", array());
+$rsSites = CSite::GetList();
 while ($arSite = $rsSites->Fetch())
 {
 	$arSites[] = $arSite;

@@ -204,20 +204,6 @@ class GoogleViewerHandler extends DocumentHandler implements IViewer
 	}
 
 	/**
-	 * Lists folder contents
-	 * @param $path
-	 * @param $folderId
-	 * @return mixed
-	 */
-	public function listFolder($path, $folderId)
-	{
-		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_GOOGLE_VIEWER_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED'), self::ERROR_METHOD_IS_NOT_SUPPORTED)
-		));
-		return null;
-	}
-
-	/**
 	 * Check success view file in service.
 	 * @param FileData $fileData
 	 * @return bool

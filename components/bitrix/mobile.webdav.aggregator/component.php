@@ -488,7 +488,7 @@ if ($mode == 'user')
             $userFilter = array('NAME' => $userName);
         }
 
-        $dbUser = CUser::GetList($by, $order, $userFilter);
+        $dbUser = CUser::GetList('', '', $userFilter);
         if (($dbUser !== false) && $arUser = $dbUser->Fetch())
         {
             $userID = $arUser['ID'];

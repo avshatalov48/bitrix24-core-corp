@@ -859,8 +859,8 @@ class CCrmInstantEditorHelper
 		}
 
 		$dbUser = CUser::GetList(
-			$by = 'ID',
-			$order = 'ASC',
+			'ID',
+			'ASC',
 			array('ID' => $userID)
 		);
 

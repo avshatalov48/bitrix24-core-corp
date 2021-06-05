@@ -40,7 +40,7 @@ class CCrmInvoiceEvent extends CSaleOrderChange
 		return self::$eventTypes[$typeCode];
 	}
 
-	public function GetRecordDescription($type, $data)
+	public static function GetRecordDescription($type, $data)
 	{
 		foreach (CCrmInvoiceEventFormat::$arOperationTypes as $typeCode => $arInfo)
 		{

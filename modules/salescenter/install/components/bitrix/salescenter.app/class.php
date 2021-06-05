@@ -685,8 +685,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		];
 
 		$dbRes = \CUser::GetList(
-			($by = 'id'),
-			($order = 'asc'),
+			'id',
+			'asc',
 			['ID' => $userId],
 			['FIELDS' => ['PERSONAL_PHOTO', 'NAME']]
 		);

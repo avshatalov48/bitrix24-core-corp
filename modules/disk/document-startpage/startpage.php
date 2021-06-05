@@ -71,7 +71,7 @@
 						}
 						messages.push(data.errors[i].message);
 					}
-					BX.adjust(BX('error-text'), {text: messages.join('<br>')});
+					BX.adjust(BX('error-text'), {html: messages.join('<br>')});
 					closeConfirm();
 					return;
 				}

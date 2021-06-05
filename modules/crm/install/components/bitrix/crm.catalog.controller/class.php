@@ -1,44 +1,49 @@
-<?
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Crm,
-	Bitrix\Iblock;
-
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
+use Bitrix\Iblock;
+
 class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Errorable
 {
 	private const PAGE_INDEX = 'index';
 	private const PAGE_LIST = 'list';
+	private const PAGE_LIST_SLIDER = 'list_slider';
 	private const PAGE_SECTION_LIST = 'section_list';
 	private const PAGE_SECTION_DETAIL = 'section_detail';
 	private const PAGE_PRODUCT_DETAIL = 'product_detail';
 	private const PAGE_CSV_IMPORT = 'csv_import';
 
+	private const MODE_SLIDER_VIEW_NAME = 'sliderList';
+
 	/** @var  Main\ErrorCollection */
-	protected $errorCollection = null;
+	protected $errorCollection;
 
 	/** @var int */
-	protected $iblockId = null;
+	protected $iblockId;
 	/** @var array */
-	protected $iblock = null;
+	protected $iblock;
 	/** @var string */
-	protected $iblockListMode = null;
+	protected $iblockListMode;
 	/** @var bool */
-	protected $iblockListMixed = null;
+	protected $iblockListMixed;
+	/** @var $sliderMode */
+	private $sliderMode;
 
 	/** @var string */
-	protected $pageId = null;
+	protected $pageId;
 
 	/** @var Crm\Product\Url\ProductBuilder */
-	protected $urlBuilder = null;
+	protected $urlBuilder;
 
 	/** @var Main\HttpRequest  */
-	protected $request = null;
+	protected $request;
 
 	/**
 	 * Base constructor.
@@ -70,6 +75,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			? $params['PATH_TO_PRODUCT_LIST'] :
 			'#SITE_DIR#crm/product/index.php'
 		);
+		$params['SEF_MODE'] = 'Y';
 
 		return $params;
 	}
@@ -92,7 +98,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	}
 
 	/**
-	 * @return array|Main\Error[]
+	 * @return Main\Error[]
 	 */
 	public function getErrors()
 	{
@@ -160,6 +166,14 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		$this->includeComponentTemplate($this->pageId);
 	}
 
+	public static function getViewModeParams(): array
+	{
+		return [
+			self::MODE_SLIDER_VIEW_NAME => 'Y',
+			'INCLUDE_SUBSECTIONS' => 'Y',
+		];
+	}
+
 	protected function checkModules(): void
 	{
 		if (!Loader::includeModule('crm'))
@@ -197,17 +211,27 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		}
 		$this->iblockId = $iblockId;
 		$this->iblock = $iblock;
-		$this->iblockListMode = \CIblock::GetAdminListMode($this->iblockId);
-		$this->iblockListMixed = $this->iblockListMode == Iblock\IblockTable::LIST_MODE_COMBINED;
-		unset($iblock, $iblockId);
 		$this->request = Main\Application::getInstance()->getContext()->getRequest();
+		$this->sliderMode = $this->request->get(self::MODE_SLIDER_VIEW_NAME) === 'Y';
 	}
 
 	protected function initUrlBuilder(): void
 	{
 		$this->urlBuilder = new Crm\Product\Url\ProductBuilder();
 		$this->urlBuilder->setIblockId($this->iblockId);
-		$this->urlBuilder->setUrlParams([]);
+		$params = [];
+		if ($this->sliderMode)
+		{
+			$this->urlBuilder->setSeparateIblockList();
+			$params = static::getViewModeParams();
+		}
+		$this->urlBuilder->setUrlParams($params);
+		$this->iblockListMixed = $this->urlBuilder->isIblockListMixed();
+		$this->iblockListMode =
+			$this->iblockListMixed
+				? Iblock\IblockTable::LIST_MODE_COMBINED
+				: Iblock\IblockTable::LIST_MODE_SEPARATE
+		;
 	}
 
 	protected function parseComponentVariables(): void
@@ -216,15 +240,19 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		{
 			LocalRedirect(CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_PRODUCT_LIST']));
 		}
-		$this->arParams['SEF_MODE'] = 'Y';
+
+		CBitrixComponent::includeComponentClass('bitrix:catalog.productcard.controller');
+
 		$templateUrls = $this->getTemplateUrls();
-		if ($this->arParams['SEF_MODE'] === 'Y')
+		[$template, $variables, $variableAliases] = $this->processSefMode($templateUrls);
+
+		if (\CatalogProductControllerComponent::hasUrlTemplateId($template))
 		{
-			[$template, $variables, $variableAliases] = $this->processSefMode($templateUrls);
+			$template = self::PAGE_PRODUCT_DETAIL;
 		}
-		else
+		elseif ($this->sliderMode && $template === self::PAGE_LIST)
 		{
-			[$template, $variables, $variableAliases] = $this->processRegularMode($templateUrls);
+			$template = self::PAGE_LIST_SLIDER;
 		}
 
 		$this->arResult = array_merge(
@@ -267,34 +295,35 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	{
 		if ($this->iblockListMixed)
 		{
-			return [
+			$result = [
 				self::PAGE_INDEX => '',
 				self::PAGE_LIST => 'list/#SECTION_ID#/',
-				self::PAGE_PRODUCT_DETAIL => 'product/#PRODUCT_ID#/',
 				self::PAGE_SECTION_DETAIL => 'section/#SECTION_ID#/',
 				self::PAGE_CSV_IMPORT => 'import/'
 			];
 		}
 		else
 		{
-			return [
+			$result = [
 				self::PAGE_INDEX => '',
 				self::PAGE_LIST => 'list/#SECTION_ID#/',
-				self::PAGE_PRODUCT_DETAIL => 'product/#PRODUCT_ID#/',
 				self::PAGE_SECTION_LIST => 'section_list/#SECTION_ID#/',
 				self::PAGE_SECTION_DETAIL => 'section/#SECTION_ID#/',
 				self::PAGE_CSV_IMPORT => 'import/'
 			];
 		}
+
+		$result = $result + \CatalogProductControllerComponent::getTemplateUrls();
+
+		return $result;
 	}
 
 	protected function processSefMode(array $templateUrls): array
 	{
 		$templateUrls = \CComponentEngine::MakeComponentUrlTemplates($templateUrls, $this->arParams['SEF_URL_TEMPLATES']);
-
 		foreach ($templateUrls as $name => $url)
 		{
-			$this->arResult['PATH_TO'][ToUpper($name)] = $this->arParams['SEF_FOLDER'].$url;
+			$this->arResult['PATH_TO'][strtoupper($name)] = $this->arParams['SEF_FOLDER'].$url;
 		}
 
 		$variableAliases = \CComponentEngine::MakeComponentVariableAliases([], $this->arParams['VARIABLE_ALIASES']);
@@ -308,31 +337,6 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		}
 
 		\CComponentEngine::InitComponentVariables($template, [], $variableAliases, $variables);
-
-		return [$template, $variables, $variableAliases];
-	}
-
-	protected function processRegularMode(array $templateUrls): array
-	{
-		$variableAliases = \CComponentEngine::MakeComponentVariableAliases([], $this->arParams['VARIABLE_ALIASES']);
-
-		$variables = [];
-		\CComponentEngine::InitComponentVariables(false, [], $variableAliases, $variables);
-
-		$currentPage = $this->request->getRequestedPage();
-		$templates = array_keys($templateUrls);
-
-		foreach ($templates as $template)
-		{
-			$this->arResult['PATH_TO'][ToUpper($template)] = $currentPage.'?'.self::TEMPLATE_CODE.'='.$template;
-		}
-
-		$template = $this->request->get(self::TEMPLATE_CODE);
-
-		if ($template === null || !in_array($template, $templates, true))
-		{
-			$template = key($templateUrls);
-		}
 
 		return [$template, $variables, $variableAliases];
 	}
@@ -366,13 +370,18 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 				];
 				break;
 			case self::PAGE_LIST:
+			case self::PAGE_LIST_SLIDER:
 				$result = [
 					'PAGE_ID' => ($this->iblockListMixed ? 'crm_catalog_item_list' : 'crm_catalog_product_list'),
 					'PAGE_PATH' => '/bitrix/modules/iblock/admin/'.($this->iblockListMixed
 						? 'iblock_list_admin.php'
 						: 'iblock_element_admin.php'
 					),
-					'PAGE_PARAMS' => $this->urlBuilder->getBaseParams(),
+					'PAGE_PARAMS' =>
+						($this->pageId === self::PAGE_LIST_SLIDER)
+							? $queryString
+							: $this->urlBuilder->getBaseParams()
+					,
 					'SEF_FOLDER' => '/', // hack for template files
 					'INTERNAL_PAGE' => 'N',
 					'CACHE_TYPE' => 'N',
@@ -414,19 +423,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 				];
 				break;
 			case self::PAGE_PRODUCT_DETAIL:
-				$result = [
-					'PAGE_ID' => 'crm_catalog_product_detail',
-					'PAGE_PATH' => '',
-					'PAGE_PARAMS' => $queryString,
-					'SEF_FOLDER' => '',
-					'INTERNAL_PAGE' => 'Y',
-					'CACHE_TYPE' => 'N',
-					'PAGE_CONSTANTS' => [
-						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
-						'SELF_FOLDER_URL' => '/shop/settings/'
-					]
-				];
+				$result = [];
 				break;
 			case self::PAGE_CSV_IMPORT:
 				$templateUrls = $this->getTemplateUrls();
@@ -525,6 +522,4 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			$this
 		);
 	}
-
-
 }

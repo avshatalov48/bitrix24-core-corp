@@ -163,6 +163,15 @@ while ($arRes = $obRes->Fetch())
 		</span>
 	</div>
 
+	<div class="filter-field filter-field-deal chfilter-field-\Bitrix\Crm\DealTable" callback="crmDealSelector">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<span class="webform-field-textbox-inner">
+			<input id="%ID%" type="text" class="webform-field-textbox" caller="true" />
+			<input type="hidden" name="%NAME%" value=""/>
+			<a href="" class="webform-field-textbox-clear"></a>
+		</span>
+	</div>
+
 	<div class="filter-field filter-field-company chfilter-field-\Bitrix\Crm\Company" callback="crmCompanySelector">
 		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
 		<span class="webform-field-textbox-inner">
@@ -172,7 +181,25 @@ while ($arRes = $obRes->Fetch())
 		</span>
 	</div>
 
+	<div class="filter-field filter-field-company chfilter-field-\Bitrix\Crm\CompanyTable" callback="crmCompanySelector">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<span class="webform-field-textbox-inner">
+			<input id="%ID%" type="text" class="webform-field-textbox" caller="true" />
+			<input type="hidden" name="%NAME%" value=""/>
+			<a href="" class="webform-field-textbox-clear"></a>
+		</span>
+	</div>
+
 	<div class="filter-field filter-field-contact chfilter-field-\Bitrix\Crm\Contact" callback="crmContactSelector">
+		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
+		<span class="webform-field-textbox-inner">
+			<input id="%ID%" type="text" class="webform-field-textbox" caller="true" />
+			<input type="hidden" name="%NAME%" value=""/>
+			<a href="" class="webform-field-textbox-clear"></a>
+		</span>
+	</div>
+
+	<div class="filter-field filter-field-contact chfilter-field-\Bitrix\Crm\ContactTable" callback="crmContactSelector">
 		<label for="%ID%" class="filter-field-title">%TITLE% "%COMPARE%"</label>
 		<span class="webform-field-textbox-inner">
 			<input id="%ID%" type="text" class="webform-field-textbox" caller="true" />
@@ -791,6 +818,7 @@ while ($arRes = $obRes->Fetch())
 				// Deal
 				i = 0; temp = []; deal = [];
 				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\Deal' }, true);
+				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\DealTable' }, true);
 				for (i in temp) if (temp[i]) deal = deal.concat(temp[i]);
 				if(deal)
 				{
@@ -817,6 +845,7 @@ while ($arRes = $obRes->Fetch())
 				// Company
 				i = 0; temp = []; company = [];
 				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\Company' }, true);
+				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\CompanyTable' }, true);
 				for (i in temp) if (temp[i]) company = company.concat(temp[i]);
 				if(company)
 				{
@@ -843,6 +872,7 @@ while ($arRes = $obRes->Fetch())
 				// Contact
 				i = 0; temp = []; contact = [];
 				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\Contact' }, true);
+				temp[i++] = BX.findChildren(BX('report-rewrite-filter'), { 'class':'chfilter-field-\\Bitrix\\Crm\\ContactTable' }, true);
 				for (i in temp) if (temp[i]) contact = contact.concat(temp[i]);
 				if(contact)
 				{

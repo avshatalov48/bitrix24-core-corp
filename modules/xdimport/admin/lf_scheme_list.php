@@ -20,7 +20,7 @@ if($lAdmin->EditAction())
 		if(!$lAdmin->IsUpdated($ID))
 			continue;
 		$DB->StartTransaction();
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 		$cData = new CXDILFScheme;
 		if(($rsData = $cData->GetByID($ID)) && ($arData = $rsData->Fetch()))
 		{
@@ -47,7 +47,7 @@ if(is_array($arID))
 {
 	foreach($arID as $ID)
 	{
-		if(strlen($ID) <= 0 || intval($ID) <= 0)
+		if($ID == '' || intval($ID) <= 0)
 			continue;
 
 		switch($action)

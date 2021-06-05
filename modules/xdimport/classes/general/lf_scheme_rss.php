@@ -7,7 +7,7 @@ class CXDILFSchemeRSS
 	{
 		global $APPLICATION;
 
-		if ($uri && strlen($uri) > 0)
+		if ($uri && $uri <> '')
 		{
 			$strURI = $uri;
 		}
@@ -15,9 +15,9 @@ class CXDILFSchemeRSS
 		{
 			$strURI = "http://".
 				$server.
-				(strlen($port) > 0 && intval($port) > 0 ? ":".intval($port) : "").
-				(strlen($page) ? $page : "/").
-				(strlen($params) > 0 ? "?".$params : "");
+				($port <> '' && intval($port) > 0 ? ":".intval($port) : "").
+				($page <> ''? $page : "/").
+				($params <> '' ? "?".$params : "");
 		}
 
 		$http = new \Bitrix\Main\Web\HttpClient(array(
@@ -66,7 +66,7 @@ class CXDILFSchemeRSS
 			$strData = $APPLICATION->ConvertCharset($strData, $rss_charset, SITE_CHARSET);
 		}
 
-		if (strlen($strData) > 0)
+		if ($strData <> '')
 		{
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/xml.php");
 			$objXML = new CDataXML();
@@ -92,7 +92,7 @@ class CXDILFSchemeRSS
 					return CXDILFSchemeRSSAtom::GetFeed($ar, $objXML);
 				}
 
-				$arRSSResult["rss_charset"] = strtolower(SITE_CHARSET);
+				$arRSSResult["rss_charset"] = mb_strtolower(SITE_CHARSET);
 			}
 		}
 

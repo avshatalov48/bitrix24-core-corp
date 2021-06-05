@@ -120,11 +120,6 @@ class Session
 	 *
 	 * @param array $params
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function load(array $params)
 	{
@@ -175,11 +170,6 @@ class Session
 	/**
 	 * @param $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function start($params)
 	{
@@ -1014,11 +1004,6 @@ class Session
 	 * @param bool $force
 	 * @param bool $hideChat
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function finish($auto = false, $force = false, $hideChat = true)
 	{
@@ -1534,11 +1519,6 @@ class Session
 	 *
 	 * @param $fields
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function update($fields)
 	{
@@ -2059,11 +2039,6 @@ class Session
 
 	/**
 	 * @param $params
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function execAutoAction($params)
 	{
@@ -2614,11 +2589,6 @@ class Session
 	 * @param $action
 	 * @param null $userId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function voteAsUser($sessionId, $action, $userId = null)
 	{
@@ -2923,7 +2893,7 @@ class Session
 	 */
 	public function isFirstOperatorMessage($messageId)
 	{
-		$message = \Bitrix\Im\MessageTable::getList(
+		$message = \Bitrix\Im\Model\MessageTable::getList(
 			[
 				'select' => ['ID'],
 				'order' => ['ID' => 'ASC'],

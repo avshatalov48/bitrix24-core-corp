@@ -15,7 +15,7 @@ if ($firstPass)
 	if (defined("ADMIN_SECTION"))
 	{
 		$site = new CSite();
-		$obSite = $site->GetList($by = "def", $order = "desc", array("ACTIVE" => "Y"));
+		$obSite = $site->GetList("def", "desc", array("ACTIVE" => "Y"));
 		if ($arSite = $obSite->Fetch())
 		{
 			$currentLocalization = $arSite["LANGUAGE_ID"];

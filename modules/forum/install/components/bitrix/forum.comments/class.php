@@ -231,9 +231,15 @@ final class ForumCommentsComponent extends CBitrixComponent implements Main\Engi
 				foreach (GetModuleEvents('forum', 'OnCommentsInit', true) as $arEvent)
 					ExecuteModuleEventEx($arEvent, array(&$this));
 
-				if (($this->arParams["CHECK_ACTIONS"] != "N"
-					&& !$this->checkPreview()
-					&& $this->checkActions() === false) || $this->checkActionComponentAction() === false)
+				if (
+					(
+						$this->arParams["CHECK_ACTIONS"] != "N"
+						&& !$this->checkPreview()
+						&& $this->checkActions() === false
+					)
+					||
+					$this->checkActionComponentAction() === false
+				)
 				{
 					foreach (GetModuleEvents('forum', 'OnCommentError', true) as $arEvent)
 						ExecuteModuleEventEx($arEvent, array(&$this));

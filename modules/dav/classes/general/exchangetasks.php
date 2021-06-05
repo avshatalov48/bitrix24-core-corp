@@ -1198,14 +1198,14 @@ class CDavExchangeTasks
 			),
 		);
 
-		$dbUserList = CUser::GetList($by = "UF_BXDAVEX_TSKSYNC", $order = "asc", $arUserFilter, array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_TSKSYNC")));
+		$dbUserList = CUser::GetList("UF_BXDAVEX_TSKSYNC", "asc", $arUserFilter, array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_TSKSYNC")));
 		while ($arUser = $dbUserList->Fetch())
 		{
 			$index++;
 			if ($index > $maxNumber)
 				break;
 
-			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_TSKSYNC" => ConvertTimeStamp(time(), FULL)));
+			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_TSKSYNC" => ConvertTimeStamp(time(), "FULL")));
 
 			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (empty($mailbox))
@@ -1297,8 +1297,8 @@ class CDavExchangeTasks
 
 		$userId = intval($userId);
 		$dbUserList = CUser::GetList(
-			$by = "",
-			$order = "",
+			"",
+			"",
 			array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 			array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX"))
 		);
@@ -1356,8 +1356,8 @@ class CDavExchangeTasks
 
 		$userId = intval($userId);
 		$dbUserList = CUser::GetList(
-			$by = "",
-			$order = "",
+			"",
+			"",
 			array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 			array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX"))
 		);
@@ -1399,8 +1399,8 @@ class CDavExchangeTasks
 
 		$userId = intval($userId);
 		$dbUserList = CUser::GetList(
-			$by = "",
-			$order = "",
+			"",
+			"",
 			array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 			array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX"))
 		);

@@ -211,6 +211,8 @@ class EventHandler
 	{
 		$analyticPageList = [];
 
+		$showLeadsInSales = \CUserOptions::GetOption('crm', SalesFunnelBoard::SHOW_LEADS_OPTION, 'Y') === 'Y';
+
 		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
 		if (LeadSettings::isEnabled() && \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Lead, 0, $userPermission))
 		{
@@ -263,10 +265,20 @@ class EventHandler
 				$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
 				$analyticPageList[] = $leadAnalytics;
 			}
-
 		}
 
-		$salesFunnel = new AnalyticBoard(SalesFunnelBoard::BOARD_KEY);
+		$salesFunnelOptions = [];
+		if (LeadSettings::isEnabled())
+		{
+			$salesFunnelOptions[] = [
+				'TITLE' => $showLeadsInSales
+					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
+					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
+				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
+				'VALUE' => $showLeadsInSales
+			];
+		}
+		$salesFunnel = new AnalyticBoard(SalesFunnelBoard::BOARD_KEY, $salesFunnelOptions);
 		$salesFunnel->setBatchKey(self::BATCH_SALES);
 		$salesFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
 		$salesFunnel->setFilter(new SalesFunnelFilter(SalesFunnelBoard::BOARD_KEY));
@@ -283,10 +295,31 @@ class EventHandler
 			'Bitrix\Crm\Agent\History\DealStageSupposedHistory'
 		]]);
 		$salesFunnel->addFeedbackButton();
+		if (method_exists($salesFunnel, 'registerSetOptionsCallback'))
+		{
+			$salesFunnel->registerSetOptionsCallback(function($name, $value)
+			{
+				if ($name === SalesFunnelBoard::SHOW_LEADS_OPTION)
+				{
+					\CUserOptions::SetOption('crm', SalesFunnelBoard::SHOW_LEADS_OPTION, $value ? 'Y' : 'N');
+				}
+			});
+		}
 
 		$analyticPageList[] = $salesFunnel;
 
-		$salesFunnelWithHistory = new AnalyticBoard(SalesFunnelByStageHistory::BOARD_KEY);
+		$salesFunnelHistoryOptions = [];
+		if (LeadSettings::isEnabled())
+		{
+			$salesFunnelHistoryOptions[] = [
+				'TITLE' => $showLeadsInSales
+					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
+					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
+				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
+				'VALUE' => $showLeadsInSales
+			];
+		}
+		$salesFunnelWithHistory = new AnalyticBoard(SalesFunnelByStageHistory::BOARD_KEY, $salesFunnelHistoryOptions);
 		$salesFunnelWithHistory->setBatchKey(self::BATCH_SALES);
 		$salesFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
 		$salesFunnelWithHistory->setFilter(new SalesFunnelFilter(SalesFunnelByStageHistory::BOARD_KEY));
@@ -303,6 +336,16 @@ class EventHandler
 			'Bitrix\Crm\Agent\History\DealStageSupposedHistory'
 		]]);
 		$salesFunnelWithHistory->setLimit(static::getLimitComponentParams(SalesFunnelByStageHistory::BOARD_KEY), Limit::isAnalyticsLimited(SalesFunnelByStageHistory::BOARD_KEY));
+		if (method_exists($salesFunnelWithHistory, 'registerSetOptionsCallback'))
+		{
+			$salesFunnelWithHistory->registerSetOptionsCallback(function($name, $value)
+			{
+				if ($name === SalesFunnelByStageHistory::SHOW_LEADS_OPTION)
+				{
+					\CUserOptions::SetOption('crm', SalesFunnelByStageHistory::SHOW_LEADS_OPTION, $value ? 'Y' : 'N');
+				}
+			});
+		}
 		$analyticPageList[] = $salesFunnelWithHistory;
 
 		$salesPlan = new AnalyticBoard(SalesPlanBoard::BOARD_KEY);

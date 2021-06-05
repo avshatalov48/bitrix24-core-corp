@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"] = "Auto connect Group Drive<br/>when a user joins the group";
 $MESS["DISK_ALLOW_CREATE_FILE_BY_CLOUD"] = "Enable document editing using external services (Google Docs, MS Office Online etc.)";
 $MESS["DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "Auto generate PDF anf JPG files for documents";
@@ -17,8 +17,11 @@ $MESS["DISK_ENABLE_RESTRICTION_STORAGE_SIZE_SUPPORT"] = "Enable storage quota";
 $MESS["DISK_MAX_FILE_SIZE_FOR_INDEX"] = "Don't index documents with size over (MB)";
 $MESS["DISK_MAX_SIZE_FOR_DOCUMENT_TRANSFORMATION"] = "Maximum size of source document for PDF and JPG generation (MB)";
 $MESS["DISK_MAX_SIZE_FOR_VIDEO_TRANSFORMATION"] = "Maximum size of source media for MP4 and JPG generation (MB)";
+$MESS["DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"] = "Auto lock file when editing";
+$MESS["DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"] = "Auto unlock file upon saving";
+$MESS["DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"] = "Document locking";
+$MESS["DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"] = "Auto unlock file after (minutes)";
 $MESS["DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE"] = "For some document types, the viewer may require document data to be sent to external services. <a href=\"#\" onclick='top.BX.Helper.show(\"redirect=detail&code=8775923\");event.preventDefault();'>Details</a>.";
 $MESS["DISK_TRANSFORM_FILES_ON_OPEN"] = "Convert file as soon as it is opened";
 $MESS["DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history";
 $MESS["DISK_VERSION_LIMIT_PER_FILE_UNLIMITED"] = "Unlimited";
-?>

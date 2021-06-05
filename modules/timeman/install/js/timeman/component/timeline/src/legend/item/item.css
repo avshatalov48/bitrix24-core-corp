@@ -1,0 +1,31 @@
+.bx-timeman-component-timeline-legend-item {
+    display: flex;
+}
+
+.bx-timeman-component-timeline-legend-item-marker {
+    height: 8px;
+    width: 8px;
+    margin: 8px;
+    border-radius: 50%;
+}
+
+.bx-timeman-component-timeline-legend-item-marker-working {
+    background-color: #8CEDA9;
+}
+
+.bx-timeman-component-timeline-legend-item-marker-personal {
+    background-color: #b5bac0;
+}
+
+.bx-timeman-component-timeline-legend-item-marker-inactive {
+    background-color: #f5f5f5;
+}
+
+.bx-timeman-component-timeline-legend-item-title {
+    display: flex;
+    align-items: center;
+    color: #535c69;
+    font: 13px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin-right: 16px;
+    user-select: none;
+}

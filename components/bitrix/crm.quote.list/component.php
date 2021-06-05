@@ -113,8 +113,7 @@ $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
-//$arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-$arResult['ENABLE_SLIDER'] = false;
+$arResult['ENABLE_SLIDER'] = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote);
 $arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
 $arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
 $arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
@@ -1419,7 +1418,7 @@ while($arQuote = $obRes->GetNext())
 
 	$arQuote['PATH_TO_QUOTE_COPY'] =  CHTTP::urlAddParams(
 		CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_QUOTE_EDIT'],
+			$arQuote['PATH_TO_QUOTE_EDIT'],
 			array('quote_id' => $entityID)
 		),
 		array('copy' => 1)
@@ -1775,24 +1774,41 @@ if($arResult['ENABLE_TOOLBAR'])
 
 	$addParams = array();
 
-	if($bInternal && isset($arParams['INTERNAL_CONTEXT']) && is_array($arParams['INTERNAL_CONTEXT']))
+	if($bInternal)
 	{
-		$internalContext = $arParams['INTERNAL_CONTEXT'];
-		if(isset($internalContext['CONTACT_ID']))
+		if (isset($arParams['INTERNAL_CONTEXT']) && is_array($arParams['INTERNAL_CONTEXT']))
 		{
-			$addParams['contact_id'] = $internalContext['CONTACT_ID'];
+			$internalContext = $arParams['INTERNAL_CONTEXT'];
+			if(isset($internalContext['CONTACT_ID']))
+			{
+				$addParams['contact_id'] = $internalContext['CONTACT_ID'];
+			}
+			if(isset($internalContext['COMPANY_ID']))
+			{
+				$addParams['company_id'] = $internalContext['COMPANY_ID'];
+			}
+			if(isset($internalContext['LEAD_ID']))
+			{
+				$addParams['lead_id'] = $internalContext['LEAD_ID'];
+			}
+			if(isset($internalContext['DEAL_ID']))
+			{
+				$addParams['deal_id'] = $internalContext['DEAL_ID'];
+			}
 		}
-		if(isset($internalContext['COMPANY_ID']))
+		else
 		{
-			$addParams['company_id'] = $internalContext['COMPANY_ID'];
-		}
-		if(isset($internalContext['LEAD_ID']))
-		{
-			$addParams['lead_id'] = $internalContext['LEAD_ID'];
-		}
-		if(isset($internalContext['DEAL_ID']))
-		{
-			$addParams['deal_id'] = $internalContext['DEAL_ID'];
+			$parentEntityTypeId = (int)$arParams['PARENT_ENTITY_TYPE_ID'];
+			$parentEntityId = (int)$arParams['PARENT_ENTITY_ID'];
+			if ($parentEntityTypeId > 0 && $parentEntityId > 0)
+			{
+				$arResult['PATH_TO_QUOTE_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					\CCrmOwnerType::Quote,
+					0,
+					null,
+					new Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId)
+				);
+			}
 		}
 	}
 

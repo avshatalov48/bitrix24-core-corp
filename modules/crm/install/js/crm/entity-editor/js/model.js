@@ -228,53 +228,150 @@ if(typeof BX.Crm.DealRecurringModel === "undefined")
 		return self;
 	};
 }
-if(typeof BX.Crm.QuoteModel === "undefined")
+
+if(typeof BX.Crm.FactoryBasedModel === "undefined")
 {
-	BX.Crm.QuoteModel = function()
+	/**
+	 * @extends BX.Crm.EntityModel
+	 * @memberOf BX.Crm
+	 * @constructor
+	 */
+	BX.Crm.FactoryBasedModel = function()
 	{
-		BX.Crm.QuoteModel.superclass.constructor.apply(this);
+		BX.Crm.FactoryBasedModel.superclass.constructor.apply(this);
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._entityTypeId = null;
 	};
-	BX.extend(BX.Crm.QuoteModel, BX.Crm.EntityModel);
-	BX.Crm.QuoteModel.prototype.doInitialize = function()
+
+	BX.extend(BX.Crm.FactoryBasedModel, BX.Crm.EntityModel);
+
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 */
+	BX.Crm.FactoryBasedModel.prototype.initialize = function(id, settings)
 	{
-		BX.addCustomEvent(window, "Crm.EntityProgress.Change", BX.delegate(this.onEntityProgressChange, this));
+		BX.Crm.FactoryBasedModel.superclass.initialize.apply(this, [id, settings]);
+
+		this._entityTypeId = BX.prop.getInteger(settings, 'entityTypeId', BX.CrmEntityType.enumeration.undefined);
 	};
-	BX.Crm.QuoteModel.prototype.onEntityProgressChange = function(sender, eventArgs)
+
+	BX.Crm.FactoryBasedModel.prototype.doInitialize = function()
 	{
-		if(BX.prop.getInteger(eventArgs, "entityTypeId", 0) !== this.getEntityTypeId()
-			|| BX.prop.getInteger(eventArgs, "entityId", 0) !== this.getEntityId()
-		)
+		BX.addCustomEvent('BX.Crm.ItemDetailsComponent:onStageChange', this.onStageChange.bind(this));
+	};
+
+	/**
+	 * @param {BX.Event.BaseEvent} event
+	 */
+	BX.Crm.FactoryBasedModel.prototype.onStageChange = function(event)
+	{
+		var entityTypeId = BX.prop.getInteger(event.getData(), "entityTypeId", BX.CrmEntityType.enumeration.undefined);
+		var entityId = BX.prop.getInteger(event.getData(), "id", 0);
+
+		if( (entityTypeId !== this.getEntityTypeId()) || (entityId !== this.getEntityId()) )
 		{
 			return;
 		}
 
-		var stepId = BX.prop.getString(eventArgs, "currentStepId", "");
-		if(stepId !== this.getField("STATUS_ID", ""))
+		var stageId = BX.prop.getString(event.getData(), "stageId", '');
+		if( (stageId !== this.getField("STAGE_ID", "")) && (stageId !== '') )
 		{
-			this.setField("STATUS_ID", stepId);
+			this.setField("STAGE_ID", stageId);
+
+			var previousStageId = BX.prop.getString(event.getData(), "previousStageId", null);
+			if(previousStageId)
+			{
+				this.setField("PREVIOUS_STAGE_ID", previousStageId);
+			}
 		}
 	};
-	BX.Crm.QuoteModel.prototype.getEntityTypeId = function()
+
+	/**
+	 * @return {number}
+	 */
+	BX.Crm.FactoryBasedModel.prototype.getEntityTypeId = function()
 	{
-		return BX.CrmEntityType.enumeration.quote;
+		return this._entityTypeId;
 	};
-	BX.Crm.QuoteModel.prototype.isCaptionEditable = function()
+
+	/**
+	 * @return {boolean}
+	 */
+	BX.Crm.FactoryBasedModel.prototype.isCaptionEditable = function()
 	{
 		return true;
 	};
-	BX.Crm.QuoteModel.prototype.getCaption = function()
+
+	/**
+	 * @return {string}
+	 */
+	BX.Crm.FactoryBasedModel.prototype.getCaption = function()
 	{
 		var title = this.getField("TITLE");
 		return BX.type.isString(title) ? title : "";
 	};
-	BX.Crm.QuoteModel.prototype.setCaption = function(caption)
+
+	/**
+	 * @param {string} caption
+	 */
+	BX.Crm.FactoryBasedModel.prototype.setCaption = function(caption)
 	{
 		this.setField("TITLE", caption);
 	};
-	BX.Crm.QuoteModel.prototype.prepareCaptionData = function(data)
+
+	/**
+	 * @param {Object} data
+	 */
+	BX.Crm.FactoryBasedModel.prototype.prepareCaptionData = function(data)
 	{
 		data["TITLE"] = this.getField("TITLE", "");
 	};
+
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 * @return {BX.Crm.FactoryBasedModel}
+	 */
+	BX.Crm.FactoryBasedModel.create = function(id, settings)
+	{
+		var self = new BX.Crm.FactoryBasedModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof BX.Crm.QuoteModel === "undefined")
+{
+	/**
+	 * @extends BX.Crm.FactoryBasedModel
+	 * @memberOf BX.Crm
+	 * @constructor
+	 */
+	BX.Crm.QuoteModel = function()
+	{
+		BX.Crm.QuoteModel.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.Crm.QuoteModel, BX.Crm.FactoryBasedModel);
+
+	/**
+	 * @return {boolean}
+	 */
+	BX.Crm.QuoteModel.prototype.isCaptionEditable = function()
+	{
+		return false;
+	};
+
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 * @return {BX.Crm.QuoteModel}
+	 */
 	BX.Crm.QuoteModel.create = function(id, settings)
 	{
 		var self = new BX.Crm.QuoteModel();

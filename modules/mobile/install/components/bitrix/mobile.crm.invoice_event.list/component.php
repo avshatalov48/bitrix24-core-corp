@@ -119,10 +119,9 @@ while($item = $dbRes->Fetch())
 if(!empty($userBindings))
 {
 	$userEnity = new CUser();
-	$by = 'ID'; $order = 'ASC';
 	$dbUsers = $userEnity->GetList(
-		$by,
-		$order,
+		'ID',
+		'ASC',
 		array('ID' => implode('|', array_keys($userBindings))),
 		array('SELECT' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME'))
 	);

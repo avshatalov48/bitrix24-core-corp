@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule("socialnetwork"))
 	return;
 
-if (WIZARD_IS_RERUN !== true)
+if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true)
 {
 	$APPLICATION->SetGroupRight("socialnetwork", WIZARD_EXTRANET_ADMIN_GROUP, "W");
 	$APPLICATION->SetGroupRight("socialnetwork", WIZARD_EXTRANET_CREATE_WG_GROUP, "K");

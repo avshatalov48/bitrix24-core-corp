@@ -388,14 +388,20 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 
 				$APPLICATION->SetTitle(Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONNECT') . ' ' . $this->arResult['NAME']);
 
-				if(!empty($this->arResult['RELOAD']))
+				if(
+					!empty($this->arResult['RELOAD'])
+					|| !empty($this->arResult['URL_RELOAD'])
+				)
 				{
 					$APPLICATION->RestartBuffer();
 				}
 
 				$this->includeComponentTemplate();
 
-				if(!empty($this->arResult['RELOAD']))
+				if(
+					!empty($this->arResult['RELOAD'])
+					|| !empty($this->arResult['URL_RELOAD'])
+				)
 				{
 					CMain::FinalActions();
 					die();

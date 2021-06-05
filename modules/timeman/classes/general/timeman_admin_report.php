@@ -139,7 +139,7 @@ class CTimeManAdminReport
 
 			if ($this->bShowAll)
 			{
-				$dbRes = CUser::GetList($by = 'LAST_NAME', $order  = 'asc', array('ID' => implode('|', $arUsers), 'ACTIVE' => 'Y'), array('SELECT' => array('*', 'UF_DEPARTMENT')));
+				$dbRes = CUser::GetList('LAST_NAME', 'asc', array('ID' => implode('|', $arUsers), 'ACTIVE' => 'Y'), array('SELECT' => array('*', 'UF_DEPARTMENT')));
 				while ($arRes = $dbRes->GetNext())
 				{
 					$arResult[$arRes['ID']] = $this->__getUserRow($arRes, '', $arFilter);

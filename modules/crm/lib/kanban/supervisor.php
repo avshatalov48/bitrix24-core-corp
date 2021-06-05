@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Kanban;
 
 use Bitrix\Main\Entity;
@@ -6,7 +7,6 @@ use Bitrix\Main\Localization\Loc;
 
 class SupervisorTable extends Entity\DataManager
 {
-
 	const TTL_ACTIVITY = 1200;
 
 	protected static $avatarSize = array('width' => 38, 'height' => 38);
@@ -410,7 +410,7 @@ class SupervisorTable extends Entity\DataManager
 	 * @param string $type Type of entity.
 	 * @return string
 	 */
-	protected function getUrl($id, $type)
+	protected static function getUrl($id, $type)
 	{
 		return str_replace(\Bitrix\Crm\Kanban\Entity::getPathMarkers(), $id, \CrmCheckPath('PATH_TO_'.mb_strtoupper($type).'_SHOW', '', ''));
 	}

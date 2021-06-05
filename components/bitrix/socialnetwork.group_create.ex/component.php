@@ -808,7 +808,7 @@ else
 							CSocNetUserToGroup::setOwner($ownerId, $arParams["GROUP_ID"], $arResult["POST"]);
 						}
 
-						$rsSite = CSite::getList($by="sort", $order="desc", Array("ACTIVE" => "Y"));
+						$rsSite = CSite::getList("sort", "desc", Array("ACTIVE" => "Y"));
 						while($arSite = $rsSite->Fetch())
 						{
 							BXClearCache(true, "/".$arSite["ID"]."/bitrix/search.tags.cloud/");
@@ -1037,8 +1037,8 @@ else
 									$userID = 0;
 
 									$rsUser = CUser::GetList(
-										($by="id"),
-										($order="asc"),
+										"id",
+										"asc",
 										$arFilter,
 										array(
 											"FIELDS" => array("ID", "EXTERNAL_AUTH_ID", "CONFIRM_CODE"),
@@ -1164,8 +1164,8 @@ else
 							}
 
 							$rsUser = CUser::GetList(
-								($by="id"),
-								($order="asc"),
+								"id",
+								"asc",
 								$arFilter,
 								array(
 									"FIELDS" => array("ID", "EXTERNAL_AUTH_ID")
@@ -1526,8 +1526,8 @@ else
 				)
 				{
 					$dbUsers = CUser::GetList(
-						($sort_by = Array('last_name'=>'asc', 'IS_ONLINE'=>'desc')),
-						($dummy=''),
+						Array('last_name'=>'asc', 'IS_ONLINE'=>'desc'),
+						'',
 						array(
 							"ID" => implode("|", $arResult["POST"]["USER_IDS"]),
 						),
@@ -1677,8 +1677,8 @@ else
 				if (!empty($arLastUserID))
 				{
 					$dbUsers = CUser::GetList(
-						($sort_by = Array('last_name'=>'asc', 'IS_ONLINE'=>'desc')),
-						($dummy=''),
+						Array('last_name'=>'asc', 'IS_ONLINE'=>'desc'),
+						'',
 						array(
 							"ACTIVE" => "Y",
 							"ID" => implode("|", $arLastUserID),

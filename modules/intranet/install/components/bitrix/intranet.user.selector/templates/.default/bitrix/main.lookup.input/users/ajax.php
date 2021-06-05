@@ -178,7 +178,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 			$arFilter["!UF_DEPARTMENT"] = false;
 
 		$dbRes = CUser::GetList(
-			$by = "last_name", $order = "asc", 
+			"last_name", "asc",
 			$arFilter, 
 			array(
 				"SELECT" => array("UF_DEPARTMENT"),

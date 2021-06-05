@@ -9,6 +9,8 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Attribute\Entity\FieldAttributeTable;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
@@ -21,6 +23,15 @@ Loc::loadMessages(__FILE__);
 
 class StatusTable extends Entity\DataManager
 {
+	public const ENTITY_ID_SOURCE = 'SOURCE';
+
+	public const DEFAULT_SUCCESS_COLOR = '#DBF199';
+	public const DEFAULT_FAILURE_COLOR = '#FFBEBD';
+	public const DEFAULT_PROCESS_COLOR = '#ACE9FB';
+
+	// entityId => statuses
+	protected static $statusesCache = [];
+
 	protected static $temporaryStorage;
 
 	public static function getTableName(): string
@@ -87,6 +98,13 @@ class StatusTable extends Entity\DataManager
 		return $result;
 	}
 
+	public static function onAfterAdd(Event $event)
+	{
+		/** @var EO_Status $status */
+		$status = $event->getParameter('object');
+		static::removeStatusesFromCache($status->fillEntityId());
+	}
+
 	public static function onBeforeUpdate(Event $event): ORM\EventResult
 	{
 		$result = new ORM\EventResult();
@@ -145,7 +163,7 @@ class StatusTable extends Entity\DataManager
 			return $result;
 		}
 
-		\CCrmStatus::ClearCachedStatuses($entityId);
+		static::removeStatusesFromCache($entityId);
 
 		$entityTypeId = $entity['ENTITY_TYPE_ID'] ?? null;
 		if (!$entityTypeId)
@@ -201,7 +219,57 @@ class StatusTable extends Entity\DataManager
 		$data = static::getByPrimary($event->getParameter('id'))->fetch();
 		static::getTemporaryStorage()->saveData($event->getParameter('id'), $data);
 
-		return new EventResult();
+		$result = new EventResult();
+		if (!$data)
+		{
+			return $result;
+		}
+
+		$factory = static::getFactoryByStagesEntityId($data['ENTITY_ID']);
+		if (!$factory)
+		{
+			return $result;
+		}
+
+		$itemsOnStageCount = $factory->getItemsCount([
+			'=' . Item::FIELD_NAME_STAGE_ID => $data['STATUS_ID'],
+		]);
+
+		if ($itemsOnStageCount > 0)
+		{
+			$result->addError(new ORM\EntityError(Loc::getMessage('CRM_STATUS_STAGE_WITH_ITEMS_ERROR')));
+		}
+
+		return $result;
+	}
+
+	protected static function getFactoryByStagesEntityId(string $stagesEntityId): ?Factory
+	{
+		foreach (Container::getInstance()->getTypesMap()->getFactories() as $factory)
+		{
+			if (!$factory->isStagesSupported())
+			{
+				continue;
+			}
+
+			if ($factory->getStagesEntityId() === $stagesEntityId)
+			{
+				return $factory;
+			}
+
+			if ($factory->isCategoriesSupported())
+			{
+				foreach ($factory->getCategories() as $category)
+				{
+					if ($factory->getStagesEntityId($category->getId()) === $stagesEntityId)
+					{
+						return $factory;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 
 	public static function onAfterDelete(Event $event): EventResult
@@ -224,8 +292,137 @@ class StatusTable extends Entity\DataManager
 		$entityScope = $entity['FIELD_ATTRIBUTE_SCOPE'] ?? '';
 
 		FieldAttributeTable::deleteByPhase($data['STATUS_ID'], $entityTypeId, $entityScope);
-		\CCrmStatus::ClearCachedStatuses($data['ENTITY_ID']);
+		static::removeStatusesFromCache($entityId);
 
 		return $result;
+	}
+
+	/**
+	 * There should be a way to determine that entityId matches particular entity.
+	 * todo refactor it on event or some other way
+	 *
+	 * @param string $entityId
+	 * @return array|null
+	 */
+	public static function parseStageEntityId(string $entityId): ?array
+	{
+		if(preg_match('#^TYPE_(\d+)_STAGE$#', $entityId, $matches))
+		{
+			return [
+				'entityTypeId' => (int) $matches[1],
+			];
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param string $entityId
+	 *
+	 * @return array[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getStatusesByEntityId(string $entityId): array
+	{
+		if (CACHED_b_crm_status === false)
+		{
+			return static::loadStatusesByEntityId($entityId);
+		}
+
+		$cachedStatuses = static::getStatusesFromCache($entityId);
+		if (!is_null($cachedStatuses))
+		{
+			return $cachedStatuses;
+		}
+
+		$statuses = static::loadStatusesByEntityId($entityId);
+		static::addStatusesToCache($entityId, $statuses);
+
+		return $statuses;
+	}
+
+	protected static function getStatusesFromCache(string $entityId): ?array
+	{
+		return static::$statusesCache[$entityId] ?? null;
+	}
+
+	protected static function addStatusesToCache(string $entityId, array $statuses): void
+	{
+		static::$statusesCache[$entityId] = $statuses;
+	}
+
+	protected static function removeStatusesFromCache(string $entityId): void
+	{
+		unset(static::$statusesCache[$entityId]);
+	}
+
+	protected static function clearStatusesCache(): void
+	{
+		static::$statusesCache = [];
+	}
+
+	/**
+	 * @param string $entityId
+	 *
+	 * @return array[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function loadStatusesByEntityId(string $entityId): array
+	{
+		$result = [];
+
+		$list = static::getList([
+			'filter' => [
+				'=ENTITY_ID' => $entityId,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
+		while($status = $list->fetch())
+		{
+			$result[$status['STATUS_ID']] = $status;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns flat list of statuses for $entityId, where key is STATUS_ID and value is NAME.
+	 *
+	 * @param string $entityId
+	 *
+	 * @return string[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getStatusesList(string $entityId): array
+	{
+		$statusList = [];
+		foreach (static::loadStatusesByEntityId($entityId) as $status)
+		{
+			$statusId = $status['STATUS_ID'];
+			$statusList[$statusId] = $status['NAME'];
+		}
+
+		return $statusList;
+	}
+
+	/**
+	 * @param string $entityId
+	 *
+	 * @return string[]|int[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getStatusesIds(string $entityId): array
+	{
+		return array_keys(static::getStatusesList($entityId));
 	}
 }

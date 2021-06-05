@@ -214,9 +214,10 @@ this.BX = this.BX || {};
 	      this.accountId = null;
 	      this.pageId = null;
 
-	      this._helper.showBlockMain();
+	      if (this.clientSelector.selected) {
+	        this._helper.showBlockMain();
+	      }
 
-	      this.loadSettings();
 	      this.clientSelector.setSelected(item);
 	    }
 	  }]);
@@ -631,11 +632,13 @@ this.BX = this.BX || {};
 	        componentName: this.componentName,
 	        uiNodes: this.uiNodes
 	      });
+	      this.profileConfigured = false;
 
 	      if (!this.clientId && !this.provider.PROFILE) {
 	        // use first client by default
 	        for (var i = 0; i < this.provider.CLIENTS.length; i++) {
 	          this.seoAccount.setProfile(this.provider.CLIENTS[i]);
+	          this.profileConfigured = true;
 	          break;
 	        }
 	      }
@@ -646,7 +649,9 @@ this.BX = this.BX || {};
 	        this.activateStage(this._STAGES.accountSelected);
 	      }
 
-	      this.seoAccount.setProfile(this.provider.PROFILE);
+	      if (!this.profileConfigured) {
+	        this.seoAccount.setProfile(this.provider.PROFILE);
+	      }
 
 	      this.seoAccount._helper.showBlockByAuth();
 	    }
@@ -1128,16 +1133,19 @@ this.BX = this.BX || {};
 	        this.storeBlockShow(false);
 	        this.openSlider(this.pageConfigurationUrl, {
 	          sessid: BX.bitrix_sessid(),
-	          targetUrl: this.uiNodes.form.targetUrl.value || ''
+	          targetUrl: this.uiNodes.form.targetUrl.value || '',
+	          cacheable: false
 	        }, this.onTargetPageSelected);
 	      }
 	    }
 	  }, {
 	    key: "openSlider",
 	    value: function openSlider(url, params, callback) {
+	      var _params$cacheable;
+
 	      var sliderOptions = {
 	        width: 990,
-	        cacheable: true,
+	        cacheable: (_params$cacheable = params.cacheable) !== null && _params$cacheable !== void 0 ? _params$cacheable : true,
 	        allowChangeHistory: false,
 	        requestMethod: 'post',
 	        requestParams: params
@@ -1146,13 +1154,6 @@ this.BX = this.BX || {};
 	      BX.removeAllCustomEvents(window, eventName, callback.bind(this));
 	      BX.addCustomEvent(window, eventName, callback.bind(this));
 	      BX.SidePanel.Instance.open(url, sliderOptions);
-	    }
-	  }, {
-	    key: "openProductSelector",
-	    value: function openProductSelector() {
-	      this.openSlider(this.productSelectornUrl, {
-	        sessid: BX.bitrix_sessid()
-	      }, this.onTargetPageSelected);
 	    }
 	  }, {
 	    key: "showAudienceExpertModeForm",

@@ -507,6 +507,8 @@ class CTasksReportHelper extends CReportHelper
 					$operationCode = $operationCodes[$matches[1]];
 					$caseResult = array();
 					$compareSql = '';
+					$where = new CSQLWhere();
+
 					switch ($operationCode)
 					{
 						case 'EQUAL':
@@ -518,15 +520,15 @@ class CTasksReportHelper extends CReportHelper
 							$caseResult = array(0, 1);
 							break;
 						case 'START_WITH':
-							$compareSql = \CSQLWhere::_Upper('TG.NAME')." LIKE '".\CSQLWhere::ForLIKE(ToUpper($v))."%' ESCAPE '!'";
+							$compareSql = $where->_Upper('TG.NAME')." LIKE '".$where->ForLIKE(ToUpper($v))."%' ESCAPE '!'";
 							$caseResult = array(1, 0);
 							break;
 						case 'CONTAINS':
-							$compareSql = \CSQLWhere::_Upper('TG.NAME')." LIKE '%".\CSQLWhere::ForLIKE(ToUpper($v))."%' ESCAPE '!'";
+							$compareSql = $where->_Upper('TG.NAME')." LIKE '%".$where->ForLIKE(ToUpper($v))."%' ESCAPE '!'";
 							$caseResult = array(1, 0);
 							break;
 						case 'NOT_CONTAINS':
-							$compareSql = \CSQLWhere::_Upper('TG.NAME')." LIKE '%".\CSQLWhere::ForLIKE(ToUpper($v))."%' ESCAPE '!'";
+							$compareSql = $where->_Upper('TG.NAME')." LIKE '%".$where->ForLIKE(ToUpper($v))."%' ESCAPE '!'";
 							$caseResult = array(0, 1);
 							break;
 					}

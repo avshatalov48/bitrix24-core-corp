@@ -3291,7 +3291,7 @@
 		{
 			return false;
 		}
-		
+
 		var previousCounters = {}
 		this.BXIM.messenger.recent.forEach(function(element) {
 			previousCounters[element.id] = element.counter;

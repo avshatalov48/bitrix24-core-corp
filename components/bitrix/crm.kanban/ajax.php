@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\Recyclebin\RecyclingManager;
 use Bitrix\Crm\Kanban;
 use Bitrix\Recyclebin\Recyclebin;
+use Bitrix\Main\Engine\Response\Component;
 
 class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 {

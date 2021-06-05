@@ -176,7 +176,7 @@ if (!function_exists('__SLMGetLogRecord'))
 						&& IsModuleInstalled("extranet")
 					)
 					{
-						$rsSite = CSite::GetList($by="sort", $order="desc", Array("ACTIVE" => "Y"));
+						$rsSite = CSite::GetList("sort", "desc", Array("ACTIVE" => "Y"));
 						while($arSite = $rsSite->Fetch())
 						{
 							$arSiteWorkgroupsPage[$arSite["ID"]] = COption::GetOptionString("socialnetwork", "workgroups_page", $arSite["DIR"]."workgroups/", $arSite["ID"]);

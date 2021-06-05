@@ -130,6 +130,8 @@ abstract class CCrmReportHelperBase extends CReportHelper
 	protected static $PERSON_TYPES = null;
 	protected static $userFieldMoneyList = null;
 
+	protected static $urlBuilder;
+
 	protected static function prepareUFInfo()
 	{
 		if (!is_array(self::$arUFId) || count(self::$arUFId) <= 0 || is_array(self::$ufInfo))
@@ -408,9 +410,9 @@ abstract class CCrmReportHelperBase extends CReportHelper
 	{
 		/** @global string $DBType */
 		global $DBType;
-		
+
 		$dbType = ToUpper(strval($DBType));
-		
+
 		// Advanced fields for text user fields
 		$textFields = array();
 		foreach($entity->getFields() as $field)
@@ -1159,12 +1161,17 @@ abstract class CCrmReportHelperBase extends CReportHelper
 		$url = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $contactID, false);
 		return '<a target="_blank" href="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsbx($title).'</a>';
 	}
+
 	protected static function prepareProductNameHtml($productID, $name)
 	{
-		$url = CComponentEngine::MakePathFromTemplate(
-			COption::GetOptionString('crm', 'path_to_product_show'),
-			array('product_id' => $productID)
-		);
+		if (!self::$urlBuilder)
+		{
+			self::$urlBuilder = new Crm\Product\Url\ProductBuilder();
+			self::$urlBuilder->setIblockId(\CCrmCatalog::GetDefaultID());
+			self::$urlBuilder->setUrlParams([]);
+		}
+		$url = self::$urlBuilder->getElementDetailUrl($productID);
+
 		return '<a target="_blank" href="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsbx($name).'</a>';
 	}
 }
@@ -4121,7 +4128,7 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 				'DEAL_OWNER.WEBFORM_ID' =>[
 					'EQUAL',
 					'NOT_EQUAL'
-				], 
+				],
 				'DEAL_OWNER.LEAD_BY' => [
 					'EQUAL'
 				],
@@ -4449,5 +4456,3 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 		return '12.0.9';
 	}
 }
-
-?>

@@ -3,6 +3,8 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Service\Container;
+
 class CCrmPerms
 {
 	const PERM_NONE = BX_CRM_PERM_NONE;
@@ -360,12 +362,46 @@ class CCrmPerms
 			$userPermissions = self::GetCurrentUserPermissions();
 		}
 
-		return (CCrmLead::IsAccessEnabled($userPermissions)
+		$result = (
+			CCrmLead::IsAccessEnabled($userPermissions)
 			|| CCrmContact::IsAccessEnabled($userPermissions)
 			|| CCrmCompany::IsAccessEnabled($userPermissions)
 			|| CCrmDeal::IsAccessEnabled($userPermissions)
 			|| CCrmQuote::IsAccessEnabled($userPermissions)
-			|| CCrmInvoice::IsAccessEnabled($userPermissions));
+			|| CCrmInvoice::IsAccessEnabled($userPermissions)
+		);
+
+		if (!$result)
+		{
+			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
+			// avoiding exceptions as this method has usages across the product.
+			try
+			{
+				$dynamicTypesMap->load([
+					'isLoadStages' => false,
+					'isLoadCategories' => false,
+				]);
+			}
+			catch (Exception $exception)
+			{
+			}
+			catch (Error $error)
+			{
+			}
+			foreach ($dynamicTypesMap->getTypes() as $type)
+			{
+				if (
+					Container::getInstance()->getUserPermissions($userPermissions->GetUserID())
+						->canReadType($type->getEntityTypeId())
+				)
+				{
+					$result = true;
+					break;
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	public function CheckEnityAccess($permEntity, $permType, $arEntityAttr)
@@ -523,6 +559,25 @@ class CCrmPerms
 					$arStatus = DealCategory::getStageList(
 						DealCategory::convertFromPermissionEntityType($permEntity)
 					);
+				}
+				else
+				{
+					// it's a very big crutch
+					$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+					if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+					{
+						$factory = Container::getInstance()->getFactory($entityTypeId);
+						if ($factory && $factory->isStagesSupported())
+						{
+							[, , $categoryId] = explode('_', $permEntity);
+							$categoryId = (int)mb_substr($categoryId, 1);
+							$stages = $factory->getStages($categoryId);
+							foreach ($stages->getAll() as $stage)
+							{
+								$arStatus[$stage->getStatusId()] = $stage->collectValues();
+							}
+						}
+					}
 				}
 
 				foreach ($arStatus as $fieldValue => $sTitle)
@@ -815,6 +870,14 @@ class CCrmPerms
 			{
 				$scopeRegex = '/^QUOTE_ID[0-9A-Z\:\_\-]+$/i';
 				break;
+			}
+		}
+		if ($scopeRegex === '')
+		{
+			$entityName = static::ResolveEntityTypeName($permEntity);
+			if (\CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::ResolveID($entityName)))
+			{
+				$scopeRegex = '/^STAGE_ID[0-9A-Z\:\_\-]+$/i';
 			}
 		}
 
@@ -1236,7 +1299,9 @@ class CCrmPerms
 			$entityID = (int)$entityID;
 		}
 
-		if($entityType !== CCrmOwnerType::DealName)
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory || !$factory->isCategoriesSupported())
 		{
 			return $entityType;
 		}
@@ -1246,12 +1311,28 @@ class CCrmPerms
 
 		if($categoryID < 0 && $entityID > 0)
 		{
-			$categoryID = CCrmDeal::GetCategoryID($entityID);
+			if ($factory instanceof \Bitrix\Crm\Service\Factory\Deal)
+			{
+				//todo temporary decision while Deal Factory does not support work with items.
+				$categoryID = CCrmDeal::GetCategoryID($entityID);
+			}
+			else
+			{
+				$items = $factory->getItems([
+					'select' => [\Bitrix\Crm\Item::FIELD_NAME_CATEGORY_ID],
+					'filter' => [
+						'=ID' => $entityID
+					],
+					'limit' => 1,
+				]);
+				if (isset($items[0]))
+				{
+					$categoryID = $items[0]->getCategoryId();
+				}
+			}
 		}
 
-		return $categoryID >= 0
-			? DealCategory::convertToPermissionEntityType($categoryID)
-			: $entityType;
+		return \Bitrix\Crm\Service\UserPermissions::getPermissionEntityType($entityTypeId, $categoryID);
 	}
 
 	public static function HasPermissionEntityType($permissionEntityType)
@@ -1272,6 +1353,8 @@ class CCrmPerms
 			return CCrmOwnerType::DealName;
 		}
 
-		return $permissionEntityType;
+		return \Bitrix\Crm\Service\UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType)
+			?? $permissionEntityType
+		;
 	}
 }

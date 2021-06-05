@@ -6,21 +6,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 class CBPCrmChangeStatusActivity extends CBPActivity
 {
-	private static $counter = array();
+	private static $counter = [];
 
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
-			"Title" => "",
-			"TargetStatus" => null,
-			"ModifiedBy" => null,
-		);
+		$this->arProperties = [
+			'Title' => '',
+			'TargetStatus' => null,
+			'ModifiedBy' => null,
+		];
 	}
 
 	public function Execute()
 	{
-		if ($this->TargetStatus == null || !CModule::IncludeModule("crm"))
+		if ($this->TargetStatus == null || !CModule::IncludeModule('crm'))
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -34,7 +34,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 		//check recursion
 		if (!isset(static::$counter[$documentId[2]]))
-			static::$counter[$documentId[2]] = array();
+			static::$counter[$documentId[2]] = [];
 		if (!isset(static::$counter[$documentId[2]][$targetStatus]))
 			static::$counter[$documentId[2]][$targetStatus] = 0;
 
@@ -50,11 +50,11 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			);
 
 			//Stop running queue
-			throw new Exception("TerminateWorkflow");
+			throw new Exception('TerminateWorkflow');
 		}
 		// end check recursion
 
-		list ($entityTypeName, $entityId) = explode('_', $documentId[2]);
+		list ($entityTypeName, $entityId) = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$fieldKey = null;
 		$stages = [];
 
@@ -74,6 +74,12 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				break;
 			case \CCrmOwnerType::InvoiceName:
 				$fieldKey = 'STATUS_ID';
+				break;
+			default:
+				$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
+
+				$fieldKey = 'STAGE_ID';
+				$stages = $this->getItemStages($entityTypeId, $entityId);
 				break;
 		}
 
@@ -104,30 +110,34 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		);
 
 		//Stop running queue
-		throw new Exception("TerminateWorkflow");
+		throw new Exception('TerminateWorkflow');
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		$errors = [];
-		if (empty($arTestProperties["TargetStatus"]))
+		if (empty($arTestProperties['TargetStatus']))
 		{
-			$errors[] = array("code" => "NotExist", "parameter" => "TargetStatus", "message" => GetMessage("CRM_CHANGE_STATUS_EMPTY_PROP"));
+			$errors[] = [
+				'code' => 'NotExist',
+				'parameter' => 'TargetStatus',
+				'message' => GetMessage('CRM_CHANGE_STATUS_EMPTY_PROP'),
+			];
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $siteId = '')
+	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
-		if (!CModule::IncludeModule("crm"))
+		if (!CModule::IncludeModule('crm'))
 		{
 			return '';
 		}
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -136,9 +146,9 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
 			'siteId' => $siteId
-		));
+		]);
 
-		$dialog->setMapCallback(array(__CLASS__, 'getPropertiesDialogMap'));
+		$dialog->setMapCallback([__CLASS__, 'getPropertiesDialogMap']);
 
 		return $dialog;
 	}
@@ -154,7 +164,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			return [];
 		}
 
-		$documentStatuses = array();
+		$documentStatuses = [];
 		$documentType = $dialog->getDocumentType();
 		$documentType = $documentType[2];
 		$context = $dialog->getContext();
@@ -199,6 +209,19 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 				$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
 				break;
+			default:
+				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
+				$target = new \Bitrix\Crm\Automation\Target\ItemTarget($documentTypeId);
+
+				if($target->isAvailable())
+				{
+					foreach ($target->getStatusInfos() as $statusId => $statusInfo)
+					{
+						$documentStatuses[$statusId] = $statusInfo['NAME'];
+					}
+					$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
+				}
+				break;
 		}
 
 		$map = [
@@ -222,10 +245,10 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
 		$errors = [];
-		$properties = array(
+		$properties = [
 			'TargetStatus' => $arCurrentValues['target_status'],
-			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues["modified_by"], $documentType, $errors)
-		);
+			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues['modified_by'], $documentType, $errors)
+		];
 
 		if (
 			empty($properties['TargetStatus'])
@@ -236,19 +259,22 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			$properties['TargetStatus'] = $arCurrentValues['target_status_text'];
 		}
 
-		if (count($errors) > 0)
+		if ($errors)
 		{
 			return false;
 		}
 
-		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($errors) > 0)
+		$errors = self::ValidateProperties(
+			$properties,
+			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+		);
+		if ($errors)
 		{
 			return false;
 		}
 
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-		$currentActivity["Properties"] = $properties;
+		$currentActivity['Properties'] = $properties;
 
 		return true;
 	}
@@ -261,8 +287,11 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 	private function getDealStages($id)
 	{
 		$dbRes = \CCrmDeal::GetListEx(
-			array(),
-			array('=ID' => $id, 'CHECK_PERMISSIONS' => 'N'),
+			[],
+			[
+				'=ID' => $id,
+				'CHECK_PERMISSIONS' => 'N'
+			],
 			false,
 			false,
 			['CATEGORY_ID']
@@ -276,5 +305,12 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 	private function getOrderStages($id)
 	{
 		return array_keys(Crm\Order\OrderStatus::getListInCrmFormat());
+	}
+
+	protected function getItemStages(int $entityTypeId, int $entityId): array
+	{
+		$target = new \Bitrix\Crm\Automation\Target\ItemTarget($entityTypeId);
+		$target->setEntityById($entityId);
+		return $target->isAvailable() ? $target->getEntityStatuses() : [];
 	}
 }

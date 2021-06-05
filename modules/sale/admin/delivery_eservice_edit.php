@@ -181,7 +181,7 @@ if($deliveryService && $ID <= 0)
 		{
 			$fields = $embeddedList[$_GET["ES_CODE"]];
 			$fields["CODE"] = $_GET["ES_CODE"];
-			$fields["ID"] = strval(mktime());
+			$fields["ID"] = strval(time());
 
 			if(empty($fields["RIGHTS"]))
 				$fields["RIGHTS"] = "NYY";
@@ -197,7 +197,7 @@ if($deliveryService && $ID <= 0)
 		}
 
 		$fields["CLASS_NAME"] = $_REQUEST["CLASS_NAME"];
-		$fields["ID"] = strval(mktime());
+		$fields["ID"] = strval(time());
 		$fields["RIGHTS"] = "YYY";
 		$fields["ACTIVE"] = "Y";
 	}

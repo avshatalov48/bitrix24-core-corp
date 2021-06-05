@@ -201,9 +201,9 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<span class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-show" id="bx-disk-filepage-filename" <?= $arResult['FILE']['VIEWER_ATTRIBUTES'] ?>><?= Loc::getMessage("DISK_FILE_VIEW_FILE_RUN_VIEWER") ?></span>
 				<? if (!$arResult['FILE']['IS_DELETED'] && !empty($arResult['CAN_UPDATE']) && (!$arResult['FILE']['LOCK']['IS_LOCKED'] || $arResult['FILE']['LOCK']['IS_LOCKED_BY_SELF']) && $arResult['FILE']['IS_EDITABLE'])
 				{
-					?><a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-edit" href="#" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('bx-disk-filepage-filename'), 'edit', {
+					?><a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-edit" href="#edit" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('bx-disk-filepage-filename'), 'edit', {
 							modalWindow: BX.Disk.openBlankDocumentPopup()
-						});"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_EDIT') ?></a><?
+						}); event.preventDefault(); return false;"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_EDIT') ?></a><?
 				}?>
 				<a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-download" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD') ?></a>
 				<? if (!$arResult['FILE']['IS_DELETED'] && !empty($arResult['CAN_UPDATE']) && (!$arResult['FILE']['LOCK']['IS_LOCKED'] || $arResult['FILE']['LOCK']['IS_LOCKED_BY_SELF']))

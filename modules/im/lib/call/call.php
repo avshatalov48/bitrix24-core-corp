@@ -293,9 +293,16 @@ class Call
 
 		$this->endDate = new DateTime();
 
-
 		if ($this->updateState(static::STATE_FINISHED))
 		{
+			$this->loadUsers();
+			foreach ($this->users as $callUser)
+			{
+				if ($callUser->getState() === CallUser::STATE_CALLING)
+				{
+					$callUser->updateState(CallUser::STATE_IDLE);
+				}
+			}
 			$this->getSignaling()->sendFinish();
 			$this->saveStat();
 		}

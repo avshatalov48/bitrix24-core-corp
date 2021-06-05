@@ -222,17 +222,33 @@ class TimelineEntry
 	}
 	public static function deleteByAssociatedEntity($entityTypeID, $entityID)
 	{
-		$query = new Query(Entity\TimelineTable::getEntity());
-		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeID);
+		$query = static::prepareDeleteQuery($entityTypeID);
 		$query->addFilter('=ASSOCIATED_ENTITY_ID', $entityID);
-		$query->addSelect('ID');
-
 		$dbResult = $query->exec();
+
 		while($entry = $dbResult->fetch())
 		{
 			$ID = (int)$entry['ID'];
 			static::delete($ID);
 		}
+	}
+	public static function deleteByAssociatedEntityType(int $entityTypeID): void
+	{
+		$dbResult = static::prepareDeleteQuery($entityTypeID)->exec();
+
+		while($entry = $dbResult->fetch())
+		{
+			$ID = (int)$entry['ID'];
+			static::delete($ID);
+		}
+	}
+	protected static function prepareDeleteQuery(int $entityTypeID): Query
+	{
+		$query = new Query(Entity\TimelineTable::getEntity());
+		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeID);
+		$query->addSelect('ID');
+
+		return $query;
 	}
 	public static function delete($ID)
 	{

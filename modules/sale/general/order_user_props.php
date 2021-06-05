@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSaleOrderUserProps
@@ -37,7 +38,7 @@ class CAllSaleOrderUserProps
 	 *
 	 * @return bool|int
 	 */
-	static function DoSaveUserProfile($userId, $profileId, $profileName, $personTypeId, $orderProps, &$arErrors)
+	public static function DoSaveUserProfile($userId, $profileId, $profileName, $personTypeId, $orderProps, &$arErrors)
 	{
 		$profileId = intval($profileId);
 
@@ -236,7 +237,7 @@ class CAllSaleOrderUserProps
 		return $arResult;
 	}
 
-	function GetByID($ID)
+	public static function GetByID($ID)
 	{
 		global $DB;
 
@@ -254,7 +255,7 @@ class CAllSaleOrderUserProps
 		return False;
 	}
 
-	function CheckFields($ACTION, &$arFields, $ID = 0)
+	public static function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB, $USER;
 
@@ -282,7 +283,7 @@ class CAllSaleOrderUserProps
 		return True;
 	}
 
-	function Update($ID, $arFields)
+	public static function Update($ID, $arFields)
 	{
 		global $DB;
 
@@ -302,7 +303,7 @@ class CAllSaleOrderUserProps
 		return $ID;
 	}
 
-	function ClearEmpty()
+	public static function ClearEmpty()
 	{
 		global $DB;
 		$strSql = 
@@ -317,7 +318,7 @@ class CAllSaleOrderUserProps
 		}
 	}
 
-	function Delete($ID)
+	public static function Delete($ID)
 	{
 		global $DB;
 		$ID = intval($ID);
@@ -325,7 +326,7 @@ class CAllSaleOrderUserProps
 		return $DB->Query("DELETE FROM b_sale_user_props WHERE ID = ".$ID."", true);
 	}
 
-	function OnUserDelete($ID)
+	public static function OnUserDelete($ID)
 	{
 		$ID = intval($ID);
 		$db_res = CSaleOrderUserProps::GetList(($b="ID"), ($o="ASC"), Array("USER_ID"=>$ID));
@@ -336,4 +337,3 @@ class CAllSaleOrderUserProps
 		return True;
 	}
 }
-?>

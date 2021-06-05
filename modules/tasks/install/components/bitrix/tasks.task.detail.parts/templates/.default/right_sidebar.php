@@ -735,7 +735,7 @@ else
 						<div class="task-detail-info-users-list" id="task-detail-assistants">
 							<?php
 								if ($arResult["TASK"]["ACCOMPLICES"]):
-									$rsAccomplices = CUser::GetList(($b = "LOGIN"), ($o = "ASC"), array("ID" => implode("|", $arResult["TASK"]["ACCOMPLICES"])));
+									$rsAccomplices = CUser::GetList("LOGIN", "ASC", array("ID" => implode("|", $arResult["TASK"]["ACCOMPLICES"])));
 									while($arAccomplice = $rsAccomplices->GetNext()):
 							?>
 							<div class="task-detail-info-user">
@@ -808,7 +808,7 @@ else
 							<?php
 							if ($arResult["TASK"]["AUDITORS"])
 							{
-								$rsAuditors = CUser::GetList(($b = "LOGIN"), ($o = "ASC"), array("ID" => implode("|", $arResult["TASK"]["AUDITORS"])));
+								$rsAuditors = CUser::GetList("LOGIN", "ASC", array("ID" => implode("|", $arResult["TASK"]["AUDITORS"])));
 								while($arAuditor = $rsAuditors->GetNext())
 								{
 									$htmlId = ' id="task-detail-info-user-auditor-' . (int) $arAuditor['ID'] . '-container" ';

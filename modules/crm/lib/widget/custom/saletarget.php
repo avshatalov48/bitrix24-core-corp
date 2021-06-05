@@ -243,8 +243,8 @@ class SaleTarget
 		if (!empty($users))
 		{
 			$res = \CUser::GetList(
-				($by = 'timestamp_x'),
-				($order = 'desc'),
+				'timestamp_x',
+				'desc',
 				array(
 					'ID' => implode(' | ', $users),
 					'ACTIVE' => 'Y'
@@ -553,7 +553,7 @@ class SaleTarget
 			unset($filter['ACTIVE']);
 		}
 
-		$dbRes = \CUser::getList(($by = "ID"), ($order = "ASC"),
+		$dbRes = \CUser::getList("ID", "ASC",
 			$filter,
 			["FIELDS" => ["ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "TITLE", "PERSONAL_PHOTO", "WORK_POSITION", 'ACTIVE']]
 		);

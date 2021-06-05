@@ -7,7 +7,7 @@ use Bitrix\Crm\InvoiceTable;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Localization\Loc;
 
-class Invoice extends ProductsDataProvider implements Nameable
+class Invoice extends ProductsDataProvider
 {
 	protected $order;
 	protected $payment;
@@ -102,11 +102,6 @@ class Invoice extends ProductsDataProvider implements Nameable
 	public function getCrmOwnerType()
 	{
 		return \CCrmOwnerType::Invoice;
-	}
-
-	protected function getCrmProductOwnerType()
-	{
-		return 'I';
 	}
 
 	protected function getPersonTypeID()

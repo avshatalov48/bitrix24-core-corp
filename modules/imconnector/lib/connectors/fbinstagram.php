@@ -1,10 +1,12 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
-use \Bitrix\Main\UserTable,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImConnector\Chat,
-	\Bitrix\ImConnector\Library;
+use Bitrix\Main\UserTable;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Chat;
+use Bitrix\ImConnector\Result;
+use Bitrix\ImConnector\Library;
 
 Loc::loadMessages(__FILE__);
 
@@ -14,59 +16,106 @@ Loc::loadMessages(__FILE__);
  */
 class FbInstagram extends Base
 {
+	//Input
 	/**
-	 * @param $value
-	 * @param $connector
-	 *
-	 * @return mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param $message
+	 * @param $line
+	 * @return Result
 	 */
-	public static function sendMessageProcessing($value, $connector)
+	public function processingInputNewMessage($message, $line): Result
 	{
-		if(($connector == Library::ID_FBINSTAGRAM_CONNECTOR) && !Library::isEmpty($value['message']['text']))
+		$message = $this->processingLastMessage($message);
+
+		return parent::processingInputNewMessage($message, $line);
+	}
+
+	/**
+	 * @param array $chat
+	 * @return array
+	 */
+	protected function processingChat(array $chat): array
+	{
+		if (!empty($chat['url']))
 		{
-			$usersTitle = array();
-			$lastMessageId = Chat::getChatLastMessageId($value['chat']['id'], $connector);
+			$chat['description'] = Loc::getMessage(
+				'IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM',
+				[
+					'#LINK#' => $chat['url']
+				]
+			);
+
+			unset($chat['url']);
+		}
+
+		return $chat;
+	}
+	//END Input
+
+	//Output
+	/**
+	 * @param array $message
+	 * @param $line
+	 * @return array
+	 */
+	public function sendMessageProcessing(array $message, $line): array
+	{
+		$message = parent::sendMessageProcessing($message, $line);
+
+		if(
+			!empty($message['message']['files'])
+			|| !Library::isEmpty($message['message']['text'])
+		)
+		{
+			$usersTitle = [];
+			$lastMessageId = Chat::getChatLastMessageId($message['chat']['id'], $this->idConnector);
 
 			if (!empty($lastMessageId))
 			{
-				$value['extra']['last_message_id'] = $lastMessageId;
+				$message['extra']['last_message_id'] = $lastMessageId;
 			}
 
-			preg_match_all("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", $value['message']['text'], $users);
+			$users = [];
+
+			if(!Library::isEmpty($message['message']['text']))
+			{
+				preg_match_all("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", $message['message']['text'], $users);
+			}
+
 			if(!empty($users[1]))
 			{
-				$filterUser = array(
-					'LOGIC' => 'OR'
-				);
+				$filterUser = ['LOGIC' => 'OR'];
 				foreach ($users[1] as $user)
-					$filterUser[] = array('=ID' => $user);
+				{
+					$filterUser[] = ['=ID' => $user];
+				}
 
 				$rawUsers = UserTable::getList(
-					array(
-						'select' => array(
+					[
+						'select' => [
 							'ID',
 							'TITLE',
 							'NAME'
-						),
+						],
 						'filter' => $filterUser
-					)
+					]
 				);
 
 				while ($rowUser = $rawUsers->fetch())
 				{
 					if(!Library::isEmpty($rowUser['TITLE']))
+					{
 						$usersTitle[$rowUser['ID']] = $rowUser['TITLE'];
+					}
 					elseif(!Library::isEmpty($rowUser['NAME'])) //case for new fb instagram connector
+					{
 						$usersTitle[$rowUser['ID']] = $rowUser['NAME'];
+					}
 				}
 
 				if(!empty($usersTitle))
 				{
-					$search = array();
-					$replace = array();
+					$search = [];
+					$replace = [];
 
 					foreach ($users[1] as $cell=>$user)
 					{
@@ -78,20 +127,23 @@ class FbInstagram extends Base
 					}
 
 					if(!empty($search) && !empty($replace))
-						$value['message']['text'] = str_replace($search, $replace, $value['message']['text']);
+					{
+						$message['message']['text'] = str_replace($search, $replace, $message['message']['text']);
+					}
 				}
 			}
-			elseif (!empty($value['extra']['last_message_id'])) //check that it is a new version
+			elseif (!empty($message['extra']['last_message_id'])) //check that it is a new version
 			{
-				$nickNameStartPosition = mb_strpos($value['chat']['id'], '.');
-				$nickName = mb_substr($value['chat']['id'], $nickNameStartPosition + 1);
+				$nickNameStartPosition = mb_strpos($message['chat']['id'], '.');
+				$nickName = mb_substr($message['chat']['id'], $nickNameStartPosition + 1);
 				if ($nickNameStartPosition > 0)
 				{
-					$value['message']['text'] = '@' . $nickName . ' ' . $value['message']['text'];
+					$message['message']['text'] = '@' . $nickName . ' ' . $message['message']['text'];
 				}
 			}
 		}
 
-		return $value;
+		return $message;
 	}
+	//END Output
 }

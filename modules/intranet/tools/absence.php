@@ -222,7 +222,7 @@ endif;
 					if (isset($_POST['USER_ID']) || isset($arElement["PROPERTY_USER_VALUE"]))
 					{
 						$UserID = isset($_POST['USER_ID']) ? $_POST['USER_ID'] : $arElement["PROPERTY_USER_VALUE"];
-						$dbUser = CUser::GetList($b="", $o="", array("ID" => intval($UserID)));
+						$dbUser = CUser::GetList("", "", array("ID" => intval($UserID)));
 						if ($arUser = $dbUser->Fetch())
 							$UserName = CUser::FormatName(CSite::GetNameFormat(false), $arUser, true);
 					}

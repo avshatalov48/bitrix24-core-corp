@@ -328,6 +328,7 @@ body {
 	-o-text-overflow: ellipsis;
 	   text-overflow: ellipsis;
 	white-space: nowrap;
+	display: inline-block;
 	font-family: "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 

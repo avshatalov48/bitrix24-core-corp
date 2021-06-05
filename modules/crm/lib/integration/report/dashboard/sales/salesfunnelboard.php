@@ -24,6 +24,7 @@ class SalesFunnelBoard
 
 	const VERSION = 'v19';
 	const BOARD_KEY = 'crm_sales_funnel';
+	const SHOW_LEADS_OPTION = 'analytics_show_leads_in_sales';
 
 	/**
 	 * @return Dashboard

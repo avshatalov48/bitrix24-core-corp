@@ -61,7 +61,7 @@ class CXDILFScheme extends CAllXDILFScheme
 		return $ID;
 	}
 
-	function GetList($aSort=array(), $aFilter=array())
+	public static function GetList($aSort=array(), $aFilter=array())
 	{
 		global $DB;
 
@@ -69,9 +69,9 @@ class CXDILFScheme extends CAllXDILFScheme
 		foreach($aFilter as $key=>$val)
 		{
 			$val = $DB->ForSql($val);
-			if(strlen($val)<=0)
+			if($val == '')
 				continue;
-			switch(strtoupper($key))
+			switch(mb_strtoupper($key))
 			{
 				case "ACTIVE":
 					$arFilter[] = "S.ACTIVE='".$val."'";
@@ -100,8 +100,8 @@ class CXDILFScheme extends CAllXDILFScheme
 		$arOrder = array();
 		foreach($aSort as $key=>$val)
 		{
-			$ord = (strtoupper($val) <> "ASC"?"DESC":"ASC");
-			switch(strtoupper($key))
+			$ord = (mb_strtoupper($val) <> "ASC"?"DESC":"ASC");
+			switch(mb_strtoupper($key))
 			{
 				case "TYPE":
 					$arOrder[] = "S.TYPE ".$ord;

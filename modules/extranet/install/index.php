@@ -12,7 +12,7 @@ Class extranet extends CModule
 
 	var $errors;
 
-	function extranet()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

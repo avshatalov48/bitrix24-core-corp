@@ -315,28 +315,92 @@ class Dictionary
 			$groupTypes[] = ['id' => $groupTypeId, 'name' => $groupTypeName];
 		}
 
+		$stringTypes = [
+			WebForm\Internals\FieldTable::TYPE_ENUM_EMAIL,
+			WebForm\Internals\FieldTable::TYPE_ENUM_PHONE,
+			WebForm\Internals\FieldTable::TYPE_ENUM_STRING,
+			WebForm\Internals\FieldTable::TYPE_ENUM_TEXT,
+			WebForm\Internals\FieldTable::TYPE_ENUM_TYPED_STRING,
+			'name',
+			'last-name',
+			'second-name',
+			'company-name',
+		];
+
+		$numberTypes = [
+			WebForm\Internals\FieldTable::TYPE_ENUM_FLOAT,
+			WebForm\Internals\FieldTable::TYPE_ENUM_INT,
+			WebForm\Internals\FieldTable::TYPE_ENUM_MONEY,
+		];
+
 		return [
 			'group' => [
 				'types' => $groupTypes
 			],
 			'field' => [
 				'types' => [],
+				'disallowed' => [
+					WebForm\Internals\FieldTable::TYPE_ENUM_BR,
+					WebForm\Internals\FieldTable::TYPE_ENUM_HR,
+					WebForm\Internals\FieldTable::TYPE_ENUM_RESOURCEBOOKING,
+					WebForm\Internals\FieldTable::TYPE_ENUM_PAGE,
+				],
 			],
 			'condition' => [
 				'events' => [
 					['id' => 'change', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_EVENT_CHANGE')],
 				],
 				'operations' => [
-					['id' => '=', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EQUAL')],
-					['id' => '!=', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_NOTEQUAL')],
-					['id' => '>', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_GREATER')],
-					['id' => '>=', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_GREATEROREQUAL')],
-					['id' => '<', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_LESS')],
-					['id' => '<=', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_LESSOREQUAL')],
-					['id' => 'empty', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EMPTY')],
-					['id' => 'any', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_ANY')],
-					['id' => 'contain', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_CONTAIN')],
-					['id' => '!contain', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_NOTCONTAIN')],
+					[
+						'id' => '=',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EQUAL'),
+						'fieldTypes' => [],
+					],
+					[
+						'id' => '!=',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_NOTEQUAL'),
+						'fieldTypes' => [],
+					],
+					[
+						'id' => '>',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_GREATER'),
+						'fieldTypes' => $numberTypes,
+					],
+					[
+						'id' => '>=',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_GREATEROREQUAL'),
+						'fieldTypes' => $numberTypes,
+					],
+					[
+						'id' => '<',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_LESS'),
+						'fieldTypes' => $numberTypes,
+					],
+					[
+						'id' => '<=',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_LESSOREQUAL'),
+						'fieldTypes' => $numberTypes,
+					],
+					[
+						'id' => 'empty',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EMPTY'),
+						'fieldTypes' => [],
+					],
+					[
+						'id' => 'any',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_ANY'),
+						'fieldTypes' => [],
+					],
+					[
+						'id' => 'contain',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_CONTAIN'),
+						'fieldTypes' => $stringTypes,
+					],
+					[
+						'id' => '!contain',
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_NOTCONTAIN'),
+						'fieldTypes' => $stringTypes,
+					],
 				],
 			],
 

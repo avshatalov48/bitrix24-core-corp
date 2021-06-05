@@ -5,3 +5,4 @@ $MESS['CRM_SALES_TUNNELS_STAGE_HAS_DEALS'] = 'В этой стадии есть 
 $MESS['CRM_SALES_STAGE_CREATE_ERROR'] = 'Не удалось создать стадию';
 $MESS['CRM_SALES_STAGE_UPDATE_ERROR'] = 'Не удалось обновить стадию';
 $MESS["CRM_ST_ACCESS_ERROR"] = 'Доступ запрещён';
+$MESS["CRM_SALES_TUNNELS_ROBOTS_NOT_SUPPORTED"] = 'Тип не поддерживает автоматизацию';

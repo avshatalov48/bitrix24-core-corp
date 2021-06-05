@@ -14,6 +14,14 @@ Loc::loadMessages(__FILE__);
  */
 class Facebook extends Base
 {
+	//Input
+
+	//END Input
+
+	//Output
+
+	//END Output
+
 	/**
 	 * @param $paramsError
 	 * @param string $message

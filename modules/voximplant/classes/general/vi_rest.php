@@ -675,8 +675,8 @@ class CVoxImplantRestService extends IRestService
 		);
 
 		$cursor = CUser::GetList(
-			($sort_by = ''),
-			($dummy = ''),
+			'',
+			'',
 			array('ID' => join(' | ', $userIds)),
 			$arExtParams
 		);

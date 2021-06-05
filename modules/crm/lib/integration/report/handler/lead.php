@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Integration\Report\Handler;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
+use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelByStageHistory;
 use Bitrix\Crm\Integration\Report\View\ColumnFunnel;
 use Bitrix\Crm\Integration\Report\View\FunnelGrid;
 use Bitrix\Crm\LeadTable;
@@ -1297,6 +1299,16 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 */
 	public function isEnabled()
 	{
-		return \Bitrix\Crm\Settings\LeadSettings::isEnabled();
+		if (!\Bitrix\Crm\Settings\LeadSettings::isEnabled())
+		{
+			return false;
+		}
+		$boardKey = $this->getWidgetHandler()->getWidget()->getBoardId();
+		if ($boardKey === SalesFunnelBoard::BOARD_KEY || $boardKey === SalesFunnelByStageHistory::BOARD_KEY)
+		{
+			return \CUserOptions::GetOption('crm',SalesFunnelBoard::SHOW_LEADS_OPTION, 'Y') === 'Y';
+		}
+
+		return true;
 	}
 }

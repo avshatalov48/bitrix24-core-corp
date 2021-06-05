@@ -196,6 +196,16 @@
 	cursor: default !important;
 }
 
+.location-map-popup-item--info-left {
+	-webkit-box-flex:1;
+	    -ms-flex:1;
+	        flex:1;
+	white-space: nowrap;
+	overflow: hidden;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+}
+
 .location-map-popup-item--text {
 	font-size: 14px;
 	color: #525c69;
@@ -203,7 +213,7 @@
 
 .location-map-popup-item--info .menu-popup-item-icon {
 	display: inline-block;
-	height: 100%;
+	height: 46px;
 	width: 10px;
 	margin-right: 9px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20width%3D%2210px%22%20height%3D%2213px%22%20viewBox%3D%220%200%2010%2013%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%0A%20%20%20%20%3C%21--%20Generator%3A%20Sketch%2059.1%20%2886144%29%20-%20https%3A//sketch.com%20--%3E%0A%20%20%20%20%3Ctitle%3EIcon%3C/title%3E%0A%20%20%20%20%3Cdesc%3ECreated%20with%20Sketch.%3C/desc%3E%0A%20%20%20%20%3Cg%20id%3D%22%u043D%u0430-%u0432%u0435%u0440%u0441%u0442%u043A%u0443%22%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20id%3D%2203---%u0441%u043C%u0435%u043D%u0438%u043B%u0438-%u0433%u043E%u0440%u043E%u0434%22%20transform%3D%22translate%28-436.000000%2C%20-1052.000000%29%22%20fill%3D%22%23525C69%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22001%22%20transform%3D%22translate%28335.000000%2C%20739.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22Group-5%22%20transform%3D%22translate%2886.033936%2C%20202.205566%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22Icon%22%20transform%3D%22translate%2815.000000%2C%20111.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cpolygon%20transform%3D%22translate%284.995749%2C%206.400000%29%20rotate%28-90.000000%29%20translate%28-4.995749%2C%20-6.400000%29%20%22%20points%3D%225.62255677%202.96886338%208.36843321%205.71473982%20-1%205.71473982%20-1%207.08518187%208.36843321%207.08518187%205.62255677%209.83105831%206.59149846%2010.8%2010.9914985%206.4%206.59149846%202%22%3E%3C/polygon%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') center 15px no-repeat;
@@ -216,6 +226,7 @@
 	width: auto;
 	margin: 0;
 	padding: 0;
+	display: inline;
 }
 
 .location-map-popup-item--show-on-map {
@@ -223,6 +234,7 @@
 	color: #2066b0;
 	margin: 0 15px 0 10px;
 	cursor: pointer !important;
+	white-space: nowrap;
 }
 
 .location-map-popup-item--show-on-map:before {

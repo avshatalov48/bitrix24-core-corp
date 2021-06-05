@@ -84,6 +84,9 @@
 		}
 		this.showFloatingScreenShareWindowTimeout = 0;
 
+		this.mutePopup = null;
+		this.allowMutePopup = true;
+
 		this.init();
 	};
 
@@ -369,6 +372,7 @@
 
 		bindCallViewEvents: function ()
 		{
+			this.callView.setCallback(BX.Call.View.Event.onShow, this._onCallViewShow.bind(this));
 			this.callView.setCallback(BX.Call.View.Event.onClose, this._onCallViewClose.bind(this));
 			this.callView.setCallback(BX.Call.View.Event.onDestroy, this._onCallViewDestroy.bind(this));
 			this.callView.setCallback(BX.Call.View.Event.onButtonClick, this._onCallViewButtonClick.bind(this));
@@ -482,7 +486,22 @@
 
 			this.callView.showButton('floorRequest');
 
-			this.callView.setStream(e.userId, e.stream);
+			if (this.callView)
+			{
+				if ("stream" in e)
+				{
+					this.callView.setStream(e.userId, e.stream);
+				}
+				if ("mediaRenderer" in e && e.mediaRenderer.kind === "audio")
+				{
+					this.callView.setStream(e.userId, e.mediaRenderer.stream);
+				}
+				if ("mediaRenderer" in e && (e.mediaRenderer.kind === "video" || e.mediaRenderer.kind === "sharing"))
+				{
+					this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
+				}
+			}
+			
 			this.childCall.removeEventListener(BX.Call.Event.onStreamReceived, this._onChildCallFirstStreamHandler);
 
 			this.removeCallEvents();
@@ -603,13 +622,18 @@
 			}.bind(this), 30 * 1000);
 		},
 
-		showNotification: function (notificationText)
+		showNotification: function (notificationText, actions)
 		{
+			if (!actions)
+			{
+				actions = [];
+			}
 			BX.UI.Notification.Center.notify({
 				content: BX.util.htmlspecialchars(notificationText),
 				position: "top-right",
 				autoHideDelay: 5000,
-				closeButton: true
+				closeButton: true,
+				actions: actions
 			});
 		},
 
@@ -842,8 +866,10 @@
 			}.bind(this));
 		},
 
-		joinCall: function (callId, video)
+		joinCall: function (callId, video, options)
 		{
+			var joinAsViewer = BX.prop.getBoolean(options, "joinAsViewer", false);
+
 			if (!this.isUserAgentSupported())
 			{
 				this.showUnsupportedNotification();
@@ -916,7 +942,8 @@
 				}
 
 				this.currentCall.answer({
-					useVideo: !!video
+					useVideo: !!video,
+					joinAsViewer: joinAsViewer
 				});
 			}.bind(this));
 		},
@@ -1326,6 +1353,11 @@
 			}
 		},
 
+		_onCallViewShow: function (e)
+		{
+			this.callView.setButtonCounter("chat", BXIM.messenger.messageCount);
+		},
+
 		_onCallViewClose: function (e)
 		{
 			this.callView.destroy();
@@ -1483,6 +1515,11 @@
 			if (this.floatingWindow)
 			{
 				this.floatingWindow.setAudioMuted(e.muted);
+			}
+
+			if (!e.muted)
+			{
+				this.allowMutePopup = true;
 			}
 
 			if (this.isRecording())
@@ -1904,26 +1941,50 @@
 					return track.kind + ": " + track.id;
 				})
 				: [];
-			console.log("_onCallUserStreamReceived", tracks.join("; "));
+			console.log("_onCallUserStreamReceived", e.userId, e.mediaRenderer);
 
 			if (this.callView)
 			{
-				this.callView.setStream(e.userId, e.stream);
+				if ("stream" in e)
+				{
+					this.callView.setStream(e.userId, e.stream);
+				}
+				if ("mediaRenderer" in e && e.mediaRenderer.kind === "audio")
+				{
+					this.callView.setStream(e.userId, e.mediaRenderer.stream);
+				}
+				if ("mediaRenderer" in e && (e.mediaRenderer.kind === "video" || e.mediaRenderer.kind === "sharing"))
+				{
+					this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
+				}
 			}
 
-			if (this.floatingWindow && this.floatingWindowUser == e.userId)
+			/*if(this.floatingWindow && this.floatingWindowUser == e.userId)
 			{
-				//this.floatingWindow.setStream(e.stream);
-			}
+				this.floatingWindow.setStream(e.stream);
+			}*/
 		},
 
 		_onCallUserStreamRemoved: function (e)
 		{
-			// this is never used, i believe
+			console.log("_onCallUserStreamRemoved", e);
+			if ("mediaRenderer" in e && (e.mediaRenderer.kind === "video" || e.mediaRenderer.kind === "sharing"))
+			{
+				this.callView.setVideoRenderer(e.userId, null);
+			}
 		},
 
 		_onCallUserVoiceStarted: function (e)
 		{
+			if (e.local)
+			{
+				if (this.currentCall.muted && this.allowMutePopup)
+				{
+					this.showMicMutedNotification();
+				}
+				return;
+			}
+
 			this.talkingUsers[e.userId] = true;
 			if (this.callView)
 			{
@@ -1941,6 +2002,11 @@
 
 		_onCallUserVoiceStopped: function (e)
 		{
+			if (e.local)
+			{
+				return;
+			}
+
 			if (this.talkingUsers[e.userId])
 			{
 				delete this.talkingUsers[e.userId];
@@ -2021,9 +2087,7 @@
 				BXDesktopSystem.CallRecordStop();
 			}
 
-
 			return true;
-
 		},
 
 		_onCallUserFloorRequest: function (e)
@@ -2142,6 +2206,11 @@
 				this.floatingWindow.close();
 			}
 
+			if (this.mutePopup)
+			{
+				this.mutePopup.close();
+			}
+
 			window.BXIM.stopRepeatSound('dialtone');
 		},
 
@@ -2191,6 +2260,12 @@
 			{
 				this.callNotification.close();
 			}
+
+			if (this.mutePopup)
+			{
+				this.mutePopup.close();
+			}
+			this.allowMutePopup = true;
 
 			window.BXIM.messenger.dialogStatusRedraw();
 			window.BXIM.stopRepeatSound('dialtone');
@@ -2343,15 +2418,14 @@
 			}
 		},
 
-		_onUpdateChatCounter: function ()
+		_onUpdateChatCounter: function (counter)
 		{
 			if (!this.currentCall || !this.currentCall.associatedEntity || !this.currentCall.associatedEntity.id || !this.callView)
 			{
 				return;
 			}
 
-			var newCount = BX.MessengerCommon.getCounter(this.currentCall.associatedEntity.id);
-			this.callView.setButtonCounter("chat", newCount);
+			this.callView.setButtonCounter("chat", counter);
 		},
 
 		_onDeviceChange: function (e)
@@ -2639,8 +2713,36 @@
 			});
 
 			this.callNotification.show();
+		},
+
+		showMicMutedNotification: function ()
+		{
+			if (this.mutePopup)
+			{
+				return;
+			}
+
+			this.mutePopup = new BX.Call.MicMutedPopup({
+				bindElement: this.callView.buttons.microphone.elements.icon,
+				targetContainer: this.callView.container,
+				onClose: function ()
+				{
+					this.allowMutePopup = false;
+					this.mutePopup.destroy();
+					this.mutePopup = null;
+				}.bind(this),
+				onUnmuteClick: function ()
+				{
+					this._onCallViewToggleMuteButtonClick({
+						muted: false
+					});
+					this.mutePopup.destroy();
+					this.mutePopup = null;
+				}.bind(this)
+			});
+			this.mutePopup.show();
 		}
-	}
+	};
 
 	BX.Call.Controller.FeatureState = {
 		Enabled: 'enabled',

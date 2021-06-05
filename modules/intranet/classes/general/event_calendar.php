@@ -3,7 +3,7 @@ IncludeModuleLangFile(__FILE__);
 
 class CEventCalendar
 {
-	function Init($arParams)
+	public function Init($arParams)
 	{
 		global $USER;
 		// Owner params
@@ -175,7 +175,7 @@ class CEventCalendar
 		return array('bAccess' => $bAccess, 'bReadOnly' => $bReadOnly);
 	}
 
-	function Show($Params)
+	public function Show($Params)
 	{
 		global $APPLICATION, $USER, $EC_UserFields;
 
@@ -478,7 +478,7 @@ class CEventCalendar
 		));
 	}
 
-	function AppendJS($Params)
+	public function AppendJS($Params)
 	{
 		global $USER;
 		CUtil::InitJSCore(array('ajax', 'window'));
@@ -520,16 +520,16 @@ class CEventCalendar
 				};
 
 				<?if (count($arCSS) > 0):?>
-				BX.loadCSS(<?= '["'.implode($arCSS, '","').'"]'?>);
+				BX.loadCSS(<?= '["'.implode('","', $arCSS).'"]'?>);
 				<?endif;?>
-				BX.loadScript(<?= '["'.implode($arJS, '","').'"]'?>, bxRunEC);
+				BX.loadScript(<?= '["'.implode('","', $arJS).'"]'?>, bxRunEC);
 			}
 		);
 		</script>
 		<?
 	}
 
-	function Request($action)
+	public function Request($action)
 	{
 		global $APPLICATION;
 		$sectionId = ($_REQUEST['section_id'] == 'none') ? 'none' : intval($_REQUEST['section_id']);
@@ -1171,7 +1171,7 @@ class CEventCalendar
 		return true;
 	}
 
-	function GetEvents($arParams = array())
+	public function GetEvents($arParams = array())
 	{
 		$DontSaveOptions = isset($arParams['DontSaveOptions']) ? $arParams['DontSaveOptions'] : false;
 		$iblockId = isset($arParams['iblockId']) ? $arParams['iblockId'] : $this->iblockId;
@@ -1417,12 +1417,10 @@ class CEventCalendar
 			return $emptyRes;
 
 		return '['.mb_substr($RESULT, 0, -1).']';
-
-		return $emptyRes;
 	}
 
 	// Cache Inside
-	function GetEventsEx($arParams = array(), $bDontCache = false)
+	public function GetEventsEx($arParams = array(), $bDontCache = false)
 	{
 		$iblockId = isset($arParams['iblockId']) ? $arParams['iblockId'] : $this->iblockId;
 		if (!isset($arParams['sectionId']))
@@ -1471,7 +1469,7 @@ class CEventCalendar
 		return $arEvents;
 	}
 
-	function SaveHidden($arCalendarIds)
+	public function SaveHidden($arCalendarIds)
 	{
 		$arHiddenCals = CECCalendar::GetHidden($this->userId);
 
@@ -1512,7 +1510,7 @@ class CEventCalendar
 		$ec->ClearCache($ec->cachePath.'events/'.intval($iblockId).'/');
 	}
 
-	function ClearCache($cachePath = "")
+	public function ClearCache($cachePath = "")
 	{
 		if ($cachePath == '')
 			$cachePath = $this->cachePath;
@@ -1521,7 +1519,7 @@ class CEventCalendar
 		$cache->CleanDir($cachePath);
 	}
 
-	function DisplayPeriodicEvent(&$res, $arParams)
+	public static function DisplayPeriodicEvent(&$res, $arParams)
 	{
 		$length = intval($arParams['length']);// length in seconds
 		$count = $arParams['count'];
@@ -1545,7 +1543,7 @@ class CEventCalendar
 		{
 			$arDays_ = explode(',', $arParams['additional']);
 			$arDaysCount = count($arDays_);
-			for ($i = 0; $i < count($arDays_); $i++)
+			for ($i = 0; $i < $arDaysCount; $i++)
 				if ($arDays_[$i] != "")
 					$arDays[$arDays_[$i]] = true;
 			$arParams['arDays'] = $arDays;
@@ -1602,7 +1600,7 @@ class CEventCalendar
 		}
 	}
 
-	function HandlePeriodicElement(&$res, $arParams)
+	public static function HandlePeriodicElement(&$res, $arParams)
 	{
 		$oPer = Array(
 			"TYPE" => $arParams['perType'],
@@ -1619,7 +1617,7 @@ class CEventCalendar
 		CEventCalendar::HandleElement($res, $arParams['arItem'], $oPer, $arParams['bJS'], $arParams['bSuperposed']);
 	}
 
-	function HandleElement(&$res, $arItem, $arPeriodic = false, $bJS = false, $bSuperposed = false)
+	public static function HandleElement(&$res, $arItem, $arPeriodic = false, $bJS = false, $bSuperposed = false)
 	{
 		$arEvent = array(
 			'ID' => intval($arItem['ID']),
@@ -1884,7 +1882,7 @@ class CEventCalendar
 	}
 
 	// Cache inside
-	function GetSectionIDByOwnerId($ownerId, $ownerType, $iblockId)
+	public static function GetSectionIDByOwnerId($ownerId, $ownerType, $iblockId)
 	{
 		$cache = new CPHPCache;
 		$cachePath = "event_calendar/section_id_by_owner/";
@@ -1957,7 +1955,7 @@ class CEventCalendar
 		return $res;
 	}
 
-	function CreateSectionForOwner($ownerId, $ownerType, $iblockId)
+	public static function CreateSectionForOwner($ownerId, $ownerType, $iblockId)
 	{
 		global $DB;
 		$DB->StartTransaction();
@@ -3766,7 +3764,7 @@ END:VEVENT'."\n";
 							"MANDATORY" => "N",
 						);
 						$arFieldName = array();
-						$rsLanguage = CLanguage::GetList($by, $order, array());
+						$rsLanguage = CLanguage::GetList();
 						while($arLanguage = $rsLanguage->Fetch())
 							$arFieldName[$arLanguage["LID"]] = $arProps[$i][1];
 						$arFields["EDIT_FORM_LABEL"] = $arFieldName;
@@ -3802,7 +3800,7 @@ END:VEVENT'."\n";
 			// return false;
 	// }
 
-	function GetLinkIBlock($iblockId)
+	public static function GetLinkIBlock($iblockId)
 	{
 		$rsProperty = CIBlockProperty::GetList(array(), array(
 			"IBLOCK_ID" => $iblockId,
@@ -3898,7 +3896,7 @@ END:VEVENT'."\n";
 		{
 			if(!array_key_exists($guest_id, $arOldGuests)) // New guests
 			{
-				$rsUser = CUser::GetList($o, $b, array("ID_EQUAL_EXACT" => $guest_id));
+				$rsUser = CUser::GetList('', '', array("ID_EQUAL_EXACT" => $guest_id));
 				$arUser = $rsUser->Fetch();
 
 				if($arUser)
@@ -4199,12 +4197,12 @@ END:VEVENT'."\n";
 		return $arGuestConfirm;
 	}
 
-	function SendInvitationMessage($arParams)
+	public static function SendInvitationMessage($arParams)
 	{
 		if (!CModule::IncludeModule("socialnetwork"))
 			return;
 
-		$rs = CUser::GetList(($by="id"), ($order="asc"), array("ID_EQUAL_EXACT"=>intval($arParams["guestId"]), "ACTIVE" => "Y"));
+		$rs = CUser::GetList("id", "asc", array("ID_EQUAL_EXACT"=>intval($arParams["guestId"]), "ACTIVE" => "Y"));
 		if (!$rs->Fetch())
 			return;
 
@@ -4503,7 +4501,7 @@ END:VEVENT'."\n";
 	}
 
 	// Cache inside
-	function GetConfirmedID($iblockId, $xml_id)
+	public function GetConfirmedID($iblockId, $xml_id)
 	{
 		$bCache = true;
 		if ($bCache)
@@ -4522,20 +4520,14 @@ END:VEVENT'."\n";
 
 		if (!$bCache || empty($res['id']))
 		{
-			$bStatic = !isset($this) || !is_a($this, "CEventCalendar");
-
-			if (!$bStatic)
+			if(!is_array($this->arConfirmedID))
 			{
-				if(!is_array($this->arConfirmedID))
-					$this->arConfirmedID = array();
-				$arConfirmedID = $this->arConfirmedID;
-			}
-			else
-			{
-				$arConfirmedID = array();
+				$this->arConfirmedID = array();
 			}
 
-			if($bStatic || !array_key_exists($iblockId, $arConfirmedID))
+			$arConfirmedID = $this->arConfirmedID;
+
+			if(!array_key_exists($iblockId, $arConfirmedID))
 			{
 				$rsProperty = CIBlockProperty::GetList(array(), array(
 					'IBLOCK_ID' => $iblockId,
@@ -4600,7 +4592,7 @@ END:VEVENT'."\n";
 			if ($userId <= 0 || in_array($userId, $arUsers) || $userId == $this->userId)
 				continue;
 
-			$r = CUser::GetList(($by="id"), ($order="asc"), array("ID_EQUAL_EXACT"=>$userId, "ACTIVE" => "Y"));
+			$r = CUser::GetList("id", "asc", array("ID_EQUAL_EXACT"=>$userId, "ACTIVE" => "Y"));
 
 			if (!$User = $r->Fetch())
 				continue;
@@ -4711,18 +4703,18 @@ END:VEVENT'."\n";
 		return $busy;
 	}
 
-	function AddAgent($remindTime, $arParams)
+	public static function AddAgent($remindTime, $arParams)
 	{
 		CEventCalendar::RemoveAgent($arParams);
 		CAgent::AddAgent("CEventCalendar::SendRemindAgent(".$arParams['iblockId'].", ".$arParams['eventId'].", ".$arParams['userId'].", '".$arParams['pathToPage']."', '".$arParams['ownerType']."', ".$arParams['ownerId'].");", "intranet", "Y", 10, "", "Y", $remindTime);
 	}
 
-	function RemoveAgent($arParams)
+	public static function RemoveAgent($arParams)
 	{
 		CAgent::RemoveAgent("CEventCalendar::SendRemindAgent(".$arParams['iblockId'].", ".$arParams['eventId'].", ".$arParams['userId'].", '".$arParams['pathToPage']."', '".$arParams['ownerType']."', ".$arParams['ownerId'].");", "intranet");
 	}
 
-	function SendRemindAgent($iblockId, $eventId, $userId, $pathToPage, $ownerType, $ownerId)
+	public static function SendRemindAgent($iblockId, $eventId, $userId, $pathToPage, $ownerType, $ownerId)
 	{
 		if (!CModule::IncludeModule("iblock"))
 			return;
@@ -4821,7 +4813,7 @@ END:VEVENT'."\n";
 			unset($GLOBALS["USER"]);
 	}
 
-	function GetAbsentEvents($arParams)
+	public static function GetAbsentEvents($arParams)
 	{
 		if (!isset($arParams['arUserIds'], $arParams['iblockId']))
 			return false;
@@ -4938,7 +4930,7 @@ END:VEVENT'."\n";
 		return $A_RESULT;
 	}
 
-	function HandleAbsentEvent(&$event, $userId, &$a_result)
+	public static function HandleAbsentEvent(&$event, $userId, &$a_result)
 	{
 		if (!CModule::IncludeModule("socialnetwork"))
 			return;
@@ -4959,7 +4951,7 @@ END:VEVENT'."\n";
 		$a_result[$userId][] = $event;
 	}
 
-	function GetOwnerName($arParams)
+	public static function GetOwnerName($arParams)
 	{
 		if($arParams['ownerType'] == 'USER')
 		{
@@ -5005,7 +4997,7 @@ END:VEVENT'."\n";
 				$usersInStructure = array();
 				$arFilter = array('ACTIVE' => 'Y');
 				$obUser = new CUser();
-				$dbUsers = $obUser->GetList(($sort_by = 'last_name'), ($sort_dir = 'asc'), $arFilter, array('SELECT' => array('UF_*')));
+				$dbUsers = $obUser->GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_*')));
 				while ($arUser = $dbUsers->GetNext())
 				{
 					$arStructureUser = array(
@@ -5040,7 +5032,8 @@ END:VEVENT'."\n";
 			return;
 		}
 
-		while(list($key, $department) = each($arStructure)):
+		while(($department = current($arStructure)) !== false):
+			next($arStructure);
 	?>
 	<div class="vcsd-user-section<?= $bUpper ? ' vcsd-user-section-upper' : ''?>" onclick="BxecCS_SwitchSection(document.getElementById('dep_<?=$department["ID"]?>_arrow'), 'dep_<?=$department["ID"]?>_block', arguments[0] || window.event);" title="<?= GetMessage("EC_OPEN_CLOSE_SECT")?>">
 	<table>
@@ -5055,9 +5048,8 @@ END:VEVENT'."\n";
 	<div style="display:none;" id="dep_<?=$department["ID"]?>_block" class="vcsd-user-contact-block">
 	<?
 			$bExit = false;
-			if(list($key, $subdepartment) = each($arStructure))
+			if(($subdepartment = current($arStructure)) !== false)
 			{
-				prev($arStructure);
 				if($subdepartment["DEPTH_LEVEL"] > $department["DEPTH_LEVEL"])
 					CEventCalendar::ShowStructureSection($arStructure, $arUsersInStructure);
 				if($subdepartment["DEPTH_LEVEL"] < $department["DEPTH_LEVEL"])
@@ -5178,7 +5170,7 @@ window._bx_plann_events['<?= $uid?>'] = [
 		?></script><?
 	}
 
-	function GetNearestEventsList($arParams)
+	public static function GetNearestEventsList($arParams)
 	{
 		if (!isset($arParams['userId']))
 		{
@@ -6626,7 +6618,7 @@ $APPLICATION->IncludeComponent(
 		CEventCalendar::DisplayJSMRAccessability($Params['id'], $arResult);
 	}
 
-	function GetMeetingRoomById($Params)
+	public static function GetMeetingRoomById($Params)
 	{
 		if (intval($Params['RMiblockId']) > 0 && CIBlock::GetPermission($Params['RMiblockId']) >= "R")
 		{
@@ -6705,7 +6697,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		return $id;
 	}
 
-	function ReleaseMR($Params)
+	public static function ReleaseMR($Params)
 	{
 		global $USER;
 		if (!$Params['allowResMeeting'])
@@ -6808,7 +6800,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		return $id;
 	}
 
-	function ReleaseVR($Params)
+	public static function ReleaseVR($Params)
 	{
 		global $USER;
 		if (!$Params['allowVideoMeeting'])
@@ -6848,7 +6840,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		return false;
 	}
 
-	function ParseLocation($str = '')
+	public static function ParseLocation($str = '')
 	{
 		$res = array('mrid' => false, 'mrevid' => false, 'str' => $str);
 		if (mb_strlen($str) > 5 && mb_substr($str, 0, 5) == 'ECMR_')
@@ -6916,14 +6908,14 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		<?
 	}
 
-	function ThrowError($str)
+	public static function ThrowError($str)
 	{
 		global $APPLICATION;
 		echo '<!-- BX_EVENT_CALENDAR_ACTION_ERROR:'.$str.'-->';
-		return $APPLICATION->ThrowException($str);
+		$APPLICATION->ThrowException($str);
 	}
 
-	function GetFullUserName($arUser)
+	public static function GetFullUserName($arUser)
 	{
 		$fullName = trim($arUser['NAME'].' '.$arUser['LAST_NAME']);
 
@@ -7164,7 +7156,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 			$res = ($eventId > 0);
 		}
 
-		CEventCalendar::ClearCache('event_calendar/events/'.$iblockId.'/');
+		$cal->ClearCache('event_calendar/events/'.$iblockId.'/');
 		return $res ? $eventId : $bs->LAST_ERROR;
 	}
 
@@ -7505,7 +7497,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 				"SHOW_FILTER" => "N",
 				"EDIT_IN_LIST" => "N",
 			);
-			$dbLang = CLanguage::GetList($b = "", $o = "", array());
+			$dbLang = CLanguage::GetList();
 			while ($arLang = $dbLang->Fetch())
 				$arFields["EDIT_FORM_LABEL"][$arLang["LID"]] = $requiredFieldValue["EDIT_FORM_LABEL_DEFAULT_MESSAGE"];
 
@@ -7542,9 +7534,11 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 	{
 		$iblockId = self::GetUserCalendarIBlockId($site);
 
-		self::ClearCache('event_calendar/events/'.$iblockId.'/');
-		self::ClearCache('event_calendar/'.$iblockId."/calendars/");
-		self::ClearCache('event_calendar/sp_user');
+		$event = new static();
+
+		$event->ClearCache('event_calendar/events/'.$iblockId.'/');
+		$event->ClearCache('event_calendar/'.$iblockId."/calendars/");
+		$event->ClearCache('event_calendar/sp_user');
 	}
 
 	public static function CheckCalDavUrl($url, $username, $password)
@@ -7592,7 +7586,7 @@ class CECEvent
 		return true;
 	}
 
-	function AddReminder($arParams)
+	public static function AddReminder($arParams)
 	{
 		$fullUrl = $arParams['fullUrl'];
 		$ownerType = $arParams['ownerType'];
@@ -7633,7 +7627,7 @@ class CECEvent
 		return $res == 'Y';
 	}
 
-	function GetExchModLabel($iblockId, $id)
+	public static function GetExchModLabel($iblockId, $id)
 	{
 		$dbProp = CIBlockElement::GetProperty($iblockId, intval($id), 'sort', 'asc', array('CODE' => 'BXDAVEX_LABEL'));
 		if ($arProp = $dbProp->Fetch())
@@ -7642,7 +7636,7 @@ class CECEvent
 		return 0;
 	}
 
-	function GetCalDAVModLabel($iblockId, $id)
+	public static function GetCalDAVModLabel($iblockId, $id)
 	{
 		$dbProp = CIBlockElement::GetProperty($iblockId, intval($id), 'sort', 'asc', array('CODE' => 'BXDAVCD_LABEL'));
 		if ($arProp = $dbProp->Fetch())
@@ -7651,7 +7645,7 @@ class CECEvent
 		return 0;
 	}
 
-	function GetAccessibility($iblockId, $id)
+	public static function GetAccessibility($iblockId, $id)
 	{
 		$dbProp = CIBlockElement::GetProperty($iblockId, intval($id), 'sort', 'asc', array('CODE' => 'ACCESSIBILITY'));
 		if ($arProp = $dbProp->Fetch())
@@ -7659,7 +7653,7 @@ class CECEvent
 		return 'busy';
 	}
 
-	function GetExchangeXmlId($iblockId, $id)
+	public static function GetExchangeXmlId($iblockId, $id)
 	{
 		$res = CIBlockElement::GetList(
 			Array("SORT"=>"ASC"),
@@ -7675,7 +7669,7 @@ class CECEvent
 		return 0;
 	}
 
-	function HostIsAbsent($iblockId, $id)
+	public static function HostIsAbsent($iblockId, $id)
 	{
 		$res = 'N';
 		$dbProp = CIBlockElement::GetProperty($iblockId, $id, 'sort', 'asc', array('CODE' => 'HOST_IS_ABSENT'));
@@ -7685,7 +7679,7 @@ class CECEvent
 		return $res === 'Y';
 	}
 
-	function GetGuests($iblockId, $id, $arParams = array())
+	public static function GetGuests($iblockId, $id, $arParams = array())
 	{
 		$arResult = array();
 		$bOnlyOwner = false;
@@ -7731,7 +7725,7 @@ class CECEvent
 				$guest_id = intval($arGuest["CREATED_BY"]);
 				if($guest_id > 0)
 				{
-					$rsUser = CUser::GetList($o, $b, array(
+					$rsUser = CUser::GetList('', '', array(
 						"ID_EQUAL_EXACT" => $guest_id
 					));
 					$arUser = $rsUser->Fetch();
@@ -7769,7 +7763,7 @@ class CECEvent
 		return $bOnlyOwner && $arParams['DontReturnOnlyOwner'] ? array() : $arResult;
 	}
 
-	function Delete($arParams)
+	public static function Delete($arParams)
 	{
 		global $DB, $USER;
 		$iblockId = $arParams['iblockId'];
@@ -7798,6 +7792,8 @@ class CECEvent
 
 		if($arElement = $rsElement->Fetch())
 		{
+			$calendar = new CEventCalendar();
+
 			$DB->StartTransaction();
 			// PROPERTY_PARENT_VALUE - id of parent iblock element in meeting
 			if($arElement["PROPERTY_PARENT_VALUE"] <> '' && $arParams['bJustDel'] !== true)
@@ -7832,7 +7828,7 @@ class CECEvent
 							'allowVideoMeeting' => $arParams['allowVideoMeeting'],
 						));
 
-						$this->ClearCache($this->cachePath.'events/'.$arHost['IBLOCK_ID'].'/');
+						$calendar->ClearCache('event_calendar/events/'.$arHost['IBLOCK_ID'].'/');
 						return true;
 					}
 				}
@@ -7841,7 +7837,7 @@ class CECEvent
 				CIBlockElement::SetPropertyValues(
 					$arElement["ID"],
 					$arElement["IBLOCK_ID"],
-					CEventCalendar::GetConfirmedID($iblockId, "N"),
+					$calendar->GetConfirmedID($iblockId, "N"),
 					"CONFIRMED"
 				);
 			}
@@ -7893,7 +7889,7 @@ class CECEvent
 				}
 
 				$arGuests = CECEvent::GetGuests($arParams['userIblockId'], $ID);
-				$obElement = new CIBlockElement;
+
 				foreach($arGuests as $guest_id => $arCalendarEvent)
 				{
 					$res = CECEvent::Delete(array(
@@ -7928,7 +7924,7 @@ class CECEvent
 				}
 
 				if ($ownerType != 'USER')
-					CEventCalendar::ClearCache('event_calendar/events/'.$arParams['userIblockId'].'/');
+					$calendar->ClearCache('event_calendar/events/'.$arParams['userIblockId'].'/');
 
 				// Deleting
 				if(!CIBlockElement::Delete($ID))
@@ -7938,28 +7934,6 @@ class CECEvent
 				}
 			}
 
-			// log changes for socnet
-/*			if($this->bSocNetLog && $ownerType && !$arElement["PROPERTY_PRIVATE_VALUE"] && !$arParams['dontLogEvent'])
-			{
-				CEventCalendar::SocNetLog(
-					array(
-						'target' => 'delete_event',
-						'id' => $ID,
-						'name' => $arElement['NAME'],
-						'desc' => $arElement['DETAIL_TEXT'],
-						'from' => $arElement['ACTIVE_FROM'],
-						'to' => $arElement['ACTIVE_TO'],
-						'calendarId' => $arElement['IBLOCK_SECTION_ID'],
-						'accessibility' => $arElement["PROPERTY_ACCESSIBILITY_VALUE"],
-						'importance' => $arElement["PROPERTY_IMPORTANCE_VALUE"],
-						'pathToGroupCalendar' =>  $arParams["pathToGroupCalendar"],
-						'pathToUserCalendar' =>  $arParams["pathToUserCalendar"],
-						'iblockId' => $iblockId,
-						'ownerType' => $ownerType,
-						'ownerId' => $ownerId
-					)
-				);
-			}*/
 			$DB->Commit();
 		}
 		else
@@ -8083,7 +8057,7 @@ class CECCalendar
 		return $arCalendars;
 	}
 
-	function Edit($arParams, &$newSectionId, $bDisplay = true)
+	public static function Edit($arParams, &$newSectionId, $bDisplay = true)
 	{
 		global $DB;
 		$iblockId = $arParams['iblockId'];
@@ -8176,7 +8150,7 @@ class CECCalendar
 		return true;
 	}
 
-	function CreateDefault($arParams = array(), $bDisplay = true, &$newSectionId = 'none')
+	public static function CreateDefault($arParams = array(), $bDisplay = true, &$newSectionId = 'none')
 	{
 		$iblockId = $arParams['iblockId'];
 		$ownerId = $arParams['ownerId'];
@@ -8222,18 +8196,19 @@ class CECCalendar
 		}
 
 		// Clear cache
-		CEventCalendar::ClearCache("event_calendar/".$iblockId."/calendars/".($ownerId > 0 ? $ownerId : 0)."/");
+		$event = new CEventCalendar();
+		$event->ClearCache("event_calendar/".$iblockId."/calendars/".($ownerId > 0 ? $ownerId : 0)."/");
 		if ($ownerType == 'GROUP')
-			CEventCalendar::ClearCache('event_calendar/sp_groups/');
+			$event->ClearCache('event_calendar/sp_groups/');
 		elseif($ownerType == 'USER')
-			CEventCalendar::ClearCache('event_calendar/sp_user/');
+			$event->ClearCache('event_calendar/sp_user/');
 		else
-			CEventCalendar::ClearCache('event_calendar/sp_common/');
+			$event->ClearCache('event_calendar/sp_common/');
 
 		return $ID;
 	}
 
-	function GetPrivateStatus($iblockId, $sectionId, $ownerType = false)
+	public static function GetPrivateStatus($iblockId, $sectionId, $ownerType = false)
 	{
 		if ($ownerType != 'USER' && $ownerType != 'GROUP')
 			$ownerType = '';
@@ -8245,7 +8220,7 @@ class CECCalendar
 		return 'full';
 	}
 
-	function GetColor($iblockId, $sectionId, $ownerType = false)
+	public static function GetColor($iblockId, $sectionId, $ownerType = false)
 	{
 		if ($ownerType != 'USER' && $ownerType != 'GROUP')
 			$ownerType = '';
@@ -8293,7 +8268,7 @@ class CECCalendar
 		return 0;
 	}
 
-	function GetCalDAVConnectionId($iblockId, $calendarId)
+	public static function GetCalDAVConnectionId($iblockId, $calendarId)
 	{
 		$key = "UF_BXDAVEX_CDAV_COL";
 		$arUF = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_".$iblockId."_SECTION", $calendarId);
@@ -8302,7 +8277,7 @@ class CECCalendar
 		return 0;
 	}
 
-	function GetCalDAVXmlId($iblockId, $calendarId)
+	public static function GetCalDAVXmlId($iblockId, $calendarId)
 	{
 		$key = "UF_BXDAVEX_CDAV";
 		$arUF = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_".$iblockId."_SECTION", $calendarId);
@@ -8311,7 +8286,7 @@ class CECCalendar
 		return 0;
 	}
 
-	function GetExportParams($iblockId, $calendarId, $ownerType = false, $ownerId = false)
+	public static function GetExportParams($iblockId, $calendarId, $ownerType = false, $ownerId = false)
 	{
 		if ($ownerType != 'USER' && $ownerType != 'GROUP')
 			$ownerType = '';
@@ -8325,7 +8300,7 @@ class CECCalendar
 			return array('ALLOW' => false, 'SET' => false, 'LINK' => false);
 	}
 
-	function GetExportLink($calendarId, $ownerType = false, $ownerId = false, $iblockId = false)
+	public static function GetExportLink($calendarId, $ownerType = false, $ownerId = false, $iblockId = false)
 	{
 		global $USER;
 		$userId = $USER->IsAuthorized() ? $USER->GetID() : '';
@@ -8339,19 +8314,19 @@ class CECCalendar
 		return $params_.'&user_id='.$userId.'&calendar_id='.intval($calendarId).'&sign='.CECCalendar::GetSign($userId, $calendarId);
 	}
 
-	function GetSPExportLink()
+	public static function GetSPExportLink()
 	{
 		global $USER;
 		$userId = $USER->IsAuthorized() ? $USER->GetID() : '';
 		return '&user_id='.$userId.'&sign='.CECCalendar::GetSign($userId, 'superposed_calendars');
 	}
 
-	function GetOutlookLink($arParams)
+	public static function GetOutlookLink($arParams)
 	{
 		return CIntranetUtils::GetStsSyncURL($arParams);
 	}
 
-	function GetUniqCalendarId()
+	public static function GetUniqCalendarId()
 	{
 		$uniq = COption::GetOptionString("iblock", "~cal_uniq_id", "");
 		if($uniq == '')
@@ -8362,17 +8337,17 @@ class CECCalendar
 		return $uniq;
 	}
 
-	function GetSign($userId, $calendarId)
+	public static function GetSign($userId, $calendarId)
 	{
 		return md5($userId."||".$calendarId."||".CECCalendar::GetUniqCalendarId());
 	}
 
-	function CheckSign($sign, $userId, $calendarId)
+	public static function CheckSign($sign, $userId, $calendarId)
 	{
 		return (md5($userId."||".$calendarId."||".CECCalendar::GetUniqCalendarId()) == $sign);
 	}
 
-	function GetHidden($userId)
+	public static function GetHidden($userId)
 	{
 		$res = array();
 		if (class_exists('CUserOptions'))
@@ -8384,7 +8359,7 @@ class CECCalendar
 		return $res;
 	}
 
-	function SetHidden($userId, $ar = array())
+	public static function SetHidden($userId, $ar = array())
 	{
 		if (class_exists('CUserOptions'))
 			return CUserOptions::SetOption("intranet", "ec_hidden_calendars", serialize($ar));

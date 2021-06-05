@@ -15,7 +15,7 @@ use Bitrix\Sale\Internals;
 use Bitrix\Sale\PropertyBase;
 use Bitrix\Sale\Registry;
 
-class Order extends ProductsDataProvider implements Nameable
+class Order extends ProductsDataProvider
 {
 	protected static $properties;
 
@@ -203,11 +203,6 @@ class Order extends ProductsDataProvider implements Nameable
 	public function getCrmOwnerType()
 	{
 		return \CCrmOwnerType::Order;
-	}
-
-	protected function getCrmProductOwnerType()
-	{
-		return 'O';
 	}
 
 	protected function getPersonTypeID()

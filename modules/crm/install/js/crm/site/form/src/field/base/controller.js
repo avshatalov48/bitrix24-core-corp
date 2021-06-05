@@ -297,6 +297,7 @@ class Controller extends Event
 		if (values.length === 0)
 		{
 			values.push(value);
+			selected = value !== 'undefined' && value !== '';
 		}
 
 		// empty single

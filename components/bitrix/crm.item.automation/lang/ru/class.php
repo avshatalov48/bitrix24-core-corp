@@ -1,0 +1,6 @@
+<?php
+$MESS['CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED'] = 'Отстствует модуль bizproc';
+$MESS['CRM_ITEM_AUTOMATION_INVALID_ENTITY_TYPE'] = 'Неверный тип сущности';
+$MESS['CRM_ITEM_AUTOMATION_TITLE'] = 'Роботы #ENTITY#';
+$MESS['CRM_ITEM_AUTOMATION_TITLE_CATEGORY'] = 'Роботы #ENTITY# (#CATEGORY#)';
+$MESS['CRM_ITEM_AUTOMATION_WRONG_CATEGORY'] = 'Неверно выбрана категория';

@@ -102,9 +102,9 @@ class Comment extends BaseObject
 			$result["FILES"] = array();
 			foreach ($params["FILES"] as $key => $val)
 			{
-				if (intval($val["FILE_ID"]) > 0)
+				if (intval($val["FILE_ID"]) > 0 && $val["del"] !== "Y")
 				{
-					$val["del"] = ($val["del"] == "Y" ? "Y" : "");
+					unset($val["del"]);
 				}
 				$result["FILES"][$key] = $val;
 			}
@@ -132,13 +132,22 @@ class Comment extends BaseObject
 			$errorCollectionParam->add($errorCollection->toArray());
 			return false;
 		}
+
+		global $USER_FIELD_MANAGER;
+		if ($result["SERVICE_TYPE"])
+		{
+			$fields = $USER_FIELD_MANAGER->getUserFields("FORUM_MESSAGE");
+			if (($ufData = array_intersect_key($params, $fields)) && !empty($ufData))
+			{
+				$USER_FIELD_MANAGER->editFormAddFields("FORUM_MESSAGE", $result, ["FORM" => $ufData]);
+			}
+		}
 		else
 		{
-			global $USER_FIELD_MANAGER;
 			$USER_FIELD_MANAGER->editFormAddFields("FORUM_MESSAGE", $result);
-			$params = $result;
-			return true;
 		}
+		$params = $result;
+		return true;
 	}
 
 	private function updateStatisticModule($messageId)
@@ -192,7 +201,9 @@ class Comment extends BaseObject
 			"AUX" => $params["AUX"],
 			"AUX_DATA" => $auxData,
 			"SERVICE_TYPE" => ($params["SERVICE_TYPE"] ?? null),
-			"SERVICE_DATA" => ($params["SERVICE_DATA"] ?? null)
+			"SERVICE_DATA" => ($params["SERVICE_DATA"] ?? null),
+
+			"UF_TASK_COMMENT_TYPE" => ($params["UF_TASK_COMMENT_TYPE"] ?? null),
 		);
 
 		if ($this->prepareFields($params, $this->errorCollection))

@@ -8,6 +8,16 @@ Loc::loadMessages(__FILE__);
 
 class OpenLineMessageTrigger extends OpenLineTrigger
 {
+	public static function isSupported($entityTypeId)
+	{
+		return $entityTypeId !== \CCrmOwnerType::Quote ? parent::isSupported($entityTypeId) : false;
+	}
+
+	protected static function areDynamicTypesSupported(): bool
+	{
+		return false;
+	}
+
 	public static function isEnabled()
 	{
 		return (Integration\OpenLineManager::isEnabled()

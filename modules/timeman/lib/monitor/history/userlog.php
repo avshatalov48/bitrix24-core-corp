@@ -1,93 +1,31 @@
 <?php
 namespace Bitrix\Timeman\Monitor\History;
 
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\Date;
-use Bitrix\Timeman\Model\Monitor\MonitorAppTable;
-use Bitrix\Timeman\Model\Monitor\MonitorSiteTable;
 use Bitrix\Timeman\Model\Monitor\MonitorUserLogTable;
+use Bitrix\Timeman\Monitor\Utils\User;
 
 class UserLog
 {
-	public static function add($history): void
+	public static function record($history): array
 	{
-		global $USER;
-		$userId = $USER->GetID();
+		$date = new Date($history['dateLog'], 'Y-m-j');
 
-		$fullTimeSpend = [];
-		foreach ($history as $day => $entries)
+		foreach ($history['historyPackage'] as $index => $entry)
 		{
-			foreach ($entries as $key => $entry)
-			{
-				$fullTimeSpend[$day][$entry['code']]['TIME_SPEND'] += $entry['time'];
-			}
+			$result = MonitorUserLogTable::add([
+				'DATE_LOG' => $date,
+				'USER_ID' => User::getCurrentUserId(),
+				'PRIVATE_CODE' => $entry['privateCode'],
+				'ENTITY_ID' => $entry['ENTITY_ID'],
+				'TIME_SPEND' => $entry['time'],
+				'DESKTOP_CODE' => $history['desktopCode'],
+				'COMMENT' => $entry['comment'],
+			]);
+
+			$history['historyPackage'][$index]['USER_LOG_ID'] = $result->getId();
 		}
 
-		foreach ($history as $day => $entries)
-		{
-			$date = new Date($day, 'Y-m-j');
-			foreach ($entries as $entry)
-			{
-				MonitorUserLogTable::merge([
-					'DATE_LOG' => $date,
-					'USER_ID' => $userId,
-					'DESKTOP_CODE' => $entry['desktopCode'],
-					'CODE' => $entry['code'],
-					'APP_CODE' => $entry['appCode'],
-					'SITE_CODE' => $entry['siteCode'],
-					'TIME_SPEND' => $fullTimeSpend[$day][$entry['code']]['TIME_SPEND']
-				]);
-			}
-		}
-	}
-
-	public static function getForPeriod(int $userId, Date $dateStart, Date $dateFinish): array
-	{
-		$query = new Query(MonitorUserLogTable::getEntity());
-
-		$query->setSelect([
-			'APP_ID' => 'app.ID',
-			'APP_NAME' => 'app.NAME',
-			'SITE_HOST' => 'site.HOST',
-			'SITE_ID' => 'site.ID',
-			'SITE_NAME' => 'site.NAME',
-			'TIME',
-		]);
-
-		$query->registerRuntimeField(new ReferenceField(
-			'site',
-			MonitorSiteTable::class,
-			Join::on('this.SITE_CODE', 'ref.CODE')
-		));
-
-		$query->registerRuntimeField(new ReferenceField(
-			'app',
-			MonitorAppTable::class,
-			Join::on('this.APP_CODE', 'ref.CODE')
-		));
-
-		$query->registerRuntimeField(new ExpressionField(
-			'TIME',
-			'sum(%s)',
-			['TIME_SPEND']
-		));
-
-		$query->addFilter('=USER_ID', $userId);
-		$query->whereBetween('DATE_LOG', $dateStart, $dateFinish);
-		$query->addOrder('TIME', 'DESC');
-
-		$result = $query->exec()->fetchAll();
-		foreach ($result as $key => $entity)
-		{
-			if (!$entity['APP_ID'] && !$entity['SITE_ID'])
-			{
-				unset($result[$key]);
-			}
-		}
-
-		return $result;
+		return $history;
 	}
 }

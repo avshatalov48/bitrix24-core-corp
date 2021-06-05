@@ -91,7 +91,7 @@ class EmployeeType extends BaseType
 		{
 			foreach($values as $value)
 			{
-				$users = \CUser::GetList($by = '', $order = '', ['ID' => $value]);
+				$users = \CUser::GetList('', '', ['ID' => $value]);
 
 				while($user = $users->Fetch())
 				{

@@ -126,7 +126,7 @@ final class DeletedLogMover extends Stepper
 	public function loadCurrentStatus()
 	{
 		$status = Option::get('disk', 'deleted_log_migrate_data', 'default');
-		$status = ($status !== 'default' ? @unserialize($status) : []);
+		$status = ($status !== 'default' ? @unserialize($status, ['allowed_classes' => false]) : []);
 		$status = (is_array($status) ? $status : []);
 
 		if (empty($status))

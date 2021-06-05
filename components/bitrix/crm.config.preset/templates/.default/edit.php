@@ -4,6 +4,20 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 /** @global CMain $APPLICATION */
 /** @var array $arParams */
 
+if (isset($arResult['IS_ERROR']) && $arResult['IS_ERROR'] === 'Y')
+{
+	if (
+		isset($arResult['ERROR_TEXT'])
+		&& is_string($arResult['ERROR_TEXT'])
+		&& $arResult['ERROR_TEXT'] !== ''
+	)
+	{
+		ShowError($arResult['ERROR_TEXT']);
+	}
+
+	return;
+}
+
 global $APPLICATION;
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',

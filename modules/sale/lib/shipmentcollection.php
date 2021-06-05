@@ -1502,7 +1502,7 @@ class ShipmentCollection
 	 *
 	 * @return Result
 	 */
-	public function updateReservedFlag(ShipmentCollection $collection)
+	public static function updateReservedFlag(ShipmentCollection $collection)
 	{
 		$result = new Result();
 		/** @var Shipment $shipment */

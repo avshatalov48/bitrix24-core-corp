@@ -222,8 +222,8 @@ final class ShipmentDataExtractor
 		}
 
 		$responsibleUser = \CUser::GetList(
-			($by = 'id'),
-			($order = 'asc'),
+			'id',
+			'asc',
 			['ID' => $responsibleUserId]
 		)->fetch();
 

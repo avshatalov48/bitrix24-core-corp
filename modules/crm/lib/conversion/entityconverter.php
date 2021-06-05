@@ -23,6 +23,9 @@ abstract class EntityConverter
 	/** @var bool */
 	private $enableBizProcCheck = true;
 
+	/** @var bool */
+	private $skipBizProcAutoStart = false;
+
 	/**
 	 * @param EntityConversionConfig $config
 	 */
@@ -175,6 +178,24 @@ abstract class EntityConverter
 	{
 		$this->enableBizProcCheck = $enable;
 	}
+
+	/**
+	 * Check should auto start BP after update.
+	 * @return bool
+	 */
+	public function shouldSkipBizProcAutoStart(): bool
+	{
+		return $this->skipBizProcAutoStart;
+	}
+	/**
+	 * Enable/disable auto start BP after update
+	 * @param bool $enable Flag of enabling User Field checking.
+	 */
+	public function setSkipBizProcAutoStart(bool $enable)
+	{
+		$this->skipBizProcAutoStart = $enable;
+	}
+
 	//endregion
 	/**
 	 * Try to execute current conversion phase.

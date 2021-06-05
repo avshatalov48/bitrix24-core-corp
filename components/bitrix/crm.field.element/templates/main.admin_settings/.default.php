@@ -21,7 +21,7 @@ $name = $arResult['additionalParameters']['NAME'];
 			<?= ($arResult['entityTypeLead'] === 'Y' ? 'checked="checked"' : '') ?>
 		>
 		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_LEAD') ?>
-		<br/>
+		<br>
 		<input
 			type="checkbox"
 			name="<?= $name ?>[CONTACT]"
@@ -29,7 +29,7 @@ $name = $arResult['additionalParameters']['NAME'];
 			<?= ($arResult['entityTypeContact'] === 'Y' ? 'checked="checked"' : '') ?>
 		>
 		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_CONTACT') ?>
-		<br/>
+		<br>
 		<input
 			type="checkbox"
 			name="<?= $name ?>[COMPANY]"
@@ -37,7 +37,7 @@ $name = $arResult['additionalParameters']['NAME'];
 			<?= ($arResult['entityTypeCompany'] === 'Y' ? 'checked="checked"' : '') ?>
 		>
 		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_COMPANY') ?>
-		<br/>
+		<br>
 		<input
 			type="checkbox"
 			name="<?= $name ?>[DEAL]"
@@ -45,7 +45,7 @@ $name = $arResult['additionalParameters']['NAME'];
 			<?= ($arResult['entityTypeDeal'] === 'Y' ? 'checked="checked"' : '') ?>
 		>
 		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_DEAL') ?>
-		<br/>
+		<br>
 		<input
 			type="checkbox"
 			name="<?= $name ?>[ORDER]"
@@ -53,5 +53,23 @@ $name = $arResult['additionalParameters']['NAME'];
 			<?= ($arResult['entityTypeOrder'] === 'Y' ? 'checked="checked"' : '') ?>
 		>
 		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_ORDER') ?>
+
+		<?php
+		$settings = $arResult['userField']['SETTINGS'];
+		foreach ($arResult['dynamicTypes'] as $dynamicId => $dynamicTitle)
+		{
+			$dynamicEntityType = \CCrmOwnerType::ResolveName($dynamicId);
+			?>
+			<br>
+			<input
+				type="checkbox"
+				name="<?= $name ?>[<?= \CCrmOwnerType::ResolveName($dynamicId) ?>]"
+				value="Y"
+				<?= ((isset($settings[$dynamicEntityType]) && $settings[$dynamicEntityType] === 'Y') ? 'checked' : '') ?>
+			>
+			<?php
+			print \Bitrix\Main\Text\HtmlFilter::encode($dynamicTitle);
+		}
+		?>
 	</td>
 </tr>

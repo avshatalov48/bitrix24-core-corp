@@ -1040,9 +1040,7 @@ class CCalendar
 			{
 				$userId = intval($userId);
 
-				$by = "id";
-				$order = "asc";
-				$r = CUser::GetList($by, $order, array("ID_EQUAL_EXACT" => $userId, "ACTIVE" => "Y"));
+				$r = CUser::GetList('id', 'asc', array("ID_EQUAL_EXACT" => $userId, "ACTIVE" => "Y"));
 
 				if (!$User = $r->Fetch())
 					continue;
@@ -2470,7 +2468,7 @@ class CCalendar
 
 			$arFields['ID'] = $id;
 			foreach(GetModuleEvents("calendar", "OnAfterCalendarEventEdit", true) as $arEvent)
-				ExecuteModuleEventEx($arEvent, array('arFields' => $arFields, 'bNew' => $bNew, 'userId' => $userId));
+				ExecuteModuleEventEx($arEvent, array($arFields, $bNew, $userId));
 		}
 
 		self::SetSilentErrorMode($silentErrorModePrev);
@@ -2480,7 +2478,7 @@ class CCalendar
 		return $result;
 	}
 
-	private function CountNumberFollowEvents($params)
+	private static function CountNumberFollowEvents($params)
 	{
 		$curCount = self::CountPastEvents($params);
 
@@ -5432,6 +5430,8 @@ class CCalendar
 		$res = [];
 		if (Loader::includeModule('tasks'))
 		{
+			$userSettings = Bitrix\Calendar\UserSettings::get();
+
 			$arFilter = [
 				'!STATUS' => [
 					CTasks::STATE_DEFERRED,
@@ -5439,7 +5439,7 @@ class CCalendar
 				'CHECK_PERMISSIONS' => 'Y'
 			];
 
-			if (self::$userSettings['showCompletedTasks'] == 'N')
+			if ($userSettings['showCompletedTasks'] == 'N')
 			{
 				$arFilter['!STATUS'][] = CTasks::STATE_COMPLETED;
 			}

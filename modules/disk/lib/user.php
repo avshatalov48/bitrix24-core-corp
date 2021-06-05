@@ -184,6 +184,11 @@ class User extends Internals\Model
 		return $this->personalGender == 'F'? 'F' : 'M';
 	}
 
+	public function getPersonalGenderExact()
+	{
+		return $this->personalGender;
+	}
+
 	/**
 	 * @return int
 	 */
@@ -285,11 +290,9 @@ class User extends Internals\Model
 		{
 			return false;
 		}
-		$o = 'ID';
-		$b = '';
 		$queryUser = \CUser::getList(
-			$o,
-			$b,
+			'ID',
+			'ASC',
 			array(
 				'ID_EQUAL_EXACT' => $this->id,
 			),
@@ -358,7 +361,7 @@ class User extends Internals\Model
 	{
 		if ($this->isExtranetUser())
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$userPage = \COption::getOptionString("socialnetwork", "user_page", false, \CExtranet::getExtranetSiteID());
 			if(!$userPage)
 			{

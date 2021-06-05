@@ -110,8 +110,8 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 					if (!empty($arImmediateEmployees))
 					{
 						$rsUsers = CUser::GetList(
-							$by = 'ID',
-							$order = 'ASC',
+							'ID',
+							'ASC',
 							array(
 								'ACTIVE' => 'Y',
 								'ID' => implode('|', array_unique($arImmediateEmployees))

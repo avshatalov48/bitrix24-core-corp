@@ -267,7 +267,7 @@ final class ForumMessageConnector extends StubConnector
 					{
 						$cache->startDataCache();
 						$res = reset($topics);
-						/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 						\CForumCacheManager::setTag($cachePath, "forum_topic_" . $res['ID']);
 						$cache->endDataCache(array($messages, $topics));
 					}
@@ -533,14 +533,14 @@ final class ForumMessageConnector extends StubConnector
 					$userGroups = array(2);
 				}
 
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				if(\CForumUser::isAdmin($userId, $userGroups))
 				{
 					$this->canRead = true;
 
 					return $this->canRead;
 				}
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$perms = \CForumNew::getUserPermission($message["FORUM_ID"], $userGroups);
 				if($perms >= "Y")
 				{
@@ -554,7 +554,7 @@ final class ForumMessageConnector extends StubConnector
 
 					return $this->canRead;
 				}
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$forum = \CForumNew::getByID($message["FORUM_ID"]);
 				$this->canRead = $forum["ACTIVE"] == "Y";
 

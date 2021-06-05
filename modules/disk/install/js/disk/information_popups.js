@@ -224,12 +224,6 @@ BX.Disk.InformationPopups = (function ()
 				'</div>'
 				;
 
-			var zIndex = (BX.getClass('BX.SidePanel.Instance') && BX.SidePanel.Instance.isOpen())? BX.SidePanel.Instance.getTopSlider().getZindex() : null;
-			if (BX.getClass('BX.UI.Viewer.Instance') && (BX.UI.Viewer.Instance.getZindex() > zIndex))
-			{
-				zIndex = BX.UI.Viewer.Instance.getZindex();
-			}
-
 			var popup = BX.Disk.modalWindow({
 				modalId: 'bx-disk-select-doc-service',
 				events: {
@@ -257,7 +251,6 @@ BX.Disk.InformationPopups = (function ()
 						this.destroy();
 					}
 				},
-				zIndex: zIndex || 3000,
 				title: BX.message('DISK_JS_SERVICE_CHOICE_TITLE_SMALL'),
 				content: [BX.create('div', {html: content})],
 				buttons: buttons

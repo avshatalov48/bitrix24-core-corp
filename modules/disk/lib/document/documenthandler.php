@@ -170,16 +170,6 @@ abstract class DocumentHandler implements IErrorable
 	}
 
 	/**
-	 * Public name storage of documents. May show in user interface.
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @return string
-	 */
-	public static function getStorageName()
-	{
-		throw new NotImplementedException;
-	}
-
-	/**
 	 * Create new blank file in cloud service.
 	 * It is not necessary set shared rights on file.
 	 * @param FileData $fileData
@@ -263,14 +253,6 @@ abstract class DocumentHandler implements IErrorable
 	{
 		return true;
 	}
-
-	/**
-	 * Lists folder contents
-	 * @param $path
-	 * @param $folderId
-	 * @return mixed
-	 */
-	abstract public function listFolder($path, $folderId);
 
 	/**
 	 * Execute this method for check potential possibility get access token.

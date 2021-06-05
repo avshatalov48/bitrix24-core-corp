@@ -100,8 +100,8 @@ elseif (empty($_REQUEST["preview_comment"]) || $_REQUEST["preview_comment"] == "
 
 
 	$rsUser = CUser::GetList(
-		$by = 'id',
-		$order = 'asc',
+		'id',
+		'asc',
 		array('ID_EQUAL_EXACT' => (int) $givenUserId),
 		array('FIELDS' => array('PERSONAL_GENDER'))
 	);

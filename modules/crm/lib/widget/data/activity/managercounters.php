@@ -705,7 +705,7 @@ HTML;
 					} while ($res = self::$personalCounterData['dbRes']->fetch());
 					if (!empty($userList))
 					{
-						$dbRes = \CUser::getList(($by = "ID"), ($order = "ASC"),
+						$dbRes = \CUser::getList("ID", "ASC",
 							array("ID" => implode("|", array_unique($userList))),
 							array("FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "TITLE", "PERSONAL_PHOTO", "WORK_POSITION")));
 						while($u = $dbRes->fetch())

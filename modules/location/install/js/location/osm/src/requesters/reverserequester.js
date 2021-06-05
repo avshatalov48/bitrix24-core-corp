@@ -1,8 +1,9 @@
+import {Point} from 'location.core';
 import BaseRequester from './baserequester';
 
 export default class ReverseRequester extends BaseRequester
 {
-	createUrl(params: Object): string
+	createUrl(params: { point: Point, zoom: number }): string
 	{
 		const zoom = params.zoom || 18;
 

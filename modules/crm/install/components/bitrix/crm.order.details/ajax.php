@@ -8,6 +8,7 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Catalog;
 use Bitrix\Crm\Order\Order;
+use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Error;
@@ -61,11 +62,16 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if(!empty($this->request['ORDER_PRODUCT_DATA']))
 		{
-			$productData = current(
-				\CUtil::JsObjectToPhp(
-					$this->request['ORDER_PRODUCT_DATA']
-				)
-			);
+			// json can be broken sometimes; see http://jabber.bx/view.php?id=133871
+			$productData = Context::getCurrent()->getRequest()->getPostList()->getRaw('ORDER_PRODUCT_DATA');
+			if(!defined("BX_UTF"))
+			{
+				$productData = \Bitrix\Main\Text\Encoding::convertEncoding(
+					$productData, 'UTF-8', SITE_CHARSET
+				);
+			}
+
+			$productData = current(\CUtil::JsObjectToPhp($productData));
 
 			if (!$isNew)
 			{
@@ -1644,7 +1650,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 					['DELIVERY_CALCULATION']
 				)
 			];
-		
+
 		$order = $this->buildOrder($formData, $settings);
 		if(!$order)
 		{

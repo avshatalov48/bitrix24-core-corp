@@ -212,12 +212,18 @@ else
 									<div class="imconnector-livechat-public-link-inner-copy-inner">
 										<div class="imconnector-livechat-public-link-inner-copy-field">
 											<span><?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_SERVER'])?></span>
-											<input id="imconnector-livechat-public-link-url-code"
+											<input
+													id="imconnector-livechat-public-link-url-code"
 												   class="imconnector-livechat-public-link-inner-copy-field-item imconnector-livechat-public-link-inner-copy-field-item-livechat"
 												   type="text"
 												   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_NAME')?>"
 												   name="URL_CODE_PUBLIC"
-												   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC'])?>">
+												   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC'])?>"
+											/>
+											<?if (defined('IMOL_WIDGET_GENERATE') && IMOL_WIDGET_GENERATE):?>
+												<br/>
+												Widget code: <div class="imconnector-livechat-public-link-code"><?=$arResult['INFO_CONNECTION']['URL_CODE']?></div>
+											<?endif;?>
 										</div>
 										<div class="imconnector-livechat-public-link-inner-copy-button">
 											<span class="webform-small-button imconnector-public-link-inner-copy-button-item" id="imconnector-copy-public-link"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_COPY')?></span>

@@ -2,8 +2,11 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service;
+use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Localization\Loc;
 
 class Quote extends Entity
@@ -21,6 +24,17 @@ class Quote extends Entity
 	public function getItemsSelectPreset(): array
 	{
 		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
+	}
+
+	protected function getDetailComponentName(): ?string
+	{
+		return 'bitrix:crm.quote.details';
+	}
+
+	protected function getInlineEditorConfiguration(\CBitrixComponent $component): array
+	{
+		/** @var \CrmQuoteDetailsComponent $component */
+		return $component->prepareKanbanConfiguration();
 	}
 
 	protected function getPersistentFilterFields(): array
@@ -78,7 +92,7 @@ class Quote extends Entity
 
 	public function isInlineEditorSupported(): bool
 	{
-		return false;
+		return QuoteSettings::getCurrent()->isFactoryEnabled();
 	}
 
 	public function isEntitiesLinksInFilterSupported(): bool
@@ -87,6 +101,11 @@ class Quote extends Entity
 	}
 
 	public function isActivityCountersSupported(): bool
+	{
+		return false;
+	}
+
+	public function isNeedToRunAutomation(): bool
 	{
 		return false;
 	}
@@ -124,6 +143,72 @@ class Quote extends Entity
 
 		$item = parent::prepareItemCommonFields($item);
 
+		// emulating crm element user field to render value properly
+		if ($item[Item\Quote::FIELD_NAME_LEAD_ID] > 0)
+		{
+			$item[Item\Quote::FIELD_NAME_LEAD_ID] = 'L_' . $item[Item\Quote::FIELD_NAME_LEAD_ID];
+		}
+		if ($item[Item\Quote::FIELD_NAME_DEAL_ID] > 0)
+		{
+			$item[Item\Quote::FIELD_NAME_DEAL_ID] = 'D_' . $item[Item\Quote::FIELD_NAME_DEAL_ID];
+		}
+
 		return $item;
+	}
+
+	/**
+	 * @param array $data
+	 * @return string
+	 */
+	protected function getColumnId(array $data): string
+	{
+		return $data['STATUS_ID'];
+	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		$factory = Service\Container::getInstance()->getFactory($this->getTypeId());
+		return static::getRequiredFieldsByStagesByFactory(
+			$factory,
+			$this->getRequiredUserFieldNames(),
+			$stages
+		);
+	}
+
+	public function getTypeInfo(): array
+	{
+		return array_merge(
+			parent::getTypeInfo(),
+			[
+				'hasPlusButtonTitle' => true,
+				'useFactoryBasedApproach' => true,
+				'canUseCallListInPanel' => true,
+				'showPersonalSetStatusNotCompletedText' => true,
+				'kanbanItemClassName' => 'crm-kanban-item crm-kanban-item-invoice',
+			]
+		);
+	}
+
+	public function getAdditionalFields(bool $clearCache = false): array
+	{
+		$fields = parent::getAdditionalFields($clearCache);
+
+		// emulating crm element user field to render value properly
+		if (isset($fields[Item\Quote::FIELD_NAME_LEAD_ID]))
+		{
+			$fields[Item\Quote::FIELD_NAME_LEAD_ID]['type'] = 'crm';
+			$fields[Item\Quote::FIELD_NAME_LEAD_ID]['settings'] = [
+				'LEAD' => 'Y',
+			];
+		}
+		if (isset($fields[Item\Quote::FIELD_NAME_DEAL_ID]))
+		{
+			$fields[Item\Quote::FIELD_NAME_DEAL_ID]['type'] = 'crm';
+			$fields[Item\Quote::FIELD_NAME_DEAL_ID]['settings'] = [
+				'DEAL' => 'Y',
+			];
+		}
+
+		return $fields;
 	}
 }

@@ -18,7 +18,7 @@ class Common extends Disk
 
 		if(!empty($this->entityMiscData) && is_string($this->entityMiscData))
 		{
-			$this->unserializedMiscData = unserialize($this->entityMiscData);
+			$this->unserializedMiscData = unserialize($this->entityMiscData, ['allowed_classes' => false]);
 		}
 	}
 

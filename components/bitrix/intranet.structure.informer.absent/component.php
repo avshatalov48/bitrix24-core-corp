@@ -65,7 +65,7 @@ if ($this->StartResultCache(false, $arParams['mode'].'|'.($arParams['DEPARTMENT'
 	if ($arParams['DEPARTMENT'])
 	{
 		$USERS = array();
-		$dbRes = CUser::GetList($by = 'ID', $order="ASC", array(
+		$dbRes = CUser::GetList('ID', "ASC", array(
 				'ACTIVE' => 'Y',
 				'UF_DEPARTMENT' => CIntranetUtils::GetIBlockSectionChildren($arParams['DEPARTMENT']),
 			)
@@ -148,7 +148,7 @@ if ($this->StartResultCache(false, $arParams['mode'].'|'.($arParams['DEPARTMENT'
 	{
 		$arFilter = array('ID' => implode('|', $arUserIDs), 'ACTIVE' => 'Y', '!UF_DEPARTMENT' => false);
 		
-		$dbUsers = CUser::GetList($by = 'ID', $order = 'desc', $arFilter);
+		$dbUsers = CUser::GetList('ID', 'desc', $arFilter);
 		while ($arUser = $dbUsers->Fetch())
 		{
 			$CACHE_MANAGER->RegisterTag('intranet_user_'.$arUser['ID']);

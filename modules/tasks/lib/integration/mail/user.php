@@ -66,8 +66,8 @@ final class User extends \Bitrix\Tasks\Integration\Mail
 		}
 
 		$item = \CUser::GetList(
-			$o = "ID",
-			$b = "ASC",
+			"ID",
+			"ASC",
 			array(
 				"=EMAIL" => $email,
 				"!EXTERNAL_AUTH_ID" => [ "bot", "controller", "replica", "shop", "imconnector", "sale", "saleanonymous" ]

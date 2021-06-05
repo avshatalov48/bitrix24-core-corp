@@ -432,6 +432,19 @@
 
 			sdpLines[videoLineIndex] = sortVideoLine(sdpLines[videoLineIndex], codecRtpMaps, options);
 			return sdpLines.join("\n");
+		},
+
+		sendTelemetryEvent: function(options)
+		{
+			var url = (document.location.protocol == "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
+			var req =  new XMLHttpRequest();
+			req.open("POST", url, true);
+			req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			req.withCredentials = true;
+			options.op = "call";
+			options.d = document.location.host;
+			var query = BX.util.buildQueryString(options);
+			req.send(query);
 		}
 	};
 

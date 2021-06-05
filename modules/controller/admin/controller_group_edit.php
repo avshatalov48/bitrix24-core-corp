@@ -517,7 +517,7 @@ echo $USER_FIELD_MANAGER->ShowScript();
 		else
 		{
 			if (method_exists($module, "GetModuleRightList"))
-				$arModuleRights[$module_id] = call_user_func(array($module_id, "GetModuleRightList"));
+				$arModuleRights[$module_id] = call_user_func(array($module, "GetModuleRightList"));
 			else
 				$arModuleRights[$module_id] = $APPLICATION->GetDefaultRightList();
 		}

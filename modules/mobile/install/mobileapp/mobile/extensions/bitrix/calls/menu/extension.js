@@ -227,7 +227,7 @@
 			{
 				if (config.userModel.avatar)
 				{
-					imageSource.uri = config.userModel.avatar;
+					imageSource.uri = encodeURI(config.userModel.avatar);
 				}
 				else
 				{

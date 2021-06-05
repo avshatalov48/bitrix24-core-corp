@@ -2,6 +2,7 @@
 
 namespace Bitrix\Im\Call;
 
+use Bitrix\Im\Call\Integration\Chat;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -15,7 +16,7 @@ class Signaling
 		$this->call = $call;
 	}
 
-	public function sendInvite(int $senderId, array $toUserIds, $isLegacyMobile, $video = false)
+	public function sendInvite(int $senderId, array $toUserIds, $isLegacyMobile, $video = false, $sendPush = true)
 	{
 		$users = $this->call->getUsers();
 
@@ -25,7 +26,7 @@ class Signaling
 
 		foreach ($toUserIds as $toUserId)
 		{
-			$config = array(
+			$config = [
 				'call' => $this->call->toArray((count($toUserIds) == 1 ? $toUserId : 0)),
 				'users' => $users,
 				'invitedUsers' => $toUserIds,
@@ -34,9 +35,9 @@ class Signaling
 				'publicIds' => $this->getPublicIds($users),
 				'isLegacyMobile' => $isLegacyMobile,
 				'video' => $video,
-				'logToken' => $this->call->getLogToken($toUserId)
-			);
-			if (!isset($skipPush[$toUserId]))
+				'logToken' => $this->call->getLogToken($toUserId),
+			];
+			if (!isset($skipPush[$toUserId]) && $sendPush)
 			{
 				$push = $this->getInvitePush($senderId, $toUserId, $isLegacyMobile, $video);
 			}
@@ -48,10 +49,19 @@ class Signaling
 	protected function getInvitePush(int $senderId, int $toUserId, $isLegacyMobile, $video)
 	{
 		$users = $this->call->getUsers();
+		$associatedEntity = $this->call->getAssociatedEntity();
+		$name = $associatedEntity ? $associatedEntity->getName($toUserId) : Loc::getMessage('IM_CALL_INVITE_NA');
 
-		$name = $this->call->getAssociatedEntity() ?
-			$this->call->getAssociatedEntity()->getName($toUserId)
-			: Loc::getMessage('IM_CALL_INVITE_NA');
+		$email = null;
+		$phone = null;
+		if ($associatedEntity instanceof Chat && $associatedEntity->isPrivateChat())
+		{
+			$userInstance = \Bitrix\Im\User::getInstance($senderId);
+			$email = $userInstance->getEmail();
+			$phone = $userInstance->getPhone();
+			$phone = preg_replace("/[^0-9#*+,;]/", "", $phone);
+			$avatar = $userInstance->getAvatar();
+		}
 
 		$pushText = Loc::getMessage('IM_CALL_INVITE', ['#USER_NAME#' => $name]);
 
@@ -61,15 +71,17 @@ class Signaling
 			'params' => [
 				'ACTION' => 'IMINV_'.$this->call->getId()."_".time()."_".($video ? 'Y' : 'N'),
 				'PARAMS' => [
-					'callerName' => $name,
-					'call' => [
-						'ID' => $this->call->getId(),
-						'PROVIDER' => $this->call->getProvider()
-					],
+					'callerName' => htmlspecialcharsback($name),
+					'callerAvatar' => $avatar ?? '',
+					'call' => $this->call->toArray($toUserId),
 					'video' => $video,
 					'users' => $users,
 					'isLegacyMobile' => $isLegacyMobile,
-					'senderId' => $senderId
+					'senderId' => $senderId,
+					'senderEmail' => $email,
+					'senderPhone' => $phone,
+					'logToken' => $this->call->getLogToken($toUserId),
+					'ts' => time(),
 				]
 			],
 			'advanced_params' => [
@@ -142,7 +154,8 @@ class Signaling
 			'advanced_params' => [
 				'id' => 'IM_CALL_'.$this->call->getId().'_ANSWER',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
-				'isVoip' => true
+				'isVoip' => true,
+				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];
 
@@ -216,7 +229,7 @@ class Signaling
 			'advanced_params' => [
 				'id' => 'IM_CALL_'.$this->call->getId().'_FINISH',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
-				'isVoip' => true
+				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];
 
@@ -232,11 +245,16 @@ class Signaling
 			'advanced_params' => [
 				'id' => 'IM_CALL_'.$this->call->getId().'_FINISH',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
-				'isVoip' => true
+				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];
 
 		return $this->send('Call::finish', $this->call->getUsers(), [], $push, 3600);
+	}
+
+	public static function filterPushesForApple($message, $deviceType, $deviceToken)
+	{
+		return Loader::includeModule("pull") && ($deviceType !== \CPushDescription::TYPE_APPLE);
 	}
 
 	protected function getPublicIds(array $userIds)

@@ -3,9 +3,9 @@ import BaseRequester from './baserequester';
 
 export default class SearchRequester extends BaseRequester
 {
-	createUrl(params: Array): string
+	createUrl(params: { query: string, viewbox: string, limit: ?number }): string
 	{
-		const limit = 5;
+		const limit = params.limit ?? 5;
 
 		let result = `${this.serviceUrl}/?
 			action=osmgateway.location.search
@@ -14,7 +14,7 @@ export default class SearchRequester extends BaseRequester
 			&params[limit]=${limit}
 			&params[accept-language]=${this.languageId}`;
 
-		if(params.viewbox)
+		if (params.viewbox)
 		{
 			result += `&params[viewbox]=${params.viewbox}`;
 		}

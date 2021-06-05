@@ -6,7 +6,7 @@ class Honorific
 	public static function getDefaultLanguageID()
 	{
 		$entity = new \CSite();
-		$dbSites = $entity->GetList($by = 'sort', $order = 'asc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
+		$dbSites = $entity->GetList('sort', 'asc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
 		$site = $dbSites->Fetch();
 		return is_array($site) && isset($site['LANGUAGE_ID']) ? $site['LANGUAGE_ID'] : '';
 	}

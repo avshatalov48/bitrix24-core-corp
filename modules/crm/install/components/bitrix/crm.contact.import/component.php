@@ -1267,7 +1267,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							$userID = is_int($data) ? $data : intval($data);
 							if($userID > 0 && !isset($usersByID[$userID]))
 							{
-								$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
+								$dbUsers = CUser::GetList('ID', 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
 								$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 								if(is_array($user))
 								{
@@ -1288,7 +1288,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 								$userID = intval($m[1]);
 								if($userID > 0 && !isset($usersByID[$userID]))
 								{
-									$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
+									$dbUsers = CUser::GetList('ID', 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
 									$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 									if(is_array($user))
 									{
@@ -2006,7 +2006,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			}
 			else
 			{
-				$error = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, 0, 'csv,txt');
+				$error = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, false, 'csv,txt');
 				if($error !== '')
 				{
 					ShowError($error);
@@ -2420,10 +2420,8 @@ if(!$enableFixedOrigin)
 
 $arResult['HEADER_LANG_SELECTOR_ID'] = 'import_file_header_lang';
 $langs = array();
-$sort = 'sort';
-$order = 'asc';
 $langEntity = new CLanguage();
-$dbLangs = $langEntity->GetList($sort, $order);
+$dbLangs = $langEntity->GetList();
 while($lang = $dbLangs->Fetch())
 {
 	$langs[$lang['LID']] = "({$lang['LID']}) {$lang['NAME']}";

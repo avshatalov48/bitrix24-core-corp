@@ -11,8 +11,10 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
+$publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === true);
 $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 ?>
+
 <select
 	name="<?= $arResult['fieldName'] ?>"
 	id="<?= $fieldName ?>_select"
@@ -20,46 +22,71 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 	<?= ($arResult['userField']['MULTIPLE'] === 'Y' ? ' multiple' : '') ?>
 >
 	<?php
-	foreach($arResult['value'] as $value)
+	foreach($arResult['valueCodes'] as $value)
 	{
 		$value = HtmlFilter::encode($value);
+		$ar = explode('_', $value);
 		?>
 		<option
 			value="<?= $value ?>"
 			selected="selected"
-			data-category="<?= $arResult['ELEMENT'][$value]['type'] ?>"
+			data-category="<?= mb_strtolower(ElementType::getLongEntityType($ar[0])) ?>"
 		><?= $value ?></option>
 		<?php
 	}
 	?>
 </select>
+
 <div>
 	<?php
-	$categoryTitles = [];
-	foreach($arResult['value'] as $value)
+	foreach($arResult['value'] as $entityType => $arEntity)
 	{
-		list($prefix, $id) = explode('_', $value);
-		if(!in_array($prefix, $categoryTitles, true))
+		if (empty($arEntity['items']))
 		{
-			$categoryTitles[] = $prefix;
+			continue;
+		}
+
+		if($arParams['PREFIX'])
+		{
 			?>
 			<span class="mobile-grid-data-span mobile-grid-crm-element-category-title">
-				<?= Loc::getMessage(
-					'CRM_ENTITY_TYPE_' . ElementType::getLongEntityType($prefix)
-				) . ':' ?>
+				<?= $arEntity['title'] ?>:
 			</span>
 			<?php
 		}
-		?>
-		<span class="mobile-grid-data-span">
-			<a
-				href="<?= HtmlFilter::encode($arResult['ELEMENT'][ElementType::getLongEntityType($prefix)][$id]['ENTITY_LINK']) ?>"
-				data-id="<?= HtmlFilter::encode($value) ?>"
-			>
-				<?= HtmlFilter::encode($arResult['ELEMENT'][ElementType::getLongEntityType($prefix)][$id]['ENTITY_TITLE']) ?>
-			</a>
-		</span>
-		<?php
+		foreach($arEntity['items'] as $entityId => $entity)
+		{
+			?>
+			<span class="mobile-grid-data-span">
+				<?php
+				if($publicMode)
+				{
+					print $entity['ENTITY_TITLE'];
+				}
+				else
+				{
+					// @todo remove after support dynamic entity in mobile
+					$typeId = \CCrmOwnerType::ResolveID($entityType);
+					if(!\CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+					{
+					?>
+					<a
+						href="<?= $entity['ENTITY_LINK'] ?>"
+						data-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
+					>
+						<?= $entity['ENTITY_TITLE'] ?>
+					</a>
+					<?php
+					}
+					else
+					{
+						print $entity['ENTITY_TITLE'];
+					}
+				}
+				?>
+			</span>
+			<?php
+		}
 	}
 	?>
 </div>
@@ -72,19 +99,18 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 	<?= Loc::getMessage('CRM_ELEMENT_BUTTON_SELECT') ?>
 </a>
 
-
-<?php
-$nodes = [$fieldName];
-?>
-
 <script>
-	BX.message({
-		"CRM_ENTITY_TYPE_COMPANY": '<?=GetMessageJS('CRM_ENTITY_TYPE_COMPANY')?>',
-		"CRM_ENTITY_TYPE_DEAL": '<?=GetMessageJS('CRM_ENTITY_TYPE_DEAL')?>',
-		"CRM_ENTITY_TYPE_CONTACT": '<?=GetMessageJS('CRM_ENTITY_TYPE_CONTACT')?>',
-		"CRM_ENTITY_TYPE_ORDER": '<?=GetMessageJS('CRM_ENTITY_TYPE_ORDER')?>',
-		"CRM_ENTITY_TYPE_LEAD": '<?=GetMessageJS('CRM_ENTITY_TYPE_LEAD')?>',
-	});
+	<?php
+		$nodes = [$fieldName];
+		$messages = [];
+		foreach ($arResult['value'] as $entityTypeName => $entityType)
+		{
+			$messages['CRM_ENTITY_TYPE_'.$entityTypeName] = $entityType['title'];
+		}
+	?>
+
+	BX.message(<?= CUtil::phpToJSObject($messages) ?>);
+
 	BX.ready(function ()
 	{
 		new BX.Mobile.Field.ElementCrm(
@@ -95,7 +121,7 @@ $nodes = [$fieldName];
 				'formId' => $arParams['additionalParameters']['formId'],
 				'gridId' => $arParams['additionalParameters']['gridId'],
 				'useOnChangeEvent' => true,
-				'availableTypes' => $arResult['userField']['SETTINGS']
+				'availableTypes' => $arResult['availableTypes']
 			])?>
 		);
 	});

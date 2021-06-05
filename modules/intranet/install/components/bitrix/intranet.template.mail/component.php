@@ -19,7 +19,7 @@ if (
 
 	if (isset($arParams["USER_ID_FROM"]))
 	{
-		$rsUsers = CUser::GetList(($by="ID"), ($order="ASC"), array("ID_EQUAL_EXACT" => $arParams["USER_ID_FROM"]), array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
+		$rsUsers = CUser::GetList("ID", "ASC", array("ID_EQUAL_EXACT" => $arParams["USER_ID_FROM"]), array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
 		if ($arUser = $rsUsers->Fetch())
 		{
 			$arResult["USER_NAME"] = CUser::FormatName("#NAME# #LAST_NAME#", array(
@@ -58,7 +58,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 {
 	if (isset($arParams["FROM_USER_ID"]))
 	{
-		$rsUsers = CUser::GetList(($by="ID"), ($order="ASC"), array("ID_EQUAL_EXACT" => $arParams["FROM_USER_ID"]), array("FIELDS" => array("PERSONAL_PHOTO")));
+		$rsUsers = CUser::GetList("ID", "ASC", array("ID_EQUAL_EXACT" => $arParams["FROM_USER_ID"]), array("FIELDS" => array("PERSONAL_PHOTO")));
 		if ($arUser = $rsUsers->Fetch())
 		{
 			if (intval($arUser["PERSONAL_PHOTO"]) > 0)
@@ -92,7 +92,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 
 	if (is_array($fromUserId) && !empty($fromUserId))
 	{
-		$rsUsers = CUser::GetList(($by="ID"), ($order="ASC"), array("ID" => implode("|", $fromUserId)), array("FIELDS" => array("ID", "PERSONAL_PHOTO")));
+		$rsUsers = CUser::GetList("ID", "ASC", array("ID" => implode("|", $fromUserId)), array("FIELDS" => array("ID", "PERSONAL_PHOTO")));
 		while ($arUser = $rsUsers->Fetch())
 		{
 			if (intval($arUser["PERSONAL_PHOTO"]) > 0)

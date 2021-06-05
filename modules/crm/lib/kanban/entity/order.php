@@ -24,6 +24,7 @@ class Order extends Entity
 
 	public function __construct()
 	{
+		parent::__construct();
 		Loader::includeModule('sale');
 	}
 
@@ -80,7 +81,7 @@ class Order extends Entity
 
 	public function getAdditionalEditFields(): array
 	{
-		return $this->getAdditionalEditFieldsFromOptions();
+		return (array)$this->getAdditionalEditFieldsFromOptions();
 	}
 
 	public function isCustomPriceFieldsSupported(): bool
@@ -468,9 +469,9 @@ class Order extends Entity
 		return $result;
 	}
 
-	protected function getPopupAdditionalFields(): array
+	protected function getPopupAdditionalFields(string $viewType = self::VIEW_TYPE_VIEW): array
 	{
-		$result = parent::getPopupAdditionalFields();
+		$result = parent::getPopupAdditionalFields($viewType);
 
 		$additionalFields = [
 			'TITLE' =>  Loc::getMessage('CRM_KANBAN_FIELD_ORDER_TITLE'),
@@ -521,5 +522,17 @@ class Order extends Entity
 		return array_merge(parent::getPopupHiddenFields(), [
 			'COUPON', 'PAY_SYSTEM', 'DELIVERY_SERVICE', 'CREATED_BY', 'SHIPMENT_TRACKING_NUMBER', 'SHIPMENT_DELIVERY_DOC_DATE'
 		]);
+	}
+
+	public function getTypeInfo(): array
+	{
+		return array_merge(
+			parent::getTypeInfo(),
+			[
+				'canUseCreateTaskInPanel' => true,
+				'canUseCallListInPanel' => true,
+				'doLayoutFieldsInItemRender' => true,
+			]
+		);
 	}
 }

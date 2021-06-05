@@ -20,7 +20,22 @@ if (Loader::includeModule('catalog'))
 
 		public function use(): bool
 		{
-			return (defined('CATALOG_PRODUCT') && defined('CRM_MODE'));
+			if (defined('CATALOG_PRODUCT') && defined('CRM_MODE'))
+			{
+				return true;
+			}
+			if (!$this->request->isAdminSection())
+			{
+				if ($this->checkCurrentPage([
+					self::PATH_PREFIX,
+					self::OLD_PRODUCT_PATH_PREFIX
+				]))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		public function getContextMenuItems(string $pageType, array $items = [], array $options = []): ?array
@@ -84,13 +99,12 @@ if (Loader::includeModule('catalog'))
 					.'?#BASE_PARAMS#'
 					.'#PARENT_FILTER#'
 					.'#ADDITIONAL_PARAMETERS#';
-				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = '/shop/catalog/'
-					.'#IBLOCK_ID#/product/#ENTITY_ID#/'
-					.'?#ADDITIONAL_PARAMETERS#';
-				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = '/shop/catalog/'
+				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = '#PATH_PREFIX#'
+					.'#IBLOCK_ID#/product/#ENTITY_ID#/';
+				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = '#PATH_PREFIX#'
 					.'#IBLOCK_ID#/product/0/copy/#ENTITY_ID#/';
 				$this->urlTemplates[self::PAGE_ELEMENT_SAVE] = $this->urlTemplates[self::PAGE_ELEMENT_DETAIL];
-				$this->urlTemplates[self::PAGE_OFFER_DETAIL] = '/shop/catalog/'
+				$this->urlTemplates[self::PAGE_OFFER_DETAIL] = '#PATH_PREFIX#'
 					.'#PRODUCT_IBLOCK_ID#/product/#PRODUCT_ID#/'
 					.'variation/#ENTITY_ID#/';
 				$this->urlTemplates[self::PAGE_ELEMENT_SEARCH] = '/bitrix/tools/iblock/element_search.php'

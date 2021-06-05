@@ -17,8 +17,8 @@ class CrmConnector extends StubConnector
 		foreach($members as $memberId)
 		{
 			$rs = \CUser::getList(
-				($by="ID"),
-				($order="ASC"),
+				"ID",
+				"ASC",
 				array("ID" => $memberId),
 				array("FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "EMAIL", "PERSONAL_PHOTO"))
 			);

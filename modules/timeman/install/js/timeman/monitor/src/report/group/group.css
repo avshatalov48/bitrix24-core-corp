@@ -1,0 +1,241 @@
+.bx-timeman-monitor-report-group-wrap {
+    margin-right: 36px;
+}
+
+.bx-timeman-monitor-report-group-wrap:first-child {
+    margin-left: 0;
+}
+
+.bx-timeman-monitor-report-group-wrap:last-child {
+    margin-right: 0;
+}
+
+.bx-monitor-group {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+}
+
+.bx-monitor-group-header {
+    display: flex;
+    flex-direction: column;
+    font: 13px/18px "Open Sans", Arial, normal;
+    font-weight: 600;
+    padding: 11px 13px;
+    border-radius: 4px 4px 0 0;
+}
+
+.bx-monitor-group-content {
+    height: 100%;
+    overflow: hidden;
+    padding-top: 12px;
+    overflow-y: scroll;
+    position: relative;
+}
+
+.bx-monitor-group-content-wrap {
+    width: 100%;
+    position: absolute;
+}
+
+.bx-monitor-group-content::-webkit-scrollbar {
+    width: 6px;
+    background-color: transparent;
+}
+
+.bx-monitor-group-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.bx-monitor-group-content::-webkit-scrollbar-thumb {
+    background: #dde2e6;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: .4;
+    transition: .2s;
+}
+
+.bx-monitor-group-content:hover::-webkit-scrollbar-thumb {
+    background: #d1d6da;
+}
+
+.bx-monitor-group-content:hover::-webkit-scrollbar-thumb:hover {
+    background: #c8cdd2;
+}
+
+.bx-monitor-group-title-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bx-monitor-group-title-wrap {
+	display: flex;
+}
+
+.bx-monitor-group-title {
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+	margin-right: 8px;
+    user-select: none;
+}
+
+.bx-timeman-monitor-report-group-wrap {
+    display: flex;
+    margin: 13px;
+}
+
+.bx-monitor-group-subtitle-wrap {
+    display: flex;
+	margin-top: 6px;
+}
+
+.bx-monitor-group-subtitle {
+    font: 13px/18px "Open Sans", Arial, normal;
+    color: #505A69;
+    margin-right: 8px;
+    user-select: none;
+}
+
+.bx-monitor-group-hint {
+    font: 13px/18px "Open Sans", Arial, normal;
+    color: #505A69;
+    margin-right: 8px;
+	min-height: 36px;
+    user-select: none;
+}
+
+.bx-timeman-monitor-popup-wrap {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.bx-timeman-monitor-popup-input {
+    position: relative;
+    padding: 10px;
+    width: 400px;
+    height: 140px;
+    resize: none;
+    border: 1px solid rgba(83,92,105,.2);
+    border-radius: 2px;
+    background: #fff;
+    font: 15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+    transition: all .3s ease-in-out;
+    outline: none;
+}
+
+.bx-timeman-monitor-popup-detail {
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.bx-timeman-monitor-popup-items-container {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    max-height: 400px;
+    overflow: hidden;
+    overflow-y: auto;
+    padding: 0 8px;
+}
+
+.bx-timeman-monitor-popup-items-container::-webkit-scrollbar {
+    width: 6px;
+    background-color: transparent;
+}
+
+.bx-timeman-monitor-popup-items-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.bx-timeman-monitor-popup-items-container::-webkit-scrollbar-thumb {
+    background: #dde2e6;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: .4;
+    transition: .2s;
+}
+
+.bx-timeman-monitor-popup-items-container:hover::-webkit-scrollbar-thumb {
+    background: #d1d6da;
+}
+
+.bx-timeman-monitor-popup-items-container:hover::-webkit-scrollbar-thumb:hover {
+    background: #c8cdd2;
+}
+
+.bx-timeman-monitor-popup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.bx-timeman-monitor-popup-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bx-timeman-monitor-popup--titlebar-text {
+    max-width: 300px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.bx-timeman-monitor-popup-content-title {
+    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 350px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.bx-timeman-monitor-popup-time {
+    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bx-monitor-group-item-move {
+    transition: transform .2s;
+}
+
+.bx-monitor-group-item-enter-active, .bx-monitor-group-item-leave-active {
+    transition: all .2s;
+}
+.bx-monitor-group-item-enter, .bx-monitor-group-item-leave-to {
+    opacity: 0;
+}
+
+.bx-monitor-group-item-leave-active {
+    position: absolute;
+    width: 100%;
+}
+
+.bx-monitor-group-btn-add {
+    position: relative;
+    font-size: 10px;
+    top: -24px;
+    color: #fff;
+    background-color: #77c18d;
+    padding: 0 14px;
+}
+
+.bx-monitor-group-btn-add:active {
+    background-color: #ecfcf1;
+}
+
+.bx-monitor-group-btn-add:hover {
+    background-color: #ecfcf1;
+}

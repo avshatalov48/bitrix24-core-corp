@@ -270,33 +270,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				$this->tplType = 'site';
 			}
 			// if edit mode - create copy for edit
-			if ($this->getEditMode())
+			if ($this->getEditMode()/* && $landing['PUBLIC'] == 'Y'*/)
 			{
-				if ($landing['PUBLIC'] == 'Y')
-				{
-					$res = self::update($id, array(
-						'PUBLIC' => 'N',
-						'DATE_MODIFY' => false
-					));
-					if ($res->isSuccess())
-					{
-						Block::cloneForEdit($this);
-					}
-				}
+				Block::cloneForEdit($this);
 			}
 			// some update if we need
 			$this->updateVersion();
-			// if landing is unactive
-			if (
-				false &&
-				!$this->active
-			)
-			{
-				//add error ?
-				//add title ? $this->title = Loc::getMessage('LANDING_TITLE_NOT_FOUND');
-			}
 			// get available blocks
-			else if (
+			if (
 				!isset($params['skip_blocks']) ||
 				$params['skip_blocks'] !== true
 			)
@@ -575,6 +556,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			{
 				Block::deleteAll($id);
 				File::deleteFromLanding($id);
+				File::deleteFromAsset($id);
 			}
 		}
 
@@ -997,9 +979,9 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				{
 					if (($modified = $result->getModified()))
 					{
-						if (isset($modified['options']))
+						if (isset($modified['options']) && is_array($modified['options']))
 						{
-							$options = $modified['options'];
+							$options = array_merge($options, $modified['options']);
 						}
 					}
 				}
@@ -1214,6 +1196,13 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		$pattern = '/([",\'\;]{1})#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
 		static $isIframe = null;
 
+		if (!self::$editMode)
+		{
+			$content = Subtype\Form::prepareFormsToView(
+				$content
+			);
+		}
+
 		if ($isIframe === null)
 		{
 			$request = Application::getInstance()->getContext()->getRequest();
@@ -1364,10 +1353,10 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			{
 				foreach ($urls['BLOCK'] as $bid => $lid)
 				{
-					$urls['LANDING'][$lid] = \htmlspecialcharsbx($urls['LANDING'][$lid]);
-					$urls['LANDING'][$lid] .= ($isIframe ? '?IFRAME=Y' : '');
 					if (isset($urls['LANDING'][$lid]))
 					{
+						$urls['LANDING'][$lid] = \htmlspecialcharsbx($urls['LANDING'][$lid]);
+						$urls['LANDING'][$lid] .= ($isIframe ? '?IFRAME=Y' : '');
 						$urls['BLOCK'][$bid] = $urls['LANDING'][$lid] . '#' . $anchorsPublicId[$bid];
 					}
 					else
@@ -1683,7 +1672,16 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	public function touch()
 	{
-		if (self::update($this->id)->isSuccess())
+		static $touched = [];
+
+		if (isset($touched[$this->id]))
+		{
+			return;
+		}
+
+		$touched[$this->id] = true;
+
+		if (self::update($this->id, ['PUBLIC' => 'N'])->isSuccess())
 		{
 			Site::touch($this->siteId);
 		}
@@ -2144,8 +2142,15 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		$block = intval($block);
 		$move = isset($params['MOVE']) && $params['MOVE'];
 		$afterId = isset($params['AFTER_ID']) ? (int)$params['AFTER_ID'] : 0;
-		$fromLandingId = Block::getLandingIdByBlockId($block);
+		$fromLandingRow = Block::getRowByBlockId($block, ['ID', 'LID', 'SITE_TYPE' => 'LANDING.SITE.TYPE']);
+		$fromLandingId = $fromLandingRow['LID'] ?? null;
+		$currentScopeId = Site\Type::getCurrentScopeId();
 		$same = $this->id == $fromLandingId;
+
+		if ($currentScopeId !== $fromLandingRow['SITE_TYPE'])
+		{
+			Site\Type::setScope($fromLandingRow['SITE_TYPE']);
+		}
 
 		if ($same)
 		{
@@ -2179,6 +2184,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					$srcBlock->getCode(),
 					array(
 						'ACTIVE' => $srcBlock->isActive() ? 'Y' : 'N',
+						'DESIGNED' => $srcBlock->isDesigned() ? 'Y' : 'N',
 						'ACCESS' => $srcBlock->getAccess(),
 						'SORT' => $srcBlock->getSort(),
 						'CONTENT' => $srcBlock->getContent(),
@@ -2223,7 +2229,6 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			//change dates
 			if ($this->error->isEmpty())
 			{
-				$this->touch();
 				if ($move && !$same)
 				{
 					$fromLanding->touch();
@@ -2232,6 +2237,16 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		$this->error->copyError($fromLanding->getError());
+
+		if ($currentScopeId !== $fromLandingRow['SITE_TYPE'])
+		{
+			Site\Type::setScope($currentScopeId);
+		}
+
+		if ($this->error->isEmpty())
+		{
+			$this->touch();
+		}
 
 		return isset($newBlock) ? $newBlock->getId() : null;
 	}
@@ -2280,6 +2295,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					$block->getCode(),
 					array(
 						'ACTIVE' => $block->isActive() ? 'Y' : 'N',
+						'DESIGNED' => $block->isDesigned() ? 'Y' : 'N',
 						'PUBLIC' => $block->isPublic() ? 'Y' : 'N',
 						'ACCESS' => $block->getAccess(),
 						'SORT' => $block->getSort(),

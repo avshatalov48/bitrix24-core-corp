@@ -299,7 +299,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 				{
 					CBPTrackingService::deleteByWorkflow($workflowId);
 					CBPTaskService::deleteByWorkflow($workflowId);
-					/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 					CBPStateService::deleteWorkflow($workflowId);
 				}
 			}

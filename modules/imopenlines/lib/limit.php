@@ -21,6 +21,7 @@ class Limit
 	const INFO_HELPER_LIMIT_CONTACT_CENTER_ANALYTICS_REPORTS = 'limit_contact_center_ol_analytics_reports';
 	const INFO_HELPER_LIMIT_CONTACT_CENTER_WORKHOUR_SETTING = 'limit_contact_center_ol_workhour_settings';
 	const INFO_HELPER_LIMIT_CONTACT_CENTER_STATISTICS_EXCEL = 'limit_contact_center_ol_statistics_excel';
+	const INFO_HELPER_LIMIT_CONTACT_CENTER_OL_CHAT_TRANSFER = 'limit_contact_center_ol_chat_transfer';
 
 	/**
 	 * @return bool

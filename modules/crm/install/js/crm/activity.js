@@ -3136,6 +3136,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		contact: 'C',
 		company: 'CO',
 		order: 'O',
+		dynamicPrefix: 'T',
 		resolve: function(name)
 		{
 			if(name === 'LEAD')
@@ -3157,6 +3158,14 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			else if (name === 'ORDER')
 			{
 				return this.order;
+			}
+			else if (name.indexOf('DYNAMIC_') === 0)
+			{
+				var typeId = Number(name.substr(8));
+				if (typeId > 0)
+				{
+					return this.dynamicPrefix + typeId.toString(16);
+				}
 			}
 			return this.undefined;
 		}

@@ -255,7 +255,7 @@ class Helper
 		}
 		if (isset($roleIds['CHIEF']))
 		{
-			$dbGroup = \CGroup::GetList($by = "", $order = "", Array("STRING_ID" => "DIRECTION"));
+			$dbGroup = \CGroup::GetList('', '', Array("STRING_ID" => "DIRECTION"));
 			if($arGroup = $dbGroup->Fetch())
 			{
 				\Bitrix\ImOpenlines\Model\RoleAccessTable::add(array(

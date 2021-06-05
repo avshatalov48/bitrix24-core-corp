@@ -22,7 +22,7 @@ class CBPCrmTimelineCommentAdd
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($ownerTypeName, $ownerId) = explode('_', $documentId[2]);
+		list($ownerTypeName, $ownerId) = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$ownerTypeId = \CCrmOwnerType::ResolveID($ownerTypeName);
 
 		$authorId = CBPHelper::ExtractUsers($this->CommentUser, $documentId, true);

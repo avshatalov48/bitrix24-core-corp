@@ -443,7 +443,7 @@ class Workgroup
 		return true;
 	}
 
-	function onAfterIBlockSectionDelete($section)
+	public static function onAfterIBlockSectionDelete($section)
 	{
 		if(
 			!isset($section['ID'])

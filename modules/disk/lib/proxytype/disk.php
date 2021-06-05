@@ -21,7 +21,7 @@ abstract class Disk extends Base
 	{
 		if($this->isCurrentUser($user))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if(Loader::includeModule('socialnetwork') && \CSocnetUser::isCurrentUserModuleAdmin())
 			{
 				return new FakeSecurityContext($user);
@@ -35,7 +35,7 @@ abstract class Disk extends Base
 		else
 		{
 			$userId = UserModel::resolveUserId($user);
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if($userId && Loader::includeModule('socialnetwork') && \CSocnetUser::isUserModuleAdmin($userId))
 			{
 				return new FakeSecurityContext($user);

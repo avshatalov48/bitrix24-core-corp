@@ -64,8 +64,17 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		}
 		else
 		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeID);
+			if ($factory)
+			{
+				$count = $factory->getItemsCount();
+			}
+
+			else
+			{
+				$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+				throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+			}
 		}
 
 		return $count;

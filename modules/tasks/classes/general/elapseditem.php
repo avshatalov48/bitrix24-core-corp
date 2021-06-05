@@ -145,7 +145,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		return ($isActionAllowed);
 	}
 
-	final protected function fetchListFromDb($taskData, $arOrder = array('ID' => 'ASC'), $arFilter = array())
+	final protected static function fetchListFromDb($taskData, $arOrder = array('ID' => 'ASC'), $arFilter = array())
 	{
 		CTaskAssert::assertLaxIntegers($taskData['ID']);
 
@@ -173,7 +173,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		return (array($arItemsData, $rsData));
 	}
 
-	final protected function fetchDataFromDb($taskId, $itemId)
+	final protected static function fetchDataFromDb($taskId, $itemId)
 	{
 		/** @noinspection PhpDeprecationInspection */
 		$rsData = CTaskElapsedTime::GetList(

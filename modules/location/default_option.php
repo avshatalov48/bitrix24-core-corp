@@ -20,7 +20,7 @@ function getDefaultAddressFormatCode(string $languageId = LANGUAGE_ID): string
 			break;
 
 		case 'de':
-			$result = 'EU';
+			$result = 'DE';
 			break;
 
 		case 'en':

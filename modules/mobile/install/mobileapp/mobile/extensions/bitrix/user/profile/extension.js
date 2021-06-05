@@ -773,6 +773,8 @@
 
 		init()
 		{
+			this.changed = false;
+			this.changedFields = [];
 			BX.onViewLoaded(()=>
 			{
 				if(this.form.setTitle)
@@ -788,6 +790,8 @@
 
 		onItemChanged(data)
 		{
+			console.log(data);
+			this.changed = true;
 			if(data.type == "userpic")
 			{
 				if(data.value == "")
@@ -822,6 +826,10 @@
 							.catch(e=>console.error(e));
 					});
 				}
+			}
+			else
+			{
+				this.changedFields.push(data.id);
 			}
 		}
 
@@ -927,14 +935,36 @@
 						if(!this.isBeingUpdated)
 						{
 							this.isBeingUpdated = true;
-							let data = {id: this.userId};
+							let data = {};
 							delete data["PERSONAL_PHOTO"];
-							this.form.getItems().forEach(item => data[item["id"]] = item["value"]);
+							this.form.getItems()
+								.filter(item =>
+								{
+									if(item.type === "userpic")
+										return false;
+									let oldValue = this.formFields[item.id].value
+									if( typeof oldValue === "undefined") {
+										oldValue = ""
+									}
+
+									return oldValue !== item.value;
+								})
+								.forEach(item => data[item["id"]] = item["value"]);
+
+							if (Object.values(data).length === 0)
+							{
+								this.isBeingUpdated = false;
+								this.form.back();
+								return;
+							}
+
+							data["ID"] = this.userId;
 							dialogs.showLoadingIndicator();
-							BX.rest.callMethod("user.update", data)
+							BX.rest.callMethod("mobile.user.update", data)
 								.then(e =>
 								{
 									this.isBeingUpdated = false;
+									this.changed = false;
 									this.showNotification(BX.message("PROFILE_CHANGED_SUCCESS"));
 									BX.postComponentEvent("shouldReloadMenu", null, "settings");
 									dialogs.hideLoadingIndicator();
@@ -942,6 +972,7 @@
 								})
 								.catch(response =>
 								{
+
 									this.isBeingUpdated = false;
 									dialogs.hideLoadingIndicator();
 									if(response.answer && response.answer.error)

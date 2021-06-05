@@ -130,18 +130,20 @@ class RecyclingManager
 		return $entityData ? $entityData->getTitle() : '';
 	}
 
-
 	/**
 	 * RecycleBin module OnModuleSurvey event handler.
 	 * @return Main\EventResult
 	 * @throws Main\LoaderException
 	 */
-	public static function OnModuleSurvey()
+	public static function onModuleSurvey(): Main\EventResult
 	{
 		//Ensure module "RecycleBin" is included.
 		if(!Main\Loader::includeModule('recyclebin'))
 		{
-			return new Main\EventResult(Main\EventResult::ERROR, "Could not load RecycleBin module.");
+			return new Main\EventResult(
+				Main\EventResult::ERROR,
+				'Could not load RecycleBin module.'
+			);
 		}
 
 		$data = array_merge(
@@ -149,15 +151,20 @@ class RecyclingManager
 			Crm\Integration\Recyclebin\Contact::prepareSurveyInfo(),
 			Crm\Integration\Recyclebin\Company::prepareSurveyInfo(),
 			Crm\Integration\Recyclebin\Deal::prepareSurveyInfo(),
-			Crm\Integration\Recyclebin\Activity::prepareSurveyInfo()
+			Crm\Integration\Recyclebin\Activity::prepareSurveyInfo(),
+			Crm\Integration\Recyclebin\Dynamic::prepareSurveyInfo()
 		);
 
 		return new Main\EventResult(
 			Main\EventResult::SUCCESS,
-			array('NAME' => 'CRM', 'LIST' => $data),
+			[
+				'NAME' => 'CRM',
+				'LIST' => $data
+			],
 			'crm'
 		);
 	}
+
 	/**
 	 * RecycleBin module OnAdditionalDataRequest event handler.
 	 * @return Main\EventResult

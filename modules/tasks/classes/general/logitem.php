@@ -11,7 +11,7 @@
 
 final class CTaskLogItem extends CTaskSubItemAbstract
 {
-	protected function fetchListFromDb($taskData, $arOrder = array('ID' => 'ASC'), $arFilter = array())
+	protected static function fetchListFromDb($taskData, $arOrder = array('ID' => 'ASC'), $arFilter = array())
 	{
 		CTaskAssert::assertLaxIntegers($taskData['ID']);
 
@@ -45,7 +45,7 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 		return (array($arItemsData, $rsData));
 	}
 
-	protected function fetchDataFromDb($taskId, $itemId)
+	protected static function fetchDataFromDb($taskId, $itemId)
 	{
 		throw new \Bitrix\Main\NotImplementedException();
 	}

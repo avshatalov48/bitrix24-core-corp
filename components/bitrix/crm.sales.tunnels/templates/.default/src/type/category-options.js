@@ -27,6 +27,9 @@ type CategoryOptions = {
 	showGeneratorRestrictionPopup: () => void,
 	isAvailableRobots: boolean,
 	showRobotsRestrictionPopup: () => void,
+	isAutomationEnabled: boolean,
+	isSenderSupported: boolean,
+	isStagesEnabled: boolean,
 };
 
 export default CategoryOptions;

@@ -4,8 +4,10 @@ namespace Bitrix\Location\Source\Google\Converters;
 
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Entity\Address\FieldType;
+use Bitrix\Location\Entity\Format\TemplateType;
 use Bitrix\Location\Entity\Location;
-use Bitrix\Location\Source\AddressLine1Composer;
+use Bitrix\Location\Service\FormatService;
+use Bitrix\Location\Entity\Address\Converter\StringConverter;
 
 /**
  * Class ConverterBase
@@ -74,9 +76,18 @@ abstract class BaseConverter
 			}
 		}
 
-		if (!AddressLine1Composer::isAddressLine1Present($address))
+		$format = FormatService::getInstance()->findDefault($this->languageId);
+
+		$addressLine1 = StringConverter::convertToStringTemplate(
+			$address,
+			$format->getTemplate(TemplateType::ADDRESS_LINE_1),
+			StringConverter::STRATEGY_TYPE_TEMPLATE,
+			StringConverter::CONTENT_TYPE_TEXT
+		);
+
+		if($addressLine1)
 		{
-			AddressLine1Composer::composeAddressLine1($address);
+			$address->setFieldValue(FieldType::ADDRESS_LINE_1, $addressLine1);
 		}
 
 		return $address;

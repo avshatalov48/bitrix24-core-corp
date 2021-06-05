@@ -265,6 +265,7 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      });
+	      main_core_events.EventEmitter.incrementMaxListeners('OnUCCommentWasPulled');
 	      main_core_events.EventEmitter.subscribe('OnUCCommentWasPulled', function (event) {
 	        var _event$getData3 = event.getData(),
 	            _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 3),

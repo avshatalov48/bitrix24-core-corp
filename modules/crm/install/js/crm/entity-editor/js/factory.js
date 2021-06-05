@@ -127,6 +127,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorEntity.create(controlId, settings);
 				}
+				else if(type === "crm_entity_tag")
+				{
+					return BX.Crm.EntityEditorEntityTag.create(controlId, settings);
+				}
 				else if(type === "file_storage")
 				{
 					return BX.Crm.EntityEditorFileStorage.create(controlId, settings);
@@ -356,6 +360,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				else if(entityTypeId === BX.CrmEntityType.enumeration.ordershipment)
 				{
 					return BX.Crm.OrderShipmentModel.create(id, settings);
+				}
+				else if (BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId))
+				{
+					return BX.Crm.FactoryBasedModel.create(id, settings);
 				}
 				return BX.Crm.EntityModel.create(id, settings);
 			}

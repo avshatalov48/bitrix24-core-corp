@@ -9,7 +9,6 @@ return [
 	'css' => 'dist/leaflet.bundle.css',
 	'rel' => [
 		'main.polyfill.core',
-		'location.core',
 	],
 	'skip_core' => true,
 ];

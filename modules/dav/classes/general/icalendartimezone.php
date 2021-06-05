@@ -81,7 +81,7 @@ class CDavICalendarTimeZone
 		{
 			if (!isset($userCache[$userId]))
 			{
-				$dbUser = CUser::GetList(($by = "id"), ($order = "asc"), array("ID_EQUAL_EXACT" => intval($userId)), array("FIELDS" => array("AUTO_TIME_ZONE", "TIME_ZONE", "TIME_ZONE_OFFSET")));
+				$dbUser = CUser::GetList("id", "asc", array("ID_EQUAL_EXACT" => intval($userId)), array("FIELDS" => array("AUTO_TIME_ZONE", "TIME_ZONE", "TIME_ZONE_OFFSET")));
 				if (($arUser = $dbUser->Fetch()))
 				{
 					$userCache[$userId] = array(

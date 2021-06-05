@@ -23,6 +23,7 @@ $MESS["CRM_KANBAN_ERROR_STAGE_IS_SYSTEM"] = "Systemphase kann nicht gelöscht we
 $MESS["CRM_KANBAN_ERROR_STAGE_IS_WIN"] = "Die Abschlussphase kann nicht gelöscht werden.";
 $MESS["CRM_KANBAN_FIELD"] = "Beobachter";
 $MESS["CRM_KANBAN_HEADER_OTHER_FIELDS"] = "Sonstiges";
+$MESS["CRM_KANBAN_NOT_SUPPORTED"] = "Dieser Elementtyp kann nicht in Kanban angezeigt werden";
 $MESS["CRM_KANBAN_ORDER_TITLE"] = "Bestellung ##ACCOUNT_NUMBER#";
 $MESS["CRM_KANBAN_PHONE_TYPE_FAX"] = "Fax";
 $MESS["CRM_KANBAN_PHONE_TYPE_HOME"] = "Privat";

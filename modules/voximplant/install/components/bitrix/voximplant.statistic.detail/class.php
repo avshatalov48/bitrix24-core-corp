@@ -662,7 +662,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		$arUsers = array();
 		if (!empty($userIds))
 		{
-			$dbUser = CUser::GetList($by = "", $order = "", array("ID" => implode($userIds, " | ")), array("FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
+			$dbUser = CUser::GetList("", "", array("ID" => implode(" | ", $userIds)), array("FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
 			while ($arUser = $dbUser->Fetch())
 			{
 				$arUsers[$arUser["ID"]]["FIO"] = CUser::FormatName("#NAME# #LAST_NAME#", array(

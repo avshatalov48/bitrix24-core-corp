@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_SEMA_ATTACHMENT"] = "Attachments";
 $MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Drive";
 $MESS["CRM_SEMA_ATTACHMENT_FILE"] = "Document files";
@@ -7,6 +7,9 @@ $MESS["CRM_SEMA_DEFAULT_BODY"] = "[no text]";
 $MESS["CRM_SEMA_DEFAULT_SUBJECT"] = "New e-mail (#DATE#)";
 $MESS["CRM_SEMA_EMAIL_CREATION_CANCELED"] = "Email message has been canceled";
 $MESS["CRM_SEMA_EMAIL_FROM"] = "From";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE"] = "Use address";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE_FIRST"] = "First added";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE_LAST"] = "Last added";
 $MESS["CRM_SEMA_EMAIL_SUBJECT"] = "Subject";
 $MESS["CRM_SEMA_EMAIL_TO"] = "To";
 $MESS["CRM_SEMA_EMAIL_TYPE"] = "Client address type";
@@ -19,4 +22,3 @@ $MESS["CRM_SEMA_NO_FROM"] = "The message sender is incorrect or not specified";
 $MESS["CRM_SEMA_NO_RESPONSIBLE"] = "Responsible person was not found";
 $MESS["CRM_SEMA_TIMELINE_ERROR"] = "Message was not sent. #ERROR_TEXT#";
 $MESS["CRM_SEMA_USE_LINK_TRACKER"] = "Enable click tracking";
-?>

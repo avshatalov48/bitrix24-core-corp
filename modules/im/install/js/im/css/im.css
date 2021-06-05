@@ -3716,7 +3716,7 @@ span.bx-notifier-popup-avatar-extranet { color:#ca7b00!important; }
 .bx-messenger-calc-wrap {font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;padding: 4px 0 14px 4px;width: 196px;}
 .bx-messenger-calc-wrap-desktop {}
 .bx-messenger-calc-panel {outline:none; border-radius: 2px;background-color: #dededf; font-size: 20px;	height: 28px;	padding: 3px 8px;	text-align: left;	width: 176px;}
-.bx-messenger-calc-panel-input {outline:none; color: #000; background: transparent;	font-size: 18px; border: 0;	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;	height: 26px;	width: 145px;}
+.bx-messenger-calc-panel-input {outline:none; color: #000; background: transparent;	font-size: 18px; border: 0;	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;	height: 26px;	width: 176px;}
 .bx-messenger-calc-panel-active .bx-messenger-calc-panel-delete { opacity: 1; cursor: pointer; }
 .bx-messenger-calc-panel-delete { width: 22px; height: 17px; background: url("./../images/im-sprite-v37.png") no-repeat scroll -171px -817px; display: block; opacity: 0; transition: opacity .5s; position: absolute; right: 23px;margin-top: 6px;}
 .bx-messenger-calc-btns-block {margin: 16px -4px 0;}

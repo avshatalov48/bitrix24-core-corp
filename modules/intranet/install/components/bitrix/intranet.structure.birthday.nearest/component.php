@@ -169,7 +169,7 @@ else
 	if (in_array('*', $arSelectFields) || in_array('UF_*', $arSelectFields))
 	{
 		$dbUsers = CUser::getList(
-			$by = 'CURRENT_BIRTHDAY', $order = 'ASC',
+			'CURRENT_BIRTHDAY', 'ASC',
 			$arFilter,
 			array(
 				'SELECT'     => $arRequiredFields,
@@ -193,7 +193,7 @@ else
 		if (!empty($arResult['USERS']))
 		{
 			$dbUsers = CUser::getList(
-				$by = 'ID', $order = 'DESC',
+				'ID', 'DESC',
 				array(
 					'ID' => join('|', $arResult['USERS'])
 				),
@@ -212,7 +212,7 @@ else
 	else
 	{
 		$dbUsers = CUser::getList(
-			$by = 'CURRENT_BIRTHDAY', $order = 'ASC',
+			'CURRENT_BIRTHDAY', 'ASC',
 			$arFilter,
 			array(
 				'SELECT'     => $arSelectFields,

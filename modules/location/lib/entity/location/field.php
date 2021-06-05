@@ -45,7 +45,7 @@ final class Field implements IField
 
 	/**
 	 * @return int.
-	 * @see Type
+	 * @see Dynamic
 	 */
 	public function getType(): int
 	{

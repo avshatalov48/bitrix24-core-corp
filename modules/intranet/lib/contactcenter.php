@@ -62,7 +62,7 @@ class ContactCenter
 			$methodName = $module . "GetItems";
 			if (method_exists($this, $methodName) && Loader::includeModule($module))
 			{
-				$result = call_user_func_array(array($this, $methodName), $filter);
+				$result = call_user_func_array(array($this, $methodName), array_values($filter));
 				if ($result instanceof Result)
 				{
 					$itemsList[$module] = $result->getData();

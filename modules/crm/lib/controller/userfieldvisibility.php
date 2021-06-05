@@ -30,19 +30,12 @@ class UserFieldVisibility extends Main\Engine\Controller
 
 	public function saveConfigurationAction($accessCodes, string $fieldName, int $entityTypeId)
 	{
-		$entityTypeMap = [
-			\CCrmOwnerType::Company => 'CRM_COMPANY',
-			\CCrmOwnerType::Contact => 'CRM_CONTACT',
-			\CCrmOwnerType::Deal => 'CRM_DEAL',
-			\CCrmOwnerType::Lead =>'CRM_LEAD'
-		];
-
 		UserFieldPermissionTable::saveEntityConfiguration(
 			$accessCodes,
 			$fieldName,
 			$entityTypeId,
 			PermissionDictionary::USER_FIELD_VIEW,
-			$entityTypeMap[$entityTypeId]
+			\CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId)
 		);
 	}
 

@@ -93,7 +93,7 @@ final class ImportManager implements IErrorable
 
 		$cloudImport = Entry::add(array(
 			'USER_ID' => $this->documentHandler->getUserId(),
-			'SERVICE' => $this->documentHandler->getCode(),
+			'SERVICE' => $this->documentHandler::getCode(),
 			'SERVICE_OBJECT_ID' => $fileData->getId(),
 			'ETAG' => $fileMetadata['etag'],
 			'CONTENT_SIZE' => $fileMetadata['size'],
@@ -118,7 +118,7 @@ final class ImportManager implements IErrorable
 		$cloudImport = Entry::add(array(
 			'OBJECT_ID' => $cloudImport->getObjectId(),
 			'USER_ID' => $this->documentHandler->getUserId(),
-			'SERVICE' => $this->documentHandler->getCode(),
+			'SERVICE' => $this->documentHandler::getCode(),
 			'SERVICE_OBJECT_ID' => $fileData->getId(),
 			'ETAG' => $fileMetadata['etag'],
 			'CONTENT_SIZE' => $fileMetadata['size'],
@@ -302,7 +302,7 @@ final class ImportManager implements IErrorable
 			array(
 				'NAME' => $name,
 				'CREATED_BY' => $this->documentHandler->getUserId(),
-				'CONTENT_PROVIDER' => $this->documentHandler->getCode(),
+				'CONTENT_PROVIDER' => $this->documentHandler::getCode(),
 			),
 			array(),
 			true

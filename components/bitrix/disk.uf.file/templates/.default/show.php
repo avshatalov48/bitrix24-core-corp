@@ -115,7 +115,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					}
 					else
 					{
-						?><img<?
+						?><span id="disk-attach-<?=$file['ID']?>"><?php
+						?><img<?php
 							?> style="display: none;"<?
 							?> id="<?=$id?>"<?
 							?> src="<?=LazyLoad::getBase64Stub()?>" <?
@@ -133,7 +134,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								?> data-bx-full-height="<?=$file["ORIGINAL"]["height"]?>"<?
 								?> data-bx-full-size="<?=$file["SIZE"]?>"<?
 							}
-						?> /><?
+						?> /><?php
+						?></span><?php
 					}
 				}
 			?></div>

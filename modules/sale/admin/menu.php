@@ -494,7 +494,7 @@ if ($APPLICATION->GetGroupRight("sale") != "D")
 		if (IsModuleInstalled('report'))
 		{
 			$arSaleReports = array();
-			if(method_exists($adminMenu, "IsSectionActive"))
+			if($adminMenu && method_exists($adminMenu, "IsSectionActive"))
 			{
 				if($adminMenu->IsSectionActive("menu_sale_report") && CModule::IncludeModule("report"))
 				{

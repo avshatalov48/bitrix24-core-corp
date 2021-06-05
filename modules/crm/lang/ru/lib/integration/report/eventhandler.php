@@ -7,6 +7,9 @@ $MESS['CRM_REPORT_CLIENTS_BATCH_TITLE'] = 'Клиенты';
 $MESS['CRM_REPORT_CROSS_CUTTING_BATCH_TITLE'] = 'Сквозная аналитика';
 $MESS['CRM_REPORT_MY_REPORTS_BATCH_TITLE'] = 'Мои отчеты';
 
+$MESS['CRM_REPORT_SALES_SHOW_LEADS'] = 'Показать лиды';
+$MESS['CRM_REPORT_SALES_HIDE_LEADS'] = 'Скрыть лиды';
+
 $MESS['CRM_REPORT_COMMON_LEAD_BOARD_TITLE'] = 'Общий анализ';
 $MESS['CRM_REPORT_NEW_LEAD_BOARD_TITLE'] = 'Первичные';
 $MESS['CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'] = 'Повторные';
@@ -51,4 +54,5 @@ $MESS['CRM_REPORT_MY_REPORTS_ACTIVITY'] = 'Мои дела';
 $MESS['CRM_REPORT_MY_REPORTS_ADD'] = 'Добавить отчёт';
 
 $MESS['CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'] = 'Постоянные покупатели';
+
 

@@ -153,7 +153,11 @@ BX.Disk.FileViewClass = (function ()
 	FileViewClass.prototype.onSliderMessage = function(event)
 	{
 		var eventData = event.getData();
-		if (event.getEventId() === 'Disk.File:onRestoredFromVersion' || event.getEventId() === 'Disk.Version:onDeleted')
+		if (
+			event.getEventId() === 'Disk.File:onRestoredFromVersion' ||
+			event.getEventId() === 'Disk.Version:onDeleted' ||
+			event.getEventId() === 'Disk.OnlyOffice:onSaved'
+		)
 		{
 			window.location.reload();
 		}

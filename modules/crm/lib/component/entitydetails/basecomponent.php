@@ -1,52 +1,61 @@
-<?php
+<?php /** @noinspection ReturnTypeCanBeDeclaredInspection */
+
 namespace Bitrix\Crm\Component\EntityDetails;
 
+use Bitrix\Crm;
+use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Crm\Entity\Traits\VisibilityConfig;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Main;
 
-use Bitrix\Crm;
-use Bitrix\Crm\Security\EntityPermissionType;
-use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Crm\Component\ComponentError;
-
-class BaseComponent extends \CBitrixComponent
+abstract class BaseComponent extends Crm\Component\Base
 {
+	use VisibilityConfig;
+
 	/** @var string */
 	protected $guid = '';
 	/** @var int */
 	protected $userID = 0;
 	/** @var  \CCrmPerms|null */
-	protected $userPermissions = null;
+	protected $userPermissions;
 	/** @var \CCrmUserType|null  */
-	protected $userType = null;
+	protected $userType;
 	/** @var array|null */
-	protected $userFields = null;
+	protected $userFields;
 	/** @var array|null */
-	protected $userFieldInfos = null;
+	protected $userFieldInfos;
 	/** @var \Bitrix\Main\UserField\Dispatcher|null */
-	protected $userFieldDispatcher = null;
+	protected $userFieldDispatcher;
 	/** @var int */
 	protected $entityID = 0;
 	/** @var int */
 	protected $mode = ComponentMode::UNDEFINED;
-	/** @var array|null */
-	protected $errors = null;
+	/** @var Crm\Conversion\EntityConversionWizard|null */
+	protected $conversionWizard;
 
 	//---
 	/** @var array|null */
-	protected $entityData = null;
+	protected $entityData;
 	/** @var array|null */
-	protected $entityDataScheme = null;
-	/** @var bool */
+	protected $entityDataScheme;
+	/**
+	 * @var bool
+	 * @deprecated Use $this->isEditMode() instead
+	 * @see BaseComponent::isEditMode()
+	 */
 	protected $isEditMode = false;
-	/** @var bool */
+	/**
+	 * @var bool
+	 * @deprecated Use $this->isCopyMode() instead
+	 * @see BaseComponent::isCopyMode()
+	 */
 	protected $isCopyMode = false;
 	//---
 
 	public function __construct($component = null)
 	{
-		/** @global \CUserTypeManager $USER_FIELD_MANAGER */
-		global $USER_FIELD_MANAGER;
-
 		parent::__construct($component);
 
 		$this->userID = \CCrmSecurityHelper::GetCurrentUserID();
@@ -55,11 +64,9 @@ class BaseComponent extends \CBitrixComponent
 		$userFieldEntityID = $this->getUserFieldEntityID();
 		if($userFieldEntityID !== '')
 		{
-			$this->userType = new \CCrmUserType($USER_FIELD_MANAGER, $userFieldEntityID);
+			$this->userType = new \CCrmUserType(Main\Application::getUserTypeManager(), $userFieldEntityID);
 			$this->userFieldDispatcher = Main\UserField\Dispatcher::instance();
 		}
-
-		$this->errors = array();
 	}
 
 	public function getEntityTypeID()
@@ -87,7 +94,7 @@ class BaseComponent extends \CBitrixComponent
 
 	public static function createEntity($entityTypeID, array $entityData, array $options = array())
 	{
-		$currentUserPermissions = isset($options['userPermissions']) ? $options['userPermissions'] : null;
+		$currentUserPermissions = $options['userPermissions'] ?? null;
 		if(!($currentUserPermissions instanceof \CCrmPerms))
 		{
 			$currentUserPermissions = \CCrmPerms::GetCurrentUserPermissions();
@@ -152,7 +159,7 @@ class BaseComponent extends \CBitrixComponent
 			{
 				$entityRequisites = array();
 				$entityBankDetails = array();
-				\Bitrix\Crm\EntityRequisite::intertalizeFormData(
+				EntityRequisite::intertalizeFormData(
 					$requisites,
 					$entityTypeID,
 					$entityRequisites,
@@ -160,7 +167,7 @@ class BaseComponent extends \CBitrixComponent
 				);
 				if (!empty($entityRequisites) || !empty($entityBankDetails))
 				{
-					\Bitrix\Crm\EntityRequisite::saveFormData(
+					EntityRequisite::saveFormData(
 						$entityTypeID,
 						$entityID,
 						$entityRequisites,
@@ -181,6 +188,7 @@ class BaseComponent extends \CBitrixComponent
 		}
 		return $entityID;
 	}
+
 	public static function updateEntity($entityTypeID, $entityID, array $entityData, array $options = array())
 	{
 		if(empty($entityData))
@@ -188,7 +196,7 @@ class BaseComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$currentUserPermissions = isset($options['userPermissions']) ? $options['userPermissions'] : null;
+		$currentUserPermissions = $options['userPermissions'] ?? null;
 		if(!($currentUserPermissions instanceof \CCrmPerms))
 		{
 			$currentUserPermissions = \CCrmPerms::GetCurrentUserPermissions();
@@ -297,10 +305,8 @@ class BaseComponent extends \CBitrixComponent
 					$areMultifieldsEquals = true;
 					foreach(['PHONE', 'EMAIL'] as $multifieldType)
 					{
-						$multifieldItems = isset($multifields[$multifieldType])
-							? $multifields[$multifieldType] : array();
-						$presentMultifieldsItems = isset($presentMultifields[$multifieldType])
-							? $presentMultifields[$multifieldType] : array();
+						$multifieldItems = $multifields[$multifieldType] ?? [];
+						$presentMultifieldsItems = $presentMultifields[$multifieldType] ?? [];
 
 						foreach($multifieldItems as $multifieldID => $multifieldData)
 						{
@@ -351,7 +357,7 @@ class BaseComponent extends \CBitrixComponent
 			{
 				$entityRequisites = array();
 				$entityBankDetails = array();
-				\Bitrix\Crm\EntityRequisite::intertalizeFormData(
+				EntityRequisite::intertalizeFormData(
 					$requisites,
 					$entityTypeID,
 					$entityRequisites,
@@ -359,7 +365,7 @@ class BaseComponent extends \CBitrixComponent
 				);
 				if (!empty($entityRequisites) || !empty($entityBankDetails))
 				{
-					\Bitrix\Crm\EntityRequisite::saveFormData(
+					EntityRequisite::saveFormData(
 						$entityTypeID,
 						$entityID,
 						$entityRequisites,
@@ -380,7 +386,8 @@ class BaseComponent extends \CBitrixComponent
 		}
 		return $result;
 	}
-	public static function deleteEntity($entityTypeID, $entityID, array $options = array())
+
+	public static function deleteEntity(int $entityTypeID, $entityID, array $options = array())
 	{
 		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
 		if(!$entity)
@@ -392,117 +399,20 @@ class BaseComponent extends \CBitrixComponent
 		$entity->delete($entityID, $options);
 	}
 
-	public static function prepareLastBoundEntityIDs($entityTypeID, $ownerEntityTypeID, array $params = null)
-	{
-		if($params === null)
-		{
-			$params = array();
-		}
-
-		$userID = (isset($params['userID']) && $params['userID'] > 0)
-			? (int)$params['userID'] : \CCrmSecurityHelper::GetCurrentUserID();
-		$userPermissions = isset($params['userPermissions'])
-			? $params['userPermissions'] : \CCrmPerms::GetCurrentUserPermissions();
-
-		$results = array();
-		if($ownerEntityTypeID === \CCrmOwnerType::Deal && \CCrmDeal::CheckReadPermission(0, $userPermissions))
-		{
-			if($entityTypeID === \CCrmOwnerType::Contact)
-			{
-				$companyID = isset($params['companyID']) ? (int)$params['companyID'] : 0;
-				if($companyID > 0)
-				{
-					$dbResult = \CCrmDeal::GetListEx(
-						array('ID' => 'DESC'),
-						array(
-							'=COMPANY_ID' => $companyID,
-							'=ASSIGNED_BY_ID' => $userID,
-							'CHECK_PERMISSIONS' => 'N'
-						),
-						false,
-						array('nTopCount' => 5),
-						array('ID')
-					);
-
-					$ownerIDs = array();
-					while($ary = $dbResult->Fetch())
-					{
-						$ownerIDs[] = (int)$ary['ID'];
-					}
-
-					$ownerIDs = array();
-					while($ary = $dbResult->Fetch())
-					{
-						$ownerIDs[] = (int)$ary['ID'];
-					}
-
-					foreach($ownerIDs as $ownerID)
-					{
-						$entityIDs = Crm\Binding\DealContactTable::getDealContactIDs($ownerID);
-						foreach($entityIDs as $entityID)
-						{
-							if(\CCrmContact::CheckReadPermission($entityID, $userPermissions))
-							{
-								$results[] = $entityID;
-							}
-						}
-
-						if(!empty($results))
-						{
-							break;
-						}
-					}
-
-					if(empty($results))
-					{
-						$results = Crm\Binding\ContactCompanyTable::getCompanyContactIDs($companyID);
-					}
-				}
-			}
-		}
-		return $results;
-	}
-
 	public static function prepareMultifieldsForSave($entityTypeID, $entityID, array $multifieldData)
 	{
-		if(!is_int($entityTypeID))
+		$multifields = [];
+		if ($entityID > 0)
 		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
-
-		$multifields = array();
-		if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
-		{
-			$dbResult = \CCrmFieldMulti::GetList(
-				array('ID' => 'asc'),
-				array('ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID), 'ELEMENT_ID' => $entityID)
-			);
-			while($fields = $dbResult->Fetch())
-			{
-				$typeID = $fields['TYPE_ID'];
-				if(!isset($multifields[$typeID]))
-				{
-					$multifields[$typeID] = array();
-				}
-
-				$multifields[$typeID][$fields['ID']] = array(
-					'VALUE' => isset($fields['VALUE']) ? $fields['VALUE'] : '',
-					'VALUE_TYPE' => isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : ''
-				);
-			}
+			$multifields = static::getMultifields($entityTypeID, $entityID);
 		}
 
 		$counter = 0;
 		foreach($multifieldData as $item)
 		{
 			$ID = isset($item['ID']) ? (int)$item['ID'] : 0;
-			$typeID = isset($item['TYPE_ID']) ? $item['TYPE_ID'] : '';
-			$value = isset($item['VALUE']) ? $item['VALUE'] : '';
+			$typeID = $item['TYPE_ID'] ?? '';
+			$value = $item['VALUE'] ?? '';
 			if($typeID === '')
 			{
 				continue;
@@ -519,10 +429,8 @@ class BaseComponent extends \CBitrixComponent
 				{
 					continue;
 				}
-				else
-				{
-					$value = '';
-				}
+
+				$value = '';
 			}
 
 			if(!isset($multifields[$typeID]))
@@ -544,6 +452,7 @@ class BaseComponent extends \CBitrixComponent
 		}
 		return $multifields;
 	}
+
 	protected static function getMultifields($entityTypeID, $entityID)
 	{
 		$dbResult = \CCrmFieldMulti::GetList(
@@ -551,23 +460,24 @@ class BaseComponent extends \CBitrixComponent
 			array('ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID), 'ELEMENT_ID' => $entityID)
 		);
 
-		$multifields = array();
+		$multifields = [];
 		while($fields = $dbResult->Fetch())
 		{
 			$typeID = $fields['TYPE_ID'];
 			if(!isset($multifields[$typeID]))
 			{
-				$multifields[$typeID] = array();
+				$multifields[$typeID] = [];
 			}
 
-			$multifields[$typeID][$fields['ID']] = array(
-				'VALUE' => isset($fields['VALUE']) ? $fields['VALUE'] : '',
-				'VALUE_TYPE' => isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : ''
-			);
+			$multifields[$typeID][$fields['ID']] = [
+				'VALUE' => $fields['VALUE'] ?? '',
+				'VALUE_TYPE' => $fields['VALUE_TYPE'] ?? ''
+			];
 		}
 
 		return $multifields;
 	}
+
 	protected static function prepareMultifieldData($entityTypeID, $entityID, $typeID, array &$data)
 	{
 		$dbResult = \CCrmFieldMulti::GetList(
@@ -582,7 +492,7 @@ class BaseComponent extends \CBitrixComponent
 		$entityKey = "{$entityTypeID}_{$entityID}";
 		while($fields = $dbResult->Fetch())
 		{
-			$value = isset($fields['VALUE']) ? $fields['VALUE'] : '';
+			$value = $fields['VALUE'] ?? '';
 			$valueType = $fields['VALUE_TYPE'];
 			$multiFieldComplexID = $fields['COMPLEX_ID'];
 
@@ -629,32 +539,30 @@ class BaseComponent extends \CBitrixComponent
 	protected function getRequestParamOrDefault($paramName, $default = null)
 	{
 		$value = $this->request->get($paramName);
-		return $value !== null ? $value : $default;
+
+		return $value ?? $default;
 	}
 
 	protected static function getUser($userID)
 	{
-		$dbUsers = \CUser::GetList(
-			$by = 'ID',
-			$order = 'ASC',
-			array('ID' => $userID),
-			array('FIELDS' => array('ID',  'LOGIN', 'PERSONAL_PHOTO', 'NAME', 'SECOND_NAME', 'LAST_NAME'))
-		);
-		return is_object($dbUsers) ? $dbUsers->Fetch() : null;
+		return Crm\Service\Container::getInstance()->getUserBroker()->getById($userID);
 	}
 
 	protected function getUserFieldEntityID()
 	{
 		return '';
 	}
+
 	protected function getFileHandlerUrl()
 	{
 		return '';
 	}
+
 	protected function checkIfEntityExists()
 	{
 		return false;
 	}
+
 	protected function checkEntityPermission($permissionTypeID)
 	{
 		return EntityAuthorization::checkPermission(
@@ -664,22 +572,21 @@ class BaseComponent extends \CBitrixComponent
 			$this->userPermissions
 		);
 	}
+
 	protected function addError($error)
 	{
-		$this->errors[] = $error;
+		$this->errorCollection[] = new Main\Error($this->getErrorMessage($error));
 	}
+
 	protected function getErrorMessage($error)
 	{
 		return ComponentError::getMessage($error);
 	}
-	protected function getErrors()
-	{
-		return $this->errors;
-	}
+
 	protected function showErrors()
 	{
 		$messages = array();
-		foreach($this->errors as $error)
+		foreach($this->errorCollection as $error)
 		{
 			$message = $this->getErrorMessage($error);
 			if($message !== '')
@@ -693,6 +600,7 @@ class BaseComponent extends \CBitrixComponent
 			ShowError(implode("\r\n", $messages));
 		}
 	}
+
 	protected function tryToDetectMode()
 	{
 		if($this->entityID <= 0)
@@ -703,7 +611,14 @@ class BaseComponent extends \CBitrixComponent
 				return false;
 			}
 
-			$this->mode = ComponentMode::CREATION;
+			if ($this->getConversionWizard())
+			{
+				$this->mode = ComponentMode::CONVERSION;
+			}
+			else
+			{
+				$this->mode = ComponentMode::CREATION;
+			}
 		}
 		else
 		{
@@ -742,10 +657,42 @@ class BaseComponent extends \CBitrixComponent
 		$this->arResult['COMPONENT_MODE'] = $this->mode;
 		return true;
 	}
+
+	protected function getConversionWizard(): ?Crm\Conversion\EntityConversionWizard
+	{
+		if (!$this->conversionWizard)
+		{
+			$this->conversionWizard = $this->initializeConversionWizard();
+		}
+
+		return $this->conversionWizard;
+	}
+
+	protected function initializeConversionWizard(): ?Crm\Conversion\EntityConversionWizard
+	{
+		return null;
+	}
+
+	protected function isConversionMode(): bool
+	{
+		return ($this->mode === ComponentMode::CONVERSION);
+	}
+
+	protected function isEditMode(): bool
+	{
+		return ($this->mode === ComponentMode::MODIFICATION);
+	}
+
+	protected function isCopyMode(): bool
+	{
+		return ($this->mode === ComponentMode::COPING);
+	}
+
 	protected function getEntityFieldsInfo()
 	{
 		throw new Main\NotImplementedException('Method getEntityDataScheme must be overridden');
 	}
+
 	public function prepareEntityDataScheme()
 	{
 		if($this->entityDataScheme === null)
@@ -755,6 +702,12 @@ class BaseComponent extends \CBitrixComponent
 		}
 		return $this->entityDataScheme;
 	}
+
+	/**
+	 * Return data from UserFieldTable about user fields of the current entity
+	 *
+	 * @return array
+	 */
 	public function prepareEntityUserFields()
 	{
 		if($this->userFields !== null)
@@ -773,6 +726,13 @@ class BaseComponent extends \CBitrixComponent
 
 		return $this->userFields;
 	}
+
+	/**
+	 * Returns user fields description for the editor
+	 *
+	 * @return array
+	 * @noinspection ReturnTypeCanBeDeclaredInspection
+	 */
 	public function prepareEntityUserFieldInfos()
 	{
 		if($this->userFieldInfos !== null)
@@ -780,68 +740,24 @@ class BaseComponent extends \CBitrixComponent
 			return $this->userFieldInfos;
 		}
 
-		$this->userFieldInfos = array();
-		$userFields = $this->prepareEntityUserFields();
-		$enumerationFields = array();
-		$userFieldEntityID = $this->getUserFieldEntityID();
-		foreach($userFields as $userField)
-		{
-			$fieldName = $userField['FIELD_NAME'];
-			$fieldInfo = array(
-				'USER_TYPE_ID' => $userField['USER_TYPE_ID'],
-				'ENTITY_ID' => $userFieldEntityID,
-				'ENTITY_VALUE_ID' => $this->entityID,
-				'FIELD' => $fieldName,
-				'MULTIPLE' => $userField['MULTIPLE'],
-				'MANDATORY' => $userField['MANDATORY'],
-				'SETTINGS' => isset($userField['SETTINGS']) ? $userField['SETTINGS'] : null
-			);
-
-			if($userField['USER_TYPE_ID'] === 'enumeration')
-			{
-				$enumerationFields[$fieldName] = $userField;
-			}
-			elseif($userField['USER_TYPE_ID'] === 'file')
-			{
-				$fieldInfo['ADDITIONAL'] = array(
-					'URL_TEMPLATE' => \CComponentEngine::MakePathFromTemplate(
-						$this->getFileHandlerUrl(),
-						array(
-							'owner_id' => $this->entityID,
-							'field_name' => $fieldName
-						)
-					)
-				);
-			}
-
-			$this->userFieldInfos[$fieldName] = array(
-				'name' => $fieldName,
-				'title' => isset($userField['EDIT_FORM_LABEL']) ? $userField['EDIT_FORM_LABEL'] : $fieldName,
-				'type' => 'userField',
-				'data' => array('fieldInfo' => $fieldInfo)
-			);
-
-			if(isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
-			{
-				$this->userFieldInfos[$fieldName]['required'] = true;
-			}
-		}
-
-		if(!empty($enumerationFields))
-		{
-			$enumInfos = \CCrmUserType::PrepareEnumerationInfos($enumerationFields);
-			foreach($enumInfos as $fieldName => $enums)
-			{
-				if(isset($this->userFieldInfos[$fieldName])
-					&& isset($this->userFieldInfos[$fieldName]['data'])
-					&& isset($this->userFieldInfos[$fieldName]['data']['fieldInfo'])
-				)
-				{
-					$this->userFieldInfos[$fieldName]['data']['fieldInfo']['ENUM'] = $enums;
-				}
-			}
-		}
+		$this->userFieldInfos = Crm\Service\EditorAdapter::prepareEntityUserFields(
+			$this->prepareEntityUserFields(),
+			$this->prepareEntityFieldvisibilityConfigs($this->getEntityTypeID()),
+			$this->getEntityTypeID(),
+			$this->getEntityID(),
+			$this->getFileHandlerUrl()
+		);
 
 		return $this->userFieldInfos;
+	}
+
+	protected function getComponentName(): string
+	{
+		return str_replace('bitrix:', '', $this->getName());
+	}
+
+	protected function getEntitySelectorContext(): string
+	{
+		return $this->getComponentName();
 	}
 }

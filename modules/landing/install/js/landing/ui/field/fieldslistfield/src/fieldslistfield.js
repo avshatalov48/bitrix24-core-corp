@@ -1,6 +1,6 @@
 import {BaseField} from 'landing.ui.field.basefield';
 import {Loc} from 'landing.loc';
-import {Dom, Runtime, Tag, Type} from 'main.core';
+import {Dom, Runtime, Tag, Text, Type} from 'main.core';
 import {Draggable} from 'ui.draganddrop.draggable';
 import {FieldsPanel} from 'landing.ui.panel.fieldspanel';
 import {ListItem} from 'landing.ui.component.listitem';
@@ -13,6 +13,7 @@ import {ListSettingsField} from 'landing.ui.field.listsettingsfield';
 import {SeparatorPanel} from 'landing.ui.panel.separatorpanel';
 import {ResourcebookingUserfield} from 'calendar.resourcebookinguserfield';
 import {PageObject} from 'landing.pageobject';
+import {Loader} from 'main.loader';
 import type {ListItemOptions} from 'landing.ui.component.listitem';
 import 'socnetlogdest';
 
@@ -371,11 +372,18 @@ export class FieldsListField extends BaseField
 			);
 		}
 
-		if (field.type === 'list' && field.editing.items.length > 0)
+		if (
+			(
+				field.type === 'list'
+				|| field.type === 'radio'
+			)
+			&& field.editing.items.length > 0
+		)
 		{
 			const defaultValueField = new BX.Landing.UI.Field.Dropdown({
 				selector: 'value',
 				title: Loc.getMessage('LANDING_FIELDS_ITEM_FORM_LIST_DEFAULT_VALUE_TITLE'),
+				content: field.value,
 				items: [
 					{
 						value: Loc.getMessage('LANDING_FORM_DEFAULT_VALUE_NOT_SELECTED'),
@@ -414,10 +422,32 @@ export class FieldsListField extends BaseField
 			fields.push(defaultValueField);
 		}
 
+		if (
+			Type.isPlainObject(field.editing)
+			&& Type.isArrayFilled(field.editing.valueTypes)
+		)
+		{
+			fields.push(
+				new BX.Landing.UI.Field.Dropdown({
+					selector: 'valueType',
+					title: Loc.getMessage('LANDING_FIELDS_ITEM_FORM_VALUE_TYPE'),
+					content: field.editing.editable.valueType,
+					items: field.editing.valueTypes.map((item) => {
+						return {name: item.name, value: item.id};
+					}),
+				}),
+			);
+		}
+
 		return new FormSettingsForm({
 			fields,
 			serializeModifier(value) {
 				const modifiedValue = {...value};
+				if (Reflect.has(value, 'label'))
+				{
+					modifiedValue.label = Text.decode(value.label);
+				}
+
 				if (Reflect.has(value, 'required'))
 				{
 					modifiedValue.required = value.required.includes('required');
@@ -434,6 +464,15 @@ export class FieldsListField extends BaseField
 						item.selected = (value.value === item.value);
 						return item;
 					});
+				}
+
+				if (Reflect.has(value, 'valueType'))
+				{
+					modifiedValue.editing = {
+						editable: {
+							valueType: value.valueType,
+						},
+					};
 				}
 
 				return modifiedValue;
@@ -460,7 +499,10 @@ export class FieldsListField extends BaseField
 				disabledFields: this.items.map((item) => item.options.id),
 			})
 			.then((selectedFields) => {
-				this.onFieldsSelect(selectedFields);
+				if (Type.isArrayFilled(selectedFields))
+				{
+					this.onFieldsSelect(selectedFields);
+				}
 			});
 	}
 
@@ -472,17 +514,20 @@ export class FieldsListField extends BaseField
 			}),
 		};
 
+		void this.showLoader();
+
 		FormClient.getInstance()
 			.prepareOptions(this.options.formOptions, preparingOptions)
 			.then((result) => {
-				const promises = result.data.fields.map((field) => {
-					return this.addItem(field);
-				});
-
-				Promise.all(promises)
-					.then(() => {
-						this.emit('onChange', {skipPrepare: true});
-					});
+				void this.hideLoader();
+				return Promise.all(
+					result.data.fields.map((field) => {
+						return this.addItem(field);
+					}),
+				);
+			})
+			.then(() => {
+				this.emit('onChange', {skipPrepare: true});
 			});
 	}
 
@@ -513,10 +558,14 @@ export class FieldsListField extends BaseField
 				{
 					fields.push({...fields[0]});
 				}
+				
+				void this.showLoader();
 
 				FormClient.getInstance()
 					.prepareOptions(this.options.formOptions, {fields})
 					.then((result) => {
+						void this.hideLoader();
+
 						let separatorPromise = Promise.resolve();
 						if (
 							separator.type === 'page'
@@ -626,5 +675,34 @@ export class FieldsListField extends BaseField
 
 			this.emit('onChange', {skipPrepare: true});
 		});
+	}
+
+	getLoader(): Loader
+	{
+		return this.cache.remember('loader', () => {
+			return new Loader({
+				size: 50,
+				mode: 'inline',
+				offset: {
+					top: '5px',
+					left: '225px',
+				},
+			});
+		});
+	}
+
+	showLoader(): Promise<any>
+	{
+		const loader = this.getLoader();
+		const container = this.getListContainer();
+		Dom.append(loader.layout, container);
+		return loader.show(container);
+	}
+
+	hideLoader(): Promise<any>
+	{
+		const loader = this.getLoader();
+		Dom.remove(loader.layout);
+		return loader.hide();
 	}
 }

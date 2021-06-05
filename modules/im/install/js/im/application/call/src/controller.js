@@ -91,6 +91,7 @@ class CallApplication
 		this.onCallUserMicrophoneStateHandler = this.onCallUserMicrophoneState.bind(this);
 		this.onCallLocalMediaReceivedHandler = BX.debounce(this.onCallLocalMediaReceived.bind(this), 1000);
 		this.onCallUserStreamReceivedHandler = this.onCallUserStreamReceived.bind(this);
+		this.onCallUserStreamRemovedHandler = this.onCallUserStreamRemoved.bind(this);
 		this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 		this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 		this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
@@ -1562,7 +1563,7 @@ class CallApplication
 		this.currentCall.addEventListener(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler);
 		this.currentCall.addEventListener(BX.Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
 		this.currentCall.addEventListener(BX.Call.Event.onStreamReceived, this.onCallUserStreamReceivedHandler);
-		//this.currentCall.addEventListener(BX.Call.Event.onStreamRemoved, this.onCallUserStreamRemoved.bind(this));
+		this.currentCall.addEventListener(BX.Call.Event.onStreamRemoved, this.onCallUserStreamRemovedHandler);
 		this.currentCall.addEventListener(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 		this.currentCall.addEventListener(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 		this.currentCall.addEventListener(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler);
@@ -1636,7 +1637,29 @@ class CallApplication
 
 	onCallUserStreamReceived(e)
 	{
-		this.callView.setStream(e.userId, e.stream);
+		if (this.callView)
+		{
+			if ("stream" in e)
+			{
+				this.callView.setStream(e.userId, e.stream);
+			}
+			if ("mediaRenderer" in e && e.mediaRenderer.kind === "audio")
+			{
+				this.callView.setStream(e.userId, e.mediaRenderer.stream);
+			}
+			if ("mediaRenderer" in e && (e.mediaRenderer.kind === "video" || e.mediaRenderer.kind === "sharing"))
+			{
+				this.callView.setVideoRenderer(e.userId, e.mediaRenderer);
+			}
+		}
+	}
+
+	onCallUserStreamRemoved(e)
+	{
+		if ("mediaRenderer" in e && (e.mediaRenderer.kind === "video" || e.mediaRenderer.kind === "sharing"))
+		{
+			this.callView.setVideoRenderer(e.userId, null);
+		}
 	}
 
 	onCallUserVoiceStarted(e)

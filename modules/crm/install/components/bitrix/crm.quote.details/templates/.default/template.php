@@ -1,150 +1,87 @@
 <?php
+
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Component\EntityDetails\ComponentMode;
-use Bitrix\Crm\Conversion\EntityConverter;
-use Bitrix\Crm\Category\DealCategory;
-
-/** @var array $arParams */
+/** @var CAllMain $APPLICATION */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
-/** @var CCrmQuoteDetailsComponent $component */
 
-$guid = $arResult['GUID'];
-$prefix = mb_strtolower($guid);
+if($this->getComponent()->getErrors())
+{
+	foreach($this->getComponent()->getErrors() as $error)
+	{
+		/** @var \Bitrix\Main\Error $error */
+		?>
+		<div><?=htmlspecialcharsbx($error->getMessage());?></div>
+		<?php
+	}
+
+	return;
+}
+/** @see \Bitrix\Crm\Component\Base::addTopPanel() */
+$this->getComponent()->addTopPanel($this);
+
+/** @see \Bitrix\Crm\Component\Base::addToolbar() */
+$this->getComponent()->addToolbar($this);
+
+/** @see \Bitrix\Crm\Component\Base::addJsRouter() */
+$this->getComponent()->addJsRouter($this);
+?>
+<div class="ui-alert ui-alert-danger" style="display: none;">
+	<span class="ui-alert-message" id="crm-type-item-details-error-text-container"></span>
+	<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
+</div>
+<?php
+
+\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
+
+\Bitrix\Main\UI\Extension::load([
+	'crm.item-details-component',
+	'ui.layout-form',
+	'ui.alerts',
+]);
 
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.quote.menu',
+	'bitrix:crm.activity.editor',
 	'',
-	array(
-		'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
-		'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
-		'ELEMENT_ID' => $arResult['ENTITY_ID'],
-		'OWNER_INFO' => $arResult['ENTITY_INFO'],
-		'TYPE' => 'details',
-		'SCRIPTS' => array(
-			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
-		)
-	),
-	$component
+	$arResult['activityEditorParams'],
+	$this->getComponent(),
+	['HIDE_ICONS' => 'Y']
 );
 
-?><script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				BX.message({ "CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_QUOTE_DETAIL_HISTORY_STUB')?>" });
-			}
-		);
-</script><?
-
-$editorContext = array('PARAMS' => $arResult['CONTEXT_PARAMS']);
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
+$messages = array_merge(Container::getInstance()->getLocalization()->loadMessages(), Loc::loadLanguageFile(__FILE__));
+if(isset($arResult['jsParams']['messages']['crmTimelineHistoryStub']))
 {
-	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
+    $messages['CRM_TIMELINE_HISTORY_STUB'] = $arResult['jsParams']['messages']['crmTimelineHistoryStub'];
 }
+?>
 
+<script>
+	BX.ready(function() {
+		BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
+		var params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
+		params.errorTextContainer = document.getElementById('crm-type-item-details-error-text-container');
+
+		if (params.conversion && params.conversion.lockScript)
+		{
+			params.conversion.lockScript = function()
+			{
+				<?php
+					// Same as params.conversion.lockScript, but not escaped
+					echo $arResult['jsParams']['conversion']['lockScript'];
+				?>
+			};
+		}
+
+		(new BX.Crm.QuoteDetailsComponent(params)).init();
+	});
+</script>
+
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
-	array(
-		'GUID' => $guid,
-		'ENTITY_TYPE_ID' => \CCrmOwnerType::Quote,
-		'ENTITY_ID' => $arResult['COMPONENT_MODE'] === ComponentMode::MODIFICATION ? $arResult['ENTITY_ID'] : 0,
-		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
-		'READ_ONLY' => $arResult['COMPONENT_MODE'] === ComponentMode::VIEW,
-		'TABS' => $arResult['TABS'],
-		'SERVICE_URL' => '/bitrix/components/bitrix/crm.quote.details/ajax.php?action=convert&'.bitrix_sessid_get(),
-		'EDITOR' => array(
-			'GUID' => "{$guid}_editor",
-			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
-			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
-			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
-			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
-			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
-			'ENABLE_SECTION_EDIT' => true,
-			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
-			'SERVICE_URL' => '/bitrix/components/bitrix/crm.quote.details/ajax.php?'.bitrix_sessid_get(),
-			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
-			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext
-		),
-		'TIMELINE' => array(
-			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => false,
-			'ENABLE_CALL' => false,
-			'ENABLE_MEETING' => false,
-			'ENABLE_EMAIL' => false,
-			'ENABLE_TASK' => false,
-			'ENABLE_VISIT' => false,
-			'PROGRESS_SEMANTICS' => $arResult['PROGRESS_SEMANTICS']
-		),
-		'ENABLE_PROGRESS_BAR' => true,
-		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],
-		//'ACTIVITY_EDITOR_ID' => '',
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
-		//'CAN_CONVERT' => isset($arResult['CAN_CONVERT']) ? $arResult['CAN_CONVERT'] : false,
-		//'CONVERSION_SCHEME' => isset($arResult['CONVERSION_SCHEME']) ? $arResult['CONVERSION_SCHEME'] : null
-	)
+	$arResult['entityDetailsParams']
 );
-
-if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):
-	?><script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				BX.CrmEntityType.captions =
-				{
-					<?=CCrmOwnerType::LeadName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Lead)?>",
-					<?=CCrmOwnerType::ContactName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Contact)?>",
-					<?=CCrmOwnerType::CompanyName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Company)?>",
-					<?=CCrmOwnerType::DealName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Deal)?>",
-					<?=CCrmOwnerType::InvoiceName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Invoice)?>",
-					<?=CCrmOwnerType::QuoteName?>: "<?=CCrmOwnerType::GetDescription(CCrmOwnerType::Quote)?>"
-				};
-
-				BX.CrmQuoteConversionScheme.messages =
-					<?=CUtil::PhpToJSObject(\Bitrix\Crm\Conversion\QuoteConversionScheme::getJavaScriptDescriptions(false))?>;
-
-				BX.CrmQuoteConverter.messages =
-				{
-					accessDenied: "<?=GetMessageJS("CRM_QUOTE_CONV_ACCESS_DENIED")?>",
-					generalError: "<?=GetMessageJS("CRM_QUOTE_CONV_GENERAL_ERROR")?>",
-					dialogTitle: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_TITLE")?>",
-					syncEditorLegend: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_SYNC_LEGEND")?>",
-					syncEditorFieldListTitle: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
-					syncEditorEntityListTitle: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
-					continueButton: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_CONTINUE_BTN")?>",
-					cancelButton: "<?=GetMessageJS("CRM_QUOTE_CONV_DIALOG_CANCEL_BTN")?>"
-				};
-				BX.CrmQuoteConverter.permissions =
-				{
-					deal: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_DEAL'])?>,
-					invoice: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_INVOICE'])?>
-				};
-				BX.CrmQuoteConverter.settings =
-				{
-					serviceUrl: "<?='/bitrix/components/bitrix/crm.quote.details/ajax.php?action=convert&'.bitrix_sessid_get()?>",
-					config: <?=CUtil::PhpToJSObject($arResult['CONVERSION_CONFIG']->toJavaScript())?>
-				};
-				BX.CrmDealCategory.infos = <?=CUtil::PhpToJSObject(
-					DealCategory::getJavaScriptInfos(EntityConverter::getPermittedDealCategoryIDs())
-				)?>;
-				BX.CrmDealCategorySelectDialog.messages =
-				{
-					title: "<?=GetMessageJS('CRM_QUOTE_EDIT_CONV_DEAL_CATEGORY_DLG_TITLE')?>",
-					field: "<?=GetMessageJS('CRM_QUOTE_EDIT_CONV_DEAL_CATEGORY_DLG_FIELD')?>",
-					saveButton: "<?=GetMessageJS('CRM_QUOTE_EDIT_BUTTON_SAVE')?>",
-					cancelButton: "<?=GetMessageJS('CRM_QUOTE_EDIT_BUTTON_CANCEL')?>"
-				};
-			}
-		);
-	</script><?
-endif;?>

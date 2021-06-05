@@ -366,7 +366,7 @@ class CUserCMLImport
 		$company_name = COption::GetOptionString("main", "site_name", "");
 		if($company_name == '')
 		{
-			$dbrs = CSite::GetList($o, $b, Array("DEFAULT"=>"Y"));
+			$dbrs = CSite::GetList('', '', Array("DEFAULT"=>"Y"));
 			if($ars = $dbrs->Fetch())
 				$company_name = $ars["NAME"];
 		}
@@ -534,7 +534,7 @@ class CUserCMLImport
 
 	function GetUserByXML_ID($XML_ID)
 	{
-		$dbRes = CUser::GetList($by="ID", $order="ASC", array("XML_ID" => $XML_ID));
+		$dbRes = CUser::GetList("ID", "ASC", array("XML_ID" => $XML_ID));
 		return $dbRes->Fetch();
 	}
 

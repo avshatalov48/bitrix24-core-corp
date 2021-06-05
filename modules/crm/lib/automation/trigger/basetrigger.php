@@ -3,6 +3,8 @@ namespace Bitrix\Crm\Automation\Trigger;
 
 use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\EntityManageFacility;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\DynamicTypesMap;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 
@@ -21,8 +23,32 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 	 */
 	public static function isSupported($entityTypeId)
 	{
-		$supported = [\CCrmOwnerType::Lead, \CCrmOwnerType::Deal, \CCrmOwnerType::Order, \CCrmOwnerType::Invoice];
+		$supported = [
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Order,
+			\CCrmOwnerType::Invoice,
+			\CCrmOwnerType::Quote,
+		];
+
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+
+			return
+				static::areDynamicTypesSupported()
+				&& !is_null($factory)
+				&& $factory->isAutomationEnabled()
+				&& $factory->isStagesEnabled()
+			;
+		}
+
 		return in_array($entityTypeId, $supported, true);
+	}
+
+	protected static function areDynamicTypesSupported(): bool
+	{
+		return true;
 	}
 
 	public static function execute(array $bindings, array $inputData = null)

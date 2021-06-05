@@ -769,7 +769,7 @@ abstract class Controller implements IErrorable
 				$this->sendJsonInvalidSignResponse('Invalid signature');
 			}
 
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$tmpFile = \CFile::resizeImageGet($fileData, array('width' => $width, 'height' => $height), ($this->request->getQuery('exact') === 'Y' ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL), true, false, true);
 			$fileData['FILE_SIZE'] = $tmpFile['size'];
 			$fileData['SRC'] = $tmpFile['src'];

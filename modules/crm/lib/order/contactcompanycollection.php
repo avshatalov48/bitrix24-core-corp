@@ -3,8 +3,9 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm\Binding;
-use Bitrix\Sale;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
+use Bitrix\Sale;
 use Bitrix\Sale\Internals\CollectableEntity;
 
 if (!Main\Loader::includeModule('sale'))
@@ -235,6 +236,45 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 	}
 
 	/**
+	 * Returns the company that is bound to the order
+	 * Order doesn't supports multiple companies
+	 * For details, @see ContactCompanyCollection::addItem()
+	 *
+	 * @return Company|null
+	 */
+	public function getCompany(): ?Company
+	{
+		/** @var Company[] $companies */
+		$companies = iterator_to_array($this->getCompanies());
+
+		return array_shift($companies);
+	}
+
+	/**
+	 * Returns an entity specified by the identifier
+	 *
+	 * @param ItemIdentifier $identifier
+	 *
+	 * @return ContactCompanyEntity|null
+	 */
+	public function getItemByIdentifier(ItemIdentifier $identifier): ?ContactCompanyEntity
+	{
+		/** @var ContactCompanyEntity $item */
+		foreach ($this->collection as $item)
+		{
+			if (
+				((int)$item->getField('ENTITY_TYPE_ID') === $identifier->getEntityTypeId())
+				&& ((int)$item->getField('ENTITY_ID') === $identifier->getEntityId())
+			)
+			{
+				return $item;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * @return Sale\Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectNotFoundException
@@ -256,7 +296,7 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 		{
 			$itemsFromDbList = static::getList(
 				array(
-					"filter" => array("ORDER_ID" => $order->getId())
+					"filter" => array("ORDER_ID" => $order->getId()),
 				)
 			);
 			while ($item = $itemsFromDbList->fetch())
@@ -334,7 +374,7 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 		$dbRes = static::getList(
 			array(
 				"filter" => array("=ORDER_ID" => $idOrder),
-				"select" => array("ID")
+				"select" => array("ID"),
 			)
 		);
 

@@ -130,7 +130,7 @@ final class Version extends Internals\Model
 			return $this->file;
 		}
 		/** @noinspection PhpUndefinedClassInspection */
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$this->file = \CFile::getByID($this->fileId)->fetch();
 
 		if(!$this->file)
@@ -245,7 +245,7 @@ final class Version extends Internals\Model
 
 		if(is_string($this->miscData))
 		{
-			$this->unserializeData = @unserialize($this->miscData);
+			$this->unserializeData = @unserialize($this->miscData, ['allowed_classes' => false]);
 			if($this->unserializeData === false)
 			{
 				return array();

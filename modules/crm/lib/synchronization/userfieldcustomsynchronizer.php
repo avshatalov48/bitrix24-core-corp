@@ -20,7 +20,7 @@ class UserFieldCustomSynchronizer
 	{
 		if(self::$languageIDs === null)
 		{
-			$dbResult = \CLanguage::GetList($by = '', $order = '');
+			$dbResult = \CLanguage::GetList();
 			while($arLang = $dbResult->Fetch())
 			{
 				self::$languageIDs[] = $arLang['LID'];

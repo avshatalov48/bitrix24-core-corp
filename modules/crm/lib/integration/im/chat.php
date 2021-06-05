@@ -16,30 +16,32 @@ use Bitrix\Main\Localization\Loc;
 
 class Chat
 {
-	const CHAT_ENTITY_TYPE = "CRM";
+	public const CHAT_ENTITY_TYPE = "CRM";
+
+	public static function isEntitySupported(int $entityTypeId): bool
+	{
+		$staticEntities = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead];
+		if (in_array($entityTypeId, $staticEntities, true))
+		{
+			return true;
+		}
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory)
+		{
+			return $factory->isObserversEnabled();
+		}
+
+		return false;
+	}
 
 	public static function getEntityUserIDs($entityTypeID, $entityID)
 	{
 		$results = [];
+		$entityTypeID = (int)$entityTypeID;
+		$entityID = (int)$entityID;
 
-		$responsibleID = 0;
-		if($entityTypeID === \CCrmOwnerType::Lead)
-		{
-			$responsibleID = Crm\Entity\Lead::getResponsibleID($entityID);
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
-		{
-			$responsibleID = Crm\Entity\Deal::getResponsibleID($entityID);
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$responsibleID = Crm\Entity\Contact::getResponsibleID($entityID);
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$responsibleID = Crm\Entity\Contact::getResponsibleID($entityID);
-		}
-
+		$responsibleID = static::getResponsibleId($entityTypeID, $entityID);
 		if($responsibleID > 0)
 		{
 			$results[] = $responsibleID;
@@ -47,6 +49,38 @@ class Chat
 
 		$results = array_merge($results, Crm\Observer\ObserverManager::getEntityObserverIDs($entityTypeID, $entityID));
 		return array_unique($results);
+	}
+
+	protected static function getResponsibleId(int $entityTypeId, int $entityId): int
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return Crm\Entity\Lead::getResponsibleID($entityId);
+		}
+		if ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			return Crm\Entity\Deal::getResponsibleID($entityId);
+		}
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return Crm\Entity\Contact::getResponsibleID($entityId);
+		}
+		if($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return Crm\Entity\Contact::getResponsibleID($entityId);
+		}
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory)
+		{
+			$item = $factory->getItem($entityId);
+			if ($item)
+			{
+				return ($item->getAssignedById() ?? 0);
+			}
+		}
+
+		return 0;
 	}
 
 	public static function prepareUserInfos(array $userIDs)
@@ -124,24 +158,24 @@ class Chat
 		}
 
 		$currentFields = isset($params['CURRENT_FIELDS']) && is_array($params['CURRENT_FIELDS'])
-			? $params['CURRENT_FIELDS'] : array();
+			? $params['CURRENT_FIELDS'] : [];
 		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
-			? $params['PREVIOUS_FIELDS'] : array();
+			? $params['PREVIOUS_FIELDS'] : [];
 		$removedObserverIDs = isset($params['REMOVED_OBSERVER_IDS']) && is_array($params['REMOVED_OBSERVER_IDS'])
-			? $params['REMOVED_OBSERVER_IDS'] : array();
+			? $params['REMOVED_OBSERVER_IDS'] : [];
 
 		$currentOwnerID = 0;
 		$currentTitle = '';
 
-		if($entityTypeID === \CCrmOwnerType::Lead || $entityTypeID === \CCrmOwnerType::Deal)
+		if (static::isEntitySupported((int)$entityTypeID))
 		{
-			$previousResponsibleID = isset($previousFields['ASSIGNED_BY_ID']) ? $previousFields['ASSIGNED_BY_ID'] : 0;
+			$previousResponsibleID = $previousFields['ASSIGNED_BY_ID'] ?? 0;
 			if(isset($currentFields['ASSIGNED_BY_ID']) && $currentFields['ASSIGNED_BY_ID'] != $previousResponsibleID)
 			{
 				$currentOwnerID = (int)$currentFields['ASSIGNED_BY_ID'];
 			}
 
-			$previousTitle = isset($previousFields['TITLE']) ? $previousFields['TITLE'] : '';
+			$previousTitle = $previousFields['TITLE'] ?? '';
 			if(isset($currentFields['TITLE']) && $currentFields['TITLE'] != $previousTitle)
 			{
 				$currentTitle = $currentFields['TITLE'];
@@ -405,15 +439,6 @@ class Chat
 				$crmEntityAvatarId = intval($entityData['LOGO']);
 			}
 		}
-		else if (
-			$entityType == \CCrmOwnerType::LeadName || $entityType == \CCrmOwnerType::DealName
-		)
-		{
-			if (isset($entityData['TITLE']))
-			{
-				$crmEntityTitle = $entityData['TITLE'];
-			}
-		}
 		else if ($entityType == \CCrmOwnerType::ContactName)
 		{
 			if (isset($entityData['FULL_NAME']))
@@ -425,10 +450,17 @@ class Chat
 				$crmEntityAvatarId = intval($entityData['PHOTO']);
 			}
 		}
+		else
+		{
+			if (isset($entityData['TITLE']))
+			{
+				$crmEntityTitle = $entityData['TITLE'];
+			}
+		}
 
 		if (!$crmEntityTitle)
 		{
-			$crmEntityTitle = '#'.$entityId;;
+			$crmEntityTitle = '#'.$entityId;
 		}
 
 		$authorId = (int)$entityData['ASSIGNED_BY_ID'];
@@ -484,12 +516,32 @@ class Chat
 		\CIMChat::AddMessage([
 			"TO_CHAT_ID" => $chatId,
 			"USER_ID" => $userId,
-			"MESSAGE" => '[b]'.Loc::getMessage('CRM_INTEGRATION_IM_CHAT_CARD_TITLE_'.$entityType).'[/b]',
+			"MESSAGE" => static::getChatCardTitle($entityType),
 			"SYSTEM" => 'Y',
 			"ATTACH" => self::getEntityCard($entityType, $entityId, $entityData)
 		]);
 
 		return $chatId;
+	}
+
+	protected static function getChatCardTitle(string $entityType): string
+	{
+		$message = Loc::getMessage('CRM_INTEGRATION_IM_CHAT_CARD_TITLE_'.$entityType);
+
+		if (empty($message))
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			if ($factory)
+			{
+				$message = Loc::getMessage(
+					'CRM_INTEGRATION_IM_CHAT_CARD_TITLE',
+					['#ENTITY_DESCRIPTION#' => $factory->getEntityDescription()]
+				);
+			}
+		}
+
+		return "[b]{$message}[/b]";
 	}
 
 	public static function deleteChat(array $params = [])
@@ -533,11 +585,31 @@ class Chat
 				: LANGUAGE_ID
 		);
 
-		return Loc::getMessage(
+		$chatName = Loc::getMessage(
 			'CRM_INTEGRATION_IM_CHAT_TITLE_'.$entityType,
 			array("#TITLE#" => $entityTitle),
 			$siteLanguageId
 		);
+		if (!empty($chatName))
+		{
+			return $chatName;
+		}
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory)
+		{
+			return Loc::getMessage(
+				'CRM_INTEGRATION_IM_CHAT_TITLE',
+				[
+					'#ENTITY_DESCRIPTION#' => $factory->getEntityDescription(),
+					'#TITLE#' => $entityTitle
+				],
+				$siteLanguageId
+			);
+		}
+
+		return null;
 	}
 
 	public static function getEntityCard($entityType, $entityId, $entityData = null)
@@ -547,12 +619,10 @@ class Chat
 			return null;
 		}
 
-		if (!in_array($entityType, [
-			\CCrmOwnerType::LeadName,
-			\CCrmOwnerType::ContactName,
-			\CCrmOwnerType::CompanyName,
-			\CCrmOwnerType::DealName
-		]))
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+		$additionalAllowedTypes = [\CCrmOwnerType::Contact, \CCrmOwnerType::Company];
+		$isEnabled = static::isEntitySupported($entityTypeId) || in_array($entityTypeId, $additionalAllowedTypes, true);
+		if (!$isEnabled)
 		{
 			return null;
 		}
@@ -609,7 +679,7 @@ class Chat
 				$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('CRM_INTEGRATION_IM_CHAT_CARD_POST'), 'VALUE' => $entityData['POST']);
 			}
 		}
-		else if ($entityType == \CCrmOwnerType::CompanyName || $entityType == \CCrmOwnerType::DealName)
+		else
 		{
 			if (isset($entityData['TITLE']))
 			{
@@ -655,20 +725,26 @@ class Chat
 		{
 			$entity = new \CCrmLead(false);
 		}
-		else if ($entityType == \CCrmOwnerType::CompanyName)
+		elseif ($entityType == \CCrmOwnerType::CompanyName)
 		{
 			$entity = new \CCrmCompany(false);
 		}
-		else if ($entityType == \CCrmOwnerType::ContactName)
+		elseif ($entityType == \CCrmOwnerType::ContactName)
 		{
 			$entity = new \CCrmContact(false);
 		}
-		else if ($entityType == \CCrmOwnerType::DealName)
+		elseif ($entityType == \CCrmOwnerType::DealName)
 		{
 			$entity = new \CCrmDeal(false);
 		}
 		else
 		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
+			if ($factory && $item = $factory->getItem((int) $entityId))
+			{
+				return $item->getData();
+			}
+
 			return false;
 		}
 		$data = $entity->GetByID($entityId, false);

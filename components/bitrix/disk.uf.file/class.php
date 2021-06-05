@@ -188,9 +188,9 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			$this->arResult['controlName'] = $this->arParams['PARAMS']['arUserField']['FIELD_NAME'];
 			$this->arResult['SHARE_EDIT_ON_OBJECT_UF'] = Configuration::isEnabledDefaultEditInUf();
 
-			$this->arResult['CREATE_BLANK_URL'] = $urlManager->getUrlToStartCreateUfFileByService('docx', $documentHandlerCode);
-			$this->arResult['RENAME_FILE_URL'] = $urlManager->getUrlDocumentController('rename', array('document_action' => 'rename'));
-			$this->arResult['UPLOAD_FILE_URL'] = $urlManager->getUrlToUploadUfFile();
+			$this->arResult['CREATE_BLANK_URL'] = $urlManager::getUrlToStartCreateUfFileByService('docx', $documentHandlerCode);
+			$this->arResult['RENAME_FILE_URL'] = $urlManager::getUrlDocumentController('rename', array('document_action' => 'rename'));
+			$this->arResult['UPLOAD_FILE_URL'] = $urlManager::getUrlToUploadUfFile();
 
 			//now we show checkbox only if it's create post, etc.
 			$this->arResult['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = empty($this->arResult['FILES']);
@@ -623,8 +623,8 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 				$defaultDocumentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultServiceForCurrentUser();
 				if ($defaultDocumentHandler)
 				{
-					$documentHandlerName = $defaultDocumentHandler->getName();
-					$documentHandlerCode = $defaultDocumentHandler->getCode();
+					$documentHandlerName = $defaultDocumentHandler::getName();
+					$documentHandlerCode = $defaultDocumentHandler::getCode();
 					$isLocal = false;
 				}
 			}

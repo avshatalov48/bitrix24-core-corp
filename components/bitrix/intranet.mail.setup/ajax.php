@@ -1879,7 +1879,7 @@ class CIntranetMailSetupAjax
 			if (intval($userId))
 			{
 				$dbUser = CUser::getList(
-					$by = 'ID', $order = 'ASC',
+					'ID', 'ASC',
 					array('ID_EQUAL_EXACT' => intval($userId)),
 					array('FIELDS' => 'ID')
 				);

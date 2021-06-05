@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\SpecificFolder;
@@ -12,7 +13,7 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
-class YandexDiskHandler extends DocumentHandler
+class YandexDiskHandler extends DocumentHandler implements CloudImportInterface
 {
 	const API_URL_V1 = 'https://cloud-api.yandex.net/v1/disk';
 

@@ -93,7 +93,9 @@ export class CompactEventForm extends EventEmitter
 					Util.sendAnalyticLabel({calendarAction: 'view_event', formType: 'compact'});
 				}
 
-				if (!this.userPlannerSelector.isPlannerDisplayed())
+				if (!this.userPlannerSelector.isPlannerDisplayed()
+				&& (this.getMode() === CompactEventForm.EDIT_MODE)
+				)
 				{
 					this.userPlannerSelector.checkBusyTime()
 				}

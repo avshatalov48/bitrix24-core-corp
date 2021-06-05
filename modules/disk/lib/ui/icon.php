@@ -50,7 +50,7 @@ final class Icon
 			{
 				$class .= ' ' . self::$possibleIconClasses[$ext];
 			}
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			elseif(TypeFile::isImage($object))
 			{
 				$class .= ' ' . self::$possibleIconClasses['img'];

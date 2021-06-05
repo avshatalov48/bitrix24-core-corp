@@ -19,11 +19,9 @@ global $USER;
 CUtil::InitJSCore(['ajax', 'popup']);
 \Bitrix\Main\UI\Extension::load(['sidepanel']);
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
 $settings = $arParams['userField']['SETTINGS'];
 $supportedTypes = DataModifiers\Element::getSupportedTypes($settings); // all entity
-$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes, $userPermissions);  // only entity types are allowed for current user
+$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes);  // only entity types are allowed for current user
 // types are defined in settings
 
 $arResult['PERMISSION_DENIED'] = (empty($arParams['ENTITY_TYPE']) ? true : false);

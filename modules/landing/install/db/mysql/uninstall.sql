@@ -21,3 +21,4 @@ drop table if exists b_landing_binding;
 drop table if exists b_landing_chat;
 drop table if exists b_landing_chat_binding;
 drop table if exists b_landing_cookies_agreement;
+drop table if exists b_landing_designer_repo;

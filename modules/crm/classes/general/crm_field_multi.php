@@ -565,10 +565,10 @@ class CCrmFieldMulti
 		{
 			$val = $arFilter[$filter_keys[$i]];
 
-			if (!is_array($val) && $val == '' || $val=="NOT_REF")
+			if (!is_array($val) && (string)$val == '' || $val=="NOT_REF")
 				continue;
 
-			$key = mb_strtoupper($filter_keys[$i]);
+			$key = strtoupper($filter_keys[$i]);
 			$operationInfo = CSqlUtil::GetFilterOperation($key);
 			$operation = $operationInfo['OPERATION'];
 			// Process only like operation

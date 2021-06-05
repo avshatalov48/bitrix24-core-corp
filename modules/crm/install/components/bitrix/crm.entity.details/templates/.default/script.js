@@ -1255,7 +1255,7 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 			params["TAB_ID"] = this._tabId;
 			this._startRequest(params);
 		},
-		_startRequest: function(params)
+		_startRequest: function(request)
 		{
 			if(this._isRequestRunning)
 			{
@@ -1273,22 +1273,35 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 					}
 				}).then(this._onRequestSuccess.bind(this), this._onRequestFailure.bind(this));
 			}
+			else if (request.isComponentAjaxAction && request.detailComponent)
+			{
+				BX.ajax.runComponentAction(request.detailComponent, 'children', {
+					mode: 'class',
+					data: {
+						parentEntityTypeId: request.params.PARENT_ENTITY_TYPE_ID,
+						parentEntityId: request.params.PARENT_ENTITY_ID,
+						entityTypeId: request.params.ENTITY_TYPE_ID
+					}
+				}).then(function (response){
+					this._container.innerHTML = response.data.html;
+					var result = BX.processHTML(response.data.html);
+					BX.ajax.processScripts(result.SCRIPT);
+				}.bind(this));
+			}
 			else
 			{
-				BX.ajax(
-					{
+				BX.ajax({
 						url: this._serviceUrl,
 						method: "POST",
 						dataType: "html",
 						data:
 							{
 								"LOADER_ID": this._id,
-								"PARAMS": params
+								"PARAMS": request
 							},
 						onsuccess: BX.delegate(this._onRequestSuccess, this),
 						onfailure: BX.delegate(this._onRequestFailure, this)
-					}
-				);
+				});
 			}
 
 			return true;

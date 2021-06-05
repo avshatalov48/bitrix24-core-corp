@@ -136,7 +136,7 @@ class User
 		$originatorGender = 'M';
 		if ($originatorId > 0)
 		{
-			$dbUser = \CUser::GetList(($sort_by = false), ($dummy=''), ['ID' => $originatorId], array('FIELDS' => ['PERSONAL_GENDER']));
+			$dbUser = \CUser::GetList('', '', ['ID_EQUAL_EXACT' => $originatorId], array('FIELDS' => ['PERSONAL_GENDER']));
 			if ($user = $dbUser->Fetch())
 			{
 				$originatorGender = $user["PERSONAL_GENDER"] == 'F'? 'F': 'M';

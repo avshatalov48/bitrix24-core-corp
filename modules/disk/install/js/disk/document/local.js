@@ -246,15 +246,8 @@
 		{
 			top.BX.loadExt('disk').then(function () {
 
-				var zIndex = (BX.getClass('BX.SidePanel.Instance') && BX.SidePanel.Instance.isOpen())? BX.SidePanel.Instance.getTopSlider().getZindex() : null;
-				if (BX.getClass('BX.UI.Viewer.Instance') && (BX.UI.Viewer.Instance.getZindex() > zIndex))
-				{
-					zIndex = BX.UI.Viewer.Instance.getZindex();
-				}
-
 				top.BX.Disk.showLoader({
-					text: BX.message('JS_DISK_DOC_WAITING_FOR_BITRIX24_DESKTOP'),
-					zIndex: zIndex
+					text: BX.message('JS_DISK_DOC_WAITING_FOR_BITRIX24_DESKTOP')
 				});
 
 				var timeoutId = setTimeout(function(){
@@ -266,7 +259,6 @@
 						closeIcon: true,
 						closeByEsc: true,
 						width: 500,
-						zIndex: zIndex,
 						overlay: {
 							backgroundColor: 'rgba(0,0,0,0.5)'
 						},

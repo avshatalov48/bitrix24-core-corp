@@ -1350,8 +1350,8 @@ if (!class_exists("CDavExchangeCalendar"))
 			if ($exchangeUseLogin == "N")
 				$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
 
-			$dbUserList = CUser::GetList($by = "UF_BXDAVEX_CALSYNC",
-				$order = "asc",
+			$dbUserList = CUser::GetList("UF_BXDAVEX_CALSYNC",
+				"asc",
 				$arUserFilter,
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'),
@@ -1687,8 +1687,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1737,8 +1737,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1805,8 +1805,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1851,8 +1851,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1901,8 +1901,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1954,8 +1954,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -1991,8 +1991,8 @@ if (!class_exists("CDavExchangeCalendar"))
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("UF_BXDAVEX_MAILBOX"),
 					"FIELDS" => array('ID', 'LOGIN'))
@@ -2020,7 +2020,7 @@ if (!class_exists("CDavExchangeCalendar"))
 				$strValue = "";
 				foreach($emailList as $email)
 				{
-					$strValue .= ",'".CDatabase::ForSql($email)."'";
+					$strValue .= ",'".$DB->ForSql($email)."'";
 				}
 				$strValue = trim($strValue, ', ');
 
@@ -2050,7 +2050,7 @@ if (!class_exists("CDavExchangeCalendar"))
 							if(!in_array(mb_strtolower($email), $checkedEmails) && mb_strtolower(mb_substr($email, mb_strlen($email) - $exchangeMailboxStrlen)) == mb_strtolower($exchangeMailbox))
 							{
 								$value = mb_substr($email, 0, mb_strlen($email) - $exchangeMailboxStrlen);
-								$strLogins .= ",'".CDatabase::ForSql($value)."'";
+								$strLogins .= ",'".$DB->ForSql($value)."'";
 							}
 						}
 						$strLogins = trim($strLogins, ', ');

@@ -27,10 +27,6 @@ class Output
 	 * @param int $chatId
 	 * @param array $params
 	 * @return Output
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInstance($chatId = 0, $params = []): Output
 	{
@@ -46,10 +42,6 @@ class Output
 	 * @param int $chatId
 	 * @param string $connectorId
 	 * @return Output
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	private static function initialization($chatId = 0, $connectorId = ''): Output
 	{
@@ -101,10 +93,6 @@ class Output
 	 * @param array $messageFields
 	 * @param string $connectorId
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function sendMessageProcessing($messageFields, $connectorId): array
 	{

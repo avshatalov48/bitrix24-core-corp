@@ -73,9 +73,7 @@ class UserField extends \Bitrix\Tasks\Integration\CRM
 	{
 		$result = array();
 
-		$by = 'LID';
-		$order = 'ASC';
-		$rsLangs = \CLanguage::GetList($by, $order, array("ACTIVE" => "Y"));
+		$rsLangs = \CLanguage::GetList('lid', 'asc', array("ACTIVE" => "Y"));
 		while ($arLang = $rsLangs->Fetch())
 		{
 			$result[] = $arLang['LID'];

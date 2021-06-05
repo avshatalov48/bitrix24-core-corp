@@ -141,7 +141,7 @@ class CTimeManNotify
 		}
 	}
 
-	protected function NotifyImNew($arEntry)
+	protected static function NotifyImNew($arEntry)
 	{
 		if(!CModule::IncludeModule("im"))
 			return false;
@@ -193,7 +193,7 @@ class CTimeManNotify
 		return true;
 	}
 
-	protected function NotifyImApprove($arEntry)
+	protected static function NotifyImApprove($arEntry)
 	{
 		if(!CModule::IncludeModule("im"))
 			return false;
@@ -342,7 +342,7 @@ class CTimeManNotify
 		$arEntry = $dbEntry->Fetch();
 
 		$dbManagers = CUser::GetList(
-			$by='ID', $order='ASC',
+			'ID', 'ASC',
 			array('ID' => implode('|', $arManagers))
 		);
 

@@ -442,7 +442,6 @@ class CAllIMContactList
 				}
 			}
 
-			//uasort($ar, create_function('$a, $b', 'if($a["stamp"] < $b["stamp"]) return 1; elseif($a["stamp"] > $b["stamp"]) return -1; else return 0;'));
 			if (is_array($arUsersToGroup[$USER->GetID()]))
 			{
 				foreach($arUsersToGroup[$USER->GetID()] as $dep_id)
@@ -649,10 +648,9 @@ class CAllIMContactList
 			);
 		}
 
-		if (CModule::IncludeModule('imopenlines'))
+		if (CModule::IncludeModule('imbot'))
 		{
-			$network = new \Bitrix\ImOpenLines\Network();
-			$result = $network->search($searchText);
+			$result = \Bitrix\ImBot\Bot\Network::search($searchText);
 			if ($result)
 			{
 				foreach ($result as $arLine)
@@ -1770,7 +1768,7 @@ class CAllIMContactList
 				if ($bVoximplantEnable)
 					$arSelectParams[] = 'UF_VI_PHONE';
 
-				$dbUsers = CUser::GetList(($sort_by = Array('last_name'=>'asc')), ($dummy=''), Array('ID' => $userId."|".implode('|', $arUsers)), Array('FIELDS' => Array("ID"), 'SELECT' => $arSelectParams));
+				$dbUsers = CUser::GetList(['last_name'=>'asc'], '', Array('ID' => $userId."|".implode('|', $arUsers)), Array('FIELDS' => Array("ID"), 'SELECT' => $arSelectParams));
 				while ($arUser = $dbUsers->GetNext(true, false))
 				{
 					$arUserPhone[$arUser['ID']] = $arUser['UF_VI_PHONE'] == 'Y';

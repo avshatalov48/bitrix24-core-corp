@@ -11,6 +11,7 @@ if (isset($arResult['ERROR']))
 }
 
 use \Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Settings\QuoteSettings;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Crm\Kanban\Helper;
 use \Bitrix\Crm\Conversion\LeadConversionScheme;
@@ -176,7 +177,6 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					itemType: "BX.CRM.Kanban.Item",
 					columnType: "BX.CRM.Kanban.Column",
 					dropZoneType: "BX.CRM.Kanban.DropZone",
-					isRecyclebinEnabled: <?= (!empty($arResult['IS_RECYCLEBIN_ENABLED']) ? 'true' : 'false') ?>,
 					canAddColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
 					canEditColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
 					canRemoveColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
@@ -196,6 +196,8 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 							ajaxHandlerPath: ajaxHandlerPath,
 							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
 							entityTypeInt: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
+							typeInfo: <?= \CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
+							isDynamicEntity: <?= ($arParams['IS_DYNAMIC_ENTITY'] ? 'true' : 'false') ?>,
 							entityPath: "<?= \CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
 							editorConfigId: "<?= \CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
 							quickEditorPath: {
@@ -279,6 +281,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					CRM_KANBAN_DELETE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS') ?>",
 					CRM_KANBAN_DELETE_CANCEL: "<?= GetMessageJS('CRM_KANBAN_DELETE_CANCEL') ?>",
 					CRM_KANBAN_DELETE_RESTORE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_RESTORE_SUCCESS') ?>",
+					CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE: "<?= GetMessageJS('CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE')?>"
 				}
 			);
 

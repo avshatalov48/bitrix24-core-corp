@@ -108,7 +108,7 @@ $canWriteConfig = ($arResult['ROLE_PERMS']['CONFIG']['WRITE']['-'] == 'X');
 				<? endif; ?>
 			</td>
 			<td>
-				<?if (mb_strpos($entityType, 'LEAD') === 0 || mb_strpos($entityType, 'DEAL') === 0 || mb_strpos($entityType, 'ORDER') === 0):
+				<?if (in_array('AUTOMATION', $arResult['ENTITY_PERMS'][$entityType])):
 					$curVal = $canWriteConfig ? BX_CRM_PERM_ALL : $arResult['ROLE_PERMS'][$entityType]['AUTOMATION']['-'];
 				?>
 					<span id="divPermsBox<?=$entityType?>Automation" data-role="automation-perm" class="divPermsBoxText <?if ($canWriteConfig):?>divPermsBoxTextDisabled<?endif?>" onclick="if (!BX.hasClass(this, 'divPermsBoxTextDisabled')){CrmPermRoleShowBox(this.id);}"><?=$arResult['ROLE_PERM']['AUTOMATION'][$curVal]?></span>

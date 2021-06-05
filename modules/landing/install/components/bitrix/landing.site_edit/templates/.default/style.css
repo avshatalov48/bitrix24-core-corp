@@ -609,10 +609,6 @@ textarea.landing-options-input {
 	height: 195px;
 }
 
-.landing-form-settings .ui-input-color.ui-input {
-	width: 179px;
-}
-
 .landing-form-wrapper {
 	max-width: 600px;
 }
@@ -1202,7 +1198,7 @@ a {
 	flex-grow: 1;
 	position: relative;
 	cursor: pointer;
-	max-width: 70px;
+	max-width: fit-content;
 	border-bottom: 1px dashed rgba(32,103,176,0.4);;
 	font-size: 13px;
 }

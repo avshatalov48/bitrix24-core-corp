@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\TypeFile;
@@ -12,7 +13,7 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
-class BoxHandler extends DocumentHandler
+class BoxHandler extends DocumentHandler implements CloudImportInterface
 {
 	const API_URL_V2 = 'https://api.box.com/2.0';
 

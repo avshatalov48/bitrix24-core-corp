@@ -27,9 +27,9 @@ if (!defined("WIZARD_SITE_ID"))
 if (!defined("WIZARD_SITE_DIR"))
 	return;
 
-if (WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
+if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 {
-	$rsSites = CSite::GetList($by="sort", $order="desc", array());
+	$rsSites = CSite::GetList();
 	if ($arSite = $rsSites->Fetch())
 	{
 		$FORMAT_DATE = $arSite["FORMAT_DATE"];

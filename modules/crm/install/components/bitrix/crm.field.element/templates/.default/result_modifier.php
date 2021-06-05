@@ -43,11 +43,9 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 	$arResult['value'] = [];
 
-	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
 	$settings = $arParams['userField']['SETTINGS'];
 	$supportedTypes = DataModifiers\Element::getSupportedTypes($settings);
-	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes, $userPermissions);  // only entity types are allowed for current user
+	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes);  // only entity types are allowed for current user
 
 	$arResult['PREFIX'] = (count($supportedTypes) > 1 ? 'Y' : 'N');
 

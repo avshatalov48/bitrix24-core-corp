@@ -319,7 +319,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			if (isset($arNewTaskData['GROUP_ID']) && ($arNewTaskData['GROUP_ID'] > 0) && \Bitrix\Tasks\Integration\Socialnetwork::includeModule())
 			{
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				if (
 					! CSocNetFeaturesPerms::CanPerformOperation(
 						$executiveUserId, SONET_ENTITY_GROUP,
@@ -1088,7 +1088,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			return array();
 	}
 
-	protected function getChildTemplateData($templateId)
+	protected static function getChildTemplateData($templateId)
 	{
 		$templateId = (int) $templateId;
 		if ( ! $templateId )
@@ -1399,13 +1399,17 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return $this->arTaskAllowedActions;
 	}
 
-	public static function getAllowedActionsArray($executiveUserId, array $arTaskData, $bReturnAsStrings = false)
+	public static function getAllowedActionsArray($executiveUserId, array $taskData, $returnAsString = false)
 	{
-		$actions = self::getAllowedActionsArrayInternal($executiveUserId, $arTaskData, self::getUserRolesArray($executiveUserId, $arTaskData));
+		$actions = self::getAllowedActionsArrayInternal(
+			$executiveUserId,
+			$taskData,
+			self::getUserRolesArray($executiveUserId, $taskData)
+		);
 
-		if($bReturnAsStrings)
+		if ($returnAsString)
 		{
-			return self::getAllowedActionsAsStrings($actions);
+			return self::getAllowedActionsAsStringsStatic($actions);
 		}
 
 		return $actions;
@@ -1494,26 +1498,27 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
         return $arStringsMap;
     }
 
-	private function getAllowedActionsAsStrings($arAllowedActions = false)
+	private function getAllowedActionsAsStrings($allowedActions = false): array
 	{
-		$arStringsMap = self::getAllowedActionsMap();
-
-		if($arAllowedActions === false)
+		if ($allowedActions === false)
 		{
-			$arAllowedActions = $this->getAllowedActions();
+			$allowedActions = $this->getAllowedActions();
 		}
 
-		$arResult = array();
+		return self::getAllowedActionsAsStringsStatic($allowedActions);
+	}
 
-		foreach ($arStringsMap as $actionCode => $actionString)
+	private static function getAllowedActionsAsStringsStatic($allowedActions = false): array
+	{
+		$arResult = [];
+
+		$actionsMap = self::getAllowedActionsMap();
+		foreach ($actionsMap as $actionCode => $actionString)
 		{
-			if (in_array($actionCode, $arAllowedActions, true))
-				$arResult[$actionString] = true;	// action is allowed
-			else
-				$arResult[$actionString] = false;	// not allowed
+			$arResult[$actionString] = in_array($actionCode, $allowedActions, true);
 		}
 
-		return ($arResult);
+		return $arResult;
 	}
 
 	private static function getAccessController(int $executiveUserId): \Bitrix\Main\Access\AccessibleController

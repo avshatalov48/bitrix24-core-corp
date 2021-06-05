@@ -3169,7 +3169,7 @@ class CIMChat
 				"RECENT_ADD" => $skipRecent? 'N': 'Y',
 				"PARAMS" => Array(
 					"CODE" => 'CHAT_JOIN',
-					"NOTIFY" => 'N',
+					"NOTIFY" => $chatEntityType == 'LINES'? 'Y': 'N',
 				),
 				"PUSH" => 'N'
 			));
@@ -3450,7 +3450,7 @@ class CIMChat
 				"RECENT_ADD" => $skipRecent? 'N': 'Y',
 				"PARAMS" => Array(
 					"CODE" => 'CHAT_LEAVE',
-					"NOTIFY" => 'N',
+					"NOTIFY" => $chatEntityType == 'LINES'? 'Y': 'N',
 				),
 				"PUSH" => 'N'
 			));
@@ -3555,7 +3555,7 @@ class CIMChat
 		if ($userId > 0)
 		{
 			$arSelect = Array("ID", "LAST_NAME", "NAME", "LOGIN", "SECOND_NAME", "PERSONAL_GENDER");
-			$dbUsers = CUser::GetList(($sort_by = false), ($dummy=''), array('ID' => $userId), array('FIELDS' => $arSelect));
+			$dbUsers = CUser::GetList('', '', array('ID_EQUAL_EXACT' => $userId), array('FIELDS' => $arSelect));
 			if ($arUser = $dbUsers->Fetch())
 			{
 				$arUser['NAME'] = \Bitrix\Im\User::formatFullNameFromDatabase($arUser);

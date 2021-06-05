@@ -69,7 +69,7 @@ abstract class CDavWebDav
 		$response->AddHeader("X-Dav-Powered-By: ".$this->davPoweredBy);
 
 		// skip auth check for OPTIONS requests on "/" - http://pear.php.net/bugs/bug.php?id=5363
-		if (($request->GetParameter('REQUEST_METHOD') != 'OPTIONS' || (/*($this instanceof CDavGroupDav) && */($request->GetPath() != "/"))) && !$this->CheckAuthWrapper())
+		if (($request->GetParameter('REQUEST_METHOD') !== 'OPTIONS' || (/*($this instanceof CDavGroupDav) && */($request->GetPath() !== "/"))) && !$this->CheckAuthWrapper())
 		{
 			$response->SetHttpStatus('401 Unauthorized');
 			$response->AddHeader('WWW-Authenticate: Basic realm="'.$this->davPoweredBy.'"');
@@ -185,13 +185,13 @@ abstract class CDavWebDav
 
 	private function SearchIfHeaderConditionsToken($string, &$pos)
 	{
-		while (in_array($string{$pos}, array(' ', '\n', '\r', '\t')))
+		while (in_array($string[$pos], array(' ', '\n', '\r', '\t')))
 			++$pos;
 
 		if (mb_strlen($string) <= $pos)
 			return false;
 
-		$c = $string{$pos++};
+		$c = $string[$pos++];
 
 		switch ($c)
 		{
@@ -202,7 +202,7 @@ abstract class CDavWebDav
 				return array("URI", $uri);
 
 			case "[":
-				if ($string{$pos} == "W")
+				if ($string[$pos] === "W")
 				{
 					$type = "ETAG_WEAK";
 					$pos += 2;

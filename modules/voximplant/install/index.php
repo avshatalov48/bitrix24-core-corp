@@ -16,7 +16,7 @@ Class voximplant extends CModule
 	var $MODULE_DESCRIPTION;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function voximplant()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

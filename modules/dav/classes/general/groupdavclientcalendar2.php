@@ -662,7 +662,7 @@ if (!class_exists("CDavGroupdavClientCalendar"))
 
 				$arCalendarsList = $client->GetCalendarList($arConnection["SERVER_PATH"]);
 
-				if (count($arCalendarsList) <= 0)
+				if (!is_array($arCalendarsList) || !count($arCalendarsList))
 				{
 					CDavConnection::SetLastResult($arConnection["ID"], "[204] No Content");
 					continue;

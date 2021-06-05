@@ -194,7 +194,7 @@ class TimelineBindingTable  extends Entity\DataManager
 	public static function rebind($entityTypeID, $oldEntityID, $newEntityID, array $typeIDs)
 	{
 		$connection = Main\Application::getConnection();
-		$typeIDs = array_filter($typeIDs);
+		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
 		{
 			$typeSql = implode(',', $typeIDs);
@@ -293,7 +293,7 @@ class TimelineBindingTable  extends Entity\DataManager
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID,  array $typeIDs)
 	{
 		$connection = Main\Application::getConnection();
-		$typeIDs = array_filter($typeIDs);
+		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
 		{
 			$typeSql = implode(',', $typeIDs);
@@ -339,7 +339,7 @@ class TimelineBindingTable  extends Entity\DataManager
 	public static function detach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array $typeIDs)
 	{
 		$connection = Main\Application::getConnection();
-		$typeIDs = array_filter($typeIDs);
+		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
 		{
 			$typeSql = implode(',', $typeIDs);

@@ -41,7 +41,6 @@
 				style: {
 				},
 				onLayout: ({ height }) => {
-console.log(`!!! gratitude ${height}`);
 					onLayout({ height });
 				},
 			},

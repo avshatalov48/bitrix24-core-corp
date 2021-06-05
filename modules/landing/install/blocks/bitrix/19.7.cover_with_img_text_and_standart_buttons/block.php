@@ -1,9 +1,9 @@
-<section class="landing-block landing-semantic-background-color g-bg-gray-light-v5 g-pt-0 g-pb-0">
+<section class="landing-block landing-semantic-background-color g-bg-gray-light-v5 g-pt-30 g-pb-30">
 	<div class="container">
 		<div class="row">
 			<div class="col-md-6 col-lg-5 offset-lg-1 d-flex text-center text-md-left">
 				<div class="align-self-center">
-					<h2 class="landing-block-node-title landing-semantic-title-small text-uppercase g-line-height-1_3 g-font-size-36 g-mb-20 g-mb-30--lg">
+					<h2 class="landing-block-node-title landing-semantic-title-small text-uppercase g-line-height-1_3 h1 g-mb-20 g-mb-30--lg">
 						We created
 						<br><span style="font-weight: bold;">revolution in app</span></h2>
 					<div class="g-mb-20 g-mb-35--lg">

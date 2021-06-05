@@ -14,7 +14,7 @@ if(
 	return;
 }
 
-if (strlen($_POST["hash"]) > 0)
+if ($_POST["hash"] <> '')
 {
 	$rsScheme = CXDILFScheme::GetList(
 		array(), 
@@ -26,8 +26,8 @@ if (strlen($_POST["hash"]) > 0)
 	if ($arScheme = $rsScheme->Fetch())
 	{
 		if (
-			strlen($_POST["title"]) > 0
-			&& strlen($_POST["message"]) > 0
+			$_POST["title"] <> ''
+			&& $_POST["message"] <> ''
 		)
 		{
 			if (XDI_DEBUG)
@@ -36,7 +36,7 @@ if (strlen($_POST["hash"]) > 0)
 			}
 
 			$arEventTmp = CSocNetLogTools::FindLogEventByID($arScheme["EVENT_ID"]);
-			if (array_key_exists("REAL_EVENT_ID", $arEventTmp) && strlen($arEventTmp["REAL_EVENT_ID"]) > 0)
+			if (array_key_exists("REAL_EVENT_ID", $arEventTmp) && $arEventTmp["REAL_EVENT_ID"] <> '')
 			{
 				$arScheme["EVENT_ID"] = $arEventTmp["REAL_EVENT_ID"];
 			}
@@ -57,8 +57,8 @@ if (strlen($_POST["hash"]) > 0)
 					{
 						list($key, $value) = explode("=", $strPair);
 						if (
-							strlen($key) > 0
-							&& strlen($value) > 0
+							$key <> ''
+							&& $value <> ''
 						)
 						{
 							$arLogParams[$key] = $value;
@@ -92,7 +92,7 @@ if (strlen($_POST["hash"]) > 0)
 				}
 				else
 				{
-					$strParams = (strlen($strParams) > 0 ? $strParams."&" : "")."SCHEME_ID=".$arScheme["ID"];
+					$strParams = ($strParams <> '' ? $strParams."&" : "")."SCHEME_ID=".$arScheme["ID"];
 				}
 			}
 
@@ -154,8 +154,11 @@ if (strlen($_POST["hash"]) > 0)
 		}
 	}
 	else
-	{	
-		CXDImport::WriteToLog("ERROR: Incorrect hash: ".$_POST["hash"], "RPOST");
+	{
+		if (XDI_XML_ERROR_DEBUG)
+		{
+			CXDImport::WriteToLog("ERROR: Incorrect hash: ".$_POST["hash"], "RPOST");
+		}
 		echo("Incorrect hash!");
 	}
 }

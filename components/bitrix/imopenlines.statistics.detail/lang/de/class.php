@@ -1,6 +1,16 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "Sie haben nicht genügend Rechte, um Statistik anzuzeigen.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "Das Modul Kommunikationskanäle ist nicht installiert.";
+$MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Möchten Sie wirklich fortfahren?";
+$MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Kommunikationskanäle";
+$MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Aktion auswählen";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Verantwortliche Person bestimmen";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE"] = "Beenden";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE_TITLE"] = "Mehrfache Konversationen werden jetzt geschlossen.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM"] = "Beenden erzwingen";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM_TITLE"] = "Mehrfache Konversationen werden jetzt zum Schließen erzwungen.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER"] = "Weiterleiten";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE"] = "Mehrfache Konversationen werden jetzt weitergeleitet.";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER"] = "Verbinden";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER_AND_CLOSE"] = "Konversation annehmen und beenden";
 $MESS["OL_COMPONENT_TABLE_ACTION_ASSIGN"] = "Konversation übernehmen";
@@ -85,5 +95,7 @@ $MESS["OL_STATS_HEADER_VOTE_HEAD_1"] = "Bewertung durch Vorgesetzten";
 $MESS["OL_STATS_HEADER_VOTE_HEAD_WO"] = "Nicht bewertet";
 $MESS["OL_STATS_HEADER_WORKTIME_TEXT"] = "Arbeitszeit";
 $MESS["OL_STATS_VOTE_AS_HEAD_BUTTON"] = "Bewerten";
+$MESS["OL_STAT_EXCEL_ACTIONS_BODY"] = "Eine Gruppenaktion wird auf Konversationen angewendet. Das kann einige Zeit in Anspruch nehmen.";
+$MESS["OL_STAT_EXCEL_ACTIONS_TITLE"] = "Gruppenaktion";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_BODY"] = "Sie haben vor, Konversationen in eine Microsoft Excel Datei zu exportieren. Bei größeren Datenmengen kann dieser Vorgang einige Zeit in Anspruch nehmen. ";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_TITLE"] = "Nach Microsoft Excel exportieren";

@@ -118,6 +118,7 @@ export class SeoAdBuilder
 		this.adCreatorData.audienceConfig = {};
 		this.adCreatorData.crmAudienceConfig = {};
 	}
+
 	initiateAccounts()
 	{
 		this.seoAccount = new SeoAccount({
@@ -133,11 +134,13 @@ export class SeoAdBuilder
 			uiNodes: this.uiNodes
 		});
 
+		this.profileConfigured = false;
 		if (!this.clientId && !this.provider.PROFILE)
 		{ // use first client by default
 			for (let i = 0; i < this.provider.CLIENTS.length; i++)
 			{
 				this.seoAccount.setProfile(this.provider.CLIENTS[i]);
+				this.profileConfigured = true;
 				break;
 			}
 		}
@@ -149,7 +152,11 @@ export class SeoAdBuilder
 			this.activateStage(this._STAGES.accountSelected);
 		}
 
-		this.seoAccount.setProfile(this.provider.PROFILE);
+		if(!this.profileConfigured)
+		{
+			this.seoAccount.setProfile(this.provider.PROFILE);
+		}
+
 		this.seoAccount._helper.showBlockByAuth();
 	}
 
@@ -679,7 +686,8 @@ export class SeoAdBuilder
 			this.openSlider(
 				this.pageConfigurationUrl, {
 					sessid: BX.bitrix_sessid(),
-					targetUrl: this.uiNodes.form.targetUrl.value || ''
+					targetUrl: this.uiNodes.form.targetUrl.value || '',
+					cacheable: false
 				},
 				this.onTargetPageSelected
 			);
@@ -690,7 +698,7 @@ export class SeoAdBuilder
 	{
 		const sliderOptions = {
 			width: 990,
-			cacheable: true,
+			cacheable: params.cacheable ?? true,
 			allowChangeHistory: false,
 			requestMethod: 'post',
 			requestParams: params
@@ -713,16 +721,6 @@ export class SeoAdBuilder
 		BX.SidePanel.Instance.open(
 			url,
 			sliderOptions
-		);
-	}
-
-	openProductSelector()
-	{
-		this.openSlider(
-			this.productSelectornUrl, {
-				sessid: BX.bitrix_sessid()
-			},
-			this.onTargetPageSelected
 		);
 	}
 

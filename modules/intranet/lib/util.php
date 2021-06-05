@@ -78,7 +78,7 @@ class Util
 		);
 
 		$userResult = \CUser::getList(
-			$by = 'ID', $order = 'ASC',
+			'ID', 'ASC',
 			$filter,
 			array(
 				'SELECT' => $select,
@@ -707,7 +707,7 @@ class Util
 		}
 		else
 		{
-			$res = \CGroup::GetList($by, $order, ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
+			$res = \CGroup::GetList('', '', ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
 			while ($group = $res->fetch())
 			{
 				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)

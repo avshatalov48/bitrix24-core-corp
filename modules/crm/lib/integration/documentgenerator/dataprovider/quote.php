@@ -9,7 +9,7 @@ use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\DateTime;
 
-class Quote extends ProductsDataProvider implements Nameable
+class Quote extends ProductsDataProvider
 {
 	protected $contacts;
 
@@ -131,14 +131,6 @@ class Quote extends ProductsDataProvider implements Nameable
 	public function getMyCompanyId($defaultMyCompanyId = null)
 	{
 		return parent::getMyCompanyId($this->data['MYCOMPANY_ID']);
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getCrmProductOwnerType()
-	{
-		return \CCrmQuote::OWNER_TYPE;
 	}
 
 	/**

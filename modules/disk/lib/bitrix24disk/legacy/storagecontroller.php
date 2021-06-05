@@ -963,9 +963,9 @@ class StorageController extends Controller
 		$pathToDiscuss = '/';
 		if($userModel->isExtranetUser())
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$siteId = CExtranet::getExtranetSiteID();
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$site = CSite::getArrayByID($siteId);
 			if(!empty($site['DIR']))
 			{

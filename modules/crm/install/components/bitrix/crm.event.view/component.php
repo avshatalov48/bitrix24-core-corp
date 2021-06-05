@@ -74,6 +74,21 @@ $isInGadgetMode = $arResult['GADGET'] === 'Y';
 $entityType = isset($arParams['ENTITY_TYPE']) ? $arParams['ENTITY_TYPE'] : '';
 $entityTypeID = CCrmOwnerType::ResolveID($entityType);
 
+$entityId = (isset($arParams['ENTITY_ID']) && !is_array($arParams['ENTITY_ID']) && $arParams['ENTITY_ID'] > 0)
+	? $arParams['ENTITY_ID']
+	: null;
+
+if ($entityTypeID !== CCrmOwnerType::Undefined && $entityId > 0)
+{
+	if (!\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($entityTypeID, $entityId))
+	{
+		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+		$this->IncludeComponentTemplate();
+		return;
+	}
+	$arFilter['CHECK_PERMISSIONS'] = 'N';
+}
+
 if ($entityType !== '')
 {
 	$arFilter['ENTITY_TYPE'] = $arResult['ENTITY_TYPE'] = $entityType;
@@ -83,7 +98,12 @@ if (isset($arParams['ENTITY_ID']))
 {
 	if (is_array($arParams['ENTITY_ID']))
 	{
-		array_walk($arParams['ENTITY_ID'], create_function('&$v',  '$v = (int)$v;'));
+		array_walk(
+			$arParams['ENTITY_ID'],
+			function (&$v) {
+				$v = (int)$v;
+			}
+		);
 		$arFilter['ENTITY_ID'] = $arResult['ENTITY_ID'] = $arParams['ENTITY_ID'];
 	}
 	elseif ($arParams['ENTITY_ID'] > 0)
@@ -632,8 +652,8 @@ $userInfos = array();
 if(!empty($userIDs))
 {
 	$dbUsers = CUser::GetList(
-		($by = 'ID'),
-		($order = 'ASC'),
+		'ID',
+		'ASC',
 		array('ID' => implode('||', array_keys($userIDs))),
 		array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO'))
 	);

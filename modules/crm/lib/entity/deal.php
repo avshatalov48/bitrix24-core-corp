@@ -71,6 +71,29 @@ class Deal extends EntityBase
 	}
 	//endregion
 
+	protected function getTopIdsInCompatibilityMode(
+		int $limit,
+		array $order = [],
+		array $filter = []
+	): array
+	{
+		$dbResult = \CCrmDeal::GetListEx(
+			$order,
+			$filter,
+			false,
+			$limit > 0 ? ['nTopCount' => $limit] : false,
+			['ID']
+		);
+
+		$results = [];
+		while ($fields = $dbResult->Fetch())
+		{
+			$results[] = (int)$fields['ID'];
+		}
+
+		return $results;
+	}
+
 	public function getCount(array $params)
 	{
 		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : array();

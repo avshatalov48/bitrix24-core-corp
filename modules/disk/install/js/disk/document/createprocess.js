@@ -29,13 +29,26 @@
 		__proto__: BX.Disk.Document.EditProcess.prototype,
 		constructor: BX.Disk.Document.CreateProcess,
 
-		buildModalWindow: function ()
+		getSliderQueryParameters: function()
 		{
-			return this.openModal(BX.util.add_url_param('/bitrix/services/main/ajax.php', {
+			return {
 				action: 'disk.api.documentService.goToCreate',
 				serviceCode: this.serviceCode,
-				typeFile: this.typeFile
-			}));
+				typeFile: this.typeFile,
+				targetFolderId: this.targetFolderId
+			}
+		},
+
+		getSliderData: function ()
+		{
+			return {
+				process: 'create',
+			}
+		},
+
+		buildModalWindow: function ()
+		{
+			return this.openModal(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()));
 		},
 
 		getConfirmMessages: function ()
@@ -147,7 +160,6 @@
 				],
 	 			autoHide: false,
 				closeByEsc: false,
-				zIndex: this.getViewerZindex(),
 				events: { onPopupClose : function() { this.destroy() }}
 			});
 

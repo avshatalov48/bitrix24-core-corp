@@ -20,6 +20,7 @@ if (!function_exists("ParseFileName"))
 if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 {
 	$path = BX_ROOT."/backup";
+	$tar = new CTar();
 
 	if (isset($_REQUEST['action']))
 	{
@@ -34,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 				while(file_exists($_SERVER["DOCUMENT_ROOT"].$name))
 				{
 					$arLink[] = htmlspecialcharsbx($name);
-					$name = CTar::getNextName($name);
+					$name = $tar->getNextName($name);
 				}
 
 				echo "links=".\Bitrix\Main\Web\Json::encode($arLink).";";
@@ -48,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 					if (!unlink($f))
 						echo \Bitrix\Main\Web\Json::encode(array("error" => GetMessage('DUMP_DELETE_ERROR', array('#FILE#' => $f))));
 
-					$item = CTar::getNextName($item);
+					$item = $tar->getNextName($item);
 				}
 
 				break;
@@ -91,8 +92,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 							break;
 						}
 
-						$ID = CTar::getNextName($ID);
-						$new_name = CTar::getNextName($new_name);
+						$ID = $tar->getNextName($ID);
+						$new_name = $tar->getNextName($new_name);
 					}
 				}
 				else
@@ -100,7 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 				break;
 		}
 		CMain::FinalActions();
-		die();
 	}
 
 	//delete several files from grid
@@ -113,7 +113,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 				if (!unlink($f))
 					echo \Bitrix\Main\Web\Json::encode(array("error" => GetMessage('DUMP_DELETE_ERROR', array('#FILE#' => $f))));
 
-				$item = CTar::getNextName($item);
+				$item = $tar->getNextName($item);
 			}
 		}
 	}

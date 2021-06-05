@@ -20,7 +20,7 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 $arSiteIDReference = array();
 $arSiteIDReferenceID = array();
 $cntSite = 0;
-$rsSite = CSite::GetList(($v1="sort"), ($v2="asc"));
+$rsSite = CSite::GetList();
 while ($arSite = $rsSite->Fetch())
 {
 	if ($arSite["ACTIVE"] == "Y")

@@ -411,7 +411,7 @@ class TmpFile extends Model
 	 */
 	public function append($fileContent, array $params)
 	{
-		$this->checkRequiredInputParams($params, array('endRange', 'fileSize'));
+		static::checkRequiredInputParams($params, array('endRange', 'fileSize'));
 		if($this->errorCollection->hasErrors())
 		{
 			return false;

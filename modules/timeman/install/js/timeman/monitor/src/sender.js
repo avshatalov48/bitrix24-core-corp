@@ -1,54 +1,53 @@
-import {Type} from 'main.core';
+import {Loc, Type} from 'main.core';
 import {Monitor} from './monitor';
-import {ProgramManager} from './model/programmanager';
 import {Logger} from './lib/logger';
 import {Debug} from './lib/debug';
+import {UI} from 'ui.notification';
+import {MonitorModel} from './model/monitor';
 
 class Sender
 {
-	init(sendTimeout = 5000, resendTimeout = 5000)
+	init(store)
 	{
 		this.enabled = false;
-		this.sendTimeout = sendTimeout;
-		this.resendTimeout = resendTimeout;
-		this.sendTimeoutId = null;
+		this.store = store;
+
 		this.attempt = 0;
+		this.resendTimeout = 5000;
+		this.resendTimeoutId = null;
 	}
 
 	send()
 	{
-		if (!this.enabled)
-		{
-			return;
-		}
-
-		const request = this.immediatelySendHistoryOnce();
-
 		Logger.warn('Trying to send history...');
 
-		request.then(result =>
+		BX.ajax.runAction('bitrix:timeman.api.monitor.recordhistory', {
+			data: {
+				history: JSON.stringify(this.getSentQueue()),
+			}
+		})
+			.then(result =>
 			{
+				Debug.log('History sent');
+
 				if (result.status === 'success')
 				{
-					const response = result.data;
-
 					Logger.warn('SUCCESS!');
-					this.saveLastSuccessfulSendDate();
-					ProgramManager.removeHistoryBeforeDate(this.getLastSuccessfulSendDate());
 
 					this.attempt = 0;
-					this.startSendingTimer();
 
-					if (response.state === Monitor.getStateStop())
+					this.afterSuccessSend();
+
+					if (result.data.state === Monitor.getStateStop())
 					{
 						Logger.warn('Stopped after server response');
 						Debug.log('Stopped after server response');
 
-						Monitor.setState(response.state);
+						Monitor.setState(result.data.state);
 						Monitor.stop();
 					}
 
-					if (response.enabled === Monitor.getStatusDisabled())
+					if (result.data.enabled === Monitor.getStatusDisabled())
 					{
 						Logger.warn('Disabled after server response');
 						Debug.log('Disabled after server response');
@@ -66,38 +65,26 @@ class Sender
 			.catch(() =>
 			{
 				Logger.error('CONNECTION ERROR!');
+
 				this.attempt++
 				this.startSendingTimer();
 			});
 	}
 
-	immediatelySendHistoryOnce()
-	{
-		const history = JSON.stringify(ProgramManager.getGroupedHistory());
-		Debug.log('History sent');
-
-		return BX.ajax.runAction('bitrix:timeman.api.monitor.recordhistory', { data: { history } });
-	}
-
 	startSendingTimer()
 	{
-		this.sendTimeoutId = setTimeout(this.send.bind(this), this.getSendingDelay());
+		this.resendTimeoutId = setTimeout(this.send.bind(this), this.getSendingDelay());
 		Logger.log(`Next send in ${this.getSendingDelay() / 1000} seconds...`);
 	}
 
 	getSendingDelay()
 	{
-		return (this.attempt === 0 ? this.sendTimeout : this.resendTimeout);
+		return (this.attempt === 0 ? this.resendTimeout : this.resendTimeout * this.attempt);
 	}
 
-	saveLastSuccessfulSendDate()
+	getSentQueue()
 	{
-		BX.desktop.setLocalConfig('bx_timeman_monitor_last_successful_send_date', ProgramManager.getDateForHistoryKey());
-	}
-
-	getLastSuccessfulSendDate()
-	{
-		return BX.desktop.getLocalConfig('bx_timeman_monitor_last_successful_send_date');
+		return this.store.state.monitor.sentQueue;
 	}
 
 	start()
@@ -110,7 +97,12 @@ class Sender
 
 		this.enabled = true;
 		this.attempt = 0;
-		this.startSendingTimer();
+
+		if (Type.isArrayFilled(this.getSentQueue()))
+		{
+			Logger.log('Preparing to send old history...');
+			this.startSendingTimer();
+		}
 
 		Logger.log("Sender started");
 	}
@@ -125,11 +117,53 @@ class Sender
 
 		this.enabled = false;
 		this.attempt = 0;
-		clearTimeout(this.sendTimeoutId);
 
-		this.immediatelySendHistoryOnce();
-		Logger.log("Immediately send request sent");
+		clearTimeout(this.resendTimeoutId);
 		Logger.log("Sender stopped");
+	}
+
+	afterSuccessSend()
+	{
+		let currentDateLog = new Date(MonitorModel.prototype.getDateLog());
+		let reportDateLog = new Date(this.store.state.monitor.reportState.dateLog);
+
+		Logger.warn('History sent');
+		Debug.space();
+		Debug.log('History sent');
+
+		Monitor.isHistorySent = true;
+
+		BX.SidePanel.Instance.close();
+
+		if (currentDateLog > reportDateLog)
+		{
+			Logger.warn('The next day came. Clearing the history and changing the date of the report.');
+			Debug.log('The next day came. Clearing the history and changing the date of the report.');
+
+			this.store.dispatch('monitor/clearStorage')
+				.then(() => {
+					this.store.dispatch('monitor/setDateLog', MonitorModel.prototype.getDateLog());
+
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_STORAGE_CLEARED'),
+						autoHideDelay: 5000,
+						position: 'bottom-right',
+					});
+				});
+		}
+		else
+		{
+			Logger.warn('History has been sent, report date has not changed.');
+			Debug.log('History has been sent, report date has not changed.');
+
+			this.store.dispatch('monitor/clearSentQueue');
+
+			UI.Notification.Center.notify({
+				content: Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SENT'),
+				autoHideDelay: 5000,
+				position: 'bottom-right',
+			});
+		}
 	}
 }
 

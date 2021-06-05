@@ -44,6 +44,7 @@
 
 	var pullEvents = {
 		ping: 'Call::ping',
+		answer: 'Call::answer',
 		negotiationNeeded: 'Call::negotiationNeeded',
 		connectionOffer: 'Call::connectionOffer',
 		connectionAnswer: 'Call::connectionAnswer',
@@ -356,8 +357,6 @@
 
 	BX.Call.PlainCall.prototype.scheduleRepeatInvite = function()
 	{
-		//todo: restore invite repeating
-		return;
 		clearTimeout(this.reinviteTimeout);
 		this.reinviteTimeout = setTimeout(this.repeatInviteUsers.bind(this), reinvitePeriod)
 	};
@@ -384,7 +383,8 @@
 		}
 		this.signaling.inviteUsers({
 			userIds: usersToRepeatInvite,
-			video: this.videoEnabled ? 'Y' : 'N'
+			video: this.videoEnabled ? 'Y' : 'N',
+			isRepeated: 'Y',
 		}).then(function()
 		{
 			this.scheduleRepeatInvite();
@@ -1064,7 +1064,8 @@
 			'Call::usersInvited': this.__onPullEventUsersInvited.bind(this),
 			'Call::userInviteTimeout': this.__onPullEventUserInviteTimeout.bind(this),
 			'Call::associatedEntityReplaced': this.__onPullEventAssociatedEntityReplaced.bind(this),
-			'Call::finish': this.__onPullEventFinish.bind(this)
+			'Call::finish': this.__onPullEventFinish.bind(this),
+			'Call::repeatAnswer': this.__onPullEventRepeatAnswer.bind(this)
 		};
 
 		if(handlers[command])
@@ -1330,6 +1331,14 @@
 		this.destroy();
 	};
 
+	BX.Call.PlainCall.prototype.__onPullEventRepeatAnswer = function()
+	{
+		if (this.ready)
+		{
+			this.signaling.sendAnswer({userId: this.userId}, true);
+		}
+	};
+
 	BX.Call.PlainCall.prototype.__onPeerStateChanged = function(e)
 	{
 		this.runCallback(BX.Call.Event.onUserStateChanged, e);
@@ -1431,9 +1440,16 @@
 		return this.__runRestAction(ajaxActions.invite, data);
 	};
 
-	BX.Call.PlainCall.Signaling.prototype.sendAnswer = function(data)
+	BX.Call.PlainCall.Signaling.prototype.sendAnswer = function(data, repeated)
 	{
-		return this.__runRestAction(ajaxActions.answer, data);
+		if (repeated && BX.CallEngine.getPullClient().isPublishingSupported())
+		{
+			return this.__sendPullEvent(pullEvents.answer, data);
+		}
+		else
+		{
+			return this.__runRestAction(ajaxActions.answer, data);
+		}
 	};
 
 	BX.Call.PlainCall.Signaling.prototype.sendConnectionOffer = function(data)

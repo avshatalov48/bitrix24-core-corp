@@ -552,8 +552,8 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 			if ($EventID = $obCalendar->SaveEvent($arEventFields))
 			{
-				CEventCalendar::ClearCache('/event_calendar/events/'.$arEventFields['iblockId'].'/');
-				CEventCalendar::ClearCache('/event_calendar/events/'.$arEventFields['userIblockId'].'/');
+				$obCalendar->ClearCache('/event_calendar/events/'.$arEventFields['iblockId'].'/');
+				$obCalendar->ClearCache('/event_calendar/events/'.$arEventFields['userIblockId'].'/');
 			}
 		}
 

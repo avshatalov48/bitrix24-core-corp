@@ -105,7 +105,10 @@ if ($arParams["CACHE_TIME"] > 0 && $cache->InitCache($arParams["CACHE_TIME"], $c
 	$Vars = $cache->GetVars();
 	foreach($Vars["arResult"] as $k=>$v)
 		$arResult[$k] = $v;
-	CBitrixComponentTemplate::ApplyCachedData($Vars["templateCachedData"]);
+
+	$template = new CBitrixComponentTemplate();
+	$template->ApplyCachedData($Vars["templateCachedData"]);
+
 	$cache->Output();
 }
 else
@@ -149,7 +152,10 @@ else
 		{
 			$Vars = $cacheSoNet->GetVars();
 			$arAvBlog = $Vars["arAvBlog"];
-			CBitrixComponentTemplate::ApplyCachedData($Vars["templateCachedData"]);
+
+			$template = new CBitrixComponentTemplate();
+			$template->ApplyCachedData($Vars["templateCachedData"]);
+
 			$cacheSoNet->Output();
 		}
 		else

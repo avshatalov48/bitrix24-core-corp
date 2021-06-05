@@ -85,6 +85,8 @@ this.BX.Location = this.BX.Location || {};
 
 	var _convertToLocationsList = new WeakSet();
 
+	var _getTypeHint = new WeakSet();
+
 	var AutocompleteService = /*#__PURE__*/function (_AutocompleteServiceB) {
 	  babelHelpers.inherits(AutocompleteService, _AutocompleteServiceB);
 
@@ -92,7 +94,7 @@ this.BX.Location = this.BX.Location || {};
 
 	  /** {google.maps.places.AutocompleteService} */
 
-	  /** {Promise}*/
+	  /** {Promise} */
 
 	  /** {GoogleSource} */
 
@@ -106,6 +108,8 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classCallCheck(this, AutocompleteService);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteService).call(this, props));
+
+	    _getTypeHint.add(babelHelpers.assertThisInitialized(_this));
 
 	    _convertToLocationsList.add(babelHelpers.assertThisInitialized(_this));
 
@@ -155,13 +159,14 @@ this.BX.Location = this.BX.Location || {};
 	    });
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId, props.languageId);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _googleSource, props.googleSource); //Because googleSource could still be in the process of loading
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _googleSource, props.googleSource); // Because googleSource could still be in the process of loading
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _loaderPromise, props.googleSource.loaderPromise.then(function () {
 	      _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _initAutocompleteService, _initAutocompleteService2).call(babelHelpers.assertThisInitialized(_this));
 	    }));
 	    return _this;
-	  }
+	  } // eslint-disable-next-line no-unused-vars
+
 
 	  babelHelpers.createClass(AutocompleteService, [{
 	    key: "autocomplete",
@@ -169,13 +174,19 @@ this.BX.Location = this.BX.Location || {};
 	    /**
 	     * Returns Promise witch  will transfer locations list
 	     * @param {string} query
-	     * @param {object} params
+	     * @param {AutocompleteServiceParams} params
 	     * @returns {Promise}
 	     */
 	    value: function autocomplete(query, params) {
 	      var _this2 = this;
 
-	      //Because google.maps.places.AutocompleteService could be still in the process of loading
+	      if (query === '') {
+	        return new Promise(function (resolve) {
+	          resolve([]);
+	        });
+	      } // Because google.maps.places.AutocompleteService could be still in the process of loading
+
+
 	      return babelHelpers.classPrivateFieldGet(this, _loaderPromise).then(function () {
 	        return _classPrivateMethodGet(_this2, _getPredictionPromise, _getPredictionPromise2).call(_this2, query, params);
 	      }, function (error) {
@@ -187,8 +198,8 @@ this.BX.Location = this.BX.Location || {};
 	}(location_core.AutocompleteServiceBase);
 
 	var _getLocalStoredResults2 = function _getLocalStoredResults2(query, params) {
-	  var result = null,
-	      storedResults = localStorage.getItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey));
+	  var result = null;
+	  var storedResults = localStorage.getItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey));
 
 	  if (storedResults) {
 	    try {
@@ -208,7 +219,7 @@ this.BX.Location = this.BX.Location || {};
 	              item = _step$value[1];
 
 	          if (item && typeof item.query !== 'undefined' && item.query === query) {
-	            result = Object.assign({}, item);
+	            result = babelHelpers.objectSpread({}, item);
 	            storedResults.splice(index, 1);
 	            storedResults.push(result);
 	            localStorage.setItem(babelHelpers.classPrivateFieldGet(this, _localStorageKey), JSON.stringify(storedResults));
@@ -229,8 +240,9 @@ this.BX.Location = this.BX.Location || {};
 	var _getPredictionPromiseLocalStorage2 = function _getPredictionPromiseLocalStorage2(query, params) {
 	  var _this3 = this;
 
-	  var result = null,
-	      answer = _classPrivateMethodGet(this, _getLocalStoredResults, _getLocalStoredResults2).call(this, query, params);
+	  var result = null;
+
+	  var answer = _classPrivateMethodGet(this, _getLocalStoredResults, _getLocalStoredResults2).call(this, query, params);
 
 	  if (answer !== null) {
 	    result = new Promise(function (resolve) {
@@ -279,16 +291,16 @@ this.BX.Location = this.BX.Location || {};
 	      input: query
 	    };
 
-	    if (params.userCoordinates) {
-	      queryPredictionsParams.location = new google.maps.LatLng(params.userCoordinates[0], params.userCoordinates[1]);
+	    if (params.locationForBias) {
+	      queryPredictionsParams.location = new google.maps.LatLng(params.locationForBias.latitude, params.locationForBias.longitude);
 	      queryPredictionsParams.radius = babelHelpers.classPrivateFieldGet(this, _biasBoundRadius);
 	    }
 
 	    result = new Promise(function (resolve) {
-	      babelHelpers.classPrivateFieldGet(_this4, _googleAutocompleteService).getQueryPredictions(queryPredictionsParams, function (result, status) {
-	        var locationsList = _classPrivateMethodGet(_this4, _convertToLocationsList, _convertToLocationsList2).call(_this4, result, status);
+	      babelHelpers.classPrivateFieldGet(_this4, _googleAutocompleteService).getQueryPredictions(queryPredictionsParams, function (res, status) {
+	        var locationsList = _classPrivateMethodGet(_this4, _convertToLocationsList, _convertToLocationsList2).call(_this4, res, status);
 
-	        _classPrivateMethodGet(_this4, _setPredictionResult, _setPredictionResult2).call(_this4, query, params, result, status);
+	        _classPrivateMethodGet(_this4, _setPredictionResult, _setPredictionResult2).call(_this4, query, params, res, status);
 
 	        resolve(locationsList);
 	      });
@@ -325,12 +337,31 @@ this.BX.Location = this.BX.Location || {};
 	      var item = _step2.value;
 
 	      if (item.place_id) {
+	        var name = void 0;
+
+	        if (item.structured_formatting && item.structured_formatting.main_text) {
+	          name = item.structured_formatting.main_text;
+	        } else {
+	          name = item.description;
+	        }
+
 	        var location = new location_core.Location({
 	          sourceCode: babelHelpers.classPrivateFieldGet(this, _googleSource).sourceCode,
 	          externalId: item.place_id,
-	          name: item.description,
+	          name: name,
 	          languageId: babelHelpers.classPrivateFieldGet(this, _languageId)
 	        });
+
+	        if (item.structured_formatting && item.structured_formatting.secondary_text) {
+	          location.setFieldValue(location_core.LocationType.TMP_TYPE_CLARIFICATION, item.structured_formatting.secondary_text);
+	        }
+
+	        var typeHint = _classPrivateMethodGet(this, _getTypeHint, _getTypeHint2).call(this, item.types);
+
+	        if (typeHint) {
+	          location.setFieldValue(location_core.LocationType.TMP_TYPE_HINT, _classPrivateMethodGet(this, _getTypeHint, _getTypeHint2).call(this, item.types));
+	        }
+
 	        result.push(location);
 	      }
 	    }
@@ -339,6 +370,31 @@ this.BX.Location = this.BX.Location || {};
 	  } finally {
 	    _iterator2.f();
 	  }
+
+	  return result;
+	};
+
+	var _getTypeHint2 = function _getTypeHint2(types) {
+	  var result = '';
+
+	  if (types.indexOf('locality') >= 0) {
+	    result = main_core.Loc.getMessage('LOCATION_GOO_AUTOCOMPLETE_TYPE_LOCALITY');
+	  } else if (types.indexOf('sublocality') >= 0) {
+	    result = main_core.Loc.getMessage('LOCATION_GOO_AUTOCOMPLETE_TYPE_SUBLOCAL');
+	  } else if (types.indexOf('store') >= 0) {
+	    result = main_core.Loc.getMessage('LOCATION_GOO_AUTOCOMPLETE_TYPE_STORE');
+	  } else if (types.indexOf('restaurant') >= 0) {
+	    result = main_core.Loc.getMessage('LOCATION_GOO_AUTOCOMPLETE_TYPE_RESTAURANT');
+	  } else if (types.indexOf('cafe') >= 0) {
+	    result = main_core.Loc.getMessage('LOCATION_GOO_AUTOCOMPLETE_TYPE_CAFE');
+	  }
+	  /*
+	  else
+	  {
+	  	result = types.join(', ');
+	  }
+	  */
+
 
 	  return result;
 	};
@@ -734,7 +790,12 @@ this.BX.Location = this.BX.Location || {};
 	  var position = _classPrivateMethodGet$1(this, _convertLocationToPosition, _convertLocationToPosition2).call(this, babelHelpers.classPrivateFieldGet(this, _location));
 
 	  var mapProps = {
-	    gestureHandling: 'greedy'
+	    gestureHandling: 'greedy',
+	    disableDefaultUI: true,
+	    zoomControl: true,
+	    zoomControlOptions: {
+	      position: google.maps.ControlPosition.TOP_LEFT
+	    }
 	  };
 
 	  var zoom = _classStaticPrivateMethodGet$1(Map, Map, _chooseZoomByLocation).call(Map, babelHelpers.classPrivateFieldGet(this, _location));

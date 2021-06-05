@@ -463,7 +463,8 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 		$arSort = $gridOptions->getSorting(array('sort' => array('ID' => 'ASC'), 'vars' => array('by' => 'by', 'order' => 'order')));
 		$arNav  = $gridOptions->getNavParams(array('nPageSize' => 50));
 
-		$arSortArg = each($arSort['sort']);
+		$sortBy = key($arSort['sort']);
+		$sortOrder = current($arSort['sort']);
 
 		$arFilter = array('ACTIVE' => 'Y', '!UF_DEPARTMENT' => false);
 		if (isset($_REQUEST['act']) && $_REQUEST['act'] == 'search' && !empty($_REQUEST['FILTER']))
@@ -492,7 +493,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 		}
 
 		$dbUsers = CUser::GetList(
-			$arSortArg['key'], $arSortArg['value'], $arFilter,
+			$sortBy, $sortOrder, $arFilter,
 			array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'PERSONAL_PHOTO', 'WORK_POSITION'))
 		);
 

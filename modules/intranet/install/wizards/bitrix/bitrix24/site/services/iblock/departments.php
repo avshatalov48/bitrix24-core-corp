@@ -130,7 +130,7 @@ if($iblockID == false)
 			"SETTINGS" => $prop["SETTINGS"],
 		);
 
-		$dbLangs = CLanguage::GetList(($b = ""), ($o = ""), array("ACTIVE" => "Y"));
+		$dbLangs = CLanguage::GetList("", "", array("ACTIVE" => "Y"));
 		while ($arLang = $dbLangs->Fetch())
 		{
 			$messages = IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/install/index.php", $arLang["LID"], true);

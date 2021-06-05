@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\ZipNginx;
 
@@ -20,20 +23,19 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	$optionList = array();
 	foreach($documentHandlersManager->getHandlersForView() as $handler)
 	{
-		$optionList[$handler->getCode()] = $handler->getName();
+		$optionList[$handler::getCode()] = $handler::getName();
 	}
-	unset($handler);
 
 	$currentHandler = $documentHandlersManager->getDefaultHandlerForView();
 	if($currentHandler && !$currentHandler->checkAccessibleTokenService())
 	{
 		$notices['default_viewer_service'] = Loc::getMessage('DISK_DEFAULT_VIEWER_SERVICE_NOTICE_SOC_SERVICE', array(
-			'#NAME#' => $currentHandler->getName(),
+			'#NAME#' => $currentHandler::getName(),
 			'#LANG#' => LANGUAGE_ID,
 		));
 	}
 
-	$arDefaultValues['default']['default_viewer_service'] = \Bitrix\Disk\Configuration::getDefaultViewerServiceCode();
+	$arDefaultValues['default']['default_viewer_service'] = Configuration::getDefaultViewerServiceCode();
 	$noticeBlock['default_viewer_service'] = Loc::getMessage("DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE");
 
 	if(ZipNginx\Configuration::isEnabled() && !ZipNginx\Configuration::isModInstalled())
@@ -42,9 +44,22 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 			'#LINK#' => 'https://www.nginx.com/resources/wiki/modules/zip/',
 		));
 	}
+
+	if(OnlyOfficeHandler::isEnabled())
+	{
+		$isValidToken = OnlyOfficeHandler::isValidToken(OnlyOfficeHandler::getSecretKey());
+		if (!$isValidToken->isSuccess())
+		{
+            $notices['disk_onlyoffice_secret_key'] = $isValidToken->getErrors()[0]->getMessage();
+		}
+		else
+        {
+            $notices['disk_onlyoffice_server'] = $isValidToken->getData()['version'];
+        }
+	}
 }
 
-$arAllOptions = array(
+$arAllOptions = array_filter(array(
 	array("disk_allow_create_file_by_cloud", GetMessage("DISK_ALLOW_CREATE_FILE_BY_CLOUD"), "Y", array("checkbox", "Y")),
 	array("disk_allow_autoconnect_shared_objects", GetMessage("DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"), "N", array("checkbox", "Y")),
 	array("disk_allow_edit_object_in_uf", GetMessage("DISK_ALLOW_EDIT_OBJECT_IN_UF"), "Y", array("checkbox", "Y")),
@@ -55,9 +70,16 @@ $arAllOptions = array(
 	array("disk_nginx_mod_zip_enabled", GetMessage("DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT"), $arDefaultValues['default']['disk_nginx_mod_zip_enabled'], array("checkbox", "Y")),
 	array("disk_restriction_storage_size_enabled", GetMessage("DISK_ENABLE_RESTRICTION_STORAGE_SIZE_SUPPORT"), 'N', array("checkbox", "Y")),
 	array("disk_allow_use_external_link", GetMessage("DISK_ALLOW_USE_EXTERNAL_LINK"), 'Y', array("checkbox", "Y")),
-	array("disk_object_lock_enabled", GetMessage("DISK_ENABLE_OBJECT_LOCK_SUPPORT"), 'N', array("checkbox", "Y")),
 	array("disk_version_limit_per_file", GetMessage("DISK_VERSION_LIMIT_PER_FILE"), 0, Array("selectbox", array(0 => GetMessage('DISK_VERSION_LIMIT_PER_FILE_UNLIMITED'), 3  => 3, 10 => 10, 25  => 25, 50 => 50, 100 => 100, 500 => 500))),
-);
+	GetMessage("DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"),
+    array("disk_object_lock_enabled", GetMessage("DISK_ENABLE_OBJECT_LOCK_SUPPORT"), 'N', array("checkbox", "Y")),
+//    Configuration::isEnabledObjectLock()? array("disk_auto_lock_on_object_edit", GetMessage("DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"), 'N', array("checkbox", "Y")) : null,
+//    Configuration::isEnabledObjectLock()? array("disk_auto_release_lock_on_save", GetMessage("DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"), 'N', array("checkbox", "Y")) : null,
+//    Configuration::isEnabledObjectLock()? array("disk_time_auto_release_object_lock", GetMessage("DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"), 0, Array("text", "20")) : null,
+//	array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")),
+//	array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")),
+//	array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")),
+));
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
 );
@@ -77,6 +99,11 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_POST['Update'] || $_POST['Apply'] ||
 	{
 		foreach($arAllOptions as $arOption)
 		{
+			if (isset($arOption['section']))
+			{
+                continue;
+			}
+
 			$name=$arOption[0];
 			$val=$_REQUEST[$name];
 			if($arOption[3][0]=="checkbox" && $val!="Y")
@@ -97,9 +124,34 @@ $tabControl->Begin();
 <?$tabControl->BeginNextTab();?>
 	<?
 	foreach($arAllOptions as $arOption):
-		$val = COption::GetOptionString("disk", $arOption[0], $arOption[2]);
+		if (isset($arOption['section']))
+		{
+		    echo <<<HTML
+            <tr class="heading">
+                <td colspan="2">{$arOption['section']}</td>
+            </tr>
+HTML;
+
+            continue;
+		}
+
+        $val = null;
+		if (!is_array($arOption))
+		{
+            $arOption = [null, $arOption, null, ['heading']];
+		}
+		else
+        {
+		    $val = COption::GetOptionString("disk", $arOption[0], $arOption[2]);
+        }
+
 		$type = $arOption[3];
 	?>
+    <?if($type[0]=="heading"):?>
+    <tr class="heading">
+        <td colspan="2"><?=$arOption[1]?></td>
+    </tr>
+    <?else:?>
 	<tr>
 		<td width="40%" nowrap <?if($type[0]=="textarea") echo 'class="adm-detail-valign-top"'?>>
 			<label for="<?echo htmlspecialcharsbx($arOption[0])?>"><?echo $arOption[1]?>:</label>
@@ -123,6 +175,7 @@ $tabControl->Begin();
 			&nbsp;<? echo (empty($notices[$arOption[0]])? '' : $notices[$arOption[0]])  ?>
 		</td>
 	</tr>
+    <?endif?>
 	<? if($noticeBlock[$arOption[0]]): ?>
 		<tr>
 			<td colspan="2" align="center">

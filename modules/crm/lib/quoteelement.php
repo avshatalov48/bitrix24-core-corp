@@ -10,6 +10,7 @@ namespace Bitrix\Crm;
 use Bitrix\Crm;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -60,5 +61,27 @@ class QuoteElementTable extends Entity\DataManager
 				array('join_type' => 'INNER')
 			)),*/
 		);
+	}
+
+	public static function deleteByQuoteId(int $quoteId): Result
+	{
+		$result = new Result();
+
+		$list = static::getList([
+			'filter' => [
+				'=QUOTE_ID' => $quoteId,
+			],
+		]);
+		while($item = $list->fetchObject())
+		{
+			Crm\Integration\StorageManager::deleteFile($item->getElementId(), $item->getStorageTypeId());
+			$deleteResult = $item->delete();
+			if(!$deleteResult->isSuccess())
+			{
+				$result->addErrors($deleteResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 }

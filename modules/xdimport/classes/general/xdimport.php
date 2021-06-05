@@ -1,9 +1,10 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CXDImport
 {
-	function OnBuildGlobalMenu(&$aGlobalMenu, &$aModuleMenu)
+	public static function OnBuildGlobalMenu(&$aGlobalMenu, &$aModuleMenu)
 	{
 		global $USER;
 		if(!$USER->IsAdmin())
@@ -34,7 +35,7 @@ class CXDImport
 	public static function ParseDaysOfMonth($strDaysOfMonth)
 	{
 		$arResult=array();
-		if(strlen($strDaysOfMonth) > 0)
+		if($strDaysOfMonth <> '')
 		{
 			$arDoM = explode(",", $strDaysOfMonth);
 			$arFound = array();
@@ -66,7 +67,7 @@ class CXDImport
 
 	public static function ParseDaysOfWeek($strDaysOfWeek)
 	{
-		if(strlen($strDaysOfWeek) <= 0)
+		if($strDaysOfWeek == '')
 			return false;
 
 		$arResult = array();
@@ -90,7 +91,7 @@ class CXDImport
 
 	public static function ParseTimesOfDay($strTimesOfDay)
 	{
-		if(strlen($strTimesOfDay) <= 0)
+		if($strTimesOfDay == '')
 			return false;
 
 		$arResult = array();
@@ -112,7 +113,7 @@ class CXDImport
 		return $arResult;
 	}
 
-	static function WriteToLog($text, $code = "")
+	public static function WriteToLog($text, $code = "")
 	{
 		$filename = $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport.log";
 		$f = fopen($filename, "a");
@@ -120,10 +121,10 @@ class CXDImport
 		fclose($f);
 	}
 
-	static function DetectUTF8($url)
+	public static function DetectUTF8($url)
 	{
 		$arBytes = array();
-		for($i=0, $n=strlen($url); $i<$n; $i++)
+		for($i=0, $n = mb_strlen($url); $i<$n; $i++)
 			$arBytes[] = ord($url[$i]);
 
 		$is_utf = 0;
@@ -142,4 +143,3 @@ class CXDImport
 		return $is_utf > 0;
 	}
 }
-?>

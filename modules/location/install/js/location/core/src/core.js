@@ -7,7 +7,13 @@ import AddressRepository from './repository/addressrepository';
 import FormatRepository from './repository/formatrepository';
 import SourceRepository from './repository/sourcerepository';
 
-import AutocompleteServiceBase from './base/autocompleteservicebase';
+import FormatTemplateType from './entity/format/formattemplatetype';
+import FormatTemplate from './entity/format/formattemplate';
+import FormatTemplateCollection from './entity/format/formattemplatecollection';
+import {AutocompleteServiceBase} from './base/autocompleteservicebase';
+import type {AutocompleteServiceParams} from './base/autocompleteservicebase';
+import AutocompleteServiceFilter from './base/autocompleteservicefilter';
+
 import BaseSource from './base/sourcebase';
 import MapBase from './base/mapbase';
 import PhotoServiceBase from './base/photoservicebase';
@@ -36,6 +42,7 @@ export {
 	AddressType,
 	LocationType,
 	LocationFieldType,
+	FormatTemplateType,
 
 	LocationRepository,
 	AddressRepository,
@@ -43,7 +50,7 @@ export {
 	SourceRepository,
 
 	StringConverter as AddressStringConverter,
-	AutocompleteServiceBase,
+	AutocompleteServiceBase, AutocompleteServiceFilter,
 	PhotoServiceBase,
 	BaseSource,
 	MapBase,
@@ -59,4 +66,8 @@ export {
 	Point,
 
 	DistanceCalculator
+};
+
+export type{
+	AutocompleteServiceParams
 };

@@ -91,6 +91,11 @@ $groupPopupExists = false;
 
 					$itemId = $item["PARAMS"]["menu_item_id"];
 					$isCustomItem = preg_match("/^[0-9]+$/", $itemId) === 1;
+					$isCustomSection =
+						isset($item['PARAMS']['is_custom_section'])
+							? (bool)$item['PARAMS']['is_custom_section']
+							: false
+					;
 
 					$itemClass = "menu-item-block";
 					if (!$isCustomItem)
@@ -108,7 +113,7 @@ $groupPopupExists = false;
 						$itemClass .= " menu-item-live-feed";
 					}
 
-					if ($item["ITEM_TYPE"] !== "default" || $isCustomItem)
+					if ($item["ITEM_TYPE"] !== "default" || $isCustomItem || $isCustomSection)
 					{
 						$itemClass .= " menu-item-no-icon-state";
 					}

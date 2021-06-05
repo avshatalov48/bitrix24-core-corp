@@ -1,10 +1,11 @@
-<?
+<?php
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/intranet/classes/general/ratings_components.php");
 
 class CAllRatingsComponentsIntranet
 {	
 	// return configs of component-rating
-	function OnGetRatingConfigs()
+	public static function OnGetRatingConfigs()
 	{
 	    $arConfigs = array(
 	    	'MODULE_ID' => 'INTRANET',
@@ -30,7 +31,7 @@ class CAllRatingsComponentsIntranet
 	}
 
 	// check input values, if value does not validate, set the default value
-	function __CheckFields($entityId, $arConfigs)
+	public static function __CheckFields($entityId, $arConfigs)
 	{
 		$arDefaultConfig = CRatingsComponentsIntranet::__AssembleConfigDefault($entityId);
 		
@@ -45,7 +46,7 @@ class CAllRatingsComponentsIntranet
 	}
 		
 	// return support object
-	function OnGetRatingObject()
+	public static function OnGetRatingObject()
 	{
 		$arRatingConfigs = CRatingsComponentsIntranet::OnGetRatingConfigs();
 		foreach ($arRatingConfigs["COMPONENT"] as $SupportType => $value)
@@ -55,7 +56,7 @@ class CAllRatingsComponentsIntranet
 	}
 	
 	// check the value of the component-rating which relate to the module
-	function OnAfterAddRating($ID, $arFields)
+	public static function OnAfterAddRating($ID, $arFields)
 	{
 		$arFields['CONFIGS']['INTRANET'] = CRatingsComponentsIntranet::__CheckFields($arFields['ENTITY_ID'], $arFields['CONFIGS']['INTRANET']);
 		
@@ -63,7 +64,7 @@ class CAllRatingsComponentsIntranet
 	}
 	
 	// check the value of the component-rating which relate to the module
-	function OnAfterUpdateRating($ID, $arFields)
+	public static function OnAfterUpdateRating($ID, $arFields)
 	{
 		$arFields['CONFIGS']['INTRANET'] = CRatingsComponentsIntranet::__CheckFields($arFields['ENTITY_ID'], $arFields['CONFIGS']['INTRANET']);
 		
@@ -73,7 +74,7 @@ class CAllRatingsComponentsIntranet
 	// Utilities
 		
 	// collect the default and regular expressions for the fields component-rating
-	function __AssembleConfigDefault($objectType = null) 
+	public static function __AssembleConfigDefault($objectType = null)
 	{
 		$arConfigs = array();
 		$arRatingConfigs = CRatingsComponentsIntranet::OnGetRatingConfigs();
@@ -96,4 +97,3 @@ class CAllRatingsComponentsIntranet
 		return $arConfigs;
 	}	
 }
-?>

@@ -324,10 +324,10 @@ if ($arParams['TYPE'] == \Bitrix\Landing\Site\Type::SCOPE_CODE_GROUP)
 	{
 		var condition = [];
 		<?if ($arParams['PAGE_URL_SITE_EDIT']):?>
-		condition.push('<?= str_replace('#site_edit#', '(\\\d+)', \CUtil::jsEscape($arParams['PAGE_URL_SITE_EDIT']));?>');
+		condition.push('<?= str_replace(['#site_edit#', '?'], ['(\\\d+)', '\\\?'], \CUtil::jsEscape($arParams['PAGE_URL_SITE_EDIT']));?>');
 		<?endif;?>
 		<?if ($arParams['PAGE_URL_LANDING_EDIT']):?>
-		condition.push('<?= str_replace(array('#site_show#', '#landing_edit#'), '(\\\d+)', \CUtil::jsEscape($arParams['PAGE_URL_LANDING_EDIT']));?>');
+		condition.push('<?= str_replace(['#site_show#', '#landing_edit#', '?'], ['(\\\d+)', '(\\\d+)', '\\\?'], \CUtil::jsEscape($arParams['PAGE_URL_LANDING_EDIT']));?>');
 		<?endif;?>
 		if (condition)
 		{

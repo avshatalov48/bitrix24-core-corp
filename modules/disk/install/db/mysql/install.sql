@@ -290,6 +290,25 @@ CREATE TABLE b_disk_sharing
 	KEY IX_DISK_S_6 (REAL_OBJECT_ID, LINK_OBJECT_ID)
 );
 
+CREATE TABLE b_disk_onlyoffice_document_session
+(
+    ID int not null auto_increment,
+    OBJECT_ID int,
+    VERSION_ID int,
+    USER_ID int not null,
+    OWNER_ID int not null,
+    IS_EXCLUSIVE tinyint default 0,
+    EXTERNAL_HASH varchar(128) not null,
+    CREATE_TIME datetime not null,
+    TYPE tinyint not null default 0,
+    CONTEXT text,
+
+    PRIMARY KEY (ID),
+
+    KEY IX_DISK_OODS_1 (EXTERNAL_HASH),
+    KEY IX_DISK_OODS_2 (OBJECT_ID, USER_ID)
+);
+
 CREATE TABLE b_disk_edit_session
 (
 	ID int(11) not null auto_increment,

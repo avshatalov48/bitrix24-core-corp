@@ -2,6 +2,7 @@
 namespace Bitrix\Location\Repository\Format;
 
 use Bitrix\Location\Entity\Address\FieldType;
+use Bitrix\Location\Entity\Format\TemplateType;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -20,7 +21,12 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_RUS_DESCR', null, $languageId),
 				'delimiter' => ', ',
 				'sort' => 100,
-				'template' => "{{#ADDRESS_LINE_1#, }}{{#ADDRESS_LINE_2#}}\n{{#LOCALITY#, }}{{#ADM_LEVEL_1#}}\n{{#COUNTRY#, }}{{#POSTAL_CODE#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,LOCALITY,ADM_LEVEL_2,ADM_LEVEL_1,COUNTRY,POSTAL_CODE]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[LOCALITY,ADDRESS_LINE_1,ADDRESS_LINE_2]]',
+					TemplateType::ADDRESS_LINE_1 => '[", ",[STREET,BUILDING]]',
+				],
 				'code' => 'RU',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
@@ -73,7 +79,13 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_EU_DESCR', null, $languageId),
 				'delimiter' => ' ',
 				'sort' => 200,
-				'template' => "{{#ADDRESS_LINE_1# }}{{#ADDRESS_LINE_2#}}\n{{#POSTAL_CODE# }}{{#LOCALITY#}}\n{{#COUNTRY#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,[" ",[POSTAL_CODE,LOCALITY,ADM_LEVEL_2,'
+						. 'ADM_LEVEL_1]],COUNTRY]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[ADDRESS_LINE_1,ADDRESS_LINE_2,[" ",[POSTAL_CODE,LOCALITY]]]]',
+					TemplateType::ADDRESS_LINE_1 => '[" ",[STREET,BUILDING]]',
+				],
 				'code' => 'EU',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
@@ -96,6 +108,18 @@ class DataCollection
 						'description' => ''
 					],
 					[
+						'sort' => 350,
+						'type' => FieldType::ADM_LEVEL_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADM_LEVEL_2', null, $languageId),
+						'description' =>''
+					],
+					[
+						'sort' => 300,
+						'type' => FieldType::ADM_LEVEL_1,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_REGION', null, $languageId),
+						'description' =>''
+					],
+					[
 						'sort' => 200,
 						'type' => FieldType::COUNTRY,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_COUNTRY', null, $languageId),
@@ -115,30 +139,42 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_US_DESCR', null, $languageId),
 				'delimiter' => ' ',
 				'sort' => 300,
-				'template' => "{{#ADDRESS_LINE_1#, }}{{#ADDRESS_LINE_2#}}\n{{#LOCALITY#}}{{ #ADM_LEVEL_1#}}{{ #POSTAL_CODE#}}\n{{#COUNTRY#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,[" ",[LOCALITY,ADM_LEVEL_2,ADM_LEVEL_1,'
+						. 'POSTAL_CODE:U]],COUNTRY:U]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[LOCALITY,ADDRESS_LINE_1,ADDRESS_LINE_2]]',
+					TemplateType::ADDRESS_LINE_1 => '[", ",[STREET,BUILDING]]',
+				],
 				'code' => 'US',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
 					[
-						'sort' => 400,
+						'sort' => 700,
 						'type' => FieldType::ADDRESS_LINE_2,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_2', null, $languageId),
 						'description' => ''
 					],
 					[
-						'sort' => 400,
+						'sort' => 600,
 						'type' => FieldType::ADDRESS_LINE_1,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_1', null, $languageId),
 						'description' => ''
 					],
 					[
-						'sort' => 300,
+						'sort' => 500,
 						'type' => FieldType::LOCALITY,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_LOCALITY', null, $languageId),
 						'description' => ''
 					],
 					[
-						'sort' => 250,
+						'sort' => 400,
+						'type' => FieldType::ADM_LEVEL_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADM_LEVEL_2', null, $languageId),
+						'description' =>''
+					],
+					[
+						'sort' => 300,
 						'type' => FieldType::ADM_LEVEL_1,
 						'name' => Loc::getMessage('LOCATION_REPO_FRMT_REGION', null, $languageId),
 						'description' =>''
@@ -162,7 +198,13 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_UK_DESCR', null, $languageId),
 				'delimiter' => ' ',
 				'sort' => 400,
-				'template' => "{{#ADDRESS_LINE_1#, }}{{#ADDRESS_LINE_2#}}\n{{#LOCALITY#\n}}{{#POSTAL_CODE#\n}}{{#COUNTRY#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,LOCALITY:U,ADM_LEVEL_2:U,ADM_LEVEL_1:U,'
+						. 'POSTAL_CODE:U,COUNTRY]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[LOCALITY,ADDRESS_LINE_1,ADDRESS_LINE_2]]',
+					TemplateType::ADDRESS_LINE_1 => '[", ",[STREET,BUILDING]]',
+				],
 				'code' => 'UK',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
@@ -203,7 +245,13 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_RUS_2_DESCR', null, $languageId),
 				'delimiter' => ', ',
 				'sort' => 500,
-				'template' => "{{#POSTAL_CODE#\n}}{{#COUNTRY#\n}}{{#LOCALITY#\n}}{{#ADDRESS_LINE_1# }}{{#ADDRESS_LINE_2#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[POSTAL_CODE,COUNTRY,ADM_LEVEL_1,ADM_LEVEL_2,LOCALITY,ADDRESS_LINE_1:N,'
+						. 'ADDRESS_LINE_2]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[LOCALITY,ADDRESS_LINE_1,ADDRESS_LINE_2]]',
+					TemplateType::ADDRESS_LINE_1 => '[", ",[STREET,BUILDING]]',
+				],
 				'code' => 'RU_2',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
@@ -256,7 +304,13 @@ class DataCollection
 				'description' => Loc::getMessage('LOCATION_REPO_FRMT_BR_DESCR', null, $languageId),
 				'delimiter' => ', ',
 				'sort' => 600,
-				'template' => "{{#ADDRESS_LINE_1#}}{{, #ADDRESS_LINE_2#}}\n{{#SUB_LOCALITY_LEVEL_1# }}\n{{#LOCALITY# }} {{#ADM_LEVEL_2# - }} {{#ADM_LEVEL_1#}}\n{{#POSTAL_CODE#}}\n{{#COUNTRY#}}",
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[[", ",[ADDRESS_LINE_1:N,ADDRESS_LINE_2]],SUB_LOCALITY_LEVEL_1,[" ",[LOCALITY,'
+						. '[" - ",[ADM_LEVEL_2,ADM_LEVEL_1]]]],POSTAL_CODE,COUNTRY]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[LOCALITY,ADDRESS_LINE_1,ADDRESS_LINE_2]]',
+					TemplateType::ADDRESS_LINE_1 => '[", ",[STREET,BUILDING]]',
+				],
 				'code' => 'BR',
 				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
 				'fieldCollection' => [
@@ -310,6 +364,52 @@ class DataCollection
 					],
 				]
 			],
+			'DE' => [
+				'name' => Loc::getMessage('LOCATION_REPO_FRMT_DE_NAME', null, $languageId),
+				'description' => Loc::getMessage('LOCATION_REPO_FRMT_EU_DESCR', null, $languageId),
+				'delimiter' => ' ',
+				'sort' => 700,
+				'templateCollection' => [
+					TemplateType::DEFAULT =>
+						'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,[" ",[POSTAL_CODE,LOCALITY]],COUNTRY]]',
+					TemplateType::AUTOCOMPLETE => '[", ",[ADDRESS_LINE_1,ADDRESS_LINE_2,LOCALITY]]',
+					TemplateType::ADDRESS_LINE_1 => '[" ",[STREET,BUILDING]]',
+				],
+				'code' => 'DE',
+				'fieldForUnRecognized' => FieldType::ADDRESS_LINE_2,
+				'fieldCollection' => [
+					[
+						'sort' => 100,
+						'type' => FieldType::ADDRESS_LINE_1,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_1', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 200,
+						'type' => FieldType::ADDRESS_LINE_2,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_ADDR_2', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 300,
+						'type' => FieldType::POSTAL_CODE,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_POSTAL_CODE', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 400,
+						'type' => FieldType::LOCALITY,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_LOCALITY', null, $languageId),
+						'description' => ''
+					],
+					[
+						'sort' => 500,
+						'type' => FieldType::COUNTRY,
+						'name' => Loc::getMessage('LOCATION_REPO_FRMT_COUNTRY', null, $languageId),
+						'description' => ''
+					],
+				]
+			]
 		];
 	}
 
@@ -321,6 +421,6 @@ class DataCollection
 	public static function getByCode(string $code, string $languageId): ?array
 	{
 		$data = self::getAll($languageId);
-		return isset($data[$code]) ? $data[$code] : null;
+		return $data[$code] ?? null;
 	}
 }

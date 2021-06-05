@@ -23,7 +23,7 @@ class SaleManager
 		$siteID = '';
 		$languageID = '';
 
-		$dbSites = \CSite::GetList($by = 'sort', $order = 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
+		$dbSites = \CSite::GetList('sort', 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
 		$defaultSite = is_object($dbSites) ? $dbSites->Fetch() : null;
 		if(is_array($defaultSite))
 		{
@@ -228,7 +228,7 @@ class SaleManager
 		$siteID = '';
 		$languageID = '';
 
-		$dbSites = \CSite::GetList($by = 'sort', $order = 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
+		$dbSites = \CSite::GetList('sort', 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
 		$defaultSite = is_object($dbSites) ? $dbSites->Fetch() : null;
 		if(is_array($defaultSite))
 		{

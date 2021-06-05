@@ -12,7 +12,7 @@ class CXDIUser
 
 		if((($action == "update" && array_key_exists("USER_ID", $arFields)) || $action == "add") && intval($arFields["USER_ID"]) <= 0)
 			$aMsg[] = array("id"=>"USER_ID", "text"=>GetMessage("LFP_CLASS_USER_ERR_USER_ID"));
-		if((($action == "update" && array_key_exists("GROUP_CODE", $arFields)) || $action == "add") && strlen($arFields["GROUP_CODE"]) == 0)
+		if((($action == "update" && array_key_exists("GROUP_CODE", $arFields)) || $action == "add") && $arFields["GROUP_CODE"] == '')
 			$aMsg[] = array("id"=>"GROUP_CODE", "text"=>GetMessage("LFP_CLASS_USER_ERR_ENTITY_GROUP_CODE"));
 
 		if(!empty($aMsg))
@@ -102,9 +102,9 @@ class CXDIUser
 		foreach($aFilter as $key=>$val)
 		{
 			$val = $DB->ForSql($val);
-			if(strlen($val)<=0)
+			if($val == '')
 				continue;
-			switch(strtoupper($key))
+			switch(mb_strtoupper($key))
 			{
 				case "USER_ID":
 					$arFilter[] = "UR.USER_ID=".intval($val);
@@ -118,8 +118,8 @@ class CXDIUser
 		$arOrder = array();
 		foreach($aSort as $key=>$val)
 		{
-			$ord = (strtoupper($val) <> "ASC"?"DESC":"ASC");
-			switch(strtoupper($key))
+			$ord = (mb_strtoupper($val) <> "ASC"?"DESC":"ASC");
+			switch(mb_strtoupper($key))
 			{
 				case "USER_ID":
 					$arOrder[] = "UR.USER_ID ".$ord;

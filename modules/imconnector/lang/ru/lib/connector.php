@@ -13,6 +13,7 @@ $MESS['IMCONNECTOR_NAME_CONNECTOR_VK_GROUP'] = 'ВКонтакте';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_OK'] = 'Одноклассники';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE'] = 'Facebook: Сообщения';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE'] = 'Facebook: Комментарии';
+$MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT'] = 'Instagram Direct';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM'] = 'Instagram для бизнеса';
 
 $MESS['IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK'] = 'Skype, Slack, Office365 e-mail, Kik, GroupMe, Twilio (SMS), Web-chat, Telegram, Facebook - Microsoft Bot Framework';

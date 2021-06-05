@@ -61,7 +61,7 @@ class Parser
 		{
 			$line = rtrim($tmp[$i]);
 
-			while (isset($tmp[$i + 1]) && mb_strlen($tmp[$i + 1]) > 0 && ($tmp[$i + 1]{0} === ' ' || $tmp[$i + 1]{0} === "\t" ))
+			while (isset($tmp[$i + 1]) && mb_strlen($tmp[$i + 1]) > 0 && ($tmp[$i + 1][0] === ' ' || $tmp[$i + 1][0] === "\t" ))
 			{
 				$line .= rtrim(mb_substr($tmp[++$i],1));
 			}

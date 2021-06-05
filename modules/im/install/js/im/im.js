@@ -1254,7 +1254,7 @@ BX.IM.prototype.openSettings = function(params)
 			//this.language=='ru' && BX.correctText? {'title': BX.message('IM_M_AUTO_CORRECT'), 'type': 'checkbox', 'name':'correctText', 'checked': this.settings.correctText }: null,
 			{'type': 'space'},
 			notifyPositionEnable? {'title': BX.message('IM_M_NOTIFY_POSITION'), 'name': 'notifyPosition', 'type': 'select', 'value': notifyPositionValue, items: notifyPositionValues, skipSave: 'Y', 'saveCallback': BX.delegate(function(element){ BXDesktopSystem.SetNotifyPosition(element.options[element.selectedIndex].value); }, this)}: null,
-			this.colors? {'title': BX.message('IM_M_USER_COLOR'), 'name': 'userColor', 'type': 'select', 'value': this.userColor, items: colors, skipSave: 'Y', 'saveCallback': BX.delegate(function(element){ BX.MessengerCommon.setColor(element.options[element.selectedIndex].value) }, this)}: null,
+			this.colors? {'title': BX.message('IM_M_USER_COLOR_2'), 'name': 'userColor', 'type': 'select', 'value': this.userColor, items: colors, skipSave: 'Y', 'saveCallback': BX.delegate(function(element){ BX.MessengerCommon.setColor(element.options[element.selectedIndex].value) }, this)}: null,
 			typeof BXDesktopSystem !== 'undefined' && !BX.MessengerCommon.isDesktop() || !this.desktopVersion? null: {'title': BX.message('IM_M_OPEN_DESKTOP_FROM_PANEL'), 'type': 'checkbox', 'name':'openDesktopFromPanel',  'checked': this.settings.openDesktopFromPanel},
 			BX.MessengerCommon.isDesktop() && this.desktop.enableInVersion(49)? {'title': BX.message('IM_M_BITRIX24_ADDITIONAL_APPLICATION'), 'type': 'checkbox', 'name':'openBitrix24Window', 'checked': this.desktop.isTwoWindowMode(), 'callback': BX.delegate(function(){ this.desktop.setTwoWindowMode(!this.desktop.isTwoWindowMode()); }, this)}: null,
 			BX.MessengerCommon.isDesktop()? {'title': BX.message('IM_M_DESKTOP_AUTORUN_ON'), 'type': 'checkbox', 'checked': BX.desktop.autorunStatus(), 'callback': BX.delegate(function(){ BX.desktop.autorunStatus(!BX.desktop.autorunStatus()); }, this)}: null,
@@ -2659,6 +2659,17 @@ BX.MessengerNotify = function(BXIM, params)
 	this.windowScrollPos = {};
 	this.sendAjaxTry = 0;
 
+	/*
+	-2 - Not supported
+	-1 - Failed
+	0 - All enabled
+	1 - Priority only
+	2 - Alarm only / DnD
+	3 - Toast disabled
+	4 - Disabled
+	 */
+	this.modeCode = 0;
+
 	this.webrtc = params.webrtcClass;
 	this.desktop = params.desktopClass;
 
@@ -2884,6 +2895,16 @@ BX.MessengerNotify = function(BXIM, params)
 		sendObject[counter] = 0;
 		this.updateNotifyCounters(sendObject);
 	}, this));
+
+	// desktop integratinon
+	if (this.desktop.ready() && this.desktop.getApiVersion() >= 58)
+	{
+		this.modeCode = BXDesktopSystem.NotificationsMode();
+		BX.desktop.addCustomEvent("BXNotificationsMode", function(modeCode) {
+			console.log('NotificationMode changed', modeCode);
+			this.modeCode = modeCode;
+		}.bind(this));
+	}
 };
 
 BX.MessengerNotify.prototype.getCounter = function(type)
@@ -12709,6 +12730,11 @@ BX.MessengerChat.prototype.updateState = function(force, send, reason)
 					if (send && BX.localStorage.get('im-us-check'))
 						BX.localStorage.set('mus', true, 1);
 
+					if (send)
+					{
+						BX.onCustomEvent(window, 'onImUpdateUstatOnline', [data.INTRANET_USTAT_ONLINE_DATA]);
+					}
+
 					if (BX.MessengerCommon.isDesktop())
 					{
 						var errorText = '';
@@ -16209,7 +16235,6 @@ BX.MessengerChat.prototype.updateMessageCount = function(send)
 	this.BXIM.messageCount = count;
 	this.BXIM.linesCount = countLines;
 
-	BX.onCustomEvent(window, 'onImUpdateCounterMessage', [countLines, 'LINES']);
 
 	var messageCountLabel = '';
 	if (this.messageCount > 99)
@@ -16229,7 +16254,12 @@ BX.MessengerChat.prototype.updateMessageCount = function(send)
 		BX.MessengerWindow.setTabBadge('im-ol', countLines);
 	}
 
-	this.BXIM.messageCount = this.messageCount;
+	if (linesTabEnable)
+	{
+		BX.onCustomEvent(window, 'onImUpdateCounterLines', [countLines, 'LINES']);
+	}
+	BX.onCustomEvent(window, 'onImUpdateCounterMessage', [count, 'MESSAGE']);
+	this.desktop.onCustomEvent('bxImUpdateCounterMessage', [count, 'MESSAGE']);
 
 	return this.messageCount;
 };
@@ -17532,6 +17562,11 @@ BX.IM.Desktop = function(BXIM, params)
 				}
 				this.webrtc.callOverlayToggleSize(false);
 			}, this));
+
+			BX.desktop.addCustomEvent('bxConferenceLoadComplete', BX.delegate(function() {
+				this.messenger.updateMessageCount(false);
+			}, this));
+
 			BX.desktop.addCustomEvent("bxCallMuteMic", BX.delegate(function() {
 				if (this.webrtc.phoneCurrentCall)
 					this.webrtc.phoneToggleAudio();
@@ -17841,6 +17876,19 @@ BX.IM.Desktop.prototype.enableInVersion = function(version)
 	return BX.desktop.enableInVersion(version);
 }
 
+BX.IM.Desktop.prototype.getApiVersion = function (full)
+{
+	if (typeof(BXDesktopSystem) == 'undefined')
+		return 0;
+
+	if (!this.clientVersion)
+	{
+		this.clientVersion = BXDesktopSystem.GetProperty('versionParts');
+	}
+
+	return full? this.clientVersion.join('.'): this.clientVersion[3];
+}
+
 BX.IM.Desktop.prototype.addCustomEvent = function(eventName, eventHandler)
 {
 	if (!BX.MessengerCommon.isDesktop()) return false;
@@ -17850,7 +17898,15 @@ BX.IM.Desktop.prototype.addCustomEvent = function(eventName, eventHandler)
 BX.IM.Desktop.prototype.onCustomEvent = function(windowTarget, eventName, arEventParams)
 {
 	if (!BX.MessengerCommon.isDesktop()) return false;
-	BX.desktop.onCustomEvent(windowTarget, eventName, arEventParams);
+
+	if (typeof arEventParams === 'undefined')
+	{
+		BX.desktop.onCustomEvent(windowTarget, eventName);
+	}
+	else
+	{
+		BX.desktop.onCustomEvent(windowTarget, eventName, arEventParams);
+	}
 };
 
 BX.IM.Desktop.prototype.windowCommand = function(command, currentWindow)
@@ -18393,6 +18449,7 @@ BX.IM.Desktop.prototype.onAwayAction = function (away, manual)
 		}, this)
 	});
 }
+
 BX.IM.Desktop.prototype.onWakeAction = function ()
 {
 	BX.desktop.setIconStatus('offline');
@@ -18425,6 +18482,7 @@ BX.IM.Desktop.prototype.onApplicationClick = function ()
 
 	return true;
 };
+
 BX.IM.Desktop.prototype.birthdayStatus = function(value)
 {
 	if (!BX.MessengerCommon.isDesktop()) return false;
@@ -18486,6 +18544,7 @@ BX.IM.Desktop.prototype.setTwoWindowMode = function(enable)
 
 	return true;
 };
+
 BX.IM.Desktop.prototype.sliderStatus = function(value)
 {
 	if (!(BX.MessengerCommon.isDesktop() && BX.MessengerCommon.isSliderBindingsEnable()))
@@ -18518,6 +18577,25 @@ BX.IM.Desktop.prototype.changeTab = function(currentTab)
 {
 	return false;
 };
+
+BX.IM.Desktop.prototype.setBrowserIconBadge = function (count, text)
+{
+	if (this.getApiVersion() < 57)
+	{
+		return false;
+	}
+
+	if (typeof text !== 'string')
+	{
+		text = '';
+	}
+
+	BXDesktopSystem.SetBrowserIconBadge(count, text);
+
+	return true;
+}
+
+
 
 BX.PopupWindowDesktop = function()
 {
@@ -25416,6 +25494,29 @@ MessengerLimit.prototype.disableExtensions = function()
 
 BX.MessengerLimit = new MessengerLimit();
 
+
+var MessengerTheme = function()
+{
+	this.theme = 'auto';
+
+};
+
+MessengerTheme.prototype.init = function(theme, controller)
+{
+	this.BXIM = controller;
+
+	if (!this.BXIM.init)
+	{
+		return false;
+	}
+
+	if (typeof theme === 'string')
+	{
+		this.theme = theme;
+	}
+}
+
+BX.MessengerTheme = new MessengerTheme();
 
 /* Desktop utils */
 

@@ -35,7 +35,6 @@ class Lock
 
 	/**
 	 * @return Lock
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function getInstance()
 	{
@@ -83,7 +82,6 @@ class Lock
 	 * @param $name
 	 * @param int $time
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public function set($name, $time = 60)
 	{
@@ -133,7 +131,6 @@ class Lock
 	/**
 	 * @param $name
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public function delete($name)
 	{

@@ -282,7 +282,9 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 				'sort' => array('NAME' => 'ASC'),
 				'vars' => array('by' => 'by', 'order' => 'order'),
 			));
-			list($sortBy, $sortTo) = array_map('strtoupper', each($sortData['sort']));
+
+			$sortBy = strtoupper(key($sortData['sort']));
+			$sortTo = strtoupper(current($sortData['sort']));
 
 			if (!in_array($sortBy, array('NAME')))
 				$sortBy = 'NAME';
@@ -448,7 +450,9 @@ class CIntranetMailConfigManageComponent extends CBitrixComponent
 				'sort' => array('EMAIL' => 'ASC'),
 				'vars' => array('by' => 'by', 'order' => 'order'),
 			));
-			list($sortBy, $sortTo) = array_map('strtoupper', each($sortData['sort']));
+
+			$sortBy = strtoupper(key($sortData['sort']));
+			$sortTo = strtoupper(current($sortData['sort']));
 
 			if (!in_array($sortBy, array('EMAIL')))
 				$sortBy = 'EMAIL';

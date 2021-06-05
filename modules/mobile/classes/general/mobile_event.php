@@ -37,7 +37,7 @@ class CMobileEvent
 			$lastTimePushOption = "last_time_push_".$message["USER_ID"];
 			$lastEmptyMessageTime = Option::get("mobile", $lastTimePushOption,  0);
 			$throttleTimeout = Option::get("mobile", "push_throttle_timeout",  20);
-			$now = mktime();
+			$now = time();
 			if(($now - $lastEmptyMessageTime) < $throttleTimeout)
 			{
 				return false;

@@ -9,7 +9,7 @@ class CCrmSearch
 	static $callback_method = '';
 	static $arMess = array();
 
-	static public function UpdateSearch($arFilter, $ENTITY_TYPE, $bOverWrite = false)
+	public static function UpdateSearch($arFilter, $ENTITY_TYPE, $bOverWrite = false)
 	{
 		if (!CModule::IncludeModule('search'))
 			return false;
@@ -135,7 +135,7 @@ class CCrmSearch
 		return $arAllResult;
 	}
 
-	static protected function _buildEntityCard($arEntity, $sTitle, $ENTITY_TYPE, $arOptions = null)
+	protected static function _buildEntityCard($arEntity, $sTitle, $ENTITY_TYPE, $arOptions = null)
 	{
 		static $arEntityGroup = array();
 		static $arStatuses = array();
@@ -217,9 +217,7 @@ class CCrmSearch
 
 		if (empty($arSite))
 		{
-			$by="sort";
-			$order="asc";
-			$rsSite = CSite::GetList($by, $order);
+			$rsSite = CSite::GetList();
 			while ($_arSite = $rsSite->Fetch())
 				$arSite[] = $_arSite['ID'];
 		}
@@ -304,7 +302,7 @@ class CCrmSearch
 		return $arResult;
 	}
 
-	static public function OnSearchReindex($NS = array(), $oCallback = null, $callback_method = '')
+	public static function OnSearchReindex($NS = array(), $oCallback = null, $callback_method = '')
 	{
 		$arFilter = array();
 		$ENTITY_TYPE = 'LEAD';
@@ -468,7 +466,7 @@ class CCrmSearch
 		return $arAllResult;
 	}
 
-	function OnSearchCheckPermissions($FIELD)
+	public static function OnSearchCheckPermissions($FIELD)
 	{
 		$arAttr = array();
 		if(CCrmPerms::IsAdmin())
@@ -564,7 +562,7 @@ class CCrmSearch
 		return $arRel;
 	}
 
-	static public function DeleteSearch($ENTITY_TYPE, $ENTITY_ID)
+	public static function DeleteSearch($ENTITY_TYPE, $ENTITY_ID)
 	{
 		if (CModule::IncludeModule('search'))
 		{
@@ -572,5 +570,3 @@ class CCrmSearch
 		}
 	}
 }
-
-?>

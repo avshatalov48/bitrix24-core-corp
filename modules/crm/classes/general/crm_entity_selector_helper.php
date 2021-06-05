@@ -1,7 +1,11 @@
 <?php
 
+use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Location\Entity\Address;
+use Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -96,6 +100,8 @@ class CCrmEntitySelectorHelper
 		$bindingDataKey = $bEntityEditorFormat ? 'bindings' : 'BINDINGS';
 		$permissionsKey = $bEntityEditorFormat ? 'permissions' : 'PERMISSIONS';
 		$canUpdateKey = $bEntityEditorFormat ? 'canUpdate' : 'CAN_UPDATE';
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 
 		if($entityTypeName === 'CONTACT')
 		{
@@ -193,6 +199,7 @@ class CCrmEntitySelectorHelper
 								$result[$advancedInfoKey][$multiFieldsKey][] = array(
 									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
 									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+									'ENTITY_TYPE_NAME' => $entityTypeName,
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
@@ -311,6 +318,7 @@ class CCrmEntitySelectorHelper
 								$result[$advancedInfoKey][$multiFieldsKey][] = array(
 									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
 									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+									'ENTITY_TYPE_NAME' => $entityTypeName,
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
@@ -415,6 +423,7 @@ class CCrmEntitySelectorHelper
 								$result[$advancedInfoKey][$multiFieldsKey][] = array(
 									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
 									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+									'ENTITY_TYPE_NAME' => $entityTypeName,
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
@@ -498,6 +507,89 @@ class CCrmEntitySelectorHelper
 					$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').$arRes['CONTACT_FULL_NAME'];
 					$result[$descKey] = $clientTitle;
 				}
+			}
+		}
+		elseif($entityTypeName === 'ORDER')
+		{
+			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
+				$result['id'] = 'O_'.$result['id'];
+
+			if($isHidden)
+			{
+				$result[$titleKey] = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_ORDER');
+			}
+			else
+			{
+				$result[$permissionsKey] = [
+					$canUpdateKey => EntityAuthorization::checkUpdatePermission(
+						\CCrmOwnerType::Order, $entityID, $userPermissions
+					),
+				];
+
+				$order = Order::getList([
+					'select' => ['ID', 'ACCOUNT_NUMBER'],
+					'filter' => [
+						'=ID'=> $entityID,
+					],
+				])->fetchRaw();
+
+				if ($order)
+				{
+					$result[$titleKey] = Loc::getMessage(
+						'CRM_ENT_SEL_HLP_ORDER_SUMMARY',
+						[
+							'#ORDER_NUMBER#' => (
+								isset($order['ACCOUNT_NUMBER'])
+								? htmlspecialcharsbx($order['ACCOUNT_NUMBER'])
+								: $order['ID']
+							),
+						]
+					);
+					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+						COption::GetOptionString('crm', 'path_to_order_details'),
+						[
+							'order_id' => $entityID,
+						]
+					);
+				}
+			}
+		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
+			{
+				$result['id'] = 'DY_' . $entityTypeId . '-' . $result['id'];
+			}
+
+			if($isHidden)
+			{
+				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC');
+			}
+			else
+			{
+				$factory = Container::getInstance()->getFactory($entityTypeId);
+				if (!$factory)
+				{
+					return $result;
+				}
+
+				$item = $factory->getItem($entityID);
+
+				if (!$item)
+				{
+					return $result;
+				}
+
+				$result[$permissionsKey] = [
+					$canUpdateKey => Container::getInstance()->getUserPermissions()->canUpdateItem($item),
+				];
+
+				$result[$titleKey] = $item->getTitle();
+
+				$result[$urlKey] = Container::getInstance()
+					->getRouter()
+					->getItemDetailUrl($entityTypeId, $entityID)
+				;
 			}
 		}
 

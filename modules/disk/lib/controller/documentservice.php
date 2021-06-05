@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Controller;
 
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
@@ -16,6 +17,7 @@ final class DocumentService extends Engine\Controller
 	public function configureActions()
 	{
 		return [
+			'goToPreview' => ['-prefilters' => [Csrf::class]],
 			'goToEdit' => ['-prefilters' => [Csrf::class]],
 			'goToCreate' => ['-prefilters' => [Csrf::class]],
 			'love' => ['prefilters' => [
@@ -25,7 +27,7 @@ final class DocumentService extends Engine\Controller
 		];
 	}
 
-	public function goToEditAction($serviceCode, $attachedObjectId = null, $objectId = null)
+	public function goToPreviewAction($serviceCode, $attachedObjectId = null, $objectId = null, $versionId = null)
 	{
 		$driver = Driver::getInstance();
 		$handlersManager = $driver->getDocumentHandlersManager();
@@ -33,6 +35,43 @@ final class DocumentService extends Engine\Controller
 		if (!$documentHandler)
 		{
 			$this->addError(new Error('There is no document service by code'));
+		}
+
+		if ($documentHandler instanceof OnlyOfficeHandler)
+		{
+			/** @see \Bitrix\Disk\Controller\OnlyOffice::loadDocumentViewerAction() */
+			return $this->forward(OnlyOffice::class, 'loadDocumentViewer', [
+				'attachedObjectId' => $attachedObjectId,
+				'objectId' => $objectId,
+				'versionId' => $versionId,
+			]);
+		}
+	}
+
+	public function goToEditAction($serviceCode, $attachedObjectId = null, $objectId = null, $documentSessionId = null)
+	{
+		$driver = Driver::getInstance();
+		$handlersManager = $driver->getDocumentHandlersManager();
+		$documentHandler = $handlersManager->getHandlerByCode($serviceCode);
+		if (!$documentHandler)
+		{
+			$this->addError(new Error('There is no document service by code'));
+		}
+
+		if ($documentHandler instanceof OnlyOfficeHandler)
+		{
+			if ($documentSessionId)
+			{
+				/** @see \Bitrix\Disk\Controller\OnlyOffice::loadDocumentEditorByViewSessionAction() */
+				return $this->forward(OnlyOffice::class, 'loadDocumentEditorByViewSession', [
+					'documentSessionId' => $documentSessionId,
+				]);
+			}
+
+			return $this->forward(OnlyOffice::class, 'loadDocumentEditor', [
+				'attachedObjectId' => $attachedObjectId,
+				'objectId' => $objectId,
+			]);
 		}
 
 		$urlManager = $driver->getUrlManager();
@@ -47,7 +86,7 @@ final class DocumentService extends Engine\Controller
 		}
 	}
 
-	public function goToCreateAction($serviceCode, $typeFile, $attachedObjectId = null, $objectId = null)
+	public function goToCreateAction($serviceCode, $typeFile, $attachedObjectId = null, $targetFolderId = null)
 	{
 		$driver = Driver::getInstance();
 		$handlersManager = $driver->getDocumentHandlersManager();
@@ -55,6 +94,14 @@ final class DocumentService extends Engine\Controller
 		if (!$documentHandler)
 		{
 			$this->addError(new Error('There is no document service by code'));
+		}
+
+		if ($documentHandler instanceof OnlyOfficeHandler)
+		{
+			return $this->forward(OnlyOffice::class, 'loadCreateDocumentEditor', [
+				'typeFile' => $typeFile,
+				'targetFolderId' => $targetFolderId,
+			]);
 		}
 
 		$urlManager = $driver->getUrlManager();

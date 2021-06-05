@@ -313,16 +313,16 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 				if($communicationType !== '')
 				{
 					$entityContactComms = CCrmActivity::PrepareCommunications('CONTACT', $entityContactID, $communicationType);
-					foreach($entityContactComms as &$entityContactComm)
+					foreach($entityContactComms as &$contactCommunication)
 					{
 						$comm = array(
-							'type' => $entityContactComm['TYPE'],
-							'value' => $entityContactComm['VALUE']
+							'type' => $contactCommunication['TYPE'],
+							'value' => $contactCommunication['VALUE']
 						);
 
 						$item['communications'][] = $comm;
 					}
-					unset($entityContactComm);
+					unset($contactCommunication);
 				}
 
 				if($communicationType === '' || !empty($item['communications']))
@@ -615,6 +615,201 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 				)
 			)
 		);
+	}
+	else
+	{
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
+		if($factory)
+		{
+			$item = $factory->getItemsFilteredByPermissions([
+				'select' => [Bitrix\Crm\Item::FIELD_NAME_COMPANY, Bitrix\Crm\Item::FIELD_NAME_CONTACTS],
+				'filter' => ['='.\Bitrix\Crm\Item::FIELD_NAME_ID => $entityID]
+			])[0] ?? null;
+			if(!$item)
+			{
+				return ['ERROR' => 'Invalid data'];
+			}
+
+			$tabId = mb_strtolower($entityType);
+			$company = null;
+			$itemData = [];
+			$company = $item->getCompany();
+			if($company)
+			{
+				$itemCompanyData = [
+					'ownerEntityType' => $entityType,
+					'ownerEntityId' => $entityID,
+					'entityType' => 'COMPANY',
+					'entityId' => $company->getId(),
+					'entityTitle' => $company->getTitle(),
+					'entityDescription' => '',
+					'communications' => [],
+				];
+
+				if($communicationType !== '')
+				{
+					$companyCommunications = CCrmActivity::PrepareCommunications('COMPANY', $company->getId(), $communicationType);
+
+					foreach($companyCommunications as &$companyCommunication)
+					{
+						$itemCompanyData['communications'][] = [
+							'type' => $companyCommunication['TYPE'],
+							'value' => $companyCommunication['VALUE']
+						];
+					}
+					unset($companyCommunication);
+				}
+
+				if(!empty($itemCompanyData['communications']))
+				{
+					$itemData['COMPANY_'.$company->getId()] = $itemCompanyData;
+					$itemData['COMPANY_'.$company->getId()]['tabId'] = $tabId;
+				}
+			}
+
+			$contact = $item->getPrimaryContact();
+			if($contact)
+			{
+				$itemContactData = [
+					'ownerEntityType' => $entityType,
+					'ownerEntityId' => $entityID,
+					'entityType' => 'CONTACT',
+					'entityId' => $contact->getId(),
+					'entityTitle' => $contact->getFormattedName(),
+					'tabId' => $tabId,
+					'communications' => [],
+				];
+
+				$contactCompany = $contact->getCompany();
+				if($contactCompany && !empty($contactCompany->getTitle()))
+				{
+					$itemContactData['entityDescription'] = $contactCompany->getTitle();
+				}
+
+				if($communicationType !== '')
+				{
+					$contactCommunications = CCrmActivity::PrepareCommunications('CONTACT', $contact->getId(), $communicationType);
+					foreach($contactCommunications as &$contactCommunication)
+					{
+						$itemContactData['communications'][] = [
+							'type' => $contactCommunication['TYPE'],
+							'value' => $contactCommunication['VALUE'],
+						];
+					}
+					unset($contactCommunication);
+				}
+
+				if($communicationType === '' || !empty($itemContactData['communications']))
+				{
+					$itemData["CONTACT_{$contact->getId()}"] = $itemContactData;
+				}
+			}
+
+			$entityComms = CCrmActivity::GetCommunicationsByOwner($entityType, $entityID, $communicationType);
+			foreach($entityComms as &$entityComm)
+			{
+				CCrmActivity::PrepareCommunicationInfo($entityComm);
+				$key = "{$entityComm['ENTITY_TYPE']}_{$entityComm['ENTITY_ID']}";
+				if(!isset($itemData[$key]))
+				{
+					$itemData[$key] = [
+						'ownerEntityType' => $entityType,
+						'ownerEntityId' => $entityID,
+						'entityType' => CCrmOwnerType::ResolveName($entityComm['ENTITY_TYPE_ID']),
+						'entityId' => $entityComm['ENTITY_ID'],
+						'entityTitle' => $entityComm['TITLE'] ?? '',
+						'entityDescription' => $entityComm['DESCRIPTION'] ?? '',
+						'tabId' => $tabId,
+						'communications' => []
+					];
+				}
+
+				if($communicationType !== '')
+				{
+					$commFound = false;
+					foreach($itemData[$key]['communications'] as &$comm)
+					{
+						if($comm['value'] === $entityComm['VALUE'])
+						{
+							$commFound = true;
+							break;
+						}
+					}
+					unset($comm);
+
+					if($commFound)
+					{
+						continue;
+					}
+
+					$comm = array(
+						'type' => $entityComm['TYPE'],
+						'value' => $entityComm['VALUE']
+					);
+
+					$itemData[$key]['communications'][] = $comm;
+				}
+			}
+			unset($entityComm);
+
+			$companyData = [];
+			// Try to get contacts of company
+			if($company)
+			{
+				$entityComms = CCrmActivity::GetCompanyCommunications($company->getId(), $communicationType);
+				foreach($entityComms as &$entityComm)
+				{
+					CCrmActivity::PrepareCommunicationInfo($entityComm);
+					$key = "{$entityComm['ENTITY_TYPE']}_{$entityComm['ENTITY_ID']}";
+					if(!isset($companyData[$key]))
+					{
+						$companyData[$key] = [
+							'ownerEntityType' => $entityType,
+							'ownerEntityId' => $entityID,
+							'entityType' => CCrmOwnerType::ResolveName($entityComm['ENTITY_TYPE_ID']),
+							'entityId' => $entityComm['ENTITY_ID'],
+							'entityTitle' => $entityComm['TITLE'] ?? '',
+							'entityDescription' => $entityComm['DESCRIPTION'] ?? '',
+							'tabId' => 'company',
+							'communications' => []
+						];
+					}
+
+					if($communicationType !== '')
+					{
+						$companyData[$key]['communications'][] = [
+							'type' => $entityComm['TYPE'],
+							'value' => $entityComm['VALUE']
+						];;
+					}
+				}
+				unset($entityComm);
+			}
+
+			if($itemCompanyData && !empty($itemCompanyData['communications']))
+			{
+				$companyData['COMPANY_'.$company->getId()] = $itemCompanyData;
+				$companyData['COMPANY_'.$company->getId()]['tabId'] = 'company';
+			}
+
+			return [
+				'DATA' => [
+					'TABS' => [
+						[
+							'id' => $tabId,
+							'title' => $factory->getEntityDescription(),
+							'active' => true,
+							'items' => array_values($itemData)
+						],
+						[
+							'id' => 'company',
+							'title' => GetMessage('CRM_COMMUNICATION_TAB_COMPANY'),
+							'items' => array_values($companyData)
+						]
+					]
+				]
+			];
+		}
 	}
 
 	return array('ERROR' => 'Invalid data');
@@ -1677,8 +1872,13 @@ elseif($action == 'SAVE_EMAIL')
 		\CCrmOwnerType::Order,
 		\CCrmOwnerType::Deal,
 		\CCrmOwnerType::DealRecurring,
+		\CCrmOwnerType::Quote,
 	);
-	if ('Y' != $data['ownerRcpt'] && in_array($ownerTypeID, $nonRcptOwnerTypes) && $ownerID > 0)
+	if (
+		'Y' !== $data['ownerRcpt']
+		&& (in_array($ownerTypeID, $nonRcptOwnerTypes) || CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
+		&& $ownerID > 0
+	)
 	{
 		$key = sprintf('%s_%u', $ownerTypeName, $ownerID);
 		if (!isset($arBindings[$key]))
@@ -3030,7 +3230,7 @@ elseif($action == 'GET_ENTITIES_DEFAULT_COMMUNICATIONS')
 	{
 		$arFilter['@ELEMENT_ID'] = $arEntityID;
 	}
-	
+
 	$dbResFields = CCrmFieldMulti::GetList(
 		array('ID' => 'asc'),
 		$arFilter
@@ -3073,7 +3273,7 @@ elseif($action == 'GET_ENTITIES_DEFAULT_COMMUNICATIONS')
 				'entityId' => $entityID,
 				'value' => $values['HOME']
 			);
-		}		
+		}
 		elseif(isset($values['OTHER']))
 		{
 			$result[] = array(

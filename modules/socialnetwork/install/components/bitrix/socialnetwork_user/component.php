@@ -1038,7 +1038,7 @@ if (
 				}
 				else
 				{
-					$rsUser = CUser::GetList(($by="id"), ($order="asc"), array("ID" => $arResult["VARIABLES"]["user_id"]), array("SELECT" => array("UF_DEPARTMENT"), "FIELDS" => array("ID")));
+					$rsUser = CUser::GetList("id", "asc", array("ID" => $arResult["VARIABLES"]["user_id"]), array("SELECT" => array("UF_DEPARTMENT"), "FIELDS" => array("ID")));
 					if ($arUser = $rsUser->Fetch())
 					{
 						$bIsUserExtranet = (
@@ -1330,7 +1330,18 @@ if (
 	$arUser = $rsUser->fetch();
 	if (!$arUser)
 	{
-		ShowError(GetMessage("SONET_NO_USER"));
+		if ($this->request->get('IFRAME_TYPE') === 'SIDE_SLIDER')
+		{
+			$APPLICATION->RestartBuffer();
+			echo '<div style="color: red">' . GetMessage("SONET_NO_USER") . '</div>';
+			\CMain::FinalActions();
+			die();
+		}
+		else
+		{
+			ShowError(GetMessage("SONET_NO_USER"));
+		}
+
 		return;
 	}
 

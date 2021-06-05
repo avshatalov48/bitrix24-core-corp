@@ -13,7 +13,7 @@ Class ml extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function ml()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

@@ -12,7 +12,7 @@ Class meeting extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "N";
 
-	function meeting()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -64,7 +64,7 @@ Class meeting extends CModule
 
 			if ($this->errors === false && CModule::IncludeModule('forum'))
 			{
-				$dbRes = CSite::GetList($by='sort', $order='asc', array());
+				$dbRes = CSite::GetList();
 				while ($arSite = $dbRes->Fetch())
 				{
 					$forumId = COption::GetOptionInt('meeting', 'comments_forum_id', 0, SITE_ID);

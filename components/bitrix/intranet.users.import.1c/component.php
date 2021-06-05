@@ -222,19 +222,21 @@ else
 		$strError = "";
 		$strMessage = "";
 
+		$obXMLFile = new CIBlockXMLFile;
+
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/".$GLOBALS["DBType"]."/cml2.php");
 		if ($NS['STEP'] >= 4)
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/classes/general/cml2.php");
 
 		if($NS["STEP"] < 1)
 		{
-			CIBlockXMLFile::DropTemporaryTables();
+			$obXMLFile->DropTemporaryTables();
 			$strMessage = GetMessage("CC_BSC1_TABLES_DROPPED");
 			$NS["STEP"] = 1;
 		}
 		elseif($NS["STEP"] == 1)
 		{
-			if(CIBlockXMLFile::CreateTemporaryTables())
+			if($obXMLFile->CreateTemporaryTables())
 			{
 				$strMessage = GetMessage("CC_BSC1_TABLES_CREATED");
 				$NS["STEP"] = 2;
@@ -248,7 +250,6 @@ else
 		{
 			if($fp = fopen($ABS_FILE_NAME, "rb"))
 			{
-				$obXMLFile = new CIBlockXMLFile;
 				if($obXMLFile->ReadXMLToDatabase($fp, $NS, $arParams["INTERVAL"]))
 				{
 					$NS["STEP"] = 3;
@@ -268,7 +269,7 @@ else
 		}
 		elseif($NS["STEP"] == 3)
 		{
-			if(CIBlockXMLFile::IndexTemporaryTables())
+			if($obXMLFile->IndexTemporaryTables())
 			{
 				$strMessage = GetMessage("CC_BSC1_INDEX_CREATED");
 				$NS["STEP"] = $arParams['STRUCTURE_CHECK'] ? 4 : 5;

@@ -1056,10 +1056,10 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 .crm-entity-widget-client-box {
 	position: relative;
 	box-sizing: border-box;
-	padding: 10px 14px;
-	border: 1px solid #f1f1f1;
-	border-radius: 1px;
-	background-color: #fff;
+	/*padding: 10px 14px;*/
+	/*border: 1px solid #f1f1f1;*/
+	/*border-radius: 1px;*/
+	/*background-color: #fff;*/
 	transition: 220ms all ease;
 }
 
@@ -1137,6 +1137,23 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	padding-right: 130px;
 }
 
+.crm-entity-widget-client-box-icon {
+	display: inline-block;
+	margin: 2px 9px 0 0;
+	width: 16px;
+	height: 17px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.crm-entity-widget-client-box-icon--deal {
+	background-image: url("data:image/svg+xml,%3Csvg width='17' height='17' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.19 13.293a.562.562 0 01-.097.145l-.15.163-.278.347a.56.56 0 01-.173.142l-.097.105a.563.563 0 01-.795.032L6.025 10.93a.563.563 0 01-.033-.795l.552-.61a.563.563 0 01.795-.032l2.443 2.068 5.32-6.196a.563.563 0 01.79-.082l.604.502c.241.196.278.55.082.792l-5.388 6.716zm-.115-9.236c.338 0 .612.274.612.613v.019a.612.612 0 01-.612.612H6.502a.612.612 0 01-.613-.612v-.02c0-.338.275-.612.613-.612h4.573zm-6.41 0a.612.612 0 110 1.225H4.3a.612.612 0 110-1.225h.364zm6.41 2.45c.338 0 .612.274.612.612v.019a.612.612 0 01-.612.612H6.502a.612.612 0 01-.613-.612v-.02c0-.337.275-.612.613-.612h4.573zm-6.41 0a.612.612 0 110 1.224H4.3a.612.612 0 110-1.225h.364zm8.572 7.022l1.225-1.533v3.695c0 .677-.548 1.225-1.225 1.225H2.216A1.225 1.225 0 01.99 15.69V2.221c0-.677.548-1.225 1.225-1.225h11.021c.677 0 1.225.548 1.225 1.224v.986L13.237 4.74V2.22H2.216v13.471h11.021V13.53z' fill='%23525C69' fill-rule='evenodd' opacity='.5'/%3E%3C/svg%3E");
+}
+
+.crm-entity-widget-client-box-icon--lead {
+	background-image: url("data:image/svg+xml,%3Csvg width='14' height='17' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.58 11.581l-3.308-3.307s-.333-.286-.333.143c0 .429.048 2.183.048 2.143h-3.62V9.512H3.223V11.8s0 1.857 1.858 1.857h4.906v1.953c0 .476.392-.011.392-.011l3.234-3.235s.184-.088.184-.374c0-.286-.218-.408-.218-.408zM9.332 6.474H3.811a.578.578 0 00-.576.576v.067c0 .316.26.576.576.576h5.522c.317 0 .576-.26.576-.576V7.05a.578.578 0 00-.576-.576zm.576-1.632a.578.578 0 00-.576-.576H3.811a.578.578 0 00-.576.576v.066c0 .317.26.576.576.576h5.522c.317 0 .576-.26.576-.576v-.066zm-8.48 10.756V1.529c0-.042.035-.076.077-.076h9.866c.042 0 .076.034.076.076v6.078h1.185V1.178a.908.908 0 00-.905-.905H1.15a.908.908 0 00-.905.905v14.77c0 .499.407.906.905.906h7.408v-1.18H1.506a.076.076 0 01-.077-.076z' fill='%23525C69' fill-rule='evenodd' opacity='.5'/%3E%3C/svg%3E");
+}
+
 .crm-entity-widget-client-box-name {
 	display: block;
 	overflow: hidden;
@@ -1148,6 +1165,7 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 }
 
 a.crm-entity-widget-client-box-name {
+	font: 16px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #333;
 	cursor: pointer;
 }
@@ -1160,7 +1178,7 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	color: #a8acb3;
 	text-transform: lowercase;
 	text-overflow: ellipsis;
-	font: 12px/12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/13px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	-o-text-overflow: ellipsis;
 }
 
@@ -3770,7 +3788,7 @@ div.crm-entity-widget-content-block-radio-label {
 
 .crm-entity-widget-participants-block .crm-entity-widget-client-box-position {
 	overflow: hidden;
-	margin: 3px 0 0;
+	margin: 10px 0 0;
 	text-transform: none;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -3792,10 +3810,10 @@ div.crm-entity-widget-content-block-radio-label {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	margin: 5px 0 0;
-	color: rgba(66, 73, 86, .8);
+	margin: 4px 0 0;
+	color: #a8acb3;
 	white-space: nowrap;
-	font: 500 13px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 500 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
 .crm-entity-widget-client-contact-item { display: inline-block; }
@@ -4058,3 +4076,12 @@ div.crm-entity-widget-content-block-radio-label {
 	pointer-events: none;
 }
 /*endregion*/
+
+.crm-entity-card-container-content .ui-entity-editor-content-block input.diskuf-fileUploader {
+	max-width: unset;
+}
+
+.crm-entity-selector-container {
+	max-width: 100%;
+	width: auto;
+}

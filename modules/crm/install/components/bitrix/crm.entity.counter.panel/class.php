@@ -59,8 +59,8 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 
 		$this->userID = $this->arResult['USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 		$dbUsers = \CUser::GetList(
-			($sort_by = 'last_name'),
-			($sort_dir = 'asc'),
+			'last_name',
+			'asc',
 			array('ID' => $this->userID),
 			array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE'))
 		);

@@ -12,29 +12,23 @@ class CCrmBizProc
 	public $arParams = array();
 	public $LAST_ERROR = '';
 
-	public function __construct($ENTITY_TYPE = 'LEAD')
+	public function __construct($entityType = 'LEAD')
 	{
 		global $USER;
-		$this->sEntityType = mb_strtoupper($ENTITY_TYPE);
-		switch($this->sEntityType)
+
+		$this->sEntityType = mb_strtoupper($entityType);
+		$this->sDocument = CCrmBizProcHelper::ResolveDocumentName(CCrmOwnerType::ResolveID($this->sEntityType));
+
+		if ($this->sDocument === '')
 		{
-			case 'DEAL':
-				$this->sDocument = 'CCrmDocumentDeal';
-				break;
-			case 'CONTACT':
-				$this->sDocument = 'CCrmDocumentContact';
-				break;
-			case 'COMPANY':
-				$this->sDocument = 'CCrmDocumentCompany';
-				break;
-			case 'LEAD':
-			default:
-				$this->sDocument = 'CCrmDocumentLead';
-				$this->sEntityType = 'LEAD';
-				break;
+			$this->sEntityType = CCrmOwnerType::LeadName;
+			$this->sDocument = CCrmBizProcHelper::ResolveDocumentId(CCrmOwnerType::Lead);
 		}
+		
 		if (is_object($USER))
+		{
 			$this->arCurrentUserGroups = $USER->GetUserGroupArray();
+		}
 	}
 
 	public function SetParams(array $params)

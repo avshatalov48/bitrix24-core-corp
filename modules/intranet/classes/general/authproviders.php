@@ -141,8 +141,8 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				);
 
 				$dbRes = CUser::GetList(
-					($by = 'last_name'),
-					($order = 'asc'),
+					'last_name',
+					'asc',
 					$arFilter,
 					array(
 						"FIELDS" => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'PERSONAL_PHOTO', 'PERSONAL_GENDER', 'WORK_POSITION', 'PERSONAL_PROFESSION')
@@ -276,7 +276,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 			if ($arFilter)
 			{
 				//be careful with field list because of CUser::FormatName()
-				$dbRes = CUser::GetList(($by = 'last_name'), ($order = 'asc'),
+				$dbRes = CUser::GetList('last_name', 'asc',
 					$arFilter,
 					array(
 						"FIELDS" => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'PERSONAL_PHOTO', 'PERSONAL_GENDER', 'WORK_POSITION', 'PERSONAL_PROFESSION'),
@@ -397,7 +397,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 			if (!empty($arLast['U']))
 			{
 				//be careful with field list because of CUser::FormatName()
-				$res = CUser::GetList(($by="LAST_NAME"), ($order="asc"),
+				$res = CUser::GetList("LAST_NAME", "asc",
 					array("ID"=>implode("|", $arLast['U'])),
 					array("FIELDS" => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'PERSONAL_PHOTO', 'PERSONAL_GENDER', 'WORK_POSITION', 'PERSONAL_PROFESSION'))
 				);
@@ -536,7 +536,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		}
 		if(!empty($arID['U']))
 		{
-			$res = CUser::GetList(($by="id"), ($order=""), array("ID"=>implode("|", $arID['U'])), array("FIELDS"=>array('ID', 'EMAIL', 'LOGIN', 'SECOND_NAME', 'LAST_NAME', 'NAME')));
+			$res = CUser::GetList("id", '', array("ID"=>implode("|", $arID['U'])), array("FIELDS"=>array('ID', 'EMAIL', 'LOGIN', 'SECOND_NAME', 'LAST_NAME', 'NAME')));
 			while($arUser = $res->Fetch())
 				$arResult["IU".$arUser["ID"]] = array("provider"=>GetMessage("authprov_name_out_user1"), "name"=>CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false));
 		}

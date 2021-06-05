@@ -85,6 +85,7 @@ $MESS['TASKS_LIST_BUTTON_NEXT'] = 'Загрузить еще';
 $MESS['TASKS_LIST_BUTTON_NEXT_PROCESS'] = 'Загрузка';
 $MESS['TASKS_LIST_SEARCH_HINT'] = 'Введите название задачи, имя ответственного или что-то еще';
 $MESS['TASKS_LIST_READ_ALL_NOTIFICATION'] = 'Комментарии прочитаны';
+$MESS['TASKS_LIST_PING_NOTIFICATION'] = 'Пинг отправлен';
 
 $MESS['TASKS_LIST_SEARCH_SECTION_LAST'] = "НЕДАВНИЙ ПОИСК";
 $MESS['TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS'] = "РЕЗУЛЬТАТЫ ПОИСКА";

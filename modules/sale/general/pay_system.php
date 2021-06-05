@@ -1,12 +1,13 @@
-<?
-use \Bitrix\Sale\Internals\PaySystemActionTable;
+<?php
+
+use Bitrix\Sale\Internals\PaySystemActionTable;
 
 IncludeModuleLangFile(__FILE__);
 
 /** @deprecated */
 class CAllSalePaySystem
 {
-	static function DoProcessOrder(&$arOrder, $paySystemId, &$arErrors)
+	public static function DoProcessOrder(&$arOrder, $paySystemId, &$arErrors)
 	{
 		if (intval($paySystemId) > 0)
 		{
@@ -78,7 +79,7 @@ class CAllSalePaySystem
 		return $arResult;
 	}
 
-	function GetByID($id, $personTypeId = 0)
+	public static function GetByID($id, $personTypeId = 0)
 	{
 		$id = (int)$id;
 		$personTypeId = (int)$personTypeId;
@@ -132,7 +133,7 @@ class CAllSalePaySystem
 		return $aliases;
 	}
 
-	function CheckFields($ACTION, &$arFields)
+	public static function CheckFields($ACTION, &$arFields)
 	{
 		global $DB, $USER;
 
@@ -150,7 +151,7 @@ class CAllSalePaySystem
 		return True;
 	}
 
-	function Update($id, $arFields)
+	public static function Update($id, $arFields)
 	{
 		if (isset($arFields['LID']))
 			unset($arFields['LID']);
@@ -166,7 +167,7 @@ class CAllSalePaySystem
 		return CSalePaySystemAction::Update($id, $arFields);
 	}
 
-	function Delete($id)
+	public static function Delete($id)
 	{
 		$id = (int)$id;
 
@@ -407,4 +408,3 @@ class CAllSalePaySystem
 		return CSalePaySystemAction::add($arFields);
 	}
 }
-?>

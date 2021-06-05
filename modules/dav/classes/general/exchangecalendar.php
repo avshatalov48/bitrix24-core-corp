@@ -747,10 +747,10 @@ else
 						$arFields["RECURRING_DAYSOFWEEK"] = implode(" ", $ar1);
 					}
 
-					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]), SHORT);
-					$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_TO"]), SHORT);
+					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]), "SHORT");
+					$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_TO"]), "SHORT");
 
-					$arFields["ACTIVE_TO"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]) + $arFields["PROPERTY_EVENT_LENGTH"], FULL);
+					$arFields["ACTIVE_TO"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]) + $arFields["PROPERTY_EVENT_LENGTH"], "FULL");
 				}
 				else
 				{
@@ -1199,7 +1199,7 @@ else
 			if ($exchangeUseLogin == "N")
 				$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
 
-			$dbUserList = CUser::GetList($by = "UF_BXDAVEX_CALSYNC", $order = "asc", $arUserFilter, array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC")));
+			$dbUserList = CUser::GetList("UF_BXDAVEX_CALSYNC", "asc", $arUserFilter, array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC")));
 			while ($arUser = $dbUserList->Fetch())
 			{
 				$index++;
@@ -1209,7 +1209,7 @@ else
 				if (DAV_EXCH_DEBUG)
 					CDav::WriteToLog("Processing user [".$arUser["ID"]."] ".$arUser["LOGIN"], "SYNCE");
 
-				$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time(), FULL)));
+				$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time(), "FULL")));
 
 				$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 				if (empty($mailbox))
@@ -1537,8 +1537,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1586,8 +1586,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1635,8 +1635,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1680,8 +1680,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1729,8 +1729,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1781,8 +1781,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX", "UF_BXDAVEX_CALSYNC"))
 			);
@@ -1817,8 +1817,8 @@ else
 
 			$userId = intval($userId);
 			$dbUserList = CUser::GetList(
-				$by = "",
-				$order = "",
+				"",
+				"",
 				array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false, "ID_EQUAL_EXACT" => $userId),
 				array("SELECT" => array("ID", "LOGIN", "UF_BXDAVEX_MAILBOX"))
 			);

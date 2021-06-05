@@ -218,7 +218,7 @@ else
 						<div class="imconnector-field-social-connector">
 							<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-connector-icon"><i></i></div>
 							<div class="ui-btn ui-btn-light-border"
-								 onclick="BX.util.popup('<?= htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['USER']['URI'])) ?>', 700, 525)">
+								 onclick="BX.util.popup('<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['USER']['URI']))?>', 700, 850)">
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_AUTHORIZE') ?>
 							</div>
 						</div>

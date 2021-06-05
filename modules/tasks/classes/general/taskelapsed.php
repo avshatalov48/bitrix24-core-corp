@@ -408,7 +408,7 @@ class CTaskElapsedTime
 	}
 
 
-	function GetByID($ID)
+	public static function GetByID($ID)
 	{
 		/** @noinspection PhpDeprecationInspection */
 		return CTaskElapsedTime::GetList(array(), array("ID" => $ID));

@@ -51,13 +51,6 @@ export default class MapFeatureAuto extends MapFeature
 				clearTimeout(this.#showMapTimerId);
 			}
 		}
-		else
-		{
-			if(this.addressWidget.address && !this.map.isShown() && event.target === this.addressWidget.inputNode)
-			{
-				this.showMap();
-			}
-		}
 	}
 
 	#onDocumentClick(event)
@@ -125,11 +118,13 @@ export default class MapFeatureAuto extends MapFeature
 
 	setAddress(address: ?Address): void
 	{
+		/*
 		if(this.addressWidget.state === State.DATA_INPUTTING)
 		{
 			this.closeMap();
 			return;
 		}
+		*/
 
 		if(!address)
 		{

@@ -7,6 +7,7 @@ export default class CategoryStub extends Category
 	{
 		super(options);
 		Dom.addClass(this.getContainer(), 'crm-st-category-stub');
+		Dom.removeClass(this.getContainer(), 'crm-st-category-automation-disabled');
 
 		this.getAllColumns()
 			.forEach((column) => {

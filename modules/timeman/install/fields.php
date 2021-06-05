@@ -325,7 +325,7 @@ $arUserFields = array(
 );
 
 $arLabels = array();
-$rsLanguage = CLanguage::GetList($by, $order, array());
+$rsLanguage = CLanguage::GetList();
 while($arLanguage = $rsLanguage->Fetch())
 {
 	$lang_file = $_SERVER['DOCUMENT_ROOT'].(
@@ -440,7 +440,7 @@ if (!$bSkipUpdateForm)
 	$dbRes = $DB->Query($query);
 	while ($arRes = $dbRes->Fetch())
 	{
-		$value = unserialize($arRes['VALUE']);
+		$value = unserialize($arRes['VALUE'], ['allowed_classes' => false]);
 		if ($value['tabs'])
 		{
 			if (!mb_strpos($value['tabs'], 'UF_TIMEMAN'))

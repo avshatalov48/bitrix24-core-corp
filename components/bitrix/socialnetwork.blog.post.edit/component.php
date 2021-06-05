@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
@@ -15,6 +16,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\Helper\Mention;
 
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
@@ -485,8 +487,8 @@ if(
 			if ($arGrat["ID"])
 			{
 				$dbUsers = CUser::GetList(
-					($sort_by = Array('last_name'=>'asc', 'IS_ONLINE'=>'desc')),
-					($dummy=''),
+					Array('last_name'=>'asc', 'IS_ONLINE'=>'desc'),
+					'',
 					array(
 						"ID" => implode("|", $arGrat["USERS"]),
 						array(
@@ -796,67 +798,12 @@ if (
 	}
 	else
 	{
-		$mapping = [
-			'DEST_CODES' => 'SPERM',
-			'GRAT_DEST_CODES' => 'GRAT',
-			'EVENT_DEST_CODES' => 'EVENT_PERM'
-		];
-
-		foreach($mapping as $from => $to)
-		{
-			if (isset($_POST[$from]))
-			{
-				$_POST[$to] = [
-					'UA' => [],
-					'U' => [],
-					'UE' => [],
-					'SG' => [],
-					'DR' => []
-				];
-				if ($from == 'DEST_CODES')
-				{
-					$_POST[$to]['UP'] = [];
-				}
-
-				foreach($_POST[$from] as $destCode)
-				{
-					if ($destCode == 'UA')
-					{
-						$_POST[$to]['UA'][] = 'UA';
-					}
-					elseif (preg_match('/^UE(.+)$/i', $destCode, $matches))
-					{
-						$_POST[$to]['UE'][] = $matches[1];
-					}
-					elseif (preg_match('/^U(\d+)$/i', $destCode, $matches))
-					{
-						$_POST[$to]['U'][] = 'U'.$matches[1];
-					}
-					elseif (
-						$from == 'DEST_CODES'
-						&& preg_match('/^UP(\d+)$/i', $destCode, $matches)
-						&& $arResult["perms"] = BLOG_PERMS_FULL
-					)
-					{
-						$_POST[$to]['UP'][] = 'UP'.$matches[1];
-					}
-					elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches))
-					{
-						$_POST[$to]['SG'][] = 'SG'.$matches[1];
-					}
-					elseif (preg_match('/^DR(\d+)$/i', $destCode, $matches))
-					{
-						$_POST[$to]['DR'][] = 'DR'.$matches[1];
-					}
-				}
-				unset($_POST[$from]);
-			}
-		}
+		$this->convertRequestData();
 
 		// Save calendar event from Socialnetwork live feed form
 		if (
-			$_POST["save"] == "Y"
-			&& $_POST["changePostFormTab"] == "calendar"
+			$_POST["save"] === "Y"
+			&& $_POST["changePostFormTab"] === "calendar"
 			&& check_bitrix_sessid()
 		)
 		{
@@ -879,12 +826,12 @@ if (
 			}
 
 			$rrule = $_POST['EVENT_RRULE'];
-			if ($_POST['rrule_endson'] == 'never')
+			if ($_POST['rrule_endson'] === 'never')
 			{
 				unset($rrule['COUNT']);
 				unset($rrule['UNTIL']);
 			}
-			elseif ($_POST['rrule_endson'] == 'count')
+			elseif ($_POST['rrule_endson'] === 'count')
 			{
 				unset($rrule['UNTIL']);
 			}
@@ -1343,8 +1290,7 @@ if (
 							$USER_FIELD_MANAGER->EditFormAddFields("BLOG_POST", $arFields);
 						}
 
-						preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST["POST_MESSAGE"], $arMention);
-						$mentionList = (!empty($arMention) ? $arMention[1] : array());
+						$mentionList = Mention::getUserIds($_POST['POST_MESSAGE']);
 
 						$APPLICATION->ResetException();
 						$bAdd = false;
@@ -1549,9 +1495,7 @@ if (
 								$arFields["UF_BLOG_POST_URL_PRV"] = $urlPreviewValue;
 							}
 
-							preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $arOldPost["DETAIL_TEXT"], $arMentionOld);
-							$mentionListOld = (!empty($arMentionOld) ? $arMentionOld[1] : array());
-
+							$mentionListOld = Mention::getUserIds($arOldPost['DETAIL_TEXT']);
 							$socnetRightsOld = CBlogPost::GetSocnetPerms($arParams["ID"]);
 
 							unset($arFields["DATE_PUBLISH"]);
@@ -2206,8 +2150,8 @@ if (
 					if (count($arUsersFromPOST) > 0)
 					{
 						$dbUsers = CUser::GetList(
-							($sort_by = Array('last_name'=>'asc', 'IS_ONLINE'=>'desc')),
-							($dummy=''),
+							Array('last_name'=>'asc', 'IS_ONLINE'=>'desc'),
+							'',
 							array(
 								"ID" => implode("|", $arUsersFromPOST),
 								array(

@@ -96,7 +96,7 @@ foreach ($data as $_data)
 
 
 $result = CUser::GetList(
-	($dummy=''), ($dummy=''), array("ID" => join('|', $topUserIds)),
+	'', '', array("ID" => join('|', $topUserIds)),
 	array("FIELDS" => array("ID", "LAST_NAME", "NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "PERSONAL_GENDER"))
 );
 

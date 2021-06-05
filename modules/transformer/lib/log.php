@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Transformer;
 
@@ -9,7 +9,7 @@ class Log
 	/**
 	 * @return bool
 	 */
-	private function getMode()
+	private static function getMode()
 	{
 		if(\Bitrix\Main\Config\Option::get('transformer', 'debug'))
 		{
@@ -45,5 +45,4 @@ class Log
 			@file_put_contents($_SERVER['DOCUMENT_ROOT'].self::LOG, '');
 		}
 	}
-
 }

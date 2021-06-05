@@ -42,7 +42,7 @@ class CTaskMembers
 		}
 		else
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$r = CUser::GetByID($arFields["USER_ID"]);
 			if (!$r->Fetch())
 			{
@@ -268,7 +268,7 @@ class CTaskMembers
 		}
 	}
 
-	function DeleteAllByTaskID($TASK_ID)
+	public static function DeleteAllByTaskID($TASK_ID)
 	{
 		$result = false;
 		$filter = array(

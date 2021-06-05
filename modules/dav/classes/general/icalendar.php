@@ -466,9 +466,16 @@ class CDavICalendarProperty
 		else
 		{
 			$pos = mb_strpos($prop, ':');
-
-			$propStart = mb_substr($prop, 0, $pos);
-			$propEnd = mb_substr($prop, $pos + 1);
+			if ($pos === false)
+			{
+				$propStart = $prop;
+				$propEnd = '';
+			}
+			else
+			{
+				$propStart = mb_substr($prop, 0, $pos);
+				$propEnd = mb_substr($prop, $pos + 1);
+			}
 		}
 
 		$propEnd = str_replace(array('\\N', '\\n'), "\n", $propEnd);

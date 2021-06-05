@@ -9,7 +9,7 @@ use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\Name;
 
-class Contact extends CrmEntityDataProvider implements Nameable
+class Contact extends CrmEntityDataProvider
 {
 	protected $bankDetailIds;
 	protected $nameData = [];

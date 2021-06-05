@@ -69,7 +69,7 @@ $arResult['~FIELD_ADD_URL'] = str_replace(array('#entity_id#', '#field_id#'), ar
 $arResult['FIELD_ADD_URL'] = htmlspecialcharsbx($arResult['~FIELD_ADD_URL']);
 
 $arLangs = array();
-$dbResLangs = CLanguage::GetList($by = '', $order = '');
+$dbResLangs = CLanguage::GetList();
 while($arLang = $dbResLangs->Fetch())
 {
 	$arLangs[$arLang['LID']] = array(
@@ -305,10 +305,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			break;
 
 			case 'crm':
-				$arField['SETTINGS']['LEAD'] = $_POST['ENTITY_TYPE_LEAD'];
-				$arField['SETTINGS']['CONTACT'] = $_POST['ENTITY_TYPE_CONTACT'];
-				$arField['SETTINGS']['COMPANY'] = $_POST['ENTITY_TYPE_COMPANY'];
-				$arField['SETTINGS']['DEAL'] = $_POST['ENTITY_TYPE_DEAL'];
+				$typeSettings = $_POST['ENTITY_TYPE'];
+				foreach ($typeSettings as $entityTypeName => $status)
+				{
+					if (\CCrmOwnerType::ResolveID($entityTypeName))
+					{
+						$arField['SETTINGS'][$entityTypeName] = $status;
+					}
+				}
 				if($arField['SHOW_FILTER'] !== 'N')
 				{
 					$arField['SHOW_FILTER'] = 'I'; // Force exact match for 'CRM' field type
@@ -566,10 +570,13 @@ elseif($arResult['FIELD_ID'])
 		break;
 
 		case 'crm':
-			$arResult['FIELD']['ENTITY_TYPE_LEAD'] = $arResult['FIELD']['SETTINGS']['LEAD'];
-			$arResult['FIELD']['ENTITY_TYPE_CONTACT'] = $arResult['FIELD']['SETTINGS']['CONTACT'];
-			$arResult['FIELD']['ENTITY_TYPE_COMPANY'] = $arResult['FIELD']['SETTINGS']['COMPANY'];
-			$arResult['FIELD']['ENTITY_TYPE_DEAL'] = $arResult['FIELD']['SETTINGS']['DEAL'];
+			foreach ($arResult['FIELD']['SETTINGS'] as $entityTypeName => $status)
+			{
+				if (\CCrmOwnerType::ResolveID($entityTypeName))
+				{
+					$arResult['FIELD'][$entityTypeName] = $status;
+				}
+			}
 		break;
 
 		case 'iblock_section':

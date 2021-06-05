@@ -760,5 +760,11 @@ $arUrlRewrite = array(
 		'ID' => 'bitrix:im.conference.center',
 		'PATH' => '/conference/index.php',
 	),
+	array (
+		'CONDITION' => '#^/page/#',
+		'RULE' => '',
+		'ID' => 'bitrix:intranet.customsection',
+		'PATH' => '/page/index.php',
+	),
 );
 ?>

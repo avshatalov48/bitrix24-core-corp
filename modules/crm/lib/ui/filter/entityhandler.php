@@ -130,6 +130,17 @@ class EntityHandler
 					$entityTypeNames[] = 'PRODUCT';
 				}
 
+				if(isset($params['enableCrmDynamics']) && is_array($params['enableCrmDynamics']))
+				{
+					foreach($params['enableCrmDynamics'] as $entityTypeId => $active)
+					{
+						if ($active === 'Y' && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+						{
+							$entityTypeNames[] = \CCrmOwnerType::ResolveName($entityTypeId);
+						}
+					}
+				}
+
 				$fieldID = $id;
 				$fieldAlias = isset($field['alias']) ? $field['alias'] : $id;
 				$isMultiple = (isset($params['multiple']) && $params['multiple'] == 'Y');
@@ -179,7 +190,9 @@ class EntityHandler
 			{
 				if($entityTypeQty > 1)
 				{
-					$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeID(\CCrmOwnerType::ResolveID($entityTypeName));
+					$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeID(
+						\CCrmOwnerType::ResolveID($entityTypeName)
+					);
 					$prefix = "{$entityTypeAbbr}_";
 				}
 				else

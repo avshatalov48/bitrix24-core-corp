@@ -23,6 +23,7 @@ $MESS["CRM_KANBAN_ERROR_STAGE_IS_SYSTEM"] = "Системну стадію не 
 $MESS["CRM_KANBAN_ERROR_STAGE_IS_WIN"] = "Фінальну стадію не можна видалити.";
 $MESS["CRM_KANBAN_FIELD"] = "Спостерігачі";
 $MESS["CRM_KANBAN_HEADER_OTHER_FIELDS"] = "Інше";
+$MESS["CRM_KANBAN_NOT_SUPPORTED"] = "Тип суті не підтримує відображення в канбані";
 $MESS["CRM_KANBAN_ORDER_TITLE"] = "Замовлення № #ACCOUNT_NUMBER#";
 $MESS["CRM_KANBAN_PHONE_TYPE_FAX"] = "Факс";
 $MESS["CRM_KANBAN_PHONE_TYPE_HOME"] = "Домашній";

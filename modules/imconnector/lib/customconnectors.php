@@ -1,14 +1,10 @@
 <?php
 namespace Bitrix\ImConnector;
 
-use \Bitrix\Main\Event,
-	\Bitrix\Main\EventResult;
+use \Bitrix\Main\Event;
+use \Bitrix\Main\EventResult;
 
-use \Bitrix\ImConnector\Rest\Helper,
-	\Bitrix\ImConnector\Input\ReceivingMessage,
-	\Bitrix\ImConnector\Input\DeactivateConnector,
-	\Bitrix\ImConnector\Input\ReceivingStatusReading,
-	\Bitrix\ImConnector\Input\ReceivingStatusDelivery;
+use Bitrix\ImConnector\Rest\Helper;
 
 class CustomConnectors
 {
@@ -22,11 +18,14 @@ class CustomConnectors
 	const DEFAULT_NEED_SIGNATURE = true;
 	const DEFAULT_CHAT_GROUP = false;
 
-	/** @var array(\Bitrix\ImConnector\CustomConnectors) */
+	/** @var CustomConnectors */
 	private static $instance;
-	private static $customConnectors = array();
+	private static $customConnectors = [];
 
-	public static function getInstance()
+	/**
+	 * @return CustomConnectors
+	 */
+	public static function getInstance(): CustomConnectors
 	{
 		if (empty(self::$instance))
 		{
@@ -36,6 +35,9 @@ class CustomConnectors
 		return self::$instance;
 	}
 
+	/**
+	 * CustomConnectors constructor.
+	 */
 	private function __construct()
 	{
 		$event = new Event(Library::MODULE_ID, Library::EVENT_REGISTRATION_CUSTOM_CONNECTOR);
@@ -63,7 +65,11 @@ class CustomConnectors
 		}
 	}
 
-	private static function handlingValues($data)
+	/**
+	 * @param $data
+	 * @return array
+	 */
+	private static function handlingValues($data): array
 	{
 		$result = array(
 			'ID' => $data['ID'],
@@ -123,12 +129,18 @@ class CustomConnectors
 
 	}
 
-	public function getCustomConnectors()
+	/**
+	 * @return array
+	 */
+	public function getCustomConnectors(): array
 	{
 		return self::$customConnectors;
 	}
 
-	public static function getListConnector()
+	/**
+	 * @return array
+	 */
+	public static function getListConnector(): array
 	{
 		$result = array();
 
@@ -138,12 +150,18 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListConnectorReal()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorReal(): array
 	{
 		return self::getListConnector();
 	}
 
-	public static function getListConnectorId()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorId(): array
 	{
 		$result = array();
 
@@ -153,7 +171,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListComponentConnector()
+	/**
+	 * @return array
+	 */
+	public static function getListComponentConnector(): array
 	{
 		$result = array();
 
@@ -163,7 +184,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListConnectorDelExternalMessages()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorDelExternalMessages(): array
 	{
 		$result = array();
 
@@ -174,7 +198,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListConnectorEditInternalMessages()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorEditInternalMessages(): array
 	{
 		$result = array();
 
@@ -185,7 +212,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListConnectorDelInternalMessages()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorDelInternalMessages(): array
 	{
 		$result = array();
 
@@ -196,7 +226,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListConnectorNotNewsletter()
+	/**
+	 * @return array
+	 */
+	public static function getListConnectorNotNewsletter(): array
 	{
 		$result = array();
 
@@ -207,7 +240,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListNotNeedSystemMessages()
+	/**
+	 * @return array
+	 */
+	public static function getListNotNeedSystemMessages(): array
 	{
 		$result = array();
 
@@ -218,7 +254,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListNotNeedSignature()
+	/**
+	 * @return array
+	 */
+	public static function getListNotNeedSignature(): array
 	{
 		$result = array();
 
@@ -229,7 +268,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getListChatGroup()
+	/**
+	 * @return array
+	 */
+	public static function getListChatGroup(): array
 	{
 		$result = array();
 
@@ -241,13 +283,13 @@ class CustomConnectors
 	}
 
 	/**
+	 * @param $type
 	 * @param $connector
 	 * @param $line
 	 * @param $data
-	 * @param $type
 	 * @return Result
 	 */
-	protected static function setMessages($connector, $line, $data, $type)
+	protected static function setMessages($type, $connector, $line, $data): Result
 	{
 		self::getInstance();
 
@@ -256,8 +298,43 @@ class CustomConnectors
 			$data[$cell]['type_message'] = $type;
 		}
 
-		$receivingHandlers = new ReceivingMessage($connector, $line, $data);
-		$result = $receivingHandlers->receiving();
+		return self::processingInProvider('receivingMessage', $connector, $line, $data);
+	}
+
+	/**
+	 * @param $command
+	 * @param $connector
+	 * @param $line
+	 * @param $data
+	 * @return Result
+	 */
+	protected static function processingInProvider($command, $connector, $line, $data): Result
+	{
+		$result = new Result();
+
+		$params =
+			[
+				'BX_COMMAND' => $command,
+				'CONNECTOR' => $connector,
+				'LINE' => $line,
+				'DATA' => $data,
+			];
+
+		$providerResult = Provider::getProviderForConnectorInput($connector, [$params]);
+
+		if($providerResult->isSuccess())
+		{
+			$provider = $providerResult->getResult();
+			if($provider instanceof Provider\Base\Input)
+			{
+				$provider->reception();
+			}
+
+		}
+		else
+		{
+			$result->addErrors($providerResult->getErrors());
+		}
 
 		return $result;
 	}
@@ -268,11 +345,9 @@ class CustomConnectors
 	 * @param $data
 	 * @return Result
 	 */
-	public static function sendMessages($connector, $line, $data)
+	public static function sendMessages($connector, $line, $data): Result
 	{
-		$result = self::setMessages($connector, $line, $data, 'message');
-
-		return $result;
+		return self::setMessages('message', $connector, $line, $data);
 	}
 
 	/**
@@ -281,11 +356,9 @@ class CustomConnectors
 	 * @param $data
 	 * @return Result
 	 */
-	public static function updateMessages($connector, $line, $data)
+	public static function updateMessages($connector, $line, $data): Result
 	{
-		$result = self::setMessages($connector, $line, $data, 'message_update');
-
-		return $result;
+		return self::setMessages('message_update', $connector, $line, $data);
 	}
 
 	/**
@@ -294,11 +367,9 @@ class CustomConnectors
 	 * @param $data
 	 * @return Result
 	 */
-	public static function deleteMessages($connector, $line, $data)
+	public static function deleteMessages($connector, $line, $data): Result
 	{
-		$result = self::setMessages($connector, $line, $data, 'message_del');
-
-		return $result;
+		return self::setMessages('message_del', $connector, $line, $data);
 	}
 
 	/**
@@ -307,12 +378,9 @@ class CustomConnectors
 	 * @param $data
 	 * @return Result
 	 */
-	public static function sendStatusDelivery($connector, $line, $data)
+	public static function sendStatusDelivery($connector, $line, $data): Result
 	{
-		$receivingHandlers = new ReceivingStatusDelivery($connector, $line, $data);
-		$result = $receivingHandlers->receiving();
-
-		return $result;
+		return self::processingInProvider('receivingStatusDelivery', $connector, $line, $data);
 	}
 
 	/**
@@ -321,12 +389,9 @@ class CustomConnectors
 	 * @param $data
 	 * @return Result
 	 */
-	public static function sendStatusReading($connector, $line, $data)
+	public static function sendStatusReading($connector, $line, $data): Result
 	{
-		$receivingHandlers = new ReceivingStatusReading($connector, $line, $data);
-		$result = $receivingHandlers->receiving();
-
-		return $result;
+		return self::processingInProvider('receivingStatusReading', $connector, $line, $data);
 	}
 
 	/**
@@ -334,15 +399,15 @@ class CustomConnectors
 	 * @param $line
 	 * @return Result
 	 */
-	public static function deactivateConnectors($connector, $line)
+	public static function deactivateConnectors($connector, $line): Result
 	{
-		$receivingHandlers = new DeactivateConnector($connector, $line);
-		$result = $receivingHandlers->receiving();
-
-		return $result;
+		return self::processingInProvider('deactivateConnector', $connector, $line, $data);
 	}
 
-	public static function getStyleCss()
+	/**
+	 * @return string
+	 */
+	public static function getStyleCss(): string
 	{
 		$result = '';
 
@@ -387,7 +452,10 @@ class CustomConnectors
 		return $result;
 	}
 
-	public static function getStyleCssDisabled()
+	/**
+	 * @return string
+	 */
+	public static function getStyleCssDisabled(): string
 	{
 		$result = '';
 

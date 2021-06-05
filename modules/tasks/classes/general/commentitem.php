@@ -197,7 +197,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		return $fields;
 	}
 
-	final protected function fetchListFromDb($taskData, $order = [], $filter = [])
+	final protected static function fetchListFromDb($taskData, $order = [], $filter = [])
 	{
 		CTaskAssert::assertLaxIntegers($taskData['ID']);
 
@@ -305,7 +305,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		return $comment;
 	}
 
-	final protected function fetchDataFromDb($taskId, $itemId)
+	final protected static function fetchDataFromDb($taskId, $itemId)
 	{
 		CTaskAssert::assertLaxIntegers($taskId, $itemId);
 		CTaskAssert::assert(CModule::IncludeModule('forum'));

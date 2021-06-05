@@ -26,13 +26,17 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 		<?php
 		foreach($arResult['value'] as $entityType => $arEntity)
 		{
+			if (empty($arEntity['items']))
+			{
+				continue;
+			}
 			?>
 			<tr>
 				<?php
 				if($arParams['PREFIX']):
 					?>
 					<td class="field_crm_entity_type">
-						<?= Loc::getMessage('CRM_ENTITY_TYPE_' . $entityType) ?>:
+						<?= $arEntity['title'] ?>:
 					</td>
 				<?php
 				endif;
@@ -40,7 +44,7 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 				<td class="field_crm_entity">
 					<?php
 					$first = true;
-					foreach($arEntity as $entityId => $entity)
+					foreach($arEntity['items'] as $entityId => $entity)
 					{
 						echo(!$first ? ', ' : '');
 
@@ -52,15 +56,6 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 						{
 							$entityTypeLower = mb_strtolower($entityType);
 
-							if($entityType === 'ORDER')
-							{
-								$url = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
-							}
-							else
-							{
-								$url = '/bitrix/components/bitrix/crm.' . $entityTypeLower . '.show/card.ajax.php';
-							}
-
 							$crmBalloonClass = (
 							$entityType === 'LEAD' || $entityType === 'DEAL'
 								? '_no_photo' : '_' . $entityTypeLower
@@ -69,8 +64,8 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 							<a
 								href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
 								target="_blank"
-								bx-tooltip-user-id="<?= HtmlFilter::encode($entityId) ?>"
-								bx-tooltip-loader="<?= HtmlFilter::encode($url) ?>"
+								bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
+								bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
 								bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
 							>
 								<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
@@ -133,4 +128,3 @@ if(\CCrmSipHelper::isEnabled())
 	</script>
 	<?php
 }
-?>

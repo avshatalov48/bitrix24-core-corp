@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
+use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
@@ -139,7 +140,7 @@ class File extends BaseObject
 				'height' => $content->getHeight(),
 				'MODULE_ID' => Driver::INTERNAL_MODULE_ID,
 				], Driver::INTERNAL_MODULE_ID, true, true);
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if (!$fileId)
 			{
 				$this->addError(new Error('Could not save file data by \CFile::saveFile'));
@@ -187,7 +188,7 @@ class File extends BaseObject
 		if ($previewFileData && \CFile::isImage($previewFileData['name'], $previewFileData['type']))
 		{
 			$previewFileData['MODULE_ID'] = 'main';
-			$previewId = \CFile::saveFile($previewFileData, 'main_preview', true);
+			$previewId = \CFile::saveFile($previewFileData, 'main_preview', true, true);
 			if ($previewId)
 			{
 				(new Main\UI\Viewer\PreviewManager())->setPreviewImageId($file->getFileId(), $previewId);
@@ -479,6 +480,35 @@ class File extends BaseObject
 	{
 		return [
 			'previewGeneration' => $file->getView()->transformOnOpen($file),
+		];
+	}
+
+	public function unlockAction(Disk\File $file)
+	{
+		if (!Configuration::isEnabledObjectLock())
+		{
+			$this->addError(new Error('Could not unlock. Feature is disabled in modules settings.'));
+
+			return null;
+		}
+
+		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
+		if (!$file->canUnlock($securityContext))
+		{
+			$this->addError(new Error('Could not unlock due to lack of rights.'));
+
+			return null;
+		}
+
+		if (!$file->unlock($this->getCurrentUser()->getId()))
+		{
+			$this->addErrors($file->getErrors());
+
+			return null;
+		}
+
+		return [
+			'unlock' => null,
 		];
 	}
 }

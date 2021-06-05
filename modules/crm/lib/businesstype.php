@@ -43,10 +43,8 @@ class BusinessTypeTable extends Entity\DataManager
 		}
 
 		self::$allLangIDs = array();
-		$sort = 'sort';
-		$order = 'asc';
 		$langEntity = new \CLanguage();
-		$dbLangs = $langEntity->GetList($sort, $order);
+		$dbLangs = $langEntity->GetList();
 		while($lang = $dbLangs->Fetch())
 		{
 			if(isset($lang['LID']))

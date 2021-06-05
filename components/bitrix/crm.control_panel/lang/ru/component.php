@@ -40,4 +40,5 @@ $MESS["CRM_CTRL_PANEL_ITEM_START_TITLE"] = "Стартовая страница 
 $MESS["CRM_CTRL_PANEL_ITEM_CRMPLUS"] = "CRM+";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN"] = "Корзина";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE"] = "Просмотр и восстановление удалённых лидов, контактов, компаний и сделок.";
+$MESS["CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST"] = "Смарт-процессы";
 ?>

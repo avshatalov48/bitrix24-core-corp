@@ -43,7 +43,7 @@ $arDefaultValues = array(
 	'BLOCK_NEW_USER_LF_SITE' => 'N',
 );
 
-$dbSites = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+$dbSites = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
 $arSites = array();
 $default_site = '';
 while ($arRes = $dbSites->GetNext())
@@ -517,7 +517,7 @@ $tabControl->BeginNextTab();
 
 $arSites = array();
 $siteDefault = false;
-$dbRes = CSite::GetList($by = 'sort', $order = 'asc', array('active' => 'Y'));
+$dbRes = CSite::GetList('sort', 'asc', array('active' => 'Y'));
 while ($arSite = $dbRes->Fetch())
 {
 	$arSites[$arSite['ID']] = '[' . $arSite['ID'] . '] ' . $arSite['NAME'];
@@ -526,7 +526,7 @@ while ($arSite = $dbRes->Fetch())
 }
 
 $arUGroupsEx = Array();
-$dbUGroups = CGroup::GetList($by = 'c_sort', $order = 'asc');
+$dbUGroups = CGroup::GetList();
 while ($arUGroups = $dbUGroups->Fetch())
 	$arUGroupsEx[$arUGroups['ID']] = $arUGroups['NAME'];
 

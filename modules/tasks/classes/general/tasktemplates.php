@@ -262,7 +262,7 @@ class CTaskTemplates
 		{
 			if(isset($arFields["RESPONSIBLE_ID"]))
 			{
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$r = CUser::GetByID($arFields["RESPONSIBLE_ID"]);
 				if (!$r->Fetch())
 				{
@@ -440,13 +440,13 @@ class CTaskTemplates
 
 	private static function removeAgents($templateId)
 	{
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.');', 'tasks');
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.', 0);', 'tasks');
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.', 1);', 'tasks');
 	}
 
@@ -527,7 +527,7 @@ class CTaskTemplates
 						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID); // localtime
 						if ($nextTime)
 						{
-							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 							CAgent::AddAgent(
 								$name,
 								'tasks',
@@ -692,7 +692,7 @@ class CTaskTemplates
 					$name = 'CTasks::RepeatTaskByTemplateId('.$ID.');';
 
 					// First, remove all agents for this template
-					/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 					self::removeAgents($ID);
 
 					// Set up new agent
@@ -701,7 +701,7 @@ class CTaskTemplates
 						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID);
 						if ($nextTime)
 						{
-							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 							$ares = CAgent::AddAgent(
 								$name,
 								'tasks',
@@ -1091,7 +1091,7 @@ class CTaskTemplates
 		return $arSqlSearch;
 	}
 
-	function GetByID($ID, $arParams = array())
+	public static function GetByID($ID, $arParams = array())
 	{
 		if(!intval($ID))
 		{

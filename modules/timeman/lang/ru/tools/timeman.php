@@ -33,4 +33,5 @@ $MESS["TM_IN"] = "через";
 $MESS["TM_TILL"] = "#today# до #time#";
 $MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Изменить день";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Рабочий день закрыт руководителем";
+$MESS["TM_DAY_OPEN_ERROR_MONITOR_ENABLED"] = "У вас включен Персональный ассистент рабочего времени. Начать день вы можете только через приложение Битрикс24 для Windows/Mac";
 ?>

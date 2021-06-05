@@ -82,7 +82,7 @@ class FieldDependenceTable extends Entity\DataManager
 		);
 	}
 
-	public function validateAction()
+	public static function validateAction()
 	{
 		return array(
 			new Entity\Validator\Enum(),

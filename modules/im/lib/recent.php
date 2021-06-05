@@ -500,11 +500,13 @@ class Recent
 		}
 		else if ($isNotification)
 		{
+			$parser = new \CTextParser();
+
 			$item['ID'] = 'notify';
 			$item['USER'] = [
 				'ID' => (int)$row['MESSAGE_AUTHOR_ID'],
 			];
-			$item['MESSAGE']['TEXT'] = \CTextParser::convert4mail($item['MESSAGE']['TEXT']);
+			$item['MESSAGE']['TEXT'] = $parser->convert4mail($item['MESSAGE']['TEXT']);
 		}
 		else
 		{
@@ -1007,12 +1009,16 @@ class Recent
 			return true;
 		}
 
-		\Bitrix\Pull\Event::add($userId, [
-			'module_id' => 'im',
-			'command' => 'chatShow',
-			'params' => \Bitrix\Im\Recent::getElement($entityType, $entityId, $userId, ['JSON' => true]),
-			'extra' => \Bitrix\Im\Common::getPullExtra()
-		]);
+		$data = \Bitrix\Im\Recent::getElement($entityType, $entityId, $userId, ['JSON' => true]);
+		if ($data)
+		{
+			\Bitrix\Pull\Event::add($userId, [
+				'module_id' => 'im',
+				'command' => 'chatShow',
+				'params' => $data,
+				'extra' => \Bitrix\Im\Common::getPullExtra()
+			]);
+		}
 
 		return true;
 	}

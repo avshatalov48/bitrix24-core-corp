@@ -20,7 +20,8 @@ Extension::load(
 		"ui.sidepanel-content",
 		'catalog.product-selector',
 		"seo.seoadbuilder",
-		'ui.entity-selector'
+		'ui.entity-selector',
+		'seo.ads.login'
 	]
 );
 $provider = $arParams['PROVIDER'];
@@ -55,6 +56,9 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 );
 
 ?>
+<script>
+	var loginObject = BX.Seo.Ads.LoginFactory.getLoginObject(<?=\Bitrix\Main\Web\Json::encode($provider)?>);
+</script>
 <div class="crm-ads-new-campaign" id="crm-ads-new-campaign">
 	<div class="crm-ads-new-campaign-item">
 		<div class="crm-ads-new-campaign-item-counter" data-stage="1">
@@ -85,7 +89,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 							<button
 								type="button"
 								class="ui-btn ui-btn-light-border"
-								onclick="BX.util.popup('<?=htmlspecialcharsbx($provider['AUTH_URL'])?>', 800, 600);"
+								onclick="loginObject.login();"
 								data-bx-ads-block="login"
 							>
 								<?=Loc::getMessage('CRM_ADS_RTG_LOGIN')?>

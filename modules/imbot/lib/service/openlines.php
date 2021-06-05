@@ -1,6 +1,13 @@
 <?php
 namespace Bitrix\ImBot\Service;
 
+use Bitrix\ImConnector\Provider;
+
+use Bitrix\Main\Loader;
+
+use Bitrix\ImBot\Log;
+use Bitrix\ImBot\Error;
+
 /**
  * Class Openlines
  *
@@ -8,14 +15,14 @@ namespace Bitrix\ImBot\Service;
  */
 class Openlines
 {
-	const BOT_CODE = "network";
-	const SERVICE_CODE = "openlines";
+	public const BOT_CODE = 'network';
+	public const SERVICE_CODE = 'openlines';
 
 	/**
 	 * @param string $command
 	 * @param array $params
 	 *
-	 * @return \Bitrix\ImBot\Error|bool|array
+	 * @return Error|bool|array
 	 */
 	public static function onReceiveCommand($command, $params)
 	{
@@ -26,26 +33,57 @@ class Openlines
 			$params['BX_TYPE']
 		);
 
-		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('imconnector'))
 		{
 			return false;
 		}
 
-		\Bitrix\ImBot\Log::write(Array($command,$params), 'NETWORK SERVICE');
+		Log::write([$command,$params], 'NETWORK SERVICE');
 
-		$network = new \Bitrix\ImOpenLines\Network();
-		$result = $network->onReceiveCommand($command, $params);
+		$providerResult = Provider::getProviderForConnectorInput(self::BOT_CODE, [$command, $params]);
+
+		if($providerResult->isSuccess())
+		{
+			$provider = $providerResult->getResult();
+			$resultReception = $provider->reception();
+
+			if ($resultReception->isSuccess())
+			{
+				$result = true;
+			}
+			else
+			{
+				$result = false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+
 		if($result)
 		{
-			$result = Array('RESULT' => 'OK');
+			$result = [
+				'RESULT' => 'OK'
+			];
 		}
 		else if (is_null($result))
 		{
-			$result = new \Bitrix\ImBot\Error(__METHOD__, 'UNKNOWN_COMMAND', 'Command "'.$command.'" is not found.', [$command, $params]);
+			$result = new Error(
+				__METHOD__,
+				'UNKNOWN_COMMAND',
+				'Command "'.$command.'" is not found.',
+				[$command, $params]
+			);
 		}
-		else if (!$result)
+		elseif (!$result)
 		{
-			$result = new \Bitrix\ImBot\Error(__METHOD__, 'ERROR_COMMAND', 'Command "'.$command.'" execute with errors.', [$command, $params]);
+			$result = new Error(
+				__METHOD__,
+				'ERROR_COMMAND',
+				'Command "'.$command.'" execute with errors.',
+				[$command, $params]
+			);
 		}
 
 		return $result;
@@ -114,7 +152,7 @@ class Openlines
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network::operatorMessageDelete
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageDelete
 	 * @param array $params
 	 *
 	 * @return bool
@@ -135,7 +173,7 @@ class Openlines
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network::operatorStartWriting
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorStartWriting
 	 * @param array $params
 	 *
 	 * @return bool
@@ -156,7 +194,7 @@ class Openlines
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network::operatorSessionStart
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\StartDialogSession
 	 * @param array $params
 	 *
 	 * @return bool
@@ -177,7 +215,7 @@ class Openlines
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network::operatorSessionFinish
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\FinishDialogSession
 	 * @param array $params
 	 *
 	 * @return bool
@@ -198,7 +236,7 @@ class Openlines
 	}
 
 	/**
-	 * @see \Bitrix\Botcontroller\Bot\Network::operatorMessageReceived
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageReceived
 	 * @param array $params
 	 *
 	 * @return bool

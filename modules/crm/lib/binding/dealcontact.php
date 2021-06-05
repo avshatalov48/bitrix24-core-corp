@@ -123,6 +123,34 @@ class DealContactTable extends Entity\DataManager
 		}
 		return $results;
 	}
+
+	public static function getDealsContactIds(array $dealIds): array
+	{
+		$dealIds = array_map('intval', $dealIds);
+		$dealIds = array_filter($dealIds, static function ($id) {
+			return $id > 0;
+		});
+
+		$result = [];
+
+		if(count($dealIds) <= 0)
+		{
+			return $result;
+		}
+		$collection = static::getList([
+			'select' => ['CONTACT_ID'],
+			'filter' => [
+				'@DEAL_ID' => $dealIds,
+			],
+		])->fetchCollection();
+		foreach ($collection as $item)
+		{
+			$result[$item->getDealId()][] = $item->getContactId();
+		}
+
+		return $result;
+	}
+
 	/**
 	 * Get deal's bindings.
 	 * @param int $dealID Deal ID.
@@ -330,7 +358,7 @@ class DealContactTable extends Entity\DataManager
 			throw new Main\ArgumentException('Must be greater than zero', 'dealID');
 		}
 
-		$contactIDs = array_filter($contactIDs);
+		$contactIDs = array_filter(array_map('intval', $contactIDs));
 		if(empty($contactIDs))
 		{
 			return;

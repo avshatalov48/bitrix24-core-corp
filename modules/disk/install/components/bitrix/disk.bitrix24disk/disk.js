@@ -926,15 +926,11 @@ var BitrixDisk = {
 			id: "disk",
 			title: BX.message("disk_name"),
 			order: 130,
+			target: false,
 			events: {
 				open: BX.proxy(function(){
-					if (!this.chartLoaded && this.diskSpace > 0)
-					{
-						this.showChart();
-					}
+					BXDesktopSystem.DiskMessage('{"action":"show_window","host":"' + location.host + '","protocol":"' + location.protocol + '"}');
 				}, this),
-				init: BX.proxy(function() { BX.desktop.setTabContent("disk", this.layout.wrap) }, this),
-				close: function() { }
 			}
 		});
 
@@ -3089,16 +3085,18 @@ var BitrixDisk = {
 			{
 				if(!!lastWindow[0])
 				{
-					if(lastWindow[0].name == name)
+					if(lastWindow[0].name === name)
 					{
 						return lastWindow[0];
 					}
 
-					for (var i in BXWindows) {
-						if (!BXWindows.hasOwnProperty(i)) {
+					for(var i in BXWindows)
+					{
+						if(!BXWindows.hasOwnProperty(i))
+						{
 							continue;
 						}
-						if(BXWindows[i].name == name)
+						if(BXWindows[i] && BXWindows[i].name === name)
 						{
 							return BXWindows[i];
 						}
@@ -3121,16 +3119,18 @@ var BitrixDisk = {
 			{
 				if(!!lastWindow[0])
 				{
-					if(lastWindow[0].name.search(prefix) != -1)
+					if(lastWindow[0].name.search(prefix) !== -1)
 					{
 						return lastWindow[0];
 					}
 
-					for (var i in BXWindows) {
-						if (!BXWindows.hasOwnProperty(i)) {
+					for(var i in BXWindows)
+					{
+						if(!BXWindows.hasOwnProperty(i))
+						{
 							continue;
 						}
-						if(BXWindows[i].name.search(prefix) != -1)
+						if(BXWindows[i] && BXWindows[i].name.search(prefix) !== -1)
 						{
 							return BXWindows[i];
 						}

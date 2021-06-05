@@ -24,6 +24,7 @@
 			this.callStartTime = null;
 			this.callTimerInterval = null;
 			this.callWithLegacyMobile = false;
+			this.nativeCall = null;
 
 			this.callVideoEnabled = false; // for proximity sensor
 			this.skipNextDeviceChangeEvent = false; // workaround to change device to speaker if headphones are removed
@@ -58,6 +59,14 @@
 			this.onDeclineButtonClickHandler = this.onDeclineButtonClick.bind(this);
 			this.onSetCentralUserHandler = this.onSetCentralUser.bind(this);
 			this.onSelectAudioDeviceHandler = this.onSelectAudioDevice.bind(this);
+
+			this.onNativeCallAnsweredHandler = this.onNativeCallAnswered.bind(this);
+			this.onNativeCallEndedHandler = this.onNativeCallEnded.bind(this);
+			this.onNativeCallMutedHandler = this.onNativeCallMuted.bind(this);
+			this.onNativeCallVideoIntentHandler = this.onNativeCallVideoIntent.bind(this);
+
+			this._nativeAnsweredAction = null;
+			this.ignoreNativeCallAnswer = false;
 
 			this.onProximitySensorDebounced = CallUtil.debounce(this.onProximitySensor.bind(this), 500);
 			this.onAudioDeviceChangedDebounced = CallUtil.debounce(this.onAudioDeviceChanged.bind(this), 100);
@@ -346,12 +355,109 @@
 			const video = e.video === true;
 
 			this.currentCall = CallEngine.calls[newCall.id];
+
+			if ("callservice" in window)
+			{
+				const nativeCall = callservice.currentCall();
+				if (nativeCall && nativeCall.params.call.ID == newCall.id)
+				{
+					this.nativeCall = nativeCall;
+					if (Application.isBackground())
+					{
+						console.warn(CallUtil.getDateForLog() + ": Waking up p&p");
+						this.forceBackgroundConnectPull(10).then(() => {
+							if (this.currentCall)
+							{
+								this.currentCall.repeatAnswerEvents();
+
+								console.warn(CallUtil.getDateForLog() + ": checking self state");
+								CallEngine.getRestClient().callMethod("im.call.getUserState", {callId: this.currentCall.id}).then(response => {
+									let data = response.data();
+									let myState = data.STATE;
+
+									if (Application.isBackground() && myState !== "calling")
+									{
+										this.clearEverything();
+									}
+								}).catch(response => {
+									console.error(response);
+									if (Application.isBackground())
+									{
+										Application.isBackground();
+									}
+								});
+							}
+						}).catch((err) => {
+							console.error("Could not connect to p&p", err);
+
+							this.clearEverything();
+						})
+					}
+				}
+			}
+
 			device.setIdleTimerDisabled(true);
 			device.setProximitySensorEnabled(true);
 			this.bindCallEvents();
+			this.bindNativeCallEvents();
 			this.currentCall.setVideoEnabled(video);
 			this.showIncomingCall({
 				video: video,
+				viewStatus: e.autoAnswer ? "call" : "incoming"
+			}).then(() => {
+				console.warn("showIncomingCall success");
+				if (this.currentCall && e.autoAnswer)
+				{
+					console.warn("auto-answer A");
+					this.onAnswerButtonClick(video);
+				}
+			});
+		}
+
+		answerCurrentCall(useVideo)
+		{
+			media.audioPlayer().stopPlayingSound();
+			if (!this.currentCall)
+			{
+				console.error("no call to answer");
+				this.clearEverything();
+				return;
+			}
+			this.currentCall.setVideoEnabled(useVideo);
+			this.requestDeviceAccess(useVideo).then(() =>
+			{
+				this.currentCall.answer({
+					useVideo: useVideo,
+				});
+				this.callView.setState({
+					status: "connecting",
+				});
+			}).catch(error =>
+			{
+				console.error(error);
+				if (error instanceof DeviceAccessError)
+				{
+					this.showDeviceAccessConfirm(
+						useVideo,
+						() => Application.openSettings(),
+						() =>
+						{
+							if (this.currentCall)
+							{
+								this.currentCall.decline();
+							}
+						},
+					);
+				}
+				else if (error instanceof CallJoinedElseWhereError)
+				{
+					navigator.notification.alert(BX.message("MOBILE_CALL_ALREADY_JOINED"));
+				}
+				else
+				{
+					navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E006"));
+				}
+				this.clearEverything();
 			});
 		}
 
@@ -369,41 +475,53 @@
 
 		showIncomingCall(params)
 		{
-			if (typeof (params) != "object")
-			{
-				params = {};
-			}
-			params.video = params.video === true;
-
-			this.openCallView({
-				status: "incoming",
-				isGroupCall: "id" in this.currentCall.associatedEntity && this.currentCall.associatedEntity.id.startsWith("chat"),
-				associatedEntityName: this.currentCall.associatedEntity.name,
-				associatedEntityAvatar: this.currentCall.associatedEntity.avatar ? CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar) : "",
-				associatedEntityAvatarColor: this.currentCall.associatedEntity.avatarColor,
-				isVideoCall: params.video,
-				cameraState: false,
-			}).then(() =>
-			{
-				media.audioPlayer().playSound("call_incoming", 10);
-				callInterface.indicator().setMode("incoming");
-				this.bindViewEvents();
-				let userStates = this.currentCall.getUsers();
-				for (let userId in userStates)
+			return new Promise((resolve, reject) => {
+				if (typeof (params) != "object")
 				{
-					this.callView.addUser(userId, userStates[userId]);
+					params = {};
 				}
+				params.video = params.video === true;
 
-				BX.rest.callMethod("im.call.getUsers", {
-					"callId": this.currentCall.id,
-					"AVATAR_HR": "Y",
-				}).then(response => this.callView.updateUserData(response.data()));
-
-				if (params.video && this.currentCall.getLocalMedia)
+				this.openCallView({
+					status: params.viewStatus || "incoming",
+					isGroupCall: "id" in this.currentCall.associatedEntity && this.currentCall.associatedEntity.id.startsWith("chat"),
+					associatedEntityName: this.currentCall.associatedEntity.name,
+					associatedEntityAvatar: this.currentCall.associatedEntity.avatar ? CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar) : "",
+					associatedEntityAvatarColor: this.currentCall.associatedEntity.avatarColor,
+					isVideoCall: params.video,
+					cameraState: false,
+				}).then(() =>
 				{
-					this.currentCall.getLocalMedia();
-				}
+					media.audioPlayer().playSound("call_incoming", 10);
+					callInterface.indicator().setMode("incoming");
+					this.bindViewEvents();
+					let userStates = this.currentCall.getUsers();
+					for (let userId in userStates)
+					{
+						this.callView.addUser(userId, userStates[userId]);
+					}
+
+					BX.rest.callMethod("im.call.getUsers", {
+						"callId": this.currentCall.id,
+						"AVATAR_HR": "Y",
+					}).then(response => {
+						if (this.callView)
+						{
+							this.callView.updateUserData(response.data())
+						}
+					});
+
+					if (params.video && this.currentCall && this.currentCall.getLocalMedia)
+					{
+						this.currentCall.getLocalMedia().then(() => resolve());
+					}
+					else
+					{
+						resolve();
+					}
+				});
 			});
+
 
 			//this.scheduleCancelNotification();
 			//window.BXIM.repeatSound('ringtone', 3500, true);
@@ -512,7 +630,8 @@
 				.on(BX.Call.Event.onStreamRemoved, this.onCallStreamRemovedHandler)
 				.on(BX.Call.Event.onJoin, this.onCallJoinHandler)
 				.on(BX.Call.Event.onLeave, this.onCallLeaveHandler)
-				.on(BX.Call.Event.onDestroy, this.onCallDestroyHandler);
+				.on(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
+			;
 		}
 
 		removeCallEvents()
@@ -538,7 +657,22 @@
 				.off(BX.Call.Event.onStreamRemoved, this.onCallStreamRemovedHandler)
 				.off(BX.Call.Event.onJoin, this.onCallJoinHandler)
 				.off(BX.Call.Event.onLeave, this.onCallLeaveHandler)
-				.off(BX.Call.Event.onDestroy, this.onCallDestroyHandler);
+				.off(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
+			;
+		}
+
+		bindNativeCallEvents()
+		{
+			if (!this.nativeCall)
+			{
+				return;
+			}
+			this.nativeCall
+				.on("answered", this.onNativeCallAnsweredHandler)
+				.on("ended", this.onNativeCallEndedHandler)
+				.on("muted", this.onNativeCallMutedHandler)
+				.on("videointent", this.onNativeCallVideoIntentHandler)
+			;
 		}
 
 		prepareWidgetLayer()
@@ -607,7 +741,7 @@
 				&& !CallUtil.isAvatarBlank(this.currentCall.associatedEntity.avatar)
 			)
 			{
-				associatedAvatar = CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar);
+				associatedAvatar = encodeURI(CallUtil.makeAbsolute(this.currentCall.associatedEntity.avatar));
 			}
 			uicomponent.widgetLayer().hide().then(() =>
 			{
@@ -671,11 +805,52 @@
 		{
 			if (!this.currentCall)
 			{
+				console.warn("no current call");
 				return;
 			}
 
-			this.currentCall.setVideoEnabled(this.callVideoEnabled);
-			this.callVideoEnabled = false;
+			const push = Application.getLastNotification();
+
+			if (
+				Application.getPlatform() === 'android'
+				&& !this.currentCall.isReady()
+				&& push.hasOwnProperty('id')
+				&& push.id.startsWith('IM_CALL_')
+			)
+			{
+				console.log("check push");
+				try
+				{
+					let pushParams = JSON.parse(push.params);
+					console.log(pushParams);
+
+					const callFields = pushParams.PARAMS.call;
+					const isVideo = pushParams.PARAMS.video;
+					const callId = callFields.ID;
+
+					if (callId == this.currentCall.id)
+					{
+						console.warn("auto-answer B");
+						this.answerCurrentCall(isVideo);
+					}
+				}
+				catch (e)
+				{
+					// do nothing
+					console.error(e);
+				}
+			}
+			else
+			{
+				this.currentCall.setVideoEnabled(this.callVideoEnabled);
+				this.callVideoEnabled = false;
+
+				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver")
+				{
+					console.warn("switching audio output to speaker on application activation");
+					this._selectSpeaker();
+				}
+			}
 		}
 
 		onAppPaused()
@@ -710,6 +885,10 @@
 
 		onAudioDeviceChanged(deviceName)
 		{
+			if (Application.isBackground())
+			{
+				return;
+			}
 			console.log("onAudioDeviceChanged", deviceName);
 			if (this.skipNextDeviceChangeEvent)
 			{
@@ -732,6 +911,10 @@
 			let muted = !this.currentCall.isMuted();
 			this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
+			if (this.nativeCall)
+			{
+				this.nativeCall.mute(muted);
+			}
 		}
 
 		onCameraButtonClick()
@@ -825,49 +1008,15 @@
 
 		onAnswerButtonClick(useVideo)
 		{
-			media.audioPlayer().stopPlayingSound();
-			if (!this.currentCall)
+			console.log(CallUtil.getDateForLog() + " onAnswerButtonClick");
+
+			this.answerCurrentCall(useVideo);
+			if (this.nativeCall)
 			{
-				console.error("no call to answer");
-				this.clearEverything();
-				return;
+				console.log("looks like the native call is not answered , calling answer");
+				this.ignoreNativeCallAnswer = true;
+				this.nativeCall.answer();
 			}
-			this.currentCall.setVideoEnabled(useVideo);
-			this.requestDeviceAccess(useVideo).then(() =>
-			{
-				this.currentCall.answer({
-					useVideo: useVideo,
-				});
-				this.callView.setState({
-					status: "connecting",
-				});
-			}).catch(error =>
-			{
-				console.error(error);
-				if (error instanceof DeviceAccessError)
-				{
-					this.showDeviceAccessConfirm(
-						video,
-						() => Application.openSettings(),
-						() =>
-						{
-							if (this.currentCall)
-							{
-								this.currentCall.decline();
-							}
-						},
-					);
-				}
-				else if (error instanceof CallJoinedElseWhereError)
-				{
-					navigator.notification.alert(BX.message("MOBILE_CALL_ALREADY_JOINED"));
-				}
-				else
-				{
-					navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E006"));
-				}
-				this.clearEverything();
-			});
 		}
 
 		onHangupButtonClick()
@@ -928,6 +1077,11 @@
 				this.callStartTime = (new Date()).getTime();
 				callInterface.indicator().setMode("active");
 				this.startCallTimer();
+			}
+			if (state === BX.Call.UserState.Connected && this._nativeAnsweredAction)
+			{
+				this._nativeAnsweredAction.fullfill();
+				this._nativeAnsweredAction = null;
 			}
 			if (isLegacyMobile)
 			{
@@ -1053,7 +1207,7 @@
 			if (e.local)
 			{
 				console.warn("joined local call");
-				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver")
+				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver" && !Application.isBackground())
 				{
 					console.warn("no headphones");
 					this._selectSpeaker();
@@ -1081,15 +1235,74 @@
 			this.clearEverything();
 		}
 
+		onNativeCallAnswered(nativeAction)
+		{
+			console.log(CallUtil.getDateForLog() + " onNativeCallAnswered");
+
+			if (this.nativeCall)
+			{
+				this._nativeAnsweredAction = nativeAction;
+
+				if (!this.ignoreNativeCallAnswer)
+				{
+					this.callVideoEnabled = this.nativeCall.params.video;
+					this.answerCurrentCall(this.nativeCall.params.video);
+				}
+			}
+		}
+
+		onNativeCallEnded(nativeAction)
+		{
+			if (this.nativeCall && this.nativeCall.connected)
+			{
+				this.onHangupButtonClick();
+			}
+			else
+			{
+				this.onDeclineButtonClick();
+			}
+			// todo: remove if (nativeAction) :)
+			if (nativeAction)
+			{
+				setTimeout(() => nativeAction.fullfill(), 500);
+			}
+		}
+
+		onNativeCallMuted(muted)
+		{
+			this.currentCall.setMuted(muted);
+			this.callView.setMuted(muted);
+		}
+
+		onNativeCallVideoIntent()
+		{
+			setTimeout(() => this.onCameraButtonClick(), 1000);
+		}
+
 		clearEverything()
 		{
+			console.trace("clearEverything");
 			if (this.currentCall)
 			{
 				this.removeCallEvents();
 				this.currentCall = null;
 			}
+			if (this._nativeAnsweredAction)
+			{
+				this._nativeAnsweredAction.fail();
+				this._nativeAnsweredAction = null;
+			}
+			if (this.nativeCall)
+			{
+				this.nativeCall.finish();
+				this.nativeCall = null;
+			}
+			this.ignoreNativeCallAnswer = false;
 
-			uicomponent.widgetLayer().close();
+			if (uicomponent.widgetLayer())
+			{
+				uicomponent.widgetLayer().close();
+			}
 			this.rootWidget = null;
 			this.callView = null;
 			callInterface.indicator().close();
@@ -1112,12 +1325,17 @@
 		{
 			return new Promise((resolve, reject) =>
 			{
-				Promise.all([
-					MediaDevices.requestMicrophoneAccess(),
-					withVideo ? MediaDevices.requestCameraAccess() : null,
-				])
-					.then(() => resolve())
-					.catch(({justDenied}) => reject(new DeviceAccessError(justDenied)));
+				MediaDevices.requestMicrophoneAccess().then(
+					() => {
+						if (!withVideo)
+						{
+							return resolve();
+						}
+						MediaDevices.requestCameraAccess().then(
+							() => resolve()
+						).catch(({justDenied}) => reject(new DeviceAccessError(justDenied)))
+					}
+				).catch(({justDenied}) => reject(new DeviceAccessError(justDenied)));
 			});
 		}
 
@@ -1134,6 +1352,46 @@
 						BX.message("MOBILE_CALL_MICROPHONE_CANCEL"),
 					],
 				);
+			});
+		}
+
+		forceBackgroundConnectPull(timeoutSeconds = 10)
+		{
+			return new Promise((resolve, reject) => {
+
+				if (CallEngine.pullStatus === 'online')
+				{
+					resolve();
+					return;
+				}
+
+				var onConnectTimeout = function()
+				{
+					console.error("Timeout while waiting for p&p to connect");
+					BX.removeCustomEvent("onPullStatus", onPullStatus);
+					reject('connect timeout');
+				};
+				var connectionTimeout = setTimeout(onConnectTimeout, timeoutSeconds * 1000);
+
+				var onPullStatus = ({status, additional}) =>
+				{
+					if (status === 'online')
+					{
+						BX.removeCustomEvent("onPullStatus", onPullStatus);
+						clearTimeout(connectionTimeout);
+						resolve();
+					}
+
+					if (status === 'offline' && additional.isError) // offline is fired on errors too
+					{
+						BX.removeCustomEvent("onPullStatus", onPullStatus);
+						clearTimeout(connectionTimeout);
+						reject('connect error');
+					}
+				};
+
+				BX.addCustomEvent("onPullStatus", onPullStatus);
+				BX.postComponentEvent("onPullForceBackgroundConnect", [], "communication");
 			});
 		}
 

@@ -500,13 +500,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			{
 				$isPermitted = FieldAttributeManager::isEnabled();
 				$isPhaseDependent = FieldAttributeManager::isPhaseDependent();
+				$isEntitySupported = FieldAttributeManager::isEntitySupported((int)$this->entityTypeID);
 				$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $isPermitted;
 				$this->arResult['ATTRIBUTE_CONFIG']['IS_PHASE_DEPENDENT'] = $isPhaseDependent;
-				$this->arResult['ATTRIBUTE_CONFIG']['IS_ATTR_CONFIG_BUTTON_HIDDEN'] = in_array(
-					$this->entityTypeID,
-					[CCrmOwnerType::Company, CCrmOwnerType::Contact],
-					true
-				);
+				$this->arResult['ATTRIBUTE_CONFIG']['IS_ATTR_CONFIG_BUTTON_HIDDEN'] = !$isEntitySupported;
 				if(!($isPermitted && $isPhaseDependent))
 				{
 					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] =
@@ -584,6 +581,8 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		}
 
 		$this->arResult['CONTEXT']['EDITOR_CONFIG_ID'] = $this->configID;
+
+		$this->arResult['MESSAGES'] = (array)($this->arParams['MESSAGES'] ?? []);
 
 		$this->prepareUfAccessRightRestriction();
 	}

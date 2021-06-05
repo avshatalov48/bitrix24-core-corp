@@ -345,8 +345,8 @@ elseif (CModule::IncludeModule("extranet") && !CExtranet::IsExtranetSite())
 	}
 
 	$rsUsers = CUser::GetList(
-		($by="ID"),
-		($order="asc"),
+		"ID",
+		"asc",
 		array(
 			"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID()),
 			"UF_DEPARTMENT" => false

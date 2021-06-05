@@ -7,28 +7,8 @@ class ObserverManager
 {
 	public static function registerBulk(array $userIDs, $entityTypeID, $entityID, $sortOffset = 0)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
-
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
-
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
-		}
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+		$entityID = static::normalizeEntityId($entityID);
 
 		$userIDs = array_values($userIDs);
 		for($i = 0, $length = count($userIDs); $i < $length; $i++)
@@ -46,39 +26,20 @@ class ObserverManager
 			}
 
 			Entity\ObserverTable::upsert(
-				array(
+				[
 					'ENTITY_TYPE_ID' => $entityTypeID,
 					'ENTITY_ID' => $entityID,
 					'USER_ID' => $userID,
 					'SORT' => (10 * ($sortOffset + $i + 1)),
-				)
+				]
 			);
 		}
 	}
+
 	public static function unregisterBulk(array $userIDs, $entityTypeID, $entityID)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
-
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
-
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
-		}
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+		$entityID = static::normalizeEntityId($entityID);
 
 		foreach($userIDs as $userID)
 		{
@@ -93,14 +54,15 @@ class ObserverManager
 			}
 
 			Entity\ObserverTable::delete(
-				array(
+				[
 					'ENTITY_TYPE_ID' => $entityTypeID,
 					'ENTITY_ID' => $entityID,
 					'USER_ID' => $userID
-				)
+				]
 			);
 		}
 	}
+
 	public static function unregister($userID, $entityTypeID, $entityID)
 	{
 		if(!is_int($userID))
@@ -113,71 +75,32 @@ class ObserverManager
 			throw new Main\ArgumentException('Must be greater than zero', 'userID');
 		}
 
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
-
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
-
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
-		}
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+		$entityID = static::normalizeEntityId($entityID);
 
 		Entity\ObserverTable::delete(
-			array(
+			[
 				'ENTITY_TYPE_ID' => $entityTypeID,
 				'ENTITY_ID' => $entityID,
 				'USER_ID' => $userID
-			)
+			]
 		);
 	}
+
 	public static function getEntityObserverIDs($entityTypeID, $entityID)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
-
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
-
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
-		}
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+		$entityID = static::normalizeEntityId($entityID);
 
 		$dbResult = Entity\ObserverTable::getList(
-			array(
-				'filter' => array('=ENTITY_TYPE_ID' => $entityTypeID, '=ENTITY_ID' => $entityID),
-				'select' => array('USER_ID'),
-				'order' => array('SORT' => 'ASC')
-			)
+			[
+				'filter' => ['=ENTITY_TYPE_ID' => $entityTypeID, '=ENTITY_ID' => $entityID],
+				'select' => ['USER_ID'],
+				'order' => ['SORT' => 'ASC']
+			]
 		);
 
-		$results = array();
+		$results = [];
 		while($fields = $dbResult->fetch())
 		{
 			$results[] = (int)$fields['USER_ID'];
@@ -208,6 +131,19 @@ class ObserverManager
 
 	public static function deleteByOwner($entityTypeID, $entityID)
 	{
+		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
+		$entityID = static::normalizeEntityId($entityID);
+
+		Entity\ObserverTable::deleteByFilter(
+			[
+				'ENTITY_TYPE_ID' => $entityTypeID,
+				'ENTITY_ID' => $entityID
+			]
+		);
+	}
+
+	protected static function normalizeEntityTypeId($entityTypeID): int
+	{
 		if(!is_int($entityTypeID))
 		{
 			$entityTypeID = (int)$entityTypeID;
@@ -221,6 +157,11 @@ class ObserverManager
 			);
 		}
 
+		return $entityTypeID;
+	}
+
+	protected static function normalizeEntityId($entityID): int
+	{
 		if(!is_int($entityID))
 		{
 			$entityID = (int)$entityID;
@@ -231,11 +172,6 @@ class ObserverManager
 			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
 		}
 
-		Entity\ObserverTable::deleteByFilter(
-			array(
-				'ENTITY_TYPE_ID' => $entityTypeID,
-				'ENTITY_ID' => $entityID
-			)
-		);
+		return $entityID;
 	}
 }

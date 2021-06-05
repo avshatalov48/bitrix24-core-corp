@@ -237,27 +237,61 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			return;
 		}
 
-		this._ajaxForm = BX.Crm.AjaxForm.create(
-			this._id,
+		var ajaxData = BX.prop.getObject(this._settings, "ajaxData", {});
+			var actionName = BX.prop.getString(ajaxData, "ACTION_NAME", "");
+			var componentName = BX.prop.getString(ajaxData, "COMPONENT_NAME", "");
+
+			if(componentName !== "")
 			{
-				elementNode: this._formElement,
-				config:
+				if(actionName === "")
 				{
-					url: this._serviceUrl,
-					method: "POST",
-					dataType: "json",
-					processData : true,
-					onsuccess: BX.delegate(this.onSaveSuccess, this),
-					data:
-					{
-						"ACTION": "SAVE",
-						"ACTION_ENTITY_ID": this._entityId,
-						"ACTION_ENTITY_TYPE": this.getEntityTypeForAction(),
-						"ENABLE_REQUIRED_USER_FIELD_CHECK": this._enableRequiredUserFieldCheck ? 'Y' : 'N'
-					}
+					actionName = "save";
 				}
+
+				this._ajaxForm = BX.Crm.ComponentAjax.create(
+					this._id,
+					{
+						elementNode: this._formElement,
+						className: componentName,
+						signedParameters: BX.prop.getString(ajaxData, "SIGNED_PARAMETERS", null),
+						actionName: actionName,
+						callbacks:
+							{
+								onSuccess: BX.delegate(this.onSaveSuccess, this),
+								onFailure: BX.delegate(this.onSaveFailure, this)
+							}
+					}
+				);
 			}
-		);
+			else
+			{
+				if(actionName === "")
+				{
+					actionName = "SAVE";
+				}
+				this._ajaxForm = BX.Crm.AjaxForm.create(
+					this._id,
+					{
+						elementNode: this._formElement,
+						config:
+						{
+							url: this._serviceUrl,
+							method: "POST",
+							dataType: "json",
+							processData : true,
+							onsuccess: BX.delegate(this.onSaveSuccess, this),
+							data:
+							{
+								"ACTION": actionName,
+								"ACTION_ENTITY_ID": this._entityId,
+								"ACTION_ENTITY_TYPE": this.getEntityTypeForAction(
+								),
+								"ENABLE_REQUIRED_USER_FIELD_CHECK": this._enableRequiredUserFieldCheck ? 'Y' : 'N'
+							}
+						}
+					}
+				);
+			}
 
 		//Prevent submit form by Enter if only one input on form
 		this._formElement.setAttribute("onsubmit", "return false;");
@@ -360,7 +394,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 								settings, "IS_ATTR_CONFIG_BUTTON_HIDDEN", true
 							),
 						lockScript: BX.prop.getString(settings, "LOCK_SCRIPT", ""),
-						captions: BX.prop.getObject(settings, "CAPTIONS", {})
+						captions: BX.prop.getObject(settings, "CAPTIONS", {}),
+						entityPhases: BX.prop.getArray(settings, 'ENTITY_PHASES', null)
 					}
 				);
 			}
@@ -595,11 +630,12 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	//endregion
 	BX.Crm.EntityEditor.prototype.adjustTitle = function()
 	{
-		BX.Crm.EntityEditor.superclass.adjustTitle.apply(this);
-		if(!this._enablePageTitleContols || !this._buttonWrapper)
+		if (!this._enablePageTitleControls || !this._model.isCaptionEditable())
 		{
 			return;
 		}
+
+		BX.Crm.EntityEditor.superclass.adjustTitle.apply(this);
 
 		document.title = this._model.getCaption().trim();
 		if (BX.getClass("BX.SidePanel.Instance.updateBrowserTitle"))
@@ -610,7 +646,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	BX.Crm.EntityEditor.prototype.adjustSize = function()
 	{
 		BX.Crm.EntityEditor.superclass.adjustSize.apply(this);
-		if(!this._enablePageTitleContols || !this._pageTitle)
+		if(!this._enablePageTitleControls || !this._pageTitle)
 		{
 			return;
 		}

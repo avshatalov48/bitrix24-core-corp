@@ -163,7 +163,7 @@ class CIntranetUserSelectorHelper
 
 					//fetch only one manager by Section
 					$dbUsers = CUser::GetList(
-						$sort_by  = 'last_name', $sort_dir = 'asc',
+						'last_name', 'asc',
 						$arHeadFilter,
 						array('SELECT' => $arCUserRequestedFields)
 					);
@@ -193,8 +193,8 @@ class CIntranetUserSelectorHelper
 			}
 
 			$dbRes = CUser::GetList(
-				$by = 'last_name',
-				$order = 'asc',
+				'last_name',
+				'asc',
 				$arFilter,
 				array('SELECT' => $arCUserRequestedFields)
 			);
@@ -281,7 +281,7 @@ class CIntranetUserSelectorHelper
 			}
 
 			$arFilter['ID'] = is_array($arLastSelected) ? implode('|', array_slice($arLastSelected, 0, 10)) : '-1';
-			$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+			$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
 			$arLastUsers[$cacheKey] = array();
 			while ($arRes = $dbRes->GetNext())
 			{
@@ -378,7 +378,7 @@ class CIntranetUserSelectorHelper
 				if(!array_key_exists($cacheKey, $cache))
 				{
 					$cache[$cacheKey] = array();
-					$dbRes = CUser::GetList($by = 'last_name', $order = 'asc',
+					$dbRes = CUser::GetList('last_name', 'asc',
 						$filterExtranetUsers,
 						array('SELECT' => array('UF_DEPARTMENT'))
 					);

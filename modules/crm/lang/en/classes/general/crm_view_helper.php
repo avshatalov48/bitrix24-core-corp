@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_TIME_NOT_SPECIFIED"] = "not set";
 $MESS["CRM_CLIENT_SUMMARY_COMPANY_NOT_SPECIFIED"] = "No company selected";
 $MESS["CRM_CLIENT_SUMMARY_CONTACT_NOT_SPECIFIED"] = "No contact selected";
@@ -68,9 +68,9 @@ $MESS["CRM_ORDER_STATUS_MANAGER_SELECTOR_TTL"] = "Processing";
 $MESS["CRM_ORDER_STATUS_MANAGER_SET_DATE"] = "Set date";
 $MESS["CRM_QUOTE_STAGE_MANAGER_CHECK_ERROR_TTL"] = "Complete all the required fields to change quote status";
 $MESS["CRM_QUOTE_STATUS_MANAGER_APPROVED_STEP_HINT"] = "Close the quote";
+$MESS["CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL"] = "Complete all the required fields to change quote status";
 $MESS["CRM_QUOTE_STATUS_MANAGER_DLG_TTL"] = "Select the closing result for the quote.";
 $MESS["CRM_QUOTE_STATUS_MANAGER_FAILURE_TTL"] = "Declined";
 $MESS["CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL"] = "Close the quote";
 $MESS["CRM_SIP_NO_SUPPORTED"] = "Phone calls are not supported in this context.";
 $MESS["CRM_STAGE_MANAGER_CHECK_ERROR_HELP"] = "More on required fields";
-?>

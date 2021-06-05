@@ -953,7 +953,7 @@ class CMobileHelper
 		if (!intval($userId))
 			return;
 
-		$dbUser = CUser::GetList($by="", $order="", array("ID_EQUAL_EXACT" => $userId), array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
+		$dbUser = CUser::GetList("", "", array("ID_EQUAL_EXACT" => $userId), array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
 		if ($arUser = $dbUser->Fetch())
 		{
 			$userPhoto = CFile::ResizeImageGet(

@@ -6,6 +6,7 @@ import {PostMenu} from "./menu/postmenu";
 import {PostFormManager} from "./postform";
 import {Post} from "./post";
 import {PinnedPanel} from "./pinned";
+import {Rating} from "./rating";
 import {Dom, Tag, Loc, Type, ajax, Runtime} from "main.core";
 import {BaseEvent, EventEmitter} from "main.core.events";
 
@@ -1184,6 +1185,7 @@ const PublicationQueueInstance = new PublicationQueue();
 const PostMenuInstance = new PostMenu();
 const PostFormManagerInstance = new PostFormManager();
 const PinnedPanelInstance = new PinnedPanel();
+const RatingInstance = new Rating();
 
 export {
 	Instance,
@@ -1193,5 +1195,6 @@ export {
 	PublicationQueueInstance,
 	PostMenuInstance,
 	PostFormManagerInstance,
-	PinnedPanelInstance
+	PinnedPanelInstance,
+	RatingInstance,
 };

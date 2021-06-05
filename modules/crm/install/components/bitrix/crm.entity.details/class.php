@@ -59,6 +59,8 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['ENABLE_PROGRESS_BAR'] = isset($this->arParams['~ENABLE_PROGRESS_BAR'])
 			&& $this->arParams['~ENABLE_PROGRESS_BAR'] === true;
 
+		$this->arResult['ENABLE_STAGEFLOW'] = $this->arParams['EDITOR']['ENABLE_STAGEFLOW'] ?? false;
+
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = isset($this->arParams['~ENABLE_PROGRESS_CHANGE'])
 			? (bool)$this->arParams['~ENABLE_PROGRESS_CHANGE'] : !$this->arResult['READ_ONLY'];
 
@@ -70,6 +72,8 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 
 		$this->arResult['CONVERSION_SCHEME'] = isset($this->arParams['~CONVERSION_SCHEME'])
 			? $this->arParams['~CONVERSION_SCHEME'] : array();
+
+		$this->arResult['MESSAGES'] = $this->arParams['MESSAGES'] ?? [];
 
 		$this->isPermitted = \Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
 			$this->entityTypeID,

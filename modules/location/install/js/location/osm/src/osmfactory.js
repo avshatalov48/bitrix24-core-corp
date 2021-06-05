@@ -8,6 +8,9 @@ import ReverseRequester from './requesters/reverserequester';
 import MapService from './mapservice';
 import TileLayerAuth from '../leaflet/src/tilelayerauth';
 import TokenContainer from './tokencontainer';
+import NominatimResponseConverter from './responseconverters/nominatimresponseconverter';
+import AutocompleteResponseConverter from './responseconverters/autocompleteresponseconverter';
+import AutocompleteRequester from './requesters/autocomplerequester'
 
 export type OSMFactoryProps = {
 	languageId: string,
@@ -15,6 +18,8 @@ export type OSMFactoryProps = {
 	token: string,
 	serviceUrl: string,
 	hostName: string,
+	autocompletePromptsCount: ?number,
+	locationBiasScale: ?number // 0.1 - 10
 }
 
 export default class OSMFactory
@@ -31,22 +36,39 @@ export default class OSMFactory
 			sourceLanguageId: params.sourceLanguageId
 		};
 
+		const responseConverter = new NominatimResponseConverter({languageId: params.languageId});
+
 		const searchRequester = new SearchRequester({
 			languageId: params.languageId,
 			tokenContainer: tokenContainer,
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
+			responseConverter: responseConverter
 		});
-	
+
 		const reverseRequester = new ReverseRequester({
 			languageId: params.languageId,
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
-			tokenContainer: tokenContainer
+			tokenContainer: tokenContainer,
+			responseConverter: responseConverter
+		});
+
+		const autocompleteResponseConverter = new AutocompleteResponseConverter({languageId: params.languageId});
+
+		const autocompleteRequester = new AutocompleteRequester({
+			languageId: params.languageId,
+			serviceUrl: params.serviceUrl,
+			hostName: params.hostName,
+			tokenContainer: tokenContainer,
+			responseConverter: autocompleteResponseConverter
 		});
 
 		osmParams.autocompleteService = new AutocompleteService({
-			requester: searchRequester
+			languageId: params.languageId,
+			autocompletePromptsCount: params.autocompletePromptsCount || 7,
+			locationBiasScale: params.locationBiasScale || 9,
+			autocompleteRequester: autocompleteRequester
 		});
 
 		const geocodingService = new GeocodingService({

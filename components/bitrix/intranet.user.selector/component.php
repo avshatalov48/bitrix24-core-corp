@@ -63,7 +63,7 @@ elseif (isset($arParams['INPUT_VALUE']))
 	{
 		$arParams['INPUT_VALUE'] = array_unique($arParams['INPUT_VALUE']);
 		
-		$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', array('ID' => implode('|', $arParams['INPUT_VALUE'])));
+		$dbRes = CUser::GetList('last_name', 'asc', array('ID' => implode('|', $arParams['INPUT_VALUE'])));
 		$arParams['~INPUT_VALUE_STRING'] = '';
 		while ($arRes = $dbRes->Fetch())
 		{

@@ -306,7 +306,7 @@ if(!empty($htmlEditorConfigs))
 			var model = BX.Crm.EntityEditorModelFactory.create(
 				<?=$arResult['ENTITY_TYPE_ID']?>,
 				"",
-				{ data: <?=CUtil::PhpToJSObject($arResult['ENTITY_DATA'])?> }
+				{ entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>, data: <?=CUtil::PhpToJSObject($arResult['ENTITY_DATA'])?> }
 			);
 
 			BX.CrmDuplicateSummaryPopup.messages =
@@ -559,8 +559,16 @@ if(!empty($htmlEditorConfigs))
 				manualOpportunityConfirmationText: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT')?>",
 				manualOpportunityConfirmationYes: "<?=GetMessageJS('MAIN_YES')?>",
 				manualOpportunityConfirmationNo: "<?=GetMessageJS('MAIN_NO')?>",
-				manualOpportunityChangeModeTitle: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_TITLE_'.$arResult['ENTITY_TYPE_ID'])?>",
-				manualOpportunityChangeModeText: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_TEXT_'.$arResult['ENTITY_TYPE_ID'])?>",
+				manualOpportunityChangeModeTitle: "<?=
+					empty($arResult['MESSAGES']['MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE'])
+						? GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_TITLE_' . $arResult['ENTITY_TYPE_ID'])
+						: \CUtil::JSEscape($arResult['MESSAGES']['MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE'])
+					?>",
+				manualOpportunityChangeModeText: "<?=
+					empty($arResult['MESSAGES']['MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT'])
+						? GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_TEXT_' . $arResult['ENTITY_TYPE_ID'])
+						: \CUtil::JSEscape($arResult['MESSAGES']['MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT'])
+					?>",
 				manualOpportunityChangeModeYes: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_AUTO')?>",
 				manualOpportunityChangeModeNo: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_MANUAL')?>"
 			};
@@ -815,6 +823,7 @@ if(!empty($htmlEditorConfigs))
 						options: <?=CUtil::PhpToJSObject($arResult['EDITOR_OPTIONS'])?>,
 						attributeConfig: <?=CUtil::PhpToJSObject($arResult['ATTRIBUTE_CONFIG'])?>,
 						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
+                        ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>,
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
 						ufAccessRights: <?=CUtil::PhpToJSObject($arResult['USER_FIELD_ACCESS_RIGHTS'])?>
 					}

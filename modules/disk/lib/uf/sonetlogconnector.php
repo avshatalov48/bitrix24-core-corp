@@ -125,7 +125,7 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 			return $this->canRead;
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		if (\CSocNetUser::isCurrentUserModuleAdmin())
 		{
 			$this->canRead = true;
@@ -214,7 +214,7 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 			false,
 			array("ID", "ENTITY_TYPE", "ENTITY_ID", "EVENT_ID", "SOURCE_ID")
 		);
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 
 		return ($this->logEntryData = $queryLog->fetch());
 	}

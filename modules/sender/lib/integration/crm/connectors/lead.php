@@ -426,7 +426,10 @@ class Lead extends ConnectorBaseFilter implements Connector\IncrementallyConnect
 			)
 			->setCallback(
 				ResultView::Draw,
-				[__NAMESPACE__ . '\Helper', 'onResultViewDraw']
+				function(array &$row)
+                {
+                    (new Helper())->onResultViewDraw($row);
+                }
 			);
 	}
 

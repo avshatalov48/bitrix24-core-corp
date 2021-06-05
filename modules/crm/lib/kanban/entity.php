@@ -4,10 +4,14 @@ namespace Bitrix\Crm\Kanban;
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
+use Bitrix\Crm\Component\EntityDetails\BaseComponent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\Exclusion;
+use Bitrix\Crm\Service;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
@@ -28,6 +32,8 @@ abstract class Entity
 	protected const EDITOR_CONFIGURATION_CATEGORY = 'crm.entity.editor';
 	protected const OPTION_NAME_VIEW_FIELDS_PREFIX = 'kanban_select_more_v4_';
 	protected const OPTION_NAME_EDIT_FIELDS_PREFIX = 'kanban_edit_more_v4_';
+	protected const VIEW_TYPE_VIEW = 'view';
+	protected const VIEW_TYPE_EDIT = 'edit';
 
 	protected $canEditCommonSettings = false;
 	protected $filter;
@@ -60,6 +66,11 @@ abstract class Entity
 		'#quote_id#',
 		'#invoice_id#'
 	];
+
+	public function __construct()
+	{
+		Service\Container::getInstance()->getLocalization()->loadMessages();
+	}
 
 	/**
 	 * Mark that current user can or not edit common settings.
@@ -128,6 +139,11 @@ abstract class Entity
 		return \CCrmOwnerType::ResolveID($this->getTypeName());
 	}
 
+	public function getTitle(): string
+	{
+		return Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->getTypeName());
+	}
+
 	public function getConfigurationPlacementUrlCode(): string
 	{
 		return 'crm_'.mb_strtolower($this->getTypeName());
@@ -141,6 +157,16 @@ abstract class Entity
 	public function getFilterPresets(): array
 	{
 		return [];
+	}
+
+	/**
+	 * Return true if this entity supports kanban at all.
+	 *
+	 * @return bool
+	 */
+	public function isKanbanSupported(): bool
+	{
+		return true;
 	}
 
 	/**
@@ -174,6 +200,16 @@ abstract class Entity
 	}
 
 	/**
+	 * Returns true if this entity supports a total sum in the kanban columns.
+	 *
+	 * @return bool
+	 */
+	public function isTotalPriceSupported(): bool
+	{
+		return true;
+	}
+
+	/**
 	 * Returns true if this entity supports quick inline editor in the kanban.
 	 *
 	 * @return bool
@@ -181,6 +217,11 @@ abstract class Entity
 	public function isInlineEditorSupported(): bool
 	{
 		return true;
+	}
+
+	public function isContactCenterSupported(): bool
+	{
+		return false;
 	}
 
 	/**
@@ -439,7 +480,7 @@ abstract class Entity
 	public function saveAdditionalFields(array $fields, string $type, bool $canEditCommon): array
 	{
 		$name =
-			($type === 'view')
+			($type === static::VIEW_TYPE_VIEW)
 				? $this->getAdditionalSelectFieldsOptionName($canEditCommon)
 				: $this->getAdditionalEditFieldsOptionName($canEditCommon);
 
@@ -457,15 +498,6 @@ abstract class Entity
 		];
 	}
 
-	protected function getAdditionalEditFieldsFromOptions(): array
-	{
-		return (array)\CUserOptions::getOption(
-			static::OPTION_CATEGORY,
-			$this->getAdditionalEditFieldsOptionName(),
-			[]
-		);
-	}
-
 	/**
 	 * Returns fields for edit in quick form.
 	 *
@@ -473,7 +505,35 @@ abstract class Entity
 	 */
 	public function getAdditionalEditFields(): array
 	{
-		return [];
+		$fields = $this->getAdditionalEditFieldsFromOptions();
+		if(!$fields)
+		{
+			$fields = $this->getDefaultAdditionalSelectFields();
+		}
+
+		return (array)$fields;
+	}
+
+	protected function getAdditionalEditFieldsFromOptions(): ?array
+	{
+		$isAddCommonSuffix = $this->canEditCommonSettings;
+
+		$fields = \CUserOptions::getOption(
+			static::OPTION_CATEGORY,
+			$this->getAdditionalEditFieldsOptionName($isAddCommonSuffix),
+			null
+		);
+
+		if(!$isAddCommonSuffix && !$fields)
+		{
+			$fields = \CUserOptions::getOption(
+				static::OPTION_CATEGORY,
+				$this->getAdditionalEditFieldsOptionName(true),
+				null
+			);
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -537,6 +597,7 @@ abstract class Entity
 		}
 
 		$componentClassName = \CBitrixComponent::includeComponentClass($componentName);
+		/** @var BaseComponent $component */
 		$component = new $componentClassName;
 
 		$component->initComponent($componentName);
@@ -618,7 +679,7 @@ abstract class Entity
 		$configuration = $this->getInlineEditorConfiguration($component);
 		$result['fieldsSections'] = $this->prepareFieldsSections($configuration);
 
-		$availableFields = $this->getAdditionalSelectFields();
+		$availableFields = $this->getAdditionalEditFields();
 		if (isset($availableFields['OPPORTUNITY']))
 		{
 			$availableFields['OPPORTUNITY_WITH_CURRENCY'] = '';
@@ -669,13 +730,7 @@ abstract class Entity
 		return false;
 	}
 
-	/**
-	 * Returns array where key is field name and value - list of stages where this field is required.
-	 *
-	 * @param array $stages
-	 * @return array
-	 */
-	public function getRequiredFieldsByStages(array $stages): array
+	protected function getRequiredUserFieldNames(): array
 	{
 		$requiredFieldNamesForAllStages = [];
 		$userFields = $this->getUserFields();
@@ -686,6 +741,19 @@ abstract class Entity
 				$requiredFieldNamesForAllStages[] = $row['FIELD_NAME'];
 			}
 		}
+
+		return $requiredFieldNamesForAllStages;
+	}
+
+	/**
+	 * Returns array where key is field name and value - list of stages where this field is required.
+	 *
+	 * @param array $stages
+	 * @return array
+	 */
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		$requiredFieldNamesForAllStages = $this->getRequiredUserFieldNames();
 
 		$requiredFields = [];
 		if (FieldAttributeManager::isEnabled())
@@ -706,6 +774,54 @@ abstract class Entity
 						$requiredFields[$fieldName] = $requiredFields[$fieldName] ?? [];
 						$requiredFields[$fieldName][] = $stage['STATUS_ID'];
 					}
+				}
+				foreach ($requiredFieldNamesForAllStages as $fieldName)
+				{
+					$requiredFields[$fieldName] = $requiredFields[$fieldName] ?? [];
+					$requiredFields[$fieldName][] = $stage['STATUS_ID'];
+				}
+			}
+		}
+
+		return $requiredFields;
+	}
+
+	protected static function getRequiredFieldsByStagesByFactory(
+		Service\Factory $factory,
+		array $requiredFieldNamesForAllStages,
+		array $stages,
+		?int $categoryId = null
+	): array
+	{
+		$requiredFields = [];
+		if (FieldAttributeManager::isEnabled())
+		{
+			$fieldsData = FieldAttributeManager::getList(
+				$factory->getEntityTypeId(),
+				FieldAttributeManager::resolveEntityScope(
+					$factory->getEntityTypeId(),
+					0,
+					[
+						'CATEGORY_ID' => $categoryId,
+					]
+				)
+			);
+			$stagesCollection = $factory->getStages($categoryId);
+			foreach($stages as $stage)
+			{
+				$stageRequiredFields = FieldAttributeManager::processFieldsForStages(
+					$fieldsData,
+					$stagesCollection,
+					$stage['STATUS_ID']
+				);
+				$stageRequiredFields = VisibilityManager::filterNotAccessibleFields(
+					$factory->getEntityTypeId(),
+					$stageRequiredFields
+				);
+				foreach ($stageRequiredFields as $fieldName)
+				{
+					$requiredFields[$fieldName] = $requiredFields[$fieldName] ?? [];
+					$requiredFields[$fieldName][] = $stage['STATUS_ID'];
 				}
 				foreach ($requiredFieldNamesForAllStages as $fieldName)
 				{
@@ -893,6 +1009,7 @@ abstract class Entity
 	 */
 	public function getItems(array $parameters): \CDBResult
 	{
+		/** @var \CAllCrmLead|\CAllCrmDeal|\CAllCrmInvoice $provider */
 		$provider = $this->getItemsProvider();
 		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
 
@@ -1032,9 +1149,7 @@ abstract class Entity
 	 */
 	public function checkUpdatePermissions(int $id, ?\CCrmPerms $permissions = null): bool
 	{
-		$provider = $this->getItemsProvider();
-
-		return $provider::CheckUpdatePermission($id, $permissions);
+		return EntityAuthorization::checkUpdatePermission($this->getTypeId(), $id, $permissions);
 	}
 
 	/**
@@ -1046,9 +1161,7 @@ abstract class Entity
 	 */
 	public function checkReadPermissions(int $id = 0, ?\CCrmPerms $permissions = null): bool
 	{
-		$provider = $this->getItemsProvider();
-
-		return $provider::CheckReadPermission($id, $permissions);
+		return EntityAuthorization::checkReadPermission($this->getTypeId(), $id, $permissions);
 	}
 
 	/**
@@ -1355,9 +1468,11 @@ abstract class Entity
 
 	public function getPopupFields(string $viewType): array
 	{
-		$result = $this->getPopupGeneralFields();
-
-		$result = array_merge($result, $this->getPopupUserFields($viewType), $this->getPopupAdditionalFields());
+		$result = array_merge(
+			$this->getPopupGeneralFields(),
+			$this->getPopupUserFields($viewType),
+			$this->getPopupAdditionalFields($viewType)
+		);
 
 		if (isset($result['OPPORTUNITY']))
 		{
@@ -1459,7 +1574,7 @@ abstract class Entity
 				continue;
 			}
 			if (
-				$viewType === 'edit' &&
+				$viewType === static::VIEW_TYPE_EDIT &&
 				$userField['USER_TYPE_ID'] === 'money'
 			)
 			{
@@ -1471,9 +1586,26 @@ abstract class Entity
 		return $result;
 	}
 
-	protected function getPopupAdditionalFields(): array
+	protected function getPopupAdditionalFields(string $viewType = self::VIEW_TYPE_VIEW): array
 	{
-		return [];
+		$fields = [
+			'CLIENT' => [
+				'ID' => 'CLIENT',
+				'NAME' => 'CLIENT',
+				'LABEL' => Loc::getMessage('CRM_COMMON_CLIENT'),
+			],
+		];
+
+		if ($viewType === static::VIEW_TYPE_EDIT)
+		{
+			$fields['OPPORTUNITY_WITH_CURRENCY'] = [
+				'ID' => 'OPPORTUNITY_WITH_CURRENCY',
+				'NAME' => 'OPPORTUNITY_WITH_CURRENCY',
+				'LABEL' =>  Loc::getMessage('CRM_KANBAN_FIELD_OPPORTUNITY_WITH_CURRENCY'),
+			];
+		}
+
+		return $fields;
 	}
 
 	protected function getPopupHiddenFields(): array
@@ -1510,7 +1642,18 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.order');
 			}
-
+			else
+			{
+				$typeId = \CCrmOwnerType::ResolveID($entityTypeName);
+				if($typeId !== \CCrmOwnerType::Undefined && \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+				{
+					$factory = Service\Container::getInstance()->getFactory($typeId);
+					if($factory)
+					{
+						return ServiceLocator::getInstance()->get('crm.kanban.entity.dynamic')->setFactory($factory);
+					}
+				}
+			}
 			static::$instances[$entityTypeName] = $instance;
 		}
 
@@ -1583,6 +1726,23 @@ abstract class Entity
 		];
 	}
 
+	public function getUrlTemplate(): string
+	{
+		$entityName = mb_strtoupper($this->getTypeName());
+		$pathKey = 'PATH_TO_' . $entityName . '_DETAILS';
+		$url = \CrmCheckPath($pathKey, '', '');
+		if (
+			$url === ''
+			|| !\CCrmOwnerType::IsSliderEnabled($this->getTypeId())
+		)
+		{
+			$pathKey = 'PATH_TO_' . $entityName . '_SHOW';
+			$url = \CrmCheckPath($pathKey, '', '');
+		}
+
+		return $url ?? '';
+	}
+
 	/**
 	 * @param int $id
 	 * @return mixed
@@ -1592,11 +1752,7 @@ abstract class Entity
 		return str_replace(
 			static::PATH_MARKERS,
 			$id,
-			\CrmCheckPath(
-				'PATH_TO_'.mb_strtoupper($this->getTypeName()).'_SHOW',
-				'',
-				''
-			)
+			$this->getUrlTemplate()
 		);
 	}
 
@@ -1709,5 +1865,36 @@ abstract class Entity
 	public static function getPathMarkers(): array
 	{
 		return static::PATH_MARKERS;
+	}
+
+	/**
+	 * Settings for JS of the kanban
+	 *
+	 * @return array
+	 */
+	public function getTypeInfo(): array
+	{
+		return [
+			'disableMoveToWin' => false,
+			'canShowPopupForLeadConvert' => false,
+			'showTotalPrice' => $this->isTotalPriceSupported(),
+			'showPersonalSetStatusNotCompletedText' => false,
+			'hasPlusButtonTitle' => false,
+			'useFactoryBasedApproach' => false,
+			'hasRestictionToMoveToWinColumn' => false,
+			'doLayoutFieldsInItemRender' => false,
+			'useRequiredVisibleFields' => false,
+			'isQuickEditorEnabled' => $this->isInlineEditorSupported(),
+			'isRecyclebinEnabled' => false,
+
+			'canUseIgnoreItemInPanel' => false,
+			'canUseCreateTaskInPanel' => false,
+			'canUseCallListInPanel' => false,
+			'canUseMergeInPanel' => false,
+
+			'stageIdKey' => 'STAGE_ID',
+			'defaultQuickFormFields' => ['TITLE', 'OPPORTUNITY_WITH_CURRENCY', 'CLIENT'],
+			'kanbanItemClassName' => 'crm-kanban-item',
+		];
 	}
 }

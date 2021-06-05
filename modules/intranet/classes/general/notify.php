@@ -38,7 +38,7 @@ class CIntranetNotify
 
 		if ($blockNewUserLF != "Y")
 		{
-			$dbRes = CUser::GetList($by="ID", $order="asc", array("ID_EQUAL_EXACT" => $USER_ID), array("FIELDS" => array("EXTERNAL_AUTH_ID"), "SELECT" => array("UF_DEPARTMENT")));
+			$dbRes = CUser::GetList("ID", "asc", array("ID_EQUAL_EXACT" => $USER_ID), array("FIELDS" => array("EXTERNAL_AUTH_ID"), "SELECT" => array("UF_DEPARTMENT")));
 			if (
 				($arUser = $dbRes->Fetch())
 				&& (!in_array($arUser["EXTERNAL_AUTH_ID"], Array('bot', 'imconnector')))
@@ -505,7 +505,7 @@ class CIntranetNotify
 		)
 		{
 			$genderSuffix = "";
-			$dbUsers = CUser::GetList(($by="ID"), ($order="desc"), array("ID" => $arCommentFields["USER_ID"].' | '.$arLog["USER_ID"]), array("PERSONAL_GENDER", "LOGIN", "NAME", "LAST_NAME", "SECOND_NAME"));
+			$dbUsers = CUser::GetList("ID", "desc", array("ID" => $arCommentFields["USER_ID"].' | '.$arLog["USER_ID"]), array("PERSONAL_GENDER", "LOGIN", "NAME", "LAST_NAME", "SECOND_NAME"));
 			while ($arUser = $dbUsers->Fetch())
 			{
 				if ($arUser["ID"] == $arCommentFields["USER_ID"])

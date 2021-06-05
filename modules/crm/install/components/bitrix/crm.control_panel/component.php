@@ -2,6 +2,20 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Crm;
+use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Settings\ActivitySettings;
+use Bitrix\Crm\Settings\CompanySettings;
+use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Crm\Settings\DealSettings;
+use Bitrix\Crm\Settings\DynamicSettings;
+use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Settings\OrderSettings;
+use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -14,20 +28,6 @@ if(!CCrmPerms::IsAccessEnabled())
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Config\Option;
-use Bitrix\Crm\Settings\ActivitySettings;
-use Bitrix\Crm\Settings\CompanySettings;
-use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\Settings\DealSettings;
-use Bitrix\Crm\Settings\LeadSettings;
-use Bitrix\Crm\Settings\InvoiceSettings;
-use Bitrix\Crm\Settings\OrderSettings;
-use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Crm\Counter\EntityCounterFactory;
-use Bitrix\Crm\Counter\EntityCounterType;
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 
@@ -397,8 +397,8 @@ if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstru
 	$stdItems['ANALYTICS'] = [
 		'ID' => 'ANALYTICS',
 		'MENU_ID' => 'menu_crm_analytics',
-		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
-		'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE'),
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
+		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE'),
 		'URL' => SITE_DIR."report/analytics/",
 	];
 }
@@ -515,20 +515,20 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 	$actions = array();
 	if($isAdmin || CCrmQuote::CheckCreatePermission($userPermissions))
 	{
-		//if($isSliderEnabled)
-		//{
-		//	$createUrl = CComponentEngine::MakePathFromTemplate(
-		//		$arParams['PATH_TO_QUOTE_DETAILS'],
-		//		array('quote_id' => 0)
-		//	);
-		//}
-		//else
-		//{
+		if($isSliderEnabled)
+		{
+			$createUrl = CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_QUOTE_DETAILS'],
+				array('quote_id' => 0)
+			);
+		}
+		else
+		{
 		$createUrl = CComponentEngine::MakePathFromTemplate(
 			$arParams['PATH_TO_QUOTE_EDIT'],
 			array('quote_id' => 0)
 		);
-		//}
+		}
 
 		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
 	}
@@ -685,6 +685,81 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24') && in_array(\CBitrix24::getLi
 		'IS_DISABLED' => true
 	);
 }
+
+if (DynamicSettings::getCurrent()->isEnabled())
+{
+	$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+	if ($isAdmin || $userPermissions->canWriteConfig())
+	{
+		$stdItems['DYNAMIC_ADD'] = [
+			'ID' => 'DYNAMIC_LIST',
+			'MENU_ID' => 'dynamic_menu',
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
+			'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
+		];
+	}
+
+	$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
+	try
+	{
+		$dynamicTypesMap->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => true,
+		]);
+	}
+	catch (Exception $exception)
+	{
+	}
+	catch (Error $error)
+	{
+	}
+	foreach($dynamicTypesMap->getTypes() as $type)
+	{
+		if (Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId()))
+		{
+			continue;
+		}
+
+		$actions = [];
+		$isCanAdd = $isAdmin;
+		$isAddRestricted = Crm\Restriction\RestrictionManager::getDynamicTypesLimitRestriction()->isCreateItemRestricted($type->getEntityTypeId());
+		if (!$isAddRestricted)
+		{
+			if (!$isCanAdd)
+			{
+				$defaultCategory = $dynamicTypesMap->getDefaultCategory($type->getEntityTypeId());
+				if ($defaultCategory)
+				{
+					$isCanAdd = Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(
+						$type->getEntityTypeId(),
+						$defaultCategory->getId()
+					);
+				}
+			}
+			if ($isCanAdd)
+			{
+				$actions[] = [
+					'ID' => 'CREATE',
+					'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+						$type->getEntityTypeId(),
+						0
+					),
+				];
+			}
+		}
+		if ($userPermissions->canReadType($type->getEntityTypeId()))
+		{
+			$id = CCrmOwnerType::ResolveName($type->getEntityTypeId());
+			$stdItems[$id] = [
+				'ID' => $id,
+				'NAME' => $type->getTitle(),
+				'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
+				'ACTIONS' => !empty($actions) ? $actions : null,
+			];
+		}
+	}
+}
+
 // <-- Prepere standard items
 
 $items = array();

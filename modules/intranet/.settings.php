@@ -29,5 +29,13 @@ return [
 			'extensions' => ['intranet.entity-selector'],
 		],
 		'readonly' => true,
-	]
+	],
+	'services' => [
+		'value' => [
+			'intranet.customSection.manager' => [
+				'className' => '\\Bitrix\\Intranet\\CustomSection\\Manager',
+			]
+		],
+		'readonly' => true,
+	],
 ];

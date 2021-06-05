@@ -68,7 +68,17 @@ class CIntranetToolbar
 			if (($cnt = count($this->arButtons)) > 0)
 			{
 				$bAjaxMode = defined('PUBLIC_AJAX_MODE') && PUBLIC_AJAX_MODE == 1;
-				uasort($this->arButtons, create_function('$a, $b', 'if($a["SORT"] == $b["SORT"]) return 0; return ($a["SORT"] < $b["SORT"])? -1 : 1;'));
+
+				uasort(
+					$this->arButtons,
+					function ($a, $b) {
+						if ($a["SORT"] == $b["SORT"])
+						{
+							return 0;
+						}
+						return ($a["SORT"] < $b["SORT"] ? -1 : 1);
+					}
+				);
 
 				ob_start();				
 				$APPLICATION->IncludeComponent("bitrix:intranet.toolbar",

@@ -149,11 +149,9 @@ class EntityController extends Controller
 
 	protected static function getDefaultAuthorId()
 	{
-		$by = 'id';
-		$sort = 'asc';
 		$user = \CUser::GetList(
-			$by,
-			$sort,
+			'ID',
+			'ASC',
 			['GROUPS_ID' => [1], 'ACTIVE' => 'Y'],
 			['FIELDS' => ['ID'], 'NAV_PARAMS' => ['nTopCount' => 1]]
 		)->fetch();

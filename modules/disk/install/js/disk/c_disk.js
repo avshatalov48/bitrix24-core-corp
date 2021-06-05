@@ -40,6 +40,21 @@ if(!BX.Disk.pathToUser)
 		var onPullDiskEvent = function(command, params)
 		{
 			params = params || {};
+
+			if (command === 'onlyoffice' && params.hash)
+			{
+				var notify = BX.UI.Notification.Center.getBalloonById('session-' + params.hash);
+				if (notify)
+				{
+					BX.UI.Notification.Center.notify({
+						content: BX.message('JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name)
+					});
+					notify.close();
+
+					return;
+				}
+			}
+
 			switch (params.action)
 			{
 				case 'commit':
@@ -70,8 +85,7 @@ if(!BX.Disk.pathToUser)
 					var viewer = BX.UI.Viewer.Instance;
 					if (!viewer.isOpen())
 					{
-						reloadItem(params.objectId);
-						break;
+						return;
 					}
 
 					var currentItem = viewer.getCurrentItem();
@@ -149,11 +163,45 @@ if(!BX.Disk.pathToUser)
 		return	{
 			apiVersion: 22,
 			pathToUser: '/company/personal/user/#user_id#/',
+			endEditSession: function(session)
+			{
+				BX.ajax.runAction('disk.api.onlyoffice.endSession', {
+					json: {
+						sessionId: session.id,
+						documentSessionHash: session.hash,
+					}
+				}).then(function(response){
+					if (!response || response.data.mode !== 'edit')
+					{
+						return;
+					}
+
+					if (response.data.activeSessions > 1)
+					{
+						return;
+					}
+
+					if (!session.documentWasChanged)
+					{
+						return;
+					}
+
+					BX.UI.Notification.Center.notify({
+						id: 'session-' + session.hash,
+						autoHide: false,
+						content: BX.message('JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVE_PROCESS').replace('#name#', response.data.file.name),
+						data: {
+							file: response.data.file
+						}
+					});
+				});
+			},
 			hideLoader: function()
 			{
 				BX.removeClass(document.body, 'disk-body-overlay');
 				if (this.loaderWrapper)
 				{
+					BX.ZIndexManager.unregister(this.loaderWrapper);
 					this.loaderWrapper.parentNode.removeChild(this.loaderWrapper);
 					this.loaderWrapper = null;
 					this.loader = null;
@@ -163,7 +211,10 @@ if(!BX.Disk.pathToUser)
 			{
 				params = params || {};
 				BX.addClass(document.body, 'disk-body-overlay');
-				document.body.appendChild(this.getLoaderWrapper(params));
+				var div = document.body.appendChild(this.getLoaderWrapper(params));
+
+				BX.ZIndexManager.register(div);
+
 				this.getLoader(this.loaderNode).show();
 			},
 			getLoaderWrapper: function (params)
@@ -788,7 +839,7 @@ if(!BX.Disk.pathToUser)
 
 			openBlankDocumentPopup: function ()
 			{
-				if ((!BX.Disk.getDocumentService() || (BX.Disk.getDocumentService() === 'l')))
+				if ((!BX.Disk.getDocumentService() || (BX.Disk.getDocumentService() === 'l' || BX.Disk.getDocumentService() === 'onlyoffice')))
 				{
 					return null;
 				}

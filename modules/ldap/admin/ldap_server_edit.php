@@ -192,30 +192,30 @@ if($ID>0)
 	{
 		if($MOD_RIGHT<"W")
 			$str_ADMIN_PASSWORD = "";
-		$ldp = CLDAP::Connect(
-			Array(
-				"SERVER"		=>	$arFields['SERVER'],
-				"PORT"			=>	$arFields['PORT'],
-				"ADMIN_LOGIN"	=>	$arFields['ADMIN_LOGIN'],
-				"ADMIN_PASSWORD"=>	$arFields['ADMIN_PASSWORD'],
-				"BASE_DN"		=>	$arFields['BASE_DN'],
-				"GROUP_FILTER"	=>	$arFields['GROUP_FILTER'],
-				"GROUP_ID_ATTR"	=>	$arFields['GROUP_ID_ATTR'],
-				"GROUP_NAME_ATTR"=>	$arFields['GROUP_NAME_ATTR'],
-				"GROUP_MEMBERS_ATTR"=>	$arFields['GROUP_MEMBERS_ATTR'],
-				"CONVERT_UTF8"	=>	$arFields['CONVERT_UTF8'],
-				"USER_FILTER"	=>	$arFields['USER_FILTER'],
-				"USER_GROUP_ATTR"=>	$arFields['USER_GROUP_ATTR'],
-				"USER_GROUP_ACCESSORY"=>	$arFields['USER_GROUP_ACCESSORY'],
-				"USER_DEPARTMENT_ATTR"	=>	$arFields['USER_DEPARTMENT_ATTR'],
-				"USER_MANAGER_ATTR"	=>	$arFields['USER_MANAGER_ATTR'],
-				"MAX_PAGE_SIZE"	=>	$arFields['MAX_PAGE_SIZE'],
-				"LDAP_OPT_TIMELIMIT"	=>	$arFields['LDAP_OPT_TIMELIMIT'],
-				"LDAP_OPT_TIMEOUT"	=>	$arFields['LDAP_OPT_TIMEOUT'],
-				"LDAP_OPT_NETWORK_TIMEOUT"	=>	$arFields['LDAP_OPT_NETWORK_TIMEOUT'],
-				"CONNECTION_TYPE" => $arFields['CONNECTION_TYPE'],
-			)
-		);
+
+		$ldp = new CLDAP([
+			"SERVER"		=>	$arFields['SERVER'],
+			"PORT"			=>	$arFields['PORT'],
+			"ADMIN_LOGIN"	=>	$arFields['ADMIN_LOGIN'],
+			"ADMIN_PASSWORD"=>	$arFields['ADMIN_PASSWORD'],
+			"BASE_DN"		=>	$arFields['BASE_DN'],
+			"GROUP_FILTER"	=>	$arFields['GROUP_FILTER'],
+			"GROUP_ID_ATTR"	=>	$arFields['GROUP_ID_ATTR'],
+			"GROUP_NAME_ATTR"=>	$arFields['GROUP_NAME_ATTR'],
+			"GROUP_MEMBERS_ATTR"=>	$arFields['GROUP_MEMBERS_ATTR'],
+			"CONVERT_UTF8"	=>	$arFields['CONVERT_UTF8'],
+			"USER_FILTER"	=>	$arFields['USER_FILTER'],
+			"USER_GROUP_ATTR"=>	$arFields['USER_GROUP_ATTR'],
+			"USER_GROUP_ACCESSORY"=>	$arFields['USER_GROUP_ACCESSORY'],
+			"USER_DEPARTMENT_ATTR"	=>	$arFields['USER_DEPARTMENT_ATTR'],
+			"USER_MANAGER_ATTR"	=>	$arFields['USER_MANAGER_ATTR'],
+			"MAX_PAGE_SIZE"	=>	$arFields['MAX_PAGE_SIZE'],
+			"LDAP_OPT_TIMELIMIT"	=>	$arFields['LDAP_OPT_TIMELIMIT'],
+			"LDAP_OPT_TIMEOUT"	=>	$arFields['LDAP_OPT_TIMEOUT'],
+			"LDAP_OPT_NETWORK_TIMEOUT"	=>	$arFields['LDAP_OPT_NETWORK_TIMEOUT'],
+			"CONNECTION_TYPE" => $arFields['CONNECTION_TYPE'],
+		]);
+		$ldp->Connect();
 
 		$db_groups = CLdapServer::GetGroupMap($ID);
 
@@ -298,37 +298,33 @@ $context->Show();
 
 if($SERVER <> '')
 {
-	$ldp = false;
-
-	$ldp = CLDAP::Connect(
-		Array(
-			"SERVER"		=>	$SERVER,
-			"PORT"			=>	$PORT,
-			"BASE_DN"		=>	$BASE_DN,
-			"ADMIN_LOGIN"	=>	$ADMIN_LOGIN,
-			"ADMIN_PASSWORD"=>	$ADMIN_PASSWORD,
-			"CONVERT_UTF8"	=>	$CONVERT_UTF8,
-			"GROUP_FILTER"	=>	$GROUP_FILTER,
-			"GROUP_ID_ATTR"	=>	$GROUP_ID_ATTR,
-			"GROUP_NAME_ATTR"=>	$GROUP_NAME_ATTR,
-			"GROUP_MEMBERS_ATTR"=>	$GROUP_MEMBERS_ATTR,
-			"USER_FILTER"	=>	$USER_FILTER,
-			"USER_GROUP_ATTR"=>	$USER_GROUP_ATTR,
-			"USER_GROUP_ACCESSORY"=>	$USER_GROUP_ACCESSORY,
-			"MAX_PAGE_SIZE"	=>	$MAX_PAGE_SIZE,
-			"LDAP_OPT_TIMELIMIT"	=>	$LDAP_OPT_TIMELIMIT,
-			"LDAP_OPT_TIMEOUT"	=>	$LDAP_OPT_TIMEOUT,
-			"LDAP_OPT_NETWORK_TIMEOUT"	=>	$LDAP_OPT_NETWORK_TIMEOUT,
-			//"USER_DEPARTMENT_ATTR"	=>	$USER_DEPARTMENT_ATTR,
-			//"USER_MANAGER_ATTR"	=>	$USER_MANAGER_ATTR,
-			"CONNECTION_TYPE" => $CONNECTION_TYPE
-		)
-	);
+	$ldp = new CLDAP([
+		"SERVER"		=>	$SERVER,
+		"PORT"			=>	$PORT,
+		"BASE_DN"		=>	$BASE_DN,
+		"ADMIN_LOGIN"	=>	$ADMIN_LOGIN,
+		"ADMIN_PASSWORD"=>	$ADMIN_PASSWORD,
+		"CONVERT_UTF8"	=>	$CONVERT_UTF8,
+		"GROUP_FILTER"	=>	$GROUP_FILTER,
+		"GROUP_ID_ATTR"	=>	$GROUP_ID_ATTR,
+		"GROUP_NAME_ATTR"=>	$GROUP_NAME_ATTR,
+		"GROUP_MEMBERS_ATTR"=>	$GROUP_MEMBERS_ATTR,
+		"USER_FILTER"	=>	$USER_FILTER,
+		"USER_GROUP_ATTR"=>	$USER_GROUP_ATTR,
+		"USER_GROUP_ACCESSORY"=>	$USER_GROUP_ACCESSORY,
+		"MAX_PAGE_SIZE"	=>	$MAX_PAGE_SIZE,
+		"LDAP_OPT_TIMELIMIT"	=>	$LDAP_OPT_TIMELIMIT,
+		"LDAP_OPT_TIMEOUT"	=>	$LDAP_OPT_TIMEOUT,
+		"LDAP_OPT_NETWORK_TIMEOUT"	=>	$LDAP_OPT_NETWORK_TIMEOUT,
+		//"USER_DEPARTMENT_ATTR"	=>	$USER_DEPARTMENT_ATTR,
+		//"USER_MANAGER_ATTR"	=>	$USER_MANAGER_ATTR,
+		"CONNECTION_TYPE" => $CONNECTION_TYPE
+	]);
 }
 
 if($bPostback)
 {
-	if(!$ldp)
+	if(!$ldp || !$ldp->Connect())
 	{
 		$errorDetails = '';
 
@@ -875,7 +871,18 @@ else
 			$arLDAPGroups[$ar_group['ID']] = (is_set($ar_group, 'NAME') ? $ar_group['NAME'] : $ar_group['ID']);
 		}
 
-		uasort($arLDAPGroups, create_function('$a, $b', '$a=ToUpper($a);$b=ToUpper($b); if($a==$b) return 0; return $a>$b?1:-1;'));
+		uasort(
+			$arLDAPGroups,
+			function ($a, $b) {
+				$a = strtoupper($a);
+				$b = strtoupper($b);
+				if ($a == $b)
+				{
+					return 0;
+				}
+				return ($a > $b ? 1 : -1);
+			}
+		);
 	}
 
 	if(!is_array($arLDAPGroups) || count($arLDAPGroups)<=0):?>
@@ -921,7 +928,7 @@ else
 						</select>
 					</td>
 					<td>
-						<?$dbgr = CGroup::GetList($o="sort", $b="asc");?>
+						<?$dbgr = CGroup::GetList("sort", "asc");?>
 						<select name="LDAP_GROUP[<?=htmlspecialcharsbx($t_id)?>][GROUP_ID]" style="width:360px;">
 							<option value=""></option>
 						<?while($argr = $dbgr->GetNext()):

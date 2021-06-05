@@ -93,6 +93,10 @@
 			{
 				code = "DEAL_CHANGECATEGORY_LINK";
 			}
+			if (code === "DYNAMIC_CHANGECATEGORY")
+			{
+				code = "DYNAMIC_CHANGECATEGORY_LINK";
+			}
 			code = "CRM_KANBAN_NOTIFY_" + code;
 			if (typeof BX.message[code] !== "undefined")
 			{
@@ -142,6 +146,10 @@
 							}
 							grid.stopActionPanel();
 							var code = gridData.entityType;
+							if (code.indexOf('DYNAMIC') === 0)
+							{
+								code = 'DYNAMIC';
+							}
 							if (
 								params.action === "delete" &&
 								params.ignore === "Y"
@@ -166,15 +174,14 @@
 							{
 								grid.stopActionPanel();
 								grid.onApplyFilter();
-								if (
-									gridData.entityType === "LEAD" ||
-									gridData.entityType === "DEAL"
-								)
+								if (grid.getTypeInfoParam('showPersonalSetStatusNotCompletedText'))
 								{
-									BX.Kanban.Utils.showErrorDialog(
-										BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType)
-									);
-									reject(new Error(BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType)));
+									var messageCode = gridData.isDynamicEntity
+										? "CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC"
+										: "CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType;
+
+									BX.Kanban.Utils.showErrorDialog(BX.message(messageCode));
+									reject(new Error(BX.message(messageCode)));
 								}
 								else
 								{
@@ -233,22 +240,17 @@
 		/**
 		 * Change category id for deals.
 		 * @param {BX.CRM.Kanban.Grid} grid
+		 * @param category
 		 * @package {int} category
 		 * @returns {void}
 		 */
 		changeCategory: function(grid, category)
 		{
-			var gridData = grid.getData();
 			var categoryLink = "";
 
-			if (
-				gridData.linksPath &&
-				gridData.linksPath.dealCategory &&
-				gridData.linksPath.dealCategory.url
-			)
+			if (category.url)
 			{
-				categoryLink = gridData.linksPath.dealCategory.url;
-				categoryLink = categoryLink.replace("#category_id#", category.ID);
+				categoryLink = category.url;
 			}
 
 			this.simpleAction(grid, {
@@ -318,11 +320,7 @@
 								content: deleteTitle
 							};
 
-							if (
-								grid.getData().entityType !== 'QUOTE'
-								&& grid.getData().entityType !== 'INVOICE'
-								&& grid.getOptions().isRecyclebinEnabled
-							)
+							if (this.getTypeInfoParam('isRecyclebinEnabled'))
 							{
 								ballonOptions.actions = [
 									{
@@ -359,7 +357,6 @@
 							}
 
 							var balloon = BX.UI.Notification.Center.notify(ballonOptions);
-
 						}
 					}, function(response) {
 						BX.UI.Notification.Center.notify({

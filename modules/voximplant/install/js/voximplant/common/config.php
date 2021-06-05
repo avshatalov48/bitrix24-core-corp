@@ -13,7 +13,6 @@ return array(
 		"/bitrix/js/voximplant/common/telephony.css"
 	],
 	"rel" => [
-		"main.polyfill.promise",
-		"ui.info-helper"
+		"main.polyfill.promise"
 	]
 );

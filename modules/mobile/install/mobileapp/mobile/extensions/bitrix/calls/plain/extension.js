@@ -37,6 +37,7 @@
 		microphoneState: "Call::microphoneState",
 		hangup: "Call::hangup",
 		userInviteTimeout: "Call::userInviteTimeout",
+		repeatAnswer: "Call::repeatAnswer",
 	};
 
 	class PlainCall
@@ -100,6 +101,8 @@
 			this.pingBackendInterval = setInterval(this.pingBackend.bind(this), backendPingPeriod);
 
 			this.lastPingReceivedTimeout = null;
+
+			this.created = new Date();
 
 			this.initPeers();
 		}
@@ -546,6 +549,11 @@
 			}
 		}
 
+		repeatAnswerEvents()
+		{
+			this.signaling.sendRepeatAnswer({userId: this.userId});
+		}
+
 		runCallback(eventName, event)
 		{
 
@@ -569,6 +577,7 @@
 				"Call::userInviteTimeout": this._onPullEventUserInviteTimeout.bind(this),
 				"Call::associatedEntityReplaced": this._onPullEventAssociatedEntityReplaced.bind(this),
 				"Call::finish": this._onPullEventFinish.bind(this),
+				[PullEvents.repeatAnswer]: this._onPullEventRepeatAnswer.bind(this),
 			};
 
 			if (handlers[command])
@@ -816,6 +825,14 @@
 		_onPullEventFinish(params)
 		{
 			this.destroy();
+		}
+
+		_onPullEventRepeatAnswer()
+		{
+			if (this.ready)
+			{
+				this.signaling.sendAnswer({userId: this.userId}, true)
+			}
 		}
 
 		_onPeerStateChanged(e)
@@ -1802,9 +1819,16 @@
 			return this.__runRestAction(ajaxActions.invite, data);
 		};
 
-		sendAnswer(data)
+		sendAnswer(data, repeated)
 		{
-			return this.__runRestAction(ajaxActions.answer, data);
+			if (repeated)
+			{
+				this.__sendPullEventOrCallRest(PullEvents.answer, ajaxActions.answer, data, 30);
+			}
+			else
+			{
+				return this.__runRestAction(ajaxActions.answer, data);
+			}
 		};
 
 		sendConnectionOffer(data)
@@ -1852,6 +1876,11 @@
 		{
 			this.__sendPullEventOrCallRest(PullEvents.ping, "", data, 0);
 		};
+
+		sendRepeatAnswer(data)
+		{
+			this.__sendPullEvent(PullEvents.repeatAnswer, data);
+		}
 
 		sendPingToBackend()
 		{

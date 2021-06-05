@@ -34,6 +34,14 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Shipment::class;
 		}
+		elseif ($ownerTypeID === CCrmOwnerType::Quote)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\Quote::class;
+		}
+		elseif(CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class;
+		}
 
 		return $docName;
 	}

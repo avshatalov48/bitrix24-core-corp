@@ -19,8 +19,6 @@ class Error extends \Bitrix\Main\Error
 	 * @param int|string $code Code of the error.
 	 * @param string $method
 	 * @param string|array $params
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function __construct($message = '', $code = 0, $method = '', $params = Array())
 	{

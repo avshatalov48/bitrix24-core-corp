@@ -16,9 +16,6 @@ class Chat
 	 * @param $fields
 	 *
 	 * @return \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function setLastMessage($fields)
 	{
@@ -27,19 +24,19 @@ class Chat
 		{
 			$result = ChatLastMessageTable::update(
 				$lastMessage['ID'],
-				array(
+				[
 					'EXTERNAL_MESSAGE_ID' => $fields['EXTERNAL_MESSAGE_ID']
-				)
+				]
 			);
 		}
 		else
 		{
 			$result = ChatLastMessageTable::add(
-				array(
+				[
 					'EXTERNAL_CHAT_ID' => $fields['EXTERNAL_CHAT_ID'],
 					'CONNECTOR' => $fields['CONNECTOR'],
 					'EXTERNAL_MESSAGE_ID' => $fields['EXTERNAL_MESSAGE_ID']
-				)
+				]
 			);
 		}
 		return $result;
@@ -50,9 +47,6 @@ class Chat
 	 * @param $connector
 	 *
 	 * @return mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getChatLastMessageId($externalChatId, $connector)
 	{
@@ -66,9 +60,6 @@ class Chat
 	 * @param $connector
 	 *
 	 * @return array|false
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLastMessage($externalChatId, $connector)
 	{

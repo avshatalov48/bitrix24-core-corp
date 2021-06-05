@@ -301,10 +301,9 @@
 			var clientParameters = {
 				micRequired: false,
 				progressTone: false,
-				//serverIp: "web-gw-yy-01-148.voximplant.com", //todo: remove
-				experiments: {
+				/*experiments: {
 					preventRendering: true
-				}
+				}*/
 			};
 
 			if(config.debug === true)

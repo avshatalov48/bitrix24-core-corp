@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Security;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
+use Bitrix\Main\Engine\CurrentUser;
 
 abstract class SecurityContext implements IErrorable
 {
@@ -30,7 +31,11 @@ abstract class SecurityContext implements IErrorable
 				$this->userId = $user->getId();
 			}
 		}
-		elseif((int)$user > 0)
+		elseif ($user instanceof CurrentUser)
+		{
+			$this->userId = (int)$user->getId();
+		}
+		elseif ((int)$user > 0)
 		{
 			$this->userId = (int)$user;
 		}

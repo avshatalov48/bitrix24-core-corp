@@ -22,7 +22,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid() && $bCrmReadPerm && !isset($ar
 	$langCount = 0;
 	$arSysLangs = Array();
 	$arSysLangNames = Array();
-	$dbLang = CLangAdmin::GetList(($b="sort"), ($o="asc"), array("ACTIVE" => "Y"));
+	$dbLang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
 
 	while ($arLang = $dbLang->Fetch())
 	{

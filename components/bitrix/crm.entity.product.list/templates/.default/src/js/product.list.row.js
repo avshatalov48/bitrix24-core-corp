@@ -487,13 +487,14 @@ export class Row
 
 	changeTaxId(value: number): void
 	{
-		const taxNode = this.getTaxNode();
-		const taxOptionNode = this.getNode().querySelector(`option[data-tax-id="${value}"]`);
-
-		if (Type.isDomNode(taxNode) && Type.isDomNode(taxOptionNode))
+		const taxList = this.getEditor().getTaxList();
+		if (Type.isArrayFilled(taxList))
 		{
-			taxNode.value = taxOptionNode.value;
-			this.changeTaxRate(this.parseFloat(taxOptionNode.value));
+			const taxRate = taxList.find((item) => parseInt(item.ID) === parseInt(value));
+			if (taxRate)
+			{
+				this.changeTaxRate(this.parseFloat(taxRate.VALUE));
+			}
 		}
 	}
 
@@ -928,7 +929,7 @@ export class Row
 				{
 					value = this.parseFloat(value, this.getQuantityPrecision());
 				}
-				else if (field === 'DISCOUNT_RATE')
+				else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE')
 				{
 					value = this.parseFloat(value, this.getCommonPrecision());
 				}
@@ -1004,6 +1005,7 @@ export class Row
 			case 'PRICE_NETTO':
 			case 'PRICE_BRUTTO':
 			case 'QUANTITY':
+			case 'TAX_RATE':
 			case 'DISCOUNT_RATE':
 			case 'DISCOUNT_SUM':
 			case 'DISCOUNT_ROW':
@@ -1015,10 +1017,6 @@ export class Row
 
 			case 'DISCOUNT_TYPE_ID':
 				result = 'discount_type_field';
-				break;
-
-			case 'TAX_RATE':
-				result = 'list';
 				break;
 
 			case 'TAX_INCLUDED':

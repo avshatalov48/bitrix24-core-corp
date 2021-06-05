@@ -351,9 +351,6 @@ class LiveChatManager
 
 	/**
 	 * @return array|bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function getPublicLink()
 	{

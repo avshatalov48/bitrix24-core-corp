@@ -1,11 +1,12 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Voximplant as VI;
 
 class CVoxImplantEvent
 {
-	public function OnBeforeUserAdd(&$arFields)
+	public static function OnBeforeUserAdd(&$arFields)
 	{
 		global $APPLICATION;
 		$error = false;
@@ -106,7 +107,7 @@ class CVoxImplantEvent
 			return false;
 	}
 
-	public function OnBeforeUserUpdate(&$arFields)
+	public static function OnBeforeUserUpdate(&$arFields)
 	{
 		if ($arFields["ID"] > 0)
 		{
@@ -258,7 +259,7 @@ class CVoxImplantEvent
 		}
 	}
 
-	public function OnAfterUserUpdate(&$fields)
+	public static function OnAfterUserUpdate(&$fields)
 	{
 		if ($fields['RESULT'] && isset($fields['ACTIVE']))
 		{
@@ -271,7 +272,7 @@ class CVoxImplantEvent
 		}
 	}
 
-	public function OnUserDelete($ID)
+	public static function OnUserDelete($ID)
 	{
 		VI\PhoneTable::deleteByUser($ID);
 
@@ -311,4 +312,3 @@ class CVoxImplantEvent
 		);
 	}
 }
-?>

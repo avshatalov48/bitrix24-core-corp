@@ -151,7 +151,7 @@ if (count($arParams["VALUE"]))
 		$arFilter['CONFIRM_CODE'] = false;
 	}
 
-	$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+	$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
 	while ($arRes = $dbRes->GetNext())
 	{
 		if(($key = array_search($arRes['ID'], $notSelectedUsersId)) !== false)

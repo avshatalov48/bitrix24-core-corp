@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Tasks\Integration\Bizproc\Automation;
 
 use Bitrix\Main\Loader;
@@ -117,7 +118,7 @@ class Rest
 		return [false];
 	}
 
-	private function addTrigger(array $params, $server)
+	private static function addTrigger(array $params, $server)
 	{
 		/** @var \CRestServer $server */
 		$clientId = $server ? $server->getClientId() : null;

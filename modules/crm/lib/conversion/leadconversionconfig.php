@@ -1,6 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
+
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 
 class LeadConversionConfig extends EntityConversionConfig
 {
@@ -9,10 +12,7 @@ class LeadConversionConfig extends EntityConversionConfig
 
 	public function __construct(array $options = null)
 	{
-		if(!is_array($options))
-		{
-			$options = array();
-		}
+		parent::__construct($options);
 
 		$this->typeID = isset($options['TYPE_ID']) ? (int)$options['TYPE_ID'] : LeadConversionType::UNDEFINED;
 		if($this->typeID === LeadConversionType::UNDEFINED)
@@ -20,17 +20,28 @@ class LeadConversionConfig extends EntityConversionConfig
 			$this->typeID = LeadConversionType::GENERAL;
 		}
 
-		$entityTypeIDs = array(\CCrmOwnerType::Contact, \CCrmOwnerType::Company, \CCrmOwnerType::Deal);
+		$entityTypeIDs = [\CCrmOwnerType::Contact, \CCrmOwnerType::Company, \CCrmOwnerType::Deal];
 		foreach($entityTypeIDs as $entityTypeID)
 		{
 			$this->addItem(new EntityConversionConfigItem($entityTypeID));
 		}
 	}
+
+	protected static function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Lead;
+	}
+
+	protected static function getDefaultDestinationEntityTypeId(): int
+	{
+		throw new Main\NotSupportedException(__METHOD__.' should not be called in Lead context. It has different mechanism');
+	}
+
 	public static function getDefault(array $options = null)
 	{
 		if(!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$typeID = isset($options['TYPE_ID']) ? (int)$options['TYPE_ID'] : LeadConversionType::UNDEFINED;
@@ -41,14 +52,14 @@ class LeadConversionConfig extends EntityConversionConfig
 
 		if($typeID === LeadConversionType::RETURNING_CUSTOMER || $typeID === LeadConversionType::SUPPLEMENT)
 		{
-			$entityTypeIDs = array(\CCrmOwnerType::Deal);
+			$entityTypeIDs = [\CCrmOwnerType::Deal];
 		}
 		else
 		{
-			$entityTypeIDs = array(\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company);
+			$entityTypeIDs = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
 		}
 
-		$config = new LeadConversionConfig(array('TYPE_ID' => $typeID));
+		$config = new LeadConversionConfig(['TYPE_ID' => $typeID]);
 		foreach($entityTypeIDs as $entityTypeID)
 		{
 			$item = $config->getItem($entityTypeID);
@@ -57,36 +68,25 @@ class LeadConversionConfig extends EntityConversionConfig
 		}
 		return $config;
 	}
+
 	public static function load(array $options = null)
 	{
-		if(!is_array($options))
-		{
-			$options = array();
-		}
-
 		$typeID = isset($options['TYPE_ID']) ? (int)$options['TYPE_ID'] : LeadConversionType::UNDEFINED;
 		if($typeID === LeadConversionType::UNDEFINED)
 		{
 			$typeID = LeadConversionType::GENERAL;
 		}
 
-		$s = Main\Config\Option::get('crm', self::resolveOptionName($typeID), '', '');
-		$params = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
-		if(!is_array($params))
-		{
-			return null;
-		}
-
-		$item = new static($options);
-		$item->internalize($params);
-		return $item;
+		$optionValue = Option::get('crm', static::resolveOptionName($typeID), '', '');
+		return static::constructFromOption($optionValue, $options);
 	}
+
 	public static function resolveCurrentSchemeID(array $options = null)
 	{
-		$config = self::load($options);
+		$config = static::load($options);
 		if($config === null)
 		{
-			$config = self::getDefault($options);
+			$config = static::getDefault($options);
 		}
 
 		$schemeID = $config->getSchemeID();
@@ -96,6 +96,7 @@ class LeadConversionConfig extends EntityConversionConfig
 		}
 		return $schemeID;
 	}
+
 	/**
 	 * @return int
 	 */
@@ -103,6 +104,7 @@ class LeadConversionConfig extends EntityConversionConfig
 	{
 		return $this->typeID;
 	}
+
 	/**
 	 * @param int $typeID
 	 * return void
@@ -111,59 +113,65 @@ class LeadConversionConfig extends EntityConversionConfig
 	{
 		$this->typeID = $typeID;
 	}
+
 	public function save()
 	{
 		Main\Config\Option::set(
 			'crm',
-			self::resolveOptionName($this->typeID),
+			static::resolveOptionName($this->typeID),
 			serialize($this->externalize()),
 			''
 		);
 	}
+
 	public function getSchemeID()
 	{
 		$contactConfig = $this->getItem(\CCrmOwnerType::Contact);
 		$companyConfig = $this->getItem(\CCrmOwnerType::Company);
 		$dealConfig = $this->getItem(\CCrmOwnerType::Deal);
-		if($dealConfig->isActive() && $contactConfig->isActive() && $companyConfig->isActive())
+
+		if ($dealConfig->isActive() && $contactConfig->isActive() && $companyConfig->isActive())
 		{
 			return LeadConversionScheme::DEAL_CONTACT_COMPANY;
 		}
-		elseif($dealConfig->isActive() && $contactConfig->isActive())
+		if ($dealConfig->isActive() && $contactConfig->isActive())
 		{
 			return LeadConversionScheme::DEAL_CONTACT;
 		}
-		elseif($dealConfig->isActive() && $companyConfig->isActive())
+		if ($dealConfig->isActive() && $companyConfig->isActive())
 		{
 			return LeadConversionScheme::DEAL_COMPANY;
 		}
-		elseif($dealConfig->isActive())
+		if ($dealConfig->isActive())
 		{
 			return LeadConversionScheme::DEAL;
 		}
-		elseif($contactConfig->isActive() && $companyConfig->isActive())
+		if ($contactConfig->isActive() && $companyConfig->isActive())
 		{
 			return LeadConversionScheme::CONTACT_COMPANY;
 		}
-		elseif($contactConfig->isActive())
+		if ($contactConfig->isActive())
 		{
 			return LeadConversionScheme::CONTACT;
 		}
-		elseif($companyConfig->isActive())
+		if($companyConfig->isActive())
 		{
 			return LeadConversionScheme::COMPANY;
 		}
+
 		return LeadConversionScheme::UNDEFINED;
 	}
+
 	public function getCurrentSchemeID()
 	{
 		return LeadConversionScheme::getCurrentOrDefault($this);
 	}
+
 	public function getSchemeJavaScriptDescriptions($checkPermissions = false)
 	{
 		return LeadConversionScheme::getJavaScriptDescriptions(
 			$checkPermissions,
-			array('TYPE_ID' => $this->getTypeID())
+			['TYPE_ID' => $this->getTypeID()]
 		);
 	}
 
@@ -176,13 +184,12 @@ class LeadConversionConfig extends EntityConversionConfig
 	{
 		return LeadConversionScheme::isSupported(
 			$this->getSchemeID(),
-			array('TYPE_ID' => $this->typeID)
+			['TYPE_ID' => $this->typeID]
 		);
 	}
 
 	protected static function resolveOptionName($typeID)
 	{
-		return $typeID === LeadConversionType::RETURNING_CUSTOMER
-			? 'crm_lead_rc_conversion' : 'crm_lead_conversion';
+		return $typeID === LeadConversionType::RETURNING_CUSTOMER ? 'crm_lead_rc_conversion' : static::getOptionName();
 	}
 }

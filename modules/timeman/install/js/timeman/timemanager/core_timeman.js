@@ -1002,6 +1002,8 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 
 	BX.onCustomEvent(this, 'onTimeManWindowBuild', [this, this.LAYOUT, DATA])
 
+	this.addPwt();
+
 	this.Align();
 }
 
@@ -1235,6 +1237,233 @@ BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 
 	return this.NOTICE;
 };
+
+BX.CTimeManWindow.prototype.isMonitorAvailable = function()
+{
+	return BX.ajax.runAction("bitrix:timeman.api.monitor.isAvailable")
+		.then(function(response)
+		{
+			if (response.data)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		})
+		.catch(function()
+		{
+			return false;
+		});
+}
+
+BX.CTimeManWindow.prototype.enableMonitorForCurrentUser = function()
+{
+	return BX.ajax.runAction("bitrix:timeman.api.monitor.enableForCurrentUser")
+		.then(function(response)
+		{
+			if (response.data)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		})
+		.catch(function()
+		{
+			return false;
+		});
+}
+
+BX.CTimeManWindow.prototype.isMonitorEnabled = function()
+{
+	return BX.ajax.runAction("bitrix:timeman.api.monitor.isEnableForCurrentUser")
+		.then(function(response)
+		{
+			if (response.data)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		})
+		.catch(function()
+		{
+			return false;
+		});
+}
+
+BX.CTimeManWindow.prototype.isPwtHistorySent = function()
+{
+	return BX.ajax.runAction("bitrix:timeman.api.monitor.isHistorySent")
+		.then(function(response)
+		{
+			return response.data;
+		});
+}
+
+BX.CTimeManWindow.prototype.addPwt = function()
+{
+	if (BX.MessengerCommon.isDesktop())
+	{
+		return;
+	}
+
+	this.isMonitorAvailable().then(function(result) {
+		if (!result)
+		{
+			return;
+		}
+
+		if (BXIM.desktopVersion < 55)
+		{
+			BX('timeman_main').appendChild(
+				BX.create('div', {
+					props: {
+						id: 'timeman-pwt-container'
+					},
+					style: {
+						textAlign: 'center',
+						maxWidth: '450px',
+						marginLeft: '12px',
+						marginRight: '12px',
+					},
+					children: [
+						new BX.UI.Alert({
+							icon: BX.UI.Alert.Icon.INFO,
+							color: BX.UI.Alert.Color.SUCCESS,
+							text: BX.message("JS_CORE_TM_MONITOR_UPDATE_DESKTOP"),
+						}).getContainer(),
+						BX.create('button', {
+							props: {
+								className: 'ui-btn ui-btn-success ui-btn-icon-download',
+								id: 'timeman-pwt-get-desktop'
+							},
+							text: BX.message("JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"),
+							style: {
+								marginBottom: '8px',
+							},
+							events: {
+								click : function() {
+									window.open('https://www.bitrix24.ru/features/desktop.php', '_blank');
+								}
+							}
+						})
+					],
+				})
+			);
+
+			return;
+		}
+
+		this.isMonitorEnabled().then(function(result) {
+			BX('timeman_main').appendChild(
+				BX.create('div', {
+					props: {
+						id: 'timeman-pwt-container'
+					},
+					style: {
+						textAlign: 'center',
+						marginLeft: '12px',
+						marginRight: '12px',
+					},
+				})
+			);
+
+			if (result)
+			{
+				this.addPwtAlert();
+
+				return;
+			}
+
+			if (
+				BXIM === 'undefined'
+				|| BXIM.desktopVersion < 55
+			)
+			{
+				return;
+			}
+
+			BX('timeman-pwt-container').appendChild(
+				BX.create('button', {
+					props: {
+						className: 'ui-btn ui-btn-success ui-btn-icon-start',
+						id: 'timeman-pwt-enable'
+					},
+					text: BX.message("JS_CORE_TM_MONITOR_ENABLE_BUTTON"),
+					style: {
+						marginBottom: '8px',
+						width: '100%',
+					},
+					events: {
+						click : function() {
+							this.enableMonitorForCurrentUser().then(function(result) {
+								if (!result)
+								{
+									return;
+								}
+
+								BX.remove(BX('timeman-pwt-enable'));
+
+								this.addPwtAlert();
+							}.bind(this));
+						}.bind(this)
+					}
+				}));
+		}.bind(this)
+	)}.bind(this));
+}
+
+BX.CTimeManWindow.prototype.addPwtAlert = function()
+{
+	BX('timeman-pwt-container').appendChild(
+		new BX.UI.Alert({
+			icon: BX.UI.Alert.Icon.INFO,
+			color: BX.UI.Alert.Color.SUCCESS,
+			text: BX.message("JS_CORE_TM_MONITOR_ENABLED"),
+			customClass: 'ui-alert-text-center'
+		}).getContainer()
+	);
+}
+
+BX.CTimeManWindow.prototype.openMonitorReport = function()
+{
+	var isUnsupportedApp =
+		typeof BXDesktopSystem !== 'undefined'
+		&& BXDesktopSystem.GetProperty('versionParts')[3] < 55;
+
+	if (BXIM.desktopVersion < 55 || isUnsupportedApp)
+	{
+		BXIM.openConfirm({
+			title: BX.message('JS_CORE_TM_MONITOR'),
+			message: BX.message('JS_CORE_TM_MONITOR_OPEN_ERROR')
+		});
+
+		return false;
+	}
+
+	BX.desktopUtils.runningCheck(
+		function()
+		{
+			BX.desktopUtils.goToBx("bx://timemanpwt");
+		},
+		function()
+		{
+			BXIM.openConfirm({
+				title: BX.message('JS_CORE_TM_MONITOR'),
+				message: BX.message('JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR')
+			});
+
+			return false;
+		}
+	);
+}
 
 BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 {
@@ -1974,7 +2203,87 @@ BX.CTimeManWindow.prototype.MainButtonClick = function(e)
 		this.REPORT.Reset();
 	}
 
-	return this.MAIN_BTN_HANDLER(e);
+	if (this.MAIN_BTN_HANDLER == this.ACTIONS.OPEN)
+	{
+		var isDesktopWithMonitor =
+			BX.MessengerCommon.isDesktop()
+			&& typeof BX.Timeman !== 'undefined'
+			&& BX.Timeman.Monitor.isEnabled()
+		;
+
+		if (isDesktopWithMonitor)
+		{
+			BX.Timeman.Monitor.send();
+
+			return this.MAIN_BTN_HANDLER(e);
+		}
+
+		this.isMonitorEnabled().then(function(result)
+		{
+			if (result === true)
+			{
+				this.isPwtHistorySent().then(function(result)
+				{
+					if (result === false)
+					{
+						this.openMonitorReport();
+					}
+					else
+					{
+						return this.MAIN_BTN_HANDLER(e);
+					}
+				}.bind(this));
+			}
+			else
+			{
+				return this.MAIN_BTN_HANDLER(e);
+			}
+		}.bind(this));
+
+		return;
+	}
+
+	if (this.MAIN_BTN_HANDLER == this.ACTIONS.CLOSE)
+	{
+		var isDesktopWithMonitor =
+			BX.MessengerCommon.isDesktop()
+			&& typeof BX.Timeman !== 'undefined'
+			&& BX.Timeman.Monitor.isEnabled()
+		;
+
+		if (isDesktopWithMonitor)
+		{
+			BX.Timeman.Monitor.send();
+
+			return this.MAIN_BTN_HANDLER(e);
+		}
+
+		this.isMonitorEnabled().then(function(result)
+		{
+			if (result === true)
+			{
+				this.isPwtHistorySent().then(function(result)
+				{
+					if (result === false)
+					{
+						this.openMonitorReport();
+					}
+					else
+					{
+						return this.MAIN_BTN_HANDLER(e);
+					}
+				}.bind(this));
+			}
+			else
+			{
+				return this.MAIN_BTN_HANDLER(e);
+			}
+		}.bind(this));
+	}
+	else
+	{
+		return this.MAIN_BTN_HANDLER(e);
+	}
 }
 
 BX.CTimeManWindow.prototype.clearTempData = function()

@@ -662,7 +662,7 @@ if ($_REQUEST['AGENDA_EX'] && check_bitrix_sessid())
 }
 
 $arResult['USERS'] = array();
-$dbUsers = CUser::GetList($by='ID', $order='ASC', array('ID' => implode('|', array_keys($arResult['MEETING']['USERS']))));
+$dbUsers = CUser::GetList('ID', 'ASC', array('ID' => implode('|', array_keys($arResult['MEETING']['USERS']))));
 while ($arUser = $dbUsers->GetNext())
 {
 	$arResult['USERS'][$arUser['ID']] = $arUser;

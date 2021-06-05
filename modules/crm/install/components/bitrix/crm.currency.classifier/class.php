@@ -359,7 +359,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 
 		if ($currencyId !== '')
 		{
-			$currencyLangList = CCurrencyLang::GetList($by = '', $order = '', $currencyId);
+			$currencyLangList = CCurrencyLang::GetList('', '', $currencyId);
 			while ($currencyLang = $currencyLangList->Fetch())
 			{
 				$langSettings = $currencyLang;

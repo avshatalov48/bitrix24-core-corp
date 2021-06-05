@@ -1757,6 +1757,41 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 				);
 			}
 		}
+		else
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory((int) $entityTypeId);
+			if($factory)
+			{
+				$item = $factory->getItem($entityId);
+				if($item)
+				{
+					if($item->hasField(\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID) && $item->getCompanyId() > 0)
+					{
+						$communications = array_merge(
+							$communications,
+							$this->getCrmEntityCommunications(\CCrmOwnerType::Company, $item->getCompanyId(), $communicationType)
+						);
+					}
+					if($item->hasField(\Bitrix\Crm\Item::FIELD_NAME_CONTACT_BINDINGS))
+					{
+						foreach($item->getContacts() as $contact)
+						{
+							$communications = array_merge(
+								$communications,
+								$this->getCrmEntityCommunications(\CCrmOwnerType::Contact, $contact->getId(), $communicationType)
+							);
+						}
+					}
+					elseif($item->hasField(\Bitrix\Crm\Item::FIELD_NAME_CONTACT_ID) && $item->getContactId() > 0)
+					{
+						$communications = array_merge(
+							$communications,
+							$this->getCrmEntityCommunications(\CCrmOwnerType::Contact, $item->getContactId(), $communicationType)
+						);
+					}
+				}
+			}
+		}
 
 		return $result($communications);
 	}

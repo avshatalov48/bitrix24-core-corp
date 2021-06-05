@@ -1,7 +1,9 @@
 import {Type, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import {Address as AddressEntity, ControlMode, Format,
-	AddressStringConverter, LocationRepository, ErrorPublisher} from 'location.core';
+import {
+	Address as AddressEntity, ControlMode, Format, AddressStringConverter,
+	LocationRepository, ErrorPublisher, FormatTemplateType, AddressType
+} from 'location.core';
 import State from '../state';
 import BaseFeature from './features/basefeature';
 import {FeatureEvent} from './featurevent';
@@ -73,37 +75,37 @@ export default class Address extends EventEmitter
 
 		this.setEventNamespace('BX.Location.Widget.Address');
 
-		if(!(props.addressFormat instanceof Format))
+		if (!(props.addressFormat instanceof Format))
 		{
 			BX.debug('addressFormat must be instance of Format');
 		}
 
 		this.#addressFormat = props.addressFormat;
 
-		if(props.address && !(props.address instanceof AddressEntity))
+		if (props.address && !(props.address instanceof AddressEntity))
 		{
 			BX.debug('address must be instance of Address');
 		}
 
 		this.#address = props.address || null;
 
-		if(!(ControlMode.isValid(props.mode)))
+		if (!(ControlMode.isValid(props.mode)))
 		{
 			BX.debug('mode must be valid ControlMode');
 		}
 
 		this.#mode = props.mode;
 
-		if(!Type.isString(props.languageId))
+		if (!Type.isString(props.languageId))
 		{
 			throw new TypeError('props.languageId must be type of string');
 		}
 
 		this.#languageId = props.languageId;
 
-		if(props.features)
+		if (props.features)
 		{
-			if(!Type.isArray(props.features))
+			if (!Type.isArray(props.features))
 			{
 				throw new TypeError('features must be an array');
 			}
@@ -113,16 +115,16 @@ export default class Address extends EventEmitter
 			});
 		}
 
-		if(Type.isBoolean(props.needWarmBackendAfterAddressChanged))
+		if (Type.isBoolean(props.needWarmBackendAfterAddressChanged))
 		{
 			this.#needWarmBackendAfterAddressChanged = props.needWarmBackendAfterAddressChanged;
 		}
 
-		if(props.locationRepository instanceof LocationRepository)
+		if (props.locationRepository instanceof LocationRepository)
 		{
 			this.#locationRepository = props.locationRepository;
 		}
-		else if(this.#needWarmBackendAfterAddressChanged)
+		else if (this.#needWarmBackendAfterAddressChanged)
 		{
 			this.#locationRepository = new LocationRepository();
 		}
@@ -136,12 +138,35 @@ export default class Address extends EventEmitter
 	 * @param {Array} excludeFeatures
 	 * @internal
 	 */
-	setAddressByFeature(address: AddressEntity, sourceFeature: BaseFeature, excludeFeatures: Array = []): void
+	setAddressByFeature(
+		address: AddressEntity,
+		sourceFeature: BaseFeature,
+		excludeFeatures: Array = []
+	): void
 	{
 		const addressId = this.#address ? this.#address.id : 0;
+
+		if (
+			address
+			&& !address.getFieldValue(AddressType.ADDRESS_LINE_1)
+			&& this.#addressFormat.isTemplateExists(FormatTemplateType.ADDRESS_LINE_1)
+		)
+		{
+			address.setFieldValue(
+				AddressType.ADDRESS_LINE_1,
+				AddressStringConverter.convertAddressToStringTemplate(
+					address,
+					this.#addressFormat.getTemplate(FormatTemplateType.ADDRESS_LINE_1),
+					AddressStringConverter.CONTENT_TYPE_TEXT,
+					null,
+					this.#addressFormat
+				)
+			);
+		}
+
 		this.#address = address;
 
-		if(addressId > 0)
+		if (addressId > 0)
 		{
 			this.#address.id = addressId;
 		}
@@ -156,7 +181,7 @@ export default class Address extends EventEmitter
 			excludeFeatures
 		);
 
-		if(this.#state !== State.DATA_INPUTTING)
+		if (this.#state !== State.DATA_INPUTTING)
 		{
 			this.#emitOnAddressChanged();
 		}
@@ -176,7 +201,7 @@ export default class Address extends EventEmitter
 	 */
 	#addFeature(feature: BaseFeature)
 	{
-		if(!(feature instanceof BaseFeature))
+		if (!(feature instanceof BaseFeature))
 		{
 			BX.debug('feature must be instance of BaseFeature');
 		}
@@ -194,19 +219,19 @@ export default class Address extends EventEmitter
 	{
 		let result;
 
-		for(let feature of this.#features)
+		for(const feature of this.#features)
 		{
 			let isExcluded = false;
-			for(let excludeFeature of excludeFeatures)
+			for(const excludeFeature of excludeFeatures)
 			{
-				if(feature instanceof excludeFeature)
+				if (feature instanceof excludeFeature)
 				{
 					isExcluded = true;
 					break;
 				}
 			}
 
-			if(!isExcluded && feature !== sourceFeature)
+			if (!isExcluded && feature !== sourceFeature)
 			{
 				result = feature[method].apply(feature, params);
 			}
@@ -222,7 +247,7 @@ export default class Address extends EventEmitter
 			{address: this.#address}
 		);
 
-		if(this.#address && this.#needWarmBackendAfterAddressChanged)
+		if (this.#address && this.#needWarmBackendAfterAddressChanged)
 		{
 			this.#warmBackendAfterAddressChanged(this.#address);
 		}
@@ -230,58 +255,72 @@ export default class Address extends EventEmitter
 
 	#warmBackendAfterAddressChanged(address: AddressEntity): void
 	{
-		if(address.location !== null && address.location.id <= 0)
+		if (address.location !== null && address.location.id <= 0)
 		{
 			this.#locationRepository.findParents(address.location);
 		}
 	}
 
+	// eslint-disable-next-line no-unused-vars
 	#onInputFocus(e: KeyboardEvent)
 	{
-		let value = this.#inputNode.value;
+		const value = this.#inputNode.value;
 
-		if(value.length > 0)
+		if (value.length > 0)
 		{
-			BX.setCaretPosition(this.#inputNode, value.length - 1)
+			BX.setCaretPosition(this.#inputNode, value.length - 1);
 		}
 	}
 
-	#convertAddressToString(address: ?Address): string
+	#convertAddressToString(
+		address: ?Address,
+		templateType: string
+	): string
 	{
-		if(!address)
+		let result = '';
+
+		if (address)
 		{
-			return '';
+			if (!this.#addressFormat.isTemplateExists(templateType))
+			{
+				console.error(`Address format "${this.#addressFormat.code}" does not have a template "${templateType}"`);
+				return '';
+			}
+
+			result = AddressStringConverter.convertAddressToStringTemplate(
+				address,
+				this.#addressFormat.getTemplate(templateType),
+				AddressStringConverter.CONTENT_TYPE_TEXT,
+				', ',
+				this.#addressFormat
+			);
 		}
 
-		return address.toString(
-			this.#addressFormat,
-			AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
-			AddressStringConverter.CONTENT_TYPE_TEXT
-		);
+		return result;
 	}
 
 	#setInputValue(address: ?Address)
 	{
-		if(this.#inputNode)
+		if (this.#inputNode)
 		{
-			let selectionStart = this.#inputNode.selectionStart;
-			let selectionEnd = this.#inputNode.selectionEnd;
-
-			const addressString = this.#convertAddressToString(address);
-			this.#inputNode.value = addressString;
-			this.#inputNode.title = addressString;
-
+			const shortAddressString = this.#convertAddressToString(address, FormatTemplateType.AUTOCOMPLETE);
+			const fullAddressString = this.#convertAddressToString(address, FormatTemplateType.DEFAULT);
+			this.#inputNode.value = shortAddressString.trim() !== '' ? shortAddressString : fullAddressString;
+			this.#inputNode.title = fullAddressString;
+			const selectionStart = this.#inputNode.selectionStart;
+			const selectionEnd = shortAddressString.length;
 			this.#inputNode.setSelectionRange(selectionStart, selectionEnd);
 		}
 	}
 
+	// eslint-disable-next-line no-unused-vars
 	#onInputFocusOut(e: Event)
 	{
 		// Seems that we don't have any autocompleter feature
-		if(this.#isInputNodeValueUpdated && !this.#isAddressChangedByFeature)
+		if (this.#isInputNodeValueUpdated && !this.#isAddressChangedByFeature)
 		{
-			let value = this.#inputNode.value.trim();
-			let address = new AddressEntity({languageId: this.#languageId});
+			const value = this.#inputNode.value.trim();
+			const address = new AddressEntity({languageId: this.#languageId});
 			address.setFieldValue(this.#addressFormat.fieldForUnRecognized, value);
 			this.address = address;
 			this.#emitOnAddressChanged();
@@ -317,16 +356,16 @@ export default class Address extends EventEmitter
 	 */
 	render(props: AddressRenderProps): void
 	{
-		if(!Type.isDomNode(props.controlWrapper))
+		if (!Type.isDomNode(props.controlWrapper))
 		{
 			BX.debug('props.controlWrapper  must be instance of Element');
 		}
 
 		this.#controlWrapper = props.controlWrapper;
 
-		if(this.#mode === ControlMode.edit)
+		if (this.#mode === ControlMode.edit)
 		{
-			if(!Type.isDomNode(props.inputNode))
+			if (!Type.isDomNode(props.inputNode))
 			{
 				BX.debug('props.inputNode  must be instance of Element');
 			}
@@ -338,7 +377,7 @@ export default class Address extends EventEmitter
 		this.#executeFeatureMethod('render', [props]);
 
 		// We can prevent these events in features if need
-		if(this.#mode === ControlMode.edit)
+		if (this.#mode === ControlMode.edit)
 		{
 			Event.bind(this.#inputNode, 'focus', this.#onInputFocus.bind(this));
 			Event.bind(this.#inputNode, 'focusout', this.#onInputFocusOut.bind(this));
@@ -363,7 +402,7 @@ export default class Address extends EventEmitter
 
 	set address(address: ?AddressEntity): void
 	{
-		if(address && !(address instanceof AddressEntity))
+		if (address && !(address instanceof AddressEntity))
 		{
 			BX.debug('address must be instance of Address');
 		}
@@ -382,7 +421,7 @@ export default class Address extends EventEmitter
 
 	set mode(mode: string): void
 	{
-		if(!(ControlMode.isValid(mode)))
+		if (!(ControlMode.isValid(mode)))
 		{
 			BX.debug('mode must be valid ControlMode');
 		}

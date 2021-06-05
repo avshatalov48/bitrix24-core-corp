@@ -115,7 +115,7 @@ class CCalendarSect
 						$params['joinTypeInfo'] = true;
 						$strType = "";
 						foreach($val as $type)
-							$strType .= ",'".CDatabase::ForSql($type)."'";
+							$strType .= ",'".$DB->ForSql($type)."'";
 						$arSqlSearch[] = "CS.CAL_TYPE in (".trim($strType, ", ").")";
 						$arSqlSearch[] = "CT.ACTIVE='Y'";
 					}
@@ -361,7 +361,7 @@ class CCalendarSect
 		if (isset($params['TYPES']) && is_array($params['TYPES']))
 		{
 			foreach($params['TYPES'] as $type)
-				$strTypes .= ",'".CDatabase::ForSql($type)."'";
+				$strTypes .= ",'".$DB->ForSql($type)."'";
 
 			$strTypes = trim($strTypes, ", ");
 			if ($strTypes != "")
@@ -538,7 +538,7 @@ class CCalendarSect
 		if (isset($sectionFields['COLOR']) || $isNewSection)
 			$sectionFields['COLOR'] = CCalendar::Color($sectionFields['COLOR']);
 
-		$sectionFields['TIMESTAMP_X'] = CCalendar::Date(mktime());
+		$sectionFields['TIMESTAMP_X'] = CCalendar::Date(time());
 
 		if (is_array($sectionFields['EXPORT']))
 		{
@@ -555,7 +555,7 @@ class CCalendarSect
 		if ($isNewSection) // Add
 		{
 			if (!isset($sectionFields['DATE_CREATE']))
-				$sectionFields['DATE_CREATE'] = CCalendar::Date(mktime());
+				$sectionFields['DATE_CREATE'] = CCalendar::Date(time());
 
 			if ((!isset($sectionFields['CREATED_BY']) || !$sectionFields['CREATED_BY']))
 				$sectionFields['CREATED_BY'] = CCalendar::GetCurUserId();
@@ -609,14 +609,14 @@ class CCalendarSect
 		{
 			foreach(\Bitrix\Main\EventManager::getInstance()->findEventHandlers("calendar", "OnAfterCalendarSectionAdd") as $event)
 			{
-				ExecuteModuleEventEx($event, array('id' => $id, 'sectionFields' => $sectionFields));
+				ExecuteModuleEventEx($event, array($id, $sectionFields));
 			}
 		}
 		else
 		{
 			foreach(\Bitrix\Main\EventManager::getInstance()->findEventHandlers("calendar", "OnAfterCalendarSectionUpdate") as $event)
 			{
-				ExecuteModuleEventEx($event, array('id' => $id, 'sectionFields' => $sectionFields));
+				ExecuteModuleEventEx($event, array($id, $sectionFields));
 			}
 		}
 
@@ -1156,7 +1156,7 @@ class CCalendarSect
 		{
 			$strSql =
 			"UPDATE b_calendar_section SET ".
-				$DB->PrepareUpdate("b_calendar_section", array('TIMESTAMP_X' => FormatDate(CCalendar::DFormat(true), mktime()))).
+				$DB->PrepareUpdate("b_calendar_section", array('TIMESTAMP_X' => FormatDate(CCalendar::DFormat(true), time()))).
 			" WHERE ID in (".$strIds.")";
 			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}

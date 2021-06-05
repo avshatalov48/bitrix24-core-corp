@@ -11,7 +11,7 @@ use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 
-class Deal extends ProductsDataProvider implements Nameable, Filterable
+class Deal extends ProductsDataProvider implements Filterable
 {
 	protected $contacts;
 
@@ -186,11 +186,6 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 	public function getCrmOwnerType()
 	{
 		return \CCrmOwnerType::Deal;
-	}
-
-	protected function getCrmProductOwnerType()
-	{
-		return 'D';
 	}
 
 	/**

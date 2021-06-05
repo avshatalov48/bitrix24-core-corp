@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,landing_backend,main_loader,landing_env,landing_ui_panel_stylepanel,ui_dialogs_messagebox,landing_ui_field_agreementslist,landing_ui_field_accordionfield,landing_ui_field_fieldslistfield,landing_ui_field_rulefield,landing_ui_component_actionpanel,landing_ui_component_internal,landing_ui_field_presetfield,landing_ui_field_variablesfield,landing_ui_component_link,landing_ui_field_radiobuttonfield,landing_ui_field_defaultvaluefield,ui_buttons,landing_ui_card_basecard,crm_form_client,landing_ui_card_messagecard,landing_ui_card_headercard,landing_ui_form_formsettingsform,landing_ui_field_textfield,main_core_events,landing_ui_field_basefield,ui_entitySelector,landing_pageobject,main_core,landing_ui_button_sidebarbutton,landing_loc,landing_ui_panel_basepresetpanel) {
+(function (exports,landing_backend,main_loader,landing_env,landing_ui_panel_stylepanel,ui_dialogs_messagebox,helper,landing_ui_field_agreementslist,landing_ui_field_accordionfield,landing_ui_field_fieldslistfield,landing_ui_field_rulefield,landing_ui_component_actionpanel,landing_ui_component_internal,landing_ui_field_presetfield,landing_ui_field_variablesfield,landing_ui_component_link,landing_ui_field_radiobuttonfield,landing_ui_field_defaultvaluefield,ui_buttons,landing_ui_card_basecard,crm_form_client,landing_ui_card_messagecard,landing_ui_card_headercard,landing_ui_form_formsettingsform,landing_ui_field_textfield,main_core_events,landing_ui_field_basefield,ui_entitySelector,landing_pageobject,main_core,landing_ui_button_sidebarbutton,landing_loc,landing_ui_panel_basepresetpanel) {
 	'use strict';
 
 	var headerAndButtonsIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/internal/content/header-and-buttons/images/header-and-buttons-message-icon.svg";
@@ -24,8 +24,15 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      id: 'headerAndButtonMessage',
 	      icon: headerAndButtonsIcon,
 	      header: main_core.Loc.getMessage('LANDING_HEADER_AND_BUTTONS_MESSAGE_HEADER'),
-	      description: main_core.Loc.getMessage('LANDING_HEADER_AND_BUTTONS_MESSAGE_DESCRIPTION'),
-	      restoreState: true
+	      description: main_core.Loc.getMessage('LANDING_HEADER_AND_BUTTONS_MESSAGE_DESCRIPTION_2'),
+	      restoreState: true,
+	      more: function more() {
+	        var helper$$1 = main_core.Reflection.getClass('top.BX.Helper');
+
+	        if (helper$$1) {
+	          BX.Helper.show('redirect=detail&code=12802786');
+	        }
+	      }
 	    });
 	    var headersForm = new landing_ui_form_formsettingsform.FormSettingsForm({
 	      id: 'headers',
@@ -680,9 +687,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }, []);
 
 	      _this.getRulesForm().addField(new landing_ui_field_rulefield.RuleField({
-	        fields: _this.options.fields,
+	        fields: _this.getFormFields(),
 	        rules: values,
-	        onRemove: _this.onFieldRemove.bind(babelHelpers.assertThisInitialized(_this))
+	        onRemove: _this.onFieldRemove.bind(babelHelpers.assertThisInitialized(_this)),
+	        dictionary: _this.options.dictionary
 	      }));
 	    }
 
@@ -690,6 +698,23 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 
 	  babelHelpers.createClass(FieldsRulesContent, [{
+	    key: "getFormFields",
+	    value: function getFormFields() {
+	      var _this2 = this;
+
+	      var disallowedTypes = function () {
+	        if (!main_core.Type.isPlainObject(_this2.options.dictionary.deps.field) || !main_core.Type.isArrayFilled(_this2.options.dictionary.deps.field.disallowed)) {
+	          return null;
+	        }
+
+	        return _this2.options.dictionary.deps.field.disallowed;
+	      }();
+
+	      return this.options.fields.filter(function (field) {
+	        return !main_core.Type.isArrayFilled(disallowedTypes) || !disallowedTypes.includes(field.type) && (!main_core.Type.isPlainObject(field.content) || disallowedTypes.includes(field.content.type));
+	      });
+	    }
+	  }, {
 	    key: "onFieldRemove",
 	    value: function onFieldRemove(event) {
 	      this.getRulesForm().removeField(event.getTarget());
@@ -740,9 +765,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.addItem(header);
 	      var ruleForm = this.getRulesForm();
 	      ruleForm.addField(new landing_ui_field_rulefield.RuleField({
-	        fields: this.options.fields,
+	        fields: this.getFormFields(),
 	        rules: [],
-	        onRemove: this.onFieldRemove.bind(this)
+	        onRemove: this.onFieldRemove.bind(this),
+	        dictionary: this.options.dictionary
 	      }));
 	      this.addItem(ruleForm);
 	      this.addItem(this.getActionPanel());
@@ -750,7 +776,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "getRuleTypeField",
 	    value: function getRuleTypeField() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      return this.cache.remember('ruleTypeField', function () {
 	        return new landing_ui_field_radiobuttonfield.RadioButtonField({
@@ -761,7 +787,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            title: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_1'),
 	            button: {
 	              text: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_BUTTON'),
-	              onClick: _this2.onCreateRule.bind(_this2)
+	              onClick: _this3.onCreateRule.bind(_this3)
 	            }
 	          }, {
 	            id: 'type2',
@@ -769,7 +795,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            title: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_2'),
 	            button: {
 	              text: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_BUTTON'),
-	              onClick: _this2.onCreateRule.bind(_this2)
+	              onClick: _this3.onCreateRule.bind(_this3)
 	            },
 	            disabled: true,
 	            soon: true
@@ -779,7 +805,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            title: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_3'),
 	            button: {
 	              text: main_core.Loc.getMessage('LANDING_FIELDS_RULES_TYPE_BUTTON'),
-	              onClick: _this2.onCreateRule.bind(_this2)
+	              onClick: _this3.onCreateRule.bind(_this3)
 	            },
 	            disabled: true,
 	            soon: true
@@ -959,7 +985,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        }
 	      };
 
-	      return main_core.Tag.render(_templateObject$3(), classPrefix, classPrefix, options.type, classPrefix, options.title, classPrefix, classPrefix, classPrefix, onViewClick, landing_loc.Loc.getMessage('LANDING_FORM_ACTIONS_EDIT_PAGE_SHOW'), classPrefix, classPrefix, onEditorClick, options.onInput, options.text, classPrefix, classPrefix, onEditClick, landing_loc.Loc.getMessage('LANDING_FORM_ACTIONS_EDIT_PAGE_EDIT'));
+	      return main_core.Tag.render(_templateObject$3(), classPrefix, classPrefix, options.type, classPrefix, options.title, classPrefix, classPrefix, classPrefix, onViewClick, landing_loc.Loc.getMessage('LANDING_FORM_ACTIONS_EDIT_PAGE_SHOW'), classPrefix, classPrefix, onEditorClick, options.onInput, main_core.Text.encode(options.text), classPrefix, classPrefix, onEditClick, landing_loc.Loc.getMessage('LANDING_FORM_ACTIONS_EDIT_PAGE_EDIT'));
 	    }
 	  }]);
 	  return ActionPagesField;
@@ -1163,15 +1189,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "getValue",
 	    value: function getValue() {
 	      var actionPagesValue = this.getActionPages().getValue();
+	      var useRedirect = this.getTypeButtons().getValue() === 'type2';
 	      return {
 	        result: {
 	          success: {
 	            text: actionPagesValue.success,
-	            url: main_core.Text.decode(this.getSuccessLinkField().getValue())
+	            url: useRedirect ? main_core.Text.decode(this.getSuccessLinkField().getValue()) : ''
 	          },
 	          failure: {
 	            text: actionPagesValue.failure,
-	            url: main_core.Text.decode(this.getFailureLinkField().getValue())
+	            url: useRedirect ? main_core.Text.decode(this.getFailureLinkField().getValue()) : ''
 	          },
 	          redirectDelay: this.getDelayField().getValue()
 	        }
@@ -1965,7 +1992,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      icon: messageIcon$2,
 	      angle: false,
 	      closeable: false,
-	      hideActions: true
+	      more: function more() {
+	        var helper$$1 = main_core.Reflection.getClass('top.BX.Helper');
+
+	        if (helper$$1) {
+	          BX.Helper.show('redirect=detail&code=12802786');
+	        }
+	      }
 	    });
 
 	    _this.addItem(header);
@@ -1979,78 +2012,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	}(landing_ui_panel_basepresetpanel.ContentWrapper);
 
 	function _templateObject$8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-field-order-wrapper\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject$8 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	var OrderField = /*#__PURE__*/function (_BaseField) {
-	  babelHelpers.inherits(OrderField, _BaseField);
-
-	  function OrderField(options) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, OrderField);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderField).call(this, options));
-	    main_core.Dom.replace(_this.input, _this.getWrapper());
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(OrderField, [{
-	    key: "getDropdown",
-	    value: function getDropdown() {
-	      var _this2 = this;
-
-	      return this.cache.remember('dropdown', function () {
-	        return new BX.Landing.UI.Field.Dropdown({
-	          items: _this2.options.items
-	        });
-	      });
-	    }
-	  }, {
-	    key: "getButton",
-	    value: function getButton() {
-	      var _this3 = this;
-
-	      return this.cache.remember('button', function () {
-	        return new ui_buttons.Button({
-	          text: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_ORDER_SETTINGS_BUTTON_LABEL'),
-	          color: ui_buttons.Button.Color.LIGHT_BORDER,
-	          size: ui_buttons.Button.Size.MEDIUM,
-	          events: {
-	            click: _this3.onButtonClick.bind(_this3)
-	          }
-	        });
-	      });
-	    }
-	  }, {
-	    key: "onButtonClick",
-	    value: function onButtonClick() {
-	      var companyId = this.getDropdown().getValue();
-	      var url = "/crm/company/details/".concat(companyId, "/?init_mode=edit");
-	      window.open(url, '_blank');
-	    }
-	  }, {
-	    key: "getWrapper",
-	    value: function getWrapper() {
-	      var _this4 = this;
-
-	      return this.cache.remember('wrapper', function () {
-	        return main_core.Tag.render(_templateObject$8(), _this4.getDropdown().getLayout(), _this4.getButton().render());
-	      });
-	    }
-	  }]);
-	  return OrderField;
-	}(landing_ui_field_basefield.BaseField);
-
-	function _templateObject$9() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-field-stages\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
 
-	  _templateObject$9 = function _templateObject() {
+	  _templateObject$8 = function _templateObject() {
 	    return data;
 	  };
 
@@ -2075,7 +2039,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      var _this2 = this;
 
 	      return this.cache.remember('inner', function () {
-	        return main_core.Tag.render(_templateObject$9(), _this2.getCategoriesDropdown().getLayout());
+	        return main_core.Tag.render(_templateObject$8(), _this2.getCategoriesDropdown().getLayout());
 	      });
 	    }
 	  }, {
@@ -2566,37 +2530,45 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	    _this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel.FacebookContent');
 
-	    var header = new landing_ui_card_headercard.HeaderCard({
+	    _this.addItem(new landing_ui_card_headercard.HeaderCard({
 	      title: landing_loc.Loc.getMessage('LANDING_SIDEBAR_BUTTON_FACEBOOK')
-	    });
-	    var buttonCard = new landing_ui_card_basecard.BaseCard();
-	    var button = new ui_buttons.Button({
-	      text: _this.prepareButtonText(_this.options.formOptions),
-	      color: ui_buttons.Button.Color.LIGHT_BORDER,
-	      onclick: function onclick() {
-	        BX.SidePanel.Instance.open("/crm/webform/ads/".concat(_this.options.formOptions.id, "/?type=facebook"), {
-	          cacheable: false,
-	          events: {
-	            onClose: function onClose() {
-	              var client = crm_form_client.FormClient.getInstance();
-	              client.resetCache(_this.options.formOptions.id);
-	              client.getOptions(_this.options.formOptions.id).then(function (result) {
-	                button.setText(_this.prepareButtonText(result));
-	              });
+	    }));
+
+	    if (_this.options.formOptions.integration.canUse) {
+	      var buttonCard = new landing_ui_card_basecard.BaseCard();
+	      var button = new ui_buttons.Button({
+	        text: _this.prepareButtonText(_this.options.formOptions),
+	        color: ui_buttons.Button.Color.LIGHT_BORDER,
+	        onclick: function onclick() {
+	          BX.SidePanel.Instance.open("/crm/webform/ads/".concat(_this.options.formOptions.id, "/?type=facebook"), {
+	            cacheable: false,
+	            events: {
+	              onClose: function onClose() {
+	                var client = crm_form_client.FormClient.getInstance();
+	                client.resetCache(_this.options.formOptions.id);
+	                client.getOptions(_this.options.formOptions.id).then(function (result) {
+	                  button.setText(_this.prepareButtonText(result));
+	                });
+	              }
 	            }
-	          }
-	        });
-	      }
-	    });
-	    main_core.Dom.style(buttonCard.getLayout(), {
-	      padding: 0,
-	      margin: 0
-	    });
-	    main_core.Dom.append(button.render(), buttonCard.getBody());
+	          });
+	        }
+	      });
+	      main_core.Dom.style(buttonCard.getLayout(), {
+	        padding: 0,
+	        margin: 0
+	      });
+	      main_core.Dom.append(button.render(), buttonCard.getBody());
 
-	    _this.addItem(header);
-
-	    _this.addItem(buttonCard);
+	      _this.addItem(buttonCard);
+	    } else {
+	      _this.addItem(new landing_ui_card_messagecard.MessageCard({
+	        header: landing_loc.Loc.getMessage('LANDING_CRM_FORM_INTEGRATION_SEO_NOT_INSTALLED_HEADER'),
+	        description: landing_loc.Loc.getMessage('LANDING_CRM_FORM_INTEGRATION_SEO_NOT_INSTALLED_FB_TEXT'),
+	        angle: false,
+	        closeable: false
+	      }));
+	    }
 
 	    return _this;
 	  }
@@ -2636,37 +2608,45 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	    _this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel.VkContent');
 
-	    var header = new landing_ui_card_headercard.HeaderCard({
+	    _this.addItem(new landing_ui_card_headercard.HeaderCard({
 	      title: landing_loc.Loc.getMessage('LANDING_SIDEBAR_BUTTON_VK')
-	    });
-	    var buttonCard = new landing_ui_card_basecard.BaseCard();
-	    var button = new ui_buttons.Button({
-	      text: _this.prepareButtonText(_this.options.formOptions),
-	      color: ui_buttons.Button.Color.LIGHT_BORDER,
-	      onclick: function onclick() {
-	        BX.SidePanel.Instance.open("/crm/webform/ads/".concat(_this.options.formOptions.id, "/?type=vkontakte"), {
-	          cacheable: false,
-	          events: {
-	            onClose: function onClose() {
-	              var client = crm_form_client.FormClient.getInstance();
-	              client.resetCache(_this.options.formOptions.id);
-	              client.getOptions(_this.options.formOptions.id).then(function (result) {
-	                button.setText(_this.prepareButtonText(result));
-	              });
+	    }));
+
+	    if (_this.options.formOptions.integration.canUse) {
+	      var buttonCard = new landing_ui_card_basecard.BaseCard();
+	      var button = new ui_buttons.Button({
+	        text: _this.prepareButtonText(_this.options.formOptions),
+	        color: ui_buttons.Button.Color.LIGHT_BORDER,
+	        onclick: function onclick() {
+	          BX.SidePanel.Instance.open("/crm/webform/ads/".concat(_this.options.formOptions.id, "/?type=vkontakte"), {
+	            cacheable: false,
+	            events: {
+	              onClose: function onClose() {
+	                var client = crm_form_client.FormClient.getInstance();
+	                client.resetCache(_this.options.formOptions.id);
+	                client.getOptions(_this.options.formOptions.id).then(function (result) {
+	                  button.setText(_this.prepareButtonText(result));
+	                });
+	              }
 	            }
-	          }
-	        });
-	      }
-	    });
-	    main_core.Dom.style(buttonCard.getLayout(), {
-	      padding: 0,
-	      margin: 0
-	    });
-	    main_core.Dom.append(button.render(), buttonCard.getBody());
+	          });
+	        }
+	      });
+	      main_core.Dom.style(buttonCard.getLayout(), {
+	        padding: 0,
+	        margin: 0
+	      });
+	      main_core.Dom.append(button.render(), buttonCard.getBody());
 
-	    _this.addItem(header);
-
-	    _this.addItem(buttonCard);
+	      _this.addItem(buttonCard);
+	    } else {
+	      _this.addItem(new landing_ui_card_messagecard.MessageCard({
+	        header: landing_loc.Loc.getMessage('LANDING_CRM_FORM_INTEGRATION_SEO_NOT_INSTALLED_HEADER'),
+	        description: landing_loc.Loc.getMessage('LANDING_CRM_FORM_INTEGRATION_SEO_NOT_INSTALLED_VK_TEXT'),
+	        angle: false,
+	        closeable: false
+	      }));
+	    }
 
 	    return _this;
 	  }
@@ -3360,10 +3340,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  soon: true
 	})];
 
-	function _templateObject$a() {
+	function _templateObject$9() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-access-error-message\">\n\t\t\t\t\t<div class=\"landing-ui-access-error-message-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
 
-	  _templateObject$a = function _templateObject() {
+	  _templateObject$9 = function _templateObject() {
 	    return data;
 	  };
 
@@ -3487,6 +3467,26 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    value: function load() {
 	      var _this5 = this;
 
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      if (options.showWithOptions) {
+	        var editorData = landing_env.Env.getInstance().getOptions().formEditorData;
+	        this.setCrmFields(editorData.crmFields);
+	        this.setCrmCompanies(editorData.crmCompanies);
+	        this.setCrmCategories(editorData.crmCategories);
+	        this.setAgreements(editorData.agreements);
+	        var currentOptions = main_core.Runtime.clone(editorData.formOptions);
+
+	        if (currentOptions.agreements.use !== true) {
+	          currentOptions.agreements.use = true;
+	          currentOptions.data.agreements = [];
+	        }
+
+	        this.setFormOptions(currentOptions);
+	        this.setFormDictionary(editorData.dictionary);
+	        return Promise.resolve();
+	      }
+
 	      var crmData = landing_backend.Backend.getInstance().batch('Form::getCrmFields', {
 	        crmFields: {
 	          action: 'Form::getCrmFields',
@@ -3574,7 +3574,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.setCurrentFormId(options.formId);
 	      this.setCurrentFormInstanceId(options.instanceId);
 	      this.showLoader();
-	      this.load().then(function () {
+	      this.load(options).then(function () {
 	        _this6.hideLoader();
 
 	        var formOptions = _this6.getFormOptions();
@@ -3656,7 +3656,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "getAccessError",
 	    value: function getAccessError() {
 	      return this.cache.remember('accessErrorMessage', function () {
-	        return main_core.Tag.render(_templateObject$a(), landing_loc.Loc.getMessage('LANDING_CRM_ACCESS_ERROR_MESSAGE'));
+	        return main_core.Tag.render(_templateObject$9(), landing_loc.Loc.getMessage('LANDING_CRM_ACCESS_ERROR_MESSAGE'));
 	      });
 	    } // eslint-disable-next-line class-methods-use-this
 
@@ -3869,13 +3869,37 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	    }
 	  }, {
-	    key: "getContent",
-	    value: function getContent(id) {
+	    key: "getDefaultValuesVariables",
+	    value: function getDefaultValuesVariables() {
 	      var _this9 = this;
 
+	      return this.cache.remember('personalizationVariables', function () {
+	        var _this9$getFormDiction = _this9.getFormDictionary(),
+	            properties = _this9$getFormDiction.properties;
+
+	        if (main_core.Type.isPlainObject(properties) && main_core.Type.isArrayFilled(properties.list)) {
+	          return properties.list.map(function (item) {
+	            return {
+	              name: item.name,
+	              value: item.id
+	            };
+	          });
+	        }
+
+	        return [];
+	      });
+	    }
+	  }, {
+	    key: "getContent",
+	    value: function getContent(id) {
+	      var _this10 = this;
+
 	      var crmForm = this.getCrmForm();
-	      crmForm.sent = false;
-	      crmForm.error = false;
+
+	      if (crmForm) {
+	        crmForm.sent = false;
+	        crmForm.error = false;
+	      }
 
 	      if (id === 'button_and_header') {
 	        return new HeaderAndButtonContent({
@@ -3929,7 +3953,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      if (id === 'fields_rules') {
 	        return new FieldsRulesContent({
 	          fields: this.getFormOptions().data.fields,
-	          values: this.getFormOptions().data.dependencies
+	          values: this.getFormOptions().data.dependencies,
+	          dictionary: this.getFormDictionary()
 	        });
 	      }
 
@@ -3939,11 +3964,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          values: this.getFormOptions().result
 	        });
 	        actionsContent.subscribe('onShowSuccess', function () {
-	          crmForm.stateText = _this9.getFormOptions().result.success.text;
+	          crmForm.stateText = _this10.getFormOptions().result.success.text;
 	          crmForm.sent = !crmForm.sent;
 	          crmForm.error = false;
 	        }).subscribe('onShowFailure', function () {
-	          crmForm.stateText = _this9.getFormOptions().result.failure.text;
+	          crmForm.stateText = _this10.getFormOptions().result.failure.text;
 	          crmForm.error = !crmForm.error;
 	          crmForm.sent = false;
 	        });
@@ -3986,7 +4011,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          formOptions: this.getFormOptions(),
 	          dictionary: this.getFormDictionary(),
 	          isLeadEnabled: this.isLeadEnabled(),
-	          personalizationVariables: this.getPersonalizationVariables(),
+	          personalizationVariables: this.getDefaultValuesVariables(),
 	          values: {
 	            fields: this.getFormOptions().presetFields
 	          }
@@ -4030,7 +4055,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "applyPreset",
 	    value: function applyPreset(preset) {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      var skipOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      this.getPresets().forEach(function (currentPreset) {
@@ -4067,13 +4092,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            return babelHelpers.objectSpread({}, agreement, agreementsOptions[index]);
 	          });
 
-	          _this10.setFormOptions(preparedOptions);
+	          _this11.setFormOptions(preparedOptions);
 
-	          _this10.getCrmForm().adjust(main_core.Runtime.clone(preparedOptions.data));
+	          _this11.getCrmForm().adjust(main_core.Runtime.clone(preparedOptions.data));
 
-	          babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "applyPreset", _this10).call(_this10, preset);
+	          babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "applyPreset", _this11).call(_this11, preset);
 
-	          _this10.hideLoader();
+	          _this11.hideLoader();
 	        });
 	      } else {
 	        babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "applyPreset", this).call(this, preset);
@@ -4082,19 +4107,19 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "getFormNode",
 	    value: function getFormNode() {
-	      var _this11 = this;
+	      var _this12 = this;
 
 	      return this.cache.remember('formNode', function () {
-	        return _this11.getCurrentBlock().node.querySelector('[data-b24form-use-style]');
+	        return _this12.getCurrentBlock().node.querySelector('[data-b24form-use-style]');
 	      });
 	    }
 	  }, {
 	    key: "useBlockDesign",
 	    value: function useBlockDesign() {
-	      var _this12 = this;
+	      var _this13 = this;
 
 	      return this.cache.remember('useBlockDesign', function () {
-	        return main_core.Text.toBoolean(main_core.Dom.attr(_this12.getFormNode(), 'data-b24form-use-style'));
+	        return main_core.Text.toBoolean(main_core.Dom.attr(_this13.getFormNode(), 'data-b24form-use-style'));
 	      });
 	    }
 	  }, {
@@ -4116,7 +4141,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "showSynchronizationPopup",
 	    value: function showSynchronizationPopup(notSynchronizedFields) {
-	      var _this13 = this;
+	      var _this14 = this;
 
 	      return new Promise(function (resolve) {
 	        var onOk = function onOk(messageBox) {
@@ -4130,7 +4155,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        };
 
 	        var messageDescription = function () {
-	          var entityName = landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_ENTITY_TEMPLATE').replace('{entityName}', _this13.getCurrentCrmEntityName());
+	          var entityName = landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_ENTITY_TEMPLATE').replace('{entityName}', _this14.getCurrentCrmEntityName());
 	          return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_DESCRIPTION').replace('{entityName}', entityName);
 	        }();
 
@@ -4161,11 +4186,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "onSaveClick",
 	    value: function onSaveClick() {
-	      var _this14 = this;
+	      var _this15 = this;
 
+	      main_core.Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
 	      this.getNotSynchronizedFields().then(function (result) {
 	        if (main_core.Type.isArrayFilled(result.sync.errors)) {
-	          _this14.showSynchronizationErrorPopup(result.sync.errors);
+	          _this15.showSynchronizationErrorPopup(result.sync.errors);
 
 	          return false;
 	        }
@@ -4174,7 +4200,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          var fieldLabels = result.sync.fields.map(function (field) {
 	            return field.label;
 	          });
-	          return _this14.showSynchronizationPopup(fieldLabels);
+	          return _this15.showSynchronizationPopup(fieldLabels);
 	        }
 
 	        return true;
@@ -4184,12 +4210,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          uri.removeQueryParam('formCreated');
 	          window.top.history.replaceState(null, document.title, uri.toString());
 
-	          var initialOptions = _this14.getInitialFormOptions();
+	          var initialOptions = _this15.getInitialFormOptions();
 
-	          var currentOptions = _this14.getFormOptions();
+	          var currentOptions = _this15.getFormOptions();
 
 	          var options = function () {
-	            if (!_this14.isCrmFormPage()) {
+	            if (!_this15.isCrmFormPage()) {
 	              var clonedOptions = main_core.Runtime.clone(currentOptions);
 	              clonedOptions.data.design = main_core.Runtime.clone(initialOptions.data.design);
 	              return clonedOptions;
@@ -4198,15 +4224,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            return currentOptions;
 	          }();
 
-	          void _this14.hide();
 	          void crm_form_client.FormClient.getInstance().saveOptions(options).then(function (result) {
-	            _this14.setFormOptions(result);
+	            _this15.setFormOptions(result);
 
 	            crm_form_client.FormClient.getInstance().resetCache(result.id);
+	            main_core.Dom.removeClass(_this15.getSaveButton().layout, 'ui-btn-wait');
+	            void _this15.hide();
 	          });
 
-	          if (_this14.useBlockDesign() && _this14.isCrmFormPage()) {
-	            _this14.disableUseBlockDesign();
+	          if (_this15.useBlockDesign() && _this15.isCrmFormPage()) {
+	            _this15.disableUseBlockDesign();
 	          }
 	        }
 	      });
@@ -4252,5 +4279,5 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	exports.FormSettingsPanel = FormSettingsPanel;
 
-}((this.BX.Landing.UI.Panel = this.BX.Landing.UI.Panel || {}),BX.Landing,BX,BX.Landing,BX.Landing.UI.Panel,BX.UI.Dialogs,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.UI,BX.Landing.UI.Card,BX.Crm.Form,BX.Landing.UI.Card,BX.Landing.UI.Card,BX.Landing.UI.Form,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Field,BX.UI.EntitySelector,BX.Landing,BX,BX.Landing.UI.Button,BX.Landing,BX.Landing.UI.Panel));
+}((this.BX.Landing.UI.Panel = this.BX.Landing.UI.Panel || {}),BX.Landing,BX,BX.Landing,BX.Landing.UI.Panel,BX.UI.Dialogs,BX,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Landing.UI.Field,BX.UI,BX.Landing.UI.Card,BX.Crm.Form,BX.Landing.UI.Card,BX.Landing.UI.Card,BX.Landing.UI.Form,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Field,BX.UI.EntitySelector,BX.Landing,BX,BX.Landing.UI.Button,BX.Landing,BX.Landing.UI.Panel));
 //# sourceMappingURL=formsettingspanel.bundle.js.map

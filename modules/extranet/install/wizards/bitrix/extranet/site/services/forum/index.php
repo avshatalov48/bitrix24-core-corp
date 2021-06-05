@@ -10,7 +10,7 @@ if (file_exists($langFile))
 	__IncludeLang($langFile);
 
 $arLanguages = Array();
-$rsLanguage = CLanguage::GetList($by, $order, array());
+$rsLanguage = CLanguage::GetList();
 while($arLanguage = $rsLanguage->Fetch())
 	$arLanguages[] = $arLanguage["LID"];
 

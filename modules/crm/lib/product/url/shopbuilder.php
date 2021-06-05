@@ -1,9 +1,9 @@
 <?php
 namespace Bitrix\Crm\Product\Url;
 
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Catalog;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Catalog;
 
 if (Loader::includeModule('catalog'))
 {
@@ -17,31 +17,29 @@ if (Loader::includeModule('catalog'))
 
 		protected const PATH_DETAIL_CARD_PREFIX = '/shop/catalog/';
 
+		public function __construct()
+		{
+			parent::__construct();
+		}
+
 		public function use(): bool
 		{
 			if (defined('CATALOG_PRODUCT') && defined('SELF_FOLDER_URL'))
 			{
 				return true;
 			}
-			$request = Main\Context::getCurrent()->getRequest();
-			if (!$request->isAdminSection())
+			if (!$this->request->isAdminSection())
 			{
-				if (
-					mb_strpos($request->getRequestedPage(), self::PATH_DETAIL_CARD_PREFIX) === 0
-				)
+				if ($this->checkCurrentPage([
+					self::PATH_PREFIX,
+					self::PATH_DETAIL_CARD_PREFIX
+				]))
 				{
 					return true;
 				}
 			}
 
 			return false;
-		}
-
-		protected function addSliderOptions(array &$options): void
-		{
-			$options['publicSidePanel'] = 'Y';
-			$options['IFRAME'] = 'Y';
-			$options['IFRAME_TYPE'] = 'SIDE_SLIDER';
 		}
 
 		protected function initConfig(): void

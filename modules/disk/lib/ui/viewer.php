@@ -168,7 +168,7 @@ final class Viewer
 				$dataAttributesForViewer .= $object->getView()->getJsViewerFallbackHtmlAttributeName().'="'.$urlManager->getUrlForShowViewHtml($object, array('mode' => 'iframe')).'" ';
 			}
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		elseif(TypeFile::isImage($object))
 		{
 			$dataAttributesForViewer =
@@ -215,7 +215,7 @@ final class Viewer
 		}
 		if(!empty($additionalParams['canUpdate']))
 		{
-			$dataAttributesForViewer .= ' data-bx-edit="' . $urlManager->getUrlForStartEditFile($object->getId(), 'gdrive') . '" ';
+			$dataAttributesForViewer .= ' data-bx-edit="' . $urlManager::getUrlForStartEditFile($object->getId(), 'gdrive') . '" ';
 		}
 		if(!empty($additionalParams['showStorage']))
 		{
@@ -317,7 +317,7 @@ final class Viewer
 				'data-bx-dateModify="' . htmlspecialcharsbx($dateTime) . '" '
 			;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		elseif(TypeFile::isImage($object))
 		{
 			$dataAttributesForViewer =
@@ -432,7 +432,7 @@ final class Viewer
 				$dataAttributesForViewer .= $version->getView()->getJsViewerFallbackHtmlAttributeName().'="'.$urlManager->getUrlForShowVersionViewHtml($version, array('mode' => 'iframe')).'" ';
 			}
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		elseif(TypeFile::isImage($object))
 		{
 			$dataAttributesForViewer =

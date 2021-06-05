@@ -89,8 +89,8 @@ else
 	}
 
 	$dbUsers = CUser::GetList(
-		($by = array("last_name" => "asc", "name" => "asc")),
-		($order = false),
+		array("last_name" => "asc", "name" => "asc"),
+		'',
 		$filter,
 		$arParams
 	);

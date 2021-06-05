@@ -37,6 +37,7 @@ export default class PullManager
 				command: this.grid.getData().pullTag,
 				callback: (params) =>
 				{
+					console.log(params);
 					if (Type.isString(params.eventName))
 					{
 						if (params.eventName === 'ITEMUPDATED')

@@ -595,7 +595,7 @@ $arMenu[] = array(
 	""
 );
 
-
-
+$pageManager = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('intranet.customSection.manager');
+$pageManager->appendSuperLeftMenuSections($arMenu);
 
 $aMenuLinks = $arMenu;

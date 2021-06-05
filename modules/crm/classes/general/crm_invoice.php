@@ -33,7 +33,7 @@ class CAllCrmInvoice
 	private static $INVOICE_PROPERTY_INFOS = null;
 	private static $INVOICE_PAY_SYSTEM_TYPES = null;
 	private static $arCurrentPermType = null;
-	private static $arinvoicePropertiesAllowed = null;
+	private static $arinvoicePropertiesAllowed = [];
 	private static $LIST_CALLBACK_PARAMS = null;
 
 	function __construct($bCheckPermission = true)
@@ -2205,22 +2205,30 @@ class CAllCrmInvoice
 		return $arResult;
 	}
 
-	private static function _getAllowedPropertiesInfo()
+	private static function _getAllowedPropertiesInfo(?string $siteId = null)
 	{
-		if (self::$arinvoicePropertiesAllowed !== null)
-			return self::$arinvoicePropertiesAllowed;
+		if ($siteId === null)
+		{
+			$siteId = CCrmPaySystem::getDefaultSiteId();
+		}
 
-		$personTypeCompany = $personTypeContact = null;
-		$arPersonTypes = CCrmPaySystem::getPersonTypeIDs();
+		if (isset(self::$arinvoicePropertiesAllowed[$siteId]))
+		{
+			return self::$arinvoicePropertiesAllowed[$siteId];
+		}
+
+		$arPersonTypes = CCrmPaySystem::getPersonTypeIDs($siteId);
 		if ($arPersonTypes['COMPANY'] != "" && $arPersonTypes['CONTACT'] != "")
 		{
 			$personTypeCompany = $arPersonTypes['COMPANY'];
 			$personTypeContact = $arPersonTypes['CONTACT'];
 		}
 		else
-			return array();
+		{
+			return [];
+		}
 
-		self::$arinvoicePropertiesAllowed = array(
+		self::$arinvoicePropertiesAllowed[$siteId] = array(
 			$personTypeCompany => array(
 				'COMPANY' => GetMessage('CRM_INVOICE_PROPERTY_COMPANY_TITLE'),
 				'COMPANY_NAME' => GetMessage('CRM_INVOICE_PROPERTY_COMPANY_TITLE'),
@@ -2239,7 +2247,7 @@ class CAllCrmInvoice
 			)
 		);
 
-		return self::$arinvoicePropertiesAllowed;
+		return self::$arinvoicePropertiesAllowed[$siteId];
 	}
 
 	public static function GetPropertiesInfo($personTypeId = 0, $onlyEditable = false)
@@ -3170,7 +3178,7 @@ class CAllCrmInvoice
 										$errMsg[] = $e->getMessage();
 										$bError = true;
 									}
-				
+
 									if ($bError)
 									{
 										$errString = implode('<br>', $errMsg);
@@ -3344,7 +3352,7 @@ class CAllCrmInvoice
 										$errMsg[] = $e->getMessage();
 										$bError = true;
 									}
-				
+
 									if ($bError)
 									{
 										$errString = implode('<br>', $errMsg);
@@ -4511,17 +4519,20 @@ class CAllCrmInvoice
 
 		if (intval($arInvoice['PERSON_TYPE_ID']) > 0)
 		{
-			$arSearchableProperties = self::_getAllowedPropertiesInfo();
+			$arSearchableProperties = self::_getAllowedPropertiesInfo($arInvoice['LID']);
 			$arSearchableProperties = $arSearchableProperties[$arInvoice['PERSON_TYPE_ID']];
-			$arInvoiceProps = self::GetProperties($arInvoice['ID'], $arInvoice['PERSON_TYPE_ID']);
-			foreach ($arInvoiceProps as $prop)
+			if (is_array($arSearchableProperties))
 			{
-				$propCode = $prop['FIELDS']['CODE'];
-				if (array_key_exists($propCode, $arSearchableProperties))
+				$arInvoiceProps = self::GetProperties($arInvoice['ID'], $arInvoice['PERSON_TYPE_ID']);
+				foreach ($arInvoiceProps as $prop)
 				{
-					$v = $prop['VALUE'];
-					if (!empty($v) && !is_numeric($v) && $v != 'N' && $v != 'Y')
-						$sBody .= $arSearchableProperties[$propCode].": $v\n";
+					$propCode = $prop['FIELDS']['CODE'];
+					if (array_key_exists($propCode, $arSearchableProperties))
+					{
+						$v = $prop['VALUE'];
+						if (!empty($v) && !is_numeric($v) && $v != 'N' && $v != 'Y')
+							$sBody .= $arSearchableProperties[$propCode].": $v\n";
+					}
 				}
 			}
 		}
@@ -4536,9 +4547,7 @@ class CAllCrmInvoice
 
 		if (empty($arSite))
 		{
-			$by="sort";
-			$order="asc";
-			$rsSite = $site->GetList($by, $order);
+			$rsSite = $site->GetList();
 			while ($_arSite = $rsSite->Fetch())
 				$arSite[] = $_arSite['ID'];
 		}

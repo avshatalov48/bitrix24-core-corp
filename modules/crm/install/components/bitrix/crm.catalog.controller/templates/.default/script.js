@@ -17,9 +17,8 @@
 				rules: [
 					{
 						condition: [
-							"/crm/catalog/product/(\\d+)/",
-							"/crm/catalog/section/(\\d+)/",
-							"/shop/settings/"
+							"/crm/catalog/(\\d+)/product/",
+							"/crm/catalog/section/(\\d+)/"
 						],
 						handler: this.adjustSidePanelOpener
 					}

@@ -270,7 +270,7 @@ class CIntranetContactsWS extends IWebService
 		) // intranet
 		{
 			$rsUsers = CUser::GetList(
-				($by="id"), ($order="asc"),
+				"id", "asc",
 				array(
 					"ID" => $USER->GetID()
 				),
@@ -380,7 +380,7 @@ class CIntranetContactsWS extends IWebService
 			);
 
 		$obUsers = CUser::GetList(
-			$by='id', $order='asc',
+			'id', 'asc',
 			$arFilter,
 			$arListParams
 		);
@@ -527,7 +527,7 @@ class CIntranetContactsWS extends IWebService
 		return array('GetAttachmentCollectionResult' => $obData);
 	}
 
-	function GetWebServiceDesc()
+	public static function GetWebServiceDesc()
 	{
 		$wsdesc = new CWebServiceDesc();
 		$wsdesc->wsname = "bitrix.webservice.intranet.contacts";

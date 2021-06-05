@@ -1,4 +1,5 @@
-<?
+<?php
+
 class CExtranetWizardServices
 {
 	public static function GetTemplates($relativePath)
@@ -52,7 +53,14 @@ class CExtranetWizardServices
 		}
 
 		closedir($handle);
-		uasort($arWizardTemplates, create_function('$a, $b', 'return strcmp($a["SORT"], $b["SORT"]);'));
+
+		uasort(
+			$arWizardTemplates,
+			function ($a, $b) {
+				return strcmp($a["SORT"], $b["SORT"]);
+			}
+		);
+
 		return $arWizardTemplates;
 	}
 
@@ -123,7 +131,7 @@ class CExtranetWizardServices
 		return $arServices;
 	}
 
-	function IncludeServiceLang($relativePath, $lang = false, $bReturnArray = false)
+	public static function IncludeServiceLang($relativePath, $lang = false, $bReturnArray = false)
 	{
 		if($lang === false)
 			$lang = LANGUAGE_ID;
@@ -151,11 +159,11 @@ class CExtranetWizardServices
 		return $arMessages;
 	}
 
-	function GetCurrentSiteID($selectedSiteID = null)
+	public static function GetCurrentSiteID($selectedSiteID = null)
 	{
 		if ($selectedSiteID <> '')
 		{
-			$obSite = CSite::GetList($by = "def", $order = "desc", Array("LID" => $selectedSiteID));
+			$obSite = CSite::GetList("def", "desc", Array("LID" => $selectedSiteID));
 			if (!$arSite = $obSite->Fetch())
 				$selectedSiteID = null;
 		}
@@ -166,7 +174,7 @@ class CExtranetWizardServices
 			$currentSiteID = SITE_ID;
 			if (defined("ADMIN_SECTION"))
 			{
-				$obSite = CSite::GetList($by = "def", $order = "desc", Array("ACTIVE" => "Y"));
+				$obSite = CSite::GetList("def", "desc", Array("ACTIVE" => "Y"));
 				if ($arSite = $obSite->Fetch())
 					$currentSiteID = $arSite["LID"];
 			}
@@ -218,7 +226,13 @@ class CExtranetWizardServices
 			@closedir($handle);
 		}
 
-		uasort($arThemes, create_function('$a, $b', 'return strcmp($a["SORT"], $b["SORT"]);'));
+		uasort(
+			$arThemes,
+			function ($a, $b) {
+				return strcmp($a["SORT"], $b["SORT"]);
+			}
+		);
+
 		return $arThemes;
 	}
 
@@ -257,7 +271,7 @@ class CExtranetWizardServices
 		return $GLOBALS["APPLICATION"]->SetFileAccessPermission($originalPath, $arPermisson);
 	}
 
-	function AddMenuItem($menuFile, $menuItem,  $siteID)
+	public static function AddMenuItem($menuFile, $menuItem,  $siteID)
 	{
 		if (CModule::IncludeModule('fileman'))
 		{
@@ -278,7 +292,7 @@ class CExtranetWizardServices
 		}
 	}
 
-	function ImportIBlockFromXML($xmlFile, $iblockCode, $iblockType, $siteID, $permissions = Array())
+	public static function ImportIBlockFromXML($xmlFile, $iblockCode, $iblockType, $siteID, $permissions = Array())
 	{
 		if (!CModule::IncludeModule("iblock"))
 			return false;
@@ -308,8 +322,7 @@ class CExtranetWizardServices
 		return $iblockID;
 	}
 
-
-	function SetIBlockFormSettings($iblockID, $settings)
+	public static function SetIBlockFormSettings($iblockID, $settings)
 	{
 		global $DBType;
 		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
@@ -336,7 +349,7 @@ class CExtranetWizardServices
 		);
 	}
 
-	function CreateSectionProperty($iblockID, $fieldCode, $arFieldName = Array())
+	public static function CreateSectionProperty($iblockID, $fieldCode, $arFieldName = Array())
 	{
 		$entityID = "IBLOCK_".$iblockID."_SECTION";
 		
@@ -358,8 +371,7 @@ class CExtranetWizardServices
 		$GLOBALS["USER_FIELD_MANAGER"]->arFieldsCache = array();
 		return $fieldID;
 	}
-	
-	
+
 	public static function ReplaceMacrosRecursive($filePath, $arReplace)
 	{
 
@@ -422,7 +434,4 @@ class CExtranetWizardServices
 
 		}
 	}
-
-	
 }
-?>

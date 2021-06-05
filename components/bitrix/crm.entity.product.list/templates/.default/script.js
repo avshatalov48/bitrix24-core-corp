@@ -291,6 +291,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  });
 	};
 
+	function _templateObject$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\thref=\"#\"\n\t\t\t\t\tclass=\"main-grid-delete-button\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t></a>\n\t\t\t"]);
+
+	  _templateObject$1 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -609,8 +619,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "enableEdit",
 	    value: function enableEdit() {
-	      this.getGrid().getRows().selectAll();
-	      this.getGrid().editSelected();
+	      // Cannot use editSelected because checkboxes have been removed
+	      var rows = this.getGrid().getRows().getRows();
+	      rows.forEach(function (current) {
+	        if (!current.isHeadChild() && !current.isTemplate()) {
+	          current.edit();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "addFirstRowIfEmpty",
@@ -847,6 +862,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "getCommonPrecision",
 	    value: function getCommonPrecision() {
 	      return this.getSettingValue('commonPrecision', DEFAULT_PRECISION);
+	    }
+	  }, {
+	    key: "getTaxList",
+	    value: function getTaxList() {
+	      return this.getSettingValue('taxList', []);
 	    }
 	  }, {
 	    key: "getTaxAllowed",
@@ -1183,6 +1203,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          var item = _step.value;
 	          var fields = babelHelpers.objectSpread({}, item.fields);
 	          this.products.push(new Row(item.rowId, fields, {}, this));
+	          var row = this.getGrid().getRows().getById(fields.ID);
+
+	          if (row) {
+	            this.setDeleteButton(row.getNode(), fields.ID);
+	          }
 	        }
 	      } catch (err) {
 	        _iterator.e(err);
@@ -1385,6 +1410,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      var newNode = newRow.getNode();
+	      this.setDeleteButton(newNode, newId);
 
 	      if (main_core.Type.isDomNode(newNode)) {
 	        newNode.setAttribute('data-id', newId);
@@ -1400,6 +1426,27 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      grid.updateCounterDisplayed();
 	      grid.updateCounterSelected();
 	      return newRow;
+	    }
+	  }, {
+	    key: "setDeleteButton",
+	    value: function setDeleteButton(row, rowId) {
+	      if (this.isReadOnly()) {
+	        return;
+	      }
+
+	      var actionCellContentContainer = row.querySelector('.main-grid-cell-action .main-grid-cell-content');
+
+	      if (rowId) {
+	        // BX.Main.grid._onClickOnRow needs to be a link or input here
+	        var deleteButton = main_core.Tag.render(_templateObject$1(), this.handleDeleteRow.bind(this, rowId), main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'));
+	        main_core.Dom.append(deleteButton, actionCellContentContainer);
+	      }
+	    }
+	  }, {
+	    key: "handleDeleteRow",
+	    value: function handleDeleteRow(rowId, event) {
+	      event.preventDefault();
+	      this.deleteRow(rowId);
 	    }
 	  }, {
 	    key: "redefineTemplateEditData",
@@ -2488,12 +2535,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "changeTaxId",
 	    value: function changeTaxId(value) {
-	      var taxNode = this.getTaxNode();
-	      var taxOptionNode = this.getNode().querySelector("option[data-tax-id=\"".concat(value, "\"]"));
+	      var taxList = this.getEditor().getTaxList();
 
-	      if (main_core.Type.isDomNode(taxNode) && main_core.Type.isDomNode(taxOptionNode)) {
-	        taxNode.value = taxOptionNode.value;
-	        this.changeTaxRate(this.parseFloat(taxOptionNode.value));
+	      if (main_core.Type.isArrayFilled(taxList)) {
+	        var taxRate = taxList.find(function (item) {
+	          return parseInt(item.ID) === parseInt(value);
+	        });
+
+	        if (taxRate) {
+	          this.changeTaxRate(this.parseFloat(taxRate.VALUE));
+	        }
 	      }
 	    }
 	  }, {
@@ -2898,7 +2949,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        case 'input':
 	          if (field === 'QUANTITY') {
 	            value = this.parseFloat(value, this.getQuantityPrecision());
-	          } else if (field === 'DISCOUNT_RATE') {
+	          } else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE') {
 	            value = this.parseFloat(value, this.getCommonPrecision());
 	          } else if (main_core.Type.isNumber(value)) {
 	            value = this.parseFloat(value, this.getPricePrecision()).toFixed(this.getPricePrecision());
@@ -2966,6 +3017,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        case 'PRICE_NETTO':
 	        case 'PRICE_BRUTTO':
 	        case 'QUANTITY':
+	        case 'TAX_RATE':
 	        case 'DISCOUNT_RATE':
 	        case 'DISCOUNT_SUM':
 	        case 'DISCOUNT_ROW':
@@ -2977,10 +3029,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	        case 'DISCOUNT_TYPE_ID':
 	          result = 'discount_type_field';
-	          break;
-
-	        case 'TAX_RATE':
-	          result = 'list';
 	          break;
 
 	        case 'TAX_INCLUDED':

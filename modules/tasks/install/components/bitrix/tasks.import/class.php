@@ -443,7 +443,7 @@ class TasksImportComponent extends TasksBaseComponent
 						: 'TASKS_IMPORT_ERRORS_FILE_ERRORS'
 				));
 			}
-			if (($error = CFile::CheckFile($_FILES['file'], 0, 0, 'csv')) !== '')
+			if (($error = CFile::CheckFile($_FILES['file'], 0, false, 'csv')) !== '')
 			{
 				$this->arResult['ERRORS']['FILE_LABEL'] = $error;
 			}

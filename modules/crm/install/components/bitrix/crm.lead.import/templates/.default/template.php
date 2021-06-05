@@ -80,7 +80,7 @@ foreach($arTabs as &$tab)
 		$params = isset($field['componentParams']) ? $field['componentParams'] : array();
 		if($value !== '')
 		{
-			$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID'=> $value), array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE')));
+			$dbUsers = CUser::GetList('ID', 'ASC', array('ID'=> $value), array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE')));
 			if($user = $dbUsers->Fetch())
 			{
 				$params['USER'] = $user;

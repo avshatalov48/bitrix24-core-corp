@@ -192,7 +192,7 @@ class CIMEvent
 						$arSites = array();
 						$extranet_site_id = CExtranet::GetExtranetSiteID();
 						$intranet_site_id = CSite::GetDefSite();
-						$dbSite = CSite::GetList($by="sort", $order="desc", array("ACTIVE" => "Y"));
+						$dbSite = CSite::GetList("sort", "desc", array("ACTIVE" => "Y"));
 						while($arSite = $dbSite->Fetch())
 						{
 							$arSites[$arSite["ID"]] = array(

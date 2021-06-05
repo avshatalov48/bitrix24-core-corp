@@ -281,7 +281,7 @@ class CTasksWebService extends IWebService
 
 			foreach ($arFilters as $arFilter)
 			{
-				$dbRes = CUser::GetList($by = 'id', $order = 'asc', $arFilter);
+				$dbRes = CUser::GetList('id', 'asc', $arFilter);
 				if ($arUser = $dbRes->Fetch())
 				{
 					$USER_ID = $arUser['ID'];
@@ -982,7 +982,7 @@ class CTasksWebService extends IWebService
 	}
 
 
-	function GetWebServiceDesc()
+	public static function GetWebServiceDesc()
 	{
 		$wsdesc = new CWebServiceDesc();
 		$wsdesc->wsname = "bitrix.webservice.tasks";

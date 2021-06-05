@@ -33,7 +33,7 @@ CModule::IncludeModule('tasks');
 Loc::loadMessages(__FILE__);
 
 $arSubDeps = CTasks::GetSubordinateDeps();
-$dbRes = CUser::GetList($by='ID', $order='ASC', array('ID' => $USER->GetID()), array('SELECT' => array('UF_DEPARTMENT')));
+$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $USER->GetID()), array('SELECT' => array('UF_DEPARTMENT')));
 $arManagers = array();
 if (($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT']) && count($arRes['UF_DEPARTMENT']) > 0)
 {
@@ -114,8 +114,8 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 
 	$limitUsersCount = 10;
 	$dbRes = CUser::GetList(
-		$by = 'last_name', 
-		$order = 'asc',
+		'last_name',
+		'asc',
 		$arFilter,
 		array(
 			'SELECT'     => array('UF_DEPARTMENT'),

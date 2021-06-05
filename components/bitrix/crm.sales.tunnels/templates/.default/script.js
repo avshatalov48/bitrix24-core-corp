@@ -1227,7 +1227,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      if (this.marker) {
 	        this.marker.container = this.getData().appContainer;
-	        this.marker.cache.clear();
+
+	        if (main_core.Type.isFunction(this.marker.cache.clear)) {
+	          this.marker.cache.clear();
+	        }
 	      }
 	    }
 	  }, {
@@ -1813,7 +1816,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject16() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-generator-link\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-generator-link crm-st-generator\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
 
 	  _templateObject16 = function _templateObject16() {
 	    return data;
@@ -1823,7 +1826,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject15() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-robots-link\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<span class=\"crm-st-category-info-links-link crm-st-robots-link crm-st-automation\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"]);
 
 	  _templateObject15 = function _templateObject15() {
 	    return data;
@@ -1893,7 +1896,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-generator\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
 
 	  _templateObject8 = function _templateObject8() {
 	    return data;
@@ -1903,7 +1906,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-info-links-help crm-st-automation\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"]);
 
 	  _templateObject7 = function _templateObject7() {
 	    return data;
@@ -2001,7 +2004,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this.name = options.name;
 	    _this.access = options.access;
 	    _this.sort = Number.parseInt(options.sort);
-	    _this.default = options.default;
+	    _this.default = Boolean(options.default);
 	    _this.generatorsCount = Number(options.generatorsCount);
 	    _this.generatorsListUrl = options.generatorsListUrl;
 	    _this.stages = options.stages;
@@ -2016,6 +2019,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
 	    _this.isAvailableRobots = options.isAvailableRobots;
 	    _this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
+	    _this.isSenderSupported = options.isSenderSupported;
+	    _this.isAutomationEnabled = options.isAutomationEnabled;
+	    _this.isStagesEnabled = options.isStagesEnabled;
 
 	    if (!options.lazy) {
 	      _this.draw();
@@ -2065,12 +2071,32 @@ this.BX.Crm = this.BX.Crm || {};
 	      }, 500);
 	    });
 
+	    if (!_this.isAutomationEnabled) {
+	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-automation-disabled');
+
+	      _this.getAllColumns().forEach(function (column) {
+	        column.marker.disable();
+	      });
+	    }
+
+	    if (!_this.isStagesEnabled) {
+	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-stages-stub');
+	    }
+
+	    if (!_this.isSenderSupported) {
+	      main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-generator-disabled');
+	    }
+
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(Category, [{
 	    key: "hasTunnels",
 	    value: function hasTunnels() {
+	      if (!this.isAutomationEnabled) {
+	        return false;
+	      }
+
 	      return this.getAllColumns().some(function (column) {
 	        return column.marker.links.size > 0;
 	      });
@@ -2236,7 +2262,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this7 = this;
 
 	      return this.cache.remember('progressContainer', function () {
-	        return main_core.Tag.render(_templateObject9(), main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_IN_PROGRESS'), _this7.getProgressStagesContainer());
+	        return main_core.Tag.render(_templateObject9(), main_core.Loc.getMessage(_this7.isStagesEnabled ? 'CRM_ST_STAGES_GROUP_IN_PROGRESS' : 'CRM_ST_STAGES_DISABLED'), _this7.getProgressStagesContainer());
 	      });
 	    }
 	  }, {
@@ -2272,7 +2298,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this9 = this;
 
 	      return this.cache.remember('successContainer', function () {
-	        return main_core.Tag.render(_templateObject11(), main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS'), _this9.getSuccessStagesContainer());
+	        return main_core.Tag.render(_templateObject11(), _this9.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS') : '', _this9.getSuccessStagesContainer());
 	      });
 	    }
 	  }, {
@@ -2290,9 +2316,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.cache.remember('successKanban', function () {
 	        return Category.createGrid({
 	          renderTo: _this10.getSuccessStagesContainer(),
-	          canEditColumn: _this10.canEditTunnels,
 	          editable: _this10.canEditTunnels,
-	          canRemoveColumn: _this10.allowWrite,
 	          columns: _this10.stages.S.map(function (stage) {
 	            return new Column({
 	              id: stage.STATUS_ID,
@@ -2312,7 +2336,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this11 = this;
 
 	      return this.cache.remember('failContainer', function () {
-	        return main_core.Tag.render(_templateObject13(), main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL'), _this11.getFailStagesContainer());
+	        return main_core.Tag.render(_templateObject13(), _this11.isStagesEnabled ? main_core.Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL') : '', _this11.getFailStagesContainer());
 	      });
 	    }
 	  }, {
@@ -2331,8 +2355,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        return Category.createGrid({
 	          renderTo: _this12.getFailStagesContainer(),
 	          editable: _this12.canEditTunnels,
-	          canEditColumn: _this12.canEditTunnels,
-	          canRemoveColumn: _this12.canEditTunnels,
 	          columns: _this12.stages.F.map(function (stage) {
 	            return new Column({
 	              id: stage.STATUS_ID,
@@ -2766,7 +2788,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.cache.remember('removeButton', function () {
 	        var button = main_core.Tag.render(_templateObject23(), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
 
-	        if (String(_this22.id) === '0') {
+	        if (_this22.default) {
 	          main_core.Tag.style(button)(_templateObject24());
 	        }
 
@@ -3063,9 +3085,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          analyticsLabel = _ref.analyticsLabel;
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runComponentAction(Backend.component, action, {
-	          mode: 'ajax',
+	          mode: 'class',
 	          data: {
-	            data: data
+	            data: data,
+	            entityTypeId: Backend.entityTypeId
 	          },
 	          analyticsLabel: analyticsLabel
 	        }).then(resolve, reject);
@@ -3243,6 +3266,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
+	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
 
 	var CategoryStub = /*#__PURE__*/function (_Category) {
 	  babelHelpers.inherits(CategoryStub, _Category);
@@ -3253,6 +3277,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, CategoryStub);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CategoryStub).call(this, options));
 	    main_core.Dom.addClass(_this.getContainer(), 'crm-st-category-stub');
+	    main_core.Dom.removeClass(_this.getContainer(), 'crm-st-category-automation-disabled');
 
 	    _this.getAllColumns().forEach(function (column) {
 	      column.marker.disable();
@@ -3276,12 +3301,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	function makeErrorMessageFromResponse(_ref) {
-	  var data = _ref.data;
-
-	  if (main_core.Type.isArray(data.errors) && data.errors.length > 0) {
-	    return data.errors.reduce(function (acc, errorText) {
+	function makeErrorMessageFromResponse(response) {
+	  if (response.data && response.data.errors && main_core.Type.isArray(response.data.errors) && response.data.errors.length > 0) {
+	    return response.data.errors.reduce(function (acc, errorText) {
 	      return "".concat(acc).concat(main_core.Text.encode(errorText), "<br>");
+	    }, '');
+	  }
+
+	  if (response.errors && main_core.Type.isArray(response.errors) && response.errors.length > 0) {
+	    return response.errors.reduce(function (result, error) {
+	      return "".concat(result).concat(main_core.Text.encode(error.message ? error.message : error), "<br>");
 	    }, '');
 	  }
 
@@ -3294,6 +3323,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, Manager);
 	    this.container = options.container;
+	    this.entityTypeId = options.entityTypeId;
+	    this.documentType = options.documentType;
 	    this.addCategoryButtonTop = options.addCategoryButtonTop;
 	    this.helpButton = options.helpButton;
 	    this.categoriesOptions = options.categories;
@@ -3301,7 +3332,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.generatorUrl = options.generatorUrl;
 	    this.permissionEditUrl = options.permissionEditUrl;
 	    this.tunnelScheme = options.tunnelScheme;
-	    this.allowWrite = Boolean(options.allowWrite);
 	    this.canEditTunnels = Boolean(options.canEditTunnels);
 	    this.canAddCategory = Boolean(options.canAddCategory);
 	    this.categoriesQuantityLimit = Number(options.categoriesQuantityLimit);
@@ -3310,10 +3340,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
 	    this.isAvailableRobots = options.isAvailableRobots;
 	    this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
+	    this.isSenderSupported = options.isSenderSupported;
+	    this.isStagesEnabled = options.isStagesEnabled;
+	    this.isAutomationEnabled = options.isAutomationEnabled && this.isStagesEnabled;
 	    this.categories = new Map();
 	    this.cache = new main_core.Cache.MemoryCache();
+	    this.isChanged = false;
 	    this.initCategories();
 	    this.initTunnels();
+	    Backend.entityTypeId = this.entityTypeId;
 	    setTimeout(function () {
 	      if (!_this.hasTunnels()) {
 	        _this.showCategoryStub();
@@ -3322,6 +3357,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Event.bind(this.getAddCategoryButton(), 'click', this.onAddCategoryClick.bind(this));
 	    main_core.Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 	    main_core.Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
+	    var toolbarComponent = main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent') ? main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent').Instance : null;
+	    var slider = this.getSlider();
+
+	    if (slider && toolbarComponent) {
+	      main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
+	        if (_this.isChanged) {
+	          toolbarComponent.emitCategoriesUpdatedEvent();
+	        }
+	      });
+	    }
 	  }
 
 	  babelHelpers.createClass(Manager, [{
@@ -3406,6 +3451,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (_this5.isShownCategoryStub()) {
 	            _this5.hideCategoryStub();
 	          }
+	        }).catch(function (response) {
+	          _this5.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      } else {
 	        try {
@@ -3460,7 +3507,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          isAvailableGenerator: true,
 	          showGeneratorRestrictionPopup: function showGeneratorRestrictionPopup() {},
 	          isAvailableRobots: true,
-	          showRobotsRestrictionPopup: function showRobotsRestrictionPopup() {}
+	          showRobotsRestrictionPopup: function showRobotsRestrictionPopup() {},
+	          isStagesEnabled: _this6.isStagesEnabled
 	        });
 	      });
 	    }
@@ -3480,7 +3528,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          _categoryStub$getProg2 = babelHelpers.slicedToArray(_categoryStub$getProg, 1),
 	          columnTo = _categoryStub$getProg2[0];
 
-	      columnFrom.marker.addStubLinkTo(columnTo.marker, true);
+	      if (this.isAutomationEnabled) {
+	        columnFrom.marker.addStubLinkTo(columnTo.marker, true);
+	      }
 	    }
 	  }, {
 	    key: "hideCategoryStub",
@@ -3509,13 +3559,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function addCategoryFromOptions(options) {
 	      var _this7 = this;
 
+	      var stages = options.STAGES;
+
+	      if (!this.isStagesEnabled) {
+	        stages = {
+	          P: createStageStubs(5),
+	          S: createStageStubs(1),
+	          F: createStageStubs(2)
+	        };
+	      }
+
 	      var category = new Category({
 	        renderTo: this.getCategoriesContainer(),
 	        appContainer: this.getAppContainer(),
 	        id: options.ID,
 	        name: options.NAME,
-	        'default': options.IS_DEFAULT,
-	        stages: options.STAGES,
+	        'default': options.IS_DEFAULT === 'Y',
+	        stages: stages,
 	        sort: options.SORT,
 	        access: options.ACCESS,
 	        robotsSettingsLink: this.robotsUrl,
@@ -3523,12 +3583,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        permissionEditLink: this.permissionEditUrl,
 	        generatorsCount: options.RC_COUNT,
 	        generatorsListUrl: options.RC_LIST_URL,
-	        allowWrite: this.allowWrite,
 	        canEditTunnels: this.canEditTunnels,
 	        isAvailableGenerator: this.isAvailableGenerator,
 	        showGeneratorRestrictionPopup: this.showGeneratorRestrictionPopup,
 	        isAvailableRobots: this.isAvailableRobots,
-	        showRobotsRestrictionPopup: this.showRobotsRestrictionPopup
+	        showRobotsRestrictionPopup: this.showRobotsRestrictionPopup,
+	        isAutomationEnabled: this.isAutomationEnabled,
+	        isSenderSupported: this.isSenderSupported,
+	        isStagesEnabled: this.isStagesEnabled
 	      });
 	      category.subscribe('Category:title:save', function (event) {
 	        var _event$data = event.data,
@@ -3539,20 +3601,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          fields: {
 	            NAME: value
 	          }
-	        }).then(function (_ref) {
-	          var data = _ref.data;
-
-	          if (data.success) {
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	              autoHideDelay: 1500,
-	              category: 'save'
-	            });
-	          } else {
-	            _this7.showErrorPopup(makeErrorMessageFromResponse({
-	              data: data
-	            }));
-	          }
+	        }).then(function () {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	            autoHideDelay: 1500,
+	            category: 'save'
+	          });
+	          _this7.isChanged = true;
+	        }).catch(function (response) {
+	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      }).subscribe('Category:access', function (event) {
 	        var _event$data2 = event.data,
@@ -3561,32 +3618,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        Backend.accessCategory({
 	          id: categoryId,
 	          access: access
-	        }).then(function (_ref2) {
-	          var data = _ref2.data;
-
-	          if (data.success) {
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	              autoHideDelay: 1500,
-	              category: 'save'
-	            });
-	          } else {
-	            _this7.showErrorPopup(makeErrorMessageFromResponse({
-	              data: data
-	            }));
-	          }
-	        }, function (_ref3) {
-	          var errors = _ref3.errors;
-	          var data = [];
-	          errors.forEach(function (item) {
-	            return data.push(item.message);
+	        }).then(function () {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	            autoHideDelay: 1500,
+	            category: 'save'
 	          });
-
-	          _this7.showErrorPopup(makeErrorMessageFromResponse({
-	            data: {
-	              errors: data
-	            }
-	          }));
+	        }).catch(function (response) {
+	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      }).subscribe('Category:access:copy', function (event) {
 	        var _event$data3 = event.data,
@@ -3595,54 +3634,25 @@ this.BX.Crm = this.BX.Crm || {};
 	        Backend.copyAccessCategory({
 	          id: categoryId,
 	          donorId: donorCategoryId
-	        }).then(function (_ref4) {
-	          var data = _ref4.data;
-
-	          if (data.success) {
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	              autoHideDelay: 1500,
-	              category: 'save'
-	            });
-	          } else {
-	            _this7.showErrorPopup(makeErrorMessageFromResponse({
-	              data: data
-	            }));
-	          }
-	        }, function (_ref5) {
-	          var errors = _ref5.errors;
-	          var data = [];
-	          errors.forEach(function (item) {
-	            return data.push(item.message);
+	        }).then(function () {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	            autoHideDelay: 1500,
+	            category: 'save'
 	          });
-
-	          _this7.showErrorPopup(makeErrorMessageFromResponse({
-	            data: {
-	              errors: data
-	            }
-	          }));
+	        }).catch(function (response) {
+	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      }).subscribe('Category:remove', function (event) {
 	        Backend.removeCategory({
 	          id: event.data.categoryId
-	        }).then(function (_ref6) {
-	          var data = _ref6.data;
-
-	          if (data.success) {
-	            event.data.onConfirm();
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	              autoHideDelay: 1500,
-	              category: 'save'
-	            });
-	          } else {
-	            event.data.onCancel();
-
-	            _this7.showErrorPopup(makeErrorMessageFromResponse({
-	              data: data
-	            }));
-	          }
-
+	        }).then(function () {
+	          event.data.onConfirm();
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	            autoHideDelay: 1500,
+	            category: 'save'
+	          });
 	          setTimeout(function () {
 	            if (_this7.isShownCategoryStub()) {
 	              _this7.hideCategoryStub();
@@ -3654,8 +3664,17 @@ this.BX.Crm = this.BX.Crm || {};
 
 	            _this7.adjustCategoryStub();
 	          });
+	          _this7.isChanged = true;
+	        }).catch(function (response) {
+	          event.data.onCancel();
+
+	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      }).subscribe('Column:link', function (event) {
+	        if (!_this7.isAutomationEnabled) {
+	          return;
+	        }
+
 	        if (!event.data.preventSave) {
 	          var from = {
 	            category: event.data.link.from.getData().column.getData().category.id,
@@ -3669,28 +3688,28 @@ this.BX.Crm = this.BX.Crm || {};
 	            from: from,
 	            to: to
 	          }).then(function (response) {
-	            if (response.data.success) {
-	              ui_notification.UI.Notification.Center.notify({
-	                content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	                autoHideDelay: 1500,
-	                category: 'save'
-	              });
+	            ui_notification.UI.Notification.Center.notify({
+	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	              autoHideDelay: 1500,
+	              category: 'save'
+	            });
 
-	              var stage = _this7.getStages().find(function (item) {
-	                return String(item.CATEGORY_ID) === String(response.data.tunnel.srcCategory) && String(item.STATUS_ID) === String(response.data.tunnel.srcStage);
-	              });
+	            var stage = _this7.getStages().find(function (item) {
+	              return String(item.CATEGORY_ID) === String(response.data.tunnel.srcCategory) && String(item.STATUS_ID) === String(response.data.tunnel.srcStage);
+	            });
 
-	              stage.TUNNELS.push(response.data.tunnel);
-	            } else {
-	              _this7.showErrorPopup(makeErrorMessageFromResponse({
-	                data: response.data
-	              }));
-	            }
+	            stage.TUNNELS.push(response.data.tunnel);
+	          }).catch(function (response) {
+	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	          });
 	        }
 
 	        _this7.hideCategoryStub();
 	      }).subscribe('Column:removeLinkFrom', function (event) {
+	        if (!_this7.isAutomationEnabled) {
+	          return;
+	        }
+
 	        if (!event.data.preventSave) {
 	          var columnFrom = event.data.link.from.getData().column;
 	          var columnTo = event.data.link.to.getData().column;
@@ -3709,20 +3728,14 @@ this.BX.Crm = this.BX.Crm || {};
 	              dstStage: dstStage,
 	              robot: tunnel.robot
 	            };
-	            Backend.removeRobot(requestOptions).then(function (_ref7) {
-	              var data = _ref7.data;
-
-	              if (data.success) {
-	                ui_notification.UI.Notification.Center.notify({
-	                  content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	                  autoHideDelay: 1500,
-	                  category: 'save'
-	                });
-	              } else {
-	                _this7.showErrorPopup(makeErrorMessageFromResponse({
-	                  data: data
-	                }));
-	              }
+	            Backend.removeRobot(requestOptions).then(function () {
+	              ui_notification.UI.Notification.Center.notify({
+	                content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	                autoHideDelay: 1500,
+	                category: 'save'
+	              });
+	            }).catch(function (response) {
+	              _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	            });
 
 	            var stage = _this7.getStageDataById(srcStage);
@@ -3735,10 +3748,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 	      }).subscribe('Column:editLink', function (event) {
+	        if (!_this7.isAutomationEnabled) {
+	          return;
+	        }
+
 	        var tunnel = _this7.getTunnelByLink(event.data.link); // eslint-disable-next-line
 
 
-	        BX.Bizproc.Automation.API.showRobotSettings(tunnel.robot, ['crm', 'CCrmDocumentDeal', 'DEAL'], tunnel.srcStage, function (robot) {
+	        BX.Bizproc.Automation.API.showRobotSettings(tunnel.robot, _this7.documentType, tunnel.srcStage, function (robot) {
 	          tunnel.robot = robot.serialize();
 	          Backend.request({
 	            action: 'updateRobot',
@@ -3747,30 +3764,23 @@ this.BX.Crm = this.BX.Crm || {};
 	              action: 'update.robot'
 	            },
 	            data: tunnel
-	          }).then(function (_ref8) {
-	            var data = _ref8.data;
+	          }).then(function () {
+	            ui_notification.UI.Notification.Center.notify({
+	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	              autoHideDelay: 1500,
+	              category: 'save'
+	            });
+	            tunnel.dstCategory = robot.getProperty('CategoryId');
+	            tunnel.dstStage = robot.getProperty('StageId');
 
-	            if (data.success) {
-	              ui_notification.UI.Notification.Center.notify({
-	                content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	                autoHideDelay: 1500,
-	                category: 'save'
-	              });
-	              tunnel.dstCategory = robot.getProperty('CategoryId');
-	              tunnel.dstStage = robot.getProperty('StageId');
+	            var category = _this7.getCategory(tunnel.dstCategory);
 
-	              var _category = _this7.getCategory(tunnel.dstCategory);
+	            var column = category.getKanbanColumn(tunnel.dstStage);
+	            event.data.link.from.updateLink(event.data.link, column.marker, true);
 
-	              var column = _category.getKanbanColumn(tunnel.dstStage);
-
-	              event.data.link.from.updateLink(event.data.link, column.marker, true);
-
-	              _this7.adjustCategoryStub();
-	            } else {
-	              _this7.showErrorPopup(makeErrorMessageFromResponse({
-	                data: data
-	              }));
-	            }
+	            _this7.adjustCategoryStub();
+	          }).catch(function (response) {
+	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	          });
 	        });
 	      }).subscribe('Category:sort', function () {
@@ -3790,34 +3800,32 @@ this.BX.Crm = this.BX.Crm || {};
 	            autoHideDelay: 1500,
 	            category: 'save'
 	          });
+	          _this7.isChanged = true;
 	        });
 	      }).subscribe('Column:remove', function (event) {
 	        if (!main_core.Type.isNil(event.data.column.data.stageId)) {
-	          var hasTunnels = babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
+	          var hasTunnels = _this7.isAutomationEnabled ? babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
 	            return event.data.column.marker === item.from || event.data.column.marker === item.to;
-	          });
+	          }) : false;
 	          Backend.removeStage({
 	            statusId: event.data.column.getId(),
 	            stageId: event.data.column.data.stageId,
 	            entityId: event.data.column.data.entityId
-	          }).then(function (response) {
-	            if (response.data.success) {
-	              event.data.onConfirm();
+	          }).then(function () {
+	            event.data.onConfirm();
 
-	              if (!hasTunnels) {
-	                ui_notification.UI.Notification.Center.notify({
-	                  content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	                  autoHideDelay: 1500,
-	                  category: 'save'
-	                });
-	              }
-	            } else {
-	              event.data.onCancel();
-
-	              _this7.showErrorPopup(makeErrorMessageFromResponse({
-	                data: response.data
-	              }));
+	            if (!hasTunnels) {
+	              ui_notification.UI.Notification.Center.notify({
+	                content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	                autoHideDelay: 1500,
+	                category: 'save'
+	              });
+	              _this7.isChanged = true;
 	            }
+	          }).catch(function (response) {
+	            event.data.onCancel();
+
+	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	          });
 	        }
 	      }).subscribe('Column:change', function (event) {
@@ -3828,8 +3836,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          name: event.data.column.getName(),
 	          sort: event.data.column.data.stage.SORT,
 	          color: event.data.column.getColor()
-	        }).then(function (_ref9) {
-	          var data = _ref9.data;
+	        }).then(function (_ref) {
+	          var data = _ref.data;
 
 	          if (data.success) {
 	            ui_notification.UI.Notification.Center.notify({
@@ -3837,6 +3845,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              autoHideDelay: 1500,
 	              category: 'save'
 	            });
+	            _this7.isChanged = true;
 	          } else {
 	            _this7.showErrorPopup(makeErrorMessageFromResponse({
 	              data: data
@@ -3865,34 +3874,30 @@ this.BX.Crm = this.BX.Crm || {};
 	            var prevColumn = grid.getPreviousColumnSibling(column);
 	            return prevColumn.data.stage.SEMANTICS;
 	          }()
-	        }).then(function (_ref10) {
-	          var data = _ref10.data;
+	        }).then(function (_ref2) {
+	          var data = _ref2.data;
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+	            autoHideDelay: 1500,
+	            category: 'save'
+	          });
+	          _this7.isChanged = true;
+	          var column = event.data.column;
+	          var stage = data.stage;
+	          var grid = column.getGrid();
+	          var prevColumn = grid.getPreviousColumnSibling(column);
 
-	          if (data.success) {
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
-	              autoHideDelay: 1500,
-	              category: 'save'
-	            });
-	            var column = event.data.column;
-	            var stage = data.stage;
-	            var grid = column.getGrid();
-	            var prevColumn = grid.getPreviousColumnSibling(column);
+	          var category = _this7.getCategory(prevColumn.data.category.id);
 
-	            var _category2 = _this7.getCategory(prevColumn.data.category.id);
+	          stage.TUNNELS = [];
 
-	            stage.TUNNELS = [];
+	          _this7.getStages().push(stage);
 
-	            _this7.getStages().push(stage);
-
-	            column.setOptions({
-	              data: _category2.getColumnData(stage)
-	            });
-	          } else {
-	            _this7.showErrorPopup(makeErrorMessageFromResponse({
-	              data: data
-	            }));
-	          }
+	          column.setOptions({
+	            data: category.getColumnData(stage)
+	          });
+	        }).catch(function (response) {
+	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	        });
 	      }).subscribe('Column:sort', function (event) {
 	        var sortData = event.data.columns.map(function (column, index) {
@@ -3908,8 +3913,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          column.data.stage.SORT = newSorting;
 	          return columnData;
 	        });
-	        Backend.updateStages(sortData).then(function (_ref11) {
-	          var data = _ref11.data;
+	        Backend.updateStages(sortData).then(function (_ref3) {
+	          var data = _ref3.data;
 	          var success = data.every(function (item) {
 	            return item.success;
 	          });
@@ -3920,6 +3925,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              autoHideDelay: 1500,
 	              category: 'save'
 	            });
+	            _this7.isChanged = true;
 	          } else {
 	            _this7.showErrorPopup(makeErrorMessageFromResponse({
 	              data: data
@@ -4037,6 +4043,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "initTunnels",
 	    value: function initTunnels() {
 	      var _this10 = this;
+
+	      if (!this.isAutomationEnabled) {
+	        return;
+	      }
 
 	      this.getStages().filter(function (stage) {
 	        return main_core.Type.isArray(stage.TUNNELS) && stage.TUNNELS.length;

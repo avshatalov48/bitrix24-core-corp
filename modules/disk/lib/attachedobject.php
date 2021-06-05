@@ -150,6 +150,16 @@ final class AttachedObject extends Internals\Model
 		return $connector->canUpdate($userId);
 	}
 
+	public function canLock($userId)
+	{
+		return $this->canUpdate($userId);
+	}
+
+	public function canUnlock($userId)
+	{
+		return $this->canUpdate($userId);
+	}
+
 	/**
 	 * Sets operable entity.
 	 * Need to optimize work in components disk.uf.file, disk.uf.version.

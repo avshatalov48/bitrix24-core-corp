@@ -11,7 +11,7 @@ Loc::loadMessages(__FILE__);
  */
 class CUserTypeCrmStatus extends CUserTypeString
 {
-	function getUserTypeDescription()
+	public static function getUserTypeDescription()
 	{
 		return StatusType::getUserTypeDescription();
 	}

@@ -260,7 +260,7 @@ class File extends BaseObject
 		{
 			return $this->file;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$this->file = \CFile::getByID($this->fileId)->fetch();
 
 		if(!$this->file)
@@ -380,7 +380,7 @@ class File extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$forkFileId = \CFile::copyFile($this->getFileId(), true);
 		if(!$forkFileId)
 		{
@@ -388,7 +388,7 @@ class File extends BaseObject
 			return null;
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileArray = \CFile::getFileArray($forkFileId);
 		$fileModel = $targetFolder->addFile(array(
 			'NAME' => $this->getName(),
@@ -434,16 +434,24 @@ class File extends BaseObject
 	/**
 	 * Returns object lock model.
 	 *
-	 * @return ObjectLock
+	 * @return ObjectLock|null
 	 */
 	public function getLock()
 	{
-		if($this->isLoadedAttribute('lock'))
+		if ($this->isLoadedAttribute('lock'))
 		{
 			return $this->lock;
 		}
-		$this->lock = ObjectLock::load(array('OBJECT_ID' => $this->getRealObjectId()));
+
+		$lock = ObjectLock::load(['OBJECT_ID' => $this->getRealObjectId()]);
+		$this->lock = $lock;
 		$this->setAsLoadedAttribute('lock');
+
+		if ($lock && $lock->shouldProcessAutoUnlock())
+		{
+			$this->unlock(SystemUser::SYSTEM_USER_ID);
+			$this->lock = null;
+		}
 
 		return $this->lock;
 	}
@@ -499,47 +507,49 @@ class File extends BaseObject
 	public function unlock($unlockedBy, $token = null)
 	{
 		$objectLock = $this->getLock();
-		if(!$objectLock)
+		if (!$objectLock)
 		{
 			return true;
 		}
 
 		if (!$objectLock->canUnlock($unlockedBy))
 		{
-			$createLockUser = $objectLock->getCreateUser();
-			if ($createLockUser)
-			{
-				$this->errorCollection->addOne(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK_2', [
-					'#USER#' => "<a href='{$createLockUser->getDetailUrl()}'>" . htmlspecialcharsbx($createLockUser->getFormattedName()) . "</a>",
-				]), self::ERROR_INVALID_USER_FOR_UNLOCK));
-			}
-			else
-			{
-				$this->errorCollection->addOne(new Error(
-					Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK'),
-					self::ERROR_INVALID_USER_FOR_UNLOCK
-				));
-			}
+			$this->errorCollection[] = $this->generateUnlockErrorByAnotherUser($objectLock);
+
 			return false;
 		}
 
-		if($token !== null && $objectLock->getToken() !== $token)
+		if ($token !== null && $objectLock->getToken() !== $token)
 		{
 			$this->errorCollection[] = new Error(
 				Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_LOCK_TOKEN'),
 				self::ERROR_INVALID_LOCK_TOKEN
 			);
+
 			return false;
 		}
 
 		$success = $objectLock->delete($unlockedBy);
-		if($success)
+		if ($success)
 		{
 			$this->update(array('SYNC_UPDATE_TIME' => new DateTime()));
 			Driver::getInstance()->sendChangeStatusToSubscribers($this, 'quick');
 		}
 
 		return $success;
+	}
+
+	public function generateUnlockErrorByAnotherUser(ObjectLock $objectLock): Error
+	{
+		$createLockUser = $objectLock->getCreateUser();
+		if ($createLockUser)
+		{
+			return new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK_2', [
+				'#USER#' => "<a href='{$createLockUser->getDetailUrl()}'>" . htmlspecialcharsbx($createLockUser->getFormattedName()) . "</a>",
+			]), self::ERROR_INVALID_USER_FOR_UNLOCK);
+		}
+
+		return new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_INVALID_USER_FOR_UNLOCK'), self::ERROR_INVALID_USER_FOR_UNLOCK);
 	}
 
 	/**
@@ -556,10 +566,11 @@ class File extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		$this->checkRequiredInputParams($file, array(
+		static::checkRequiredInputParams($file, array(
 			'ID', 'FILE_SIZE'
 		));
 
+		$objectLock = null;
 		if(Configuration::isEnabledObjectLock())
 		{
 			$objectLock = $this->getLock();
@@ -590,6 +601,11 @@ class File extends BaseObject
 		}
 
 		$this->changeParentUpdateTime(new DateTime(), $updatedBy);
+
+		if ($objectLock instanceof ObjectLock && Configuration::shouldAutoUnlockObjectOnSave())
+		{
+			$this->unlock($updatedBy);
+		}
 
 		$this->updateLinksAttributes(array(
 			'ETAG' => $this->getEtag(),
@@ -655,7 +671,7 @@ class File extends BaseObject
 
 		if(Configuration::isEnabledStorageSizeRestriction())
 		{
-			$this->checkRequiredInputParams($file, array(
+			static::checkRequiredInputParams($file, array(
 				'FILE_SIZE'
 			));
 
@@ -787,7 +803,7 @@ class File extends BaseObject
 			$attache->getConnector()->addComment($createdBy, array(
 				'text' => $text,
 				'versionId' => $valueVersionUf,
-				'authorGender' => $createUser->getPersonalGender()
+				'authorGender' => $createUser->getPersonalGenderExact()
 			));
 
 			AttachedObject::storeDataByObjectId($this->getId(), null);
@@ -919,7 +935,7 @@ class File extends BaseObject
 		}
 		$fileArray['type'] = TypeFile::normalizeMimeType($fileArray['type'], $this->name);
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileId = CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 		if(!$fileId)
 		{
@@ -928,7 +944,7 @@ class File extends BaseObject
 		}
 		$updateTime = isset($fileArray['UPDATE_TIME'])? $fileArray['UPDATE_TIME'] : null;
 		/** @var array $fileArray */
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileArray = CFile::getFileArray($fileId);
 		if(!$fileArray)
 		{
@@ -1028,7 +1044,7 @@ class File extends BaseObject
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_COULD_NOT_RESTORE_FROM_ANOTHER_OBJECT'), self::ERROR_COULD_NOT_RESTORE_FROM_OBJECT)));
 			return false;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$forkFileId = \CFile::copyFile($version->getFileId(), true);
 
 		if(!$forkFileId)
@@ -1037,7 +1053,7 @@ class File extends BaseObject
 			return false;
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		if($this->addVersion(\CFile::getFileArray($forkFileId), $createdBy, true) === null)
 		{
 			return false;

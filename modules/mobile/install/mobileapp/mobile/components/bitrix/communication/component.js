@@ -438,10 +438,28 @@
 			return true;
 		}
 
+		if( typeof Application.registerVoipNotifications == "function") {
+			Application.registerVoipNotifications().then( ({token, uuid, model}) => {
+				BX.ajax({
+					url : env.siteDir + "mobile/",
+					method : "POST",
+					dataType : "json",
+					tokenSaveRequest : true,
+					data : {
+						mobile_action : "save_device_token",
+						device_name : model,
+						uuid : uuid,
+						device_token_voip : token,
+						device_type : "APPLE",
+					}
+				})
+					.then((data) => console.log("save_device_token response ", data))
+					.catch((e) => console.error(e))
+				;
+			})
+		}
+
 		window.registerSuccess = true;
-
-		console.error(111);
-
 		Cordova.exec(
 			(deviceInfo) =>
 			{
@@ -485,7 +503,6 @@
 								device_name : (typeof device.name == "undefined"? device.model: device.name),
 								uuid : device.uuid,
 								device_token : token,
-								device_token_voip : data.voip ? data.voip : '',
 								device_type : dt,
 							}
 						})
@@ -536,6 +553,14 @@
 			{
 				params = tag.split("|");
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2] + "&commentId=" + params[3] + "#com" + params[3];
+			}
+
+			else if (
+				tag.substr(0, 25) == 'XDIMPORT|COMMENT_MENTION|'
+			)
+			{
+				params = tag.split("|");
+				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=" + params[2];
 			}
 
 			else if(

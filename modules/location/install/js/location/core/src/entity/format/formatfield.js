@@ -1,4 +1,4 @@
-import Field from "../generic/field";
+import Field from '../generic/field';
 
 export default class FormatField extends Field
 {

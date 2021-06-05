@@ -8,7 +8,7 @@ use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Timeman\Monitor\Config;
 use Bitrix\Timeman\Monitor\History\History;
-use Bitrix\Timeman\Monitor\State;
+use Bitrix\Timeman\Monitor\Report\Status;
 
 class Monitor extends Controller
 {
@@ -37,10 +37,46 @@ class Monitor extends Controller
 			return null;
 		}
 
+		foreach ($history as $day)
+		{
+			History::deleteForCurrentUser($day['dateLog'], $day['desktopCode']);
+		}
+
+		$recorded = History::record($history);
+		if ($recorded)
+		{
+			Status::setForCurrentUser(Status::CLOSED);
+		}
+
 		return [
 			'enabled' => $enabled,
 			'state' => $state,
-			'recorded' => History::record($history)
+			'recorded' => $recorded,
 		];
+	}
+
+	public function setStatusWaitingDataAction(): bool
+	{
+		return Status::setForCurrentUser(Status::WAITING_DATA);
+	}
+
+	public function isHistorySentAction(): bool
+	{
+		return Status::getForCurrentUser();
+	}
+
+	public function enableForCurrentUserAction(): bool
+	{
+		return Config::enableForCurrentUser();
+	}
+
+	public function isEnableForCurrentUserAction(): bool
+	{
+		return Config::isMonitorEnabledForCurrentUser();
+	}
+
+	public function isAvailableAction(): bool
+	{
+		return Config::isAvailable();
 	}
 }

@@ -39,4 +39,5 @@ $MESS["DISK_USER_GROUPS_MODS"] = "Модераторы";
 $MESS["DISK_USER_GROUPS_MEMBERS"] = "Члены";
 $MESS["DISK_BZ_D_FIELD_DETAIL_PAGE_URL"] = "Ссылка на страницу детального просмотра файла";
 $MESS["DISK_BZ_ENTITY_NAME"] = "Диск";
+$MESS["DISK_BZ_RESUME_RESTRICTED"] = "Завершено по тарифным ограничениям";
 ?>

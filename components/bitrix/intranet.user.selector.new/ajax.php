@@ -205,7 +205,7 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 				);
 
 				$dbUsers = CUser::GetList(
-					$sort_by = 'last_name', $sort_dir = 'asc',
+					'last_name', 'asc',
 					$arHeadFilter,
 					array('SELECT' => array('UF_DEPARTMENT'))
 				);
@@ -229,7 +229,7 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 			}
 		}
 
-		$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+		$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
 		while ($arRes = $dbRes->Fetch())
 		{
 			//exclude extranet users in accordance with SHOW_EXTRANET_USER parameter

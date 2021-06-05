@@ -109,17 +109,34 @@ class Manager
 	public static function getLanguages()
 	{
 		$list = array();
+
+		$found = false;
 		if (ModuleManager::isModuleInstalled("bitrix24"))
 		{
-			global $b24Languages;
+
 			$fileName = Application::getDocumentRoot() . SITE_TEMPLATE_PATH . "/languages.php";
-			include_once $fileName;
-			if (isset($b24Languages) && is_array($b24Languages))
+			$fileExists = file_exists($fileName);
+			if (!$fileExists)
 			{
-				$list = \Bitrix\Main\Text\Encoding::convertEncoding($b24Languages, 'UTF-8', SITE_CHARSET);
+				$fileName = Application::getDocumentRoot()
+					. getLocalPath('templates/bitrix24', BX_PERSONAL_ROOT)
+					. "/languages.php"
+				;
+				$fileExists = file_exists($fileName);
+			}
+			if ($fileExists)
+			{
+				global $b24Languages;
+				include_once $fileName;
+				if (isset($b24Languages) && is_array($b24Languages))
+				{
+					$list = \Bitrix\Main\Text\Encoding::convertEncoding($b24Languages, 'UTF-8', SITE_CHARSET);
+					$found = !empty($list);
+				}
 			}
 		}
-		else
+
+		if (!$found)
 		{
 			$langDir = Application::getDocumentRoot() . '/bitrix/modules/crm/lang/';
 			$dir = new \Bitrix\Main\IO\Directory($langDir);

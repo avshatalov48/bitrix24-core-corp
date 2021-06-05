@@ -39,7 +39,7 @@ foreach ($arSocNetAllowedSubscribeEntityTypesDesc as $entity_type => $arEntityTy
 		continue;
 	}
 
-	$arEntityTypes[$entity_type] = strtolower((array_key_exists("TITLE_ENTITY_XDI", $arEntityTypeTmp) ? $arEntityTypeTmp["TITLE_ENTITY_XDI"] : $arEntityTypeTmp["TITLE_ENTITY"]));
+	$arEntityTypes[$entity_type] = mb_strtolower((array_key_exists("TITLE_ENTITY_XDI", $arEntityTypeTmp)? $arEntityTypeTmp["TITLE_ENTITY_XDI"] : $arEntityTypeTmp["TITLE_ENTITY"]));
 }	
 
 foreach ($arSocNetLogEvents as $event_id => $arEventTmp)
@@ -115,7 +115,7 @@ $bVarsFromForm = false;
 $message = /*.(CAdminMessage).*/null;
 
 $arSites = array();
-$rsSite = CSite::GetList(($by="sort"), ($order="asc"));
+$rsSite = CSite::GetList();
 while($arSite = $rsSite->Fetch())
 	$arSites[] = $arSite["LID"];
 
@@ -353,9 +353,9 @@ if($ID > 0)
 				$predefined = "sale";
 			}
 		}
-		if (strlen($arRes["URI"]) <= 0)
+		if ($arRes["URI"] == '')
 		{
-			$arRes["URI"] = "http://".$arRes["HOST"].(intval($arRes["PORT"]) > 0 ? ":".$arRes["PORT"] : "").$arRes["PAGE"].($arRes["TYPE"] == "RSS" && strlen($arRes["PARAMS"]) > 0 ? "?".$arRes["PARAMS"] : "");
+			$arRes["URI"] = "http://".$arRes["HOST"].(intval($arRes["PORT"]) > 0 ? ":".$arRes["PORT"] : "").$arRes["PAGE"].($arRes["TYPE"] == "RSS" && $arRes["PARAMS"] <> '' ? "?".$arRes["PARAMS"] : "");
 		}
 
 		$DAYS_OF_WEEK = explode(",", $arRes["DAYS_OF_WEEK"]);
@@ -363,21 +363,21 @@ if($ID > 0)
 
 		while($arSchemeRights = $rsSchemeRights->Fetch())
 		{
-			if (substr($arSchemeRights["GROUP_CODE"], 0, 1) == "U")
+			if (mb_substr($arSchemeRights["GROUP_CODE"], 0, 1) == "U")
 			{
-				if (substr($arSchemeRights["GROUP_CODE"], 1) == "A")
+				if (mb_substr($arSchemeRights["GROUP_CODE"], 1) == "A")
 				{
 					$arRes["RIGHTS_USER_ID"][] = "UA";
 					break;
 				}
-				elseif(substr($arSchemeRights["GROUP_CODE"], 1) == "N")
+				elseif(mb_substr($arSchemeRights["GROUP_CODE"], 1) == "N")
 				{
 					$arRes["RIGHTS_USER_ID"][] = "UN";
 					break;
 				}
-				elseif(intval(substr($arSchemeRights["GROUP_CODE"], 1)) > 0)
+				elseif(intval(mb_substr($arSchemeRights["GROUP_CODE"], 1)) > 0)
 				{
-					$arRes["RIGHTS_USER_ID"][] = substr($arSchemeRights["GROUP_CODE"], 1);
+					$arRes["RIGHTS_USER_ID"][] = mb_substr($arSchemeRights["GROUP_CODE"], 1);
 				}
 			}
 		}
@@ -1120,11 +1120,11 @@ $tabControl->BeginNextTab();
 			<?
 		}
 		?>
-		<tr id="LF_URI_ROW" style="display: <?=(strlen($predefined) > 0 ? "none" : "table-row")?>;" class="adm-detail-required-field">
+		<tr id="LF_URI_ROW" style="display: <?=($predefined <> '' ? "none" : "table-row")?>;" class="adm-detail-required-field">
 			<td><?echo GetMessage("LFP_SCHEME_EDIT_URI")?>:</td>
 			<td><input id="LF_URI" type="text" size="50" name="URI" value="<?=HtmlFilter::encode($arRes["URI"])?>"></td>
 		</tr>
-		<tr id="LF_HOST_ROW" style="display: <?=(strlen($predefined) > 0 ? "table-row" : "none")?>;" class="adm-detail-required-field">
+		<tr id="LF_HOST_ROW" style="display: <?=($predefined <> '' ? "table-row" : "none")?>;" class="adm-detail-required-field">
 			<td><?echo GetMessage("LFP_SCHEME_EDIT_HOST")?>:</td>
 			<td>
 				<input id="LF_HOST" type="text" size="50" name="HOST" value="<?=HtmlFilter::encode($arRes["HOST"]).(intval($arRes["PORT"]) > 0 ? ":".HtmlFilter::encode($arRes["PORT"]) : "")?>">
@@ -1134,7 +1134,7 @@ $tabControl->BeginNextTab();
 		<?
 		if ($scheme_type == "XML")
 		{
-			?><tr id="LF_METHOD_ROW" style="display: <?=(strlen($predefined) > 0 ? "none" : "table-row")?>;">
+			?><tr id="LF_METHOD_ROW" style="display: <?=($predefined <> '' ? "none" : "table-row")?>;">
 				<td><?=GetMessage("LFP_SCHEME_EDIT_METHOD")?>:</td>
 				<td><input type="text" id="LF_METHOD" size="50" name="METHOD" value="<?=HtmlFilter::encode($arRes["METHOD"])?>"></td>
 			</tr>

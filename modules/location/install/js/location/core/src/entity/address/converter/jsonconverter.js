@@ -1,6 +1,6 @@
 import Address from '../../address';
-import AddressFieldCollection from './../addressfieldcollection';
-import AddressLinkCollection from './../addresslinkcollection';
+import AddressFieldCollection from '../addressfieldcollection';
+import AddressLinkCollection from '../addresslinkcollection';
 
 export default class JsonConverter
 {
@@ -29,7 +29,7 @@ export default class JsonConverter
 			location: null
 		};
 
-		if(address.location)
+		if (address.location)
 		{
 			obj.location = JSON.parse(address.location.toJson());
 		}
@@ -43,7 +43,7 @@ export default class JsonConverter
 	 */
 	static #objectifyFieldCollection(fieldCollection: AddressFieldCollection): Object
 	{
-		let result = {};
+		const result = {};
 
 		Object.values(fieldCollection.fields).forEach((field) => {
 			result[field.type] = field.value;

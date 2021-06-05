@@ -26,8 +26,6 @@ return array(
 						'format' => 'ms',
 						'attribute' => 'data-end-date',
 					),
-					//						"placeholder" => "2018/08/25 19:19:19",
-					//			"value" => "default_value",
 				),
 			),
 		),
@@ -73,13 +71,9 @@ return array(
 			'type' => array('block-default-background-overlay'),
 		),
 		'nodes' => array(
-			'.landing-block-node-title-container' => array(
-				'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--TITLE'),
-				'type' => 'border-color',
-			),
 			'.landing-block-node-title' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--TITLE'),
-				'type' => 'typo',
+				'type' => ['typo', 'heading'],
 			),
 			'.landing-block-node-text-title' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--TITLE'),

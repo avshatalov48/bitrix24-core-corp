@@ -32,4 +32,22 @@ class TriggerTable extends Main\Entity\DataManager
 			)
 		);
 	}
+
+	public static function deleteByEntityTypeId(int $entityTypeId)
+	{
+		$iterator = static::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId
+			]
+		]);
+
+		if ($iterator)
+		{
+			while ($trigger = $iterator->fetch())
+			{
+				static::delete($trigger['ID']);
+			}
+		}
+	}
 }

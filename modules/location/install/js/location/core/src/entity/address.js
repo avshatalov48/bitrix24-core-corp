@@ -207,13 +207,13 @@ export default class Address
 	{
 		if(!(format instanceof Format))
 		{
-			throw new TypeError('format must be instance of Format');
+			console.error('format must be instance of Format');
+			return '';
 		}
 
 		const strategy = strategyType || StringConverter.STRATEGY_TYPE_TEMPLATE;
 		const type = contentType || StringConverter.CONTENT_TYPE_HTML;
-		const result = StringConverter.convertAddressToString(this, format, strategy, type);
-		return result;
+		return StringConverter.convertAddressToString(this, format, strategy, type);
 	}
 
 	/**

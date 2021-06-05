@@ -1,4 +1,5 @@
-<?
+<?php
+
 /*
 -document	pdf
 +document	rtf TODO: source document encoding
@@ -129,7 +130,7 @@ class CIntranetSearchConverters
 		return false;
 	}
 
-	function ProcessZipEntry($absolute_path, $entry_name, $processor, $method = "ParseDocZip")
+	public static function ProcessZipEntry($absolute_path, $entry_name, $processor, $method = "ParseDocZip")
 	{
 		if(file_exists($absolute_path) && is_file($absolute_path))
 		{
@@ -161,7 +162,6 @@ class CIntranetSearchConverters
 		return false;
 	}
 }
-
 
 class CIntranetSearchConverter
 {
@@ -646,12 +646,7 @@ class CIntranetSearch
 	var $arIndexUserFields = false;
 	var $arSites = false;
 
-	function __construct()
-	{
-		return $this->CIntranetSearch();
-	}
-
-	function CIntranetSearch()
+	public function __construct()
 	{
 		$this->arIndexFields = array(
 			"ACTIVE",
@@ -695,7 +690,7 @@ class CIntranetSearch
 		if(!$arSites)
 		{
 			$arSites = array();
-			$rsSites = CSite::GetList(($b=""), ($o=""), array());
+			$rsSites = CSite::GetList();
 			while($arSite = $rsSites->Fetch())
 			{
 				if (!CModule::IncludeModule("extranet") || (CExtranet::GetExtranetSiteID() != $arSite["LID"]))
@@ -705,7 +700,7 @@ class CIntranetSearch
 		$this->arSites = $arSites;
 	}
 
-	function OnSearchReindex($NS=Array(), $oCallback=NULL, $callback_method="")
+	public static function OnSearchReindex($NS=Array(), $oCallback=NULL, $callback_method="")
 	{
 		global $DB;
 
@@ -733,7 +728,7 @@ class CIntranetSearch
 			if(IsModuleInstalled('extranet') && mb_strlen(COption::GetOptionString("extranet", "extranet_site")))
 				$arFilter["!UF_DEPARTMENT"] = false;
 
-			$rsUsers = CUser::GetList($by = "ID", $order = "asc", $arFilter);
+			$rsUsers = CUser::GetList("ID", "asc", $arFilter);
 			while($arUser = $rsUsers->Fetch())
 			{
 				$BODY = "";
@@ -770,7 +765,7 @@ class CIntranetSearch
 		return false;
 	}
 
-	function OnSearchGetURL($arFields)
+	public static function OnSearchGetURL($arFields)
 	{
 		if($arFields["MODULE_ID"] !== "intranet" || mb_substr($arFields["URL"], 0, 1) !== "=")
 			return $arFields["URL"];
@@ -787,7 +782,7 @@ class CIntranetSearch
 		return "";
 	}
 
-	function OnUserUpdate($arFields)
+	public static function OnUserUpdate($arFields)
 	{
 		$obj = new CIntranetSearch;
 		if (!array_intersect(array_merge($obj->arIndexFields, $obj->arIndexUserFields), array_keys($arFields)))
@@ -868,12 +863,12 @@ class CIntranetSearch
 		}
 	}
 
-	function OnUserAdd($arFields)
+	public static function OnUserAdd($arFields)
 	{
 		CIntranetSearch::OnUserUpdate($arFields);
 	}
 
-	function OnUserDelete($ID)
+	public static function OnUserDelete($ID)
 	{
 		if(CModule::IncludeModule('search'))
 		{
@@ -885,7 +880,7 @@ class CIntranetSearch
 	}
 
 	/*Disallow blog user entries in search index*/
-	function ExcludeBlogUser($arFields)
+	public static function ExcludeBlogUser($arFields)
 	{
 		/*
 		if(is_array($arFields) && $arFields["MODULE_ID"] == "blog")
@@ -902,4 +897,3 @@ class CIntranetSearch
 		return $arFields;
 	}
 }
-?>

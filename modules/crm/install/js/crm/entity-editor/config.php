@@ -41,6 +41,7 @@ return array(
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
 		"/bitrix/js/crm/entity-editor/js/field-configurator.js",
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
+		'/bitrix/js/crm/entity-editor/js/entity-selector.js',
 	],
 	'rel' => [
 		'main.polyfill.promise',
@@ -65,6 +66,7 @@ return array(
 		'crm_entity_editor_rel',
 		'ui.forms',
 		'ui.entity-editor',
+		'ui.entity-selector',
 		'ui.dialogs.messagebox',
 	]
 );

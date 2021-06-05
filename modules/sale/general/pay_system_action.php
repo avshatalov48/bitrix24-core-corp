@@ -1,4 +1,5 @@
-<?
+<?php
+
 use \Bitrix\Sale\Internals\PaySystemActionTable;
 use \Bitrix\Sale\Internals\ServiceRestrictionTable;
 use \Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
@@ -11,7 +12,7 @@ class CAllSalePaySystemAction
 {
 	const GET_PARAM_VALUE = 1;
 
-	function GetByID($id)
+	public static function GetByID($id)
 	{
 		$id = (int)$id;
 
@@ -22,7 +23,7 @@ class CAllSalePaySystemAction
 		return false;
 	}
 
-	function CheckFields($ACTION, &$arFields)
+	public static function CheckFields($ACTION, &$arFields)
 	{
 		global $DB, $USER;
 
@@ -50,7 +51,7 @@ class CAllSalePaySystemAction
 		return True;
 	}
 
-	function Delete($id)
+	public static function Delete($id)
 	{
 		$id = (int)$id;
 
@@ -58,12 +59,12 @@ class CAllSalePaySystemAction
 		return $result->isSuccess();
 	}
 
-	static function SerializeParams($arParams)
+	public static function SerializeParams($arParams)
 	{
 		return serialize($arParams);
 	}
 
-	static function UnSerializeParams($strParams)
+	public static function UnSerializeParams($strParams)
 	{
 		$arParams = unserialize($strParams, ['allowed_classes' => false]);
 
@@ -73,7 +74,7 @@ class CAllSalePaySystemAction
 		return $arParams;
 	}
 
-	function GetParamValue($key, $defaultValue = null)
+	public static function GetParamValue($key, $defaultValue = null)
 	{
 		if (
 			isset($_REQUEST["SALE_CORRESPONDENCE"]) || array_key_exists("SALE_CORRESPONDENCE", $_REQUEST)
@@ -155,13 +156,13 @@ class CAllSalePaySystemAction
 		return $res;
 	}
 
-	static function alarm($itemId, $description)
+	public static function alarm($itemId, $description)
 	{
 		self::writeToEventLog($itemId, $description);
 		self::showAlarmMessage();
 	}
 
-	static function writeToEventLog($itemId, $description)
+	public static function writeToEventLog($itemId, $description)
 	{
 		return CEventLog::Add(array(
 			"SEVERITY" => "ERROR",
@@ -172,14 +173,14 @@ class CAllSalePaySystemAction
 		));
 	}
 
-	public function OnEventLogGetAuditTypes()
+	public static function OnEventLogGetAuditTypes()
 	{
 		return array(
 			"PAY_SYSTEM_ACTION_ALARM" => "[PAY_SYSTEM_ACTION_ALARM] ".GetMessage("SKGPSA_ALARM_EVENT_LOG")
 		);
 	}
 
-	static function showAlarmMessage()
+	public static function showAlarmMessage()
 	{
 		$tag = "PAY_SYSTEM_ACTION_ALARM";
 		$dbRes = CAdminNotify::GetList(array(), array("TAG" => $tag));
@@ -197,7 +198,7 @@ class CAllSalePaySystemAction
 		);
 	}
 
-	function InitParamArrays($arOrder, $orderID = 0, $psParams = "", $relatedData = array(), $payment = array(), $shipment = array(), $registryType = Sale\Registry::REGISTRY_TYPE_ORDER)
+	public static function InitParamArrays($arOrder, $orderID = 0, $psParams = "", $relatedData = array(), $payment = array(), $shipment = array(), $registryType = Sale\Registry::REGISTRY_TYPE_ORDER)
 	{
 		if(!is_array($relatedData))
 			$relatedData = array();
@@ -499,7 +500,7 @@ class CAllSalePaySystemAction
 		}
 	}
 
-	function IncludePrePaySystem($fileName, $bDoPayAction, &$arPaySysResult, &$strPaySysError, &$strPaySysWarning, $BASE_LANG_CURRENCY = False, $ORDER_PRICE = 0.0, $TAX_PRICE = 0.0, $DISCOUNT_PRICE = 0.0, $DELIVERY_PRICE = 0.0)
+	public static function IncludePrePaySystem($fileName, $bDoPayAction, &$arPaySysResult, &$strPaySysError, &$strPaySysWarning, $BASE_LANG_CURRENCY = False, $ORDER_PRICE = 0.0, $TAX_PRICE = 0.0, $DISCOUNT_PRICE = 0.0, $DELIVERY_PRICE = 0.0)
 	{
 		$strPaySysError = "";
 		$strPaySysWarning = "";
@@ -903,7 +904,7 @@ class CAllSalePaySystemAction
 		return $params;
 	}
 
-	function Add($fields)
+	public static function Add($fields)
 	{
 		if (\Bitrix\Main\Config\Option::get('main', '~sale_paysystem_converted') == 'Y')
 		{
@@ -1002,7 +1003,7 @@ class CAllSalePaySystemAction
 		}
 	}
 
-	function Update($id, $fields)
+	public static function Update($id, $fields)
 	{
 		if (\Bitrix\Main\Config\Option::get('main', '~sale_paysystem_converted') == 'Y')
 		{
@@ -1943,4 +1944,3 @@ class CAllSalePaySystemAction
 		return $psAliases['general'];
 	}
 }
-?>

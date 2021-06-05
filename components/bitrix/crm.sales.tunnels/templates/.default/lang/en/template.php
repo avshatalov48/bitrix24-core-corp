@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL"] = "Grant access to all users";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS"] = "Copy access permissions from funnel";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_CUSTOM"] = "Custom access settings";
@@ -28,6 +28,7 @@ $MESS["CRM_ST_ROBOTS_HELP_BUTTON"] = "Read about CRM automation";
 $MESS["CRM_ST_ROBOT_SETTINGS_LINK_LABEL"] = "Configure automation rules";
 $MESS["CRM_ST_SAVE_ERROR"] = "An error occurred while saving the funnel";
 $MESS["CRM_ST_SETTINGS"] = "Configure";
+$MESS["CRM_ST_STAGES_DISABLED"] = "Stages disabled";
 $MESS["CRM_ST_STAGES_GROUP_FAIL"] = "Failed";
 $MESS["CRM_ST_STAGES_GROUP_IN_PROGRESS"] = "In progress";
 $MESS["CRM_ST_STAGES_GROUP_SUCCESS"] = "Success";
@@ -35,4 +36,3 @@ $MESS["CRM_ST_TITLE_EDITOR_PLACEHOLDER"] = "New funnel";
 $MESS["CRM_ST_TUNNEL_BUTTON_LABEL"] = "Tunnel";
 $MESS["CRM_ST_TUNNEL_BUTTON_TITLE"] = "Edit or delete tunnel";
 $MESS["CRM_ST_TUNNEL_EDIT_ACCESS_DENIED"] = "Insufficient permission to create a tunnel.";
-?>

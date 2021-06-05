@@ -1,6 +1,7 @@
 <?
 $MESS["CRM_ST_ROBOT_SETTINGS_LINK_LABEL"] = "Настроить роботов";
 $MESS["CRM_ST_GENERATOR_SETTINGS_LINK_LABEL"] = "Генератор продаж";
+$MESS["CRM_ST_STAGES_DISABLED"] = "Стадии отключены";
 $MESS["CRM_ST_STAGES_GROUP_IN_PROGRESS"] = "В работе";
 $MESS["CRM_ST_STAGES_GROUP_SUCCESS"] = "Успешные";
 $MESS["CRM_ST_STAGES_GROUP_FAIL"] = "Неуспешные";

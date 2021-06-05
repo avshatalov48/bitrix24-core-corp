@@ -1,6 +1,18 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
+
+$phrase = 'CRM_CHANGE_STATUS_NAME';
+if (
+	isset($documentType)
+	&& (
+		$documentType[2] === 'DEAL'
+		|| mb_strpos($documentType[2], 'DYNAMIC') === 0
+	)
+)
+{
+	$phrase = 'CRM_CHANGE_DEAL_STAGE_NAME';
+}
 
 $arActivityDescription = [
 	'NAME'           => GetMessage('CRM_CHANGE_STATUS_NAME'),
@@ -18,11 +30,13 @@ $arActivityDescription = [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
 			//['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
 		],
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'TITLE'    => (isset($documentType) && $documentType[2] === 'DEAL') ? GetMessage('CRM_CHANGE_DEAL_STAGE_NAME') : GetMessage('CRM_CHANGE_STATUS_NAME')
+		'TITLE'    => GetMessage($phrase),
 	],
 ];

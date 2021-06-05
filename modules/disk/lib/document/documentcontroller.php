@@ -139,7 +139,7 @@ class DocumentController extends Internals\Controller
 
 			if(!$this->documentHandler->checkAccessibleTokenService())
 			{
-				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $this->documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $this->documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 				$this->errorCollection->add($this->documentHandler->getErrors());
 				$this->sendJsonErrorResponse();
 			}
@@ -191,6 +191,20 @@ class DocumentController extends Internals\Controller
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_BAD_RIGHTS'), self::ERROR_BAD_RIGHTS)));
 			$this->sendJsonErrorResponse();
 		}
+	}
+
+	protected function checkLockPermissions()
+	{
+		$securityContext = $this->file->getStorage()->getCurrentUserSecurityContext();
+		
+		return $this->file->canLock($securityContext);
+	}
+	
+	protected function checkUnlockPermissions()
+	{
+		$securityContext = $this->file->getStorage()->getCurrentUserSecurityContext();
+		
+		return $this->file->canUnlock($securityContext);
 	}
 
 	/**
@@ -423,7 +437,7 @@ class DocumentController extends Internals\Controller
 		$fileArray['name'] = $fileData->getName();
 		$fileArray['type'] = $fileData->getMimeType();
 		$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 
 		if(!$fileId)
@@ -486,7 +500,7 @@ class DocumentController extends Internals\Controller
 				$fileArray['name'] = $fileData->getName();
 				$fileArray['type'] = $fileData->getMimeType();
 				$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 				if($fileId && !$newFile->addVersion(array(
 						'ID' => $fileId,
@@ -556,7 +570,7 @@ class DocumentController extends Internals\Controller
 			'OBJECT_ID' => $this->file->getRealObjectId(),
 			'USER_ID' => $this->getUser()->getId(),
 			'OWNER_ID' => $this->getUser()->getId(),
-			'=SERVICE' => $this->documentHandler->getCode(),
+			'=SERVICE' => $this->documentHandler::getCode(),
 			'>=CREATE_TIME' => DateTime::createFromTimestamp($this->file->getSyncUpdateTime()->getTimestamp()),
 		);
 
@@ -609,6 +623,16 @@ class DocumentController extends Internals\Controller
 
 	protected function processActionPublish()
 	{
+		if (Configuration::isEnabledObjectLock() && $this->file->getLock())
+		{
+			if (!$this->file->getLock()->canUnlock($this->getUser()->getId()))
+			{
+				$this->errorCollection->addOne($this->file->generateUnlockErrorByAnotherUser($this->file->getLock()));
+
+				$this->sendJsonErrorResponse();
+			}
+		}
+
 		$onlineSession = $this->getOnlineEditSessionForFile();
 		if($onlineSession)
 		{
@@ -832,7 +856,7 @@ class DocumentController extends Internals\Controller
 		$fileArray['name'] = $this->file->getName();
 		$fileArray['type'] = $fileData->getMimeType();
 		$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 
 		if(!$fileId)
@@ -869,7 +893,7 @@ class DocumentController extends Internals\Controller
 				$fileArray['name'] = $this->file->getName();
 				$fileArray['type'] = $fileData->getMimeType();
 				$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 				if($fileId && !$this->file->addVersion(array(
 						'ID' => $fileId,
@@ -1026,7 +1050,7 @@ class DocumentController extends Internals\Controller
 			return false;
 		}
 
-		$this->setDocumentHandlerName($this->documentHandler->getCode());
+		$this->setDocumentHandlerName($this->documentHandler::getCode());
 
 		return true;
 	}
@@ -1059,7 +1083,7 @@ class DocumentController extends Internals\Controller
 			'OBJECT_ID' => $this->file->getRealObjectId(),
 			'USER_ID' => $this->getUser()->getId(),
 			'OWNER_ID' => $this->getUser()->getId(),
-			'SERVICE' => $this->documentHandler->getCode(),
+			'SERVICE' => $this->documentHandler::getCode(),
 			'SERVICE_FILE_ID' => $fileData->getId(),
 			'SERVICE_FILE_LINK' => $fileData->getLinkInService(),
 		);
@@ -1067,6 +1091,14 @@ class DocumentController extends Internals\Controller
 		{
 			$data['VERSION_ID'] = $this->version->getId();
 			$data['IS_EXCLUSIVE'] = 1;
+		}
+
+		if (Configuration::isEnabledObjectLock() && Configuration::shouldAutoLockObjectOnEdit())
+		{
+			if ($this->checkLockPermissions() && !$this->file->getLock())
+			{
+				$this->file->lock($this->getUser()->getId());
+			}
 		}
 
 		return EditSession::add($data, $this->errorCollection);
@@ -1083,7 +1115,7 @@ class DocumentController extends Internals\Controller
 			'USER_ID' => $this->getUser()->getId(),
 			'OWNER_ID' => $this->getUser()->getId(),
 			'IS_EXCLUSIVE' => 1,
-			'SERVICE' => $this->documentHandler->getCode(),
+			'SERVICE' => $this->documentHandler::getCode(),
 			'SERVICE_FILE_ID' => $fileData->getId(),
 			'SERVICE_FILE_LINK' => $fileData->getLinkInService(),
 		), $this->errorCollection);
@@ -1115,12 +1147,24 @@ class DocumentController extends Internals\Controller
 		return EditSession::load(array(
 			'ID' => $sessionId,
 			'USER_ID' => $this->getUser()->getId(),
-			'=SERVICE' => $this->documentHandler->getCode(),
+			'=SERVICE' => $this->documentHandler::getCode(),
 		));
 	}
 
 	protected function deleteEditSession(EditSession $editSession)
 	{
+		if (Configuration::isEnabledObjectLock() && Configuration::shouldAutoLockObjectOnEdit())
+		{
+			if ($this->checkUnlockPermissions() && $this->file->getLock())
+			{
+				$lock = $this->file->getLock();
+				if (($lock->getCreatedBy() == $this->getUser()->getId()) && $lock->canUnlock($this->getUser()->getId()))
+				{
+					$this->file->unlock($this->getUser()->getId());
+				}
+			}
+		}
+
 		return EditSessionTable::delete($editSession->getId())->isSuccess();
 	}
 
@@ -1146,7 +1190,7 @@ class DocumentController extends Internals\Controller
 			'status' => self::STATUS_NEED_AUTH,
 			'authUrl' => $this->documentHandler->getUrlForAuthorizeInTokenService(),
 			'authUrlOpenerMode' => $this->documentHandler->getUrlForAuthorizeInTokenService('opener'),
-			'serviceName' => $this->documentHandler->getName(),
+			'serviceName' => $this->documentHandler::getName(),
 		), $response));
 	}
 

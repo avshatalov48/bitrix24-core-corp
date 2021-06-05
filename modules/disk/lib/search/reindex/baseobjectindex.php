@@ -185,7 +185,7 @@ final class BaseObjectIndex extends Stepper
 	public function loadCurrentStatus()
 	{
 		$status = Option::get('disk', 'baseobjectindex', 'default');
-		$status = ($status !== 'default' ? @unserialize($status) : array());
+		$status = ($status !== 'default' ? @unserialize($status, ['allowed_classes' => false]) : array());
 		$status = (is_array($status) ? $status : array());
 
 		if (empty($status))

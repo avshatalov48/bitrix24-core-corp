@@ -32,11 +32,49 @@
 	{
 		start: function ()
 		{
+			if (this.serviceCode === 'onlyoffice')
+			{
+				this.openSlider();
+
+				return;
+			}
+
 			this.modalWindow = this.buildModalWindow();
 
 			this.loadServiceDescription().then(function (service) {
 				this.openEditConfirm();
 			}.bind(this));
+		},
+
+		getSliderQueryParameters: function()
+		{
+			return {
+				action: 'disk.api.documentService.goToEdit',
+				serviceCode: this.serviceCode,
+				objectId: this.objectId || 0,
+				attachedObjectId: this.attachedObjectId || 0
+			}
+		},
+
+		getSliderData: function()
+		{
+			return {
+				process: 'edit',
+			}
+		},
+
+		openSlider: function ()
+		{
+			var data = this.getSliderData();
+			data.documentEditor = true;
+
+			return BX.SidePanel.Instance.open(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()), {
+				width: '100%',
+				customLeftBoundary: 30,
+				cacheable: false,
+				allowChangeHistory: false,
+				data: data
+			});
 		},
 
 		buildModalWindow: function ()
@@ -239,16 +277,6 @@
 			});
 		},
 
-		getViewerZindex: function()
-		{
-			if (BX.getClass('BX.UI.Viewer.Instance'))
-			{
-				return BX.UI.Viewer.Instance.getZindex();
-			}
-
-			return null;
-		},
-
 		closeEditConfirm: function()
 		{
 			this.popupConfirm && this.popupConfirm.close();
@@ -338,7 +366,6 @@
 				],
 	 			autoHide: false,
 				closeByEsc: false,
-				zIndex: this.getViewerZindex(),
 				events: { onPopupClose : function() { this.destroy() }}
 			});
 			this.popupConfirm.show();

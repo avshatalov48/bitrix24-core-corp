@@ -504,9 +504,9 @@ class CAllControllerCounter
 
 class CControllerCounterResult extends CDBResult
 {
-	function CControllerCounterResult($res)
+	public function __construct($res)
 	{
-		parent::CDBResult($res);
+		parent::__construct($res);
 	}
 
 	function Fetch()

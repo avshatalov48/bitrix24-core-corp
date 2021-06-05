@@ -169,8 +169,8 @@ if (
 		$arResult['~USER_NAMES'] = array();
 
 		$rsUsers = CUser::GetList(
-			$by = 'id', 
-			$order = 'asc', 
+			'id',
+			'asc',
 			array("ID" => implode('|', array_filter(array($arResult['F_CREATED_BY'], $arResult['F_RESPONSIBLE_ID'])))),
 			array(
 				'FIELDS' => array(

@@ -15,7 +15,10 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	/** @var Tax[] */
 	protected $taxes;
 
-	abstract protected function getCrmProductOwnerType();
+	protected function getCrmProductOwnerType()
+	{
+		return \CCrmOwnerTypeAbbr::ResolveByTypeID($this->getCrmOwnerType());
+	}
 
 	/**
 	 * @return array

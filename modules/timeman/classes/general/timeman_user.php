@@ -1286,7 +1286,7 @@ class CTimeManUser
 		}
 		else
 		{
-			if (!CTimeManUser::$LAST_ENTRY[$this->USER_ID])
+			if (!isset(CTimeManUser::$LAST_ENTRY[$this->USER_ID]))
 			{
 				if ($CACHE_MANAGER->Read(86400, $this->_cacheId(), 'b_timeman_entries'))
 				{

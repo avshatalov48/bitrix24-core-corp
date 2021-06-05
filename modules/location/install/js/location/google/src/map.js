@@ -261,6 +261,11 @@ export default class Map extends MapBase
 
 		let mapProps = {
 			gestureHandling: 'greedy',
+			disableDefaultUI: true,
+			zoomControl: true,
+			zoomControlOptions: {
+				position: google.maps.ControlPosition.TOP_LEFT
+			}
 		};
 
 		let zoom = Map.#chooseZoomByLocation(this.#location);

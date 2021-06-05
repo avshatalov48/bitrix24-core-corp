@@ -2,12 +2,14 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Crm\Order\Permissions\Order;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Crm\UserField\DataModifiers;
+use Bitrix\Main\Text\HtmlFilter;
 
 if(!Loader::includeModule('crm'))
 {
@@ -22,17 +24,15 @@ if ($component->isDefaultMode())
 	CUtil::InitJSCore(['ajax', 'popup']);
 	\Bitrix\Main\UI\Extension::load(['sidepanel']);
 
-	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
 	$settings = $arParams['userField']['SETTINGS'];
 	$supportedTypes = DataModifiers\Element::getSupportedTypes($settings); // all entity
-	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes, $userPermissions);  // only entity types are allowed for current user
+	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getEntityTypes($supportedTypes);  // only entity types are allowed for current user
 
 	$arResult['PERMISSION_DENIED'] = (empty($arParams['ENTITY_TYPE']) ? true : false);
 
 	$arResult['PREFIX'] = (count($supportedTypes) > 1 ? 'Y' : 'N');
 
-	if (!empty($arParams['usePrefix']))
+	if(!empty($arParams['usePrefix']))
 	{
 		$arResult['PREFIX'] = 'Y';
 	}
@@ -52,8 +52,11 @@ if ($component->isDefaultMode())
 		'CONTACT' => 'contacts',
 		'COMPANY' => 'companies',
 		'LEAD' => 'leads',
-		'ORDER' => 'orders'
+		'ORDER' => 'orders',
+		'DYNAMIC' => 'dynamics'
 	];
+
+	$arResult['DYNAMIC_TYPE_TITLES'] = [];
 
 	if (!is_array($arResult['value']))
 	{
@@ -84,24 +87,38 @@ if ($component->isDefaultMode())
 
 		if ($arResult['USE_SYMBOLIC_ID'])
 		{
+			[$type, $entityId] = explode('_', $value);
+			$entityTypeName = ElementType::getLongEntityType($type);
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
 			$code = '';
-			foreach ($arResult['LIST_PREFIXES'] as $type => $prefix)
+			if (isset($arResult['LIST_PREFIXES'][$entityTypeName]))
 			{
-				if (preg_match('/^' . $prefix . '_(\d+)$/i', $value, $matches))
-				{
-					$code = $arResult['SELECTOR_ENTITY_TYPES'][$type];
-					break;
-				}
+				$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityTypeName];
+			}
+			elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			{
+				$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId;
 			}
 		}
-		elseif (preg_match('/(\d+)$/i', $value, $matches))
+		elseif(preg_match('/(\d+)$/i', $value, $matches))
 		{
-			foreach ($arParams['ENTITY_TYPE'] as $entityType)
+			foreach($arParams['ENTITY_TYPE'] as $entityType)
 			{
-				if (!empty($entityType))
+				if(!empty($entityType))
 				{
-					$value = $arResult['LIST_PREFIXES'][$entityType] . '_' . $matches[1];
-					$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityType];
+					$entityTypeId = \CCrmOwnerType::ResolveId($entityType);
+
+					if(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+					{
+						$value = $arResult['LIST_PREFIXES'][\CCrmOwnerType::CommonDynamicName] . '-' . $entityTypeId . '_' . $value;
+						$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId;
+					}
+					else
+					{
+						$value = $arResult['LIST_PREFIXES'][$entityType] . '_' . $value;
+						$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityType];
+					}
 					break;
 				}
 			}
@@ -113,10 +130,20 @@ if ($component->isDefaultMode())
 		}
 	}
 
+	$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+		'isLoadStages' => false
+	]);
+
+	$types = $typesMap->getTypes();
+	foreach($types as $type)
+	{
+		$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $type->getEntityTypeId();
+		$arResult['DYNAMIC_TYPE_TITLES'][mb_strtoupper($code)] = \Bitrix\Main\Text\HtmlFilter::encode($type->getTitle());
+	}
+
 	$arParams['createNewEntity'] = (
 		$arParams['createNewEntity']
-		&&
-		LayoutSettings::getCurrent()->isSliderEnabled()
+		&& LayoutSettings::getCurrent()->isSliderEnabled()
 	);
 
 	if (!empty($arParams['createNewEntity']))
@@ -152,12 +179,21 @@ if ($component->isDefaultMode())
 }
 else if($component->isMobileMode())
 {
-
 	if(is_array($arResult['value']) && count($arResult['value']) > 0)
 	{
 		$arParams['ENTITY_TYPE'] = DataModifiers\Element::getSupportedTypes(
 			$arParams['userField']['SETTINGS']
 		);
+
+		$arParams['PREFIX'] = false;
+		if(count($arParams['ENTITY_TYPE']) > 1)
+		{
+			$arParams['PREFIX'] = true;
+		}
+		if(!empty($arParams['usePrefix']))
+		{
+			$arResult['PREFIX'] = 'Y';
+		}
 
 		$values = [];
 		foreach($arResult['value'] as $value)
@@ -175,6 +211,7 @@ else if($component->isMobileMode())
 
 		$arResult['value'] = [];
 
+		$arResult['value']['LEAD']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_LEAD');
 		if(
 			$arParams['userField']['SETTINGS']['LEAD'] === 'Y'
 			&&
@@ -190,7 +227,7 @@ else if($component->isMobileMode())
 			);
 			while($lead = $leads->Fetch())
 			{
-				$arResult['value']['LEAD'][$lead['ID']] = [
+				$arResult['value']['LEAD']['items'][$lead['ID']] = [
 					'ENTITY_TITLE' => $lead['TITLE'],
 					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 						CCrmOwnerType::Lead,
@@ -200,6 +237,7 @@ else if($component->isMobileMode())
 			}
 		}
 
+		$arResult['value']['CONTACT']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_CONTACT');
 		if(
 			$arParams['userField']['SETTINGS']['CONTACT'] === 'Y'
 			&&
@@ -235,7 +273,7 @@ else if($component->isMobileMode())
 					$title = ($contact['FULL_NAME'] ?? '');
 				}
 
-				$arResult['value']['CONTACT'][$contact['ID']] = [
+				$arResult['value']['CONTACT']['items'][$contact['ID']] = [
 					'ENTITY_TITLE' => $title,
 					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 						CCrmOwnerType::Contact,
@@ -245,6 +283,7 @@ else if($component->isMobileMode())
 			}
 		}
 
+		$arResult['value']['COMPANY']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_COMPANY');
 		if(
 			$arParams['userField']['SETTINGS']['COMPANY'] === 'Y'
 			&&
@@ -257,7 +296,7 @@ else if($component->isMobileMode())
 			);
 			while($company = $companies->Fetch())
 			{
-				$arResult['value']['COMPANY'][$company['ID']] = [
+				$arResult['value']['COMPANY']['items'][$company['ID']] = [
 					'ENTITY_TITLE' => $company['TITLE'],
 					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 						CCrmOwnerType::Company,
@@ -267,6 +306,7 @@ else if($component->isMobileMode())
 			}
 		}
 
+		$arResult['value']['DEAL']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_DEAL');
 		if(
 			$arParams['userField']['SETTINGS']['DEAL'] === 'Y'
 			&&
@@ -279,13 +319,14 @@ else if($component->isMobileMode())
 			);
 			while($deal = $deals->Fetch())
 			{
-				$arResult['value']['DEAL'][$deal['ID']] = [
+				$arResult['value']['DEAL']['items'][$deal['ID']] = [
 					'ENTITY_TITLE' => $deal['TITLE'],
 					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $deal['ID']),
 				];
 			}
 		}
 
+		$arResult['value']['ORDER']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_ORDER');
 		if(
 			$arParams['userField']['SETTINGS']['ORDER'] === 'Y'
 			&&
@@ -300,7 +341,7 @@ else if($component->isMobileMode())
 
 			while($order = $orders->fetch())
 			{
-				$arResult['value']['ORDER'][$order['ID']] = [
+				$arResult['value']['ORDER']['items'][$order['ID']] = [
 					'ENTITY_TITLE' => $order['ACCOUNT_NUMBER'],
 					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 						CCrmOwnerType::Order,
@@ -310,13 +351,49 @@ else if($component->isMobileMode())
 			}
 		}
 
-		$arResult['ELEMENT'] = $arResult['value'];
-		$arResult['value'] = ($arResult['userField']['VALUE'] ?: []);
-
-		if (!is_array($arResult['value']))
+		foreach ($arParams['userField']['SETTINGS'] as $entityTypeName => $status)
 		{
-			$arResult['value'] = [$arResult['value']];
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+			if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			{
+				continue;
+			}
+
+			if (($factory = Container::getInstance()->getFactory($entityTypeId)) === null)
+			{
+				continue;
+			}
+
+			$arResult['value'][$entityTypeName]['title'] = HtmlFilter::encode($factory->getEntityDescription());
+
+			if ($status === 'Y' && isset($values[$entityTypeName]))
+			{
+				$list = $factory->getItemsFilteredByPermissions([
+					'filter' => ['@ID' => $values[$entityTypeName]],
+					'order' => ['ID' => 'DESC'],
+				]);
+				foreach ($list as $item)
+				{
+					$itemId = $item->getId();
+					$arResult['value'][$entityTypeName]['items'][$itemId] = [
+						'ENTITY_TYPE_ID' => $entityTypeId,
+						'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
+						'ENTITY_TITLE' => HtmlFilter::encode($item->getTitle()),
+						'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
+					];
+				}
+			}
 		}
+
+		$arResult['valueCodes'] = ($arResult['userField']['VALUE'] ?: []);
+
+		if (!is_array($arResult['valueCodes']))
+		{
+			$arResult['valueCodes'] = [$arResult['valueCodes']];
+		}
+
+		$arResult['availableTypes'] = ($arResult['userField']['SETTINGS'] ?? []);
 
 		Asset::getInstance()->addJs(
 			'/bitrix/js/mobile/userfield/mobile_field.js'

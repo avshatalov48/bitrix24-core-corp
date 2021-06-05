@@ -67,6 +67,8 @@ class PrepareDeletionAction extends Main\Engine\Action
 				$entityFilter->prepareListFilterParams($filterFields);
 				Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeID, $filterFields);
 				\CCrmEntityHelper::PrepareMultiFieldFilter($filterFields, array(), '=%', false);
+
+				$entityFilter->clearServiceUiFilterFields($filterFields);
 			}
 
 			$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);

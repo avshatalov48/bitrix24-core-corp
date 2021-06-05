@@ -250,7 +250,7 @@ class CTimeMan
 		$r = COption::GetOptionString('timeman', 'SUBORDINATE_ACCESS', '');
 		if ($r <> '')
 		{
-			$r = unserialize($r);
+			$r = unserialize($r, ['allowed_classes' => false]);
 		}
 
 		if (!is_array($r))
@@ -774,7 +774,7 @@ class CTimeMan
 						|| (
 							$bCheckExistance
 							&& (
-								!($arUser = CUser::getList($by = 'ID', $order = 'ASC',
+								!($arUser = CUser::getList('ID', 'ASC',
 									['ID'=> $arCurDpt['UF_HEAD']], ['FIELDS' => ['ACTIVE']])->fetch())
 								|| $arUser['ACTIVE'] == 'N'
 							)

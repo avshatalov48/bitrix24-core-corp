@@ -2068,8 +2068,10 @@ BX.namespace('BX.Crm.Activity');
 			'Bitrix24.Slider:onMessage',
 			function (sender, data)
 			{
-				if (!BX.CrmActivityEditor)
+				if (!BX.CrmActivityEditor || !data)
+				{
 					return;
+				}
 
 				var matches = null;
 				if (data.action && (matches = data.action.match(/^ACTIVITY_(CREATE|DELETE)$/)))

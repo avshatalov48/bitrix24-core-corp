@@ -10,7 +10,7 @@ if ($ADV_RIGHT>="R") :
 if ($REQUEST_METHOD=="GET" && $ADV_RIGHT=="W" && $RestoreDefaults <> '' && check_bitrix_sessid())
 {
 	COption::RemoveOption($module_id);
-	$z = CGroup::GetList($v1="id",$v2="asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+	$z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
 	while($zr = $z->Fetch())
 		$APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
 }

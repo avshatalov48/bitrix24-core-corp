@@ -31,13 +31,13 @@ ClearVars();
 
 $APPLICATION->SetTitle(GetMessage("BUYER_TITLE"));
 
-$rsSites = CSite::GetList($sby="sort", $sorder="desc", array("ACTIVE" => "Y"));
+$rsSites = CSite::GetList("sort", "desc", array("ACTIVE" => "Y"));
 $arSites = array();
 while ($arSite = $rsSites->Fetch())
 	$arSites[$arSite["ID"]] = array("ID" => $arSite["ID"], "NAME" => $arSite["NAME"]);
 
 $arUsersGroups = array();
-$dbGroups = CGroup::GetList(($b = "c_sort"), ($o = "asc"), array("ANONYMOUS" => "N"));
+$dbGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
 while ($arGroups = $dbGroups->Fetch())
 	$arUsersGroups[] = $arGroups;
 
@@ -61,7 +61,7 @@ foreach ($currencyList as $currencyId => $currencyName)
 	$listCurrency[$currencyId] = $currencyName;
 }
 $listSite = array();
-$sitesQueryObject = CSite::getList($bySite = "sort", $orderSite = "asc", array("ACTIVE" => "Y"));
+$sitesQueryObject = CSite::getList("sort", "asc", array("ACTIVE" => "Y"));
 while ($site = $sitesQueryObject->fetch())
 {
 	$listSite[$site["LID"]] = $site["NAME"]." [".$site["LID"]."]";

@@ -811,7 +811,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 		if($runResize && TypeFile::isImage($fileData['ORIGINAL_NAME']))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$tmpFile = \CFile::resizeImageGet($fileData, array("width" => 1920, "height" => 1080), BX_RESIZE_IMAGE_PROPORTIONAL, true, false, true);
 			$fileData["FILE_SIZE"] = $tmpFile["size"];
 			$fileData["SRC"] = $tmpFile["src"];

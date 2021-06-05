@@ -40,7 +40,7 @@ export class Category extends Event.EventEmitter
 		this.name = options.name;
 		this.access = options.access;
 		this.sort = Number.parseInt(options.sort);
-		this.default = options.default;
+		this.default = Boolean(options.default);
 		this.generatorsCount = Number(options.generatorsCount);
 		this.generatorsListUrl = options.generatorsListUrl;
 		this.stages = options.stages;
@@ -55,6 +55,9 @@ export class Category extends Event.EventEmitter
 		this.showGeneratorRestrictionPopup = options.showGeneratorRestrictionPopup;
 		this.isAvailableRobots = options.isAvailableRobots;
 		this.showRobotsRestrictionPopup = options.showRobotsRestrictionPopup;
+		this.isSenderSupported = options.isSenderSupported;
+		this.isAutomationEnabled = options.isAutomationEnabled;
+		this.isStagesEnabled = options.isStagesEnabled;
 
 		if (!options.lazy)
 		{
@@ -113,10 +116,31 @@ export class Category extends Event.EventEmitter
 					});
 				}, 500);
 			});
+
+		if (!this.isAutomationEnabled)
+		{
+			Dom.addClass(this.getContainer(), 'crm-st-category-automation-disabled');
+			this.getAllColumns()
+				.forEach((column) => {
+					column.marker.disable();
+				});
+		}
+		if (!this.isStagesEnabled)
+		{
+			Dom.addClass(this.getContainer(), 'crm-st-category-stages-stub');
+		}
+		if (!this.isSenderSupported)
+		{
+			Dom.addClass(this.getContainer(), 'crm-st-category-generator-disabled');
+		}
 	}
 
 	hasTunnels(): boolean
 	{
+		if (!this.isAutomationEnabled)
+		{
+			return false;
+		}
 		return this.getAllColumns()
 			.some(column => column.marker.links.size > 0);
 	}
@@ -326,7 +350,7 @@ export class Category extends Event.EventEmitter
 
 			return Tag.render`
 				<span 
-					class="crm-st-category-info-links-help" 
+					class="crm-st-category-info-links-help crm-st-automation" 
 					onclick="${onClick}"
 					title="${Text.encode(Loc.getMessage('CRM_ST_ROBOTS_HELP_BUTTON'))}"
 					> </span>
@@ -346,7 +370,7 @@ export class Category extends Event.EventEmitter
 
 			return Tag.render`
 				<span 
-					class="crm-st-category-info-links-help" 
+					class="crm-st-category-info-links-help crm-st-generator" 
 					onclick="${onClick}"
 					title="${Text.encode(Loc.getMessage('CRM_ST_GENERATOR_HELP_BUTTON'))}"
 					> </span>
@@ -361,7 +385,11 @@ export class Category extends Event.EventEmitter
 				<div class="crm-st-category-stages-group crm-st-category-stages-group-in-progress">
 					<div class="crm-st-category-stages-group-header">
 						<span class="crm-st-category-stages-group-header-text">
-							${Loc.getMessage('CRM_ST_STAGES_GROUP_IN_PROGRESS')}
+							${Loc.getMessage(
+								this.isStagesEnabled
+									? 'CRM_ST_STAGES_GROUP_IN_PROGRESS'
+									: 'CRM_ST_STAGES_DISABLED'
+							)}
 						</span>
 					</div>
 					${this.getProgressStagesContainer()}
@@ -405,7 +433,7 @@ export class Category extends Event.EventEmitter
 					<div class="crm-st-category-stages-group-header">
 						<span class="crm-st-category-stages-group-in-success"> </span> 
 						<span class="crm-st-category-stages-group-header-text">
-							${Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS')}
+							${this.isStagesEnabled ? Loc.getMessage('CRM_ST_STAGES_GROUP_SUCCESS') : ''}
 						</span>
 					</div>
 					${this.getSuccessStagesContainer()}
@@ -428,9 +456,7 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('successKanban', () => (
 			Category.createGrid({
 				renderTo: this.getSuccessStagesContainer(),
-				canEditColumn: this.canEditTunnels,
 				editable: this.canEditTunnels,
-				canRemoveColumn: this.allowWrite,
 				columns: this.stages.S.map(stage => (
 					new Column({
 						id: stage.STATUS_ID,
@@ -453,7 +479,7 @@ export class Category extends Event.EventEmitter
 					<div class="crm-st-category-stages-group-header">
 						<span class="crm-st-category-stages-group-in-fail"> </span> 
 						<span class="crm-st-category-stages-group-header-text">
-							${Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL')}
+							${this.isStagesEnabled ? Loc.getMessage('CRM_ST_STAGES_GROUP_FAIL') : ''}
 						</span>
 					</div>
 					${this.getFailStagesContainer()}
@@ -477,8 +503,6 @@ export class Category extends Event.EventEmitter
 			Category.createGrid({
 				renderTo: this.getFailStagesContainer(),
 				editable: this.canEditTunnels,
-				canEditColumn: this.canEditTunnels,
-				canRemoveColumn: this.canEditTunnels,
 				columns: this.stages.F.map(stage => (
 					new Column({
 						id: stage.STATUS_ID,
@@ -573,7 +597,7 @@ export class Category extends Event.EventEmitter
 
 			return Tag.render`
 				${!this.isAvailableRobots ? ' <span class="tariff-lock"></span>' : ''}
-				<span class="crm-st-category-info-links-link crm-st-robots-link" onclick="${onClick}">
+				<span class="crm-st-category-info-links-link crm-st-robots-link crm-st-automation" onclick="${onClick}">
 					${Loc.getMessage('CRM_ST_ROBOT_SETTINGS_LINK_LABEL')}
 				</span>
 			`;
@@ -614,7 +638,7 @@ export class Category extends Event.EventEmitter
 
 			return Tag.render`
 				${!this.isAvailableGenerator ? ' <span class="tariff-lock"></span>' : ''}
-				<span class="crm-st-category-info-links-link crm-st-generator-link" onclick="${onClick}">
+				<span class="crm-st-category-info-links-link crm-st-generator-link crm-st-generator" onclick="${onClick}">
 					${Loc.getMessage('CRM_ST_GENERATOR_SETTINGS_LINK_LABEL')}
 				</span>
 			`;
@@ -935,7 +959,7 @@ export class Category extends Event.EventEmitter
 					> </span>
 			`;
 
-			if (String(this.id) === '0')
+			if (this.default)
 			{
 				Tag.style(button)`
 					display: none;

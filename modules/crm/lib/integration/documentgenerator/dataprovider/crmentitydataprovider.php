@@ -22,6 +22,7 @@ use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Integration\Numerator\DocumentNumerable;
+use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\IO\Path;
@@ -31,7 +32,7 @@ use Bitrix\Main\Numerator\Hashable;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Main\Type\DateTime;
 
-abstract class CrmEntityDataProvider extends EntityDataProvider implements Hashable, DocumentNumerable
+abstract class CrmEntityDataProvider extends EntityDataProvider implements Hashable, DocumentNumerable, Nameable
 {
 	protected $multiFields;
 	protected $linkData;
@@ -332,7 +333,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			return $result;
 		}
 
-		$crmOwnerTypeProvidersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
+		$crmOwnerTypeProvidersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap(false);
 		$enumerationFields = [];
 		$fields = $manager->GetEntityFields($this->getSource());
 		foreach($fields as $code => $field)
@@ -350,15 +351,15 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				'VALUE' => [$this, 'getUserFieldValue'],
 				'DESCRIPTION' => $field,
 			];
-			if($field['USER_TYPE_ID'] == 'file')
+			if($field['USER_TYPE_ID'] === 'file')
 			{
 				$result[$code]['TYPE'] = DataProvider::FIELD_TYPE_IMAGE;
 			}
-			elseif($field['USER_TYPE_ID'] == 'enumeration')
+			elseif($field['USER_TYPE_ID'] === 'enumeration')
 			{
 				$enumerationFields[] = $field;
 			}
-			elseif($field['USER_TYPE_ID'] == 'employee')
+			elseif($field['USER_TYPE_ID'] === 'employee')
 			{
 				if($field['MULTIPLE'] === 'Y')
 				{
@@ -377,37 +378,41 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					$result[$code]['PROVIDER'] = User::class;
 				}
 			}
-			elseif($field['USER_TYPE_ID'] == 'date')
+			elseif($field['USER_TYPE_ID'] === 'date')
 			{
 				$result[$code]['TYPE'] = static::FIELD_TYPE_DATE;
 			}
-			elseif($field['USER_TYPE_ID'] == 'datetime')
+			elseif($field['USER_TYPE_ID'] === 'datetime')
 			{
 				$result[$code]['TYPE'] = static::FIELD_TYPE_DATE;
 				$result[$code]['FORMAT'] = ['format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture())];
 			}
-			elseif($field['USER_TYPE_ID'] == 'crm' && !$this->isLightMode())
+			elseif($field['USER_TYPE_ID'] === 'crm' && !$this->isLightMode())
 			{
 				$provider = null;
 				$entityTypes = [];
-				if($field['SETTINGS']['LEAD'] == 'Y')
+				$field['SETTINGS'] = (array)$field['SETTINGS'];
+				foreach ($field['SETTINGS'] as $entityName => $isEnabled)
 				{
-					$entityTypes[] = \CCrmOwnerType::Lead;
-				}
-				if($field['SETTINGS']['CONTACT'] == 'Y')
-				{
-					$entityTypes[] = \CCrmOwnerType::Contact;
-				}
-				if($field['SETTINGS']['COMPANY'] == 'Y')
-				{
-					$entityTypes[] = \CCrmOwnerType::Company;
-				}
-				if($field['SETTINGS']['DEAL'] == 'Y')
-				{
-					$entityTypes[] = \CCrmOwnerType::Deal;
+					if ($isEnabled !== 'Y')
+					{
+						continue;
+					}
+					$entityTypeId = \CCrmOwnerType::ResolveID($entityName);
+					if ($entityTypeId > 0)
+					{
+						$entityTypes[] = $entityTypeId;
+					}
 				}
 				$isCrmPrefix = (count($entityTypes) > 1);
-				if($isCrmPrefix || (!is_numeric($field['VALUE'])) && $field['VALUE'] !== false && !is_array($field['VALUE']))
+				if (
+					(
+						$isCrmPrefix
+						|| (!is_numeric($field['VALUE']))
+					)
+					&& $field['VALUE'] !== false
+					&& !is_array($field['VALUE'])
+				)
 				{
 					$parts = explode('_', $field['VALUE']);
 					$field['VALUE'] = $parts[1];
@@ -447,7 +452,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					}
 				}
 			}
-			elseif($field['USER_TYPE_ID'] == 'money')
+			elseif($field['USER_TYPE_ID'] === 'money')
 			{
 				$result[$code]['TYPE'] = Money::class;
 			}

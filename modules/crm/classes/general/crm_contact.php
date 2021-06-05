@@ -2541,7 +2541,7 @@ class CAllCrmContact
 
 		if (isset($arFields['PHOTO']) && is_array($arFields['PHOTO']))
 		{
-			if (($strError = CFile::CheckFile($arFields['PHOTO'], 0, 0, CFile::GetImageExtensions())) != '')
+			if (($strError = CFile::CheckFile($arFields['PHOTO'], 0, false, CFile::GetImageExtensions())) != '')
 				$this->LAST_ERROR .= $strError."<br />";
 		}
 
@@ -2931,7 +2931,7 @@ class CAllCrmContact
 		{
 			$arUser = Array();
 			$dbUsers = CUser::GetList(
-				($sort_by = 'last_name'), ($sort_dir = 'asc'),
+				'last_name', 'asc',
 				array('ID' => implode('|', array(intval($arFieldsOrig['ASSIGNED_BY_ID']), intval($arFieldsModif['ASSIGNED_BY_ID'])))),
 				array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL'))
 			);

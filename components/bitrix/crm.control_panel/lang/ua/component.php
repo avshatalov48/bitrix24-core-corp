@@ -11,6 +11,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_CONTACT_TITLE"] = "Список контактів";
 $MESS["CRM_CTRL_PANEL_ITEM_CRMPLUS"] = "CRM +";
 $MESS["CRM_CTRL_PANEL_ITEM_DEAL"] = "Угоди";
 $MESS["CRM_CTRL_PANEL_ITEM_DEAL_TITLE"] = "Список угод";
+$MESS["CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST"] = "Смарт-процеси";
 $MESS["CRM_CTRL_PANEL_ITEM_EVENT"] = "Події";
 $MESS["CRM_CTRL_PANEL_ITEM_EVENT_2"] = "Історія";
 $MESS["CRM_CTRL_PANEL_ITEM_FUNNEL"] = "Воронка продажів";
@@ -40,4 +41,3 @@ $MESS["CRM_CTRL_PANEL_ITEM_STREAM_TITLE"] = "Жива стрічка CRM";
 $MESS["CRM_CTRL_PANEL_ITEM_WEBFORM"] = "CRM-форми";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлений.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
-

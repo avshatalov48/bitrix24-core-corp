@@ -115,8 +115,8 @@ final class User
 		if($admin === null)
 		{
 			$user = \CUser::GetList(
-				($by = 'id'),
-				($sort = 'asc'),
+				'id',
+				'asc',
 				array('GROUPS_ID' => array(1), 'ACTIVE' => 'Y'),
 				array('FIELDS' => array('ID'), 'NAV_PARAMS' => array('nTopCount' => 1))
 			)->fetch();
@@ -216,7 +216,7 @@ final class User
 				}
 				else
 				{
-					/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 					$ar = \CUser::GetUserGroup($userId);
 					if (in_array(1, $ar, true) || in_array('1', $ar, true))
 						$arCache[$userId] = true;	// user is admin
@@ -674,8 +674,8 @@ final class User
             else
             {
                 $dbResult = \CUser::getList(
-                    $o = 'ID',
-                    $b = 'ASC',
+                    'ID',
+                    'ASC',
                     array('ID_EQUAL_EXACT' => $userID),
                     array('FIELDS' => array('ID'), 'SELECT' => array('UF_DEPARTMENT'))
                 );

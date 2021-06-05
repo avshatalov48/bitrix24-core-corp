@@ -567,8 +567,8 @@ class CIntranetStructureListComponent extends CBitrixComponent
 				}
 
 				$dbUsers = $obUser->getList(
-					$sortBy = 'FULL_NAME',
-					$sortDir = 'ASC',
+					'FULL_NAME',
+					'ASC',
 					$this->arFilter,
 					$arListParams
 				);
@@ -587,8 +587,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			$this->setDepWhereUserIsHead();
 
 			$arAdmins = array();
-			/** @noinspection PhpUndefinedVariableInspection */
-			$rsUsers  = CUser::GetList($o, $b, array("GROUPS_ID" => array(static::ADMIN_GROUP_ID)), array("SELECT"=>array("ID")));
+			$rsUsers  = CUser::GetList('', '', array("GROUPS_ID" => array(static::ADMIN_GROUP_ID)), array("SELECT"=>array("ID")));
 			while ($ar = $rsUsers->Fetch())
 			{
 				$arAdmins[$ar["ID"]] = $ar["ID"];
@@ -673,7 +672,8 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			}
 			unset($arUser, $key);
 
-			$this->arResult["USERS_NAV"] = ($bNav ? $dbUsers->GetPageNavStringEx($navComponentObject=null, $this->arParams["NAV_TITLE"]) : '');
+			$navComponentObject = null;
+			$this->arResult["USERS_NAV"] = ($bNav ? $dbUsers->GetPageNavStringEx($navComponentObject, $this->arParams["NAV_TITLE"]) : '');
 
 			if ($this->arParams['bCache'])
 			{
@@ -827,7 +827,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 				$this->arResult['USERS'][$id]['IS_ONLINE'] = false;
 			}
 
-			$dbRes = \CUser::getList($by='id', $order='asc', array('ID' => $strUserIds, 'LAST_ACTIVITY' => static::getOnlineInterval()), array('FIELDS' => array('ID')));
+			$dbRes = \CUser::getList('id', 'asc', array('ID' => $strUserIds, 'LAST_ACTIVITY' => static::getOnlineInterval()), array('FIELDS' => array('ID')));
 			while ($arRes = $dbRes->fetch())
 			{
 				if ($this->arResult['USERS'][$arRes['ID']])

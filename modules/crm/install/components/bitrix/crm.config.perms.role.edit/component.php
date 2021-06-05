@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use \Bitrix\Crm\Service;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -36,7 +38,6 @@ if($arResult['IS_PERMITTED'])
 {
 	if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])) && check_bitrix_sessid())
 	{
-
 		$permissions = (isset($_POST['ROLE_PERMS']) && is_array($_POST['ROLE_PERMS'])) ? $_POST['ROLE_PERMS'] : [];
 		$bVarsFromForm = true;
 		$arFields = array(
@@ -145,13 +146,24 @@ $arResult['ENTITY'] = array_merge(
 	)
 );
 
-$arPerms = array('READ', 'ADD', 'WRITE', 'DELETE', 'EXPORT', 'IMPORT', 'AUTOMATION');
-$arAllowedEntityPerms = array(
-	'WEBFORM' => array('READ', 'WRITE'),
-	'BUTTON' => array('READ', 'WRITE'),
-	'SALETARGET' => array('READ', 'WRITE'),
-	'EXCLUSION' => array('READ', 'WRITE'),
-);
+$operations = ['READ', 'ADD', 'WRITE', 'DELETE'];
+$operationsWithImport = $operations;
+$operationsWithImport[] = 'EXPORT';
+$operationsWithImport[] = 'IMPORT';
+$operationsWithAutomation = $operationsWithImport;
+$operationsWithAutomation[] = 'AUTOMATION';
+$entityOperationsMap = [
+	'LEAD' => $operationsWithAutomation,
+	'QUOTE' => $operationsWithImport,
+	'INVOICE' => $operationsWithImport,
+	'CONTACT' => $operationsWithImport,
+	'COMPANY' => $operationsWithImport,
+	'ORDER' => $operationsWithAutomation,
+	'WEBFORM' => ['READ', 'WRITE'],
+	'BUTTON' => ['READ', 'WRITE'],
+	'SALETARGET' => ['READ', 'WRITE'],
+	'EXCLUSION' => ['READ', 'WRITE'],
+];
 
 $arResult['ENTITY_FIELDS'] = array(
 	'DEAL' => array('STAGE_ID' => CCrmStatus::GetStatusListEx('DEAL_STAGE')),
@@ -198,6 +210,32 @@ foreach($dealCategoryConfigs as $typeName => $config)
 	$arResult['ROLE_PERM'][$typeName] = $permissionSet;
 }
 
+$typesMap = Service\Container::getInstance()->getDynamicTypesMap()->load();
+foreach ($typesMap->getTypes() as $type)
+{
+	$isAutomationEnabled = $typesMap->isAutomationEnabled($type->getEntityTypeId());
+	$stagesFieldName = htmlspecialcharsbx($typesMap->getStagesFieldName($type->getEntityTypeId()));
+	foreach ($typesMap->getCategories($type->getEntityTypeId()) as $category)
+	{
+		$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId()));
+		$entityTitle = $type->getTitle();
+		if ($type->getIsCategoriesEnabled())
+		{
+			$entityTitle .= ' ' . $category->getName();
+		}
+		$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
+		if ($type->getIsStagesEnabled())
+		{
+			foreach ($typesMap->getStages($type->getEntityTypeId(), $category->getId()) as $stage)
+			{
+				$arResult['ENTITY_FIELDS'][$entityName][$stagesFieldName][htmlspecialcharsbx($stage->getStatusId())] = htmlspecialcharsbx($stage->getName());
+			}
+		}
+		$arResult['ROLE_PERM'][$entityName] = $permissionSet;
+		$entityOperationsMap[$entityName] = $isAutomationEnabled ? $operationsWithAutomation : $operations;
+	}
+}
+
 unset($arResult['ROLE_PERM']['INVOICE'][BX_CRM_PERM_OPEN]);
 unset($arResult['ROLE_PERM']['ORDER'][BX_CRM_PERM_OPEN]);
 
@@ -208,13 +246,13 @@ $arResult['PATH_TO_ROLE_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePa
 	array('delete' => '1', 'sessid' => bitrix_sessid())
 );
 
-foreach ($arPerms as $perm)
+foreach ($operationsWithAutomation as $operation)
 {
 	foreach ($arResult['ENTITY'] as $entityType => $entityName)
 	{
-		if(!isset($arAllowedEntityPerms[$entityType]) || in_array($perm, $arAllowedEntityPerms[$entityType]))
+		if(!isset($entityOperationsMap[$entityType]) || in_array($operation, $entityOperationsMap[$entityType]))
 		{
-			$arResult['ENTITY_PERMS'][$entityType][] = $perm;
+			$arResult['ENTITY_PERMS'][$entityType][] = $operation;
 		}
 		
 		if (isset($arResult['ENTITY_FIELDS'][$entityType]))
@@ -223,8 +261,8 @@ foreach ($arPerms as $perm)
 			{
 				foreach ($arFieldValue as $fieldValueID => $fieldValue)
 				{
-					if (!isset($arResult['ROLE_PERMS'][$entityType][$perm][$fieldID][$fieldValueID]) || $arResult['ROLE_PERMS'][$entityType][$perm][$fieldID][$fieldValueID] == '-')
-						$arResult['ROLE_PERMS'][$entityType][$perm][$fieldID][$fieldValueID] = $arResult['ROLE_PERMS'][$entityType][$perm]['-'];
+					if (!isset($arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID]) || $arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID] == '-')
+						$arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID] = $arResult['ROLE_PERMS'][$entityType][$operation]['-'];
 				}
 			}
 		}

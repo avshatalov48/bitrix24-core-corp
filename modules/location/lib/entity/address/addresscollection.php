@@ -31,4 +31,23 @@ final class AddressCollection extends \Bitrix\Location\Entity\Generic\Collection
 
 		return parent::addItem($address);
 	}
+
+	/**
+	 * Returns address by address id.
+	 *
+	 * @param int $addressId
+	 * @return Address|null
+	 */
+	public function getAddressById(int $addressId): ?Address
+	{
+		foreach ($this->items as $item)
+		{
+			if ($item->getId() === $addressId)
+			{
+				return $item;
+			}
+		}
+
+		return null;
+	}
 }

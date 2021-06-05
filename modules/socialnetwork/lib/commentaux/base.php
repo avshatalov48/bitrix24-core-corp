@@ -194,7 +194,7 @@ abstract class Base
 				$siteList = array();
 				$intranetSiteId = \CExtranet::getExtranetSiteID();
 				$extranetSiteId = \CSite::getDefSite();
-				$res = \CSite::getList($by="sort", $order="desc", array("ACTIVE" => "Y"));
+				$res = \CSite::getList("sort", "desc", array("ACTIVE" => "Y"));
 				while($site = $res->fetch())
 				{
 					$siteList[$site["ID"]] = array(

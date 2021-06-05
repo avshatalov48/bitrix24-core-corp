@@ -27,7 +27,7 @@ class Starter
 		$this->entityTypeId = $entityTypeId;
 		$this->entityId = $entityId;
 
-		if ($entityTypeId === \CCrmOwnerType::Lead)
+		if ($entityTypeId === \CCrmOwnerType::Lead || $entityTypeId === \CCrmOwnerType::Quote)
 		{
 			$this->statusFieldKey = 'STATUS_ID';
 		}

@@ -18,9 +18,18 @@ if ($CCrmPerms->HavePerm($arParams['ENTITY_TYPE'], BX_CRM_PERM_NONE, 'READ'))
 CUtil::InitJSCore();
 
 if (is_array($arParams['ENTITY_ID']))
-	array_walk($arParams['ENTITY_ID'], create_function('&$val', '$val = (int)$val;'));
-else if ($arParams['ENTITY_ID'] != 'all')
+{
+	array_walk(
+		$arParams['ENTITY_ID'],
+		function (&$val) {
+			$val = (int)$val;
+		}
+	);
+}
+elseif ($arParams['ENTITY_ID'] != 'all')
+{
 	$arParams['ENTITY_ID'] = (int)$arParams['ENTITY_ID'];
+}
 
 $arResult['FORM_TYPE'] = mb_strtoupper($arParams['FORM_TYPE']);
 $arResult['ENTITY_TYPE'] = mb_strtoupper($arParams['ENTITY_TYPE']);

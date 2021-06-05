@@ -612,7 +612,7 @@ class CCrmExternalChannelImportAgent extends \CCrmExternalChannelRestProxy
 			$ufFields['USER_TYPE_ID'] = 'url';
 			$ufFields['FIELD_NAME'] = $ufName;
 
-			$langDbResult = \CLanguage::GetList($by = '', $order = '');
+			$langDbResult = \CLanguage::GetList();
 			while($lang = $langDbResult->Fetch())
 			{
 				$lid = $lang['LID'];

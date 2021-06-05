@@ -1412,6 +1412,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      if (gridComponent) {
 	        gridComponent.unsubscribeCustomEvents();
 	      }
+
+	      main_core_events.EventEmitter.emit(this.getGrid().getSettingsWindow().getPopup(), 'onDestroy');
+	      this.getGrid().destroy();
 	    }
 	  }, {
 	    key: "ajaxSuccessHandler",
@@ -1510,9 +1513,14 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      }
 
 	      var skuGridName = this.getGridId();
-	      var skuGridData = grid.getRows().getEditSelectedValues(); // replace sku custom properties edit data names with original names
+	      var skuGridData = grid.getRows().getEditSelectedValues();
+	      var copyItemsMap = grid.getParam('COPY_ITEMS_MAP', {}); // replace sku custom properties edit data names with original names
 
 	      for (var id in skuGridData) {
+	        if (!skuGridData.hasOwnProperty(id)) {
+	          continue;
+	        }
+
 	        for (var name in skuGridData[id]) {
 	          if (!skuGridData[id].hasOwnProperty(name)) {
 	            continue;
@@ -1564,6 +1572,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 	            skuGridData[id][newName] = skuGridData[id][name];
 	            delete skuGridData[id][name];
 	          }
+	        }
+
+	        if (!main_core.Type.isNil(copyItemsMap[id])) {
+	          skuGridData[id]['COPY_SKU_ID'] = copyItemsMap[id];
 	        }
 	      }
 

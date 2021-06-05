@@ -63,7 +63,7 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		$arQueueDepartmentsEmployees = array();	// IDs of departments where we need employees
 
 		// Departments where given user is head
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$arManagedDepartments = \CIntranetUtils::getSubordinateDepartments($userId ? $userId : null, $includeSubDepartments);
 
 		if (is_array($allowedDepartments))

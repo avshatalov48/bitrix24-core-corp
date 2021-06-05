@@ -34,7 +34,7 @@ abstract class CTaskSubItemAbstract
 	}
 
 
-	final protected function constructWithPreloadedData($oTaskItem, $itemId, $data)
+	final protected static function constructWithPreloadedData($oTaskItem, $itemId, $data)
 	{
 		/** @var $oItem CTaskSubItemAbstract */
 		$oItem = new static($oTaskItem, $itemId);
@@ -136,6 +136,6 @@ abstract class CTaskSubItemAbstract
 	}
 
 
-	protected abstract function fetchListFromDb($taskId, $arOrder);
-	protected abstract function fetchDataFromDb($taskId, $itemId);
+	abstract protected static function fetchListFromDb($taskId, $arOrder);
+	abstract protected static function fetchDataFromDb($taskId, $itemId);
 }

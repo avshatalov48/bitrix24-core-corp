@@ -743,7 +743,7 @@ function BxDiskInterfaceGrid(table_id)
 				e = window.event;
 			if(e)
 				bControl = e.ctrlKey;
-			url += (bControl? (def_order == 'acs'? 'desc':'asc') : def_order);
+			url += (bControl? (def_order == 'asc'? 'desc':'asc') : def_order);
 		}
 		else if(sort_state == 'asc')
 			url += 'desc';

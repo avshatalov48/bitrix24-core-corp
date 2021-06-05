@@ -37,7 +37,7 @@ class CCalendarEvent
 
 	public static function CheckRRULE($RRule = array())
 	{
-		if ($RRule['FREQ'] != 'WEEKLY' && isset($RRule['BYDAY']))
+		if (is_array($RRule) && $RRule['FREQ'] !== 'WEEKLY' && isset($RRule['BYDAY']))
 			unset($RRule['BYDAY']);
 		return $RRule;
 	}
@@ -62,10 +62,12 @@ class CCalendarEvent
 		$result = false;
 		$attendeesCodes = [];
 		// Get current user id
-		$userId = (isset($params['userId']) && intval($params['userId']) > 0) ? intval($params['userId']) : CCalendar::GetCurUserId();
+		$userId = (isset($params['userId']) && (int)$params['userId'] > 0)
+			? (int)$params['userId']
+			: CCalendar::GetCurUserId();
 		if (!$userId && isset($entryFields['CREATED_BY']))
 		{
-			$userId = intval($entryFields['CREATED_BY']);
+			$userId = (int)$entryFields['CREATED_BY'];
 		}
 
 		if (((!isset($entryFields['ID']) || $entryFields['ID'] <= 0)
@@ -90,7 +92,7 @@ class CCalendarEvent
 		}
 
 		$isNewEvent = !isset($entryFields['ID']) || !$entryFields['ID'];
-		$entryFields['TIMESTAMP_X'] = CCalendar::Date(mktime(), true, false);
+		$entryFields['TIMESTAMP_X'] = CCalendar::Date(time(), true, false);
 
 		// Current event
 		$currentEvent = [];
@@ -513,25 +515,29 @@ class CCalendarEvent
 			{
 				foreach(\Bitrix\Main\EventManager::getInstance()->findEventHandlers("calendar", "OnAfterCalendarEntryAdd") as $event)
 				{
-					ExecuteModuleEventEx($event, array('id' => $eventId,'entryFields' => $entryFields));
+					ExecuteModuleEventEx($event, array($eventId, $entryFields));
 				}
 			}
 			else
 			{
 				foreach(\Bitrix\Main\EventManager::getInstance()->findEventHandlers("calendar", "OnAfterCalendarEntryUpdate") as $event)
 				{
-					ExecuteModuleEventEx($event, array('id' => $eventId,'entryFields' => $entryFields));
+					ExecuteModuleEventEx($event, array($eventId, $entryFields));
 				}
 			}
 
 			$pullUserId = (int)$entryFields['CREATED_BY'] > 0 ? (int)$entryFields['CREATED_BY'] : $userId;
-			Util::addPullEvent('edit_event',
-			   $pullUserId,
-				[
-					'fields' => $entryFields,
-					'newEvent' => $isNewEvent
-				]
-			);
+			if ($pullUserId > 0)
+			{
+				Util::addPullEvent(
+					'edit_event',
+					$pullUserId,
+					[
+						'fields' => $entryFields,
+						'newEvent' => $isNewEvent
+					]
+				);
+			}
 		}
 
 		return $result;
@@ -669,7 +675,7 @@ class CCalendarEvent
 					}
 					elseif ($n == 'G_EVENT_ID')
 					{
-						$arSqlSearch[] = "CE.G_EVENT_ID = '". CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = "CE.G_EVENT_ID = '". $DB->ForSql($val)."'";
 					}
 					elseif($n == 'OWNER_ID')
 					{
@@ -697,11 +703,11 @@ class CCalendarEvent
 					}
 					elseif($n == 'NAME')
 					{
-						$arSqlSearch[] = "CE.NAME='".CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = "CE.NAME='".$DB->ForSql($val)."'";
 					}
 					elseif($n == 'CAL_TYPE')
 					{
-						$arSqlSearch[] = "CE.CAL_TYPE='".CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = "CE.CAL_TYPE='".$DB->ForSql($val)."'";
 					}
 					elseif($n == 'CREATED_BY')
 					{
@@ -768,7 +774,7 @@ class CCalendarEvent
 					}
 					elseif($n == 'DAV_XML_ID' && is_string($val))
 					{
-						$arSqlSearch[] = "CE.DAV_XML_ID='".CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = "CE.DAV_XML_ID='".$DB->ForSql($val)."'";
 					}
 					elseif($n == '*SEARCHABLE_CONTENT') // Full text index match
 					{
@@ -782,7 +788,7 @@ class CCalendarEvent
 					}
 					elseif(isset($arFields[$n]) && $arFields[$n]["FIELD_TYPE"] == 'date')
 					{
-						$arSqlSearch[] = $DB->DateToCharFunction("CE.".$n)."='".CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = $DB->DateToCharFunction("CE.".$n)."='".$DB->ForSql($val)."'";
 					}
 					elseif($n == 'RECURRENCE_ID' && intval($val))
 					{
@@ -790,7 +796,7 @@ class CCalendarEvent
 					}
 					elseif($n == 'DELETED')
 					{
-						$arSqlSearch[] = "CE.DELETED='".CDatabase::ForSql($val)."'";
+						$arSqlSearch[] = "CE.DELETED='".$DB->ForSql($val)."'";
 					}
 					elseif(isset($arFields[$n]))
 					{
@@ -1799,7 +1805,7 @@ class CCalendarEvent
 
 		if (!isset($arFields['TIMESTAMP_X']))
 		{
-			$arFields['TIMESTAMP_X'] = CCalendar::Date(mktime(), true, false);
+			$arFields['TIMESTAMP_X'] = CCalendar::Date(time(), true, false);
 		}
 
 		if (!$userId)
@@ -2734,7 +2740,7 @@ class CCalendarEvent
 			$USER_FIELD_MANAGER->Update("CALENDAR_EVENT", $eventId, $arFields);
 
 		foreach(GetModuleEvents("calendar", "OnAfterCalendarEventUserFieldsUpdate", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array('ID' => $eventId,'arFields' => $arFields));
+			ExecuteModuleEventEx($arEvent, array($eventId, $arFields));
 
 		self::updateSearchIndex($eventId);
 
@@ -2779,7 +2785,10 @@ class CCalendarEvent
 
 		if ($id)
 		{
-			$userId = (isset($params['userId']) && $params['userId'] > 0) ? $params['userId'] : CCalendar::GetCurUserId();
+			$userId = (isset($params['userId']) && (int)$params['userId'] > 0)
+				? (int)$params['userId']
+				: CCalendar::GetCurUserId();
+
 			$arAffectedSections = array();
 			$entry = $params['Event'];
 
@@ -2944,13 +2953,16 @@ class CCalendarEvent
 //							}
 
 							$pullUserId = (int)$chEvent['CREATED_BY'] > 0 ? (int)$chEvent['CREATED_BY'] : $userId;
-							Util::addPullEvent(
-								'delete_event',
-								$pullUserId,
-								[
-									'fields' => $chEvent,
-								]
-							);
+							if ($pullUserId)
+							{
+								Util::addPullEvent(
+									'delete_event',
+									$pullUserId,
+									[
+										'fields' => $chEvent,
+									]
+								);
+							}
 						}
 
 						if (!empty($icalManagersCollection))
@@ -3017,13 +3029,16 @@ class CCalendarEvent
 					CCalendar::ClearCache('event_list');
 
 					$pullUserId = (int)$entry['CREATED_BY'] > 0 ? (int)$entry['CREATED_BY'] : $userId;
-					Util::addPullEvent(
-						'delete_event',
-						$pullUserId,
-						[
-							'fields' => $entry
-						]
-					);
+					if ($pullUserId)
+					{
+						Util::addPullEvent(
+							'delete_event',
+							$pullUserId,
+							[
+								'fields' => $entry
+							]
+						);
+					}
 				}
 				return true;
 			}
@@ -3168,18 +3183,23 @@ class CCalendarEvent
 			if ($params['personalNotification'] && intval(CCalendar::getCurUserId()) == $userId)
 			{
 				$fromTo = CCalendarEvent::GetEventFromToForUser($event, $userId);
-				CCalendarNotify::Send(array(
-					'mode' => $status == "Y" ? 'status_accept' : 'status_decline',
-					'name' => $event['NAME'],
-					"from" => $fromTo["DATE_FROM"],
-					"guestId" => $userId,
-					"eventId" => $event['PARENT_ID'],
-					"userId" => $userId,
-					"markRead" => true,
-					"fields" => $event
-				));
+				CCalendarNotify::Send(
+					[
+						'mode' => $status == "Y" ? 'status_accept' : 'status_decline',
+						'name' => $event['NAME'],
+						"from" => $fromTo["DATE_FROM"],
+						"guestId" => $userId,
+						"eventId" => $event['PARENT_ID'],
+						"userId" => $userId,
+						"markRead" => true,
+						"fields" => $event
+					]
+				);
+			}
 
-				$pullUserId = (int)$event['CREATED_BY'] > 0 ? (int)$event['CREATED_BY'] : $userId;
+			$pullUserId = (int)$event['CREATED_BY'] > 0 ? (int)$event['CREATED_BY'] : $userId;
+			if ($pullUserId)
+			{
 				Util::addPullEvent(
 					'set_meeting_status',
 					$pullUserId,

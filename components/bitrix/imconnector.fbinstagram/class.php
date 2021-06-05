@@ -161,9 +161,16 @@ class ImConnectorFBInstagram extends CBitrixComponent
 						{
 							$this->setStatus(false);
 
-							if (!empty($authorizationPage->getErrorMessages()))
+							$errorsAuthorizationPage = $authorizationPage->getErrorMessages();
+
+							if(!empty($errorsAuthorizationPage))
 							{
-								$this->error = array_merge($this->error, $authorizationPage->getErrorMessages());
+								$errorsAuthorizationPage = array_filter($errorsAuthorizationPage);
+							}
+
+							if (!empty($errorsAuthorizationPage))
+							{
+								$this->error = array_merge($this->error, $errorsAuthorizationPage);
 							}
 							else
 							{

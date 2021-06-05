@@ -22,6 +22,7 @@ class Handler
 	const ENTITY_TYPE_CRMORDERS = 'ORDERS';
 	const ENTITY_TYPE_CRMPRODUCTS = 'PRODUCTS';
 	const ENTITY_TYPE_CRMQUOTES = 'QUOTES';
+	const ENTITY_TYPE_CRMDYNAMICS = 'DYNAMICS';
 
 	public static function OnUISelectorGetProviderByEntityType(Event $event)
 	{
@@ -51,6 +52,9 @@ class Handler
 				break;
 			case self::ENTITY_TYPE_CRMQUOTES:
 				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmQuotes;
+				break;
+			case (strpos($entityType, self::ENTITY_TYPE_CRMDYNAMICS)===0):
+				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmDynamics;
 				break;
 			default:
 				$provider = false;
@@ -102,6 +106,18 @@ class Handler
 		elseif (preg_match('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
 		{
 			$newCode = preg_replace('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/', CrmQuotes::PREFIX_FULL.'$1', $code);
+		}
+		elseif (preg_match(
+			'/^'.\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix.'(\w+)_(\d+)$/i',
+			$code,
+			$matches
+		))
+		{
+			$newCode = preg_replace(
+				'/^' . \CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix . '(\w+)_(\d+)$/',
+				CrmDynamics::PREFIX_FULL.'$1'.'_'.'$2',
+				$code
+			);
 		}
 		else
 		{

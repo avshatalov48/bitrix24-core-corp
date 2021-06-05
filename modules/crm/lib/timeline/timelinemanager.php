@@ -115,6 +115,14 @@ class TimelineManager
 		{
 			return ScoringController::getInstance();
 		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($assocEntityTypeID))
+		{
+			return DynamicController::getInstance($assocEntityTypeID);
+		}
+		elseif ($assocEntityTypeID === \CCrmOwnerType::Quote)
+		{
+			return QuoteController::getInstance();
+		}
 
 		return null;
 	}

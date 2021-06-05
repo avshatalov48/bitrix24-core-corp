@@ -398,7 +398,7 @@ class UploadFileManager implements IErrorable
 		{
 			return null;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$bucket = \CCloudStorage::findBucketForFile(array('FILE_SIZE' => $params['fileSize'], 'MODULE_ID' => Driver::INTERNAL_MODULE_ID), $params['name']);
 		if(!$bucket || !$bucket->init())
 		{

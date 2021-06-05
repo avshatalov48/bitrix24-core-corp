@@ -4,6 +4,8 @@ namespace Bitrix\Disk\Document;
 
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
@@ -109,26 +111,18 @@ class DocumentHandlersManager
 
 	/**
 	 * Returns all list of document handlers which can import files and folders.
-	 * @return DocumentHandler[]
+	 * @return DocumentHandler[]|CloudImportInterface[]
 	 */
 	public function getHandlersForImport()
 	{
-		$list = array();
-		foreach($this->getHandlers() as $code => $handler)
+		$list = [];
+		foreach ($this->getHandlers() as $code => $handler)
 		{
-			if($handler instanceof GoogleViewerHandler)
+			if ($handler instanceof CloudImportInterface)
 			{
-				continue;
+				$list[$code] = $handler;
 			}
-
-			if($handler instanceof BitrixHandler)
-			{
-				continue;
-			}
-
-			$list[$code] = $handler;
 		}
-		unset($handler);
 
 		return $list;
 	}
@@ -165,7 +159,7 @@ class DocumentHandlersManager
 		$documentHandler = $this->getHandlerByCode(Configuration::getDefaultViewerServiceCode());
 		if(!$documentHandler instanceof IViewer)
 		{
-			throw new SystemException("Invalid class '{$documentHandler->getCode()}' for documentHandler. Must be implement IViewer");
+			throw new SystemException("Invalid class '{$documentHandler::getCode()}' for documentHandler. Must be implement IViewer");
 		}
 
 		return $documentHandler;
@@ -187,38 +181,25 @@ class DocumentHandlersManager
 
 	protected function buildDocumentHandlerList()
 	{
-		/** @var MyOfficeHandler $myOfficeClass */
-		$myOfficeClass = MyOfficeHandler::className();
-		/** @var GoogleHandler $googleDriveClass */
-		$googleDriveClass = GoogleHandler::className();
-		/** @var DropboxHandler $dropboxClass */
-		$dropboxClass = DropboxHandler::className();
-		/** @var BoxHandler $boxClass */
-		$boxClass = BoxHandler::className();
-		/** @var YandexDiskHandler $yandexDiskClass */
-		$yandexDiskClass = YandexDiskHandler::className();
-		/** @var OneDriveHandler $oneDriveClass */
-		$oneDriveClass = OneDriveHandler::className();
-		/** @var Office365Handler $office365Class */
-		$office365Class = Office365Handler::className();
-		/** @var GoogleViewerHandler $googleViewerClass */
-		$googleViewerClass = GoogleViewerHandler::className();
-		/** @var BitrixHandler $bitrixClass */
-		$bitrixClass = BitrixHandler::className();
-		$this->documentHandlerList = array(
-			$bitrixClass::getCode() => $bitrixClass,
-			$googleDriveClass::getCode() => $googleDriveClass,
-			$oneDriveClass::getCode() => $oneDriveClass,
-			$office365Class::getCode() => $office365Class,
-			$dropboxClass::getCode() => $dropboxClass,
-			$googleViewerClass::getCode() => $googleViewerClass,
-			$yandexDiskClass::getCode() => $yandexDiskClass,
-			$boxClass::getCode() => $boxClass,
-		);
+		$this->documentHandlerList = [
+			BitrixHandler::getCode() => BitrixHandler::class,
+			GoogleHandler::getCode() => GoogleHandler::class,
+			OneDriveHandler::getCode() => OneDriveHandler::class,
+			Office365Handler::getCode() => Office365Handler::class,
+			DropboxHandler::getCode() => DropboxHandler::class,
+			GoogleViewerHandler::getCode() => GoogleViewerHandler::class,
+			YandexDiskHandler::getCode() => YandexDiskHandler::class,
+			BoxHandler::getCode() => BoxHandler::class,
+		];
+
+		if (OnlyOfficeHandler::isEnabled())
+		{
+			$this->documentHandlerList[OnlyOfficeHandler::getCode()] = OnlyOfficeHandler::class;
+		}
 
 		if (MyOfficeHandler::isEnabled() && MyOfficeHandler::getPredefinedUser($this->userId))
 		{
-			$this->documentHandlerList[$myOfficeClass::getCode()] = $myOfficeClass;
+			$this->documentHandlerList[MyOfficeHandler::getCode()] = MyOfficeHandler::class;
 		}
 
 		$event = new Event(Driver::INTERNAL_MODULE_ID, 'onDocumentHandlerBuildList');

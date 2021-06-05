@@ -588,7 +588,7 @@ class CCrmContactWS extends IWebService
 		return array('GetFieldsListResult' => $fields);
 	}
 
-	public function GetWebServiceDesc()
+	public static function GetWebServiceDesc()
 	{
 		$wsdesc = new CWebServiceDesc();
 		$wsdesc->wsname = "bitrix.crm.contact.webservice";

@@ -33,7 +33,6 @@ class Welcome
 	 * Automatic processing on incoming message.
 	 *
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function automaticAddMessage()
 	{

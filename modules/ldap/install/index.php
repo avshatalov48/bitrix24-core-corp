@@ -118,7 +118,9 @@ Class ldap extends CModule
 			return false;
 		}
 
-		$dbLang = CLanguage::GetList($by = "name", $order = "asc");
+		$by = "name";
+		$order = "asc";
+		$dbLang = CLanguage::GetList();
 		while($arLang = $dbLang->Fetch())
 		{
 			$lid = $arLang["LID"];
@@ -133,7 +135,7 @@ Class ldap extends CModule
 			));
 
 			$arSites = array();
-			$sites = CSite::GetList($by = "name", $order = "asc", Array("LANGUAGE_ID"=> $lid));
+			$sites = CSite::GetList("name", "asc", Array("LANGUAGE_ID"=> $lid));
 			while ($site = $sites->Fetch())
 				$arSites[] = $site["LID"];
 
@@ -159,7 +161,7 @@ Class ldap extends CModule
 
 	function UnInstallEvents()
 	{	
-		$dbEvent = CEventMessage::GetList($by, $order, Array("EVENT_NAME" => "LDAP_USER_CONFIRM"));
+		$dbEvent = CEventMessage::GetList('', '', Array("EVENT_NAME" => "LDAP_USER_CONFIRM"));
 		while ($arEvent = $dbEvent->Fetch())
 			CEventMessage::Delete($arEvent["ID"]);
 

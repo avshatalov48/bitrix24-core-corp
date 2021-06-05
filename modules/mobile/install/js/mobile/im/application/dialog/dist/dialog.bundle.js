@@ -1795,7 +1795,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 
 	            if (text.length === 0) {
-	              _this13.controller.application.setTextareaMessage({
+	              _this13.setTextareaMessage({
 	                message: ''
 	              });
 

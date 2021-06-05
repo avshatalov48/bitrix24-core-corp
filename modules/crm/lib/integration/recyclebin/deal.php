@@ -98,7 +98,7 @@ class Deal extends RecyclableEntity
 	 * Get message array for Recycle Bin action's notification
 	 * @return array
 	 */
-	public static function getNotifyMessages()
+	public static function getNotifyMessages(): array
 	{
 		return array(
 			'NOTIFY'=> array(

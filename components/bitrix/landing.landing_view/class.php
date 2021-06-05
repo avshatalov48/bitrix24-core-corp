@@ -464,6 +464,26 @@ class LandingViewComponent extends LandingBaseComponent
 	}
 
 	/**
+	 * Returns additional references for placeholders.
+	 * @return array
+	 */
+	protected function getReferences(): array
+	{
+		$references = [];
+
+		$references[] = [
+			'text' => '+7 (777) 777 77 77',
+			'value' => '1'
+		];
+		$references[] = [
+			'text' => 'My Company',
+			'value' => 'crmCompanyTitle'
+		];
+
+		return $references;
+	}
+
+	/**
 	 * Returns block section, opened by default.
 	 * @param string $type Site type.
 	 * @return string
@@ -499,9 +519,10 @@ class LandingViewComponent extends LandingBaseComponent
 		$landing = $this->arResult['LANDING'];
 		$site = $this->arResult['SITE'];
 		$params = $this->arParams;
+		$arResult = $this->arResult;
 		$eventManager = EventManager::getInstance();
 		$eventManager->addEventHandler('landing', 'onLandingView',
-			function(\Bitrix\Main\Event $event) use ($type, $params, $landing, $site)
+			function(\Bitrix\Main\Event $event) use ($type, $params, $arResult, $landing, $site)
 			{
 				/** @var \Bitrix\Landing\Landing $landing */
 				$result = new \Bitrix\Main\Entity\EventResult;
@@ -516,6 +537,24 @@ class LandingViewComponent extends LandingBaseComponent
 				$options['params'] = (array)$params['PARAMS'];
 				$options['params']['type'] = $params['TYPE'];
 				$options['params']['draftMode'] = $params['DRAFT_MODE'] == 'Y';
+				$options['params']['sef_url']['design_block'] = $arResult['TOP_PANEL_CONFIG']['urls']['designBlock'];
+				if ($options['specialType'] === \Bitrix\Landing\Site\Type::PSEUDO_SCOPE_CODE_FORMS)
+				{
+					$res = \Bitrix\Crm\WebForm\Internals\LandingTable::getList([
+						'select' => [
+							'FORM_ID'
+						],
+						'filter' => [
+							'LANDING_ID' => $landing->getId()
+						]
+					]);
+					if ($row = $res->fetch())
+					{
+						$options['formEditorData'] = \Bitrix\Landing\PublicAction\Form::getEditorData(
+							$row['FORM_ID']
+						)->getResult();
+					}
+				}
 				if ($options['params']['draftMode'])
 				{
 					$options['params']['editor'] = [
@@ -532,6 +571,7 @@ class LandingViewComponent extends LandingBaseComponent
 				}
 				$options['sites_count'] = $this->getSitesCount();
 				$options['pages_count'] = $this->getPagesCount($landing->getSiteId());
+				$options['references'] = [];//$this->getReferences();
 				$options['syspages'] = array();
 				$options['helps'] = [
 					'DYNAMIC_BLOCKS' => \Bitrix\Landing\Help::getHelpUrl('DYNAMIC_BLOCKS')
@@ -884,6 +924,12 @@ class LandingViewComponent extends LandingBaseComponent
 		$urls['landingView'] = new \Bitrix\Main\Web\Uri(
 			$replaceParamUrl('landing_view')
 		);
+		$urls['designBlock'] = new \Bitrix\Main\Web\Uri(
+			str_replace('#', '__', $this->arParams['PARAMS']['sef_url']['landing_view'] ?? '')
+		);
+		$urls['designBlock']->addParams([
+			'design_block' => '__block_id__'
+		]);
 		$urls['landingEdit'] = new \Bitrix\Main\Web\Uri(
 			$replaceParamUrl('landing_edit')
 		);

@@ -94,23 +94,28 @@ class Crm extends UserFieldBase
 	private static function prepareCrmUserTypeValueView($value, $defaultTypeName = '')
 	{
 		$parts = explode('_', $value);
-		if(count($parts) > 1)
+
+		$entityTypeId = null;
+		$entityId = null;
+
+		if (count($parts) > 1)
 		{
-			return \CCrmOwnerType::GetCaption(
-				\CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($parts[0])),
-				$parts[1],
-				false
+			$entityTypeId = \CCrmOwnerType::ResolveID(
+				\CCrmOwnerTypeAbbr::ResolveName($parts[0] . $parts[1])
+				?: \CCrmOwnerTypeAbbr::ResolveName($parts[0])
 			);
+			$entityId = (int)end($parts);
 		}
-		elseif($defaultTypeName !== '')
+		elseif ($defaultTypeName !== '')
 		{
-			return \CCrmOwnerType::GetCaption(
-				\CCrmOwnerType::ResolveID($defaultTypeName),
-				$value,
-				false
-			);
+			$entityTypeId = \CCrmOwnerType::ResolveID($defaultTypeName);
+			$entityId = (int)$value;
 		}
 
-		return $value;
+		return
+			!is_null($entityTypeId) && !is_null($entityId)
+				? \CCrmOwnerType::GetCaption($entityTypeId, $entityId, false)
+				: $value
+		;
 	}
 }

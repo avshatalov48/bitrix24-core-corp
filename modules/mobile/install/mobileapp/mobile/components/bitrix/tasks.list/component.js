@@ -2242,6 +2242,10 @@ include('InAppNotifier');
 
 			switch (event.action.identifier)
 			{
+				case 'ping':
+					this.onPingAction(task);
+					break;
+
 				case 'changeDeadline':
 					this.onChangeDeadlineAction(task);
 					break;
@@ -2338,6 +2342,10 @@ include('InAppNotifier');
 		{
 			switch (item.id)
 			{
+				case 'ping':
+					this.onPingAction(task);
+					break;
+
 				case 'changeDeadline':
 					this.onChangeDeadlineAction(task);
 					break;
@@ -2410,6 +2418,20 @@ include('InAppNotifier');
 			}
 
 			this.updateItem(task.id, {});
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onPingAction(task)
+		{
+			void task.ping();
+			this.updateItem(task.id, {activityDate: Date.now()});
+
+			Notify.showIndicatorSuccess({
+				text: BX.message('TASKS_LIST_PING_NOTIFICATION'),
+				hideAfter: 1500,
+			});
 		}
 
 		/**
@@ -2962,6 +2984,7 @@ include('InAppNotifier');
 				.call('comment.readAll', {
 					groupId: this.groupId || null,
 					userId: this.owner.id || this.currentUser.id,
+					role: this.filter.getRole(),
 				})
 				.then((response) => {
 					console.log(response);

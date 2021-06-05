@@ -63,14 +63,15 @@ class BindingMenu
 				if ($scriptItems)
 				{
 					$scriptItems[] = ['delimiter' => true];
-					$scriptItems[] = [
-						'id' => 'script_list',
-						'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_LIST'),
-						'onclick' => "BX.Bizproc.Script.Manager.Instance.showScriptList({$docTypeParam}, {$placementParam})",
-						'sort' => 100
-					];
-					$scriptItems[] = ['delimiter' => true];
 				}
+
+				$scriptItems[] = [
+					'id' => 'script_list',
+					'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_LIST'),
+					'onclick' => "BX.Bizproc.Script.Manager.Instance.showScriptList({$docTypeParam}, {$placementParam})",
+					'sort' => 100
+				];
+				$scriptItems[] = ['delimiter' => true];
 
 				$scriptItems[] = [
 					'id' => 'script_create',

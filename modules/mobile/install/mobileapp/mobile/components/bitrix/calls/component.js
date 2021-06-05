@@ -242,60 +242,6 @@ callsModuleWrapper.prototype =
 
 var webrtc = new callsModuleWrapper();
 
-var NativeCallsWrapper = function()
-{
-	this.callbacks = {
-		onReceiveCall: null,
-		onConnectCall: null,
-		onEndCall: null,
-		onErrorCall: null,
-		onOutgoingCall: null,
-	};
-
-	if ('nativeCallService' in window)
-	{
-		this.init();
-	}
-};
-
-NativeCallsWrapper.prototype = {
-	init: function()
-	{
-		window.nativeCallService.setListener(this.onCallEvent.bind(this));
-	},
-
-	onCallEvent: function(eventName, data)
-	{
-		console.log("callkit: ", eventName, data);
-
-		if(this.callbacks[eventName])
-		{
-			this.callbacks[eventName](data);
-		}
-	},
-
-	setEventListener: function(eventName, callback)
-	{
-		this.callbacks[eventName] = callback;
-	},
-
-	getActiveCall: function()
-	{
-		if ('nativeCallService' in window)
-		{
-			return window.nativeCallService.getActiveCall();
-		}
-	},
-
-	endCall: function()
-	{
-		if ('nativeCallService' in window)
-		{
-			return window.nativeCallService.endCall(window.nativeCallService.getActiveCall());
-		}
-	}
-};
-
 MobileWebrtc = function ()
 {
     this.siteDir = (typeof mobileSiteDir == "undefined" ? "/" : mobileSiteDir);
@@ -336,9 +282,6 @@ MobileWebrtc = function ()
 	this.connectionAttempt = 0;
 	this.waitConnectionAnswerTimeout = null;
 	this.waitConnectionOfferTimeout = null;
-
-	this.nativeCalls = new NativeCallsWrapper();
-	this.nativeCallUUID = '';
 
 	this.signalingHandlers = {
 		'Call::answer': this.logged('Call::answer', this.onPullCommandAnswer.bind(this)),
@@ -387,15 +330,10 @@ MobileWebrtc.prototype.init = function ()
 
 	this.attachListeners();
 	this.checkActiveCall();
-
-	this.nativeCalls.setEventListener("onConnectCall", this.onCallKitConnectCall.bind(this));
-	this.nativeCalls.setEventListener("onEndCall", this.onCallKitEndCall.bind(this));
-	this.nativeCalls.setEventListener("onOutgoingCall", this.onCallKitOutgoingCall.bind(this));
 };
 
 MobileWebrtc.prototype.checkActiveCall = function ()
 {
-	let call = this.nativeCalls.getActiveCall();
 	if(!call || call.currentState != 'onConnectCall')
 	{
 		//console.error("wrong call " + call.payload.id + " state ", call.currentState);
@@ -755,7 +693,6 @@ MobileWebrtc.prototype.resetState = function ()
     clearTimeout(this.checkConnectionTimeout);
 
     webrtc.destroyPeerConnection();
-    this.nativeCalls.endCall();
 };
 
 MobileWebrtc.prototype.storeRedialParameters = function ()

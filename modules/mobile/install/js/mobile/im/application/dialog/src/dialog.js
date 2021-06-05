@@ -1508,7 +1508,7 @@ export class MobileDialogApplication
 
 					if (text.length === 0)
 					{
-						this.controller.application.setTextareaMessage({message: ''});
+						this.setTextareaMessage({message: ''});
 						this.controller.application.stopWriting();
 					}
 					else

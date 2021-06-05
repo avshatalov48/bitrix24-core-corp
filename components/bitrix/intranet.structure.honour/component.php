@@ -105,8 +105,8 @@ else
 	if (count($arUserIDs) > 0)
 	{
 		$dbUsers = CUser::GetList(
-			$by = 'ID',
-			$order = 'asc',
+			'ID',
+			'asc',
 			array('ID' => implode('|', $arUserIDs), 'ACTIVE' => 'Y', '!UF_DEPARTMENT' => false),
 			array('SELECT' => array('UF_*'))
 		);

@@ -1223,8 +1223,8 @@ $responsibleInfos = array();
 if(!empty($responsibleIDs))
 {
 	$dbUsers = CUser::GetList(
-		($by = 'ID'),
-		($order = 'ASC'),
+		'ID',
+		'ASC',
 		array('ID' => implode('||', $responsibleIDs)),
 		array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'TITLE'))
 	);

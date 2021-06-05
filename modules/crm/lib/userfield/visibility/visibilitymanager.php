@@ -42,19 +42,12 @@ class VisibilityManager
 	 */
 	public static function saveEntityConfiguration($accessCodes, string $fieldName, int $entityTypeId, string $permissionId): void
 	{
-		$entityTypeMap = [
-			\CCrmOwnerType::Company => 'CRM_COMPANY',
-			\CCrmOwnerType::Contact => 'CRM_CONTACT',
-			\CCrmOwnerType::Deal => 'CRM_DEAL',
-			\CCrmOwnerType::Lead =>'CRM_LEAD'
-		];
-
 		UserFieldPermissionTable::saveEntityConfiguration(
 			$accessCodes,
 			$fieldName,
 			$entityTypeId,
 			$permissionId,
-			$entityTypeMap[$entityTypeId]
+			\CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId)
 		);
 	}
 
@@ -85,6 +78,21 @@ class VisibilityManager
 		}
 
 		return $excludedFields;
+	}
+
+	public static function filterNotAccessibleFields(
+		int $entityTypeId,
+		array $fieldNames,
+		?array $userAccessCodes = null
+	): array
+	{
+		if(empty($fieldNames))
+		{
+			return $fieldNames;
+		}
+		$notAccessibleFields = static::getNotAccessibleFields($entityTypeId, $userAccessCodes);
+
+		return array_diff($fieldNames, $notAccessibleFields);
 	}
 
 	private static function getUserAccessCodes(): array

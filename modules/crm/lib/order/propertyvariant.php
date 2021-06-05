@@ -16,7 +16,7 @@ if (!Main\Loader::includeModule('sale'))
  */
 class PropertyVariant
 {
-	public function getList(array $params = [])
+	public static function getList(array $params = [])
 	{
 		return Sale\Internals\OrderPropsVariantTable::getList($params);
 	}

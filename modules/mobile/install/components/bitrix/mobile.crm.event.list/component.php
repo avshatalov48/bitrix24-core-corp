@@ -155,13 +155,11 @@ $nUsers = count($arUserDistinct);
 if ($nUsers > 0 && !($nUsers === 1 && $arUserDistinct[0] == 0))
 {
 	$users = new CUser();
-	$by = 'ID'; $order = 'ASC';
 	$dbResUsers = $users->GetList(
-		$by, $order,
+		'ID', 'ASC',
 		array('ID' => implode('|', $arUserDistinct)),
 		array('SELECT' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME'))
 	);
-	unset($by, $order);
 	if ($dbResUsers)
 	{
 		while ($arUser = $dbResUsers->Fetch())

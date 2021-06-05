@@ -51,6 +51,8 @@ class RestrictionManager
 	private static $ufAccessRightsRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $diskQuotaRestriction;
+	/** @var DynamicTypesLimit  */
+	private static $dynamicTypesLimit;
 	/**
 	* @return SqlRestriction
 	*/
@@ -703,5 +705,15 @@ class RestrictionManager
 	{
 		Main\Config\Option::delete('crm', array('name' => 'crm_enable_permission_control'));
 		Main\Config\Option::delete('crm', array('name' => 'recurring_deal_enabled'));
+	}
+
+	public static function getDynamicTypesLimitRestriction(): DynamicTypesLimit
+	{
+		if (!static::$dynamicTypesLimit)
+		{
+			static::$dynamicTypesLimit = new DynamicTypesLimit();
+		}
+
+		return static::$dynamicTypesLimit;
 	}
 }

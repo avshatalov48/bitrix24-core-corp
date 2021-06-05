@@ -308,7 +308,7 @@ class CDavAccount
 			$extranetSite = isModuleInstalled('extranet') ? COption::getOptionString('extranet', 'extranet_site') : (isModuleInstalled('bitrix24') ? 'ex' : false);
 			$extranetUser = (CModule::IncludeModule("extranet") && !CExtranet::IsIntranetUser());
 
-			$rsSite = CSite::getList(($b=''), ($o=''), array('LID' => $siteId));
+			$rsSite = CSite::getList('', '', array('LID' => $siteId));
 			while ($arSite = $rsSite->fetch())
 			{
 				if (

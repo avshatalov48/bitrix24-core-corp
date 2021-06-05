@@ -54,27 +54,9 @@ class EntityBinding
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
+		self::validateEntityTypeId($entityTypeID);
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		$effectiveBindings = array();
 		$primaryBindingIndex = -1;
@@ -118,13 +100,36 @@ class EntityBinding
 		$bindings = $effectiveBindings;
 	}
 
-	public static function addEntityBinding($entityTypeID, $entityID, array &$bindings)
+	public static function removeBindingsWithDuplicatingEntityIDs(int $entityTypeID, array &$bindings): void
 	{
-		if(!is_int($entityTypeID))
+		self::validateEntityTypeId($entityTypeID);
+
+		// No sense in search for duplicates in the array of 1 or 0 elements
+ 		if (count($bindings) < 2)
 		{
-			$entityTypeID = (int)$entityTypeID;
+			return;
 		}
 
+ 		// Sort bindings by entityId
+		$entityIds = self::prepareEntityIDs($entityTypeID, $bindings);
+		array_multisort($bindings, SORT_ASC, $entityIds);
+
+		$indexMax = count($bindings);
+		for ($index = 1; $index < $indexMax; $index++)
+		{
+			$currentEntityId = $innerEntityId = self::resolveEntityID($entityTypeID, $bindings[$index]);
+			$previousEntityId = $innerEntityId = self::resolveEntityID($entityTypeID, $bindings[$index - 1]);
+
+			if ($currentEntityId === $previousEntityId)
+			{
+				$duplicatingIndex = self::findBindingIndexByEntityID($entityTypeID, $currentEntityId, $bindings);
+				unset($bindings[$duplicatingIndex]);
+			}
+		}
+	}
+
+	private static function validateEntityTypeId(int $entityTypeID): void
+	{
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeID',
@@ -133,19 +138,24 @@ class EntityBinding
 			);
 		}
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
+		if (empty($fieldName))
 		{
 			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
+	}
+
+	public static function addEntityBinding($entityTypeID, $entityID, array &$bindings)
+	{
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
+		self::validateEntityTypeId($entityTypeID);
+
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		$bindings[] = array($fieldName => (int)$entityID);
 
@@ -203,27 +213,9 @@ class EntityBinding
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
+		self::validateEntityTypeId($entityTypeID);
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		$bindings = array();
 		$entityIDs = array_filter($entityIDs);
@@ -253,27 +245,9 @@ class EntityBinding
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
+		self::validateEntityTypeId($entityTypeID);
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		$entityIDs = array();
 		foreach($bindings as $binding)
@@ -306,27 +280,9 @@ class EntityBinding
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
+		self::validateEntityTypeId($entityTypeID);
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		return isset($binding[$fieldName]) ? (int)$binding[$fieldName] : 0;
 	}
@@ -500,27 +456,9 @@ class EntityBinding
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
-			);
-		}
+		self::validateEntityTypeId($entityTypeID);
 
-		if($entityTypeID === \CCrmOwnerType::Company)
-		{
-			$fieldName = 'COMPANY_ID';
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			$fieldName = 'CONTACT_ID';
-		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
 		$maxSort = 0;
 

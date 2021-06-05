@@ -104,6 +104,33 @@ final class Configuration
 		return $isAllow;
 	}
 
+	public static function shouldAutoLockObjectOnEdit(): bool
+	{
+		static $isAllow = null;
+		if ($isAllow === null)
+		{
+			$isAllow = 'Y' === Option::get(Driver::INTERNAL_MODULE_ID, 'disk_auto_lock_on_object_edit', 'N');
+		}
+
+		return $isAllow;
+	}
+
+	public static function shouldAutoUnlockObjectOnSave(): bool
+	{
+		static $isAllow = null;
+		if ($isAllow === null)
+		{
+			$isAllow = 'Y' === Option::get(Driver::INTERNAL_MODULE_ID, 'disk_auto_release_lock_on_save', 'N');
+		}
+
+		return $isAllow;
+	}
+
+	public static function getMinutesToAutoReleaseObjectLock(): int
+	{
+		return (int)Option::get(Driver::INTERNAL_MODULE_ID, 'disk_time_auto_release_object_lock', 0);
+	}
+
 	public static function getDocumentServiceCodeForCurrentUser()
 	{
 		return UserConfiguration::getDocumentServiceCode();

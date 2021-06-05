@@ -1,71 +1,47 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
+
 class DealConversionConfig extends EntityConversionConfig
 {
 	public function __construct(array $options = null)
 	{
+		parent::__construct($options);
+
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Invoice));
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Quote));
 	}
 
-	public static function getDefault()
+	protected static function getEntityTypeId(): int
 	{
-		$config = new DealConversionConfig();
-		$item = $config->getItem(\CCrmOwnerType::Invoice);
-		$item->setActive(true);
-		$item->enableSynchronization(true);
-		return $config;
+		return \CCrmOwnerType::Deal;
 	}
 
-	public static function load()
+	protected static function getDefaultDestinationEntityTypeId(): int
 	{
-		$s = Main\Config\Option::get('crm', 'crm_deal_conversion', '', '');
-		$params = $s !== '' ? unserialize($s, ['allowed_classes' => false]) : null;
-		if(!is_array($params))
-		{
-			return null;
-		}
-
-		$item = new DealConversionConfig();
-		$item->internalize($params);
-		return $item;
-	}
-
-	function save()
-	{
-		Main\Config\Option::set('crm', 'crm_deal_conversion', serialize($this->externalize()), '');
+		return \CCrmOwnerType::Invoice;
 	}
 
 	public function getSchemeID()
 	{
 		$invoiceConfig = $this->getItem(\CCrmOwnerType::Invoice);
 		$quoteConfig = $this->getItem(\CCrmOwnerType::Quote);
-		if($invoiceConfig->isActive())
+
+		if ($invoiceConfig->isActive())
 		{
 			return DealConversionScheme::INVOICE;
 		}
-		elseif($quoteConfig->isActive())
+
+		if($quoteConfig->isActive())
 		{
 			return DealConversionScheme::QUOTE;
 		}
+
 		return DealConversionScheme::UNDEFINED;
 	}
 
 	public static function getCurrentSchemeID()
 	{
-		$config = self::load();
-		if($config === null)
-		{
-			$config = self::getDefault();
-		}
-
-		$schemeID = $config->getSchemeID();
-		if($schemeID === DealConversionScheme::UNDEFINED)
-		{
-			$schemeID = DealConversionScheme::getDefault();
-		}
-
-		return $schemeID;
+		return static::getCurrentSchemeIDImplementation();
 	}
 }

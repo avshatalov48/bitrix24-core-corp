@@ -178,22 +178,10 @@
 	BX.Voximplant.openLimitSlider = function(sliderCode)
 	{
 		sliderCode = sliderCode || 'limit_contact_center_telephony';
-		// do not forget to include component bitrix:ui.info.helper
-		if (!BX.UI.InfoHelper)
-		{
-			return;
-		}
-
-		if (BX.UI.InfoHelper.inited)
+		BX.loadExt("ui.info-helper").then(function()
 		{
 			BX.UI.InfoHelper.show(sliderCode);
-			return;
-		}
-		BX.ajax.runAction("ui.infoHelper.getInitParams").then(function(response)
-		{
-			BX.UI.InfoHelper.init(response.data);
-			BX.UI.InfoHelper.show(sliderCode);
-		})
+		});
 	};
 
 	BX.Voximplant.openBilling = function()

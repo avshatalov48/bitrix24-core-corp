@@ -1,7 +1,9 @@
 <?php
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\Item;
 use \Bitrix\Crm\Order;
+use Bitrix\Crm\Service\Container;
 
 class EntityAuthorization
 {
@@ -95,9 +97,33 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkCreatePermission($userPermissions);
 		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeID);
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				// check that can create in at least one category
+				$categories = $factory->getCategories();
+				foreach ($categories as $category)
+				{
+					$canAdd = Container::getInstance()->getUserPermissions()->checkAddPermissions(
+						$entityTypeID,
+						$category->getId()
+					);
+					if ($canAdd)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			return Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeID);
+		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-		$permissionEntityType = \CCrmPerms::ResolvePermissionEntityType($entityTypeName);
+		$permissionEntityType = \CCrmPerms::ResolvePermissionEntityType($entityTypeName, 0);
 
 		return \CCrmAuthorizationHelper::CheckCreatePermission(
 			$permissionEntityType,
@@ -156,6 +182,20 @@ class EntityAuthorization
 		elseif($entityTypeID === \CCrmOwnerType::OrderShipment)
 		{
 			return Order\Permissions\Shipment::checkReadPermission($entityID, $userPermissions);
+		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeID);
+			if ($factory)
+			{
+				return Container::getInstance()->getUserPermissions()->checkReadPermissions(
+					$entityTypeID,
+					$entityID,
+					$factory->getItemCategoryId($entityID) ?? 0
+				);
+			}
+
+			return false;
 		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
@@ -216,6 +256,14 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkUpdatePermission($entityID, $userPermissions);
 		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			return Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+				$entityTypeID,
+				$entityID,
+				Container::getInstance()->getFactory($entityTypeID)->getItemCategoryId($entityID) ?? 0
+			);
+		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 		$permissionEntityType = \CCrmPerms::ResolvePermissionEntityType($entityTypeName, $entityID);
@@ -275,6 +323,14 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkDeletePermission($entityID, $userPermissions);
 		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			return Container::getInstance()->getUserPermissions()->checkDeletePermissions(
+				$entityTypeID,
+				$entityID,
+				Container::getInstance()->getFactory($entityTypeID)->getItemCategoryId($entityID) ?? 0
+			);
+		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 		$permissionEntityType = \CCrmPerms::ResolvePermissionEntityType($entityTypeName, $entityID);
@@ -310,6 +366,10 @@ class EntityAuthorization
 		elseif($entityTypeID === \CCrmOwnerType::Company)
 		{
 			return \CCrmCompany::GetPermissionAttributes($entityIDs);
+		}
+		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			//@todo process dynamic types
 		}
 
 		$permissionEntityMap = array();

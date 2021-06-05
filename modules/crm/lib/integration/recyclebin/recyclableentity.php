@@ -46,9 +46,9 @@ abstract class RecyclableEntity implements Recyclebin\Internals\Contracts\Recycl
 
 	/**
 	 * Get message array for Recycle Bin action's notification
-	 * @return array|void
+	 * @return array
 	 */
-	abstract public static function getNotifyMessages();
+	abstract public static function getNotifyMessages(): array;
 
 	protected static function prepareDataSlots(Recyclebin\Internals\Entity $entity)
 	{

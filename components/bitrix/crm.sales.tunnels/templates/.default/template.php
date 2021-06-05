@@ -50,7 +50,7 @@ $this->SetViewTarget('pagetitle', 100);
 			'',
 			array(
 				'SECTION_CODE' => 'crm_tunnels',
-				'MENU_CODE' => 'deal'
+				'MENU_CODE' => mb_strtolower(\CCrmOwnerType::ResolveName($arResult['entityTypeId'])),
 			)
 		);
 	}
@@ -73,7 +73,7 @@ $APPLICATION->includeComponent(
 	'',
 	[
 		'API_MODE' => 'Y',
-		'DOCUMENT_TYPE' => \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Deal),
+		'DOCUMENT_TYPE' => \CCrmBizProcHelper::ResolveDocumentType($arResult['entityTypeId']),
 	]
 );
 
@@ -81,15 +81,26 @@ $APPLICATION->includeComponent(
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 
+	var workarea = document.getElementById('workarea-content');
+	if (workarea)
+    {
+    	BX.Dom.addClass(workarea, 'ui-page-slider-workarea-content-padding');
+    }
+
 	void new BX.Crm.SalesTunnels.Manager({
-		container: document.querySelector('.crm-st'),
+		entityTypeId: <?=(int)$arResult['entityTypeId']?>,
+		documentType: <?= \Bitrix\Main\Web\Json::encode($arResult['documentType']) ?>,
+		isSenderSupported: <?=($arResult['isSenderSupported'] ? 'true' : 'false')?>,
+		isAutomationEnabled: <?=($arResult['isAutomationEnabled'] ? 'true' : 'false')?>,
+		isStagesEnabled: <?=($arResult['isStagesEnabled'] ? 'true' : 'false')?>,
+        container: document.querySelector('.crm-st'),
 		addCategoryButtonTop: document.querySelector('.crm-st-add-category-btn-top'),
 		helpButton: document.querySelector('.crm-st-help-button'),
 		categories: <?=CUtil::phpToJsObject($arResult['categories'])?>,
 		tunnelScheme: <?=CUtil::phpToJsObject($arResult['tunnelScheme'])?>,
 		canAddCategory: <?=CUtil::phpToJsObject($arResult['canAddCategory'])?>,
 		categoriesQuantityLimit: <?=CUtil::phpToJsObject($arResult['categoriesQuantityLimit'])?>,
-		robotsUrl: '/crm/deal/automation/{category}/',
+		robotsUrl: '<?=$arResult['robotsUrl']?>',
 		generatorUrl: '<?=Rc\Service::getPathToAddDeal()?>',
 		permissionEditUrl: '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_perm_list'))?>/',
 		allowWrite: true,

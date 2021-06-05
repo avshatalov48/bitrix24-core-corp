@@ -577,8 +577,6 @@ abstract class Model implements \ArrayAccess, IErrorable
 				throw new ArgumentException("Required params: { {$item} }");
 			}
 		}
-
-		return;
 	}
 
 	/**

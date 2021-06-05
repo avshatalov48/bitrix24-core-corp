@@ -74,7 +74,7 @@ $arResult['BACK_URL'] = CComponentEngine::MakePathFromTemplate(
 );
 
 $langs = array();
-$rsLang = CLangAdmin::GetList(($by = 'sort'), ($order = 'asc'));
+$rsLang = CLangAdmin::GetList();
 while ($arLang = $rsLang->Fetch())
 {
 	$lid = $arLang['LID'];
@@ -89,7 +89,7 @@ $arResult['LANGS'] = $langs;
 $currencyLocs = array();
 if($currencyID !== '')
 {
-	$rs = CCurrencyLang::GetList(($by = ''), ($order = ''), $currencyID);
+	$rs = CCurrencyLang::GetList('', '', $currencyID);
 	while ($ary = $rs->Fetch())
 	{
 		$loc = array();

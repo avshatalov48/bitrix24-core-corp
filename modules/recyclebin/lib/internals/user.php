@@ -83,7 +83,7 @@ class User
 				}
 				else
 				{
-					/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 					$ar = \CUser::GetUserGroup($userId);
 					if (in_array(1, $ar, true) || in_array('1', $ar, true))
 						$users[$userId] = true;    // user is admin
@@ -115,8 +115,8 @@ class User
 		}
 
 		$dbResult = \CUser::getList(
-			$o = 'ID',
-			$b = 'ASC',
+			'ID',
+			'ASC',
 			['ID_EQUAL_EXACT' => $userID],
 			['FIELDS' => ['ID'], 'SELECT' => ['UF_DEPARTMENT']]
 		);

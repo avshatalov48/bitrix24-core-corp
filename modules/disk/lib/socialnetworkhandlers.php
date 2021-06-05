@@ -241,7 +241,7 @@ class SocialnetworkHandlers
 					}
 				}
 			}
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if(!empty($userId) && !empty($groupId) && \CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $groupId, 'files'))
 			{
 				$storage = Driver::getInstance()->getStorageByGroupId($groupId);
@@ -291,7 +291,7 @@ class SocialnetworkHandlers
 				$groupId = $fields['GROUP_ID'];
 			}
 
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if(!empty($groupId) && \CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $groupId, 'files'))
 			{
 				$storage = Driver::getInstance()->getStorageByGroupId($groupId);
@@ -354,7 +354,7 @@ class SocialnetworkHandlers
 
 		if(!$updateGroupFilesFeatures && isset($fields['ACTIVE']) && $fields['ACTIVE'] == 'N')
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$features = \CSocNetFeatures::getById($id);
 			if($features
 				&& isset($features['FEATURE'])
@@ -390,7 +390,7 @@ class SocialnetworkHandlers
 		}
 		elseif(isset($fields['ACTIVE']) && $fields['ACTIVE'] == 'Y')
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$features = \CSocNetFeatures::getById($id);
 			if($features
 				&& isset($features['FEATURE'])

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Disk\Internals;
 
+use Bitrix\Disk\Configuration;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Validator\Length;
@@ -45,6 +46,17 @@ final class ObjectLockTable extends DataManager
 	 */
 	public static function getMap()
 	{
+		$sqlHelper = Application::getConnection()->getSqlHelper();
+
+		$minutesToAutoReleaseObjectLock = Configuration::getMinutesToAutoReleaseObjectLock();
+		if (!$minutesToAutoReleaseObjectLock || $minutesToAutoReleaseObjectLock < 0)
+		{
+			$minutesToAutoReleaseObjectLock = 0;
+		}
+		$seconds = (int)$minutesToAutoReleaseObjectLock * 60;
+		$secondsToAutoRelease = $sqlHelper->addSecondsToDateTime($seconds, '%s');
+		$now = $sqlHelper->getCurrentDateTimeFunction();
+
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
@@ -77,6 +89,14 @@ final class ObjectLockTable extends DataManager
 				'default_value' => function() {
 					return new DateTime();
 				},
+			),
+			'IS_READY_AUTO_UNLOCK' => array(
+				'data_type' => 'boolean',
+				'expression' => array(
+					"CASE WHEN ({$now} > {$secondsToAutoRelease}) THEN 1 ELSE 0 END",
+					'CREATE_TIME'
+				),
+				'values' => array(0, 1),
 			),
 			'EXPIRY_TIME' => array(
 				'data_type' => 'datetime',

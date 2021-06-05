@@ -1555,9 +1555,7 @@ foreach ($arVisibleColumns as $visibleColumn)
 	}
 }
 
-$b = "sort";
-$o = "asc";
-$dbSite = CSite::GetList($b, $o, array());
+$dbSite = CSite::GetList();
 while ($arSite = $dbSite->Fetch())
 {
 	$serverName[$arSite["LID"]] = $arSite["SERVER_NAME"];
@@ -3524,7 +3522,7 @@ else
 		$arSiteMenu = array();
 		$arSitesShop = array();
 		$arSitesTmp = array();
-		$rsSites = CSite::GetList($b = "id", $o = "asc", Array("ACTIVE" => "Y"));
+		$rsSites = CSite::GetList("id", "asc", Array("ACTIVE" => "Y"));
 
 		while ($arSite = $rsSites->GetNext())
 		{
@@ -3851,9 +3849,7 @@ else
 				<select name="filter_lang">
 					<option value=""><?= htmlspecialcharsbx(Loc::getMessage("SALE_F_ALL")) ?></option>
 					<?
-					$b1 = "SORT";
-					$o1 = "ASC";
-					$dbSitesList = CLang::GetList($b1, $o1);
+					$dbSitesList = CLang::GetList();
 					while ($arSitesList = $dbSitesList->Fetch())
 					{
 						if(!in_array($arSitesList["LID"], $arAccessibleSites)

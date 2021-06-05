@@ -93,8 +93,13 @@ class CBPCrmGenerateEntityDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($entityTypeName, $entityId) = explode('_', $this->GetDocumentId()[2]);
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		$itemIdentifier = $this->extractItemIdentifier($this->GetDocumentId());
+		if (!$itemIdentifier)
+		{
+			$this->WriteToTrackingService('Could not parse entities', 0, CBPTrackingType::Error);
+		}
+		$entityTypeId = $itemIdentifier->getEntityTypeId();
+		$entityId = $itemIdentifier->getEntityId();
 		$providerClassName = static::getDataProviderByEntityTypeId($entityTypeId);
 		if(!$providerClassName)
 		{
@@ -110,6 +115,11 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 		$template->setSourceType($providerClassName);
 		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $entityId);
+		if (!$document)
+		{
+			$this->WriteToTrackingService('Could not create document', 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
+		}
 		if($this->WithStamps === 'Y')
 		{
 			$document->enableStamps(true);
@@ -188,11 +198,17 @@ class CBPCrmGenerateEntityDocumentActivity
 
 	protected function getResponsibleId()
 	{
-		$documentId = $this->GetDocumentId();
-		list($typeName, $ownerID) = explode('_', $documentId[2]);
-		$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
+		$itemIdentifier = $this->extractItemIdentifier($this->GetDocumentId());
+		if ($itemIdentifier)
+		{
+			return CCrmOwnerType::GetResponsibleID(
+				$itemIdentifier->getEntityTypeId(),
+				$itemIdentifier->getEntityId(),
+				false
+			);
+		}
 
-		return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
+		return 0;
 	}
 
 	public function Subscribe(IBPActivityExternalEventListener $eventHandler)
@@ -284,9 +300,9 @@ class CBPCrmGenerateEntityDocumentActivity
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($documentType[2]);
 		$providerClassName = static::getDataProviderByEntityTypeId($entityTypeId);
-		if(!$providerClassName)
+		if (!$providerClassName)
 		{
-			return '';
+			return GetMessage('CRM_GEDA_PROVIDER_NOT_FOUND');
 		}
 
 		$templatesList = [];
@@ -524,29 +540,11 @@ class CBPCrmGenerateEntityDocumentActivity
 
 	/**
 	 * @param int $entityTypeId
-	 * @return bool|string
+	 * @return null|string
 	 */
 	public static function getDataProviderByEntityTypeId($entityTypeId)
 	{
-		switch($entityTypeId)
-		{
-			case CCrmOwnerType::Lead:
-				return DataProvider\Lead::class;
-			case CCrmOwnerType::Deal:
-				return DataProvider\Deal::class;
-			case CCrmOwnerType::Contact:
-				return DataProvider\Contact::class;
-			case CCrmOwnerType::Company:
-				return DataProvider\Company::class;
-			case CCrmOwnerType::Invoice:
-				return DataProvider\Invoice::class;
-			case CCrmOwnerType::Quote:
-				return DataProvider\Quote::class;
-			case CCrmOwnerType::Order:
-				return DataProvider\Order::class;
-		}
-
-		return false;
+		return DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
 	}
 
 	public static function getAjaxResponse($request)
@@ -595,7 +593,7 @@ class CBPCrmGenerateEntityDocumentActivity
 
 	public static function renderValuePropertyDialog($isRobot, $providerClassName, $placeholder, array $field = null, $value = null)
 	{
-		if(!$value || empty($value) && isset($field['chain']))
+		if((!$value || empty($value)) && isset($field['chain']))
 		{
 			$value = $field['chain'];
 		}
@@ -687,5 +685,27 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Get ItemIdentifier object from documentId.
+	 *
+	 * @param array $documentId
+	 * @return \Bitrix\Crm\ItemIdentifier|null
+	 */
+	protected function extractItemIdentifier(array $documentId): ?\Bitrix\Crm\ItemIdentifier
+	{
+		if (count($documentId) === 3 && isset($documentId[2]))
+		{
+			[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+			$entityId = (int)$entityId;
+			if ($entityTypeId > 0 && $entityId > 0)
+			{
+				return new \Bitrix\Crm\ItemIdentifier($entityTypeId, $entityId);
+			}
+		}
+
+		return null;
 	}
 }

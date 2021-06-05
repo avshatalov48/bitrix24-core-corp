@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\SpecificFolder;
@@ -13,7 +14,7 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
-class DropboxHandler extends DocumentHandler
+class DropboxHandler extends DocumentHandler implements CloudImportInterface
 {
 	const API_URL         = 'https://api.dropbox.com/2';
 	const API_CONTENT_URL = 'https://api-content.dropbox.com/2';

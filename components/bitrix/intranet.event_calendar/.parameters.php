@@ -280,7 +280,7 @@ if ($arCurrentValues["ALLOW_RES_MEETING"] != 'N')
 
 	/* Access to Reserve Meeting */
 	$arUserGroups = array();
-	$dbGroups = CGroup::GetList($b = "NAME", $o = "ASC", array("ACTIVE" => "Y"));
+	$dbGroups = CGroup::GetList("NAME", "ASC", array("ACTIVE" => "Y"));
 	while ($arGroup = $dbGroups->GetNext())
 		$arUserGroups[$arGroup["ID"]] = "[".$arGroup["ID"]."] ".$arGroup["NAME"];
 
@@ -321,7 +321,7 @@ if ($arCurrentValues["ALLOW_VIDEO_MEETING"] != 'N')
 
 	/* Access to Reserve Video-Meeting */
 	$arUserGroups = array();
-	$dbGroups = CGroup::GetList($b = "NAME", $o = "ASC", array("ACTIVE" => "Y"));
+	$dbGroups = CGroup::GetList("NAME", "ASC", array("ACTIVE" => "Y"));
 	while ($arGroup = $dbGroups->GetNext())
 		$arUserGroups[$arGroup["ID"]] = "[".$arGroup["ID"]."] ".$arGroup["NAME"];
 

@@ -834,7 +834,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							if ($arUserListCache === null)
 							{
 								$arUserListCache = array();
-								$rsUserList = CUser::GetList($by = 'ID', $order = 'ASC');
+								$rsUserList = CUser::GetList('ID', 'ASC');
 								$site = new CSite();
 								while ($arUser = $rsUserList->Fetch())
 								{
@@ -1157,7 +1157,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			if ($_FILES['IMPORT_FILE']['error'] > 0)
 				ShowError(GetMessage('CRM_PRODUCT_IMP_CSV_NF_ERROR'));
-			elseif (($strError = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, 0, 'csv,txt')) == '')
+			elseif (($strError = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, false, 'csv,txt')) == '')
 			{
 				$arFields = Array(''=>'');
 				$arFieldsUpper = Array();

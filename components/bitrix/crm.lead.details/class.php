@@ -535,6 +535,16 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			'html' => ob_get_clean()
 		);
 
+		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+		$this->arResult['TABS'] = array_merge(
+			$this->arResult['TABS'],
+			$relationManager->getRelationTabsForDynamicChildren(
+				\CCrmOwnerType::Lead,
+				$this->entityID,
+				($this->entityID === 0)
+			)
+		);
+
 		if($this->entityID > 0)
 		{
 			$this->arResult['TABS'][] = array(
@@ -1944,8 +1954,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
 			$dbUsers = \CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				'ID',
+				'ASC',
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1972,8 +1982,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$this->entityData['OBSERVER_INFOS'] = array();
 
 			$userDbResult = \CUser::GetList(
-				($by = 'ID'),
-				($order = 'ASC'),
+				'ID',
+				'ASC',
 				array('ID' => implode('||', $this->entityData['OBSERVER_IDS'])),
 				array('FIELDS' => array('ID', 'PERSONAL_PHOTO', 'WORK_POSITION', 'NAME', 'SECOND_NAME', 'LAST_NAME'))
 			);

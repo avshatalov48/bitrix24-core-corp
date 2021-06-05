@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["LFP_SOCNET_LOG_LIST_P_ALL"] = "All external events";
 $MESS["LFP_SOCNET_LOG_P"] = "External data source";
 $MESS["LFP_SOCNET_LOG_XDI_P"] = "external data source";
@@ -20,4 +20,3 @@ $MESS["LFP_SOCNET_LOG_DATA_COMMENT_G_TITLE_MAIL"] = "A comment added to \"#TITLE
 $MESS["LFP_SOCNET_LOG_DATA_COMMENT_U_TITLE_MAIL"] = "A comment added to data from \"#TITLE#\" in #ENTITY#'s profile";
 $MESS["LFP_SOCNET_LOG_DATA_TITLE_IMPORTANT_24"] = "Important!";
 $MESS["LFP_SOCNET_LOG_DATA_TITLE_24"] = "Message from external source";
-?>

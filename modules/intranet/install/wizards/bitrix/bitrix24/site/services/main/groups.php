@@ -66,7 +66,7 @@ foreach ($arGroups as $arGroup)
 {
 
 	//Add Group
-	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
+	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
 		$groupID = $arExistsGroup["ID"];
 	else
@@ -121,7 +121,7 @@ foreach ($arGroups as $arGroup)
 }
 
 
-$dbGroupUsers = CGroup::GetList($by="id", $order="asc", Array("ACTIVE" => "Y"));
+$dbGroupUsers = CGroup::GetList("id", "asc", Array("ACTIVE" => "Y"));
 $arGroupsId = Array("ADMIN_SECTION", "SUPPORT", "CREATE_GROUPS", "PERSONNEL_DEPARTMENT", "DIRECTION", "MARKETING_AND_SALES");
 while($arGroupUser = $dbGroupUsers->Fetch())
 {
@@ -173,7 +173,7 @@ if($res = $z->Fetch())
 	}
 }
 
-$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID, "STRING_ID_EXACT_MATCH" => "Y"));
+$dbResult = CGroup::GetList('', '', Array("STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID, "STRING_ID_EXACT_MATCH" => "Y"));
 if ($arExistsGroup = $dbResult->Fetch())
 	$groupID = $arExistsGroup["ID"];
 
@@ -206,14 +206,14 @@ if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 
 		}
 
-		$rsUsers = CUser::GetList(($by="id"), ($order="asc"), array("UF_DEPARTMENT" => $arSectionUsers));
+		$rsUsers = CUser::GetList("id", "asc", array("UF_DEPARTMENT" => $arSectionUsers));
 		while($arUsers = $rsUsers->Fetch())
 		{
 			CUser::AppendUserGroup($arUsers["ID"], $groupID);
 		}
 	}
 
-	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => "PERSONNEL_DEPARTMENT", "STRING_ID_EXACT_MATCH" => "Y"));
+	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => "PERSONNEL_DEPARTMENT", "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
 	{
 		$groupID = $arExistsGroup["ID"];
@@ -228,7 +228,7 @@ if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
 $allowGuests = COption::GetOptionString("main", "wizard_allow_group", "N", WIZARD_SITE_ID);
 if($allowGuests == "Y" && !WIZARD_IS_INSTALLED)
 {
-	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID_EXACT_MATCH" => "Y"));
+	$dbResult = CGroup::GetList('', '', Array("STRING_ID_EXACT_MATCH" => "Y"));
 	while ($arExistsGroup = $dbResult->Fetch())
 	{
 		if($arExistsGroup["ID"] != 1 && $arExistsGroup["ID"] !=2)

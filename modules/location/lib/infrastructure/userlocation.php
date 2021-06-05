@@ -8,6 +8,7 @@ use Bitrix\Main\Service\GeoIp;
 /**
  * Class UserPoint
  * @package Bitrix\Location\Infrastructure
+ * @internal
  */
 final class UserLocation
 {
@@ -17,7 +18,14 @@ final class UserLocation
 	 */
 	public static function findUserLocation(): Location
 	{
-		if(!($location = self::findLocationByIp()))
+		$location = self::findLocationByOption();
+
+		if(!$location)
+		{
+			$location = self::findLocationByIp();
+		}
+
+		if(!$location)
 		{
 			$location = self::findLocationByPortalRegion();
 		}
@@ -129,5 +137,41 @@ final class UserLocation
 		}
 
 		return $result;
+	}
+
+	private static function findLocationByOption(): ?Location
+	{
+		$result = null;
+		$locationData = (string)\Bitrix\Main\Config\Option::get('location', 'user_location_data', '');
+
+		if($locationData !== '')
+		{
+			$locationData = explode(';', $locationData);
+
+			if (is_array($locationData) && count($locationData) === 3)
+			{
+				$result = (new Location())
+					->setLatitude($locationData[0])
+					->setLongitude($locationData[1])
+					->setType($locationData[2]);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Set default user location
+	 * @param string $latitude
+	 * @param string $longitude
+	 * @param int $locationType One from \Bitrix\Location\Entity\Location\Type
+	 */
+	public static function setDefaultLocation(string $latitude, string $longitude, int $locationType): void
+	{
+		\Bitrix\Main\Config\Option::set(
+			'location',
+			'user_location_data',
+			$latitude . ";" . $longitude . ";" . (string)$locationType
+		);
 	}
 }

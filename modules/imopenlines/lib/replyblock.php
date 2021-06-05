@@ -68,14 +68,18 @@ class ReplyBlock
 	 */
 	public static function isBlocked(Session $session): bool
 	{
+		$result = false;
 		$sessionData = $session->getData();
 
-		if (!empty($sessionData['BLOCK_DATE']) && $sessionData['BLOCK_DATE'] < new \Bitrix\Main\Type\DateTime())
+		if (
+			!empty($sessionData['BLOCK_DATE']) &&
+			$sessionData['BLOCK_DATE'] < new \Bitrix\Main\Type\DateTime()
+		)
 		{
-			return true;
+			$result = true;
 		}
 
-		return false;
+		return $result;
 	}
 
 	/**

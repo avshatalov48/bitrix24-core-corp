@@ -154,6 +154,7 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 
 			// set predefined for getting props from component
 			\Bitrix\Landing\Node\Component::setPredefineForDynamicProps([
+				'IBLOCK_ID' => \Bitrix\Main\Config\Option::get('crm', 'default_product_catalog_id'),
 				'USE_ENHANCED_ECOMMERCE' => 'Y',
 				'SHOW_DISCOUNT_PERCENT' => 'Y',
 				'LABEL_PROP' => [
@@ -227,12 +228,13 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 
 		// callback for update site
 		$tplRef = $this->request('TPL_REF', true);
-		if ($tplRef !== false)
-		{
-			Site::callback('OnAfterUpdate',
-				function(\Bitrix\Main\Event $event) use ($tplRef)
+		Site::callback('OnAfterUpdate',
+			function(\Bitrix\Main\Event $event) use ($tplRef)
+			{
+				$primary = $event->getParameter('primary');
+
+				if ($tplRef !== false)
 				{
-					$primary = $event->getParameter('primary');
 					$areaCount = 0;
 					$tplId = $this->arResult['SITE']['TPL_ID']['CURRENT'];
 					$templates = $this->arResult['TEMPLATES'];
@@ -272,22 +274,21 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 						$primary['ID'],
 						$data
 					);
-					if (Manager::getOption('public_hook_on_save') == 'Y')
-					{
-						Hook::publicationSite($primary['ID']);
-					}
-					// rights
-					if (Rights::isAdmin() && Rights::isExtendedMode())
-					{
-						Rights::setOperationsForSite(
-							$primary['ID'],
-							$this->getRightsValue()
-						);
-					}
 				}
-			);
-		}
-
+				if (Manager::getOption('public_hook_on_save') == 'Y')
+				{
+					Hook::publicationSite($primary['ID']);
+				}
+				// rights
+				if (Rights::isAdmin() && Rights::isExtendedMode())
+				{
+					Rights::setOperationsForSite(
+						$primary['ID'],
+						$this->getRightsValue()
+					);
+				}
+			}
+		);
 
 		parent::executeComponent();
 		Manager::forceB24disable(false);

@@ -161,8 +161,8 @@ class Important extends \Bitrix\Socialnetwork\Controller\Base
 						}
 
 						$res = \CUser::getList(
-							($by = "ID"),
-							($order = "ASC"),
+							"ID",
+							"ASC",
 							[ 'ID' => implode("|", $userIdList) ],
 							$select
 						);

@@ -601,7 +601,7 @@ class TZGen
 		return $vTimeZone;
 	}
 
-	public function transitionRuleToVTransitionRule(TZConvTransitionRule $transitionRule, $offsetFrom)
+	public static function transitionRuleToVTransitionRule(TZConvTransitionRule $transitionRule, $offsetFrom)
 	{
 		$zone = $transitionRule->isdst ? 'DAYLIGHT' : 'STANDARD';
 		$dtstart = clone $transitionRule->from;

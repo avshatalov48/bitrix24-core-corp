@@ -51,8 +51,8 @@ class Context
 					}
 				}
 				$users = \CUser::GetList(
-					($by = ["last_name" => "asc", "name" => "asc"]),
-					($order = false),
+					["last_name" => "asc", "name" => "asc"],
+					'',
 					[ 'ID' => $USER->GetID() ],
 					[ 'SELECT' => [ 'UF_DEPARTMENT' ]]
 				);

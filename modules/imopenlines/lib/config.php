@@ -1121,13 +1121,7 @@ class Config
 				{
 					\Bitrix\Im\Alias::delete($alias['ID']);
 				}
-
-				$livechatManager = new LiveChatManager($id);
-				$livechatManager->delete();
 			}
-
-			$network = new Network();
-			$network->unRegisterConnector($id);
 
 			if (Loader::includeModule('imconnector'))
 			{
@@ -1275,6 +1269,33 @@ class Config
 		}
 
 		return self::canDoOperation($id, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM);
+	}
+
+	/**
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getIdConfigCanJoin(): array
+	{
+		$result = [];
+
+		$configs = Model\ConfigTable::getList([
+			'select' => ['ID'],
+			'cache' => ['ttl' => 84600]
+		]);
+
+		while ($config = $configs->fetch())
+		{
+			if(self::canJoin($config['ID']))
+			{
+				$result[] = $config['ID'];
+			}
+		}
+
+		return $result;
 	}
 
 	/**

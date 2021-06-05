@@ -23,6 +23,7 @@ $MESS["CRM_KANBAN_ERROR_STAGE_IS_SYSTEM"] = "System stage cannot be deleted.";
 $MESS["CRM_KANBAN_ERROR_STAGE_IS_WIN"] = "Final stage cannot be deleted.";
 $MESS["CRM_KANBAN_FIELD"] = "Observers";
 $MESS["CRM_KANBAN_HEADER_OTHER_FIELDS"] = "Other";
+$MESS["CRM_KANBAN_NOT_SUPPORTED"] = "This entity type cannot be displayed in Kanban";
 $MESS["CRM_KANBAN_ORDER_TITLE"] = "Order ##ACCOUNT_NUMBER#";
 $MESS["CRM_KANBAN_PHONE_TYPE_FAX"] = "Fax";
 $MESS["CRM_KANBAN_PHONE_TYPE_HOME"] = "Home";

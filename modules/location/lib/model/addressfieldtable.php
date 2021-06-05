@@ -36,10 +36,10 @@ class AddressFieldTable extends Main\ORM\Data\DataManager
 				->configurePrimary(true),
 
 			(new Fields\StringField('VALUE'))
-				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(null, 255)),
+				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(null, 1024)),
 
 			(new Fields\StringField('VALUE_NORMALIZED'))
-				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(null, 255)),
+				->addValidator(new Main\ORM\Fields\Validators\LengthValidator(null, 1024)),
 
 			// Ref
 

@@ -4,6 +4,7 @@ use Bitrix\Main\Loader;
 
 IncludeModuleLangFile(__FILE__);
 
+
 /**
  * @use \Bitrix\Im\Revision::getWeb()
  * @deprecated
@@ -154,6 +155,7 @@ $jsImCall = [
 	'/bitrix/js/im/call/voximplant_call.js',
 	'/bitrix/js/im/call/util.js',
 	'/bitrix/js/im/call/view.js',
+	'/bitrix/js/im/call/mic_muted_popup.js',
 	'/bitrix/js/im/call/notification.js',
 	'/bitrix/js/im/call/notification_conference.js',
 	'/bitrix/js/im/call/invite_popup.js',

@@ -5,6 +5,8 @@ use Bitrix\Bitrix24\Feature;
 use Bitrix\Bizproc;
 use Bitrix\Crm\Automation\Target;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
@@ -14,12 +16,7 @@ use Bitrix\Crm\ActivityTable;
 
 class Factory
 {
-	private static $supportedEntityTypes = array(
-		\CCrmOwnerType::Lead,
-		\CCrmOwnerType::Deal,
-		\CCrmOwnerType::Order,
-		//\CCrmOwnerType::Invoice,
-	);
+	private static $supportedEntityTypes = null;
 
 	private static $limitedEntityTypes = [
 		\CCrmOwnerType::Lead,
@@ -34,6 +31,25 @@ class Factory
 	private static $conversionResults = [];
 
 	private static $limitationCache = [];
+
+	private static function getSupportedEntityTypes()
+	{
+		if (is_null(static::$supportedEntityTypes))
+		{
+			static::$supportedEntityTypes = [
+					\CCrmOwnerType::Lead,
+					\CCrmOwnerType::Deal,
+					\CCrmOwnerType::Order,
+			];
+
+			if (QuoteSettings::getCurrent()->isFactoryEnabled())
+			{
+				static::$supportedEntityTypes[] = \CCrmOwnerType::Quote;
+			}
+		}
+
+		return static::$supportedEntityTypes;
+	}
 
 	public static function isAutomationAvailable($entityTypeId, $ignoreLicense = false)
 	{
@@ -149,7 +165,7 @@ class Factory
 
 	public static function canUseAutomation()
 	{
-		foreach (static::$supportedEntityTypes as $entityTypeId)
+		foreach (static::getSupportedEntityTypes() as $entityTypeId)
 		{
 			if (static::isAutomationAvailable($entityTypeId))
 				return true;
@@ -159,7 +175,14 @@ class Factory
 
 	public static function isSupported($entityTypeId)
 	{
-		return in_array((int)$entityTypeId, static::$supportedEntityTypes, true);
+		$isSupported = in_array((int)$entityTypeId, static::getSupportedEntityTypes(), true);
+		if (!$isSupported && \CCrmOwnerType::isPossibleDynamicTypeId((int)$entityTypeId))
+		{
+			$factory = Container::getInstance()->getFactory((int)$entityTypeId);
+			$isSupported = $factory && $factory->isAutomationEnabled();
+		}
+
+		return $isSupported;
 	}
 
 	public static function runOnAdd($entityTypeId, $entityId)
@@ -238,6 +261,14 @@ class Factory
 		elseif ($entityTypeId === \CCrmOwnerType::Invoice)
 		{
 			return new Target\InvoiceTarget();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return new Target\ItemTarget($entityTypeId);
+		}
+		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) || $entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return new Target\ItemTarget($entityTypeId);
 		}
 		else
 		{
@@ -466,5 +497,4 @@ class Factory
 
 		return $result;
 	}
-
 }

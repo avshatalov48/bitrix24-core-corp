@@ -28,6 +28,8 @@ $arActivityDescription = array(
 		'EXCLUDE' => [
 			['tasks'],
 			['rpa'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
 		]
 	],
 	'ROBOT_SETTINGS' => array(

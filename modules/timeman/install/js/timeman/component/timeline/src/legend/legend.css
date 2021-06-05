@@ -1,0 +1,20 @@
+.bx-timeman-component-timeline-legend-enter-active {
+    animation: move-item .2s;
+}
+
+.bx-timeman-component-timeline-legend-leave-active {
+    animation: move-item .2s reverse;
+}
+
+@keyframes move-item {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.bx-timeman-component-timeline-legend-container {
+    display: flex;
+}

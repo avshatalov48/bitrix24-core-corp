@@ -75,6 +75,31 @@ elseif($dealID > 0)
 	$isPermitted = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
 }
 
+if (!$isPermitted)
+{
+	$parentEntityTypeId = (int)$componentParams['PARENT_ENTITY_TYPE_ID'];
+	$parentEntityId = (int)$componentParams['PARENT_ENTITY_ID'];
+	if ($parentEntityTypeId && $parentEntityId)
+	{
+		$isPermitted = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$parentEntityTypeId,
+			$parentEntityId
+		);
+
+		$filter = [];
+		$children = \Bitrix\Crm\Service\Container::getInstance()->getRelationManager()->getChildElements(new \Bitrix\Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId));
+		foreach ($children as $child)
+		{
+			$filter['ID'][] = $child->getEntityId();
+		}
+		if (empty($filter))
+		{
+			$filter['ID'] = 0;
+		}
+		$componentParams['INTERNAL_FILTER'] = $filter;
+	}
+}
+
 if(!$isPermitted)
 {
 	die();

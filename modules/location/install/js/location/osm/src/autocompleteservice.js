@@ -1,44 +1,26 @@
-import {AutocompleteServiceBase} from 'location.core';
+import {AutocompleteServiceBase, Location} from 'location.core';
+import type {AutocompleteServiceParams} from 'location.core';
 
 export default class AutocompleteService extends AutocompleteServiceBase
 {
-	#requester;
-	/** {number} Radius in kilometers */
-	#biasBoundRadius = 50;
+	#autocompleteRequester;
 
-	constructor(params: {})
+	constructor(props)
 	{
-		super();
-		this.#requester = params.requester;
+		super(props);
+		this.#autocompleteRequester = props.autocompleteRequester;
 	}
 
-	autocomplete(text: string, params: Object): Promise<Array<Location>, Error>
+	autocomplete(text: String, autocompleteParams: AutocompleteServiceParams): Promise<Array<Location>, Error>
 	{
-		let queryParams = {query: text, params: params};
-
-		if(params.userCoordinates)
+		if (text === '')
 		{
-			queryParams.viewbox = this.#getBoundsFromLatLng(
-				params.userCoordinates[0],
-				params.userCoordinates[1]
-			);
+			return new Promise((resolve) =>
+			{
+				resolve([]);
+			});
 		}
 
-		return this.#requester.request(queryParams);
-	}
-
-	#getBoundsFromLatLng(lat: string, lng: string): string
-	{
-		let latChange = this.#biasBoundRadius/111.2;
-		let lonChange = Math.abs(Math.cos(lat*(Math.PI/180)));
-
-		let bounds = {
-			latA : lat - latChange,
-			lonA : lng - lonChange,
-			latB : lat + latChange,
-			lonB : lng + lonChange
-		};
-
-		return `${bounds.lonA},${bounds.latA},${bounds.lonB},${bounds.latB}`;
+		return this.#autocompleteRequester.request({text, autocompleteParams});
 	}
 }

@@ -42,7 +42,7 @@ final class TokenRequester extends BaseSender
 	 */
 	public function getToken(): ?Token
 	{
-		if (is_null($this->source))
+		if ($this->source === null)
 		{
 			throw new RuntimeException('Source is not specified');
 		}
@@ -84,12 +84,13 @@ final class TokenRequester extends BaseSender
 	{
 		$config = $this->source->getConfig();
 
-		if (is_null($config))
+		if ($config === null)
 		{
 			return null;
 		}
 
 		$tokenArray = $config->getValue('TOKEN');
+
 		if (!$tokenArray)
 		{
 			return null;
@@ -101,6 +102,16 @@ final class TokenRequester extends BaseSender
 		}
 
 		$token = Token::makeFromArray(unserialize($tokenArray, ['allowed_classes' => false]));
+
+		if(!$token)
+		{
+			return null;
+		}
+
+		if ($token->getToken() === '')
+		{
+			return null;
+		}
 
 		if ($token->getExpiry() <= time() + self::SAFE_BUFFER_TIME_SECONDS)
 		{

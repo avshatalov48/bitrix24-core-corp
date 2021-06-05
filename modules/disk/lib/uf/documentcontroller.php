@@ -87,6 +87,16 @@ final class DocumentController extends Document\DocumentController
 		}
 	}
 
+	protected function checkLockPermissions()
+	{
+		return $this->attachedModel->canLock($this->getUser()->getId());
+	}
+
+	protected function checkUnlockPermissions()
+	{
+		return $this->attachedModel->canUnlock($this->getUser()->getId());
+	}
+
 	protected function prepareFileData()
 	{
 		$fileData = parent::prepareFileData();

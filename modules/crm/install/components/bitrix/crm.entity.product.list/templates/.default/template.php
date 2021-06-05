@@ -47,6 +47,18 @@ foreach ($currency['FORMAT']['TEMPLATE']['PARTS'] as $index => $value)
 	}
 }
 
+$taxList = [];
+if (!empty($arResult['PRODUCT_VAT_LIST']) && is_array($arResult['PRODUCT_VAT_LIST']))
+{
+	foreach ($arResult['PRODUCT_VAT_LIST'] as $id => $value)
+	{
+		$taxList[] = [
+			'ID' => $id,
+			'VALUE' => $value,
+		];
+	}
+}
+
 $pricePrecision = $arResult['PRICE_PRECISION'];
 $quantityPrecision = $arResult['QUANTITY_PRECISION'];
 $commonPrecision = $arResult['COMMON_PRECISION'];
@@ -80,11 +92,12 @@ $editorConfig = [
 	'quantityPrecision' => $quantityPrecision,
 	'commonPrecision' => $commonPrecision,
 
+	'taxList' => $taxList,
 	'allowTax' => $arResult['ALLOW_TAX'] ? 'Y' : 'N',
 	'enableTax' => $arResult['ENABLE_TAX'] ? 'Y' : 'N',
 	'taxUniform' => $arResult['PRODUCT_ROW_TAX_UNIFORM'],
-	'newRowPosition' => $arResult['NEW_ROW_POSITION'],
 
+	'newRowPosition' => $arResult['NEW_ROW_POSITION'],
 	'enableDiscount' => $arResult['ENABLE_DISCOUNT'] ? 'Y' : 'N',
 
 	'measures' => $measures['LIST'],
@@ -398,35 +411,11 @@ foreach ($grid['ROWS'] as $product)
 		$columns['TAX_SUM'] = $taxSumColumn;
 	}
 
-	$actions = [];
-
-	if ($settings['ALLOW_EDIT'])
-	{
-		$pathToRemove = CHTTP::urlAddParams(
-			$editorConfig['reloadUrl'] ?? $APPLICATION->GetCurPage(),
-			[
-				'action_'.$gridId => 'delete',
-				'OWNER_TYPE' => $rawProduct['OWNER_TYPE'],
-				'ID' => $rawProduct['ID'],
-				'sessid' => bitrix_sessid(),
-			]
-		);
-
-		$actions[] = [
-			'iconclass' => 'delete',
-			'title' => Loc::getMessage('CRM_ENTITY_PL_DELETE'),
-			'text' => Loc::getMessage('CRM_ENTITY_PL_DELETE'),
-			'onclick' => "BX.Crm.Entity.ProductList.Instance.deleteRow('{$rawProduct['ID']}')",
-			'default' => false,
-		];
-	}
-
 	$rows[] = [
 		'id' => $rawProduct['ID'] === $productIdMask ? 'template_0' : $rawProduct['ID'],
 		'raw_data' => $rawProduct,
 		'data' => $product,
 		'columns' => $columns,
-		'actions' => $actions,
 		'has_child' => $isSetItems,
 		'parent_id' => \Bitrix\Main\Grid\Context::isInternalRequest() && !empty($rawProduct['PARENT_ID']) ? $rawProduct['PARENT_ID'] : 0,
 		'editable' => !$isSetItems && !$isReadOnly,
@@ -527,7 +516,7 @@ foreach ($rows as $key => $row)
 			'SHOW_PAGINATION' => $grid['SHOW_PAGINATION'],
 			'SHOW_TOTAL_COUNTER' => $grid['SHOW_TOTAL_COUNTER'],
 			'SHOW_PAGESIZE' => $grid['SHOW_PAGESIZE'],
-			'SHOW_ROW_ACTIONS_MENU' => !$isReadOnly,
+			'SHOW_ROW_ACTIONS_MENU' => false,
 			'PAGINATION' => $grid['PAGINATION'],
 			'ALLOW_SORT' => false,
 			'ALLOW_ROWS_SORT' => true,
@@ -541,6 +530,7 @@ foreach ($rows as $key => $row)
 			'NAME_TEMPLATE' => (string)($arParams['~NAME_TEMPLATE'] ?? ''),
 			'ACTION_PANEL' => $grid['ACTION_PANEL'],
 			'SHOW_ACTION_PANEL' => !empty($grid['ACTION_PANEL']),
+			'SHOW_ROW_CHECKBOXES' => false,
 		],
 		$component
 	);

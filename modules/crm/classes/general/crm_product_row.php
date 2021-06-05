@@ -181,8 +181,8 @@ class CAllCrmProductRow
 			return false;
 		}
 
-		$ownerType = isset($arFields['OWNER_TYPE']) ? strval($arFields['OWNER_TYPE']) : isset($arParams['OWNER_TYPE']) ? strval($arParams['OWNER_TYPE']) : '';
-		$ownerID = isset($arFields['OWNER_ID']) ? intval($arFields['OWNER_ID']) : isset($arParams['OWNER_ID']) ? intval($arParams['OWNER_ID']) : 0;
+		$ownerType = (isset($arFields['OWNER_TYPE']) ? strval($arFields['OWNER_TYPE']) : (isset($arParams['OWNER_TYPE']) ? strval($arParams['OWNER_TYPE']) : ''));
+		$ownerID = (isset($arFields['OWNER_ID']) ? intval($arFields['OWNER_ID']) : (isset($arParams['OWNER_ID']) ? intval($arParams['OWNER_ID']) : 0));
 
 		if($ownerType !== '' && $ownerID > 0)
 		{
@@ -560,6 +560,12 @@ class CAllCrmProductRow
 				$result = CCrmOwnerTypeAbbr::ResolveName($ownerType);
 				break;
 		}
+
+		if (empty($result) && \CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($ownerType))
+		{
+			$result = \CCrmOwnerTypeAbbr::ResolveName($ownerType);
+		}
+
 		return $result;
 	}
 
@@ -1219,7 +1225,7 @@ class CAllCrmProductRow
 			$siteID = '';
 			if (!defined("SITE_ID"))
 			{
-				$obSite = CSite::GetList($by = "def", $order = "desc", array("ACTIVE" => "Y"));
+				$obSite = CSite::GetList("def", "desc", array("ACTIVE" => "Y"));
 				if ($obSite && $arSite = $obSite->Fetch())
 					$siteID= $arSite["LID"];
 				unset($obSite, $arSite);
@@ -1642,7 +1648,7 @@ class CAllCrmProductRow
 			}
 			else
 			{
-				$obSite = CSite::GetList($by = 'def', $order = 'desc', array('ACTIVE' => 'Y'));
+				$obSite = CSite::GetList('def', 'desc', array('ACTIVE' => 'Y'));
 				if ($obSite && $arSite = $obSite->Fetch())
 					$siteID= $arSite["LID"];
 				unset($obSite, $arSite);

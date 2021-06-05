@@ -234,4 +234,18 @@ class Invoice extends Entity
 	{
 		return null;
 	}
+
+	public function getTypeInfo(): array
+	{
+		return array_merge(
+			parent::getTypeInfo(),
+			[
+				'canUseCallListInPanel' => true,
+				'hasRestictionToMoveToWinColumn' => true,
+				'useRequiredVisibleFields' => true,
+				'showPersonalSetStatusNotCompletedText' => true,
+				'kanbanItemClassName' => 'crm-kanban-item crm-kanban-item-invoice',
+			]
+		);
+	}
 }

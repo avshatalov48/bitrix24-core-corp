@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\UserField\Types;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Types\StringType;
@@ -25,7 +26,9 @@ class ElementType extends StringType
 		'C' => 'CONTACT',
 		'CO' => 'COMPANY',
 		'O' => 'ORDER',
-		'L' => 'LEAD'
+		'L' => 'LEAD',
+		'Q' => 'QUOTE',
+		\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix => 'DYNAMIC'
 	];
 
 	protected const ENTITY_TYPE_NAME_DEFAULT = 'L';
@@ -40,20 +43,26 @@ class ElementType extends StringType
 
 	public static function prepareSettings(array $userField): array
 	{
-		$entityType['LEAD'] =
-			($userField['SETTINGS']['LEAD'] === 'Y' ? 'Y' : 'N');
-		$entityType['CONTACT'] =
-			($userField['SETTINGS']['CONTACT'] === 'Y' ? 'Y' : 'N');
-		$entityType['COMPANY'] =
-			($userField['SETTINGS']['COMPANY'] === 'Y' ? 'Y' : 'N');
-		$entityType['DEAL'] =
-			($userField['SETTINGS']['DEAL'] === 'Y' ? 'Y' : 'N');
-		$entityType['ORDER'] =
-			($userField['SETTINGS']['ORDER'] === 'Y' ? 'Y' : 'N');
+		$entityTypes = [];
+
+		foreach ($userField['SETTINGS'] as $entityTypeName => $status)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+			if (
+				$entityTypeId
+				&& (
+					in_array($entityTypeName, self::ENTITY_TYPE_NAMES, true)
+					|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+				)
+			)
+			{
+				$entityTypes[$entityTypeName] = ($status === 'Y' ? 'Y' : 'N');
+			}
+		}
 
 		$entityQuantity = 0;
 
-		foreach($entityType as $result)
+		foreach($entityTypes as $result)
 		{
 			if($result === 'Y')
 			{
@@ -61,15 +70,9 @@ class ElementType extends StringType
 			}
 		}
 
-		$entityType['LEAD'] = ($entityQuantity === 0) ? 'Y' : $entityType['LEAD'];
+		$entityType['LEAD'] = ($entityQuantity === 0 ? 'Y' : $entityTypes['LEAD']);
 
-		return [
-			'LEAD' => $entityType['LEAD'],
-			'CONTACT' => $entityType['CONTACT'],
-			'COMPANY' => $entityType['COMPANY'],
-			'DEAL' => $entityType['DEAL'],
-			'ORDER' => $entityType['ORDER'],
-		];
+		return $entityTypes;
 	}
 
 	/**
@@ -102,8 +105,9 @@ class ElementType extends StringType
 		}
 
 		$userPerms = (
-		$userId > 0 ?
-			CCrmPerms::GetUserPermissions($userId) : CCrmPerms::GetCurrentUserPermissions()
+			$userId > 0
+			? CCrmPerms::GetUserPermissions($userId)
+			: CCrmPerms::GetCurrentUserPermissions()
 		);
 
 		return CCrmPerms::IsAccessEnabled($userPerms);
@@ -128,9 +132,23 @@ class ElementType extends StringType
 	 */
 	public static function getLongEntityType(string $type): string
 	{
-		return (self::ENTITY_TYPE_NAMES[$type] ??
-			self::ENTITY_TYPE_NAMES[self::ENTITY_TYPE_NAME_DEFAULT]
-		);
+		if(isset(self::ENTITY_TYPE_NAMES[$type]))
+		{
+			return self::ENTITY_TYPE_NAMES[$type];
+		}
+
+		$entityTypeName = \CCrmOwnerTypeAbbr::ResolveName($type);
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			if ($factory = Container::getInstance()->getFactory($entityTypeId))
+			{
+				return $factory->getEntityName();
+			}
+		}
+
+		return self::ENTITY_TYPE_NAMES[self::ENTITY_TYPE_NAME_DEFAULT];
 	}
 
 	/**
@@ -139,5 +157,128 @@ class ElementType extends StringType
 	public static function getEntityTypeNames(): array
 	{
 		return static::ENTITY_TYPE_NAMES;
+	}
+
+	public static function getUseInUserfieldTypes(): array
+	{
+		$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+
+		$types = $typesMap->getTypes();
+
+		$result = [];
+		foreach($types as $type)
+		{
+			if ($type['IS_USE_IN_USERFIELD_ENABLED'])
+			{
+				$result[$type['ENTITY_TYPE_ID']] = $type['TITLE'];
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getAvailableTypes(array $userField): array
+	{
+		$availableTypes = ($userField['SETTINGS'] ?? []);
+		if (isset($availableTypes[\CCrmOwnerType::CommonDynamicName]))
+		{
+			$dynamicTypesSettings = $availableTypes[\CCrmOwnerType::CommonDynamicName];
+			unset($availableTypes[\CCrmOwnerType::CommonDynamicName]);
+			foreach ($dynamicTypesSettings as $dynamicEntityId => $status)
+			{
+				$availableTypes[\CCrmOwnerType::ResolveName($dynamicEntityId)] = $status;
+			}
+		}
+
+		return $availableTypes;
+	}
+
+	/**
+	 * @param array|null $availableTypes
+	 * @param array|null $crmDynamicTitles
+	 * @return array
+	 */
+	public static function getEnableEntityTypesForSelectorOptions(
+		?array $availableTypes = [],
+		?array $crmDynamicTitles = []
+	): array
+	{
+		$selectorOptions = [];
+		$tabsCounter = 0;
+
+		if(in_array(\CCrmOwnerType::ContactName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmContacts'] = 'Y';
+			$selectorOptions['addTabCrmContacts'] = 'Y';
+			$tabsCounter++;
+		}
+		if(in_array(\CCrmOwnerType::CompanyName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmCompanies'] = 'Y';
+			$selectorOptions['addTabCrmCompanies'] = 'Y';
+			$tabsCounter++;
+		}
+		if(in_array(\CCrmOwnerType::LeadName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmLeads'] = 'Y';
+			$selectorOptions['addTabCrmLeads'] = 'Y';
+			$tabsCounter++;
+		}
+		if(in_array(\CCrmOwnerType::DealName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmDeals'] = 'Y';
+			$selectorOptions['addTabCrmDeals'] = 'Y';
+			$tabsCounter++;
+		}
+		if(in_array(\CCrmOwnerType::OrderName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmOrders'] = 'Y';
+			$selectorOptions['addTabCrmOrders'] = 'Y';
+			$tabsCounter++;
+		}
+		if(in_array(\CCrmOwnerType::QuoteName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmQuotes'] = 'Y';
+			$selectorOptions['addTabCrmQuotes'] = 'Y';
+			$tabsCounter++;
+		}
+
+		foreach($availableTypes as $typeName)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+			if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			{
+				$selectorOptions['enableCrmDynamics'][$entityTypeId] = 'Y';
+				$selectorOptions['addTabCrmDynamics'][$entityTypeId] = 'Y';
+				$tabsCounter++;
+			}
+		}
+
+		if($tabsCounter <= 1)
+		{
+			$selectorOptions['addTabCrmContacts'] = 'N';
+			$selectorOptions['addTabCrmCompanies'] = 'N';
+			$selectorOptions['addTabCrmLeads'] = 'N';
+			$selectorOptions['addTabCrmDeals'] = 'N';
+			$selectorOptions['addTabCrmOrders'] = 'N';
+			$selectorOptions['addTabCrmQuotes'] = 'N';
+			if (!empty($selectorOptions['addTabCrmDynamics']))
+			{
+				foreach($selectorOptions['addTabCrmDynamics'] as $key => $item)
+				{
+					$selectorOptions['addTabCrmDynamics'][$key] = 'N';
+				}
+			}
+		}
+
+		if (is_array($crmDynamicTitles) && count($crmDynamicTitles))
+		{
+			$selectorOptions['crmDynamicTitles'] = $crmDynamicTitles;
+		}
+
+		return $selectorOptions;
 	}
 }

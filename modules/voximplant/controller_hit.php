@@ -233,6 +233,7 @@ if(is_array($params))
 			if($call)
 			{
 				$call->getSignaling()->sendInvite($users);
+				\Bitrix\Pull\Event::send();
 			}
 		}
 		else if($params["COMMAND"] == "Ping")

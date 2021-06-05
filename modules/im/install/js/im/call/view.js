@@ -22,6 +22,7 @@
 	};
 
 	var EventName = {
+		onShow: 'onShow',
 		onClose: 'onClose',
 		onDestroy: 'onDestroy',
 		onButtonClick: 'onButtonClick',
@@ -42,6 +43,9 @@
 	var localUserPosition = 1000;
 	var addButtonPosition = 1001;
 	var maximumNotifications = 5;
+
+	var SIDE_USER_WIDTH = 160; // keep in sync with .bx-messenger-videocall-user-block .bx-messenger-videocall-user width
+	var SIDE_USER_HEIGHT = 90; // keep in sync with .bx-messenger-videocall-user height
 
 	/**
 	 *
@@ -87,6 +91,7 @@
 		this.userRegistry.push(localUserModel);
 
 		this.localUser = new CallUser({
+			parentContainer: this.container,
 			userModel: localUserModel,
 			allowBackgroundItem: this.isIntranetOrExtranet,
 			onUserNameMouseOver: this._onUserNameMouseOver.bind(this),
@@ -203,6 +208,7 @@
 		this._onOrientationChangeHandler = BX.debounce(this._onOrientationChange.bind(this), 500);
 
 		this.resizeObserver = new BX.ResizeObserver(this._onResizeHandler);
+		this.intersectionObserver = null;
 
 		// timers
 		this.switchPresenterTimeout = 0;
@@ -215,6 +221,8 @@
 		this.userMenu = null;
 		this.participantsMenu = null;
 		this.renameSlider = null;
+
+		this.userSize = {width: 0, height: 0};
 
 		this.hintManager = BX.UI.Hint.createInstance({
 			popupParameters: {
@@ -786,6 +794,7 @@
 		this.userRegistry.push(userModel);
 
 		this.users[userId] = new CallUser({
+			parentContainer: this.container,
 			userModel: userModel,
 			allowPinButton: this.getConnectedUserCount() > 1,
 			onClick: this._onUserClick.bind(this),
@@ -1122,6 +1131,11 @@
 			throw Error("User " + userId + " is not a part of this call");
 		}
 
+		if (!(mediaStream instanceof MediaStream))
+		{
+			throw Error("mediaStream should be instance of MediaStream");
+		}
+
 		if(!this.elements.audio[userId])
 		{
 			this.elements.audio[userId] = BX.create("audio");
@@ -1153,37 +1167,70 @@
 			}
 		}
 
-		this.users[userId].stream = mediaStream;
+		this.users[userId].stream = mediaStream.getVideoTracks().length > 0 ? mediaStream : null;
 		this.userRegistry.get(userId).cameraState = this.users[userId].hasVideo();
-		if(this.users[userId].hasVideo())
+	};
+
+	BX.Call.View.prototype.setVideoRenderer = function(userId, mediaRenderer)
+	{
+		if(this.uiState == UiState.Calling)
 		{
-			if(this.centralUser.id == this.userId)
-			{
-				this.setCentralUser(userId);
-			}
+			this.setUiState(UiState.Connected);
 		}
-		else
+		if(!this.users[userId])
 		{
-			// no video
-			if(this.centralUser.id == userId)
-			{
-				var usersWithVideo = this.getUsersWithVideo();
-				if(usersWithVideo.length > 0)
-				{
-					this.setCentralUser(usersWithVideo[0]);
-				}
-				/*else if (this.localUser.hasVideo())
-				{
-					this.setCentralUser(this.userId);
-				}*/
-			}
+			throw Error("User " + userId + " is not a part of this call");
 		}
-		if(this.centralUser.id == userId)
+		if (mediaRenderer === null)
 		{
-			this.centralUser.stream = mediaStream;
+			this.users[userId].videoRenderer = null;
+			this.userRegistry.get(userId).cameraState = this.users[userId].hasVideo();
+			return;
 		}
 
-		this.updateUserList();
+		if (!("render" in mediaRenderer) || !BX.type.isFunction(mediaRenderer.render))
+		{
+			throw Error("mediaRenderer should have method render");
+		}
+		if (!("kind" in mediaRenderer) || (mediaRenderer.kind !== "video" && mediaRenderer.kind !== "sharing"))
+		{
+			throw Error("mediaRenderer should be of video kind");
+		}
+
+		this.users[userId].videoRenderer = mediaRenderer;
+		this.userRegistry.get(userId).cameraState = this.users[userId].hasVideo();
+	};
+
+	BX.Call.View.prototype.applyIncomingVideoConstraints = function()
+	{
+		var userId;
+		var user;
+		if (this.layout === BX.Call.View.Layout.Grid)
+		{
+			for (userId in this.users)
+			{
+				/** @type {CallUser} */
+				user = this.users[userId];
+				user.setIncomingVideoConstraints(this.userSize.width, this.userSize.height);
+			}
+		}
+		else if (this.layout === BX.Call.View.Layout.Centered)
+		{
+			for (userId in this.users)
+			{
+				/** @type {CallUser} */
+				user = this.users[userId];
+				if (userId == this.centralUser.id)
+				{
+					var containerSize = this.elements.center.getBoundingClientRect();
+					user.setIncomingVideoConstraints(Math.floor(containerSize.width), Math.floor(containerSize.height));
+				}
+				else
+				{
+					user.setIncomingVideoConstraints(SIDE_USER_WIDTH, SIDE_USER_HEIGHT);
+				}
+			}
+		}
 	};
 
 	BX.Call.View.prototype.getDefaultRecordState = function()
@@ -1232,13 +1279,32 @@
 		this.resumeVideo();
 
 		this.toggleEars();
+		this.startIntersectionObserver();
 		this.visible = true;
+
+		this.eventEmitter.emit(EventName.onShow);
 	};
 
 	BX.Call.View.prototype.hide = function()
 	{
 		BX.remove(this.elements.root);
 		this.visible = false;
+	};
+
+	BX.Call.View.prototype.startIntersectionObserver = function()
+	{
+		if (!('IntersectionObserver' in window))
+		{
+			return;
+		}
+
+		this.intersectionObserver = new IntersectionObserver(
+			this._onIntersectionChange.bind(this),
+			{
+				root: this.elements.userList.container,
+				threshold: 0.5
+			}
+		);
 	};
 
 	BX.Call.View.prototype.showDeviceSelector = function(bindElement)
@@ -2031,7 +2097,11 @@
 			var user = this.users[userId];
 			if(userId == this.centralUser.id && (this.layout == Layouts.Centered || this.layout == Layouts.Mobile))
 			{
-				user.mount(this.elements.center, true);
+				user.mount(this.elements.center);
+				if(this.intersectionObserver && user.elements.root)
+				{
+					this.intersectionObserver.unobserve(user.elements.root);
+				}
 				continue;
 			}
 			var userState = this.userRegistry.get(userId).state;
@@ -2042,9 +2112,17 @@
 			)
 			{
 				user.dismount();
+				if(this.intersectionObserver && user.elements.root)
+				{
+					this.intersectionObserver.unobserve(user.elements.root);
+				}
 				continue;
 			}
 			user.mount(this.elements.userList.container);
+			if(this.intersectionObserver)
+			{
+				this.intersectionObserver.observe(user.elements.root);
+			}
 			userCount++;
 		}
 		if(showLocalUser)
@@ -2052,11 +2130,19 @@
 			if(this.layout == Layouts.Centered && this.userId == this.centralUser.id || this.layout == Layouts.Mobile)
 			{
 				this.localUser.mount(this.elements.center, true);
+				if(this.intersectionObserver && this.localUser.elements.root)
+				{
+					this.intersectionObserver.unobserve(this.localUser.elements.root);
+				}
 			}
 			else
 			{
 				// using force true to always move self to the end of the list
 				this.localUser.mount(this.elements.userList.container, true);
+				if(this.intersectionObserver)
+				{
+					this.intersectionObserver.observe(this.localUser.elements.root);
+				}
 			}
 
 			userCount++;
@@ -2064,18 +2150,22 @@
 		else
 		{
 			this.localUser.dismount();
+			if(this.intersectionObserver && this.localUser.elements.root)
+			{
+				this.intersectionObserver.unobserve(this.localUser.elements.root);
+			}
 		}
 
 		if (this.layout == Layouts.Grid)
 		{
 			var containerSize = this.elements.userList.container.getBoundingClientRect();
-			var userSize = BX.Call.Util.findBestElementSize(containerSize.width, containerSize.height, userCount);
+			this.userSize = BX.Call.Util.findBestElementSize(containerSize.width, containerSize.height, userCount);
 
-			var avatarSize = Math.round(userSize.height * 0.45);
-			this.elements.userList.container.style.setProperty('--grid-user-width', userSize.width + 'px');
-			this.elements.userList.container.style.setProperty('--grid-user-height', userSize.height + 'px');
+			var avatarSize = Math.round(this.userSize.height * 0.45);
+			this.elements.userList.container.style.setProperty('--grid-user-width', this.userSize.width + 'px');
+			this.elements.userList.container.style.setProperty('--grid-user-height', this.userSize.height + 'px');
 			this.elements.userList.container.style.setProperty('--avatar-size', avatarSize + 'px');
-			if (userSize.width < 220)
+			if (this.userSize.width < 220)
 			{
 				this.elements.userList.container.classList.add("bx-messenger-videocall-user-list-small");
 			}
@@ -2090,6 +2180,7 @@
 			this.elements.userList.container.style.removeProperty('--avatar-size');
 			this.updateCentralUserAvatarSize();
 		}
+		this.applyIncomingVideoConstraints();
 
 		var showAdd = this.layout == Layouts.Centered && userCount > 0 /*&& !this.isFullScreen*/ && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1;
 		if (showAdd && !this.isFullScreen)
@@ -2121,11 +2212,12 @@
 			containerSize = this.elements.root.getBoundingClientRect();
 			avatarSize = Math.round(containerSize.width * 0.55);
 		}
-		else
+		else if (this.layout == Layouts.Centered)
 		{
 			containerSize = this.elements.center.getBoundingClientRect();
 			avatarSize = Math.round(containerSize.height * 0.45);
 			avatarSize = Math.min(avatarSize, 142);
+			this.centralUser.setIncomingVideoConstraints(Math.floor(containerSize.width), Math.floor(containerSize.height));
 		}
 		this.elements.center.style.setProperty('--avatar-size', avatarSize + 'px');
 	};
@@ -2798,6 +2890,22 @@
 		}.bind(this), 0);
 	};
 
+	BX.Call.View.prototype._onIntersectionChange = function(entries)
+	{
+		var t = {};
+		entries.forEach(function(intersectionEntry)
+		{
+			t[intersectionEntry.target.dataset.userId] = intersectionEntry.isIntersecting;
+		});
+		for (var userId in t)
+		{
+			if (this.users[userId])
+			{
+				this.users[userId].visible = t[userId];
+			}
+		}
+	};
+
 	BX.Call.View.prototype._onResize = function()
 	{
 		if(!this.elements.root)
@@ -3307,6 +3415,12 @@
 		window.removeEventListener("mozfullscreenchange", this._onFullScreenChangeHandler);
 		window.removeEventListener("orientationchange", this._onOrientationChangeHandler);
 		this.resizeObserver.disconnect();
+		this.resizeObserver = null;
+		if (this.intersectionObserver)
+		{
+			this.intersectionObserver.disconnect();
+			this.intersectionObserver = null;
+		}
 		for(var userId in this.users)
 		{
 			if(this.users.hasOwnProperty(userId))
@@ -3329,10 +3443,16 @@
 
 	var CallUser = function(config)
 	{
+		this.parentContainer = config.parentContainer;
 		this.userModel = config.userModel;
 		this.allowBackgroundItem = BX.prop.getBoolean(config, "allowBackgroundItem", true);
 		this.userModel.subscribe("changed", this._onUserFieldChanged.bind(this));
+		this.incomingVideoConstraints = {
+			width: 0,
+			height: 0
+		};
 		this._allowPinButton = BX.prop.getBoolean(config, "allowPinButton", true);
+		this._visible = true;
 
 		Object.defineProperty(this, "allowPinButton", {
 			get: function()
@@ -3367,6 +3487,18 @@
 				this.update()
 			}
 		});
+		this._videoRenderer = null;
+		Object.defineProperty(this, "videoRenderer", {
+			get: function()
+			{
+				return this._videoRenderer;
+			},
+			set: function(videoRenderer)
+			{
+				this._videoRenderer = videoRenderer;
+				this.update()
+			}
+		});
 		this._flipVideo = false;
 		Object.defineProperty(this, "flipVideo", {
 			get: function()
@@ -3377,6 +3509,21 @@
 			{
 				this._flipVideo = flipVideo;
 				this.update()
+			}
+		});
+		Object.defineProperty(this, "visible", {
+			get: function()
+			{
+				return this._visible;
+			},
+			set: function(visible)
+			{
+				if (this._visible !== visible)
+				{
+					this._visible = visible;
+					this.update();
+					this.updateRendererState();
+				}
 			}
 		});
 
@@ -3623,7 +3770,7 @@
 		}
 		if (this.userModel.screenState)
 		{
-			this.elements.video.classList.add("bx-messenger-videocall-video-containn");
+			this.elements.video.classList.add("bx-messenger-videocall-video-contain");
 		}
 
 		//this.elements.nameContainer.appendChild(this.elements.micState);
@@ -3729,6 +3876,45 @@
 		return this.elements.root;
 	};
 
+	CallUser.prototype.setIncomingVideoConstraints = function(width, height)
+	{
+		this.incomingVideoConstraints.width = typeof(width) === "undefined" ? this.incomingVideoConstraints.width : width;
+		this.incomingVideoConstraints.height = typeof(height) === "undefined" ? this.incomingVideoConstraints.height : height;
+
+		if (!this.videoRenderer)
+		{
+			return;
+		}
+
+		// vox low quality temporary workaround
+
+		if (this.incomingVideoConstraints.width >= 320 && this.incomingVideoConstraints.width <= 640)
+		{
+			this.incomingVideoConstraints.width = 640;
+		}
+		if (this.incomingVideoConstraints.height >= 180 && this.incomingVideoConstraints.height <= 360)
+		{
+			this.incomingVideoConstraints.height = 360;
+		}
+
+		this.videoRenderer.requestVideoSize(this.incomingVideoConstraints.width, this.incomingVideoConstraints.height);
+	};
+
+	CallUser.prototype.updateRendererState = function()
+	{
+		if (this.videoRenderer)
+		{
+			if (this.visible)
+			{
+				this.videoRenderer.enable();
+			}
+			else
+			{
+				this.videoRenderer.disable();
+			}
+		}
+	};
+
 	CallUser.prototype._onUserFieldChanged = function(event)
 	{
 		var eventData = event.data;
@@ -3792,6 +3978,7 @@
 			this.elements.buttonMenu,
 			menuItems,
 			{
+				targetContainer: this.parentContainer,
 				autoHide: true,
 				zIndex: window['BX'] && BX.MessengerCommon ? (BX.MessengerCommon.getDefaultZIndex() + 500) : 500,
 				closeByEsc: true,
@@ -3911,9 +4098,19 @@
 		{
 			return;
 		}
-		if(this.hasVideo())
+		if(this.hasVideo() && this.visible)
 		{
-			if(this.elements.video.srcObject != this.stream)
+			if (this.videoRenderer)
+			{
+
+				//this.elements.video.srcObject = this.videoRenderer.stream;
+				this.videoRenderer.render(this.elements.video);
+				/*if (!this.elements.video.parentElement)
+				{
+					this.elements.videoContainer.appendChild(this.elements.video);
+				}*/
+			}
+			else if (this.elements.video.srcObject != this.stream)
 			{
 				this.elements.video.srcObject = this.stream;
 			}
@@ -3988,7 +4185,7 @@
 			this.render();
 		}
 
-		if(this.isMounted() && !force)
+		if(this.isMounted() && this.elements.root.parentElement == parent && !force)
 		{
 			this.updatePanelDeferred();
 			return false;
@@ -4123,7 +4320,10 @@
 
 	CallUser.prototype.hasVideo = function()
 	{
-		return this.userModel.state == BX.Call.UserState.Connected && BX.Call.Util.containsVideoTrack(this.stream);
+		return this.userModel.state == BX.Call.UserState.Connected && (
+			BX.Call.Util.containsVideoTrack(this.stream)
+			|| !!this._videoRenderer
+		);
 	};
 
 	CallUser.prototype.checkVideoAspect = function()

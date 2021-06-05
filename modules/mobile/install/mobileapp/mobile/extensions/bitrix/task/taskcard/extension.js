@@ -513,6 +513,10 @@ include('InAppNotifier');
 		{
 			switch (action.identifier)
 			{
+				case 'ping':
+					this.onPingAction();
+					break;
+
 				case 'changeDeadline':
 					this.onChangeDeadlineAction();
 					break;
@@ -575,6 +579,17 @@ include('InAppNotifier');
 		}
 
 		// actions
+		onPingAction()
+		{
+			this.updateTask({activityDate: Date.now()});
+			this.task.ping();
+
+			Notify.showIndicatorSuccess({
+				text: BX.message('TASKS_TASK_DETAIL_TASK_PING_NOTIFICATION'),
+				hideAfter: 1500,
+			});
+		}
+
 		onChangeDeadlineAction()
 		{
 			const pickerParams = {
@@ -707,6 +722,10 @@ include('InAppNotifier');
 		{
 			switch (item.id)
 			{
+				case 'ping':
+					this.onPingAction();
+					break;
+
 				case 'changeDeadline':
 					this.onChangeDeadlineAction();
 					break;

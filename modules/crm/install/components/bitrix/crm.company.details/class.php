@@ -428,6 +428,17 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						)
 					)
 				);
+
+				$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+				$this->arResult['TABS'] = array_merge(
+					$this->arResult['TABS'],
+					$relationManager->getRelationTabsForDynamicChildren(
+						\CCrmOwnerType::Company,
+						$this->entityID,
+						($this->entityID === 0)
+					)
+				);
+
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_quote',
 					'name' => Loc::getMessage('CRM_COMPANY_TAB_QUOTE'),
@@ -1538,7 +1549,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					$this->entityData['INDUSTRY'] = $this->defaultEntityData['INDUSTRY'];
 				}
 			}
-			
+
 			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'EMPLOYEES'))
 			{
 				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'EMPLOYEES';
@@ -1604,10 +1615,9 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
-			$by = 'ID';
-			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by, $order,
+				'ID',
+				'ASC',
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1616,7 +1626,6 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
-			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{

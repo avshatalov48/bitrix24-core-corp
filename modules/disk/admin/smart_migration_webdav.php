@@ -3081,7 +3081,7 @@ class SmartMigrationWebdav
 	{
 		if(!isset($this->diskOperationsByTask[$taskId]))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$this->diskOperationsByTask[$taskId] = \CTask::getOperations($taskId, true);
 		}
 		return $this->diskOperationsByTask[$taskId];
@@ -3091,7 +3091,7 @@ class SmartMigrationWebdav
 	{
 		if(!isset($this->iblockOperationsByTask[$taskId]))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$this->iblockOperationsByTask[$taskId] = \CTask::getOperations($taskId, true);
 		}
 		return $this->iblockOperationsByTask[$taskId];
@@ -5015,7 +5015,7 @@ class SmartMigrationWebdav
 		{
 			return $l;
 		}
-		$rsLanguage = CLanguage::GetList($by, $order, array());
+		$rsLanguage = CLanguage::GetList();
 		while($arLanguage = $rsLanguage->fetch())
 		{
 			$l[] = $arLanguage;

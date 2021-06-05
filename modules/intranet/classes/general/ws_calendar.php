@@ -593,7 +593,7 @@ class CIntranetCalendarWS extends IWebService
 					'allowResMeeting' => true,
 				)))
 				{
-					CEventCalendar::ClearCache('/event_calendar/events/'.$arSection['IBLOCK_ID'].'/');
+					$obCalendar->ClearCache('/event_calendar/events/'.$arSection['IBLOCK_ID'].'/');
 					$obNode->setData('0x00000000');
 				}
 				else
@@ -874,7 +874,7 @@ class CIntranetCalendarWS extends IWebService
 
 				if ($EventID = $obCalendar->SaveEvent($arRes))
 				{
-					CEventCalendar::ClearCache('/event_calendar/events/'.$arRes['iblockId'].'/');
+					$obCalendar->ClearCache('/event_calendar/events/'.$arRes['iblockId'].'/');
 
 					// dirty hack
 					$arReplicationIDs[$EventID] = $arData['MetaInfo_ReplicationID'];
@@ -921,7 +921,7 @@ class CIntranetCalendarWS extends IWebService
 		return array('UpdateListItemsResult' => $obResponse);
 	}
 
-	function GetWebServiceDesc()
+	public static function GetWebServiceDesc()
 	{
 		$wsdesc = new CWebServiceDesc();
 		$wsdesc->wsname = "bitrix.webservice.intranet.calendar";

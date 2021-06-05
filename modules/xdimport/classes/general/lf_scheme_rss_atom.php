@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CXDILFSchemeRSSAtom
@@ -37,7 +38,7 @@ class CXDILFSchemeRSSAtom
 		return $arRSSResult;
 	}
 
-	private function FormatArray(&$arRes, $objXML)
+	private static function FormatArray(&$arRes, $objXML)
 	{
 		$entries = $objXML->GetTree()->children[0]->elementsByName('entry');
 
@@ -138,6 +139,4 @@ class CXDILFSchemeRSSAtom
 
 		return $arResult;
 	}
-
 }
-?>

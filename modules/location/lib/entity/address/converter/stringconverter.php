@@ -13,6 +13,9 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 final class StringConverter
 {
 	public const STRATEGY_TYPE_TEMPLATE = 'template';
+	public const STRATEGY_TYPE_TEMPLATE_COMMA = 'template_comma';
+	public const STRATEGY_TYPE_TEMPLATE_NL = 'template_nl';
+	public const STRATEGY_TYPE_TEMPLATE_BR = 'template_br';
 	public const STRATEGY_TYPE_FIELD_SORT = 'field_sort';
 	public const STRATEGY_TYPE_FIELD_TYPE = 'field_type';
 
@@ -31,9 +34,34 @@ final class StringConverter
 	 */
 	public static function convertToString(Address $address, Format $format, string $strategyType, string $contentType): string
 	{
-		if($strategyType === self::STRATEGY_TYPE_TEMPLATE)
+		if($strategyType === self::STRATEGY_TYPE_TEMPLATE
+			|| $strategyType === self::STRATEGY_TYPE_TEMPLATE_COMMA
+			|| $strategyType === self::STRATEGY_TYPE_TEMPLATE_NL
+			|| $strategyType === self::STRATEGY_TYPE_TEMPLATE_BR
+		)
 		{
-			$result = self::convertToStringTemplate($address, $format, $contentType);
+			$delimiter = null;
+
+			switch ($strategyType)
+			{
+				case self::STRATEGY_TYPE_TEMPLATE_COMMA:
+					$delimiter = ', ';
+					break;
+				case self::STRATEGY_TYPE_TEMPLATE_NL:
+					$delimiter = "\n";
+					break;
+				case self::STRATEGY_TYPE_TEMPLATE_BR:
+					$delimiter = '<br />';
+					break;
+			}
+
+			$result = self::convertToStringTemplate(
+				$address,
+				$format->getTemplate(),
+				$contentType,
+				$delimiter,
+				$format
+			);
 		}
 		elseif($strategyType === self::STRATEGY_TYPE_FIELD_SORT)
 		{
@@ -76,81 +104,35 @@ final class StringConverter
 	 * Convert if format has template
 	 *
 	 * @param Address $address
-	 * @param Format $format
+	 * @param Format\Template $template
 	 * @param string $contentType
+	 * @param string|null $delimiter
+	 * @param Format|null $format
 	 * @return string
 	 */
-	protected static function convertToStringTemplate(Address $address, Format $format, string $contentType): string
+	public static function convertToStringTemplate(
+		Address $address,
+		Format\Template $template,
+		string $contentType,
+		string $delimiter = null,
+		Format $format = null
+	): string
 	{
-		$result = $format->getTemplate();
+		$needHtmlEncode = ($contentType === self::CONTENT_TYPE_HTML);
 
-		if($contentType === self::CONTENT_TYPE_HTML)
+		if ($delimiter === null)
 		{
-			$result = str_replace("\n", '<br/>', $result);
+			$delimiter = $needHtmlEncode ? '<br />' : "\n";
 		}
 
-		$matches = [];
+		$templateConverter = new StringTemplateConverter(
+			$template->getTemplate(),
+			$delimiter,
+			$needHtmlEncode,
+			$format
+		);
 
-		// find placeholders witch looks like {{ ... }}
-		if(preg_match_all('/{{.*?}}/ms', $result, $matches))
-		{
-			foreach($matches[0] as $component)
-			{
-				$fields = [];
-
-				// find placeholders which looks like # ... #
-				if(!preg_match('/#([0-9A-Z_]*?)#/', $component, $fields))
-				{
-					continue;
-				}
-
-				if(!isset($fields[1]) || !is_string($fields[1]))
-				{
-					continue;
-				}
-
-				if(!defined(Address\FieldType::class.'::'.$fields[1]))
-				{
-					continue;
-				}
-
-				$type = constant(Address\FieldType::class.'::'.$fields[1]);
-				$addressFieldValue = $address->getFieldValue($type);
-
-				if($addressFieldValue === null)
-				{
-					continue;
-				}
-
-				if($contentType === self::CONTENT_TYPE_HTML)
-				{
-					$addressFieldValue = htmlspecialcharsbx($addressFieldValue);
-				}
-
-				$componentReplacer = str_replace($fields[0], $addressFieldValue, $component);
-				$componentReplacer = trim($componentReplacer, '{}');
-				$result = str_replace($component, $componentReplacer, $result);
-			}
-		}
-
-		// Remove redundant placeholders
-		$result = preg_replace('/({{.*?}})/ms', '', $result);
-
-		// Remove redundant line breaks
-		if($contentType === self::CONTENT_TYPE_HTML)
-		{
-			$result = preg_replace('/(<br\/>)+/', '<br/>',  $result);
-		}
-		else
-		{
-			$result = preg_replace("/(\n)+/", "\n", $result);
-		}
-
-		// Remove line break if it goes in the beginning
-		$lineBreak = ($contentType === self::CONTENT_TYPE_HTML) ? '<br/>' : "\n";
-		$result = (mb_strpos($result, $lineBreak) === 0) ? mb_substr($result, mb_strlen($lineBreak)) : $result;
-
-		return $result;
+		return $templateConverter->convert($address);
 	}
 
 	/**

@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/intranet/classes/general/sharepoint.php');
 
 class CIntranetSharepoint extends CAllIntranetSharepoint
@@ -112,4 +113,3 @@ ORDER BY SYNC_DATE
 LIMIT 0,'.intval($limit);
 	}
 }
-?>

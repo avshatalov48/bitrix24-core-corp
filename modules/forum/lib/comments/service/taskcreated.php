@@ -14,7 +14,7 @@ final class TaskCreated extends Base
 		return static::TYPE;
 	}
 
-	public function getText(string $text = '')
+	public function getText(string $text = '', array $params = [])
 	{
 		$result = '';
 
@@ -36,7 +36,13 @@ final class TaskCreated extends Base
 			return $result;
 		}
 
-		$socNetProvider = CommentAux\Base::init(CommentAux\CreateTask::TYPE, $data, []);
+		$options = [];
+		if (isset($params['suffix']))
+		{
+			$options['suffix'] = $params['suffix'];
+		}
+
+		$socNetProvider = CommentAux\Base::init(CommentAux\CreateTask::TYPE, $data, $options);
 		$result = $socNetProvider->getText();
 
 		return $result;

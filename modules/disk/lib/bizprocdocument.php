@@ -950,7 +950,7 @@ class BizProcDocument
 			if(ModuleManager::isModuleInstalled('bitrix24'))
 			{
 				$siteId = \CAllSite::getDefSite();
-				$employeeGroup = \CGroup::getList(($by = ''), ($order = ''), array(
+				$employeeGroup = \CGroup::getList('', '', array(
 					'STRING_ID' => 'EMPLOYEES_' . $siteId,
 					'STRING_ID_EXACT_MATCH' => 'Y'
 				))->fetch();
@@ -1084,7 +1084,7 @@ class BizProcDocument
 			$filter["GROUPS_ID"] = $group;
 		}
 
-		$query = \CUser::getList(($b = "ID"), ($o = "ASC"), $filter, ['FIELDS' => ['ID']]);
+		$query = \CUser::getList("ID", "ASC", $filter, ['FIELDS' => ['ID']]);
 		while($user = $query->fetch())
 		{
 			$userIds[] = $user["ID"];
@@ -2338,6 +2338,25 @@ class BizProcDocument
 		}
 
 		return $documentType;
+	}
+
+	/**
+	 * @param string $documentId
+	 * @param string $workflowId
+	 * @param int $status
+	 * @param null|\CBPActivity $rootActivity
+	 */
+	public static function onWorkflowStatusChange($documentId, $workflowId, $status, $rootActivity)
+	{
+		if (
+			$rootActivity
+			&& $status === \CBPWorkflowStatus::Running
+			&& !$rootActivity->workflow->isNew()
+			&& !\CBPRuntime::isFeatureEnabled()
+		)
+		{
+			throw new \Exception(Loc::getMessage('DISK_BZ_RESUME_RESTRICTED'));
+		}
 	}
 
 	/**

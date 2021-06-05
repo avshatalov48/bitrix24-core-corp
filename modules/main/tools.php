@@ -308,7 +308,7 @@ function ".$sFromName."_SetDate()
 ";
 		global $$sname;
 		$value = $$sname;
-		if ($value <> '' && $value!="NOT_REF")
+		if ((string)$value <> '' && $value!="NOT_REF")
 			$ds = "disabled";
 
 		?><script type="text/javascript">
@@ -411,8 +411,8 @@ function CheckDateTime($datetime, $format=false)
 				$hour = 0;
 		}
 	}
-	$min   = intval($ar["MI"]);
-	$sec   = intval($ar["SS"]);
+	$min   = intval($ar["MI"] ?? 0);
+	$sec   = intval($ar["SS"] ?? 0);
 
 	if (!checkdate($month, $day, $year))
 		return false;
@@ -520,8 +520,8 @@ function MakeTimeStamp($datetime, $format=false)
 				$hour = 0;
 		}
 	}
-	$min   = intval($ar["MI"]);
-	$sec   = intval($ar["SS"]);
+	$min = intval($ar["MI"] ?? 0);
+	$sec = intval($ar["SS"] ?? 0);
 
 	if(!checkdate($month, $day, $year))
 		return false;
@@ -553,21 +553,24 @@ function ParseDateTime($datetime, $format=false)
 			$arrResult = array();
 			foreach($fm_args[0] as $i => $v)
 			{
-				if (is_numeric($dt_args[0][$i]))
+				if (isset($dt_args[0][$i]))
 				{
-					$arrResult[$v] = sprintf("%0".mb_strlen($v)."d", intval($dt_args[0][$i]));
-				}
-				elseif(($dt_args[0][$i] == "am" || $dt_args[0][$i] == "pm") && array_search("T", $fm_args[0]) !== false)
-				{
-					$arrResult["T"] = $dt_args[0][$i];
-				}
-				elseif(($dt_args[0][$i] == "AM" || $dt_args[0][$i] == "PM") && array_search("TT", $fm_args[0]) !== false)
-				{
-					$arrResult["TT"] = $dt_args[0][$i];
-				}
-				elseif(isset($dt_args[0][$i]))
-				{
-					$arrResult[$v] = $dt_args[0][$i];
+					if (is_numeric($dt_args[0][$i]))
+					{
+						$arrResult[$v] = sprintf("%0".mb_strlen($v)."d", intval($dt_args[0][$i]));
+					}
+					elseif(($dt_args[0][$i] == "am" || $dt_args[0][$i] == "pm") && array_search("T", $fm_args[0]) !== false)
+					{
+						$arrResult["T"] = $dt_args[0][$i];
+					}
+					elseif(($dt_args[0][$i] == "AM" || $dt_args[0][$i] == "PM") && array_search("TT", $fm_args[0]) !== false)
+					{
+						$arrResult["TT"] = $dt_args[0][$i];
+					}
+					else
+					{
+						$arrResult[$v] = $dt_args[0][$i];
+					}
 				}
 			}
 			return $arrResult;
@@ -1606,30 +1609,47 @@ function ParseDate($strDate, $format="dmy")
  */
 function MkDateTime($strDT, $format="d.m.Y H:i:s")
 {
-	$arr = array("d.m.Y","d.m.Y H:i","d.m.Y H:i:s");
-	if (!(in_array($format,$arr)))
+	static $arr = ["d.m.Y", "d.m.Y H:i", "d.m.Y H:i:s"];
+
+	if (!(in_array($format, $arr)))
+	{
 		return false;
+	}
 
 	$strDT = preg_replace("/[\n\r\t ]+/", " ", $strDT);
-	list($date,$time) = explode(" ",$strDT);
-	$date  = trim($date);
-	$time  = trim($time);
-	list($day,$month,$year) = explode(".",$date);
-	list($hour,$min,$sec)   = explode(":",$time);
-	$day   = intval($day);
-	$month = intval($month);
-	$year  = intval($year);
-	$hour  = intval($hour);
-	$min   = intval($min);
-	$sec   = intval($sec);
-	if (!checkdate($month,$day,$year))
-		return false;
-	if ($hour>24 || $hour<0 || $min<0 || $min>59 || $sec<0 || $sec>59)
-		return false;
 
-	$ts = mktime($hour,$min,$sec,$month,$day,$year);
-	if($ts <= 0)
+	$dateTime = explode(" ", $strDT);
+
+	$date  = trim($dateTime[0] ?? '');
+	$time  = trim($dateTime[1] ?? '');
+
+	$dayMonthYear = explode(".", $date);
+
+	$day = intval($dayMonthYear[0] ?? 0);
+	$month = intval($dayMonthYear[1] ?? 0);
+	$year = intval($dayMonthYear[2] ?? 0);
+
+	$hourMinSec = explode(":", $time);
+
+	$hour = intval($hourMinSec[0] ?? 0);
+	$min = intval($hourMinSec[1] ?? 0);
+	$sec = intval($hourMinSec[2] ?? 0);
+
+	if (!checkdate($month, $day, $year))
+	{
 		return false;
+	}
+	if ($hour > 24 || $hour < 0 || $min < 0 || $min > 59 || $sec < 0 || $sec > 59)
+	{
+		return false;
+	}
+
+	$ts = mktime($hour, $min, $sec, $month, $day, $year);
+
+	if($ts <= 0)
+	{
+		return false;
+	}
 
 	return $ts;
 }
@@ -2175,11 +2195,11 @@ function TxtToHTML(
 	// chr(3).E-Mail.chr(3) => <a href="mailto:E-Mail">E-Mail</a>
 	if($bMakeUrls)
 	{
-		$script = $arUrlEvent["SCRIPT"];
+		$script = ($arUrlEvent["SCRIPT"] ?? '');
 		$helper = new CConvertorsPregReplaceHelper("");
 		$helper->setLinkClass($link_class);
 		$helper->setLinkTarget($link_target);
-		$helper->setEvents($arUrlEvent["EVENT1"], $arUrlEvent["EVENT2"], $arUrlEvent["EVENT3"]);
+		$helper->setEvents(($arUrlEvent["EVENT1"] ?? ''), ($arUrlEvent["EVENT2"] ?? ''), ($arUrlEvent["EVENT3"] ?? ''));
 		if($script <> '')
 		{
 			$helper->setScript($script);
@@ -2322,13 +2342,13 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 	if($maxlen > 0)
 		$str = preg_replace("#(^|[\\r\\n])([^\\n\\r]{".intval($maxlen)."}[^ \\r\\n]*[\\] ])([^\\r])#", "\\1\\2\r\n\\3", $str);
 
-	$str = str_replace(chr(1), " ",$str);
+	$str = str_replace(chr(1), " ", $str);
 	return trim($str);
 }
 
 function FormatText($strText, $strTextType="text")
 {
-	if(mb_strtolower($strTextType) == "html")
+	if(strtolower($strTextType) == "html")
 		return $strText;
 
 	return TxtToHtml($strText);
@@ -2338,14 +2358,16 @@ function htmlspecialcharsEx($str)
 {
 	static $search =  array("&amp;",     "&lt;",     "&gt;",     "&quot;",     "&#34;",     "&#x22;",     "&#39;",     "&#x27;",     "<",    ">",    "\"");
 	static $replace = array("&amp;amp;", "&amp;lt;", "&amp;gt;", "&amp;quot;", "&amp;#34;", "&amp;#x22;", "&amp;#39;", "&amp;#x27;", "&lt;", "&gt;", "&quot;");
-	return str_replace($search, $replace, $str);
+
+	return Text\StringHelper::str_replace($search, $replace, $str);
 }
 
 function htmlspecialcharsback($str)
 {
 	static $search =  array("&lt;", "&gt;", "&quot;", "&apos;", "&amp;");
 	static $replace = array("<",    ">",    "\"",     "'",      "&");
-	return str_replace($search, $replace, $str);
+
+	return Text\StringHelper::str_replace($search, $replace, $str);
 }
 
 function htmlspecialcharsbx($string, $flags = ENT_COMPAT, $doubleEncode = true)
@@ -3588,18 +3610,7 @@ function UnQuoteArr(&$arr, $syb = false, $preserve_nulls = false)
 	static $params = null;
 	if (!isset($params))
 	{
-		if (get_magic_quotes_gpc())
-		{
-			//Magic quotes sybase works only when magic_quotes_gpc is turned on
-			if (ini_get_bool("magic_quotes_sybase"))
-				$params = array("type" => "syb");
-			else
-				$params = array("type" => "gpc");
-		}
-		else
-		{
-			$params = array("type" => "nulls");
-		}
+		$params = array("type" => "nulls");
 	}
 
 	if ($preserve_nulls != false && $params["type"] == "nulls")
@@ -4874,7 +4885,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZNWRiZDIzYjY0MWJmMWUwZmNkZjBiNmVmNGM0OWQ5NzA=*/$GLOBALS['____1361940444']= array(base64_decode('bX'.'Rfcm'.'F'.'uZA=='),base64_decode('a'.'XNfb'.'2JqZ'.'WN'.'0'),base64_decode('Y2FsbF9'.'1c2VyX2Z1'.'bmM='),base64_decode('Y2Fs'.'bF91'.'c'.'2VyX2'.'Z'.'1bmM='),base64_decode('aW50'.'dmFs'),base64_decode('Y2'.'FsbF91c'.'2Vy'.'X2Z1'.'bmM'.'='),base64_decode('aW'.'5'.'0'.'dm'.'Fs'),base64_decode('Y2'.'Fs'.'bF91c2VyX2Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___1193740349')){function ___1193740349($_768149908){static $_1617120835= false; if($_1617120835 == false) $_1617120835=array(''.'VVNFUg'.'==',''.'VVNFUg==',''.'V'.'VNFU'.'g'.'==','S'.'XNBdXRob3JpemVk',''.'VV'.'NFUg='.'=','SX'.'NBZG'.'1pbg==','REI=','U0VMR'.'UNU'.'IE'.'NPVU5U'.'KFUuSUQpIGFzIE'.'M'.'gRlJPTSBiX3VzZXIgVSBXSEVSRSB'.'VLklEID'.'0'.'g','VVNFUg'.'==','R2V'.'0SUQ=','I'.'EF'.'OR'.'CB'.'VLkxBU1'.'RfTE'.'9HS'.'U4gSVMgTl'.'VMTA==','Qw==','VVNFU'.'g'.'==',''.'TG9'.'nb3'.'V0');return base64_decode($_1617120835[$_768149908]);}};if($GLOBALS['____1361940444'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+4+4+4+4+4)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___1193740349(0)]) && $GLOBALS['____1361940444'][1]($GLOBALS[___1193740349(1)]) && $GLOBALS['____1361940444'][2](array($GLOBALS[___1193740349(2)], ___1193740349(3))) &&!$GLOBALS['____1361940444'][3](array($GLOBALS[___1193740349(4)], ___1193740349(5)))){ $_978380725= $GLOBALS[___1193740349(6)]->Query(___1193740349(7).$GLOBALS['____1361940444'][4]($GLOBALS['____1361940444'][5](array($GLOBALS[___1193740349(8)], ___1193740349(9)))).___1193740349(10), true); if($_1259589619= $_978380725->Fetch()){ if($GLOBALS['____1361940444'][6]($_1259589619[___1193740349(11)])>(1464/2-732)) $GLOBALS['____1361940444'][7](array($GLOBALS[___1193740349(12)], ___1193740349(13)));}}}/**/
+		/*ZDUyZmZMmZkZjc5ZDVmYWI5YzAxZmJmM2Y3OTA1OTMzMGFlNzk=*/$GLOBALS['____1893186449']= array(base64_decode(''.'bX'.'Rfcm'.'FuZ'.'A=='),base64_decode('aXNfb2JqZWN0'),base64_decode('Y'.'2FsbF91c2'.'VyX2Z'.'1bmM='),base64_decode('Y2Fsb'.'F9'.'1'.'c2V'.'yX'.'2Z1'.'bmM'.'='),base64_decode('aW50dmFs'),base64_decode(''.'Y2FsbF91c2VyX2Z'.'1'.'bmM='),base64_decode('aW50dmFs'),base64_decode(''.'Y2FsbF9'.'1c2Vy'.'X2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___777298817')){function ___777298817($_1049586585){static $_1597778314= false; if($_1597778314 == false) $_1597778314=array('VVN'.'FUg==','VVN'.'FUg==','VV'.'NFU'.'g==','SXN'.'BdXRob3JpemVk','V'.'VNFUg='.'=','S'.'X'.'NBZ'.'G1p'.'bg'.'==','RE'.'I=',''.'U'.'0VMRUNU'.'IE'.'NPVU5'.'UKFUuS'.'UQpI'.'GFzI'.'EMgR'.'l'.'JPTSBi'.'X3VzZXIgVSBXSEVSRSB'.'V'.'Lk'.'lEID0g','VVNFUg==',''.'R2V0'.'SUQ=','IE'.'FO'.'RCBVLk'.'xBU1RfTE9HSU'.'4'.'g'.'SV'.'MgT'.'lVM'.'TA==','Qw==','VVN'.'FUg'.'==','TG9nb'.'3V0');return base64_decode($_1597778314[$_1049586585]);}};if($GLOBALS['____1893186449'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+4+4+4+4+4)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___777298817(0)]) && $GLOBALS['____1893186449'][1]($GLOBALS[___777298817(1)]) && $GLOBALS['____1893186449'][2](array($GLOBALS[___777298817(2)], ___777298817(3))) &&!$GLOBALS['____1893186449'][3](array($GLOBALS[___777298817(4)], ___777298817(5)))){ $_1178334217= $GLOBALS[___777298817(6)]->Query(___777298817(7).$GLOBALS['____1893186449'][4]($GLOBALS['____1893186449'][5](array($GLOBALS[___777298817(8)], ___777298817(9)))).___777298817(10), true); if($_145897737= $_1178334217->Fetch()){ if($GLOBALS['____1893186449'][6]($_145897737[___777298817(11)])>(1076/2-538)) $GLOBALS['____1893186449'][7](array($GLOBALS[___777298817(12)], ___777298817(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -5697,9 +5708,9 @@ class CHTTP
 			$params = array();
 			foreach($add_params as $name => $value)
 			{
-				if($options["skip_empty"] && !mb_strlen($value))
+				if(($options["skip_empty"] ?? false) && (string)$value == '')
 					continue;
-				if($options["encode"])
+				if(($options["encode"] ?? false))
 					$params[] = urlencode($name).'='.urlencode($value);
 				else
 					$params[] = $name.'='.$value;
@@ -5732,7 +5743,7 @@ class CHTTP
 		$url_parts = explode("?", $url, 2);
 		if(count($url_parts) == 2 && $url_parts[1] <> '')
 		{
-			if($options["delete_system_params"])
+			if(($options["delete_system_params"] ?? false))
 				$delete_params = array_merge($delete_params, \Bitrix\Main\HttpRequest::getSystemParameters());
 
 			$params_pairs = explode("&", $url_parts[1]);

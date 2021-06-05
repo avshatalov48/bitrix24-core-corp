@@ -3,10 +3,12 @@
 namespace Bitrix\Location\Source\Osm\Converters;
 
 use Bitrix\Location\Entity\Address;
+use Bitrix\Location\Entity\Address\Converter\StringConverter;
 use Bitrix\Location\Entity\Address\Field;
 use Bitrix\Location\Entity\Address\FieldType;
+use Bitrix\Location\Entity\Format\TemplateType;
 use Bitrix\Location\Entity\Location;
-use Bitrix\Location\Source\AddressLine1Composer;
+use Bitrix\Location\Service\FormatService;
 use Bitrix\Location\Source\Osm\ExternalIdBuilder;
 use Bitrix\Location\Source\Osm\Repository;
 
@@ -59,10 +61,10 @@ abstract class BaseConverter
 			return null;
 		}
 
-		$addressFieldCollection = $this->makeAddressFieldCollection();
+		$addressFieldCollection = $this->makeAddressFieldCollection($languageId);
 		$locationTypeField = $this->getLocationTypeField($addressFieldCollection);
 
-		if (is_null($locationTypeField))
+		if ($locationTypeField === null)
 		{
 			return null;
 		}
@@ -74,9 +76,9 @@ abstract class BaseConverter
 			->setLongitude($longitude)
 			->setFieldCollection($addressFieldCollection);
 
-		if (!AddressLine1Composer::isAddressLine1Present($address))
+		if ($addressLine1 = $this->createAddressLine1($address))
 		{
-			AddressLine1Composer::composeAddressLine1($address);
+			$address->setFieldValue(FieldType::ADDRESS_LINE_1, $addressLine1);
 		}
 
 		$externalId = ExternalIdBuilder::buildExternalId(
@@ -155,10 +157,11 @@ abstract class BaseConverter
 	}
 
 	/**
+	 * @param string $languageId
 	 * @return Address\FieldCollection
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function makeAddressFieldCollection(): Address\FieldCollection
+	private function makeAddressFieldCollection(string $languageId): Address\FieldCollection
 	{
 		$result = new Address\FieldCollection();
 
@@ -267,6 +270,22 @@ abstract class BaseConverter
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param Address $address
+	 * @return string|null
+	 */
+	private function createAddressLine1(Address $address): ?string
+	{
+		$format = FormatService::getInstance()->findDefault($address->getLanguageId());
+
+		return StringConverter::convertToStringTemplate(
+			$address,
+			$format->getTemplate(TemplateType::ADDRESS_LINE_1),
+			StringConverter::STRATEGY_TYPE_TEMPLATE,
+			StringConverter::CONTENT_TYPE_TEXT
+		);
 	}
 
 	/**

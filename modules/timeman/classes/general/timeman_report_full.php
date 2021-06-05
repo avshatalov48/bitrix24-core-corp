@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 define("TM_SHORT_FORMAT","DD.MM.YYYY");
@@ -298,7 +299,7 @@ class CTimeManReportFull
 		);
 	}
 
-	function CheckFields($action, &$arFields)
+	public static function CheckFields($action, &$arFields)
 	{
 		global $DB, $USER;
 
@@ -307,12 +308,12 @@ class CTimeManReportFull
 			if (!$arFields['USER_ID'])
 					$arFields['USER_ID'] = $USER->GetID();
 				if (!$arFields["DATE_FROM"])
-					$arFields["DATE_FROM"] = mktime();
+					$arFields["DATE_FROM"] = time();
 				if (!$arFields["DATE_TO"])
 					$arFields["DATE_TO"] = $arFields["DATE_FROM"];
 		}
 
-		$arFields["REPORT_DATE"] = ConvertTimeStampForReport(mktime(),"FULL");
+		$arFields["REPORT_DATE"] = ConvertTimeStampForReport(time(),"FULL");
 
 		if (isset($arFields['REPORT']))
 				$arFields['REPORT'] = trim($arFields['REPORT']);
@@ -345,9 +346,12 @@ class CTimeManReportFull
 		if ($arReportDate["IS_REPORT_DAY"]!="Y")
 			return false;
 
-		$arFields["DATE_TO"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_TO"], TM_SHORT_FORMAT),"SHORT");
-		$arFields["DATE_FROM"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_FROM"], TM_SHORT_FORMAT),"SHORT");
-		$arFields["REPORT_DATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["REPORT_DATE"], TM_FULL_FORMAT),"FULL");
+		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
+		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+
+		$arFields["DATE_TO"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_TO"], $shortFormat),"SHORT");
+		$arFields["DATE_FROM"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_FROM"], $shortFormat),"SHORT");
+		$arFields["REPORT_DATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["REPORT_DATE"], $fullFormat),"FULL");
 
 		foreach(GetModuleEvents('timeman', 'OnBeforeFullReportAdd', true) as $event)
 		{
@@ -710,6 +714,9 @@ class CUserReportFull
 		global $DB,$USER;
 		$arSettings=$this->GetSettings();
 
+		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
+		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+
 		if (!$arSettings["UF_LAST_REPORT_DATE"])
 		{
 			$dbres = CTimeManReportFull::GetList(
@@ -723,10 +730,15 @@ class CUserReportFull
 		}
 		else
 		{
-			$last_date_report = MakeTimeStamp($arSettings["UF_LAST_REPORT_DATE"],TM_SHORT_FORMAT);
+			$last_date_report = MakeTimeStamp($arSettings["UF_LAST_REPORT_DATE"], $shortFormat);
+			if (!$last_date_report)
+			{
+				// id=140000
+				$last_date_report = MakeTimeStamp($arSettings["UF_LAST_REPORT_DATE"], TM_SHORT_FORMAT);
+			}
 		}
 
-		$last_settings = MakeTimeStamp($arSettings["UF_SETTING_DATE"], TM_FULL_FORMAT);
+		$last_settings = MakeTimeStamp($arSettings["UF_SETTING_DATE"], $fullFormat);
 		$last_date_report = max($last_date_report, $last_settings);
 
 		switch ($arSettings["UF_REPORT_PERIOD"])
@@ -771,8 +783,11 @@ class CUserReportFull
 		// $DATE_TO_INC = ConvertTimeStampForReport(strtotime('+1 day', MakeTimeStamp($DATE_TO,TM_SHORT_FORMAT)),"SHORT");
 		// $DATE_FROM = ConvertTimeStampForReport(MakeTimeStamp($DATE_FROM, TM_SHORT_FORMAT),"SHORT");
 
-		$DATE_TO_INC = ConvertTimeStamp(strtotime('+1 day', MakeTimeStamp($DATE_TO,TM_SHORT_FORMAT)),"SHORT");
-		$DATE_FROM = ConvertTimeStamp(MakeTimeStamp($DATE_FROM, TM_SHORT_FORMAT),"SHORT");
+		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
+		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+
+		$DATE_TO_INC = ConvertTimeStamp(strtotime('+1 day', MakeTimeStamp($DATE_TO, $shortFormat)),"SHORT");
+		$DATE_FROM = ConvertTimeStamp(MakeTimeStamp($DATE_FROM, $shortFormat),"SHORT");
 
 		// if($DATE_TO_INC == $DATE_FROM)
 		// {
@@ -829,6 +844,20 @@ class CUserReportFull
 	public static function getInfoCacheId($USER_ID)
 	{
 		return  'timeman|report_info|'.$USER_ID.'|'.ConvertTimeStamp().'|'.FORMAT_DATETIME.'|'.FORMAT_DATE;
+	}
+
+	public static function setReportFiles(array $value): void
+	{
+		$kernelSession = \Bitrix\Main\Application::getInstance()->getKernelSession();
+
+		$kernelSession['report_files'] = $value;
+	}
+
+	public static function getReportFiles(): array
+	{
+		$kernelSession = \Bitrix\Main\Application::getInstance()->getKernelSession();
+
+		return is_array($kernelSession['report_files']) ? $kernelSession['report_files'] : [];
 	}
 
 	public function GetReportInfo()
@@ -985,7 +1014,8 @@ class CUserReportFull
 		{
 			return false;
 		}
-		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, TM_FULL_FORMAT);
+		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, $fullFormat);
 		$currentTimeWihOffset = time() + CTimeZone::getOffset();
 		return (CTimeMan::removeHoursTS($dateSubmitTimeStamp) <= CTimeMan::removeHoursTS($currentTimeWihOffset));
 	}
@@ -996,7 +1026,8 @@ class CUserReportFull
 		{
 			return false;
 		}
-		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, TM_FULL_FORMAT);
+		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, $fullFormat);
 		$currentTimeWihOffset = time() + CTimeZone::getOffset();
 		return (doubleval($dateSubmitTimeStamp) <= doubleval($currentTimeWihOffset));
 	}
@@ -1028,23 +1059,20 @@ class CUserReportFull
 
 		if (!$this->isSavedReport($entriesInfo['REPORT_ID']))
 		{
-			if (isset($_SESSION['report_files']) && is_array($_SESSION['report_files']))
+			$reportFiles = self::getReportFiles();
+			if ($reportFiles)
 			{
-				$entriesInfo['FILES'] = $_SESSION['report_files'];
+				$entriesInfo['FILES'] = $reportFiles;
 			}
 
-			$entriesInfo['REPORT_DATE_FROM'] = MakeTimeStamp($currentReportInfo['DATE_FROM'], TM_SHORT_FORMAT);
-			$entriesInfo['REPORT_DATE_TO'] = MakeTimeStamp($currentReportInfo['DATE_TO'], TM_SHORT_FORMAT);
+			$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
+
+			$entriesInfo['REPORT_DATE_FROM'] = MakeTimeStamp($currentReportInfo['DATE_FROM'], $shortFormat);
+			$entriesInfo['REPORT_DATE_TO'] = MakeTimeStamp($currentReportInfo['DATE_TO'], $shortFormat);
 		}
 
 		$dateFrom = (($currentReportInfo['DATE_FROM']) ? $currentReportInfo['DATE_FROM'] : $savedReport['DATE_FROM']);
 		$dateTo = (($currentReportInfo['DATE_TO']) ? $currentReportInfo['DATE_TO'] : $savedReport['DATE_TO']);
-
-		if ($this->isNeedClearTasksAndEvents($dateTo))
-		{
-			$entriesInfo['TASKS'] = [];
-			$entriesInfo['EVENTS'] = [];
-		}
 
 		$entriesInfo = $this->preparePlannerData($entriesInfo);
 
@@ -1110,7 +1138,7 @@ class CUserReportFull
 
 		$userUrl = COption::getOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
 
-		$queryObject = CUser::getList($by='ID', $order='ASC', ['ID' => implode('|', $managers)]);
+		$queryObject = CUser::getList('ID', 'ASC', ['ID' => implode('|', $managers)]);
 
 		$currentUser = [];
 		$currentUserManagers = [];
@@ -1180,13 +1208,6 @@ class CUserReportFull
 	private function isSavedReport($reportId): bool
 	{
 		return (bool) $reportId;
-	}
-
-	private function isNeedClearTasksAndEvents(string $dateTo): bool
-	{
-		$dateTo = MakeTimeStamp($dateTo, CSite::getDateFormat('SHORT', SITE_ID));
-		$today = CTimeMan::removeHoursTS(time());
-		return ($dateTo < $today);
 	}
 
 	private function preparePlannerData(array $entriesInfo): array
@@ -1400,12 +1421,12 @@ class CReportSettings
 {
 	private static $SECTIONS_SETTINGS_CACHE = null;
 
-	public function getSettingsCacheId($USER_ID)
+	public static function getSettingsCacheId($USER_ID)
 	{
 		return 'timeman|report_settings|u'.$USER_ID;
 	}
 
-	function GetUserSettings($USER_ID = false)
+	public static function GetUserSettings($USER_ID = false)
 	{
 		global $CACHE_MANAGER, $USER;
 
@@ -1535,7 +1556,7 @@ class CReportSettings
 		}
 	}
 
-	function GetPeriodByID($ID,$ENTITY = "USER")
+	public static function GetPeriodByID($ID,$ENTITY = "USER")
 	{
 
 		$entities = CUserTypeEntity::GetList(Array(),Array("ENTITY_ID"=>$ENTITY,"FIELD_NAME"=>"UF_REPORT_PERIOD"));
@@ -1638,7 +1659,7 @@ class CReportNotifications
 
 	}
 
-	protected function NotifyIm($arReport)
+	protected static function NotifyIm($arReport)
 	{
 		if(!CModule::IncludeModule("im"))
 			return;
@@ -1922,7 +1943,7 @@ class CReportNotifications
 		$arManagers[] = $arReport["USER_ID"];
 		$arManagers = array_unique($arManagers);
 
-		$dbManagers = CUser::GetList($by='ID', $order='ASC', array('ID' => implode('|', $arManagers)), array('SELECT' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'WORK_POSITION', 'PERSONAL_PHOTO', 'PERSONAL_GENDER')));
+		$dbManagers = CUser::GetList('ID', 'ASC', array('ID' => implode('|', $arManagers)), array('SELECT' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'WORK_POSITION', 'PERSONAL_PHOTO', 'PERSONAL_GENDER')));
 		$arCurrentUserManagers = array();
 		while ($manager = $dbManagers->GetNext())
 		{
@@ -2500,10 +2521,9 @@ class CReportNotifications
 
 function ConvertTimeStampForReport($timestamp, $format = "FULL")
 {
-	$datatime = ConvertTimeStamp($timestamp, $format);
-	$tm_format = TM_FULL_FORMAT;
-	if ($format == "SHORT")
-		$tm_format = TM_SHORT_FORMAT;
-	return ConvertDateTime($datatime, $tm_format);
+	$dateTime = ConvertTimeStamp($timestamp, $format);
+
+	$dateformat = CSite::getDateFormat($format, SITE_ID);
+
+	return ConvertDateTime($dateTime, $dateformat);
 }
-?>

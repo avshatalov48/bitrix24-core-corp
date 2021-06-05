@@ -45,7 +45,7 @@ Class tasks extends CModule
 			);
 		}
 
-		$errors = $this->installUserFields();
+		$errors = static::installUserFields();
 		if (!empty($errors))
 		{
 			if (!is_array($this->errors))
@@ -164,41 +164,41 @@ Class tasks extends CModule
 		return true;
 	}
 
-	public function installUserFields($moduleId = 'all'): array
+	public static function installUserFields($moduleId = 'all'): array
 	{
 		$errors = [];
 
 		if (in_array($moduleId, ['all', 'disk'], true))
 		{
-			$errors = $this->installDiskUserFields($errors);
+			$errors = static::installDiskUserFields($errors);
 		}
 		if (in_array($moduleId, ['all', 'mail'], true))
 		{
-			$errors = $this->installMailUserFields($errors);
+			$errors = static::installMailUserFields($errors);
 		}
 
 		return $errors;
 	}
 
-	private function installDiskUserFields(array $errors): array
+	private static function installDiskUserFields(array $errors): array
 	{
 		if (!IsModuleInstalled('disk'))
 		{
 			return $errors;
 		}
 
-		$errors = $this->createFileField('TASKS_TASK', $errors);
-		$errors = $this->createFileField('TASKS_TASK_TEMPLATE', $errors);
+		$errors = static::createFileField('TASKS_TASK', $errors);
+		$errors = static::createFileField('TASKS_TASK_TEMPLATE', $errors);
 
-		$errors = $this->createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
-		$errors = $this->createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
+		$errors = static::createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
+		$errors = static::createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
 
-		$errors = $this->createScrumItemFileField('TASKS_SCRUM_ITEM', $errors);
+		$errors = static::createScrumItemFileField('TASKS_SCRUM_ITEM', $errors);
 
 		return $errors;
 	}
 
-	private function createFileField(string $entityId, array $errors): array
+	private static function createFileField(string $entityId, array $errors): array
 	{
 		global $APPLICATION;
 
@@ -240,7 +240,7 @@ Class tasks extends CModule
 		return $errors;
 	}
 
-	private function createChecklistFileField(string $entityId, array $errors): array
+	private static function createChecklistFileField(string $entityId, array $errors): array
 	{
 		global $APPLICATION;
 
@@ -276,7 +276,7 @@ Class tasks extends CModule
 		return $errors;
 	}
 
-	private function createScrumItemFileField(string $entityId, array $errors): array
+	private static function createScrumItemFileField(string $entityId, array $errors): array
 	{
 		global $APPLICATION;
 
@@ -312,7 +312,7 @@ Class tasks extends CModule
 		return $errors;
 	}
 
-	private function installMailUserFields(array $errors): array
+	private static function installMailUserFields(array $errors): array
 	{
 		if (!isModuleInstalled('mail'))
 		{

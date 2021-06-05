@@ -39,11 +39,13 @@ class ConfigFactory implements IConfigFactory
 				(new ConfigItem('SERVICE_URL', 'string'))
 					->setSort(10)
 					->setValue($this->serviceUrl)
+					->setIsVisible(false)
 			)
 			->addItem(
 				(new ConfigItem('TOKEN', 'string'))
 					->setSort(20)
 					->setValue($token)
+					->setIsVisible(false)
 			)
 		;
 

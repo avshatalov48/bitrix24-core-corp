@@ -5,7 +5,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 $arFilter = Array(
 	"ACTIVE"	=>	"Y",
 );
-$rsMess = CEventMessage::GetList($by="id", $order="desc", $arFilter);
+$rsMess = CEventMessage::GetList("id", "desc", $arFilter);
 
 $arMess = array();
 

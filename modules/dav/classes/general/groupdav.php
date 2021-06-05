@@ -537,7 +537,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		$arSite = null;
 		try
 		{
-			$dbSite = CSite::GetList($o, $b, array("LID" => $part, "ACTIVE" => "Y"));
+			$dbSite = CSite::GetList('', '', array("LID" => $part, "ACTIVE" => "Y"));
 			if (!($arSite = $dbSite->Fetch()))
 				$arSite = null;
 		}

@@ -755,15 +755,20 @@ class Event
 					}
 				}
 				elseif(
-					isset($userFields['UF_DEPARTMENT']) &&
-					isset(self::$userFieldsUpdate['UF_DEPARTMENT']) &&
-					(
-						!isset($userFields['ACTIVE']) ||
-						$userFields['ACTIVE'] === 'Y'
+					isset($userFields['UF_DEPARTMENT'])
+					&& is_array($userFields['UF_DEPARTMENT'])
+					&& isset(self::$userFieldsUpdate['UF_DEPARTMENT'])
+					&& is_array(self::$userFieldsUpdate['UF_DEPARTMENT'])
+					&& (
+						!isset($userFields['ACTIVE'])
+						|| $userFields['ACTIVE'] === 'Y'
 					)
 				)
 				{
-					$changedDepartments = array_merge(array_diff($userFields['UF_DEPARTMENT'], self::$userFieldsUpdate['UF_DEPARTMENT']), array_diff(self::$userFieldsUpdate['UF_DEPARTMENT'], $userFields['UF_DEPARTMENT']));
+					$changedDepartments = array_merge(
+						array_diff($userFields['UF_DEPARTMENT'], self::$userFieldsUpdate['UF_DEPARTMENT']),
+						array_diff(self::$userFieldsUpdate['UF_DEPARTMENT'], $userFields['UF_DEPARTMENT'])
+					);
 				}
 
 				if(!empty($changedDepartments))

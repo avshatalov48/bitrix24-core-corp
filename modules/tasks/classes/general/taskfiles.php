@@ -187,7 +187,7 @@ class CTaskFiles
 			'MODULE_ID' => 'tasks'
 		);
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$fileId = CFile::SaveFile($arFile, 'tasks');
 
 		if ($fileId > 0)
@@ -309,7 +309,7 @@ class CTaskFiles
 		}
 		else
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$r = CFile::GetByID($arFields["FILE_ID"]);
 			if (!$r->Fetch())
 			{
@@ -365,7 +365,7 @@ class CTaskFiles
 		{
 			$arFilesIds = array_unique($arFilesIds);
 			$arNotFetchedFilesIds = $arFilesIds;
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$r = CFile::GetList(array(), array('@ID' => implode(',', $arFilesIds)));
 
 			while ($ar = $r->Fetch())

@@ -26,7 +26,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function UpdateActivity($arFields)
+	public static function UpdateActivity($arFields)
 	{
 		if ($arFields['RESULT'] && isset($arFields['ACTIVE']))
 		{
@@ -65,7 +65,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function UpdateActivityIBlock(&$arFields)
+	public static function UpdateActivityIBlock(&$arFields)
 	{
 		global $DB, $USER;
 
@@ -76,7 +76,7 @@ class CIntranetEventHandlers
 			if (!$iblock)
 			{
 				$iblock = array();
-				$dbRes = CSite::GetList($b='SORT', $o='ASC');
+				$dbRes = CSite::GetList();
 				while ($arRes = $dbRes->Fetch())
 				{
 					if ($ib = COption::GetOptionInt('intranet', 'iblock_absence', false, $arRes['ID']))
@@ -404,7 +404,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function DeleteLogEntry($elementID)
+	public static function DeleteLogEntry($elementID)
 	{
 		if (
 			intval($elementID) > 0
@@ -440,7 +440,7 @@ class CIntranetEventHandlers
 	RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionUpdate");
 	RegisterModuleDependences("iblock", "OnBeforeIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionAdd");
 */
-	function OnBeforeIBlockSectionAdd($arParams)
+	public static function OnBeforeIBlockSectionAdd($arParams)
 	{
 		global $APPLICATION;
 
@@ -460,7 +460,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function OnBeforeIBlockSectionUpdate($arParams)
+	public static function OnBeforeIBlockSectionUpdate($arParams)
 	{
 		global $APPLICATION;
 
@@ -482,7 +482,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function onAfterForumMessageAdd($ID, $arForumMessage, $arTopicInfo, $arForumInfo, $arFields)
+	public static function onAfterForumMessageAdd($ID, $arForumMessage, $arTopicInfo, $arForumInfo, $arFields)
 	{
 		// add log comment
 		if (
@@ -657,7 +657,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function onAfterForumMessageDelete($ID, $arFields)
+	public static function onAfterForumMessageDelete($ID, $arFields)
 	{
 		$val = COption::GetOptionString("intranet", "sonet_log_news_iblock_forum");
 		if ($val <> '')
@@ -686,7 +686,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function AddComment_News($arFields)
+	public static function AddComment_News($arFields)
 	{
 		global $USER, $USER_FIELD_MANAGER;
 
@@ -902,7 +902,7 @@ class CIntranetEventHandlers
 		);
 	}
 
-	function OnAfterIBlockElementDelete($arFields)
+	public static function OnAfterIBlockElementDelete($arFields)
 	{
 		// news
 		if (
@@ -953,7 +953,7 @@ class CIntranetEventHandlers
 		// --news
 	}
 
-	function OnUserDelete($USER_ID)
+	public static function OnUserDelete($USER_ID)
 	{
 		if (CModule::IncludeModule('socialnetwork'))
 		{
@@ -986,7 +986,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function OnAfterUserInitialize($userId)
+	public static function OnAfterUserInitialize($userId)
 	{
 		if (!IsModuleInstalled('bitrix24'))
 		{
@@ -1013,7 +1013,7 @@ class CIntranetEventHandlers
 		}
 	}
 
-	function OnAfterUserAdd($arUser)
+	public static function OnAfterUserAdd($arUser)
 	{
 		static
 			$processedIdListIblock = [];
@@ -1090,7 +1090,7 @@ class CIntranetEventHandlers
 
 		$userId = intval($fields['ID']);
 
-		$res = CUser::getList(($by="id"), ($order="asc"), array("ID_EQUAL_EXACT" => $userId), array("SELECT" => array("UF_DEPARTMENT"), "FIELDS" => array("ID", "ACTIVE")));
+		$res = CUser::getList("id", "asc", array("ID_EQUAL_EXACT" => $userId), array("SELECT" => array("UF_DEPARTMENT"), "FIELDS" => array("ID", "ACTIVE")));
 		if ($user = $res->fetch())
 		{
 			self::$userDepartmentCache[$userId] = $user["UF_DEPARTMENT"];
@@ -1219,14 +1219,14 @@ clear single user cache and clear all users cache in case of change user's activ
 /*
 TODO: what do we should check in case of user's departments change? variant: if they're changed - use both $CACHE_MANAGER->ClearByTag('iblock_id_'.$old_dept) and $CACHE_MANAGER->ClearByTag('iblock_id_'.$new_dept)
 */
-	function ClearSingleUserCache($arFields)
+	public static function ClearSingleUserCache($arFields)
 	{
 		if (!defined('BX_COMP_MANAGED_CACHE') || !BX_COMP_MANAGED_CACHE) return true;
 
 		global $CACHE_MANAGER;
 
 		$dbRes = CUser::GetList(
-			$by="id", $order="asc",
+			"id", "asc",
 			array("ID_EQUAL_EXACT" => intval($arFields['ID'])),
 			array('SELECT' => array('UF_DEPARTMENT'))
 		);
@@ -1305,7 +1305,7 @@ TODO: what do we should check in case of user's departments change? variant: if 
 /*
 RegisterModuleDependences('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', 'CIntranetEventHandlers', 'ClearDepartmentCache');
 */
-	function ClearDepartmentCache($arFields)
+	public static function ClearDepartmentCache($arFields)
 	{
 		global $CACHE_MANAGER;
 
@@ -1673,7 +1673,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		return $arResult;
 	}
 
-	function FormatComment_News($arFields, $arParams, $bMail = false, $arLog = array())
+	public static function FormatComment_News($arFields, $arParams, $bMail = false, $arLog = array())
 	{
 		$arResult = array(
 				"EVENT_FORMATTED"	=> array(),
@@ -1806,7 +1806,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		return false;
 	}
 
-	function OnAfterUserAuthorize($arParams)
+	public static function OnAfterUserAuthorize($arParams)
 	{
 		unset($_SESSION["OTP_ADMIN_INFO"]);
 		unset($_SESSION["OTP_EMPLOYEES_INFO"]);
@@ -1819,7 +1819,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		}
 	}
 
-	function onRestAppInstall($params)
+	public static function onRestAppInstall($params)
 	{
 		if (!isset($params["APP_ID"]) || !\Bitrix\Main\Loader::includeModule("rest"))
 			return;
@@ -1907,7 +1907,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		}
 	}
 
-	function onRestAppDelete($params)
+	public static function onRestAppDelete($params)
 	{
 		if (!isset($params["APP_ID"]) || !\Bitrix\Main\Loader::includeModule("rest"))
 			return;

@@ -52,7 +52,6 @@ UI\Extension::load([
 \CJSCore::Init('loader');
 Connector::initIconCss();
 ?>
-
 <?
 if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 {

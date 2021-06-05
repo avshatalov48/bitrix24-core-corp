@@ -77,7 +77,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function createBlankFile(FileData $fileData)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -92,7 +92,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function createFile(FileData $fileData)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -105,7 +105,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function downloadFile(FileData $fileData)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -119,7 +119,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function getFileMetadata(FileData $fileData)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -134,7 +134,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function downloadPartFile(FileData $fileData, $startRange, $chunkSize)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -147,7 +147,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function deleteFile(FileData $fileData)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}
@@ -246,7 +246,7 @@ class BitrixHandler extends DocumentHandler implements IViewer
 	public function listFolder($path, $folderId)
 	{
 		$this->errorCollection->add(array(
-			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this->getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
+			new Error(Loc::getMessage('DISK_BITRIX_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED', array('#NAME#' => $this::getName())), self::ERROR_METHOD_IS_NOT_SUPPORTED)
 		));
 		return null;
 	}

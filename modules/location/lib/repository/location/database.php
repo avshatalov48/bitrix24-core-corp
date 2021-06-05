@@ -149,11 +149,6 @@ final class Database
 			->addSelect('ID')
 			->addSelect('CODE');
 
-		if($location->getId() > 0)
-		{
-			$query->where('ID', $location->getId());
-		}
-
 		if($res = $query->fetch())
 		{
 			$result = [(int)$res['ID'], (string)$res['CODE']];
@@ -175,39 +170,41 @@ final class Database
 
 	/**
 	 * @inheritDoc
-	 * todo: Transaction. If something wrong with address, or name.
 	*/
 	public function save(Location $location): Result
 	{
-		$fields = Location\Converter\DbFieldConverter::convertToDbFields($location);
 		$isNewLocation = false;
-		list($locationId, $locationCode) = $this->obtainLocationKeys($location);
 
-		if($locationId > 0)
+		// We can have already saved location with the same externalId and source code.
+		if($location->getId() <= 0)
 		{
-			if($location->getId() <= 0)
+			[$locationId, $locationCode] = $this->obtainLocationKeys($location);
+
+			if($locationId > 0)
 			{
 				$location->setId($locationId);
 				$location->setCode($locationCode);
-				$fields['CODE'] = $locationCode;
 			}
+			else
+			{
+				$location->setCode($this->generateLocationCode());
+			}
+		}
 
-			$result = $this->locationTable::update($locationId, $fields);
+		$fields = Location\Converter\DbFieldConverter::convertToDbFields($location);
+
+		if($location->getId() > 0)
+		{
+			$result = $this->locationTable::update($location->getId(), $fields);
 		}
 		else
 		{
-			if((string)$fields['CODE'] === '')
-			{
-				$fields['CODE'] = $this->generateLocationCode();
-			}
-
 			$result  = $this->locationTable::add($fields);
 			$isNewLocation = true;
 
 			if($result->isSuccess())
 			{
 				$location->setId($result->getId());
-				$location->setCode($fields['CODE']);
 			}
 		}
 
@@ -244,20 +241,29 @@ final class Database
 		return $fieldsCollection->save();
 	}
 
-	private function saveName(Location $location, bool $newLocation)
+	private function saveName(Location $location, bool $isLocationNew)
 	{
 		$fields = Location\Converter\DbFieldConverter::convertNameToDbFields($location);
+		$itemExist = false;
 
-		if($newLocation)
+		if(!$isLocationNew)
 		{
-			$result = $this->locationNameTable::add($fields);
+			$itemExist = $this->locationNameTable::getById([
+				'LOCATION_ID' => $fields['LOCATION_ID'],
+				'LANGUAGE_ID' => $fields['LANGUAGE_ID']]
+			)->fetch();
+		}
+
+		if($itemExist)
+		{
+			$result = $this->locationNameTable::update([
+			   'LOCATION_ID' => $fields['LOCATION_ID'],
+			   'LANGUAGE_ID' => $fields['LANGUAGE_ID']
+		   ], $fields);
 		}
 		else
 		{
-			$result = $this->locationNameTable::update([
-				'LOCATION_ID' => $fields['LOCATION_ID'],
-				'LANGUAGE_ID' => $fields['LANGUAGE_ID']
-			], $fields);
+			$result = $this->locationNameTable::add($fields);
 		}
 
 		return $result;

@@ -256,9 +256,6 @@ class Helper
 	/**
 	 * @param array $filter
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function listRestConnector($filter = array())
 	{

@@ -3,7 +3,7 @@ namespace Bitrix\Disk\Internals\Collection;
 
 use Bitrix\Main\InvalidOperationException;
 
-final class FixedArray implements \Iterator, \ArrayAccess, \Countable
+final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 {
 	/** @var \SplFixedArray */
 	protected $fixedArray;
@@ -13,6 +13,16 @@ final class FixedArray implements \Iterator, \ArrayAccess, \Countable
 	public function __construct($size)
 	{
 		$this->fixedArray = new \SplFixedArray($size);
+	}
+
+	public function getIterator()
+	{
+		if ($this->getSplFixedArray() instanceof \IteratorAggregate)
+		{
+			return $this->getSplFixedArray()->getIterator();
+		}
+
+		return new Compatibility\FixedArrayIterator($this->getSplFixedArray());
 	}
 
 	/**
@@ -65,7 +75,7 @@ final class FixedArray implements \Iterator, \ArrayAccess, \Countable
 
 	public function __wakeup()
 	{
-		return $this->fixedArray->__wakeup();
+		$this->fixedArray->__wakeup();
 	}
 
 	/**
@@ -133,7 +143,7 @@ final class FixedArray implements \Iterator, \ArrayAccess, \Countable
 	 */
 	public function next()
 	{
-		return $this->fixedArray->next();
+		$this->fixedArray->next();
 	}
 
 	/**

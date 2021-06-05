@@ -57,6 +57,34 @@ BX.CrmUISelector = {
 			};
 		}
 
+		var dynamicTypes = selectorInstance.getOption('enableCrmDynamics');
+		if (dynamicTypes)
+		{
+			var dynamicTitles = (selectorInstance.getOption('crmDynamicTitles') ? selectorInstance.getOption('crmDynamicTitles') : {});
+
+			for(var typeId in dynamicTypes)
+			{
+				if (dynamicTypes[typeId] === 'Y')
+				{
+					var entityTypeId = 'DYNAMICS_'+typeId;
+					var addTabCrmDynamics = selectorInstance.getOption('addTabCrmDynamics');
+
+					selectorInstance.entityTypes[entityTypeId] = {
+						options: {
+							enableSearch: 'Y',
+							searchById: 'Y',
+							addTab: ((addTabCrmDynamics && addTabCrmDynamics[typeId] === 'Y') ? 'Y' : 'N'),
+							typeId: typeId,
+							onlyWithEmail: (selectorInstance.getOption('onlyWithEmail') === 'Y' ? 'Y' : 'N'),
+							prefixType: (BX.type.isNotEmptyString(selectorInstance.getOption('crmPrefixType')) ? selectorInstance.getOption('crmPrefixType') : 'FULL'),
+							returnItemUrl: (selectorInstance.getOption('returnItemUrl') === 'N' ? 'N' : 'Y'),
+							title: (dynamicTitles[entityTypeId] ? dynamicTitles[entityTypeId] : '')
+						}
+					};
+				}
+			}
+		}
+
 		if (selectorInstance.getOption('enableCrmLeads') == 'Y')
 		{
 			selectorInstance.entityTypes.LEADS = {
@@ -146,11 +174,11 @@ BX.CrmUISelector = {
 			entityTypesList = [ 'CONTACTS', 'COMPANIES', 'LEADS', 'DEALS', 'ORDERS', 'PRODUCTS', 'QUOTES' ],
 			entityType = null;
 
-		for (var i=0; i<entityTypesList.length; i++)
+		for (entityType in responseData.ENTITIES)
 		{
-			entityType = [entityTypesList[i]];
 			if (
-				BX.type.isNotEmptyObject(responseData.ENTITIES[entityType])
+				(entityTypesList.indexOf(entityType) > -1 || entityType.match(/^DYNAMICS_\d+$/))
+				&& BX.type.isNotEmptyObject(responseData.ENTITIES[entityType])
 				&& BX.type.isNotEmptyObject(responseData.ENTITIES[entityType].ITEMS)
 			)
 			{
@@ -160,9 +188,7 @@ BX.CrmUISelector = {
 					{
 						continue;
 					}
-
 					selectorInstance.entities[entityType].items[itemCode] = responseData.ENTITIES[entityType].ITEMS[itemCode];
-
 					if (BX.type.isNotEmptyObject(params.eventResult))
 					{
 						params.eventResult.found = true;
@@ -236,6 +262,12 @@ BX.CrmUISelector = {
 				value = {
 					'DEAL': [ parseInt(split[1]) ]
 				};
+			}
+			else if (split = params.value.match(/CRMDYNAMIC-(\d+)_(\d+)/))
+			{
+				var entityType =  'DYNAMIC_' + split[1];
+				value = {};
+				value[entityType] = [ parseInt(split[2]) ];
 			}
 
 			if (BX.type.isNotEmptyObject(value))

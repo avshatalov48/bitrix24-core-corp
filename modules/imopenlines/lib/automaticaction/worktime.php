@@ -152,11 +152,6 @@ class WorkTime
 	 * @param bool $finish
 	 * @param bool $vote
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function automaticAddMessage($finish = false, $vote = false)
 	{
@@ -198,11 +193,6 @@ class WorkTime
 	 * @param bool $finish
 	 * @param bool $vote
 	 * @return bool|int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function sendMessage($finish = false, $vote = false)
 	{

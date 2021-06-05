@@ -7,10 +7,15 @@
  */
 namespace Bitrix\Crm\Binding;
 
+use Bitrix\Crm\QuoteTable;
 use Bitrix\Main;
-use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 
-class QuoteContactTable extends Entity\DataManager
+class QuoteContactTable extends DataManager
 {
 	/**
 	 * Get table name.
@@ -26,13 +31,23 @@ class QuoteContactTable extends Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'QUOTE_ID' => array('primary' => true, 'data_type' => 'integer'),
-			'CONTACT_ID' => array('primary' => true, 'data_type' => 'integer'),
-			'SORT' => array('data_type' => 'integer', 'default_value' => 0),
-			'ROLE_ID' => array('data_type' => 'integer', 'default_value' => 0),
-			'IS_PRIMARY' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N')
-		);
+		return [
+			(new IntegerField('QUOTE_ID'))
+				->configurePrimary(),
+			(new IntegerField('CONTACT_ID'))
+				->configurePrimary(),
+			(new IntegerField('SORT'))
+				->configureRequired()
+				->configureDefaultValue(0),
+			(new IntegerField('ROLE_ID'))
+				->configureRequired()
+				->configureDefaultValue(EntityBinding::ROLE_UNDEFINED),
+			(new BooleanField('IS_PRIMARY'))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue('N'),
+			(new Reference('QUOTE', QuoteTable::class, Join::on('this.QUOTE_ID', 'ref.ID'))),
+		];
 	}
 	/**
 	 * Execute UPSERT operation.
@@ -325,7 +340,7 @@ class QuoteContactTable extends Entity\DataManager
 			throw new Main\ArgumentException('Must be greater than zero', 'quoteID');
 		}
 
-		$contactIDs = array_filter($contactIDs);
+		$contactIDs = array_filter(array_map('intval', $contactIDs));
 		if(empty($contactIDs))
 		{
 			return;

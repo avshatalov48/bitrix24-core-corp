@@ -1,5 +1,3 @@
-import {ErrorPublisher} from 'location.core';
-
 export default class TokenContainer
 {
 	#token;
@@ -25,7 +23,7 @@ export default class TokenContainer
 
 	refreshToken()
 	{
-		if(this.#isRefreshing)
+		if (this.#isRefreshing)
 		{
 			return this.#refreshingPromise;
 		}

@@ -50,7 +50,7 @@ if ($arCurrentValues['IBLOCK_TYPE'] && $arCurrentValues['IBLOCK_TYPE'] != '-')
 }
 
 $arUGroupsEx = Array();
-$dbUGroups = CGroup::GetList($by = "c_sort", $order = "asc");
+$dbUGroups = CGroup::GetList();
 while($arUGroups = $dbUGroups -> Fetch())
 {
 	$arUGroupsEx[$arUGroups["ID"]] = $arUGroups["NAME"];
@@ -71,7 +71,7 @@ if ($bLDAP)
 
 $arSites = array();
 $siteDefault = 's1';
-$dbRes = CSite::GetList($by = 'sort', $order = 'asc', array('active' => 'Y'));
+$dbRes = CSite::GetList('sort', 'asc', array('active' => 'Y'));
 while ($arSite = $dbRes->Fetch())
 {
 	$arSites[$arSite['ID']] = '['.$arSite['ID'].'] '.$arSite['NAME'];

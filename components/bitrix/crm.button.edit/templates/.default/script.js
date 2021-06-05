@@ -1850,7 +1850,7 @@ CrmButtonEditLine.prototype =
 		}
 
 		BX.bind(node, 'mouseover', function(){
-			BX.UI.Hint.show(this, text);
+			BX.UI.Hint.show(this, BX.util.htmlspecialchars(text));
 		});
 		BX.bind(node, 'mouseout', function(){
 			BX.UI.Hint.hide();

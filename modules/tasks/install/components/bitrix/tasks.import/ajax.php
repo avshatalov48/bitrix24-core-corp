@@ -679,9 +679,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 				return $userId;
 			}
 
-			$by = 'ID';
-			$order = 'ASC';
-			$dbUsers = CUser::GetList($by, $order, ['ID'=> $userId], ['FIELDS' => ['ID']]);
+			$dbUsers = CUser::GetList('ID',	'ASC', ['ID'=> $userId], ['FIELDS' => ['ID']]);
 			$user = (is_object($dbUsers) ? $dbUsers->Fetch() : null);
 			if (is_array($user))
 			{
@@ -721,9 +719,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 				}
 			}
 
-			$by = 'ID';
-			$order = 'ASC';
-			$dbUsers = CUser::GetList($by, $order, $userFilter, ['FIELDS' => ['ID']]);
+			$dbUsers = CUser::GetList('ID',	'ASC', $userFilter, ['FIELDS' => ['ID']]);
 			$user = (is_object($dbUsers) ? $dbUsers->Fetch() : null);
 			if (is_array($user))
 			{

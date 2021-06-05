@@ -301,7 +301,7 @@ final class ShowSession extends Internals\Model
 				'VERSION_ID' => $versionId,
 				'USER_ID' => $handler->getUserId(),
 				'OWNER_ID' => $handler->getUserId(),
-				'SERVICE' => $handler->getCode(),
+				'SERVICE' => $handler::getCode(),
 				'SERVICE_FILE_ID' => $fileData->getId(),
 				'SERVICE_FILE_LINK' => $fileData->getLinkInService(),
 				'ETAG' => !empty($metaData['etag'])? $metaData['etag'] : '',

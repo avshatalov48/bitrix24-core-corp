@@ -638,7 +638,7 @@ class CCrmDocumentCompany extends CCrmDocument
 		$arFields['CONTACT_ID'] = \Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($arFields['ID']);
 	}
 
-	public function getDocumentName($documentId)
+	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		$dbRes = CCrmCompany::GetListEx([], ['=ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'],

@@ -27,6 +27,8 @@ class UserOperationChecker implements IUserOperationChecker
 					->addSelect('TASK_OPERATION.OPERATION.NAME', 'OPNAME')
 					->whereIn('ACCESS_CODE', $userAccessCodes)
 					->where('USER_ACCESS.USER_ID', $this->user->getId())
+					->setCacheTtl(3600 * 24)
+					->cacheJoins(true)
 					->exec()
 					->fetchAll(),
 				'OPNAME'

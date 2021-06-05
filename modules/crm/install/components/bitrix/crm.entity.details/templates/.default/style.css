@@ -358,3 +358,8 @@ input.pagetitle-item {
 	padding-left: 63px;
 	width: 58.4%;
 }
+
+.crm-stageflow-wrap {
+	position: relative;
+	height: 32px;
+}

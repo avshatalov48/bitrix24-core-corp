@@ -1024,7 +1024,7 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 	 *
 	 * @deprecated
 	 */
-	protected function fetchListFromDb($taskData, $order = ['SORT_INDEX' => 'asc', 'ID' => 'asc'])
+	protected static function fetchListFromDb($taskData, $order = ['SORT_INDEX' => 'asc', 'ID' => 'asc'])
 	{
 		$taskId = $taskData['ID'];
 
@@ -1061,7 +1061,7 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 	 *
 	 * @deprecated
 	 */
-	protected function fetchDataFromDb($taskId, $itemId)
+	protected static function fetchDataFromDb($taskId, $itemId)
 	{
 		$itemData = TaskCheckListFacade::getList([], ['ID' => $itemId, 'TASK_ID' => $taskId])[$itemId];
 

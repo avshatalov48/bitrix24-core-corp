@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['OL_COMPONENT_MODULE_NOT_INSTALLED'] = 'Модуль "Коннекторы для внешних мессенджеров" не установлен';
 $MESS['OL_COMPONENT_ACCESS_DENIED'] = 'У вас недостаточно прав для просмотра статистики';
 $MESS['OL_COMPONENT_TABLE_INPUT'] = 'Входящий';
@@ -87,4 +87,15 @@ $MESS['OL_STATS_VOTE_AS_HEAD_BUTTON'] = 'Оценить';
 $MESS['OL_STAT_EXCEL_EXPORT_POPUP_TITLE'] = 'Экспорт в Excel';
 $MESS['OL_STAT_EXCEL_EXPORT_POPUP_BODY'] = 'Будет сформирован файл экспорта диалогов. Выполнение этой операции может занять продолжительное время при большом количестве данных.';
 $MESS['OL_STATS_COMMENT_HEAD_ADD'] = 'добавить';
-?>
+$MESS['OL_STAT_EXCEL_ACTIONS_TITLE'] = 'Групповое действие';
+$MESS['OL_STAT_EXCEL_ACTIONS_BODY'] = 'Будет произведено групповое действие над диалогами. Выполнение этой операции может занять продолжительное время.';
+$MESS['OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION'] = 'Выберите действие';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE'] = 'Назначить ответственного';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE'] = 'Завершить';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE_TITLE'] = 'Выполняется завершение группы диалогов.';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM'] = 'Принудительно завершить';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM_TITLE'] = 'Выполняется принудительное завершение группы диалогов.';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER'] = 'Переадресовать';
+$MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE'] = 'Выполняется переадресация группы диалогов.';
+$MESS['OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION'] = 'Вы действительно хотите это сделать?';
+$MESS['OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE'] = 'Открытые линии';

@@ -3621,6 +3621,9 @@ this.BX = this.BX || {};
 	exports.EntityEditorRequisiteAddressField = EntityEditorRequisiteAddressField;
 	exports.EntityEditorRequisiteController = EntityEditorRequisiteController;
 	exports.EntityEditorClientRequisites = EntityEditorClientRequisites;
+	exports.EntityEditorRequisiteTooltip = EntityEditorRequisiteTooltip;
+	exports.RequisiteList = RequisiteList;
+	exports.EntityEditorRequisiteEditor = EntityEditorRequisiteEditor;
 
 }((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.Main,BX.UI.Dialogs,BX.Crm,BX,BX,BX.Crm,BX.Event));
 //# sourceMappingURL=requisite.bundle.js.map

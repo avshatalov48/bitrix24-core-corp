@@ -67,8 +67,8 @@ class Controller
 		{
 			$userIDs = array_keys($userMap);
 			$dbResultUser = \CUser::GetList(
-				($by = 'id'),
-				($order = 'asc'),
+				'id',
+				'asc',
 				array('ID' => implode('|', $userIDs)),
 				array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'TITLE', 'PERSONAL_PHOTO'))
 			);

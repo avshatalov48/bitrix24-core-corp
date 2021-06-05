@@ -34,6 +34,8 @@ final class EditSession extends Internals\Model
 	protected $serviceFileLink;
 	/** @var DateTime */
 	protected $createTime;
+	/** @var int */
+	protected $status;
 
 	/**
 	 * Gets the fully qualified name of table class which belongs to current model.
@@ -191,6 +193,11 @@ final class EditSession extends Internals\Model
 	public function isExclusive()
 	{
 		return !empty($this->isExclusive);
+	}
+
+	public function delete(): bool
+	{
+		return $this->deleteInternal();
 	}
 
 	/**

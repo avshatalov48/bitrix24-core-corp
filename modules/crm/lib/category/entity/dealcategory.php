@@ -1,102 +1,139 @@
 <?php
+
 namespace Bitrix\Crm\Category\Entity;
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal;
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
-use Bitrix\Main;
-use Bitrix\Main\Entity;
-use Bitrix\Main\ORM\Event;
 
-class DealCategoryTable extends Entity\DataManager
+use Bitrix\Crm\Entry\EntryException;
+use Bitrix\Main\Error;
+use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Result;
+
+class DealCategory extends Category
 {
-	public static function getTableName()
+	protected $entityObject;
+
+	public function __construct(EO_DealCategory $entityObject)
 	{
-		return 'b_crm_deal_category';
-	}
-	public static function getMap()
-	{
-		return array(
-			'ID' => array('data_type' => 'integer', 'primary' => true, 'autocomplete' => true),
-			'CREATED_DATE' => array('data_type' => 'date', 'required' => true),
-			'NAME' => array('data_type' => 'string'),
-			'IS_LOCKED' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N'),
-			'SORT' => array('data_type' => 'integer'),
-			'ORIGIN_ID' => array('data_type' => 'string'),
-			'ORIGINATOR_ID' => array('data_type' => 'string')
-		);
+		$this->entityObject = $entityObject;
 	}
 
-	public static function onAfterAdd(Event $event)
+	public function getId(): ?int
 	{
-		try
-		{
-			if(DocumentGeneratorManager::getInstance()->isEnabled())
-			{
-				$categoryId = $event->getParameter('primary')['ID'];
-				$category = DealCategory::get($categoryId);
-				if(!is_array($category))
-				{
-					return;
-				}
-				$codes = [];
-				$controller = new \Bitrix\DocumentGenerator\Controller\Template();
-				$result = $controller::getDefaultTemplateList(['MODULE_ID' => 'crm']);
-				if($result->isSuccess())
-				{
-					$codes = array_keys($result->getData());
-				}
-				if(empty($codes))
-				{
-					return new Main\ORM\EventResult();
-				}
-				$provider = Deal::getExtendedProviderByCategory($category);
-				$templates = \Bitrix\DocumentGenerator\Model\TemplateTable::getList([
-					'select' => ['ID'],
-					'filter' => [
-						'@CODE' => $codes,
-					]
-				]);
-				while($template = $templates->fetch())
-				{
-					\Bitrix\DocumentGenerator\Model\TemplateProviderTable::add([
-						'TEMPLATE_ID' => $template['ID'],
-						'PROVIDER' => $provider['PROVIDER'],
-					]);
-				}
-			}
-		}
-		finally
-		{
-			return new Main\ORM\EventResult();
-		}
+		return $this->entityObject->getId();
 	}
 
-	public static function onBeforeDelete(Event $event)
+	public function getEntityTypeId(): int
 	{
+		return \CCrmOwnerType::Deal;
+	}
+
+	public function setEntityTypeId(int $entityTypeId): Category
+	{
+		throw new InvalidOperationException('Deal categories does not support changing entityTypeId');
+	}
+
+	public function getName(): string
+	{
+		return $this->entityObject->getName();
+	}
+
+	public function setName(string $name): Category
+	{
+		$this->entityObject->setName($name);
+
+		return $this;
+	}
+
+	public function getSort(): int
+	{
+		return $this->entityObject->getSort();
+	}
+
+	public function setSort(int $sort): Category
+	{
+		$this->entityObject->setSort($sort);
+
+		return $this;
+	}
+
+	public function setIsDefault(bool $isDefault): Category
+	{
+		throw new InvalidOperationException('Deal categories does not support updating default state');
+	}
+
+	public function getIsDefault(): bool
+	{
+		return false;
+	}
+
+	public function save(): Result
+	{
+		$result = new Result();
+
+		$fields = $this->entityObject->collectValues();
 		try
 		{
-			if(DocumentGeneratorManager::getInstance()->isEnabled())
+			if ($this->getId() > 0)
 			{
-				$categoryId = $event->getParameter('primary')['ID'];
-				$category = DealCategory::get($categoryId);
-				if(!is_array($category))
-				{
-					return new Main\ORM\EventResult();
-				}
-				$provider = Deal::getExtendedProviderByCategory($category);
-				$templates = \Bitrix\DocumentGenerator\Model\TemplateTable::getListByClassName($provider['PROVIDER'], null, ' ', false);
-				foreach($templates as $template)
-				{
-					\Bitrix\DocumentGenerator\Model\TemplateProviderTable::delete([
-						'TEMPLATE_ID' => $template['ID'],
-						'PROVIDER' => $provider['PROVIDER'],
-					]);
-				}
+				\Bitrix\Crm\Category\DealCategory::update($this->getId(), $fields);
+			}
+			else
+			{
+				$id = \Bitrix\Crm\Category\DealCategory::add($fields);
+				$this->entityObject = DealCategoryTable::getById($id)->fetchObject();
 			}
 		}
-		finally
+		catch (EntryException $exception)
 		{
-			return new Main\ORM\EventResult();
+			$result->addError(new Error($exception->getLocalizedMessage()));
 		}
+
+		return $result;
+	}
+
+	public function delete(): Result
+	{
+		$result = new Result();
+		try
+		{
+			\Bitrix\Crm\Category\DealCategory::delete($this->getId());
+		}
+		catch (EntryException $exception)
+		{
+			$result->addError(new Error($exception->getLocalizedMessage()));
+		}
+
+		return $result;
+	}
+
+	public function setOriginId(string $originId): self
+	{
+		$this->entityObject->setOriginId($originId);
+
+		return $this;
+	}
+
+	public function getOriginId(): ?string
+	{
+		return $this->entityObject->getOriginId();
+	}
+
+	public function setOriginatorId(string $originatorId): self
+	{
+		$this->entityObject->setOriginatorId($originatorId);
+
+		return $this;
+	}
+
+	public function getOriginatorId(): ?string
+	{
+		return $this->entityObject->getOriginatorId();
+	}
+
+	public function getData(): array
+	{
+		return array_merge(parent::getData(), [
+			'ORIGIN_ID' => $this->getOriginId(),
+			'ORIGINATOR_ID' => $this->getOriginatorId(),
+		]);
 	}
 }

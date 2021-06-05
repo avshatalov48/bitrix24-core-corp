@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -715,7 +716,7 @@ class CTaskNotifications
 	 * @param $arFields
 	 * @param bool $safeDelete
 	 */
-	function SendDeleteMessage($arFields, bool $safeDelete = false): void
+	public static function SendDeleteMessage($arFields, bool $safeDelete = false): void
 	{
 		$cacheWasEnabled = CTaskNotifications::enableStaticCache();
 
@@ -1450,8 +1451,8 @@ class CTaskNotifications
 			$cachedAllSitesIds = array();
 
 			$dbSite = CSite::GetList(
-				$by = 'sort',
-				$order = 'desc',
+				'sort',
+				'desc',
 				array('ACTIVE' => 'Y')
 			);
 
@@ -1463,8 +1464,8 @@ class CTaskNotifications
 		if ( ! in_array( (int) $arFields["CREATED_BY"], $arCheckedUsers, true) )
 		{
 			$rsUser = CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				'ID',
+				'ASC',
 				array('ID' => $arFields["CREATED_BY"]),
 				array('FIELDS' => array('ID'))
 			);
@@ -2927,7 +2928,7 @@ class CTaskNotifications
 				}
 				else
 				{
-					$userDataDb = \CUser::GetList($by, $order, ['ID' => $arUser['ID']], ['FIELDS' => ['ID', 'LID']]);
+					$userDataDb = \CUser::GetList('', '', ['ID' => $arUser['ID']], ['FIELDS' => ['ID', 'LID']]);
 					if ($userData = $userDataDb->Fetch())
 					{
 						$siteID = $userData['LID'];
@@ -3213,8 +3214,8 @@ class CTaskNotifications
 		if(!empty($absent))
 		{
 			$res = CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				'ID',
+				'ASC',
 				array('ID' => implode('|', $absent)),
 				array('FIELDS' => array('NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'ID', 'PERSONAL_GENDER', 'EXTERNAL_AUTH_ID'))
 			);
@@ -3390,7 +3391,7 @@ class CTaskNotifications
 	/**
 	 * @deprecated
 	 */
-	private function __GetUsers($arFields)
+	private static function __GetUsers($arFields)
 	{
 		$arUsersIDs = array_unique(
 			array_filter(
@@ -3412,7 +3413,7 @@ class CTaskNotifications
 	/**
 	 * @deprecated
 	 */
-	private function __Users2String($arUserIDs, $arUsers, $nameTemplate = "")
+	private static function __Users2String($arUserIDs, $arUsers, $nameTemplate = "")
 	{
 		$arUsersStrs = array();
 		if (!is_array($arUserIDs))
@@ -3431,7 +3432,7 @@ class CTaskNotifications
 	/**
 	 * @deprecated
 	 */
-	function __UserIDs2Rights($arUserIDs)
+	public static function __UserIDs2Rights($arUserIDs)
 	{
 		$arUserIDs = array_unique(array_filter($arUserIDs));
 		$arRights = array();
@@ -3444,7 +3445,7 @@ class CTaskNotifications
 	/**
 	 * @deprecated
 	 */
-	function __Fields2Names($arFields)
+	public static function __Fields2Names($arFields)
 	{
 		$arFields = array_unique(array_filter($arFields));
 		$arNames = array();

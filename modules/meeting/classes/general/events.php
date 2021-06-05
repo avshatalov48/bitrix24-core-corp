@@ -1,4 +1,5 @@
-<?
+<?php
+
 class CMeetingEventHandlers
 {
 	public static function OnTaskDelete($task_id)
@@ -36,7 +37,6 @@ class CMeetingEventHandlers
 		return true;
 	}
 }
-
 
 class CMeetingForumHandlers
 {
@@ -129,7 +129,7 @@ class CMeetingForumHandlers
 					'SITES' => array(SITE_ID => $this->forumPath), //tmp!
 					'GROUP_ID' => array(1 => 'Y'),
 				);
-				if ($dbRes = CSite::GetList($sBy = "sort", $sOrder = "asc"))
+				if ($dbRes = CSite::GetList())
 				{
 					while ($res = $dbRes->Fetch())
 					{
@@ -189,4 +189,3 @@ class CMeetingItemForumHandlers extends CMeetingForumHandlers
 		}
 	}
 }
-?>

@@ -1682,7 +1682,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		);
 		if (!empty($optionSerialized))
 		{
-			return unserialize($optionSerialized);
+			return unserialize($optionSerialized, ['allowed_classes' => false]);
 		}
 
 		return null;

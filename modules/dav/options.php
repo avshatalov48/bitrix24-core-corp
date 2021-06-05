@@ -108,7 +108,7 @@ if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bit
 						{
 							$arEditFormLabel1 = array();
 
-							$dbLang1 = CLanguage::GetList($b1, $o1, array());
+							$dbLang1 = CLanguage::GetList();
 							while ($arLang1 = $dbLang1->Fetch())
 							{
 								$MESS = array();

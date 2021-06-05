@@ -10,6 +10,9 @@
 		getCall: 'im.call.get'
 	};
 
+	const pingTTLWebsocket = 10;
+	const pingTTLPush = 45;
+
 	BX.Call = {};
 
 	BX.Call.State = {
@@ -100,11 +103,18 @@
 
 			this.debugFlag = false;
 
+			this.pullStatus = '';
+
 			this._onPullEventHandler = this._onPullEvent.bind(this);
 			this._onPullClientEventHandler = this._onPullClientEvent.bind(this);
 			BX.addCustomEvent("onPullEvent-im", this._onPullEventHandler);
 			BX.addCustomEvent("onPullClientEvent-im", this._onPullClientEventHandler);
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
+
+			BX.addCustomEvent("onPullStatus", (e) => {
+				this.pullStatus = e.status;
+				console.log("[" + CallUtil.getTimeForLog() + "]: pull status: " + this.pullStatus);
+			});
 
 			this._onCallJoinHandler = this._onCallJoin.bind(this);
 			this._onCallLeaveHandler = this._onCallLeave.bind(this);
@@ -112,14 +122,34 @@
 			this._onCallInactiveHandler = this._onCallInactive.bind(this);
 			this._onCallActiveHandler = this._onCallActive.bind(this);
 
+			this._onNativeIncomingCallHandler = this._onNativeIncomingCall.bind(this);
+			if ("callservice" in window)
+			{
+				callservice.on("incoming", this._onNativeIncomingCallHandler);
+				if (callservice.currentCall())
+				{
+					setTimeout(() => this._onNativeIncomingCall(callservice.currentCall()), 0);
+				}
+			}
+
 			this.startWithPush();
+
+			setTimeout(
+				() => BX.postComponentEvent("onPullGetStatus", [], "communication"),
+				100
+			)
 		}
 
 		onAppActive()
 		{
 			for (var callId in this.calls)
 			{
-				if (this.calls.hasOwnProperty(callId) && (this.calls[callId] instanceof PlainCall) && !this.calls[callId].ready)
+				if (this.calls.hasOwnProperty(callId)
+					&& (this.calls[callId] instanceof PlainCall)
+					&& !this.calls[callId].ready
+					&& !this.isNativeCall(callId)
+					&& ((new Date()) - this.calls[callId].created) > 30000
+				)
 				{
 					console.warn("Destroying stale call " + callId);
 					this.calls[callId].destroy();
@@ -156,18 +186,74 @@
 			let callFields = pushParams.PARAMS.call;
 			let isVideo = pushParams.PARAMS.video;
 			let callId = callFields.ID;
-			let [,,timestamp] = pushParams.ACTION.split("_"); // ACTION example: IMINV_5215_1605116453_Y
+			let timestamp = pushParams.PARAMS.ts;
 			let timeAgo = (new Date()).getTime() / 1000 - timestamp;
-			this._onUnknownCallPing(callId, timeAgo).then((result) =>
+			console.log("timeAgo: ", timeAgo)
+			this._onUnknownCallPing(callId, timeAgo, pingTTLPush).then((result) =>
 			{
 				if (result && this.calls[callId])
 				{
 					BX.postComponentEvent("CallEvents::incomingCall", [{
 						callId: callId,
 						video: isVideo,
+						autoAnswer: true,
 					}], "calls");
 				}
 			}).catch(err => console.error(err));
+		}
+
+		shouldCallBeAutoAnswered(callId)
+		{
+			if (Application.getPlatform() !== 'android')
+			{
+				return false;
+			}
+			const push = Application.getLastNotification();
+			if (!push.id || !push.id.startsWith('IM_CALL_'))
+			{
+				return false;
+			}
+			try
+			{
+				let pushParams = JSON.parse(push.params);
+				if (!pushParams.ACTION || !pushParams.ACTION.startsWith('IMINV_') || !pushParams.PARAMS || !pushParams.PARAMS.call)
+				{
+					return false;
+				}
+
+				let callFields = pushParams.PARAMS.call;
+				let pushCallId = callFields.ID;
+				return callId == pushCallId;
+			}
+			catch (e)
+			{
+				return false;
+			}
+		}
+
+		_onNativeIncomingCall(nativeCall)
+		{
+			console.log("_onNativeIncomingCall", nativeCall);
+			let isVideo = nativeCall.params.video;
+			let callId = nativeCall.params.call.ID;
+			let timestamp = nativeCall.params.ts;
+			let timeAgo = (new Date()).getTime() / 1000 - timestamp;
+			if (timeAgo > 15)
+			{
+				console.error("Call originated too long time ago");
+			}
+			if (this.calls[callId])
+			{
+				console.error("Call " + callId + " is already known");
+				return;
+			}
+
+			this._instantiateCall(nativeCall.params.call, nativeCall.params.users, nativeCall.params.logToken);
+			BX.postComponentEvent("CallEvents::incomingCall", [{
+				callId: callId,
+				video: isVideo,
+				isNative: true,
+			}], "calls");
 		}
 
 		/**
@@ -390,6 +476,17 @@
 			return true;
 		}
 
+		isNativeCall(callId)
+		{
+			if (!("callservice" in window))
+			{
+				return false;
+			}
+
+			const nativeCall = callservice.currentCall();
+			return nativeCall && nativeCall.params.call.ID == callId;
+		}
+
 		_onPullEvent(command, params, extra)
 		{
 			let handlers = {
@@ -414,7 +511,7 @@
 				}
 				else if (command === 'Call::ping')
 				{
-					this._onUnknownCallPing(params.callId, extra.server_time_ago).then((result) =>
+					this._onUnknownCallPing(params.callId, extra.server_time_ago, pingTTLWebsocket).then((result) =>
 					{
 						if (result && this.calls[callId])
 						{
@@ -436,7 +533,7 @@
 				}
 				else if (command === 'Call::ping')
 				{
-					this._onUnknownCallPing(params.callId, extra.server_time_ago).then((result) =>
+					this._onUnknownCallPing(params.callId, extra.server_time_ago, pingTTLWebsocket).then((result) =>
 					{
 						if (result && this.calls[callId])
 						{
@@ -497,25 +594,27 @@
 				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
 			}
 
-			call.addInvitedUsers(params.invitedUsers);
-			if (call)
+			console.log(call);
+			if (call && !(call instanceof CallStub))
 			{
+				call.addInvitedUsers(params.invitedUsers);
 				BX.postComponentEvent("CallEvents::incomingCall", [{
 					callId: callId,
 					video: params.video === true,
 					isLegacyMobile: params.isLegacyMobile === true,
-					userData: params.userData || null
+					userData: params.userData || null,
+					autoAnswer: this.shouldCallBeAutoAnswered(callId),
 				}], "calls");
 			}
 			call.log("Incoming call " + call.id);
 		}
 
-		_onUnknownCallPing(callId, serverTimeAgo)
+		_onUnknownCallPing(callId, serverTimeAgo, ttl)
 		{
 			return new Promise((resolve, reject) =>
 				{
 					callId = parseInt(callId, 10);
-					if (serverTimeAgo > 10)
+					if (serverTimeAgo > ttl)
 					{
 						this.log(callId, "Error: Ping was sent too long time ago");
 						return resolve(false);
@@ -561,8 +660,8 @@
 				parentId: callFields['PARENT_ID'],
 				direction: callFields['INITIATOR_ID'] == env.userId ? BX.Call.Direction.Outgoing : BX.Call.Direction.Incoming,
 				users: users,
-				associatedEntity: callFields.ASSOCIATED_ENTITY,
-				type: callFields.TYPE,
+				associatedEntity: callFields['ASSOCIATED_ENTITY'],
+				type: callFields['TYPE'],
 				startDate: callFields['START_DATE'],
 				logToken: logToken,
 
@@ -741,7 +840,7 @@
 		};
 	}
 
-	class CallUtil
+	class CCallUtil
 	{
 		constructor()
 		{
@@ -879,7 +978,7 @@
 			{
 				result = url.startsWith("/") ? currentDomain + url : currentDomain + "/" + url;
 			}
-			return encodeURI(result);
+			return result;
 		}
 
 		getCustomMessage(message, userData)
@@ -991,7 +1090,7 @@
 		//window.CallEngine.destroy();
 	}
 
-	window.CallUtil = new CallUtil;
+	window.CallUtil = new CCallUtil;
 	window.DeviceAccessError = DeviceAccessError;
 	window.CallJoinedElseWhereError = CallJoinedElseWhereError;
 	setTimeout(() =>

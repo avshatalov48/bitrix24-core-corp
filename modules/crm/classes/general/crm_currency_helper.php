@@ -13,10 +13,8 @@ class CCrmCurrencyHelper
 			return array();
 		}
 
-		$by='sort';
-		$order='asc';
 		$ary = array();
-		$dbCurrencies = CCurrency::GetList($by, $order);
+		$dbCurrencies = CCurrency::GetList('sort', 'asc');
 		while ($arCurrency = $dbCurrencies->Fetch())
 		{
 			$arCurrency['FULL_NAME'] = (string)$arCurrency['FULL_NAME'];

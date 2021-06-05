@@ -15,6 +15,7 @@ import type CopyCategoryAccessOptions from "./type/copy-category-access-options"
 export default class Backend
 {
 	static component: string = 'bitrix:crm.sales.tunnels';
+	static entityTypeId: number = 2;
 
 	static request({action, data, analyticsLabel}: RequestOptions): Promise<RequestResponse>
 	{
@@ -24,8 +25,11 @@ export default class Backend
 					Backend.component,
 					action,
 					{
-						mode: 'ajax',
-						data: {data},
+						mode: 'class',
+						data: {
+							data,
+							entityTypeId: Backend.entityTypeId,
+						},
 						analyticsLabel,
 					},
 				)

@@ -6,8 +6,7 @@ if (BX.CommentAux)
 	return;
 }
 
-BX.CommentAux =
-{
+BX.CommentAux = {
 	postEventTypeList: [
 		'BLOG_POST',
 		'FORUM_TOPIC',
@@ -50,7 +49,7 @@ BX.CommentAux.isSourceComment = function(eventType)
 BX.CommentAux.getLiveText = function(type, params)
 {
 	var result = '';
-	if (type == 'share')
+	if (type === 'share')
 	{
 		if (
 			typeof params == 'object'
@@ -61,7 +60,7 @@ BX.CommentAux.getLiveText = function(type, params)
 			result = result.replace('#SHARE_LIST#', this.getShareList(params));
 		}
 	}
-	else if (type == 'createtask')
+	else if (type === 'createtask')
 	{
 		if (
 			BX.type.isNotEmptyObject(params)
@@ -106,7 +105,7 @@ BX.CommentAux.getLiveText = function(type, params)
 			}
 		}
 	}
-	else if (type == 'fileversion')
+	else if (type === 'fileversion')
 	{
 		var messageType = (
 			typeof params == 'object'

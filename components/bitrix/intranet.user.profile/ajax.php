@@ -398,8 +398,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		//prepare groups
 		$arGroups = array(1);
 		$rsGroups = CGroup::GetList(
-			$o="",
-			$b="",
+			'',
+			'',
 			array(
 				"STRING_ID" => "PORTAL_ADMINISTRATION_".SITE_ID
 			)

@@ -16,7 +16,7 @@ Class transformer extends CModule
 	var $MODULE_DESCRIPTION;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function transformer()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 

@@ -187,7 +187,7 @@ $arResult['ITEM']['TASKS'] = CMeetingItem::GetTasks($arResult['ITEM']['ID']);
 $arResult['USERS'] = array();
 if (count($arUserIDs) > 0)
 {
-	$dbRes = CUser::GetList($by = 'ID', $order = 'ASC', array('ID' => implode('|', array_unique($arUserIDs))));
+	$dbRes = CUser::GetList('ID', 'ASC', array('ID' => implode('|', array_unique($arUserIDs))));
 	while ($arUser = $dbRes->Fetch())
 	{
 		$arResult['USERS'][$arUser['ID']] = $arUser;

@@ -1,4 +1,5 @@
-<?
+<?php
+
 define("GW_MAXIMUM_PRIVILEGES", "65535");
 define("GW_ADDRESSBOOK_MAXIMUM_PRIVILEGES", "1023");
 
@@ -177,7 +178,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		return $digest;
 	}
 
-	static public function GetWindowsVersion()
+	public static function GetWindowsVersion()
 	{
 		static $MODULE = 'dav';
 		static $PARAM = 'windows_version';
@@ -190,7 +191,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 
 		if ($savedValues === null)
 		{
-			$savedValues = @unserialize(COption::GetOptionString($MODULE, $PARAM, ''));
+			$savedValues = @unserialize(COption::GetOptionString($MODULE, $PARAM, ''), ["allowed_classes" => false]);
 			if (!is_array($savedValues))
 				$savedValues = array();
 		}
@@ -220,7 +221,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		return $result;
 	}
 
-	static function GetIP()
+	public static function GetIP()
 	{
 		$result = "";
 
@@ -243,7 +244,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		return $result;
 	}
 
-	function IsDavHeaders($params = "empty")
+	public static function IsDavHeaders($params = "empty")
 	{
 		static $result = array();
 
@@ -253,7 +254,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		return $result[$params];
 	}
 
-	function _isDavHeaders($params = "empty")
+	public static function _isDavHeaders($params = "empty")
 	{
 		$aDavHeaders = array(
 			"DAV",
@@ -908,7 +909,7 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 
 			$arSites = array();
 
-			$dbSite = CSite::GetList($o = "SORT", $b = "ASC", array("ACTIVE" => "Y"));
+			$dbSite = CSite::GetList("SORT", "ASC", array("ACTIVE" => "Y"));
 			while ($arSite = $dbSite->Fetch())
 			{
 				if (!in_array($arSite["ID"], $arSkipSites))
@@ -922,4 +923,3 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 		return $intranetSite;
 	}
 }
-?>

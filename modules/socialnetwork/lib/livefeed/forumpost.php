@@ -105,14 +105,18 @@ final class ForumPost extends Provider
 						$this->setSourceDescription($message['POST_MESSAGE']);
 
 						$title = htmlspecialcharsback($message['POST_MESSAGE']);
-						$title = preg_replace(
-							"/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is".BX_UTF_PCRE_MODIFIER,
-							"\\2",
-							$title
-						);
+						$title = \Bitrix\Socialnetwork\Helper\Mention::clear($title);
+
 						$CBXSanitizer = new \CBXSanitizer;
 						$CBXSanitizer->delAllTags();
-						$title = preg_replace(array("/\n+/is".BX_UTF_PCRE_MODIFIER, "/\s+/is".BX_UTF_PCRE_MODIFIER), " ", $CBXSanitizer->sanitizeHtml($title));
+						$title = preg_replace(
+							[
+								"/\n+/is" . BX_UTF_PCRE_MODIFIER,
+								"/\s+/is" . BX_UTF_PCRE_MODIFIER
+							],
+							' ',
+							\CTextParser::clearAllTags($title)
+						);
 						$this->setSourceTitle(truncateText($title, 100));
 						$this->setSourceAttachedDiskObjects($this->getAttachedDiskObjects($messageId));
 						$this->setSourceDiskObjects($this->getDiskObjects($messageId, $this->cloneDiskObjects));
@@ -233,6 +237,7 @@ final class ForumPost extends Provider
 					if (in_array($logEntryFields['EVENT_ID'], $providerTasksTask->getEventId()))
 					{
 						$provider = $providerTasksTask;
+						$provider->setOption('checkAccess', false);
 						$provider->setEntityId((int)$logEntryFields[($logEntryFields['EVENT_ID'] === 'crm_activity_add' ? 'RATING_ENTITY_ID' : 'SOURCE_ID')]);
 						$provider->setLogId($logId);
 						$provider->initSourceFields();

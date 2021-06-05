@@ -529,6 +529,7 @@ class OrderShipment
 		$result .= self::initJsShipment($params);
 		return $result;
 	}
+
 	public static function getWeightUnit($siteId)
 	{
 		return htmlspecialcharsbx(Option::get('sale', 'weight_unit', "", $siteId));
@@ -546,7 +547,7 @@ class OrderShipment
 		return $weightKoef;
 	}
 
-	public function getImgDeliveryServiceList($items)
+	public static function getImgDeliveryServiceList($items)
 	{
 		$srcList = array();
 		foreach ($items as $item)
@@ -717,6 +718,7 @@ class OrderShipment
 
 		return $result;
 	}
+
 	/**
 	 * @param $shipment
 	 * @param int $index
@@ -1824,7 +1826,6 @@ class OrderShipment
 		return $fields;
 	}
 
-
 	private static function getDisallowFields()
 	{
 		return array(
@@ -1842,6 +1843,7 @@ class OrderShipment
 			'DELIVERY_ID',
 		);
 	}
+
 	/**
 	 * @param Order $order
 	 * @param array $shipments

@@ -1,17 +1,27 @@
-import {Tag} from "main.core";
-import {Address, Format, AddressStringConverter} from "location.core";
+import {Tag} from 'main.core';
+import {Address, Format, AddressStringConverter} from 'location.core';
 import {EventEmitter} from 'main.core.events';
 
+/**
+ * Class AddressRestorer
+ * It is responsible for the address restoring.
+ * If user saved the unrecognized address and then changes the marker position on the map.
+ * The address changes.
+ * We show the dialog where the user can restore the address entered earlier.
+ */
 export default class AddressRestorer extends EventEmitter
 {
 	static #onRestoreEvent = 'onRestore';
 
+	/** {Format} */
 	#addressFormat;
-
+	/** {Address} */
 	#address;
-
+	/** {Element} */
 	#element;
+	/** {Element} */
 	#stringElement;
+	/** {Element} */
 	#button;
 
 	constructor(props)
@@ -20,7 +30,7 @@ export default class AddressRestorer extends EventEmitter
 
 		this.setEventNamespace('BX.Location.Widget.MapPopup.AddressRestorer');
 
-		if(!(props.addressFormat instanceof Format))
+		if (!(props.addressFormat instanceof Format))
 		{
 			throw new Error('addressFormat must be instance of Format');
 		}
@@ -59,6 +69,7 @@ export default class AddressRestorer extends EventEmitter
 		return this.#element;
 	}
 
+	// eslint-disable-next-line no-unused-vars
 	#onRestoreButtonClick(e)
 	{
 		this.emit(AddressRestorer.#onRestoreEvent, {address: this.#address});
@@ -66,12 +77,12 @@ export default class AddressRestorer extends EventEmitter
 
 	#convertAddressToString(address: ?Address): string
 	{
-		if(!address)
+		if (!address)
 		{
 			return '';
 		}
 
-		return address.toString(this.#addressFormat, AddressStringConverter.STRATEGY_TYPE_FIELD_SORT);
+		return address.toString(this.#addressFormat, AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
 	}
 
 	set address(address: ?Address): void
@@ -79,7 +90,7 @@ export default class AddressRestorer extends EventEmitter
 		this.#address = address;
 
 		// Not rendered yet
-		if(!this.#stringElement || !this.#address)
+		if (!this.#stringElement || !this.#address)
 		{
 			return;
 		}
@@ -89,7 +100,7 @@ export default class AddressRestorer extends EventEmitter
 
 	show()
 	{
-		if(this.#element && this.#address && this.isHidden())
+		if (this.#element && this.#address && this.isHidden())
 		{
 			this.#element.style.display = 'flex';
 			this.#element.classList.remove('hidden');
@@ -98,7 +109,7 @@ export default class AddressRestorer extends EventEmitter
 
 	hide()
 	{
-		if(this.#element && !this.isHidden())
+		if (this.#element && !this.isHidden())
 		{
 			this.#element.classList.add('hidden');
 
@@ -112,7 +123,7 @@ export default class AddressRestorer extends EventEmitter
 	{
 		let result = false;
 
-		if(this.#element)
+		if (this.#element)
 		{
 			result = this.#element.classList.contains('hidden');
 		}

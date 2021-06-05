@@ -392,7 +392,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 		private function GetICalContent(array $event, $siteId = null)
 		{
-			if ($event["DT_SKIP_TIME"] == "Y")
+			if ($event["DT_SKIP_TIME"] === "Y")
 			{
 				$dtStart = array(
 					"VALUE" => date("Ymd", MakeTimeStamp($event["DATE_FROM"])),
@@ -426,7 +426,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				"DTEND" => $dtEnd
 			);
 
-			if (isset($event["ACCESSIBILITY"]) && ($event["ACCESSIBILITY"] == 'free' || $event["ACCESSIBILITY"] == 'quest'))
+			if (isset($event["ACCESSIBILITY"]) && ($event["ACCESSIBILITY"] === 'free' || $event["ACCESSIBILITY"] === 'quest'))
 				$iCalEvent["TRANSP"] = 'TRANSPARENT';
 			else
 				$iCalEvent["TRANSP"] = 'OPAQUE';
@@ -441,9 +441,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			if (isset($event["IMPORTANCE"]))
 			{
-				if ($event["IMPORTANCE"] == "low")
+				if ($event["IMPORTANCE"] === "low")
 					$iCalEvent["PRIORITY"] = 9;
-				elseif ($event["IMPORTANCE"] == "high")
+				elseif ($event["IMPORTANCE"] === "high")
 					$iCalEvent["PRIORITY"] = 1;
 				else
 					$iCalEvent["PRIORITY"] = 5;
@@ -473,7 +473,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 						"TYPE" => "VALARM",
 						"ACTION" => "DISPLAY",
 						"TRIGGER" => array(
-							"VALUE" => "-P".($type == 'D' ? '' : 'T').$remind['count'].$type
+							"VALUE" => "-P".($type === 'D' ? '' : 'T').$remind['count'].$type
 						)
 					);
 				}
@@ -484,12 +484,12 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$val = "FREQ=".$event["RRULE"]["FREQ"];
 				$val .= ";INTERVAL=".$event["RRULE"]["INTERVAL"];
 
-				if ($event["RRULE"]["FREQ"] == "WEEKLY" && count($event["RRULE"]["BYDAY"]) > 0)
+				if ($event["RRULE"]["FREQ"] === "WEEKLY" && count($event["RRULE"]["BYDAY"]) > 0)
 					$val .= ";BYDAY=".implode(",", $event["RRULE"]["BYDAY"]);
 
 				if (isset($event["RRULE"]["COUNT"]) && $event["RRULE"]["COUNT"])
 				{
-					$val .= ";COUNT=".(intval($event["RRULE"]["COUNT"]));
+					$val .= ";COUNT=".((int)$event["RRULE"]["COUNT"]);
 				}
 				elseif ($event["RRULE"]["UNTIL"])
 				{

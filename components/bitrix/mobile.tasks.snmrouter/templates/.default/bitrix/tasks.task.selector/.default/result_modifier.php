@@ -78,7 +78,7 @@ foreach ($arResult["LAST_TASKS"] as $task)
 }
 if (!empty($users))
 {
-	$dbRes = CUser::GetList(($by="ID"), ($order="ASC"), array("@ID" => $users), array("SELECT" => array("ID", "NAME", "SECOND_NAME", "LAST_NAME", "PERSONAL_PHOTO")));
+	$dbRes = CUser::GetList("ID", "ASC", array("@ID" => $users), array("SELECT" => array("ID", "NAME", "SECOND_NAME", "LAST_NAME", "PERSONAL_PHOTO")));
 	$users = array();
 	while (($user=$dbRes->fetch()) && $user)
 		$users[$user["ID"]] = tasksFormatNameShort($user["NAME"], $user["LAST_NAME"], $user["LOGIN"], $user["SECOND_NAME"], $arParams["NAME_TEMPLATE"], true);

@@ -15,11 +15,11 @@ Loc::loadMessages(__FILE__);
 
 class UtmTable extends Entity\DataManager
 {
-	const ENUM_CODE_UTM_SOURCE = 'UTM_SOURCE';
-	const ENUM_CODE_UTM_MEDIUM = 'UTM_MEDIUM';
-	const ENUM_CODE_UTM_CAMPAIGN = 'UTM_CAMPAIGN';
-	const ENUM_CODE_UTM_CONTENT = 'UTM_CONTENT';
-	const ENUM_CODE_UTM_TERM = 'UTM_TERM';
+	public const ENUM_CODE_UTM_SOURCE = 'UTM_SOURCE';
+	public const ENUM_CODE_UTM_MEDIUM = 'UTM_MEDIUM';
+	public const ENUM_CODE_UTM_CAMPAIGN = 'UTM_CAMPAIGN';
+	public const ENUM_CODE_UTM_CONTENT = 'UTM_CONTENT';
+	public const ENUM_CODE_UTM_TERM = 'UTM_TERM';
 
 	public static function getTableName()
 	{
@@ -28,34 +28,34 @@ class UtmTable extends Entity\DataManager
 
 	public static function getMap()
 	{
-		return array(
-			'ENTITY_TYPE_ID' => array(
+		return [
+			'ENTITY_TYPE_ID' => [
 				'data_type' => 'integer',
 				'primary' => true
-			),
-			'ENTITY_ID' => array(
+			],
+			'ENTITY_ID' => [
 				'data_type' => 'integer',
 				'primary' => true
-			),
-			'CODE' => array(
+			],
+			'CODE' => [
 				'data_type' => 'string',
 				'primary' => true
-			),
-			'VALUE' => array(
+			],
+			'VALUE' => [
 				'data_type' => 'string'
-			)
-		);
+			]
+		];
 	}
 
 	public static function getCodeNames()
 	{
-		return array(
+		return [
 			self::ENUM_CODE_UTM_SOURCE => 'UTM Source',
 			self::ENUM_CODE_UTM_MEDIUM => 'UTM Medium',
 			self::ENUM_CODE_UTM_CAMPAIGN => 'UTM Campaign',
 			self::ENUM_CODE_UTM_CONTENT => 'UTM Content',
 			self::ENUM_CODE_UTM_TERM => 'UTM Term'
-		);
+		];
 	}
 
 	public static function getCodeList()
@@ -79,17 +79,17 @@ class UtmTable extends Entity\DataManager
 				continue;
 			}
 
-			$primary = array(
+			$primary = [
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $entityId,
 				'CODE' => $code
-			);
+			];
 
 			if (!$isAdd)
 			{
 				if (static::getRowById($primary))
 				{
-					$resultDb = static::update($primary, array('VALUE' => $fields[$code]));
+					$resultDb = static::update($primary, ['VALUE' => $fields[$code]]);
 				}
 				else
 				{
@@ -118,12 +118,30 @@ class UtmTable extends Entity\DataManager
 		static::upsertEntityUtmFromFields(false, $entityTypeId, $entityId, $fields);
 	}
 
+	public static function getEntityUtm(int $entityTypeId, int $entityId): array
+	{
+		$dbResult = static::getList([
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId,
+			]
+		]);
+
+		$utm = [];
+		while ($row = $dbResult->fetch())
+		{
+			$utm[$row['CODE']] = $row['VALUE'];
+		}
+
+		return $utm;
+	}
+
 	public static function deleteEntityUtm($entityTypeId, $entityId, $code = null)
 	{
-		$primary = array(
+		$primary = [
 			'ENTITY_TYPE_ID' => $entityTypeId,
 			'ENTITY_ID' => $entityId
-		);
+		];
 
 		if ($code)
 		{
@@ -161,13 +179,13 @@ class UtmTable extends Entity\DataManager
 	}
 	public static function getUtmFieldsInfo()
 	{
-		$resultList = array();
+		$resultList = [];
 		$fieldCodes = self::getCodeList();
 		foreach ($fieldCodes as $fieldCode)
 		{
-			$resultList[$fieldCode] = array(
+			$resultList[$fieldCode] = [
 				'TYPE' => 'string'
-			);
+			];
 		}
 
 		return $resultList;
@@ -175,20 +193,20 @@ class UtmTable extends Entity\DataManager
 
 	public static function getFieldsDescriptionByEntityTypeId($entityTypeId, $entitySqlTableAlias = 'L')
 	{
-		$resultList = array();
+		$resultList = [];
 		$codeList = self::getCodeList();
 		foreach ($codeList as $code)
 		{
 			$fieldName = mb_strtoupper($code);
 			$tableAlias = 'U_' . $fieldName;
-			$resultList[$fieldName] = array(
+			$resultList[$fieldName] = [
 				'FIELD' => "{$tableAlias}.VALUE",
 				'TYPE' => 'string',
 				'FROM' => 'LEFT JOIN ' . self::getTableName() . " {$tableAlias} ON"
 					. " {$tableAlias}.ENTITY_TYPE_ID = " . (int) $entityTypeId
 					. " AND {$tableAlias}.ENTITY_ID = " . $entitySqlTableAlias . '.ID'
 					. " AND {$tableAlias}.CODE = '" . $code . "'"
-			);
+			];
 		}
 
 		return $resultList;

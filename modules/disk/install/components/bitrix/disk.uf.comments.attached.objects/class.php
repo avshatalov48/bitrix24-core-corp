@@ -97,8 +97,8 @@ class CDiskUfCommentsAttachesComponent extends BaseComponent
 				;
 				if($defaultDocumentHandler)
 				{
-					$documentHandlerName = $defaultDocumentHandler->getName();
-					$documentHandlerCode = $defaultDocumentHandler->getCode();
+					$documentHandlerName = $defaultDocumentHandler::getName();
+					$documentHandlerCode = $defaultDocumentHandler::getCode();
 					$isLocal = false;
 				}
 			}

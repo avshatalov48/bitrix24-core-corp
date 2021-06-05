@@ -3,7 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
 if (
-	WIZARD_IS_RERUN === true
+	defined("WIZARD_IS_RERUN")
+	&& WIZARD_IS_RERUN === true
 	&& !file_exists(WIZARD_SITE_PATH.".superleft.menu.php")
 )
 {
@@ -70,7 +71,7 @@ foreach ($arGroups as $arGroup)
 	//Add Group
 	$groupID = 0;
 
-	$dbResult = CGroup::GetList($by, $order, Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
+	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
 		$groupID = $arExistsGroup["ID"];
 	elseif (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php"))
@@ -124,7 +125,7 @@ foreach ($arGroups as $arGroup)
 }
 
 // set view perms for employee groups
-$rsGroupEmployees = CGroup::GetList($by = "c_sort", $order = "asc", Array("STRING_ID" => "EMPLOYEES%"));
+$rsGroupEmployees = CGroup::GetList("c_sort", "asc", Array("STRING_ID" => "EMPLOYEES%"));
 while ($arGroupEmployees = $rsGroupEmployees->Fetch())
 {
 	$dbResult = CTask::GetList(array(), Array("NAME" => "fm_folder_access_read"));
@@ -149,7 +150,7 @@ if (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php")) // don't use in cloud-
 		)
 	);
 
-	$rsUser = CUser::GetList(($by="ID"), ($order="desc"), array("GROUPS_ID"=>array(1)));
+	$rsUser = CUser::GetList("ID", "desc", array("GROUPS_ID"=>array(1)));
 	while($arAdminUser = $rsUser->Fetch())
 	{
 		$arUserGroups = CUser::GetUserGroup($arAdminUser["ID"]);

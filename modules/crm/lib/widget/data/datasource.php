@@ -83,8 +83,8 @@ abstract class DataSource
 		if(!empty($userIDs))
 		{
 			$dbResult = \CUser::GetList(
-				($by = 'ID'),
-				($order = 'ASC'),
+				'ID',
+				'ASC',
 				array('ID' => implode('||', $userIDs)),
 				array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'TITLE', 'PERSONAL_PHOTO'))
 			);

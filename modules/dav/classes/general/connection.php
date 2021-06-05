@@ -207,7 +207,7 @@ class CDavConnectionResult extends CDBResult
 {
 	public function __construct($res)
 	{
-		parent::CDBResult($res);
+		parent::__construct($res);
 	}
 
 	function Fetch()

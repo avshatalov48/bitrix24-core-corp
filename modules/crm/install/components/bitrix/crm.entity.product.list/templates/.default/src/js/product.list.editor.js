@@ -346,8 +346,14 @@ export class Editor
 
 	enableEdit()
 	{
-		this.getGrid().getRows().selectAll();
-		this.getGrid().editSelected();
+		// Cannot use editSelected because checkboxes have been removed
+		const rows = this.getGrid().getRows().getRows();
+		rows.forEach((current) => {
+			if(!current.isHeadChild() && !current.isTemplate())
+			{
+				current.edit();
+			}
+		});
 	}
 
 	addFirstRowIfEmpty(): void
@@ -584,6 +590,11 @@ export class Editor
 	getCommonPrecision(): number
 	{
 		return this.getSettingValue('commonPrecision', DEFAULT_PRECISION);
+	}
+
+	getTaxList(): Array
+	{
+		return this.getSettingValue('taxList', []);
 	}
 
 	getTaxAllowed(): 'Y' | 'N'
@@ -912,6 +923,11 @@ export class Editor
 		{
 			const fields = {...item.fields};
 			this.products.push(new Row(item.rowId, fields, {}, this));
+			const row = this.getGrid().getRows().getById(fields.ID);
+			if (row)
+			{
+				this.setDeleteButton(row.getNode(), fields.ID);
+			}
 		}
 	}
 
@@ -1118,6 +1134,9 @@ export class Editor
 		}
 
 		const newNode = newRow.getNode();
+
+		this.setDeleteButton(newNode, newId);
+
 		if (Type.isDomNode(newNode))
 		{
 			newNode.setAttribute('data-id', newId);
@@ -1136,6 +1155,35 @@ export class Editor
 		grid.updateCounterSelected();
 
 		return newRow;
+	}
+
+	setDeleteButton(row, rowId)
+	{
+		if (this.isReadOnly())
+		{
+			return;
+		}
+
+		const actionCellContentContainer = row.querySelector('.main-grid-cell-action .main-grid-cell-content');
+		if (rowId)
+		{
+			// BX.Main.grid._onClickOnRow needs to be a link or input here
+			const deleteButton = Tag.render`
+				<a 
+					href="#"
+					class="main-grid-delete-button" 
+					onclick="${this.handleDeleteRow.bind(this, rowId)}"
+					title="${Loc.getMessage('CRM_ENTITY_PL_DELETE')}"
+				></a>
+			`;
+			Dom.append(deleteButton, actionCellContentContainer);
+		}
+	}
+
+	handleDeleteRow(rowId, event: BaseEvent)
+	{
+		event.preventDefault();
+		this.deleteRow(rowId);
 	}
 
 	redefineTemplateEditData(newId: string)

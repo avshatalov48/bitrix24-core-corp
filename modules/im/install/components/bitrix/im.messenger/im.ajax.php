@@ -293,6 +293,20 @@ elseif (
 		}
 	}
 
+	$arResult["INTRANET_USTAT_ONLINE_DATA"] = [];
+	if (
+		$_POST["DESKTOP"] !== "Y"
+		&& CModule::IncludeModule("intranet")
+		&& class_exists('\Bitrix\Intranet\Component\UstatOnline')
+	)
+	{
+		$ustatOnline = new \Bitrix\Intranet\Component\UstatOnline;
+		if (!$ustatOnline->isFullAnimationMode())
+		{
+			$arResult["INTRANET_USTAT_ONLINE_DATA"] = $ustatOnline->getCurrentOnlineUserData();
+		}
+	}
+
 	$arSend = [
 		'REVISION' => $arResult["REVISION"],
 		'MOBILE_REVISION' => $arResult["MOBILE_REVISION"],
@@ -305,6 +319,7 @@ elseif (
 		'SERVER_TIME' => time(),
 		'XMPP_STATUS' => CIMMessenger::CheckXmppStatusOnline()? 'Y':'N',
 		'DESKTOP_STATUS' => CIMMessenger::CheckDesktopStatusOnline()? 'Y':'N',
+		'INTRANET_USTAT_ONLINE_DATA' => $arResult["INTRANET_USTAT_ONLINE_DATA"],
 		'ERROR' => ""
 	];
 	echo \Bitrix\Im\Common::objectEncode($arSend, true);
@@ -695,10 +710,12 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 	else
 	{
 		$networkUserId = 0;
-		if (mb_substr($_POST['USER_ID'], 0, 12) == 'networkLines' && CModule::IncludeModule('imopenlines'))
+		if (
+			mb_substr($_POST['USER_ID'], 0, 12) == 'networkLines'
+			&& CModule::IncludeModule('imbot')
+		)
 		{
-			$network = new \Bitrix\ImOpenLines\Network();
-			$userId = $network->join(mb_substr($_POST['USER_ID'], 12));
+			$userId = \Bitrix\ImBot\Bot\Network::join(mb_substr($_POST['USER_ID'], 12));
 			if ($userId > 0)
 			{
 				$networkUserId = $_POST['USER_ID'];

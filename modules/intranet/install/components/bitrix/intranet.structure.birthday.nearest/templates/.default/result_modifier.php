@@ -109,7 +109,7 @@ if ($arParams['bCache'])
 
 if ($arResult['bUsersCached'] && $strUserIDs <> '')
 {
-	$dbRes = CUser::GetList($by='id', $order='asc', array('ID' => $strUserIDs, 'LAST_ACTIVITY' => 120));
+	$dbRes = CUser::GetList('id', 'asc', array('ID' => $strUserIDs, 'LAST_ACTIVITY' => 120));
 	while ($arRes = $dbRes->Fetch())
 	{
 		$arResult['USERS'][$arRes['ID']]['IS_ONLINE'] = true;

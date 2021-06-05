@@ -62,7 +62,6 @@ $formParams = array(
 		'fontSize' => '14px',
 		'bInitByJS' => !$hasErrors
 	),
-	'MPF_DESTINATION_1' => GetMessage("CRM_SL_EVENT_EDIT_MPF_DESTINATION_1"),
 	"USE_CLIENT_DATABASE" => "Y",
 	"DEST_CONTEXT" => "CRM_POST",
 	"PROPERTIES" => array(

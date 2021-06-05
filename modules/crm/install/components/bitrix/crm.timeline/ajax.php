@@ -265,7 +265,7 @@ elseif($action == 'SAVE_WAIT')
 		else
 		{
 			__CrmTimelineEndResponse(
-				array('ERROR' => implode($result->getErrorMessages(), "\n"))
+				array('ERROR' => implode("\n", $result->getErrorMessages()))
 			);
 		}
 	}
@@ -332,7 +332,7 @@ elseif($action == 'COMPLETE_WAIT')
 	else
 	{
 		__CrmTimelineEndResponse(
-			array('ERROR' => implode($result->getErrorMessages(), "\n"))
+			array('ERROR' => implode("\n", $result->getErrorMessages()))
 		);
 	}
 }

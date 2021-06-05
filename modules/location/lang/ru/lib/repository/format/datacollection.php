@@ -25,3 +25,4 @@ $MESS ['LOCATION_REPO_FRMT_RUS_2_DESCR'] = "125075<br/>Россия<br/>Моск
 $MESS ['LOCATION_REPO_FRMT_BR_DESCR'] = "Avenida Presidente Affonso Camargo, 749<br/>Cristo Rei<br/>Curitiba - Parana<br/>80050-370<br/>Brazil";
 $MESS ['LOCATION_REPO_FRMT_ADM_LEVEL_2'] = "Район";
 $MESS ['LOCATION_REPO_FRMT_ADM_LEVEL_2_MUNICIPALITY'] = "Муниципалитет";
+$MESS ['LOCATION_REPO_FRMT_DE_NAME'] = "Германия";

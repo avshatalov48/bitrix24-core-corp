@@ -486,11 +486,10 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Line not found", "NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$network = new \Bitrix\ImOpenLines\Network();
-		$result = $network->join($arParams['CODE']);
+		$result = \Bitrix\ImBot\Bot\Network::join($arParams['CODE']);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException($network->getError()->msg, $network->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+			throw new \Bitrix\Rest\RestException(\Bitrix\ImBot\Bot\Network::getError()->msg, \Bitrix\ImBot\Bot\Network::getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return $result;

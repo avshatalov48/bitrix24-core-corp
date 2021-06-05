@@ -23,6 +23,7 @@ return [
 		'landing.ui.panel.separatorpanel',
 		'calendar.resourcebookinguserfield',
 		'landing.pageobject',
+		'main.loader',
 		'socnetlogdest',
 	],
 	'skip_core' => false,

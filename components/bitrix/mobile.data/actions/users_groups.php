@@ -140,8 +140,8 @@ if (in_array($action, array("get_user_list", "get_usergroup_list")))
 			}
 
 			$dbUsers = CUser::GetList(
-				($by = array("last_name" => "asc", "name" => "asc")),
-				($order = false),
+				array("last_name" => "asc", "name" => "asc"),
+				'',
 				$filter,
 				$arParams
 			);

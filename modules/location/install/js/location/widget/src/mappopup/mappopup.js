@@ -1,10 +1,12 @@
 import {Tag, Type, Dom, Event} from 'main.core';
-import {Address, Format, Location, ControlMode, MapBase, GeocodingServiceBase, AddressStringConverter} from 'location.core';
+import {
+	Address, Format, Location, ControlMode, MapBase, GeocodingServiceBase, AddressStringConverter
+} from 'location.core';
 import {EventEmitter} from 'main.core.events';
 import AddressString from './addressstring';
 import './css/mappopup.css';
 import Popup from './popup';
-import AddressRestorer from './addressrestorer'
+import AddressRestorer from './addressrestorer';
 
 export default class MapPopup extends EventEmitter
 {
@@ -35,28 +37,28 @@ export default class MapPopup extends EventEmitter
 		super(props);
 		this.setEventNamespace('BX.Location.Widget.MapPopup');
 
-		if(!(props.map instanceof MapBase))
+		if (!(props.map instanceof MapBase))
 		{
 			BX.debug('map must be instance of Map');
 		}
 
 		this.#map = props.map;
 
-		if(props.geocodingService instanceof GeocodingServiceBase)
+		if (props.geocodingService instanceof GeocodingServiceBase)
 		{
 			this.#geocodingService = props.geocodingService;
 		}
 
 		this.#map.onLocationChangedEventSubscribe(this.#onLocationChanged.bind(this));
 
-		if(!(props.popup instanceof Popup))
+		if (!(props.popup instanceof Popup))
 		{
 			BX.debug('popup must be instance of Popup');
 		}
 
 		this.#popup = props.popup;
 
-		if(!(props.addressFormat instanceof Format))
+		if (!(props.addressFormat instanceof Format))
 		{
 			BX.debug('addressFormat must be instance of Format');
 		}
@@ -73,7 +75,7 @@ export default class MapPopup extends EventEmitter
 
 		this.#addressRestorer.onRestoreEventSubscribe(this.#onAddressRestore.bind(this));
 
-		if(props.gallery)
+		if (props.gallery)
 		{
 			this.#gallery = props.gallery;
 		}
@@ -84,36 +86,36 @@ export default class MapPopup extends EventEmitter
 
 	#onLocationChanged(event: Event)
 	{
-		let data = event.getData(),
-			location = data.location,
-			address = location.toAddress();
+		const data = event.getData();
+		const location = data.location;
+		const address = location.toAddress();
 
 		this.#address = address;
 		this.#addressString.address = address;
 
-		if(this.#needRestore)
+		if (this.#needRestore)
 		{
-			if(this.#addressRestorer.isHidden())
+			if (this.#addressRestorer.isHidden())
 			{
 				this.#addressRestorer.show();
 			}
 		}
 
-		if(this.#gallery)
+		if (this.#gallery)
 		{
 			this.#gallery.location = location;
 		}
 
 		this.emit(
 			MapPopup.#onChangedEvent,
-			{ address: address}
+			{address: address}
 		);
 	}
 
 	#onAddressRestore(event: Event)
 	{
-		const data = event.getData(),
-			prevAddress = data.address;
+		const data = event.getData();
+			const prevAddress = data.address;
 
 		prevAddress.latitude = this.#address.latitude;
 		prevAddress.longitude = this.#address.longitude;
@@ -122,11 +124,10 @@ export default class MapPopup extends EventEmitter
 		this.#addressString.address = prevAddress;
 
 		this.#addressRestorer.hide();
-		this.#needRestore = false;
 
 		this.emit(
 			MapPopup.#onChangedEvent,
-			{ address: prevAddress}
+			{address: prevAddress}
 		);
 	}
 
@@ -144,7 +145,7 @@ export default class MapPopup extends EventEmitter
 	{
 		let gallery = '';
 
-		if(this.#gallery)
+		if (this.#gallery)
 		{
 			gallery = this.#gallery.render();
 		}
@@ -173,7 +174,7 @@ export default class MapPopup extends EventEmitter
 
 	set bindElement(bindElement: Element)
 	{
-		if(Type.isDomNode(bindElement))
+		if (Type.isDomNode(bindElement))
 		{
 			this.#popup.setBindElement(bindElement);
 		}
@@ -199,8 +200,7 @@ export default class MapPopup extends EventEmitter
 	#convertAddressToLocation(address: ?Address): Promise<?Location>
 	{
 		return new Promise((resolve) => {
-
-			if(address)
+			if (address)
 			{
 				let lat;
 				let lon;
@@ -219,7 +219,7 @@ export default class MapPopup extends EventEmitter
 					lon = address.location.longitude;
 				}
 
-				if(lat && lat !== '0' && lon && lon !== '0')
+				if (lat && lat !== '0' && lon && lon !== '0')
 				{
 					resolve(new Location({
 						latitude: lat,
@@ -229,26 +229,28 @@ export default class MapPopup extends EventEmitter
 					return;
 				}
 
+				// If we'll not find the address location - let's use the user's one
 				let location = this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null;
 
-				if(this.#geocodingService)
+				// Try to find via geocoding by string name
+				if (this.#geocodingService)
 				{
-					let addressStr = null;
-
-					addressStr = address.toString(
+					const addressStr = address.toString(
 						this.#addressFormat,
 						AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
 						AddressStringConverter.CONTENT_TYPE_TEXT
 					);
 
 					this.#geocodingService.geocode(addressStr)
-						.then((locationsList: Array) =>
+						.then((locationsList: ?Array) =>
 						{
-							if(locationsList.length === 1)
+							// If we have found just one location - we probably have found the right one.
+							if (Array.isArray(locationsList) && locationsList.length === 1)
 							{
 								location = locationsList[0];
 							}
 
+							// geocoded or user's location
 							resolve(location);
 						});
 
@@ -256,6 +258,7 @@ export default class MapPopup extends EventEmitter
 				}
 			}
 
+			// If address is null, let's use the user's location in view mode.
 			resolve(this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null);
 		});
 	}
@@ -264,7 +267,7 @@ export default class MapPopup extends EventEmitter
 	{
 		this.#map.location = location;
 
-		if(this.#gallery)
+		if (this.#gallery)
 		{
 			this.#gallery.location = location;
 		}
@@ -289,20 +292,18 @@ export default class MapPopup extends EventEmitter
 	{
 		this.#convertAddressToLocation(this.#address)
 			.then((location) => {
-
-				if(!location)
+				if (!location)
 				{
 					return;
 				}
 
 				this.#popup.show();
 
-				if(!this.#isMapRendered)
+				if (!this.#isMapRendered)
 				{
 					this.#renderMap({location})
 						.then(() => {
-
-							if(this.#gallery)
+							if (this.#gallery)
 							{
 								this.#gallery.location = location;
 							}
@@ -316,7 +317,7 @@ export default class MapPopup extends EventEmitter
 				{
 					this.#map.location = location;
 
-					if(this.#gallery)
+					if (this.#gallery)
 					{
 						this.#gallery.location = location;
 					}
@@ -338,12 +339,12 @@ export default class MapPopup extends EventEmitter
 
 		this.#needRestore = false;
 
-		if(!this.#addressRestorer.isHidden())
+		if (!this.#addressRestorer.isHidden())
 		{
 			this.#addressRestorer.hide();
 		}
 
-		this.emit(MapPopup.#onClosedEvent)
+		this.emit(MapPopup.#onClosedEvent);
 	}
 
 	onChangedEventSubscribe(listener: Function): void

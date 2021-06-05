@@ -557,7 +557,7 @@ Class sale extends CModule
 		foreach($statusMes as $v)
 		{
 			$eventType->Delete($v);
-			$dbEvent = CEventMessage::GetList($b="ID", $order="ASC", Array("EVENT_NAME" => $v));
+			$dbEvent = CEventMessage::GetList("id", "asc", Array("EVENT_NAME" => $v));
 			while($arEvent = $dbEvent->Fetch())
 			{
 				$eventM->Delete($arEvent["ID"]);
@@ -605,7 +605,7 @@ Class sale extends CModule
 		return true;
 	}
 
-	function OnGetTableSchema()
+	public static function OnGetTableSchema()
 	{
 		return array(
 			'sale' => array(

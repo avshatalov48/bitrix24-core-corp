@@ -17,7 +17,7 @@ while($arr=$rsIBlock->Fetch())
 	$arIBlock[$arr["ID"]] = "[".$arr["ID"]."] ".$arr["NAME"];
 
 $arUserGroups = array();
-$dbGroups = CGroup::GetList($b = "NAME", $o = "ASC", array("ACTIVE" => "Y"));
+$dbGroups = CGroup::GetList("NAME", "ASC", array("ACTIVE" => "Y"));
 while ($arGroup = $dbGroups->GetNext())
 	$arUserGroups[$arGroup["ID"]] = "[".$arGroup["ID"]."] ".$arGroup["NAME"];
 

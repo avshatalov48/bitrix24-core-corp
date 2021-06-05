@@ -51,7 +51,7 @@ class SessionIndexTable extends Main\Entity\DataManager
 		);
 	}
 
-	protected function getMergeFields()
+	protected static function getMergeFields()
 	{
 		return array('SESSION_ID');
 	}

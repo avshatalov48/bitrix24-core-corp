@@ -1,10 +1,10 @@
 <?php
-
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
 use Bitrix\ImOpenlines\QuickAnswers\QuickAnswer;
 use Bitrix\Main,
+	Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc;
 
 use Bitrix\ImOpenlines\Security\Permissions;
@@ -19,10 +19,16 @@ class Operator
 	private $error = null;
 	private $moduleLoad = false;
 
+	/**
+	 * Operator constructor.
+	 * @param $chatId
+	 * @param null $userId
+	 * @throws Main\LoaderException
+	 */
 	public function __construct($chatId, $userId = null)
 	{
-		$imLoad = \Bitrix\Main\Loader::includeModule('im');
-		$pullLoad = \Bitrix\Main\Loader::includeModule('pull');
+		$imLoad = Loader::includeModule('im');
+		$pullLoad = Loader::includeModule('pull');
 		if ($imLoad && $pullLoad)
 		{
 			$this->error = new BasicError(null, '', '');
@@ -49,6 +55,13 @@ class Operator
 		$this->userId = intval($userId);
 	}
 
+	/**
+	 * @return bool[]|false[]
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	private function checkAccess()
 	{
 		if (!$this->moduleLoad)
@@ -89,9 +102,9 @@ class Operator
 			{
 				$this->error = new BasicError(__METHOD__, 'CHAT_TYPE', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_TYPE'));
 
-				return Array(
+				return [
 					'RESULT' => false
-				);
+				];
 			}
 		}
 		else
@@ -108,33 +121,33 @@ class Operator
 					{
 						$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
 
-						return Array(
+						return [
 							'RESULT' => false
-						);
+						];
 					}
 				}
 				else
 				{
 					$this->error = new BasicError(__METHOD__, 'CHAT_TYPE', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_TYPE'));
 
-					return Array(
+					return [
 						'RESULT' => false
-					);
+					];
 				}
 			}
 			else
 			{
 				$this->error = new BasicError(__METHOD__, 'CHAT_ID', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_ID'));
 
-				return Array(
+				return [
 					'RESULT' => false
-				);
+				];
 			}
 		}
 
-		return Array(
+		return [
 			'RESULT' => true
-		);
+		];
 	}
 
 	/**

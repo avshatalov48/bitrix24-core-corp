@@ -317,7 +317,7 @@ this.BX = this.BX || {};
 	          });
 	        }
 
-	        if (!_this2.userPlannerSelector.isPlannerDisplayed()) {
+	        if (!_this2.userPlannerSelector.isPlannerDisplayed() && _this2.getMode() === CompactEventForm.EDIT_MODE) {
 	          _this2.userPlannerSelector.checkBusyTime();
 	        }
 	      });

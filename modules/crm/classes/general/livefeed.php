@@ -6340,90 +6340,9 @@ class CCrmLiveFeedComponent
 		$bMailModuleInstalled = IsModuleInstalled('mail');
 		$arCrmEmailEntities = array();
 
-		if (isset($arPOST['DEST_CODES']))
-		{
-			if (empty($arPOST['SPERM']))
-			{
-				$arPOST['SPERM'] = array();
-			}
-
-			foreach($arPOST['DEST_CODES'] as $destCode)
-			{
-				if ($destCode == 'UA')
-				{
-					if (empty($arPOST['SPERM']['UA']))
-					{
-						$arPOST['SPERM']['UA'] = array();
-					}
-					$arPOST['SPERM']['UA'][] = 'UA';
-				}
-				elseif (preg_match('/^UE(.+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['UE']))
-					{
-						$arPOST['SPERM']['UE'] = array();
-					}
-					$arPOST['SPERM']['UE'][] = $matches[1];
-				}
-				elseif (preg_match('/^U(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['U']))
-					{
-						$arPOST['SPERM']['U'] = array();
-					}
-					$arPOST['SPERM']['U'][] = 'U'.$matches[1];
-				}
-				elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['SG']))
-					{
-						$arPOST['SPERM']['SG'] = array();
-					}
-					$arPOST['SPERM']['SG'][] = 'SG'.$matches[1];
-				}
-				elseif (preg_match('/^DR(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['DR']))
-					{
-						$arPOST['SPERM']['DR'] = array();
-					}
-					$arPOST['SPERM']['DR'][] = 'DR'.$matches[1];
-				}
-				elseif (preg_match('/^CRMCONTACT(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['CRMCONTACT']))
-					{
-						$arPOST['SPERM']['CRMCONTACT'] = array();
-					}
-					$arPOST['SPERM']['CRMCONTACT'][] = 'CRMCONTACT'.$matches[1];
-				}
-				elseif (preg_match('/^CRMCOMPANY(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['CRMCOMPANY']))
-					{
-						$arPOST['SPERM']['CRMCOMPANY'] = array();
-					}
-					$arPOST['SPERM']['CRMCOMPANY'][] = 'CRMCOMPANY'.$matches[1];
-				}
-				elseif (preg_match('/^CRMLEAD(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['CRMLEAD']))
-					{
-						$arPOST['SPERM']['CRMLEAD'] = array();
-					}
-					$arPOST['SPERM']['CRMLEAD'][] = 'CRMLEAD'.$matches[1];
-				}
-				elseif (preg_match('/^CRMDEAL(\d+)$/i', $destCode, $matches))
-				{
-					if (empty($arPOST['SPERM']['CRMDEAL']))
-					{
-						$arPOST['SPERM']['CRMDEAL'] = array();
-					}
-					$arPOST['SPERM']['CRMDEAL'][] = 'CRMDEAL'.$matches[1];
-				}
-			}
-			unset($arPOST['DEST_CODES']);
-		}
+		\Bitrix\Socialnetwork\ComponentHelper::convertSelectorRequestData($arPOST, [
+			'crm' => true,
+		]);
 
 		self::ProcessLogEventEditPOSTCrmEmailUsers($arPOST, $arCrmEmailEntities);
 

@@ -211,7 +211,7 @@ final class IndexManager
 			$searchData['BODY'] = Text\BinaryString::getSubstring($searchData['BODY'], 0, $maxIndexSize);
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CSearch::index(Driver::INTERNAL_MODULE_ID, $this->getItemId($file), $searchData, true);
 	}
 
@@ -336,7 +336,7 @@ final class IndexManager
 			);
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CSearch::index(Driver::INTERNAL_MODULE_ID, $this->getItemId($folder), $searchData, true);
 	}
 
@@ -381,7 +381,7 @@ final class IndexManager
 		{
 			return;
 		}
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		CSearch::deleteIndex(Driver::INTERNAL_MODULE_ID, $this->getItemId($object));
 	}
 
@@ -405,7 +405,7 @@ final class IndexManager
 		}
 		if($object instanceof File)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
 				$this->getSimpleRights($object),
@@ -414,7 +414,7 @@ final class IndexManager
 		}
 		elseif($object instanceof Folder)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
 				$this->getSimpleRights($object),
@@ -422,7 +422,7 @@ final class IndexManager
 				$object->getStorageId(),
 				$object->getId()
 			);
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
 				$this->getSimpleRights($object),
@@ -653,7 +653,7 @@ final class IndexManager
 			return $defaultSite['LID'];
 		}
 
-		$sites = \CSite::GetList($b = 'SORT', $o = 'asc', array('ACTIVE' => 'Y'));
+		$sites = \CSite::GetList('SORT', 'asc', array('ACTIVE' => 'Y'));
 		while ($site = $sites->getNext())
 		{
 			if(!$defaultSite && $site['DEF'] == 'Y')

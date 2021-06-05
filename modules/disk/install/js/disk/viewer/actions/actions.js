@@ -44,7 +44,7 @@
 		}
 
 		additionalParams = additionalParams || {};
-		if (BX.Disk.getDocumentService() !== 'l')
+		if (BX.Disk.getDocumentService() !== 'l' && BX.Disk.getDocumentService() !== 'onlyoffice' && !BX.UI.Viewer.Instance.isOpen())
 		{
 			BX.UI.Viewer.Instance.openByNode(item.sourceNode);
 		}

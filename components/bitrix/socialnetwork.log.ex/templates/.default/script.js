@@ -1845,14 +1845,13 @@ BitrixLF.prototype.createTask = function(params)
 					}
 				}).then(function(response) {
 
-					var
-						entryTitle = BX.type.isNotEmptyString(response.data.TITLE) ? response.data.TITLE : '',
-						entryDescription = BX.type.isNotEmptyString(response.data.DESCRIPTION) ? response.data.DESCRIPTION : '',
-						entryDiskObjects = BX.type.isNotEmptyObject(response.data.DISK_OBJECTS) ? response.data.DISK_OBJECTS : [],
-						entryUrl = BX.type.isNotEmptyString(response.data.LIVEFEED_URL) ? response.data.LIVEFEED_URL : '',
-						entrySuffix = BX.type.isNotEmptyString(response.data.SUFFIX) ? response.data.SUFFIX : '',
-						groupsAvailable = BX.type.isNotEmptyObject(response.data.GROUPS_AVAILABLE) ? response.data.GROUPS_AVAILABLE : [],
-						logId = typeof response.data.LOG_ID != 'undefined' ? parseInt(response.data.LOG_ID) : 0;
+					var entryTitle = BX.type.isNotEmptyString(response.data.TITLE) ? response.data.TITLE : '';
+					var entryDescription = BX.type.isNotEmptyString(response.data.DESCRIPTION) ? response.data.DESCRIPTION : '';
+					var entryDiskObjects = BX.type.isNotEmptyObject(response.data.DISK_OBJECTS) ? response.data.DISK_OBJECTS : [];
+					var entryUrl = BX.type.isNotEmptyString(response.data.LIVEFEED_URL) ? response.data.LIVEFEED_URL : '';
+					var entrySuffix = BX.type.isNotEmptyString(response.data.SUFFIX) ? response.data.SUFFIX : '';
+					var groupsAvailable = BX.type.isNotEmptyObject(response.data.GROUPS_AVAILABLE) ? response.data.GROUPS_AVAILABLE : [];
+					var logId = typeof response.data.LOG_ID != 'undefined' ? parseInt(response.data.LOG_ID) : 0;
 
 					if (
 						(

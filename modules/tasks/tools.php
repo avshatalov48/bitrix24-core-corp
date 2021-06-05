@@ -1173,7 +1173,7 @@ function tasksGetLastSelected($arManagers, $bSubordinateOnly = false, $nameTempl
 			$arFilter['!UF_DEPARTMENT'] = false;
 		}
 		$arFilter['ID'] = is_array($arLastSelected) ? implode('|', array_slice($arLastSelected, 0, 10)) : '-1';
-		$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+		$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
 		$arLastUsers = array();
 		while ($arRes = $dbRes->GetNext())
 		{
@@ -1350,7 +1350,7 @@ function __checkForum($forumID)
 	if (CModule::IncludeModule("forum") && $forumID && COption::GetOptionString("tasks", "forum_checked", false))
 	{
 		$arGroups = array();
-		$rs = CGroup::GetList($order = 'id', $by = 'asc', array());
+		$rs = CGroup::GetList('id', 'asc');
 		while($ar = $rs->Fetch())
 			$arGroups[$ar['ID']] = 'A';
 

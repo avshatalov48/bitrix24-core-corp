@@ -63,9 +63,7 @@ class CCrmTax
 
 		if(empty($arSites))
 		{
-			$by = "sort";
-			$order = "asc";
-			$dbSites = CSite::GetList($by, $order);
+			$dbSites = CSite::GetList();
 			while ($arSite = $dbSites->Fetch())
 				$arSites[$arSite["LID"]] = "[".$arSite["LID"]."] ".$arSite["NAME"];
 		}

@@ -50,7 +50,7 @@ if (!$arResult["FatalError"])
 		{
 			foreach($arResult["DEPARTMENTS"] as $key => $dep)
 			{
-				$dbUsers = CUser::GetList($o = "", $b = "", array(
+				$dbUsers = CUser::GetList("", "", array(
 						"!ID" => $arResult["User"]["ID"],
 						'UF_DEPARTMENT' => $dep["ID"],
 						'ACTIVE' => 'Y',

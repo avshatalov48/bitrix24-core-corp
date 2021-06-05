@@ -616,7 +616,7 @@ class CVoxImplantHistory
 	{
 		$userName = '';
 		$arSelect = Array("ID", "LAST_NAME", "NAME", "LOGIN", "SECOND_NAME", "PERSONAL_GENDER");
-		$dbUsers = CUser::GetList(($sort_by = false), ($dummy=''), array('ID' => $transferUserId), array('FIELDS' => $arSelect));
+		$dbUsers = CUser::GetList('', '', array('ID' => $transferUserId), array('FIELDS' => $arSelect));
 		if ($arUser = $dbUsers->Fetch())
 			$userName = CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false);
 

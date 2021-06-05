@@ -67,7 +67,7 @@ class CBPCrmSetContactField
 	{
 		$id = null;
 
-		list($entityType, $entityId) = explode('_', $this->GetDocumentId()[2]);
+		list($entityType, $entityId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 
 		if ($entityType === \CCrmOwnerType::LeadName)
 		{
@@ -78,6 +78,15 @@ class CBPCrmSetContactField
 		{
 			$entity = \CCrmDeal::GetByID($entityId, false);
 			$id = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
+		}
+		else
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($entityType));
+			if (isset($factory) && $factory->isAutomationEnabled())
+			{
+				$entity = $factory->getItem($entityId);
+				$id = (int)$entity->getContactId();
+			}
 		}
 
 		return $id ? CCrmBizProcHelper::ResolveDocumentId(\CCrmOwnerType::Contact, $id) : null;

@@ -55,7 +55,7 @@ if (
 		foreach ($arResult["DEPARTMENTS"] as $key => $dep)
 		{
 			$dbUsers = CUser::GetList(
-				$o = "", $b="",
+				"", "",
 				array("!ID" => $arResult["User"]["ID"], 'UF_DEPARTMENT' => $dep["ID"], 'ACTIVE' => 'Y', '!LAST_ACTIVITY' => false),
 				array('FIELDS' => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "WORK_POSITION"))
 			);

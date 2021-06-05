@@ -78,11 +78,9 @@ final class CalendarEventConnector extends StubConnector
 		}
 		else
 		{
-			$by = "id";
-			$order = "asc";
 			$userRow = \CUser::getList(
-				$by,
-				$order,
+				'ID',
+				'ASC',
 				array("ID_EQUAL_EXACT" => $event['CREATED_BY'], "ACTIVE" => "Y"),
 				array("SELECT" => array(
 					'ID', 'NAME', 'LAST_NAME', 'LOGIN', 'PERSONAL_PHOTO',

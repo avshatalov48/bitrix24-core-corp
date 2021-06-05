@@ -1,10 +1,13 @@
-import {Event, Type} from 'main.core';
+import {Event, Loc, Tag} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
-import {LocationRepository, AutocompleteServiceBase, Format, Address, Location, DistanceCalculator,
-	AddressStringConverter, ErrorPublisher} from 'location.core';
+import {LocationRepository, AutocompleteServiceBase, Format, Address, Location,
+	DistanceCalculator,	ErrorPublisher, LocationType,
+	AutocompleteServiceFilter,
+} from 'location.core';
+import type {AutocompleteServiceParams} from 'location.core';
 import Prompt from './prompt';
 import State from '../state';
-import {Loc} from 'main.core';
+import AddressString from './addressstring';
 
 /**
  * @mixes EventEmitter
@@ -19,8 +22,8 @@ export default class Autocomplete extends EventEmitter
 
 	/** {Address} */
 	#address;
-	/** {String} */
-	#addressString = '';
+	/** {AddressString|null} */
+	#addressString = null;
 	/** {String} */
 	#languageId;
 	/** {Format} */
@@ -39,7 +42,7 @@ export default class Autocomplete extends EventEmitter
 	#autocompleteService;
 	/** @type {number} */
 	#minCharsCountToAutocomplete;
-	/** {number} miliseconds promptDelay before the searching will start */
+	/** {number} milliseconds promptDelay before the searching will start */
 	#promptDelay;
 	/** {number} */
 	#maxPromptDelay;
@@ -47,6 +50,9 @@ export default class Autocomplete extends EventEmitter
 	#timerId = null;
 	/** {Element} */
 	#inputNode;
+
+	/** {Location} */
+	#lastSelectedLocation = null;
 
 	#searchPhrase = {
 		requested: '',
@@ -63,6 +69,10 @@ export default class Autocomplete extends EventEmitter
 	#isAutocompleteRequestStarted = false;
 
 	#maxFirstItemUserDistanceKm = 100;
+	#onLocationSelectTimerId = null;
+
+	/** {AutocompleteServiceFilter} */
+	#filter;
 
 	constructor(props)
 	{
@@ -70,21 +80,21 @@ export default class Autocomplete extends EventEmitter
 
 		this.setEventNamespace('BX.Location.Widget.Autocomplete');
 
-		if(!(props.addressFormat instanceof Format))
+		if (!(props.addressFormat instanceof Format))
 		{
 			throw new Error('props.addressFormat must be type of Format');
 		}
 
 		this.#addressFormat = props.addressFormat;
 
-		if(!(props.autocompleteService instanceof AutocompleteServiceBase))
+		if (!(props.autocompleteService instanceof AutocompleteServiceBase))
 		{
 			throw new Error('props.autocompleteService must be type of AutocompleteServiceBase');
 		}
 
 		this.#autocompleteService = props.autocompleteService;
 
-		if(!props.languageId)
+		if (!props.languageId)
 		{
 			throw new Error('props.languageId must be defined');
 		}
@@ -95,34 +105,19 @@ export default class Autocomplete extends EventEmitter
 		this.#presetLocationsProvider = props.presetLocationsProvider;
 		this.#locationRepository = props.locationRepository || new LocationRepository();
 		this.#userLocation = props.userLocation;
-		this.#promptDelay = props.promptDelay || 500;
-		this.#maxPromptDelay = props.maxPromptDelay || 1500;
+		this.#promptDelay = props.promptDelay || 300;
+		this.#maxPromptDelay = props.maxPromptDelay || 500;
 		this.#minCharsCountToAutocomplete = props.minCharsCountToAutocomplete || 3;
 		this.#setState(State.INITIAL);
 		this.#avgKeyUpDelay = this.#promptDelay;
-	}
-
-	#convertAddressToString(address: ?Address): string
-	{
-		if(!address)
-		{
-			return '';
-		}
-
-		return address.toString(
-			this.#addressFormat,
-			AddressStringConverter.STRATEGY_TYPE_FIELD_TYPE,
-			AddressStringConverter.CONTENT_TYPE_TEXT
-		);
+		this.#filter = new AutocompleteServiceFilter();
 	}
 
 	render(props: {}): void
 	{
 		this.#inputNode = props.inputNode;
-		this.#addressString = this.#inputNode.value;
-
 		this.#address = props.address;
-
+		this.#addressString = new AddressString(this.#inputNode, this.#addressFormat, this.#address);
 		this.#inputNode.addEventListener('keyup', this.#onInputKeyUp.bind(this));
 		this.#inputNode.addEventListener('focus', this.#onInputFocus.bind(this));
 		this.#inputNode.addEventListener('focusout', this.#onInputFocusOut.bind(this));
@@ -137,11 +132,12 @@ export default class Autocomplete extends EventEmitter
 		document.addEventListener('click', this.#onDocumentClick.bind(this));
 	}
 
+	// eslint-disable-next-line no-unused-vars
 	#onInputClick(e: MouseEvent)
 	{
-		let value = this.#inputNode.value;
+		const value = this.#addressString.value;
 
-		if(value.length === 0)
+		if (value.length === 0)
 		{
 			this.#showPresetLocations();
 		}
@@ -149,39 +145,96 @@ export default class Autocomplete extends EventEmitter
 
 	#showPresetLocations()
 	{
-		let presetLocationList = this.#presetLocationsProvider();
+		const presetLocationList = this.#presetLocationsProvider();
 
 		this.#prompt.setMenuItems(presetLocationList, '');
 
-		this.#prompt.addShowOnMapMenuItem(
-			this.#getShowOnMapHandler(null),
-			Loc.getMessage(
-				(presetLocationList.length > 0)
-					? 'LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'
-					: 'LOCATION_WIDGET_START_PRINTING_OR_SHOW_ON_MAP'
-			)
-		);
+		let leftBottomMenuMessage;
 
+		if (presetLocationList.length > 0)
+		{
+			leftBottomMenuMessage = Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP');
+		}
+		else
+		{
+			leftBottomMenuMessage = Loc.getMessage('LOCATION_WIDGET_START_PRINTING_OR_SHOW_ON_MAP');
+		}
+
+		this.#showMenu(leftBottomMenuMessage, null);
+	}
+
+	#createRightBottomMenuNode(location: ?Location): Element
+	{
+		const element = Tag.render`
+				<span class="location-map-popup-item--show-on-map">
+					${Loc.getMessage('LOCATION_WIDGET_SHOW_ON_MAP')}
+				</span>
+		`;
+
+		element.addEventListener('click', this.#getShowOnMapHandler(location));
+
+		return element;
+	}
+
+	#createLeftBottomMenuNode(text: string): Element
+	{
+		return Tag.render`
+				<span>				
+					<span class="menu-popup-item-icon"></span>
+					<span class="menu-popup-item-text">${text}</span>
+				</span>		
+		`;
+	}
+
+	#showMenu(leftBottomText: string, location: ?Location): void
+	{
+		/* Menu destroys popup after the closing, so we need to refresh it every time, we show it */
+		this.#prompt.getMenu().setBottomRightItemNode(
+			this.#createRightBottomMenuNode(location)
+		);
+		this.#prompt.getMenu().setBottomLeftItemNode(
+			this.#createLeftBottomMenuNode(leftBottomText)
+		);
 		this.#prompt.getMenu().show();
 	}
 
 	#onInputFocusOut(e: Event)
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
 		// If we have selected item from prompt, the focusOut event will be first.
 		setTimeout(() => {
-			if(this.#state === State.DATA_INPUTTING)
+
+			if (this.#state === State.DATA_INPUTTING)
 			{
 				this.#setState(State.DATA_SUPPOSED);
-				this.#setAddressFromInput();
-			}
-		}, 200);
 
-		if(this.#prompt)
+				if (this.#addressString)
+				{
+					if (!this.#address || !this.#addressString.hasPureAddressString())
+					{
+						this.#address = this.#convertStringToAddress(
+							this.#addressString.value
+						);
+					}
+					// this.#addressString === null until autocompete'll be rendered
+					else if (this.#addressString.customTail !== '')
+					{
+						this.#address.setFieldValue(
+							this.#addressFormat.fieldForUnRecognized,
+							this.#addressString.customTail
+						);
+					}
+				}
+
+				this.#onAddressChangedEventEmit();
+			}
+		}, 1);
+
+		if (this.#prompt)
 		{
 			this.#prompt.close();
 		}
@@ -192,25 +245,71 @@ export default class Autocomplete extends EventEmitter
 
 	#onInputFocus()
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
-		if(this.#address
+		if (
+			this.#address
 			&& (!this.#address.location || !this.#address.location.hasExternalRelation())
-			&& this.#inputNode.value.length > 0
+			&& this.#addressString.value.length > 0
 		)
 		{
-			this.showPrompt(this.#inputNode.value, this.#makeParams());
+			this.showPrompt(this.#addressString.value);
 		}
 	}
 
-	#makeParams(): Object
+	#makeAutocompleteFilter(locationForBias: ?Location): AutocompleteServiceFilter
 	{
-		return {
-			userCoordinates: this.#userLocation ? [this.#userLocation.latitude, this.#userLocation.longitude] : null
-		};
+		const result = new AutocompleteServiceFilter();
+
+		if (!locationForBias)
+		{
+			return result;
+		}
+
+		let filterType = null;
+
+		if (locationForBias.type === LocationType.COUNTRY)
+		{
+			filterType = LocationType.LOCALITY;
+		}
+		else if (locationForBias.type === LocationType.LOCALITY)
+		{
+			filterType = LocationType.STREET;
+		}
+		else if (locationForBias.type === LocationType.STREET)
+		{
+			filterType = LocationType.BUILDING;
+		}
+
+		if (filterType)
+		{
+			result.types = [filterType];
+		}
+
+		return result;
+	}
+
+	#makeAutocompleteServiceParams(): AutocompleteServiceParams
+	{
+		let locationForBias = null;
+		const result: AutocompleteServiceParams = {};
+
+		if (this.#lastSelectedLocation)
+		{
+			locationForBias = this.#lastSelectedLocation;
+		}
+		else if (this.#userLocation)
+		{
+			locationForBias = this.#userLocation;
+		}
+
+		result.filter = this.#filter;
+		result.locationForBias = locationForBias;
+
+		return result;
 	}
 
 	/**
@@ -220,22 +319,15 @@ export default class Autocomplete extends EventEmitter
 	{
 		this.#address = address;
 
-		if(this.#inputNode)
+		if (this.#addressString) // already rendered
 		{
-			this.#addressString = this.#inputNode.value;
-		}
-	}
-
-	#getInputValue()
-	{
-		let result = '';
-
-		if(this.#inputNode)
-		{
-			result = this.#inputNode.value;
+			this.#addressString.setValueFromAddress(this.#address);
 		}
 
-		return result;
+		if (!address)
+		{
+			this.#filter.reset();
+		}
 	}
 
 	/**
@@ -246,22 +338,13 @@ export default class Autocomplete extends EventEmitter
 		return this.#address;
 	}
 
-	#setAddressFromInput()
-	{
-		this.#address = this.#convertStringToAddress(
-			this.#getInputValue()
-		);
-
-		this.#onAddressChangedEventEmit();
-	}
-
 	/**
 	 * Close menu on mouse click outside
 	 * @param {MouseEvent} event
 	 */
 	#onDocumentClick(event: MouseEvent)
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
@@ -271,7 +354,7 @@ export default class Autocomplete extends EventEmitter
 			return;
 		}
 
-		if(this.#prompt.isShown())
+		if (this.#prompt.isShown())
 		{
 			this.#prompt.close();
 		}
@@ -326,24 +409,30 @@ export default class Autocomplete extends EventEmitter
 	 */
 	#onPromptsReceived(locationsList: array<Location>, params: Object): void
 	{
-		if(Array.isArray(locationsList) && locationsList.length > 0)
+		if (Array.isArray(locationsList) && locationsList.length > 0)
 		{
-			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested);
+			if (
+				locationsList.length === 1
+				&& this.#address
+				&& this.#address.location
+				&& this.#address.location.externalId
+				&& this.#address.location.externalId === locationsList[0].externalId
+			)
+			{
+				this.closePrompt();
+				return;
+			}
 
-			this.#prompt.addShowOnMapMenuItem(
-				this.#getShowOnMapHandler(locationsList[0]),
-				Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP')
-			);
-
-			this.#prompt.getMenu().show();
+			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested, this.address);
+			this.#showMenu(Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'), locationsList[0]);
 		}
 		else
 		{
 			const split = Autocomplete.#splitPhrase(this.#searchPhrase.current);
 			this.#searchPhrase.current = split[0];
-			this.#searchPhrase.dropped = split[1] + ' ' + this.#searchPhrase.dropped;
+			this.#searchPhrase.dropped = `${split[1]} ${this.#searchPhrase.dropped}`;
 
-			if(this.#searchPhrase.current.length > 0)
+			if (this.#searchPhrase.current.length > 0)
 			{
 				this.#showPromptInner(this.#searchPhrase.current, params, 1);
 			}
@@ -355,18 +444,14 @@ export default class Autocomplete extends EventEmitter
 					{
 						id: 'notFound',
 						html: `<span>${Loc.getMessage('LOCATION_WIDGET_PROMPT_ADDRESS_NOT_FOUND')}</span>`,
+						// eslint-disable-next-line no-unused-vars
 						onclick: (event, item) => {
 							this.#prompt.close();
 						}
 					}
 				);
 
-				this.#prompt.addShowOnMapMenuItem(
-					this.#getShowOnMapHandler(null),
-					Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP')
-				);
-
-				this.#prompt.getMenu().show();
+				this.#showMenu(Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
 			}
 		}
 	}
@@ -374,14 +459,13 @@ export default class Autocomplete extends EventEmitter
 	#getShowOnMapHandler(location: ?Location)
 	{
 		return () => {
-
 			if (location && this.#userLocation
 				&& location.latitude && location.longitude
 				&& this.#userLocation.latitude
 				&& this.#userLocation.longitude
 			)
 			{
-				let firstItemUserDistance = DistanceCalculator.getDistanceFromLatLonInKm(
+				const firstItemUserDistance = DistanceCalculator.getDistanceFromLatLonInKm(
 					location.latitude,
 					location.longitude,
 					this.#userLocation.latitude,
@@ -396,22 +480,27 @@ export default class Autocomplete extends EventEmitter
 				}
 			}
 
-			this.emit(Autocomplete.#onShowOnMapClickedEvent);
+			setTimeout(() => {
+					this.emit(Autocomplete.#onShowOnMapClickedEvent);
+				},
+				1 // Otherwise this click will close just opened map popup.
+			);
 		};
 	}
 
 	static #splitPhrase(phrase: string): Object
 	{
+		// eslint-disable-next-line no-param-reassign
 		phrase = phrase.trim();
 
-		if(phrase.length <= 0)
+		if (phrase.length <= 0)
 		{
-			return['', ''];
+			return ['', ''];
 		}
 
 		const tailPosition = phrase.lastIndexOf(' ');
 
-		if(tailPosition <= 0)
+		if (tailPosition <= 0)
 		{
 			return ['', ''];
 		}
@@ -425,9 +514,9 @@ export default class Autocomplete extends EventEmitter
 	 */
 	#onPromptItemSelected(event: BaseEvent): void
 	{
-		if(event.data.location)
+		if (event.data.location)
 		{
-			this.#fulfillSelection(event.data.location)
+			this.#fulfillSelection(event.data.location);
 		}
 	}
 
@@ -451,23 +540,23 @@ export default class Autocomplete extends EventEmitter
 	{
 		let result;
 		this.#setState(State.DATA_SELECTED);
-		if(location)
+		if (location)
 		{
 			if (location.hasExternalRelation() && this.#sourceCode === location.sourceCode)
 			{
 				result = this.#getLocationDetails(location)
 					.then((location: ?Location) => {
-							this.#onLocationSelect(location);
+							this.#createOnLocationSelectTimer(location, 0);
 							return true;
 						},
-						response => ErrorPublisher.getInstance().notify(response.errors)
+						(response) => ErrorPublisher.getInstance().notify(response.errors)
 					);
 			}
 			else
 			{
 				result = new Promise((resolve) => {
 					setTimeout(() => {
-						this.#onLocationSelect(location);
+						this.#createOnLocationSelectTimer(location, 0);
 						resolve();
 					}, 0);
 				});
@@ -477,7 +566,7 @@ export default class Autocomplete extends EventEmitter
 		{
 			result = new Promise((resolve) => {
 				setTimeout(() => {
-					this.#onLocationSelect(null);
+					this.#createOnLocationSelectTimer(null, 0);
 					resolve();
 				}, 0);
 			});
@@ -488,11 +577,9 @@ export default class Autocomplete extends EventEmitter
 
 	#onAddressChangedEventEmit(excludeSetAddressFeatures: Array = [])
 	{
-		this.#addressString = this.#address ? this.#convertAddressToString(this.#address) : '';
 		this.emit(
 			Autocomplete.#onAddressChangedEvent,
 			{
-
 				address: this.#address,
 				excludeSetAddressFeatures
 			}
@@ -513,9 +600,29 @@ export default class Autocomplete extends EventEmitter
 			location.sourceCode,
 			location.languageId
 		)
-			.then((location: ?Location) => {
+			.then((detailedLocation: ?Location) => {
 					this.#setState(State.DATA_LOADED);
-					return location;
+
+					let result;
+					/*
+					 * Nominatim could return a bit different location without the coordinates.
+					 * For example N752206814
+					 */
+					if (
+						detailedLocation.latitude !== '0'
+						&& detailedLocation.longitude !== '0'
+						&& detailedLocation !== ''
+					)
+					{
+						result = detailedLocation;
+						result.name = location.name;
+					}
+					else
+					{
+						result = location;
+					}
+
+					return result;
 				},
 				(response) => {
 					ErrorPublisher.getInstance().notify(response.errors);
@@ -539,26 +646,23 @@ export default class Autocomplete extends EventEmitter
 	 */
 	#onLocationSelect(location: ?Location): void
 	{
+		this.#lastSelectedLocation = location;
+		this.#filter = this.#makeAutocompleteFilter(this.#lastSelectedLocation);
 		this.#address = location ? location.toAddress() : null;
-
-		if(this.#address && this.#searchPhrase.dropped.length > 0)
-		{
-			this.#address.setFieldValue(this.#addressFormat.fieldForUnRecognized, this.#searchPhrase.dropped);
-		}
-
+		this.#addressString.setValueFromAddress(this.#address);
 		this.#onAddressChangedEventEmit();
 	}
 
 	#onInputKeyUp(e: KeyboardEvent): void
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
 		const now = Date.now();
 
-		if(this.#prevKeyUpTime)
+		if (this.#prevKeyUpTime)
 		{
 			const delta = now - this.#prevKeyUpTime;
 			this.#avgKeyUpDelay = (this.#avgKeyUpDelay + delta) / 2;
@@ -566,68 +670,103 @@ export default class Autocomplete extends EventEmitter
 
 		this.#prevKeyUpTime = now;
 
-		if(
+		if (
 			this.#state !== State.DATA_INPUTTING
-			&& this.#addressString.trim() !== this.#getInputValue().trim()
+			&& this.#addressString.isChanged()
 		)
 		{
 			this.#setState(State.DATA_INPUTTING);
 		}
 
-		if(this.#prompt.isShown())
+		if (this.#prompt.isShown())
 		{
+			let location;
+			const onLocationSelectTimeout = 700;
+
 			switch (e.code)
 			{
 				case 'NumpadEnter':
 				case 'Enter':
-					if(this.#prompt.isItemChosen())
+					if (this.#prompt.isItemChosen())
 					{
 						this.#fulfillSelection(this.#prompt.getChosenItem())
 							.then(() => {
 									this.#prompt.close();
 								},
-								error => BX.debug(error)
+								(error) => BX.debug(error)
 							);
 					}
 					return;
+
 				case 'Tab':
 				case 'Escape':
 					this.#setState(State.DATA_SUPPOSED);
-					this.#setAddressFromInput();
+					this.#onAddressChangedEventEmit();
 					this.#prompt.close();
 					return;
 
 				case 'ArrowUp':
-					this.#prompt.choosePrevItem();
+					location = this.#prompt.choosePrevItem();
+
+					if (location && location.address)
+					{
+						this.#createOnLocationSelectTimer(location, onLocationSelectTimeout);
+					}
+
 					return;
 
 				case 'ArrowDown':
-					this.#prompt.chooseNextItem();
+					location = this.#prompt.chooseNextItem();
+
+					if (location && location.address)
+					{
+						this.#createOnLocationSelectTimer(location, onLocationSelectTimeout);
+					}
+
 					return;
+
+				case 'Backspace':
+				case 'Delete':
+					this.#filter.reset();
+					break;
 			}
 		}
 
-		if(this.#addressString.trim() !== this.#getInputValue().trim())
+		if (this.#addressString.isChanged())
 		{
-			this.showPrompt(this.#inputNode.value, this.#makeParams());
+			this.#addressString.actualize();
+			this.showPrompt(this.#addressString.value);
 		}
 
-		if(this.#inputNode.value.length === 0)
+		if (this.#addressString.value.length === 0)
 		{
 			this.#showPresetLocations();
 		}
 	}
 
+	#createOnLocationSelectTimer(location: Location, timeout: Number): void
+	{
+		if (this.#onLocationSelectTimerId !== null)
+		{
+			clearTimeout(this.#onLocationSelectTimerId);
+		}
+
+		this.#onLocationSelectTimerId = setTimeout(() => {
+				this.#onLocationSelect(location);
+			},
+			timeout
+		);
+	}
+
 	/**
 	 * @param {string} searchPhrase
-	 * @param {Object} params
 	 */
-	showPrompt(searchPhrase: string, params: Object): void
+	showPrompt(searchPhrase: string): void
 	{
 		this.#searchPhrase.requested = searchPhrase;
 		this.#searchPhrase.current = searchPhrase;
 		this.#searchPhrase.dropped = '';
-		this.#showPromptInner(searchPhrase, params, this.#computePromptDelay());
+		this.#showPromptInner(searchPhrase, this.#computePromptDelay());
 	}
 
 	/**
@@ -641,7 +780,7 @@ export default class Autocomplete extends EventEmitter
 
 	closePrompt(): void
 	{
-		if(this.#prompt)
+		if (this.#prompt)
 		{
 			this.#prompt.close();
 		}
@@ -649,75 +788,77 @@ export default class Autocomplete extends EventEmitter
 
 	isPromptShown(): boolean
 	{
-		if(this.#prompt)
+		if (this.#prompt)
 		{
 			this.#prompt.isShown();
 		}
 	}
 
-	#showPromptInner(searchPhrase: string, params: Object, promptDelay: number): void
+	#showPromptInner(searchPhrase: string, promptDelay: number): void
 	{
-		if(searchPhrase.length > this.#minCharsCountToAutocomplete)
+		if (searchPhrase.length <= this.#minCharsCountToAutocomplete)
 		{
-			if(this.#timerId !== null)
-			{
-				clearTimeout(this.#timerId);
-			}
-
-			this.#timerId = this.#createTimer(searchPhrase, params, promptDelay);
+			promptDelay *= 2;
 		}
+
+		if (this.#timerId !== null)
+		{
+			clearTimeout(this.#timerId);
+		}
+
+		this.#timerId = this.#createTimer(searchPhrase, promptDelay);
 	}
 
 	/**
 	 * Wait for further user input for some time
 	 * @param {string} searchPhrase
-	 * @param {object} params
 	 * @param {number} promptDelay
 	 * @returns {number}
 	 */
-	#createTimer(searchPhrase: string, params: Object, promptDelay: number): number
+	#createTimer(searchPhrase: string, promptDelay: number): number
 	{
 		return setTimeout(() => {
+			// to avoid multiple parallel requests, server responses are too slow.
+			if (this.#isAutocompleteRequestStarted)
+			{
+				clearTimeout(this.#timerId);
+				this.#timerId = this.#createTimer(searchPhrase, promptDelay);
+				return;
+			}
 
-				// to avoid multiple parallel requests, if server responses are too slow.
-				if(this.#isAutocompleteRequestStarted)
-				{
-					clearTimeout(this.#timerId);
-					this.#timerId = this.#createTimer(searchPhrase, params, promptDelay);
-					return;
-				}
+			this.emit(Autocomplete.#onSearchStartedEvent);
+			this.#isAutocompleteRequestStarted = true;
+			const params = this.#makeAutocompleteServiceParams();
 
-				this.emit(Autocomplete.#onSearchStartedEvent);
-				this.#isAutocompleteRequestStarted = true;
-				this.#autocompleteService.autocomplete(searchPhrase, params)
-					.then(
-						(locationsList: Array<Location>) => {
-							this.#timerId = null;
-							this.#onPromptsReceived(locationsList, params);
-							this.emit(Autocomplete.#onSearchCompletedEvent);
-							this.#isAutocompleteRequestStarted = false;
-						},
-						(error) => {
-							this.emit(Autocomplete.#onSearchCompletedEvent);
-							this.#isAutocompleteRequestStarted = false;
-							BX.debug(error);
-						}
-					);
-			},
-			promptDelay
+			this.#autocompleteService.autocomplete(searchPhrase, params)
+				.then(
+					(locationsList: Array<Location>) => {
+						this.#timerId = null;
+						this.#onPromptsReceived(locationsList, params);
+						this.emit(Autocomplete.#onSearchCompletedEvent);
+						this.#isAutocompleteRequestStarted = false;
+					},
+					(error) => {
+						this.emit(Autocomplete.#onSearchCompletedEvent);
+						this.#isAutocompleteRequestStarted = false;
+						BX.debug(error);
+					}
+				);
+		},
+		promptDelay
 		);
 	}
 
 	destroy(): void
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
 		Event.unbindAll(this);
 
-		if(this.#prompt)
+		if (this.#prompt)
 		{
 			this.#prompt.destroy();
 			this.#prompt = null;
@@ -725,7 +866,7 @@ export default class Autocomplete extends EventEmitter
 
 		this.#timerId = null;
 
-		if(this.#inputNode)
+		if (this.#inputNode)
 		{
 			this.#inputNode.removeEventListener('keyup', this.#onInputKeyUp);
 			this.#inputNode.removeEventListener('focus', this.#onInputFocus);

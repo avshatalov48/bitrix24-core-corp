@@ -1,11 +1,25 @@
-import {Type} from 'main.core';
-import {Monitor} from '../monitor';
+import {Loc} from 'main.core';
 
 class Debug
 {
+	constructor()
+	{
+		this.enabled = false;
+	}
+
 	isEnabled()
 	{
-		return Monitor.isEnabled();
+		return this.enabled;
+	}
+
+	enable()
+	{
+		this.enabled = true;
+	}
+
+	disable()
+	{
+		this.enabled = false;
 	}
 
 	log(...params)
@@ -17,7 +31,7 @@ class Debug
 
 		let text = this.getLogMessage(...params);
 
-		BX.desktop.log(BX.message('USER_ID') + '.monitor.log', text.substr(3));
+		BX.desktop.log(Loc.getMessage('USER_ID') + '.monitor.log', text.substr(3));
 	}
 
 	space()
@@ -27,7 +41,7 @@ class Debug
 			return;
 		}
 
-		BX.desktop.log(BX.message('USER_ID') + '.monitor.log', ' ');
+		BX.desktop.log(Loc.getMessage('USER_ID') + '.monitor.log', ' ');
 	}
 
 	getLogMessage()

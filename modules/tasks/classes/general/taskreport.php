@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -8,10 +9,9 @@
  * @deprecated
  */
 
-
 class CTaskReport
 {
-	function GetList($arOrder=array(), $arFilter=array(), $arNavParams = array())
+	public static function GetList($arOrder=array(), $arFilter=array(), $arNavParams = array())
 	{
 		global $DB;
 
@@ -157,8 +157,7 @@ class CTaskReport
 		return $res;
 	}
 
-
-	function GetDepartementStats($arFilter=array())
+	public static function GetDepartementStats($arFilter=array())
 	{
 		global $DB;
 
@@ -203,8 +202,7 @@ class CTaskReport
 		return $res;
 	}
 
-
-	function GetCompanyStats($arFilter=array())
+	public static function GetCompanyStats($arFilter=array())
 	{
 		global $DB;
 
@@ -236,8 +234,7 @@ class CTaskReport
 		return $res;
 	}
 
-
-	function GetEmployeesCount()
+	public static function GetEmployeesCount()
 	{
 		global $DB;
 
@@ -270,8 +267,7 @@ class CTaskReport
 		return 0;
 	}
 
-
-	function GetPeriodCondition($arPeriod, $field, $extraCond = "1=1")
+	public static function GetPeriodCondition($arPeriod, $field, $extraCond = "1=1")
 	{
 		global $DB;
 		if ($arPeriod["START"])

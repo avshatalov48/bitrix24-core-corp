@@ -911,6 +911,55 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Creates site by template code.
+	 * @param string $code Template code.
+	 * @param string $type Site type.
+	 * @return \Bitrix\Main\Entity\AddResult
+	 */
+	public static function addByTemplate(string $code, string $type): \Bitrix\Main\Entity\AddResult
+	{
+		$result = new \Bitrix\Main\Entity\AddResult;
+
+		$componentName = 'bitrix:landing.demo';
+		$className = \CBitrixComponent::includeComponentClass($componentName);
+		$demoCmp = new $className;
+		$demoCmp->initComponent($componentName);
+		$demoCmp->arParams = [
+			'TYPE' => $type,
+			'DISABLE_REDIRECT' => 'Y'
+		];
+		$res = $demoCmp->actionSelect($code);
+
+		if ($res)
+		{
+			$resSite = self::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'=TYPE' => $type
+				],
+				'order' => [
+					'ID' => 'desc'
+				]
+			]);
+			if ($rowSite = $resSite->fetch())
+			{
+				$result->setId($rowSite['ID']);
+			}
+		}
+		else
+		{
+			foreach ($demoCmp->getErrors() as $code => $title)
+			{
+				$result->addError(new \Bitrix\Main\Error($code, $title));
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Tries to add page to the all menu on the site.
 	 * Detects blocks with menu-manifests only.
 	 * @param int $siteId Site id.

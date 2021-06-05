@@ -10,8 +10,6 @@ global $DB, $APPLICATION, $MESS, $DBType;
 	)
 );
 
-
-
 if (!defined('SEO_COUNTERS_DEFAULT'))
 {
 	if (COption::GetOptionString('main', 'vendor', '') == '1c_bitrix')

@@ -1641,6 +1641,43 @@ this.BX = this.BX || {};
 	  return PinnedPanel;
 	}();
 
+	var Rating = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(Rating, _EventEmitter);
+
+	  function Rating() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, Rating);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rating).call(this));
+
+	    _this.init();
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(Rating, [{
+	    key: "init",
+	    value: function init() {
+	      this.setEventNamespace('BX.Mobile.Livefeed');
+	      this.subscribe('onFeedInit', this.onFeedInit.bind(this));
+	    }
+	  }, {
+	    key: "onFeedInit",
+	    value: function onFeedInit() {
+	      if (!window.BXRL) {
+	        return;
+	      }
+
+	      Object.keys(window.BXRL).forEach(function (key) {
+	        if (key !== 'manager' && key !== 'render') {
+	          delete window.BXRL[key];
+	        }
+	      });
+	    }
+	  }]);
+	  return Rating;
+	}(main_core_events.EventEmitter);
+
 	function _templateObject$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
 
@@ -2619,6 +2656,7 @@ this.BX = this.BX || {};
 	var PostMenuInstance = new PostMenu();
 	var PostFormManagerInstance = new PostFormManager();
 	var PinnedPanelInstance = new PinnedPanel();
+	var RatingInstance = new Rating();
 
 	exports.Instance = Instance;
 	exports.BalloonNotifierInstance = BalloonNotifierInstance;
@@ -2628,6 +2666,7 @@ this.BX = this.BX || {};
 	exports.PostMenuInstance = PostMenuInstance;
 	exports.PostFormManagerInstance = PostFormManagerInstance;
 	exports.PinnedPanelInstance = PinnedPanelInstance;
+	exports.RatingInstance = RatingInstance;
 
 }((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX,BX.Mobile));
 //# sourceMappingURL=livefeed.bundle.js.map

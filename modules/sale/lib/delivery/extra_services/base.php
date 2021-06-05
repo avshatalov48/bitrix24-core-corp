@@ -27,7 +27,7 @@ abstract class Base
 	protected $currency = "";
 	protected $operatingCurrency = "";
 
-	abstract public function getClassTitle();
+	abstract public static function getClassTitle();
 
 	public function __construct($id, array $initParams, $currency, $value = null, array $additionalParams = array())
 	{

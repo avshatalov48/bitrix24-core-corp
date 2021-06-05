@@ -672,7 +672,7 @@ class CCrmDocumentContact extends CCrmDocument
 		}
 	}
 
-	public function getDocumentName($documentId)
+	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		$caption = '';

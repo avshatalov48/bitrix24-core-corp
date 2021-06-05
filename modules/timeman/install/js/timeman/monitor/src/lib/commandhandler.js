@@ -42,12 +42,7 @@ export class CommandHandler
 			Logger.warn('Enabled via API');
 			Debug.log('Enabled via API');
 
-			Monitor.enable();
-
-			if (Monitor.isWorkingDayStarted())
-			{
-				Monitor.start();
-			}
+			location.reload();
 		}
 		else
 		{
@@ -56,6 +51,24 @@ export class CommandHandler
 
 			Logger.warn('Disabled via API');
 			Debug.log('Disabled via API');
+		}
+	}
+
+	handleChangeMonitorDebugEnabled(params)
+	{
+		if (params.enabled)
+		{
+			Debug.enable();
+
+			Logger.warn('Debug mode enabled via API');
+			Debug.log('Debug mode enabled via API');
+		}
+		else
+		{
+			Logger.warn('Debug mode disabled via API');
+			Debug.log('Debug mode disabled via API');
+
+			Debug.disable();
 		}
 	}
 }

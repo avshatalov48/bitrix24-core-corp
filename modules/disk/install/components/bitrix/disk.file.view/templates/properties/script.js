@@ -744,7 +744,6 @@ BX.Disk.FileViewClass = (function ()
 			&& BX.SidePanel.Instance.isOpen()
 		)
 		{
-			selectorInstance.popups.container.params.zIndex = BX.SidePanel.Instance.getTopSlider().getZindex();
 			selectorInstance.popups.container.adjustPosition();
 		}
 	};

@@ -359,7 +359,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						$userID = is_int($data) ? $data : intval($data);
 						if($userID > 0 && !isset($usersByID[$userID]))
 						{
-							$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
+							$dbUsers = CUser::GetList('ID', 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
 							$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 							if(is_array($user))
 							{
@@ -380,7 +380,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							$userID = intval($m[1]);
 							if($userID > 0 && !isset($usersByID[$userID]))
 							{
-								$dbUsers = CUser::GetList($by = 'ID', $order = 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
+								$dbUsers = CUser::GetList('ID', 'ASC', array('ID_EQUAL_EXACT'=> $userID), array('FIELDS' => array('ID')));
 								$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 								if(is_array($user))
 								{
@@ -600,7 +600,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			if ($_FILES['IMPORT_FILE']['error'] > 0)
 				ShowError(GetMessage('CRM_CSV_NF_ERROR'));
-			elseif (($strError = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, 0, 'csv,txt')) == '')
+			elseif (($strError = CFile::CheckFile($_FILES['IMPORT_FILE'], 0, false, 'csv,txt')) == '')
 			{
 				$arFields = Array(''=>'');
 				$arFieldsUpper = Array();

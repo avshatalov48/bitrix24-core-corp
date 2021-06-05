@@ -1,3 +1,7 @@
+/**
+ * @mixes BX.Event.EventEmitter
+ * @constructor
+ */
 BX.CrmDiskUploader = function()
 {
 	this._id = "";
@@ -27,6 +31,8 @@ BX.CrmDiskUploader = function()
 
 	this._isShown = false;
 	this._hasLayout = false;
+
+	BX.Event.EventEmitter.makeObservable(this, 'BX.Crm.DiskUploader');
 };
 
 BX.CrmDiskUploader.prototype =
@@ -60,7 +66,7 @@ BX.CrmDiskUploader.prototype =
 	},
 	getFileInputName: function()
 	{
-		return this._fileInput;
+		return 'FILES';
 	},
 	getPlaceHolder: function()
 	{
@@ -165,6 +171,9 @@ BX.CrmDiskUploader.prototype =
 			{
 				item.cleanLayout();
 				this._items.splice(i, 1);
+				this.emit('removeItem', {
+					item: item
+				});
 				return;
 			}
 		}
@@ -174,6 +183,9 @@ BX.CrmDiskUploader.prototype =
 		for(var i = 0; i < this._items.length; i++)
 		{
 			this._items[i].cleanLayout();
+			this.emit('removeItem', {
+				item: this._items[i]
+			});
 		}
 		this._items = [];
 	},
@@ -588,6 +600,11 @@ BX.CrmDiskUploader.prototype =
 			}
 		);
 		this._items.push(item);
+
+		this.emit('addItem', {
+			item: item
+		});
+
 		return item;
 	},
 	_onFileUploadStart: function(queueItem, percent, agent, pIndex)

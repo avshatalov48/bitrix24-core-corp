@@ -33,11 +33,9 @@ abstract class ChannelTracker implements IChannelTracker
 		}
 
 		$users = new \CUser();
-		$by = 'ID';
-		$order = 'ASC';
 		$dbUsers = $users->GetList(
-			$by,
-			$order,
+			'ID',
+			'ASC',
 			array('ID' => implode('|', $userIDs)),
 			array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME'))
 		);

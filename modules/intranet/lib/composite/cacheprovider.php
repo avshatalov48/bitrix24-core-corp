@@ -16,7 +16,7 @@ class CacheProvider extends StaticCacheProvider
 	{
 	}
 
-	public static  function getObject()
+	public static function getObject()
 	{
 		return new self();
 	}

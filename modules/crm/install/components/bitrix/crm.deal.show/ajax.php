@@ -75,6 +75,45 @@ if($mode === '')
 	__CrmDealShowEndJsonResonse(array('ERROR'=>'MODE IS NOT DEFINED!'));
 }
 
+if($mode === 'GET_CLIENT_INFO')
+{
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
+	$entityTypeName = $params['ENTITY_TYPE_NAME'] ?? '';
+	if($entityTypeName === '')
+	{
+		__CrmDealShowEndJsonResonse(array('ERROR' => 'Entity type is not specified.'));
+	}
+
+	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
+	if($entityTypeID !== CCrmOwnerType::Deal)
+	{
+		__CrmDealShowEndJsonResonse(array('ERROR' => 'Entity type is not supported in current context.'));
+	}
+
+	$entityID = $params['ENTITY_ID'] ?? null;
+
+	if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeID, $entityID, $userPermissions))
+	{
+		__CrmDealShowEndJsonResonse(array('ERROR' => 'Access denied.'));
+	}
+
+	$data = \CCrmEntitySelectorHelper::PrepareEntityInfo(
+		$entityTypeName,
+		$entityID,
+		[
+			'ENTITY_EDITOR_FORMAT' => true,
+			'IS_HIDDEN' => false,
+			'REQUIRE_REQUISITE_DATA' => true,
+			'REQUIRE_MULTIFIELDS' => true,
+			'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
+		]
+	);
+
+	__CrmDealShowEndJsonResonse(array('DATA' => $data));
+
+	\Bitrix\Main\Application::getInstance()->terminate();
+}
 if($mode === 'GET_USER_INFO')
 {
 	$result = array();

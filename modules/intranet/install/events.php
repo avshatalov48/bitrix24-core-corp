@@ -1,12 +1,12 @@
 <?
-$langs = CLanguage::GetList(($b=""), ($o=""));
+$langs = CLanguage::GetList();
 while($lang = $langs->Fetch())
 {
 	$lid = $lang["LID"];
 	IncludeModuleLangFile(__FILE__, $lid);
 
 	$arSites = array();
-	$sites = CSite::GetList(($b=""), ($o=""), Array("LANGUAGE_ID"=>$lid));
+	$sites = CSite::GetList('', '', Array("LANGUAGE_ID"=>$lid));
 	while ($site = $sites->Fetch())
 	{
 		$arSites[] = $site["LID"];

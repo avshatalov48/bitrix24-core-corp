@@ -1,6 +1,16 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "У вас недостатньо прав для перегляду статистики";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "Модуль 'Коннектори для зовнішніх месенджерів' не встановлено";
+$MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Ви дійсно хочете це зробити?";
+$MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Відкриті лінії";
+$MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Оберіть дію";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Призначити відповідального";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE"] = "Завершити";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE_TITLE"] = "Виконується завершення групи діалогів.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM"] = "Примусово завершити";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM_TITLE"] = "Виконується примусове завершення групи діалогів.";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER"] = "Переадресувати";
+$MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE"] = "Виконується переадресація групи діалогів.";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER"] = "Приєднатися";
 $MESS["OL_COMPONENT_TABLE_ACTION_ANSWER_AND_CLOSE"] = "Прийняти та закрити діалог";
 $MESS["OL_COMPONENT_TABLE_ACTION_ASSIGN"] = "Забрати діалог";
@@ -85,5 +95,7 @@ $MESS["OL_STATS_HEADER_VOTE_HEAD_1"] = "Оцінка керівника";
 $MESS["OL_STATS_HEADER_VOTE_HEAD_WO"] = "Без оцінки";
 $MESS["OL_STATS_HEADER_WORKTIME_TEXT"] = "Робочий час";
 $MESS["OL_STATS_VOTE_AS_HEAD_BUTTON"] = "Оцінити";
+$MESS["OL_STAT_EXCEL_ACTIONS_BODY"] = "Буде виконана групова дія над діалогами, це може зайняти тривалий час.";
+$MESS["OL_STAT_EXCEL_ACTIONS_TITLE"] = "Групова дія";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_BODY"] = "Буде сформований файл експорту діалогів. Виконання цієї операції може зайняти тривалий час при великій кількості даних.";
 $MESS["OL_STAT_EXCEL_EXPORT_POPUP_TITLE"] = "Експорт в Excel";

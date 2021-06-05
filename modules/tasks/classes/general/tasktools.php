@@ -118,7 +118,7 @@ class CTasksTools
 
 		$isTime = (($ts + date('Z', $ts)) % 86400 != 0);
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$processed = FormatDate(
 			$DB->DateFormatToPhp(CSite::GetDateFormat($isTime ? 'FULL' : 'SHORT')),
 			$ts
@@ -204,7 +204,7 @@ class CTasksTools
 	{
 		if ($formatDatetimePHP === false)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$formatDatetimePHP = CDatabase::DateFormatToPHP(FORMAT_DATETIME);
 		}
 
@@ -240,12 +240,12 @@ class CTasksTools
 			|| (mb_strpos($formatDatetimePHP, 'a') !== false)
 		)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$formatTimePHP = CDatabase::DateFormatToPHP('H:MI T');
 		}
 		else
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$formatTimePHP = CDatabase::DateFormatToPHP('HH:MI');
 		}
 
@@ -253,7 +253,7 @@ class CTasksTools
 		$formatPHP = $formatDatetimePHP;
 
 		// Strip time, if it's zeroed
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		if (
 			(FormatDate(CDatabase::DateFormatToPHP('HH:MI'), MakeTimeStamp($in)) === '00:00')
 			|| (FormatDate(CDatabase::DateFormatToPHP('HH:MI'), MakeTimeStamp($in)) === '0:00')
@@ -275,9 +275,9 @@ class CTasksTools
 		// For current date strip date
 		if ( ! $bTimeStripped )
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$curDate = FormatDate(CDatabase::DateFormatToPHP('Y-m-d'), MakeTimeStamp(time()));
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$givenDate = FormatDate(CDatabase::DateFormatToPHP('Y-m-d'), MakeTimeStamp($in));
 
 			if ($curDate === $givenDate)
@@ -405,11 +405,11 @@ class CTasksTools
 
 		if (self::IsIntranetUser($userId))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			return (CSocNetGroup::CanUserViewGroup($userId, $groupId));
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$userRole = CSocNetUserToGroup::GetUserRole($userId, $groupId);
 
 		if (in_array($userRole, $arAllowedRoles))
@@ -421,13 +421,13 @@ class CTasksTools
 
 	public static function IsIntranetUser($userId)
 	{
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		if (in_array(1, CUser::GetUserGroup($userId)))
 			return true;
 
 		$rsUsers = CUser::GetList(
-			$by = "id",
-			$order = "asc",
+			"id",
+			"asc",
 			array("ID" => $userId),
 			array("SELECT" => array("UF_DEPARTMENT"))
 		);
@@ -474,14 +474,14 @@ class CTasksTools
 			return (null);
 
 		// Prepare path
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$defSiteId = CSite::GetDefSite();
 		$extranetSiteId = false;
 		if (CModule::IncludeModule('extranet')
 			&& method_exists('CExtranet', 'GetExtranetSiteID')
 		)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$extranetSiteId = CExtranet::GetExtranetSiteID();
 		}
 
@@ -491,8 +491,8 @@ class CTasksTools
 			);
 
 		$rsUser = CUser::GetList(
-			$by = 'last_name',
-			$order = 'asc',
+			'last_name',
+			'asc',
 			$arFilter,
 			array('SELECT' => array('UF_DEPARTMENT'))
 			);
@@ -666,7 +666,7 @@ class CTasksTools
 			{
 				$arFilter = array('XML_ID' => $xmlId);
 
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$rc = CForumNew::GetList($arOrder, $arFilter);
 
 				while ($arForum = $rc->Fetch())
@@ -756,7 +756,7 @@ class CTasksTools
 		$arOrder  = array();
 		$arFilter = array('XML_ID' => $XML_ID);
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		$rc = CForumNew::GetList($arOrder, $arFilter);
 		$arForum = $rc->Fetch();
 

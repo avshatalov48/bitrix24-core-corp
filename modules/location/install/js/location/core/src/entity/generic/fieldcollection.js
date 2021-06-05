@@ -55,6 +55,14 @@ export default class FieldCollection
 		return this;
 	}
 
+	deleteField(type)
+	{
+		if(this.isFieldExists(type))
+		{
+			delete this.#fields[type];
+		}
+	}
+
 	getMaxFieldType()
 	{
 		const types = Object.keys(this.#fields).sort((a, b) => {

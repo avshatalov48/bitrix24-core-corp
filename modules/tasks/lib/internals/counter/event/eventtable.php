@@ -115,7 +115,7 @@ class EventTable extends DataManager
 	{
 		$res = self::getList([
 			'filter' => [
-				'=PROCESSED' => 0
+				'<PROCESSED' => DateTime::createFromTimestamp(0),
 			],
 			'limit' => 1
 		]);
@@ -147,7 +147,7 @@ class EventTable extends DataManager
 		\CTimeZone::disable();
 		$res = self::getList([
 			'filter' => [
-				'=PROCESSED' => 0,
+				'<PROCESSED' => DateTime::createFromTimestamp(0),
 				'<CREATED' => DateTime::createFromTimestamp(time() - self::LOST_TTL)
 			],
 			'limit' => $limit

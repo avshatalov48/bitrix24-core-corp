@@ -25,22 +25,6 @@ final class NewItem extends Save
 			$location->setCode($existedLocation->getCode());
 		}
 
-		/* todo: renew data and the custom filled fields.
-		else
-		{
-			$sourceLocation = Service\Location::getInstance()->findByExternalId(
-				$location->getExternalId(),
-				$location->getSourceCode(),
-				$location->getLanguageId()
-			);
-
-			if($sourceLocation)
-			{
-				$location->copyDataFrom($sourceLocation);
-			}
-		}
-		*/
-
 		$result = new Result();
 
 		foreach($this->locationRepositories as $repository)

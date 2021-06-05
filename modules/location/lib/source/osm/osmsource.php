@@ -35,7 +35,7 @@ final class OsmSource extends Source
 	{
 		static $result = null;
 
-		if (!is_null($result))
+		if ($result !== null)
 		{
 			return $result;
 		}

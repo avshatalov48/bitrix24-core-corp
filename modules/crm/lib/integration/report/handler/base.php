@@ -486,7 +486,9 @@ abstract class Base extends BaseReport
 				'height' => $params['avatarHeight'] ?? static::DEFAULT_AVATAR_HEIGHT
 			],
 			BX_RESIZE_IMAGE_EXACT,
-			false
+			false,
+			false,
+			true
 		);
 		$userIcon = $fileTmp['src'];
 

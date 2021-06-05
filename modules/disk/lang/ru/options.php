@@ -21,4 +21,10 @@ $MESS["DISK_MAX_SIZE_FOR_VIDEO_TRANSFORMATION"] = "Максимальный ра
 $MESS["DISK_TRANSFORM_FILES_ON_OPEN"] = "Отправлять файлы на конвертацию при открытии";
 $MESS["DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE"] = "Для просмотра некоторые типы документов будут отправлены во внешние сервисы. <a href=\"#\" onclick='top.BX.Helper.show(\"redirect=detail&code=8775923\");event.preventDefault();'>Подробнее</a>.";
 $MESS["DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Индексировать контент документов";
-?>
+$MESS["DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"] = "Блокировка документов";
+$MESS["DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"] = "Автоматически блокировать при редактировании";
+$MESS["DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"] = "Автоматически разблокировать после сохранения";
+$MESS["DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"] = "Автоматически снимать блокировку через (минут)";
+$MESS["DISK_SETTINGS_ONLYOFFICE_HEAD"] = "Интеграция с OnlyOffice";
+$MESS["DISK_SETTINGS_ONLYOFFICE_SERVER"] = "Адрес сервера (с http://, https://)";
+$MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Секретный код для интеграции";

@@ -2261,7 +2261,7 @@ class CAllCrmCompany
 
 		if (isset($arFields['LOGO']) && is_array($arFields['LOGO']))
 		{
-			if (($strError = CFile::CheckFile($arFields['LOGO'], 0, 0, CFile::GetImageExtensions())) != '')
+			if (($strError = CFile::CheckFile($arFields['LOGO'], 0, false, CFile::GetImageExtensions())) != '')
 				$this->LAST_ERROR .= $strError."<br />";
 		}
 
@@ -2520,14 +2520,11 @@ class CAllCrmCompany
 			&& (int)$arFieldsOrig['ASSIGNED_BY_ID'] != (int)$arFieldsModif['ASSIGNED_BY_ID'])
 		{
 			$arUser = Array();
-			$sort_by = 'last_name';
-			$sort_dir = 'asc';
 			$dbUsers = CUser::GetList(
-				$sort_by, $sort_dir,
+				'last_name', 'asc',
 				array('ID' => implode('|', array(intval($arFieldsOrig['ASSIGNED_BY_ID']), intval($arFieldsModif['ASSIGNED_BY_ID'])))),
 				array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL'))
 			);
-			unset($sort_by, $sort_dir);
 			while ($arRes = $dbUsers->Fetch())
 				$arUser[$arRes['ID']] = CUser::FormatName(CSite::GetNameFormat(false), $arRes);
 

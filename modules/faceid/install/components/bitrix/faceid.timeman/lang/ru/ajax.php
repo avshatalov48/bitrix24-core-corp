@@ -6,6 +6,7 @@ $MESS["FACEID_TRACKERWD_CMP_ERROR_OPEN_DAY"] = "Ошибка при открыт
 $MESS["FACEID_TRACKERWD_CMP_ERROR_PAUSE_DAY"] = "Ошибка при установке перерыва";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_REOPEN_DAY"] = "Ошибка при возобновлении рабочего дня";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_CLOSE_DAY"] = "Ошибка при завершении рабочего дня";
+$MESS["FACEID_TRACKERWD_CMP_ERROR_OPEN_DAY_MONITOR_ENABLED"] = "У вас включен Персональный ассистент рабочего времени. Начать день вы можете только через приложение Битрикс24 для Windows/Mac";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_TIMEMAN_DISABLED"] = "Для сотрудника отключен учет рабочего времени";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_USER_NOT_FOUND_LOCAL"] = "Пользователь не найден в базе данных";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_NO_FACE_LOCAL"] = "Лицо не найдено в базе данных";

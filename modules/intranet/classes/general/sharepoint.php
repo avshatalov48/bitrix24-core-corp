@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllIntranetSharepoint
@@ -643,7 +644,7 @@ class CAllIntranetSharepoint
 
 	public static function UpdateItems($arRows)
 	{
-		list(,$row) = each($arRows);
+		$row = current($arRows);
 
 		$IBLOCK_ID = $row['IBLOCK_ID'];
 		$PRIORITY = $row['PRIORITY'];
@@ -1011,9 +1012,8 @@ class CAllIntranetSharepoint
 		}
 	}
 
-
 	// TODO: think how to return "local entry is newer" fault
-	protected function _Sync($arService, $row, &$arQueue)
+	protected static function _Sync($arService, $row, &$arQueue)
 	{
 		$IBLOCK_ID = $arService['IBLOCK_ID'];
 
@@ -1119,12 +1119,12 @@ class CAllIntranetSharepoint
 		return (mb_substr($fld, 0, 9) == 'PROPERTY_') ? intval(mb_substr($fld, 9)) : null;
 	}
 
-	protected function _UpdateGetValueByType($value, $type)
+	protected static function _UpdateGetValueByType($value, $type)
 	{
 		return $value;
 	}
 
-	protected function _SyncGetValueByType($FIELD, &$arQueue)
+	protected static function _SyncGetValueByType($FIELD, &$arQueue)
 	{
 		$fld = $FIELD['FIELD'];
 
@@ -1268,7 +1268,7 @@ class CAllIntranetSharepoint
 	}
 
 	/* checks existance of UF with sharepoint id. and creates it. */
-	protected function _CheckUF()
+	protected static function _CheckUF()
 	{
 		static $RESULT = null;
 
@@ -1311,7 +1311,7 @@ class CAllIntranetSharepoint
 	}
 
 	/* parse a user string from sp like this: '8;#Ivan Ivanov,#ivanov@expample.com' and try to find such user inside the system */
-	protected function _SyncGetUser($user_str)
+	protected static function _SyncGetUser($user_str)
 	{
 		$USER_XML_ID = 0;
 		$USER_ID = 0;
@@ -1324,7 +1324,7 @@ class CAllIntranetSharepoint
 			{
 				if ($uf_name =  self::_CheckUF())
 				{
-					$dbRes = CUser::GetList($by='ID', $order='ASC', array($uf_name => $USER_XML_ID));
+					$dbRes = CUser::GetList('ID', 'ASC', array($uf_name => $USER_XML_ID));
 					if ($arRes = $dbRes->Fetch())
 					{
 						$USER_ID = $arRes['ID'];
@@ -1360,7 +1360,7 @@ class CAllIntranetSharepoint
 
 			foreach ($arFilters as $arFilter)
 			{
-				$dbRes = CUser::GetList($by='id', $order='asc', $arFilter);
+				$dbRes = CUser::GetList('id', 'asc', $arFilter);
 				if ($arUser = $dbRes->Fetch())
 				{
 					$USER_ID = $arUser['ID'];
@@ -1633,7 +1633,12 @@ class CAllIntranetSharepoint
 						{
 							if ($arFields[$key]["TYPE"] == "int")
 							{
-								array_walk($vals, create_function("&\$item", "\$item=IntVal(\$item);"));
+								array_walk(
+									$vals,
+									function (&$item) {
+										$item = (int)$item;
+									}
+								);
 								$vals = array_unique($vals);
 								$val = implode(",", $vals);
 
@@ -1644,7 +1649,12 @@ class CAllIntranetSharepoint
 							}
 							elseif ($arFields[$key]["TYPE"] == "double")
 							{
-								array_walk($vals, create_function("&\$item", "\$item=DoubleVal(\$item);"));
+								array_walk(
+									$vals,
+									function (&$item) {
+										$item = (float)$item;
+									}
+								);
 								$vals = array_unique($vals);
 								$val = implode(",", $vals);
 
@@ -1655,7 +1665,12 @@ class CAllIntranetSharepoint
 							}
 							elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char")
 							{
-								array_walk($vals, create_function("&\$item", "\$item=\"'\".\$GLOBALS[\"DB\"]->ForSql(\$item).\"'\";"));
+								array_walk(
+									$vals,
+									function (&$item) {
+										$item = "'".$GLOBALS["DB"]->ForSql($item)."'";
+									}
+								);
 								$vals = array_unique($vals);
 								$val = implode(",", $vals);
 
@@ -1666,7 +1681,12 @@ class CAllIntranetSharepoint
 							}
 							elseif ($arFields[$key]["TYPE"] == "datetime")
 							{
-								array_walk($vals, create_function("&\$item", "\$item=\"'\".\$GLOBALS[\"DB\"]->CharToDateFunction(\$GLOBALS[\"DB\"]->ForSql(\$item), \"FULL\").\"'\";"));
+								array_walk(
+									$vals,
+									function (&$item) {
+										$item = $GLOBALS["DB"]->CharToDateFunction($item, "FULL");
+									}
+								);
 								$vals = array_unique($vals);
 								$val = implode(",", $vals);
 
@@ -1677,7 +1697,12 @@ class CAllIntranetSharepoint
 							}
 							elseif ($arFields[$key]["TYPE"] == "date")
 							{
-								array_walk($vals, create_function("&\$item", "\$item=\"'\".\$GLOBALS[\"DB\"]->CharToDateFunction(\$GLOBALS[\"DB\"]->ForSql(\$item), \"SHORT\").\"'\";"));
+								array_walk(
+									$vals,
+									function (&$item) {
+										$item = $GLOBALS["DB"]->CharToDateFunction($item, "SHORT");
+									}
+								);
 								$vals = array_unique($vals);
 								$val = implode(",", $vals);
 
@@ -1856,4 +1881,3 @@ class CAllIntranetSharepoint
 		);
 	}
 }
-?>

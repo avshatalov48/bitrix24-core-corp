@@ -78,6 +78,13 @@ this.BX.Location = this.BX.Location || {};
 	      return this;
 	    }
 	  }, {
+	    key: "deleteField",
+	    value: function deleteField(type) {
+	      if (this.isFieldExists(type)) {
+	        delete babelHelpers.classPrivateFieldGet(this, _fields)[type];
+	      }
+	    }
+	  }, {
 	    key: "getMaxFieldType",
 	    value: function getMaxFieldType() {
 	      var types = Object.keys(babelHelpers.classPrivateFieldGet(this, _fields)).sort(function (a, b) {
@@ -382,151 +389,6 @@ this.BX.Location = this.BX.Location || {};
 	  return FormatFieldCollection;
 	}(FieldCollection);
 
-	/**
-	 * Class defines how the Address will look like
-	 */
-
-	var _code = new WeakMap();
-
-	var _name$1 = new WeakMap();
-
-	var _description$1 = new WeakMap();
-
-	var _languageId = new WeakMap();
-
-	var _template = new WeakMap();
-
-	var _fieldCollection = new WeakMap();
-
-	var _delimiter = new WeakMap();
-
-	var _fieldForUnRecognized = new WeakMap();
-
-	var Format$$1 = /*#__PURE__*/function () {
-	  function Format$$1(props) {
-	    babelHelpers.classCallCheck(this, Format$$1);
-
-	    _code.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _name$1.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _description$1.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _languageId.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _template.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _fieldCollection.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _delimiter.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _fieldForUnRecognized.set(this, {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    if (main_core.Type.isUndefined(props.languageId)) {
-	      throw new TypeError('LanguageId must be defined');
-	    }
-
-	    babelHelpers.classPrivateFieldSet(this, _languageId, props.languageId);
-	    babelHelpers.classPrivateFieldSet(this, _code, props.code || '');
-	    babelHelpers.classPrivateFieldSet(this, _name$1, props.name || '');
-	    babelHelpers.classPrivateFieldSet(this, _template, props.template || '');
-	    babelHelpers.classPrivateFieldSet(this, _description$1, props.description || '');
-	    babelHelpers.classPrivateFieldSet(this, _delimiter, props.delimiter || ', ');
-	    babelHelpers.classPrivateFieldSet(this, _fieldForUnRecognized, props.fieldForUnRecognized || AddressType.UNKNOWN);
-	    babelHelpers.classPrivateFieldSet(this, _fieldCollection, new FormatFieldCollection());
-
-	    if (main_core.Type.isObject(props.fieldCollection)) {
-	      babelHelpers.classPrivateFieldGet(this, _fieldCollection).initFields(props.fieldCollection);
-	    }
-	  }
-
-	  babelHelpers.createClass(Format$$1, [{
-	    key: "getField",
-	    value: function getField(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection).getField(type);
-	    }
-	  }, {
-	    key: "isFieldExists",
-	    value: function isFieldExists(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection).isFieldExists(type);
-	    }
-	  }, {
-	    key: "languageId",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _languageId);
-	    }
-	  }, {
-	    key: "name",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _name$1);
-	    }
-	  }, {
-	    key: "description",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _description$1);
-	    }
-	  }, {
-	    key: "code",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _code);
-	    }
-	  }, {
-	    key: "fieldCollection",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection);
-	    }
-	  }, {
-	    key: "template",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _template);
-	    },
-	    set: function set(template) {
-	      babelHelpers.classPrivateFieldSet(this, _template, template);
-	    }
-	  }, {
-	    key: "delimiter",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _delimiter);
-	    },
-	    set: function set(delimiter) {
-	      babelHelpers.classPrivateFieldSet(this, _delimiter, delimiter);
-	    }
-	  }, {
-	    key: "fieldForUnRecognized",
-	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldForUnRecognized);
-	    },
-	    set: function set(fieldForUnRecognized) {
-	      babelHelpers.classPrivateFieldSet(this, _fieldForUnRecognized, fieldForUnRecognized);
-	    }
-	  }]);
-	  return Format$$1;
-	}();
-
 	var LocationType = function LocationType() {
 	  babelHelpers.classCallCheck(this, LocationType);
 	};
@@ -546,6 +408,9 @@ this.BX.Location = this.BX.Location || {};
 	babelHelpers.defineProperty(LocationType, "ADDRESS_LINE_1", 410);
 	babelHelpers.defineProperty(LocationType, "FLOOR", 420);
 	babelHelpers.defineProperty(LocationType, "ROOM", 430);
+	babelHelpers.defineProperty(LocationType, "TMP_DISTANCE", 5000);
+	babelHelpers.defineProperty(LocationType, "TMP_TYPE_HINT", 5010);
+	babelHelpers.defineProperty(LocationType, "TMP_TYPE_CLARIFICATION", 5020);
 
 	var AddressType = /*#__PURE__*/function (_LocationType) {
 	  babelHelpers.inherits(AddressType, _LocationType);
@@ -564,11 +429,884 @@ this.BX.Location = this.BX.Location || {};
 	babelHelpers.defineProperty(AddressType, "RECIPIENT", 710);
 	babelHelpers.defineProperty(AddressType, "PO_BOX", 800);
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var FormatTemplate = function FormatTemplate(type, template) {
+	  babelHelpers.classCallCheck(this, FormatTemplate);
+	  this.type = type;
+	  this.template = template;
+	};
 
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+	var _templates = new WeakMap();
 
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	var FormatTemplateCollection = /*#__PURE__*/function () {
+	  function FormatTemplateCollection(templateData) {
+	    babelHelpers.classCallCheck(this, FormatTemplateCollection);
+
+	    _templates.set(this, {
+	      writable: true,
+	      value: {}
+	    });
+
+	    for (var type in templateData) {
+	      // eslint-disable-next-line no-prototype-builtins
+	      if (templateData.hasOwnProperty(type)) {
+	        this.setTemplate(new FormatTemplate(type, templateData[type]));
+	      }
+	    }
+	  }
+
+	  babelHelpers.createClass(FormatTemplateCollection, [{
+	    key: "isTemplateExists",
+	    value: function isTemplateExists(type) {
+	      return typeof babelHelpers.classPrivateFieldGet(this, _templates)[type] !== 'undefined';
+	    }
+	  }, {
+	    key: "getTemplate",
+	    value: function getTemplate(type) {
+	      return this.isTemplateExists(type) ? babelHelpers.classPrivateFieldGet(this, _templates)[type] : null;
+	    }
+	  }, {
+	    key: "setTemplate",
+	    value: function setTemplate(template) {
+	      if (!(template instanceof FormatTemplate)) {
+	        throw new Error('Argument template must be instance of FormatTemplate!');
+	      }
+
+	      babelHelpers.classPrivateFieldGet(this, _templates)[template.type] = template;
+	    }
+	  }]);
+	  return FormatTemplateCollection;
+	}();
+
+	/**
+	 * Template types
+	 */
+	var FormatTemplateType = function FormatTemplateType() {
+	  babelHelpers.classCallCheck(this, FormatTemplateType);
+	};
+
+	babelHelpers.defineProperty(FormatTemplateType, "DEFAULT", 'DEFAULT');
+	babelHelpers.defineProperty(FormatTemplateType, "AUTOCOMPLETE", 'AUTOCOMPLETE');
+	babelHelpers.defineProperty(FormatTemplateType, "ADDRESS_LINE_1", 'ADDRESS_LINE_1');
+
+	/**
+	 * Class defines how the Address will look like
+	 */
+
+	var Format = /*#__PURE__*/function () {
+	  function Format(props) {
+	    babelHelpers.classCallCheck(this, Format);
+
+	    if (main_core.Type.isUndefined(props.languageId)) {
+	      throw new TypeError('LanguageId must be defined');
+	    }
+
+	    this.languageId = props.languageId;
+	    this.code = props.code || '';
+	    this.name = props.name || '';
+	    this.templateAutocomplete = props.templateAutocomplete || '';
+	    this.templateAddressLine1 = props.templateAddressLine1 || '';
+	    this.description = props.description || '';
+	    this.delimiter = props.delimiter || ', ';
+	    this.fieldForUnRecognized = props.fieldForUnRecognized || AddressType.UNKNOWN;
+	    this.fieldCollection = new FormatFieldCollection();
+
+	    if (main_core.Type.isObject(props.fieldCollection)) {
+	      this.fieldCollection.initFields(props.fieldCollection);
+	    }
+
+	    var collection = {};
+
+	    if (main_core.Type.isObject(props.templateCollection)) {
+	      collection = props.templateCollection;
+	    }
+
+	    this.templateCollection = new FormatTemplateCollection(collection);
+	  }
+
+	  babelHelpers.createClass(Format, [{
+	    key: "getField",
+	    value: function getField(type) {
+	      return this.fieldCollection.getField(type);
+	    }
+	  }, {
+	    key: "isFieldExists",
+	    value: function isFieldExists(type) {
+	      return this.fieldCollection.isFieldExists(type);
+	    }
+	  }, {
+	    key: "getTemplate",
+	    value: function getTemplate() {
+	      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : FormatTemplateType.DEFAULT;
+	      return this.templateCollection.getTemplate(type);
+	    }
+	  }, {
+	    key: "isTemplateExists",
+	    value: function isTemplateExists(type) {
+	      return this.templateCollection.isTemplateExists(type);
+	    }
+	  }, {
+	    key: "template",
+	    get: function get() {
+	      return this.templateCollection.getTemplate();
+	    }
+	  }]);
+	  return Format;
+	}();
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var STR_DELIMITER_PLACEHOLDER = "#S#";
+	var REGEX_COMMA_AMONG_EMPTY_SPACE = "\\s*,\\s*";
+	var REGEX_GROUP_DELIMITER = "(\\\"([^\"\\\\]*|\\\\\"|\\\\\\\\|\\\\)*\")";
+	var REGEX_GROUP_FIELD_TEXT = REGEX_GROUP_DELIMITER;
+	var REGEX_GROUP_FIELD_NAME = "([a-zA-Z][a-zA-Z_0-9]*(:(NU|UN|N|U))?)";
+	var REGEX_GROUP_FIELD_LIST_END = "\\s*\\]";
+	var REGEX_GROUP_END = REGEX_GROUP_FIELD_LIST_END;
+	var REGEX_PART_FROM_DELIMITER_TO_FIELD_LIST = "\\s*,\\s*\\[\\s*";
+	var REGEX_GROUP_PART_BEFORE_FIELDS = "(([^\\[\\\\]|\\\\\\[|\\\\\\\\)*)(\\[\\s*)(\"([^\"\\\\]*|\\\\\"|\\\\\\\\|\\\\)*\")\\s*,\\s*\\[\\s*";
+	var ERR_PARSE_GROUP_START_POSITION = 1100;
+	var ERR_PARSE_GROUP_START = 1110;
+	var ERR_PARSE_GROUP_DELIMITER = 1120;
+	var ERR_PARSE_PART_FROM_DELIMITER_TO_FIELD_LIST = 1130;
+	var ERR_PARSE_GROUP_FIELD_TEXT = 1140;
+	var ERR_PARSE_GROUP_FIELD_NAME = 1150;
+	var ERR_PARSE_GROUP_FIELD = 1160;
+	var ERR_PARSE_GROUP_FIELD_LIST = 1170;
+	var ERR_PARSE_GROUP_FIELD_LIST_DELIMITER = 1180;
+	var ERR_PARSE_GROUP_FIELD_LIST_END = 1190;
+	var ERR_PARSE_GROUP_END = 1200;
+	var ERR_PARSE_GROUP = 1210;
+
+	var _template = new WeakMap();
+
+	var _delimiter = new WeakMap();
+
+	var _htmlEncode = new WeakMap();
+
+	var _format = new WeakMap();
+
+	var _isTemplateForFieldExists = new WeakSet();
+
+	var _getFieldValueByTemplate = new WeakSet();
+
+	var _getAlterFieldValue = new WeakSet();
+
+	var StringTemplateConverter = /*#__PURE__*/function () {
+	  function StringTemplateConverter(_template2, delimiter, htmlEncode) {
+	    var format = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	    babelHelpers.classCallCheck(this, StringTemplateConverter);
+
+	    _getAlterFieldValue.add(this);
+
+	    _getFieldValueByTemplate.add(this);
+
+	    _isTemplateForFieldExists.add(this);
+
+	    _template.set(this, {
+	      writable: true,
+	      value: ""
+	    });
+
+	    _delimiter.set(this, {
+	      writable: true,
+	      value: ""
+	    });
+
+	    _htmlEncode.set(this, {
+	      writable: true,
+	      value: false
+	    });
+
+	    _format.set(this, {
+	      writable: true,
+	      value: null
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _template, _template2);
+	    babelHelpers.classPrivateFieldSet(this, _delimiter, delimiter);
+	    babelHelpers.classPrivateFieldSet(this, _htmlEncode, htmlEncode);
+	    babelHelpers.classPrivateFieldSet(this, _format, format);
+	  }
+
+	  babelHelpers.createClass(StringTemplateConverter, [{
+	    key: "getErrorCodes",
+	    value: function getErrorCodes() {
+	      var result = {};
+	      result[ERR_PARSE_GROUP_START_POSITION] = "ERR_PARSE_GROUP_START_POSITION";
+	      result[ERR_PARSE_GROUP_START] = "ERR_PARSE_GROUP_START";
+	      result[ERR_PARSE_GROUP_DELIMITER] = "ERR_PARSE_GROUP_DELIMITER";
+	      result[ERR_PARSE_PART_FROM_DELIMITER_TO_FIELD_LIST] = "ERR_PARSE_PART_FROM_DELIMITER_TO_FIELD_LIST";
+	      result[ERR_PARSE_GROUP_FIELD_TEXT] = "ERR_PARSE_GROUP_FIELD_TEXT";
+	      result[ERR_PARSE_GROUP_FIELD_NAME] = "ERR_PARSE_GROUP_FIELD_NAME";
+	      result[ERR_PARSE_GROUP_FIELD] = "ERR_PARSE_GROUP_FIELD";
+	      result[ERR_PARSE_GROUP_FIELD_LIST] = "ERR_PARSE_GROUP_FIELD_LIST";
+	      result[ERR_PARSE_GROUP_FIELD_LIST_DELIMITER] = "ERR_PARSE_GROUP_FIELD_LIST_DELIMITER";
+	      result[ERR_PARSE_GROUP_FIELD_LIST_END] = "ERR_PARSE_GROUP_FIELD_LIST_END";
+	      result[ERR_PARSE_GROUP_END] = "ERR_PARSE_GROUP_END";
+	      result[ERR_PARSE_GROUP] = "ERR_PARSE_GROUP";
+	      return result;
+	    }
+	  }, {
+	    key: "getErrorsText",
+	    value: function getErrorsText(context) {
+	      var result = "";
+	      var errorCodes = this.getErrorCodes();
+	      var errors = context["error"]["errors"];
+
+	      for (var i = 0; i < errors.length; i++) {
+	        result += "Error: ".concat(errors[i]["position"], ", ").concat(errorCodes[errors[i]["code"]], "\n");
+
+	        if (errors[i].hasOwnProperty("info") && main_core.Type.isPlainObject(errors[i]["info"])) {
+	          var errorInfo = errors[i]["info"];
+	          var needHeader = true;
+
+	          for (var paramName in errorInfo) {
+	            if (errorInfo.hasOwnProperty(paramName)) {
+	              var paramValue = errorInfo[paramName];
+	              var needPrint = false;
+
+	              if (main_core.Type.isString(paramValue)) {
+	                paramValue = "\"".concat(paramValue, "\"");
+	                needPrint = true;
+	              } else if (main_core.Type.isNumber(paramValue) || main_core.Type.isFloat(paramValue)) {
+	                needPrint = true;
+	              } else if (main_core.Type.isBoolean(paramValue)) {
+	                paramValue = paramValue ? "true" : "false";
+	                needPrint = true;
+	              } else if (main_core.Type.isArray(paramValue)) {
+	                paramValue = "[...]";
+	                needPrint = true;
+	              } else if (main_core.Type.isObject(paramValue)) {
+	                paramValue = '{...}';
+	                needPrint = true;
+	              }
+
+	              if (needPrint) {
+	                if (needHeader) {
+	                  result += "  Error info:\n";
+	                  needHeader = false;
+	                }
+
+	                result += "    ".concat(paramName, ": ").concat(paramValue, "\n");
+	              }
+	            }
+	          }
+	        }
+	      }
+
+	      var templateValue = context["template"].replace("\n", "\\n");
+	      templateValue = templateValue.replace("\"", "\\\"");
+	      result += "Template: \"".concat(templateValue, "\"\n\n");
+	      return result;
+	    }
+	  }, {
+	    key: "createContext",
+	    value: function createContext() {
+	      return {
+	        "level": 0,
+	        "position": 0,
+	        "template": "",
+	        "address": null,
+	        "info": {},
+	        "hasError": false,
+	        "error": {
+	          "code": 0,
+	          "position": 0,
+	          "errors": [],
+	          "info": {}
+	        }
+	      };
+	    }
+	  }, {
+	    key: "clearContextInfo",
+	    value: function clearContextInfo(context) {
+	      context["info"] = {};
+	      return context;
+	    }
+	  }, {
+	    key: "clearContextError",
+	    value: function clearContextError(context) {
+	      context["hasError"] = false;
+	      context["error"] = {
+	        "code": 0,
+	        "position": 0,
+	        "errors": [],
+	        "info": {}
+	      };
+	      return context;
+	    }
+	  }, {
+	    key: "clearContextInfoAndError",
+	    value: function clearContextInfoAndError(context) {
+	      return this.clearContextError(this.clearContextInfo(context));
+	    }
+	  }, {
+	    key: "unescapeText",
+	    value: function unescapeText(text) {
+	      var result = "";
+	      var i;
+
+	      for (i = 0; i < text.length; i++) {
+	        if (text[i] === "\\") {
+	          if (text.length - i > 1) {
+	            result += text[++i];
+	          }
+	        } else {
+	          result += text[i];
+	        }
+	      }
+
+	      return result;
+	    }
+	  }, {
+	    key: "parseGroupDelimiter",
+	    value: function parseGroupDelimiter(context) {
+	      // Capturing the group's separator
+	      var delimiterStartPosition = context["position"]; //                [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for ^^^^
+
+	      var regEx = new RegExp(REGEX_GROUP_DELIMITER, "mg");
+	      regEx.lastIndex = delimiterStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === delimiterStartPosition) {
+	        context["info"] = {
+	          "position": delimiterStartPosition,
+	          "end": delimiterStartPosition + matches[0].length,
+	          "value": this.unescapeText(context["template"].substr(delimiterStartPosition + 1, matches[0].length - 2))
+	        };
+	        context["position"] = context["info"]["end"];
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_DELIMITER, delimiterStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseFieldText",
+	    value: function parseFieldText(context) {
+	      var textBlockStartPosition = context["position"]; // [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for                         ^^^^^^
+
+	      var regEx = new RegExp(REGEX_GROUP_FIELD_TEXT, "mg");
+	      regEx.lastIndex = textBlockStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === textBlockStartPosition) {
+	        context["info"] = {
+	          "type": "text",
+	          "position": textBlockStartPosition,
+	          "end": textBlockStartPosition + matches[0].length,
+	          "value": this.unescapeText(context["template"].substr(textBlockStartPosition + 1, matches[0].length - 2))
+	        };
+	        context["position"] = context["info"]["end"];
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_FIELD_TEXT, textBlockStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "splitFieldName",
+	    value: function splitFieldName(fieldName) {
+	      var parts = fieldName.split(":");
+	      var namePart = parts[0];
+	      var modifiersPart = parts.length > 1 ? parts[1] : "";
+	      return [namePart, modifiersPart];
+	    }
+	  }, {
+	    key: "getAddressFieldValue",
+	    value: function getAddressFieldValue(address, fieldName, fieldModifiers) {
+	      var result = "";
+
+	      if (!main_core.Type.isUndefined(AddressType[fieldName])) {
+	        if (fieldName === "ADM_LEVEL_1" || fieldName === "ADM_LEVEL_2") {
+	          // Scratch "Province & Region by Locality"
+	          result = _classPrivateMethodGet(this, _getAlterFieldValue, _getAlterFieldValue2).call(this, address, AddressType[fieldName]);
+	        } else {
+	          result = address.getFieldValue(AddressType[fieldName]);
+	        }
+
+	        if (result === null) {
+	          result = _classPrivateMethodGet(this, _getFieldValueByTemplate, _getFieldValueByTemplate2).call(this, fieldName, address);
+	        }
+	      }
+
+	      if (!main_core.Type.isString(result)) {
+	        result = "";
+	      }
+
+	      if (result !== "") {
+	        if (fieldModifiers.indexOf("N") >= 0) {
+	          result = result.replace(/(\r\n|\n|\r)/g, "#S#");
+	        }
+
+	        if (fieldModifiers.indexOf("U") >= 0) {
+	          result = result.toUpperCase();
+	        }
+	      }
+
+	      return result;
+	    }
+	  }, {
+	    key: "parseFieldName",
+	    value: function parseFieldName(context) {
+	      var fieldNameStartPosition = context["position"]; //          [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for  ^^^^^^^^^^^^^^^^
+
+	      var regEx = new RegExp(REGEX_GROUP_FIELD_NAME, "mg");
+	      regEx.lastIndex = fieldNameStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === fieldNameStartPosition) {
+	        context["position"] = fieldNameStartPosition + matches[0].length;
+	        var fieldParts = this.splitFieldName(matches[0]);
+	        var fieldName = fieldParts[0];
+	        var fieldModifiers = fieldParts[1];
+	        var fieldValue = this.getAddressFieldValue(context["address"], fieldName, fieldModifiers);
+	        context["info"] = {
+	          "type": "field",
+	          "position": fieldNameStartPosition,
+	          "end": context["position"],
+	          "modifiers": fieldModifiers,
+	          "name": fieldName,
+	          "value": fieldValue
+	        };
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_FIELD_NAME, fieldNameStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseFieldListDelimiter",
+	    value: function parseFieldListDelimiter(context) {
+	      var markerStartPosition = context["position"]; // [", ", [ADDRESS_LINE_1:N , ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for         ^^^
+
+	      var regEx = new RegExp(REGEX_COMMA_AMONG_EMPTY_SPACE, "mg");
+	      regEx.lastIndex = markerStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === markerStartPosition) {
+	        context["position"] = markerStartPosition + matches[0].length;
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_FIELD_LIST_DELIMITER, markerStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseFieldListEnd",
+	    value: function parseFieldListEnd(context) {
+	      var markerStartPosition = context["position"]; // [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for                                                    ^
+
+	      var regEx = new RegExp(REGEX_GROUP_FIELD_LIST_END, "mg");
+	      regEx.lastIndex = markerStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === markerStartPosition) {
+	        context["position"] = markerStartPosition + matches[0].length;
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_FIELD_LIST_END, markerStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseField",
+	    value: function parseField(context) {
+	      var fieldInfo = [];
+	      var fieldStartPosition = context["position"];
+	      var errors = []; // Checking for the presence of a text block
+
+	      context = this.parseFieldText(context);
+
+	      if (context["hasError"]) {
+	        this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	        context = this.clearContextInfoAndError(context); // Checking for the presence of a field name
+
+	        context = this.parseFieldName(context);
+	      }
+
+	      if (context["hasError"]) {
+	        this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	        context = this.clearContextInfoAndError(context); // Checking for the presence of a nested group
+
+	        context = this.parseGroup(context);
+
+	        if (context["hasError"]) {
+	          this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	        } else if (context["info"]["position"] > fieldStartPosition) {
+	          // Group found beyond the expected position
+	          this.addContextError(context, ERR_PARSE_GROUP_START_POSITION, fieldStartPosition);
+	          this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	        }
+	      }
+
+	      if (!context["hasError"]) {
+	        fieldInfo = context["info"];
+	        fieldInfo["isFieldListEnd"] = false;
+	        context = this.clearContextInfo(context); // Checking for the presence of a field separator
+
+	        context = this.parseFieldListDelimiter(context);
+
+	        if (context["hasError"]) {
+	          this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	          context = this.clearContextInfoAndError(context); // Checking for the presence of the end sign of the field list
+
+	          context = this.parseFieldListEnd(context);
+
+	          if (context["hasError"]) {
+	            this.unshiftError(errors, context["error"]["code"], context["error"]["position"]);
+	          } else {
+	            fieldInfo["isFieldListEnd"] = true;
+	          }
+	        }
+	      }
+
+	      if (context["hasError"]) {
+	        this.unshiftError(errors, ERR_PARSE_GROUP_FIELD, fieldStartPosition);
+	        this.addContextErrors(context, errors);
+	      } else {
+	        context["info"] = fieldInfo;
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseGroupFieldList",
+	    value: function parseGroupFieldList(context) {
+	      var fieldListStartPosition = context["position"];
+	      var fieldValues = []; //            [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for ^^^
+
+	      var regEx = new RegExp(REGEX_PART_FROM_DELIMITER_TO_FIELD_LIST, "mg");
+	      regEx.lastIndex = fieldListStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === fieldListStartPosition) {
+	        context["position"] = fieldListStartPosition + matches[0].length;
+	        var isFieldListEnd = false;
+
+	        while (!(context["hasError"] || isFieldListEnd)) {
+	          context = this.parseField(context);
+
+	          if (!context["hasError"]) {
+	            isFieldListEnd = context["info"].hasOwnProperty("isFieldListEnd") && context["info"]["isFieldListEnd"];
+
+	            if (context["info"]["value"] !== "") {
+	              fieldValues.push(context["info"]["value"]);
+	            }
+
+	            context = this.clearContextInfo(context);
+	          }
+	        }
+
+	        if (!context["hasError"]) {
+	          context["info"] = {
+	            "fieldValues": fieldValues
+	          };
+	        }
+	      } else {
+	        this.addContextError(context, ERR_PARSE_PART_FROM_DELIMITER_TO_FIELD_LIST, fieldListStartPosition);
+	      }
+
+	      if (context["hasError"]) {
+	        this.addContextError(context, ERR_PARSE_GROUP_FIELD_LIST, fieldListStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseGroupStart",
+	    value: function parseGroupStart(context) {
+	      //                 [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for ^^^^^^^^
+	      var regEx = new RegExp(REGEX_GROUP_PART_BEFORE_FIELDS, "mg");
+	      regEx.lastIndex = context["position"];
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches) {
+	        context["info"]["groupStartPosition"] = matches.index + matches[1].length;
+	        context["info"]["groupDelimiterStartPosition"] = matches.index + matches[1].length + matches[3].length;
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_START, context["position"]);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseGroupEnd",
+	    value: function parseGroupEnd(context) {
+	      var markerStartPosition = context["position"]; // [", ", [ADDRESS_LINE_1:N,ADDRESS_LINE_2,"Text",LOCALITY,ADM_LEVEL_2]]
+	      // Are looking for                                                     ^
+
+	      var regEx = new RegExp(REGEX_GROUP_END, "mg");
+	      regEx.lastIndex = markerStartPosition;
+	      var matches = regEx.exec(context["template"]);
+
+	      if (matches && matches.index === markerStartPosition) {
+	        context["position"] = markerStartPosition + matches[0].length;
+	      } else {
+	        this.addContextError(context, ERR_PARSE_GROUP_END, markerStartPosition);
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "parseGroup",
+	    value: function parseGroup(context) {
+	      var startSearchPosition = context["position"];
+	      var groupStartPosition = 0;
+	      var delimiterValue = "";
+	      var fieldValues = [];
+	      context["level"]++; // Checking for the presence of a start of a group
+
+	      context = this.parseGroupStart(context);
+
+	      if (!context["hasError"]) {
+	        // Found a sign of the beginning of a group
+	        groupStartPosition = context["info"]["groupStartPosition"];
+	        context["position"] = context["info"]["groupDelimiterStartPosition"];
+	        context = this.clearContextInfo(context);
+	        context = this.parseGroupDelimiter(context);
+	      }
+
+	      if (!context["hasError"]) {
+	        // The value of the group separator was got
+	        delimiterValue = context["info"]["value"];
+	        context = this.clearContextInfo(context);
+	        context = this.parseGroupFieldList(context);
+	      }
+
+	      if (!context["hasError"]) {
+	        // The values of the field list was got
+	        fieldValues = context["info"]["fieldValues"];
+	        context = this.clearContextInfo(context);
+	        context = this.parseGroupEnd(context);
+	      }
+
+	      if (!context["hasError"]) {
+	        // Kremlin,Moscow,Moscow,Russia,103132 -> Kremlin,Moscow,Russia,103132
+	        fieldValues = babelHelpers.toConsumableArray(new Set(fieldValues)); // The sign of the end of the group is received, the assembly of the group value.
+
+	        context["info"] = {
+	          "type": "group",
+	          "position": groupStartPosition,
+	          "end": context["position"],
+	          "value": fieldValues.join(delimiterValue)
+	        };
+	      }
+
+	      context["level"]--;
+
+	      if (context["hasError"]) {
+	        this.addContextError(context, ERR_PARSE_GROUP, startSearchPosition, {
+	          "groupStartPosition": groupStartPosition
+	        });
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "appendTextBlock",
+	    value: function appendTextBlock(blocks, position, value) {
+	      var lastBlockIndex = blocks.length - 1;
+	      var lastBlock = lastBlockIndex >= 0 ? blocks[lastBlockIndex] : null;
+
+	      if (lastBlock && lastBlock.hasOwnProperty("type") && lastBlock["type"] === "text") {
+	        blocks[lastBlockIndex]["value"] += value;
+	        blocks[lastBlockIndex]["length"] += value.length;
+	      } else {
+	        blocks[++lastBlockIndex] = {
+	          "type": "text",
+	          "position": position,
+	          "length": value.length,
+	          "value": value
+	        };
+	      }
+	    }
+	  }, {
+	    key: "appendGroupBlock",
+	    value: function appendGroupBlock(blocks, position, value) {
+	      blocks.push({
+	        "type": "group",
+	        "position": position,
+	        "length": value.length,
+	        "value": value
+	      });
+	    }
+	  }, {
+	    key: "unshiftError",
+	    value: function unshiftError(errors, code, position) {
+	      var info = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	      errors.unshift({
+	        "code": code,
+	        "position": position,
+	        "info": main_core.Type.isPlainObject(info) ? info : {}
+	      });
+	    }
+	  }, {
+	    key: "addContextError",
+	    value: function addContextError(context, code, position) {
+	      var info = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	      context["hasError"] = true;
+	      context["error"]["code"] = code;
+	      context["error"]["position"] = position;
+	      context["error"]["info"] = main_core.Type.isPlainObject(info) ? info : {};
+	      this.unshiftError(context["error"]["errors"], code, position, info);
+	    }
+	  }, {
+	    key: "addContextErrors",
+	    value: function addContextErrors(context, errors) {
+	      var info = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	      context["hasError"] = true;
+	      context["error"]["code"] = errors[0]["code"];
+	      context["error"]["position"] = errors[0]["position"];
+	      context["error"]["info"] = main_core.Type.isPlainObject(info) ? info : {};
+	      context["error"]["errors"].splice(0, 0, errors);
+	    }
+	  }, {
+	    key: "parseBlocks",
+	    value: function parseBlocks(context) {
+	      /* Variable for debug only
+	      let errorDisplayed = false;
+	      */
+	      var blocks = [];
+	      var templateLength = context["template"].length;
+
+	      while (context["position"] < templateLength) {
+	        var blockStartPosition = context["position"];
+	        context = this.parseGroup(context);
+
+	        if (context["hasError"]) {
+	          // Debug info
+
+	          /*if (!errorDisplayed)
+	          {
+	          	console.info(this.getErrorsText(context));
+	          	errorDisplayed = true;
+	          }*/
+	          var errorInfo = context["error"]["info"];
+	          var blockLength = void 0;
+
+	          if (!main_core.Type.isPlainObject(errorInfo) && errorInfo.hasOwnProperty("groupStartPosition") && errorInfo["groupStartPosition"] > blockStartPosition) {
+	            blockLength = errorInfo["groupStartPosition"] - blockStartPosition + 1;
+	          } else {
+	            blockLength = 1;
+	          }
+
+	          this.appendTextBlock(blocks, context["error"]["position"], context["template"].substr(blockStartPosition, blockLength));
+	          context = this.clearContextInfoAndError(context);
+	          context["position"] = blockStartPosition + blockLength;
+	        } else {
+	          var groupStartPosition = context["info"]["position"];
+
+	          if (groupStartPosition > blockStartPosition) {
+	            this.appendTextBlock(blocks, blockStartPosition, context["template"].substr(blockStartPosition, groupStartPosition - blockStartPosition));
+	          }
+
+	          if (context["info"]["value"] !== "") {
+	            this.appendGroupBlock(blocks, groupStartPosition, context["info"]["value"]);
+	          }
+
+	          context = this.clearContextInfo(context);
+	        }
+	      }
+
+	      if (!context["hasError"]) {
+	        context["info"] = {
+	          "blocks": blocks
+	        };
+	      }
+
+	      return context;
+	    }
+	  }, {
+	    key: "convert",
+	    value: function convert(address) {
+	      var result = "";
+	      var context = this.createContext();
+	      context["template"] = babelHelpers.classPrivateFieldGet(this, _template);
+	      context["address"] = address;
+	      context = this.parseBlocks(context);
+
+	      if (!context["hasError"]) {
+	        var blocks = context["info"]["blocks"];
+
+	        for (var i = 0; i < blocks.length; i++) {
+	          if (blocks[i]["type"] === "text") {
+	            result += this.unescapeText(blocks[i]["value"]);
+	          } else {
+	            result += blocks[i]["value"];
+	          }
+	        }
+	      }
+
+	      if (result !== "") {
+	        var temp = result.split(STR_DELIMITER_PLACEHOLDER);
+	        var parts = [];
+
+	        for (var _i = 0; _i < temp.length; _i++) {
+	          if (temp[_i] !== "") {
+	            parts.push(temp[_i]);
+	          }
+	        }
+
+	        if (babelHelpers.classPrivateFieldGet(this, _htmlEncode) && parts.length > 0) {
+	          for (var _i2 = 0; _i2 < parts.length; _i2++) {
+	            parts[_i2] = main_core.Text.encode(parts[_i2]);
+	          }
+	        }
+
+	        result = parts.join(babelHelpers.classPrivateFieldGet(this, _delimiter));
+	      }
+
+	      return result;
+	    }
+	  }]);
+	  return StringTemplateConverter;
+	}();
+
+	var _isTemplateForFieldExists2 = function _isTemplateForFieldExists2(fieldName) {
+	  return babelHelpers.classPrivateFieldGet(this, _format) && babelHelpers.classPrivateFieldGet(this, _format).getTemplate(fieldName) !== null;
+	};
+
+	var _getFieldValueByTemplate2 = function _getFieldValueByTemplate2(fieldName, address) {
+	  if (!_classPrivateMethodGet(this, _isTemplateForFieldExists, _isTemplateForFieldExists2).call(this, fieldName)) {
+	    return null;
+	  }
+
+	  var template = babelHelpers.classPrivateFieldGet(this, _format).getTemplate(fieldName).template;
+	  var templateConverter = new StringTemplateConverter(template, babelHelpers.classPrivateFieldGet(this, _delimiter), babelHelpers.classPrivateFieldGet(this, _htmlEncode), babelHelpers.classPrivateFieldGet(this, _format));
+	  return templateConverter.convert(address);
+	};
+
+	var _getAlterFieldValue2 = function _getAlterFieldValue2(address, fieldType) {
+	  var localityValue = address.getFieldValue(AddressType.LOCALITY);
+	  localityValue = main_core.Type.isString(localityValue) ? localityValue : "";
+	  var result = address.getFieldValue(fieldType);
+
+	  if (!main_core.Type.isString(result)) {
+	    result = "";
+	  }
+
+	  if (result !== "" && localityValue !== "") {
+	    var localityValueUpper = localityValue.toUpperCase();
+	    var targetValueUpper = result.toUpperCase();
+
+	    if (targetValueUpper.length >= localityValueUpper.length) {
+	      var targetValueSubstr = targetValueUpper.substr(targetValueUpper.length - localityValueUpper.length);
+
+	      if (localityValueUpper === targetValueSubstr) {
+	        result = "";
+	      }
+	    }
+	  }
+
+	  return result;
+	};
 
 	var StringConverter = /*#__PURE__*/function () {
 	  function StringConverter() {
@@ -589,8 +1327,24 @@ this.BX.Location = this.BX.Location || {};
 	    value: function convertAddressToString(address, format, strategyType, contentType) {
 	      var result;
 
-	      if (strategyType === StringConverter.STRATEGY_TYPE_TEMPLATE) {
-	        result = StringConverter.convertAddressToStringTemplate(address, format, contentType);
+	      if (strategyType === StringConverter.STRATEGY_TYPE_TEMPLATE || strategyType === StringConverter.STRATEGY_TYPE_TEMPLATE_COMMA || strategyType === StringConverter.STRATEGY_TYPE_TEMPLATE_NL || strategyType === StringConverter.STRATEGY_TYPE_TEMPLATE_BR) {
+	        var delimiter = null;
+
+	        switch (strategyType) {
+	          case StringConverter.STRATEGY_TYPE_TEMPLATE_COMMA:
+	            delimiter = ', ';
+	            break;
+
+	          case StringConverter.STRATEGY_TYPE_TEMPLATE_NL:
+	            delimiter = '\n';
+	            break;
+
+	          case StringConverter.STRATEGY_TYPE_TEMPLATE_BR:
+	            delimiter = '<br />';
+	            break;
+	        }
+
+	        result = StringConverter.convertAddressToStringTemplate(address, format.getTemplate(), contentType, delimiter, format);
 	      } else if (strategyType === StringConverter.STRATEGY_TYPE_FIELD_SORT) {
 	        var fieldSorter = function fieldSorter(a, b) {
 	          return a.sort - b.sort;
@@ -622,75 +1376,26 @@ this.BX.Location = this.BX.Location || {};
 	    /**
 	     * Convert address to string
 	     * @param {Address} address
-	     * @param {Format} format
+	     * @param {string} template
 	     * @param {string} contentType
+	     * @param {string|null} delimiter
+	     * @param {Format|null} format
 	     * @returns {string}
 	     */
 
 	  }, {
 	    key: "convertAddressToStringTemplate",
-	    value: function convertAddressToStringTemplate(address, format, contentType) {
-	      var result = format.template;
+	    value: function convertAddressToStringTemplate(address, template, contentType) {
+	      var delimiter = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	      var format = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+	      var needHtmlEncode = contentType === StringConverter.CONTENT_TYPE_HTML;
 
-	      if (contentType === StringConverter.CONTENT_TYPE_HTML) {
-	        result = result.replace(/\n/g, '<br/>');
+	      if (delimiter === null) {
+	        delimiter = needHtmlEncode ? '<br />' : '\n';
 	      }
 
-	      var components = result.match(/{{[^]*?}}/gm);
-
-	      if (!main_core.Type.isArray(components)) {
-	        return '';
-	      } // find placeholders witch looks like {{ ... }}
-
-
-	      var _iterator = _createForOfIteratorHelper$2(components),
-	          _step;
-
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var component = _step.value;
-	          // find placeholders wich looks like # ... #
-	          var fields = component.match(/#([0-9A-Z_]*?)#/);
-
-	          if (!main_core.Type.isArray(fields) || main_core.Type.isUndefined(fields[1])) {
-	            continue;
-	          }
-
-	          if (main_core.Type.isUndefined(AddressType[fields[1]])) {
-	            continue;
-	          }
-
-	          var type = AddressType[fields[1]];
-	          var fieldValue = address.getFieldValue(type);
-
-	          if (fieldValue === null) {
-	            continue;
-	          }
-
-	          if (contentType === StringConverter.CONTENT_TYPE_HTML) {
-	            fieldValue = main_core.Text.encode(fieldValue);
-	          }
-
-	          var componentReplacer = component.replace(fields[0], fieldValue);
-	          componentReplacer = componentReplacer.replace('{{', '');
-	          componentReplacer = componentReplacer.replace('}}', '');
-	          result = result.replace(component, componentReplacer);
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-
-	      result = result.replace(/({{[^]*?}})/gm, '');
-
-	      if (contentType === StringConverter.CONTENT_TYPE_HTML) {
-	        result = result.replace(/(<br\/>)+/g, '<br/>');
-	      } else {
-	        result = result.replace(/(\n)+/g, '\n');
-	      }
-
-	      return result;
+	      var templateConverter = new StringTemplateConverter(template.template, delimiter, needHtmlEncode, format);
+	      return templateConverter.convert(address);
 	    }
 	    /**
 	     * Convert address to string
@@ -704,7 +1409,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "convertAddressToStringByField",
 	    value: function convertAddressToStringByField(address, format, fieldSorter, contentType) {
-	      if (!(format instanceof Format$$1)) {
+	      if (!(format instanceof Format)) {
 	        BX.debug('format must be instance of Format');
 	      }
 
@@ -749,6 +1454,9 @@ this.BX.Location = this.BX.Location || {};
 	}();
 
 	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_TEMPLATE", 'template');
+	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_TEMPLATE_COMMA", 'template_comma');
+	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_TEMPLATE_NL", 'template_nl');
+	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_TEMPLATE_BR", 'template_br');
 	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_FIELD_SORT", 'field_sort');
 	babelHelpers.defineProperty(StringConverter, "STRATEGY_TYPE_FIELD_TYPE", 'field_type');
 	babelHelpers.defineProperty(StringConverter, "CONTENT_TYPE_HTML", 'html');
@@ -821,21 +1529,21 @@ this.BX.Location = this.BX.Location || {};
 	  return result;
 	};
 
-	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
+	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
-	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	var _id = new WeakMap();
 
-	var _languageId$1 = new WeakMap();
+	var _languageId = new WeakMap();
 
 	var _latitude = new WeakMap();
 
 	var _longitude = new WeakMap();
 
-	var _fieldCollection$1 = new WeakMap();
+	var _fieldCollection = new WeakMap();
 
 	var _links$1 = new WeakMap();
 
@@ -853,7 +1561,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _languageId$1.set(this, {
+	    _languageId.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -868,7 +1576,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _fieldCollection$1.set(this, {
+	    _fieldCollection.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -887,11 +1595,11 @@ this.BX.Location = this.BX.Location || {};
 	      throw new TypeError('languageId must be defined');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(this, _languageId$1, props.languageId);
+	    babelHelpers.classPrivateFieldSet(this, _languageId, props.languageId);
 	    babelHelpers.classPrivateFieldSet(this, _id, props.id || 0);
 	    babelHelpers.classPrivateFieldSet(this, _latitude, props.latitude || 0);
 	    babelHelpers.classPrivateFieldSet(this, _longitude, props.longitude || 0);
-	    babelHelpers.classPrivateFieldSet(this, _fieldCollection$1, new AddressFieldCollection());
+	    babelHelpers.classPrivateFieldSet(this, _fieldCollection, new AddressFieldCollection());
 
 	    if (main_core.Type.isObject(props.fieldCollection)) {
 	      for (var _i = 0, _Object$entries = Object.entries(props.fieldCollection); _i < _Object$entries.length; _i++) {
@@ -906,7 +1614,7 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classPrivateFieldSet(this, _links$1, new AddressLinkCollection());
 
 	    if (main_core.Type.isArray(props.links)) {
-	      var _iterator = _createForOfIteratorHelper$3(props.links),
+	      var _iterator = _createForOfIteratorHelper$2(props.links),
 	          _step;
 
 	      try {
@@ -946,7 +1654,7 @@ this.BX.Location = this.BX.Location || {};
 	     * @param {mixed} value
 	     */
 	    value: function setFieldValue(type, value) {
-	      babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).setFieldValue(type, value);
+	      babelHelpers.classPrivateFieldGet(this, _fieldCollection).setFieldValue(type, value);
 	    }
 	    /**
 	     * @param {number} type
@@ -956,7 +1664,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "getFieldValue",
 	    value: function getFieldValue(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).getFieldValue(type);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection).getFieldValue(type);
 	    }
 	    /**
 	     * Check if field exist
@@ -967,7 +1675,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "isFieldExists",
 	    value: function isFieldExists(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).isFieldExists(type);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection).isFieldExists(type);
 	    }
 	    /**
 	     * @return {string} JSON
@@ -988,14 +1696,14 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "toString",
 	    value: function toString(format, strategyType, contentType) {
-	      if (!(format instanceof Format$$1)) {
-	        throw new TypeError('format must be instance of Format');
+	      if (!(format instanceof Format)) {
+	        console.error('format must be instance of Format');
+	        return '';
 	      }
 
 	      var strategy = strategyType || StringConverter.STRATEGY_TYPE_TEMPLATE;
 	      var type = contentType || StringConverter.CONTENT_TYPE_HTML;
-	      var result = StringConverter.convertAddressToString(this, format, strategy, type);
-	      return result;
+	      return StringConverter.convertAddressToString(this, format, strategy, type);
 	    }
 	    /**
 	     * @returns {?Location}
@@ -1021,7 +1729,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "getType",
 	    value: function getType() {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).getMaxFieldType();
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection).getMaxFieldType();
 	    }
 	    /**
 	     * @param {string} entityId
@@ -1080,7 +1788,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "languageId",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _languageId$1);
+	      return babelHelpers.classPrivateFieldGet(this, _languageId);
 	    }
 	    /**
 	     * @returns {AddressFieldCollection}
@@ -1089,7 +1797,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "fieldCollection",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection);
 	    }
 	  }, {
 	    key: "latitude",
@@ -1289,7 +1997,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _id$1 = new WeakMap();
 
-	var _code$1 = new WeakMap();
+	var _code = new WeakMap();
 
 	var _externalId = new WeakMap();
 
@@ -1297,9 +2005,9 @@ this.BX.Location = this.BX.Location || {};
 
 	var _type$1 = new WeakMap();
 
-	var _name$2 = new WeakMap();
+	var _name$1 = new WeakMap();
 
-	var _languageId$2 = new WeakMap();
+	var _languageId$1 = new WeakMap();
 
 	var _latitude$1 = new WeakMap();
 
@@ -1307,7 +2015,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _address = new WeakMap();
 
-	var _fieldCollection$2 = new WeakMap();
+	var _fieldCollection$1 = new WeakMap();
 
 	var Location = /*#__PURE__*/function () {
 	  function Location() {
@@ -1319,7 +2027,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _code$1.set(this, {
+	    _code.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1339,12 +2047,12 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _name$2.set(this, {
+	    _name$1.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _languageId$2.set(this, {
+	    _languageId$1.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1364,21 +2072,21 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _fieldCollection$2.set(this, {
+	    _fieldCollection$1.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
 	    babelHelpers.classPrivateFieldSet(this, _id$1, parseInt(props.id) || 0);
-	    babelHelpers.classPrivateFieldSet(this, _code$1, props.code || '');
+	    babelHelpers.classPrivateFieldSet(this, _code, props.code || '');
 	    babelHelpers.classPrivateFieldSet(this, _externalId, props.externalId || '');
 	    babelHelpers.classPrivateFieldSet(this, _sourceCode, props.sourceCode || '');
 	    babelHelpers.classPrivateFieldSet(this, _type$1, parseInt(props.type) || 0);
-	    babelHelpers.classPrivateFieldSet(this, _name$2, props.name || '');
-	    babelHelpers.classPrivateFieldSet(this, _languageId$2, props.languageId || '');
+	    babelHelpers.classPrivateFieldSet(this, _name$1, props.name || '');
+	    babelHelpers.classPrivateFieldSet(this, _languageId$1, props.languageId || '');
 	    babelHelpers.classPrivateFieldSet(this, _latitude$1, props.latitude || '');
 	    babelHelpers.classPrivateFieldSet(this, _longitude$1, props.longitude || '');
-	    babelHelpers.classPrivateFieldSet(this, _fieldCollection$2, new LocationFieldCollection());
+	    babelHelpers.classPrivateFieldSet(this, _fieldCollection$1, new LocationFieldCollection());
 
 	    if (main_core.Type.isObject(props.fieldCollection)) {
 	      for (var _i = 0, _Object$entries = Object.entries(props.fieldCollection); _i < _Object$entries.length; _i++) {
@@ -1424,17 +2132,17 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "setFieldValue",
 	    value: function setFieldValue(type, value) {
-	      babelHelpers.classPrivateFieldGet(this, _fieldCollection$2).setFieldValue(type, value);
+	      babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).setFieldValue(type, value);
 	    }
 	  }, {
 	    key: "getFieldValue",
 	    value: function getFieldValue(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$2).getFieldValue(type);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).getFieldValue(type);
 	    }
 	  }, {
 	    key: "isFieldExists",
 	    value: function isFieldExists(type) {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$2).isFieldExists(type);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1).isFieldExists(type);
 	    }
 	  }, {
 	    key: "hasExternalRelation",
@@ -1452,10 +2160,10 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "code",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _code$1);
+	      return babelHelpers.classPrivateFieldGet(this, _code);
 	    },
 	    set: function set(code) {
-	      babelHelpers.classPrivateFieldSet(this, _code$1, code);
+	      babelHelpers.classPrivateFieldSet(this, _code, code);
 	    }
 	  }, {
 	    key: "externalId",
@@ -1484,18 +2192,18 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "name",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _name$2);
+	      return babelHelpers.classPrivateFieldGet(this, _name$1);
 	    },
 	    set: function set(value) {
-	      babelHelpers.classPrivateFieldSet(this, _name$2, value);
+	      babelHelpers.classPrivateFieldSet(this, _name$1, value);
 	    }
 	  }, {
 	    key: "languageId",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _languageId$2);
+	      return babelHelpers.classPrivateFieldGet(this, _languageId$1);
 	    },
 	    set: function set(value) {
-	      babelHelpers.classPrivateFieldSet(this, _languageId$2, value);
+	      babelHelpers.classPrivateFieldSet(this, _languageId$1, value);
 	    }
 	  }, {
 	    key: "latitude",
@@ -1524,7 +2232,7 @@ this.BX.Location = this.BX.Location || {};
 	  }, {
 	    key: "fieldCollection",
 	    get: function get() {
-	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$2);
+	      return babelHelpers.classPrivateFieldGet(this, _fieldCollection$1);
 	    }
 	  }]);
 	  return Location;
@@ -1563,11 +2271,11 @@ this.BX.Location = this.BX.Location || {};
 	  return ActionRunner;
 	}();
 
-	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
+	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
-	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 	var _actionRunner = new WeakMap();
 
@@ -1600,7 +2308,7 @@ this.BX.Location = this.BX.Location || {};
 	        var message = '';
 
 	        if (Array.isArray(response.errors) && response.errors.length > 0) {
-	          var _iterator = _createForOfIteratorHelper$4(response.errors),
+	          var _iterator = _createForOfIteratorHelper$3(response.errors),
 	              _step;
 
 	          try {
@@ -1637,7 +2345,7 @@ this.BX.Location = this.BX.Location || {};
 	  return BaseRepository;
 	}();
 
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _convertCollection = new WeakSet();
 
@@ -1670,7 +2378,7 @@ this.BX.Location = this.BX.Location || {};
 
 	      return this.actionRunner.run('findParents', {
 	        location: LocationObjectConverter.convertLocationToObject(location)
-	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet(this, _convertCollection, _convertCollection2).bind(this));
+	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet$1(this, _convertCollection, _convertCollection2).bind(this));
 	    }
 	  }, {
 	    key: "findByExternalId",
@@ -1683,7 +2391,7 @@ this.BX.Location = this.BX.Location || {};
 	        externalId: externalId,
 	        sourceCode: sourceCode,
 	        languageId: languageId
-	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet(this, _convertLocation, _convertLocation2).bind(this));
+	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet$1(this, _convertLocation, _convertLocation2).bind(this));
 	    }
 	  }, {
 	    key: "findById",
@@ -1695,7 +2403,7 @@ this.BX.Location = this.BX.Location || {};
 	      return this.actionRunner.run('findById', {
 	        id: locationId,
 	        languageId: languageId
-	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet(this, _convertLocation, _convertLocation2).bind(this));
+	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet$1(this, _convertLocation, _convertLocation2).bind(this));
 	    }
 	  }]);
 	  return LocationRepository;
@@ -1710,7 +2418,7 @@ this.BX.Location = this.BX.Location || {};
 
 	  var result = [];
 	  collectionJsonData.forEach(function (location) {
-	    result.push(_classPrivateMethodGet(_this2, _convertLocation, _convertLocation2).call(_this2, location));
+	    result.push(_classPrivateMethodGet$1(_this2, _convertLocation, _convertLocation2).call(_this2, location));
 	  });
 	  return result;
 	};
@@ -1887,7 +2595,7 @@ this.BX.Location = this.BX.Location || {};
 	        throw new TypeError('Can\'t convert format data');
 	      }
 
-	      return new Format$$1(formatData);
+	      return new Format(formatData);
 	    }
 	  }]);
 	  return FormatRepository;
@@ -1913,9 +2621,12 @@ this.BX.Location = this.BX.Location || {};
 	}(BaseRepository);
 
 	/**
-	 * Base class for autocomplete source services
+	 * Autocomplete search parameters
 	 */
 
+	/**
+	 * Base class for the source autocomplete services.
+	 */
 	var AutocompleteServiceBase = /*#__PURE__*/function () {
 	  function AutocompleteServiceBase() {
 	    babelHelpers.classCallCheck(this, AutocompleteServiceBase);
@@ -1923,11 +2634,36 @@ this.BX.Location = this.BX.Location || {};
 
 	  babelHelpers.createClass(AutocompleteServiceBase, [{
 	    key: "autocomplete",
+
+	    /**
+	     * @param {String} text
+	     * @param {AutocompleteServiceParams} params
+	     */
+	    // eslint-disable-next-line no-unused-vars
 	    value: function autocomplete(text, params) {
 	      throw new Error('Method autocomplete() Must be implemented');
 	    }
 	  }]);
 	  return AutocompleteServiceBase;
+	}();
+
+	/**
+	 * Base class for the autocomplete filter.
+	 */
+
+	var AutocompleteServiceFilter = /*#__PURE__*/function () {
+	  function AutocompleteServiceFilter() {
+	    babelHelpers.classCallCheck(this, AutocompleteServiceFilter);
+	    babelHelpers.defineProperty(this, "types", []);
+	  }
+
+	  babelHelpers.createClass(AutocompleteServiceFilter, [{
+	    key: "reset",
+	    value: function reset() {
+	      this.types = [];
+	    }
+	  }]);
+	  return AutocompleteServiceFilter;
 	}();
 
 	var PhotoServiceBase = /*#__PURE__*/function () {
@@ -2273,16 +3009,18 @@ this.BX.Location = this.BX.Location || {};
 
 	exports.Location = Location;
 	exports.Address = Address;
-	exports.Format = Format$$1;
+	exports.Format = Format;
 	exports.AddressType = AddressType;
 	exports.LocationType = LocationType;
 	exports.LocationFieldType = LocationFieldType;
+	exports.FormatTemplateType = FormatTemplateType;
 	exports.LocationRepository = LocationRepository;
 	exports.AddressRepository = AddressRepository;
 	exports.FormatRepository = FormatRepository;
 	exports.SourceRepository = SourceRepository;
 	exports.AddressStringConverter = StringConverter;
 	exports.AutocompleteServiceBase = AutocompleteServiceBase;
+	exports.AutocompleteServiceFilter = AutocompleteServiceFilter;
 	exports.PhotoServiceBase = PhotoServiceBase;
 	exports.BaseSource = SourceBase;
 	exports.MapBase = MapBase;

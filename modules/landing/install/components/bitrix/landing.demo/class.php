@@ -387,7 +387,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 		));
 		if ($row = $res->fetch())
 		{
-			$manifest = unserialize($row['MANIFEST']);
+			$manifest = unserialize($row['MANIFEST'], ['allowed_classes' => false]);
 			if ($manifest)
 			{
 				$manifest['app_code'] = $row['APP_CODE'];
@@ -966,6 +966,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 					$this->urlTpl
 				);
 			}
+			$siteData['LANG'] = Manager::getZone();
 			$siteData['TPL_CODE'] = $code;
 			$siteData['XML_ID'] = $data['name'] . '|' . $code;
 			$siteData['TYPE'] = $this->arParams['TYPE'];
@@ -1042,6 +1043,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			}
 			if ($siteId)
 			{
+				\Bitrix\Landing\Rights::setGlobalOff();
 				$siteData['ID'] = $siteId;
 				$forSiteUpdate = array();
 				$firstLandingId = false;
@@ -1275,6 +1277,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				{
 					Site::update($siteData['ID'], $forSiteUpdate);
 				}
+				\Bitrix\Landing\Rights::setGlobalOn();
 				// send events
 				$event = new \Bitrix\Main\Event('landing', 'onAfterDemoCreate', array(
 					'id' => $siteData['ID'],
@@ -1557,7 +1560,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				));
 				while ($row = $res->fetch())
 				{
-					$lang = $row['LANG'] ? (array)unserialize($row['LANG']) : [];
+					$lang = $row['LANG'] ? (array)unserialize($row['LANG'], ['allowed_classes' => false]) : [];
 					if (!$row['APP_CODE'])
 					{
 						$row['APP_CODE'] = 'local';
@@ -1798,7 +1801,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				$cacheId .= $param;
 			}
 
-			$cachePath = 'landing';
+			$cachePath = 'landing/demo';
 			if ($cache->initCache($cacheTime, $cacheId, $cachePath))
 			{
 				$data[$subDir] = $cache->getVars();
@@ -2185,38 +2188,166 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 		// demo data
 		$sort = 0;
 		$colorValues = array();
-		$colors = array(
-			'PURPLE' => 'colors_files/iblock/0d3/0d3ef035d0cf3b821449b0174980a712.jpg',
-			'BROWN' => 'colors_files/iblock/f5a/f5a37106cb59ba069cc511647988eb89.jpg',
-			'SEE' => 'colors_files/iblock/f01/f01f801e9da96ae5a7f26aae01255f38.jpg',
-			'BLUE' => 'colors_files/iblock/c1b/c1ba082577379bdc75246974a9f08c8b.jpg',
-			'ORANGERED' => 'colors_files/iblock/0ba/0ba3b7ecdef03a44b145e43aed0cca57.jpg',
-			'REDBLUE' => 'colors_files/iblock/1ac/1ac0a26c5f47bd865a73da765484a2fa.jpg',
-			'RED' => 'colors_files/iblock/0a7/0a7513671518b0f2ce5f7cf44a239a83.jpg',
-			'GREEN' => 'colors_files/iblock/b1c/b1ced825c9803084eb4ea0a742b2342c.jpg',
-			'WHITE' => 'colors_files/iblock/b0e/b0eeeaa3e7519e272b7b382e700cbbc3.jpg',
-			'BLACK' => 'colors_files/iblock/d7b/d7bdba8aca8422e808fb3ad571a74c09.jpg',
-			'PINK' => 'colors_files/iblock/1b6/1b61761da0adce93518a3d613292043a.jpg',
-			'AZURE' => 'colors_files/iblock/c2b/c2b274ad2820451d780ee7cf08d74bb3.jpg',
-			'JEANS' => 'colors_files/iblock/24b/24b082dc5e647a3a945bc9a5c0a200f0.jpg',
-			'FLOWERS' => 'colors_files/iblock/64f/64f32941a654a1cbe2105febe7e77f33.jpg'
-		);
-		foreach ($colors as $colorName => $colorFile)
+
+		$colors = [];
+		$colors['PURPLE'] = [
+			'XML_ID' => 'purple',
+			'PATH' => 'colors_files/iblock/0d3/0d3ef035d0cf3b821449b0174980a712.jpg',
+			'FILE_NAME' => 'purple.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['BROWN'] = [
+			'XML_ID' => 'brown',
+			'PATH' => 'colors_files/iblock/f5a/f5a37106cb59ba069cc511647988eb89.jpg',
+			'FILE_NAME' => 'brown.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['SEE'] = [
+			'XML_ID' => 'see',
+			'PATH' => 'colors_files/iblock/f01/f01f801e9da96ae5a7f26aae01255f38.jpg',
+			'FILE_NAME' => 'see.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['BLUE'] = [
+			'XML_ID' => 'blue',
+			'PATH' => 'colors_files/iblock/c1b/c1ba082577379bdc75246974a9f08c8b.jpg',
+			'FILE_NAME' => 'blue.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['ORANGERED'] = [
+			'XML_ID' => 'orangered',
+			'PATH' => 'colors_files/iblock/0ba/0ba3b7ecdef03a44b145e43aed0cca57.jpg',
+			'FILE_NAME' => 'orangered.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['REDBLUE'] = [
+			'XML_ID' => 'redblue',
+			'PATH' => 'colors_files/iblock/1ac/1ac0a26c5f47bd865a73da765484a2fa.jpg',
+			'FILE_NAME' => 'redblue.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['RED'] = [
+			'XML_ID' => 'red',
+			'PATH' => 'colors_files/iblock/0a7/0a7513671518b0f2ce5f7cf44a239a83.jpg',
+			'FILE_NAME' => 'red.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['GREEN'] = [
+			'XML_ID' => 'green',
+			'PATH' => 'colors_files/iblock/b1c/b1ced825c9803084eb4ea0a742b2342c.jpg',
+			'FILE_NAME' => 'green.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['WHITE'] = [
+			'XML_ID' => 'white',
+			'PATH' => 'colors_files/iblock/b0e/b0eeeaa3e7519e272b7b382e700cbbc3.jpg',
+			'FILE_NAME' => 'white.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['BLACK'] = [
+			'XML_ID' => 'black',
+			'PATH' => 'colors_files/iblock/d7b/d7bdba8aca8422e808fb3ad571a74c09.jpg',
+			'FILE_NAME' => 'black.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['PINK'] = [
+			'XML_ID' => 'pink',
+			'PATH' => 'colors_files/iblock/1b6/1b61761da0adce93518a3d613292043a.jpg',
+			'FILE_NAME' => 'pink.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['AZURE'] = [
+			'XML_ID' => 'azure',
+			'PATH' => 'colors_files/iblock/c2b/c2b274ad2820451d780ee7cf08d74bb3.jpg',
+			'FILE_NAME' => 'azure.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['JEANS'] = [
+			'XML_ID' => 'jeans',
+			'PATH' => 'colors_files/iblock/24b/24b082dc5e647a3a945bc9a5c0a200f0.jpg',
+			'FILE_NAME' => 'jeans.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => ''
+		];
+		$colors['FLOWERS'] = [
+			'XML_ID' => 'flowers',
+			'PATH' => 'colors_files/iblock/64f/64f32941a654a1cbe2105febe7e77f33.jpg',
+			'FILE_NAME' => 'flowers.jpg',
+			'FILE_TYPE' => 'image/jpeg',
+			'TITLE' => 'colors_files/iblock/64f/64f32941a654a1cbe2105febe7e77f33.jpg'
+		];
+
+		$colors['DARKBLUE'] = [
+			'XML_ID' => 'darkblue',
+			'PATH' => 'colors_files/iblock/84a/84afl562rq429820451d780ee7cf08d7.png',
+			'FILE_NAME' => 'darkblue.png',
+			'FILE_TYPE' => 'image/png',
+			'TITLE' => ''
+		];
+		$colors['DARKGREEN'] = [
+			'XML_ID' => 'darkgreen',
+			'PATH' => 'colors_files/iblock/87f/87f5d3ad34562rq429820451d780ee7c.png',
+			'FILE_NAME' => 'darkgreen.png',
+			'FILE_TYPE' => 'image/png',
+			'TITLE' => ''
+		];
+		$colors['GREY'] = [
+			'XML_ID' => 'grey',
+			'PATH' => 'colors_files/iblock/90c/90c274ad2820451d780ee7cf08d74bb3.png',
+			'FILE_NAME' => 'grey.png',
+			'FILE_TYPE' => 'image/png',
+			'TITLE' => ''
+		];
+		$colors['YELLOW'] = [
+			'XML_ID' => 'yellow',
+			'PATH' => 'colors_files/iblock/99a/99a082dc5e647a3a945bc9a5c0a200f0.png',
+			'FILE_NAME' => 'yellow.png',
+			'FILE_TYPE' => 'image/png',
+			'TITLE' => ''
+		];
+		$colors['ORANGE'] = [
+			'XML_ID' => 'orange',
+			'PATH' => 'colors_files/iblock/a0d/a0ddba8aca8422e808fb3ad571a74c09.png',
+			'FILE_NAME' => 'orange.png',
+			'FILE_TYPE' => 'image/png',
+			'TITLE' => ''
+		];
+
+		foreach (array_keys($colors) as $index)
+		{
+			$colors[$index]['TITLE'] = Loc::getMessage('LANDING_CMP_COLOR_'.$index);
+		}
+
+		Main\Type\Collection::sortByColumn($colors, ['TITLE' => SORT_ASC]);
+
+		foreach($colors as $row)
 		{
 			$sort += 100;
-			$colorValues[] = array(
-				'UF_NAME' => Loc::getMessage('LANDING_CMP_COLOR_' . $colorName),
-				'UF_FILE' =>
-					array (
-						'name' => mb_strtolower($colorName).'.jpg',
-						'type' => 'image/jpeg',
-						'tmp_name' => Manager::getDocRoot() . $xmlPath . '/hl/' . $colorFile
-					),
+			$colorValues[] = [
+				'UF_NAME' => $row['TITLE'],
+				'UF_FILE' => [
+					'name' => $row['FILE_NAME'],
+					'type' => $row['FILE_TYPE'],
+					'tmp_name' => Manager::getDocRoot().$xmlPath.'/hl/'.$row['PATH']
+				],
 				'UF_SORT' => $sort,
 				'UF_DEF' => '0',
-				'UF_XML_ID' => mb_strtolower($colorName)
-			);
+				'UF_XML_ID' => $row['XML_ID']
+			];
 		}
+
 		$sort = 0;
 		$brandValues = array();
 		$brands = array(
@@ -2667,13 +2798,14 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			['CODE' => 'NEWPRODUCT', 'XML_ID' => 'af49d0e309af4fac506a8a228000efc5'],
 			['CODE' => 'SALELEADER', 'XML_ID' => '103'],
 			['CODE' => 'SPECIALOFFER', 'XML_ID' => '5'],
-			['CODE' => 'ARTNUMBER', 'XML_ID' => '10'],
+			['CODE' => 'ARTNUMBER', 'XML_ID' => '10', 'NEW_XML_ID' => 'CML2_ARTICLE'],
 			['CODE' => 'MANUFACTURER', 'XML_ID' => '12'],
 			['CODE' => 'MATERIAL', 'XML_ID' => '11'],
 			['CODE' => 'COLOR', 'XML_ID' => '291'],
 			['CODE' => 'BLOG_POST_ID', 'XML_ID' => '43'],
 			['CODE' => 'BLOG_COMMENTS_CNT', 'XML_ID' => '44'],
-			['CODE' => 'BACKGROUND_IMAGE', 'XML_ID' => '45']
+			['CODE' => 'BACKGROUND_IMAGE', 'XML_ID' => '45'],
+			['CODE' => 'MORE_PHOTO', 'XML_ID' => 'MORE_PHOTO', 'NEW_XML_ID' => 'CML2_PICTURES']
 		];
 		self::changePropertyXmlId($iblockId, $list);
 		unset($list);
@@ -2685,7 +2817,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			['CODE' => 'ARTNUMBER', 'XML_ID' => '38'],
 			['CODE' => 'SIZES_SHOES', 'XML_ID' => '4510'],
 			['CODE' => 'SIZES_CLOTHES', 'XML_ID' => '40'],
-			['CODE' => 'MORE_PHOTO', 'XML_ID' => '39']
+			['CODE' => 'MORE_PHOTO', 'XML_ID' => '39', 'NEW_XML_ID' => 'CML2_PICTURES']
 		];
 		self::changePropertyXmlId($iblockId, $list);
 		unset($list);
@@ -2722,7 +2854,8 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			$row = $iterator->fetch();
 			if (!empty($row))
 			{
-				if (isset($xmlCodes[$property['CODE']]))
+				$newXmlId = $property['NEW_XML_ID'] ?? $property['CODE'];
+				if (isset($xmlCodes[$newXmlId]))
 				{
 					$old = $xmlCodes[$property['XML_ID']];
 					$internalResult = Iblock\PropertyTable::update(
@@ -2732,7 +2865,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				}
 				$internalResult = Iblock\PropertyTable::update(
 					$row['ID'],
-					['XML_ID' => $property['CODE']]
+					['XML_ID' => $newXmlId]
 				);
 				unset($internalResult);
 			}
@@ -2839,9 +2972,10 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 
 	/**
 	 * Xml import with internal steps.
+	 * @param string $demoDataId
 	 * @return array
 	 */
-	private function importXmlFile()
+	private function importXmlFile(string $demoDataId = ''): array
 	{
 		$result = [
 			'STATUS' => self::STEP_STATUS_CONTINUE,
@@ -2852,14 +2986,19 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 
 		$importer = new \CIBlockXmlImport();
 		$xmlProductCatalog = 'CRM_PRODUCT_CATALOG';
-		$xmlPath = '/bitrix/components/bitrix/landing.demo/data/xml';
+
+		if ($demoDataId === '')
+		{
+			$demoDataId = 'clothes';
+		}
+		$xmlPath = '/bitrix/components/bitrix/landing.demo/data/xml/'.$demoDataId;
 		$xml = $this->getCurrentXml();
 		$currentZone = Manager::getZone();
 		$subDirLng = in_array($currentZone, ['ru', 'kz', 'by']) ? 'ru' : 'en';
 		$this->setXmlBaseCurrency();
 
 		$parameters = [
-			'FILE' => Manager::getDocRoot() .$xmlPath .'/clothes_' . $subDirLng . '/' . $xml . '.xml',
+			'FILE' => Manager::getDocRoot() .$xmlPath .'/' . $subDirLng . '/' . $xml . '.xml',
 			'IBLOCK_TYPE' => $xmlProductCatalog,
 			'SITE_LIST' => [SITE_ID],
 			'MISSING_SECTION_ACTION' => \CIBlockXmlImport::ACTION_NOTHING,
@@ -3081,15 +3220,11 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				'STEP_ID' => self::STEP_ID_HIGHLOADBLOCK,
 				'XML_LIST' => [
 					'catalog',
-					'catalog_prices',
 					'catalog_sku',
-					'catalog_prices_sku'
 				],
 				'IBLOCK_ID' => [
 					'catalog' => 0,
-					'catalog_prices' => 0,
 					'catalog_sku' => 0,
-					'catalog_prices_sku' => 0
 				],
 				'STEP_PARAMETERS' => []
 			];
@@ -3228,14 +3363,8 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				case 'catalog':
 					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_COMPLETE');
 					break;
-				case 'catalog_prices':
-					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_PRICES_COMPLETE');
-					break;
 				case 'catalog_sku':
 					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_OFFERS_COMPLETE');
-					break;
-				case 'catalog_prices_sku':
-					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_OFFER_PRICES_COMPLETE');
 					break;
 			}
 		}
@@ -3246,14 +3375,8 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				case 'catalog':
 					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_PROGRESS');
 					break;
-				case 'catalog_prices':
-					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_PRICES_PROGRESS');
-					break;
 				case 'catalog_sku':
 					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_OFFERS_PROGRESS');
-					break;
-				case 'catalog_prices_sku':
-					$result = Loc::getMessage('LANDING_CMP_LD_MESS_XML_IMPORT_CATALOG_OFFER_PRICES_PROGRESS');
 					break;
 			}
 		}

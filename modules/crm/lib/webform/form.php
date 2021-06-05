@@ -312,10 +312,12 @@ class Form
 		}
 
 		$responsibleQueue = new ResponsibleQueue($id);
-		$this->params['ASSIGNED_BY_ID'] = array_unique(array_merge(
-			$responsibleQueue->getList(),
-			[$this->params['ASSIGNED_BY_ID']]
-		));
+		$responsibles = $responsibleQueue->getList();
+		if ($this->params['ASSIGNED_BY_ID'])
+		{
+			$responsibles[] = $this->params['ASSIGNED_BY_ID'];
+		}
+		$this->params['ASSIGNED_BY_ID'] = array_unique($responsibles);
 		$this->params['ASSIGNED_WORK_TIME'] = $responsibleQueue->isWorkTimeCheckEnabled() ? 'Y' : 'N';
 
 		return true;

@@ -600,11 +600,6 @@ abstract class Queue
 	 * @param bool $finish
 	 * @param bool $vote
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function automaticActionAddMessage($finish = false, $vote = false): bool
 	{

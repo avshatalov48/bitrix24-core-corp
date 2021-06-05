@@ -201,7 +201,7 @@ class CDavResource
 	}
 
 	// Encode a hierarchical properties
-	public function EncodeHierarchicalProp(array $arProps, $parentXmlns, &$xmlnsDefs, array &$xmlnsHash, &$response, &$request)
+	public static function EncodeHierarchicalProp(array $arProps, $parentXmlns, &$xmlnsDefs, array &$xmlnsHash, &$response, &$request)
 	{
 		$result = '';
 

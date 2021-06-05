@@ -454,17 +454,14 @@ abstract class BasePersonalize
 	 */
 	private static function addAssignedByFieldsValue($assignedByID, &$objDocument)
 	{
-		$sortBy = 'id';
-		$sortOrder = 'asc';
-
 		if ($assignedByID < 1)
 		{
 			return;
 		}
 
 		$dbUsers = \CUser::GetList(
-			$sortBy,
-			$sortOrder,
+			'id',
+			'asc',
 			['ID' => $assignedByID],
 			[
 				'SELECT' => [
@@ -475,20 +472,7 @@ abstract class BasePersonalize
 					'UF_XING',
 					'UF_WEB_SITES',
 					'UF_PHONE_INNER',
-				],
-				'FIELDS' => [
-					'EMAIL',
-					'WORK_PHONE',
-					'PERSONAL_MOBILE',
-					'LOGIN',
-					'ACTIVE',
-					'NAME',
-					'LAST_NAME',
-					'SECOND_NAME',
-					'WORK_POSITION',
-					'PERSONAL_WWW',
-					'PERSONAL_CITY',
-				],
+				]
 			]
 		);
 
@@ -567,8 +551,8 @@ abstract class BasePersonalize
 				if ($objDocument[$usedField] > 1)
 				{
 					$dbUsers = \CUser::GetList(
-						$sortBy,
-						$sortOrder,
+						'',
+						'',
 						['ID' => $objDocument[$usedField]],
 						[
 							'FIELDS' => [

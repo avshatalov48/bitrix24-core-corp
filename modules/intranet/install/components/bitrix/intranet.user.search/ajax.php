@@ -89,7 +89,7 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 		if (($arSection = $dbRes->Fetch()) && $arSection['UF_HEAD'] > 0)
 		{
 			$dbUsers = CUser::GetList(
-				($sort_by = 'last_name'), ($sort_dir = 'asc'),
+				'last_name', 'asc',
 				array(
 					'ID' => $arSection['UF_HEAD'],
 					'ACTIVE' => 'Y'
@@ -135,7 +135,7 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 		}
 	}
 
-	$dbRes = CUser::GetList($by = 'last_name', $order = 'asc', $arFilter);
+	$dbRes = CUser::GetList('last_name', 'asc', $arFilter);
 	while ($arRes = $dbRes->GetNext())
 	{
 		$arPhoto = array('IMG' => '');
@@ -202,7 +202,7 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 			unset($arFilter["!UF_DEPARTMENT"]);
 
 		$dbRes = CUser::GetList(
-			$by = "last_name", $order = "asc",
+			"last_name", "asc",
 			$arFilter,
 			array(
 				"SELECT" => array("UF_DEPARTMENT"),
@@ -247,7 +247,7 @@ if (isset($_GET['value']))
 	}
 	if (count($arLoadUsers) > 0)
 	{
-		$dbRes = CUser::GetList($by = 'ID', $order = 'ASC', array('ID' => implode('|', $arLoadUsers), '!UF_DEPARTMENT' => false), array('SELECT' => array('UF_*')));
+		$dbRes = CUser::GetList('ID', 'ASC', array('ID' => implode('|', $arLoadUsers), '!UF_DEPARTMENT' => false), array('SELECT' => array('UF_*')));
 		while ($arUser = $dbRes->Fetch())
 		{
 			$arOpenedSections[] = $arUser['UF_DEPARTMENT'][0];

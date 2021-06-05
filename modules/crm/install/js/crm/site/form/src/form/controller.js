@@ -1,4 +1,4 @@
-import {VueVendorV2} from "../../../../../../../../ui/install/js/ui/vue/vendor/v2/prod/src/vue.js";
+import {Vue} from "../vue/vue2.js";
 import * as Type from "./types";
 import * as Field from "../field/registry";
 import * as Pager from "./pager";
@@ -121,7 +121,6 @@ class Controller extends Event
 		else
 		{
 			this.load();
-
 			if (this.provider.user)
 			{
 				if (typeof this.provider.user === 'string')
@@ -288,7 +287,9 @@ class Controller extends Event
 				return;
 			}
 
-			field.item().value = field.format(values[field.type]);
+			let value = field.format(values[field.type]);
+			field.item().value = value;
+			field.item().selected = value !== 'undefined' && value !== '';
 		});
 	}
 
@@ -584,7 +585,7 @@ class Controller extends Event
 	render(): void
 	{
 		//this.node.innerHTML = '';
-		this.#vue = new VueVendorV2({
+		this.#vue = new Vue({
 			el: this.node,
 			components: Components.Definition,
 			data: {

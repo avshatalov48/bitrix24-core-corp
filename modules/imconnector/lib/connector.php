@@ -11,8 +11,7 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Web\Json,
 	\Bitrix\Main\UserTable,
 	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImOpenLines\Network,
-	\Bitrix\ImOpenLines\LiveChatManager;
+use \Bitrix\ImOpenLines\LiveChatManager;
 use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
@@ -28,11 +27,9 @@ class Connector
 
 	/**
 	 * @param string $idConnector
-	 * @return \Bitrix\ImConnector\Connectors\Base
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @return Connectors\Base|Connectors\BotFramework|Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Yandex|Connectors\Network
 	 */
-	public static function initializationConnectorHandler($idConnector = '')
+	public static function initConnectorHandler($idConnector = '')
 	{
 		$class = 'Bitrix\\ImConnector\\Connectors\\Base';
 
@@ -144,6 +141,7 @@ class Connector
 		$connectors['olx'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
 		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
 		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
+		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
 		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
 		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
 
@@ -290,6 +288,8 @@ class Connector
 	}
 
 	/**
+	 * TODO: Not relevant
+	 *
 	 * @return array
 	 */
 	public static function getListConnectorNoServer()
@@ -321,12 +321,13 @@ class Connector
 		$components['telegrambot'] = 'bitrix:imconnector.telegrambot';
 		$components['wechat'] = 'bitrix:imconnector.wechat';
 		$components['imessage'] = 'bitrix:imconnector.imessage';
-		$components['yandex'] = 'bitrix:imconnector.yandex';;
+		$components['yandex'] = 'bitrix:imconnector.yandex';
 		$components['vkgroup'] = 'bitrix:imconnector.vkgroup';
 		$components['ok'] = 'bitrix:imconnector.ok';
 		$components['olx'] = 'bitrix:imconnector.olx';
 		$components['facebook'] = 'bitrix:imconnector.facebook';
 		$components['facebookcomments'] = 'bitrix:imconnector.facebookcomments';
+		$components[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = 'bitrix:imconnector.fbinstagramdirect';
 		$components['fbinstagram'] = 'bitrix:imconnector.fbinstagram';
 		$components['network'] = 'bitrix:imconnector.network';
 		$components['botframework'] = 'bitrix:imconnector.botframework';
@@ -445,14 +446,16 @@ class Connector
 	 * @param string $id ID connector
 	 * @return bool
 	 */
-	public static function isNeedSignature($id)
+	public static function isNeedSignature($id): bool
 	{
 		$listNotNeedSignature = Library::$listNotNeedSignature;
 
 		$customNotNeedSignature = CustomConnectors::getListNotNeedSignature();
 
 		if(!empty($customNotNeedSignature))
+		{
 			$listNotNeedSignature = array_unique(array_merge($customNotNeedSignature, $listNotNeedSignature));
+		}
 
 		return !in_array($id, $listNotNeedSignature);
 	}
@@ -665,8 +668,6 @@ class Connector
 	 * @param string $id ID connector.
 	 * @param bool $local Not to check on a remote server.
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function isConnector($id, $local = false)
 	{
@@ -674,8 +675,7 @@ class Connector
 
 		$connectors = self::getListConnectorActive();
 
-		/*$noServerConnectors = self::getListConnectorNoServer();*/
-		if(in_array($id, $connectors)/* && (in_array($id, $noServerConnectors) || $local || Output::isConnector($id)->isSuccess())*/)
+		if(in_array($id, $connectors))
 			return true;
 		else
 			return false;
@@ -685,8 +685,6 @@ class Connector
 	 * Returns the domain by default of the current client.
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getDomainDefault()
 	{
@@ -707,63 +705,6 @@ class Connector
 
 		return $uri;
 	}
-
-	/**
-	 * Returns information about all connected connectors specific open line.
-	 *
-	 * @param string $id ID open line.
-	 * @return array.
-	 */
-	/*public static function infoConnectorsLine($id)
-	{
-		$result = array();
-		$cache = Cache::createInstance();
-
-		if ($cache->initCache(Library::CACHE_TIME_INFO_CONNECTORS_LINE, $id, Library::CACHE_DIR_INFO_CONNECTORS_LINE))
-		{
-			$result = $cache->getVars();
-		}
-		elseif ($cache->startDataCache())
-		{
-			$rawInfo = Output::infoConnectorsLine($id);
-
-			$infoConnectors = $rawInfo->getData();
-
-			if(!empty($infoConnectors))
-			{
-				$result = array();
-
-				$connectors = self::getListActiveConnector();
-
-				foreach ($connectors as $idConnector=>$value)
-				{
-					if(!empty($infoConnectors[$idConnector]))
-					{
-						$result[$idConnector] = $infoConnectors[$idConnector];
-						if(empty($result[$idConnector]['name']))
-							$result[$idConnector]['name'] = $value;
-
-						$result[$idConnector]['connector_name'] = $value;
-					}
-				}
-
-				if(empty($result))
-				{
-					$cache->abortDataCache();
-				}
-				else
-				{
-					$cache->endDataCache($result);
-				}
-			}
-			else
-			{
-				$cache->abortDataCache();
-			}
-		}
-
-		return $result;
-	}*/
 
 	/**
 	 * Returns information about all connected connectors specific open line.
@@ -926,6 +867,7 @@ class Connector
 			'vkgrouporder' => 'vk-order',
 			'ok' => 'ok',
 			'facebook' => 'fb',
+			Library::ID_FBINSTAGRAMDIRECT_CONNECTOR => 'instagram-direct',
 			'wechat' => 'wechat',
 			'facebookcomments' => 'fb-comments',
 			'facebookmessenger' => 'fb-messenger',
@@ -1103,12 +1045,19 @@ class Connector
 						case 'network':
 							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
 							{
-								$network = new Network();
-								$resultRegister = $network->registerConnector($line, $params);
-								if (!$resultRegister)
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'), Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
+								$output = new Output($connector, $line);
+								$resultRegister = $output->register($params);
+
+								if ($resultRegister->isSuccess())
+								{
+									$status->setData($resultRegister->getResult());
+								}
 								else
-									$status->setData($resultRegister);
+								{
+									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'), Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
+									$result->addErrors($resultRegister->getErrors());
+								}
+
 							}
 							else
 							{
@@ -1153,6 +1102,7 @@ class Connector
 
 						case 'vkgroup':
 						case 'facebook':
+						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
 						case 'facebookcomments':
 						case Library::ID_FBINSTAGRAM_CONNECTOR:
 						default:
@@ -1234,16 +1184,19 @@ class Connector
 						case 'network':
 							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
 							{
-								$network = new Network();
-								if (!$network->updateConnector($line, $params))
-								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'), Library::ERROR_FAILED_TO_UPDATE_CONNECTOR, __METHOD__, $connector));
-								}
-								else
+								$output = new Output($connector, $line);
+								$resultUpdate = $output->update($params);
+
+								if ($resultUpdate->isSuccess())
 								{
 									$dataStatus = $status->getData();
 									$dataStatus = array_merge($dataStatus, $params);
 									$status->setData($dataStatus);
+								}
+								else
+								{
+									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'), Library::ERROR_FAILED_TO_UPDATE_CONNECTOR, __METHOD__, $connector));
+									$result->addErrors($resultUpdate->getErrors());
 								}
 							}
 							else
@@ -1300,6 +1253,7 @@ class Connector
 
 						case 'vkgroup':
 						case 'facebook':
+						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
 						case 'facebookcomments':
 						case Library::ID_FBINSTAGRAM_CONNECTOR:
 						default:
@@ -1376,9 +1330,18 @@ class Connector
 						case 'network':
 							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
 							{
-								$network = new Network();
-								if (!$network->unRegisterConnector($line))
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'), Library::ERROR_FAILED_TO_DELETE_CONNECTOR, __METHOD__, $connector));
+								$output = new Output($connector, $line);
+								$resultDelete = $output->delete();
+								if (!$resultDelete->isSuccess())
+								{
+									$result->addError(new Error(
+										Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
+										Library::ERROR_FAILED_TO_DELETE_CONNECTOR,
+										__METHOD__,
+										$connector
+									));
+									$result->addErrors($resultDelete->getErrors());
+								}
 							}
 							else
 							{
@@ -1387,6 +1350,7 @@ class Connector
 							break;
 
 						case 'facebook':
+						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
 						case 'vkgroup':
 						case 'ok':
 						case 'telegrambot':
@@ -1428,11 +1392,6 @@ class Connector
 	 * @param array $user
 	 * @param string $connector
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getUserByUserCode(array $user, string $connector): Result
 	{
@@ -1583,5 +1542,25 @@ class Connector
 		$message['message']['attachments'] = $richData;
 
 		return $message;
+	}
+
+	/**
+	 * Temporary method to check if WeChat can be shown for the portal, based on "wechat_enabled" option,
+	 * which has been set in the updater, only if portal has active WeChat connection.
+	 * Remove this method and its usage when WeChat will be available again.
+	 * https://helpdesk.bitrix24.com/open/10225886/
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	private static function isWeChatEnabled(): bool
+	{
+		if (Option::get(Library::MODULE_ID, 'wechat_enabled'))
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

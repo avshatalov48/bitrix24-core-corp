@@ -7,6 +7,7 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\CrumbStorage;
 use Bitrix\Disk\Document\CloudImport;
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
@@ -244,7 +245,7 @@ class Controller extends Internals\Controller
 		$diskSecurityContext = new DiskSecurityContext($user);
 		if(Loader::includeModule('socialnetwork'))
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			if(\CSocnetUser::isCurrentUserModuleAdmin())
 			{
 				$diskSecurityContext = new FakeSecurityContext($user);
@@ -296,7 +297,7 @@ class Controller extends Internals\Controller
 		$documentHandler = $importManager->getDocumentHandler();
 		if(!$documentHandler->checkAccessibleTokenService())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 			$this->errorCollection->add($documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
@@ -350,7 +351,7 @@ class Controller extends Internals\Controller
 		}
 		if(!$documentHandler->checkAccessibleTokenService())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 			$this->errorCollection->add($documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
@@ -403,7 +404,7 @@ class Controller extends Internals\Controller
 		}
 		if(!$documentHandler->checkAccessibleTokenService())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 			$this->errorCollection->add($documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
@@ -454,7 +455,7 @@ class Controller extends Internals\Controller
 		}
 		if(!$documentHandler->checkAccessibleTokenService())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 			$this->errorCollection->add($documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
@@ -517,7 +518,7 @@ class Controller extends Internals\Controller
 		}
 		if(!$documentHandler->checkAccessibleTokenService())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 			$this->errorCollection->add($documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
@@ -618,15 +619,15 @@ class Controller extends Internals\Controller
 		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
 		foreach($documentHandlersManager->getHandlersForImport() as $handler)
 		{
-			$list[$handler->getCode()] = array(
-				'id' => $handler->getCode(),
-				'name' => $handler->getStorageName(),
+			$list[$handler::getCode()] = array(
+				'id' => $handler::getCode(),
+				'name' => $handler::getStorageName(),
 				'type' => 'cloud',
 				'link' => Driver::getInstance()->getUrlManager()->getUrlUfController(
 					'loadItems',
 					array(
 						'cloudImport' => 1,
-						'service' => $handler->getCode(),
+						'service' => $handler::getCode(),
 					)
 				),
 			);
@@ -949,9 +950,14 @@ class Controller extends Internals\Controller
 				$this->errorCollection->add($documentHandlersManager->getErrors());
 				$this->sendJsonErrorResponse();
 			}
+			if (!($documentHandler instanceof CloudImportInterface))
+			{
+				$this->errorCollection[] = new Error("Document handler {{$documentHandler::getCode()}} does not implement " . CloudImportInterface::class);
+				$this->sendJsonErrorResponse();
+			}
 			if(!$documentHandler->checkAccessibleTokenService())
 			{
-				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler->getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
 				$this->errorCollection->add($documentHandler->getErrors());
 				$this->sendJsonErrorResponse();
 			}
@@ -1094,6 +1100,12 @@ class Controller extends Internals\Controller
 		return $response;
 	}
 
+	/**
+	 * @param DocumentHandler|CloudImportInterface $documentHandler
+	 * @param string          $path
+	 * @return array|null
+	 * @throws \Bitrix\Main\NotImplementedException
+	 */
 	protected function listItemsCloud(DocumentHandler $documentHandler, $path = '/')
 	{
 		$urlManager = Driver::getInstance()->getUrlManager();
@@ -1110,7 +1122,7 @@ class Controller extends Internals\Controller
 				'loadItems',
 				array(
 					'folderId' => $item['id'],
-					'service' => $documentHandler->getCode(),
+					'service' => $documentHandler::getCode(),
 				)
 			);
 			$response[$item['id']] = $item;
@@ -1678,7 +1690,7 @@ class Controller extends Internals\Controller
 					$this->sendJsonInvalidSignResponse('Invalid signature');
 				}
 
-				/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 				$tmpFile = \CFile::resizeImageGet($fileData, array("width" => $width, "height" => $height), ($this->request->getQuery('exact') == "Y" ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL), true, false, true);
 				$fileData["FILE_SIZE"] = $tmpFile["size"];
 				$fileData["SRC"] = $tmpFile["src"];

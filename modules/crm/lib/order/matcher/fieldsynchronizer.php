@@ -1666,7 +1666,7 @@ class FieldSynchronizer
 		return [$fieldsToCreate, $fieldsToUpdate];
 	}
 
-	public function onAfterSetEnumValues($ufId, $items = [])
+	public static function onAfterSetEnumValues($ufId, $items = [])
 	{
 		if (!Loader::includeModule('sale') || empty($items))
 			return;

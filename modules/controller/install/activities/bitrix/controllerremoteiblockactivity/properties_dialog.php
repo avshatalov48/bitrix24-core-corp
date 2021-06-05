@@ -41,8 +41,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 <tr id="tr_sites" <?if($arCurrentValues["sites_filter_type"]!="sites") echo 'style="display:none"'?>>
 	<?if(!array_key_exists($arCurrentValues["sites_filter_sites_group"], $arSites))
 	{
-		list($arCurrentValues["sites_filter_sites_group"], $arGroupSites) = each($arSites);
-		reset($arSites);
+		$arCurrentValues["sites_filter_sites_group"] = key($arSites);
 	}
 	?>
 	<td align="right" width="40%"><?echo GetMessage("BPCRIA_SITES_SITES")?>:</td>

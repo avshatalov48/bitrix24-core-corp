@@ -1,7 +1,7 @@
 import 'im.test';
 
 import { Controller } from "im.controller";
-import { VuexBuilder } from "ui.vue.vuex";
+import { VuexBuilder, VuexVendor } from "ui.vue.vuex";
 import {
 	CallApplicationModel,
 	RecentModel,
@@ -14,7 +14,6 @@ import {
 import { ApplicationController } from "../../controller/src/application";
 import { RecentController } from "../../controller/src/recent";
 import { Utils } from "im.lib.utils";
-import { VuexVendor } from "ui.vue.vuex";
 import { VueVendor } from "ui.vue";
 import { CoreRestHandler } from "im.provider.rest";
 

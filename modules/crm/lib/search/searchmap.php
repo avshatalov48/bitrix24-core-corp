@@ -21,8 +21,8 @@ class SearchMap
 		}
 
 		$dbResult = \CUser::GetList(
-			$by = 'ID',
-			$order = 'ASC',
+			'ID',
+			'ASC',
 			array('ID' => implode('|', array_filter(array_map('intval', $userIDs)))),
 			array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'))
 		);
@@ -95,8 +95,8 @@ class SearchMap
 		else
 		{
 			$dbResult = \CUser::GetList(
-				$by = 'ID',
-				$order = 'ASC',
+				'ID',
+				'ASC',
 				array('ID'=> $userID),
 				array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'))
 			);

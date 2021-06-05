@@ -94,6 +94,7 @@ class CCrmRole
 
 	public function SetRelation($arRelation)
 	{
+		$this->log('SetRelation', $arRelation);
 		global $DB;
 		$sSql = 'DELETE FROM b_crm_role_relation';
 		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -260,6 +261,8 @@ class CCrmRole
 		global $DB;
 		$ID = (int)$ID;
 
+		$this->log('SetRoleRelation', ['ID' => $ID, 'RELATION' => $arRelation]);
+
 		$sSql = 'DELETE FROM b_crm_role_perms WHERE ROLE_ID = '.$ID;
 		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		foreach ($arRelation as $sEntity => $arPerms)
@@ -336,6 +339,7 @@ class CCrmRole
 
 	public function Delete($ID)
 	{
+		$this->log('Delete', ['ID' => $ID]);
 		global $DB;
 		$ID = (int)$ID;
 		$sSql = 'DELETE FROM b_crm_role_relation WHERE ROLE_ID = '.$ID;
@@ -429,5 +433,23 @@ class CCrmRole
 			}
 		}
 		return $permissions;
+	}
+
+	/**
+	 * @internal
+	 */
+	protected function log(string $event, $extraData): void
+	{
+		if (Main\Config\Option::get('crm', '~CRM_LOG_PERMISSION_ROLE_CHANGES', 'N') !== 'Y')
+		{
+			return;
+		}
+		$logData = 'CRM_LOG_PERMISSION_ROLE_CHANGES: ' . $event . "\n";
+		$logData .= 'User: ' . \CCrmSecurityHelper::GetCurrentUserID();
+		if (!empty($extraData))
+		{
+			$logData .= "\n" . print_r($extraData, true);
+		}
+		AddMessage2Log($logData, 'crm');
 	}
 }

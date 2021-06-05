@@ -1,5 +1,6 @@
 <?php
 return [
+	'notify',
 	'reload/listeners',
 	'task',
 	'task/checklist',

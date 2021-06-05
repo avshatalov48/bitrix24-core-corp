@@ -166,7 +166,7 @@ if($action === 'ADD_FIELD')
 	$fields['LIST_COLUMN_LABEL'] = array();
 	$fields['LIST_FILTER_LABEL'] = array();
 
-	$langDbResult = CLanguage::GetList($by = '', $order = '');
+	$langDbResult = CLanguage::GetList();
 	while($lang = $langDbResult->Fetch())
 	{
 		$lid = $lang['LID'];

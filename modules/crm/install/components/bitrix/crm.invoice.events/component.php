@@ -66,7 +66,12 @@ if (isset($arParams['ENTITY_ID']))
 }
 if (isset($arParams['ORDER_ID']) && is_array($arParams['ORDER_ID']))
 {
-	array_walk($arParams['ORDER_ID'], create_function('&$v',  '$v = (int)$v;'));
+	array_walk(
+		$arParams['ORDER_ID'],
+		function (&$v) {
+			$v = (int)$v;
+		}
+	);
 	$arFilter['ORDER_ID'] = $arResult['ORDER_ID'] = $arParams['ORDER_ID'];
 }
 elseif (isset($arParams['ORDER_ID']) && intval($arParams['ORDER_ID']) > 0)
@@ -407,13 +412,12 @@ $nUsers = count($arUserDistinct);
 if ($nUsers > 0 && !($nUsers === 1 && $arUserDistinct[0] == 0))
 {
 	$users = new CUser();
-	$by = 'ID'; $order = 'ASC';
 	$dbResUsers = $users->GetList(
-		$by, $order,
+		'ID',
+		'ASC',
 		array('ID' => implode('|', $arUserDistinct)),
 		array('SELECT' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME'))
 	);
-	unset($by, $order);
 	if ($dbResUsers)
 	{
 		while ($arUser = $dbResUsers->Fetch())

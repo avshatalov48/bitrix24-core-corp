@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\MessageService;
 
@@ -343,6 +345,36 @@ class SmsManager
 						\CCrmOwnerType::Company,
 						$entity['ENTITY_ID']
 					);
+				}
+			}
+		}
+		else
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if($factory && $factory->isClientEnabled())
+			{
+				$item = $factory->getItem($entityId);
+				if($item)
+				{
+					foreach($item->getContactBindings() as $binding)
+					{
+						$contactId = EntityBinding::prepareEntityID(\CCrmOwnerType::Contact, $binding);
+						if($contactId > 0)
+						{
+							$communications[] = static::prepareEntityCommunications(
+								\CCrmOwnerType::Contact,
+								$contactId
+							);
+						}
+					}
+					$companyId = $item->getCompanyId();
+					if($companyId > 0)
+					{
+						$communications[] = static::prepareEntityCommunications(
+							\CCrmOwnerType::Company,
+							$companyId
+						);
+					}
 				}
 			}
 		}

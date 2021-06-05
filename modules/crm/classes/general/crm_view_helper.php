@@ -156,8 +156,8 @@ class CCrmViewHelper
 		}
 
 		$dbUser = CUser::GetList(
-			($by = 'id'),
-			($order = 'asc'),
+			'id',
+			'asc',
 			array('ID'=> $userID),
 			array(
 				'FIELDS' => array(
@@ -1173,7 +1173,7 @@ class CCrmViewHelper
 
 
 		$dbUsers = CUser::GetList(
-			($by = 'id'), ($sort = 'asc'),
+			'id', 'asc',
 			array('ID' => $userID),
 			array('FIELDS' =>  array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE', 'EMAIL', 'PERSONAL_PHOTO'))
 		);
@@ -2890,7 +2890,10 @@ class CCrmViewHelper
 		$messages = array(
 			'dialogTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_DLG_TTL'),
 			'failureTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_FAILURE_TTL'),
-			'selectorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL')
+			'selectorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL'),
+			'checkErrorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
+			'checkErrorHelpArticleCode' => '8233923'
 		);
 
 		return '<script type="text/javascript">'

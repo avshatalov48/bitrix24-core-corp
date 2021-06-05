@@ -708,3 +708,21 @@
 select.crm-entity-product-control-select-field:hover {
 	border-color: var(--ui-field-color-primary);
 }
+
+.main-grid-delete-button {
+	position: relative;
+	top: 7px;
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: url(/bitrix/js/ui/buttons/icons/images/ui-remove-black.svg) no-repeat center center;
+	opacity: .3;
+	cursor: pointer;
+	transition: opacity 200ms ease;
+}
+
+.main-grid-delete-button:hover { opacity: .7; }
+
+.main-grid-cell-drag {
+	padding-top: 6px !important;
+}

@@ -167,8 +167,13 @@ var WebSocketConnector = function (delegate, params)
 		console.warn("Forced connection in background");
 		if(Application.isBackground())
 		{
-			this.connect();
+			this.connect(true);
 		}
+	});
+
+	BX.addCustomEvent("onPullGetStatus", () => {
+		BX.postWebEvent("onPullStatus", {status : this.currentStatus});
+		BX.postComponentEvent("onPullStatus", [{status : this.currentStatus}]);
 	})
 };
 
@@ -177,6 +182,7 @@ WebSocketConnector.prototype = {
 	state : 0,
 	connectionTimeoutId : null,
 	connectionTimeoutTime : 0,
+	currentStatus : 'offline',
 	connect : function (force)
 	{
 		if (!force)
@@ -260,15 +266,20 @@ WebSocketConnector.prototype = {
 		this.socket.onmessage = this.onmessage.bind(this);
 		this.socket.onopen = this.onopen.bind(this);
 	},
-	sendPullStatus : function (status)
+	sendPullStatus : function (status, additional)
 	{
+		if (!additional)
+		{
+			additional = {};
+		}
+		this.currentStatus = status;
 		if(this.offlineTimeout)
 		{
 			clearTimeout(this.offlineTimeout);
 			this.offlineTimeout = null;
 		}
-		BX.postWebEvent("onPullStatus", {status : status});
-		BX.postComponentEvent("onPullStatus", [{status : status}]);
+		BX.postWebEvent("onPullStatus", {status : status, additional: additional});
+		BX.postComponentEvent("onPullStatus", [{status : status, additional: additional}]);
 	},
 	/**
 	 * Sends some data to the server via websocket connection.
@@ -319,7 +330,7 @@ WebSocketConnector.prototype = {
 	{
 		console.error("WebSocket -> onerror", arguments);
 
-		this.sendPullStatus(PullStatus.Offline);
+		this.sendPullStatus(PullStatus.Offline, {isError: true});
 
 		this.delegate.onError.apply(this.delegate, [arguments[0], this.waitingConnectionAfterBackground]);
 		this.waitingConnectionAfterBackground = false;

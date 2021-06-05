@@ -169,15 +169,36 @@ elseif ($action === 'SAVE_PROGRESS')
 
 	$arFields = array('STATUS_ID' => $statusID);
 	$CCrmQuote = new CCrmQuote(false);
-	$CCrmQuote->Update($ID, $arFields, true, true, array('DISABLE_USER_FIELD_CHECK' => true, 'REGISTER_SONET_EVENT' => true));
+	$result = $CCrmQuote->Update($ID, $arFields, true, true, array('DISABLE_USER_FIELD_CHECK' => true, 'REGISTER_SONET_EVENT' => true));
 
-	__CrmQuoteListEndResponse(
-		array(
-			'TYPE' => $targetTypeName,
-			'ID' => $ID,
-			'VALUE' => $statusID
-		)
-	);
+	$response = [
+		'TYPE' => $targetTypeName,
+		'ID' => $ID,
+		'VALUE' => $statusID
+	];
+
+	if (!$result)
+	{
+
+		$response['ERROR'] = $CCrmQuote->LAST_ERROR;
+
+		$lastErrors = $CCrmQuote->getLastErrors();
+		if ($lastErrors !== null)
+		{
+			foreach ($lastErrors as $error)
+			{
+				if (
+					$error->getCode() === \Bitrix\Crm\Field::ERROR_CODE_REQUIRED_FIELD_ATTRIBUTE
+					&& isset($error->getCustomData()['fieldName'])
+				)
+				{
+					$response['CHECK_ERRORS'][$error->getCustomData()['fieldName']] = $error->getMessage();
+				}
+			}
+		}
+	}
+
+	__CrmQuoteListEndResponse($response);
 }
 elseif ($action === 'GET_ROW_COUNT')
 {

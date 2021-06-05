@@ -636,7 +636,7 @@ class ProjectProvider extends BaseProvider
 			$projectPage = Option::get('socialnetwork', 'workgroups_page', false, SITE_ID);
 			if (!$projectPage)
 			{
-				$projectPage = SITE_DIR.'company/workgroups/';
+				$projectPage = SITE_DIR.'workgroups/';
 			}
 		}
 

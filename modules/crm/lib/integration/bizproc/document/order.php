@@ -415,7 +415,7 @@ class Order extends \CCrmDocument
 		}
 	}
 
-	public function getDocumentName($documentId)
+	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		return \CCrmOwnerType::GetCaption(\CCrmOwnerType::Order, $arDocumentID['ID'], false);
@@ -531,7 +531,7 @@ class Order extends \CCrmDocument
 	private static function fillResponsibleFields($responsibleId, array &$fields)
 	{
 		$dbUsers = \CUser::GetList(
-			($sortBy = 'id'), ($sortOrder = 'asc'),
+			'id', 'asc',
 			array('ID' => (int) $responsibleId),
 			array('SELECT' => array(
 				'EMAIL',
@@ -585,7 +585,7 @@ class Order extends \CCrmDocument
 	private static function fillBuyerFields($buyerId, array &$fields)
 	{
 		$dbUsers = \CUser::GetList(
-			($sortBy = 'id'), ($sortOrder = 'asc'),
+			'id', 'asc',
 			array('ID' => (int) $buyerId),
 			array('SELECT' => array(
 				'LOGIN',

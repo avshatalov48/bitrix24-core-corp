@@ -37,6 +37,15 @@ class StorageType
 		}
 		return self::$defaultTypeID;
 	}
+
+	public static function getAllTypes(): array
+	{
+		return [
+			self::File,
+			self::WebDav,
+			self::Disk,
+		];
+	}
 	public static function resolveName($typeID)
 	{
 		$typeID = (int)$typeID;

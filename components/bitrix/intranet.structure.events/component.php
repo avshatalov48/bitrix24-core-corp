@@ -127,7 +127,8 @@ else
 	);
 
 	$arResult['ENTRIES'] = array();
-	$arResult["ENTRIES_NAV"] = $dbIB->GetPageNavStringEx($navComponentObject=null, GetMessage('INTR_ISE_USERS_NAV_TITLE'));
+	$navComponentObject = null;
+	$arResult["ENTRIES_NAV"] = $dbIB->GetPageNavStringEx($navComponentObject, GetMessage('INTR_ISE_USERS_NAV_TITLE'));
 
 	$arDepCacheValue = array();
 	$arDepartmentIDs = array();
@@ -154,7 +155,7 @@ else
 		}
 		unset($dbRes);
 
-		$dbUsers = CUser::GetList($by = 'ID', $order = "asc", array('ID' => $strUserIDs, '!UF_DEPARTMENT' => false), array('SELECT' => array('UF_*')));
+		$dbUsers = CUser::GetList('ID', "asc", array('ID' => $strUserIDs, '!UF_DEPARTMENT' => false), array('SELECT' => array('UF_*')));
 		$arUsedFields = array('PERSONAL_PHOTO', 'FULL_NAME', 'ID','LOGIN','NAME','ACTIVE','SECOND_NAME','LAST_NAME','EMAIL','DATE_REGISTER','PERSONAL_PROFESSION','PERSONAL_WWW','PERSONAL_BIRTHDAY','PERSONAL_ICQ','PERSONAL_GENDER','PERSONAL_PHONE','PERSONAL_FAX','PERSONAL_MOBILE','PERSONAL_PAGER','PERSONAL_STREET','PERSONAL_MAILBOX','PERSONAL_CITY','PERSONAL_STATE','PERSONAL_ZIP','PERSONAL_COUNTRY','WORK_PHONE','PERSONAL_NOTES','ADMIN_NOTES','XML_ID');
 		while ($arUser = $dbUsers->Fetch())
 		{
@@ -201,7 +202,7 @@ if (count($arResult['USERS']) > 0)
 
 if ($bDataFromCache)
 {
-	$dbRes = CUser::GetList($by='id', $order='asc', array('ID' => implode('|', array_keys($arResult['USERS'])), '!UF_DEPARTMENT' => false, 'LAST_ACTIVITY' => 120));
+	$dbRes = CUser::GetList('id', 'asc', array('ID' => implode('|', array_keys($arResult['USERS'])), '!UF_DEPARTMENT' => false, 'LAST_ACTIVITY' => 120));
 	while ($arRes = $dbRes->Fetch())
 	{
 		$arResult['USERS'][$arRes['ID']]['IS_ONLINE'] = true;

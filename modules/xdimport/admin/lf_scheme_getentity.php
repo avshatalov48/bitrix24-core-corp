@@ -19,8 +19,8 @@ $arSocNetAllowedSubscribeEntityTypesDesc = CSocNetAllowed::GetAllowedEntityTypes
 if (
 	array_key_exists("CLASS_DESC_GET", $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]])
 	&& array_key_exists("METHOD_DESC_GET", $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]])
-	&& strlen($arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["CLASS_DESC_GET"]) > 0
-	&& strlen($arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["METHOD_DESC_GET"]) > 0
+	&& $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["CLASS_DESC_GET"] <> ''
+	&& $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["METHOD_DESC_GET"] <> ''
 )
 {
 	$arEntityTmp = call_user_func(
@@ -34,8 +34,8 @@ if (
 	if (
 		array_key_exists("CLASS_DESC_SHOW", $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]])
 		&& array_key_exists("METHOD_DESC_SHOW", $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]])
-		&& strlen($arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["CLASS_DESC_SHOW"]) > 0
-		&& strlen($arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["METHOD_DESC_SHOW"]) > 0
+		&& $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["CLASS_DESC_SHOW"] <> ''
+		&& $arSocNetAllowedSubscribeEntityTypesDesc[$_POST["entity_type"]]["METHOD_DESC_SHOW"] <> ''
 	)
 		$name = call_user_func(
 			array(

@@ -3,6 +3,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Main\Localization\Loc;
 
+use \Bitrix\Main\UI;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -17,10 +19,10 @@ use \Bitrix\Main\Localization\Loc;
 
 if ($arResult['LINE_NAME'])
 {
-	$APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('OL_STAT_TITLE', ['#LINE_NAME#' => htmlspecialcharsbx($arResult['LINE_NAME'])]));
+	$APPLICATION->SetTitle(Loc::getMessage('OL_STAT_TITLE', ['#LINE_NAME#' => htmlspecialcharsbx($arResult['LINE_NAME'])]));
 }
 
-ShowError($arResult['ERROR_TEXT']);
+\ShowError($arResult['ERROR_TEXT']);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == 'bitrix24');
 if($isBitrix24Template)
@@ -85,11 +87,16 @@ $APPLICATION->IncludeComponent(
 		'ALLOW_COLUMNS_SORT' => true,
 		'ALLOW_SORT' => true,
 		'ALLOW_PIN_HEADER' => true,
+		'ACTION_PANEL' => $arResult['GROUP_ACTIONS'],
+		'SHOW_CHECK_ALL_CHECKBOXES' => true,
+		'SHOW_ROW_CHECKBOXES' => true,
+		'SHOW_ROW_ACTIONS_MENU'     => true,
+		'SHOW_GRID_SETTINGS_MENU'   => true,
+		'SHOW_NAVIGATION_PANEL'     => true,
+		'SHOW_SELECTED_COUNTER'     => true,
+		'SHOW_TOTAL_COUNTER'        => true,
 		'SHOW_PAGINATION' => true,
 		'SHOW_PAGESIZE' => true,
-		'SHOW_ROW_CHECKBOXES' => false,
-        'SHOW_CHECK_ALL_CHECKBOXES' => false,
-        'SHOW_SELECTED_COUNTER' => false,
 		'PAGE_SIZES' => [
 			['NAME' => '20', 'VALUE' => '20'],
 			['NAME' => '50', 'VALUE' => '50'],
@@ -101,40 +108,71 @@ $APPLICATION->IncludeComponent(
         'AJAX_OPTION_HISTORY' => 'N',
 		'AJAX_ID' => CAjax::GetComponentID('bitrix:imopenlines.statistics.detail', '.default', '')
 	],
-	$component, ['HIDE_ICONS' => 'Y']
+	$component,
+	['HIDE_ICONS' => 'Y']
 );
 
 \Bitrix\Imopenlines\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
-?>
-<script type="text/javascript">
-<?
-if (is_array($arResult['STEXPORT_PARAMS']))
+UI\Extension::load([
+	'ui.entity-selector',
+	'ui.buttons',
+	'ui.forms',
+	'ui.stepprocessing',
+]);
+$isStExport = is_array($arResult['STEXPORT_PARAMS']);
+if ($isStExport)
 {
-	\Bitrix\Main\UI\Extension::load('ui.progressbar');
-	\Bitrix\Main\UI\Extension::load('ui.buttons');
-	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/imopenlines/common.js');
 	?>
+	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				BX.OpenLines.ExportManager.create(
-					"<?=CUtil::JSEscape($arResult['STEXPORT_PARAMS']['managerId'])?>",
-					<?=CUtil::PhpToJSObject($arResult['STEXPORT_PARAMS'])?>
-				);
+				BX.UI.StepProcessing.ProcessManager.create(<?=\Bitrix\Main\Web\Json::encode([
+					'id' => 'OpenLinesExport',
+					'component' => 'bitrix:imopenlines.statistics.detail',
+					'componentMode' => 'ajax',
+					'messages' => [
+					 	'DialogTitle' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_TITLE'),
+						'DialogSummary' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BODY'),
+						'DialogStartButton' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BTN_START'),
+						'DialogStopButton' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BTN_STOP'),
+						'DialogCloseButton' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BTN_CLOSE'),
+						//'RequestError' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_REQUEST_ERR'),
+						//'WaitingResponse' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_WAIT'),
+					],
+					'queue' => [
+						[
+							'action' => 'dispatcher',
+						],
+					],
+					'params' => $arResult['STEXPORT_PARAMS'],
+					'dialogMaxWidth' => 610,
+				])?>);
 			}
 		);
-		BX.OpenlinesLongRunningProcessDialog.messages =
-		{
-			startButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_START')?>",
-			stopButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_STOP')?>",
-			closeButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_CLOSE')?>",
-			wait: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_WAIT')?>",
-			requestError: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_REQUEST_ERR')?>"
-		};
+	</script>
 	<?php
 }
 ?>
-	BX.message({
-		IMOL_STATISTICS_GRID_ID: '<?=CUtil::JSEscape($arResult['GRID_ID'])?>',
-	});
+<script type="text/javascript">
+	BX.ready(
+		function()
+		{
+			BX.message({
+				LIST_GROUP_ACTION_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('OL_STAT_EXCEL_ACTIONS_TITLE'))?>',
+				LIST_GROUP_ACTION_SUMMARY: '<?= CUtil::JSEscape(Loc::getMessage('OL_STAT_EXCEL_ACTIONS_BODY'))?>',
+				LIST_GROUP_ACTION_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE_TITLE'))?>',
+				LIST_GROUP_ACTION_SPAM: '<?= CUtil::JSEscape(Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM_TITLE'))?>',
+				LIST_GROUP_ACTION_TRANSFER: '<?= CUtil::JSEscape(Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE'))?>',
+				OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION: '<?= CUtil::JSEscape(Loc::getMessage('OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION'))?>',//TODO: del
+				OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE')) ?>',
+			});
+
+			BX.OpenLines.GridActions.gridId = "<?= CUtil::JSEscape($arResult['GRID_ID'])?>";//TODO: del
+			BX.OpenLines.Actions.init(
+				"<?= CUtil::JSEscape($arResult['GRID_ID'])?>",
+				<?=CUtil::PhpToJSObject($arResult['groupActionsData'])?>
+			);
+		}
+	);
 </script>

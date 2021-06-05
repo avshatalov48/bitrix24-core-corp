@@ -12,7 +12,7 @@ class CIntranetUtils
 		if (!isset($cache[$USER_ID]))
 		{
 			$dbRes = CUser::GetList(
-				$by='ID', $order='ASC',
+				'ID', 'ASC',
 				array('ID' => $USER_ID),
 				array('SELECT' => array('UF_DEPARTMENT'), 'FIELDS' => array('ID'))
 			);
@@ -1004,7 +1004,7 @@ class CIntranetUtils
 
 		if(count($arManagerIDs) > 0)
 		{
-			$dbRes = CUser::GetList($by = 'ID', $sort = 'ASC', array('ID' => implode('|', array_unique($arManagerIDs))));
+			$dbRes = CUser::GetList('ID', 'ASC', array('ID' => implode('|', array_unique($arManagerIDs))));
 			while($arUser = $dbRes->GetNext())
 			{
 				$arManagers[$arUser['ID']] = $arUser;
@@ -1237,7 +1237,7 @@ class CIntranetUtils
 		if (!$USER_ID)
 			$USER_ID = $USER->GetID();
 
-		$dbRes = CUser::GetList($by='ID', $order='ASC', array('ID' => $USER_ID), array('SELECT' => array('UF_DEPARTMENT')));
+		$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $USER_ID), array('SELECT' => array('UF_DEPARTMENT')));
 		if (($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT']) && count($arRes['UF_DEPARTMENT']) > 0)
 		{
 			return CIntranetUtils::getDepartmentEmployees($arRes['UF_DEPARTMENT'], $bRecursive, $bSkipSelf, $onlyActive, $arSelect);
@@ -1450,7 +1450,7 @@ class CIntranetUtils
 		if (!CUserOptions::GetOption('global', 'davex_mailbox'))
 		{
 			$arUser = CUser::GetList(
-				$by = 'ID', $order = 'ASC',
+				'ID', 'ASC',
 				array('ID_EQUAL_EXACT' => $USER->GetID()),
 				array('SELECT' => array('UF_BXDAVEX_MAILBOX'), 'FIELDS' => array('ID'))
 			)->Fetch();
@@ -1474,7 +1474,7 @@ class CIntranetUtils
 			return '';
 
 		$arAdmin = CUser::getList(
-			$by, $order,
+			'', '',
 			array('ID' => $user_id, 'GROUPS_ID' => 1, 'ACTIVE' => 'Y'),
 			array('FIELDS' => array('ID', 'TIME_ZONE_OFFSET'))
 		)->fetch();
@@ -1570,7 +1570,7 @@ class CIntranetUtils
 			return '';
 
 		$arAdmin = CUser::getList(
-			$by, $order,
+			'', '',
 			array('ID' => $user_id, 'GROUPS_ID' => 1, 'ACTIVE' => 'Y'),
 			array('FIELDS' => array('ID', 'EMAIL'))
 		)->fetch();

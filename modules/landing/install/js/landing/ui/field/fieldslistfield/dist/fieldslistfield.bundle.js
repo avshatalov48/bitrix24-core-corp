@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,landing_ui_field_basefield,landing_loc,main_core,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,calendar_resourcebookinguserfield,landing_pageobject) {
+(function (exports,landing_ui_field_basefield,landing_loc,main_core,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,calendar_resourcebookinguserfield,landing_pageobject,main_loader) {
 	'use strict';
 
 	function _templateObject2() {
@@ -296,10 +296,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        }));
 	      }
 
-	      if (field.type === 'list' && field.editing.items.length > 0) {
+	      if ((field.type === 'list' || field.type === 'radio') && field.editing.items.length > 0) {
 	        var defaultValueField = new BX.Landing.UI.Field.Dropdown({
 	          selector: 'value',
 	          title: landing_loc.Loc.getMessage('LANDING_FIELDS_ITEM_FORM_LIST_DEFAULT_VALUE_TITLE'),
+	          content: field.value,
 	          items: [{
 	            value: landing_loc.Loc.getMessage('LANDING_FORM_DEFAULT_VALUE_NOT_SELECTED'),
 	            id: null
@@ -330,10 +331,28 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        fields.push(defaultValueField);
 	      }
 
+	      if (main_core.Type.isPlainObject(field.editing) && main_core.Type.isArrayFilled(field.editing.valueTypes)) {
+	        fields.push(new BX.Landing.UI.Field.Dropdown({
+	          selector: 'valueType',
+	          title: landing_loc.Loc.getMessage('LANDING_FIELDS_ITEM_FORM_VALUE_TYPE'),
+	          content: field.editing.editable.valueType,
+	          items: field.editing.valueTypes.map(function (item) {
+	            return {
+	              name: item.name,
+	              value: item.id
+	            };
+	          })
+	        }));
+	      }
+
 	      return new landing_ui_form_formsettingsform.FormSettingsForm({
 	        fields: fields,
 	        serializeModifier: function serializeModifier(value) {
 	          var modifiedValue = babelHelpers.objectSpread({}, value);
+
+	          if (Reflect.has(value, 'label')) {
+	            modifiedValue.label = main_core.Text.decode(value.label);
+	          }
 
 	          if (Reflect.has(value, 'required')) {
 	            modifiedValue.required = value.required.includes('required');
@@ -348,6 +367,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	              item.selected = value.value === item.value;
 	              return item;
 	            });
+	          }
+
+	          if (Reflect.has(value, 'valueType')) {
+	            modifiedValue.editing = {
+	              editable: {
+	                valueType: value.valueType
+	              }
+	            };
 	          }
 
 	          return modifiedValue;
@@ -374,7 +401,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          return item.options.id;
 	        })
 	      }).then(function (selectedFields) {
-	        _this5.onFieldsSelect(selectedFields);
+	        if (main_core.Type.isArrayFilled(selectedFields)) {
+	          _this5.onFieldsSelect(selectedFields);
+	        }
 	      });
 	    }
 	  }, {
@@ -389,14 +418,15 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          };
 	        })
 	      };
+	      void this.showLoader();
 	      crm_form_client.FormClient.getInstance().prepareOptions(this.options.formOptions, preparingOptions).then(function (result) {
-	        var promises = result.data.fields.map(function (field) {
+	        void _this6.hideLoader();
+	        return Promise.all(result.data.fields.map(function (field) {
 	          return _this6.addItem(field);
-	        });
-	        Promise.all(promises).then(function () {
-	          _this6.emit('onChange', {
-	            skipPrepare: true
-	          });
+	        }));
+	      }).then(function () {
+	        _this6.emit('onChange', {
+	          skipPrepare: true
 	        });
 	      });
 	    }
@@ -427,9 +457,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          fields.push(babelHelpers.objectSpread({}, fields[0]));
 	        }
 
+	        void _this7.showLoader();
 	        crm_form_client.FormClient.getInstance().prepareOptions(_this7.options.formOptions, {
 	          fields: fields
 	        }).then(function (result) {
+	          void _this7.hideLoader();
 	          var separatorPromise = Promise.resolve();
 
 	          if (separator.type === 'page' && !_this7.items.find(function (item) {
@@ -538,6 +570,35 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        });
 	      });
 	    }
+	  }, {
+	    key: "getLoader",
+	    value: function getLoader() {
+	      return this.cache.remember('loader', function () {
+	        return new main_loader.Loader({
+	          size: 50,
+	          mode: 'inline',
+	          offset: {
+	            top: '5px',
+	            left: '225px'
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "showLoader",
+	    value: function showLoader() {
+	      var loader = this.getLoader();
+	      var container = this.getListContainer();
+	      main_core.Dom.append(loader.layout, container);
+	      return loader.show(container);
+	    }
+	  }, {
+	    key: "hideLoader",
+	    value: function hideLoader() {
+	      var loader = this.getLoader();
+	      main_core.Dom.remove(loader.layout);
+	      return loader.hide();
+	    }
 	  }], [{
 	    key: "isSeparator",
 	    value: function isSeparator(fieldId) {
@@ -572,5 +633,5 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	exports.FieldsListField = FieldsListField;
 
-}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX.Landing.UI.Field,BX.Landing,BX,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Calendar,BX.Landing));
+}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX.Landing.UI.Field,BX.Landing,BX,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Calendar,BX.Landing,BX));
 //# sourceMappingURL=fieldslistfield.bundle.js.map

@@ -10,15 +10,15 @@ class CAllXDILFScheme
 		$this->LAST_ERROR = "";
 		$aMsg = array();
 
-		if((($action == "update" && array_key_exists("TYPE", $arFields)) || $action == "add") && strlen($arFields["TYPE"]) == 0)
+		if((($action == "update" && array_key_exists("TYPE", $arFields)) || $action == "add") && $arFields["TYPE"] == '')
 			$aMsg[] = array("id"=>"TYPE", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_TYPE"));
-		if((($action == "update" && array_key_exists("ENTITY_TYPE", $arFields)) || $action == "add") && strlen($arFields["ENTITY_TYPE"]) == 0)
+		if((($action == "update" && array_key_exists("ENTITY_TYPE", $arFields)) || $action == "add") && $arFields["ENTITY_TYPE"] == '')
 			$aMsg[] = array("id"=>"ENTITY_TYPE", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_ENTITY_TYPE"));
-		if((($action == "update" && array_key_exists("EVENT_ID", $arFields)) || $action == "add") && strlen($arFields["EVENT_ID"]) == 0)
+		if((($action == "update" && array_key_exists("EVENT_ID", $arFields)) || $action == "add") && $arFields["EVENT_ID"] == '')
 			$aMsg[] = array("id"=>"EVENT_ID", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_EVENT_ID"));
-		if((($action == "update" && array_key_exists("NAME", $arFields)) || $action == "add") && strlen($arFields["NAME"]) == 0)
+		if((($action == "update" && array_key_exists("NAME", $arFields)) || $action == "add") && $arFields["NAME"] == '')
 			$aMsg[] = array("id"=>"NAME", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_NAME"));
-		if(strlen($arFields["LID"]) > 0)
+		if($arFields["LID"] <> '')
 		{
 			$r = CLang::GetByID($arFields["LID"]);
 			if(!$r->Fetch())
@@ -28,8 +28,8 @@ class CAllXDILFScheme
 			$aMsg[] = array("id"=>"LID", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_SITE2"));
 
 		if(
-			($action == "add" && $arFields["TYPE"] == "POST" && (!array_key_exists("HASH", $arFields) || strlen($arFields["HASH"]) <= 0)) 
-			|| ($action == "update" && $arFields["TYPE"] == "POST" && array_key_exists("HASH", $arFields) && strlen($arFields["HASH"]) <= 0)
+			($action == "add" && $arFields["TYPE"] == "POST" && (!array_key_exists("HASH", $arFields) || $arFields["HASH"] == ''))
+			|| ($action == "update" && $arFields["TYPE"] == "POST" && array_key_exists("HASH", $arFields) && $arFields["HASH"] == '')
 		)
 			$arFields["HASH"] = md5(randString(20));
 			
@@ -39,7 +39,7 @@ class CAllXDILFScheme
 		)
 			$arFields["ENABLE_COMMENTS"] = "Y";
 
-		if((($action == "update" && array_key_exists("DAYS_OF_MONTH", $arFields)) || $action == "add") && strlen($arFields["DAYS_OF_MONTH"]) > 0)
+		if((($action == "update" && array_key_exists("DAYS_OF_MONTH", $arFields)) || $action == "add") && $arFields["DAYS_OF_MONTH"] <> '')
 		{
 			$arDoM = explode(",", $arFields["DAYS_OF_MONTH"]);
 			$arFound = array();
@@ -68,7 +68,7 @@ class CAllXDILFScheme
 				}
 			}
 		}
-		if((($action == "update" && array_key_exists("DAYS_OF_WEEK", $arFields)) || $action == "add") && strlen($arFields["DAYS_OF_WEEK"]) > 0)
+		if((($action == "update" && array_key_exists("DAYS_OF_WEEK", $arFields)) || $action == "add") && $arFields["DAYS_OF_WEEK"] <> '')
 		{
 			$arDoW = explode(",", $arFields["DAYS_OF_WEEK"]);
 			$arFound = array();
@@ -89,7 +89,7 @@ class CAllXDILFScheme
 				}
 			}
 		}
-		if((($action == "update" && array_key_exists("TIMES_OF_DAY", $arFields)) || $action == "add") && strlen($arFields["TIMES_OF_DAY"]) > 0)
+		if((($action == "update" && array_key_exists("TIMES_OF_DAY", $arFields)) || $action == "add") && $arFields["TIMES_OF_DAY"] <> '')
 		{
 			$arToD = explode(",", $arFields["TIMES_OF_DAY"]);
 			$arFound = array();
@@ -140,7 +140,7 @@ class CAllXDILFScheme
 				&& in_array($arFields["TYPE"], array("XML", "RSS"))
 			)
 			{
-				if(strlen($arURI["host"]) <= 0)
+				if($arURI["host"] == '')
 				{
 					$aMsg[] = array(
 						"id" => "URI", 
@@ -152,12 +152,12 @@ class CAllXDILFScheme
 					$arFields["HOST"] = $arURI["host"];
 				}
 
-				if(strlen($arURI["port"]) > 0)
+				if($arURI["port"] <> '')
 				{
 					$arFields["PORT"] = $arURI["port"];
 				}
 
-				if(strlen($arURI["path"]) > 0)
+				if($arURI["path"] <> '')
 				{
 					$arFields["PAGE"] = $arURI["path"];
 				}
@@ -166,7 +166,7 @@ class CAllXDILFScheme
 			if (
 				array_key_exists("TYPE", $arFields) 
 				&& $arFields["TYPE"] == "RSS" 
-				&& strlen($arURI["query"]) > 0
+				&& $arURI["query"] <> ''
 			)
 			{
 				$arFields["PARAMS"] = $arURI["query"];
@@ -181,28 +181,28 @@ class CAllXDILFScheme
 		{
 			if (array_key_exists("TYPE", $arFields) && in_array($arFields["TYPE"], array("XML")))
 			{
-				if (strpos($arFields["HOST"], "://") === false)
+				if (mb_strpos($arFields["HOST"], "://") === false)
 					$arFields["HOST"] = "http://".$arFields["HOST"];
 
 				$arURI = parse_url($arFields["HOST"]);
 
-				if(strlen($arURI["host"]) <= 0)
+				if($arURI["host"] == '')
 					$aMsg[] = array("id"=>"HOST", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_URI_HOST"));	
 				else
 					$arFields["HOST"] = $arURI["host"];
 
-				if(strlen($arURI["port"]) > 0)
+				if($arURI["port"] <> '')
 					$arFields["PORT"] = $arURI["port"];
 			}
 		}
 
 		if($arFields["AUTO"]=="Y")
 		{
-			if(strlen($arFields["DAYS_OF_MONTH"])+strlen($arFields["DAYS_OF_WEEK"]) <= 0)
+			if(mb_strlen($arFields["DAYS_OF_MONTH"]) + mb_strlen($arFields["DAYS_OF_WEEK"]) <= 0)
 				$aMsg[] = array("id"=>"DAYS_OF_MONTH", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DAYS_MISSING"));
-			if(strlen($arFields["TIMES_OF_DAY"]) <= 0)
+			if($arFields["TIMES_OF_DAY"] == '')
 				$aMsg[] = array("id"=>"TIMES_OF_DAY", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_TIMES_MISSING"));
-			if(strlen($arFields["LAST_EXECUTED"])<=0)
+			if($arFields["LAST_EXECUTED"] == '')
 				$aMsg[] = array("id"=>"LAST_EXECUTED", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_LE_MISSING"));
 			elseif(is_set($arFields, "LAST_EXECUTED") && $arFields["LAST_EXECUTED"]!==false && $DB->IsDate($arFields["LAST_EXECUTED"], false, false, "FULL")!==true)
 				$aMsg[] = array("id"=>"LAST_EXECUTED", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_LE_WRONG"));
@@ -218,7 +218,7 @@ class CAllXDILFScheme
 		return true;
 	}
 
-	function Delete($ID)
+	public static function Delete($ID)
 	{
 		global $DB, $APPLICATION, $CACHE_MANAGER;
 		$strError = '';
@@ -264,7 +264,7 @@ class CAllXDILFScheme
 		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 	}
 
-	function CheckRequest()
+	public static function CheckRequest()
 	{
 		global $DB;
 
@@ -297,7 +297,7 @@ class CAllXDILFScheme
 			$arEventTmp = CSocNetLogTools::FindLogEventByID($arScheme["EVENT_ID"]);
 			if (
 				array_key_exists("REAL_EVENT_ID", $arEventTmp) 
-				&& strlen($arEventTmp["REAL_EVENT_ID"]) > 0
+				&& $arEventTmp["REAL_EVENT_ID"] <> ''
 			)
 			{
 				$arScheme["EVENT_ID"] = $arEventTmp["REAL_EVENT_ID"];
@@ -350,7 +350,7 @@ class CAllXDILFScheme
 				if ($arScheme["TYPE"] == "XML")
 				{
 					$arParams = array();
-					if (strlen($arScheme["PARAMS"]) > 0)
+					if ($arScheme["PARAMS"] <> '')
 					{
 						$arTmp = explode("&", $arScheme["PARAMS"]);
 						if (is_array($arTmp) && count($arTmp) > 0)
@@ -457,7 +457,7 @@ class CAllXDILFScheme
 							}
 						}
 					}
-					else
+					elseif (XDI_XML_ERROR_DEBUG)
 					{
 						CXDImport::WriteToLog("ERROR: Incorrect webservice response. Scheme ID: ".$arScheme["ID"].", server: ".$arScheme["HOST"].", port: ".$arScheme["PORT"].", page: ".$arScheme["PAGE"].", method: ".$arScheme["METHOD"].", params: ".$arScheme["PARAMS"], "RXML");
 					}
@@ -531,7 +531,7 @@ class CAllXDILFScheme
 									"ENTITY_URL" => $arResponse["link"]
 								);
 
-								if(strlen($arItem["pubDate"]) > 0)
+								if($arItem["pubDate"] <> '')
 								{
 									$arLogParams["SOURCE_TIMESTAMP"] = strtotime($arItem["pubDate"]);
 								}
@@ -611,7 +611,7 @@ class CAllXDILFScheme
 							}
 						}
 					}
-					else
+					elseif (XDI_XML_ERROR_DEBUG)
 					{
 						CXDImport::WriteToLog("ERROR: Incorrect RSS response. Scheme ID: ".$arScheme["ID"].", server: ".$arScheme["HOST"].", port: ".$arScheme["PORT"].", page: ".$arScheme["PAGE"].", params: ".$arScheme["PARAMS"], "RRSS");
 					}
@@ -638,7 +638,7 @@ class CAllXDILFScheme
 	
 	function GetProviderByID($ID)
 	{
-		$ID = IntVal($ID);
+		$ID = intval($ID);
 
 		$rsProvider = CXDILFScheme::GetByID($ID);
 		if ($arProvider = $rsProvider->GetNext())
@@ -691,21 +691,21 @@ class CAllXDILFScheme
 			$rsSchemeRights = CXDILFSchemeRights::GetList(array(), array("SCHEME_ID" => $entity_id));
 			while($arSchemeRights = $rsSchemeRights->Fetch())
 			{
-				if (substr($arSchemeRights["GROUP_CODE"], 0, 1) == "U")
+				if (mb_substr($arSchemeRights["GROUP_CODE"], 0, 1) == "U")
 				{
-					if (substr($arSchemeRights["GROUP_CODE"], 1) == "A")
+					if (mb_substr($arSchemeRights["GROUP_CODE"], 1) == "A")
 					{
 						$arRights[] = "AU";
 						break;
 					}
-					elseif(substr($arSchemeRights["GROUP_CODE"], 1) == "N")
+					elseif(mb_substr($arSchemeRights["GROUP_CODE"], 1) == "N")
 					{
 						$arRights[] = "G2";
 						break;
 					}
-					elseif(intval(substr($arSchemeRights["GROUP_CODE"], 1)) > 0)
+					elseif(intval(mb_substr($arSchemeRights["GROUP_CODE"], 1)) > 0)
 					{
-						$arRights[] = "U".substr($arSchemeRights["GROUP_CODE"], 1);
+						$arRights[] = "U".mb_substr($arSchemeRights["GROUP_CODE"], 1);
 					}
 				}
 			}
@@ -723,23 +723,23 @@ class CAllXDILFScheme
 	public static function IsSecureUrl($url)
 	{
 		$url = trim(strval($url));
-		$colonOffset = strpos($url, ':');
+		$colonOffset = mb_strpos($url, ':');
 		if($colonOffset === false)
 		{
 			$colonOffset = -1;
 		}
 
-		$slashOffset = strpos($url, '/');
+		$slashOffset = mb_strpos($url, '/');
 		if($slashOffset === false)
 		{
 			$slashOffset = -1;
 		}
 
 		$scheme = (
-			$colonOffset > 0
-			&& ($slashOffset < 0 || $colonOffset < $slashOffset)
-				? strtolower(substr($url, 0, $colonOffset))
-				: ''
+		$colonOffset > 0
+		&& ($slashOffset < 0 || $colonOffset < $slashOffset)
+			? mb_strtolower(mb_substr($url, 0, $colonOffset))
+			: ''
 		);
 
 		return $scheme === '' || preg_match('/^(?:(?:ht|f)tp(?:s)?){1}/i', $scheme) === 1;

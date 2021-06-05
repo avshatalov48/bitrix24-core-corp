@@ -238,7 +238,7 @@ class CDavExchangeMail
 			$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
 
 		$dbUserList = CUser::GetList(
-			$by = "UF_BXDAVEX_MLSYNC", $order = "asc",
+			"UF_BXDAVEX_MLSYNC", "asc",
 			$arUserFilter,
 			array(
 				'SELECT' => array('UF_BXDAVEX_MAILBOX', 'UF_BXDAVEX_MLSYNC'),
@@ -250,7 +250,7 @@ class CDavExchangeMail
 			if ($index > $maxNumber)
 				break;
 
-			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_MLSYNC" => ConvertTimeStamp(time(), FULL)));
+			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_MLSYNC" => ConvertTimeStamp(time(), "FULL")));
 
 			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (empty($mailbox))

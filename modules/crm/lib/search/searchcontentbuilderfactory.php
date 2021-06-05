@@ -37,6 +37,10 @@ class SearchContentBuilderFactory
 		{
 			return new OrderSearchContentBuilder();
 		}
+		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		{
+			return new DynamicTypeSearchContentBuilder($entityTypeID);
+		}
 		else
 		{
 			throw new Main\NotSupportedException("Type: '".\CCrmOwnerType::resolveName($entityTypeID)."' is not supported in current context");

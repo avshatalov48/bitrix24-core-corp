@@ -118,4 +118,189 @@ class UserFieldManager
 		
 		return Main\UserField\Dispatcher::instance()->getSignature($signatureParams);
 	}
+
+	/**
+	 * Return array of descriptions about linked to crm user fields in other modules.
+	 *
+	 * @return array[]
+	 */
+	public static function getLinkedUserFieldsDescription(): array
+	{
+		return [
+			static::combineUserFieldFieldsToString(
+				Crm\Integration\Calendar::USER_FIELD_ENTITY_ID,
+				Crm\Integration\Calendar::EVENT_FIELD_NAME
+			) => [
+				'moduleId' => 'calendar',
+				'title' => Main\Localization\Loc::getMessage('CRM_USER_FIELD_MANAGER_FIELD_UF_CRM_CAL_EVENT'),
+			],
+			static::combineUserFieldFieldsToString(
+				Crm\Integration\TaskManager::TASK_USER_FIELD_ENTITY_ID,
+				Crm\Integration\TaskManager::TASK_FIELD_NAME
+			) => [
+				'moduleId' => 'tasks',
+				'title' => Main\Localization\Loc::getMessage('CRM_USER_FIELD_MANAGER_FIELD_UF_CRM_TASK'),
+			],
+			static::combineUserFieldFieldsToString(
+				Crm\Integration\TaskManager::TASK_TEMPLATE_USER_FIELD_ENTITY_ID,
+				Crm\Integration\TaskManager::TASK_FIELD_NAME
+			) => [
+				'moduleId' => 'tasks',
+				'title' => Main\Localization\Loc::getMessage('CRM_USER_FIELD_MANAGER_FIELD_UF_CRM_TASK_TEMPLATE'),
+			],
+		];
+	}
+
+	/**
+	 * Combine entityId and fieldName into a unique string.
+	 *
+	 * @param string $entityId
+	 * @param string $fieldName
+	 * @return string
+	 */
+	public static function combineUserFieldFieldsToString(string $entityId, string $fieldName): string
+	{
+		return $entityId . '|' . $fieldName;
+	}
+
+	/**
+	 * Return full info about user fields from UserFieldTable by their description.
+	 *
+	 * @param array $descriptions
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getLinkedUserFields(array $descriptions): array
+	{
+		$descriptions = array_filter(
+			$descriptions,
+			static function($description) {
+				return (
+					isset($description['moduleId'], $description['title'])
+					&& Main\Loader::includeModule($description['moduleId'])
+				);
+			}
+		);
+		if (empty($descriptions))
+		{
+			return [];
+		}
+		$filter = [
+			'LOGIC' => 'OR',
+		];
+		foreach ($descriptions as $name => $description)
+		{
+			$userFieldFields = static::parseUserFieldFieldsFromString($name);
+			if ($userFieldFields)
+			{
+				$filter[] = [
+					'=ENTITY_ID' => $userFieldFields['entityId'],
+					'=FIELD_NAME' => $userFieldFields['fieldName'],
+				];
+			}
+		}
+		if (empty($filter))
+		{
+			return [];
+		}
+
+		return Main\UserFieldTable::getList([
+			'filter' => $filter,
+		])->fetchAll();
+	}
+
+	/**
+	 * Return entityId and fieldName of a userField from combined name.
+	 *
+	 * @param string $combinedFields
+	 * @return array|null
+	 */
+	public static function parseUserFieldFieldsFromString(string $combinedFields): ?array
+	{
+		$data = explode('|', $combinedFields);
+		if (count($data) === 2)
+		{
+			return [
+				'entityId' => $data[0],
+				'fieldName' => $data[1],
+			];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Return true if this entity is enabled in userField settings.
+	 *
+	 * @param array $userField
+	 * @param string $entityTypeName
+	 * @return bool
+	 */
+	public static function isEntityEnabledInUserField(array $userField, string $entityTypeName): bool
+	{
+		return (
+			isset($userField['SETTINGS'][$entityTypeName])
+			&& $userField['SETTINGS'][$entityTypeName] === 'Y'
+		);
+	}
+
+	/**
+	 * Enable or disable entity with name $entityTypeName in settings of a userField.
+	 *
+	 * @param array $settings
+	 * @param string $entityTypeName
+	 * @param bool $isEnabled
+	 * @return array
+	 */
+	public static function processUserFieldEntitySettings(array $settings, string $entityTypeName, bool $isEnabled): array
+	{
+		$settings[$entityTypeName] = $isEnabled ? 'Y' : 'N';
+
+		return $settings;
+	}
+
+	/**
+	 * Saves new status of entity with name $entityTypeName in settings of $userField in the database.
+	 *
+	 * @param array $userField
+	 * @param string $entityTypeName
+	 * @param bool $isEnabled
+	 * @return bool
+	 */
+	public static function enableEntityInUserField(array $userField, string $entityTypeName, bool $isEnabled): bool
+	{
+		$settings = $userField['SETTINGS'] ?? [];
+		$settings = static::processUserFieldEntitySettings($settings, $entityTypeName, $isEnabled);
+
+		$userTypeEntity = new \CUserTypeEntity();
+
+		return $userTypeEntity->Update($userField['ID'], [
+			'SETTINGS' => $settings,
+		]);
+	}
+
+	public static function isEnabledInTasksUserField(string $entityTypeName): bool
+	{
+		if (!Main\Loader::includeModule('tasks'))
+		{
+			return false;
+		}
+
+		$filter = [
+			'=ENTITY_ID' => Crm\Integration\TaskManager::TASK_USER_FIELD_ENTITY_ID,
+			'=FIELD_NAME' => Crm\Integration\TaskManager::TASK_FIELD_NAME,
+		];
+
+		$userField = Main\UserFieldTable::getList([
+			'filter' => $filter,
+		])->fetch();
+		if (!$userField)
+		{
+			return false;
+		}
+
+		return static::isEntityEnabledInUserField($userField, $entityTypeName);
+	}
 }

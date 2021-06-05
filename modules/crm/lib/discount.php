@@ -2,12 +2,12 @@
 namespace Bitrix\Crm;
 class Discount
 {
-	const UNDEFINED = 0;
-	const MONETARY = 1;
-	const PERCENTAGE = 2;
+	public const UNDEFINED = 0;
+	public const MONETARY = 1;
+	public const PERCENTAGE = 2;
 
-	const MONETARY_NAME = 'MONETARY';
-	const PERCENTAGE_NAME = 'PERCENTAGE';
+	public const MONETARY_NAME = 'MONETARY';
+	public const PERCENTAGE_NAME = 'PERCENTAGE';
 
 	public static function isDefined($typeID)
 	{
@@ -19,6 +19,7 @@ class Discount
 		$typeID = intval($typeID);
 		return $typeID >= self::MONETARY && $typeID <= self::PERCENTAGE;
 	}
+
 	public static function resolveName($typeID)
 	{
 		if(!is_numeric($typeID))
@@ -43,6 +44,7 @@ class Discount
 				return '';
 		}
 	}
+
 	public static function calculateDiscountRate($originalPrice, $price)
 	{
 		$originalPrice = round(doubleval($originalPrice), 2);
@@ -60,20 +62,32 @@ class Discount
 
 		return round(((100 * ($originalPrice - $price)) / $originalPrice), 2);
 	}
+
 	public static function calculateDiscountSum($price, $discountRate)
 	{
 		return (self::calculateOriginalPrice($price, $discountRate) - doubleval($price));
 	}
+
+	/**
+	 * @deprecated Please use calculateDiscountSum instead
+	 *
+	 * @param $discountPrice
+	 * @param $discountRate
+	 *
+	 * @return float|int
+	 */
 	public static function calculateDiscountByDiscountPrice($discountPrice, $discountRate)
 	{
-		return (100 * $discountPrice / (100 - $discountRate) - $discountPrice);
+		return self::calculateDiscountSum($discountPrice, $discountRate);
 	}
+
 	public static function calculateOriginalPrice($price, $discountRate)
 	{
 		$price = doubleval($price);
 		$discountRate = doubleval($discountRate);
 		return (100 * $price) / (100 - $discountRate);
 	}
+
 	public static function calculatePrice($originalPrice, $discountRate)
 	{
 		$originalPrice = doubleval($originalPrice);

@@ -132,6 +132,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPullItemUpdated",
 	    value: function onPullItemUpdated(params) {
+	      console.log(params);
+
 	      if (this.updateItem(params)) {
 	        this.queue.loadItem();
 	      }

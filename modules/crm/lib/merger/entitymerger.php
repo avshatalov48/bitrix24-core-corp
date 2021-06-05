@@ -188,8 +188,8 @@ abstract class EntityMerger
 		}
 
 		$dbResult = \CUser::GetList(
-			($by='id'),
-			($order='asc'),
+			'id',
+			'asc',
 			array('ID'=> $this->userID),
 			array('FIELDS'=> array('ID', 'LOGIN', 'EMAIL', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE')
 			)

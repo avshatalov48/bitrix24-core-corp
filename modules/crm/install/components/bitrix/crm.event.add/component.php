@@ -1,7 +1,11 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
 	return;
+
+use Bitrix\Crm\Service\UserPermissions;
 
 global $USER;
 
@@ -301,15 +305,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 					}
 				}
 			break;
-		case 'ORDER':
-			$arErrors = array();
-			CCrmBizProcHelper::AutoStartWorkflows(
-				CCrmOwnerType::Order,
-				$entityID,
-				CCrmBizProcEventType::Edit,
-				$arErrors
-			);
-			break;
+			case 'ORDER':
+				$arErrors = array();
+				CCrmBizProcHelper::AutoStartWorkflows(
+					CCrmOwnerType::Order,
+					$entityID,
+					CCrmBizProcEventType::Edit,
+					$arErrors
+				);
+				break;
+
+			default:
+				$stageId = $_POST['STAGE_ID'] ?? null;
+				if (!$stageId)
+				{
+					break;
+				}
+
+				$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityTypeID));
+				if (!$factory)
+				{
+					break;
+				}
+
+				$item = $factory->getItem((int)$_POST['ENTITY_ID']);
+				if (!$item)
+				{
+					break;
+				}
+
+				$item->setStageId($stageId);
+				$factory->getUpdateOperation($item)->launch();
+				break;
 		}
 	}
 }
@@ -578,6 +605,43 @@ else
 			}
 		}
 		break;
+
+		default:
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(
+				\CCrmOwnerType::ResolveID($arResult['ENTITY_TYPE'])
+			);
+			if (!$factory)
+			{
+				break;
+			}
+
+			$item = $factory->getItem((int)$arResult['ENTITY_ID']);
+			if (!$item)
+			{
+				break;
+			}
+
+			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+			{
+				break;
+			}
+
+			$arResult['ENTITY_TYPE_CAPTION'] = $factory->getEntityDescription();
+			$arResult['ENTITY_TITLE'] = $item->getTitle();
+			if ($factory->isStagesEnabled())
+			{
+				$arResult['STAGE_ID'] = $item->getStageId();
+				$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+				foreach ($factory->getStages($item->getCategoryId()) as $stage)
+				{
+					if ($userPermissions->getPermissionType($item, UserPermissions::OPERATION_UPDATE) > UserPermissions::PERMISSION_NONE)
+					{
+						$arResult['FACTORY_STAGE_LIST']['REFERENCE'][] = $stage->getName();
+						$arResult['FACTORY_STAGE_LIST']['REFERENCE_ID'][] = $stage->getStatusId();
+					}
+				}
+			}
+			break;
 	}
 
 	$arResult['EVENT_TYPE'] = Array();

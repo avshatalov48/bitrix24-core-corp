@@ -2,6 +2,7 @@
 namespace Bitrix\ImOpenLines;
 
 use \Bitrix\Main\Loader,
+	\Bitrix\Main\Web\Uri,
 	\Bitrix\Main\Application,
 	\Bitrix\Main\ModuleManager,
 	\Bitrix\Main\Type\DateTime,
@@ -517,7 +518,11 @@ class Queue
 
 				if (!empty($result['AVATAR']))
 				{
-					$result['AVATAR'] = mb_substr($result['AVATAR'], 0, 4) == 'http' ? $result['AVATAR']: \Bitrix\ImOpenLines\Common::getServerAddress() . $result['AVATAR'];
+					$uri = new Uri($result['AVATAR']);
+					if(empty($uri->getHost()))
+					{
+						$result['AVATAR'] = Common::getServerAddress() . $result['AVATAR'];
+					}
 				}
 			}
 		}
@@ -568,7 +573,6 @@ class Queue
 				}
 			}
 		}
-
 
 		return $result;
 	}

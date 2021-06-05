@@ -3397,6 +3397,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 	{
 	};
 
+	BX.CrmEntityType.dynamicTypeStart = 128;
+	BX.CrmEntityType.dynamicTypeEnd = 192;
+	BX.CrmEntityType.dynamicTypeNamePrefix = "DYNAMIC_";
+	BX.CrmEntityType.dynamicTypeAbbreviationPrefix = "T";
 	BX.CrmEntityType.enumeration =
 	{
 		undefined: 0,
@@ -3455,7 +3459,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 			}
 		}
 
-		return (typeId >= 0 && typeId <= 7) || typeId === 14;
+		var isStaticType = (typeId >= 0 && typeId <= 7) || typeId === 14;
+		var isDynamicType = this.isDynamicTypeByTypeId(typeId);
+
+		return isStaticType || isDynamicType;
 	};
 	BX.CrmEntityType.resolveName = function(typeId)
 	{
@@ -3516,6 +3523,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.orderpayment;
 		}
+		else if (BX.CrmEntityType.isDynamicTypeByTypeId(typeId))
+		{
+			return BX.CrmEntityType.getDynamicTypeName(typeId);
+		}
 		else
 		{
 			return "";
@@ -3572,6 +3583,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return this.enumeration.wait;
 		}
+		else if (BX.CrmEntityType.isDynamicTypeByName(name))
+		{
+			return this.getTypeIdFromDynamicTypeName(name);
+		}
 		else
 		{
 			return this.enumeration.undefined;
@@ -3612,11 +3627,82 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return this.abbreviations.orderpayment;
 		}
+		else if (BX.CrmEntityType.isDynamicTypeByName(name))
+		{
+			var typeId = this.getTypeIdFromDynamicTypeName(name);
+			return this.getDynamicTypeAbbreviation(typeId);
+		}
 		else
 		{
 			return this.abbreviations.undefined;
 		}
 	};
+
+	/**
+	 * @param {number} typeId
+	 * @return {boolean}
+	 */
+	BX.CrmEntityType.isDynamicTypeByTypeId = function(typeId)
+	{
+		return (typeId >= this.dynamicTypeStart && typeId < this.dynamicTypeEnd);
+	};
+
+	/**
+	 * @param {string} name
+	 * @return {boolean}
+	 */
+	BX.CrmEntityType.isDynamicTypeByName = function(name)
+	{
+		name = String(name);
+		var prefixMatches = (name.indexOf(this.dynamicTypeNamePrefix) === 0);
+		var typeIdIsValid = this.isDynamicTypeByTypeId(this.getTypeIdFromDynamicTypeName(name));
+
+		return (prefixMatches && typeIdIsValid);
+	};
+
+	/**
+	 * @param {number} typeId
+	 * @return {string}
+	 */
+	BX.CrmEntityType.getDynamicTypeName = function(typeId)
+	{
+		return this.dynamicTypeNamePrefix + typeId;
+	};
+
+	/**
+	 * @param {number} typeId
+	 * @return {string}
+	 */
+	BX.CrmEntityType.getDynamicTypeAbbreviation = function(typeId)
+	{
+		return this.dynamicTypeAbbreviationPrefix + this.normalizeTypeIdForAbbreviation(typeId);
+	}
+
+	/**
+	 * @private
+	 * @param {number} typeId
+	 * @return {string}
+	 */
+	BX.CrmEntityType.normalizeTypeIdForAbbreviation = function(typeId)
+	{
+		typeId = Number(typeId);
+		// In dynamic type abbreviation typeId is being converted to Hex
+		// in order to fit the resulting abbreviation into 3 symbols. It's a limitation of several CRM tables
+		return typeId.toString(16);
+	}
+
+	/**
+	 * @private
+	 * @param {string} name
+	 * @return {number}
+	 */
+	BX.CrmEntityType.getTypeIdFromDynamicTypeName = function(name)
+	{
+		name = String(name);
+		var typeId = name.replace(this.dynamicTypeNamePrefix, '');
+		return parseInt(typeId);
+	};
+
 	BX.CrmEntityType.verifyName = function(name)
 	{
 		if(!BX.type.isNotEmptyString(name))
@@ -12760,7 +12846,8 @@ BX.Crm.Page =
 		orderSalescenter: { condition: new RegExp("/saleshub/orders/order/", "i") }, //
 		orderShipment: { condition: new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") },
 		orderPayment: { condition: new RegExp("/shop/orders/payment/details/[0-9]+/", "i") },
-		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i") }
+		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i") },
+		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") }
 	},
 	items: [],
 	initialized: false,
@@ -13111,6 +13198,90 @@ if(typeof(BX.Crm.AjaxForm) === "undefined")
 	BX.Crm.AjaxForm.create = function(id, settings)
 	{
 		var self = new BX.Crm.AjaxForm();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.Crm.ComponentAjax) === "undefined")
+{
+	BX.Crm.ComponentAjax = function()
+	{
+		BX.Crm.ComponentAjax.superclass.constructor.apply(this);
+		this._className = "";
+		this._actionName = "";
+		this._signedParameters = null;
+		this._callbacks = null;
+		this._getParameters = {};
+	};
+	BX.extend(BX.Crm.ComponentAjax, BX.Crm.Form);
+	BX.Crm.ComponentAjax.prototype.doInitialize = function()
+	{
+		this._className = BX.prop.getString(this._settings, "className", "");
+		this._actionName = BX.prop.getString(this._settings, "actionName", "");
+		this._signedParameters = BX.prop.getString(this._settings, "signedParameters", null);
+		this._callbacks = BX.prop.getObject(this._settings, "callbacks", {});
+
+	};
+	BX.Crm.ComponentAjax.prototype.addUrlParams = function(params)
+	{
+		if(BX.type.isPlainObject(params) && Object.keys(params).length > 0)
+		{
+			this._getParameters = BX.merge(this._getParameters, params);
+		}
+	};
+	BX.Crm.ComponentAjax.prototype.doSubmit = function(options)
+	{
+		BX.ajax.runComponentAction(
+			this._className,
+			this._actionName,
+			{
+				mode: "class",
+				signedParameters: this._signedParameters,
+				data: BX.ajax.prepareForm(this._elementNode),
+				getParameters: this._getParameters
+			}
+		).then(
+			function(response)
+			{
+				var callback = BX.prop.getFunction(this._callbacks, "onSuccess", null);
+				if(callback)
+				{
+					BX.onCustomEvent(
+						window,
+						"BX.Crm.EntityEditorAjax:onSubmit",
+						[ response["data"]["ENTITY_DATA"], response ]
+					);
+					callback(response["data"]);
+				}
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				var callback = BX.prop.getFunction(this._callbacks, "onFailure", null);
+				if(!callback)
+				{
+					return;
+				}
+
+				var messages = [];
+				var errors = response["errors"];
+				for(var i = 0, length = errors.length; i < length; i++)
+				{
+					messages.push(errors[i]["message"]);
+				}
+				BX.onCustomEvent(
+					window,
+					"BX.Crm.EntityEditorAjax:onSubmitFailure",
+					[ response["errors"] ]
+				);
+				callback({ "ERRORS": messages });
+			}.bind(this)
+		);
+	};
+	BX.Crm.ComponentAjax.create = function(id, settings)
+	{
+		var self = new BX.Crm.ComponentAjax();
 		self.initialize(id, settings);
 		return self;
 	};

@@ -272,7 +272,7 @@ class Field
 				global $USER_FIELD_MANAGER;
 				$entity = new CCrmFields($USER_FIELD_MANAGER, $data['TYPE']);
 				$langList = array();
-				$resLang = CLanguage::GetList($by = '', $order = '');
+				$resLang = CLanguage::GetList();
 				while($lang = $resLang->Fetch())
 				{
 					$langList[] = $lang['LID'];

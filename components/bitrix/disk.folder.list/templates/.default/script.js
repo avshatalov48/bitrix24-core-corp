@@ -917,9 +917,9 @@ BX.Disk.FolderListClass = (function (){
 			onAfterSave: function(response) {
 				if (response.status === 'success')
 				{
-					window.document.location = BX.Disk.getUrlToShowObjectInGrid(response.objectId);
+					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.objectId))
 				}
-			}
+			}.bind(this)
 		});
 
 		createProcess.start();
@@ -1243,6 +1243,22 @@ BX.Disk.FolderListClass = (function (){
 		if (event.getEventId() === 'Disk.File:onNewVersionUploaded')
 		{
 			this.commonGrid.reload(BX.SidePanel.Instance.getPageUrl());
+		}
+
+		if (event.getEventId() === 'Disk.OnlyOffice:onSaved')
+		{
+			if (!eventData.object)
+			{
+				this.commonGrid.reload(BX.SidePanel.Instance.getPageUrl());
+			}
+			else
+			{
+				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id))
+			}
+		}
+		if (event.getEventId() === 'Disk.OnlyOffice:onClosed' && eventData.object && eventData.process === 'create')
+		{
+			this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id))
 		}
 
 		if (event.getEventId() === 'Disk.File:onAddSharing')
@@ -3392,8 +3408,6 @@ BX.Disk.FolderListClass = (function (){
 										}, this)
 									});
 
-									BX.Access.popup.getPopupContainer().style.zIndex = modalWindow.getZindex() + 10;
-
 									return BX.PreventDefault(e);
 								}, this));
 
@@ -3649,8 +3663,6 @@ BX.Disk.FolderListClass = (function (){
 											}
 										}, this)
 									});
-
-									BX.Access.popup.getPopupContainer().style.zIndex = modalWindow.getZindex() + 10;
 
 									return BX.PreventDefault(e);
 								}, this));

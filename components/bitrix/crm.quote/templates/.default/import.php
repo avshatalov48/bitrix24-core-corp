@@ -16,6 +16,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_DEAL_LIST' => isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '',
 		'PATH_TO_DEAL_EDIT' => isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '',
 		'PATH_TO_QUOTE_LIST' => isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '',
+		'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'] ?? '',
 		'PATH_TO_QUOTE_EDIT' => isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '',
 		'PATH_TO_INVOICE_LIST' => isset($arResult['PATH_TO_INVOICE_LIST']) ? $arResult['PATH_TO_INVOICE_LIST'] : '',
 		'PATH_TO_INVOICE_EDIT' => isset($arResult['PATH_TO_INVOICE_EDIT']) ? $arResult['PATH_TO_INVOICE_EDIT'] : '',
@@ -27,15 +28,16 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.quote.menu', 
-	'', 
+	'bitrix:crm.quote.menu',
+	'',
 	array(
 		'PATH_TO_QUOTE_LIST' => $arResult['PATH_TO_QUOTE_LIST'],
 		'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'],
 		'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'],
+		'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
 		'PATH_TO_QUOTE_IMPORT' => $arResult['PATH_TO_QUOTE_IMPORT'],
 		'PATH_TO_QUOTE_PAYMENT' => $arResult['PATH_TO_QUOTE_PAYMENT'],
-		'ELEMENT_ID' => $arResult['VARIABLES']['quote_id'],    
+		'ELEMENT_ID' => $arResult['VARIABLES']['quote_id'],
 		'TYPE' => 'import'
 	),
 	$component
@@ -43,8 +45,8 @@ $APPLICATION->IncludeComponent(
 
 <?
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.quote.import', 
-	'', 
+	'bitrix:crm.quote.import',
+	'',
 	array(
 		'PATH_TO_QUOTE_LIST' => $arResult['PATH_TO_QUOTE_LIST'],
 		'PATH_TO_QUOTE_IMPORT' => $arResult['PATH_TO_QUOTE_IMPORT']

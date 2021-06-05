@@ -16,6 +16,8 @@ $arActivityDescription = array(
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'CCrmDocumentDeal'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
 		]
 	],
 	'ROBOT_SETTINGS' => array(

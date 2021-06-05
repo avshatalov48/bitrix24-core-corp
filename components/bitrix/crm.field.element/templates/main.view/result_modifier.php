@@ -2,8 +2,10 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\Types\ElementType;
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Loader;
@@ -36,7 +38,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 	{
 		if(is_numeric($value))
 		{
-			$values[$arParams['ENTITY_TYPE'][0]][] = $value;
+			$values[reset($arParams['ENTITY_TYPE'])][] = $value;
 		}
 		else
 		{
@@ -47,10 +49,10 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 
 	$arResult['value'] = [];
 
+	$arResult['value']['LEAD']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_LEAD');
 	if(
 		$arParams['userField']['SETTINGS']['LEAD'] === 'Y'
-		&&
-		!empty($values['LEAD'])
+		&& !empty($values['LEAD'])
 	)
 	{
 		$leads = CCrmLead::GetListEx(
@@ -60,9 +62,11 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 			false,
 			['ID', 'TITLE']
 		);
+		$arResult['value']['LEAD']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.lead.show/card.ajax.php';
+
 		while($lead = $leads->Fetch())
 		{
-			$arResult['value']['LEAD'][$lead['ID']] = [
+			$arResult['value']['LEAD']['items'][$lead['ID']] = [
 				'ENTITY_TITLE' => $lead['TITLE'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Lead,
@@ -72,10 +76,10 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		}
 	}
 
+	$arResult['value']['CONTACT']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_CONTACT');
 	if(
 		$arParams['userField']['SETTINGS']['CONTACT'] === 'Y'
-		&&
-		!empty($values['CONTACT'])
+		&& !empty($values['CONTACT'])
 	)
 	{
 		$hasNameFormatter = method_exists('CCrmContact', 'PrepareFormattedName');
@@ -88,6 +92,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 				? ['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME']
 				: ['ID', 'FULL_NAME']
 		);
+		$arResult['value']['CONTACT']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.contact.show/card.ajax.php';
 
 		while($contact = $contatcs->Fetch())
 		{
@@ -107,7 +112,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 				$title = ($contact['FULL_NAME'] ?? '');
 			}
 
-			$arResult['value']['CONTACT'][$contact['ID']] = [
+			$arResult['value']['CONTACT']['items'][$contact['ID']] = [
 				'ENTITY_TITLE' => $title,
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Contact,
@@ -117,19 +122,21 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		}
 	}
 
+	$arResult['value']['COMPANY']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_COMPANY');
 	if(
 		$arParams['userField']['SETTINGS']['COMPANY'] === 'Y'
-		&&
-		!empty($values['COMPANY'])
+		&& !empty($values['COMPANY'])
 	)
 	{
 		$companies = CCrmCompany::GetListEx(
 			['TITLE' => 'ASC'],
 			['ID' => $values['COMPANY']]
 		);
+		$arResult['value']['COMPANY']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.company.show/card.ajax.php';
+
 		while($company = $companies->Fetch())
 		{
-			$arResult['value']['COMPANY'][$company['ID']] = [
+			$arResult['value']['COMPANY']['items'][$company['ID']] = [
 				'ENTITY_TITLE' => $company['TITLE'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Company,
@@ -139,6 +146,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		}
 	}
 
+	$arResult['value']['DEAL']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_DEAL');
 	if(
 		$arParams['userField']['SETTINGS']['DEAL'] === 'Y'
 		&&
@@ -149,19 +157,21 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 			['TITLE' => 'ASC'],
 			['ID' => $values['DEAL']]
 		);
+		$arResult['value']['DEAL']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.deal.show/card.ajax.php';
+
 		while($deal = $deals->Fetch())
 		{
-			$arResult['value']['DEAL'][$deal['ID']] = [
+			$arResult['value']['DEAL']['items'][$deal['ID']] = [
 				'ENTITY_TITLE' => $deal['TITLE'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $deal['ID']),
 			];
 		}
 	}
 
+	$arResult['value']['ORDER']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_ORDER');
 	if(
 		$arParams['userField']['SETTINGS']['ORDER'] === 'Y'
-		&&
-		!empty($values['ORDER'])
+		&& !empty($values['ORDER'])
 	)
 	{
 		$orders = \Bitrix\Crm\Order\Order::getList([
@@ -170,9 +180,11 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 			'order' => ['ID' => 'DESC']
 		]);
 
+		$arResult['value']['ORDER']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
+
 		while($order = $orders->fetch())
 		{
-			$arResult['value']['ORDER'][$order['ID']] = [
+			$arResult['value']['ORDER']['items'][$order['ID']] = [
 				'ENTITY_TITLE' => $order['ACCOUNT_NUMBER'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Order,
@@ -182,6 +194,47 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		}
 	}
 
+	$uri = UrlManager::getInstance()->create(
+		'bitrix:crm.controller.tooltip.card',
+		[
+			'sessid' => bitrix_sessid(),
+		]
+	);
+	foreach ($arParams['userField']['SETTINGS'] as $entityTypeName => $status)
+	{
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			continue;
+		}
+
+		if (($factory = Container::getInstance()->getFactory($entityTypeId)) === null)
+		{
+			continue;
+		}
+
+		$arResult['value'][$entityTypeName]['title'] = HtmlFilter::encode($factory->getEntityDescription());
+
+		if ($status === 'Y' && isset($values[$entityTypeName]))
+		{
+			$arResult['value'][$entityTypeName]['tooltipLoaderUrl'] = $uri;
+			$list = $factory->getItemsFilteredByPermissions([
+				'filter' => ['@ID' => $values[$entityTypeName]],
+				'order' => ['ID' => 'DESC'],
+			]);
+			foreach ($list as $item)
+			{
+				$itemId = $item->getId();
+				$arResult['value'][$entityTypeName]['items'][$itemId] = [
+					'ENTITY_TYPE_ID' => $entityTypeId,
+					'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
+					'ENTITY_TITLE' => HtmlFilter::encode($item->getTitle()),
+					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
+				];
+			}
+		}
+	}
 
 	/**
 	 * @var $component ElementCrmUfComponent
@@ -191,14 +244,14 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 
 	if($component->isMobileMode())
 	{
-		$arResult['ELEMENT'] = $arResult['value'];
+		$arResult['valueCodes'] = ($arResult['userField']['VALUE'] ?: []);
 
-		$arResult['value'] = ($arResult['userField']['VALUE'] ?: []);
-
-		if (!is_array($arResult['value']))
+		if (!is_array($arResult['valueCodes']))
 		{
-			$arResult['value'] = [$arResult['value']];
+			$arResult['valueCodes'] = [$arResult['valueCodes']];
 		}
+
+		$arResult['availableTypes'] = ($arResult['userField']['SETTINGS'] ?? []);
 
 		Asset::getInstance()->addJs(
 			'/bitrix/js/mobile/userfield/mobile_field.js'

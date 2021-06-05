@@ -77,7 +77,7 @@ final class SonetCommentConnector extends StubConnector implements ISupportForei
 			return $this->canRead;
 		}
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 		if (\CSocNetUser::isCurrentUserModuleAdmin())
 		{
 			$this->canRead = true;

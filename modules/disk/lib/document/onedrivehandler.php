@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\Upload\OneDriveResumableUpload;
 use Bitrix\Disk\Internals\Error\Error;
@@ -14,7 +15,7 @@ use Bitrix\Main\IO;
 
 Loc::loadMessages(__FILE__);
 
-class OneDriveHandler extends DocumentHandler implements FileCreatable
+class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImportInterface
 {
 	const API_URL_V1                      = 'https://api.onedrive.com/v1.0';
 	const PREFIX_TO_CREATE_FILE           = '/drive/special/approot:/';

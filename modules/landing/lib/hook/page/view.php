@@ -81,26 +81,26 @@ class View extends \Bitrix\Landing\Hook\Page
 
 		$type = trim($this->fields['TYPE']);
 
-		if ($type == 'ltr')
+		if ($type === 'ltr')
 		{
-			Manager::setPageView(
-				'MainClass',
-				'g-pt-6 g-px-10 g-pt-30--md g-px-50--md'
-			);
+			$bodyClass = 'landing-viewtype--ltr';
+			$mainClasses = 'g-pt-6 g-px-10 g-pt-30--md g-px-50--md';
 		}
-		elseif ($type == 'all')
+		elseif ($type === 'all')
 		{
-			Manager::setPageView(
-				'MainClass',
-				'g-py-6 g-px-10 g-py-30--md g-px-50--md'
-			);
+			$bodyClass = 'landing-viewtype--all';
+			$mainClasses = 'g-py-6 g-px-10 g-py-30--md g-px-50--md';
 		}
-		elseif ($type == 'mobile')
+		elseif ($type === 'mobile')
 		{
-			Manager::setPageView(
-				'MainClass',
-				'g-max-width-768--md mx-md-auto'
-			);
+			$bodyClass = 'landing-viewtype--mobile';
+			$mainClasses = 'g-max-width-768--md mx-md-auto';
+		}
+
+		if($mainClasses && $bodyClass)
+		{
+			Manager::setPageView('BodyClass', $bodyClass);
+			Manager::setPageView('MainClass', $mainClasses);
 		}
 	}
 }

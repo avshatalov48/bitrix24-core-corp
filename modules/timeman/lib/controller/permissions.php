@@ -117,6 +117,8 @@ class Permissions extends Controller
 				$this->addErrors($addResult->getErrors());
 			}
 		}
+
+		(TaskAccessCodeTable::getEntity())->cleanCache();
 	}
 
 	private function checkAccess()

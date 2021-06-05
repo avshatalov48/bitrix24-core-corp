@@ -726,7 +726,7 @@ class DiskStorage extends AbstractStorage
 		/** @var array $fileArray */
 		if($tmpFile->isCloud() && $tmpFile->getContentType())
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$fileId = \CFile::saveFile(array(
 				'name' => $tmpFile->getFilename(),
 				'tmp_name' => $tmpFile->getAbsolutePath(),
@@ -741,7 +741,7 @@ class DiskStorage extends AbstractStorage
 
 				return array();
 			}
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$fileArray = \CFile::getFileArray($fileId);
 			if(!$fileArray)
 			{
@@ -902,7 +902,7 @@ class DiskStorage extends AbstractStorage
 		/** @var array $fileArray */
 		if($tmpFile->isCloud() && $tmpFile->getContentType())
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$fileId = \CFile::saveFile(array(
 				'name' => $tmpFile->getFilename(),
 				'tmp_name' => $tmpFile->getAbsolutePath(),
@@ -911,7 +911,7 @@ class DiskStorage extends AbstractStorage
 				'height' => $tmpFile->getHeight(),
 				'MODULE_ID' => Driver::INTERNAL_MODULE_ID,
 			), Driver::INTERNAL_MODULE_ID, true, true);
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$fileArray = \CFile::getFileArray($fileId);
 			if(!$fileArray)
 			{

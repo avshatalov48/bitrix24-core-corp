@@ -68,7 +68,7 @@ class LicenseWidget
 								}
 								else
 								{*/
-								className = "license-btn-alert-border license-btn-animate license-btn-animate-forward";
+									className = "license-btn-alert-border license-btn-animate license-btn-animate-forward";
 								//}
 							}
 							else

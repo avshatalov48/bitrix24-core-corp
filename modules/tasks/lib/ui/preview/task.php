@@ -156,7 +156,7 @@ class Task
 		return $attach;
 	}
 
-	protected function getUser()
+	protected static function getUser()
 	{
 		return User::get();
 	}

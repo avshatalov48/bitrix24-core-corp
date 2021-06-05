@@ -57,13 +57,18 @@ class Transferor
 			'DATE_CREATE' => new DateTime()
 		]);
 
+
+		$transferCall->addUsers([$userId], CallUserTable::ROLE_CALLER, CallUserTable::STATUS_CONNECTED);
+		$sendResult = $transferCall->getScenario()->sendStartTransfer($userId, $transferCall->getCallId(), $forwardConfig, true);
+		if (!$sendResult->isSuccess())
+		{
+			return $result->addErrors($sendResult->getErrors());
+		}
+
 		$result->setData([
 			'CALL' => $transferCall->toArray()
 		]);
 
-		$transferCall->addUsers([$userId], CallUserTable::ROLE_CALLER, CallUserTable::STATUS_CONNECTED);
-
-		$transferCall->getScenario()->sendStartTransfer($userId, $transferCall->getCallId(), $forwardConfig);
 		return $result;
 	}
 

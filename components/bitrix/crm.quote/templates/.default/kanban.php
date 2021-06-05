@@ -15,7 +15,8 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote
 // if not isset
 $arResult['PATH_TO_QUOTE_EDIT'] = isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '';
 $arResult['PATH_TO_QUOTE_LIST'] = isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '';
-$arResult['PATH_TO_QUOTE_KANBAN'] = isset($arResult['PATH_TO_QUOTE_KANBAN']) ? $arResult['PATH_TO_QUOTE_KANBAN'] : '';'';
+$arResult['PATH_TO_QUOTE_KANBAN'] = isset($arResult['PATH_TO_QUOTE_KANBAN']) ? $arResult['PATH_TO_QUOTE_KANBAN'] : '';
+$arResult['PATH_TO_QUOTE_DETAILS'] = $arResult['PATH_TO_QUOTE_DETAILS'] ?? '';
 
 // csv and excel delegate to list
 $context = \Bitrix\Main\Application::getInstance()->getContext();
@@ -33,7 +34,7 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
-	array(
+	[
 		'ID' => 'QUOTE_LIST',
 		'ACTIVE_ITEM_ID' => 'QUOTE',
 		'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
@@ -45,6 +46,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_DEAL_LIST' => isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '',
 		'PATH_TO_DEAL_EDIT' => isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '',
 		'PATH_TO_QUOTE_LIST' => isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '',
+		'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'] ?? '',
 		'PATH_TO_QUOTE_EDIT' => isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '',
 		'PATH_TO_INVOICE_LIST' => isset($arResult['PATH_TO_INVOICE_LIST']) ? $arResult['PATH_TO_INVOICE_LIST'] : '',
 		'PATH_TO_INVOICE_EDIT' => isset($arResult['PATH_TO_INVOICE_EDIT']) ? $arResult['PATH_TO_INVOICE_EDIT'] : '',
@@ -52,7 +54,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
 		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-	),
+	],
 	$component
 );
 
@@ -65,7 +67,7 @@ if (!\CCrmPerms::IsAccessEnabled())
 // check accessable
 if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quote))
 {
-	$APPLICATION->IncludeComponent('bitrix:bitrix24.business.tools.info', '', array());
+	$APPLICATION->IncludeComponent('bitrix:bitrix24.business.tools.info', '', []);
 }
 else
 {
@@ -81,7 +83,7 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',
-		array('ENTITY_TYPE_NAME' => $entityType)
+		['ENTITY_TYPE_NAME' => $entityType]
 	);
 
 	if($isBitrix24Template)
@@ -93,13 +95,14 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.quote.menu',
 		'',
-		array(
+		[
 			'PATH_TO_QUOTE_LIST' => $arResult['PATH_TO_QUOTE_LIST'],
 			'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'],
+			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
 			'ELEMENT_ID' => 0,
 			'TYPE' => 'list',
 			'DISABLE_EXPORT' => 'Y'
-		),
+		],
 		$component
 	);
 
@@ -107,34 +110,37 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => array(
-				'ITEMS' => array(
-					array(
-						//'icon' => 'kanban',
-						'id' => 'kanban',
-						'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
-						'active' => 1,
-						'url' => $arResult['PATH_TO_QUOTE_KANBAN']
-					),
-					array(
-						//'icon' => 'table',
-						'id' => 'list',
-						'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
-						'active' => 0,
-						'url' => $arResult['PATH_TO_QUOTE_LIST']
-					)
+			'NAVIGATION_BAR' => [
+				'ITEMS' => array_merge(
+					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Quote),
+					[
+						[
+							//'icon' => 'kanban',
+							'id' => 'kanban',
+							'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
+							'active' => 1,
+							'url' => $arResult['PATH_TO_QUOTE_KANBAN']
+						],
+						[
+							//'icon' => 'table',
+							'id' => 'list',
+							'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
+							'active' => 0,
+							'url' => $arResult['PATH_TO_QUOTE_LIST']
+						]
+					]
 				),
-				'BINDING' => array(
+				'BINDING' => [
 					'category' => 'crm.navigation',
 					'name' => 'index',
 					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			)
-		),
+				]
+			]
+		],
 		$component,
-		array('HIDE_ICONS' => true)
+		['HIDE_ICONS' => true]
 	);
 
 	/*
@@ -149,9 +155,10 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
-		array(
-			'ENTITY_TYPE' => $entityType
-		),
+		[
+			'ENTITY_TYPE' => $entityType,
+			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
+		],
 		$component
 	);
 }

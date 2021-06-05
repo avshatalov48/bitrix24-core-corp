@@ -1,22 +1,26 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Main\Loader,
-	\Bitrix\ImOpenLines\Network,
-	\Bitrix\Main\LoaderException,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Web\Uri;
-use \Bitrix\ImConnector\Status,
-	\Bitrix\ImConnector\Connector;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Output;
+use Bitrix\ImConnector\Status;
+use Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\Connectors\Network;
 
 class ImConnectorNetwork extends \CBitrixComponent
 {
 	private $cacheId;
 
 	private $connector = 'network';
-	private $error = array();
-	private $messages = array();
-	/** @var \Bitrix\ImConnector\Status */
+	private $error = [];
+	private $messages = [];
+	/** @var Output */
+	private $connectorOutput;
+	/** @var Status */
 	private $status;
 
 	protected $pageId = 'page_nw';
@@ -26,7 +30,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 	 * @return bool
 	 * @throws LoaderException
 	 */
-	protected function checkModules()
+	protected function checkModules(): bool
 	{
 		if (Loader::includeModule('imconnector') && Loader::includeModule('imopenlines'))
 		{
@@ -35,9 +39,13 @@ class ImConnectorNetwork extends \CBitrixComponent
 		else
 		{
 			if(!Loader::includeModule('imconnector'))
+			{
 				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMCONNECTOR_NOT_INSTALLED'));
+			}
 			if(!Loader::includeModule('imopenlines'))
+			{
 				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMOPENLINES_NOT_INSTALLED'));
+			}
 
 			return false;
 		}
@@ -45,6 +53,8 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 	protected function initialization()
 	{
+		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+
 		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
 
 		$this->arResult["STATUS"] = $this->status->isStatus();
@@ -76,10 +86,9 @@ class ImConnectorNetwork extends \CBitrixComponent
 				//Activation bot
 				if($this->request[$this->connector. '_active'] && empty($this->arResult["ACTIVE_STATUS"]))
 				{
-					$network = new Network();
-					$resultRegister = $network->registerConnector($this->arParams['LINE']);
+					$resultRegister = $this->connectorOutput->register();
 
-					if($resultRegister)
+					if($resultRegister->isSuccess())
 					{
 						$this->status->setActive(true);
 						$this->arResult["ACTIVE_STATUS"] = true;
@@ -87,8 +96,8 @@ class ImConnectorNetwork extends \CBitrixComponent
 						$this->arResult["CONNECTION_STATUS"] = true;
 						$this->status->setRegister(true);
 						$this->arResult["REGISTER_STATUS"] = true;
-						$this->status->setData($resultRegister);
-						$this->arResult["DATA_STATUS"] = $resultRegister;
+						$this->status->setData($resultRegister->getResult());
+						$this->arResult["DATA_STATUS"] = $resultRegister->getResult();
 
 						$this->arResult["STATUS"] = true;
 					}
@@ -168,8 +177,9 @@ class ImConnectorNetwork extends \CBitrixComponent
 						}
 						//end avatar
 
-						$network = new Network();
-						if($network->updateConnector($this->arParams['LINE'], $dataUpdate))
+						$resultUpdate = $this->connectorOutput->update($dataUpdate);
+
+						if($resultUpdate->isSuccess())
 						{
 							$this->messages[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_OK_SAVE");
 							$this->arResult["SAVE_STATUS"] = true;
@@ -206,9 +216,9 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 					if($this->request[$this->connector. '_del'])
 					{
-						$network = new Network();
+						$resultDelete = $this->connectorOutput->delete();
 
-						if($network->unRegisterConnector($this->arParams['LINE']))
+						if($resultDelete->isSuccess())
 						{
 							//$this->messages[] = Loc::getMessage("IMCONNECTOR_COMPONENT_SETTINGS_OK_DISABLE");
 						}

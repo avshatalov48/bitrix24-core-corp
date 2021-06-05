@@ -51,8 +51,8 @@ class CCrmEMail
 		}
 
 		$dbUsers = CUser::GetList(
-			($by='ID'),
-			($order='ASC'),
+			'ID',
+			'ASC',
 			array('=EMAIL' => $email),
 			array(
 				'FIELDS' => array('ID'),
@@ -389,7 +389,7 @@ class CCrmEMail
 			$adminList = array();
 
 			$res = \CUser::getList(
-				$by, $order,
+				'', '',
 				array('GROUPS_ID' => 1),
 				array('FIELDS' => array('ID', 'ACTIVE'))
 			);
@@ -1357,8 +1357,8 @@ class CCrmEMail
 		}
 
 		$eventText  = '<b>'.getMessage('CRM_EMAIL_SUBJECT').'</b>: '.$subject.PHP_EOL;
-		$eventText .= '<b>'.getMessage('CRM_EMAIL_FROM').'</b>: '.join($sender, ', ').PHP_EOL;
-		$eventText .= '<b>'.getMessage('CRM_EMAIL_TO').'</b>: '.join($rcpt, ', ').PHP_EOL;
+		$eventText .= '<b>'.getMessage('CRM_EMAIL_FROM').'</b>: '.join(', ', $sender).PHP_EOL;
+		$eventText .= '<b>'.getMessage('CRM_EMAIL_TO').'</b>: '.join(', ', $rcpt).PHP_EOL;
 
 		if (!empty($bannedAttachments))
 		{
@@ -2397,7 +2397,7 @@ class CCrmEMail
 		$eventText  = '';
 		$eventText .= '<b>'.GetMessage('CRM_EMAIL_SUBJECT').'</b>: '.$subject.PHP_EOL;
 		$eventText .= '<b>'.GetMessage('CRM_EMAIL_FROM').'</b>: '.$addresserInfo['EMAIL'].PHP_EOL;
-		$eventText .= '<b>'.GetMessage('CRM_EMAIL_TO').'</b>: '.implode($addresseeEmails, '; ').PHP_EOL;
+		$eventText .= '<b>'.GetMessage('CRM_EMAIL_TO').'</b>: '.implode('; ', $addresseeEmails).PHP_EOL;
 		if(!empty($arBannedAttachments))
 		{
 			$eventText .= '<b>'.GetMessage('CRM_EMAIL_BANNENED_ATTACHMENTS', array('%MAX_SIZE%' => $attachmentMaxSizeMb)).'</b>: ';
@@ -3182,4 +3182,3 @@ class CCrmEMailCodeAllocation
 		return self::IsDefined($value) ? $value : self::Body;
 	}
 }
-?>

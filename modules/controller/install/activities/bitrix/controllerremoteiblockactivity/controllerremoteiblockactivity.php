@@ -85,7 +85,8 @@ if(!CModule::IncludeModule("iblock"))
 	return false;
 }
 
-$iblock_id = CIBlockCMLImport::GetIBlockByXML_ID('.$this->PHP2PHP($arIBlock['XML_ID']).');
+$obCatalog = new CIBlockCMLImport;
+$iblock_id = $obCatalog->GetIBlockByXML_ID('.$this->PHP2PHP($arIBlock['XML_ID']).');
 if(!$iblock_id)
 {
 	$rsType = CIBlockType::GetByID($iblock_type);

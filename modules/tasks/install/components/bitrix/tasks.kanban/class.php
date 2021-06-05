@@ -523,8 +523,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 		if (!empty($users))
 		{
 			$res = \CUser::GetList(
-					($by = 'timestamp_x'),
-					($order = 'desc'),
+					'timestamp_x',
+					'desc',
 					array(
 						'ID' => implode(' | ', $users),
 						'ACTIVE' => 'Y',

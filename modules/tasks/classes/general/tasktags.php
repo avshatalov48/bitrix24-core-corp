@@ -42,7 +42,7 @@ class CTaskTags
 		}
 		else
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$r = CUser::GetByID($arFields["USER_ID"]);
 			if (!$r->Fetch())
 			{
@@ -82,7 +82,7 @@ class CTaskTags
 		return false;
 	}
 
-	function GetFilter($arFilter)
+	public static function GetFilter($arFilter)
 	{
 		if (!is_array($arFilter))
 			$arFilter = Array();
@@ -200,7 +200,7 @@ class CTaskTags
 		return self::Delete(array("=USER_ID" => (int) $USER_ID));
 	}
 
-	function Rename($OLD_NAME, $NEW_NAME, $USER_ID)
+	public static function Rename($OLD_NAME, $NEW_NAME, $USER_ID)
 	{
 		$tasks = array();
 		$list = \Bitrix\Tasks\TagTable::getList(array(
@@ -224,7 +224,7 @@ class CTaskTags
 		return true;
 	}
 
-	function Delete($arFilter)
+	public static function Delete($arFilter)
 	{
 		$result = false;
 		if ($arFilter)

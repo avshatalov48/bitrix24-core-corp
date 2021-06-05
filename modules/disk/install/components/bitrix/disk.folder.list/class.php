@@ -2399,8 +2399,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			$defaultDocumentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultServiceForCurrentUser();
 			if ($defaultDocumentHandler)
 			{
-				$documentHandlerName = $defaultDocumentHandler->getName();
-				$documentHandlerCode = $defaultDocumentHandler->getCode();
+				$documentHandlerName = $defaultDocumentHandler::getName();
+				$documentHandlerCode = $defaultDocumentHandler::getCode();
 			}
 		}
 
@@ -2414,8 +2414,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$conf = array(
 			'DEFAULT_SERVICE' => $documentHandlerCode,
 			'DEFAULT_SERVICE_LABEL' => $documentHandlerName,
-			'CREATE_BLANK_FILE_URL' => $urlManager->getUrlForStartCreateFile('docx', $documentHandlerCode),
-			'RENAME_BLANK_FILE_URL' => $urlManager->getUrlDocumentController(
+			'CREATE_BLANK_FILE_URL' => $urlManager::getUrlForStartCreateFile('docx', $documentHandlerCode),
+			'RENAME_BLANK_FILE_URL' => $urlManager::getUrlDocumentController(
 				'rename',
 				array('document_action' => 'rename')
 			),

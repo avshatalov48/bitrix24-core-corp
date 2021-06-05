@@ -1713,7 +1713,9 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						helpData: { text: this._manager.getMessage("checkErrorHelp"), code: this._manager.getMessage("checkErrorHelpArticleCode") },
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
-						context: BX.prop.getObject(data, "CONTEXT", null)
+						context: BX.prop.getObject(data, "CONTEXT", null),
+						isController: this._entityType === 'QUOTE',
+						stageId: BX.prop.getString(data, 'VALUE', null)
 					}
 				);
 				return;
@@ -1738,7 +1740,9 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					entityId: this._entityId,
 					fieldNames: BX.prop.getArray(params, "fieldNames", []),
 					helpData: BX.prop.getObject(params, "helpData", null),
-					context: BX.prop.getObject(params, "context", null)
+					context: BX.prop.getObject(params, "context", null),
+					isController: BX.prop.getBoolean(params, 'isController', false),
+					stageId: BX.prop.getString(params, 'stageId', null)
 				}
 			);
 

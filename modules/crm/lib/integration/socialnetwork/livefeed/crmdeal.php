@@ -1,14 +1,19 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
+use Bitrix\Crm\Integration\Socialnetwork;
 use Bitrix\Socialnetwork\LogTable;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
 
 final class CrmDeal extends CrmEntity
 {
 	const PROVIDER_ID = 'CRM_LOG_DEAL';
 	const CONTENT_TYPE_ID = 'CRM_LOG_DEAL';
 
+	private const EMPTY_TITLE = '__EMPTY__';
 
 	public function getEventId()
 	{
@@ -45,7 +50,7 @@ final class CrmDeal extends CrmEntity
 				[],
 				[
 					'ID' => $logEntryFields['ENTITY_ID'],
-					'CHECK_PERMISSIONS' => 'N'
+					'CHECK_PERMISSIONS' => 'N',
 				],
 				false,
 				[ 'nTopCount' => 1 ],
@@ -62,7 +67,7 @@ final class CrmDeal extends CrmEntity
 
 	public function getLogEntityType()
 	{
-		return \Bitrix\Crm\Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_DEAL;
+		return Socialnetwork::DATA_ENTITY_TYPE_CRM_DEAL;
 	}
 
 	public function getLogCommentEventId()
@@ -80,24 +85,25 @@ final class CrmDeal extends CrmEntity
 		$entityId = $this->getEntityId();
 		$logId = $this->getLogId();
 
-		$fields = $entity = $logEntry = array();
+		$fields = [];
 
 		if ($entityId > 0)
 		{
-			$fields = array(
+			$fields = [
 				'ID' => $entityId,
 				'CURRENT_ENTITY' => $this->getCurrentEntityFields()
-			);
+			];
 		}
 
 		if ($logId > 0)
 		{
-			$res = LogTable::getList(array(
-				'filter' => array(
-					'=ID' => $logId
-				)
-			));
+			$res = LogTable::getList([
+				'filter' => [
+					'=ID' => $logId,
+				],
+			]);
 			$logEntry = $res->fetch();
+
 			if (
 				!empty($logEntry['PARAMS'])
 				&& !empty($fields['CURRENT_ENTITY'])
@@ -109,28 +115,55 @@ final class CrmDeal extends CrmEntity
 					$this->setCrmEntitySourceTitle($fields['CURRENT_ENTITY']);
 					$fields = array_merge($fields, $logEntry['PARAMS']);
 
-					$sourceDescription = \Bitrix\Crm\Integration\Socialnetwork::buildAuxTaskDescription(
+					$sourceDescription = Socialnetwork::buildAuxTaskDescription(
 						$logEntry['PARAMS'],
 						$this->getLogEntityType()
 					);
 
 					if (!empty($sourceDescription))
 					{
-						$this->setSourceDescription(Loc::getMessage('CRMINTEGRATION_SONETLF_ENTITY_DESCRIPTION', array(
-							'#LOGENTRY_TITLE#' => $logEntry['TITLE'],
-							'#ENTITY_TITLE#' => $sourceDescription
-						)));
+						$title = $logEntry['TITLE'];
+						if ($title === self::EMPTY_TITLE)
+						{
+							$title = self::getEventTitle([
+								'EVENT_ID' => $logEntry['EVENT_ID'],
+							]);
+						}
+
+						$this->setSourceDescription(Loc::getMessage('CRMINTEGRATION_SONETLF_ENTITY_DESCRIPTION', [
+							'#LOGENTRY_TITLE#' => $title,
+							'#ENTITY_TITLE#' => $sourceDescription,
+						]));
 					}
 				}
 			}
-			elseif ($logEntry['EVENT_ID'] == $this->getLogCommentEventId())
+			elseif ($logEntry['EVENT_ID'] === $this->getLogCommentEventId())
 			{
 				$this->setSourceDescription($logEntry['MESSAGE']);
-				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== '__EMPTY__' ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
+				$this->setSourceTitle(truncateText(($logEntry['TITLE'] !== self::EMPTY_TITLE ? $logEntry['TITLE'] : $logEntry['MESSAGE']), 100));
 			}
 		}
 
 		$this->setSourceFields($fields);
+	}
+
+	private static function getEventTitle(array $params = []): string
+	{
+		$result = '';
+		$eventId = ($params['EVENT_ID'] ?? null);
+		if (!$eventId)
+		{
+			return $result;
+		}
+
+		switch ($eventId)
+		{
+			case 'crm_deal_progress':
+				$result = Loc::getMessage('CRMINTEGRATION_SONETLF_DEAL_PROGRESS_TITLE');
+				break;
+		}
+
+		return $result;
 	}
 
 	public function getSuffix()

@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 CModule::IncludeModule('intranet');
 
 $arLang = array();
-$dbRes = CLanguage::GetList($by = 'def', $order = 'desc', array('ACTIVE' => 'Y'));
+$dbRes = CLanguage::GetList('def', 'desc', array('ACTIVE' => 'Y'));
 while ($arRes = $dbRes->Fetch())
 {
 	$arLang[$arRes['LID']] = '['.$arRes['LID'].'] '.$arRes['NAME'];

@@ -1,6 +1,6 @@
 <header class="landing-block g-pt-20 g-pb-20 u-header u-header--sticky u-header--relative g-brd-top g-brd-primary g-brd-4 g-theme-bitrix-bg-dark-v2 g-bg-transparent">
 	<div class="container">
-		<nav class="landing-block-node-navbar u-navbar-modal container navbar u-navbar-color-white u-navbar-color-white--hover g-brd-0 g-pa-0 g-mb-0 u-navbar-bg-gray-dark-v2--hover u-navbar-marker--arrow">
+		<nav class="landing-block-node-navbar u-navbar-modal container navbar u-navbar-color-white u-navbar-color-white--hover g-brd-0 g-pa-0 g-mb-0 u-navbar-bg-gray-dark-v2--hover u-navbar-marker--arrow hamburger--sm hamburger--boring">
 
 			<!--		 	todo: u-header in other blocks z-index 101-->
 			<!--			todo: click not worked -->
@@ -68,7 +68,7 @@
 					data-toggle="collapse"
 					data-target="#navBar">
 				<span class="d-flex align-items-center">
-					<span class="landing-block-node-hamburger hamburger hamburger--sm hamburger--slider g-mr-9">
+					<span class="hamburger g-mr-9">
 						<span class="hamburger-box">
 							<span class="hamburger-inner"></span>
 						</span>

@@ -25,8 +25,8 @@ $arResult['UID'] = $arParams['UID'] = $uid;
 $currentUserID = $arResult['USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 
 $dbUser = CUser::GetList(
-	($by = 'id'),
-	($order = 'asc'),
+	'id',
+	'asc',
 	array('ID_EQUAL_EXACT' => $currentUserID),
 	array('FIELDS' => array('LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'EMAIL', 'PERSONAL_PHOTO'))
 );

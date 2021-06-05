@@ -13,11 +13,12 @@
  * @global CDatabase $DB
  */
 
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/include.php");
-
-use \Bitrix\Main;
+Loader::includeModule('advertising');
 
 ClearVars();
 
@@ -681,7 +682,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 }
 
 $arrSites = array();
-$rs = CSite::GetList($by="sort", $order="asc");
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch())
 	$arrSites[$ar["ID"]] = $ar;
 
@@ -737,7 +738,10 @@ else
 			$str_STAT_TYPE = "COUNTRY";
 		$arrSTAT_TYPE_VALUES = CAdvBanner::GetCountryArray($ID, $str_STAT_TYPE);
 		$arrWEEKDAY = CAdvBanner::GetWeekdayArray($ID);
-		while (list($key, $value)=each($arrWEEKDAY)) ${"arr".$key} = $value;
+		foreach ($arrWEEKDAY as $key => $value)
+		{
+			${"arr".$key} = $value;
+		}
 		$arrSTAT_ADV = CAdvBanner::GetStatAdvArray($ID);
 		$arrUSERGROUP = CAdvBanner::GetGroupArray($ID);
 	}
@@ -753,12 +757,12 @@ if ($strError <> '')
 if ($SEND_EMAIL == '') $SEND_EMAIL = "Y";
 
 if ($str_TEMPLATE && CheckSerializedData($str_TEMPLATE))
-	$str_TEMPLATE = unserialize(htmlspecialchars_decode($str_TEMPLATE));
+	$str_TEMPLATE = unserialize(htmlspecialchars_decode($str_TEMPLATE), ['allowed_classes' => false]);
 else
 	$str_TEMPLATE = array();
 
 if ($str_TEMPLATE_FILES && CheckSerializedData($str_TEMPLATE_FILES))
-	$str_TEMPLATE_FILES = unserialize(htmlspecialchars_decode($str_TEMPLATE_FILES));
+	$str_TEMPLATE_FILES = unserialize(htmlspecialchars_decode($str_TEMPLATE_FILES), ['allowed_classes' => false]);
 else
 	$str_TEMPLATE_FILES = array();
 
@@ -1115,7 +1119,7 @@ $context->Show();
 
 					$ref = array();
 					$ref_id = array();
-					$rsBann = CAdvBanner::GetList($v1="s_group_sid", $v2="asc", array(), $v3);
+					$rsBann = CAdvBanner::GetList("s_group_sid", "asc");
 					while ($arBann = $rsBann->Fetch())
 					{
 						if (!in_array($arBann["GROUP_SID"], $ref_id) && $arBann["GROUP_SID"] <> '')
@@ -1167,7 +1171,7 @@ $context->Show();
 							"SID_EXACT_MATCH"	=> "Y"
 						);
 					}
-					$rsTypies = CAdvType::GetList($v1, $v2, $arFilter, $v3);
+					$rsTypies = CAdvType::GetList('', '', $arFilter);
 					while ($arType = $rsTypies->Fetch())
 					{
 						$ref[] = "[".$arType["SID"]."] ".htmlspecialcharsbx($arType["NAME"]);
@@ -1970,8 +1974,8 @@ $context->Show();
 
 					if ($isEditMode) : ?>
 						<div class="adm-list">
-							<?reset($arrSites);
-							while (list($sid, $arrS) = each($arrSites)):
+							<?
+							foreach ($arrSites as $sid => $arrS):
 								if (in_array($sid, $arrContractSite)) :
 									$checked = (in_array($sid, $arrSITE)) ? "checked" : "";
 									/*<?=$disabled?>*/
@@ -1982,7 +1986,7 @@ $context->Show();
 									</div>
 									<?
 								endif;
-							endwhile;?>
+							endforeach;?>
 						</div>
 					<? else:
 
@@ -2050,7 +2054,7 @@ $context->Show();
 		</tr>
 
 		<? if ($isEditMode):
-			$rUserGroups = CGroup::GetList($by = "name", $order = "asc", array("ANONYMOUS"=>"N"));
+			$rUserGroups = CGroup::GetList("name", "asc", array("ANONYMOUS"=>"N"));
 			while ($arUserGroups = $rUserGroups->Fetch())
 			{
 				$ug_id[] = $arUserGroups["ID"];
@@ -2066,7 +2070,7 @@ $context->Show();
 			</tr>
 		<? else:
 			$ug = '';
-			$rUserGroups = CGroup::GetList($by = "name", $order = "asc", Array("ID"=>implode(" | ",$arrUSERGROUP), "ANONYMOUS"=>"N"));
+			$rUserGroups = CGroup::GetList("name", "asc", Array("ID"=>implode(" | ",$arrUSERGROUP), "ANONYMOUS"=>"N"));
 			while ($arUserGroups = $rUserGroups->Fetch())
 			{
 				$ug .= $arUserGroups["NAME"].' [<a href="group_edit.php?ID='.$arUserGroups["ID"].'&lang='.LANGUAGE_ID.'" title="'.GetMessage("ADV_VIEW_UGROUP").'">'.$arUserGroups["ID"].'</a>]<br>';
@@ -2128,8 +2132,7 @@ $context->Show();
 				if (is_array($arrSTAT_TYPE_VALUES) && (count($arrSTAT_TYPE_VALUES) > 0))
 				{
 					$arr = array_flip($arrSTAT_TYPE_VALUES);
-					$v1 = "s_id";
-					$rs = CStatCountry::GetList($v1, $v2, array(), $v3);
+					$rs = CStatCountry::GetList("s_id");
 					while ($ar = $rs->GetNext())
 						if (array_key_exists($ar["REFERENCE_ID"], $arr))
 							$arDisplay[$ar["REFERENCE_ID"]] = $ar["REFERENCE"];
@@ -2155,7 +2158,7 @@ $context->Show();
 								"REGION" => array(),
 								"CITY" => array()
 							))?>;
-							
+
 							function stat_type_values_change()
 							{
 								var oSelect = document.getElementById('STAT_TYPE_VALUES[]');
@@ -2170,11 +2173,11 @@ $context->Show();
 										else
 											v = oSelect[i].value;
 									}
-									
+
 									document.getElementById('ALL_STAT_TYPE_VALUES').value = v;
 								}
 							}
-							
+
 							function stat_type_changed(target)
 							{
 								var oSelect = document.getElementById('STAT_TYPE_VALUES[]');
@@ -2183,7 +2186,7 @@ $context->Show();
 									//Save
 									V_STAT_TYPE_VALUES[V_STAT_TYPE] = [];
 									var n = oSelect.length;
-									
+
 									for (var i=0; i<n; i++)
 										V_STAT_TYPE_VALUES[V_STAT_TYPE][oSelect[i].value] = oSelect[i].text;
 									//Clear
@@ -2192,12 +2195,12 @@ $context->Show();
 									//Restore
 									for (var val in V_STAT_TYPE_VALUES[target.value])
 										jsSelectUtils.addNewOption('STAT_TYPE_VALUES[]', val, V_STAT_TYPE_VALUES[target.value][val]);
-									
+
 									V_STAT_TYPE = target.value;
 									stat_type_values_change();
 								}
 							}
-							
+
 							function stat_type_popup()
 							{
 								if (V_STAT_TYPE == 'CITY')
@@ -2321,11 +2324,11 @@ $context->Show();
 							"SATURDAY"	=> GetMessage("AD_SATURDAY"),
 							"SUNDAY"	=> GetMessage("AD_SUNDAY")
 						);
-						while (list($key,$value)=each($arrWDAY)) :
+						foreach ($arrWDAY as $key => $value) :
 							?>
 							<td><label for="<?=$key?>"><?=$value?></label><br><input <?=$disabled?> type="checkbox" onclick="OnSelectAll(this.checked, '<?=$key?>', true)" id="<?=$key?>"></td>
 							<?
-						endwhile;
+						endforeach;
 						?>
 						<td>&nbsp;</td>
 					</tr>
@@ -2336,8 +2339,7 @@ $context->Show();
 						<tr>
 							<td><label for="<?=$i?>"><?=$i."&nbsp;-&nbsp;".($i+1)?></label></td>
 							<?
-							reset($arrWDAY);
-							while (list($key,$value)=each($arrWDAY)) :
+							foreach ($arrWDAY as $key => $value):
 								$checked = "";
 								$disabled = "";
 								$disabled = (!is_array($arrCONTRACT_WEEKDAY[$key]) || !in_array($i, $arrCONTRACT_WEEKDAY[$key]) || !$isEditMode) ? "disabled" : "";
@@ -2347,7 +2349,7 @@ $context->Show();
 								?>
 								<td><input <?=$disabled?> id="arr<?=$key?>_<?=$i?>[]" name="arr<?=$key?>[]" type="checkbox" value="<?=$i?>" <?=$checked?>></td>
 								<?
-							endwhile;
+							endforeach;
 							$disabled = (!$isEditMode) ? "disabled" : "";
 							?>
 							<td><input <?=$disabled?> type="checkbox" onclick="OnSelectAll(this.checked, '<?=$i?>', false)" id="<?=$i?>"></td>
@@ -2361,7 +2363,7 @@ $context->Show();
 						{
 							var valu = true;
 							name = ar[j];
-							
+
 							for (var i = 0; i <= 23; i++)
 							{
 								var name1 = "arr" + name + "_" + i + "[]";
@@ -2371,26 +2373,26 @@ $context->Show();
 									break;
 								}
 							}
-							
+
 							document.getElementById(name).checked = valu;
 						}
-						
+
 						for (j = 0; j <= 23; j++)
 						{
 							valu = true;
-							
+
 							for ( i = 0; i < 7; i++)
 							{
 								name = ar[i];
 								name1 = "arr" + name + "_" + j + "[]";
-								
+
 								if (document.getElementById(name1).checked == false)
 								{
 									valu = false;
 									break;
 								}
 							}
-							
+
 							document.getElementById(j).checked = valu;
 						}
 					</script>

@@ -236,6 +236,11 @@ $colorSchemes = array();
 
 foreach(CCrmStatus::GetEntityTypes() as $entityId => $arEntityType)
 {
+	if (isset($arEntityType['IS_ENABLED']) && $arEntityType['IS_ENABLED'] === false)
+	{
+		continue;
+	}
+
 	$arResult['HEADERS'][$entityId] = $arEntityType['NAME'];
 	$arResult['ROWS'][$entityId] = Array();
 

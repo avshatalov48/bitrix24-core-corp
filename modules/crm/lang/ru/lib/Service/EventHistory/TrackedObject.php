@@ -1,0 +1,5 @@
+<?php
+$MESS['CRM_TRACKED_OBJECT_DEPENDANT_UPDATE_TEXT'] = 'Изменено поле "#FIELD_NAME#" связанной сущности "#ENTITY_NAME#"';
+$MESS['CRM_TRACKED_OBJECT_UPDATE_EVENT_NAME'] = 'Значение поля "#FIELD_NAME#" было изменено';
+$MESS['CRM_TRACKED_OBJECT_ENTITY_ADD_EVENT_NAME'] = 'Добавлена связь с "#FIELD_NAME#"';
+$MESS['CRM_TRACKED_OBJECT_ENTITY_DELETE_EVENT_NAME'] = 'Удалена связь с "#FIELD_NAME#"';

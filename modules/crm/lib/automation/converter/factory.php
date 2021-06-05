@@ -32,6 +32,7 @@ class Factory
 		$config->enablePermissionCheck(false);
 		$wizard->enableUserFieldCheck(false);
 		$wizard->enableBizProcCheck(false);
+		$wizard->setSkipBizProcAutoStart(true);
 
 		return new Converter($entityTypeId, $entityId, $config, $wizard);
 	}

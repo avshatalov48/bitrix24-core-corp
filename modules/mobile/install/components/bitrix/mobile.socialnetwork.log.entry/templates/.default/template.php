@@ -1050,14 +1050,15 @@ else
 					$arResult["OUTPUT_LIST"]["HTML"] .= ob_get_clean();
 				}
 
-				if ($_REQUEST["empty_get_comments"] === "Y")
+				if ($_REQUEST['empty_get_comments'] === 'Y')
 				{
 					$APPLICATION->RestartBuffer();
 					while(ob_get_clean());
-					\CMain::FinalActions(CUtil::PhpToJSObject(array(
-						"TEXT" => $arResult["OUTPUT_LIST"]["HTML"],
-						"POST_NUM_COMMENTS" => (int)$arParams["EVENT"]["COMMENTS_COUNT"]
-					)));
+					\CMain::FinalActions(CUtil::PhpToJSObject([
+						'TEXT' => $arResult['OUTPUT_LIST']['HTML'],
+						'POST_NUM_COMMENTS' => (int)$arParams['EVENT']['COMMENTS_COUNT'],
+						'TS' => time(),
+					]));
 					die();
 				}
 

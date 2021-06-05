@@ -13,7 +13,7 @@ final class Utils
 	 */
 	public static function getParamsFromString($str)
 	{
-		$params = unserialize($str);
+		$params = unserialize($str, [ 'allowed_classes' => false ]);
 
 		if (
 			!is_array($params)

@@ -616,6 +616,7 @@ class LandingPubComponent extends LandingBaseComponent
 				)
 			),
 			'order' => array(
+			//	'RULE' => 'asc',
 				'ID' => 'asc'
 			)
 		));
@@ -664,6 +665,7 @@ class LandingPubComponent extends LandingBaseComponent
 								)
 							),
 							'order' => array(
+							//	'RULE' => 'asc',
 								'ID' => 'asc'
 							)
 						));
@@ -810,7 +812,7 @@ class LandingPubComponent extends LandingBaseComponent
 			return '';
 		}
 
-		$urls = Landing::getPublicUrl(array_keys($ids));
+		$urls = Landing::createInstance(0)->getPublicUrl(array_keys($ids));
 		$sitemap = '<?xml version="1.0" encoding="' . SITE_CHARSET . '"?>';
 		$sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 		foreach ($ids as $id => $date)
@@ -911,7 +913,7 @@ class LandingPubComponent extends LandingBaseComponent
 						$row['ITEM_ID'] = mb_substr($row['ITEM_ID'], 1);
 						$urlType = 'section';
 					}
-					$row['URL'] = \Bitrix\Landing\Node\Component::getIblockURL(
+					$row['URL'] = \Bitrix\Landing\PublicAction\Utils::getIblockURL(
 						$row['ITEM_ID'],
 						$urlType
 					);
@@ -1014,16 +1016,12 @@ class LandingPubComponent extends LandingBaseComponent
 				{
 					$personalLandingId = $sysPages['personal']['LANDING_ID'];
 					$params['BODY'] = preg_replace_callback(
-						'@(https|http)://([^/]+)/auth/index\.php\?' .
+						'@(https|http)://([^/]+)/.*?/index\.php\?' .
 						'change_password=yes&lang=([^&]+)&' .
 						'USER_CHECKWORD=([a-z0-9]+)@',
 						function ($matches) use($landing, $personalLandingId)
 						{
 							$url = $landing->getPublicUrl($personalLandingId);
-							if (mb_substr($url, 0, 1) == '/')
-							{
-								$url = $matches[1] . '://' . $matches[2] . $url;
-							}
 							$url .= '?' . http_build_query([
 								'SECTION' => 'password_change',
 								'USER_CHECKWORD' => $matches[4]
@@ -1285,6 +1283,28 @@ class LandingPubComponent extends LandingBaseComponent
 	}
 
 	/**
+	 * Sends push on landing first view.
+	 * @param int $landingId Landing id.
+	 * @return void
+	 */
+	protected function sendPageViewPush(int $landingId): void
+	{
+		if (\Bitrix\Main\Loader::includeModule('pull'))
+		{
+			\CPullWatch::addToStack(
+				'LANDING_ENTITY_LANDING',
+				[
+					'module_id' => 'landing',
+					'command' => 'onLandingFirstView',
+					'params' => [
+						'ladingId' => $landingId
+					]
+				]
+			);
+		}
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
@@ -1438,10 +1458,10 @@ class LandingPubComponent extends LandingBaseComponent
 							{
 								$robotsContent .= PHP_EOL . PHP_EOL;
 							}
-							if (mb_strpos($robotsContent, 'User-agent: *') !== false)
+							if (mb_strpos(strtolower($robotsContent), 'user-agent:') !== false)
 							{
-								$robotsContent = str_replace(
-									'User-agent: *',
+								$robotsContent = preg_replace(
+									'/user-agent:\s+\*/i',
 									$this->getForceRobots(),
 									$robotsContent
 								);
@@ -1509,6 +1529,10 @@ class LandingPubComponent extends LandingBaseComponent
 						);
 					}
 					// views
+					if ($this->request('qr') == 'Y')// only for qr code
+					{
+						$this->sendPageViewPush($landing->getId());
+					}
 					\Bitrix\Landing\Landing\View::inc($lid);
 				}
 			}

@@ -81,7 +81,7 @@ final class Site
 					'INTRANET' => false
 				)
 			);
-			$res = \CSite::getList($by="sort", $order="desc", array("ACTIVE" => "Y"));
+			$res = \CSite::getList("sort", "desc", array("ACTIVE" => "Y"));
 			while($site = $res->Fetch())
 			{
 				$siteList['LIST'][$site['ID']] = array(

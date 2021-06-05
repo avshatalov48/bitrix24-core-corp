@@ -2,86 +2,60 @@
 
 namespace Bitrix\Crm\Integration;
 
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Contact;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Lead;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Suspended;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
+use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Nameable;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Event;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
+use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Localization\Loc;
 
 class DocumentGeneratorManager
 {
-	const PROVIDER_LIST_EVENT_NAME = 'onGetDataProviderList';
-	const DOCUMENT_CREATE_EVENT_NAME = 'onCreateDocument';
-	const DOCUMENT_UPDATE_EVENT_NAME = 'onUpdateDocument';
-	const DOCUMENT_PUBLIC_VIEW_EVENT_NAME = 'onPublicView';
-	const DOCUMENT_DELETE_EVENT_NAME = '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete';
+	public const PROVIDER_LIST_EVENT_NAME = 'onGetDataProviderList';
+	public const DOCUMENT_CREATE_EVENT_NAME = 'onCreateDocument';
+	public const DOCUMENT_UPDATE_EVENT_NAME = 'onUpdateDocument';
+	public const DOCUMENT_PUBLIC_VIEW_EVENT_NAME = 'onPublicView';
+	public const DOCUMENT_DELETE_EVENT_NAME = '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete';
 
-	protected static $instance;
 	protected $isEnabled;
 
-	protected function __construct()
+	public function __construct()
 	{
-		if(Loader::includeModule('documentgenerator'))
-		{
-			$this->isEnabled = true;
-		}
-		else
-		{
-			$this->isEnabled = false;
-		}
+		$this->isEnabled = Loader::includeModule('documentgenerator');
 	}
 
 	/**
 	 * @return DocumentGeneratorManager
 	 */
-	public static function getInstance()
+	public static function getInstance(): DocumentGeneratorManager
 	{
-		if(static::$instance === null)
-		{
-			static::$instance = new static();
-		}
-
-		return static::$instance;
+		return ServiceLocator::getInstance()->get('crm.integration.documentgeneratormanager');
 	}
 
 	/**
+	 * Returns true if module documentgenerator is enabled.
+	 *
 	 * @return bool
 	 */
-	public function isEnabled()
+	public function isEnabled(): bool
 	{
-		if($this->isEnabled)
-		{
-			if(method_exists(Driver::getInstance(), 'isEnabled'))
-			{
-				return Driver::getInstance()->isEnabled();
-			}
-			else
-			{
-				return (class_exists('\DOMDocument', true) && class_exists('\ZipArchive', true));
-			}
-		}
-
-		return false;
+		return ($this->isEnabled && Driver::getInstance()->isEnabled());
 	}
 
 	/**
+	 * Returns true if current user can access to some actions with documents.
+	 *
 	 * @return bool
 	 */
-	public function isDocumentButtonAvailable()
+	public function isDocumentButtonAvailable(): bool
 	{
 		return (
 			$this->isEnabled() && (
@@ -92,11 +66,13 @@ class DocumentGeneratorManager
 	}
 
 	/**
-	 * @param string $className
-	 * @param string $value
+	 * Returns parameters for "Documents" button.
+	 *
+	 * @param string $className - FQN of a provider
+	 * @param mixed $value
 	 * @return array
 	 */
-	public function getDocumentButtonParameters($className, $value)
+	public function getDocumentButtonParameters($className, $value): array
 	{
 		if(!$this->isDocumentButtonAvailable())
 		{
@@ -129,6 +105,8 @@ class DocumentGeneratorManager
 	}
 
 	/**
+	 * Returns url to add template.
+	 *
 	 * @param string $provider
 	 * @return bool|string
 	 */
@@ -149,31 +127,38 @@ class DocumentGeneratorManager
 	}
 
 	/**
+	 * Returns list of providers and their descriptions (@see \Bitrix\DocumentGenerator\Registry\DataProvider::getList())
+	 *
 	 * @return array
 	 */
-	public static function getDataProviders()
+	public static function getDataProviders(): array
 	{
-		$result = [];
-		if(static::getInstance()->isEnabled())
+		static $result;
+		if($result === null)
 		{
-			$providers = [
-				Company::class,
-				Contact::class,
-				Deal::class,
-				Invoice::class,
-				Lead::class,
-				Quote::class,
-				Order::class,
-			];
-			foreach($providers as $provider)
+			$result = [];
+			if(static::getInstance()->isEnabled())
 			{
-				/** @var Nameable $provider */
-				$className = mb_strtolower($provider);
-				$result[$className] = [
-					'NAME' => $provider::getLangName(),
-					'CLASS' => $className,
-					'MODULE' => 'crm',
+				$providers = [
+					DataProvider\Company::class,
+					DataProvider\Contact::class,
+					DataProvider\Deal::class,
+					DataProvider\Invoice::class,
+					DataProvider\Lead::class,
+					DataProvider\Quote::class,
+					DataProvider\Order::class,
 				];
+				$providers = array_merge($providers, array_values(static::getDynamicProviders(true)));
+				foreach($providers as $provider)
+				{
+					/** @var Nameable $provider */
+					$className = mb_strtolower($provider);
+					$result[$className] = [
+						'NAME' => $provider::getLangName(),
+						'CLASS' => $className,
+						'MODULE' => 'crm',
+					];
+				}
 			}
 		}
 
@@ -184,14 +169,14 @@ class DocumentGeneratorManager
 	 * @param Event $event
 	 * @return bool
 	 */
-	public static function onCreateDocument(Event $event)
+	public static function onCreateDocument(Event $event): bool
 	{
 		$document = $event->getParameter('document');
 		/** @var Document $document */
 		if($document)
 		{
 			$provider = $document->getProvider();
-			if($provider && $provider instanceof CrmEntityDataProvider)
+			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentCreate($document);
 			}
@@ -203,11 +188,8 @@ class DocumentGeneratorManager
 	/**
 	 * @param Event $event
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function onDeleteDocument(Event $event)
+	public static function onDeleteDocument(Event $event): bool
 	{
 		$primary = $event->getParameter('primary');
 		if(is_array($primary))
@@ -218,7 +200,7 @@ class DocumentGeneratorManager
 		if($document)
 		{
 			$provider = $document->getProvider();
-			if($provider && $provider instanceof CrmEntityDataProvider)
+			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentDelete($document);
 			}
@@ -230,18 +212,15 @@ class DocumentGeneratorManager
 	/**
 	 * @param Event $event
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function onUpdateDocument(Event $event)
+	public static function onUpdateDocument(Event $event): bool
 	{
 		$document = $event->getParameter('document');
 		/** @var Document $document */
 		if($document)
 		{
 			$provider = $document->getProvider();
-			if($provider && $provider instanceof CrmEntityDataProvider)
+			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onDocumentUpdate($document);
 			}
@@ -253,11 +232,8 @@ class DocumentGeneratorManager
 	/**
 	 * @param Event $event
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function onPublicView(Event $event)
+	public static function onPublicView(Event $event): bool
 	{
 		$document = $event->getParameter('document');
 		$isFirstTime = ($event->getParameter('isFirstTime') === true);
@@ -265,7 +241,7 @@ class DocumentGeneratorManager
 		if($document)
 		{
 			$provider = $document->getProvider();
-			if($provider && $provider instanceof CrmEntityDataProvider)
+			if($provider && $provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				$provider->onPublicView($document, $isFirstTime);
 			}
@@ -277,32 +253,62 @@ class DocumentGeneratorManager
 	/**
 	 * Returns array where key - id from \CCrmOwnerType and value - data provider class name
 	 *
+	 * @param bool $isSourceEntitiesOnly. If true - returns only those providers which can be source for a new document.
 	 * @return array
 	 */
-	public function getCrmOwnerTypeProvidersMap()
+	public function getCrmOwnerTypeProvidersMap(bool $isSourceEntitiesOnly = true): array
 	{
-		static $map = null;
-		if($map === null)
-		{
-			$map = [
-				\CCrmOwnerType::Lead => Lead::class,
-				\CCrmOwnerType::Deal => Deal::class,
-				\CCrmOwnerType::Contact => Contact::class,
-				\CCrmOwnerType::Company => Company::class,
-				\CCrmOwnerType::Invoice => Invoice::class,
-				\CCrmOwnerType::Quote => Quote::class,
-				\CCrmOwnerType::Order => Order::class,
+		$map = [
+			\CCrmOwnerType::Lead => DataProvider\Lead::class,
+			\CCrmOwnerType::Deal => DataProvider\Deal::class,
+			\CCrmOwnerType::Contact => DataProvider\Contact::class,
+			\CCrmOwnerType::Company => DataProvider\Company::class,
+			\CCrmOwnerType::Invoice => DataProvider\Invoice::class,
+			\CCrmOwnerType::Quote => DataProvider\Quote::class,
+			\CCrmOwnerType::Order => DataProvider\Order::class,
 
-				\CCrmOwnerType::SuspendedLead => Suspended::class,
-				\CCrmOwnerType::SuspendedDeal => Suspended::class,
-				\CCrmOwnerType::SuspendedContact => Suspended::class,
-				\CCrmOwnerType::SuspendedCompany => Suspended::class,
-				\CCrmOwnerType::SuspendedQuote => Suspended::class,
-				\CCrmOwnerType::SuspendedInvoice => Suspended::class,
-				\CCrmOwnerType::SuspendedOrder => Suspended::class,
-			];
+			\CCrmOwnerType::SuspendedLead => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedDeal => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedContact => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedCompany => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedQuote => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedInvoice => DataProvider\Suspended::class,
+			\CCrmOwnerType::SuspendedOrder => DataProvider\Suspended::class,
+		];
+
+		foreach (static::getDynamicProviders($isSourceEntitiesOnly) as $entityTypeId => $provider)
+		{
+			$map[$entityTypeId] = $provider;
+			$map[\CCrmOwnerType::getSuspendedDynamicTypeId($entityTypeId)] = DataProvider\Suspended::class;
 		}
+
 		return $map;
+	}
+
+	protected static function getDynamicProviders(bool $isSourceEntitiesOnly): array
+	{
+		$providers = [];
+
+		$typesMap = Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadCategories' => false,
+			'isLoadStages' => false,
+		]);
+		foreach ($typesMap->getTypes() as $type)
+		{
+			if (
+				!$isSourceEntitiesOnly
+				|| (
+					$isSourceEntitiesOnly
+					&& $type->getIsDocumentsEnabled()
+				)
+			)
+			{
+				$entityTypeId = $type->getEntityTypeId();
+				$providers[$entityTypeId] = DataProvider\Dynamic::getProviderCode($entityTypeId);
+			}
+		}
+
+		return $providers;
 	}
 
 	/**
@@ -311,7 +317,7 @@ class DocumentGeneratorManager
 	 * @param $newEntityTypeID
 	 * @param $newEntityID
 	 */
-	public function transferDocumentsOwnership($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID)
+	public function transferDocumentsOwnership($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID): void
 	{
 		if(!$this->isEnabled)
 		{
@@ -332,14 +338,14 @@ class DocumentGeneratorManager
 	 * @param $entityId
 	 * @return \Bitrix\Main\Result|null
 	 */
-	public function deleteDocumentsByOwner($entityTypeId, $entityId)
+	public function deleteDocumentsByOwner($entityTypeId, $entityId): ?Result
 	{
 		if(!$this->isEnabled)
 		{
-			return;
+			return null;
 		}
 
-		$entityId = intval($entityId);
+		$entityId = (int) $entityId;
 		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId];
 		if($provider && $entityId > 0)
 		{
@@ -348,5 +354,7 @@ class DocumentGeneratorManager
 				'VALUE' => $entityId
 			]);
 		}
+
+		return null;
 	}
 }

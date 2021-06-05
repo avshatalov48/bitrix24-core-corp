@@ -242,7 +242,10 @@ if (!empty($arParams['TEMPLATES']))
 			);
 		}
 	}
-	elseif ($activity['OWNER_TYPE_ID'] !== \CCrmOwnerType::Order)
+	elseif (
+		$activity['OWNER_TYPE_ID'] !== \CCrmOwnerType::Order
+		&& !\CCrmOwnerType::isPossibleDynamicTypeId($activity['OWNER_TYPE_ID'])
+	)
 	{
 		$dealsField = array(
 			'name'  => 'DATA[docs]',

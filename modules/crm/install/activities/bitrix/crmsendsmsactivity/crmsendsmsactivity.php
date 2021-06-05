@@ -76,7 +76,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			)));
 
 			$documentId = $this->GetDocumentId();
-			list($typeName, $id) = explode('_', $documentId[2]);
+			list($typeName, $id) = mb_split('_(?=[^_]*$)', $documentId[2]);
 			$typeId = \CCrmOwnerType::ResolveID($typeName);
 			$responsibleId = CCrmOwnerType::GetResponsibleID($typeId, $id, false);
 
@@ -249,7 +249,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		if ($recipientType === static::RECIPIENT_TYPE_ENTITY)
 		{
 			$documentId = $this->GetDocumentId();
-			list($typeName, $id) = explode('_', $documentId[2]);
+			list($typeName, $id) = mb_split('_(?=[^_]*$)', $documentId[2]);
 			$communication = $this->getEntityPhoneCommunication(
 				\CCrmOwnerType::ResolveID($typeName),
 				$id,
@@ -540,7 +540,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		list($typeName, $id) = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$authorId = \CCrmOwnerType::GetResponsibleID(\CCrmOwnerType::ResolveID($typeName), $id, false);
 
 		$result = SmsManager::sendMessage(array(
@@ -583,7 +583,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		list($typeName, $id) = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$authorId = \CCrmOwnerType::GetResponsibleID(\CCrmOwnerType::ResolveID($typeName), $id, false);
 
 		$result = SmsManager::sendMessage(array(
@@ -668,7 +668,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		list($typeName, $id) = mb_split('_(?=[^_]*$)', $documentId[2]);
 
 		$auth = array(
 			'CODE' => $provider['CODE'],

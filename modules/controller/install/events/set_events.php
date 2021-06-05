@@ -1,5 +1,5 @@
 <?
-$langs = CLanguage::GetList(($b=""), ($o=""));
+$langs = CLanguage::GetList();
 while($lang = $langs->Fetch())
 {
 	$lid = $lang["LID"];

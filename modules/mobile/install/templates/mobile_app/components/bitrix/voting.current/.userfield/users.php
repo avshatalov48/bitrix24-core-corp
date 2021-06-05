@@ -73,8 +73,8 @@ if ($_REQUEST["answer_id"] > 0 && check_bitrix_sessid())
 			}
 
 			$db_res = CUser::GetList(
-				($by = "ID"),
-				($order = "ASC"),
+				"ID",
+				"ASC",
 				array("ID" => implode("|", $arUsers)),
 				$arSelect
 			);

@@ -58,8 +58,8 @@ class CExtranet
 			else
 			{
 				$rsUser = CUser::GetList(
-					$o = "ID",
-					$b = "ASC",
+					'ID',
+					'ASC',
 					array("ID_EQUAL_EXACT" => $userID),
 					array("FIELDS" => array("ID"), "SELECT" => array("UF_DEPARTMENT"))
 				);
@@ -113,8 +113,8 @@ class CExtranet
 		else
 		{
 			$rsUser = CUser::GetList(
-				$o = "ID",
-				$b = "ASC",
+				'ID',
+				'ASC',
 				array("ID_EQUAL_EXACT" => $userID),
 				array("FIELDS" => array("ID"), "SELECT" => array("UF_DEPARTMENT"))
 			);
@@ -388,8 +388,8 @@ class CExtranet
 		else
 		{
 			$dbUsers = CUser::GetList(
-				($by="id"),
-				($order="asc"),
+				'ID',
+				'ASC',
 				array(
 					"ACTIVE" => "Y",
 					"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID())
@@ -517,7 +517,7 @@ class CExtranet
 
 			$arFilter = Array("ID"=>$strUsersInMyGroupsID);
 
-			$rsUsers = CUser::GetList(($by="ID"), ($order="asc"), $arFilter, array("SELECT"=>array("UF_*")));
+			$rsUsers = CUser::GetList("ID", "asc", $arFilter, array("SELECT"=>array("UF_*")));
 
 			while($arUser = $rsUsers->GetNext())
 				$arUsersInMyGroups[] = $arUser;
@@ -535,7 +535,7 @@ class CExtranet
 
 		$arFilter = Array("GROUPS_ID"=>array(CExtranet::GetExtranetUserGroupID()));
 
-		$rsUsers = CUser::GetList(($by="ID"), ($order="asc"), $arFilter);
+		$rsUsers = CUser::GetList("ID", "asc", $arFilter);
 		while($arUser = $rsUsers->GetNext())
 		{
 			if ($full)
@@ -559,7 +559,7 @@ class CExtranet
 			"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID())
 		);
 
-		$rsUsers = CUser::GetList(($by="ID"), ($order="asc"), $arFilter);
+		$rsUsers = CUser::GetList("ID", "asc", $arFilter);
 		while($arUser = $rsUsers->GetNext())
 		{
 			if ($full)
@@ -601,8 +601,8 @@ class CExtranet
 				}
 
 				$rsUsers = CUser::GetList(
-					($by="ID"),
-					($order="asc"),
+					'ID',
+					'ASC',
 					Array(
 						"!UF_DEPARTMENT" => false
 					),
@@ -1197,7 +1197,7 @@ class CExtranet
 		if (intval($arFields["ID"]) > 0) // update
 		{
 			$dbRes = CUser::GetList(
-				$by="id", $order="asc",
+				"id", "asc",
 				array("ID_EQUAL_EXACT" => intval($arFields['ID'])),
 				array('SELECT' => array('UF_PUBLIC'))
 			);
@@ -1230,7 +1230,7 @@ class CExtranet
 		if (intval($ID) > 0)
 		{
 			$dbRes = CUser::GetList(
-				$by="id", $order="asc",
+				"id", "asc",
 				array("ID_EQUAL_EXACT" => intval($ID)),
 				array('SELECT' => array('UF_PUBLIC'))
 			);
@@ -1267,11 +1267,7 @@ class CExtranet
 		{
 			$extranet_site_id = CExtranet::GetExtranetSiteID();
 			$arIntranetSiteID = array();
-			$rsSite = CSite::GetList(
-				$by="sort",
-				$order="desc",
-				array("ACTIVE" => "Y")
-			);
+			$rsSite = CSite::GetList("sort", "desc", array("ACTIVE" => "Y"));
 			while ($arSite = $rsSite->Fetch())
 			{
 				if ($arSite["LID"] == $extranet_site_id)
@@ -1345,7 +1341,7 @@ class CExtranet
 			}
 
 			$rsUser = CUser::GetList(
-				($by = ''), ($order = ''),
+				'', '',
 				$arFilter,
 				array("FIELDS" => array("ID"))
 			);

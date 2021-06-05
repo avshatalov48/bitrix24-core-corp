@@ -94,6 +94,24 @@ abstract class EntityConversionWizard
 	{
 		$this->converter->enableBizProcCheck($enable);
 	}
+
+	/**
+	 * Check should auto start BP after update.
+	 * @return bool
+	 */
+	public function shouldSkipBizProcAutoStart(): bool
+	{
+		return $this->converter->shouldSkipBizProcAutoStart();
+	}
+	/**
+	 * Enable/disable auto start BP after update
+	 * @param bool $enable Flag of enabling User Field checking.
+	 */
+	public function setSkipBizProcAutoStart(bool $enable)
+	{
+		$this->converter->setSkipBizProcAutoStart($enable);
+	}
+
 	/**
 	 * Get event params that must be risen on the client
 	 * @return array|null

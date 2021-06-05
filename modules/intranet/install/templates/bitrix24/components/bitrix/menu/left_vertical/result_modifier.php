@@ -520,13 +520,14 @@ if (!empty($newItems))
 {
 	foreach ($newItems as $item)
 	{
-		if ($item["ITEM_TYPE"] == "default")
+		$isCustomSection = isset($item['PARAMS']['is_custom_section']) ? (bool)$item['PARAMS']['is_custom_section'] : false;
+		if ($isCustomSection || ($item["ITEM_TYPE"] != "default"))
 		{
-			array_unshift($arResult["ITEMS"]["hide"], $item);
+			$arResult["ITEMS"]["show"][] = $item;
 		}
 		else
 		{
-			$arResult["ITEMS"]["show"][] = $item;
+			array_unshift($arResult["ITEMS"]["hide"], $item);
 		}
 	}
 }

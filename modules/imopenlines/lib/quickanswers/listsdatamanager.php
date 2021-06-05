@@ -392,7 +392,7 @@ class ListsDataManager extends DataManager
 	protected static function getDefaultSiteID()
 	{
 		$siteEntity = new \CSite();
-		$dbSites = $siteEntity->GetList($by = 'sort', $order = 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
+		$dbSites = $siteEntity->GetList('sort', 'desc', array('DEFAULT' => 'Y', 'ACTIVE' => 'Y'));
 		$defaultSite = is_object($dbSites) ? $dbSites->Fetch() : null;
 		if(is_array($defaultSite))
 		{

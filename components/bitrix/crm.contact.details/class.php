@@ -381,6 +381,17 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		//region TABS
 		$this->arResult['TABS'] = array();
+
+		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+		$this->arResult['TABS'] = array_merge(
+			$this->arResult['TABS'],
+			$relationManager->getRelationTabsForDynamicChildren(
+				\CCrmOwnerType::Contact,
+				$this->entityID,
+				($this->entityID === 0)
+			)
+		);
+
 		if($this->entityID > 0)
 		{
 			$this->arResult['TABS'][] = array(
@@ -1575,10 +1586,9 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
-			$by = 'ID';
-			$order = 'ASC';
 			$dbUsers = \CUser::GetList(
-				$by, $order,
+				'ID',
+				'ASC',
 				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
 				array(
 					'FIELDS' => array(
@@ -1587,7 +1597,6 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
-			unset($by, $order);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
 			if(is_array($user))
 			{

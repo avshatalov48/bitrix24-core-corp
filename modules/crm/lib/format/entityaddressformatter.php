@@ -441,7 +441,12 @@ class EntityAddressFormatter
 
 		if(isset($options['HTML_ENCODE']) && $options['HTML_ENCODE'] === true)
 		{
-			array_walk($lines, create_function("&\$v", "\$v=htmlspecialcharsbx(\$v);"));
+			array_walk(
+				$lines,
+				function (&$v) {
+					$v = htmlspecialcharsbx($v);
+				}
+			);
 		}
 
 		return $lines;

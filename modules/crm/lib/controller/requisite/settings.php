@@ -3,7 +3,6 @@
 
 namespace Bitrix\Crm\Controller\Requisite;
 
-
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Main\Engine\Controller;
 

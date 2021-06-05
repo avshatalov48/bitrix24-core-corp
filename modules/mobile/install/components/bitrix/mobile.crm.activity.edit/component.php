@@ -126,8 +126,8 @@ else
 	if($arFields['RESPONSIBLE_ID'] > 0)
 	{
 		$dbUser = CUser::GetList(
-			($by='id'),
-			($order='asc'),
+			'id',
+			'asc',
 			array('ID'=> $arFields['RESPONSIBLE_ID']),
 			array(
 				'FIELDS'=> array(
@@ -419,8 +419,8 @@ elseif($typeID === CCrmActivityType::Email)
 	}
 
 	$dbUser = CUser::GetList(
-		($by = 'id'),
-		($order = 'asc'),
+		'id',
+		'asc',
 		array('ID_EQUAL_EXACT' => $currentUserID),
 		array('FIELDS' => array('LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'EMAIL', 'PERSONAL_PHOTO'))
 	);

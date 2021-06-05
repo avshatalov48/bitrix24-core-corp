@@ -32,6 +32,20 @@ $arParams['PATH_TO_QUOTE_KANBAN'] = CrmCheckPath('PATH_TO_QUOTE_KANBAN', $arPara
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
 
+$makeEditPathFromDetailsPath = static function(string $pathToDetails): string
+{
+	$templateWithoutConflictingSymbols = str_replace('#quote_id#', 'quote_id', $pathToDetails);
+	$editWithoutConflictingSymbols = CHTTP::urlAddParams($templateWithoutConflictingSymbols, ['init_mode' => 'edit']);
+
+	return str_replace('quote_id', '#quote_id#', $editWithoutConflictingSymbols);
+};
+
+if (\CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote))
+{
+	$arParams['PATH_TO_QUOTE_SHOW'] = $arParams['PATH_TO_QUOTE_DETAILS'];
+	$arParams['PATH_TO_QUOTE_EDIT'] = $makeEditPathFromDetailsPath($arParams['PATH_TO_QUOTE_DETAILS']);
+}
+
 if (!isset($arParams['TYPE']))
 	$arParams['TYPE'] = 'list';
 
@@ -259,6 +273,8 @@ if($arParams['TYPE'] === 'list')
 
 		unset($stExportId);
 	}
+
+	$arResult['BUTTONS'][] = ['SEPARATOR' => true];
 
 	if(count($arResult['BUTTONS']) > 1)
 	{

@@ -283,7 +283,6 @@
 			addItemQueue: function(event)
 			{
 				this.showPopupDepartment(event.getData().item);
-				this.showPopupDepartment(event.getData().item);
 				this.reloadUserInputQueue(event.getData().item.getDialog());
 			},
 			deleteItemQueue: function(event)

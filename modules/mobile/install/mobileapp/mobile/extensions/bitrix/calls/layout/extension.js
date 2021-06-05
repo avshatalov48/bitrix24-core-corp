@@ -938,7 +938,7 @@
 		renderIncoming()
 		{
 			const avBack = this.state.associatedEntityAvatar && !isAvatarBlank(this.state.associatedEntityAvatar) ?
-				{backgroundImage: this.state.associatedEntityAvatar} // todo
+				{backgroundImage: encodeURI(this.state.associatedEntityAvatar)} // todo
 				: {backgroundImageSvg: Icons.emptyAvatar2};
 
 			return View({
@@ -1121,7 +1121,7 @@
 		renderOutgoing()
 		{
 			const avBack = this.state.associatedEntityAvatar && !isAvatarBlank(this.state.associatedEntityAvatar) ?
-				{backgroundImage: CallUtil.makeAbsolute(this.state.associatedEntityAvatar)} // todo
+				{backgroundImage: encodeURI(CallUtil.makeAbsolute(this.state.associatedEntityAvatar))} // todo
 				: {backgroundImageSvg: Icons.emptyAvatar2};
 
 			return View({

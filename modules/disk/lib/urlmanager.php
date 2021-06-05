@@ -44,7 +44,8 @@ class UrlManager implements IErrorable
 		$component = $engine->getComponent();
 		if(!$component)
 		{
-			list($pageId, $variables) = each($pageCandidates);
+			$pageId = key($pageCandidates);
+			$variables = current($pageCandidates);
 
 			return $pageId;
 		}
@@ -91,7 +92,9 @@ class UrlManager implements IErrorable
 			}
 		}
 
-		list($pageId, $variables) = each($pageCandidates);
+		$pageId = key($pageCandidates);
+		$variables = current($pageCandidates);
+
 		return $pageId;
 	}
 
@@ -107,7 +110,8 @@ class UrlManager implements IErrorable
 		$component = $engine->getComponent();
 		if(!$component)
 		{
-			list($pageId, $variables) = each($pageCandidates);
+			$pageId = key($pageCandidates);
+			$variables = current($pageCandidates);
 
 			return $pageId;
 		}
@@ -173,7 +177,9 @@ class UrlManager implements IErrorable
 			}
 		}
 
-		list($pageId, $variables) = each($pageCandidates);
+		$pageId = key($pageCandidates);
+		$variables = current($pageCandidates);
+
 		return $pageId;
 	}
 
@@ -229,7 +235,7 @@ class UrlManager implements IErrorable
 		static $rewriteCondition = null;
 		if($rewriteCondition === null)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$extLinksAccessPoints = \CUrlRewriter::getList(array('ID' => 'bitrix:disk.external.link'));
 			if(empty($extLinksAccessPoints))
 			{
@@ -828,7 +834,7 @@ class UrlManager implements IErrorable
 		static $rewriteCondition = null;
 		if($rewriteCondition === null)
 		{
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 			$accessPoints = \CUrlRewriter::getList(array('ID' => 'bitrix:disk.services'));
 			if(empty($accessPoints))
 			{

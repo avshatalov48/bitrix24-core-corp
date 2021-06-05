@@ -47,16 +47,6 @@ class MyOfficeHandler extends DocumentHandler
 	}
 
 	/**
-	 * Public name storage of documents. May show in user interface.
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @return string
-	 */
-	public static function getStorageName()
-	{
-		return Loc::getMessage('DISK_MYOFFICE_HANDLER_NAME_STORAGE');
-	}
-
-	/**
 	 * Execute this method for check potential possibility get access token.
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
@@ -101,7 +91,7 @@ class MyOfficeHandler extends DocumentHandler
 			return null;
 		}
 
-		$predefinedUsers = unserialize($users);
+		$predefinedUsers = unserialize($users, ['allowed_classes' => false]);
 		if (empty($predefinedUsers[$userId]))
 		{
 			return null;
@@ -441,83 +431,6 @@ class MyOfficeHandler extends DocumentHandler
 	{
 		$this->errorCollection[] = new Error('Could not use preview with MyOffice', self::ERROR_COULD_NOT_VIEW_FILE);
 		return null;
-	}
-
-	/**
-	 * Lists folder contents
-	 * @param $path
-	 * @param $folderId
-	 * @return mixed
-	 */
-	public function listFolder($path, $folderId)
-	{
-		if($path === '/')
-		{
-			$folderId = '';
-		}
-		else
-		{
-			$folderId = $folderId . '/children';
-		}
-
-		$http = new HttpClient(array(
-			'socketTimeout' => 10,
-			'streamTimeout' => 30,
-			'version' => HttpClient::HTTP_1_1,
-		));
-		$http->setHeader('Content-Type', 'application/json; charset=UTF-8');
-		$http->setHeader('X-co-auth-token', $this->getAccessToken());
-
-		if($http->get($this->getApiUrlRoot() . "/files/{$folderId}") === false)
-		{
-			$errorString = implode('; ', array_keys($http->getError()));
-			$this->errorCollection->add(array(
-				new Error($errorString, self::ERROR_HTTP_LIST_FOLDER)
-			));
-			return null;
-		}
-
-		if(!$this->checkHttpResponse($http))
-		{
-			return null;
-		}
-
-		$items = Json::decode($http->getResult());
-		if($items === null)
-		{
-			$this->errorCollection->add(array(
-				new Error('Could not decode response as json', self::ERROR_BAD_JSON)
-			));
-			return null;
-		}
-
-		$reformatItems = array();
-		foreach($items as $item)
-		{
-			$item = $item['file'];
-			$isFolder = $item['mediaType'] === 'application/vnd.ncloudtech.cloudoffice.folder';
-			$dateTime = new \DateTime($item['modifiedDate']);
-			$reformatItems[$item['id']] = array(
-				'id' => $item['id'],
-				'name' => $item['filename'],
-				'type' => $isFolder? 'folder' : 'file',
-
-				'size' => $isFolder? '' : \CFile::formatSize($item['fileSize']),
-				'sizeInt' => $isFolder? '' : $item['fileSize'],
-				'modifyBy' => '',
-				'modifyDate' => $dateTime->format('d.m.Y'),
-				'modifyDateInt' => $dateTime->getTimestamp(),
-				'provider' => static::getCode(),
-			);
-			if(!$isFolder)
-			{
-				$reformatItems[$item['id']]['storage'] = '';
-				$reformatItems[$item['id']]['ext'] = getFileExtension($item['name']);
-			}
-		}
-		unset($item);
-
-		return $reformatItems;
 	}
 
 	/**

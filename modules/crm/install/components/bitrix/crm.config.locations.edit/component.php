@@ -76,7 +76,7 @@ $arResult['BACK_URL'] = CComponentEngine::MakePathFromTemplate(
 $langCount = 0;
 $arSysLangs = Array();
 $arSysLangNames = Array();
-$dbLang = CLangAdmin::GetList(($b="sort"), ($o="asc"), array("ACTIVE" => "Y"));
+$dbLang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
 while ($arLang = $dbLang->Fetch())
 {
 	$arSysLangs[$langCount] = $arLang["LID"];

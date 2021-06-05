@@ -1077,7 +1077,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 							unset($this->deletedBankDetailMap[$pseudoId]);
 						}
 					}
-					elseif ($pseudoId > 0)
+					elseif ((int)$pseudoId > 0)
 					{
 						$bankDetailResult = $this->bankDetail->update($pseudoId, $bankDetailFields);
 					}

@@ -7,6 +7,13 @@ use	Bitrix\Main\Config\Option;
 
 class WeChat extends Base
 {
+	//Input
+
+	//END Input
+
+	//Output
+
+	//END Output
 	public const ENABLED_OPTION = 'wechat_enabled';
 
 	/**
@@ -16,8 +23,6 @@ class WeChat extends Base
 	 * https://helpdesk.bitrix24.com/open/10225886/
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function isEnabled(): bool
 	{

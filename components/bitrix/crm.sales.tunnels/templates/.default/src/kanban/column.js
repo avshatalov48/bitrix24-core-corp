@@ -131,7 +131,10 @@ export default class Column extends Kanban.Column
 		if (this.marker)
 		{
 			this.marker.container = this.getData().appContainer;
-			this.marker.cache.clear();
+			if (Type.isFunction(this.marker.cache.clear))
+			{
+				this.marker.cache.clear();
+			}
 		}
 	}
 

@@ -51,7 +51,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		[$typeName, $ownerId] = explode('_', $this->GetDocumentId()[2]);
+		list($typeName, $ownerId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 		$ownerTypeId = \CCrmOwnerType::ResolveID($typeName);
 		$ownerId = (int)$ownerId;
 

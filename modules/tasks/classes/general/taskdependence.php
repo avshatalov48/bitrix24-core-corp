@@ -77,7 +77,7 @@ class CTaskDependence
 		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 	}
 
-	function GetFilter($arFilter)
+	public static function GetFilter($arFilter)
 	{
 		if (!is_array($arFilter))
 			$arFilter = Array();
@@ -163,7 +163,7 @@ class CTaskDependence
 		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 	}
 
-	function DeleteByDependsOnID($DEPENDS_ON)
+	public static function DeleteByDependsOnID($DEPENDS_ON)
 	{
 		global $DB;
 
@@ -172,7 +172,7 @@ class CTaskDependence
 		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 	}
 
-	function DeleteByTaskID($TASK_ID)
+	public static function DeleteByTaskID($TASK_ID)
 	{
 		global $DB;
 

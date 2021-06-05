@@ -25,25 +25,35 @@ class CBPCrmSetObserverField
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = explode("_", $this->GetDocumentId()[2])[1];
+		$documentType = $this->GetDocumentType()[2];
+		$documentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
 		$observerIds = CBPHelper::ExtractUsers($this->Observers, $this->GetDocumentId());
 
-		$classHandler = $this->defineClassHandler();
-		$methodHandler = $this->defineMethodHandler();
-
-		if(is_null($classHandler) || is_null($methodHandler))
+		if ($documentType === CCrmOwnerType::LeadName || $documentType === CCrmOwnerType::DealName)
 		{
-			return CBPActivityExecutionStatus::Closed;
+			$this->setLeadDealObservers($documentType, $documentId, $observerIds);
 		}
-
-		call_user_func([$classHandler, $methodHandler], $documentId, $observerIds);
+		else
+		{
+			$this->setItemObservers(CCrmOwnerType::ResolveID($documentType), $documentId, $observerIds);
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	protected function defineClassHandler() : ?string
+	protected function setLeadDealObservers(string $documentType, int $documentId, array $observerIds)
 	{
-		$documentType = $this->GetDocumentType()[2];
+		$classHandler = $this->defineClassHandler($documentType);
+		$methodHandler = $this->defineMethodHandler();
+
+		if(!is_null($classHandler) && !is_null($methodHandler))
+		{
+			call_user_func([$classHandler, $methodHandler], $documentId, $observerIds);
+		}
+	}
+
+	protected function defineClassHandler(string $documentType) : ?string
+	{
 		if ($documentType === CCrmOwnerType::DealName)
 		{
 			return CCrmDeal::class;
@@ -60,7 +70,6 @@ class CBPCrmSetObserverField
 
 	protected function defineMethodHandler() : ?string
 	{
-		$actions = self::getActionsOnObservers();
 		switch($this->ActionOnObservers)
 		{
 			case self::ACTION_ADD_OBSERVERS:
@@ -72,6 +81,34 @@ class CBPCrmSetObserverField
 			default:
 				return null;
 		}
+	}
+
+	protected function setItemObservers(int $typeId, int $entityId, array $observerIds)
+	{
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeId);
+		if (is_null($factory) || !$factory->isAutomationEnabled())
+		{
+			return;
+		}
+
+		$item = $factory->getItem($entityId);
+
+		switch ($this->ActionOnObservers)
+		{
+			case self::ACTION_ADD_OBSERVERS:
+				$observerIds = array_merge($item->getObservers(), $observerIds);
+				break;
+
+			case self::ACTION_REMOVE_OBSERVERS:
+				$observerIds = array_diff($item->getObservers(), $observerIds);
+				break;
+
+			default:
+				$observerIds = [];
+		}
+
+		$item->setObservers($observerIds);
+		$factory->getUpdateOperation($item)->launch();
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')

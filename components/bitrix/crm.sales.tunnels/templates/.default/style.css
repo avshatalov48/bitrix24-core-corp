@@ -636,10 +636,29 @@
 	z-index: 999;
 }
 
+.crm-st-category-stages-stub .crm-st-category-info {
+	width: 402px;
+}
+
+.crm-st-category-stages-stub .crm-st-category-stages {
+	flex-grow: 1;
+	max-width: calc(100% - 423px);
+	display: flex;
+}
+
+.crm-st-category-stages-stub .crm-st-category-info-title,
+.crm-st-category-stages-stub .crm-st-category-info-title-editor {
+	max-width: 350px;
+}
+
+.crm-st-category-stages-stub .crm-st-category-stages,
 .crm-st-category-stub {
 	pointer-events: none;
 }
 
+.crm-st-category-automation-disabled .crm-st-kanban-column-dot,
+.crm-st-category-automation-disabled .crm-st-automation,
+.crm-st-category-generator-disabled .crm-st-generator,
 .crm-st-category-stub .crm-st-category-action-drag,
 .crm-st-category-stub .crm-st-category-info-links-link,
 .crm-st-category-stub .crm-st-category-info-links-help,
@@ -651,6 +670,7 @@
 	min-height: 25px;
 }
 
+.crm-st-category-stages-stub .main-kanban-column-title-text,
 .crm-st-category-stub .main-kanban-column-title-text {
 	opacity: 0;
 }
@@ -661,6 +681,7 @@
 	margin-bottom: 16px;
 }
 
+.crm-st-category-stages-stub .main-kanban-column-title-info::before,
 .crm-st-category-stub .crm-st-category-info-links-item::before,
 .crm-st-category-stub .crm-st-category-info-title-container::before,
 .crm-st-category-stub .main-kanban-column-title-info::before {
@@ -678,6 +699,7 @@
 	height: 8px;
 }
 
+.crm-st-category-stages-stub .main-kanban-column-title-info::before,
 .crm-st-category-stub .main-kanban-column-title-info::before {
 	width: auto;
 	height: 8px;

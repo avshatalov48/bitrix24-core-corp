@@ -79,15 +79,12 @@ class AddressRepository
 
 		if($location = $address->getLocation())
 		{
-			if($location->getId() <= 0)
-			{
-				// todo: may be shift location if location type is unknown?
-				$res = $location->save();
+			// Even if location has id > 0. It could contain unsaved name on other language.
+			$res = $location->save();
 
-				if(!$res->isSuccess())
-				{
-					$result->addErrors($res->getErrors());
-				}
+			if(!$res->isSuccess())
+			{
+				$result->addErrors($res->getErrors());
 			}
 		}
 

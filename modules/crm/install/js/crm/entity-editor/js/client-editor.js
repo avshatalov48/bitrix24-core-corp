@@ -2797,6 +2797,8 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 
 		this._container = null;
 		this._wrapper = null;
+		this._titleIcon = null;
+		this._titleLink = null;
 
 		this._clientRequisites = null;
 
@@ -2860,6 +2862,10 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 			{
 				this._container = container;
 			},
+			getTitleLink: function()
+			{
+				return this._titleLink;
+			},
 			getEntity: function()
 			{
 				return this._entityInfo;
@@ -2892,6 +2898,31 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 			{
 				this._requisiteListChangeNotifier.removeListener(listener);
 			},
+			getTitleIcon: function()
+			{
+				if (!this._titleIcon && this._entityInfo)
+				{
+					var iconClass = null;
+					if (this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.lead)
+					{
+						iconClass = 'crm-entity-widget-client-box-icon--lead';
+					}
+					else if (this._entityInfo.getTypeId() === BX.CrmEntityType.enumeration.deal)
+					{
+						iconClass = 'crm-entity-widget-client-box-icon--deal';
+					}
+					if (iconClass)
+					{
+						this._titleIcon = BX.create("span", {
+							props: {
+								className: 'crm-entity-widget-client-box-icon ' + iconClass
+							}}
+						);
+					}
+				}
+
+				return this._titleIcon;
+			},
 			layout: function()
 			{
 				var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
@@ -2899,7 +2930,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 				this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-client-block" } });
 				this._container.appendChild(this._wrapper);
 
-				var innerWrapper = BX.create("div", { props: { className: "crm-entity-widget-client-box" } });
+				var innerWrapper = BX.create("div", { props: { className: "crm-entity-widget-client-box crm-entity-widget-participants-block" } });
 				this._wrapper.appendChild(innerWrapper);
 
 				if(BX.prop.getBoolean(this._settings, "enableEntityTypeCaption", false))
@@ -2943,7 +2974,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 				var showUrl = this._entityInfo.getShowUrl();
 				if(showUrl !== "")
 				{
-					var titleLink = BX.create("a",
+					this._titleLink = BX.create("a",
 						{
 							props:
 								{
@@ -2954,14 +2985,14 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 						}
 					);
 
-					BX.Event.bind(titleLink, 'mouseenter', this.onTitleMouseEnter.bind(this));
-					BX.Event.bind(titleLink, 'mouseleave', this.onTitleMouseLeave.bind(this));
+					BX.Event.bind(this._titleLink, 'mouseenter', this.onTitleMouseEnter.bind(this));
+					BX.Event.bind(this._titleLink, 'mouseleave', this.onTitleMouseLeave.bind(this));
 
 					titleWrapper.appendChild(
 						BX.create("div",
 							{
 								props: { className: "crm-entity-widget-client-box-name-row" },
-								children: [ titleLink, buttonWrapper ]
+								children: [ this.getTitleIcon(), this._titleLink, buttonWrapper ]
 							}
 						)
 					);
@@ -3079,6 +3110,7 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 				}
 
 				this._communicationButtons = null;
+				this._titleIcon = null;
 				this._wrapper = BX.remove(this._wrapper);
 				this._hasLayout = false;
 			},

@@ -4,6 +4,10 @@ use Bitrix\Main\Loader;
 
 class TaskManager
 {
+	public const TASK_FIELD_NAME = 'UF_CRM_TASK';
+	public const TASK_USER_FIELD_ENTITY_ID = 'TASKS_TASK';
+	public const TASK_TEMPLATE_USER_FIELD_ENTITY_ID = 'TASKS_TASK_TEMPLATE';
+
 	/**
 	* @return \CTaskItem
 	*/

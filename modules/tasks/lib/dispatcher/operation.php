@@ -4,9 +4,9 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * This class DOES NOT check any CSRF tokens and even for current user`s authorization, so BE CAREFUL using it.
  */
 
@@ -70,36 +70,38 @@ final class Operation
 
 	public function call()
 	{
-		$opResult = array();
+		$opResult = [];
 
-		if($this->parsed['SIGNATURE']['STATIC'])
+		$arguments = array_values($this->parsed['ARGUMENTS']);
+
+		if ($this->parsed['SIGNATURE']['STATIC'])
 		{
-			$opResult = call_user_func_array($this->parsed['CLASS'].'::'.$this->parsed['METHOD'], $this->parsed['ARGUMENTS']);
+			$callback = $this->parsed['CLASS'] . '::' . $this->parsed['METHOD'];
+			$opResult = call_user_func_array($callback, $arguments);
 		}
 		else
 		{
 			$class = $this->parsed['CLASS'];
 			$instance = new $class();
 
-			if($instance->canExecute())
+			if ($instance->canExecute())
 			{
-				$opResult = call_user_func_array(array($instance, $this->parsed['METHOD']), $this->parsed['ARGUMENTS']);
+				$callback = [$instance, $this->parsed['METHOD']];
+				$opResult = call_user_func_array($callback, $arguments);
 			}
 
 			// get errors from operation instance itself
 			$this->errors->load($instance->getErrors());
 		}
 
-		if($opResult instanceof Result)
+		if ($opResult instanceof Result)
 		{
 			// also get errors from result, in case of object
 			$this->errors->load($opResult->getErrors());
 			return $opResult->getData();
 		}
-		else
-		{
-			return $opResult;
-		}
+
+		return $opResult;
 	}
 
 	protected function prepareArguments()
@@ -241,10 +243,19 @@ final class Operation
 			}
 		}
 
-		if(!$noEntity && !is_callable($this->parsed['CLASS'].'::'.$this->parsed['METHOD']))
+		if(!$noEntity && !$this->isCallable())
 		{
 			$this->addParseError('Method not found or not callable: '.$this->parsed['FULLPATH']);
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isCallable(): bool
+	{
+		$obj = new $this->parsed['CLASS'];
+		return is_callable([$obj, $this->parsed['METHOD']]);
 	}
 
 	protected function parseQueryPath($path)

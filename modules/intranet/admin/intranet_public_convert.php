@@ -14,8 +14,7 @@ if($REQUEST_METHOD=="POST" && check_bitrix_sessid())
 	{
 		$extranetSiteId = COption::GetOptionString("extranet", "extranet_site", false);
 
-		$by = 'sort'; $order='asc';
-		$rsSite = CSite::GetList($by,$order);
+		$rsSite = CSite::GetList();
 		while ($site = $rsSite->Fetch())
 		{
 			if ($extranetSiteId && $site["ID"] == $extranetSiteId)

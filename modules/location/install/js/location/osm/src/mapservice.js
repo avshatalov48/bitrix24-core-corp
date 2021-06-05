@@ -58,7 +58,7 @@ export default class MapService extends MapBase
 	{
 		this.#mode = mode;
 
-		if(this.#marker)
+		if (this.#marker)
 		{
 			this.#marker.draggable = mode === ControlMode.edit;
 		}
@@ -98,7 +98,7 @@ export default class MapService extends MapBase
 	{
 		this.#zoom = zoom;
 
-		if(this.#map)
+		if (this.#map)
 		{
 			this.#map.setZoom(zoom);
 		}
@@ -108,18 +108,18 @@ export default class MapService extends MapBase
 	{
 		this.#location = location;
 
-		if(location)
+		if (location)
 		{
-			if(this.#marker)
+			if (this.#marker)
 			{
 				this.#isUpdating = true;
 				this.#marker.setLatLng([location.latitude, location.longitude]);
 				this.#isUpdating = false;
 			}
 
-			if(this.#map)
+			if (this.#map)
 			{
-				if(!this.#map.hasLayer(this.#marker))
+				if (!this.#map.hasLayer(this.#marker))
 				{
 					this.#marker.addTo(this.#map);
 				}
@@ -127,7 +127,7 @@ export default class MapService extends MapBase
 				this.#map.panTo([location.latitude, location.longitude]);
 			}
 		}
-		else if(this.#marker)
+		else if (this.#marker)
 		{
 			this.#marker.remove();
 		}
@@ -137,14 +137,14 @@ export default class MapService extends MapBase
 
 	#adjustZoom(): void
 	{
-		if(!this.#location)
+		if (!this.#location)
 		{
 			return;
 		}
 
-		let zoom = MapService.#chooseZoomByLocation(this.#location);
+		const zoom = MapService.#chooseZoomByLocation(this.#location);
 
-		if(zoom !== null && zoom !== this.#zoom)
+		if (zoom !== null && zoom !== this.#zoom)
 		{
 			this.zoom = zoom;
 		}
@@ -155,23 +155,23 @@ export default class MapService extends MapBase
 	{
 		let result = 18;
 
-		if(location)
+		if (location)
 		{
 			let locationType = location.type;
 
-			if(locationType > LocationType.UNKNOWN)
+			if (locationType > LocationType.UNKNOWN)
 			{
-				if(locationType < LocationType.COUNTRY)
+				if (locationType < LocationType.COUNTRY)
 					result = 1;
-				else if(locationType === LocationType.COUNTRY)
+				else if (locationType === LocationType.COUNTRY)
 					result = 4;
-				else if(locationType <= LocationType.ADM_LEVEL_1)
+				else if (locationType <= LocationType.ADM_LEVEL_1)
 					result = 6;
-				else if(locationType <= LocationType.LOCALITY)
+				else if (locationType <= LocationType.LOCALITY)
 					result = 11;
-				else if(locationType <= LocationType.STREET)
+				else if (locationType <= LocationType.STREET)
 					result = 16;
-				else if(locationType > LocationType.STREET)
+				else if (locationType > LocationType.STREET)
 					result = 18;
 			}
 		}
@@ -191,9 +191,9 @@ export default class MapService extends MapBase
 
 	#onMapClick(lat: string, lng: string): void
 	{
-		if(this.#mode === ControlMode.edit)
+		if (this.#mode === ControlMode.edit)
 		{
-			if(!this.#map.hasLayer(this.#marker))
+			if (!this.#map.hasLayer(this.#marker))
 			{
 				this.#marker.addTo(this.#map);
 			}
@@ -207,7 +207,7 @@ export default class MapService extends MapBase
 	{
 		let result;
 
-		if(location)
+		if (location)
 		{
 			result = this.#locationRepository.findByExternalId(
 				location.externalId,
@@ -227,7 +227,7 @@ export default class MapService extends MapBase
 
 	#createTimer(lat: string, lng: string): void
 	{
-		if(this.#timerId !== null)
+		if (this.#timerId !== null)
 		{
 			clearTimeout(this.#timerId);
 		}
@@ -259,7 +259,7 @@ export default class MapService extends MapBase
 
 	#emitOnLocationChangedEvent(location: ?Location): void
 	{
-		if(this.#mode === ControlMode.edit)
+		if (this.#mode === ControlMode.edit)
 		{
 			this.emit(MapService.#onChangedEvent, { location: location	});
 		}
@@ -267,7 +267,7 @@ export default class MapService extends MapBase
 
 	#onMarkerUpdatePosition(lat: string, lng: string): void
 	{
-		if(!this.#isUpdating && this.#mode === ControlMode.edit)
+		if (!this.#isUpdating && this.#mode === ControlMode.edit)
 		{
 			this.#createTimer(lat, lng);
 		}
@@ -348,7 +348,7 @@ export default class MapService extends MapBase
 
 	onMapShow()
 	{
-		if(this.#isResizeInvalidated)
+		if (this.#isResizeInvalidated)
 		{
 			this.#isResizeInvalidated = false;
 			this.#invalidateMapSize();

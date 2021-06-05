@@ -46,7 +46,7 @@ if ($arParams['SHOW_SECTION_INFO'] == 'Y' && $current_section)
 		elseif ($arResult['SECTION_DATA']['PICTURE'])
 			$arResult['SECTION_DATA']['DETAIL_PICTURE'] = CFile::ShowImage($arResult['SECTION_DATA']['PICTURE']);
 	//uf_head:
-		$dbUser = CUser::GetList($b="", $o="", array("ID" => intval($arResult['SECTION_DATA']["UF_HEAD"]), "ACTIVE" => "Y"), array('FIELDS' => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "EMAIL", "CONFIRM_CODE", "PERSONAL_PHOTO", "PERSONAL_MOBILE", "WORK_POSITION", "LAST_ACTIVITY_DATE", "LAST_LOGIN"), 'SELECT' => array("UF_SKYPE")));
+		$dbUser = CUser::GetList('', '', array("ID" => intval($arResult['SECTION_DATA']["UF_HEAD"]), "ACTIVE" => "Y"), array('FIELDS' => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "EMAIL", "CONFIRM_CODE", "PERSONAL_PHOTO", "PERSONAL_MOBILE", "WORK_POSITION", "LAST_ACTIVITY_DATE", "LAST_LOGIN"), 'SELECT' => array("UF_SKYPE")));
 		if ($arUser = $dbUser->GetNext())
 		{	
 			$arResult['SECTION_DATA']["UF_HEAD"] = $arUser;
@@ -80,7 +80,7 @@ if ($arParams['SHOW_SECTION_INFO'] == 'Y' && $current_section)
 		{
 			$arResult['SECTION_DATA']["IBLOCK_SECTION_NAME"] = $arSection["NAME"];
 			$arResult['SECTION_DATA']["IBLOCK_SECTION_UF_HEAD"] = $arSection["UF_HEAD"];
-			$dbUser = CUser::GetList($b="", $o="", array("ID" => intval($arSection["UF_HEAD"])));
+			$dbUser = CUser::GetList('', '', array("ID" => intval($arSection["UF_HEAD"])));
 			if ($arUser = $dbUser->Fetch())
 				$arResult['SECTION_DATA']["IBLOCK_SECTION_UF_HEAD_NAME"] = $name = CUser::FormatName($arParams['NAME_TEMPLATE'], $arUser);
 		}
@@ -134,7 +134,7 @@ if (!empty($arResult['SECTION_DATA']['UF_HEAD']))
 }
 $userNum = 0;
 $arFilter = Array("ACTIVE" => 'Y', "UF_DEPARTMENT" => $current_section);
-$rsUsers = CUser::GetList($by = 'ID', $order = 'ASC', $arFilter); 
+$rsUsers = CUser::GetList('ID', 'ASC', $arFilter);
 while ($arUser = $rsUsers->fetch())
 {
 	if ($arUser['ID'] != $sectionHeadId)

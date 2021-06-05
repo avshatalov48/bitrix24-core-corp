@@ -18,8 +18,10 @@
 
 	var pullEvents = {
 		ping: "Call::ping",
+		answer: "Call::answer",
 		hangup: "Call::hangup",
 		userInviteTimeout: "Call::userInviteTimeout",
+		repeatAnswer: "Call::repeatAnswer",
 	};
 
 	var clientEvents = {
@@ -126,6 +128,8 @@
 
 			this.lastPingReceivedTimeout = null;
 			this.lastSelfPingReceivedTimeout = null;
+
+			this.created = new Date();
 		}
 
 		log()
@@ -195,6 +199,11 @@
 			{
 				this.signaling.sendPingToBackend();
 			}
+		}
+
+		repeatAnswerEvents()
+		{
+			this.signaling.sendRepeatAnswer({userId: this.userId});
 		}
 
 		createPeer(userId)
@@ -597,7 +606,7 @@
 
 						if (this.muted)
 						{
-							this.voximplantCall.muteMicrophone();
+							this.voximplantCall.sendAudio = false;
 						}
 						this.signaling.sendMicrophoneState(!this.muted);
 
@@ -779,6 +788,7 @@
 				"Call::userInviteTimeout": this.__onPullEventUserInviteTimeout.bind(this),
 				"Call::ping": this.__onPullEventPing.bind(this),
 				"Call::finish": this.__onPullEventFinish.bind(this),
+				[pullEvents.repeatAnswer]: this.__onPullEventRepeatAnswer.bind(this),
 			};
 
 			if (handlers[command])
@@ -934,6 +944,14 @@
 		__onPullEventFinish(params)
 		{
 			this.destroy();
+		}
+
+		__onPullEventRepeatAnswer()
+		{
+			if (this.ready)
+			{
+				this.signaling.sendAnswer({userId: this.userId}, true);
+			}
 		}
 
 		__onLocalDevicesUpdated(e)
@@ -1243,9 +1261,16 @@
 			return this.__runRestAction(ajaxActions.invite, data);
 		}
 
-		sendAnswer(data)
+		sendAnswer(data, repeated)
 		{
-			return this.__runRestAction(ajaxActions.answer, data);
+			if (repeated)
+			{
+				this.__sendPullEventOrCallRest(pullEvents.answer, ajaxActions.answer, data, 30);
+			}
+			else
+			{
+				return this.__runRestAction(ajaxActions.answer, data);
+			}
 		}
 
 		sendCancel(data)
@@ -1338,12 +1363,22 @@
 			this.__runRestAction(ajaxActions.ping, {retransmit: false});
 		}
 
+		sendRepeatAnswer(data)
+		{
+			this.__sendPullEvent(pullEvents.repeatAnswer, data);
+		}
+
 		sendUserInviteTimeout(data)
 		{
 			if (this.isPublishingEnabled())
 			{
 				this.__sendPullEvent(pullEvents.userInviteTimeout, data, 0);
 			}
+		}
+
+		getPublishingState()
+		{
+			return BX.PULL.getPublishingState();
 		}
 
 		__sendPullEvent(eventName, data, expiry)
@@ -1370,7 +1405,7 @@
 			data.requestId = CallEngine.getUuidv4();
 
 			this.call.log("Sending p2p signaling event " + eventName + "; " + JSON.stringify(data));
-			CallEngine.getPullClient().sendMessage(data.userId, "im", eventName, data, expiry);
+			BX.PULL.sendMessage(data.userId, "im", eventName, data, expiry);
 		}
 
 		__sendMessage(eventName, data)
@@ -1401,6 +1436,25 @@
 			data.callInstanceId = this.call.instanceId;
 			data.requestId = CallEngine.getUuidv4();
 			return CallEngine.getRestClient().callMethod(signalName, data);
+		}
+
+		__sendPullEventOrCallRest(eventName, restMethod, data, expiry)
+		{
+			this.getPublishingState().then(result =>
+			{
+				if (result)
+				{
+					this.__sendPullEvent(eventName, data, expiry);
+				}
+				else if (restMethod != "")
+				{
+					this.__runRestAction(restMethod, data);
+				}
+			}).catch(error =>
+			{
+				console.error(error);
+				this.call.log(error);
+			});
 		}
 	}
 

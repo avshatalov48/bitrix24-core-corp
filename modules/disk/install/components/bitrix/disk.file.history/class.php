@@ -163,6 +163,7 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 			$attr = FileAttributes::buildByFileId($version->getFileId(), new Uri($urlManager->getUrlForDownloadVersion($version)))
 				->setTitle($version->getName())
 				->setGroupBy($this->componentId)
+				->setVersionId($version->getId())
 			;
 
 			$createUser = $version->getCreateUser();

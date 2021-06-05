@@ -675,21 +675,24 @@
 	border-bottom-color: #505152;
 }
 
-.bx-messenger-dark .bx-messenger-box-create .bx-messenger-panel {
-	height: auto;
-}
-
 .bx-messenger-dark .bx-messenger-birthday-icon {
 	width: 17px;
 	height: 20px;
 	background: url(./../images/im-sprite-v37.png) -46px -164px no-repeat;
 }
 
+.bx-messenger-dark .bx-messenger-panel-avatar-img {
+	background-color: transparent;
+}
 .bx-messenger-dark .bx-messenger-panel-avatar-status {
 	height: 17px;
 	width: 17px;
 	margin-left: -13px;
 	margin-top : 21px;
+}
+
+.bx-messenger-dark .bx-messenger-cl-avatar-img {
+	background-color: transparent;
 }
 
 .bx-messenger-dark .bx-messenger-cl-status {
@@ -1455,6 +1458,9 @@
 }
 
 .bx-messenger-dark .bx-messenger-panel-wrap {
+	background-color: #313131;
+	margin: 0 -15px 0 -11px;
+	padding: 0 15px 0 11px;
 	border-bottom: none;
 }
 

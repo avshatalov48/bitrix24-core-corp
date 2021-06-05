@@ -2,13 +2,16 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Loader,
+	\Bitrix\Main\Grid\Panel,
 	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\HttpApplication;
 
 use \Bitrix\Imopenlines\Limit,
 	\Bitrix\ImOpenLines\Config,
 	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Model\SessionTable;
+	\Bitrix\ImOpenlines\Security,
+	\Bitrix\ImOpenLines\Model\SessionTable,
+	\Bitrix\ImOpenlines\Security\Permissions;
 
 class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 {
@@ -19,7 +22,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	protected $gridOptions;
 	protected $excelMode = false;
 	protected $enableExport = true;
-	/** @var \Bitrix\ImOpenlines\Security\Permissions */
+	/** @var Security\Permissions */
 	protected $userPermissions;
 	protected $showHistory;
 	protected $configId;
@@ -30,25 +33,31 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	 * @param $close
 	 * @return bool
 	 */
-	protected static function isOperatorCloseSession($status, $close): bool
+	protected static function isNotCloseSession($status, $close): bool
 	{
-		$result = true;
+		$result = false;
 
 		if(
 			$status < Session::STATUS_WAIT_CLIENT &&
 			$close !== 'Y'
 		)
 		{
-			$result = false;
+			$result = true;
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function init()
 	{
 		$this->enableExport = Limit::canStatisticsExcel();
-		$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
+		$this->userPermissions = Security\Permissions::createWithCurrentUser();
 
 		$this->gridOptions = new CGridOptions($this->gridId);
 
@@ -59,22 +68,17 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		if($this->enableExport)
 		{
-			$stExportId = 'STEXPORT_MANAGER';
-			$randomSequence = new Bitrix\Main\Type\RandomSequence($stExportId);
-			$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
-
 			$this->arResult['STEXPORT_PARAMS'] = [
-				'siteId' => SITE_ID,
-				'stExportId' => $stExportId,
-				'managerId' => $stExportManagerId,
-				'sToken' => 's' . time(),
-				'messages' => [
-					'stExportExcelDlgTitle' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_TITLE'),
-					'stExportExcelDlgSummary' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BODY'),
-				]
+				'SITE_ID' => SITE_ID,
+				'EXPORT_TYPE' => 'excel',
+				'COMPONENT_NAME' => 'bitrix:imopenlines.statistics.detail',
 			];
+			if ($this->listKeysSignedParameters())
+			{
+				$this->arResult['STEXPORT_PARAMS']['signedParameters'] = $this->getSignedParameters();
+			}
 
-			$this->arResult['BUTTON_EXPORT'] = 'BX.OpenLines.ExportManager.items[\'' . CUtil::JSEscape($stExportManagerId) . '\'].startExport(\'excel\')';
+			$this->arResult['BUTTON_EXPORT'] = 'BX.UI.StepProcessing.ProcessManager.get(\'OpenLinesExport\').showDialog()';
 			$this->arResult['LIMIT_EXPORT'] = false;
 
 			$this->arResult['STEXPORT_TOTAL_ITEMS'] = (isset($this->arParams['STEXPORT_TOTAL_ITEMS']) ?
@@ -98,10 +102,16 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		}
 
 		$this->arResult['LINES'] = $this->getConfigList();
+		$this->arResult['groupActionsData'] = $this->getGroupActionsData();
 	}
 
-	private function getConfigList()
+	/**
+	 * @return array
+	 */
+	protected function getConfigList(): array
 	{
+		$lines = [];
+
 		$configManager = new Config();
 		$result = $configManager->getList([
 				'select' => [
@@ -114,12 +124,72 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			['QUEUE' => 'N']
 		);
 
-		$lines = [];
 		foreach ($result as $id => $config)
 		{
 			$lines[$config['ID']] = htmlspecialcharsbx($config['LINE_NAME']);
 		}
 		return $lines;
+	}
+
+	/**
+	 * @param array $lines
+	 * @return array[]
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function getGroupActionsData(): array
+	{
+		$result = [
+			'transfer' => [
+				'items' => [],
+				'inputId' => 'action-transfer-text',
+				'inputName' => 'transferText',
+			]
+		];
+
+		if(Limit::canTransferToLine())
+		{
+			$lines = Config::getQueueList(Security\Helper::getCurrentUserId());
+
+			usort($lines, function($a, $b)
+			{
+				if($a['TRANSFER_COUNT'] > $b['TRANSFER_COUNT'])
+				{
+					return -1;
+				}
+				elseif($a['TRANSFER_COUNT'] < $b['TRANSFER_COUNT'])
+				{
+					return 1;
+				}
+				else
+				{
+					if($a['ID'] > $b['ID'])
+					{
+						return 1;
+					}
+					elseif($a['ID'] < $b['ID'])
+					{
+						return -1;
+					}
+				}
+
+				return 0;
+			});
+
+			if(!empty($lines))
+			{
+				foreach ($lines as $line)
+				{
+					$result['transfer']['items'][] = [
+						'id' => $line['ID'],
+						'entityId' => 'open-line',
+						'tabs' => 'open-lines',
+						'title' => $line['NAME']
+					];
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	protected function checkModules()
@@ -140,7 +210,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 	protected function checkAccess()
 	{
-		if(!$this->userPermissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SESSION, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW))
+		if(!$this->userPermissions->canPerform(Security\Permissions::ENTITY_SESSION, Security\Permissions::ACTION_VIEW))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_ACCESS_DENIED'));
 			return false;
@@ -663,9 +733,9 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		$result = array();
 
-		$allowedUserIds = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
-			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SESSION, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
+		$allowedUserIds = Security\Helper::getAllowedUserIds(
+			Security\Helper::getCurrentUserId(),
+			$this->userPermissions->getPermission(Security\Permissions::ENTITY_SESSION, Security\Permissions::ACTION_VIEW)
 		);
 
 		if ($request->get('GUEST_USER_ID'))
@@ -1079,6 +1149,179 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	}
 
 	/**
+	 * @return array|array[][][]
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	protected function prepareGroupActions(): array
+	{
+		$result = [];
+
+		$userPermissions = Permissions::createWithCurrentUser();
+
+		if($userPermissions->canPerform(Permissions::ENTITY_SESSION, Permissions::ACTION_VIEW))
+		{
+			$prefix = $this->gridId;
+			$snippet = new Panel\Snippet();
+
+			$actionList = [
+				[
+					'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION'),
+					'VALUE' => 'none'
+				]
+			];
+
+			$applyButton = $snippet->getApplyButton(
+				[
+					'ONCHANGE' => [
+						[
+							'ACTION' => Panel\Actions::CALLBACK,
+							'DATA' => [
+								[
+									'JS' => 'BX.OpenLines.Actions.confirmGroupAction(\'' . $this->gridId . '\')'
+								]
+							]
+						]
+					]
+				]
+			);
+
+			$actionList[] = [
+				'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CLOSE'),
+				'VALUE' => 'close',
+				'ONCHANGE' => [
+					[
+						'ACTION' => Panel\Actions::CREATE,
+						'DATA' => [
+							$applyButton
+						]
+					],
+					[
+						'ACTION' => Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.OpenLines.Actions.destroyTransferDialogSelector();"],
+						],
+					],
+				]
+			];
+
+			$actionList[] = [
+				'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_SPAM'),
+				'VALUE' => 'spam',
+				'ONCHANGE' => [
+					[
+						'ACTION' => Panel\Actions::CREATE,
+						'DATA' => [
+							$applyButton
+						]
+					],
+					[
+						'ACTION' => Panel\Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.OpenLines.Actions.destroyTransferDialogSelector();"],
+						],
+					],
+				]
+			];
+
+			if(Limit::canTransferToLine())
+			{
+				$actionList[] = [
+					'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER'),
+					'VALUE' => 'transfer',
+					'ONCHANGE' => [
+						[
+							'ACTION' => Panel\Actions::CREATE,
+							'DATA' => [
+								[
+									'TYPE' => Panel\Types::TEXT,
+									'ID' => $this->arResult['groupActionsData']['transfer']['inputId'],
+									'NAME' => $this->arResult['groupActionsData']['transfer']['inputName'],
+									'VALUE' => '',
+									'SIZE' => 1,
+								],
+								$applyButton
+							],
+						],
+						[
+							'ACTION' => Panel\Actions::CALLBACK,
+							'DATA' => [
+								['JS' => "BX.OpenLines.Actions.initTransferDialogSelector();"],
+							],
+						],
+					]
+				];
+			}
+			else
+			{
+				$actionList[] = [
+					'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER'),
+					'VALUE' => 'transfer',
+					'ONCHANGE' => [
+						[
+							'ACTION' => Panel\Actions::CALLBACK,
+							'DATA' => [
+								['JS' => "BX.UI.InfoHelper.show('" . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_OL_CHAT_TRANSFER . "');"],
+							],
+						],
+					]
+				];
+			}
+
+			/*$actionList[] = [
+				'NAME' => Loc::getMessage('OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE'),
+				'VALUE' => 'setresponsible',
+				'ONCHANGE' => [
+					[
+						'ACTION' => Panel\Actions::CREATE,
+						'DATA' => [
+							[
+								'TYPE' => Panel\Types::TEXT,
+								'ID' => 'action_set_responsible_text',
+								'NAME' => 'responsibleText',
+								'VALUE' => '',
+								'SIZE' => 1
+							],
+							[
+								'TYPE' => Panel\Types::HIDDEN,
+								'ID' => 'action_set_responsible',
+								'NAME' => 'responsibleId',
+								'VALUE' => '',
+								'SIZE' => 1
+							]
+						]
+					],
+					[
+						'ACTION' => Panel\Actions::CALLBACK,
+						'DATA' => [
+							[
+								'JS' => 'BX.OpenLines.GridActions.initPopupBaloon(\'user\', \'action_set_responsible_text\',\'action_set_responsible\');'
+							]
+						]
+					]
+				]
+			];*/
+
+			$result = [
+				'GROUPS' => [
+					[
+						'ITEMS' => [
+							[
+								'TYPE' => Panel\Types::DROPDOWN,
+								'ID' => 'action_button_' . $prefix,
+								'NAME' => 'action_button_' . $prefix,
+								'ITEMS' => $actionList
+							],
+							$snippet->getForAllCheckbox()
+						]
+					]
+				]
+			];
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @return array|mixed
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
@@ -1103,7 +1346,9 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$this->arResult["GRID_ID"] = $this->gridId;
 		$this->arResult["FILTER_ID"] = $this->filterId;
 		$this->arResult["FILTER"] = $this->getFilterDefinition();
-		$this->arResult["UF_FIELDS"] = array();
+		$this->arResult["UF_FIELDS"] = [];
+
+		$this->arResult['GROUP_ACTIONS'] = $this->prepareGroupActions();
 
 		//UF ->
 		$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
@@ -1248,9 +1493,9 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$this->arResult["ELEMENTS_ROWS"][] = ["data" => $data, "columns" => []];
 		}
 		$this->arResult['STEXPORT_IS_LAST_PAGE'] = $this->enableNextPage ? false : true;
-		$this->showHistory = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
-			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_HISTORY, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
+		$this->showHistory = Security\Helper::getAllowedUserIds(
+			Security\Helper::getCurrentUserId(),
+			$this->userPermissions->getPermission(Security\Permissions::ENTITY_HISTORY, Security\Permissions::ACTION_VIEW)
 		);
 		$configManager = new Config();
 
@@ -1334,6 +1579,14 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				case Session::STATUS_SPAM:
 					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_STATS_HEADER_SPAM_2");
 				break;
+			}
+
+			if (!self::isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
+			{
+				$this->arResult['ELEMENTS_ROWS'][$key]['editable'] = false;
+				$this->arResult['ELEMENTS_ROWS'][$key]['draggable'] = false;
+				$this->arResult['ELEMENTS_ROWS'][$key]['expand'] = false;
+				$this->arResult['ELEMENTS_ROWS'][$key]['not_count'] = true;
 			}
 
 			$newRow["PAUSE_TEXT"] = $row["data"]["PAUSE"] == 'Y'? Loc::getMessage('OL_COMPONENT_TABLE_YES'): Loc::getMessage('OL_COMPONENT_TABLE_NO');
@@ -1443,7 +1696,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				$newRow['COMMENT_HEAD'] = self::formatComment($row['data']['ID'], $row['data']['COMMENT_HEAD'], $permissionCommentHead);
 			}
 
-			$actions = Array();
+			$actions = [];
 			if (!$this->excelMode)
 			{
 				if (!is_array($this->showHistory) || in_array($row["data"]["OPERATOR_ID"], $this->showHistory))
@@ -1463,7 +1716,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 						'ONCLICK' => "BXIM.openMessenger('imol|{$row['data']['USER_CODE']}')"
 					];
 
-					if(!self::isOperatorCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
+					if(self::isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
 					{
 						$currentUserId = $GLOBALS['USER']->GetId();
 

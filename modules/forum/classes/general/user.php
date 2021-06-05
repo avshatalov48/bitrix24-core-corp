@@ -1655,7 +1655,7 @@ class CAllForumRank
 				if (!is_set($val, "NAME") || empty($val["NAME"])) return false;
 			}
 
-			$db_lang = CLang::GetList(($b="sort"), ($o="asc"));
+			$db_lang = CLang::GetList();
 			while ($arLang = $db_lang->Fetch())
 			{
 				$bFound = false;

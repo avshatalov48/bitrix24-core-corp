@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Settings;
 
 use Bitrix\Crm;
+use Bitrix\Main\Type\Date;
 
 class EntityViewSettings
 {
@@ -87,6 +88,7 @@ class EntityViewSettings
 	 */
 	public function getViewID($entityTypeID)
 	{
+		/** @var string $entityTypeName */
 		$entityTypeName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeID));
 		if($entityTypeName === '')
 		{

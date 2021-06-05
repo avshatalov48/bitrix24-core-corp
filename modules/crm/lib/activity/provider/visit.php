@@ -3,10 +3,8 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Faceid\AgreementTable;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -172,13 +170,13 @@ class Visit extends Base
 		return $cache[$entityType . '_' . $entityId];
 	}
 
-	protected function hasConsent()
+	protected static function hasConsent()
 	{
 		$consent = (array)\CUserOptions::GetOption('crm.activity.visit', 'consent', array());
 		return ($consent['timestamp'] > 0);
 	}
 
-	protected function hasRecognizeConsent()
+	protected static function hasRecognizeConsent()
 	{
 		global $USER;
 		$userId = $USER->getId();

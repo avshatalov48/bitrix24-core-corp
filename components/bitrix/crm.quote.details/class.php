@@ -1,1386 +1,798 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Component\EntityDetails\FactoryBased;
+use Bitrix\Crm\Contact;
+use Bitrix\Crm\Conversion\ConversionManager;
+use Bitrix\Crm\Conversion\DealConversionWizard;
+use Bitrix\Crm\Conversion\EntityConversionConfig;
+use Bitrix\Crm\EO_Company;
+use Bitrix\Crm\Integration\StorageManager;
+use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\EditorAdapter;
+use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Main\Engine\Response;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm;
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Binding\QuoteContactTable;
-use Bitrix\Crm\Component\ComponentError;
-use Bitrix\Crm\Component\EntityDetails\ComponentMode;
-use Bitrix\Crm\Security\EntityPermissionType;
-use Bitrix\Currency;
-use Bitrix\Catalog;
+use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
-if(!Main\Loader::includeModule('crm'))
+Loader::includeModule('crm');
+
+/**
+ * Class CrmQuoteDetailsComponent
+ * @property Item\Quote $item
+ */
+class CrmQuoteDetailsComponent extends FactoryBased
 {
-	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	return;
-}
+	public const TAB_NAME_DEALS = 'tab_deals';
+	public const TAB_NAME_INVOICES = 'tab_invoices';
 
-Loc::loadMessages(__FILE__);
+	protected const OPEN_IN_NEW_WINDOW = true;
+	protected const OPEN_IN_SAME_WINDOW = false;
+	protected const WITH_SIGNATURE_AND_STAMP = false;
+	protected const WITHOUT_SIGNATURE_AND_STAMP = true;
 
-class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponent
-{
-	/** @var array|null */
-	private $statuses = null;
-	/** @var array|null */
-	private $types = null;
-	/** @var \Bitrix\Crm\Conversion\EntityConversionWizard|null  */
-	private $conversionWizard = null;
-	/** @var int */
-	private $dealID = 0;
+	protected const FILES_DATA = 'DISK_FILES';
 
-	public function getEntityTypeID()
+	public function onPrepareComponentParams($arParams): array
 	{
-		return \CCrmOwnerType::Quote;
+		$arParams['ENTITY_TYPE_ID'] = CCrmOwnerType::Quote;
+		return parent::onPrepareComponentParams($arParams);
 	}
-	protected function getUserFieldEntityID()
-	{
-		return \CCrmQuote::GetUserFieldEntityID();
-	}
-	protected function getFileHandlerUrl()
-	{
-		return '/bitrix/components/bitrix/crm.quote.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
-	}
-	protected function checkIfEntityExists()
-	{
-		return $this->entityID > 0 && \CCrmQuote::Exists($this->entityID);
-	}
-	protected function getErrorMessage($error)
-	{
-		if($error === ComponentError::ENTITY_NOT_FOUND)
-		{
-			return Loc::getMessage('CRM_QUOTE_NOT_FOUND');
-		}
-		return ComponentError::getMessage($error);
-	}
-	public function initializeParams(array $params)
-	{
-		foreach($params as $k => $v)
-		{
-			if(!is_string($v))
-			{
-				continue;
-			}
 
-			if($k === 'PATH_TO_PRODUCT_SHOW')
-			{
-				$this->arResult['PATH_TO_PRODUCT_SHOW'] = $this->arParams['PATH_TO_PRODUCT_SHOW'] = $v;
-			}
-			elseif($k === 'PATH_TO_USER_PROFILE')
-			{
-				$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = $v;
-			}
-			elseif($k === 'NAME_TEMPLATE')
-			{
-				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
-			}
-			elseif($k === 'DEAL_ID')
-			{
-				$this->arResult[$k] = $this->arParams[$k] = (int)$v;
-			}
-		}
-	}
-	protected function getEntityFieldsInfo()
-	{
-		return \CCrmQuote::GetFieldsInfo();
-	}
 	public function executeComponent()
 	{
-		/** @global \CMain $APPLICATION */
-		global $APPLICATION;
+		$this->init();
 
-		$useNewProductList =
-			Main\Loader::includeModule('catalog')
-			&& \Bitrix\Catalog\Config\Feature::isCommonProductProcessingEnabled()
-		;
-
-		//region Params
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
-
-		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-
-		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
-			? CSite::GetNameFormat(false)
-			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
-
-		$this->arResult['PATH_TO_QUOTE_SHOW'] = CrmCheckPath(
-			'PATH_TO_QUOTE_SHOW',
-			$this->arParams['PATH_TO_QUOTE_SHOW'],
-			$APPLICATION->GetCurPage().'?quote_id=#quote_id#&show'
-		);
-		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
-			'PATH_TO_QUOTE_EDIT',
-			$this->arParams['PATH_TO_QUOTE_EDIT'],
-			$APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit'
-		);
-
-		$this->arResult['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
-			'PATH_TO_DEAL_SHOW',
-			$this->arParams['PATH_TO_DEAL_SHOW'],
-			$APPLICATION->GetCurPage().'?deal_id=#deal_id#&show'
-		);
-		$this->arResult['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
-			'PATH_TO_DEAL_EDIT',
-			$this->arParams['PATH_TO_DEAL_EDIT'],
-			$APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit'
-		);
-
-		$this->arResult['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath(
-			'PATH_TO_PRODUCT_EDIT',
-			$this->arParams['PATH_TO_PRODUCT_EDIT'],
-			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
-		);
-
-		if ($useNewProductList)
+		if($this->getErrors())
 		{
-			$catalogId = CCrmCatalog::EnsureDefaultExists();
-			$this->arResult['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
-		}
-		else
-		{
-			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
-				'PATH_TO_PRODUCT_SHOW',
-				$this->arParams['PATH_TO_PRODUCT_SHOW'],
-				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
-			);
-		}
-
-		$ufEntityID = $this->getUserFieldEntityID();
-		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-
-		$this->arResult['ENABLE_USER_FIELD_CREATION'] = $enableUfCreation;
-		$this->arResult['USER_FIELD_ENTITY_ID'] = $ufEntityID;
-		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = CCrmOwnerType::GetUserFieldEditUrl($ufEntityID, 0);
-		$this->arResult['USER_FIELD_CREATE_SIGNATURE'] = $enableUfCreation
-			? $this->userFieldDispatcher->getCreateSignature(array('ENTITY_ID' => $ufEntityID))
-			: '';
-		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
-
-		$this->arResult['PRODUCT_DATA_FIELD_NAME'] = 'QUOTE_PRODUCT_DATA';
-		$this->arResult['PRODUCT_EDITOR_ID'] = 'quote_product_editor';
-
-		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::QuoteName.'_'.$this->arResult['ENTITY_ID'];
-		$this->arResult['CONTEXT_PARAMS'] = array(
-			'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-		);
-
-		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
-		{
-			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
-			{
-				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
-			}
-		}
-
-		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if($this->arResult['ORIGIN_ID'] === null)
-		{
-			$this->arResult['ORIGIN_ID'] = '';
-		}
-		//endregion
-
-		$this->setEntityID($this->arResult['ENTITY_ID']);
-
-		if(!$this->tryToDetectMode())
-		{
-			$this->showErrors();
+			$this->includeComponentTemplate();
 			return;
 		}
 
-		//region Conversion & Conversion Scheme
-		CCrmQuote::PrepareConversionPermissionFlags($this->entityID, $this->arResult, $this->userPermissions);
-		if($this->arResult['CAN_CONVERT'])
+		if (!\CCrmOwnerType::IsSliderEnabled($this->getEntityTypeID()))
 		{
-			$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::load();
-			if($config === null)
-			{
-				$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::getDefault();
-			}
+			$url = Container::getInstance()->getRouter()->getItemDetailUrl($this->getEntityTypeID(), $this->getEntityID());
 
-			$this->arResult['CONVERSION_CONFIG'] = $config;
+			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+			$url->addParams($request->getQueryList()->toArray());
+
+			LocalRedirect($url, false, '301 Moved Permanently');
 		}
 
-		if(isset($this->arResult['DEAL_ID']) && $this->arResult['DEAL_ID'] > 0)
-		{
-			$this->dealID = $this->arResult['DEAL_ID'];
-		}
-		elseif(isset($this->request['conv_deal_id']) && $this->request['conv_deal_id'] > 0)
-		{
-			$this->dealID = $this->arResult['DEAL_ID'] = (int)$this->request['conv_deal_id'];
-		}
-
-		if($this->dealID > 0)
-		{
-			$this->conversionWizard = \Bitrix\Crm\Conversion\DealConversionWizard::load($this->dealID);
-			if($this->conversionWizard !== null)
-			{
-				$this->arResult['CONTEXT_PARAMS'] = array_merge(
-					$this->arResult['CONTEXT_PARAMS'],
-					$this->conversionWizard->prepareEditorContextParams(\CCrmOwnerType::Quote)
-				);
-			}
-		}
-		//endregion
-
-		$this->prepareEntityUserFields();
-		$this->prepareEntityUserFieldInfos();
-		$this->prepareEntityData();
-
-		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "quote_{$this->entityID}_details";
-
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'quote_details';
-		//endregion
-
-		$progressSemantics = $this->entityData['STATUS_ID']
-			? \CCrmQuote::GetStatusSemantics($this->entityData['STATUS_ID']) : '';
-		$this->arResult['PROGRESS_SEMANTICS'] = $progressSemantics;
-		$this->arResult['ENABLE_PROGRESS_CHANGE'] = $this->mode !== ComponentMode::VIEW;
-
-		//region Entity Info
-		$this->arResult['ENTITY_INFO'] = array(
-			'ENTITY_ID' => $this->entityID,
-			'ENTITY_TYPE_ID' => CCrmOwnerType::Quote,
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
-			'ENTITY_TYPE_CODE' => CCrmOwnerTypeAbbr::Quote,
-			'TITLE' => isset($this->entityData['TITLE']) ? $this->entityData['TITLE'] : '',
-			'SHOW_URL' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $this->entityID, false),
-		);
-		//endregion
-
-		//region Page title
-		if($this->mode === ComponentMode::CREATION)
-		{
-			$APPLICATION->SetTitle(Loc::getMessage('CRM_QUOTE_CREATION_PAGE_TITLE'));
-		}
-		elseif($this->mode === ComponentMode::COPING)
-		{
-			$APPLICATION->SetTitle(Loc::getMessage('CRM_QUOTE_COPY_PAGE_TITLE'));
-		}
-		elseif(isset($this->entityData['TITLE']))
-		{
-			$APPLICATION->SetTitle(htmlspecialcharsbx($this->entityData['TITLE']));
-		}
-		//endregion
-
-		//region Fields
-		$this->prepareFieldInfos();
-		//endregion
-
-		//region Config
-		$userFieldConfigElements = array();
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
-				'name' => 'main',
-				'title' => Loc::getMessage('CRM_QUOTE_SECTION_MAIN'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'QUOTE_NUMBER'),
-					array('name' => 'TITLE'),
-					array('name' => 'STATUS_ID'),
-					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
-					array('name' => 'CLIENT'),
-					array('name' => 'MYCOMPANY_ID'),
-					array('name' => 'FILES')
-				)
-			),
-			array(
-				'name' => 'additional',
-				'title' => Loc::getMessage('CRM_QUOTE_SECTION_ADDITIONAL'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'LEAD_ID'),
-							array('name' => 'DEAL_ID'),
-							array('name' => 'BEGINDATE'),
-							array('name' => 'CLOSEDATE'),
-							array('name' => 'OPENED'),
-							array('name' => 'ASSIGNED_BY_ID'),
-							array('name' => 'CONTENT'),
-							array('name' => 'TERMS'),
-							array('name' => 'COMMENTS'),
-							array('name' => 'UTM'),
-						),
-						$userFieldConfigElements
-					)
-			),
-			array(
-				'name' => 'products',
-				'title' => Loc::getMessage('CRM_QUOTE_SECTION_PRODUCTS'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'PRODUCT_ROW_SUMMARY')
-				)
-			)
-		);
-		//endregion
-
-		$currencyID = CCrmCurrency::GetBaseCurrencyID();
-		if(isset($this->entityData['CURRENCY_ID']) && $this->entityData['CURRENCY_ID'] !== '')
-		{
-			$currencyID = $this->entityData['CURRENCY_ID'];
-		}
-
-		//region CONTROLLERS
-		$this->arResult['ENTITY_CONTROLLERS'] = [];
-		if ($useNewProductList)
-		{
-			$currencyList = [];
-			// TODO: remove to api
-			if (Main\Loader::includeModule('currency'))
-			{
-				$currencyIterator = Currency\CurrencyTable::getList([
-					'select' => ['CURRENCY']
-				]);
-				while ($currency = $currencyIterator->fetch())
-				{
-					$currencyFormat = \CCurrencyLang::GetFormatDescription($currency['CURRENCY']);
-					$currencyList[] = [
-						'CURRENCY' => $currency['CURRENCY'],
-						'FORMAT' => [
-							'FORMAT_STRING' => $currencyFormat['FORMAT_STRING'],
-							'DEC_POINT' => $currencyFormat['DEC_POINT'],
-							'THOUSANDS_SEP' => $currencyFormat['THOUSANDS_SEP'],
-							'DECIMALS' => $currencyFormat['DECIMALS'],
-							'THOUSANDS_VARIANT' => $currencyFormat['THOUSANDS_VARIANT'],
-							'HIDE_ZERO' => $currencyFormat['HIDE_ZERO']
-						]
-					];
-				}
-				unset($currencyFormat, $currency, $currencyIterator);
-			}
-
-			$this->arResult['ENTITY_CONTROLLERS'][] = [
-				'name' => 'PRODUCT_LIST',
-				'type' => 'product_list',
-				'config' => [
-					'productListId' => $this->arResult['PRODUCT_EDITOR_ID'],
-					'currencyList' => $currencyList,
-					'currencyId' => $currencyID
-				]
-			];
-			unset($currencyList);
-		}
-		else
-		{
-			$this->arResult['ENTITY_CONTROLLERS'][] = [
-				"name" => "PRODUCT_ROW_PROXY",
-				"type" => "product_row_proxy",
-				"config" => array("editorId" => $this->arResult['PRODUCT_EDITOR_ID'])
-			];
-		}
-		//endregion
-
-		//region Tabs
-		$this->arResult['TABS'] = array();
-
-		$bTaxMode = \CCrmTax::isTaxMode();
-		$personTypeID = CCrmQuote::ResolvePersonType($this->entityData, CCrmPaySystem::getPersonTypeIDs());
-
-		if ($useNewProductList)
-		{
-			$productsParams = [
-				'INTERNAL_FILTER' => [
-					'OWNER_ID' => $this->arResult['ENTITY_INFO']['ENTITY_ID'],
-					'OWNER_TYPE' => $this->arResult['ENTITY_INFO']['ENTITY_TYPE_CODE']
-				],
-				'PATH_TO_ENTITY_PRODUCT_LIST' => Crm\Component\EntityDetails\ProductList::getComponentUrl(
-					['site' => $this->getSiteId()],
-					bitrix_sessid_get()
-				),
-				'ACTION_URL' => Crm\Component\EntityDetails\ProductList::getLoaderUrl(
-					['site' => $this->getSiteId()],
-					bitrix_sessid_get()
-				),
-				'ENTITY_ID' => $this->arResult['ENTITY_INFO']['ENTITY_ID'],
-				'ENTITY_TYPE_NAME' => $this->arResult['ENTITY_INFO']['ENTITY_TYPE_NAME'],
-				'CUSTOM_SITE_ID' => $this->getSiteId(),
-				'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
-				'ALLOW_EDIT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
-				'ALLOW_ADD_PRODUCT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
-				//'ALLOW_CREATE_NEW_PRODUCT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
-
-				'ID' => $this->arResult['PRODUCT_EDITOR_ID'],
-				'PREFIX' => $this->arResult['PRODUCT_EDITOR_ID'],
-
-				'FORM_ID' => '',
-				'OWNER_ID' => $this->entityID,
-				'OWNER_TYPE' => \CCrmQuote::OWNER_TYPE,
-				'PERMISSION_TYPE' => $this->mode === ComponentMode::VIEW ? 'READ' : 'WRITE',
-				'PERMISSION_ENTITY_TYPE' => $this->arResult['PERMISSION_ENTITY_TYPE'],
-				'PERSON_TYPE_ID' => $personTypeID,
-				'CURRENCY_ID' => $currencyID,
-				'LOCATION_ID' => $bTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
-				//'CLIENT_SELECTOR_ID' => '',
-				'PRODUCTS' => isset($this->entityData['PRODUCT_ROWS']) ? $this->entityData['PRODUCT_ROWS'] : null,
-				'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
-				'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID
-/*				'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
-				'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
-				'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
-				'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
-				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-				'INIT_LAYOUT' => 'N',
-				'INIT_EDITABLE' => $this->mode === ComponentMode::VIEW ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N',
-				'USE_ASYNC_ADD_PRODUCT' => 'Y' */
-			];
-
-			$this->arResult['PRODUCT_COMPONENT_DATA'] = array(
-				'template' => '.default',
-				'params' => $productsParams
-			);
-
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_products',
-				'name' => Loc::getMessage('CRM_QUOTE_TAB_PRODUCTS'),
-				'loader' => array(
-					'serviceUrl' => $this->arResult['PRODUCT_COMPONENT_DATA']['params']['ACTION_URL'],
-					'componentData' => $this->arResult['PRODUCT_COMPONENT_DATA']
-				),
-				'html' => '<div class="crm-entity-section-product-loader"></div>'
-			);
-		}
-		else
-		{
-			ob_start();
-			$APPLICATION->IncludeComponent('bitrix:crm.product_row.list',
-				'',
-				array(
-					'ID' => $this->arResult['PRODUCT_EDITOR_ID'],
-					'PREFIX' => $this->arResult['PRODUCT_EDITOR_ID'],
-					'FORM_ID' => '',
-					'OWNER_ID' => $this->entityID,
-					'OWNER_TYPE' => \CCrmQuote::OWNER_TYPE,
-					'PERMISSION_TYPE' => $this->mode === ComponentMode::VIEW ? 'READ' : 'WRITE',
-					'PERMISSION_ENTITY_TYPE' => $this->arResult['PERMISSION_ENTITY_TYPE'],
-					'PERSON_TYPE_ID' => $personTypeID,
-					'CURRENCY_ID' => $currencyID,
-					'LOCATION_ID' => $bTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
-					//'CLIENT_SELECTOR_ID' => '',
-					'PRODUCT_ROWS' => isset($this->entityData['PRODUCT_ROWS']) ? $this->entityData['PRODUCT_ROWS'] : null,
-					'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
-					'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
-					'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
-					'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
-					'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
-					'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-					'INIT_LAYOUT' => 'N',
-					'INIT_EDITABLE' => $this->mode === ComponentMode::VIEW ? 'N' : 'Y',
-					'ENABLE_MODE_CHANGE' => 'N',
-					'USE_ASYNC_ADD_PRODUCT' => 'Y',
-					'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID
-				),
-				false,
-				array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y')
-			);
-			$html = ob_get_contents();
-			ob_end_clean();
-
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_products',
-				'name' => Loc::getMessage('CRM_QUOTE_TAB_PRODUCTS'),
-				'html' => $html
-			);
-		}
-
-		if($this->entityID > 0)
-		{
-			//TODO: ADD DEALS and INVOICES
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_tree',
-				'name' => Loc::getMessage('CRM_QUOTE_TAB_TREE'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '.default',
-						'params' => array(
-							'ENTITY_ID' => $this->entityID,
-							'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
-						)
-					)
-				)
-			);
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_QUOTE_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "QUOTE_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "QUOTE_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => 'QUOTE',
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
-		}
-		else
-		{
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_QUOTE_TAB_EVENT'),
-				'enabled' => false
-			);
-		}
-		//endregion
-
-		//region VIEW EVENT
-		if($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
-		{
-			CCrmEvent::RegisterViewEvent(CCrmOwnerType::Quote, $this->entityID, $this->userID);
-		}
-		//endregion
+		$this->executeBaseLogic();
 
 		$this->includeComponentTemplate();
 	}
-	protected function prepareFieldInfos()
+
+	public function getEntityTypeID(): int
 	{
-		if(isset($this->arResult['ENTITY_FIELDS']))
+		return \CCrmOwnerType::Quote;
+	}
+
+	protected function getSelect(): array
+	{
+		return array_merge(parent::getSelect(), [
+			Item\Quote::FIELD_NAME_LEAD.'.EMAIL',
+			Item\Quote::FIELD_NAME_LEAD.'.TITLE',
+			Item\Quote::FIELD_NAME_DEAL.'.TITLE',
+		]);
+	}
+
+	protected function getTitle(): string
+	{
+		if ($this->isCopyMode())
 		{
-			return $this->arResult['ENTITY_FIELDS'];
+			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_COPY');
 		}
 
-		//region Disabled Statuses
-		$disabledStatusIDs = array();
-		$allStatuses = CCrmStatus::GetStatusList('QUOTE_STATUS');
-
-		$statusSelectorPermissionType = ($this->mode === ComponentMode::CREATION ||
-			$this->mode === ComponentMode::COPING) ? EntityPermissionType::CREATE : EntityPermissionType::UPDATE;
-
-		foreach(array_keys($allStatuses) as $statusID)
+		if($this->item->isNew())
 		{
-			if($this->mode === ComponentMode::VIEW)
+			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_NEW');
+		}
+
+		return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE', [
+			'#QUOTE_NUMBER#' => $this->item->getQuoteNumber(),
+			'#BEGINDATE#' => $this->item->getBegindate(),
+		]);
+	}
+
+	protected function isPageTitleEditable(): bool
+	{
+		return false;
+	}
+
+	protected function getEntityEditorMessages(): array
+	{
+		return [
+			'COPY_PAGE_URL' => Loc::getMessage('CRM_QUOTE_DETAILS_COPY_PAGE_URL'),
+			'PAGE_URL_COPIED' => Loc::getMessage('CRM_QUOTE_DETAILS_PAGE_URL_COPIED'),
+		];
+	}
+
+	protected function getActivityEditorConfig(): array
+	{
+		return array_merge(parent::getActivityEditorConfig(),
+		[
+			'ENABLE_EMAIL_ADD' => true,
+		]);
+	}
+
+	protected function getJsParams(): array
+	{
+		return array_merge(parent::getJsParams(),
+		[
+			'activityEditorId' => $this->getActivityEditorId(),
+			'emailSettings' => $this->getEmailSettings($this->item->getPrimaryContact(), $this->item->getCompany()),
+			'printTemplates' => $this->getPrintTemplates(),
+			'conversion' => $this->getJsConversionParams(),
+		]);
+	}
+
+	public function getEmailSettings(?Contact $contact, ?EO_Company $company): array
+	{
+		$isClientEmpty = is_null($contact) && is_null($company);
+		$hasLead = ($this->item->getLeadId() > 0 && !$this->item->isNew());
+
+		$communications = [];
+		if (!$isClientEmpty)
+		{
+			/** @noinspection PhpParamsInspection */
+			$communications = array_merge($this->getCommunications($company), $this->getCommunications($contact));
+			if (!empty($communications))
 			{
-				$disabledStatusIDs[] = $statusID;
+				$communications['type'] = 'EMAIL';
 			}
-			else
+		}
+		elseif ($hasLead && !empty($this->item->getLead()->getEmail()))
+		{
+			$communications = [
+				'entityId' => $this->item->getLeadId(),
+				'entityType' => \CCrmOwnerType::LeadName,
+				'title' => $this->item->getLead()->getTitle(),
+				'type' => 'EMAIL',
+				'value' => $this->item->getLead()->getEmail(),
+			];
+		}
+
+		return [
+			'communications' => [
+				$communications
+			],
+			'subject' => $this->item->getTitle() ?? $this->item->getId(),
+			'ownerType' => $this->factory->getEntityName(),
+			'ownerId' => $this->item->getId(),
+		];
+	}
+
+	protected function getCommunications(?EntityObject $client): array
+	{
+		if (is_null($client))
+		{
+			return [];
+		}
+
+		$communications = [];
+		if ($client instanceof Contact)
+		{
+			$communications = $this->getContactCommunications($client);
+		}
+		elseif ($client instanceof EO_Company)
+		{
+			$communications = $this->getCompanyCommunications($client);
+		}
+
+		return array_filter($communications, static function($value)
+		{
+			return !is_null($value);
+		});
+	}
+
+	protected function getContactCommunications(Contact $contact): array
+	{
+		return [
+			'entityType' => \CCrmOwnerType::ContactName,
+			'entityId' => $contact->getId(),
+			'entityTitle' => $contact->getFullName(),
+			'value' => $contact->getEmail(),
+		];
+	}
+
+	protected function getCompanyCommunications(EO_Company $company): array
+	{
+		return [
+			'entityType' => \CCrmOwnerType::CompanyName,
+			'entityId' => $company->getId(),
+			'entityTitle' => $company->getTitle(),
+			'value' => $company->getEmail(),
+		];
+	}
+
+	protected function getPrintTemplates(): array
+	{
+		$paySystems = \CCrmPaySystem::GetPaySystems($this->item->getPersonTypeId());
+
+		if (!is_array($paySystems))
+		{
+			return [];
+		}
+
+		$printTemplates = [];
+		foreach($paySystems as $paySystem)
+		{
+			$file = $paySystem['~PSA_ACTION_FILE'] ?? '';
+			if(preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
 			{
-				if(!\CCrmQuote::CheckStatusPermission($statusID, $statusSelectorPermissionType, $this->userPermissions))
+				$printTemplates[] = [
+					'id' => (int)$paySystem['~ID'],
+					'name' => $paySystem['~NAME'] ?? $paySystem['~ID']
+				];
+			}
+		}
+
+		return $printTemplates;
+	}
+
+	protected function initializeConversionWizard(): ?\Bitrix\Crm\Conversion\EntityConversionWizard
+	{
+		$dealId = (int)$this->request->get(DealConversionWizard::QUERY_PARAM_SRC_ID);
+		if ($dealId <= 0)
+		{
+			return null;
+		}
+
+		return DealConversionWizard::load($dealId);
+	}
+
+	protected function getJsConversionParams(): array
+	{
+		if ($this->item->isNew())
+		{
+			return [];
+		}
+
+		if (!ConversionManager::isConversionPossible($this->item))
+		{
+			return [];
+		}
+
+		$convertButton = $this->getConversionToolbarButton();
+
+		$restrictions = \Bitrix\Crm\Restriction\RestrictionManager::getConversionRestriction();
+		// Restrictions are relevant only to quote conversion
+		if (!$restrictions->hasPermission())
+		{
+			return [
+				'lockScript' => $restrictions->prepareInfoHelperScript(),
+				'buttonId' => $convertButton->getMainButton()->getAttribute('id'),
+			];
+		}
+
+		$schemeId = ConversionManager::getCurrentSchemeID($this->factory->getEntityTypeId());
+		$conversionSchemeName = ConversionManager::getSchemeClass($this->getEntityTypeID())::resolveName($schemeId);
+
+		return [
+			'scheme' => [
+				'messages' => ConversionManager::getSchemeClass($this->getEntityTypeID())::getJavaScriptDescriptions()
+			],
+			'schemeSelector' => [
+				'entityId' => $this->item->getId(),
+				'scheme' => $conversionSchemeName,
+				'containerId' => $convertButton->getMainButton()->getAttribute('id'),
+				'labelId' => $convertButton->getMainButton()->getAttribute('id'),
+				'buttonId' => $convertButton->getMenuButton()->getAttribute('id'),
+				'originUrl' => $this->getApplication()->getCurPage(),
+			],
+			'converter' => [
+				'messages' => [
+					'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
+					'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
+					'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
+					'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
+					'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
+					'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
+					'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
+					'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
+				],
+				'permissions' => ConversionManager::getConversionPermissions($this->item),
+				'settings' => [
+					'serviceUrl' => \Bitrix\Main\Engine\UrlManager::getInstance()->createByBitrixComponent($this, 'convert', [
+						'entityTypeId' => $this->factory->getEntityTypeId(),
+						'entityId' => $this->item->getId(),
+						'sessid' => bitrix_sessid(),
+					]),
+					'config' => ConversionManager::getConfig($this->factory->getEntityTypeId())->toJavaScript()
+				],
+			],
+		];
+	}
+
+	protected function getJsMessages(): array
+	{
+		return array_merge(parent::getJsMessages(), [
+			'deleteItemTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_TITLE'),
+			'deleteItemMessage' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_MESSAGE'),
+			'template' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_TEMPLATE'),
+			'selectTemplate' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_SELECT_TEMPLATE'),
+			'print' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_PRINT'),
+			'errorNoPrintTemplates' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_ERROR_NO_TEMPLATES'),
+			'errorNoEmailSettings' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_ERROR_NO_EMAIL_SETTINGS'),
+		]);
+	}
+
+	protected function getToolbarParameters(): array
+	{
+		$buttons = [];
+
+		if(!$this->item->isNew())
+		{
+			if(Buttons\IntranetBindingMenu::isAvailable())
+			{
+				$buttons[ButtonLocation::AFTER_TITLE][] = Buttons\IntranetBindingMenu::createByComponentParameters(
+					$this->getIntranetBindingMenuParameters()
+				);
+			}
+
+			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getActionsToolbarButton();
+
+			$buttons[ButtonLocation::AFTER_TITLE][] = new Buttons\SettingsButton([
+				'menu' => [
+					'items' => [
+						[
+							'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
+							'href' => Container::getInstance()->getRouter()->getItemCopyUrl($this->getEntityTypeID(), $this->item->getId(), $this->categoryId),
+						],
+						[
+							'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
+							'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
+						],
+					],
+				],
+			]);
+
+			if($this->isDocumentButtonAvailable())
+			{
+				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getDocumentToolbarButton();
+			}
+
+			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getConversionToolbarButton();
+		}
+
+		return [
+			'buttons' => $buttons,
+			'communications' => $this->getCommunicationToolbarParameters(),
+		];
+	}
+
+	protected function getActionsToolbarButton(): Buttons\Button
+	{
+		return new Buttons\Button([
+			'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS'),
+			'color' => Buttons\Color::LIGHT_BORDER,
+			'menu' => [
+				'items' => [
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PRINT'),
+						'onclick' => $this->compileJsForPrintButton(static::WITH_SIGNATURE_AND_STAMP),
+					],
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PRINT_BLANK'),
+						'onclick' => $this->compileJsForPrintButton(static::WITHOUT_SIGNATURE_AND_STAMP),
+					],
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PDF'),
+						'onclick' => $this->compileJsForPdfButton(static::WITH_SIGNATURE_AND_STAMP),
+					],
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PDF_BLANK'),
+						'onclick' => $this->compileJsForPdfButton(static::WITHOUT_SIGNATURE_AND_STAMP),
+					],
+					[
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_EMAIL'),
+						'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickEmail'),
+					],
+				]
+			],
+		]);
+	}
+
+	protected function compileJsForPrintButton(bool $isBlank): Buttons\JsCode
+	{
+		$linkPrint = Container::getInstance()->getRouter()->getQuotePrintUrl($this->item->getId(), $isBlank);
+
+		$eventData = $this->getJsEventData($linkPrint, static::OPEN_IN_NEW_WINDOW);
+		return new Buttons\JsCode(
+			"BX.Event.EventEmitter.emit('BX.Crm.ItemDetailsComponent:onClickPrint', $eventData)"
+		);
+	}
+
+	protected function compileJsForPdfButton(bool $isBlank): Buttons\JsCode
+	{
+		$linkPdf = Container::getInstance()->getRouter()->getQuotePdfUrl($this->item->getId(), $isBlank);
+
+		$eventData = $this->getJsEventData($linkPdf, static::OPEN_IN_SAME_WINDOW);
+		return new Buttons\JsCode(
+			"BX.Event.EventEmitter.emit('BX.Crm.ItemDetailsComponent:onClickPdf', $eventData)"
+		);
+	}
+
+	protected function getJsEventData(Uri $link, bool $openInNewWindow): string
+	{
+		$eventData = [
+			'link' => $link,
+			'openInNewWindow' => $openInNewWindow
+		];
+
+		return \CUtil::PhpToJSObject($eventData);
+	}
+
+	protected function getConversionToolbarButton(): Buttons\Split\Button
+	{
+		$schemeId = ConversionManager::getCurrentSchemeID($this->factory->getEntityTypeId());
+		$schemeDescription = ConversionManager::getSchemeClass($this->factory->getEntityTypeId())::getDescription($schemeId);
+
+		$convertButton = new Bitrix\UI\Buttons\Split\Button([
+			'color' => Buttons\Color::PRIMARY,
+			'mainButton' => [
+				'text' => $schemeDescription
+			],
+		]);
+
+		$convertButton->getMainButton()->addAttribute('id', 'crm-quote-details-convert-main-button');
+		$convertButton->getMenuButton()->addAttribute('id', 'crm-quote-details-convert-button');
+
+		return $convertButton;
+	}
+
+	public function getInlineEditorEntityConfig(): array
+	{
+		$sections = [];
+		$sections[] = [
+			'name' => 'main',
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE'),
+			'type' => 'section',
+			'elements' => [
+				['name' => Item\Quote::FIELD_NAME_TITLE],
+				['name' => EditorAdapter::FIELD_OPPORTUNITY],
+				['name' => EditorAdapter::FIELD_CLIENT],
+			],
+		];
+		return $sections;
+	}
+
+	public function getEditorEntityConfig(): array
+	{
+		$sectionMain = [
+			'name' => 'main',
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE'),
+			'type' => 'section',
+			'elements' => [
+				['name' => Item\Quote::FIELD_NAME_NUMBER],
+				['name' => Item\Quote::FIELD_NAME_TITLE],
+				['name' => Item\Quote::FIELD_NAME_STAGE_ID],
+				['name' => EditorAdapter::FIELD_OPPORTUNITY],
+				['name' => EditorAdapter::FIELD_CLIENT],
+				['name' => Item\Quote::FIELD_NAME_MYCOMPANY_ID],
+				['name' => EditorAdapter::FIELD_FILES],
+			],
+		];
+		$sections[] = $sectionMain;
+
+		$sectionAdditional = [
+			'name' => 'additional',
+			'title' => Loc::getMessage('CRM_TYPE_ITEM_EDITOR_SECTION_ADDITIONAL'),
+			'type' => 'section',
+			'elements' => [
+				['name' => Item\Quote::FIELD_NAME_LEAD_ID],
+				['name' => Item\Quote::FIELD_NAME_DEAL_ID],
+				['name' => Item\Quote::FIELD_NAME_BEGIN_DATE],
+				['name' => Item\Quote::FIELD_NAME_CLOSE_DATE],
+				['name' => Item\Quote::FIELD_NAME_OPENED],
+				['name' => Item\Quote::FIELD_NAME_ASSIGNED],
+				['name' => Item\Quote::FIELD_NAME_CONTENT],
+				['name' => Item\Quote::FIELD_NAME_TERMS],
+				['name' => Item\Quote::FIELD_NAME_COMMENTS],
+				['name' => Item\Quote::FIELD_NAME_CLOSED],
+				['name' => EditorAdapter::FIELD_UTM],
+			],
+		];
+		foreach($this->prepareEntityUserFields() as $fieldName => $userField)
+		{
+			$sectionAdditional['elements'][] = [
+				'name' => $fieldName,
+			];
+		}
+		$sections[] = $sectionAdditional;
+
+		$sections[] = [
+			'name' => 'products',
+			'title' => Loc::getMessage('CRM_COMMON_PRODUCTS'),
+			'type' => 'section',
+			'elements' => [
+				['name' => EditorAdapter::FIELD_PRODUCT_ROW_SUMMARY],
+			],
+		];
+
+		return $sections;
+	}
+
+	protected function getDefaultTabInfoByCode(string $tabCode): ?array
+	{
+		if ($tabCode === static::TAB_NAME_DEALS)
+		{
+			if ($this->item->getDealId() > 0 && !$this->item->isNew())
+			{
+				$dealTitle = htmlspecialcharsbx($this->item->getDeal()->getTitle());
+				$linkToDealDetails = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Deal, $this->item->getDealId());
+
+				return [
+					'id' => static::TAB_NAME_DEALS,
+					'name' => Loc::getMessage('CRM_COMMON_DEALS'),
+					'html' => Loc::getMessage(
+						'CRM_QUOTE_DETAILS_CONVERTED_FROM_DEAL',
+						['#TITLE#' => $dealTitle, '#URL#' => $linkToDealDetails]
+					),
+					'enabled' => !$this->item->isNew(),
+				];
+			}
+
+			return [
+				'id' => static::TAB_NAME_DEALS,
+				'name' => Loc::getMessage('CRM_COMMON_DEALS'),
+				'loader' => [
+					'serviceUrl' => '/bitrix/components/bitrix/crm.deal.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+					'componentData' => [
+						'template' => '',
+						'params' => [
+							'DEAL_COUNT' => static::MAX_ENTITIES_IN_TAB,
+							'INTERNAL_FILTER' => [$this->getEntityName().'_ID' => $this->item->getId()],
+							'GRID_ID_SUFFIX' => $this->getGuid(),
+							'TAB_ID' => static::TAB_NAME_DEALS,
+							'ENABLE_TOOLBAR' => true,
+							'PRESERVE_HISTORY' => true,
+							// compatible entity-specific event name
+							'ADD_EVENT_NAME' => 'CrmCreateDealFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
+						],
+					],
+				],
+				'enabled' => !$this->item->isNew(),
+			];
+		}
+
+		if ($tabCode === static::TAB_NAME_INVOICES)
+		{
+			return [
+				'id' => static::TAB_NAME_INVOICES,
+				'name' => Loc::getMessage('CRM_COMMON_INVOICES'),
+				'loader' => [
+					'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+					'componentData' => [
+						'template' => '',
+						'params' => [
+							'INVOICE_COUNT' => static::MAX_ENTITIES_IN_TAB,
+							'INTERNAL_FILTER' => ['UF_'.$this->getEntityName().'_ID' => $this->item->getId()],
+							'SUM_PAID_CURRENCY' => $this->item->getCurrencyId(),
+							'GRID_ID_SUFFIX' => $this->getGuid(),
+							'TAB_ID' => static::TAB_NAME_INVOICES,
+							'ENABLE_TOOLBAR' => 'Y',
+							'PRESERVE_HISTORY' => true,
+							// compatible entity-specific event name
+							'ADD_EVENT_NAME' => 'CrmCreateInvoiceFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
+						],
+					],
+				],
+				'enabled' => !$this->item->isNew(),
+			];
+		}
+
+		return parent::getDefaultTabInfoByCode($tabCode);
+	}
+
+	protected function getTabCodes(): array
+	{
+		$codes = parent::getTabCodes();
+
+		return array_merge($codes, [
+			static::TAB_NAME_TREE => [],
+			static::TAB_NAME_DEALS => [],
+			static::TAB_NAME_INVOICES => [],
+		]);
+	}
+
+	public function initializeEditorAdapter(): void
+	{
+		parent::initializeEditorAdapter();
+
+		$filesData = [];
+		$storageElementIds = array_unique($this->item->getStorageElementIds() ?? []);
+		foreach($storageElementIds as $fileId)
+		{
+			if($fileId > 0)
+			{
+				$fileInfo = StorageManager::getFileInfo($fileId);
+				if($fileInfo)
 				{
-					$disabledStatusIDs[] = $statusID;
+					$filesData[] = $fileInfo;
 				}
 			}
-		}
-		//endregion
 
-		//region Client primary entity
-		$companyID = isset($this->entityData['COMPANY_ID']) ? (int)$this->entityData['COMPANY_ID'] : 0;
-		if(isset($this->entityData['CONTACT_BINDINGS']))
-		{
-			$contactBindings = $this->entityData['CONTACT_BINDINGS'];
 		}
-		elseif($this->entityID > 0)
+
+		$this->editorAdapter
+			->addEntityData(Item\Quote::FIELD_NAME_STORAGE_TYPE, $this->item->getStorageTypeId())
+			->addEntityData(Item\Quote::FIELD_NAME_STORAGE_ELEMENTS, $storageElementIds)
+			->addEntityData(static::FILES_DATA, $filesData)
+		;
+	}
+
+	public function createEmailAttachmentAction(int $paymentSystemId): ?array
+	{
+		$this->init();
+		if ($this->getErrors())
 		{
-			$contactBindings = QuoteContactTable::getQuoteBindings($this->entityID);
+			return null;
 		}
-		elseif(isset($this->entityData['CONTACT_ID']))
+
+		$errorText = null;
+		$fileId = \CCrmQuote::savePdf($this->item->getId(), $paymentSystemId, $errorText);
+		if (!$fileId)
 		{
-			//For backward compatibility
-			$contactBindings = EntityBinding::prepareEntityBindings(
-				CCrmOwnerType::Contact,
-				array($this->entityData['CONTACT_ID'])
-			);
+			$this->errorCollection[] = new Error('Error while saving file: '.$errorText);
+			return null;
+		}
+
+		$attachmentFileId = StorageManager::saveEmailAttachment(\CFile::GetFileArray($fileId));
+
+		$storageTypeId = StorageType::getDefaultTypeID();
+
+		return array_merge(StorageManager::getFileInfo($attachmentFileId), ['STORAGE_TYPE_ID' => $storageTypeId]);
+	}
+
+	public function convertAction(int $entityTypeId, int $entityId): Response\Json
+	{
+		$this->arParams['ENTITY_TYPE_ID'] = $entityTypeId;
+		$this->arParams['ENTITY_ID'] = $entityId;
+		$this->init();
+		if ($this->getErrors())
+		{
+			return $this->returnErrorJson();
+		}
+
+		$configJsParams = $this->request->getPost('CONFIG') ?? [];
+		if (!empty($configJsParams))
+		{
+			$configs = ConversionManager::getConfigFromJavaScript($this->factory->getEntityTypeId(), $configJsParams);
 		}
 		else
 		{
-			$contactBindings = array();
+			$configs = ConversionManager::getConfig($this->factory->getEntityTypeId());
 		}
-		//endregion
 
-		$primaryEntityTypeName = ($companyID > 0 || empty($contactBindings))
-			? CCrmOwnerType::CompanyName : CCrmOwnerType::ContactName;
+		if (is_null($configs))
+		{
+			$this->errorCollection[] = new Error(Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_NO_CONFIG_ERROR'));
+			return $this->returnErrorJson();
+		}
 
-		$this->arResult['ENTITY_FIELDS'] = array(
-			array(
-				'name' => 'ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_ID'),
-				'type' => 'text',
-				'editable' => false
-			),
-			array(
-				'name' => 'QUOTE_NUMBER',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_NUMBER'),
-				'type' => 'text',
-				'editable' => true
-			),
-			array(
-				'name' => 'TITLE',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_TITLE'),
-				'type' => 'text',
-				'isHeading' => true,
-				'visibilityPolicy' => 'edit',
-				'editable' => true
-			),
-			array(
-				'name' => 'STATUS_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_STATUS_ID'),
-				'type' => 'list',
-				'editable' => true,
-				'data' => array(
-					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
-						$allStatuses,
-						array('EXCLUDE_FROM_EDIT' => $disabledStatusIDs)
-					)
-				)
-			),
-			array(
-				'name' => 'OPPORTUNITY_WITH_CURRENCY',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => 'money',
-				'editable' => true,
-				'data' => array(
-					'affectedFields' => array('CURRENCY_ID', 'OPPORTUNITY'),
-					'currency' => array(
-						'name' => 'CURRENCY_ID',
-						'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
-					),
-					'amount' => 'OPPORTUNITY',
-					'formatted' => 'FORMATTED_OPPORTUNITY',
-					'formattedWithCurrency' => 'FORMATTED_OPPORTUNITY_WITH_CURRENCY'
-				)
-			),
-			array(
-				'name' => 'ASSIGNED_BY_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_ASSIGNED_BY_ID'),
-				'type' => 'user',
-				'editable' => true,
-				'data' => array(
-					'enableEditInView' => true,
-					'formated' => 'ASSIGNED_BY_FORMATTED_NAME',
-					'position' => 'ASSIGNED_BY_WORK_POSITION',
-					'photoUrl' => 'ASSIGNED_BY_PHOTO_URL',
-					'showUrl' => 'PATH_TO_ASSIGNED_BY_USER',
-					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
+		$originUrl = $this->request->getPost('ORIGIN_URL') ?? '';
+		$configs->setOriginUrl(new Uri($originUrl));
 
-				)
-			),
-			array(
-				'name' => 'BEGINDATE',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_BEGINDATE'),
-				'type' => 'datetime',
-				'editable' => true,
-				'data' => array('enableTime' => false)
-			),
-			array(
-				'name' => 'CLOSEDATE',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_CLOSEDATE'),
-				'type' => 'datetime',
-				'editable' => true,
-				'data' =>  array('enableTime' => false)
-			),
-			array(
-				'name' => 'LEAD_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_LEAD_ID'),
-				'type' => 'crm_entity',
-				'editable' => true,
-				'data' =>  array('typeId' => \CCrmOwnerType::Lead)
-			),
-			array(
-				'name' => 'DEAL_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_DEAL_ID'),
-				'type' => 'crm_entity',
-				'editable' => true,
-				'data' =>  array('typeId' => \CCrmOwnerType::Deal)
-			),
-			array(
-				'name' => 'OPENED',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_OPENED'),
-				'type' => 'boolean',
-				'editable' => true
-			),
-			array(
-				'name' => 'CONTENT',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_CONTENT'),
-				'type' => 'html',
-				'editable' => true
-			),
-			array(
-				'name' => 'TERMS',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_TERMS'),
-				'type' => 'html',
-				'editable' => true
-			),
-			array(
-				'name' => 'COMMENTS',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_COMMENTS'),
-				'type' => 'html',
-				'editable' => true
-			),
-			array(
-				'name' => 'LEAD_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_LEAD'),
-				'type' => 'crm_entity',
-				'editable' => true,
-				'data' => array(
-					'entityTypeName' => \CCrmOwnerType::LeadName,
-					'info' => 'LEAD_INFO',
-					'loader' => array(
-						\CCrmOwnerType::LeadName => array(
-							'action' => 'GET_ENTITY_INFO',
-							'url' => '/bitrix/components/bitrix/crm.lead.show/ajax.php?'.bitrix_sessid_get()
-						)
-					)
-				)
-			),
-			array(
-				'name' => 'DEAL_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_DEAL'),
-				'type' => 'crm_entity',
-				'editable' => true,
-				'data' => array(
-					'entityTypeName' => \CCrmOwnerType::DealName,
-					'info' => 'DEAL_INFO',
-					'loader' => array(
-						\CCrmOwnerType::DealName => array(
-							'action' => 'GET_ENTITY_INFO',
-							'url' => '/bitrix/components/bitrix/crm.deal.show/ajax.php?'.bitrix_sessid_get()
-						)
-					)
-				)
-			),
-			array(
-				'name' => 'CLIENT',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_CLIENT'),
-				'type' => 'client',
-				'editable' => true,
-				'data' => array(
-					'map' => array(
-						'primaryEntityType' => 'CLIENT_PRIMARY_ENTITY_TYPE',
-						'primaryEntityId' => 'CLIENT_PRIMARY_ENTITY_ID',
-						'secondaryEntityType' => 'CLIENT_SECONDARY_ENTITY_TYPE',
-						'secondaryEntityIds' => 'CLIENT_SECONDARY_ENTITY_IDS',
-						'unboundSecondaryEntityIds' => 'CLIENT_UBOUND_SECONDARY_ENTITY_IDS',
-						'boundSecondaryEntityIds' => 'CLIENT_BOUND_SECONDARY_ENTITY_IDS'
-					),
-					'info' => 'CLIENT_INFO',
-					'primaryEntityTypeName' => $primaryEntityTypeName,
-					'secondaryEntityTypeName' => CCrmOwnerType::ContactName,
-					'secondaryEntityLegend' => Loc::getMessage('CRM_QUOTE_FIELD_CONTACT_LEGEND'),
-					'loaders' => array(
-						'primary' => array(
-							CCrmOwnerType::CompanyName => array(
-								'action' => 'GET_CLIENT_INFO',
-								'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get()
-							),
-							CCrmOwnerType::ContactName => array(
-								'action' => 'GET_CLIENT_INFO',
-								'url' => '/bitrix/components/bitrix/crm.contact.show/ajax.php?'.bitrix_sessid_get()
-							)
-						),
-						'secondary' => array(
-							CCrmOwnerType::CompanyName => array(
-								'action' => 'GET_SECONDARY_ENTITY_INFOS',
-								'url' => '/bitrix/components/bitrix/crm.quote.edit/ajax.php?'.bitrix_sessid_get()
-							)
-						)
-					)
-				)
-			),
-			array(
-				'name' => 'MYCOMPANY_ID',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_MYCOMPANY'),
-				'type' => 'crm_entity',
-				'editable' => true,
-				'data' => array(
-					'entityTypeName' => \CCrmOwnerType::CompanyName,
-					'enableMyCompanyOnly' => true,
-					'info' => 'MYCOMPANY_INFO',
-					'loader' => array(
-						\CCrmOwnerType::CompanyName => array(
-							'action' => 'GET_CLIENT_INFO',
-							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get()
-						)
-					)
-				)
-			),
-			array(
-				'name' => 'FILES',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_FILES'),
-				'type' => 'file_storage',
-				'editable' => true,
-				'data' => array(
-					'diskFileInfos' => 'DISK_FILES',
-					'storageElementIds' => 'STORAGE_ELEMENT_IDS',
-					'storageTypeId' => 'STORAGE_TYPE_ID'
-				)
-			),
-			array(
-				'name' => 'PRODUCT_ROW_SUMMARY',
-				'title' => Loc::getMessage('CRM_QUOTE_FIELD_PRODUCTS'),
-				'type' => 'product_row_summary',
-				'editable' => false,
-				'transferable' => false
-			)
-		);
+		$wereFieldsChecked = ($this->request->getPost('ENABLE_SYNCHRONIZATION') === 'Y');
+		if (!$wereFieldsChecked)
+		{
+			$fieldNames = $this->getUserFieldNamesToSync($configs);
+			if (!empty($fieldNames))
+			{
+				return $this->returnSyncRequiredJson($configs, $fieldNames);
+			}
+		}
 
-		Crm\Tracking\UI\Details::appendEntityFields($this->arResult['ENTITY_FIELDS']);
-		$this->arResult['ENTITY_FIELDS'][] = array(
-			'name' => 'UTM',
-			'title' => Loc::getMessage('CRM_QUOTE_FIELD_UTM'),
-			'type' => 'custom',
-			'data' => array('view' => 'UTM_VIEW_HTML'),
-			'editable' => false
-		);
+		$operation = $this->factory->getConversionOperation($this->item, $configs);
+		$conversionResult = $operation->launch();
+		if (!$conversionResult->isSuccess())
+		{
+			$this->errorCollection->add($conversionResult->getErrors());
+		}
 
-		$this->arResult['ENTITY_FIELDS'] = array_merge(
-			$this->arResult['ENTITY_FIELDS'],
-			array_values($this->userFieldInfos)
-		);
-
-		return $this->arResult['ENTITY_FIELDS'];
+		return $this->returnResultJson($conversionResult);
 	}
-	protected function getStatusList($entityPermissionTypeID)
+
+	protected function returnErrorJson(): Response\Json
 	{
-		$statuses = array();
-		$allStatuses = CCrmStatus::GetStatusList('QUOTE_STATUS');
-		foreach ($allStatuses as $ID => $title)
-		{
-			if(\CCrmQuote::CheckStatusPermission($ID, $entityPermissionTypeID, $this->userPermissions))
-			{
-				$statuses[$ID] = $title;
-			}
-		}
-		return $statuses;
+		return new Response\Json([
+			'ERROR' => [
+				'MESSAGE' => implode(PHP_EOL, $this->getErrorMessages()),
+			]
+		]);
 	}
-	public function prepareEntityData()
+
+	protected function returnSyncRequiredJson(EntityConversionConfig $configs, array $fieldNames): Response\Json
 	{
-		/** @global \CMain $APPLICATION */
-		global $APPLICATION;
+		return new Response\Json([
+			'REQUIRED_ACTION' => [
+				'NAME' => 'SYNCHRONIZE',
+				'DATA' => [
+					'CONFIG' => $configs->toJavaScript(),
+					'FIELD_NAMES' => $fieldNames,
+				]
+			]
+		]);
+	}
 
-		if($this->entityData)
+	protected function returnResultJson(\Bitrix\Crm\Service\Operation\ConversionResult $result): Response\Json
+	{
+		if ($result->getRedirectUrl())
 		{
-			return $this->entityData;
+			return new Response\Json([
+				'DATA' => [
+					'URL' => $result->getRedirectUrl(),
+					'IS_FINISHED' => $result->isConversionFinished() ? 'Y' : 'N',
+				],
+			]);
 		}
 
-		if($this->fileOwnershipData === null)
+		return $this->returnErrorJson();
+	}
+
+	protected function getUserFieldNamesToSync(EntityConversionConfig $config): array
+	{
+		$fieldNamesToSync = [];
+
+		foreach ($config->getActiveItems() as $dstEntityTypeId => $configItem)
 		{
-			$this->fileOwnershipData = array();
-		}
-
-		if($this->conversionWizard !== null)
-		{
-			$this->entityData = array();
-			$mappedUserFields = array();
-			\Bitrix\Crm\Entity\EntityEditor::prepareConvesionMap(
-				$this->conversionWizard,
-				CCrmOwnerType::Quote,
-				$this->entityData,
-				$mappedUserFields
-			);
-
-			foreach($mappedUserFields as $k => $v)
-			{
-				if(isset($this->userFields[$k]))
-				{
-					$this->userFields[$k]['VALUE'] = $v;
-				}
-			}
-
-			if(!isset($this->entityData['CURRENCY_ID']) || $this->entityData['CURRENCY_ID'] === '')
-			{
-				$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
-			}
-
-			$this->entityData['OPENED'] = \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
-		}
-		elseif($this->mode === ComponentMode::CREATION)
-		{
-			$this->entityData = array();
-			//region Default Dates
-			$beginDate = time() + \CTimeZone::GetOffset();
-			$time = localtime($beginDate, true);
-			$beginDate -= $time['tm_sec'] + 60 * $time['tm_min'] + 3600 * $time['tm_hour'];
-
-			$this->entityData['BEGINDATE'] = ConvertTimeStamp($beginDate, 'SHORT', SITE_ID);
-			$this->entityData['CLOSEDATE'] = ConvertTimeStamp($beginDate + 7 * 86400, 'SHORT', SITE_ID);
-			//endregion
-			//leave OPPORTUNITY unassigned
-			//$this->entityData['OPPORTUNITY'] = 0.0;
-			$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
-			$this->entityData['OPENED'] = \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
-			//$this->entityData['CLOSED'] = 'N';
-
-			//region Default Responsible
-			if($this->userID > 0)
-			{
-				$this->entityData['ASSIGNED_BY_ID'] = $this->userID;
-			}
-			//endregion
-
-			//region Default Stage ID
-			$statusList = $this->getStatusList(EntityPermissionType::CREATE);
-			if(!empty($statusList))
-			{
-				$requestStatusId = $this->request->get('status_id');
-				if (isset($statusList[$requestStatusId]))
-				{
-					$this->entityData['STATUS_ID'] = $requestStatusId;
-				}
-				else
-				{
-					$this->entityData['STATUS_ID'] = current(array_keys($statusList));
-				}
-			}
-			//endregion
-
-			\Bitrix\Crm\Entity\EntityEditor::mapRequestData(
-				$this->prepareEntityDataScheme(),
-				$this->entityData,
-				$this->userFields
-			);
-		}
-		else
-		{
-			$dbResult = \CCrmQuote::GetList(
-				array(),
-				array('=ID' => $this->entityID, 'CHECK_PERMISSIONS' => 'N')
-			);
-
-			if(is_object($dbResult))
-			{
-				$this->entityData = $dbResult->Fetch();
-			}
-
-			if(!is_array($this->entityData))
-			{
-				$this->entityData = array();
-			}
-
-			//HACK: Removing time from BEGINDATE because of 'datetime' type (see CCrmQuote::GetFields)
-			if(isset($this->entityData['BEGINDATE']))
-			{
-				$this->entityData['BEGINDATE'] = \CCrmComponentHelper::TrimZeroTime($this->entityData['BEGINDATE']);
-			}
-
-			//HACK: Removing time from CLOSEDATE because of 'datetime' type (see CCrmQuote::GetFields)
-			if(isset($this->entityData['CLOSEDATE']))
-			{
-				$this->entityData['CLOSEDATE'] = \CCrmComponentHelper::TrimZeroTime($this->entityData['CLOSEDATE']);
-			}
-
-			if(!isset($this->entityData['CURRENCY_ID']) || $this->entityData['CURRENCY_ID'] === '')
-			{
-				$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
-			}
-
-			//region Default Responsible and Status ID for copy mode
-			if($this->mode === ComponentMode::COPING)
-			{
-				if($this->userID > 0)
-				{
-					$this->entityData['ASSIGNED_BY_ID'] = $this->userID;
-				}
-
-				$statusList = $this->getStatusList(EntityPermissionType::CREATE);
-				if(!empty($statusList))
-				{
-					$this->entityData['STATUS_ID'] = current(array_keys($statusList));
-				}
-			}
-			//endregion
-
-			//region UTM
-			ob_start();
-			$APPLICATION->IncludeComponent(
-				'bitrix:crm.utm.entity.view',
-				'',
-				array('FIELDS' => $this->entityData),
-				false,
-				array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y')
-			);
-			$this->entityData['UTM_VIEW_HTML'] = ob_get_contents();
-			ob_end_clean();
-			//endregion
-		}
-
-		//region Responsible
-		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
-		{
-			$user = self::getUser($this->entityData['ASSIGNED_BY_ID']);
-			if(is_array($user))
-			{
-				$this->entityData['ASSIGNED_BY_LOGIN'] = $user['LOGIN'];
-				$this->entityData['ASSIGNED_BY_NAME'] = isset($user['NAME']) ? $user['NAME'] : '';
-				$this->entityData['ASSIGNED_BY_SECOND_NAME'] = isset($user['SECOND_NAME']) ? $user['SECOND_NAME'] : '';
-				$this->entityData['ASSIGNED_BY_LAST_NAME'] = isset($user['LAST_NAME']) ? $user['LAST_NAME'] : '';
-				$this->entityData['ASSIGNED_BY_PERSONAL_PHOTO'] = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
-			}
-		}
-		//endregion
-
-		//region User Fields
-		foreach($this->userFields as $fieldName => $userField)
-		{
-			$fieldValue = isset($userField['VALUE']) ? $userField['VALUE'] : '';
-			$fieldData = isset($this->userFieldInfos[$fieldName])
-				? $this->userFieldInfos[$fieldName] : null;
-
-			if(!is_array($fieldData))
+			if (!\Bitrix\Crm\Security\EntityAuthorization::checkCreatePermission($dstEntityTypeId))
 			{
 				continue;
 			}
 
-			$isEmptyField = true;
-			$fieldParams = $fieldData['data']['fieldInfo'];
-			if((is_string($fieldValue) && $fieldValue !== '')
-				|| (is_array($fieldValue) && !empty($fieldValue))
-			)
+			if (UserFieldSynchronizer::needForSynchronization($this->factory->getEntityTypeId(), $dstEntityTypeId))
 			{
-				$fieldParams['VALUE'] = $fieldValue;
-				$isEmptyField = false;
-			}
+				$configItem->enableSynchronization(true);
 
-			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
-			if($isEmptyField)
-			{
-				$this->entityData[$fieldName] = array(
-					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => true
-				);
-			}
-			else
-			{
-				$this->entityData[$fieldName] = array(
-					'VALUE' => $fieldValue,
-					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => false
-				);
-
-				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				$fieldsToSync = UserFieldSynchronizer::getSynchronizationFields($this->factory->getEntityTypeId(), $dstEntityTypeId);
+				foreach ($fieldsToSync as $field)
 				{
-					if(!isset($this->fileOwnershipData[$fieldName]))
-					{
-						$this->fileOwnershipData[$fieldName] = array();
-					}
-
-					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
-					foreach($values as $value)
-					{
-						$this->fileOwnershipData[$fieldName][$value] = $this->entityID;
-					}
+					$fieldNamesToSync[] = UserFieldSynchronizer::getFieldLabel($field);
 				}
 			}
 		}
-		//endregion
-		//region Opportunity & Currency
-		$this->entityData['FORMATTED_OPPORTUNITY_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['OPPORTUNITY'],
-			$this->entityData['CURRENCY_ID'],
-			''
-		);
-		$this->entityData['FORMATTED_OPPORTUNITY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['OPPORTUNITY'],
-			$this->entityData['CURRENCY_ID'],
-			'#'
-		);
-		//endregion
-		//region Responsible
-		$assignedByID = isset($this->entityData['ASSIGNED_BY_ID']) ? (int)$this->entityData['ASSIGNED_BY_ID'] : 0;
-		if($assignedByID > 0)
-		{
-			$this->entityData['ASSIGNED_BY_FORMATTED_NAME'] =
-				\CUser::FormatName(
-					$this->arResult['NAME_TEMPLATE'],
-					array(
-						'LOGIN' => $this->entityData['ASSIGNED_BY_LOGIN'],
-						'NAME' => $this->entityData['ASSIGNED_BY_NAME'],
-						'LAST_NAME' => $this->entityData['ASSIGNED_BY_LAST_NAME'],
-						'SECOND_NAME' => $this->entityData['ASSIGNED_BY_SECOND_NAME']
-					),
-					true,
-					false
-				);
 
-			$assignedByPhotoID = isset($this->entityData['ASSIGNED_BY_PERSONAL_PHOTO'])
-				? (int)$this->entityData['ASSIGNED_BY_PERSONAL_PHOTO'] : 0;
+		return $fieldNamesToSync;
+	}
 
-			if($assignedByPhotoID > 0)
-			{
-				$file = new CFile();
-				$fileInfo = $file->ResizeImageGet(
-					$assignedByPhotoID,
-					array('width' => 60, 'height'=> 60),
-					BX_RESIZE_IMAGE_EXACT
-				);
-				if(is_array($fileInfo) && isset($fileInfo['src']))
-				{
-					$this->entityData['ASSIGNED_BY_PHOTO_URL'] = $fileInfo['src'];
-				}
-			}
+	protected function getTimelineHistoryStubMessage(): ?string
+	{
+		return $this->arParams['CRM_TIMELINE_HISTORY_STUB_MESSAGE']
+			?? Loc::getMessage('CRM_QUOTE_DETAILS_TIMELINE_HISTORY_STUB');
+	}
 
-			$this->entityData['PATH_TO_ASSIGNED_BY_USER'] = CComponentEngine::MakePathFromTemplate(
-				$this->arResult['PATH_TO_USER_PROFILE'],
-				array('user_id' => $assignedByID)
-			);
-		}
-		//endregion
-		//region Client Data & Multifield Data
-		$clientInfo = array();
-		$multiFildData = array();
-
-		$companyID = isset($this->entityData['COMPANY_ID']) ? (int)$this->entityData['COMPANY_ID'] : 0;
-		if($companyID > 0)
-		{
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyID, 'PHONE', $multiFildData);
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyID, 'EMAIL', $multiFildData);
-
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyID, $this->userPermissions);
-			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				CCrmOwnerType::CompanyName,
-				$companyID,
-				array(
-					'ENTITY_EDITOR_FORMAT' => true,
-					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'REQUIRE_REQUISITE_DATA' => true,
-					'REQUIRE_MULTIFIELDS' => true,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
-			);
-
-			$clientInfo['PRIMARY_ENTITY_DATA'] = $companyInfo;
-		}
-
-		$contactBindings = array();
-		if($this->entityID > 0)
-		{
-			$contactBindings = \Bitrix\Crm\Binding\QuoteContactTable::getQuoteBindings($this->entityID);
-		}
-		elseif(isset($this->entityData['CONTACT_BINDINGS']) && is_array($this->entityData['CONTACT_BINDINGS']))
-		{
-			$contactBindings = $this->entityData['CONTACT_BINDINGS'];
-		}
-		elseif(isset($this->entityData['CONTACT_ID']) && $this->entityData['CONTACT_ID'] > 0)
-		{
-			$contactBindings = \Bitrix\Crm\Binding\EntityBinding::prepareEntityBindings(
-				CCrmOwnerType::Contact,
-				array($this->entityData['CONTACT_ID'])
-			);
-		}
-
-		$contactIDs = \Bitrix\Crm\Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
-		$clientInfo['SECONDARY_ENTITY_DATA'] = array();
-		foreach($contactIDs as $contactID)
-		{
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFildData);
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFildData);
-
-			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
-			$clientInfo['SECONDARY_ENTITY_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
-				CCrmOwnerType::ContactName,
-				$contactID,
-				array(
-					'ENTITY_EDITOR_FORMAT' => true,
-					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'REQUIRE_REQUISITE_DATA' => true,
-					'REQUIRE_MULTIFIELDS' => true,
-					'REQUIRE_BINDINGS' => true,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
-			);
-		}
-		if(!isset($clientInfo['PRIMARY_ENTITY_DATA']) && !empty($clientInfo['SECONDARY_ENTITY_DATA']))
-		{
-			$clientInfo['PRIMARY_ENTITY_DATA'] = array_shift($clientInfo['SECONDARY_ENTITY_DATA']);
-		}
-		$this->entityData['CLIENT_INFO'] = $clientInfo;
-
-		//region Requisites
-		$this->entityData['REQUISITE_BINDING'] = array();
-
-		$requisiteEntityList = array();
-		$requisite = new \Bitrix\Crm\EntityRequisite();
-		$requisiteEntityList[] = array('ENTITY_TYPE_ID' => CCrmOwnerType::Deal, 'ENTITY_ID' => $this->entityID);
-		if(isset($this->entityData['COMPANY_ID']) && $this->entityData['COMPANY_ID'] > 0)
-		{
-			$requisiteEntityList[] = array(
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-				'ENTITY_ID' => $this->entityData['COMPANY_ID']
-			);
-		}
-		if(!empty($contactBindings))
-		{
-			$primaryBoundEntityID = \Bitrix\Crm\Binding\EntityBinding::getPrimaryEntityID(
-				CCrmOwnerType::Contact,
-				$contactBindings
-			);
-			if($primaryBoundEntityID > 0)
-			{
-				$requisiteEntityList[] = array(
-					'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-					'ENTITY_ID' => $primaryBoundEntityID
-				);
-			}
-		}
-
-		$requisiteLinkInfo = $requisite->getDefaultRequisiteInfoLinked($requisiteEntityList);
-		if (is_array($requisiteLinkInfo))
-		{
-			/* requisiteLinkInfo contains following fields: REQUISITE_ID, BANK_DETAIL_ID */
-			$this->entityData['REQUISITE_BINDING'] = $requisiteLinkInfo;
-		}
-		//endregion
-
-		$this->entityData['MULTIFIELD_DATA'] = $multiFildData;
-		//endregion
-
-		//region MyCompany Data
-		$myCompanyID = isset($this->entityData['MYCOMPANY_ID']) ? (int)$this->entityData['MYCOMPANY_ID'] : 0;
-		if($myCompanyID > 0)
-		{
-			$this->entityData['MYCOMPANY_INFO'] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				CCrmOwnerType::CompanyName,
-				$myCompanyID,
-				array(
-					'ENTITY_EDITOR_FORMAT' => true,
-					'IS_HIDDEN' => !\CCrmCompany::CheckReadPermission($myCompanyID, $this->userPermissions),
-					'REQUIRE_REQUISITE_DATA' => true,
-					'REQUIRE_MULTIFIELDS' => true,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
-			);
-		}
-		//endregion
-
-		//region Lead Data
-		$leadID = isset($this->entityData['LEAD_ID']) ? (int)$this->entityData['LEAD_ID'] : 0;
-		if($leadID > 0)
-		{
-			$this->entityData['LEAD_INFO'] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				CCrmOwnerType::LeadName,
-				$leadID,
-				array(
-					'ENTITY_EDITOR_FORMAT' => true,
-					'IS_HIDDEN' => !\CCrmLead::CheckReadPermission($leadID, $this->userPermissions),
-					'REQUIRE_REQUISITE_DATA' => false,
-					'REQUIRE_MULTIFIELDS' => true,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
-			);
-		}
-		//endregion
-
-		//region Deal Data
-		$dealID = isset($this->entityData['DEAL_ID']) ? (int)$this->entityData['DEAL_ID'] : 0;
-		if($dealID > 0)
-		{
-			$this->entityData['DEAL_INFO'] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				CCrmOwnerType::DealName,
-				$dealID,
-				array(
-					'ENTITY_EDITOR_FORMAT' => true,
-					'IS_HIDDEN' => !\CCrmDeal::CheckReadPermission($dealID, $this->userPermissions),
-					'REQUIRE_REQUISITE_DATA' => false,
-					'REQUIRE_MULTIFIELDS' => false,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
-			);
-		}
-		//endregion
-
-		//region Product row & Files
-		if($this->entityID > 0)
-		{
-			\CCrmQuote::PrepareStorageElementIDs($this->entityData);
-			\CCrmQuote::PrepareStorageElementInfo($this->entityData);
-
-			$productRowCount = 0;
-			$productRowTotalSum = 0.0;
-			$productRowInfos = array();
-			$dbResult = \CAllCrmProductRow::GetList(
-				array('SORT' => 'ASC', 'ID'=>'ASC'),
-				array(
-					'OWNER_ID' => $this->entityID, 'OWNER_TYPE' => \CCrmQuote::OWNER_TYPE
-				),
-				false,
-				false,
-				array(
-					'PRODUCT_ID',
-					'PRODUCT_NAME',
-					'ORIGINAL_PRODUCT_NAME',
-					'PRICE',
-					'PRICE_EXCLUSIVE',
-					'QUANTITY',
-					'TAX_INCLUDED',
-					'TAX_RATE'
-				)
-			);
-			while($fields = $dbResult->Fetch())
-			{
-				$productName = isset($fields['PRODUCT_NAME']) ? $fields['PRODUCT_NAME'] : '';
-				if($productName === '' && isset($fields['ORIGINAL_PRODUCT_NAME']))
-				{
-					$productName = $fields['ORIGINAL_PRODUCT_NAME'];
-				}
-
-				$productID = isset($fields['PRODUCT_ID']) ? (int)$fields['PRODUCT_ID'] : 0;
-				$url = '';
-				if($productID > 0)
-				{
-					$url = CComponentEngine::MakePathFromTemplate(
-						$this->arResult['PATH_TO_PRODUCT_SHOW'],
-						array('product_id' => $fields['PRODUCT_ID'])
-					);
-				}
-
-				if($fields['TAX_INCLUDED'] === 'Y')
-				{
-					$sum = $fields['PRICE'] * $fields['QUANTITY'];
-				}
-				else
-				{
-					$sum = $fields['PRICE_EXCLUSIVE'] * $fields['QUANTITY'] * (1 + $fields['TAX_RATE'] / 100);
-				}
-
-				$productRowTotalSum += $sum;
-				$productRowCount++;
-
-				if($productRowCount <= 10)
-				{
-					$productRowInfos[] = array(
-						'PRODUCT_NAME' => $productName,
-						'SUM' => CCrmCurrency::MoneyToString($sum, $this->entityData['CURRENCY_ID']),
-						'URL' => $url
-					);
-				}
-			}
-			$this->entityData['PRODUCT_ROW_SUMMARY'] = array(
-				'count' => $productRowCount,
-				'total' => CCrmCurrency::MoneyToString($productRowTotalSum, $this->entityData['CURRENCY_ID']),
-				'items' => $productRowInfos
-			);
-		}
-
-		Crm\Tracking\UI\Details::prepareEntityData(
-			\CCrmOwnerType::Quote,
-			$this->entityID,
-			$this->entityData
-		);
-
-		//endregion
-		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
+	public function prepareKanbanConfiguration(): array
+	{
+		$scheme = [];
+		$scheme[] = [
+			'name' => 'main',
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_SECTION_MAIN'),
+			'type' => 'section',
+			'elements' => [
+				['name' => 'QUOTE_NUMBER'],
+				['name' => 'TITLE'],
+				['name' => 'OPPORTUNITY_WITH_CURRENCY'],
+				['name' => 'MYCOMPANY_TITLE']
+			]
+		];
+		$scheme[] = [
+			'name' => 'additional',
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_SECTION_ADDITIONAL'),
+			'type' => 'section',
+			'elements' => []
+		];
+		return $scheme;
 	}
 }

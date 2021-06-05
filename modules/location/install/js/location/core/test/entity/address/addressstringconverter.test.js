@@ -4,6 +4,8 @@ import Address from '../../../src/entity/address';
 import StringConverter from '../../../src/entity/address/converter/stringconverter';
 import Format from '../../../src/entity/format';
 import AddressType from '../../../src/entity/address/addresstype';
+import FormatTemplateType from '../../../src/entity/format/formattemplatetype';
+import FormatTemplate from '../../../src/entity/format/formattemplate';
 
 describe('StringConverter', () =>
 {
@@ -26,9 +28,8 @@ describe('StringConverter', () =>
 	const formatData = {
 		languageId: 'en',
 		code: 'TEST_FORMAT',
-		template: '',
 		name: 'test format',
-		// template: '{{#UNKNOWN#\n}}{{#LOCALITY#\n}}{{#ADM_LEVEL_1#\n}}{{#COUNTRY#}}',
+		// template: '["#S#",[UNKNOWN,LOCALITY,ADM_LEVEL_1,COUNTRY]]',
 		fieldCollection: [
 			{
 				type: AddressType.COUNTRY,
@@ -105,7 +106,10 @@ describe('StringConverter', () =>
 		{
 			const address = new Address(JSON.parse(testData));
 			const format = new Format(formatData);
-			format.template = '{{#ADDRESS_LINE_1#\n}}{{#LOCALITY#\n}}{{#ADM_LEVEL_1#\n}}{{#COUNTRY#}}';
+			format.templateCollection.setTemplate(
+				new FormatTemplate(FormatTemplateType.DEFAULT, '["#S#",[ADDRESS_LINE_1,LOCALITY,ADM_LEVEL_1,COUNTRY]]')
+			);
+
 			const result = StringConverter.convertAddressToString(
 				address,
 				format,
@@ -114,14 +118,16 @@ describe('StringConverter', () =>
 			);
 
 			assert(Type.isString(result));
-			assert.equal(result, '617 Red River St<br/>Austin<br/>Texas<br/>USA');
+			assert.equal(result, '617 Red River St<br />Austin<br />Texas<br />USA');
 		});
 
 		it('Should return string using template with text content type', () =>
 		{
 			const address = new Address(JSON.parse(testData));
 			const format = new Format(formatData);
-			format.template = '{{#ADDRESS_LINE_1#\n}}{{#LOCALITY#\n}}{{#ADM_LEVEL_1#\n}}{{#COUNTRY#}}';
+			format.templateCollection.setTemplate(
+				new FormatTemplate(FormatTemplateType.DEFAULT,'["#S#",[ADDRESS_LINE_1,LOCALITY,ADM_LEVEL_1,COUNTRY]]')
+			);
 			const result = StringConverter.convertAddressToString(
 				address,
 				format,
@@ -137,7 +143,11 @@ describe('StringConverter', () =>
 		{
 			const address = new Address(JSON.parse(testData));
 			const format = new Format(formatData);
-			format.template = '{{#ADDRESS_LINE_1#\n}}{{#REDUDANT#\n}}{{#LOCALITY#\n}}{{#REDUDANT#\n}}{{#ADM_LEVEL_1#\n}}{{#COUNTRY#}}{{#REDUDANT#\n}}';
+			format.templateCollection.setTemplate(
+				new FormatTemplate(
+					FormatTemplateType.DEFAULT,
+					'["#S#",[ADDRESS_LINE_1,REDUNDANT,LOCALITY,REDUNDANT,ADM_LEVEL_1,COUNTRY,REDUNDANT]]')
+			);
 			const result = StringConverter.convertAddressToString(
 				address,
 				format,
@@ -146,7 +156,7 @@ describe('StringConverter', () =>
 			);
 
 			assert(Type.isString(result));
-			assert.equal(result, '617 Red River St<br/>Austin<br/>Texas<br/>USA');
+			assert.equal(result, '617 Red River St<br />Austin<br />Texas<br />USA');
 		});
 
 		it('Should return string using template and remove 2 x redundant line brakes', () =>
@@ -162,7 +172,12 @@ describe('StringConverter', () =>
 			}`));
 
 			const format = new Format(formatData);
-			format.template = '{{#ADDRESS_LINE_1#\n}}{{#LOCALITY#\n}}{{#ADM_LEVEL_1#}}\n{{#COUNTRY#}}{{#REDUDANT#\n}}';
+			format.templateCollection.setTemplate(
+				new FormatTemplate(
+					FormatTemplateType.DEFAULT,
+					'["#S#",[ADDRESS_LINE_1,LOCALITY,ADM_LEVEL_1,COUNTRY,REDUNDANT]]'
+				)
+			);
 			const result = StringConverter.convertAddressToString(
 				address,
 				format,
@@ -171,7 +186,7 @@ describe('StringConverter', () =>
 			);
 
 			assert(Type.isString(result));
-			assert.equal(result, '617 Red River St<br/>Austin<br/>USA');
+			assert.equal(result, '617 Red River St<br />Austin<br />USA');
 		});
 
 		it('Should return string using template and remove 3 x redundant line brakes', () =>
@@ -186,7 +201,13 @@ describe('StringConverter', () =>
 			}`));
 
 			const format = new Format(formatData);
-			format.template = '{{#ADDRESS_LINE_1#\n}}{{#LOCALITY#}}\n{{#ADM_LEVEL_1#}}\n{{#COUNTRY#}}{{#REDUDANT#\n}}';
+			format.templateCollection.setTemplate(
+				new FormatTemplate(
+					FormatTemplateType.DEFAULT,
+					'["#S#",[ADDRESS_LINE_1,LOCALITY,ADM_LEVEL_1,COUNTRY,REDUNDANT]]'
+				)
+			);
+
 			const result = StringConverter.convertAddressToString(
 				address,
 				format,
@@ -195,7 +216,41 @@ describe('StringConverter', () =>
 			);
 
 			assert(Type.isString(result));
-			assert.equal(result, '617 Red River St<br/>USA');
+			assert.equal(result, '617 Red River St<br />USA');
+		});
+
+		// Kremlin,Moscow,Moscow,Russia,103132 -> Kremlin,Moscow,Russia,103132
+		it('Should remove same values from the address string', () =>
+		{
+			const address = new Address(JSON.parse(`{ 
+				"id":175,
+				"languageId":"en",
+				"fieldCollection":{ 
+					"50":"103132",						
+					"100":"Russia",
+					"200":"Moscow",
+					"300":"Moscow",
+					"600":"Kremlin"
+				}
+			}`));
+
+			const format = new Format(formatData);
+			format.templateCollection.setTemplate(
+				new FormatTemplate(
+					FormatTemplateType.DEFAULT,
+					'["#S#",[ADDRESS_LINE_1:N,ADDRESS_LINE_2,LOCALITY,ADM_LEVEL_2,ADM_LEVEL_1,COUNTRY,POSTAL_CODE]]'
+				)
+			);
+
+			const result = StringConverter.convertAddressToString(
+				address,
+				format,
+				StringConverter.STRATEGY_TYPE_TEMPLATE,
+				StringConverter.CONTENT_TYPE_TEXT
+			);
+
+			assert(Type.isString(result));
+			assert.equal(result, 'Kremlin\nMoscow\nRussia\n103132');
 		});
 	});
 });

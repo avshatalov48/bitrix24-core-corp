@@ -114,6 +114,12 @@ class PresetEditComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
+		if (!$this->checkRights())
+		{
+			$this->showErrors();
+			return $this->getComponentResult();
+		}
+
 		if (!$this->checkModules())
 		{
 			$this->showErrors();

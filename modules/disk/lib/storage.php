@@ -9,6 +9,7 @@ use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Result;
@@ -166,7 +167,7 @@ final class Storage extends Internals\Model
 	{
 		if(!empty($this->entityMiscData) && is_string($this->entityMiscData))
 		{
-			return unserialize($this->entityMiscData);
+			return unserialize($this->entityMiscData, ['allowed_classes' => false]);
 		}
 
 		return array();
@@ -468,23 +469,28 @@ final class Storage extends Internals\Model
 	{
 		//todo Mistake? We decided, SecurityContext should parse USER self. But we would not create typical SecurityContext (cache. cache)
 		$userId = null;
-		if($user instanceof \CUser)
+		if ($user instanceof CurrentUser)
 		{
-			if($user->isAuthorized())
+			return $this->getSecurityContext($user->getId());
+		}
+
+		if ($user instanceof \CUser)
+		{
+			if ($user->isAuthorized())
 			{
 				$userId = $user->getId();
 			}
 		}
-		elseif((int)$user > 0)
+		elseif ((int)$user > 0)
 		{
 			$userId = (int)$user;
 		}
 
-		if($userId === null)
+		if ($userId === null)
 		{
 			return $this->getProxyType()->getSecurityContextByUser($user);
 		}
-		if(!isset($this->cacheSecurityContext[$userId]))
+		if (!isset($this->cacheSecurityContext[$userId]))
 		{
 			$this->cacheSecurityContext[$userId] = $this->getProxyType()->getSecurityContextByUser($user);
 		}

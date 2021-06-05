@@ -1,10 +1,11 @@
-<?
+<?php
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/intranet/classes/general/rating_rules.php");
 
 class CRatingRulesIntranet
 {
 	// return configs
-	public function OnGetRatingRuleConfigs()
+	public static function OnGetRatingRuleConfigs()
 	{
 		$arConfigs["USER"]["CONDITION_CONFIG"][] = array(
 		   "ID"	=> 'SUBORDINATE',
@@ -41,7 +42,7 @@ class CRatingRulesIntranet
 		return $arConfigs;
 	}
 
-	public function subordinateCheck($arConfigs)
+	public static function subordinateCheck($arConfigs)
 	{
 		global $DB, $USER_FIELD_MANAGER;
 			$err_mess = "File: ".__FILE__."<br>Function: subordinateCheck<br>Line: ";
@@ -93,7 +94,7 @@ class CRatingRulesIntranet
 		return true;
 	}
 
-	public function RecalcSubordinateRuleAgent()
+	public static function RecalcSubordinateRuleAgent()
 	{
 		$ratingId = (int)CRatings::GetAuthorityRating();
 		if ($ratingId)
@@ -121,7 +122,7 @@ class CRatingRulesIntranet
 	}
 
 	// check input values, if value does not validate, set the default value
-	public function __CheckFields($entityId, $arConfigs)
+	public static function __CheckFields($entityId, $arConfigs)
 	{
 		$arDefaultConfig = CRatingRulesIntranet::__AssembleConfigDefault($entityId);
 
@@ -132,7 +133,7 @@ class CRatingRulesIntranet
 	}
 
 	// assemble config default value
-	public function __AssembleConfigDefault($objectType = null)
+	public static function __AssembleConfigDefault($objectType = null)
 	{
 		$arConfigs = array();
 		$arRatingRuleConfigs = CRatingRulesIntranet::OnGetRatingRuleConfigs();
@@ -163,7 +164,7 @@ class CRatingRulesIntranet
 	}
 
 	// return support object
-	public function OnGetRatingRuleObjects()
+	public static function OnGetRatingRuleObjects()
 	{
 		$arRatingRulesConfigs = CRatingRulesIntranet::OnGetRatingRuleConfigs();
 		foreach ($arRatingRulesConfigs as $SupportType => $value)
@@ -173,7 +174,7 @@ class CRatingRulesIntranet
 	}
 
 	// check the value which relate to the module
-	public function OnAfterAddRatingRule($ID, $arFields)
+	public static function OnAfterAddRatingRule($ID, $arFields)
 	{
 		$arFields = CRatingRulesIntranet::__CheckFields($arFields['ENTITY_TYPE_ID'], $arFields);
 
@@ -181,12 +182,10 @@ class CRatingRulesIntranet
 	}
 
 	// check the value which relate to the module
-	public function OnAfterUpdateRatingRule($ID, $arFields)
+	public static function OnAfterUpdateRatingRule($ID, $arFields)
 	{
 		$arFields = CRatingRulesIntranet::__CheckFields($arFields['ENTITY_TYPE_ID'], $arFields);
 
 		return $arFields;
 	}
 }
-
-?>

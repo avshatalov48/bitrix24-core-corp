@@ -3261,7 +3261,7 @@ class CIMMessenger
 			'settingsNotifyBlocked' => empty($arTemplate['SETTINGS_NOTIFY_BLOCKED'])? false: $arTemplate['SETTINGS_NOTIFY_BLOCKED'],
 
 			'recent' => false,
-			'businessUsers' => $businessUsers === false? false: empty($businessUsers)? null: $businessUsers,
+			'businessUsers' => $businessUsers === false? false: (empty($businessUsers)? null: $businessUsers),
 			'userChatOptions' => CIMChat::GetChatOptions(),
 			'history' => false,
 			'openMessenger' => false,
