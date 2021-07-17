@@ -1,4 +1,4 @@
-import {Event, Text} from 'main.core';
+import {Dom, Text} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
@@ -7,6 +7,7 @@ import {Sprint} from '../entity/sprint/sprint';
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
 
 import {View} from './view';
+import {BurnDownButton} from './header/burn.down.button';
 
 import type {Views} from './view';
 import type {SprintParams} from '../entity/sprint/sprint';
@@ -27,9 +28,25 @@ export class CompletedSprint extends View
 
 		this.setParams(params);
 
-		this.initDomNodes();
 		this.bindHandlers();
-		this.createTitle();
+	}
+
+	renderSprintStatsTo(container: HTMLElement)
+	{
+		super.renderSprintStatsTo(container);
+
+		this.titleContainer = container;
+		this.titleContainer.textContent = Text.encode(this.completedSprint.getName());
+	}
+
+	renderButtonsTo(container: HTMLElement)
+	{
+		super.renderButtonsTo(container);
+
+		const burnDownButton = new BurnDownButton();
+		burnDownButton.subscribe('click', this.onShowSprintBurnDownChart.bind(this));
+
+		Dom.append(burnDownButton.render(), container);
 	}
 
 	setParams(params: Params)
@@ -46,22 +63,9 @@ export class CompletedSprint extends View
 		this.views = params.views;
 	}
 
-	initDomNodes()
-	{
-		this.chartSprintButtonNode = document.getElementById('tasks-scrum-completed-sprint-chart');
-	}
-
 	bindHandlers()
 	{
 		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onSprintSelectorChange.bind(this));
-
-		Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
-	}
-
-	createTitle()
-	{
-		this.titleContainer = document.getElementById('tasks-scrum-completed-sprint-title');
-		this.titleContainer.textContent = Text.encode(this.completedSprint.getName());
 	}
 
 	onSprintSelectorChange(event: BaseEvent)
@@ -73,7 +77,7 @@ export class CompletedSprint extends View
 		this.titleContainer.textContent = Text.encode(currentSprint.name);
 	}
 
-	onShowSprintBurnDownChart()
+	onShowSprintBurnDownChart(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
 			sidePanel: this.sidePanel,

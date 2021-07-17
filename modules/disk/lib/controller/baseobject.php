@@ -159,7 +159,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 
 	protected function generateExternalLink(Disk\BaseObject $object)
 	{
-		$extLink = $this->getExternalLink($object);
+		$extLink = $this->getExternalLinkObject($object);
 		if (!$extLink)
 		{
 			$extLink = $object->addExternalLink(array(
@@ -175,28 +175,23 @@ abstract class BaseObject extends Internals\Engine\Controller
 			return null;
 		}
 
-		$link = new Uri(Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-			'hash' => $extLink->getHash(),
-			'action' => 'default',
-		), true));
+		return $this->parseExternalLinkObject($extLink);
+	}
 
-		return [
-			'externalLink' => [
-				'id' => $extLink->getId(),
-				'objectId' => $extLink->getObjectId(),
-				'hash' => $extLink->getHash(),
-				'link' => $link,
-				'hasPassword' => $extLink->hasPassword(),
-				'hasDeathTime' => $extLink->hasDeathTime(),
-				'deathTime' => $extLink->getDeathTime(),
-				'deathTimeTimestamp' => $extLink->hasDeathTime()? $extLink->getDeathTime()->getTimestamp() : null,
-			],
-		];
+	protected function getExternalLink(Disk\BaseObject $object): ?array
+	{
+		$extLink = $this->getExternalLinkObject($object);
+
+		if (!$extLink)
+		{
+			return null;
+		}
+		return $this->parseExternalLinkObject($extLink);
 	}
 
 	protected function disableExternalLink(Disk\BaseObject $object)
 	{
-		$extLink = $this->getExternalLink($object);
+		$extLink = $this->getExternalLinkObject($object);
 		if (!$extLink || $extLink->delete())
 		{
 			return true;
@@ -210,7 +205,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 	 *
 	 * @return Disk\ExternalLink|null
 	 */
-	private function getExternalLink(Disk\BaseObject $object)
+	private function getExternalLinkObject(Disk\BaseObject $object): ?Disk\ExternalLink
 	{
 		$extLinks = $object->getExternalLinks([
 			'filter' => [
@@ -223,6 +218,37 @@ abstract class BaseObject extends Internals\Engine\Controller
 		]);
 
 		return array_pop($extLinks);
+	}
+
+	private function parseExternalLinkObject(Disk\ExternalLink $extLink): array
+	{
+		$driver = Driver::getInstance();
+		$link = new Uri($driver->getUrlManager()->getShortUrlExternalLink(array(
+			'hash' => $extLink->getHash(),
+			'action' => 'default',
+		), true));
+
+		$canEditDocument = null;
+		$availableEdit = $extLink->availableEdit();
+		if ($availableEdit)
+		{
+			$canEditDocument = $extLink->getAccessRight() === $extLink::ACCESS_RIGHT_EDIT;
+		}
+
+		return [
+			'externalLink' => [
+				'id' => $extLink->getId(),
+				'objectId' => $extLink->getObjectId(),
+				'hash' => $extLink->getHash(),
+				'link' => $link,
+				'hasPassword' => $extLink->hasPassword(),
+				'hasDeathTime' => $extLink->hasDeathTime(),
+				'availableEdit' => $availableEdit,
+				'canEditDocument' => $canEditDocument,
+				'deathTime' => $extLink->getDeathTime(),
+				'deathTimeTimestamp' => $extLink->hasDeathTime()? $extLink->getDeathTime()->getTimestamp() : null,
+			],
+		];
 	}
 
 	protected function getAllowedOperationsRights(Disk\BaseObject $object)

@@ -10,29 +10,24 @@ use Bitrix\Tasks\Internals\Task\MemberTable;
  */
 class CounterDictionary
 {
-	public const PREFIX 				= 'tasks_';
+	public const PREFIX = 'tasks_';
 
-	public const
-		EVENT_AFTER_TASK_VIEW 			= 'onAfterTaskView',
+	public const META_PROP_ALL = 'all';
+	public const META_PROP_GROUP = 'group';
+	public const META_PROP_PROJECT = 'project';
+	public const META_PROP_SONET = 'sonet';
+	public const META_PROP_NONE = 'none';
 
-		EVENT_AFTER_TASK_ADD 			= 'onAfterTaskAdd',
-		EVENT_AFTER_TASK_DELETE 		= 'onAfterTaskDelete',
-		EVENT_AFTER_TASK_UPDATE 		= 'onAfterTaskUpdate',
-		EVENT_AFTER_TASK_RESTORE 		= 'onAfterTaskRestore',
-		EVENT_AFTER_TASK_MUTE 			= 'onAfterTaskMute',
-
-		EVENT_AFTER_COMMENT_ADD 		= 'onAfterCommentAdd',
-		EVENT_AFTER_COMMENT_DELETE 		= 'onAfterCommentDelete',
-		EVENT_AFTER_COMMENTS_READ_ALL 	= 'onAfterCommentsReadAll',
-
-		EVENT_TASK_EXPIRED 				= 'onTaskExpired',
-		EVENT_TASK_EXPIRED_SOON			= 'onTaskExpiredSoon';
+	public const LEFT_MENU_TASKS = 'tasks_total';
 
 	public const
 		COUNTER_TOTAL							= 'total',
+		COUNTER_MEMBER_TOTAL					= 'member_total',
 
 		COUNTER_NEW_COMMENTS					= 'new_comments',
+		COUNTER_MUTED_NEW_COMMENTS				= 'muted_new_comments',
 		COUNTER_EXPIRED							= 'expired',
+		COUNTER_MUTED_EXPIRED					= 'muted_expired',
 		COUNTER_EFFECTIVE						= 'effective',
 
 		COUNTER_MY								= 'my',
@@ -59,10 +54,28 @@ class CounterDictionary
 		COUNTER_ORIGINATOR_NEW_COMMENTS			= 'originator_new_comments',
 		COUNTER_ORIGINATOR_MUTED_NEW_COMMENTS	= 'originator_muted_new_comments',
 
-		COUNTER_PROJECT_EXPIRED					= 'project_expired',
-		COUNTER_PROJECT_COMMENTS				= 'project_comments',
+		COUNTER_GROUP_EXPIRED					= 'project_expired',
+		COUNTER_GROUP_COMMENTS					= 'project_comments',
 
-		COUNTER_FLAG_COUNTED					= 'flag_computed_20210203';
+		COUNTER_PROJECTS_TOTAL_EXPIRED			= 'projects_total_expired',
+		COUNTER_PROJECTS_TOTAL_COMMENTS			= 'projects_total_comments',
+		COUNTER_PROJECTS_FOREIGN_EXPIRED		= 'projects_foreign_expired',
+		COUNTER_PROJECTS_FOREIGN_COMMENTS		= 'projects_foreign_comments',
+		COUNTER_PROJECTS_MAJOR					= 'projects_major',
+
+		COUNTER_GROUPS_TOTAL_EXPIRED			= 'groups_total_expired',
+		COUNTER_GROUPS_TOTAL_COMMENTS			= 'groups_total_comments',
+		COUNTER_GROUPS_FOREIGN_EXPIRED			= 'groups_foreign_expired',
+		COUNTER_GROUPS_FOREIGN_COMMENTS			= 'groups_foreign_comments',
+		COUNTER_GROUPS_MAJOR					= 'groups_major',
+
+		COUNTER_SONET_TOTAL_EXPIRED				= 'sonet_total_expired',
+		COUNTER_SONET_TOTAL_COMMENTS			= 'sonet_total_comments',
+		COUNTER_SONET_FOREIGN_EXPIRED			= 'sonet_foreign_expired',
+		COUNTER_SONET_FOREIGN_COMMENTS			= 'sonet_foreign_comments',
+		COUNTER_SONET_MAJOR						= 'sonet_major',
+
+		COUNTER_FLAG_COUNTED					= 'flag_computed_20210501';
 
 	public const MAP_EXPIRED = [
 		MemberTable::MEMBER_TYPE_RESPONSIBLE 	=> self::COUNTER_MY_EXPIRED,
@@ -92,9 +105,21 @@ class CounterDictionary
 		MemberTable::MEMBER_TYPE_AUDITOR 		=> self::COUNTER_AUDITOR_MUTED_NEW_COMMENTS
 	];
 
-	public const MAP_COUNTERS = [
-		self::COUNTER_EXPIRED => self::MAP_EXPIRED,
-		self::COUNTER_NEW_COMMENTS => self::MAP_COMMENTS
+	public const MAP_SONET_TOTAL = [
+		self::COUNTER_PROJECTS_TOTAL_EXPIRED => self::COUNTER_GROUPS_TOTAL_EXPIRED,
+		self::COUNTER_PROJECTS_TOTAL_COMMENTS => self::COUNTER_GROUPS_TOTAL_COMMENTS,
+		self::COUNTER_PROJECTS_FOREIGN_EXPIRED => self::COUNTER_GROUPS_FOREIGN_EXPIRED,
+		self::COUNTER_PROJECTS_FOREIGN_COMMENTS => self::COUNTER_GROUPS_FOREIGN_COMMENTS,
+
+		self::COUNTER_GROUPS_TOTAL_EXPIRED => self::COUNTER_GROUPS_TOTAL_EXPIRED,
+		self::COUNTER_GROUPS_TOTAL_COMMENTS => self::COUNTER_GROUPS_TOTAL_COMMENTS,
+		self::COUNTER_GROUPS_FOREIGN_EXPIRED => self::COUNTER_GROUPS_FOREIGN_EXPIRED,
+		self::COUNTER_GROUPS_FOREIGN_COMMENTS => self::COUNTER_GROUPS_FOREIGN_COMMENTS,
+
+		self::COUNTER_SONET_TOTAL_EXPIRED => self::COUNTER_GROUPS_TOTAL_EXPIRED,
+		self::COUNTER_SONET_TOTAL_COMMENTS => self::COUNTER_GROUPS_TOTAL_COMMENTS,
+		self::COUNTER_SONET_FOREIGN_EXPIRED => self::COUNTER_GROUPS_FOREIGN_EXPIRED,
+		self::COUNTER_SONET_FOREIGN_COMMENTS => self::COUNTER_GROUPS_FOREIGN_COMMENTS,
 	];
 
 	/**

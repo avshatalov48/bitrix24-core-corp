@@ -2,6 +2,8 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Document\DocumentHandler;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Main\DB\SqlExpression;
@@ -10,8 +12,11 @@ use CBXShortUri;
 
 final class ExternalLink extends Internals\Model
 {
-	const TYPE_AUTO   = ExternalLinkTable::TYPE_AUTO;
-	const TYPE_MANUAL = ExternalLinkTable::TYPE_MANUAL;
+	public const TYPE_AUTO = ExternalLinkTable::TYPE_AUTO;
+	public const TYPE_MANUAL = ExternalLinkTable::TYPE_MANUAL;
+
+	public const ACCESS_RIGHT_VIEW = ExternalLinkTable::ACCESS_RIGHT_VIEW;
+	public const ACCESS_RIGHT_EDIT = ExternalLinkTable::ACCESS_RIGHT_EDIT;
 
 	/** @var int */
 	protected $objectId;
@@ -33,6 +38,8 @@ final class ExternalLink extends Internals\Model
 	protected $description;
 	/** @var int */
 	protected $downloadCount;
+	/** @var int */
+	protected $accessRight;
 	/** @var int */
 	protected $type;
 	/** @var  DateTime */
@@ -266,6 +273,44 @@ final class ExternalLink extends Internals\Model
 	}
 
 	/**
+	 * Returns access right (view, edit).
+	 * @return int
+	 */
+	public function getAccessRight(): int
+	{
+		return (int)$this->accessRight;
+	}
+
+	public function allowEdit(): bool
+	{
+		return $this->getAccessRight() === self::ACCESS_RIGHT_EDIT;
+	}
+
+	public function allowView(): bool
+	{
+		return true;
+	}
+
+	public function availableEdit(): bool
+	{
+		$object = $this->getObject();
+		if (!($object instanceof File))
+		{
+			return false;
+		}
+
+		if (!DocumentHandler::isEditable($object->getExtension()))
+		{
+			return false;
+		}
+
+		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
+		$documentHandler = $documentHandlersManager->getDefaultHandlerForView();
+
+		return ($documentHandler instanceof OnlyOfficeHandler);
+	}
+
+	/**
 	 * Tells if the external link has type AUTO.
 	 * @return bool
 	 */
@@ -322,6 +367,7 @@ final class ExternalLink extends Internals\Model
 			'DEATH_TIME' => 'deathTime',
 			'DESCRIPTION' => 'description',
 			'DOWNLOAD_COUNT' => 'downloadCount',
+			'ACCESS_RIGHT' => 'accessRight',
 			'TYPE' => 'type',
 			'CREATE_TIME' => 'createTime',
 			'CREATED_BY' => 'createdBy',
@@ -478,6 +524,13 @@ final class ExternalLink extends Internals\Model
 		list($data['PASSWORD'], $data['SALT']) = ExternalLink::generatePasswordAndSalt($newPassword);
 
 		return $this->update($data);
+	}
+
+	public function changeAccessRight(int $right): bool
+	{
+		return $this->update([
+			'ACCESS_RIGHT' => $right,
+		]);
 	}
 
 	/**

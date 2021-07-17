@@ -88,6 +88,11 @@ export class Model
         return (this.getId() > 0);
     }
 
+    isDeleted(): boolean
+	{
+		return this.deleted;
+	}
+
     setData(data: ModelData): this
     {
         this.data = data;
@@ -102,7 +107,7 @@ export class Model
 
     setGetParameters(action: string, parameters: getParameters)
     {
-        this.getParameters[action] = this.getParameters;
+        this.getParameters[action] = parameters;
     }
 
     getGetParameters(action: string): getParameters
@@ -252,7 +257,7 @@ export class Model
 		return errorMessages;
 	}
 
-    delete(): Promise<null,string[]>
+    delete(): Promise<{data: {}},string[]>
     {
         return new Promise((resolve, reject) => {
             const errors = [];
@@ -285,10 +290,10 @@ export class Model
                     id: this.getId(),
                 },
                 getParameters: this.getGetParameters('delete'),
-            }).then(() => {
+            }).then((response) => {
                 this.deleted = true;
                 this.progress = false;
-                resolve();
+                resolve(response);
             }).catch((response) => {
                 this.progress = false;
                 response.errors.forEach(({message}) => {

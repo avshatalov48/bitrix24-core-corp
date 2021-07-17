@@ -11,6 +11,7 @@ $MESS["MENU_CRM_MARKETING"] = "CRM Marketing";
 $MESS["MENU_CRM_TRACKING"] = "Sales Intelligence";
 $MESS["MENU_CRM_WEBFORM"] = "CRM Forms";
 $MESS["MENU_DEVOPS"] = "Developer resources";
+$MESS["MENU_DISK_DOCUMENTS"] = "Documents";
 $MESS["MENU_DISK_SECTION"] = "Bitrix24.Drive";
 $MESS["MENU_EMPLOYEE"] = "Employees";
 $MESS["MENU_GROUP_SECTION"] = "Workgroups";

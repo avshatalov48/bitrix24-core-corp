@@ -708,10 +708,13 @@ class Base
 
 		foreach ($files as $cell => $file)
 		{
-			$resultSaveFile = $this->saveFile($file);
-			if(!empty($resultSaveFile))
+			if(!empty($file))
 			{
-				$resultSaveFiles[$cell] = $resultSaveFile;
+				$resultSaveFile = $this->saveFile($file);
+				if(!empty($resultSaveFile))
+				{
+					$resultSaveFiles[$cell] = $resultSaveFile;
+				}
 			}
 		}
 
@@ -730,7 +733,17 @@ class Base
 	{
 		$result = false;
 
-		$file = Library::downloadFile($file);
+		if(
+			!empty($file)
+			&& is_array($file)
+		)
+		{
+			$file = Library::downloadFile($file);
+		}
+		else
+		{
+			$file = false;
+		}
 
 		if($file)
 		{

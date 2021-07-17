@@ -28,6 +28,10 @@ class CommentEntry extends TimelineEntry
 		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof Main\Type\DateTime)
 			? $params['CREATED'] : new Main\Type\DateTime();
 
+		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
+
+		self::markCallTrackerActivitiesAsCompleted($bindings);
+
 		$result = Entity\TimelineTable::add(
 			array(
 				'TYPE_ID' => TimelineType::COMMENT,
@@ -47,7 +51,7 @@ class CommentEntry extends TimelineEntry
 		}
 
 		$ID = $result->getId();
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
+
 		if (isset($params['FILES']) && is_array($params['FILES']))
 		{
 			self::attachFiles($ID, $params['FILES']);
@@ -126,5 +130,47 @@ class CommentEntry extends TimelineEntry
 
 		$event = new Main\Event("crm", self::ON_CRM_TIMELINE_COMMENT_DELETE_EVENT, ['ID' => $ID]);
 		$event->send();
+	}
+
+	private static function markCallTrackerActivitiesAsCompleted(array $bindings): void
+	{
+		foreach ($bindings as $binding)
+		{
+			$ownerTypeId = (int)$binding['ENTITY_TYPE_ID'];
+			$ownerId = (int)$binding['ENTITY_ID'];
+
+			if ($ownerTypeId <= 0 || $ownerId <= 0)
+			{
+				continue;
+			}
+
+			$activityCollection = \CCrmActivity::GetList(
+				[
+					'ID' => 'ASC',
+				],
+				[
+					'TYPE_ID' => \CCrmActivityType::Provider,
+					'PROVIDER_ID' => \Bitrix\Crm\Activity\Provider\CallTracker::PROVIDER_ID,
+					'OWNER_TYPE_ID' => $ownerTypeId,
+					'OWNER_ID' => $ownerId,
+					'CHECK_PERMISSIONS' => 'Y',
+					'COMPLETED' => 'N',
+				],
+				false,
+				false,
+				['ID']
+			);
+
+			while ($activity = $activityCollection->Fetch())
+			{
+				\CCrmActivity::Complete(
+					$activity['ID'],
+					true,
+					[
+						'REGISTER_SONET_EVENT' => true,
+					]
+				);
+			}
+		}
 	}
 }

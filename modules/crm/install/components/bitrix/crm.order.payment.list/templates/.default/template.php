@@ -56,6 +56,12 @@ $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
+
+$salescenterMode = ($arParams['SALESCENTER_MODE']
+	&& \Bitrix\Main\ModuleManager::isModuleInstalled('salescenter')
+	&& \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSitePublished()
+);
+
 $activityEditorID = '';
 if(!$isInternal)
 {
@@ -138,7 +144,13 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 		);
 	}
 
-	$arActions[] = array('SEPARATOR' => true);
+	if ($salescenterMode)
+	{
+		$arActions[] = array(
+			'TEXT' => GetMessage("CRM_ORDER_PAYMENT_SEND_TO_CHAT"),
+			'ONCLICK' => "BX.Salescenter.Payments.highlightOrder('".$payment['ID']."'); BX.Salescenter.Payments.sendGridPayments();",
+		);
+	}
 
 	$eventParam = array(
 		'ID' => $payment['ID'],
@@ -190,7 +202,7 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 			'DATE_MARKED' => ($payment['DATE_MARKED'] == 'Y' ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_MARKED']), $now) : ''),
 			'DATE_RESPONSIBLE_ID' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_RESPONSIBLE_ID']), $now),
 			'SUM' => CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']),
-			'CURRENCY' => CCrmCurrency::GetCurrencyName($payment['CURRENCY']),
+			'CURRENCY' => CCrmCurrency::GetEncodedCurrencyName($payment['CURRENCY']),
 			'PAY_SYSTEM_FULL' => $paySystemFull,
 			'PAID' => Loc::getMessage($messageCode),
 			'USER_ID' => $payment['BUYER_FORMATTED_NAME'] <> '' ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
@@ -298,6 +310,22 @@ if(($allowWrite || $allowDelete))
 		"ITEMS" => $actionList
 	);
 
+	if ($salescenterMode)
+	{
+		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+			"TEXT" => GetMessage("CRM_ORDER_PAYMENT_SEND_TO_CHAT"),
+			"ID" => "send_to_chat",
+			"NAME" => "send_to_chat",
+			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+					'DATA' => [['JS' => "BX.Salescenter.Payments.sendGridPayments();"]]
+				)
+			)
+		);
+	}
+
 	$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getForAllCheckbox();
 }
 //endregion
@@ -354,7 +382,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'ENABLE_LIVE_SEARCH' => true,
-		'ACTION_PANEL' => array(),
+		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
 			? $arResult['PAGINATION'] : array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
@@ -396,7 +424,7 @@ $APPLICATION->IncludeComponent(
 			)
 		),
 		'SHOW_CHECK_ALL_CHECKBOXES' => false,
-		'SHOW_ROW_CHECKBOXES' => false,
+		'SHOW_ROW_CHECKBOXES' => $arParams['SHOW_ROW_CHECKBOXES'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE']
 	),
 	$component

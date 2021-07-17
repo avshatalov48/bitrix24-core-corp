@@ -11,7 +11,9 @@ return [
 		'main.core',
 		'mobile.imageviewer',
 		'ui.icons.disk',
-		'mobile.ajax'
+		'mobile.ajax',
+		'ui.vue.components.audioplayer',
+		'ui.vue'
 	],
 	'skip_core' => false,
 ];

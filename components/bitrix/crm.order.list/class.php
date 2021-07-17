@@ -264,6 +264,19 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$select['USER_ACTIVITY_SUBJECT'] = 'ACTIVITY.SUBJECT';
 		}
 	}
+
+	/**
+	 * @param array $runtime
+	 */
+	protected function addOrderDealRuntime(array &$runtime): void
+	{
+		$runtime[] = new Main\ORM\Fields\Relations\Reference('ORDER_DEAL',
+			\Bitrix\Crm\Binding\OrderDealTable::getEntity(),
+			['=ref.ORDER_ID' => 'this.ID',],
+			['join_type' => 'LEFT',]
+		);
+	}
+
 	protected function addActivityCounterFilter(array &$filter, array &$glFilter, array &$runtime)
 	{
 		if(is_array($filter['ACTIVITY_COUNTER']))
@@ -715,12 +728,16 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			elseif($name === 'ASSOCIATED_DEAL_ID')
 			{
 				$result['=ORDER_DEAL.DEAL_ID'] = $v;
-
-				$runtime[] = new Main\ORM\Fields\Relations\Reference('ORDER_DEAL',
-					\Bitrix\Crm\Binding\OrderDealTable::getEntity(),
-					['=ref.ORDER_ID' => 'this.ID',],
-					['join_type' => 'LEFT',]
+				$this->addOrderDealRuntime($runtime);
+			}
+			elseif($name === 'HAS_ASSOCIATED_DEAL')
+			{
+				$key = sprintf(
+					'%s=ORDER_DEAL.ORDER_ID',
+					($v === 'Y') ? '!' : ''
 				);
+				$result[$key] = null;
+				$this->addOrderDealRuntime($runtime);
 			}
 			elseif($name === 'COUPON')
 			{

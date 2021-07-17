@@ -1,0 +1,9 @@
+<?php
+$MESS['IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_ADMIN_NOTIFY'] = 'Компания Microsoft с 31 октября 2019 года больше не принимает запросы на публикацию чат-ботов Skype.<br>В ближайшее время станет недоступно подключение канала Microsoft Bot Framework к Открытым линиям Битрикс24.<br>Все чат-боты, подключенные через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email и др.), будут принудительно отключены. <a href="#HREF#" target="_blank">Подробнее</a>';
+$MESS['IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_CHAT'] = 'Компания Microsoft с 31 октября 2019 года больше не принимает запросы на публикацию чат-ботов Skype.
+В ближайшее время станет недоступно подключение канала Microsoft Bot Framework к Открытым линиям Битрикс24.
+Все чат-боты, подключенные через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email и др.), будут принудительно отключены.  #A_START#Подробнее#A_END#.';
+$MESS['IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_ADMIN_NOTIFY'] = 'Компания Microsoft с 31 октября 2019 года больше не принимает запросы на публикацию чат-ботов Skype.<br>Канала Microsoft Bot Framework больше нельзя подключить к Открытым линиям Битрикс24.<br>Все чат-боты, подключенные через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email и др.), были принудительно отключены. <a href="#HREF#" target="_blank">Подробнее</a>';
+$MESS['IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_CHAT'] = 'Компания Microsoft с 31 октября 2019 года больше не принимает запросы на публикацию чат-ботов Skype.
+Канала Microsoft Bot Framework больше нельзя подключить к Открытым линиям Битрикс24.
+Все чат-боты, подключенные через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email и др.), были принудительно отключены. #A_START#Подробнее#A_END#.';

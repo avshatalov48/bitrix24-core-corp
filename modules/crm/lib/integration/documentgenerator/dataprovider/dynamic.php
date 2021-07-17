@@ -321,10 +321,15 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 
 	public function getStage($placeholder): ?string
 	{
+		$statusId = $this->data[$placeholder . '_ID'];
+		if (empty($statusId))
+		{
+			return null;
+		}
 		$factory = $this->getFactory();
 		if ($factory)
 		{
-			$stage = $factory->getStage($this->data[$placeholder . '_ID']);
+			$stage = $factory->getStage($statusId);
 			if ($stage)
 			{
 				return $stage->getName();

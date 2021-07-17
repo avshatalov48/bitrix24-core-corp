@@ -30,3 +30,6 @@ $MESS["CRM_PRODUCT_ROW_FIELD_MEASURE_NAME"] = "Единица измерения
 $MESS["CRM_PRODUCT_ROW_FIELD_SORT"] = "Сортировка";
 $MESS["CRM_PRODUCT_ROW_FIELD_CATALOG_XML_ID"] = "Внешний код каталога";
 $MESS["CRM_PRODUCT_ROW_FIELD_PRODUCT_XML_ID"] = "Внешний код продукта";
+$MESS["CRM_PRODUCT_ROW_DELIVERY"] = "Доставка";
+$MESS["CRM_PRODUCT_ROW_DISCOUNT"] = "Скидка";
+?>

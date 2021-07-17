@@ -5,6 +5,7 @@ $MESS["MENU_TASKS"] = "Задачи и Проекты";
 $MESS["MENU_CALENDAR"] = "Календарь";
 $MESS["MENU_SITES"] = "Сайты";
 $MESS["MENU_KNOWLEDGE"] = "База знаний";
+$MESS["MENU_DISK_DOCUMENTS"] = "Документы";
 $MESS["MENU_PHOTO"] = "Фотографии";
 $MESS["MENU_MAIL"] = "Почта";
 $MESS["MENU_GROUP_SECTION"] = "Группы";

@@ -91,9 +91,9 @@ class Status
 	 *
 	 * @param $connector
 	 * @param string $line
-	 * @return mixed
+	 * @return self
 	 */
-	public static function getInstance($connector, $line = '#empty#')
+	public static function getInstance($connector, $line = '#empty#'): Status
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
@@ -180,6 +180,53 @@ class Status
 		];
 		$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 		$event->send();
+
+		if(!empty($delete) && is_object($delete) && $delete->isSuccess())
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Removal of all lines for the connector, except one
+	 *
+	 * @param string $connector ID connector.
+	 * @param string $lineToKeep ID open line to be keeped.
+	 * @return bool
+	 */
+	public static function deleteLinesExcept(string $connector, int $lineToKeep)
+	{
+		if (!empty(self::$instance[$connector]) && is_array(self::$instance[$connector]))
+		{
+			foreach (self::$instance[$connector] as $lineId => $_)
+			{
+				if ($lineId != $lineToKeep)
+				{
+					unset(self::$instance[$connector][$lineId]);
+				}
+			}
+		}
+
+		$raw = StatusConnectorsTable::getList([
+			'select' => ['ID', 'LINE'],
+			'filter' => [
+				'!=LINE' => $lineToKeep,
+				'=CONNECTOR' => $connector
+			]
+		]);
+		while($row = $raw->fetch())
+		{
+			$delete = StatusConnectorsTable::delete($row['ID']);
+			self::cleanCache($connector, $row['LINE']);
+
+			//Event
+			$dataEvent = [
+				"connector" => $connector,
+				"line" => $row['LINE'],
+			];
+			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
+			$event->send();
+		}
 
 		if(!empty($delete) && is_object($delete) && $delete->isSuccess())
 			return true;

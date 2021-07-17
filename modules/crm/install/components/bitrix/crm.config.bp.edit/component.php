@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -19,6 +23,8 @@ if (!CModule::IncludeModule('bizprocdesigner'))
 	return;
 }
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 $CrmPerms = new CCrmPerms($USER->GetID());
 if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
@@ -26,44 +32,71 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-$arTypes = Array(
-	'CRM_LEAD' => array(
+$arTypes = [
+	'CRM_LEAD' => [
 		'ID' => 'CRM_LEAD',
 		'NAME' => GetMessage('CRM_BP_LEAD'),
 		'DOCUMENT' => 'CCrmDocumentLead',
 		'TYPE' => 'LEAD'
-	),
-	'CRM_CONTACT' => array(
+	],
+	'CRM_CONTACT' => [
 		'ID' => 'CRM_CONTACT',
 		'NAME' => GetMessage('CRM_BP_CONTACT'),
 		'DOCUMENT' => 'CCrmDocumentContact',
 		'TYPE' => 'CONTACT'
-	),
-	'CRM_COMPANY' => array(
+	],
+	'CRM_COMPANY' => [
 		'ID' => 'CRM_COMPANY',
 		'NAME' => GetMessage('CRM_BP_COMPANY'),
 		'DOCUMENT' => 'CCrmDocumentCompany',
 		'TYPE' => 'COMPANY'
-	),
-	'CRM_DEAL' => array(
+	],
+	'CRM_DEAL' => [
 		'ID' => 'CRM_DEAL',
 		'NAME' => GetMessage('CRM_BP_DEAL'),
 		'DOCUMENT' => 'CCrmDocumentDeal',
 		'TYPE' => 'DEAL'
-	),
-	'CRM_ORDER' => array(
+	],
+	'CRM_ORDER' => [
 		'ID' => 'CRM_ORDER',
 		'NAME' => GetMessage('CRM_BP_ORDER'),
 		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Order::class,
 		'TYPE' => 'ORDER'
-	),
-	'CRM_INVOICE' => array(
+	],
+	'CRM_INVOICE' => [
 		'ID' => 'CRM_INVOICE',
 		'NAME' => GetMessage('CRM_BP_INVOICE'),
 		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Invoice::class,
 		'TYPE' => 'INVOICE'
-	)
-);
+	],
+	'CRM_QUOTE' => [
+		'ID' => 'CRM_QUOTE',
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE'),
+		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Quote::class,
+		'TYPE' => 'QUOTE',
+	],
+];
+
+$dynamicTypesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap();
+$dynamicTypesMap->load([
+	'isLoadStages' => false,
+	'isLoadCategories' => false,
+]);
+
+foreach ($dynamicTypesMap->getTypes() as $type)
+{
+	if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerSupported($type->getEntityTypeId()))
+	{
+		$typeId = "CRM_DYNAMIC_{$type->getEntityTypeId()}";
+
+		$arTypes[$typeId] = [
+			'ID' => $typeId,
+			'NAME' => $type->getTitle(),
+			'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class,
+			'TYPE' => CCrmOwnerType::ResolveName($type->getEntityTypeId()),
+		];
+	}
+}
 
 $arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['BP_ENTITY_ID'];
 $arResult['BP_ID'] = isset($_REQUEST['bp_id']) ? $_REQUEST['bp_id']: $arParams['BP_BP_ID'];
@@ -72,26 +105,36 @@ $arResult['DOCUMENT_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['TYPE'];
 $arResult['ENTITY_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['DOCUMENT'];
 define('CRM_ENTITY', $arResult['ENTITY_TYPE']);
 
+$arResult['IS_BIZPROC_DESIGNER_ENABLED'] = \Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled(
+	CCrmOwnerType::ResolveID($arResult['DOCUMENT_TYPE'])
+);
+
 $arResult['~ENTITY_LIST_URL'] = $arParams['~ENTITY_LIST_URL'];
 $arResult['ENTITY_LIST_URL'] = htmlspecialcharsbx($arResult['~ENTITY_LIST_URL']);
 
 $arResult['~BP_LIST_URL'] = str_replace('#entity_id#', $arResult['ENTITY_ID'], $arParams['~BP_LIST_URL']);
 $arResult['BP_LIST_URL'] = htmlspecialcharsbx($arResult['~BP_LIST_URL']);
 
-$arResult['~BP_EDIT_URL'] = str_replace(	array('#entity_id#'),	array($arResult['ENTITY_ID']),	$arParams['~BP_EDIT_URL']);
+$arResult['~BP_EDIT_URL'] = str_replace(['#entity_id#'], [$arResult['ENTITY_ID']], $arParams['~BP_EDIT_URL']);
 $arResult['BP_EDIT_URL'] = htmlspecialcharsbx($arResult['~BP_EDIT_URL']);
 
 $arTemplate = null;
-if ($arResult['BP_ID'] <> '')
+if ($arResult['BP_ID'] != '')
 {
 	$db_res = CBPWorkflowTemplateLoader::GetList(
-		array($by => $order),
-		array('DOCUMENT_TYPE' => array('crm', $arResult['ENTITY_TYPE'], $arResult['DOCUMENT_TYPE']), 'ID' => $arResult['BP_ID']),
+		[$by => $order],
+		[
+			'DOCUMENT_TYPE' => ['crm', $arResult['ENTITY_TYPE'], $arResult['DOCUMENT_TYPE']],
+			'ID' => $arResult['BP_ID']
+		],
 		false,
 		false,
-		array('ID', 'NAME'));
+		['ID', 'NAME']
+	);
 	if ($db_res)
+	{
 		$arTemplate = $db_res->Fetch();
+	}
 }
 
 $this->IncludeComponentTemplate();

@@ -100,7 +100,8 @@ if (Loader::includeModule('catalog'))
 					.'#PARENT_FILTER#'
 					.'#ADDITIONAL_PARAMETERS#';
 				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = '#PATH_PREFIX#'
-					.'#IBLOCK_ID#/product/#ENTITY_ID#/';
+					.'#IBLOCK_ID#/product/#ENTITY_ID#/'
+					.'?#ADDITIONAL_PARAMETERS#';
 				$this->urlTemplates[self::PAGE_ELEMENT_COPY] = '#PATH_PREFIX#'
 					.'#IBLOCK_ID#/product/0/copy/#ENTITY_ID#/';
 				$this->urlTemplates[self::PAGE_ELEMENT_SAVE] = $this->urlTemplates[self::PAGE_ELEMENT_DETAIL];
@@ -128,6 +129,9 @@ if (Loader::includeModule('catalog'))
 				$this->urlTemplates[self::PAGE_ELEMENT_DETAIL] = '#PATH_PREFIX#'
 					.'show/'
 					.'#ENTITY_ID#/';
+				$this->urlTemplates[self::PAGE_OFFER_DETAIL] = '#PATH_PREFIX#'
+					.'show/'
+					.'#PRODUCT_ID#/';
 			}
 
 			$this->urlTemplates[self::PAGE_CSV_IMPORT] = '#PATH_PREFIX#'

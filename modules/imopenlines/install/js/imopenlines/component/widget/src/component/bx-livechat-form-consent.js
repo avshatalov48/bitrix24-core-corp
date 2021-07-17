@@ -7,10 +7,10 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 
-Vue.component('bx-livechat-form-consent',
+BitrixVue.component('bx-livechat-form-consent',
 {
 	/**
 	 * @emits 'agree' {event: object} -- 'event' - click event
@@ -18,10 +18,6 @@ Vue.component('bx-livechat-form-consent',
 	 */
 	computed:
 	{
-		localize()
-		{
-			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-		},
 		...Vuex.mapState({
 			widget: state => state.widget,
 		})
@@ -116,13 +112,13 @@ Vue.component('bx-livechat-form-consent',
 		<transition @enter="onShow" @leave="onHide">
 			<template v-if="widget.common.showConsent && widget.common.consentUrl">
 				<div class="bx-livechat-consent-window">
-					<div class="bx-livechat-consent-window-title">{{localize.BX_LIVECHAT_CONSENT_TITLE}}</div>
+					<div class="bx-livechat-consent-window-title">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_TITLE')}}</div>
 					<div class="bx-livechat-consent-window-content">
 						<iframe class="bx-livechat-consent-window-content-iframe" ref="iframe" frameborder="0" marginheight="0"  marginwidth="0" allowtransparency="allow-same-origin" seamless="true" :src="widget.common.consentUrl" @keydown="onKeyDown"></iframe>
 					</div>								
 					<div class="bx-livechat-consent-window-btn-box">
-						<button class="bx-livechat-btn bx-livechat-btn-success" ref="success" @click="agree" @keydown="onKeyDown" v-focus>{{localize.BX_LIVECHAT_CONSENT_AGREE}}</button>
-						<button class="bx-livechat-btn bx-livechat-btn-cancel" ref="cancel" @click="disagree" @keydown="onKeyDown">{{localize.BX_LIVECHAT_CONSENT_DISAGREE}}</button>
+						<button class="bx-livechat-btn bx-livechat-btn-success" ref="success" @click="agree" @keydown="onKeyDown" v-focus>{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_AGREE')}}</button>
+						<button class="bx-livechat-btn bx-livechat-btn-cancel" ref="cancel" @click="disagree" @keydown="onKeyDown">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_DISAGREE')}}</button>
 					</div>
 				</div>
 			</template>

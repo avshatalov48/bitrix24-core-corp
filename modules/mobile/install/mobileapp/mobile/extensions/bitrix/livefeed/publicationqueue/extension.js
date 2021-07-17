@@ -342,7 +342,8 @@
 			BX.ajax.runAction('socialnetwork.api.livefeed.blogpost.add', {
 				data: {
 					params: Object.assign({
-						PARSE_PREVIEW: 'Y'
+						MOBILE: 'Y',
+						PARSE_PREVIEW: 'Y',
 					}, fields)
 				},
 				analyticsLabel: {
@@ -351,10 +352,12 @@
 				}
 			}).then(response => {
 				let errors = response.errors;
-				if(errors && errors.length > 0)
+				if (errors && errors.length > 0)
 				{
 					BX.postWebEvent('Livefeed.PublicationQueue::afterPostAddError', {
-						errorText: false,
+						errorText: errors.filter(error => error.customData && error.customData.public === 'Y')
+							.map(error => error.message)
+							.join("\n"),
 						context: context,
 						key: key,
 						postData: fields,
@@ -368,12 +371,14 @@
 						pageId: pageId,
 						context: context,
 						key: key,
-						groupId: groupId
+						groupId: groupId,
+						warningText: (response.data.warnings ? response.data.warnings : []).join("\n"),
 					});
+					analytics.send("addLogEntry", {}, ["fbonly"]);
 				}
 			}).catch(response => {
 				let errors = response.errors;
-				if(errors && errors.length > 0)
+				if (errors && errors.length > 0)
 				{
 					BX.postWebEvent('Livefeed.PublicationQueue::afterPostAddError', {
 						errorText: false,
@@ -403,7 +408,8 @@
 				data: {
 					id: postId,
 					params: Object.assign({
-						PARSE_PREVIEW: 'Y'
+						MOBILE: 'Y',
+						PARSE_PREVIEW: 'Y',
 					}, fields)
 				},
 				analyticsLabel: {
@@ -415,7 +421,9 @@
 				if(errors && errors.length > 0)
 				{
 					BX.postWebEvent('Livefeed.PublicationQueue::afterPostUpdateError', {
-						errorText: false,
+						errorText: errors.filter(error => error.customData && error.customData.public === 'Y')
+							.map(error => error.message)
+							.join("\n"),
 						context: context,
 						key: key,
 						postId: postId,
@@ -431,6 +439,7 @@
 						key: key,
 						pinned: (!!params.pinned)
 					});
+					analytics.send("editLogEntry", {}, ["fbonly"]);
 				}
 
 			}).catch(response => {

@@ -1,9 +1,10 @@
 <?php
-define("STOP_STATISTICS", true);
-define("NO_KEEP_STATISTIC", "Y");
-define("NO_AGENT_STATISTIC","Y");
-define("DisableEventsCheck", true);
-define("BX_SECURITY_SHOW_MESSAGE", true);
+
+define('STOP_STATISTICS', true);
+define('NO_KEEP_STATISTIC', 'Y');
+define('NO_AGENT_STATISTIC', 'Y');
+define('DisableEventsCheck', true);
+define('BX_SECURITY_SHOW_MESSAGE', true);
 define('NOT_CHECK_PERMISSIONS', true);
 
 $siteId = isset($_REQUEST['SITE_ID']) && is_string($_REQUEST['SITE_ID']) ? $_REQUEST['SITE_ID'] : '';
@@ -23,22 +24,31 @@ if (!check_bitrix_sessid() && !$request->isPost())
 	die();
 }
 
-$params = \Bitrix\Main\Component\ParameterSigner::unsignParameters("bitrix:salescenter.payment.pay", $request->get('signedParameters'));
+$params = \Bitrix\Main\Component\ParameterSigner::unsignParameters(
+	'bitrix:salescenter.payment.pay',
+	$request->get('signedParameters')
+);
+
+if (isset($request['orderId']))
+{
+	$params['ORDER_ID'] = (int)$request->get('orderId');
+}
+
 $params['PAY_SYSTEM_ID'] = (int)$request->get('paysystemId');
 $params['RETURN_URL'] = (string)$request->get('returnUrl');
 
-CBitrixComponent::includeComponentClass("bitrix:salescenter.payment.pay");
+CBitrixComponent::includeComponentClass('bitrix:salescenter.payment.pay');
 
-$salesCenterPaymentObject = new SalesCenterPaymentPay();
-$salesCenterPaymentObject->initComponent('bitrix:salescenter.payment.pay');
-$params = $salesCenterPaymentObject->onPrepareComponentParams($params);
+$component = new SalesCenterPaymentPay();
+$component->initComponent('bitrix:salescenter.payment.pay');
+$params = $component->onPrepareComponentParams($params);
 $initiatePayResult = null;
 
 $result = [];
 
-if ($salesCenterPaymentObject->getErrorCollection()->isEmpty())
+if ($component->getErrorCollection()->isEmpty())
 {
-	$initiatePayResult = $salesCenterPaymentObject->initiatePayAction($params);
+	$initiatePayResult = $component->initiatePayAction($params);
 	if ($initiatePayResult->isSuccess())
 	{
 		$result = [
@@ -49,7 +59,7 @@ if ($salesCenterPaymentObject->getErrorCollection()->isEmpty())
 		$result['status'] = 'success';
 		if (empty($result['html']))
 		{
-			$payment = $salesCenterPaymentObject->getPayment();
+			$payment = $component->getPayment();
 			if ($payment)
 			{
 				$result['fields'] = [
@@ -61,18 +71,20 @@ if ($salesCenterPaymentObject->getErrorCollection()->isEmpty())
 	}
 	else
 	{
-		$salesCenterPaymentObject->getErrorCollection()->add($initiatePayResult->getBuyerErrors());
+		$component->getErrorCollection()->add($initiatePayResult->getBuyerErrors());
 	}
 }
 
-if (($initiatePayResult && !$initiatePayResult->isSuccess())
-	|| $salesCenterPaymentObject->getErrorCollection()->count() > 0)
+if (
+	($initiatePayResult && !$initiatePayResult->isSuccess())
+	|| $component->getErrorCollection()->count() > 0
+)
 {
 	$result['status'] = 'error';
 	$result['errors'] = [];
 
 	/** @var \Bitrix\Main\Error $error */
-	foreach ($salesCenterPaymentObject->getErrorCollection() as $error)
+	foreach ($component->getErrorCollection() as $error)
 	{
 		$result['errors'][$error->getCode()][] = $error->getMessage();
 	}
@@ -80,6 +92,5 @@ if (($initiatePayResult && !$initiatePayResult->isSuccess())
 
 global $APPLICATION;
 $APPLICATION->RestartBuffer();
-
 echo \Bitrix\Main\Web\Json::encode($result);
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');

@@ -3,7 +3,10 @@
 use Bitrix\Main;
 use Bitrix\Main\Localization;
 use Bitrix\Crm\Order;
-use Bitrix\Sale\Delivery;
+use Bitrix\Sale;
+use Bitrix\Catalog;
+use Bitrix\Catalog\v2\Helpers;
+use Bitrix\Iblock;
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Main\Loader;
 
@@ -11,17 +14,18 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 Main\Loader::includeModule('sale');
 
-CBitrixComponent::includeComponentClass("bitrix:sale.personal.order.detail");
-
-class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
+class SalesCenterOrderDetails extends CBitrixComponent
 {
+	/** @var Order\Order $order */
+	protected $order;
+
 	public function onPrepareComponentParams($params)
 	{
-		self::tryParseInt($params["CACHE_TIME"], 3600, true);
-
+		$params["CACHE_TIME"] = 3600;
 		$params['CACHE_GROUPS'] = (isset($params['CACHE_GROUPS']) && $params['CACHE_GROUPS'] == 'N' ? 'N' : 'Y');
 
 		$params['ID'] = (int)$params['ID'];
+		$params['PAYMENT_ID'] = (int)$params['PAYMENT_ID'];
 
 		$params['ALLOW_INNER'] = 'N';
 
@@ -40,14 +44,16 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 		}
 
 		// resample sizes
-		self::tryParseInt($params["PICTURE_WIDTH"], 110);
-		self::tryParseInt($params["PICTURE_HEIGHT"], 110);
+		$params["PICTURE_WIDTH"] = $params["PICTURE_WIDTH"] ?? 110;
+		$params["PICTURE_HEIGHT"] = $params["PICTURE_HEIGHT"] ?? 110;
 
 		// resample type for images
-		if(!in_array($params['RESAMPLE_TYPE'], array(BX_RESIZE_IMAGE_EXACT, BX_RESIZE_IMAGE_PROPORTIONAL, BX_RESIZE_IMAGE_PROPORTIONAL_ALT)))
+		if (!in_array($params['RESAMPLE_TYPE'], [BX_RESIZE_IMAGE_EXACT, BX_RESIZE_IMAGE_PROPORTIONAL, BX_RESIZE_IMAGE_PROPORTIONAL_ALT]))
+		{
 			$params['RESAMPLE_TYPE'] = BX_RESIZE_IMAGE_PROPORTIONAL;
+		}
 
-		if(!$params['HEADER_TITLE'])
+		if (!$params['HEADER_TITLE'])
 		{
 			if (Loader::includeModule('crm'))
 			{
@@ -80,7 +86,7 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 	 */
 	protected function checkOrder()
 	{
-		if (!($this->order))
+		if (!$this->order)
 		{
 			$this->doCaseOrderIdNotSet();
 		}
@@ -95,8 +101,7 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 	protected function doCaseOrderIdNotSet()
 	{
 		throw new Main\SystemException(
-			Localization\Loc::getMessage("SPOD_NO_ORDER", array("#ID#" => $this->arParams["ID"])),
-			self::E_ORDER_NOT_FOUND
+			Localization\Loc::getMessage("SPOD_NO_ORDER", array("#ID#" => $this->arParams["ID"]))
 		);
 	}
 
@@ -105,184 +110,344 @@ class SalesCenterOrderDetails extends CBitrixPersonalOrderDetailComponent
 		$context = Main\Context::getCurrent();
 		$request = $context->getRequest();
 
-		$this->loadOrder(urldecode(urldecode($this->arParams["ID"])));
-		$this->checkOrder();
-
 		if ($request->get('access') !== $this->order->getHash())
 		{
-			$msg = Localization\Loc::getMessage("SPOD_ACCESS_DENIED");
-			throw new Main\SystemException($msg, self::E_NOT_AUTHORIZED);
+			throw new Main\SystemException(
+				Localization\Loc::getMessage("SPOD_ACCESS_DENIED")
+			);
 		}
 	}
 
-	protected function obtainDataPaySystem()
+	protected function loadOrder($id)
 	{
-		return;
-	}
+		$registry = Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Order\Order $orderClassName */
+		$orderClassName = $registry->getOrderClassName();
 
-	/**
-	 * @return array
-	 */
-	protected function createCacheId()
-	{
-		global $APPLICATION;
-
-		return array(
-			$APPLICATION->GetCurPage(),
-			$this->dbResult["ID"],
-			$this->dbResult["PERSON_TYPE_ID"],
-			$this->dbResult["DATE_UPDATE"]->toString(),
-			$this->useCatalog,
-			false
-		);
+		if (!$this->order)
+		{
+			$this->order = $orderClassName::load($id);
+		}
 	}
 
 	protected function obtainData()
 	{
-		parent::obtainData();
+		$this->obtainOrder();
+		$this->obtainBasket();
+		$this->obtainShipment();
+		$this->obtainPrice();
+		$this->obtainPayment();
+	}
 
-		if (Main\Loader::includeModule('crm'))
+	protected function obtainPayment()
+	{
+		$payment = null;
+
+		if ($this->arParams['PAYMENT_ID'])
 		{
-			if ($this->needAddTimelineEntityOnOpen())
+			$payment = $this->order->getPaymentCollection()->getItemById($this->arParams['PAYMENT_ID']);
+		}
+		else
+		{
+			/** @var Order\Payment $item */
+			foreach ($this->order->getPaymentCollection() as $item)
 			{
-				$this->addTimelineEntityOnView();
-
-				/** @var Order\DealBinding $dealBinding */
-				$dealBinding = $this->order->getDealBinding();
-				if ($dealBinding)
+				if (!$item->isPaid())
 				{
-					$this->changeOrderStageDealOnViewedNoPaid(
-						$dealBinding->getDealId()
+					$payment = $item;
+					break;
+				}
+			}
+		}
+
+		if ($payment)
+		{
+			$this->arResult['ACCOUNT_NUMBER'] = $payment->getField('ACCOUNT_NUMBER');
+			$this->arResult['PAYMENT'] = $payment->getFieldValues();
+
+			$dateBill = $payment->getField('DATE_BILL');
+			if ($dateBill instanceof Main\Type\DateTime)
+			{
+				$date = new Main\Type\Date($dateBill);
+				$this->arResult['DATE_BILL_FORMATTED'] = $date;
+			}
+			else
+			{
+				$this->arResult['DATE_BILL_FORMATTED'] = $dateBill;
+			}
+		}
+	}
+
+	protected function getPaymentId()
+	{
+		if (
+			isset($this->arParams['PAYMENT_ID'])
+			&& $this->arParams['PAYMENT_ID'] > 0
+		)
+		{
+			return $this->arParams['PAYMENT_ID'];
+		}
+
+		return 0;
+	}
+
+	protected function obtainOrder()
+	{
+		$this->arResult['CURRENCY'] = $this->order->getCurrency();
+	}
+
+	protected function obtainBasket()
+	{
+		$this->arResult['BASKET'] = [];
+
+		if ($this->arParams['PAYMENT_ID'])
+		{
+			/** @var Order\Payment $payment */
+			$payment = $this->order->getPaymentCollection()->getItemById($this->arParams['PAYMENT_ID']);
+			if ($payment)
+			{
+				/** @var Order\PayableBasketItem $item */
+				foreach ($payment->getPayableItemCollection()->getBasketItems() as $item)
+				{
+					/** @var Order\BasketItem $basketItem */
+					$basketItem = $item->getEntityObject();
+
+					$basketValues = $this->extractBasketItemData($basketItem);
+					$basketValues['QUANTITY'] = $item->getQuantity();
+
+					$this->arResult['BASKET'][$basketValues['ID']] = $basketValues;
+				}
+			}
+		}
+		elseif ($this->order)
+		{
+			foreach ($this->order->getBasket() as $basketItem)
+			{
+				$basketValues = $this->extractBasketItemData($basketItem);
+
+				$this->arResult['BASKET'][$basketValues['ID']] = $basketValues;
+			}
+		}
+	}
+
+	protected function extractBasketItemData(Order\BasketItem $basketItem)
+	{
+		$discounts = $this->order->getDiscount();
+		$showPrices = $discounts->getShowPrices();
+
+		$data = $showPrices['BASKET'][$basketItem->getBasketCode()];
+
+		$basketItem->setFieldNoDemand('BASE_PRICE', $data['SHOW_BASE_PRICE']);
+		$basketItem->setFieldNoDemand('PRICE', $data['SHOW_PRICE']);
+		$basketItem->setFieldNoDemand('DISCOUNT_PRICE', $data['SHOW_DISCOUNT']);
+
+		$basketValues = $basketItem->getFieldValues();
+
+		$propertyCollection = $basketItem->getPropertyCollection();
+		$basketValues['PROPERTIES'] = $propertyCollection ? $propertyCollection->getPropertyValues() : [];
+		unset($basketValues['PROPERTIES']['CATALOG.XML_ID'], $basketValues['PROPERTIES']['PRODUCT.XML_ID']);
+
+		$basketValues['FORMATED_PRICE'] = SaleFormatCurrency($basketValues["PRICE"], $basketValues["CURRENCY"]);
+		$basketValues['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketValues["BASE_PRICE"], $basketValues["CURRENCY"]);
+
+		$iblockId = static::getIblockId($basketValues['PRODUCT_ID']);
+		if ($iblockId)
+		{
+			$productRepository = Catalog\v2\IoC\ServiceContainer::getProductRepository($iblockId);
+			if ($productRepository)
+			{
+				$product = $productRepository->getEntityById($basketValues['PRODUCT_ID']);
+				if (!$product)
+				{
+					$skuRepository = Catalog\v2\IoC\ServiceContainer::getSkuRepository($iblockId);
+					if ($skuRepository)
+					{
+						/** @var Catalog\v2\BaseEntity $product */
+						$product = $skuRepository->getEntityById($basketValues['PRODUCT_ID']);
+					}
+				}
+
+				$imageCollection = $product->getFrontImageCollection();
+				$frontImage = $imageCollection->getFrontImage();
+
+				$frontImageData = null;
+				if ($frontImage)
+				{
+					$frontImageData = $frontImage->getFields();
+				}
+
+				if ($frontImageData
+					&& isset($frontImageData['FILE_STRUCTURE'])
+					&&
+					(
+						$this->arParams['PICTURE_WIDTH']
+						|| $this->arParams['PICTURE_HEIGHT']
+					)
+				)
+				{
+					$arFileTmp = CFile::ResizeImageGet(
+						$frontImageData['FILE_STRUCTURE'],
+						array("width" => $this->arParams['PICTURE_WIDTH'], "height" => $this->arParams['PICTURE_HEIGHT']),
+						$this->arParams['PICTURE_RESAMPLE_TYPE'],
+						true
 					);
+
+					$basketValues["PICTURE"] = array_change_key_case($arFileTmp, CASE_UPPER);
 				}
-			}
-		}
-	}
-
-	protected function obtainDataOrder()
-	{
-		parent::obtainDataOrder();
-
-		$this->dbResult['SHIPMENT'] = array_values(
-			array_filter(
-				$this->dbResult['SHIPMENT'],
-				function ($item)
+				else
 				{
-					return (int)$item['DELIVERY_ID'] !== (int)Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+					$basketValues["PICTURE"] = $frontImageData['FILE_STRUCTURE'];
 				}
-			)
-		);
-	}
+			}
 
-	protected function obtainBasket(&$cached)
-	{
-		parent::obtainBasket($cached);
-
-		foreach ($cached['BASKET'] as &$basketItem)
-		{
-			$basketItem['FORMATED_PRICE'] = SaleFormatCurrency($basketItem["PRICE"], $basketItem["CURRENCY"]);
-			$basketItem['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketItem["BASE_PRICE"], $basketItem["CURRENCY"]);
-		}
-	}
-
-	/**
-	 * @param $item
-	 * @return int
-	 */
-	protected function getPictureId($item): int
-	{
-		$result = 0;
-
-		if ((int)$item['PROPERTY_MORE_PHOTO_VALUE'] > 0)
-		{
-			$result = $item['PROPERTY_MORE_PHOTO_VALUE'];
-		}
-		elseif ((int)$item['DETAIL_PICTURE'] > 0)
-		{
-			$result = $item['DETAIL_PICTURE'];
-		}
-		elseif ((int)$item['PREVIEW_PICTURE'] > 0)
-		{
-			$result = $item['PREVIEW_PICTURE'];
 		}
 
-		return (int)$result;
+		return $basketValues;
 	}
 
-	private function changeOrderStageDealOnViewedNoPaid($dealId)
+	protected function obtainShipment()
 	{
-		$fields = ['ORDER_STAGE' => Order\OrderStage::VIEWED_NO_PAID];
-
-		$deal = new \CCrmDeal(false);
-		$deal->Update($dealId, $fields);
-	}
-
-	/**
-	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	protected function needAddTimelineEntityOnOpen()
-	{
-		$dbRes = \Bitrix\Crm\Timeline\Entity\TimelineTable::getList([
-			'filter' => [
-				'TYPE_ID' => \Bitrix\Crm\Timeline\TimelineType::ORDER,
-				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ASSOCIATED_ENTITY_ID' => $this->order->getId()
-			]
-		]);
-
-		while ($item = $dbRes->fetch())
+		if ($this->arParams['PAYMENT_ID'])
 		{
-			if (isset($item['SETTINGS']['FIELDS']['VIEWED']))
+			/** @var Order\Payment $payment */
+			$payment = $this->order->getPaymentCollection()->getItemById($this->arParams['PAYMENT_ID']);
+			if ($payment)
 			{
-				return false;
+				/** @var Sale\PayableShipmentItem $item */
+				foreach ($payment->getPayableItemCollection()->getShipments() as $item)
+				{
+					/** @var Order\Shipment $shipment */
+					$shipment = $item->getEntityObject();
+					if (!$shipment)
+					{
+						continue;
+					}
+
+					$this->arResult['SHIPMENT'] = $this->extractShipmentData($shipment);
+				}
 			}
 		}
+		elseif ($this->order)
+		{
+			foreach ($this->order->getShipmentCollection() as $shipment)
+			{
+				$this->arResult['SHIPMENT'] = $this->extractShipmentData($shipment);
+			}
+		}
+	}
 
-		global $USER;
+	protected function extractShipmentData(Order\Shipment $shipment)
+	{
+		$fields = $shipment->getFieldValues();
 
-		return
-			is_object($USER)
-			&& (int)$USER->GetID() !== (int)$this->order->getField('RESPONSIBLE_ID')
-		;
+			$fields["PRICE_DELIVERY_FORMATTED"] = SaleFormatCurrency(
+			$fields['PRICE_DELIVERY'],
+			$fields['CURRENCY']
+		);
+
+		return $fields;
+	}
+
+	public function obtainPrice()
+	{
+		if (isset($this->arResult['BASKET']))
+		{
+			$this->arResult['BASE_PRODUCT_SUM'] = 0;
+			$this->arResult['PRODUCT_SUM'] = 0;
+			$this->arResult['DISCOUNT_VALUE'] = 0;
+
+			foreach ($this->arResult['BASKET'] as $item)
+			{
+				$this->arResult['BASE_PRODUCT_SUM'] += $item["BASE_PRICE"] * $item['QUANTITY'];
+				$this->arResult['PRODUCT_SUM'] += $item["PRICE"] * $item['QUANTITY'];
+				$this->arResult['DISCOUNT_VALUE'] += $item["DISCOUNT_PRICE"] * $item['QUANTITY'];
+			}
+		}
+	}
+
+	private static function getIblockId($productId)
+	{
+		$iblockData = Iblock\ElementTable::getList([
+			'select' => ['IBLOCK_ID'],
+			'filter' => ['=ID' => $productId],
+			'cache' => ['ttl' => 86400],
+			'limit' => 1,
+		])->fetch();
+
+		return $iblockData['IBLOCK_ID'] ?? null;
 	}
 
 	/**
-	 * @throws Main\ArgumentException
+	 * Function implements all the life cycle of the component
+	 * @return void
 	 */
-	protected function addTimelineEntityOnView()
+	public function executeComponent()
 	{
-		$order = $this->order;
-
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $order->getId()
-			]
-		];
-
-		if ($order->getDealBinding())
+		try
 		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $order->getDealBinding()->getDealId()
-			];
+			$this->setFrameMode(false);
+			$this->checkRequiredModules();
+
+			$this->loadOrder(urldecode(urldecode($this->arParams["ID"])));
+
+			$this->checkOrder();
+			$this->checkAuthorized();
+
+			$this->obtainData();
+
+			$this->formatResultPrices();
+		}
+		catch(Exception $e)
+		{
+			$this->arResult['ERRORS']['FATAL'][$e->getCode()] = $e->getMessage();
 		}
 
-		$params = [
-			'ORDER_FIELDS' => $order->getFieldValues(),
-			'SETTINGS' => [
-				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
-				'FIELDS' => [
-					'ORDER_ID' => $order->getId(),
-					'VIEWED' => 'Y',
-				]
-			],
-			'BINDINGS' => $bindings
-		];
+		$this->includeComponentTemplate();
+	}
 
-		\Bitrix\Crm\Timeline\OrderController::getInstance()->onView($order->getId(), $params);
+	/**
+	 * Function formats price info in arResult
+	 * @return void
+	 */
+	protected function formatResultPrices()
+	{
+		$this->arResult["PRICE_FORMATED"] = SaleFormatCurrency($this->arResult["PAYMENT"]['SUM'], $this->arResult['CURRENCY']);
+		$this->arResult["PRODUCT_SUM_FORMATED"] = SaleFormatCurrency($this->arResult["PRODUCT_SUM"], $this->arResult["CURRENCY"]);
+		$this->arResult["BASE_PRODUCT_SUM_FORMATED"] = SaleFormatCurrency($this->arResult["BASE_PRODUCT_SUM"], $this->arResult["CURRENCY"]);
+		$this->arResult["PRODUCT_SUM_DISCOUNT_FORMATED"] = SaleFormatCurrency(
+			$this->arResult["BASE_PRODUCT_SUM"] - $this->arResult["PRODUCT_SUM"],
+			$this->arResult["CURRENCY"]
+		);
+
+		if (doubleval($this->arResult["DISCOUNT_VALUE"]))
+		{
+			$this->arResult["DISCOUNT_VALUE_FORMATED"] = SaleFormatCurrency(
+				$this->arResult["DISCOUNT_VALUE"],
+				$this->arResult["CURRENCY"]
+			);
+		}
+
+		if (doubleval($this->arResult["SUM_PAID"]))
+		{
+			$this->arResult["SUM_PAID_FORMATED"] = SaleFormatCurrency(
+				$this->arResult["SUM_PAID"],
+				$this->arResult["CURRENCY"]
+			);
+		}
+	}
+
+	/**
+	 * Function checks if required modules installed. If not, throws an exception
+	 * @throws Main\SystemException
+	 * @return void
+	 */
+	protected function checkRequiredModules()
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			throw new Main\SystemException(
+				Localization\Loc::getMessage("SPOD_SALE_MODULE_NOT_INSTALL")
+			);
+		}
 	}
 }

@@ -120,6 +120,11 @@ class CommonActions extends BaseObject
 		return $this->disableExternalLink($object);
 	}
 
+	public function getExternalLinkAction(Disk\BaseObject $object)
+	{
+		return $this->getExternalLink($object);
+	}
+
 	public function getAllowedOperationsRightsAction(Disk\BaseObject $object)
 	{
 		return $this->getAllowedOperationsRights($object);

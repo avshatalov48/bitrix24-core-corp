@@ -2027,7 +2027,9 @@ a {
 	padding: 1px 6px 0 0;
 	font-size: inherit;
 }
-
+.post-comment-detail .post-item-attached-file.post-item-attached-audio {
+	display: block;
+}
 .post-item-attached-file .ui-icon {
 	min-width: 24px;
 	max-width: 24px;
@@ -4599,6 +4601,10 @@ div.tasks-filter-custom-condition-element { padding: 10px }
 	padding-top: 11px;
 	text-align: center;
 	position: relative;
+}
+
+.task-status-text-color-completed {
+	text-decoration: line-through;
 }
 
 .task-title-folder-btn {

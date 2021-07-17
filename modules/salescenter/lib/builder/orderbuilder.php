@@ -7,11 +7,16 @@ use Bitrix\Sale;
 use Bitrix\Crm\Order;
 use Bitrix\SalesCenter\Integration;
 
-class OrderBuilder extends Order\OrderBuilderCrm
+class OrderBuilder extends Order\Builder\OrderBuilderCrm
 {
 	protected function prepareFields(array $fields)
 	{
 		$fields = parent::prepareFields($fields);
+
+		if (empty($fields['SITE_ID']))
+		{
+			$fields['SITE_ID'] = SITE_ID;
+		}
 
 		if (!empty($fields['CLIENT']['COMPANY_ID']))
 		{
@@ -27,127 +32,127 @@ class OrderBuilder extends Order\OrderBuilderCrm
 			$fields['RESPONSIBLE_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 		}
 
-		if (!isset($fields['USER_ID']))
-		{
-			$fields['USER_ID'] = (int)\CSaleUser::GetAnonymousUserID();
-		}
-
-		if (!isset($fields['TRADING_PLATFORM']))
-		{
-			if (Integration\LandingManager::getInstance()->isSiteExists())
-			{
-				$connectedSiteId = Integration\LandingManager::getInstance()->getConnectedSiteId();
-				$fields['TRADING_PLATFORM'] = Sale\TradingPlatform\Landing\Landing::getCodeBySiteId(
-					$connectedSiteId
-				);
-			}
-		}
-
 		return $fields;
 	}
 
-	protected function setDealBinding()
+	public function buildTradeBindings()
 	{
-		$dealId = $this->formData['DEAL_ID'] ?? 0;
-
-		if ((int)$dealId === 0)
+		if (
+			!isset($this->formData["TRADING_PLATFORM"])
+			&& (!$this->order || $this->order->getId() === 0)
+			&& Integration\LandingManager::getInstance()->isSiteExists()
+		)
 		{
-			$selector = Integration\SaleManager::getActualEntitySelector($this->order);
-			$dealId = (int)$selector->search()->getDealId();
+			$connectedSiteId = Integration\LandingManager::getInstance()->getConnectedSiteId();
+			$code = Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($connectedSiteId);
+			$platform = Sale\TradingPlatform\Landing\Landing::getInstanceByCode($code);
 
-			if ($dealId <= 0)
-			{
-				$dealData = Order\DealBinding::getList([
-					'select' => ['DEAL_ID'],
-					'filter' => [
-						'ORDER.USER_ID' => $this->formData['USER_ID'],
-						'DEAL.CLOSED' => 'N'
-					],
-					'limit' => 1,
-					'order' => ['DEAL_ID' => 'DESC']
-				])->fetch();
-
-				$dealId = $dealData['DEAL_ID'] ?? 0;
-			}
-
-			$this->formData['DEAL_ID'] = (int)$dealId;
+			$this->formData['TRADING_PLATFORM'] = $platform->getId();
 		}
 
-		return parent::setDealBinding();
+		return parent::buildTradeBindings();
 	}
 
 	public function buildPayments()
 	{
+		if (
+			empty($this->formData["PAYMENT"])
+			&& $this->needCreateDefaultPayment()
+		)
+		{
+			$fields = ['SUM' => 0];
+
+			$paySystem = $this->getDefaultPaySystem();
+			if ($paySystem)
+			{
+				$fields['PAY_SYSTEM_ID'] = $paySystem['ID'];
+				$fields['PAY_SYSTEM_NAME'] = $paySystem['NAME'];
+			}
+
+			foreach ($this->formData['PRODUCT'] as $index => $item)
+			{
+				$fields['SUM'] += Sale\PriceMaths::roundPrecision($item['QUANTITY'] * $item['PRICE']);
+
+				$fields['PRODUCT'][] = [
+					'BASKET_CODE' => $index,
+					'QUANTITY' => $item['QUANTITY']
+				];
+			}
+
+			$this->formData["PAYMENT"] = [$fields];
+		}
+
 		if (isset($this->formData["PAYMENT"]))
 		{
-			parent::buildPayments();
+			foreach ($this->formData["PAYMENT"] as &$item)
+			{
+				if (!isset($item['PAY_SYSTEM_ID']))
+				{
+					$paySystem = $this->getDefaultPaySystem();
+					if ($paySystem)
+					{
+						$item['PAY_SYSTEM_ID'] = $paySystem['ID'];
+						$item['PAY_SYSTEM_NAME'] = $paySystem['NAME'];
+					}
+				}
+			}
 		}
-		else
+
+		return parent::buildPayments();
+	}
+
+	protected function getDefaultPaySystem()
+	{
+		$paySystem = [];
+
+		$paySystemList = Sale\PaySystem\Manager::getListWithRestrictionsByOrder($this->order);
+
+		if ($this->isIMessageConnector())
 		{
-			$fields = [
-				'SUM' => $this->order->getPrice()
-			];
-			$payment = $this->createEmptyPayment();
-
-			$paySystemList = Sale\PaySystem\Manager::getListWithRestrictions($payment);
-
-			$applePayPaySystem = null;
-			$cashPaySystem = null;
-			$firstPaySystemInList = null;
-			foreach ($paySystemList as $paySystem)
+			foreach ($paySystemList as $item)
 			{
-				if ($this->isAllowApplePay($paySystem))
+				if (Integration\SaleManager::getInstance()->isApplePayPayment($item))
 				{
-					$applePayPaySystem = $paySystem;
-				}
-
-				if ($paySystem['ACTION_FILE'] === 'cash')
-				{
-					$cashPaySystem = $paySystem;
-				}
-
-				if (!$firstPaySystemInList && (int)$paySystem['ID'] !== (int)Sale\PaySystem\Manager::getInnerPaySystemId())
-				{
-					$firstPaySystemInList = $paySystem;
+					$paySystem = $item;
 				}
 			}
-
-			if ($applePayPaySystem)
-			{
-				$selectedPaySystem = $applePayPaySystem;
-			}
-			elseif ($cashPaySystem)
-			{
-				$selectedPaySystem = $cashPaySystem;
-			}
-			else
-			{
-				$selectedPaySystem = $firstPaySystemInList;
-			}
-
-			if ($selectedPaySystem)
-			{
-				$fields['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
-				$fields['PAY_SYSTEM_NAME'] = $selectedPaySystem['NAME'];
-			}
-
-			$payment->setFields($fields);
 		}
 
-		return $this;
+		if (!$paySystem)
+		{
+			$paySystem = $this->findCashPaySystem($paySystemList);
+			if (!$paySystem)
+			{
+				$paySystem = current($paySystemList);
+			}
+		}
+
+		return $paySystem;
+	}
+
+	/**
+	 * @param array $paySystemList
+	 * @return array
+	 */
+	private function findCashPaySystem(array $paySystemList) : array
+	{
+		foreach ($paySystemList as $item)
+		{
+			if ($item['ACTION_FILE'] === 'cash')
+			{
+				return $item;
+			}
+		}
+
+		return [];
 	}
 
 	/**
 	 * @param array $paySystem
 	 * @return bool
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\LoaderException
 	 */
-	private function isAllowApplePay(array $paySystem): bool
+	private function isIMessageConnector(): bool
 	{
-		return isset($this->formData['CONNECTOR'])
-			&& $this->formData['CONNECTOR'] === 'imessage'
-			&& Integration\SaleManager::getInstance()->isApplePayPayment($paySystem);
+		return isset($this->formData['CONNECTOR']) && $this->formData['CONNECTOR'] === 'imessage';
 	}
 }

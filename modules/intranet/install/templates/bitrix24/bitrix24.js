@@ -1182,3 +1182,68 @@ B24.upgradeButtonRedirect = function(params)
 		}, this)
 	);
 }
+
+B24.PopupBlur = function() {
+	BX.PopupWindow.apply(this, arguments);
+	this.setBlurBg();
+
+	BX.addCustomEvent("OnThemePickerApplyTheme", this.setBlurBg.bind(this));
+}
+
+B24.PopupBlur.prototype = {
+	__proto__: BX.PopupWindow.prototype,
+	constructor: B24.PopupBlur,
+	setBlurBg: function()
+	{
+		var container = this.getPopupContainer();
+		var backgroundImage = window.getComputedStyle(document.body).backgroundImage;
+		var backgroundColor = window.getComputedStyle(document.body).backgroundColor;
+		container.classList.add('popup-window-blur');
+
+		var style = BX.create('style', {
+			attrs: {
+				type: 'text/css'
+			}
+		});
+
+		var styles = '.popup-window-content:after { ' + 'background-image: ' + backgroundImage + ';' + 'background-color: ' + backgroundColor + '} ';
+
+		styles = document.createTextNode(styles);
+		style.appendChild(styles);
+		document.head.appendChild(style);
+
+		if (this.angle) {
+			this.setBlurBgAngle();
+		}
+	},
+	setBlurBgAngle: function() {
+		var backgroundColor = window.getComputedStyle(document.body).backgroundColor;
+
+		var anglyStyle = BX.create('style', {
+			attrs: {
+				type: 'text/css'
+			}
+		});
+
+		var anglyStyles = '.popup-window-angly:after { ' + 'background-color: ' + backgroundColor + '} ';
+
+		anglyStyles = document.createTextNode(anglyStyles);
+		anglyStyle.appendChild(anglyStyles);
+		document.head.appendChild(anglyStyle);
+	},
+	setPadding: function(padding)
+	{
+		if (BX.Type.isNumber(padding) && padding >= 0)
+		{
+			this.padding = padding;
+			this.getContentContainer().style.padding = padding + 'px';
+		}
+		else if (padding === null)
+		{
+			this.padding = null;
+			this.getContentContainer().style.removeProperty('padding');
+		}
+	}
+};
+
+

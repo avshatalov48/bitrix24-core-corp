@@ -1,18 +1,22 @@
 <?php
 
+use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
+use Bitrix\Sale\Cashbox;
+use Bitrix\Sale\Payment;
+use Bitrix\Sale\PaySystem;
+use Bitrix\Crm;
 use Bitrix\Crm\Order\DealBinding;
-use Bitrix\Main,
-	Bitrix\Sale,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Main\Loader,
-	Bitrix\Sale\Payment,
-	Bitrix\Sale\Cashbox,
-	Bitrix\ImOpenLines\Model\SessionTable,
-	Bitrix\Sale\PaySystem,
-	Bitrix\Main\Config\Option,
-	Bitrix\Crm;
+use Bitrix\ImOpenLines\Model\SessionTable;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -21,23 +25,46 @@ Loc::loadMessages(__FILE__);
  */
 class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Contract\Controllerable
 {
-	/** @var  Main\ErrorCollection $errorCollection*/
-	protected $errorCollection;
+	const CACHE_TTL = 31536000;
 
-	protected $isViewMode = false;
-	protected $paymentId = null;
-	/** @var Sale\Payment $payment */
-	protected $payment = null;
-	protected $orderId = null;
+	const CACHE_BASE_ID = 'BITRIX_SALESCENTER_PAYMENT_PAY_COMPONENT';
 
 	/**
-	 * @var Sale\Registry registry
+	 * @var Main\ErrorCollection
 	 */
-	protected $registry = null;
+	private $errorCollection;
 
+	/**
+	 * @var bool
+	 */
+	private $isViewMode = false;
+
+	/**
+	 * @var int
+	 */
+	private $paymentId = null;
+
+	/**
+	 * @var Sale\Payment
+	 */
+	private $payment = null;
+
+	/**
+	 * @var int
+	 */
+	private $orderId = null;
+
+	/**
+	 * @var Sale\Registry
+	 */
+	private $registry = null;
+
+	/**
+	 * @return array
+	 */
 	public function configureActions()
 	{
-		return array();
+		return [];
 	}
 
 	/**
@@ -56,16 +83,9 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		return $this->payment;
 	}
 
-	protected function listKeysSignedParameters()
-	{
-		return array(
-			'PAYMENT_ACCOUNT_NUMBER',
-			'PAYMENT_ID'
-		);
-	}
-
 	/**
-	 * Function checks and prepares all the parameters passed. Everything about $arParam modification is here.
+	 * Component entrypoint and initialization.
+	 *
 	 * @param mixed[] $params List of unchecked parameters
 	 * @return mixed[] Checked and valid parameters
 	 */
@@ -73,108 +93,33 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	{
 		$this->errorCollection = new Main\ErrorCollection();
 		$this->checkModules();
+		$this->setupRegistry();
 
-		if (empty($params["ACTIVE_DATE_FORMAT"]))
+		if (empty($params['ACTIVE_DATE_FORMAT']))
 		{
-			$params["ACTIVE_DATE_FORMAT"] = Main\Type\DateTime::getFormat();
+			$params['ACTIVE_DATE_FORMAT'] = Main\Type\DateTime::getFormat();
 		}
 
-		if (empty($params["ALLOW_PAYMENT_REDIRECT"]))
+		if (empty($params['ALLOW_PAYMENT_REDIRECT']))
 		{
-			$params["ALLOW_PAYMENT_REDIRECT"] = "Y";
+			$params['ALLOW_PAYMENT_REDIRECT'] = 'Y';
 		}
 
-		if ((int)($params["PAYMENT_ID"]) > 0)
+		if ((int)($params['PAYMENT_ID']) > 0 || $params['PAYMENT_ACCOUNT_NUMBER'] != '')
 		{
-			$filter = ['ID' => (int)$params["PAYMENT_ID"]];
+			$this->initPaymentDataByPaymentId($params);
 		}
-		elseif ($params["PAYMENT_ACCOUNT_NUMBER"] <> '')
+		elseif ((int)($params['ORDER_ID']) > 0)
 		{
-			$filter = ['ACCOUNT_NUMBER' => $params["PAYMENT_ACCOUNT_NUMBER"]];
-		}
-
-		if (empty($filter))
-		{
-			$this->isViewMode = true;
-			$params['VIEW_MODE'] = 'Y';
-
-			return $params;
-		}
-
-		$paymentRaw = Sale\Payment::getList([
-			'filter' => $filter,
-			'select' => ['ORDER_ID', 'ID'],
-			'limit' => 1
-		]);
-		if ($paymentData = $paymentRaw->fetch())
-		{
-			$this->paymentId = $paymentData['ID'];
-			$this->orderId = $paymentData['ORDER_ID'];
+			$this->initPaymentDataByOrderId($params);
 		}
 		else
 		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_PAYMENT_NOT_FOUND')));
-			return null;
+			$this->isViewMode = true;
+			$params['VIEW_MODE'] = 'Y';
 		}
 
 		return $params;
-	}
-
-	/**
-	 * Check Required Modules
-	 * @throws Main\SystemException
-	 * @return bool
-	 */
-	protected function checkModules()
-	{
-		if (!Loader::includeModule('salescenter'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_SALESCENTER_NOT_INSTALL')));
-			return false;
-		}
-		if (!Loader::includeModule('sale'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_SALE_NOT_INSTALL')));
-			return false;
-		}
-		if (!Loader::includeModule('catalog'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_CATALOG_NOT_INSTALL')));
-			return false;
-		}
-		if (!Loader::includeModule('iblock'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_IBLOCK_NOT_INSTALL')));
-			return false;
-		}
-		if (!Loader::includeModule('crm'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_CRM_NOT_INSTALL')));
-			return false;
-		}
-		if (!Loader::includeModule('documentgenerator'))
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_MODULE_DOCUMENTGENERATOR_NOT_INSTALL')));
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @param Sale\Order $order
-	 *
-	 * @return bool
-	 */
-	private function checkAuthorized($order)
-	{
-		$request = Main\Context::getCurrent()->getRequest();
-		if ($request->get('access') !== $order->getHash())
-		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage("SPOD_ACCESS_DENIED")));
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -187,8 +132,6 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 
 		if ($this->errorCollection->isEmpty())
 		{
-			$this->setRegistry();
-
 			if ($this->isViewMode)
 			{
 				$orderClassName = $this->registry->getOrderClassName();
@@ -217,7 +160,10 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 							);
 						}
 						$this->arResult['PAYMENT']['DATE_BILL_FORMATTED'] = $dateBillFormatted;
-						$this->arResult['PAYMENT']['FORMATTED_SUM'] = SaleFormatCurrency($this->payment->getSum(), $this->payment->getField('CURRENCY'));
+						$this->arResult['PAYMENT']['FORMATTED_SUM'] = SaleFormatCurrency(
+							$this->payment->getSum(),
+							$this->payment->getField('CURRENCY')
+						);
 						$this->arResult['PAYSYSTEMS_LIST'] = $this->formatPaySystemList($this->payment);
 						$defaultPaySystem = [];
 						foreach ($this->arResult['PAYSYSTEMS_LIST'] as $paySystem)
@@ -240,23 +186,310 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 
 						$this->prepareConsentSettings($order);
 						$this->prepareCheckFields($this->payment);
+
+						if (Main\Loader::includeModule('crm'))
+						{
+							$needEmitOrderViewedEvent = false;
+
+							if ($this->payment && !$this->payment->isPaid())
+							{
+								$result = Crm\Binding\OrderPaymentStageTable::setStage(
+									$this->payment->getId(),
+									Crm\Order\PaymentStage::VIEWED_NO_PAID
+								);
+								if ($result !== null)
+								{
+									$needEmitOrderViewedEvent = true;
+								}
+							}
+
+							if ($this->needAddTimelineEntityOnOpen($this->payment))
+							{
+								$needEmitOrderViewedEvent = true;
+								$this->addTimelineEntityOnView($this->payment);
+
+								if (!$this->payment->isPaid())
+								{
+									/** @var DealBinding $dealBinding */
+									$dealBinding = $order->getDealBinding();
+									if ($dealBinding)
+									{
+										$this->changeOrderStageDealOnViewedNoPaid(
+											$dealBinding->getDealId()
+										);
+									}
+								}
+							}
+
+							if ($needEmitOrderViewedEvent)
+							{
+								$this->emitOrderViewedEvent($this->payment);
+							}
+						}
 					}
 					else
 					{
-						$this->errorCollection->setError(
-							new Main\Error(
-								Loc::getMessage('SPP_ORDER_CANCELED')
-							)
-						);
+						$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_ORDER_CANCELED')));
 					}
 				}
 
-				$this->arResult['RETURN_URL'] = (new PaySystem\Context())->getUrl();
+				$this->arResult['RETURN_URL'] = $this->arParams['RETURN_URL'] !== ''
+					? $this->arParams['RETURN_URL']
+					: (new PaySystem\Context())->getUrl();
 			}
 		}
 
 		$this->formatResultErrors();
 		$this->includeComponentTemplate($templateName);
+	}
+
+	/**
+	 * Action for ajax call
+	 *
+	 * @param array $params
+	 * @return PaySystem\ServiceResult
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\ObjectException
+	 * @throws Main\SystemException
+	 */
+	public function initiatePayAction(array $params = [])
+	{
+		$result = new PaySystem\ServiceResult();
+
+		$paysystemId = (int)$params['PAY_SYSTEM_ID'];
+		if ($paysystemId > 0)
+		{
+			$order = $this->loadOrder();
+			if ($order)
+			{
+				$paymentCollection = $order->getPaymentCollection();
+				/** @var Sale\Payment $payment */
+				$this->payment = $paymentCollection->getItemById($this->paymentId);
+				$paySystemObject = PaySystem\Manager::getObjectById($paysystemId);
+
+				Sale\DiscountCouponsManagerBase::freezeCouponStorage();
+
+				$paymentResult = $this->payment->setFields([
+					'PAY_SYSTEM_ID' => $paySystemObject->getField('ID'),
+					'PAY_SYSTEM_NAME' => $paySystemObject->getField('NAME')
+				]);
+
+				if ($paymentResult->isSuccess())
+				{
+					$order->save();
+
+					if ($returnUrl = $params['RETURN_URL'])
+					{
+						$paySystemObject->getContext()->setUrl($returnUrl);
+					}
+
+					$request = null;
+					if ($this->isPaySystemOrderDocument($paySystemObject))
+					{
+						$request = Main\Context::getCurrent()->getRequest();
+						$request->set(['template' => 'template_download']);
+					}
+					$result = $paySystemObject->initiatePay(
+						$this->payment,
+						$request,
+						PaySystem\BaseServiceHandler::STRING
+					);
+				}
+				else
+				{
+					$result->addErrors($paymentResult->getErrors());
+				}
+
+				Sale\DiscountCouponsManagerBase::unFreezeCouponStorage();
+			}
+			else
+			{
+				$result->addError(new Main\Error(Loc::getMessage('SPP_ORDER_NOT_FOUND')));
+			}
+		}
+		else
+		{
+			$result->addError(new Main\Error(Loc::getMessage('SPP_PAYSYSTEM_NOT_FOUND')));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $params
+	 * @return bool
+	 */
+	private function initPaymentDataByPaymentId(array $params): bool
+	{
+		if ((int)($params['PAYMENT_ID']) > 0)
+		{
+			$filter = ['ID' => (int)$params['PAYMENT_ID']];
+		}
+		elseif ($params['PAYMENT_ACCOUNT_NUMBER'] != '')
+		{
+			$filter = ['ACCOUNT_NUMBER' => $params['PAYMENT_ACCOUNT_NUMBER']];
+		}
+
+		if (!empty($filter))
+		{
+			$paymentRow = Sale\Payment::getList([
+				'filter' => $filter,
+				'select' => ['ORDER_ID', 'ID'],
+				'limit' => 1
+			]);
+			if ($paymentData = $paymentRow->fetch())
+			{
+				$this->paymentId = (int)$paymentData['ID'];
+				$this->orderId = (int)$paymentData['ORDER_ID'];
+
+				return true;
+			}
+		}
+		$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_PAYMENT_NOT_FOUND')));
+		return false;
+	}
+
+	/**
+	 * @param array $params
+	 * @return bool
+	 */
+	private function initPaymentDataByOrderId(array $params): bool
+	{
+		if ((int)($params['ORDER_ID']) <= 0)
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_ORDER_NOT_FOUND')));
+			return false;
+		}
+
+		if (!$order = $this->loadOrderById((int)$params['ORDER_ID']))
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_ORDER_NOT_FOUND')));
+			return false;
+		}
+
+		$paymentSum = $order->getPrice();
+		$filter = [
+			'ORDER_ID' => $order->getId(),
+			'SUM' => $paymentSum,
+		];
+
+		$paymentRow = Sale\Payment::getList([
+			'filter' => $filter,
+			'select' => ['ORDER_ID', 'ID'],
+			'limit' => 1
+		]);
+		if ($paymentData = $paymentRow->fetch())
+		{
+			$this->paymentId = (int)$paymentData['ID'];
+			$this->orderId = (int)$paymentData['ORDER_ID'];
+			return true;
+		}
+		else
+		{
+			$paySystemObject = $this->getPaySystemForNewPayment($order, $params);
+			if (!$paySystemObject)
+			{
+				$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_PAYSYSTEM_NOT_FOUND')));
+				return false;
+			}
+
+			$paymentCollection = $order->getPaymentCollection();
+
+			$payment = $paymentCollection->createItem($paySystemObject);
+			$paymentResult = $payment->setField('SUM', $paymentSum);
+
+			if (!$paymentResult->isSuccess())
+			{
+				$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_CANNOT_CREATE_PAYMENT')));
+				return false;
+			}
+
+			$orderResult = $order->save();
+			if ($orderResult->isSuccess())
+			{
+				$this->paymentId = $payment->getId();
+				$this->orderId = $order->getId();
+				return true;
+			}
+			else
+			{
+				$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_CANNOT_CREATE_PAYMENT')));
+				return false;
+			}
+		}
+	}
+
+	/**
+	 * @param Sale\Order $order
+	 * @param array $componentParams
+	 * @return Bitrix\Sale\PaySystem\Service|null
+	 */
+	private function getPaySystemForNewPayment(Sale\Order $order, array $componentParams)
+	{
+		if (isset($componentParams['PAY_SYSTEM_ID']) && (int)$componentParams['PAY_SYSTEM_ID'] > 0)
+		{
+			$paySystemId = (int)$componentParams['PAY_SYSTEM_ID'];
+		}
+		else
+		{
+			$paySystemId = $this->getDefaultPaySystemId($order);
+		}
+
+		if (!$paySystemId)
+		{
+			return null;
+		}
+
+		return PaySystem\Manager::getObjectById($paySystemId);
+	}
+
+	/**
+	 * @param Sale\Order $order
+	 * @return int|null
+	 */
+	private function getDefaultPaySystemId(Sale\Order $order)
+	{
+		$id = 0;
+
+		$cacheManager = Application::getInstance()->getManagedCache();
+		$cacheId = self::CACHE_BASE_ID . '_DEFAULT_PS_ID';
+
+		if ($cacheManager->read(self::CACHE_TTL, $cacheId))
+		{
+			$id = (int)$cacheManager->get($cacheId);
+		}
+
+		if ($id <= 0)
+		{
+			$paySystem = [];
+			$paySystemList = Sale\PaySystem\Manager::getListWithRestrictionsByOrder($order);
+
+			foreach ($paySystemList as $item)
+			{
+				if ($item['ACTION_FILE'] === 'cash')
+				{
+					$paySystem = $item;
+					break;
+				}
+			}
+
+			if (!$paySystem)
+			{
+				$paySystem = current($paySystemList);
+			}
+
+			if ($paySystem['ID'])
+			{
+				$id = (int)$paySystem['ID'];
+				$cacheManager->set($cacheId, $id);
+			}
+		}
+
+		return ($id > 0) ? $id : null;
 	}
 
 	/**
@@ -269,46 +502,32 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	private function formatPaySystemList(Payment $payment)
 	{
 		$formattedPaySystems = [];
-		$salesCenterRestrictionIds = PaySystem\Manager::getList(array(
+		$salesCenterRestrictionIds = PaySystem\Manager::getList([
 			'filter' => [
 				'!=ACTION_FILE' => 'inner',
 				'ACTIVE' => 'Y',
 			],
 			'select' => ['ID']
-		))->fetchAll();
+		])->fetchAll();
 		$salesCenterRestrictionIds = array_column($salesCenterRestrictionIds, 'ID');
-
-		if (!$this->isViewMode)
-		{
-			$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
-		}
-		else
-		{
-			$paySystemList = PaySystem\Manager::getList([
-				'filter' => [
-					'!=ACTION_FILE' => ['inner'],
-					'ENTITY_REGISTRY_TYPE' => $payment::getRegistryType(),
-					'ACTIVE' => 'Y',
-				],
-			]);
-		}
+		$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
 		foreach ($paySystemList as $paySystemElement)
 		{
-			if (!$this->isViewMode && !in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
+			if (!in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
 			{
 				continue;
 			}
 
 			$logo = null;
-			if ($paySystemElement["LOGOTIP"])
+			if ($paySystemElement['LOGOTIP'])
 			{
 				$logo = CFile::GetFileArray($paySystemElement['LOGOTIP']);
 			}
 
 			if ($logo)
 			{
-				$paySystemElement["LOGOTIP"] = CFile::ResizeImageGet(
-					$logo["ID"],
+				$paySystemElement['LOGOTIP'] = CFile::ResizeImageGet(
+					$logo['ID'],
 					array(),
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					true
@@ -316,7 +535,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			}
 			else
 			{
-				$paySystemElement["LOGOTIP"] = null;
+				$paySystemElement['LOGOTIP'] = null;
 			}
 
 			$formattedPaySystems[] = $paySystemElement;
@@ -374,12 +593,9 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	}
 
 	/**
-	 * Return current class registry
-	 *
-	 * @param mixed[] array that date conversion performs in
 	 * @return void
 	 */
-	protected function setRegistry()
+	private function setupRegistry(): void
 	{
 		$this->registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 	}
@@ -388,7 +604,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 * Move all errors to $this->arResult, if there were any
 	 * @return void
 	 */
-	protected function formatResultErrors()
+	private function formatResultErrors()
 	{
 		if (!$this->errorCollection->isEmpty())
 		{
@@ -401,20 +617,34 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	}
 
 	/**
-	 * Initialize new order
 	 * @return Sale\Order $order
 	 */
-	protected function loadOrder()
+	private function loadOrder()
 	{
-		$orderClassName = $this->registry->getOrderClassName();
-		/** @var Sale\Order $order */
-		$order = $orderClassName::load($this->orderId);
+		$order = $this->loadOrderById((int)$this->orderId);
 		if (!$order)
 		{
-			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_PAYMENT_NOT_FOUND')));
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPP_ORDER_NOT_FOUND')));
 			return null;
 		}
 
+		return $order;
+	}
+
+	/**
+	 * @param int $orderId
+	 * @return ?Sale\Order
+	 */
+	private function loadOrderById(int $orderId)
+	{
+		if ($orderId <= 0)
+		{
+			return null;
+		}
+
+		$orderClassName = $this->registry->getOrderClassName();
+		/** @var Sale\Order $order */
+		$order = $orderClassName::load($orderId);
 		return $order;
 	}
 
@@ -423,7 +653,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 * @throws Main\ArgumentException
 	 * @throws Main\NotImplementedException
 	 */
-	protected function prepareCheckFields(Sale\Payment $payment): void
+	private function prepareCheckFields(Sale\Payment $payment): void
 	{
 		$this->arResult['CHECK'] = [];
 
@@ -440,120 +670,6 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	}
 
 	/**
-	 * Action for ajax call
-	 *
-	 * @param array $params
-	 * @return PaySystem\ServiceResult
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\ObjectException
-	 * @throws Main\SystemException
-	 */
-	public function initiatePayAction(array $params = [])
-	{
-		$result = new PaySystem\ServiceResult();
-
-		$paysystemId = (int)$params['PAY_SYSTEM_ID'];
-		if ($paysystemId > 0)
-		{
-			$this->setRegistry();
-			$order = $this->loadOrder();
-			if ($order)
-			{
-				$paymentCollection = $order->getPaymentCollection();
-				/** @var Sale\Payment $payment */
-				$this->payment = $paymentCollection->getItemById($this->paymentId);
-				$paySystemObject = PaySystem\Manager::getObjectById($paysystemId);
-
-				Sale\DiscountCouponsManagerBase::freezeCouponStorage();
-				$paymentResult = $this->payment->setFields([
-					'PAY_SYSTEM_ID' => $paySystemObject->getField('ID'),
-					'PAY_SYSTEM_NAME' => $paySystemObject->getField('NAME')
-				]);
-
-				if ($paymentResult->isSuccess())
-				{
-					$order->save();
-					$this->addTimelineEntryOnPay($this->payment);
-
-					if ($returnUrl = $params['RETURN_URL'])
-					{
-						$paySystemObject->getContext()->setUrl($returnUrl);
-					}
-
-					$request = null;
-					if ($this->isPaySystemOrderDocument($paySystemObject))
-					{
-						$request = Main\Context::getCurrent()->getRequest();
-						$request->set(["template" => "template_download"]);
-					}
-					$result = $paySystemObject->initiatePay($this->payment, $request, PaySystem\BaseServiceHandler::STRING);
-				}
-				else
-				{
-					$result->addErrors($paymentResult->getErrors());
-				}
-
-				Sale\DiscountCouponsManagerBase::unFreezeCouponStorage();
-			}
-			else
-			{
-				$result->addError(new Main\Error(Loc::getMessage('SPP_ORDER_NOT_FOUND')));
-			}
-		}
-		else
-		{
-			$result->addError(new Main\Error(Loc::getMessage('SPP_PAYSYSTEM_NOT_FOUND')));
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param Payment $payment
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
-	private function addTimelineEntryOnPay(Sale\Payment $payment): void
-	{
-		/** @var Crm\Order\Order $order */
-		$order = $payment->getOrder();
-
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $order->getId(),
-			]
-		];
-
-		/** @var DealBinding $dealBindings */
-		if ($dealBindings = $order->getDealBinding())
-		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealBindings->getDealId(),
-			];
-		}
-
-		$timelineParams =  [
-			'FIELDS' => $payment->getFieldValues(),
-			'SETTINGS' => [
-				'CHANGED_ENTITY' => \CCrmOwnerType::OrderPaymentName,
-				'FIELDS' => [
-					'PAY_SYSTEM_ID' => $payment->getPaymentSystemId(),
-					'PAY_SYSTEM_NAME' => $payment->getPaymentSystemName(),
-				],
-			],
-			'BINDINGS' => $bindings,
-		];
-
-		Crm\Timeline\OrderPaymentController::getInstance()->onClick($payment->getId(), $timelineParams);
-	}
-
-	/**
 	 * @param PaySystem\Service $service
 	 * @return bool
 	 */
@@ -564,5 +680,168 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		);
 
 		return $handlerClassName === $service->getField('ACTION_FILE');
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function listKeysSignedParameters()
+	{
+		return [
+			'PAYMENT_ACCOUNT_NUMBER',
+			'PAYMENT_ID',
+			'ORDER_ID',
+		];
+	}
+
+	/**
+	 * Check Required Modules
+	 * @throws Main\SystemException
+	 * @return bool
+	 */
+	private function checkModules()
+	{
+		$requiredModules = [
+			'sale' => 'SPP_MODULE_SALE_NOT_INSTALL',
+			'catalog' => 'SPP_MODULE_CATALOG_NOT_INSTALL',
+			'iblock' => 'SPP_MODULE_IBLOCK_NOT_INSTALL',
+			'documentgenerator' => 'SPP_MODULE_DOCUMENTGENERATOR_NOT_INSTALL',
+		];
+
+		foreach ($requiredModules as $module => $errorMessageCode)
+		{
+			if (!Loader::includeModule($module))
+			{
+				$this->errorCollection->setError(new Main\Error(Loc::getMessage($errorMessageCode)));
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param Sale\Order $order
+	 *
+	 * @return bool
+	 */
+	private function checkAuthorized($order)
+	{
+		$access = $this->arParams['ACCESS_CODE'];
+		if($access == '')
+		{
+			$request = Main\Context::getCurrent()->getRequest();
+			$access = $request->get('access');
+		}
+
+		if ($access !== $order->getHash())
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SPOD_ACCESS_DENIED')));
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param Payment $payment
+	 * @return bool
+	 */
+	protected function needAddTimelineEntityOnOpen(Sale\Payment $payment): bool
+	{
+		$dbRes = Crm\Timeline\Entity\TimelineTable::getList([
+			'order' => ['ID' => 'ASC'],
+			'filter' => [
+				'TYPE_ID' => Crm\Timeline\TimelineType::ORDER,
+				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
+				'ASSOCIATED_ENTITY_ID' => $payment->getId(),
+			]
+		]);
+
+		while ($item = $dbRes->fetch())
+		{
+			if (isset($item['SETTINGS']['FIELDS']['VIEWED']) && $item['SETTINGS']['FIELDS']['VIEWED'] === 'Y')
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param Payment $payment
+	 */
+	protected function addTimelineEntityOnView(Sale\Payment $payment): void
+	{
+		$order = $payment->getOrder();
+
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $order->getId()
+			]
+		];
+
+		if ($order->getDealBinding())
+		{
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $order->getDealBinding()->getDealId()
+			];
+		}
+
+		$params = [
+			'ORDER_FIELDS' => $order->getFieldValues(),
+			'SETTINGS' => [
+				'FIELDS' => [
+					'ORDER_ID' => $order->getId(),
+					'PAYMENT_ID' => $payment->getId(),
+				]
+			],
+			'BINDINGS' => $bindings
+		];
+
+		Crm\Timeline\OrderPaymentController::getInstance()->onView($payment->getId(), $params);
+	}
+
+	/**
+	 * @param Payment $payment
+	 */
+	protected function emitOrderViewedEvent(Sale\Payment $payment): void
+	{
+		if(!Main\Loader::includeModule('pull'))
+		{
+			return;
+		}
+
+		$orderId = $payment->getOrder()->getId();
+		if ($orderId <= 0)
+		{
+			return;
+		}
+
+		$tagName = "SALESCENTER_ORDER_PAYMENT_VIEWED_$orderId";
+		$params = [
+			'ORDER_ID' => $orderId,
+			'PAYMENT_ID' => $payment->getId(),
+		];
+		$message = [
+			'module_id' => 'salescenter',
+			'command' => 'onOrderPaymentViewed',
+			'params' => $params,
+		];
+
+		\CPullWatch::AddToStack($tagName, $message);
+	}
+
+	/**
+	 * @param $dealId
+	 */
+	private function changeOrderStageDealOnViewedNoPaid($dealId): void
+	{
+		$fields = ['ORDER_STAGE' => Crm\Order\OrderStage::VIEWED_NO_PAID];
+
+		$deal = new \CCrmDeal(false);
+		$deal->Update($dealId, $fields);
 	}
 }

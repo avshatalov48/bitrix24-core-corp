@@ -14,9 +14,10 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
 
 Extension::load([
-	"ui.buttons",
-	"ui.fonts.opensans",
-	"ui.hint"
+	'ui.buttons',
+	'ui.counter',
+	'ui.fonts.opensans',
+	'ui.hint',
 ]);
 
 $isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
@@ -31,9 +32,10 @@ if ($isBitrix24Template)
 }
 ?>
 
+<div class="task-interface-toolbar">
 <?php if ($showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID'])):?>
-<div class="tasks-view-switcher">
-    <div class="tasks-view-switcher-list">
+<div class="task-interface-toolbar--item --visible">
+    <div class="tasks-view-switcher">
         <?php
 			// temporary we show agile parts only by option
 			$optionName = 'agile_enabled_group_'.$arParams['GROUP_ID'];
@@ -63,7 +65,7 @@ if ($isBitrix24Template)
 					$url .= '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
 				}
 
-				?><a class="tasks-view-switcher-list-item <?=($active ? 'tasks-view-switcher-list-item-active' : '')?>"
+				?><a class="tasks-view-switcher--item<?=($active ? ' tasks-view-switcher--item --active' : '')?>"
 					 href="<?=$url?>" id="tasks_<?= mb_strtolower($viewKey)?>">
 					<?=$view['SHORT_TITLE']?>
 				</a><?php
@@ -75,10 +77,27 @@ if ($isBitrix24Template)
 <?php if (!$isBitrix24Template):?>
 	<div class="tasks-interface-toolbar-container">
 <?php endif ?>
+	<?php
+	if ($arResult['SHOW_COUNTERS'])
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:tasks.interface.counters',
+			'',
+			[
+				'USER_ID' => (int)$arResult['OWNER_ID'],
+				'GROUP_ID' => (int)$arResult['GROUP_ID'],
+				'ROLE' => $arResult['ROLE'],
+				'GRID_ID' => $arParams['GRID_ID'],
+				'COUNTERS' => ($arParams['COUNTERS'] ? : []),
+				'FILTER_FIELD' => $arParams['FILTER_FIELD'],
+			],
+			$component
+		);
+	}
+	?>
 
-	<div class="tasks-counters" id="counter_panel_container">
-		<div class="tasks-counter-title" id="<?=$arResult['HELPER']->getScopeId()?>"></div>
-	</div>
+	<div class="task-interface-toolbar--item --without-bg --align-right">
+		<div class="task-interface-toolbar--item--scope">
 	<?php
 	if (
 		$isMyTasks
@@ -97,12 +116,11 @@ if ($isBitrix24Template)
 		$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
 		$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
 		?>
-		<div class="tasks-counter-btn-container">
-			<button class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round tasks-counter-btn <?=$lockClass?>"
-					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
-				<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
-			</button>
-		</div><?php
+		<button class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round <?=$lockClass?> task-interface-btn-toolbar --robots --small"
+			<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
+			<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
+		</button>
+		<?php
 	}
 
 	if (\Bitrix\Main\Loader::includeModule('intranet') && !$isSprintMode)
@@ -121,10 +139,16 @@ if ($isBitrix24Template)
 			)
 		);
 	}
+	?>
+		</div>
+	</div>
 
+<?php
 if (!$isBitrix24Template):?>
 	</div>
 <?php endif?>
+
+</div>
 
 <?php
 if ($isBitrix24Template)
@@ -155,7 +179,7 @@ if ($isBitrix24Template)
 		]);
 	?>
 
-	<?php if ((\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance())->isInQueue((int) $arParams['USER_ID'])): ?>
+	<?php if ((\Bitrix\Tasks\Internals\Counter\Queue\Queue::getInstance())->isInQueue((int) $arParams['USER_ID'])): ?>
 		<?php \CJSCore::Init(array('update_stepper')); ?>
 		<div class="main-stepper-block">
 			<div class="main-stepper main-stepper-show" >
@@ -170,7 +194,7 @@ if ($isBitrix24Template)
 		</div>
 	<?php endif; ?>
 </div>
-
+</div>
 <?php
 if ($arResult['SHOW_COUNTERS'])
 {
@@ -223,5 +247,16 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 		<?php if ($arResult['SHOW_COUNTERS']):?>
 			BX.UI.Hint.init(BX('tasksCommentsReadAll'));
 		<?php endif;?>
+
+		var toolbarCounters = document.querySelector('.task-interface-toolbar');
+		if(toolbarCounters)
+		{
+			var toolbarCountersItems = toolbarCounters.querySelectorAll('.task-interface-toolbar--item');
+			var toolbarCountersRobots = toolbarCounters.querySelector('.--align-right');
+			if(toolbarCountersRobots)
+			{
+				toolbarCountersRobots.classList.add('task-interface-toolbar--item--' + toolbarCountersItems.length);
+			}
+		}
 	});
 </script>

@@ -30,12 +30,13 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
 
 			this._container = BX(BX.prop.get(this._settings, "containerId"));
+
 			this._tabManager = BX.Crm.EntityDetailTabManager.create(
 				this._id,
 				{
-						container: BX(BX.prop.get(this._settings, "tabContainerId")),
-						menuContainer: BX(BX.prop.get(this._settings, "tabMenuContainerId")),
-						data: BX.prop.getArray(this._settings, "tabs")
+					container: BX(BX.prop.get(this._settings, "tabContainerId")),
+					menuId: BX.prop.get(this._settings, "tabMenuContainerId"),
+					data: BX.prop.getArray(this._settings, "tabs")
 				}
 			);
 
@@ -915,9 +916,7 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 	BX.Crm.EntityDetailTabManager = function()
 	{
 		this._id = "";
-		this._settings = {};
 		this._container = null;
-		this._menuContainer = null;
 		this._items = null;
 	};
 	BX.Crm.EntityDetailTabManager.prototype =
@@ -925,27 +924,54 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 		initialize: function(id, settings)
 		{
 			this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-			this._settings = settings ? settings : {};
+			settings = settings ? settings : {};
 
-			this._container = BX.prop.getElementNode(this._settings, "container");
-			this._menuContainer = BX.prop.getElementNode(this._settings, "menuContainer");
+			this._container = BX.prop.getElementNode(settings, "container");
 
+			var tabsById = {};
+			BX.prop.getArray(settings, "data").forEach(function(itemData) {
+				if (!tabsById[itemData['id']])
+				{
+					tabsById[itemData['id']] = itemData;
+				}
+			}.bind(this));
+
+			var menuManager = BX.Main.interfaceButtonsManager.getById(
+				BX.prop.getString(settings, "menuId")
+			);
+			var firstItem = null;
 			this._items = [];
-			var data = BX.prop.getArray(this._settings, "data");
-			for(var i = 0, l = data.length; i < l; i++)
-			{
-				var itemData = data[i];
-				var itemId = itemData["id"];
-				var item = BX.Crm.EntityDetailTab.create(
-					itemId,
+			menuManager.getAllItems().forEach(function(item) {
+				if (firstItem === null)
+				{
+					firstItem = item;
+				}
+
+				var itemData = tabsById[item.dataset.id];
+				if (!itemData)
+				{
+					return;
+				}
+
+				this._items.push(BX.Crm.EntityDetailTab.create(
+					itemData['id'],
 					{
 						manager: this,
 						data: itemData,
-						container: this._container.querySelector('[data-tab-id="' + itemId + '"]'),
-						menuContainer: this._menuContainer.querySelector('[data-tab-id="' + itemId + '"]')
+						container: this._container.querySelector('[data-tab-id="' + itemData['id'] + '"]'),
+						menuContainer: item
 					}
-				);
-				this._items.push(item);
+				))
+			}.bind(this));
+
+			var activeItem = menuManager.getActive();
+			if (activeItem['DATA_ID'] === 'main' && firstItem.dataset.id !== activeItem['DATA_ID'])
+			{
+				var script = BX.data(firstItem, 'onclick');
+				if (BX.type.isNotEmptyString(script))
+				{
+					eval(script);
+				}
 			}
 		},
 		getId: function()
@@ -994,12 +1020,11 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 	BX.Crm.EntityDetailTab = function()
 	{
 		this._id = "";
-		this._settings = {};
 		this._data = {};
 		this._manager = null;
 		this._container = null;
 		this._menuContainer = null;
-		this._onMenuClickHandler = BX.delegate(this.onMenuClick, this);
+		this.onMenuClick = this.onMenuClick.bind(this);
 
 		this._isActive = false;
 		this._isEnabled = false;
@@ -1010,22 +1035,17 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		initialize: function(id, settings)
 		{
 			this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-			this._settings = settings ? settings : {};
 
-			this._data = BX.prop.getObject(this._settings, "data", {});
-			this._manager = BX.prop.get(this._settings, "manager", null);
-
-			this._container = BX.prop.getElementNode(this._settings, "container");
-			this._menuContainer = BX.prop.getElementNode(this._settings, "menuContainer");
+			settings = settings ? settings : {};
+			this._data = BX.prop.getObject(settings, "data", {});
+			this._manager = BX.prop.get(settings, "manager", null);
+			this._container = BX.prop.getElementNode(settings, "container");
+			this._menuContainer = BX.prop.getElementNode(settings, "menuContainer");
 
 			this._isActive = BX.prop.getBoolean(this._data, "active", false);
 			this._isEnabled = BX.prop.getBoolean(this._data, "enabled", true);
 
-			var link = this._menuContainer.querySelector("a.crm-entity-section-tab-link");
-			if(link)
-			{
-				BX.bind(link, "click", this._onMenuClickHandler);
-			}
+			BX.addCustomEvent(this._manager.getId() + '_click_' + this._id, this.onMenuClick);
 
 			var loaderSettings = BX.prop.getObject(this._data, "loader", null);
 			if(loaderSettings)
@@ -1062,6 +1082,10 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 
 			if(this._isActive)
 			{
+				if(this._loader && !this._loader.isLoaded())
+				{
+					this._loader.load();
+				}
 				// setTimeout(BX.delegate(this.showTab, this), 10);
 				this.showTab()
 			}
@@ -1075,7 +1099,7 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		{
 			BX.addClass(this._container, "crm-entity-section-tab-content-show");
 			BX.removeClass(this._container, "crm-entity-section-tab-content-hide");
-			BX.addClass(this._menuContainer, "crm-entity-section-tab-current");
+			BX.addClass(this._menuContainer, "crm-entity-section-tab-active");
 
 			this._container.style.display = "";
 			this._container.style.position = "absolute";
@@ -1115,7 +1139,7 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		{
 			BX.addClass(this._container, "crm-entity-section-tab-content-hide");
 			BX.removeClass(this._container, "crm-entity-section-tab-content-show");
-			BX.removeClass(this._menuContainer, "crm-entity-section-tab-current");
+			BX.removeClass(this._menuContainer, "crm-entity-section-tab-active");
 
 			var hideTab = new BX.easing({
 				duration : 350,
@@ -1137,19 +1161,17 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 			hideTab.animate();
 
 		},
-		onMenuClick: function(e)
+		onMenuClick: function()
 		{
-			if(!this._isEnabled)
+			if (!this._isEnabled)
 			{
-				return BX.PreventDefault(e);
+				return;
 			}
-
 			if(this._loader && !this._loader.isLoaded())
 			{
 				this._loader.load();
 			}
 			this._manager.processItemSelect(this);
-			return BX.PreventDefault(e);
 		}
 	};
 	BX.Crm.EntityDetailTab.create = function(id, settings)

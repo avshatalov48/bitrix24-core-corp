@@ -32,4 +32,5 @@ $MESS["INTR_SONET_ADD_COMMENT_SOURCE_ERROR"] = "Не удалось добави
 $MESS["INTR_SONET_LOG_DATA_TITLE_IMPORTANT_24"] = "Важное сообщение";
 $MESS["INTR_IBLOCK_TOP_SECTION_WARNING"] = "В структуре компании должен быть только один раздел верхнего уровня.";
 $MESS["INTR_IBLOCK_REQUIRED"] = "Модуль Интранет не может работать без модуля Информационных блоков.";
+$MESS["INTR_IBLOCK_REQUIRED_EXTENDED"] = "Операция удаления запрещена, так как модуль Интранет не может работать без модуля Информационных блоков. Модуль Интранет нельзя удалить.";
 ?>

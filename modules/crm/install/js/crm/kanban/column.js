@@ -41,6 +41,7 @@
 		clickStatus: null,
 		animationDuration: 800,
 		cancelEditHandler: null,
+		blockSize: 20,
 
 		/**
 		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
@@ -1368,6 +1369,7 @@
 						if (itemToRemove.isCountable() && itemToRemove.isVisible())
 						{
 							this.decrementTotal();
+							this.getGrid().resetMultiSelectMode();
 						}
 
 						if (this.getGrid().isRendered())
@@ -1382,7 +1384,7 @@
 					resolve();
 				}
 			}.bind(this));
-		}
+		},
 	};
 
 })();

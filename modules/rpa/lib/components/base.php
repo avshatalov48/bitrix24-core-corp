@@ -114,7 +114,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 				$photo = \CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [
 					'width' => 63,
 					'height' => 63,
-				]);
+				], BX_RESIZE_IMAGE_EXACT, true, false, true);
 				if($photo)
 				{
 					$user['PHOTO'] = $photo['src'];

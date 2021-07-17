@@ -1,6 +1,7 @@
 <?
 $MESS["CRM_DEAL_FILTER_ALL"] = "(все)";
 $MESS["CRM_DEAL_FILTER_ORDER_STAGE"] = "Статус оплаты сделки";
+$MESS["CRM_DEAL_FILTER_DELIVERY_STAGE"] = "Статус доставки";
 $MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID"] = "Группа стадий";
 $MESS["CRM_DEAL_FILTER_ACTIVITY_COUNTER"] = "Дела";
 $MESS["CRM_DEAL_FILTER_CONTACT_ID"] = "Список контактов";
@@ -16,4 +17,5 @@ $MESS["CRM_DEAL_FILTER_ACTIVE_TIME_PERIOD"] = "Период активности
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_HISTORY"] = "Стадия по истории";
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_SUPPOSED_HISTORY"] = "Стадия по истории(с предполагаемыми переходами)";
 $MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID_FROM_HISTORY"] = "Группа стадий по истории";
+$MESS["CRM_DEAL_FILTER_ORDER_SOURCE"] = "Источник заказа";
 ?>

@@ -129,9 +129,9 @@ class LandingUtilsCmpFilterComponent extends \CBitrixComponent
 						[
 							'LOGIC' => 'OR',
 							'*SEARCHABLE_CONTENT' => $query,
-							'=ID' => \CIBlockElement::SubQuery(
-								'PROPERTY_'.$catalog['SKU_PROPERTY_ID'],
-								[
+							'=SUBQUERY' => [
+								'FIELD' => 'PROPERTY_'.$catalog['SKU_PROPERTY_ID'],
+								'FILTER' => [
 									'CHECK_PERMISSIONS' => 'Y',
 									'MIN_PERMISSION' => 'R',
 									'ACTIVE' => 'Y',
@@ -139,7 +139,7 @@ class LandingUtilsCmpFilterComponent extends \CBitrixComponent
 									'IBLOCK_ID' => $catalog['IBLOCK_ID'],
 									'*SEARCHABLE_CONTENT' => $query,
 								]
-							)
+							],
 						]
 					];
 				}

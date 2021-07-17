@@ -59,6 +59,7 @@ this.BX = this.BX || {};
 	    _this._isMultiple = null;
 	    _this._autocompleteEnabled = false;
 	    _this._restrictionsCallback = null;
+	    _this._isMarkedAsChanged = false;
 	    return _this;
 	  }
 
@@ -96,6 +97,7 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.subscribe(this._field, 'onUpdate', this.onAddressListUpdate.bind(this));
 	      main_core_events.EventEmitter.subscribe(this._field, 'onStartLoadAddress', this.onStartLoadAddress.bind(this));
 	      main_core_events.EventEmitter.subscribe(this._field, 'onAddressLoaded', this.onAddressLoaded.bind(this));
+	      main_core_events.EventEmitter.subscribe(this._field, 'onAddressDataInputting', this.onAddressDataInputting.bind(this));
 	      main_core_events.EventEmitter.subscribe(this._field, 'onError', this.onError.bind(this));
 	      this.initializeFromModel();
 	    }
@@ -298,6 +300,19 @@ this.BX = this.BX || {};
 
 	      if (toolPanel) {
 	        toolPanel.setLocked(false);
+	      }
+	    }
+	  }, {
+	    key: "onAddressDataInputting",
+	    value: function onAddressDataInputting() {
+	      this.markAsChanged();
+	    }
+	  }, {
+	    key: "markAsChanged",
+	    value: function markAsChanged() {
+	      if (!this._isMarkedAsChanged) {
+	        babelHelpers.get(babelHelpers.getPrototypeOf(EntityEditorAddressField.prototype), "markAsChanged", this).call(this);
+	        this._isMarkedAsChanged = true;
 	      }
 	    }
 	  }, {

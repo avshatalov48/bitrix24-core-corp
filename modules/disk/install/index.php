@@ -486,11 +486,20 @@ Class disk extends CModule
 						'b_disk_external_link' => 'OBJECT_ID',
 						'b_disk_cloud_import' => 'OBJECT_ID',
 						'b_disk_object_lock' => 'OBJECT_ID',
+						'b_disk_onlyoffice_document_session' => 'OBJECT_ID',
+						'b_disk_tracked_object' => 'OBJECT_ID',
+						'b_disk_tracked_object^' => 'REAL_OBJECT_ID',
+						'b_disk_recently_used' => 'OBJECT_ID',
 					),
 				),
 				'b_disk_sharing' => array(
 					'ID' => array(
 						'b_disk_sharing' => 'PARENT_ID',
+					)
+				),
+				'b_disk_attached_object' => array(
+					'ID' => array(
+						'b_disk_tracked_object' => 'ATTACHED_OBJECT_ID',
 					)
 				),
 				'b_disk_storage' => array(
@@ -508,6 +517,7 @@ Class disk extends CModule
 						'b_disk_external_link' => 'VERSION_ID',
 						'b_disk_edit_session' => 'VERSION_ID',
 						'b_disk_cloud_import' => 'VERSION_ID',
+						'b_disk_onlyoffice_document_session' => 'VERSION_ID',
 					)
 				),
 				'b_disk_tmp_file' => array(
@@ -539,7 +549,11 @@ Class disk extends CModule
 						'b_disk_deleted_log' => 'USER_ID',
 						'b_disk_deleted_log_v2' => 'USER_ID',
 						'b_disk_cloud_import' => 'USER_ID',
+						'b_disk_tracked_object' => 'USER_ID',
 						'b_disk_object_lock' => 'CREATED_BY',
+						'b_disk_onlyoffice_document_session' => 'USER_ID',
+						'b_disk_onlyoffice_document_session^' => 'OWNER_ID',
+						'b_disk_recently_used' => 'USER_ID',
 					)
 				),
 				"b_task" => array(

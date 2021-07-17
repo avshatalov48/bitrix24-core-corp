@@ -192,23 +192,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 		else
 		{
 			$this->arFilter["UF_DEPARTMENT"] = false;
-			$arExternalAuthId = array();
-			if (IsModuleInstalled('socialservices'))
-			{
-				$arExternalAuthId[] = 'replica';
-			}
-			if (IsModuleInstalled('mail'))
-			{
-				$arExternalAuthId[] = 'email';
-			}
-			if (IsModuleInstalled('imconnector'))
-			{
-				$arExternalAuthId[] = 'imconnector';
-			}
-			if (!empty($arExternalAuthId))
-			{
-				$this->arFilter["!EXTERNAL_AUTH_ID"] = $arExternalAuthId;
-			}
+			$this->arFilter["!EXTERNAL_AUTH_ID"] = \Bitrix\Main\UserTable::getExternalUserTypes();
 		}
 	}
 
@@ -286,25 +270,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			}
 		}
 
-		$arExternalAuthId = array("bot", "shop");
-		if (IsModuleInstalled('socialservices'))
-		{
-			$arExternalAuthId[] = 'replica';
-		}
-		if (IsModuleInstalled('mail'))
-		{
-			$arExternalAuthId[] = 'email';
-		}
-		if (IsModuleInstalled('imconnector'))
-		{
-			$arExternalAuthId[] = 'imconnector';
-		}
-		if (isModuleInstalled('sale'))
-			$arExternalAuthId[] = 'saleanonymous';
-		if (!empty($arExternalAuthId))
-		{
-			$this->arFilter["!EXTERNAL_AUTH_ID"] = $arExternalAuthId;
-		}
+		$this->arFilter["!EXTERNAL_AUTH_ID"] = \Bitrix\Main\UserTable::getExternalUserTypes();
 
 		//items equal to FALSE (see converting to boolean in PHP) will be removed (see array_filter()). After merge with $this->arFilter
 

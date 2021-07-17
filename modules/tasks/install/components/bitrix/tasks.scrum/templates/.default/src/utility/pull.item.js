@@ -203,28 +203,39 @@ export class PullItem
 			return;
 		}
 
-		const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
-		if (!entity)
-		{
-			return;
-		}
+		this.requestSender.hasTaskInFilter({
+			taskId: item.getSourceId()
+		}).then((response) => {
+			if (!response.data.has)
+			{
+				return;
+			}
 
-		const bindItemNode = entity.getListItemsNode().children[1];
+			const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
+			if (!entity)
+			{
+				return;
+			}
 
-		if (bindItemNode)
-		{
-			this.domBuilder.insertBefore(item.render(), bindItemNode);
-		}
-		else
-		{
-			this.domBuilder.append(item.render(), entity.getListItemsNode());
-		}
+			const bindItemNode = entity.getListItemsNode().children[1];
 
-		item.onAfterAppend(entity.getListItemsNode());
-		entity.setItem(item);
+			if (bindItemNode)
+			{
+				this.domBuilder.insertBefore(item.render(), bindItemNode);
+			}
+			else
+			{
+				this.domBuilder.append(item.render(), entity.getListItemsNode());
+			}
 
-		item.getTags().forEach((tag) => {
-			this.tagSearcher.addTagToSearcher(tag);
+			item.onAfterAppend(entity.getListItemsNode());
+			entity.setItem(item);
+
+			item.getTags().forEach((tag) => {
+				this.tagSearcher.addTagToSearcher(tag);
+			});
+		}).catch((response) => {
+			this.requestSender.showErrorAlert(response);
 		});
 	}
 
@@ -275,7 +286,18 @@ export class PullItem
 		}
 		else
 		{
-			this.addItemToEntity(tmpItem);
+			if (tmpItem.isSubTask())
+			{
+				const parentItem = this.entityStorage.findItemBySourceId(tmpItem.getParentTaskId());
+				if (parentItem)
+				{
+					parentItem.updateSubTasksPoints(tmpItem.getSourceId(), tmpItem.getStoryPoints());
+				}
+			}
+			else
+			{
+				this.addItemToEntity(tmpItem);
+			}
 		}
 	}
 

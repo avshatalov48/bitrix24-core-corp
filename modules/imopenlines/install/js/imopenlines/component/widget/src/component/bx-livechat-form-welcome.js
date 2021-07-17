@@ -10,12 +10,12 @@
 import 'ui.icons';
 import 'ui.forms';
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {Utils} from "im.lib.utils";
 import {FormType} from "../const";
 
-Vue.component('bx-livechat-form-welcome',
+BitrixVue.component('bx-livechat-form-welcome',
 {
 	data()
 	{
@@ -51,7 +51,7 @@ Vue.component('bx-livechat-form-welcome',
 	{
 		localize()
 		{
-			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
+			return BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
 		},
 		...Vuex.mapState({
 			widget: state => state.widget,
@@ -85,7 +85,7 @@ Vue.component('bx-livechat-form-welcome',
 
 			if (name || email || phone)
 			{
-				this.$root.$bitrixApplication.sendForm(FormType.welcome, {name, email, phone});
+				this.$Bitrix.Application.get().sendForm(FormType.welcome, {name, email, phone});
 			}
 
 			this.hideForm();

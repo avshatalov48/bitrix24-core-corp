@@ -14,7 +14,6 @@ export default class PostFormTabs extends EventEmitter
 	active = null;
 	animation = null;
 	animationStartHeight:number = 0;
-
 	previousTab = null;
 	menu = null;
 	listsMenu = null;
@@ -24,6 +23,20 @@ export default class PostFormTabs extends EventEmitter
 
 	tabContainer: HTMLElement = null;
 	arrow: HTMLElement = null;
+
+	config = {
+		id: {
+			message: 'message',
+			task: 'tasks',
+			calendar: 'calendar',
+			file: 'file',
+			gratitude: 'grat',
+			important: 'important',
+			vote: 'vote',
+			more: 'more',
+			listItem: 'lists',
+		},
+	};
 
 	static setInstance(instance)
 	{
@@ -81,51 +94,54 @@ export default class PostFormTabs extends EventEmitter
 			}
 		}
 
-		if (!!this.tabs['file'])
+		if (!!this.tabs[this.config.id.file])
 		{
-			this.bodies['file'] = [ this.bodies['message'] ];
+			this.bodies[this.config.id.file] = [ this.bodies[this.config.id.message] ];
 		}
 
-		if (!!this.tabs['calendar'])
+		if (!!this.tabs[this.config.id.calendar])
 		{
-			this.bodies['calendar'] = [ this.bodies['calendar'] ];
+			this.bodies[this.config.id.calendar] = [ this.bodies[this.config.id.calendar] ];
 		}
 
-		if (!!this.tabs['vote'])
+		if (!!this.tabs[this.config.id.vote])
 		{
-			this.bodies['vote'] = [ this.bodies['message'], this.bodies['vote'] ];
-		}
-
-		if (!!this.tabs['more'])
-		{
-			this.bodies['more'] = null;
-		}
-
-		if (!!this.tabs['important'])
-		{
-			this.bodies['important'] = [
-				this.bodies['message'],
-				this.bodies['important']
+			this.bodies[this.config.id.vote] = [
+				this.bodies[this.config.id.message],
+				this.bodies[this.config.id.vote],
 			];
 		}
 
-		if (!!this.tabs['grat'])
+		if (!!this.tabs[this.config.id.more])
 		{
-			this.bodies['grat'] = [
-				this.bodies['message'],
-				this.bodies['grat']
+			this.bodies[this.config.id.more] = null;
+		}
+
+		if (!!this.tabs[this.config.id.important])
+		{
+			this.bodies[this.config.id.important] = [
+				this.bodies[this.config.id.message],
+				this.bodies[this.config.id.important],
 			];
 		}
 
-		if (!!this.tabs['lists'])
+		if (!!this.tabs[this.config.id.gratitude])
 		{
-			this.bodies['lists'] = [ this.bodies['lists'] ];
+			this.bodies[this.config.id.gratitude] = [
+				this.bodies[this.config.id.message],
+				this.bodies[this.config.id.gratitude],
+			];
+		}
+
+		if (!!this.tabs[this.config.id.listItem])
+		{
+			this.bodies[this.config.id.listItem] = [ this.bodies[this.config.id.listItem] ];
 		}
 
 
-		if (!!this.tabs['tasks'])
+		if (!!this.tabs[this.config.id.task])
 		{
-			this.bodies['tasks'] = [ this.bodies['tasks'] ];
+			this.bodies[this.config.id.task] = [ this.bodies[this.config.id.task] ];
 		}
 
 		for (let ii in this.bodies)
@@ -172,7 +188,7 @@ export default class PostFormTabs extends EventEmitter
 		this.subscribe('changePostFormTab', (event) => {
 			const { type } = event.getData();
 
-			if (type === 'more')
+			if (type === this.config.id.more)
 			{
 				return;
 			}
@@ -181,7 +197,7 @@ export default class PostFormTabs extends EventEmitter
 
 			if (form['UF_BLOG_POST_IMPRTNT'])
 			{
-				form['UF_BLOG_POST_IMPRTNT'].value = (type === 'important' ? '1' : '0');
+				form['UF_BLOG_POST_IMPRTNT'].value = (type === this.config.id.important ? '1' : '0');
 			}
 		});
 	};
@@ -194,7 +210,7 @@ export default class PostFormTabs extends EventEmitter
 
 			btnText.innerHTML = name;
 
-			if (id !== 'lists')
+			if (id !== this.config.id.listItem)
 			{
 				btn.className = `feed-add-post-form-link feed-add-post-form-link-more feed-add-post-form-link-active feed-add-post-form-${id}-link`;
 				this.changePostFormTab(id);
@@ -229,7 +245,7 @@ export default class PostFormTabs extends EventEmitter
 			Type.isNull(type)
 			|| (
 				this.active === type
-				&& type !== 'lists'
+				&& type !== this.config.id.listItem
 			)
 		)
 		{
@@ -240,7 +256,7 @@ export default class PostFormTabs extends EventEmitter
 			return false;
 		}
 
-		const needAnimation = (type !== 'tasks' || this.isTaskTabLoaded());
+		const needAnimation = (type !== this.config.id.task || this.isTaskTabLoaded());
 		if (needAnimation)
 		{
 			this.startAnimation();
@@ -303,8 +319,8 @@ export default class PostFormTabs extends EventEmitter
 			})).animate();
 
 			if (
-				this.previousTab === 'file'
-				|| type === 'file'
+				this.previousTab === this.config.id.file
+				|| type === this.config.id.file
 			)
 			{
 				let hasValuesFile = false;
@@ -357,13 +373,13 @@ export default class PostFormTabs extends EventEmitter
 						{
 							Dom.adjust(messageBody.childNodes[ii], {
 								style: {
-									display: (type === 'file' ? 'none' : '')
+									display: (type === this.config.id.file ? 'none' : '')
 								}
 							});
 						}
 					}
 
-					if (type === 'file')
+					if (type === this.config.id.file)
 					{
 						if (
 							!!window['PlEditorblogPostForm']
@@ -385,9 +401,9 @@ export default class PostFormTabs extends EventEmitter
 								}
 
 								document.getElementById('bx-b-uploadfile-blogPostForm').setAttribute('bx-press', 'pressOn');
-								if (this.active !== 'file')
+								if (this.active !== this.config.id.file)
 								{
-									this.changePostFormTab('message');
+									this.changePostFormTab(this.config.id.message);
 								}
 							});
 						}
@@ -422,7 +438,7 @@ export default class PostFormTabs extends EventEmitter
 				}));
 			}
 
-			if(type === 'lists')
+			if(type === this.config.id.listItem)
 			{
 				EventEmitter.emit('onDisplayClaimLiveFeed', new BaseEvent({
 					compatData: [ iblock ]
@@ -452,7 +468,7 @@ export default class PostFormTabs extends EventEmitter
 			this.endAnimation();
 		}
 
-		if(type != 'lists')
+		if(type !== this.config.id.listItem)
 		{
 			this.restoreMoreMenu();
 		}

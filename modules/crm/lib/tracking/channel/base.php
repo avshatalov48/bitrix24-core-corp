@@ -25,6 +25,7 @@ class Base
 	const Site = 'site';
 	const Site24 = 'site24';
 	const Shop24 = 'shop24';
+	const CrmShop = 'crm-shop';
 	const SiteDomain = 'site-domain';
 	const Button = 'button';
 	const Form = 'form';

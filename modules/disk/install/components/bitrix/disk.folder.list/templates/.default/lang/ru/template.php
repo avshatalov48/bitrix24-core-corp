@@ -43,6 +43,7 @@ $MESS["DISK_FOLDER_LIST_SHARING_LABEL_OWNER"] = "Владелец";
 $MESS["DISK_FOLDER_LIST_BTN_CLOSE"] = "Закрыть";
 $MESS["DISK_FOLDER_LIST_BTN_SAVE"] = "Сохранить";
 $MESS["DISK_FOLDER_LIST_SHARING_TITLE_MODAL_2"] = "Общий доступ";
+$MESS["DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3"] = "Общий доступ";
 $MESS["DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL"] = "Настройка прав доступа";
 $MESS["DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL"] = "Настройка Бизнесс-процессов";
 $MESS["DISK_FOLDER_LIST_BIZPROC_LABEL"] = "Активировать Бизнесс-процессы";

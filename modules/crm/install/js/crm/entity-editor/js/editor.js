@@ -498,6 +498,20 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._enableCloseConfirmation = true;
 		BX.Crm.EntityEditor.superclass.processControlChange.apply(this, [controller]);
 	};
+	BX.Crm.EntityEditor.prototype.tapController = function(controllerId, callback)
+	{
+		if (BX.type.isNotEmptyString(controllerId) && BX.type.isFunction(callback))
+		{
+			var i, length;
+			for(i = 0, length = this._controllers.length; i < length; i++)
+			{
+				if (this._controllers[i]._id === controllerId)
+				{
+					return callback.call(this, this._controllers[i]);
+				}
+			}
+		}
+	};
 	//endregion
 	//region Layout
 	BX.Crm.EntityEditor.prototype.hasLayout = function()

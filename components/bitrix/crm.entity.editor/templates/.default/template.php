@@ -17,6 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Main;
 use \Bitrix\Crm;
+Main\UI\Extension::load("ui.label");
 Main\UI\Extension::load("crm.entity-editor");
 Main\UI\Extension::load("crm.entity-editor.field.requisite");
 Main\UI\Extension::load("ui.icons.b24");
@@ -387,6 +388,7 @@ if(!empty($htmlEditorConfigs))
 
 			BX.Crm.EntityEditorMoneyPay.messages =
 			{
+				popupItemTitle: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY_POPUP_ITEM_TITLE')?>",
 				payButtonLabel: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY')?>",
 				showPayButton: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_BUTTON_PAY')?>",
 				hidePayButton: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_BUTTON_PAY')?>",
@@ -715,6 +717,11 @@ if(!empty($htmlEditorConfigs))
 			BX.Crm.EntityEditorOrderClientSearchBox.messages =
 			{
 				notFound: "<?=GetMessageJS('CRM_ENTITY_ED_NOT_FOUND')?>"
+			};
+
+			BX.Crm.EntityEditorCalculatedDeliveryPrice.messages =
+			{
+				refresh: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_REFRESH')?>",
 			};
 
 			BX.message(

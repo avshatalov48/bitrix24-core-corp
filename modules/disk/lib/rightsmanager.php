@@ -302,6 +302,20 @@ class RightsManager implements IErrorable
 		return $this->set($object, array_merge($this->getSpecificRights($object), $rights));
 	}
 
+	public function hasSimpleRight(int $userId, int $objectId): bool
+	{
+		$sql = "
+			SELECT 'x' FROM b_disk_simple_right simple_right
+			INNER JOIN b_user_access uaccess ON uaccess.ACCESS_CODE = simple_right.ACCESS_CODE AND uaccess.USER_ID = {$userId}
+			WHERE (simple_right.OBJECT_ID = {$objectId})
+			LIMIT 1
+		";
+
+		$connection = Application::getConnection();
+
+		return (bool)$connection->query($sql)->getSelectedRowsCount();
+	}
+
 	public function revokeByAccessCodes(BaseObject $object, array $accessCodes)
 	{
 		if (empty($accessCodes))

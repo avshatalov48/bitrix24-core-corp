@@ -319,6 +319,18 @@ if($arParams['TYPE'] === 'list')
 	}
 }
 
+if ($bConfig)
+{
+	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+	$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');
+	$scenarioSelectionPath = getLocalPath('components'.$scenarioSelectionPath.'/slider.php');
+	$arResult['BUTTONS'][] = [
+		'TEXT' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+		'TITLE' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+		'ONCLICK' => 'BX.SidePanel.Instance.open("' . $scenarioSelectionPath .'", {width: 900, cacheable: false});'
+	];
+}
+
 $qty = count($arResult['BUTTONS']);
 if ($arParams['TYPE'] === 'kanban' && $GLOBALS['USER']->canDoOperation('edit_other_settings'))
 {

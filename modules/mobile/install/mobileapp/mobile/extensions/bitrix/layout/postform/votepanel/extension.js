@@ -135,7 +135,7 @@
 					flexDirection: 'row',
 				}
 			},
-			TextInput({
+			TextField({
 				ref: ref => {
 					this.votePanelRef.setQuestionElement(questionIndex, ref);
 				},
@@ -180,6 +180,7 @@
 
 					this.votePanelRef.questions[questionIndex].answers[0].element.focus();
 				},
+				autoCapitalize: 'sentences',
 			})
 		)
 	};
@@ -207,7 +208,7 @@
 					alignItems: 'center',
 				}
 			},
-			TextInput({
+			TextField({
 				ref: ref => {
 					setTimeout(() => { // wait for setState callback
 						this.votePanelRef.setAnswerElement(questionIndex, answerIndex, ref);
@@ -264,6 +265,7 @@
 						rootScrollRef.scrollToEnd(true);
 					}
 				},
+				autoCapitalize: 'sentences',
 			}),
 			View(
 				{

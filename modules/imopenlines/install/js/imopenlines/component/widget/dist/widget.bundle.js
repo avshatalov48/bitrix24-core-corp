@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_view_dialog,im_view_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,main_md5,im_const,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
 	'use strict';
 
 	/**
@@ -101,6 +101,9 @@
 	  spam: 65,
 	  duplicate: 69,
 	  silentlyClose: 75
+	});
+	var EventType = Object.freeze({
+	  requestShowForm: 'IMOL.Widget:requestShowForm'
 	});
 
 	/**
@@ -1452,6 +1455,8 @@
 	    value: function requestData() {
 	      var _this5 = this;
 
+	      im_lib_logger.Logger.log('requesting data from widget');
+
 	      if (this.requestDataSend) {
 	        return true;
 	      }
@@ -1739,8 +1744,7 @@
 	      });
 
 	      if (this.template) {
-	        this.template.$root.$bitrixPullClient = this.pullClient;
-	        this.template.$root.$emit('onBitrixPullClientInited', this.pullClient);
+	        this.template.$Bitrix.PullClient.set(this.pullClient);
 	      }
 
 	      this.pullClient.start(babelHelpers.objectSpread({}, config, {
@@ -1778,8 +1782,19 @@
 	        this.offline = false;
 
 	        if (this.pullRequestMessage) {
-	          this.getDialogUnread().then(function () {
+	          this.controller.pullBaseHandler.option.skip = true;
+	          im_lib_logger.Logger.warn('Requesting getDialogUnread after going online');
+	          main_core_events.EventEmitter.emitAsync(im_const.EventType.dialog.requestUnread, {
+	            chatId: this.controller.application.getChatId()
+	          }).then(function () {
+	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
+	              chatId: _this8.controller.application.getChatId()
+	            });
+	            _this8.controller.pullBaseHandler.option.skip = false;
+
 	            _this8.processSendMessages();
+	          }).catch(function () {
+	            _this8.controller.pullBaseHandler.option.skip = false;
 	          });
 	          this.pullRequestMessage = false;
 	        } else {
@@ -1817,6 +1832,13 @@
 	            data: {}
 	          });
 	          application.template = this;
+
+	          if (main_core_minimal.ZIndexManager !== undefined) {
+	            var stack = main_core_minimal.ZIndexManager.getOrAddStack(document.body);
+	            stack.setBaseIndex(1000000); // some big value
+
+	            this.$bitrix.Data.set('zIndexStack', stack);
+	          }
 	        },
 	        destroyed: function destroyed() {
 	          application.sendEvent({
@@ -1864,6 +1886,30 @@
 	        return false;
 	      }
 
+	      var quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
+
+	      if (quoteId) {
+	        var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
+
+	        if (quoteMessage) {
+	          var user = null;
+
+	          if (quoteMessage.authorId) {
+	            user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
+	          }
+
+	          var files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
+	          var message = [];
+	          message.push('-'.repeat(54));
+	          message.push((user && user.name ? user.name : this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE')) + ' [' + im_lib_utils.Utils.date.format(quoteMessage.date, null, this.getLocalize()) + ']');
+	          message.push(im_lib_utils.Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
+	          message.push('-'.repeat(54));
+	          message.push(text);
+	          text = message.join("\n");
+	          this.quoteMessageClear();
+	        }
+	      }
+
 	      im_lib_logger.Logger.warn('addMessage', text, file);
 
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
@@ -1876,7 +1922,6 @@
 	        return true;
 	      }
 
-	      this.controller.getStore().commit('application/increaseDialogExtraCount');
 	      var params = {};
 
 	      if (file) {
@@ -1895,6 +1940,11 @@
 	            dialogStart: true
 	          });
 	        }
+
+	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	          chatId: _this9.getChatId(),
+	          cancelIfScrollChange: true
+	        });
 
 	        _this9.messagesQueue.push({
 	          id: messageId,
@@ -2257,16 +2307,6 @@
 	      return this.controller.application.readMessage(messageId);
 	    }
 	  }, {
-	    key: "quoteMessage",
-	    value: function quoteMessage(id) {
-	      this.controller.getStore().dispatch('dialogues/update', {
-	        dialogId: this.controller.application.getDialogId(),
-	        fields: {
-	          quoteId: id
-	        }
-	      });
-	    }
-	  }, {
 	    key: "reactMessage",
 	    value: function reactMessage(id, reaction) {
 	      this.controller.application.reactMessage(id, reaction.type, reaction.action);
@@ -2393,6 +2433,72 @@
 	      }));
 	    }
 	  }, {
+	    key: "getHtmlHistory",
+	    value: function getHtmlHistory() {
+	      var chatId = this.getChatId();
+
+	      if (chatId <= 0) {
+	        console.error('Incorrect chatId value');
+	      }
+
+	      var config = {
+	        chatId: this.getChatId()
+	      };
+	      this.requestControllerAction('imopenlines.widget.history.download', config).then(function (response) {
+	        var contentType = response.headers.get('Content-Type');
+
+	        if (contentType.startsWith('application/json')) {
+	          return response.json();
+	        }
+
+	        return response.blob();
+	      }).then(function (result) {
+	        if (result instanceof Blob) {
+	          var url = window.URL.createObjectURL(result);
+	          var a = document.createElement('a');
+	          a.href = url;
+	          a.download = chatId + '.html';
+	          document.body.appendChild(a);
+	          a.click();
+	          a.remove();
+	        } else if (result.hasOwnProperty('errors')) {
+	          console.error(result.errors[0]);
+	        } else {
+	          console.error('Unknown error.');
+	        }
+	      }).catch(function () {
+	        return console.error('Fetch error.');
+	      });
+	    }
+	    /**
+	     * Basic method to run actions.
+	     * If you need to extend it, check BX.ajax.runAction to extend this method.
+	     */
+
+	  }, {
+	    key: "requestControllerAction",
+	    value: function requestControllerAction(action, config) {
+	      var host = this.host ? this.host : '';
+	      var ajaxEndpoint = '/bitrix/services/main/ajax.php';
+	      var url = new URL(ajaxEndpoint, host);
+	      url.searchParams.set('action', action);
+	      var formData = new FormData();
+
+	      for (var key in config) {
+	        if (config.hasOwnProperty(key)) {
+	          formData.append(key, config[key]);
+	        }
+	      }
+
+	      return fetch(url, {
+	        method: 'POST',
+	        headers: {
+	          'Livechat-Auth-Id': this.getUserHash()
+	        },
+	        body: formData
+	      });
+	    }
+	  }, {
 	    key: "sendConsentDecision",
 	    value: function sendConsentDecision(result) {
 	      result = result === true;
@@ -2468,7 +2574,7 @@
 	  }, {
 	    key: "showNotification",
 	    value: function showNotification(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      } // TODO show popup notification and set badge on button
@@ -2655,7 +2761,7 @@
 	  }, {
 	    key: "getUserData",
 	    value: function getUserData() {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -2687,7 +2793,7 @@
 	  }, {
 	    key: "setUserRegisterData",
 	    value: function setUserRegisterData(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -2740,7 +2846,7 @@
 	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -3065,7 +3171,8 @@
 	 * @notice Do not mutate or clone this component! It is under development.
 	 */
 
-	ui_vue.Vue.component('bx-livechat', {
+	ui_vue.BitrixVue.component('bx-livechat', {
+	  mixins: [im_mixin.DialogCore, im_mixin.TextareaCore, im_mixin.TextareaUploadFile, im_mixin.DialogReadMessages, im_mixin.DialogClickOnCommand, im_mixin.DialogClickOnUserName, im_mixin.DialogClickOnKeyboardButton, im_mixin.DialogClickOnMessageMenu, im_mixin.DialogClickOnMessageRetry, im_mixin.DialogSetMessageReaction, im_mixin.DialogClickOnUploadCancel],
 	  data: function data() {
 	    return {
 	      viewPortMetaSiteNode: null,
@@ -3086,10 +3193,12 @@
 	      textareaDrag: false,
 	      textareaHeight: 100,
 	      textareaMinimumHeight: 100,
-	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300
+	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300,
+	      zIndexStackInstance: null
 	    };
 	  },
 	  created: function created() {
+	    im_lib_logger.Logger.warn('bx-livechat created');
 	    this.onCreated();
 	    document.addEventListener('keydown', this.onWindowKeyDown);
 
@@ -3097,16 +3206,27 @@
 	      window.addEventListener('resize', this.getAvailableSpaceFunc = im_lib_utils.Utils.throttle(this.getAvailableSpace, 50));
 	    }
 
-	    this.$root.$on('requestShowForm', this.onRequestShowForm);
+	    main_core_events.EventEmitter.subscribe(EventType.requestShowForm, this.onRequestShowForm);
+	  },
+	  mounted: function mounted() {
+	    this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
+
+	    if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
+	      this.zIndexStackInstance.register(this.$refs.widgetWrapper);
+	    }
 	  },
 	  beforeDestroy: function beforeDestroy() {
+	    if (this.zIndexStackInstance) {
+	      this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
+	    }
+
 	    document.removeEventListener('keydown', this.onWindowKeyDown);
 
 	    if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
 	      window.removeEventListener('resize', this.getAvailableSpaceFunc);
 	    }
 
-	    this.$root.$off('requestShowForm', this.onRequestShowForm);
+	    main_core_events.EventEmitter.unsubscribe(EventType.requestShowForm, this.onRequestShowForm);
 	    this.onTextareaDragEventRemove();
 	  },
 	  computed: babelHelpers.objectSpread({
@@ -3119,7 +3239,7 @@
 	    DeviceType: function DeviceType() {
 	      return im_const.DeviceType;
 	    },
-	    EventType: function EventType() {
+	    EventType: function EventType$$1() {
 	      return im_const.EventType;
 	    },
 	    textareaHeightStyle: function textareaHeightStyle(state) {
@@ -3127,7 +3247,7 @@
 	        flex: '0 0 ' + this.textareaHeight + 'px'
 	      };
 	    },
-	    textAreaBottomMargin: function textAreaBottomMargin() {
+	    textareaBottomMargin: function textareaBottomMargin() {
 	      if (!this.widget.common.copyright && !this.isBottomLocation) {
 	        return {
 	          marginBottom: '5px'
@@ -3174,7 +3294,7 @@
 	      return [LocationType.bottomLeft, LocationType.topLeft, LocationType.topMiddle].includes(this.widget.common.location);
 	    },
 	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
+	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
 	    },
 	    widgetMobileDisabled: function widgetMobileDisabled(state) {
 	      if (state.application.device.type === im_const.DeviceType.mobile) {
@@ -3245,33 +3365,6 @@
 	    },
 	    showMessageDialog: function showMessageDialog() {
 	      return this.messageCollection.length > 0;
-	    },
-	    quotePanelData: function quotePanelData() {
-	      var result = {
-	        id: 0,
-	        title: '',
-	        description: '',
-	        color: ''
-	      };
-
-	      if (!this.dialog.quoteId) {
-	        return result;
-	      }
-
-	      var message = this.$store.getters['messages/getMessage'](this.dialog.chatId, this.dialog.quoteId);
-
-	      if (!message) {
-	        return result;
-	      }
-
-	      var user = this.$store.getters['users/get'](message.authorId);
-	      result = {
-	        id: this.dialog.quoteId,
-	        title: user ? user.name : '',
-	        color: user ? user.color : '',
-	        description: message.textConverted ? message.textConverted : this.localize.BX_LIVECHAT_FILE_MESSAGE
-	      };
-	      return result;
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -3290,9 +3383,54 @@
 	  watch: {
 	    sessionClose: function sessionClose(value) {
 	      im_lib_logger.Logger.log('sessionClose change', value);
+	    },
+	    //Redefined for uploadFile mixin
+	    dialogInited: function dialogInited(newValue) {
+	      return false;
 	    }
 	  },
 	  methods: {
+	    getRestClient: function getRestClient() {
+	      return this.$Bitrix.RestClient.get();
+	    },
+	    getApplication: function getApplication() {
+	      return this.$Bitrix.Application.get();
+	    },
+	    onSendMessage: function onSendMessage(_ref) {
+	      var event = _ref.data;
+	      event.focus = event.focus !== false;
+
+	      if (this.widget.common.showForm === FormType.smile) {
+	        this.$store.commit('widget/common', {
+	          showForm: FormType.none
+	        });
+	      } //show consent window if needed
+
+
+	      if (!this.widget.dialog.userConsent && this.widget.common.consentUrl) {
+	        if (event.text) {
+	          this.storedMessage = event.text;
+	        }
+
+	        this.showConsentWidow();
+	        return false;
+	      }
+
+	      event.text = event.text ? event.text : this.storedMessage;
+
+	      if (!event.text) {
+	        return false;
+	      }
+
+	      this.hideForm();
+	      this.getApplication().addMessage(event.text);
+
+	      if (event.focus) {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      }
+
+	      return true;
+	    },
 	    close: function close(event) {
 	      if (this.widget.common.pageMode) {
 	        return false;
@@ -3355,6 +3493,9 @@
 	        showForm: FormType.history
 	      });
 	    },
+	    onOpenMenu: function onOpenMenu(event) {
+	      this.getApplication().getHtmlHistory();
+	    },
 	    hideForm: function hideForm() {
 	      clearTimeout(this.showFormTimeout);
 
@@ -3373,12 +3514,14 @@
 	      this.$store.commit('widget/common', {
 	        showConsent: false
 	      });
-	      this.$root.$bitrixApplication.sendConsentDecision(true);
+	      this.getApplication().sendConsentDecision(true);
 
 	      if (this.storedMessage || this.storedFile) {
 	        if (this.storedMessage) {
-	          this.onTextareaSend({
-	            focus: this.application.device.type !== im_const.DeviceType.mobile
+	          this.onSendMessage({
+	            data: {
+	              focus: this.application.device.type !== im_const.DeviceType.mobile
+	            }
 	          });
 	          this.storedMessage = '';
 	        }
@@ -3388,7 +3531,7 @@
 	          this.storedFile = '';
 	        }
 	      } else if (this.widget.common.showForm === FormType.none) {
-	        this.$root.$emit(im_const.EventType.textarea.focus);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
 	    },
 	    disagreeConsentWidow: function disagreeConsentWidow() {
@@ -3398,10 +3541,10 @@
 	      this.$store.commit('widget/common', {
 	        showConsent: false
 	      });
-	      this.$root.$bitrixApplication.sendConsentDecision(false);
+	      this.getApplication().sendConsentDecision(false);
 
 	      if (this.storedMessage) {
-	        this.$root.$emit(im_const.EventType.textarea.insertText, {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
 	          text: this.storedMessage,
 	          focus: this.application.device.type !== im_const.DeviceType.mobile
 	        });
@@ -3413,7 +3556,7 @@
 	      }
 
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
-	        this.$root.$emit(im_const.EventType.textarea.focus);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
 	    },
 	    logEvent: function logEvent(name) {
@@ -3480,13 +3623,13 @@
 
 	      this.textareaHeight = this.widget.common.textareaHeight || this.textareaHeight;
 	      this.$store.commit('files/initCollection', {
-	        chatId: this.$root.$bitrixApplication.getChatId()
+	        chatId: this.getApplication().getChatId()
 	      });
 	      this.$store.commit('messages/initCollection', {
-	        chatId: this.$root.$bitrixApplication.getChatId()
+	        chatId: this.getApplication().getChatId()
 	      });
 	      this.$store.commit('dialogues/initCollection', {
-	        dialogId: this.$root.$bitrixApplication.getDialogId(),
+	        dialogId: this.getApplication().getDialogId(),
 	        fields: {
 	          entityType: 'LIVECHAT',
 	          type: 'livechat'
@@ -3513,11 +3656,12 @@
 	      }
 	    },
 	    onAfterClose: function onAfterClose() {
-	      this.$root.$bitrixApplication.close();
+	      this.getApplication().close();
 	    },
-	    onRequestShowForm: function onRequestShowForm(event) {
+	    onRequestShowForm: function onRequestShowForm(_ref2) {
 	      var _this2 = this;
 
+	      var event = _ref2.data;
 	      clearTimeout(this.showFormTimeout);
 
 	      if (event.type === FormType.welcome) {
@@ -3547,105 +3691,81 @@
 	      }
 	    },
 	    onDialogRequestHistory: function onDialogRequestHistory(event) {
-	      this.$root.$bitrixApplication.getDialogHistory(event.lastId);
+	      this.getApplication().getDialogHistory(event.lastId);
 	    },
 	    onDialogRequestUnread: function onDialogRequestUnread(event) {
-	      this.$root.$bitrixApplication.getDialogUnread(event.lastId);
+	      this.getApplication().getDialogUnread(event.lastId);
 	    },
-	    onDialogMessageClickByUserName: function onDialogMessageClickByUserName(event) {
+	    onClickOnUserName: function onClickOnUserName(_ref3) {
+	      var event = _ref3.data;
 	      // TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
-	      this.$root.$emit(im_const.EventType.textarea.insertText, {
-	        text: event.user.name + ' '
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
+	        text: event.user.name + ', '
 	      });
 	    },
-	    onDialogMessageClickByUploadCancel: function onDialogMessageClickByUploadCancel(event) {
-	      this.$root.$bitrixApplication.cancelUploadFile(event.file.id);
+	    onClickOnUploadCancel: function onClickOnUploadCancel(_ref4) {
+	      var event = _ref4.data;
+	      this.getApplication().cancelUploadFile(event.file.id);
 	    },
-	    onDialogMessageClickByKeyboardButton: function onDialogMessageClickByKeyboardButton(event) {
-	      this.$root.$bitrixApplication.execMessageKeyboardCommand(event);
+	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref5) {
+	      var event = _ref5.data;
+	      this.getApplication().execMessageKeyboardCommand(event);
 	    },
-	    onDialogMessageClickByCommand: function onDialogMessageClickByCommand(event) {
+	    onClickOnCommand: function onClickOnCommand(_ref6) {
+	      var event = _ref6.data;
+
 	      if (event.type === 'put') {
-	        this.$root.$emit(im_const.EventType.textarea.insertText, {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
 	          text: event.value + ' '
 	        });
 	      } else if (event.type === 'send') {
-	        this.$root.$bitrixApplication.addMessage(event.value);
+	        this.getApplication().addMessage(event.value);
 	      } else {
 	        im_lib_logger.Logger.warn('Unprocessed command', event);
 	      }
 	    },
-	    onDialogMessageMenuClick: function onDialogMessageMenuClick(event) {
+	    onClickOnMessageMenu: function onClickOnMessageMenu(_ref7) {
+	      var event = _ref7.data;
 	      im_lib_logger.Logger.warn('Message menu:', event);
 	    },
-	    onDialogMessageRetryClick: function onDialogMessageRetryClick(event) {
+	    onClickOnMessageRetry: function onClickOnMessageRetry(_ref8) {
+	      var event = _ref8.data;
 	      im_lib_logger.Logger.warn('Message retry:', event);
-	      this.$root.$bitrixApplication.retrySendMessage(event.message);
+	      this.getApplication().retrySendMessage(event.message);
 	    },
-	    onDialogReadMessage: function onDialogReadMessage(event) {
-	      this.$root.$bitrixApplication.readMessage(event.id);
+	    onReadMessage: function onReadMessage(_ref9) {
+	      var event = _ref9.data;
+	      this.getApplication().readMessage(event.id);
 	    },
-	    onDialogQuoteMessage: function onDialogQuoteMessage(event) {
-	      this.$root.$bitrixApplication.quoteMessage(event.message.id);
+	    onSetMessageReaction: function onSetMessageReaction(_ref10) {
+	      var event = _ref10.data;
+	      this.getApplication().reactMessage(event.message.id, event.reaction);
 	    },
-	    onDialogMessageReactionSet: function onDialogMessageReactionSet(event) {
-	      this.$root.$bitrixApplication.reactMessage(event.message.id, event.reaction);
-	    },
-	    onDialogClick: function onDialogClick(event) {
+	    onClickOnDialog: function onClickOnDialog(_ref11) {
+	      var event = _ref11.data;
+
 	      if (this.widget.common.showForm !== FormType.none) {
 	        this.$store.commit('widget/common', {
 	          showForm: FormType.none
 	        });
 	      }
 	    },
-	    onTextareaKeyUp: function onTextareaKeyUp(event) {
-	      if (this.widget.common.watchTyping && this.widget.dialog.sessionId && !this.widget.dialog.sessionClose && this.widget.dialog.operator.id && this.widget.dialog.operatorChatId && this.$root.$bitrixPullClient.isPublishingEnabled()) {
+	    onTextareaKeyUp: function onTextareaKeyUp(_ref12) {
+	      var event = _ref12.data;
+
+	      if (this.widget.common.watchTyping && this.widget.dialog.sessionId && !this.widget.dialog.sessionClose && this.widget.dialog.operator.id && this.widget.dialog.operatorChatId && this.$Bitrix.PullClient.get().isPublishingEnabled()) {
 	        var infoString = main_md5.md5(this.widget.dialog.sessionId + '/' + this.application.dialog.chatId + '/' + this.widget.user.id);
-	        this.$root.$bitrixPullClient.sendMessage([this.widget.dialog.operator.id], 'imopenlines', 'linesMessageWrite', {
+	        this.$Bitrix.PullClient.get().sendMessage([this.widget.dialog.operator.id], 'imopenlines', 'linesMessageWrite', {
 	          text: event.text,
 	          infoString: infoString,
 	          operatorChatId: this.widget.dialog.operatorChatId
 	        });
 	      }
 	    },
-	    onTextareaSend: function onTextareaSend(event) {
-	      event.focus = event.focus !== false;
-
-	      if (this.widget.common.showForm === FormType.smile) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.none
-	        });
-	      }
-
-	      if (!this.widget.dialog.userConsent && this.widget.common.consentUrl) {
-	        if (event.text) {
-	          this.storedMessage = event.text;
-	        }
-
-	        this.showConsentWidow();
-	        return false;
-	      }
-
-	      event.text = event.text ? event.text : this.storedMessage;
-
-	      if (!event.text) {
-	        return false;
-	      }
-
-	      this.hideForm();
-	      this.$root.$bitrixApplication.addMessage(event.text);
-
-	      if (event.focus) {
-	        this.$root.$emit(im_const.EventType.textarea.focus);
-	      }
-
-	      return true;
-	    },
-	    onTextareaWrites: function onTextareaWrites(event) {
-	      this.$root.$bitrixController.application.startWriting();
-	    },
-	    onTextareaFocus: function onTextareaFocus(event) {
+	    onTextareaFocus: function onTextareaFocus(_ref13) {
 	      var _this3 = this;
+
+	      var event = _ref13.data;
 
 	      if (this.widget.common.copyright && this.application.device.type === im_const.DeviceType.mobile) {
 	        this.widget.common.copyright = false;
@@ -3660,13 +3780,16 @@
 
 	      this.textareaFocused = true;
 	    },
-	    onTextareaBlur: function onTextareaBlur(event) {
+	    onTextareaBlur: function onTextareaBlur(_ref14) {
 	      var _this4 = this;
 
-	      if (!this.widget.common.copyright && this.widget.common.copyright !== this.$root.$bitrixApplication.copyright) {
-	        this.widget.common.copyright = this.$root.$bitrixApplication.copyright;
+	      var event = _ref14.data;
+
+	      if (!this.widget.common.copyright && this.widget.common.copyright !== this.getApplication().copyright) {
+	        this.widget.common.copyright = this.getApplication().copyright;
 	        this.$nextTick(function () {
-	          _this4.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	            chatId: _this4.chatId,
 	            force: true
 	          });
 	        });
@@ -3690,7 +3813,7 @@
 	      this.textareaDragCursorStartPoint = event.clientY;
 	      this.textareaDragHeightStartPoint = this.textareaHeight;
 	      this.onTextareaDragEventAdd();
-	      this.$root.$emit(im_const.EventType.textarea.blur, true);
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
 	    },
 	    onTextareaContinueDrag: function onTextareaContinueDrag(event) {
 	      if (!this.textareaDrag) {
@@ -3717,7 +3840,8 @@
 	      this.$store.commit('widget/common', {
 	        textareaHeight: this.textareaHeight
 	      });
-	      this.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
+	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	        chatId: this.chatId,
 	        force: true
 	      });
 	    },
@@ -3735,7 +3859,10 @@
 	      document.removeEventListener('mouseup', this.onTextareaStopDrag);
 	      document.removeEventListener('mouseleave', this.onTextareaStopDrag);
 	    },
-	    onTextareaFileSelected: function onTextareaFileSelected(event) {
+	    onTextareaFileSelected: function onTextareaFileSelected() {
+	      var _ref15 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	          event = _ref15.data;
+
 	      var fileInputEvent = null;
 
 	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
@@ -3754,9 +3881,11 @@
 	        return false;
 	      }
 
-	      this.$root.$bitrixApplication.uploadFile(fileInputEvent);
+	      this.getApplication().uploadFile(fileInputEvent);
 	    },
-	    onTextareaAppButtonClick: function onTextareaAppButtonClick(event) {
+	    onTextareaAppButtonClick: function onTextareaAppButtonClick(_ref16) {
+	      var event = _ref16.data;
+
 	      if (event.appId === FormType.smile) {
 	        if (this.widget.common.showForm === FormType.smile) {
 	          this.$store.commit('widget/common', {
@@ -3768,22 +3897,23 @@
 	          });
 	        }
 	      } else {
-	        this.$root.$emit(im_const.EventType.textarea.focus);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
 	    },
+	    onTextareaEdit: function onTextareaEdit(_ref17) {
+	      var event = _ref17.data;
+	      this.logEvent('edit message', event);
+	    },
 	    onPullRequestConfig: function onPullRequestConfig(event) {
-	      this.$root.$bitrixApplication.recoverPullConnection();
+	      this.getApplication().recoverPullConnection();
 	    },
 	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
-	      this.$root.$emit(im_const.EventType.textarea.insertText, {
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
 	        text: event.text
 	      });
 	    },
 	    onSmilesSelectSet: function onSmilesSelectSet() {
-	      this.$root.$emit(im_const.EventType.textarea.focus);
-	    },
-	    onQuotePanelClose: function onQuotePanelClose() {
-	      this.$root.$bitrixApplication.quoteMessageClear();
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	    },
 	    onWidgetStartDrag: function onWidgetStartDrag(event) {
 	      if (this.widgetDrag) {
@@ -3866,19 +3996,18 @@
 
 	        event.preventDefault();
 	        event.stopPropagation();
-	        this.$root.$emit(im_const.EventType.textarea.focus);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
 	    },
 	    onWindowScroll: function onWindowScroll(event) {
-	      var _this5 = this;
-
 	      clearTimeout(this.onWindowScrollTimeout);
 	      this.onWindowScrollTimeout = setTimeout(function () {
-	        _this5.$root.$emit(im_const.EventType.textarea.blur, true);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
 	      }, 50);
 	    }
 	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @history=\"showHistoryForm\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-view-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:chatId=\"application.dialog.chatId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:messageExtraCount=\"application.dialog.messageExtraCount\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventScrollToBottom=\"EventType.dialog.scrollToBottom\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventRequestHistory=\"EventType.dialog.requestHistoryResult\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventRequestUnread=\"EventType.dialog.requestUnreadResult\"\n\t\t\t\t\t\t\t\t\t\t\t@readMessage=\"onDialogReadMessage\"\n\t\t\t\t\t\t\t\t\t\t\t@requestHistory=\"onDialogRequestHistory\"\n\t\t\t\t\t\t\t\t\t\t\t@requestUnread=\"onDialogRequestUnread\"\n\t\t\t\t\t\t\t\t\t\t\t@quoteMessage=\"onDialogQuoteMessage\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByCommand=\"onDialogMessageClickByCommand\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByUserName=\"onDialogMessageClickByUserName\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByUploadCancel=\"onDialogMessageClickByUploadCancel\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByKeyboardButton=\"onDialogMessageClickByKeyboardButton\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageMenu=\"onDialogMessageMenuClick\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageRetry=\"onDialogMessageRetryClick\"\n\t\t\t\t\t\t\t\t\t\t\t@setMessageReaction=\"onDialogMessageReactionSet\"\n\t\t\t\t\t\t\t\t\t\t\t@click=\"onDialogClick\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<bx-im-view-quote-panel :id=\"quotePanelData.id\" :title=\"quotePanelData.title\" :description=\"quotePanelData.description\" :color=\"quotePanelData.color\" @close=\"onQuotePanelClose\"/>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textAreaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-view-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t\t:listenEventInsertText=\"EventType.textarea.insertText\"\n\t\t\t\t\t\t\t\t:listenEventFocus=\"EventType.textarea.focus\"\n\t\t\t\t\t\t\t\t:listenEventBlur=\"EventType.textarea.blur\"\n\t\t\t\t\t\t\t\t@writes=\"onTextareaWrites\" \n\t\t\t\t\t\t\t\t@send=\"onTextareaSend\" \n\t\t\t\t\t\t\t\t@focus=\"onTextareaFocus\" \n\t\t\t\t\t\t\t\t@blur=\"onTextareaBlur\"\n\t\t\t\t\t\t\t\t@keyup=\"onTextareaKeyUp\" \n\t\t\t\t\t\t\t\t@edit=\"logEvent('edit message', $event)\"\n\t\t\t\t\t\t\t\t@fileSelected=\"onTextareaFileSelected\"\n\t\t\t\t\t\t\t\t@appButtonClick=\"onTextareaAppButtonClick\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  // language=Vue
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -3889,20 +4018,13 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-body-error', {
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return Object.freeze({
-	        BX_LIVECHAT_ERROR_TITLE: this.$root.$bitrixMessages.BX_LIVECHAT_ERROR_TITLE,
-	        BX_LIVECHAT_ERROR_DESC: this.$root.$bitrixMessages.BX_LIVECHAT_ERROR_DESC
-	      });
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
+	ui_vue.BitrixVue.component('bx-livechat-body-error', {
+	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
 	    application: function application(state) {
 	      return state.application;
 	    }
 	  })),
-	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"error-body\">\n\t\t\t<div class=\"bx-livechat-warning-window\">\n\t\t\t\t<div class=\"bx-livechat-warning-icon\"></div>\n\t\t\t\t<template v-if=\"application.error.description\"> \n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\" v-html=\"application.error.description\"></div>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg\">{{localize.BX_LIVECHAT_ERROR_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\">{{localize.BX_LIVECHAT_ERROR_DESC}}</div>\n\t\t\t\t</template> \n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"error-body\">\n\t\t\t<div class=\"bx-livechat-warning-window\">\n\t\t\t\t<div class=\"bx-livechat-warning-icon\"></div>\n\t\t\t\t<template v-if=\"application.error.description\"> \n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\" v-html=\"application.error.description\"></div>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_DESC')}}</div>\n\t\t\t\t</template> \n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -3913,7 +4035,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-head', {
+	ui_vue.BitrixVue.component('bx-livechat-head', {
 	  /**
 	   * @emits 'close'
 	   * @emits 'like'
@@ -3931,13 +4053,18 @@
 	    like: function like(event) {
 	      this.$emit('like');
 	    },
-	    history: function history(event) {
-	      this.$emit('history');
+	    openMenu: function openMenu(event) {
+	      this.$emit('openMenu', event);
 	    }
 	  },
 	  computed: babelHelpers.objectSpread({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
+	    },
+	    chatId: function chatId() {
+	      if (this.application) {
+	        return this.application.dialog.chatId;
+	      }
 	    },
 	    customBackgroundStyle: function customBackgroundStyle(state) {
 	      return state.widget.common.styles.backgroundColor ? 'background-color: ' + state.widget.common.styles.backgroundColor + '!important;' : '';
@@ -3988,7 +4115,10 @@
 	      return this.localize.BX_LIVECHAT_OPERATOR_POSITION_ONLY.replace("#POSITION#", operatorPosition);
 	    },
 	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
+	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
+	    },
+	    ie11: function ie11() {
+	      return main_core_minimal.Browser.isIE11();
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -4004,12 +4134,15 @@
 
 	      if (value) {
 	        setTimeout(function () {
-	          _this.$root.$emit(im_const.EventType.dialog.scrollToBottom);
+	          _this.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
+	            chatId: _this.chatId
+	          });
 	        }, 300);
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button v-if=\"false\" class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  //language=Vue
+	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"!ie11 && application.dialog.chatId > 0\"\n\t\t\t\t\t\t\t\tclass=\"bx-livechat-control-btn bx-livechat-control-btn-menu\"\n\t\t\t\t\t\t\t\t@click=\"openMenu\"\n\t\t\t\t\t\t\t\t:title=\"localize.BX_LIVECHAT_DOWNLOAD_HISTORY\"\n\t\t\t\t\t\t\t></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4020,15 +4153,8 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-body-loading', {
-	  computed: {
-	    localize: function localize() {
-	      return Object.freeze({
-	        BX_LIVECHAT_LOADING: this.$root.$bitrixMessages.BX_LIVECHAT_LOADING
-	      });
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-livechat-loading-window\">\n\t\t\t<svg class=\"bx-livechat-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t<circle class=\"bx-livechat-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t<circle class=\"bx-livechat-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t</svg>\n\t\t\t<h3 class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-loading-msg\">{{localize.BX_LIVECHAT_LOADING}}</h3>\n\t\t</div>\n\t"
+	ui_vue.BitrixVue.component('bx-livechat-body-loading', {
+	  template: "\n\t\t<div class=\"bx-livechat-loading-window\">\n\t\t\t<svg class=\"bx-livechat-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t<circle class=\"bx-livechat-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t<circle class=\"bx-livechat-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t</svg>\n\t\t\t<h3 class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-loading-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_LOADING')}}</h3>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4039,12 +4165,8 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-body-operators', {
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
+	ui_vue.BitrixVue.component('bx-livechat-body-operators', {
+	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -4060,15 +4182,8 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-body-orientation-disabled', {
-	  computed: {
-	    localize: function localize() {
-	      return Object.freeze({
-	        BX_LIVECHAT_MOBILE_ROTATE: this.$root.$bitrixMessages.BX_LIVECHAT_MOBILE_ROTATE
-	      });
-	    }
-	  },
-	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"orientation-head\">\n\t\t\t<div class=\"bx-livechat-mobile-orientation-box\">\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-icon\"></div>\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-text\">{{localize.BX_LIVECHAT_MOBILE_ROTATE}}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	ui_vue.BitrixVue.component('bx-livechat-body-orientation-disabled', {
+	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"orientation-head\">\n\t\t\t<div class=\"bx-livechat-mobile-orientation-box\">\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-icon\"></div>\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-text\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MOBILE_ROTATE')}}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4079,16 +4194,12 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-form-consent', {
+	ui_vue.BitrixVue.component('bx-livechat-form-consent', {
 	  /**
 	   * @emits 'agree' {event: object} -- 'event' - click event
 	   * @emits 'disagree' {event: object} -- 'event' - click event
 	   */
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
+	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -4156,7 +4267,7 @@
 	      }
 	    }
 	  },
-	  template: "\n\t\t<transition @enter=\"onShow\" @leave=\"onHide\">\n\t\t\t<template v-if=\"widget.common.showConsent && widget.common.consentUrl\">\n\t\t\t\t<div class=\"bx-livechat-consent-window\">\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-title\">{{localize.BX_LIVECHAT_CONSENT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-content\">\n\t\t\t\t\t\t<iframe class=\"bx-livechat-consent-window-content-iframe\" ref=\"iframe\" frameborder=\"0\" marginheight=\"0\"  marginwidth=\"0\" allowtransparency=\"allow-same-origin\" seamless=\"true\" :src=\"widget.common.consentUrl\" @keydown=\"onKeyDown\"></iframe>\n\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" ref=\"success\" @click=\"agree\" @keydown=\"onKeyDown\" v-focus>{{localize.BX_LIVECHAT_CONSENT_AGREE}}</button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-cancel\" ref=\"cancel\" @click=\"disagree\" @keydown=\"onKeyDown\">{{localize.BX_LIVECHAT_CONSENT_DISAGREE}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition @enter=\"onShow\" @leave=\"onHide\">\n\t\t\t<template v-if=\"widget.common.showConsent && widget.common.consentUrl\">\n\t\t\t\t<div class=\"bx-livechat-consent-window\">\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-title\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-content\">\n\t\t\t\t\t\t<iframe class=\"bx-livechat-consent-window-content-iframe\" ref=\"iframe\" frameborder=\"0\" marginheight=\"0\"  marginwidth=\"0\" allowtransparency=\"allow-same-origin\" seamless=\"true\" :src=\"widget.common.consentUrl\" @keydown=\"onKeyDown\"></iframe>\n\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" ref=\"success\" @click=\"agree\" @keydown=\"onKeyDown\" v-focus>{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_AGREE')}}</button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-cancel\" ref=\"cancel\" @click=\"disagree\" @keydown=\"onKeyDown\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_DISAGREE')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -4167,7 +4278,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-form-history', {
+	ui_vue.BitrixVue.component('bx-livechat-form-history', {
 	  data: function data() {
 	    return {
 	      fieldEmail: ''
@@ -4179,11 +4290,7 @@
 	      this.fieldEmailTimeout = setTimeout(this.checkEmailField, 300);
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-	    }
-	  }, ui_vue_vuex.Vuex.mapState({
+	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -4201,7 +4308,7 @@
 	      var email = this.checkEmailField() ? this.fieldEmail : '';
 
 	      if (email) {
-	        this.$root.$bitrixApplication.sendForm(FormType.history, {
+	        this.$Bitrix.Application.get().sendForm(FormType.history, {
 	          email: email
 	        });
 	      }
@@ -4234,7 +4341,7 @@
 	      }
 	    }
 	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div v-if=\"false\" class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{localize.BX_LIVECHAT_MAIL_TITLE_NEW}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"localize.BX_LIVECHAT_FIELD_MAIL_TOOLTIP\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"localize.BX_LIVECHAT_FIELD_MAIL\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{localize.BX_LIVECHAT_MAIL_BUTTON_NEW}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\" @after-enter=\"formShowed\">\n\t\t\t<div v-if=\"false\" class=\"bx-livechat-alert-box bx-livechat-form-show\" key=\"welcome\">\t\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-form-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-sm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_TITLE_NEW')}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-form-item ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-lg\" ref=\"email\">\n\t\t\t\t\t   <div class=\"ui-ctl-after ui-ctl-icon-mail bx-livechat-form-icon\" :title=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL_TOOLTIP')\"></div>\n\t\t\t\t\t   <input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" :placeholder=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_FIELD_MAIL')\" v-model=\"fieldEmail\" ref=\"emailInput\" @blur=\"checkEmailField\" @keydown.enter=\"onFieldEnterPress\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" @click=\"sendForm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MAIL_BUTTON_NEW')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\n\t\t</transition>\t\n\t"
 	});
 
 	/**
@@ -4258,7 +4365,7 @@
 	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
 
 	      if (name || email || phone) {
-	        this.$root.$bitrixApplication.sendForm(FormType.offline, {
+	        this.$Bitrix.Application.get().sendForm(FormType.offline, {
 	          name: name,
 	          email: email,
 	          phone: phone
@@ -4303,13 +4410,10 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-form-vote', {
+	ui_vue.BitrixVue.component('bx-livechat-form-vote', {
 	  computed: babelHelpers.objectSpread({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
-	    },
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -4324,7 +4428,7 @@
 	      this.$store.commit('widget/dialog', {
 	        userVote: vote
 	      });
-	      this.$root.$bitrixApplication.sendDialogVote(vote);
+	      this.$Bitrix.Application.get().sendDialogVote(vote);
 	    },
 	    hideForm: function hideForm(event) {
 	      this.$parent.hideForm();
@@ -4341,7 +4445,7 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-	ui_vue.Vue.component('bx-livechat-form-welcome', {
+	ui_vue.BitrixVue.component('bx-livechat-form-welcome', {
 	  data: function data() {
 	    return {
 	      fieldName: '',
@@ -4368,7 +4472,7 @@
 	  },
 	  computed: babelHelpers.objectSpread({
 	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
+	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -4396,7 +4500,7 @@
 	      var phone = this.checkPhoneField() ? this.fieldPhone : '';
 
 	      if (name || email || phone) {
-	        this.$root.$bitrixApplication.sendForm(FormType.welcome, {
+	        this.$Bitrix.Application.get().sendForm(FormType.welcome, {
 	          name: name,
 	          email: email,
 	          phone: phone
@@ -4513,5 +4617,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,window,window,window,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Messenger.Const,BX,BX,BX,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX,BX,BX.Messenger.Lib,BX));
 //# sourceMappingURL=widget.bundle.js.map

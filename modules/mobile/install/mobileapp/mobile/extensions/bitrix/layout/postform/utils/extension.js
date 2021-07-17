@@ -381,9 +381,7 @@
 			}
 
 			let result = null;
-
-			let extension = this.Utils.getExtension({ uri: url });
-			const fileType = this.Utils.getFileType({ extension });
+			const fileType = this.Utils.getType(this.Utils.getFileMimeType(type));
 
 			if (imageUri.length > 0) // images and also B24 files
 			{

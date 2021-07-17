@@ -13,6 +13,8 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 	this.appliedThemeId = this.themeId;
 	this.appliedTheme = BX.type.isPlainObject(options.theme) ? options.theme : null;
 	this.siteId = options.siteId;
+	this.entityType = options.entityType;
+	this.entityId = options.entityId;
 	this.maxUploadSize = BX.type.isNumber(options.maxUploadSize) ? options.maxUploadSize : 5 * 1024 * 1024;
 	this.ajaxHandlerPath = BX.type.isNotEmptyString(options.ajaxHandlerPath) ? options.ajaxHandlerPath : null;
 	this.isAdmin = options.isAdmin === true;
@@ -29,6 +31,8 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 
 	this.popup = null;
 	this.loaderTimeout = null;
+	this.behaviour = BX.type.isNotEmptyString(options.behaviour) ? options.behaviour : 'apply';
+	this.returnValue = null;
 
 	this.newThemeDialog = new BX.Intranet.Bitrix24.NewThemeDialog(this);
 
@@ -92,7 +96,11 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	closeDialog: function()
 	{
-		this.applyTheme(this.getThemeId());
+		if (!this.needReturnValue())
+		{
+			this.applyTheme(this.getThemeId());
+		}
+
 		this.setThemes([]);
 		this.popup.destroy();
 		this.popup = null;
@@ -156,6 +164,8 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		data.sessid = BX.bitrix_sessid();
 		data.templateId = this.getTemplateId();
 		data.siteId = this.getSiteId();
+		data.entityType = this.getEntityType();
+		data.entityId = this.getEntityId();
 
 		BX.ajax({
 			method: "POST",
@@ -214,6 +224,8 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	applyTheme: function(themeId)
 	{
+		BX.onCustomEvent('OnThemePickerApplyTheme');
+
 		if (!BX.type.isNotEmptyString(themeId) || themeId === this.getAppliedThemeId())
 		{
 			return false;
@@ -348,15 +360,23 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		});
 
 		BX.addClass(item, "theme-dialog-item-selected");
-		this.showLoader(item, 100, true);
 
-		this.preloadTheme(themeId, function() {
-			if (BX.hasClass(item, "theme-dialog-item-selected")) //by this time user could select another theme
-			{
-				this.hideLoader();
-				this.applyTheme(themeId);
-			}
-		}.bind(this));
+		if (!this.needReturnValue())
+		{
+			this.showLoader(item, 100, true);
+
+			this.preloadTheme(themeId, function() {
+				if (BX.hasClass(item, "theme-dialog-item-selected")) //by this time user could select another theme
+				{
+					this.hideLoader();
+					this.applyTheme(themeId);
+				}
+			}.bind(this));
+		}
+		else
+		{
+			this.setReturnValue(themeId);
+		}
 	},
 
 	getThemeAssets: function(themeId)
@@ -500,6 +520,16 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		return this.siteId;
 	},
 
+	getEntityType: function()
+	{
+		return this.entityType;
+	},
+
+	getEntityId: function()
+	{
+		return this.entityId;
+	},
+
 	getAjaxHandlerPath: function()
 	{
 		return this.ajaxHandlerPath;
@@ -573,6 +603,16 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		this.themes = this.getThemes().filter(function(theme) {
 			return theme.id !== themeId;
 		});
+	},
+
+	setReturnValue: function(themeId)
+	{
+		this.returnValue = themeId;
+	},
+
+	getReturnValue: function()
+	{
+		return this.returnValue;
 	},
 
 	addItem: function(theme)
@@ -774,7 +814,13 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	handleSaveButtonClick: function(event)
 	{
-		if (this.getThemeId() !== this.getAppliedThemeId() || this.isCheckboxChecked())
+		if (this.needReturnValue())
+		{
+			BX.onCustomEvent('Intranet.ThemePicker:onSave', [{
+				theme: this.getThemeAssets(this.getReturnValue()),
+			}]);
+		}
+		else if (this.getThemeId() !== this.getAppliedThemeId() || this.isCheckboxChecked())
 		{
 			this.saveTheme(this.getAppliedThemeId());
 		}
@@ -799,7 +845,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		}
 
 		var checkboxBtn = null;
-		if (this.isCurrentUserAdmin())
+		if (this.isCurrentUserAdmin() && this.getEntityType() === 'USER')
 		{
 			checkboxBtn = new BX.Intranet.Bitrix24.ThemePickerCheckboxButton(this);
 		}
@@ -976,7 +1022,13 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 	handleMessengerClose: function()
 	{
 		this.playVideo();
-	}
+	},
+
+	needReturnValue: function()
+	{
+		return (this.behaviour === 'return');
+	},
+
 };
 
 /**
@@ -1786,7 +1838,8 @@ BX.Intranet.Bitrix24.NewThemeDialog.prototype =
 	getPreviewThemeId: function()
 	{
 		return this.getTextColor() + ":" + "custom_live_preview"
-	}
+	},
+
 };
 
 })();

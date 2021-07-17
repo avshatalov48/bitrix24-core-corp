@@ -61,6 +61,8 @@ use Bitrix\Report\VisualConstructor as VC;
 
 use Bitrix\Crm\Tracking;
 
+use Bitrix\Voximplant\Integration\Report\Dashboard\CallDynamics\CallDynamicsBoard;
+
 /**
  * Class EventHandler
  * @package Bitrix\Crm\Integration\Report
@@ -688,6 +690,41 @@ class EventHandler
 				$board->setPlacementHandlerId($appInfo['ID']);
 				$analyticPageList[] = $board;
 			}
+		}
+
+		if (\Bitrix\Main\Loader::includeModule('voximplant'))
+		{
+			$telephonyExternalLink = new AnalyticBoard();
+			$telephonyExternalLink->setBoardKey('crm_telephony_external_link');
+			$telephonyExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_TELEPHONY_BOARD_TITLE'));
+			$telephonyExternalLink->setExternal(true);
+			$telephonyExternalLink->setExternalUrl(
+				'/report/telephony/?analyticBoardKey=' . CallDynamicsBoard::BOARD_KEY
+			);
+			$telephonyExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+			$analyticPageList[] = $telephonyExternalLink;
+		}
+
+		if (\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			$openlinesExternalLink = new AnalyticBoard();
+			$openlinesExternalLink->setBoardKey('crm_openlines_external_link');
+			$openlinesExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_OPENLINES_BOARD_TITLE'));
+			$openlinesExternalLink->setExternal(true);
+
+			if (IsModuleInstalled("bitrix24"))
+			{
+				$openlinesExternalLink->setExternalUrl('/contact_center/openlines');
+			}
+			else
+			{
+				$openlinesExternalLink->setExternalUrl('/services/contact_center/openlines');
+			}
+
+			$openlinesExternalLink->setSliderSupport(false);
+
+			$openlinesExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+			$analyticPageList[] = $openlinesExternalLink;
 		}
 
 		return $analyticPageList;

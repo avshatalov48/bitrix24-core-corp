@@ -288,37 +288,10 @@ BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 	window.history.pushState(null, null, url);
 });
 
-BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
-	var filterManager = BX.Main.filterManager.getById(ganttFilterId);
-	if (!filterManager)
+BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
+	var data = event.getData();
+	if (data.counter && data.counter.filter)
 	{
-		alert('BX.Main.filterManager not initialised');
-		return;
-	}
-	var filterApi = filterManager.getApi();
-	var filterFields = filterManager.getFilterFieldsValues();
-
-	if (Number(counterId) === 12582912 || Number(counterId) === 6291456)
-	{
-		var fields = {
-			ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
-			PROBLEM: counterId
-		};
-		filterApi.setFields(fields);
-		filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
-	}
-	else
-	{
-		fields = {
-			preset_id: BX.Tasks.GanttActions.defaultPresetId,
-			additional: {
-				PROBLEM: counterId,
-			}
-		};
-		if (filterFields.hasOwnProperty('ROLEID'))
-		{
-			fields.additional.ROLEID = filterFields.ROLEID;
-		}
-		filterApi.setFilter(fields);
+		data.counter.filter.toggleByField({PROBLEM: data.counter.filterValue});
 	}
 });

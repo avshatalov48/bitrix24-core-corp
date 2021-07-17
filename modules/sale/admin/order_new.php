@@ -3936,7 +3936,14 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 		</script>
 		<?
 		$arCurFormat = CCurrencyLang::GetCurrencyFormat($str_CURRENCY);
+
 		$CURRENCY_FORMAT = trim(str_replace("#", '', $arCurFormat["FORMAT_STRING"]));
+		$CURRENCY_FORMAT = strip_tags(preg_replace(
+			'#<script[^>]*?>.*?</script[^>]*?>#is',
+			'',
+			$CURRENCY_FORMAT
+		));
+
 		$ORDER_TOTAL_PRICE = 0;
 		$ORDER_PRICE_WITH_DISCOUNT = 0;
 		$productCountAll = 0;

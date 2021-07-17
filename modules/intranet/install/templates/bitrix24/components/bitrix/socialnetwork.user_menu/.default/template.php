@@ -95,7 +95,7 @@ if (
 		(
 			"ID" => "tasks",
 			"TEXT" => $arResult["Title"]['tasks'],
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/taskslist.min.svg', })",
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:tasklist', })",
 			'SUB_LINK' => array(
 				'CLASS' => '',
 				'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
@@ -119,7 +119,7 @@ if (
 		(
 			"ID" => "calendar",
 			"TEXT" => $arResult["Title"]['calendar'],
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/calendar.min.svg' })",
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:calendar' })",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['calendar']) === 0)
 		)
 	));
@@ -139,7 +139,7 @@ if (
 		(
 			"ID" => "files",
 			"TEXT" => $arResult["Title"]['files'],
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/disk.min.svg' })",
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:disk' })",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['files']) === 0)
 		)
 	));
@@ -160,7 +160,7 @@ if (
 			"ID" => "blog",
 			"TEXT" => $arResult["Title"]['blog'],
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', {
-				loader: '".$this->getFolder()."/images/slider/livefeed.min.svg', 
+				loader: 'intranet:livefeed', 
 				width: 1000 
 			})",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['blog']) === 0),
@@ -247,13 +247,13 @@ if (
 		(
 			"ID" => "timeman",
 			"TEXT"     => GetMessage("SONET_UM_TIME"),
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/timeman.php?USERS=U".$arResult["User"]["ID"]."&apply_filter=Y', { width: 1000, loader: '".$this->getFolder()."/images/slider/worktime.min.svg', })"
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/timeman.php?USERS=U".$arResult["User"]["ID"]."&apply_filter=Y', { width: 1000, loader: 'intranet:worktime', })"
 		),
 		array
 		(
 			"ID" => "work_report",
 			"TEXT"     => GetMessage("SONET_UM_REPORTS"),
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/work_report.php', { width: 1000, loader: '".$this->getFolder()."/images/slider/workreport.min.svg' })"
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/work_report.php', { width: 1000, loader: 'intranet:workreport' })"
 		)
 	));
 }
@@ -273,7 +273,7 @@ if (
 		(
 			"ID" => "groups",
 			"TEXT" => GetMessage("SONET_UM_GROUPS"),
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000, loader: '".$this->getFolder()."/images/slider/grouplist.min.svg' })"
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000, loader: 'intranet:grouplist' })"
 		)
 	));
 }

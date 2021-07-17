@@ -252,6 +252,23 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 		if ($this->mode !== ComponentMode::CREATION)
 		{
+			$entityConfig[] = [
+				'name' => 'ps_status',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_STATUS_TITLE'),
+				'type' => 'section',
+				'editable' => false,
+				'elements' => 	[
+					['name' => 'PS_STATUS'],
+					['name' => 'PS_INVOICE_ID'],
+					['name' => 'PS_STATUS_CODE'],
+					['name' => 'PS_STATUS_DESCRIPTION'],
+					['name' => 'PS_STATUS_MESSAGE'],
+					['name' => 'PS_SUM'],
+					['name' => 'PS_CURRENCY'],
+					['name' => 'PS_RESPONSE_DATE'],
+				]
+			];
+
 			$entityConfig[] = array(
 				'name' => 'checks',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_BLOCK_CHECK_TITLE'),
@@ -363,7 +380,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				'name' => Loc::getMessage('CRM_ORDER_PAYMENT_TAB_CHECK'),
 				'enabled' => false
 			);
-			
+
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_event',
 				'name' => Loc::getMessage('CRM_ORDER_PAYMENT_TAB_EVENT'),
@@ -511,6 +528,54 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				'type' => 'text',
 				'editable' => false
 			),
+			[
+				'name' => 'PS_STATUS',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_STATUS'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_INVOICE_ID',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_INVOICE'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_STATUS_CODE',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_STATUS_CODE'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_STATUS_DESCRIPTION',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_STATUS_DESCRIPTION'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_STATUS_MESSAGE',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_STATUS_MESSAGE'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_SUM',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_SUM'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_CURRENCY',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_CURRENCY'),
+				'type' => 'text',
+				'editable' => false
+			],
+			[
+				'name' => 'PS_RESPONSE_DATE',
+				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_PS_DATE'),
+				'type' => 'datetime',
+				'editable' => false
+			],
 			array(
 				'name' => 'PAY_SYSTEM_ID',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_PAY_SYSTEM'),

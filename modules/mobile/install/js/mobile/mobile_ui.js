@@ -69,6 +69,11 @@
 					}
 				};
 
+				if (params["useAudioMessages"] === true || params["useAudioMessages"] === false)
+				{
+					panelParams.useAudioMessages = params["useAudioMessages"];
+				}
+
 				if (params["text"])
 				{
 					panelParams.text = params["text"];
@@ -602,12 +607,7 @@
 						var menuEventName = menuItemsNode.getAttribute('bx-longtap-menu-eventname');
 						if (BX.type.isNotEmptyString(menuEventName))
 						{
-							var
-								emitter = new BX.Event.EventEmitter(),
-								eventResult = {
-									menuItems: menuItems
-								};
-							emitter.emit(menuEventName, {
+							BX.Event.EventEmitter.emit(menuEventName, {
 								targetNode: targetNode,
 								menuItems: menuItems
 							});

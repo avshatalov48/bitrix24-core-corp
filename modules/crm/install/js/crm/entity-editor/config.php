@@ -68,5 +68,6 @@ return array(
 		'ui.entity-editor',
 		'ui.entity-selector',
 		'ui.dialogs.messagebox',
+		'crm.entity-editor.field.payment-documents',
 	]
 );

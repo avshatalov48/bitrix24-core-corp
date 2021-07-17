@@ -15,6 +15,7 @@ $MESS["TOP_MENU_CRM_TRACKING"] = "Sales Intelligence";
 $MESS["TOP_MENU_DEPARTMENTS"] = "Departments";
 $MESS["TOP_MENU_DEVOPS"] = "Developer resources";
 $MESS["TOP_MENU_DISK"] = "Drive";
+$MESS["TOP_MENU_DISK_DOCUMENTS"] = "Documents";
 $MESS["TOP_MENU_FAVORITE"] = "My Workspace";
 $MESS["TOP_MENU_GROUPS"] = "Workgroups";
 $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Extranet Workgroups";

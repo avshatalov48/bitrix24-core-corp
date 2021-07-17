@@ -98,7 +98,7 @@ class Agent
 			return '';
 		}
 
-		Counter\CounterService::addEvent(Counter\CounterDictionary::EVENT_TASK_EXPIRED, $taskData);
+		Counter\CounterService::addEvent(Counter\Event\EventDictionary::EVENT_TASK_EXPIRED, $taskData);
 
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
 		$commentPoster && $commentPoster->postCommentsOnTaskExpired($taskData);
@@ -141,7 +141,7 @@ class Agent
 			return '';
 		}
 
-		Counter\CounterService::addEvent(Counter\CounterDictionary::EVENT_TASK_EXPIRED_SOON, $taskData);
+		Counter\CounterService::addEvent(Counter\Event\EventDictionary::EVENT_TASK_EXPIRED_SOON, $taskData);
 
 		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
 		$commentPoster && $commentPoster->postCommentsOnTaskExpiredSoon($taskData);

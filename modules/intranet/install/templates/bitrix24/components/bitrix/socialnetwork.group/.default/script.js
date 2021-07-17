@@ -13,6 +13,11 @@ window.B24SGControl = function()
 {
 	this.instance = null;
 	this.groupId = null;
+	this.groupType = null;
+	this.isProject = false;
+	this.userIsMember = false;
+	this.userIsAutoMember = false;
+	this.userRole = null;
 	this.groupOpened = false;
 	this.waitPopup = null;
 	this.waitTimeout = null;
@@ -21,6 +26,12 @@ window.B24SGControl = function()
 	this.notifyHintTime = 3000;
 	this.favoritesValue = null;
 	this.newValue = null;
+	this.editFeaturesAllowed = true;
+	this.canInitiate = false;
+	this.canModify = false;
+	this.canProcessRequestsIn = false;
+	this.canPickTheme = false;
+	this.urls = {};
 };
 
 window.B24SGControl.getInstance = function()
@@ -47,8 +58,23 @@ window.B24SGControl.prototype = {
 		}
 
 		this.groupId = parseInt(params.groupId);
+		this.groupType = params.groupType;
 		this.favoritesValue = !!params.favoritesValue;
 		this.groupOpened = !!params.groupOpened;
+		this.isProject = !!params.isProject;
+		this.userIsMember = !!params.userIsMember;
+		this.userIsAutoMember = !!params.userIsAutoMember;
+		this.userRole = params.userRole;
+		this.editFeaturesAllowed = (BX.type.isBoolean(params.editFeaturesAllowed) ? params.editFeaturesAllowed : true);
+		this.canInitiate = !!params.canInitiate;
+		this.canModify = !!params.canModify;
+		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
+		this.canPickTheme = !!params.canPickTheme;
+
+		if (BX.type.isObject(params.urls))
+		{
+			this.urls = params.urls;
+		}
 
 		if (BX('bx-group-join-submit'))
 		{
@@ -105,6 +131,45 @@ window.B24SGControl.prototype = {
 				}
 			}
 		}, this));
+	},
+
+	showMenu: function(event)
+	{
+		BX.SocialnetworkUICommon.showGroupMenuPopup({
+			bindElement: BX.getEventTarget(event),
+			groupId: this.groupId,
+			groupType: this.groupType,
+			userIsMember: this.userIsMember,
+			userIsAutoMember: this.userIsAutoMember,
+			userRole: this.userRole,
+			isProject: this.isProject,
+			isOpened: this.groupOpened,
+			editFeaturesAllowed: this.editFeaturesAllowed,
+			canPickTheme: this.canPickTheme,
+			perms: {
+				canInitiate: this.canInitiate,
+				canProcessRequestsIn: this.canProcessRequestsIn,
+				canModify: this.canModify
+			},
+			urls: {
+				requestUser: (
+					BX.type.isNotEmptyString(this.urls.Invite)
+						? this.urls.Invite
+						: this.urls.Edit + (this.urls.Edit.indexOf('?') >= 0 ? '&' : '?') + 'tab=invite'
+				),
+				edit: this.urls.Edit + (this.urls.Edit.indexOf('?') >= 0 ? '&' : '?') + 'tab=edit',
+				delete: this.urls.Delete,
+				features: this.urls.Features,
+				members: this.urls.GroupUsers,
+				requests: this.urls.GroupRequests,
+				requestsOut: this.urls.GroupRequestsOut,
+				userRequestGroup: this.urls.UserRequestGroup,
+				userLeaveGroup: this.urls.UserLeaveGroup,
+				copy: this.urls.Copy
+			}
+		});
+
+		event.preventDefault();
 	},
 
 	setSubscribe: function(event)
@@ -189,37 +254,41 @@ window.B24SGControl.prototype = {
 		_this.showWait();
 		_this.newValue = !_this.favoritesValue;
 
-		BX.ajax({
-			url: '/bitrix/components/bitrix/socialnetwork.group_menu/ajax.php',
-			method: 'POST',
-			dataType: 'json',
+		BX.ajax.runAction('socialnetwork.api.workgroup.setFavorites', {
 			data: {
-				groupID: _this.groupId,
-				action: (_this.favoritesValue ? 'fav_unset' : 'fav_set'),
-				sessid: BX.bitrix_sessid(),
-				lang: BX.message('LANGUAGE_ID')
-			},
-			onsuccess: function(data) {
-				_this.processFavoritesAJAXResponse(data);
-
-				if (
-					typeof data.NAME != 'undefined'
-					&& typeof data.URL != 'undefined'
-				)
-				{
-					BX.onCustomEvent(window, 'BX.Socialnetwork.WorkgroupFavorites:onSet', [{
-						id: _this.groupId,
-						name: data.NAME,
-						url: data.URL,
-						extranet: (typeof data.EXTRANET != 'undefined' ? data.EXTRANET : 'N')
-					}, _this.newValue]);
+				params: {
+					groupId: _this.groupId,
+					value: (_this.favoritesValue ? 'N' : 'Y'),
+					getAdditionalResultData: true,
 				}
-
 			},
-			onfailure: function(data) {
+			analyticsLabel: {
+				b24statAction: (params.favoritesValue ? 'removeFavSonetGroup' : 'addFavSonetGroup')
 			}
-		});
-		BX.PreventDefault(event);
+		}).then(function(response) {
+
+			_this.processFavoritesAJAXResponse(response.data);
+
+			if (
+				BX.type.isNotEmptyString(response.data.NAME)
+				&& BX.type.isNotEmptyString(response.data.URL)
+			)
+			{
+				BX.onCustomEvent(window, 'BX.Socialnetwork.WorkgroupFavorites:onSet', [{
+					id: _this.groupId,
+					name: response.data.NAME,
+					url: response.data.URL,
+					extranet: (typeof response.data.EXTRANET != 'undefined' ? response.data.EXTRANET : 'N')
+				}, _this.newValue]);
+			}
+		}.bind(this)).catch(function(response) {
+			params.callback.failure({
+				ERROR: response.errors[0].message,
+			});
+		}.bind(this));
+
+		event.preventDefault();
+		event.stopPropagation();
 	},
 
 	setNotifyButton: function(value, showHint)

@@ -20,6 +20,7 @@ $MESS["CRM_ORDER_FIELD_PRODUCTS"] = "Товары";
 $MESS["CRM_ORDER_SECTION_MAIN"] = "Параметры заказа";
 $MESS["CRM_ORDER_SECTION_ADDITIONAL"] = "Дополнительно";
 $MESS["CRM_ORDER_SECTION_PROPERTIES"] = "Свойства заказа";
+$MESS["CRM_ORDER_SECTION_SHIPMENT_PROPERTIES"] = "Свойства отгрузки";
 $MESS["CRM_ORDER_SECTION_PRODUCTS"] = "Товары";
 $MESS["CRM_ORDER_TAB_PRODUCTS"] = "Товары";
 $MESS["CRM_ORDER_TAB_TREE"] = "Анализ заказа";

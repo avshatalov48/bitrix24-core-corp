@@ -92,6 +92,11 @@ class Item extends UserField\Internal\Item
 			}
 		}
 
+		if (is_array($name))
+		{
+			$name = reset($name);
+		}
+
 		return $name;
 	}
 

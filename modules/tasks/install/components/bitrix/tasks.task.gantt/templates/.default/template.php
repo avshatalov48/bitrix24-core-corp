@@ -634,7 +634,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $APPLICATION->GetCurPage() . '?F_STATE=sVg0'
+		'URL' => $APPLICATION->GetCurPageParam('F_STATE=sVg0', [ 'F_STATE' ]),
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')

@@ -13,6 +13,10 @@ if (\Bitrix\Main\Loader::includeModule('location'))
 {
 	\Bitrix\Main\UI\Extension::load(['location.core', 'location.widget',]);
 }
+if (\Bitrix\Main\Loader::includeModule('crm'))
+{
+	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+}
 
 if (\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') == 'Y')
 {
@@ -55,8 +59,17 @@ $this->SetViewTarget('pagetitle');
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
 		<?php
+		Bitrix24Manager::getInstance()->renderIntegrationRequestButton();
 		Bitrix24Manager::getInstance()->renderFeedbackButton();
 		?>
+	</div>
+<?
+$this->EndViewTarget();
+
+$this->SetViewTarget('below_pagetitle');
+?>
+	<div id="salescenter-app-order-selector" class="salescenter-app-order-selector is-hidden">
+		<span class="salescenter-app-order-selector-text" data-hint="" data-hint-no-icon></span>
 	</div>
 <?
 $this->EndViewTarget();
@@ -89,7 +102,7 @@ if (!empty($arResult['CURRENCIES']))
 	<script>
 		BX.ready(function()
 		{
-			var options = <?=CUtil::PhpToJSObject($arResult)?>;
+			var options = <?=CUtil::PhpToJSObject($arResult, false, false, true)?>;
 			new BX.Salescenter.App(options);
 			BX.Salescenter.Manager.init(options);
 		});

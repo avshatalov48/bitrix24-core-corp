@@ -8,8 +8,8 @@ namespace Bitrix\Tasks\Replica;
 //	FORKED_BY_TEMPLATE_ID int(11) DEFAULT NULL,
 
 use Bitrix\Main;
-use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterService;
+use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 
@@ -273,7 +273,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		}
 
 		CounterService::addEvent(
-			CounterDictionary::EVENT_AFTER_TASK_ADD,
+			EventDictionary::EVENT_AFTER_TASK_ADD,
 			$newRecord
 		);
 
@@ -377,7 +377,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		}
 
 		CounterService::addEvent(
-			CounterDictionary::EVENT_AFTER_TASK_UPDATE,
+			EventDictionary::EVENT_AFTER_TASK_UPDATE,
 			[
 				'NEW_RECORD' => $newRecord,
 				'OLD_RECORD' => $oldRecord
@@ -440,7 +440,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 			\CTaskNotifications::sendStatusMessage($oldRecord, $status, $newRecord);
 		}
 		\CTaskNotifications::sendUpdateMessage($newRecord, $oldRecord, true, array());
-		
+
 		//\CTaskComments::onAfterTaskUpdate($newRecord['ID'], $oldRecord, $newRecord);
 
 		\CTasks::Index($newRecord, $newRecord["TAGS"]); // search index
@@ -535,7 +535,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 		$this->clearSearchIndex((int)$oldRecord['ID']);
 
 		CounterService::addEvent(
-			CounterDictionary::EVENT_AFTER_TASK_DELETE,
+			EventDictionary::EVENT_AFTER_TASK_DELETE,
 			$oldRecord
 		);
 

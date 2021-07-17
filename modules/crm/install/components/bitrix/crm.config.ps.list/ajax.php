@@ -16,7 +16,7 @@ if (!Loader::includeModule('crm') || !Loader::includeModule('sale'))
 
 IncludeModuleLangFile(__FILE__);
 
-global $DB, $APPLICATION;
+global $DB, $APPLICATION, $USER;
 
 $curUser = CCrmSecurityHelper::GetCurrentUser();
 if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] != 'POST')
@@ -51,6 +51,13 @@ header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 if ($action == '')
 	__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid data!'));
+
+$CrmPerms = new CCrmPerms($USER->GetID());
+$bCrmWritePerm = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+if (!$bCrmWritePerm)
+{
+	__CrmActivityEditorEndResponse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_PS_ACCESS_DENIED')]);
+}
 
 $result = array();
 

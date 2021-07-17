@@ -201,6 +201,16 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.converter.stage');
 	}
 
+	/**
+	 * Returns a type converter object
+	 *
+	 * @return Converter\Type
+	 */
+	public function getTypeConverter(): Converter\Type
+	{
+		return ServiceLocator::getInstance()->get('crm.service.converter.type');
+	}
+
 	public function getUserBroker(): Broker\User
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.user');

@@ -245,32 +245,44 @@
 
 		openSlider: function()
 		{
+			var firstLoad = true;
 			var sliderOptions = {
 				allowChangeHistory: false,
 				events: {
 					onLoad: function (e)
 					{
-						var slider = e.getSlider();
-						this.updatePaySystemForm(slider);
+						if (firstLoad)
+						{
+							var slider = e.getSlider();
+							this.updatePaySystemForm(slider);
+							firstLoad = false;
+						}
 					}.bind(this),
 					onClose: function (e)
 					{
 						var slider = e.getSlider(), paySystemFormData;
 						paySystemFormData = this.getPaySystemFormData(slider);
-						this.updateCommonSettingsForm(paySystemFormData);
-					}.bind(this),
-					onDestroy: function (e) {
-						if (this.paySystemId > 0)
+
+						if (paySystemFormData.hasOwnProperty('ID') && paySystemFormData.ID > 0)
 						{
-							var slider = e.getSlider(), paySystemFormData;
-							paySystemFormData = this.getPaySystemFormData(slider);
+							this.paySystemId = paySystemFormData.ID;
+
 							this.updateCommonSettingsForm(paySystemFormData);
+
+							this.savePaySystem().then(function(response) {
+								slider.destroy();
+
+								this.slider.url = BX.util.add_url_param(this.slider.url, { ID: this.paySystemId });
+								this.slider.setFrameSrc();
+
+								this.slider.reload();
+							}.bind(this));
 						}
 						else
 						{
-							this.closeSlider();
+							this.updateCommonSettingsForm(paySystemFormData);
 						}
-					}.bind(this)
+					}.bind(this),
 				}
 			};
 
@@ -279,12 +291,15 @@
 
 		onMessageSlider: function (e)
 		{
-			if (BX.util.in_array('destroy', e.data.listActions))
+			if (e.getEventId() === 'save')
 			{
-				var slider = e.getSender();
-				if (!slider.destroyed)
+				if (this.paySystemId > 0)
 				{
-					slider.destroy();
+					this.slider.reload();
+				}
+				else
+				{
+					this.closeSlider();
 				}
 			}
 		},
@@ -292,11 +307,11 @@
 		closeSlider: function()
 		{
 			var savedInput = BX('salescenter-form-is-saved');
-			if(savedInput)
+			if (savedInput)
 			{
 				savedInput.value = 'y';
 			}
-			if(this.slider)
+			if (this.slider)
 			{
 				this.slider.close();
 			}
@@ -325,8 +340,32 @@
 		{
 			e.preventDefault();
 
+			this.savePaySystem().then(
+				function(response) {
+					BX.removeClass(this.buttonSaveNode, 'ui-btn-wait');
+					this.hideError();
+					this.closeSlider();
+				}.bind(this),
+				function (response) {
+					BX.removeClass(this.buttonSaveNode, 'ui-btn-wait');
+					this.showError(response.errors);
+
+					if (response.data.hasOwnProperty('ID'))
+					{
+						this.paySystemId = response.data.ID;
+						BX('ID').value = this.paySystemId;
+					}
+
+					window.scrollTo(0, 0);
+				}.bind(this)
+			);
+		},
+
+		savePaySystem: function()
+		{
 			var analyticsLabel, type;
-			if(this.paySystemId > 0)
+
+			if (this.paySystemId > 0)
 			{
 				analyticsLabel = 'salescenterUpdatePaymentSystem';
 			}
@@ -334,7 +373,8 @@
 			{
 				analyticsLabel = 'salescenterAddPaymentSystem';
 			}
-			if(this.paySystemMode && this.paySystemHandler === 'yandexcheckout')
+
+			if (this.paySystemMode && this.paySystemHandler === 'yandexcheckout')
 			{
 				type = this.paySystemMode;
 			}
@@ -342,7 +382,8 @@
 			{
 				type = this.paySystemHandler;
 			}
-			BX.ajax.runComponentAction(
+
+			return BX.ajax.runComponentAction(
 				'bitrix:salescenter.paysystem',
 				'savePaySystem',
 				{
@@ -353,15 +394,6 @@
 						type: type,
 					},
 				}
-			).then(
-				function(response) {
-					BX.removeClass(this.buttonSaveNode, 'ui-btn-wait');
-					this.closeSlider();
-				}.bind(this),
-				function (response) {
-					BX.removeClass(this.buttonSaveNode, 'ui-btn-wait');
-					this.showError(response.errors);
-				}.bind(this)
 			);
 		},
 
@@ -433,9 +465,9 @@
 				psMode,
 				psaName,
 				name,
-				descriptionFrame,
 				isCash,
-				canPrintCheck;
+				canPrintCheck,
+				fiscalizationTab;
 
 			psaName = innerDoc.getElementById('PSA_NAME');
 			if (psaName && commonSettingsFormData.NAME)
@@ -455,12 +487,6 @@
 				isCash[0].value = commonSettingsFormData.IS_CASH;
 			}
 
-			canPrintCheck = innerDoc.getElementById('CAN_PRINT_CHECK');
-			if (canPrintCheck && commonSettingsFormData.CAN_PRINT_CHECK)
-			{
-				canPrintCheck.checked = (commonSettingsFormData.CAN_PRINT_CHECK === 'Y');
-			}
-
 			psAction = innerDoc.getElementById('ACTION_FILE');
 			if (psAction)
 			{
@@ -472,6 +498,49 @@
 			{
 				psMode.closest('tr').style.display = 'none';
 			}
+
+			if (commonSettingsFormData.CAN_PRINT_CHECK_SELF && commonSettingsFormData.CAN_PRINT_CHECK_SELF === 'Y')
+			{
+				canPrintCheck = innerDoc.getElementById('CAN_PRINT_CHECK');
+				if (canPrintCheck)
+				{
+					canPrintCheck.closest('tr').style.display = 'none';
+				}
+			}
+			else
+			{
+				canPrintCheck = innerDoc.getElementById('CAN_PRINT_CHECK');
+				if (canPrintCheck && commonSettingsFormData.CAN_PRINT_CHECK)
+				{
+					canPrintCheck.checked = (commonSettingsFormData.CAN_PRINT_CHECK === 'Y');
+				}
+			}
+
+			fiscalizationTab = innerDoc.getElementById('tab_cont_cashbox_edit');
+			if (fiscalizationTab)
+			{
+				fiscalizationTab.style.display = 'none';
+				innerDoc.getElementById('cashbox_edit').style.display = 'none';
+			}
+
+			try
+			{
+				var descriptionEditor = this.lookupDescriptionEditor(innerDoc);
+				if (descriptionEditor)
+				{
+					descriptionEditor.SetEditorContent(commonSettingsFormData.DESCRIPTION);
+					descriptionEditor.SaveContent();
+					if (descriptionEditor.pEditorDocument)
+					{
+						BX.bind(descriptionEditor.pEditorDocument, 'click', BX.proxy(descriptionEditor.OnClick, descriptionEditor));
+						BX.bind(descriptionEditor.pEditorDocument, 'mousedown', BX.proxy(descriptionEditor.OnMousedown, descriptionEditor));
+					}
+				}
+			}
+			catch (err)
+			{
+				//
+			}
 		},
 
 		getPaySystemFormData: function(slider)
@@ -480,17 +549,38 @@
 			innerDoc = this.getSliderDocument(slider);
 			paySystemFormData = this.getAllFormDataList(innerDoc);
 
+			try
+			{
+				var descriptionEditor = this.lookupDescriptionEditor(innerDoc);
+				if (descriptionEditor)
+				{
+					descriptionEditor.SaveContent();
+					paySystemFormData.DESCRIPTION = descriptionEditor.GetContent();
+				}
+			}
+			catch (err)
+			{
+				//
+			}
+
 			return paySystemFormData;
 		},
 
 		updateCommonSettingsForm: function(paySystemFormData)
 		{
-			var name, description, isCash, canPrintCheck;
+			var id, name, description, isCash, canPrintCheck;
+			var sliderData = this.getCommonSettingsFormData();
 
+			id = BX('ID');
 			name = BX('NAME');
 			description = BX('DESCRIPTION');
 			isCash = BX('IS_CASH');
 			canPrintCheck = BX('CAN_PRINT_CHECK');
+
+			if (id && paySystemFormData.ID)
+			{
+				id.value = paySystemFormData.ID;
+			}
 
 			if (name && paySystemFormData.NAME)
 			{
@@ -509,7 +599,14 @@
 
 			if (canPrintCheck)
 			{
-				canPrintCheck.checked = !!(paySystemFormData.CAN_PRINT_CHECK && paySystemFormData.CAN_PRINT_CHECK === 'Y');
+				if (sliderData.CAN_PRINT_CHECK_SELF && sliderData.CAN_PRINT_CHECK_SELF === 'Y')
+				{
+					canPrintCheck.checked = true;
+				}
+				else
+				{
+					canPrintCheck.checked = !!(paySystemFormData.CAN_PRINT_CHECK && paySystemFormData.CAN_PRINT_CHECK === 'Y');
+				}
 			}
 
 			this.paySystemFormData = paySystemFormData;
@@ -691,10 +788,19 @@
 				text += error.message + '<br>';
 			});
 
-			if(this.errorMessageNode && text)
+			if (this.errorMessageNode && text)
 			{
 				this.errorMessageNode.parentNode.style.display = 'block';
 				this.errorMessageNode.innerHTML = text;
+			}
+		},
+
+		hideError: function()
+		{
+			if (this.errorMessageNode)
+			{
+				this.errorMessageNode.innerHTML = '';
+				this.errorMessageNode.parentNode.style.display = 'none';
 			}
 		},
 
@@ -705,6 +811,24 @@
 			innerDoc = sliderIframe.contentDocument || sliderIframe.contentWindow.document;
 
 			return innerDoc;
+		},
+
+		lookupDescriptionEditor: function(documentObject)
+		{
+			try
+			{
+				var windowObject = documentObject.defaultView || documentObject.parentWindow;
+				var descriptionFrameObject = 'LightHTMLEditorhndl_dscr_0';
+				if (this.paySystemId && this.paySystemId > 0)
+				{
+					descriptionFrameObject = 'LightHTMLEditorhndl_dscr_' + this.paySystemId;
+				}
+				return windowObject[descriptionFrameObject];
+			}
+			catch (err)
+			{
+				// assume no editor found
+			}
 		},
 
 		showLogotip: function(input) {
@@ -847,6 +971,331 @@
 					BX.removeClass(buttonRemoveNode, 'ui-btn-wait');
 				}, 100);
 			}
+		},
+	};
+
+	if (BX.SalecenterPaySystemCashbox)
+		return;
+
+	BX.SalecenterPaySystemCashbox = {
+		init: function (parameters) {
+			this.paySystemId = parameters.paySystemId;
+			this.formNode = BX(parameters.formId);
+			this.cashboxContainerInfoNode = BX(parameters.cashboxContainerInfoId);
+			this.cashboxContainerNode = BX(parameters.cashboxContainerId);
+			this.canPrintCheckNode = BX(parameters.canPrintCheckId);
+
+			this.cashboxSwitchet = null;
+
+			this.containerNodeList = {
+				'settings': BX(parameters.containerList.settings),
+				'cashboxSettings': BX(parameters.containerList.cashboxSettings),
+			};
+
+			this.section = parameters.section;
+			this.fields = parameters.fields;
+
+			this.initSwitcher();
+
+			this.renderSettings(this.cashboxContainerNode);
+		},
+
+		renderSettings: function (cashboxContainerNode)
+		{
+			Object.keys(this.section).forEach(function (name) {
+				if (this.fields[name])
+				{
+					var section = this.section[name];
+					var sectionType = section.type;
+
+					if (this.containerNodeList[sectionType])
+					{
+						this.containerNodeList[sectionType].appendChild(this.renderSection(section, this.fields[name]));
+					}
+					else
+					{
+						cashboxContainerNode.appendChild(this.renderSection(section, this.fields[name]));
+					}
+				}
+			}.bind(this));
+		},
+
+		renderSection: function (section, fields)
+		{
+			var sectionNode = BX.create('div', {
+				props: {
+					className: 'salescenter-editor-section-content'
+				}
+			});
+
+			var title = BX.create('div', {
+				props: {
+					className: 'salescenter-paysystem-section-title salescenter-paysystem-angle-icon-after'
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'ui-title-6'
+						},
+						text: section.title,
+					}),
+					BX.create('div', {
+						props: {
+							className: 'salescenter-paysystem-angle-icon'
+						}
+					})
+				],
+			});
+			sectionNode.appendChild(title);
+
+			sectionNode.appendChild(BX.create('div', {
+				props: {
+					className: 'ui-hr'
+				}
+			}));
+
+			var innerContent = BX.create('div');
+			sectionNode.appendChild(innerContent);
+
+			if (section.warning)
+			{
+				innerContent.appendChild(BX.create('div', {
+					props: {
+						className: 'ui-alert ui-alert-warning'
+					},
+					text: section.warning
+				}));
+			}
+
+			fields.forEach(function (field) {
+				var blockNode = BX.create('div', {
+					props: {
+						className: 'salescenter-editor-content-block'
+					}
+				})
+
+				this.renderField(field).forEach(function (itemNode) {
+					blockNode.appendChild(itemNode);
+				});
+
+				innerContent.appendChild(blockNode);
+			}.bind(this));
+
+			title.addEventListener('click', function()
+			{
+				BX.toggle(innerContent);
+			});
+
+			return sectionNode;
+		},
+
+		renderField: function (field)
+		{
+			if (field.type === 'checkbox')
+			{
+				return this.renderCheckbox(field);
+			}
+
+			if (field.type === 'select')
+			{
+				return this.renderSelect(field);
+			}
+
+			return this.renderString(field);
+		},
+
+		renderString: function (field)
+		{
+			var result = [];
+
+			result.push(BX.create('div', {
+				props: {
+					className: 'ui-ctl-label-text' + ((field.required) ? ' salescenter-paysystem-control-required' : '')
+				},
+				text: field.label
+			}));
+
+			result.push(BX.create('div', {
+				props: {
+					className: 'ui-ctl ui-ctl-textbox ui-ctl-w100'
+				},
+				html: field.input
+			}));
+
+			if (field.hint)
+			{
+				result.push(BX.create('div', {
+					props: {
+						className: 'ui-ctl-label-text'
+					},
+					style: {
+						marginTop: '5px'
+					},
+					children: [
+						BX.create('span', {
+							props: {
+								className: 'salescenter-editor-content-logo-hint'
+							},
+							text: field.hint
+						})
+					]
+				}));
+			}
+
+			return result;
+		},
+
+		renderSelect: function (field)
+		{
+			var result = [];
+
+			result.push(BX.create('div', {
+				props: {
+					className: 'ui-ctl-label-text' + ((field.required) ? ' salescenter-paysystem-control-required' : '')
+				},
+				text: field.label
+			}));
+
+			var dropdown = BX.create('div', {
+				props: {
+					className: 'ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100'
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'ui-ctl-after ui-ctl-icon-angle'
+						}
+					})
+				],
+			});
+
+			dropdown.insertAdjacentHTML('beforeend', field.input);
+			result.push(dropdown);
+
+			return result;
+		},
+
+		renderCheckbox: function (field)
+		{
+			var result = [];
+
+			var label = BX.create('label', {
+				props: {
+					className: 'ui-ctl ui-ctl-checkbox ui-ctl-w100'
+				},
+				html: field.input
+			});
+			label.appendChild(BX.create('div', {
+				props: {
+					className: 'ui-ctl-label-text' + ((field.required) ? ' salescenter-paysystem-control-required' : '')
+				},
+				text: field.label
+			}));
+
+			result.push(label);
+
+			return result;
+		},
+
+		initSwitcher: function()
+		{
+			var nodes = this.formNode.getElementsByClassName('js-cashbox-ui-switcher');
+			nodes = BX.convert.nodeListToArray(nodes);
+			nodes.forEach(function (node) {
+				if (node.getAttribute('data-switcher-init'))
+				{
+					return;
+				}
+
+				var switcher = new BX.UI.Switcher({node: node});
+				this.cashboxSwitchet = switcher;
+
+				BX.addCustomEvent(switcher, 'unchecked', BX.proxy(this.onToggleCashboxSwitcher.bind(this, switcher)));
+				BX.addCustomEvent(switcher, 'checked', BX.proxy(this.onToggleCashboxSwitcher.bind(this, switcher)));
+			}.bind(this));
+		},
+
+		onToggleCashboxSwitcher: function (switcher)
+		{
+			if (switcher.checked)
+			{
+				this.canPrintCheckNode.checked = true;
+				this.canPrintCheckNode.setAttribute("disabled", "true");
+				this.cashboxContainerInfoNode.classList.remove("salescenter-paysystem-cashbox-block--disabled");
+
+				this.showCashboxSettings();
+			}
+			else
+			{
+				this.canPrintCheckNode.removeAttribute("disabled");
+				this.cashboxContainerInfoNode.classList.add("salescenter-paysystem-cashbox-block--disabled");
+
+				this.hideCashboxSettings();
+			}
+		},
+
+		showCashboxSettings: function ()
+		{
+			BX('salescenter-paysystem-cashbox').style.display = 'block';
+		},
+
+		hideCashboxSettings: function ()
+		{
+			BX('salescenter-paysystem-cashbox').style.display = 'none';
+		},
+
+		reloadCashboxSettings: function (kkmId)
+		{
+			var self = this;
+
+			BX.ajax.runComponentAction(
+				'bitrix:salescenter.paysystem',
+				'reloadCashboxSettings',
+				{
+					mode: 'class',
+					data: {
+						'paySystemId': this.paySystemId,
+						'kkmId': kkmId.value
+					}
+				}
+			).then(
+				function (response)
+				{
+					if (response.data.hasOwnProperty('IS_FISCALIZATION_ENABLE'))
+					{
+						var isFiscalizationEnable = response.data.IS_FISCALIZATION_ENABLE;
+						self.cashboxSwitchet.check(isFiscalizationEnable);
+					}
+
+					self.section = response.data.CASHBOX.section;
+					self.fields = response.data.CASHBOX.fields;
+
+					self.resetAllSection();
+
+					if (self.section)
+					{
+						self.renderSettings(self.cashboxContainerNode);
+					}
+				}
+			);
+		},
+
+		resetSection: function(section)
+		{
+			section.forEach(function (name) {
+				var sectionType = this.section[name].type;
+				if (this.containerNodeList[sectionType])
+				{
+					this.containerNodeList[sectionType].innerHTML = '';
+				}
+			}.bind(this));
+		},
+
+		resetAllSection: function ()
+		{
+			Object.keys(this.containerNodeList).forEach(function (name) {
+				this.containerNodeList[name].innerHTML = '';
+			}.bind(this));
 		}
 	};
 })(window);

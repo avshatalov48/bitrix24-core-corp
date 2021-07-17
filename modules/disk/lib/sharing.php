@@ -3,6 +3,9 @@
 namespace Bitrix\Disk;
 
 
+use Bitrix\Disk\Controller\DocumentService;
+use Bitrix\Disk\Document\DocumentHandler;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\SharingTable;
@@ -158,7 +161,7 @@ final class Sharing extends Internals\Model
 		$successSharingByEntity = array();
 		foreach ($entitiesToTask as $entity => $taskName)
 		{
-			list($type, $id) = self::parseEntityValue($entity);
+			[$type, $id] = self::parseEntityValue($entity);
 			if(!$type)
 			{
 				continue;
@@ -302,7 +305,7 @@ final class Sharing extends Internals\Model
 				continue;
 			}
 
-			list($type) = Sharing::parseEntityValue($sharing->getFromEntity());
+			[$type] = Sharing::parseEntityValue($sharing->getFromEntity());
 			if($type != SharingTable::TYPE_TO_USER)
 			{
 				continue;
@@ -330,7 +333,7 @@ final class Sharing extends Internals\Model
 			$entity,
 			$m
 		);
-		list(, $code, $id) = $m;
+		[, $code, $id] = $m;
 		if($code === null || $id === null)
 		{
 			return null;
@@ -541,6 +544,32 @@ final class Sharing extends Internals\Model
 		return array_shift($sharings)?: null;
 	}
 
+	private static function generateLinkToViewDocument(Sharing $sharingModel, BaseObject $objectToSharing): ?string
+	{
+		$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		if (!($documentHandler instanceof OnlyOfficeHandler))
+		{
+			return null;
+		}
+
+		if (!($objectToSharing instanceof File))
+		{
+			return null;
+		}
+
+		if (!DocumentHandler::isEditable($objectToSharing->getExtension()))
+		{
+			return null;
+		}
+
+		$uri = (new DocumentService())->getActionUri('goToPreview', [
+			'serviceCode' => 'onlyoffice',
+			'objectId' => $sharingModel->getLinkObjectId(),
+		]);
+
+		return (string)$uri;
+	}
+
 	/**
 	 * @param Sharing[]                 $successSharingByEntity
 	 * @param File|Folder|BaseObject $objectToSharing
@@ -565,21 +594,22 @@ final class Sharing extends Internals\Model
 						continue;
 					}
 
-					$pathInListing = $urlManager->getUrlFocusController('showObjectInGrid', array(
+					$linkToViewDocument = self::generateLinkToViewDocument($sharingModel, $objectToSharing);
+					$pathInListing = $urlManager::getUrlFocusController('showObjectInGrid', array(
 						'objectId' => $sharingModel->getLinkObjectId(),
 					));
-					$uriToDisconnect = $urlManager->getUrlFocusController('showObjectInGrid', array(
+					$uriToDisconnect = $urlManager::getUrlFocusController('showObjectInGrid', array(
 						'objectId' => $sharingModel->getLinkObjectId(),
 						'cmd' => 'detach',
 					));
-					list($subTag, $tag) = $sharingModel->getNotifyTags();
+					[$subTag, $tag] = $sharingModel->getNotifyTags();
 					Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 						'FROM_USER_ID' => $sharingModel->getCreatedBy(),
 						'NOTIFY_EVENT' => 'sharing',
 						'NOTIFY_TAG' => $tag,
 						'NOTIFY_SUB_TAG' => $subTag,
 						'NOTIFY_MESSAGE' => Loc::getMessage($isFolder? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE', array(
-							'#NAME#' => '<a href="'.$pathInListing.'">'.$objectToSharing->getName().'</a>',
+							'#NAME#' => '<a href="'.($linkToViewDocument ?: $pathInListing).'">'.$objectToSharing->getName().'</a>',
 							'#DESCRIPTION#' => $sharingModel->getDescription(),
 							'#DISCONNECT_LINK#' => '<a href="'.$uriToDisconnect.'">'.Loc::getMessage('DISK_SHARING_MODEL_TEXT_DISCONNECT_LINK').'</a>',
 						)),
@@ -617,7 +647,7 @@ final class Sharing extends Internals\Model
 				{
 					continue;
 				}
-				list($subTag, $tag) = $sharingModel->getNotifyTags();
+				[$subTag, $tag] = $sharingModel->getNotifyTags();
 				Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 					'NOTIFY_BUTTONS' => $buttons,
 					'NOTIFY_TYPE' => 'IM_NOTIFY_CONFIRM',
@@ -1085,7 +1115,7 @@ final class Sharing extends Internals\Model
 		}
 		$this->linkObject = $linkModel;
 
-		list(, $tag) = $this->getNotifyTags();
+		[, $tag] = $this->getNotifyTags();
 		if(Loader::includeModule('im'))
 		{
 			\CIMNotify::deleteByTag($tag);
@@ -1152,7 +1182,7 @@ final class Sharing extends Internals\Model
 			$rightsManager = Driver::getInstance()->getRightsManager();
 			$rightsManager->deleteByDomain($this->getRealObject(), $rightsManager->getSharingDomain($this->id));
 
-			list(, $tag) = $this->getNotifyTags();
+			[, $tag] = $this->getNotifyTags();
 			if(Loader::includeModule('im'))
 			{
 				\CIMNotify::deleteByTag($tag);
@@ -1174,7 +1204,7 @@ final class Sharing extends Internals\Model
 					'#USERNAME#' => User::loadById($declinedBy)->getFormattedName(),
 				)
 			);
-			list($subTag, $tag) = $this->getNotifyTags();
+			[$subTag, $tag] = $this->getNotifyTags();
 			Driver::getInstance()->sendNotify($this->createdBy, array(
 				'FROM_USER_ID' => $declinedBy,
 				'NOTIFY_EVENT' => 'sharing',
@@ -1376,7 +1406,7 @@ final class Sharing extends Internals\Model
 			return;
 		}
 
-		list(, $tag) = $sharingModel->getNotifyTags();
+		[, $tag] = $sharingModel->getNotifyTags();
 		\CIMNotify::deleteByTag($tag);
 
 		if($value === 'N')
@@ -1389,18 +1419,19 @@ final class Sharing extends Internals\Model
 		{
 			$isFolder = $sharingModel->getLinkObject() instanceof Folder;
 
+			$linkToViewDocument = self::generateLinkToViewDocument($sharingModel, $sharingModel->getLinkObject());
 			$pathInListing = Driver::getInstance()->getUrlManager()->getUrlFocusController('showObjectInGrid', array(
 				'objectId' => $sharingModel->getLinkObjectId(),
 			));
 			$message = Loc::getMessage(
 				$isFolder ? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE',
 				array(
-					'#NAME#' => '<a href="' . $pathInListing . '">' . $sharingModel->getLinkObject()->getName() . '</a>',
+					'#NAME#' => '<a href="' . ($linkToViewDocument ?: $pathInListing) . '">' . $sharingModel->getLinkObject()->getName() . '</a>',
 					'#DESCRIPTION#' => '',
 					'#DISCONNECT_LINK#' => '',
 				)
 			);
-			list($subTag, $tag) = $sharingModel->getNotifyTags();
+			[$subTag, $tag] = $sharingModel->getNotifyTags();
 			Driver::getInstance()->sendNotify(mb_substr($sharingModel->getToEntity(), 1), array(
 				'FROM_USER_ID' => $sharingModel->getCreatedBy(),
 				'NOTIFY_EVENT' => 'sharing',

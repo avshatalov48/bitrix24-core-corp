@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_DEAL_COPY_PAGE_TITLE"] = "Copy deal";
 $MESS["CRM_DEAL_CREATION_PAGE_TITLE"] = "New deal";
 $MESS["CRM_DEAL_FIELD_ADD_OBSERVER"] = "Add observer";
@@ -19,6 +19,7 @@ $MESS["CRM_DEAL_FIELD_OBSERVERS"] = "Observers";
 $MESS["CRM_DEAL_FIELD_OPENED"] = "Available to everyone";
 $MESS["CRM_DEAL_FIELD_OPPORTUNITY"] = "Amount";
 $MESS["CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Amount and currency";
+$MESS["CRM_DEAL_FIELD_PAYMENT_DOCUMENTS"] = "Payment documentation";
 $MESS["CRM_DEAL_FIELD_PROBABILITY"] = "Probability";
 $MESS["CRM_DEAL_FIELD_PRODUCTS"] = "Products";
 $MESS["CRM_DEAL_FIELD_RECURRING"] = "Repeat";
@@ -84,4 +85,3 @@ $MESS["CRM_DEAL_TAB_QUOTE"] = "Quotes";
 $MESS["CRM_DEAL_TAB_TREE"] = "Dependencies";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
-?>

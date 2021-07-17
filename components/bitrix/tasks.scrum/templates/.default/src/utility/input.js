@@ -122,7 +122,7 @@ export class Input extends EventEmitter
 		}
 		if (enteredHashTags.length > 0 && this.isTagsSearchMode())
 		{
-			const enteredHashTagName = enteredHashTags.pop().trim();
+			const enteredHashTagName = enteredHashTags.pop();
 			this.emit('tagsSearchOpen', enteredHashTagName);
 		}
 		else
@@ -142,7 +142,7 @@ export class Input extends EventEmitter
 		}
 		if (enteredHashEpics.length > 0 && this.isEpicSearchMode())
 		{
-			const enteredHashTagName = enteredHashEpics.pop().trim();
+			const enteredHashTagName = enteredHashEpics.pop();
 			this.emit('epicSearchOpen', enteredHashTagName);
 		}
 		else

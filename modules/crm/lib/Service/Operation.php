@@ -13,6 +13,7 @@ use Bitrix\Crm\Service\Operation\Action;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\InvalidOperationException;
@@ -29,6 +30,8 @@ abstract class Operation
 	public const ACTION_BEFORE_SAVE = 'beforeSave';
 	public const ACTION_AFTER_SAVE = 'afterSave';
 
+	/** @var \CCrmBizProcHelper */
+	protected $bizProcHelper = \CCrmBizProcHelper::class;
 	/** @var Item */
 	protected $itemBeforeSave;
 	/** @var Item */
@@ -40,6 +43,7 @@ abstract class Operation
 		self::ACTION_BEFORE_SAVE => [],
 		self::ACTION_AFTER_SAVE => [],
 	];
+	protected $bizProcEventType;
 
 	protected $pullItem = [];
 	protected $pullParams = [];
@@ -171,10 +175,10 @@ abstract class Operation
 
 		if ($this->isCheckFieldsEnabled())
 		{
-			$CheckFieldsResult = $this->checkFields();
-			if (!$CheckFieldsResult->isSuccess())
+			$checkFieldsResult = $this->checkFields();
+			if (!$checkFieldsResult->isSuccess())
 			{
-				return $CheckFieldsResult;
+				return $checkFieldsResult;
 			}
 		}
 
@@ -232,6 +236,15 @@ abstract class Operation
 		{
 			$this->preparePullEvent();
 			$this->sendPullEvent();
+		}
+
+		if ($result->isSuccess() && $this->isBizProcEnabled())
+		{
+			$bizProcResult = $this->runBizProc();
+			if (!$bizProcResult->isSuccess())
+			{
+				$result->addErrors($bizProcResult->getErrors());
+			}
 		}
 
 		if ($result->isSuccess() && $this->isAutomationEnabled())
@@ -333,16 +346,11 @@ abstract class Operation
 
 		$requiredFields = [];
 
-		$isCheckRequiredOnlyChanged = $this->isCheckRequiredOnlyChanged();
 		foreach ($this->fieldsCollection as $field)
 		{
 			if ($field->isRequired())
 			{
 				$fieldName = $field->getName();
-				if ($isCheckRequiredOnlyChanged && !$this->item->isChanged($fieldName))
-				{
-					continue;
-				}
 				if ($field->isUserField() && !$this->isCheckRequiredUserFields())
 				{
 					continue;
@@ -363,6 +371,20 @@ abstract class Operation
 		)
 		{
 			$requiredFields = array_merge($requiredFields, $this->getStageDependantRequiredFields($factory));
+		}
+
+		if ($this->isCheckRequiredOnlyChanged())
+		{
+			$notChangedFields = [];
+			foreach ($requiredFields as $fieldName)
+			{
+				if ($this->item->hasField($fieldName) && !$this->item->isChanged($fieldName))
+				{
+					$notChangedFields[] = $fieldName;
+				}
+			}
+
+			$requiredFields = array_diff($requiredFields, $notChangedFields);
 		}
 
 		$result = $this->checkRequiredFields($requiredFields, $factory);
@@ -415,6 +437,33 @@ abstract class Operation
 				if ($emptyValuesCount >= count ($dependantFieldNames[$fieldName]))
 				{
 					$result->addError(Field::getRequiredEmptyError($fieldName, $factory->getFieldCaption($fieldName)));
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	protected function runBizProc(): Result
+	{
+		$result = new Result();
+
+		if (is_int($this->bizProcEventType))
+		{
+			$errors = [];
+
+			$this->bizProcHelper::AutoStartWorkflows(
+				$this->item->getEntityTypeId(),
+				$this->item->getId(),
+				$this->bizProcEventType,
+				$errors
+			);
+
+			if ($errors)
+			{
+				foreach ($errors as $errorMessage)
+				{
+					$result->addError(new Error($errorMessage));
 				}
 			}
 		}
@@ -501,6 +550,25 @@ abstract class Operation
 	public function isAutomationEnabled(): bool
 	{
 		return $this->settings->isAutomationEnabled();
+	}
+
+	public function enableBizProc(): self
+	{
+		$this->settings->enableBizProc();
+
+		return $this;
+	}
+
+	public function disableBizProc(): self
+	{
+		$this->settings->disableBizProc();
+
+		return $this;
+	}
+
+	public function isBizProcEnabled(): bool
+	{
+		return $this->settings->isBizProcEnabled();
 	}
 
 	public function enableCheckAccess(): self

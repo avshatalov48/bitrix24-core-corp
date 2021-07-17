@@ -1,4 +1,7 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+\Bitrix\Main\UI\Extension::load("popup");
+
 $settings = $arResult["SETTINGS"];
 if ($settings['MODE'] === 'edit' && !is_null($settings['FIELD_ID']))
 {

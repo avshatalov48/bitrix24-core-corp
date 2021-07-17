@@ -298,15 +298,15 @@ if (check_bitrix_sessid())
 				{
 					if ($psID > 0)
 					{
-						$result = \Bitrix\Sale\Internals\PaySystemActionTable::update($psID, $arActFields);
+						$result = PaySystem\Manager::update($psID, $arActFields);
 					}
 					else
 					{
-						$result = \Bitrix\Sale\Internals\PaySystemActionTable::add($arActFields);
+						$result = PaySystem\Manager::add($arActFields);
 						if ($result->isSuccess())
 						{
 							$psID = $result->getId();
-							\Bitrix\Sale\Internals\PaySystemActionTable::update($psID, array('PAY_SYSTEM_ID' => $psID));
+							PaySystem\Manager::update($psID, array('PAY_SYSTEM_ID' => $psID));
 						}
 					}
 

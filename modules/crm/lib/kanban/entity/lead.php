@@ -239,6 +239,6 @@ class Lead extends Entity
 	 */
 	protected function getColumnId(array $data): string
 	{
-		return $data['STATUS_ID'];
+		return ($data['STATUS_ID'] ?? '');
 	}
 }

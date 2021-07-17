@@ -303,8 +303,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$this->prepareEntityUserFields();
 		$this->prepareEntityUserFieldInfos();
-		$this->prepareEntityData();
 		$this->prepareStatusList();
+
+		$this->initializeData();
 
 		//region GUID & Editor Config ID
 		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
@@ -368,10 +369,6 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$this->arResult['CONVERSION_CONFIGS'] = LeadConversionDispatcher::getJavaScriptConfigurations();
 			$this->arResult['CONVERSION_SCRIPT_DESCRIPTIONS'] = LeadConversionScheme::getJavaScriptDescriptions(false);
 		}
-		//endregion
-
-		//region Fields
-		$this->prepareFieldInfos();
 		//endregion
 
 		//region Config
@@ -462,6 +459,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					),
 					'ENTITY_ID' => $this->arResult['ENTITY_INFO']['ENTITY_ID'],
 					'ENTITY_TYPE_NAME' => $this->arResult['ENTITY_INFO']['ENTITY_TYPE_NAME'],
+					'ENTITY_TITLE' => $this->arResult['ENTITY_INFO']['TITLE'],
 					'CUSTOM_SITE_ID' => $this->getSiteId(),
 					'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
 					'ALLOW_EDIT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
@@ -1832,6 +1830,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			}
 			//endregion
 
+			$this->entityData['IS_MANUAL_OPPORTUNITY'] = 'N';
+
 			//region Default Status ID
 			$statusList = $this->prepareStatusList();
 			if(!empty($statusList))
@@ -2561,5 +2561,19 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	public function initializeData()
+	{
+		$this->prepareEntityData();
+		$this->prepareFieldInfos();
+	}
+
+	public function getEntityEditorData(): array
+	{
+		return [
+			'ENTITY_ID' => $this->getEntityID(),
+			'ENTITY_DATA' => $this->prepareEntityData()
+		];
 	}
 }

@@ -109,7 +109,7 @@ class CacheProvider extends StaticCacheProvider
 				"=ACTIVE" => "Y",
 				"=CONFIRM_CODE" => false,
 				"!UF_DEPARTMENT" => false,
-				"!=EXTERNAL_AUTH_ID" => array("replica", "email", "bot", "imconnector")
+				"=IS_REAL_USER" => "Y"
 			)
 		));
 

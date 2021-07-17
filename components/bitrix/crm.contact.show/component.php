@@ -10,9 +10,9 @@ if (!CModule::IncludeModule('crm'))
 // 'Fileman' module always installed
 CModule::IncludeModule('fileman');
 
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\Format\ContactAddressFormatter;
-use Bitrix\Crm\Format\AddressSeparator;
 
 /**
  * Bitrix vars
@@ -387,9 +387,8 @@ if($enableOutmodedFields)
 		'id' => 'ADDRESS',
 		'name' => GetMessage('CRM_FIELD_ADDRESS'),
 		'type' => 'custom',
-		'value' =>  ContactAddressFormatter::format(
-			$arResult['ELEMENT'],
-			array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
+		'value' => AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			ContactAddress::mapEntityFields($arResult['ELEMENT'])
 		),
 		'isTactile' => true
 	);

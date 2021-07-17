@@ -142,7 +142,6 @@ class ActivityTable extends Entity\DataManager
 			),
 			'DESCRIPTION' => array(
 				'data_type' => 'string',
-				'fetch_data_modification' => [static::class, 'getDescriptionFetchModification'],
 			),
 			'COMPLETED' => array(
 				'data_type' => 'boolean',
@@ -283,6 +282,9 @@ class ActivityTable extends Entity\DataManager
 			'SEARCH_CONTENT' => array(
 				'data_type' => 'string'
 			),
+			new TextField('SETTINGS', [
+				'serialized' => true
+			]),
 			new TextField('PROVIDER_PARAMS', [
 				'serialized' => true
 			])
@@ -293,15 +295,5 @@ class ActivityTable extends Entity\DataManager
 	{
 		$result = Loc::getMessage("CRM_ACTIVITY_ENTITY_{$fieldName}_FIELD");
 		return is_string($result) ? $result : '';
-	}
-
-	public static function getDescriptionFetchModification(): array
-	{
-		return [
-			//function ($value) {
-			//
-			//	return \CCrmActivity::uncompressDescription($value);
-			//}
-		];
 	}
 }

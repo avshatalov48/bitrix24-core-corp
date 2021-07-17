@@ -59,6 +59,9 @@ return array(
 			'crm.service.converter.stage' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Stage',
 			],
+			'crm.service.converter.type' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Type',
+			],
 			'crm.service.broker.user' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\User',
 			],
@@ -110,6 +113,9 @@ return array(
 			'crm.integration.documentgeneratormanager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\DocumentGeneratorManager',
 			],
+			'crm.integration.documentgeneratormanager.productLoader' => [
+				'className' => '\\Bitrix\\Crm\\Integration\\DocumentGenerator\\ProductLoader',
+			],
 			'crm.integration.pullmanager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\PullManager',
 			],
@@ -118,7 +124,10 @@ return array(
 			],
 			'crm.recycling.dynamicController' => [
 				'className' => '\\Bitrix\\Crm\\Recycling\\DynamicController',
-			]
+			],
+			'crm.deal.paymentDocumentsRepository' => [
+				'className' => '\\Bitrix\\Crm\\Deal\\PaymentDocumentsRepository',
+			],
 		],
 		'readonly' => true,
 	],

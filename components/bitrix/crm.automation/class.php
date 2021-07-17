@@ -1,17 +1,25 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Automation\Factory;
-use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Rest;
+use Bitrix\Crm\Automation\Trigger\WebHookTrigger;
 
-Loc::loadMessages(__FILE__);
-
-class CrmAutomationComponent extends \CBitrixComponent
+class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Contract\Controllerable
 {
 	protected $entity;
+
+	public function configureActions()
+	{
+		return [];
+	}
 
 	protected function getEntityTypeId()
 	{
@@ -84,13 +92,36 @@ class CrmAutomationComponent extends \CBitrixComponent
 		$this->includeComponentTemplate();
 	}
 
+	public function generateWebhookPasswordAction()
+	{
+		if (
+			!Main\Loader::includeModule('crm')
+			|| !Main\Loader::includeModule('rest')
+			|| !WebHookTrigger::isEnabled()
+			|| !Rest\Engine\Access::isAvailableCount(Rest\Engine\Access::ENTITY_TYPE_WEBHOOK)
+		)
+		{
+			return ['error' => Loc::getMessage('CRM_AUTOMATION_WEBHOOK_NOT_AVAILABLE')];
+		}
+
+		$userId = Main\Engine\CurrentUser::get()->getId();
+		$pwd = WebHookTrigger::touchPassword($userId);
+
+		if (!$pwd)
+		{
+			return ['error' => Loc::getMessage('CRM_AUTOMATION_WEBHOOK_CREATE_FAILURE')];
+		}
+
+		return ['password' => $pwd];
+	}
+
 	private function getBpDesignerEditUrl($entityTypeId)
 	{
 		if (!Factory::canUseBizprocDesigner())
 			return '';
 
 		// full designer is not available for now
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (!Factory::isBizprocDesignerSupported($entityTypeId))
 		{
 			return null;
 		}

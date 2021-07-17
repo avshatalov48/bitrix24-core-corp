@@ -27,3 +27,4 @@ $MESS['CRM_ORDER_CASHBOX_STATUS_N'] = "Не напечатан";
 $MESS['CRM_ORDER_CASHBOX_STATUS_P'] = "В процессе печати";
 $MESS['CRM_ORDER_CASHBOX_STATUS_Y'] = "Напечатан";
 $MESS['CRM_ORDER_CASHBOX_STATUS_E'] = "Ошибка";
+$MESS["CRM_ORDER_CASHBOX_MANUAL_PRINT_ERROR"] = "Ручное добавление чеков недоступно. Чеки печатаются в автоматическом режиме.";

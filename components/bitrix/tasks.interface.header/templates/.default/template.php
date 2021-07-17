@@ -103,6 +103,7 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 		'SPRINT_ID' => $arParams[ 'SPRINT_ID' ],
 		'SPRINT_SELECTED' => $arParams[ 'SPRINT_SELECTED' ],
 
+		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER_ID' => $arParams[ "FILTER_ID" ],
 
 		'SHOW_VIEW_MODE'=>$arParams['SHOW_VIEW_MODE'],

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\SalesCenter\Integration\CrmManager;
 
 class SalesCenterManager
@@ -55,5 +56,18 @@ class SalesCenterManager
 			method_exists(CrmManager::getInstance(), 'isShowSmsTile') &&
 			CrmManager::getInstance()->isShowSmsTile()
 		);
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function hasInstallableDeliveryItems(): bool
+	{
+		if (!$this->isEnabled)
+		{
+			return false;
+		}
+
+		return (new HandlersRepository())->getCollection()->hasInstallableItems();
 	}
 }

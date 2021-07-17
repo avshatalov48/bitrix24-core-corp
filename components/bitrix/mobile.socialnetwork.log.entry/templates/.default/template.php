@@ -305,7 +305,13 @@ else
 						$avatarClassList[] = $arEvent['EVENT_FORMATTED']['AVATAR_STYLE'];
 					}
 
-					?><div class="<?=implode(' ', $avatarClassList)?>"<?=($arEvent["AVATAR_SRC"] <> ''? " style=\"background-image:url('".\CHTTP::urnEncode($arEvent["AVATAR_SRC"])."')\"" : "")?>></div><?
+					$style = (
+						$arEvent["AVATAR_SRC"] <> ''
+							? "background-image: url('" . $arEvent['AVATAR_SRC'] . "')"
+							: ''
+					);
+
+					?><div class="<?= implode(' ', $avatarClassList) ?>" style="<?= $style ?>"></div><?
 
 					?><div class="post-item-pinned-block"><?
 
@@ -431,8 +437,18 @@ else
 					$voteId = $arEvent["EVENT"]["RATING_TYPE_ID"].'_'.$arEvent["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
 					$emotion = (!empty($arEvent["RATING"]["USER_REACTION"])? mb_strtoupper($arEvent["RATING"]["USER_REACTION"]) : 'LIKE');
 
-					?><span class="post-item-informers bx-ilike-block" id="rating_block_<?=$arEvent["EVENT"]["ID"]?>" data-counter="<?=intval($arEvent["RATING"]["TOTAL_VOTES"])?>"><?
-						?><span data-rating-vote-id="<?=htmlspecialcharsbx($voteId)?>" id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="post-item-informer-like feed-inform-ilike"><?
+					?><span
+					 class="post-item-informers bx-ilike-block"
+					 id="rating_block_<?= (int)$arEvent['EVENT']['ID'] ?>"
+					 data-counter="<?= (int)$arEvent['RATING']['TOTAL_VOTES'] ?>"
+					><?
+						?><span
+						 data-rating-vote-id="<?= htmlspecialcharsbx($voteId) ?>"
+						 data-rating-entity-type-id="<?= htmlspecialcharsbx($arEvent['EVENT']['RATING_TYPE_ID']) ?>"
+						 data-rating-entity-id="<?= (int)$arEvent['EVENT']['RATING_ENTITY_ID'] ?>"
+						 id="bx-ilike-button-<?= htmlspecialcharsbx($voteId) ?>"
+						 class="post-item-informer-like feed-inform-ilike"
+						><?php
 							$likeClassList = [ 'bx-ilike-left-wrap' ];
 							if (
 								isset($arEvent["RATING"]["USER_HAS_VOTED"])

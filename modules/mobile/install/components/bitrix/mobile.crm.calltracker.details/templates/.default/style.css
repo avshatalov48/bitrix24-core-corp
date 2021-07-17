@@ -1,0 +1,73 @@
+.crm-phonetracker-detail-wrapper { background-color: #eef2f4; }
+
+.crm-phonetracker-detail {
+	margin-bottom: 7px;
+	padding-left: 16px;
+	background-color: #fff;
+}
+
+.crm-phonetracker-detail-control-container {
+	display: flex;
+	align-items: center;
+}
+
+.crm-phonetracker-detail .crm-phonetracker-detail-control-container:last-child .crm-phonetracker-detail-control-inner { border-bottom: none; }
+
+.crm-phonetracker-detail-control-icon {
+	width: 28px;
+	height: 28px;
+	margin-right: 9px;
+	margin-bottom: 8px;
+	border-radius: 50%;
+	background: no-repeat center;
+	background-size: cover;
+}
+
+.crm-phonetracker-detail-control-icon-wallet { background-image: url(images/wallet.svg); }
+
+.crm-phonetracker-detail-control-icon-avatar { background-image: url(images/avatar.svg); }
+
+.crm-phonetracker-detail-control-inner {
+	min-height: 63px;
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	flex-direction: column;
+	border-bottom: 1px solid rgba(219, 221, 224, 0.5);
+}
+
+.crm-phonetracker-detail-control-title {
+	font: 14px/16px "Roboto", sans-serif;
+	color: #828b95;
+	opacity: 0.7;
+}
+
+.crm-phonetracker-detail-control-field-currency {
+	font: 18px/25px "Roboto", sans-serif;
+	color: #828b95;
+	padding-right: 10px;
+}
+
+.crm-phonetracker-detail-control-field-container {
+	display: flex;
+	align-items: baseline;
+}
+
+.crm-phonetracker-detail-control-field-container label {
+	display: block;
+	width: 100%;
+}
+
+.crm-phonetracker-detail-control-field {
+	font: 18px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	flex: 1;
+	color: #333;
+	border: none;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.crm-phonetracker-detail-control-field:disabled {
+	background: transparent;
+	color: #828b95;
+}

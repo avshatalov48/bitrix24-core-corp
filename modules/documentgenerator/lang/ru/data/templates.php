@@ -48,3 +48,7 @@ $MESS['DOCGEN_TEMPLATE_QUOTE_BR_NAME'] = 'Коммерческое предло�
 $MESS['DOCGEN_TEMPLATE_QUOTE_MX_NAME'] = 'Коммерческое предложение (Мексика)';
 $MESS['DOCGEN_TEMPLATE_INVOICE_PL_NAME'] = 'Счет (Польша)';
 $MESS['DOCGEN_TEMPLATE_SALES_ORDER_PL_NAME'] = 'Подтверждение заказа (Польша)';
+$MESS['DOCGEN_TEMPLATE_INVOICE_FR_NAME'] = 'Счет (Франция)';
+$MESS['DOCGEN_TEMPLATE_QUOTE_FR_NAME'] = 'Коммерческое предложение (Франция)';
+$MESS['DOCGEN_TEMPLATE_INVOICE_SP_NAME'] = 'Счет (Испания)';
+$MESS['DOCGEN_TEMPLATE_QUOTE_SP_NAME'] = 'Коммерческое предложение (Испания)';

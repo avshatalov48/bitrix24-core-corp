@@ -1,4 +1,5 @@
-<?
+<?php
+
 use Bitrix\Main;
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\ArgumentException;
@@ -12,6 +13,10 @@ define("DisableEventsCheck", true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
+
 $result = array("success" => false);
 $request = Main\Application::getInstance()->getContext()->getRequest();
 
@@ -20,7 +25,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 	$theme = null;
 	try
 	{
-		$theme = new ThemePicker($request->getPost("templateId"), $request->getPost("siteId"));
+		$theme = new ThemePicker($request->getPost("templateId"), $request->getPost("siteId"), 0, $request->getPost("entityType"), $request->getPost("entityId"));
 	}
 	catch (ArgumentException $exception)
 	{
@@ -101,4 +106,3 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 echo Json::encode($result);
 
 \CMain::FinalActions();
-die();

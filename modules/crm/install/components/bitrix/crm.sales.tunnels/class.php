@@ -27,6 +27,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 	protected $categories;
 	protected $scheme;
 	protected $stages;
+	/** @var Crm\Automation\TunnelManager */
 	protected $tunnelManager;
 
 	protected function addError(Error $error): self
@@ -564,7 +565,8 @@ HTML;
 			$data['from']['category'],
 			$data['from']['stage'],
 			$data['to']['category'],
-			$data['to']['stage']
+			$data['to']['stage'],
+			$data['robotAction']
 		);
 
 		if ($result->isSuccess())
@@ -638,7 +640,8 @@ HTML;
 			'SEMANTICS' => (isset($data['semantics']) &&
 				in_array($data['semantics'], [PhaseSemantics::SUCCESS, PhaseSemantics::FAILURE], true))
 				? $data['semantics']
-				: null
+				: null,
+			'CATEGORY_ID' => $data['categoryId'],
 		]);
 
 		if (!$id)

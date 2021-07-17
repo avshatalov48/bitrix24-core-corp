@@ -16,6 +16,8 @@ final class OrderStage
 	public const PAID = 'PAID';
 	public const SENT_NO_VIEWED = 'SENT_NO_VIEWED';
 	public const VIEWED_NO_PAID = 'VIEWED_NO_PAID';
+	public const PAYMENT_CANCEL = 'PAYMENT_CANCEL';
+	public const REFUND = 'REFUND';
 
 	public static function getList() : array
 	{

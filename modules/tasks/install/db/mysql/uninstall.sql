@@ -95,3 +95,7 @@ DROP TABLE IF EXISTS b_tasks_scrum_item_checklist_items;
 DROP TABLE IF EXISTS b_tasks_scrum_item_checklist_tree;
 
 DROP TABLE IF EXISTS b_tasks_scorer_event;
+
+DROP TABLE IF EXISTS b_tasks_project_last_activity;
+
+DROP TABLE IF EXISTS b_tasks_project_user_option;

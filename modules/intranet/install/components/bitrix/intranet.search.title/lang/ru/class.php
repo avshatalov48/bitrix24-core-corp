@@ -6,6 +6,7 @@ $MESS["CC_BST_QUERY_PROMPT"] = "результаты для: <b>\"#query#\"</b>"
 $MESS["CC_BST_ALL_QUERY_PROMPT"] = "Все результаты для: <b>\"#query#\"</b>";
 $MESS["CT_BST_GLOBAL_SEARCH"] = "Искать в";
 $MESS["CT_BST_GLOBAL_SEARCH_STREAM"] = "Живая лента";
+$MESS["CT_BST_GLOBAL_SEARCH_NEWS"] = "Новости";
 $MESS["CT_BST_GLOBAL_SEARCH_TASKS"] = "Задачи";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM"] = "CRM";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM_LEAD"] = "Лиды";

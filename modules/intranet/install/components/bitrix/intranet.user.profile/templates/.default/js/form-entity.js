@@ -306,7 +306,7 @@ BX.load(['/bitrix/js/ui/entity-editor/js/editor.js'], function ()
 
 				this._selectContainerAutoTimeZone = BX.create("div",
 					{
-						props: {className: "ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w50"},
+						props: {className: "ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100"},
 						children: [
 							this._selectAutoTimeZone,
 							selectIconAutoTimeZone
@@ -317,8 +317,8 @@ BX.load(['/bitrix/js/ui/entity-editor/js/editor.js'], function ()
 				this._selectContainerTimeZone = BX.create("div",
 					{
 						props: {
-							className: "ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w50",
-							style: (value.autoTimeZone !== "N" ? "display: none" : "")
+							className: "ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100",
+							style: "margin-top: 10px;" + (value.autoTimeZone !== "N" ? "display: none;" : "")
 						},
 						children: [
 							this._selectTimeZone,

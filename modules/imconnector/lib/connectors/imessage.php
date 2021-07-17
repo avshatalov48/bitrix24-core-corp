@@ -69,16 +69,22 @@ class IMessage extends Base
 		{
 			$key = $file['key'];
 
-			$file = Library::downloadFile($file);
-
-			if($file !== false)
+			if(
+				!empty($file)
+				&& is_array($file)
+			)
 			{
-				$file = self::getDecryptedFile($file, $key);
+				$file = Library::downloadFile($file);
 
-				$result = \CFile::SaveFile(
-					$file,
-					Library::MODULE_ID
-				);
+				if($file !== false)
+				{
+					$file = self::getDecryptedFile($file, $key);
+
+					$result = \CFile::SaveFile(
+						$file,
+						Library::MODULE_ID
+					);
+				}
 			}
 		}
 

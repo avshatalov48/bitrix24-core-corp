@@ -510,14 +510,6 @@ ChatDialog.message.init = function(callback)
 
 		BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.recent');
 
-		if (
-			this.base.dialogId.toString().substr(0, 4) === 'chat'
-			&& BXIM.messenger.chat[this.base.dialogId.toString().substr(4)].owner != 0
-		)
-		{
-			BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.openlines.recent');
-		}
-
 		if (this.dialogCache.dialogs.has(this.base.dialogId.toString()))
 		{
 			this.dialogCache.dialogs.get(this.base.dialogId.toString()).unreadList = [];
@@ -1229,11 +1221,18 @@ ChatDialog.userAddDialog.prepareItems = function ()
 			{
 				return false;
 			}
-			if (element.type == 'user')
+			if (element.type !== 'user')
 			{
-				items.push(element.user);
-				itemsIndex[element.id] = true;
+				return false;
 			}
+
+			if (element.user.network || element.user.connector)
+			{
+				return false;
+			}
+
+			items.push(element.user);
+			itemsIndex[element.id] = true;
 
 			return true;
 		});
@@ -1245,6 +1244,12 @@ ChatDialog.userAddDialog.prepareItems = function ()
 		{
 			return false;
 		}
+
+		if (element.network || element.connector)
+		{
+			return false;
+		}
+
 		items.push(element);
 		itemsIndex[element.id] = true;
 	});
@@ -1262,6 +1267,11 @@ ChatDialog.userAddDialog.prepareItems = function ()
 		}
 		if (element.type == 'user')
 		{
+			if (element.user.network || element.user.connector)
+			{
+				return false;
+			}
+
 			items.push(element.user);
 			itemsIndex[element.id] = true;
 		}
@@ -1287,7 +1297,7 @@ ChatDialog.transferDialog.open = function (chatId)
 {
 	this.chatId = chatId;
 
-	let listUsers = this.prepareItems();
+	let listUsers = this.prepareItems().filter(element => !element.bot);
 	let listLines = this.prepareItems('line');
 
 	app.exec("openComponent", {

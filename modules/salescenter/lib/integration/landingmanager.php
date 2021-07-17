@@ -20,6 +20,7 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\Sale;
+use Bitrix\Sale\TradingPlatform;
 use Bitrix\Crm\Order;
 use Bitrix\SalesCenter\Model\Meta;
 use Bitrix\SalesCenter\Model\PageTable;
@@ -435,6 +436,43 @@ class LandingManager extends Base
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns last created "CRM + Online Store" active site.
+	 * @return array|null
+	 */
+	public function getCrmStoreSite(): ?array
+	{
+		if (!\Bitrix\Main\Loader::includeModule('sale'))
+		{
+			return null;
+		}
+
+		$filter = [
+			'=CLASS' => '\\' . TradingPlatform\Landing\Landing::class,
+			'=ACTIVE' => 'Y',
+		];
+
+		$tradingPlatforms = TradingPlatform\Manager::getList([
+			'select' => ['CODE'],
+			'filter' => $filter,
+			'order' => ['ID' => 'desc'],
+		]);
+		while ($platformData = $tradingPlatforms->fetch())
+		{
+			$platform = TradingPlatform\Landing\Landing::getInstanceByCode($platformData['CODE']);
+			if ($platform->isOfType(TradingPlatform\Landing\Landing::LANDING_STORE_STORE_V3))
+			{
+				$landingData = $platform->getInfo();
+				if ($landingData['ACTIVE'] === 'Y')
+				{
+					return $landingData;
+				}
+			}
+		}
+
+		return null;
 	}
 	//endregion
 

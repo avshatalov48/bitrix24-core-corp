@@ -12,6 +12,8 @@ use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\JsHandler;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
+Loc::loadLanguageFile(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/salescenter/install/js/salescenter/app/config.php');
+
 class Bitrix24Manager extends Base
 {
 	const FEATURE_NAME = 'salescenter';
@@ -252,6 +254,44 @@ class Bitrix24Manager extends Base
 	}
 
 	/**
+	 * @param $region
+	 * @return array
+	 */
+	public function getIntegrationRequestFormInfo($region): array
+	{
+		if (LANGUAGE_ID === 'ua')
+		{
+			return ['id' => 1293, 'lang' => 'ua', 'sec' => 'vnb6hi'];
+		}
+
+		switch ($region)
+		{
+			case 'ru':
+				return ['id' => 1291, 'lang' => 'ru', 'sec' => 'a9byq4'];
+			case 'by':
+				return ['id' => 1297, 'lang' => 'ru', 'sec' => 'b9rrf5'];
+			case 'kz':
+				return ['id' => 1298, 'lang' => 'ru', 'sec' => '6xe72g'];
+			default:
+				return ['id' => 1291, 'lang' => 'ru', 'sec' => 'a9byq4'];
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isIntegrationRequestPossible(): bool
+	{
+		$isPortalValidForIntegration = in_array(
+			$this->getPortalZone(),
+			['ru', 'ua', 'by', 'kz']
+		);
+		$doesFormHavePortalLanguage = in_array(LANGUAGE_ID, ['ru', 'ua']);
+
+		return $isPortalValidForIntegration && $doesFormHavePortalLanguage;
+	}
+
+	/**
 	 * @return string
 	 */
 	public function getPortalZone()
@@ -328,6 +368,22 @@ class Bitrix24Manager extends Base
 		}
 	}
 
+	public function addIntegrationRequestButtonToToolbar()
+	{
+		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+			Toolbar::addButton([
+				'color' => Color::LIGHT_BORDER,
+				'click' => new JsHandler('BX.Salescenter.Manager.openIntegrationRequestForm'),
+				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION'),
+				'dataset' => [
+					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO
+				]
+			]);
+		}
+	}
+
 	public function renderFeedbackButton()
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
@@ -336,6 +392,16 @@ class Bitrix24Manager extends Base
 			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackForm(event);">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
 		}
 	}
+
+	public function renderIntegrationRequestButton()
+	{
+		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">'.Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION').'</button>';
+		}
+	}
+
 	public function renderFeedbackSmsProviderOfferButton()
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))

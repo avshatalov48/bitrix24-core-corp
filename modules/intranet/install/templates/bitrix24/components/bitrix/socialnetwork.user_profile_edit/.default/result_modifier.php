@@ -1,5 +1,16 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 
 global $USER_FIELD_MANAGER;
 
@@ -24,8 +35,8 @@ $arResult["User"]["IS_INVITED"] = !empty($arResult['User']["CONFIRM_CODE"]);
 $arResult["IsMyProfile"] =  ($arResult["User"]["ID"] == $USER->GetID()) ? true: false;
 $arResult["User"]["IS_EXTRANET"] = (
 	empty($arResult["User"]['UF_DEPARTMENT'][0])
-	&& \Bitrix\Main\Loader::includeModule('extranet')
-	&& \Bitrix\Extranet\Util::checkExternalAuthId($arResult["User"]['EXTERNAL_AUTH_ID'])
+	&& \Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
+	&& !in_array($arResult['User']['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
 );
 
 $arResult['USER_PROP'] = array();

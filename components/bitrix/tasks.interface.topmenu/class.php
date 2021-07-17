@@ -35,7 +35,6 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		//		static::tryParseStringParameter($arParams[ 'PATH_TO_DEPARTMENTS' ], $arParams[ 'SECTION_URL_PREFIX' ] . 'departments/');
 
 		static::tryParseStringParameter($arParams['GROUP_ID'], 0);
-		static::tryParseStringParameter($arParams['SHOW_SECTION_PROJECTS'], 'Y');
 		static::tryParseStringParameter($arParams['SHOW_SECTION_TEMPLATES'], 'Y');
 		static::tryParseStringParameter($arParams['SHOW_SECTION_REPORTS'], 'Y');
 		static::tryParseStringParameter($arParams['SHOW_SECTION_MANAGE'], 'A');
@@ -64,12 +63,8 @@ class TasksTopmenuComponent extends TasksBaseComponent
 	{
 		if ($this->arParams['GROUP_ID'] > 0)
 		{
-			// $this->arParams['SHOW_SECTION_PROJECTS'] = 'N';
 			$this->arParams['SHOW_SECTION_TEMPLATES'] = 'N';
 		}
-
-		$this->arParams['SHOW_SECTION_PROJECTS'] = ($this->arParams['SHOW_SECTION_PROJECTS'] == 'Y' &&
-													$this->arParams['USER_ID'] == $this->userId) ? 'Y' : 'N';
 
 		if (!CModule::IncludeModule('report'))
 		{
@@ -133,6 +128,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 
 		$this->arResult['ROLES'] = [];
 		$this->arResult['TOTAL'] = 0;
+		$this->arResult['PROJECTS_COUNTER'] = 0;
 
 		if (
 			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
@@ -140,8 +136,12 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			|| $_REQUEST['IFRAME'] !== 'Y'
 		)
 		{
+			$counter = Counter::getInstance($this->arParams['USER_ID']);
+
 			$this->arResult['ROLES'] = $this->getRoles();
-			$this->arResult['TOTAL'] = Counter::getInstance($this->arParams['USER_ID'])->get(Counter\CounterDictionary::COUNTER_TOTAL);
+			$this->arResult['TOTAL'] = $counter->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL);
+			$this->arResult['PROJECTS_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
+				+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
 		}
 
 		return true;

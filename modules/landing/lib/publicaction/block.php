@@ -711,7 +711,7 @@ class Block
 				);
 				Assets\PreProcessing::blockUpdateNodeProcessing(
 					$blocks[$block]
-				); 
+				);
 				$result->setResult(
 					$blocks[$block]->save()
 				);

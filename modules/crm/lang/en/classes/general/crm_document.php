@@ -51,6 +51,7 @@ $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_UF_WEB_SITES"] = "Responsible person: Othe
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_UF_XING"] = "Responsible person: Xing";
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_WORK_PHONE"] = "Responsible person (work phone)";
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_WORK_POSITION"] = "Responsible person: Position";
+$MESS["CRM_DOCUMENT_FIELD_CONTACT_IDS"] = "Contacts";
 $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_COMPANY"] = "Company created by";
 $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_CONTACT"] = "Contact created by";
 $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_DEAL"] = "Deal created by";

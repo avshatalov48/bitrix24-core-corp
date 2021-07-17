@@ -19,4 +19,5 @@ $MESS["ORDER_STEXPORT_SUMMARY"] = "Будет сформирован файл э
 $MESS["ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Экспортировать все поля заказов";
 $MESS["ORDER_DOCUMENT_BUTTON_TEXT"] = "Документ";
 $MESS["ORDER_DOCUMENT_BUTTON_TITLE"] = "Создать документ на основании заказа";
+$MESS["DEAL_ORDER_SCENARIO"] = "Режим работы с заказами";
 ?>

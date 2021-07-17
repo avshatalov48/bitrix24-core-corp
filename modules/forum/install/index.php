@@ -366,10 +366,8 @@ class forum extends CModule
 		$eventManager->unregisterEventHandler('socialnetwork', 'onLogCommentIndexGetContent', 'forum', '\Bitrix\Forum\Integration\Socialnetwork\LogComment', 'onIndexGetContent');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onContentViewed', 'forum', '\Bitrix\Forum\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
 
-		CAgent::RemoveAgent("CForumTopic::CleanUp();","forum");
-		CAgent::RemoveAgent("CForumStat::CleanUp();","forum");
-		CAgent::RemoveAgent("CForumFiles::CleanUp();","forum");
-		UnRegisterModule("forum");
+		CAgent::RemoveModuleAgents('forum');
+		UnRegisterModule('forum');
 
 		return true;
 	}

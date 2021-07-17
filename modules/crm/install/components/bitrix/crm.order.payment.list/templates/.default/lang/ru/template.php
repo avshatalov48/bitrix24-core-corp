@@ -25,3 +25,4 @@ $MESS["CRM_ORDER_PAYMENT_ACTION_PAID"] = "Оплатить";
 $MESS["CRM_ORDER_PAYMENT_ACTION_PAID_N"] = "Отменить оплату";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Показать количество";
 $MESS["CRM_ALL"] = "Всего";
+$MESS["CRM_ORDER_PAYMENT_SEND_TO_CHAT"] = "Отправить в чат";

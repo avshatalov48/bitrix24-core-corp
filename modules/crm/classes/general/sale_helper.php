@@ -376,9 +376,6 @@ class CCrmSaleHelper
 			return self::getCacheAccess($userId, $role);
 		}
 
-		$isCrmAccess = self::isCrmAccess($USER, $role);
-		$isDbAccess = self::isDbAccess($userId, $role);
-
 		if (!isModuleInstalled("bitrix24"))
 		{
 			if ($USER->isAdmin())
@@ -389,45 +386,52 @@ class CCrmSaleHelper
 					self::addDbAccessAddingAgent($userId);
 				}
 				self::addToCacheAccess($userId, $role, true);
+
 				return true;
 			}
 			else
 			{
+				$isDbAccess = self::isDbAccess($userId, $role);
 				self::addToCacheAccess($userId, $role, $isDbAccess);
+
 				return $isDbAccess;
 			}
 		}
 
+		$isCrmAccess = self::isCrmAccess($USER, $role);
+
 		if (!$isCrmAccess)
 		{
 			self::addToCacheAccess($userId, $role, false);
+
 			return false;
 		}
 
-		if ($isCrmAccess && $isDbAccess)
+		$isDbAccess = self::isDbAccess($userId, $role);
+
+		if ($isDbAccess)
 		{
 			self::addToCacheAccess($userId, $role, true);
+
 			return true;
 		}
-
-		if ($isCrmAccess && !$isDbAccess)
+		else
 		{
 			$shopRole = self::getShopRole($userId);
 			if ($shopRole)
 			{
 				self::addDbAccessAddingAgent($userId);
 				self::addToCacheAccess($userId, $role, true);
+
 				return true;
 			}
 			else
 			{
 				self::addToCacheAccess($userId, $role, false);
+
 				return false;
 			}
 		}
-
-		self::addToCacheAccess($userId, $role, false);
-		return false;
 	}
 
 	private static function addToCacheAccess(int $userId, string $role, bool $access): void
@@ -1237,5 +1241,25 @@ class CCrmSaleHelper
 				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
 			);
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public static function isWithOrdersMode(): bool
+	{
+		return Option::get('crm', 'enable_order_deal_create', 'N') === 'N';
+	}
+
+	/**
+	 * @param bool $withOrders
+	 */
+	public static function setOrdersMode(bool $withOrders): void
+	{
+		Option::set(
+			'crm',
+			'enable_order_deal_create',
+			$withOrders ? 'N' : 'Y'
+		);
 	}
 }

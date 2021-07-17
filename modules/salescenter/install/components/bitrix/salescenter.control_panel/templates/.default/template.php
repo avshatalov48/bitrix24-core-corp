@@ -26,6 +26,7 @@ Extension::load([
 	'applayout',
 ]);
 
+\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
 \Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
 
 ?>

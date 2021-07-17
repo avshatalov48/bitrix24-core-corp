@@ -13,6 +13,8 @@ $runtime->IncludeActivityFile('CrmCopyDynamicActivity');
 
 class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 {
+	const CYCLE_LIMIT = 150;
+
 	protected function prepareProperties(Crm\Service\Factory $factory, Crm\Item $item)
 	{
 		$this->preparedProperties = [
@@ -55,7 +57,13 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 	{
 		$operation = $factory->getUpdateOperation($item);
 		$operation->getContext()->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
-		$updateResult = $operation->disableCheckWorkflows()->launch();
+		$operation
+			->disableCheckAccess()
+			->disableBizProc()
+			->disableCheckFields()
+			->disableCheckWorkflows()
+		;
+		$updateResult = $operation->launch();
 
 		$errorMessages = $updateResult->getErrorMessages();
 

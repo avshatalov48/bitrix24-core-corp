@@ -204,6 +204,7 @@ class Comment extends BaseObject
 			"SERVICE_DATA" => ($params["SERVICE_DATA"] ?? null),
 
 			"UF_TASK_COMMENT_TYPE" => ($params["UF_TASK_COMMENT_TYPE"] ?? null),
+			'UF_FORUM_MES_URL_PRV' => ($params['UF_FORUM_MES_URL_PRV'] ?? null),
 		);
 
 		if ($this->prepareFields($params, $this->errorCollection))
@@ -212,7 +213,7 @@ class Comment extends BaseObject
 			{
 				$params["AUTHOR_IP"] = $realIp;
 				$params["AUTHOR_REAL_IP"] = $realIp;
-				if (\Bitrix\Main\Config\Option::get("forum", "FORUM_GETHOSTBYADDR", "N") == "Y")
+				if (\Bitrix\Main\Config\Option::get('forum', 'FORUM_GETHOSTBYADDR', 'N') === "Y")
 				{
 					$params["AUTHOR_REAL_IP"] = @gethostbyaddr($realIp);
 				}

@@ -436,6 +436,10 @@ export default class Item extends Kanban.Item
 
 	renderTitle(title: string): Element
 	{
+		if (Type.isArray(title))
+		{
+			title = title[0];
+		}
 		title = Text.encode(title);
 		let href = 'javascript:void(0);';
 		if(this.data.detailUrl)

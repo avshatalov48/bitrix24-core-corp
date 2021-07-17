@@ -15,13 +15,12 @@ if (!CModule::IncludeModule('sale'))
 global $USER, $APPLICATION;
 
 $CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+if (!$arResult['CAN_EDIT'])
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 
 $arParams['PATH_TO_TAX_LIST'] = CrmCheckPath('PATH_TO_TAX_LIST', $arParams['PATH_TO_TAX_LIST'], '');
 $arParams['PATH_TO_TAX_SHOW'] = CrmCheckPath('PATH_TO_TAX_SHOW', $arParams['PATH_TO_TAX_SHOW'], '?tax_id=#tax_id#&show');

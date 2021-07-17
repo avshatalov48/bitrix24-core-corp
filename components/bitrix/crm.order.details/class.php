@@ -29,10 +29,11 @@ Loc::loadMessages(__FILE__);
 
 class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponent
 {
+	use Crm\Component\EntityDetails\SaleProps\ComponentTrait;
+
 	/** @var Bitrix\Crm\Order\Order */
 	private  $order = null;
 	private  $profileId = null;
-	private  $propertyMap = null;
 
 	public function getEntityTypeID()
 	{
@@ -793,7 +794,22 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 		}
 
-		$this->arResult['ORDER_PROPERTIES'] = $this->prepareProperties($this->order);
+		$this->arResult['ORDER_PROPERTIES'] = $this->prepareProperties(
+			$this->order->getPropertyCollection(),
+			Order\Property::class,
+			$this->order->getPersonTypeId(),
+			$this->order->isNew()
+		);
+
+		$shipment = $this->getFirstShipment($this->order);
+		$this->arResult['SHIPMENT_PROPERTIES'] = $shipment
+			? $this->prepareProperties(
+				$shipment->getPropertyCollection(),
+				Order\ShipmentProperty::class,
+				$shipment->getPersonTypeId(),
+				($shipment->getId() === 0)
+			)
+			: [];
 
 		$isCurrencyEditable = $this->order->getId() <= 0;
 
@@ -807,7 +823,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			array(
 				'name' => 'TRADING_PLATFORM',
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_TRADING_PLATFORM'),
-				'type' => 'list',
+				'type' => 'order_trading_platform',
 				'editable' => count($tradingPlatforms) > 0 && ($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] !== 'Y') ,
 				'data' => array(
 					'items'=> \CCrmInstantEditorHelper::PrepareListOptions($tradingPlatforms)
@@ -948,6 +964,22 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		);
 
 		$this->arResult['ENTITY_FIELDS'][] = array(
+			'name' => 'SHIPMENT_PROPERTIES',
+			'type' => 'order_property_wrapper',
+			'transferable' => false,
+			'editable' => true,
+			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+			'elements' => [],
+			'sortedElements' => [
+				'active' => is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) ? $this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"] : [],
+				'hidden' => is_array($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]) ? $this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"] : [],
+			],
+			'data' => [
+				'entityType' => 'shipment',
+			]
+		);
+
+		$this->arResult['ENTITY_FIELDS'][] = array(
 			'name' => 'PAYMENT',
 			'type' => 'payment',
 			'editable' => true,
@@ -990,6 +1022,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'data' => array(
 				'managerUrl' => '/shop/orderform/#person_type_id#/',
 				'editorUrl' => '/shop/orderform/#person_type_id#/prop/#property_id#/',
+				'entityType' => 'order',
 			)
 		);
 		$personTypeList = is_array($this->arResult['PERSON_TYPES']) ? $this->arResult['PERSON_TYPES'] : array();
@@ -1100,7 +1133,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		return $data;
 	}
-
 	public function prepareEntityData($prepareDataMode = ComponentMode::UNDEFINED)
 	{
 		if($this->entityData)
@@ -1144,42 +1176,52 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 			//endregion
 
-			$propertiesData = Order\Property::getList(
-				array(
-					'filter' => array('ACTIVE' => 'Y'),
-					'order' => array('SORT')
-				)
-			);
-
-			while ($property = $propertiesData->fetch())
+			//region Properties
+			$propertyEntityClassNames = [
+				Order\Property::class,
+				Order\ShipmentProperty::class,
+			];
+			foreach ($propertyEntityClassNames as $propertyEntityClassName)
 			{
-				$defaultValue = $property['DEFAULT_VALUE'];
-				$id = $property['ID'];
-				$name = "PROPERTY_{$id}";
-				$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
-				if (!in_array($property['TYPE'], $simplePropertyTypes, true))
+				$propertiesData = $propertyEntityClassName::getList(
+					array(
+						'filter' => array('ACTIVE' => 'Y'),
+						'order' => array('SORT')
+					)
+				);
+
+				while ($property = $propertiesData->fetch())
 				{
-					$property['ONCHANGE'] = "BX.onCustomEvent('CrmOrderPropertySetCustom', ['{$name}']);";
-					if($property['TYPE'] === 'LOCATION')
+					$defaultValue = $property['DEFAULT_VALUE'];
+					$id = $property['ID'];
+					$name = "PROPERTY_{$id}";
+					$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
+					if (!in_array($property['TYPE'], $simplePropertyTypes, true))
 					{
-						$property['IS_SEARCH_LINE'] = true;
+						$property['ONCHANGE'] = "BX.onCustomEvent('CrmOrderPropertySetCustom', ['{$name}']);";
+						if($property['TYPE'] === 'LOCATION')
+						{
+							$property['IS_SEARCH_LINE'] = true;
+						}
+
+						$html = \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+							$name,
+							$property,
+							$defaultValue
+						);
+
+						$this->entityData["{$name}_EDIT_HTML"] = $html;
 					}
 
-					$locationHtml = \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
-						$name,
-						$property,
-						$defaultValue
-					);
-
-					$this->entityData["{$name}_EDIT_HTML"] = $locationHtml;
+					$this->entityData[$name] = $defaultValue;
 				}
-
-				$this->entityData[$name] = $defaultValue;
 			}
+			// endregion
 
 			$this->entityData['USER_PROFILE'] = !is_null($this->profileId) ? (int)$this->profileId : 'NEW';
 			$this->entityData['OLD_USER_ID'] = null;
 			$this->entityData['OLD_USER_PROFILE'] = null;
+			$this->entityData['OLD_TRADING_PLATFORM'] = null;
 		}
 		else
 		{
@@ -1216,10 +1258,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			{
 				$this->entityData['TRADING_PLATFORM'] = $item->getField('TRADING_PLATFORM_ID');
 			}
+
+			$this->entityData['OLD_TRADING_PLATFORM'] = $this->entityData['TRADING_PLATFORM'];
 			//endregion
 		}
-		$properties = $this->getPropertyEntityData($this->order);
-		$this->entityData = array_merge($this->entityData, $properties);
+		$this->entityData = array_merge(
+			$this->entityData,
+			$this->getPropertyEntityData($this->order->getPropertyCollection())
+		);
+
 		//region Responsible
 		if(isset($this->entityData['RESPONSIBLE_ID']) && $this->entityData['RESPONSIBLE_ID'] > 0)
 		{
@@ -1536,63 +1583,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		);
 	}
 
-	/**
-	 * @param Order\Order $order
-	 * @return array
-	 */
-	public function getPropertyEntityData(Order\Order $order)
-	{
-		$properties = array();
-		$propertyCollection = $order->getPropertyCollection();
-
-		/**@var Bitrix\Sale\PropertyValue $property*/
-		foreach ($propertyCollection as $property)
-		{
-			$code = null;
-			$propertyData = $property->getProperty();
-			if ((int)$propertyData['ID'] > 0)
-			{
-				$code = (int)$propertyData['ID'];
-			}
-			elseif (is_array($property->getValue()) || $property->getValue() <> '')
-			{
-				$code = 'n'.$property->getId();
-			}
-
-			if (empty($code))
-			{
-				continue;
-			}
-
-			$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
-			if (!in_array($property->getType(), $simplePropertyTypes, true))
-			{
-				$params = $property->getProperty();
-				$name = "PROPERTY_{$code}";
-				$params['ONCHANGE'] = "BX.onCustomEvent('CrmOrderPropertySetCustom', ['{$name}']);";
-
-				if ($property->getType() === 'LOCATION')
-				{
-					$params['IS_SEARCH_LINE'] = true;
-				}
-
-				$html = \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
-					$name,
-					$params,
-					$property->getValue()
-				);
-
-				$properties["{$name}_EDIT_HTML"] = $html;
-				$properties["{$name}_VIEW_HTML"] = $property->getValue() ? $property->getViewHtml() : "";
-				$properties["{$name}_EMPTY_HTML"] = Loc::getMessage('CRM_ORDER_NOT_SELECTED');
-			}
-
-			$properties['PROPERTY_'.$code] = $property->getValue();
-		}
-
-		return $properties;
-	}
-
 	protected function getShipmentEntityData()
 	{
 		$result = array(
@@ -1607,7 +1597,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		{
 			if($shipment->isSystem())
 				continue;
-
 			$deliveryId = $shipment->getDeliveryId();
 			$deliveryList = Order\Manager::getDeliveryServicesList($shipment);
 			$profilesList = Order\Manager::getDeliveryProfiles($deliveryId, $deliveryList);
@@ -1718,7 +1707,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 								$shipment->getField('DATE_INSERT')),
 							'SHORT',
 							$this->arResult['SITE_ID']
-				)))),
+						)))),
 				'STATUS_CONTROL' => $statusControlShipment,
 				'DELIVERY_SERVICES_LIST' => $deliveryList,
 				'DELIVERY_PROFILES_LIST' => $profilesList,
@@ -1769,7 +1758,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$calcPrice = $shipment->calculateDelivery();
 				$price = $calcPrice->getPrice();
 
-				$fields['EXPECTED_PRICE_DELIVERY'] = $price;
+				$fields['PRICE_DELIVERY_CALCULATED'] = $price;
 				$fields['FORMATTED_PRICE_DELIVERY_CALCULATED'] =  str_replace('&nbsp;', ' ', CCrmCurrency::MoneyToString(
 					$shipment->getField('PRICE_DELIVERY'),
 					$shipment->getField('CURRENCY'),
@@ -1810,6 +1799,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$fields['DELIVERY_STORE_ADDRESS'] = $fields['DELIVERY_STORES_LIST'][$fields['DELIVERY_STORE_ID']]['ADDRESS'];
 			}
 
+			// @TODO add multi-shipment properties support
+			$propertyEntityData = $this->getPropertyEntityData($shipment->getPropertyCollection());
+			foreach ($propertyEntityData as $propertyKey => $value)
+			{
+				$result[$propertyKey] = $value;
+			}
 
 			$result['SHIPMENT'][] = array_merge($shipment->getFieldValues(), $fields);
 			$index++;
@@ -1867,10 +1862,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			if($price = $item->getPriceShipment($shipment))
 			{
 				$price = \CCrmCurrency::MoneyToString(
-						floatval($price),
-						$item->getOperatingCurrency(),
-						''
-					);
+					floatval($price),
+					$item->getOperatingCurrency(),
+					''
+				);
 			}
 
 			if($cost = $item->getCostShipment($shipment))
@@ -2014,11 +2009,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'ORDER.USER_ID' => $userId
 			];
 		}
-		else
-		{
-			$params['limit'] = 20;
-		}
 
+		$params['limit'] = 20;
 		$clientDataRaw = Binding\OrderContactCompanyTable::getList($params);
 
 		$clientData = $clientDataRaw->fetchAll();
@@ -2196,220 +2188,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		return $result;
 	}
 
-	/**
-	 * @param Order\Order $order
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	public function prepareProperties(Order\Order $order)
-	{
-		$rawProperties = array();
-		$result = array(
-			'PERSON_TYPE_ID' => $order->getPersonTypeId()
-		);
-		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-
-		$filter = array('ACTIVE' => 'Y');
-		if ($order->isNew())
-		{
-			$filter['PERSON_TYPE_ID'] = $order->getPersonTypeId();
-		}
-
-		$propertiesData = Order\Property::getList(
-			array(
-				'filter' => $filter,
-				'order' => array('SORT')
-			)
-		);
-
-		while ($property = $propertiesData->fetch())
-		{
-			$rawProperties[$property['ID']] = $property;
-		}
-
-		$propertyCollection = $order->getPropertyCollection();
-
-		/** @var \Bitrix\Sale\PropertyValue $propertyValue */
-		foreach ($propertyCollection as $propertyValue)
-		{
-			$property = $propertyValue->getProperty();
-			$value = $propertyValue->getValue();
-
-			if (empty($property['ID']))
-			{
-				if(!empty($value) && !is_array($value))
-				{
-					$fieldValues = $propertyValue->getFieldValues();
-					if (isset($rawProperties[$fieldValues['ORDER_PROPS_ID']])){
-						$property = $rawProperties[$fieldValues['ORDER_PROPS_ID']];
-						$property['ORDER_PROPS_ID'] = $fieldValues['ORDER_PROPS_ID'];
-					}
-					$property['ID'] = 'n'.$propertyValue->getId();
-					$property['ENABLE_MENU'] = false;
-					$property['IS_DRAG_ENABLED'] = false;
-					$preparedData = $this->formatProperty($property);
-					$result['ACTIVE'][] = $preparedData;
-				}
-			}
-			else
-			{
-				$property['ENABLE_MENU'] = $allowConfig;
-				$preparedData = $this->formatProperty($property);
-				if($property['IS_HIDDEN'] === 'Y')
-				{
-					$result["HIDDEN"][] = $preparedData;
-				}
-				else
-				{
-					$result['ACTIVE'][] = $preparedData;
-				}
-			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param $propertyType
-	 * @param bool $isMultiple
-	 *
-	 * @return string
-	 */
-	protected function resolvePropertyType($propertyType, $isMultiple = false)
-	{
-		switch($propertyType)
-		{
-			case 'STRING' :
-				return 'text';
-			case 'NUMBER' :
-				return 'number';
-			case 'Y/N' :
-				return 'boolean';
-			case 'DATE' :
-				return 'datetime';
-			case 'ENUM' :
-				if($isMultiple)
-					return 'multilist';
-				return 'list';
-			case 'FILE' :
-				return 'order_property_file';
-		}
-		return 'custom';
-	}
-
-	private function getPropertyLinkInfo($property)
-	{
-		if(!$this->propertyMap && (int)($property['PERSON_TYPE_ID']) > 0)
-		{
-			$matchedProperties = Bitrix\Crm\Order\Matcher\FieldMatcher::getMatchedProperties($property['PERSON_TYPE_ID']);
-			foreach ($matchedProperties as $id => $match)
-			{
-				$entity = null;
-				$entityName = '';
-				if ((int)$match['CRM_ENTITY_TYPE'] === CCrmOwnerType::Contact)
-				{
-					$entity = \CCrmOwnerType::ContactName;
-					$entityName = Loc::getMessage('CRM_ENTITY_CONTACT');
-				}
-				elseif ((int)$match['CRM_ENTITY_TYPE'] === CCrmOwnerType::Company)
-				{
-					$entity = \CCrmOwnerType::CompanyName;
-					$entityName = Loc::getMessage('CRM_ENTITY_COMPANY');
-				}
-
-				if ((int)$match['CRM_FIELD_TYPE'] === \Bitrix\Crm\Order\Matcher\BaseEntityMatcher::REQUISITE_FIELD_TYPE)
-				{
-					$entity = \CCrmOwnerType::RequisiteName;
-				}
-
-				if ((int)$match['CRM_FIELD_TYPE'] === \Bitrix\Crm\Order\Matcher\BaseEntityMatcher::BANK_DETAIL_FIELD_TYPE)
-				{
-					$entity = 'BANK_DETAIL';
-				}
-
-				$field = $match['CRM_FIELD_CODE'];
-				if ($field === 'RQ_ADDR')
-				{
-					$entity = 'ADDRESS';
-					$field = $match['SETTINGS']['RQ_ADDR_CODE'];
-				}
-
-				if (!empty($entity))
-				{
-					$this->propertyMap[$id] = [
-						'ENTITY_NAME' => $entityName,
-						'CAPTION' => \Bitrix\Crm\Order\Matcher\FieldSynchronizer::getFieldCaption($entity, $field)
-					];
-				}
-
-
-			}
-		}
-
-		return $this->propertyMap[$property['ID']];
-	}
-
-	/**
-	 * @param array $property
-	 *
-	 * @return array
-	 */
-	public function formatProperty(array $property)
-	{
-		$propertyId = (int)$property['ORDER_PROPS_ID'] > 0 ? (int)$property['ORDER_PROPS_ID'] : $property['ID'];
-		$name = 'PROPERTY_'.$property['ID'];
-		$data = array(
-			'propertyId' => $propertyId,
-			'personTypeId' => $property['PERSON_TYPE_ID'],
-			'type' => $property['TYPE']
-		);
-		$linked = null;
-		if ($linkInfo = $this->getPropertyLinkInfo($property))
-		{
-			$linked = Loc::getMessage("CRM_ORDER_PROPERTY_TITLE_LINK", array(
-				'#CAPTION#' => !empty($linkInfo['CAPTION']) ? htmlspecialcharsbx($linkInfo['CAPTION']) : $property['NAME'],
-				'#ENTITY_NAME#' => $linkInfo['ENTITY_NAME']
-			));
-		}
-
-		$simplePropertyTypes = ['STRING', 'NUMBER', 'ENUM', 'DATE', 'Y/N'];
-		if (!in_array($property['TYPE'], $simplePropertyTypes, true))
-		{
-			$data += array(
-				'edit' => "{$name}_EDIT_HTML",
-				'view' => "{$name}_VIEW_HTML",
-				'empty' => "{$name}_EMPTY_HTML",
-				'type' => $property['TYPE'],
-				'classNames' => ['crm-entity-widget-content-block-field-'.mb_strtolower($property['TYPE'])]
-			);
-		}
-		elseif ($property['TYPE'] === 'ENUM')
-		{
-			$list = Order\PropertyValue::loadOptions($propertyId);
-			$options = array();
-			if($property['MULTIPLE'] !== 'Y')
-			{
-				$options['NOT_SELECTED'] = Loc::getMessage('CRM_ORDER_NOT_SELECTED');
-			}
-			$data['items'] = \CCrmInstantEditorHelper::PrepareListOptions($list, $options);
-		}
-		return array(
-			'name' => $name,
-			'title' => $property['NAME'],
-			'type' => $this->resolvePropertyType($property['TYPE'], $property['MULTIPLE'] === 'Y'),
-			'editable' => true,
-			'required' => $property['REQUIRED'] === 'Y',
-			'enabledMenu' => ($property['ENABLE_MENU'] === true),
-			'transferable' => false,
-			'linked' => $linked,
-			'isDragEnabled' => ($property['IS_DRAG_ENABLED'] !== false),
-			'optionFlags' => ($property['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
-			'data' => $data
-		);
-	}
 	public function prepareConfiguration()
 	{
 		if (isset($this->arResult['ENTITY_CONFIG']))
@@ -2458,59 +2236,89 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			)
 		);
 
-		$this->arResult['ENTITY_CONFIG'][] =
-			array(
-				'name' => 'products',
-				'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'PRODUCT_ROW_SUMMARY')
-				)
-			);
-
-		$this->arResult['ENTITY_CONFIG'] = array_merge(
-			$this->arResult['ENTITY_CONFIG'],
-			array(
-				array(
-					'name' => 'properties',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PROPERTIES'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false
-					),
-					'elements' => 	array(
-						array('name' => 'USER_PROFILE'),
-						array('name' => 'PROPERTIES')
-					)
-				),
-				array(
-					'name' => 'payment',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PAYMENT'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false,
-						'enableToggling' =>  false
-					),
-					'elements' => 	array(
-						array('name' => 'PAYMENT')
-					)
-				),
-				array(
-					'name' => 'shipment',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_SHIPMENT'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false,
-						'enableToggling' =>  false,
-					),
-					'elements' => 	array(
-						array('name' => 'SHIPMENT'),
-					)
-				)
+		$this->arResult['ENTITY_CONFIG'][] = array(
+			'name' => 'products',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
+			'type' => 'section',
+			'elements' => array(
+				array('name' => 'PRODUCT_ROW_SUMMARY')
 			)
 		);
 
+		$this->arResult['ENTITY_CONFIG'][] = array(
+			'name' => 'properties',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_PROPERTIES'),
+			'type' => 'section',
+			'data' => array(
+				'showButtonPanel' => false
+			),
+			'elements' => 	array(
+				array('name' => 'USER_PROFILE'),
+				array('name' => 'PROPERTIES')
+			)
+		);
+
+		$this->arResult['ENTITY_CONFIG'][] = array(
+			'name' => 'payment',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_PAYMENT'),
+			'type' => 'section',
+			'data' => array(
+				'showButtonPanel' => false,
+				'enableToggling' =>  false
+			),
+			'elements' => 	array(
+				array('name' => 'PAYMENT')
+			)
+		);
+
+		$this->arResult['ENTITY_CONFIG'][] = array(
+			'name' => 'shipment',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_SHIPMENT'),
+			'type' => 'section',
+			'data' => array(
+				'showButtonPanel' => false,
+				'enableToggling' =>  false,
+			),
+			'elements' => 	array(
+				array('name' => 'SHIPMENT'),
+			)
+		);
+
+		if (in_array($this->mode, [ComponentMode::CREATION, ComponentMode::COPING], true))
+		{
+			$this->arResult['ENTITY_CONFIG'][] = array(
+				'name' => 'shipment_properties',
+				'title' => Loc::getMessage('CRM_ORDER_SECTION_SHIPMENT_PROPERTIES'),
+				'type' => 'section',
+				'forceInclude' => true,
+				'data' => array(
+					'showButtonPanel' => false,
+					'onlyDefault' => 'Y',
+				),
+				'elements' => 	array(
+					array('name' => 'SHIPMENT_PROPERTIES')
+				)
+			);
+		}
+
 		return $this->arResult['ENTITY_CONFIG'];
+	}
+
+	/**
+	 * @param Order\Order $order
+	 * @return Order\Shipment|null
+	 */
+	public function getFirstShipment(Order\Order $order): ?Order\Shipment
+	{
+		$result = null;
+
+		foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
+		{
+			$result = $shipment;
+			break;
+		}
+
+		return $result;
 	}
 
 	public function prepareKanbanConfiguration()

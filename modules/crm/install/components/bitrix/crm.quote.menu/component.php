@@ -68,6 +68,7 @@ if ($arParams['TYPE'] == 'list')
 	//$bImport = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'IMPORT');
 	$bAdd    = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
 	$bWrite  = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE');
+	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 	$bDelete = false;
 }
 else
@@ -79,6 +80,7 @@ else
 	$bAdd    = CCrmQuote::CheckCreatePermission($CrmPerms);
 	$bWrite  = CCrmQuote::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
 	$bDelete = CCrmQuote::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 }
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
@@ -184,6 +186,26 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
+	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+
+	if ($bConfig)
+	{
+		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+		$userFieldListUrl = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getUserFieldListUrl(\CCrmOwnerType::Quote);
+		if ($userFieldListUrl)
+		{
+			$userFieldListUrl = $userFieldListUrl->__toString();
+		}
+		if ($userFieldListUrl)
+		{
+			$arResult['BUTTONS'][] = [
+				'TEXT' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
+				'TITLE' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
+				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $userFieldListUrl . '")',
+			];
+		}
+	}
+
 	/*if ($bImport)
 	{
 		$arResult['BUTTONS'][] = array(
@@ -274,10 +296,9 @@ if($arParams['TYPE'] === 'list')
 		unset($stExportId);
 	}
 
-	$arResult['BUTTONS'][] = ['SEPARATOR' => true];
-
 	if(count($arResult['BUTTONS']) > 1)
 	{
+		$arResult['BUTTONS'][] = ['SEPARATOR' => true];
 		//Force start new bar after first button
 		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
 	}

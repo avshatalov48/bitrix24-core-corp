@@ -41,7 +41,8 @@ $APPLICATION->IncludeComponent(
 				'paypal' => '#243B80',
 				'liqpay' => '#7AB72B',
 			],
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

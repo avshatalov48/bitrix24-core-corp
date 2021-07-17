@@ -390,16 +390,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && mb_strpos($comments, '<') !== false)
-				{
-					$sanitizer = new CBXSanitizer();
-					$sanitizer->ApplyDoubleEncode(false);
-					$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-					//Crutch for for Chrome line break behaviour in HTML editor.
-					$sanitizer->AddTags(array('div' => array()));
-					$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-					$comments = $sanitizer->SanitizeHtml($comments);
-				}
+				$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 				$arFields['COMMENTS'] = $comments;
 			}
 
@@ -1034,7 +1025,8 @@ $arResult['FIELDS'][] = array(
 	),
 	'params' => $arResult["IS_EDIT_PERMITTED"] ? array() : array('disabled' => true),
 	'value' => isset($arResult['ELEMENT']['OPENED'])
-		? $arResult['ELEMENT']['OPENED'] : \Bitrix\Crm\Settings\DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+		? $arResult['ELEMENT']['OPENED']
+		: (\Bitrix\Crm\Settings\DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N')
 );
 
 if (CCrmContact::CheckReadPermission($arResult['ELEMENT']['CONTACT_ID'], $userPermissions))

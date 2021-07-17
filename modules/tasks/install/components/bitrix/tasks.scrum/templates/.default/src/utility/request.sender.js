@@ -102,6 +102,11 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'getCurrentState');
 	}
 
+	hasTaskInFilter(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'hasTaskInFilter');
+	}
+
 	removeSprint(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'removeSprint');
@@ -120,6 +125,16 @@ export class RequestSender
 	getSprintCompletedItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getSprintCompletedItems');
+	}
+
+	getCompletedSprints(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getCompletedSprints');
+	}
+
+	getItems(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getItems');
 	}
 
 	getEpicDescriptionEditor(data): Promise

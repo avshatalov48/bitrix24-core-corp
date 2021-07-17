@@ -1438,7 +1438,20 @@ BX.Disk.UFShowController.prototype.hideToggleViewLoader = function(params)
 					return;
 				}
 
-				insertDocumentIntoUf(extendedFileData);
+				if (!extendedFileData)
+				{
+					BX.ajax.runAction('disk.api.file.getMetaDataForCreatedFileInUf', {
+						data: {
+							id: response.object.id
+						}
+					}).then(function(response){
+						insertDocumentIntoUf(response.data);
+					});
+				}
+				else
+				{
+					insertDocumentIntoUf(extendedFileData);
+				}
 			}
 		});
 
@@ -1448,6 +1461,18 @@ BX.Disk.UFShowController.prototype.hideToggleViewLoader = function(params)
 	window.DiskOpenMenuCreateService = function(targetElement)
 	{
 		var items = [
+			(BX.Disk.UF.getDocumentHandler('onlyoffice')? {
+				text: BX.Disk.UF.getDocumentHandler('onlyoffice').name,
+				className: "bx-viewer-popup-item item-b24-docs",
+				onclick: function (event, popupItem)
+				{
+					popupItem.getMenuWindow().close();
+
+					BX.Disk.saveDocumentService('onlyoffice');
+
+					BX.adjust(targetElement, {text: BX.Disk.UF.getDocumentHandler('onlyoffice').name});
+				}
+			}: null),
 			(BX.Disk.Document.Local.Instance.isEnabled()? {
 				text: BX.message('DISK_FOLDER_TOOLBAR_LABEL_LOCAL_BDISK_EDIT'),
 				className: "bx-viewer-popup-item item-b24",

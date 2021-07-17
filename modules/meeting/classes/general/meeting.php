@@ -12,7 +12,7 @@ abstract class CAllMeeting
 
 	const MEETING_ROOM_PREFIX = 'mr';
 
-	abstract public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array());
+	abstract public static function GetList($arOrder = [], $arFilter = [], $arGroupBy = false, $arNavStartParams = false, $arSelectFields = []);
 
 	public static function GetItems($ID, $type = false)
 	{
@@ -35,7 +35,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 	public static function GetByID($ID)
 	{
-		return CMeeting::GetList(array(), array('ID' => intval($ID)));
+		return CMeeting::GetList([], array('ID' => intval($ID)));
 	}
 
 	public static function Add($arFields)
@@ -98,7 +98,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		$strUpdate = $DB->PrepareUpdate('b_meeting', $arFields);
 		$query = 'UPDATE b_meeting SET '.$strUpdate.' WHERE ID=\''.intval($ID).'\'';
 
-		$arBind = array();
+		$arBind = [];
 		if(isset($arFields['DESCRIPTION']))
 		{
 			$arBind['DESCRIPTION'] = $arFields['DESCRIPTION'];
@@ -141,8 +141,10 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		if ($bClear)
 		{
 			$query = "DELETE FROM b_meeting_users WHERE MEETING_ID='".$ID."'";
-			if (count($arUsers) > 0)
+			if (is_array($arUsers) && count($arUsers) > 0)
+			{
 				$query .= " AND (USER_ROLE='".self::ROLE_MEMBER."' OR USER_ROLE='".self::ROLE_KEEPER."')";
+			}
 			$DB->Query($query);
 		}
 
@@ -172,7 +174,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$arUsers = array();
+		$arUsers = [];
 
 		$ID = intval($ID);
 		if ($ID > 0)
@@ -240,7 +242,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		{
 			CFile::Delete($arRes['FILE_ID']);
 		}
-		self::SetFiles($ID, array());
+		self::SetFiles($ID, []);
 	}
 
 	public static function DeleteFilesBySrc($FILE_SRC)
@@ -389,7 +391,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		if($place <> '')
 		{
-			$matches = array();
+			$matches = [];
 			if(preg_match('/^'.self::MEETING_ROOM_PREFIX.'_([\d]+)_([\d]+)$/', $place, $matches))
 			{
 				return array(
@@ -407,7 +409,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		return COption::GetOptionString("intranet", "calendar_2", "N") == "Y" && CModule::IncludeModule('calendar');
 	}
 
-	public static function AddEvent($MEETING_ID, $arFields, $arParams = array())
+	public static function AddEvent($MEETING_ID, $arFields, $arParams = [])
 	{
 		global $USER;
 
@@ -436,7 +438,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				$arEventFields['DT_TO'] = MakeTimeStamp($arFields['DATE_FINISH']) > MakeTimeStamp($arFields['DATE_START']) ? $arFields['DATE_FINISH'] : $arEventFields['DT_TO'];
 			}
 
-			$matches = array();
+			$matches = [];
 			if(preg_match('/^mr_([\d]+)_([\d]+)$/', $arFields["PLACE"], $matches))
 			{
 				$location = 'ECMR_'.$matches[2];
@@ -492,7 +494,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 			$guestCalendarId = false;
 			$guestSection = $obCalendar->GetSectionIDByOwnerId($USER->GetID(), 'USER', $iblockId);
-			$arGuestCalendars = array();
+			$arGuestCalendars = [];
 
 			if(!$guestSection) // Guest does not have any calendars
 			{
@@ -544,7 +546,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				'dateTo' => $arFields['DATE_FINISH'] ? $arFields['DATE_FINISH'] : ConvertTimeStamp(MakeTimeStamp($arFields['DATE_START']) + $arFields['DURATION'], 'FULL'),
 				'name' => $arFields['TITLE'],
 				'desc' => $arFields['DESCRIPTION'],
-				'prop' => array(),
+				'prop' => [],
 				'isMeeting' => true,
 				'guests' => array_keys($arFields['USERS']),
 				'notDisplayCalendar' => true,
@@ -580,7 +582,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		if (self::IsNewCalendar())
 		{
-			$res = array();
+			$res = [];
 
 			$arAttendees = CCalendarEvent::GetAttendees($eventId);
 
@@ -626,7 +628,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				'ownerType' => 'USER'
 			));
 			if ($event = $arEvents[0])
-				return is_array($event['GUESTS']) ? array_values($event['GUESTS']) : array();
+				return is_array($event['GUESTS']) ? array_values($event['GUESTS']) : [];
 		}
 	}
 
@@ -643,10 +645,10 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 	public static function GetFilesData($arInput, $arFrom = null)
 	{
-		$arFiles = array();
+		$arFiles = [];
 		if (is_array($arInput) && count($arInput) > 0)
 		{
-			$dbFiles = CFile::GetList(array(), array("@ID" => implode(",", array_keys($arInput))));
+			$dbFiles = CFile::GetList([], array("@ID" => implode(",", array_keys($arInput))));
 			while ($arFile = $dbFiles->GetNext())
 			{
 				$fileSrc = intval($arInput[$arFile['ID']]);
@@ -781,7 +783,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 		$arGroupByFunct = array("COUNT", "AVG", "MIN", "MAX", "SUM");
 
-		$arAlreadyJoined = array();
+		$arAlreadyJoined = [];
 
 		// GROUP BY -->
 		if (is_array($arGroupBy) && count($arGroupBy)>0)
@@ -928,10 +930,10 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		// <-- SELECT
 
 		// WHERE -->
-		$arSqlSearch = Array();
+		$arSqlSearch = [];
 
 		if (!is_array($arFilter))
-			$filter_keys = Array();
+			$filter_keys = [];
 		else
 			$filter_keys = array_keys($arFilter);
 
@@ -953,7 +955,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 			if (array_key_exists($key, $arFields))
 			{
-				$arSqlSearch_tmp = array();
+				$arSqlSearch_tmp = [];
 				$cVals = count($vals);
 				for ($j = 0; $j < $cVals; $j++)
 				{
@@ -1065,7 +1067,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		// <-- WHERE
 
 		// ORDER BY -->
-		$arSqlOrder = Array();
+		$arSqlOrder = [];
 		foreach ($arOrder as $by => $order)
 		{
 			$by = mb_strtoupper($by);

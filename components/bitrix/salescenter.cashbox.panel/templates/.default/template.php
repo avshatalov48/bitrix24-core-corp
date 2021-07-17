@@ -17,6 +17,9 @@ Extension::load([
 	'popup',
 	'salescenter.manager',
 ]);
+
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
 ?>
 
 <?php if ($arResult['isCashboxCountryConflict']): ?>

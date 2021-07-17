@@ -561,6 +561,8 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			$this->arResult['IS_SLIDER_ENABLED'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		}
 
+		if(isset($this->arResult['ACTIVITY']['SUBJECT'])) $this->arResult['ACTIVITY']['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($this->arResult['ACTIVITY']['SUBJECT']);
+
 		$this->includeComponentTemplate($template);
 	}
 
@@ -1870,6 +1872,6 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			$html = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br>", htmlspecialcharsbx($description));
 		}
 
-		return $html;
+		return \Bitrix\Main\Text\Emoji::decode($html);
 	}
 }

@@ -70,6 +70,7 @@ $MESS["CRM_WEBFORM_EDIT_DOC_LIST_TITLE"] = "Будуть створені";
 $MESS["CRM_WEBFORM_EDIT_DOC_SECTION"] = "Створення документів";
 $MESS["CRM_WEBFORM_EDIT_DOC_SECTION_NAV"] = "Документи";
 $MESS["CRM_WEBFORM_EDIT_DOC_TITLE"] = "Зберігати дані з форми у документи";
+$MESS["CRM_WEBFORM_EDIT_DYNAMIC_CATEGORY_LIST"] = "Напрямок";
 $MESS["CRM_WEBFORM_EDIT_EDIT"] = "налаштувати";
 $MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_APPLY"] = "Підтвердити";
 $MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_HOLD_OVER"] = "Вирішити пізніше";

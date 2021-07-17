@@ -45,8 +45,12 @@ $iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult["CONNECT
 		<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_del" value="Y">
 		<?=bitrix_sessid_post();?>
 	</form>
+
 <?
-if (empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS'])
+if (
+		empty($arResult['PAGE'])
+		&& $arResult['ACTIVE_STATUS']
+)
 {
 	if ($arResult['STATUS'])
 	{
@@ -193,11 +197,23 @@ else
 				</div>
 				<div class="imconnector-field-box">
 					<div class="imconnector-field-main-subtitle">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_TITLE') ?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_TITLE_NEW') ?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_DESCRIPTION') ?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_DESCRIPTION_NEW') ?>
 					</div>
+					<?if(!$arResult['ACTIVE_STATUS']):?>
+						<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post" class="ui-btn-container">
+							<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
+							<?= bitrix_sessid_post(); ?>
+							<button class="ui-btn ui-btn-light-border"
+									name="<?= $arResult["CONNECTOR"] ?>_active"
+									type="submit"
+									value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
+								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
+							</button>
+						</form>
+					<?endif;?>
 				</div>
 			</div>
 		</div>
@@ -230,36 +246,6 @@ else
 						<?
 					}
 					?>
-				</div>
-			</div>
-			<?
-		}
-		else
-		{    //case before start connecting to fb
-			?>
-			<div class="imconnector-field-container">
-				<div class="imconnector-field-section">
-					<div class="imconnector-field-main-title">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE') ?>
-					</div>
-					<div class="imconnector-field-box">
-						<div class="imconnector-field-box-content">
-							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_DESCRIPTION') ?>
-						</div>
-					</div>
-					<div class="imconnector-field-social-connector">
-						<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-connector-icon"><i></i></div>
-						<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post">
-							<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
-							<?= bitrix_sessid_post(); ?>
-							<button class="ui-btn ui-btn-light-border"
-									name="<?= $arResult["CONNECTOR"] ?>_active"
-									type="submit"
-									value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
-								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
-							</button>
-						</form>
-					</div>
 				</div>
 			</div>
 			<?

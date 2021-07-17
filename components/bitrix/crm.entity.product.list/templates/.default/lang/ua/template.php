@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_DELIVERY_TOTAL"] = "Сума доставки";
 $MESS["CRM_ENTITY_PL_ADD"] = "Додати";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT"] = "Додати товар";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT_TITLE"] = "Знайти або створити новий товар";
@@ -15,6 +16,7 @@ $MESS["CRM_ENTITY_PL_DELETE_WARNING"] = "Ви впевнені, що хочет�
 $MESS["CRM_ENTITY_PL_DISCOUNT"] = "знижка";
 $MESS["CRM_ENTITY_PL_DISCOUNTS_ABSENT"] = "Підходящі знижки відсутні";
 $MESS["CRM_ENTITY_PL_DISCOUNT_PRICE"] = "Вартість товарів з урахуванням знижок та націнок";
+$MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Ціна не може бути негативною.";
 $MESS["CRM_ENTITY_PL_NO"] = "Ні";
 $MESS["CRM_ENTITY_PL_ORDER_DISCOUNT"] = "Знижки на замовлення";
 $MESS["CRM_ENTITY_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Додати";
@@ -27,6 +29,7 @@ $MESS["CRM_ENTITY_PL_SELECT_PRODUCT"] = "Обрати товар";
 $MESS["CRM_ENTITY_PL_SELECT_PRODUCT_TITLE"] = "Обрати товар із каталогу";
 $MESS["CRM_ENTITY_PL_SETTING_DISABLED"] = "Налаштування \"#NAME#\" виключене";
 $MESS["CRM_ENTITY_PL_SETTING_ENABLED"] = "Налаштування \"#NAME#\" включене";
+$MESS["CRM_ENTITY_PL_SMALL_PRICE_NOTICE"] = "Ціна < 1 в деяких випадках не дозволяє точно розрахувати знижку. Перевірте остаточну суму знижки, спробуйте задати ціну за партію.";
 $MESS["CRM_ENTITY_PL_SUM"] = "сума";
 $MESS["CRM_ENTITY_PL_TAX"] = "Податок";
 $MESS["CRM_ENTITY_PL_TOTAL_PRICE"] = "Загальна вартість товарів";

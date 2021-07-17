@@ -352,7 +352,7 @@ BX.Tasks.Kanban.Item.prototype = {
 		var format = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));
 		var value = BX.date.format(format, data.date_deadline || data.date_day_end);
 
-		BX.calendar({
+		var calendar = BX.calendar({
 			node: BX.proxy_context,
 			value: value,
 			currentTime: value,
@@ -386,7 +386,15 @@ BX.Tasks.Kanban.Item.prototype = {
 						BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 					}.bind(this)
 				);
+			}.bind(this),
+			callback_after: function(value) {
+				BX.onCustomEvent(this.getGrid(), 'Tasks.Kanban.Item:deadlineChanged', {value: value});
 			}.bind(this)
+		});
+
+		BX.onCustomEvent(this.getGrid(), 'Tasks.Kanban.Item:deadlineChangeClick', {
+			calendar: calendar,
+			itemId: data.id
 		});
 	},
 
@@ -1184,27 +1192,6 @@ BX.Tasks.Kanban.Item.prototype = {
 			this.container.appendChild(this.storyPointsNode);
 		}
 
-		//region checked button
-		if(this.getGrid().isMultiSelect())
-		{
-			this.task_check = BX.create("div", {
-				props: {
-					className: "tasks-kanban-item-checkbox"
-				},
-				events: {
-					click: function()
-					{
-						this.checked = !this.checked;
-						this.checked
-							? BX.addClass(this.checkedButton, "tasks-kanban-item-checkbox-checked")
-							: BX.removeClass(this.checkedButton, "tasks-kanban-item-checkbox-checked");
-					}.bind(this)
-				}
-			});
-
-			this.container.appendChild(this.task_check);
-		}
-
 		//endregion
 
 		//region Counters
@@ -1262,21 +1249,28 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		this.layout.container = BX.create("div", {
 			attrs: {
-				className: this.grid.firstRenderComplete ? "main-kanban-item main-kanban-item-new" : "main-kanban-item",
+				className: "main-kanban-item",
 				"data-id": this.getId(),
 				"data-type": "item"
 			},
 			children: [
 				this.getDragTarget(),
 				this.getBodyContainer()
-			],
-			events: {
-				click: this.handleClick.bind(this)
-			}
+			]
 		});
 
 		this.makeDraggable();
 		this.makeDroppable();
+
+		if(this.grid.firstRenderComplete && !this.draftContainer)
+		{
+			this.layout.container.classList.add("main-kanban-item-new");
+			var cleanAnimate = function() {
+				this.layout.container.classList.remove("main-kanban-item-new");
+				this.getBodyContainer().removeEventListener("animationend", cleanAnimate);
+			}.bind(this);
+			this.getBodyContainer().addEventListener("animationend", cleanAnimate);
+		}
 
 		BX.addCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStart", function() {
 			if(this.getGrid().isRealtimeMode())

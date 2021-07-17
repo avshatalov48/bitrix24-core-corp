@@ -297,10 +297,6 @@ $arReference = Array(
 		<td class="adm-detail-content-cell-r" width="60%"><input type="checkbox" name="VIEW_GROUP" <?=(!$arSettingsDefault['viewGroup']?'checked="checked"' :'')?>></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-content-cell-l" width="40%"><?=Loc::getMessage("IM_LOAD_LAST_NOTIFY")?>:</td>
-		<td class="adm-detail-content-cell-r" width="60%"><input type="checkbox" name="LOAD_LAST_NOTIFY" <?=($arSettingsDefault['loadLastNotify']?'checked="checked"' :'')?>></td>
-	</tr>
-	<tr>
 		<td class="adm-detail-content-cell-l" width="40%"><?=Loc::getMessage("IM_SEND_BY_ENTER")?></td>
 		<td class="adm-detail-content-cell-r" width="60%"><?=SelectBoxFromArray("SEND_BY_ENTER", array('reference_id' => $arReferenceId['sendByEnter'], 'reference' => $arReference['sendByEnter']), $arSettingsDefault['sendByEnter']? 'Y': 'N');?></td>
 	</tr>

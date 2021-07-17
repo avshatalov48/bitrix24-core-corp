@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Gesamt";
 $MESS["CRM_COMPANY_ACTION_DELETE"] = "Löschen";
 $MESS["CRM_COMPANY_ACTION_MERGE"] = "Vereinigen";
@@ -38,7 +38,7 @@ $MESS["CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE"] = "Alte Adressen der Unternehme
 $MESS["CRM_COMPANY_CONVERT_ADDRESSES_STATE"] = "#processed# von #total#";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Adressen aus Nutzerfeldern in detaillierte Informationen der Unternehmen verschieben";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE"] = "#processed# von #total#";
-$MESS["CRM_COMPANY_COPY"] = "Unternehmen kopieren";
+$MESS["CRM_COMPANY_COPY"] = "Kopieren";
 $MESS["CRM_COMPANY_COPY_TITLE"] = "Unternehmen kopieren";
 $MESS["CRM_COMPANY_CREATE_CALL_LIST"] = "Anrufliste erstellen";
 $MESS["CRM_COMPANY_DEAL_ADD"] = "Auftrag hinzufügen";
@@ -97,4 +97,3 @@ $MESS["CRM_SHOW_ROW_COUNT"] = "Menge anzeigen";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Anrufen";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unbekannter Empfänger";
 $MESS["CRM_STATUS_INIT"] = "- Status -";
-?>

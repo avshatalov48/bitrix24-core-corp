@@ -162,7 +162,7 @@ abstract class CheckListFacade
 	 */
 	public static function getList(array $select = [], array $filter = [], array $order = [])
 	{
-		list($filteredSelect, $filteredFilter, $filteredOrder) = static::getFilteredFields($select, $filter, $order);
+		[$filteredSelect, $filteredFilter, $filteredOrder] = static::getFilteredFields($select, $filter, $order);
 
 		/** @var DataManager $checkListDataController */
 		$checkListDataController = static::getCheckListDataController();
@@ -559,6 +559,8 @@ abstract class CheckListFacade
 	public static function merge($entityId, $userId, $newItems, $parameters = [])
 	{
 		$mergeResult = new Result();
+
+		static::doMergePreActions($entityId, $userId);
 
 		static::enableDeferredActionsMode();
 
@@ -1465,6 +1467,18 @@ abstract class CheckListFacade
 	 * @param array $data
 	 */
 	public static function doDeletePostActions($entityId, $userId, $data = [])
+	{
+
+	}
+
+	/**
+	 * Does some actions before merging checklists.
+	 *
+	 * @param int $entityId
+	 * @param int $userId
+	 * @param array $data
+	 */
+	public static function doMergePreActions($entityId, $userId, $data = [])
 	{
 
 	}

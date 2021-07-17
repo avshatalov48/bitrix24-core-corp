@@ -4,6 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
 $this->getComponent()->addToolbar($this);
+$this->getComponent()->addTopPanel($this);
 
 if ($arResult['CATEGORIES'] && count($arResult['CATEGORIES']) > 1)
 {
@@ -23,7 +24,8 @@ $APPLICATION->IncludeComponent(
 		'TITLE_VIEW' => $arResult['TITLE_VIEW'],
 		'TITLE_EDIT' => $arResult['TITLE_EDIT'],
 		'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
-		'ENTITY_CATEGORY_ID' => $arResult['ENTITY_CATEGORY_ID']
+		'ENTITY_CATEGORY_ID' => $arResult['ENTITY_CATEGORY_ID'],
+		'back_url' => $arResult['BACK_URL'],
 	],
 	$this
 );

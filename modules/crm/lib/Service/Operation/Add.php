@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
@@ -13,6 +15,12 @@ use Bitrix\Main\Result;
 
 class Add extends Operation
 {
+	public function __construct(Item $item, Operation\Settings $settings, Collection $fieldsCollection = null)
+	{
+		parent::__construct($item, $settings, $fieldsCollection);
+		$this->bizProcEventType = \CCrmBizProcEventType::Create;
+	}
+
 	public function checkAccess(): Result
 	{
 		$result = new Result();

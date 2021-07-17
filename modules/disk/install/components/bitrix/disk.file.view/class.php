@@ -293,7 +293,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 					{
 						continue;
 					}
-					$dataToShow = $connector->getDataToShow();
+					$dataToShow = $connector->tryToGetDataToShowForUser($userId);
 					if ($dataToShow)
 					{
 						$this->arResult['ENTITIES'][] = $dataToShow;

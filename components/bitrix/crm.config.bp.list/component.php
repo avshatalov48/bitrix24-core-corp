@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -13,6 +17,8 @@ if (!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
 	return;
 }
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 $CrmPerms = new CCrmPerms($USER->GetID());
 if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
@@ -20,32 +26,59 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-$arTypes = Array(
-	'CRM_LEAD' => array(
+$arTypes = [
+	'CRM_LEAD' => [
 		'ID' => 'CRM_LEAD',
 		'NAME' => GetMessage('CRM_BP_LEAD'),
 		'DOCUMENT' => 'CCrmDocumentLead',
-		'TYPE' => 'LEAD'
-	),
-	'CRM_CONTACT' => array(
+		'TYPE' => 'LEAD',
+	],
+	'CRM_CONTACT' => [
 		'ID' => 'CRM_CONTACT',
 		'NAME' => GetMessage('CRM_BP_CONTACT'),
 		'DOCUMENT' => 'CCrmDocumentContact',
-		'TYPE' => 'CONTACT'
-	),
-	'CRM_COMPANY' => array(
+		'TYPE' => 'CONTACT',
+	],
+	'CRM_COMPANY' => [
 		'ID' => 'CRM_COMPANY',
 		'NAME' => GetMessage('CRM_BP_COMPANY'),
 		'DOCUMENT' => 'CCrmDocumentCompany',
-		'TYPE' => 'COMPANY'
-	),
-	'CRM_DEAL' => array(
+		'TYPE' => 'COMPANY',
+	],
+	'CRM_DEAL' => [
 		'ID' => 'CRM_DEAL',
 		'NAME' => GetMessage('CRM_BP_DEAL'),
 		'DOCUMENT' => 'CCrmDocumentDeal',
-		'TYPE' => 'DEAL'
-	)
-);
+		'TYPE' => 'DEAL',
+	],
+	'CRM_QUOTE' => [
+		'ID' => 'CRM_QUOTE',
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE'),
+		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Quote::class,
+		'TYPE' => 'QUOTE',
+	],
+];
+
+$dynamicTypesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap();
+$dynamicTypesMap->load([
+	'isLoadStages' => false,
+	'isLoadCategories' => false,
+]);
+
+foreach ($dynamicTypesMap->getTypes() as $type)
+{
+	if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($type->getEntityTypeId()))
+	{
+		$typeId = "CRM_DYNAMIC_{$type->getEntityTypeId()}";
+
+		$arTypes[$typeId] = [
+			'ID' => $typeId,
+			'NAME' => $type->getTitle(),
+			'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class,
+			'TYPE' => CCrmOwnerType::ResolveName($type->getEntityTypeId()),
+		];
+	}
+}
 
 $arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['BP_ENTITY_ID'];
 $arResult['ENTITY_NAME'] = $arTypes[$arResult['ENTITY_ID']]['NAME'];

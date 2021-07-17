@@ -17,9 +17,6 @@
 	  },
 	  created: function created() {},
 	  computed: babelHelpers.objectSpread({
-	    localize: function localize() {
-	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-	    },
 	    wasFilled: function wasFilled() {
 	      return !!this.message.params.CRM_FORM_VALUE;
 	    }
@@ -30,7 +27,7 @@
 	  })),
 	  methods: {
 	    onFillForm: function onFillForm() {
-	      this.$root.$bitrixRestClient.callMethod('imopenlines.widget.form.fill', {
+	      this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.form.fill', {
 	        'CRM_FORM_VALUE': this.formValue,
 	        'MESSAGE_ID': this.message.id
 	      }).then(function (response) {

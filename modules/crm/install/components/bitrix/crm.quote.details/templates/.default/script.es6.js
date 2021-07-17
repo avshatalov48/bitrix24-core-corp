@@ -18,6 +18,7 @@ declare type QuoteDetailsComponentParams = ItemDetailsComponentParams & {
 declare type ConversionSettings = {
 	lockScript?: Function,
 	buttonId?: string,
+	menuButtonId?: string,
 	scheme?: {messages: Object},
 	schemeSelector?: Object,
 	converter?: {messages: Object, permissions: Object, settings: Object},
@@ -115,6 +116,11 @@ class QuoteDetailsComponent extends ItemDetailsComponent
 			if (button)
 			{
 				Event.bind(button, 'click', this.conversionSettings.lockScript);
+			}
+			const menuButton = document.getElementById(this.conversionSettings.menuButtonId);
+			if (menuButton)
+			{
+				Event.bind(menuButton, 'click', this.conversionSettings.lockScript);
 			}
 
 			EventEmitter.subscribe('CrmCreateDealFromQuote', this.conversionSettings.lockScript);

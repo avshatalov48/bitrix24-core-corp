@@ -838,6 +838,12 @@ abstract class Factory
 		return $this->userType;
 	}
 
+	public function clearUserFieldsInfoCache()
+	{
+		$this->userType = null;
+		return $this;
+	}
+
 	public function getUserFieldsInfo(): array
 	{
 		$fieldsInfo = [];
@@ -845,6 +851,7 @@ abstract class Factory
 		{
 			return $fieldsInfo;
 		}
+
 		$this->getUserType()->PrepareFieldsInfo($fieldsInfo);
 
 		return $fieldsInfo;
@@ -971,6 +978,11 @@ abstract class Factory
 		if (!$this->isAutomationEnabled())
 		{
 			$settings->disableAutomation();
+		}
+
+		if (!$this->isBizProcEnabled())
+		{
+			$settings->disableBizProc();
 		}
 
 		return $settings;
@@ -1206,6 +1218,16 @@ abstract class Factory
 	 * @return bool
 	 */
 	public function isAutomationEnabled(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Returns true if this entity supported by business processes designer.
+	 *
+	 * @return bool
+	 */
+	public function isBizProcEnabled(): bool
 	{
 		return false;
 	}

@@ -1753,29 +1753,51 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 /*region Products*/
 .crm-entity-widget-content-block-products-list {
 	width: 100%;
-	border: none;
-	border-collapse: collapse;
 }
 
-.crm-entity-widget-content-block-products-item { }
-
-.crm-entity-widget-content-block-products-item td {
-	box-sizing: border-box;
-	padding: 10px 2px;
+.crm-entity-widget-content-block-products-item {
 	border-bottom: 1px solid #e4e7ea;
+	display: flex;
 }
 
-.crm-entity-widget-content-block-products-item:first-child td { padding-top: 0; }
+.crm-entity-widget-content-block-products-item:last-child {
+	border-bottom: none;
+}
 
-.crm-entity-widget-content-block-products-item:last-child td { border-bottom: none; }
+.crm-entity-widget-content-block-products-in {
+	animation: slideProductIn .5s 1 ease;
+}
 
-td.crm-entity-widget-content-block-products-item-name {
+.crm-entity-widget-content-block-products-out {
+	animation: slideProductOut .5s 1 ease;
+	max-height: 0;
+	overflow: hidden;
+	border-bottom: none;
+}
+
+@keyframes slideProductIn {
+	from {max-height: 0; font-size: 0;}
+	80% {font-size: 0}
+	81% {font-size: inherit}
+	to {max-height: 50px; font-size: inherit;}
+}
+
+@keyframes slideProductOut {
+	from {max-height: 50px;}
+	20% {font-size: inherit}
+	21% {font-size: 0}
+	to {max-height: 0; font-size: 0}
+}
+
+.crm-entity-widget-content-block-products-item-name {
 	word-break: break-all;
 	word-break: break-word;
+	padding: 10px 2px 10px 0;
+	flex: 1;
 }
 
-td.crm-entity-widget-content-block-products-price {
-	padding-left: 20px;
+.crm-entity-widget-content-block-products-price {
+	padding: 10px 0 10px 20px;
 	vertical-align: top;
 	text-align: right;
 	white-space: nowrap;
@@ -3918,7 +3940,6 @@ div.crm-entity-widget-content-block-radio-label {
 /*endregion END OF REQUISITE POPUP MODIFIERS */
 
 .crm-entity-widget-content-block-title.price-calculated {
-	margin-top: -10px;
 	font-style: italic;
 }
 
@@ -4077,6 +4098,209 @@ div.crm-entity-widget-content-block-radio-label {
 }
 /*endregion*/
 
+/*region payment fields */
+
+.crm-entity-widget-payment-action {
+	cursor: pointer;
+	padding-right: 22px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%229%22%3E%3Cpath%20fill%3D%22%23b4b9bf%22%20fill-rule%3D%22evenodd%22%20d%3D%22M13.667.151L9.14%204.678%207.999%205.801%206.88%204.678%202.353.151.756%201.748%208.01%209.003l7.254-7.255z%22/%3E%3C/svg%3E) no-repeat top 7px right 7px;
+	background-size: 9px 5px;
+	margin-right: 3px;
+}
+
+.crm-entity-widget-payment-item,
+.crm-entity-widget-payment-total {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 12px;
+}
+
+.crm-entity-widget-payment-block {
+	padding: 0 12px;
+}
+
+.crm-entity-widget-payment-total {
+	padding: 0 10px 0 22px;
+}
+
+.crm-entity-widget-payment-block:first-child {
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+}
+
+.crm-entity-widget-payment-block .ui-link {
+	font-size: 14px;
+}
+
+.crm-entity-widget-payment-block-caption {
+	display: block;
+	margin-bottom: 5px;
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525c69;
+	opacity: .5;
+}
+
+.crm-entity-widget-payment-block-item {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.crm-entity-widget-payment-block-item .crm-entity-widget-payment-text {
+	display: inline-block;
+	margin-right: 10px;
+	max-width: 100%;
+	font: 36px/32px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-entity-widget-payment-block-item .crm-entity-widget-payment-rub {
+	display: inline-block;
+	margin-left: 8px;
+	font: 36px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #424956;
+	opacity: .36;
+}
+
+.crm-entity-widget-payment-detail {
+	padding-left: 15px;
+}
+
+.crm-entity-widget-payment-detail + .crm-entity-widget-payment-detail {
+	margin-top: 8px;
+}
+
+.crm-entity-widget-payment-detail-caption {
+	display: block;
+	margin-bottom: 12px;
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #a3a9b1;
+}
+
+/*.crm-entity-widget-payment-detail .ui-link {*/
+/*    letter-spacing: -.5px;*/
+/*}*/
+
+.crm-entity-widget-payment-add-box {
+	margin-top: 16px;
+	padding: 0 15px;
+}
+
+.crm-entity-widget-payment-add {
+	display: block;
+	padding-bottom: 8px;
+	margin-bottom: 14px;
+	border-bottom: 2px dashed rgba(198,205,211,.47);
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #80868e;
+	transition: color .3s;
+}
+
+.crm-entity-widget-payment-add:hover {
+	color: #9499a0;
+}
+
+/*.crm-entity-widget-payment-detail-inner {*/
+/*	padding-top: 4px;*/
+/*}*/
+
+.crm-entity-widget-inner.crm-entity-widget-inner--payment {
+	padding: 17px 0 17px;
+}
+
+.crm-entity-widget-inner--payment.is-hidden {
+	display: none;
+}
+
+.crm-entity-widget-inner--payment.is-loading {
+	opacity: .4;
+	cursor: progress;
+}
+
+.crm-entity-widget-inner--payment.is-loading * {
+	cursor: progress;
+}
+
+.crm-entity-widget-payment-subject,
+.crm-entity-widget-payment-subject + .crm-entity-widget-payment-text {
+	color: #a3a9b1;
+}
+
+.crm-entity-widget-payment-subject {
+	font-size: 12px;
+}
+
+.crm-entity-widget-payment-subject + .crm-entity-widget-payment-text {
+	font-size: 14px;
+}
+
+.crm-entity-widget-payment-items {
+	margin-top: 28px;
+}
+
+.crm-entity-widget-payment-item {
+	padding: 0 0 4px;
+	margin: 0 12px 16px;
+	border-bottom: 1px dashed #e2e6e9;
+}
+
+.crm-entity-widget-payment-total {
+	color: #000;
+	font-size: 14px;
+	padding: 0 15px;
+}
+
+.crm-entity-widget-payment-total .crm-entity-widget-payment-text {
+	color: #525C69;
+	font-size: 16px;
+}
+
+.crm-entity-widget-payment-total .ui-hint {
+	position: relative;
+	top: 2px;
+	left: -5px;
+}
+
+.menu-popup .menu-popup-item.crm-entity-widget-payment-menu-item-remove {
+	pointer-events: auto;
+	opacity: 0.4;
+	cursor: default;
+}
+
+.menu-popup .menu-popup-item.crm-entity-widget-payment-menu-item-remove:hover {
+	background: initial;
+}
+
+.ui-entity-editor-content-block > .crm-entity-widget-payment-block {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.crm-entity-widget-payment-rub {
+	font-family: 'rubleBitrix', 'OpenSans', sans-serif;
+}
+
+.crm-entity-widget-payment-total .crm-entity-widget-payment-rub,
+.crm-entity-widget-payment-total .crm-entity-widget-payment-currency,
+.ui-entity-editor-content-block > .crm-entity-widget-payment-block .crm-entity-widget-payment-rub {
+	color: #a7acb3;
+}
+
+.crm-entity-widget-payment-label .ui-label-inner, .crm-entity-widget-payment-action .ui-label-inner {
+	text-transform: uppercase;
+	font: 700 9px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.ui-label-light, .ui-label:not(.ui-label-fill) {
+	--ui-label-color: #a3a9b1;
+}
+/*endregion*/
+
 .crm-entity-card-container-content .ui-entity-editor-content-block input.diskuf-fileUploader {
 	max-width: unset;
 }
@@ -4084,4 +4308,11 @@ div.crm-entity-widget-content-block-radio-label {
 .crm-entity-selector-container {
 	max-width: 100%;
 	width: auto;
+}
+
+.ui-link .crm-entity-widget-payment-rub {
+	display: inline-block;
+	max-width: 10px;
+	max-height: 21px;
+	vertical-align: middle;
 }

@@ -22,9 +22,11 @@ export class ProjectSidePanel
 
 	showTeamSpeedChart()
 	{
-		this.sidePanelId = 'tasks-scrum-start-' + Text.getRandom();
+		this.sidePanelId = 'tasks-scrum-team-speed-chart';
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadTeamSpeedChartPanel.bind(this));
+
 		this.sidePanel.subscribe('onCloseSidePanel', this.onCloseTeamSpeedChart.bind(this));
 
 		this.sidePanel.openSidePanel(this.sidePanelId, {
@@ -39,10 +41,11 @@ export class ProjectSidePanel
 
 	showDefinitionOfDone(entity: Entity)
 	{
-		this.sidePanelId = 'tasks-scrum-dod-' + Text.getRandom();
+		this.sidePanelId = 'tasks-scrum-dod-panel';
 
 		this.entity = entity;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadDodPanel.bind(this));
 
 		this.sidePanel.openSidePanel(this.sidePanelId, {
@@ -97,13 +100,19 @@ export class ProjectSidePanel
 	{
 		const sidePanel = baseEvent.getData();
 
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-project-side-panel');
 
 		this.getTeamSpeedChartData().then((data) => {
+
+			sidePanel.closeLoader();
+
 			setTimeout(() => {
 				this.teamSpeedChart = new TeamSpeedChart(data);
 				this.teamSpeedChart.createChart(this.form.querySelector('.tasks-scrum-project-side-panel-chart'));
 			}, 300);
+
 		});
 	}
 
@@ -114,8 +123,11 @@ export class ProjectSidePanel
 		if (this.sidePanelId === sidePanel.getUrl())
 		{
 			setTimeout(() => {
-				this.teamSpeedChart.destroyChart();
-				this.teamSpeedChart = null;
+				if (this.teamSpeedChart)
+				{
+					this.teamSpeedChart.destroyChart();
+					this.teamSpeedChart = null;
+				}
 			}, 300);
 		}
 	}
@@ -124,9 +136,12 @@ export class ProjectSidePanel
 	{
 		const sidePanel = baseEvent.getData();
 
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-project-side-panel');
 
 		this.getDodComponent().then((data) => {
+			sidePanel.closeLoader();
 			const dodContainer = this.form.querySelector('.tasks-scrum-project-dod-panel');
 			Runtime.html(dodContainer, data.html);
 		}).then(() => {
@@ -138,11 +153,9 @@ export class ProjectSidePanel
 				const buttonsContainer = this.form.querySelector('.tasks-scrum-project-side-panel-buttons');
 				Runtime.html(buttonsContainer, response.data.html).then(() => {
 					Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', () => {
-						this.requestSender.saveDod(this.getRequestDataForSaveList())
-							.then(response => {
-							sidePanel.close();
-						});
+						this.requestSender.saveDod(this.getRequestDataForSaveList()).then(() => sidePanel.close());
 					});
+					Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 				});
 			});
 		});

@@ -23,5 +23,4 @@ class CrmItemDetailsComponent extends FactoryBased
 
 		$this->includeComponentTemplate();
 	}
-
 }

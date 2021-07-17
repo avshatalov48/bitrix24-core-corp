@@ -26,34 +26,6 @@ if ($detailUrl)
 }
 
 ?>
-<? if ($classBlock->get('SHOW_CART')): ?>
-	<? $APPLICATION->IncludeComponent(
-		'bitrix:sale.basket.basket.line',
-		'store_v3',
-		[
-			'PATH_TO_BASKET' => '#system_order',
-			'PATH_TO_ORDER' => '#system_order',
-			'PATH_TO_PERSONAL' => '#system_personal',
-			'PATH_TO_REGISTER' => '',
-			'PATH_TO_PROFILE' => '#system_personal',
-			'PATH_TO_AUTHORIZE' => '#system_personal?SECTION=private',
-			'SHOW_PERSONAL_LINK' => 'N',
-			'SHOW_NUM_PRODUCTS' => 'Y',
-			'SHOW_TOTAL_PRICE' => 'Y',
-			'SHOW_PRODUCTS' => 'N',
-			'POSITION_FIXED' => 'Y',
-			'SHOW_AUTHOR' => $classBlock->get('SHOW_PERSONAL_LINK'),
-			'SHOW_REGISTRATION' => 'N',
-			'COMPONENT_TEMPLATE' => 'store_v3',
-			'SHOW_EMPTY_VALUES' => 'N',
-			'POSITION_HORIZONTAL' => $classBlock->get('CART_POSITION_HORIZONTAL'),
-			'POSITION_VERTICAL' => $classBlock->get('CART_POSITION_VERTICAL'),
-			'HIDE_ON_BASKET_PAGES' => 'Y',
-			'CONTEXT_SITE_ID' => $classBlock->get('SITE_ID'),
-		],
-		false
-	); ?>
-<? endif; ?>
 <section class="landing-block g-pt-20 g-pb-20">
 	<?php if ($classBlock->get('EDIT_MODE') || $showElementSection): ?>
 		<div class="landing-component">
@@ -201,7 +173,7 @@ if ($detailUrl)
 					'COMPARE_PATH' => '#system_compare',
 					'HIDE_NOT_AVAILABLE' => $classBlock->get('HIDE_NOT_AVAILABLE'),
 					'HIDE_NOT_AVAILABLE_OFFERS' => $classBlock->get('HIDE_NOT_AVAILABLE_OFFERS'),
-					'PRODUCT_SUBSCRIPTION' => $classBlock->get('PRODUCT_SUBSCRIPTION'),
+					'PRODUCT_SUBSCRIPTION' => 'N',
 					'USE_PRODUCT_QUANTITY' => $classBlock->get('USE_PRODUCT_QUANTITY'),
 					'DISPLAY_COMPARE' => 'N',
 					'PRICE_CODE' => $classBlock->get('PRICE_CODE'),
@@ -372,7 +344,7 @@ if ($detailUrl)
 					'COMPARE_PATH' => '#system_compare',
 					'HIDE_NOT_AVAILABLE' => $classBlock->get('HIDE_NOT_AVAILABLE'),
 					'HIDE_NOT_AVAILABLE_OFFERS' => $classBlock->get('HIDE_NOT_AVAILABLE_OFFERS'),
-					'PRODUCT_SUBSCRIPTION' => $classBlock->get('PRODUCT_SUBSCRIPTION'),
+					'PRODUCT_SUBSCRIPTION' => 'N',
 					'USE_PRODUCT_QUANTITY' => $classBlock->get('USE_PRODUCT_QUANTITY'),
 					'DISPLAY_COMPARE' => 'N',
 					'PRICE_CODE' => $classBlock->get('PRICE_CODE'),

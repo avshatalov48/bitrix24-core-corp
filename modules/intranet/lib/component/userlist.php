@@ -252,6 +252,12 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 			);
 			$constantAllowed['EDIT_ALL'] = $USER->canDoOperation('edit_all_users');
 			$constantAllowed['EDIT_SUBORDINATE'] = $USER->canDoOperation('edit_subordinate_users');
+
+			if (Loader::includeModule('bitrix24') && \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID()))
+			{
+				$constantAllowed['EDIT_ALL'] = false;
+				$constantAllowed['EDIT_SUBORDINATE'] = false;
+			}
 		}
 
 		$result = [

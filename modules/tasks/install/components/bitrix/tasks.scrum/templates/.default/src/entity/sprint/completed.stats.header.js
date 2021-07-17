@@ -12,12 +12,15 @@ export class CompletedStatsHeader extends StatsHeader
 
 		const completedDate = this.getCompletedDate(this.getEndDate());
 
-		const label = Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_COMPLETED_LABEL').
-			replace('#percent#', '<b>' + percentage + '%</b>').
-			replace('#date#', completedDate);
+		const label = Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_COMPLETED_LABEL')
+			.replace('#percent#', percentage)
+			.replace('#date#', completedDate)
+		;
+
+		const title = this.getSprintDate().getFormattedTitleDatePeriod();
 
 		this.headerNode = Tag.render`
-			<div class="${this.headerClass}">
+			<div class="${this.headerClass}" title="${title}">
 				${label}
 			</div>
 		`;

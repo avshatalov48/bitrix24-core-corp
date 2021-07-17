@@ -790,10 +790,22 @@ select.crm-entity-product-control-select-field:hover {
 .main-grid-cell-drag {
 	padding-top: 6px !important;
 }
+
+.main-grid-cell-head[data-name="MAIN_INFO"] {
+	min-width: 420px;
+}
+
+.catalog-product-edit {
+	max-width: 800px;
+}
 .crm-product-list-payment-side-table {
 	width: 50%;
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #525c69;
+}
+
+.crm-product-list-payment-side-table-row {
+    text-align: right;
 }
 
 .crm-product-list-payment-side-table td.crm-product-list-payment-side-table-td-border {

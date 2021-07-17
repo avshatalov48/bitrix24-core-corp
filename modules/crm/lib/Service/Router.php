@@ -988,4 +988,27 @@ class Router
 
 		return null;
 	}
+
+	public function getChildrenItemsListUrl(int $entityTypeId, int $parentEntityTypeId, int $parentEntityId): ?Uri
+	{
+		// only dynamic types for now
+		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return null;
+		}
+
+		$componentName = 'bitrix:crm.item.list';
+		$componentPath = \CComponentEngine::makeComponentPath($componentName);
+		$componentPath = getLocalPath('components'.$componentPath.'/lazyload.ajax.php');
+
+		$url = new Uri($componentPath);
+		$url->addParams([
+			'entityTypeId' => $entityTypeId,
+			'parentEntityTypeId' => $parentEntityTypeId,
+			'parentEntityId' => $parentEntityId,
+			'sessid' => bitrix_sessid(),
+		]);
+
+		return $url;
+	}
 }

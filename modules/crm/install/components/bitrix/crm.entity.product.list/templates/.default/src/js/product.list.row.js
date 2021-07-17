@@ -1,7 +1,9 @@
-import {Cache, Dom, Event, Reflection, Runtime, Text, Type} from 'main.core';
+import {Cache, Dom, Event, Loc, Reflection, Runtime, Text, Type} from 'main.core';
 import {Editor} from './product.list.editor';
 import {DiscountType, DiscountTypes, FieldScheme, ProductCalculator} from 'catalog.product-calculator';
 import {CurrencyCore} from 'currency.currency-core';
+import 'ui.hint';
+import HintPopup from './hint.popup';
 
 type Action = {
 	type: string,
@@ -85,6 +87,11 @@ export class Row
 	getEditorContainer(): HTMLElement
 	{
 		return this.getEditor().getContainer();
+	}
+
+	getHintPopup(): HintPopup
+	{
+		return this.getEditor().getHintPopup();
 	}
 
 	initHandlers()
@@ -594,6 +601,9 @@ export class Row
 			this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
 		}
 
+		// price in model can't be less than zero
+		value = Math.max(value, 0);
+
 		const isChangedValue = this.getBasePrice() !== value;
 		if (isChangedValue)
 		{
@@ -603,6 +613,61 @@ export class Row
 
 			this.addActionProductChange();
 			this.addActionUpdateTotal();
+		}
+
+		this.#togglePriceHintPopup();
+	}
+
+	#shouldShowSmallPriceHint(): boolean
+	{
+		return (
+			Text.toNumber(this.getField('PRICE')) > 0
+			&& Text.toNumber(this.getField('PRICE')) < 1
+			&& this.isDiscountPercentage()
+			&& (
+				Text.toNumber(this.getField('DISCOUNT_SUM')) > 0
+				|| Text.toNumber(this.getField('DISCOUNT_RATE')) > 0
+				|| Text.toNumber(this.getField('DISCOUNT_ROW')) > 0
+			)
+		);
+	}
+
+	#shouldShowNegativePriceHint(): boolean
+	{
+		const priceInput = this.getInputByFieldName('PRICE');
+		if (Type.isDomNode(priceInput))
+		{
+			return Text.toNumber(priceInput.value) < 0;
+		}
+
+		return false;
+	}
+
+	#togglePriceHintPopup(ignoreNegative: boolean = false): void
+	{
+		if (this.#shouldShowSmallPriceHint())
+		{
+			this.getHintPopup()
+				.load(
+					this.getInputByFieldName('PRICE'),
+					Loc.getMessage('CRM_ENTITY_PL_SMALL_PRICE_NOTICE')
+				)
+				.show()
+			;
+		}
+		else if (!ignoreNegative && this.#shouldShowNegativePriceHint())
+		{
+			this.getHintPopup()
+				.load(
+					this.getInputByFieldName('PRICE'),
+					Loc.getMessage('CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE')
+				)
+				.show()
+			;
+		}
+		else
+		{
+			this.getHintPopup().close();
 		}
 	}
 
@@ -657,6 +722,8 @@ export class Row
 			this.addActionProductChange();
 			this.addActionUpdateTotal();
 		}
+
+		this.#togglePriceHintPopup(true);
 	}
 
 	setDiscountType(value)
@@ -1142,5 +1209,14 @@ export class Row
 
 		this.getEditor().executeActions(this.externalActions);
 		this.resetExternalActions();
+	}
+
+	isEmpty()
+	{
+		return (
+			!Type.isStringFilled(this.getField('PRODUCT_NAME', '').trim())
+			&& this.getField('PRODUCT_ID', 0) <= 0
+			&& this.getPrice() <= 0
+		)
 	}
 }

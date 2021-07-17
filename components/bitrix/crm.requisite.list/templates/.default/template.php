@@ -73,20 +73,6 @@ foreach ($arResult['LIST_DATA'] as $sKey => $arRequisite)
 			$row[$fName] = $fValue;
 		$row['~'.$fName] = $fValue;
 	}
-
-	// address fields
-	/*foreach ($arResult['ADDRESS_FIELDS'] as $fieldName)
-	{
-		$row[$fieldName] = Bitrix\Crm\Format\RequisiteAddressFormatter::format(
-			$row,
-			array(
-				'SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak,
-				'NL2BR' => true,
-				'TYPE_ID' => $requisite->resolveAddressTypeByFieldName($fieldName)
-			)
-		);
-	}*/
-
 	$data[$sKey] = &$row;
 	unset($row);
 }

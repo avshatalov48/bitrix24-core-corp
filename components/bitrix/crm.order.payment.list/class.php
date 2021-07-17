@@ -19,7 +19,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 
 	public function onPrepareComponentParams($arParams)
 	{
-		global  $APPLICATION;
+		global $APPLICATION;
 
 		$arParams['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_DETAILS', $arParams['PATH_TO_ORDER_PAYMENT_DETAILS'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&details');
 		$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_SHOW', $arParams['PATH_TO_ORDER_PAYMENT_SHOW'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&show');
@@ -27,6 +27,8 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 		$arParams['PATH_TO_BUYER_PROFILE'] = CrmCheckPath('PATH_TO_BUYER_PROFILE', $arParams['PATH_TO_BUYER_PROFILE'], 'shop/settings/sale_buyers_profile/?USER_ID=#user_id#');
 		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+		$arParams['SHOW_ROW_CHECKBOXES'] = empty($arParams['SHOW_ROW_CHECKBOXES']) ? false : $arParams['SHOW_ROW_CHECKBOXES'];
+		$arParams['SALESCENTER_MODE'] = empty($arParams['SALESCENTER_MODE']) ? false : $arParams['SALESCENTER_MODE'];
 
 		return $arParams;
 	}

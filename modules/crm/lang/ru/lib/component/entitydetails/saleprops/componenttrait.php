@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_ORDER_NOT_SELECTED"] = "не заполнено";
+$MESS["CRM_ORDER_PROPERTY_TITLE_LINK"] = "Свойство в CRM: #CAPTION# (#ENTITY_NAME#)";
+$MESS["CRM_ENTITY_CONTACT"] = "Контакт";
+$MESS["CRM_ENTITY_COMPANY"] = "Компания";

@@ -15,6 +15,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
 use Bitrix\Crm\Ads\AdsForm;
+use Bitrix\Crm\Service\Container;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -76,7 +77,10 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		));
 		while($form = $dbForms->fetch())
 		{
-			$counters = Form::getCounters($form['ID'], $form['ENTITY_SCHEME']);
+			$counters = Form::getCounters(
+				$form['ID'],
+				$form['ENTITY_SCHEME']
+			);
 			$form['ENTITY_COUNTERS'] = $counters['ENTITY'];
 			$form['COUNT_START_FILL'] = intval($counters['COMMON']['START_FILL']);
 			$form['COUNT_END_FILL'] = intval($counters['COMMON']['END_FILL']);

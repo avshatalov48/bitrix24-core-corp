@@ -43,7 +43,7 @@ else
 					</div>
 					<div class="order-list-header-order">
 						<?= str_replace(' ', '&nbsp;', Loc::getMessage(
-							'SOD_SUB_ORDER_TITLE_SHORT',
+							'SOD_SUB_PAYMENT_TITLE_SHORT',
 							["#ACCOUNT_NUMBER#" => htmlspecialcharsbx($arResult["ACCOUNT_NUMBER"])]
 						)) ?>
 					</div>
@@ -68,6 +68,15 @@ else
 							</div>
 							<div class="col order-item-title">
 								<?= htmlspecialcharsbx($basketItem['NAME']) ?>
+								<?php if (isset($basketItem['PROPERTIES']) && count($basketItem['PROPERTIES']) > 0):?>
+									<div class="order-item-properties">
+										<?php foreach ($basketItem['PROPERTIES'] as $property):?>
+											<div class="order-item-property">
+												<?= htmlspecialcharsbx($property['NAME']) ?>: <?= htmlspecialcharsbx($property['VALUE']) ?>
+											</div>
+										<?php endforeach; ?>
+									</div>
+								<?php endif; ?>
 							</div>
 							<div class="col pr-0 order-item-info">
 								<div class="order-item-price">
@@ -100,7 +109,7 @@ else
 							<td class="order-total-value">
 								<div class="order-total-price"><?= $arResult['PRODUCT_SUM_FORMATED'] ?></div>
 								<?php if (
-									$arResult["BASE_PRODUCT_SUM_FORMATED"] <> ''
+									$arResult["BASE_PRODUCT_SUM_FORMATED"] !== ''
 									&& ($arResult['BASE_PRODUCT_SUM']
 										> $arResult['PRODUCT_SUM'])
 								): ?>
@@ -108,7 +117,7 @@ else
 								<?php endif; ?>
 							</td>
 						</tr>
-						<?php if ($arResult["DISCOUNT_VALUE_FORMATED"] <> '') : ?>
+						<?php if (!empty($arResult["DISCOUNT_VALUE_FORMATED"])) : ?>
 							<tr class="order-total-price-old-row">
 								<td class="order-total-item"><?= Loc::getMessage(
 										'SOD_COMMON_DISCOUNT'
@@ -127,17 +136,17 @@ else
 							</tr>
 						<?php endif; ?>
 
-						<?php foreach ($arResult['SHIPMENT'] as $shipment): ?>
+						<?php if ($arResult['SHIPMENT']): ?>
 							<tr class="order-total-delivery-row">
 								<td class="order-total-item">
-									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= HtmlFilter::encode($shipment['DELIVERY_NAME']) ?>)
+									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= HtmlFilter::encode($arResult['SHIPMENT']['DELIVERY_NAME']) ?>)
 								</td>
 								<?
 								$deliveryText = Loc::getMessage('SOD_FREE');
 								$deliveryClass = 'order-total-delivery-price';
-								if ((float)($shipment["PRICE_DELIVERY"]) > 0)
+								if ((float)($arResult['SHIPMENT']["PRICE_DELIVERY"]) > 0)
 								{
-									$deliveryText = $shipment["PRICE_DELIVERY_FORMATED"];
+									$deliveryText = $arResult['SHIPMENT']["PRICE_DELIVERY_FORMATTED"];
 									$deliveryClass = 'order-total-price';
 								}
 								?>
@@ -145,7 +154,8 @@ else
 									<div class="<?=$deliveryClass?>"><?=$deliveryText?></div>
 								</td>
 							</tr>
-						<?php endforeach; ?>
+						<?php endif; ?>
+
 					</table>
 				</div>
 				<div class="order-total-result d-flex align-items-center justify-content-between">
@@ -155,10 +165,10 @@ else
 			</div>
 			<!--endregion-->
 			<?
-			foreach ($arResult['PAYMENT'] as $payment)
+			if ($arResult['PAYMENT'])
 			{
 				$paymentComponentParams = [
-					"PAYMENT_ID" => $payment['ID'],
+					"PAYMENT_ID" => $arResult['PAYMENT']['ID'],
 					"INCLUDED_IN_ORDER_TEMPLATE" => "Y",
 					"ALLOW_PAYMENT_REDIRECT" => "Y",
 					"ACTIVE_DATE_FORMAT" => "d F Y, H:m",
@@ -174,9 +184,9 @@ else
 			?>
 
 			<div class="order-list-title">
-				<?= Loc::getMessage('SOD_SUB_ORDER_TITLE', array(
+				<?= Loc::getMessage('SOD_SUB_PAYMENT_TITLE', array(
 					"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($arResult["ACCOUNT_NUMBER"]),
-					"#DATE_ORDER_CREATE#" => $arResult["DATE_INSERT_FORMATED"],
+					"#DATE_ORDER_CREATE#" => $arResult["DATE_BILL_FORMATTED"],
 				)) ?>
 			</div>
 		</div>

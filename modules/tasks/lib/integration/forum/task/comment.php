@@ -22,6 +22,7 @@ use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
@@ -56,19 +57,19 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 	{
 		$result = new Result();
 
-		if(!static::includeModule())
+		if (!self::includeModule())
 		{
 			$result->addError('NO_MODULE', 'No forum module installed');
 			return $result;
 		}
 
-		Counter\CounterService::getInstance()->collectData((int) $taskId);
+		Counter\CounterService::getInstance()->collectData((int)$taskId);
 
-		if(!array_key_exists('AUTHOR_ID', $data))
+		if (!array_key_exists('AUTHOR_ID', $data))
 		{
 			$data['AUTHOR_ID'] = User::getId();
 		}
-		if(!array_key_exists('USE_SMILES', $data))
+		if (!array_key_exists('USE_SMILES', $data))
 		{
 			$data['USE_SMILES'] = 'Y';
 		}
@@ -81,13 +82,14 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			{
 				$data['AUX_DATA'] = [
 					'auxData' => $data['UF_TASK_COMMENT_TYPE'],
-					'text' => $data['POST_MESSAGE']
+					'text' => $data['POST_MESSAGE'],
 				];
 			}
 			$data['SERVICE_TYPE'] = Forum\Comments\Service\Manager::TYPE_TASK_INFO;
-			if (defined(Forum\Comments\Service\Manager::class.'::TYPE_FORUM_DEFAULT'))
+
+			if (defined(Forum\Comments\Service\Manager::class . '::TYPE_FORUM_DEFAULT'))
 			{
-					$data['SERVICE_DATA'] = Json::encode($data['AUX_DATA']);
+				$data['SERVICE_DATA'] = Json::encode($data['AUX_DATA']);
 				$data['POST_MESSAGE'] = Forum\Comments\Service\Manager::find([
 					'SERVICE_TYPE' => Forum\Comments\Service\Manager::TYPE_TASK_INFO,
 				])->getText($data['SERVICE_DATA']);
@@ -99,12 +101,12 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		$feed = new Forum\Comments\Feed(
-			static::getForumId(),
-			array(
-				"type" => "TK",
-				"id" => $taskId,
-				"xml_id" => "TASK_".$taskId
-			),
+			self::getForumId(),
+			[
+				'type' => 'TK',
+				'id' => $taskId,
+				'xml_id' => "TASK_{$taskId}",
+			],
 			$data['AUTHOR_ID']
 		);
 
@@ -132,26 +134,47 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		$addResult = $feed->add($data);
-		if($addResult)
+		if ($addResult)
 		{
 			$result->setData($addResult);
-			if ($data["AUX"] === "Y" && method_exists($feed, "send"))
+			if ($data['AUX'] === 'Y' && method_exists($feed, 'send'))
 			{
+				$skipUserRead = 'N';
+
+				if ($data['UF_TASK_COMMENT_TYPE'] === Comments\Internals\Comment::TYPE_EXPIRED_SOON)
+				{
+					$taskData = \CTaskItem::getInstance($taskId, $data['AUTHOR_ID']);
+					$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
+					$accomplices = $taskData['ACCOMPLICES'];
+					$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
+					$accomplices = array_map('intval', $accomplices);
+
+					if (in_array($data['AUTHOR_ID'], array_merge([$responsibleId], $accomplices), true))
+					{
+						$skipUserRead = 'Y';
+					}
+				}
+
 				$feed->send(
 					$addResult["ID"],
-					[ "URL_TEMPLATES_PROFILE_VIEW" => Option::get('socialnetwork', 'user_page', '/company/personal/').'user/#user_id#/' ]
+					[
+						'URL_TEMPLATES_PROFILE_VIEW' => Option::get('socialnetwork', 'user_page', '/company/personal/') . 'user/#user_id#/',
+						'SKIP_USER_READ' => $skipUserRead,
+					]
 				);
 			}
 		}
-		else
+		elseif (is_array($errors = $feed->getErrors()))
 		{
-			$errors = $feed->getErrors();
-			if(is_array($errors))
+			$resultErrors = $result->getErrors();
+			foreach ($errors as $error)
 			{
-				foreach($errors as $error)
-				{
-					$result->getErrors()->add('ACTION_FAILED_REASON', $error->getMessage(), Error::TYPE_FATAL, array('CODE' => $error->getCode()));
-				}
+				$resultErrors && $resultErrors->add(
+					'ACTION_FAILED_REASON',
+					$error->getMessage(),
+					Error::TYPE_FATAL,
+					['CODE' => $error->getCode()]
+				);
 			}
 		}
 
@@ -324,7 +347,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		Counter\CounterService::addEvent(
-			Counter\CounterDictionary::EVENT_AFTER_COMMENT_DELETE,
+			Counter\Event\EventDictionary::EVENT_AFTER_COMMENT_DELETE,
 			[
 				'TASK_ID' => (int) $taskId,
 				'USER_ID' => (int) $message['AUTHOR_ID'],
@@ -457,6 +480,14 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		catch (\TasksException | \CTaskAssertException $e)
 		{
 			return;
+		}
+
+		if ($arTask['GROUP_ID'] > 0)
+		{
+			ProjectLastActivityTable::update(
+				$arTask['GROUP_ID'],
+				['ACTIVITY_DATE' => DateTime::createFromTimestamp($messageEditDateTimeStamp)]
+			);
 		}
 
 		if (!$aux)
@@ -748,7 +779,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		Counter\CounterService::addEvent(
-			Counter\CounterDictionary::EVENT_AFTER_COMMENT_ADD,
+			Counter\Event\EventDictionary::EVENT_AFTER_COMMENT_ADD,
 			[
 				'TASK_ID' => (int) $taskId,
 				'USER_ID' => (int) $occurAsUserId,
@@ -1162,7 +1193,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				SearchIndexTable::deleteByTaskAndMessageIds($taskID, $messageId);
 
 				Counter\CounterService::addEvent(
-					Counter\CounterDictionary::EVENT_AFTER_COMMENT_DELETE,
+					Counter\Event\EventDictionary::EVENT_AFTER_COMMENT_DELETE,
 					[
 						'TASK_ID' => (int) $taskID,
 						'USER_ID' => (int) $messageAuthorId,

@@ -67,19 +67,6 @@ if ( ! $arParams['PATH_TO_DEPARTMENTS'] )
 if ( ! $arParams['PATH_TO_EMPLOYEE_PLAN'] )
 	$arParams['PATH_TO_EMPLOYEE_PLAN'] = $arParams['SECTION_URL_PREFIX'] . 'employee/plan/';
 
-if (
-	isset($arParams['SHOW_SECTION_PROJECTS']) 
-	&& ($arParams['SHOW_SECTION_PROJECTS'] === 'Y')
-	&& isset($arParams['PATH_TO_PROJECTS']) 
-	&& ( ! empty($arParams['PATH_TO_PROJECTS']) )
-	&& ($arParams['USER_ID'] == $loggedInUserId)
-)
-{
-	$arResult['SHOW_SECTION_PROJECTS'] = 'Y';
-}
-else
-	$arResult['SHOW_SECTION_PROJECTS'] = 'N';
-
 $arResult['SHOW_SECTION_MANAGE'] = $arParams['SHOW_SECTION_MANAGE'];
 
 $arResult['F_SEARCH'] = null;
@@ -129,7 +116,7 @@ if (
 				$employeeId = (int) $employeeId;
 
 				$arResult['SECTION_MANAGE_COUNTER'] += Counter::getInstance($employeeId)
-															  ->get(Counter\CounterDictionary::COUNTER_TOTAL);
+															  ->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL);
 			}
 
 			$oldCounter = (int)\CUserCounter::GetValue($this->arParams['USER_ID'], 'departments_counter', '**');
@@ -182,7 +169,7 @@ if (
 		while ($arUser = $rsUsers->fetch())
 		{
 			$arResult['~USER_NAMES'][$arUser['ID']] = CUser::FormatName(
-				$arParams['NAME_TEMPLATE'], 
+				$arParams['NAME_TEMPLATE'],
 				array(
 					'NAME'        => $arUser['NAME'],
 					'LAST_NAME'   => $arUser['LAST_NAME'],
@@ -262,7 +249,7 @@ if (
 
 		$arResult['VIEW_COUNTERS'] = array(
 			'TOTAL' => array(
-				'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_TOTAL)
+				'COUNTER' => $counter->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL)
 			),
 			'ROLES' => array(
 				'VIEW_ROLE_RESPONSIBLE' => array(

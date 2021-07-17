@@ -24,6 +24,12 @@ $arUrlRewrite = array(
 		"PATH" => "/pub/payment.php",
 	),
 	array(
+		"CONDITION" => "#^/pub/calendar-event/([0-9]+)/([0-9a-zA-Z]+)/?([^/]*)#",
+		"RULE" => "event_id=\$1&hash=\$2",
+		"ID" => "bitrix:calendar.pub.event",
+		"PATH" => "/pub/calendar_event.php",
+	),
+	array(
 		"CONDITION" => "#^/pub/document/([0-9a-zA-Z_-]+)/([0-9a-zA-Z]+)/([^/]*)#",
 		"RULE" => "id=\$1&hash=\$2",
 		"ID" => "bitrix:documentgenerator.view",
@@ -700,6 +706,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:landing.pub",
 		"PATH" => "/mobile/knowledge/index.php",
+	),
+	array(
+		"CONDITION" => "#^/extranet/mobile/knowledge/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/extranet/mobile/knowledge/group/index.php",
 	),
 	array(
 		"CONDITION" => "#^/kb/group/#",

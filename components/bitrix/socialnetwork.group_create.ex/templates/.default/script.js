@@ -157,7 +157,6 @@ function BXGCESubmitForm(e)
 
 		BX.BXGCE.disableSubmitButton(true);
 
-
 		var b24statAction = 'addSonetGroup';
 		if (
 			BX('SONET_GROUP_ID')
@@ -203,6 +202,9 @@ function BXGCESubmitForm(e)
 				url: actionURL,
 				method: 'POST',
 				dataType: 'json',
+				data: {
+					PROJECT_OPTIONS: BX.BXGCE.projectOptions,
+				},
 				onsuccess: function(obResponsedata)
 				{
 					if (BX.type.isNotEmptyString(obResponsedata.ERROR))
@@ -295,7 +297,8 @@ function BXGCESubmitForm(e)
 									eventData = {
 										code: (obResponsedata.ACTION == 'create' ? 'afterCreate' : 'afterEdit'),
 										data: {
-											group: obResponsedata.GROUP
+											group: obResponsedata.GROUP,
+											projectOptions: BX.BXGCE.projectOptions,
 										}
 									};
 								}
@@ -381,7 +384,8 @@ BX.BXGCE = {
 	arUserSelector: [],
 	formSteps: 2,
 	animationList: {},
-	selectedTypeCode: false
+	selectedTypeCode: false,
+	projectOptions: {}
 };
 
 BX.BXGCE.init = function(params) {
@@ -397,17 +401,19 @@ BX.BXGCE.init = function(params) {
 		{
 			this.config = params.config;
 		}
+
+		if (BX.type.isNotEmptyObject(params.projectOptions))
+		{
+			this.projectOptions = params.projectOptions;
+		}
 	}
 
-	this.isScrumProject = params.isScrumProject;
-	if (parseInt(this.groupId, 10) > 0)
-	{
-		this.makeAdditionalCustomizationForm();
-	}
+	this.isScrumProject = params.isScrumProject === 'Y';
 
-	var
-		i = null,
-		cnt = null;
+	this.makeAdditionalCustomizationForm();
+
+	var i = null;
+	var cnt = null;
 
 	if (
 		BX.type.isNotEmptyString(params.preset)
@@ -416,6 +422,17 @@ BX.BXGCE.init = function(params) {
 	{
 		this.recalcForm({
 			type: params.preset
+		});
+	}
+
+	if (
+		BX.type.isNotEmptyObject(params.themePickerData)
+		&& document.getElementById('GROUP_THEME_container')
+	)
+	{
+		new BX.BXGCEThemePicker({
+			container: document.getElementById('GROUP_THEME_container'),
+			data: params.themePickerData,
 		});
 	}
 
@@ -932,25 +949,36 @@ BX.BXGCE.makeAdditionalCustomizationForm = function()
 {
 	if (this.isScrumProject)
 	{
-		this.updatePageTitle();
-
 		this.createHiddenInputs();
 
-		this.hideBlocksForScrumProject();
+		this.hideBlocks();
+
+		this.showScrumBlocks();
 	}
 	else
 	{
+		this.removeHiddenInputs();
+
+		this.showBlocks();
+
 		this.hideScrumBlocks();
 	}
 };
 
-BX.BXGCE.hideBlocksForScrumProject = function ()
+BX.BXGCE.hideBlocks = function ()
 {
-
 	var typeBlock = document.getElementById('additional-block-type');
 	if (typeBlock)
 	{
-		BX.addClass(typeBlock, 'sgcp-hide-scrum-project');
+		var itemList = typeBlock.querySelector('.social-group-create-form-field-list');
+		itemList.querySelectorAll('.social-group-create-form-field-list-item').forEach(function(itemNode) {
+			var checkboxNode = itemNode.querySelector('input[type=checkbox]');
+			if (!BX.util.in_array(checkboxNode.id, ['GROUP_VISIBLE', 'GROUP_OPENED']))
+			{
+				BX.addClass(itemNode, 'sgcp-hide-scrum-project');
+			}
+		});
+		itemList.style.height = 'auto';
 	}
 
 	var subjectBlock = document.getElementById('GROUP_SUBJECT_ID_LABEL_block');
@@ -960,11 +988,27 @@ BX.BXGCE.hideBlocksForScrumProject = function ()
 	}
 };
 
-BX.BXGCE.updatePageTitle = function ()
+BX.BXGCE.showBlocks = function ()
 {
-	document.title = BX.message('SONET_GCE_T_SCRUM_PAGE_TITLE');
-	BX.SidePanel.Instance.updateBrowserTitle();
-	BX.html(document.getElementById('pagetitle'), document.title);
+	var typeBlock = document.getElementById('additional-block-type');
+	if (typeBlock)
+	{
+		var itemList = typeBlock.querySelector('.social-group-create-form-field-list');
+		itemList.querySelectorAll('.social-group-create-form-field-list-item').forEach(function(itemNode) {
+			var checkboxNode = itemNode.querySelector('input[type=checkbox]');
+			if (!BX.util.in_array(checkboxNode.id, ['GROUP_VISIBLE', 'GROUP_OPENED']))
+			{
+				BX.removeClass(itemNode, 'sgcp-hide-scrum-project');
+			}
+		});
+		itemList.style.height = 'auto';
+	}
+
+	var subjectBlock = document.getElementById('GROUP_SUBJECT_ID_LABEL_block');
+	if (subjectBlock)
+	{
+		BX.removeClass(subjectBlock.closest('.social-group-create-options-item'), 'sgcp-hide-scrum-project');
+	}
 };
 
 BX.BXGCE.hideScrumBlocks = function ()
@@ -972,6 +1016,14 @@ BX.BXGCE.hideScrumBlocks = function ()
 	document.querySelectorAll('#scrum-block').forEach(function (scrumBlock)
 	{
 		BX.addClass(scrumBlock, 'sgcp-hide-scrum-project');
+	});
+};
+
+BX.BXGCE.showScrumBlocks = function ()
+{
+	document.querySelectorAll('#scrum-block').forEach(function (scrumBlock)
+	{
+		BX.removeClass(scrumBlock, 'sgcp-hide-scrum-project');
 	});
 };
 
@@ -986,6 +1038,16 @@ BX.BXGCE.createHiddenInputs = function ()
 			}
 		})
 	);
+};
+
+BX.BXGCE.removeHiddenInputs = function ()
+{
+	document.forms['sonet_group_create_popup_form'].querySelectorAll('input[name="SCRUM_PROJECT"]')
+		.forEach(function (input)
+		{
+			BX.remove(input);
+		})
+	;
 };
 
 BX.BXGCE.recalcForm = function (params) {
@@ -1004,9 +1066,10 @@ BX.BXGCE.recalcForm = function (params) {
 		return;
 	}
 
+	this.isScrumProject = this.types[type].hasOwnProperty('SCRUM_PROJECT');
+
 	this.recalcFormPartProject(this.types[type].PROJECT == 'Y');
 
-	this.isScrumProject = this.types[type].hasOwnProperty('SCRUM_PROJECT');
 	this.makeAdditionalCustomizationForm();
 
 	if (BX('GROUP_OPENED'))
@@ -1435,5 +1498,94 @@ BX.BXGCESelectorInstance.prototype.init = function(openParams)
 		}
 	});
 };
+
+BX.BXGCEThemePicker = function(params)
+{
+	this.container = null;
+	this.theme = {};
+	this.init(params);
+};
+
+BX.BXGCEThemePicker.prototype.init = function(params)
+{
+	this.container = params.container;
+	this.theme = params.data;
+	this.draw(this.theme);
+
+	var previewImageNode = this.getNode('image');
+	if (previewImageNode)
+	{
+		previewImageNode.addEventListener('click', this.open);
+	}
+
+	var titleNode = this.getNode('title');
+	if (titleNode)
+	{
+		titleNode.addEventListener('click', this.open);
+	}
+
+	var deleteNode = this.getNode('delete');
+	if (deleteNode)
+	{
+		deleteNode.addEventListener('click', function() {
+			this.select({});
+		}.bind(this));
+	}
+
+	BX.addCustomEvent('Intranet.ThemePicker:onSave', function(data) {
+		this.select(data);
+	}.bind(this));
+};
+
+BX.BXGCEThemePicker.prototype.select = function(data)
+{
+	var theme = (BX.type.isNotEmptyObject(data.theme) ? data.theme : {});
+	this.draw(theme);
+}
+
+BX.BXGCEThemePicker.prototype.draw = function(theme)
+{
+	var previewImageNode = this.getNode('image');
+	if (previewImageNode)
+	{
+		previewImageNode.style.backgroundImage = (BX.type.isNotEmptyString(theme.previewImage) ? "url('" + theme.previewImage + "')" : '');
+		previewImageNode.style.backgroundColor = (BX.type.isNotEmptyString(theme.previewColor) ? theme.previewColor : 'transparent');
+	}
+
+	var titleNode = this.getNode('title');
+	if (titleNode)
+	{
+		titleNode.innerHTML = (BX.type.isNotEmptyString(theme.title) ? theme.title : BX.message('BITRIX24_THEME_DIALOG_NEW_THEME'));
+	}
+
+	var inputNode = this.getNode('id');
+	if (inputNode)
+	{
+		inputNode.value = (BX.type.isNotEmptyString(theme.id) ? theme.id : '');
+	}
+}
+
+BX.BXGCEThemePicker.prototype.open = function(event)
+{
+	BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog(false);
+
+	event.preventDefault();
+}
+
+BX.BXGCEThemePicker.prototype.getNode = function(name)
+{
+	var result = null;
+	if (!BX.type.isNotEmptyString(name))
+	{
+		return result;
+	}
+
+	return this.container.querySelector('[bx-group-edit-theme-node="' + name + '"]');
+}
+
+BX.BXGCEThemePicker.prototype.getContainer = function()
+{
+	return this.container;
+}
 
 })();

@@ -19,30 +19,9 @@ final class CB24SearchTitle
 		$userPageURLTemplate = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
 
 		$userFilter = array(
-			'ACTIVE' => 'Y'
+			'ACTIVE' => 'Y',
+			'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
 		);
-
-		$arExternalAuthId = array();
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('replica'))
-		{
-			$arExternalAuthId[] = 'replica';
-		}
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
-		{
-			$arExternalAuthId[] = 'bot';
-		}
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('imconnector'))
-		{
-			$arExternalAuthId[] = 'imconnector';
-		}
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('mail'))
-		{
-			$arExternalAuthId[] = 'mail';
-		}
-		if (!empty($arExternalAuthId))
-		{
-			$userFilter['!=EXTERNAL_AUTH_ID'] = $arExternalAuthId;
-		}
 
 		$searchByEmail = false;
 		if (!empty($searchString))

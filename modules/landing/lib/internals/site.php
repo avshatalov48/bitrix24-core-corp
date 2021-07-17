@@ -1421,6 +1421,17 @@ class SiteTable extends Entity\DataManager
 				));
 				return $result;
 			}
+			// check lock status
+			if (\Bitrix\Landing\Lock::isSiteDeleteLocked($primary['ID']))
+			{
+				$result->setErrors(array(
+					new Entity\EntityError(
+						Loc::getMessage('LANDING_TABLE_ERROR_SITE_IS_LOCK'),
+						'SITE_IS_LOCK'
+					)
+				));
+				return $result;
+			}
 
 			// delete in b24.site
 			if (Manager::isB24())

@@ -144,7 +144,6 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		$this->errors = new ErrorCollection();
 		$this->requisite = EntityRequisite::getSingleInstance();
 		$this->userFieldDispatcher = UserField\Dispatcher::instance();
-		$this->requisite = EntityRequisite::getSingleInstance();
 		$this->preset = EntityPreset::getSingleInstance();
 		$this->bankDetail = EntityBankDetail::getSingleInstance();
 	}
@@ -192,15 +191,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		/** @var $error Error */
 		foreach ($this->errors as $error)
 		{
-			$errorMessage = $error->getMessage();
-			$errorMessageLines = explode('<br>', $errorMessage);
-			foreach ($errorMessageLines as $errorMessageLine)
-			{
-				if ($errorMessageLine !== '')
-				{
-					$result .= htmlspecialcharsbx($errorMessageLine) . '<br>';
-				}
-			}
+			$result .= $error->getMessage() . '<br>';
 		}
 
 		return $result;

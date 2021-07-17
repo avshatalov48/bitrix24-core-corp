@@ -15,7 +15,16 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	      this.$emit('on-hint', e);
 	    }
 	  },
-	  template: "\n\t\t<div @click=\"onHint\" class=\"salescenter-app-payment-by-sms-item-title-info\">\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
+	  computed: {
+	    hasContentSlot: function hasContentSlot() {
+	      try {
+	        return this.$slots['default'][0].text !== '';
+	      } catch (err) {
+	        return false;
+	      }
+	    }
+	  },
+	  template: "\n\t\t<div v-if=\"hasContentSlot\" @click=\"onHint\" class=\"salescenter-app-payment-by-sms-item-title-info\">\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
 	};
 
 	var Title = {

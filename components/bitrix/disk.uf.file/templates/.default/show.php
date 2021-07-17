@@ -22,6 +22,7 @@ UI\Extension::load([
 	'ui.viewer',
 	'disk.document',
 	'disk.viewer.actions',
+	'disk.viewer.document-item',
 	'loader'
 ]);
 

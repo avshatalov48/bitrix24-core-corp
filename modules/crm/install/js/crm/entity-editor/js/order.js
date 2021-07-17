@@ -5,7 +5,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 	BX.Crm.EntityEditorOrderController = function()
 	{
 		BX.Crm.EntityEditorOrderController.superclass.constructor.apply(this);
-		this._loader = null;
+		this._loaderController = BX.Crm.EntityEditorOrderLoaderController.create();
 		this._productList = null;
 		this._isRequesting = false;
 		this._isCreateMode = false;
@@ -160,6 +160,16 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 		}
 	};
 
+	BX.Crm.EntityEditorOrderController.prototype.hideLoader = function()
+	{
+		this._loaderController.hideLoader();
+	};
+
+	BX.Crm.EntityEditorOrderController.prototype.showLoader = function()
+	{
+		this._loaderController.showLoader();
+	};
+
 	BX.Crm.EntityEditorOrderController.prototype.onProductAdd = function(productId, quantity)
 	{
 		this.ajax(
@@ -167,66 +177,6 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 			{data: {PRODUCT_ID: productId, QUANTITY: quantity}},
 			this._ajaxOptsPreset
 		);
-	};
-
-	BX.Crm.EntityEditorOrderController.prototype.isLoaderExists = function()
-	{
-		return this._loader !== null;
-	};
-
-	BX.Crm.EntityEditorOrderController.prototype.showLoader = function()
-	{
-		document.body.appendChild(this.getLoader());
-	};
-
-	BX.Crm.EntityEditorOrderController.prototype.hideLoader = function()
-	{
-		if(this._loader && this._loader.parentNode === document.body)
-		{
-			document.body.removeChild(this._loader);
-		}
-	};
-
-	BX.Crm.EntityEditorOrderController.prototype.getLoader = function()
-	{
-		if(!this.isLoaderExists())
-		{
-			this._loader = this.createLoader();
-		}
-
-		return this._loader;
-	};
-
-	BX.Crm.EntityEditorOrderController.prototype.createLoader = function()
-	{
-		//document.createElementNS("http://www.w3.org/2000/svg", "rect")
-		var circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle"),
-			circle2 = document.createElementNS("http://www.w3.org/2000/svg", "circle"),
-			svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-
-		BX.addClass(circle1, 'crm-entity-order-controller-loader-path');
-		circle1.setAttributeNS(null, 'cx', '50');
-		circle1.setAttributeNS(null, 'cy', '50');
-		circle1.setAttributeNS(null, 'r', '20');
-		circle1.setAttributeNS(null, 'fill', 'none');
-		circle1.setAttributeNS(null, 'stroke-miterlimit', '10');
-		BX.addClass(circle2, 'crm-entity-order-controller-loader-inner-path');
-		circle2.setAttributeNS(null, 'cx', '50');
-		circle2.setAttributeNS(null, 'cy', '50');
-		circle2.setAttributeNS(null, 'r', '20');
-		circle2.setAttributeNS(null, 'fill', 'none');
-		circle1.setAttributeNS(null, 'stroke-miterlimit', '10');
-		BX.addClass(svg, 'crm-entity-order-controller-loader-circular');
-		svg.setAttributeNS(null, 'viewBox', '25 25 50 50');
-		svg.appendChild(circle1);
-		svg.appendChild(circle2);
-
-		return	BX.create('div', {props: {className: 'crm-entity-order-controller-loader-wrap'}, children:[
-					BX.create('div', {props: {className: 'crm-entity-order-controller-loader-mask'}}),
-					BX.create('div', {props: {className: 'crm-entity-order-controller-loader-box'}, children:[
-						svg
-					]})
-				]});
 	};
 
 	BX.Crm.EntityEditorOrderController.prototype.onProductCreate = function(productData)
@@ -421,7 +371,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 
 		if(options.showLoader)
 		{
-			this.showLoader();
+			this._loaderController.showLoader();
 		}
 
 		var data = {
@@ -701,7 +651,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 	{
 		var skipMarkAsChanged = (options && options.skipMarkAsChanged) || false;
 		this.unlockSending();
-		this.hideLoader();
+		this._loaderController.hideLoader();
 		this._editor._toolPanel.clearErrors();
 
 		if(result)
@@ -739,6 +689,20 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 					);
 				}
 
+				if(result.ORDER_DATA.SHIPMENT_PROPERTIES_SCHEME)
+				{
+					setTimeout(
+						BX.delegate(function(){
+							BX.onCustomEvent(
+								window,
+								"Crm.ShipmentModel.ChangePropertyScheme",
+								[ result.ORDER_DATA.SHIPMENT_PROPERTIES_SCHEME ]
+							);
+						}, this),
+						0
+					);
+				}
+
 				if (result.ORDER_DATA.USER_PROFILE_LIST)
 				{
 					var profiles = BX.prop.getArray(result.ORDER_DATA, "USER_PROFILE_LIST");
@@ -770,7 +734,7 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 	BX.Crm.EntityEditorOrderController.prototype.onSendDataFailure = function(type, e)
 	{
 		this.unlockSending();
-		this.hideLoader();
+		this._loaderController.hideLoader();
 		BX.debug(e.message);
 	};
 
@@ -824,6 +788,8 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 	BX.Crm.EntityEditorOrderShipmentController = function()
 	{
 		BX.Crm.EntityEditorOrderShipmentController.superclass.constructor.apply(this);
+
+		this._loaderController = BX.Crm.EntityEditorOrderLoaderController.create();
 		this._productList = null;
 		this._isRequesting = false;
 	};
@@ -846,6 +812,7 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 	{
 		BX.onCustomEvent(window, "onEntityEditorOrderShipmentControllerInit", [this]);
 		BX.addCustomEvent(window, "onDeliveryExtraServiceValueChange", BX.delegate(this.onDeliveryExtraServiceValueChange, this));
+		BX.addCustomEvent(window, "onDeliveryPriceRecalculateClicked", BX.delegate(this.onDeliveryPriceRecalculateClicked, this));
 		BX.addCustomEvent(window, BX.Crm.EntityEvent.names.create, BX.delegate(this.onAfterCreate, this));
 		BX.addCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.delegate(this.onAfterUpdate, this));
 		window['EntityEditorOrderShipmentController'] = this;
@@ -881,6 +848,11 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 	BX.Crm.EntityEditorOrderShipmentController.prototype.onDeliveryExtraServiceValueChange = function()
 	{
 		this.onDataChanged();
+	};
+
+	BX.Crm.EntityEditorOrderShipmentController.prototype.onDeliveryPriceRecalculateClicked = function()
+	{
+		this.onDataChanged({}, {showLoader: true});
 	};
 
 	BX.Crm.EntityEditorOrderShipmentController.prototype.innerCancel = function()
@@ -987,6 +959,16 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 
 		ajaxParams = ajaxParams || {};
 		options = options || {};
+
+		if(typeof options.showLoader === 'undefined')
+		{
+			options.showLoader = false;
+		}
+
+		if(options.showLoader)
+		{
+			this._loaderController.showLoader();
+		}
 
 		var data = {
 			ACTION: action,
@@ -1112,9 +1094,12 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 		return value;
 	};
 
-	BX.Crm.EntityEditorOrderShipmentController.prototype.onDataChanged = function()
+	BX.Crm.EntityEditorOrderShipmentController.prototype.onDataChanged = function(ajaxParams, options)
 	{
-		this.ajax('refreshShipmentData');
+		ajaxParams = ajaxParams || {};
+		options = options || {};
+
+		this.ajax('refreshShipmentData', ajaxParams, options);
 	};
 
 	BX.Crm.EntityEditorOrderShipmentController.prototype.markAsChangedItem = function()
@@ -1129,6 +1114,7 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 		var toolPanel = this._editor._toolPanel;
 		var skipMarkAsChanged = (options && options.skipMarkAsChanged) || false;
 		this._isRequesting = false;
+		this._loaderController.hideLoader();
 		toolPanel.clearErrors();
 
 		if(result)
@@ -1157,6 +1143,20 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 					this.markAsChanged();
 				}
 
+				if(result.SHIPMENT_DATA.SHIPMENT_PROPERTIES_SCHEME)
+				{
+					setTimeout(
+						BX.delegate(function(){
+							BX.onCustomEvent(
+								window,
+								"Crm.ShipmentModel.ChangePropertyScheme",
+								[ result.SHIPMENT_DATA.SHIPMENT_PROPERTIES_SCHEME ]
+							);
+						}, this),
+						0
+					);
+				}
+
 				if(this._productList !== null)
 				{
 					this._productList.setFormData(result);
@@ -1183,6 +1183,7 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 	BX.Crm.EntityEditorOrderShipmentController.prototype.onSendDataFailure = function(type, e)
 	{
 		this._isRequesting = false;
+		this._loaderController.hideLoader();
 		BX.debug(e.message);
 	};
 
@@ -2292,11 +2293,18 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 				{
 					var fields = eventArgs;
 					fields['PAYMENT_ID'] = paymentId;
-					fields['PAID'] = this.getItemField(index,'PAID');
-					fields['IS_RETURN'] = this.getItemField(index,'IS_RETURN');
+					var action = 'setPaymentPaidField';
+					if (fields['IS_RETURN'])
+					{
+						action = 'setPaymentReturnField';
+					}
 					this.getOrderController().ajax(
-						'setPaymentPaidField',
-						{ data: { FIELDS: eventArgs } },
+						action,
+						{
+							data: {
+								FIELDS: fields,
+							},
+						},
 						{
 							skipMarkAsChanged: true,
 							needProductComponentParams: this.getOrderController().isProductListLoaded()
@@ -2504,8 +2512,6 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 			if(value === "CANCEL" || value === "RETURN")
 			{
-				input.value = 'N';
-
 				if(value === "RETURN")
 				{
 					isReturnInput.value = 'Y';
@@ -2517,6 +2523,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 				}
 				else
 				{
+					input.value = 'N';
 					if(!_this._isCreateMode)
 					{
 						BX.Crm.Page.openSlider(_this.getItemField(index, 'PAY_CANCEL_URL'), { width: 500 });
@@ -2557,7 +2564,7 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 
 			_this.closePaidButtonMenu(index);
 			_this.setPaidStatus(input.value, isReturnInput.value, index);
-			_this.setPaidButtonView(index, (value === 'SET_PAID'));
+			_this.setPaidButtonView(index, (input.value === 'Y'));
 		};
 
 		if(input.value === 'Y')
@@ -3194,7 +3201,7 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 										},
 										style: { borderBottom: '1px dashed', cursor: 'pointer' },
 										events:{ click: BX.proxy(function(){
-											this.setItemField(index, 'PRICE_DELIVERY', this.getItemField(index, 'EXPECTED_PRICE_DELIVERY'));
+											this.setItemField(index, 'PRICE_DELIVERY', this.getItemField(index, 'PRICE_DELIVERY_CALCULATED'));
 											this._priceDeliveryInputs[index].value = this.getItemField(index, 'FORMATTED_PRICE_DELIVERY_CALCULATED');
 											this.setItemField(index, 'CUSTOM_PRICE_DELIVERY', 'N');
 											this.getOrderController().onDataChanged();
@@ -3731,7 +3738,7 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 				{
 					this._priceDeliveryInputs[i].value = value[i].FORMATTED_PRICE_DELIVERY;
 
-					if(value[i].CUSTOM_PRICE_DELIVERY === 'Y' && parseFloat(value[i].EXPECTED_PRICE_DELIVERY) !== parseFloat(value[i].PRICE_DELIVERY))
+					if(value[i].CUSTOM_PRICE_DELIVERY === 'Y' && parseFloat(value[i].PRICE_DELIVERY_CALCULATED) !== parseFloat(value[i].PRICE_DELIVERY))
 					{
 						this.setCalculatedPrice(i, true, value[i].FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY);
 					}
@@ -4074,11 +4081,18 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 				{
 					var fields = eventArgs;
 					fields['PAYMENT_ID'] = BX.prop.getString(eventArgs, "entityId", 0);
-					fields['PAID'] = this.getModel().getField('PAID');
-					fields['IS_RETURN'] = this.getModel().getField('IS_RETURN');
+					var action = 'setPaymentPaidField';
+					if (fields['IS_RETURN'])
+					{
+						action = 'setPaymentReturnField';
+					}
 					this.getPaymentController().ajax(
-						'setPaymentPaidField',
-						{ data: { FIELDS: eventArgs } },
+						action,
+						{
+							data: {
+								FIELDS: fields
+							}
+						},
 						{
 							skipMarkAsChanged: true,
 							sendUpdateEvent: true
@@ -4205,11 +4219,6 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 
 			if(value === "CANCEL" || value === "RETURN")
 			{
-				_this.setValue({
-					isPaid: 'N',
-					datePaid: _this.getValue().datePaid
-				});
-
 				_this.getModel().setField('PAID', 'N');
 
 				if(value === "RETURN")
@@ -4223,6 +4232,10 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 				}
 				else
 				{
+					_this.setValue({
+						isPaid: 'N',
+						datePaid: _this.getValue().datePaid
+					});
 					if(!_this._isCreateMode)
 					{
 						BX.Crm.Page.openSlider(_this.getModel().getStringField('PAY_CANCEL_URL'), { width: 500 });
@@ -4265,7 +4278,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			}
 
 			_this.closePaidButtonMenu(index);
-			_this.setPaidButtonView(index, (value === 'SET_PAID'));
+			_this.setPaidButtonView(index, (_this.getValue('PAID') === 'Y'));
 		};
 
 		var value = this.getValue();
@@ -4812,7 +4825,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 		this._personTypeId = BX.prop.getInteger(this._model.getData(), 'PERSON_TYPE_ID');
 		this._disabledFieldsBlock = null;
 		// this._hiddenElements = [];
-
+		this._entityType = BX.prop.getString(this._schemeElement.getData(), 'entityType');
 		this._elementsData = BX.prop.getObject(this._schemeElement._settings, "sortedElements", {});
 
 		this._elementData = {
@@ -4832,7 +4845,15 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 
 		BX.addCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.delegate(this.onAfterSubmit, this));
 		BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(this.onPropertySave, this));
-		BX.addCustomEvent(window, 'Crm.OrderModel.ChangePropertyScheme', BX.delegate(this.onSchemeChange, this));
+
+		if (this._entityType === 'order')
+		{
+			BX.addCustomEvent(window, 'Crm.OrderModel.ChangePropertyScheme', BX.delegate(this.onSchemeChange, this));
+		}
+		else if (this._entityType === 'shipment')
+		{
+			BX.addCustomEvent(window, 'Crm.ShipmentModel.ChangePropertyScheme', BX.delegate(this.onSchemeChange, this));
+		}
 	};
 
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.setChildrenScheme = function(elementData)
@@ -4851,6 +4872,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 			{
 				'name': this._id + '_ACTIVE',
 				'type': 'order_property_subsection',
+				'entityType': this._entityType,
 				'transferable': false,
 				'editable': true,
 				'isDragEnabled': BX.prop.getBoolean(this._schemeElement._settings, "isDragEnabled", false),
@@ -4981,25 +5003,29 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 
 		if (this.isCreationEnabled())
 		{
-			this._createChildButton = BX.create("span",
-				{
-					props: { className: "crm-entity-widget-content-block-edit-action-btn" },
-					text: this.getMessage("createField"),
-					events: { click: BX.delegate(this.onCreateUserFieldBtnClick, this) }
-				}
-			);
+			if (this.getEditorUrlTemplate())
+			{
+				this._createChildButton = BX.create("span",
+					{
+						props: {className: "crm-entity-widget-content-block-edit-action-btn"},
+						text: this.getMessage("createField"),
+						events: {click: BX.delegate(this.onCreateUserFieldBtnClick, this)}
+					}
+				);
+				this._buttonPanelWrapper.appendChild(this._createChildButton);
+			}
 
-			this._buttonPanelWrapper.appendChild(this._createChildButton);
-
-			this._insertChildButton = BX.create("span",
-				{
-					props: { className: "crm-entity-widget-content-block-edit-action-btn" },
-					text: this.getMessage("insertField"),
-					events: { click: BX.delegate(this.onInsertPropertyBtnClick, this) }
-				}
-			);
-
-			this._buttonPanelWrapper.appendChild(this._insertChildButton);
+			if (this.getManagerUrlTemplate())
+			{
+				this._insertChildButton = BX.create("span",
+					{
+						props: { className: "crm-entity-widget-content-block-edit-action-btn" },
+						text: this.getMessage("insertField"),
+						events: { click: BX.delegate(this.onInsertPropertyBtnClick, this) }
+					}
+				);
+				this._buttonPanelWrapper.appendChild(this._insertChildButton);
+			}
 		}
 
 		this._addChildButton = BX.create("span",
@@ -5388,21 +5414,44 @@ if(typeof BX.Crm.EntityEditorOrderPropertyWrapper === "undefined")
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.showPropertyEditor = function(propertyId)
 	{
 		propertyId = parseInt(propertyId);
-		var data = this._schemeElement.getData();
-		if (BX.type.isNotEmptyString(data.editorUrl))
+
+		var urlTemplate = this.getEditorUrlTemplate();
+		if (urlTemplate)
 		{
-			var url = data.editorUrl.replace('#property_id#', propertyId).replace('#person_type_id#', this._personTypeId);
+			var url = urlTemplate.replace('#property_id#', propertyId).replace('#person_type_id#', this._personTypeId);
 			BX.SidePanel.Instance.open(url, {loader: "crm-webform-view-loader"});
 		}
 	};
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.showManagerSlider = function(e)
 	{
-		var data = this._schemeElement.getData();
-		if (BX.type.isNotEmptyString(data.managerUrl))
+		var urlTemplate = this.getManagerUrlTemplate();
+		if (urlTemplate)
 		{
-			var url = data.managerUrl.replace('#person_type_id#', this._personTypeId);
+			var url = urlTemplate.replace('#person_type_id#', this._personTypeId);
 			BX.SidePanel.Instance.open(url, {loader: "crm-webform-view-loader"});
 		}
+	};
+
+	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.getManagerUrlTemplate = function(e)
+	{
+		var data = this._schemeElement.getData();
+		if (!BX.type.isNotEmptyString(data.managerUrl))
+		{
+			return null;
+		}
+
+		return data.managerUrl;
+	};
+
+	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.getEditorUrlTemplate = function(e)
+	{
+		var data = this._schemeElement.getData();
+		if (!BX.type.isNotEmptyString(data.editorUrl))
+		{
+			return null;
+		}
+
+		return data.editorUrl;
 	};
 
 	BX.Crm.EntityEditorOrderPropertyWrapper.prototype.onCreateUserFieldBtnClick = function(e)
@@ -5653,7 +5702,14 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.editChildConfiguration = function(child)
 	{
-		this.showPropertyEditor(child._schemeElement.getDataStringParam("propertyId"));
+		if (BX.prop.getString(this._schemeElement.getData(), 'entityType') === 'order')
+		{
+			this.showPropertyEditor(child._schemeElement.getDataStringParam("propertyId"));
+		}
+		else
+		{
+			BX.Crm.EntityEditorOrderPropertySubsection.superclass.editChildConfiguration.apply(this, [child]);
+		}
 	};
 
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.removeChild = function(child, options)
@@ -5812,7 +5868,7 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 	};
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.getAdditionalMenu = function(e)
 	{
-		return [{ value: "linkToSettings", text: this.getMessage("linkToSettings") }];
+		return !!this.getManagerUrl() ? [{ value: "linkToSettings", text: this.getMessage("linkToSettings") }] : [];
 	};
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.showPropertyEditor = function(propertyId)
 	{
@@ -5826,13 +5882,23 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 	};
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.showManagerSlider = function(e)
 	{
-		var data = this._schemeElement.getData();
-		if (BX.type.isNotEmptyString(data.managerUrl))
+		var url = this.getManagerUrl();
+		if (url)
 		{
-			var url = data.managerUrl.replace('#person_type_id#', this._personTypeId);
 			BX.SidePanel.Instance.open(url, {loader: "crm-webform-view-loader"});
 		}
 	};
+	BX.Crm.EntityEditorOrderPropertySubsection.prototype.getManagerUrl = function(e)
+	{
+		var data = this._schemeElement.getData();
+		if (!BX.type.isNotEmptyString(data.managerUrl))
+		{
+			return null;
+		}
+
+		return data.managerUrl.replace('#person_type_id#', this._personTypeId);
+	};
+
 	BX.Crm.EntityEditorOrderPropertySubsection.prototype.processChildAdditionalMenuCommand = function(child, command)
 	{
 		if (command === "linkToSettings")
@@ -6006,6 +6072,64 @@ if(typeof BX.Crm.EntityEditorOrderProductProperty === "undefined")
 	};
 }
 
+// It is similar to EntityEditorOrderPersonType. Good reason for the unification.
+if(typeof BX.Crm.EntityEditorOrderTradingPlatform === "undefined")
+{
+	BX.Crm.EntityEditorOrderTradingPlatform = function()
+	{
+		BX.Crm.EntityEditorOrderTradingPlatform.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.Crm.EntityEditorOrderTradingPlatform, BX.UI.EntityEditorList);
+
+	BX.Crm.EntityEditorOrderTradingPlatform.prototype.initialize = function(id, settings)
+	{
+		BX.Crm.EntityEditorOrderTradingPlatform.superclass.initialize.call(this, id, settings);
+		BX.addCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.delegate(this.onAfterUpdate, this));
+		this._baseValue = this.getValue();
+	};
+
+	BX.Crm.EntityEditorOrderTradingPlatform.prototype.onItemSelect = function(e, item)
+	{
+		if (this._selectedValue !== item.value)
+		{
+			BX.Crm.EntityEditorOrderTradingPlatform.superclass.onItemSelect.apply(this, [e, item]);
+			for(var i = 0, length = this._editor._controllers.length; i < length; i++)
+			{
+				if (this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController)
+				{
+					this._editor._controllers[i].onDataChanged();
+				}
+			}
+		}
+		else
+		{
+			this.closeMenu();
+			BX.PopupMenu.destroy(this._id);
+		}
+	};
+
+	BX.Crm.EntityEditorOrderTradingPlatform.prototype.getDragObjectType = function()
+	{
+		return BX.UI.EditorDragObjectType.intermediate;
+	};
+
+	BX.Crm.EntityEditorOrderTradingPlatform.prototype.onAfterUpdate = function(e, item)
+	{
+		if (this.isChanged())
+		{
+			this._baseValue = this.getValue();
+		}
+	};
+
+	BX.Crm.EntityEditorOrderTradingPlatform.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorOrderTradingPlatform();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
 if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 {
 	BX.Crm.EntityEditorOrderPersonType = function()
@@ -6015,7 +6139,7 @@ if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 
 	BX.extend(BX.Crm.EntityEditorOrderPersonType, BX.UI.EntityEditorList);
 
-	BX.Crm.EntityEditorOrderPersonType.prototype.initialize =  function(id, settings)
+	BX.Crm.EntityEditorOrderPersonType.prototype.initialize = function(id, settings)
 	{
 		BX.Crm.EntityEditorOrderPersonType.superclass.initialize.call(this, id, settings);
 		BX.addCustomEvent(window, BX.Crm.EntityEvent.names.update, BX.delegate(this.onAfterUpdate, this));
@@ -6065,6 +6189,7 @@ if(typeof BX.Crm.EntityEditorOrderPersonType === "undefined")
 		return self;
 	};
 }
+
 if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 {
 	BX.Crm.EntityEditorOrderUser = function()
@@ -6539,6 +6664,10 @@ if(typeof BX.Crm.EntityEditorOrderClientSearchBox === "undefined")
 		this._hasLayout = true;
 	};
 	BX.Crm.EntityEditorOrderClientSearchBox.prototype.validate = function(result)
+	{
+		return true;
+	};
+	BX.Crm.EntityEditorOrderClientSearchBox.prototype.release = function()
 	{
 		return true;
 	};
@@ -7991,17 +8120,7 @@ if(typeof BX.Crm.EntityEditorDeliverySelector === "undefined")
 
 		if(errors.length)
 		{
-			var message = '';
-
-			for(var i = 0, l = errors.length - 1; i <= l; i++)
-			{
-				message += errors[i]+'<br>';
-			}
-
-			if(message)
-			{
-				this.showError(message);
-			}
+			this.showError(errors.join(', '));
 		}
 	};
 
@@ -8127,5 +8246,133 @@ if(typeof BX.Crm.EntityEditorShipmentExtraServices === "undefined")
 		var self = new BX.Crm.EntityEditorShipmentExtraServices();
 		self.initialize(id, settings);
 		return self;
+	}
+}
+
+if(typeof BX.Crm.EntityEditorCalculatedDeliveryPrice === "undefined")
+{
+	BX.Crm.EntityEditorCalculatedDeliveryPrice = function()
+	{
+		BX.Crm.EntityEditorCalculatedDeliveryPrice.superclass.constructor.apply(this);
+		this._refreshButton = null;
+	};
+
+	BX.extend(BX.Crm.EntityEditorCalculatedDeliveryPrice, BX.Crm.EntityEditorMoney);
+
+	BX.Crm.EntityEditorCalculatedDeliveryPrice.prototype.layout = function(options)
+	{
+		BX.Crm.EntityEditorCalculatedDeliveryPrice.superclass.layout.apply(this, arguments);
+
+		if (this.getParent().getMode() === BX.UI.EntityEditorMode.edit)
+		{
+			this._refreshButton = BX.create('div', {
+				props: {
+					className: 'ui-btn ui-btn-light-border',
+				},
+				style: {marginLeft: '10px', marginBottom: '3px'},
+				events: {
+					click: function () {
+						BX.onCustomEvent('onDeliveryPriceRecalculateClicked');
+					}
+				},
+				html: this.getMessage('refresh')
+			});
+
+			if (BX.Type.isElementNode(this._innerWrapper.firstChild))
+			{
+				this._innerWrapper.firstChild.appendChild(this._refreshButton);
+			}
+			else
+			{
+				BX.Dom.clean(this._innerWrapper);
+				this._innerWrapper.appendChild(this._refreshButton);
+			}
+		}
+	};
+
+	BX.Crm.EntityEditorCalculatedDeliveryPrice.prototype.getMessage = function(name)
+	{
+		var m = BX.Crm.EntityEditorCalculatedDeliveryPrice.messages;
+		return m.hasOwnProperty(name) ? m[name] : BX.Crm.EntityEditorCalculatedDeliveryPrice.superclass.getMessage.apply(this, arguments);
+	};
+
+	BX.Crm.EntityEditorCalculatedDeliveryPrice.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorCalculatedDeliveryPrice();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof BX.Crm.EntityEditorOrderLoaderController === "undefined")
+{
+	BX.Crm.EntityEditorOrderLoaderController = function()
+	{
+		this._loader = null;
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.prototype.isLoaderExists = function()
+	{
+		return this._loader !== null;
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.prototype.showLoader = function()
+	{
+		document.body.appendChild(this.getLoader());
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.prototype.hideLoader = function()
+	{
+		if(this._loader && this._loader.parentNode === document.body)
+		{
+			document.body.removeChild(this._loader);
+		}
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.prototype.getLoader = function()
+	{
+		if(!this.isLoaderExists())
+		{
+			this._loader = this.createLoader();
+		}
+
+		return this._loader;
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.prototype.createLoader = function()
+	{
+		//document.createElementNS("http://www.w3.org/2000/svg", "rect")
+		var circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle"),
+			circle2 = document.createElementNS("http://www.w3.org/2000/svg", "circle"),
+			svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+		BX.addClass(circle1, 'crm-entity-order-controller-loader-path');
+		circle1.setAttributeNS(null, 'cx', '50');
+		circle1.setAttributeNS(null, 'cy', '50');
+		circle1.setAttributeNS(null, 'r', '20');
+		circle1.setAttributeNS(null, 'fill', 'none');
+		circle1.setAttributeNS(null, 'stroke-miterlimit', '10');
+		BX.addClass(circle2, 'crm-entity-order-controller-loader-inner-path');
+		circle2.setAttributeNS(null, 'cx', '50');
+		circle2.setAttributeNS(null, 'cy', '50');
+		circle2.setAttributeNS(null, 'r', '20');
+		circle2.setAttributeNS(null, 'fill', 'none');
+		circle1.setAttributeNS(null, 'stroke-miterlimit', '10');
+		BX.addClass(svg, 'crm-entity-order-controller-loader-circular');
+		svg.setAttributeNS(null, 'viewBox', '25 25 50 50');
+		svg.appendChild(circle1);
+		svg.appendChild(circle2);
+
+		return	BX.create('div', {props: {className: 'crm-entity-order-controller-loader-wrap'}, children:[
+				BX.create('div', {props: {className: 'crm-entity-order-controller-loader-mask'}}),
+				BX.create('div', {props: {className: 'crm-entity-order-controller-loader-box'}, children:[
+						svg
+					]})
+			]});
+	};
+
+	BX.Crm.EntityEditorOrderLoaderController.create = function()
+	{
+		return new BX.Crm.EntityEditorOrderLoaderController();
 	}
 }

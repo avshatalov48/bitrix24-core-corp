@@ -23,6 +23,7 @@ $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Нравится";
 $MESS["BX_LIVECHAT_VOTE_MINUS"] = "Не нравится";
 
 $MESS["BX_LIVECHAT_MAIL_BUTTON_NEW"] = "Отправить копию разговора";
+$MESS["BX_LIVECHAT_DOWNLOAD_HISTORY"] = "Скачать историю диалога";
 $MESS["BX_LIVECHAT_MAIL_TITLE_NEW"] = "Укажите E-mail на который мы вышлем вам копию разговора.";
 $MESS["BX_LIVECHAT_MAIL_FIELD_EMAIL"] = "Электронная почта";
 $MESS["BX_LIVECHAT_MAIL_RESULT_NEW"] = "Мы отправили копию разговора на вашу почту.";
@@ -63,4 +64,6 @@ $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "Очень жаль, что мы не �
 
 $MESS["BX_LIVECHAT_OPERATOR_POSITION_ONLY"] = "#POSITION#";
 $MESS["BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID"] = "#POSITION#, диалог №#ID#";
+
+$MESS["BX_LIVECHAT_ADDITIONAL_ACTION_BUTTON_TOOLTIP"] = "Дополнительные действия";
 ?>

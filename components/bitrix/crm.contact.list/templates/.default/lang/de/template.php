@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Gesamt";
 $MESS["CRM_CONTACT_ACTION_DELETE"] = "Löschen";
 $MESS["CRM_CONTACT_ACTION_MERGE"] = "Vereinigen";
@@ -34,21 +34,21 @@ $MESS["CRM_CONTACT_CONVERT_ADDRESSES_DLG_TITLE"] = "Alte Adressen der Kontakte i
 $MESS["CRM_CONTACT_CONVERT_ADDRESSES_STATE"] = "#processed# von #total#";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Adressen aus Nutzerfeldern in detaillierte Informationen der Kontakte verschieben";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_STATE"] = "#processed# von #total#";
-$MESS["CRM_CONTACT_COPY"] = "Kontakt kopieren";
+$MESS["CRM_CONTACT_COPY"] = "Kopieren";
 $MESS["CRM_CONTACT_COPY_TITLE"] = "Kontakt kopieren";
 $MESS["CRM_CONTACT_CREATE_CALL_LIST"] = "Anrufliste erstellen";
 $MESS["CRM_CONTACT_DEAL_ADD"] = "Auftrag hinzufügen";
 $MESS["CRM_CONTACT_DEAL_ADD_TITLE"] = "Auftrag hinzufügen";
-$MESS["CRM_CONTACT_DELETE"] = "Kontakt löschen";
+$MESS["CRM_CONTACT_DELETE"] = "Löschen";
 $MESS["CRM_CONTACT_DELETE_CONFIRM"] = "Möchten Sie das wirklich löschen?";
 $MESS["CRM_CONTACT_DELETE_TITLE"] = "Kontakt löschen";
-$MESS["CRM_CONTACT_EDIT"] = "Kontakt bearbeiten";
+$MESS["CRM_CONTACT_EDIT"] = "Bearbeiten";
 $MESS["CRM_CONTACT_EDIT_TITLE"] = "Kontakt bearbeiten";
 $MESS["CRM_CONTACT_EVENT"] = "Aktivität hinzufügen";
 $MESS["CRM_CONTACT_EVENT_TITLE"] = "Eine neue Aktivität hinzufügen";
-$MESS["CRM_CONTACT_EXPORT_NEW"] = "In den Export einschließen";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_SUMMARY"] = "Export-Zugriffsrechte werden für die ausgewählten Kontakte definiert. Das kann einige Zeit in Anspruch nehmen, wenn es viele Kontakte gibt.";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_TITLE"] = "Zugriffsrechte für Export von Kontakten definieren";
+$MESS["CRM_CONTACT_EXPORT_NEW"] = "In den Export einschließen";
 $MESS["CRM_CONTACT_EXPORT_OFF"] = "Nein";
 $MESS["CRM_CONTACT_EXPORT_ON"] = "Ja";
 $MESS["CRM_CONTACT_LIST_ADD"] = "Kontakt hinzufügen";
@@ -79,7 +79,7 @@ $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "Die Informationen zum Kontakt
 $MESS["CRM_CONTACT_RQ_TX_PROC_DLG_TITLE"] = "Informationen zum Kontakt kopieren und übertragen";
 $MESS["CRM_CONTACT_RQ_TX_SELECTOR_FIELD"] = "Vorlage der Informationen zum Kontakt";
 $MESS["CRM_CONTACT_RQ_TX_SELECTOR_TITLE"] = "Parameter der Übertragung von Informationen zum Kontakt";
-$MESS["CRM_CONTACT_SHOW"] = "Kontakt anzeigen";
+$MESS["CRM_CONTACT_SHOW"] = "Anzeigen";
 $MESS["CRM_CONTACT_SHOW_TITLE"] = "Kontakt anzeigen";
 $MESS["CRM_CONTACT_START_CALL_LIST"] = "Anrufe starten";
 $MESS["CRM_CONTACT_STEPWISE_STATE_TEMPLATE"] = "#processed# von #total#";
@@ -95,4 +95,3 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# von #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Menge anzeigen";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Anrufen";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unbekannter Empfänger";
-?>

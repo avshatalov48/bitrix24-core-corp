@@ -5,6 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 class ProductRow extends EO_ProductRow
@@ -52,6 +53,26 @@ class ProductRow extends EO_ProductRow
 		}
 
 		return new static($filteredValues);
+	}
+
+	/**
+	 * Get an array with data from this EntityObject
+	 *
+	 * @return array Compatible with CCrmProductRow
+	 */
+	public function toArray(): array
+	{
+		$result = $this->collectValues(Values::ALL, FieldTypeMask::SCALAR);
+
+		foreach ($result as &$value)
+		{
+			if (is_bool($value))
+			{
+				$value = $value ? 'Y' : 'N';
+			}
+		}
+
+		return $result;
 	}
 
 	public function isNew(): bool

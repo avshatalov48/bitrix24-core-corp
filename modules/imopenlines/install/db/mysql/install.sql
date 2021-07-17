@@ -30,6 +30,7 @@ CREATE TABLE b_imopenlines_session
 	DATE_OPERATOR_CLOSE datetime,
 	DATE_FIRST_ANSWER datetime,
 	DATE_LAST_MESSAGE datetime,
+    DATE_FIRST_LAST_USER_ACTION datetime,
 	DATE_CLOSE datetime,
 	DATE_CLOSE_VOTE datetime,
 	TIME_FIRST_ANSWER int(11) null,

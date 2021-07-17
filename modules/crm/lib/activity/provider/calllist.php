@@ -252,7 +252,7 @@ class CallList extends Base
 		);
 	}
 
-	public static function onAfterAdd($activityFields)
+	public static function onAfterAdd($activityFields, array $params = null)
 	{
 		if($activityFields['AUTHOR_ID'] !== $activityFields['RESPONSIBLE_ID'])
 			static::notify($activityFields);

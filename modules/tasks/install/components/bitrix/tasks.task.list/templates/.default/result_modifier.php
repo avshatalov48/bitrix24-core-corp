@@ -9,14 +9,13 @@ use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\Filter\Options;
-use Bitrix\Tasks\Grid\Row;
+use Bitrix\Tasks\Grid\Task;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI;
-use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
-\Bitrix\Main\UI\Extension::load(["ui.notification", "ui.icons"]);
+Extension::load(["ui.notification", "ui.icons"]);
 
 if (Main\ModuleManager::isModuleInstalled('rest'))
 {
@@ -66,228 +65,6 @@ if (isset($arParams['SET_NAVCHAIN']) && $arParams['SET_NAVCHAIN'] !== 'N')
 }
 
 //endregion TITLE
-
-if (!function_exists('prepareHeaders'))
-{
-	/**
-	 * @param $arParams
-	 * @return array|array[]
-	 * @throws Main\LoaderException
-	 */
-	function prepareHeaders($arParams): array
-	{
-		$headers = [
-			'ID' => [
-				'id' => 'ID',
-				'name' => Loc::getMessage('TASKS_COLUMN_ID'),
-				'sort' => 'ID',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'TITLE' => [
-				'id' => 'TITLE',
-				'name' => Loc::getMessage('TASKS_COLUMN_TITLE'),
-				'sort' => 'TITLE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'type' => 'custom',
-				'prevent_default' => false,
-				'shift' => true,
-				'default' => true,
-			],
-			'ACTIVITY_DATE' => [
-				'id' => 'ACTIVITY_DATE',
-				'name' => Loc::getMessage('TASKS_COLUMN_ACTIVITY_DATE'),
-				'sort' => 'ACTIVITY_DATE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => true,
-				'width' => 250
-			],
-			'DEADLINE' => [
-				'id' => 'DEADLINE',
-				'name' => Loc::getMessage('TASKS_COLUMN_DEADLINE'),
-				'sort' => 'DEADLINE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => true,
-			],
-			'ORIGINATOR_NAME' => [
-				'id' => 'ORIGINATOR_NAME',
-				'name' => Loc::getMessage('TASKS_COLUMN_ORIGINATOR_NAME'),
-				'sort' => 'ORIGINATOR_NAME',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => true,
-			],
-			'RESPONSIBLE_NAME' => [
-				'id' => 'RESPONSIBLE_NAME',
-				'name' => Loc::getMessage('TASKS_COLUMN_RESPONSIBLE_NAME'),
-				'sort' => 'RESPONSIBLE_NAME',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => true,
-			],
-			// 'PRIORITY' => [
-			// 	'id' => 'PRIORITY',
-			// 	'name' => Loc::getMessage('TASKS_COLUMN_PRIORITY'),
-			// 	'sort' => 'PRIORITY',
-			// 	'first_order' => 'desc',
-			// 	'editable' => false,
-			// ],
-			'STATUS' => [
-				'id' => 'STATUS',
-				'name' => Loc::getMessage('TASKS_COLUMN_STATUS'),
-				'sort' => 'REAL_STATUS',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'GROUP_NAME' => [
-				'id' => 'GROUP_NAME',
-				'name' => Loc::getMessage('TASKS_COLUMN_GROUP_NAME'),
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => true,
-			],
-			'CREATED_DATE' => [
-				'id' => 'CREATED_DATE',
-				'name' => Loc::getMessage('TASKS_COLUMN_CREATED_DATE'),
-				'sort' => 'CREATED_DATE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'CHANGED_DATE' => [
-				'id' => 'CHANGED_DATE',
-				'name' => Loc::getMessage('TASKS_COLUMN_CHANGED_DATE'),
-				'sort' => 'CHANGED_DATE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'CLOSED_DATE' => [
-				'id' => 'CLOSED_DATE',
-				'name' => Loc::getMessage('TASKS_COLUMN_CLOSED_DATE'),
-				'sort' => 'CLOSED_DATE',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'TIME_ESTIMATE' => [
-				'id' => 'TIME_ESTIMATE',
-				'name' => Loc::getMessage('TASKS_COLUMN_TIME_ESTIMATE'),
-				'sort' => 'TIME_ESTIMATE',
-				'first_order' => 'desc',
-				'default' => false,
-			],
-			'ALLOW_TIME_TRACKING' => [
-				'id' => 'ALLOW_TIME_TRACKING',
-				'name' => Loc::getMessage('TASKS_COLUMN_ALLOW_TIME_TRACKING'),
-				'sort' => 'ALLOW_TIME_TRACKING',
-				'first_order' => 'desc',
-				'default' => false,
-			],
-			'MARK' => [
-				'id' => 'MARK',
-				'name' => Loc::getMessage('TASKS_COLUMN_MARK'),
-				'sort' => 'MARK',
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			],
-			'ALLOW_CHANGE_DEADLINE' => [
-				'id' => 'ALLOW_CHANGE_DEADLINE',
-				'name' => Loc::getMessage('TASKS_COLUMN_ALLOW_CHANGE_DEADLINE'),
-				'sort' => 'ALLOW_CHANGE_DEADLINE',
-				'first_order' => 'desc',
-				'default' => false,
-			],
-			'TIME_SPENT_IN_LOGS' => [
-				'id' => 'TIME_SPENT_IN_LOGS',
-				'name' => Loc::getMessage('TASKS_COLUMN_TIME_SPENT_IN_LOGS'),
-				'sort' => 'TIME_SPENT_IN_LOGS',
-				'first_order' => 'desc',
-				'default' => false,
-			],
-			'FLAG_COMPLETE' => [
-				'id' => 'FLAG_COMPLETE',
-				'name' => Loc::getMessage('TASKS_COLUMN_FLAG_COMPLETE'),
-				'sort' => false,
-				'editable' => false,
-				'default' => false,
-			],
-			'TAG' => [
-				'id' => 'TAG',
-				'name' => Loc::getMessage('TASKS_COLUMN_TAG'),
-				'sort' => false,
-				'editable' => false,
-				'default' => true,
-			],
-		];
-
-		if (Main\Loader::includeModule('crm'))
-		{
-			$headers['UF_CRM_TASK_LEAD'] = [
-				'id' => 'UF_CRM_TASK_LEAD',
-				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Lead),
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			];
-			$headers['UF_CRM_TASK_CONTACT'] = [
-				'id' => 'UF_CRM_TASK_CONTACT',
-				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Contact),
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			];
-			$headers['UF_CRM_TASK_COMPANY'] = [
-				'id' => 'UF_CRM_TASK_COMPANY',
-				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Company),
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			];
-			$headers['UF_CRM_TASK_DEAL'] = [
-				'id' => 'UF_CRM_TASK_DEAL',
-				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Deal),
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			];
-		}
-
-		foreach ($arParams['UF'] as $ufName => $ufItem)
-		{
-			$headers[$ufName] = [
-				'id' => $ufName,
-				'name' => $ufItem['EDIT_FORM_LABEL'],
-				'sort' => false,
-				'first_order' => 'desc',
-				'editable' => false,
-				'default' => false,
-			];
-		}
-
-		// if key 'default' is present, don't change it
-		foreach ($arParams['COLUMNS'] as $columnId)
-		{
-			if (array_key_exists($columnId, $headers) && !array_key_exists('default', $headers[$columnId]))
-			{
-				$headers[$columnId]['default'] = true;
-			}
-		}
-
-		return $headers;
-	}
-}
 
 if (!function_exists('formatDateFieldsForOutput'))
 {
@@ -736,7 +513,9 @@ if (!function_exists('prepareGroupActionItems'))
 	}
 }
 
-$arResult['HEADERS'] = prepareHeaders($arParams);
+$grid = new Bitrix\Tasks\Grid\Task\Grid($arResult['LIST'], $arParams);
+
+$arResult['HEADERS'] = $grid->prepareHeaders();
 $arResult['TEMPLATE_DATA'] = [
 	'EXTENSION_ID' => 'tasks_task_list_component_ext_'.md5($this->GetFolder()),
 ];
@@ -750,8 +529,6 @@ if (!empty($arResult['LIST']))
 	$users = [];
 	$groups = [];
 
-	$arParams['FILTER_FIELDS'] = (new Options($arParams['FILTER_ID']))->getFilter();
-
 	foreach ($arResult['LIST'] as $row)
 	{
 		$users[] = $row['CREATED_BY'];
@@ -764,6 +541,7 @@ if (!empty($arResult['LIST']))
 	}
 
 	$groups = SocialNetwork\Group::getData($groups);
+	$preparedRows = $grid->prepareRows();
 
 	foreach ($arResult['LIST'] as $key => $row)
 	{
@@ -795,18 +573,21 @@ if (!empty($arResult['LIST']))
 			];
 		}
 
+		$preparedRow = $preparedRows[$key];
+
 		$arResult['ROWS'][] = [
 			'id' => $taskId,
 			'has_child' => array_key_exists($taskId, $arResult['SUB_TASK_COUNTERS']),
 			'parent_id' => (Grid\Context::isInternalRequest() ? $row['PARENT_ID'] : 0),
 			'parent_group_id' => $groupId,
-			'columns' => Row::prepareContent($row, $arParams),
-			'actions' => Row::prepareActions($row, $arParams),
+			'columns' => $preparedRow['content'],
+			'actions' => $preparedRow['actions'],
+			'cellActions' => $preparedRow['cellActions'],
+			'counters' => $preparedRow['counters'],
 			'attrs' => [
 				'data-type' => 'task',
 				'data-group-id' => $groupId,
 				'data-can-edit' => ($row['ACTION']['EDIT'] === true ? 'true' : 'false'),
-				'data-pinned' => ($arParams['CAN_USE_PIN'] ? $row['IS_PINNED'] : 'N'),
 			],
 		];
 

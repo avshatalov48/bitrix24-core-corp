@@ -3,8 +3,9 @@
 	const defaultOptions = {
 		entities: {
 			"user": {
-				"options": {},
-				"emailUsers": true,
+				"options": {
+					"emailUsers": true,
+				},
 				"searchable": true,
 				"dynamicLoad": true,
 				"dynamicSearch": true

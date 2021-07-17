@@ -1020,9 +1020,9 @@ class CIntranetEventHandlers
 
 		if (
 			$arUser['ID'] > 0
-			&& $arUser['ACTIVE'] == 'Y'
+			&& $arUser['ACTIVE'] === 'Y'
 			&& empty($arUser['CONFIRM_CODE'])
-			&& !in_array($arUser['EXTERNAL_AUTH_ID'], array('replica', 'email', 'bot', 'imconnector'))
+			&& !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
 			&& !defined('INTR_SKIP_EVENT_ADD')
 			&& ($IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_state_history', ''))
 			&& !in_array($arUser['ID'], $processedIdListIblock)
@@ -1123,15 +1123,15 @@ class CIntranetEventHandlers
 				$fields['ID'] > 0
 				&& is_array($fields['UF_DEPARTMENT'])
 				&& $fields['UF_DEPARTMENT'][0]
-				&& $fields['ACTIVE'] == 'Y'
+				&& $fields['ACTIVE'] === 'Y'
 				&& (
 					!isset($fields['EXTERNAL_AUTH_ID'])
-					|| !in_array($fields['EXTERNAL_AUTH_ID'], array('replica', 'email', 'bot', 'imconnector'))
+					|| !in_array($fields['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
 				)
 				&& (
 					!is_array(self::$userDepartmentCache[$fields['ID']])
 					|| !self::$userDepartmentCache[$fields['ID']][0]
-					|| self::$userActiveCache == 'N'
+					|| self::$userActiveCache === 'N'
 				)
 				&& !defined('INTR_SKIP_EVENT_ADD')
 				&& !IsModuleInstalled('bitrix24')
@@ -1801,7 +1801,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 	{
 		global $APPLICATION;
 
-		$APPLICATION->ThrowException(GetMessage('INTR_IBLOCK_REQUIRED'));
+		$APPLICATION->ThrowException(GetMessage('INTR_IBLOCK_REQUIRED_EXTENDED'));
 
 		return false;
 	}

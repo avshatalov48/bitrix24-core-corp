@@ -453,7 +453,7 @@ class CCrmStatus
 			for ($i=0, $ic=count($filter_keys); $i<$ic; $i++)
 			{
 				$val = $arFilter[$filter_keys[$i]];
-				if ((string)$val == '' || $val=='NOT_REF') continue;
+				if ((string)$val == '' || (string)$val=='NOT_REF') continue;
 				switch(strtoupper($filter_keys[$i]))
 				{
 					case 'ID':
@@ -755,7 +755,7 @@ class CCrmStatus
 		$escapedList = [];
 		foreach (static::GetStatusList($entityId) as $statusId => $statusName)
 		{
-			$escapedList[$statusId] = htmlspecialcharsbx($statusName);
+			$escapedList[htmlspecialcharsbx($statusId)] = htmlspecialcharsbx($statusName);
 		}
 
 		return $escapedList;
@@ -1020,7 +1020,6 @@ class CCrmStatus
 				'SORT' => 79,
 				'SYSTEM' => 'Y'
 			],
-
 			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_OTHER'),
 				'STATUS_ID' => 'OTHER',

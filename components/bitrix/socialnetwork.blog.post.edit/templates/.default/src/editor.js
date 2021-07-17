@@ -1,10 +1,11 @@
-import { Dom, Type, Uri, ajax as Ajax, Event, Browser } from 'main.core';
+import { Dom, Type, Uri, ajax as Ajax, Event, Browser, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import PostForm from './form';
 import PostFormTabs from './tabs';
+import PostFormGratSelector from './grat';
 import PostFormAutoSave from './autosave';
 
-export default class PostFormEditor
+export default class PostFormEditor extends EventEmitter
 {
 	static instance: { [key: string]: any } = {};
 
@@ -24,6 +25,7 @@ export default class PostFormEditor
 
 	constructor(formID, params)
 	{
+		super();
 		this.init(formID, params);
 		PostFormEditor.setInstance(formID, this);
 
@@ -125,6 +127,12 @@ export default class PostFormEditor
 			if (params.activeTab !== '')
 			{
 				PostFormTabs.getInstance().changePostFormTab(params.activeTab);
+			}
+
+			PostFormTabs.getInstance().subscribe('changePostFormTab', this.checkHideAlert.bind(this));
+			if (PostFormGratSelector.getInstance())
+			{
+				PostFormGratSelector.getInstance().subscribe('Selector::onContainerClick', this.hideAlert.bind(this));
 			}
 		});
 	}
@@ -243,22 +251,9 @@ export default class PostFormEditor
 				document.getElementById('POST_TITLE').value = '';
 			}
 
-			let submitButton = null;
-
-			if (
-				value === 'save'
-				&& document.getElementById('blog-submit-button-save')
-			)
-			{
-				submitButton = document.getElementById('blog-submit-button-save');
-			}
-			else if (
-				value === 'draft'
-				&& document.getElementById('blog-submit-button-draft')
-			)
-			{
-				submitButton = document.getElementById('blog-submit-button-draft');
-			}
+			const submitButton = this.getSubmitButton({
+				buttonType: value,
+			});
 
 			if (submitButton)
 			{
@@ -287,11 +282,111 @@ export default class PostFormEditor
 				document.getElementById(this.formId).action = actionUrl;
 			}
 
+			if (
+				activeTab === PostFormTabs.getInstance().config.id.gratitude
+				&& PostFormGratSelector.getInstance()
+			)
+			{
+				if (!this.checkEmployeesValue({
+					buttonType: value,
+				}))
+				{
+					return;
+				}
+			}
+
 			BX.submit(document.getElementById(this.formId), value);
 
 			this.formParams.submitted = true;
 		}
 	};
+
+	checkEmployeesValue({ buttonType }): boolean
+	{
+		const employeesValueNode = document.getElementById(this.formId).elements[PostFormGratSelector.getInstance().config.fields.employeesValue.name];
+		if (
+			!employeesValueNode
+			|| !Type.isStringFilled(employeesValueNode.value)
+			|| employeesValueNode.value === '[]'
+		)
+		{
+			const submitButton = this.getSubmitButton({
+				buttonType,
+			});
+
+			if (submitButton)
+			{
+				submitButton.classList.remove('ui-btn-clock');
+				this.disabled = false;
+			}
+
+			const alertNode = document.getElementById('feed-add-post-bottom-alertblogPostForm');
+			if (alertNode)
+			{
+				Dom.clean(alertNode);
+				alertNode.appendChild(Dom.create('div', {
+					props: {
+						className: 'ui-alert ui-alert-danger',
+					},
+					children: [
+						Dom.create('span', {
+							props: {
+								className: 'ui-alert-message',
+							},
+							text: Loc.getMessage('BLOG_POST_EDIT_T_GRAT_ERROR_NO_EMPLOYEES'),
+						}),
+					],
+				}));
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
+	checkHideAlert(event) {
+		const { type } = event.getData();
+		if (type === PostFormTabs.getInstance().config.id.gratitude)
+		{
+			return;
+		}
+
+		this.hideAlert();
+	}
+
+	hideAlert()
+	{
+		const alertNode = document.getElementById('feed-add-post-bottom-alertblogPostForm');
+		if (!alertNode)
+		{
+			return;
+		}
+
+		Dom.clean(alertNode);
+	}
+
+	getSubmitButton({ buttonType })
+	{
+		let result = null;
+
+		if (
+			buttonType === 'save'
+			&& document.getElementById('blog-submit-button-save')
+		)
+		{
+			result = document.getElementById('blog-submit-button-save');
+		}
+		else if (
+			buttonType === 'draft'
+			&& document.getElementById('blog-submit-button-draft')
+		)
+		{
+			result = document.getElementById('blog-submit-button-draft');
+		}
+
+		return result;
+	}
 
 	onHandlerInited(obj, form)
 	{
@@ -303,7 +398,7 @@ export default class PostFormEditor
 		this.formParams.handler = obj;
 
 		EventEmitter.subscribe(obj.eventNode, 'OnControlClick', () => {
-			PostFormTabs.getInstance().changePostFormTab('message');
+			PostFormTabs.getInstance().changePostFormTab(PostFormTabs.getInstance().config.id.message);
 		});
 
 		EventEmitter.subscribe(obj.eventNode, 'OnAfterShowLHE', this.OnAfterShowLHE.bind(this));
@@ -324,6 +419,7 @@ export default class PostFormEditor
 		const div = [
 			document.getElementById('feed-add-post-form-notice-blockblogPostForm'),
 			document.getElementById('feed-add-buttons-blockblogPostForm'),
+			document.getElementById('feed-add-post-bottom-alertblogPostForm'),
 			document.getElementById('feed-add-post-content-message-add-ins')
 		];
 
@@ -355,6 +451,7 @@ export default class PostFormEditor
 		const div = [
 			document.getElementById('feed-add-post-form-notice-blockblogPostForm'),
 			document.getElementById('feed-add-buttons-blockblogPostForm'),
+			document.getElementById('feed-add-post-bottom-alertblogPostForm'),
 			document.getElementById('feed-add-post-content-message-add-ins')
 		];
 

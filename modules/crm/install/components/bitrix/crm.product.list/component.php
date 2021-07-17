@@ -91,6 +91,7 @@ $curParam = $APPLICATION->GetCurParam();
 $curParam = preg_replace('/(^|[^\w])bxajaxid=[\d\w]*([^\d\w]|$)/', '', $curParam);
 $curParam = preg_replace('/(?<!\w)list_section_id=\d*(?=([^\d]|$))/', 'list_section_id=#section_id#', $curParam);
 $curParam = preg_replace('/(^|&)tree=\w*(?=(&|$))/', '', $curParam);
+$curParam = preg_replace('/(^|&)PAGEN_\d*=\d*(?=(&|$))/', '', $curParam);
 $arResult['PAGE_URI_TEMPLATE'] = $arParams['PATH_TO_PRODUCT_LIST'].($curParam <> '' ? '?'.$curParam.'&tree=Y' : '?tree=Y');
 unset($curParam);
 

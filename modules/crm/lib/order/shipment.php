@@ -60,6 +60,17 @@ class Shipment extends Sale\Shipment
 			);
 		}
 
+		if (
+			$this->fields->isChanged('STATUS_ID')
+			&& $this->getField('STATUS_ID') === DeliveryStatus::getFinalStatus()
+		)
+		{
+			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
+		}
+
 		if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
 		{
 			Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
@@ -78,7 +89,7 @@ class Shipment extends Sale\Shipment
 				);
 			}
 
-			if (!$this->isSystem() && !$this->getOrder()->isNew())
+			if (!$isNew && !$this->isSystem() && !$this->getOrder()->isNew())
 			{
 				$timelineParams = [
 					'FIELDS' => $this->getFieldValues(),

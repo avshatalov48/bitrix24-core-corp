@@ -62,6 +62,41 @@ class File extends BaseObject
 		return $this->get($file);
 	}
 
+	/**
+	 * @param Disk\File $file
+	 * @return array
+	 * @deprecated
+	 * @throws ArgumentTypeException
+	 */
+	public function getMetaDataForCreatedFileInUfAction(Disk\File $file)
+	{
+		if ($file->getCreatedBy() != $this->getCurrentUser()->getId())
+		{
+			return [];
+		}
+
+		$folder = $file->getParent();
+		if (!$folder || $folder->getCode() !== Disk\SpecificFolder::CODE_FOR_CREATED_FILES)
+		{
+			return [];
+		}
+
+		$storage = $file->getStorage();
+
+		return [
+			'id' => $file->getId(),
+			'object' => [
+				'id' => $file->getId(),
+				'name' => $file->getName(),
+				'sizeInt' => $file->getSize(),
+				'size' => \CFile::formatSize($file->getSize()),
+				'extension' => $file->getExtension(),
+				'nameWithoutExtension' => getFileNameWithoutExtension($file->getName()),
+			],
+			'folderName' => $storage->getProxyType()->getTitleForCurrentUser() . ' / ' . $folder->getName(),
+		];
+	}
+
 	protected function get(Disk\BaseObject $file)
 	{
 		if (!($file instanceof Disk\File))
@@ -310,6 +345,11 @@ class File extends BaseObject
 	public function disableExternalLinkAction(Disk\File $file)
 	{
 		return $this->disableExternalLink($file);
+	}
+
+	public function getExternalLinkAction(Disk\File $file)
+	{
+		return $this->getExternalLink($file);
 	}
 
 	public function getAllowedOperationsRightsAction(Disk\File $file)

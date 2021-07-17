@@ -37,9 +37,9 @@ class Task extends StubConnector
 		return $this->canRead($userId);
 	}
 
-	public function getDataToShow()
+	public function getDataToShowForUser(int $userId)
 	{
-		$data = $this->loadTaskData($this->getUser()->getId());
+		$data = $this->loadTaskData($userId);
 
 		if (!$data)
 		{
@@ -55,6 +55,11 @@ class Task extends StubConnector
 			'DESCRIPTION' => Ui\Text::killTags($data['TITLE']),
 			'MEMBERS' => $this->getDestinations(),
 		];
+	}
+
+	public function getDataToShow()
+	{
+		return $this->getDataToShowForUser($this->getUser()->getId());
 	}
 
 	protected function getTitle()

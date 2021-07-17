@@ -171,7 +171,7 @@ class CBPRpaApproveActivity
 	{
 		$params = [];
 		$params['DOCUMENT_ID'] = $this->GetDocumentId();
-		$params['TASK_EDIT_URL'] = Rpa\Driver::getInstance()->getUrlManager()->getTaskIdUrl('#ID#');
+		$params['TASK_EDIT_URL'] = (string)Rpa\Driver::getInstance()->getUrlManager()->getTaskIdUrl('#ID#');
 		$params['ACTIONS'] = $this->Actions;
 		$params['FIELDS_TO_SHOW'] = $this->FieldsToShow;
 		$params['RESPONSIBLE_TYPE'] = $this->ResponsibleType;

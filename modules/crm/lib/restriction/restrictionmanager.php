@@ -51,6 +51,8 @@ class RestrictionManager
 	private static $ufAccessRightsRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $diskQuotaRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $callTrackerRestriction;
 	/** @var DynamicTypesLimit  */
 	private static $dynamicTypesLimit;
 	/**
@@ -247,6 +249,23 @@ class RestrictionManager
 	{
 		self::initializeDiskQuotaRestriction();
 		return self::$diskQuotaRestriction;
+	}
+
+	/**
+	 * @return AccessRestriction
+	 */
+	public static function getCallTrackerRestriction()
+	{
+		self::initialize();
+		return self::$callTrackerRestriction;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public static function isCallTrackerPermitted()
+	{
+		return self::getCallTrackerRestriction()->hasPermission();
 	}
 
 	/**
@@ -639,6 +658,23 @@ class RestrictionManager
 			]);
 
 		self::$callListRestriction = new Bitrix24AccessRestriction('call-list-limit-popup', false, [], ['ID' => 'limit_crm_dialer']);
+
+		self::$callTrackerRestriction = new Bitrix24AccessRestriction(
+			'crm_phone_tracker',
+			false,
+			[],
+			[
+				'ID' => 'crm_phone_tracker',
+				'TITLE' => '',
+				'CONTENT' => ''
+			]
+		);
+		if(!self::$callTrackerRestriction->load())
+		{
+			self::$callTrackerRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled("crm_phone_tracker")
+			);
+		}
 
 		self::$isInitialized = true;
 	}

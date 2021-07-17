@@ -11,6 +11,7 @@ $MESS["CRM_KANBAN_DELETE_CANCEL"] = "Abbrechen";
 $MESS["CRM_KANBAN_DELETE_RESTORE_SUCCESS"] = "Elemnte wurden erfolgreich wiederhergestellt.";
 $MESS["CRM_KANBAN_DELETE_SUCCESS"] = "Element #ELEMENT_NAME# wurde gelöscht";
 $MESS["CRM_KANBAN_DELETE_SUCCESS_MULTIPLE"] = "Elemente wurden gelöscht.";
+$MESS["CRM_KANBAN_DELIVERY_STAGE"] = "Lieferstatus";
 $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Privat";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Sonstiges";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Geschäftlich";

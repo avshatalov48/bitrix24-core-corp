@@ -211,27 +211,33 @@ class DealSearchContentBuilder extends SearchContentBuilder
 		DealTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
 	}
 
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\ORM\Data\Result
+	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\DB\Result
 	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$searchContent = $helper->forSql($map->getString());
+
 		if ($checkExist)
 		{
-			if (\Bitrix\Crm\Entity\Index\DealTable::getByPrimary(['DEAL_ID' => $entityId])->fetchObject())
+			$sql = "
+				INSERT INTO b_crm_deal_index(DEAL_ID, SEARCH_CONTENT)
+				VALUES({$entityId}, '{$searchContent}')
+				ON DUPLICATE KEY UPDATE SEARCH_CONTENT= '{$searchContent}'
+			";
+			try
 			{
-				return \Bitrix\Crm\Entity\Index\DealTable::update(
-					$entityId,
-					['SEARCH_CONTENT' => $map->getString()]
-				);
+				return $connection->query($sql);
 			}
-
-			return \Bitrix\Crm\Entity\Index\DealTable::add([
-				'DEAL_ID' => $entityId,
-				'SEARCH_CONTENT' => $map->getString()
-			]);
+			catch (\Exception $exception)
+			{
+				return $connection->query($sql);
+			}
 		}
 
-		return \Bitrix\Crm\Entity\Index\DealTable::update(
-			$entityId,
-			['SEARCH_CONTENT' => $map->getString()]
-		);
+		$sql = "
+			UPDATE b_crm_deal_index SET SEARCH_CONTENT= '{$searchContent}' WHERE DEAL_ID = {$entityId}
+		";
+		return $connection->query($sql);
 	}
 }

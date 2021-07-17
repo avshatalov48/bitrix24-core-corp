@@ -11,12 +11,14 @@ interface MenuBot
 {
 	/**
 	 * Checks if bot has ITR menu.
+	 *
 	 * @return bool
 	 */
 	public static function hasBotMenu();
 
 	/**
 	 * Returns stored data for ITR menu.
+	 *
 	 * @return array
 	 */
 	public static function getBotMenu();
@@ -49,13 +51,13 @@ interface MenuBot
 	 *   (int) MESSAGE_ID Previous message id.
 	 *   (string) COMMAND
 	 *   (string) COMMAND_PARAMS
-	 * ]</pre>
-	 *
-	 * @param bool $fullRedraw  Drop previous menu block.
+	 *   (bool) FULL_REDRAW Drop previous menu block.
+	 * ]
+	 * </pre>.
 	 *
 	 * @return array|null
 	 */
-	public static function showMenu(array $params, bool $fullRedraw = false);
+	public static function showMenu(array $params);
 
 	/**
 	 * Sends result of the user interaction with ITR menu to operator.

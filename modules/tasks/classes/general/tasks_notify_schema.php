@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -41,6 +41,13 @@ class CTasksNotifySchema
 					'NAME' => GetMessage('TASKS_NS_TASK_ASSIGNED'),
 					'PUSH' => 'Y',
 				],
+				'task_expired_soon' => [
+					'NAME' => GetMessage('TASKS_NS_TASK_EXPIRED_SOON'),
+					'PUSH' => 'Y',
+					'MAIL' => 'N',
+					'XMPP' => 'N',
+					'DISABLED' => [IM_NOTIFY_FEATURE_XMPP, IM_NOTIFY_FEATURE_MAIL],
+				]
 			],
 		];
 	}

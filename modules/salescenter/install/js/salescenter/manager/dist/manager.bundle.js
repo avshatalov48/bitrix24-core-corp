@@ -550,9 +550,27 @@ this.BX = this.BX || {};
 	      return new main_core.Uri('/saleshub/orders/').setQueryParams(params).toString();
 	    }
 	  }, {
+	    key: "getPaymentsListUrl",
+	    value: function getPaymentsListUrl(params) {
+	      if (!main_core.Type.isPlainObject(params)) {
+	        params = {};
+	      }
+
+	      if (Manager.sessionId > 0) {
+	        params['sessionId'] = Manager.sessionId;
+	      }
+
+	      return new main_core.Uri('/saleshub/payments/').setQueryParams(params).toString();
+	    }
+	  }, {
 	    key: "showOrdersList",
 	    value: function showOrdersList(params) {
 	      return Manager.openSlider(Manager.getOrdersListUrl(params));
+	    }
+	  }, {
+	    key: "showPaymentsList",
+	    value: function showPaymentsList(params) {
+	      return Manager.openSlider(Manager.getPaymentsListUrl(params));
 	    }
 	  }, {
 	    key: "getOrderAddUrl",
@@ -725,6 +743,11 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=9289135', 'chat_connect');
 	    }
 	  }, {
+	    key: "openHowCrmStoreWorks",
+	    value: function openHowCrmStoreWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=13651476', 'crmstore_how_works');
+	    }
+	  }, {
 	    key: "openHowSmsWorks",
 	    value: function openHowSmsWorks(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=9680407', 'sms_connect');
@@ -743,6 +766,11 @@ this.BX = this.BX || {};
 	    key: "openHowToConfigPaySystem",
 	    value: function openHowToConfigPaySystem(event, code) {
 	      Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_connect');
+	    }
+	  }, {
+	    key: "openHowToConfigCashboxPaySystem",
+	    value: function openHowToConfigCashboxPaySystem(event, code) {
+	      Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_cashbox_connect');
 	    }
 	  }, {
 	    key: "openHowToUseOfflineCashBox",
@@ -798,6 +826,11 @@ this.BX = this.BX || {};
 	    key: "openCommonPagesHelp",
 	    value: function openCommonPagesHelp(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=9604717', 'common_pages');
+	    }
+	  }, {
+	    key: "openBitrix24NotificationsHelp",
+	    value: function openBitrix24NotificationsHelp(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=13659402', 'bitrix24_notifications');
 	    }
 	  }, {
 	    key: "openHelper",
@@ -869,6 +902,17 @@ this.BX = this.BX || {};
 	      }
 
 	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {
+	        width: 735
+	      });
+	    }
+	  }, {
+	    key: "openIntegrationRequestForm",
+	    value: function openIntegrationRequestForm(event) {
+	      if (event && main_core.Type.isFunction(event.preventDefault)) {
+	        event.preventDefault();
+	      }
+
+	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=integration_request', {
 	        width: 735
 	      });
 	    }

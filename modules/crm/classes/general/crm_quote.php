@@ -2,7 +2,10 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Integration\StorageManager;
@@ -2150,8 +2153,8 @@ class CAllCrmQuote
 			'MYCOMPANY_ID' => array('FIELD' => self::TABLE_ALIAS.'.MYCOMPANY_ID', 'TYPE' => 'int'),
 			'MYCOMPANY_TITLE' => array('FIELD' => 'MC.TITLE', 'TYPE' => 'string', 'FROM' => $myCompanyJoin),
 
-			'BEGINDATE' => array('FIELD' => self::TABLE_ALIAS.'.BEGINDATE', 'TYPE' => 'datetime'),
-			'CLOSEDATE' => array('FIELD' => self::TABLE_ALIAS.'.CLOSEDATE', 'TYPE' => 'datetime'),
+			'BEGINDATE' => array('FIELD' => self::TABLE_ALIAS.'.BEGINDATE', 'TYPE' => 'date'),
+			'CLOSEDATE' => array('FIELD' => self::TABLE_ALIAS.'.CLOSEDATE', 'TYPE' => 'date'),
 
 			'ASSIGNED_BY_ID' => array('FIELD' => self::TABLE_ALIAS.'.ASSIGNED_BY_ID', 'TYPE' => 'int'),
 			'ASSIGNED_BY_LOGIN' => array('FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $assignedByJoin),
@@ -2864,9 +2867,11 @@ class CAllCrmQuote
 					}
 					elseif ($k === 'CLIENT_ADDR')
 					{
-						$v = Bitrix\Crm\Format\CompanyAddressFormatter::format(
-							$arCompany,
-							array('TYPE_ID' => EntityAddressType::Registered)
+						$v = AddressFormatter::getSingleInstance()->formatTextComma(
+							CompanyAddress::mapEntityFields(
+								$arCompany,
+								['TYPE_ID' => EntityAddressType::Registered]
+							)
 						);
 					}
 					elseif ($k === 'CLIENT_EMAIL')
@@ -2901,7 +2906,9 @@ class CAllCrmQuote
 					}
 					elseif ($k === 'CLIENT_ADDR')
 					{
-						$v = Bitrix\Crm\Format\ContactAddressFormatter::format($arContact);
+						$v = AddressFormatter::getSingleInstance()->formatTextComma(
+							ContactAddress::mapEntityFields($arContact)
+						);
 					}
 					elseif ($k === 'CLIENT_EMAIL')
 					{
@@ -2985,10 +2992,7 @@ class CAllCrmQuote
 					{
 						$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId;
 						$requisiteValues[$valueKey] =
-							Bitrix\Crm\Format\EntityAddressFormatter::format(
-								$addrFields,
-								array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::Comma)
-							);
+							AddressFormatter::getSingleInstance()->formatTextComma($addrFields);
 					}
 				}
 			}
@@ -3776,14 +3780,15 @@ class CAllCrmQuote
 						foreach ($requisite->getAddresses($requisiteId) as $addrTypeId => $addrFields)
 						{
 							$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId.'|'.$presetCountryId;
-							$requisiteValues[$valueKey] =
-								Bitrix\Crm\Format\EntityAddressFormatter::prepareLines(
-									$addrFields,
-									array(
-										'SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::NewLine,
-										'NL2BR' => false
-									)
-								);
+							$addressLines = explode(
+								"\n",
+								str_replace(
+									["\r\n", "\n", "\r"], "\n",
+									AddressFormatter::getSingleInstance()->formatTextMultiline($addrFields)
+								)
+							);
+							$requisiteValues[$valueKey] = is_array($addressLines) ? $addressLines : [];
+							unset($valueKey, $addressLines);
 						}
 					}
 				}
@@ -4070,14 +4075,15 @@ class CAllCrmQuote
 						foreach ($requisite->getAddresses($mcRequisiteId) as $addrTypeId => $addrFields)
 						{
 							$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId.'|'.$mcPresetCountryId;
-							$mcRequisiteValues[$valueKey] =
-								Bitrix\Crm\Format\EntityAddressFormatter::prepareLines(
-									$addrFields,
-									array(
-										'SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::NewLine,
-										'NL2BR' => false
-									)
-								);
+							$addressLines = explode(
+								"\n",
+								str_replace(
+									["\r\n", "\n", "\r"], "\n",
+									AddressFormatter::getSingleInstance()->formatTextMultiline($addrFields)
+								)
+							);
+							$mcRequisiteValues[$valueKey] = is_array($addressLines) ? $addressLines : [];
+							unset($valueKey, $addressLines);
 						}
 					}
 				}

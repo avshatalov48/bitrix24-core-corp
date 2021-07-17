@@ -109,3 +109,7 @@ export const SessionStatus = Object.freeze({
 	duplicate: 69,
 	silentlyClose: 75,
 });
+
+export const EventType = Object.freeze({
+	requestShowForm: 'IMOL.Widget:requestShowForm',
+});

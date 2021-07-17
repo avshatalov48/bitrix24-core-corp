@@ -1,20 +1,21 @@
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
-(function (exports,main_popup,salescenter_manager,main_core,ui_vue) {
+(function (exports,main_core,main_popup,salescenter_manager,ui_vue) {
 	'use strict';
 
-	var Alert = {
-	  template: "\n\t\t<div class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t<slot name=\"sms-alert-text\"></slot>\n\t\t\t</span>\n\t\t</div>\n\t"
-	};
-
-	var Configure = {
-	  props: ['url'],
+	var Error = {
+	  props: {
+	    error: {
+	      type: Object,
+	      required: true
+	    }
+	  },
 	  methods: {
 	    openSlider: function openSlider() {
 	      var _this = this;
 
-	      salescenter_manager.Manager.openSlider(this.url).then(function () {
+	      salescenter_manager.Manager.openSlider(this.error.fixUrl).then(function () {
 	        return _this.onConfigure();
 	      });
 	    },
@@ -22,7 +23,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      this.$emit('on-configure');
 	    }
 	  },
-	  template: "\n\t\t<div class=\"ui-alert ui-alert-danger ui-alert-xs salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t<slot name=\"sms-configure-text-alert\"></slot>\n\t\t\t</span>\n\t\t\t<span class=\"salescenter-app-payment-by-sms-item-container-alert-config\" @click=\"openSlider()\">\n\t\t\t\t<slot name=\"sms-configure-text-setting\"></slot>\n\t\t\t</span>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"ui-alert ui-alert-danger ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t{{error.text}}\n\t\t\t</span>\n\t\t\t<span\n\t\t\t\tv-if=\"error.fixUrl && error.fixText\"\n\t\t\t\tclass=\"salescenter-app-payment-by-sms-item-container-alert-config\"\n\t\t\t\t@click=\"openSlider()\"\n\t\t\t>\n\t\t\t\t{{error.fixText}}\n\t\t\t</span>\n\t\t</div>\n\t"
 	};
 
 	var MessageControl = {
@@ -271,43 +272,60 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	};
 
 	var SenderList = {
-	  props: ['list', 'selected', 'settingUrl'],
+	  props: ['list', 'initSelected', 'settingUrl'],
 	  computed: {
-	    getSenderCode: function getSenderCode() {
-	      return this.selected;
+	    selectedSender: function selectedSender() {
+	      var _this = this;
+
+	      return this.list.find(function (sender) {
+	        return sender.id === _this.selected;
+	      });
 	    },
-	    getConfigUrl: function getConfigUrl() {
-	      return this.settingUrl;
+	    selectedSenderName: function selectedSenderName() {
+	      return this.selectedSender ? this.selectedSender.name : '';
 	    },
 	    localize: function localize() {
 	      return ui_vue.Vue.getFilteredPhrases('SALESCENTER_SENDER_LIST_CONTENT_');
 	    }
 	  },
+	  data: function data() {
+	    return {
+	      selected: null
+	    };
+	  },
+	  created: function created() {
+	    if (this.initSelected) {
+	      this.onSelectedSender(this.initSelected);
+	    } else if (this.list && this.list.length > 0) {
+	      this.onSelectedSender(this.list[0].id);
+	    }
+	  },
 	  methods: {
 	    openSlider: function openSlider() {
-	      var _this = this;
+	      var _this2 = this;
 
-	      salescenter_manager.Manager.openSlider(this.getConfigUrl).then(function () {
-	        return _this.onConfigure();
+	      salescenter_manager.Manager.openSlider(this.settingUrl).then(function () {
+	        return _this2.onConfigure();
 	      });
 	    },
 	    onConfigure: function onConfigure() {
 	      this.$emit('on-configure');
 	    },
 	    onSelectedSender: function onSelectedSender(value) {
+	      this.selected = value;
 	      this.$emit('on-selected', value);
 	    },
 	    render: function render(target, array) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var menuItems = [];
 
 	      var setItem = function setItem(ev) {
 	        target.innerHTML = ev.target.innerHTML;
 
-	        _this2.setCode(ev.currentTarget.getAttribute('data-item-sender-value'));
+	        _this3.onSelectedSender(ev.currentTarget.getAttribute('data-item-sender-value'));
 
-	        _this2.popupMenu.close();
+	        _this3.popupMenu.close();
 	      };
 
 	      for (var index in array) {
@@ -327,9 +345,9 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      menuItems.push({
 	        text: this.localize.SALESCENTER_SENDER_LIST_CONTENT_SETTINGS,
 	        onclick: function onclick() {
-	          _this2.openSlider();
+	          _this3.openSlider();
 
-	          _this2.popupMenu.close();
+	          _this3.popupMenu.close();
 	        }
 	      });
 	      this.popupMenu = new main_popup.PopupMenuWindow({
@@ -337,35 +355,9 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	        items: menuItems
 	      });
 	      this.popupMenu.show();
-	    },
-	    getName: function getName() {
-	      if (main_core.Type.isArray(this.list)) {
-	        for (var index in this.list) {
-	          if (!this.list.hasOwnProperty(index)) {
-	            continue;
-	          }
-
-	          if (this.list[index].id === this.getSenderCode) {
-	            return this.list[index].name;
-	          }
-	        }
-	      }
-
-	      return null;
-	    },
-	    setCode: function setCode(value) {
-	      if (typeof value === 'string') {
-	        this.onSelectedSender(value);
-	        return;
-	      }
-
-	      this.onSelectedSender(value.target.value);
-	    },
-	    isShow: function isShow() {
-	      return main_core.Type.isString(this.getName());
 	    }
 	  },
-	  template: "\n\t\t<div v-if=\"isShow()\" class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t<slot name=\"sms-sender-list-text-send-from\"></slot>\n\t\t\t<span @click=\"render($event.target, list)\">{{getName()}}</span>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t<slot name=\"sms-sender-list-text-send-from\"></slot>\n\t\t\t<span @click=\"render($event.target, list)\">{{selectedSenderName}}</span>\n\t\t</div>\n\t"
 	};
 
 	var UserAvatar = {
@@ -386,8 +378,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-user\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-user-avatar\" :style=\"avatarStyle\"></div>\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-user-name\">{{manager.name}}</div>\n\t\t</div>\n\t"
 	};
 
-	exports.Alert = Alert;
-	exports.Configure = Configure;
+	exports.Error = Error;
 	exports.MessageControl = MessageControl;
 	exports.MessageEdit = MessageEdit;
 	exports.MessageEditor = MessageEditor;
@@ -395,5 +386,5 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	exports.SenderList = SenderList;
 	exports.UserAvatar = UserAvatar;
 
-}((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX.Main,BX.Salescenter,BX,BX));
+}((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX,BX.Main,BX.Salescenter,BX));
 //# sourceMappingURL=sms-message.bundle.js.map

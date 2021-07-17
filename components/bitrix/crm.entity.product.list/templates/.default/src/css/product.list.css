@@ -726,3 +726,11 @@ select.crm-entity-product-control-select-field:hover {
 .main-grid-cell-drag {
 	padding-top: 6px !important;
 }
+
+.main-grid-cell-head[data-name="MAIN_INFO"] {
+	min-width: 420px;
+}
+
+.catalog-product-edit {
+	max-width: 800px;
+}

@@ -533,14 +533,8 @@ elseif($action === 'SAVE')
 	$component = new CCrmContactDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
-	$component->prepareEntityFieldAttributes();
-	$result = array(
-		'ENTITY_ID' => $ID,
-		'ENTITY_DATA' => $component->prepareEntityData(),
-		'ENTITY_INFO' => $component->prepareEntityInfo()
-	);
+	$component->initializeData();
+	$result = $component->getEntityEditorData();
 
 	if($isNew)
 	{
@@ -565,6 +559,29 @@ elseif($action === 'SAVE')
 			array('ENABLE_SLIDER' => true)
 		);
 	}
+
+	__CrmContactDetailsEndJsonResonse($result);
+}
+elseif($action === 'LOAD')
+{
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
+
+	if ($ID <=0)
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
+	}
+	if(!\CCrmCompany::CheckReadPermission($ID, $currentUserPermissions))
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+	}
+
+	CBitrixComponent::includeComponentClass('bitrix:crm.contact.details');
+	$component = new CCrmContactDetailsComponent();
+	$component->initializeParams($params);
+	$component->setEntityID($ID);
+	$component->initializeData();
+	$result = $component->getEntityEditorData();
 
 	__CrmContactDetailsEndJsonResonse($result);
 }
@@ -701,9 +718,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
 
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
-	$component->prepareEntityFieldAttributes();
+	$component->initializeData();
 
 	if(empty($fieldNames))
 	{

@@ -415,6 +415,7 @@ elseif($action === 'SAVE')
 
 	if($enableProductRows)
 	{
+		$isManualOpportunity = array_key_exists('IS_MANUAL_OPPORTUNITY', $fields) ? $fields['IS_MANUAL_OPPORTUNITY'] : $previousFields['IS_MANUAL_OPPORTUNITY'];
 		if(!empty($productRows))
 		{
 			if($isCopyMode)
@@ -443,13 +444,16 @@ elseif($action === 'SAVE')
 			}
 
 			$totals = \CCrmProductRow::CalculateTotalInfo('L', 0, false, $calculationParams, $productRows);
-			$fields['OPPORTUNITY'] = isset($totals['OPPORTUNITY']) ? $totals['OPPORTUNITY'] : 0.0;
+			if ($isManualOpportunity !='Y')
+			{
+				$fields['OPPORTUNITY'] = isset($totals['OPPORTUNITY']) ? $totals['OPPORTUNITY'] : 0.0;
+			}
 			$fields['TAX_VALUE'] = isset($totals['TAX_VALUE']) ? $totals['TAX_VALUE'] : 0.0;
 		}
 		else
 		{
 			$fields['TAX_VALUE'] = 0.0;
-			if(!isset($fields['OPPORTUNITY']) && ($isNew || !empty($originalProductRows)))
+			if(!isset($fields['OPPORTUNITY']) && ($isNew || !empty($originalProductRows)) && $isManualOpportunity !='Y')
 			{
 				$fields['OPPORTUNITY'] = 0.0;
 			}
@@ -732,11 +736,9 @@ elseif($action === 'SAVE')
 	$component = new CCrmLeadDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+	$component->initializeData();
 
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
-
-	$result = array('ENTITY_ID' => $ID, 'ENTITY_DATA' => $component->prepareEntityData());
+	$result = $component->getEntityEditorData();
 
 	if($isNew)
 	{
@@ -764,6 +766,30 @@ elseif($action === 'SAVE')
 			array('ENABLE_SLIDER' => true)
 		);
 	}
+
+	__CrmLeadDetailsEndJsonResponse($result);
+}
+elseif($action === 'LOAD')
+{
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
+
+	if ($ID <=0)
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
+	}
+	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+	}
+
+	CBitrixComponent::includeComponentClass('bitrix:crm.lead.details');
+	$component = new CCrmLeadDetailsComponent();
+	$component->initializeParams($params);
+	$component->setEntityID($ID);
+	$component->initializeData();
+
+	$result = $component->getEntityEditorData();
 
 	__CrmLeadDetailsEndJsonResponse($result);
 }
@@ -946,9 +972,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	{
 		$optionPrefix = $component->getDefaultConfigID();
 	}
-
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
+	$component->initializeData();
 
 	$GLOBALS['APPLICATION']->RestartBuffer();
 	Header('Content-Type: text/html; charset='.LANG_CHARSET);

@@ -1,4 +1,4 @@
-export default function getInputParams(entityName: string): Object
+export default function getInputParams(entityName: string, seed: number): Object
 {
 	const views = {
 		plan: {
@@ -96,14 +96,14 @@ export default function getInputParams(entityName: string): Object
 			};
 		case 'SimpleItem':
 			return {
-				itemId: 1,
+				itemId: seed ? 1 + seed : 1,
 				name: '::name::',
-				sort: 1,
-				storyPoints: 3,
+				sort: seed ? 1 + seed : 1,
+				storyPoints: seed ? 3 + seed : 3,
 			};
 		case 'Item':
 			return {
-				itemId: 2,
+				itemId: 7,
 				name: '::name::',
 				itemType: 'task',
 				sort: 1,
@@ -111,7 +111,6 @@ export default function getInputParams(entityName: string): Object
 				entityType: 'backlog',
 				parentId: 0,
 				sourceId: 1,
-				parentSourceId: 0,
 				responsible: {
 					id: 1,
 					name: '::username::',

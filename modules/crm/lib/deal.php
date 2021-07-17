@@ -326,6 +326,11 @@ class DealTable extends Main\ORM\Data\DataManager
 				Binding\DealContactTable::class,
 				Main\ORM\Query\Join::on('this.ID', 'ref.DEAL_ID')
 			),
+			new ReferenceField(
+				'ORDER_BINDING',
+				Binding\OrderDealTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.DEAL_ID')
+			),
 		);
 
 		$codeList = UtmTable::getCodeList();

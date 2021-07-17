@@ -417,10 +417,44 @@ class Base
 	}
 
 	/**
+	 * Activity add callback
 	 * @param array $activityFields
+	 * @param array|null $params
 	 * return null
 	 */
-	public static function onAfterAdd($activityFields)
+	public static function onAfterAdd($activityFields, array $params = null)
+	{
+	}
+
+	/**
+	 * Activity update callback
+	 * @param int $id
+	 * @param array $changedFields
+	 * @param array $oldFields
+	 * @param array $newFields
+	 * @param array|null $params
+	 */
+	public static function onAfterUpdate(
+		int $id,
+		array $changedFields,
+		array $oldFields,
+		array $newFields,
+		array $params = null
+	)
+	{
+	}
+
+	/**
+	 * Activity delete callback
+	 * @param int $id
+	 * @param array $activityFields
+	 * @param array|null $params
+	 */
+	public static function onAfterDelete(
+		int $id,
+		array $activityFields,
+		array $params = null
+	)
 	{
 	}
 

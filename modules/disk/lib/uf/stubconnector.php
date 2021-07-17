@@ -14,7 +14,12 @@ class StubConnector extends Connector implements IWorkWithAttachedObject
 	 */
 	public function getDataToShow()
 	{
-		return array();
+		return [];
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
+		return [];
 	}
 
 	/**

@@ -8,6 +8,7 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
@@ -15,7 +16,6 @@ use Bitrix\Main\EventResult;
 use Bitrix\Crm\Requisite;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Format;
-use Bitrix\Crm\EntityAddress;
 use Bitrix\Main\UserConsent\Agreement;
 use Bitrix\Main\UserConsent\Internals\AgreementTable;
 use Bitrix\Main\UserConsent\Intl;
@@ -266,9 +266,7 @@ class UserConsent
 
 		if ($address && is_array($address))
 		{
-			$address = Format\EntityAddressFormatter::format($address, array(
-				'SEPARATOR' => Format\AddressSeparator::Comma
-			));
+		    $address = Format\AddressFormatter::getSingleInstance()->formatTextComma($address);
 		}
 		else
 		{
@@ -287,10 +285,9 @@ class UserConsent
 				$addressTypeId =  EntityAddressType::Primary;
 			}
 
-			$address = Format\CompanyAddressFormatter::format($address, array(
-				'SEPARATOR' => Format\AddressSeparator::Comma,
-				'TYPE_ID' => $addressTypeId
-			));
+            $address = Format\AddressFormatter::getSingleInstance()->formatTextComma(
+                CompanyAddress::mapEntityFields($address, ['TYPE_ID' => $addressTypeId])
+            );
 		}
 
 		$result['COMPANY_ADDRESS'] = $address;

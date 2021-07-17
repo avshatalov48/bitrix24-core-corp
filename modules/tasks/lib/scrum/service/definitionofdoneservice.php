@@ -328,7 +328,10 @@ class DefinitionOfDoneService extends Controller
 						'TYPE' => 'save',
 						'CAPTION' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_TASK_COMPLETE_BUTTON')
 					],
-					'cancel'
+					[
+						'type' => 'custom',
+						'layout' => $this->getCancelButtonLayout(),
+					],
 				]
 			]);
 		}
@@ -417,5 +420,11 @@ class DefinitionOfDoneService extends Controller
 
 			return '';
 		}
+	}
+
+	private function getCancelButtonLayout(): string
+	{
+		return '<a class="ui-btn ui-btn-link" name="cancel">'
+			.Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_TASK_CANCEL_BUTTON').'</a>';
 	}
 }

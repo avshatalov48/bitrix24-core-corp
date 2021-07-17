@@ -142,7 +142,7 @@ abstract class Request
 		{
 			throw new SystemException('AuthAdapter not applied.');
 		}
-		$this->client =  $this->client ?? new AdsHttpClient(['socketTimeout' => 5]);
+		$this->client = $this->client ?? new AdsHttpClient(['socketTimeout' => 5]);
 		$this->client->clearHeaders();
 
 		$response = Response::create($this->type);

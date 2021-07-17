@@ -19,6 +19,7 @@ final class FileAttributes extends ItemAttributes
 	public const ATTRIBUTE_OBJECT_ID = 'data-object-id';
 	public const ATTRIBUTE_VERSION_ID = 'data-version-id';
 	public const ATTRIBUTE_ATTACHED_OBJECT_ID = 'data-attached-object-id';
+	public const ATTRIBUTE_SEPARATE_ITEM = 'data-viewer-separate-item';
 
 	public const JS_TYPE = 'cloud-document';
 
@@ -58,6 +59,13 @@ final class FileAttributes extends ItemAttributes
 		return $this;
 	}
 
+	public function setAsSeparateItem()
+	{
+		$this->setAttribute(self::ATTRIBUTE_SEPARATE_ITEM, true);
+
+		return $this;
+	}
+
 	protected function setDefaultAttributes()
 	{
 		parent::setDefaultAttributes();
@@ -67,17 +75,31 @@ final class FileAttributes extends ItemAttributes
 			$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 			if ($documentHandler instanceof OnlyOfficeHandler)
 			{
-				$this->attributes['data-viewer-type-class'] = self::JS_TYPE_CLASS_ONLYOFFICE;
+				$this->setTypeClass(self::JS_TYPE_CLASS_ONLYOFFICE);
+				$this->setAsSeparateItem();
 			}
 			else
 			{
-				$this->attributes['data-viewer-type-class'] = self::JS_TYPE_CLASS_CLOUD_DOCUMENT;
+				$this->setTypeClass(self::JS_TYPE_CLASS_CLOUD_DOCUMENT);
 			}
 
 			$this->setExtension('disk.viewer.document-item');
 
 			Extension::load('disk.viewer.document-item');
 		}
+	}
+
+	public function setGroupBy($id)
+	{
+		if ($this->getTypeClass() === self::JS_TYPE_CLASS_ONLYOFFICE)
+		{
+			//temp fix: we have to disable view in group because onlyoffice uses SidePanel
+			$this->unsetGroupBy();
+
+			return $this;
+		}
+
+		return parent::setGroupBy($id);
 	}
 
 	protected static function getViewerTypeByFile(array $fileArray)
@@ -150,7 +172,7 @@ final class FileAttributes extends ItemAttributes
 			MimeType::getByFileExtension('xlsx'),
 			MimeType::getByFileExtension('ppt'),
 			MimeType::getByFileExtension('pptx'),
-//			MimeType::getByFileExtension('xodt'),
+			'application/vnd.ms-powerpoint',
 		];
 	}
 }

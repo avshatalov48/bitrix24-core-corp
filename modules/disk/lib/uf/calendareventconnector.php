@@ -39,6 +39,11 @@ final class CalendarEventConnector extends StubConnector
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		$event = \CCalendarEvent::getById($this->entityId);
 		if(empty($event))
 		{

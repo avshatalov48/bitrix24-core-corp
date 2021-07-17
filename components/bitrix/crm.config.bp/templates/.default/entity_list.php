@@ -1,9 +1,14 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
-	array(
+	[
 		'ID' => 'BP_TYPES',
 		'ACTIVE_ITEM_ID' => '',
 		'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
@@ -22,16 +27,15 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
 		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-	),
+	],
 	$component
 );
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.config.bp.types',
 	'',
-	Array(
+	[
 		'BP_LIST_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['bp_list'],
 		'BP_EDIT_URL' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['bp_edit']
-	),
+	],
 	$component
 );
-?>

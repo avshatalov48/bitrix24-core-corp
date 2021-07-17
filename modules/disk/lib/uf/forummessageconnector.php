@@ -15,7 +15,12 @@ final class ForumMessageConnector extends StubConnector
 
 	private $canRead = null;
 
-	public function getDataToShow($userId = 0)
+	public function getDataToShow()
+	{
+		return $this->getDataToShowForUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowForUser(int $userId)
 	{
 		$return = null;
 		if(($res = $this->getDataToCheck($this->entityId)) && !empty($res))
@@ -131,7 +136,7 @@ final class ForumMessageConnector extends StubConnector
 							if(Loader::includeModule("tasks"))
 							{
 								$connector = new \Bitrix\Tasks\Integration\Disk\Connector\Task($entityId);
-								$subData = $connector->getDataToShow();
+								$subData = $connector->tryToGetDataToShowForUser($userId);
 								if($subData["MEMBERS"])
 								{
 									$return["MEMBERS"] = $subData["MEMBERS"];
@@ -578,8 +583,8 @@ final class ForumMessageConnector extends StubConnector
 	public function addComment($authorId, array $data)
 	{
 		$return = null;
-		if(($res = $this->getDataToShow($authorId)) && !empty($res) &&
-			($res2 = $this->getDataToCheck($this->entityId)) && !empty($res2))
+		if(($res = $this->getDataToShowForUser($authorId)) && !empty($res) &&
+		   ($res2 = $this->getDataToCheck($this->entityId)) && !empty($res2))
 		{
 			list($message, $topic, $forum) = $res2;
 			$messageFields = array(

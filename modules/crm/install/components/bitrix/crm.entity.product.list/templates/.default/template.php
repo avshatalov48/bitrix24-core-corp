@@ -531,6 +531,7 @@ foreach ($rows as $key => $row)
 			'ACTION_PANEL' => $grid['ACTION_PANEL'],
 			'SHOW_ACTION_PANEL' => !empty($grid['ACTION_PANEL']),
 			'SHOW_ROW_CHECKBOXES' => false,
+			'SETTINGS_WINDOW_TITLE' => $arResult['ENTITY']['TITLE'],
 		],
 		$component
 	);
@@ -569,7 +570,7 @@ foreach ($rows as $key => $row)
 	<div class="crm-entity-total-wrapper crm-product-list-page-content">
 		<div class="crm-product-list-result-container" id="<?=$productTotalContainerId?>">
 			<table class="crm-product-list-payment-side-table">
-				<tr style="text-align: right;">
+				<tr class="crm-product-list-payment-side-table-row">
 					<td><?=Loc::getMessage('CRM_PRODUCT_TOTAL_BEFORE_DISCOUNT')?>:</td>
 					<td>
 						<span data-total="totalWithoutDiscount">
@@ -578,7 +579,16 @@ foreach ($rows as $key => $row)
 						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
 					</td>
 				</tr>
-				<tr style="text-align: right;" class="crm-product-list-result-grid-benefit">
+				<tr class="crm-product-list-payment-side-table-row">
+					<td><?=Loc::getMessage('CRM_DELIVERY_TOTAL')?>:</td>
+					<td>
+						<span data-total="totalDelivery">
+							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_DELIVERY_SUM'], $currency['ID'], false)?>
+						</span>
+						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					</td>
+				</tr>
+				<tr class="crm-product-list-payment-side-table-row crm-product-list-result-grid-benefit">
 					<td>
 						<?=Loc::getMessage('CRM_PRODUCT_TOTAL_DISCOUNT')?>:
 					</td>
@@ -589,7 +599,7 @@ foreach ($rows as $key => $row)
 						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
 					</td>
 				</tr>
-				<tr style="text-align: right;">
+				<tr class="crm-product-list-payment-side-table-row">
 					<td><?=Loc::getMessage('CRM_PRODUCT_TOTAL_BEFORE_TAX')?>:</td>
 					<td>
 						<span data-total="totalWithoutTax">
@@ -598,7 +608,7 @@ foreach ($rows as $key => $row)
 						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
 					</td>
 				</tr>
-				<tr style="text-align: right;">
+				<tr class="crm-product-list-payment-side-table-row">
 					<td class="crm-product-list-payment-side-table-td-border">
 						<?=Loc::getMessage('CRM_PRODUCT_TOTAL_TAX')?>:
 					</td>
@@ -609,7 +619,7 @@ foreach ($rows as $key => $row)
 						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
 					</td>
 				</tr>
-				<tr style="text-align: right;">
+				<tr class="crm-product-list-payment-side-table-row">
 					<td class="crm-product-list-result-grid-total-big">
 						<?=Loc::getMessage('CRM_PRODUCT_SUM_TOTAL')?>:
 					</td>

@@ -48,6 +48,7 @@
 
 			var checkboxTimeLimit = this.getEntity(container, 'public-link-setting-checkbox-time-limit');
 			var checkboxSetPassword = this.getEntity(container, 'public-link-setting-checkbox-password');
+			var canEditPassword = this.getEntity(container, 'public-link-setting-checkbox-can-edit');
 			var buttonShowPassword = this.getEntity(container, 'public-link-setting-popup-password-show');
 			var accessType = this.getEntity(container, 'public-link-setting-popup-dropdown');
 			var inputPassword = this.getEntity(this.getContainer(), 'public-link-setting-popup-input-password');
@@ -55,6 +56,7 @@
 
 			BX.bind(checkboxTimeLimit, 'click', this.handleStateTimeInputBlock.bind(this));
 			BX.bind(checkboxSetPassword, 'click', this.handleStatePasswordInputBlock.bind(this));
+			BX.bind(canEditPassword, 'click', this.handleStateCanEdit.bind(this));
 			BX.bind(buttonShowPassword, 'mousedown', this.handleStatePasswordInput.bind(this));
 			BX.bind(buttonShowPassword, 'mouseup', this.handleStatePasswordInput.bind(this));
 			BX.bind(accessType, 'click', this.showAccessTypePopup.bind(this));
@@ -136,6 +138,34 @@
 					return this;
 				}.bind(this)).then(afterSave);
 			}
+
+			if (typeof this.newState.canEditDocument != 'undefined' && this.newState.canEditDocument != this.state.canEditDocument)
+			{
+				if (!this.newState.canEditDocument)
+				{
+					BX.ajax.runAction('disk.api.externalLink.disallowEditDocument', {
+						data: {
+							externalLinkId: this.state.id
+						}
+					}).then(function (response) {
+						this.state.canEditDocument = false;
+
+						return this;
+					}.bind(this)).then(afterSave);
+				}
+				else
+				{
+					BX.ajax.runAction('disk.api.externalLink.allowEditDocument', {
+						data: {
+							externalLinkId: this.state.id
+						}
+					}).then(function (response) {
+						this.state.canEditDocument = true;
+
+						return this;
+					}.bind(this)).then(afterSave);
+				}
+			}
 		},
 
 		handlePasswordValue: function(event)
@@ -206,6 +236,12 @@
 				this.newState.deathTimeTimestamp = null;
 				this.newState.hasDeathTime = false;
 			}
+		},
+
+		handleStateCanEdit: function(event)
+		{
+			var eventTarget = BX.getEventTarget(event);
+			this.newState.canEditDocument = eventTarget.checked;
 		},
 
 		handleStatePasswordInputBlock: function(event)

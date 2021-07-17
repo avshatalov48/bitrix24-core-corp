@@ -47,10 +47,20 @@ abstract class BaseEntity
 
 	public function setTemplateFields(array $fields = [])
 	{
+		$ignoredFields = $this->getIgnoredTemplateFields();
 		foreach ($fields as $name=>$value)
 		{
+			if (in_array($name, $ignoredFields, true))
+			{
+				continue;
+			}
 			$this->setTemplateField($name, $value);
 		}
+	}
+
+	protected function getIgnoredTemplateFields(): array
+	{
+		return [];
 	}
 
 	public function setTemplateField($name, $value)

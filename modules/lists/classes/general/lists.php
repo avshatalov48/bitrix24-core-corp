@@ -284,8 +284,10 @@ class CLists
 
 	public static function OnAfterIBlockDelete($iblock_id)
 	{
-		if(CModule::includeModule('bizproc') && CBPRuntime::isFeatureEnabled())
+		if (CModule::includeModule('bizproc'))
+		{
 			BizProcDocument::deleteDataIblock($iblock_id);
+		}
 	}
 
 	public static function IsEnabledSocnet()

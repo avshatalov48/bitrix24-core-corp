@@ -11,6 +11,7 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		this._isMultiple = null;
 		this._autocompleteEnabled = false;
 		this._restrictionsCallback = null;
+		this._isMarkedAsChanged = false;
 	}
 
 	initialize(id, settings)
@@ -42,6 +43,7 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		EventEmitter.subscribe(this._field, 'onUpdate', this.onAddressListUpdate.bind(this));
 		EventEmitter.subscribe(this._field, 'onStartLoadAddress', this.onStartLoadAddress.bind(this));
 		EventEmitter.subscribe(this._field, 'onAddressLoaded', this.onAddressLoaded.bind(this));
+		EventEmitter.subscribe(this._field, 'onAddressDataInputting', this.onAddressDataInputting.bind(this));
 		EventEmitter.subscribe(this._field, 'onError', this.onError.bind(this));
 
 		this.initializeFromModel();
@@ -255,6 +257,20 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		if (toolPanel)
 		{
 			toolPanel.setLocked(false);
+		}
+	}
+
+	onAddressDataInputting()
+	{
+			this.markAsChanged();
+	}
+
+	markAsChanged()
+	{
+		if (!this._isMarkedAsChanged)
+		{
+			super.markAsChanged();
+			this._isMarkedAsChanged = true;
 		}
 	}
 

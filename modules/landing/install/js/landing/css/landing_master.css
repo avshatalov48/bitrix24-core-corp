@@ -872,6 +872,9 @@ main.landing-edit-mode.landing-ui-overlay::after {
 
 .landing-layout-flex {
 	overflow: visible!important;
+}
+.landing-edit-mode
+{
 	min-height: 100vh;
 }
 

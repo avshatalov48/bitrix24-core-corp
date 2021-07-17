@@ -8,13 +8,19 @@ export default {
 	mixins: [UseLocalize],
 	template: `
 		<div class="crm-entity-stream-content-delivery-order-item">
-			<div class="crm-entity-stream-content-delivery-order-label">
-				{{localize.TIMELINE_DELIVERY_TAXI_ROUTE}}
-			</div>
-			<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm crm-entity-stream-content-delivery-order-value--flex">
-				<span v-html="from"></span>
-				<span class="crm-entity-stream-content-delivery-order-arrow"></span>
-				<span v-html="to"></span>
+			<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
+				<div class="crm-entity-stream-content-delivery-order-box">
+					<div class="crm-entity-stream-content-delivery-order-box-label">
+						{{localize.TIMELINE_DELIVERY_TAXI_ADDRESS_FROM}}
+					</div>
+					<span v-html="from"></span>
+				</div>
+				<div class="crm-entity-stream-content-delivery-order-box">
+					<div class="crm-entity-stream-content-delivery-order-box-label">
+						{{localize.TIMELINE_DELIVERY_TAXI_ADDRESS_TO}}
+					</div>
+					<span v-html="to"></span>
+				</div>
 			</div>
 		</div>
 	`

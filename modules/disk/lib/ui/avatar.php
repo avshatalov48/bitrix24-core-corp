@@ -50,7 +50,9 @@ final class Avatar
 						$imageFile,
 						array("width" => $width, "height" => $height),
 						BX_RESIZE_IMAGE_EXACT,
-						false
+						false,
+						false,
+						\Bitrix\Main\Context::getCurrent()->getRequest()->isAjaxRequest()
 					);
 					$src = $fileTmp["src"];
 				}

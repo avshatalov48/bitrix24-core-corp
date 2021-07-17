@@ -13,65 +13,51 @@ use \Bitrix\Imopenlines\Limit,
 	\Bitrix\ImOpenLines\Model\SessionTable,
 	\Bitrix\ImOpenlines\Security\Permissions;
 
-class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
+class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 {
 	protected $gridId = 'imopenlines_statistic_v3';
 	protected $filterId = 'imopenlines_statistic_detail_filter';
 
 	/** @var  \Bitrix\Main\Grid\Options */
 	protected $gridOptions;
+
+	// export flags
 	protected $excelMode = false;
 	protected $enableExport = true;
+	protected $enableNextPage = false;
+
 	/** @var Security\Permissions */
 	protected $userPermissions;
 	protected $showHistory;
 	protected $configId;
-	private $enableNextPage;
+	protected $ufFields;
+	protected $isNeedKpi = false;
+	protected $filterFields;
+
+	//region Init
 
 	/**
-	 * @param $status
-	 * @param $close
-	 * @return bool
+	 * @return void
 	 */
-	protected static function isNotCloseSession($status, $close): bool
-	{
-		$result = false;
-
-		if(
-			$status < Session::STATUS_WAIT_CLIENT &&
-			$close !== 'Y'
-		)
-		{
-			$result = true;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	private function init()
+	private function init(): void
 	{
 		$this->enableExport = Limit::canStatisticsExcel();
-		$this->userPermissions = Security\Permissions::createWithCurrentUser();
 
-		$this->gridOptions = new CGridOptions($this->gridId);
+		$this->gridOptions = new \Bitrix\Main\Grid\Options($this->gridId);
 
-		if(isset($_REQUEST['EXPORT_TYPE']) && $_REQUEST['EXPORT_TYPE'] === 'excel'  && $this->enableExport)
+		$request = HttpApplication::getInstance()->getContext()->getRequest();
+
+		if ($this->enableExport && $request->get('EXPORT_TYPE') === 'excel')
 		{
 			$this->excelMode = true;
 		}
 
-		if($this->enableExport)
+		if ($this->enableExport)
 		{
 			$this->arResult['STEXPORT_PARAMS'] = [
 				'SITE_ID' => SITE_ID,
 				'EXPORT_TYPE' => 'excel',
-				'COMPONENT_NAME' => 'bitrix:imopenlines.statistics.detail',
+				'COMPONENT_NAME' => $this->getName(),
 			];
 			if ($this->listKeysSignedParameters())
 			{
@@ -83,7 +69,6 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 			$this->arResult['STEXPORT_TOTAL_ITEMS'] = (isset($this->arParams['STEXPORT_TOTAL_ITEMS']) ?
 				(int)$this->arParams['STEXPORT_TOTAL_ITEMS'] : 0);
-			$this->enableNextPage = false;
 		}
 		else
 		{
@@ -91,18 +76,58 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$this->arResult['LIMIT_EXPORT'] = true;
 		}
 
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
-
 		$this->configId = 0;
 		if ($request->get('CONFIG_ID'))
 		{
-			$this->configId = $request->get('CONFIG_ID');
-			$config = Config::getInstance()->get($request->get('CONFIG_ID'));
+			$this->configId = (int)$request->get('CONFIG_ID');
+			$config = Config::getInstance()->get($this->configId);
 			$this->arResult['LINE_NAME'] = $config['LINE_NAME'];
 		}
 
 		$this->arResult['LINES'] = $this->getConfigList();
 		$this->arResult['groupActionsData'] = $this->getGroupActionsData();
+		//UF
+		$this->arResult['UF_FIELDS'] = $this->getUfFieldList();
+
+		$this->showHistory = Security\Helper::getAllowedUserIds(
+			Security\Helper::getCurrentUserId(),
+			$this->userPermissions->getPermission(Security\Permissions::ENTITY_HISTORY, Security\Permissions::ACTION_VIEW)
+		);
+
+		$this->arResult['FDC_MODE'] = $this->isFdcMode();
+		$this->arResult['ALLOW_MODIFY_SETTINGS'] = $this->isFdcMode() && $this->userPermissions->canModifySettings();
+		if ($this->arResult['ALLOW_MODIFY_SETTINGS'] && Loader::includeModule('intranet'))
+		{
+			$this->arResult['UF_LIST_CONFIG_URL'] = \Bitrix\Intranet\Util::getUserFieldListConfigUrl('imopenlines', 'IMOPENLINES_SESSION');
+		}
+	}
+
+	/**
+	 * @return \CUser
+	 */
+	private function getCurrentUser()
+	{
+		/** @global \CUser $USER */
+		global $USER;
+		return $USER;
+	}
+
+	/**
+	 * @return \CUserTypeManager
+	 */
+	private function getUfTypeManager()
+	{
+		/** @global \CUserTypeManager $USER_FIELD_MANAGER */
+		global $USER_FIELD_MANAGER;
+		return $USER_FIELD_MANAGER;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isFdcMode(): bool
+	{
+		return defined('IMOL_FDC');
 	}
 
 	/**
@@ -132,9 +157,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	}
 
 	/**
-	 * @param array $lines
-	 * @return array[]
-	 * @throws \Bitrix\Main\LoaderException
+	 * @return array
 	 */
 	protected function getGroupActionsData(): array
 	{
@@ -192,7 +215,31 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return $result;
 	}
 
-	protected function checkModules()
+	/**
+	 * @return array
+	 */
+	protected function getUfFieldList(): array
+	{
+		if ($this->ufFields === null)
+		{
+			$this->ufFields = [];
+
+			$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
+			while($field = $ufData->Fetch())
+			{
+				$field['USER_TYPE'] = $this->getUfTypeManager()->getUserType($field['USER_TYPE_ID']);
+
+				$this->ufFields[$field['FIELD_NAME']] = $field;
+			}
+		}
+
+		return $this->ufFields;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function checkModules(): bool
 	{
 		if (!Loader::includeModule('imopenlines'))
 		{
@@ -208,8 +255,13 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return true;
 	}
 
-	protected function checkAccess()
+	/**
+	 * @return bool
+	 */
+	protected function checkAccess(): bool
 	{
+		$this->userPermissions = Security\Permissions::createWithCurrentUser();
+
 		if(!$this->userPermissions->canPerform(Security\Permissions::ENTITY_SESSION, Security\Permissions::ACTION_VIEW))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_ACCESS_DENIED'));
@@ -219,7 +271,16 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return true;
 	}
 
-	public static function getFormattedCrmColumn($row)
+	//endregion
+
+	//region Format data
+
+	/**
+	 * @param array $row
+	 *
+	 * @return string
+	 */
+	public static function getFormattedCrmColumn($row): string
 	{
 		$crmData = Array();
 		$crmLinks = self::getCrmLink($row['data']);
@@ -249,13 +310,18 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return $result;
 	}
 
-	private static function getCrmName($type)
+	/**
+	 * @param string $type
+	 *
+	 * @return string
+	 */
+	private static function getCrmName($type): string
 	{
 		$name = '';
 
 		if (\CModule::IncludeModule('crm'))
 		{
-			$name = CCrmOwnerType::GetDescription(CCrmOwnerType::ResolveID($type));
+			$name = \CCrmOwnerType::GetDescription(\CCrmOwnerType::ResolveID($type));
 		}
 
 		return $name;
@@ -264,9 +330,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	/**
 	 * @param $row
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	private static function getCrmLink($row)
+	private static function getCrmLink($row): array
 	{
 		$result = [];
 
@@ -292,11 +357,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	}
 
 	/**
-	 * @param $row
-	 * @return bool|mixed|string
-	 * @throws \Bitrix\Main\LoaderException
+	 * @param array $row
+	 * @return string
 	 */
-	private static function getCrmActivityLink($row)
+	private static function getCrmActivityLink($row): string
 	{
 		$result = '';
 
@@ -310,21 +374,36 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return $result;
 	}
 
-	private static function formatDate($date)
+	/**
+	 * @param \Bitrix\Main\Type\DateTime $date
+	 *
+	 * @return string
+	 */
+	private static function formatDate($date): string
 	{
-		if (!$date)
+		if (
+			!$date
+			|| !($date instanceof \Bitrix\Main\Type\DateTime)
+		)
 		{
 			return '-';
 		}
 
-		return formatDate('x', $date->toUserTime()->getTimestamp(), (time() + \CTimeZone::getOffset()));
+		return \FormatDate('x', $date->toUserTime()->getTimestamp(), (time() + \CTimeZone::getOffset()));
 	}
 
-	private static function formatDuration($duration)
+	/**
+	 * @param int $duration
+	 *
+	 * @return string
+	 */
+	private static function formatDuration($duration): string
 	{
-		$duration = intval($duration);
+		$duration = (int)$duration;
 		if ($duration <= 0)
+		{
 			return '-';
+		}
 
 		$currentTime = new \Bitrix\Main\Type\DateTime();
 		$formatTime = $currentTime->getTimestamp()-$duration;
@@ -345,8 +424,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			{
 				$formatTime = $currentTime->getTimestamp()-($duration % 3600);
 				$result = $result .' '. \FormatDate(Array(
-				's' => 'sdiff',
-				'i' => 'idiff',
+					's' => 'sdiff',
+					'i' => 'idiff',
 				), $formatTime);
 			}
 		}
@@ -374,9 +453,9 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	}
 
 	/**
-	 * @param $sessionId
-	 * @param $rating
-	 * @param string $field
+	 * @param int $sessionId
+	 * @param int $rating
+	 * @param string $field Enum: VOTE | VOTE_HEAD | VOTE_HEAD_PERM.
 	 * @return string
 	 */
 	private static function formatVote($sessionId, $rating, $field = 'VOTE'): string
@@ -409,16 +488,15 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 			})</script>';
 			}
-
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @param $sessionId
-	 * @param $comment
-	 * @param string $field
+	 * @param int $sessionId
+	 * @param string $comment
+	 * @param string $field Enum: COMMENT_HEAD | COMMENT_HEAD_PERM.
 	 * @return string
 	 */
 	private static function formatComment($sessionId, $comment, $field = 'COMMENT_HEAD')
@@ -461,270 +539,310 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return $result;
 	}
 
+	//endregion
+
+	//region Filter
+
+	/**
+	 * Returns list with filter fields.
+	 * @return array
+	 */
 	private function getFilterDefinition()
 	{
-		$result = array(
-			"CONFIG_ID" => array(
-				"id" => "CONFIG_ID",
-				"name" => Loc::getMessage("OL_STATS_HEADER_CONFIG_NAME"),
-				"type" => "list",
-				"items" => $this->arResult['LINES'],
-				"default" => !$this->configId,
-				"default_value" => $this->configId? $this->configId: '',
-				"params" => array(
-					"multiple" => "Y"
-				)
-			),
-		);
-
-		$result = array_merge($result, array(
-			"TYPE" => array(
-				"id" => "TYPE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_MODE_NAME"),
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"input" => Loc::getMessage("OL_COMPONENT_TABLE_INPUT"),
-					"output" => Loc::getMessage("OL_COMPONENT_TABLE_OUTPUT"),
-				),
-				"default" => false,
-			),
-			"DATE_CREATE" => array(
-				"id" => "DATE_CREATE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_DATE_CREATE"),
-				"type" => "date",
-				"default" => true
-			),
-			"DATE_CLOSE" => array(
-				"id" => "DATE_CLOSE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_DATE_CLOSE"),
-				"type" => "date",
-				"default" => false
-			),
-			"OPERATOR_ID" => array(
-				"id" => "OPERATOR_ID",
-				"name" => Loc::getMessage("OL_STATS_HEADER_OPERATOR_NAME"),
-				"type" => "dest_selector",
-				'params' => array (
-					'apiVersion' => '3',
-					'context' => 'OL_STATS_FILTER_OPERATOR_ID',
-					'multiple' => 'N',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableEmpty' => 'Y',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-					'allowBots' => 'Y'
-				),
-				"default" => true,
-			),
-			"CLIENT_NAME" => array(
-				"id" => "CLIENT_NAME",
-				"name" => Loc::getMessage("OL_STATS_HEADER_USER_NAME"),
-				"type" => "string",
-				"default" => false,
-			),
-			'SOURCE' => array(
-				"id" => "SOURCE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_SOURCE_TEXT_2"),
-				"type" => "list",
-				"items" => \Bitrix\ImConnector\Connector::getListConnector(),
-				"default" => true,
-				"params" => array(
-					"multiple" => "Y"
-				)
-			),
-			"ID" => array(
-				"id" => "ID",
-				"name" => Loc::getMessage("OL_STATS_HEADER_SESSION_ID"),
-				"type" => "string",
-				"default" => true
-			),
-			'EXTRA_URL' => array(
-				"id" => "EXTRA_URL",
-				"name" => Loc::getMessage("OL_STATS_HEADER_EXTRA_URL"),
-				"type" => "string",
-				"default" => false
-			),
-			"STATUS" => array(
-				"id" => "STATUS",
-				"name" => Loc::getMessage("OL_STATS_HEADER_STATUS"),
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"client" => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW"),
-					"operator" => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW"),
-					"closed" => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED"),
-				),
-				"default" => true,
-			),
-			"STATUS_DETAIL" => array(
-				"id" => "STATUS_DETAIL",
-				"name" => Loc::getMessage("OL_STATS_HEADER_STATUS_DETAIL"),
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					0 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_NEW"),
-					5 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW"),
-					10 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW"),
-					20 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW"),
-					25 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW"),
-					40 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW"),
-					50 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2"),
-					60 => Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED"),
-					65 => Loc::getMessage("OL_STATS_HEADER_SPAM_2"),
-				),
-				"params" => array(
-					"multiple" => "Y"
-				),
-				"default" => false
-			),
-		));
-		if (defined('IMOL_FDC'))
+		if ($this->filterFields === null)
 		{
-			$result["EXTRA_TARIFF"] = array(
-				"id" => "EXTRA_TARIFF",
-				"name" => Loc::getMessage("OL_STATS_HEADER_EXTRA_TARIFF"),
-				"type" => "string",
-				"default" => false
-			);
-			$result["EXTRA_USER_LEVEL"] = array(
-				"id" => "EXTRA_USER_LEVEL",
-				"name" => Loc::getMessage("OL_STATS_HEADER_EXTRA_USER_LEVEL"),
-				"type" => "string",
-				"default" => false
-			);
-			$result["EXTRA_PORTAL_TYPE"] = array(
-				"id" => "EXTRA_PORTAL_TYPE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_EXTRA_PORTAL_TYPE"),
-				"type" => "string",
-				"default" => false
-			);
-			$result["EXTRA_REGISTER"] = array(
-				"id" => "EXTRA_REGISTER",
-				"name" => Loc::getMessage("OL_STATS_HEADER_EXTRA_REGISTER"),
-				"default" => false,
-				"type" => "number"
-			);
-		}
-		if(Loader::includeModule('crm'))
-		{
-			$result["CRM"] = array(
-				"id" => "CRM",
-				"name" => Loc::getMessage("OL_STATS_HEADER_CRM"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"Y" => Loc::getMessage("OL_STATS_FILTER_Y"),
-					"N" => Loc::getMessage("OL_STATS_FILTER_N"),
-				)
-			);
-			/*$result["CRM_ENTITY"] = array(
-				"id" => "CRM_ENTITY",
-				"name" => Loc::getMessage("OL_STATS_HEADER_CRM_TEXT"),
-				"default" => false,
-				"type" => "custom_entity",
-				"selector" => array(
-					"TYPE" => "crm_entity",
-					"DATA" => array(
-						"ID" => "CRM_ENTITY",
-						"FIELD_ID" => "CRM_ENTITY",
-						'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::LeadName, CCrmOwnerType::CompanyName, CCrmOwnerType::ContactName, CCrmOwnerType::DealName),
-						'IS_MULTIPLE' => false
+			$this->filterFields = array(
+				'CONFIG_ID' => array(
+					'id' => 'CONFIG_ID',
+					'name' => Loc::getMessage('OL_STATS_HEADER_CONFIG_NAME'),
+					'type' => 'list',
+					'items' => $this->arResult['LINES'],
+					'default' => !$this->configId,
+					'default_value' => $this->configId ? $this->configId : '',
+					'params' => array(
+						'multiple' => 'Y'
 					)
+				),
+
+				'TYPE' => array(
+					'id' => 'TYPE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_MODE_NAME'),
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'input' => Loc::getMessage('OL_COMPONENT_TABLE_INPUT'),
+						'output' => Loc::getMessage('OL_COMPONENT_TABLE_OUTPUT'),
+					),
+					'default' => false,
+				),
+				'DATE_CREATE' => array(
+					'id' => 'DATE_CREATE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_DATE_CREATE'),
+					'type' => 'date',
+					'default' => true
+				),
+				'DATE_CLOSE' => array(
+					'id' => 'DATE_CLOSE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_DATE_CLOSE'),
+					'type' => 'date',
+					'default' => false
+				),
+				'OPERATOR_ID' => array(
+					'id' => 'OPERATOR_ID',
+					'name' => Loc::getMessage('OL_STATS_HEADER_OPERATOR_NAME'),
+					'type' => 'dest_selector',
+					'params' => array(
+						'apiVersion' => '3',
+						'context' => 'OL_STATS_FILTER_OPERATOR_ID',
+						'multiple' => 'N',
+						'contextCode' => 'U',
+						'enableAll' => 'N',
+						'enableEmpty' => 'Y',
+						'enableSonetgroups' => 'N',
+						'allowEmailInvitation' => 'N',
+						'departmentSelectDisable' => 'Y',
+						'isNumeric' => 'Y',
+						'prefix' => 'U',
+						'allowBots' => 'Y'
+					),
+					'default' => true,
+				),
+				'CLIENT_NAME' => array(
+					'id' => 'CLIENT_NAME',
+					'name' => Loc::getMessage('OL_STATS_HEADER_USER_NAME'),
+					'type' => 'string',
+					'default' => false,
+				),
+				'SOURCE' => array(
+					'id' => 'SOURCE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_SOURCE_TEXT_2'),
+					'type' => 'list',
+					'items' => \Bitrix\ImConnector\Connector::getListConnector(),
+					'default' => true,
+					'params' => array(
+						'multiple' => 'Y'
+					)
+				),
+				'ID' => array(
+					'id' => 'ID',
+					'name' => Loc::getMessage('OL_STATS_HEADER_SESSION_ID'),
+					'type' => 'string',
+					'default' => true
+				),
+				'EXTRA_URL' => array(
+					'id' => 'EXTRA_URL',
+					'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_URL'),
+					'type' => 'string',
+					'default' => false
+				),
+				'STATUS' => array(
+					'id' => 'STATUS',
+					'name' => Loc::getMessage('OL_STATS_HEADER_STATUS'),
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'client' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW'),
+						'operator' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW'),
+						'closed' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED'),
+					),
+					'default' => true,
+				),
+				'STATUS_DETAIL' => array(
+					'id' => 'STATUS_DETAIL',
+					'name' => Loc::getMessage('OL_STATS_HEADER_STATUS_DETAIL'),
+					'type' => 'list',
+					'items' => array(
+						'' => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'0' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_NEW'),
+						'5' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW'),
+						'10' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW'),
+						'20' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW'),
+						'25' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW'),
+						'40' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW'),
+						'50' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2'),
+						'60' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED'),
+						'65' => Loc::getMessage('OL_STATS_HEADER_SPAM_2'),
+					),
+					'params' => array(
+						'multiple' => 'Y'
+					),
+					'default' => false
+				),
+			);
+			if ($this->isFdcMode())
+			{
+				$this->filterFields['EXTRA_TARIFF'] = array(
+					'id' => 'EXTRA_TARIFF',
+					'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_TARIFF'),
+					'type' => 'string',
+					'default' => false
+				);
+				$this->filterFields['EXTRA_USER_LEVEL'] = array(
+					'id' => 'EXTRA_USER_LEVEL',
+					'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_USER_LEVEL'),
+					'type' => 'string',
+					'default' => false
+				);
+				$this->filterFields['EXTRA_PORTAL_TYPE'] = array(
+					'id' => 'EXTRA_PORTAL_TYPE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_PORTAL_TYPE'),
+					'type' => 'string',
+					'default' => false
+				);
+				$this->filterFields['EXTRA_REGISTER'] = array(
+					'id' => 'EXTRA_REGISTER',
+					'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_REGISTER'),
+					'default' => false,
+					'type' => 'number'
+				);
+			}
+			if (Loader::includeModule('crm'))
+			{
+				$this->filterFields['CRM'] = array(
+					'id' => 'CRM',
+					'name' => Loc::getMessage('OL_STATS_HEADER_CRM'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'Y' => Loc::getMessage('OL_STATS_FILTER_Y'),
+						'N' => Loc::getMessage('OL_STATS_FILTER_N'),
+					)
+				);
+				/*
+				$this->filterFields['CRM_ENTITY'] = array(
+					'id' => 'CRM_ENTITY',
+					'name' => Loc::getMessage('OL_STATS_HEADER_CRM_TEXT'),
+					'default' => false,
+					'type' => 'custom_entity',
+					'selector' => array(
+						'TYPE' => 'crm_entity',
+						'DATA' => array(
+							'ID' => 'CRM_ENTITY',
+							'FIELD_ID' => 'CRM_ENTITY',
+							'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::LeadName, CCrmOwnerType::CompanyName, CCrmOwnerType::ContactName, CCrmOwnerType::DealName),
+							'IS_MULTIPLE' => false
+						)
+					)
+				);
+				*/
+			}
+
+			$this->filterFields = array_merge($this->filterFields, array(
+				'SEND_FORM' => array(
+					'id' => 'SEND_FORM',
+					'name' => Loc::getMessage('OL_STATS_HEADER_SEND_FORM'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'Y' => Loc::getMessage('OL_STATS_FILTER_Y'),
+						'N' => Loc::getMessage('OL_STATS_FILTER_N'),
+					)
+				),
+				'SEND_HISTORY' => array(
+					'id' => 'SEND_HISTORY',
+					'name' => Loc::getMessage('OL_STATS_HEADER_SEND_HISTORY'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'Y' => Loc::getMessage('OL_STATS_FILTER_Y'),
+						'N' => Loc::getMessage('OL_STATS_FILTER_N'),
+					)
+				),
+				'WORKTIME' => array(
+					'id' => 'WORKTIME',
+					'name' => Loc::getMessage('OL_STATS_HEADER_WORKTIME_TEXT'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'Y' => Loc::getMessage('OL_STATS_FILTER_Y'),
+						'N' => Loc::getMessage('OL_STATS_FILTER_N'),
+					)
+				),
+				'SPAM' => array(
+					'id' => 'SPAM',
+					'name' => Loc::getMessage('OL_STATS_HEADER_SPAM_2'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'Y' => Loc::getMessage('OL_STATS_FILTER_Y'),
+						'N' => Loc::getMessage('OL_STATS_FILTER_N'),
+					)
+				),
+				'MESSAGE_COUNT' => array(
+					'id' => 'MESSAGE_COUNT',
+					'name' => Loc::getMessage('OL_STATS_FILTER_MESSAGE_COUNT'),
+					'default' => false,
+					'type' => 'number'
+				),
+				'VOTE' => array(
+					'id' => 'VOTE',
+					'name' => Loc::getMessage('OL_STATS_HEADER_VOTE_CLIENT'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						"" => Loc::getMessage('OL_STATS_FILTER_UNSET'),
+						'5' => Loc::getMessage('OL_STATS_HEADER_VOTE_CLIENT_LIKE'),
+						'1' => Loc::getMessage('OL_STATS_HEADER_VOTE_CLIENT_DISLIKE'),
+					)
+				),
+				'VOTE_HEAD' => array(
+					'id' => 'VOTE_HEAD',
+					'name' => Loc::getMessage('OL_STATS_HEADER_VOTE_HEAD_1'),
+					'default' => false,
+					'type' => 'list',
+					'items' => array(
+						'wo' => Loc::getMessage('OL_STATS_HEADER_VOTE_HEAD_WO'),
+						'5' => 5,
+						'4' => 4,
+						'3' => 3,
+						'2' => 2,
+						'1' => 1,
+					),
+					'params' => array(
+						'multiple' => 'Y'
+					)
+				),
+			));
+
+			// UF
+			foreach ($this->getUfFieldList() as $fieldName => $field)
+			{
+				if (
+					$field['SHOW_FILTER'] != 'N'
+					&& $field['USER_TYPE']['BASE_TYPE'] != \CUserTypeManager::BASE_TYPE_FILE
 				)
-			);*/
+				{
+					$fieldClass = $field['USER_TYPE']['CLASS_NAME'];
+					if (
+						is_a($fieldClass, \Bitrix\Main\UserField\Types\BaseType::class, true)
+						&& is_callable([$fieldClass, 'getFilterData'])
+					)
+					{
+						$this->filterFields[$fieldName] = $fieldClass::getFilterData(
+							$field,
+							[
+								'ID' => $fieldName,
+								'NAME' => $field['LIST_FILTER_LABEL'] ?
+									$field['LIST_FILTER_LABEL'] : $field['FIELD_NAME'],
+							]
+						);
+					}
+				}
+			}
 		}
 
-		$result = array_merge($result, Array(
-			"SEND_FORM" => array(
-				"id" => "SEND_FORM",
-				"name" => Loc::getMessage("OL_STATS_HEADER_SEND_FORM"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"Y" => Loc::getMessage("OL_STATS_FILTER_Y"),
-					"N" => Loc::getMessage("OL_STATS_FILTER_N"),
-				)
-			),
-			"SEND_HISTORY" => array(
-				"id" => "SEND_HISTORY",
-				"name" => Loc::getMessage("OL_STATS_HEADER_SEND_HISTORY"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"Y" => Loc::getMessage("OL_STATS_FILTER_Y"),
-					"N" => Loc::getMessage("OL_STATS_FILTER_N"),
-				)
-			),
-			"WORKTIME" => array(
-				"id" => "WORKTIME",
-				"name" => Loc::getMessage("OL_STATS_HEADER_WORKTIME_TEXT"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"Y" => Loc::getMessage("OL_STATS_FILTER_Y"),
-					"N" => Loc::getMessage("OL_STATS_FILTER_N"),
-				)
-			),
-			"SPAM" => array(
-				"id" => "SPAM",
-				"name" => Loc::getMessage("OL_STATS_HEADER_SPAM_2"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"Y" => Loc::getMessage("OL_STATS_FILTER_Y"),
-					"N" => Loc::getMessage("OL_STATS_FILTER_N"),
-				)
-			),
-			"MESSAGE_COUNT" => array(
-				"id" => "MESSAGE_COUNT",
-				"name" => Loc::getMessage("OL_STATS_FILTER_MESSAGE_COUNT"),
-				"default" => false,
-				"type" => "number"
-			),
-			"VOTE" => array(
-				"id" => "VOTE",
-				"name" => Loc::getMessage("OL_STATS_HEADER_VOTE_CLIENT"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"" => Loc::getMessage("OL_STATS_FILTER_UNSET"),
-					"5" => Loc::getMessage("OL_STATS_HEADER_VOTE_CLIENT_LIKE"),
-					"1" => Loc::getMessage("OL_STATS_HEADER_VOTE_CLIENT_DISLIKE"),
-				)
-			),
-			"VOTE_HEAD" => array(
-				"id" => "VOTE_HEAD",
-				"name" => Loc::getMessage("OL_STATS_HEADER_VOTE_HEAD_1"),
-				"default" => false,
-				"type" => "list",
-				"items" => array(
-					"wo" => Loc::getMessage("OL_STATS_HEADER_VOTE_HEAD_WO"),
-					"5" => 5,
-					"4" => 4,
-					"3" => 3,
-					"2" => 2,
-					"1" => 1,
-				),
-				"params" => array(
-					"multiple" => "Y"
-				)
-			),
-		));
-
-		return $result;
+		return $this->filterFields;
 	}
 
-	private function getFilter(array $filterDefinition)
+	/**
+	 * @return array
+	 */
+	private function getFilter()
 	{
 		$request = HttpApplication::getInstance()->getContext()->getRequest();
 
@@ -743,7 +861,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$result['=USER_ID'] = intval($request->get('GUEST_USER_ID'));
 		}
 
-		if (!isset($filter["OPERATOR_ID"]) && $request->get('OPERATOR_ID') !== null)
+		if (!isset($filter['OPERATOR_ID']) && $request->get('OPERATOR_ID') !== null)
 		{
 			$value = $request->get('OPERATOR_ID');
 			$filter['OPERATOR_ID'] = (
@@ -753,10 +871,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			);
 		}
 
-		if(isset($filter["CLIENT_NAME"]))
+		if (isset($filter['CLIENT_NAME']))
 		{
 			$filterUserClient = \Bitrix\Main\UserUtils::getUserSearchFilter(Array(
-				'FIND' => $filter["CLIENT_NAME"]
+				'FIND' => $filter['CLIENT_NAME']
 			));
 
 			$filterUserClient['EXTERNAL_AUTH_ID'] = array('imconnector');
@@ -768,132 +886,139 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 			while ($userClientRow = $userClientRaw->fetch())
 			{
-				$result["=USER_ID"][] = $userClientRow['ID'];
+				$result['=USER_ID'][] = $userClientRow['ID'];
 			}
 
-			if(empty($result["=USER_ID"]))
-				$result["=USER_ID"] = -1;
+			if (empty($result['=USER_ID']))
+			{
+				$result['=USER_ID'] = -1;
+			}
 		}
 
-		if(isset($filter["OPERATOR_ID"]))
+		if (isset($filter['OPERATOR_ID']))
 		{
-			$filter["OPERATOR_ID"] = (
-			mb_strtolower($filter["OPERATOR_ID"]) === 'empty'
+			$filter['OPERATOR_ID'] =
+				mb_strtolower($filter['OPERATOR_ID']) === 'empty'
 					? false
-					: (int)$filter["OPERATOR_ID"]
-			);
+					: (int)$filter['OPERATOR_ID']
+			;
 
-			if(is_array($allowedUserIds))
+			if (is_array($allowedUserIds))
 			{
-				$result["=OPERATOR_ID"] = array_intersect(array_merge($allowedUserIds, array(false)), array($filter["OPERATOR_ID"]));
+				$result['=OPERATOR_ID'] = array_intersect(array_merge($allowedUserIds, array(false)), array($filter['OPERATOR_ID']));
 			}
 			else
 			{
-				$result["=OPERATOR_ID"] = $filter["OPERATOR_ID"];
+				$result['=OPERATOR_ID'] = $filter['OPERATOR_ID'];
 			}
 		}
-		else
+		elseif (is_array($allowedUserIds))
 		{
-			if(is_array($allowedUserIds))
-			{
-				$result["=OPERATOR_ID"] = $allowedUserIds;
-			}
+			$result['=OPERATOR_ID'] = $allowedUserIds;
 		}
 
-		if ($filter["DATE_CREATE_from"] <> '')
+		$extractDateRange = function($fieldName) use (&$filter, &$result)
 		{
-			try
+			if ($filter["{$fieldName}_from"] <> '')
 			{
-				$result[">=DATE_CREATE"] = new \Bitrix\Main\Type\DateTime($filter["DATE_CREATE_from"]);
+				try
+				{
+					$result[">={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_from"]);
+				}
+				catch (\Exception $e)
+				{
+				}
 			}
-			catch (Exception $e)
+			if ($filter["{$fieldName}_to"] <> '')
 			{
+				try
+				{
+					$result["<={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_to"]);
+				}
+				catch (\Exception $e)
+				{
+				}
 			}
-		}
-		if ($filter["DATE_CREATE_to"] <> '')
+		};
+
+		$extractDateRange('DATE_CREATE');
+		$extractDateRange('DATE_CLOSE');
+
+		if (is_array($filter['SOURCE']))
 		{
-			try
-			{
-				$result["<=DATE_CREATE"] = new \Bitrix\Main\Type\DateTime($filter["DATE_CREATE_to"]);
-			}
-			catch (Exception $e)
-			{
-			}
+			$result['=SOURCE'] = $filter['SOURCE'];
 		}
 
-		if ($filter["DATE_CLOSE_from"] <> '')
+		if (is_array($filter['CONFIG_ID']))
 		{
-			try
-			{
-				$result[">=DATE_CLOSE"] = new \Bitrix\Main\Type\DateTime($filter["DATE_CLOSE_from"]);
-			} catch (Exception $e){}
-		}
-		if ($filter["DATE_CLOSE_to"] <> '')
-		{
-			try
-			{
-				$result["<=DATE_CLOSE"] = new \Bitrix\Main\Type\DateTime($filter["DATE_CLOSE_to"]);
-			} catch (Exception $e){}
-		}
-
-		if(is_array($filter["SOURCE"]))
-			$result["=SOURCE"] = $filter["SOURCE"];
-
-		if(is_array($filter["CONFIG_ID"]))
-		{
-			$result["=CONFIG_ID"] = $filter["CONFIG_ID"];
+			$result['=CONFIG_ID'] = $filter['CONFIG_ID'];
 		}
 		else if ($this->configId)
 		{
 			$result['=CONFIG_ID'] = $this->configId;
 		}
 
-		if(!empty($filter["EXTRA_URL"]))
-			$result["%EXTRA_URL"] = $filter["EXTRA_URL"];
-
-		if(!empty($filter["EXTRA_TARIFF"]))
-			$result["=EXTRA_TARIFF"] = $filter["EXTRA_TARIFF"];
-
-		if(!empty($filter["EXTRA_USER_LEVEL"]))
-			$result["=EXTRA_USER_LEVEL"] = $filter["EXTRA_USER_LEVEL"];
-
-		if(!empty($filter["EXTRA_PORTAL_TYPE"]))
-			$result["=EXTRA_PORTAL_TYPE"] = $filter["EXTRA_PORTAL_TYPE"];
-
-		if(isset($filter["STATUS"]))
+		if (!empty($filter['EXTRA_URL']))
 		{
-			switch ($filter["STATUS"])
+			$result['%EXTRA_URL'] = $filter['EXTRA_URL'];
+		}
+
+		if (!empty($filter['EXTRA_TARIFF']))
+		{
+			$result['=EXTRA_TARIFF'] = $filter['EXTRA_TARIFF'];
+		}
+
+		if (!empty($filter['EXTRA_USER_LEVEL']))
+		{
+			$result['=EXTRA_USER_LEVEL'] = $filter['EXTRA_USER_LEVEL'];
+		}
+
+		if (!empty($filter['EXTRA_PORTAL_TYPE']))
+		{
+			$result['=EXTRA_PORTAL_TYPE'] = $filter['EXTRA_PORTAL_TYPE'];
+		}
+
+		if (isset($filter['STATUS']))
+		{
+			switch ($filter['STATUS'])
 			{
-				case "client":
-					$result["<STATUS"] = 40;
-				break;
+				case 'client':
+					$result['<STATUS'] = 40;
+					break;
 
-				case "operator":
-					$result[">=STATUS"] = 40;
-					$result["<STATUS"] = 60;
-				break;
+				case 'operator':
+					$result['>=STATUS'] = 40;
+					$result['<STATUS'] = 60;
+					break;
 
-				case "closed":
-					$result[">=STATUS"] = 60;
-				break;
+				case 'closed':
+					$result['>=STATUS'] = 60;
+					break;
 			}
 		}
 
-		if(is_array($filter["STATUS_DETAIL"]))
-			$result["=STATUS"] = $filter["STATUS_DETAIL"];
+		if (is_array($filter['STATUS_DETAIL']))
+		{
+			$result['=STATUS'] = $filter['STATUS_DETAIL'];
+		}
 
-		if(isset($filter["CRM"]))
-			$result["=CRM"] = $filter["CRM"];
+		if (isset($filter['CRM']))
+		{
+			$result['=CRM'] = $filter['CRM'];
+		}
 
-		if(isset($filter['CRM_ENTITY']) && $filter['CRM_ENTITY'] != '')
+		if (isset($filter['CRM_ENTITY']) && $filter['CRM_ENTITY'] != '')
 		{
 			$crmFilter = array();
 			try
 			{
 				$crmFilter = \Bitrix\Main\Web\Json::decode($filter['CRM_ENTITY']);
-			} catch (\Bitrix\Main\ArgumentException $e) {};
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+			}
 
-			if(count($crmFilter) == 1)
+			if (count($crmFilter) == 1)
 			{
 				//TODO: improve search
 				$entityTypes = array_keys($crmFilter);
@@ -904,140 +1029,112 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 		}
 
-		if(isset($filter["SEND_FORM"]))
+		if (isset($filter['SEND_FORM']))
 		{
-			if ($filter["SEND_FORM"] == 'Y')
+			if ($filter['SEND_FORM'] == 'Y')
 			{
-				$result["!=SEND_FORM"] = 'none';
+				$result['!=SEND_FORM'] = 'none';
 			}
 			else
 			{
-				$result["=SEND_FORM"] = 'none';
+				$result['=SEND_FORM'] = 'none';
 			}
 		}
 
-		if(isset($filter["SEND_HISTORY"]))
-		{
-			if ($filter["SEND_HISTORY"] == 'Y')
-			{
-				$result["=SEND_HISTORY"] = 'Y';
-			}
-			else if ($filter["SEND_HISTORY"] == 'N')
-			{
-				$result["!=SEND_HISTORY"] = 'Y';
-			}
-		}
 
-		if(isset($filter["SPAM"]))
+		$extractBoolean = function($fieldName, $typeCast = 'enum') use (&$filter, &$result)
 		{
-			if ($filter["SPAM"] == 'Y')
+			if (isset($filter[$fieldName]))
 			{
-				$result["=SPAM"] = 'Y';
-			}
-			else if ($filter["SPAM"] == 'N')
-			{
-				$result["!=SPAM"] = 'Y';
-			}
-		}
-
-		if (isset($filter["MESSAGE_COUNT_numsel"]))
-		{
-			if ($filter["MESSAGE_COUNT_numsel"] == 'range')
-			{
-				if (intval($filter["MESSAGE_COUNT_from"]) > 0 && intval($filter["MESSAGE_COUNT_to"]) == 0)
+				$trueVal = $typeCast == 'enum' ? 'Y' : 1;
+				if ($filter[$fieldName] == 'Y')
 				{
-					$filter["MESSAGE_COUNT_numsel"] = 'more';
-					$filter["MESSAGE_COUNT_from"] = $filter["MESSAGE_COUNT_from"]-1;
+					$result["={$fieldName}"] = $trueVal;
 				}
-				else if (intval($filter["MESSAGE_COUNT_from"]) == 0 && intval($filter["MESSAGE_COUNT_to"]) > 0)
+				else if ($filter[$fieldName] == 'N')
 				{
-					$filter["MESSAGE_COUNT_numsel"] = 'less';
-					$filter["MESSAGE_COUNT_to"] = $filter["MESSAGE_COUNT_to"]+1;
-				}
-				else
-				{
-					$result[">=MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT_from"]);
-					$result["<=MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT_to"]);
+					$result["!={$fieldName}"] = $trueVal;
 				}
 			}
-			if ($filter["MESSAGE_COUNT_numsel"] == 'more')
-			{
-				$result[">MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT_from"]);
-			}
-			else if ($filter["MESSAGE_COUNT_numsel"] == 'less')
-			{
-				$result["<MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT_to"]);
-			}
-			else if ($filter["MESSAGE_COUNT_numsel"] != 'range')
-			{
-				$result["=MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT_from"]);
-			}
-		}
-		else if (isset($filter["MESSAGE_COUNT"]))
-		{
-			$result["=MESSAGE_COUNT"] = intval($filter["MESSAGE_COUNT"]);
-		}
+		};
 
-		if (isset($filter["EXTRA_REGISTER_numsel"]))
+		$extractBoolean('SEND_HISTORY', 'enum');
+		$extractBoolean('SPAM', 'enum');
+
+		$extractNumberRange = function($fieldName, $typeCast = 'intval') use (&$filter, &$result)
 		{
-			if ($filter["EXTRA_REGISTER_numsel"] == 'range')
+			if (isset($filter["{$fieldName}_numsel"]))
 			{
-				if (intval($filter["EXTRA_REGISTER_from"]) > 0 && intval($filter["EXTRA_REGISTER_to"]) == 0)
+				if ($filter["{$fieldName}_numsel"] == 'range')
 				{
-					$filter["EXTRA_REGISTER_numsel"] = 'more';
-					$filter["EXTRA_REGISTER_from"] = $filter["EXTRA_REGISTER_from"]-1;
+					if ($typeCast($filter["{$fieldName}_from"]) > 0 && $typeCast($filter["{$fieldName}_to"]) == 0)
+					{
+						$filter["{$fieldName}_numsel"] = 'more';
+						$filter["{$fieldName}_from"] = $typeCast($filter["{$fieldName}_from"]) - 1;
+					}
+					elseif ($typeCast($filter["{$fieldName}_from"]) == 0 && $typeCast($filter["{$fieldName}_to"]) > 0)
+					{
+						$filter["{$fieldName}_numsel"] = 'less';
+						$filter["{$fieldName}_to"] = $typeCast($filter["{$fieldName}_to"]) + 1;
+					}
+					else
+					{
+						$result[">={$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
+						$result["<={$fieldName}"] = $typeCast($filter["{$fieldName}_to"]);
+					}
 				}
-				else if (intval($filter["EXTRA_REGISTER_from"]) == 0 && intval($filter["EXTRA_REGISTER_to"]) > 0)
+				if ($filter["{$fieldName}_numsel"] == 'more')
 				{
-					$filter["EXTRA_REGISTER_numsel"] = 'less';
-					$filter["EXTRA_REGISTER_to"] = $filter["EXTRA_REGISTER_to"]+1;
+					$result[">{$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
 				}
-				else
+				elseif ($filter["{$fieldName}_numsel"] == 'less')
 				{
-					$result[">=EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER_from"]);
-					$result["<=EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER_to"]);
+					$result["<{$fieldName}"] = $typeCast($filter["{$fieldName}_to"]);
+				}
+				elseif ($filter["{$fieldName}_numsel"] != 'range')
+				{
+					$result["={$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
 				}
 			}
-			if ($filter["EXTRA_REGISTER_numsel"] == 'more')
+			elseif (isset($filter["{$fieldName}"]))
 			{
-				$result[">EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER_from"]);
+				$result["={$fieldName}"] = $typeCast($filter["{$fieldName}"]);
 			}
-			else if ($filter["EXTRA_REGISTER_numsel"] == 'less')
-			{
-				$result["<EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER_to"]);
-			}
-			else if ($filter["EXTRA_REGISTER_numsel"] != 'range')
-			{
-				$result["=EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER_from"]);
-			}
-		}
-		else if (isset($filter["EXTRA_REGISTER"]))
+		};
+
+		$extractNumberRange('MESSAGE_COUNT', 'intval');
+		$extractNumberRange('EXTRA_REGISTER', 'intval');
+
+		if (isset($filter['TYPE']))
 		{
-			$result["=EXTRA_REGISTER"] = intval($filter["EXTRA_REGISTER"]);
+			$result['=MODE'] = $filter['TYPE'];
 		}
 
-		if(isset($filter["TYPE"]))
-			$result["=MODE"] = $filter["TYPE"];
-
-		if(isset($filter["ID"]))
-			$result["=ID"] = $filter["ID"];
-
-		if(isset($filter["WORKTIME"]))
-			$result["=WORKTIME"] = $filter["WORKTIME"];
-
-		if(isset($filter["VOTE"]))
-			$result["=VOTE"] = intval($filter["VOTE"]);
-
-		if(is_array($filter["VOTE_HEAD"]))
+		if (isset($filter['ID']))
 		{
-			foreach ($filter["VOTE_HEAD"] as $key => $value)
+			$result['=ID'] = $filter['ID'];
+		}
+
+		if (isset($filter['WORKTIME']))
+		{
+			$result['=WORKTIME'] = $filter['WORKTIME'];
+		}
+
+		if (isset($filter['VOTE']))
+		{
+			$result['=VOTE'] = intval($filter['VOTE']);
+		}
+
+		if (is_array($filter['VOTE_HEAD']))
+		{
+			foreach ($filter['VOTE_HEAD'] as $key => $value)
 			{
 				if ($value == 'wo')
 				{
-					$filter["VOTE_HEAD"][$key] = 0;
+					$filter['VOTE_HEAD'][$key] = 0;
 				}
 			}
-			$result["=VOTE_HEAD"] = $filter["VOTE_HEAD"];
+			$result['=VOTE_HEAD'] = $filter['VOTE_HEAD'];
 		}
 
 		$minSearchToken = \Bitrix\Main\Config\Option::get('imopenlines', 'min_search_token');
@@ -1048,12 +1145,16 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				|| \Bitrix\Main\Search\Content::isIntegerToken($filter['FIND'])
 				|| mb_strlen($filter['FIND']) >= $minSearchToken
 			)
-			&& \Bitrix\Main\Search\Content::canUseFulltextSearch($filter['FIND'], \Bitrix\Main\Search\Content::TYPE_MIXED))
+			&& \Bitrix\Main\Search\Content::canUseFulltextSearch($filter['FIND'], \Bitrix\Main\Search\Content::TYPE_MIXED)
+		)
 		{
 			global $DB;
-			if (!\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT') && $DB->IndexExists("b_imopenlines_session_index", array("SEARCH_CONTENT"), true))
+			if (
+				!\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT')
+				&& $DB->IndexExists('b_imopenlines_session_index', array('SEARCH_CONTENT'), true)
+			)
 			{
-				\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
+				\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
 			}
 			if (\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT'))
 			{
@@ -1068,8 +1169,114 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 		}
 
+		// UF
+		foreach ($this->getUfFieldList() as $fieldName => $field)
+		{
+			if (
+				$field['SHOW_FILTER'] != 'N'
+				&& $field['USER_TYPE']['BASE_TYPE'] !== \CUserTypeManager::BASE_TYPE_FILE
+			)
+			{
+				if ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_DATETIME)
+				{
+					$extractDateRange($fieldName);
+				}
+				elseif ($field['USER_TYPE']['USER_TYPE_ID'] === \Bitrix\Main\UserField\Types\BooleanType::USER_TYPE_ID)
+				{
+					$extractBoolean($fieldName, 'intval');
+				}
+				elseif ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_INT)
+				{
+					$extractNumberRange($fieldName, 'intval');
+				}
+				elseif ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_DOUBLE)
+				{
+					$extractNumberRange($fieldName, 'doubleval');
+				}
+				elseif (isset($filter[$fieldName]))
+				{
+					$result["={$fieldName}"] = $filter[$fieldName];
+				}
+			}
+		}
+
 		return $result;
 	}
+
+	/**
+	 * @param string $path
+	 * @param array $parameters
+	 *
+	 * @return string
+	 */
+	protected function getFilterUrl(string $path, array $parameters = []): string
+	{
+		$uri = new \Bitrix\Main\Web\Uri($path);
+
+		$filterReserved = [
+			//filter
+			'clear_filter',
+			'apply_filter',
+			'PRESET_ID',
+			'FILTER_ID',
+			'FILTER_APPLIED',
+			//grid
+			'clear_nav',
+			'internal',
+			'grid_id',
+			'grid_action',
+			//ajax
+			'bxajaxid',
+			'AJAX_CALL',
+		];
+		$filterKeys = array_keys($this->getFilterDefinition());
+
+		$uri->deleteParams(array_merge(
+			\Bitrix\Main\HttpRequest::getSystemParameters(),
+			$filterReserved,
+			$filterKeys
+		));
+
+		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->filterId);
+		$filter = $filterOptions->getFilter($this->getFilterDefinition());
+
+		$params = [];
+		foreach ($filter as $key => $value)
+		{
+			if (in_array($key, $filterReserved) || !in_array($key, $filterKeys))
+			{
+				continue;
+			}
+			if (!empty($value))
+			{
+				$params[$key] = $value;
+			}
+		}
+		foreach ($parameters as $key => $value)
+		{
+			if (!empty($value))
+			{
+				$params[$key] = $value;
+			}
+		}
+		if (count($params) > 0)
+		{
+			$params['apply_filter'] = 'Y';
+		}
+		else
+		{
+			$params['apply_filter'] = 'Y';
+			$params['clear_filter'] = 'Y';
+		}
+
+		$uri->addParams($params);
+
+		return $uri->getLocator();
+	}
+
+	//endregion
+
+	//region Format User
 
 	private function getUserHtml($userId, $userData)
 	{
@@ -1148,9 +1355,102 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		return $users;
 	}
 
+	// endregion
+
+	//region Status
+
 	/**
-	 * @return array|array[][][]
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @param $status
+	 * @param $close
+	 * @return bool
+	 */
+	protected function isNotCloseSession($status, $close): bool
+	{
+		$result = false;
+
+		if (
+			$status < Session::STATUS_WAIT_CLIENT &&
+			$close !== 'Y'
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $status
+	 * @return string
+	 */
+	protected function formatStatus($status): string
+	{
+		$result = $status;
+
+		if ($status < Session::STATUS_OPERATOR)
+		{
+			$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW');
+		}
+		else if ($status >= Session::STATUS_OPERATOR && $status < Session::STATUS_CLOSE)
+		{
+			$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW');
+		}
+		else if ($status >= Session::STATUS_CLOSE)
+		{
+			$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED');
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $status
+	 * @return string
+	 */
+	protected function formatStatusDetail($status): string
+	{
+		$result = $status;
+
+		switch ($status)
+		{
+			case Session::STATUS_NEW:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_NEW');
+				break;
+			case Session::STATUS_SKIP:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW');
+				break;
+			case Session::STATUS_ANSWER:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW');
+				break;
+			case Session::STATUS_CLIENT:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW');
+				break;
+			case Session::STATUS_CLIENT_AFTER_OPERATOR:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW');
+				break;
+			case Session::STATUS_OPERATOR:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW');
+				break;
+			case Session::STATUS_WAIT_CLIENT:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2');
+				break;
+			case Session::STATUS_CLOSE:
+			case Session::STATUS_DUPLICATE:
+			case Session::STATUS_SILENTLY_CLOSE:
+				$result = Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED');
+				break;
+			case Session::STATUS_SPAM:
+				$result = Loc::getMessage('OL_STATS_HEADER_SPAM_2');
+				break;
+		}
+
+		return $result;
+	}
+
+	//endregion
+
+	/**
+	 * @return array
 	 */
 	protected function prepareGroupActions(): array
 	{
@@ -1158,7 +1458,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		$userPermissions = Permissions::createWithCurrentUser();
 
-		if($userPermissions->canPerform(Permissions::ENTITY_SESSION, Permissions::ACTION_VIEW))
+		if ($userPermissions->canPerform(Permissions::ENTITY_SESSION, Permissions::ACTION_VIEW))
 		{
 			$prefix = $this->gridId;
 			$snippet = new Panel\Snippet();
@@ -1322,71 +1622,429 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	}
 
 	/**
-	 * @return array|mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return array
+	 */
+	protected function prepareHeaders(): array
+	{
+		$result = [
+			[
+				'id' => 'ID',
+				'name' => Loc::getMessage('OL_STATS_HEADER_MODE_ID'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'ID',
+			],
+			[
+				'id' => 'CONFIG_ID',
+				'name' => Loc::getMessage('OL_STATS_HEADER_CONFIG_NAME'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'CONFIG_ID',
+			],
+			[
+				'id' => 'MODE_NAME',
+				'name' => Loc::getMessage('OL_STATS_HEADER_MODE_NAME'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'MODE',
+			],
+			[
+				'id' => 'STATUS',
+				'name' => Loc::getMessage('OL_STATS_HEADER_STATUS'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'STATUS',
+			],
+			[
+				'id' => 'STATUS_DETAIL',
+				'name' => Loc::getMessage('OL_STATS_HEADER_STATUS_DETAIL'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'STATUS',
+			],
+			[
+				'id' => 'SPAM',
+				'name' => Loc::getMessage('OL_STATS_HEADER_SPAM'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'SPAM',
+			],
+			[
+				'id' => 'SOURCE_TEXT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_SOURCE_TEXT_2'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'SOURCE',
+			],
+			[
+				'id' => 'USER_NAME',
+				'name' => Loc::getMessage('OL_STATS_HEADER_USER_NAME'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'USER_ID',
+			],
+			[
+				'id' => 'SEND_FORM',
+				'name' => Loc::getMessage('OL_STATS_HEADER_SEND_FORM'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'SEND_FORM',
+			],
+			[
+				'id' => 'SEND_HISTORY',
+				'name' => Loc::getMessage('OL_STATS_HEADER_SEND_HISTORY'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'SEND_HISTORY',
+			],
+			[
+				'id' => 'CRM_TEXT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_CRM_TEXT'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'ACTION',
+				'name' => Loc::getMessage('OL_STATS_HEADER_ACTION'),
+				'default' => true,
+				'editable' => false,
+			]
+		];
+
+		if ($this->excelMode)
+		{
+			$result[] = [
+				'id' => 'CRM_LINK',
+				'name' => Loc::getMessage('OL_STATS_HEADER_CRM_LINK'),
+				'default' => true,
+				'editable' => false,
+			];
+			$result[] = [
+				'id' => 'EXTRA_DOMAIN',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_DOMAIN'),
+				'default' => true,
+				'editable' => false,
+			];
+			$result[] = [
+				'id' => 'EXTRA_URL',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_URL'),
+				'default' => true,
+				'editable' => false,
+			];
+		}
+		else
+		{
+			$result[] = [
+				'id' => 'EXTRA_URL',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_URL'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'EXTRA_URL',
+			];
+		}
+
+		if ($this->isFdcMode())
+		{
+			$result[] = [
+				'id' => 'EXTRA_REGISTER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_REGISTER'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'EXTRA_REGISTER'
+			];
+			$result[] = [
+				'id' => 'EXTRA_TARIFF',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_TARIFF'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'EXTRA_TARIFF'
+			];
+			$result[] = [
+				'id' => 'EXTRA_USER_LEVEL',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_USER_LEVEL'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'EXTRA_USER_LEVEL'
+			];
+			$result[] = [
+				'id' => 'EXTRA_PORTAL_TYPE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_EXTRA_PORTAL_TYPE'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'EXTRA_PORTAL_TYPE'
+			];
+		}
+
+		$result = array_merge($result, [
+			[
+				'id' => 'PAUSE_TEXT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_PAUSE_TEXT'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'PAUSE',
+			],
+			[
+				'id' => 'WORKTIME_TEXT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_WORKTIME_TEXT'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'WORKTIME',
+			],
+			[
+				'id' => 'MESSAGE_COUNT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_MESSAGE_COUNT_NEW_NEW'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'MESSAGE_COUNT',
+			],
+			[
+				'id' => 'OPERATOR_NAME',
+				'name' => Loc::getMessage('OL_STATS_HEADER_OPERATOR_NAME'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'OPERATOR_ID',
+			],
+			[
+				'id' => 'DATE_CREATE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_CREATE'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'DATE_CREATE',
+			],
+			[
+				'id' => 'DATE_OPERATOR',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_OPERATOR_NEW_1'),
+				'default' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'DATE_FIRST_ANSWER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_FIRST_ANSWER_NEW'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'DATE_OPERATOR_ANSWER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_OPERATOR_ANSWER_NEW_1'),
+				'default' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'DATE_LAST_MESSAGE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_LAST_MESSAGE'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'DATE_OPERATOR_CLOSE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_OPERATOR_CLOSE_NEW'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'DATE_CLOSE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_CLOSE'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'DATE_CLOSE',
+			],
+			[
+				'id' => 'DATE_MODIFY',
+				'name' => Loc::getMessage('OL_STATS_HEADER_DATE_MODIFY'),
+				'default' => false,
+				'editable' => false,
+				'sort' => 'DATE_MODIFY',
+			],
+			[
+				'id' => 'TIME_FIRST_ANSWER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_FIRST_ANSWER_NEW'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'TIME_ANSWER_WO_BOT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_ANSWER_WO_BOT_NEW'),
+				'default' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'TIME_CLOSE_WO_BOT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_CLOSE_WO_BOT_1_NEW'),
+				'default' => false,
+				'editable' => false,
+			],
+			/*
+			[
+			'id' => 'TIME_ANSWER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_ANSWER_NEW'),
+				'default' => false,
+				'editable' => false
+			],
+			[
+			'id' => 'TIME_CLOSE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_CLOSE_1_NEW'),
+				'default' => false,
+				'editable' => false
+			],
+			*/
+			[
+				'id' => 'TIME_DIALOG_WO_BOT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_DIALOG_WO_BOT_1'),
+				'default' => true,
+				'editable' => false
+			],
+			/*
+			[
+			'id' => 'TIME_DIALOG',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_DIALOG_1'),
+				'default' => false,
+				'editable' => false
+			],
+			*/
+			[
+				'id' => 'TIME_BOT',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_BOT'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'TIME_MESSAGE_ANSWER_FIRST',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FIRST'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'TIME_MESSAGE_ANSWER_FULL',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FULL'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'TIME_MESSAGE_ANSWER_AVERAGE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_MESSAGE_ANSWER_AVERAGE'),
+				'default' => true,
+				'editable' => false,
+				],
+			[
+				'id' => 'TIME_MESSAGE_ANSWER_MAX',
+				'name' => Loc::getMessage('OL_STATS_HEADER_TIME_MESSAGE_ANSWER_MAX'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'VOTE',
+				'name' => Loc::getMessage('OL_STATS_HEADER_VOTE_CLIENT'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'VOTE',
+			],
+			[
+				'id' => 'COMMENT_HEAD',
+				'name' => Loc::getMessage('OL_STATS_HEADER_COMMENT_HEAD'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'VOTE_HEAD',
+				'name' => Loc::getMessage('OL_STATS_HEADER_VOTE_HEAD_1'),
+				'default' => true,
+				'editable' => false,
+				'sort' => 'VOTE_HEAD',
+			],
+		]);
+
+		//UF ->
+		foreach ($this->getUfFieldList() as $fieldName => $field)
+		{
+			if (!empty($field["LIST_COLUMN_LABEL"]))
+			{
+				$name = $field["LIST_COLUMN_LABEL"];
+			}
+			else if (!empty($field["EDIT_FORM_LABEL"]))
+			{
+				$name = $field["EDIT_FORM_LABEL"];
+			}
+			else
+			{
+				$name = $fieldName;
+			}
+
+			$result[$fieldName] = [
+				'id' => $fieldName,
+				'name' => $name,
+				'default' => false,
+				'editable' => false,
+			];
+
+			if (
+				$field['MULTIPLE'] != 'Y'
+				&& $field['USER_TYPE']['BASE_TYPE'] != \CUserTypeManager::BASE_TYPE_FILE
+			)
+			{
+				$result[$fieldName]['sort'] = $fieldName;
+			}
+		}
+		//<- UF
+
+		return $result;
+	}
+
+	/**
+	 * Runs component.
+	 * @return array|bool
 	 */
 	public function executeComponent()
 	{
-		global $APPLICATION, $USER_FIELD_MANAGER;
-
 		$this->includeComponentLang('class.php');
 
 		if (!$this->checkModules())
+		{
 			return false;
-
-		$this->init();
+		}
 
 		if (!$this->checkAccess())
+		{
 			return false;
+		}
+
+		$this->init();
 
 		$this->arResult["GRID_ID"] = $this->gridId;
 		$this->arResult["FILTER_ID"] = $this->filterId;
 		$this->arResult["FILTER"] = $this->getFilterDefinition();
-		$this->arResult["UF_FIELDS"] = [];
-
 		$this->arResult['GROUP_ACTIONS'] = $this->prepareGroupActions();
+		$this->arResult["HEADERS"] = $this->prepareHeaders();
 
-		//UF ->
-		$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
-		//<- UF
+		$sorting = $this->gridOptions->getSorting(array("sort" => array("ID" => "DESC")));
+		$navParams = $this->gridOptions->getNavParams();
 
-		while($ufResult = $ufData->Fetch())
-		{
-			$this->arResult["UF_FIELDS"][$ufResult["FIELD_NAME"]] = $ufResult;
-		}
-
-		$sorting = $this->gridOptions->GetSorting(array("sort" => array("ID" => "DESC")));
-		$navParams = $this->gridOptions->GetNavParams();
-
-		if($this->excelMode)
+		if ($this->excelMode)
 		{
 			$pageSize = $this->arParams['STEXPORT_PAGE_SIZE'];
 			$pageNum = $this->arParams['PAGE_NUMBER'];
-			$total = $this->arParams['STEXPORT_TOTAL_ITEMS'];
 			$this->arResult['STEXPORT_IS_FIRST_PAGE'] = $pageNum === 1;
-
-			$processed = ($pageNum - 1) * $pageSize;
 			$offset = $pageSize * ($pageNum - 1);
+
+			/*
+			$total = $this->arParams['STEXPORT_TOTAL_ITEMS'];
+			$processed = ($pageNum - 1) * $pageSize;
 			if (($total > 0) && ($total - $processed <= $pageSize))
 			{
 				$pageSize = $total - $processed;
 			}
 			unset($total, $processed);
+			*/
 		}
 		else
 		{
 			$pageSize = $navParams['nPageSize'];
 		}
 
-		$gridHeaders = $this->gridOptions->GetVisibleColumns();
+		$gridHeaders = $this->gridOptions->getVisibleColumns();
 		if (empty($gridHeaders))
 		{
-			$gridHeaders = \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance();
-			$isNeedKpi = true;
+			$gridHeaders = SessionTable::getSelectFieldsPerformance();
+			$this->isNeedKpi = true;
 		}
 		$selectHeaders = array_intersect(SessionTable::getSelectFieldsPerformance(), $gridHeaders);
 
@@ -1448,7 +2106,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				case 'TIME_MESSAGE_ANSWER_FULL':
 				case 'TIME_MESSAGE_ANSWER_AVERAGE':
 				case 'TIME_MESSAGE_ANSWER_MAX':
-					$isNeedKpi = true;
+					$this->isNeedKpi = true;
 					break;
 			}
 		}
@@ -1458,11 +2116,16 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			->setPageSize($pageSize)
 			->initFromUri();
 
+		if ($this->excelMode)
+		{
+			$nav->setCurrentPage($pageNum);
+		}
+
 		$cursor = SessionTable::getList(array(
 			'order' => $sorting["sort"],
-			'filter' => $this->getFilter($this->arResult["FILTER"]),
+			'filter' => $this->getFilter(),
 			'select' => $selectHeaders,
-			"count_total" => true,
+			'count_total' => true,
 			'limit' => ($this->excelMode ? $pageSize : $nav->getLimit()),
 			'offset' => ($this->excelMode ? $offset : $nav->getOffset())
 		));
@@ -1474,14 +2137,12 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$this->arResult["SORT_VARS"] = $sorting["vars"];
 		$this->arResult["NAV_OBJECT"] = $nav;
 
+		$this->enableNextPage = $nav->getCurrentPage() < $nav->getPageCount();
+
 		$userId = array();
 		$this->arResult["ELEMENTS_ROWS"] = [];
-		while($data = $cursor->fetch())
+		while ($data = $cursor->fetch())
 		{
-			if($pageSize >= count($this->arResult["ELEMENTS_ROWS"]))
-			{
-				$this->enableNextPage = true;
-			}
 			if ($data["USER_ID"] > 0)
 			{
 				$userId[$data["USER_ID"]] = $data["USER_ID"];
@@ -1492,11 +2153,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 			$this->arResult["ELEMENTS_ROWS"][] = ["data" => $data, "columns" => []];
 		}
-		$this->arResult['STEXPORT_IS_LAST_PAGE'] = $this->enableNextPage ? false : true;
-		$this->showHistory = Security\Helper::getAllowedUserIds(
-			Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(Security\Permissions::ENTITY_HISTORY, Security\Permissions::ACTION_VIEW)
-		);
+
 		$configManager = new Config();
 
 		$arUsers = $this->getUserData($userId);
@@ -1505,25 +2162,22 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			$newRow = $this->arResult["ELEMENTS_ROWS"][$key]["columns"];
 
-			$userFields = $USER_FIELD_MANAGER->getUserFields(SessionTable::getUfId(), $row["data"]['ID'], LANGUAGE_ID);
-
-			foreach ($userFields as $ufResult)
+			if ($this->ufFields)
 			{
-				if(isset($row["data"][$ufResult["FIELD_NAME"]]))
+				$userFields = $this->getUfTypeManager()->getUserFields(SessionTable::getUfId(), $row["data"]['ID'], LANGUAGE_ID);
+
+				foreach ($userFields as $ufResult)
 				{
-					ob_start();
-					$APPLICATION->IncludeComponent(
-						"bitrix:system.field.view",
-						$ufResult["USER_TYPE_ID"],
-						//array("arUserField" => array_merge($ufResult, array('VALUE' => $row["data"][$ufResult["FIELD_NAME"]]))),
-						array("arUserField" => $ufResult),
-						null,
-						array("HIDE_ICONS" => "Y")
-					);
-
-					$newRow[$ufResult["FIELD_NAME"]] = ob_get_contents();
-
-					ob_end_clean();
+					if (isset($row["data"][$ufResult["FIELD_NAME"]]))
+					{
+						$field = new \Bitrix\Main\UserField\Renderer(
+							$ufResult,
+							[
+								'mode' => \Bitrix\Main\UserField\Types\BaseType::MODE_VIEW
+							]
+						);
+						$newRow[$ufResult["FIELD_NAME"]] = $field->render();
+					}
 				}
 			}
 
@@ -1535,53 +2189,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 			$newRow["SOURCE_TEXT"] = $arSources[$row["data"]["SOURCE"]];
 
-			if ($row["data"]["STATUS"] < Session::STATUS_OPERATOR)
-			{
-				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW");
-			}
-			else if ($row["data"]["STATUS"] >= Session::STATUS_OPERATOR && $row["data"]["STATUS"] < Session::STATUS_CLOSE)
-			{
-				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW");
-			}
-			else if ($row["data"]["STATUS"] >= Session::STATUS_CLOSE)
-			{
-				$newRow["STATUS"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED");
-			}
+			$newRow['STATUS'] = $this->formatStatus($row['data']['STATUS']);
+			$newRow['STATUS_DETAIL'] = $this->formatStatusDetail($row['data']['STATUS']);
 
-			switch ($row["data"]["STATUS"])
-			{
-				case Session::STATUS_NEW:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_NEW");
-				break;
-				case Session::STATUS_SKIP:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW");
-				break;
-				case Session::STATUS_ANSWER:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW");
-				break;
-				case Session::STATUS_CLIENT:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_NEW");
-				break;
-				case Session::STATUS_CLIENT_AFTER_OPERATOR:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW");
-				break;
-				case Session::STATUS_OPERATOR:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW");
-				break;
-				case Session::STATUS_WAIT_CLIENT:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2");
-				break;
-				case Session::STATUS_CLOSE:
-				case Session::STATUS_DUPLICATE:
-				case Session::STATUS_SILENTLY_CLOSE:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_COMPONENT_TABLE_STATUS_CLOSED");
-				break;
-				case Session::STATUS_SPAM:
-					$newRow["STATUS_DETAIL"] = Loc::getMessage("OL_STATS_HEADER_SPAM_2");
-				break;
-			}
-
-			if (!self::isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
+			if (!$this->isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
 			{
 				$this->arResult['ELEMENTS_ROWS'][$key]['editable'] = false;
 				$this->arResult['ELEMENTS_ROWS'][$key]['draggable'] = false;
@@ -1626,7 +2237,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$newRow["EXTRA_USER_LEVEL"] = $row["data"]["EXTRA_USER_LEVEL"]? $row["data"]["EXTRA_USER_LEVEL"]: ($this->excelMode? '': '-');
 			$newRow["EXTRA_PORTAL_TYPE"] = $row["data"]["EXTRA_PORTAL_TYPE"]? $row["data"]["EXTRA_PORTAL_TYPE"]: ($this->excelMode? '': '-');
 
-			if(isset($isNeedKpi))
+			if ($this->isNeedKpi)
 			{
 				$kpi = new \Bitrix\ImOpenLines\KpiManager($row["data"]["ID"]);
 				$newRow["TIME_MESSAGE_ANSWER_FIRST"] = $kpi->getFirstMessageAnswerTime();
@@ -1716,7 +2327,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 						'ONCLICK' => "BXIM.openMessenger('imol|{$row['data']['USER_CODE']}')"
 					];
 
-					if(self::isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
+					if($this->isNotCloseSession($row['data']['STATUS'], $row['data']['CLOSED']))
 					{
 						$currentUserId = $GLOBALS['USER']->GetId();
 
@@ -1755,103 +2366,12 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$this->arResult["ELEMENTS_ROWS"][$key]["columns"] = $newRow;
 		}
 
-
-		$this->arResult["HEADERS"] = array(
-			array("id"=>"ID", "name"=> GetMessage("OL_STATS_HEADER_MODE_ID"), "default"=>true, "editable"=>false, "sort"=>"ID"),
-			array("id"=>"CONFIG_ID", "name"=>GetMessage("OL_STATS_HEADER_CONFIG_NAME"), "default"=>false, "editable"=>false, "sort"=>"CONFIG_ID")
-		);
-
-		$this->arResult["HEADERS"] = array_merge($this->arResult["HEADERS"], Array(
-			array("id"=>"MODE_NAME", "name"=>GetMessage("OL_STATS_HEADER_MODE_NAME"), "default"=>true, "editable"=>false, "sort"=>"MODE"),
-			array("id"=>"STATUS", "name"=>GetMessage("OL_STATS_HEADER_STATUS"), "default"=>true, "editable"=>false),
-			array("id"=>"STATUS_DETAIL", "name"=>GetMessage("OL_STATS_HEADER_STATUS_DETAIL"), "default"=>false, "editable"=>false),
-			array("id"=>"SPAM", "name"=>GetMessage("OL_STATS_HEADER_SPAM"), "default"=>true, "editable"=>false, "sort"=>"SPAM"),
-			array("id"=>"SOURCE_TEXT", "name"=>GetMessage("OL_STATS_HEADER_SOURCE_TEXT_2"), "default"=>true, "editable"=>false, "sort"=>"SOURCE"),
-			array("id"=>"USER_NAME", "name"=>GetMessage("OL_STATS_HEADER_USER_NAME"), "default"=>true, "editable"=>false, "sort"=>"USER_ID"),
-			array("id"=>"SEND_FORM", "name"=>GetMessage("OL_STATS_HEADER_SEND_FORM"), "default"=>false, "editable"=>false, "sort"=>"SEND_FORM"),
-			array("id"=>"SEND_HISTORY", "name"=>GetMessage("OL_STATS_HEADER_SEND_HISTORY"), "default"=>false, "editable"=>false, "sort"=>"SEND_HISTORY"),
-			array("id"=>"CRM_TEXT", "name"=>GetMessage("OL_STATS_HEADER_CRM_TEXT"), "default"=>true, "editable"=>false),
-			array("id"=>"ACTION", "name"=>GetMessage("OL_STATS_HEADER_ACTION"), "default"=>true, "editable"=>false),
-		));
 		if ($this->excelMode)
 		{
-			$this->arResult["HEADERS"] = array_merge($this->arResult["HEADERS"], Array(
-				array("id"=>"CRM_LINK", "name"=>GetMessage("OL_STATS_HEADER_CRM_LINK"), "default"=>true, "editable"=>false),
-				array("id"=>"EXTRA_DOMAIN", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_DOMAIN"), "default"=>true, "editable"=>false),
-				array("id"=>"EXTRA_URL", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_URL"), "default"=>true, "editable"=>false),
-			));
-		}
-		else
-		{
-			$this->arResult["HEADERS"] = array_merge($this->arResult["HEADERS"], Array(
-				array("id"=>"EXTRA_URL", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_URL"), "default"=>true, "editable"=>false, "sort"=>"EXTRA_URL"),
-			));
-		}
+			$this->arResult['STEXPORT_IS_LAST_PAGE'] = !$this->enableNextPage;
 
-		if (defined('IMOL_FDC'))
-		{
-			$this->arResult["HEADERS"] = array_merge($this->arResult["HEADERS"], Array(
-				array("id"=>"EXTRA_REGISTER", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_REGISTER"), "default"=>true, "editable"=>false, "sort"=>"EXTRA_REGISTER"),
-				array("id"=>"EXTRA_TARIFF", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_TARIFF"), "default"=>true, "editable"=>false, "sort"=>"EXTRA_TARIFF"),
-				array("id"=>"EXTRA_USER_LEVEL", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_USER_LEVEL"), "default"=>true, "editable"=>false, "sort"=>"EXTRA_USER_LEVEL"),
-				array("id"=>"EXTRA_PORTAL_TYPE", "name"=>GetMessage("OL_STATS_HEADER_EXTRA_PORTAL_TYPE"), "default"=>true, "editable"=>false, "sort"=>"EXTRA_PORTAL_TYPE"),
-			));
-		}
-
-		$this->arResult["HEADERS"] = array_merge($this->arResult["HEADERS"], [
-			["id"=>"PAUSE_TEXT", "name"=>GetMessage("OL_STATS_HEADER_PAUSE_TEXT"), "default"=>false, "editable"=>false, "sort"=>"PAUSE"],
-			["id"=>"WORKTIME_TEXT", "name"=>GetMessage("OL_STATS_HEADER_WORKTIME_TEXT"), "default"=>false, "editable"=>false, "sort"=>"WORKTIME"],
-			["id"=>"MESSAGE_COUNT", "name"=>GetMessage("OL_STATS_HEADER_MESSAGE_COUNT_NEW_NEW"), "default"=>true, "editable"=>false, "sort"=>"MESSAGE_COUNT"],
-			["id"=>"OPERATOR_NAME", "name"=>GetMessage("OL_STATS_HEADER_OPERATOR_NAME"), "default"=>true, "editable"=>false, "sort"=>"OPERATOR_ID"],
-			["id"=>"DATE_CREATE", "name"=>GetMessage("OL_STATS_HEADER_DATE_CREATE"), "default"=>true, "editable"=>false, "sort"=>"DATE_CREATE"],
-			["id"=>"DATE_OPERATOR", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_NEW_1"), "default"=>false, "editable"=>false],
-			["id"=>"DATE_FIRST_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_DATE_FIRST_ANSWER_NEW"), "default"=>true, "editable"=>false],
-			["id"=>"DATE_OPERATOR_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_ANSWER_NEW_1"), "default"=>false, "editable"=>false],
-			["id"=>"DATE_LAST_MESSAGE", "name"=>GetMessage("OL_STATS_HEADER_DATE_LAST_MESSAGE"), "default"=>true, "editable"=>false],
-			["id"=>"DATE_OPERATOR_CLOSE", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_CLOSE_NEW"), "default"=>true, "editable"=>false],
-			["id"=>"DATE_CLOSE", "name"=>GetMessage("OL_STATS_HEADER_DATE_CLOSE"), "default"=>false, "editable"=>false, "sort"=>"DATE_CLOSE"],
-			["id"=>"DATE_MODIFY", "name"=>GetMessage("OL_STATS_HEADER_DATE_MODIFY"), "default"=>false, "editable"=>false, "sort"=>"DATE_MODIFY"],
-			["id"=>"TIME_FIRST_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_TIME_FIRST_ANSWER_NEW"), "default"=>true, "editable"=>false],
-			["id"=>"TIME_ANSWER_WO_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_ANSWER_WO_BOT_NEW"), "default"=>false, "editable"=>false],
-			["id"=>"TIME_CLOSE_WO_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_CLOSE_WO_BOT_1_NEW"), "default"=>false, "editable"=>false],
-		//	["id"=>"TIME_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_TIME_ANSWER_NEW"), "default"=>false, "editable"=>false],
-		//	["id"=>"TIME_CLOSE", "name"=>GetMessage("OL_STATS_HEADER_TIME_CLOSE_1_NEW"), "default"=>false, "editable"=>false],
-			["id"=>"TIME_DIALOG_WO_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_DIALOG_WO_BOT_1"), "default"=>true, "editable"=>false],
-		//	["id"=>"TIME_DIALOG", "name"=>GetMessage("OL_STATS_HEADER_TIME_DIALOG_1"), "default"=>false, "editable"=>false],
-			["id"=>"TIME_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_BOT"), "default"=>true, "editable"=>false],
-			["id"=>"TIME_MESSAGE_ANSWER_FIRST", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FIRST"), "default"=>true, "editable"=>false],
-			["id"=>"TIME_MESSAGE_ANSWER_FULL", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FULL"), "default"=>true, "editable"=>false],
-			["id"=>"TIME_MESSAGE_ANSWER_AVERAGE", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_AVERAGE"), "default"=>true, "editable"=>false],
-			["id"=>"TIME_MESSAGE_ANSWER_MAX", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_MAX"), "default"=>true, "editable"=>false],
-			["id"=>"VOTE", "name"=>GetMessage("OL_STATS_HEADER_VOTE_CLIENT"), "default"=>true, "editable"=>false, "sort"=>"VOTE"],
-			["id"=>"COMMENT_HEAD", "name"=>GetMessage("OL_STATS_HEADER_COMMENT_HEAD"), "default"=>true, "editable"=>false],
-			["id"=>"VOTE_HEAD", "name"=>GetMessage("OL_STATS_HEADER_VOTE_HEAD_1"), "default"=>true, "editable"=>false, "sort"=>"VOTE_HEAD"],
-		]);
-
-		//UF ->
-		foreach($this->arResult["UF_FIELDS"] as $ufResult)
-		{
-			if(!empty($ufResult["LIST_COLUMN_LABEL"]))
-			{
-				$name = $ufResult["LIST_COLUMN_LABEL"];
-			}
-			else if(!empty($ufResult["EDIT_FORM_LABEL"]))
-			{
-				$name = $ufResult["EDIT_FORM_LABEL"];
-			}
-			else
-			{
-				$name = $ufResult["FIELD_NAME"];
-			}
-
-			$this->arResult["HEADERS"][$ufResult["FIELD_NAME"]] = array("id"=>$ufResult["FIELD_NAME"], "name"=>$name, "default"=>false, "editable"=>false);
-		}
-		//<- UF
-
-		if ($this->excelMode)
-		{
 			// We should use only selected grid columns for export
-			if (!empty($this->gridOptions->GetVisibleColumns()))
+			if (!empty($this->gridOptions->getVisibleColumns()))
 			{
 				foreach ($gridHeaders as $gridHeader)
 				{
@@ -1890,12 +2410,24 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			if(\Bitrix\Main\Loader::includeModule("pull"))
 			{
-				global $USER;
-				\CPullWatch::Add($USER->GetId(), 'IMOL_STATISTICS');
+				\CPullWatch::Add($this->getCurrentUser()->getId(), 'IMOL_STATISTICS');
+			}
+
+			if ($this->isFdcMode())
+			{
+				$this->arResult['FILTER_URL'] = $this->getFilterUrl(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri());
+				array_unshift(
+					$this->arResult["ELEMENTS_ROWS"],
+					array(
+						'editable' => false,
+						'not_count' => true,
+						'custom' => '<a id="ol-stat-filter-list-url" href="'.htmlspecialcharsbx($this->arResult['FILTER_URL']).'" style="display:none;"></a>'
+					)
+				);
 			}
 
 			$this->includeComponentTemplate();
 			return $this->arResult;
 		}
 	}
-};
+}

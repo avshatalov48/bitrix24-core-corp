@@ -203,7 +203,11 @@ abstract class EntityConversionMapper
 
 			if(!is_array($settings['DEFAULT_VALUE']))
 			{
-				$fields[$name] = $settings['DEFAULT_VALUE'];
+				$fields[$name] =
+					$userField['MULTIPLE'] === 'Y'
+						? [ $settings['DEFAULT_VALUE'] ]
+						: $settings['DEFAULT_VALUE']
+				;
 			}
 			elseif($typeID === 'datetime')
 			{

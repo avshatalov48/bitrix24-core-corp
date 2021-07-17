@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\UserField;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 class FileViewer
 {
@@ -25,6 +26,11 @@ class FileViewer
 
 	public function getUrl($entityID, $fieldName, $fileID = 0)
 	{
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID))
+		{
+			return Container::getInstance()->getRouter()->getFileUrl($this->entityTypeID, $entityID, $fieldName, $fileID)->getUri();
+		}
+
 		$params = array('owner_id' => $entityID, 'field_name' => $fieldName);
 		if($fileID > 0)
 		{

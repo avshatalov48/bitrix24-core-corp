@@ -7,20 +7,13 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 
-Vue.component('bx-livechat-body-error',
+BitrixVue.component('bx-livechat-body-error',
 {
 	computed:
 	{
-		localize()
-		{
-			return  Object.freeze({
-				BX_LIVECHAT_ERROR_TITLE: this.$root.$bitrixMessages.BX_LIVECHAT_ERROR_TITLE,
-				BX_LIVECHAT_ERROR_DESC: this.$root.$bitrixMessages.BX_LIVECHAT_ERROR_DESC
-			});
-		},
 		...Vuex.mapState({
 			application: state => state.application
 		}),
@@ -33,8 +26,8 @@ Vue.component('bx-livechat-body-error',
 					<div class="bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg" v-html="application.error.description"></div>
 				</template> 
 				<template v-else>
-					<div class="bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg">{{localize.BX_LIVECHAT_ERROR_TITLE}}</div>
-					<div class="bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg">{{localize.BX_LIVECHAT_ERROR_DESC}}</div>
+					<div class="bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_TITLE')}}</div>
+					<div class="bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_DESC')}}</div>
 				</template> 
 			</div>
 		</div>

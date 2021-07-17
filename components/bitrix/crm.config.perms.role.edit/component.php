@@ -204,7 +204,16 @@ foreach($dealCategoryConfigs as $typeName => $config)
 {
 	if(isset($config['FIELDS']) && is_array($config['FIELDS']))
 	{
-		$arResult['ENTITY_FIELDS'][$typeName] = $config['FIELDS'];
+		$fields = $config['FIELDS'];
+		foreach ($fields as $fieldType => $stages)
+		{
+			foreach ($stages as $stageId => $stageName)
+			{
+				unset($fields[$fieldType][$stageId]);
+				$fields[$fieldType][htmlspecialcharsbx($stageId)]= htmlspecialcharsbx($stageName);
+			}
+		}
+		$arResult['ENTITY_FIELDS'][$typeName] = $fields;
 	}
 
 	$arResult['ROLE_PERM'][$typeName] = $permissionSet;

@@ -1,4 +1,9 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -20,25 +25,25 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 }
 
 
-$arDefaultUrlTemplates404 = array(
+$arDefaultUrlTemplates404 = [
 	'entity_list' => '',
 	'bp_list' => '#entity_id#/',
 	'bp_edit' => '#entity_id#/edit/#bp_id#/',
-);
+];
 
-$arDefaultVariableAliases404 = array();
+$arDefaultVariableAliases404 = [];
 
-$arDefaultVariableAliases = array();
+$arDefaultVariableAliases = [];
 
-$arComponentVariables = array(
+$arComponentVariables = [
 	'bp_id',
 	'entity_id',
 	'mode',
-);
+];
 
-if($arParams['SEF_MODE'] == 'Y')
+if ($arParams['SEF_MODE'] == 'Y')
 {
-	$arVariables = array();
+	$arVariables = [];
 
 	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams['SEF_URL_TEMPLATES']);
 	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams['VARIABLE_ALIASES']);
@@ -50,24 +55,36 @@ if($arParams['SEF_MODE'] == 'Y')
 	);
 
 	if(!$componentPage)
+	{
 		$componentPage = 'entity_list';
+	}
 
 	CComponentEngine::InitComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
-	$arResult = array(
+	$arResult = [
 		'FOLDER' => $arParams['SEF_FOLDER'],
 		'URL_TEMPLATES' => $arUrlTemplates,
 		'VARIABLES' => $arVariables,
 		'ALIASES' => $arVariableAliases
-	);
+	];
 }
 else
 {
-	$arVariables = array();
+	$arVariables = [];
 	if(!isset($arParams['VARIABLE_ALIASES']['ID']))
+	{
 		$arParams['VARIABLE_ALIASES']['ID'] = 'ID';
+	}
 
-	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases, $arParams['VARIABLE_ALIASES']);
-	CComponentEngine::InitComponentVariables(false, $arComponentVariables, $arVariableAliases, $arVariables);
+	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases(
+		$arDefaultVariableAliases,
+		$arParams['VARIABLE_ALIASES']
+	);
+	CComponentEngine::InitComponentVariables(
+		false,
+		$arComponentVariables,
+		$arVariableAliases,
+		$arVariables
+	);
 
 	$componentPage = 'entity_list'; //default page
 
@@ -77,17 +94,21 @@ else
 		{
 			case 'edit':
 				if(isset($arVariables['bp_id']))
+				{
 					$componentPage = 'bp_edit';
-			break;
+				}
+
+				break;
 			case 'list':
 				$componentPage = 'bp_list';
-			break;
+
+				break;
 		}
 	}
 
-	$arResult = array(
+	$arResult = [
 		'FOLDER' => '',
-		'URL_TEMPLATES' => Array(
+		'URL_TEMPLATES' => [
 			'entity_list' => $APPLICATION->GetCurPage(),
 			'bp_edit' => $APPLICATION->GetCurPage()
 				.'?'.$arVariableAliases['mode'].'=edit'
@@ -98,11 +119,10 @@ else
 				.'?'.$arVariableAliases['mode'].'=list'
 				.'&'.$arVariableAliases['entity_id'].'=#entity_id#'
 			,
-		),
+		],
 		'VARIABLES' => $arVariables,
 		'ALIASES' => $arVariableAliases
-	);
+	];
 }
 
 $this->IncludeComponentTemplate($componentPage);
-?>

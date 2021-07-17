@@ -18,6 +18,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Helpers\Order\Builder;
+use Bitrix\Sale\Payment;
 use Bitrix\Main\Type\Date;
 use Bitrix\SalesCenter;
 
@@ -32,6 +33,8 @@ if(!Loader::includeModule('crm'))
 
 final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 {
+	use \Bitrix\Crm\Component\EntityDetails\SaleProps\AjaxProcessorTrait;
+
 	protected function getActionMethodName($action)
 	{
 		if ($action === 'GET_SECONDARY_ENTITY_INFOS')
@@ -94,7 +97,18 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				$salesCenterLandingId = SalesCenter\Integration\LandingManager::getInstance()->getConnectedSiteId();
 				if ($salesCenterLandingId > 0)
 				{
-					$productData['TRADING_PLATFORM'] = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($salesCenterLandingId);
+					$code = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($salesCenterLandingId);
+					$platform = \Bitrix\Sale\TradingPlatform\Landing\Landing::getInstanceByCode($code);
+					$productData['TRADING_PLATFORM'] = $platform->getId();
+				}
+
+				$controller = new SalesCenter\Controller\Order();
+				$clientInfo = $controller->getClientInfo([
+					'sessionId' => $this->request['SALES_CENTER_SESSION_ID'],
+				]);
+				if (isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
+				{
+					$productData['DEAL_ID'] = $clientInfo['DEAL_ID'];
 				}
 			}
 		}
@@ -463,52 +477,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 	}
 
-	protected function getPropertiesField($formData)
-	{
-		$result = [];
-
-		$props = array_filter(
-			$formData,
-			function($k){
-				return mb_substr($k, 0, 9) == 'PROPERTY_';
-			},
-			ARRAY_FILTER_USE_KEY
-		);
-
-		if(!empty($props) && is_array($props))
-		{
-			foreach($props as $id => $value)
-			{
-				$propId = mb_substr($id, 9);
-
-				if (isset($this->request[$id]))
-				{
-					$result[mb_substr($id, 9)] = $this->request[$id];
-				}
-				elseif ((int)$propId > 0 || (mb_substr($propId, 0, 1) == 'n'))
-				{
-					$result[mb_substr($id, 9)] = $value;
-				}
-			}
-		}
-		$files = $this->preparePropertyFiles();
-
-		if (!empty($files) && is_array($files['PROPERTIES']['name']))
-		{
-			foreach ($files['PROPERTIES']['name'] as $key => $value)
-			{
-				if (!is_array($value))
-				{
-					$result[$key] = [
-						'ID' => ''
-					];
-				}
-			}
-		}
-
-		return $result;
-	}
-
 	protected function deleteAction()
 	{
 		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
@@ -581,11 +549,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
 		}
 	}
+
 	protected function setPaymentPaidFieldAction()
 	{
-		$paymentId = isset($this->request['FIELDS']['PAYMENT_ID']) && intval($this->request['FIELDS']['PAYMENT_ID']) > 0 ? intval($this->request['FIELDS']['PAYMENT_ID']) : 0;
-		$paid = isset($this->request['FIELDS']['PAID']) ? trim($this->request['FIELDS']['PAID']) : '';
-		$isReturn = isset($this->request['FIELDS']['IS_RETURN']) ? trim($this->request['FIELDS']['IS_RETURN']) : '';
+		$this->setPaymentField('PAID');
+	}
+
+	protected function setPaymentReturnFieldAction()
+	{
+		$this->setPaymentField('IS_RETURN');
+	}
+
+	protected function setPaymentField($fieldName)
+	{
+		$paymentId = isset($this->request['FIELDS']['PAYMENT_ID']) && (int)$this->request['FIELDS']['PAYMENT_ID'] > 0 ? (int)$this->request['FIELDS']['PAYMENT_ID'] : 0;
 
 		if($paymentId <= 0)
 		{
@@ -593,7 +570,23 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if($paid != 'Y' && $paid != 'N')
+		if (!in_array($fieldName, ['PAID', 'IS_RETURN']))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+			return;
+		}
+
+		$value = isset($this->request['FIELDS'][$fieldName]) ? trim($this->request['FIELDS'][$fieldName]) : '';
+
+		if($fieldName === 'PAID' && !in_array($value, ['Y', 'N']))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+			return;
+		}
+
+		if(
+			$fieldName === 'IS_RETURN'
+			&& !in_array($value,[Payment::RETURN_NONE, Payment::RETURN_INNER, Payment::RETURN_PS]))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
 			return;
@@ -632,7 +625,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$payment = $res->fetch();
 
-		if(!$payment || intval($payment['ORDER_ID']) <= 0)
+		if(!$payment || (int)$payment['ORDER_ID'] <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND'));
 			return;
@@ -662,18 +655,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if($isReturn <> '')
+		if ($fieldName === 'PAID')
 		{
-			$setResult = $paymentObj->setReturn($isReturn);
-
-			if(!$setResult->isSuccess())
-			{
-				$this->addErrors($setResult->getErrors());
-				return;
-			}
+			$setResult = $paymentObj->setPaid($value);
 		}
-
-		$setResult = $paymentObj->setPaid($paid);
+		elseif ($fieldName === 'IS_RETURN')
+		{
+			$setResult = $paymentObj->setReturn($value);
+		}
 
 		if(!$setResult->isSuccess())
 		{
@@ -788,59 +777,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'ORDER_DATA' => $this->formatResultData($order),
 			'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
 		]);
-	}
-
-	protected function savePropertyConfigAction()
-	{
-		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-		if (!$allowConfig)
-		{
-			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
-			return;
-		}
-
-		$id = isset($this->request['PROPERTY_ID']) ? max((int)$this->request['PROPERTY_ID'], 0) : 0;
-		if ($id <= 0)
-		{
-			$this->addError('PROPERTY NOT FOUND');
-			return;
-		}
-
-		$updateParams = [];
-		$propertyData = \Bitrix\Sale\Internals\OrderPropsTable::getById($id);
-		if ($property = $propertyData->fetch())
-		{
-			$updateParams['SETTINGS'] = $property['SETTINGS'];
-		}
-		else
-		{
-			$this->addError('PROPERTY NOT FOUND');
-			return;
-		}
-
-		if (isset($this->request['CONFIG']['NAME']))
-		{
-			$updateParams['NAME'] = $this->request['CONFIG']['NAME'];
-		}
-		if (is_array($this->request['CONFIG']['SETTINGS']))
-		{
-			$updateParams['SETTINGS']['SHOW_ALWAYS'] = ($this->request['CONFIG']['SETTINGS']['SHOW_ALWAYS'] === 'Y') ? 'Y' : 'N';
-			$updateParams['SETTINGS']['IS_HIDDEN'] = ($this->request['CONFIG']['SETTINGS']['IS_HIDDEN'] === 'Y') ? 'Y' : 'N';
-		}
-
-		if (!empty($updateParams))
-		{
-			$result = \Bitrix\Sale\Internals\OrderPropsTable::update($id, $updateParams);
-
-			if ($result->isSuccess())
-			{
-				$this->addData(['PROPERTY_ID' => $id]);
-			}
-			else
-			{
-				$this->addError($result->getErrors());
-			}
-		}
 	}
 
 	protected function addPropertyAction()
@@ -1086,53 +1022,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
 			return;
 		}
-		$properties = $component->prepareProperties($order);
+		$properties = $component->prepareProperties(
+			$order->getPropertyCollection(),
+			\Bitrix\Crm\Order\Property::class,
+			$order->getPersonTypeId(),
+			$order->isNew()
+		);
+
 		$this->addData([
 			'PROPERTIES' => $properties,
 			'ORDER_ID' => $order->getId()
 		]);
 	}
-	protected function sortPropertiesAction()
-	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		$allowConfig = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-		if (!$allowConfig)
-		{
-			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
-			return;
-		}
 
-		$propertyList = $this->request['PROPERTIES'];
-		if (empty($propertyList) || !is_array($propertyList))
-		{
-			return;
-		}
-
-		$propertiesData = \Bitrix\Crm\Order\Property::getList(
-			array(
-				'filter' => array('ACTIVE' => 'Y'),
-				'select' => array('ID', 'SORT'),
-				'order' => array('SORT')
-			)
-		);
-		$sortList = [];
-		while ($property = $propertiesData->fetch())
-		{
-			if (in_array($property['ID'], $propertyList))
-			{
-				$sortList[] = $property['SORT'];
-			}
-		}
-
-		foreach ($propertyList as $key => $id)
-		{
-			$id = (int)$id;
-			if ($id > 0 && $sortList[$key] > 0)
-			{
-				\Bitrix\Sale\Internals\OrderPropsTable::update($id, array('SORT' => $sortList[$key]));
-			}
-		}
-	}
 	protected function refreshOrderDataAction()
 	{
 		if(!($formData = $this->getFormData()))
@@ -1268,6 +1170,10 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$newDeliveryId = isset($freshData['DELIVERY_ID']) ? (int)$freshData['DELIVERY_ID'] : null;
 		$isDeliverySystemChanged = ($oldDeliveryId !== $newDeliveryId);
 
+		$oldTradingPlatformId = isset($changedFields['OLD_TRADING_PLATFORM']) ? (int)$changedFields['OLD_TRADING_PLATFORM'] : null;
+		$newTradingPlatformId = isset($freshData['TRADING_PLATFORM']) ? (int)$freshData['TRADING_PLATFORM'] : null;
+		$isTradingPlatformChanged = ($oldTradingPlatformId !== $newTradingPlatformId);
+
 		$oldPaymentSystemId = isset($changedFields['PAY_SYSTEM_ID']) ? (int)$changedFields['PAY_SYSTEM_ID'] : null;
 		$newPaymentSystemId = isset($freshData['PAY_SYSTEM_ID']) ? (int)$freshData['PAY_SYSTEM_ID'] : null;
 		$isPaymentSystemChanged = ($oldPaymentSystemId !== $newPaymentSystemId);
@@ -1277,6 +1183,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			|| (isset($changedFields['OLD_USER_ID']) && (int)$changedFields['OLD_USER_ID'] !== (int)$freshData['USER_ID'])
 			|| $isDeliverySystemChanged
 			|| $isPaymentSystemChanged
+			|| $isTradingPlatformChanged
 		)
 		{
 			\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
@@ -1294,7 +1201,35 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				}
 			}
 
-			$freshData['PROPERTIES_SCHEME'] = $component->prepareProperties($order);
+			$freshData['PROPERTIES_SCHEME'] = $component->prepareProperties(
+				$order->getPropertyCollection(),
+				\Bitrix\Crm\Order\Property::class,
+				$order->getPersonTypeId(),
+				$order->isNew()
+			);
+		}
+
+		if (
+			(isset($changedFields['OLD_PERSON_TYPE_ID']) && (int)$changedFields['OLD_PERSON_TYPE_ID'] !== (int)$freshData['PERSON_TYPE_ID'])
+			|| (isset($changedFields['OLD_USER_ID']) && (int)$changedFields['OLD_USER_ID'] !== (int)$freshData['USER_ID'])
+			|| $isDeliverySystemChanged
+			|| $isTradingPlatformChanged
+		)
+		{
+			\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
+			$component = new \CCrmOrderDetailsComponent();
+			$component->initializeParams(
+				isset($this->request['PARAMS']) && is_array($this->request['PARAMS']) ? $this->request['PARAMS'] : []
+			);
+			$shipment = $component->getFirstShipment($order);
+			$freshData['SHIPMENT_PROPERTIES_SCHEME'] = $shipment
+				? $component->prepareProperties(
+					$shipment->getPropertyCollection(),
+					\Bitrix\Crm\Order\ShipmentProperty::class,
+					$shipment->getPersonTypeId(),
+					($shipment->getId() === 0)
+				)
+				: [];
 		}
 
 		if (empty($freshData['USER_PROFILE']) && $order->isNew())
@@ -1343,6 +1278,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	protected function buildOrder(array &$formData, array $settings = [])
 	{
 		$formData['PROPERTIES'] = $this->getPropertiesField($formData);
+
+		if (isset($formData['SHIPMENT']) && is_array($formData['SHIPMENT']))
+		{
+			foreach ($formData['SHIPMENT'] as $shipmentIndex => $shipment)
+			{
+				//@TODO add multi-shipment properties support
+				$formData['SHIPMENT'][$shipmentIndex]['PROPERTIES'] = $this->getPropertiesField($formData);
+			}
+		}
 
 		$settings = array_merge(
 			[
@@ -1733,7 +1677,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	protected function getProductComponentData(Order $order)
 	{
 		global $APPLICATION;
-		$componentParams = $this->request['PRODUCT_COMPONENT_DATA'];
+		$componentParams = $this->request['PRODUCT_COMPONENT_DATA'] ?? [];
 		$sessionBasket = [];
 		$basket = $order->getBasket();
 		/** @var \Bitrix\Sale\BasketItem $basketItem */
@@ -1754,12 +1698,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$_SESSION['ORDER_BASKET'][$order->getId()]['ITEMS'] = $sessionBasket;
 		$ajaxParams = $componentParams;
 		$ajaxParams['params']['SESSION_BASKET'] = 'Y';
+		$template = $componentParams['template'] ?? '';
+		$params = $componentParams['params'] ?? [];
 
 		ob_start();
 		$APPLICATION->IncludeComponent('bitrix:crm.order.product.list',
-			isset($componentParams['template']) ? $componentParams['template'] : '',
+			$template,
 			array_merge(
-				$componentParams['params'],
+				$params,
 				[
 					'AJAX_LOADER' => array(
 						'url' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
@@ -2206,29 +2152,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$component->setOrder($order);
 		$component->formatResultSettings();
 		return $component->prepareEntityData();
-	}
-
-	protected function preparePropertyFiles()
-	{
-		$files = [];
-		foreach ($_FILES as $id => $fileData)
-		{
-			$propertyId = mb_substr($id, 9);
-			if ($propertyId > 0 && !isset($_FILES[$propertyId]['DELETE']))
-			{
-				foreach ($fileData as $key => $value)
-				{
-					$files['PROPERTIES'][$key][$propertyId] = $value;
-				}
-			}
-		}
-
-		if (!empty($files))
-		{
-			\CUtil::decodeURIComponent($files);
-		}
-
-		return $files;
 	}
 
 	protected function deleteCouponAction()

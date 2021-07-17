@@ -113,6 +113,7 @@ class OrderDataProvider extends Main\Filter\EntityDataProvider
 				'CHECK_PRINTED',
 				['type' => 'checkbox']
 			),
+			'HAS_ASSOCIATED_DEAL' => $this->createField('HAS_ASSOCIATED_DEAL', ['type' => 'checkbox']),
 			'XML_ID' => $this->createField('XML_ID'),
 		);
 

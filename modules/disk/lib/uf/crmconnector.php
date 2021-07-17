@@ -46,6 +46,11 @@ class CrmMessageConnector extends CrmConnector
 {
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		return array(
 			'DETAIL_URL' => \CComponentEngine::makePathFromTemplate('/crm/stream/?log_id=#log_id#', array('log_id' => $this->entityId)),
 			'DESCRIPTION' => Loc::getMessage('DISK_UF_CRM_CONNECTOR_MESSAGE_DESCRIPTION')
@@ -65,6 +70,11 @@ class CrmMessageCommentConnector extends CrmConnector
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		return array(
 			'DETAIL_URL' => \CComponentEngine::makePathFromTemplate(
 					'/crm/stream/?log_id=#log_id#?commentId=#comment_id##com#comment_id#',
@@ -82,6 +92,11 @@ class CrmDealConnector extends CrmConnector
 {
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		$responsibleId = \CCrmOwnerType::getResponsibleID(\CCrmOwnerType::Deal, $this->entityId, false);
 
 		return array(
@@ -94,6 +109,11 @@ class CrmDealConnector extends CrmConnector
 class CrmLeadConnector extends CrmConnector
 {
 	public function getDataToShow()
+	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
 	{
 		$responsibleId = \CCrmOwnerType::getResponsibleID(\CCrmOwnerType::Lead, $this->entityId, false);
 
@@ -108,6 +128,11 @@ class CrmCompanyConnector extends CrmConnector
 {
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		$responsibleId = \CCrmOwnerType::getResponsibleID(\CCrmOwnerType::Company, $this->entityId, false);
 
 		return array(
@@ -120,6 +145,11 @@ class CrmCompanyConnector extends CrmConnector
 class CrmContactConnector extends CrmConnector
 {
 	public function getDataToShow()
+	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
 	{
 		$responsibleId = \CCrmOwnerType::getResponsibleID(\CCrmOwnerType::Contact, $this->entityId, false);
 

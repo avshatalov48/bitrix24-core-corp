@@ -633,8 +633,16 @@
 	      });
 	    }
 	  }, {
+	    key: "onDeleteImmediately",
+	    value: function onDeleteImmediately(id) {
+	      var additionalOptions = {
+	        'deleteImmediately': true
+	      };
+	      this.onDeleteClick(id, additionalOptions);
+	    }
+	  }, {
 	    key: "onDeleteClick",
-	    value: function onDeleteClick(id) {
+	    value: function onDeleteClick(id, additionalOptions) {
 	      var selected = this.getGridInstance().getRows().getSelected();
 
 	      if (id === undefined && selected.length === 0) {
@@ -647,6 +655,7 @@
 	      }
 
 	      var options = {
+	        params: additionalOptions !== undefined ? additionalOptions : {},
 	        keepRows: true,
 	        analyticsLabel: {
 	          'groupCount': selected.length,
@@ -664,7 +673,7 @@
 	      selectedIds = this.filterRowsByClassName(this.disabledClassName, selectedIds, true);
 	      options.ids = selectedIds;
 
-	      if (this.userInterfaceManager.isCurrentFolderTrash) {
+	      if (this.userInterfaceManager.isCurrentFolderTrash || additionalOptions !== undefined && additionalOptions['deleteImmediately']) {
 	        var confirmPopup = this.getConfirmDeletePopup(options);
 	        confirmPopup.show();
 	      } else {

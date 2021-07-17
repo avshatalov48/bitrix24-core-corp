@@ -1605,6 +1605,7 @@ class Connector
 				'session' => [
 					'id' => $session->getData('ID'),
 					'closed' => $session->getData('CLOSED'),
+					'parent_id' => $session->getData('PARENT_ID'),
 				],
 				'chat' => ['id' => $chatEntityId['connectorChatId']],
 				'user' => ['id' => $chatEntityId['connectorUserId']],
@@ -1629,7 +1630,7 @@ class Connector
 			&& Loader::includeModule('imconnector')
 		)
 		{
-			Log::write($fields, 'SESSION FINISHED');
+			Log::write($fields, 'SESSION STARTED');
 
 			$connector = new Output($fields['connector']['connector_id'], $fields['connector']['line_id']);
 			$connector->sessionStart([$fields]);

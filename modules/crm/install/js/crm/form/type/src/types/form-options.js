@@ -22,11 +22,15 @@ type Deal = {
 	category: string;
 	duplicatesEnabled: boolean;
 };
+type DocumentDynamic = {
+	category: number;
+};
 
 type Document = {
 	scheme: number;
 	duplicateMode: string;
 	deal: Deal;
+	dynamic: DocumentDynamic;
 };
 
 type Responsible = {

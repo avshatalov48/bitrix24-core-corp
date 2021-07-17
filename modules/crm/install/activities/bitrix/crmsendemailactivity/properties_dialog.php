@@ -29,35 +29,20 @@ $attachmentType = $map['AttachmentType'];
 $attachment = $map['Attachment'];
 
 $from = isset($map['MessageFrom']) ? $map['MessageFrom'] : null;
-$fromValue = $from ? $dialog->getCurrentValue($from['FieldName'], $dialog->getCurrentValue('from','')) : null;
-if ($from && $fromValue && !in_array($fromValue, $from['Options']))
-{
-	array_unshift($from['Options'], $fromValue);
-}
 
-if ($from):?>
-<div style="display:none;">
-	<?
-	$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
-	?>
-</div>
-<tr>
-	<td align="right" width="40%"><span class="adm-required-field"><?=htmlspecialcharsbx($from['Name'])?>:</span></td>
-	<td width="60%">
-		<select name="<?=htmlspecialcharsbx($from['FieldName'])?>" id="BPCSMA-from-control">
-			<option value=""><?=GetMessage('CRM_SEMA_PD_FROM_AUTO')?></option>
-			<?foreach ($from['Options'] as $fromOption):
-				$selected = ($fromValue === $fromOption) ? 'selected' : '';
-			?>
-				<option value="<?=htmlspecialcharsbx($fromOption)?>" <?=$selected?>><?=htmlspecialcharsbx($fromOption)?></option>
-			<?endforeach;?>
-		</select>&nbsp;<a href="#" onclick="return BPCSMA_addFrom();" style="color: black; text-decoration: none; border-bottom: 1px dotted"><?=GetMessage('CRM_SEMA_PD_FROM_ADD')?></a>
-	</td>
-</tr>
-<?
-endif;
-?>
-
+if ($from): ?>
+	<div style="display:none;">
+		<?php
+		$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
+		?>
+	</div>
+	<tr>
+		<td align="right" width="40%"><span class="adm-required-field"><?=htmlspecialcharsbx($from['Name'])?>:</span></td>
+		<td width="60%">
+			<?= $dialog->renderFieldControl($from, null, true, 0) ?>
+		</td>
+	</tr>
+<? endif; ?>
 <tr>
 	<td align="right" width="40%"><span class="adm-required-field"><?=htmlspecialcharsbx($subject['Name'])?>:</span></td>
 	<td width="60%">
@@ -233,29 +218,6 @@ endif;
 				}, this), 10);
 			}, this)
 		);
-		return false;
-	};
-
-	var BPCSMA_addFrom = function()
-	{
-		if (window.BXMainMailConfirm)
-		{
-			window.BXMainMailConfirm.showForm(function(mailbox)
-			{
-				var selectNode = BX('BPCSMA-from-control');
-				var fromValue = mailbox['name'].length > 0
-					? mailbox['name'] + ' <' + mailbox['email'] + '>'
-					: mailbox['email'];
-
-				selectNode.appendChild(BX.create('option', {
-					text: fromValue,
-					props: {value: fromValue}
-				}));
-
-				selectNode.value = fromValue;
-			});
-		}
-
 		return false;
 	};
 </script>

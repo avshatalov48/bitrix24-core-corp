@@ -38,7 +38,7 @@ foreach ($dialog->getMap() as $fieldId => $field):
 			{
 				var opt = stageSelect.options[i];
 
-				if (opt.value === '')
+				if (opt.value === '' || opt.getAttribute('data-role') === 'expression')
 				{
 					continue;
 				}

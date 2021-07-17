@@ -17,12 +17,18 @@ export default class PullQueue
 
 	loadItem(isForce)
 	{
+		isForce = (isForce || false);
+		if (this.#isProgress && !isForce)
+		{
+			return;
+		}
+
 		const id = this.pop();
 
-		if (id && (!this.#isProgress || isForce === true))
+		if (id)
 		{
 			this.#isProgress = true;
-			this.#grid.loadNew(id, false).then(
+			this.#grid.loadNew(id, false, true).then(
 				function (response)
 				{
 					if (this.peek())
@@ -40,10 +46,15 @@ export default class PullQueue
 
 	push(id)
 	{
-		if (this.getAll().indexOf(id) === -1)
+		id = parseInt(id, 10);
+		const index = this.getAll().indexOf(id);
+
+		if (index !== -1)
 		{
-			this.#queue.push(id);
+			this.splice(index);
 		}
+
+		this.#queue.push(id);
 		return this;
 	}
 
@@ -60,5 +71,10 @@ export default class PullQueue
 	getAll()
 	{
 		return this.#queue;
+	}
+
+	splice(index)
+	{
+		this.#queue.splice(index, 1);
 	}
 }

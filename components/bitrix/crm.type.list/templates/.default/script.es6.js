@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Reflection, Text, Type, Dom } from "main.core";
+import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from "main.core";
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 
@@ -46,11 +46,23 @@ class TypeListComponent
 		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickDelete', this.handleTypeDelete.bind(this));
 
 		const toolbarComponent = this.getToolbarComponent();
-		if (this.gridId && Reflection.getClass('BX.Main.gridManager') && toolbarComponent)
+
+		if (toolbarComponent)
 		{
-			toolbarComponent.subscribeTypeUpdatedEvent(() => {
-				Dom.removeClass(document.getElementById('crm-type-list-container'), 'crm-type-list-grid-empty');
-				BX.Main.gridManager.reload(this.gridId);
+			/** @see BX.Crm.ToolbarComponent.subscribeTypeUpdatedEvent */
+			toolbarComponent.subscribeTypeUpdatedEvent((event: BaseEvent) => {
+				const isUrlChanged = Type.isObject(event.getData()) && (event.getData().isUrlChanged === true);
+				if (isUrlChanged)
+				{
+					window.location.reload();
+					return;
+				}
+
+				if (this.gridId && Reflection.getClass('BX.Main.gridManager.reload'))
+				{
+					Dom.removeClass(document.getElementById('crm-type-list-container'), 'crm-type-list-grid-empty');
+					BX.Main.gridManager.reload(this.gridId);
+				}
 			});
 		}
 	}
@@ -113,7 +125,14 @@ class TypeListComponent
 							{
 								entityTypeId,
 							}
-				}).then(() => {
+				}).then((response: {data: {}}) => {
+					const isUrlChanged = Type.isObject(response.data) && (response.data.isUrlChanged === true);
+					if (isUrlChanged)
+					{
+						window.location.reload();
+						return;
+					}
+
 					this.grid.reloadTable();
 				}).catch(this.showErrorsFromResponse.bind(this));
 

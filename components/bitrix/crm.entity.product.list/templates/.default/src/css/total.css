@@ -4,6 +4,10 @@
 	color: #525c69;
 }
 
+.crm-product-list-payment-side-table-row {
+    text-align: right;
+}
+
 .crm-product-list-payment-side-table td.crm-product-list-payment-side-table-td-border {
 	padding-bottom: 18px;
 	position: relative;

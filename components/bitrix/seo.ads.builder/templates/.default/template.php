@@ -25,6 +25,7 @@ Extension::load(
 	]
 );
 $provider = $arParams['PROVIDER'];
+$isCloud = $arResult['IS_CLOUD'];
 $containerNodeId = $arParams['CONTAINER_NODE_ID'];
 $destroyEventName = $arParams['JS_DESTROY_EVENT_NAME'];
 $accountId = $arParams['ACCOUNT_ID'];
@@ -221,21 +222,23 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 							'CRM_ADS_RTG_PRODUCT_PAGE_ADD_OR_CREATE'
 						);?></div>
 					<div class="crm-ads-new-campaign-item-options">
-<!--						<div class="crm-ads-new-campaign-item-option seo-ads-product-item-block-->
-<!--						crm-ads-new-campaign-item-option--selected"-->
-<!--							data-type="auto">-->
-<!--							<span class="crm-ads-new-campaign-item-option-label">--><?//=Loc::getMessage(
-//									'CRM_ADS_RTG_PRODUCT_AD'
-//								)?><!--</span>-->
-<!--							<div class="crm-ads-new-campaign-item-option-subtitle">--><?//=Loc::getMessage(
-//									'CRM_ADS_RTG_PRODUCT_SELL'
-//								)?><!--</div>-->
-<!--							<div class="crm-ads-new-campaign-item-option-text">--><?//=Loc::getMessage(
-//									'CRM_ADS_RTG_PRODUCT_SELL_CREATE_AUTO'
-//								)?><!--</div>-->
-<!--						</div>-->
-						<div class="crm-ads-new-campaign-item-option seo-ads-product-item-block
-                            crm-ads-new-campaign-item-option--selected" data-type="expert">
+						<?php if ($isCloud): ?>
+							<div class="crm-ads-new-campaign-item-option seo-ads-product-item-block
+							crm-ads-new-campaign-item-option--selected"
+								data-type="auto">
+								<span class="crm-ads-new-campaign-item-option-label"><?=Loc::getMessage(
+										'CRM_ADS_RTG_PRODUCT_AD'
+									)?></span>
+								<div class="crm-ads-new-campaign-item-option-subtitle"><?=Loc::getMessage(
+										'CRM_ADS_RTG_PRODUCT_SELL'
+									)?></div>
+								<div class="crm-ads-new-campaign-item-option-text"><?=Loc::getMessage(
+										'CRM_ADS_RTG_PRODUCT_SELL_CREATE_AUTO'
+									)?></div>
+							</div>
+						<?php endif ?>
+
+						<div class="crm-ads-new-campaign-item-option seo-ads-product-item-block" data-type="expert">
 							<span class="crm-ads-new-campaign-item-option-label"><?=Loc::getMessage(
 									'CRM_ADS_RTG_PRODUCT_EXPERT'
 								)?></span>
@@ -247,15 +250,19 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 								)?></div>
 						</div>
 					</div>
-					<div class="crm-ads-new-campaign-item-container seo-ads-store"
+
+					<?php if ($isCloud): ?>
+						<div class="crm-ads-new-campaign-item-container seo-ads-store"
 						data-type="store-not-created" style="display:none">
-						<div class="crm-ads-new-campaign-item-subtitle"><?=Loc::getMessage(
-								'CRM_ADS_RTG_PRODUCT_FOR_SELL'
-							)?></div>
-						<button type="button" class="ui-btn ui-btn-primary seo-ads-add-product-btn">
-							<?=Loc::getMessage('CRM_ADS_RTG_ADD_PRODUCT_FOR_SELL')?>
-						</button>
-					</div>
+							<div class="crm-ads-new-campaign-item-subtitle"><?=Loc::getMessage(
+									'CRM_ADS_RTG_PRODUCT_FOR_SELL'
+								)?></div>
+							<button type="button" class="ui-btn ui-btn-primary seo-ads-add-product-btn">
+								<?=Loc::getMessage('CRM_ADS_RTG_ADD_PRODUCT_FOR_SELL')?>
+							</button>
+						</div>
+					<?php endif; ?>
+
 					<div class="crm-ads-new-campaign-item-container seo-ads-store" data-type="store-created" style="display:none">
 						<div class="crm-ads-new-campaign-item-subtitle"><?=Loc::getMessage(
 								'CRM_ADS_RTG_PRODUCT_FOR_SELL'
@@ -277,15 +284,19 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 		<div class="crm-ads-new-campaign-item-block">
 			<div class="crm-ads-new-campaign-item-header">
 				<span class="crm-ads-new-campaign-item-title"><?=Loc::getMessage('CRM_ADS_RTG_CAMPAIGN')?></span>
-<!--				<div class="crm-ads-new-campaign-item-expert">-->
-<!--					<span class="crm-ads-new-campaign-item-expert-text">--><?//=Loc::getMessage('CRM_ADS_RTG_EXPERT_MODE')?><!--</span>-->
-<!--					<span class="crm-ads-new-campaign-item-expert-switcher"-->
-<!--						id="crm-ads-new-campaign-item-expert-audience"></span>-->
-<!--				</div>-->
 			</div>
 			<div class="crm-ads-new-campaign-item-content">
 				<div class="crm-ads-new-campaign-item-content-inner">
 					<div class="crm-ads-new-campaign-item-desc"><?=Loc::getMessage('CRM_ADS_RTG_AUDIENCE');?></div>
+					<div class="crm-ads-new-campaign-item-geo">
+						<div class="crm-ads-new-campaign-item-geo-title"><?=Loc::getMessage(
+								'CRM_ADS_RTG_PRODUCT_LOCATION'
+							)?></div>
+						<div class="crm-ads-new-campaign-item-geo-subject"><?=Loc::getMessage(
+								'CRM_ADS_RTG_LOCATION_LIVING_PLACE'
+							)?></div>
+						<div id="seo-ads-regions"></div>
+					</div>
 					<div class="crm-ads-new-campaign-item-options">
 						<div class="crm-ads-new-campaign-item-option seo-ads-audience-item-block
 						crm-ads-new-campaign-item-option--selected" data-type="auto">
@@ -325,15 +336,6 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 								)?></div>
 						</div>
 					</div>
-					<div class="crm-ads-new-campaign-item-geo">
-						<div class="crm-ads-new-campaign-item-geo-title"><?=Loc::getMessage(
-								'CRM_ADS_RTG_PRODUCT_LOCATION'
-							)?></div>
-						<div class="crm-ads-new-campaign-item-geo-subject"><?=Loc::getMessage(
-								'CRM_ADS_RTG_LOCATION_LIVING_PLACE'
-							)?></div>
-						<div id="seo-ads-regions"></div>
-					</div>
 				</div>
 			</div>
 		</div>
@@ -349,11 +351,6 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 		<div class="crm-ads-new-campaign-item-block">
 			<div class="crm-ads-new-campaign-item-header">
 				<span class="crm-ads-new-campaign-item-title"><?=Loc::getMessage('CRM_ADS_RTG_BUDGET');?></span>
-<!--				<div class="crm-ads-new-campaign-item-expert">-->
-<!--					<span class="crm-ads-new-campaign-item-expert-text">--><?//=Loc::getMessage('CRM_ADS_RTG_EXPERT_MODE');?><!--</span>-->
-<!--					<span class="crm-ads-new-campaign-item-expert-switcher"-->
-<!--						id="crm-ads-new-campaign-item-expert-budget"></span>-->
-<!--				</div>-->
 			</div>
 			<div class="crm-ads-new-campaign-item-content">
 				<div class="crm-ads-new-campaign-item-content-inner">
@@ -648,6 +645,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.image.input', '', [
 				'pageConfigurationUrl' => $pageConfigurationUrl,
 				'baseCurrency'         => $baseCurrency,
 				'iBlockId'             => $iBlockId,
+				'isCloud'              => $isCloud !== false,
 				'basePriceId'          => $basePriceId,
 				'storeExists'          => $arResult['STORE_EXISTS'],
 				'signedParameters'     => $this->getComponent()

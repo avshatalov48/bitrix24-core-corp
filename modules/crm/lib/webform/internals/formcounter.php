@@ -151,9 +151,13 @@ class FormCounterTable extends Entity\DataManager
 		$fieldsMap = static::getMap();
 		$entityFieldPrefix = static::getEntityFieldPrefix();
 
+		$map = [
+			\CCrmOwnerType::OrderName => \CCrmOwnerType::InvoiceName
+		];
 		$fields = array();
 		foreach($counters as $counterName)
 		{
+			$counterName = $map[$counterName] ?? $counterName;
 			$fieldName = $entityFieldPrefix . $counterName;
 			if(!isset($fieldsMap[$fieldName]))
 			{

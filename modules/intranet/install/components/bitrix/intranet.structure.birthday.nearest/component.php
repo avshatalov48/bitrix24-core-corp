@@ -129,7 +129,7 @@ else
 
 	$arFilter = array(
 		'ACTIVE' => 'Y',
-		'!EXTERNAL_AUTH_ID' => array('replica', 'email', 'bot', 'imconnector'),
+		'!EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
 	);
 
 	if ($arResult['DEPARTMENT'] > 0 && (!CModule::IncludeModule('extranet') || !CExtranet::IsExtranetSite()))

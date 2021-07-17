@@ -54,6 +54,7 @@ class SalesCenterOrderComponent extends CBitrixComponent
 	{
 		$extras = [
 			'IS_SALESCENTER_ORDER_CREATION' => 'Y',
+			'SALESCENTER_SESSION_ID' => $this->arParams['sessionId'] ?? '',
 		];
 
 		$controller = new \Bitrix\SalesCenter\Controller\Order();

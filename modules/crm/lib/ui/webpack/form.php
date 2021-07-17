@@ -54,16 +54,31 @@ class Form extends Webpack\Base
 
 		if ($isSuccess && ModuleManager::isModuleInstalled('bitrix24'))
 		{
-			$agentName = static::class . "::checkResourcesFileExistsAgent();";
-			\CAgent::RemoveAgent($agentName, 'crm');
-			\CAgent::AddAgent(
-				$agentName,
-				'crm', "N", 60, "", "Y",
-				\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+300, "FULL")
-			);
+			static::addCheckResourcesAgent();
 		}
 
 		return $isSuccess;
+	}
+
+	/**
+	 * Add check resources agent.
+	 *
+	 * @return void
+	 */
+	public static function addCheckResourcesAgent()
+	{
+		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return;
+		}
+
+		$agentName = static::class . "::checkResourcesFileExistsAgent();";
+		\CAgent::RemoveAgent($agentName, 'crm');
+		\CAgent::AddAgent(
+			$agentName,
+			'crm', "N", 60, "", "Y",
+			\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+300, "FULL")
+		);
 	}
 
 	/**

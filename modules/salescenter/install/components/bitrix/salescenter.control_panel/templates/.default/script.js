@@ -337,6 +337,11 @@
 	      return this.data.menu;
 	    }
 	  }, {
+	    key: "hasMenu",
+	    value: function hasMenu() {
+	      return main_core.Type.isArrayFilled(this.data.menu);
+	    }
+	  }, {
 	    key: "dropMenu",
 	    value: function dropMenu() {
 	      delete this.data.menu;
@@ -357,6 +362,15 @@
 	    value: function getUrl() {
 	      if (main_core.Type.isString(this.data.url)) {
 	        return this.data.url;
+	      }
+
+	      return null;
+	    }
+	  }, {
+	    key: "getSliderOptions",
+	    value: function getSliderOptions() {
+	      if (main_core.Type.isPlainObject(this.data.sliderOptions)) {
+	        return this.data.sliderOptions;
 	      }
 
 	      return null;
@@ -492,17 +506,26 @@
 	        } else {
 	          this.showRestApplication(this.data.code);
 	        }
-	      } else if (this.isCrmStoreTile()) {
+	      } else if (this.opensSlider()) {
 	        var url = this.getUrl();
+	        var options = this.getSliderOptions();
 
 	        if (url) {
-	          salescenter_manager.Manager.openSlider(url);
+	          salescenter_manager.Manager.openSlider(url, options).then(this.reloadTile.bind(this));
 	        }
 	      } else if (this.isRecommendTile()) {
 	        salescenter_manager.Manager.openFeedbackPayOrderForm();
 	      } else {
 	        babelHelpers.get(babelHelpers.getPrototypeOf(PaymentItem.prototype), "onClick", this).call(this);
 	      }
+	    }
+	  }, {
+	    key: "opensSlider",
+	    value: function opensSlider() {
+	      var tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile();
+	      var tileHasUrl = this.getUrl();
+	      var tileHasMenu = this.hasMenu();
+	      return tileHasSlider && tileHasUrl && !tileHasMenu;
 	    }
 	  }, {
 	    key: "isRecommendTile",
@@ -513,6 +536,11 @@
 	    key: "isCrmStoreTile",
 	    value: function isCrmStoreTile() {
 	      return this.id === 'crmstore';
+	    }
+	  }, {
+	    key: "isCrmWithEshopTile",
+	    value: function isCrmWithEshopTile() {
+	      return this.id === 'crm-with-eshop';
 	    }
 	  }]);
 	  return PaymentItem;

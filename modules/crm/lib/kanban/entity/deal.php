@@ -48,6 +48,7 @@ class Deal extends Entity
 				'canUseCreateTaskInPanel' => true,
 				'canUseCallListInPanel' => true,
 				'canUseMergeInPanel' => true,
+				'doLayoutFieldsInItemRender' => true,
 			]
 		);
 	}
@@ -145,6 +146,7 @@ class Deal extends Entity
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
 			'ORDER_STAGE' => '',
+			'DELIVERY_STAGE' => '',
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
 		];
@@ -308,6 +310,6 @@ class Deal extends Entity
 	 */
 	protected function getColumnId(array $data): string
 	{
-		return $data['STAGE_ID'];
+		return ($data['STAGE_ID'] ?? '');
 	}
 }

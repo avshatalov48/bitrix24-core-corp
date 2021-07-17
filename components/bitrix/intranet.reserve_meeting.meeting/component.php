@@ -7,6 +7,11 @@ if (!CModule::IncludeModule("iblock"))
 
 $iblockId = intval($arParams["IBLOCK_ID"]);
 
+if ($iblockId <= 0)
+{
+	return ShowError(GetMessage("EC_IBLOCK_ID_EMPTY"));
+}
+
 $arParams["PAGE_VAR"] = Trim($arParams["PAGE_VAR"]);
 if ($arParams["PAGE_VAR"] == '')
 	$arParams["PAGE_VAR"] = "page";

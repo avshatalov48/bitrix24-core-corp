@@ -7,6 +7,9 @@ import type {EpicType} from '../item/item';
 
 export class TagSearcher extends EventEmitter
 {
+	static tagRegExp = '#[^#@](?:[^#@]*[^\s#@])?';
+	static epicRegExp = '@[^#@](?:[^#@]*[^\s#@])?';
+
 	constructor()
 	{
 		super();
@@ -247,7 +250,7 @@ export class TagSearcher extends EventEmitter
 		dialog.show();
 	}
 
-	showTagsSearchDialog(inputObject: Input, enteredHashTagName: String): Dialog
+	showTagsSearchDialog(inputObject: Input, enteredHashTagName: string): Dialog
 	{
 		const input = inputObject.getInputNode();
 
@@ -270,10 +273,10 @@ export class TagSearcher extends EventEmitter
 					'Item:onSelect': (event) => {
 						const selectedItem = event.getData().item;
 						const selectedHashTag = '#' + selectedItem.getTitle();
-						const hashTags = TagSearcher.getHashTagsFromText(input.value);
-						const enteredHashTag = (hashTags.length > 0 ? hashTags.pop().trim() : '');
+						const hashTags = TagSearcher.getHashTagNamesFromText(input.value);
+						const enteredHashTag = (hashTags.length > 0 ? hashTags.pop() : '');
 						input.value = input.value.replace(
-							new RegExp('#(['+enteredHashTag+']+|)(?:$)', 'g'),
+							new RegExp('#' + enteredHashTag, 'g'),
 							selectedHashTag
 						);
 						input.focus();
@@ -290,6 +293,7 @@ export class TagSearcher extends EventEmitter
 		inputObject.setTagsSearchMode(true);
 
 		this.tagsDialog.show();
+
 		this.tagsDialog.search(enteredHashTagName);
 	}
 
@@ -324,7 +328,7 @@ export class TagSearcher extends EventEmitter
 					'Item:onSelect': (event) => {
 						const selectedItem = event.getData().item;
 						const selectedHashEpic = '@' + selectedItem.getTitle();
-						input.value = input.value.replace(new RegExp('(?:^|\\s)(?:@)([^\\s]*)','g'),'');
+						input.value = input.value.replace(new RegExp(TagSearcher.epicRegExp,'g'),'');
 						input.value = input.value + ' ' + selectedHashEpic
 						input.focus();
 						selectedItem.deselect();
@@ -352,63 +356,30 @@ export class TagSearcher extends EventEmitter
 		}
 	}
 
-	cleanEpicTagsInText(inputText: String): String
+	static getHashTagNamesFromText(inputText: string): Array
 	{
-		const regex = new RegExp('(?:^|\\s)(?:@)(\\S+)', 'g');
+		const regex = new RegExp(TagSearcher.tagRegExp, 'g');
+
 		const matches = [];
 		let match;
 		while (match = regex.exec(inputText))
 		{
-			matches.push(match[0]);
+			matches.push(match[0].substring(1));
 		}
+
 		return matches;
 	}
 
-	static getHashTagsFromText(inputText: String): Array
+	static getHashEpicNamesFromText(inputText: string): Array
 	{
-		const regex = new RegExp('(?:^|\\s)(?:#)(\\S+)', 'g');
+		const regex = new RegExp(TagSearcher.epicRegExp, 'g');
 		const matches = [];
 		let match;
 		while (match = regex.exec(inputText))
 		{
-			matches.push(match[0]);
+			matches.push(match[0].substring(1));
 		}
-		return matches;
-	}
 
-	static getHashEpicFromText(inputText: String): Array
-	{
-		const regex = new RegExp('(?:^|\\s)(?:@)(\\S+)', 'g');
-		const matches = [];
-		let match;
-		while (match = regex.exec(inputText))
-		{
-			matches.push(match[0]);
-		}
-		return matches;
-	}
-
-	static getHashTagNamesFromText(inputText: String): Array
-	{
-		const regex = new RegExp('(?:^|\\s)(?:#)(\\S+|)', 'g');
-		const matches = [];
-		let match;
-		while (match = regex.exec(inputText))
-		{
-			matches.push(match[1]);
-		}
-		return matches;
-	}
-
-	static getHashEpicNamesFromText(inputText: String): Array
-	{
-		const regex = new RegExp('(?:^|\\s)(?:@)(\\S+|)', 'g');
-		const matches = [];
-		let match;
-		while (match = regex.exec(inputText))
-		{
-			matches.push(match[1]);
-		}
 		return matches;
 	}
 }

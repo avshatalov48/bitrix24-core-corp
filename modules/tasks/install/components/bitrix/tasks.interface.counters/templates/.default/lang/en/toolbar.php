@@ -1,0 +1,9 @@
+<?php
+$MESS["TASKS_COUNTER_EXPIRED"] = "Overdue";
+$MESS["TASKS_COUNTER_MORE"] = "More";
+$MESS["TASKS_COUNTER_MY"] = "My items:";
+$MESS["TASKS_COUNTER_MY_TASKS"] = "My tasks:";
+$MESS["TASKS_COUNTER_NEW_COMMENTS"] = "Comments";
+$MESS["TASKS_COUNTER_OTHER"] = "Other:";
+$MESS["TASKS_COUNTER_OTHER_TASKS"] = "Other tasks: #TITLE#";
+$MESS["TASKS_COUNTER_READ_ALL"] = "Mark all as read";

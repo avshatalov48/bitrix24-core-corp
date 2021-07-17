@@ -161,6 +161,8 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 			</div>
 		</div>
 
+		<div class="task-detail-sidebar-item-videocall" id="task-detail-sidebar-item-videocall"></div>
+
 		<?$APPLICATION->IncludeComponent(
 			'bitrix:tasks.widget.member.selector',
 			'view',
@@ -391,6 +393,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 		},
 		user: <?=CUtil::PhpToJSObject($arParams['USER'])?>,
 		iAmAuditor: <?=($arParams['TEMPLATE_DATA']['I_AM_AUDITOR'] ? 'true' : 'false')?>,
+		showIntranetControl: <?= ($arParams['TEMPLATE_DATA']['SHOW_INTRANET_CONTROL'] ? 'true' : 'false') ?>,
 		pathToTasks: "<?=CUtil::JSEscape($arParams["PATH_TO_TASKS"])?>",
 		stageId: <?=$taskData["STAGE_ID"]?>,
 		stages: <?= \CUtil::PhpToJSObject(array_values($stages), false, false, true)?>,

@@ -2,6 +2,8 @@
 $MESS["CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE"] = "Zusätzliche Optionen";
 $MESS["CRM_TYPE_DETAIL_AUTOMATION_CARD_DESCRIPTION"] = "Automatisieren Sie die Arbeit mit Elementen in den Smartprozessen mithilfe von Automatisierungsregeln und Trigger (so wie diese auch in den Aufträgen oder Leads funktionieren).";
 $MESS["CRM_TYPE_DETAIL_AUTOMATION_CARD_TITLE"] = "Automatisierungsregeln und Trigger";
+$MESS["CRM_TYPE_DETAIL_BIZ_PROC_CARD_DESCRIPTION"] = "Nutzen Sie den voll funktionsfähigen Workflow-Designer. Konfigurieren Sie Ihre Workflow-Vorlagen und starten Sie diese, wenn Elemente dieses Smartprozesses erstellt oder bearbeitet werden.";
+$MESS["CRM_TYPE_DETAIL_BIZ_PROC_CARD_TITLE"] = "Workflow-Designer";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_CARD_DESCRIPTION"] = "Sie können mehrere Pipelines für diesen Smartprozess erstellen (ähnlich wie mit den Pipelines in den Aufträgen) und dann Elemente in verschiedene Pipelines mithilfe von Sales Funnel verschieben. Jede Pipeline hat individuelle Phasen, detaillierte Ansichten und Zugriffsrechte.";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_CARD_TITLE"] = "Pipelines und Sales Funnels";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_DISABLED_HINT"] = "Es gibt mehr als eine Pipeline.";

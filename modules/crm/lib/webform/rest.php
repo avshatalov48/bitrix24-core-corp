@@ -53,7 +53,7 @@ class Rest
 
 		$res = Internals\FormTable::getList([
 			'select' => [
-				'ID', 'NAME', 'SECURITY_CODE', 'IS_CALLBACK_FORM', 'ACTIVE'
+				'ID', 'NAME', 'SECURITY_CODE', 'IS_CALLBACK_FORM', 'ACTIVE', 'XML_ID'
 			],
 			'filter' => $filter,
 			'order' => [

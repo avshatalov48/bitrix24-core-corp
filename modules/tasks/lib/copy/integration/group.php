@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Copy\Integration;
 use Bitrix\Main\Config\Option;
 use Bitrix\Socialnetwork\Copy\Integration\Feature;
 use Bitrix\Tasks\Copy\TaskManager;
+use Bitrix\Tasks\Util;
 
 class Group implements Feature
 {
@@ -21,7 +22,7 @@ class Group implements Feature
 
 	public function __construct($executiveUserId = 0, array $features = [])
 	{
-		$this->executiveUserId = $executiveUserId;
+		$this->executiveUserId = Util\User::getAdminId();
 		$this->features = $features;
 	}
 

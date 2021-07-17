@@ -24,7 +24,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 <div id="tasks-scrum-container" class='tasks-scrum-container'></div>
 
 <script>
-	BX.ready(function() {
+	BX.ready(function()
+	{
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			viewName: 'plan',
@@ -33,7 +34,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			isOwnerCurrentUser: '<?= ($arResult['isOwnerCurrentUser'] ? 'Y' : 'N') ?>',
 			userId: '<?= (int)$arParams['USER_ID'] ?>',
 			groupId: '<?= (int)$arParams['GROUP_ID'] ?>',
-			defaultSprintDuration: '<?=(int)$arResult['defaultSprintDuration'] ?>',
+			defaultSprintDuration: '<?=(int) $arResult['defaultSprintDuration'] ?>',
+			pageNumberToCompletedSprints: '1',
 			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
 			tags: <?= Json::encode($arResult['tags']) ?>,
 			backlog: <?= Json::encode($arResult['backlog']) ?>,
@@ -44,7 +46,9 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			defaultResponsible: <?= Json::encode($arResult['defaultResponsible']) ?>,
 			counters: <?= $arResult['counters'] ? Json::encode($arResult['counters']) : 'null' ?>,
 		});
-		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
+		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderCountersTo(document.getElementById('tasks-scrum-counters-container'));
+		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
+		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
 </script>

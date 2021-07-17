@@ -119,9 +119,10 @@ CJSCore::RegisterExt('disk', array(
 			// And in this case we'll rewrite composite cache and have invalid data in composite cache.
 			// So in this way we have to insert BX.messages in dynamic area by viewContent placeholders.
 			global $APPLICATION;
-			$APPLICATION->AddViewContent("below_pagetitle", '
+			$APPLICATION->AddViewContent("inline-scripts", '
 				<script>
 					BX.message["disk_restriction"] = false;
+					BX.message["disk_onlyoffice_available"] = ' . (int)\Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled() . ';
 					BX.message["disk_revision_api"] = ' . (int)\Bitrix\Disk\Configuration::getRevisionApi() . ';
 					BX.message["disk_document_service"] = "' . (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode() . '";
 				</script>    
@@ -129,13 +130,14 @@ CJSCore::RegisterExt('disk', array(
 		}
 		else
 		{
-			return array(
-				'lang_additional' => array(
+			return [
+				'lang_additional' => [
 					'disk_restriction' => false,
+					'disk_onlyoffice_available' => \Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler::isEnabled(),
 					'disk_revision_api' => (int)\Bitrix\Disk\Configuration::getRevisionApi(),
 					'disk_document_service' => (string)\Bitrix\Disk\UserConfiguration::getDocumentServiceCode(),
-				),
-			);
+				],
+			];
 		}
 	},
 ));

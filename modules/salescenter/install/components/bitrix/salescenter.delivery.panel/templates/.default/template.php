@@ -26,6 +26,9 @@ Extension::load([
 	'applayout'
 ]);
 
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
+
 ?>
 <div class="salescenter-delivery-title"><?=Loc::getMessage('SDP_SALESCENTER_DELIVERY_RECOMMENDATION_SUB_TITLE')?></div>
 <div id="salescenter-delivery" class="salescenter-delivery"></div>

@@ -402,7 +402,7 @@ this.BX = this.BX || {};
 	      }
 
 	      var safeFullName = main_core.Text.encode(userData.fullName);
-	      return main_core.Tag.render(_templateObject18(), safeFullName, userData.photo ? 'style="background-image: url(\'' + userData.photo + '\'); background-size: 100%;"' : '');
+	      return main_core.Tag.render(_templateObject18(), safeFullName, userData.photo ? "style=\"background-image: url('".concat(userData.photo, "'); background-size: 100%;\"") : '');
 	    }
 	  }, {
 	    key: "doTaskHandler",

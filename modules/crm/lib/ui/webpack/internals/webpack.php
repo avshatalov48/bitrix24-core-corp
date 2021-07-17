@@ -45,6 +45,13 @@ class WebpackTable extends DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			],
+			'FILE_DATE_UPDATE' => [
+				'data_type' => 'datetime',
+				'expression' => array(
+					'(SELECT TIMESTAMP_X FROM b_file WHERE ID=%s)',
+					'FILE_ID'
+				)
+			],
 		];
 	}
 }

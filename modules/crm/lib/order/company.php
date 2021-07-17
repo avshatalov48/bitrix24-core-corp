@@ -41,4 +41,14 @@ class Company extends ContactCompanyEntity
 	{
 		return ENTITY_CRM_COMPANY;
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getCustomerName(): ?string
+	{
+		$company = \CAllCrmCompany::GetByID($this->getField('ENTITY_ID'), false);
+
+		return $company ? (string)$company['TITLE'] : null;
+	}
 }

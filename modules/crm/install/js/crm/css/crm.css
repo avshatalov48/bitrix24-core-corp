@@ -8406,12 +8406,16 @@ a.crm-client-contacts-block-text-mail:hover{
 	color: #1097c2;
 }
 
-.crm-list-item-status-send {
+.crm-list-item-status-send,
+.crm-list-item-status-no-shipped,
+.crm-list-item-status-cancel,
+.crm-list-item-status-refund {
 	background: #e6e7e9;
 	color: #757c86;
 }
 
-.crm-list-item-status-paid {
+.crm-list-item-status-paid,
+.crm-list-item-status-shipped {
 	background: #e5f1bf;
 	color: #668d13;
 }

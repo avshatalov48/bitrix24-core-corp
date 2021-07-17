@@ -6,4 +6,5 @@ $MESS["CRM_1C_START_EXCHANGE"] = "1С + CRM";
 $MESS["CRM_1C_START_SYNCHRO_INVOICE"] = "Счета";
 $MESS["CRM_1C_START_SYNCHRO_CATALOG"] = "Каталог";
 $MESS["CRM_1C_START_DOC"] = "1С:Бэкофис";
+$MESS["CRM_1C_START_BACKOFFICE"] = "1С:Бэкофис - 2.0";
 ?>

@@ -1620,7 +1620,7 @@ else
 								&& CPullOptions::GetNginxStatus())
 							{
 								?>
-								BX.Event.EventEmitter.incrementMaxListeners(window, 'OnUCCommentWasPulled');
+								BX.Event.EventEmitter.incrementMaxListeners('OnUCCommentWasPulled');
 								BX.addCustomEvent(window, "OnUCCommentWasPulled", function(id) { if (id && id[0] == '<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>') { BX.show(BX('feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>')); } });
 								<?
 							}

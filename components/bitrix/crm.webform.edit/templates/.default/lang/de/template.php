@@ -70,6 +70,7 @@ $MESS["CRM_WEBFORM_EDIT_DOC_LIST_TITLE"] = "Werden erstellt";
 $MESS["CRM_WEBFORM_EDIT_DOC_SECTION"] = "CRM-Elemente erstellen";
 $MESS["CRM_WEBFORM_EDIT_DOC_SECTION_NAV"] = "CRM-Elemente";
 $MESS["CRM_WEBFORM_EDIT_DOC_TITLE"] = "Formulardaten in CRM-Elementen speichern";
+$MESS["CRM_WEBFORM_EDIT_DYNAMIC_CATEGORY_LIST"] = "Pipeline";
 $MESS["CRM_WEBFORM_EDIT_EDIT"] = "konfigurieren";
 $MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_APPLY"] = "Meine Auswahl speichern";
 $MESS["CRM_WEBFORM_EDIT_EDITOR_CHOISE_BTN_HOLD_OVER"] = "Ich entscheide später";

@@ -6,9 +6,10 @@ class CAllSearchTitle extends CDBResult
 	var $_arStemFunc;
 	var $minLength = 1;
 
-	function __construct()
+	function __construct($res = null)
 	{
 		$this->_arStemFunc = stemming_init(LANGUAGE_ID);
+		parent::__construct($res);
 	}
 
 	function Search($phrase = "", $nTopCount = 5, $arParams = array(), $bNotFilter = false, $order = "")

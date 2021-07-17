@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["SONET_UM_GENERAL"] = "Основное";
+$MESS["SONET_UM_NEWS"] = "Новости";
 $MESS["SONET_UM_MODS"] = "Модераторы";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_FORUM"] = "Форум";
@@ -40,10 +41,15 @@ $MESS["SONET_SGM_T_MEMBERS"] = "Участники";
 $MESS["SONET_SGM_T_MEMBERS2"] = "Участники: #NUM#";
 $MESS["SONET_SGM_T_SETTINGS"] = "Настройки";
 $MESS["SONET_SGM_T_BUTTON_JOIN"] = "Вступить";
-
-
 $MESS["SONET_TASKS_PRESET_I_DO"] = "Делаю";
 $MESS["SONET_TASKS_PRESET_I_ACCOMPLICES"] = "Помогаю";
 $MESS["SONET_TASKS_PRESET_I_ORIGINATOR"] = "Поручил";
 $MESS["SONET_TASKS_PRESET_I_AUDITOR"] = "Наблюдаю";
-?>
+$MESS["SONET_SGM_T_CHAT_TITLE"] = "Открыть чат группы";
+$MESS["SONET_SGM_T_CHAT_TITLE_PROJECT"] = "Открыть чат проекта";
+$MESS["SONET_SGM_T_CONTROL_HINT_COPYURL"] = "Скопировать ссылку на страницу в буфер обмена";
+$MESS["SONET_SGM_T_CONTROL_HINT_OPENNEWWINDOW"] = "Открыть страницу в новом окне";
+$MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_ADD"] = "Добавить в избранное";
+$MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_REMOVE"] = "Убрать из избранного";
+$MESS["SONET_SGM_T_CONTROL_NOTIFICATION_COPYURL"] = "Ссылка на страницу скопирована в буфер обмена";
+

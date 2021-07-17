@@ -70,6 +70,7 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 			fieldsDictionary: <?=CUtil::PhpToJSObject($arResult['AVAILABLE_FIELDS'])?>,
 			schemesDictionary: <?=CUtil::PhpToJSObject($arResult['ENTITY_SCHEMES'])?>,
 			entityDictionary: <?=CUtil::PhpToJSObject($arResult['AVAILABLE_ENTITIES'])?>,
+			dynamicEntities: <?=CUtil::PhpToJSObject($arResult['DYNAMIC_ENTITIES'])?>,
 			dependencies: <?=CUtil::PhpToJSObject($arResult['FORM']['DEPENDENCIES'])?>,
 			presetFields: <?=CUtil::PhpToJSObject($arResult['FORM']['PRESET_FIELDS'])?>,
 			booleanFieldItems: <?=CUtil::PhpToJSObject($arResult['BOOLEAN_FIELD_ITEMS'])?>,
@@ -471,6 +472,26 @@ if (!empty($arResult['ERRORS']))
 									<?=htmlspecialcharsbx($dealCategory['NAME'])?>
 								</option>
 							<?endforeach;?>
+						</select>
+					</div>
+				</div>
+
+				<div
+					data-bx-web-form-entity-scheme-dyn-cat=""
+					class="crm-webform-edit-animate crm-webform-edit-task-options-document-duplicate-control"
+				>
+					<div class="crm-webform-edit-task-options-document-duplicate-list-element">
+						<?=Loc::getMessage('CRM_WEBFORM_EDIT_DYNAMIC_CATEGORY_LIST')?>:
+					</div>
+					<div class="crm-webform-edit-task-options-document-duplicate-list-container">
+						<select
+							id="DYNAMIC_CATEGORY"
+							name="DYNAMIC_CATEGORY"
+							class="crm-webform-edit-task-options-rule-select"
+						>
+							<?if(!empty($arResult['FORM']['FORM_SETTINGS']['DYNAMIC_CATEGORY'])):?>
+								<option value="<?=htmlspecialcharsbx($arResult['FORM']['FORM_SETTINGS']['DYNAMIC_CATEGORY'])?>"></option>
+							<?endif?>
 						</select>
 					</div>
 				</div>

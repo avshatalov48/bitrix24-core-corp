@@ -432,9 +432,10 @@ export default class Manager
 						category: event.data.link.to.getData().column.getData().category.id,
 						stage: event.data.link.to.getData().column.data.stage.STATUS_ID,
 					};
+					const robotAction = event.data.link.robotAction;
 
 					Backend
-						.createRobot({from, to})
+						.createRobot({from, to, robotAction})
 						.then((response: {data: {tunnel: Tunnel, success: boolean}}) => {
 							UI.Notification.Center.notify({
 								content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
@@ -509,6 +510,65 @@ export default class Manager
 
 						this.adjustCategoryStub();
 					}
+				}
+			})
+			.subscribe('Column:changeRobotAction', (event) => {
+				if (!this.isAutomationEnabled || event.data.preventSave)
+				{
+					return;
+				}
+				const columnFrom = event.data.link.from.getData().column;
+				const columnTo = event.data.link.to.getData().column;
+				const srcCategory = columnFrom.getData().category.id;
+				const srcStage = columnFrom.getId();
+				const dstCategory = columnTo.getData().category.id;
+				const dstStage = columnTo.getId();
+				const tunnel = this.getTunnelByLink(event.data.link);
+
+				if (tunnel)
+				{
+					const from = {
+						category: srcCategory,
+						stage: srcStage,
+					};
+					const to = {
+						category: dstCategory,
+						stage: dstStage,
+					};
+
+					Backend
+						.removeRobot(tunnel)
+						.then(() => {
+							Backend
+								.createRobot({from, to, robotAction: event.data.link.robotAction})
+								.then((response: {data: {tunnel: Tunnel, success: boolean}}) => {
+									UI.Notification.Center.notify({
+										content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
+										autoHideDelay: 1500,
+										category: 'save',
+									});
+
+									const stage = this.getStageDataById(srcStage);
+
+									const index = stage.TUNNELS.findIndex((item) => {
+										return (
+											String(item.srcStage) === String(srcStage)
+											&& String(item.srcCategory) === String(srcCategory)
+											&& String(item.dstStage) === String(dstStage)
+											&& String(item.dstCategory) === String(dstCategory)
+										);
+									});
+
+									if (index >= 0)
+									{
+										stage.TUNNELS[index] = response.data.tunnel;
+									}
+
+									event.data.onChangeRobotEnd();
+								})
+								.catch((response) => this.showErrorPopup(makeErrorMessageFromResponse(response)));
+						})
+						.catch((response) => this.showErrorPopup(makeErrorMessageFromResponse(response)));
 				}
 			})
 			.subscribe('Column:editLink', (event) => {
@@ -647,26 +707,25 @@ export default class Manager
 						name: event.data.column.getGrid().getMessage('COLUMN_TITLE_PLACEHOLDER'),
 						sort: (() => {
 							const {column} = event.data;
-							const grid = column.getGrid();
-							const prevColumn = grid.getPreviousColumnSibling(column);
 
-							return Number(prevColumn.data.stage.SORT) + 1;
+							return Number(column.data.stage.SORT) + 1;
 						})(),
 						entityId: (() => {
 							const {column} = event.data;
-							const grid = column.getGrid();
-							const prevColumn = grid.getPreviousColumnSibling(column);
 
-							return prevColumn.data.stage.ENTITY_ID;
+							return column.data.stage.ENTITY_ID;
 						})(),
-						color: event.data.column.getColor(),
+						color: BX.Kanban.Column.DEFAULT_COLOR,
 						semantics: (() => {
 							const {column} = event.data;
-							const grid = column.getGrid();
-							const prevColumn = grid.getPreviousColumnSibling(column);
 
-							return prevColumn.data.stage.SEMANTICS;
-						})()
+							return column.data.stage.SEMANTICS;
+						})(),
+						categoryId: (() => {
+							const {column} = event.data;
+
+							return column.data.category.id;
+						})(),
 					})
 					.then(({data}) => {
 						UI.Notification.Center.notify({
@@ -676,19 +735,26 @@ export default class Manager
 						});
 						this.isChanged = true;
 
-						const {column} = event.data;
 						const {stage} = data;
-						const grid = column.getGrid();
-						const prevColumn = grid.getPreviousColumnSibling(column);
+						const prevColumn = event.data.column;
+						const grid = prevColumn.getGrid();
 						const category = this.getCategory(prevColumn.data.category.id);
 
 						stage.TUNNELS = [];
 
 						this.getStages().push(stage);
 
-						column.setOptions({
+						const targetId = grid.getNextColumnSibling(prevColumn);
+						// column.getGrid().removeColumn(column);
+						const column = grid.addColumn({
+							id: stage.STATUS_ID,
+							name: stage.NAME,
+							color: stage.COLOR.replace('#', ''),
 							data: category.getColumnData(stage),
-						})
+							targetId,
+						});
+						column.switchToEditMode();
+						Marker.adjustLinks();
 					})
 					.catch((response) => {
 						this.showErrorPopup(makeErrorMessageFromResponse(response));
@@ -878,7 +944,7 @@ export default class Manager
 						if (columnFrom && columnTo)
 						{
 							const preventEvent = true;
-							columnFrom.marker.addLinkTo(columnTo.marker, preventEvent);
+							columnFrom.marker.addLinkTo(columnTo.marker, tunnel.robotAction, preventEvent);
 						}
 					}
 				});

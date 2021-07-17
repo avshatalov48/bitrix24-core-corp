@@ -205,7 +205,8 @@
 					canSort: false,
 					canAddItem: false,
 					droppable: false,
-					targetId: this.getGrid().getNextColumnSibling(this)
+					targetId: this.getGrid().getNextColumnSibling(this),
+					animate: 'slide-left'
 				});
 
 				newColumn.switchToEditMode();
@@ -271,22 +272,52 @@
 
 			this.layout.title = BX.create("div", {
 				attrs: {
-					className: (this.isChildScrumGrid() ? "" : "main-kanban-column-title")
+					className: ((this.isScrumGridHeader() || !this.isScrumGrid()) ? "main-kanban-column-title" : "")
 				}
 			});
 
 			return this.layout.title;
 		},
 
-		renderTitle: function()
+		getSubTitle: function()
 		{
-			if (this.isChildScrumGrid())
+			if (this.isScrumGridHeader())
 			{
-				return document.createElement('div');
+				this.layout.subTitle = document.createElement('div');
+
+				return this.layout.subTitle;
 			}
 			else
 			{
+				return BX.Kanban.Column.prototype.getSubTitle.call(this);
+			}
+		},
+
+		renderTitle: function()
+		{
+			if ((this.isScrumGridHeader() || !this.isScrumGrid()))
+			{
 				return BX.Kanban.Column.prototype.renderTitle.call(this);
+			}
+			else
+			{
+				return document.createElement('div');
+			}
+		},
+
+		getBody: function()
+		{
+			if (this.isScrumGridHeader())
+			{
+				this.layout.body = document.createElement('div');
+
+				this.layout.items = this.getItemsContainer();
+
+				return this.layout.body;
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.getBody.call(this);
 			}
 		},
 
@@ -377,7 +408,7 @@
 
 		getAddColumnButton: function ()
 		{
-			if (this.isChildScrumGrid())
+			if (this.isScrumGrid() && !this.isScrumGridHeader())
 			{
 				return document.createElement('div');
 			}
@@ -387,14 +418,26 @@
 			}
 		},
 
-		isGridGroupingMode: function()
+		getItemsContainer: function()
 		{
-			return this.getGrid().isGroupingMode();
+			if (this.isScrumGrid() && this.isScrumGridHeader())
+			{
+				return document.createElement('div');
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.getItemsContainer.call(this);
+			}
 		},
 
-		isChildScrumGrid: function()
+		isScrumGrid: function()
 		{
-			return this.getGrid().isChildScrumGrid();
+			return this.getGrid().isScrumGrid();
+		},
+
+		isScrumGridHeader: function()
+		{
+			return this.getGrid().isScrumGridHeader();
 		}
 	};
 

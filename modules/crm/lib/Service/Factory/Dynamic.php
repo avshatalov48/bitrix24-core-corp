@@ -103,6 +103,9 @@ class Dynamic extends Service\Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
 				'CLASS' => Field\Opened::class,
 			],
+			Item::FIELD_NAME_WEBFORM_ID => [
+				'TYPE' => Field::TYPE_INTEGER,
+			],
 		];
 
 		if ($this->isMultipleAssignedEnabled())
@@ -362,6 +365,11 @@ class Dynamic extends Service\Factory
 	public function isAutomationEnabled(): bool
 	{
 		return ($this->type->getIsStagesEnabled() && $this->type->getIsAutomationEnabled());
+	}
+
+	public function isBizProcEnabled(): bool
+	{
+		return $this->type->getIsBizProcEnabled();
 	}
 
 	protected function getTrackedFieldNames(): array

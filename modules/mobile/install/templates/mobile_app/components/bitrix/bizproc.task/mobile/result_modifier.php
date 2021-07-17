@@ -1,27 +1,18 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-$arResult["SKIP_BP"] = 'N';
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+$arResult['SKIP_BP'] = 'N';
 
 if (!empty($arResult['TASK']['PARAMETERS']['REQUEST']))
 {
-	//primitive checking
 	if (empty($arResult['TypesMap']))
 	{
-		$whiteList = array(
-			'bool', 'double', 'int', 'select', 'string', 'text', 'internalselect',
-			//CBPVirtualDocument
-			'B', 'N', 'L', 'S', 'T'
-		);
-		foreach ($arResult['TASK']['PARAMETERS']['REQUEST'] as $request)
-		{
-			if (!in_array($request['Type'], $whiteList))
-			{
-				$arResult["SKIP_BP"] = 'Y';
-				break;
-			}
-		}
+		$arResult['SKIP_BP'] = 'Y';
 	}
-	//smart checking
 	else
 	{
 		$checkedTypes = array();
@@ -36,14 +27,14 @@ if (!empty($arResult['TASK']['PARAMETERS']['REQUEST']))
 					$typeClass = $arResult['TypesMap'][$type];
 					if (!$typeClass::canRenderControl(\Bitrix\Bizproc\FieldType::RENDER_MODE_MOBILE))
 					{
-						$arResult["SKIP_BP"] = 'Y';
+						$arResult['SKIP_BP'] = 'Y';
 						break;
 					}
 					$checkedTypes[] = $type;
 				}
 				else
 				{
-					$arResult["SKIP_BP"] = 'Y';
+					$arResult['SKIP_BP'] = 'Y';
 					break;
 				}
 			}

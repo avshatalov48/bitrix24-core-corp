@@ -133,6 +133,7 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
 					{
 						this.returnItem(handlerData.item);
 					}
+					BX.Crm.KanbanComponent.activePopups[containerId] = false;
 					this.dropConfirmed = false;
 				}.bind(this)
 			},

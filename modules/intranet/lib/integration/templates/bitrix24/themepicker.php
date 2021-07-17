@@ -1,11 +1,11 @@
-<?
+<?php
 
 namespace Bitrix\Intranet\Integration\Templates\Bitrix24;
 
 use Bitrix\Intranet\Composite\CacheProvider;
+use Bitrix\Intranet\Internals\ThemeTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\File;
@@ -15,6 +15,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\SystemException;
+use Bitrix\Socialnetwork\WorkgroupSiteTable;
 
 class ThemePicker
 {
@@ -22,6 +23,20 @@ class ThemePicker
 	const MAX_IMAGE_HEIGHT = 5000;
 	const MAX_CUSTOM_THEMES = 40;
 	const MAX_UPLOAD_SIZE = 20971520; //20Mb
+
+	public const ENTITY_TYPE_USER = 'USER';
+	public const ENTITY_TYPE_SONET_GROUP = 'SONET_GROUP';
+	public const VALID_ENTITY_TYPE_LIST = [
+		self::ENTITY_TYPE_USER,
+		self::ENTITY_TYPE_SONET_GROUP,
+	];
+
+	public const BEHAVIOUR_APPLY = 'apply';
+	public const BEHAVIOUR_RETURN = 'return';
+	public const VALID_BEHAVIOUR_LIST = [
+		self::BEHAVIOUR_APPLY,
+		self::BEHAVIOUR_RETURN,
+	];
 
 	private static $instance = null;
 	private static $config = null;
@@ -32,16 +47,19 @@ class ThemePicker
 	private $userId = 0;
 	private $currentTheme = null;
 	private $zoneId = null;
+	private $entityType = self::ENTITY_TYPE_USER;
+	private $entityId = 0;
+	private $behaviour = self::BEHAVIOUR_APPLY;
 
 	/**
 	 * Theme constructor.
 	 *
 	 * @param string $templateId
 	 * @param bool $siteId
-	 *
-	 * @param int $userId
+	 * @param int $entityId
+ 	 * @param string $entityType
 	 */
-	public function __construct($templateId, $siteId = false, $userId = 0)
+	public function __construct($templateId, $siteId = false, $userId = 0, $entityType = self::ENTITY_TYPE_USER, $entityId = 0, $params = [])
 	{
 		if (!static::isValidTemplateId($templateId))
 		{
@@ -51,6 +69,18 @@ class ThemePicker
 		$this->templateId = $templateId;
 		$this->templatePath = \getLocalPath("templates/".$templateId, BX_PERSONAL_ROOT);
 		$this->siteId = is_string($siteId)? mb_substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2) : SITE_ID;
+		if (in_array($entityType, self::VALID_ENTITY_TYPE_LIST))
+		{
+			$this->entityType = $entityType;
+		}
+
+		if (
+			isset($params['behaviour'])
+			&& in_array((string)$params['behaviour'], self::VALID_BEHAVIOUR_LIST)
+		)
+		{
+			$this->behaviour = (string)$params['behaviour'];
+		}
 
 		if (is_numeric($userId) && $userId > 0)
 		{
@@ -58,11 +88,20 @@ class ThemePicker
 		}
 		else
 		{
-			$user = &$GLOBALS["USER"];
+			$user = &$GLOBALS['USER'];
 			if ($user instanceof \CUser)
 			{
-				$this->userId = intval($user->getId());
+				$this->userId = (int)$user->getId();
 			}
+		}
+
+		if (is_numeric($entityId) && $entityId > 0)
+		{
+			$this->entityId = $entityId;
+		}
+		elseif ($entityType === self::ENTITY_TYPE_USER)
+		{
+			$this->entityId = $this->userId;
 		}
 
 		if (Loader::includeModule("bitrix24"))
@@ -75,16 +114,21 @@ class ThemePicker
 			$this->zoneId = $context !== null ? $context->getLanguage() : "en";
 		}
 
-		$currentThemeId = \CUserOptions::getOption(
-			"intranet",
-			$this->getCurrentThemeOptionName(),
-			null,
-			$this->getUserId()
-		);
+		$res = ThemeTable::getList([
+			'filter' => [
+				'=ENTITY_TYPE' => $this->getEntityType(),
+				'ENTITY_ID' => $this->getEntityId(),
+				'=CONTEXT' => $this->getContext(),
+			],
+			'select' => [ 'THEME_ID', 'ENTITY_TYPE', 'USER_ID' ],
+		]);
 
-		if ($currentThemeId !== null && $this->isValidTheme($currentThemeId))
+		if (
+			($themeFields = $res->fetch())
+			&& $this->isValidTheme($themeFields['THEME_ID'], ($themeFields['ENTITY_TYPE'] === self::ENTITY_TYPE_SONET_GROUP ? (int)$themeFields['USER_ID'] : false))
+		)
 		{
-			$this->currentTheme = $this->getTheme($currentThemeId);
+			$this->currentTheme = $this->getTheme($themeFields['THEME_ID'], ($themeFields['ENTITY_TYPE'] === self::ENTITY_TYPE_SONET_GROUP ? $themeFields['USER_ID'] : false));
 		}
 		else
 		{
@@ -93,14 +137,15 @@ class ThemePicker
 	}
 
 	/**
+	 * @param string $entityType
 	 * @return ThemePicker
 	 */
-	public static function getInstance()
+	public static function getInstance($entityType = self::ENTITY_TYPE_USER)
 	{
 		if (static::$instance === null)
 		{
 			$templateId = defined("SITE_TEMPLATE_ID") ? SITE_TEMPLATE_ID : "bitrix24";
-			static::$instance = new static($templateId);
+			static::$instance = new static($templateId, false, 0, $entityType);
 		}
 
 		return static::$instance;
@@ -124,7 +169,7 @@ class ThemePicker
 		return !Loader::includeModule("bitrix24") || \Bitrix\Bitrix24\Release::isAvailable("17.5.0");
 	}
 
-	public static function canSetDefaultTheme()
+	public static function canSetDefaultTheme(): bool
 	{
 		if (!static::isAdmin())
 		{
@@ -147,13 +192,13 @@ class ThemePicker
 		);
 	}
 
-	public function showHeadAssets()
+	public function showHeadAssets(): void
 	{
 		$this->registerJsExtension();
 		$this->registerCss();
 
 		$theme = $this->getCurrentTheme();
-		$theme = $theme ? $theme : array();
+		$theme = $theme ?: [];
 
 		$options = \CUtil::phpToJSObject(
 			array(
@@ -165,7 +210,10 @@ class ThemePicker
 				"ajaxHandlerPath" => $this->getAjaxHandlerPath(),
 				"isAdmin" => static::isAdmin(),
 				"allowSetDefaultTheme" => static::canSetDefaultTheme(),
-				"isVideo" => isset($theme["video"])
+				"isVideo" => isset($theme["video"]),
+				'entityType' => $this->getEntityType(),
+				'entityId' => $this->getEntityId(),
+				'behaviour' => $this->getBehaviour(),
 		 	),
 			false,
 			false,
@@ -246,34 +294,95 @@ class ThemePicker
 		return $subThemeId;
 	}
 
-	public function setCurrentThemeId($themeId)
+	public function setCurrentThemeId($themeId, $currentUserId = 0): bool
 	{
+		$contextList = [ $this->getContext() ];
+		$entityId = (int)$this->getEntityId();
+		if ($entityId <= 0)
+		{
+			return false;
+		}
+
+		if (
+			$this->getEntityType() === self::ENTITY_TYPE_SONET_GROUP
+			&& Loader::includeModule('socialnetwork')
+		)
+		{
+			$contextList = [];
+			$res = WorkgroupSiteTable::getList([
+				'filter' => [
+					'GROUP_ID' => $entityId
+				],
+				'select' => [ 'SITE_ID' ]
+			]);
+			while ($workgroupSiteFields = $res->fetch())
+			{
+				$contextList[] = $this->getTemplateId() . '_' . $workgroupSiteFields['SITE_ID'];
+			}
+		}
+
 		if ($this->isValidTheme($themeId))
 		{
 			//Standard or Custom Own Themes
 			if ($themeId !== $this->getDefaultThemeId())
 			{
-				\CUserOptions::setOption(
-					"intranet",
-					$this->getCurrentThemeOptionName(),
-					$themeId,
-					false,
-					$this->getUserId()
-				);
+				$currentUserId = (int)$currentUserId;
+				if ($currentUserId <= 0)
+				{
+					$currentUserId = (is_object($GLOBALS["USER"]) ? (int)$GLOBALS["USER"]->getID() : 0);
+				}
+
+				foreach ($contextList as $context)
+				{
+					ThemeTable::set([
+						'USER_ID' => $currentUserId,
+						'THEME_ID' => $themeId,
+						'ENTITY_TYPE' => $this->getEntityType(),
+						'ENTITY_ID' => $entityId,
+						'CONTEXT' => $context,
+					]);
+				}
 			}
 			else
 			{
-				\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
+				foreach ($contextList as $context)
+				{
+					$res = ThemeTable::getList([
+						'filter' => [
+							'=ENTITY_TYPE' => $this->getEntityType(),
+							'ENTITY_ID' => $entityId,
+							'=CONTEXT' => $context,
+						],
+						'select' => ['ID']
+					]);
+					while ($themeFields = $res->fetch())
+					{
+						ThemeTable::delete($themeFields['ID']);
+					}
+				}
 			}
 
 			$this->currentTheme = $this->getTheme($themeId);
 			$this->setLastUsage($themeId);
 			return true;
 		}
-		elseif ($themeId === $this->getDefaultThemeId())
+
+		if ($themeId === $this->getDefaultThemeId())
 		{
 			//Custom Admin Theme
-			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
+			$res = ThemeTable::getList([
+				'filter' => [
+					'=ENTITY_TYPE' => $this->getEntityType(),
+					'ENTITY_ID' => $entityId,
+					'=CONTEXT' => $this->getContext(),
+				],
+				'select' => ['ID']
+			]);
+			while($themeFields = $res->fetch())
+			{
+				ThemeTable::delete($themeFields['ID']);
+			}
+
 			return true;
 		}
 
@@ -355,18 +464,29 @@ class ThemePicker
 
 		if (static::isAdmin() && $themeId === $this->getDefaultThemeId())
 		{
-			Option::set("intranet", $this->getDefaultThemeOptionName(), serialize(array()));
+			$res = ThemeTable::getList([
+				'filter' => [
+					'=ENTITY_TYPE' => $this->getEntityType(),
+					'ENTITY_ID' => 0,
+					'=CONTEXT' => $this->getContext(),
+				],
+				'select' => ['ID']
+			]);
+			while($themeFields = $res->fetch())
+			{
+				ThemeTable::delete($themeFields['ID']);
+			}
 
-			if (\CHTMLPagesCache::isOn() && Loader::includeModule("intranet"))
+			if (\CHTMLPagesCache::isOn() && Loader::includeModule('intranet'))
 			{
 				CacheProvider::deleteAllCache();
 			}
 		}
 
 		$customThemes = $this->getCustomThemesOptions();
-		if (isset($customThemes[$themeId]["bgImage"]))
+		if (isset($customThemes[$themeId]['bgImage']))
 		{
-			\CFile::delete($customThemes[$themeId]["bgImage"]);
+			\CFile::delete($customThemes[$themeId]['bgImage']);
 		}
 
 		$customThemes = $this->getCustomThemesOptions();
@@ -377,7 +497,18 @@ class ThemePicker
 
 		if ($this->getCurrentThemeId() === $themeId)
 		{
-			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
+			$res = ThemeTable::getList([
+				'filter' => [
+					'=ENTITY_TYPE' => $this->getEntityType(),
+					'ENTITY_ID' => $this->getEntityId(),
+					'=CONTEXT' => $this->getContext(),
+				],
+				'select' => ['ID']
+			]);
+			while($themeFields = $res->fetch())
+			{
+				ThemeTable::delete($themeFields['ID']);
+			}
 		}
 
 		return true;
@@ -481,6 +612,23 @@ class ThemePicker
 		return $customTheme;
 	}
 
+	public function getPatternThemes(): array
+	{
+		$result = [];
+
+		foreach ($this->getStandardThemes() as $theme)
+		{
+			if (!preg_match('/^(dark|light):pattern-(.+)/is' . BX_UTF_PCRE_MODIFIER, $theme['id'], $matches))
+			{
+				continue;
+			}
+
+			$result[] = $theme;
+		}
+
+		return $result;
+	}
+
 	public function getStandardThemes()
 	{
 		$themes = array();
@@ -577,7 +725,7 @@ class ThemePicker
 		return $theme;
 	}
 
-	public function getTheme($themeId)
+	public function getTheme($themeId, $userId = false)
 	{
 		if (!is_string($themeId))
 		{
@@ -586,7 +734,7 @@ class ThemePicker
 
 		if ($this->isCustomThemeId($themeId))
 		{
-			return $this->getCustomTheme($themeId);
+			return $this->getCustomTheme($themeId, $userId);
 		}
 		else
 		{
@@ -597,24 +745,29 @@ class ThemePicker
 	public function getDefaultTheme()
 	{
 		$theme = null;
-		$themeOptions = Option::get("intranet", $this->getDefaultThemeOptionName(), null);
-		if (is_string($themeOptions))
+
+		$res = ThemeTable::getList([
+			'filter' => [
+				'=ENTITY_TYPE' => $this->getEntityType(),
+				'ENTITY_ID' => 0,
+				'=CONTEXT' => $this->getContext(),
+			],
+			'select' => [ 'THEME_ID', 'USER_ID' ]
+		]);
+
+		if ($themeFields = $res->fetch())
 		{
-			$defaultTheme = @unserialize($themeOptions, ["allowed_classes" => false]);
-			if (is_array($defaultTheme) && isset($defaultTheme["userId"]) && isset($defaultTheme["themeId"]))
+			if ($this->isCustomThemeId($themeFields['THEME_ID']))
 			{
-				if ($this->isCustomThemeId($defaultTheme["themeId"]))
-				{
-					$theme = $this->getCustomTheme($defaultTheme["themeId"], $defaultTheme["userId"]);
-				}
-				else
-				{
-					$theme = $this->getStandardTheme($defaultTheme["themeId"]);
-				}
+				$theme = $this->getCustomTheme($themeFields['THEME_ID'], $themeFields['USER_ID']);
+			}
+			else
+			{
+				$theme = $this->getStandardTheme($themeFields['THEME_ID']);
 			}
 		}
 
-		return $theme ?: $this->getStandardTheme("default");
+		return $theme ?: $this->getStandardTheme('default');
 	}
 
 	public function getDefaultThemeId()
@@ -623,28 +776,34 @@ class ThemePicker
 		return $defaultTheme ? $defaultTheme["id"] : "default";
 	}
 
-	public function setDefaultTheme($themeId, $userId = false)
+	public function setDefaultTheme($themeId, $currentUserId = 0): bool
 	{
-		if (!$this->isValidTheme($themeId))
+		if (
+			!$this->isValidTheme($themeId)
+			|| $this->getEntityType() !== self::ENTITY_TYPE_USER
+		)
 		{
 			return false;
 		}
 
-		if ($userId === false && is_object($GLOBALS["USER"]))
+		$currentUserId = (int)$currentUserId;
+		if ($currentUserId <= 0)
 		{
-			$userId = $GLOBALS["USER"]->getID();
+			$currentUserId = (is_object($GLOBALS["USER"]) ? (int)$GLOBALS["USER"]->getID() : 0);
 		}
 
-		$userId = intval($userId);
+		return ThemeTable::set([
+			'THEME_ID' => $themeId,
+			'USER_ID' => $currentUserId,
+			'ENTITY_TYPE' => $this->getEntityType(),
+			'ENTITY_ID' => 0,
+			'CONTEXT' => $this->getContext(),
+		]);
+	}
 
-		$themeOptions = array(
-			"themeId" => $themeId,
-			"userId" => $userId
-		);
-
-		Option::set("intranet", $this->getDefaultThemeOptionName(), serialize($themeOptions));
-
-		return true;
+	public function getContext()
+	{
+		return $this->getTemplateId() . '_' . $this->getSiteId();
 	}
 
 	public function getBaseThemes()
@@ -702,6 +861,21 @@ class ThemePicker
 		return $this->userId;
 	}
 
+	public function getEntityType(): string
+	{
+		return $this->entityType;
+	}
+
+	public function getEntityId()
+	{
+		return $this->entityId;
+	}
+
+	public function getBehaviour()
+	{
+		return $this->behaviour;
+	}
+
 	public function getCurrentThemeOptionName()
 	{
 		return "bitrix24_theme_".$this->getTemplateId()."_".$this->getSiteId();
@@ -750,7 +924,7 @@ class ThemePicker
 		return $maxUploadSize;
 	}
 
-	private function isValidTheme($themeId)
+	private function isValidTheme($themeId, $userId = false)
 	{
 		if (!is_string($themeId) || $themeId == '')
 		{
@@ -759,7 +933,7 @@ class ThemePicker
 
 		if ($this->isCustomThemeId($themeId))
 		{
-			return $this->getCustomTheme($themeId) !== null;
+			return $this->getCustomTheme($themeId, $userId) !== null;
 		}
 
 		if ($this->getStandardTheme($themeId) === null)

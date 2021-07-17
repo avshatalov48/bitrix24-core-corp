@@ -4,6 +4,7 @@ namespace Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialnetwork\Item\Subscription;
 use Bitrix\Socialnetwork\LogTable;
 use Bitrix\Socialnetwork\UserContentViewTable;
@@ -43,10 +44,12 @@ abstract class Provider
 	public const CONTENT_TYPE_ID = false;
 
 	protected $entityId = 0;
+	protected $additionalParams = [];
 	protected $logId = 0;
 	protected $sourceFields = [];
 	protected $siteId = false;
 	protected $options = [];
+	protected $parentProvider = false;
 
 	protected $cloneDiskObjects = false;
 	protected $sourceDescription = '';
@@ -57,6 +60,8 @@ abstract class Provider
 	protected $sourceDiskObjects = [];
 	protected $diskObjectsCloned = [];
 	protected $attachedDiskObjectsCloned = [];
+	protected $sourceDateTime = null;
+	protected $sourceAuthorId = 0;
 
 	protected $logEventId = null;
 	protected $logEntityType = null;
@@ -118,9 +123,29 @@ abstract class Provider
 		return false;
 	}
 
+	public function getRatingTypeId(): string
+	{
+		return '';
+	}
+
+	public function getUserTypeEntityId(): string
+	{
+		return '';
+	}
+
 	public function getCommentProvider()
 	{
 		return false;
+	}
+
+	public function setParentProvider($value): void
+	{
+		$this->parentProvider = $value;
+	}
+
+	public function getParentProvider()
+	{
+		return $this->parentProvider;
 	}
 
 	final private static function getTypes()
@@ -231,7 +256,8 @@ abstract class Provider
 		if ($provider)
 		{
 			$provider->setEntityId($params['ENTITY_ID']);
-			$provider->setSiteId(isset($params['SITE_ID']) ? $params['SITE_ID'] : SITE_ID);
+			$provider->setSiteId($params['SITE_ID'] ?? SITE_ID);
+
 			if (
 				isset($params['CLONE_DISK_OBJECTS'])
 				&& $params['CLONE_DISK_OBJECTS'] === true
@@ -239,12 +265,21 @@ abstract class Provider
 			{
 				$provider->cloneDiskObjects = true;
 			}
+
 			if (
 				isset($params['LOG_ID'])
 				&& (int)$params['LOG_ID'] > 0
 			)
 			{
 				$provider->setLogId((int)$params['LOG_ID']);
+			}
+
+			if (
+				isset($params['ADDITIONAL_PARAMS'])
+				&& is_array($params['ADDITIONAL_PARAMS'])
+			)
+			{
+				$provider->setAdditionalParams($params['ADDITIONAL_PARAMS']);
 			}
 		}
 
@@ -272,7 +307,11 @@ abstract class Provider
 		else
 		{
 			$eventId = $this->getEventId();
-			if (empty($eventId))
+
+			if (
+				empty($eventId)
+				|| $this->entityId <= 0
+			)
 			{
 				return $result;
 			}
@@ -309,8 +348,43 @@ abstract class Provider
 					[ 'ID' ]
 				);
 
+				$logEntry = $res->fetch();
 				if (
-					($logEntry = $res->fetch())
+					!$logEntry
+					&& static::getId() === TasksTask::PROVIDER_ID
+					&& Loader::includeModule('crm')
+				)
+				{
+					$res = \CCrmActivity::getList(
+						[],
+						[
+							'ASSOCIATED_ENTITY_ID' => $this->entityId,
+							'TYPE_ID' => \CCrmActivityType::Task,
+							'CHECK_PERMISSIONS' => 'N'
+						],
+						false,
+						false,
+						[ 'ID' ]
+					);
+					if ($activityFields = $res->fetch())
+					{
+						$res = \CSocNetLog::getList(
+							[],
+							[
+								'EVENT_ID' => $eventId,
+								'=ENTITY_TYPE' => 'CRMACTIVITY',
+								'=ENTITY_ID' => $activityFields['ID'],
+							],
+							false,
+							[ 'nTopCount' => 1 ],
+							[ 'ID' ]
+						);
+						$logEntry = $res->fetch();
+					}
+				}
+
+				if (
+					$logEntry
 					&& ((int)$logEntry['ID'] > 0)
 				)
 				{
@@ -496,14 +570,24 @@ abstract class Provider
 		$this->entityId = $entityId;
 	}
 
-	final protected function getEntityId()
+	final public function getEntityId()
 	{
 		return $this->entityId;
 	}
 
-	final public function setLogId($logId)
+	final public function setLogId($logId): void
 	{
 		$this->logId = $logId;
+	}
+
+	final public function setAdditionalParams(array $additionalParams): void
+	{
+		$this->additionalParams = $additionalParams;
+	}
+
+	final public function getAdditionalParams(): array
+	{
+		return $this->additionalParams;
 	}
 
 	final protected function setSourceFields(array $fields)
@@ -516,7 +600,7 @@ abstract class Provider
 		return $this->sourceFields;
 	}
 
-	final protected function getSourceFields()
+	final public function getSourceFields()
 	{
 		return $this->sourceFields;
 	}
@@ -666,6 +750,26 @@ abstract class Provider
 	protected function getAttachedDiskObjects($clone = false)
 	{
 		return [];
+	}
+
+	final protected function setSourceDateTime(\Bitrix\Main\Type\DateTime $datetime)
+	{
+		$this->sourceDateTime = $datetime;
+	}
+
+	final public function getSourceDateTime(): ?\Bitrix\Main\Type\DateTime
+	{
+		return $this->sourceDateTime;
+	}
+
+	final protected function setSourceAuthorId($authorId = 0)
+	{
+		$this->sourceAuthorId = (int)$authorId;
+	}
+
+	final public function getSourceAuthorId()
+	{
+		return $this->sourceAuthorId;
 	}
 
 	protected static function cloneUfValues(array $values)

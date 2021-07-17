@@ -2,20 +2,41 @@ import UseLocalize from '../mixins/uselocalize';
 
 export default {
 	props: {
-		name: {required: true, type: String},
-		phone: {required: false, type: String},
-		phoneExt: {required: false, type: String},
+		name: {
+			required: true,
+			type: String,
+		},
+		phone: {
+			required: false,
+			type: String,
+		},
+		phoneExt: {
+			required: false,
+			type: String,
+		},
+		canUseTelephony: {
+			required: false,
+			type: Boolean,
+			default: false,
+		},
 	},
 	mixins: [UseLocalize],
 	methods: {
 		call()
 		{
-			if (!(this.phone && typeof(top.BXIM)!=='undefined'))
+			if (!this.phone)
 			{
 				return;
 			}
 
-			top.BXIM.phoneTo(this.phone);
+			if (this.canUseTelephony && typeof(top.BXIM)!=='undefined')
+			{
+				top.BXIM.phoneTo(this.phone);
+			}
+			else
+			{
+				window.location.href='tel:' + this.phone;
+			}
 		},
 	},
 	template: `

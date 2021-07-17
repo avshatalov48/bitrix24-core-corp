@@ -4,8 +4,8 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\Value;
 
 \Bitrix\Main\Loader::includeModule('documentgenerator');
 
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\Format\EntityAddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Requisite;
 use Bitrix\DocumentGenerator\DataProviderManager;
@@ -34,8 +34,24 @@ class Address extends Value implements Nameable
 		$options['FORMAT'] = (int)$options['FORMAT'];
 		$options['SHOW_TYPE'] = $options['SHOW_TYPE'] ?? null;
 
-		$result = EntityAddressFormatter::format($this->value, $options);
-		if($options['SHOW_TYPE'] === true && !empty($this->value['TYPE']))
+		$addressFormatter = AddressFormatter::getSingleInstance();
+		switch ($options['SEPARATOR'])
+        {
+            case AddressSeparator::Comma:
+                $result = $addressFormatter->formatTextComma($this->value, $options['FORMAT']);
+                break;
+            case AddressSeparator::NewLine:
+                $result = $addressFormatter->formatTextMultiline($this->value, $options['FORMAT']);
+                break;
+            case AddressSeparator::HtmlLineBreak:
+                $result = $addressFormatter->formatHtmlMultiline($this->value, $options['FORMAT']);
+                break;
+            default:
+                $result = $addressFormatter->formatTextComma($this->value, $options['FORMAT']);
+        }
+        unset($addressFormatter);
+
+        if($options['SHOW_TYPE'] === true && !empty($this->value['TYPE']))
 		{
 			$separator = AddressSeparator::getSeparator($options['SEPARATOR']);
 			$separator = str_replace(',', '', $separator);

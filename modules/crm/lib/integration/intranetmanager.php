@@ -324,4 +324,34 @@ class IntranetManager
 
 		return $result;
 	}
+
+	/**
+	 * Returns first custom section that contains the provided entity type
+	 *
+	 * @param int $entityTypeId - entity type to find
+	 *
+	 * @return CustomSection|null
+	 */
+	public static function getCustomSectionByEntityTypeId(int $entityTypeId): ?CustomSection
+	{
+		$customSections = static::getCustomSections();
+		if (is_null($customSections))
+		{
+			return null;
+		}
+
+		foreach ($customSections as $customSection)
+		{
+			foreach ($customSection->getPages() as $page)
+			{
+				$entityTypeIdInPage = static::getEntityTypeIdByPageSettings($page->getSettings());
+				if (($entityTypeIdInPage > 0) && ($entityTypeIdInPage === $entityTypeId))
+				{
+					return $customSection;
+				}
+			}
+		}
+
+		return null;
+	}
 }

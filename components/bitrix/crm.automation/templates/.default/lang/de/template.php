@@ -15,3 +15,4 @@ $MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_EDIT"] = "Automatisierungsregeln für alle 
 $MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_VIEW"] = "Aktueller Leadstatus: \"#TITLE#\"";
 $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_EDIT"] = "Automatisierungsregeln für alle Bestellungen bearbeiten";
 $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_VIEW"] = "Aktueller Bestellstatus";
+$MESS["CRM_AUTOMATION_CMP_WEBHOOK_PASSWORD_ALERT"] = "Trigger erfordert einen eingehenden WebHook. Möchten Sie jetzt #A1#diesen erstellen#A2#?";

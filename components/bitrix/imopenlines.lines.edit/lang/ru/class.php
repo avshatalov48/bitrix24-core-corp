@@ -38,7 +38,7 @@ $MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL'] = 'Автоматически 
 $MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_SECOND'] = 'В какой воронке создавать сделку';
 $MESS['OL_COMPONENT_CONFIG_EDIT_CRM_CREATE_DEAL_THIRD'] = 'Использовать активную сделку, не создавая новую';
 
-$MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_TITLE'] = 'Мы не получили от вас ответа. Пожалуйта, скажите, у вас остались еще вопросы?';
+$MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_TITLE'] = 'Мы не получили от вас ответа. Пожалуйста, скажите, у вас остались еще вопросы?';
 $MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_CLOSE_TITLE'] = 'Закрыть диалог';
 $MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_CONTINUE_TITLE'] = 'Продолжить диалог';
 $MESS['OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE'] = 'Новый диалог';

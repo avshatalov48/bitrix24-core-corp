@@ -57,6 +57,8 @@ class CTaskListState
 	const VIEW_TASK_CATEGORY_WO_DEADLINE = 0x0A00000;	// tasks without DEADLINE, created NOT by the current user
 	const VIEW_TASK_CATEGORY_ALL         = 0x0B00000;
 	const VIEW_TASK_CATEGORY_NEW_COMMENTS = 0x0C00000;
+	const VIEW_TASK_CATEGORY_PROJECT_EXPIRED = 0x0D00000;
+	const VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS = 0x0E00000;
 
 	// view mode parameters
 	const VIEW_MODE_GANTT_OPTION_ZOOM    = 'ZOOM';
@@ -98,15 +100,21 @@ class CTaskListState
 	 * @param integer $userId
 	 * @return CTaskListState
 	 */
-	public static function getInstance($userId)
+	public static function getInstance($userId, int $groupId = 0)
 	{
 		CTaskAssert::assertLaxIntegers($userId);
 		CTaskAssert::assert($userId > 0);
 
-		$key = (string) ((int) $userId);
+		$key = $userId .'_'. $groupId;
+		if ($groupId)
+		{
+			$key .= '_'.$groupId;
+		}
 
-		if ( ! array_key_exists($key, self::$instancesOfSelf) )
-			self::$instancesOfSelf[$key] = new self($userId);
+		if (!array_key_exists($key, self::$instancesOfSelf))
+		{
+			self::$instancesOfSelf[$key] = new self($userId, $groupId);
+		}
 
 		return (self::$instancesOfSelf[$key]);
 	}
@@ -117,18 +125,24 @@ class CTaskListState
 	 *
 	 * @param $userId
 	 */
-	private function __construct($userId)
+	private function __construct($userId, int $groupId = 0)
 	{
 		CTaskAssert::assertLaxIntegers($userId);
 		CTaskAssert::assert($userId > 0);
 
 		$this->userId = $userId;
 
+		$paramName = self::listViewModeParamName;
+		if ($groupId)
+		{
+			$paramName .= '_'.$groupId;
+		}
+
 		$this->resetState();
 
 		$rc = CUserOptions::GetOption(
 			self::listCategoryName,
-			self::listViewModeParamName,
+			$paramName,
 			serialize(false),
 			$this->userId
 		);
@@ -144,7 +158,7 @@ class CTaskListState
 		)
 		{
 			$this->loggedInUserId = (int) \Bitrix\Tasks\Util\User::getId();
-			$this->paramName = self::listViewModeParamName . '_by_user_' . $this->loggedInUserId;
+			$this->paramName = $paramName . '_by_user_' . $this->loggedInUserId;
 
 			$rc = CUserOptions::GetOption(
 				self::listCategoryName,
@@ -345,16 +359,16 @@ class CTaskListState
 
 		// kinda validators :)
 		if($view == self::VIEW_MODE_GANTT && $code == self::VIEW_MODE_GANTT_OPTION_ZOOM && !in_array($value, array(
-			self::GANTT_ZOOM_YEARQUARTER,
-			self::GANTT_ZOOM_YEARMONTH,
-			self::GANTT_ZOOM_MONTHDAY,
-			self::GANTT_ZOOM_MONTHDAY2X,
-			self::GANTT_ZOOM_WEEKDAY,
-			self::GANTT_ZOOM_DAYHOUR,
-			self::GANTT_ZOOM_DAYEVERYHOUR,
-			self::GANTT_ZOOM_DAYSECONDHOUR,
-			self::GANTT_ZOOM_HOURMINUTE,
-		)))
+				self::GANTT_ZOOM_YEARQUARTER,
+				self::GANTT_ZOOM_YEARMONTH,
+				self::GANTT_ZOOM_MONTHDAY,
+				self::GANTT_ZOOM_MONTHDAY2X,
+				self::GANTT_ZOOM_WEEKDAY,
+				self::GANTT_ZOOM_DAYHOUR,
+				self::GANTT_ZOOM_DAYEVERYHOUR,
+				self::GANTT_ZOOM_DAYSECONDHOUR,
+				self::GANTT_ZOOM_HOURMINUTE,
+			)))
 		{
 			throw new TasksException('', TasksException::TE_WRONG_ARGUMENTS);
 		}
@@ -596,31 +610,31 @@ class CTaskListState
 			{
 				case self::TOC_SELECTED:
 					$newkey = 'SELECTED';
-				break;
+					break;
 
 				case self::TOC_SUBMODES:
 					$newkey = 'SUBMODES';
-				break;
+					break;
 
 				case self::TOC_VIEW_SELECTED:
 					$newkey = 'VIEW_SELECTED';
-				break;
+					break;
 
 				case self::TOC_ROLE_SELECTED:
 					$newkey = 'ROLE_SELECTED';
-				break;
+					break;
 
 				case self::TOC_SECTION_SELECTED:
 					$newkey = 'SECTION_SELECTED';
-				break;
+					break;
 
 				case self::TOC_TASK_CATEGORY_SELECTED:
 					$newkey = 'TASK_CATEGORY_SELECTED';
-				break;
+					break;
 
 				default:
 					$newkey = $key;
-				break;
+					break;
 			}
 
 			if (is_array($value))
@@ -650,7 +664,7 @@ class CTaskListState
 					self::VIEW_TASK_CATEGORY_EXPIRED,
 					self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
 				);
-			break;
+				break;
 
 			case self::VIEW_ROLE_ACCOMPLICE:
 				$arCategories = array(
@@ -663,7 +677,7 @@ class CTaskListState
 					self::VIEW_TASK_CATEGORY_EXPIRED,
 					self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
 				);
-			break;
+				break;
 
 			case self::VIEW_ROLE_AUDITOR:
 				$arCategories = array(
@@ -675,7 +689,7 @@ class CTaskListState
 					self::VIEW_TASK_CATEGORY_EXPIRED,
 					self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
 				);
-			break;
+				break;
 
 			case self::VIEW_ROLE_ORIGINATOR:
 				$arCategories = array(
@@ -688,11 +702,11 @@ class CTaskListState
 					self::VIEW_TASK_CATEGORY_EXPIRED,
 					self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
 				);
-			break;
+				break;
 
 			default:
 				throw new TasksException(TasksException::TE_WRONG_ARGUMENTS);
-			break;
+				break;
 		}
 
 		return ($arCategories);
@@ -708,17 +722,17 @@ class CTaskListState
 	}
 
 
-	public function getAllowedViewModes()
+	public function getAllowedViewModes(): array
 	{
-		return (array(
+		return [
 			self::VIEW_MODE_LIST,
+			self::VIEW_MODE_KANBAN,
 			self::VIEW_MODE_TIMELINE,
 			self::VIEW_MODE_PLAN,
 			self::VIEW_MODE_CALENDAR,
 			self::VIEW_MODE_GANTT,
 			self::VIEW_MODE_SPRINT,
-			self::VIEW_MODE_KANBAN,
-		));
+		];
 	}
 
 	public static function getKnownRoles()
@@ -954,28 +968,30 @@ class CTaskListState
 
 		if ($arMap === null)
 		{
-			$arMap = array(
-				self::VIEW_TASK_CATEGORY_ALL         => GetMessage('TASKS_LIST_CTRL_CATEGORY_ALL'),
-				self::VIEW_TASK_CATEGORY_NEW         => GetMessage('TASKS_LIST_CTRL_CATEGORY_NEW'),
+			$arMap = [
+				self::VIEW_TASK_CATEGORY_ALL => GetMessage('TASKS_LIST_CTRL_CATEGORY_ALL'),
+				self::VIEW_TASK_CATEGORY_NEW => GetMessage('TASKS_LIST_CTRL_CATEGORY_NEW'),
 				self::VIEW_TASK_CATEGORY_IN_PROGRESS => GetMessage('TASKS_LIST_CTRL_CATEGORY_IN_PROGRESS'),
-				self::VIEW_TASK_CATEGORY_COMPLETED   => GetMessage('TASKS_LIST_CTRL_CATEGORY_COMPLETED'),
-				self::VIEW_TASK_CATEGORY_DEFERRED    => GetMessage('TASKS_LIST_CTRL_CATEGORY_DEFERRED'),
-				self::VIEW_TASK_CATEGORY_EXPIRED     => GetMessage('TASKS_LIST_CTRL_CATEGORY_EXPIRED'),
+				self::VIEW_TASK_CATEGORY_COMPLETED => GetMessage('TASKS_LIST_CTRL_CATEGORY_COMPLETED'),
+				self::VIEW_TASK_CATEGORY_DEFERRED => GetMessage('TASKS_LIST_CTRL_CATEGORY_DEFERRED'),
+				self::VIEW_TASK_CATEGORY_EXPIRED => GetMessage('TASKS_LIST_CTRL_CATEGORY_EXPIRED'),
 				self::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES => GetMessage('TASKS_LIST_CTRL_CATEGORY_EXPIRED_CANDIDATES'),
-				self::VIEW_TASK_CATEGORY_ATTENTION   => GetMessage('TASKS_LIST_CTRL_CATEGORY_ATTENTION'),
-				self::VIEW_TASK_CATEGORY_WAIT_CTRL   => GetMessage('TASKS_LIST_CTRL_CATEGORY_WAIT_CTRL'),
+				self::VIEW_TASK_CATEGORY_ATTENTION => GetMessage('TASKS_LIST_CTRL_CATEGORY_ATTENTION'),
+				self::VIEW_TASK_CATEGORY_WAIT_CTRL => GetMessage('TASKS_LIST_CTRL_CATEGORY_WAIT_CTRL'),
 				self::VIEW_TASK_CATEGORY_WO_DEADLINE => GetMessage('TASKS_LIST_CTRL_CATEGORY_WO_DEADLINE'),
 				self::VIEW_TASK_CATEGORY_NEW_COMMENTS => GetMessage('TASKS_LIST_CTRL_CATEGORY_NEW_COMMENTS'),
-			);
+				self::VIEW_TASK_CATEGORY_PROJECT_EXPIRED => GetMessage('TASKS_LIST_CTRL_CATEGORY_PROJECT_EXPIRED'),
+				self::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS => GetMessage('TASKS_LIST_CTRL_CATEGORY_PROJECT_NEW_COMMENTS'),
+			];
 		}
 
 		if (isset($arMap[$categoryId]))
-			return ($arMap[$categoryId]);
-		else
 		{
-			CTaskAssert::logError('[0xa1bd9ec0] ');
-			return ('???');
+			return ($arMap[$categoryId]);
 		}
+
+		CTaskAssert::logError('[0xa1bd9ec0] ');
+		return ('???');
 	}
 
 	public static function encodeState($state)

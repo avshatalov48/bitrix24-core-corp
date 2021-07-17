@@ -71,6 +71,19 @@
 					: ''
 			);
 
+			if (typeof votePanelRef !== 'undefined')
+			{
+				// deep clone
+				votePanelRef.questions = (voteValue.questions ? JSON.parse(JSON.stringify(voteValue.questions)) : []);
+				if (voteValue.questions)
+				{
+					voteValue.questions.forEach((value, index) => {
+						voteValue.questions[index].answers.push({});
+						votePanelRef.addAnswer(index);
+					});
+				}
+			}
+
 			this.state = {
 				actionSheetShown: (this.postText.length <= 0),
 				titleShown: (this.postTitleValue.length > 0),
@@ -539,6 +552,17 @@
 
 				if (
 					medal
+					&& (
+						!Array.isArray(gratitudeEmployees)
+						|| gratitudeEmployees.length <= 0
+					)
+				)
+				{
+					reject(BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDE_EMPLOYEE_EMPTY'));
+				}
+
+				if (
+					medal
 					&& gratitudeEmployees
 					&& Array.isArray(gratitudeEmployees)
 				)
@@ -712,6 +736,7 @@
 							uploadTasks.push({
 								taskId: taskId,
 								type: fileData.type,
+								name: fileData.name,
 								mimeType: Utils.getFileMimeType(fileData.type),
 								folderId: parseInt(BX.componentParameters.get('USER_FOLDER_FOR_SAVED_FILES', 0)),
 								params: {
@@ -886,7 +911,17 @@
 						searchable: true,
 						dynamicLoad: true,
 						dynamicSearch: false,
-					}
+					},
+					'project': {
+						options: {
+							features: {
+								blog:  [ 'premoderate_post', 'moderate_post', 'write_post', 'full_post' ],
+							}
+						},
+						searchable: true,
+						dynamicLoad: true,
+						dynamicSearch: true
+					},
 				})
 				.open({ selected: Utils.formatSelectedRecipients(recipients) })
 				.then(recipients => this.onSelectedRecipient(recipients))
@@ -941,9 +976,9 @@
 				.setEntitiesOptions({
 					'user': {
 						'options': {
-							'intranetUsersOnly': true
+							'intranetUsersOnly': true,
+							'emailUsers': true
 						},
-						'emailUsers': true,
 						'searchable': true,
 						'dynamicLoad': true,
 						'dynamicSearch': true
@@ -1573,7 +1608,9 @@
 				votePanelRef.addAnswer(newState.voteData.questions.length - 1);
 			}
 
-			this.setState(newState);
+			this.setState(newState, () => {
+				votePanelRef.questions[newState.voteData.questions.length - 1].element.focus();
+			});
 		};
 
 		onSetVoteData(value) {
@@ -1706,7 +1743,11 @@
 
 			if (Object.keys(newState).length > 0)
 			{
-				this.setState(newState); // to recalc background rendering forcefully
+				this.setState(newState, () => {
+					setTimeout(() => {
+						this.focusPostMessage()
+					}, 1);
+				}); // to recalc background rendering forcefully
 			}
 		}
 
@@ -1874,7 +1915,6 @@
 							inputTextColor: this.getStyle(coloredMessage ? 'inputColoredTextColor' : 'inputTextColor'),
 							placeholderTextColor: this.getStyle(coloredMessage ? 'placeholderColoredTextColor' : 'placeholderTextColor'),
 							checkColoredText: this.checkColoredText.bind(this),
-							postTextCursorPosition: this.postTextCursorPosition,
 							rootHeightWithKeyboard: this.rootRef.heightWithKeyboard,
 							marginTop: this.config.postMessageMarginTop,
 							marginBottom: this.config.postMessageMarginBottom,

@@ -11,6 +11,7 @@ IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Tasks\Internals\Notification\Task\ThrottleTable;
 use Bitrix\Tasks\Internals\UserOption;
+use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\AgentManager;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Main\Localization\Loc;
@@ -950,6 +951,7 @@ class CTaskNotifications
 				'ACTION' => 'TASK_EXPIRED_SOON',
 				'arFields' => $taskData,
 			],
+			'NOTIFY_EVENT' => 'task_expired_soon'
 		];
 
 		self::sendExpiredSoonMessageForResponsible($taskData, $parameters);
@@ -971,7 +973,7 @@ class CTaskNotifications
 		/** @var \Bitrix\Tasks\Util\Type\DateTime $deadline */
 		$deadline = clone $taskData['DEADLINE'];
 		$deadline->addSecond(\CTimeZone::GetOffset($responsibleId, true));
-		$formattedDeadline = $deadline->format(self::getTimeFormat($deadline->getTimestamp()));
+		$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
 		$messageKey = (
 			$responsibleId === $createdBy
@@ -990,6 +992,7 @@ class CTaskNotifications
 				self::getGenderMessage(0, $messageKey)
 			),
 			'PUSH' => self::makePushMessage($messageKey, $createdBy, $taskData),
+
 		];
 
 		self::sendMessageEx($taskData['ID'], $createdBy, [$responsibleId], $messages, $parameters);
@@ -1018,7 +1021,7 @@ class CTaskNotifications
 			/** @var \Bitrix\Tasks\Util\Type\DateTime $deadline */
 			$deadline = clone $taskData['DEADLINE'];
 			$deadline->addSecond(\CTimeZone::GetOffset($createdBy, true));
-			$formattedDeadline = $deadline->format(self::getTimeFormat($deadline->getTimestamp()));
+			$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
 			$messageKey = 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE';
 			$messages = [
@@ -1044,7 +1047,7 @@ class CTaskNotifications
 			/** @var \Bitrix\Tasks\Util\Type\DateTime $deadline */
 			$deadline = clone $taskData['DEADLINE'];
 			$deadline->addSecond(\CTimeZone::GetOffset($userId, true));
-			$formattedDeadline = $deadline->format(self::getTimeFormat($deadline->getTimestamp()));
+			$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
 			$messageKey = 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE';
 			$messages = [
@@ -1207,25 +1210,6 @@ class CTaskNotifications
 		];
 
 		self::sendMessageEx($taskData['ID'], $createdBy, $auditors, $messages, $parameters);
-	}
-
-	private static function getTimeFormat(int $timestamp): string
-	{
-		$timeFormat = '';
-		$currentTimeFormat = 'HH:MI:SS';
-
-		$resSite = CSite::GetByID(SITE_ID);
-		if ($site = $resSite->Fetch())
-		{
-			$currentTimeFormat = str_replace($site['FORMAT_DATE'] . ' ', '', $site['FORMAT_DATETIME']);
-		}
-
-		if (date('Hi', $timestamp) > 0)
-		{
-			$timeFormat = ($currentTimeFormat === 'HH:MI:SS' ? 'G:i' : 'g:i a');
-		}
-
-		return $timeFormat;
 	}
 
 	public static function sendPingStatusMessage(array $taskData, int $authorId): void
@@ -1934,29 +1918,34 @@ class CTaskNotifications
 	########################
 	# throttle functions
 
-	public static function throttleRelease()
+	public static function throttleRelease(): void
 	{
 		$items = ThrottleTable::getUpdateMessages();
-
-		if(is_array($items) && !empty($items))
+		if (is_array($items) && !empty($items))
 		{
-			$cacheAFWasDisabled = \CTasks::disableCacheAutoClear();
-			$notifADWasDisabled = \CTaskNotifications::disableAutoDeliver();
+			$cacheAutoClearingWasDisabled = \CTasks::disableCacheAutoClear();
+			$notificationAutoDeliveryWasDisabled = \CTaskNotifications::disableAutoDeliver();
 
-			// this function may be called on agent, so DO NOT relay on global user as an author, use field AUTHOR_ID instead
-			foreach($items as $item)
+			// this function may be called on agent
+			// DO NOT relay on global user as an author, use field AUTHOR_ID instead
+			foreach ($items as $item)
 			{
-				self::SendUpdateMessage($item['STATE_LAST'], $item['STATE_ORIG'], false, array(
-					'AUTHOR_ID' => $item['AUTHOR_ID'],
-					'IGNORE_AUTHOR' => isset($item['IGNORE_RECEPIENTS'][$item['AUTHOR_ID']])
-				));
+				self::SendUpdateMessage(
+					$item['STATE_LAST'],
+					$item['STATE_ORIG'],
+					false,
+					[
+						'AUTHOR_ID' => $item['AUTHOR_ID'],
+						'IGNORE_AUTHOR' => isset($item['IGNORE_RECIPIENTS'][$item['AUTHOR_ID']]),
+					]
+				);
 			}
 
-			if($notifADWasDisabled)
+			if ($notificationAutoDeliveryWasDisabled)
 			{
 				\CTaskNotifications::enableAutoDeliver();
 			}
-			if($cacheAFWasDisabled)
+			if ($cacheAutoClearingWasDisabled)
 			{
 				\CTasks::enableCacheAutoClear();
 			}

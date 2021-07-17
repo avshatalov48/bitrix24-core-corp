@@ -24,10 +24,11 @@ export class ScrumDod
 		return this.getListOptions().then((data) => {
 			if (this.isRequiredToggle(data))
 			{
-				this.sidePanelId = 'tasks-scrum-dod-' + Text.getRandom();
+				this.sidePanelId = 'tasks-scrum-dod';
 
 				this.taskId = taskId;
 
+				this.sidePanel.unsubscribeAll('onLoadSidePanel');
 				this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadList.bind(this));
 
 				this.sidePanel.openSidePanel(this.sidePanelId, {

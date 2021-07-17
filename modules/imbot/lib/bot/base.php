@@ -48,44 +48,6 @@ abstract class Base
 	}
 
 	/**
-	 * Returns per user option value.
-	 *
-	 * @param int $userId
-	 * @param string $name
-	 * @param bool $value
-	 *
-	 * @return bool|mixed
-	 */
-	public static function getBotOption($userId, $name, $value = false)
-	{
-		$class = self::getClassName();
-		if (!$class::BOT_CODE)
-			return false;
-
-		return \CUserOptions::GetOption(self::MODULE_ID, $class::BOT_CODE.'_'.$name, $value, $userId);
-	}
-
-	/**
-	 * Saves option value for certain user.
-	 *
-	 * @param int $userId
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return bool
-	 */
-	public static function setBotOption($userId, $name, $value)
-	{
-		$class = self::getClassName();
-		if (!$class::BOT_CODE)
-			return false;
-
-		\CUserOptions::SetOption(self::MODULE_ID, $class::BOT_CODE.'_'.$name, $value, false, $userId);
-
-		return true;
-	}
-
-	/**
 	 * Event handler when bot join to chat.
 	 *
 	 * @param string $dialogId
@@ -221,7 +183,7 @@ abstract class Base
 	/**
 	 * @return \Bitrix\ImBot\Bot\Base|string
 	 */
-	public static function getClassName()
+	protected static function getClassName()
 	{
 		return get_called_class();
 	}

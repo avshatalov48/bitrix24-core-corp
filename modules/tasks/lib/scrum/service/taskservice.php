@@ -47,6 +47,7 @@ class TaskService implements Errorable
 	const ERROR_COULD_NOT_CHECK_IS_SUB_TASK = 'TASKS_TS_17';
 	const ERROR_COULD_NOT_CHECK_IS_LINKED_TASK = 'TASKS_TS_18';
 	const ERROR_COULD_NOT_CHECK_GET_SUB_TASK_IDS = 'TASKS_TS_19';
+	const ERROR_COULD_NOT_CHECK_GET_SUB_TASK_INFO = 'TASKS_TS_20';
 
 	private $executiveUserId;
 	private $application;
@@ -60,6 +61,9 @@ class TaskService implements Errorable
 	private $ownerId = 0;
 
 	private $userFieldManager;
+
+	private static $isSubordinate = null;
+	private static $isSuper = null;
 
 	public function __construct(int $executiveUserId, \CMain $application = null)
 	{
@@ -77,17 +81,6 @@ class TaskService implements Errorable
 	public function setOwnerId(int $ownerId): void
 	{
 		$this->ownerId = (int)$ownerId;
-	}
-
-	/**
-	 * If, when reading data, you need to get information about the files attached to the task,
-	 * pass the user field manager to this method.
-	 *
-	 * @param \CUserTypeManager $userFieldManager
-	 */
-	public function setUserFieldManager(\CUserTypeManager $userFieldManager): void
-	{
-		$this->userFieldManager = $userFieldManager;
 	}
 
 	public function getFilterInstance(int $groupId, bool $isCompletedSprint = false): Common
@@ -147,8 +140,7 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			list($taskFields['TITLE'], $tags) = $this->cleanTagsInTaskName($taskFields['TITLE']);
-			$tags = $this->cleanTagsInTaskFields($taskFields['TAGS'], $tags);
+			$tags = $this->cleanTagsInTaskFields($taskFields['TAGS']);
 
 			$taskItemObject = \CTaskItem::add($taskFields, $this->executiveUserId, ['DISABLE_BIZPROC_RUN' => true]);
 			$taskId = $taskItemObject->getId();
@@ -335,31 +327,6 @@ class TaskService implements Errorable
 		}
 	}
 
-	public function getTaskInfo($taskId): array
-	{
-		try
-		{
-			$queryObject = \CTasks::getList(
-				[],
-				['ID' => $taskId, 'CHECK_PERMISSIONS' => 'N'],
-				['TITLE', 'RESPONSIBLE_ID', 'CREATED_BY', 'GROUP_ID']
-			);
-			if ($data = $queryObject->fetch())
-			{
-				$data['TAGS'] = $this->getTagsByTaskIds([$taskId]);
-
-				return $data;
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
-		}
-
-		return [];
-	}
-
 	public function setTaskTags(array $taskTags): void
 	{
 		foreach ($taskTags as $taskTag)
@@ -375,10 +342,20 @@ class TaskService implements Errorable
 
 	public function hasAccessToCounters(): bool
 	{
+		if (self::$isSubordinate === null)
+		{
+			self::$isSubordinate = \CTasks::isSubordinate($this->ownerId, $this->executiveUserId);
+		}
+
+		if (self::$isSuper === null)
+		{
+			self::$isSuper = Util\User::isSuper($this->executiveUserId);
+		}
+
 		return (
 			$this->executiveUserId === $this->ownerId
-			|| Util\User::isSuper($this->executiveUserId)
-			|| \CTasks::IsSubordinate($this->ownerId, $this->executiveUserId)
+			|| self::$isSuper
+			|| self::$isSubordinate
 		);
 	}
 
@@ -485,78 +462,6 @@ class TaskService implements Errorable
 		}
 	}
 
-	public function getAttachedFilesCount(\CUserTypeManager $manager, int $taskId): int
-	{
-		try
-		{
-			$ufValue = $manager->getUserFieldValue('TASKS_TASK', 'UF_TASK_WEBDAV_FILES', $taskId);
-			if (is_array($ufValue))
-			{
-				return count($ufValue);
-			}
-			return 0;
-		}
-		catch (\Exception $exception)
-		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COUNT_FILES_TASK));
-			return 0;
-		}
-	}
-
-	public function getChecklistCounts(int $taskId): array
-	{
-		try
-		{
-			$checkList = [];
-
-			$query = new Query(CheckListTable::getEntity());
-			$query->setSelect(['TASK_ID', 'IS_COMPLETE', new ExpressionField('CNT', 'COUNT(TASK_ID)')]);
-			$query->setFilter(['TASK_ID' => $taskId]);
-			$query->setGroup(['TASK_ID', 'IS_COMPLETE']);
-			$query->registerRuntimeField('', new ReferenceField(
-				'IT',
-				CheckListTreeTable::class,
-				Join::on('this.ID', 'ref.CHILD_ID')->where('ref.LEVEL', 1),
-				['join_type' => 'INNER']
-			));
-
-			$result = $query->exec();
-			while ($row = $result->fetch())
-			{
-				$checkList[$row['IS_COMPLETE'] == 'Y' ? 'complete' : 'progress'] = $row['CNT'];
-			}
-
-			return $checkList;
-		}
-		catch (\Exception $exception)
-		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COUNT_CHECKLIST_FILES));
-			return [];
-		}
-	}
-
-	public function getNewCommentsCount(int $taskId): int
-	{
-		if (!$this->hasAccessToCounters())
-		{
-			return 0;
-		}
-
-		try
-		{
-			$newComments = Counter::getInstance((int) $this->executiveUserId)->getCommentsCount([$taskId]);
-			return $newComments[$taskId];
-		}
-		catch (\Exception $exception)
-		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COUNT_COMMENTS_TASK));
-			return 0;
-		}
-	}
-
 	public function isCompletedTask(int $taskId): bool
 	{
 		try
@@ -580,18 +485,24 @@ class TaskService implements Errorable
 		}
 	}
 
-	public function getSubTaskIds(int $taskId): array
+	public function getSubTaskIds(int $groupId, int $taskId, bool $notCompleted = true): array
 	{
 		$taskIds = [];
 
 		try
 		{
+			$filter = [
+				'PARENT_ID' => $taskId,
+				'GROUP_ID' => $groupId,
+			];
+			if ($notCompleted)
+			{
+				$filter['!=STATUS'] = \CTasks::STATE_COMPLETED;
+			}
+
 			$queryObject = \CTasks::getList(
 				['ID' => 'ASC'],
-				[
-					'PARENT_ID' => $taskId,
-					'!=STATUS' => \CTasks::STATE_COMPLETED
-				],
+				$filter,
 				['ID']
 			);
 			while ($taskData = $queryObject->fetch())
@@ -626,8 +537,8 @@ class TaskService implements Errorable
 					'filter' => [
 						'ID' => $parentId,
 						'GROUP_ID' => $groupId,
-						'!=STATUS' => \CTasks::STATE_COMPLETED,
 						'CHECK_PERMISSIONS' => 'Y',
+						'!=STATUS' => \CTasks::STATE_COMPLETED,
 					],
 				]);
 
@@ -641,28 +552,6 @@ class TaskService implements Errorable
 			);
 
 			return 0;
-		}
-	}
-
-	public function isLinkedTask(int $taskId): bool
-	{
-		try
-		{
-			$taskItem = $this->getTaskItemObject($taskId);
-
-			$taskData = $taskItem->getData(false, [
-				'select' => ['DEPENDS_ON'],
-			]);
-
-			return !empty($taskData['DEPENDS_ON']);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_LINKED_TASK)
-			);
-
-			return false;
 		}
 	}
 
@@ -711,45 +600,97 @@ class TaskService implements Errorable
 	/**
 	 * The method returns an array of data in the required format for the client app.
 	 *
-	 * @param int $taskId Task id.
+	 * @param array $taskIds Task ids.
 	 * @return array
 	 */
-	public function getItemData(int $taskId): array
+	public function getItemsData(array $taskIds): array
 	{
-		$taskInfo = $this->getTaskInfo($taskId);
-
-		$tags = $taskInfo['TAGS'] ? $taskInfo['TAGS'] : [];
-		$this->setTaskTags($tags);
-
-		$checkListCounts = $this->getChecklistCounts($taskId);
-
-		$attachedFilesCount = 0;
-		if ($this->userFieldManager)
+		if (empty($taskIds))
 		{
-			$attachedFilesCount = $this->getAttachedFilesCount($this->userFieldManager, $taskId);
+			return [];
 		}
 
-		$subTaskIds = $this->getSubTaskIds($taskId);
+		$itemsData = [];
 
-		$groupId = (int)$taskInfo['GROUP_ID'];
-		$parentTaskId = $this->getParentTaskId($taskId, $groupId);
+		$tasksInfo = $this->getTasksInfo($taskIds);
 
-		return [
-			'name' => $taskInfo['TITLE'],
-			'tags' => $tags,
-			'checkListComplete' => $checkListCounts['complete'],
-			'checkListAll' => $checkListCounts['complete'] + $checkListCounts['progress'],
-			'newCommentsCount' => $this->getNewCommentsCount($taskId),
-			'completed' => ($this->isCompletedTask($taskId) ? 'Y' : 'N'),
-			'allowedActions' => $this->getAllowedTaskActions($taskId),
-			'attachedFilesCount' => $attachedFilesCount,
-			'responsibleId' => (isset($taskInfo['RESPONSIBLE_ID']) ? $taskInfo['RESPONSIBLE_ID'] : 0),
-			'isParentTask' => $subTaskIds ? 'Y' : 'N',
-			'subTasksCount' => count($subTaskIds),
-			'isLinkedTask' => $this->isLinkedTask($taskId) ? 'Y' : 'N',
-			'parentTaskId' => $parentTaskId,
-			'isSubTask' => $parentTaskId ? 'Y' : 'N',
-		];
+		$groupId = 0;
+		$parentIdsToCheck = [];
+
+		foreach ($tasksInfo as $taskId => $taskInfo)
+		{
+			$groupId = (int) $taskInfo['GROUP_ID'];
+
+			$tags = $taskInfo['TAGS'] ? $taskInfo['TAGS'] : [];
+			$this->setTaskTags($tags);
+
+			$attachedFilesCount = (
+				is_array($taskInfo['UF_TASK_WEBDAV_FILES'])
+					? count($taskInfo['UF_TASK_WEBDAV_FILES'])
+					: 0
+			);
+
+			$subTasksInfo = [];
+			$completedSubTasksInfo = [];
+			foreach ($this->getSubTasksInfo($taskId) as $sourceId => $subTaskInfo)
+			{
+				if ($subTaskInfo['completed'] === 'Y')
+				{
+					$completedSubTasksInfo[$sourceId] = $subTaskInfo;
+				}
+				else
+				{
+					$subTasksInfo[$sourceId] = $subTaskInfo;
+				}
+			}
+
+			$itemsData[$taskId] = [
+				'name' => $taskInfo['TITLE'],
+				'tags' => $tags,
+				'responsibleId' => ($taskInfo['RESPONSIBLE_ID'] ?? 0),
+				'completed' => ($taskInfo['STATUS'] == \CTasks::STATE_COMPLETED) ? 'Y' : 'N',
+				'allowedActions' => $this->getAllowedTaskActions($taskId),
+				'attachedFilesCount' => $attachedFilesCount,
+				'isLinkedTask' => $this->isLinkedTask($taskId) ? 'Y' : 'N',
+				'isParentTask' => ($subTasksInfo ? 'Y' : 'N'),
+				'subTasksCount' => count($subTasksInfo),
+				'subTasksInfo' => $subTasksInfo,
+				'completedSubTasksInfo' => $completedSubTasksInfo,
+			];
+
+			$parentId = (int) $taskInfo['PARENT_ID'];
+			if ($parentId)
+			{
+				$parentIdsToCheck[$taskId] = $parentId;
+			}
+			else
+			{
+				$itemsData[$taskId]['parentTaskId'] = 0;
+				$itemsData[$taskId]['isSubTask'] = 'N';
+			}
+		}
+
+		$actualParentIds = $this->getActualParentIds($parentIdsToCheck, $groupId);
+		foreach ($actualParentIds as $taskId => $parentId)
+		{
+			$itemsData[$taskId]['parentTaskId'] = $parentId;
+			$itemsData[$taskId]['isSubTask'] = $parentId ? 'Y' : 'N';
+		}
+
+		$checkListCounts = $this->getChecklistCounts($taskIds);
+		foreach ($checkListCounts as $taskId => $checkListCount)
+		{
+			$itemsData[$taskId]['checkListComplete'] = (int) $checkListCount['complete'];
+			$itemsData[$taskId]['checkListAll'] = (int) ($checkListCounts['complete'] + $checkListCounts['progress']);
+		}
+
+		$newCommentsCounts = $this->getNewCommentsCount($taskIds);
+		foreach ($newCommentsCounts as $taskId => $newCommentsCount)
+		{
+			$itemsData[$taskId]['newCommentsCount'] = $newCommentsCount;
+		}
+
+		return $itemsData;
 	}
 
 	public function getErrors()
@@ -780,7 +721,8 @@ class TaskService implements Errorable
 						$parentItem = $itemService->getItemBySourceId($parentTaskId);
 						if (!$parentItem->isEmpty())
 						{
-							$itemService->changeItem($parentItem);
+							$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+							$itemService->changeItem($parentItem, $pushService);
 						}
 					}
 				}
@@ -856,10 +798,14 @@ class TaskService implements Errorable
 				&& (isset($previousFields['STATUS']) && $previousFields['STATUS'] == \CTasks::STATE_COMPLETED)
 			);
 
-			$isParentChangeAction = $fields['PARENT_ID'] != $previousFields['PARENT_ID'];
+			$isParentChangeAction =
+				isset($fields['PARENT_ID'])
+				&& $fields['PARENT_ID'] != $previousFields['PARENT_ID']
+			;
 			if ($isParentChangeAction)
 			{
 				$itemService = new ItemService();
+				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 				$parentId = (int)$fields['PARENT_ID'];
 				$oldParentId = (int)$previousFields['PARENT_ID'];
@@ -868,7 +814,7 @@ class TaskService implements Errorable
 					$parentItem = $itemService->getItemBySourceId($oldParentId);
 					if (!$parentItem->isEmpty())
 					{
-						$itemService->changeItem($parentItem);
+						$itemService->changeItem($parentItem, $pushService);
 					}
 				}
 				if ($parentId)
@@ -876,17 +822,18 @@ class TaskService implements Errorable
 					$parentItem = $itemService->getItemBySourceId($parentId);
 					if (!$parentItem->isEmpty())
 					{
-						$itemService->changeItem($parentItem);
+						$itemService->changeItem($parentItem, $pushService);
 					}
 				}
 
-				$itemService->changeItem($itemService->getItemBySourceId($taskId));
+				$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
 			}
 
 			if (($isScrumFieldsUpdated || $isCompleteAction || $isRenewAction) && !$isParentChangeAction)
 			{
 				$itemService = new ItemService();
-				$itemService->changeItem($itemService->getItemBySourceId($taskId));
+				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+				$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
 			}
 			if ($isRenewAction)
 			{
@@ -907,6 +854,179 @@ class TaskService implements Errorable
 			self::$taskItemObject[$taskId] = \CTaskItem::getInstance($taskId, $this->executiveUserId);
 		}
 		return self::$taskItemObject[$taskId];
+	}
+
+	private function getTasksInfo(array $taskIds): array
+	{
+		try
+		{
+			$tasksInfo = [];
+
+			$queryObject = \CTasks::getList(
+				[],
+				[
+					'ID' => $taskIds,
+					'CHECK_PERMISSIONS' => 'N',
+				],
+				[
+					'TITLE',
+					'RESPONSIBLE_ID',
+					'CREATED_BY',
+					'GROUP_ID',
+					'PARENT_ID',
+					'STATUS',
+					'UF_TASK_WEBDAV_FILES',
+				]
+			);
+			while ($data = $queryObject->fetch())
+			{
+				$data['TAGS'] = $this->getTagsByTaskIds([$data['ID']]);
+
+				$tasksInfo[$data['ID']] = $data;
+			}
+
+			return $tasksInfo;
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
+		}
+
+		return [];
+	}
+
+	private function getActualParentIds(array $parentIds, int $groupId): array
+	{
+		[$rows, $queryObject] = $this->getList([
+			'select' => ['ID'],
+			'filter' => [
+				'ID' => $parentIds,
+				'GROUP_ID' => $groupId,
+				'CHECK_PERMISSIONS' => 'Y',
+				'!=STATUS' => \CTasks::STATE_COMPLETED,
+			],
+		]);
+
+		$receivedIds = [];
+		foreach ($rows as $row)
+		{
+			$receivedIds[] = $row->getId();
+		}
+
+		foreach ($parentIds as $taskId => $parentId)
+		{
+			if (!in_array($parentId, $receivedIds))
+			{
+				$parentIds[$taskId] = 0;
+			}
+		}
+
+		return $parentIds;
+	}
+
+	private function getChecklistCounts(array $taskIds): array
+	{
+		try
+		{
+			$checkList = [];
+
+			$query = new Query(CheckListTable::getEntity());
+			$query->setSelect(['TASK_ID', 'IS_COMPLETE', new ExpressionField('CNT', 'COUNT(TASK_ID)')]);
+			$query->setFilter(['TASK_ID' => $taskIds]);
+			$query->setGroup(['TASK_ID', 'IS_COMPLETE']);
+			$query->registerRuntimeField('', new ReferenceField(
+				'IT',
+				CheckListTreeTable::class,
+				Join::on('this.ID', 'ref.CHILD_ID')->where('ref.LEVEL', 1),
+				['join_type' => 'INNER']
+			));
+
+			$result = $query->exec();
+			while ($row = $result->fetch())
+			{
+				$checkList[$row['TASK_ID']][$row['IS_COMPLETE'] == 'Y' ? 'complete' : 'progress'] = $row['CNT'];
+			}
+
+			return $checkList;
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COUNT_CHECKLIST_FILES));
+			return [];
+		}
+	}
+
+	private function getNewCommentsCount(array $taskIds): array
+	{
+		if (!$this->hasAccessToCounters())
+		{
+			return [];
+		}
+
+		try
+		{
+			return Counter::getInstance($this->executiveUserId)->getCommentsCount($taskIds);
+		}
+		catch (\Exception $exception)
+		{
+			$message = $exception->getMessage().$exception->getTraceAsString();
+			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COUNT_COMMENTS_TASK));
+
+			return [];
+		}
+	}
+
+	private function getSubTasksInfo(int $taskId): array
+	{
+		$subTasksInfo = [];
+
+		try
+		{
+			$queryObject = \CTasks::getList(
+				['ID' => 'ASC'],
+				['PARENT_ID' => $taskId],
+				['ID', 'STATUS']
+			);
+			while ($taskData = $queryObject->fetch())
+			{
+				$subTasksInfo[$taskData['ID']] = [
+					'sourceId' => (int)$taskData['ID'],
+					'completed' => ($taskData['STATUS'] == \CTasks::STATE_COMPLETED ? 'Y' : 'N'),
+				];
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_GET_SUB_TASK_INFO)
+			);
+		}
+
+		return $subTasksInfo;
+	}
+
+	private function isLinkedTask(int $taskId): bool
+	{
+		try
+		{
+			$taskItem = $this->getTaskItemObject($taskId);
+
+			$taskData = $taskItem->getData(false, [
+				'select' => ['DEPENDS_ON'],
+			]);
+
+			return !empty($taskData['DEPENDS_ON']);
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_LINKED_TASK)
+			);
+
+			return false;
+		}
 	}
 
 	private function getList(array $params): array
@@ -942,10 +1062,11 @@ class TaskService implements Errorable
 		return [$name, $tags];
 	}
 
-	private function cleanTagsInTaskFields(array &$fieldTags, array $tags): array
+	private function cleanTagsInTaskFields(array &$fieldTags): array
 	{
-		$tags = array_merge($fieldTags, $tags);
+		$tags = $fieldTags;
 		$fieldTags = [];
+
 		return $tags;
 	}
 
@@ -1002,6 +1123,8 @@ class TaskService implements Errorable
 		$item = $itemService->getItemBySourceId($taskId);
 		if (!$itemService->getErrors() && $item->isEmpty())
 		{
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
 			$scrumItem = ItemTable::createItemObject();
 			$createdBy = ($fields['CREATED_BY'] ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
 			$scrumItem->setCreatedBy($createdBy);
@@ -1011,7 +1134,7 @@ class TaskService implements Errorable
 			$scrumItem->setSort(0);
 			$scrumItem->setParentId($epicId);
 
-			$itemService->createTaskItem($scrumItem);
+			$itemService->createTaskItem($scrumItem, $pushService);
 			if (!$itemService->getErrors() && $entity->isActiveSprint())
 			{
 				$kanbanService = new KanbanService();
@@ -1058,11 +1181,13 @@ class TaskService implements Errorable
 		$scrumItem = $itemService->getItemBySourceId($taskId);
 		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
 		{
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
 			$scrumItem->setEntityId($entity->getId());
 			$scrumItem->setSort(0);
 			$scrumItem->setParentId(0);
 			$scrumItem->setModifiedBy($fields['CHANGED_BY']);
-			$itemService->changeItem($scrumItem);
+			$itemService->changeItem($scrumItem, $pushService);
 			if (!$itemService->getErrors() && $entity->isActiveSprint())
 			{
 				$kanbanService = new KanbanService();
@@ -1074,10 +1199,11 @@ class TaskService implements Errorable
 	private static function deleteScrumItem(int $taskId): void
 	{
 		$itemService = new ItemService();
+		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 		$scrumItem = $itemService->getItemBySourceId($taskId);
 		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
 		{
-			$itemService->removeItem($scrumItem);
+			$itemService->removeItem($scrumItem, $pushService);
 		}
 	}
 
@@ -1108,7 +1234,8 @@ class TaskService implements Errorable
 						$scrumItem->setEntityId($backlog->getId());
 						$scrumItem->setSort(0);
 
-						$itemService->changeItem($scrumItem);
+						$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+						$itemService->changeItem($scrumItem, $pushService);
 					}
 				}
 			}

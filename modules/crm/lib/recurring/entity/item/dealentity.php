@@ -130,4 +130,9 @@ abstract class DealEntity extends BaseEntity
 
 		return $nextExecution;
 	}
+
+	protected function getIgnoredTemplateFields(): array
+	{
+		return ['ORDER_STAGE'];
+	}
 }

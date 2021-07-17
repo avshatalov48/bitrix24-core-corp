@@ -61,6 +61,7 @@ else
 	$arFields = array();
 }
 
+$bConfig = false;
 if ($arParams['TYPE'] == 'list')
 {
 	$bRead   = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ');
@@ -477,7 +478,11 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
-	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+	if(
+		\Bitrix\Main\Loader::includeModule('rest')
+		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
+		&& ($bAdd || $bWrite || $bConfig)
+	)
 	{
 		if ($bConfig)
 		{

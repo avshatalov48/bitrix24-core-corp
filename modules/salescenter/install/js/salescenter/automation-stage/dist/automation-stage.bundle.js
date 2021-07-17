@@ -10,7 +10,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	    this.name = main_core.Type.isString(props.name) && props.name.length > 0 ? props.name : '';
 	    this.color = main_core.Type.isString(props.color) && props.color.length > 0 ? props.color : '';
 	    this.selected = main_core.Type.isBoolean(props.selected) ? props.selected : false;
-	    this.colorText = main_core.Type.isString(props.colorText) && props.color.colorText > 0 ? props.colorText : '';
+	    this.colorText = main_core.Type.isString(props.colorText) && props.colorText.length > 0 ? props.colorText : '';
 	  }
 
 	  babelHelpers.createClass(Base, [{

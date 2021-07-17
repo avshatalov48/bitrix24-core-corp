@@ -48,13 +48,14 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 		{
 			$taskRefs = Rights::getAccessTasksReferences();
 			$taskReadId = $taskRefs[Rights::ACCESS_TYPES['read']];
+			$taskDenyId = $taskRefs[Rights::ACCESS_TYPES['denied']];
 			$resRight = RightsTable::getList([
 				'select' => [
 					'ID'
 				],
 				'filter' => [
 					'ENTITY_ID' => 0,
-					'TASK_ID' => $taskReadId,
+					'TASK_ID' => [$taskReadId, $taskDenyId],
 					'ROLE_ID' => $role['ID'],
 					'=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
 				]

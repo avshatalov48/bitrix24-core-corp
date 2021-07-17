@@ -1,4 +1,5 @@
-import {Dom, Event, Loc, Tag, Text} from 'main.core';
+import {Dom, Event, Loc, Tag, Text, Type} from 'main.core';
+import {Loader} from 'main.loader';
 import {EventEmitter} from 'main.core.events';
 import {Draggable} from 'ui.draganddrop.draggable';
 
@@ -7,10 +8,13 @@ import {Sprint} from '../entity/sprint/sprint';
 import {RequestSender} from './request.sender';
 import {EntityStorage} from './entity.storage';
 
+import type {SprintParams} from '../entity/sprint/sprint';
+
 type Params = {
 	requestSender: RequestSender,
 	entityStorage: EntityStorage,
-	defaultSprintDuration: number
+	defaultSprintDuration: number,
+	pageNumberToCompletedSprints: number
 }
 
 export class DomBuilder extends EventEmitter
@@ -24,6 +28,7 @@ export class DomBuilder extends EventEmitter
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
 		this.defaultSprintDuration = params.defaultSprintDuration;
+		this.pageNumberToCompletedSprints = parseInt(params.pageNumberToCompletedSprints, 10);
 	}
 
 	renderTo(container: HTMLElement)
@@ -168,17 +173,108 @@ export class DomBuilder extends EventEmitter
 							}
 						})}
 					</div>
+					<div class="tasks-scrum-sprint-completed-loader"></div>
 				</div>
 			`;
 		};
 
-		return Tag.render`
+		const sprintsNode = Tag.render`
 			<div class="tasks-scrum-sprints">
 				${createCreatingButton()}
 				${createCreatingDropZone()}
 				${createSprintsList()}
 			</div>
 		`;
+
+		this.completedSprintLoader = sprintsNode.querySelector('.tasks-scrum-sprint-completed-loader');
+		this.bindLoadCompletedSprints(this.completedSprintLoader);
+
+		return sprintsNode;
+	}
+
+	bindLoadCompletedSprints(loader: HTMLElement)
+	{
+		const observer = new IntersectionObserver((entries) =>
+			{
+				if(entries[0].isIntersecting === true)
+				{
+					if (!this.isActiveLoadCompletedSprints)
+					{
+						this.onLoadCompletedSprints();
+					}
+				}
+			},
+			{
+				threshold: [0]
+			}
+		);
+
+		observer.observe(loader);
+	}
+
+	onLoadCompletedSprints()
+	{
+		this.isActiveLoadCompletedSprints = true;
+
+		const loader = this.showLoader(this.completedSprintLoader);
+
+		const requestData = {
+			pageNumber: this.pageNumberToCompletedSprints + 1
+		};
+
+		this.requestSender.getCompletedSprints(requestData)
+			.then((response) => {
+				const data = response.data;
+				if (Type.isArray(data) && data.length)
+				{
+					this.pageNumberToCompletedSprints++;
+					this.isActiveLoadCompletedSprints = false;
+
+					this.createSprints(data);
+				}
+				loader.hide();
+			})
+			.catch((response) => {
+				loader.hide();
+				this.isActiveLoadCompletedSprints = false;
+				this.requestSender.showErrorAlert(response);
+			})
+		;
+	}
+
+	createSprints(sprints: Array)
+	{
+		const sprintListNode = this.sprintListNode.querySelector('.tasks-scrum-sprint-completed-list');
+
+		sprints.forEach((sprintData: SprintParams) => {
+			const sprint = Sprint.buildSprint(sprintData);
+			if (!this.entityStorage.findEntityByEntityId(sprint.getId()))
+			{
+				this.entityStorage.addSprint(sprint);
+				this.append(sprint.render(), sprintListNode);
+				sprint.onAfterAppend();
+				this.emit('createSprint', sprint);
+			}
+		});
+	}
+
+	showLoader(container: HTMLElement): Loader
+	{
+		const listPosition = this.getPosition(container);
+
+		const loader = new Loader({
+			target: container,
+			size: 60,
+			mode: 'inline',
+			color: 'rgba(82, 92, 105, 0.9)',
+			offset: {
+				left: `${(listPosition.width / 2 - 30)}px`
+			}
+		});
+
+		loader.show();
+
+		return loader;
 	}
 
 	createSprint(): Promise
@@ -219,7 +315,7 @@ export class DomBuilder extends EventEmitter
 			sprint.getNode().scrollIntoView(true);
 			this.entityStorage.addSprint(sprint);
 			this.draggableItems.addContainer(sprint.getListItemsNode());
-			this.emit('createSprint', sprint); //todo move handlers to new classes
+			this.emit('createSprint', sprint);
 			return sprint;
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);

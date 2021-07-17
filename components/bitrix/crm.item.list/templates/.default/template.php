@@ -47,9 +47,9 @@ $this->getComponent()->addToolbar($this);
 		}
 		?>" id="crm-type-item-list-container">
 		<?php
-		if($arResult['grid'])
+		if ($arResult['grid'])
 		{
-			if($arParams['enableInterfaceToolbar'])
+			if (!empty($arResult['interfaceToolbar']))
 			{
 				$APPLICATION->IncludeComponent(
 					'bitrix:crm.interface.toolbar',

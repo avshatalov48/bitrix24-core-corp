@@ -1380,12 +1380,16 @@ a.crm-kanban-sidepanel:hover {
 	color: #1097c2;
 }
 
-.crm-kanban-item-status-send {
+.crm-kanban-item-status-send,
+.crm-kanban-item-status-no-shipped,
+.crm-kanban-item-status-cancel,
+.crm-kanban-item-status-refund {
 	background: #e6e7e9;
 	color: #757c86;
 }
 
-.crm-kanban-item-status-paid {
+.crm-kanban-item-status-paid,
+.crm-kanban-item-status-shipped {
 	background: #e5f1bf;
 	color: #668d13;
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ENTITY_COMPANY"] = "Company";
 $MESS["CRM_ENTITY_CONTACT"] = "Contact";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
@@ -39,6 +39,7 @@ $MESS["CRM_ORDER_SECTION_PERSON_TYPE_ID"] = "Payer type";
 $MESS["CRM_ORDER_SECTION_PRODUCTS"] = "Products";
 $MESS["CRM_ORDER_SECTION_PROPERTIES"] = "Order properties";
 $MESS["CRM_ORDER_SECTION_SHIPMENT"] = "Shipment";
+$MESS["CRM_ORDER_SECTION_SHIPMENT_PROPERTIES"] = "Shipment properties";
 $MESS["CRM_ORDER_SECTION_USER_PROFILE"] = "Order profile";
 $MESS["CRM_ORDER_SHIPMENT_SUBTITLE_MASK"] = "##ID# - #DATE_BILL#";
 $MESS["CRM_ORDER_STORE_NOT_CHOSEN"] = "Not selected";
@@ -51,4 +52,3 @@ $MESS["CRM_ORDER_TAB_SHIPMENT"] = "Shipments";
 $MESS["CRM_ORDER_TAB_TREE"] = "Linked entities";
 $MESS["CRM_ORDER_TITLE"] = "Order ID (#ID#), ##ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_TITLE2"] = "Order ##ACCOUNT_NUMBER#";
-?>

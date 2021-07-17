@@ -1,5 +1,18 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
+
 CJSCore::Init(array('fx'));
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -387,32 +400,41 @@ foreach ($arFields as $GROUP_ID => $arGroupFields):
 				</td>
 			<?
 				break;
-			case 'GROUP_ID':?>
+			case 'GROUP_ID':
+				$readonly = ($arResult['IsMyProfile'] ? 'readonly' : '');
+				$onClick = ($arResult['IsMyProfile'] ? 'onclick="return false"' : '');
+				$checked = ($arResult['User']['IS_ADMIN'] ? 'checked' : '');
+				$disabled = (
+					$arResult['User']['ACTIVE'] !== "Y"
+					|| (
+						$arResult['IS_BITRIX24']
+						&& $arResult['ADMIN_RIGHTS_RESTRICTED']
+						&& (
+							$arResult['User']['IS_INVITED']
+							|| in_array($arResult['User']['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
+							|| empty($arResult['User']['LAST_LOGIN'])
+						)
+					)
+						? 'disabled'
+						: ''
+				);
+				?>
 				<td class="content-edit-form-field-input" colspan="2">
-				<?if (!$arResult["User"]["IS_EXTRANET"]):?>
+				<?
+				if (!$arResult["User"]["IS_EXTRANET"]):
+					?>
 					<div class="content-edit-form-field-input-sub">
 						<label style="display: inline-block;">
 							<input
-								type="checkbox"
-								class="content-edit-form-field-input-selector"
-								id="group_admin"
-								name="IS_ADMIN"
-								<?if ($arResult["IsMyProfile"]):?>
-									readonly
-									onclick="return false"
-								<?endif;?>
-								value="Y"
-								<?if ($arResult['User']['IS_ADMIN']) echo "checked";?>
-								<?if (
-									$arResult['User']['ACTIVE'] != "Y"
-									|| $arResult["IS_BITRIX24"] && $arResult["ADMIN_RIGHTS_RESTRICTED"]
-									&& (
-										$arResult["User"]["IS_INVITED"]
-										|| in_array($arResult["User"]["EXTERNAL_AUTH_ID"], array("email", "replica", "imconnector", "bot", "__controller"))
-										|| empty($arResult['User']["LAST_LOGIN"])
-									)
-								)
-									echo "disabled";?>
+							 type="checkbox"
+							 class="content-edit-form-field-input-selector"
+							 id="group_admin"
+							 name="IS_ADMIN"
+							 <?= $readonly ?>
+							 <?= $onClick ?>
+							 value="Y"
+							 <?= $checked ?>
+							 <?= $disabled ?>
 							/>
 
 							<span class="content-edit-form-field-input-selector-name"><?=GetMessage("ISL_GROUP_ADMIN")?></span>

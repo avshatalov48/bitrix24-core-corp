@@ -54,7 +54,7 @@ class Network extends Base
 
 		if($result->isSuccess())
 		{
-			$userId = $this->getUserId($message['USER']);
+			$userId = self::getUserId($message['USER']);
 
 			if (empty($userId))
 			{
@@ -169,7 +169,7 @@ class Network extends Base
 			}
 			if (
 				isset($message['USER']['PORTAL_TYPE'])
-				&& in_array($message['USER']['PORTAL_TYPE'], ['PRODUCTION', 'STAGE'])
+				&& in_array($message['USER']['PORTAL_TYPE'], ['PRODUCTION', 'STAGE', 'ETALON'])
 			)
 			{
 				$description .=
@@ -251,7 +251,7 @@ class Network extends Base
 	{
 		$result = new Result();
 
-		$userId = $this->getUserId($message['USER']);
+		$userId = self::getUserId($message['USER']);
 		if (empty($userId))
 		{
 			$result->addError(new Error(
@@ -291,7 +291,7 @@ class Network extends Base
 	{
 		$result = new Result();
 
-		$userId = $this->getUserId($message['USER']);
+		$userId = self::getUserId($message['USER']);
 		if (empty($userId))
 		{
 			$result->addError(new Error(
@@ -324,7 +324,7 @@ class Network extends Base
 	{
 		$result = new Result();
 
-		$userId = $this->getUserId($message['USER']);
+		$userId = self::getUserId($message['USER']);
 		if (empty($userId))
 		{
 			$result->addError(new Error(
@@ -406,18 +406,16 @@ class Network extends Base
 	 */
 	public function updateMessageProcessing(array $message, $line): array
 	{
-		$message = [
-			"LINE_ID" => $line,
-			"GUID" => $message['chat']['id'],
-			"MESSAGE_ID" => $message['im']['message_id'],
-			"MESSAGE_TEXT" => $message['message']['text'],
-			"CONNECTOR_MID" => $message['message']['id'][0],
-			"FILES" => $message['message']['files'],
-			"ATTACH" => $message['message']['attachments'],
-			"PARAMS" => $message['message']['params'],
-		];
-
-		return $message;
+		return [
+            "LINE_ID" => $line,
+            "GUID" => $message['chat']['id'],
+            "MESSAGE_ID" => $message['im']['message_id'],
+            "MESSAGE_TEXT" => $message['message']['text'],
+            "CONNECTOR_MID" => $message['message']['id'][0],
+            "FILES" => $message['message']['files'],
+            "ATTACH" => $message['message']['attachments'],
+            "PARAMS" => $message['message']['params'],
+        ];
 	}
 
 	/**
@@ -427,14 +425,12 @@ class Network extends Base
 	 */
 	public function deleteMessageProcessing(array $message, $line): array
 	{
-		$message = [
-			"LINE_ID" => $line,
-			"GUID" => $message['chat']['id'],
-			"MESSAGE_ID" => $message['im']['message_id'],
-			"CONNECTOR_MID" => is_array($message['message']['id'])? $message['message']['id'][0]: $message['message']['id']
-		];
-
-		return $message;
+		return [
+            "LINE_ID" => $line,
+            "GUID" => $message['chat']['id'],
+            "MESSAGE_ID" => $message['im']['message_id'],
+            "CONNECTOR_MID" => is_array($message['message']['id'])? $message['message']['id'][0]: $message['message']['id']
+        ];
 	}
 	//END Output
 
@@ -444,7 +440,7 @@ class Network extends Base
 	 * @param bool $createUser
 	 * @return false|int|mixed|string
 	 */
-	public static function getUserId($params, $createUser = true)
+	public static function getUserId($params, bool $createUser = true)
 	{
 		$userId = 0;
 
@@ -504,7 +500,7 @@ class Network extends Base
 			}
 			elseif ($createUser)
 			{
-				$userName = $params['NAME'] ? $params['NAME'] : Loc::getMessage('IMOL_NETWORK_GUEST_NAME');
+				$userName = $params['NAME'] ?: Loc::getMessage('IMOL_NETWORK_GUEST_NAME');
 				$userLastName = $params['LAST_NAME'];
 				$userGender = $params['PERSONAL_GENDER'];
 				$userWww = $params['PERSONAL_WWW'];
@@ -522,7 +518,7 @@ class Network extends Base
 
 				$fields['PERSONAL_GENDER'] = $userGender;
 				$fields['PERSONAL_WWW'] = $userWww;
-				$fields['PASSWORD'] = md5($fields['LOGIN'].'|'.rand(1000,9999).'|'.time());
+				$fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . rand(1000,9999) . '|' . time());
 				$fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];
 				$fields['EXTERNAL_AUTH_ID'] = self::EXTERNAL_AUTH_ID;
 				$fields['XML_ID'] =  'network|'.$params['UUID'];

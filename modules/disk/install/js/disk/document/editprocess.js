@@ -21,6 +21,7 @@
 		this.popupConfirm = null;
 		this.onAfterSave = null;
 		this.modalWindow = parameters.modalWindow;
+		this.handlerOnSliderMessage = null;
 
 		if(BX.type.isFunction(parameters.onAfterSave))
 		{
@@ -68,13 +69,34 @@
 			var data = this.getSliderData();
 			data.documentEditor = true;
 
-			return BX.SidePanel.Instance.open(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()), {
+			var success = BX.SidePanel.Instance.open(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()), {
 				width: '100%',
 				customLeftBoundary: 30,
 				cacheable: false,
 				allowChangeHistory: false,
 				data: data
 			});
+
+			if (success)
+			{
+				this.handlerOnSliderMessage = this.onSliderMessage.bind(this);
+				BX.addCustomEvent('SidePanel.Slider:onMessage', this.handlerOnSliderMessage)
+			}
+		},
+
+		onSliderMessage: function(event)
+		{
+			var eventData = event.getData();
+			if (event.getEventId() === 'Disk.OnlyOffice:onClosed' && (eventData.process === 'edit' || eventData.process === 'create'))
+			{
+				var object = eventData.object;
+				BX.removeCustomEvent('SidePanel.Slider:onMessage', this.handlerOnSliderMessage);
+				var pseudoResponse = {
+					status: 'success',
+					object: object
+				};
+				this.onAfterSave.call(this, pseudoResponse);
+			}
 		},
 
 		buildModalWindow: function ()

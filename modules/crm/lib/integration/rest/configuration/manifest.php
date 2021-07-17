@@ -67,6 +67,29 @@ class Manifest
 			'EXPORT_ACTION_DESCRIPTION' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_FORM"),
 		];
 
+		$manifestList[] = [
+			'DISABLE_CLEAR_FULL' => 'Y',
+			'CODE' => 'crm_smart_robots',
+			'VERSION' => 1,
+			'ACTIVE' => 'Y',
+			'PLACEMENT' => [
+				'crm_smart_robots',
+			],
+			'USES' => [
+				'bizproc_script',
+			],
+			'TITLE' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_TITLE_CRM_SMART_ROBOTS"),
+			'COLOR' => '#ff799c',
+			'ICON' => '/bitrix/images/crm/configuration/vertical-crm-icon.svg',
+			'EXPORT_TITLE_PAGE' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_CRM_SMART_ROBOTS"),
+			'EXPORT_TITLE_BLOCK' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_SMART_ROBOTS"),
+			'IMPORT_TITLE_PAGE' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_IMPORT_CRM_SMART_ROBOTS"),
+			'IMPORT_TITLE_BLOCK' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_IMPORT_CRM_SMART_ROBOTS"),
+			'IMPORT_DESCRIPTION_UPLOAD' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_IMPORT_DESCRIPTION_UPLOAD_CRM_SMART_ROBOTS"),
+			'IMPORT_DESCRIPTION_START' => ' ',
+			'EXPORT_ACTION_DESCRIPTION' => Loc::getMessage("CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_SMART_ROBOTS"),
+		];
+
 		return $manifestList;
 	}
 }

@@ -7,17 +7,13 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 
-Vue.component('bx-livechat-body-operators',
+BitrixVue.component('bx-livechat-body-operators',
 {
 	computed:
 	{
-		localize()
-		{
-			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-		},
 		...Vuex.mapState({
 			widget: state => state.widget
 		})

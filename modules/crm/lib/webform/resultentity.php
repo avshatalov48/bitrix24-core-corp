@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\WebForm;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\EntityManageFacility;
 use Bitrix\Crm\Integration\UserConsent as CrmIntegrationUserConsent;
@@ -22,12 +23,11 @@ use Bitrix\Crm\WebForm\Internals\ResultEntityTable;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\BindingSelector;
 use Bitrix\Crm\Integration\Channel\WebFormTracker;
-//use Bitrix\Crm\Integration\Channel\SiteButtonTracker as CallBackWebFormTracker;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
+use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\SalesCenter;
-use Bitrix\Salescenter\Builder\OrderBuilder;
 
 Loc::loadMessages(__FILE__);
 
@@ -69,6 +69,8 @@ class ResultEntity
 	protected $quoteId = null;
 	protected $invoiceId = null;
 	protected $orderId = null;
+	protected $dynamicTypeId = null;
+	protected $dynamicId = null;
 
 	protected $resultEntityPack = array();
 
@@ -338,7 +340,7 @@ class ResultEntity
 				'PRODUCT_NAME' => $product['NAME'],
 				'PRICE' => $product['PRICE'],
 				'DISCOUNT_SUM' => $product['DISCOUNT'],
-				'QUANTITY' => $product['QUANTITY'],
+				'QUANTITY' => ($product['QUANTITY'] ?? 1) ?: 1,
 				'VAT_INCLUDED' => isset($product['VAT_INCLUDED']) ? $product['VAT_INCLUDED'] : null,
 				'VAT_RATE' => isset($product['VAT_RATE']) ? $product['VAT_RATE'] : null,
 			);
@@ -459,6 +461,7 @@ class ResultEntity
 
 		$isEntityInvoice = $entityName == \CCrmOwnerType::InvoiceName;
 		$isEntityLead = $entityName == \CCrmOwnerType::LeadName;
+		$isEntityDynamic = !empty($params['DYNAMIC_ENTITY']);
 
 		if(!$isEntityInvoice)
 		{
@@ -483,7 +486,7 @@ class ResultEntity
 		$isLeadOrQuoteOrDeal = in_array($entityName, array(\CCrmOwnerType::LeadName, \CCrmOwnerType::DealName, \CCrmOwnerType::QuoteName));
 		$entity = $this->entityMap[$entityName];
 		/** @var \CCrmLead $entityClassName */
-		$entityClassName = $entity['CLASS_NAME'];
+		$entityClassName = $entity['CLASS_NAME'] ?? null;
 
 		$isEntityAdded = false;
 		$id = $this->findDuplicateEntityId($entityName, $entityFields);
@@ -506,21 +509,51 @@ class ResultEntity
 				$entityFields['SOURCE_ID'] = 'CALLBACK';
 			}
 
-			/** @var \CCrmLead $entityInstance */
-			$entityInstance = new $entityClassName(false);
+
 			$addOptions = [
 				'DISABLE_USER_FIELD_CHECK' => true,
 				'CURRENT_USER' => $this->assignedById
 			];
-			if($isEntityInvoice)
+			if($isEntityDynamic)
+			{
+				$entityFields['WEBFORM_ID'] = $this->formId;
+				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::resolveID($entityName));
+				$dynamicItem = $dynamicFactory->createItem($entityFields);
+				if (empty($entityFields['STAGE_ID']) && !empty($entityFields['CATEGORY_ID']))
+				{
+					$dynamicStageId = $dynamicFactory->getStages($entityFields['CATEGORY_ID'])->getStatusIdList()[0] ?? null;
+					if ($dynamicStageId)
+					{
+						$dynamicItem->setStageId($dynamicStageId);
+					}
+				}
+
+				if ($isNeedAddProducts)
+				{
+					$dynamicItem->setProductRowsFromArrays($productRows);
+				}
+				$dynamicOperation = $dynamicFactory->getAddOperation(
+					$dynamicItem,
+					(new Crm\Service\Context())->setUserId($this->assignedById ?: 1)
+				);
+				$dynamicResult = $dynamicOperation
+					->disableCheckAccess()
+					->disableCheckFields()
+					->launch();
+				$id = $dynamicResult->isSuccess() ? $dynamicItem->getId() : null;
+			}
+			elseif($isEntityInvoice)
 			{
 				/** @var \CCrmInvoice $entityInstance */
+				$entityInstance = new $entityClassName(false);
 				$recalculateOptions = false;
 				$entityFields = $this->fixInvoiceFieldsAnonymousUser($entityFields);
 				$id = $entityInstance->Add($entityFields, $recalculateOptions, SITE_ID, $addOptions);
 			}
 			else
 			{
+				/** @var \CCrmLead $entityInstance */
+				$entityInstance = new $entityClassName(false);
 				$entityFields['WEBFORM_ID'] = $this->formId;
 				if($isEntityLead)
 				{
@@ -538,11 +571,10 @@ class ResultEntity
 
 		if($id)
 		{
-			if($isNeedAddProducts && $isLeadOrQuoteOrDeal)
+			if($isNeedAddProducts && $isLeadOrQuoteOrDeal && $entityClassName)
 			{
 				$entityClassName::SaveProductRows($id, $productRows, false);
 			}
-
 
 			$resultEntityInfo = [
 				'RESULT_ID' => $this->resultId,
@@ -727,6 +759,50 @@ class ResultEntity
 		}
 	}
 
+	protected function addDynamic($options = [])
+	{
+		$this->addClient();
+
+		$params = array(
+			'FIELDS' => [
+				'SOURCE_ID' => 'WEBFORM',
+			]
+		);
+		if($this->companyId || $this->contactId)
+		{
+			if($this->companyId)
+			{
+				$params['FIELDS']['COMPANY_ID'] = $this->companyId;
+			}
+
+			if($this->contactId)
+			{
+				$params['FIELDS']['CONTACT_ID'] = $this->contactId;
+			}
+		}
+
+		$params['SET_PRODUCTS'] = true;
+		$params['DYNAMIC_ENTITY'] = true;
+		$entityTypeId = (int)($options['DYNAMIC_TYPE_ID'] ?? 0);
+		$categoryId = (int)($this->formData['FORM_SETTINGS']['DYNAMIC_CATEGORY'] ?? 0);
+		if (!$entityTypeId)
+		{
+			return;
+		}
+		if ($categoryId)
+		{
+			$params['FIELDS']['CATEGORY_ID'] = $categoryId;
+		}
+
+		$this->dynamicTypeId = $entityTypeId;
+		$this->dynamicId = $this->addByEntityName(\CCrmOwnerType::resolveName($entityTypeId), $params);
+
+		if($options['ADD_INVOICE'])
+		{
+			$this->addInvoice();
+		}
+	}
+
 	protected function getInvoiceSettingsPayer()
 	{
 		$payer = null;
@@ -750,6 +826,47 @@ class ResultEntity
 
 	protected function addOrder()
 	{
+		$formData = $this->getDataForOrderBuilder();
+		if (!$formData)
+		{
+			return;
+		}
+
+		$builder = SalesCenter\Builder\Manager::getBuilder();
+		try
+		{
+			$builder->build($formData);
+		}
+		catch (BuildingException $exception)
+		{
+			return;
+		}
+
+		$order = $builder->getOrder();
+		if (!$order)
+		{
+			return;
+		}
+
+		$r = $order->save();
+		if (!$r->isSuccess())
+		{
+			return;
+		}
+
+		$this->orderId = $order->getId();
+
+		$this->resultEntityPack[] = [
+			'RESULT_ID' => $this->resultId,
+			'ENTITY_NAME' => \CCrmOwnerType::OrderName,
+			'ITEM_ID' => $this->orderId,
+			'IS_DUPLICATE' => false,
+			'IS_AUTOMATION_RUN' => false,
+		];
+	}
+
+	protected function getDataForOrderBuilder()
+	{
 		if ($this->dealId)
 		{
 			$ownerTypeId = \CCrmOwnerType::Deal;
@@ -772,47 +889,51 @@ class ResultEntity
 		}
 		else
 		{
-			return;
+			return [];
 		}
 
-		$orderFacade = (new SalesCenter\OrderFacade())
-			->setResponsibleId($this->assignedById)
-			->setClientByCrmOwner($ownerTypeId, $ownerId)
-		;
+		$formData = [
+			'PRODUCT' => [],
+			'RESPONSIBLE_ID' => $this->assignedById,
+			'SHIPMENT' => [
+				[
+					'DELIVERY_ID' => SalesCenter\Integration\SaleManager::getInstance()->getEmptyDeliveryServiceId(),
+					'ALLOW_DELIVERY' => 'Y',
+				]
+			]
+		];
 
-		foreach ($this->getProductRows() as $row)
+		$client = SalesCenter\Integration\CrmManager::getInstance()->getClientInfo($ownerTypeId, $ownerId);;
+
+		if(!empty($client['DEAL_ID']))
 		{
-			$product = $this->getBasketItemById($row['PRODUCT_ID'], [
-				'name' => $row['PRODUCT_NAME'],
-				'price' => $row['PRICE'],
-				'quantity' => $row['QUANTITY'] ?? 1,
-			]);
-
-			$orderFacade->addProduct($product);
+			$formData['DEAL_ID'] = $client['DEAL_ID'];
+			unset($client['DEAL_ID']);
 		}
+
+		$formData['CLIENT'] = $client;
 
 		$code = TradingPlatform\WebForm::getCodeByFormId($this->formId);
 		$platform = TradingPlatform\WebForm::getInstanceByCode($code);
 		if ($platform->isInstalled())
 		{
-			$orderFacade->setFields(['TRADING_PLATFORM' => $platform->getId()]);
+			$formData['TRADING_PLATFORM'] = $platform->getId();
 		}
 
-		$order = $orderFacade->saveOrder();
-		if ($orderFacade->hasErrors())
-		{
-			return;
-		}
+		$formData['PRODUCT'] = Catalog::create()->setItems($this->getProductRows())->getOrderProducts();
 
-		$this->orderId = $order->getId();
-		$this->resultEntityPack[] = [
-			'RESULT_ID' => $this->resultId,
-			'ENTITY_NAME' => \CCrmOwnerType::OrderName,
-			'ITEM_ID' => $this->orderId,
-			'IS_DUPLICATE' => false,
-			'IS_AUTOMATION_RUN' => false,
-		];
+
+		return $formData;
 	}
+
+	/**
+	 * Get basket item by ID.
+	 * @param $productId
+	 * @param array $options
+	 * @return array
+	 * @throws Main\SystemException
+	 * @deprecated
+	 */
 	public function getBasketItemById($productId, array $options = [])
 	{
 		$measure = null;
@@ -842,16 +963,17 @@ class ResultEntity
 		}
 
 		return [
-			'productId' => $productId,
-			'sort' => $product['SORT'] ?? 100,
-			'module' => $productId ? 'catalog' : '',
-			'quantity' => $options['quantity'] ?? 1,
-			'isCustomPrice' => 'Y',
-			'name' => $options['name'] ?? $product['NAME'],
-			'basePrice' => $options['price'] ?? $product['PRICE'],
-			'price' => $options['price'] ?? $product['PRICE'],
-			'measureName' => $measure['SYMBOL'],
-			'measureCode' => $measure['CODE']
+			'PRODUCT_ID' => $productId,
+			'OFFER_ID' => $productId,
+			'SORT' => $product['SORT'] ?? 100,
+			'MODULE' => $productId ? 'catalog' : '',
+			'QUANTITY' => $options['quantity'] ?? 1,
+			'CUSTOM_PRICE' => 'Y',
+			'NAME' => $options['name'] ?? $product['NAME'],
+			'BASE_PRICE' => $options['price'] ?? $product['PRICE'],
+			'PRICE' => $options['price'] ?? $product['PRICE'],
+			'MEASURE_NAME' => $measure['SYMBOL'],
+			'MEASURE_CODE' => $measure['CODE']
 		];
 	}
 
@@ -1464,17 +1586,17 @@ class ResultEntity
 		return $selector->search();
 	}
 
-	public function add($scheme, $fields)
+	public function add($schemeId, $fields)
 	{
 		$this->entityMap = Entity::getMap();
-		$this->scheme = $scheme;
+		$this->scheme = $schemeId;
 		$this->fields = $this->prepareFields($fields);
 		$this->selector = $this->createSelector();
 		$this->performTrace();
 
 		try
 		{
-			switch($scheme)
+			switch($schemeId)
 			{
 				case Entity::ENUM_ENTITY_SCHEME_CONTACT:
 					$this->addClient();
@@ -1506,6 +1628,37 @@ class ResultEntity
 
 				case Entity::ENUM_ENTITY_SCHEME_CONTACT_INVOICE:
 					$this->addClient(array('ADD_INVOICE' => true));
+					break;
+
+				default:
+					$scheme = Entity::getSchemes($schemeId);
+					if (!$scheme)
+					{
+						return;
+					}
+
+					$dynamicTypeId = null;
+					$hasInvoice = false;
+					foreach ($scheme['ENTITIES'] as $entityTypeName)
+					{
+						$entityTypeId = \CCrmOwnerType::resolveId($entityTypeName);
+						if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+						{
+							$dynamicTypeId = $entityTypeId;
+						}
+						elseif ($entityTypeId === \CCrmOwnerType::Invoice)
+						{
+							$hasInvoice = true;
+						}
+					}
+
+					if ($dynamicTypeId)
+					{
+						$this->addDynamic([
+							'DYNAMIC_TYPE_ID' => $dynamicTypeId,
+							'ADD_INVOICE' => $hasInvoice
+						]);
+					}
 					break;
 			}
 

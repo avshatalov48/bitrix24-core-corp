@@ -9,7 +9,6 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\AccessibleItem;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -18,9 +17,6 @@ use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 class TaskModel
 	implements \Bitrix\Tasks\Access\AccessibleTask
 {
-	private const
-		CACHE_MODEL_KEY = 'model';
-
 	private static $cache = [];
 
 	private
@@ -433,6 +429,11 @@ class TaskModel
 	 */
 	public function getStatus(): ?int
 	{
+		if (!is_null($this->status))
+		{
+			return $this->status;
+		}
+
 		$task = $this->getTask();
 		if (!$task)
 		{

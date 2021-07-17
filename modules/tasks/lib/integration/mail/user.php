@@ -66,13 +66,15 @@ final class User extends \Bitrix\Tasks\Integration\Mail
 		}
 
 		$item = \CUser::GetList(
-			"ID",
-			"ASC",
-			array(
-				"=EMAIL" => $email,
-				"!EXTERNAL_AUTH_ID" => [ "bot", "controller", "replica", "shop", "imconnector", "sale", "saleanonymous" ]
-			),
-			array("FIELDS" => array("ID", "EXTERNAL_AUTH_ID", "ACTIVE"))
+			'ID',
+			'ASC',
+			[
+				'=EMAIL' => $email,
+				'!EXTERNAL_AUTH_ID' => array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email' ]),
+			],
+			[
+				'FIELDS' => [ 'ID', 'EXTERNAL_AUTH_ID', 'ACTIVE' ]
+			]
 		)->fetch();
 
 		if(

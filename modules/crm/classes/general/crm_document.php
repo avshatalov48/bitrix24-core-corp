@@ -1,8 +1,10 @@
-<?
-if (!CModule::IncludeModule('bizproc'))
-	return;
+<?php
 
-IncludeModuleLangFile(__FILE__);
+if (!CModule::IncludeModule('bizproc'))
+{
+	return;
+}
+
 
 use \Bitrix\Crm\Service;
 
@@ -51,17 +53,38 @@ class CCrmDocument
 			'file' => array('Name' => GetMessage('BPVDX_FILE'), 'BaseType' => 'file'),
 			'user' => array('Name' => GetMessage('BPVDX_USER'), 'BaseType' => 'user'),
 			'bool' => array('Name' => GetMessage('BPVDX_YN'), 'BaseType' => 'bool'),
-			'datetime' => array('Name' => GetMessage('BPVDX_DATETIME'), 'BaseType' => 'datetime')
-		);
-
-		if (class_exists('\Bitrix\Bizproc\BaseType\InternalSelect'))
-		{
-			$arResult[\Bitrix\Bizproc\FieldType::INTERNALSELECT] = array(
-				'Name'     => GetMessage("BPVDX_INTERNALSELECT"),
+			'datetime' => array('Name' => GetMessage('BPVDX_DATETIME'), 'BaseType' => 'datetime'),
+			\Bitrix\Bizproc\FieldType::INTERNALSELECT => [
+				'Name' => GetMessage("BPVDX_INTERNALSELECT"),
 				'BaseType' => 'string',
-				'Complex'  => true,
-			);
-		}
+				'Complex' => true,
+			],
+			'deal_category' => [
+				'Name' => \Bitrix\Crm\Integration\BizProc\FieldType\DealCategory::getName(),
+				'BaseType' => \Bitrix\Crm\Integration\BizProc\FieldType\DealCategory::getType(),
+				'typeClass' => \Bitrix\Crm\Integration\BizProc\FieldType\DealCategory::class,
+			],
+			'deal_stage' => [
+				'Name' => \Bitrix\Crm\Integration\BizProc\FieldType\DealStage::getName(),
+				'BaseType' => \Bitrix\Crm\Integration\BizProc\FieldType\DealStage::getType(),
+				'typeClass' => \Bitrix\Crm\Integration\BizProc\FieldType\DealStage::class,
+			],
+			'lead_status' => [
+				'Name' => \Bitrix\Crm\Integration\BizProc\FieldType\LeadStatus::getName(),
+				'BaseType' => \Bitrix\Crm\Integration\BizProc\FieldType\LeadStatus::getType(),
+				'typeClass' => \Bitrix\Crm\Integration\BizProc\FieldType\LeadStatus::class,
+			],
+			'sms_sender' => [
+				'Name' => \Bitrix\Crm\Integration\BizProc\FieldType\SmsSender::getName(),
+				'BaseType' => \Bitrix\Crm\Integration\BizProc\FieldType\SmsSender::getType(),
+				'typeClass' => \Bitrix\Crm\Integration\BizProc\FieldType\SmsSender::class,
+			],
+			'mail_sender' => [
+				'Name' => \Bitrix\Bizproc\UserType\MailSender::getName(),
+				'BaseType' => \Bitrix\Bizproc\UserType\MailSender::getType(),
+				'typeClass' => \Bitrix\Bizproc\UserType\MailSender::class,
+			]
+		);
 
 		//'Disk File' is disabled due to GUI issues (see CCrmFields::GetFieldTypes)
 		$ignoredUserTypes = array(
@@ -1370,7 +1393,7 @@ class CCrmDocument
 				if (isset($factory) && $factory->isAutomationEnabled())
 				{
 					$item = $factory->getItem((int)$arDocumentID['ID']);
-					$objDocument = isset($item) ? $item->getData() : null;
+					$objDocument = isset($item) ? $item->getCompatibleData() : null;
 				}
 
 				break;
@@ -1401,7 +1424,6 @@ class CCrmDocument
 				['ID' => $assignedByID],
 				[
 					'SELECT' => [
-						'EMAIL',
 						'UF_SKYPE',
 						'UF_TWITTER',
 						'UF_FACEBOOK',
@@ -1409,7 +1431,20 @@ class CCrmDocument
 						'UF_XING',
 						'UF_WEB_SITES',
 						'UF_PHONE_INNER',
-					]
+					],
+					'FIELDS' => [
+						'EMAIL',
+						'WORK_PHONE',
+						'PERSONAL_MOBILE',
+						'LOGIN',
+						'ACTIVE',
+						'NAME',
+						'LAST_NAME',
+						'SECOND_NAME',
+						'WORK_POSITION',
+						'PERSONAL_WWW',
+						'PERSONAL_CITY',
+					],
 				]
 			);
 
@@ -1468,7 +1503,7 @@ class CCrmDocument
 			$objDocument['CONTACTS'] = [];
 			foreach ($item->getContacts() as $contact)
 			{
-				$objDocument['CONTACTS'][] = 'user_' . $contact->getId();
+				$objDocument['CONTACTS'][] = $contact->getId();
 			}
 		}
 

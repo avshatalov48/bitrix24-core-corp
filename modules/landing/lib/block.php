@@ -1061,7 +1061,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 													: '',
 									'restricted' => false,
 									'repo_id' => false,
-									'app_code' => false
+									'app_code' => false,
+									'only_for_license' => $description['block']['only_for_license'] ?? '',
 								);
 								if ($withManifest)
 								{
@@ -1811,6 +1812,50 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Checks that current block are designed and adds new manifest parts.
+	 * @param array $manifest Current manifest.
+	 * @return array
+	 */
+	protected function checkDesignedManifest(array $manifest): array
+	{
+		if (isset($manifest['block']['name']))
+		{
+			$designerBlockManifest = $this->parseManifest();
+			if (!empty($designerBlockManifest['nodes']))
+			{
+				foreach ($designerBlockManifest['nodes'] as $keyNode => $node)
+				{
+					if (isset($manifest['nodes'][$keyNode]))
+					{
+						continue;
+					}
+					$node['code'] = $keyNode;
+					$class = Node\Type::getClassName($node['type']);
+					if (isset($node['type']) && class_exists($class))
+					{
+						$node['handler'] = call_user_func(
+							[
+								$class,
+								'getHandlerJS'
+							]
+						);
+						$manifest['nodes'][$keyNode] = $node;
+					}
+				}
+			}
+			if (!empty($designerBlockManifest['style']))
+			{
+				$manifest['style']['nodes'] = array_merge(
+					$designerBlockManifest['style'],
+					$manifest['style']['nodes']
+				);
+			}
+		}
+
+		return $manifest;
+	}
+
+	/**
 	 * Get manifest array from block.
 	 * @param bool $extended Get extended manifest.
 	 * @param bool $missCache Don't save in static cache.
@@ -1831,7 +1876,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				$manifestStore[$this->code]['disableCache'] !== true
 			)
 			{
-				return $manifestStore[$this->code];
+				return $this->checkDesignedManifest($manifestStore[$this->code]);
 			}
 		}
 
@@ -1859,8 +1904,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		// prepare manifest
 		if (isset($manifest['block']['name']))
 		{
-			$designerBlockManifest = $this->parseManifest();
-
 			// prepare by subtype
 			if (
 				isset($manifest['block']['subtype']) &&
@@ -1899,13 +1942,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				{
 					$manifest[$code] = array();
 				}
-			}
-			if (!empty($designerBlockManifest['nodes']))
-			{
-				$manifest['nodes'] = array_merge(
-					$manifest['nodes'],
-					$designerBlockManifest['nodes']
-				);
 			}
 			// prepare every node
 			foreach ($manifest['nodes'] as $keyNode => &$node)
@@ -1994,13 +2030,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 					'nodes' => array()
 				);
 			}
-			if (!empty($designerBlockManifest['style']))
-			{
-				$manifest['style']['nodes'] = array_merge(
-					$designerBlockManifest['style'],
-					$manifest['style']['nodes']
-				);
-			}
 			// other
 			$manifest['code'] = $this->code;
 		}
@@ -2052,7 +2081,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			unset($manifest['lang']);
 		}
 
-		return $manifest;
+		return $this->checkDesignedManifest($manifest);
 	}
 
 	/**
@@ -2196,22 +2225,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				}
 			}
 
-			$designerBlockManifest = $this->parseManifest();
-			if (!empty($designerBlockManifest['assets']))
-			{
-				if (!isset($manifest['assets']))
-				{
-					$manifest['assets'] = $designerBlockManifest['assets'];
-				}
-				else
-				{
-					$manifest['assets'] = array_merge_recursive(
-						$manifest['assets'],
-						$designerBlockManifest['assets']
-					);
-				}
-			}
-
 			foreach (array_keys($asset[$this->code]) as $ass)
 			{
 				if (
@@ -2259,9 +2272,17 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			}
 		}
 
-		return isset($asset[$this->code][$type])
-				? $asset[$this->code][$type]
-				: $asset[$this->code];
+		$designerBlockManifest = $this->parseManifest();
+		if (!empty($designerBlockManifest['assets']))
+		{
+			foreach ($designerBlockManifest['assets'] as $key => $assets)
+			{
+				$asset[$this->code][$key] = array_merge($asset[$this->code][$key], $assets);
+				$asset[$this->code][$key] = array_unique($asset[$this->code][$key]);
+			}
+		}
+
+		return $asset[$this->code][$type] ?? $asset[$this->code];
 	}
 
 	/**
@@ -3461,11 +3482,11 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 						'sanitize' => false
 					]
 				);
-				$this->access = $rememberAccess;
 				if(!$edit)
 				{
 					Assets\PreProcessing::blockSetDynamicProcessing($this);
 				}
+				$this->access = $rememberAccess;
 
 				header('X-Bitrix24-Page: dynamic');
 				if ($caching)
@@ -3509,9 +3530,18 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 * Gets only runtime required actions.
 	 * @return array
 	 */
-	public function getRuntimeRequiredUserAction()
+	public function getRuntimeRequiredUserAction(): array
 	{
 		return $this->runtimeRequiredUserAction;
+	}
+
+	/**
+	 * Set only runtime required actions.
+	 * @param array $action
+	 */
+	public function setRuntimeRequiredUserAction(array $action): void
+	{
+		$this->runtimeRequiredUserAction = $action;
 	}
 
 	/**
@@ -4611,7 +4641,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			foreach ($manifest['nodes'] as $selector => $node)
 			{
 				/** @var Node $class */
-				$class = '\\Bitrix\\Landing\\Node\\' . $node['type'];
+				$class = NodeType::getClassName($node['type']);
 				if (is_callable([$class, 'getSearchableNode']))
 				{
 					$search = array_merge($search, $class::getSearchableNode($this, $selector));
@@ -4699,7 +4729,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		{
 			foreach ($manifest['nodes'] as $selector => $node)
 			{
-				$class = '\\Bitrix\\Landing\\Node\\' . $node['type'];
+				/** @var Node $class */
+				$class = NodeType::getClassName($node['type']);
 				$nodes[$selector] = $class::getNode($this, $selector);
 			}
 		}

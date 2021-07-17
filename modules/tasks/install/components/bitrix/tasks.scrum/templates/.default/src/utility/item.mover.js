@@ -52,6 +52,11 @@ export class ItemMover extends EventEmitter
 			const sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
 			const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
 			this.hideSubTasks(sourceEntity, item);
+			const actionsPanel = item.getCurrentActionsPanel();
+			if (actionsPanel)
+			{
+				actionsPanel.destroy();
+			}
 		});
 		this.domBuilder.subscribe('itemMoveEnd', (baseEvent: BaseEvent) => {
 			const dragEndEvent = baseEvent.getData();
@@ -165,8 +170,6 @@ export class ItemMover extends EventEmitter
 
 	moveItemToUp(item: Item, listItemsNode, entityWithInput = true, updateSort = true)
 	{
-		this.hideSubTasks(entity, item);
-
 		if (entityWithInput)
 		{
 			this.domBuilder.appendItemAfterItem(item.getItemNode(), listItemsNode.firstElementChild);

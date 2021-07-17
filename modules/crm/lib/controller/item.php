@@ -8,7 +8,6 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Crm\Settings\DynamicSettings;
 use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\ActionFilter\Csrf;

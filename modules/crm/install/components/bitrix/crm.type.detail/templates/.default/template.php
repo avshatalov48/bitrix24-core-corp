@@ -99,7 +99,7 @@ $menuItems[] = [
 //	],
 //];
 
-if (is_array($arResult['customSections']))
+if ($arResult['isCustomSectionsAvailable'])
 {
 	$menuItems[] = [
 		'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION'),
@@ -325,6 +325,17 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			);
 
 			echo $renderCheckbox(
+				Loc::getMessage('CRM_TYPE_TYPE_IS_BIZ_PROC_ENABLED_TITLE'),
+				'isBizProcEnabled',
+				$type->getIsBizProcEnabled()
+			);
+
+			echo $renderCardMessage(
+				Loc::getMessage('CRM_TYPE_DETAIL_BIZ_PROC_CARD_TITLE'),
+				Loc::getMessage('CRM_TYPE_DETAIL_BIZ_PROC_CARD_DESCRIPTION')
+			);
+
+			echo $renderCheckbox(
 				Loc::getMessage('CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE'),
 				'isSetOpenPermissions',
 				$type->getIsSetOpenPermissions(),
@@ -491,7 +502,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 				);
 			}?>
 		</div>
-		<?php if (is_array($arResult['customSections'])): ?>
+		<?php if ($arResult['isCustomSectionsAvailable']): ?>
 			<div class="crm-type-tab" data-tab="custom-section">
 				<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION') ?></div>
 				<?php echo $renderCardMessage(
@@ -575,7 +586,6 @@ BX.ready(function()
 				$arResult['presets']
 		)) ?>,
 		relations: <?= CUtil::PhpToJSObject($arResult['relations']) ?>,
-		customSections: <?= CUtil::PhpToJSObject($arResult['customSections']) ?>,
 		isRestricted: <?=$arResult['isRestricted'] ? 'true' : 'false'?>
 	});
 	component.init();

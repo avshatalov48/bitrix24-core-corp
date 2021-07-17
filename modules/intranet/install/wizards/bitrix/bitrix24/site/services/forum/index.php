@@ -95,7 +95,6 @@ $arForums = Array(
 			"2" => "E",
 			WIZARD_PORTAL_ADMINISTRATION_GROUP => "Y",
 			WIZARD_EMPLOYEES_GROUP => "M",
-			WIZARD_PERSONNEL_DEPARTMENT_GROUP => "M",
 		),
 		"TOPICS" => Array(
 			Array(

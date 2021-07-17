@@ -488,6 +488,13 @@ final class Driver implements IErrorable
 	}
 
 	/**
+	 * @return TrackedObjectManager
+	 */
+	public function getTrackedObjectManager()
+	{
+		return ServiceLocator::getInstance()->get('disk.trackedObjectManager');
+	}
+	/**
 	 * Getting array of errors.
 	 * @return Error[]
 	 */
@@ -660,7 +667,9 @@ final class Driver implements IErrorable
 			$userIds = array($userIds);
 		}
 
-		\Bitrix\Pull\Event::add(array_unique($userIds), $message);
+		$userIds = array_filter(array_unique($userIds));
+
+		\Bitrix\Pull\Event::add($userIds, $message);
 	}
 
 	private function checkRequiredInputParams(array $inputParams, array $required)

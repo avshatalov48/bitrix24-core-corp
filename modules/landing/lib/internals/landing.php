@@ -760,6 +760,17 @@ class LandingTable extends Entity\DataManager
 					return $result;
 				}
 			}
+			// check lock status
+			if (\Bitrix\Landing\Lock::isLandingDeleteLocked($primary['ID']))
+			{
+				$result->setErrors(array(
+					new Entity\EntityError(
+						Loc::getMessage('LANDING_TABLE_ERROR_LD_IS_LOCK'),
+						'LANDING_IS_LOCK'
+					)
+				));
+				return $result;
+			}
 			// check if it is folder
 			$res = self::getList(array(
 				'select' => array(

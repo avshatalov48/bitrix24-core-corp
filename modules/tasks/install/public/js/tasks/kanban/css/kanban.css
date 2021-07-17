@@ -5,15 +5,7 @@
 
 .tasks-kanban-item {
 	padding: 10px 35px 0 12px;
-	background: #fff;
 	position: relative;
-	-webkit-border-radius: 2px;
-	border-radius: 2px;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	-moz-user-select: -moz-none;
-	-moz-user-select: none;
-	user-select: none;
-	-webkit-user-select: text;
 }
 
 .tasks-kanban-item:before {
@@ -52,49 +44,6 @@
 .tasks-kanban-item-hover {
 	-webkit-transition: .3s;
 	transition: .3s;
-}
-
-.tasks-kanban-item-shadow {
-	position: absolute;
-	overflow: hidden;
-	bottom: -15px;
-	left: -3px;
-	right: 0;
-	height: 15px;
-	border-top: 1px solid #e1e7ea;
-	transition: .2s;
-}
-
-.main-kanban-item-drag .tasks-kanban-item-shadow,
-.tasks-kanban-item:hover .tasks-kanban-item-shadow {
-	border-top: 1px solid transparent;
-}
-
-.tasks-kanban-item-shadow:before {
-	content: '';
-	position: absolute;
-	left: 5px;
-	right: 5px;
-	top: -5px;
-	height: 5px;
-	opacity: 0;
-	border-radius: 10px;
-	box-shadow: 0 0 10px rgba(0,0,0,.5);
-	transition: .2s;
-	-ms-transform: translateY(-5px);
-	transform: translateY(-5px);
-}
-
-.tasks-kanban-item:hover {
-	-ms-transform: translateY(-1px);
-	transform: translateY(-1px);
-}
-
-.main-kanban-item-drag .tasks-kanban-item-shadow:before,
-.tasks-kanban-item:hover .tasks-kanban-item-shadow:before {
-	opacity: 1;
-	-ms-transform: translateY(0);
-	transform: translateY(0);
 }
 
 .tasks-kanban-item-title {

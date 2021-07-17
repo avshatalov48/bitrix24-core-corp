@@ -34,7 +34,7 @@ class Scoring
 	const MINIMAL_TRAINING_SET = 2000;
 	const MINIMAL_CLASS_SIZE = 200;
 
-	const RETRAIN_PERIOD = 30; // days
+	const RETRAIN_PERIOD = 90; // days
 
 	const ERROR_MODEL_ALREADY_EXISTS = "model_already_exists";
 	const ERROR_NOT_ENOUGH_DATA = "not_enough_data";

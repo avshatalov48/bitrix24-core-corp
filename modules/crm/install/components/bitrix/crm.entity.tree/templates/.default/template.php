@@ -2,9 +2,6 @@
 
 use Bitrix\Main\Localization\Loc;
 
-echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?v13" />';
-echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v2"></script>';
-
 if (!function_exists('CrmEntityTreeConvertDateTime'))
 {
 	/*
@@ -16,21 +13,17 @@ if (!function_exists('CrmEntityTreeConvertDateTime'))
 		{
 			return \ConvertDateTime($datetime, $to_format, $from_site, $bSearchInSitesOnly);
 		}
-		else
-		{
-			return \ConvertTimeStamp($datetime);
-		}
+
+		return \ConvertTimeStamp($datetime);
 	}
 }
-
-
 
 if (!function_exists('CrmEntityTreeDrawActivity'))
 {
 	/*
 	 * Draw activity block for one entity.
 	 */
-	function CrmEntityTreeDrawActivity($id, $type, $activity, $leadId=null)
+	function CrmEntityTreeDrawActivity($id, $type, $activity, $leadId = null)
 	{
 		static $label = null;
 		static $activityTypes = array();
@@ -90,21 +83,13 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 			);
 		}
 
-		if (
-			isset($activity[$type]) &&
-			isset($activity[$type][$id]) &&
-			!empty($activity[$type][$id])
-		)
-		{
+		if (!empty($activity[$type][$id])){
 			//add parent lead's activity
 			if (
 				$leadId &&
-				isset($activity['LEAD']) &&
-				isset($activity['LEAD'][$leadId]) &&
-				!empty($activity['LEAD'][$leadId])
-			)
+				!empty($activity[\CCrmOwnerType::Lead][$leadId]))
 			{
-				$activity[$type][$id] += $activity['LEAD'][$leadId];
+				$activity[$type][$id] += $activity[\CCrmOwnerType::Lead][$leadId];
 				ksort($activity[$type][$id]);
 				$activity[$type][$id] = array_reverse($activity[$type][$id], true);
 			}
@@ -181,18 +166,41 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 			);
 		}
 		$statuses = $params['STATUSES'];
-		$codes = $params['TYPES'];
-		$selected = $params['ENTITY_TYPE_NAME'] == $item['TREE_TYPE'] && $params['ENTITY_ID'] == $item['ID'];
+		$selected = false;
+		if (
+			\CCrmOwnerType::ResolveID($params['ENTITY_TYPE_NAME']) === $item['TREE_TYPE']
+			&& $params['ENTITY_ID'] == $item['ID']
+		)
+		{
+			$selected = true;
+		}
+
+		$renderProgressBar = function(string $statusId, array $statuses): string {
+			$name = $statuses[$statusId]['NAME'];
+			$width = isset($statuses[$statusId]['CHUNK'])
+				? round($statuses[$statusId]['CHUNK'] * 100 / $statuses['__COUNT'], 2)
+				: 100;
+			$color = $statuses[$statusId]['COLOR'];
+			if (!preg_match('#^\#[aAbBcCdDeEfF0-9]{3,6}$#', $color))
+			{
+				$color = \Bitrix\Crm\Color\PhaseColorScheme::getDefaultColorBySemantics($statuses[$statusId]['SEMANTICS'] ?? \Bitrix\Crm\PhaseSemantics::PROCESS);
+			}
+
+			return '<div class="crm-doc-info-progressbar">
+				<div class="crm-doc-info-progressbar-indikator" style="background-color: '. htmlspecialcharsbx($color) .'; width: '.(int)$width.'%"></div>
+			</div>
+			<div class="crm-doc-info-text">'.htmlspecialcharsbx($name).'</div>';
+		};
 
 		echo '<li class="crm-doc-ul-li">';
 		switch ($item['TREE_TYPE'])
 		{
-			case $codes['lead']:
+			case \CCrmOwnerType::Lead:
 				?>
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-title"><span class="crm-doc-title-gray"><?= $lang['LEAD']?>:</span>
-						<a href="<?= $item['URL']?>" class="crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?= $item['TITLE']?></a>
-						<?if ($item['IS_RETURN_CUSTOMER'] == 'Y'):?>
+						<a href="<?= $item['URL']?>" class="crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?= htmlspecialcharsbx($item['TITLE'])?></a>
+						<?if ($item['IS_RETURN_CUSTOMER'] === 'Y'):?>
 						<div>
 							<?= Loc::getMessage('CRM_ENTITY_TREE_IS_RETURN_CUSTOMER');?>
 						</div>
@@ -200,34 +208,21 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 					</div>
 					<div class="crm-doc-info">
 						<?if ($item['STATUS_ID']):
-							$name = $statuses['STATUS'][$item['STATUS_ID']]['NAME'];
-							$width = isset($statuses['STATUS'][$item['STATUS_ID']]['CHUNK'])
-									? round($statuses['STATUS'][$item['STATUS_ID']]['CHUNK'] * 100 / $statuses['STATUS']['__COUNT'], 2)
-									: 100;
-							$color = $statuses['STATUS'][$item['STATUS_ID']]['COLOR'] != ''
-									? $statuses['STATUS'][$item['STATUS_ID']]['COLOR']
-									: \Bitrix\Crm\Color\LeadStatusColorScheme::getDefaultColorByStatus($item['STATUS_ID']);
 							?>
-						<div class="crm-doc-info-progress">
-							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
+							<div class="crm-doc-info-progress">
+								<?=$renderProgressBar($item['STATUS_ID'], $statuses['STATUS']);?>
 							</div>
-							<div class="crm-doc-info-text"><?= \htmlspecialcharsbx($name);?></div>
-						</div>
 						<?endif;?>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
 						<div class="crm-doc-info-responsible">
 							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-								<?
-								echo CCrmViewHelper::PrepareUserBaloonHtml(
-											array(
-												'PREFIX' => 'LEAD_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-												'USER_ID' => $item['ASSIGNED_BY_ID'],
-												'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-												'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL']
-									)
-								)
-								?>
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'PREFIX' => 'LEAD_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+									'USER_ID' => $item['ASSIGNED_BY_ID'],
+									'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+									'ENCODE_USER_NAME' => true,
+								])?>
 							</div>
 						</div>
 						<?endif;?>
@@ -252,31 +247,31 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				</div>
 				<?
 				break;
-			case $codes['company']:
-			case $codes['contact']:
+			case \CCrmOwnerType::Company:
+			case \CCrmOwnerType::Contact:
 				?>
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-user">
-						<div class="crm-doc-cart-<?= $item['TREE_TYPE'] == $codes['company'] ? 'company' : 'user'?>-avatar"<?
-															?><?if ($item['TREE_TYPE'] == $codes['company'] && $item['LOGO']){?> style="background-image: url('<?= $item['LOGO_FILE']['src']?>'); background-position: center;"<?}?><?
-															?><?if ($item['TREE_TYPE'] == $codes['contact'] && $item['PHOTO']){?> style="background-image: url('<?= $item['PHOTO_FILE']['src']?>'); background-position: center;"<?}?><?
+						<div class="crm-doc-cart-<?= $item['TREE_TYPE'] === \CCrmOwnerType::Company ? 'company' : 'user'?>-avatar"<?
+															?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['LOGO']){?> style="background-image: url('<?= $item['LOGO_FILE']['src']?>'); background-position: center;"<?}?><?
+															?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Contact && $item['PHOTO']){?> style="background-image: url('<?= $item['PHOTO_FILE']['src']?>'); background-position: center;"<?}?><?
 															?>></div>
 						<div class="crm-doc-cart-user-info">
 							<a href="<?= $item['URL']?>" class="crm-doc-cart-user-name crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
-								if ($item['TREE_TYPE'] == $codes['company'])
+								if ($item['TREE_TYPE'] === \CCrmOwnerType::Company)
 								{
-									echo $item['TITLE'];
+									echo htmlspecialcharsbx($item['TITLE']);
 								}
-								elseif ($item['TREE_TYPE'] == $codes['contact'])
+								elseif ($item['TREE_TYPE'] === \CCrmOwnerType::Contact)
 								{
-									echo $item['LAST_NAME'], ' ', $item['NAME'], ' ', $item['SECOND_NAME'];
+									echo htmlspecialcharsbx($item['LAST_NAME'] . ' ' . $item['NAME'] . ' ' . $item['SECOND_NAME']);
 								}
 							?></a>
-							<?if ($item['TREE_TYPE'] == $codes['contact'] && $item['COMPANY_TITLE']):?>
-							<div class="crm-doc-cart-user-company"><?= $item['COMPANY_TITLE']?></div>
+							<?if ($item['TREE_TYPE'] === \CCrmOwnerType::Contact && $item['COMPANY_TITLE']):?>
+							<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($item['COMPANY_TITLE'])?></div>
 							<?endif;?>
-							<?if ($item['TREE_TYPE'] == $codes['company'] && $item['COMPANY_TYPE']):?>
-							<div class="crm-doc-cart-user-company"><?= $statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME']?></div>
+							<?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['COMPANY_TYPE']):?>
+							<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME'])?></div>
 							<?endif;?>
 							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID']);?>
 						</div>
@@ -286,10 +281,10 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						<table>
 						<?if (isset($item['FM_VALUES']['EMAIL'])):?>
 							<tr>
-								<td><?if ($p == 0){?><?= $lang['EMAIL']?>: <?}?></td>
+								<td><?= $lang['EMAIL']?>:</td>
 								<td>
 									<?foreach ($item['FM_VALUES']['EMAIL'] as $p => $val):?>
-										<a href="mailto:<?= $val?>" class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-email"><?= $val?></a>
+										<a href="mailto:<?= htmlspecialcharsbx($val)?>" class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-email"><?= htmlspecialcharsbx($val)?></a>
 									<?endforeach;?>
 								</td>
 							</tr>
@@ -299,10 +294,10 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								<td><?= $lang['PHONE']?>: </td>
 								<td>
 									<?foreach ($item['FM_VALUES']['PHONE'] as $p => $val):
-										$formatCU = \CCrmCallToUrl::PrepareLinkAttributes($val, array(
-											'ENTITY_TYPE' => $item['TREE_TYPE'],
-											'ENTITY_ID' => $item['ID']
-										));
+										$formatCU = \CCrmCallToUrl::PrepareLinkAttributes($val, [
+											'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($item['TREE_TYPE']),
+											'ENTITY_ID' => $item['ID'],
+										]);
 										?>
 									<a href="<?= htmlspecialcharsbx($formatCU['HREF'])?>"<?
 										?><?if ($formatCU['ONCLICK'] != ''){?> onclick="<?= htmlspecialcharsbx($formatCU['ONCLICK'])?>"<?}?><?
@@ -322,26 +317,23 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				</div>
 				<?
 				break;
-			case $codes['deal']:
+			case \CCrmOwnerType::Deal:
 				?>
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-info">
 						<a href="<?= $item['URL']?>" class="crm-doc-cart-title crm-doc-cart-title-deal crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang['DEAL']?>:</span> <?
-							?><?= $item['TITLE']?><?
+							?><?= htmlspecialcharsbx($item['TITLE'])?><?
 						?></a>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
 						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-							<?
-							echo CCrmViewHelper::PrepareUserBaloonHtml(
-										array(
-											'PREFIX' => 'DEAL_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-											'USER_ID' => $item['ASSIGNED_BY_ID'],
-											'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-											'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL']
-								)
-							)
-							?>
+							<?=CCrmViewHelper::PrepareUserBaloonHtml([
+								'PREFIX' => 'DEAL_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+								'USER_ID' => $item['ASSIGNED_BY_ID'],
+								'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+								'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+								'ENCODE_USER_NAME' => true,
+							])?>
 						</div>
 						<?endif;?>
 						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID']);?>
@@ -350,19 +342,8 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						<div class="crm-doc-info-progress">
 							<?if ($item['STAGE_ID']):
 								$statusGroup = $item['CATEGORY_ID'] > 0 ? $statuses['DEAL_STAGE_' . $item['CATEGORY_ID']] : $statuses['DEAL_STAGE'];
-								$name = $statusGroup[$item['STAGE_ID']]['NAME'];
-								$width = isset($statusGroup[$item['STAGE_ID']]['CHUNK'])
-										? round($statusGroup[$item['STAGE_ID']]['CHUNK'] * 100 / $statusGroup['__COUNT'], 2)
-										: 100;
-								$color = $statusGroup[$item['STAGE_ID']]['COLOR'] != ''
-										? $statusGroup[$item['STAGE_ID']]['COLOR']
-										: \Bitrix\Crm\Color\DealStageColorScheme::getDefaultColorByStage($item['STAGE_ID']);
-								?>
-							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
-							</div>
-							<div class="crm-doc-info-text"><?= htmlspecialcharsbx($name);?></div>
-							<?endif;?>
+								echo $renderProgressBar($item['STAGE_ID'], $statusGroup);
+							endif;?>
 							<table class="crm-doc-info-table">
 								<tr>
 									<td><?= $lang['DATE_BEGIN']?>:</td>
@@ -386,45 +367,31 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				</div>
 				<?
 				break;
-			case $codes['quote']:
+			case \CCrmOwnerType::Quote:
 				?>
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-info">
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-sentence crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang['QUOTE']?>:</span> <?
-							?><?= $item['TITLE']?><?
+							?><?= htmlspecialcharsbx($item['TITLE'])?><?
 						?></a>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
 						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-						<?
-						echo CCrmViewHelper::PrepareUserBaloonHtml(
-									array(
-										'PREFIX' => 'QUOTE_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-										'USER_ID' => $item['ASSIGNED_BY_ID'],
-										'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-										'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL']
-							)
-						)
-						?>
+							<?=CCrmViewHelper::PrepareUserBaloonHtml([
+								'PREFIX' => 'QUOTE_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+								'USER_ID' => $item['ASSIGNED_BY_ID'],
+								'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+								'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+								'ENCODE_USER_NAME' => true,
+							])?>
 						</div>
 						<?endif;?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
 							<?if ($item['STATUS_ID']):
-								$name = $statuses['QUOTE_STATUS'][$item['STATUS_ID']]['NAME'];
-								$width = isset($statuses['QUOTE_STATUS'][$item['STATUS_ID']]['CHUNK'])
-										? round($statuses['QUOTE_STATUS'][$item['STATUS_ID']]['CHUNK'] * 100 / $statuses['QUOTE_STATUS']['__COUNT'], 2)
-										: 100;
-								$color = $statuses['QUOTE_STATUS'][$item['STATUS_ID']]['COLOR'] != ''
-										? $statuses['QUOTE_STATUS'][$item['STATUS_ID']]['COLOR']
-										: \Bitrix\Crm\Color\QuoteStatusColorScheme::getDefaultColorByStatus($item['STATUS_ID']);
-								?>
-							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
-							</div>
-							<div class="crm-doc-info-text"><?= htmlspecialcharsbx($name);?></div>
-							<?endif;?>
+								echo $renderProgressBar($item['STATUS_ID'], $statuses['QUOTE_STATUS']);
+							endif;?>
 							<table class="crm-doc-info-table">
 								<col class="crm-doc-info-table-1">
 								<col class="crm-doc-info-table-2">
@@ -444,64 +411,35 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				</div>
 				<?
 				break;
-			case $codes['order']:
-			case $codes['order_payment']:
-			case $codes['order_shipment']:
-			case $codes['invoice']:
+			case \CCrmOwnerType::Order:
+			case \CCrmOwnerType::OrderPayment:
+			case \CCrmOwnerType::OrderShipment:
+			case \CCrmOwnerType::Invoice:
 				?>
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-info">
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-invoice crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
-							?><span class="crm-doc-gray"><?= $lang[mb_strtoupper($item['TREE_TYPE'])]?><?= $item['ACCOUNT_NUMBER']?>:</span> <?
-							?><?= $item['ORDER_TOPIC'] <> '' ? $item['ORDER_TOPIC'] : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
+							?><span class="crm-doc-gray"><?= $lang[\CCrmOwnerType::ResolveName($item['TREE_TYPE'])]?><?= htmlspecialcharsbx($item['ACCOUNT_NUMBER'])?>:</span> <?
+							?><?= $item['ORDER_TOPIC'] <> '' ? htmlspecialcharsbx($item['ORDER_TOPIC']) : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
 						?></a>
 						<?if ($item['RESPONSIBLE_ID'] > 0):?>
 						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
 						<?=CCrmViewHelper::PrepareUserBaloonHtml([
-								'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
-								'USER_ID' => $item['RESPONSIBLE_ID'],
-								'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
-								'USER_PROFILE_URL' => $item['RESPONSIBLE_URL']
-							]);
-						?>
+							'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
+							'USER_ID' => $item['RESPONSIBLE_ID'],
+							'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
+							'USER_PROFILE_URL' => $item['RESPONSIBLE_URL'],
+							'ENCODE_USER_NAME' => true,
+						])?>
 						</div>
 						<?endif;?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
 							<?if ($item['STATUS_ID']):
-								$typeStatusName = $item['TREE_TYPE'].'_STATUS';
-								$name = $statuses[$typeStatusName][$item['STATUS_ID']]['NAME'];
-								$width = isset($statuses[$typeStatusName][$item['STATUS_ID']]['CHUNK'])
-										? round($statuses[$typeStatusName][$item['STATUS_ID']]['CHUNK'] * 100 / $statuses[$typeStatusName]['__COUNT'], 2)
-										: 100;
-								if ($statuses[$typeStatusName][$item['STATUS_ID']]['COLOR'] != '')
-								{
-									$color = $statuses[$typeStatusName][$item['STATUS_ID']]['COLOR'];
-								}
-								else
-								{
-									$defaultSemantic = null;
-									switch ($item['TREE_TYPE'])
-									{
-										case $codes['invoice']:
-											$defaultSemantic = \CCrmInvoice::GetSemanticID($item['STATUS_ID']);
-											break;
-										case $codes['order']:
-											$defaultSemantic = \Bitrix\Crm\Order\OrderStatus::getSemanticID($item['STATUS_ID']);
-											break;
-										case $codes['order_shipment']:
-											$defaultSemantic = \Bitrix\Crm\Order\DeliveryStatus::getSemanticID($item['STATUS_ID']);
-											break;
-									}
-									$color = \Bitrix\Crm\Color\PhaseColorScheme::getDefaultColorBySemantics($defaultSemantic);
-								}
-								?>
-							<div class="crm-doc-info-progressbar">
-								<div class="crm-doc-info-progressbar-indikator" style="background-color: <?= \htmlspecialcharsbx($color);?>; width: <?= $width?>%"></div>
-							</div>
-							<div class="crm-doc-info-text"><?= \htmlspecialcharsbx($name);?></div>
-							<?endif;?>
+								$typeStatusName = \CCrmOwnerType::ResolveName($item['TREE_TYPE']) . '_STATUS';
+								echo $renderProgressBar($item['STATUS_ID'], $statuses[$typeStatusName]);
+							endif;?>
 							<table class="crm-doc-info-table">
 								<tr>
 									<td><?= $lang['DATE_BILL']?>:</td>
@@ -522,6 +460,48 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 					</div>
 				</div>
 				<?
+				break;
+			default:
+				if (\CCrmOwnerType::isPossibleDynamicTypeId($item['TREE_TYPE'])):
+					?>
+					<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
+						<div class="crm-doc-cart-info">
+							<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-invoice crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
+								?><span class="crm-doc-gray"><?= htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item['TREE_TYPE']))?>: </span><?= htmlspecialcharsbx($item['NAME'])?><?
+								?></a>
+							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'USER_ID' => $item['ASSIGNED_BY_ID'],
+									'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+									'ENCODE_USER_NAME' => true,
+								]);
+								?>
+							</div>
+						</div>
+						<div class="crm-doc-cart-param">
+							<div class="crm-doc-info-progress">
+								<?if ($item['STAGE_ID']):
+									$typeStatusName = \CCrmOwnerType::ResolveName($item['TREE_TYPE']) . '_STAGE_' . $item['CATEGORY_ID'];
+									echo $renderProgressBar($item['STAGE_ID'], $statuses[$typeStatusName]);
+								endif;?>
+								<table class="crm-doc-info-table">
+									<tr>
+										<td><?= $lang['DATE_CREATE']?>:</td>
+										<td><?= CrmEntityTreeConvertDateTime($item['CREATED_TIME'], FORMAT_DATE)?></td>
+									</tr>
+									<?if (!empty($item['OPPORTUNITY_FORMATTED'])):?>
+										<tr>
+											<td><?= $lang['SUM']?>:</td>
+											<td><?= $item['OPPORTUNITY_FORMATTED']?></td>
+										</tr>
+									<?endif;?>
+								</table>
+							</div>
+						</div>
+					</div>
+					<?php
+				endif;
 				break;
 		}
 		echo '</li>';
@@ -552,9 +532,6 @@ if (!function_exists('CrmEntityTreeDrawRecur'))
 	}
 }
 ?>
-
-
-
 <div class="crm-doc">
 	<div class="crm-doc-three">
 	<?

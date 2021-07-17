@@ -813,7 +813,6 @@ if (
 			'SHOW_SECTIONS_BAR'     => 'Y',
 			'SHOW_FILTER_BAR'       => 'Y',
 			'SHOW_COUNTERS_BAR'     =>  $ynNotGroupList,
-			'SHOW_SECTION_PROJECTS' =>  $ynNotGroupList,
 			'SHOW_SECTION_MANAGE'   => 'A',
 			'SHOW_SECTION_COUNTERS' =>  $ynNotGroupList,
 			'MARK_ACTIVE_ROLE'      => 'Y'

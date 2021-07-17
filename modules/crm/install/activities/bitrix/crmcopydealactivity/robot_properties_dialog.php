@@ -37,7 +37,7 @@ foreach ($map as $propertyKey => $property):?>
 			{
 				var opt = stageSelect.options[i];
 
-				if (opt.value === '')
+				if (opt.value === '' || opt.getAttribute('data-role') === 'expression')
 				{
 					continue;
 				}

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DOCGEN_TEMPLATE_ACT_BY_NAME"] = "Certificate of acceptance (Belarus)";
 $MESS["DOCGEN_TEMPLATE_ACT_KZ_NAME"] = "Certificate of acceptance (Kazakhstan)";
 $MESS["DOCGEN_TEMPLATE_ACT_RU_NAME"] = "Certificate of acceptance (Russia)";
@@ -27,8 +27,10 @@ $MESS["DOCGEN_TEMPLATE_ESTIMATE_UK_NAME"] = "Quote (UK)";
 $MESS["DOCGEN_TEMPLATE_FAKTURA_KZ_NAME"] = "VAT Invoice (Kazakhstan)";
 $MESS["DOCGEN_TEMPLATE_INVOICE_BR_NAME"] = "Invoice (Brazil)";
 $MESS["DOCGEN_TEMPLATE_INVOICE_DE_NAME"] = "Invoice (Germany)";
+$MESS["DOCGEN_TEMPLATE_INVOICE_FR_NAME"] = "Invoice (France)";
 $MESS["DOCGEN_TEMPLATE_INVOICE_PL_NAME"] = "Invoice (Poland)";
 $MESS["DOCGEN_TEMPLATE_INVOICE_RU_NAME"] = "VAT Invoice (Russia)";
+$MESS["DOCGEN_TEMPLATE_INVOICE_SP_NAME"] = "Invoice (Spain)";
 $MESS["DOCGEN_TEMPLATE_INVOICE_UK_NAME"] = "Invoice (UK)";
 $MESS["DOCGEN_TEMPLATE_NAKL_BY_NAME"] = "Waybill (Belarus)";
 $MESS["DOCGEN_TEMPLATE_NAKL_KZ_NAME"] = "Waybill (Kazakhstan)";
@@ -39,13 +41,14 @@ $MESS["DOCGEN_TEMPLATE_PACKING_SLIP_UK_NAME"] = "Packing sheet (UK)";
 $MESS["DOCGEN_TEMPLATE_PROXY_RU_NAME"] = "Power of attorney (Russia)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_BR_NAME"] = "Quote (Brazil)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_BY_NAME"] = "Quote (Belarus)";
+$MESS["DOCGEN_TEMPLATE_QUOTE_FR_NAME"] = "Quote (France)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_KZ_NAME"] = "Quote (Kazakhstan)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_MX_NAME"] = "Quote (Mexico)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_RU_NAME"] = "Quote (Russia)";
+$MESS["DOCGEN_TEMPLATE_QUOTE_SP_NAME"] = "Quote (Spain)";
 $MESS["DOCGEN_TEMPLATE_QUOTE_UA_NAME"] = "Quote (Ukraine)";
 $MESS["DOCGEN_TEMPLATE_SALES_ORDER_DE_NAME"] = "Order confirmation (Germany)";
 $MESS["DOCGEN_TEMPLATE_SALES_ORDER_PL_NAME"] = "Order confirmation (Poland)";
 $MESS["DOCGEN_TEMPLATE_SALES_ORDER_UK_NAME"] = "Order confirmation (UK)";
 $MESS["DOCGEN_TEMPLATE_TTN_BY_NAME"] = "Shipment manifest (Belarus)";
 $MESS["DOCGEN_TEMPLATE_UPD_RU_NAME"] = "Universal invoice (Russia)";
-?>

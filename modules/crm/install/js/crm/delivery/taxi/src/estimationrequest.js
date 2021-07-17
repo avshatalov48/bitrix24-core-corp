@@ -24,7 +24,7 @@ export default Vue.extend({
 				</span>
 			</template>			
 			<template v-slot:default>
-				<div class="crm-entity-stream-content-detail-description">
+				<div class="crm-entity-stream-content-detail-description crm-delivery-taxi-caption">
 					<template v-if="isExpectedPriceReceived">
 						{{localize.TIMELINE_DELIVERY_TAXI_ESTIMATED_DELIVERY_PRICE_RECEIVED}}:
 						<span v-html="fields.EXPECTED_PRICE_DELIVERY"></span>
@@ -33,10 +33,15 @@ export default Vue.extend({
 						{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED_FULL}}
 					</template>
 				</div>
-				<div class="crm-entity-stream-content-detail-description crm-entity-stream-content-delivery-order-value--flex">
-					<span v-html="fields.ADDRESS_FROM"></span>
-					<span class="crm-entity-stream-content-detail-description--arrow"></span>
-					<span v-html="fields.ADDRESS_TO"></span>
+				<div class="crm-entity-stream-content-detail-description">
+					<div class="crm-entity-stream-content-delivery-order-box">
+						<div class="crm-entity-stream-content-delivery-order-box-label">{{localize.TIMELINE_DELIVERY_TAXI_ADDRESS_FROM}}</div>
+						<span v-html="fields.ADDRESS_FROM"></span>
+					</div>
+					<div class="crm-entity-stream-content-delivery-order-box">
+						<div class="crm-entity-stream-content-delivery-order-box-label">{{localize.TIMELINE_DELIVERY_TAXI_ADDRESS_TO}}</div>
+						<span v-html="fields.ADDRESS_TO"></span>
+					</div>
 				</div>
 			</template>
 		</history-item>

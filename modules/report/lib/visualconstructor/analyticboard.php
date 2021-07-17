@@ -26,6 +26,7 @@ class AnalyticBoard
 	private $limitComponentParams = [];
 	private $isExternal = false;
 	private $externalUrl = "";
+	private $isSliderSupport = true;
 	private $options;
 	private $setOptionsCallback;
 
@@ -330,6 +331,22 @@ class AnalyticBoard
 	public function setExternalUrl(string $externalUrl): void
 	{
 		$this->externalUrl = $externalUrl;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isSliderSupport(): bool
+	{
+		return $this->isSliderSupport;
+	}
+
+	/**
+	 * @param bool $isSliderSupport
+	 */
+	public function setSliderSupport(bool $isSliderSupport): void
+	{
+		$this->isSliderSupport = $isSliderSupport;
 	}
 
 	public function getDisplayComponentName()

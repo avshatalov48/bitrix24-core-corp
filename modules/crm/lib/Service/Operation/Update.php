@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Restriction\RestrictionManager;
@@ -15,8 +16,11 @@ use Bitrix\Main\Result;
 
 class Update extends Operation
 {
-	/** @var \CCrmBizProcHelper */
-	protected $bizProcHelper = \CCrmBizProcHelper::class;
+	public function __construct(Item $item, Operation\Settings $settings, Collection $fieldsCollection = null)
+	{
+		parent::__construct($item, $settings, $fieldsCollection);
+		$this->bizProcEventType = \CCrmBizProcEventType::Edit;
+	}
 
 	public function checkAccess(): Result
 	{
@@ -115,7 +119,7 @@ class Update extends Operation
 		PullManager::getInstance()->sendItemUpdatedEvent($this->pullItem, $this->pullParams);
 	}
 
-	public function runAutomation(): Result
+	protected function runAutomation(): Result
 	{
 		$result = parent::runAutomation();
 
@@ -123,7 +127,11 @@ class Update extends Operation
 		{
 			/** @var \Bitrix\Crm\Automation\Starter $starter */
 			$starter = $result->getData()['starter'];
-			return $starter->runOnUpdate($this->itemBeforeSave->getData(Values::CURRENT), []);
+
+			return $starter->runOnUpdate(
+				$this->itemBeforeSave->getCompatibleData(Values::CURRENT),
+				$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
+			);
 		}
 
 		return $result;

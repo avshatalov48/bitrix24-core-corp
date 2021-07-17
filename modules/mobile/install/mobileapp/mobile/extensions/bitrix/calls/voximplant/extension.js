@@ -28,6 +28,8 @@
 		voiceStarted: "Call::voiceStarted",
 		voiceStopped: "Call::voiceStopped",
 		microphoneState: "Call::microphoneState",
+		cameraState: "Call::cameraState",
+		videoPaused: "Call::videoPaused",
 		screenState: "Call::screenState",
 		floorRequest: "Call::floorRequest",
 		emotion: "Call::emotion",
@@ -365,7 +367,23 @@
 			this.videoEnabled = videoEnabled;
 			if (this.voximplantCall)
 			{
-				this.voximplantCall.setSendVideo(this.videoEnabled);
+				this.voximplantCall.setSendVideo(this.videoEnabled && !this.videoPaused);
+				this.signaling.sendCameraState(this.videoEnabled);
+			}
+		}
+
+		setVideoPaused(videoPaused)
+		{
+			if (this.videoPaused == videoPaused)
+			{
+				return;
+			}
+
+			this.videoPaused = videoPaused;
+			if (this.voximplantCall)
+			{
+				this.voximplantCall.setSendVideo(this.videoEnabled && !this.videoPaused);
+				this.signaling.sendVideoPaused(this.videoPaused);
 			}
 		}
 
@@ -578,7 +596,7 @@
 
 						this.voximplantCall = client.callConference(
 							"bx_conf_" + this.id,
-							{sendVideo: this.videoEnabled, receiveVideo: true},
+							{sendVideo: this.videoEnabled, receiveVideo: true, enableSimulcast: true},
 						);
 					} catch (e)
 					{
@@ -609,6 +627,7 @@
 							this.voximplantCall.sendAudio = false;
 						}
 						this.signaling.sendMicrophoneState(!this.muted);
+						this.signaling.sendCameraState(this.videoEnabled);
 
 						if (this.videoAllowedFrom == BX.Call.UserMnemonic.none)
 						{
@@ -961,6 +980,7 @@
 
 		__onLocalVideoStreamReceived(stream)
 		{
+			this.log("__onLocalVideoStreamReceived")
 			this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [stream]);
 		}
 
@@ -1102,6 +1122,13 @@
 				this.eventEmitter.emit(BX.Call.Event.onUserScreenState, [
 					message.senderId,
 					message.screenState === "Y",
+				]);
+			}
+			else if (eventName === clientEvents.videoPaused)
+			{
+				this.eventEmitter.emit(BX.Call.Event.onUserVideoPaused, [
+					message.senderId,
+					message.videoPaused === "Y",
 				]);
 			}
 			else if (eventName === clientEvents.floorRequest)
@@ -1307,6 +1334,20 @@
 		{
 			return this.__sendMessage(clientEvents.microphoneState, {
 				microphoneState: microphoneState ? "Y" : "N",
+			});
+		}
+
+		sendCameraState(cameraState)
+		{
+			return this.__sendMessage(clientEvents.cameraState, {
+				cameraState: cameraState ? "Y" : "N",
+			});
+		}
+
+		sendVideoPaused(videoPaused)
+		{
+			return this.__sendMessage(clientEvents.videoPaused, {
+				videoPaused: videoPaused ? "Y" : "N",
 			});
 		}
 

@@ -38,6 +38,11 @@ final class BlogPostConnector extends Connector
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowForUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowForUser(int $userId)
+	{
 		if(!$this->loadBlogPostData())
 		{
 			return null;
@@ -231,6 +236,7 @@ final class BlogPostConnector extends Connector
 				{
 					$res = WorkgroupTable::getList([
 						'filter' => [
+							'@ID' => $sonetGroupsIdList,
 							'=LANDING' => 'Y',
 							'=ACTIVE' => 'Y'
 						],

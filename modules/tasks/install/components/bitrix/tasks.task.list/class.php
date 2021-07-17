@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 /**
@@ -23,9 +23,11 @@ use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\TagTable;
 use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Grid\Row;
+use Bitrix\Tasks\Grid\Task;
+use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\Ui\Controls\Column;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
@@ -64,7 +66,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			'setViewState',
 			'getNearTasks',
 			'prepareGridRowsForTasks',
-			'getTotalCount'
+			'getTotalCount',
 		];
 	}
 
@@ -144,19 +146,21 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 */
 	public static function prepareGridRowsForTasks(array $taskIds, array $data = [], array $arParams = []): array
 	{
-
 		static::tryParseIntegerParameter($arParams['USER_ID'], User::getId());
+
+		$arParams['CAN_SEE_COUNTERS'] = self::canSeeCounters((int)$arParams['USER_ID']);
 
 		if (empty($data))
 		{
 			$parameters = [
 				'MAKE_ACCESS_FILTER' => true,
+				'TARGET_USER_ID' => (int)$arParams['USER_ID']
 			];
 			$getListParameters = [
 				'select' => array_keys(\CTasks::getFieldsInfo()),
 				'legacyFilter' => ['ID' => $taskIds],
 			];
-			$tasks = Manager\Task::getList($arParams['USER_ID'], $getListParameters, $parameters)['DATA'];
+			$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
 		}
 		else
 		{
@@ -187,16 +191,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$arParams['FILTER_FIELDS'] = (new Options($arParams['FILTER_ID']))->getFilter();
 		}
 
-		$gridRows = [];
-		foreach ($tasks as $taskId => $taskData)
-		{
-			$gridRows[$taskId] = [
-				'content' => Row::prepareContent($taskData, $arParams),
-				'actions' => Row::prepareActions($taskData, $arParams),
-			];
-		}
-
-		return $gridRows;
+		return (new Task\Grid($tasks, $arParams))->prepareRows();
 	}
 
 	protected static function checkRequiredModules(
@@ -303,49 +298,71 @@ class TasksTaskListComponent extends TasksBaseComponent
 			unset($filter['ONLY_ROOT_TASKS']);
 		}
 
+		/**
+		 * Group by subtask should be ignored for fulltext search
+		 * See #134428 for more information
+		 */
+		$listStateIsModified = false;
+		if (
+			array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $filter)
+			&& $groupBySubtasks
+		)
+		{
+			unset($filter['ONLY_ROOT_TASKS']);
+			$listStateIsModified = true;
+			$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+
 		$parameters = \Bitrix\Main\Web\Json::decode($parameters);
 		if (!array_key_exists('TARGET_USER_ID', $parameters))
 		{
 			$parameters['TARGET_USER_ID'] = $userId;
 		}
-		return Manager\Task::getCount($filter, $parameters);
+
+		$count = Manager\Task::getCount($filter, $parameters);
+
+		if ($listStateIsModified)
+		{
+			$listState->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+
+		return $count;
 	}
 
 	protected function checkParameters()
 	{
 		parent::checkParameters();
 
-		$arParams =& $this->arParams;
-
-		$arParams['IS_MOBILE'] = (array_key_exists('PATH_TO_SNM_ROUTER', $arParams));
+		$this->arParams['IS_MOBILE'] = (array_key_exists('PATH_TO_SNM_ROUTER', $this->arParams));
 
 		// allows to see other user`s tasks, if have permissions
-		static::tryParseIntegerParameter($arParams['USER_ID'], $this->userId);
-		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
+		static::tryParseIntegerParameter($this->arParams['USER_ID'], $this->userId);
+		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
+		static::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
 
-		static::tryParseIntegerParameter($arParams['FORUM_ID'], 0); // forum id to keep comments in
-		if ($arParams['FORUM_ID'])
+		static::tryParseIntegerParameter($this->arParams['FORUM_ID'], 0); // forum id to keep comments in
+		if ($this->arParams['FORUM_ID'])
 		{
-			__checkForum($arParams["FORUM_ID"]);
+			__checkForum($this->arParams["FORUM_ID"]);
 		}
 
-		static::tryParseStringParameter($arParams['SCRUM_BACKLOG'], 'N'); // use tasks list as scrum backlog
-		if ($arParams['GROUP_ID'] <= 0)
+		static::tryParseStringParameter($this->arParams['SCRUM_BACKLOG'], 'N'); // use tasks list as scrum backlog
+		if ($this->arParams['GROUP_ID'] <= 0)
 		{
-			$arParams['SCRUM_BACKLOG'] = 'N';
+			$this->arParams['SCRUM_BACKLOG'] = 'N';
 		}
 
 		$this->exportAs = (array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false);
 		if ($this->exportAs !== false)
 		{
-			$arParams['USE_PAGINATION'] = false;
-			$arParams['PAGINATION_PAGE_SIZE'] = 0;
+			$this->arParams['USE_PAGINATION'] = false;
+			$this->arParams['PAGINATION_PAGE_SIZE'] = 0;
 		}
 		else
 		{
 			// enable or disable CDResult-driven page navigation in this component
-			static::tryParseBooleanParameter($arParams['USE_PAGINATION'], true);
-			static::tryParseNonNegativeIntegerParameter($arParams['PAGINATION_PAGE_SIZE'], 10);
+			static::tryParseBooleanParameter($this->arParams['USE_PAGINATION'], true);
+			static::tryParseNonNegativeIntegerParameter($this->arParams['PAGINATION_PAGE_SIZE'], 10);
 		}
 
 		$this->getChildRowsAction = false;
@@ -356,6 +373,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			$this->getChildRowsAction = true;
 		}
+
+		static::tryParseBooleanParameter($this->arParams['LAZY_LOAD'], false);
+		if (
+			$this->arParams['LAZY_LOAD']
+			&& \Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') !== 'Y'
+		)
+		{
+			$this->arParams['LAZY_LOAD'] = false;
+		}
+
+		$this->arParams['CAN_SEE_COUNTERS'] = self::canSeeCounters($this->arParams['USER_ID']);
 	}
 
 	/**
@@ -371,8 +399,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 */
 	protected function canUsePin(): bool
 	{
-		return $this->isMyList()
-			&& $this->arParams['GROUP_ID'] === 0;
+		return $this->isMyList();
 	}
 
 	protected function disableGrouping(string $field, string $direction): void
@@ -451,7 +478,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
 
 		$order = $this->getOrder();
-		unset($order['GROUP_ID'], $order['IS_PINNED']);
+		unset($order['GROUP_ID'], $order['IS_PINNED'], $order['IS_PINNED_IN_GROUP']);
 
 		reset($order);
 		$field = key($order);
@@ -747,6 +774,92 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$oTimer = CTaskTimerManager::getInstance($this->arParams['USER_ID']);
 		$this->arParams['TIMER']  = $oTimer->getRunningTask(true);	// false => allow use static cache
+
+		$this->processTours();
+	}
+
+	private function processTours(): void
+	{
+		$this->arResult['tours'] = [
+			'firstGridTaskCreation' => [
+				'show' => false,
+				'popupData' => [],
+			],
+			'expiredTasksDeadlineChange' => [
+				'show' => false,
+				'popupData' => [],
+				'backgroundCheck' => false,
+			],
+		];
+
+		if ($this->canProceedTours())
+		{
+			/** @var TourGuide\FirstGridTaskCreation $firstGridTaskTour */
+			$firstGridTaskTour = TourGuide\FirstGridTaskCreation::getInstance($this->userId);
+			$currentStepPopupData = $firstGridTaskTour->getCurrentStepPopupData();
+			$showFirstGridTaskTour = $firstGridTaskTour->proceed();
+
+			if ($showFirstGridTaskTour)
+			{
+				\Bitrix\Tasks\AnalyticLogger::logToFile(
+					'markShowedStep',
+					'firstGridTaskCreation',
+					'0',
+					'tourGuide'
+				);
+			}
+
+			$this->arResult['tours']['firstGridTaskCreation'] = [
+				'show' => $showFirstGridTaskTour,
+				'popupData' => $currentStepPopupData,
+			];
+
+			if (!$showFirstGridTaskTour && $this->canProceedExpiredTour())
+			{
+				/** @var TourGuide\ExpiredTasksDeadlineChange $expiredTour */
+				$expiredTour = TourGuide\ExpiredTasksDeadlineChange::getInstance($this->userId);
+				$currentStepPopupData = $expiredTour->getCurrentStepPopupData();
+				$showExpiredTour = $expiredTour->proceed();
+
+				$this->arResult['tours']['expiredTasksDeadlineChange'] = [
+					'show' => $showExpiredTour,
+					'popupData' => $currentStepPopupData,
+					'backgroundCheck' => !$showExpiredTour && $expiredTour->canPotentiallyProceed(),
+					'counterToCheck' => $expiredTour->getNeededExpiredTasksCount(),
+				];
+			}
+		}
+	}
+
+	private function canProceedTours(): bool
+	{
+		return $this->isMyList() && !$this->request->isAjaxRequest();
+	}
+
+	private function canProceedExpiredTour(): bool
+	{
+		if ($this->arParams['GROUP_ID'] > 0)
+		{
+			return false;
+		}
+
+		$isFilteredByExpired = false;
+
+		if ($filterOptions = $this->filter->getOptions())
+		{
+			$filterFields = $filterOptions->getFilter($this->filter->getFilters());
+			$isFilteredByExpired =
+				array_key_exists('PROBLEM', $filterFields)
+				&& (int)$filterFields['PROBLEM'] === Counter\Type::TYPE_EXPIRED
+			;
+		}
+
+		if ($isFilteredByExpired)
+		{
+			return false;
+		}
+
+		return !Counter\Queue\Queue::getInstance()->isInQueue($this->userId);
 	}
 
 	protected function getSelect()
@@ -780,16 +893,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'FAVORITE',
 				'IS_MUTED',
 				'IS_PINNED',
+				'IS_PINNED_IN_GROUP'
 			];
-
-			if (
-				(int) $this->arParams['USER_ID'] === (int) $this->arResult['USER_ID']
-				|| User::isAdmin()
-				|| CTasks::IsSubordinate($this->arParams['USER_ID'], $this->arResult['USER_ID'])
-			)
-			{
-				$preferredColumns[] = 'NEW_COMMENTS_COUNT';
-			}
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
 		}
@@ -822,7 +927,14 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		if ($this->canUsePin())
 		{
-			$sortResult['IS_PINNED'] = 'desc';
+			if (!$this->arParams['GROUP_ID'])
+			{
+				$sortResult['IS_PINNED'] = 'desc';
+			}
+			else
+			{
+				$sortResult['IS_PINNED_IN_GROUP'] = 'desc';
+			}
 		}
 
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
@@ -1033,7 +1145,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		// @todo: needed to refactor
-		if ($this->arParams['SCRUM_BACKLOG'] == 'Y')
+		if ($this->arParams['SCRUM_BACKLOG'] === 'Y')
 		{
 			$getListParameters['legacyFilter']['ONLY_ROOT_TASKS'] = 'N';
 			$getListParameters['NAV_PARAMS']['nPageSize'] = 500;
@@ -1042,9 +1154,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$parameters = $this->arParams['PROVIDER_PARAMETERS'];
 		$parameters['ERRORS'] = $this->errors;
 		$parameters['TARGET_USER_ID'] = $this->arParams['USER_ID'];
-		$mgrResult = Manager\Task::getList(User::getId(), $getListParameters, $parameters);
 
-		$this->arResult['CURRENT_PAGE'] = (int)$mgrResult['AUX']['OBJ_RES']->PAGEN;
+		if ($this->arParams['LAZY_LOAD'] && !$this->request->isAjaxRequest())
+		{
+			$mgrResult['DATA'] = [];
+			$this->arResult['CURRENT_PAGE'] = 0;
+		}
+		else
+		{
+			$mgrResult = Manager\Task::getList(User::getId(), $getListParameters, $parameters);
+			$this->arResult['CURRENT_PAGE'] = (int)$mgrResult['AUX']['OBJ_RES']->PAGEN;
+		}
 
 		$this->arResult['ENABLE_NEXT_PAGE'] = false;
 		if (
@@ -1062,12 +1182,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$mgrResult['DATA'] = $this->mergeWithTags($mgrResult['DATA']);
 		}
 
+		if (array_key_exists('FILTER_ID', $this->arParams))
+		{
+			$this->arParams['FILTER_FIELDS'] = (new Options($this->arParams['FILTER_ID']))->getFilter();
+		}
 		$this->arParams['GET_LIST_PARAMETERS'] = $getListParameters;
 		$this->arResult['GET_LIST_PARAMS'] = $getListParameters;
 		$this->arResult['LIST'] = $mgrResult['DATA'];
 		$this->arResult['SUB_TASK_COUNTERS'] = $this->processSubTaskCounters();
+		$this->arResult['STUB'] = $this->getStub();
 
-		if ($this->arParams['SCRUM_BACKLOG'] == 'Y')
+		if ($this->arParams['SCRUM_BACKLOG'] === 'Y')
 		{
 			$this->arResult['LIST'] = $this->collapseParents($this->arResult['LIST']);
 		}
@@ -1084,11 +1209,50 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			$listState->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
 		}
+	}
 
-		if ($this->errors->checkHasFatals())
+	private function getStub()
+	{
+		if ($this->isUserFilterApplied())
 		{
-			return;
+			return [
+				'title' => Loc::getMessage('TASKS_GRID_STUB_NO_DATA_TITLE'),
+				'description' => Loc::getMessage('TASKS_GRID_STUB_NO_DATA_DESCRIPTION'),
+			];
 		}
+
+		if ($this->arParams['GROUP_ID'] > 0)
+		{
+			return '
+				<div class="tasks-list-create">
+					<div class="tasks-list-create-icon"></div>
+					<div class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_PROJECT_CREATED') . '</div>
+					<div class="tasks-list-create-br"></div>
+					<div class="tasks-list-create-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK') . '</div>
+					<div class="tasks-list-create-subtitle">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE') . '</div>
+				</div>
+			';
+		}
+
+		return [
+			'title' => Loc::getMessage('TASKS_GRID_STUB_TITLE'),
+			'description' => Loc::getMessage('TASKS_GRID_STUB_DESCRIPTION'),
+		];
+	}
+
+	private function isUserFilterApplied(): bool
+	{
+		if ($filterOptions = $this->filter->getOptions())
+		{
+			$currentPreset = $filterOptions->getCurrentFilterId();
+			$isDefaultPreset = $filterOptions->getDefaultFilterId() === $currentPreset;
+			$additionalFields = $filterOptions->getAdditionalPresetFields($currentPreset);
+			$isSearchStringEmpty = $filterOptions->getSearchString() === '';
+
+			return !$isSearchStringEmpty || !$isDefaultPreset || !empty($additionalFields);
+		}
+
+		return false;
 	}
 
 	/**
@@ -1101,6 +1265,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 	{
 		$userId = (int) $this->arParams['USER_ID'];
 		if (!$this->isMyList())
+		{
+			return;
+		}
+
+		if (Counter::getGlobalLimit() !== null)
 		{
 			return;
 		}
@@ -1151,8 +1320,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$groupId = isset($this->arParams['GROUP_ID']) ? (int) $this->arParams['GROUP_ID'] : 0;
 
-		$counter = \Bitrix\Tasks\Internals\Counter::getInstance($userId);
-		$counterValue = $counter->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_EXPIRED, $groupId);
+		$counter = Counter::getInstance($userId);
+		$counterValue = $counter->get(Counter\CounterDictionary::COUNTER_EXPIRED, $groupId);
 
 		if ($gridValue === $counterValue)
 		{
@@ -1164,19 +1333,19 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
-		if (\Bitrix\Tasks\Internals\Counter\CounterQueue::getInstance()->isInQueue($userId))
+		if (Counter\Queue\Queue::getInstance()->isInQueue($userId))
 		{
 			return;
 		}
 
-		if (\Bitrix\Tasks\Internals\Counter\Event\EventTable::hasLostEvents())
+		if (Counter\Event\EventTable::hasLostEvents())
 		{
 			return;
 		}
 
 		$application = Application::getInstance();
 		$application && $application->addBackgroundJob(
-			['\Bitrix\Tasks\Internals\Counter\CounterService', 'recountForUser'],
+			['\Bitrix\Tasks\Internals\Counter\CounterController', 'recountForUser'],
 			[$userId],
 			Application::JOB_PRIORITY_LOW - 5
 		);
@@ -1206,6 +1375,24 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		return $list;
+	}
+
+	/**
+	 * @param int $userId
+	 * @return bool
+	 */
+	private static function canSeeCounters(int $userId): bool
+	{
+		if (
+			$userId === (int)User::getId()
+			|| User::isAdmin()
+			|| CTasks::IsSubordinate($userId, (int)User::getId())
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	private static function setGroupData(array $list)

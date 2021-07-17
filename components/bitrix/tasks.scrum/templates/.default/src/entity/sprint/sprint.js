@@ -514,20 +514,52 @@ export class Sprint extends Entity
 		{
 			this.totalStoryPoints.clearPoints();
 			[...this.getItems().values()].map((item: Item) => {
-				this.totalStoryPoints.addPoints(item.getStoryPoints().getPoints());
+				if (!item.isSubTask())
+				{
+					this.totalStoryPoints.addPoints(item.getStoryPoints().getPoints());
+				}
 			});
 			this.totalCompletedStoryPoints.clearPoints();
 			[...this.getItems().values()].map((item: Item) => {
 				if (item.isCompleted())
 				{
-					this.totalCompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+					if (!item.isSubTask())
+					{
+						this.totalCompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+					}
+				}
+				else
+				{
+					if (item.isParentTask())
+					{
+						this.totalCompletedStoryPoints.addPoints(
+							item.getCompletedSubTasksStoryPoints().getPoints()
+						);
+					}
 				}
 			});
 			this.totalUncompletedStoryPoints.clearPoints();
 			[...this.getItems().values()].map((item: Item) => {
 				if (!item.isCompleted())
 				{
-					this.totalUncompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
+					if (!item.isSubTask())
+					{
+						let storyPoints = item.getStoryPoints().getPoints();
+						if (item.isParentTask())
+						{
+							storyPoints = item.getUncompletedSubTasksStoryPoints().getPoints();
+						}
+						this.totalUncompletedStoryPoints.addPoints(storyPoints);
+					}
+				}
+				else
+				{
+					if (item.isParentTask())
+					{
+						this.totalUncompletedStoryPoints.addPoints(
+							item.getUncompletedSubTasksStoryPoints().getPoints()
+						);
+					}
 				}
 			});
 		}

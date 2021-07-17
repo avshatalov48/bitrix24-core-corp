@@ -32,7 +32,7 @@ IncludeModuleLangFile(__FILE__);
 
 class CSeoEventHandlers
 {
-	function SeoOnPanelCreate()
+	public static function SeoOnPanelCreate()
 	{
 		global $APPLICATION, $USER;
 

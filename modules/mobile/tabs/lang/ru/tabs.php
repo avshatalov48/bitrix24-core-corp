@@ -18,3 +18,5 @@ $MESS['TASKS_ROLE_ACCOMPLICE'] = 'Помогаю';
 $MESS['TASKS_ROLE_AUDITOR'] = 'Наблюдаю';
 $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
 
+$MESS["TAB_NAME_CALLTRACKER"] = "Трекер звонков";
+$MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Звонки";

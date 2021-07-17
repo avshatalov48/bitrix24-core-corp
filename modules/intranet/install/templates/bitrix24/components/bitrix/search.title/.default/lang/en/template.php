@@ -4,6 +4,7 @@ $MESS["CT_BST_SEARCH_HINT"] = "find people, documents, and more";
 $MESS["CT_BST_WAITER_TEXT"] = "Searching...";
 $MESS["CT_BST_GLOBAL_SEARCH"] = "Search";
 $MESS["CT_BST_GLOBAL_SEARCH_STREAM"] = "Activity Stream";
+$MESS["CT_BST_GLOBAL_SEARCH_NEWS"] = "Feed";
 $MESS["CT_BST_GLOBAL_SEARCH_TASKS"] = "Tasks";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM"] = "CRM";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM_LEAD"] = "Leads";

@@ -241,7 +241,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 			'DATE_MARKED' => ($arOrderShipment['DATE_MARKED'] == 'Y' ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_MARKED']), $now) : ''),
 			'DATE_RESPONSIBLE_ID' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_RESPONSIBLE_ID']), $now),
 			'MARKED' => $arOrderShipment['MARKED'] == 'Y' ? Loc::getMessage('MAIN_YES') : Loc::getMessage('MAIN_NO'),
-			'CURRENCY' => CCrmCurrency::GetCurrencyName($arOrderShipment['CURRENCY']),
+			'CURRENCY' => CCrmCurrency::GetEncodedCurrencyName($arOrderShipment['CURRENCY']),
 			'DELIVERY_SERVICE' => $deliveryService,
 			'ALLOW_DELIVERY' => $arOrderShipment['ALLOW_DELIVERY'] == 'Y' ? '<span style="color: green;">'.Loc::getMessage('MAIN_YES').'</span>' : '<span style="color: red;">'.Loc::getMessage('MAIN_NO').'</span>',
 			'DEDUCTED' => $arOrderShipment['DEDUCTED'] == 'Y' ? '<span style="color: green;">'.Loc::getMessage('CRM_ORDER_DEDUCTED').'</span>' : '<span style="color: red;">'.Loc::getMessage('CRM_ORDER_NOT_DEDUCTED').'</span>'
@@ -268,11 +268,6 @@ if($arResult['ENABLE_TOOLBAR'])
 		'LINK' => $arResult['PATH_TO_ORDER_SHIPMENT_ADD'],
 		'ICON' => 'btn-new'
 	);
-
-	if($arResult['ADD_EVENT_NAME'] !== '')
-	{
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
-	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',

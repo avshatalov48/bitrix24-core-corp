@@ -368,6 +368,32 @@
 			},
 			{
 				condition: [
+					new RegExp(siteDir + "workgroups/group/[0-9]+/$", "i")
+				],
+				options: {
+					contentClassName: "bitrix24-group-slider-content",
+					loader: "intranet:livefeed",
+					cacheable: false,
+					customLeftBoundary: 0,
+					newWindowLabel: true,
+					copyLinkLabel: true,
+				}
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "workgroups/group/[0-9]+/tasks/$", "i")
+				],
+				options: {
+					contentClassName: "bitrix24-group-slider-content",
+					loader: "intranet:tasklist",
+					cacheable: false,
+					customLeftBoundary: 0,
+					newWindowLabel: true,
+					copyLinkLabel: true,
+				}
+			},
+			{
+				condition: [
 					new RegExp(siteDir + "timeman/worktime/records/[0-9]+/report/($|\\?)", "i")
 				],
 				options: {
@@ -493,7 +519,8 @@
 			},
 			{
 				condition: [
-					"/shop/catalog/(\\d+)/product/(\\d+)/variation/(\\d+)/"
+					"/shop/catalog/(\\d+)/product/(\\d+)/variation/(\\d+)/",
+					"/crm/catalog/(\\d+)/product/(\\d+)/variation/(\\d+)/"
 				],
 				options: {
 					cacheable: false,
@@ -504,7 +531,8 @@
 			},
 			{
 				condition: [
-					"/shop/catalog/(\\d+)/product/(\\d+)/"
+					"/shop/catalog/(\\d+)/product/(\\d+)/",
+					"/crm/catalog/(\\d+)/product/(\\d+)/"
 				],
 				options: {
 					cacheable: false,
@@ -541,6 +569,40 @@
 					cacheable: false,
 					allowChangeHistory: false,
 					width: 1028
+				}
+			},
+			{
+				condition: [
+					"/bitrix/services/main/ajax.php\\?action=disk.controller.documentservice.goToPreview"
+				],
+				options: {
+					cacheable: false,
+					width: '100%',
+					customLeftBoundary: 30,
+					allowChangeHistory: false,
+					data: {
+						documentEditor: true
+					}
+				}
+			},
+			{
+				condition: [ new RegExp("/shop/orders/payment/details/[0-9]+/", "i") ],
+				loader: "crm-entity-details-loader",
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_PAYMENT"),
+					}
+				}
+			},
+			{
+				condition: [ new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") ],
+				loader: "crm-entity-details-loader",
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_SHIPMENT"),
+					}
 				}
 			},
 		]

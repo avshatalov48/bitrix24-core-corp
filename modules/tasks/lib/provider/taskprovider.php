@@ -677,6 +677,11 @@ class TaskProvider
 					$needle = 'IS_PINNED';
 					break;
 
+				case 'is_pinned_in_group':
+					$this->arSqlOrder[] = " IS_PINNED_IN_GROUP " . $order . " ";
+					$needle = 'IS_PINNED_IN_GROUP';
+					break;
+
 				default:
 					if (substr($by, 0, 3) === 'uf_')
 					{
@@ -858,7 +863,6 @@ class TaskProvider
 			"PARENT_ID" => "T.PARENT_ID",
 			"COMMENTS_COUNT" => "FT.POSTS",
 			"SERVICE_COMMENTS_COUNT" => "FT.POSTS_SERVICE",
-			"NEW_COMMENTS_COUNT" => "CASE WHEN TSC.VALUE IS NULL THEN 0 ELSE TSC.VALUE END",
 			"FORUM_ID" => "FT.FORUM_ID",
 			"MESSAGE_ID" => "MIN(TSIF.MESSAGE_ID)",
 			"SITE_ID" => "T.SITE_ID",
@@ -911,6 +915,7 @@ class TaskProvider
 		{
 			$this->arFields['IS_MUTED'] = UserOption::getSelectSql($this->userId, UserOption\Option::MUTED);
 			$this->arFields['IS_PINNED'] = UserOption::getSelectSql($this->userId, UserOption\Option::PINNED);
+			$this->arFields['IS_PINNED_IN_GROUP'] = UserOption::getSelectSql($this->userId, UserOption\Option::PINNED_IN_GROUP);
 		}
 
 		return $this;

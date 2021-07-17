@@ -21,6 +21,8 @@ Loc::loadMessages(__FILE__);
 
 class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\BaseComponent
 {
+	use Crm\Component\EntityDetails\SaleProps\ComponentTrait;
+
 	const COMPONENT_ERROR_EMPTY_ORDER_ID = -0x3;
 
 	/** @var Order\Shipment */
@@ -99,6 +101,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 	public function setShipment(Order\Shipment $shipment)
 	{
 		$this->shipment = $shipment;
+		$this->arResult['SITE_ID'] = $this->shipment->getOrder()->getSiteId();
 	}
 
 	public function executeComponent()
@@ -298,7 +301,18 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 					array('name' => 'DISCOUNTS'),
 					array('name' => 'EXTRA_SERVICES_DATA')
 				)
-			)
+			),
+			array(
+				'name' => 'properties',
+				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_PROPERTIES'),
+				'type' => 'section',
+				'data' => array(
+					'showButtonPanel' => false
+				),
+				'elements' => 	array(
+					array('name' => 'PROPERTIES')
+				)
+			),
 		);
 
 		//endregion
@@ -454,6 +468,13 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		}
 		//endregion
 
+		$this->arResult['SHIPMENT_PROPERTIES'] = $this->prepareProperties(
+			$this->shipment->getPropertyCollection(),
+			Order\ShipmentProperty::class,
+			$this->shipment->getPersonTypeId(),
+			($this->shipment->getId() === 0)
+		);
+
 		$this->arResult['ENTITY_FIELDS'] = array(
 			array(
 				'name' => 'ID',
@@ -506,15 +527,15 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			array(
 				'name' => 'PRICE_DELIVERY_CALCULATED_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'),
-				'type' => 'money',
+				'type' => 'calculated_delivery_price',
 				'editable' => false,
 				'data' => array(
-					'affectedFields' => array('CURRENCY', 'EXPECTED_PRICE_DELIVERY'),
+					'affectedFields' => array('CURRENCY', 'PRICE_DELIVERY_CALCULATED'),
 					'currency' => array(
 						'name' => 'CURRENCY',
 						'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
 					),
-					'amount' => 'EXPECTED_PRICE_DELIVERY',
+					'amount' => 'PRICE_DELIVERY_CALCULATED',
 					'formatted' => 'FORMATTED_PRICE_DELIVERY_CALCULATED',
 					'formattedWithCurrency' => 'FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'
 				)
@@ -770,6 +791,21 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			)
 		);
 
+		$this->arResult['ENTITY_FIELDS'][] = array(
+			'name' => 'PROPERTIES',
+			'type' => 'order_property_wrapper',
+			'transferable' => false,
+			'editable' => true,
+			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+			'elements' => [],
+			'sortedElements' => [
+				'active' => is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) ? $this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"] : [],
+				'hidden' => is_array($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]) ? $this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"] : [],
+			],
+			'data' => [
+				'entityType' => 'shipment',
+			],
+		);
 
 		if($this->entityData['EXTRA_SERVICES_DATA'])
 		{
@@ -794,8 +830,11 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		if($this->entityData)
 			return $this->entityData;
 
-		$this->entityData = array();
 		$this->entityData = $this->shipment->getFieldValues();
+
+		$properties = $this->getPropertyEntityData($this->shipment->getPropertyCollection());
+		$this->entityData = array_merge($this->entityData, $properties);
+
 		if ($this->mode === ComponentMode::CREATION)
 		{
 			$this->entityData['ACCOUNT_NUMBER'] = AccountNumberGenerator::generateForShipment($this->shipment);
@@ -961,15 +1000,15 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			$this->entityData['ERRORS'] = $calcPrice->getErrorMessages();
 		}
 
-		$this->entityData['EXPECTED_PRICE_DELIVERY'] = $calcPrice->getPrice();
+		$this->entityData['PRICE_DELIVERY_CALCULATED'] = $calcPrice->getPrice();
 
 		$this->entityData['FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['EXPECTED_PRICE_DELIVERY'],
+			$this->entityData['PRICE_DELIVERY_CALCULATED'],
 			$this->entityData['CURRENCY'],
 			''
 		);
 		$this->entityData['FORMATTED_PRICE_DELIVERY_CALCULATED'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['EXPECTED_PRICE_DELIVERY'],
+			$this->entityData['PRICE_DELIVERY_CALCULATED'],
 			$this->entityData['CURRENCY'],
 			'#'
 		);
@@ -1060,6 +1099,12 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		];
 
 		$this->entityData['TRACKING_STATUS_VIEW'] = '';
+
+		$personTypes = \Bitrix\Crm\Order\PersonType::load($this->arResult['SITE_ID']);
+		if(empty($this->entityData['PERSON_TYPE_ID']))
+		{
+			$this->entityData['PERSON_TYPE_ID'] = key($personTypes);
+		}
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
 	}

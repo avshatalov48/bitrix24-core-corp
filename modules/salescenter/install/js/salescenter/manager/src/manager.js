@@ -667,9 +667,27 @@ export class Manager
 		return (new Uri('/saleshub/orders/')).setQueryParams(params).toString();
 	}
 
+	static getPaymentsListUrl(params)
+	{
+		if(!Type.isPlainObject(params))
+		{
+			params = {};
+		}
+		if(Manager.sessionId > 0)
+		{
+			params['sessionId'] = Manager.sessionId;
+		}
+		return (new Uri('/saleshub/payments/')).setQueryParams(params).toString();
+	}
+
 	static showOrdersList(params)
 	{
 		return Manager.openSlider(Manager.getOrdersListUrl(params));
+	}
+
+	static showPaymentsList(params)
+	{
+		return Manager.openSlider(Manager.getPaymentsListUrl(params));
 	}
 
 	static getOrderAddUrl(params)
@@ -853,6 +871,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=9289135', 'chat_connect');
 	}
 
+	static openHowCrmStoreWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=13651476', 'crmstore_how_works');
+	}
+
 	static openHowSmsWorks(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9680407', 'sms_connect');
@@ -871,6 +894,11 @@ export class Manager
 	static openHowToConfigPaySystem(event, code)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_connect');
+	}
+
+	static openHowToConfigCashboxPaySystem(event, code)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=' + code, 'pay_system_cashbox_connect');
 	}
 
 	static openHowToUseOfflineCashBox(event)
@@ -926,6 +954,11 @@ export class Manager
 	static openCommonPagesHelp(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9604717', 'common_pages');
+	}
+
+	static openBitrix24NotificationsHelp(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=13659402', 'bitrix24_notifications');
 	}
 
 	static openHelper(event = null, url = '', analyticsArticle = '')
@@ -994,6 +1027,15 @@ export class Manager
 			event.preventDefault();
 		}
 		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {width: 735});
+	}
+
+	static openIntegrationRequestForm(event)
+	{
+		if (event && Type.isFunction(event.preventDefault))
+		{
+			event.preventDefault();
+		}
+		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=integration_request', {width: 735});
 	}
 
 	static openApplication(params = {})

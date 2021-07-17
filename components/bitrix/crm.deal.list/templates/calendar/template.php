@@ -645,3 +645,4 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	//endregion
 </script>
 
+<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>

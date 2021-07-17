@@ -163,6 +163,27 @@ class Factory
 		return true;
 	}
 
+	public static function isBizprocDesignerSupported(int $entityTypeId): bool
+	{
+		return (
+			$entityTypeId === \CCrmOwnerType::Lead
+			|| $entityTypeId === \CCrmOwnerType::Deal
+			|| $entityTypeId === \CCrmOwnerType::Contact
+			|| $entityTypeId === \CCrmOwnerType::Company
+			|| $entityTypeId === \CCrmOwnerType::Order
+			|| $entityTypeId === \CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+		);
+	}
+
+	public static function isBizprocDesignerEnabled(int $entityTypeId): bool
+	{
+		$isSupported = static::isBizprocDesignerSupported($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		return isset($factory) ? $factory->isBizProcEnabled() : $isSupported;
+	}
+
 	public static function canUseAutomation()
 	{
 		foreach (static::getSupportedEntityTypes() as $entityTypeId)
@@ -338,6 +359,7 @@ class Factory
 					Trigger\DeductedTrigger::className(),
 					Trigger\OrderCanceledTrigger::className(),
 					Trigger\OrderPaidTrigger::className(),
+					Trigger\DeliveryFinishedTrigger::className(),
 					Trigger\WebHookTrigger::className(),
 					Trigger\VisitTrigger::className(),
 					Trigger\GuestReturnTrigger::className(),

@@ -41,4 +41,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 			<span class="disk-external-link-setting-password"><?= Loc::getMessage('DISK_JS_EL_SETTINGS_LINK_VALUE_PROTECT_BY_PASSWORD') ?></span>
 		</div>
 		{{/hasPassword}}
+        {{#availableEdit}}
+        <div class="disk-external-link-setting-popup">
+            <label for="public-link-setting-checkbox-can-edit" class="disk-external-link-setting-popup-label">
+                <input type="checkbox" {{#canEditDocument}} checked="checked" {{/canEditDocument}} class="disk-external-link-setting-checkbox" data-entity="public-link-setting-checkbox-can-edit" id="public-link-setting-checkbox-can-edit">
+                <span><?= Loc::getMessage('DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT') ?></span>
+            </label>
+        </div>
+        {{/availableEdit}}
 </script>

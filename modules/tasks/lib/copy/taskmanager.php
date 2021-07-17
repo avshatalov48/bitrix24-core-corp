@@ -5,7 +5,6 @@ use Bitrix\Bizproc\Copy\Implement\Trigger as TriggerImplementer;
 use Bitrix\Bizproc\Copy\Integration\Helper as BizprocHelper;
 use Bitrix\Bizproc\Copy\Trigger as TriggerCopier;
 use Bitrix\Bizproc\Copy\WorkflowTemplate as RobotsCopier;
-use Bitrix\Bizproc\Copy\Implement\WorkflowTemplate as RobotsImplementer;
 use Bitrix\Forum\Copy\Implement\Comment as CommentImplementer;
 use Bitrix\Forum\Copy\Implement\Topic as TopicImplementer;
 use Bitrix\Main\Copy\Container;
@@ -14,6 +13,7 @@ use Bitrix\Main\Copy\EntityCopier;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Tasks\Copy\CheckList as CheckListCopier;
+use Bitrix\Tasks\Copy\Implement\Robots;
 use Bitrix\Tasks\Copy\Implement\Stage as StageImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskCheckList as CheckListImplementer;
 use Bitrix\Tasks\Copy\Implement\Task as TaskImplementer;
@@ -119,7 +119,7 @@ class TaskManager
 	{
 		if (Loader::includeModule("bizproc"))
 		{
-			$projectDocumentType = TaskDocumentType::resolveProjectTaskType($groupId);
+			$projectDocumentType = TaskDocumentType::resolveProjectTaskType($groupId); // todo scrum project
 			$currentDocumentType = ["tasks", TaskDocumentType::class, $projectDocumentType];
 			$bizprocHelper = new BizprocHelper($currentDocumentType);
 			$newDocumentType = ["tasks", TaskDocumentType::class,
@@ -212,7 +212,7 @@ class TaskManager
 
 	private function getRobotsImplementer(array $documentType, array $mapIdsCopiedStages)
 	{
-		return new RobotsImplementer($documentType, $mapIdsCopiedStages);
+		return new Robots($documentType, $mapIdsCopiedStages);
 	}
 
 	private function getRobotsCopier($robotsImplementer)

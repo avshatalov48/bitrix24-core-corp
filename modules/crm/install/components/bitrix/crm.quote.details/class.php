@@ -2,6 +2,7 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Accounting;
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Contact;
 use Bitrix\Crm\Conversion\ConversionManager;
@@ -11,6 +12,8 @@ use Bitrix\Crm\EO_Company;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
@@ -51,7 +54,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		$this->init();
 
-		if($this->getErrors())
+		if ($this->getErrors())
 		{
 			$this->includeComponentTemplate();
 			return;
@@ -139,7 +142,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	public function getEmailSettings(?Contact $contact, ?EO_Company $company): array
 	{
 		$isClientEmpty = is_null($contact) && is_null($company);
-		$hasLead = ($this->item->getLeadId() > 0 && !$this->item->isNew());
+		$hasLead = ($this->item->getLead() !== null && !$this->item->isNew());
 
 		$communications = [];
 		if (!$isClientEmpty)
@@ -272,6 +275,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			return [
 				'lockScript' => $restrictions->prepareInfoHelperScript(),
 				'buttonId' => $convertButton->getMainButton()->getAttribute('id'),
+				'menuButtonId' => $convertButton->getMenuButton()->getAttribute('id'),
 			];
 		}
 
@@ -333,7 +337,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 		if(!$this->item->isNew())
 		{
-			if(Buttons\IntranetBindingMenu::isAvailable())
+			if (Buttons\IntranetBindingMenu::isAvailable())
 			{
 				$buttons[ButtonLocation::AFTER_TITLE][] = Buttons\IntranetBindingMenu::createByComponentParameters(
 					$this->getIntranetBindingMenuParameters()
@@ -357,9 +361,17 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				],
 			]);
 
-			if($this->isDocumentButtonAvailable())
+			if ($this->isDocumentButtonAvailable())
 			{
 				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getDocumentToolbarButton();
+			}
+
+			if (
+				\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
+				&& $this->getBizprocStarterConfig()
+			)
+			{
+				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
 			}
 
 			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getConversionToolbarButton();
@@ -600,7 +612,6 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		$codes = parent::getTabCodes();
 
 		return array_merge($codes, [
-			static::TAB_NAME_TREE => [],
 			static::TAB_NAME_DEALS => [],
 			static::TAB_NAME_INVOICES => [],
 		]);
@@ -794,5 +805,111 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			'elements' => []
 		];
 		return $scheme;
+	}
+
+	protected function getProductRowsFromParent(ItemIdentifier $identifier): array
+	{
+		return \CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::ResolveByTypeID($identifier->getEntityTypeId()), $identifier->getEntityId());
+	}
+
+	protected function getParentEntityTypeIdsToLoadProducts(): array
+	{
+		return [
+			\CCrmOwnerType::Lead => Item\Quote::FIELD_NAME_LEAD_ID,
+			\CCrmOwnerType::Deal => Item\Quote::FIELD_NAME_DEAL_ID
+		];
+	}
+
+	protected function getProductsData(): ?array
+	{
+		if ($this->item->isNew() && !$this->isCopyMode() && !$this->isConversionMode())
+		{
+			$parentFieldNamesToPassProducts = $this->getParentEntityTypeIdsToLoadProducts();
+			foreach ($parentFieldNamesToPassProducts as $entityTypeId => $fieldName)
+			{
+				$entityId = $this->item->get($fieldName);
+				if ($entityId > 0)
+				{
+					$parentRows = $this->getProductRowsFromParent(new ItemIdentifier($entityTypeId, $entityId));
+					if (!empty($parentRows))
+					{
+						return $parentRows;
+					}
+				}
+			}
+		}
+
+		return parent::getProductsData();
+	}
+
+	protected function fillParentFields(): void
+	{
+		parent::fillParentFields();
+
+		$parentFieldNamesToPassProducts = $this->getParentEntityTypeIdsToLoadProducts();
+		foreach ($parentFieldNamesToPassProducts as $entityTypeId => $fieldName)
+		{
+			$entityId = $this->item->get($fieldName);
+			if ($entityId > 0)
+			{
+				$parentIdentifier = new ItemIdentifier($entityTypeId, $entityId);
+				$parentRows = $this->getProductRowsFromParent($parentIdentifier);
+				if (!empty($parentRows))
+				{
+					$this->item->setProductRowsFromArrays($parentRows);
+					$productRows = $this->item->getProductRows();
+					if ($productRows)
+					{
+						$this->item->set(
+							Item::FIELD_NAME_OPPORTUNITY,
+							Accounting\Products::calculateSum(
+								$this->item,
+								$this->item->getProductRows()->getAll()
+							)
+						);
+					}
+				}
+
+				$companyRelation = Container::getInstance()->getRelationManager()->getRelation(new RelationIdentifier(
+					\CCrmOwnerType::Company,
+					$entityTypeId
+				));
+				if ($companyRelation)
+				{
+					$companyIdentifiers = $companyRelation->getParentElements($parentIdentifier);
+					if (!empty($companyIdentifiers))
+					{
+						$companyId = $companyIdentifiers[0]->getEntityId();
+						if ($companyId > 0)
+						{
+							$this->item->setCompanyId($companyId);
+						}
+					}
+				}
+				$contactRelation = Container::getInstance()->getRelationManager()->getRelation(new RelationIdentifier(
+					\CCrmOwnerType::Contact,
+					$entityTypeId
+				));
+				if ($contactRelation)
+				{
+					$contactIds = [];
+					$contactIdentifiers = $contactRelation->getParentElements($parentIdentifier);
+					foreach ($contactIdentifiers as $contactIdentifier)
+					{
+						$contactIds[] = $contactIdentifier->getEntityId();
+					}
+					if (!empty($contactIds))
+					{
+						$bindings = \Bitrix\Crm\Binding\EntityBinding::prepareEntityBindings(
+							\CCrmOwnerType::Contact,
+							$contactIds
+						);
+						$this->item->bindContacts($bindings);
+					}
+				}
+				
+				return;
+			}
+		}
 	}
 }

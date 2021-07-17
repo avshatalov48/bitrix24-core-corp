@@ -58,7 +58,7 @@ class CommentController extends EntityController
 		return self::$parser;
 	}
 
-	public static function getFileBlock($id)
+	public static function getFileBlock($id, $options = ['MOBILE' => 'N'])
 	{
 		$id = (int)$id;
 		if ($id <= 0)
@@ -84,6 +84,7 @@ class CommentController extends EntityController
 						"PUBLIC_MODE" => false,
 						"ENABLE_AUTO_BINDING_VIEWER" => true,
 						"LAZYLOAD" => 'Y',
+						'MOBILE' => $options['MOBILE'],
 						'arUserField' => $fileFields[self::UF_COMMENT_FILE_NAME]
 					),
 					null,
@@ -127,6 +128,7 @@ class CommentController extends EntityController
 				$parser->arUserfields = $fileFields;
 			}
 		}
+		$parser->bMobile = ($options['MOBILE'] === 'Y');
 		if (self::$parser instanceof \blogTextParser)
 		{
 			$data['TEXT'] = $parser::killAllTags($data['COMMENT']);
@@ -162,7 +164,7 @@ class CommentController extends EntityController
 		}
 
 		$data['COMMENT'] = \Bitrix\Main\Text\Emoji::decode($data['COMMENT']);
-		$data['COMMENT'] = preg_replace('/\[[^\]]+\]/', '', $data['COMMENT']);
+	//	$data['COMMENT'] = preg_replace('/\[[^\]]+\]/', '', $data['COMMENT']);
 
 		return $data;
 	}

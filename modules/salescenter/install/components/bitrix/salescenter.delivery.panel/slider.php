@@ -45,7 +45,8 @@ else
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
 				'SEF_FOLDER' => '/shop/settings/'
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

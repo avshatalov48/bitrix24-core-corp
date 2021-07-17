@@ -957,24 +957,48 @@ th.task-responsible-column:hover .task-head-cell-clear-underlay, th.task-directo
 .task-list-item:hover { background-color: #f9f9f9;}
 .task-list-item-hidden { display:none; }
 
-.tasks-list-item-pinned .main-grid-cell {
-    background-color: #eefbff!important;
+.tasks-list-item-pinned td:not([style*="background-color"]) {
+    background-color: whitesmoke !important;
 }
 
-/* The duration of animation should be sync with BX.Tasks.QuickForm.prototype.highlight */
-.task-list-item-highlighted .main-grid-cell {
-	-webkit-animation: task-list-item-highlight 1s linear 1;
-	animation: task-list-item-highlight 1s linear 1;
+.task-list-item-highlighted {
+    animation: highlightRow 900ms ease;
+    z-index: 9999;
 }
 
-@-webkit-keyframes task-list-item-highlight {
-	20% { background-color: #fff4cb; }
-	100% { background-color: transparent; }
+.task-list-item-highlighted td:not([style*="background-color"]) {
+    animation: highlightRowTd 900ms ease;
 }
 
-@keyframes task-list-item-highlight {
-	20% { background-color: #fff4cb; }
-	100% { background-color: transparent; }
+@keyframes highlightRow {
+    0% {
+        opacity: .2;
+        box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    60% {
+        box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.3);
+        opacity: 1;
+    }
+
+    100% {
+        box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes highlightRowTd {
+    0% {
+        background-color: #FFF2D5;
+    }
+
+    60% {
+        background-color: #FFF2D5;
+    }
+
+    100% {
+        background-color: #ffffff;
+    }
 }
 
 /* Title column*/
@@ -1056,6 +1080,8 @@ td.task-title-column { padding-left:6px !important; padding-right:0 !important; 
 .task-checklist-counter.ui-label,
 .task-attachment-counter.ui-label {
 	top: -1px;
+	height: 16px;
+	margin: 0;
 	--ui-label-color: #525C69 !important;
 	font-size: 14px;
 	cursor: pointer;
@@ -1470,7 +1496,11 @@ td.task-report-efficiency-column { border-right: 1px solid #e5e5e5 !important; b
 .task-title-button-search-full .task-title-button-search-right { background-position: -6px -936px; }
 .task-title-button-search-full .task-title-button-search-textbox { border-color: #c6c6c6; }
 
-.task-title { font-size: 14px }
+.task-title {
+	display: inline-block;
+	margin-top: -1px;
+	font-size: 14px
+}
 
 .task-title-button-create { margin-right: 10px;}
 .task-title-button-create-icon { display:inline-block; height:19px; width: 11px; background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -19px -470px; vertical-align:top;}
@@ -2603,6 +2633,6 @@ table.task-table-hide-first-column > tr > td:first-child {
 	background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='11px' height='13px' viewBox='0 0 11 13' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cg stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'%3E%3Cpath d='M6.08790493,11.1580043 L6.12024586,11.1844386 C6.31934788,11.3841575 6.42935564,11.6514245 6.42913384,11.9366893 C6.42862733,12.5228272 5.96054194,12.9998139 5.38636441,12.9999993 C5.11328726,13.0003244 4.85546874,12.8930364 4.66122316,12.6980313 C4.46212114,12.4983124 4.35211338,12.2310455 4.35233519,11.9457806 C4.35241064,11.6316037 4.48950833,11.3532306 4.70212795,11.1585192 L6.08790493,11.1580043 Z M1.11582543,2.7204359 L10.3682328,11.9728433 L9.54257658,12.7984995 L7.184,10.44 L0.558979634,10.4429714 C0.289944504,10.4432231 0.100876746,10.3865477 0.0403327495,10.2875744 C-0.0358115004,10.1638477 -0.0155502715,9.84830681 0.200485995,9.42159015 C0.283111663,9.25813648 0.438375759,9.08613434 0.61766653,8.90626003 L0.803165757,8.72378672 C1.11444818,8.42052716 1.46717541,8.07664476 1.67749347,7.65471349 C1.90956876,7.18864507 2.02422279,6.65494378 2.13050031,6.08862316 L2.241,5.497 L0.290169229,3.5460921 L1.11582543,2.7204359 Z M5.52922102,2.69002325 C7.92523314,2.68934536 8.38257184,4.04786312 8.69932868,5.58849322 L8.86311196,6.41129934 C8.96233787,6.89081731 9.07516529,7.34096232 9.26324787,7.73329538 C9.39894031,8.0165063 9.6318998,8.2835082 9.88128468,8.54152562 L10.2710897,8.93686054 C10.4416347,9.11217159 10.5948027,9.28118571 10.665046,9.41147285 C10.9124527,9.87001169 10.9134517,10.1795848 10.8389297,10.3053415 C10.7728366,10.4169569 10.606391,10.4403398 10.4782973,10.4400962 L10.323,10.44 L3.21898869,3.33731565 C3.31615795,3.25416637 3.42360178,3.17781567 3.54280993,3.10899082 C4.00216905,2.8437797 4.63583048,2.69014293 5.52922102,2.69002325 Z M5.77558341,-7.81597009e-14 C5.92043391,0.0123989274 6.06622092,0.260392588 6.06584444,0.786404827 L6.06805933,1.92487303 L5.0008028,1.92552754 L5.00391468,0.794478832 C5.00425096,0.254846423 5.17353056,0.0322233975 5.33204057,0.000528575997 L5.77558341,-7.81597009e-14 Z' fill='%23767C87' /%3E%3C/g%3E%3C/svg%3E");
 }
 
-.main-grid-row[data-type='task'] .ui-label {
+.main-grid-row[data-type='task'] .ui-label:not(.task-attachment-counter):not(.task-checklist-counter) {
 	margin: 0 4px 4px 0;
 }

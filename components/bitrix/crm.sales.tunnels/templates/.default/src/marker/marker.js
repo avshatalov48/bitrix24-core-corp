@@ -126,7 +126,7 @@ export default class Marker extends Event.EventEmitter
 
 		Marker.getAllLinks().forEach((link) => {
 			link.from.links.delete(link);
-			link.from.addLinkTo(link.to, preventSave);
+			link.from.addLinkTo(link.to, link.robotAction, preventSave);
 		});
 	}
 
@@ -423,7 +423,7 @@ export default class Marker extends Event.EventEmitter
 					return;
 				}
 
-				this.addLinkTo(destinationMarker);
+				this.addLinkTo(destinationMarker, 'copy');
 			}
 		}
 	}
@@ -445,8 +445,38 @@ export default class Marker extends Event.EventEmitter
 	getTunnelMenuItems(link): Array<{text: string, onclick: () => void}>
 	{
 		const self = this;
+		const onRobotActionChange = function(robotAction: string) {
+			if (!Type.isNil(link) && link.robotAction !== robotAction)
+			{
+				self.changeRobotAction(link, robotAction)
+				link.robotAction = robotAction;
+			}
+
+			this.getParentMenuWindow().close();
+			this.getParentMenuWindow().getMenuItems()[0].setText(
+				Loc.getMessage(`CRM_ST_ROBOT_ACTION_${robotAction.toUpperCase()}`)
+			);
+		}
+		const robotAction = Type.isNil(link) ? 'COPY' : link.robotAction.toUpperCase();
 
 		return [
+			{
+				text: Loc.getMessage(`CRM_ST_ROBOT_ACTION_${robotAction}`),
+				items: [
+					{
+						text: Loc.getMessage('CRM_ST_ACTION_COPY'),
+						onclick() {
+							onRobotActionChange.call(this, 'copy');
+						},
+					},
+					{
+						text: Loc.getMessage('CRM_ST_ACTION_MOVE'),
+						onclick() {
+							onRobotActionChange.call(this, 'move');
+						}
+					},
+				],
+			},
 			{
 				text: Loc.getMessage('CRM_ST_SETTINGS'),
 				onclick() {
@@ -470,12 +500,21 @@ export default class Marker extends Event.EventEmitter
 		];
 	}
 
+	changeRobotAction(link: Link, action: string)
+	{
+		this.emit('Marker:changeRobotAction', {
+			link,
+			action,
+			onChangeRobotEnd: () => this.emit('Marker:editLink', { link }),
+		});
+	}
+
 	editLink(link: Link)
 	{
 		this.emit('Marker:editLink', {link});
 	}
 
-	addLinkTo(destination: Marker, preventSave = false)
+	addLinkTo(destination: Marker, robotAction: string, preventSave = false)
 	{
 		setTimeout(() => {
 			if (![...this.links].some(link => link.to === destination))
@@ -519,6 +558,7 @@ export default class Marker extends Event.EventEmitter
 					from: this,
 					to: destination,
 					node: linkNode,
+					robotAction,
 					arrow,
 					path,
 				};

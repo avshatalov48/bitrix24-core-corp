@@ -95,3 +95,7 @@
 	margin-bottom: -1px;
 	border: none;
 }
+
+.task-detail-sidebar-item-videocall {
+	margin: 15px 0 33px;
+}

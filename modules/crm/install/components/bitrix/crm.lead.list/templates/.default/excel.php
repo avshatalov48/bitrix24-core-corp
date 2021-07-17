@@ -127,7 +127,7 @@ else
 							$leadData['SOURCE_ID'] = isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : $sourceID;
 							break;
 						case 'CURRENCY_ID':
-							$leadData['CURRENCY_ID'] = CCrmCurrency::GetCurrencyName($arLead['CURRENCY_ID']);
+							$leadData['CURRENCY_ID'] = CCrmCurrency::GetEncodedCurrencyName($arLead['CURRENCY_ID']);
 							break ;
 						case 'CREATED_BY':
 							$leadData['CREATED_BY'] = isset($arLead['CREATED_BY_FORMATTED_NAME']) ? $arLead['CREATED_BY_FORMATTED_NAME'] : '';

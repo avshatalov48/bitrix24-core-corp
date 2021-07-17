@@ -19,6 +19,7 @@ var CrmFormEditor = function(params)
 		this.canRemoveCopyright = params.canRemoveCopyright;
 		this.showRestrictionPopup = params.showRestrictionPopup;
 
+		this.dynamicEntities = params.dynamicEntities;
 		this.entityDictionary = params.entityDictionary;
 		this.schemesDictionary = params.schemesDictionary;
 		this.fieldsDictionary = params.fieldsDictionary;
@@ -1173,6 +1174,7 @@ CrmWebFormEditEntityScheme.prototype =
 		this.radioList = BX.convert.nodeListToArray(this.context.querySelectorAll('[data-bx-web-form-entity-scheme-value]'));
 		this.invoiceCheckNode = this.context.querySelector('[data-bx-web-form-entity-scheme-invoice]');
 		this.dealCategoryNode = this.context.querySelector('[data-bx-web-form-entity-scheme-deal-cat]');
+		this.dynamicCategoryNode = this.context.querySelector('[data-bx-web-form-entity-scheme-dyn-cat]');
 		this.dealDcNode = this.context.querySelector('[data-bx-web-form-entity-scheme-deal-dc]');
 
 		var valueNodes = document.getElementsByName('ENTITY_SCHEME');
@@ -1186,6 +1188,8 @@ CrmWebFormEditEntityScheme.prototype =
 		this.submitButtonNode = BX('CRM_WEBFORM_SUBMIT_APPLY');
 		BX.bind(this.submitButtonNode, 'click', BX.proxy(this.checkCreateFields, this));
 		this.initInvoiceBlock();
+
+		this.actualizeDynamicCategory();
 	},
 
 	initInvoiceBlock: function ()
@@ -1476,6 +1480,7 @@ CrmWebFormEditEntityScheme.prototype =
 		this.setCurrentId(scheme.ID);
 		this.actualizeInvoiceSettings(scheme);
 		this.actualizeDealCategory(scheme);
+		this.actualizeDynamicCategory(scheme);
 
 		BX.onCustomEvent(this.caller, 'change-entity-scheme', [scheme]);
 	},
@@ -1518,6 +1523,36 @@ CrmWebFormEditEntityScheme.prototype =
 		this.helper.changeClass(this.dealCategoryNode, 'crm-webform-edit-animate-show-120', isAdd);
 		this.helper.changeClass(this.dealDcNode, 'crm-webform-edit-animate-show-120', isAdd);
 		//this.helper.styleDisplay(this.dealCategoryNode, BX.util.in_array('DEAL', scheme.ENTITIES));
+	},
+
+	actualizeDynamicCategory: function()
+	{
+		var scheme = this.getCurrent();
+		var isAdd = scheme.DYNAMIC;
+		this.helper.changeClass(this.dynamicCategoryNode, 'crm-webform-edit-animate-show-120', isAdd);
+		if (!isAdd)
+		{
+			return;
+		}
+
+		var entity = this.caller.dynamicEntities.filter(function (entity) {
+			return entity.id === scheme.MAIN_ENTITY;
+		})[0];
+		if (!entity)
+		{
+			return;
+		}
+
+		var select = BX('DYNAMIC_CATEGORY');
+		var selectedCatId = parseInt(select.value || 0);
+		select.innerHTML = '';
+		entity.categories.forEach(function (category) {
+			var option = document.createElement('option');
+			option.value = category.id;
+			option.selected = parseInt(category.id) === selectedCatId;
+			option.textContent = category.name;
+			select.appendChild(option);
+		}.bind(this));
 	},
 
 	actualizeTextWillCreatedEntities: function()

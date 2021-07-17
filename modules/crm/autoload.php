@@ -247,6 +247,14 @@ CModule::AddAutoloadClasses(
 $classAliases = [
 	['Bitrix\Crm\Communication\Type', 'Bitrix\Crm\CommunicationType'],
 ];
+
+if (IsModuleInstalled('sale'))
+{
+	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderCrm', 'Bitrix\Crm\Order\OrderBuilderCrm'];
+	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderRest', 'Bitrix\Crm\Order\OrderBuilderRest'];
+	$classAliases[] = ['Bitrix\Crm\Order\Builder\BasketBuilderCrm', 'Bitrix\Crm\Order\BasketBuilderCrm'];
+}
+
 foreach ($classAliases as $classAlias)
 {
 	class_alias($classAlias[0], $classAlias[1]);

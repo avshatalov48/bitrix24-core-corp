@@ -108,13 +108,31 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
+				var roleButton = BX('tasks_panel_menu_view_projects');
+				if (roleButton)
+				{
+					roleButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data.projects_major);
+				}
+
 				Object.keys(data[0]).forEach(function(role) {
 					var roleButton = BX('tasks_panel_menu_' + (this.groupId ? 'group_' : '') + role);
 					if (roleButton)
 					{
-						roleButton.querySelector('.main-buttons-item-counter').innerText = (data[0][role].total || '');
+						roleButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data[0][role].total);
 					}
 				}.bind(this));
+			},
+
+			getCounterValue: function(value)
+			{
+				if (!value)
+				{
+					return '';
+				}
+
+				var maxValue = 99;
+
+				return (value > maxValue ? maxValue + '+' : value);
 			},
 
 			onFilterApply: function(filterId, data, ctx)

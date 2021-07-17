@@ -13,6 +13,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Web\Uri;
 
@@ -88,13 +89,13 @@ class Manager
 	 */
 	public function clearLeftMenuCache(): void
 	{
-		if (!defined('BX_COMP_MANAGED_CACHE'))
-		{
-			return;
-		}
+		$this->clearTaggedCache('bitrix24_left_menu');
 
-		$taggedCache = Application::getInstance()->getTaggedCache();
-		$taggedCache->clearByTag('bitrix24_left_menu');
+		// since composite cache will be cleared for users on their next hit,
+		// there is no sense in in clearing whole site composite cache
+
+		// clear cache only for current user
+		$this->clearCompositeCache();
 	}
 
 	/**
@@ -104,13 +105,30 @@ class Manager
 	 */
 	public function clearLeftMenuCacheForUser(int $userId): void
 	{
+		$this->clearTaggedCache('USER_NAME_' . $userId);
+
+		$this->clearCompositeCache($userId);
+	}
+
+	protected function clearTaggedCache(string $tag): void
+	{
 		if (!defined('BX_COMP_MANAGED_CACHE'))
 		{
 			return;
 		}
 
 		$taggedCache = Application::getInstance()->getTaggedCache();
-		$taggedCache->clearByTag('USER_NAME_' . $userId);
+		$taggedCache->clearByTag($tag);
+	}
+
+	/**
+	 * Clears left menu composite cache for a user.
+	 *
+	 * @param int|null $userId - if no $userId is provided, cache is cleared for the current user
+	 */
+	protected function clearCompositeCache(int $userId = null): void
+	{
+		\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache(is_int($userId) ? $userId : false);
 	}
 
 	/**
@@ -462,7 +480,10 @@ class Manager
 	{
 		if (!preg_match(static::PAGE_URL_REGEX, $url->getPath(), $matches))
 		{
-			$result->addError(new Error('Url not matches custom section pattern', static::ERROR_CODE_INVALID_URL));
+			$result->addError(new Error(
+				Loc::getMessage('INTRANET_CUSTOM_SECTION_MANAGER_INVALID_URL'),
+				static::ERROR_CODE_INVALID_URL
+			));
 			return null;
 		}
 
@@ -470,13 +491,19 @@ class Manager
 
 		if (!$customSection)
 		{
-			$result->addError(new Error('Custom section is not found', static::ERROR_CODE_SECTION_NOT_FOUND));
+			$result->addError(new Error(
+				Loc::getMessage('INTRANET_CUSTOM_SECTION_MANAGER_SECTION_NOT_FOUND'),
+				static::ERROR_CODE_SECTION_NOT_FOUND
+			));
 			return null;
 		}
 
 		if (!$this->isCustomSectionAvailable($customSection))
 		{
-			$result->addError(new Error('Custom section is not available', static::ERROR_CODE_SECTION_NOT_AVAILABLE));
+			$result->addError(new Error(
+				Loc::getMessage('INTRANET_CUSTOM_SECTION_MANAGER_SECTION_NOT_AVAILABLE'),
+				static::ERROR_CODE_SECTION_NOT_AVAILABLE
+			));
 			return null;
 		}
 
@@ -568,7 +595,10 @@ class Manager
 
 		if (is_null($component))
 		{
-			$result->addError(new Error('Component was not found', static::ERROR_CODE_COMPONENT_NOT_FOUND));
+			$result->addError(new Error(
+				Loc::getMessage('INTRANET_CUSTOM_SECTION_MANAGER_COMPONENT_NOT_FOUND'),
+				static::ERROR_CODE_COMPONENT_NOT_FOUND
+			));
 			return;
 		}
 

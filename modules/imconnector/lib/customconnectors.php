@@ -327,9 +327,8 @@ class CustomConnectors
 			$provider = $providerResult->getResult();
 			if($provider instanceof Provider\Base\Input)
 			{
-				$provider->reception();
+				$result = $provider->reception();
 			}
-
 		}
 		else
 		{

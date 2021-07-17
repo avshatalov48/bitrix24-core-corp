@@ -18,4 +18,7 @@ $MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE"] = "Предложение";
 $MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_DESC"] = "предложение, контакт или компания";
 $MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC"] = "предложение, контакт или компания, счет";
 $MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1"] = "предложение, контакт или компания, заказ";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC"] = "Смарт-процесс";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_DESC"] = "Смарт-процесс, контакт или компания";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_INVOICE_DESC"] = "Смарт-процесс, контакт или компания, заказ";
 ?>

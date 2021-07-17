@@ -18,6 +18,8 @@ class Filter extends Common
 {
 	protected static $instance = null;
 
+	protected static $options = [];
+
 	public function getDefaultRoleId()
 	{
 		static $roleId = null;
@@ -89,14 +91,15 @@ class Filter extends Common
 	 */
 	public function getOptions()
 	{
-		static $instance = null;
-
-		if (!$instance)
+		if (empty(static::$options[$this->getId()]))
 		{
-			$instance = new \Bitrix\Main\UI\Filter\Options($this->getId(), static::getPresets($this));
+			static::$options[$this->getId()] = new \Bitrix\Main\UI\Filter\Options(
+				$this->getId(),
+				static::getPresets($this)
+			);
 		}
 
-		return $instance;
+		return static::$options[$this->getId()];
 	}
 
 	/**
@@ -968,11 +971,11 @@ class Filter extends Common
 	/**
 	 * @return array
 	 */
-	private function getAllowedTaskCategories()
+	private function getAllowedTaskCategories(): array
 	{
-		$list = array();
+		$list = [];
 
-		$taskCategories = array(
+		$taskCategories = [
 			\CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE,
 			\CTaskListState::VIEW_TASK_CATEGORY_NEW,
 			\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
@@ -980,8 +983,12 @@ class Filter extends Common
 			\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL,
 			\CTaskListState::VIEW_TASK_CATEGORY_DEFERRED,
 			\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
-		);
-
+		];
+		if ($this->getGroupId() > 0)
+		{
+			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_EXPIRED;
+			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
+		}
 		foreach ($taskCategories as $categoryId)
 		{
 			$list[$categoryId] = \CTaskListState::getTaskCategoryName($categoryId);
@@ -1157,6 +1164,14 @@ class Filter extends Common
 						}
 						$arrFilter['WITH_NEW_COMMENTS'] = 'Y';
 						$arrFilter['IS_MUTED'] = 'N';
+						break;
+
+					case Counter\Type::TYPE_PROJECT_EXPIRED:
+						$arrFilter['PROJECT_EXPIRED'] = 'Y';
+						break;
+
+					case Counter\Type::TYPE_PROJECT_NEW_COMMENTS:
+						$arrFilter['PROJECT_NEW_COMMENTS'] = 'Y';
 						break;
 
 					default:

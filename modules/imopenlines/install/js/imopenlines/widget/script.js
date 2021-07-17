@@ -10907,8 +10907,6 @@
 	var EventEmitter = /*#__PURE__*/function () {
 	  /** @private */
 	  function EventEmitter() {
-	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, EventEmitter);
 	    this[targetProperty] = null;
 	    this[namespaceProperty] = null;
@@ -10926,11 +10924,6 @@
 	      }
 
 	    this[targetProperty] = target;
-	    setTimeout(function () {
-	      if (_this.getEventNamespace() === null) {
-	        console.warn('The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' + 'Use emitter.setEventNamespace() to make events more unique.');
-	      }
-	    }, 500);
 	  }
 	  /**
 	   * Makes a target observable
@@ -10982,7 +10975,7 @@
 	  }, {
 	    key: "subscribeFromOptions",
 	    value: function subscribeFromOptions(options, aliases, compatMode) {
-	      var _this2 = this;
+	      var _this = this;
 
 	      if (!Type.isPlainObject(options)) {
 	        return;
@@ -11000,11 +10993,11 @@
 
 	        if (aliases[eventName]) {
 	          var actualName = aliases[eventName].eventName;
-	          EventEmitter.subscribe(_this2, actualName, listener, {
+	          EventEmitter.subscribe(_this, actualName, listener, {
 	            compatMode: compatMode !== false
 	          });
 	        } else {
-	          EventEmitter.subscribe(_this2, eventName, listener, {
+	          EventEmitter.subscribe(_this, eventName, listener, {
 	            compatMode: compatMode === true
 	          });
 	        }
@@ -11088,6 +11081,10 @@
 	     * @return {this}
 	     */
 	    value: function emit(eventName, event) {
+	      if (this.getEventNamespace() === null) {
+	        console.warn('The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' + 'Use emitter.setEventNamespace() to make events more unique.');
+	      }
+
 	      EventEmitter.emit(this, eventName, event);
 	      return this;
 	    }
@@ -11115,6 +11112,10 @@
 	     * @return {Promise<Array>}
 	     */
 	    value: function emitAsync(eventName, event) {
+	      if (this.getEventNamespace() === null) {
+	        console.warn('The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' + 'Use emitter.setEventNamespace() to make events more unique.');
+	      }
+
 	      return EventEmitter.emitAsync(this, eventName, event);
 	    }
 	    /**
@@ -11361,7 +11362,7 @@
 	  }, {
 	    key: "subscribeOnce",
 	    value: function subscribeOnce(target, eventName, listener) {
-	      var _this3 = this;
+	      var _this2 = this;
 
 	      if (Type.isString(target)) {
 	        listener = eventName;
@@ -11396,7 +11397,7 @@
 	        console.error("You cannot subscribe the same \"".concat(fullEventName, "\" event listener twice."));
 	      } else {
 	        var once = function once() {
-	          _this3.unsubscribe(target, eventName, once);
+	          _this2.unsubscribe(target, eventName, once);
 
 	          onceListeners.delete(listener);
 	          listener.apply(void 0, arguments);
@@ -11860,7 +11861,7 @@
 	  }, {
 	    key: "mergeEventAliases",
 	    value: function mergeEventAliases(aliases) {
-	      var _this4 = this;
+	      var _this3 = this;
 
 	      var globalEvents = eventStore.get(this.GLOBAL_TARGET);
 
@@ -11870,9 +11871,9 @@
 
 	      Object.keys(aliases).forEach(function (alias) {
 	        var options = aliases[alias];
-	        alias = _this4.normalizeEventName(alias);
+	        alias = _this3.normalizeEventName(alias);
 
-	        var fullEventName = _this4.makeFullEventName(options.namespace, options.eventName);
+	        var fullEventName = _this3.makeFullEventName(options.namespace, options.eventName);
 
 	        var aliasListeners = globalEvents.eventsMap.get(alias);
 
@@ -14203,6 +14204,549 @@
 	babelHelpers.defineProperty(Cache, "MemoryCache", MemoryCache);
 	babelHelpers.defineProperty(Cache, "LocalStorageCache", LocalStorageCache);
 
+	var _Symbol$iterator;
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _searchIndexToInsert = new WeakSet();
+
+	_Symbol$iterator = Symbol.iterator;
+
+	var OrderedArray = /*#__PURE__*/function () {
+	  function OrderedArray() {
+	    var comparator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	    babelHelpers.classCallCheck(this, OrderedArray);
+
+	    _searchIndexToInsert.add(this);
+
+	    babelHelpers.defineProperty(this, "comparator", null);
+	    babelHelpers.defineProperty(this, "items", []);
+	    this.comparator = Type.isFunction(comparator) ? comparator : null;
+	  }
+
+	  babelHelpers.createClass(OrderedArray, [{
+	    key: "add",
+	    value: function add(item) {
+	      var index = -1;
+
+	      if (this.comparator) {
+	        index = _classPrivateMethodGet(this, _searchIndexToInsert, _searchIndexToInsert2).call(this, item);
+	        this.items.splice(index, 0, item);
+	      } else {
+	        this.items.push(item);
+	      }
+
+	      return index;
+	    }
+	  }, {
+	    key: "has",
+	    value: function has(item) {
+	      return this.items.includes(item);
+	    }
+	  }, {
+	    key: "getIndex",
+	    value: function getIndex(item) {
+	      return this.items.indexOf(item);
+	    }
+	  }, {
+	    key: "getByIndex",
+	    value: function getByIndex(index) {
+	      if (Type.isNumber(index) && index >= 0) {
+	        var item = this.items[index];
+	        return Type.isUndefined(item) ? null : item;
+	      }
+
+	      return null;
+	    }
+	  }, {
+	    key: "getFirst",
+	    value: function getFirst() {
+	      var first = this.items[0];
+	      return Type.isUndefined(first) ? null : first;
+	    }
+	  }, {
+	    key: "getLast",
+	    value: function getLast() {
+	      var last = this.items[this.count() - 1];
+	      return Type.isUndefined(last) ? null : last;
+	    }
+	  }, {
+	    key: "count",
+	    value: function count() {
+	      return this.items.length;
+	    }
+	  }, {
+	    key: "delete",
+	    value: function _delete(item) {
+	      var index = this.getIndex(item);
+
+	      if (index !== -1) {
+	        this.items.splice(index, 1);
+	        return true;
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "clear",
+	    value: function clear() {
+	      this.items = [];
+	    }
+	  }, {
+	    key: _Symbol$iterator,
+	    value: function value() {
+	      return this.items[Symbol.iterator]();
+	    }
+	  }, {
+	    key: "forEach",
+	    value: function forEach(callbackfn, thisArg) {
+	      return this.items.forEach(callbackfn, thisArg);
+	    }
+	  }, {
+	    key: "getAll",
+	    value: function getAll() {
+	      return this.items;
+	    }
+	  }, {
+	    key: "getComparator",
+	    value: function getComparator() {
+	      return this.comparator;
+	    }
+	  }, {
+	    key: "sort",
+	    value: function sort() {
+	      var _this = this;
+
+	      var comparator = this.getComparator();
+
+	      if (comparator === null) {
+	        return;
+	      }
+	      /*
+	      Simple implementation
+	      this.items.sort((item1, item2) => {
+	      	return comparator(item1, item2);
+	      });
+	      */
+	      // For stable sorting https://v8.dev/features/stable-sort
+
+
+	      var length = this.items.length;
+	      var indexes = new Array(length);
+
+	      for (var i = 0; i < length; i++) {
+	        indexes[i] = i;
+	      } // If the comparator returns zero, use the original indexes
+
+
+	      indexes.sort(function (index1, index2) {
+	        return comparator(_this.items[index1], _this.items[index2]) || index1 - index2;
+	      });
+
+	      for (var _i = 0; _i < length; _i++) {
+	        indexes[_i] = this.items[indexes[_i]];
+	      }
+
+	      for (var _i2 = 0; _i2 < length; _i2++) {
+	        this.items[_i2] = indexes[_i2];
+	      }
+	    }
+	  }]);
+	  return OrderedArray;
+	}();
+
+	var _searchIndexToInsert2 = function _searchIndexToInsert2(value) {
+	  var low = 0;
+	  var high = this.items.length;
+
+	  while (low < high) {
+	    var mid = Math.floor((low + high) / 2);
+
+	    if (this.comparator(this.items[mid], value) >= 0) {
+	      high = mid;
+	    } else {
+	      low = mid + 1;
+	    }
+	  }
+
+	  return low;
+	};
+
+	var ZIndexComponent = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(ZIndexComponent, _EventEmitter);
+
+	  function ZIndexComponent(element) {
+	    var _this;
+
+	    var componentOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    babelHelpers.classCallCheck(this, ZIndexComponent);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ZIndexComponent).call(this));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "sort", 0);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "alwaysOnTop", false);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "zIndex", 0);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "element", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "overlay", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "overlayGap", -5);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "stack", null);
+
+	    _this.setEventNamespace('BX.Main.ZIndexManager.Component');
+
+	    if (!Type.isElementNode(element)) {
+	      throw new Error('ZIndexManager.Component: The argument \'element\' must be a DOM element.');
+	    }
+
+	    _this.element = element;
+	    var options = Type.isPlainObject(componentOptions) ? componentOptions : {};
+
+	    _this.setAlwaysOnTop(options.alwaysOnTop);
+
+	    _this.setOverlay(options.overlay);
+
+	    _this.setOverlayGap(options.overlayGap);
+
+	    _this.subscribeFromOptions(options.events);
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(ZIndexComponent, [{
+	    key: "getSort",
+	    value: function getSort() {
+	      return this.sort;
+	    }
+	    /**
+	     * @internal
+	     * @param sort
+	     */
+
+	  }, {
+	    key: "setSort",
+	    value: function setSort(sort) {
+	      if (Type.isNumber(sort)) {
+	        this.sort = sort;
+	      }
+	    }
+	    /**
+	     * @internal
+	     * @param stack
+	     */
+
+	  }, {
+	    key: "setStack",
+	    value: function setStack(stack) {
+	      this.stack = stack;
+	    }
+	  }, {
+	    key: "getStack",
+	    value: function getStack() {
+	      return this.stack;
+	    }
+	  }, {
+	    key: "getZIndex",
+	    value: function getZIndex() {
+	      return this.zIndex;
+	    }
+	    /**
+	     * @internal
+	     */
+
+	  }, {
+	    key: "setZIndex",
+	    value: function setZIndex(zIndex) {
+	      var changed = this.getZIndex() !== zIndex;
+	      this.getElement().style.setProperty('z-index', zIndex, 'important');
+	      this.zIndex = zIndex;
+
+	      if (this.getOverlay() !== null) {
+	        this.getOverlay().style.setProperty('z-index', zIndex + this.getOverlayGap(), 'important');
+	      }
+
+	      if (changed) {
+	        this.emit('onZIndexChange', {
+	          component: this
+	        });
+	      }
+	    }
+	  }, {
+	    key: "getAlwaysOnTop",
+	    value: function getAlwaysOnTop() {
+	      return this.alwaysOnTop;
+	    }
+	  }, {
+	    key: "setAlwaysOnTop",
+	    value: function setAlwaysOnTop(value) {
+	      if (Type.isNumber(value) || Type.isBoolean(value)) {
+	        this.alwaysOnTop = value;
+	      }
+	    }
+	  }, {
+	    key: "getElement",
+	    value: function getElement() {
+	      return this.element;
+	    }
+	  }, {
+	    key: "setOverlay",
+	    value: function setOverlay(overlay, gap) {
+	      if (Type.isElementNode(overlay) || overlay === null) {
+	        this.overlay = overlay;
+	        this.setOverlayGap(gap);
+
+	        if (this.getStack()) {
+	          this.getStack().sort();
+	        }
+	      }
+	    }
+	  }, {
+	    key: "getOverlay",
+	    value: function getOverlay() {
+	      return this.overlay;
+	    }
+	  }, {
+	    key: "setOverlayGap",
+	    value: function setOverlayGap(gap) {
+	      if (Type.isNumber(gap)) {
+	        this.overlayGap = gap;
+	      }
+	    }
+	  }, {
+	    key: "getOverlayGap",
+	    value: function getOverlayGap() {
+	      return this.overlayGap;
+	    }
+	  }]);
+	  return ZIndexComponent;
+	}(EventEmitter);
+
+	var ZIndexStack = /*#__PURE__*/function () {
+	  function ZIndexStack(container) {
+	    babelHelpers.classCallCheck(this, ZIndexStack);
+	    babelHelpers.defineProperty(this, "container", null);
+	    babelHelpers.defineProperty(this, "components", null);
+	    babelHelpers.defineProperty(this, "elements", new WeakMap());
+	    babelHelpers.defineProperty(this, "baseIndex", 1000);
+	    babelHelpers.defineProperty(this, "baseStep", 50);
+	    babelHelpers.defineProperty(this, "sortCount", 0);
+
+	    if (!Type.isDomNode(container)) {
+	      throw new Error('ZIndexManager.Stack: The \'container\' argument must be a DOM element.');
+	    }
+
+	    this.container = container;
+
+	    var comparator = function comparator(componentA, componentB) {
+	      var result = (componentA.getAlwaysOnTop() || 0) - (componentB.getAlwaysOnTop() || 0);
+
+	      if (!result) {
+	        result = componentA.getSort() - componentB.getSort();
+	      }
+
+	      return result;
+	    };
+
+	    this.components = new OrderedArray(comparator);
+	  }
+
+	  babelHelpers.createClass(ZIndexStack, [{
+	    key: "getBaseIndex",
+	    value: function getBaseIndex() {
+	      return this.baseIndex;
+	    }
+	  }, {
+	    key: "setBaseIndex",
+	    value: function setBaseIndex(index) {
+	      if (Type.isNumber(index) && index >= 0) {
+	        this.baseIndex = index;
+	        this.sort();
+	      }
+	    }
+	  }, {
+	    key: "setBaseStep",
+	    value: function setBaseStep(step) {
+	      if (Type.isNumber(step) && step > 0) {
+	        this.baseStep = step;
+	        this.sort();
+	      }
+	    }
+	  }, {
+	    key: "getBaseStep",
+	    value: function getBaseStep() {
+	      return this.baseStep;
+	    }
+	  }, {
+	    key: "register",
+	    value: function register(element) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	      if (this.getComponent(element)) {
+	        console.warn('ZIndexManager: You cannot register the element twice.', element);
+	        return this.getComponent(element);
+	      }
+
+	      var component = new ZIndexComponent(element, options);
+	      component.setStack(this);
+	      component.setSort(++this.sortCount);
+	      this.elements.set(element, component);
+	      this.components.add(component);
+	      this.sort();
+	      return component;
+	    }
+	  }, {
+	    key: "unregister",
+	    value: function unregister(element) {
+	      var component = this.elements.get(element);
+	      this.components.delete(component);
+	      this.elements.delete(element);
+	      this.sort();
+	    }
+	  }, {
+	    key: "getComponent",
+	    value: function getComponent(element) {
+	      return this.elements.get(element) || null;
+	    }
+	  }, {
+	    key: "getComponents",
+	    value: function getComponents() {
+	      return this.components.getAll();
+	    }
+	  }, {
+	    key: "getMaxZIndex",
+	    value: function getMaxZIndex() {
+	      var last = this.components.getLast();
+	      return last ? last.getZIndex() : this.baseIndex;
+	    }
+	  }, {
+	    key: "sort",
+	    value: function sort() {
+	      var _this = this;
+
+	      this.components.sort();
+	      var zIndex = this.baseIndex;
+	      this.components.forEach(function (component) {
+	        component.setZIndex(zIndex);
+	        zIndex += _this.baseStep;
+	      });
+	    }
+	  }, {
+	    key: "bringToFront",
+	    value: function bringToFront(element) {
+	      var component = this.getComponent(element);
+
+	      if (!component) {
+	        console.error('ZIndexManager: element was not found in the stack.', element);
+	        return null;
+	      }
+
+	      component.setSort(++this.sortCount);
+	      this.sort();
+	      return component;
+	    }
+	  }]);
+	  return ZIndexStack;
+	}();
+
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
+
+	/**
+	 * @memberof BX
+	 */
+	var ZIndexManager = /*#__PURE__*/function () {
+	  function ZIndexManager() {
+	    babelHelpers.classCallCheck(this, ZIndexManager);
+	  }
+
+	  babelHelpers.createClass(ZIndexManager, null, [{
+	    key: "register",
+	    value: function register(element) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+
+	      if (!parentNode) {
+	        return null;
+	      }
+
+	      var stack = this.getOrAddStack(parentNode);
+	      return stack.register(element, options);
+	    }
+	  }, {
+	    key: "unregister",
+	    value: function unregister(element) {
+	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+
+	      var stack = this.getStack(parentNode);
+
+	      if (stack) {
+	        stack.unregister(element);
+	      }
+	    }
+	  }, {
+	    key: "addStack",
+	    value: function addStack(container) {
+	      var stack = new ZIndexStack(container);
+	      this.stacks.set(container, stack);
+	      return stack;
+	    }
+	  }, {
+	    key: "getStack",
+	    value: function getStack(container) {
+	      return this.stacks.get(container) || null;
+	    }
+	  }, {
+	    key: "getOrAddStack",
+	    value: function getOrAddStack(container) {
+	      return this.getStack(container) || this.addStack(container);
+	    }
+	  }, {
+	    key: "getComponent",
+	    value: function getComponent(element) {
+	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element, true);
+
+	      if (!parentNode) {
+	        return null;
+	      }
+
+	      var stack = this.getStack(parentNode);
+	      return stack ? stack.getComponent(element) : null;
+	    }
+	  }, {
+	    key: "bringToFront",
+	    value: function bringToFront(element) {
+	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+
+	      var stack = this.getStack(parentNode);
+
+	      if (stack) {
+	        return stack.bringToFront(element);
+	      }
+
+	      return null;
+	    }
+	  }]);
+	  return ZIndexManager;
+	}();
+
+	var _getParentNode = function _getParentNode(element) {
+	  var suppressWarnings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+	  if (!Type.isElementNode(element)) {
+	    if (!suppressWarnings) {
+	      console.error('ZIndexManager: The argument \'element\' must be a DOM element.', element);
+	    }
+
+	    return null;
+	  } else if (!Type.isElementNode(element.parentNode)) {
+	    if (!suppressWarnings) {
+	      console.error('ZIndexManager: The \'element\' doesn\'t have a parent node.', element);
+	    }
+
+	    return null;
+	  }
+
+	  return element.parentNode;
+	};
+
+	babelHelpers.defineProperty(ZIndexManager, "stacks", new WeakMap());
+
 	function getElement(element) {
 	  if (Type.isString(element)) {
 	    return document.getElementById(element);
@@ -14537,6 +15081,7 @@
 	exports.Validation = Validation;
 	exports.Cache = Cache;
 	exports.BaseError = BaseError;
+	exports.ZIndexManager = ZIndexManager;
 	exports.getClass = getClass;
 	exports.namespace = namespace;
 	exports.message = message$1;
@@ -14718,7 +15263,7 @@
 	      var instance = new this._instance(params);
 
 	      instance.mount = function (rootContainer) {
-	        this.$mount(rootContainer);
+	        return this.$mount(rootContainer);
 	      };
 
 	      return instance;
@@ -20576,7 +21121,6 @@
 
 
 })();
- 
 
 
 
@@ -32851,7 +33395,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	 * @param {string} command Command name.
 	 * @param {object} params Command parameters.
 	 * @param {integer} [expiry] Message expiry time in seconds.
-	 * @return {BX.Promise<bool>}
+	 * @return void
 	 */
 	Pull.prototype.sendMessage = function(users, moduleId, command, params, expiry)
 	{
@@ -32873,7 +33417,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	 * @param {string} messageBatch.command Command name.
 	 * @param {object} messageBatch.params Command parameters.
 	 * @param {integer} [messageBatch.expiry] Message expiry time in seconds.
-	 * @return {BX.Promise<bool>}
+	 * @return void
 	 */
 	Pull.prototype.sendMessageBatch = function(messageBatch)
 	{
@@ -33152,7 +33696,19 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 		if(this.storage)
 		{
-			this.storage.set('bx-pull-config', config);
+			try
+			{
+				this.storage.set('bx-pull-config', config);
+			}
+			catch (e)
+			{
+				// try to delete the key "history" (landing site change history, see http://jabber.bx/view.php?id=136492)
+				if (localStorage && localStorage.removeItem)
+				{
+					localStorage.removeItem('history');
+				}
+				console.error(Utils.getDateForLog() + " Pull: Could not cache config in local storage. Error: ", e);
+			}
 		}
 	};
 
@@ -33811,7 +34367,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		session.ttl = (new Date()).getTime() + LS_SESSION_CACHE_TIME * 1000;
 		if(this.storage)
 		{
-			this.storage.set(LS_SESSION, JSON.stringify(session), LS_SESSION_CACHE_TIME);
+			try
+			{
+				this.storage.set(LS_SESSION, JSON.stringify(session), LS_SESSION_CACHE_TIME);
+			}
+			catch (e)
+			{
+				console.error(Utils.getDateForLog() + " Pull: Could not save session info in local storage. Error: ", e);
+			}
 		}
 
 		this.scheduleReconnect(15);
@@ -34304,7 +34867,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return false;
 		}
 
-		this.storage.set(this.lsKeys.websocketBlocked, (isWebSocketBlocked ? Utils.getTimestamp()+this.ttl : 0));
+		try
+		{
+			this.storage.set(this.lsKeys.websocketBlocked, (isWebSocketBlocked ? Utils.getTimestamp()+this.ttl : 0));
+		}
+		catch (e)
+		{
+			console.error(Utils.getDateForLog() + " Pull: Could not save WS_blocked flag in local storage. Error: ", e);
+		}
 	};
 
 	SharedConfig.prototype.isLongPollingBlocked = function()
@@ -34324,7 +34894,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return false;
 		}
 
-		this.storage.set(this.lsKeys.longPollingBlocked, (isLongPollingBlocked ? Utils.getTimestamp()+this.ttl : 0));
+		try
+		{
+			this.storage.set(this.lsKeys.longPollingBlocked, (isLongPollingBlocked ? Utils.getTimestamp()+this.ttl : 0));
+		}
+		catch (e)
+		{
+			console.error(Utils.getDateForLog() + " Pull: Could not save LP_blocked flag in local storage. Error: ", e);
+		}
 	};
 
 	SharedConfig.prototype.isLoggingEnabled = function()
@@ -34344,7 +34921,15 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return false;
 		}
 
-		this.storage.set(this.lsKeys.loggingEnabled, (isLoggingEnabled ? Utils.getTimestamp()+this.ttl : 0));
+		try
+		{
+			this.storage.set(this.lsKeys.loggingEnabled, (isLoggingEnabled ? Utils.getTimestamp()+this.ttl : 0));
+		}
+		catch (e)
+		{
+			console.error("LocalStorage error: ", e);
+			return false;
+		}
 	};
 
 	var ObjectExtend = function(child, parent)
@@ -36222,7 +36807,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  });
 	}
 
-	ui_vue.WidgetVue.directive('bx-lazyload', {
+	ui_vue.WidgetBitrixVue.directive('bx-lazyload', {
 	  bind: function bind(element, bindings) {
 	    if (babelHelpers.typeof(bindings.value) === 'object' && typeof bindings.value.callback === 'function') {
 	      element.lazyloadCallback = bindings.value.callback;
@@ -44399,7 +44984,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	    this.setSelected = 0;
 	    this.serverLoad = false;
-	    this.smilesController = new SmileManager(this.$Bitrix.RestClient.get());
+	    var restClient = this.$root.$bitrixRestClient || this.$Bitrix.RestClient.get();
+	    this.smilesController = new SmileManager(restClient);
 	    this.smilesController.loadFromCache().then(function (result) {
 	      if (_this.serverLoad) return true;
 	      _this.smiles = result.smiles;
@@ -46877,7 +47463,7 @@ this.BX = this.BX || {};
 	      return {};
 	    }
 	    /**
-	     * Get mutations
+	     * Get actions
 	     *
 	    	 * @override
 	     *
@@ -46922,7 +47508,7 @@ this.BX = this.BX || {};
 	     * Set external variable.
 	     *
 	     * @param variables {Object}
-	     * @returns {VuexBuilder}
+	     * @returns {VuexBuilderModel}
 	     */
 
 	  }, {
@@ -46999,7 +47585,7 @@ this.BX = this.BX || {};
 	     * @param active {boolean}
 	     * @param config {{name: String, siteId: String, userId: Number, type: VuexBuilder.DatabaseType}}
 	     *
-	     * @returns {VuexBuilder}
+	     * @returns {VuexBuilderModel}
 	     */
 
 	  }, {
@@ -47030,6 +47616,11 @@ this.BX = this.BX || {};
 	        this.databaseConfig.timeout = config.timeout;
 	      }
 
+	      if (!this.databaseConfig.active && this.db !== null) {
+	        this.databaseConfig.type = null;
+	        updateDriver = true;
+	      }
+
 	      if (updateDriver) {
 	        if (this.databaseConfig.type === VuexBuilder$$1.DatabaseType.indexedDb) {
 	          this.db = new VuexBuilderDatabaseIndexedDB(this.databaseConfig);
@@ -47045,50 +47636,88 @@ this.BX = this.BX || {};
 	      return this;
 	    }
 	    /**
-	     * Enable namespace option for model.
-	     *
-	     * @param active {boolean}
-	     * @returns {VuexBuilder}
+	     * @returns {VuexBuilderModel}
+	     * @deprecated
 	     */
 
 	  }, {
 	    key: "useNamespace",
 	    value: function useNamespace(active) {
-	      this.withNamespace = !!active;
+	      if (ui_vue.WidgetBitrixVue.developerMode) {
+	        if (active) {
+	          console.warn('VuexBuilderModel: Method `useNamespace` is deprecated, please remove this call.');
+	        } else {
+	          console.error('VuexBuilderModel: Method `useNamespace` is deprecated, using VuexBuilder without namespaces is no longer supported.');
+	        }
+	      }
+
 	      return this;
 	    }
 	    /**
-	     * Get store config for Vuex.
-	     *
 	     * @returns {Promise}
+	     * @deprecated use getModule instead.
 	     */
 
 	  }, {
 	    key: "getStore",
 	    value: function getStore() {
+	      return this.getModule();
+	    }
+	    /**
+	     * Get Vuex module.
+	     *
+	     * @returns {Promise}
+	     */
+
+	  }, {
+	    key: "getModule",
+	    value: function getModule() {
 	      var _this = this;
 
 	      return new Promise(function (resolve, reject) {
-	        var namespace = '';
+	        var namespace = _this.namespace ? _this.namespace : _this.getName();
 
-	        if (_this.withNamespace) {
-	          namespace = _this.namespace ? _this.namespace : _this.getName();
+	        if (!namespace) {
+	          _this.logger('error', 'VuexBuilderModel.getStore: current model can not be run in Vuex modules mode', _this.getState());
 
-	          if (!namespace && _this.withNamespace) {
-	            _this.logger('error', 'VuexModel.getStore: current model can not be run in Vuex modules mode', _this.getState());
-
-	            reject();
-	          }
+	          reject();
 	        }
 
 	        if (_this.db) {
 	          _this._getStoreFromDatabase().then(function (state) {
-	            return resolve(_this._createStore(state, namespace));
+	            return resolve({
+	              namespace: namespace,
+	              module: _this._createStore(state)
+	            });
 	          });
 	        } else {
-	          resolve(_this._createStore(_this.getState(), namespace));
+	          resolve({
+	            namespace: namespace,
+	            module: _this._createStore(_this.getState())
+	          });
 	        }
 	      });
+	    }
+	    /**
+	     * Get default state of Vuex module.
+	     *
+	     * @returns {Object}
+	     */
+
+	  }, {
+	    key: "getModuleWithDefaultState",
+	    value: function getModuleWithDefaultState() {
+	      var namespace = this.namespace ? this.namespace : this.getName();
+
+	      if (!namespace) {
+	        this.logger('error', 'VuexBuilderModel.getStore: current model can not be run in Vuex modules mode', this.getState());
+	        return null;
+	      }
+
+	      return {
+	        namespace: namespace,
+	        module: this._createStore(this.getState())
+	      };
 	    }
 	    /**
 	     * Get timeout for save to database
@@ -47102,6 +47731,19 @@ this.BX = this.BX || {};
 	    key: "getSaveTimeout",
 	    value: function getSaveTimeout() {
 	      return 150;
+	    }
+	    /**
+	     * Get timeout for load from database
+	     *
+	     * @override
+	     *
+	     * @returns {number|boolean}
+	     */
+
+	  }, {
+	    key: "getLoadTimeout",
+	    value: function getLoadTimeout() {
+	      return 1000;
 	    }
 	    /**
 	     * Get state after load from database
@@ -47182,9 +47824,7 @@ this.BX = this.BX || {};
 	    key: "clearState",
 	    value: function clearState() {
 	      if (this.store) {
-	        var command = 'vuexBuilderModelClearState';
-	        command = this.withNamespace ? this.getNamespace() + '/' + command : command;
-	        this.store.commit(command);
+	        this.store.commit(this.getNamespace() + '/' + 'vuexBuilderModelClearState');
 	        return true;
 	      }
 
@@ -47278,7 +47918,6 @@ this.BX = this.BX || {};
 	    this.store = null;
 	    this.namespace = null;
 	    this.variables = {};
-	    this.withNamespace = false;
 	  }
 
 	  babelHelpers.createClass(VuexBuilderModel$$1, [{
@@ -47299,11 +47938,17 @@ this.BX = this.BX || {};
 
 	      clearTimeout(this.cacheTimeout);
 	      return new Promise(function (resolve) {
-	        _this3.cacheTimeout = setTimeout(function () {
-	          _this3.logger('warn', 'VuexModel.getStoreFromDatabase: Cache loading timeout', _this3.getName());
+	        var loadTimeout = _this3.getLoadTimeout();
 
-	          resolve(_this3.getState());
-	        }, 1000);
+	        if (loadTimeout !== false && typeof loadTimeout === 'number') {
+	          _this3.cacheTimeout = setTimeout(function () {
+	            _this3.logger('warn', 'VuexModel.getStoreFromDatabase: Cache loading timeout', _this3.getName());
+
+	            resolve(_this3.getState());
+	          }, loadTimeout);
+	        } else {
+	          _this3.cacheTimeout = null;
+	        }
 
 	        _this3.db.get().then(function (cache) {
 	          clearTimeout(_this3.cacheTimeout);
@@ -47344,8 +47989,8 @@ this.BX = this.BX || {};
 	    value: function _createStore(state) {
 	      var _this4 = this;
 
-	      var namespace = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	      var result = {
+	        namespaced: true,
 	        state: state,
 	        getters: this.getGetters(),
 	        actions: this.getActions(),
@@ -47357,11 +48002,6 @@ this.BX = this.BX || {};
 
 	        _this4.saveState(state);
 	      };
-
-	      if (namespace) {
-	        result.namespaced = true;
-	        result = babelHelpers.defineProperty({}, namespace, result);
-	      }
 
 	      return result;
 	    }
@@ -47477,16 +48117,39 @@ this.BX = this.BX || {};
 	    key: "create",
 
 	    /**
-	     * Create new instance of builder.
-	     *
+	     * @deprecated use init() method.
 	     * @returns {VuexBuilder}
 	     */
 	    value: function create() {
+	      if (ui_vue.WidgetBitrixVue.developerMode) {
+	        console.warn('VuexBuilder: Method VuexBuilder.create is deprecated, use VuexBuilder.init instead.');
+	      }
+
 	      return new this();
+	    }
+	    /**
+	     * Create new instance of builder and initialize Vuex store
+	     *
+	     * @param store {Vuex}
+	     *
+	     * @returns {VuexBuilder}
+	     */
+
+	  }, {
+	    key: "init",
+	    value: function init(store) {
+	      if (store) {
+	        if (!(store instanceof Vuex.Store)) {
+	          console.warn('VuexBuilder.init: passed store is not a Vuex.Store', store);
+	          return new this();
+	        }
+	      }
+
+	      return new this(store);
 	    }
 	  }]);
 
-	  function VuexBuilder$$1() {
+	  function VuexBuilder$$1(store) {
 	    babelHelpers.classCallCheck(this, VuexBuilder$$1);
 	    this.models = [];
 	    this.databaseConfig = {
@@ -47496,10 +48159,11 @@ this.BX = this.BX || {};
 	      userId: null,
 	      timeout: null
 	    };
-	    this.withNamespace = true;
+	    this.store = store;
+	    this.builded = false;
 	  }
 	  /**
-	   * Add vuex module.
+	   * Add Vuex module.
 	   *
 	   * @param model {VuexBuilderModel}
 	   *
@@ -47510,6 +48174,10 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(VuexBuilder$$1, [{
 	    key: "addModel",
 	    value: function addModel(model) {
+	      if (this.builded) {
+	        return this;
+	      }
+
 	      if (!(model instanceof VuexBuilderModel$$1)) {
 	        console.error('BX.WidgetVuexBuilder.addModel: passed model is not a BX.WidgetVuexBuilderModel', model, name);
 	        return this;
@@ -47519,16 +48187,98 @@ this.BX = this.BX || {};
 	      return this;
 	    }
 	    /**
-	     * Disable namespace for builder with single model.
+	     * Add dynamic Vuex module.
 	     *
-	     * @param active {boolean}
+	     * @param model {VuexBuilderModel}
+	     *
+	     * @returns {Promise}
+	     */
+
+	  }, {
+	    key: "addDynamicModel",
+	    value: function addDynamicModel(model) {
+	      var _this = this;
+
+	      if (!(model instanceof VuexBuilderModel$$1)) {
+	        return new Promise(function (resolve, reject) {
+	          console.error('BX.WidgetVuexBuilder.addDynamicModel: passed model is not a BX.WidgetVuexBuilderModel', model);
+	          reject('MODEL_ERROR');
+	        });
+	      }
+
+	      if (this.store.hasModule(model.getNamespace()) || this.models.find(function (stored) {
+	        return stored.getNamespace() === model.getNamespace();
+	      })) {
+	        return new Promise(function (resolve, reject) {
+	          console.error('BX.WidgetVuexBuilder.addDynamicModel: model `' + model.getNamespace() + '` was not added because it is already registered.');
+	          reject('DUPLICATE_MODEL');
+	        });
+	      }
+
+	      this.models.push(model);
+
+	      if (this.databaseConfig.active && model.databaseConfig.active !== false) {
+	        model.useDatabase(true, this.databaseConfig);
+	      } else {
+	        model.useDatabase(false);
+	      }
+
+	      model.setStore(this.store);
+	      var promise = model.getModule();
+	      return new Promise(function (resolve, reject) {
+	        promise.then(function (result) {
+	          _this.store.registerModule(result.namespace, result.module);
+
+	          resolve();
+	        }, function (error) {
+	          console.error('BX.WidgetVuexBuilder.addDynamicModel: storage was not created due to runtime errors.', error ? error : '');
+	          reject('ERROR_IN_MODEL');
+	        });
+	      });
+	    }
+	    /**
+	     * Remove dynamic Vuex module.
+	     *
+	     * @param namespace {string}
+	     *
 	     * @returns {VuexBuilder}
+	     */
+
+	  }, {
+	    key: "removeDynamicModel",
+	    value: function removeDynamicModel(namespace) {
+	      if (!this.builded) {
+	        console.error('BX.WidgetVuexBuilder.removeDynamicModel: you cannot use the method until builder is built.');
+	        return this;
+	      }
+
+	      if (!this.store.hasModule(namespace)) {
+	        console.error('BX.WidgetVuexBuilder.removeDynamicModel: module `' + namespace + '` not registered.');
+	        return this;
+	      }
+
+	      this.models = this.models.filter(function (stored) {
+	        return stored.getNamespace() !== namespace;
+	      });
+	      this.store.unregisterModule(namespace);
+	      return this;
+	    }
+	    /**
+	     * @returns {VuexBuilder}
+	     * @deprecated
 	     */
 
 	  }, {
 	    key: "useNamespace",
 	    value: function useNamespace(active) {
-	      this.withNamespace = !!active;
+	      if (ui_vue.WidgetBitrixVue.developerMode) {
+	        if (active) {
+	          console.warn('VuexBuilder: Method `useNamespace` is deprecated, please remove this call.');
+	        } else {
+	          console.error('VuexBuilder: Method `useNamespace` is deprecated, using VuexBuilder without namespaces is no longer supported.');
+	        }
+	      }
+
 	      return this;
 	    }
 	    /**
@@ -47559,6 +48309,17 @@ this.BX = this.BX || {};
 	    key: "clearModelState",
 	    value: function clearModelState() {
 	      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+	      if (!this.builded) {
+	        return new Promise(function (resolve, reject) {
+	          console.error('BX.WidgetVuexBuilder.clearModelState: you cannot use the method until builder is built.');
+
+	          if (typeof callback !== 'function') {
+	            reject('BUILDER_NOT_BUILD');
+	          }
+	        });
+	      }
+
 	      var results = [];
 	      this.models.forEach(function (model) {
 	        results.push(model.clearState());
@@ -47582,6 +48343,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "clearDatabase",
 	    value: function clearDatabase() {
+	      if (!this.builded) {
+	        return new Promise(function (resolve, reject) {
+	          console.error('BX.WidgetVuexBuilder.clearModelState: you cannot use the method until builder is built.');
+	          reject('BUILDER_NOT_BUILD');
+	        });
+	      }
+
 	      this.models.forEach(function (model) {
 	        return model.clearDatabase();
 	      });
@@ -47590,7 +48358,7 @@ this.BX = this.BX || {};
 	      });
 	    }
 	    /**
-	     * Build Vuex Store
+	     * Build Vuex Store asynchronously
 	     *
 	     * @param callback {Function|null}
 	     * @returns {Promise<any>}
@@ -47599,60 +48367,45 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "build",
 	    value: function build() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-	      var withNamespace = this.models.length > 1;
 
-	      if (!this.withNamespace && withNamespace) {
-	        return new Promise(function (resolve, reject) {
-	          console.error('BX.WidgetVuexBuilder.create: you can not use the "no namespace" mode with multiple databases.');
-
-	          if (typeof callback !== 'function') {
-	            reject('MULTIPLE_MODULES_WITHOUT_NAMESPACE');
-	          }
-	        });
+	      if (this.builded) {
+	        return this;
 	      }
 
-	      var results = [];
+	      var promises = [];
+
+	      if (!this.store) {
+	        this.store = Vuex.createStore();
+	      }
+
 	      this.models.forEach(function (model) {
-	        if (_this.databaseConfig.active && model.databaseConfig.active !== false) {
-	          model.useDatabase(true, _this.databaseConfig);
+	        if (_this2.databaseConfig.active && model.databaseConfig.active !== false) {
+	          model.useDatabase(true, _this2.databaseConfig);
 	        }
 
-	        if (_this.withNamespace) {
-	          model.useNamespace(true);
-	        }
-
-	        results.push(model.getStore());
+	        model.setStore(_this2.store);
+	        promises.push(model.getModule());
 	      });
 	      return new Promise(function (resolve, reject) {
-	        Promise.all(results).then(function (stores) {
-	          var modules = {};
-	          stores.forEach(function (store) {
-	            Object.assign(modules, store);
+	        Promise.all(promises).then(function (modules) {
+	          modules.forEach(function (result) {
+	            _this2.store.registerModule(result.namespace, result.module);
 	          });
-	          var store = Vuex.store(_this.withNamespace ? {
-	            modules: modules
-	          } : modules);
-
-	          _this.models.forEach(function (model) {
-	            return model.setStore(store);
-	          });
-
-	          resolve({
-	            store: store,
-	            models: _this.models,
-	            builder: _this
-	          });
+	          var result = {
+	            store: _this2.store,
+	            models: _this2.models,
+	            builder: _this2
+	          };
+	          _this2.builded = true;
 
 	          if (typeof callback === 'function') {
-	            callback({
-	              store: store,
-	              models: _this.models,
-	              builder: _this
-	            });
+	            callback(result);
 	          }
+
+	          resolve(result);
 	        }, function (error) {
 	          console.error('BX.WidgetVuexBuilder.create: storage was not created due to runtime errors.', error ? error : '');
 
@@ -47661,6 +48414,54 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      });
+	    }
+	    /**
+	     * Build Vuex Store synchronously
+	     *
+	     * @returns {Object<any>}
+	     */
+
+	  }, {
+	    key: "syncBuild",
+	    value: function syncBuild() {
+	      var _this3 = this;
+
+	      if (this.builded) {
+	        return {
+	          store: this.store,
+	          models: this.models,
+	          builder: this
+	        };
+	      }
+
+	      if (!this.store) {
+	        this.store = Vuex.createStore();
+	      }
+
+	      if (this.databaseConfig.active) {
+	        if (ui_vue.WidgetBitrixVue.developerMode) {
+	          console.error('VuexBuilder: Method `syncBuild` creates storage in synchronous mode, the database does not work in this mode.');
+	        }
+
+	        this.databaseConfig.active = false;
+	      }
+
+	      this.models.forEach(function (model) {
+	        model.useDatabase(false);
+	        model.setStore(_this3.store);
+
+	        var _model$getModuleWithD = model.getModuleWithDefaultState(),
+	            namespace = _model$getModuleWithD.namespace,
+	            module = _model$getModuleWithD.module;
+
+	        _this3.store.registerModule(namespace, module);
+	      });
+	      this.builded = true;
+	      return {
+	        store: this.store,
+	        models: this.models,
+	        builder: this
+	      };
 	    }
 	  }]);
 	  return VuexBuilder$$1;
@@ -49035,6 +49836,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports) {
 	'use strict';
 
+	var _types = new WeakMap();
+
+	var _config = new WeakMap();
+
+	var _custom = new WeakMap();
+
 	/**
 	 * Bitrix Messenger
 	 * Logger class
@@ -49046,90 +49853,222 @@ this.BX.Messenger = this.BX.Messenger || {};
 	var Logger = /*#__PURE__*/function () {
 	  function Logger() {
 	    babelHelpers.classCallCheck(this, Logger);
-	    this.enabled = null;
+
+	    _types.set(this, {
+	      writable: true,
+	      value: {}
+	    });
+
+	    _config.set(this, {
+	      writable: true,
+	      value: {}
+	    });
+
+	    _custom.set(this, {
+	      writable: true,
+	      value: {}
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _types, {
+	      desktop: true,
+	      log: false,
+	      info: false,
+	      warn: false,
+	      error: true,
+	      trace: true
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _config, babelHelpers.classPrivateFieldGet(this, _types));
+
+	    this.__load();
 	  }
 
 	  babelHelpers.createClass(Logger, [{
-	    key: "enable",
-	    value: function enable() {
-	      this.enabled = true;
-
-	      if (typeof window.localStorage !== 'undefined') {
-	        try {
-	          window.localStorage.setItem('bx-messenger-logger', 'enable');
-	        } catch (e) {}
-	      }
-
-	      return this.enabled;
-	    }
-	  }, {
-	    key: "disable",
-	    value: function disable() {
-	      this.enabled = false;
-
-	      if (typeof window.localStorage !== 'undefined') {
-	        try {
-	          window.localStorage.removeItem('bx-messenger-logger');
-	        } catch (e) {}
-	      }
-
-	      return this.enabled;
-	    }
-	  }, {
-	    key: "isEnabled",
-	    value: function isEnabled() {
-	      if (typeof BX !== 'undefined' && typeof BX.WidgetVueDevTools !== 'undefined') {
-	        return true;
-	      } else if (this.enabled === null) {
-	        if (typeof window.localStorage !== 'undefined') {
-	          try {
-	            this.enabled = window.localStorage.getItem('bx-messenger-logger') === 'enable';
-	          } catch (e) {}
+	    key: "setConfig",
+	    value: function setConfig(types) {
+	      for (var type in types) {
+	        if (types.hasOwnProperty(type) && typeof babelHelpers.classPrivateFieldGet(this, _types)[type] !== 'undefined') {
+	          babelHelpers.classPrivateFieldGet(this, _types)[type] = !!types[type];
+	          babelHelpers.classPrivateFieldGet(this, _config)[type] = !!types[type];
 	        }
 	      }
 
-	      return this.enabled === true;
+	      this.__load();
+	    }
+	  }, {
+	    key: "enable",
+	    value: function enable(type) {
+	      if (typeof babelHelpers.classPrivateFieldGet(this, _types)[type] === 'undefined') {
+	        return false;
+	      }
+
+	      babelHelpers.classPrivateFieldGet(this, _types)[type] = true;
+	      babelHelpers.classPrivateFieldGet(this, _custom)[type] = true;
+
+	      this.__save();
+
+	      return true;
+	    }
+	  }, {
+	    key: "disable",
+	    value: function disable(type) {
+	      if (typeof babelHelpers.classPrivateFieldGet(this, _types)[type] === 'undefined') {
+	        return false;
+	      }
+
+	      babelHelpers.classPrivateFieldGet(this, _types)[type] = false;
+	      babelHelpers.classPrivateFieldGet(this, _custom)[type] = false;
+
+	      this.__save();
+
+	      return true;
+	    }
+	  }, {
+	    key: "isEnabled",
+	    value: function isEnabled(type) {
+	      return babelHelpers.classPrivateFieldGet(this, _types)[type] === true;
+	    }
+	  }, {
+	    key: "desktop",
+	    value: function desktop() {
+	      if (this.isEnabled('desktop')) {
+	        var _console;
+
+	        for (var _len = arguments.length, params = new Array(_len), _key = 0; _key < _len; _key++) {
+	          params[_key] = arguments[_key];
+	        }
+
+	        (_console = console).log.apply(_console, [].concat(babelHelpers.toConsumableArray(this.__getStyles('desktop')), params));
+	      }
 	    }
 	  }, {
 	    key: "log",
 	    value: function log() {
-	      if (this.isEnabled()) {
-	        var _console;
+	      if (this.isEnabled('log')) {
+	        var _console2;
 
-	        (_console = console).log.apply(_console, arguments);
+	        for (var _len2 = arguments.length, params = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	          params[_key2] = arguments[_key2];
+	        }
+
+	        (_console2 = console).log.apply(_console2, [].concat(babelHelpers.toConsumableArray(this.__getStyles('log')), params));
 	      }
 	    }
 	  }, {
 	    key: "info",
 	    value: function info() {
-	      if (this.isEnabled()) {
-	        var _console2;
+	      if (this.isEnabled('info')) {
+	        var _console3;
 
-	        (_console2 = console).info.apply(_console2, arguments);
+	        for (var _len3 = arguments.length, params = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+	          params[_key3] = arguments[_key3];
+	        }
+
+	        (_console3 = console).info.apply(_console3, [].concat(babelHelpers.toConsumableArray(this.__getStyles('info')), params));
 	      }
 	    }
 	  }, {
 	    key: "warn",
 	    value: function warn() {
-	      if (this.isEnabled()) {
-	        var _console3;
+	      if (this.isEnabled('warn')) {
+	        var _console4;
 
-	        (_console3 = console).warn.apply(_console3, arguments);
+	        for (var _len4 = arguments.length, params = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+	          params[_key4] = arguments[_key4];
+	        }
+
+	        (_console4 = console).warn.apply(_console4, [].concat(babelHelpers.toConsumableArray(this.__getStyles('warn')), params));
 	      }
 	    }
 	  }, {
 	    key: "error",
 	    value: function error() {
-	      var _console4;
+	      if (this.isEnabled('error')) {
+	        var _console5;
 
-	      (_console4 = console).error.apply(_console4, arguments);
+	        for (var _len5 = arguments.length, params = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+	          params[_key5] = arguments[_key5];
+	        }
+
+	        (_console5 = console).error.apply(_console5, [].concat(babelHelpers.toConsumableArray(this.__getStyles('error')), params));
+	      }
 	    }
 	  }, {
 	    key: "trace",
 	    value: function trace() {
-	      var _console5;
+	      if (this.isEnabled('trace')) {
+	        var _console6;
 
-	      (_console5 = console).trace.apply(_console5, arguments);
+	        (_console6 = console).trace.apply(_console6, arguments);
+	      }
+	    }
+	  }, {
+	    key: "__save",
+	    value: function __save() {
+	      if (typeof window.localStorage !== 'undefined') {
+	        try {
+	          var custom = {};
+
+	          for (var type in babelHelpers.classPrivateFieldGet(this, _custom)) {
+	            if (babelHelpers.classPrivateFieldGet(this, _custom).hasOwnProperty(type) && babelHelpers.classPrivateFieldGet(this, _config)[type] !== babelHelpers.classPrivateFieldGet(this, _custom)[type]) {
+	              custom[type] = !!babelHelpers.classPrivateFieldGet(this, _custom)[type];
+	            }
+	          }
+
+	          console.warn(JSON.stringify(custom));
+	          window.localStorage.setItem('bx-messenger-logger', JSON.stringify(custom));
+	        } catch (e) {}
+	      }
+	    }
+	  }, {
+	    key: "__load",
+	    value: function __load() {
+	      if (typeof window.localStorage !== 'undefined') {
+	        try {
+	          var custom = window.localStorage.getItem('bx-messenger-logger');
+
+	          if (typeof custom === 'string') {
+	            babelHelpers.classPrivateFieldSet(this, _custom, JSON.parse(custom));
+	            babelHelpers.classPrivateFieldSet(this, _types, babelHelpers.objectSpread({}, babelHelpers.classPrivateFieldGet(this, _types), babelHelpers.classPrivateFieldGet(this, _custom)));
+	          }
+	        } catch (e) {}
+	      }
+	    }
+	  }, {
+	    key: "__getStyles",
+	    value: function __getStyles() {
+	      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'all';
+	      var styles = {
+	        'desktop': ["%cDESKTOP", "color: white; font-style: italic; background-color: #29619b; padding: 0 6\px"],
+	        'log': ["%cLOG", "color: #2a323b; font-style: italic; background-color: #ccc; padding: 0 6\px"],
+	        'info': ["%cINFO", "color: #fff; font-style: italic; background-color: #6b7f96; padding: 0 6\px"],
+	        'warn': ["%cWARNING", "color: white; font-style: italic; padding: 0 6\px; border: 1px solid #f0a74f"],
+	        'error': ["%cERROR", "color: white; font-style: italic; padding: 0 6\px; border: 1px solid #8a3232"]
+	      };
+
+	      if (type === 'all') {
+	        return styles;
+	      }
+
+	      if (styles[type]) {
+	        return styles[type];
+	      }
+
+	      return [];
+	    }
+	  }, {
+	    key: "__getRemoveString",
+	    value: function __getRemoveString() {
+	      var styles = this.__getStyles();
+
+	      var result = [];
+
+	      for (var type in styles) {
+	        if (styles.hasOwnProperty(type)) {
+	          result.push(styles[type][1]);
+	        }
+	      }
+
+	      return result;
 	    }
 	  }]);
 	  return Logger;
@@ -49240,7 +50179,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  mobileBrowserConstGet: 'mobile.browser.const.get',
 	  imRecentGet: 'im.recent.get',
 	  imRecentList: 'im.recent.list',
-	  imCallGetCallLimits: 'im.call.getCallLimits'
+	  imCallGetCallLimits: 'im.call.getCallLimits',
+	  imNotifyGet: 'im.notify.get',
+	  imNotifySchemaGet: 'im.notify.schema.get'
 	});
 	var RestMethodHandler = Object.freeze({
 	  imChatGet: 'im.chat.get',
@@ -49257,7 +50198,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  mobileBrowserConstGet: 'mobile.browser.const.get',
 	  imRecentGet: 'im.recent.get',
 	  imRecentList: 'im.recent.list',
-	  imCallGetCallLimits: 'im.call.getCallLimits'
+	  imCallGetCallLimits: 'im.call.getCallLimits',
+	  imNotifyGet: 'im.notify.get',
+	  imNotifySchemaGet: 'im.notify.schema.get'
 	});
 
 	/**
@@ -49311,6 +50254,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    hideSmiles: 'IM.Conference:hideSmiles',
 	    requestPermissions: 'IM.Conference:requestPermissions',
 	    waitForStart: 'IM.Conference:waitForStart'
+	  },
+	  notification: {
+	    updateState: 'IM.Notifications:restoreConnection'
 	  }
 	});
 
@@ -49395,38 +50341,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	/**
 	 * Bitrix Messenger
-	 * Call constants
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
-	var CallLimit = Object.freeze({
-	  userLimitForHd: 5
-	});
-	var CallStateType = Object.freeze({
-	  preparation: 'preparation',
-	  call: 'call'
-	});
-	var CallErrorCode = Object.freeze({
-	  noSignalFromCamera: 'noSignalFromCamera'
-	});
-	var CallApplicationErrorCode = Object.freeze({
-	  userLimitReached: 'userLimitReached',
-	  detectIntranetUser: 'detectIntranetUser',
-	  bitrix24only: 'bitrix24only',
-	  kickedFromCall: 'kickedFromCall',
-	  unsupportedBrowser: 'unsupportedBrowser',
-	  missingMicrophone: 'missingMicrophone',
-	  unsafeConnection: 'unsafeConnection',
-	  wrongAlias: 'wrongAlias',
-	  notStarted: 'notStarted',
-	  finished: 'finished',
-	  userLeftCall: 'userLeftCall'
-	});
-
-	/**
-	 * Bitrix Messenger
 	 * Conference constants
 	 *
 	 * @package bitrix
@@ -49437,6 +50351,30 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  view: 'view',
 	  edit: 'edit',
 	  create: 'create'
+	});
+	var ConferenceStateType = Object.freeze({
+	  preparation: 'preparation',
+	  call: 'call'
+	});
+	var ConferenceErrorCode = Object.freeze({
+	  userLimitReached: 'userLimitReached',
+	  detectIntranetUser: 'detectIntranetUser',
+	  bitrix24only: 'bitrix24only',
+	  kickedFromCall: 'kickedFromCall',
+	  unsupportedBrowser: 'unsupportedBrowser',
+	  missingMicrophone: 'missingMicrophone',
+	  unsafeConnection: 'unsafeConnection',
+	  wrongAlias: 'wrongAlias',
+	  notStarted: 'notStarted',
+	  finished: 'finished',
+	  userLeftCall: 'userLeftCall',
+	  noSignalFromCamera: 'noSignalFromCamera'
+	});
+	var ConferenceRightPanelMode = Object.freeze({
+	  hidden: 'hidden',
+	  chat: 'chat',
+	  users: 'users',
+	  split: 'split'
 	});
 
 	/**
@@ -49482,11 +50420,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	exports.FileStatus = FileStatus;
 	exports.FileType = FileType;
 	exports.MessageType = MessageType;
-	exports.CallStateType = CallStateType;
-	exports.CallLimit = CallLimit;
-	exports.CallErrorCode = CallErrorCode;
-	exports.CallApplicationErrorCode = CallApplicationErrorCode;
 	exports.ConferenceFieldState = ConferenceFieldState;
+	exports.ConferenceStateType = ConferenceStateType;
+	exports.ConferenceErrorCode = ConferenceErrorCode;
+	exports.ConferenceRightPanelMode = ConferenceRightPanelMode;
 	exports.ChatTypes = ChatTypes;
 	exports.TemplateTypes = TemplateTypes;
 	exports.RecentSection = RecentSection;
@@ -51785,18 +52722,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
-	var CallApplicationModel = /*#__PURE__*/function (_VuexBuilderModel) {
-	  babelHelpers.inherits(CallApplicationModel, _VuexBuilderModel);
+	var ConferenceModel = /*#__PURE__*/function (_VuexBuilderModel) {
+	  babelHelpers.inherits(ConferenceModel, _VuexBuilderModel);
 
-	  function CallApplicationModel() {
-	    babelHelpers.classCallCheck(this, CallApplicationModel);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallApplicationModel).apply(this, arguments));
+	  function ConferenceModel() {
+	    babelHelpers.classCallCheck(this, ConferenceModel);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConferenceModel).apply(this, arguments));
 	  }
 
-	  babelHelpers.createClass(CallApplicationModel, [{
+	  babelHelpers.createClass(ConferenceModel, [{
 	    key: "getName",
 	    value: function getName() {
-	      return 'callApplication';
+	      return 'conference';
 	    }
 	  }, {
 	    key: "getState",
@@ -51807,8 +52744,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          passChecked: true,
 	          showChat: false,
 	          userCount: 0,
+	          messageCount: 0,
 	          userInCallCount: 0,
-	          state: im_const.CallStateType.preparation,
+	          state: im_const.ConferenceStateType.preparation,
+	          callEnded: false,
 	          showSmiles: false,
 	          error: '',
 	          conferenceTitle: '',
@@ -51817,7 +52756,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          conferenceStarted: null,
 	          conferenceStartDate: null,
 	          joinWithVideo: null,
-	          userReadyToJoin: false
+	          userReadyToJoin: false,
+	          isBroadcast: false,
+	          users: [],
+	          usersInCall: [],
+	          presenters: [],
+	          rightPanelMode: im_const.ConferenceRightPanelMode.hidden
 	        },
 	        user: {
 	          id: -1,
@@ -51836,8 +52780,64 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          store.commit('showChat', payload);
 	        },
+	        changeRightPanelMode: function changeRightPanelMode(store, payload) {
+	          if (!im_const.ConferenceRightPanelMode[payload.mode]) {
+	            return false;
+	          }
+
+	          store.commit('changeRightPanelMode', payload);
+	        },
 	        setPermissionsRequested: function setPermissionsRequested(store, payload) {
 	          store.commit('setPermissionsRequested', payload);
+	        },
+	        setPresenters: function setPresenters(store, payload) {
+	          if (!Array.isArray(payload.presenters)) {
+	            payload.presenters = [payload.presenters];
+	          }
+
+	          store.commit('setPresenters', payload);
+	        },
+	        setUsers: function setUsers(store, payload) {
+	          if (!Array.isArray(payload.users)) {
+	            payload.users = [payload.users];
+	          }
+
+	          store.commit('setUsers', payload);
+	        },
+	        removeUsers: function removeUsers(store, payload) {
+	          if (!Array.isArray(payload.users)) {
+	            payload.users = [payload.users];
+	          }
+
+	          store.commit('removeUsers', payload);
+	        },
+	        setUsersInCall: function setUsersInCall(store, payload) {
+	          if (!Array.isArray(payload.users)) {
+	            payload.users = [payload.users];
+	          }
+
+	          store.commit('setUsersInCall', payload);
+	        },
+	        removeUsersInCall: function removeUsersInCall(store, payload) {
+	          if (!Array.isArray(payload.users)) {
+	            payload.users = [payload.users];
+	          }
+
+	          store.commit('removeUsersInCall', payload);
+	        },
+	        setConferenceTitle: function setConferenceTitle(store, payload) {
+	          if (typeof payload.conferenceTitle !== 'string') {
+	            return false;
+	          }
+
+	          store.commit('setConferenceTitle', payload);
+	        },
+	        setBroadcastMode: function setBroadcastMode(store, payload) {
+	          if (typeof payload.broadcastMode !== 'boolean') {
+	            return false;
+	          }
+
+	          store.commit('setBroadcastMode', payload);
 	        }
 	      };
 	    }
@@ -51860,12 +52860,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            state.common.userCount = parseInt(payload.userCount);
 	          }
 
+	          if (typeof payload.messageCount === 'number' || typeof payload.messageCount === 'string') {
+	            state.common.messageCount = parseInt(payload.messageCount);
+	          }
+
 	          if (typeof payload.userInCallCount === 'number' || typeof payload.userInCallCount === 'string') {
 	            state.common.userInCallCount = parseInt(payload.userInCallCount);
 	          }
 
 	          if (typeof payload.componentError === 'string') {
 	            state.common.componentError = payload.componentError;
+	          }
+
+	          if (typeof payload.isBroadcast === 'boolean') {
+	            state.common.isBroadcast = payload.isBroadcast;
+	          }
+
+	          if (Array.isArray(payload.presenters)) {
+	            state.common.presenters = payload.presenters;
 	          }
 	        },
 	        user: function user(state, payload) {
@@ -51887,17 +52899,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var newState = _ref.newState;
 	          state.common.showChat = newState;
 	        },
+	        changeRightPanelMode: function changeRightPanelMode(state, _ref2) {
+	          var mode = _ref2.mode;
+	          state.common.rightPanelMode = mode;
+	        },
 	        setPermissionsRequested: function setPermissionsRequested(state, payload) {
 	          state.common.permissionsRequested = true;
 	        },
 	        startCall: function startCall(state, payload) {
-	          state.common.state = im_const.CallStateType.call;
+	          state.common.state = im_const.ConferenceStateType.call;
+	          state.common.callEnded = false;
 	        },
 	        endCall: function endCall(state, payload) {
-	          state.common.state = im_const.CallStateType.preparation;
+	          state.common.state = im_const.ConferenceStateType.preparation;
+	          state.common.callEnded = true;
 	        },
 	        returnToPreparation: function returnToPreparation(state, payload) {
-	          state.common.state = im_const.CallStateType.preparation;
+	          state.common.state = im_const.ConferenceStateType.preparation;
 	        },
 	        toggleSmiles: function toggleSmiles(state, payload) {
 	          state.common.showSmiles = !state.common.showSmiles;
@@ -51908,9 +52926,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        },
 	        setConferenceTitle: function setConferenceTitle(state, payload) {
-	          if (typeof payload.conferenceTitle === 'string') {
-	            state.common.conferenceTitle = payload.conferenceTitle;
-	          }
+	          state.common.conferenceTitle = payload.conferenceTitle;
+	        },
+	        setBroadcastMode: function setBroadcastMode(state, payload) {
+	          state.common.isBroadcast = payload.broadcastMode;
 	        },
 	        setAlias: function setAlias(state, payload) {
 	          if (typeof payload.alias === 'string') {
@@ -51934,6 +52953,47 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        setUserReadyToJoin: function setUserReadyToJoin(state, payload) {
 	          state.common.userReadyToJoin = true;
+	        },
+	        setPresenters: function setPresenters(state, payload) {
+	          if (payload.replace) {
+	            state.common.presenters = payload.presenters;
+	          } else {
+	            payload.presenters.forEach(function (presenter) {
+	              presenter = parseInt(presenter);
+
+	              if (!state.common.presenters.includes(presenter)) {
+	                state.common.presenters.push(presenter);
+	              }
+	            });
+	          }
+	        },
+	        setUsers: function setUsers(state, payload) {
+	          payload.users.forEach(function (user) {
+	            user = parseInt(user);
+
+	            if (!state.common.users.includes(user)) {
+	              state.common.users.push(user);
+	            }
+	          });
+	        },
+	        removeUsers: function removeUsers(state, payload) {
+	          state.common.users = state.common.users.filter(function (user) {
+	            return !payload.users.includes(parseInt(user));
+	          });
+	        },
+	        setUsersInCall: function setUsersInCall(state, payload) {
+	          payload.users.forEach(function (user) {
+	            user = parseInt(user);
+
+	            if (!state.common.usersInCall.includes(user)) {
+	              state.common.usersInCall.push(user);
+	            }
+	          });
+	        },
+	        removeUsersInCall: function removeUsersInCall(state, payload) {
+	          state.common.usersInCall = state.common.usersInCall.filter(function (user) {
+	            return !payload.users.includes(parseInt(user));
+	          });
 	        }
 	      };
 	    }
@@ -51946,6 +53006,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          state: null,
 	          showSmiles: null,
 	          userCount: null,
+	          messageCount: null,
 	          userInCallCount: null,
 	          error: null,
 	          conferenceTitle: null,
@@ -51953,12 +53014,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          conferenceStarted: null,
 	          conferenceStartDate: null,
 	          joinWithVideo: null,
-	          userReadyToJoin: null
+	          userReadyToJoin: null,
+	          rightPanelMode: null,
+	          presenters: null,
+	          users: null
 	        }
 	      };
 	    }
 	  }]);
-	  return CallApplicationModel;
+	  return ConferenceModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
@@ -51996,7 +53060,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        saveMessageList: {},
 	        saveFileList: {},
 	        saveUserList: {},
-	        messagesSet: {},
 	        host: this.getVariable('host', location.protocol + '//' + location.host)
 	      };
 	    }
@@ -52006,6 +53069,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return {
 	        templateId: 0,
 	        templateType: 'message',
+	        placeholderType: 0,
 	        id: 0,
 	        chatId: 0,
 	        authorId: 0,
@@ -52215,6 +53279,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 
 	          var insertType = payload.requestMode === 'history' ? im_const.MutationType.setBefore : im_const.MutationType.setAfter;
+
+	          if (insertType === im_const.MutationType.setBefore) {
+	            payload.placeholders = payload.placeholders.reverse();
+	          }
+
 	          store.commit('set', {
 	            insertType: insertType,
 	            data: payload.placeholders
@@ -52434,8 +53503,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        add: function add(state, payload) {
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
-	          }); // this.setMutationType(state, {chatId: payload.chatId, initialType: MutationType.add});
-
+	          });
 
 	          state.collection[payload.chatId].push(payload);
 	          state.saveMessageList[payload.chatId].push(payload.id);
@@ -52458,22 +53526,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        },
 	        updatePlaceholders: function updatePlaceholders(state, payload) {
-	          payload.data.forEach(function (element, index) {
-	            var placeholderId = "placeholder".concat(payload.firstMessage + index);
-	            var existingPlaceholderIndex = state.collection[payload.chatId].findIndex(function (message) {
-	              return message.id === placeholderId;
-	            });
-	            var existingMessageIndex = state.collection[payload.chatId].findIndex(function (message) {
-	              return message.id === element.id;
-	            });
+	          var firstPlaceholderId = "placeholder".concat(payload.firstMessage);
+	          var firstPlaceholderIndex = state.collection[payload.chatId].findIndex(function (message) {
+	            return message.id === firstPlaceholderId;
+	          }); // Logger.warn('firstPlaceholderIndex', firstPlaceholderIndex);
 
-	            if (existingMessageIndex > -1) {
-	              state.collection[payload.chatId][existingMessageIndex] = Object.assign(state.collection[payload.chatId][existingMessageIndex], element);
-	              state.collection[payload.chatId].splice(existingPlaceholderIndex, 1);
-	            } else {
-	              state.collection[payload.chatId].splice(existingPlaceholderIndex, 1, Object.assign({}, element));
-	            }
-	          });
+	          if (firstPlaceholderIndex >= 0) {
+	            var _state$collection$pay;
+
+	            // Logger.warn('before delete', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
+	            state.collection[payload.chatId].splice(firstPlaceholderIndex, payload.amount); // Logger.warn('after delete', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
+
+	            (_state$collection$pay = state.collection[payload.chatId]).splice.apply(_state$collection$pay, [firstPlaceholderIndex, 0].concat(babelHelpers.toConsumableArray(payload.data))); // Logger.warn('after add', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
+
+	          }
+
 	          state.collection[payload.chatId].sort(function (a, b) {
 	            return a.id - b.id;
 	          });
@@ -52485,8 +53552,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          im_lib_logger.Logger.warn('Messages model: set mutation', payload);
 	          var chats = [];
 	          var chatsSave = [];
-	          var needToScroll = false; // let mutationType = {};
-
+	          var isPush = false;
 	          var initialType = payload.insertType;
 
 	          if (payload.insertType === im_const.MutationType.set) {
@@ -52523,7 +53589,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	                var intersection = _this3.manageCacheBeforeSet(babelHelpers.toConsumableArray(state.saveMessageList[chatId].reverse()), elements[chatId]);
 
-	                im_lib_logger.Logger.warn('Messages model: set intersection with cache', intersection); // /*
+	                im_lib_logger.Logger.warn('Messages model: set intersection with cache', intersection);
 
 	                if (intersection.type === IntersectionType.none) {
 	                  if (intersection.foundElements.length > 0) {
@@ -52538,46 +53604,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                  im_lib_logger.Logger.warn('Messages model: no intersection - removing cache');
 	                  _this3.removeIntersectionCacheElements = state.collection[chatId].map(function (element) {
 	                    return element.id;
-	                  }); // clearTimeout(this.removeIntersectionCacheTimeout);
-	                  // this.removeIntersectionCacheTimeout = setTimeout(() => {
-
+	                  });
 	                  state.collection[chatId] = state.collection[chatId].filter(function (element) {
 	                    return !_this3.removeIntersectionCacheElements.includes(element.id);
 	                  });
 	                  state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
 	                    return !_this3.removeIntersectionCacheElements.includes(id);
 	                  });
-	                  _this3.removeIntersectionCacheElements = []; // }, 1000);
-
-	                  im_lib_logger.Logger.warn('setting needToScroll true, intersection.type === IntersectionType.none');
-	                  needToScroll = true;
+	                  _this3.removeIntersectionCacheElements = [];
 	                } else if (intersection.type === IntersectionType.foundReverse) {
 	                  im_lib_logger.Logger.warn('Messages model: found reverse intersection');
 	                  payload.insertType = im_const.MutationType.setBefore;
 	                  payload.data = payload.data.reverse();
 	                }
-
-	                if (intersection.foundElements.length > 0) {
-	                  im_lib_logger.Logger.warn('setting needToScroll true, intersection.foundElements.length > 0');
-	                  needToScroll = true; // Logger.warn('Messages model: found intersection', intersection.foundElements);
-	                  // if (intersection.type === IntersectionType.found && intersection.noneElements[0])
-	                  // {
-	                  // 	mutationType.scrollStickToTop = false;
-	                  // 	mutationType.scrollMessageId = intersection.foundElements[intersection.foundElements.length-1];
-	                  // }
-	                } // 	else
-	                // 	{
-	                // 		mutationType.scrollStickToTop = false;
-	                // 		mutationType.scrollMessageId = 0;
-	                // 	}
-	                // }
-	                // else if (intersection.type === IntersectionType.none)
-	                // {
-	                // 	mutationType.scrollStickToTop = false;
-	                // 	mutationType.scrollMessageId = payload.data[0].id;
-	                // }
-	                // */
-
 	              };
 
 	              for (var chatId in elements) {
@@ -52631,48 +53670,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 
 	          chats = babelHelpers.toConsumableArray(new Set(chats));
-	          chatsSave = babelHelpers.toConsumableArray(new Set(chatsSave)); // check array for correct order of messages
+	          chatsSave = babelHelpers.toConsumableArray(new Set(chatsSave));
+	          isPush = payload.data.every(function (element) {
+	            return element.push === true;
+	          });
+	          im_lib_logger.Logger.warn('Is it fake push message?', isPush);
+	          chats.forEach(function (chatId) {
+	            state.collection[chatId].sort(function (a, b) {
+	              return a.id - b.id;
+	            });
 
-	          if (initialType === im_const.MutationType.set) {
-	            chats.forEach(function (chatId) {
-	              var lastElementId = 0;
-	              var needApplySort = false;
-
-	              for (var i = 0; i < state.collection[chatId].length; i++) {
-	                var element = state.collection[chatId][i];
-
-	                if (element.id < lastElementId) {
-	                  needApplySort = true;
-	                  break;
-	                }
-
-	                lastElementId = element.id;
-	              }
-
-	              im_lib_logger.Logger.warn('Messages model: check if sorting is needed', needApplySort);
-
-	              if (needApplySort) {
-	                state.collection[chatId].sort(function (a, b) {
-	                  return a.id - b.id;
-	                });
-	              }
-
+	            if (!isPush) {
+	              //send event that messages are ready and we can start reading etc
 	              im_lib_logger.Logger.warn('setting messagesSet = true for chatId = ', chatId);
-	              ui_vue.WidgetVue.set(state.messagesSet, chatId, {
-	                needToScroll: needToScroll
-	              });
 	              setTimeout(function () {
 	                main_core_events.EventEmitter.emit(im_const.EventType.dialog.messagesSet, {
 	                  chatId: chatId
 	                });
+	                main_core_events.EventEmitter.emit(im_const.EventType.dialog.readVisibleMessages, {
+	                  chatId: chatId
+	                });
 	              }, 100);
-	            });
-	          }
-
-	          chats.forEach(function (chatId) {
-	            state.collection[chatId].sort(function (a, b) {
-	              return a.id - b.id;
-	            }); // this.setMutationType(state, {chatId: chatId, ...mutationType});
+	            }
 	          });
 
 	          if (initialType !== im_const.MutationType.setBefore) {
@@ -52713,8 +53732,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        delete: function _delete(state, payload) {
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
-	          }); // this.setMutationType(state, {chatId: payload.chatId, initialType: MutationType.delete});
-
+	          });
 
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
 	            return !payload.elements.includes(element.id);
@@ -52746,8 +53764,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        clear: function clear(state, payload) {
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
-	          }); // this.setMutationType(state, {chatId: payload.chatId, initialType: 'clear'});
-
+	          });
 
 	          state.collection[payload.chatId] = [];
 	          state.saveMessageList[payload.chatId] = [];
@@ -52840,33 +53857,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return true;
 	      }
 
-	      ui_vue.WidgetVue.set(state.collection, payload.chatId, payload.messages ? [].concat(payload.messages) : []); // Vue.set(state.mutationType, payload.chatId, {applied: false, initialType: MutationType.none, appliedType: MutationType.none, scrollStickToTop: 0, scrollMessageId: 0});
-
+	      ui_vue.WidgetVue.set(state.collection, payload.chatId, payload.messages ? [].concat(payload.messages) : []);
 	      ui_vue.WidgetVue.set(state.saveMessageList, payload.chatId, []);
 	      ui_vue.WidgetVue.set(state.saveFileList, payload.chatId, []);
 	      ui_vue.WidgetVue.set(state.saveUserList, payload.chatId, []);
-	      return true;
-	    }
-	  }, {
-	    key: "setMutationType",
-	    value: function setMutationType(state, payload) {
-	      var mutationType = {
-	        applied: false,
-	        initialType: im_const.MutationType.none,
-	        appliedType: im_const.MutationType.none,
-	        scrollStickToTop: false,
-	        scrollMessageId: 0
-	      };
-
-	      if (payload.initialType && !payload.appliedType) {
-	        payload.appliedType = payload.initialType;
-	      }
-
-	      if (typeof state.mutationType[payload.chatId] === 'undefined') {
-	        ui_vue.WidgetVue.set(state.mutationType, payload.chatId, mutationType);
-	      }
-
-	      state.mutationType[payload.chatId] = babelHelpers.objectSpread({}, mutationType, payload);
 	      return true;
 	    }
 	  }, {
@@ -52957,12 +53951,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        saveUserList.push(parseInt(dialog.dialogId));
 	      }
 
+	      var readCounter = 0;
+
 	      for (var index = state.collection[chatId].length - 1; index >= 0; index--) {
 	        if (state.collection[chatId][index].id.toString().startsWith('temporary')) {
 	          continue;
 	        }
 
-	        if (count >= im_const.StorageLimit.messages && !state.collection[chatId][index].unread) {
+	        if (!state.collection[chatId][index].unread) {
+	          readCounter++;
+	        }
+
+	        if (count >= im_const.StorageLimit.messages && readCounter === 50) {
 	          break;
 	        }
 
@@ -53028,6 +54028,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          });
 
+	          im_lib_logger.Logger.warn('Cache after updating', storedState.collection[_chatId]);
 	          storedState.saveMessageList[_chatId] = state.saveMessageList[_chatId];
 	          storedState.saveFileList[_chatId] = state.saveFileList[_chatId];
 	          storedState.saveUserList[_chatId] = state.saveUserList[_chatId];
@@ -53075,6 +54076,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (typeof fields.templateType === "string") {
 	        result.templateType = fields.templateType;
+	      }
+
+	      if (typeof fields.placeholderType === "number") {
+	        result.placeholderType = fields.placeholderType;
 	      }
 
 	      if (typeof fields.chat_id !== 'undefined') {
@@ -53602,7 +54607,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        userCounter: 0,
 	        messageCount: 0,
 	        unreadId: 0,
-	        unreadLastId: 0,
+	        lastMessageId: 0,
 	        managerList: [],
 	        readedList: [],
 	        writingList: [],
@@ -53838,24 +54843,34 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return false;
 	        },
 	        increaseCounter: function increaseCounter(store, payload) {
+	          var _store$rootState$appl;
+
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
 
 	          var counter = store.state.collection[payload.dialogId].counter;
-	          var increasedCounter = counter + payload.count;
-	          var fields = {
-	            counter: increasedCounter
-	          };
 
-	          if (typeof payload.unreadLastId !== 'undefined') {
-	            fields.unreadLastId = payload.unreadLastId;
+	          if (counter === 100) {
+	            return true;
 	          }
 
+	          var increasedCounter = counter + payload.count;
+
+	          if (increasedCounter > 100) {
+	            increasedCounter = 100;
+	          }
+
+	          var userId = (_store$rootState$appl = store.rootState.application) === null || _store$rootState$appl === void 0 ? void 0 : _store$rootState$appl.common.userId;
+	          var dialogMuted = userId && store.state.collection[payload.dialogId].muteList.includes(userId);
 	          store.commit('update', {
 	            actionName: 'increaseCounter',
 	            dialogId: payload.dialogId,
-	            fields: fields
+	            dialogMuted: dialogMuted,
+	            fields: {
+	              counter: increasedCounter,
+	              previousCounter: counter
+	            }
 	          });
 	          return false;
 	        },
@@ -53865,6 +54880,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 
 	          var counter = store.state.collection[payload.dialogId].counter;
+
+	          if (counter === 100) {
+	            return true;
+	          }
+
 	          var decreasedCounter = counter - payload.count;
 
 	          if (decreasedCounter < 0) {
@@ -53874,15 +54894,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var unreadId = payload.unreadId > store.state.collection[payload.dialogId].unreadId ? payload.unreadId : store.state.collection[payload.dialogId].unreadId;
 
 	          if (store.state.collection[payload.dialogId].unreadId !== unreadId || store.state.collection[payload.dialogId].counter !== decreasedCounter) {
+	            var _store$rootState$appl2;
+
+	            var previousCounter = store.state.collection[payload.dialogId].counter;
+
 	            if (decreasedCounter === 0) {
 	              unreadId = 0;
 	            }
 
+	            var userId = (_store$rootState$appl2 = store.rootState.application) === null || _store$rootState$appl2 === void 0 ? void 0 : _store$rootState$appl2.common.userId;
+	            var dialogMuted = userId && store.state.collection[payload.dialogId].muteList.includes(userId);
 	            store.commit('update', {
 	              actionName: 'decreaseCounter',
 	              dialogId: payload.dialogId,
+	              dialogMuted: dialogMuted,
 	              fields: {
 	                counter: decreasedCounter,
+	                previousCounter: previousCounter,
 	                unreadId: unreadId
 	              }
 	            });
@@ -54095,12 +55123,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        result.unreadId = parseInt(fields.unreadId);
 	      }
 
-	      if (typeof fields.unread_last_id !== 'undefined') {
-	        fields.unreadLastId = fields.unread_last_id;
+	      if (typeof fields.last_message_id !== 'undefined') {
+	        fields.lastMessageId = fields.last_message_id;
 	      }
 
-	      if (typeof fields.unreadLastId === "number" || typeof fields.unreadLastId === "string") {
-	        result.unreadLastId = parseInt(fields.unreadLastId);
+	      if (typeof fields.lastMessageId === "number" || typeof fields.lastMessageId === "string") {
+	        result.lastMessageId = parseInt(fields.lastMessageId);
 	      }
 
 	      if (typeof fields.readed_list !== 'undefined') {
@@ -54461,6 +55489,26 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return function (params) {
 	            return _this.getElementState(params);
 	          };
+	        },
+	        getList: function getList(state) {
+	          return function (userList) {
+	            var result = [];
+
+	            if (!Array.isArray(userList)) {
+	              return null;
+	            }
+
+	            userList.forEach(function (id) {
+	              if (state.collection[id]) {
+	                result.push(state.collection[id]);
+	              } else {
+	                result.push(_this.getElementState({
+	                  id: id
+	                }));
+	              }
+	            });
+	            return result;
+	          };
 	        }
 	      };
 	    }
@@ -54534,7 +55582,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                id: element.id
 	              });
 
-	              state.collection[element.id] = element;
+	              state.collection[element.id] = Object.assign(state.collection[element.id], element);
 	              var status = im_lib_utils.Utils.user.getOnlineStatus(element);
 
 	              if (status.isOnline) {
@@ -56161,10 +57209,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function getState() {
 	      return {
 	        collection: [],
+	        searchCollection: [],
 	        chat_id: 0,
 	        total: 0,
 	        host: this.getVariable('host', location.protocol + '//' + location.host),
-	        unreadCounter: 0
+	        unreadCounter: 0,
+	        schema: []
 	      };
 	    }
 	  }, {
@@ -56174,14 +57224,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        id: 0,
 	        authorId: 0,
 	        date: new Date(),
-	        text: "",
+	        text: '',
 	        sectionCode: 'notification',
-	        textConverted: "",
+	        textConverted: '',
 	        unread: false,
 	        template: 'item',
 	        templateId: 0,
 	        display: true,
-	        settingName: "im|default"
+	        settingName: 'im|default',
+	        type: 0
 	      };
 	    }
 	  }, {
@@ -56202,6 +57253,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 
 	            var existingItem = _this.findItemInArr(state.collection, notificationId);
+
+	            if (!existingItem.element) {
+	              return false;
+	            }
+
+	            return existingItem.element;
+	          };
+	        },
+	        getSearchItemById: function getSearchItemById(state) {
+	          return function (notificationId) {
+	            if (main_core.Type.isString(notificationId)) {
+	              notificationId = parseInt(notificationId);
+	            }
+
+	            var existingItem = _this.findItemInArr(state.searchCollection, notificationId);
 
 	            if (!existingItem.element) {
 	              return false;
@@ -56240,9 +57306,34 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            result.total = parseInt(payload.total);
 	          }
 
-	          store.commit('set', {
+	          store.commit('set', result);
+	        },
+	        setSearchResults: function setSearchResults(store, payload) {
+	          var result = {
+	            notification: []
+	          };
+
+	          if (!(payload.notification instanceof Array)) {
+	            return false;
+	          } // we don't need validation for the local results
+
+
+	          if (payload.type === 'local') {
+	            result.notification = payload.notification;
+	          } else {
+	            result.notification = payload.notification.map(function (notification) {
+	              return _this2.prepareNotification(notification, {
+	                host: store.state.host
+	              });
+	            });
+	          }
+
+	          store.commit('setSearchResults', {
 	            data: result
 	          });
+	        },
+	        deleteSearchResults: function deleteSearchResults(store, payload) {
+	          store.commit('deleteSearchResults');
 	        },
 	        setCounter: function setCounter(store, payload) {
 	          if (main_core.Type.isNumber(payload.unreadTotal) || main_core.Type.isString(payload.unreadTotal)) {
@@ -56268,6 +57359,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            store.commit('add', {
 	              data: addItem
 	            });
+	            store.commit('setTotal', store.state.total + 1);
 	          } else {
 	            store.commit('update', {
 	              index: existingItem.index,
@@ -56293,37 +57385,81 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        update: function update(store, payload) {
 	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
 
-	          if (!existingItem.element) {
-	            return false;
+	          if (existingItem.element) {
+	            store.commit('update', {
+	              index: existingItem.index,
+	              fields: Object.assign({}, payload.fields)
+	            });
 	          }
 
-	          store.commit('update', {
-	            index: existingItem.index,
-	            fields: Object.assign({}, payload.fields)
-	          });
+	          if (payload.searchMode) {
+	            var existingItemInSearchCollection = _this2.findItemInArr(store.state.searchCollection, payload.id);
+
+	            if (existingItemInSearchCollection.element) {
+	              store.commit('update', {
+	                searchCollection: true,
+	                index: existingItemInSearchCollection.index,
+	                fields: Object.assign({}, payload.fields)
+	              });
+	            }
+	          }
 	        },
 	        read: function read(store, payload) {
-	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
+	          var _iterator = _createForOfIteratorHelper$4(payload.ids),
+	              _step;
 
-	          if (!existingItem.element) {
-	            return false;
+	          try {
+	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	              var notificationId = _step.value;
+
+	              var existingItem = _this2.findItemInArr(store.state.collection, notificationId);
+
+	              if (!existingItem.element) {
+	                return false;
+	              }
+
+	              store.commit('read', {
+	                index: existingItem.index,
+	                action: !payload.action
+	              });
+	            }
+	          } catch (err) {
+	            _iterator.e(err);
+	          } finally {
+	            _iterator.f();
 	          }
-
-	          store.commit('read', {
-	            index: existingItem.index,
-	            action: !payload.action
-	          });
+	        },
+	        readAll: function readAll(store, payload) {
+	          store.commit('readAll');
 	        },
 	        delete: function _delete(store, payload) {
 	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
 
-	          if (!existingItem.element) {
-	            return false;
+	          if (existingItem.element) {
+	            store.commit('delete', {
+	              searchCollection: false,
+	              index: existingItem.index
+	            });
+	            store.commit('setTotal', store.state.total - 1);
 	          }
 
-	          store.commit('delete', {
-	            index: existingItem.index,
-	            fields: Object.assign({}, payload.fields)
+	          if (payload.searchMode) {
+	            var existingItemInSearchCollection = _this2.findItemInArr(store.state.searchCollection, payload.id);
+
+	            if (existingItemInSearchCollection.element) {
+	              store.commit('delete', {
+	                searchCollection: true,
+	                index: existingItemInSearchCollection.index
+	              });
+	            }
+	          }
+	        },
+	        deleteAll: function deleteAll(store, payload) {
+	          store.commit('deleteAll');
+	        },
+	        setSchema: function setSchema(store, payload) {
+	          store.commit('setSchema', {
+	            data: payload.data
 	          });
 	        }
 	      };
@@ -56335,16 +57471,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      return {
 	        set: function set(state, payload) {
-	          var _payload$data$total;
+	          state.total = payload.hasOwnProperty('total') ? payload.total : state.total;
 
-	          state.total = (_payload$data$total = payload.data.total) !== null && _payload$data$total !== void 0 ? _payload$data$total : state.total;
+	          if (!payload.hasOwnProperty('notification') || !main_core.Type.isArray(payload.notification)) {
+	            return;
+	          }
 
-	          var _iterator = _createForOfIteratorHelper$4(payload.data.notification),
-	              _step;
+	          var _iterator2 = _createForOfIteratorHelper$4(payload.notification),
+	              _step2;
 
 	          try {
-	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	              var element = _step.value;
+	            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	              var element = _step2.value;
 
 	              var existingItem = _this3.findItemInArr(state.collection, element.id);
 
@@ -56355,12 +57493,40 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              }
 	            }
 	          } catch (err) {
-	            _iterator.e(err);
+	            _iterator2.e(err);
 	          } finally {
-	            _iterator.f();
+	            _iterator2.f();
 	          }
 
 	          state.collection.sort(_this3.sortByType);
+	        },
+	        setSearchResults: function setSearchResults(state, payload) {
+	          var _iterator3 = _createForOfIteratorHelper$4(payload.data.notification),
+	              _step3;
+
+	          try {
+	            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	              var element = _step3.value;
+
+	              var existingItem = _this3.findItemInArr(state.searchCollection, element.id);
+
+	              if (!existingItem.element) {
+	                state.searchCollection.push(element);
+	              } else {
+	                state.searchCollection[existingItem.index] = Object.assign(state.searchCollection[existingItem.index], element);
+	              }
+	            }
+	          } catch (err) {
+	            _iterator3.e(err);
+	          } finally {
+	            _iterator3.f();
+	          }
+	        },
+	        deleteAll: function deleteAll(state, payload) {
+	          state.collection = [];
+	        },
+	        deleteSearchResults: function deleteSearchResults(state, payload) {
+	          state.searchCollection = [];
 	        },
 	        add: function add(state, payload) {
 	          var firstNotificationIndex = null;
@@ -56378,7 +57544,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              } //if we didn't find any simple notification and its index, then add new one to the end.
 
 
-	              if (!firstNotificationIndex) {
+	              if (firstNotificationIndex === null) {
 	                state.collection.push(payload.data);
 	              } else //otherwise, put it right before first simple notification.
 	                {
@@ -56387,34 +57553,47 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	        },
 	        update: function update(state, payload) {
-	          ui_vue.WidgetVue.set(state.collection, payload.index, Object.assign({}, state.collection[payload.index], payload.fields));
+	          var collectionName = payload.searchCollection ? 'searchCollection' : 'collection';
+	          ui_vue.WidgetVue.set(state[collectionName], payload.index, Object.assign({}, state[collectionName][payload.index], payload.fields));
 	        },
 	        delete: function _delete(state, payload) {
-	          state.collection.splice(payload.index, 1);
+	          var collectionName = payload.searchCollection ? 'searchCollection' : 'collection';
+	          state[collectionName].splice(payload.index, 1);
 	        },
 	        read: function read(state, payload) {
 	          state.collection[payload.index].unread = payload.action;
 	        },
+	        readAll: function readAll(state, payload) {
+	          for (var index = 0; state.collection.length > index; index++) {
+	            if (state.collection[index].sectionCode === 'notification') {
+	              state.collection[index].unread = false;
+	            }
+	          }
+	        },
 	        updatePlaceholders: function updatePlaceholders(state, payload) {
+	          var collectionName = payload.searchCollection ? 'searchCollection' : 'collection';
 	          payload.items.forEach(function (element, index) {
 	            var placeholderId = "placeholder".concat(payload.firstItem + index);
-	            var existingPlaceholderIndex = state.collection.findIndex(function (notification) {
+	            var existingPlaceholderIndex = state[collectionName].findIndex(function (notification) {
 	              return notification.id === placeholderId;
 	            });
-	            var existingMessageIndex = state.collection.findIndex(function (notification) {
+	            var existingMessageIndex = state[collectionName].findIndex(function (notification) {
 	              return notification.id === element.id;
 	            });
 
 	            if (existingMessageIndex >= 0) {
-	              state.collection[existingMessageIndex] = Object.assign(state.collection[existingMessageIndex], element);
-	              state.collection.splice(existingPlaceholderIndex, 1);
+	              state[collectionName][existingMessageIndex] = Object.assign(state[collectionName][existingMessageIndex], element);
+	              state[collectionName].splice(existingPlaceholderIndex, 1);
 	            } else {
-	              state.collection.splice(existingPlaceholderIndex, 1, Object.assign({}, element));
+	              state[collectionName].splice(existingPlaceholderIndex, 1, Object.assign({}, element));
 	            }
 	          });
 	        },
 	        clearPlaceholders: function clearPlaceholders(state, payload) {
 	          state.collection = state.collection.filter(function (element) {
+	            return !element.id.toString().startsWith('placeholder');
+	          });
+	          state.searchCollection = state.searchCollection.filter(function (element) {
 	            return !element.id.toString().startsWith('placeholder');
 	          });
 	        },
@@ -56423,6 +57602,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        setTotal: function setTotal(state, payload) {
 	          state.total = payload;
+	        },
+	        setSchema: function setSchema(state, payload) {
+	          state.schema = payload.data;
 	        }
 	      };
 	    }
@@ -56447,8 +57629,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        if (main_core.Type.isString(fields.text) || main_core.Type.isNumber(fields.text)) {
 	          result.textConverted = this.convertToHtml({
-	            text: fields.text.toString(),
-	            isConverted: true
+	            text: fields.text.toString()
 	          });
 	        }
 	      } else // modern format
@@ -56465,8 +57646,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            result.text = fields.text.toString();
 	            var isConverted = !main_core.Type.isNil(result.textConverted);
 	            result.textConverted = this.convertToHtml({
-	              text: isConverted ? result.textConverted : result.text,
-	              isConverted: isConverted
+	              text: isConverted ? result.textConverted : result.text
 	            });
 	          }
 	        }
@@ -56504,19 +57684,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            TEXT: "".concat(button.TITLE),
 	            TYPE: 'BUTTON',
 	            DISPLAY: 'LINE',
-	            BG_COLOR: button.VALUE === 'Y' ? "#8bc84b" : "#ef4b57",
-	            TEXT_COLOR: "#fff"
+	            BG_COLOR: button.VALUE === 'Y' ? '#8bc84b' : '#ef4b57',
+	            TEXT_COLOR: '#fff'
 	          };
 	        });
 	      }
 
-	      if (fields.notify_type === 1) {
+	      if (fields.notify_type === 1 || fields.type === 1) {
 	        result.sectionCode = 'confirm';
-	      } //p&p format
+	      }
 
-
-	      if (fields.type === 1) {
-	        result.sectionCode = 'confirm';
+	      if (main_core.Type.isNumber(fields.notify_type)) {
+	        result.type = fields.notify_type;
 	      }
 
 	      if (!main_core.Type.isNil(fields.notify_read)) {
@@ -56629,7 +57808,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (a.sectionCode !== 'confirm' && b.sectionCode === 'confirm') {
 	        return 1;
 	      } else {
-	        return a.id > b.id;
+	        return 0;
 	      }
 	    }
 	    /* endregion Internal helpers */
@@ -56640,139 +57819,34 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "convertToHtml",
 	    value: function convertToHtml() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      var _params$quote = params.quote,
-	          quote = _params$quote === void 0 ? true : _params$quote,
-	          _params$image = params.image,
-	          image = _params$image === void 0 ? true : _params$image,
-	          _params$text = params.text,
-	          text = _params$text === void 0 ? '' : _params$text,
-	          _params$highlightText = params.highlightText,
-	          highlightText = _params$highlightText === void 0 ? '' : _params$highlightText,
-	          _params$isConverted = params.isConverted,
-	          isConverted = _params$isConverted === void 0 ? false : _params$isConverted,
-	          _params$enableBigSmil = params.enableBigSmile,
-	          enableBigSmile = _params$enableBigSmil === void 0 ? true : _params$enableBigSmil;
+	      var _params$text = params.text,
+	          text = _params$text === void 0 ? '' : _params$text;
 	      text = text.trim();
-
-	      if (text.startsWith('/me')) {
-	        text = "<i>".concat(text.substr(4), "</i>");
-	      } else if (text.startsWith('/loud')) {
-	        text = "<b>".concat(text.substr(6), "</b>");
-	      }
-
-	      var quoteSign = "&gt;&gt;";
-
-	      if (quote && text.indexOf(quoteSign) >= 0) {
-	        var textPrepare = text.split(isConverted ? "<br />" : "\n");
-
-	        for (var i = 0; i < textPrepare.length; i++) {
-	          if (textPrepare[i].startsWith(quoteSign)) {
-	            textPrepare[i] = textPrepare[i].replace(quoteSign, '<div class="bx-im-message-content-quote"><div class="bx-im-message-content-quote-wrap">');
-
-	            while (++i < textPrepare.length && textPrepare[i].startsWith(quoteSign)) {
-	              textPrepare[i] = textPrepare[i].replace(quoteSign, '');
-	            }
-
-	            textPrepare[i - 1] += '</div></div><br>';
-	          }
-	        }
-
-	        text = textPrepare.join("<br />");
-	      }
-
 	      text = text.replace(/\n/gi, '<br />');
 	      text = text.replace(/\t/gi, '&nbsp;&nbsp;&nbsp;&nbsp;');
-	      text = this.decodeBbCode(text, false, enableBigSmile);
-
-	      if (quote) {
-	        text = text.replace(/------------------------------------------------------<br \/>(.*?)\[(.*?)\]<br \/>(.*?)------------------------------------------------------(<br \/>)?/g, function (whole, p1, p2, p3, p4, offset) {
-	          return (offset > 0 ? '<br>' : '') + "<div class=\"bx-im-message-content-quote\"><div class=\"bx-im-message-content-quote-wrap\"><div class=\"bx-im-message-content-quote-name\"><span class=\"bx-im-message-content-quote-name-text\">" + p1 + "</span><span class=\"bx-im-message-content-quote-name-time\">" + p2 + "</span></div>" + p3 + "</div></div><br />";
-	        });
-	        text = text.replace(/------------------------------------------------------<br \/>(.*?)------------------------------------------------------(<br \/>)?/g, function (whole, p1, p2, p3, offset) {
-	          return (offset > 0 ? '<br>' : '') + "<div class=\"bx-im-message-content-quote\"><div class=\"bx-im-message-content-quote-wrap\">" + p1 + "</div></div><br />";
-	        });
-	      }
-
-	      if (image) {
-	        var changed = false;
-	        text = text.replace(/<a(.*?)>(http[s]{0,1}:\/\/.*?)<\/a>/ig, function (whole, aInner, text, offset) {
-	          if (!text.match(/(\.(jpg|jpeg|png|gif|webp)\?|\.(jpg|jpeg|png|gif|webp)$)/i) || text.indexOf("/docs/pub/") > 0 || text.indexOf("logout=yes") > 0) {
-	            return whole;
-	          } else {
-	            changed = true;
-	            return (offset > 0 ? '<br />' : '') + '<a' + aInner + ' target="_blank" class="bx-im-element-file-image"><img src="' + text + '" class="bx-im-element-file-image-source-text" onerror="BX.Messenger.Model.MessagesModel.hideErrorImage(this)"></a></span>';
-	          }
-	        });
-
-	        if (changed) {
-	          text = text.replace(/<\/span>(\n?)<br(\s\/?)>/ig, '</span>').replace(/<br(\s\/?)>(\n?)<br(\s\/?)>(\n?)<span/ig, '<br /><span');
-	        }
-	      }
-
-	      if (highlightText) {
-	        text = text.replace(new RegExp("(" + highlightText.replace(/[\-\[\]\/{}()*+?.\\^$|]/g, "\\$&") + ")", 'ig'), '<span class="bx-messenger-highlight">$1</span>');
-	      }
-
-	      if (enableBigSmile) {
-	        text = text.replace(/^(\s*<img\s+src=[^>]+?data-code=[^>]+?data-definition="UHD"[^>]+?style="width:)(\d+)(px[^>]+?height:)(\d+)(px[^>]+?class="bx-smile"\s*\/?>\s*)$/, function doubleSmileSize(match, start, width, middle, height, end) {
-	          return start + parseInt(width, 10) * 1.7 + middle + parseInt(height, 10) * 1.7 + end;
-	        });
-	      }
-
-	      if (text.substr(-6) == '<br />') {
-	        text = text.substr(0, text.length - 6);
-	      }
-
-	      text = text.replace(/<br><br \/>/ig, '<br />');
-	      text = text.replace(/<br \/><br>/ig, '<br />');
-	      return text;
-	    }
-	  }, {
-	    key: "decodeBbCode",
-	    value: function decodeBbCode(text) {
-	      var textOnly = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	      var enableBigSmile = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-	      return NotificationsModel.decodeBbCode({
-	        text: text,
-	        textOnly: textOnly,
-	        enableBigSmile: enableBigSmile
+	      text = NotificationsModel.decodeBbCode({
+	        text: text
 	      });
+
+	      if (im_lib_utils.Utils.platform.isBitrixDesktop()) {
+	        text = text.replace(/<a(.*?)>(.*?)<\/a>/ig, function (whole, anchor, text) {
+	          return '<a' + anchor.replace('target="_self"', 'target="_blank"') + ' class="bx-im-notifications-item-link">' + text + '</a>';
+	        });
+	      }
+
+	      return text;
 	    }
 	  }], [{
 	    key: "decodeBbCode",
 	    value: function decodeBbCode() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      var text = params.text,
-	          _params$textOnly = params.textOnly,
-	          textOnly = _params$textOnly === void 0 ? false : _params$textOnly,
-	          _params$enableBigSmil2 = params.enableBigSmile,
-	          enableBigSmile = _params$enableBigSmil2 === void 0 ? true : _params$enableBigSmil2;
-	      var codeReplacement = [];
-	      text = text.replace(/\[CODE\]\n?([\s\S]*?)\[\/CODE\]/ig, function (whole, text) {
-	        var id = codeReplacement.length;
-	        codeReplacement.push(text);
-	        return '####REPLACEMENT_MARK_' + id + '####';
-	      });
+	      var text = params.text;
 	      text = text.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/ig, function (whole, link, text) {
 	        var tag = document.createElement('a');
 	        tag.href = im_lib_utils.Utils.text.htmlspecialcharsback(link);
 	        tag.target = '_blank';
 	        tag.text = im_lib_utils.Utils.text.htmlspecialcharsback(text);
-	        var allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
-
-	        if (allowList.indexOf(tag.protocol) <= -1) {
-	          return whole;
-	        }
-
-	        return tag.outerHTML;
-	      });
-	      text = text.replace(/\[url\]([^\]]+)\[\/url\]/ig, function (whole, link) {
-	        link = im_lib_utils.Utils.text.htmlspecialcharsback(link);
-	        var tag = document.createElement('a');
-	        tag.href = link;
-	        tag.target = '_blank';
-	        tag.text = link;
-	        var allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
+	        var allowList = ['http:', 'https:', 'ftp:', 'file:', 'tel:', 'callto:', 'mailto:', 'skype:', 'viber:'];
 
 	        if (allowList.indexOf(tag.protocol) <= -1) {
 	          return whole;
@@ -56782,16 +57856,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	      text = text.replace(/\[LIKE\]/ig, '<span class="bx-smile bx-im-smile-like"></span>');
 	      text = text.replace(/\[DISLIKE\]/ig, '<span class="bx-smile bx-im-smile-dislike"></span>');
+	      text = text.replace(/\[RATING\=([1-5]{1})\]/ig, function (whole, rating) {
+	        // todo: refactor legacy call
+	        return BX.MessengerCommon.linesVoteHeadNodes(0, rating, false).outerHTML;
+	      });
 	      text = text.replace(/\[BR\]/ig, '<br/>');
 	      text = text.replace(/\[([buis])\](.*?)\[(\/[buis])\]/ig, function (whole, open, inner, close) {
 	        return '<' + open + '>' + inner + '<' + close + '>';
-	      }); // TODO tag USER
-	      // this code needs to be ported to im/install/js/im/view/message/body/src/body.js:229
-
+	      });
 	      text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, function (whole, openlines, chatId, inner) {
-	        return openlines ? inner : '<span class="bx-im-mention" data-type="CHAT" data-value="chat' + chatId + '">' + inner + '</span>';
-	      }); // TODO tag CHAT
+	        chatId = parseInt(chatId);
 
+	        if (chatId <= 0) {
+	          return inner;
+	        }
+
+	        if (openlines) {
+	          return '<span class="bx-im-mention" data-type="OPENLINES" data-value="' + chatId + '">' + inner + '</span>';
+	        } else {
+	          return '<span class="bx-im-mention" data-type="CHAT" data-value="' + chatId + '">' + inner + '</span>';
+	        }
+	      });
 	      text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, text) {
 	        var html = '';
 	        userId = parseInt(userId);
@@ -56804,150 +57889,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        return html;
 	      });
-
 	      text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, function (whole, historyId, text) {
 	        return text;
-	      }); // TODO tag PCH
-
-	      text = text.replace(/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/ig, function (whole, command, text) {
-	        var html = '';
-	        text = text ? text : command;
-	        command = (command ? command : text).replace('<br />', '\n');
-
-	        if (!textOnly && text) {
-	          text = text.replace(/<([\w]+)[^>]*>(.*?)<\\1>/i, "$2", text);
-	          text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
-	          html = '<span class="bx-im-message-command-wrap">' + '<span class="bx-im-message-command" data-entity="send">' + text + '</span>' + '<span class="bx-im-message-command-data">' + command + '</span>' + '</span>';
-	        } else {
-	          html = text;
-	        }
-
-	        return html;
-	      });
-	      text = text.replace(/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/ig, function (whole, command, text) {
-	        var html = '';
-	        text = text ? text : command;
-	        command = (command ? command : text).replace('<br />', '\n');
-
-	        if (!textOnly && text) {
-	          text = text.replace(/<([\w]+)[^>]*>(.*?)<\/\1>/i, "$2", text);
-	          text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
-	          html = '<span class="bx-im-message-command" data-entity="put">' + text + '</span>';
-	          html += '<span class="bx-im-message-command-data">' + command + '</span>';
-	        } else {
-	          html = text;
-	        }
-
-	        return html;
-	      });
-	      var textElementSize = 0;
-
-	      if (enableBigSmile) {
-	        textElementSize = text.replace(/\[icon\=([^\]]*)\]/ig, '').trim().length;
-	      }
-
-	      text = text.replace(/\[icon\=([^\]]*)\]/ig, function (whole) {
-	        var url = whole.match(/icon\=(\S+[^\s.,> )\];\'\"!?])/i);
-
-	        if (url && url[1]) {
-	          url = url[1];
-	        } else {
-	          return '';
-	        }
-
-	        var attrs = {
-	          'src': url,
-	          'border': 0
-	        };
-	        var size = whole.match(/size\=(\d+)/i);
-
-	        if (size && size[1]) {
-	          attrs['width'] = size[1];
-	          attrs['height'] = size[1];
-	        } else {
-	          var width = whole.match(/width\=(\d+)/i);
-
-	          if (width && width[1]) {
-	            attrs['width'] = width[1];
-	          }
-
-	          var height = whole.match(/height\=(\d+)/i);
-
-	          if (height && height[1]) {
-	            attrs['height'] = height[1];
-	          }
-
-	          if (attrs['width'] && !attrs['height']) {
-	            attrs['height'] = attrs['width'];
-	          } else if (attrs['height'] && !attrs['width']) {
-	            attrs['width'] = attrs['height'];
-	          } else if (attrs['height'] && attrs['width']) ; else {
-	            attrs['width'] = 20;
-	            attrs['height'] = 20;
-	          }
-	        }
-
-	        attrs['width'] = attrs['width'] > 100 ? 100 : attrs['width'];
-	        attrs['height'] = attrs['height'] > 100 ? 100 : attrs['height'];
-
-	        if (enableBigSmile && textElementSize === 0 && attrs['width'] === attrs['height'] && attrs['width'] === 20) {
-	          attrs['width'] = 40;
-	          attrs['height'] = 40;
-	        }
-
-	        var title = whole.match(/title\=(.*[^\s\]])/i);
-
-	        if (title && title[1]) {
-	          title = title[1];
-
-	          if (title.indexOf('width=') > -1) {
-	            title = title.substr(0, title.indexOf('width='));
-	          }
-
-	          if (title.indexOf('height=') > -1) {
-	            title = title.substr(0, title.indexOf('height='));
-	          }
-
-	          if (title.indexOf('size=') > -1) {
-	            title = title.substr(0, title.indexOf('size='));
-	          }
-
-	          if (title) {
-	            attrs['title'] = im_lib_utils.Utils.text.htmlspecialchars(title).trim();
-	            attrs['alt'] = attrs['title'];
-	          }
-	        }
-
-	        var attributes = '';
-
-	        for (var name in attrs) {
-	          if (attrs.hasOwnProperty(name)) {
-	            attributes += name + '="' + attrs[name] + '" ';
-	          }
-	        }
-
-	        return '<img class="bx-smile bx-icon" ' + attributes + '>';
-	      });
-	      codeReplacement.forEach(function (code, index) {
-	        text = text.replace('####REPLACEMENT_MARK_' + index + '####', !textOnly ? '<div class="bx-im-message-content-code">' + code + '</div>' : code);
 	      });
 	      return text;
 	    }
-	  }, {
-	    key: "hideErrorImage",
-	    value: function hideErrorImage(element) {
-	      if (element.parentNode && element.parentNode) {
-	        element.parentNode.innerHTML = '<a href="' + element.src + '" target="_blank">' + element.src + '</a>';
-	      }
+	    /* endregion Text utils */
 
-	      return true;
-	    }
 	  }]);
 	  return NotificationsModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	exports.ApplicationModel = ApplicationModel;
-	exports.CallApplicationModel = CallApplicationModel;
+	exports.ConferenceModel = ConferenceModel;
 	exports.MessagesModel = MessagesModel;
 	exports.DialoguesModel = DialoguesModel;
 	exports.UsersModel = UsersModel;
@@ -58242,6 +59196,55 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }
 	};
 
+	var AttachLinks = {
+	  methods: {
+	    openLink: function openLink(event) {
+	      var element = event.element;
+	      var eventData = event.event;
+
+	      if (element.LINK) {
+	        im_lib_utils.Utils.platform.openNewPage(element.LINK);
+	      } else {
+	        var entity = {
+	          id: null,
+	          type: null
+	        };
+
+	        if (element.hasOwnProperty('USER_ID') && element.USER_ID > 0) {
+	          entity.id = element.USER_ID;
+	          entity.type = 'user';
+	        }
+
+	        if (element.hasOwnProperty('CHAT_ID') && element.CHAT_ID > 0) {
+	          entity.id = element.CHAT_ID;
+	          entity.type = 'chat';
+	        }
+
+	        if (entity.id && entity.type && window.top['BXIM']) {
+	          var popupAngle = !BX.MessengerTheme.isDark();
+	          window.top['BXIM'].messenger.openPopupExternalData(eventData.target, entity.type, popupAngle, {
+	            'ID': entity.id
+	          });
+	        } else if (navigator.userAgent.toLowerCase().includes('bitrixmobile')) {
+	          var dialogId = '';
+
+	          if (entity.type === 'chat') {
+	            dialogId = "chat".concat(entity.id);
+	          } else {
+	            dialogId = entity.id;
+	          }
+
+	          if (dialogId !== '') {
+	            BXMobileApp.Events.postToComponent("onOpenDialog", [{
+	              dialogId: dialogId
+	            }, true], 'im.recent');
+	          }
+	        }
+	      }
+	    }
+	  }
+	};
+
 	/**
 	 * Bitrix Messenger
 	 * Vue component
@@ -58256,6 +59259,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  property: 'GRID',
 	  name: 'bx-im-view-element-attach-grid',
 	  component: {
+	    mixins: [AttachLinks],
 	    props: {
 	      config: {
 	        type: Object,
@@ -58274,11 +59278,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    },
 	    methods: {
-	      openLink: function openLink(element) {
-	        if (element.LINK) {
-	          im_lib_utils.Utils.platform.openNewPage(element.LINK);
-	        }
-	      },
 	      getWidth: function getWidth(element) {
 	        if (this.type !== 'row') {
 	          return element.WIDTH ? element.WIDTH + 'px' : '';
@@ -58318,7 +59317,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return this.config.GRID[0].DISPLAY.toLowerCase();
 	      }
 	    },
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-grid\">\n\t\t\t\t<template v-if=\"type === 'block'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-block\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\" @click=\"openLink(element)\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'line'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-card\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\" @click=\"openLink(element)\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'row'\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-column\">\n\t\t\t\t\t\t<table class=\"bx-im-element-attach-type-display-column-table\">\n\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.NAME\">\n\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-name\" :colspan=\"element.VALUE? 1: 2\" :style=\"{width: getWidth(element)}\">{{element.NAME}}</td>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.VALUE\">\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\" @click=\"openLink(element)\" :colspan=\"element.NAME? 1: 2\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-value\" :colspan=\"element.NAME? 1: 2\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    //language=Vue
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-grid\">\n\t\t\t\t<template v-if=\"type === 'block'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-block\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'line'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-card\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'row'\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-column\">\n\t\t\t\t\t\t<table class=\"bx-im-element-attach-type-display-column-table\">\n\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.NAME\">\n\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-name\" :colspan=\"element.VALUE? 1: 2\" :style=\"{width: getWidth(element)}\">{{element.NAME}}</td>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.VALUE\">\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t\t\t\t\t<td \n\t\t\t\t\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t:colspan=\"element.NAME? 1: 2\" \n\t\t\t\t\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-value\" :colspan=\"element.NAME? 1: 2\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -58470,6 +59470,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  property: 'LINK',
 	  name: 'bx-im-view-element-attach-link',
 	  component: {
+	    mixins: [AttachLinks],
 	    props: {
 	      config: {
 	        type: Object,
@@ -58493,11 +59494,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      },
 	      getLinkName: function getLinkName(element) {
 	        return element.NAME ? element.NAME : element.LINK;
-	      },
-	      openLink: function openLink(element) {
-	        if (element.LINK) {
-	          im_lib_utils.Utils.platform.openNewPage(element.LINK);
-	        }
 	      }
 	    },
 	    computed: {
@@ -58507,7 +59503,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    components: babelHelpers.defineProperty({}, AttachTypeImage.name, AttachTypeImage.component),
 	    //language=Vue
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-link\">\n\t\t\t\t<template v-for=\"(element, index) in config.LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-link-element\" :key=\"index\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-link-name\" @click=\"openLink(element)\">{{getLinkName(element)}}</div>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-link-desc\">{{element.DESC}}</div>\n\t\t\t\t\t\t<div v-if=\"element.PREVIEW\" class=\"bx-im-element-attach-type-link-image\" @click=\"openLink(element)\">\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-link\">\n\t\t\t\t<template v-for=\"(element, index) in config.LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-link-element\" :key=\"index\">\n\t\t\t\t\t\t<a \n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\"\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-name\" \n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span \n\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-ajax-link\"\n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-link-desc\">{{element.DESC}}</div>\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tv-if=\"element.PREVIEW\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-image\"\n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -58569,6 +59565,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  property: 'RICH_LINK',
 	  name: 'bx-im-view-element-attach-rich',
 	  component: {
+	    mixins: [AttachLinks],
 	    props: {
 	      config: {
 	        type: Object,
@@ -58589,11 +59586,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            HEIGHT: element.HEIGHT
 	          }]
 	        };
-	      },
-	      openLink: function openLink(element) {
-	        if (element.LINK) {
-	          im_lib_utils.Utils.platform.openNewPage(element.LINK);
-	        }
 	      }
 	    },
 	    computed: {
@@ -58602,7 +59594,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    },
 	    components: babelHelpers.defineProperty({}, AttachTypeImage.name, AttachTypeImage.component),
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-rich\">\n\t\t\t\t<template v-for=\"(element, index) in config.RICH_LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-rich-element\" :key=\"index\">\n\t\t\t\t\t\t<div v-if=\"element.PREVIEW\" class=\"bx-im-element-attach-type-rich-image\" @click=\"openLink(element)\">\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-rich-name\" @click=\"openLink(element)\">{{element.NAME}}</div>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-rich-desc\">{{element.DESC}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    //language=Vue
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-rich\">\n\t\t\t\t<template v-for=\"(element, index) in config.RICH_LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-rich-element\" :key=\"index\">\n\t\t\t\t\t\t<div v-if=\"element.PREVIEW\" class=\"bx-im-element-attach-type-rich-image\" @click=\"openLink({element: element, event: $event})\">\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-rich-name\" @click=\"openLink({element: element, event: $event})\">{{element.NAME}}</div>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-rich-desc\">{{element.DESC}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -58620,6 +59613,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  property: 'USER',
 	  name: 'bx-im-view-element-attach-user',
 	  component: {
+	    mixins: [AttachLinks],
 	    props: {
 	      config: {
 	        type: Object,
@@ -58631,11 +59625,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    },
 	    methods: {
-	      openLink: function openLink(element) {
-	        if (element.LINK) {
-	          im_lib_utils.Utils.platform.openNewPage(element.LINK);
-	        }
-	      },
 	      getAvatarType: function getAvatarType(element) {
 	        if (element.AVATAR) {
 	          return '';
@@ -58652,7 +59641,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return 'bx-im-element-attach-type-user-avatar-type-' + avatarType;
 	      }
 	    },
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-user\">\n\t\t\t\t<template v-for=\"(element, index) in config.USER\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-body\" @click=\"openLink(element)\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-avatar\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-element-attach-type-user-avatar-type', getAvatarType(element)]\" :style=\"{backgroundColor: element.AVATAR? '': color}\">\n\t\t\t\t\t\t\t\t<img v-if=\"element.AVATAR\" \n\t\t\t\t\t\t\t\t\tv-bx-lazyload\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-avatar-source\"\n\t\t\t\t\t\t\t\t\t:data-lazyload-src=\"element.AVATAR\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-name\">{{element.NAME}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    //language=Vue
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-user\">\n\t\t\t\t<template v-for=\"(element, index) in config.USER\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-body\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-avatar\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-element-attach-type-user-avatar-type', getAvatarType(element)]\" :style=\"{backgroundColor: element.AVATAR? '': color}\">\n\t\t\t\t\t\t\t\t<img v-if=\"element.AVATAR\" \n\t\t\t\t\t\t\t\t\tv-bx-lazyload\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-avatar-source\"\n\t\t\t\t\t\t\t\t\t:data-lazyload-src=\"element.AVATAR\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-name\" \n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span v-else @click.prevent=\"openLink({element: element, event: $event})\">\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -59082,7 +60072,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return UA.includes('android') || UA.includes('iphone') || UA.includes('ipad') || UA.includes('bitrixmobile');
 	    }
 	  },
-	  template: "\n\t\t<div :class=\"['ui-vue-reaction', {'ui-vue-reaction-mobile': isMobile}]\">\n\t\t\t<transition name=\"ui-vue-reaction-result-animation\">\n\t\t\t\t<div v-if=\"isTypesShowed\" class=\"ui-vue-reaction-result\" @click=\"list\">\n\t\t\t\t\t<transition-group tag=\"div\" class=\"ui-vue-reaction-result-types\" name=\"ui-vue-reaction-result-type-animation\" >\n\t\t\t\t\t\t<span v-for=\"element in types\" :class=\"['ui-vue-reaction-result-type', 'ui-vue-reaction-icon-'+element.type]\" :key=\"element.type\"></span>\n\t\t\t\t\t</transition-group>\t\n\t\t\t\t\t<div class=\"ui-vue-reaction-result-counter\">{{counter}}</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div v-if=\"userId > 0\"  class=\"ui-vue-reaction-button\" \n\t\t\t\t@click=\"likeIt\"\n\t\t\t\t@touchend=\"likeIt\"\n\t\t\t\t@mousedown=\"preventDefault\" \n\t\t\t\t@touchstart=\"preventDefault\" \n\t\t\t>\n\t\t\t\t<div class=\"ui-vue-reaction-button-container\">\n\t\t\t\t\t<div :class=\"['ui-vue-reaction-button-icon', 'ui-vue-reaction-icon-'+userReaction, {'ui-vue-reaction-button-pressed': buttonAnimate}]\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"['ui-vue-reaction', {'ui-vue-reaction-mobile': isMobile}]\">\n\t\t\t<transition name=\"ui-vue-reaction-result-animation\">\n\t\t\t\t<div v-if=\"isTypesShowed\" class=\"ui-vue-reaction-result\" @click=\"list\">\n\t\t\t\t\t<transition-group tag=\"div\" class=\"ui-vue-reaction-result-types\" name=\"ui-vue-reaction-result-type-animation\" >\n\t\t\t\t\t\t<span v-for=\"element in types\" :class=\"['ui-vue-reaction-result-type', 'ui-vue-reaction-icon-'+element.type]\" :key=\"element.type\"></span>\n\t\t\t\t\t</transition-group>\t\n\t\t\t\t\t<div class=\"ui-vue-reaction-result-counter\">{{counter}}</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div v-if=\"userId > 0\"  class=\"ui-vue-reaction-button\" @click=\"likeIt\">\n\t\t\t\t<div class=\"ui-vue-reaction-button-container\">\n\t\t\t\t\t<div :class=\"['ui-vue-reaction-button-icon', 'ui-vue-reaction-icon-'+userReaction, {'ui-vue-reaction-button-pressed': buttonAnimate}]\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 }((this.window = this.window || {}),BX));
@@ -59136,18 +60126,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    message: {
 	      type: Object,
 	      default: im_model.MessagesModel.create().getElementState
-	    },
-	    user: {
-	      type: Object,
-	      default: im_model.UsersModel.create().getElementState
-	    },
-	    dialog: {
-	      type: Object,
-	      default: im_model.DialoguesModel.create().getElementState
-	    },
-	    files: {
-	      type: Object,
-	      default: {}
 	    },
 	    enableReactions: {
 	      default: true
@@ -59336,6 +60314,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    chatColor: function chatColor() {
 	      return this.dialog.type !== im_const.DialogType.private ? this.dialog.color : this.user.color;
+	    },
+	    dialog: function dialog() {
+	      var dialog = this.$store.getters['dialogues/get'](this.dialogId);
+	      return dialog ? dialog : this.$store.getters['dialogues/getBlank']();
+	    },
+	    user: function user() {
+	      return this.$store.getters['users/get'](this.message.authorId, true);
 	    },
 	    filesData: function filesData() {
 	      var _this3 = this;
@@ -59592,10 +60577,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    referenceContentNameClassName: {
 	      default: ''
-	    },
-	    dialog: {
-	      type: Object,
-	      default: im_model.DialoguesModel.create().getElementState
 	    },
 	    message: {
 	      type: Object,
@@ -59871,6 +60852,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    MessageType: function MessageType() {
 	      return im_const.MessageType;
 	    },
+	    dialog: function dialog() {
+	      var dialog = this.$store.getters['dialogues/get'](this.dialogId);
+	      return dialog ? dialog : this.$store.getters['dialogues/getBlank']();
+	    },
 	    type: function type() {
 	      if (this.message.system || this.message.authorId == 0) {
 	        return im_const.MessageType.system;
@@ -59908,7 +60893,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.showLargeFont && this.message.params.LARGE_FONT === 'Y';
 	    }
 	  },
-	  template: "\n\t\t<div :class=\"['bx-im-message', {\n\t\t\t\t'bx-im-message-without-menu': !showMenu,\n\t\t\t\t'bx-im-message-without-avatar': !showAvatar,\n\t\t\t\t'bx-im-message-type-system': type === MessageType.system,\n\t\t\t\t'bx-im-message-type-self': type === MessageType.self,\n\t\t\t\t'bx-im-message-type-other': type !== MessageType.self,\n\t\t\t\t'bx-im-message-type-opponent': type === MessageType.opponent,\n\t\t\t\t'bx-im-message-status-error': message.error,\n\t\t\t\t'bx-im-message-status-unread': message.unread,\n\t\t\t\t'bx-im-message-status-blink': message.blink,\n\t\t\t\t'bx-im-message-status-edited': isEdited,\n\t\t\t\t'bx-im-message-status-deleted': isDeleted,\n\t\t\t\t'bx-im-message-large-font': isLargeFont,\n\t\t\t}]\" \n\t\t\t@touchstart=\"gestureRouter('touchstart', $event)\"\n\t\t\t@touchmove=\"gestureRouter('touchmove', $event)\"\n\t\t\t@touchend=\"gestureRouter('touchend', $event)\"\n\t\t\tref=\"body\"\n\t\t\t:style=\"{\n\t\t\t\twidth: dragWidth > 0? dragWidth+'px': '', \n\t\t\t\tmarginLeft: (enableGestureQuoteFromRight && dragPosition < 0) || (!enableGestureQuoteFromRight && dragPosition > 0)? dragPosition+'px': '',\n\t\t\t}\"\n\t\t>\n\t\t\t<template v-if=\"type === MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:dialog=\"dialog\"\n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:user=\"userData\"\n\t\t\t\t\t\t:files=\"filesData\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t\t@clickByUserName=\"clickByUserName\"\n\t\t\t\t\t\t@clickByUploadCancel=\"clickByUploadCancel\"\n\t\t\t\t\t\t@clickByKeyboardButton=\"clickByKeyboardButton\"\n\t\t\t\t\t\t@clickByChatTeaser=\"clickByChatTeaser\"\n\t\t\t\t\t\t@setReaction=\"setMessageReaction\"\n\t\t\t\t\t\t@openReactionList=\"openMessageReactionList\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-message-box-status\">\n\t\t\t\t\t<template v-if=\"message.sending\">\n\t\t\t\t\t\t<div class=\"bx-im-message-sending\"></div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<transition name=\"bx-im-message-status-retry\">\n\t\t\t\t\t\t<template v-if=\"!message.sending && message.error && message.retry\">\n\t\t\t\t\t\t\t<div class=\"bx-im-message-status-retry\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_RETRY_TITLE')\" @click=\"clickByMessageRetry({message: message, event: $event})\">\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-retry-icon\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</transition>\n\t\t\t\t\t<template v-if=\"showMenu && !message.sending && !message.error\">\n\t\t\t\t\t\t<div class=\"bx-im-message-status-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template> \n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t\t<template v-else-if=\"type !== MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<template v-if=\"type === MessageType.opponent\">\n\t\t\t\t\t<div v-if=\"showAvatar\" class=\"bx-im-message-avatar\" @click=\"clickByAvatar({user: userData, event: $event})\">\n\t\t\t\t\t\t<div :class=\"['bx-im-message-avatar-image', {\n\t\t\t\t\t\t\t\t'bx-im-message-avatar-image-default': !userData.avatar\n\t\t\t\t\t\t\t}]\"\n\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\tbackgroundColor: !userData.avatar? userData.color: '', \n\t\t\t\t\t\t\t\tbackgroundImage: userAvatar\n\t\t\t\t\t\t\t}\" \n\t\t\t\t\t\t\t:title=\"userData.name\"\n\t\t\t\t\t\t></div>\t\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:user=\"userData\"\n\t\t\t\t\t\t:files=\"filesData\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t\t@clickByUserName=\"clickByUserName\"\n\t\t\t\t\t\t@clickByUploadCancel=\"clickByUploadCancel\"\n\t\t\t\t\t\t@clickByKeyboardButton=\"clickByKeyboardButton\"\n\t\t\t\t\t\t@clickByChatTeaser=\"clickByChatTeaser\"\n\t\t\t\t\t\t@setReaction=\"setMessageReaction\"\n\t\t\t\t\t\t@openReactionList=\"openMessageReactionList\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"showMenu\"  class=\"bx-im-message-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t</div>\t\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"['bx-im-message', {\n\t\t\t\t'bx-im-message-without-menu': !showMenu,\n\t\t\t\t'bx-im-message-without-avatar': !showAvatar,\n\t\t\t\t'bx-im-message-type-system': type === MessageType.system,\n\t\t\t\t'bx-im-message-type-self': type === MessageType.self,\n\t\t\t\t'bx-im-message-type-other': type !== MessageType.self,\n\t\t\t\t'bx-im-message-type-opponent': type === MessageType.opponent,\n\t\t\t\t'bx-im-message-status-error': message.error,\n\t\t\t\t'bx-im-message-status-unread': message.unread,\n\t\t\t\t'bx-im-message-status-blink': message.blink,\n\t\t\t\t'bx-im-message-status-edited': isEdited,\n\t\t\t\t'bx-im-message-status-deleted': isDeleted,\n\t\t\t\t'bx-im-message-large-font': isLargeFont,\n\t\t\t}]\" \n\t\t\t@touchstart=\"gestureRouter('touchstart', $event)\"\n\t\t\t@touchmove=\"gestureRouter('touchmove', $event)\"\n\t\t\t@touchend=\"gestureRouter('touchend', $event)\"\n\t\t\tref=\"body\"\n\t\t\t:style=\"{\n\t\t\t\twidth: dragWidth > 0? dragWidth+'px': '', \n\t\t\t\tmarginLeft: (enableGestureQuoteFromRight && dragPosition < 0) || (!enableGestureQuoteFromRight && dragPosition > 0)? dragPosition+'px': '',\n\t\t\t}\"\n\t\t>\n\t\t\t<template v-if=\"type === MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t\t@clickByUserName=\"clickByUserName\"\n\t\t\t\t\t\t@clickByUploadCancel=\"clickByUploadCancel\"\n\t\t\t\t\t\t@clickByKeyboardButton=\"clickByKeyboardButton\"\n\t\t\t\t\t\t@clickByChatTeaser=\"clickByChatTeaser\"\n\t\t\t\t\t\t@setReaction=\"setMessageReaction\"\n\t\t\t\t\t\t@openReactionList=\"openMessageReactionList\"\t\n\t\t\t\t\t\t\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-message-box-status\">\n\t\t\t\t\t<template v-if=\"message.sending\">\n\t\t\t\t\t\t<div class=\"bx-im-message-sending\"></div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<transition name=\"bx-im-message-status-retry\">\n\t\t\t\t\t\t<template v-if=\"!message.sending && message.error && message.retry\">\n\t\t\t\t\t\t\t<div class=\"bx-im-message-status-retry\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_RETRY_TITLE')\" @click=\"clickByMessageRetry({message: message, event: $event})\">\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-retry-icon\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</transition>\n\t\t\t\t\t<template v-if=\"showMenu && !message.sending && !message.error\">\n\t\t\t\t\t\t<div class=\"bx-im-message-status-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template> \n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t\t<template v-else-if=\"type !== MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<template v-if=\"type === MessageType.opponent\">\n\t\t\t\t\t<div v-if=\"showAvatar\" class=\"bx-im-message-avatar\" @click=\"clickByAvatar({user: userData, event: $event})\">\n\t\t\t\t\t\t<div :class=\"['bx-im-message-avatar-image', {\n\t\t\t\t\t\t\t\t'bx-im-message-avatar-image-default': !userData.avatar\n\t\t\t\t\t\t\t}]\"\n\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\tbackgroundColor: !userData.avatar? userData.color: '', \n\t\t\t\t\t\t\t\tbackgroundImage: userAvatar\n\t\t\t\t\t\t\t}\" \n\t\t\t\t\t\t\t:title=\"userData.name\"\n\t\t\t\t\t\t></div>\t\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:files=\"filesData\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t\t@clickByUserName=\"clickByUserName\"\n\t\t\t\t\t\t@clickByUploadCancel=\"clickByUploadCancel\"\n\t\t\t\t\t\t@clickByKeyboardButton=\"clickByKeyboardButton\"\n\t\t\t\t\t\t@clickByChatTeaser=\"clickByChatTeaser\"\n\t\t\t\t\t\t@setReaction=\"setMessageReaction\"\n\t\t\t\t\t\t@openReactionList=\"openMessageReactionList\"\n\t\t\t\t\t/>\t\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"showMenu\"  class=\"bx-im-message-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t</div>\t\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 }((this.window = this.window || {}),window,BX.Messenger.Model,BX,BX.Messenger.Const,BX.Messenger.Lib,BX.Messenger.Lib));
@@ -60152,6 +61137,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.generateUniqueName = task.generateUniqueName;
 	    this.chunkSizeInBytes = task.chunkSize;
 	    this.previewBlob = task.previewBlob || null;
+	    this.requestToDelete = false;
 	    this.listener('onStartUpload', {
 	      id: this.taskId,
 	      file: this.fileData,
@@ -60234,6 +61220,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "deleteContent",
 	    value: function deleteContent() {
 	      this.status = Uploader.STATUSES.CANCELLED;
+	      this.requestToDelete = true;
 
 	      if (!this.token) {
 	        console.error('Empty token.');
@@ -60261,7 +61248,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }).then(function (response) {
 	        return response.json();
 	      }).then(function (result) {
-	        return console.log();
+	        return console.log(result);
 	      }).catch(function (err) {
 	        return console.error(err);
 	      });
@@ -60273,6 +61260,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (!this.token) {
 	        console.error('Empty token.');
+	        return;
+	      }
+
+	      if (this.requestToDelete) {
 	        return;
 	      }
 
@@ -60318,6 +61309,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          console.error(result.errors[0].message);
 	        } else {
+	          _this2.calculateProgress();
+
 	          _this2.status = Uploader.STATUSES.DONE;
 
 	          _this2.listener('onComplete', {
@@ -60387,6 +61380,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      _this.inputNode = options.inputNode || null;
 	      _this.dropNode = options.dropNode || null;
 	      _this.fileMaxSize = options.fileMaxSize || null;
+	      _this.fileMaxWidth = options.fileMaxWidth || null;
+	      _this.fileMaxHeight = options.fileMaxHeight || null;
 
 	      if (options.sender) {
 	        _this.senderOptions = {
@@ -60490,13 +61485,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return;
 	      }
 
-	      var task = this.queue.find(function (queueItem) {
-	        return queueItem.taskId === taskId;
-	      });
+	      this.queue = this.queue.filter(function (queueItem) {
+	        if (queueItem.taskId === taskId) {
+	          queueItem.deleteContent();
+	          return false;
+	        }
 
-	      if (task) {
-	        task.deleteContent();
-	      }
+	        return true;
+	      });
 	    }
 	  }, {
 	    key: "getTask",
@@ -60660,6 +61656,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          data['previewData'] = previewData.blob;
 	          data['previewDataWidth'] = previewData.width;
 	          data['previewDataHeight'] = previewData.height;
+
+	          if (_this9.fileMaxWidth || _this9.fileMaxHeight) {
+	            var isMaxWidthExceeded = _this9.fileMaxWidth === null ? false : _this9.fileMaxWidth < data['previewDataWidth'];
+	            var isMaxHeightExceeded = _this9.fileMaxHeight === null ? false : _this9.fileMaxHeight < data['previewDataHeight'];
+
+	            if (isMaxWidthExceeded || isMaxHeightExceeded) {
+	              var eventData = {
+	                maxWidth: _this9.fileMaxWidth,
+	                maxHeight: _this9.fileMaxHeight,
+	                fileWidth: data['previewDataWidth'],
+	                fileHeight: data['previewDataHeight']
+	              };
+
+	              _this9.emit('onFileMaxResolutionExceeded', eventData);
+
+	              return false;
+	            }
+	          }
 	        }
 
 	        _this9.emit('onSelectFile', data);
@@ -60790,7 +61804,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return true;
 	      }
 
-	      if (this.dialog.unreadLastId <= 0) {
+	      if (this.dialog.lastMessageId <= 0) {
 	        return true;
 	      }
 
@@ -60809,7 +61823,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      return lastElementId >= this.dialog.unreadLastId;
+	      return lastElementId >= this.dialog.lastMessageId;
 	    },
 	    //methods used in several mixins
 	    openDialog: function openDialog() {//TODO
@@ -61486,8 +62500,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.diskFolderId) {
 	        this.requestDiskFolderId().then(function () {
 	          _this2.processMessagesToSendQueue();
-	        }).catch(function () {
-	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
+	        }).catch(function (error) {
+	          im_lib_logger.Logger.warn('processMessagesToSendQueue error', error);
 	          return false;
 	        });
 	        return false;
@@ -61627,7 +62641,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.textarea.fileSelected, this.onTextareaFileSelected);
 	  },
 	  beforeDestroy: function beforeDestroy() {
-	    this.uploader.unsubscribeAll();
+	    if (this.uploader) {
+	      this.uploader.unsubscribeAll();
+	    }
+
 	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.textarea.fileSelected, this.onTextareaFileSelected);
 	  },
 	  computed: {
@@ -61875,7 +62892,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 // file: /bitrix/js/im/component/dialog/dist/dialog.bundle.js
 this.BX = this.BX || {};
-(function (exports,im_view_message,im_mixin,im_lib_utils,im_lib_animation,im_lib_logger,main_polyfill_intersectionobserver,ui_vue_vuex,ui_vue,main_core_events,im_const,main_core) {
+(function (exports,im_view_message,im_mixin,im_lib_utils,im_lib_animation,im_lib_logger,main_polyfill_intersectionobserver,ui_vue_vuex,ui_vue,im_const,main_core,main_core_events) {
 	'use strict';
 
 	var ObserverType = Object.freeze({
@@ -61890,6 +62907,75 @@ this.BX = this.BX || {};
 	  groupTitle: 'groupTitle',
 	  readedTitle: 'readedTitle'
 	});
+
+	var Placeholder1 = {
+	  props: ['element'],
+	  created: function created() {
+	    var modes = ['self', 'opponent'];
+	    var randomIndex = Math.floor(Math.random() * modes.length);
+	    this.mode = modes[randomIndex];
+	  },
+	  computed: {
+	    itemClasses: function itemClasses() {
+	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--sm', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
+
+	      if (this.mode === 'self') {
+	        itemClasses.push('im-skeleton-item-self');
+	      } else {
+	        itemClasses.push('im-skeleton-item-opponent');
+	      }
+
+	      return itemClasses;
+	    }
+	  },
+	  template: "\n\t\t<div :class=\"itemClasses\" :key=\"element.templateId\">\n\t\t\t<div v-if=\"mode === 'opponent'\" class=\"im-skeleton-logo\"></div>\n\t\t\t<div class=\"im-skeleton-content\">\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 70%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-like\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
+
+	var Placeholder2 = {
+	  props: ['element'],
+	  created: function created() {
+	    var modes = ['self', 'opponent'];
+	    var randomIndex = Math.floor(Math.random() * modes.length);
+	    this.mode = modes[randomIndex];
+	  },
+	  computed: {
+	    itemClasses: function itemClasses() {
+	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--md', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
+
+	      if (this.mode === 'self') {
+	        itemClasses.push('im-skeleton-item-self');
+	      } else {
+	        itemClasses.push('im-skeleton-item-opponent');
+	      }
+
+	      return itemClasses;
+	    }
+	  },
+	  template: "\n\t\t<div :class=\"itemClasses\" :key=\"element.templateId\">\n\t\t\t<div v-if=\"mode === 'opponent'\" class=\"im-skeleton-logo\"></div>\n\t\t\t<div class=\"im-skeleton-content\">\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 35%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 55%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-like\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
+
+	var Placeholder3 = {
+	  props: ['element'],
+	  created: function created() {
+	    var modes = ['self', 'opponent'];
+	    var randomIndex = Math.floor(Math.random() * modes.length);
+	    this.mode = modes[randomIndex];
+	  },
+	  computed: {
+	    itemClasses: function itemClasses() {
+	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--md', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
+
+	      if (this.mode === 'self') {
+	        itemClasses.push('im-skeleton-item-self');
+	      } else {
+	        itemClasses.push('im-skeleton-item-opponent');
+	      }
+
+	      return itemClasses;
+	    }
+	  },
+	  template: "\n\t\t<div :class=\"itemClasses\" :key=\"element.templateId\">\n\t\t\t<div v-if=\"mode === 'opponent'\" class=\"im-skeleton-logo\"></div>\n\t\t\t<div class=\"im-skeleton-content\">\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 35%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 55%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-like\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
 
 	var MessageList = {
 	  /**
@@ -61949,6 +63035,11 @@ this.BX = this.BX || {};
 	      default: true
 	    }
 	  },
+	  components: {
+	    Placeholder1: Placeholder1,
+	    Placeholder2: Placeholder2,
+	    Placeholder3: Placeholder3
+	  },
 	  mixins: [im_mixin.DialogCore, im_mixin.DialogReadMessages],
 	  data: function data() {
 	    return {
@@ -61965,17 +63056,21 @@ this.BX = this.BX || {};
 	      unreadMessageLimit: 50,
 	      isRequestingHistory: false,
 	      historyPagesRequested: 0,
+	      stopHistoryLoading: false,
 	      isRequestingUnread: false,
 	      unreadPagesRequested: 0,
+	      placeholdersComposition: [],
 	      placeholderCount: 0,
 	      lastScroll: 0,
-	      scrollingDownThreshold: 200,
-	      scrollingUpThreshold: 200,
+	      scrollingDownThreshold: 1000,
+	      scrollingUpThreshold: 1000,
 	      messageScrollOffset: 20,
 	      pagesLoaded: 0
 	    };
 	  },
 	  created: function created() {
+	    this.count = 1;
+	    this.placeholdersComposition = this.getPlaceholdersComposition();
 	    im_lib_logger.Logger.warn('MessageList component is created');
 	    this.initParams();
 	    this.initEvents();
@@ -61990,6 +63085,19 @@ this.BX = this.BX || {};
 	    this.getMessageIdsForPagination();
 	    this.scrollOnStart();
 	  },
+	  watch: {
+	    // after each dialog switch (without switching to loading state)
+	    // we reset messagesSet flag and run scroll on start routine
+	    dialogId: function dialogId(newValue, oldValue) {
+	      var _this = this;
+
+	      im_lib_logger.Logger.warn('new dialogId in message-list', newValue);
+	      this.messagesSet = false;
+	      this.$nextTick(function () {
+	        _this.scrollOnStart();
+	      });
+	    }
+	  },
 	  computed: babelHelpers.objectSpread({
 	    localize: function localize() {
 	      return ui_vue.WidgetBitrixVue.getFilteredPhrases('IM_MESSENGER_DIALOG_', this);
@@ -62002,7 +63110,7 @@ this.BX = this.BX || {};
 	      return this.$store.getters['messages/get'](this.chatId);
 	    },
 	    formattedCollection: function formattedCollection() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.lastMessageId = 0; //used in readed status
 
@@ -62016,24 +63124,24 @@ this.BX = this.BX || {};
 	      var collection = []; //array to return
 
 	      this.collection.forEach(function (element) {
-	        if (_this.messagesSet && (_this.lastHistoryMessageId === null || _this.lastHistoryMessageId > element.id)) {
+	        if (_this2.messagesSet && (_this2.lastHistoryMessageId === null || _this2.lastHistoryMessageId > element.id)) {
 	          im_lib_logger.Logger.warn('setting new lastHistoryMessageId', element.id);
-	          _this.lastHistoryMessageId = element.id;
+	          _this2.lastHistoryMessageId = element.id;
 	        }
 
-	        _this.lastMessageId = element.id;
+	        _this2.lastMessageId = element.id;
 
-	        var group = _this.getDateGroup(element.date);
+	        var group = _this2.getDateGroup(element.date);
 
 	        if (!dateGroups[group.title]) {
 	          dateGroups[group.title] = group.id;
-	          collection.push(_this.getDateGroupBlock(group.id, group.title));
+	          collection.push(_this2.getDateGroupBlock(group.id, group.title));
 	        } else if (lastAuthorId !== element.authorId) {
-	          collection.push(_this.getDelimiterBlock(element.id));
+	          collection.push(_this2.getDelimiterBlock(element.id));
 	        }
 
-	        if (element.unread && !_this.firstUnreadMessageId) {
-	          _this.firstUnreadMessageId = element.id;
+	        if (element.unread && !_this2.firstUnreadMessageId) {
+	          _this2.firstUnreadMessageId = element.id;
 	        }
 
 	        collection.push(element);
@@ -62044,7 +63152,7 @@ this.BX = this.BX || {};
 	      return collection;
 	    },
 	    writingStatusText: function writingStatusText() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      clearTimeout(this.scrollToTimeout);
 
@@ -62055,7 +63163,7 @@ this.BX = this.BX || {};
 
 	      if (!this.scrollChangedByUser && !this.showScrollButton) {
 	        this.scrollToTimeout = setTimeout(function () {
-	          return _this2.animatedScrollToPosition({
+	          return _this3.animatedScrollToPosition({
 	            duration: 500
 	          });
 	        }, 300);
@@ -62067,7 +63175,7 @@ this.BX = this.BX || {};
 	      return this.localize['IM_MESSENGER_DIALOG_WRITES_MESSAGE'].replace('#USER#', text);
 	    },
 	    statusReaded: function statusReaded() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      clearTimeout(this.scrollToTimeout);
 
@@ -62087,7 +63195,7 @@ this.BX = this.BX || {};
 	        }
 	      } else {
 	        var readedList = this.dialog.readedList.filter(function (record) {
-	          return record.messageId === _this3.lastMessageId && record.userId !== _this3.lastMessageAuthorId;
+	          return record.messageId === _this4.lastMessageId && record.userId !== _this4.lastMessageAuthorId;
 	        });
 
 	        if (readedList.length === 1) {
@@ -62104,7 +63212,7 @@ this.BX = this.BX || {};
 
 	      if (!this.scrollChangedByUser && !this.showScrollButton) {
 	        this.scrollToTimeout = setTimeout(function () {
-	          return _this3.animatedScrollToPosition({
+	          return _this4.animatedScrollToPosition({
 	            duration: 500
 	          });
 	        }, 300);
@@ -62113,8 +63221,10 @@ this.BX = this.BX || {};
 	      return text;
 	    },
 	    unreadCounter: function unreadCounter() {
-	      // return this.dialog.counter > 999? 999: this.dialog.counter;
-	      return this.dialog.counter;
+	      return this.dialog.counter > 99 ? 999 : this.dialog.counter;
+	    },
+	    formattedUnreadCounter: function formattedUnreadCounter() {
+	      return this.unreadCounter > 99 ? '99+' : this.unreadCounter;
 	    },
 	    scrollBlocked: function scrollBlocked() {
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
@@ -62134,16 +63244,28 @@ this.BX = this.BX || {};
 	      return this.isRequestingHistory || this.isRequestingUnread;
 	    },
 	    remainingHistoryPages: function remainingHistoryPages() {
-	      var notLoadedUnreadCount = this.dialog.counter - this.unreadInCollection.length;
-	      return Math.ceil((this.dialog.messageCount - this.collection.length - notLoadedUnreadCount) / this.historyMessageLimit);
+	      return Math.ceil((this.dialog.messageCount - this.collection.length) / this.historyMessageLimit);
 	    },
 	    remainingUnreadPages: function remainingUnreadPages() {
-	      return Math.ceil((this.dialog.counter - this.unreadInCollection.length) / this.unreadMessageLimit);
+	      // we dont use unread counter now - we reverted unread counter to be max at 99, so we dont know actual counter
+	      if (this.isLastIdInCollection) {
+	        return 0;
+	      }
+
+	      return Math.ceil((this.dialog.messageCount - this.collection.length) / this.unreadMessageLimit);
 	    },
 	    unreadInCollection: function unreadInCollection() {
 	      return this.collection.filter(function (item) {
 	        return item.unread === true;
 	      });
+	    },
+	    isLastIdInCollection: function isLastIdInCollection() {
+	      return this.collection.map(function (message) {
+	        return message.id;
+	      }).includes(this.dialog.lastMessageId);
+	    },
+	    showStatusPlaceholder: function showStatusPlaceholder() {
+	      return !this.writingStatusText && !this.statusReaded;
 	    },
 	    bodyClasses: function bodyClasses() {
 	      return [im_const.DialogReferenceClassName.listBody, {
@@ -62170,13 +63292,13 @@ this.BX = this.BX || {};
 	      this.lastAuthorId = 0;
 	      this.lastHistoryMessageId = null;
 	      this.firstUnreadMessageId = null;
+	      this.lastUnreadMessageId = null;
 	      this.dateFormatFunction = null;
 	      this.cachedDateGroups = {};
 	      this.readMessageQueue = [];
 	      this.readMessageTarget = {};
 	      this.readVisibleMessagesDelayed = im_lib_utils.Utils.debounce(this.readVisibleMessages, 50, this);
 	      this.requestHistoryDelayed = im_lib_utils.Utils.debounce(this.requestHistory, 50, this);
-	      this.onScrollUpDelayed = im_lib_utils.Utils.throttle(this.onScrollUp, 150, this);
 	    },
 	    initEvents: function initEvents() {
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.scrollOnStart, this.onScrollOnStart);
@@ -62258,7 +63380,7 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    onOrientationChange: function onOrientationChange() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      clearTimeout(this.scrollToTimeout);
 
@@ -62270,7 +63392,7 @@ this.BX = this.BX || {};
 
 	      if (!this.scrollChangedByUser) {
 	        this.scrollToTimeout = setTimeout(function () {
-	          return _this4.scrollToBottom({
+	          return _this5.scrollToBottom({
 	            force: true
 	          });
 	        }, 300);
@@ -62332,6 +63454,7 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 
+	      im_lib_logger.Logger.warn('onReadVisibleMessages');
 	      this.readVisibleMessagesDelayed();
 	      return true;
 	    },
@@ -62374,10 +63497,10 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnMessageRetry, event);
 	    },
 	    onClickOnReadList: function onClickOnReadList(event) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var readedList = this.dialog.readedList.filter(function (record) {
-	        return record.messageId === _this5.lastMessageId && record.userId !== _this5.lastMessageAuthorId;
+	        return record.messageId === _this6.lastMessageId && record.userId !== _this6.lastMessageAuthorId;
 	      });
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnReadList, {
 	        list: readedList,
@@ -62417,12 +63540,17 @@ this.BX = this.BX || {};
 	      this.currentScroll = event.target.scrollTop;
 	      var isScrollingDown = this.lastScroll < this.currentScroll;
 	      var isScrollingUp = !isScrollingDown;
+
+	      if (isScrollingUp && this.scrollButtonClicked) {
+	        im_lib_logger.Logger.warn('scrollUp - reset scroll button clicks');
+	        this.scrollButtonClicked = false;
+	      }
+
 	      var leftSpaceBottom = event.target.scrollHeight - event.target.scrollTop - event.target.clientHeight;
 
 	      if (this.currentScroll > 0 && isScrollingDown && leftSpaceBottom < this.scrollingDownThreshold) {
 	        this.onScrollDown();
 	      } else if (isScrollingUp && this.currentScroll <= this.scrollingUpThreshold) {
-	        // this.onScrollUpDelayed();
 	        this.onScrollUp();
 	      } //remember current scroll to compare with new ones
 
@@ -62433,9 +63561,9 @@ this.BX = this.BX || {};
 	      this.manageScrollButton(event);
 	    },
 	    onScrollDown: function onScrollDown() {
-	      var _this6 = this;
+	      var _this7 = this;
 
-	      if (!this.messagesSet) {
+	      if (!this.messagesSet || this.isLastIdInCollection) {
 	        return false;
 	      } // Logger.warn('---');
 	      // Logger.warn('Want to load unread');
@@ -62446,22 +63574,28 @@ this.BX = this.BX || {};
 
 	      if (this.isRequestingData && this.remainingUnreadPages > 0) {
 	        this.drawPlaceholders(RequestMode.unread).then(function () {
-	          _this6.unreadPagesRequested += 1;
-	          im_lib_logger.Logger.warn('Already loading! Draw placeholders and add request, total - ', _this6.unreadPagesRequested);
+	          _this7.unreadPagesRequested += 1;
+	          im_lib_logger.Logger.warn('Already loading! Draw placeholders and add request, total - ', _this7.unreadPagesRequested);
 	        });
 	      } else if (!this.isRequestingData && this.remainingUnreadPages > 0) {
 	        im_lib_logger.Logger.warn('Starting new unread request');
 	        this.isRequestingUnread = true;
 	        this.drawPlaceholders(RequestMode.unread).then(function () {
-	          _this6.requestUnread();
+	          _this7.requestUnread();
 	        });
 	      }
 	    },
 	    onScrollUp: function onScrollUp() {
-	      var _this7 = this;
+	      var _this8 = this;
 
-	      if (!this.messagesSet) {
+	      if (!this.messagesSet || this.stopHistoryLoading) {
 	        return false;
+	      }
+
+	      this.projectedPagesToLoad = 1; //draw 3 sets of placeholders if we are close to top of container
+
+	      if (!this.isMobile && this.$refs.body.scrollTop < this.$refs.body.scrollHeight / 4) {
+	        this.projectedPagesToLoad = 3;
 	      } // Logger.warn('---');
 	      // Logger.warn('Want to load history');
 	      // Logger.warn('this.isRequestingData', this.isRequestingData);
@@ -62471,45 +63605,47 @@ this.BX = this.BX || {};
 
 	      if (this.isRequestingData && this.remainingHistoryPages > 0) {
 	        var currentBodyHeight = this.$refs.body.scrollHeight;
-	        this.drawPlaceholders(RequestMode.history).then(function () {
-	          if (!_this7.isOverflowAnchorSupported()) {
-	            _this7.enableUserScroll();
+	        this.drawPlaceholders(RequestMode.history, this.projectedPagesToLoad).then(function () {
+	          if (!_this8.isOverflowAnchorSupported()) {
+	            _this8.enableUserScroll();
 	          }
 
-	          _this7.historyPagesRequested += 1;
-	          im_lib_logger.Logger.warn('Already loading! Draw placeholders and add request, total - ', _this7.historyPagesRequested);
+	          _this8.historyPagesRequested += _this8.projectedPagesToLoad;
+	          im_lib_logger.Logger.warn('Already loading! Draw placeholders and add request, total - ', _this8.historyPagesRequested);
 	        });
 
 	        if (!this.isOverflowAnchorSupported()) {
 	          im_lib_logger.Logger.warn('Disabling user scroll');
 	          this.$nextTick(function () {
-	            var heightDifference = _this7.$refs.body.scrollHeight - currentBodyHeight;
+	            var heightDifference = _this8.$refs.body.scrollHeight - currentBodyHeight;
 
-	            _this7.disableUserScroll();
+	            _this8.disableUserScroll();
 
-	            _this7.forceScrollToPosition(_this7.$refs.body.scrollTop + heightDifference);
+	            _this8.forceScrollToPosition(_this8.$refs.body.scrollTop + heightDifference);
 	          });
 	        }
 	      } else if (!this.isRequestingData && this.remainingHistoryPages > 0) {
 	        im_lib_logger.Logger.warn('Starting new history request');
 	        this.isRequestingHistory = true;
 	        var _currentBodyHeight = this.$refs.body.scrollHeight;
-	        this.drawPlaceholders(RequestMode.history).then(function () {
-	          if (!_this7.isOverflowAnchorSupported()) {
-	            _this7.enableUserScroll();
+	        this.drawPlaceholders(RequestMode.history, this.projectedPagesToLoad).then(function () {
+	          _this8.historyPagesRequested = _this8.projectedPagesToLoad - 1;
+
+	          if (!_this8.isOverflowAnchorSupported()) {
+	            _this8.enableUserScroll();
 	          }
 
-	          _this7.requestHistory();
+	          _this8.requestHistory();
 	        }); //will run right after drawing placeholders, before .then()
 
 	        if (!this.isOverflowAnchorSupported()) {
 	          im_lib_logger.Logger.warn('Disabling user scroll');
 	          this.$nextTick(function () {
-	            var heightDifference = _this7.$refs.body.scrollHeight - _currentBodyHeight;
+	            var heightDifference = _this8.$refs.body.scrollHeight - _currentBodyHeight;
 
-	            _this7.disableUserScroll();
+	            _this8.disableUserScroll();
 
-	            _this7.forceScrollToPosition(_this7.$refs.body.scrollTop + heightDifference);
+	            _this8.forceScrollToPosition(_this8.$refs.body.scrollTop + heightDifference);
 	          });
 	        }
 	      }
@@ -62525,7 +63661,7 @@ this.BX = this.BX || {};
 	      this.$refs.body.classList.remove('bx-im-dialog-list-scroll-blocked');
 	    },
 	    onScrollButtonClick: function onScrollButtonClick() {
-	      im_lib_logger.Logger.warn('Scroll button click', this.waitForScrollButtonSecondClick); // TODO: now we just do nothing if button was clicked during data request (history or unread)
+	      im_lib_logger.Logger.warn('Scroll button click', this.scrollButtonClicked); // TODO: now we just do nothing if button was clicked during data request (history or unread)
 
 	      if (this.isRequestingData) {
 	        return false;
@@ -62538,18 +63674,18 @@ this.BX = this.BX || {};
 	      } //it's a second click on button - scroll to last page if we have one
 
 
-	      if (this.waitForScrollButtonSecondClick && this.remainingUnreadPages > 0) {
+	      if (this.scrollButtonClicked && this.remainingUnreadPages > 0) {
 	        im_lib_logger.Logger.warn('Second click on scroll button');
 	        this.scrollToLastPage();
 	        return true;
 	      } //it's a first click - just set the flag and move on
 
 
-	      this.waitForScrollButtonSecondClick = true;
+	      this.scrollButtonClicked = true;
 	      this.scrollToBottom();
 	    },
 	    onNewMessage: function onNewMessage(_ref3) {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      var _ref3$data = _ref3.data,
 	          chatId = _ref3$data.chatId,
@@ -62567,24 +63703,31 @@ this.BX = this.BX || {};
 
 	      this.$nextTick(function () {
 	        //non-focus handling
-	        if (!_this8.windowFocused) {
-	          _this8.scrollToFirstUnreadMessage();
+	        if (!_this9.windowFocused) {
+	          var availableScrollHeight = _this9.$refs['body'].scrollHeight - _this9.$refs['body'].clientHeight;
+
+	          if (_this9.currentScroll < availableScrollHeight) {
+	            //show scroll button when out of focus and all visible space is filled with unread messaages already
+	            _this9.showScrollButton = true;
+	          }
+
+	          _this9.scrollToFirstUnreadMessage();
 
 	          return true;
 	        } //big message handling
 
 
-	        var messageElement = _this8.getElementById(messageId);
+	        var messageElement = _this9.getElementById(messageId);
 
 	        if (!messageElement) {
 	          return false;
 	        } //if big message - scroll to top of it
 
 
-	        var body = _this8.$refs.body;
+	        var body = _this9.$refs.body;
 
 	        if (messageElement.clientHeight > body.clientHeight) {
-	          _this8.scrollToMessage({
+	          _this9.scrollToMessage({
 	            messageId: messageId
 	          });
 
@@ -62592,7 +63735,7 @@ this.BX = this.BX || {};
 	        } //else - scroll to bottom
 
 
-	        _this8.animatedScrollToPosition();
+	        _this9.animatedScrollToPosition();
 	      });
 	    },
 	    onMessagesSet: function onMessagesSet(_ref4) {
@@ -62602,9 +63745,23 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 
+	      if (this.messagesSet === true) {
+	        im_lib_logger.Logger.warn('messages are already set');
+	        return false;
+	      }
+
 	      im_lib_logger.Logger.warn('onMessagesSet', event.chatId);
 	      this.messagesSet = true;
-	      this.scrollToBottom();
+	      var force = false; //if we are in top half of container - force scroll to first unread, else - animated scroll
+
+	      if (this.$refs.body.scrollTop < this.$refs.body.scrollHeight / 2) {
+	        force = true;
+	      }
+
+	      this.scrollToBottom({
+	        force: force,
+	        cancelIfScrollChange: false
+	      });
 	    },
 	    onBeforeMobileKeyboard: function onBeforeMobileKeyboard(_ref5) {
 	      var event = _ref5.data;
@@ -62612,7 +63769,7 @@ this.BX = this.BX || {};
 	      this.scrollBeforeMobileKeyboard = body.scrollHeight - body.scrollTop - body.clientHeight;
 	    },
 	    onExternalUnreadRequest: function onExternalUnreadRequest() {
-	      var _this9 = this;
+	      var _this10 = this;
 
 	      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	          _ref6$data = _ref6.data,
@@ -62627,11 +63784,11 @@ this.BX = this.BX || {};
 	      im_lib_logger.Logger.warn('onExternalUnreadRequest');
 	      this.isRequestingUnread = true;
 	      this.drawPlaceholders(RequestMode.unread).then(function () {
-	        return _this9.requestUnread();
+	        return _this10.requestUnread();
 	      });
 	      this.externalUnreadRequestResolve = null;
 	      return new Promise(function (resolve, reject) {
-	        _this9.externalUnreadRequestResolve = resolve;
+	        _this10.externalUnreadRequestResolve = resolve;
 	      });
 	    },
 	    onScrollOnStart: function onScrollOnStart(_ref7) {
@@ -62654,6 +63811,7 @@ this.BX = this.BX || {};
 	          _ref8$force = _ref8.force,
 	          force = _ref8$force === void 0 ? true : _ref8$force;
 
+	      im_lib_logger.Logger.warn('scrolling on start of dialog');
 	      var unreadId = this.getFirstUnreadMessage();
 
 	      if (unreadId) {
@@ -62683,7 +63841,7 @@ this.BX = this.BX || {};
 
 	      if (this.dialog.counter > 0) {
 	        var scrollToMessageId = this.dialog.counter > 1 && this.firstUnreadMessageId ? this.firstUnreadMessageId : this.lastMessageId;
-	        this.scrollToFirstUnreadMessage(scrollToMessageId);
+	        this.scrollToFirstUnreadMessage(scrollToMessageId, force);
 	        return true;
 	      } //hide scroll button because we will scroll to bottom
 
@@ -62779,7 +63937,7 @@ this.BX = this.BX || {};
 	    },
 	    //scroll to provided position with animation, by default - to the bottom
 	    animatedScrollToPosition: function animatedScrollToPosition() {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      im_lib_logger.Logger.warn('Animated scroll to - ', params);
@@ -62839,8 +63997,8 @@ this.BX = this.BX || {};
 	        element: body,
 	        elementProperty: 'scrollTop',
 	        callback: function callback() {
-	          _this10.animateScrollId = null;
-	          _this10.scrollAnimating = false;
+	          _this11.animateScrollId = null;
+	          _this11.scrollAnimating = false;
 
 	          if (_callback && typeof _callback === 'function') {
 	            _callback();
@@ -62853,34 +64011,45 @@ this.BX = this.BX || {};
 
 	    /* region 04. Placeholders */
 	    drawPlaceholders: function drawPlaceholders(requestMode) {
+	      var pagesCount = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 	      var limit = requestMode === RequestMode.history ? this.historyMessageLimit : this.unreadMessageLimit;
-	      var placeholders = this.generatePlaceholders(limit);
+	      var placeholders = this.generatePlaceholders(limit, pagesCount);
 	      return this.$store.dispatch('messages/addPlaceholders', {
 	        placeholders: placeholders,
 	        requestMode: requestMode
 	      });
 	    },
-	    generatePlaceholders: function generatePlaceholders(amount) {
+	    generatePlaceholders: function generatePlaceholders(amount, pagesCount) {
 	      var placeholders = [];
 
-	      for (var i = 0; i < amount; i++) {
-	        placeholders.push({
-	          id: "placeholder".concat(this.placeholderCount),
-	          chatId: this.chatId,
-	          templateType: im_const.DialogTemplateType.placeholder,
-	          unread: false
-	        });
-	        this.placeholderCount++;
+	      for (var i = 0; i < pagesCount; i++) {
+	        for (var j = 0; j < this.placeholdersComposition.length; j++) {
+	          placeholders.push({
+	            id: "placeholder".concat(this.placeholderCount),
+	            chatId: this.chatId,
+	            templateType: im_const.DialogTemplateType.placeholder,
+	            placeholderType: this.placeholdersComposition[j],
+	            unread: false
+	          });
+	          this.placeholderCount++;
+	        }
 	      }
 
 	      return placeholders;
+	    },
+	    getPlaceholdersComposition: function getPlaceholdersComposition() {
+	      //randomize set of placeholder types (sums up to ~2400px height)
+	      //placeholder1 x8, placeholder2 x6, placeholder3 x8
+	      return [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3].sort(function () {
+	        return 0.5 - Math.random();
+	      });
 	    },
 
 	    /* endregion 04. Placeholders */
 
 	    /* region 05. History request */
 	    requestHistory: function requestHistory() {
-	      var _this11 = this;
+	      var _this12 = this;
 
 	      return this.$Bitrix.RestClient.get().callMethod(im_const.RestMethod.imDialogMessagesGet, {
 	        chat_id: this.chatId,
@@ -62891,51 +64060,61 @@ this.BX = this.BX || {};
 	        var newMessages = result.data().messages;
 
 	        if (newMessages.length > 0) {
-	          _this11.lastHistoryMessageId = newMessages[newMessages.length - 1].id;
+	          _this12.lastHistoryMessageId = newMessages[newMessages.length - 1].id;
+	        }
+
+	        if (newMessages.length < _this12.historyMessageLimit) {
+	          _this12.stopHistoryLoading = true;
 	        } //files and users
 
 
-	        _this11.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
+	        _this12.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
 
 	        return new Promise(function (resolve, reject) {
-	          var currentBodyHeight = _this11.$refs.body.scrollHeight;
+	          var currentBodyHeight = _this12.$refs.body.scrollHeight;
 
-	          _this11.$store.dispatch('messages/updatePlaceholders', {
-	            chatId: _this11.chatId,
+	          _this12.$store.dispatch('messages/updatePlaceholders', {
+	            chatId: _this12.chatId,
 	            data: newMessages,
-	            firstMessage: _this11.pagesLoaded * _this11.historyMessageLimit
+	            firstMessage: _this12.pagesLoaded * _this12.placeholdersComposition.length,
+	            amount: _this12.placeholdersComposition.length
 	          }).then(function () {
-	            if (!_this11.isOverflowAnchorSupported()) {
-	              _this11.enableUserScroll();
+	            if (!_this12.isOverflowAnchorSupported()) {
+	              _this12.enableUserScroll();
 	            }
 
 	            resolve();
 	          });
 
-	          if (!_this11.isOverflowAnchorSupported()) {
+	          if (!_this12.isOverflowAnchorSupported()) {
 	            im_lib_logger.Logger.warn('Disabling user scroll in updating placeholders');
 
-	            _this11.$nextTick(function () {
-	              var heightDifference = _this11.$refs.body.scrollHeight - currentBodyHeight;
+	            _this12.$nextTick(function () {
+	              var heightDifference = _this12.$refs.body.scrollHeight - currentBodyHeight;
 
-	              _this11.disableUserScroll();
+	              _this12.disableUserScroll();
 
-	              _this11.forceScrollToPosition(_this11.$refs.body.scrollTop + heightDifference);
+	              _this12.forceScrollToPosition(_this12.$refs.body.scrollTop + heightDifference);
 	            });
 	          }
 	        });
 	      }).then(function () {
-	        _this11.pagesLoaded += 1;
-	        im_lib_logger.Logger.warn('History page loaded. Total loaded - ', _this11.pagesLoaded);
-	        return _this11.onAfterHistoryRequest();
+	        _this12.pagesLoaded += 1;
+	        im_lib_logger.Logger.warn('History page loaded. Total loaded - ', _this12.pagesLoaded);
+	        return _this12.onAfterHistoryRequest();
 	      }).catch(function (result) {
 	        im_lib_logger.Logger.warn('Request history error', result);
 	      });
 	    },
 	    onAfterHistoryRequest: function onAfterHistoryRequest() {
-	      var _this12 = this;
+	      var _this13 = this;
 
 	      im_lib_logger.Logger.warn('onAfterHistoryRequest');
+
+	      if (this.stopHistoryLoading) {
+	        im_lib_logger.Logger.warn('stopHistoryLoading, deleting all delayed requests');
+	        this.historyPagesRequested = 0;
+	      }
 
 	      if (this.historyPagesRequested > 0) {
 	        im_lib_logger.Logger.warn('We have delayed requests -', this.historyPagesRequested);
@@ -62944,13 +64123,13 @@ this.BX = this.BX || {};
 	      } else if (this.$refs.body.scrollTop <= this.scrollingUpThreshold && this.remainingHistoryPages > 0) {
 	        im_lib_logger.Logger.warn('currentScroll <= scrollingUpThreshold, requesting next page and scrolling');
 	        return this.drawPlaceholders(RequestMode.history).then(function (firstPlaceholderId) {
-	          _this12.scrollToMessage({
+	          _this13.scrollToMessage({
 	            messageId: firstPlaceholderId,
 	            force: true,
 	            stickToTop: false
 	          });
 
-	          return _this12.requestHistory();
+	          return _this13.requestHistory();
 	        });
 	      } else {
 	        im_lib_logger.Logger.warn('No more delayed requests, clearing placeholders');
@@ -62970,36 +64149,35 @@ this.BX = this.BX || {};
 
 	      return _ref11 = {}, babelHelpers.defineProperty(_ref11, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
 	        dialog_id: this.dialogId,
-	        message_id: this.firstUnreadMessageId
+	        message_id: this.lastUnreadMessageId
 	      }]), babelHelpers.defineProperty(_ref11, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
 	        dialog_id: this.dialogId
 	      }]), babelHelpers.defineProperty(_ref11, im_const.RestMethodHandler.imDialogMessagesGetUnread, [im_const.RestMethod.imDialogMessagesGet, {
 	        chat_id: this.chatId,
-	        first_id: this.firstUnreadMessageId,
+	        first_id: this.lastUnreadMessageId,
 	        limit: this.unreadMessageLimit,
 	        convert_text: 'Y'
 	      }]), _ref11;
 	    },
 	    requestUnread: function requestUnread() {
-	      var _this13 = this;
+	      var _this14 = this;
 
-	      if (!this.firstUnreadMessageId) {
-	        this.firstUnreadMessageId = this.$store.getters['messages/getLastId'](this.chatId);
+	      if (!this.lastUnreadMessageId) {
+	        this.lastUnreadMessageId = this.$store.getters['messages/getLastId'](this.chatId);
 	      }
 
-	      if (!this.firstUnreadMessageId) {
+	      if (!this.lastUnreadMessageId) {
 	        return false;
-	      } //TODO: rework on event
+	      }
 
-
-	      this.readMessage(this.firstUnreadMessageId, true, true).then(function () {
-	        _this13.$Bitrix.RestClient.get().callBatch(_this13.prepareUnreadRequestParams(), function (response) {
-	          return _this13.onUnreadRequest(response);
+	      this.readMessage(this.lastUnreadMessageId, true, true).then(function () {
+	        _this14.$Bitrix.RestClient.get().callBatch(_this14.prepareUnreadRequestParams(), function (response) {
+	          return _this14.onUnreadRequest(response);
 	        });
 	      });
 	    },
 	    onUnreadRequest: function onUnreadRequest(response) {
-	      var _this14 = this;
+	      var _this15 = this;
 
 	      if (!response) {
 	        im_lib_logger.Logger.warn('Unread request: callBatch error');
@@ -63021,20 +64199,22 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 
-	      var newMessages = dialogMessageUnread.data().messages; // if (newMessages.length > 0)
-	      // {
-	      // 	this.lastUnreadMessageId = newMessages[newMessages.length - 1].id;
-	      // }
+	      var newMessages = dialogMessageUnread.data().messages;
+
+	      if (newMessages.length > 0) {
+	        this.lastUnreadMessageId = newMessages[newMessages.length - 1].id;
+	      }
 
 	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
 	      this.$store.dispatch('messages/updatePlaceholders', {
 	        chatId: this.chatId,
 	        data: newMessages,
-	        firstMessage: this.pagesLoaded * this.unreadMessageLimit
+	        firstMessage: this.pagesLoaded * this.placeholdersComposition.length,
+	        amount: this.placeholdersComposition.length
 	      }).then(function () {
-	        _this14.pagesLoaded += 1;
-	        im_lib_logger.Logger.warn('Unread page loaded. Total loaded - ', _this14.pagesLoaded);
-	        return _this14.onAfterUnreadRequest();
+	        _this15.pagesLoaded += 1;
+	        im_lib_logger.Logger.warn('Unread page loaded. Total loaded - ', _this15.pagesLoaded);
+	        return _this15.onAfterUnreadRequest();
 	      }).catch(function (result) {
 	        im_lib_logger.Logger.warn('Unread history error', result);
 	      });
@@ -63063,23 +64243,23 @@ this.BX = this.BX || {};
 
 	    /* region 07. Last page request */
 	    scrollToLastPage: function scrollToLastPage() {
-	      var _this15 = this;
+	      var _this16 = this;
 
 	      im_lib_logger.Logger.warn('Load last page'); //draw placeholders at the bottom
 
 	      this.drawPlaceholders(RequestMode.unread).then(function () {
 	        //block unread and history requests
-	        _this15.isScrolling = true;
+	        _this16.isScrolling = true;
 
-	        _this15.animatedScrollToPosition({
+	        _this16.animatedScrollToPosition({
 	          callback: function callback() {
-	            return _this15.onScrollToLastPage();
+	            return _this16.onScrollToLastPage();
 	          }
 	        });
 	      });
 	    },
 	    onScrollToLastPage: function onScrollToLastPage() {
-	      var _this16 = this;
+	      var _this17 = this;
 
 	      //hide scroll button
 	      this.showScrollButton = false; //set counter to 0
@@ -63097,7 +64277,7 @@ this.BX = this.BX || {};
 	      }); //call batch - imDialogRead, imChatGet, imDialogMessagesGet
 
 	      this.$Bitrix.RestClient.get().callBatch(this.prepareLastPageRequestParams(), function (response) {
-	        return _this16.onLastPageRequest(response);
+	        return _this17.onLastPageRequest(response);
 	      });
 	    },
 	    prepareLastPageRequestParams: function prepareLastPageRequestParams() {
@@ -63114,7 +64294,7 @@ this.BX = this.BX || {};
 	      }]), _ref12;
 	    },
 	    onLastPageRequest: function onLastPageRequest(response) {
-	      var _this17 = this;
+	      var _this18 = this;
 
 	      if (!response) {
 	        im_lib_logger.Logger.warn('Last page request: callBatch error');
@@ -63145,18 +64325,24 @@ this.BX = this.BX || {};
 	      this.$store.dispatch('messages/updatePlaceholders', {
 	        chatId: this.chatId,
 	        data: newMessages,
-	        firstMessage: this.pagesLoaded * this.historyMessageLimit
+	        firstMessage: this.pagesLoaded * this.placeholdersComposition.length,
+	        amount: this.placeholdersComposition.length
 	      }).then(function () {
 	        //get id for history requests and increase pages counter to count placeholders on next requests
-	        _this17.lastHistoryMessageId = _this17.collection[0].id;
-	        _this17.pagesLoaded += 1; //clear remaining placeholders
+	        _this18.lastHistoryMessageId = _this18.collection[0].id;
+	        _this18.pagesLoaded += 1; //clear remaining placeholders
 
-	        return _this17.$store.dispatch('messages/clearPlaceholders', {
-	          chatId: _this17.chatId
+	        return _this18.$store.dispatch('messages/clearPlaceholders', {
+	          chatId: _this18.chatId
 	        });
 	      }).then(function () {
-	        //enable history requests on scroll up
-	        _this17.isScrolling = false;
+	        _this18.scrollToBottom({
+	          force: true
+	        }); //enable history requests on scroll up
+
+
+	        _this18.stopHistoryLoading = false;
+	        _this18.isScrolling = false;
 	      }).catch(function (result) {
 	        im_lib_logger.Logger.warn('Unread history error', result);
 	      });
@@ -63166,23 +64352,24 @@ this.BX = this.BX || {};
 
 	    /* region 08. Read messages */
 	    readVisibleMessages: function readVisibleMessages() {
-	      var _this18 = this;
+	      var _this19 = this;
 
-	      if (!this.windowFocused) {
+	      if (!this.windowFocused || !this.messagesSet) {
+	        im_lib_logger.Logger.warn('reading is disabled!');
 	        return false;
 	      } //need to filter that way to empty array after async method on every element was completed
 
 
 	      this.readMessageQueue = this.readMessageQueue.filter(function (messageId) {
-	        if (_this18.readMessageTarget[messageId]) {
-	          if (_this18.observers[ObserverType.read]) {
-	            _this18.observers[ObserverType.read].unobserve(_this18.readMessageTarget[messageId]);
+	        if (_this19.readMessageTarget[messageId]) {
+	          if (_this19.observers[ObserverType.read]) {
+	            _this19.observers[ObserverType.read].unobserve(_this19.readMessageTarget[messageId]);
 	          }
 
-	          delete _this18.readMessageTarget[messageId];
+	          delete _this19.readMessageTarget[messageId];
 	        }
 
-	        _this18.requestReadVisibleMessages(messageId);
+	        _this19.requestReadVisibleMessages(messageId);
 
 	        return false;
 	      });
@@ -63196,17 +64383,17 @@ this.BX = this.BX || {};
 	    /* endregion 08. Read messages */
 
 	    /* region 09. Helpers */
-	    getMessageIdsForPagination: function getMessageIdsForPagination() {// console.warn('this.collection.length', this.collection.length);
+	    getMessageIdsForPagination: function getMessageIdsForPagination() {
+	      // console.warn('this.collection.length', this.collection.length);
 	      // if (this.collection.length > 0)
 	      // {
 	      // 	console.warn('this.collection.length', this.collection[0].id);
 	      // 	this.lastHistoryMessageId = this.collection[0].id;
 	      // }
 	      //
-	      // if (this.unreadInCollection.length > 0)
-	      // {
-	      // 	this.lastUnreadMessageId = this.unreadInCollection[this.unreadInCollection.length - 1].id;
-	      // }
+	      if (this.unreadInCollection.length > 0) {
+	        this.lastUnreadMessageId = this.unreadInCollection[this.unreadInCollection.length - 1].id;
+	      }
 	    },
 	    getFirstUnreadMessage: function getFirstUnreadMessage() {
 	      var unreadId = null;
@@ -63222,21 +64409,21 @@ this.BX = this.BX || {};
 	      return unreadId;
 	    },
 	    manageScrollButton: function manageScrollButton(event) {
-	      var _this19 = this;
+	      var _this20 = this;
 
 	      var availableScrollHeight = event.target.scrollHeight - event.target.clientHeight;
 	      this.scrollChangedByUser = this.currentScroll + this.scrollButtonDiff < availableScrollHeight;
 	      clearTimeout(this.scrollButtonShowTimeout);
 	      this.scrollButtonShowTimeout = setTimeout(function () {
-	        if (_this19.scrollChangedByUser) {
+	        if (_this20.scrollChangedByUser) {
 	          //if user scroll and there is no scroll button - show it
-	          if (!_this19.showScrollButton) {
-	            _this19.showScrollButton = true;
+	          if (!_this20.showScrollButton) {
+	            _this20.showScrollButton = true;
 	          }
 	        } else {
 	          //if not user scroll, there was scroll button and no more unread to load - hide it
-	          if (_this19.showScrollButton && _this19.remainingUnreadPages === 0) {
-	            _this19.showScrollButton = false;
+	          if (_this20.showScrollButton && _this20.remainingUnreadPages === 0) {
+	            _this20.showScrollButton = false;
 	          }
 	        }
 	      }, 200); //if we are at the bottom
@@ -63250,7 +64437,7 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    getDateObject: function getDateObject() {
-	      var _this20 = this;
+	      var _this21 = this;
 
 	      if (this.dateFormatFunction) {
 	        return this.dateFormatFunction;
@@ -63259,7 +64446,7 @@ this.BX = this.BX || {};
 	      this.dateFormatFunction = Object.create(BX.Main.Date);
 
 	      this.dateFormatFunction._getMessage = function (phrase) {
-	        return _this20.$Bitrix.Loc.getMessage(phrase);
+	        return _this21.$Bitrix.Loc.getMessage(phrase);
 	      };
 
 	      return this.dateFormatFunction;
@@ -63298,7 +64485,7 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    getObserver: function getObserver(config) {
-	      var _this21 = this;
+	      var _this22 = this;
 
 	      if (typeof window.IntersectionObserver === 'undefined' || config.type === ObserverType.none) {
 	        return {
@@ -63323,18 +64510,18 @@ this.BX = this.BX || {};
 	          }
 
 	          if (sendReadEvent) {
-	            _this21.readMessageQueue.push(entry.target.dataset.messageId);
+	            _this22.readMessageQueue.push(entry.target.dataset.messageId);
 
-	            _this21.readMessageTarget[entry.target.dataset.messageId] = entry.target;
+	            _this22.readMessageTarget[entry.target.dataset.messageId] = entry.target;
 	          } else {
-	            _this21.readMessageQueue = _this21.readMessageQueue.filter(function (messageId) {
+	            _this22.readMessageQueue = _this22.readMessageQueue.filter(function (messageId) {
 	              return messageId !== entry.target.dataset.messageId;
 	            });
-	            delete _this21.readMessageTarget[entry.target.dataset.messageId];
+	            delete _this22.readMessageTarget[entry.target.dataset.messageId];
 	          }
 
-	          if (_this21.enableReadMessages) {
-	            _this21.readVisibleMessagesDelayed();
+	          if (_this22.enableReadMessages) {
+	            _this22.readVisibleMessagesDelayed();
 	          }
 	        });
 	      };
@@ -63358,7 +64545,7 @@ this.BX = this.BX || {};
 	    },
 	    getPlaceholderClass: function getPlaceholderClass(elementId) {
 	      var classWithId = im_const.DialogReferenceClassName.listItem + '-' + elementId;
-	      return ['bx-im-dialog-placeholder', 'bx-im-dialog-placeholder-self', classWithId];
+	      return ['im-skeleton-item', 'im-skeleton-item-1', 'im-skeleton-item--sm', classWithId];
 	    }
 	    /* endregion 09. Helpers */
 
@@ -63393,7 +64580,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t<div class=\"bx-im-dialog\" @click=\"onDialogClick\" @touchmove=\"onDialogMove\" ref=\"container\">\n\t\t<div :class=\"bodyClasses\" @scroll.passive=\"onScroll\" ref=\"body\">\n\t\t\t<!-- Main elements loop -->\n\t\t\t<template v-for=\"(element, index) in formattedCollection\">\n\t\t\t\t<!-- Message -->\n\t\t\t\t<template v-if=\"element.templateType === TemplateType.message\">\n\t\t\t\t\t<div\n\t\t\t\t\t\t:class=\"getElementClass(element.id)\"\n\t\t\t\t\t\t:data-message-id=\"element.id\"\n\t\t\t\t\t\t:data-template-id=\"element.templateId\"\n\t\t\t\t\t\t:data-type=\"element.templateType\" \n\t\t\t\t\t\t:key=\"element.templateId\"\n\t\t\t\t\t\tv-bx-im-directive-dialog-observer=\"element.unread? ObserverType.read: ObserverType.none\"\n\t\t\t\t\t>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t<component :is=\"element.params.COMPONENT_ID\"\n\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t\t:dialog=\"dialog\"\n\t\t\t\t\t\t\t:message=\"element\"\n\t\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t\t:enableDateActions=\"enableDateActions\"\n\t\t\t\t\t\t\t:enableCreateContent=\"showMessageMenu\"\n\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t:showName=\"showMessageUserName\"\n\t\t\t\t\t\t\t:showAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t:showMenu=\"showMessageMenu\"\n\t\t\t\t\t\t\t:capturedMoveEvent=\"capturedMoveEvent\"\n\t\t\t\t\t\t\t:referenceContentClassName=\"DialogReferenceClassName.listItem\"\n\t\t\t\t\t\t\t:referenceContentBodyClassName=\"DialogReferenceClassName.listItemBody\"\n\t\t\t\t\t\t\t:referenceContentNameClassName=\"DialogReferenceClassName.listItemName\"\n\t\t\t\t\t\t\t@clickByUserName=\"onClickOnUserName\"\n\t\t\t\t\t\t\t@clickByUploadCancel=\"onClickOnUploadCancel\"\n\t\t\t\t\t\t\t@clickByKeyboardButton=\"onClickOnKeyboardButton\"\n\t\t\t\t\t\t\t@clickByChatTeaser=\"onClickOnChatTeaser\"\n\t\t\t\t\t\t\t@clickByMessageMenu=\"onClickOnMessageMenu\"\n\t\t\t\t\t\t\t@clickByMessageRetry=\"onClickOnMessageRetry\"\n\t\t\t\t\t\t\t@setMessageReaction=\"onMessageReactionSet\"\n\t\t\t\t\t\t\t@openMessageReactionList=\"onMessageReactionListOpen\"\n\t\t\t\t\t\t\t@dragMessage=\"onDragMessage\"\n\t\t\t\t\t\t\t@quoteMessage=\"onQuoteMessage\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Date groups -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.group\">\n\t\t\t\t\t<div class=\"bx-im-dialog-group\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-group-date\">{{ element.text }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Delimiters -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.delimiter\">\n\t\t\t\t\t<div class=\"bx-im-dialog-delimiter\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\"></div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Placeholders -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.placeholder\">\n\t\t\t\t\t<div :class=\"getPlaceholderClass(element.id)\" :key=\"element.templateId\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-placeholder-content\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- Writing and readed statuses -->\n\t\t\t<transition name=\"bx-im-dialog-status\">\n\t\t\t\t<template v-if=\"writingStatusText\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\">\n\t\t\t\t\t\t<span class=\"bx-im-dialog-status-writing\"></span>\n\t\t\t\t\t\t{{ writingStatusText }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"statusReaded\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\" @click=\"onClickOnReadList\">\n\t\t\t\t\t\t{{ statusReaded }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</transition>\n\t\t</div>\n\t\t<!-- Scroll button -->\n\t\t<transition name=\"bx-im-dialog-scroll-button\">\n\t\t\t<div v-show=\"showScrollButton || unreadCounter\" class=\"bx-im-dialog-scroll-button-box\" @click=\"onScrollButtonClick\">\n\t\t\t\t<div class=\"bx-im-dialog-scroll-button\">\n\t\t\t\t\t<div v-show=\"unreadCounter\" class=\"bx-im-dialog-scroll-button-counter\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-counter-digit\">{{unreadCounter}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-arrow\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t</div>\n"
+	  template: "\n\t<div class=\"bx-im-dialog\" @click=\"onDialogClick\" @touchmove=\"onDialogMove\" ref=\"container\">\n\t\t<div :class=\"bodyClasses\" @scroll.passive=\"onScroll\" ref=\"body\">\n\t\t\t<!-- Main elements loop -->\n\t\t\t<template v-for=\"(element, index) in formattedCollection\">\n\t\t\t\t<!-- Message -->\n\t\t\t\t<template v-if=\"element.templateType === TemplateType.message\">\n\t\t\t\t\t<div\n\t\t\t\t\t\t:class=\"getElementClass(element.id)\"\n\t\t\t\t\t\t:data-message-id=\"element.id\"\n\t\t\t\t\t\t:data-template-id=\"element.templateId\"\n\t\t\t\t\t\t:data-type=\"element.templateType\" \n\t\t\t\t\t\t:key=\"element.templateId\"\n\t\t\t\t\t\tv-bx-im-directive-dialog-observer=\"element.unread? ObserverType.read: ObserverType.none\"\n\t\t\t\t\t>\t\t\t\t\n<!--\t\t\t\t\t  <div style=\"width: 200px; height: 50px; margin-top: 5px; background: #000; color: #fff;\">{{ element.textConverted }}</div>-->\n\t\t\t\t\t\t<component :is=\"element.params.COMPONENT_ID\"\n\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t\t:message=\"element\"\n\t\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t\t:enableDateActions=\"enableDateActions\"\n\t\t\t\t\t\t\t:enableCreateContent=\"showMessageMenu\"\n\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t:showName=\"showMessageUserName\"\n\t\t\t\t\t\t\t:showAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t:showMenu=\"showMessageMenu\"\n\t\t\t\t\t\t\t:capturedMoveEvent=\"capturedMoveEvent\"\n\t\t\t\t\t\t\t:referenceContentClassName=\"DialogReferenceClassName.listItem\"\n\t\t\t\t\t\t\t:referenceContentBodyClassName=\"DialogReferenceClassName.listItemBody\"\n\t\t\t\t\t\t\t:referenceContentNameClassName=\"DialogReferenceClassName.listItemName\"\n\t\t\t\t\t\t\t@clickByUserName=\"onClickOnUserName\"\n\t\t\t\t\t\t\t@clickByUploadCancel=\"onClickOnUploadCancel\"\n\t\t\t\t\t\t\t@clickByKeyboardButton=\"onClickOnKeyboardButton\"\n\t\t\t\t\t\t\t@clickByChatTeaser=\"onClickOnChatTeaser\"\n\t\t\t\t\t\t\t@clickByMessageMenu=\"onClickOnMessageMenu\"\n\t\t\t\t\t\t\t@clickByMessageRetry=\"onClickOnMessageRetry\"\n\t\t\t\t\t\t\t@setMessageReaction=\"onMessageReactionSet\"\n\t\t\t\t\t\t\t@openMessageReactionList=\"onMessageReactionListOpen\"\n\t\t\t\t\t\t\t@dragMessage=\"onDragMessage\"\n\t\t\t\t\t\t\t@quoteMessage=\"onQuoteMessage\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Date groups -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.group\">\n\t\t\t\t\t<div class=\"bx-im-dialog-group\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-group-date\">{{ element.text }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Delimiters -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.delimiter\">\n\t\t\t\t\t<div class=\"bx-im-dialog-delimiter\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\"></div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Placeholders -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.placeholder\">\n\t\t\t\t\t<component :is=\"'Placeholder'+element.placeholderType\" :element=\"element\"/>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- Writing and readed statuses -->\n\t\t\t<transition name=\"bx-im-dialog-status\">\n\t\t\t\t<template v-if=\"writingStatusText\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\">\n\t\t\t\t\t\t<span class=\"bx-im-dialog-status-writing\"></span>\n\t\t\t\t\t\t{{ writingStatusText }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"statusReaded\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\" @click=\"onClickOnReadList\">\n\t\t\t\t\t\t{{ statusReaded }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</transition>\n\t\t\t<div v-if=\"showStatusPlaceholder\" class=\"bx-im-dialog-status-placeholder\"></div>\n\t\t</div>\n\t\t<!-- Scroll button -->\n\t\t<transition name=\"bx-im-dialog-scroll-button\">\n\t\t\t<div v-show=\"showScrollButton || (unreadCounter > 0 && !isLastIdInCollection)\" class=\"bx-im-dialog-scroll-button-box\" @click=\"onScrollButtonClick\">\n\t\t\t\t<div class=\"bx-im-dialog-scroll-button\">\n\t\t\t\t\t<div v-show=\"unreadCounter\" class=\"bx-im-dialog-scroll-button-counter\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-counter-digit\">{{ formattedUnreadCounter }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-arrow\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t</div>\n"
 	};
 
 	var ErrorState = {
@@ -63409,26 +64596,45 @@ this.BX = this.BX || {};
 	var LoadingState = {
 	  data: function data() {
 	    return {
-	      loadingPlaceholdersCount: 0,
-	      placeholderHeight: 66
+	      placeholdersComposition: [],
+	      placeholderTypes: [0, 1],
+	      placeholderModes: ['self', 'opponent'],
+	      placeholdersCount: 20
 	    };
 	  },
-	  mounted: function mounted() {
-	    this.loadingPlaceholdersCount = this.getPlaceholderQuantity();
-	  },
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
-	    application: function application(state) {
-	      return state.application;
+	  created: function created() {
+	    for (var i = 0; i < this.placeholdersCount; i++) {
+	      var randomType = Math.floor(Math.random() * this.placeholderTypes.length);
+	      var randomMode = Math.floor(Math.random() * this.placeholderModes.length);
+	      this.placeholdersComposition.push({
+	        index: i,
+	        type: randomType,
+	        mode: this.placeholderModes[randomMode],
+	        classes: this.getItemClasses(randomType, randomMode)
+	      });
 	    }
-	  })),
+	  },
 	  methods: {
-	    getPlaceholderQuantity: function getPlaceholderQuantity() {
-	      var chatBox = this.$parent.$refs['chatBox'];
-	      return Math.floor(chatBox.clientHeight / this.placeholderHeight);
+	    getItemClasses: function getItemClasses(type, modeIndex) {
+	      var itemClasses = ['im-skeleton-item'];
+
+	      if (this.placeholderModes[modeIndex] === 'self') {
+	        itemClasses.push('im-skeleton-item-self');
+	      } else {
+	        itemClasses.push('im-skeleton-item-opponent');
+	      }
+
+	      if (type === 0) {
+	        itemClasses.push('im-skeleton-item--sm');
+	      } else {
+	        itemClasses.push('im-skeleton-item--md');
+	      }
+
+	      return itemClasses;
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-mobilechat-placeholder-wrap\">\n\t\t\t<template v-for=\"index in loadingPlaceholdersCount\">\n\t\t\t\t<div class=\"bx-mobilechat-placeholder bx-mobilechat-placeholder-self\" :key=\"index\">\n\t\t\t\t\t<div class=\"bx-mobilechat-placeholder-content\"></div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-mobilechat-placeholder-wrap\">\n\t\t\t<div class=\"bx-mobilechat-placeholder-wrap-visible\">\n\t\t\t\t<template v-for=\"item in placeholdersComposition\">\n\t\t\t\t\t<div :class=\"item.classes\" :key=\"item.index\">\n\t\t\t\t\t\t<div v-if=\"item.mode === 'opponent'\" class=\"im-skeleton-logo\"></div>\n\t\t\t\t\t\t<div class=\"im-skeleton-content\">\n\t\t\t\t\t\t\t<template v-if=\"item.type === 0\">\n\t\t\t\t\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 70%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 35%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 55%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div class=\"im-skeleton-like\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var EmptyState = {
@@ -63499,6 +64705,12 @@ this.BX = this.BX || {};
 	    skipDataRequest: {
 	      default: false
 	    },
+	    showLoadingState: {
+	      default: true
+	    },
+	    showEmptyState: {
+	      default: true
+	    },
 	    enableGestureQuote: {
 	      default: true
 	    },
@@ -63515,16 +64727,23 @@ this.BX = this.BX || {};
 	      default: true
 	    }
 	  },
+	  data: function data() {
+	    return {
+	      messagesSet: false
+	    };
+	  },
 	  created: function created() {
-	    if (!this.skipDataRequest) {
-	      this.requestData();
-	    }
+	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.messagesSet, this.onMessagesSet);
+	    this.onDialogOpen();
+	  },
+	  beforeDestroy: function beforeDestroy() {
+	    main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.messagesSet, this.onMessagesSet);
 	  },
 	  watch: {
-	    dialogId: function dialogId() {
-	      if (!this.skipDataRequest) {
-	        this.requestData();
-	      }
+	    dialogId: function dialogId(newValue, oldValue) {
+	      im_lib_logger.Logger.warn('Switching dialogId from ', oldValue, ' to ', newValue);
+	      this.messagesSet = false;
+	      this.onDialogOpen();
 	    }
 	  },
 	  computed: {
@@ -63575,6 +64794,27 @@ this.BX = this.BX || {};
 	        color: user ? user.color : '',
 	        description: im_lib_utils.Utils.text.purify(message.text, message.params, files, this.localize)
 	      };
+	    },
+	    isLoading: function isLoading() {
+	      if (!this.showLoadingState) {
+	        return false;
+	      } // show placeholders if we don't have chatId for current dialogId
+	      // or we have chatId, but there is no messages collection for this chatId and messages are not set yet
+	      // (because if chat is empty - there will be no messages collection, but we should not show loading state)
+
+
+	      return !this.isChatIdInModel || this.isChatIdInModel && !this.isMessagesModelInited && !this.messagesSet;
+	    },
+	    isEmpty: function isEmpty() {
+	      return this.showEmptyState && this.messagesSet && this.messageCollection.length === 0;
+	    },
+	    isChatIdInModel: function isChatIdInModel() {
+	      var dialogues = this.$store.state.dialogues.collection;
+	      return dialogues[this.dialogId] && dialogues[this.dialogId].chatId > 0;
+	    },
+	    isMessagesModelInited: function isMessagesModelInited() {
+	      var messages = this.$store.state.messages.collection;
+	      return messages[this.chatId];
 	    }
 	  },
 	  methods: {
@@ -63646,7 +64886,8 @@ this.BX = this.BX || {};
 	              enableReadMessages: true
 	            }
 	          }).then(function () {
-	            _this.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+	            _this.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult); // this.messagesSet = true;
+
 	          });
 	        }
 	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
@@ -63656,13 +64897,41 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        return resolve();
 	      });
+	    },
+	    onDialogOpen: function onDialogOpen() {
+	      if (this.isChatIdInModel) {
+	        var dialogues = this.$store.state.dialogues.collection;
+	        this.$store.commit('application/set', {
+	          dialog: {
+	            chatId: dialogues[this.dialogId].chatId,
+	            dialogId: this.dialogId
+	          }
+	        });
+	      }
+
+	      if (!this.skipDataRequest) {
+	        this.requestData();
+	      }
+	    },
+	    onMessagesSet: function onMessagesSet(_ref) {
+	      var event = _ref.data;
+
+	      if (event.chatId !== this.chatId) {
+	        return false;
+	      }
+
+	      if (this.messagesSet === true) {
+	        return false;
+	      }
+
+	      this.messagesSet = true;
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div :class=\"dialogWrapClasses\">\n\t\t\t<div :class=\"dialogBoxClasses\" ref=\"chatBox\">\n\t\t\t\t<!-- Error state -->\n\t\t\t\t<ErrorState v-if=\"application.error.active\" />\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div :class=\"dialogBodyClasses\" key=\"with-message\">\n\t\t\t\t\t\t<!-- Loading state -->\n\t\t\t\t\t  \t<LoadingState v-if=\"dialogState === DialogState.loading\" />\n\t\t\t\t\t\t<!-- Empty state -->\n\t\t\t\t\t  \t<EmptyState v-else-if=\"dialogState === DialogState.empty\" />\n\t\t\t\t\t\t<!-- Message list state -->\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"bx-mobilechat-dialog\">\n\t\t\t\t\t\t\t\t<MessageList\n\t\t\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t\t\t:showMessageUserName=\"showMessageUserName\"\n\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<!-- Quote panel -->\n\t\t\t\t\t\t\t<QuotePanel :quotePanelData=\"quotePanelData\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"dialogWrapClasses\">\n\t\t\t<div :class=\"dialogBoxClasses\" ref=\"chatBox\">\n\t\t\t\t<!-- Error state -->\n\t\t\t\t<ErrorState v-if=\"application.error.active\" />\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div :class=\"dialogBodyClasses\" key=\"with-message\">\n\t\t\t\t\t\t<!-- Loading state -->\n\t\t\t\t\t  \t<LoadingState v-if=\"isLoading\" />\n\t\t\t\t\t\t<!-- Empty state -->\n\t\t\t\t\t  \t<EmptyState v-else-if=\"isEmpty\" />\n\t\t\t\t\t\t<!-- Message list state -->\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"bx-mobilechat-dialog\">\n\t\t\t\t\t\t\t\t<MessageList\n\t\t\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t\t\t:showMessageUserName=\"showMessageUserName\"\n\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<!-- Quote panel -->\n\t\t\t\t\t\t\t<QuotePanel :quotePanelData=\"quotePanelData\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.BX.Messenger = this.BX.Messenger || {}),window,BX.Messenger.Mixin,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX,BX.Event,BX.Messenger.Const,BX));
+}((this.BX.Messenger = this.BX.Messenger || {}),window,BX.Messenger.Mixin,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX,BX.Messenger.Const,BX,BX.Event));
  
 
 
@@ -63859,7 +65128,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/im/component/textarea/dist/textarea.bundle.js
-(function (exports,ui_vue,im_lib_localstorage,im_lib_utils,main_core,main_core_events,im_const) {
+(function (exports,ui_vue,im_lib_localstorage,im_lib_utils,main_core,ui_vue_vuex,main_core_events,im_const) {
 	'use strict';
 
 	/**
@@ -63955,9 +65224,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.localStorage.set(this.siteId, this.userId, 'textarea-history', this.textareaHistory);
 	    this.localStorage = null;
 	  },
-	  computed: {
+	  computed: babelHelpers.objectSpread({
 	    textareaClassName: function textareaClassName() {
-	      return 'bx-im-textarea' + (im_lib_utils.Utils.device.isMobile() ? ' bx-im-textarea-mobile' : '');
+	      return ['bx-im-textarea', {
+	        'bx-im-textarea-dark-background': this.isDarkBackground,
+	        'bx-im-textarea-mobile': this.isMobile
+	      }];
 	    },
 	    buttonStyle: function buttonStyle() {
 	      var styles = Object.assign({}, this.stylesDefault, this.styles);
@@ -63973,17 +65245,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      styles.button.style = styles.button.backgroundColor ? 'background-color: ' + styles.button.backgroundColor + ';' : '';
 	      return styles;
 	    },
+	    isDarkBackground: function isDarkBackground() {
+	      return this.application.options.darkBackground;
+	    },
+	    isMobile: function isMobile() {
+	      return this.application.device.type === im_const.DeviceType.mobile;
+	    },
 	    localize: function localize() {
 	      return ui_vue.WidgetBitrixVue.getFilteredPhrases('BX_MESSENGER_TEXTAREA_', this);
 	    },
 	    isIE11: function isIE11() {
 	      return main_core.Browser.isIE11();
 	    }
-	  },
+	  }, ui_vue_vuex.WidgetVuex.mapState({
+	    application: function application(state) {
+	      return state.application;
+	    }
+	  })),
 	  directives: {
 	    'bx-im-focus': {
 	      inserted: function inserted(element, params) {
-	        if (params.value === true || params.value === null && !im_lib_utils.Utils.device.isMobile()) {
+	        if (params.value === true || params.value === null && !this.isMobile) {
 	          element.focus();
 	        }
 	      }
@@ -64192,7 +65474,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (this.enableEdit && event.keyCode == 38 && text.length <= 0) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.edit, {});
 	      } else if (event.keyCode == 13) {
-	        if (im_lib_utils.Utils.device.isMobile()) ; else if (this.sendByEnter == true) {
+	        if (this.isMobile) ; else if (this.sendByEnter == true) {
 	          if (event.ctrlKey || event.altKey || event.shiftKey) {
 	            if (!event.shiftKey) {
 	              this.insertText("\n");
@@ -64291,7 +65573,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"textareaClassName\">\n\t\t\t<div class=\"bx-im-textarea-box\">\n\t\t\t\t<textarea ref=\"textarea\" class=\"bx-im-textarea-input\" @keydown=\"onKeyDown\" @keyup=\"onKeyUp\" @paste=\"onPaste\" @input=\"onInput\" @focus=\"onFocus\" @blur=\"onBlur\" v-bx-im-focus=\"autoFocus\" :placeholder=\"localize.BX_MESSENGER_TEXTAREA_PLACEHOLDER\">{{placeholderMessage}}</textarea>\n\t\t\t\t<transition enter-active-class=\"bx-im-textarea-send-button-show\" leave-active-class=\"bx-im-textarea-send-button-hide\">\n\t\t\t\t\t<button \n\t\t\t\t\t\tv-if=\"currentMessage\" \n\t\t\t\t\t\t:class=\"buttonStyle.button.className\" \n\t\t\t\t\t\t:style=\"buttonStyle.button.style\" \n\t\t\t\t\t\t:title=\"localize.BX_MESSENGER_TEXTAREA_BUTTON_SEND\"\n\t\t\t\t\t\t@click=\"sendMessage\" \n\t\t\t\t\t\t@touchend=\"sendMessage\" \n\t\t\t\t\t\t@mousedown=\"preventDefault\" \n\t\t\t\t\t\t@touchstart=\"preventDefault\" \n\t\t\t\t\t/>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-textarea-app-box\">\n\t\t\t\t<label v-if=\"enableFile && !isIE11\" class=\"bx-im-textarea-app-button bx-im-textarea-app-file\" :title=\"localize.BX_MESSENGER_TEXTAREA_FILE\">\n\t\t\t\t\t<input type=\"file\" @click=\"onFileClick($event)\" @change=\"onFileSelect($event)\" multiple>\n\t\t\t\t</label>\n\t\t\t\t<button class=\"bx-im-textarea-app-button bx-im-textarea-app-smile\" :title=\"localize.BX_MESSENGER_TEXTAREA_SMILE\" @click=\"onAppButtonClick('smile', $event)\"></button>\n\t\t\t\t<button v-if=\"false\" class=\"bx-im-textarea-app-button bx-im-textarea-app-gif\" :title=\"localize.BX_MESSENGER_TEXTAREA_GIPHY\" @click=\"onAppButtonClick('giphy', $event)\"></button>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Event,BX.Messenger.Const));
+}((this.window = this.window || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Event,BX.Messenger.Const));
  
 
 
@@ -64650,8 +65932,18 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImDialogMessagesGetInitSuccess",
 	    value: function handleImDialogMessagesGetInitSuccess(data) {
 	      this.store.dispatch('users/set', data.users);
-	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files));
-	      this.store.dispatch('messages/set', data.messages.reverse());
+	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files)); //handling messagesSet for empty chat
+
+	      if (data.messages.length === 0 && data.chat_id) {
+	        im_lib_logger.Logger.warn('setting messagesSet for empty chat', data.chat_id);
+	        setTimeout(function () {
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.messagesSet, {
+	            chatId: data.chat_id
+	          });
+	        }, 100);
+	      } else {
+	        this.store.dispatch('messages/set', data.messages.reverse());
+	      }
 	    }
 	  }, {
 	    key: "handleImDialogMessagesGetUnreadSuccess",
@@ -64825,10 +66117,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    }
 	  }, {
 	    key: "handleImDialogMessagesGetInitSuccess",
-	    value: function handleImDialogMessagesGetInitSuccess(data) {
-	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.readVisibleMessages, {
-	        chatId: this.controller.application.getChatId()
-	      });
+	    value: function handleImDialogMessagesGetInitSuccess(data) {// EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
 	    }
 	  }, {
 	    key: "handleImMessageAddSuccess",
@@ -64964,6 +66253,8 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    value: function handleMessageAdd(params, extra) {
 	      var _this = this;
 
+	      im_lib_logger.Logger.warn('handleMessageAdd', params);
+
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
@@ -64972,7 +66263,8 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 
 	      if (!collection) {
 	        collection = [];
-	      }
+	      } //search for message with message id from params
+
 
 	      var message = collection.find(function (element) {
 	        if (params.message.templateId && element.id === params.message.templateId) {
@@ -64980,54 +66272,58 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        }
 
 	        return element.id === params.message.id;
-	      });
+	      }); //stop if it's message with 'push' (pseudo push message in mobile)
 
 	      if (message && params.message.push) {
 	        return false;
 	      }
 
 	      if (params.chat && params.chat[params.chatId]) {
-	        var existingChat = this.store.getters['dialogues/getByChatId'](params.chatId);
+	        var existingChat = this.store.getters['dialogues/getByChatId'](params.chatId); //add new chat if there is no one
 
 	        if (!existingChat) {
 	          var chatToAdd = Object.assign({}, params.chat[params.chatId], {
 	            dialogId: params.dialogId
 	          });
 	          this.store.dispatch('dialogues/set', chatToAdd);
-	        } else {
-	          this.store.dispatch('dialogues/update', {
-	            dialogId: params.dialogId,
-	            fields: params.chat[params.chatId]
-	          });
-	        }
+	        } //otherwise - update it
+	        else {
+	            this.store.dispatch('dialogues/update', {
+	              dialogId: params.dialogId,
+	              fields: params.chat[params.chatId]
+	            });
+	          }
 	      }
 
-	      var recentItem = this.store.getters['recent/get'](params.dialogId);
+	      var recentItem = this.store.getters['recent/get'](params.dialogId); //add recent item if there is no one
 
 	      if (!recentItem) {
 	        var newRecentItem = this.prepareRecentItem(params);
 	        this.store.dispatch('recent/set', [newRecentItem]);
-	      } else {
-	        this.store.dispatch('recent/update', {
-	          id: params.dialogId,
-	          fields: {
-	            lines: params.lines || {
-	              id: 0
-	            },
-	            message: {
-	              id: params.message.id,
-	              text: params.message.text,
-	              date: params.message.date,
-	              senderId: params.message.senderId
-	            },
-	            counter: params.counter
-	          }
-	        });
-	      }
+	      } //otherwise - update it
+	      else {
+	          this.store.dispatch('recent/update', {
+	            id: params.dialogId,
+	            fields: {
+	              lines: params.lines || {
+	                id: 0
+	              },
+	              message: {
+	                id: params.message.id,
+	                text: params.message.text,
+	                date: params.message.date,
+	                senderId: params.message.senderId
+	              },
+	              counter: params.counter
+	            }
+	          });
+	        } //set users
+
 
 	      if (params.users) {
 	        this.store.dispatch('users/set', ui_vue_vuex.WidgetVuexBuilderModel.convertToArray(params.users));
-	      }
+	      } //set files
+
 
 	      if (params.files) {
 	        var files = this.controller.application.prepareFilesBeforeSave(ui_vue_vuex.WidgetVuexBuilderModel.convertToArray(params.files));
@@ -65047,58 +66343,86 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            _this.store.dispatch('files/set', file);
 	          }
 	        });
-	      }
+	      } //if we already have message - update it and scrollToBottom
+
 
 	      if (message) {
+	        im_lib_logger.Logger.warn('New message pull handler: we already have this message', params.message);
 	        this.store.dispatch('messages/update', {
 	          id: message.id,
 	          chatId: message.chatId,
-	          fields: babelHelpers.objectSpread({
-	            push: false
-	          }, params.message, {
+	          fields: babelHelpers.objectSpread({}, params.message, {
 	            sending: false,
 	            error: false
 	          })
 	        }).then(function () {
-	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	            chatId: message.chatId,
-	            cancelIfScrollChange: params.message.senderId !== _this.controller.application.getUserId()
+	          if (!params.message.push) {
+	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	              chatId: message.chatId,
+	              cancelIfScrollChange: params.message.senderId !== _this.controller.application.getUserId()
+	            });
+	          }
+	        });
+	      } //if we dont have message and we have all pages - add new message and send newMessage event (handles scroll stuff)
+	      //we dont do anything if we dont have message and there are unloaded messages
+	      else if (this.controller.application.isUnreadMessagesLoaded()) {
+	          im_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
+	          this.store.dispatch('messages/setAfter', babelHelpers.objectSpread({}, params.message, {
+	            unread: true
+	          })).then(function () {
+	            if (!params.message.push) {
+	              main_core_events.EventEmitter.emit(im_const.EventType.dialog.newMessage, {
+	                chatId: params.message.chatId,
+	                messageId: params.message.id
+	              });
+	            }
 	          });
-	        });
-	      } else if (this.controller.application.isUnreadMessagesLoaded()) {
-	        this.store.dispatch('messages/setAfter', babelHelpers.objectSpread({
-	          push: false
-	        }, params.message, {
-	          unread: true
-	        }));
-	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.newMessage, {
-	          chatId: params.message.chatId,
-	          messageId: params.message.id
-	        });
-	      }
+	        } //stop writing event
+
 
 	      this.controller.application.stopOpponentWriting({
 	        dialogId: params.dialogId,
 	        userId: params.message.senderId
-	      });
+	      }); //if we sent message and there are no unloaded unread pages - read all messages on server and client, set counter to 0
+	      //TODO: to think about it during new chat development
 
 	      if (params.message.senderId === this.controller.application.getUserId() && this.controller.application.isUnreadMessagesLoaded()) {
-	        this.store.dispatch('messages/readMessages', {
-	          chatId: params.chatId
-	        }).then(function (result) {
-	          _this.store.dispatch('dialogues/update', {
-	            dialogId: params.dialogId,
-	            fields: {
-	              counter: 0
-	            }
+	        if (this.store.state.dialogues.collection[params.dialogId] && this.store.state.dialogues.collection[params.dialogId].counter !== 0) {
+	          this.controller.restClient.callMethod('im.dialog.read', {
+	            dialog_id: params.dialogId
+	          }).then(function () {
+	            _this.store.dispatch('messages/readMessages', {
+	              chatId: params.chatId
+	            }).then(function (result) {
+	              main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	                chatId: params.chatId,
+	                cancelIfScrollChange: false
+	              });
+
+	              _this.store.dispatch('dialogues/update', {
+	                dialogId: params.dialogId,
+	                fields: {
+	                  counter: 0
+	                }
+	              });
+	            });
 	          });
-	        });
-	      } else {
-	        this.store.dispatch('dialogues/increaseCounter', {
-	          dialogId: params.dialogId,
-	          count: 1
-	        });
-	      }
+	        }
+	      } //else - just increase the counter
+	      else {
+	          this.store.dispatch('dialogues/increaseCounter', {
+	            dialogId: params.dialogId,
+	            count: 1
+	          });
+	        } //set new lastMessageId (used for pagination)
+
+
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: params.dialogId,
+	        fields: {
+	          lastMessageId: params.message.id
+	        }
+	      }); //increase total message count
 
 	      this.store.dispatch('dialogues/increaseMessageCounter', {
 	        dialogId: params.dialogId,
@@ -65215,6 +66539,32 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        fields: {
 	          ownerId: params.userId
 	        }
+	      });
+	    }
+	  }, {
+	    key: "handleChatManagers",
+	    value: function handleChatManagers(params, extra) {
+	      if (this.skipExecute(params, extra)) {
+	        return false;
+	      }
+
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: params.dialogId,
+	        fields: {
+	          managerList: params.list
+	        }
+	      });
+	    }
+	  }, {
+	    key: "handleChatUpdateParams",
+	    value: function handleChatUpdateParams(params, extra) {
+	      if (this.skipExecute(params, extra)) {
+	        return false;
+	      }
+
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: params.dialogId,
+	        fields: params.params
 	      });
 	    }
 	  }, {
@@ -65541,10 +66891,15 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          lastActivityDate: new Date()
 	        });
 	      });
-	      this.store.commit('callApplication/common', {
+	      this.store.commit('conference/common', {
 	        userCount: params.userCount
 	      });
-	      this.store.commit('users/set', users);
+	      this.store.dispatch('users/set', users);
+	      this.store.dispatch('conference/setUsers', {
+	        users: users.map(function (user) {
+	          return user.id;
+	        })
+	      });
 	    }
 	  }, {
 	    key: "handleChatUserLeave",
@@ -65553,8 +66908,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        this.application.kickFromCall();
 	      }
 
-	      this.store.commit('callApplication/common', {
+	      this.store.commit('conference/common', {
 	        userCount: params.userCount
+	      });
+	      this.store.dispatch('conference/removeUsers', {
+	        users: [params.userId]
 	      });
 	    }
 	  }, {
@@ -65587,7 +66945,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "handleMessageChat",
 	    value: function handleMessageChat(params) {
-	      if (params.chatId === this.application.getChatId() && !this.store.state.callApplication.common.showChat && params.message.senderId !== this.controller.getUserId() && !this.store.state.callApplication.common.error) {
+	      var rightPanelMode = this.store.state.conference.common.rightPanelMode;
+
+	      if (params.chatId === this.application.getChatId() && rightPanelMode !== im_const.ConferenceRightPanelMode.chat && rightPanelMode !== im_const.ConferenceRightPanelMode.split && params.message.senderId !== this.controller.getUserId() && !this.store.state.conference.common.error) {
 	        var text = '';
 
 	        if (params.message.senderId === 0 || params.message.system === 'Y') {
@@ -65605,10 +66965,46 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        this.application.sendNewMessageNotify(text);
 	      }
 	    }
+	  }, {
+	    key: "handleChatRename",
+	    value: function handleChatRename(params) {
+	      if (params.chatId !== this.application.getChatId()) {
+	        return false;
+	      }
+
+	      this.store.dispatch('conference/setConferenceTitle', {
+	        conferenceTitle: params.name
+	      });
+	    }
+	  }, {
+	    key: "handleConferenceUpdate",
+	    value: function handleConferenceUpdate(params) {
+	      if (params.chatId !== this.application.getChatId()) {
+	        return false;
+	      }
+
+	      if (params.isBroadcast !== '') {
+	        this.store.dispatch('conference/setBroadcastMode', {
+	          broadcastMode: params.isBroadcast
+	        });
+	      }
+
+	      if (params.presenters.length > 0) {
+	        this.store.dispatch('conference/setPresenters', {
+	          presenters: params.presenters,
+	          replace: true
+	        });
+	      }
+	    }
 	  }]);
 	  return ImCallPullHandler;
 	}();
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var ImNotificationsPullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImNotificationsPullHandler, null, [{
 	    key: "create",
@@ -65648,10 +67044,23 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      return pull_client.PullClient.SubscriptionType.Server;
 	    }
 	  }, {
-	    key: "handleNotify",
-	    value: function handleNotify(params, extra) {
-	      if (extra.server_time_ago > 30) {
+	    key: "handleNotifyAdd",
+	    value: function handleNotifyAdd(params, extra) {
+	      if (extra.server_time_ago > 30 || params.onlyFlash === true) {
 	        return false;
+	      }
+
+	      var user = this.store.getters['users/get'](params.userId);
+
+	      if (!user) {
+	        var users = [];
+	        users.push({
+	          id: params.userId,
+	          avatar: params.userAvatar,
+	          color: params.userColor,
+	          name: params.userName
+	        });
+	        this.store.dispatch('users/set', users);
 	      }
 
 	      this.store.dispatch('notifications/add', {
@@ -65660,10 +67069,21 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      this.store.dispatch('notifications/setCounter', {
 	        unreadTotal: params.counter
 	      });
+	      this.store.dispatch('recent/update', {
+	        id: "notify",
+	        fields: {
+	          message: {
+	            id: params.id,
+	            text: params.text,
+	            date: params.date
+	          },
+	          counter: params.counter
+	        }
+	      });
 	    }
 	  }, {
-	    key: "handleConfirmNotify",
-	    value: function handleConfirmNotify(params, extra) {
+	    key: "handleNotifyConfirm",
+	    value: function handleNotifyConfirm(params, extra) {
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
@@ -65674,10 +67094,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      this.store.dispatch('notifications/setCounter', {
 	        unreadTotal: params.counter
 	      });
+	      this.updateRecentListOnDelete(params.counter);
 	    }
 	  }, {
-	    key: "handleReadNotifyList",
-	    value: function handleReadNotifyList(params, extra) {
+	    key: "handleNotifyRead",
+	    value: function handleNotifyRead(params, extra) {
 	      var _this = this;
 
 	      if (extra.server_time_ago > 30) {
@@ -65686,17 +67107,23 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 
 	      params.list.forEach(function (id) {
 	        _this.store.dispatch('notifications/read', {
-	          id: id,
+	          ids: [id],
 	          action: true
 	        });
 	      });
 	      this.store.dispatch('notifications/setCounter', {
 	        unreadTotal: params.counter
 	      });
+	      this.store.dispatch('recent/update', {
+	        id: "notify",
+	        fields: {
+	          counter: params.counter
+	        }
+	      });
 	    }
 	  }, {
-	    key: "handleUnreadNotifyList",
-	    value: function handleUnreadNotifyList(params, extra) {
+	    key: "handleNotifyUnread",
+	    value: function handleNotifyUnread(params, extra) {
 	      var _this2 = this;
 
 	      if (extra.server_time_ago > 30) {
@@ -65705,17 +67132,23 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 
 	      params.list.forEach(function (id) {
 	        _this2.store.dispatch('notifications/read', {
-	          id: id,
+	          ids: [id],
 	          action: false
 	        });
 	      });
 	      this.store.dispatch('notifications/setCounter', {
 	        unreadTotal: params.counter
 	      });
+	      this.store.dispatch('recent/update', {
+	        id: "notify",
+	        fields: {
+	          counter: params.counter
+	        }
+	      });
 	    }
 	  }, {
-	    key: "handleDeleteNotifies",
-	    value: function handleDeleteNotifies(params, extra) {
+	    key: "handleNotifyDelete",
+	    value: function handleNotifyDelete(params, extra) {
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
@@ -65724,10 +67157,71 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      this.store.dispatch('notifications/delete', {
 	        id: idToDelete
 	      });
-	      var unreadCount = --this.store.unreadCounter;
+	      this.updateRecentListOnDelete(params.counter);
 	      this.store.dispatch('notifications/setCounter', {
-	        unreadTotal: unreadCount
+	        unreadTotal: params.counter
 	      });
+	    }
+	  }, {
+	    key: "updateRecentListOnDelete",
+	    value: function updateRecentListOnDelete(counterValue) {
+	      var message;
+	      var latestNotification = this.getLatest();
+
+	      if (latestNotification !== null) {
+	        message = {
+	          id: latestNotification.id,
+	          text: latestNotification.text,
+	          date: latestNotification.date
+	        };
+	      } else {
+	        var notificationChat = this.store.getters['recent/get']('notify');
+
+	        if (notificationChat === false) {
+	          return;
+	        }
+
+	        message = notificationChat.element.message;
+	        message.text = this.controller.localize['IM_NOTIFICATIONS_DELETED_ITEM_STUB'];
+	      }
+
+	      this.store.dispatch('recent/update', {
+	        id: "notify",
+	        fields: {
+	          message: message,
+	          counter: counterValue
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getLatest",
+	    value: function getLatest() {
+	      var latestNotification = {
+	        id: 0
+	      };
+
+	      var _iterator = _createForOfIteratorHelper(this.store.state.notifications.collection),
+	          _step;
+
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var notification = _step.value;
+
+	          if (notification.id > latestNotification.id) {
+	            latestNotification = notification;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+
+	      if (latestNotification.id === 0) {
+	        return null;
+	      }
+
+	      return latestNotification;
 	    }
 	  }]);
 	  return ImNotificationsPullHandler;
@@ -65962,7 +67456,7 @@ this.BX = this.BX || {};
 	        return true;
 	      }
 
-	      if (dialog.unreadLastId <= 0) {
+	      if (dialog.lastMessageId <= 0) {
 	        return true;
 	      }
 
@@ -65983,7 +67477,7 @@ this.BX = this.BX || {};
 	        }
 	      }
 
-	      return lastElementId >= dialog.unreadLastId;
+	      return lastElementId >= dialog.lastMessageId;
 	    }
 	  }, {
 	    key: "prepareFilesBeforeSave",
@@ -67056,7 +68550,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/imopenlines/component/widget/dist/widget.bundle.js
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_icons,ui_forms,ui_vue_vuex,im_lib_utils,ui_vue) {
 	'use strict';
 
 	/**
@@ -68890,6 +70384,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            data: {}
 	          });
 	          application.template = this;
+
+	          if (main_core_minimal.ZIndexManager !== undefined) {
+	            var stack = main_core_minimal.ZIndexManager.getOrAddStack(document.body);
+	            stack.setBaseIndex(1000000); // some big value
+
+	            this.$bitrix.Data.set('zIndexStack', stack);
+	          }
 	        },
 	        destroyed: function destroyed() {
 	          application.sendEvent({
@@ -69144,7 +70645,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        fileName: message.file.source.file.name,
 	        generateUniqueName: true,
 	        diskFolderId: diskFolderId,
-	        previewBlob: message.file.previewBlob
+	        previewBlob: message.file.previewBlob,
+	        chunkSize: this.localize.isCloud ? im_lib_uploader.Uploader.CLOUD_MAX_CHUNK_SIZE : im_lib_uploader.Uploader.BOX_MIN_CHUNK_SIZE
 	      });
 	    }
 	  }, {
@@ -69483,6 +70985,72 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }));
 	    }
 	  }, {
+	    key: "getHtmlHistory",
+	    value: function getHtmlHistory() {
+	      var chatId = this.getChatId();
+
+	      if (chatId <= 0) {
+	        console.error('Incorrect chatId value');
+	      }
+
+	      var config = {
+	        chatId: this.getChatId()
+	      };
+	      this.requestControllerAction('imopenlines.widget.history.download', config).then(function (response) {
+	        var contentType = response.headers.get('Content-Type');
+
+	        if (contentType.startsWith('application/json')) {
+	          return response.json();
+	        }
+
+	        return response.blob();
+	      }).then(function (result) {
+	        if (result instanceof Blob) {
+	          var url = window.URL.createObjectURL(result);
+	          var a = document.createElement('a');
+	          a.href = url;
+	          a.download = chatId + '.html';
+	          document.body.appendChild(a);
+	          a.click();
+	          a.remove();
+	        } else if (result.hasOwnProperty('errors')) {
+	          console.error(result.errors[0]);
+	        } else {
+	          console.error('Unknown error.');
+	        }
+	      }).catch(function () {
+	        return console.error('Fetch error.');
+	      });
+	    }
+	    /**
+	     * Basic method to run actions.
+	     * If you need to extend it, check BX.ajax.runAction to extend this method.
+	     */
+
+	  }, {
+	    key: "requestControllerAction",
+	    value: function requestControllerAction(action, config) {
+	      var host = this.host ? this.host : '';
+	      var ajaxEndpoint = '/bitrix/services/main/ajax.php';
+	      var url = new URL(ajaxEndpoint, host);
+	      url.searchParams.set('action', action);
+	      var formData = new FormData();
+
+	      for (var key in config) {
+	        if (config.hasOwnProperty(key)) {
+	          formData.append(key, config[key]);
+	        }
+	      }
+
+	      return fetch(url, {
+	        method: 'POST',
+	        headers: {
+	          'Livechat-Auth-Id': this.getUserHash()
+	        },
+	        body: formData
+	      });
+	    }
+	  }, {
 	    key: "sendConsentDecision",
 	    value: function sendConsentDecision(result) {
 	      result = result === true;
@@ -69558,7 +71126,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "showNotification",
 	    value: function showNotification(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      } // TODO show popup notification and set badge on button
@@ -69745,7 +71313,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getUserData",
 	    value: function getUserData() {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -69777,7 +71345,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setUserRegisterData",
 	    value: function setUserRegisterData(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -69830,7 +71398,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
-	      if (!this.controller.getStore()) {
+	      if (!this.controller || !this.controller.getStore()) {
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
@@ -70177,7 +71745,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      textareaDrag: false,
 	      textareaHeight: 100,
 	      textareaMinimumHeight: 100,
-	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300
+	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300,
+	      zIndexStackInstance: null
 	    };
 	  },
 	  created: function created() {
@@ -70191,7 +71760,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	    main_core_events.EventEmitter.subscribe(EventType.requestShowForm, this.onRequestShowForm);
 	  },
+	  mounted: function mounted() {
+	    this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
+
+	    if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
+	      this.zIndexStackInstance.register(this.$refs.widgetWrapper);
+	    }
+	  },
 	  beforeDestroy: function beforeDestroy() {
+	    if (this.zIndexStackInstance) {
+	      this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
+	    }
+
 	    document.removeEventListener('keydown', this.onWindowKeyDown);
 
 	    if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
@@ -70465,6 +72045,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        showForm: FormType.history
 	      });
 	    },
+	    onOpenMenu: function onOpenMenu(event) {
+	      this.getApplication().getHtmlHistory();
+	    },
 	    hideForm: function hideForm() {
 	      clearTimeout(this.showFormTimeout);
 
@@ -70669,7 +72252,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref3.data;
 	      // TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	        text: event.user.name + ' '
+	        text: event.user.name + ', '
 	      });
 	    },
 	    onClickOnUploadCancel: function onClickOnUploadCancel(_ref4) {
@@ -70976,7 +72559,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @history=\"showHistoryForm\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\t\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -71022,8 +72605,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    like: function like(event) {
 	      this.$emit('like');
 	    },
-	    history: function history(event) {
-	      this.$emit('history');
+	    openMenu: function openMenu(event) {
+	      this.$emit('openMenu', event);
 	    }
 	  },
 	  computed: babelHelpers.objectSpread({
@@ -71085,6 +72668,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    localize: function localize() {
 	      return ui_vue.WidgetBitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
+	    },
+	    ie11: function ie11() {
+	      return main_core_minimal.Browser.isIE11();
 	    }
 	  }, ui_vue_vuex.WidgetVuex.mapState({
 	    widget: function widget(state) {
@@ -71107,7 +72693,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button v-if=\"false\" class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  //language=Vue
+	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"!ie11 && application.dialog.chatId > 0\"\n\t\t\t\t\t\t\t\tclass=\"bx-livechat-control-btn bx-livechat-control-btn-menu\"\n\t\t\t\t\t\t\t\t@click=\"openMenu\"\n\t\t\t\t\t\t\t\t:title=\"localize.BX_LIVECHAT_DOWNLOAD_HISTORY\"\n\t\t\t\t\t\t\t></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -71582,7 +73169,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX,BX,BX.Messenger.Lib,BX));
  
 
 

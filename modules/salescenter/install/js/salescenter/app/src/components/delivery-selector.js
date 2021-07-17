@@ -109,7 +109,7 @@ export default {
 							ownerId: this.config.ownerId,
 						},
 						deliveryServiceId: this.order.deliveryId,
-						deliveryRelatedPropValues: this.order.propertyValues,
+						shipmentPropValues: this.order.propertyValues,
 						deliveryRelatedServiceValues: this.order.deliveryExtraServicesValues,
 						deliveryResponsibleId: this.order.deliveryResponsibleId,
 					}
@@ -139,13 +139,9 @@ export default {
 		{
 			return Loc.getMessage('SALESCENTER_PRODUCT_PRODUCTS_PRICE');
 		},
-		productsPriceFormatted()
-		{
-			return this.order.total.result;
-		},
 		productsPrice()
 		{
-			return this.order.total.resultNumeric;
+			return this.order.total.result;
 		},
 		delivery()
 		{
@@ -176,12 +172,16 @@ export default {
 		{
 			return (this.order.delivery !== null);
 		},
-
+		excludedServiceIds()
+		{
+			return this.$root.$app.options.mode === 'delivery' ? [this.$root.$app.options.emptyDeliveryServiceId] : [];
+		},
 		actionData()
 		{
 			return {
 				basketItems: this.config.basket,
 				options: {
+					orderId : this.$root.$app.orderId,
 					sessionId: this.config.sessionId,
 					ownerTypeId: this.config.ownerTypeId,
 					ownerId: this.config.ownerId,
@@ -196,8 +196,8 @@ export default {
 		<delivery-selector
 			:editable="this.config.editable"
 			:available-service-ids="availableServiceIds"
-			:init-is-calculated="config.isExistingItem"		
-			:init-estimated-delivery-price="config.expectedDeliveryPrice"		
+			:excluded-service-ids="excludedServiceIds"
+			:init-is-calculated="config.isCalculated"				
 			:init-entered-delivery-price="config.deliveryPrice"
 			:init-delivery-service-id="config.deliveryServiceId"
 			:init-related-services-values="config.relatedServicesValues"

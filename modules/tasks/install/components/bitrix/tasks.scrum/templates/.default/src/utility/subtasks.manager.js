@@ -86,7 +86,6 @@ export class SubTasksManager
 			sprint.setItem(subTaskItem);
 			this.domBuilder.appendItemAfterItem(subTaskItem.render(), parentItemNode);
 			subTaskItem.onAfterAppend(sprint.getListItemsNode());
-
 		});
 
 		this.setVisibility(parentItem);

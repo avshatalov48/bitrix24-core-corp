@@ -206,20 +206,18 @@ abstract class SearchContentBuilder
 			if(is_array($fields))
 			{
 				$this->save($entityID, $this->prepareSearchMap($fields));
-
-				$options['isShortIndex'] = true;
 				$this->saveShortIndex(
 					(int)$entityID,
-					$this->prepareSearchMap($fields, $options),
-					($options['checkExist'] ?? false)
+					$this->prepareSearchMap($fields, ['isShortIndex' => true]),
+					true
 				);
 			}
 		}
 	}
 
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\ORM\Data\Result
+	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): ?\Bitrix\Main\DB\Result
 	{
 		// not implemented by default
-		return new \Bitrix\Main\ORM\Data\Result();
+		return null;
 	}
 }

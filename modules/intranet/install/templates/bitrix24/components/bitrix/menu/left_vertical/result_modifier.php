@@ -3,6 +3,7 @@
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\Date;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -258,6 +259,7 @@ $presets = array(
 			"menu_im_messenger",
 			"menu_all_groups",
 			"menu_files",
+			"menu_documents",
 			"menu_calendar",
 			"menu_timeman_sect",
 			"menu_rpa",
@@ -297,6 +299,7 @@ $presets = array(
 			"menu_shop",
 			"menu_sites",
 			"menu_contact_center",
+			"menu_documents"
 		),
 		"hide" => array(
 			"menu_company",
@@ -322,6 +325,7 @@ $presets = array(
 			"menu_tasks",
 			"menu_calendar",
 			"menu_files",
+			"menu_documents",
 			"menu_im_messenger",
 			"menu_external_mail",
 			"menu_crm_favorite",
@@ -363,6 +367,7 @@ $presets = array(
 			"menu_crm_tracking",
 			"menu_tasks",
 			"menu_rpa",
+			"menu_documents",
 		),
 		"hide" => array(
 			"menu_live_feed",
@@ -385,15 +390,16 @@ $presets = array(
 	),
 	"shop" => array(
 		"show" => array(
+			"menu_crm_favorite",
 			"menu_shop",
 			"menu-sale-center",
-			"menu_crm_favorite",
 			"menu_marketing",
 			"menu_contact_center",
 			"menu_external_mail",
 			"menu_sites",
 			"menu_tasks",
 			"menu_rpa",
+			"menu_documents",
 		),
 		"hide" => array(
 			"menu_live_feed",
@@ -520,15 +526,7 @@ if (!empty($newItems))
 {
 	foreach ($newItems as $item)
 	{
-		$isCustomSection = isset($item['PARAMS']['is_custom_section']) ? (bool)$item['PARAMS']['is_custom_section'] : false;
-		if ($isCustomSection || ($item["ITEM_TYPE"] != "default"))
-		{
-			$arResult["ITEMS"]["show"][] = $item;
-		}
-		else
-		{
-			array_unshift($arResult["ITEMS"]["hide"], $item);
-		}
+		$arResult["ITEMS"]["show"][] = $item;
 	}
 }
 
@@ -586,10 +584,12 @@ if (
 		$arResult["DEMO_DAYS"] = "";
 		if ($arResult["IS_DEMO_LICENSE"])
 		{
-			$demoStart = COption::GetOptionInt("bitrix24", "DEMO_START");
-			if ($demoStart > 0)
+			$demoEnd = COption::GetOptionInt('main', '~controller_group_till');
+			if ($demoEnd > 0)
 			{
-				$arResult["DEMO_DAYS"] = FormatDate("ddiff", time(), $demoStart + 30 * 24 * 60 * 60);
+				$currentDate = new Date;
+				$currentDate = $currentDate->getTimestamp();
+				$arResult["DEMO_DAYS"] = FormatDate("ddiff", $currentDate, $demoEnd);
 			}
 		}
 	}

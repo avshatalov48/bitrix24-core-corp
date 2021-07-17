@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_ORDER_NOT_SELECTED"] = "field is empty";
+$MESS["CRM_ORDER_PROPERTY_TITLE_LINK"] = "CRM property: #CAPTION# (#ENTITY_NAME#)";
+$MESS["CRM_ENTITY_COMPANY"] = "Company";
+$MESS["CRM_ENTITY_CONTACT"] = "Contact";

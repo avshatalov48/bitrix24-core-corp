@@ -360,7 +360,11 @@ if($arParams['TYPE'] === 'list')
 		}
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
-		if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+		if(
+			\Bitrix\Main\Loader::includeModule('rest')
+			&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
+			&& ($bAdd || $bWrite)
+		)
 		{
 			$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_company', 'setting_list');
 			$arResult['BUTTONS'][] = [

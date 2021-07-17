@@ -26,6 +26,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.useAnimation = false;
 	this.isAnimationInProgress = false;
 	this.changedInPullRequest = false;
+	this.nextFieldsRenderingDisabled = false;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -141,6 +142,20 @@ BX.CRM.Kanban.Item.prototype = {
 		};
 	},
 
+	getBodyContainer: function()
+	{
+		if (!this.layout.bodyContainer)
+		{
+			this.layout.bodyContainer = BX.create("div", {
+				attrs: {
+					className: "main-kanban-item-wrapper"
+				}
+			});
+		}
+
+		return this.layout.bodyContainer;
+	},
+
 	/**
 	 * Return full node for item.
 	 * @returns {DOMNode}
@@ -158,6 +173,7 @@ BX.CRM.Kanban.Item.prototype = {
 				this, layout
 			]);
 			this.grid.ccItem = this;
+			this.getBodyContainer().style.background = "none";
 			return layout;
 		}
 		else if (data.special_type === "rest")
@@ -258,19 +274,32 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		}
 
-		if (
-			this.fieldsWrapper
-			&& data.fields
-			&& this.getGrid().getTypeInfoParam('doLayoutFieldsInItemRender')
-		)
+		if (this.needRenderFields())
 		{
 			this.fieldsWrapper.innerHTML = null;
 			this.layoutFields();
 		}
 
+		this.nextFieldsRenderingDisabled = false;
+
 		layout = this.container;
 
 		return layout;
+	},
+
+	needRenderFields: function()
+	{
+		var wrapperCreated = this.fieldsWrapper ? true : false;
+		var itemHasFields = this.getData().fields ? true : false;
+		var entityAllowsRendering = this.getGrid().getTypeInfoParam('doLayoutFieldsInItemRender');
+		var nextRenderingEnabled = !this.nextFieldsRenderingDisabled;
+
+		return wrapperCreated && itemHasFields && entityAllowsRendering && nextRenderingEnabled;
+	},
+
+	preventNextFieldsRendering: function()
+	{
+		this.nextFieldsRenderingDisabled = true;
 	},
 
 	getItemFields: function()
@@ -388,8 +417,30 @@ BX.CRM.Kanban.Item.prototype = {
 					{
 						cssPostfix = 'seen';
 					}
+					else if (this.data.fields[i].value.code === 'PAYMENT_CANCEL')
+					{
+						cssPostfix = 'cancel';
+					}
+					else if (this.data.fields[i].value.code === 'REFUND')
+					{
+						cssPostfix = 'refund';
+					}
 
 					params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-'+cssPostfix+'">'+this.data.fields[i].value.title+'</div>'
+				}
+				else if(code === 'DELIVERY_STAGE')
+				{
+					try
+					{
+						var title = this.data.fields[i].value.STAGE.TITLE;
+						var code = this.data.fields[i].value.STAGE.CODE;
+						var cssPostfix = (code === 'SHIPPED') ? 'shipped' : 'no-shipped';
+						params['html'] = '<div class="crm-kanban-item-status crm-kanban-item-status-' + cssPostfix + '">' + title + '</div>';
+					}
+					catch (err)
+					{
+						//
+					}
 				}
 				else if(
 					this.data.fields[i].type === "money"

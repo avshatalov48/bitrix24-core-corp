@@ -54,6 +54,28 @@ final class ExternalLink extends Engine\Controller
 		return $defaultPreFilters;
 	}
 
+	public function allowEditDocumentAction(Disk\ExternalLink $externalLink)
+	{
+		if ($externalLink->availableEdit())
+		{
+			$storage = $externalLink->getObject()->getStorage();
+			$securityContext = $storage->getSecurityContext($this->getCurrentUser());
+
+			if ($externalLink->getObject()->canUpdate($securityContext))
+			{
+				$externalLink->changeAccessRight(Disk\ExternalLink::ACCESS_RIGHT_EDIT);
+			}
+		}
+	}
+
+	public function disallowEditDocumentAction(Disk\ExternalLink $externalLink)
+	{
+		if ($externalLink->availableEdit())
+		{
+			$externalLink->changeAccessRight(Disk\ExternalLink::ACCESS_RIGHT_VIEW);
+		}
+	}
+
 	public function setPasswordAction(Disk\ExternalLink $externalLink, $newPassword)
 	{
 		$externalLink->changePassword($newPassword);

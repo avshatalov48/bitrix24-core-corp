@@ -17,6 +17,7 @@ $MESS['DISK_JS_BTN_CLOSE'] = "Закрыть";
 $MESS['DISK_JS_BTN_SAVE'] = "Сохранить";
 $MESS['DISK_JS_BTN_DOWNLOAD'] = "Скачать";
 $MESS['DISK_JS_SHARING_LABEL_TITLE_MODAL_2'] = "Общий доступ";
+$MESS['DISK_JS_SHARING_LABEL_TITLE_MODAL_3'] = "Общий доступ";
 $MESS["DISK_JS_SERVICE_CHOICE_TITLE_SMALL"] = "Выбор способа работы";
 $MESS["DISK_JS_SERVICE_CHOICE_TITLE"] = "Выберите удобный способ работы с документами";
 $MESS["DISK_JS_SERVICE_CHANGE_TEXT"] = "Изменить выбор можно будет по ссылке Еще или в настройках Диска";
@@ -32,4 +33,7 @@ $MESS["DISK_JS_PLAYER_ERROR_MESSAGE"] = "К сожалению, ваш брау�
 $MESS["DISK_VIEWER_DESCR_SAVE_FILE_TO_OWN_FILES"] = "Файл #NAME# успешно сохранен<br>в папку \"Файлы\\Сохраненные\"";
 $MESS["DISK_VIEWER_DESCR_PROCESS_SAVE_FILE_TO_OWN_FILES"] = "Файл #NAME# сохраняется<br>на ваш \"Битрикс24.Диск\"";
 $MESS["DISK_JS_HELP_WITH_BDISK"] = "Подробнее о работе с документами";
-?>
+$MESS["DISK_JS_SERVICE_B24_DOCS_TITLE"] = "Битрикс24";
+$MESS["DISK_JS_SERVICE_B24_DOCS_TEXT"] = "Вы сможете работать с ними совместно. Редактировать, обсуждать, делиться.";
+$MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS"] = "Идёт сохранение документа: #name#";
+$MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVED"] = "Документ #name# обновлён";

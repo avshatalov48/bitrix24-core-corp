@@ -156,6 +156,11 @@ class CAllSaleOrderUserProps
 						"PERSON_TYPE_ID" => $personTypeId
 					);
 					$profileId = CSaleOrderUserProps::Add($arFields);
+					if (!$profileId)
+					{
+						$arErrors[] = array("CODE" => "PROFILE_CREATE_ERROR", "TEXT" => GetMessage('SKGOUP_PROFILE_CREATE_ERROR'));
+						return false;
+					}
 				}
 
 				if (array_key_exists($arOrderProperty["ID"], $arIDs))
@@ -306,7 +311,7 @@ class CAllSaleOrderUserProps
 	public static function ClearEmpty()
 	{
 		global $DB;
-		$strSql = 
+		$strSql =
 			"SELECT UP.ID ".
 			"FROM b_sale_user_props UP ".
 			"	LEFT JOIN b_sale_user_props_value UPV ON (UP.ID = UPV.USER_PROPS_ID) ".

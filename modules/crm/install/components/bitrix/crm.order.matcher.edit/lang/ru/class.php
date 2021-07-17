@@ -12,6 +12,7 @@ $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_REPLACE"] = "Заменять";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_MERGE"] = "Объединять";
 $MESS["CRM_ORDERFORM_REQUIERD_FIELDS_ERROR"] = "Требуется добавить обязательные поля";
 $MESS["CRM_ORDERFORM_RELATION_PAY_SYSTEM"] = "Платежная система";
+$MESS["CRM_ORDERFORM_RELATION_LANDING"] = "Лендинги";
 $MESS["CRM_ORDERFORM_RELATION_DELIVERY"] = "Служба доставки";
 $MESS["CRM_ORDERFORM_EMPTY_LIST_LABEL"] = "Список свойств пуст";
 ?>

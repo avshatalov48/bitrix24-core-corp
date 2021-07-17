@@ -2163,6 +2163,14 @@ class CCrmViewHelper
 		{
 			$cssPostfix = 'seen';
 		}
+		elseif ($stage === Order\OrderStage::PAYMENT_CANCEL)
+		{
+			$cssPostfix = 'cancel';
+		}
+		elseif ($stage === Order\OrderStage::REFUND)
+		{
+			$cssPostfix = 'refund';
+		}
 
 		$stageList = Order\OrderStage::getList();
 
@@ -2172,6 +2180,31 @@ class CCrmViewHelper
 		}
 
 		return '<div class="crm-list-item-status crm-list-item-status-'.$cssPostfix.'">'.$stageList[$stage].'</div>';
+	}
+
+	/**
+	 * @param string $stage
+	 * @return string
+	 */
+	public static function RenderDealDeliveryStageControl($stage)
+	{
+		static $stages;
+
+		if ($stages === null)
+		{
+			$stages = Order\DeliveryStage::getList();
+		}
+
+		if (!isset($stages[$stage]))
+		{
+			return '';
+		}
+
+		$cssPostfix = ($stage === Order\DeliveryStage::SHIPPED)
+			? 'shipped'
+			: 'no-shipped';
+
+		return '<div class="crm-list-item-status crm-list-item-status-'.$cssPostfix.'">'.$stages[$stage].'</div>';
 	}
 
 	public static function RenderDealStageControl($arParams)

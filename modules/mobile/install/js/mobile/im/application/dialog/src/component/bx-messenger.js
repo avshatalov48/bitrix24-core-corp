@@ -7,19 +7,38 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {Logger} from "im.lib.logger";
 import {EventType, RestMethod} from "im.const";
 import {Utils} from "im.lib.utils";
-import "im.view.dialog";
+import "im.component.dialog";
 import "im.view.quotepanel";
 
+import {EventEmitter} from "main.core.events";
+
+import {LoadingStatus} from './loading-status';
+import {ErrorStatus} from './error-status';
+import {EmptyStatus} from './empty-status';
+import {MobileSmiles} from './mobile-smiles';
+
+import {
+	DialogCore, DialogReadMessages, DialogQuoteMessage, DialogClickOnCommand, DialogClickOnMention, DialogClickOnUserName,
+	DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogClickOnUploadCancel, DialogClickOnReadList, DialogSetMessageReaction,
+	DialogOpenMessageReactionList, DialogClickOnKeyboardButton, DialogClickOnChatTeaser, DialogClickOnDialog
+} from 'im.mixin';
+
 /**
- * @notice Do not mutate or clone this component! It is under development.
+ * @notice Do not clone this component! It is under development.
  */
-Vue.component('bx-mobile-im-component-dialog',
+BitrixVue.component('bx-mobile-im-component-dialog',
 {
+	mixins: [
+		DialogCore, DialogReadMessages, DialogQuoteMessage, DialogClickOnCommand, DialogClickOnMention, DialogClickOnUserName,
+		DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogClickOnUploadCancel, DialogClickOnReadList, DialogSetMessageReaction,
+		DialogOpenMessageReactionList, DialogClickOnKeyboardButton, DialogClickOnChatTeaser, DialogClickOnDialog
+	],
+	components: {LoadingStatus, ErrorStatus, EmptyStatus, MobileSmiles},
 	data: function()
 	{
 		return {
@@ -31,10 +50,7 @@ Vue.component('bx-mobile-im-component-dialog',
 		EventType: () => EventType,
 		localize()
 		{
-			return Object.assign({},
-				Vue.getFilteredPhrases('MOBILE_CHAT_', this.$root.$bitrixMessages),
-				Vue.getFilteredPhrases('IM_UTILS_', this.$root.$bitrixMessages),
-			);
+			return BitrixVue.getFilteredPhrases(['MOBILE_CHAT_', 'IM_UTILS_'], this.$root.$bitrixMessages);
 		},
 		widgetClassName(state)
 		{
@@ -73,9 +89,9 @@ Vue.component('bx-mobile-im-component-dialog',
 
 			return {
 				id: this.dialog.quoteId,
-				title: editId? this.localize.MOBILE_CHAT_EDIT_TITLE : (message.params.NAME ? message.params.NAME : (user ? user.name: '')),
+				title: editId? this.$Bitrix.Loc.getMessage('MOBILE_CHAT_EDIT_TITLE') : (message.params.NAME ? message.params.NAME : (user ? user.name: '')),
 				color: user? user.color: '',
-				description: Utils.text.purify(message.text, message.params, files, this.localize)
+				description: Utils.text.purify(message.text, message.params, files, this.$Bitrix.Loc.getMessages())
 			};
 		},
 
@@ -138,110 +154,113 @@ Vue.component('bx-mobile-im-component-dialog',
 		},
 		...Vuex.mapState({
 			application: state => state.application,
-			dialog: state => state.dialogues.collection[state.application.dialog.dialogId],
 			messageCollection: state => state.messages.collection[state.application.dialog.chatId]
 		})
 	},
 	methods:
 	{
+		getApplication()
+		{
+			return this.$Bitrix.Application.get();
+		},
 		logEvent(name, ...params)
 		{
 			Logger.info(name, ...params);
 		},
 		onDialogRequestHistory(event)
 		{
-			this.$root.$bitrixApplication.getDialogHistory(event.lastId);
+			this.getApplication().getDialogHistory(event.lastId);
 		},
 		onDialogRequestUnread(event)
 		{
-			this.$root.$bitrixApplication.getDialogUnread(event.lastId);
+			this.getApplication().getDialogUnread(event.lastId);
 		},
-		onDialogMessageClickByUserName(event)
+		onClickOnUserName({data: event})
 		{
-			this.$root.$bitrixApplication.replyToUser(event.user.id, event.user);
+			this.getApplication().replyToUser(event.user.id, event.user);
 		},
-		onDialogMessageClickByUploadCancel(event)
+		onClickOnUploadCancel({data: event})
 		{
-			this.$root.$bitrixApplication.cancelUploadFile(event.file.id);
+			this.getApplication().cancelUploadFile(event.file.id);
 		},
-		onDialogMessageClickByCommand(event)
+		onClickOnCommand({data: event})
 		{
 			if (event.type === 'put')
 			{
-				this.$root.$bitrixApplication.insertText({text: event.value+' '});
+				this.getApplication().insertText({text: event.value+' '});
 			}
 			else if (event.type === 'send')
 			{
-				this.$root.$bitrixApplication.addMessage(event.value);
+				this.getApplication().addMessage(event.value);
 			}
 			else
 			{
 				Logger.warn('Unprocessed command', event);
 			}
 		},
-		onDialogMessageClickByMention(event)
+		onClickOnMention({data: event})
 		{
 			if (event.type === 'USER')
 			{
-				this.$root.$bitrixApplication.openProfile(event.value);
+				this.getApplication().openProfile(event.value);
 			}
 			else if (event.type === 'CHAT')
 			{
-				this.$root.$bitrixApplication.openDialog(event.value);
+				this.getApplication().openDialog(event.value);
 			}
 			else if (event.type === 'CALL')
 			{
-				this.$root.$bitrixApplication.openPhoneMenu(event.value);
+				this.getApplication().openPhoneMenu(event.value);
 			}
 		},
-		onDialogMessageMenuClick(event)
+		onClickOnMessageMenu({data: event})
 		{
 			Logger.warn('Message menu:', event);
-			this.$root.$bitrixApplication.openMessageMenu(event.message);
+			this.getApplication().openMessageMenu(event.message);
 		},
-		onDialogMessageRetryClick(event)
+		onClickOnMessageRetry({data: event})
 		{
 			Logger.warn('Message retry:', event);
-			this.$root.$bitrixApplication.retrySendMessage(event.message);
+			this.getApplication().retrySendMessage(event.message);
 		},
-		onDialogReadMessage(event)
+		onReadMessage({data: event})
 		{
-			this.$root.$bitrixApplication.readMessage(event.id);
+			this.getApplication().readMessage(event.id);
 		},
-		onDialogReadedListClick(event)
+		onClickOnReadList({data: event})
 		{
-			this.$root.$bitrixApplication.openReadedList(event.list);
+			this.getApplication().openReadedList(event.list);
 		},
-		onDialogQuoteMessage(event)
+		onQuoteMessage({data: event})
 		{
-			this.$root.$bitrixApplication.quoteMessage(event.message.id);
+			this.getApplication().quoteMessage(event.message.id);
 		},
-		onDialogMessageReactionSet(event)
+		onSetMessageReaction({data: event})
 		{
-			this.$root.$bitrixApplication.reactMessage(event.message.id, event.reaction);
+			this.getApplication().reactMessage(event.message.id, event.reaction);
 		},
-		onDialogMessageReactionListOpen(event)
+		onOpenMessageReactionList({data: event})
 		{
-			this.$root.$bitrixApplication.openMessageReactionList(event.message.id, event.values);
+			this.getApplication().openMessageReactionList(event.message.id, event.values);
 		},
-		onDialogMessageClickByKeyboardButton(data)
+		onClickOnKeyboardButton({data: event})
 		{
-			if (data.action === 'ACTION')
+			if (event.action === 'ACTION')
 			{
-				let {dialogId, messageId, botId, action, value} = data.params;
+				let {dialogId, messageId, botId, action, value} = event.params;
 
 				if (action === 'SEND')
 				{
-					this.$root.$bitrixApplication.addMessage(value);
-					setTimeout(() => this.$root.$bitrixController.application.emit(EventType.dialog.scrollToBottom, {duration: 300, cancelIfScrollChange: false}), 300);
+					this.getApplication().addMessage(value);
+					setTimeout(() => EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.chatId, duration: 300, cancelIfScrollChange: false}), 300);
 				}
 				else if (action === 'PUT')
 				{
-					this.$root.$bitrixApplication.insertText({text: value+' '});
+					this.getApplication().insertText({text: value+' '});
 				}
 				else if (action === 'CALL')
 				{
-					this.$root.$bitrixApplication.openPhoneMenu(value);
+					this.getApplication().openPhoneMenu(value);
 				}
 				else if (action === 'COPY')
 				{
@@ -263,17 +282,17 @@ Vue.component('bx-mobile-im-component-dialog',
 				}
 				else if (action === 'DIALOG')
 				{
-					this.$root.$bitrixApplication.openDialog(value);
+					this.getApplication().openDialog(value);
 				}
 
 				return true;
 			}
 
-			if (data.action === 'COMMAND')
+			if (event.action === 'COMMAND')
 			{
-				let {dialogId, messageId, botId, command, params} = data.params;
+				let {dialogId, messageId, botId, command, params} = event.params;
 
-				this.$root.$bitrixController.restClient.callMethod(RestMethod.imMessageCommand, {
+				this.$Bitrix.RestClient.get().callMethod(RestMethod.imMessageCommand, {
 					'MESSAGE_ID': messageId,
 					'DIALOG_ID': dialogId,
 					'BOT_ID': botId,
@@ -286,100 +305,57 @@ Vue.component('bx-mobile-im-component-dialog',
 
 			return false;
 		},
-		onDialogMessageClickByChatTeaser(event)
+		onClickOnChatTeaser({data: event})
 		{
-			this.$root.$bitrixController.application.joinParentChat(event.message.id, 'chat'+event.message.params.CHAT_ID).then((dialogId) => {
-				this.$root.$bitrixApplication.openDialog(dialogId);
+			this.$Bitrix.Data.get('controller').application.joinParentChat(event.message.id, 'chat'+event.message.params.CHAT_ID).then((dialogId) => {
+				this.getApplication().openDialog(dialogId);
 			}).catch(() => {});
 		},
-		onDialogClick(event)
+		onClickOnDialog({data: event})
 		{
-			//this.$root.$bitrixApplication.controller.hideSmiles();
+			//this.getApplication().controller.hideSmiles();
 		},
 		onQuotePanelClose()
 		{
-			this.$root.$bitrixApplication.quoteMessageClear();
+			this.getApplication().quoteMessageClear();
 		},
 		onSmilesSelectSmile(event)
 		{
 			console.warn('Smile selected:', event);
-			this.$root.$bitrixApplication.insertText({text: event.text});
+			this.getApplication().insertText({text: event.text});
 		},
 		onSmilesSelectSet()
 		{
 			console.warn('Set selected');
-			this.$root.$bitrixApplication.setTextFocus();
+			this.getApplication().setTextFocus();
 		},
 		onHideSmiles()
 		{
-			//this.$root.$bitrixApplication.controller.hideSmiles();
-			this.$root.$bitrixApplication.setTextFocus();
+			//this.getApplication().controller.hideSmiles();
+			this.getApplication().setTextFocus();
 		}
-
 	},
+	// language=Vue
 	template: `
-		<div :class="widgetClassName">
-			<div :class="['bx-mobilechat-box', {'bx-mobilechat-box-dark-background': isDarkBackground}]">
-				<template v-if="application.error.active">
-					<bx-im-view-body-error/>
-				</template>			
-				<template v-else>
-					<div :class="['bx-mobilechat-body', {'bx-mobilechat-body-with-message': dialogState == 'show'}]" key="with-message">
-						<template v-if="dialogState == 'loading'">
-							<bx-im-view-body-loading/>
-						</template>
-						<template v-else-if="dialogState == 'empty'">
-							<bx-im-view-body-empty/>
-						</template>
-						<template v-else>
-							<div class="bx-mobilechat-dialog">
-								<bx-im-view-dialog
-									:userId="application.common.userId" 
-									:dialogId="application.dialog.dialogId"
-									:chatId="application.dialog.chatId"
-									:messageLimit="application.dialog.messageLimit"
-									:messageExtraCount="application.dialog.messageExtraCount"
-									:enableReadMessages="application.dialog.enableReadMessages"
-									:enableReactions="true"
-									:enableDateActions="false"
-									:enableCreateContent="false"
-									:enableGestureQuote="application.options.quoteEnable"
-									:enableGestureQuoteFromRight="application.options.quoteFromRight"
-									:enableGestureMenu="true"
-									:showMessageUserName="isDialog"
-									:showMessageAvatar="isDialog"
-									:showMessageMenu="false"
-									:listenEventScrollToBottom="EventType.dialog.scrollToBottom"
-									:listenEventRequestHistory="EventType.dialog.requestHistoryResult"
-									:listenEventRequestUnread="EventType.dialog.requestUnreadResult"
-									:listenEventSendReadMessages="EventType.dialog.sendReadMessages"
-									@readMessage="onDialogReadMessage"
-									@quoteMessage="onDialogQuoteMessage"
-									@requestHistory="onDialogRequestHistory"
-									@requestUnread="onDialogRequestUnread"
-									@clickByCommand="onDialogMessageClickByCommand"
-									@clickByMention="onDialogMessageClickByMention"
-									@clickByUserName="onDialogMessageClickByUserName"
-									@clickByMessageMenu="onDialogMessageMenuClick"
-									@clickByMessageRetry="onDialogMessageRetryClick"
-									@clickByUploadCancel="onDialogMessageClickByUploadCancel"
-									@clickByReadedList="onDialogReadedListClick"
-									@setMessageReaction="onDialogMessageReactionSet"
-									@openMessageReactionList="onDialogMessageReactionListOpen"
-									@clickByKeyboardButton="onDialogMessageClickByKeyboardButton"
-									@clickByChatTeaser="onDialogMessageClickByChatTeaser"
-									@click="onDialogClick"
-								 />
-							</div>
-							<template v-if="application.options.showSmiles">
-<!--								<bx-livechat-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet"/>	-->
-								<bx-messenger-smiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet" @hideSmiles="onHideSmiles" />	
-							</template>
-							<bx-im-view-quote-panel :id="quotePanelData.id" :title="quotePanelData.title" :description="quotePanelData.description" :color="quotePanelData.color" @close="onQuotePanelClose"/>
-						</template>
-					</div>
-				</template>
-			</div>
+		<div>
+			<bx-im-component-dialog
+				:userId="application.common.userId" 
+				:dialogId="application.dialog.dialogId"
+				:enableReadMessages="application.dialog.enableReadMessages"
+				:enableReactions="true"
+				:enableDateActions="false"
+				:enableCreateContent="false"
+				:enableGestureQuote="application.options.quoteEnable"
+				:enableGestureQuoteFromRight="application.options.quoteFromRight"
+				:enableGestureMenu="true"
+				:showMessageUserName="isDialog"
+				:showMessageAvatar="isDialog"
+				:showMessageMenu="false"
+				:skipDataRequest="true"
+			 />
+			<template v-if="application.options.showSmiles">
+				<MobileSmiles @selectSmile="onSmilesSelectSmile" @selectSet="onSmilesSelectSet" @hideSmiles="onHideSmiles" />	
+			</template>
 		</div>
 	`
-});
+}, {immutable: true});

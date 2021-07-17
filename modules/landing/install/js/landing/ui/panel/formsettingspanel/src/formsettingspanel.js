@@ -314,7 +314,12 @@ export class FormSettingsPanel extends BasePresetPanel
 							if (Type.isArrayFilled(preset.options.options.data.fields))
 							{
 								preset.options.options.data.fields = preset.options.options.data.fields.map((field) => {
-									return {...field, name: field.name.replace(/^LEAD_/, 'CONTACT_')};
+									const preparedField = {...field};
+									if (Type.isStringFilled(field.name))
+									{
+										preparedField.name = field.name.replace(/^LEAD_/, 'CONTACT_');
+									}
+									return preparedField;
 								});
 							}
 
@@ -740,6 +745,7 @@ export class FormSettingsPanel extends BasePresetPanel
 			return new FieldsContent({
 				crmFields: this.getCrmFields(),
 				formOptions: this.getFormOptions(),
+				dictionary: this.getFormDictionary(),
 				isLeadEnabled: this.isLeadEnabled(),
 				values: {
 					fields: this.getFormOptions().data.fields,
@@ -801,10 +807,12 @@ export class FormSettingsPanel extends BasePresetPanel
 				companies: this.getCrmCompanies(),
 				categories: this.getCrmCategories(),
 				isLeadEnabled: this.isLeadEnabled(),
+				formDictionary: this.getFormDictionary(),
 				values: {
 					scheme: this.getFormOptions().document.scheme,
 					duplicatesEnabled: this.getFormOptions().document.deal.duplicatesEnabled || 'Y',
 					category: this.getFormOptions().document.deal.category,
+					dynamicCategory: this.getFormOptions().document.dynamic.category,
 					payment: this.getFormOptions().payment.use,
 					duplicateMode: this.getFormOptions().document.duplicateMode,
 				},
@@ -1031,19 +1039,22 @@ export class FormSettingsPanel extends BasePresetPanel
 
 		this.getNotSynchronizedFields()
 			.then((result) => {
-				if (Type.isArrayFilled(result.sync.errors))
+				if (Type.isPlainObject(result.sync))
 				{
-					this.showSynchronizationErrorPopup(result.sync.errors);
-					return false;
-				}
+					if (Type.isArrayFilled(result.sync.errors))
+					{
+						this.showSynchronizationErrorPopup(result.sync.errors);
+						return false;
+					}
 
-				if (Type.isArrayFilled(result.sync.fields))
-				{
-					const fieldLabels = result.sync.fields.map((field) => {
-						return field.label;
-					});
+					if (Type.isArrayFilled(result.sync.fields))
+					{
+						const fieldLabels = result.sync.fields.map((field) => {
+							return field.label;
+						});
 
-					return this.showSynchronizationPopup(fieldLabels);
+						return this.showSynchronizationPopup(fieldLabels);
+					}
 				}
 
 				return true;
@@ -1081,6 +1092,10 @@ export class FormSettingsPanel extends BasePresetPanel
 					{
 						this.disableUseBlockDesign();
 					}
+				}
+				else
+				{
+					Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
 				}
 			});
 	}

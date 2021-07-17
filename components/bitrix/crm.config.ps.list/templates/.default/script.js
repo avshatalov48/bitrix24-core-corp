@@ -5,7 +5,7 @@ BX.Crm.PaySystemList =
 	ajaxUrl : '',
 
 	init : function (options)
-	{	
+	{
 		this.ajaxUrl = options.ajaxUrl
 	},
 
@@ -61,7 +61,7 @@ BX.Crm.PaySystemList =
 			onfailure: function () {}
 		});
 	},
-	
+
 	delete : function (paySystemId)
 	{
 		if (confirm(BX.message('CRM_PS_DELETE_CONFIRM')))
@@ -82,8 +82,14 @@ BX.Crm.PaySystemList =
 
 				onsuccess: function (result)
 				{
-					BX.toggleClass(BX('close-row-' + paySystemId), 'crm-webform-row-close');
-					CloseWaitWindow();
+					if (result && result.hasOwnProperty('ERROR'))
+					{
+						alert(result.ERROR);
+					}
+					else
+					{
+						BX.toggleClass(BX('close-row-' + paySystemId), 'crm-webform-row-close');
+					}
 				},
 
 				onfailure: function ()

@@ -1275,7 +1275,7 @@ class CCrmProduct
 			return '';
 		}
 
-		$dbResult = self::GetList(array(), array('=ID' => $productID), array('NAME'));
+		$dbResult = self::GetList(array(), array('ID' => $productID), array('NAME'));
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		return is_array($fields) && isset($fields['NAME']) ? $fields['NAME'] : '';
 	}

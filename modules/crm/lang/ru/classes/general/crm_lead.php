@@ -97,4 +97,7 @@ $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Не удалось выполнит
 $MESS["CRM_LEAD_FIELD_OBSERVER"] = "Наблюдатели";
 $MESS["CRM_LEAD_FIELD_OBSERVER_IDS"] = "Наблюдатели";
 $MESS["CRM_LEAD_FIELD_UTM"] = "UTM-метки";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Изменен режим расчета поля \"Сумма\"";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
 ?>

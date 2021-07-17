@@ -57,6 +57,11 @@ final class BlogPostCommentConnector extends StubConnector
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		$connector = BlogPostConnector::createFromBlogPostCommentConnector($this);
 		$dataToShow = $connector->getDataToShow();
 		$detailUrl = new Uri($dataToShow['DETAIL_URL'] . "#com{$this->entityId}");

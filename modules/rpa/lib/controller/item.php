@@ -8,7 +8,6 @@ use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Engine\Response\Converter;
@@ -630,6 +629,14 @@ class Item extends Base
 		if(!Driver::getInstance()->getUserPermissions()->canViewItem($item))
 		{
 			$this->addError(new Error(Loc::getMessage('RPA_VIEW_ITEM_ACCESS_DENIED')));
+			return null;
+		}
+
+		$userFieldCollection = $item->getType()->getUserFieldCollection();
+		$userField = $userFieldCollection->getByName($fieldName);
+		if (!$userField || !$userField->isBaseTypeFile())
+		{
+			$this->addError(new Error('Field ' . $fieldName . ' is not a file field'));
 			return null;
 		}
 

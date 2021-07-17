@@ -25,7 +25,6 @@ BX.namespace('Tasks.Component');
 			{
 				this.bindDelegateControl('deselect', 'click', this.onDeSelect.bind(this));
 				this.bindDelegateControl('open-form', 'click', this.onOpenForm.bind(this));
-				this.bindDelegateControl('item-link', 'click', this.onProjectClick.bind(this));
 			},
 
 			onDeSelect: function()
@@ -59,19 +58,6 @@ BX.namespace('Tasks.Component');
 			onOpenForm: function()
 			{
 				this.getSelector().open();
-			},
-
-			onProjectClick: function()
-			{
-				BX.PreventDefault();
-				if (BX.SidePanel && typeof(BXDesktopSystem) != "undefined")
-				{
-					window.open(this.getProjectLink(this.option('groupId')))
-				}
-				else
-				{
-					window.top.location.href = this.getProjectLink(this.option('groupId'));
-				}
 			},
 
 			getProjectLink: function(groupId)

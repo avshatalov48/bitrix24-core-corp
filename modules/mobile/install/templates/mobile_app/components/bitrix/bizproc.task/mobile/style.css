@@ -44,3 +44,67 @@ table.bizproc-task-table select
 span.required {
 	color: red;
 }
+
+.bp-task-block .webform-small-button.add-field-button {
+	margin: 5px 0 10px 0;
+	background-image: url('plus.svg');
+	-webkit-background-size: contain;
+	background-size: contain;
+	background-position: left center;
+	background-repeat: no-repeat;
+	height: 26px;
+	line-height: 29px;
+	vertical-align: middle;
+	display: inline-block;
+	padding: 0 0 0 22px;
+	color:#aaa;
+	background-color: #e8f9fe;
+}
+
+.bp-task-block .webform-field-item-wrap {
+	position: relative;
+	padding-right: 23px;
+}
+
+.bp-task-block .webform-field-item-wrap .upload-file-name {
+	word-break: break-word;
+}
+
+.bp-task-block .webform-field-item-wrap del {
+	display: block;
+	background: #e7e6eb;
+	position: absolute;
+	z-index: 2;
+	bottom: 0;
+	border-radius: 50%;
+	width: 20px;
+	height: 20px;
+	right: 1px;
+	margin: -10px 0 0 0;
+	top: 50%;
+}
+
+.bp-task-block .webform-field-item-wrap del:before,
+.bp-task-block .webform-field-item-wrap del:after {
+	position: absolute;
+	content: '';
+	background: #fff;
+	margin-top: -7px;
+	width: 2px;
+	height: 12px;
+	right: 9px;
+	top: 11px;
+}
+
+.bp-task-block .webform-field-item-wrap del:after {
+	-webkit-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+.bp-task-block .webform-field-item-wrap del:before{
+	-webkit-transform: rotate(-45deg);
+	transform: rotate(-45deg);
+}
+
+.bp-task-block .bp-task-form {
+	margin-top: 15px;
+}

@@ -54,5 +54,7 @@ $MESS['CRM_REPORT_MY_REPORTS_ACTIVITY'] = 'Мои дела';
 $MESS['CRM_REPORT_MY_REPORTS_ADD'] = 'Добавить отчёт';
 
 $MESS['CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'] = 'Постоянные покупатели';
+$MESS['CRM_REPORT_EXTERNAL_LINK_TELEPHONY_BOARD_TITLE'] = 'Статистика звонков';
+$MESS['CRM_REPORT_EXTERNAL_LINK_OPENLINES_BOARD_TITLE'] = 'Статистика диалогов';
 
 

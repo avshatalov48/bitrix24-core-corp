@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Text, Type } from 'main.core';
 import { Model } from 'crm.model';
 
 export type TypeModelData = {
@@ -19,6 +19,7 @@ export type TypeModelData = {
 	isObserversEnabled?: boolean,
 	isRecyclebinEnabled?: boolean,
 	isAutomationEnabled?: boolean,
+	isBizProcEnabled?: boolean,
 	isSetOpenPermissions?: boolean,
 	conversionMap?: {
 		//we can't send an empty array via ajax. therefore, it's stored as 'false'
@@ -39,6 +40,7 @@ declare type RelationsMap = {
 declare type Relation = {
 	entityTypeId: number,
 	isChildrenListEnabled?: boolean|null,
+	isPredefined?: boolean,
 }
 
 export type ConversionMap = {
@@ -49,6 +51,7 @@ export type ConversionMap = {
 export type CustomSection = {
 	id: number,
 	title: string,
+	isSelected: boolean,
 };
 
 /**
@@ -224,6 +227,16 @@ export class TypeModel extends Model
 		this.data.isAutomationEnabled = (isAutomationEnabled === true);
 	}
 
+	getIsBizProcEnabled(): boolean
+	{
+		return this.data.isBizProcEnabled;
+	}
+
+	setIsBizProcEnabled(isBizProcEnabled: boolean)
+	{
+		this.data.isBizProcEnabled = (isBizProcEnabled === true);
+	}
+
 	getIsSetOpenPermissions(): boolean
 	{
 		return this.data.isSetOpenPermissions;
@@ -246,7 +259,12 @@ export class TypeModel extends Model
 
 	getCustomSectionId(): ?number
 	{
-		return this.data.customSectionId;
+		if (this.data.hasOwnProperty('customSectionId'))
+		{
+			return Text.toInteger(this.data.customSectionId);
+		}
+
+		return null;
 	}
 
 	setCustomSectionId(customSectionId: number)
@@ -365,6 +383,7 @@ export class TypeModel extends Model
 			'isObserversEnabled',
 			'isRecyclebinEnabled',
 			'isAutomationEnabled',
+			'isBizProcEnabled',
 			'isSetOpenPermissions',
 		];
 	}

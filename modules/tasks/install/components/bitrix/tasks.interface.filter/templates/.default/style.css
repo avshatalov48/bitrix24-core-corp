@@ -167,3 +167,17 @@
 	top: -7px;
 	margin-left: 5px;
 }
+
+.tasks-pagetitle-view .ui-side-panel-wrap-title {
+	flex: none !important;
+}
+
+.tasks-interface-filter {
+	flex: 1;
+	max-width: 813px;
+	min-width: 300px;
+}
+
+.tasks-interface-filter .main-ui-filter-search {
+	flex: 1;
+}

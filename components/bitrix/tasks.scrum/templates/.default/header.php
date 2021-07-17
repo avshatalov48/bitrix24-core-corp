@@ -12,7 +12,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\Filter;
 
@@ -123,7 +122,7 @@ $APPLICATION->includeComponent(
 		'TEMPLATES_LIST' => $arParams['TEMPLATES_LIST'],//todo
 		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
-		'SPRINT_ID' => ($arResult['completedSprintId'] ? $arResult['completedSprintId'] : -1),
+		'SPRINT_ID' => (isset($arResult['completedSprintId']) ? $arResult['completedSprintId'] : -1),
 		'MENU_GROUP_ID' => $arParams['GROUP_ID'],
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
@@ -176,68 +175,12 @@ if ($isBitrix24Template)
 {
 	$this->setViewTarget('below_pagetitle');
 }
-
-$planTabActiveClass = ($arResult['views']['plan']['active'] ? 'tasks-scrum-switcher-tab-active' : '');
-$activeTabActiveClass = ($arResult['views']['activeSprint']['active'] ? 'tasks-scrum-switcher-tab-active' : '');
-$completedTabActiveClass = ($arResult['views']['completedSprint']['active'] ? 'tasks-scrum-switcher-tab-active' : '');
 ?>
 
-<div class="tasks-scrum-switcher">
-	<div class="tasks-scrum-switcher-views">
-		<a
-			href="<?=HtmlFilter::encode($arResult['views']['plan']['url'])?>"
-			class="tasks-scrum-switcher-tab <?= $planTabActiveClass ?>"
-		><?= $arResult['views']['plan']['name']; ?></a>
-		<a
-			href="<?=HtmlFilter::encode($arResult['views']['activeSprint']['url'])?>"
-			class="tasks-scrum-switcher-tab <?= $activeTabActiveClass ?>"
-		><?= $arResult['views']['activeSprint']['name']; ?></a>
-		<a
-			href="<?=HtmlFilter::encode($arResult['views']['completedSprint']['url'])?>"
-			class="tasks-scrum-switcher-tab <?= $completedTabActiveClass ?>"
-		><?= $arResult['views']['completedSprint']['name']; ?></a>
-	</div>
-</div>
-
+<div id="tasks-scrum-switcher" class="tasks-scrum-switcher"></div>
 <div id="tasks-scrum-counters-container" class="tasks-scrum-counters-container"></div>
-
-<?php if ($arResult['views']['plan']['active']): ?>
-	<div class="tasks-scrum-active-sprint-stats"></div>
-<?php endif; ?>
-<?php if ($arResult['views']['activeSprint']['active'] && $arResult['activeSprintId'] > 0): ?>
-	<div id="tasks-scrum-active-sprint-stats" class="tasks-scrum-active-sprint-stats"></div>
-<?php endif; ?>
-<?php if ($arResult['views']['completedSprint']['active'] && $arResult['completedSprintId'] > 0): ?>
-	<div id="tasks-scrum-completed-sprint-title" class="tasks-scrum-completed-sprint-title"></div>
-<?php endif; ?>
-
-<div class="tasks-scrum-buttons">
-	<?php if ($arResult['views']['plan']['active']): ?>
-		<div id="tasks-scrum-team-speed-button-container" class="tasks-scrum-team-speed-button-container">
-			<button class="ui-btn ui-btn-primary ui-btn-xs">
-				<?=Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON');?>
-			</button>
-		</div>
-	<?php endif; ?>
-	<?php if ($arResult['views']['activeSprint']['active'] && $arResult['activeSprintId'] > 0): ?>
-		<div id="tasks-scrum-actions-complete-sprint" class="tasks-scrum-actions-complete-sprint">
-			<button class="ui-btn ui-btn-primary-dark ui-btn-round ui-btn-xs">
-				<?=Loc::getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON');?>
-			</button>
-			<button class="ui-btn ui-btn-primary ui-btn-round ui-btn-xs">
-				<?=Loc::getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT');?>
-			</button>
-		</div>
-	<?php endif; ?>
-	<?php if ($arResult['views']['completedSprint']['active'] && $arResult['completedSprintId'] > 0): ?>
-		<div id="tasks-scrum-completed-sprint-title" class="tasks-scrum-completed-sprint-title"></div>
-		<div id="tasks-scrum-completed-sprint-chart" class="tasks-scrum-actions-complete-sprint">
-			<button class="ui-btn ui-btn-primary-dark ui-btn-round ui-btn-xs">
-				<?=Loc::getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON');?>
-			</button>
-		</div>
-	<?php endif; ?>
-</div>
+<div id="tasks-scrum-sprint-stats" class="tasks-scrum-sprint-stats"></div>
+<div id="tasks-scrum-buttons-container" class="tasks-scrum-buttons"></div>
 
 <?php
 if ($isBitrix24Template)

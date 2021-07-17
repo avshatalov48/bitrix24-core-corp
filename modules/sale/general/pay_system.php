@@ -1,5 +1,5 @@
 <?php
-
+use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 
 IncludeModuleLangFile(__FILE__);
@@ -88,14 +88,14 @@ class CAllSalePaySystem
 		{
 			$select = array_merge(array('ID', 'NAME', 'DESCRIPTION', 'ACTIVE', 'SORT'), self::getAliases());
 
-			$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getList(array(
+			$dbRes = PaySystem\Manager::getList(array(
 				'select' => $select,
 				'filter' => array('ID' => $id)
 			));
 		}
 		else
 		{
-			$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getById($id);
+			$dbRes = PaySystemActionTable::getById($id);
 		}
 
 		if ($result = $dbRes->fetch())
@@ -171,21 +171,21 @@ class CAllSalePaySystem
 	{
 		$id = (int)$id;
 
-		$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getById($id);
+		$dbRes = PaySystemActionTable::getById($id);
 		if (!$dbRes->fetch())
 		{
 			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGPS_ORDERS_TO_PAYSYSTEM"), "ERROR_ORDERS_TO_PAYSYSTEM");
 			return false;
 		}
 
-		$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::delete($id);
+		$dbRes = PaySystem\Manager::delete($id);
 
 		return $dbRes->isSuccess();
 	}
 
 	public static function getNewIdsFromOld($ids, $personTypeId = null)
 	{
-		$dbRes = PaySystemActionTable::getList(array(
+		$dbRes = PaySystem\Manager::getList(array(
 			'select' => array('ID'),
 			'filter' => array('PAY_SYSTEM_ID' => $ids)
 		));
@@ -290,7 +290,7 @@ class CAllSalePaySystem
 			foreach ($arGroupBy as $key => $value)
 				$groupBy[$key] = self::getAlias($value);
 		}
-		$dbRes = PaySystemActionTable::getList(
+		$dbRes = PaySystem\Manager::getList(
 			array(
 				'select' => $select,
 				'filter' => $filter,

@@ -226,7 +226,7 @@ if(typeof(BX.CrmOrderCheckDetails) === "undefined")
 					}),
 					BX.create("span",
 						{
-							text: elementAddition['NAME']
+							html: elementAddition['NAME']
 						}
 					)
 				],

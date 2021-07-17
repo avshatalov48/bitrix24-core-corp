@@ -110,17 +110,17 @@ endif;
 		if ($arResult["SKIP_BP"] == "Y" && $arResult["ShowMode"] != "Success"):?>
 			<div class="bp-errortext"><?=GetMessage("MB_BP_SKIP")?></div>
 		<? elseif ($arResult["ShowMode"] != "Success" && $arResult["TASK"]['IS_INLINE'] != 'Y'):?>
-			<form method="post" name="task_form1" action="<?=POST_FORM_ACTION_URI?>" enctype="multipart/form-data" onsubmit="return false;">
+			<form class="bp-task-form" method="post" name="task_form1" action="<?=POST_FORM_ACTION_URI?>" enctype="multipart/form-data" onsubmit="return false;">
 				<?= bitrix_sessid_post() ?>
 				<input type="hidden" name="action" value="doTask" />
 				<input type="hidden" name="" value="" id="bp_task_submiter">
-				<input type="hidden" name="id" value="<?= intval($arResult["TASK"]["ID"]) ?>" />
+				<input type="hidden" name="TASK_ID" value="<?= intval($arResult["TASK"]["ID"]) ?>" />
 				<input type="hidden" name="workflow_id" value="<?= htmlspecialcharsbx($arResult["TASK"]["WORKFLOW_ID"]) ?>" />
 				<input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($arParams["REDIRECT_URL"]) ?>" />
 
 				<?if (!empty($arResult["TaskForm"])):?>
 				<div class="bizproc-detail-block">
-					<table class="bizproc-table-main bizproc-task-table" cellpadding="3" border="0">
+					<table class="bizproc-table-main bizproc-task-table" cellpadding="0" border="0">
 						<?= $arResult["TaskForm"]?>
 					</table>
 				</div>
@@ -175,11 +175,15 @@ endif;
 		if (bpForm)
 		{
 			BX.bind(bpForm, "submit", function(){
-				app.showPopupLoader();
 
-				var data_form = {"TASK_ID":"<?=CUtil::JSEscape($arParams["TASK_ID"])?>"};
-				BX.ajax.prepareForm(bpForm, data_form);
-				return BX.BizProcMobile.doTask(data_form, function(){BXMobileApp.UI.Page.close({drop: true});});
+				var formData = new FormData(bpForm);
+				return BX.BizProcMobile.doTask(
+					formData,
+					function()
+					{
+						BXMobileApp.UI.Page.close({drop: true});
+					}
+				);
 			});
 		}
 	});

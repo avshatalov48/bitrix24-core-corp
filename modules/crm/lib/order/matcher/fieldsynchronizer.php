@@ -18,6 +18,7 @@ use Bitrix\Sale\Delivery\Services\Manager as DeliveryManager;
 use Bitrix\Sale\Internals\Input\File;
 use Bitrix\Sale\Internals\OrderPropsGroupTable;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
+use Bitrix\Sale\TradingPlatform;
 use Bitrix\Sale\Internals\OrderPropsTable;
 
 class FieldSynchronizer
@@ -1259,9 +1260,38 @@ class FieldSynchronizer
 		return static::$relations['P'];
 	}
 
+	public static function getLandingRelations()
+	{
+		if (!isset(static::$relations['L']))
+		{
+			$landings = [];
+
+			$dbRes = TradingPlatform\Manager::getList(
+				[
+					'select' => ['ID', 'NAME'],
+					'filter' => [
+						'=ACTIVE' => 'Y',
+						'%CODE' => TradingPlatform\Landing\Landing::TRADING_PLATFORM_CODE,
+					]
+				]
+			);
+			foreach ($dbRes as $row)
+			{
+				$landings[$row['ID']] = [
+					"ID" => $row['ID'],
+					"VALUE" => "{$row['NAME']} [{$row['ID']}]",
+				];
+			}
+
+			static::$relations['L'] = $landings;
+		}
+
+		return static::$relations['L'];
+	}
+
 	private static function extractRelations(&$itemFields)
 	{
-		$relations = isset($itemFields['RELATIONS']) ? $itemFields['RELATIONS'] : [];
+		$relations = $itemFields['RELATIONS'] ?? [];
 		unset($itemFields['RELATIONS']);
 
 		return $relations;

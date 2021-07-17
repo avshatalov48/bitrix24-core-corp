@@ -114,22 +114,22 @@ if (!function_exists('prepareProjectRowTitle'))
 
 		$out =
 			'<div class="tasks-project-owerview-container">'
-				.'<div class="tasks-project-overview-group-avatar">'
-					.'<a class="tasks-proj-avatar" href="'.$row['PATHES']['TO_GROUP'].'">'
-						.($image ? '<img src="'.$image['RESIZED']['SRC'].'"/>' : '')
-					.'</a>'
-				.'</div>'
-				.'<div class="tasks-project-overview-title">'
-					.'<a class="tasks-project-overview-title-link" target="_top"  href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>'
-					.'<span class="tasks-project-overview-members">'
-						.'<span class="tasks-project-overview-members-text">'.GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($heads) > 1)).'</span>'
+			.'<div class="tasks-project-overview-group-avatar">'
+			.'<a class="tasks-proj-avatar" href="'.$row['PATHES']['TO_GROUP'].'">'
+			.($image ? '<img src="'.$image['RESIZED']['SRC'].'"/>' : '')
+			.'</a>'
+			.'</div>'
+			.'<div class="tasks-project-overview-title">'
+			.'<a class="tasks-project-overview-title-link" target="_top"  href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>'
+			.'<span class="tasks-project-overview-members">'
+			.'<span class="tasks-project-overview-members-text">'.GetMessage('TASKS_PROJECTS_OVERVIEW_HEADS_'.(int)(count($heads) > 1)).'</span>'
 		;
 		foreach ($heads as $head)
 		{
 			$photoSrc = getUserPictureSrc($head['PHOTO_ID'], $head['USER_GENDER'], 25, 25);
 			$out .=
 				'<a href="'.$head['HREF'].'" class="ui-icon ui-icon-common-user tasks-project-overview-member-avatar">'
-					.($photoSrc ? '<i style="background-image: url('.$photoSrc.')"></i>' : '')
+				.($photoSrc ? '<i style="background-image: url('.$photoSrc.')"></i>' : '')
 				.'</a>';
 		}
 
@@ -191,13 +191,13 @@ if (!function_exists('prepareProjectRowInWork'))
 	function prepareProjectRowInWork($row, $arParams)
 	{
 		return '<a href="'.
-			   $row['PATHES']['IN_WORK'].
-			   '">'.
-			   $row['COUNTERS']['IN_WORK'].
-			   '</a>'.
-			   ($row['COUNTERS']['EXPIRED'] > 0 ? '<span class="tasks-project-overview-expired">'.
-												  $row['COUNTERS']['EXPIRED'].
-												  '</span>' : '');
+			$row['PATHES']['IN_WORK'].
+			'">'.
+			$row['COUNTERS']['IN_WORK'].
+			'</a>'.
+			($row['COUNTERS']['EXPIRED'] > 0 ? '<span class="tasks-project-overview-expired">'.
+				$row['COUNTERS']['EXPIRED'].
+				'</span>' : '');
 	}
 }
 

@@ -33,4 +33,17 @@ class Quote extends Item
 			'DOCUMENT_TYPE' => ['crm', static::class, \CCrmOwnerType::QuoteName],
 		];
 	}
+
+	public static function getEntityFields($entityTypeId)
+	{
+		$fields = parent::getEntityFields($entityTypeId);
+
+		unset(
+			$fields[\Bitrix\Crm\Item\Quote::FIELD_NAME_STORAGE_ELEMENTS],
+			$fields[\Bitrix\Crm\Item\Quote::FIELD_NAME_STORAGE_TYPE],
+			$fields[\Bitrix\Crm\Item\Quote::FIELD_NAME_PERSON_TYPE_ID]
+		);
+
+		return $fields;
+	}
 }

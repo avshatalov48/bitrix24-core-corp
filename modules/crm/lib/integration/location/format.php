@@ -41,7 +41,7 @@ class Format
 		return $result;
 	}
 
-	protected static function getLocationFormatCode(string $crmAddressFormatCode): string
+	public static function getLocationFormatCode(string $crmAddressFormatCode): string
 	{
 		switch ($crmAddressFormatCode)
 		{
@@ -73,7 +73,7 @@ class Format
 		return $result;
 	}
 
-	protected static function getCrmFormatCode(string $locAddressFormatCode): string
+	public static function getCrmFormatCode(string $locAddressFormatCode): string
 	{
 		switch ($locAddressFormatCode)
 		{

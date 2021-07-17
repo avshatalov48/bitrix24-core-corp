@@ -10,7 +10,7 @@ $taskTemplateUrlTemplateAction = $arParams['PATH_TO_USER_TASKS_TEMPLATES_ACTION'
 ?>
 
 
-<div style="margin-right: 12px" class="ui-btn-split ui-btn-primary tasks-interface-filter-btn-add">
+<div style="margin-right: 12px" class="ui-btn-split ui-btn-success tasks-interface-filter-btn-add">
 	<a class="ui-btn-main" id="tasks-buttonAdd"
 	   href="<?=CComponentEngine::makePathFromTemplate(
 		   $taskUrlTemplate,

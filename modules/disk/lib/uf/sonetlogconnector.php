@@ -12,6 +12,11 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		if(!($log = $this->loadLogEntryData()))
 		{
 			return null;

@@ -48,7 +48,8 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 						: $arResult["newCount"]
 				)
 		),
-
+		"WARNING_CODE" => ($arResult["WARNING_CODE"] ?: ''),
+		"WARNING_MESSAGE" => ($arResult["WARNING_MESSAGE"] ?: ''),
 		"ERROR_MESSAGE" => ($arResult["ERROR_MESSAGE"] ?: $arResult["COMMENT_ERROR"]),
 		"OK_MESSAGE" => $arResult["MESSAGE"],
 		"RESULT" => ($arResult["ajax_comment"] ?: $_GET["commentId"]),

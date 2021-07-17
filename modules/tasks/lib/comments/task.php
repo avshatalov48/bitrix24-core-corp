@@ -70,12 +70,20 @@ class Task
 					)
 			)
 			->where('FM.NEW_TOPIC', 'N')
-			->where('FM.AUTHOR_ID', '<>', $userId)
 			->where(
 				Query::filter()
 					->logic('or')
-					->whereNull('FM.UF_TASK_COMMENT_TYPE')
-					->where('FM.UF_TASK_COMMENT_TYPE', '<>', Internals\Comment::TYPE_EXPIRED)
+					->where(
+						Query::filter()
+							->where('FM.AUTHOR_ID', '<>', $userId)
+							->where(
+								Query::filter()
+									->logic('or')
+									->whereNull('FM.UF_TASK_COMMENT_TYPE')
+									->where('FM.UF_TASK_COMMENT_TYPE', '<>', Internals\Comment::TYPE_EXPIRED)
+							)
+					)
+					->where('FM.UF_TASK_COMMENT_TYPE', Internals\Comment::TYPE_EXPIRED_SOON)
 			)
 		;
 
@@ -210,22 +218,5 @@ class Task
 		$commentResult = $query->exec();
 
 		return ($comment = $commentResult->fetch()) && (int)$comment['COMMENT_ID'] === $commentId;
-	}
-
-	/**
-	 * @param int $userId
-	 * @param int $groupId
-	 * @throws Main\LoaderException
-	 */
-	public static function onAfterCommentsReadAll(int $userId, int $groupId = 0): void
-	{
-		PushService::addEvent($userId, [
-			'module_id' => 'tasks',
-			'command' => 'comment_read_all',
-			'params' => [
-				'USER_ID' => $userId,
-				'GROUP_ID' => $groupId,
-			]
-		]);
 	}
 }

@@ -1,10 +1,11 @@
 <?php
-use Bitrix\Crm\EntityAddress;
+
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\Format\CompanyAddressFormatter;
-use Bitrix\Crm\Format\ContactAddressFormatter;
-use Bitrix\Crm\Format\LeadAddressFormatter;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
+
 abstract class CCrmTemplateMapperBase
 {
 	protected $contentType = CCrmContentType::PlainText;
@@ -219,18 +220,18 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 					break;
 				case 'ADDRESS':
 				{
-					$addressOptions = array();
 					if($isHtml)
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::HtmlLineBreak;
-						$addressOptions['NL2BR'] = true;
+						$result = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+							LeadAddress::mapEntityFields($fields)
+						);
 					}
 					else
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::NewLine;
+						$result = AddressFormatter::getSingleInstance()->formatTextMultiline(
+							LeadAddress::mapEntityFields($fields)
+						);
 					}
-
-					$result = LeadAddressFormatter::format($fields, $addressOptions);
 					break;
 				}
 				case 'COMMENTS':
@@ -403,18 +404,18 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 					break;
 				case 'ADDRESS':
 				{
-					$addressOptions = array();
 					if($isHtml)
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::HtmlLineBreak;
-						$addressOptions['NL2BR'] = true;
+						$result = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+							ContactAddress::mapEntityFields($fields)
+						);
 					}
 					else
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::NewLine;
+						$result = AddressFormatter::getSingleInstance()->formatTextMultiline(
+							ContactAddress::mapEntityFields($fields)
+						);
 					}
-
-					$result = ContactAddressFormatter::format($fields, $addressOptions);
 					break;
 				}
 				case 'COMMENTS':
@@ -493,21 +494,22 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 				case 'ADDRESS':
 				case 'ADDRESS_LEGAL':
 				{
-					$addressOptions = array(
-						'TYPE_ID' => $fieldName === 'ADDRESS' ? EntityAddressType::Primary : EntityAddressType::Registered
+					$addressTypeId = (
+						$fieldName === 'ADDRESS' ? EntityAddressType::Primary : EntityAddressType::Registered
 					);
-
 					if($isHtml)
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::HtmlLineBreak;
-						$addressOptions['NL2BR'] = true;
+						$result = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+							CompanyAddress::mapEntityFields($fields, ['TYPE_ID' => $addressTypeId])
+						);
 					}
 					else
 					{
-						$addressOptions['SEPARATOR'] = AddressSeparator::NewLine;
+						$result = AddressFormatter::getSingleInstance()->formatTextMultiline(
+							CompanyAddress::mapEntityFields($fields, ['TYPE_ID' => $addressTypeId])
+						);
 					}
-
-					$result = CompanyAddressFormatter::format($fields, $addressOptions);
+					unset($addressTypeId);
 					break;
 				}
 				case 'COMMENTS':

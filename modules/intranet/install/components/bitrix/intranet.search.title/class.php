@@ -32,30 +32,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		$userPageURLTemplate = Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
 
 		$userFilter = array(
-			'ACTIVE' => 'Y'
+			'ACTIVE' => 'Y',
+			'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes()
 		);
-
-		$arExternalAuthId = array();
-		if (ModuleManager::isModuleInstalled('replica'))
-		{
-			$arExternalAuthId[] = 'replica';
-		}
-		if (ModuleManager::isModuleInstalled('im'))
-		{
-			$arExternalAuthId[] = 'bot';
-		}
-		if (ModuleManager::isModuleInstalled('imconnector'))
-		{
-			$arExternalAuthId[] = 'imconnector';
-		}
-		if (ModuleManager::isModuleInstalled('mail'))
-		{
-			$arExternalAuthId[] = 'mail';
-		}
-		if (!empty($arExternalAuthId))
-		{
-			$userFilter['!=EXTERNAL_AUTH_ID'] = $arExternalAuthId;
-		}
 
 		$searchByEmail = false;
 		if (!empty($searchString))
@@ -818,7 +797,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		$globalSearchCategories = array(
 			"stream" => array(
 				"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR : SITE_DIR."stream/")."?".(\Bitrix\Main\Composite\Helper::isOn() ? "ncc=1&" : "")."apply_filter=Y&FIND=",
-				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_STREAM")
+				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_NEWS")
 			),
 			"tasks" => array(
 				"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/user/".$USER->GetID()."/tasks/?apply_filter=Y&with_preset=Y&FIND=",

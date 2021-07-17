@@ -862,6 +862,10 @@ final class Task extends \Bitrix\Tasks\Manager
 			$params['TARGET_USER_ID'] = $parameters['TARGET_USER_ID'];
 		}
 
+		if (!array_key_exists('select', $listParameters) || !is_array($listParameters['select']))
+		{
+			$listParameters['select'] = [];
+		}
 		$getNewCommentsCount = in_array('NEW_COMMENTS_COUNT', $listParameters['select'], true);
 
 		if (

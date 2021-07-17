@@ -25,6 +25,8 @@ class RestManager extends Base
 	public const TAG_DELIVERY_RECOMMENDED = 'recommended';
 
 	public const TAG_SALESCENTER = 'salescenter';
+	public const TAG_SALES_CENTER = 'sales_center';
+	public const TAG_PARTNERS = 'partners';
 
 	public const ACTIONBOX_PLACEMENT_PAYMENT = 'payment';
 	public const ACTIONBOX_PLACEMENT_DELIVERY = 'delivery';
@@ -37,12 +39,12 @@ class RestManager extends Base
 
 	/**
 	 * @param array $tag
-	 * @param bool $page
-	 * @param bool $pageSize
+	 * @param integer|bool $page
+	 * @param integer|bool $pageSize
 	 * @return array|bool|mixed|null
 	 * @throws Main\SystemException
 	 */
-	public function getByTag(array $tag, bool $page = false, bool $pageSize = false)
+	public function getByTag(array $tag, $page = false, $pageSize = false)
 	{
 		$cacheId = md5(serialize([$tag, $page, $pageSize]));
 		$cachePath = '/salescenter/saleshub/tag/';

@@ -1,6 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -10,7 +11,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\PaySystem;
-use Bitrix\Sale\Internals;
+use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Helpers\Admin;
 use Bitrix\Sale\Services\PaySystem\Restrictions;
@@ -67,6 +68,8 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$allowEditPayment = $this->request->get('ALLOW_EDIT_PAYMENT');
 		$code = $this->request->get('CODE');
 
+		$isCanPrintCheckSelf = $this->request->get('CAN_PRINT_CHECK_SELF');
+
 		$path = PaySystem\Manager::getPathToHandlerFolder($handler);
 		if ($path === null)
 		{
@@ -92,7 +95,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			"NAME" => $name,
 			"PSA_NAME" => $name,
 			"ACTIVE" => $active ?? 'Y',
-			"CAN_PRINT_CHECK" => ($isCanPrintCheck === 'Y') ? 'Y' : 'N',
+			"CAN_PRINT_CHECK" => ($isCanPrintCheck === 'Y' || $isCanPrintCheckSelf === 'Y') ? 'Y' : 'N',
 			"CODE" => $code ? $code : '',
 			"NEW_WINDOW" => ($newWindow === 'Y') ? 'Y' : 'N',
 			"ALLOW_EDIT_PAYMENT" => ($allowEditPayment === 'Y') ? 'Y' : 'N',
@@ -110,14 +113,12 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$file = $this->request->getFile('LOGOTIP');
 		if ($file !== null && $file["error"] == 0)
 		{
-			/** @noinspection PhpUndefinedClassInspection */
 			$imageFileError = \CFile::CheckImageFile($file);
 			if ($imageFileError === null)
 			{
 				$fields['LOGOTIP'] = $file;
 				$fields['LOGOTIP']['del'] = trim($this->request->get("LOGOTIP_del"));
 				$fields['LOGOTIP']['MODULE_ID'] = "sale";
-				/** @noinspection PhpUndefinedClassInspection */
 				\CFile::SaveForDB($fields, 'LOGOTIP', 'sale/paysystem/logotip');
 			}
 			else
@@ -136,10 +137,8 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				$image = '/bitrix/images/sale/sale_payments/'.$handler.'/'.$psMode.'.png';
 				if (IO\File::isFileExists($documentRoot.$image))
 				{
-					/** @noinspection PhpUndefinedClassInspection */
 					$fields['LOGOTIP'] = \CFile::MakeFileArray($image);
 					$fields['LOGOTIP']['MODULE_ID'] = "sale";
-					/** @noinspection PhpUndefinedClassInspection */
 					\CFile::SaveForDB($fields, 'LOGOTIP', 'sale/paysystem/logotip');
 				}
 			}
@@ -149,10 +148,8 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				$image = '/bitrix/images/sale/sale_payments/'.$handler.'.png';
 				if (IO\File::isFileExists($documentRoot.$image))
 				{
-					/** @noinspection PhpUndefinedClassInspection */
 					$fields['LOGOTIP'] = \CFile::MakeFileArray($image);
 					$fields['LOGOTIP']['MODULE_ID'] = "sale";
-					/** @noinspection PhpUndefinedClassInspection */
 					\CFile::SaveForDB($fields, 'LOGOTIP', 'sale/paysystem/logotip');
 				}
 			}
@@ -296,6 +293,15 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			}
 		}
 
+		if ($id > 0 && $this->errorCollection->isEmpty())
+		{
+			$service = PaySystem\Manager::getObjectById($id);
+			if ($service && $service->isSupportPrintCheck())
+			{
+				$this->setCashbox($service);
+			}
+		}
+
 		return [
 			'ID' => $id
 		];
@@ -336,6 +342,178 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$this->errorCollection->add([new Error('')]);
 		}
+	}
+
+	private function setCashbox(PaySystem\Service $service): void
+	{
+		$cashboxSettings = $this->getCashboxSettingsFromRequest();
+		if (!$this->errorCollection->isEmpty())
+		{
+			return;
+		}
+
+		$kkmId = $cashboxSettings['CASHBOX_DATA']['KKM_ID'] ?? '';
+
+		/** @var Cashbox\CashboxPaySystem $cashboxClass */
+		$cashboxClass = $service->getCashboxClass();
+
+		if (!$kkmId)
+		{
+			$supportedKkmModels = BusinessValue::getValuesByCode(
+				$service->getConsumerName(),
+				$cashboxClass::getPaySystemCodeForKkm()
+			);
+			if ($supportedKkmModels)
+			{
+				$kkmId = current($supportedKkmModels);
+			}
+		}
+
+		if ($this->request->get('CAN_PRINT_CHECK_SELF') === 'Y')
+		{
+			if (!$kkmId)
+			{
+				$handlerDescription = $service->getHandlerDescription();
+				$paySystemCodeName = $handlerDescription['CODES'][$cashboxClass::getPaySystemCodeForKkm()]['NAME'] ?? '';
+				if ($paySystemCodeName)
+				{
+					$this->errorCollection->add(
+						[
+							new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX')),
+							new Error(Loc::getMessage(
+								'SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_KEY_IS_EMPTY',
+								[
+									'#CODE_NAME#' => $paySystemCodeName,
+								]
+							))
+						]
+					);
+				}
+				else
+				{
+					$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX'))]);
+				}
+
+				return;
+			}
+
+			$fields = [
+				'NAME' => $cashboxClass::getName(),
+				'HANDLER' => $cashboxClass,
+				'EMAIL' => $cashboxSettings['CASHBOX_DATA']['EMAIL'] ?? '',
+				'NUMBER_KKM' => '',
+				'KKM_ID' => $kkmId,
+				'ACTIVE' => 'Y',
+				'USE_OFFLINE' => 'N',
+				'ENABLED' => 'Y',
+				'SORT' => 100,
+				'SETTINGS' => $cashboxSettings['CASHBOX_SETTINGS'],
+			];
+
+			$handlerList = Cashbox\Cashbox::getHandlerList();
+			if (isset($handlerList[$fields['HANDLER']]))
+			{
+				$cashboxObject = Cashbox\Cashbox::create($fields);
+				if ($cashboxObject)
+				{
+					$result = $cashboxObject->validate();
+					if ($result->isSuccess())
+					{
+						$cashbox = Cashbox\Manager::getList([
+							'filter' => [
+								'=ACTIVE' => 'Y',
+								'=HANDLER' => $cashboxClass,
+								'=KKM_ID' => $kkmId,
+							],
+						])->fetch();
+						$cashboxId = $cashbox['ID'] ?? null;
+						if ($cashboxId)
+						{
+							$result = Cashbox\Manager::update($cashboxId, $fields);
+							if ($result->isSuccess())
+							{
+								$cashboxObject = Cashbox\Manager::getObjectById($cashboxId);
+								AddEventToStatFile(
+									'sale',
+									'updateCashbox',
+									$cashboxId,
+									$cashboxObject::getCode()
+								);
+							}
+						}
+						else
+						{
+							$result = Cashbox\Manager::add($fields);
+							if ($result->isSuccess())
+							{
+								$cashboxId = $result->getId();
+								$cashboxObject = Cashbox\Manager::getObjectById($cashboxId);
+								AddEventToStatFile(
+									'sale',
+									'addCashbox',
+									$cashboxId,
+									$cashboxObject::getCode()
+								);
+							}
+						}
+					}
+					else
+					{
+						$this->errorCollection->add($result->getErrors());
+					}
+				}
+				else
+				{
+					$this->errorCollection->add([
+						new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX'))
+					]);
+				}
+			}
+			else
+			{
+				$this->errorCollection->add([
+					new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_NO_HANDLER_EXIST'))
+				]);
+			}
+		}
+		else
+		{
+			$onDisabledFiscalizationResult = PaySystem\Cashbox\EventHandler::onDisabledFiscalization($service, $kkmId);
+			if (!$onDisabledFiscalizationResult->isSuccess())
+			{
+				$this->errorCollection->add($onDisabledFiscalizationResult->getErrors());
+			}
+		}
+	}
+
+	private function getCashboxSettingsFromRequest(): array
+	{
+		$result = [
+			'CASHBOX_DATA' => [],
+			'CASHBOX_SETTINGS' => [],
+		];
+
+		$cashboxData = $this->request->get('CASHBOX');
+		$cashboxSettings = $this->request->get('SETTINGS');
+
+		try
+		{
+			if ($cashboxData)
+			{
+				$result['CASHBOX_DATA'] = Web\Json::decode($cashboxData);
+			}
+
+			if ($cashboxSettings)
+			{
+				$result['CASHBOX_SETTINGS'] = Web\Json::decode($cashboxSettings);
+			}
+		}
+		catch (Main\ArgumentException $ex)
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_PARAMS'))]);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -492,6 +670,6 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	 */
 	public function deletePaySystemAction($paySystemId)
 	{
-		Internals\PaySystemActionTable::delete($paySystemId);
+		PaySystem\Manager::delete($paySystemId);
 	}
 }

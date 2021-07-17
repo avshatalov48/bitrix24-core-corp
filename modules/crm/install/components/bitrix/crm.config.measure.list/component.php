@@ -13,7 +13,7 @@ if (!CModule::IncludeModule('catalog'))
 }
 
 $userPermissions = CCrmAuthorizationHelper::GetUserPermissions();
-if (!CCrmAuthorizationHelper::CheckConfigurationReadPermission($userPermissions))
+if (!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($userPermissions))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

@@ -2,16 +2,25 @@
 
 namespace Bitrix\Crm\Order;
 
+use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Main\EventResult;
 use Bitrix\Sale;
 use Bitrix\Crm;
+use Bitrix\Catalog;
 use Bitrix\Main;
 use Bitrix\Crm\Requisite;
+use Bitrix\Sale\TradingPlatform\Landing\Landing;
+use Bitrix\Iblock;
+use Bitrix\Catalog\v2\Integration\UI\ViewedProducts;
+use Bitrix\Main\Engine\UrlManager;
+use \Bitrix\Crm\Order\BindingsMaker\TimelineBindingsMaker;
 
 if (!Main\Loader::includeModule('sale'))
 {
 	return;
 }
+
+Main\Localization\Loc::loadMessages(__FILE__);
 
 /**
  * Class Order
@@ -31,10 +40,6 @@ class Order extends Sale\Order
 	 * @param null $userId
 	 * @param null $currency
 	 * @return Sale\Order
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectException
 	 */
 	public static function create($siteId, $userId = null, $currency = null)
 	{
@@ -50,11 +55,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\SystemException
 	 */
 	protected function add()
 	{
@@ -76,16 +76,65 @@ class Order extends Sale\Order
 			$this->setContactCompanyRequisites();
 		}
 
+		if ($this->enableAutomaticDealCreation())
+		{
+			$dealBinding = $this->getDealBinding();
+			if (!$dealBinding)
+			{
+				$dealCreator = new DealCreator($this);
+				$dealId = $dealCreator->create();
+				if ($dealId)
+				{
+					$dealBinding = $this->createDealBinding();
+					$dealBinding->setField('DEAL_ID', $dealId);
+					$dealBinding->markCrmDealAsNew();
+				}
+			}
+		}
+
+		if (
+			Main\Loader::includeModule('landing')
+			&& $platform = $this->getTradeBindingCollection()->getTradingPlatform(
+				Landing::TRADING_PLATFORM_CODE,
+				Landing::LANDING_STORE_STORE_V3
+			)
+		)
+		{
+			$this->addTimelineEntryOnStoreV3OrderCreate();
+			$this->sendSmsToClientOnStoreV3OrderCreate($platform);
+		}
+
 		$this->addTimelineEntryOnCreate();
 
 		return $result;
 	}
 
+	protected function enableAutomaticDealCreation()
+	{
+		if (!\CCrmSaleHelper::isWithOrdersMode())
+		{
+			return true;
+		}
+		else
+		{
+			$collection = $this->getTradeBindingCollection();
+			/** @var TradeBindingEntity $binding */
+			foreach ($collection as $binding)
+			{
+				$platform = $binding->getTradePlatform();
+				if ($platform instanceof Landing)
+				{
+					return $platform->isOfType(Landing::LANDING_STORE_CHATS);
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * @param $checkId
 	 * @param array $settings
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	public function addTimelineCheckEntryOnCreate($checkId, array $settings = []) : void
 	{
@@ -110,15 +159,13 @@ class Order extends Sale\Order
 	/**
 	 * @param array $settings
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	private function getTimelineEntryParamsOnCheckPrint(array $settings)
 	{
 		return [
 			'ORDER_FIELDS' => $this->getFieldValues(),
 			'SETTINGS' => $settings,
-			'BINDINGS' => $this->getTimelineBindings(),
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this),
 		];
 	}
 
@@ -130,37 +177,8 @@ class Order extends Sale\Order
 		return [
 			'ORDER_FIELDS' => $this->getFieldValues(),
 			'SETTINGS' => $resultSettings,
-			'BINDINGS' => $this->getTimelineBindings(),
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this),
 		];
-	}
-
-	/**
-	 * @param bool $withDeal
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
-	private function getTimelineBindings($withDeal = true) : array
-	{
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $this->getId()
-			]
-		];
-
-		if (
-			$withDeal === true
-			&& $this->getDealBinding()
-		)
-		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $this->getDealBinding()->getDealId()
-			];
-		}
-
-		return $bindings;
 	}
 
 	/**
@@ -168,12 +186,6 @@ class Order extends Sale\Order
 	 * @param float|int|mixed|string $oldValue
 	 * @param float|int|mixed|string $value
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\ObjectNotFoundException
 	 */
 	protected function onFieldModify($name, $oldValue, $value)
 	{
@@ -197,12 +209,6 @@ class Order extends Sale\Order
 		return $result;
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
-	 * @return void
-	 */
 	private function setContactCompanyRequisites()
 	{
 		$collection = $this->getContactCompanyCollection();
@@ -240,11 +246,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\LoaderException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\SystemException
 	 */
 	protected function onAfterSave()
 	{
@@ -259,7 +260,7 @@ class Order extends Sale\Order
 		}
 
 		$dealBinding = $this->getDealBinding();
-		if ($dealBinding && $this->getDealBinding()->isChanged())
+		if ($dealBinding && $dealBinding->isChanged() && !$this->enableAutomaticDealCreation())
 		{
 			$this->addTimelineEntryOnBindingDealChanged();
 		}
@@ -324,8 +325,6 @@ class Order extends Sale\Order
 		{
 			if ($this->getDealBinding())
 			{
-				$this->changeOrderStageDealOnPaid();
-
 				if (Crm\Automation\Factory::canUseAutomation())
 				{
 					Crm\Automation\Trigger\OrderPaidTrigger::execute(
@@ -341,12 +340,25 @@ class Order extends Sale\Order
 			);
 		}
 
+		$this->updateDealOrderStage();
+
 		if ($this->getFields()->isChanged('DEDUCTED') && $this->isDeducted())
 		{
 			Crm\Timeline\OrderController::getInstance()->onDeduct(
 				$this->getId(),
 				$this->getTimelineEntryParamsOnDeducted()
 			);
+
+			if ($this->getDealBinding())
+			{
+				if (Crm\Automation\Factory::canUseAutomation())
+				{
+					Crm\Automation\Trigger\DeliveryFinishedTrigger::execute(
+						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $this->getDealBinding()->getDealId()]],
+						['ORDER' => $this]
+					);
+				}
+			}
 		}
 
 		$this->appendBuyerGroups();
@@ -370,12 +382,79 @@ class Order extends Sale\Order
 		return $result;
 	}
 
-	private function changeOrderStageDealOnPaid()
+	/**
+	 * @return void
+	 */
+	private function updateDealOrderStage()
 	{
-		$fields = ['ORDER_STAGE' => OrderStage::PAID];
+		if (!$this->getDealBinding())
+		{
+			return;
+		}
 
-		$deal = new \CCrmDeal(false);
-		$deal->Update($this->getDealBinding()->getDealId(), $fields);
+		$nextStage = false;
+
+		if ($this->getFields()->isChanged('PAYED') && $this->isPaid())
+		{
+			$nextStage = OrderStage::PAID;
+		}
+		else
+		{
+			$latestPayment = $this->getLatestPayment();
+			if ($latestPayment && $latestPayment->getFields()->isChanged('PAID'))
+			{
+				if ($latestPayment->isPaid())
+				{
+					$nextStage = OrderStage::PAID;
+				}
+				elseif ($latestPayment->isReturn())
+				{
+					$nextStage = OrderStage::REFUND;
+				}
+				else
+				{
+					$originalFields = $latestPayment->getFields()->getOriginalValues();
+
+					// @todo: implement Payment::isNew() method
+					if ($originalFields['PAID'] !== null)
+					{
+						$nextStage = OrderStage::PAYMENT_CANCEL;
+					}
+				}
+			}
+		}
+
+		if ($nextStage)
+		{
+			$fields = ['ORDER_STAGE' => $nextStage];
+			$deal = new \CCrmDeal(false);
+			$deal->Update($this->getDealBinding()->getDealId(), $fields);
+		}
+	}
+
+	/**
+	 * @return \Bitrix\Sale\Payment|null
+	 */
+	private function getLatestPayment()
+	{
+		$paymentCollection = $this->getPaymentCollection();
+		if ($paymentCollection && count($paymentCollection) > 0)
+		{
+			$maxId = 0;
+
+			/** @var \Bitrix\Sale\Payment $payment */
+			foreach ($paymentCollection as $payment)
+			{
+				$maxId = max($maxId, $payment->getId());
+			}
+
+			if ($latestPayment = $paymentCollection->getItemById($maxId))
+			{
+				return $latestPayment;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -396,8 +475,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	protected function getTimelineEntryParamsOnPaid() : array
 	{
@@ -410,27 +487,23 @@ class Order extends Sale\Order
 					'ORDER_DONE' => ($this->getField('STATUS_ID') === OrderStatus::getFinalStatus()) ? 'Y' : 'N',
 				]
 			],
-			'BINDINGS' => $this->getTimelineBindings(false)
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this, ['withDeal' => false])
 		];
 	}
 
 	/**
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	protected function getTimelineEntryParamsOnCreate() : array
 	{
 		return [
 			'ORDER_FIELDS' => $this->getFieldValues(),
-			'BINDINGS' => $this->getTimelineBindings(false)
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this, ['withDeal' => false])
 		];
 	}
 
 	/**
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	protected function getTimelineEntryParamsOnDeducted() : array
 	{
@@ -442,14 +515,10 @@ class Order extends Sale\Order
 					'ORDER_DEDUCTED' => $this->getField('DEDUCTED')
 				]
 			],
-			'BINDINGS' => $this->getTimelineBindings()
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this, ['withDeal' => false])
 		];
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
 	protected function addTimelineEntryOnBindingDealChanged()
 	{
 		Crm\Timeline\OrderController::getInstance()->onBindingDealCreation(
@@ -465,8 +534,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @param array $params
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	protected function addTimelineEntryNotifyBindingDeal(array $params) : void
 	{
@@ -509,11 +576,7 @@ class Order extends Sale\Order
 		Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Order, $this->getId());
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
-	private function addTimelineEntryOnCreate()
+	private function addTimelineEntryOnCreate(): void
 	{
 		Crm\Timeline\OrderController::getInstance()->onCreate(
 			$this->getId(),
@@ -522,9 +585,143 @@ class Order extends Sale\Order
 	}
 
 	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
+	 * @return ?array
 	 */
+	private function getViewedProducts(): ?array
+	{
+		if (!Main\Loader::includeModule('catalog') || !Main\Loader::includeModule('iblock'))
+		{
+			return null;
+		}
+
+		$basePriceGroupId = \CCatalogGroup::GetBaseGroupId();
+		/** @var Crm\Product\Url\ProductBuilder $adminLinkBuilder */
+		$adminLinkBuilder = Iblock\Url\AdminPage\BuilderManager::getInstance()->getBuilder(
+			Crm\Product\Url\ProductBuilder::TYPE_ID
+		);
+
+		$skus = ViewedProducts\Repository::getInstance()->getList();
+
+		$newCard = Catalog\Config\State::isProductCardSliderEnabled();
+
+		$result  = [];
+		foreach ($skus as $sku)
+		{
+			$price = $basePriceGroupId ? $sku->getPriceCollection()->findByGroupId($basePriceGroupId) : null;
+			$image = $sku->getFrontImageCollection()->getFrontImage();
+
+			if ($adminLinkBuilder)
+			{
+				$adminLinkBuilder->setIblockId($sku->getIblockId());
+			}
+
+			$result[] = [
+				'slider' => $newCard ? 'Y' : 'N',
+				'offerId' => $sku->getId(),
+				'adminLink' => $adminLinkBuilder ? $adminLinkBuilder->getProductDetailUrl($sku->getId()) : null,
+				'name' => $sku->getName(),
+				'image' => $image ? $image->getSource() : null,
+				'variationInfo' => Catalog\v2\Helpers\PropertyValue::getSkuPropertyDisplayValues($sku),
+				'price' => $price ? $price->getPrice() : null,
+				'currency' => $price ? $price->getCurrency() : null,
+			];
+		}
+
+		return $result;
+	}
+
+	private function addTimelineEntryOnStoreV3OrderCreate(): void
+	{
+		$viewedProducts = $this->getViewedProducts();
+
+		if (
+			$viewedProducts
+			&& $this->getDealBinding()
+			&& $this->getTradeBindingCollection()->hasTradingPlatform(Landing::TRADING_PLATFORM_CODE)
+		)
+		{
+			Crm\Timeline\OrderController::getInstance()->onLandingOrderCreate(
+				$this->getId(),
+				$this->getDealBinding()->getDealId(),
+				[
+					'ORDER_FIELDS' => $this->getFieldValues(),
+					'SETTINGS' => [
+						'DEAL_ID' => $this->getDealBinding()->getDealId(),
+						'VIEWED_PRODUCTS' => $viewedProducts,
+					],
+				]
+			);
+		}
+	}
+
+	/**
+	 * @param Sale\TradingPlatform\Platform $platform
+	 */
+	private function sendSmsToClientOnStoreV3OrderCreate(Sale\TradingPlatform\Platform $platform): void
+	{
+		/** @var Contact|Company|null $entityCommunication */
+		$entityCommunication = $this->getEntityCommunication();
+		$phoneTo = $this->getEntityCommunicationPhone();
+
+		if ($entityCommunication && $phoneTo)
+		{
+			$feedbackPage = $platform->getExternalLink(
+				Landing::LINK_TYPE_PUBLIC_FEEDBACK,
+				$this
+			);
+
+			Crm\MessageSender\MessageSender::send(
+				[
+					Crm\Integration\NotificationsManager::getSenderCode() => [
+						'ACTIVITY_PROVIDER_TYPE_ID' => Crm\Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+						'TEMPLATE_CODE' => 'ORDER_COMPLETED',
+						'PLACEHOLDERS' => [
+							'NAME' => $entityCommunication->getCustomerName(),
+						],
+					],
+					Crm\Integration\SmsManager::getSenderCode() => [
+						'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+						'MESSAGE_BODY' => Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED')
+							. (
+							$feedbackPage
+								? (
+								' ' . Main\Localization\Loc::getMessage(
+									'CRM_ORDER_ORDER_CREATED_QUESTIONS_LEFT',
+									[
+										'#FEEDBACK_LINK#' => UrlManager::getInstance()->getHostUrl() . \CBXShortUri::GetShortUri($feedbackPage),
+									]
+								)
+							)
+								: ''
+							),
+					]
+				],
+				[
+					'COMMON_OPTIONS' => [
+						'PHONE_NUMBER' => $phoneTo,
+						'USER_ID' => $this->getField('RESPONSIBLE_ID'),
+						'ADDITIONAL_FIELDS' => [
+							'ENTITY_TYPE' => $entityCommunication::getEntityTypeName(),
+							'ENTITY_TYPE_ID' => $entityCommunication::getEntityType(),
+							'ENTITY_ID' => $entityCommunication->getField('ENTITY_ID'),
+							'BINDINGS' => Crm\Order\BindingsMaker\ActivityBindingsMaker::makeByOrder(
+								$this,
+								[
+									'extraBindings' => [
+										[
+											'TYPE_ID' => $entityCommunication::getEntityType(),
+											'ID' => $entityCommunication->getField('ENTITY_ID'),
+										]
+									]
+								]
+							),
+						]
+					]
+				]
+			);
+		}
+	}
+
 	private function addTimelineEntryOnCancel()
 	{
 		$fields = [
@@ -542,15 +739,11 @@ class Order extends Sale\Order
 			$this->getId(),
 			[
 				'FIELDS' => $fields,
-				'BINDINGS' => $this->getTimelineBindings()
+				'BINDINGS' => TimelineBindingsMaker::makeByOrder($this, ['withDeal' => false])
 			]
 		);
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
 	private function addTimelineEntryOnStatusModify()
 	{
 		$originalValues = $this->getFields()->getOriginalValues();
@@ -561,15 +754,11 @@ class Order extends Sale\Order
 				'STATUS_ID' => $this->getField('STATUS_ID'),
 				'EMP_STATUS_ID' => $this->getField('EMP_STATUS_ID')
 			],
-			'BINDINGS' => $this->getTimelineBindings()
+			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this, ['withDeal' => false])
 		];
 		Crm\Timeline\OrderController::getInstance()->onModify($this->getId(), $params);
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @return void;
-	 */
 	private function updateTimelineCreationEntity()
 	{
 		$fields = $this->getFields();
@@ -588,11 +777,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\SystemException
 	 */
 	private function addContactCompany()
 	{
@@ -629,18 +813,12 @@ class Order extends Sale\Order
 
 	/**
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\ObjectNotFoundException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected function saveEntities()
 	{
 		$result = parent::saveEntities();
 
-		$communication = $this->getContactCompanyCollection();
-		$r = $communication->save();
+		$r = $this->getContactCompanyCollection()->save();
 		if (!$r->isSuccess())
 		{
 			$result->addErrors($r->getErrors());
@@ -667,9 +845,6 @@ class Order extends Sale\Order
 	/**
 	 * @param $orderId
 	 * @return Sale\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected static function deleteEntitiesNoDemand($orderId)
 	{
@@ -700,11 +875,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @param Sale\OrderBase $order
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\ObjectNotFoundException
-	 * @throws Main\SystemException
 	 */
 	protected static function deleteEntities(Sale\OrderBase $order)
 	{
@@ -731,10 +901,53 @@ class Order extends Sale\Order
 	}
 
 	/**
+	 * @return Company|Contact|null
+	 */
+	public function getEntityCommunication()
+	{
+		$contact = $this->getContactCompanyCollection()->getPrimaryContact();
+		if ($contact)
+		{
+			return $contact;
+		}
+
+		$company = $this->getContactCompanyCollection()->getPrimaryCompany();
+		if ($company)
+		{
+			return $company;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getEntityCommunicationPhone(): ?string
+	{
+		$entityCommunication = $this->getEntityCommunication();
+		if (!$entityCommunication)
+		{
+			return null;
+		}
+
+		$phone = \CCrmFieldMulti::GetEntityFirstPhone(
+			$entityCommunication::getEntityTypeName(),
+			$entityCommunication->getField('ENTITY_ID'),
+			true,
+			false
+		);
+
+		if (!$phone)
+		{
+			return null;
+		}
+
+		return (string)$phone->format();
+	}
+
+	/**
 	 * @return ContactCompanyCollection|null
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
 	 */
 	public function getContactCompanyCollection()
 	{
@@ -748,9 +961,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return ContactCompanyCollection
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function loadContactCompanyCollection()
 	{
@@ -763,9 +973,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
 	 */
 	public function isChanged()
 	{
@@ -786,11 +993,6 @@ class Order extends Sale\Order
 		return false;
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
-	 */
 	public function clearChanged()
 	{
 		parent::clearChanged();
@@ -811,7 +1013,6 @@ class Order extends Sale\Order
 	 *
 	 * @param int $id Order id.
 	 * @return Sale\Result
-	 * @throws Main\ArgumentNullException
 	 */
 	public static function delete($id)
 	{
@@ -869,7 +1070,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return array|false
-	 * @throws Main\ArgumentException
 	 */
 	public function getRequisiteLink()
 	{
@@ -886,7 +1086,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return array|false
-	 * @throws Main\ArgumentException
 	 */
 	protected function loadRequisiteLink()
 	{
@@ -905,16 +1104,12 @@ class Order extends Sale\Order
 
 		if ($data = $dbRes->fetch())
 		{
-			 return $data;
+			return $data;
 		}
 
 		return [];
 	}
 
-	/**
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotSupportedException
-	 */
 	protected function saveRequisiteLink()
 	{
 		$requisiteLink = $this->getRequisiteLink();
@@ -933,9 +1128,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @param \SplObjectStorage $cloneEntity
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\SystemException
 	 */
 	protected function cloneEntities(\SplObjectStorage $cloneEntity)
 	{
@@ -976,6 +1168,9 @@ class Order extends Sale\Order
 				Sale\Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Crm\Order\BasketPropertyItem',
 				Sale\Registry::ENTITY_PAYMENT => '\Bitrix\Crm\Order\Payment',
 				Sale\Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Crm\Order\PaymentCollection',
+				Sale\Registry::ENTITY_PAYABLE_BASKET_ITEM => '\Bitrix\Crm\Order\PayableBasketItem',
+				Sale\Registry::ENTITY_PAYABLE_SHIPMENT => '\Bitrix\Crm\Order\PayableShipmentItem',
+				Sale\Registry::ENTITY_PAYABLE_ITEM_COLLECTION => '\Bitrix\Crm\Order\PayableItemCollection',
 				Sale\Registry::ENTITY_SHIPMENT => '\Bitrix\Crm\Order\Shipment',
 				Sale\Registry::ENTITY_SHIPMENT_COLLECTION => '\Bitrix\Crm\Order\ShipmentCollection',
 				Sale\Registry::ENTITY_SHIPMENT_ITEM => '\Bitrix\Crm\Order\ShipmentItem',
@@ -1003,8 +1198,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return DealBinding
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	public function getDealBinding()
 	{
@@ -1023,8 +1216,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return DealBinding|null
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	public function loadDealBinding()
 	{
@@ -1036,8 +1227,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return DealBinding
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	public function createDealBinding()
 	{
@@ -1053,8 +1242,6 @@ class Order extends Sale\Order
 
 	/**
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
 	 */
 	public function toArray() : array
 	{

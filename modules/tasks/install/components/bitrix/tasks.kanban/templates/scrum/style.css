@@ -58,3 +58,10 @@
 	padding-right: 10px;
 	cursor: default;
 }
+
+.tasks-scrum-kanban-header {
+	position: fixed;
+	z-index: 1000;
+	top: 0;
+	height: auto;
+}

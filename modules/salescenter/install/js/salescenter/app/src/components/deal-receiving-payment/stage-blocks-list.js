@@ -1,25 +1,30 @@
-import {
-	StatusTypes as Status
-} 						from 'salescenter.component.stage-block';
-import * as TimeLineItem
-						from 'salescenter.timeline';
-import {MixinTemplatesType}
-						from "./templates-type-mixin";
+import {Loc} from 'main.core';
+import {StatusTypes as Status} from 'salescenter.component.stage-block';
+import * as TimeLineItem from 'salescenter.timeline';
+import {MixinTemplatesType} from '../templates-type-mixin';
+import * as Tile from 'salescenter.tile';
+import Send from './stage-blocks/send';
+import {Cashbox} from '../stage-blocks/cashbox';
+import Product from '../stage-blocks/product';
+import {DeliveryVuex} from '../stage-blocks/delivery-vuex';
+import {PaySystem} from '../stage-blocks/paysystem';
+import {SmsMessage} from '../stage-blocks/sms-message';
+import {Automation} from '../stage-blocks/automation';
+import {StageMixin} from '../stage-blocks/stage-mixin';
+import {TimeLine} from '../stage-blocks/timeline';
 
-import * as Tile 		from 'salescenter.tile';
-import {Send} 			from "./stage-blocks/send";
-import {Cashbox} 		from "./stage-blocks/cashbox";
-import {Product} 		from "./stage-blocks/product";
-import {DeliveryVuex} 	from "./stage-blocks/delivery-vuex";
-import {PaySystem} 		from "./stage-blocks/paysystem";
-import {SmsMessage} 	from "./stage-blocks/sms-message";
-import {Automation} 	from "./stage-blocks/automation";
-import {StageMixin} 	from "./stage-blocks/stage-mixin";
-import {TimeLine} 		from "./stage-blocks/timeline";
-
-
-const StageBlocksList = {
-	props:{
+export default {
+	components: {
+		'send-block': Send,
+		'cashbox-block': Cashbox,
+		'product-block': Product,
+		'delivery-block': DeliveryVuex,
+		'paysystem-block': PaySystem,
+		'automation-block': Automation,
+		'sms-message-block': SmsMessage,
+		'timeline-block': TimeLine
+	},
+	props: {
 		sendAllowed: {
 			type: Boolean,
 			required: true
@@ -28,38 +33,52 @@ const StageBlocksList = {
 	data()
 	{
 		let stages =  {
-			message:{
-				status: 			Status.complete,
-				items: 				this.$root.$app.options.contactBlock.smsSenders,
-				manager:			this.$root.$app.options.contactBlock.manager,
-				phone:				this.$root.$app.options.contactPhone,
-				senderSettingsUrl:	this.$root.$app.urlSettingsSmsSenders,
-				editorTemplate:		this.$root.$app.sendingMethodDesc.text,
-				editorUrl:			this.$root.$app.orderPublicUrl
+			message: {
+				initSenders: this.$root.$app.options.senders,
+				initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
+				initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
+				status: Status.complete,
+				selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
+				manager: this.$root.$app.options.dealResponsible,
+				phone: this.$root.$app.options.contactPhone,
+				titleTemplate: this.$root.$app.sendingMethodDesc.sent
+					? Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME')
+					: Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
+				showHint: this.$root.$app.options.templateMode !== 'view',
+				editorTemplate: this.$root.$app.sendingMethodDesc.text,
+				editorUrl: this.$root.$app.orderPublicUrl
 			},
-			product:{
-				status:				this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
-									?	Status.complete
-									:	Status.current
+			product: {
+				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
+					? Status.complete
+					: Status.current,
+				title: this.$root.$app.options.templateMode === 'view'
+					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW')
+					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+				hintTitle: this.$root.$app.options.templateMode === 'view'
+					? ''
+					: Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'),
 			},
-			paysystem:{
-				status: 			this.$root.$app.options.paySystemList.isSet
-									?	Status.complete
-									:	Status.disabled,
-				tiles:			this.getTileCollection(
-									this.$root.$app.options.paySystemList.items),
-				installed:			this.$root.$app.options.paySystemList.isSet,
+			paysystem: {
+				status: this.$root.$app.options.paySystemList.isSet
+					? Status.complete
+					: Status.disabled,
+				tiles: this.getTileCollection(this.$root.$app.options.paySystemList.items),
+				installed: this.$root.$app.options.paySystemList.isSet,
 				titleItems: this.getTitleItems(this.$root.$app.options.paySystemList.items),
 				initialCollapseState: this.$root.$app.options.isPaySystemCollapsed ? this.$root.$app.options.isPaySystemCollapsed === 'Y' : this.$root.$app.options.paySystemList.isSet,
 			},
-			cashbox:{},
-			delivery:{
-				status: 			this.$root.$app.options.deliveryList.isInstalled
-									?	Status.complete
-									:	Status.disabled,
-				tiles:			this.getTileCollection(
-									this.$root.$app.options.deliveryList.items),
-				installed:			this.$root.$app.options.deliveryList.isInstalled,
+			cashbox: {},
+			delivery: {
+				isHidden: (
+					this.$root.$app.options.templateMode === 'view'
+					&& parseInt(this.$root.$app.options.shipmentId) <= 0
+				),
+				status: this.$root.$app.options.deliveryList.isInstalled
+					? Status.complete
+					: Status.disabled,
+				tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
+				installed: this.$root.$app.options.deliveryList.isInstalled,
 				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled,
 			}
 		};
@@ -67,12 +86,11 @@ const StageBlocksList = {
 		if (this.$root.$app.options.cashboxList.hasOwnProperty('items'))
 		{
 			stages.cashbox = {
-				status: 			this.$root.$app.options.cashboxList.isSet
-									?	Status.complete
-									:	Status.disabled,
-				tiles:			this.getTileCollection(
-									this.$root.$app.options.cashboxList.items),
-				installed:			this.$root.$app.options.cashboxList.isSet,
+				status: this.$root.$app.options.cashboxList.isSet
+					? Status.complete
+					: Status.disabled,
+				tiles: this.getTileCollection(this.$root.$app.options.cashboxList.items),
+				installed: this.$root.$app.options.cashboxList.isSet,
 				titleItems: this.getTitleItems(this.$root.$app.options.cashboxList.items),
 				initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet,
 			};
@@ -81,18 +99,18 @@ const StageBlocksList = {
 		if (this.$root.$app.options.isAutomationAvailable)
 		{
 			stages.automation = {
-				status:				Status.complete,
-				items:				this.$root.$app.options.dealStageList,
+				status: Status.complete,
+				stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
+				stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
+				items: this.$root.$app.options.dealStageList,
 				initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
 			};
 		}
 
-		if (BX.type.isObject(this.$root.$app.options.timeline)
-			&& Object.values(this.$root.$app.options.timeline).length > 0)
+		if (this.$root.$app.options.hasOwnProperty('timeline'))
 		{
 			stages.timeline = {
-				items:			this.getTimelineCollection(
-									this.$root.$app.options.timeline)
+				items: this.getTimelineCollection(this.$root.$app.options.timeline)
 			}
 		}
 
@@ -100,139 +118,122 @@ const StageBlocksList = {
 			stages: stages,
 		}
 	},
-	components: {
-		'send-block'			: Send,
-		'cashbox-block'			: Cashbox,
-		'product-block'			: Product,
-		'delivery-block'		: DeliveryVuex,
-		'paysystem-block'		: PaySystem,
-		'automation-block'		: Automation,
-		'sms-message-block'		: SmsMessage,
-		'timeline-block'		: TimeLine
-	},
-	mixins:[StageMixin, MixinTemplatesType],
-	computed:
+	mixins: [
+		StageMixin,
+		MixinTemplatesType
+	],
+	computed: {
+		hasStageTimeLine()
 		{
-			hasStageTimeLine()
-			{
-				return this.stages.timeline.hasOwnProperty('items');
-			},
+			return this.stages.timeline.hasOwnProperty('items') && this.stages.timeline.items.length > 0;
+		},
+		hasStageAutomation()
+		{
+			return this.stages.automation.hasOwnProperty('items');
+		},
+		hasStageCashBox()
+		{
+			return this.stages.cashbox.hasOwnProperty('tiles');
+		},
+		submitButtonLabel()
+		{
+			return this.editable ? Loc.getMessage('SALESCENTER_SEND') : Loc.getMessage('SALESCENTER_RESEND');
+		},
+	},
+	methods: {
+		initCounter()
+		{
+			this.counter = 1;
+		},
+		getTimelineCollection(items)
+		{
+			let list = [];
 
-			hasStageAutomation()
+			Object.values(items).forEach(
+				options => list.push(TimeLineItem.Factory.create(options)));
+
+			return list;
+		},
+		getTileCollection(items)
+		{
+			let tiles = [];
+			Object.values(items).forEach(
+				options => tiles.push(Tile.Factory.create(options)));
+
+			return tiles;
+		},
+		getTitleItems(items)
+		{
+			let result = [];
+			items.forEach((item) => {
+				if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
+				{
+					result.push(item);
+				}
+			});
+
+			return result;
+		},
+		stageRefresh(e, type)
+		{
+			BX.ajax.runComponentAction(
+				"bitrix:salescenter.app",
+				"getAjaxData",
+				{
+					mode: "class",
+					data: {
+						type: type,
+					}
+				}
+			).then(function(response) {
+				if (response.data)
+				{
+					this.refreshTilesByType(response.data, type);
+				}
+			}.bind(this));
+		},
+		refreshTilesByType(data, type)
+		{
+			if(type === 'PAY_SYSTEM')
 			{
-				return this.stages.automation.hasOwnProperty('items');
-			},
-			hasStageCashBox()
+				this.stages.paysystem.status = data.isSet
+					? Status.complete
+					: Status.disabled;
+				this.stages.paysystem.tiles = this.getTileCollection(data.items);
+				this.stages.paysystem.installed = data.isSet;
+			}
+			else if(type === 'CASHBOX')
 			{
-				return this.stages.cashbox.hasOwnProperty('tiles');
-			},
-			editableMixin()
+				this.stages.cashbox.status = data.isSet
+					? Status.complete
+					: Status.disabled;
+				this.stages.cashbox.tiles = this.getTileCollection(data.items);
+				this.stages.cashbox.installed = data.isSet;
+				this.stages.cashbox.titleItems = this.getTitleItems(data.items);
+			}
+			else if(type === 'DELIVERY')
 			{
-				return this.editable === false;
+				this.stages.delivery.status = data.isSet
+					? Status.complete
+					: Status.disabled;
+				this.stages.delivery.tiles = this.getTileCollection(data.items);
+				this.stages.delivery.installed = data.isInstalled;
 			}
 		},
-	methods:
+		onSend(event)
 		{
-			initCounter()
-			{
-				this.counter = 1;
-			},
-
-			getTimelineCollection(items)
-			{
-				let list = [];
-
-				Object.values(items).forEach(
-					options => list.push(TimeLineItem.Factory.create(options)));
-
-				return list;
-			},
-
-			getTileCollection(items)
-			{
-				let tiles = [];
-				Object.values(items).forEach(
-					options => tiles.push(Tile.Factory.create(options)));
-
-				return tiles;
-			},
-
-			getTitleItems(items)
-			{
-				let result = [];
-				items.forEach((item) => {
-					if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
-					{
-						result.push(item);
-					}
-				});
-
-				return result;
-			},
-
-			stageRefresh(e, type)
-			{
-				BX.ajax.runComponentAction(
-					"bitrix:salescenter.app",
-					"getAjaxData",
-					{
-						mode: "class",
-						data: {
-							type: type,
-						}
-					}
-				).then(function(response) {
-					if (response.data)
-					{
-						this.refreshTilesByType(response.data, type);
-					}
-				}.bind(this));
-			},
-
-			refreshTilesByType(data, type)
-			{
-				if(type === 'PAY_SYSTEM')
-				{
-					this.stages.paysystem.status = 		data.isSet
-														?	Status.complete
-														:	Status.disabled;
-					this.stages.paysystem.tiles = 		this.getTileCollection(data.items);
-					this.stages.paysystem.installed = 	data.isSet;
-				}
-				else if(type === 'CASHBOX')
-				{
-					this.stages.cashbox.status = 		data.isSet
-														?	Status.complete
-														:	Status.disabled;
-					this.stages.cashbox.tiles = 		this.getTileCollection(data.items);
-					this.stages.cashbox.installed = 	data.isSet;
-					this.stages.cashbox.titleItems = this.getTitleItems(data.items);
-				}
-				else if(type === 'DELIVERY')
-				{
-					this.stages.delivery.status = 		data.isSet
-														?	Status.complete
-														:	Status.disabled;
-					this.stages.delivery.tiles = 		this.getTileCollection(data.items);
-					this.stages.delivery.installed = 	data.isInstalled;
-				}
-			},
-
-			onSend(event)
-			{
-				this.$emit('stage-block-send-on-send', event)
-			},
-
-			changeProvider(value)
-			{
-				this.$root.$app.sendingMethodDesc.provider = value;
-			},
-
-			saveCollapsedOption(type, value)
-			{
-				BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
-			},
+			this.$emit('stage-block-send-on-send', event)
 		},
+		changeProvider(value)
+		{
+			this.$root.$app.sendingMethodDesc.provider = value;
+			BX.userOptions.save('salescenter', 'payment_sms_provider_options', 'latest_selected_provider', value);
+		},
+		saveCollapsedOption(type, value)
+		{
+			BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
+		},
+	},
 	created()
 	{
 		this.initCounter();
@@ -243,71 +244,80 @@ const StageBlocksList = {
 	},
 	template: `
 		<div>
-			<sms-message-block 						v-on:stage-block-sms-send-on-change-provider="changeProvider"
-				:counter=			"counter++"
-				:status=			"stages.message.status"
-				:items=				"stages.message.items"
-				:manager=			"stages.message.manager"
-				:phone=				"stages.message.phone"
-				:senderSettingsUrl=	"stages.message.senderSettingsUrl"
-				:editorTemplate=	"stages.message.editorTemplate"
-				:editorUrl=			"stages.message.editorUrl"
-			/>
-				
-			<product-block 
-				:counter=	"counter++"
-				:status= 	"stages.product.status"				
-			/>
-			
-			<paysystem-block						v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'PAY_SYSTEM')"
-				:counter=	"counter++"
-				:status=  	"stages.paysystem.status"
-				:tiles=  	"stages.paysystem.tiles"
-				:installed=	"stages.paysystem.installed"
-				:titleItems="stages.paysystem.titleItems"
-				:initialCollapseState = "stages.paysystem.initialCollapseState"
-				@on-save-collapsed-option="saveCollapsedOption"
-			/>
-				
-			<cashbox-block 	v-if="hasStageCashBox"	v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'CASHBOX')"
-				:counter=	"counter++"
-				:status=	"stages.cashbox.status"
-				:tiles=		"stages.cashbox.tiles"
-				:installed=	"stages.cashbox.installed"
-				:titleItems="stages.cashbox.titleItems"
-				:initialCollapseState = "stages.cashbox.initialCollapseState"
-				@on-save-collapsed-option="saveCollapsedOption"
+			<sms-message-block
+				@stage-block-sms-send-on-change-provider="changeProvider"
+				:counter="counter++"
+				:status="stages.message.status"
+				:initSenders="stages.message.initSenders"
+				:initCurrentSenderCode="stages.message.initCurrentSenderCode"
+				:initPushedToUseBitrix24Notifications="stages.message.initPushedToUseBitrix24Notifications"
+				:selectedSmsSender="stages.message.selectedSmsSender"
+				:manager="stages.message.manager"
+				:phone="stages.message.phone"
+				:titleTemplate="stages.message.titleTemplate"
+				:showHint="stages.message.showHint"
+				:editorTemplate="stages.message.editorTemplate"
+				:editorUrl="stages.message.editorUrl"
 			/>	
-			
-			<automation-block v-if="hasStageAutomation"
-				:counter=	"counter++"
-				:status=	"stages.automation.status"
-				:items=		"stages.automation.items"
-				:initialCollapseState = "stages.automation.initialCollapseState"
+			<product-block 
+				:counter="counter++"
+				:status="stages.product.status"
+				:title="stages.product.title"
+				:hintTitle="stages.product.hintTitle"
+			/>
+			<paysystem-block
+				v-if="editable"
+				@on-stage-tile-collection-slider-close="stageRefresh($event, 'PAY_SYSTEM')"
+				:counter="counter++"
+				:status="stages.paysystem.status"
+				:tiles="stages.paysystem.tiles"
+				:installed="stages.paysystem.installed"
+				:titleItems="stages.paysystem.titleItems"
+				:initialCollapseState="stages.paysystem.initialCollapseState"
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
-			
-			<delivery-block							v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
-				:counter=	"counter++"
-				:status=  	"stages.delivery.status"
-				:tiles=  	"stages.delivery.tiles"
-				:installed=	"stages.delivery.installed"
-				:initialCollapseState = "stages.delivery.initialCollapseState"
+			<cashbox-block
+				v-if="editable && hasStageCashBox"
+				@on-stage-tile-collection-slider-close="stageRefresh($event, 'CASHBOX')"
+				:counter="counter++"
+				:status="stages.cashbox.status"
+				:tiles="stages.cashbox.tiles"
+				:installed="stages.cashbox.installed"
+				:titleItems="stages.cashbox.titleItems"
+				:initialCollapseState="stages.cashbox.initialCollapseState"
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
-			
-			<send-block								v-on:stage-block-send-on-send="onSend"
-				:allowed=	"sendAllowed" 
-				:resend=	"editableMixin"
+			<delivery-block
+				v-if="!stages.delivery.isHidden"
+				@on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
+				:counter="counter++"
+				:status="stages.delivery.status"
+				:tiles="stages.delivery.tiles"
+				:installed="stages.delivery.installed"
+				:isCollapsible="true"
+				:initialCollapseState="stages.delivery.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
 			/>
-			
-			<timeline-block  v-if="hasStageTimeLine"
-				:timelineItems= "stages.timeline.items"
+			<automation-block
+				v-if="editable && hasStageAutomation"
+				:counter="counter++"
+				:status="stages.automation.status"
+				:stageOnOrderPaid="stages.automation.stageOnOrderPaid"
+				:stageOnDeliveryFinished="stages.automation.stageOnDeliveryFinished"
+				:items="stages.automation.items"
+				:initialCollapseState="stages.automation.initialCollapseState"
+				@on-save-collapsed-option="saveCollapsedOption"
+			/>
+			<send-block
+				@on-submit="onSend"
+				:buttonEnabled="sendAllowed"
+				:showWhatClientSeesControl="!editable"
+				:buttonLabel="submitButtonLabel"
+			/>
+			<timeline-block
+				v-if="hasStageTimeLine"
+				:timelineItems="stages.timeline.items"
 			/>
 		</div>
 	`
 };
-
-export {
-	StageBlocksList
-}

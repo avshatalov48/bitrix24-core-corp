@@ -25,11 +25,12 @@ if ($entityTypeName === '')
 	return;
 }
 
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\Format\ContactAddressFormatter;
-use Bitrix\Crm\Format\CompanyAddressFormatter;
-use Bitrix\Crm\Format\LeadAddressFormatter;
 use Bitrix\Crm\EntityAddressType;
 
 $entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
@@ -770,11 +771,21 @@ if($entityTypeID === CCrmOwnerType::Contact)
 		}
 		elseif($k === 'ADDRESS')
 		{
+			$addressLines = explode(
+				"\n",
+				str_replace(
+					["\r\n", "\n", "\r"], "\n",
+					AddressFormatter::getSingleInstance()->formatTextMultiline(
+						ContactAddress::mapEntityFields($entityFields)
+					)
+				)
+			);
 			$entityData[$k] = array(
 				'type' => 'address',
 				'editable'=> false,
-				'data' => array('lines' => ContactAddressFormatter::prepareLines($entityFields, array('NL2BR' => true)))
+				'data' => array('lines' => (is_array($addressLines) ? $addressLines : []))
 			);
+			unset($addressLines);
 		}
 		elseif($k === 'SOURCE_DESCRIPTION')
 		{
@@ -913,23 +924,45 @@ elseif($entityTypeID === CCrmOwnerType::Company)
 		}
 		elseif($k === 'ADDRESS')
 		{
+			$addressLines = explode(
+				"\n",
+				str_replace(
+					["\r\n", "\n", "\r"], "\n",
+					AddressFormatter::getSingleInstance()->formatTextMultiline(
+						CompanyAddress::mapEntityFields(
+							$entityFields,
+							['TYPE_ID' => EntityAddressType::Primary]
+						)
+					)
+				)
+			);
 			$entityData[$k] = array(
 				'type' => 'address',
 				'editable'=> false,
-				'data' => array('lines' => CompanyAddressFormatter::prepareLines(
-					$entityFields, array('TYPE_ID' => EntityAddressType::Primary, 'NL2BR' => true))
-				)
+				'data' => array('lines' => (is_array($addressLines) ? $addressLines : []))
 			);
+			unset($addressLines);
 		}
 		elseif($k === 'ADDRESS_LEGAL' || $k === 'REG_ADDRESS')
 		{
+			$addressLines = explode(
+				"\n",
+				str_replace(
+					["\r\n", "\n", "\r"], "\n",
+					AddressFormatter::getSingleInstance()->formatTextMultiline(
+						CompanyAddress::mapEntityFields(
+							$entityFields,
+							['TYPE_ID' => EntityAddressType::Registered]
+						)
+					)
+				)
+			);
 			$entityData[$k] = array(
 				'type' => 'address',
 				'editable'=> false,
-				'data' => array('lines' => CompanyAddressFormatter::prepareLines(
-					$entityFields, array('TYPE_ID' => EntityAddressType::Registered, 'NL2BR' => true))
-				)
+				'data' => array('lines' => (is_array($addressLines) ? $addressLines : []))
 			);
+			unset($addressLines);
 		}
 		elseif($k === 'BANKING_DETAILS')
 		{
@@ -1419,11 +1452,21 @@ elseif($entityTypeID === CCrmOwnerType::Lead)
 		}
 		elseif($k === 'ADDRESS')
 		{
+			$addressLines = explode(
+				"\n",
+				str_replace(
+					["\r\n", "\n", "\r"], "\n",
+					AddressFormatter::getSingleInstance()->formatTextMultiline(
+						LeadAddress::mapEntityFields($entityFields)
+					)
+				)
+			);
 			$entityData[$k] = array(
 				'type' => 'address',
 				'editable'=> false,
-				'data' => array('lines' => LeadAddressFormatter::prepareLines($entityFields, array('NL2BR' => true)))
+				'data' => array('lines' => (is_array($addressLines) ? $addressLines : []))
 			);
+			unset($addressLines);
 		}
 		elseif($k === 'STATUS_DESCRIPTION' || $k === 'SOURCE_DESCRIPTION')
 		{

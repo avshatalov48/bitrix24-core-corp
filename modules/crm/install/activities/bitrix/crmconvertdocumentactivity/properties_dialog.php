@@ -11,7 +11,7 @@ foreach ($dialog->getMap() as $fieldId => $field):
 		echo $filedType->renderControl(array(
 			'Form' => $dialog->getFormName(),
 			'Field' => $field['FieldName']
-		), $dialog->getCurrentValue($field['FieldName']), true, 0);
+		), $dialog->getCurrentValue($field['FieldName']), $fieldId !== 'Items', 0);
 		?>
 	</td>
 </tr>

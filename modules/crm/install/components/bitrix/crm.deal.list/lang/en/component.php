@@ -26,6 +26,7 @@ $MESS["CRM_COLUMN_CURRENCY_ID"] = "Currency";
 $MESS["CRM_COLUMN_DATE_CREATE"] = "Created";
 $MESS["CRM_COLUMN_DATE_MODIFY"] = "Modified";
 $MESS["CRM_COLUMN_DEAL"] = "Deal";
+$MESS["CRM_COLUMN_DELIVERY_STAGE"] = "Delivery status";
 $MESS["CRM_COLUMN_EVENT_DATE"] = "Event Date";
 $MESS["CRM_COLUMN_EVENT_DATE_FILTER"] = "Planned Event Date";
 $MESS["CRM_COLUMN_EVENT_DESCRIPTION"] = "Event Description";

@@ -194,6 +194,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 			{
 				if (!empty($crmItem["LIST"]))
 				{
+					$crmItem["ITEM_CODE"] = $itemCode;
 					$itemParams = array(
 						'moduleId' => 'crm',
 						'itemCode' => $itemCode
@@ -211,7 +212,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 							$crmItem["LIST"]
 						);
 					}
-					else
+					elseif ($itemCode !== 'crm_shop')
 					{
 						$crmItem["LIST"] = $this->setMenuItemsClickAction($crmItem["LIST"], $itemParams);
 					}
@@ -231,6 +232,11 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 					if (!empty($crmItem['SIDEPANEL_WIDTH']))
 					{
 						$itemParams['width'] = $crmItem['SIDEPANEL_WIDTH'];
+					}
+
+					if (!empty($crmItem['SIDEPANEL_PARAMS']) && is_array($crmItem['SIDEPANEL_PARAMS']))
+					{
+						$itemParams = array_merge($itemParams, $crmItem['SIDEPANEL_PARAMS']);
 					}
 
 					$crmItem["ONCLICK"] = $this->getOnclickScript($crmItem["LINK"], $itemParams);

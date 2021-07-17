@@ -15,10 +15,6 @@ if (!CModule::IncludeModule('mobile'))
 
 CModule::IncludeModule('fileman');
 
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\CompanyAddressFormatter;
-use Bitrix\Crm\Format\AddressSeparator;
-
 if (IsModuleInstalled('bizproc'))
 {
 	if (!CModule::IncludeModule('bizproc'))
@@ -27,6 +23,11 @@ if (IsModuleInstalled('bizproc'))
 		return;
 	}
 }
+
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Format\AddressSeparator;
 
 global $USER_FIELD_MANAGER, $DB, $USER;
 $CCrmCompany = new CCrmCompany();
@@ -298,16 +299,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-				if($comments !== '' && mb_strpos($comments, '<') !== false)
-				{
-					$sanitizer = new CBXSanitizer();
-					$sanitizer->ApplyDoubleEncode(false);
-					$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-					//Crutch for for Chrome line break behaviour in HTML editor.
-					$sanitizer->AddTags(array('div' => array()));
-					$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-					$comments = $sanitizer->SanitizeHtml($comments);
-				}
+				$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 				$arFields['COMMENTS'] = $comments;
 			}
 
@@ -1052,10 +1044,22 @@ $arResult['FIELDS'][] = array(
 //address
 if ($arParams["RESTRICTED_MODE"])
 {
-	$addressHtml = Bitrix\Crm\Format\CompanyAddressFormatter::format(
-		$arResult['ELEMENT'],
-		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Primary, 'NL2BR' => true)
-	);
+	if (class_exists('Bitrix\Crm\Format\AddressFormatter'))
+	{
+		$addressHtml = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			CompanyAddress::mapEntityFields(
+				$arResult['ELEMENT'],
+				['TYPE_ID' => EntityAddressType::Primary]
+			)
+		);
+	}
+	else
+	{
+		$addressHtml = Bitrix\Crm\Format\CompanyAddressFormatter::format(
+			$arResult['ELEMENT'],
+			array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Primary, 'NL2BR' => true)
+		);
+	}
 }
 else
 {
@@ -1089,10 +1093,22 @@ $arResult['FIELDS'][] = array(
 //address legal
 if ($arParams["RESTRICTED_MODE"])
 {
-	$addressHtml = CompanyAddressFormatter::format(
-		$arResult['ELEMENT'],
-		array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Registered, 'NL2BR' => true)
-	);
+	if (class_exists('Bitrix\Crm\Format\AddressFormatter'))
+	{
+		$addressHtml = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			CompanyAddress::mapEntityFields(
+				$arResult['ELEMENT'],
+				['TYPE_ID' => EntityAddressType::Registered]
+			)
+		);
+	}
+	else
+	{
+		$addressHtml = Bitrix\Crm\Format\CompanyAddressFormatter::format(
+			$arResult['ELEMENT'],
+			array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'TYPE_ID' => EntityAddressType::Registered, 'NL2BR' => true)
+		);
+	}
 }
 else
 {

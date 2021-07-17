@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Gesamt";
 $MESS["CRM_LEAD_ACTION_DELETE"] = "Löschen";
 $MESS["CRM_LEAD_ACTION_MERGE"] = "Vereinen";
@@ -50,7 +50,7 @@ $MESS["CRM_LEAD_CONV_ENTITY_SEL_SEARCH_NO_RESULT"] = "Es wurde nichts gefunden."
 $MESS["CRM_LEAD_CONV_ENTITY_SEL_TITLE"] = "Wählen Sie einen Kontakt oder ein Unternehmen aus";
 $MESS["CRM_LEAD_CONV_GENERAL_ERROR"] = "Allgemeiner Konvertierungsfehler.";
 $MESS["CRM_LEAD_CONV_OPEN_ENTITY_SEL"] = "Aus der Liste auswählen...";
-$MESS["CRM_LEAD_COPY"] = "Lead kopieren";
+$MESS["CRM_LEAD_COPY"] = "Kopieren";
 $MESS["CRM_LEAD_COPY_TITLE"] = "Lead kopieren";
 $MESS["CRM_LEAD_CREATE_CALL_LIST"] = "Anrufliste erstellen";
 $MESS["CRM_LEAD_CREATE_ON_BASIS"] = "Daraus erstellen";
@@ -116,4 +116,3 @@ $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Anrufen";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unbekannter Empfänger";
 $MESS["CRM_STATUS_INIT"] = "- Status -";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Suchindex für Leads, Aufträge, Kontakte, Unternehmen und andere CRM-Elemente neu erstellen";
-?>

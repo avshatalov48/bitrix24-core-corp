@@ -11,4 +11,5 @@ $MESS["CRM_BP_CONTACT"] = "Контакт";
 $MESS["CRM_BP_CONTACT_DESC"] = "Шаблоны бизнес-процессов для \"Контактов\"";
 $MESS["CRM_BP_COMPANY"] = "Компания";
 $MESS["CRM_BP_COMPANY_DESC"] = "Шаблоны бизнес-процессов для \"Компаний\"";
-?>
+$MESS["CRM_BP_QUOTE_DESC"] = "Шаблоны бизнес-процессов для \"Коммерческих предложений\"";
+$MESS["CRM_BP_DYNAMIC_DESC"] = "Шаблоны бизнес-процессов для \"#DYNAMIC_TYPE_NAME#\"";

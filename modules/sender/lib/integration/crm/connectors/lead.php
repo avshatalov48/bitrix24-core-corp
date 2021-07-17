@@ -427,9 +427,9 @@ class Lead extends ConnectorBaseFilter implements Connector\IncrementallyConnect
 			->setCallback(
 				ResultView::Draw,
 				function(array &$row)
-                {
-                    (new Helper())->onResultViewDraw($row);
-                }
+				{
+					(new Helper())->onResultViewDraw($row);
+				}
 			);
 	}
 
@@ -474,7 +474,7 @@ class Lead extends ConnectorBaseFilter implements Connector\IncrementallyConnect
 			['ID' => 'DESC'],
 			['CHECK_PERMISSIONS' => 'N'],
 			false,
-            ['nTopCount' => '1'],
+			['nTopCount' => '1'],
 			['ID']
 		)->Fetch();
 		$lastLeadId = $lastLead['ID'] ?? 0;

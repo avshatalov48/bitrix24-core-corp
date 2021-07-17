@@ -52,6 +52,11 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		{
 			$this->checkRequiredParams();
 
+			if (!CCrmSaleHelper::isShopAccess('admin'))
+			{
+				throw new SystemException('Access denied');
+			}
+
 			$this->checkPostRequest();
 
 			$this->formatResult();
@@ -78,6 +83,13 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 	public function saveCommonSettingsAction()
 	{
+		$this->checkRequiredParams();
+
+		if (!CCrmSaleHelper::isShopAccess('admin'))
+		{
+			return;
+		}
+
 		$request = Context::getCurrent()->getRequest();
 		if ($request->isAjaxRequest() && $request->get("common_sale_settings") === "Y")
 		{
@@ -281,6 +293,13 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 	protected function checkPostRequest()
 	{
+		$this->checkRequiredParams();
+
+		if (!CCrmSaleHelper::isShopAccess('admin'))
+		{
+			return;
+		}
+
 		$request = Context::getCurrent()->getRequest();
 		if ($request->isPost() && check_bitrix_sessid() && $this->arParams['TYPE_SETTINGS'] !== 'fields')
 		{
@@ -827,7 +846,6 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"type" => "checkbox",
 			"value" => Option::get("sale", "tracking_check_switch", "N")
 		);
-
 		/* Check section */
 		$options[] = array(
 			"id" => "sale_advance_check_section",

@@ -11,6 +11,7 @@ $MESS["CRM_KANBAN_DELETE_CANCEL"] = "Скасувати";
 $MESS["CRM_KANBAN_DELETE_RESTORE_SUCCESS"] = "Елементи успішно відновлені!";
 $MESS["CRM_KANBAN_DELETE_SUCCESS"] = "Елемент #ELEMENT_NAME# успішно видалений!";
 $MESS["CRM_KANBAN_DELETE_SUCCESS_MULTIPLE"] = "Елементи успішно видалені!";
+$MESS["CRM_KANBAN_DELIVERY_STAGE"] = "Статус доставки";
 $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Приватний";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Інший";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Робочий";

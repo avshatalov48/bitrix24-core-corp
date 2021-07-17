@@ -4,40 +4,52 @@ if (typeof BX.BizProcMobile === 'undefined')
 
 	BX.BizProcMobile.doTask = function (parameters, callback, silent)
 	{
-		parameters['sessid'] = BX.bitrix_sessid();
+		var preparePost = true;
+		if (parameters instanceof FormData)
+		{
+			preparePost = false;
+			parameters.append('sessid', BX.bitrix_sessid());
+		}
+		else
+		{
+			parameters['sessid'] = BX.bitrix_sessid();
+		}
+
 		app.showPopupLoader({text: '...'});
+		var url = (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/?mobile_action=bp_do_task';
 
-		var BMAjaxWrapper = new MobileAjaxWrapper();
-		BMAjaxWrapper.Wrap(
+		BX.ajax({
+			method: 'POST',
+			dataType: 'json',
+			url: url,
+			data: parameters,
+			preparePost: preparePost,
+			onsuccess: function (json)
 			{
-				method: 'POST',
-				dataType: 'json',
-				url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/?mobile_action=bp_do_task',
-				data: parameters,
-				callback: function (json)
-				{
-					app.hidePopupLoader();
+				app.hidePopupLoader();
 
-					if (json.ERROR)
-					{
-						app.alert({text: json.ERROR, title: BX.message('MB_BP_DETAIL_ALERT')});
-					}
-					else
-					{
-						if (callback)
-							callback(json, parameters);
-						if (!silent)
-							BXMobileApp.onCustomEvent('bpDoTaskComplete', parameters, true);
-					}
-				},
-				callback_failure: function (e)
+				if (json.ERROR)
 				{
-					console.error(e);
-					app.hidePopupLoader();
+					app.alert({text: json.ERROR, title: BX.message('MB_BP_DETAIL_ALERT')});
 				}
+				else
+				{
+					if (callback)
+					{
+						callback(json, parameters);
+					}
+					if (!silent)
+					{
+						BXMobileApp.onCustomEvent('bpDoTaskComplete', parameters, true);
+					}
+				}
+			},
+			onfailure: function (e)
+			{
+				console.error(e);
+				app.hidePopupLoader();
 			}
-		);
-
+		});
 
 		return false;
 	};

@@ -106,6 +106,7 @@ $MESS["DISK_FOLDER_LIST_DETACH_FOLDER_CONFIRM"] = "Отключение прив
 $MESS["DISK_FOLDER_LIST_DETACH_FILE_CONFIRM"] = "Отключение приведет к удалению файла \"#NAME#\" с вашего диска";
 $MESS["DISK_FOLDER_LIST_DETACH_BUTTON"] = "Отключить";
 $MESS["DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2"] = "Общий доступ";
+$MESS["DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3"] = "Общий доступ";
 $MESS["DISK_FOLDER_LIST_ACT_START_BIZPROC"] = "Бизнес-процессы";
 $MESS["DISK_FOLDER_LIST_GRID_BIZPROC"] = "Бизнес-процессов";
 $MESS["DISK_FOLDER_LIST_GRID_BIZPROC_TITLE"] = "Перейти к бизнес-процессам документа";

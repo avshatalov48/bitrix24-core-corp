@@ -37,6 +37,8 @@ use Bitrix\Main\UserField;
  * @method setIsRecyclebinEnabled(bool $isRecyclebinEnabled)
  * @method bool|null getIsAutomationEnabled()
  * @method setIsAutomationEnabled(bool $isAutomationEnabled)
+ * @method bool|null getIsBizProcEnabled()
+ * @method setIsBizProcEnabled(bool $isBizProcEnabled)
  * @method bool|null getIsSetOpenPermissions()
  * @method setIsSetOpenPermissions(bool $isSetOpenPermissions)
  * @method int|null getEntityTypeId()
@@ -48,7 +50,16 @@ class Type extends UserField\Internal\Type implements \JsonSerializable
 
 	public function jsonSerialize(): array
 	{
-		//todo relations
-		return Container::getInstance()->getOrmObjectConverter()->toJson($this);
+		return Container::getInstance()->getTypeConverter()->toJson($this);
+	}
+
+	/**
+	 * Returns true if this object has been created recently and is not saved yet
+	 *
+	 * @return bool
+	 */
+	public function isNew(): bool
+	{
+		return ($this->getId() <= 0);
 	}
 }

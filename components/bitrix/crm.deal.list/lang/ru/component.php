@@ -13,6 +13,7 @@ $MESS["CRM_COLUMN_COMPANY_ID"] = "Компания";
 $MESS["CRM_COLUMN_COMPANY_TITLE"] = "Компания";
 $MESS["CRM_COLUMN_CONTACT_ID"] = "Контакт";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Статус оплаты сделки";
+$MESS["CRM_COLUMN_DELIVERY_STAGE"] = "Статус доставки";
 $MESS["CRM_COLUMN_STAGE_ID"] = "Стадия сделки";
 $MESS["CRM_COLUMN_STATE_ID"] = "Состояние";
 $MESS["CRM_COLUMN_CURRENCY_ID"] = "Валюта";

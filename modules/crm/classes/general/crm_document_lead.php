@@ -1,6 +1,8 @@
 <?
 
 use Bitrix\Crm;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
 
 if (!CModule::IncludeModule('bizproc'))
 	return;
@@ -307,6 +309,22 @@ class CCrmDocumentLead extends CCrmDocument
 				'Type' => 'bool',
 				'Editable' => false,
 			),
+			"CONTACT_ID" => [
+				"Name" => GetMessage("CRM_DOCUMENT_CRM_ENTITY_TYPE_CONTACT"),
+				"Type" => "UF:crm",
+				"Options" => ['CONTACT' => 'Y'],
+			],
+			"CONTACT_IDS" => [
+				"Name" => GetMessage("CRM_DOCUMENT_FIELD_CONTACT_IDS"),
+				"Type" => "UF:crm",
+				"Options" => ['CONTACT' => 'Y'],
+				"Multiple" => true,
+			],
+			"COMPANY_ID" => [
+				"Name" => GetMessage("CRM_DOCUMENT_CRM_ENTITY_TYPE_COMPANY"),
+				"Type" => "UF:crm",
+				"Options" => ['COMPANY' => 'Y'],
+			],
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -397,9 +415,10 @@ class CCrmDocumentLead extends CCrmDocument
 			$arFields['CONTACT_ID'] = null;
 		}
 
-		$arFields['FULL_ADDRESS'] = Crm\Format\LeadAddressFormatter::format(
-			$arFields,
-			array('SEPARATOR' => Crm\Format\AddressSeparator::Comma)
+		$arFields['CONTACT_IDS'] = Crm\Binding\LeadContactTable::getLeadContactIDs($arFields['ID']);
+
+		$arFields['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+			LeadAddress::mapEntityFields($arFields)
 		);
 	}
 

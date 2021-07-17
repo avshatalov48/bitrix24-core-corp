@@ -47,7 +47,8 @@
 					registerUrl: BX.componentParameters.get('registerUrl', ''),
 					adminConfirm: BX.componentParameters.get('registerAdminConfirm', false),
 					disableAdminConfirm: BX.componentParameters.get('disableRegisterAdminConfirm', false),
-					sharingMessage: BX.componentParameters.get('sharingMessage', '')
+					sharingMessage: BX.componentParameters.get('sharingMessage', ''),
+					rootStructureSectionId: BX.componentParameters.get('rootStructureSectionId', 0),
 				});
 			}
 			else if (Application.getApiVersion() >= 29)

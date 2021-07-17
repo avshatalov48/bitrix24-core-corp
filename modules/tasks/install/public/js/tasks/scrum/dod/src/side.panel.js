@@ -1,4 +1,5 @@
-import {EventEmitter} from 'main.core.events';
+import {Dom} from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
 export class SidePanel extends EventEmitter
 {
@@ -10,56 +11,92 @@ export class SidePanel extends EventEmitter
 
 		/* eslint-disable */
 		this.sidePanelManager = BX.SidePanel.Instance;
+		this.contentSidePanelManager = new BX.SidePanel.Manager({});
 		/* eslint-enable */
 
-		this.BX = window.top.BX;
+		this.contentSidePanels = new Set();
 
 		this.bindEvents();
 	}
 
 	bindEvents()
 	{
-		/* eslint-disable */
-		this.BX.addCustomEvent(window.top, 'SidePanel.Slider:onLoad', (event) => {
-			const sidePanel = event.getSlider();
+		EventEmitter.subscribe('SidePanel.Slider:onLoad', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			const sidePanel = sliderEvent.getSlider();
 			sidePanel.setCacheable(false);
 			this.emit('onLoadSidePanel', sidePanel);
 		});
-		this.BX.addCustomEvent(window.top, 'SidePanel.Slider:onClose', (event) => {
-			const sidePanel = event.getSlider();
+
+		EventEmitter.subscribe('SidePanel.Slider:onClose', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			const sidePanel = sliderEvent.getSlider();
 			this.emit('onCloseSidePanel', sidePanel);
 		});
-		/* eslint-enable */
-	}
 
-	isPreviousSidePanelExist(currentSidePanel): Boolean
-	{
-		return Boolean(this.sidePanelManager.getPreviousSlider(currentSidePanel));
-	}
-
-	reloadTopSidePanel()
-	{
-		this.sidePanelManager.getTopSlider().reload();
-	}
-
-	closeTopSidePanel()
-	{
-		this.sidePanelManager.getTopSlider().close();
-	}
-
-	reloadPreviousSidePanel(currentSidePanel)
-	{
-		const previousSidePanel = this.sidePanelManager.getPreviousSlider(currentSidePanel);
-		previousSidePanel.reload();
-	}
-
-	openSidePanelByUrl(url)
-	{
-		this.sidePanelManager.open(url);
+		EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			const sidePanel = sliderEvent.getSlider();
+			if (this.contentSidePanels.has(sidePanel.getUrl()))
+			{
+				this.contentSidePanels.delete(sidePanel.getUrl());
+				if (!this.contentSidePanels.size)
+				{
+					this.resetBodyWidthHack();
+					this.addEscapePressHandler();
+				}
+			}
+		});
 	}
 
 	openSidePanel(id, options)
 	{
-		this.sidePanelManager.open(id, options);
+		this.applyBodyWidthHack();
+		this.removeEscapePressHandler();
+
+		this.contentSidePanelManager.open(id, options);
+
+		this.contentSidePanels.add(id);
+	}
+
+	existFrameTopSlider(): boolean
+	{
+		return Boolean(this.sidePanelManager.getTopSlider());
+	}
+
+	addEscapePressHandler()
+	{
+		const sidePanel = this.sidePanelManager.getTopSlider();
+		if (sidePanel)
+		{
+			const frameWindow = sidePanel.getFrameWindow();
+			frameWindow.addEventListener('keydown', sidePanel.handleFrameKeyDown);
+		}
+	}
+
+	removeEscapePressHandler()
+	{
+		const sidePanel = this.sidePanelManager.getTopSlider();
+		if (sidePanel)
+		{
+			const frameWindow = sidePanel.getFrameWindow();
+			frameWindow.removeEventListener('keydown', sidePanel.handleFrameKeyDown);
+		}
+	}
+
+	applyBodyWidthHack()
+	{
+		if (this.existFrameTopSlider())
+		{
+			Dom.addClass(document.body, 'tasks-scrum-dod-panel-padding');
+		}
+	}
+
+	resetBodyWidthHack()
+	{
+		if (this.existFrameTopSlider())
+		{
+			Dom.removeClass(document.body, 'tasks-scrum-dod-panel-padding');
+		}
 	}
 }

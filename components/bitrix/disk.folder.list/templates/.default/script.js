@@ -227,6 +227,7 @@ BX.Disk.FolderListClass = (function (){
 		});
 
 		BX.addCustomEvent('SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
+		BX.addCustomEvent('Disk.OnlyOffice:onSaved', this.handleDocumentSaved.bind(this));
 
 		BX.bind(window, 'popstate', this.onPopState.bind(this));
 
@@ -917,7 +918,7 @@ BX.Disk.FolderListClass = (function (){
 			onAfterSave: function(response) {
 				if (response.status === 'success')
 				{
-					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.objectId))
+					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id))
 				}
 			}.bind(this)
 		});
@@ -1207,6 +1208,28 @@ BX.Disk.FolderListClass = (function (){
 			}, this)
 		});
 	};
+
+	FolderListClass.prototype.handleDocumentSaved = function(object, documentSession)
+	{
+		var item = this.commonGrid.getItemById(object.id);
+		if (!item || this.commonGrid.isTile())
+		{
+			return;
+		}
+
+		this.commonGrid.instance.updateRow(object.id, null, null, function () {
+			var rowNode = this.commonGrid.instance.getRows().getById(object.id).getNode();
+			if (!rowNode)
+			{
+				return;
+			}
+
+			BX.addClass(rowNode, 'main-grid-row-checked');
+			setInterval(function () {
+				BX.removeClass(rowNode, 'main-grid-row-checked');
+			}, 8000);
+		}.bind(this));
+	}
 
 	FolderListClass.prototype.onSliderMessage = function(event) {
 		var eventData = event.getData();
@@ -1613,10 +1636,10 @@ BX.Disk.FolderListClass = (function (){
 	FolderListClass.prototype.copyLinkInternalLink = function (link, target)
 	{
 		target.classList.add('menu-popup-item-accept', 'disk-folder-list-context-menu-item-accept-animate');
+		target.style.minWidth = (target.offsetWidth) + 'px';
 		var textNode = target.querySelector('.menu-popup-item-text');
 		if (textNode)
 		{
-			textNode.style.width = (textNode.offsetWidth - 13 - 20) + 'px'; //html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-text, html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-text
 			textNode.textContent = BX.message('DISK_FOLDER_LIST_ACT_COPIED_INTERNAL_LINK');
 		}
 
@@ -2948,7 +2971,7 @@ BX.Disk.FolderListClass = (function (){
 
 					BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_2'),
+						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {},
 						events: {
@@ -3219,7 +3242,7 @@ BX.Disk.FolderListClass = (function (){
 
 					BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_2'),
+						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {
 							//paddingTop: '30px',
@@ -4035,7 +4058,7 @@ BX.Disk.FolderListClass = (function (){
 
 					BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_2'),
+						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {
 							//paddingTop: '30px',

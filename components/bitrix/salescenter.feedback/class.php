@@ -10,6 +10,7 @@ use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\SalesCenter\Model\PageTable;
+use \Bitrix\Main\Service\GeoIp;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -21,6 +22,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	private const FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER = 'paysystem_sbp_offer';
 	private const FEEDBACK_TYPE_SMSPROVIDER_OFFER = 'smsprovider_offer';
 	private const FEEDBACK_TYPE_DELIVERY_OFFER = 'delivery_offer';
+	private const FEEDBACK_TYPE_INTEGRATION_REQUEST = 'integration_request';
 
 	private $template = '';
 
@@ -78,23 +80,62 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		{
 			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackPaySystemSbpOfferFormInfo(LANGUAGE_ID);
 		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_INTEGRATION_REQUEST)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getIntegrationRequestFormInfo(Bitrix24Manager::getInstance()->getPortalZone());
+		}
 
 		$this->arResult['type'] = 'slider_inline';
 		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
-		$this->arResult['presets'] = [
-			'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
-			'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),
-			'b24_zone' => Bitrix24Manager::getInstance()->getPortalZone(),
-			'c_name' => CurrentUser::get()->getFullName(),
-			'user_status' => Bitrix24Manager::getInstance()->isPortalAdmin(CurrentUser::get()->getId()),
-			'is_created_eshop' => $this->getBooleanPhrase(LandingManager::getInstance()->isSiteExists()),
-			'is_payment_system' => $this->getBooleanPhrase($this->hasPaymentSystemConfigured()),
-			'is_cashbox' => $this->getBooleanPhrase($this->hasCashboxConfigured()),
-			'is_own_url' => $this->getBooleanPhrase($this->hasPagesWithCustomUrl()),
-			'is_other_website_url' => $this->getBooleanPhrase($this->hasPagesFromAnotherSite()),
-		];
+		if ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_INTEGRATION_REQUEST)
+		{
+			$this->arResult['domain'] = 'https://cp.bitrix.ru';
+			$this->arResult['presets'] = [
+				'url' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : $_SERVER['SERVER_NAME'],
+				'tarif' => Bitrix24Manager::getInstance()->getLicenseType(),
+				'c_email' => CurrentUser::get()->getEmail(),
+				'city' => implode(' / ', $this->getUserGeoData()),
+				'partner_id' => \Bitrix\Main\Config\Option::get('bitrix24', 'partner_id', 0),
+			];
+		}
+		else
+		{
+			$this->arResult['domain'] = 'https://landing.bitrix24.ru';
+			$this->arResult['presets'] = [
+				'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
+				'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),
+				'b24_zone' => Bitrix24Manager::getInstance()->getPortalZone(),
+				'c_name' => CurrentUser::get()->getFullName(),
+				'user_status' => Bitrix24Manager::getInstance()->isPortalAdmin(CurrentUser::get()->getId()),
+				'is_created_eshop' => $this->getBooleanPhrase(LandingManager::getInstance()->isSiteExists()),
+				'is_payment_system' => $this->getBooleanPhrase($this->hasPaymentSystemConfigured()),
+				'is_cashbox' => $this->getBooleanPhrase($this->hasCashboxConfigured()),
+				'is_own_url' => $this->getBooleanPhrase($this->hasPagesWithCustomUrl()),
+				'is_other_website_url' => $this->getBooleanPhrase($this->hasPagesFromAnotherSite()),
+			];
+		}
 
 		$this->includeComponentTemplate($this->template);
+	}
+
+	private function getUserGeoData(): array
+	{
+		$countryName = GeoIp\Manager::getCountryName('', 'ru');
+		if (!$countryName)
+		{
+			$countryName = GeoIp\Manager::getCountryName();
+		}
+
+		$cityName = GeoIp\Manager::getCityName('', 'ru');
+		if (!$cityName)
+		{
+			$cityName = GeoIp\Manager::getCityName();
+		}
+
+		return [
+			'country' => $countryName,
+			'city' => $cityName
+		];
 	}
 
 	/**

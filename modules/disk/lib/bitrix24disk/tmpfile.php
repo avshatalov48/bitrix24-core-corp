@@ -599,7 +599,7 @@ class TmpFile extends Model
 	protected static function generatePath()
 	{
 		$tmpName = md5(mt_rand() . mt_rand());
-		$dir = rtrim(CTempFile::getDirectoryName(2, Driver::INTERNAL_MODULE_ID), '/') . '/';
+		$dir = rtrim(CTempFile::getDirectoryName(24, Driver::INTERNAL_MODULE_ID), '/') . '/';
 		checkDirPath($dir); //make folder recursive
 		$pathItems = explode(CTempFile::getAbsoluteRoot(), $dir . $tmpName);
 

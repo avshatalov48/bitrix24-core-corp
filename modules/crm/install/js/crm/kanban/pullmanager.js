@@ -38,11 +38,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(PullQueue, [{
 	    key: "loadItem",
 	    value: function loadItem(isForce) {
+	      isForce = isForce || false;
+
+	      if (babelHelpers.classPrivateFieldGet(this, _isProgress) && !isForce) {
+	        return;
+	      }
+
 	      var id = this.pop();
 
-	      if (id && (!babelHelpers.classPrivateFieldGet(this, _isProgress) || isForce === true)) {
+	      if (id) {
 	        babelHelpers.classPrivateFieldSet(this, _isProgress, true);
-	        babelHelpers.classPrivateFieldGet(this, _grid).loadNew(id, false).then(function (response) {
+	        babelHelpers.classPrivateFieldGet(this, _grid).loadNew(id, false, true).then(function (response) {
 	          if (this.peek()) {
 	            this.loadItem(true);
 	          } else {
@@ -54,10 +60,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "push",
 	    value: function push(id) {
-	      if (this.getAll().indexOf(id) === -1) {
-	        babelHelpers.classPrivateFieldGet(this, _queue).push(id);
+	      id = parseInt(id, 10);
+	      var index = this.getAll().indexOf(id);
+
+	      if (index !== -1) {
+	        this.splice(index);
 	      }
 
+	      babelHelpers.classPrivateFieldGet(this, _queue).push(id);
 	      return this;
 	    }
 	  }, {
@@ -74,6 +84,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getAll",
 	    value: function getAll() {
 	      return babelHelpers.classPrivateFieldGet(this, _queue);
+	    }
+	  }, {
+	    key: "splice",
+	    value: function splice(index) {
+	      babelHelpers.classPrivateFieldGet(this, _queue).splice(index, 1);
 	    }
 	  }]);
 	  return PullQueue;
@@ -132,8 +147,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPullItemUpdated",
 	    value: function onPullItemUpdated(params) {
-	      console.log(params);
-
 	      if (this.updateItem(params)) {
 	        this.queue.loadItem();
 	      }
@@ -158,6 +171,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        item.setActivityExistInnerHtml();
 	        item.useAnimation = true;
 	        item.setChangedInPullRequest();
+	        this.grid.resetMultiSelectMode();
+	        item.preventNextFieldsRendering();
 	        this.grid.insertItem(item);
 	        var newColumn = this.grid.getColumn(paramsItem.data.columnId);
 	        var newPrice = parseFloat(paramsItem.data.price);

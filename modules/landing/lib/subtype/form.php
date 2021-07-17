@@ -2,14 +2,16 @@
 
 namespace Bitrix\Landing\Subtype;
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Loader;
-use Bitrix\Landing\Manager;
-use Bitrix\Landing\Site;
+use Bitrix\Crm\Integration\UserConsent;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\UI\Webpack;
+use Bitrix\Crm\WebForm;
 use Bitrix\Landing\Block;
 use Bitrix\Landing\Internals\BlockTable;
-use Bitrix\Crm\WebForm\Internals\FormTable;
-use Bitrix\Crm\UI\Webpack;
+use Bitrix\Landing\Manager;
+use Bitrix\Landing\Site;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialservices\ApClient;
 
 Loc::loadMessages(__FILE__);
@@ -31,6 +33,7 @@ class Form
 	protected const SELECTOR_OLD_STYLE_NODE = '.landing-block-form-styles';
 	protected const STYLE_SETTING = 'crm-form';
 	protected const REGEXP_FORM_STYLE = '/data-b24form-design *= *[\'"](\{.+\})[\'"]/i';
+	protected const REGEXP_FORM_ID_INLINE = '/data-b24form=["\']#crmFormInline(?<id>[\d]+)["\']/i';
 
 	public const INLINE_MARKER_PREFIX = '#crmFormInline';
 	public const POPUP_MARKER_PREFIX = '#crmFormPopup';
@@ -44,6 +47,7 @@ class Form
 		'XML_ID',
 	];
 
+	// region replaces for view and public
 	/**
 	 * Replace form markers in block, put true scripts. Run on publication action
 	 * @param string $content - content of block
@@ -157,16 +161,9 @@ class Form
 			]);
 		}
 	}
+	// endregion
 
-	/**
-	 * Check if b24 or box portal
-	 * @return bool
-	 */
-	protected static function isCrm(): bool
-	{
-		return Loader::includeModule('crm');
-	}
-
+	// region get forms
 	/**
 	 * Gets web forms in system.
 	 * @param bool $force - if true - get forms forcibly w/o cache
@@ -193,9 +190,65 @@ class Form
 	}
 
 	/**
+	 * Check if b24 or box portal
+	 * @return bool
+	 */
+	protected static function isCrm(): bool
+	{
+		return Loader::includeModule('crm');
+	}
+
+	protected static function getFormsForPortal(array $filter = []): array
+	{
+		$res = Webform\Internals\FormTable::getList([
+			'select' => self::AVAILABLE_FORM_FIELDS,
+			'filter' => $filter,
+			'order' => [
+				'ID' => 'ASC',
+			],
+		]);
+
+		$forms = [];
+		while ($form = $res->fetch())
+		{
+			$form['ID'] = (int) $form['ID'];
+			$webpack = Webpack\Form::instance($form['ID']);
+			if (!$webpack->isBuilt())
+			{
+				$webpack->build();
+				$webpack = Webpack\Form::instance($form['ID']);
+			}
+			$form['URL'] = $webpack->getEmbeddedFileUrl();
+			$forms[$form['ID']] = $form;
+		}
+
+		return $forms;
+	}
+
+	protected static function getFormsViaConnector(): array
+	{
+		$forms = [];
+		$client = ApClient::init();
+		if ($client)
+		{
+			$res = $client->call('crm.webform.list', ['GET_INACTIVE' => 'Y']);
+			if (isset($res['result']) && is_array($res['result']))
+			{
+				foreach($res['result'] as $form)
+				{
+					$form['ID'] = (int) $form['ID'];
+					$forms[$form['ID']] = $form;
+				}
+			}
+		}
+
+		return $forms;
+	}
+
+	/**
 	 * Find just one form by ID. Return array of form fields, or empty array if not found
 	 * @return array
-	 */
+	*/
 	public static function getFormById(int $id): array
 	{
 		$forms = self::getFormsByFilter(['ID' => $id]);
@@ -251,191 +304,9 @@ class Form
 		return $forms;
 	}
 
-	protected static function getFormsForPortal(array $filter = []): array
-	{
-		$res = FormTable::getList([
-			'select' => self::AVAILABLE_FORM_FIELDS,
-			'filter' => $filter,
-			'order' => [
-				'ID' => 'ASC',
-			],
-		]);
+	// endregion
 
-		$forms = [];
-		while ($form = $res->fetch())
-		{
-			$form['ID'] = (int) $form['ID'];
-			$webpack = Webpack\Form::instance($form['ID']);
-			if (!$webpack->isBuilt())
-			{
-				$webpack->build();
-				$webpack = Webpack\Form::instance($form['ID']);
-			}
-			$form['URL'] = $webpack->getEmbeddedFileUrl();
-			$forms[$form['ID']] = $form;
-		}
-
-		return $forms;
-	}
-
-	protected static function getFormsViaConnector(): array
-	{
-		$forms = [];
-		$client = ApClient::init();
-		if ($client)
-		{
-			$res = $client->call('crm.webform.list', ['GET_INACTIVE' => 'Y']);
-			if (isset($res['result']) && is_array($res['result']))
-			{
-				foreach($res['result'] as $form)
-				{
-					$form['ID'] = (int) $form['ID'];
-					$forms[$form['ID']] = $form;
-				}
-			}
-		}
-
-		return $forms;
-	}
-
-	/**
-	 * Move callback form to end.
-	 * @param array $forms Forms array.
-	 * @return array
-	 */
-	protected static function prepareFormsToAttrs(array $forms): array
-	{
-		$sorted = [];
-		foreach ($forms as $form)
-		{
-			if(array_key_exists('ACTIVE', $form) && $form['ACTIVE'] !== 'Y')
-			{
-				continue;
-			}
-
-			$item = [
-				'name' => $form['NAME'],
-				'value' => self::INLINE_MARKER_PREFIX . $form['ID'],
-			];
-
-			if ($form['IS_CALLBACK_FORM'] === 'Y')
-			{
-				$sorted[] = $item;
-			}
-			else
-			{
-				array_unshift($sorted, $item);
-			}
-		}
-
-		return $sorted;
-	}
-
-	/**
-	 * Gets attrs for form.
-	 * @return array
-	 */
-	protected static function getAttrs()
-	{
-		static $attrs = [];
-		if ($attrs)
-		{
-			return $attrs;
-		}
-
-		// get from CRM or via connector
-		$forms = self::getForms();
-		$forms = self::prepareFormsToAttrs($forms);
-
-		$attrs = [
-			$attrs[] = [
-				'name' => 'Embed form flag',
-				'attribute' => self::ATTR_FORM_EMBED,
-				'type' => 'string',
-				'hidden' => true,
-			],
-			[
-				'name' => 'Form design',
-				'attribute' => self::ATTR_FORM_STYLE,
-				'type' => 'string',
-				'hidden' => true,
-			],
-			[
-				'name' => 'Form from connector flag',
-				'attribute' => self::ATTR_FORM_FROM_CONNECTOR,
-				'type' => 'string',
-				'hidden' => true,
-			],
-		];
-
-		if (!empty($forms))
-		{
-			// get forms list
-			$attrs[] = [
-				'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
-				'attribute' => self::ATTR_FORM_PARAMS,
-				'items' => $forms,
-				'type' => 'list',
-			];
-			// show header
-			// use custom design
-			$attrs[] = [
-				'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE'),
-				'attribute' => self::ATTR_FORM_USE_STYLE,
-				'type' => 'list',
-				'items' => [
-					[
-						'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE_Y'),
-						'value' => 'Y',
-					],
-					[
-						'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE_N'),
-						'value' => 'N',
-					],
-				],
-			];
-		}
-		// no form - no settings, just message for user
-		else
-		{
-			// portal or SMN with b24connector
-			if (Manager::isB24() || Manager::isB24Connector())
-			{
-				// todo:need alert?
-				$attrs[] = [
-					'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
-					'attribute' => self::ATTR_FORM_PARAMS,
-					'type' => 'list',
-					'items' => [
-						[
-							'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_NO_FORM'),
-							'value' => false,
-						],
-					],
-				];
-			}
-			// siteman
-			else
-			{
-				// todo: need?
-				$attrs[] = [
-					'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
-					'attribute' => self::ATTR_FORM_PARAMS,
-					'type' => 'list',
-					'items' => [
-						[
-							'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_NO_FORM'),
-							'value' => false,
-						],
-					],
-
-				];
-			}
-		}
-
-		return $attrs;
-	}
-
+	// region prepare manifest
 	/**
 	 * Prepare manifest.
 	 * @param array $manifest Block's manifest.
@@ -557,16 +428,219 @@ class Form
 	}
 
 	/**
-	 * Correctly set form ID param
+	 * Gets attrs for form.
+	 * @return array
+	 */
+	protected static function getAttrs(): array
+	{
+		static $attrs = [];
+		if ($attrs)
+		{
+			return $attrs;
+		}
+
+		// get from CRM or via connector
+		$forms = self::getForms();
+		$forms = self::prepareFormsToAttrs($forms);
+
+		$attrs = [
+			$attrs[] = [
+				'name' => 'Embed form flag',
+				'attribute' => self::ATTR_FORM_EMBED,
+				'type' => 'string',
+				'hidden' => true,
+			],
+			[
+				'name' => 'Form design',
+				'attribute' => self::ATTR_FORM_STYLE,
+				'type' => 'string',
+				'hidden' => true,
+			],
+			[
+				'name' => 'Form from connector flag',
+				'attribute' => self::ATTR_FORM_FROM_CONNECTOR,
+				'type' => 'string',
+				'hidden' => true,
+			],
+		];
+
+		if (!empty($forms))
+		{
+			// get forms list
+			$attrs[] = [
+				'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
+				'attribute' => self::ATTR_FORM_PARAMS,
+				'items' => $forms,
+				'type' => 'list',
+			];
+			// show header
+			// use custom design
+			$attrs[] = [
+				'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE'),
+				'attribute' => self::ATTR_FORM_USE_STYLE,
+				'type' => 'list',
+				'items' => [
+					[
+						'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE_Y'),
+						'value' => 'Y',
+					],
+					[
+						'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_USE_STYLE_N'),
+						'value' => 'N',
+					],
+				],
+			];
+		}
+		// no form - no settings, just message for user
+		else
+		{
+			// portal or SMN with b24connector
+			if (Manager::isB24() || Manager::isB24Connector())
+			{
+				// todo:need alert?
+				$attrs[] = [
+					'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
+					'attribute' => self::ATTR_FORM_PARAMS,
+					'type' => 'list',
+					'items' => [
+						[
+							'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_NO_FORM'),
+							'value' => false,
+						],
+					],
+				];
+			}
+			// siteman
+			else
+			{
+				// todo: need?
+				$attrs[] = [
+					'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM'),
+					'attribute' => self::ATTR_FORM_PARAMS,
+					'type' => 'list',
+					'items' => [
+						[
+							'name' => Loc::getMessage('LANDING_BLOCK_WEBFORM_NO_FORM'),
+							'value' => false,
+						],
+					],
+
+				];
+			}
+		}
+
+		return $attrs;
+	}
+
+	/**
+	 * Move callback form to end.
+	 * @param array $forms Forms array.
+	 * @return array
+	 */
+	protected static function prepareFormsToAttrs(array $forms): array
+	{
+		$sorted = [];
+		foreach ($forms as $form)
+		{
+			if (array_key_exists('ACTIVE', $form) && $form['ACTIVE'] !== 'Y')
+			{
+				continue;
+			}
+
+			$item = [
+				'name' => $form['NAME'],
+				'value' => self::INLINE_MARKER_PREFIX . $form['ID'],
+			];
+
+			if ($form['IS_CALLBACK_FORM'] === 'Y')
+			{
+				$sorted[] = $item;
+			}
+			else
+			{
+				array_unshift($sorted, $item);
+			}
+		}
+
+		return $sorted;
+	}
+	// endregion
+
+	// region actions with blocks and forms
+	/**
+	 * @param int|array $landingIds - int or [int] of landing IDs
+	 * @return array of all block with CRM-forms at this page
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getLandingFormBlocks($landingIds): array
+	{
+		if (empty($landingIds))
+		{
+			return [];
+		}
+
+		if (!is_array($landingIds))
+		{
+			$landingIds = [$landingIds];
+		}
+
+		return BlockTable::getList([
+			'select' => ['ID', 'LID'],
+			'filter' => [
+				'=LID' => $landingIds,
+				'=DELETED' => 'N',
+				'CONTENT' => '%data-b24form=%',
+			],
+		])->fetchAll();
+	}
+
+	/**
+	 * Return CRM-form ID from block, if exists. Else return null;
+	 * @param int $blockId
+	 * @return int|null
+	 */
+	public static function getFormByBlock(int $blockId): ?int
+	{
+		$block = new Block($blockId);
+		if(preg_match(self::REGEXP_FORM_ID_INLINE, $block->getContent(), $matches))
+		{
+			return (int)$matches[1];
+		}
+		return null;
+	}
+
+	/**
+	 * Save form params in block for current form
+	 * @param int $blockId - from landing block table
+	 * @param int $formId - from webform table
+	 * @return bool - true if success, false if errors
+	 */
+	public static function setFormIdToBlock(int $blockId, int $formId): bool
+	{
+		$block = new Block($blockId);
+		// on form create need forced get forms!
+		$forms = self::getForms(true);
+		if (array_key_exists($formId, $forms))
+		{
+			self::setFormIdParam($block, $formId);
+			$block->save();
+		}
+
+		return $block->getError()->isEmpty();
+	}
+
+	/**
+	 * Encapsulates the form params save logic
 	 * @param Block $block
-	 * @param int $formId
+	 * @param int $formId - from webform table
 	 */
 	protected static function setFormIdParam(Block $block, int $formId): void
 	{
 		$forms = self::getForms();
-		if (array_key_exists($formId, $forms))
+		if (($form = $forms[$formId]))
 		{
-			$form = $forms[$formId];
 			$newParam = $block->isPublic() && !self::isCrm() && Manager::isB24Connector()
 				? "{$form['ID']}|{$form['SECURITY_CODE']}|{$form['URL']}"
 				: self::INLINE_MARKER_PREFIX . $form['ID'];
@@ -578,22 +652,168 @@ class Form
 	}
 
 	/**
-	 * Replace block content to set form ID in right format.
-	 * @param int $blockId
-	 * @param int $formId
+	 * @param Block $block
+	 * @param string $xmlId
 	 */
-	public static function setFormIdToBlock(int $blockId, int $formId): void
+	public static function setSpecialFormToBlock(Block $block, string $xmlId): void
 	{
-		$block = new Block($blockId);
-		// on form create need forced get forms!
-		$forms = self::getForms(true);
-		if (array_key_exists($formId, $forms))
+		// todo: if not crm or connector - break
+		if (($formData = self::getSpecialFormsData()[$xmlId]))
 		{
-			self::setFormIdParam($block, $formId);
-			$block->save();
+			$formId = null;
+			foreach(self::getForms() as $form)
+			{
+				if(
+					array_key_exists('XML_ID', $form)
+					&& $form['XML_ID'] === $xmlId
+				)
+				{
+					$formId = $form['ID'];
+					break;
+				}
+			}
+
+			if(!$formId)
+			{// todo: find xmlid in getForms
+				if (self::isCrm())
+				{
+					$form = new WebForm\Form;
+					$formData['BUTTON_CAPTION'] = $form->getButtonCaption();
+					$form->merge($formData);
+					$form->save();
+					if(!$form->hasErrors())
+					{
+						$formId = $form->getId();
+					}
+				}
+				elseif (Manager::isB24Connector())
+				{
+					// todo: rest
+				}
+			}
+
+			if ($formId)
+			{
+				self::setFormIdParam($block, $formId);
+				$block->save();
+			}
 		}
 	}
 
+	protected static function getSpecialFormsData(): array
+	{
+		// todo: clear comments
+		// todo: params from \Bitrix\Crm\WebForm\Preset::addForm
+		$data = [
+			'crm_preset_store_v3' => [
+				'XML_ID' => 'crm_preset_store_v3',
+				'NAME' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_NAME'),
+				'IS_SYSTEM' => 'N',
+				'ACTIVE' => 'Y',
+				// 'CAPTION' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_CAPTION'),
+				// 'DESCRIPTION' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_DESC'),
+				'RESULT_SUCCESS_TEXT' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_RESULT_SUCCESS'),
+				'RESULT_FAILURE_TEXT' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_RESULT_FAILURE'),
+				// 'ENTITY_SCHEME' => (string)(self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
+				'COPYRIGHT_REMOVED' => 'N',
+				'IS_PAY' => 'N',
+				'FORM_SETTINGS' => [
+					'DEAL_DC_ENABLED' => 'Y',
+				],
+				'BUTTON_CAPTION' => '',
+				'FIELDS' => [
+					[
+						'TYPE' => 'string',
+						// 'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
+						'CODE' => 'CONTACT_NAME',
+						'CAPTION' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_FIELD_NAME'),
+						'SORT' => 100,
+						'REQUIRED' => 'N',
+						'MULTIPLE' => 'N',
+						'PLACEHOLDER' => '',
+					],
+					[
+						'TYPE' => 'phone',
+						// 'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
+						'CODE' => 'CONTACT_PHONE',
+						'CAPTION' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_FIELD_PHONE'),
+						'SORT' => 200,
+						'REQUIRED' => 'N',
+						'MULTIPLE' => 'N',
+						'PLACEHOLDER' => '',
+					],
+					[
+						'TYPE' => 'text',
+						// 'CODE' => self::isLeadEnabled() ? 'LEAD_COMMENTS' : 'DEAL_COMMENTS',
+						'CODE' => 'DEAL_COMMENTS',
+						'CAPTION' => Loc::getMessage('LANDING_FORM_SPECIAL_STOREV3_FIELD_COMMENT'),
+						'SORT' => 300,
+						'REQUIRED' => 'N',
+						'MULTIPLE' => 'N',
+						'PLACEHOLDER' => '',
+					],
+				],
+			],
+		];
+
+		if (self::isCrm())
+		{
+			$isLeadEnabled = static function()
+			{
+				return LeadSettings::getCurrent()->isEnabled();
+			};
+
+			$getCurrentUserId = static function()
+			{
+				static $userId = null;
+				if($userId === null)
+				{
+					global $USER;
+					$userId = (is_object($USER) && $USER->GetID()) ? $USER->GetID() : 1;
+				}
+
+				return $userId;
+			};
+
+			foreach($data as $id => $form)
+			{
+				$data[$id]['DUPLICATE_MODE'] = WebForm\ResultEntity::DUPLICATE_CONTROL_MODE_MERGE;
+				$data[$id]['ENTITY_SCHEME'] = (string)($isLeadEnabled()
+					? WebForm\Entity::ENUM_ENTITY_SCHEME_LEAD
+					: WebForm\Entity::ENUM_ENTITY_SCHEME_DEAL)
+				;
+				$data[$id]['ACTIVE_CHANGE_BY'] = $getCurrentUserId();
+				$data[$id]['ASSIGNED_BY_ID'] = $getCurrentUserId();
+
+				$agreementId = UserConsent::getDefaultAgreementId();
+				$data[$id]['USE_LICENCE'] = $agreementId ? 'Y': 'N';
+				if ($agreementId)
+				{
+					$data[$id]['LICENCE_BUTTON_IS_CHECKED'] = 'Y';
+					$data[$id]['AGREEMENT_ID'] = $agreementId;
+				}
+
+				if($isLeadEnabled())
+				{
+					foreach ($data[$id]['FIELDS'] as $key => $field)
+					{
+						$field['CODE'] = str_replace(['CONTACT', 'DEAL'], 'LEAD', $field['CODE']);
+						$data[$id]['FIELDS'][$key] = $field;
+					}
+				}
+			}
+		}
+		// else
+		// {
+			// todo: is connector - get by rest
+		// }
+
+		return $data;
+	}
+
+	// endregion
+
+	// region update
 	/**
 	 * Find old forms blocks and update to embed format
 	 * @param int $landingId
@@ -673,7 +893,7 @@ class Form
 			}
 		}
 
-		if ($oldStyleNode = $dom->querySelector(self::SELECTOR_OLD_STYLE_NODE))
+		if (($oldStyleNode = $dom->querySelector(self::SELECTOR_OLD_STYLE_NODE)))
 		{
 			$oldStyleNode->getParentNode()->removeChild($oldStyleNode);
 		}
@@ -696,4 +916,5 @@ class Form
 
 		return '';
 	}
+	// endregion
 }

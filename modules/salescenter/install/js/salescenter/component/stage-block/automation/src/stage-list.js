@@ -1,7 +1,6 @@
 import {Text} 				from 'main.core';
 import {Popup as MainPopup} from 'main.popup';
 import {Dom, Tag} 			from 'main.core';
-import {SelectItem} 		from "./select-item";
 import {SelectArrow} 		from "./select-arrow";
 
 const StageList = {
@@ -9,11 +8,14 @@ const StageList = {
 		stages: {
 			type: Array,
 			required: true
-		}
+		},
+		editable: {
+			type: Boolean,
+			required: true
+		},
 	},
 	components:
 		{
-			'select-item-block'		:	SelectItem,
 			'select-arrow-block'	:	SelectArrow,
 		},
 	computed:
@@ -34,7 +36,7 @@ const StageList = {
 
 		showSelectPopup(target, options)
 		{
-			if(!target)
+			if(!target || !this.editable)
 			{
 				return;
 			}
@@ -84,7 +86,7 @@ const StageList = {
 
 		onChooseSelectOption(event)
 		{
-			const currentOption = document.getElementById('stageOnOrderPaid');
+			const currentOption = this.$refs['selectedOptions'][0];
 			currentOption.textContent = event.currentTarget.textContent;
 			currentOption.style.color = event.currentTarget.style.color;
 			currentOption.nextElementSibling.style.borderColor = event.currentTarget.style.color;
@@ -96,22 +98,22 @@ const StageList = {
 		}
 	},
 	template: `
-	<div class="salescenter-app-payment-by-sms-item-container-select">
-		<div class="salescenter-app-payment-by-sms-item-container-select-text">
-			<slot name="stage-list-text"/>
-		</div>
-		<template v-for="stage in stages">
-			<div 
-				v-if="stage.selected" 
-				:class="classesObject" 
-				:style="styleObject(stage)" 
-				v-on:click="showSelectPopup($event.currentTarget, stages, 'stageOnOrderPaid')"
-			>
-				<select-item-block :name="stage.name"/>
-				<select-arrow-block/>
+		<div class="salescenter-app-payment-by-sms-item-container-select">
+			<div class="salescenter-app-payment-by-sms-item-container-select-text">
+				<slot name="stage-list-text"/>
 			</div>
-		</template>
-	</div>
+			<template v-for="stage in stages">
+				<div 
+					v-if="stage.selected" 
+					:class="classesObject" 
+					:style="styleObject(stage)" 
+					v-on:click="showSelectPopup($event.currentTarget, stages)"
+				>
+					<div ref="selectedOptions" class="salescenter-app-payment-by-sms-item-container-select-item">{{stage.name}}</div>
+					<select-arrow-block/>
+				</div>
+			</template>
+		</div>
 	`
 };
 export {

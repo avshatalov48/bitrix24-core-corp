@@ -1,4 +1,8 @@
 <?php
+
+/**
+ * @deprecated
+ */
 class CCrmActivityConverter
 {
 	public static function IsCalEventConvertigRequired()

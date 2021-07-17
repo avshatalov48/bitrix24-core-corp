@@ -196,4 +196,10 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 	{
 		return $this->errorCollection->getErrorByCode($code);
 	}
+
+	protected function checkParameters()
+	{
+		parent::checkParameters();
+		$this->arParams['LAZY_LOAD'] = false;
+	}
 }

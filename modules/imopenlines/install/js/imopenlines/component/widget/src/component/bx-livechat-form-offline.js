@@ -33,7 +33,7 @@ Vue.cloneComponent('bx-livechat-form-offline', 'bx-livechat-form-welcome',
 
 			if (name || email || phone)
 			{
-				this.$root.$bitrixApplication.sendForm(FormType.offline, {name, email, phone});
+				this.$Bitrix.Application.get().sendForm(FormType.offline, {name, email, phone});
 			}
 
 			this.hideForm();

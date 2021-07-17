@@ -1,18 +1,21 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm;
 
-class CBPCrmCopyDealActivity
-	extends CBPActivity
+class CBPCrmCopyDealActivity extends CBPActivity
 {
 	private static $cycleCounter = [];
-	const CYCLE_LIMIT = 200;
+	const CYCLE_LIMIT = 150;
 
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			'Title' => '',
 			'DealTitle' => '',
 			'CategoryId' => 0,
@@ -20,14 +23,14 @@ class CBPCrmCopyDealActivity
 			'Responsible' => null,
 
 			//return
-			'DealId' => 0
-		);
+			'DealId' => 0,
+		];
 
-		$this->SetPropertiesTypes(array(
-			'DealId' => array(
-				'Type' => 'int'
-			)
-		));
+		$this->SetPropertiesTypes([
+			'DealId' => [
+				'Type' => 'int',
+			],
+		]);
 	}
 
 	protected function ReInitialize()
@@ -49,14 +52,14 @@ class CBPCrmCopyDealActivity
 		$sourceDealId = explode('_', $documentId[2])[1];
 		$sourceFields = $fields = [];
 
-		if($sourceDealId > 0)
+		if ($sourceDealId > 0)
 		{
 			$dbResult = \CCrmDeal::GetListEx(
-				array(),
-				array('=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'),
+				[],
+				['=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'],
 				false,
 				false,
-				array('*', 'UF_*')
+				['*', 'UF_*']
 			);
 			$sourceFields = $dbResult->Fetch();
 		}
@@ -64,6 +67,7 @@ class CBPCrmCopyDealActivity
 		if (!$sourceFields)
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_CDA_NO_SOURCE_FIELDS'), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -80,9 +84,10 @@ class CBPCrmCopyDealActivity
 		{
 			$fields['STAGE_ID'] = $stageId;
 
-			if($fields['CATEGORY_ID'] !== Crm\Category\DealCategory::resolveFromStageID($stageId))
+			if ($fields['CATEGORY_ID'] !== Crm\Category\DealCategory::resolveFromStageID($stageId))
 			{
 				$this->WriteToTrackingService(GetMessage("CRM_CDA_STAGE_SELECTION_ERROR"), 0, CBPTrackingType::Error);
+
 				return CBPActivityExecutionStatus::Closed;
 			}
 		}
@@ -117,6 +122,7 @@ class CBPCrmCopyDealActivity
 		if (!$newDealId)
 		{
 			$this->WriteToTrackingService($entity->LAST_ERROR, 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -150,7 +156,7 @@ class CBPCrmCopyDealActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		$arErrors = [];
 
@@ -162,7 +168,7 @@ class CBPCrmCopyDealActivity
 		if (!CModule::IncludeModule("crm"))
 			return '';
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -170,8 +176,8 @@ class CBPCrmCopyDealActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
-		));
+			'siteId' => $siteId,
+		]);
 
 		$defaultTitle = GetMessage('CRM_CDA_NEW_DEAL_TITLE', ['#SOURCE_TITLE#' => '{=Document:TITLE}']);
 		if ($formName === 'bizproc_automation_robot_dialog')
@@ -179,62 +185,67 @@ class CBPCrmCopyDealActivity
 			$defaultTitle = Crm\Automation\Helper::convertExpressions($defaultTitle, $documentType);
 		}
 
-		$dialog->setMap(array(
-			'DealTitle' => array(
+		$dialog->setMap([
+			'DealTitle' => [
 				'Name' => GetMessage('CRM_CDA_DEAL_TITLE'),
 				'FieldName' => 'deal_title',
 				'Type' => 'string',
-				'Default' => $defaultTitle
-			),
-			'CategoryId' => array(
+				'Default' => $defaultTitle,
+			],
+			'CategoryId' => [
 				'Name' => GetMessage('CRM_CDA_MOVE_TO_CATEGORY'),
 				'FieldName' => 'category_id',
-				'Type' => 'select',
-				'Options' => Crm\Category\DealCategory::getSelectListItems(),
+				'Type' => 'deal_category',
 				'Required' => true,
-				'Default' => '0',
-			),
-			'StageId' => array(
+			],
+			'StageId' => [
 				'Name' => GetMessage('CRM_CDA_CHANGE_STAGE'),
 				'FieldName' => 'stage_id',
-				'Type' => 'select',
-				'Default' => 'NEW',
-				'Options' => Crm\Category\DealCategory::getFullStageList(),
-			),
-			'Responsible' => array(
+				'Type' => 'deal_stage',
+			],
+			'Responsible' => [
 				'Name' => GetMessage('CRM_CDA_CHANGE_RESPONSIBLE'),
 				'FieldName' => 'responsible',
-				'Type' => 'user'
-			),
-		));
+				'Type' => 'user',
+			],
+		]);
 
 		return $dialog;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
-		$arErrors = [];
+		$errors = [];
 
-		$arProperties = array(
-			'DealTitle' => $arCurrentValues["deal_title"],
+		$properties = [
+			'DealTitle' => $arCurrentValues['deal_title'],
 			'CategoryId' => $arCurrentValues['category_id'],
 			'StageId' => $arCurrentValues['stage_id'],
-			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues["responsible"], $documentType, $arErrors),
-		);
+			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues['responsible'], $documentType, $errors),
+		];
 
-		if (count($arErrors) > 0)
+		if ($properties['CategoryId'] === '' && static::isExpression($arCurrentValues['category_id_text']))
+		{
+			$properties['CategoryId'] = $arCurrentValues['category_id_text'];
+		}
+		if ($properties['StageId'] === '' && static::isExpression($arCurrentValues['stage_id_text']))
+		{
+			$properties['StageId'] = $arCurrentValues['stage_id_text'];
+		}
+
+		if (count($errors) > 0)
 		{
 			return false;
 		}
 
-		$arErrors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($arErrors) > 0)
+		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		if (count($errors) > 0)
 		{
 			return false;
 		}
 
-		$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-		$arCurrentActivity["Properties"] = $arProperties;
+		$activity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
+		$activity["Properties"] = $properties;
 
 		return true;
 	}
@@ -289,9 +300,9 @@ class CBPCrmCopyDealActivity
 				if ($fieldTypeId === 'resourcebooking')
 				{
 					$newValue = [];
-					$resourceList = \Bitrix\Calendar\UserField\ResourceBooking::getResourceEntriesList((array) $fieldValue);
+					$resourceList = \Bitrix\Calendar\UserField\ResourceBooking::getResourceEntriesList((array)$fieldValue);
 
-					if  ($resourceList)
+					if ($resourceList)
 					{
 						foreach ($resourceList['ENTRIES'] as $entry)
 						{

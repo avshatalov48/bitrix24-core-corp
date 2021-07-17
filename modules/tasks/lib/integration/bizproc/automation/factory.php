@@ -81,6 +81,10 @@ class Factory
 		{
 			$target = new Target\ProjectTask();
 		}
+		elseif (Document\Task::isScrumProjectTask($documentType))
+		{
+			$target = new Target\ScrumProjectTask();
+		}
 
 		if (!$target)
 		{

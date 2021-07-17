@@ -72,6 +72,10 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'OPPORTUNITY' => array(
 				'data_type' => 'float'
 			),
+			'IS_MANUAL_OPPORTUNITY' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y')
+			),
 			'CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),

@@ -146,6 +146,16 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('tasks', 'OnTaskAdd', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskAdd');
 		$eventManager->registerEventHandler('tasks', 'OnTaskUpdate', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskUpdate');
 
+		// Socialnetwork, project counters
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupAdd', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupAdd');
+		$eventManager->registerEventHandler('socialnetwork', 'onBeforeSocNetGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onBeforeGroupUpdate');
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUpdate');
+		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupDelete');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetFeaturesPermsUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupPermissionUpdate');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserAdd');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserUpdate');
+		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserDelete');
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
@@ -600,6 +610,16 @@ Class tasks extends CModule
 		$eventManager->unRegisterEventHandler('socialnetwork', 'OnAfterSocNetLogCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Socialnetwork\Log', 'onAfterSocNetLogCommentAdd');
 		$eventManager->unRegisterEventHandler('tasks', 'OnTaskAdd', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskAdd');
 		$eventManager->unRegisterEventHandler('tasks', 'OnTaskUpdate', 'tasks', '\Bitrix\Tasks\Scrum\Service\TaskService', 'onAfterTaskUpdate');
+
+		// Socialnetwork, project counters
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupAdd', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupAdd');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onBeforeSocNetGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onBeforeGroupUpdate');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUpdate');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onSocNetGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupDelete');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetFeaturesPermsUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupPermissionUpdate');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserAdd');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserUpdate');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserDelete');
 
 		// remove tasks from socnetlog table
 		if (

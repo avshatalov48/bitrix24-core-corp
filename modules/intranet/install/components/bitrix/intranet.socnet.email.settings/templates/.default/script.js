@@ -44,13 +44,13 @@
 			}
 
 			var inputNode;
+			var elementType = element.getAttribute("data-role");
 
-			if (element.getAttribute("data-role") === "copyBlog")
+			if (elementType === "copyBlog")
 			{
 				inputNode = document.querySelector("[data-role='copy-blog-input']");
 			}
-
-			if (element.getAttribute("data-role") === "copyTask")
+			else if (elementType === "copyTask")
 			{
 				inputNode = document.querySelector("[data-role='copy-task-input']");
 			}
@@ -62,27 +62,28 @@
 
 			BX.clipboard.copy(inputNode.value);
 
-			var popup = new BX.PopupWindow('socnetEmailCopyUrl', element, {
+			BX.PopupWindowManager.create("socnetEmailCopyUrl", element, {
 				content: BX.message("INTRANET_SOCNET_EMAIL_SETTINGS_COPY_SUCCESS"),
 				zIndex: 15000,
 				angle: true,
 				offsetTop: 0,
 				offsetLeft: 50,
-				closeIcon : false,
+				closeIcon: false,
 				autoHide: true,
-				darkMode : true,
-				overlay : false,
-				events: {
-					onAfterPopupShow: function()
-					{
+				darkMode: true,
+				overlay: false,
+				events : {
+					onAfterPopupShow: function () {
 						setTimeout(function () {
 							this.close();
 						}.bind(this), 1500);
+					},
+					onPopupClose: function ()
+					{
+						this.destroy();
 					}
 				}
-			});
-
-			popup.show();
+			}).show();
 		}
 	};
 })();

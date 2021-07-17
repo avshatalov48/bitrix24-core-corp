@@ -398,7 +398,14 @@ if ($isBitrix24Cloud)
 		</td>
 	</tr>
 	<tr>
-		<td class="bx-layout-cont">
+		<td class="bx-layout-cont"><?php
+			$dynamicArea = new \Bitrix\Main\Composite\StaticArea("inline-scripts");
+			$dynamicArea->startDynamicArea();
+
+			$APPLICATION->ShowViewContent("inline-scripts");
+
+			$dynamicArea->finishDynamicArea();
+			?>
 			<table class="bx-layout-inner-table">
 				<tr class="bx-layout-inner-top-row">
 					<td class="bx-layout-inner-left" id="layout-left-column">

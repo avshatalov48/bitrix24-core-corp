@@ -8,7 +8,7 @@ class Base
 		this.name = 		Type.isString(props.name) && props.name.length > 0 ? props.name : '';
 		this.color = 		Type.isString(props.color) && props.color.length > 0 ? props.color : '';
 		this.selected = 	Type.isBoolean(props.selected) ? props.selected : false;
-		this.colorText = 	Type.isString(props.colorText) && props.color.colorText > 0 ? props.colorText : '';
+		this.colorText = 	Type.isString(props.colorText) && props.colorText.length > 0 ? props.colorText : '';
 	}
 
 	getType()

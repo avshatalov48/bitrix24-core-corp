@@ -202,7 +202,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * @return Model
 	 * @throws SystemException
 	 */
-	public static function buildFromRow(array $row, array $with = null)
+	public static function buildFromRow(array $row, array $with = [])
 	{
 		$lastAliases = [];
 		foreach ($with as $ref)
@@ -692,6 +692,11 @@ abstract class Model implements \ArrayAccess, IErrorable
 		{
 			$this->loadedAttributes[$name] = true;
 		}
+	}
+
+	protected function setAsNotLoadedAttribute($name): void
+	{
+		$this->loadedAttributes[$name] = null;
 	}
 
 	/**

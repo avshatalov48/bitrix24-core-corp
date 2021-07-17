@@ -132,14 +132,14 @@ class Client extends Connector\BaseFilter implements Connector\IncrementallyConn
 			false,
 			['nTopCount' => '1'],
 			['ID'],
-            ['limit' => 1]
+			['limit' => 1]
 		)->Fetch();
 
 		$lastCompany = \CCrmCompany::GetListEx(
 			['ID' => 'DESC'],
 			['CHECK_PERMISSIONS' => 'N'],
 			false,
-            ['nTopCount' => '1'],
+			['nTopCount' => '1'],
 			['ID']
 		)->Fetch();
 
@@ -1295,11 +1295,11 @@ class Client extends Connector\BaseFilter implements Connector\IncrementallyConn
 			)
 			->setCallback(
 				ResultView::Draw,
-                function(array &$row)
-                {
-                    (new Helper())->onResultViewDraw($row);
-                }
-            );
+				function (array &$row)
+				{
+					(new Helper())->onResultViewDraw($row);
+				}
+			);
 	}
 
 	protected function getProductSkuIds($productIds)

@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Rest\Controllers;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Tasks\Item\Task;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Item\Task\Template;
 
 class Base extends Controller
@@ -86,18 +86,18 @@ class Base extends Controller
         return [
             new Parameter(
                 \CTaskItem::class,
-                function ($className, $id)  {
-                    $userId = CurrentUser::get()->getId();
-                    /** @var Task $className */
-                    return new $className($id, $userId);
+                function ($className, $id) {
+					if (($id = (int)$id) <= 0)
+					{
+						throw new SystemException('wrong task id');
+					}
+                    return new $className($id, CurrentUser::get()->getId());
                 }
             ),
             new Parameter(
                 Template::class,
                 function ($className, $id) {
-                    $userId = CurrentUser::get()->getId();
-                    /** @var Template $className */
-                    return new $className($id, $userId);
+                    return new $className($id, CurrentUser::get()->getId());
                 }
             ),
         ];

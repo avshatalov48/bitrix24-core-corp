@@ -21,7 +21,7 @@ if (!CModule::IncludeModule('iblock'))
 global $USER, $APPLICATION;
 
 $CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

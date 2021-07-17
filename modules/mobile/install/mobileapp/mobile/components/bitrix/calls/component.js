@@ -1713,6 +1713,7 @@ MobileTelephony.prototype.onPullEvent = function(command, params, extra)
 		'start': this._onPullEventStart.bind(this),
 		'hold': this._onPullEventHold.bind(this),
 		'unhold': this._onPullEventUnHold.bind(this),
+		'updatePortalUser': this._onPullEventUpdatePortalUser.bind(this),
 		'update_crm': this._onPullEventUpdateCrm.bind(this),
 		'completeTransfer': this._onPullEventCompleteTransfer,
 		//'phoneDeviceActive': this._onPullEventPhoneDeviceActive,
@@ -2216,6 +2217,9 @@ MobileTelephony.prototype.showCallForm = function(params)
 	this.log('callFormParams: ', callFormParams);
 	this.ui.show(callFormParams);
 	this.formShown = true;
+
+	device.setProximitySensorEnabled(true);
+	device.setIdleTimerDisabled(true);
 };
 
 MobileTelephony.prototype.updateCallForm = function()
@@ -2234,6 +2238,9 @@ MobileTelephony.prototype.closeCallForm = function()
 	this.ui.closeNumpad();
 	this.ui.close();
 	this.formShown = false;
+
+	device.setProximitySensorEnabled(false);
+	device.setIdleTimerDisabled(false);
 };
 
 MobileTelephony.prototype.setCrmData = function(crmData)
@@ -2426,10 +2433,16 @@ MobileTelephony.prototype._onOneTimeKeyGenerated = function(e)
 
 MobileTelephony.prototype._onAuthResult = function(e)
 {
+	this.log("_onAuthResult", e);
 	if(e.hasOwnProperty('key'))
 	{
 		// android sdk fires event onAuthResult instead of onOneTimeKeyGenerated
 		return this._onOneTimeKeyGenerated(e);
+	}
+	if (typeof(e.result) === "string")
+	{
+		// in some versions of mobile, e.result is string, like "true" or "false"
+		e.result = (e.result === "true");
 	}
 	if(e.result)
 	{
@@ -2447,6 +2460,7 @@ MobileTelephony.prototype._onAuthResult = function(e)
 		if (e.code == 401 || e.code == 400 || e.code == 403 || e.code == 404 || e.code == 302)
 		{
 			this.setUiStateLabel(BX.message('IM_PHONE_401'));
+			BX.rest.callMethod('voximplant.authorization.onError');
 		}
 		else
 		{
@@ -2659,11 +2673,18 @@ MobileTelephony.prototype._onCallInvite = function (params)
 		//params.callerId = this.BXIM.messenger.users[params.portalCallUserId].name;
 		params.phoneNumber = '';
 
-		this.crmData.FOUND = 'Y';
-		this.crmData.CONTACT = {
-			'NAME': params.portalCallData.users[params.portalCallUserId].name,
-			'PHOTO': params.portalCallData.users[params.portalCallUserId].avatar
-		};
+		if (params.params.portalCallUserId)
+		{
+			this.crmData.FOUND = 'Y';
+			this.crmData.CONTACT = {
+				'NAME': params.portalCallData.users[params.portalCallUserId].name,
+				'PHOTO': params.portalCallData.users[params.portalCallUserId].avatar
+			};
+		}
+		else
+		{
+
+		}
 	}
 
 	this.callConfig = params.config? params.config: {};
@@ -2797,16 +2818,29 @@ MobileTelephony.prototype._onPullEventOutgoing = function (params, extra)
 			this.setCrmData(params.CRM);
 		}
 
-		if (this.portalCall && params.portalCallUserId)
+		if (this.portalCall)
 		{
-			this.setCrmData({
-				FOUND: 'Y',
-				CONTACT:
-				{
-					'NAME': params.portalCallData.users[params.portalCallUserId].name,
-					'PHOTO': params.portalCallData.users[params.portalCallUserId].avatar
-				}
-			});
+			if (params.portalCallUserId)
+			{
+				this.setCrmData({
+					FOUND: 'Y',
+					CONTACT:
+						{
+							'NAME': params.portalCallData.users[params.portalCallUserId].name,
+							'PHOTO': params.portalCallData.users[params.portalCallUserId].avatar
+						}
+				});
+			}
+			else
+			{
+				this.setCrmData({
+					FOUND: 'Y',
+					CONTACT:
+						{
+							'NAME': params.portalCallQueueName,
+						}
+				});
+			}
 		}
 	}
 };
@@ -2837,6 +2871,21 @@ MobileTelephony.prototype._onPullEventHold = function(params)
 MobileTelephony.prototype._onPullEventUnHold = function(params)
 {
 	this.phoneHolded = false;
+};
+
+MobileTelephony.prototype._onPullEventUpdatePortalUser = function(params)
+{
+	if (this.callId == params.callId && params.portalCallUserId)
+	{
+		this.setCrmData({
+			FOUND: 'Y',
+			CONTACT:
+				{
+					'NAME': params.portalCallData.users[params.portalCallUserId].name,
+					'PHOTO': params.portalCallData.users[params.portalCallUserId].avatar
+				}
+		});
+	}
 };
 
 MobileTelephony.prototype._onPullEventUpdateCrm = function (params)

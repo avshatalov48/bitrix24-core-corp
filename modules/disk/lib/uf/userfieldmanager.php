@@ -323,8 +323,8 @@ final class UserFieldManager implements IErrorable
 		{
 			$res = AttachedViewTypeTable::getList([
 				'filter' => [
-					'ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
-					'ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
+					'=ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
+					'=ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
 				],
 				'select' => [ 'VALUE' ]
 			]);

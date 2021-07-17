@@ -26,6 +26,20 @@
 					BX.SidePanel.Instance.open(tile.data.url/*, {width: 735, cacheable: false}*/);
 				}
 			);
+
+			this.integrationTileManagerId = params.integrationTileManagerId;
+			this.integrationtileManager = BX.UI.TileList.Manager.getById(this.integrationTileManagerId);
+
+			if (this.integrationtileManager)
+			{
+				BX.addCustomEvent(
+					this.integrationtileManager,
+					this.integrationtileManager.events.tileClick,
+					function (tile) {
+						BX.SidePanel.Instance.open(tile.data.url/*, {width: 735, cacheable: false}*/);
+					}
+				);
+			}
 		}
 	};
 
@@ -36,6 +50,10 @@ function BXOneCStart(type)
 	if (type === "doc")
 	{
 		var app_url = '/marketplace/detail/bitrix.1cdoc/';
+	}
+	else if (type === "backoffice")
+	{
+		var app_url = '/marketplace/detail/bitrix.1ctotal/';
 	}
 	else
 	{

@@ -7,6 +7,7 @@ use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Collection;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
@@ -52,6 +53,11 @@ abstract class EntityProvider extends BaseProvider
 	protected function makeItemsByIds(array $ids): array
 	{
 		$items = [];
+		Collection::normalizeArrayValuesByInt($ids);
+		if (empty($ids))
+		{
+			return $items;
+		}
 		$ids = $this->fetchEntryIds([
 			'@ID' => $ids,
 		]);

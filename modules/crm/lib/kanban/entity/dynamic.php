@@ -388,18 +388,12 @@ class Dynamic extends Kanban\Entity
 		$item->setStageId($stageId);
 		$operation = $this->factory->getUpdateOperation($item);
 
-		$result = $operation->launch();
-		if($result->isSuccess() && $this->isNeedToRunAutomation())
-		{
-			$this->runAutomationOnUpdate($id, $item->getData());
-		}
-
-		return $result;
+		return $operation->launch();
 	}
 
 	public function isNeedToRunAutomation(): bool
 	{
-		return true;
+		return false;
 	}
 
 	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void

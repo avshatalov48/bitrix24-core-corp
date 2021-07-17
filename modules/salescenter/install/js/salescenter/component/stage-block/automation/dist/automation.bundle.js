@@ -4,16 +4,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 (function (exports,main_core,main_popup) {
 	'use strict';
 
-	var SelectItem = {
-	  props: {
-	    name: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  template: "\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select-item\" id=\"stageOnOrderPaid\">{{name}}</div>\n"
-	};
-
 	var SelectArrow = {
 	  template: "\n\t\t\t<span class=\"salescenter-app-payment-by-sms-item-container-select-arrow\" /> \n"
 	};
@@ -42,10 +32,13 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    stages: {
 	      type: Array,
 	      required: true
+	    },
+	    editable: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  components: {
-	    'select-item-block': SelectItem,
 	    'select-arrow-block': SelectArrow
 	  },
 	  computed: {
@@ -64,7 +57,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    showSelectPopup: function showSelectPopup(target, options) {
 	      var _this = this;
 
-	      if (!target) {
+	      if (!target || !this.editable) {
 	        return;
 	      }
 
@@ -106,7 +99,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      return this.selectPopupContent;
 	    },
 	    onChooseSelectOption: function onChooseSelectOption(event) {
-	      var currentOption = document.getElementById('stageOnOrderPaid');
+	      var currentOption = this.$refs['selectedOptions'][0];
 	      currentOption.textContent = event.currentTarget.textContent;
 	      currentOption.style.color = event.currentTarget.style.color;
 	      currentOption.nextElementSibling.style.borderColor = event.currentTarget.style.color;
@@ -117,12 +110,10 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      this.selectPopup.destroy();
 	    }
 	  },
-	  template: "\n\t<div class=\"salescenter-app-payment-by-sms-item-container-select\">\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select-text\">\n\t\t\t<slot name=\"stage-list-text\"/>\n\t\t</div>\n\t\t<template v-for=\"stage in stages\">\n\t\t\t<div \n\t\t\t\tv-if=\"stage.selected\" \n\t\t\t\t:class=\"classesObject\" \n\t\t\t\t:style=\"styleObject(stage)\" \n\t\t\t\tv-on:click=\"showSelectPopup($event.currentTarget, stages, 'stageOnOrderPaid')\"\n\t\t\t>\n\t\t\t\t<select-item-block :name=\"stage.name\"/>\n\t\t\t\t<select-arrow-block/>\n\t\t\t</div>\n\t\t</template>\n\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-select-text\">\n\t\t\t\t<slot name=\"stage-list-text\"/>\n\t\t\t</div>\n\t\t\t<template v-for=\"stage in stages\">\n\t\t\t\t<div \n\t\t\t\t\tv-if=\"stage.selected\" \n\t\t\t\t\t:class=\"classesObject\" \n\t\t\t\t\t:style=\"styleObject(stage)\" \n\t\t\t\t\tv-on:click=\"showSelectPopup($event.currentTarget, stages)\"\n\t\t\t\t>\n\t\t\t\t\t<div ref=\"selectedOptions\" class=\"salescenter-app-payment-by-sms-item-container-select-item\">{{stage.name}}</div>\n\t\t\t\t\t<select-arrow-block/>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	};
 
 	exports.StageList = StageList;
-	exports.SelectItem = SelectItem;
-	exports.SelectArrow = SelectArrow;
 
 }((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX,BX.Main));
 //# sourceMappingURL=automation.bundle.js.map

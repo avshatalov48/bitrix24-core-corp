@@ -15,8 +15,6 @@ COption::SetOptionString('wiki','allow_html','Y');
 $APPLICATION->SetGroupRight("wiki", 1, "Y");
 $APPLICATION->SetGroupRight("wiki", 2, "R");
 $APPLICATION->SetGroupRight("wiki", WIZARD_PORTAL_ADMINISTRATION_GROUP, "Y");
-$APPLICATION->SetGroupRight("wiki", WIZARD_DIRECTION_GROUP, "Y");
-$APPLICATION->SetGroupRight("wiki", WIZARD_PERSONNEL_DEPARTMENT_GROUP, "Y");
 $APPLICATION->SetGroupRight("wiki", WIZARD_EMPLOYEES_GROUP, "W");
 
 
@@ -61,7 +59,13 @@ if ($IBLOCK_TYPE_ID)
 	    "DETAIL_PAGE_URL" => "#SITE_DIR#/services/wiki/#EXTERNAL_ID#/",
 	    "SECTION_PAGE_URL" => "#SITE_DIR#/services/wiki/category:#EXTERNAL_ID#/",
 	    "LIST_PAGE_URL" => "#SITE_DIR#/services/wiki/",
-	    "GROUP_ID" => Array('1' => 'X', "2" => "R", "3" => "W", WIZARD_PORTAL_ADMINISTRATION_GROUP => "W", WIZARD_DIRECTION_GROUP => "W", WIZARD_PERSONNEL_DEPARTMENT_GROUP => "W", WIZARD_EMPLOYEES_GROUP => "W")
+	    "GROUP_ID" => Array(
+	    	'1' => 'X',
+			"2" => "R",
+			"3" => "W",
+			WIZARD_PORTAL_ADMINISTRATION_GROUP => "W",
+			WIZARD_EMPLOYEES_GROUP => "W"
+		)
 	);
 	
 	if (IsModuleInstalled('bizproc'))
@@ -127,7 +131,13 @@ if ($IBLOCK_TYPE_ID)
 			"NAME" => GetMessage('WIKI_FORUM_NAME'),
 			"XML_ID" => "WIKI",
 			"FORUM_GROUP_ID" => $arGroupID["HIDDEN"],    
-			"GROUP_ID" => array(1 => "Y", 2 => 'E', 3 => 'M', WIZARD_PORTAL_ADMINISTRATION_GROUP => "M", WIZARD_DIRECTION_GROUP => "M", WIZARD_PERSONNEL_DEPARTMENT_GROUP => "M", WIZARD_EMPLOYEES_GROUP => "M"),    
+			"GROUP_ID" => array(
+				1 => "Y",
+				2 => 'E',
+				3 => 'M',
+				WIZARD_PORTAL_ADMINISTRATION_GROUP => "M",
+				WIZARD_EMPLOYEES_GROUP => "M"
+			),
 			"SITES" => Array(
 		   		WIZARD_SITE_ID => WIZARD_SITE_DIR."community/forum/forum#FORUM_ID#/topic#TOPIC_ID#/"
 		   ),
@@ -160,7 +170,13 @@ if ($IBLOCK_TYPE_ID)
 			    "LIST_PAGE_URL" => "",
 			    "INDEX_ELEMENT" => 'N',
 			    "INDEX_SECTION" => 'N',
-			    "GROUP_ID" => Array('1' => 'X', "2"=>"R", "3"=>"W", WIZARD_PORTAL_ADMINISTRATION_GROUP => "W", WIZARD_DIRECTION_GROUP => "W", WIZARD_PERSONNEL_DEPARTMENT_GROUP => "W", WIZARD_EMPLOYEES_GROUP => "W")
+			    "GROUP_ID" => Array(
+			    	'1' => 'X',
+					"2"=>"R",
+					"3"=>"W",
+					WIZARD_PORTAL_ADMINISTRATION_GROUP => "W",
+					WIZARD_EMPLOYEES_GROUP => "W"
+				)
 			);
 			
 			if (IsModuleInstalled('bizproc'))
@@ -227,12 +243,18 @@ if ($IBLOCK_TYPE_ID)
 			}
     		
             $arFields = Array(
-               "ACTIVE" => "Y", 
-               "NAME" => GetMessage('WIKI_FORUM_SOCNET_NAME'),
-		"XML_ID" => 'WIKI_GROUP_COMMENTS',
-               "FORUM_GROUP_ID" => $arGroupID["HIDDEN"],   
-               "GROUP_ID" => array(1 => "Y", 2 => 'E', 3 => 'M', WIZARD_PORTAL_ADMINISTRATION_GROUP => "M", WIZARD_DIRECTION_GROUP => "M", WIZARD_PERSONNEL_DEPARTMENT_GROUP => "M", WIZARD_EMPLOYEES_GROUP => "M"),    
-	           "SITES" => Array(
+				"ACTIVE" => "Y",
+				"NAME" => GetMessage('WIKI_FORUM_SOCNET_NAME'),
+				"XML_ID" => 'WIKI_GROUP_COMMENTS',
+				"FORUM_GROUP_ID" => $arGroupID["HIDDEN"],
+				"GROUP_ID" => array(
+					1 => "Y",
+					2 => 'E',
+					3 => 'M',
+					WIZARD_PORTAL_ADMINISTRATION_GROUP => "M",
+					WIZARD_EMPLOYEES_GROUP => "M"
+				),
+				"SITES" => Array(
 					WIZARD_SITE_ID => WIZARD_SITE_DIR."community/forum/messages/forum#FORUM_ID#/topic#TOPIC_ID#/message#MESSAGE_ID#/#message#MESSAGE_ID#",
 			   ),
             );

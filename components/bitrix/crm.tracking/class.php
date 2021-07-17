@@ -72,6 +72,7 @@ class CrmTrackingComponent extends CBitrixComponent
 			"site" => "channel/site/#id#/",
 			"site24" => "channel/site24/",
 			"shop24" => "channel/shop24/",
+			"crm-shop" => "channel/crm-shop/",
 			"order" => "channel/order/",
 			"settings" => "settings/",
 		);

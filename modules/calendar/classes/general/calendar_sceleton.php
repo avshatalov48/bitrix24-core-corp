@@ -14,10 +14,9 @@ class CCalendarSceleton
 		\Bitrix\Main\UI\Extension::load([
 			'calendar.util',
 			'calendar.entry',
-			'calendar.calendarsection',
+			'calendar.sectionmanager',
 			'calendar.controls',
 			'calendar.sliderloader',
-//			'calendar.sync.interface',
 			'calendar.sync.manager',
 		]);
 

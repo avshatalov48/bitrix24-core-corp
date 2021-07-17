@@ -48,6 +48,8 @@ import {LocalStorage} from "im.lib.localstorage";
 import {Logger} from "im.lib.logger";
 
 import {Uploader} from "im.lib.uploader";
+import { EventEmitter } from "main.core.events";
+import { ZIndexManager } from "main.core.minimal";
 
 // TODO change BX.Promise, BX.Main.Date to IMPORT
 
@@ -479,6 +481,7 @@ export class Widget
 
 	requestData()
 	{
+		Logger.log('requesting data from widget');
 		if (this.requestDataSend)
 		{
 			return true;
@@ -737,8 +740,7 @@ export class Widget
 
 		if (this.template)
 		{
-			this.template.$root.$bitrixPullClient = this.pullClient;
-			this.template.$root.$emit('onBitrixPullClientInited', this.pullClient);
+			this.template.$Bitrix.PullClient.set(this.pullClient);
 		}
 
 		this.pullClient.start({
@@ -777,9 +779,18 @@ export class Widget
 
 			if (this.pullRequestMessage)
 			{
-				this.getDialogUnread().then(() => {
+				this.controller.pullBaseHandler.option.skip = true;
+
+				Logger.warn('Requesting getDialogUnread after going online');
+				EventEmitter.emitAsync(EventType.dialog.requestUnread, {chatId: this.controller.application.getChatId()}).then(() => {
+					EventEmitter.emit(EventType.dialog.scrollOnStart, {chatId: this.controller.application.getChatId()});
+					this.controller.pullBaseHandler.option.skip = false;
 					this.processSendMessages();
+				})
+				.catch(() => {
+					this.controller.pullBaseHandler.option.skip = false;
 				});
+
 				this.pullRequestMessage = false;
 			}
 			else
@@ -822,6 +833,13 @@ export class Widget
 					data: {}
 				});
 				application.template = this;
+
+				if (ZIndexManager !== undefined)
+				{
+					const stack = ZIndexManager.getOrAddStack(document.body);
+					stack.setBaseIndex(1000000); // some big value
+					this.$bitrix.Data.set('zIndexStack', stack);
+				}
 			},
 			destroyed()
 			{
@@ -866,6 +884,32 @@ export class Widget
 			return false;
 		}
 
+		const quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
+		if (quoteId)
+		{
+			const quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
+			if (quoteMessage)
+			{
+				let user = null;
+				if (quoteMessage.authorId)
+				{
+					user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
+				}
+
+				const files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
+
+				const message = [];
+				message.push('-'.repeat(54));
+				message.push((user && user.name? user.name: this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE'))+' ['+Utils.date.format(quoteMessage.date, null, this.getLocalize())+']');
+				message.push(Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
+				message.push('-'.repeat(54));
+				message.push(text);
+				text = message.join("\n");
+
+				this.quoteMessageClear();
+			}
+		}
+
 		Logger.warn('addMessage', text, file);
 
 		if (!this.controller.application.isUnreadMessagesLoaded())
@@ -875,8 +919,6 @@ export class Widget
 
 			return true;
 		}
-
-		this.controller.getStore().commit('application/increaseDialogExtraCount');
 
 		let params = {};
 		if (file)
@@ -891,11 +933,12 @@ export class Widget
 			params,
 			sending: !file,
 		}).then(messageId => {
-
 			if (!this.isDialogStart())
 			{
 				this.controller.getStore().commit('widget/common', {dialogStart:true});
 			}
+
+			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.getChatId(), cancelIfScrollChange: true});
 
 			this.messagesQueue.push({
 				id: messageId,
@@ -1245,16 +1288,6 @@ export class Widget
 		return this.controller.application.readMessage(messageId);
 	}
 
-	quoteMessage(id)
-	{
-		this.controller.getStore().dispatch('dialogues/update', {
-			dialogId: this.controller.application.getDialogId(),
-			fields: {
-				quoteId: id
-			}
-		});
-	}
-
 	reactMessage(id, reaction)
 	{
 		this.controller.application.reactMessage(id, reaction.type, reaction.action);
@@ -1375,6 +1408,80 @@ export class Widget
 
 	}
 
+	getHtmlHistory()
+	{
+		const chatId = this.getChatId();
+		if (chatId <= 0)
+		{
+			console.error('Incorrect chatId value');
+		}
+
+		const config = {
+			chatId: this.getChatId()
+		};
+		this.requestControllerAction('imopenlines.widget.history.download', config)
+			.then(response => {
+				const contentType = response.headers.get('Content-Type');
+				if (contentType.startsWith('application/json'))
+				{
+					return response.json();
+				}
+
+				return response.blob();
+			})
+			.then(result => {
+				if (result instanceof Blob)
+				{
+					const url = window.URL.createObjectURL(result);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = chatId + '.html';
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+				}
+				else if (result.hasOwnProperty('errors'))
+				{
+					console.error(result.errors[0]);
+				}
+				else
+				{
+					console.error('Unknown error.');
+				}
+			})
+			.catch(() => console.error('Fetch error.'));
+	}
+
+	/**
+	 * Basic method to run actions.
+	 * If you need to extend it, check BX.ajax.runAction to extend this method.
+	 */
+	requestControllerAction(action, config)
+	{
+		const host = this.host ? this.host : '';
+		const ajaxEndpoint = '/bitrix/services/main/ajax.php';
+
+		const url = new URL(ajaxEndpoint, host);
+		url.searchParams.set('action', action);
+
+		const formData = new FormData();
+		for (const key in config)
+		{
+			if (config.hasOwnProperty(key))
+			{
+				formData.append(key, config[key]);
+			}
+		}
+
+		return fetch(url, {
+			method: 'POST',
+			headers: {
+				'Livechat-Auth-Id': this.getUserHash()
+			},
+			body: formData
+		})
+	}
+
 	sendConsentDecision(result)
 	{
 		result = result === true;
@@ -1460,7 +1567,7 @@ export class Widget
 
 	showNotification(params)
 	{
-		if (!this.controller.getStore())
+		if (!this.controller || !this.controller.getStore())
 		{
 			console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1661,7 +1768,7 @@ export class Widget
 
 	getUserData()
 	{
-		if (!this.controller.getStore())
+		if (!this.controller || !this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1694,7 +1801,7 @@ export class Widget
 
 	setUserRegisterData(params)
 	{
-		if (!this.controller.getStore())
+		if (!this.controller || !this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
@@ -1756,7 +1863,7 @@ export class Widget
 
 	setCustomData(params)
 	{
-		if (!this.controller.getStore())
+		if (!this.controller || !this.controller.getStore())
 		{
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;

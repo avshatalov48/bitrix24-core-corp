@@ -1,9 +1,11 @@
-import {Event, Dom, Type} from 'main.core';
+import {Dom, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
 
 import {View} from './view';
+import {ActiveSprintActionButton} from './header/active.sprint.action.button';
+import {RobotButton} from './header/robot.button';
 
 import {Sprint} from '../entity/sprint/sprint';
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
@@ -17,7 +19,9 @@ type Params = {
 	pathToTask: string,
 	views: Views,
 	activeSprint: SprintParams,
-	sprints: Array<SprintParams>
+	sprints: Array<SprintParams>,
+	taskLimitExceeded: 'Y' | 'N',
+	canUseAutomation: 'Y' | 'N'
 }
 
 export class ActiveSprint extends View
@@ -38,18 +42,52 @@ export class ActiveSprint extends View
 
 			this.itemsInFinishStage = new Map();
 
-			this.initDomNodes();
-			this.createSprintStats();
 			this.bindHandlers();
 		}
 
 		this.sidePanel = new SidePanel();
 	}
 
+	renderSprintStatsTo(container: HTMLElement)
+	{
+		super.renderSprintStatsTo(container);
+
+		this.statsHeader = StatsHeaderBuilder.build(this.sprint);
+		this.statsHeader.setKanbanStyle();
+
+		Dom.append(this.statsHeader.render(), container);
+	}
+
+	renderButtonsTo(container: HTMLElement)
+	{
+		super.renderButtonsTo(container);
+
+		if (!this.existActiveSprint())
+		{
+			return;
+		}
+
+		const robotButton = new RobotButton({
+			sidePanel: this.sidePanel,
+			groupId: this.getCurrentGroupId(),
+			isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
+			canUseAutomation: this.isCanUseAutomation()
+		});
+
+		const activeSprintActionButton = new ActiveSprintActionButton();
+		activeSprintActionButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
+		activeSprintActionButton.subscribe('showBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
+
+		Dom.append(robotButton.render(), container);
+		Dom.append(activeSprintActionButton.render(), container);
+	}
+
 	setParams(params: Params)
 	{
 		this.setPathToTask(params.pathToTask);
 		this.setActiveSprintParams(params.activeSprint);
+		this.setTaskLimitsExceeded(params.taskLimitExceeded);
+		this.setCanUseAutomation(params.canUseAutomation);
 
 		this.sprints = new Map();
 		params.sprints.forEach((sprintData) => {
@@ -80,31 +118,33 @@ export class ActiveSprint extends View
 		return this.activeSprint;
 	}
 
+	setTaskLimitsExceeded(limitExceeded: string)
+	{
+		this.limitExceeded = (limitExceeded === 'Y');
+	}
+
+	isTaskLimitsExceeded(): boolean
+	{
+		return this.limitExceeded;
+	}
+
+	setCanUseAutomation(canUseAutomation: string)
+	{
+		this.canUseAutomation = (canUseAutomation === 'Y');
+	}
+
+	isCanUseAutomation(): boolean
+	{
+		return this.canUseAutomation;
+	}
+
 	existActiveSprint(): boolean
 	{
 		return (this.activeSprint !== null);
 	}
 
-	initDomNodes()
-	{
-		this.sprintStatsContainer = document.getElementById('tasks-scrum-active-sprint-stats');
-		const buttonsContainer = document.getElementById('tasks-scrum-actions-complete-sprint');
-		this.chartSprintButtonNode = buttonsContainer.firstElementChild;
-		this.completeSprintButtonNode = buttonsContainer.lastElementChild;
-	}
-
-	createSprintStats()
-	{
-		this.statsHeader = StatsHeaderBuilder.build(this.sprint);
-		this.statsHeader.setKanbanStyle();
-		Dom.append(this.statsHeader.render(), this.sprintStatsContainer);
-	}
-
 	bindHandlers()
 	{
-		Event.bind(this.chartSprintButtonNode, 'click', this.onShowSprintBurnDownChart.bind(this));
-		Event.bind(this.completeSprintButtonNode, 'click', this.onCompleteSprint.bind(this));
-
 		// eslint-disable-next-line
 		const kanbanManager = BX.Tasks.Scrum.Kanban;
 		if (kanbanManager)
@@ -126,7 +166,7 @@ export class ActiveSprint extends View
 		});
 	}
 
-	onCompleteSprint()
+	onCompleteSprint(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
 			sprints: this.sprints,
@@ -136,8 +176,8 @@ export class ActiveSprint extends View
 		});
 		sprintSidePanel.showCompleteSidePanel(this.sprint);
 
-		this.sprint.subscribe('showTask', (baseEvent) => {
-			const item = baseEvent.getData();
+		this.sprint.subscribe('showTask', (innerBaseEvent: BaseEvent) => {
+			const item = innerBaseEvent.getData();
 			this.sidePanel.openSidePanelByUrl(this.getPathToTask().replace('#task_id#', item.getSourceId()));
 		});
 	}
@@ -205,6 +245,20 @@ export class ActiveSprint extends View
 			if (scrumItem.getSourceId() === parseInt(kanbanItem.getId(), 10))
 			{
 				scrumItem.setCompleted('Y');
+
+				if (scrumItem.isSubTask())
+				{
+					const parentItem = sprint.getItemBySourceId(scrumItem.getParentTaskId());
+					if (parentItem)
+					{
+						const subTasksItems = sprint.getItemsByParentTaskId(parentItem.getSourceId());
+						const unCompletedItem = [...subTasksItems.values()].find((item: Item) => !item.isCompleted());
+						if (!unCompletedItem)
+						{
+							parentItem.setCompleted('Y');
+						}
+					}
+				}
 			}
 		});
 	}
@@ -223,11 +277,25 @@ export class ActiveSprint extends View
 			if (scrumItem.getSourceId() === parseInt(kanbanItem.getId(), 10))
 			{
 				scrumItem.setCompleted('N');
+
+				if (scrumItem.isSubTask())
+				{
+					const parentItem = sprint.getItemBySourceId(scrumItem.getParentTaskId());
+					if (parentItem)
+					{
+						const subTasksItems = sprint.getItemsByParentTaskId(parentItem.getSourceId());
+						const unCompletedItem = [...subTasksItems.values()].find((item: Item) => !item.isCompleted());
+						if (unCompletedItem)
+						{
+							parentItem.setCompleted('N');
+						}
+					}
+				}
 			}
 		});
 	}
 
-	onShowSprintBurnDownChart()
+	onShowSprintBurnDownChart(baseEvent: BaseEvent)
 	{
 		const sprintSidePanel = new SprintSidePanel({
 			sidePanel: this.sidePanel,

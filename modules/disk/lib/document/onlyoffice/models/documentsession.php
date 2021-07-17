@@ -3,36 +3,45 @@
 namespace Bitrix\Disk\Document\OnlyOffice\Models;
 
 use Bitrix\Disk\File;
-use Bitrix\Disk\Internals\Model;
+use Bitrix\Disk\Internals\Entity\Model;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Version;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * @method File|null getObject()
+ * @method Version|null getVersion()
+ * @method DocumentInfo|null getInfo()
+ * @method \Bitrix\Disk\EmptyUser|\Bitrix\Disk\SystemUser|User getUser()
+ * @method \Bitrix\Disk\EmptyUser|\Bitrix\Disk\SystemUser|User getOwner()
+ */
 final class DocumentSession extends Model
 {
 	public const TYPE_VIEW = DocumentSessionTable::TYPE_VIEW;
 	public const TYPE_EDIT = DocumentSessionTable::TYPE_EDIT;
 
+	public const STATUS_ACTIVE = DocumentSessionTable::STATUS_ACTIVE;
+	public const STATUS_NON_ACTIVE = DocumentSessionTable::STATUS_NON_ACTIVE;
+
+	public const REF_USER = 'user';
+	public const REF_OWNER = 'owner';
+	public const REF_OBJECT = 'object';
+	public const REF_VERSION = 'version';
+	public const REF_INFO = 'info';
+
 	/** @var int */
 	protected $id;
 	/** @var int */
 	protected $objectId;
-	/** @var File */
-	protected $object;
 	/** @var int */
 	protected $versionId;
-	/** @var Version */
-	protected $version;
 	/** @var int */
 	protected $userId;
-	/** @var User */
-	protected $user;
 	/** @var int */
 	protected $ownerId;
-	/** @var User */
-	protected $owner;
 	/** @var bool */
 	protected $isExclusive;
 	/** @var string */
@@ -41,6 +50,8 @@ final class DocumentSession extends Model
 	protected $createTime;
 	/** @var int */
 	protected $type;
+	/** @var int */
+	protected $status;
 	/** @var string */
 	protected $context;
 
@@ -61,17 +72,9 @@ final class DocumentSession extends Model
 		return $this->objectId;
 	}
 
-	public function getObject(): ?File
+	public function getFile(): ?File
 	{
-		if ($this->object && $this->isLoadedAttribute('object') && $this->objectId == $this->object->getId())
-		{
-			return $this->object;
-		}
-
-		$this->object = File::loadById($this->objectId);
-		$this->setAsLoadedAttribute('object');
-
-		return $this->object;
+		return $this->getObject();
 	}
 
 	/**
@@ -80,19 +83,6 @@ final class DocumentSession extends Model
 	public function getVersionId(): ?int
 	{
 		return $this->versionId;
-	}
-
-	public function getVersion(): ?Version
-	{
-		if ($this->version && $this->isLoadedAttribute('version') && $this->versionId == $this->version->getId())
-		{
-			return $this->version;
-		}
-
-		$this->version = Version::loadById($this->versionId);
-		$this->setAsLoadedAttribute('version');
-
-		return $this->version;
 	}
 
 	public function isVersion(): bool
@@ -114,6 +104,14 @@ final class DocumentSession extends Model
 		return $file ? $file->getName() : '';
 	}
 
+	public function setUserId(int $userId): self
+	{
+		$this->userId = $userId;
+		$this->resetReferenceValue(self::REF_USER);
+
+		return $this;
+	}
+
 	/**
 	 * @return int
 	 */
@@ -122,20 +120,9 @@ final class DocumentSession extends Model
 		return $this->userId;
 	}
 
-	/**
-	 * @return \Bitrix\Disk\EmptyUser|\Bitrix\Disk\SystemUser|User
-	 */
-	public function getUser(): ?User
+	public function belongsToUser(int $userId): bool
 	{
-		if ($this->user && $this->isLoadedAttribute('user') && $this->userId == $this->user->getId())
-		{
-			return $this->user;
-		}
-
-		$this->user = User::getModelForReferenceField($this->userId, $this->user);
-		$this->setAsLoadedAttribute('user');
-
-		return $this->user;
+		return $userId === $this->getUserId();
 	}
 
 	/**
@@ -144,22 +131,6 @@ final class DocumentSession extends Model
 	public function getOwnerId(): int
 	{
 		return $this->ownerId;
-	}
-
-	/**
-	 * @return \Bitrix\Disk\EmptyUser|\Bitrix\Disk\SystemUser|User
-	 */
-	public function getOwner(): ?User
-	{
-		if ($this->owner && $this->isLoadedAttribute('owner') && $this->ownerId == $this->owner->getId())
-		{
-			return $this->owner;
-		}
-
-		$this->owner = User::getModelForReferenceField($this->ownerId, $this->owner);
-		$this->setAsLoadedAttribute('owner');
-
-		return $this->owner;
 	}
 
 	/**
@@ -186,12 +157,48 @@ final class DocumentSession extends Model
 		return $this->createTime;
 	}
 
+	public function isOutdatedByFileContent(): bool
+	{
+		return $this->getObject()->getSyncUpdateTime() > $this->getCreateTime();
+	}
+
 	/**
 	 * @return int
 	 */
 	public function getType(): int
 	{
-		return (int)$this->type;
+		return $this->type;
+	}
+
+	public function createInfo(): DocumentInfo
+	{
+		$documentInfo = $this->getInfo();
+		if ($documentInfo)
+		{
+			return $documentInfo;
+		}
+
+		$result = DocumentSessionTable::tryToAddInfo([
+			'EXTERNAL_HASH' => $this->getExternalHash(),
+			'OBJECT_ID' => $this->getObjectId(),
+			'VERSION_ID'    => $this->getVersionId(),
+			'OWNER_ID'  => $this->getOwnerId(),
+		]);
+
+		if (!$result)
+		{
+			throw new ObjectNotFoundException("Could not find or creat info for {$this->getExternalHash()}");
+		}
+
+		return DocumentInfo::buildFromResult($result);
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getStatus(): int
+	{
+		return $this->status;
 	}
 
 	public function getContextRaw(): ?string
@@ -214,10 +221,47 @@ final class DocumentSession extends Model
 		return $this->getType() === self::TYPE_EDIT;
 	}
 
+	public function isActive(): bool
+	{
+		return $this->getStatus() === self::STATUS_ACTIVE;
+	}
+
+	public function isNonActive(): bool
+	{
+		return $this->getStatus() === self::STATUS_NON_ACTIVE;
+	}
+
+	public function setAsActive(): bool
+	{
+		return $this->update([
+			'STATUS' => self::STATUS_ACTIVE,
+		]);
+	}
+
+	public function setAsNonActive(): bool
+	{
+		return $this->update([
+			'STATUS' => self::STATUS_NON_ACTIVE,
+		]);
+	}
+
 	public function forkForUser(int $userId, ?DocumentSessionContext $context = null): ?self
 	{
 		return self::add([
 			'EXTERNAL_HASH' => $this->getExternalHash(),
+			'OBJECT_ID' => $this->getObjectId(),
+			'VERSION_ID' => $this->getVersionId(),
+			'USER_ID' => $userId,
+			'OWNER_ID' => $this->getOwnerId(),
+			'IS_EXCLUSIVE' => $this->isExclusive(),
+			'TYPE' => $this->getType(),
+			'CONTEXT' => $context? $context->toJson() : $this->getContextRaw(),
+		], $this->errorCollection);
+	}
+
+	public function cloneWithNewHash(int $userId, ?DocumentSessionContext $context = null): ?self
+	{
+		return self::add([
 			'OBJECT_ID' => $this->getObjectId(),
 			'VERSION_ID' => $this->getVersionId(),
 			'USER_ID' => $userId,
@@ -234,9 +278,10 @@ final class DocumentSession extends Model
 			'OBJECT_ID' => $this->getObjectId(),
 			'VERSION_ID' => $this->getVersionId(),
 			'TYPE' => self::TYPE_EDIT,
+			'STATUS' => self::STATUS_ACTIVE,
 		]);
 
-		if ($currentEditSession && $currentEditSession->getUserId() == $this->getUserId())
+		if ($currentEditSession && $currentEditSession->belongsToUser($this->getUserId()))
 		{
 			return $currentEditSession;
 		}
@@ -271,6 +316,11 @@ final class DocumentSession extends Model
 
 	public function canTransformToEdit(SecurityContext $securityContext): bool
 	{
+		return $this->canEdit($securityContext);
+	}
+
+	public function canEdit(SecurityContext $securityContext): bool
+	{
 		$context = $this->getContext();
 		if (!$context)
 		{
@@ -282,26 +332,136 @@ final class DocumentSession extends Model
 			return true;
 		}
 
+		if ($context->getExternalLink() && $context->getExternalLink()->allowEdit())
+		{
+			return true;
+		}
+
 		return $securityContext->canUpdate($this->getObjectId());
+	}
+
+	public function canUserEdit(CurrentUser $user): bool
+	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
+			return false;
+		}
+
+		return $this->canEdit($securityContext);
 	}
 
 	public function canTransformUserToEdit(CurrentUser $user): bool
 	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
+			return false;
+		}
+
+		return $this->canTransformToEdit($securityContext);
+	}
+
+	public function canRename(SecurityContext $securityContext): bool
+	{
+		return $securityContext->canRename($this->getObjectId());
+	}
+
+	public function canUserRename(CurrentUser $user): bool
+	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
+			return false;
+		}
+
+		return $this->canRename($securityContext);
+	}
+
+	protected function getSecurityContext(CurrentUser $user): ?SecurityContext
+	{
 		$file = $this->getObject();
 		if (!$file)
 		{
-			return false;
+			return null;
 		}
 
 		$storage = $file->getStorage();
 		if (!$storage)
 		{
+			return null;
+		}
+
+		return $storage->getSecurityContext($user);
+	}
+
+	public function canUserShare(CurrentUser $user): bool
+	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
 			return false;
 		}
 
-		$securityContext = $storage->getSecurityContext($user);
+		return $this->canShare($securityContext);
+	}
 
-		return $this->canTransformToEdit($securityContext);
+	public function canShare(SecurityContext $securityContext): bool
+	{
+		if ($securityContext->canShare($this->getObjectId()))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public function canUserChangeRights(CurrentUser $user): bool
+	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
+			return false;
+		}
+
+		return $this->canChangeRights($securityContext);
+	}
+
+	public function canChangeRights(SecurityContext $securityContext): bool
+	{
+		if ($securityContext->canChangeRights($this->getObjectId()))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public function canUserRead(CurrentUser $user): bool
+	{
+		$securityContext = $this->getSecurityContext($user);
+		if (!$securityContext)
+		{
+			return false;
+		}
+
+		return $this->canRead($securityContext);
+	}
+
+	public function canRead(SecurityContext $securityContext): bool
+	{
+		$context = $this->getContext();
+		if (!$context)
+		{
+			return $securityContext->canRead($this->getObjectId());
+		}
+
+		if ($context->getAttachedObject() && $context->getAttachedObject()->canRead($securityContext->getUserId()))
+		{
+			return true;
+		}
+
+		return $securityContext->canRead($this->getObjectId());
 	}
 
 	protected function isSingleUsageOfExternalHash(): bool
@@ -317,6 +477,16 @@ final class DocumentSession extends Model
 		return $this->deleteInternal();
 	}
 
+	public function countActiveSessions(): int
+	{
+		$countActiveSessions = DocumentSessionTable::getCount([
+			'=EXTERNAL_HASH' => $this->getExternalHash(),
+			'=STATUS' => DocumentSessionTable::STATUS_ACTIVE,
+		]);
+
+		return $countActiveSessions;
+	}
+
 	public static function getMapAttributes()
 	{
 		return [
@@ -329,6 +499,7 @@ final class DocumentSession extends Model
 			'EXTERNAL_HASH' => 'externalHash',
 			'CREATE_TIME' => 'createTime',
 			'TYPE' => 'type',
+			'STATUS' => 'status',
 			'CONTEXT' => 'context',
 		];
 	}
@@ -343,15 +514,37 @@ final class DocumentSession extends Model
 		$fields = User::getFieldsForSelect();
 
 		return [
-			'OBJECT' => File::class,
-			'VERSION' => Version::class,
-			'USER' => [
+			self::REF_USER => [
 				'class' => User::class,
 				'select' => $fields,
+				'load' => function(self $documentSession){
+					return User::loadById($documentSession->getUserId());
+				},
 			],
-			'OWNER' => [
+			self::REF_OWNER => [
 				'class' => User::class,
 				'select' => $fields,
+				'load' => function(self $documentSession){
+					return User::loadById($documentSession->getOwnerId());
+				},
+			],
+			self::REF_OBJECT => [
+				'class' => File::class,
+				'load' => function(self $documentSession){
+					return File::loadById($documentSession->getObjectId());
+				},
+			],
+			self::REF_VERSION => [
+				'class' => Version::class,
+				'load' => function(self $documentSession){
+					return Version::loadById($documentSession->getVersionId());
+				},
+			],
+			self::REF_INFO => [
+				'class' => DocumentInfo::class,
+				'load' => function(self $documentSession){
+					return DocumentInfo::loadById($documentSession->getExternalHash());
+				},
 			],
 		];
 	}

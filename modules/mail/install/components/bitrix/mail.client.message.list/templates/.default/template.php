@@ -533,6 +533,23 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 			],
 		],
 	],
+	[
+		'DISABLED' => ($arResult['currentDir'] !== '[Gmail]/All Mail') ? false : true,
+		'TYPE' => Main\Grid\Panel\Types::BUTTON,
+		'ID' => $arResult['gridActionsData']['deleteImmediately']['id'],
+		'ICON' => $arResult['gridActionsData']['deleteImmediately']['icon'],
+		'TEXT' => $arResult['gridActionsData']['deleteImmediately']['text'],
+		'ONCHANGE' => [
+			[
+				'ACTION' => Main\Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
+					[
+						'JS' => "BX.Mail.Client.Message.List['" . CUtil::JSEscape($component->getComponentId()) . "'].onDeleteImmediately()",
+					],
+				],
+			],
+		],
+	],
 ]);
 
 ?>
@@ -642,6 +659,7 @@ $APPLICATION->includeComponent(
 	}
 
 	BX.message({
+		MAILBOX_LINK: '<?= CUtil::JSEscape($arResult['MAILBOX']['LINK'])?>',
 		MAIL_MESSAGE_GRID_ID: '<?= CUtil::JSEscape($arResult['GRID_ID'])?>',
 		INTERFACE_MAIL_CHECK_ALL: '<?=Loc::getMessage('INTERFACE_MAIL_CHECK_ALL')?>',
 		MAIL_MESSAGE_LIST_COLUMN_BIND_TASKS_TASK: '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_LIST_COLUMN_BIND_TASKS_TASK')) ?>',

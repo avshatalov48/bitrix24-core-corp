@@ -231,6 +231,18 @@ class TaskCheckListFacade extends CheckListFacade
 	}
 
 	/**
+	 * Does some actions before merging checklists.
+	 *
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param array $data
+	 */
+	public static function doMergePreActions($taskId, $userId, $data = []): void
+	{
+		static::$collectedData = [];
+	}
+
+	/**
 	 * Does some actions after merging checklists.
 	 *
 	 * @param int $taskId

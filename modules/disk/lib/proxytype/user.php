@@ -10,6 +10,8 @@ Loc::loadMessages(__FILE__);
 
 class User extends Disk
 {
+	public const SUFFIX_DOCUMENTS_LIST = 'documents/';
+
 	/** @var \Bitrix\Disk\User */
 	private $user;
 
@@ -100,5 +102,14 @@ class User extends Disk
 		}
 
 		return $this->user;
+	}
+
+	/**
+	 * Gets url on documents.
+	 * @return string
+	 */
+	public function getBaseUrlDocumentList(): string
+	{
+		return '/' . trim($this->getStorageBaseUrl(), '/') . '/' . static::SUFFIX_DOCUMENTS_LIST;
 	}
 }

@@ -1505,9 +1505,11 @@
 	-o-text-overflow: ellipsis;
 	   text-overflow: ellipsis;
 	max-width: 50%;
+	margin-right: -22px;
 }
 
 .salescenter-app-payment-by-sms-item-container-payment-title-item-text {
+	display: inline;
 	height: 20px;
 	line-height: 24px;
 	-webkit-transition: all .2s linear;
@@ -1682,7 +1684,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	margin: 0 7px 20px;
+	margin: 0 7px 17px;
 }
 
 .salescenter-app-payment-by-sms-item-container-select-text {
@@ -1701,6 +1703,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
+	margin-left: auto;
 }
 
 .salescenter-app-payment-by-sms-item-container-select-arrow {
@@ -2289,4 +2292,131 @@
 	padding-bottom: 14px;
 	margin-bottom: 7px;
 	border-bottom: 1px solid #f0f3f5;
+}
+
+.main-ui-loader.main-ui-loader-custom {
+	position: absolute;
+	display: inline-block;
+	width: 110px;
+	height: 110px;
+	top: 50%;
+	left: 50%;
+	-webkit-transform: translate3d(-50%, -50%, 0);
+	-ms-transform: translate3d(-50%, -50%, 0);
+	transform: translate3d(-50%, -50%, 0);
+	will-change: transform;
+	z-index: 5000;
+}
+
+.salescenter-delivery-selector-head,
+.salescenter-delivery-selector-info {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	width: 100%;
+}
+
+.salescenter-delivery-selector-head {
+	margin-bottom: 20px;
+}
+
+.salescenter-delivery-selector-logo {
+	display: inline-block;
+	margin-right: 11px;
+	min-width: 46px;
+	min-height: 30px;
+	width: 46px;
+	height: 30px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.salescenter-delivery-selector-info .salescenter-delivery-selector-logo {
+	margin-right: 13px;
+	width: 30px;
+	height: 30px;
+	min-width: 30px;
+	min-height: 30px;
+}
+
+.salescenter-delivery-selector-text-light {
+	display: block;
+	margin-bottom: 3px;
+	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+	opacity: .5;
+}
+
+.salescenter-delivery-selector-text-dark {
+	display: block;
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+}
+
+.salescenter-delivery-selector-main .salescenter-delivery-selector-text-light {
+	margin-bottom: 5px;
+}
+
+.salescenter-delivery-selector-list {
+	padding: 0;
+	margin: 0 0 23px 0;
+}
+
+.salescenter-delivery-selector-list .salescenter-delivery-selector-list-item {
+	margin-bottom: 3px;
+	list-style: none;
+}
+
+
+.salescenter-delivery-selector-line {
+	display: block;
+	height: 1px;
+	margin: 26px 0 19px 0;
+	background: rgba(82,92,105,.1);
+}
+
+.catalog-pf-result-padding-bottom {
+	padding-bottom: 14px;
+}
+
+.salescenter-app-order-selector {
+	width: 100%;
+	font-size: 14px;
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	line-height: normal;
+	color: #828a94;
+	margin: -20px 0 15px 7px;
+}
+
+.salescenter-app-order-selector.is-hidden {
+	display: none;
+}
+
+.salescenter-app-order-selector-text {
+	border-bottom: 1px dashed #828a94;
+	cursor: pointer;
+	position: relative;
+}
+
+.salescenter-app-order-selector-text:after {
+	content: '';
+	position: absolute;
+	right: -15px;
+	top: 5px;
+	width: 5px;
+	height: 5px;
+	border: 2px solid #828a94;
+	border-top: none;
+	border-left: none;
+	-webkit-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	opacity: 0.7;
+	-webkit-transition: .2s;
+	-o-transition: .2s;
+	transition: .2s;
 }

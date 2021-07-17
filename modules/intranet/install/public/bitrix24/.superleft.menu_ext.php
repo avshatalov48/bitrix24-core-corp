@@ -143,7 +143,19 @@ $arMenu[] = array(
 	),
 	""
 );
-
+if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') === 'Y')
+{
+	$arMenu[] = array(
+		GetMessage("MENU_DISK_DOCUMENTS"),
+		"/company/personal/user/".$userId."/disk/documents/",
+		[],
+		array(
+			"menu_item_id" => "menu_documents",
+			"my_tools_section" => true,
+		),
+		""
+	);
+}
 $arMenu[] = array(
 	GetMessage("MENU_PHOTO"),
 	"/company/personal/user/".$userId."/photo/",
@@ -170,13 +182,14 @@ $arMenu[] = array(
 
 if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 {
+	$counterId = CCrmSaleHelper::isWithOrdersMode() ? 'crm_all' : 'crm_all_no_orders';
 	$arMenu[] = array(
 		GetMessage("MENU_CRM"),
 		"/crm/menu/",
 		array("/crm/"),
 		array(
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
-			"counter_id" => "crm_all",
+			"counter_id" => $counterId,
 			"menu_item_id" => "menu_crm_favorite",
 			"top_menu_id" => "crm_control_panel_menu"
 		),
@@ -218,20 +231,26 @@ if (CModule::IncludeModule("crm") && CCrmSaleHelper::isShopAccess())
 		);
 	}
 
+	$includeCounter = CCrmSaleHelper::isWithOrdersMode();
+	$parameters = [
+		'real_link' => getLeftMenuItemLink(
+			'store',
+			'/shop/orders/menu/'
+		),
+		'menu_item_id' => 'menu_shop',
+		'top_menu_id' => 'store',
+		'is_beta' => true
+	];
+	if ($includeCounter)
+	{
+		$parameters['counter_id'] = 'shop_all';
+	}
+
 	$arMenu[] = array(
 		GetMessage("MENU_SHOP"),
 		"/shop/menu/",
 		array("/shop/"),
-		array(
-			"real_link" => getLeftMenuItemLink(
-				"store",
-				"/shop/orders/menu/"
-			),
-			"counter_id" => "shop_all",
-			"menu_item_id" => "menu_shop",
-			"top_menu_id" => "store",
-			"is_beta" => true
-		),
+		$parameters,
 		""
 	);
 }

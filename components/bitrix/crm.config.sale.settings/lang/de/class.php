@@ -16,6 +16,7 @@ $MESS["CRM_CF_LOCATION_TITLE"] = "Adresse des Onlineshops";
 $MESS["CRM_CF_LOCATION_ZIP"] = "PLZ:";
 $MESS["CRM_CF_NOTIFY_PRODUCT_USE"] = "Benachrichtigungen über Wieder-Auf-Lager schicken";
 $MESS["CRM_CF_NUMERATOR_TITLE"] = "Bestellnummerierung aktivieren";
+$MESS["CRM_CF_ORDER_DEAL_CREATE"] = "Aufträge an alle Bestellungen anbinden";
 $MESS["CRM_CF_ORDER_DEFAULT_RESPONSIBLE_ID"] = "Person, die für die Bestellung verantwortlich ist (standardmäßig)";
 $MESS["CRM_CF_ORDER_NUMERATOR_TEMPLATE"] = "Vorlage zur Bestellnummerierung";
 $MESS["CRM_CF_ORDER_TRACKING_AUTOCHECK"] = "Lieferstatus automatisch prüfen";

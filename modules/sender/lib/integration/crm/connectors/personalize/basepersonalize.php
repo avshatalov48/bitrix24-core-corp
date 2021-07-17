@@ -336,21 +336,20 @@ abstract class BasePersonalize
 
 	private static function buildAddress($entityType,$address)
 	{
-		$addressFormatter = '\\Bitrix\\Crm\\Format\\'.
-			ucfirst(strtolower($entityType)).
-			'AddressFormatter';
-
-		return $addressFormatter::format(
-			[
-				'ADDRESS' => $address['ADDRESS'],
-				'ADDRESS_2' => $address['ADDRESS_2'],
-				'ADDRESS_CITY' => $address['ADDRESS_CITY'],
-				'ADDRESS_REGION' => $address['ADDRESS_REGION'],
-				'ADDRESS_PROVINCE' => $address['ADDRESS_PROVINCE'],
-				'ADDRESS_POSTAL_CODE' => $address['ADDRESS_POSTAL_CODE'],
-				'ADDRESS_COUNTRY' => $address['ADDRESS_COUNTRY']
-			],
-			array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::Comma)
+		$entityAddressClassName = '\\Bitrix\\Crm\\Format\\'.ucfirst(strtolower($entityType)).'Address';
+		return Bitrix\Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
+			$entityAddressClassName::mapEntityFields(
+				[
+					'ADDRESS' => $address['ADDRESS'],
+					'ADDRESS_2' => $address['ADDRESS_2'],
+					'ADDRESS_CITY' => $address['ADDRESS_CITY'],
+					'ADDRESS_REGION' => $address['ADDRESS_REGION'],
+					'ADDRESS_PROVINCE' => $address['ADDRESS_PROVINCE'],
+					'ADDRESS_POSTAL_CODE' => $address['ADDRESS_POSTAL_CODE'],
+					'ADDRESS_COUNTRY' => $address['ADDRESS_COUNTRY'],
+					'ADDRESS_LOC_ADDR_ID' => $address['ADDRESS_COUNTRY']
+				]
+			)
 		);
 	}
 
@@ -472,7 +471,20 @@ abstract class BasePersonalize
 					'UF_XING',
 					'UF_WEB_SITES',
 					'UF_PHONE_INNER',
-				]
+				],
+				'FIELDS' => [
+					'EMAIL',
+					'WORK_PHONE',
+					'PERSONAL_MOBILE',
+					'LOGIN',
+					'ACTIVE',
+					'NAME',
+					'LAST_NAME',
+					'SECOND_NAME',
+					'WORK_POSITION',
+					'PERSONAL_WWW',
+					'PERSONAL_CITY',
+				],
 			]
 		);
 

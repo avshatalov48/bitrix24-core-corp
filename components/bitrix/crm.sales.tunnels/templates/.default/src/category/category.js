@@ -529,6 +529,9 @@ export class Category extends Event.EventEmitter
 				this.emit('Column:removeLinkFrom', link);
 				this.adjustRobotsLinkIcon();
 			},
+			onChangeRobotAction: (event) => {
+				this.emit('Column:changeRobotAction', event);
+			},
 			onEditLink: (link) => {
 				this.emit('Column:editLink', link);
 				this.adjustRobotsLinkIcon();

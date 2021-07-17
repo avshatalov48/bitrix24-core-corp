@@ -1,0 +1,9 @@
+<?php
+$MESS["CRM_KANBAN_FIELD_OBSERVER"] = "Спостерігачі";
+$MESS["CRM_KANBAN_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Сума та валюта";
+$MESS["CRM_KANBAN_FIELD_ORDER_PAYMENTS"] = "Оплати";
+$MESS["CRM_KANBAN_FIELD_ORDER_PROBLEM_NOTIFICATION"] = "Проблеми із замовленням";
+$MESS["CRM_KANBAN_FIELD_ORDER_SHIPMENTS"] = "Відвантаження";
+$MESS["CRM_KANBAN_FIELD_ORDER_TITLE"] = "Назва зомовлення";
+$MESS["CRM_KANBAN_FIELD_RECURRING"] = "Регулярна угода";
+$MESS["CRM_KANBAN_FIELD_SOURCE_DESCRIPTION"] = "Додатково про джерело";

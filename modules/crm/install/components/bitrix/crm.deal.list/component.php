@@ -401,6 +401,7 @@ if($fromAnalytics)
 	else
 	{
 		$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
+		$boardId = preg_replace('/[^\w-_]/', '', $boardId);
 		$externalFilterId = 'report_board_' . $boardId . '_filter';
 	}
 }
@@ -687,6 +688,7 @@ if ($arParams['IS_RECURRING'] === 'Y')
 			array('id' => 'PROBABILITY', 'name' => GetMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
 			array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 			array('id' => 'ORDER_STAGE', 'name' => GetMessage('CRM_COLUMN_ORDER_STAGE'), 'sort' => 'order_stage', 'editable' => false),
+			array('id' => 'DELIVERY_STAGE', 'name' => GetMessage('CRM_COLUMN_DELIVERY_STAGE'), 'sort' => false, 'editable' => false),
 			array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
 			array('id' => 'ORIGINATOR_ID', 'name' => GetMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
 
@@ -716,6 +718,7 @@ else
 			array('id' => 'PROBABILITY', 'name' => GetMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
 			array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 			array('id' => 'ORDER_STAGE', 'name' => GetMessage('CRM_COLUMN_ORDER_STAGE'), 'sort' => 'order_stage', 'editable' => false, 'default' => true),
+			array('id' => 'DELIVERY_STAGE', 'name' => GetMessage('CRM_COLUMN_DELIVERY_STAGE'), 'sort' => false, 'editable' => false),
 			array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
 			array('id' => 'ORIGINATOR_ID', 'name' => GetMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
 
@@ -1062,6 +1065,35 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 }
 //endregion
 
+if (isset($arFilter['ORDER_SOURCE']))
+{
+	$orderSourceQuery = new Main\Entity\Query(Crm\DealTable::getEntity());
+	$orderSourceQuery->setSelect(['ID']);
+	$orderSourceQuery->setFilter([
+		'ORDER_BINDING.ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $arFilter['ORDER_SOURCE'],
+	]);
+
+	$orderSourceSql = $orderSourceQuery->getQuery();
+
+	$arFilter['__CONDITIONS'][] = [
+		'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$orderSourceSql})",
+	];
+
+	unset($orderSourceQuery, $orderSourceSql, $arFilter['ORDER_SOURCE']);
+}
+
+if (isset($arFilter['DELIVERY_STAGE']) && is_array($arFilter['DELIVERY_STAGE']))
+{
+	$deliveryStageFilter = new Crm\Deal\DeliveryStageFilter($arFilter['DELIVERY_STAGE']);
+	if ($sql = $deliveryStageFilter->getDealIdQuery())
+	{
+		$arFilter['__CONDITIONS'][] = [
+			'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$sql})",
+		];
+	}
+	unset($arFilter['DELIVERY_STAGE']);
+}
+
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 
 $arImmutableFilters = array(
@@ -1077,7 +1109,7 @@ $arImmutableFilters = array(
 	'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'SEARCH_CONTENT',
 	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
-	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'ORDER_STAGE'
+	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'ORDER_STAGE', 'ORDER_SOURCE', 'DELIVERY_STAGE',
 );
 
 foreach ($arFilter as $k => $v)
@@ -2910,6 +2942,52 @@ if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
 			$arEntity['PRODUCT_ROWS'] = array();
 		}
 		$arEntity['PRODUCT_ROWS'][] = $arProductRow;
+	}
+
+	// fetch delivery stage from latest related shipment
+	$orderIds = [];
+	$orderToDealMap = [];
+
+	$dealOrders = Bitrix\Crm\Order\DealBinding::getList([
+		'select' => ['ORDER_ID', 'DEAL_ID'],
+		'filter' => [
+			'=DEAL_ID' => array_keys($arResult['DEAL_ID'])
+		]
+	]);
+
+	while ($binding = $dealOrders->fetch())
+	{
+		$orderIds[] = (int)$binding['ORDER_ID'];
+		$orderToDealMap[(int)$binding['ORDER_ID']] = (int)$binding['DEAL_ID'];
+	}
+
+	if (count($orderIds) > 0)
+	{
+		$select = ['ID', 'ORDER_ID', 'DEDUCTED'];
+		$where = ['=ORDER_ID' => $orderIds, '!SYSTEM' => 'Y'];
+		$orderBy = ['ID' => 'desc'];
+
+		$shipments = Bitrix\Crm\Order\ShipmentCollection::getList([
+			'select' => $select,
+			'filter' => $where,
+			'order' => $orderBy,
+		]);
+		while ($shipment = $shipments->fetch())
+		{
+			$orderId = (int)$shipment['ORDER_ID'];
+			$dealId = $orderToDealMap[$orderId];
+			if ($dealId && isset($arResult['DEAL'][$dealId]) && !isset($arResult['DEAL'][$dealId]['DELIVERY_STAGE']))
+			{
+				if ($shipment['DEDUCTED'] === 'Y')
+				{
+					$arResult['DEAL'][$dealId]['DELIVERY_STAGE'] = Bitrix\Crm\Order\DeliveryStage::SHIPPED;
+				}
+				else
+				{
+					$arResult['DEAL'][$dealId]['DELIVERY_STAGE'] = Bitrix\Crm\Order\DeliveryStage::NO_SHIPPED;
+				}
+			}
+		}
 	}
 }
 

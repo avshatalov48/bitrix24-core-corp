@@ -53,7 +53,7 @@ class VisibilityManager
 
 	/**
 	 * @param int $entityTypeId
-	 * @param array $userAccessCodes
+	 * @param array|null $userAccessCodes
 	 * @return array
 	 */
 	public static function getNotAccessibleFields(int $entityTypeId, ?array $userAccessCodes = null): array
@@ -80,6 +80,12 @@ class VisibilityManager
 		return $excludedFields;
 	}
 
+	/**
+	 * @param int $entityTypeId
+	 * @param array $fieldNames
+	 * @param array|null $userAccessCodes
+	 * @return array
+	 */
 	public static function filterNotAccessibleFields(
 		int $entityTypeId,
 		array $fieldNames,
@@ -95,6 +101,9 @@ class VisibilityManager
 		return array_diff($fieldNames, $notAccessibleFields);
 	}
 
+	/**
+	 * @return array
+	 */
 	private static function getUserAccessCodes(): array
 	{
 		$user = \CCrmSecurityHelper::getCurrentUser();

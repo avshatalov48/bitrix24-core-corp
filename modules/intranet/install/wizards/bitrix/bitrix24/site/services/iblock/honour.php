@@ -31,7 +31,6 @@ if($iblockID == false)
 			"1" => "X",
 			"2" => "R",
 			WIZARD_PORTAL_ADMINISTRATION_GROUP => "X",
-			WIZARD_PERSONNEL_DEPARTMENT_GROUP => "X",
 		)
 	);
 

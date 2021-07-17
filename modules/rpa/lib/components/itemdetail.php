@@ -415,7 +415,7 @@ abstract class ItemDetail extends Base implements Controllerable
 			$data[$fieldName] = $userId;
 			$data[$fieldName . '_FORMATTED_NAME'] = $users[$userId]['fullName'];
 			$data[$fieldName . '_WORK_POSITION'] = $users[$userId]['workPosition'];
-			$data[$fieldName . '_PHOTO_URL'] = $users[$userId]['personalPhoto'];
+			$data[$fieldName . '_PHOTO_URL'] = $users[$userId]['photo'];
 			$data[$fieldName . '_SHOW_URL'] = $users[$userId]['link'];
 		}
 

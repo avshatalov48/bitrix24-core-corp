@@ -79,7 +79,7 @@ export default class PostForm
 		}
 
 		BX.SidePanel.Instance.postMessageAll(window, 'SidePanel.Wrapper:onClose', {
-			sliderData: sliderInstance.getData()
+			sliderData: sliderInstance.getData(),
 		});
 	};
 
@@ -93,16 +93,26 @@ export default class PostForm
 			this.container = Type.isDomNode(params.container) ? params.container : null;
 			this.containerMicro = Type.isDomNode(params.containerMicro) ? params.containerMicro : null;
 			this.containerMicroInner = Type.isDomNode(params.containerMicroInner) ? params.containerMicroInner : null;
+			this.successPostId = !Type.isUndefined(params.successPostId) && parseInt(params.successPostId) > 0 ? parseInt(params.successPostId) : 0;
 		}
 
 		const sliderInstance = BX.SidePanel.Instance.getTopSlider();
-		if (
-			sliderInstance
-			&& !sliderInstance.getData().get('initialized')
-		)
+		if (sliderInstance)
 		{
-			EventEmitter.subscribe(sliderInstance, 'SidePanel.Slider:onClose', this.onSliderClose);
-			sliderInstance.getData().set('initialized', true);
+			if (this.successPostId > 0)
+			{
+				BX.SidePanel.Instance.postMessage(window, 'Socialnetwork.PostForm:onAdd', {
+					originatorSliderId: sliderInstance.getData().get('sliderId'),
+					successPostId: this.successPostId,
+				});
+
+				BX.SidePanel.Instance.close();
+			}
+			else if (!sliderInstance.getData().get('initialized'))
+			{
+				EventEmitter.subscribe(sliderInstance, 'BX.Socialnetwork.SidePanel.Slider:onClose', this.onSliderClose);
+				sliderInstance.getData().set('initialized', true);
+			}
 		}
 	};
 

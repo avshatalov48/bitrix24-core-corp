@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_Y"] = "Убрать из избранного";
 $MESS["MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_N"] = "Добавить в избранное";
 $MESS["MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_Y"] = "Больше не следить";
@@ -52,3 +52,6 @@ $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE"] = "Пост был зак�
 $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION"] = "Теперь он находится вверху ленты";
 $MESS["MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON"] = "отменить";
 $MESS["MOBILE_EXT_LIVEFEED_PLAYER_ERROR_MESSAGE"] = "К сожалению, приложение не может воспроизвести этот файл.<br />Вы можете <span class=\"disk-mobile-player-download\">скачать</span> и посмотреть его на вашем устройстве";
+$MESS["MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y"] = "Нравится";
+$MESS["MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_N"] = "Не нравится";
+$MESS["MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_D"] = "Это нравится";

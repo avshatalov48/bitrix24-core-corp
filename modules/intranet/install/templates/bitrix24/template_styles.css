@@ -528,6 +528,14 @@ td.bx-layout-inner-inner-cont {
 	margin: 0 5px;
 }
 
+.timeman-status {
+	max-width: 90px;
+	display: inline-block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 .planner-wrap .timeman-event, .planner-wrap .timeman-tasks {
 	display: block;
 	margin: 3px 11px 3px 0;
@@ -3873,7 +3881,7 @@ a.td1:hover {
 	display: flex;
 	margin: auto 19px auto 0;
 	width: 100%;
-	max-width: 813px;
+	max-width: 780px;
 	min-width: 300px;
 }
 
@@ -4359,4 +4367,70 @@ a.td1:hover {
 .header-personal {
 	order: 5;
 	display: flex;
+}
+
+.popup-window-blur {
+	background-color: transparent;
+	padding: 0;
+}
+
+.popup-window-blur .popup-window-content {
+	background-color: transparent;
+	overflow: hidden !important;
+	position: relative;
+	padding: 10px;
+}
+
+.popup-window-blur .popup-window-content:after {
+	content: '';
+	background-size: cover;
+	filter: blur(48px);
+	background-repeat: no-repeat;
+	background-position: -240px -200px;
+	transform: scale(1.2);
+	background-attachment: fixed;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -240px;
+	width: 100vw;
+	z-index: -2;
+	pointer-events: none;
+}
+
+.popup-window-blur .popup-window-content:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #fff;
+	opacity: .75;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.popup-window-blur .popup-window-angly:after {
+	content: '';
+	height: 15px;
+	position: absolute;
+	left: 9px;
+	top: 16px;
+	transform: rotate(45deg);
+	transform-origin: 50% 50%;
+	width: 14px;
+	z-index: -1;
+}
+
+.popup-window-blur .popup-window-angly:before {
+	opacity: .8;
+}
+
+.ui-page-slider-wrapper .intranet-binding-menu-btn {
+	margin-right: 0;
+}
+
+.ui-page-slider-wrapper .intranet-binding-menu-btn + script + .ui-btn {
+	margin-left: 12px;
 }

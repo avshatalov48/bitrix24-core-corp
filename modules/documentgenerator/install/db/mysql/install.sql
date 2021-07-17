@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS `b_documentgenerator_document` (
   `UPDATED_BY` int(11),
   `VALUES` TEXT NULL,
   PRIMARY KEY (ID),
-  INDEX ix_docgen_doc_templ(TEMPLATE_ID)
+  INDEX ix_docgen_doc_templ(TEMPLATE_ID),
+  INDEX ix_docgen_doc_file(FILE_ID)
 );
 
 CREATE TABLE IF NOT EXISTS `b_documentgenerator_file` (

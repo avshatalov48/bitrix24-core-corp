@@ -373,6 +373,7 @@ export class EntityEditorBaseAddressField
 		addressItem.subscribe('onDelete', this.onDeleteAddress.bind(this));
 		addressItem.subscribe('onStartLoadAddress', this.onStartLoadAddress.bind(this));
 		addressItem.subscribe('onAddressLoaded', this.onAddressLoaded.bind(this));
+		addressItem.subscribe('onAddressDataInputting', this.onAddressDataInputting.bind(this));
 		addressItem.subscribe('onError', this.onError.bind(this));
 		addressItem.subscribe('onCopyAddress', this.onCopyAddress.bind(this));
 		this.updateAvailableTypes(type, null);
@@ -500,6 +501,11 @@ export class EntityEditorBaseAddressField
 	onAddressLoaded(event)
 	{
 		EventEmitter.emit(this, 'onAddressLoaded');
+	}
+
+	onAddressDataInputting(event)
+	{
+		EventEmitter.emit(this, 'onAddressDataInputting');
 	}
 
 	onError(event)
@@ -1186,9 +1192,13 @@ class AddressItem extends EventEmitter
 		{
 			this.emit('onStartLoadAddress', {id: this.getId()});
 		}
-		if (state === BX.Location.Widget.State.DATA_LOADED)
+		else if (state === BX.Location.Widget.State.DATA_LOADED)
 		{
 			this.emit('onAddressLoaded', {id: this.getId()});
+		}
+		else if (state === BX.Location.Widget.State.DATA_INPUTTING)
+		{
+			this.emit('onAddressDataInputting', {id: this.getId()});
 		}
 	}
 

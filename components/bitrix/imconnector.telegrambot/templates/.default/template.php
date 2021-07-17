@@ -40,7 +40,6 @@ $placeholder = $arResult["placeholder"]["api_token"] ? Loc::getMessage('IMCONNEC
 <?
 if (empty($arResult['PAGE']))
 {
-
 	?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section imconnector-field-section-social">

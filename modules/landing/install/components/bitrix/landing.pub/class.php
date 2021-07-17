@@ -19,6 +19,7 @@ use \Bitrix\Main\Config\Option;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\Event;
 use \Bitrix\Crm\UI\Webpack\CallTracker;
+use \Bitrix\Crm\MessageSender\NotificationsPromoManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -593,10 +594,11 @@ class LandingPubComponent extends LandingBaseComponent
 					array(
 						'ID' => $site['LANDING_ID_404']
 					),
-					array(
-						'ID' => $site['LANDING_ID_INDEX'],
-						'FOLDER_ID' => false
+					$site['LANDING_ID_INDEX']
+					? array(
+						'ID' => $site['LANDING_ID_INDEX']
 					)
+					: array()
 				),
 				$this->isPreviewMode
 				? array()
@@ -606,17 +608,18 @@ class LandingPubComponent extends LandingBaseComponent
 						'=ACTIVE' => ['Y', 'N'],
 						'FOLDER_ID' => false
 					),
-					array(
-						'ID' => $site['LANDING_ID_INDEX'],
-						'FOLDER_ID' => false
-					),
+					$site['LANDING_ID_INDEX']
+					? array(
+						'ID' => $site['LANDING_ID_INDEX']
+					)
+					: array(),
 					array(
 						'ID' => $site['LANDING_ID_404']
 					)
 				)
 			),
 			'order' => array(
-			//	'RULE' => 'asc',
+				'RULE' => 'asc',
 				'ID' => 'asc'
 			)
 		));
@@ -644,10 +647,11 @@ class LandingPubComponent extends LandingBaseComponent
 						($landing['ACTIVE'] == 'Y' || $this->isPreviewMode)
 					)
 					{
+						$fullMatch = null;
 						// check landing in subfolder
 						$resSub = Landing::getList(array(
 							'select' => array(
-								'ID', 'CODE', 'RULE', 'ACTIVE', 'DELETED'
+								'ID', 'CODE', 'RULE', 'ACTIVE', 'DELETED', 'FOLDER_ID'
 							),
 							'filter' => array(
 								'SITE_ID' => $site['ID'],
@@ -665,18 +669,22 @@ class LandingPubComponent extends LandingBaseComponent
 								)
 							),
 							'order' => array(
-							//	'RULE' => 'asc',
+								'RULE' => 'asc',
 								'ID' => 'asc'
 							)
 						));
 						while ($row = $resSub->fetch())
 						{
+							if ($landingIdExec)
+							{
+								continue;
+							}
 							if ($row['CODE'] == $landingSubUrl)
 							{
 								$landingIdExec = $checkExecId($row);
 							}
 							else if (
-								$row['RULE'] &&
+								$row['RULE'] && $row['RULE'] !== '(.*?)' &&
 								preg_match('@^'. trim($row['RULE']) . '$@i', $landingSubUrl, $matches)
 							)
 							{
@@ -684,6 +692,19 @@ class LandingPubComponent extends LandingBaseComponent
 								array_shift($matches);
 								$this->sefVariables = $matches;
 							}
+							if ($row['RULE'] === '(.*?)')
+							{
+								$fullMatch = $row;
+							}
+						}
+						if (
+							!$landingIdExec && $fullMatch &&
+							preg_match('@^'. trim($fullMatch['RULE']) . '$@i', $landingSubUrl, $matches)
+						)
+						{
+							$landingIdExec = $checkExecId($fullMatch);
+							array_shift($matches);
+							$this->sefVariables = $matches;
 						}
 					}
 				}
@@ -1204,7 +1225,7 @@ class LandingPubComponent extends LandingBaseComponent
 		$canonical = $domainName . Manager::getApplication()->getCurDir();
 		Manager::setPageView(
 			'MetaOG',
-			'<meta name="og:url" content="' . $canonical . '" />' . "\n" .
+			'<meta property="og:url" content="' . $canonical . '" />' . "\n" .
 			'<link rel="canonical" href="' . $canonical . '"/>'
 		);
 	}
@@ -1529,9 +1550,14 @@ class LandingPubComponent extends LandingBaseComponent
 						);
 					}
 					// views
-					if ($this->request('qr') == 'Y')// only for qr code
+					if ($this->request('promo') == 'Y')// only for promo hit
 					{
 						$this->sendPageViewPush($landing->getId());
+						if (\Bitrix\Main\Loader::includeModule('crm'))
+						{
+							NotificationsPromoManager::enablePromoSession($landing->getId());
+						}
+
 					}
 					\Bitrix\Landing\Landing\View::inc($lid);
 				}

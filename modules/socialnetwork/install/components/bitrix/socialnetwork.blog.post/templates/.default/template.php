@@ -822,6 +822,11 @@ else
 					$classList[] = 'feed-post-block-important';
 				}
 
+				if (!empty($arResult['Post']['BACKGROUND_CODE']))
+				{
+					$classList[] = 'feed-post-block-colored';
+				}
+
 				if (
 					(
 						$arResult["Post"]["textFormated"] === ''

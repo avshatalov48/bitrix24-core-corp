@@ -19,25 +19,18 @@ $emailSelectRuleValue = (string)$dialog->getCurrentValue($emailSelectRule['Field
 $attachmentType = isset($map['AttachmentType']) ? $map['AttachmentType'] : null;
 $attachment = isset($map['Attachment']) ? $map['Attachment'] : null;
 $from = isset($map['MessageFrom']) ? $map['MessageFrom'] : null;
-$fromValue = $from ? $dialog->getCurrentValue($from['FieldName'], $dialog->getCurrentValue('from','')) : null;
 
-$runtimeData = $dialog->getRuntimeData();
-$mailboxes = $runtimeData['mailboxes'];
-
-if ($from):?>
-<div style="display:none;">
-<?
-	$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
-?>
-</div>
-<div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text">
-	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($from['Name'])?>:</span>
-	<input type="hidden" name="<?=htmlspecialcharsbx($from['FieldName'])?>" value="<?=htmlspecialcharsbx($fromValue)?>" data-role="mailbox-selector-value">
-	<a class="bizproc-automation-popup-settings-link" data-role="mailbox-selector"></a>
-</div>
-<?
-endif;
-?>
+if ($from): ?>
+	<div style="display:none;">
+	<?php
+		$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
+	?>
+	</div>
+	<div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text">
+		<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-top"><?=htmlspecialcharsbx($from['Name'])?>:</span>
+		<?= $dialog->renderFieldControl($from)?>
+	</div>
+<?php endif; ?>
 <div class="bizproc-automation-popup-settings">
 	<?= $dialog->renderFieldControl($subject)?>
 </div>
@@ -158,112 +151,6 @@ endif;
 	$configAttributeValue = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($config));
 ?>
 <div class="bizproc-automation-popup-settings" data-role="file-selector" data-config="<?=$configAttributeValue?>"></div>
-<?if ($from):?>
-<script>
-
-	BX.ready(function ()
-	{
-		var dialog = BX.Bizproc.Automation.Designer.getRobotSettingsDialog();
-		if (!dialog)
-		{
-			return;
-		}
-
-		var mailboxes = <?=\Bitrix\Main\Web\Json::encode($mailboxes);?>;
-
-		var mailboxSelector = dialog.form.querySelector('[data-role="mailbox-selector"]');
-		var mailboxSelectorValue = dialog.form.querySelector('[data-role="mailbox-selector-value"]');
-
-		var setMailbox = function(value)
-		{
-			mailboxSelector.textContent = value ? value : '<?=GetMessageJS('CRM_SEMA_RPD_FROM_AUTO')?>';
-			mailboxSelectorValue.value = value;
-		};
-
-		var getMenuItems = function()
-		{
-			var i, menuItems = [{
-				text: '<?=GetMessageJS('CRM_SEMA_RPD_FROM_AUTO')?>',
-				onclick: function(e, item)
-				{
-					this.popupWindow.close();
-					setMailbox('');
-				}
-			}];
-
-			for (i = 0; i < mailboxes.length; ++i)
-			{
-				var mailbox = mailboxes[i];
-				var mailboxName = mailbox['name'].length > 0
-					? mailbox['name'] + ' <' + mailbox['email'] + '>'
-					: mailbox['email'];
-
-				menuItems.push({
-					text: BX.util.htmlspecialchars(mailboxName),
-					value: mailboxName,
-					onclick: function(e, item)
-					{
-						this.popupWindow.close();
-						setMailbox(item.value);
-					}
-				});
-			}
-
-			if (window.BXMainMailConfirm)
-			{
-				if (menuItems.length > 0)
-				{
-					menuItems.push({delimiter: true});
-				}
-
-				menuItems.push({
-					text: '<?=GetMessageJS('CRM_SEMA_RPD_FROM_ADD')?>',
-					onclick: function(e, item)
-					{
-						this.popupWindow.close();
-						window.BXMainMailConfirm.showForm(function(mailbox)
-						{
-							mailboxes.push(mailbox);
-							setMailbox(mailbox['name'].length > 0
-								? mailbox['name'] + ' <' + mailbox['email'] + '>'
-								: mailbox['email']);
-						});
-					}
-				});
-			}
-
-			return menuItems;
-		};
-
-		BX.bind(mailboxSelector, 'click', function(e)
-			{
-				var menuId = 'crm-sma-mailboxes' + Math.random();
-				BX.PopupMenu.show(
-					menuId,
-					this,
-					getMenuItems(),
-					{
-						autoHide: true,
-						offsetLeft: (BX.pos(this)['width'] / 2),
-						angle: { position: 'top', offset: 0 },
-						overlay: { backgroundColor: 'transparent' },
-						events:
-						{
-							onPopupClose: function()
-							{
-								this.destroy();
-							}
-						}
-					},
-				);
-			}
-		);
-
-		//init
-		setMailbox(mailboxSelectorValue.value);
-	});
-</script>
-<?endif;?>
 
 <div class="bizproc-automation-popup-checkbox">
 	<div class="bizproc-automation-popup-checkbox-item">
@@ -272,5 +159,4 @@ endif;
 			<?=htmlspecialcharsbx($map['UseLinkTracker']['Name'])?>
 		</label>
 	</div>
-
 </div>

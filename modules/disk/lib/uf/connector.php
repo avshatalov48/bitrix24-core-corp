@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Uf;
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
 
 abstract class Connector
@@ -50,6 +51,23 @@ abstract class Connector
 	public function getDataToShow()
 	{
 		return array();
+	}
+
+	public function getDataToShowForUser(int $userId)
+	{
+		throw new NotImplementedException();
+	}
+
+	public function tryToGetDataToShowForUser(int $userId)
+	{
+		try
+		{
+			return $this->getDataToShowForUser($userId);
+		}
+		catch (NotImplementedException $e)
+		{
+			return $this->getDataToShow();
+		}
 	}
 
 	/**

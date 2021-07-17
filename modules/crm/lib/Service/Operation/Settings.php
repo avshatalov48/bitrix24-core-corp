@@ -13,6 +13,7 @@ class Settings
 	protected $isCheckFieldsEnabled = true;
 	protected $iscCheckRequiredUserFields = true;
 	protected $isAutomationEnabled = true;
+	protected $isBizProcEnabled = true;
 	protected $isFieldProcessionEnabled = true;
 	protected $isSaveToHistoryEnabled = true;
 	protected $isBeforeSaveActionsEnabled = true;
@@ -67,7 +68,7 @@ class Settings
 	}
 
 	/**
-	 * Enables automation procession in an Operation
+	 * Enables robots automation execution in an Operation
 	 *
 	 * @return $this
 	 */
@@ -79,7 +80,7 @@ class Settings
 	}
 
 	/**
-	 * Disables automation procession in an Operation
+	 * Disables robots automation execution in an Operation
 	 *
 	 * @return $this
 	 */
@@ -91,13 +92,47 @@ class Settings
 	}
 
 	/**
-	 * Returns true if automation procession is enabled
+	 * Returns true if robots automation execution is enabled
 	 *
 	 * @return bool
 	 */
 	public function isAutomationEnabled(): bool
 	{
 		return $this->isAutomationEnabled;
+	}
+
+	/**
+	 * Enables business processes execution in an Operation
+	 *
+	 * @return $this
+	 */
+	public function enableBizProc(): self
+	{
+		$this->isBizProcEnabled = true;
+
+		return $this;
+	}
+
+	/**
+	 * Disables business processes execution in an Operation
+	 *
+	 * @return $this
+	 */
+	public function disableBizProc(): self
+	{
+		$this->isBizProcEnabled = false;
+
+		return $this;
+	}
+
+	/**
+	 * Returns true if business processes execution is enabled
+	 *
+	 * @return bool
+	 */
+	public function isBizProcEnabled(): bool
+	{
+		return $this->isBizProcEnabled;
 	}
 
 	/**

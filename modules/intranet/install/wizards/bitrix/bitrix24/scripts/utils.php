@@ -1,7 +1,8 @@
-<?
+<?php
+
 class WizardServices
 {
-	function GetTemplates($relativePath)
+	public static function GetTemplates($relativePath)
 	{
 		$absolutePath = $_SERVER["DOCUMENT_ROOT"].$relativePath;
 		$absolutePath = str_replace("\\", "/", $absolutePath);
@@ -63,7 +64,7 @@ class WizardServices
 		return $arWizardTemplates;
 	}
 
-	function GetTemplatesPath($path)
+	public static function GetTemplatesPath($path)
 	{
 		$templatesPath = $path."/templates";
 
@@ -73,7 +74,7 @@ class WizardServices
 		return $templatesPath;
 	}
 
-	function GetServices($wizardPath, $serviceFolder = "", $arFilter = Array())
+	public static function GetServices($wizardPath, $serviceFolder = "", $arFilter = Array())
 	{
 		$arServices = Array();
 
@@ -130,7 +131,7 @@ class WizardServices
 		return $arServices;
 	}
 
-	function IncludeServiceLang($relativePath, $lang = false, $bReturnArray = false)
+	public static function IncludeServiceLang($relativePath, $lang = false, $bReturnArray = false)
 	{
 		global $WIZARD_SERVICE_ABSOLUTE_PATH;
 		if($lang === false)
@@ -169,7 +170,7 @@ class WizardServices
 		return $arMessages;
 	}
 
-	function GetCurrentSiteID($selectedSiteID = null)
+	public static function GetCurrentSiteID($selectedSiteID = null)
 	{
 		if ($selectedSiteID <> '')
 		{
@@ -192,7 +193,7 @@ class WizardServices
 		return $currentSiteID;
 	}
 
-	function GetThemes($relativePath)
+	public static function GetThemes($relativePath)
 	{
 		$arThemes = Array();
 
@@ -246,7 +247,7 @@ class WizardServices
 		return $arThemes;
 	}
 
-	function SetFilePermission($path, $permissions)
+	public static function SetFilePermission($path, $permissions)
 	{
 		$originalPath = $path;
 
@@ -281,7 +282,7 @@ class WizardServices
 		return $GLOBALS["APPLICATION"]->SetFileAccessPermission($originalPath, $arPermisson);
 	}
 
-	function AddMenuItem($menuFile, $menuItem,  $siteID, $pos = -1)
+	public static function AddMenuItem($menuFile, $menuItem,  $siteID, $pos = -1)
 	{
 		if (CModule::IncludeModule('fileman'))
 		{
@@ -311,12 +312,12 @@ class WizardServices
 		}
 	}
 
-	function CopyFile($fileFrom, $fileTo)
+	public static function CopyFile($fileFrom, $fileTo)
 	{
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].$fileFrom, $_SERVER['DOCUMENT_ROOT'].$fileTo, false, true);
 	}
 
-	function ImportIBlockFromXML($xmlFile, $iblockCode, $iblockType, $siteID, $permissions = Array())
+	public static function ImportIBlockFromXML($xmlFile, $iblockCode, $iblockType, $siteID, $permissions = Array())
 	{
 		if (!CModule::IncludeModule("iblock"))
 			return false;
@@ -346,8 +347,7 @@ class WizardServices
 		return $iblockID;
 	}
 
-
-	function SetIBlockFormSettings($iblockID, $settings)
+	public static function SetIBlockFormSettings($iblockID, $settings)
 	{
 		global $DBType;
 		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
@@ -360,7 +360,7 @@ class WizardServices
 		);
 	}
 
-	function SetUserOption($category, $option, $settings, $common = false, $userID = false)
+	public static function SetUserOption($category, $option, $settings, $common = false, $userID = false)
 	{
 		global $DBType;
 		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
@@ -374,7 +374,7 @@ class WizardServices
 		);
 	}
 
-	function CreateSectionProperty($iblockID, $fieldCode, $arFieldName = Array())
+	public static function CreateSectionProperty($iblockID, $fieldCode, $arFieldName = Array())
 	{
 		$entityID = "IBLOCK_".$iblockID."_SECTION";
 		
@@ -397,4 +397,3 @@ class WizardServices
 		return $fieldID;
 	}
 }
-?>

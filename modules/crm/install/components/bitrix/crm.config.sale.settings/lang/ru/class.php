@@ -78,4 +78,5 @@ $MESS["CRM_CF_PRODUCT_SETTINGS_CHANGE"] = "Изменить";
 $MESS["CRM_CF_NUMERATOR_TITLE"] = "Использовать";
 $MESS["CRM_CF_ORDER_DEFAULT_RESPONSIBLE_ID"] = "Ответственный за заказ (по умолчанию)";
 $MESS["CRM_CF_ORDER_TRACKING_AUTOCHECK"] = "Автоматически проверять статусы отправлений";
+$MESS["CRM_CF_ORDER_DEAL_CREATE"] = "Привязывать сделки ко всем заказам";
 ?>

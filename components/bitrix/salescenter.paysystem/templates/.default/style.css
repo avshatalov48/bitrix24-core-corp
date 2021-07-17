@@ -76,13 +76,13 @@
 
 .salescenter-editor-block-title {
 	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-pack: justify;
 	color: #a3a9b1;
-	-webkit-box-pack: justify;
 	justify-content: space-between;
+}
+
+.salescenter-editor-block-subtitle {
+	color: #525d69;
 }
 
 .salescenter-editor-content-block {
@@ -534,4 +534,99 @@
 .salescenter-button-container {
 	padding-top: 5px;
 	margin-bottom: 15px;
+}
+
+.salescenter-paysystem-cashbox-block {
+	margin: 6px 0 7px;
+	padding: 20px 17px 23px 20px;
+	background: #ebf9fe;
+	transition: background .2s linear;
+}
+
+.salescenter-paysystem-cashbox-block--disabled {
+	background: #f1fbfe;
+}
+
+.salescenter-paysystem-cashbox-block-inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.salescenter-paysystem-cashbox-block-title {
+	color: #333;
+	margin-bottom: 8px;
+	font: 16px/20px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-paysystem-cashbox-block-description {
+	color: #979da5;
+	font-size: 14px;
+	line-height: 18px;
+	margin-bottom: 15px;
+}
+
+.salescenter-main-cashbox-switcher-container {
+	margin-left: auto;
+}
+
+.salescenter-main-cashbox-switcher-container > .ui-switcher {
+	display: block;
+}
+
+.salescenter-paysystem-control-required:after {
+	content: "*";
+	color: red;
+}
+
+.salescenter-paysystem-section-title {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.salescenter-paysystem-angle-icon-after {
+	cursor: pointer;
+}
+.salescenter-paysystem-angle-icon {
+	width: 10px;
+	height: 10px;
+	position: relative;
+	display: inline-block;
+	margin-left: auto;
+	margin-right: 15px;
+}
+.salescenter-paysystem-angle-icon::before {
+	-webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	margin-left: -3px;
+}
+.salescenter-paysystem-angle-icon::after {
+	-webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	margin-left: 3px;
+}
+
+.salescenter-paysystem-angle-icon::after, .salescenter-paysystem-angle-icon::before {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 9px;
+	height: 2px;
+	background-color: #767676;
+	content: "";
+	transition: all 250ms ease;
+	-webkit-transform-origin: center;
+	-moz-transform-origin: center;
+	-ms-transform-origin: center;
+	-o-transform-origin: center;
+	transform-origin: center;
 }

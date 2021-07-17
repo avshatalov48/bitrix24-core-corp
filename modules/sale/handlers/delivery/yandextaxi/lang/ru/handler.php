@@ -37,6 +37,7 @@ $MESS["SALE_YANDEX_TAXI_ORDER_CREATE_ERROR"] = "Ошибка при попытк
 $MESS["SALE_YANDEX_TAXI_ORDER_PERSIST_ERROR"] = "Заказ был успешно создан в службе Яндекс Go, но возникли проблемы при сохранении заказа в локальную базу данных";
 $MESS['SALE_YANDEX_TAXI_ACTIVITY_NAME'] = 'Доставка Яндекс Go';
 $MESS["SALE_YANDEX_TAXI_PARCEL_ON_ITS_WAY_SMS"] = "Курьер уже в пути! Надеемся, вам все понравится!";
+$MESS["SALE_YANDEX_TAXI_YOUR_ORDER_IS_ON_ITS_WAY"] = "Ваш заказ уже в пути.";
 $MESS["SALE_YANDEX_TAXI_TRACKING_URL"] = "Ссылка для отслеживания заказа";
 $MESS["SALE_YANDEX_TAXI_DEAL_NOT_FOUND"] = "Отсутствует связь сделки с заказом";
 $MESS["SALE_YANDEX_TAXI_CLIENT_FULL_NAME_NOT_SPECIFIED"] = "Не заполнено ФИО клиента";
@@ -47,6 +48,7 @@ $MESS["SALE_YANDEX_TAXI_CLIENT_CLIENT_CONTACT_NOT_FOUND"] = "Контактна�
 $MESS["SALE_YANDEX_TAXI_INVALID_TOKEN"] = 'Указан некорректный токен.';
 $MESS["SALE_YANDEX_TAXI_TARIFF_NOT_SUPPORTED"] = 'Проверьте настройки подключения сервиса. Убедитесь, что у вас заключен договор на работу с доставкой Яндекс Go <a target="_blank" href="https://helpdesk.bitrix24.ru/open/11604358">подробнее</a>';
 $MESS["SALE_YANDEX_TAXI_TARIFF_COURIER"] = "Курьер";
+$MESS["SALE_YANDEX_TAXI_TARIFF_COURIER_BY"] = "Стандартная доставка";
 $MESS["SALE_YANDEX_TAXI_TARIFF_EXPRESS"] = "Доставка";
 $MESS["SALE_YANDEX_TAXI_TARIFF_CARGO"] = "Грузовой";
 $MESS["SALE_YANDEX_TAXI_TARIFF_COURIER_DESCRIPTION"] = "Для небольших вещей и документов";

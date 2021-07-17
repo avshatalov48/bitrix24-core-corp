@@ -55,12 +55,15 @@ class CrmTypeDetailComponent extends Base
 				$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'));
 				return;
 			}
-			$consistentUrl = Service\Container::getInstance()->getRouter()->getConsistentUrlFromPartlyDefined(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri());
+
+			$requestUrl = $this->request->getRequestUri();
+			$consistentUrl = Service\Container::getInstance()->getRouter()->getConsistentUrlFromPartlyDefined($requestUrl);
 			if ($consistentUrl)
 			{
 				LocalRedirect($consistentUrl->getUri());
 				return;
 			}
+
 			if(!$userPermissions->canUpdateType($this->type->getId()))
 			{
 				$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_ACCESS_DENIED'));
@@ -132,7 +135,7 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['listUrl'] = Service\Container::getInstance()->getRouter()->getTypeListUrl()->getUri();
 		$this->arResult['conversionParams'] = $this->getConversionParams();
 		$this->arResult['relations'] = $this->getRelations();
-		$this->arResult['customSections'] = $this->getCustomSections();
+		$this->arResult['isCustomSectionsAvailable'] = Integration\IntranetManager::isCustomSectionsAvailable();
 		$this->arResult['linkedUserFields'] = $this->getLinkedUserFields();
 
 		$this->includeComponentTemplate();
@@ -246,64 +249,16 @@ class CrmTypeDetailComponent extends Base
 
 	protected function getLinkedUserFields(): array
 	{
-		$result = [];
-
 		$linkedDescriptions = UserFieldManager::getLinkedUserFieldsDescription();
-		$linkedUserFields = UserFieldManager::getLinkedUserFields($linkedDescriptions);
 		$entityTypeName = \CCrmOwnerType::ResolveName($this->type->getEntityTypeId());
-		foreach ($linkedUserFields as $userField)
-		{
-			$isEnabled = false;
-			if (
-				$this->type->getId() > 0
-				&& UserFieldManager::isEntityEnabledInUserField($userField, $entityTypeName)
-			)
-			{
-				$isEnabled = true;
-			}
-
-			$name = UserFieldManager::combineUserFieldFieldsToString(
-				$userField['ENTITY_ID'],
-				$userField['FIELD_NAME']
-			);
-			$result[$name] = $linkedDescriptions[$name];
-			$result[$name]['isEnabled'] = $isEnabled;
-		}
-
-		return $result;
-	}
-
-	protected function getCustomSections(): ?array
-	{
-		$sections = Integration\IntranetManager::getCustomSections();
-		if ($sections === null)
-		{
-			return null;
-		}
 
 		$result = [];
-		foreach ($sections as $section)
+		foreach (UserFieldManager::getLinkedUserFieldsMap() as $userFieldName => $userField)
 		{
-			$isSelected = false;
+			$isEnabled = (!$this->type->isNew() && UserFieldManager::isEntityEnabledInUserField($userField, $entityTypeName));
 
-			if ($this->type->getId() > 0)
-			{
-				foreach ($section->getPages() as $sectionPage)
-				{
-					$settings = Integration\IntranetManager::preparePageSettingsForItemsList($this->type->getEntityTypeId());
-					$isSelected = ($sectionPage->getSettings() === $settings);
-					if ($isSelected)
-					{
-						break;
-					}
-				}
-			}
-
-			$result[] = [
-				'id' => $section->getId(),
-				'title' => $section->getTitle(),
-				'isSelected' => $isSelected,
-			];
+			$result[$userFieldName] = $linkedDescriptions[$userFieldName];
+			$result[$userFieldName]['isEnabled'] = $isEnabled;
 		}
 
 		return $result;

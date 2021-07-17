@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_DELIVERY_TOTAL"] = "Lieferpreis";
 $MESS["CRM_ENTITY_PL_ADD"] = "Hinzufügen";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT"] = "Produkt hinzufügen";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT_TITLE"] = "Finden oder ein neues Produkt erstellen";
@@ -15,6 +16,7 @@ $MESS["CRM_ENTITY_PL_DELETE_WARNING"] = "Möchten Sie dieses Element wirklich l�
 $MESS["CRM_ENTITY_PL_DISCOUNT"] = "Rabatt";
 $MESS["CRM_ENTITY_PL_DISCOUNTS_ABSENT"] = "Keine gültigen Rabatte";
 $MESS["CRM_ENTITY_PL_DISCOUNT_PRICE"] = "Gesamtbetrag nach Abzug des Rabatts";
+$MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Preis kann nicht negativ sein.";
 $MESS["CRM_ENTITY_PL_NO"] = "Keine";
 $MESS["CRM_ENTITY_PL_ORDER_DISCOUNT"] = "Rabatte";
 $MESS["CRM_ENTITY_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Hinzufügen";
@@ -27,6 +29,7 @@ $MESS["CRM_ENTITY_PL_SELECT_PRODUCT"] = "Produkt auswählen";
 $MESS["CRM_ENTITY_PL_SELECT_PRODUCT_TITLE"] = "Ein Produkt aus dem Katalog auswählen";
 $MESS["CRM_ENTITY_PL_SETTING_DISABLED"] = "Option \"#NAME#\" ist deaktiviert";
 $MESS["CRM_ENTITY_PL_SETTING_ENABLED"] = "Option \"#NAME#\" ist aktiviert";
+$MESS["CRM_ENTITY_PL_SMALL_PRICE_NOTICE"] = "Preiswerte kleiner als 1 (eins) können manchmal eine inkorrekte Rabattkalkulation verursachen. Bitte prüfen Sie den Gesamtbetrag des Rabatts. Als eine mögliche Lösung können Sie Preis pro Partie (bspw. 10 oder 100 Stück) angeben, nicht pro ein Element.";
 $MESS["CRM_ENTITY_PL_SUM"] = "Betrag";
 $MESS["CRM_ENTITY_PL_TAX"] = "Steuer";
 $MESS["CRM_ENTITY_PL_TOTAL_PRICE"] = "Gesamtbetrag der Produkte";

@@ -41,58 +41,11 @@ class ActivityCounter extends EntityCounter
 	 */
 	protected function prepareEntityQuery($entityTypeID)
 	{
-		$connection = Main\Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
-
 		$query = new Query(ActivityBindingTable::getEntity());
 		$query->setCustomBaseTableAlias('b');
 		$query->addSelect('ACTIVITY_ID', 'ACTIVITY_ID');
 
-		$join = array(
-			'=ref.ID' => 'this.ACTIVITY_ID',
-			'=ref.COMPLETED' => new SqlExpression('?', 'N'),
-			'=this.OWNER_TYPE_ID' => new SqlExpression($entityTypeID)
-		);
-
-		if($this->userID > 0)
-		{
-			$join['=ref.RESPONSIBLE_ID'] = new SqlExpression('?i', $this->userID);
-		}
-
-		if($this->typeID === EntityCounterType::PENDING)
-		{
-			$lowBound = new DateTime();
-			$lowBound->setTime(0, 0, 0);
-
-			$join['>=ref.DEADLINE'] = new SqlExpression(
-				$sqlHelper->convertToDb($lowBound, new DatetimeField('D'))
-			);
-
-			$highBound = new DateTime();
-			$highBound->setTime(23, 59, 59);
-
-			$join['<=ref.DEADLINE'] = new SqlExpression(
-				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
-			);
-		}
-		elseif($this->typeID === EntityCounterType::OVERDUE)
-		{
-			$highBound = new DateTime();
-			$highBound->setTime(0, 0, 0);
-
-			$join['<ref.DEADLINE'] = new SqlExpression(
-				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
-			);
-		}
-		else//if($this->typeID === EntityCounterType::CURRENT)
-		{
-			$highBound = new DateTime();
-			$highBound->setTime(23, 59, 59);
-
-			$join['<=ref.DEADLINE'] = new SqlExpression(
-				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
-			);
-		}
+		$join = $this->prepareActivityTableJoin((int)$entityTypeID);
 
 		$query->registerRuntimeField(
 			'',
@@ -135,6 +88,65 @@ class ActivityCounter extends EntityCounter
 		return $query;
 	}
 
+	protected function prepareActivityTableJoin(int $entityTypeID): array
+	{
+		$sqlHelper = Main\Application::getConnection()->getSqlHelper();
+
+		$join = [
+			'=ref.ID' => 'this.ACTIVITY_ID',
+			'=ref.COMPLETED' => new SqlExpression('?', 'N'),
+			'=this.OWNER_TYPE_ID' => new SqlExpression($entityTypeID)
+		];
+
+		if ($this->userID > 0)
+		{
+			$join['=ref.RESPONSIBLE_ID'] = new SqlExpression('?i', $this->userID);
+		}
+
+		if ($this->typeID === EntityCounterType::PENDING)
+		{
+			$lowBound = new DateTime();
+			$lowBound->setTime(0, 0, 0);
+
+			$join['>=ref.DEADLINE'] = new SqlExpression(
+				$sqlHelper->convertToDb($lowBound, new DatetimeField('D'))
+			);
+
+			$highBound = new DateTime();
+			$this->convertToUserTime($highBound);
+			$highBound->setTime(23, 59, 59);
+			$this->convertFromUserTime($highBound);
+
+			$join['<=ref.DEADLINE'] = new SqlExpression(
+				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
+			);
+		}
+		elseif ($this->typeID === EntityCounterType::OVERDUE)
+		{
+			$highBound = new DateTime();
+			$this->convertToUserTime($highBound);
+			$highBound->setTime(0, 0, 0);
+			$this->convertFromUserTime($highBound);
+
+			$join['<ref.DEADLINE'] = new SqlExpression(
+				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
+			);
+		}
+		else//if($this->typeID === EntityCounterType::CURRENT)
+		{
+			$highBound = new DateTime();
+			$this->convertToUserTime($highBound);
+			$highBound->setTime(23, 59, 59);
+			$this->convertFromUserTime($highBound);
+
+			$join['<=ref.DEADLINE'] = new SqlExpression(
+				$sqlHelper->convertToDb($highBound, new DatetimeField('D'))
+			);
+		}
+
+		return $join;
+	}
+
 	/**
 	 * Evaluate counter value
 	 * @return int
@@ -164,5 +176,41 @@ class ActivityCounter extends EntityCounter
 	public function prepareEntityListFilter(array $params = null)
 	{
 		throw new Main\NotSupportedException("This method is not supported in current context");
+	}
+
+	private function convertToUserTime(DateTime $date)
+	{
+		$diff = $this->getUserTimeOffset();
+
+		if ($diff !== 0)
+		{
+			$date->add(($diff < 0 ? '-' : '') . 'PT' . abs($diff) . 'S');
+		}
+
+		return $date;
+	}
+
+	private function convertFromUserTime(DateTime $date)
+	{
+		$diff = $this->getUserTimeOffset();
+
+		if ($diff !== 0)
+		{
+			$date->add(($diff > 0 ? '-' : '') . 'PT' . abs($diff) . 'S');
+		}
+
+		return $date;
+	}
+
+	private function getUserTimeOffset(): int
+	{
+		static $offset;
+
+		if ($offset === null)
+		{
+			$offset = \CTimeZone::GetOffset($this->getUserID());
+		}
+
+		return (int)$offset;
 	}
 }

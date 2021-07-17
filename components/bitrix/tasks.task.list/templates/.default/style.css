@@ -1,3 +1,7 @@
+.transparent-workarea #workarea-content {
+    background-color: transparent!important;
+}
+
 .task-item-updates .task-item-updates-inner {
     display: inline-block;
     height: 12px;
@@ -23,7 +27,7 @@
 	vertical-align: middle;
 	height: 16px;
 	width: 8px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2211%22%20viewBox%3D%220%200%208%2011%22%3E%0A%20%20%3Cpath%20fill%3D%22%23F16C0A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M200.069979%2C24%20L200.14%2C24%20C200.14%2C24%20203%2C23.0560625%20203%2C20.390625%20C203%2C16.6348125%20199.346667%2C15.8813125%20199.666667%2C13%20C197.993333%2C13.8339375%20195%2C16.75375%20195%2C19.875%20C195.039359%2C21.7259245%20196.174362%2C23.3629491%20197.86%2C24%20L197.86%2C24%20L198.123417%2C24%20C197.460595%2C23.3218266%20197.059336%2C22.4251727%20197%2C21.4707569%20C197.092476%2C20.0452868%20197.868205%2C18.7524059%20199.082454%2C18%20C200.109798%2C20.1851885%20201.164908%2C19.9436239%20201.164908%2C21.4707569%20C201.162991%2C22.4339232%20200.76293%2C23.3471724%20200.069979%2C24%20Z%22%20transform%3D%22translate%28-195%20-13%29%22/%3E%0A%3C/svg%3E%0A') center 1px no-repeat;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2211%22%20viewBox%3D%220%200%208%2011%22%3E%0A%20%20%3Cpath%20fill%3D%22%23F16C0A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M200.069979%2C24%20L200.14%2C24%20C200.14%2C24%20203%2C23.0560625%20203%2C20.390625%20C203%2C16.6348125%20199.346667%2C15.8813125%20199.666667%2C13%20C197.993333%2C13.8339375%20195%2C16.75375%20195%2C19.875%20C195.039359%2C21.7259245%20196.174362%2C23.3629491%20197.86%2C24%20L197.86%2C24%20L198.123417%2C24%20C197.460595%2C23.3218266%20197.059336%2C22.4251727%20197%2C21.4707569%20C197.092476%2C20.0452868%20197.868205%2C18.7524059%20199.082454%2C18%20C200.109798%2C20.1851885%20201.164908%2C19.9436239%20201.164908%2C21.4707569%20C201.162991%2C22.4339232%20200.76293%2C23.3471724%20200.069979%2C24%20Z%22%20transform%3D%22translate%28-195%20-13%29%22/%3E%0A%3C/svg%3E%0A') center 0 no-repeat;
 }
 
 .task-title-comments-grid {
@@ -75,7 +79,7 @@
 	display: block;
 }
 
-.main-grid-cell-content a:hover .tasks-grid-filter-remove:hover {
+.main-grid-cell-content a:hover, div:hover .tasks-grid-filter-remove:hover {
 	transition: .1s;
 	opacity: 1;
 }
@@ -161,10 +165,16 @@
 	border-radius: 14.5px;
 }
 
+.tasks-grid-tag {
+    cursor: pointer;
+}
+
 .tasks-grid-group:hover,
 .tasks-grid-group.tasks-grid-filter-active,
 .tasks-grid-username:hover,
-.tasks-grid-username.tasks-grid-filter-active {
+.tasks-grid-username.tasks-grid-filter-active,
+.tasks-grid-tag:hover,
+.tasks-grid-tag.tasks-grid-filter-active {
 	background: #C0EDFD;
 	text-decoration: none !important;
 }
@@ -259,4 +269,58 @@
 	stroke-dashoffset: 0;
 	animation: dash 1.5s ease-in-out infinite;
 	stroke-linecap: round;
+}
+
+.tasks-list-create {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 530px;
+}
+
+.tasks-list-create-icon {
+	display: flex;
+	align-self: center;
+	width: 59px;
+	height: 59px;
+	margin-bottom: 25px;
+	border: 3px solid #9dcf00;
+	border-radius: 100%;
+}
+
+.tasks-list-create-icon:after {
+	content: '';
+	width: 27px;
+	height: 21px;
+	margin: 19px 0 0 17px;
+	background: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='21' viewBox='0 0 27 21'%3E%3Cpath fill='%239DCF00' fill-rule='evenodd' d='M4.50424193,2 L4.419,11.339 L26.5768928,10.6311272 L26.6522535,13.9231795 L4.389,14.635 L4.38975175,14.6391726 L4.284,14.638 L2.19557348,14.7056469 L2.193,14.622 L1.01093607,14.6132962 L1,2 L4.50424193,2 Z' transform='rotate(-45 12.619 7.853)'/%3E%3C/svg%3E%0A") center no-repeat;
+}
+
+.tasks-list-create-title {
+	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	color: #333;
+	font-size: 31px;
+	line-height: 31px;
+}
+
+.tasks-list-create-br {
+	display: block;
+	width: 100%;
+	height: 1px;
+	margin: 36px 0 29px 0;
+	background: #525c69;
+	opacity: .1;
+}
+
+.tasks-list-create-subtitle {
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	margin-top: 22px;
+	font-size: 16px;
+	line-height: 22px;
+	color: #525c69;
+	text-align: center;
+}
+
+.tasks-list-cursor {
+    cursor: pointer;
 }

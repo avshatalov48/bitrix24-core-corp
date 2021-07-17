@@ -1,4 +1,6 @@
-<?
+<?php
+$MESS["TAB_NAME_CALLTRACKER"] = "Call tracker";
+$MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Calls";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Open Channels";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Open Channels";
 $MESS["TAB_NAME_IM_RECENT"] = "Chats";
@@ -16,4 +18,3 @@ $MESS["TASKS_ROLE_AUDITOR"] = "Following";
 $MESS["TASKS_ROLE_ORIGINATOR"] = "Set by me";
 $MESS["TASKS_ROLE_RESPONSIBLE"] = "Ongoing";
 $MESS["TASKS_ROLE_VIEW_ALL"] = "All tasks";
-?>

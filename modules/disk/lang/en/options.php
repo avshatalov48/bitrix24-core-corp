@@ -19,6 +19,9 @@ $MESS["DISK_MAX_SIZE_FOR_DOCUMENT_TRANSFORMATION"] = "Maximum size of source doc
 $MESS["DISK_MAX_SIZE_FOR_VIDEO_TRANSFORMATION"] = "Maximum size of source media for MP4 and JPG generation (MB)";
 $MESS["DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"] = "Auto lock file when editing";
 $MESS["DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"] = "Auto unlock file upon saving";
+$MESS["DISK_SETTINGS_ONLYOFFICE_HEAD"] = "OnlyOffice integration";
+$MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Secret key";
+$MESS["DISK_SETTINGS_ONLYOFFICE_SERVER"] = "Server address (including http:// or https://)";
 $MESS["DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"] = "Document locking";
 $MESS["DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"] = "Auto unlock file after (minutes)";
 $MESS["DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE"] = "For some document types, the viewer may require document data to be sent to external services. <a href=\"#\" onclick='top.BX.Helper.show(\"redirect=detail&code=8775923\");event.preventDefault();'>Details</a>.";

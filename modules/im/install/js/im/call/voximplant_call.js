@@ -40,6 +40,8 @@
 		voiceStarted: 'Call::voiceStarted',
 		voiceStopped: 'Call::voiceStopped',
 		microphoneState: 'Call::microphoneState',
+		cameraState: 'Call::cameraState',
+		videoPaused: 'Call::videoPaused',
 		screenState: 'Call::screenState',
 		recordState: 'Call::recordState',
 		floorRequest: 'Call::floorRequest',
@@ -47,6 +49,11 @@
 		showUsers: 'Call::showUsers',
 		showAll: 'Call::showAll',
 		hideAll: 'Call::hideAll',
+	};
+
+	var scenarioEvents = {
+		viewerJoined: 'Call::viewerJoined',
+		viewerLeft: 'Call::viewerLeft',
 	};
 
 	var VoximplantCallEvent = {
@@ -96,9 +103,11 @@
 		this.joinedElsewhere = false;
 		this.joinedAsViewer = false;
 		this.localVideoShown = false;
+		this._localUserState = BX.Call.UserState.Idle;
 		this.clientEventsBound = false;
 		this._screenShared = false;
 		this.videoAllowedFrom = BX.Call.UserMnemonic.all;
+		this.direction = BX.Call.EndpointDirection.SendRecv;
 
 		this.localVAD = null;
 
@@ -111,8 +120,28 @@
 				{
 					this._screenShared = screenShared;
 					this.signaling.sendScreenState(this._screenShared);
-					this._applyCurrentVideoQuality();
 				}
+			}
+		});
+
+		Object.defineProperty(this, "localUserState", {
+			get: function()
+			{
+				return this._localUserState
+			},
+			set: function (state)
+			{
+				if (state == this._localUserState)
+				{
+					return;
+				}
+				this.runCallback(BX.Call.Event.onUserStateChanged, {
+					userId: this.userId,
+					state: state,
+					previousState: this._localUserState,
+					direction: this.direction,
+				});
+				this._localUserState = state;
 			}
 		});
 
@@ -140,8 +169,6 @@
 		this.lastSelfPingReceivedTimeout = null;
 
 		this.reinviteTimeout = null;
-
-		this._applyCurrentVideoQuality = BX.debounce(this._doAapplyCurrentVideoQuality.bind(this), 500);
 	};
 
 	BX.extend(BX.Call.VoximplantCall, BX.Call.AbstractCall);
@@ -345,6 +372,7 @@
 			}
 
 			this.voximplantCall.sendVideo(this.videoEnabled);
+			this.signaling.sendCameraState(this.videoEnabled);
 		}
 	};
 
@@ -415,16 +443,6 @@
 	BX.Call.VoximplantCall.prototype.useHdVideo = function(flag)
 	{
 		this.videoHd = (flag === true);
-	};
-
-	BX.Call.VoximplantCall.prototype.setVideoQuality = function(videoQuality)
-	{
-		if(this.videoQuality == videoQuality)
-		{
-			return;
-		}
-		this.videoQuality = videoQuality;
-		this._applyCurrentVideoQuality();
 	};
 
 	BX.Call.VoximplantCall.prototype.requestFloor = function(requestActive)
@@ -533,45 +551,6 @@
 		}
 	};
 
-	BX.Call.VoximplantCall.prototype._doAapplyCurrentVideoQuality = function()
-	{
-		this.log("Trying to apply video quality " + this.videoQuality);
-		if(!this.voximplantCall)
-		{
-			return;
-		}
-
-		if (BX.type.isFunction(this.voximplantCall.scaleVideoResolutionDownBy))
-		{
-			var scaleDownCoefficient = this._getVideoScaleDownCoefficient();
-			this.voximplantCall.scaleVideoResolutionDownBy(scaleDownCoefficient);
-		}
-	};
-
-	BX.Call.VoximplantCall.prototype._getVideoScaleDownCoefficient = function()
-	{
-		if (this.screenShared)
-		{
-			return 1;
-		}
-
-		switch (this.videoQuality)
-		{
-			case BX.Call.Quality.VeryHigh:
-				return 1;
-			case BX.Call.Quality.High:
-				return 1.5;
-			case BX.Call.Quality.Medium:
-				return 2;
-			case BX.Call.Quality.Low:
-				return 3;
-			case BX.Call.Quality.VeryLow:
-				return 4;
-			default:
-				return 1;
-		}
-	};
-
 	BX.Call.VoximplantCall.prototype._showLocalVideo = function()
 	{
 		return new Promise(function(resolve, reject)
@@ -624,7 +603,7 @@
 		}
 
 		var showLocalView = !this.videoEnabled;
-		var replaceTrack = this.videoEnabled;
+		var replaceTrack = this.videoEnabled || this.screenShared;
 
 		this.voximplantCall.shareScreen(showLocalView, replaceTrack).then(function()
 		{
@@ -685,6 +664,7 @@
 			}
 		}).then(function(response)
 		{
+			self.state = BX.Call.State.Connected;
 			self.runCallback(BX.Call.Event.onJoin, {
 				local: true
 			});
@@ -766,19 +746,18 @@
 		}
 		this.videoEnabled = (config.useVideo == true);
 
-		this.sendAnswer();
+		if (!joinAsViewer)
+		{
+			this.signaling.sendAnswer();
+		}
 		this.attachToConference({joinAsViewer: joinAsViewer}).then(function ()
 		{
 			this.log("Attached to conference");
+			this.state = BX.Call.State.Connected;
 			this.runCallback(BX.Call.Event.onJoin, {
 				local: true
 			});
 		}.bind(this)).catch(this.onFatalError.bind(this));
-	};
-
-	BX.Call.VoximplantCall.prototype.sendAnswer = function()
-	{
-		this.signaling.sendAnswer();
 	};
 
 	BX.Call.VoximplantCall.prototype.decline = function(code)
@@ -825,6 +804,7 @@
 		{
 			data.reason = reason;
 		}
+		this.state = BX.Call.State.Proceeding;
 		this.runCallback(BX.Call.Event.onLeave, {local: true});
 
 		//clone users and append current user id to send event to all participants of the call
@@ -872,9 +852,13 @@
 				}
 			}
 
+			self.direction = joinAsViewer ? BX.Call.EndpointDirection.RecvOnly : BX.Call.EndpointDirection.SendRecv;
 			self.sendTelemetryEvent("call");
+
 			self.getClient().then(function(voximplantClient)
 			{
+				self.localUserState = BX.Call.UserState.Connecting;
+
 				// workaround to set default video settings before starting call. ugly, but I do not see another way
 				VoxImplant.Hardware.CameraManager.get().setDefaultVideoSettings(self.constructCameraParams());
 				if (self.microphoneId)
@@ -891,12 +875,10 @@
 
 				try
 				{
-					if (self.joinedAsViewer)
+					if (joinAsViewer)
 					{
-						self.voximplantCall = voximplantClient.joinAsViewer({
-							number: "bx_conf_" + self.id,
-							video: {sendVideo: false, receiveVideo: true},
-							customData: {}
+						self.voximplantCall = voximplantClient.joinAsViewer("bx_conf_" + self.id, {
+							'X-Direction': BX.Call.EndpointDirection.RecvOnly
 						});
 					}
 					else
@@ -905,7 +887,9 @@
 							number: "bx_conf_" + self.id,
 							video: {sendVideo: self.videoEnabled, receiveVideo: true},
 							simulcast: true,
-							customData: {}
+							customData: JSON.stringify({
+								cameraState: self.videoEnabled,
+							})
 						});
 					}
 				}
@@ -914,6 +898,7 @@
 					console.error(e);
 					return reject(e);
 				}
+				self.joinedAsViewer = joinAsViewer;
 
 				if(!self.voximplantCall)
 				{
@@ -931,6 +916,7 @@
 				{
 					self.log("Call connected");
 					self.sendTelemetryEvent("connect");
+					self.localUserState = BX.Call.UserState.Connected;
 
 					self.voximplantCall.removeEventListener(VoxImplant.CallEvents.Connected, onCallConnected);
 					self.voximplantCall.removeEventListener(VoxImplant.CallEvents.Failed, onCallFailed);
@@ -958,6 +944,7 @@
 						self.voximplantCall.muteMicrophone();
 					}
 					self.signaling.sendMicrophoneState(!self.muted);
+					self.signaling.sendCameraState(self.videoEnabled);
 
 					if (self.videoAllowedFrom == BX.Call.UserMnemonic.none)
 					{
@@ -975,6 +962,7 @@
 				{
 					self.log("Could not attach to conference", e);
 					self.sendTelemetryEvent("connect_failure");
+					self.localUserState = BX.Call.UserState.Failed;
 
 					self.voximplantCall.removeEventListener(VoxImplant.CallEvents.Connected, onCallConnected);
 					self.voximplantCall.removeEventListener(VoxImplant.CallEvents.Failed, onCallFailed);
@@ -1146,6 +1134,10 @@
 
 		if(handlers[command])
 		{
+			if (command != 'Call::ping')
+			{
+				this.log("Signaling: " + command + "; Parameters: " + JSON.stringify(params));
+			}
 			handlers[command].call(this, params);
 		}
 	};
@@ -1275,7 +1267,7 @@
 			this.lastSelfPingReceivedTimeout = setTimeout(this.__onNoSelfPingsReceived.bind(this), pingPeriod * 2.1);
 		}
 		clearTimeout(this.lastPingReceivedTimeout);
-		this.lastPingReceivedTimeout = setTimeout(this.__onNoPingsReceived.bind(this), pingPeriod * 2.1)
+		this.lastPingReceivedTimeout = setTimeout(this.__onNoPingsReceived.bind(this), pingPeriod * 2.1);
 		if(this.peers[senderId])
 		{
 			this.peers[senderId].setReady(true);
@@ -1401,6 +1393,7 @@
 	{
 		this.log("__onCallDisconnected", (e && e.headers ? {headers: e.headers} : null));
 		this.sendTelemetryEvent("disconnect");
+		this.localUserState = BX.Call.UserState.Idle;
 
 		this.ready = false;
 		this.muted = false;
@@ -1415,6 +1408,7 @@
 		client.enableSilentLogging(false);
 		client.setLoggerCallback(null);
 
+		this.state = BX.Call.State.Proceeding;
 		this.runCallback(BX.Call.Event.onLeave, {
 			local: true
 		});
@@ -1440,6 +1434,7 @@
 
 		this.ready = false;
 		this.muted = false;
+		self.localUserState = BX.Call.UserState.Failed;
 		this.reinitPeers();
 
 		this._hideLocalVideo().then(function()
@@ -1491,7 +1486,7 @@
 			{
 				this.peers[userId].setEndpoint(endpoint);
 			}
-			this.setVideoQuality(BX.CallEngine.getAllowedVideoQuality(this.voximplantCall.getEndpoints().length-1));
+			this.wasConnected = true;
 		}
 		else
 		{
@@ -1510,7 +1505,6 @@
 						this.peers[userId].setEndpoint(endpoint);
 					}
 				}
-				this.setVideoQuality(BX.CallEngine.getAllowedVideoQuality(this.voximplantCall.getEndpoints().length-1));
 			}.bind(this));
 
 			this.log('Unknown endpoint ' + userName);
@@ -1521,6 +1515,7 @@
 	BX.Call.VoximplantCall.prototype.__onCallMessageReceived = function(e)
 	{
 		var message;
+		var peer;
 
 		try
 		{
@@ -1550,6 +1545,20 @@
 			this.runCallback(BX.Call.Event.onUserMicrophoneState, {
 				userId: message.senderId,
 				microphoneState: message.microphoneState === "Y"
+			});
+		}
+		else if (eventName === clientEvents.cameraState)
+		{
+			this.runCallback(BX.Call.Event.onUserCameraState, {
+				userId: message.senderId,
+				cameraState: message.cameraState === "Y"
+			});
+		}
+		else if (eventName === clientEvents.videoPaused)
+		{
+			this.runCallback(BX.Call.Event.onUserVideoPaused, {
+				userId: message.senderId,
+				videoPaused: message.videoPaused === "Y"
 			});
 		}
 		else if (eventName === clientEvents.screenState)
@@ -1584,6 +1593,25 @@
 		else if (eventName === "scenarioLogUrl")
 		{
 			console.warn("scenario log url: " + message.logUrl)
+		}
+		else if (eventName === scenarioEvents.viewerJoined)
+		{
+			console.log("viewer " + message.senderId + " joined");
+			peer = this.peers[message.senderId];
+			if (peer)
+			{
+				peer.setDirection(BX.Call.EndpointDirection.RecvOnly);
+				peer.setReady(true);
+			}
+		}
+		else if (eventName === scenarioEvents.viewerLeft)
+		{
+			console.log("viewer " + message.senderId + " left");
+			peer = this.peers[message.senderId];
+			if (peer)
+			{
+				peer.setReady(false);
+			}
 		}
 		else
 		{
@@ -1638,6 +1666,18 @@
 
 		window.removeEventListener("unload", this.__onWindowUnloadHandler);
 		this.superclass.destroy.apply(this, arguments);
+
+		//workaround to force camera release in the end of the call
+		if ('VoxImplant' in window)
+		{
+			window.VoxImplant.Hardware.StreamManager.umCache.forEach(function(stream)
+			{
+				stream.getTracks().forEach(function(track)
+				{
+					track.stop();
+				})
+			})
+		}
 	};
 
 	BX.Call.VoximplantCall.Signaling = function(params)
@@ -1696,6 +1736,13 @@
 	{
 		return this.__sendMessage(clientEvents.microphoneState, {
 			microphoneState: microphoneState ? "Y" : "N"
+		});
+	};
+
+	BX.Call.VoximplantCall.Signaling.prototype.sendCameraState = function(cameraState)
+	{
+		return this.__sendMessage(clientEvents.cameraState, {
+			cameraState: cameraState ? "Y" : "N"
 		});
 	};
 
@@ -1832,6 +1879,7 @@
 		this.busy = false;
 		this.inviteTimeout = false;
 		this.endpoint = null;
+		this.direction = params.direction || BX.Call.EndpointDirection.SendRecv;
 
 		this.stream = null;
 		this.mediaRenderers = [];
@@ -1872,6 +1920,7 @@
 				return;
 			}
 			this.ready = ready;
+			this.readyStack = (new Error()).stack;
 			if(this.calling)
 			{
 				clearTimeout(this.callingTimeout);
@@ -1889,6 +1938,15 @@
 			}
 
 			this.updateCalculatedState();
+		},
+
+		setDirection: function(direction)
+		{
+			if (this.direction == direction)
+			{
+				return;
+			}
+			this.direction = direction;
 		},
 
 		setDeclined: function(declined)
@@ -2047,7 +2105,8 @@
 				this.callbacks.onStateChanged({
 					userId: this.userId,
 					state: calculatedState,
-					previousState: this.calculatedState
+					previousState: this.calculatedState,
+					direction: this.direction,
 				});
 				this.calculatedState = calculatedState;
 			}

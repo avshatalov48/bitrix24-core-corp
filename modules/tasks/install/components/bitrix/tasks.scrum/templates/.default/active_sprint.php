@@ -17,9 +17,14 @@ $isKanban = true;
 
 require_once __DIR__.'/header.php';
 
+if ($arResult['frameMode'] === 'Y')
+{
+	require_once __DIR__.'/slider_crutch.php';
+}
+
 Extension::load('tasks.scrum.dod');
 
-$APPLICATION->IncludeComponent(
+$APPLICATION->includeComponent(
 	'bitrix:tasks.kanban',
 	'scrum',
 	[
@@ -67,7 +72,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 ?>
 
 <script>
-	BX.ready(function() {
+	BX.ready(function()
+	{
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			viewName: 'activeSprint',
@@ -80,8 +86,13 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			activeSprintId: '<?= $arResult['activeSprintId'] ?>',
 			activeSprint: <?= Json::encode($arResult['activeSprintData']) ?>,
 			sprints: <?= Json::encode($arResult['sprints']) ?>,
-			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>'
+			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
+			taskLimitExceeded: '<?= ($arResult['taskLimitExceeded'] ? 'Y' : 'N') ?>',
+			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>'
 		});
+		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderCountersTo(document.getElementById('tasks-scrum-counters-container'));
+		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
+		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
 	});
 </script>

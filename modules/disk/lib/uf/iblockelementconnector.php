@@ -48,6 +48,11 @@ final class IblockElementConnector extends StubConnector
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		if(!Loader::includeModule("lists"))
 		{
 			return false;

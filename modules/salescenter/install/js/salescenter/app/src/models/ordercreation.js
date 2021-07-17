@@ -1,6 +1,4 @@
-import {Vue} from 'ui.vue';
 import {VuexBuilderModel} from 'ui.vue.vuex';
-import "currency";
 
 export class OrderCreationModel extends VuexBuilderModel
 {
@@ -17,8 +15,6 @@ export class OrderCreationModel extends VuexBuilderModel
 		return {
 			currency: '',
 			processingId: null,
-			showPaySystemSettingBanner: false,
-			selectedProducts: [],
 			basket: [],
 			basketVersion: 0,
 			propertyValues: [],
@@ -34,7 +30,6 @@ export class OrderCreationModel extends VuexBuilderModel
 				sum: null,
 				discount: null,
 				result: null,
-				resultNumeric: null,
 			},
 		}
 	}
@@ -50,14 +45,6 @@ export class OrderCreationModel extends VuexBuilderModel
 			{
 				const currency = payload || '';
 				commit('setCurrency', currency);
-			},
-			enableSubmitButton: ({ commit }, payload) =>
-			{
-				commit('setSubmitButtonStatus', true);
-			},
-			disableSubmitButton: ({ commit }, payload) =>
-			{
-				commit('setSubmitButtonStatus', false);
 			},
 			setDeliveryId: ({ commit }, payload) =>
 			{
@@ -195,14 +182,6 @@ export class OrderCreationModel extends VuexBuilderModel
 			setPersonTypeId: (state, payload) =>
 			{
 				state.personTypeId = payload;
-			},
-			showBanner: (state) =>
-			{
-				state.showPaySystemSettingBanner = true;
-			},
-			hideBanner: (state) =>
-			{
-				state.showPaySystemSettingBanner = false;
 			},
 			enableSubmit: (state) =>
 			{

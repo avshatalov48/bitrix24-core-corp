@@ -458,7 +458,7 @@ class Mail
 			}
 
 			$messages[$messageId] = Array(
-				'NAME' => $authorName,
+				'NAME' => htmlspecialcharsbx($authorName),
 				'AVATAR' => $authorAvatar,
 				'DATE' => $messageDate,
 				'TEXT' => $messageText,

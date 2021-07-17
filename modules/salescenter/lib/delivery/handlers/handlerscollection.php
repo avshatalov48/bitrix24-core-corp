@@ -47,6 +47,14 @@ class HandlersCollection implements \IteratorAggregate
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function hasInstallableItems(): bool
+	{
+		return count($this->getInstallableItems()) > 0;
+	}
+
+	/**
 	 * @return HandlerContract[]
 	 */
 	public function getInstalledItems()

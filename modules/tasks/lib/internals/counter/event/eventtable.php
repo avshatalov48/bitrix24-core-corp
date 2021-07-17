@@ -72,11 +72,12 @@ class EventTable extends DataManager
 		$connection = $entity->getConnection();
 
 		\CTimeZone::disable();
-		$res = $connection->query(sprintf(
+		$sql = sprintf(
 			'DELETE FROM %s WHERE %s',
 			$connection->getSqlHelper()->quote($entity->getDbTableName()),
 			Query::buildFilterSql($entity, $filter)
-		));
+		);
+		$res = $connection->query($sql);
 		\CTimeZone::enable();
 
 		return $res;
@@ -137,7 +138,6 @@ class EventTable extends DataManager
 	 */
 	public static function getLostEvents(): array
 	{
-
 		$limit = \COption::GetOptionString("tasks", "tasksLostCountersLimit", 0);
 		if (!$limit)
 		{

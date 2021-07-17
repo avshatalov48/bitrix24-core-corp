@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -65,18 +67,31 @@ class TasksAutomationComponent extends \CBitrixComponent
 
 		if ($taskId > 0)
 		{
-			$entityCaption = Tasks\Integration\Bizproc\Document\Task::getDocumentName($taskId);;
+			$entityCaption = Tasks\Integration\Bizproc\Document\Task::getDocumentName($taskId);
 		}
 
 		$viewType = $this->getViewType();
 		if (!$viewType)
 		{
 			$viewType = ($projectId > 0) ? 'project' : 'plan';
+
+			if ($viewType === 'project' && Loader::includeModule('socialnetwork'))
+			{
+				$group = Workgroup::getById($projectId);
+				if ($group && $group->isScrumProject())
+				{
+					$viewType = 'scrumProject';
+				}
+			}
 		}
 
 		if ($viewType === 'project')
 		{
 			$documentType = Tasks\Integration\Bizproc\Document\Task::resolveProjectTaskType($projectId);
+		}
+		elseif ($viewType === 'scrumProject')
+		{
+			$documentType = Tasks\Integration\Bizproc\Document\Task::resolveScrumProjectTaskType($projectId);
 		}
 		elseif ($viewType === 'plan')
 		{
@@ -108,7 +123,7 @@ class TasksAutomationComponent extends \CBitrixComponent
 		$myGroups = [];
 		$limit = 4;
 
-		if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (Loader::includeModule('socialnetwork'))
 		{
 			if ($groupId > 0)
 			{

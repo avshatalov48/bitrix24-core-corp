@@ -14,10 +14,7 @@ use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
-use Bitrix\Crm\Settings\DynamicSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Main\Engine\Router;
-use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
@@ -43,8 +40,7 @@ class RelationManager
 	/**
 	 * Return array of entities that can be bind.
 	 *
-	 * @param int|null $currentTypeId
-	 * @return array
+	 * @return array[] [entityTypeId => ['title' => string, 'entityTypeId' => int]]
 	 */
 	protected function getAvailableForBindingEntityTypes(): array
 	{
@@ -85,6 +81,11 @@ class RelationManager
 		return $this->availableEntityTypes;
 	}
 
+	/**
+	 * @param int|null $currentEntityId
+	 *
+	 * @return array[] [entityTypeId => ['title' => string, 'entityTypeId' => int]]
+	 */
 	public function getAvailableForParentBindingEntityTypes(?int $currentEntityId = null): array
 	{
 		$availableTypes = $this->getAvailableForBindingEntityTypes();
@@ -96,6 +97,11 @@ class RelationManager
 		return $availableTypes;
 	}
 
+	/**
+	 * @param int|null $currentEntityId
+	 *
+	 * @return array[] [entityTypeId => ['title' => string, 'entityTypeId' => int]]
+	 */
 	public function getAvailableForChildBindingEntityTypes(?int $currentEntityId = null): array
 	{
 		$availableTypes = $this->getAvailableForBindingEntityTypes();
@@ -400,14 +406,6 @@ class RelationManager
 					[DealContactTable::class, 'unbindContactIDs']
 				)),
 
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Company)
-				->setStorageStrategy(new StorageStrategy\EntityBinding(
-					[ContactCompanyTable::class, 'getCompanyContactIDs'],
-					[ContactCompanyTable::class, 'getContactCompanyIDs'],
-					[ContactCompanyTable::class, 'bindContactIDs'],
-					[ContactCompanyTable::class, 'unbindContactIDs']
-				)),
-
 			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Lead)
 				->setStorageStrategy(new StorageStrategy\EntityBinding(
 					[LeadContactTable::class, 'getLeadContactIDs'],
@@ -421,6 +419,9 @@ class RelationManager
 			//endregion
 
 			//region Company child predefined relations
+			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Lead)
+				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmLead::class, 'COMPANY_ID')),
+
 			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Deal)
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmDeal::class, 'COMPANY_ID')),
 
@@ -660,10 +661,6 @@ class RelationManager
 		bool $isNew = false
 	): array
 	{
-		if (!DynamicSettings::getCurrent()->isEnabled())
-		{
-			return [];
-		}
 		$tabCodes = $this->getRelationTabCodes($parentEntityTypeId);
 
 		$result = [];
@@ -677,7 +674,8 @@ class RelationManager
 					'id' => $tabCode,
 					'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Quote),
 					'loader' => [
-						'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+						'serviceUrl' =>
+							'/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site' . SITE_ID . '&' . bitrix_sessid_get(),
 						'componentData' => [
 							'template' => '',
 							'params' => [
@@ -694,27 +692,16 @@ class RelationManager
 			}
 			elseif ($factory && $detailComponent)
 			{
-				$serviceUrl = UrlManager::getInstance()->create('children', [
-					'c' => $detailComponent,
-					'mode' => Router::COMPONENT_MODE_CLASS,
-					'sessid' => bitrix_sessid(),
-				]);
 				$result[] = [
 					'id' => $tabCode,
 					'name' => $factory->getEntityDescription(),
 					'loader' => [
-						'serviceUrl' => $serviceUrl->getLocator(),
-						'componentData' => [
-							'isComponentAjaxAction' => true,
-							'detailComponent' => $detailComponent,
-							'params' => [
-								'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
-								'PARENT_ENTITY_ID' => $parentEntityId,
-								'ENTITY_TYPE_ID' => $entityTypeId,
-							],
-						],
+						'serviceUrl' => Container::getInstance()->getRouter()->getChildrenItemsListUrl(
+							$entityTypeId,
+							$parentEntityTypeId,
+							$parentEntityId
+						),
 					],
-					'enabled' => !$isNew,
 				];
 			}
 		}

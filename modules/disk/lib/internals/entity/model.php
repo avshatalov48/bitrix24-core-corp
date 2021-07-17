@@ -29,13 +29,12 @@ class Model extends \Bitrix\Disk\Internals\Model
 	 */
 	public function __call($name, $arguments)
 	{
-		$name = mb_strtolower($name);
 		if (mb_substr($name, 0, 3) !== 'get')
 		{
 			return null;
 		}
 
-		$possibleReference = mb_substr($name, 3);
+		$possibleReference = lcfirst(mb_substr($name, 3));
 
 		if (isset($this->lazyAttributes[$possibleReference]) || $this->isLoadedAttribute($possibleReference))
 		{
@@ -78,5 +77,17 @@ class Model extends \Bitrix\Disk\Internals\Model
 			$this->lazyAttributes[$referenceName] = $value;
 			$this->isLoadedAttribute($referenceName);
 		}
+	}
+
+	public function resetReferenceValue(string $referenceName): void
+	{
+		$referenceField = FieldManager::getInstance()->getReferenceFieldByName($this, $referenceName);
+		if (!$referenceField)
+		{
+			throw new ArgumentException("Invalid reference name {$referenceName}. Could not find field in map.");
+		}
+
+		unset($this->lazyAttributes[$referenceName]);
+		$this->setAsNotLoadedAttribute($referenceName);
 	}
 }

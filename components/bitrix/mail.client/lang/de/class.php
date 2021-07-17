@@ -1,4 +1,5 @@
 <?php
+$MESS["INTERFACE_MAIL_CHECK_ALL"] = "Alle auswählen / Alle abwählen";
 $MESS["MAIL_CLIENT_AJAX_ERROR"] = "Fehler bei Verarbeitung der Anfrage.";
 $MESS["MAIL_CLIENT_BUTTON_LOADING"] = "Wird geladen";
 $MESS["MAIL_CLIENT_CANCELATION_WARNING_3"] = "Die E-Mail-Synchronisierung ist in Ihrem Tarif nicht verfügbar. Neue E-Mails werden im BItrix24 nicht angezeigt. Die mit Aufgaben verbundenen E-Mails bleiben erhalten. Andere E-Mails werden gelöscht.<br>
@@ -59,6 +60,7 @@ $MESS["MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK"] = "Kontakte";
 $MESS["MAIL_MESSAGE_LIST_ATTACH_ICON_HINT"] = "Enthält Anhänge";
 $MESS["MAIL_MESSAGE_LIST_BLACKLIST_LINK"] = "Schwarze Liste";
 $MESS["MAIL_MESSAGE_LIST_BTN_DELETE"] = "Löschen";
+$MESS["MAIL_MESSAGE_LIST_BTN_DELETE_IMMEDIATELY"] = "Unwiderruflich löschen";
 $MESS["MAIL_MESSAGE_LIST_BTN_MOVE"] = "In Ordner verschieben";
 $MESS["MAIL_MESSAGE_LIST_BTN_NOT_SPAM"] = "Kein Spam";
 $MESS["MAIL_MESSAGE_LIST_BTN_SEEN"] = "Gelesen";

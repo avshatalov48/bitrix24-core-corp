@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Document\OnlyOffice\Models\GuestUser;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Loader;
@@ -70,6 +71,10 @@ class User extends Internals\Model
 		{
 			self::$loadedUsers[$id] = SystemUser::create();
 		}
+		elseif(GuestUser::isGuestUserId($id))
+		{
+			self::$loadedUsers[$id] = GuestUser::create();
+		}
 		else
 		{
 			self::$loadedUsers[$id] = parent::loadById($id, $with);
@@ -96,6 +101,10 @@ class User extends Internals\Model
 		if(SystemUser::isSystemUserId($id))
 		{
 			self::$loadedUsers[$id] = SystemUser::create();
+		}
+		elseif(GuestUser::isGuestUserId($id))
+		{
+			self::$loadedUsers[$id] = GuestUser::create();
 		}
 		else
 		{

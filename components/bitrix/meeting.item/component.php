@@ -131,17 +131,27 @@ while ($arInstance = $dbRes->Fetch())
 
 		if($res)
 		{
-			$fileList = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles('MEETING_ITEM_REPORT_FILES_'.$arInstance['ID'], $_REQUEST['FILES']);
-			$deletedFileList = \Bitrix\Main\UI\FileInputUtility::instance()->checkDeletedFiles('MEETING_ITEM_REPORT_FILES_'.$arInstance['ID']);
-
-			CMeetingReports::SetFiles(
-				$REPORT_ID,
-				array_values($fileList)
+			$fileList = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles(
+				'MEETING_ITEM_REPORT_FILES_'.$arInstance['ID'],
+				$_REQUEST['FILES']
 			);
+			$deletedFileList = \Bitrix\Main\UI\FileInputUtility::instance()->checkDeletedFiles(
+				'MEETING_ITEM_REPORT_FILES_'.$arInstance['ID']
+			);
+
+			if (is_array($fileList))
+			{
+				CMeetingReports::SetFiles(
+					$REPORT_ID,
+					array_values($fileList)
+				);
+			}
 		}
 
 		if ($res)
+		{
 			echo $REPORT_ID;
+		}
 
 		die();
 	}
@@ -150,7 +160,9 @@ while ($arInstance = $dbRes->Fetch())
 }
 
 if (!$bHasAccess)
+{
 	return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['save_item'] && check_bitrix_sessid())
 {
@@ -163,7 +175,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['save_item'] && check_bitr
 		if (isset($_REQUEST['ITEM_TITLE']))
 			$arResult['ITEM']['TITLE'] = $arFields['TITLE'] = trim($_REQUEST['ITEM_TITLE']);
 		if (isset($_REQUEST['ITEM_DESCRIPTION']))
-			$arResult['ITEM']['DESCRIPTION'] = $arFields['DESCRIPTION'] = trim($_REQUEST['ITEM_DESCRIPTION']);
+		{
+			$textParser = new CBXSanitizer();
+			$textParser->SetLevel(CBXSanitizer::SECURE_LEVEL_LOW);
+			$arFields['DESCRIPTION'] = $textParser->SanitizeHtml(trim($_REQUEST['ITEM_DESCRIPTION']));
+			$arResult['ITEM']['DESCRIPTION'] = $arFields['DESCRIPTION'];
+		}
 	}
 
 	$arFields['FILES'] = is_array($_REQUEST['ITEM_FILES'])

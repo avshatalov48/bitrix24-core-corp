@@ -37,13 +37,7 @@ $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurre
 <?php if ($dealCategoryId):?>
 <div class="bizproc-automation-popup-settings" data-role="crm-cvtd-deal-category">
 	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($dealCategoryId['Name'])?>: </span>
-	<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($dealCategoryId['FieldName'])?>">
-		<?foreach ($dealCategoryId['Options'] as $value => $optionLabel):?>
-			<option value="<?=htmlspecialcharsbx($value)?>"
-				<?=($value == $selectedDealCategory) ? ' selected' : ''?>
-			><?=htmlspecialcharsbx($optionLabel)?></option>
-		<?endforeach;?>
-	</select>
+	<?= $dialog->renderFieldControl($dealCategoryId) ?>
 </div>
 <?php endif?>
 <?if ($disableActivityCompletion):?>

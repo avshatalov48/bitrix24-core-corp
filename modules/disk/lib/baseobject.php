@@ -645,9 +645,9 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 * @param string $newName New name.
 	 * @return bool
 	 */
-	public function rename($newName)
+	public function rename($newName, bool $generateUniqueName = false)
 	{
-		$success = $this->renameInternal($newName, false);
+		$success = $this->renameInternal($newName, $generateUniqueName);
 		if($success)
 		{
 			$this->changeParentUpdateTime();
@@ -1558,19 +1558,17 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 				));
 				while($userRow = $query->fetch())
 				{
+					/** @var User $userModel */
+					$userModel = User::buildFromRow($userRow);
 					/** @var Sharing $sharing */
 					$sharing = $membersToSharing[$type . '|' . $userRow['ID']];
 					$entityList[] = array(
 						'sharingId' => $sharing->getId(),
 						'entityId' => Sharing::CODE_USER . $userRow['ID'],
-						'name' => \CUser::formatName('#NAME# #LAST_NAME#', array(
-							"NAME" => $userRow['NAME'],
-							"LAST_NAME" => $userRow['LAST_NAME'],
-							"SECOND_NAME" => $userRow['SECOND_NAME'],
-							"LOGIN" => $userRow['LOGIN'],
-						), false, false),
+						'name' => $userModel->getFormattedName(),
 						'right' => $sharing->getTaskName(),
-						'avatar' => Avatar::getPerson($userRow['PERSONAL_PHOTO']),
+						'avatar' => $userModel->getAvatarSrc(),
+						'url' => $userModel->getDetailUrl(),
 						'type' => 'users',
 					);
 				}

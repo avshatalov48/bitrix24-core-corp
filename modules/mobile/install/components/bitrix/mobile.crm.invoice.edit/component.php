@@ -586,24 +586,9 @@ else
 			}
 
 			$comments = trim($_POST['COMMENTS']);
-			$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
+			$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 			$userDescription = trim($_POST['USER_DESCRIPTION']);
-			$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
-			if($bSanitizeComments || $bSanitizeUserDescription)
-			{
-				$sanitizer = new CBXSanitizer();
-				$sanitizer->ApplyDoubleEncode(false);
-				$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-				//Crutch for for Chrome line break behaviour in HTML editor.
-				$sanitizer->AddTags(array('div' => array()));
-				$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-				if ($bSanitizeComments)
-					$comments = $sanitizer->SanitizeHtml($comments);
-				if ($bSanitizeUserDescription)
-					$userDescription = $sanitizer->SanitizeHtml($userDescription);
-				unset($sanitizer);
-			}
-			unset($bSanitizeComments, $bSanitizeUserDescription);
+			$userDescription = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($userDescription);
 
 			$dateInsert = ConvertTimeStamp(time(), 'FULL', SITE_ID);
 			if ($bEdit && isset($arResult['ELEMENT']['DATE_INSERT']))

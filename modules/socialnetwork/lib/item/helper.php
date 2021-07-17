@@ -10,6 +10,7 @@ namespace Bitrix\Socialnetwork\Item;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Controller\Livefeed;
@@ -17,7 +18,7 @@ use Bitrix\Disk\Uf\FileUserType;
 
 class Helper
 {
-	public static function addBlogPost($params, $scope = \Bitrix\Main\Engine\Controller::SCOPE_AJAX)
+	public static function addBlogPost($params, $scope = \Bitrix\Main\Engine\Controller::SCOPE_AJAX, &$resultFields = [])
 	{
 		global $USER, $CACHE_MANAGER, $APPLICATION;
 
@@ -115,14 +116,21 @@ class Helper
 				'DEST' => $params['DEST'],
 				'SITE_ID' => $siteId,
 				'AUTHOR_ID' => $authorId,
+				'MOBILE' => ($params['MOBILE'] ?? 'N'),
 			], $resultFields);
 
-			$postFields['PUBLISH_STATUS'] = $resultFields['PUBLISH_STATUS'];
-			if ($resultFields['ERROR_MESSAGE'])
+			if ($resultFields['ERROR_MESSAGE_PUBLIC'])
 			{
-				$APPLICATION->throwException($resultFields['ERROR_MESSAGE'], 'SONET_CONTROLLER_LIVEFEED_BLOGPOST_ADD_ERROR');
 				return false;
 			}
+
+			if ($resultFields['ERROR_MESSAGE'])
+			{
+				$APPLICATION->throwException($resultFields['ERROR_MESSAGE']);
+				return false;
+			}
+
+			$postFields['PUBLISH_STATUS'] = $resultFields['PUBLISH_STATUS'];
 		}
 		elseif (
 			!empty($params['SPERM'])
@@ -255,6 +263,16 @@ class Helper
 			return false;
 		}
 
+		$socnetPerms = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostSocNetPerms([
+			'postId' => $result,
+			'authorId' => $postFields['AUTHOR_ID']
+		]);
+
+		\Bitrix\Main\FinderDestTable::merge([
+			'CONTEXT' => 'blog_post',
+			'CODE' => \Bitrix\Main\FinderDestTable::convertRights($socnetPerms, [ 'U' . $postFields['AUTHOR_ID'] ])
+		]);
+
 		if (
 			isset($params['IMPORTANT'])
 			&& $params['IMPORTANT'] === 'Y'
@@ -385,29 +403,6 @@ class Helper
 
 		$postFields['ID'] = $result;
 
-		$paramsNotify = [
-			'bSoNet' => true,
-			'allowVideo' => Option::get('blog', 'allow_video', 'Y'),
-			'PATH_TO_POST' => $pathToPost,
-			'user_id' => $authorId,
-			'NAME_TEMPLATE' => \CSite::getNameFormat(null, $siteId)
-		];
-
-		$logId = \CBlogPost::notify($postFields, $blog, $paramsNotify);
-		if ($logId)
-		{
-			if ($post = \Bitrix\Blog\Item\Post::getById($result))
-			{
-				\CSocNetLog::update((int)$logId, [
-					'EVENT_ID' => self::getBlogPostEventId([
-						'postId' => $post->getId()
-					]),
-					'SOURCE_ID' => $result, // table column field
-					'TAG' => $post->getTags()
-				]);
-			}
-		}
-
 		$postUrl = \CComponentEngine::makePathFromTemplate(htmlspecialcharsBack($pathToPost), [
 			'post_id' => $result,
 			'user_id' => $blog['OWNER_ID']
@@ -415,6 +410,29 @@ class Helper
 
 		if ($postFields['PUBLISH_STATUS'] === BLOG_PUBLISH_STATUS_PUBLISH)
 		{
+			$paramsNotify = [
+				'bSoNet' => true,
+				'allowVideo' => Option::get('blog', 'allow_video', 'Y'),
+				'PATH_TO_POST' => $pathToPost,
+				'user_id' => $authorId,
+				'NAME_TEMPLATE' => \CSite::getNameFormat(null, $siteId),
+			];
+
+			$logId = \CBlogPost::notify($postFields, $blog, $paramsNotify);
+			if ($logId)
+			{
+				if ($post = \Bitrix\Blog\Item\Post::getById($result))
+				{
+					\CSocNetLog::update((int)$logId, [
+						'EVENT_ID' => self::getBlogPostEventId([
+							'postId' => $post->getId()
+						]),
+						'SOURCE_ID' => $result, // table column field
+						'TAG' => $post->getTags(),
+					]);
+				}
+			}
+
 			BXClearCache(true, ComponentHelper::getBlogPostCacheDir([
 				'TYPE' => 'posts_last',
 				'SITE_ID' => $siteId
@@ -449,6 +467,8 @@ class Helper
 				'FROM_USER_ID' => $authorId,
 				'TO_SOCNET_RIGHTS' => $postFields['SOCNET_RIGHTS']
 			]);
+
+			$resultFields['WARNING_MESSAGE_PUBLIC'] = Loc::getMessage('SOCIALNETWORK_ITEM_HELPER_MODERATION_WARNING');
 		}
 
 		foreach ($postFields['SOCNET_RIGHTS'] as $destination)
@@ -462,9 +482,9 @@ class Helper
 		return $result;
 	}
 
-	public static function updateBlogPost($params = [], $scope = \Bitrix\Main\Engine\Controller::SCOPE_AJAX)
+	public static function updateBlogPost($params = [], $scope = \Bitrix\Main\Engine\Controller::SCOPE_AJAX, &$resultFields = [])
 	{
-		global $USER, $USER_FIELD_MANAGER, $APPLICATION;
+		global $USER, $USER_FIELD_MANAGER, $APPLICATION, $CACHE_MANAGER;
 
 		$postId = (int)$params['POST_ID'];
 
@@ -577,14 +597,21 @@ class Helper
 				'DEST' => $params['DEST'],
 				'SITE_ID' => $siteId,
 				'AUTHOR_ID' => $postFields['AUTHOR_ID'],
+				'MOBILE' => ($params['MOBILE'] ?? 'N'),
 			], $resultFields);
 
-			$updateFields['PUBLISH_STATUS'] = $resultFields['PUBLISH_STATUS'];
+			if ($resultFields['ERROR_MESSAGE_PUBLIC'])
+			{
+				return false;
+			}
+
 			if ($resultFields['ERROR_MESSAGE'])
 			{
 				$APPLICATION->throwException($resultFields['ERROR_MESSAGE'], 'SONET_CONTROLLER_LIVEFEED_BLOGPOST_UPDATE_ERROR');
 				return false;
 			}
+
+			$updateFields['PUBLISH_STATUS'] = $resultFields['PUBLISH_STATUS'];
 		}
 
 		if (isset($params['IMPORTANT']))
@@ -818,7 +845,18 @@ class Helper
 				}
 			}
 
+			if (
+				isset($params['IMPORTANT'])
+				&& $params['IMPORTANT'] === 'Y'
+			)
+			{
+				\CBlogUserOptions::setOption($result, 'BLOG_POST_IMPRTNT', 'Y', $currentUserId);
 
+				if (defined('BX_COMP_MANAGED_CACHE'))
+				{
+					$CACHE_MANAGER->clearByTag('blogpost_important_all');
+				}
+			}
 		}
 
 		return $result;

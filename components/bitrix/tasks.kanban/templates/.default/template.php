@@ -11,9 +11,11 @@ if (!empty($arResult['ERRORS'])) {
     return;
 }
 
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\Type\Date;
-use \Bitrix\Tasks\UI\Filter;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\UI\Filter;
+use Bitrix\Tasks\Kanban\StagesTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -53,35 +55,50 @@ $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + \CTimeZo
 	'ui.notification',
 	'ui.dialogs.messagebox',
 	'ui.counter',
-	'ui.label'
+	'ui.label',
+	'ui.tour'
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 if (!$emptyKanban) {
     $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-    $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
+    $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-hidden');
 }
 
-$isSprintView = Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_SPRINT ||
-	Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT;
+$workMode = StagesTable::getWorkMode();
+$isTimeline = ($workMode === StagesTable::WORK_MODE_TIMELINE);
+$isMyPlan = ($workMode === StagesTable::WORK_MODE_USER);
+$isSprintView = ($workMode == StagesTable::WORK_MODE_SPRINT || $workMode == StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
-if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE_HEADER'] == 'Y') {
+$viewMode = '';
+if ($isMyPlan)
+{
+	$viewMode = 'myPlan';
+}
+elseif ($isTimeline)
+{
+	$viewMode = 'timeline';
+}
+
+if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE_HEADER'] == 'Y')
+{
     $filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($arParams["USER_ID"], $arParams["GROUP_ID"]);
 
     $filter = $filterInstance->getFilters();
     $presets = $filterInstance->getPresets();
     $gridID = $filterInstance->getId();
 
-    if ($isBitrix24Template) {
+    if ($isBitrix24Template)
+    {
         $this->SetViewTarget('inside_pagetitle');
     }
 
 	$showViewMode = (
-		$arParams['KANBAN_SHOW_VIEW_MODE'] == 'Y' ||
-		Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_USER ||
-		Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_TIMELINE ||
-		!(Kanban\StagesTable::getWorkMode() == Kanban\StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
+		$arParams['KANBAN_SHOW_VIEW_MODE'] == 'Y'
+		|| $isMyPlan
+		|| $isTimeline
+		|| !($workMode == StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
 	);
 
 	$group = Bitrix\Socialnetwork\Item\Workgroup::getById($arParams['GROUP_ID']);
@@ -281,6 +298,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             canAddItem: <?= $arResult['ACCESS_CREATE_PERMS'] ? 'true' : 'false'?>,
             canSortItem: <?= $arResult['ACCESS_SORT_PERMS'] ? 'true' : 'false'?>,
             bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+			addItemTitleText: "<?= Loc::getMessage('KANBAN_QUICK_TASK');?>",
+			addDraftItemInfo: "<?= Loc::getMessage('KANBAN_QUICK_TASK_ITEM_INFO');?>",
             columns: <?= \CUtil::PhpToJSObject($data['columns'], false, false, true)?>,
             items: <?= \CUtil::PhpToJSObject($data['items'], false, false, true)?>,
             data: {
@@ -318,6 +337,20 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
         Kanban.draw();
 
         BX.Tasks.KanbanComponent.onReady();
+
+        function runTours()
+		{
+			BX.removeCustomEvent(Kanban, 'Kanban.Grid:onRender', runTours);
+			BX.Tasks.KanbanComponent.TourGuideControllerInstance = new BX.Tasks.KanbanComponent.TourGuideController(<?=
+				Json::encode([
+					'userId' => $arParams['USER_ID'],
+					'groupId' => (int)$arParams['GROUP_ID'],
+					'tours' => $arResult['TOURS'],
+					'viewMode' => $viewMode,
+				])
+			?>);
+		}
+		BX.addCustomEvent(Kanban, 'Kanban.Grid:onRender', runTours);
     })();
 
 </script>

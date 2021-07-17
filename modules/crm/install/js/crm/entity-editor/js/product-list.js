@@ -77,6 +77,11 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		}
 	};
 
+	BX.Crm.EntityProductListController.prototype.getProductList = function()
+	{
+		return this.productList;
+	}
+
 	BX.Crm.EntityProductListController.prototype.setProductList = function(productList)
 	{
 		if (this.productList === productList)
@@ -332,7 +337,7 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 
 	BX.Crm.EntityProductListController.prototype.doAdjustLocks = function()
 	{
-		if (!this.productList)
+		if (!this.productList || !this.productList.wasProductsInitiated())
 		{
 			return;
 		}

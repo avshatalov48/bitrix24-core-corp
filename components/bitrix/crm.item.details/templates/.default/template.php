@@ -40,6 +40,7 @@ $this->getComponent()->addJsRouter($this);
 
 \Bitrix\Main\UI\Extension::load([
 	'crm.item-details-component',
+	'bp_starter',
 ]);
 
 $APPLICATION->IncludeComponent(

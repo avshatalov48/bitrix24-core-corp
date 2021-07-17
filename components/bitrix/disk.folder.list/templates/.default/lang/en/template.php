@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DISK_FOLDER_BTN_CREATE_FOLDER"] = "Create";
 $MESS["DISK_FOLDER_LABEL_NAME_CREATE_FOLDER"] = "Name";
 $MESS["DISK_FOLDER_LIST_BIZPROC_LABEL"] = "Activate business processes";
@@ -68,6 +68,7 @@ $MESS["DISK_FOLDER_LIST_SHARING_LABEL_RIGHT_READ"] = "Read";
 $MESS["DISK_FOLDER_LIST_SHARING_LABEL_TOOLTIP_SHARING"] = "All users the folder is shared with<br/>will be able to re-share the folder with other users";
 $MESS["DISK_FOLDER_LIST_SHARING_TITLE_MODAL"] = "Sharing parameters";
 $MESS["DISK_FOLDER_LIST_SHARING_TITLE_MODAL_2"] = "Sharing";
+$MESS["DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3"] = "Share with other users";
 $MESS["DISK_FOLDER_LIST_SPOTLIGHT_VIEW_MODE"] = "Please select file view mode";
 $MESS["DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FILE"] = "The file #NAME# has been connected to My Drive.";
 $MESS["DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FOLDER"] = "The folder #NAME# has been connected to My Drive.";
@@ -117,4 +118,3 @@ $MESS["DISK_FOLDER_MW_CREATE_TYPE_DOC"] = "Document";
 $MESS["DISK_FOLDER_MW_CREATE_TYPE_PPT"] = "Presentation";
 $MESS["DISK_FOLDER_MW_CREATE_TYPE_XLS"] = "Spreadsheet";
 $MESS["DISK_FOLDER_TITLE_CREATE_FOLDER"] = "Create folder";
-?>

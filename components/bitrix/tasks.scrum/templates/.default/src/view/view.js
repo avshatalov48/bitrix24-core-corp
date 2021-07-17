@@ -1,4 +1,4 @@
-import {Type} from 'main.core';
+import {Dom, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Filter} from '../service/filter';
@@ -6,7 +6,11 @@ import {Filter} from '../service/filter';
 import {RequestSender} from '../utility/request.sender';
 import {Counters} from '../utility/counters';
 
+import {Tabs} from './header/tabs';
+
 import type {CountersData} from '../utility/counters';
+
+import '../css/base.css';
 
 export type ViewInfo = {
 	name: string,
@@ -72,13 +76,48 @@ export class View extends EventEmitter
 		}
 	}
 
+	renderTabsTo(container: HTMLElement)
+	{
+		if (!Type.isDomNode(container))
+		{
+			throw new Error('Scrum: HTMLElement for tabs not found');
+		}
+
+		const tabs = new Tabs({
+			views: this.views
+		});
+
+		Dom.append(tabs.render(), container);
+	}
+
 	renderCountersTo(container: HTMLElement)
 	{
 		this.counters.renderTo(container);
 	}
 
+	renderSprintStatsTo(container: HTMLElement)
+	{
+		if (!Type.isDomNode(container))
+		{
+			throw new Error('Scrum: HTMLElement for Sprint stats not found');
+		}
+	}
+
+	renderButtonsTo(container: HTMLElement)
+	{
+		if (!Type.isDomNode(container))
+		{
+			throw new Error('Scrum: HTMLElement for buttons not found');
+		}
+	}
+
 	getCurrentUserId(): number
 	{
 		return this.userId;
+	}
+
+	getCurrentGroupId(): number
+	{
+		return this.groupId;
 	}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ERROR_FIELD_INCORRECT"] = "The field '%FIELD_NAME%' is incorrect.";
 $MESS["CRM_ERROR_FIELD_IS_MISSING"] = "The required field '%FIELD_NAME%' is missing.";
 $MESS["CRM_FIELD_COMPARE_ADDRESS"] = "Changed the field \"Address\"";
@@ -48,12 +48,15 @@ $MESS["CRM_LEAD_FIELD_ADDRESS_PROVINCE"] = "State / Province";
 $MESS["CRM_LEAD_FIELD_ADDRESS_REGION"] = "Region";
 $MESS["CRM_LEAD_FIELD_ASSIGNED_BY_ID"] = "Responsible person";
 $MESS["CRM_LEAD_FIELD_BIRTHDATE"] = "Date of birth";
+$MESS["CRM_LEAD_FIELD_CLIENT"] = "Client";
 $MESS["CRM_LEAD_FIELD_COMMENTS"] = "Comment";
 $MESS["CRM_LEAD_FIELD_COMPANY_ID"] = "Company";
 $MESS["CRM_LEAD_FIELD_COMPANY_TITLE"] = "Company name";
 $MESS["CRM_LEAD_FIELD_COMPARE"] = "Changed the field \"#FIELD_NAME#\"";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Total amount calculation mode changed";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "Auto calculate using product prices";
+$MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Manual";
 $MESS["CRM_LEAD_FIELD_CONTACT_ID"] = "Contact";
-$MESS["CRM_LEAD_FIELD_CLIENT"] = "Client";
 $MESS["CRM_LEAD_FIELD_CREATED_BY_ID"] = "Created by";
 $MESS["CRM_LEAD_FIELD_CURRENCY_ID"] = "Currency";
 $MESS["CRM_LEAD_FIELD_DATE_CLOSED"] = "Completed on";
@@ -97,4 +100,3 @@ $MESS["CRM_LEAD_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the lead 
 $MESS["CRM_LEAD_UPDATE_CANCELED"] = "Lead has not been updated because the operation was canceled by event handler: \"#NAME#\"";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
 $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Cannot verify permissions because no user was specified.";
-?>

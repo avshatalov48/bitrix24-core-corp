@@ -91,7 +91,7 @@ $prefix = $arResult['GRID_ID'];
 			$authorHtml = "<div class = \"crm-client-summary-wrapper\">
 				<div class = \"crm-client-photo-wrapper\">
 					<div class=\"ui-icon ui-icon-common-user crm-client-def-pic\">
-						<i style=\"background-image: url({$photoUrl})\"></i>
+						<i ".($photoUrl ? "style=\"background-image: url({$photoUrl})\"" : "")."></i>
 					</div>
 				</div>
 				<div class=\"crm-client-info-wrapper\">

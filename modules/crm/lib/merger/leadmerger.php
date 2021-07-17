@@ -393,25 +393,103 @@ class LeadMerger extends EntityMerger
 		// check all address components
 		if($fieldID === 'ADDRESS')
 		{
-			$targetId = (int)$targ['ID'];
-			$result = parent::innerPrepareEntityFieldMergeData($fieldID, $fieldParams, $seeds, $targ, $options);
-			if ($targetId > 0)
+			$addressFields = [];
+			$result = parent::innerPrepareEntityFieldMergeData(
+				'ADDRESS_LOC_ADDR_ID',
+				$fieldParams,
+				$seeds,
+				$targ,
+				$options
+			);
+			if ($result['VALUE'] > 0)
 			{
-				$result['SOURCE_ENTITY_IDS'] = [$targetId];
+				$addressFields['LOC_ADDR_ID'] = $result['VALUE'];
 			}
-			foreach (self::getBaseAddressFieldNames() as $addrFieldID)
+			else
 			{
-				if ($addrFieldID === $fieldID)
+				$result = parent::innerPrepareEntityFieldMergeData(
+					$fieldID,
+					$fieldParams,
+					$seeds,
+					$targ,
+					$options
+				);
+				foreach (self::getBaseAddressFieldNames() as $addrFieldId)
 				{
-					continue;
+					if ($addrFieldId === $fieldID)
+					{
+						continue;
+					}
+					$extraFieldMergeResult = parent::innerPrepareEntityFieldMergeData(
+						$addrFieldId,
+						$fieldParams,
+						$seeds,
+						$targ,
+						$options
+					);
+
+					if (empty($result['SOURCE_ENTITY_IDS']))
+					{
+						$result = $extraFieldMergeResult;
+					}
+
+					$result['IS_MERGED'] = $result['IS_MERGED'] && $extraFieldMergeResult['IS_MERGED'];
+					if (!$result['IS_MERGED'])
+					{
+						break;
+					}
 				}
-				$mergeData = parent::innerPrepareEntityFieldMergeData($addrFieldID, $fieldParams, $seeds, $targ, $options);
-				$result['IS_MERGED'] = $result['IS_MERGED'] && $mergeData['IS_MERGED'];
-				if (!$result['IS_MERGED'])
+
+				$addressSourceId = $result['SOURCE_ENTITY_IDS'][0] ?? null;
+				if ($addressSourceId)
 				{
-					break;
+					$addressSource = null;
+					if ($targ['ID'] === $addressSourceId)
+					{
+						$addressSource = $targ;
+					}
+					else
+					{
+						foreach ($seeds as $seed)
+						{
+							if ($seed['ID'] === $addressSourceId)
+							{
+								$addressSource = $seed;
+								break;
+							}
+						}
+					}
+					if ($addressSource)
+					{
+						foreach (self::getBaseAddressFieldNames() as $addrFieldId)
+						{
+							$addressValue = (string)$addressSource[$addrFieldId];
+							if ($addressValue !== '')
+							{
+								if ($addrFieldId !== 'ADDRESS' && $addrFieldId !== 'ADDRESS_2')
+								{
+									$addrFieldId = str_replace('ADDRESS_', '', $addrFieldId);
+								}
+								if ($addrFieldId === 'ADDRESS')
+								{
+									$addrFieldId = 'ADDRESS_1';
+								}
+								$addressFields[$addrFieldId] = $addressValue;
+							}
+						}
+					}
 				}
 			}
+
+			if (Main\Loader::includeModule('location') && !empty($addressFields))
+			{
+				$address = \Bitrix\Crm\EntityAddress::makeLocationAddressByFields($addressFields);
+				if ($address)
+				{
+					$result['VALUE'] = $address->toJson();
+				}
+			}
+
 			return $result;
 		}
 		return parent::innerPrepareEntityFieldMergeData($fieldID, $fieldParams, $seeds, $targ, $options);

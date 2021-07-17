@@ -67,6 +67,25 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		];
 	}
 
+	public function processAfterAction(\Bitrix\Main\Engine\Action $action, $result)
+	{
+		parent::processAfterAction($action, $result);
+
+		if ($action->getName() === 'getSliderContent' && !$this->errorCollection->isEmpty())
+		{
+			$errorText = '';
+			foreach ($this->errorCollection as $error)
+			{
+				/** @var Error $error */
+				$errorText .= '<span style="color: red">' . $error->getMessage() . '</span><br/>';
+			}
+
+			return (new HttpResponse())->setContent($errorText);
+		}
+
+		return $result;
+	}
+
 	public function getSliderContentAction(string $componentParams = '')
 	{
 		$params =

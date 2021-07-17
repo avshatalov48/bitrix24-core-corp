@@ -445,6 +445,25 @@ class LandingBaseComponent extends \CBitrixComponent
 	}
 
 	/**
+	 * Redirects to the url in according with frame mode.
+	 * @param string $url Url to redirect.
+	 * @return void
+	 */
+	protected function frameRedirect(string $url): void
+	{
+		if ($this->request('IFRAME') == 'Y')
+		{
+			$uri = new \Bitrix\Main\Web\Uri($url);
+			$uri->addParams([
+				'IFRAME' => 'Y',
+				'IFRAME_TYPE' => 'SIDE_SLIDER'
+			]);
+			$url = $uri->getUri();
+		}
+		\localRedirect($url);
+	}
+
+	/**
 	 * Get some var from request.
 	 * @param string $var Code of var.
 	 * @return mixed
@@ -736,7 +755,7 @@ class LandingBaseComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Get URI without some external params.
+	 * Get URI within/without some external params.
 	 * @param array $add Additional params for adding.
 	 * @param array $remove Additional params for deleting.
 	 * @return string
@@ -755,6 +774,38 @@ class LandingBaseComponent extends \CBitrixComponent
 		}
 
 		return $curUri->getUri();
+	}
+
+	/**
+	 * Adds new params / removes old params from $pageUri.
+	 * @param string $pageUri Page uri.
+	 * @param array $add Additional params for adding.
+	 * @param array $remove Additional params for deleting.
+	 * @return string
+	 */
+	public function getPageParam(string $pageUri, array $add = [], array $remove = []): string
+	{
+		$curUri = new \Bitrix\Main\Web\Uri($pageUri);
+
+		if ($add)
+		{
+			$curUri->addParams($add);
+		}
+		if ($remove)
+		{
+			$curUri->deleteParams($remove);
+		}
+
+		return $curUri->getUri();
+	}
+
+	/**
+	 * Returns relative path of current component template.
+	 * @return string
+	 */
+	public function getComponentTemplate(): string
+	{
+		return $this->__template->__folder;
 	}
 
 	/**

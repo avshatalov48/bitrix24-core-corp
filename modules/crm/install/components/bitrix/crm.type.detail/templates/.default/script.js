@@ -107,11 +107,6 @@
 	      this.errorsContainer = params.errorsContainer;
 	      this.presets = params.presets;
 	      this.relations = params.relations;
-
-	      if (main_core.Type.isArray(params.customSections)) {
-	        this.customSections = params.customSections;
-	      }
-
 	      this.isRestricted = Boolean(params.isRestricted);
 	    }
 
@@ -379,7 +374,9 @@
 	        location.href = crm_router.Router.Instance.getTypeDetailUrl(this.type.getEntityTypeId());
 	      }
 
-	      this.emitTypeUpdatedEvent();
+	      this.emitTypeUpdatedEvent({
+	        isUrlChanged: response.data.isUrlChanged === true
+	      });
 	    }
 	  }, {
 	    key: "getSlider",
@@ -401,11 +398,11 @@
 	    }
 	  }, {
 	    key: "emitTypeUpdatedEvent",
-	    value: function emitTypeUpdatedEvent() {
+	    value: function emitTypeUpdatedEvent(data) {
 	      var toolbar = this.getToolbarComponent();
 
 	      if (toolbar) {
-	        toolbar.emitTypeUpdatedEvent();
+	        toolbar.emitTypeUpdatedEvent(data);
 	      }
 	    }
 	  }, {
@@ -465,10 +462,14 @@
 	        return new Promise(function (resolve) {
 	          _this6.startProgress();
 
-	          _this6.type.delete().then(function () {
+	          _this6.type.delete().then(function (response) {
 	            _this6.stopProgress();
 
-	            _this6.emitTypeUpdatedEvent();
+	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
+
+	            _this6.emitTypeUpdatedEvent({
+	              isUrlChanged: isUrlChanged
+	            });
 
 	            var slider = _this6.getSlider();
 
@@ -663,14 +664,12 @@
 	  }, {
 	    key: "initCustomSections",
 	    value: function initCustomSections() {
-	      if (main_core.Type.isArray(this.customSections)) {
-	        this.customSectionController = new CustomSectionsController({
-	          switcher: BX.UI.Switcher.getById('crm-type-custom-section-switcher'),
-	          container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
-	          selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
-	          customSections: this.customSections
-	        });
-	      }
+	      this.customSectionController = new CustomSectionsController({
+	        switcher: BX.UI.Switcher.getById('crm-type-custom-section-switcher'),
+	        container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
+	        selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
+	        customSections: this.type.getCustomSections() || []
+	      });
 	    }
 	  }], [{
 	    key: "handleLeftMenuClick",
@@ -898,7 +897,13 @@
 	    this.switcher = options.switcher;
 	    this.container = options.container;
 	    this.selectorContainer = options.selectorContainer;
-	    this.customSections = options.customSections;
+
+	    if (main_core.Type.isArray(options.customSections)) {
+	      this.customSections = options.customSections;
+	    } else {
+	      this.customSections = [];
+	    }
+
 	    this.initSelector();
 	    this.settingsContainer = main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST'));
 	    this.container.append(this.settingsContainer);

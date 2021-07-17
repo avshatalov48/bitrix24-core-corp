@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models;
 
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\File;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
@@ -16,15 +17,20 @@ final class DocumentSessionContext implements Jsonable
 	protected $attachedObjectId;
 	/** @var AttachedObject */
 	protected $attachedObject;
+	/** @var int|null */
+	protected $externalLinkId;
+	/** @var ExternalLink */
+	protected $externalLink;
 	/** @var int */
 	protected $objectId;
 	/** @var BaseObject|File */
 	protected $object;
 
-	public function __construct(int $objectId, int $attachedObjectId = null)
+	public function __construct(int $objectId, int $attachedObjectId = null, int $externalLinkId = null)
 	{
 		$this->attachedObjectId = $attachedObjectId;
 		$this->objectId = $objectId;
+		$this->externalLinkId = $externalLinkId;
 	}
 
 	public static function tryBuildByAttachedObject(?AttachedObject $attachedObject, File $file): self
@@ -68,6 +74,19 @@ final class DocumentSessionContext implements Jsonable
 		return $context;
 	}
 
+	public static function buildByExternalLink(ExternalLink $externalLink): self
+	{
+		$context = new self(
+			$externalLink->getObject()->getRealObjectId(),
+			null,
+			$externalLink->getId()
+		);
+
+		$context->setObject($externalLink->getObject());
+
+		return $context;
+	}
+
 	public static function buildByObject(BaseObject $baseObject): self
 	{
 		if (!($baseObject instanceof File))
@@ -86,7 +105,11 @@ final class DocumentSessionContext implements Jsonable
 			return null;
 		}
 
-		return new self($decoded['objectId'], $decoded['attachedObjectId'] ?? null);
+		return new self(
+			$decoded['objectId'],
+			$decoded['attachedObjectId'] ?? null,
+			$decoded['externalLinkId'] ?? null
+		);
 	}
 
 	public function toJson($options = 0)
@@ -94,6 +117,7 @@ final class DocumentSessionContext implements Jsonable
 		return Json::encode([
 			'attachedObjectId' => $this->getAttachedObjectId(),
 			'objectId' => $this->getObjectId(),
+			'externalLinkId' => $this->getExternalLinkId(),
 		], $options);
 	}
 
@@ -112,10 +136,37 @@ final class DocumentSessionContext implements Jsonable
 		if (!$this->attachedObject)
 		{
 			$this->attachedObject = AttachedObject::loadById($this->getAttachedObjectId(), ['OBJECT']);
+			if (!$this->attachedObject)
+			{
+				$this->attachedObjectId = null;
+
+				return null;
+			}
+
 			$this->setObject($this->attachedObject->getFile());
 		}
 
 		return $this->attachedObject;
+	}
+
+	public function getExternalLinkId(): ?int
+	{
+		return $this->externalLinkId;
+	}
+
+	public function getExternalLink(): ?ExternalLink
+	{
+		if (!$this->getExternalLinkId())
+		{
+			return null;
+		}
+
+		if (!$this->externalLink)
+		{
+			$this->externalLink = ExternalLink::loadById($this->getExternalLinkId());
+		}
+
+		return $this->externalLink;
 	}
 
 	public function getObjectId(): int

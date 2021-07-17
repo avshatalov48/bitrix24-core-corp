@@ -6,6 +6,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -45,7 +46,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			$this->parentEntityId = (int) $this->arParams['parentEntityId'];
 		}
 
-		$this->gridOptions = new Bitrix\Main\Grid\Options($this->kanbanEntity->getGridId());
+		$this->gridOptions = new Bitrix\Main\Grid\Options($this->getGridId());
 	}
 
 	public function executeComponent()
@@ -64,23 +65,36 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['interfaceToolbar'] = $this->prepareInterfaceToolbar();
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
+			'entityTypeName' => \CCrmOwnerType::ResolveName($this->entityTypeId),
 			'categoryId' => $this->category ? $this->category->getId() : 0,
-			'gridId' => $this->arResult['grid']['GRID_ID'],
-			'itemCreateUrl' => $this->getAddButtonParameters()['createUrl'],
+			'gridId' => $this->getGridId(),
+			'backendUrl' => $this->arParams['backendUrl'] ?? null,
 		];
 
 		$this->includeComponentTemplate();
 	}
 
+	protected function getGridId(): string
+	{
+		$gridId = parent::getGridId();
+
+		if ($this->parentEntityTypeId > 0)
+		{
+			$gridId .= 'parent_' . $this->parentEntityTypeId;
+		}
+
+		return $gridId;
+	}
+
 	protected function prepareGrid(): array
 	{
 		$grid = [];
-		$grid['GRID_ID'] = $this->kanbanEntity->getGridId();
+		$grid['GRID_ID'] = $this->getGridId();
 		$grid['COLUMNS'] = array_merge($this->provider->getGridColumns(), $this->ufProvider->getGridColumns());
 
 		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
-		$gridSort = $this->gridOptions->GetSorting(['sort' => $this->defaultGridSort]);
+		$gridSort = $this->gridOptions->getSorting(['sort' => $this->defaultGridSort]);
 		$pageNavigation = $this->getPageNavigation($pageSize);
 		$listFilter = $this->getListFilter();
 
@@ -132,7 +146,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function prepareInterfaceToolbar(): array
 	{
 		$toolbar = [];
-		if($this->arParams['enableInterfaceToolbar'])
+		if($this->parentEntityTypeId > 0)
 		{
 			$entityTypeDescription = $this->factory->getEntityDescription();
 
@@ -146,7 +160,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				)
 			;
 
-			$toolbar['id'] = $this->kanbanEntity->getGridId().'_toolbar';
+			$toolbar['id'] = $this->getGridId() . '_toolbar';
 			$addButton = [
 				'TEXT' => $entityTypeDescription,
 				'TITLE' => Loc::getMessage(
@@ -158,8 +172,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				'LINK' => $url,
 				'ICON' => 'btn-new',
 			];
-			$toolbar['buttons'][] = $addButton;
+			$toolbar['buttons'] = [$addButton];
 		}
+
 		return $toolbar;
 	}
 
@@ -173,7 +188,13 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 	protected function getListFilter(): array
 	{
-		$filterOptions = $this->kanbanEntity->getFilterOptions();
+		$filter = $this->getBindingFilter();
+		if (!empty($filter))
+		{
+			return $filter;
+		}
+
+		$filterOptions = new Options($this->getGridId(), $this->kanbanEntity->getFilterPresets());
 		$filterFields = $this->getDefaultFilterFields();
 		$requestFilter = $filterOptions->getFilter($filterFields);
 
@@ -185,12 +206,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			$filter = $this->category->getItemsFilter($filter);
 		}
 
-		$filter = $this->getBindingFilter($filter);
-
 		return $filter;
 	}
 
-	protected function getBindingFilter(array $filter): array
+	protected function getBindingFilter(): ?array
 	{
 		if ($this->parentEntityId && $this->parentEntityTypeId)
 		{
@@ -207,9 +226,12 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				}
 			}
 
-			$filter['@ID'] = $ids;
+			return [
+				'@ID' => $ids
+			];
 		}
-		return $filter;
+
+		return null;
 	}
 
 	protected function getParentItemIdentifier(): ItemIdentifier
@@ -574,16 +596,5 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getListViewType(): string
 	{
 		return Router::LIST_VIEW_LIST;
-	}
-
-	protected function getAddButtonParameters(): array
-	{
-		$parameters = parent::getAddButtonParameters();
-
-		$parameters['onclick'] = new \Bitrix\UI\Buttons\JsHandler('BX.Crm.ItemListComponent.handleAddButtonClick');
-		$parameters['createUrl'] = $parameters['link'];
-		unset($parameters['link']);
-
-		return $parameters;
 	}
 }

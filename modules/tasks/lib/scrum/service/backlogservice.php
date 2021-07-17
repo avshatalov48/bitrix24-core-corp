@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Scrum\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 
 class BacklogService implements Errorable
@@ -48,10 +49,17 @@ class BacklogService implements Errorable
 	 * Returns an object with backlog data by scrum group id.
 	 *
 	 * @param int $groupId Scrum group id.
-	 * @param ItemService $itemService Item service object.
+	 * @param ItemService|null $itemService Item service object.
+	 * @param PageNavigation|null $nav For item navigation.
+	 * @param array $filteredSourceIds If you need to get filtered items.
 	 * @return EntityTable
 	 */
-	public function getBacklogByGroupId(int $groupId, ItemService $itemService = null): EntityTable
+	public function getBacklogByGroupId(
+		int $groupId,
+		ItemService $itemService = null,
+		PageNavigation $nav = null,
+		array $filteredSourceIds = []
+	): EntityTable
 	{
 		$backlog = EntityTable::createEntityObject();
 
@@ -59,7 +67,7 @@ class BacklogService implements Errorable
 		{
 			$queryObject = EntityTable::getList([
 				'filter' => [
-					'GROUP_ID' => (int) $groupId,
+					'GROUP_ID' => $groupId,
 					'ENTITY_TYPE' => EntityTable::BACKLOG_TYPE
 				]
 			]);
@@ -73,7 +81,7 @@ class BacklogService implements Errorable
 
 				if ($itemService)
 				{
-					$backlog->setChildren($itemService->getHierarchyChildItems($backlog));
+					$backlog->setChildren($itemService->getHierarchyChildItems($backlog, $nav, $filteredSourceIds));
 				}
 			}
 		}

@@ -227,6 +227,13 @@ foreach($arResult['ROWS'] as $key => $row)
 					$userFields['TAGS']->getNameList()
 				));
 				break;
+			case 'WWW':
+				$arResult['ROWS'][$key]['data'][$column] = (
+					$exportMode
+						? $userFields['PERSONAL_WWW']
+						: '<a href="' . htmlspecialcharsbx($userFields['PERSONAL_WWW']) . '" target="_blank">' . htmlspecialcharsEx($userFields['PERSONAL_WWW']) . '</a>'
+				);
+				break;
 			default:
 				if (in_array($column, $ufCodesList))
 				{

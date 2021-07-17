@@ -44,7 +44,8 @@ class AutomaticAction
 
 		//Automatic action
 		$this->sessionManager->execAutoAction([
-			'MESSAGE_ID' => $messageId
+			'MESSAGE_ID' => $messageId,
+			'INPUT_MESSAGE' => true
 		]);
 
 		return true;

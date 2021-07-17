@@ -10,4 +10,5 @@ return [
 	"settings/chat",
 	"settings/tabs",
 	"settings/system",
+	"settings/calltracker",
 ];

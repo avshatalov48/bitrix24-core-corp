@@ -169,6 +169,7 @@ export class Epic extends EventEmitter
 					sidePanel.close();
 				});
 			});
+			Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 		});
 	}
 
@@ -184,6 +185,7 @@ export class Epic extends EventEmitter
 					this.openEditForm(this.currentEpic.id);
 				});
 			});
+			Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 		});
 	}
 
@@ -208,6 +210,7 @@ export class Epic extends EventEmitter
 					);
 				});
 			});
+			Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 		});
 	}
 
@@ -647,7 +650,7 @@ export class Epic extends EventEmitter
 		const container = tagLabel.getContainer();
 		Event.bind(container, 'click', () => {
 			this.emit('filterByTag', tag);
-			this.sidePanel.closeTopSidePanel();
+			this.sidePanel.closeTopSidePanel(true);
 		});
 		return container;
 	}
@@ -699,6 +702,6 @@ export class Epic extends EventEmitter
 			}
 		});
 		this.tagSearcher.removeEpicFromSearcher(epic);
-		this.sidePanel.reloadTopSidePanel();
+		this.sidePanel.reloadTopSidePanel(true);
 	}
 }

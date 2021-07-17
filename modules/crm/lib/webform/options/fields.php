@@ -9,6 +9,7 @@
 namespace Bitrix\Crm\WebForm\Options;
 
 use Bitrix\Main;
+use Bitrix\Catalog;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
 
@@ -243,7 +244,7 @@ final class Fields
 							$data['quantity']['unit'] = $item['QUANTITY']['unit'] ?? null;
 						}
 
-						$product = \CCrmProduct::getByID($item['value']);
+						$product = \CCrmProduct::getByID($item['ID']);
 						if (!$product)
 						{
 							return $data;
@@ -266,38 +267,72 @@ final class Fields
 							}
 						}
 
+
 						$pics = [];
-						if ($product['DETAIL_PICTURE'] && isset($item['bigPic']) && $item['bigPic'])
+						if (Main\Loader::includeModule('catalog'))
 						{
-							$pics[] = $product['DETAIL_PICTURE'];
-						}
-						elseif (!$product['PREVIEW_PICTURE'] && $product['DETAIL_PICTURE'])
-						{
-							$pics[] = $product['DETAIL_PICTURE'];
-						}
-						elseif ($product['PREVIEW_PICTURE'])
-						{
-							$pics[] = $product['PREVIEW_PICTURE'];
-						}
-
-						if (!empty($pics))
-						{
-							foreach ($pics as $fileId)
+							$repositoryFacade = Catalog\v2\IoC\ServiceContainer::getRepositoryFacade();
+							if ($repositoryFacade)
 							{
-								$file = \CFile::getByID($fileId)->fetch();
-								if (!$file)
+								$variation = $repositoryFacade->loadVariation($item['ID']);
+								if ($variation)
 								{
-									continue;
-								}
-								$uri = $file['~src'];
-								if (empty($uri))
-								{
-									$uri = Main\Web\WebPacker\Builder::getDefaultSiteUri() . \CFile::GetFileSRC($file);
-								}
+									foreach ($variation->getImageCollection()->toArray() as $file)
+									{
+										if (empty($file['SRC']))
+										{
+											continue;
+										}
 
-								$data['pics'][] = $uri;
+										$uri = $file['SRC'];
+										if (!preg_match('/^http(s?):/i', $uri))
+										{
+											$uri = Main\Web\WebPacker\Builder::getDefaultSiteUri() . $uri;
+										}
+
+										$pics[] = $uri;
+									}
+								}
 							}
 						}
+
+						if (!$pics)
+						{
+							$fileId = null;
+							$useBigPic = ($field['SETTINGS_DATA']['BIG_PIC'] ?? 'N') === 'Y';
+							if ($product['DETAIL_PICTURE'] && $useBigPic)
+							{
+								$fileId = $product['DETAIL_PICTURE'];
+							}
+							elseif (!$product['PREVIEW_PICTURE'] && $product['DETAIL_PICTURE'])
+							{
+								$fileId = $product['DETAIL_PICTURE'];
+							}
+							elseif ($product['PREVIEW_PICTURE'])
+							{
+								$fileId = $product['PREVIEW_PICTURE'];
+							}
+
+							if ($fileId)
+							{
+								$file = \CFile::getByID($fileId)->fetch();
+								if ($file)
+								{
+									$uri = $file['~src'];
+									if (empty($uri))
+									{
+										$uri = \CFile::GetFileSRC($file);
+										if (!preg_match('/^http(s?):/i', $uri))
+										{
+											$uri = Main\Web\WebPacker\Builder::getDefaultSiteUri() . $uri;
+										}
+									}
+									$pics[] = $uri;
+								}
+							}
+						}
+
+						$data['pics'] = $pics;
 
 						return $data;
 					},
@@ -375,6 +410,11 @@ final class Fields
 			}
 		}
 
+		$catalog = $field['TYPE'] === 'product'
+			? WebForm\Catalog::create()->setItems($field['ITEMS'])->getSelectorProducts()
+			: []
+		;
+
 		$types = [];
 		if (($data['TYPE_ORIGINAL'] ?? null) === 'typed_string')
 		{
@@ -412,6 +452,7 @@ final class Fields
 			'canBeRequired' => $isValuableType,
 			'supportListableItems' => $hasListableItems,
 			'supportCustomItems' => $field['TYPE'] === 'product',
+			'catalog' => $field['TYPE'] === 'product' ? $catalog : null,
 			'items' => $items,
 			'editable' => [
 				'valueType' => $field['VALUE_TYPE'],
@@ -557,8 +598,16 @@ final class Fields
 			'VALUE' => $options['value']
 		);
 
+		$multipleOriginal = $field['MULTIPLE_ORIGINAL'] ?? false;
+		if($data['TYPE'] == 'product')
+		{
+			$data['SETTINGS_DATA']['BIG_PIC'] = ($options['bigPic'] ?? false) ? 'Y' : 'N';
+			$multipleOriginal = true;
+		}
+
+
 		$data['REQUIRED'] = $options['required'] ? 'Y' : 'N';
-		$data['MULTIPLE'] = $options['multiple'] && $field['MULTIPLE_ORIGINAL'] ? 'Y' : 'N';
+		$data['MULTIPLE'] = $options['multiple'] && $multipleOriginal ? 'Y' : 'N';
 
 		if($data['TYPE'] == 'section' || $data['TYPE'] == 'page')
 		{
@@ -658,9 +707,9 @@ final class Fields
 					'CUSTOM_PRICE' => ($item['changeablePrice'] && WebForm\Manager::isOrdersAvailable()) ? 'Y' : 'N',
 					'DISCOUNT' => $item['discount'],
 					'QUANTITY' => [
-						'min' => (int) $item['quantity']['min'] ?? 0,
-						'max' => (int) $item['quantity']['min'] ?? null,
-						'step' => (int) $item['quantity']['min'] ?? 1,
+						'min' => (int)($item['quantity']['min'] ?? 0),
+						'max' => (int)($item['quantity']['min'] ?? null),
+						'step' => (int)($item['quantity']['min'] ?? 1),
 						'unit' => ($item['value'] && is_numeric($item['value']))
 							? ($item['quantity']['unit'] ?? null)
 							: null,

@@ -94,13 +94,31 @@ class salescenter extends CModule
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onBeforeSiteRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeSiteRecycle');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onBeforeLandingRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeLandingRecycle');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
-		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSaleOrderPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePayOrder');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePsServiceProcessRequestBeforePaid');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnPrintableCheckSend', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnPrintableCheckSend');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnCheckPrintError', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnCheckPrintError');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('crm', 'OnActivityAdd', 'salescenter', '\Bitrix\SalesCenter\Integration\CrmManager', 'onActivityAdd');
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('pull', 'OnGetDependentModule', 'salescenter', '\Bitrix\SalesCenter\Driver', 'onGetDependentModule', 1000);
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler('sale', 'OnPaymentPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onPaymentPaid');
+
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendPaymentBySms',
+			50
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyEnqueued',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendPaymentByControlCenter',
+			50
+		);
 
 		RegisterModule($this->MODULE_ID);
 
@@ -145,7 +163,6 @@ class salescenter extends CModule
 			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
 		}
 
-		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePayOrder');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onSalePsServiceProcessRequestBeforePaid');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnPrintableCheckSend', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnPrintableCheckSend');
@@ -161,6 +178,24 @@ class salescenter extends CModule
         \Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('crm', 'OnActivityAdd', 'salescenter', '\Bitrix\SalesCenter\Integration\CrmManager', 'onActivityAdd');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('pull', 'OnGetDependentModule', 'salescenter', '\Bitrix\SalesCenter\Driver', 'onGetDependentModule');
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnPaymentPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onPaymentPaid');
+
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendPaymentBySms'
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyEnqueued',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendPaymentByControlCenter'
+		);
+
 		\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();
 
 		UnRegisterModule($this->MODULE_ID);

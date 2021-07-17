@@ -2,8 +2,11 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice\Models;
 
+use Bitrix\Disk\Internals\DataManager;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\BooleanField;
-use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -15,6 +18,9 @@ final class DocumentSessionTable extends DataManager
 {
 	public const TYPE_VIEW = 0;
 	public const TYPE_EDIT = 2;
+
+	public const STATUS_ACTIVE = 0;
+	public const STATUS_NON_ACTIVE = 2;
 
 	/**
 	 * Returns DB table name for entity.
@@ -64,7 +70,60 @@ final class DocumentSessionTable extends DataManager
 			(new IntegerField('TYPE'))
 				->configureDefaultValue(self::TYPE_VIEW)
 			,
+			(new IntegerField('STATUS'))
+				->configureDefaultValue(self::STATUS_ACTIVE)
+			,
 			new TextField('CONTEXT'),
 		];
+	}
+
+	public static function onAfterAdd(Event $event)
+	{
+		parent::onAfterAdd($event);
+
+		$fields = $event->getParameter('fields');
+		self::tryToAddInfo($fields);
+	}
+
+	public static function tryToAddInfo(array $fields): ?AddResult
+	{
+		try
+		{
+			return DocumentInfoTable::add([
+				'EXTERNAL_HASH' => $fields['EXTERNAL_HASH'],
+				'OBJECT_ID' => $fields['OBJECT_ID'],
+				'VERSION_ID' => $fields['VERSION_ID'],
+				'OWNER_ID' => $fields['OWNER_ID'],
+			]);
+		}
+		catch (SqlQueryException $exception)
+		{
+			if (self::isDuplicateKeyError($exception))
+			{
+				return null;
+			}
+		}
+	}
+
+	private static function isDuplicateKeyError(SqlQueryException $exception): bool
+	{
+		return mb_strpos($exception->getDatabaseMessage(), '(1062)') !== false;
+	}
+
+	public static function deleteBatch(array $filter)
+	{
+		parent::deleteBatch($filter);
+	}
+
+	public static function deactivateByHash(string $hash): void
+	{
+		parent::updateBatch(
+			[
+				'STATUS' => self::STATUS_NON_ACTIVE,
+			],
+			[
+				'EXTERNAL_HASH' => $hash,
+			]
+		);
 	}
 }

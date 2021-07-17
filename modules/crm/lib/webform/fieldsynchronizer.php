@@ -185,8 +185,12 @@ class FieldSynchronizer
 					$srcFieldMap[$entityTypeName][$syncFieldOld]['NEW_FIELD_CODE'] = $prefix . $syncFieldNew;
 					$srcFieldMap[$entityTypeName][$syncFieldOld]['NEW_FIELD'] = self::findField($syncFieldNew, $dstEntityFields);
 				}
-			}
 
+				if ($this->isCreateMode && is_callable($dstEntity['CLEAR_FIELDS_CACHE_CALL'] ?? null))
+				{
+					$dstEntity['CLEAR_FIELDS_CACHE_CALL']();
+				}
+			}
 		}
 
 		return $srcFieldMap;

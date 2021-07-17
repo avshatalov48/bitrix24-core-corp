@@ -10,7 +10,7 @@ Loc::loadMessages(dirname(__FILE__).'/.description-nottranslate.php');
 return array(
 	'parent' => 'store-mini-catalog',
 	'code' => 'store-mini-catalog/handmade',
-	'name' => Loc::getMessage('LANDING_DEMO_STORE_MINI_CATALOG_HANDMADE_TXT_NEW'),
+	'name' => Loc::getMessage('LANDING_DEMO_STORE_MINI_CATALOG_HANDMADE_TITLE'),
 	'description' => Loc::getMessage('LANDING_DEMO_STORE_MINI_CATALOG_HANDMADE_DESC'),
 	'type' => 'store',
 	'version' => 2,

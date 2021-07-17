@@ -76,6 +76,20 @@ switch ($languageId)
 		break;
 }
 
+$currentSiteID = SITE_ID;
+if (defined("ADMIN_SECTION"))
+{
+	$siteIterator = \Bitrix\Main\SiteTable::getList(array(
+		'select' => array('LID', 'LANGUAGE_ID'),
+		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+	));
+	if ($defaultSite = $siteIterator->fetch())
+	{
+		$currentSiteID = $defaultSite['LID'];
+	}
+	unset($defaultSite, $siteIterator);
+}
+
 $companyPTID = $contactPTID = 0;
 
 $runtimeFields = [];
@@ -86,7 +100,8 @@ $dbPerson = \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::getList([
 		'PT_ID' => 'PERSON_TYPE_REFERENCE.ID',
 	],
 	'filter' => [
-		'PERSON_TYPE_REFERENCE.ENTITY_REGISTRY_TYPE' => \Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER
+		'=PERSON_TYPE_REFERENCE.ENTITY_REGISTRY_TYPE' => \Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER,
+		'=PERSON_TYPE_REFERENCE.LID' => $currentSiteID,
 	]
 ]);
 
@@ -100,21 +115,6 @@ while ($arPerson = $dbPerson->fetch())
 	{
 		$contactPTID = $arPerson["PT_ID"];
 	}
-}
-
-
-$currentSiteID = SITE_ID;
-if (defined("ADMIN_SECTION"))
-{
-	$siteIterator = \Bitrix\Main\SiteTable::getList(array(
-		'select' => array('LID', 'LANGUAGE_ID'),
-		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
-	));
-	if ($defaultSite = $siteIterator->fetch())
-	{
-		$currentSiteID = $defaultSite['LID'];
-	}
-	unset($defaultSite, $siteIterator);
 }
 
 if ($contactPTID === 0)
@@ -278,7 +278,7 @@ $arProps = array();
 
 $arProps[] = array(
 	"PERSON_TYPE_ID" => $contactPTID,
-	"NAME" => \Bitrix\Main\Localization\Loc::getMessage("CRM_ORD_PROP_6"),
+	"NAME" => \Bitrix\Main\Localization\Loc::getMessage("CRM_ORD_PROP_6_2"),
 	"TYPE" => "TEXT",
 	"REQUIED" => "Y",
 	"DEFAULT_VALUE" => "",
@@ -292,6 +292,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "Y",
 	"IS_PAYER" => "Y",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "FIO",
 	"IS_FILTERED" => "Y",
@@ -312,6 +313,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "Y",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "EMAIL",
 	"IS_FILTERED" => "Y",
@@ -332,6 +334,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "Y",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "PHONE",
 	"IS_FILTERED" => "N",
@@ -353,6 +356,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "ZIP",
 	"IS_FILTERED" => "N",
@@ -375,6 +379,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "CITY",
 	"IS_FILTERED" => "Y",
@@ -396,6 +401,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "Y",
 	"CODE" => "LOCATION",
 	"IS_FILTERED" => "N",
@@ -417,6 +423,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "N",
 	"CODE" => "ADDRESS",
 	"IS_FILTERED" => "N",
@@ -438,6 +445,7 @@ $arProps[] = array(
 	"IS_EMAIL" => "N",
 	"IS_PROFILE_NAME" => "N",
 	"IS_PAYER" => "N",
+	"IS_PHONE" => "N",
 	"IS_LOCATION4TAX" => "Y",
 	"CODE" => "LOCATION",
 	"IS_FILTERED" => "N",
@@ -461,6 +469,7 @@ if ($shopLocalization == "ru")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "INN",
 		"IS_FILTERED" => "N",
@@ -482,6 +491,7 @@ if ($shopLocalization == "ru")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "KPP",
 		"IS_FILTERED" => "N",
@@ -505,6 +515,7 @@ elseif ($shopLocalization == "de")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "BLZ",
 		"IS_FILTERED" => "N",
@@ -526,6 +537,7 @@ elseif ($shopLocalization == "de")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "IBAN",
 		"IS_FILTERED" => "N",
@@ -546,6 +558,7 @@ elseif ($shopLocalization == "de")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "BIC_SWIFT",
 		"IS_FILTERED" => "N",
@@ -566,6 +579,7 @@ elseif ($shopLocalization == "de")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "UST_IDNR",
 		"IS_FILTERED" => "N",
@@ -586,6 +600,7 @@ elseif ($shopLocalization == "de")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "STEU",
 		"IS_FILTERED" => "N",
@@ -609,6 +624,7 @@ elseif (in_array($shopLocalization, array('en', 'la', 'br', 'fr'), true))
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "IBAN",
 		"IS_FILTERED" => "N",
@@ -629,6 +645,7 @@ elseif (in_array($shopLocalization, array('en', 'la', 'br', 'fr'), true))
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "BIC_SWIFT",
 		"IS_FILTERED" => "N",
@@ -649,6 +666,7 @@ elseif (in_array($shopLocalization, array('en', 'la', 'br', 'fr'), true))
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "SORT_CODE",
 		"IS_FILTERED" => "N",
@@ -669,6 +687,7 @@ elseif (in_array($shopLocalization, array('en', 'la', 'br', 'fr'), true))
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "COMPANY_REG_NO",
 		"IS_FILTERED" => "N",
@@ -689,6 +708,7 @@ elseif (in_array($shopLocalization, array('en', 'la', 'br', 'fr'), true))
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "TAX_REG_NO",
 		"IS_FILTERED" => "N",
@@ -714,6 +734,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "Y",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "COMPANY",
 		"IS_FILTERED" => "Y",
@@ -734,6 +755,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "COMPANY_ADR",
 		"IS_FILTERED" => "N",
@@ -755,6 +777,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "Y",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "CONTACT_PERSON",
 		"IS_FILTERED" => "N",
@@ -775,6 +798,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "Y",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "EMAIL",
 		"IS_FILTERED" => "N",
@@ -795,6 +819,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "Y",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "PHONE",
 		"IS_FILTERED" => "N",
@@ -815,6 +840,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "FAX",
 		"IS_FILTERED" => "N",
@@ -836,6 +862,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "ZIP",
 		"IS_FILTERED" => "N",
@@ -857,6 +884,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "CITY",
 		"IS_FILTERED" => "Y",
@@ -877,6 +905,7 @@ if($shopLocalization != "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "ADDRESS",
 		"IS_FILTERED" => "N",
@@ -900,6 +929,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "Y",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "EMAIL",
 		"IS_FILTERED" => "Y",
@@ -920,6 +950,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "Y",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "COMPANY_NAME",
 		"IS_FILTERED" => "Y",
@@ -940,6 +971,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "COMPANY_ADR",
 		"IS_FILTERED" => "N",
@@ -960,6 +992,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "EGRPU",
 		"IS_FILTERED" => "N",
@@ -980,6 +1013,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "INN",
 		"IS_FILTERED" => "N",
@@ -1000,6 +1034,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "NDS",
 		"IS_FILTERED" => "N",
@@ -1021,6 +1056,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "ZIP",
 		"IS_FILTERED" => "N",
@@ -1043,6 +1079,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "CITY",
 		"IS_FILTERED" => "Y",
@@ -1063,6 +1100,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "N",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "ADDRESS",
 		"IS_FILTERED" => "N",
@@ -1083,6 +1121,7 @@ elseif($shopLocalization == "ua")
 		"IS_EMAIL" => "N",
 		"IS_PROFILE_NAME" => "N",
 		"IS_PAYER" => "N",
+		"IS_PHONE" => "Y",
 		"IS_LOCATION4TAX" => "N",
 		"CODE" => "PHONE",
 		"IS_FILTERED" => "N",
@@ -1102,10 +1141,9 @@ foreach($arProps as $prop)
 
 	if (!$dbRes->fetch())
 	{
+		$prop['NAME'] = $prop['NAME'] ?? ' ';
 		$prop = CSaleOrderPropsAdapter::convertOldToNew($prop);
-
 		$prop['ENTITY_REGISTRY_TYPE'] = 'ORDER';
-
 		$id = \Bitrix\Sale\Internals\OrderPropsTable::add($prop);
 	}
 }
@@ -1529,7 +1567,7 @@ if (!$res->fetch())
 			unset($item["LOGOTIP"]);
 		}
 
-		$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::add($item);
+		$dbRes = \Bitrix\Sale\PaySystem\Manager::add($item);
 	}
 }
 

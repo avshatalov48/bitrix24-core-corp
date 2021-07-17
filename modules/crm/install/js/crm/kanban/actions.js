@@ -320,7 +320,7 @@
 								content: deleteTitle
 							};
 
-							if (this.getTypeInfoParam('isRecyclebinEnabled'))
+							if (grid.getTypeInfoParam('isRecyclebinEnabled'))
 							{
 								ballonOptions.actions = [
 									{

@@ -1,0 +1,146 @@
+.crm-entity-stream-section-icon-advice.crm-entity-stream-section-icon  {
+    background-image: url("data:image/svg+xml,%3Csvg width='31' height='31' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle fill='%23B5BBC0' cx='15.5' cy='15.5' r='15.5'/%3E%3Cpath d='M20.332 20.203c0 .284-.232.504-.53.504H9.887c-.298 0-.53-.22-.53-.504v-9.406c0-.284.232-.504.53-.504h6.831l1.89-1.793h-9.35c-.962 0-1.758.755-1.758 1.667v10.666c0 .912.796 1.667 1.757 1.667h11.241c.962 0 1.758-.755 1.758-1.667V16.71l-1.89 1.793v1.7h-.034zm2.985-9.406l-.863-.818c-.232-.22-.596-.22-.795 0l-6.002 5.663-2.686-2.549c-.232-.22-.597-.22-.796 0l-.862.818c-.232.22-.232.567 0 .755l3.98 3.776a.633.633 0 00.53.157c.1-.032.199-.063.298-.157l7.262-6.89c.166-.19.166-.535-.066-.755z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.crm-entity-stream-advice-content {
+    position: relative;
+    padding: 12px 13px;
+    background-color: #fff;
+    z-index: 1000;
+}
+
+.crm-entity-stream-advice-info {
+    padding: 0 34px 0 0;
+    font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: rgba(83,92,105,.7);
+}
+
+.crm-entity-stream-advice-inner {
+	padding-top: 20px;
+	margin-top: 20px;
+	border-top: 1px solid rgba(82,92,105,.1);
+}
+
+.crm-entity-stream-advice-subtitle {
+    display: block;
+	margin: 0 0 19px 0;
+    color: #525c69;
+    font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-entity-stream-advice-list {
+    padding: 0;
+    margin: 0;
+	max-height: 150px;
+	transition: max-height .5s linear;
+}
+
+.crm-entity-stream-advice-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 13px;
+}
+
+.crm-entity-stream-advice-list-item--active {
+    margin: -5px -9px 13px -6px;
+    padding: 5px 9px 5px 6px;
+    background-color: rgba(47,198,246,.1);
+}
+
+.crm-entity-stream-advice-list-content {
+    display: flex;
+	overflow: hidden;
+}
+
+.crm-entity-stream-advice-list-icon {
+    display: block;
+    margin: 0 8px 0 3px;
+	min-width: 37px;
+    width: 37px;
+    height: 37px;
+    border-radius: 50%;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='37' height='37'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23D8D8D8' d='M18.5 0C28.717 0 37 8.283 37 18.5S28.717 37 18.5 37 0 28.717 0 18.5 8.283 0 18.5 0zm0 1C8.835 1 1 8.835 1 18.5S8.835 36 18.5 36 36 28.165 36 18.5 28.165 1 18.5 1z'/%3E%3Cpath fill='%23828B95' d='M12 10h13a2 2 0 012 2v13a2 2 0 01-2 2H12a2 2 0 01-2-2V12a2 2 0 012-2zm0 15h13v-1l-3.466-4-1.734 2-4.334-5L12 21v4zm9.5-9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'/%3E%3C/g%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.crm-entity-stream-advice-list-name {
+    display: block;
+    margin: 4px 0 3px 0;
+    font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #2066b0;
+    cursor: pointer;
+}
+
+.crm-entity-stream-advice-list-desc-box {
+    display: flex;
+}
+
+.crm-entity-stream-advice-list-inner {
+	overflow: hidden;
+}
+
+.crm-entity-stream-advice-list-desc-name {
+    display: inline-block;
+    margin-right: 7px;
+    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: rgba(82,92,105,.5);
+}
+
+.crm-entity-stream-advice-list-desc-value {
+    display: inline-block;
+    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #333;
+	white-space: nowrap;
+}
+
+.crm-entity-stream-advice-list-btn {
+    padding-left: 23px;
+    height: 21px;
+    border: 1px solid rgba(82,92,105,.17);
+    background: transparent url("data:image/svg+xml,%3Csvg width='7' height='7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.105.278v2.618h2.588v1.207H4.105v2.619H2.9v-2.62l-2.611.001V2.897h2.61V.277h1.207z' fill='%23838C96' fill-rule='evenodd'/%3E%3C/svg%3E") 10px center no-repeat;
+    font: 12px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #828b95;
+    text-transform: inherit;
+}
+
+.crm-entity-stream-advice-list-btn:hover {
+    background-image: url("data:image/svg+xml,%3Csvg width='7' height='7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.105.278v2.618h2.588v1.207H4.105v2.619H2.9v-2.62l-2.611.001V2.897h2.61V.277h1.207z' fill='%23ffffff' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.crm-entity-stream-advice-list-item--active .crm-entity-stream-advice-list-btn {
+	border: 1px solid transparent;
+	background: transparent url("data:image/svg+xml,%3Csvg width='9' height='7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.224 6.223a.814.814 0 01-.584-.229L.247 3.684a.828.828 0 011.15-1.191l1.792 1.73L7.022.253a.823.823 0 011.17-.019c.33.32.338.841.021 1.17L3.803 5.97a.821.821 0 01-.577.253h-.002z' fill='%232066B0' fill-rule='evenodd'/%3E%3C/svg%3E") 10px center no-repeat;
+	color: #2066b0;
+}
+
+.crm-entity-stream-advice-list-item--active .crm-entity-stream-advice-list-btn:hover {
+	border: 1px solid rgba(67,126,188,.6);
+}
+
+.crm-entity-stream-advice-link {
+    display: inline-block;
+    margin-top: 3px;
+    border-bottom: 1px dashed rgba(130,139,149,.4);
+    font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #80868e;
+    transition: border-bottom .3s;
+}
+
+.crm-entity-stream-advice-link:hover {
+    border-bottom: 1px dashed transparent;
+    color: #80868e;
+}
+
+/*** Vue's built-in animation Demo ***/
+.list-item {
+    display: inline-block;
+}
+.list-enter-active, .list-leave-active {
+    transition: opacity .5s .15s linear;
+}
+.list-enter, .list-leave-to /* .list-leave-active up to 2.1.8 version */ {
+    opacity: 0;
+}

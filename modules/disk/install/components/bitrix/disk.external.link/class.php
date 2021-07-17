@@ -2,8 +2,11 @@
 
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\DocumentEditorUser;
+use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\FileData;
 use Bitrix\Disk\Document\GoogleViewerHandler;
+use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
@@ -18,6 +21,7 @@ use Bitrix\Disk\ZipNginx;
 use Bitrix\Main\Config\Option;
 use Bitrix\Disk\Internals\Grid;
 use Bitrix\Main\Context;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Uri;
@@ -42,7 +46,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 	protected $hash;
 	/** @var string */
 	protected $downloadToken;
-	/** @var \Bitrix\Disk\Document\DocumentHandler  */
+	/** @var DocumentHandler  */
 	protected $defaultHandlerForView;
 	protected $langId;
 
@@ -68,7 +72,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			return false;
 		}
 
-		if ($actionName == 'default')
+		if (in_array($actionName, ['default', 'goToEdit'], true))
 		{
 			$this->downloadToken = Random::getString(12);
 			$this->storeDownloadToken($this->downloadToken);
@@ -101,6 +105,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 	protected function listActions()
 	{
 		return array(
+			'goToEdit',
 			'download',
 			'downloadFolderArchive',
 			'downloadFileUnderFolder',
@@ -145,6 +150,11 @@ class CDiskExternalLinkComponent extends DiskComponent
 		return $this;
 	}
 
+	private function isViewableDocument(string $ext): bool
+	{
+		return DocumentHandler::isEditable($ext) || $ext === 'pdf';
+	}
+
 	private function storeDownloadToken($token)
 	{
 		$_SESSION['DISK_PUBLIC_VERIFICATION'][$this->externalLink->getObject()->getId()] = $token;
@@ -157,6 +167,50 @@ class CDiskExternalLinkComponent extends DiskComponent
 			return false;
 		}
 		return $_SESSION['DISK_PUBLIC_VERIFICATION'][$this->externalLink->getObject()->getId()] === $token;
+	}
+
+	protected function processActionGoToEdit()
+	{
+		$file = $this->externalLink->getFile();
+		if(!$file || !$this->externalLink->allowEdit())
+		{
+			$this->showNotFoundPage();
+
+			return false;
+		}
+
+		$isDocument = $this->isViewableDocument($this->externalLink->getFile()->getExtension());
+		if ($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler && $isDocument)
+		{
+			$documentSession = $this->generateDocumentSession();
+			if ($documentSession->canTransformUserToEdit(CurrentUser::get()))
+			{
+				$fieldsToCreateUser = [
+					'NAME' => OnlyOffice\Models\GuestUser::create()->getName(),
+				];
+
+				if (DocumentEditorUser::login($fieldsToCreateUser))
+				{
+					$documentSession->setUserId(CurrentUser::get()->getId());
+				}
+
+				$createdSession = $documentSession->createEditSession();
+				if ($createdSession->getId() != $documentSession->getId())
+				{
+					$documentSession->delete();
+				}
+
+				$documentSession = $createdSession;
+				$this->arResult['DOCUMENT_SESSION'] = $documentSession;
+				$this->arResult['LINK_TO_DOWNLOAD'] = $this->getDownloadUrl();
+			}
+
+			$this->includeComponentTemplate('onlyoffice');
+		}
+		else
+		{
+			$this->showNotFoundPage();
+		}
 	}
 
 	protected function processActionDefault($path = '/')
@@ -181,15 +235,34 @@ class CDiskExternalLinkComponent extends DiskComponent
 			'SITE_NAME' => Option::get('main', 'site_name', $server->getServerName()),
 		);
 
-		if($isFile)
+		if ($isFile)
 		{
+			$passwordPassed = !$this->arResult['PROTECTED_BY_PASSWORD'] || $this->arResult['VALID_PASSWORD'];
+			$isDocument = $this->isViewableDocument($this->externalLink->getFile()->getExtension());
+			if ($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler && $passwordPassed && $isDocument)
+			{
+				$this->arResult['DOCUMENT_SESSION'] = $this->generateDocumentSession();
+
+				$linkToEdit = Driver::getInstance()->getUrlManager()->getUrlExternalLink(
+					[
+						'hash' => $this->externalLink->getHash(),
+						'action' => 'goToEdit',
+					]
+				);
+				$this->arResult['LINK_TO_EDIT'] = $linkToEdit;
+				$this->arResult['LINK_TO_DOWNLOAD'] = $this->getDownloadUrl();
+				$this->includeComponentTemplate('onlyoffice');
+
+				return;
+			}
+
 			$this->arResult['FILE'] = $this->getResultByFile();
 		}
 
 		if($isFolder)
 		{
 			$rootFolder = $this->externalLink->getFolder();
-			list($targetFolder, $relativeItems) = $this->getTargetFolderData($rootFolder, $path);
+			[$targetFolder, $relativeItems] = $this->getTargetFolderData($rootFolder, $path);
 			if(!$targetFolder)
 			{
 				throw new \Bitrix\Main\SystemException('Wrong path');
@@ -217,6 +290,20 @@ class CDiskExternalLinkComponent extends DiskComponent
 		}
 
 		$this->includeComponentTemplate($isFile? 'template' : 'folder');
+	}
+
+	private function generateDocumentSession(): ?OnlyOffice\Models\DocumentSession
+	{
+		$documentSessionContext = OnlyOffice\Models\DocumentSessionContext::buildByExternalLink($this->externalLink);
+		$sessionManager = new OnlyOffice\DocumentSessionManager();
+		$sessionManager
+			->setUserId($this->getUser()->getId() ?: OnlyOffice\Models\GuestUser::GUEST_USER_ID)
+			->setSessionType(OnlyOffice\Models\DocumentSession::TYPE_VIEW)
+			->setSessionContext($documentSessionContext)
+			->setFile($this->externalLink->getFile())
+		;
+
+		return $sessionManager->findOrCreateSession();
 	}
 
 	private function getTargetFolderData(Folder $rootFolder, $path)
@@ -503,6 +590,21 @@ class CDiskExternalLinkComponent extends DiskComponent
 		);
 	}
 
+	private function getDownloadUrl()
+	{
+		$file = $this->externalLink->getFile();
+		if (!$file)
+		{
+			return null;
+		}
+
+		return $this->getUrlManager()->getUrlExternalLink([
+			'hash' => $this->externalLink->getHash(),
+			'action' => 'download',
+			'token' => $this->downloadToken,
+		]);
+	}
+
 	private function getResultByFile()
 	{
 		$file = $this->externalLink->getFile();
@@ -519,11 +621,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			'UPDATE_TIME' => $file->getUpdateTime(),
 			'NAME' => $file->getName(),
 			'SIZE' => $file->getSize(),
-			'DOWNLOAD_URL' => $this->getUrlManager()->getUrlExternalLink(array(
-				'hash' => $this->externalLink->getHash(),
-				'action' => 'download',
-				'token' => $this->downloadToken,
-			)),
+			'DOWNLOAD_URL' => $this->getDownloadUrl(),
 			'ABSOLUTE_SHOW_FILE_URL' => $this->getUrlManager()->getUrlExternalLink(array(
 				'hash' => $this->externalLink->getHash(),
 				'action' => 'showFile',
@@ -822,7 +920,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 	protected function getTargetFile($path, $fileId)
 	{
-		list($targetFolder,) = $this->getTargetFolderData($this->externalLink->getFolder(), $path);
+		[$targetFolder,] = $this->getTargetFolderData($this->externalLink->getFolder(), $path);
 		if (!$targetFolder)
 		{
 			return null;

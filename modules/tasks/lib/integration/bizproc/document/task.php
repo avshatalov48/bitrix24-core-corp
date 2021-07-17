@@ -116,6 +116,21 @@ class Task implements \IBPWorkflowDocument
 					return (\CSocNetUserToGroup::GetUserRole($userId, $projectId) === \SONET_ROLES_OWNER);
 				}
 			}
+			elseif (static::isScrumProjectTask($documentType))
+			{
+				$projectId = static::resolveScrumProjectId($documentType);
+
+				if ($projectId > 0 && Main\Loader::includeModule('socialnetwork'))
+				{
+					$activeFeatures = \CSocNetFeatures::GetActiveFeaturesNames(\SONET_ENTITY_GROUP, $projectId);
+					if (!is_array($activeFeatures) || !array_key_exists('tasks', $activeFeatures))
+					{
+						return false;
+					}
+
+					return (\CSocNetUserToGroup::GetUserRole($userId, $projectId) === \SONET_ROLES_OWNER);
+				}
+			}
 			elseif (static::isPlanTask($documentType))
 			{
 				$ownerId = static::resolvePlanId($documentType);
@@ -644,14 +659,29 @@ class Task implements \IBPWorkflowDocument
 		return 'TASK_PROJECT_'.(int)$projectId;
 	}
 
+	public static function resolveScrumProjectTaskType($projectId)
+	{
+		return 'TASK_SCRUM_PROJECT_'.(int) $projectId;
+	}
+
 	public static function resolveProjectId($documentType)
 	{
 		return (int)mb_substr($documentType, mb_strlen('TASK_PROJECT_'));
 	}
 
+	public static function resolveScrumProjectId($documentType)
+	{
+		return (int)mb_substr($documentType, mb_strlen('TASK_SCRUM_PROJECT_'));
+	}
+
 	public static function isProjectTask($documentType)
 	{
 		return (mb_strpos($documentType, 'TASK_PROJECT_') === 0);
+	}
+
+	public static function isScrumProjectTask($documentType)
+	{
+		return (mb_strpos($documentType, 'TASK_SCRUM_PROJECT_') === 0);
 	}
 
 	public static function getDocumentName($documentId)

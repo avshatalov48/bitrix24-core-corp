@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		"ENABLE_LABEL" => true,
 		'ENABLE_LIVE_SEARCH' => $arParams['USE_LIVE_SEARCH'] == 'Y',
 		'RESET_TO_DEFAULT_MODE' => true,
+		'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
 	];
 
 	if ($arResult['LIMIT_EXCEEDED'])

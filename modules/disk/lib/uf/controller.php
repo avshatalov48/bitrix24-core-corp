@@ -1239,6 +1239,11 @@ class Controller extends Internals\Controller
 		{
 			$fileData = $this->resizeImage($fileData, $attachedModel->getId());
 		}
+		else
+		{
+			$trackedObjectManager = Driver::getInstance()->getTrackedObjectManager();
+			$trackedObjectManager->pushAttachedObject($this->getUser()->getId(), $attachedModel, true);
+		}
 
 		if ($isImage && $showFile && $attachedModel->getConnector()->isAnonymousAllowed())
 		{

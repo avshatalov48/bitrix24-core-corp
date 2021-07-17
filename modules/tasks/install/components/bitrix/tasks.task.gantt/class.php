@@ -108,38 +108,15 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 	 */
 	private function prepareTitle(array $row): string
 	{
-		$userId = (int) $this->arParams['USER_ID'];;
-
-		$isExpired = ($row['DEADLINE'] && $this->isExpired($this->getDateTimestamp($row['DEADLINE'])));
-		$isDeferred = ($row['REAL_STATUS'] === CTasks::STATE_DEFERRED);
-		$isWaitCtrlCounts = (
-			$row['REAL_STATUS'] === CTasks::STATE_SUPPOSEDLY_COMPLETED
-			&& (int)$row['CREATED_BY'] === $userId
-			&& (int)$row['RESPONSIBLE_ID'] !== $userId
-		);
-		$isCompletedCounts = (
-			$row['REAL_STATUS'] === CTasks::STATE_COMPLETED
-			|| ($row['REAL_STATUS'] === CTasks::STATE_SUPPOSEDLY_COMPLETED && (int)$row['CREATED_BY'] !== $userId)
-		);
-
-		$value = ((int)$row['NEW_COMMENTS_COUNT'] > 0 ? (int)$row['NEW_COMMENTS_COUNT'] : 0);
-		$color = 'success';
-
-		if ($isExpired && !$isCompletedCounts && !$isWaitCtrlCounts && !$isDeferred)
-		{
-			$value++;
-			$color = 'danger';
-		}
-
-		if ($row['IS_MUTED'] === 'Y')
-		{
-			$color = 'gray';
-		}
-
 		$counter = '';
-		if ($value > 0 && $this->isMember($userId, $row))
+
+		if ($this->arParams['CAN_SEE_COUNTERS'])
 		{
-			$counter = "<div class='ui-counter ui-counter-{$color}'><div class='ui-counter-inner'>{$value}</div></div>";
+			$rowCounter = (new \Bitrix\Tasks\Internals\Counter\Template\TaskCounter((int)$this->arParams["USER_ID"]))->getRowCounter((int)$row['ID']);
+			if ($rowCounter['VALUE'])
+			{
+				$counter = "<div class='ui-counter ui-counter-{$rowCounter['COLOR']}'><div class='ui-counter-inner'>{$rowCounter['VALUE']}</div></div>";
+			}
 		}
 
 		$title = htmlspecialcharsbx($row['TITLE']);
@@ -237,8 +214,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 	protected function checkParameters()
 	{
 		parent::checkParameters();
-
-		$arParams =& $this->arParams;
-		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
+		static::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
+		$this->arParams['LAZY_LOAD'] = false;
 	}
 }

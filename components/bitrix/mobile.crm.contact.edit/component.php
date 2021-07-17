@@ -23,6 +23,9 @@ if (IsModuleInstalled('bizproc'))
 	}
 }
 
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Format\AddressFormatter;
+
 global $USER_FIELD_MANAGER, $DB, $USER;
 $CCrmContact = new CCrmContact();
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmContact::$sUFEntityID);
@@ -552,16 +555,7 @@ else
 			if(isset($_POST['COMMENTS']))
 			{
 				$comments = trim($_POST['COMMENTS']);
-				if($comments !== '' && mb_strpos($comments, '<') !== false)
-				{
-					$sanitizer = new CBXSanitizer();
-					$sanitizer->ApplyDoubleEncode(false);
-					$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-					//Crutch for for Chrome line break behaviour in HTML editor.
-					$sanitizer->AddTags(array('div' => array()));
-					$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-					$comments = $sanitizer->SanitizeHtml($comments);
-				}
+				$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 
 				$arFields['COMMENTS'] = $comments;
 			}
@@ -1162,10 +1156,19 @@ $arResult['FIELDS'][] = array(
 //address
 if ($arParams["RESTRICTED_MODE"])
 {
-	$addressHtml =  Bitrix\Crm\Format\ContactAddressFormatter::format(
-		$arResult['ELEMENT'],
-		array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
-	);
+	if (class_exists('Bitrix\Crm\Format\AddressFormatter'))
+	{
+		$addressHtml = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			ContactAddress::mapEntityFields($arResult['ELEMENT'])
+		);
+	}
+	else
+	{
+		$addressHtml =  Bitrix\Crm\Format\ContactAddressFormatter::format(
+			$arResult['ELEMENT'],
+			array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
+		);
+	}
 }
 else
 {

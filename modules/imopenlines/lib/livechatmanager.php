@@ -19,6 +19,10 @@ class LiveChatManager
 	const TYPE_WIDGET = 'widget';
 	const TYPE_BUTTON = 'button';
 
+	const WIDGET_PATH_SCRIPT = '/bitrix/modules/imopenlines/install/js/imopenlines/widget/script.js';
+	const WIDGET_PATH_EXTENTION_LIST = '/bitrix/modules/imopenlines/install/js/imopenlines/widget/extension.map';
+	const WIDGET_PATH_STYLE = '/bitrix/modules/imopenlines/install/js/imopenlines/widget/styles.css';
+
 	static $availableCount = null;
 
 	public function __construct($configId)
@@ -499,17 +503,20 @@ class LiveChatManager
 
 	public static function compileWidgetAssets()
 	{
-		$folderPath = Application::getDocumentRoot().'/bitrix/js/';
-		if (!is_writable($folderPath))
+		if (!defined('IMOL_WIDGET_GENERATE') || !IMOL_WIDGET_GENERATE)
 		{
 			return "";
 		}
+
+		// Note: temporarily remove this constant if you need check on developer version Vue
+		define('VUEJS_DEBUG_DISABLE', true);
 
 		$resources = \Bitrix\Main\UI\Extension::getResourceList([
 			'main.core.minimal',
 			'imopenlines.component.widget',
 		], [
-			'skip_extensions' => ['core', 'main.core', 'main.polyfill.core'],
+			'skip_extensions' => ['core', 'main.core', 'main.polyfill.core', 'ui.fonts.opensans', 'main.popup'],
+			'get_resolved_extension_list' => true,
 		]);
 
 		$scriptContent = "// widget bundle";
@@ -523,23 +530,37 @@ class LiveChatManager
 				continue;
 			}
 
-			$minPath = mb_substr($path, 0, -3).'.min.js';
-			if (Main\IO\File::isFileExists($minPath))
-			{
-				$file = new \Bitrix\Main\IO\File($path);
-				$minFile = new \Bitrix\Main\IO\File($minPath);
-				if ($file->getModificationTime() <= $minFile->getModificationTime())
-				{
-					$path = $minPath;
-				}
-			}
-
 			$scriptContent .= "\n\n// file: ".$purePath."\n".Main\IO\File::getFileContents($path)."\n\n";
 		}
 
 		$scriptContent = preg_replace('/\/\/#(\s?)sourceMappingURL(\s?)=(\s?)([\w\.\-])+/mi', ' ', $scriptContent);
 
-		Main\IO\File::putFileContents(Application::getDocumentRoot().'/bitrix/js/imopenlines_widget/script.js', $scriptContent);
+		// change BX.Vue => BX.WidgetVue to use the new features of the library,
+		// we need to replace default export to another variable
+		$scriptContent = str_replace(
+			[
+				'BX.BitrixVue',
+				'ui_vue.BitrixVue',
+				'exports.BitrixVue',
+				'ui_vue_vuex.Vue',
+				'ui_vue.Vue',
+				'exports.Vue',
+				'BX.Vue',
+			],
+			[
+				'BX.WidgetBitrixVue',
+				'ui_vue.WidgetBitrixVue',
+				'exports.WidgetBitrixVue',
+				'ui_vue_vuex.WidgetVue',
+				'ui_vue.WidgetVue',
+				'exports.WidgetVue',
+				'BX.WidgetVue',
+			],
+			$scriptContent
+		);
+
+		Main\IO\File::putFileContents(Application::getDocumentRoot().self::WIDGET_PATH_SCRIPT, $scriptContent);
+		Main\IO\File::putFileContents(Application::getDocumentRoot().self::WIDGET_PATH_EXTENTION_LIST, implode("\n", $resources['resolved_extension']));
 
 		$stylesContent = "/* widget bundle*/";
 		foreach ($resources['css'] as $path)
@@ -551,23 +572,12 @@ class LiveChatManager
 				continue;
 			}
 
-			$minPath = mb_substr($path, 0, -4).'.min.css';
-			if (Main\IO\File::isFileExists($minPath))
-			{
-				$file = new \Bitrix\Main\IO\File($path);
-				$minFile = new \Bitrix\Main\IO\File($minPath);
-				if ($file->getModificationTime() <= $minFile->getModificationTime())
-				{
-					$path = $minPath;
-				}
-			}
-
 			$stylesContent .= "\n\n/* file: ".$purePath." */\n".Main\IO\File::getFileContents($path)."\n\n";
 		}
 
 		$stylesContent = preg_replace('/\/\*#(\s?)sourceMappingURL(\s?)=(\s?)([\w\.\-])+(\s?\*\/)/mi', ' ', $stylesContent);
 
-		Main\IO\File::putFileContents(Application::getDocumentRoot().'/bitrix/js/imopenlines_widget/styles.css', $stylesContent);
+		Main\IO\File::putFileContents(Application::getDocumentRoot().self::WIDGET_PATH_STYLE, $stylesContent);
 
 		return "";
 	}
@@ -616,6 +626,32 @@ $initWidget = <<<JS
 	BXLiveChat.start();
 JS;
 
+		$scriptName = 'script.js';
+		$scriptPath = Application::getDocumentRoot().self::WIDGET_PATH_SCRIPT;
+		$scriptPathMin = mb_substr(Application::getDocumentRoot().self::WIDGET_PATH_SCRIPT, 0, -3).'.min.js';
+		if (Main\IO\File::isFileExists($scriptPathMin))
+		{
+			$file = new \Bitrix\Main\IO\File($scriptPath);
+			$minFile = new \Bitrix\Main\IO\File($scriptPathMin);
+			if ($file->getModificationTime() <= $minFile->getModificationTime())
+			{
+				$scriptName = 'script.min.js';
+			}
+		}
+
+		$stylesName = 'styles.css';
+		$stylesPath = Application::getDocumentRoot().self::WIDGET_PATH_STYLE;
+		$stylesPathMin = mb_substr(Application::getDocumentRoot().self::WIDGET_PATH_STYLE, 0, -4).'.min.css';
+		if (Main\IO\File::isFileExists($stylesPathMin))
+		{
+			$file = new \Bitrix\Main\IO\File($stylesPath);
+			$minFile = new \Bitrix\Main\IO\File($stylesPathMin);
+			if ($file->getModificationTime() <= $minFile->getModificationTime())
+			{
+				$stylesName = 'styles.min.css';
+			}
+		}
+
 		$codeWidget =
 			'window.addEventListener(\'onBitrixLiveChatSourceLoaded\',function() {'
 				.str_replace(["\n","\t"], " ", $initWidget).
@@ -624,14 +660,15 @@ JS;
 				'var f = function () {'.
 					'var week = function () {var d = new Date();d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);};'.
 					'var head = (document.getElementsByTagName("head")[0] || document.documentElement);'.
-					'var style = document.createElement("link"); style.type = "text/css"; style.rel = "stylesheet";  style.href = "'.$host.'/bitrix/js/imopenlines_widget/styles.css?r='.time().'-"+week();'.
-					'var script = document.createElement("script"); script.type = "text/javascript"; script.async = "true"; script.charset = "'.$charset.'"; script.src = "'.$host.'/bitrix/js/imopenlines_widget/script.js?r='.time().'-"+week();'.
+					'var style = document.createElement("link"); style.type = "text/css"; style.rel = "stylesheet";  style.href = "'.$host.'/bitrix/js/imopenlines/widget/'.$stylesName.'?r='.time().'-"+week();'.
+					'var script = document.createElement("script"); script.type = "text/javascript"; script.async = "true"; script.charset = "'.$charset.'"; script.src = "'.$host.'/bitrix/js/imopenlines/widget/'.$scriptName.'?r='.time().'-"+week();'.
 					'head.appendChild(style); head.appendChild(script);'.
 				'};'.
 				'if (typeof(BX)!="undefined" && typeof(BX.ready)!="undefined") {BX.ready(f)}'.
 				'else if (typeof(jQuery)!="undefined") {jQuery(f)}'.
 				'else {f();}'.
-			'})();';
+			'})();'
+		;
 
 		return $codeWidget;
 	}

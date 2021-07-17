@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["DEAL_ORDER_SCENARIO"] = "Order handling mode";
 $MESS["ORDER_ADD"] = "New order";
 $MESS["ORDER_ADD_TITLE"] = "New order";
 $MESS["ORDER_CANCEL"] = "Cancel order";
@@ -19,4 +20,3 @@ $MESS["ORDER_RESTORE"] = "Recover order";
 $MESS["ORDER_RESTORE_TITLE"] = "Recover order";
 $MESS["ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Export all order fields";
 $MESS["ORDER_STEXPORT_SUMMARY"] = "This will create an order export file. Exporting a considerable amount of data may take some time.";
-?>

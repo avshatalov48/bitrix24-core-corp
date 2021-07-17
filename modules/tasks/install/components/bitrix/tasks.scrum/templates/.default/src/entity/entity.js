@@ -161,7 +161,10 @@ export class Entity extends EventEmitter
 			this.setItemMoveActivity(item);
 		});
 
-		this.addNumberTasks(1);
+		if (!newItem.isSubTask())
+		{
+			this.addNumberTasks(1);
+		}
 	}
 
 	setItemMoveActivity(item: Item)
@@ -179,7 +182,10 @@ export class Entity extends EventEmitter
 				this.setItemMoveActivity(item);
 			});
 
-			this.subtractNumberTasks(1);
+			if (!item.isSubTask())
+			{
+				this.subtractNumberTasks(1);
+			}
 		}
 	}
 
@@ -279,7 +285,17 @@ export class Entity extends EventEmitter
 			this.emit('updateItem', baseEvent.getData());
 		});
 
-		item.subscribe('updateStoryPoints', () => this.updateStoryPoints());
+		item.subscribe('updateStoryPoints', () => {
+			if (item.isSubTask())
+			{
+				const parentItem = this.getItemBySourceId(item.getParentTaskId());
+				if (parentItem)
+				{
+					parentItem.updateSubTasksPoints(item.getSourceId(), item.getStoryPoints());
+				}
+			}
+			this.updateStoryPoints();
+		});
 
 		item.subscribe('showTask', (baseEvent) => this.emit('showTask', baseEvent.getTarget()));
 
@@ -364,7 +380,10 @@ export class Entity extends EventEmitter
 	{
 		this.storyPoints.clearPoints();
 		[...this.getItems().values()].map((item: Item) => {
-			this.storyPoints.addPoints(item.getStoryPoints().getPoints());
+			if (!item.isSubTask())
+			{
+				this.storyPoints.addPoints(item.getStoryPoints().getPoints());
+			}
 		});
 	}
 
@@ -375,6 +394,25 @@ export class Entity extends EventEmitter
 	getItemByItemId(itemId: number|string): Item|undefined
 	{
 		return this.items.get((Type.isInteger(itemId) ? parseInt(itemId, 10) : itemId));
+	}
+
+	getItemBySourceId(sourceId: number): Item|undefined
+	{
+		return [...this.items.values()].find((item: Item) => item.getSourceId() === sourceId);
+	}
+
+	getItemsByParentTaskId(parentTaskId: number): Map<number, Item>
+	{
+		const items = new Map();
+
+		[...this.items.values()].map((item: Item) => {
+			if (item.getParentTaskId() === parentTaskId)
+			{
+				items.set(item.getItemId(), item);
+			}
+		});
+
+		return items;
 	}
 
 	getStoryPoints(): StoryPoints

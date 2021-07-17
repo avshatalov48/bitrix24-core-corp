@@ -69,6 +69,10 @@ this.BX = this.BX || {};
 	      babelHelpers.toConsumableArray(document.querySelectorAll('a')).map(function (node) {
 	        var href = main_core.Dom.attr(node, 'href');
 
+	        if (href) {
+	          href = href.toString();
+	        }
+
 	        if (href && href.indexOf(':')) {
 	          var hrefPref = href.split(':')[0];
 
@@ -175,7 +179,7 @@ this.BX = this.BX || {};
 	     * Send label to the portal.
 	     * @param {string|null} portalUrl
 	     * @param {string} label
-	     * @param {string} value
+	     * @param {string|null} value
 	     */
 
 	  }, {
@@ -185,7 +189,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      if (value.substr(0, 1) === '#') {
+	      if (value && value.substr(0, 1) === '#') {
 	        value = value.substr(1);
 	      }
 

@@ -18,6 +18,11 @@ final class Deal extends Factory
 		return true;
 	}
 
+	public function isBizProcEnabled(): bool
+	{
+		return true;
+	}
+
 	public function isCategoriesSupported(): bool
 	{
 		return true;
@@ -141,5 +146,10 @@ final class Deal extends Factory
 	public function createItem(array $data = []): Item
 	{
 		throw new InvalidOperationException('Deal factory is not ready to work with items yet');
+	}
+
+	public function getItemCategoryId(int $id): ?int
+	{
+		return \CCrmDeal::GetCategoryID($id);
 	}
 }

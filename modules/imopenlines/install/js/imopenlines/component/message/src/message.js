@@ -9,6 +9,8 @@
 
 import './message.css';
 import 'im.view.message';
+import { EventEmitter } from "main.core.events";
+import { EventType as WidgetEventType } from "../../widget/src/const";
 
 const FormType = Object.freeze({
 	none: 'none',
@@ -50,10 +52,10 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 					)
 				)
 				{
-					this.$root.$emit('requestShowForm', {
+					EventEmitter.emit(WidgetEventType.requestShowForm, {
 						type: FormType.welcome,
 						delayed: true
-					})
+					});
 				}
 			}
 			else if (this.message.params.IMOL_FORM === 'offline')
@@ -63,10 +65,10 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 					&& (!this.widget.user.email)
 				)
 				{
-					this.$root.$emit('requestShowForm', {
+					EventEmitter.emit(WidgetEventType.requestShowForm, {
 						type: FormType.offline,
 						delayed: true
-					})
+					});
 				}
 			}
 			else if (this.message.params.IMOL_FORM === 'history-delay')
@@ -76,10 +78,10 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 					&& this.widget.dialog.userVote === VoteType.none
 				)
 				{
-					this.$root.$emit('requestShowForm', {
+					EventEmitter.emit(WidgetEventType.requestShowForm, {
 						type: FormType.like,
 						delayed: true
-					})
+					});
 				}
 			}
 		}
@@ -102,16 +104,7 @@ BX.Vue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 				return false;
 			}
 
-			return this.localize.IMOL_MESSAGE_DIALOG_ID.replace('#ID#', this.message.params.IMOL_SID);
-		},
-		localize()
-		{
-			return Object.freeze(
-				Object.assign({},
-					this.parentLocalize,
-					BX.Vue.getFilteredPhrases('IMOL_MESSAGE_', this.$root.$bitrixMessages)
-				)
-			);
+			return this.$Bitrix.Loc.getMessage('IMOL_MESSAGE_DIALOG_ID').replace('#ID#', this.message.params.IMOL_SID);
 		},
 		showMessage()
 		{

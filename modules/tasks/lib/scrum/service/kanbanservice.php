@@ -25,9 +25,120 @@ class KanbanService implements Errorable
 	private $unFinishedTaskIdsCache = [];
 	private $finishedTaskIdsCache = [];
 
+	private static $sprintStageIds = [];
+
 	public function __construct()
 	{
 		$this->errorCollection = new ErrorCollection;
+	}
+
+	/**
+	 * The method returns the stages for the task, depending on whether it is in the active sprint,
+	 * completed sprint, or in the backlog.
+	 *
+	 * @param int $taskId Task id.
+	 * @return array
+	 */
+	public function getStagesToTask(int $taskId): array
+	{
+		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if ($itemService->getErrors() || $scrumItem->isEmpty())
+		{
+			return [];
+		}
+
+		$entity = $entityService->getEntityById($scrumItem->getEntityId());
+		if ($entityService->getErrors() || $entity->isEmpty())
+		{
+			return [];
+		}
+
+		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		{
+			return [];
+		}
+
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		return StagesTable::getStages($entity->getId(), true);
+	}
+
+	/**
+	 * The method returns the stage id for the task.
+	 *
+	 * @param int $taskId Task id.
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getTaskStageId(int $taskId): int
+	{
+		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if ($itemService->getErrors() || $scrumItem->isEmpty())
+		{
+			return 0;
+		}
+
+		$entity = $entityService->getEntityById($scrumItem->getEntityId());
+		if ($entityService->getErrors() || $entity->isEmpty())
+		{
+			return 0;
+		}
+
+		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		{
+			return 0;
+		}
+
+		$queryObject = TaskStageTable::getList([
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'STAGE.ENTITY_ID' => $entity->getId()
+			]
+		]);
+		if ($taskStage = $queryObject->fetch())
+		{
+			return $taskStage['STAGE_ID'];
+		}
+
+		return 0;
+	}
+
+	/**
+	 * The method returns the entity id for the task.
+	 *
+	 * @param int $taskId Task id.
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getTaskEntityId(int $taskId): int
+	{
+		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if ($itemService->getErrors() || $scrumItem->isEmpty())
+		{
+			return 0;
+		}
+
+		$entity = $entityService->getEntityById($scrumItem->getEntityId());
+		if ($entityService->getErrors() || $entity->isEmpty())
+		{
+			return 0;
+		}
+
+		return $entity->getId();
 	}
 
 	/**
@@ -42,6 +153,7 @@ class KanbanService implements Errorable
 		try
 		{
 			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
 			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
 
 			if (!$defaultStageId)
@@ -88,6 +200,7 @@ class KanbanService implements Errorable
 			}
 
 			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
 			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
 
 			$taskStageIdsMap = [];
@@ -154,8 +267,6 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 			$finishStageId = $this->getFinishStageId($sprintId);
 
 			if ($finishStageId)
@@ -179,8 +290,6 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 			$finishStageId = $this->getFinishStageId($sprintId);
 
 			if ($finishStageId)
@@ -206,8 +315,6 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 			$stageIds = $this->getSprintStageIds($sprintId);
 
 			$queryObject = TaskStageTable::getList([
@@ -231,8 +338,6 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 			$newStageId = $this->getNewStageId($sprintId);
 
 			if ($newStageId)
@@ -293,7 +398,7 @@ class KanbanService implements Errorable
 	 * @param int $sprintId Sprint id for copy last view.
 	 * @return array
 	 */
-	public function getKanbanStages(int $sprintId = 0): array
+	public function generateKanbanStages(int $sprintId = 0): array
 	{
 		$stages = [];
 
@@ -367,12 +472,13 @@ class KanbanService implements Errorable
 
 		foreach ($taskIds as $taskId)
 		{
-			if ($this->getTaskIds([
+			if (
+				$this->getTaskIds([
 					'=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
 					'=TASK_ID' => $taskId,
 					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-				]
-			))
+				])
+			)
 			{
 				$finishedTaskIds[] = $taskId;
 			}
@@ -429,7 +535,7 @@ class KanbanService implements Errorable
 		return $taskIds;
 	}
 
-	private function getLastCompletedSprintIdSameGroup(int $sprintId): int
+	public function getLastCompletedSprintIdSameGroup(int $sprintId): int
 	{
 		$queryObject = EntityTable::getList([
 			'select' => ['ID', 'GROUP_ID'],
@@ -482,7 +588,12 @@ class KanbanService implements Errorable
 
 	private function getSprintStageIds(int $sprintId): array
 	{
-		$stageIds = [];
+		if (isset(self::$sprintStageIds[$sprintId]))
+		{
+			return self::$sprintStageIds[$sprintId];
+		}
+
+		self::$sprintStageIds[$sprintId] = [];
 
 		$queryObject = StagesTable::getList([
 			'select' => ['ID'],
@@ -494,13 +605,13 @@ class KanbanService implements Errorable
 		]);
 		while ($stage = $queryObject->fetch())
 		{
-			$stageIds[] = $stage['ID'];
+			self::$sprintStageIds[$sprintId][] = $stage['ID'];
 		}
 
-		return $stageIds;
+		return self::$sprintStageIds[$sprintId];
 	}
 
-	private function getStageIdsMapBetweenTwoSprints(int $firstSprintId, int $secondSprintId): array
+	public function getStageIdsMapBetweenTwoSprints(int $firstSprintId, int $secondSprintId): array
 	{
 		$firstStages = [];
 		$secondStages = [];
@@ -545,6 +656,8 @@ class KanbanService implements Errorable
 	{
 		try
 		{
+			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
 			$stageId = 0;
 
 			$stages = StagesTable::getStages($sprintId, true);
@@ -572,6 +685,8 @@ class KanbanService implements Errorable
 	{
 		try
 		{
+			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
 			$stageId = 0;
 
 			$stages = StagesTable::getStages($sprintId, true);

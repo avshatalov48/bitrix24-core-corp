@@ -107,14 +107,18 @@ final class Driver
 				'ON_CLICK' => 'BX.Salescenter.Manager.openSlider(\''.$dealsLink.'\');',
 			];
 		}
-		$ordersList = '/shop/orders/list/';
-		$items[] = [
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			$ordersList = '/shop/orders/list/';
+			$items[] = [
 				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_ORDER'),
 				'URL' => $ordersList,
 				'URL_CONSTANT' => true,
 				'SORT' => 30,
 				'ON_CLICK' => 'BX.Salescenter.Manager.openSlider(\''.$ordersList.'\');',
-		];
+			];
+		}
+
 		$contactsLink = CrmManager::getInstance()->getContactsLink();
 		if($contactsLink)
 		{

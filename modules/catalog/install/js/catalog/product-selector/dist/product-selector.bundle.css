@@ -112,15 +112,15 @@
 
 .catalog-product-field-no-image .catalog-product-field-input,
 .catalog-product-field-no-image .product-item-scu-wrapper {
-	margin-left: 0;
-	width: auto;
+	margin: 0;
+	width: 100%;
 }
 
 .adm-fileinput-wrapper-single .adm-fileinput-drag-area {
 	background-size: 17px;
 }
 
-span.ui-image-input-img-add {
+.catalog-product-img span.ui-image-input-img-add {
 	position: absolute;
 	right: -24px;
 	top: 50%;

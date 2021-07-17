@@ -7,10 +7,9 @@ use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
-use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\CompanyAddressFormatter;
-use Bitrix\Crm\Format\AddressSeparator;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 
 if(!Main\Loader::includeModule('crm'))
@@ -328,7 +327,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		$this->prepareEntityUserFields();
 		$this->prepareEntityUserFieldInfos();
-		$this->prepareEntityData();
+
+		$this->initializeData();
 
 		$this->arResult['IS_MY_COMPANY'] = $this->isMyCompany();
 
@@ -367,11 +367,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Fields
-		$this->prepareFieldInfos();
-
-		$this->prepareEntityFieldAttributes();
-
-		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
+		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
 		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
 			CCrmOwnerType::Company,
 			$this->entityID
@@ -489,7 +485,11 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						)
 					)
 				);
-				if (CModule::IncludeModule('sale') && Main\Config\Option::get("crm", "crm_shop_enabled") === "Y")
+				if (
+					CModule::IncludeModule('sale')
+					&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
+					&& CCrmSaleHelper::isWithOrdersMode()
+				)
 				{
 					$this->arResult['TABS'][] = array(
 						'id' => 'tab_order',
@@ -1919,25 +1919,20 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		if($this->enableOutmodedFields)
 		{
-			$this->entityData['ADDRESS_HTML'] = CompanyAddressFormatter::format(
-				$this->entityData,
-				array(
-					'TYPE_ID' => EntityAddressType::Primary,
-					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-					'NL2BR' => true,
-					'HTML_ENCODE' => true
-				)
-			);
-
-			$this->entityData['REG_ADDRESS_HTML'] = CompanyAddressFormatter::format(
-				$this->entityData,
-				array(
-					'TYPE_ID' => EntityAddressType::Registered,
-					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-					'NL2BR' => true,
-					'HTML_ENCODE' => true
-				)
-			);
+			$this->entityData['ADDRESS_HTML'] =
+				AddressFormatter::getSingleInstance()->formatHtmlMultilineSpecialchar(
+					CompanyAddress::mapEntityFields(
+						$this->entityData,
+						['TYPE_ID' => EntityAddressType::Primary]
+					)
+				);
+			$this->entityData['REG_ADDRESS_HTML'] =
+				AddressFormatter::getSingleInstance()->formatHtmlMultilineSpecialchar(
+					CompanyAddress::mapEntityFields(
+						$this->entityData,
+						['TYPE_ID' => EntityAddressType::Registered]
+					)
+				);
 		}
 
 		Tracking\UI\Details::prepareEntityData(
@@ -2056,5 +2051,21 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	public function initializeData()
+	{
+		$this->prepareEntityData();
+		$this->prepareFieldInfos();
+		$this->prepareEntityFieldAttributes();
+	}
+
+	public function getEntityEditorData(): array
+	{
+		return [
+			'ENTITY_ID' => $this->getEntityID(),
+			'ENTITY_DATA' => $this->prepareEntityData(),
+			'ENTITY_INFO' => $this->prepareEntityInfo()
+		];
 	}
 }

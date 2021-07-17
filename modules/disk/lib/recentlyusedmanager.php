@@ -8,7 +8,7 @@ use Bitrix\Disk\Internals\FileTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\RecentlyUsedTable;
 use Bitrix\Disk\Uf\FileUserType;
-use Bitrix\Main\Application;
+use Bitrix\Disk;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 
@@ -28,10 +28,10 @@ final class RecentlyUsedManager
 	/**
 	 * Push in recently used new object.
 	 * @param mixed|int|User|\CAllUser $user User.
-	 * @param int $objectId Object id.
+	 * @param int|\Bitrix\Disk\Internals\Model $object Object id.
 	 * @return bool
 	 */
-	public function push($user, $objectId)
+	public function push($user, $object)
 	{
 		$userId = User::resolveUserId($user);
 		if (!$userId)
@@ -39,6 +39,7 @@ final class RecentlyUsedManager
 			$this->errorCollection->addOne(new Error('Could not get user id.'));
 			return false;
 		}
+		$objectId = ($object instanceof Disk\Internals\Model ? $object->getId() : (int)$object);
 
 		$rows = RecentlyUsedTable::getList(
 			[
@@ -77,6 +78,10 @@ final class RecentlyUsedManager
 			$alreadyUpdateTime = $result->isSuccess();
 		}
 
+		if ($object instanceof File)
+		{
+			Disk\Driver::getInstance()->getTrackedObjectManager()->pushFile($userId, $object);
+		}
 
 		if (!$alreadyUpdateTime)
 		{

@@ -24,6 +24,9 @@ class Signaling
 		$skipPush = $parentCall ?  $parentCall->getUsers() : [];
 		$skipPush = array_flip($skipPush);
 
+		$associatedEntity = $this->call->getAssociatedEntity();
+		$isBroadcast = ($associatedEntity instanceof Chat) && $associatedEntity->isBroadcast();
+
 		foreach ($toUserIds as $toUserId)
 		{
 			$config = [
@@ -37,7 +40,7 @@ class Signaling
 				'video' => $video,
 				'logToken' => $this->call->getLogToken($toUserId),
 			];
-			if (!isset($skipPush[$toUserId]) && $sendPush)
+			if (!isset($skipPush[$toUserId]) && $sendPush && !$isBroadcast)
 			{
 				$push = $this->getInvitePush($senderId, $toUserId, $isLegacyMobile, $video);
 			}
@@ -54,13 +57,16 @@ class Signaling
 
 		$email = null;
 		$phone = null;
-		if ($associatedEntity instanceof Chat && $associatedEntity->isPrivateChat())
+		if ($associatedEntity instanceof Chat)
 		{
-			$userInstance = \Bitrix\Im\User::getInstance($senderId);
-			$email = $userInstance->getEmail();
-			$phone = $userInstance->getPhone();
-			$phone = preg_replace("/[^0-9#*+,;]/", "", $phone);
-			$avatar = $userInstance->getAvatar();
+			if ($associatedEntity->isPrivateChat())
+			{
+				$userInstance = \Bitrix\Im\User::getInstance($senderId);
+				$email = $userInstance->getEmail();
+				$phone = $userInstance->getPhone();
+				$phone = preg_replace("/[^0-9#*+,;]/", "", $phone);
+			}
+			$avatar = $associatedEntity->getAvatar($toUserId);
 		}
 
 		$pushText = Loc::getMessage('IM_CALL_INVITE', ['#USER_NAME#' => $name]);
@@ -89,7 +95,8 @@ class Signaling
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
 				'androidHighPriority' => true,
 				'useVibration' => true,
-				'isVoip' => true
+				'isVoip' => true,
+				'callkit' => true,
 			],
 			'sound' => 'call.aif',
 			'send_immediately' => 'Y'
@@ -146,7 +153,9 @@ class Signaling
 			'isLegacyMobile' => $isLegacyMobile,
 		);
 
-		$toUserIds = $this->call->getUsers();
+		$toUserIds = array_diff($this->call->getUsers(), [$senderId]);
+		$this->send('Call::answer', $toUserIds, $config, null, 3600);
+
 		$push = [
 			'send_immediately' => 'Y',
 			'expiry' => 0,
@@ -155,11 +164,12 @@ class Signaling
 				'id' => 'IM_CALL_'.$this->call->getId().'_ANSWER',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
 				'isVoip' => true,
+				'callkit' => true,
 				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];
 
-		return $this->send('Call::answer', $toUserIds, $config, $push, 3600);
+		$this->send('Call::answer', $senderId, $config, $push, 3600);
 	}
 
 	public function sendPing(int $senderId, $requestId)
@@ -229,6 +239,7 @@ class Signaling
 			'advanced_params' => [
 				'id' => 'IM_CALL_'.$this->call->getId().'_FINISH',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
+				'callkit' => true,
 				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];
@@ -245,6 +256,7 @@ class Signaling
 			'advanced_params' => [
 				'id' => 'IM_CALL_'.$this->call->getId().'_FINISH',
 				'notificationsToCancel' => ['IM_CALL_'.$this->call->getId()],
+				'callkit' => true,
 				'filterCallback' => [static::class, 'filterPushesForApple'],
 			]
 		];

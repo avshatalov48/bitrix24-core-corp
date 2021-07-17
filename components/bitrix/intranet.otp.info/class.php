@@ -73,26 +73,29 @@ class CIntranetOtpInfoComponent extends CBitrixComponent
 			['user_id' => $USER->GetID()]
 		);
 
-		//for all mandatory
-		$isUserSkipMandatoryRights = \CSecurityUser::IsUserSkipMandatoryRights($USER->GetID());
-		$dateDeactivate = \CSecurityUser::GetDeactivateUntil($USER->GetID());
+		$localStorage = \Bitrix\Main\Application::getInstance()->getLocalSession('otpMandatoryInfo');
 
 		if (
 			!$arUserOtp['ACTIVE']
-			&& !isset($_SESSION['OTP_MANDATORY_INFO'])
-			&& !$isUserSkipMandatoryRights
-			&& $dateDeactivate
+			&& !isset($localStorage['otpMandatoryInfo'])
 		)
 		{
-			$this->arResult['POPUP_NAME'] = 'otp_mandatory_info';
-			$_SESSION['OTP_MANDATORY_INFO'] = 'Y';
-			$this->arResult['USER']['OTP_DAYS_LEFT'] = (
-				$dateDeactivate
-				? FormatDate('ddiff', time() - 60*60*24,  MakeTimeStamp($dateDeactivate))
-				: ''
-			);	
+			//for all mandatory
+			$isUserSkipMandatoryRights = \CSecurityUser::IsUserSkipMandatoryRights($USER->GetID());
+			$dateDeactivate = \CSecurityUser::GetDeactivateUntil($USER->GetID());
 
-			$this->includeComponentTemplate();
+			if (!$isUserSkipMandatoryRights && $dateDeactivate)
+			{
+				$this->arResult['POPUP_NAME'] = 'otp_mandatory_info';
+				$localStorage->set('otpMandatoryInfo', 'Y');
+				$this->arResult['USER']['OTP_DAYS_LEFT'] = (
+					$dateDeactivate
+					? FormatDate('ddiff', time() - 60*60*24,  MakeTimeStamp($dateDeactivate))
+					: ''
+				);
+
+				$this->includeComponentTemplate();
+			}
 		}
 	}
 }

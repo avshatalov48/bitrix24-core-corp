@@ -38,7 +38,7 @@ $user_action_menu_number = rand();
 	</td>
 	<?if ($arResult['CAN_EDIT_USER']):?>
 	<td>
-		<? if (!in_array($arUser['EXTERNAL_AUTH_ID'], array('bot', 'imconnector'))): ?>
+		<? if (!in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())): ?>
 			<div style="margin-right: 40px;">
 				<a href="<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_EDIT'], array("user_id" => $arUser['ID']))?>"><?=GetMessage("INTR_ISP_EDIT_LINK")?></a>
 			</div>
@@ -244,7 +244,7 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 			{ text : "<?=GetMessage("INTR_ISP_MESSAGE_HISTORY")?>", onclick : function() { this.popupWindow.close(); BXIM.openHistory(user_id);} },
 		<?endif;?>
 
-		<?if ($arResult['CAN_EDIT_USER'] && $arUser["ID"] != $USER->GetID() && !in_array($arUser['EXTERNAL_AUTH_ID'], array('bot', 'imconnector'))):?>
+		<?if ($arResult['CAN_EDIT_USER'] && $arUser["ID"] != $USER->GetID() && !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())):?>
 			{ text : "<?=$userActionMessage?>", onclick : function() {
 				BX.showWait(button.parentNode.parentNode);
 				if (confirmUser("<?=$arUser["ACTIVITY_STATUS"]?>"))
@@ -301,7 +301,7 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 				return false;
 			} },
 		<?endif;?>
-		<?if ($arResult['CAN_EDIT_USER'] || $arUser["ID"] == $USER->GetID() and !in_array($arUser['EXTERNAL_AUTH_ID'], array('bot', 'imconnector'))):?>
+		<?if ($arResult['CAN_EDIT_USER'] || $arUser["ID"] == $USER->GetID() and !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())):?>
 			{ text : "<?=GetMessage("INTR_ISP_EDIT_USER")?>", href : "<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_EDIT'], array("user_id" => $arUser['ID']))?>" }
 		<?endif;?>
 	];

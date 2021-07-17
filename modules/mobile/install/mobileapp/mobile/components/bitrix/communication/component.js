@@ -28,12 +28,14 @@
 				'messages': 'im_messenger',
 				'openlines': 'im_messenger',
 				'tasks_total': 'tasks_total',
+				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
 			};
 
 			this.userCounterMapTabName = {
 				'**': 'stream',
 				'im': 'messages',
 				'tasks_total': 'tasks_total',
+				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
 			};
 
 			this.sharedStorage = Application.sharedStorage();

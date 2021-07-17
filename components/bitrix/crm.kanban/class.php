@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 }
 
 use \Bitrix\Crm\Integration\PullManager;
-use Bitrix\Crm\Item;
 use \Bitrix\Crm\Service\Container;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
@@ -650,6 +649,24 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 		}
+		if (isset($filter['ORDER_SOURCE']))
+		{
+			$orderSourceQuery = new \Bitrix\Main\Entity\Query(\Bitrix\Crm\DealTable::getEntity());
+			$orderSourceQuery->setSelect(['ID']);
+			$orderSourceQuery->setFilter([
+				'ORDER_BINDING.ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $filter['ORDER_SOURCE'],
+			]);
+
+			$orderSourceSql = $orderSourceQuery->getQuery();
+			$filter['__CONDITIONS'][] = [
+				'SQL' => \CCrmDeal::TABLE_ALIAS.".ID IN ({$orderSourceSql})",
+			];
+
+			unset($orderSourceQuery, $orderSourceSql, $filter['ORDER_SOURCE']);
+		}
+
+		$filter = $this->applyDeliveryStageFilter($filter);
+
 		//deal
 		if ($this->entity->isCategoriesSupported())
 		{
@@ -1495,17 +1512,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$columns[$filter[$statusKey]]['count'] <= static::MAX_SORTED_ITEMS_COUNT
 		);
 
+		$parameters['limit'] = $this->blockSize;
 		if(!$canGetAllItems)
 		{
-			$parameters['limit'] = $this->blockSize;
 			$parameters['offset'] = $this->blockSize * ($this->blockPage - 1);
+		}
+		else
+		{
+			$parameters['offset'] = ($this->arParams['EXTRA']['itemsCount'] ?? 0);
 		}
 
 		$res = $this->entity->getItems($parameters);
-		if($canGetAllItems)
-		{
-			$res->NavStart($this->blockSize, false, $this->blockPage);
-		}
 
 		$timeOffset = \CTimeZone::GetOffset();
 		$timeFull = time() + $timeOffset;
@@ -2118,8 +2135,22 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$traces = $this->getTracesById(array_keys($result));
 		}
+
+		// fetch shipments info
+		$shipments = false;
+		if ($type === 'DEAL' && in_array('DELIVERY_STAGE', $select, true))
+		{
+			if (is_array($result) && count($result) > 0)
+			{
+				$shipments = $this->fetchShipmentsList(array_keys($result));
+				if (count($shipments) <= 0)
+				{
+					$shipments = false;
+				}
+			}
+		}
 		// refill result array, if we have any new data
-		if ($users || $fileIds || $iblockSects || $iblockElements || $crmEntities || $traces)
+		if ($users || $fileIds || $iblockSects || $iblockElements || $crmEntities || $traces || $shipments)
 		{
 			foreach ($result as $id => &$row)
 			{
@@ -2287,6 +2318,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 						'title' => Loc::getMessage('CRM_KANBAN_TRACKING_SOURCE_ID'),
 						'value' => $traces[$id]['NAME']
 					);
+				}
+				// shipments
+				if (isset($shipments[$id]) && count($shipments[$id]) > 0)
+				{
+					$row['fields'][] = [
+						'code' => 'DELIVERY_STAGE',
+						'title' => Loc::getMessage('CRM_KANBAN_DELIVERY_STAGE'),
+						'type' => 'string',
+						'value' => array_shift($shipments[$id]),
+						'html' => false,
+					];
 				}
 			}
 			unset($row);
@@ -3106,6 +3148,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$fields['COLOR'] = $columnColor;
 		}
+		$fields['CATEGORY_ID'] = $this->entity->getCategoryId() > 0 ? $this->entity->getCategoryId() : null;
 		//todo move to entity
 		$isOrder = ($this->entity->getTypeName() === 'ORDER');
 		if ($columnId !== '' && isset($stages[$columnId]))
@@ -3750,5 +3793,98 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Returns map deal-shipments for given deal ids
+	 * @param int[] $dealIds
+	 * @return array deal_id => [related shipments]
+	 */
+	protected function fetchShipmentsList(array $dealIds): array
+	{
+		if (count($dealIds) <= 0)
+		{
+			return [];
+		}
+
+		$orderIds = [];
+		$orderToDealMap = [];
+		$stages = Order\DeliveryStage::getList();
+		$result = [];
+
+		$dealOrders = Order\DealBinding::getList([
+			'select' => ['ORDER_ID', 'DEAL_ID'],
+			'filter' => [
+				'=DEAL_ID' => $dealIds
+			]
+		]);
+
+		while ($binding = $dealOrders->fetch())
+		{
+			$orderIds[] = (int)$binding['ORDER_ID'];
+			$orderToDealMap[(int)$binding['ORDER_ID']] = (int)$binding['DEAL_ID'];
+		}
+
+		if (count($orderIds) <= 0)
+		{
+			return [];
+		}
+
+		$select = ['ID', 'ORDER_ID', 'DEDUCTED'];
+		$where = ['=ORDER_ID' => $orderIds, '!SYSTEM' => 'Y'];
+		$orderBy = ['ID' => 'desc'];
+
+		$shipments = Order\ShipmentCollection::getList([
+			'select' => $select,
+			'filter' => $where,
+			'order' => $orderBy,
+		]);
+		while ($shipment = $shipments->fetch())
+		{
+			$orderId = (int)$shipment['ORDER_ID'];
+			$dealId = $orderToDealMap[$orderId];
+			if ($dealId)
+			{
+				if ($shipment['DEDUCTED'] === 'Y')
+				{
+					$shipment['STAGE'] = [
+						'CODE' => Order\DeliveryStage::SHIPPED,
+						'TITLE' => $stages[Order\DeliveryStage::SHIPPED],
+					];
+				}
+				else
+				{
+					$shipment['STAGE'] = [
+						'CODE' => Order\DeliveryStage::NO_SHIPPED,
+						'TITLE' => $stages[Order\DeliveryStage::NO_SHIPPED],
+					];
+				}
+				$result[$dealId][] = $shipment;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Adds special SQL condition into $filter.
+	 * It filters deals by flag DEDUCTED in related shipments
+	 * @param array $filter
+	 * @return array
+	 */
+	protected function applyDeliveryStageFilter(array $filter): array
+	{
+		if (isset($filter['DELIVERY_STAGE']) && is_array($filter['DELIVERY_STAGE']))
+		{
+			$deliveryStageFilter = new Bitrix\Crm\Deal\DeliveryStageFilter($filter['DELIVERY_STAGE']);
+			if ($sql = $deliveryStageFilter->getDealIdQuery())
+			{
+				$filter['__CONDITIONS'][] = [
+					'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$sql})",
+				];
+			}
+			unset($filter['DELIVERY_STAGE']);
+		}
+		return $filter;
 	}
 }

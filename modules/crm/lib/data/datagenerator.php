@@ -1,9 +1,11 @@
 <?php
 namespace Bitrix\Crm\Data;
-use Bitrix\Main;
+
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Crm\Format;
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Format\AddressFormatter;
 
 class DataGenerator
 {
@@ -79,9 +81,8 @@ class DataGenerator
 		if(is_array($fields))
 		{
 			$result['TITLE'] = isset($fields['TITLE']) ? $fields['TITLE'] : '';
-			$result['FULL_ADDRESS'] = Format\CompanyAddressFormatter::format(
-				$fields,
-				array('SEPARATOR' => Format\AddressSeparator::NewLine)
+			$result['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextMultiline(
+				CompanyAddress::mapEntityFields($fields)
 			);
 
 			$dbRes = \CCrmFieldMulti::GetListEx(
@@ -134,9 +135,8 @@ class DataGenerator
 		if(is_array($fields))
 		{
 			$result['FULL_NAME'] = \CCrmContact::PrepareFormattedName($fields);
-			$result['FULL_ADDRESS'] = Format\ContactAddressFormatter::format(
-				$fields,
-				array('SEPARATOR' => Format\AddressSeparator::NewLine)
+			$result['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextMultiline(
+				ContactAddress::mapEntityFields($fields)
 			);
 
 			$dbRes = \CCrmFieldMulti::GetListEx(

@@ -13,3 +13,7 @@
 .tasks-scrum-project-side-panel-header-title {
 	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+
+.tasks-scrum-dod-panel-padding {
+	padding: 0 30px 21px 21px !important;
+}

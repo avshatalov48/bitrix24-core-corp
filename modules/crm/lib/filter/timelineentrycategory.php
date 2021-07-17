@@ -9,26 +9,31 @@ Loc::loadMessages(__FILE__);
 
 class TimelineEntryCategory
 {
-	const COMMENT = 'comment';
-	const DOCUMENT = 'document';
-	const SMS = 'sms';
-	const BIZ_PROCESS = 'biz-process';
-	const ACTIVITY_REQUEST = 'activity-request';
-	const ACTIVITY_TASK = 'activity-task';
-	const ACTIVITY_CALL = 'activity-call';
-	const ACTIVITY_VISIT = 'activity-visit';
-	const ACTIVITY_MEETING = 'activity-meeting';
-	const ACTIVITY_EMAIL = 'activity-email';
-	const ACTIVITY_ZOOM = 'activity-zoom';
-	const WEB_FORM = 'web-form';
-	const CHAT = 'chat';
-	const CREATION = 'creation';
-	const MODIFICATION = 'modification';
-	const CONVERSION = 'conversion';
-	const WAITING = 'waiting';
-	const APPLICATION = 'application';
-	const ORDER = 'order';
-	const ORDER_CHECK = 'check';
+	public const
+		ACTIVITY_REQUEST = 'activity-request',
+		ACTIVITY_TASK = 'activity-task',
+		ACTIVITY_CALL = 'activity-call',
+		ACTIVITY_VISIT = 'activity-visit',
+		ACTIVITY_MEETING = 'activity-meeting',
+		ACTIVITY_EMAIL = 'activity-email',
+		ACTIVITY_ZOOM = 'activity-zoom',
+		ACTIVITY_CALL_TRACKER = 'activity-call-tracker';
+
+	public const
+		COMMENT = 'comment',
+		DOCUMENT = 'document',
+		SMS = 'sms',
+		NOTIFICATION = 'notification',
+		BIZ_PROCESS = 'biz-process',
+		WEB_FORM = 'web-form',
+		CHAT = 'chat',
+		CREATION = 'creation',
+		MODIFICATION = 'modification',
+		CONVERSION = 'conversion',
+		WAITING = 'waiting',
+		APPLICATION = 'application',
+		ORDER = 'order',
+		ORDER_CHECK = 'check';
 
 	/**
 	 * Get Category descriptions
@@ -40,7 +45,9 @@ class TimelineEntryCategory
 			self::COMMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_COMMENT'),
 			self::DOCUMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_DOCUMENT'),
 			self::SMS => Loc::getMessage('CRM_TIMELINE_CATEGORY_SMS'),
+			self::NOTIFICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_NOTIFICATION_2'),
 			self::ACTIVITY_ZOOM => Loc::getMessage('CRM_TIMELINE_CATEGORY_ZOOM'),
+			self::ACTIVITY_CALL_TRACKER => Loc::getMessage('CRM_TIMELINE_CATEGORY_CALL_TRACKER'),
 			self::BIZ_PROCESS => Loc::getMessage('CRM_TIMELINE_CATEGORY_BIZ_PROCESS'),
 			self::ACTIVITY_REQUEST => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_REQUEST'),
 			self::ACTIVITY_TASK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_TASK'),
@@ -127,6 +134,13 @@ class TimelineEntryCategory
 							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Zoom::getId())
 					);
 				}
+				elseif($entryCategoryID === self::ACTIVITY_CALL_TRACKER)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\CallTracker::getId())
+					);
+				}
 				elseif($entryCategoryID === self::ACTIVITY_MEETING)
 				{
 					$categoryFilter->where(
@@ -170,6 +184,13 @@ class TimelineEntryCategory
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
 							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Sms::getId())
+					);
+				}
+				elseif($entryCategoryID === self::NOTIFICATION)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Notification::getId())
 					);
 				}
 				elseif($entryCategoryID === self::WEB_FORM)

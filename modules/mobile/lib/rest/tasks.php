@@ -2,6 +2,7 @@
 namespace Bitrix\Mobile\Rest;
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Kanban\TimeLineTable;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -33,6 +34,10 @@ class Tasks extends \IRestService
 			],
 			'mobile.tasks.group.lastSearched.validate' => [
 				'callback' => [__CLASS__, 'validateLastSearchedGroups'],
+				'options' => ['private' => false],
+			],
+			'mobile.task.link.params.get' => [
+				'callback' => [__CLASS__, 'getParamsToCreateLink'],
 				'options' => ['private' => false],
 			],
 		];
@@ -135,5 +140,28 @@ class Tasks extends \IRestService
 		}
 
 		return $groups;
+	}
+
+	/**
+	 * @param array $params
+	 *
+	 * @return string
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws \Bitrix\Rest\RestException
+	 * @throws \CTaskAssertException
+	 */
+	public static function getParamsToCreateLink(array $params): string
+	{
+		if (!Loader::includeModule('mobile'))
+		{
+			throw new \Bitrix\Rest\RestException(
+				'Module mobile is not installed', 'SERVER_ERROR', \CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		$taskId = (int)$params['taskId'];
+
+		return \CMobileHelper::getParamsToCreateTaskLink($taskId);
 	}
 }

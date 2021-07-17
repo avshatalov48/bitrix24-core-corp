@@ -6,7 +6,7 @@ const SelectItem = {
 		}
 	},
 	template: `
-			<div class="salescenter-app-payment-by-sms-item-container-select-item" id="stageOnOrderPaid">{{name}}</div>
+			<div class="salescenter-app-payment-by-sms-item-container-select-item">{{name}}</div>
 `
 
 };

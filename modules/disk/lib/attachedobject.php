@@ -6,6 +6,7 @@ namespace Bitrix\Disk;
 use Bitrix\Disk\Integration\TransformerManager;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
+use Bitrix\Disk\Internals\TrackedObjectTable;
 use Bitrix\Disk\Uf\Connector;
 use Bitrix\Disk\Uf\StubConnector;
 use Bitrix\Main\Loader;
@@ -205,7 +206,10 @@ final class AttachedObject extends Internals\Model
 		if($model && $model->getCreatedBy())
 		{
 			$driver = Driver::getInstance();
-			$driver->getRecentlyUsedManager()->push($model->getCreatedBy(), $model->getObjectId());
+			$driver->getRecentlyUsedManager()->push(
+				$model->getCreatedBy(),
+				$model
+			);
 
 			/** @var AttachedObject $model */
 			/** @var File $file */
@@ -480,6 +484,10 @@ final class AttachedObject extends Internals\Model
 		{
 			return false;
 		}
+
+		TrackedObjectTable::deleteBatch([
+			'ATTACHED_OBJECT_ID' => $this->id,
+		]);
 
 		if($this->isSpecificVersion())
 		{

@@ -69,7 +69,8 @@ class CDeliveryRusPost
 
 			'COMPABILITY' => array('CDeliveryRusPost', 'Compability'),
 			'CALCULATOR' => array('CDeliveryRusPost', 'Calculate'),
-			"TRACKING_CLASS_NAME" => '\Bitrix\Sale\Delivery\Tracking\RusPost',
+			'TRACKING_CLASS_NAME' => '\Bitrix\Sale\Delivery\Tracking\RusPost',
+			'IS_HANDLER_COMPATIBLE' => array('CDeliveryRusPost', 'isHandlerCompatible'),
 
 			/* List of delivery profiles */
 			'PROFILES' => array(
@@ -781,6 +782,17 @@ class CDeliveryRusPost
 		}
 
 		return isset($data[$regionLangName]) ? $data[$regionLangName] : "";
+	}
+
+	/**
+	 * Checks if handler is compatible
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function isHandlerCompatible(): bool
+	{
+		return \Bitrix\Sale\Delivery\Helper::getPortalZone() !== 'ua';
 	}
 }
 

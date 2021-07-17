@@ -82,7 +82,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 								isAutomatic: <?=($arResult['IS_AUTOMATIC'] ? 'true' : 'false')?>,
 								previouslyProcessedCount: <?=(isset($arResult['PROCESSED_COUNT']) ? (int)$arResult['PROCESSED_COUNT'] : 0)?>,
 								entityEditorUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_EDITOR'])?>",
-								externalContextId: "<?=$arResult['EXTERNAL_CONTEXT_ID']?>",
+								externalContextId: "<?=CUtil::JSEscape($arResult['EXTERNAL_CONTEXT_ID'])?>",
 								headerTitleTemplate: "<?=CUtil::JSEscape($arResult['HEADER_TEMPLATE'])?>"
 							}
 						);

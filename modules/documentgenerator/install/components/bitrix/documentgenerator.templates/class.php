@@ -376,7 +376,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						'NAME' => htmlspecialcharsbx($template['NAME']),
 						'REGION' => htmlspecialcharsbx($this->getRegions()[$template['REGION']]['NAME']),
 						'UPDATE_TIME' => $template['UPDATE_TIME'],
-						'PROVIDERS' => htmlspecialcharsbx(implode(', ', $template['PROVIDER_NAMES'])),
+						'PROVIDERS' => htmlspecialcharsbx(implode(', ', (array)$template['PROVIDER_NAMES'])),
 						'CREATE_TIME' => $template['CREATE_TIME'],
 						'SORT' => $template['SORT'],
 						'DOWNLOAD' => '<a target="_blank" href="'.$templateInstance->getDownloadUrl()->getLocator().'">'.Loc::getMessage('DOCGEN_TEMPLATE_LIST_DOWNLOAD').'</a>',

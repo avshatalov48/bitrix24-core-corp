@@ -491,4 +491,9 @@ class Quote extends Factory
 	{
 		return true;
 	}
+
+	public function isBizProcEnabled(): bool
+	{
+		return true;
+	}
 }

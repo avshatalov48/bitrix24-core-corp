@@ -1,22 +1,22 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Event,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main;
+use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Entity\ReferenceField;
 
-use \Bitrix\Im\Recent,
-	\Bitrix\Im\User as ImUser,
-	\Bitrix\Im\Model\ChatTable,
-	\Bitrix\Im\Model\RelationTable;
+use Bitrix\Im\Recent;
+use Bitrix\Im\User as ImUser;
+use Bitrix\Im\Model\ChatTable;
+use Bitrix\Im\Model\RelationTable;
 
-use \Bitrix\Pull;
+use Bitrix\Pull;
 
-use	\Bitrix\ImOpenLines\Tools\DbNameLock,
-	\Bitrix\ImOpenlines\Model\ConfigTable,
-	\Bitrix\ImOpenLines\Model\OperatorTransferTable;
+use Bitrix\ImOpenlines\Model\ConfigTable;
+use Bitrix\ImOpenLines\Model\OperatorTransferTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -68,8 +68,8 @@ class Chat
 
 	public function __construct($chatId = 0, $params = [])
 	{
-		$imLoad = \Bitrix\Main\Loader::includeModule('im');
-		$pullLoad = \Bitrix\Main\Loader::includeModule('pull');
+		$imLoad = Loader::includeModule('im');
+		$pullLoad = Loader::includeModule('pull');
 		if ($imLoad && $pullLoad)
 		{
 			$this->error = new BasicError(null, '', '');
@@ -89,13 +89,19 @@ class Chat
 
 		if ($imLoad)
 		{
-			$chatId = intval($chatId);
+			$chatId = (int)$chatId;
 			if ($chatId > 0)
 			{
 				$chat = ChatTable::getById($chatId)->fetch();
-				if (!empty($chat) && in_array($chat['ENTITY_TYPE'], Array(self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT)))
+				if (
+					!empty($chat)
+					&& in_array($chat['ENTITY_TYPE'], [self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT])
+				)
 				{
-					if (isset($params['CONNECTOR']['chat']['description']) && $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description'])
+					if (
+						isset($params['CONNECTOR']['chat']['description'])
+						&& $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description']
+					)
 					{
 						$chatManager = new \CIMChat(0);
 						$chatManager->SetDescription($chat['ID'], $params['CONNECTOR']['chat']['description']);
@@ -120,16 +126,19 @@ class Chat
 		{
 			return false;
 		}
-		$orm = ChatTable::getList(array(
-			'filter' => array(
+		$orm = ChatTable::getList([
+			'filter' => [
 				'=ENTITY_TYPE' => 'LINES',
 				'=ENTITY_ID' => $params['USER_CODE']
-			),
+			],
 			'limit' => 1
-		));
+		]);
 		if($chat = $orm->fetch())
 		{
-			if (isset($params['CONNECTOR']['chat']['description']) && $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description'])
+			if(
+				isset($params['CONNECTOR']['chat']['description'])
+				&& $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description']
+			)
 			{
 				$chatManager = new \CIMChat(0);
 				$chatManager->SetDescription($chat['ID'], $params['CONNECTOR']['chat']['description']);
@@ -140,7 +149,7 @@ class Chat
 			$this->isDataLoaded = true;
 			return true;
 		}
-		elseif ($params['ONLY_LOAD'] == 'Y')
+		elseif($params['ONLY_LOAD'] === 'Y')
 		{
 			return false;
 		}
@@ -159,11 +168,13 @@ class Chat
 			{
 				if ($user['PERSONAL_PHOTO'] > 0)
 				{
-					$avatarId = $user['PERSONAL_PHOTO'];
+					$avatarId = \CFile::CopyFile($user['PERSONAL_PHOTO']);
 				}
-				$addChat['USERS'] = Array($params['USER_ID']);
+				$addChat['USERS'] = [$params['USER_ID']];
 
-				if ($connectorId != 'livechat' || !empty($user['NAME']))
+				if (
+					$connectorId != 'livechat' ||
+					!empty($user['NAME']))
 				{
 					$userName = ImUser::getInstance($params['USER_ID'])->getFullName(false);
 				}
@@ -1466,12 +1477,6 @@ class Chat
 	 * @param $userId
 	 * @param string $message
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function startSessionAndCloseOldSession($userId, $message = ''): Result
 	{
@@ -1540,6 +1545,11 @@ class Chat
 						$sessionUpdate = [
 							'CHECK_DATE_CLOSE' => $dateClose
 						];
+
+						if(ImUser::getInstance($userId)->isConnector())
+						{
+							$sessionUpdate['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
+						}
 						$session->update($sessionUpdate);
 
 						if(
@@ -1589,11 +1599,6 @@ class Chat
 	 * @param $userId
 	 * @param $messageId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function startSessionByMessage($userId, $messageId)
 	{
@@ -1628,6 +1633,7 @@ class Chat
 
 						$configId = $session->getData('CONFIG_ID');
 						$sessionId = $session->getData('SESSION_ID');
+						$dateFirstLastUserAction = $session->getData('DATE_FIRST_LAST_USER_ACTION');
 
 						$session->finish(false, true, false);
 
@@ -1663,7 +1669,8 @@ class Chat
 							$dateClose->add('1 MONTH');
 
 							$sessionUpdate = [
-								'CHECK_DATE_CLOSE' => $dateClose
+								'CHECK_DATE_CLOSE' => $dateClose,
+								'DATE_FIRST_LAST_USER_ACTION' => $dateFirstLastUserAction
 							];
 							$session->update($sessionUpdate);
 
@@ -2235,6 +2242,7 @@ class Chat
 
 			if (!empty($users))
 			{
+				// TODO remove this after release 21.500.0
 				foreach ($updateDate as $name => $value)
 				{
 					Pull\Event::add($users, Array(
@@ -2248,6 +2256,22 @@ class Chat
 						'extra' =>  \Bitrix\Im\Common::getPullExtra()
 					));
 				}
+
+				if (isset($updateDate['NAME']))
+				{
+					$updateDate['NAME'] = htmlspecialcharsbx($updateDate['NAME']);
+				}
+
+				Pull\Event::add($users, Array(
+					'module_id' => 'im',
+					'command' => 'chatUpdateParams',
+					'params' => Array(
+						'dialogId' => 'chat'.$this->chat['ID'],
+						'chatId' => (int)$this->chat['ID'],
+						'params' => array_change_key_case($updateDate)
+					),
+					'extra' => \Bitrix\Im\Common::getPullExtra()
+				));
 			}
 		}
 
@@ -2374,7 +2398,7 @@ class Chat
 
 	public static function getGuestName($chatColorCode = '')
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 			return false;
 
 		if (\Bitrix\Im\Color::isEnabled())
@@ -2616,7 +2640,7 @@ class Chat
 		}
 
 		if (
-			\Bitrix\Main\Loader::includeModule('im') &&
+			Loader::includeModule('im') &&
 			in_array($type, Array(self::RATING_TYPE_CLIENT, self::RATING_TYPE_HEAD, self::RATING_TYPE_HEAD_AND_COMMENT, self::RATING_TYPE_COMMENT)) &&
 			$toUserId > 0 &&
 			$toUserId != $fromUserId

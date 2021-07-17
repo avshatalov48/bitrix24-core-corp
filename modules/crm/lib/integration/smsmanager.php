@@ -4,14 +4,23 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\MessageSender\ICanSendMessage;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\MessageService;
 
-class SmsManager
+/**
+ * Class SmsManager
+ * @package Bitrix\Crm\Integration
+ * @internal
+ */
+class SmsManager implements ICanSendMessage
 {
 	static $canUse = null;
 
+	/**
+	 * @return bool
+	 */
 	public static function canUse()
 	{
 		if (static::$canUse === null)
@@ -21,13 +30,66 @@ class SmsManager
 		return static::$canUse;
 	}
 
-	public static function canSendMessage()
+	/**
+	 * @inheritDoc
+	 */
+	public static function getSenderCode(): string
+	{
+		return 'sms_provider';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function isAvailable(): bool
+	{
+		return static::canUse();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function isConnected(): bool
 	{
 		if (static::canUse())
 		{
 			return MessageService\Sender\SmsManager::getUsableSender() !== null;
 		}
+
 		return false;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function getConnectUrl(): ?string
+	{
+		if (!static::canUse())
+		{
+			return null;
+		}
+
+		return (new Main\Web\Uri(
+			getLocalPath(
+				'components' . \CComponentEngine::makeComponentPath('bitrix:salescenter.smsprovider.panel') . '/slider.php'
+			)
+		))->getLocator();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function getUsageErrors(): array
+	{
+		return [];
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function canSendMessage()
+	{
+		return static::isConnected();
 	}
 
 	/**
@@ -429,8 +491,8 @@ class SmsManager
 		$iterator = \CCrmFieldMulti::GetList(
 			array('ID' => 'asc'),
 			array('ENTITY_ID' => $typeName,
-				  'ELEMENT_ID' => $entityId,
-				  'TYPE_ID' => \CCrmFieldMulti::PHONE
+				'ELEMENT_ID' => $entityId,
+				'TYPE_ID' => \CCrmFieldMulti::PHONE
 			)
 		);
 
@@ -447,5 +509,37 @@ class SmsManager
 		}
 
 		return count($result['phones']) > 0 ? $result : null;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function makeMessageFields(array $options, array $commonOptions): array
+	{
+		$sender = (isset($options['SENDER_ID']))
+			? MessageService\Sender\SmsManager::getSenderById($options['SENDER_ID'])
+			: MessageService\Sender\SmsManager::getUsableSender();
+
+		return [
+			'SENDER_ID' => $sender->getId(),
+			'MESSAGE_FROM' => $sender->getFirstFromList(),
+			'MESSAGE_BODY' => $options['MESSAGE_BODY'],
+			'AUTHOR_ID' => $commonOptions['USER_ID'],
+			'MESSAGE_TO' => $commonOptions['PHONE_NUMBER'],
+			'MESSAGE_HEADERS' => [
+				'module_id' => 'crm',
+				'bindings' => $commonOptions['ADDITIONAL_FIELDS']['BINDINGS'] ?? [],
+			],
+			'ADDITIONAL_FIELDS' => array_merge(
+				$commonOptions['ADDITIONAL_FIELDS'],
+				[
+					'ACTIVITY_PROVIDER_TYPE_ID' => $options['ACTIVITY_PROVIDER_TYPE_ID'] ?? null,
+					'ACTIVITY_AUTHOR_ID' => $commonOptions['USER_ID'],
+					'ACTIVITY_DESCRIPTION' => $options['MESSAGE_BODY'],
+					'MESSAGE_TO' => $commonOptions['PHONE_NUMBER'],
+					'SENDER_ID' => $sender->getId(),
+				]
+			),
+		];
 	}
 }

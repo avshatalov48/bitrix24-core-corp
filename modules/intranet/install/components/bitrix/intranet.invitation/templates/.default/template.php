@@ -444,7 +444,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 		</g>
 	</svg>
 </div>
-<div class="invite-wrap-decal">
+<div class="invite-wrap-decal" id="invite-wrap-decal">
 	<div class="invite-wrap-decal-image"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_PICTURE_TITLE")?></div>
 </div>
 <?$this->EndViewTarget();?>
@@ -473,5 +473,24 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			isInvitationBySmsAvailable: '<?=$arResult["IS_SMS_INVITATION_AVAILABLE"] ? "Y" : "N"?>',
 			isCreatorEmailConfirmed: '<?=$arResult["IS_CREATOR_EMAIL_CONFIRMED"] ? "Y" : "N"?>'
 		});
+
+		var imageMail = document.getElementById("invite-wrap-decal");
+		var leftPanel = document.getElementById("left-panel");
+
+		function adjustImageShow()
+		{
+			if(window.innerHeight - leftPanel.offsetHeight <= 240)
+			{
+				imageMail.style.display = "none";
+			}
+
+			if(window.innerHeight - leftPanel.offsetHeight> 240)
+			{
+				imageMail.style.display = null;
+			}
+		}
+
+		adjustImageShow();
+		BX.bind(window, "resize", BX.throttle(adjustImageShow, 100, this));
 	});
 </script>

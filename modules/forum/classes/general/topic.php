@@ -795,13 +795,6 @@ class CAllForumTopic
 
 	public static function CleanUp($period = 168)
 	{
-		global $DB;
-		$period = intval($period)*3600;
-		$date = $DB->CharToDateFunction($DB->ForSql(Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)), time()-$period)), "FULL") ;
-		$strSQL = "DELETE FROM b_forum_user_topic
-					WHERE (LAST_VISIT
-					< ".$date.")";
-		$DB->Query($strSQL, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		return "CForumTopic::CleanUp();";
 	}
 

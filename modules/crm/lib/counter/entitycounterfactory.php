@@ -5,6 +5,7 @@ use Bitrix\Main;
 class EntityCounterFactory
 {
 	const TOTAL_COUNTER = 'crm_all';
+	public const NO_ORDERS_COUNTER = 'crm_all_no_orders';
 	static public function isEntityTypeSupported($entityTypeID)
 	{
 		if(!is_int($entityTypeID))
@@ -32,6 +33,31 @@ class EntityCounterFactory
 					array('entityTypeID' => \CCrmOwnerType::Deal, 'counterTypeID' => EntityCounterType::ALL),
 					array('entityTypeID' => \CCrmOwnerType::Order, 'counterTypeID' => EntityCounterType::ALL)
 				),
+				$userID
+			);
+		}
+		elseif ($code === self::NO_ORDERS_COUNTER)
+		{
+			return new AggregateCounter(
+				$code,
+				[
+					[
+						'entityTypeID' => \CCrmOwnerType::Lead,
+						'counterTypeID' => EntityCounterType::ALL
+					],
+					[
+						'entityTypeID' => \CCrmOwnerType::Contact,
+						'counterTypeID' => EntityCounterType::ALL
+					],
+					[
+						'entityTypeID' => \CCrmOwnerType::Company,
+						'counterTypeID' => EntityCounterType::ALL
+					],
+					[
+						'entityTypeID' => \CCrmOwnerType::Deal,
+						'counterTypeID' => EntityCounterType::ALL
+					],
+				],
 				$userID
 			);
 		}
@@ -64,5 +90,10 @@ class EntityCounterFactory
 		}
 
 		return new EntityCounter($entityTypeID, $typeID, $userID, $extras);
+	}
+
+	public static function createCallTrackerCounter(int $userId = 0): EntityCounter
+	{
+		return new CallTrackerActivityCounter(\Bitrix\Crm\Counter\EntityCounterType::CURRENT, $userId);
 	}
 }

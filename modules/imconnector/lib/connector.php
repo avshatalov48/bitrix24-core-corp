@@ -1,18 +1,21 @@
 <?php
 namespace Bitrix\ImConnector;
 
-use Bitrix\ImConnector\Connectors\WeChat;
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Context,
-	\Bitrix\Main\Page\Asset,
-	\Bitrix\Main\Data\Cache,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\Web\Json,
-	\Bitrix\Main\UserTable,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImOpenLines\LiveChatManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Context;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\UserTable;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DI\ServiceLocator;
+
+use Bitrix\ImOpenLines\LiveChatManager;
+use Bitrix\ImConnector\Connectors\WeChat;
+use Bitrix\ImConnector\Connectors\Notifications;
 
 Loc::loadMessages(__FILE__);
 Library::loadMessages();
@@ -121,10 +124,11 @@ class Connector
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected static function getListConnectorBase(): array
 	{
+		$serviceLocator = ServiceLocator::getInstance();
+
 		$connectors['livechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
 		$connectors['whatsappbytwilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
 		$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
@@ -141,9 +145,14 @@ class Connector
 		$connectors['olx'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
 		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
 		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
-		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
+		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] =
+			Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
 		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
 		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
+		if (Loader::includeModule('notifications') && \Bitrix\Notifications\Limit::isAvailable())
+		{
+			$connectors[Notifications::CONNECTOR_ID] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS');
+		}
 
 		return $connectors;
 	}
@@ -331,6 +340,7 @@ class Connector
 		$components['fbinstagram'] = 'bitrix:imconnector.fbinstagram';
 		$components['network'] = 'bitrix:imconnector.network';
 		$components['botframework'] = 'bitrix:imconnector.botframework';
+		$components[Notifications::CONNECTOR_ID] = 'bitrix:imconnector.notifications';
 
 		$customComponents = CustomConnectors::getListComponentConnector();
 
@@ -873,6 +883,7 @@ class Connector
 			'facebookmessenger' => 'fb-messenger',
 			'fbinstagram' => 'instagram-fb',
 			'network' => 'bitrix24',
+			Notifications::CONNECTOR_ID => 'bitrix24-sms',
 			'botframework' => 'microsoft',
 			'skypebot' => 'skype',
 			'skype' => 'skype',

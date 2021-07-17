@@ -14,7 +14,7 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 	 * @param mixed $default Default value.
 	 * @return void
 	 */
-	protected function checkParam($var, $default)
+	protected function checkParam($var, $default): void
 	{
 		if (!isset($this->arParams[$var]))
 		{
@@ -33,7 +33,7 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 	/**
 	 * Returns most frequency (by clicking) menu item.
 	 * @param array $items Items array.
-	 * @param string $menuId Frequency menu item id.
+	 * @param string|null $menuId Frequency menu item id.
 	 * @return array
 	 */
 	protected function getFrequencyMenuItem(array $items, ?string $menuId): array
@@ -52,7 +52,7 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 					if (isset($item['items']))
 					{
 						$innerItem = $this->getFrequencyMenuItem($item['items'], $menuId);
-						if ($innerItem)
+						if (isset($innerItem['id']) && $innerItem['id'] == $menuId)
 						{
 							return $innerItem;
 						}
@@ -92,7 +92,7 @@ class IntranetBindingMenuComponent extends \CBitrixComponent
 	 * Base executable method.
 	 * @return void
 	 */
-	public function executeComponent()
+	public function executeComponent(): void
 	{
 		$this->checkParam('SECTION_CODE', '');
 		$this->checkParam('MENU_CODE', '');

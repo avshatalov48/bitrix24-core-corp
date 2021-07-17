@@ -65,6 +65,7 @@
 
 			BX.addCustomEvent('BX.Main.Filter:apply', this.onApplyFilter.bind(this));
 			BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', this.setDefaultBtnTitles.bind(this));
+			BX.addCustomEvent('BX.UI.ActionPanel:showPanel', this.setDefaultBtnOnShow.bind(this));
 			BX.addCustomEvent('Grid::updated', function(){
 				if(this.getGridInstance().getRows().getSelectedIds().length > 0)
 				{
@@ -704,14 +705,32 @@
 				this.disActivateBtn(this.readActionBtnRole);
 			}
 		},
+		setDefaultBtnOnShow: function (panel)
+		{
+			panel.items.forEach(function(item) {
+
+			if(item && item instanceof BX.UI.ActionPanel.Item)
+			{
+				if(this.getCurrentFolder() === '[Gmail]/All Mail' && item['id']==='deleteImmediately')
+				{
+					item.disable();
+					item.layout.container.removeAttribute('onclick');
+				}
+			}}.bind(this));
+		}
+		,
 		setDefaultBtnTitles: function (panel)
 		{
 			if(panel && Array.isArray(panel.items))
 			{
 				panel.items.forEach(function(item) {
-					if(item && item instanceof BX.UI.ActionPanel.Item) item.layout.container.removeAttribute('onclick');
+					if(item && item instanceof BX.UI.ActionPanel.Item)
+					{
+						item.layout.container.removeAttribute('onclick');
+					}
 				});
 			}
+			
 			var popup = BX.Main.MenuManager.getMenuById('ui-action-panel-item-popup-menu');
 			popup && popup.close();
 

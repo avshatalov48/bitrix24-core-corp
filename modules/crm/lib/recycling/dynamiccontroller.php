@@ -104,6 +104,22 @@ class DynamicController extends BaseController
 		);
 	}
 
+	/**
+	 * Returns array of field names that are allowed in entity data
+	 *
+	 * @return string[]
+	 */
+	public function getFieldNames(): array
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
+		if (!$factory)
+		{
+			return [];
+		}
+
+		return $factory->getFieldsCollection()->getFieldNameList();
+	}
+
 	public function prepareEntityData($entityId, array $params = []): array
 	{
 		$fields = (isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null);
@@ -113,7 +129,7 @@ class DynamicController extends BaseController
 			throw new Main\ObjectNotFoundException("Could not find entity: #{$entityId}.");
 		}
 
-		$slots = ['FIELDS' => $fields];
+		$slots = ['FIELDS' => $this->filterEntityDataFields($fields)];
 
 		$companyId = (int)($fields['COMPANY_ID'] ?? 0);
 		if($companyId > 0)
@@ -138,6 +154,19 @@ class DynamicController extends BaseController
 			'TITLE' => $params['FIELDS']['TITLE'],
 			'SLOTS' => $slots
 		];
+	}
+
+	protected function filterEntityDataFields(array $fields): array
+	{
+		$allowedFieldNames = $this->getFieldNames();
+
+		return array_filter(
+			$fields,
+			static function ($fieldName) use ($allowedFieldNames): bool {
+				return in_array((string)$fieldName, $allowedFieldNames, true);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
 	}
 
 	/**
@@ -268,7 +297,7 @@ class DynamicController extends BaseController
 			return false;
 		}
 
-		unset($fields['ID'], $fields['COMPANY_ID'], $fields['CONTACT_ID'], $fields['CONTACT_IDS']);
+		unset($fields['ID'], $fields['COMPANY_ID'], $fields['CONTACT_ID'], $fields['CONTACT_IDS'], $fields['PRODUCT_ROWS']);
 
 		$relationMap = RelationMap::createByEntity($this->getEntityTypeID(), $entityID, $recyclingEntityID);
 		$relationMap->build();

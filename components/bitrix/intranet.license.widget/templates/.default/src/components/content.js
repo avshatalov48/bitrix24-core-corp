@@ -301,7 +301,7 @@ export const ContentComponent = {
 							</div>
 							<div v-if="license.isDemo && !license.isDemoExpired" class="license-widget-item-info">
 								<span class="license-widget-item-info-text">
-									{{ license.demoTillMessage }}
+									{{ license.tillMessage }}
 								</span>
 							</div>
 							<div 
@@ -309,7 +309,7 @@ export const ContentComponent = {
 								class="license-widget-item-info license-widget-item-info--exp"
 							>
 								<span class="license-widget-item-info-text">
-									{{ license.demoDaysLeftMessage }}
+									{{ license.daysLeftMessage }}
 								</span>
 							</div>
 							<div 

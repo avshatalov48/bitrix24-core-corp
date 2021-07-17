@@ -5,11 +5,16 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Scrum\Internal\Fields\InfoField;
+use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\PushService;
 
 class ItemTable extends Entity\DataManager
 {
@@ -35,7 +40,6 @@ class ItemTable extends Entity\DataManager
 	private $info;
 
 	private $tmpId = '';
-	private $children = [];
 
 	public static function createItemObject(array $fields = []): ItemTable
 	{
@@ -113,6 +117,9 @@ class ItemTable extends Entity\DataManager
 			return $itemInfoColumn;
 		});
 
+		$entity = new Reference('ENTITY', EntityTable::class, Join::on('this.ENTITY_ID', 'ref.ID'));
+		$entity->configureJoinType(Join::TYPE_LEFT);
+
 		return [
 			$id,
 			$entityId,
@@ -126,7 +133,8 @@ class ItemTable extends Entity\DataManager
 			$modifiedBy,
 			$storyPoints,
 			$sourceId,
-			$info
+			$info,
+			$entity,
 		];
 	}
 
@@ -139,7 +147,7 @@ class ItemTable extends Entity\DataManager
 	public static function deleteByEntityId(int $entityId): void
 	{
 		$connection = Application::getConnection();
-		$connection->queryExecute('DELETE FROM '.self::getTableName().' WHERE ENTITY_ID = '.(int) $entityId);
+		$connection->queryExecute('DELETE FROM ' . self::getTableName() . ' WHERE ENTITY_ID = ' . (int)$entityId);
 	}
 
 	/**
@@ -151,7 +159,7 @@ class ItemTable extends Entity\DataManager
 	public static function deleteBySourceId(int $sourceId): void
 	{
 		$connection = Application::getConnection();
-		$connection->queryExecute('DELETE FROM '.self::getTableName().' WHERE SOURCE_ID = '.(int) $sourceId);
+		$connection->queryExecute('DELETE FROM ' . self::getTableName() . ' WHERE SOURCE_ID = ' . (int)$sourceId);
 	}
 
 	/**
@@ -164,8 +172,10 @@ class ItemTable extends Entity\DataManager
 	{
 		$connection = Application::getConnection();
 		$connection->queryExecute(
-			'UPDATE '.self::getTableName().' SET ACTIVE = \'Y\' WHERE SOURCE_ID = '.(int) $sourceId
+			'UPDATE ' . self::getTableName() . ' SET ACTIVE = \'Y\' WHERE SOURCE_ID = ' . (int)$sourceId
 		);
+
+		self::sendAddItemEvent($sourceId);
 	}
 
 	/**
@@ -176,9 +186,11 @@ class ItemTable extends Entity\DataManager
 	 */
 	public static function deactivateBySourceId(int $sourceId): void
 	{
+		self::sendRemoveItemEvent($sourceId);
+
 		$connection = Application::getConnection();
 		$connection->queryExecute(
-			'UPDATE '.self::getTableName().' SET ACTIVE = \'N\' WHERE SOURCE_ID = '.(int) $sourceId
+			'UPDATE ' . self::getTableName() . ' SET ACTIVE = \'N\' WHERE SOURCE_ID = ' . (int)$sourceId
 		);
 	}
 
@@ -436,16 +448,6 @@ class ItemTable extends Entity\DataManager
 		$this->tmpId = $tmpId;
 	}
 
-	public function getChildren(): array
-	{
-		return $this->children;
-	}
-
-	public function setChildren(array $children): void
-	{
-		$this->children = $children;
-	}
-
 	/**
 	 * @throws ArgumentNullException
 	 */
@@ -548,5 +550,31 @@ class ItemTable extends Entity\DataManager
 			$item->setInfo($itemData['INFO']);
 		}
 		return $item;
+	}
+
+	private static function sendAddItemEvent(int $sourceId): void
+	{
+		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+		if ($pushService)
+		{
+			$itemService = new ItemService();
+			$item = $itemService->getItemBySourceId($sourceId);
+
+			$pushService->sendAddItemEvent($item);
+		}
+	}
+
+	private static function sendRemoveItemEvent(int $sourceId): void
+	{
+		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+		if ($pushService)
+		{
+			$itemService = new ItemService();
+			$item = $itemService->getItemBySourceId($sourceId);
+
+			$pushService->sendRemoveItemEvent($item);
+		}
 	}
 }

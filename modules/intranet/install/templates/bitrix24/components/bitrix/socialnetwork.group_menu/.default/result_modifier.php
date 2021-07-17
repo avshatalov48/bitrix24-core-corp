@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true){
+	die();
+}
+
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -10,7 +14,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Web\Uri;
+
 $arResult["menuId"] = "group_panel_menu_".$arResult["Group"]["ID"];
+$arResult['inIframe'] = \Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') === 'Y';
 
 $firstMenuItemCode = false;
 
@@ -34,7 +41,7 @@ $sampleKeysList = [
 	'marketplace' => 12,
 ];
 
-if ($arResult["Group"]["PROJECT"] === 'Y')
+if ($arResult['Group']['PROJECT'] === 'Y')
 {
 	$sampleKeysList = [
 		'tasks' => 0,
@@ -51,6 +58,16 @@ if ($arResult["Group"]["PROJECT"] === 'Y')
 		'content_search' => 11,
 		'marketplace' => 12,
 	];
+}
+
+if (!\CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["Group"]["ID"], 'tasks'))
+{
+	unset($sampleKeysList['tasks']);
+}
+
+if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet'))
+{
+	$arResult['CanView']['blog'] = false;
 }
 
 reset($sampleKeysList);
@@ -70,10 +87,12 @@ if (
 	)
 	{
 		$menuItems = array_keys($userOptionsSettings);
-		foreach($menuItems as $menuItem)
+		foreach ($menuItems as $menuItem)
 		{
 			if (
-				$menuItem == $arResult["menuId"].'_chat'
+				$menuItem === $arResult['menuId'] . '_chat'
+				|| $menuItem === $arResult['menuId'] . '_marketplace'
+				|| preg_match('/^' . $arResult['menuId'] . '_placement_/i', $menuItem, $matches)
 			)
 			{
 				continue;
@@ -84,10 +103,19 @@ if (
 			{
 				if (
 					array_key_exists($matches[1], $arResult["ActiveFeatures"])
-					|| $matches[1] == 'general'
+					|| $matches[1] === 'general'
 				)
 				{
 					$firstMenuItemCode = $matches[1];
+					break;
+				}
+
+				if (
+					$matches[1] === 'view_all'
+					&& array_key_exists('tasks', $arResult["ActiveFeatures"])
+				)
+				{
+					$firstMenuItemCode = 'tasks';
 					break;
 				}
 			}
@@ -96,19 +124,21 @@ if (
 
 	$arResult["Urls"]["General"] = $urlGeneralSpecific;
 }
-elseif ($firstKeyDefault != 'general')
+elseif ($firstKeyDefault !== 'general')
 {
 	$arResult["Urls"]["General"] = $urlGeneralSpecific;
 }
 
-if ($arParams["PAGE_ID"] == 'group')
+if ($arParams['PAGE_ID'] === 'group')
 {
+	$redirectUrl = false;
+
 	if ($firstMenuItemCode)
 	{
 		if (
 			(
-				$firstMenuItemCode != $firstKeyDefault
-				|| $firstKeyDefault != 'general'
+				(string)$firstMenuItemCode !== (string)$firstKeyDefault
+				|| (string)$firstKeyDefault !== 'general'
 			)
 			&& isset($arResult["Urls"][$firstMenuItemCode])
 		)
@@ -116,14 +146,41 @@ if ($arParams["PAGE_ID"] == 'group')
 			$url = $arResult["Urls"][$firstMenuItemCode];
 			if (mb_substr($url, 0, 1) === "/")
 			{
-				LocalRedirect($url);
+				$redirectUrl = $url;
 			}
 		}
 	}
-	elseif ($firstKeyDefault != 'general')
+/*
+	elseif (
+		$firstKeyDefault !== 'general'
+		&& $arResult['CanView'][$firstKeyDefault]
+	)
 	{
-		LocalRedirect($arResult["Urls"][$firstKeyDefault]);
+		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
 	}
+*/
+	if ($redirectUrl)
+	{
+		if ($arResult['inIframe'])
+		{
+			$redirectUrl = (new Uri($redirectUrl))->addParams([ 'IFRAME' => 'Y' ])->getUri();
+		}
+
+		LocalRedirect($redirectUrl);
+	}
+}
+elseif (
+	$arParams['componentPage'] === 'group_tasks'
+	&& !$arResult['CanView']['tasks']
+)
+{
+	$redirectUrl = $arResult['Urls']['view'];
+	if ($arResult['inIframe'])
+	{
+		$redirectUrl = (new Uri($redirectUrl))->addParams([ 'IFRAME' => 'Y' ])->getUri();
+	}
+
+	LocalRedirect($redirectUrl);
 }
 
 if ($this->__component->__parent && $this->__component->__parent->arResult && array_key_exists("PATH_TO_GROUP_CARD", $this->__component->__parent->arResult))
@@ -145,16 +202,16 @@ if ($this->__component->__parent && $this->__component->__parent->arResult && ar
 
 if ($this->__component->__parent && $this->__component->__parent->arParams && array_key_exists("GROUP_USE_BAN", $this->__component->__parent->arParams))
 	$arParams["GROUP_USE_BAN"] = $this->__component->__parent->arParams["GROUP_USE_BAN"];
-$arParams["GROUP_USE_BAN"] = $arParams["GROUP_USE_BAN"] != "N" ? "Y" : "N";
+$arParams["GROUP_USE_BAN"] = $arParams["GROUP_USE_BAN"] !== "N" ? "Y" : "N";
 
-if (intval($arResult["Group"]["IMAGE_ID"]) <= 0)
+if ((int)$arResult["Group"]["IMAGE_ID"] <= 0)
 {
 	$arResult["Group"]["IMAGE_ID"] = COption::GetOptionInt("socialnetwork", "default_group_picture", false, SITE_ID);
 }
 
 $arResult["Group"]["IMAGE_FILE"] = array("src" => "");
 
-if (intval($arResult["Group"]["IMAGE_ID"]) > 0)
+if ((int)$arResult["Group"]["IMAGE_ID"] > 0)
 {
 	$arFileTmp = false;
 	$imageFile = CFile::GetFileArray($arResult["Group"]["IMAGE_ID"]);
@@ -168,7 +225,7 @@ if (intval($arResult["Group"]["IMAGE_ID"]) > 0)
 		);
 	}
 
-	if($arFileTmp && array_key_exists("src", $arFileTmp))
+	if ($arFileTmp && array_key_exists("src", $arFileTmp))
 	{
 		$arResult["Group"]["IMAGE_FILE"] = $arFileTmp;
 	}
@@ -193,7 +250,7 @@ $arResult["CanView"]["general"] = true;
 
 $arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && $arResult["ActiveFeatures"]["chat"] <> '') ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
 $arResult["OnClicks"] = array(
-	"chat" => "BXIM.openMessenger('sg".$arResult["Group"]["ID"]."');"
+	"chat" => "top.BXIM.openMessenger('sg".$arResult["Group"]["ID"]."');"
 );
 
 uksort($arResult["CanView"], function($a, $b) use ($sampleKeysList) {
@@ -203,10 +260,12 @@ uksort($arResult["CanView"], function($a, $b) use ($sampleKeysList) {
 	{
 		return 1;
 	}
-	elseif ($valA < $valB)
+
+	if ($valA < $valB)
 	{
 		return -1;
 	}
+
 	return 0;
 });
 
@@ -220,7 +279,7 @@ if ($USER->isAuthorized())
 
 if (
 	$arResult["CurrentUserPerms"]["UserRole"] == UserToGroupTable::ROLE_REQUEST
-	&& $arResult["Group"]["VISIBLE"] == "Y"
+	&& $arResult["Group"]["VISIBLE"] === "Y"
 	&& !$arResult["HideArchiveLinks"]
 )
 {
@@ -252,7 +311,7 @@ $arResult['Group']['TypeCode'] = Workgroup::getTypeCodeByParams(array(
 		'OPENED' => $arResult['Group']['OPENED'],
 		'VISIBLE' => $arResult['Group']['VISIBLE'],
 		'PROJECT' => $arResult['Group']['PROJECT'],
-		'EXTERNAL' => (isset($arResult['Group']['IS_EXTRANET']) && $arResult['Group']['IS_EXTRANET'] == 'Y' ? 'Y' : 'N')
+		'EXTERNAL' => (isset($arResult['Group']['IS_EXTRANET']) && $arResult['Group']['IS_EXTRANET'] === 'Y' ? 'Y' : 'N')
 	),
 	'fullMode' => true
 ));
@@ -273,18 +332,18 @@ $res = UserToGroupTable::getList(array(
 	),
 	'select' => array('CNT')
 ));
-if($relation = $res->fetch())
+if ($relation = $res->fetch())
 {
-	$arResult['Group']['NUMBER_OF_REQUESTS'] = intval($relation['CNT']);
+	$arResult['Group']['NUMBER_OF_REQUESTS'] = (int)$relation['CNT'];
 }
 
 $arResult["HideArchiveLinks"] = (
-	$arResult['Group']["CLOSED"] == "Y"
-	&& Option::get("socialnetwork", "work_with_closed_groups", "N") != "Y"
+	$arResult['Group']["CLOSED"] === "Y"
+	&& Option::get("socialnetwork", "work_with_closed_groups", "N") !== "Y"
 );
 
 $arResult["bUserCanRequestGroup"] = (
-	$arResult["Group"]["VISIBLE"] == "Y"
+	$arResult["Group"]["VISIBLE"] === "Y"
 	&& !$arResult["bExtranet"]
 	&& !$arResult["HideArchiveLinks"]
 	&& (
@@ -307,3 +366,84 @@ if ($USER->IsAuthorized())
 	));
 	$arResult["FAVORITES"] = ($res->fetch());
 }
+
+$sliderPages = [
+	'calendar' => [
+		'loader' => 'intranet:calendar',
+	],
+	'files' => [
+		'loader' => 'intranet:disk',
+	],
+	'blog' => [
+		'loader' => 'intranet:livefeed',
+	],
+//	'General' => [],
+//	'view' => [],
+	'group_lists' => [],
+	'forum' => [],
+	'wiki' => [],
+	'photo' => [],
+];
+
+foreach ($arResult['Urls'] as $key => $value)
+{
+	if (
+		$arResult['inIframe']
+		&& in_array(mb_strtolower($key), [ 'view', 'general', 'tasks' ])
+	)
+	{
+		$arResult['Urls'][$key] = (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri();
+	}
+	elseif (isset($sliderPages[$key]))
+	{
+		$arResult['OnClicks'][$key] = "BX.SidePanel.Instance.open('" . (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri() . "', {
+			customLeftBoundary: 270,
+			loader: '" . ($sliderPages[$key]['loader'] ?? '') . "', 
+			newWindowLabel: true,
+			copyLinkLabel: true,
+		})";
+	}
+	elseif ($key === 'marketplace')
+	{
+		$arResult['OnClicks'][$key] = "if (BX.rest)
+		{
+			BX.rest.Marketplace.open({
+				PLACEMENT: 'SONET_GROUP_DETAIL_TAB',
+			});
+		}";
+	}
+	elseif (
+		empty($arResult['OnClicks'][$key])
+		&& !in_array(mb_strtolower($key), [
+			'edit',
+			'userrequestgroup',
+			'grouprequestsearch',
+			'grouprequests',
+			'groupmods',
+			'groupusers',
+			'groupban',
+			'delete',
+			'features',
+			'card',
+			'grouprequestsout',
+			'userleavegroup',
+			'copy',
+			'landing_knowledge',
+			'groupslist',
+			'view',
+			'general',
+		])
+	)
+	{
+		$uri = new Uri($value);
+		$arResult['OnClicks'][$key] = "top.location.href = '" . $uri->getUri() . "'";
+	}
+}
+
+$arResult['IS_CURRENT_PAGE_FIRST'] = \Bitrix\Socialnetwork\ComponentHelper::isCurrentPageFirst([
+	'componentName' => 'bitrix:socialnetwork_group',
+	'page' => $arParams['PAGE_ID'],
+	'entityId' => $arResult['Group']['ID'],
+	'firstMenuItemCode' => $firstMenuItemCode,
+	'canView' => $arResult['CanView'],
+]);

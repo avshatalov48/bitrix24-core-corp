@@ -134,29 +134,42 @@ foreach($arResult['ITEMS'] as $item)
 	$item['viewClassName'] = $viewClassName;
 	$item['itemViewList'] = $itemViewList;
 
+	$counterMap = [
+		\CCrmOwnerType::InvoiceName => \CCrmOwnerType::OrderName
+	];
 	$item['ENTITY_COUNTERS_DISPLAY'] = array();
 	foreach($item['ENTITY_COUNTERS'] as $entityCounter)
 	{
+		$entityName = $counterMap[$entityCounter['ENTITY_NAME']] ?? $entityCounter['ENTITY_NAME'];
 		$entityListPath = \Bitrix\Main\Config\Option::get(
 			'crm',
-			'path_to_'.mb_strtolower($entityCounter['ENTITY_NAME']) . '_list',
+			'path_to_'.mb_strtolower($entityName) . '_list',
 			''
 		);
-		$entityCountDisplay = (int) $entityCounter['VALUE'];
-		if ($entityListPath && $entityCountDisplay > 0)
+		if ($entityCounter['VALUE'] === false)
 		{
-			if ($entityCounter['ENTITY_NAME'] != 'INVOICE')
-			{
-				$entityListPath .= mb_strpos($entityListPath, '?') === false ? '?' : '&';
-				$entityListPath .= 'WEBFORM_ID[]=' . $item['ID'] . '&apply_filter=Y';
-			}
-
-			$entityListPath =  htmlspecialcharsbx($entityListPath);
-			$entityCountDisplay = '<a href="' . $entityListPath . '">' . $entityCountDisplay . '</a>';
+			$entityCountDisplay = false;
 		}
+		else
+		{
+			$entityCountDisplay = (int) $entityCounter['VALUE'];
+			if ($entityListPath && $entityCountDisplay > 0)
+			{
+				if ($entityCounter['ENTITY_NAME'] != 'INVOICE')
+				{
+					$entityListPath .= mb_strpos($entityListPath, '?') === false ? '?' : '&';
+					$entityListPath .= 'WEBFORM_ID[]=' . $item['ID'] . '&apply_filter=Y';
+				}
+
+				$entityListPath =  htmlspecialcharsbx($entityListPath);
+				$entityCountDisplay = '<a href="' . $entityListPath . '">' . $entityCountDisplay . '</a>';
+			}
+		}
+
 		$item['ENTITY_COUNTERS_DISPLAY'][] = htmlspecialcharsbx($entityCounter['ENTITY_CAPTION'])
-			. ' - '
-			. $entityCountDisplay;
+			. ($entityCountDisplay !== false ? ' - ' : '')
+			. $entityCountDisplay
+		;
 	}
 	$item['ENTITY_COUNTERS_DISPLAY'] = implode(' / ', $item['ENTITY_COUNTERS_DISPLAY']);
 

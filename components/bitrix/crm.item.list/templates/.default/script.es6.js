@@ -5,8 +5,6 @@ import { Router } from "crm.router";
 
 const namespace = Reflection.namespace('BX.Crm');
 
-let instance;
-
 class ItemListComponent
 {
 	entityTypeId: number;
@@ -14,13 +12,15 @@ class ItemListComponent
 	gridId: string;
 	grid: BX.Main.grid;
 	errorTextContainer: Element;
-	itemCreateUrl: ?string;
+	entityTypeName: string;
+	reloadGridTimeoutId: number;
 
 	constructor(params): void
 	{
 		if(Type.isPlainObject(params))
 		{
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
+			this.entityTypeName = params.entityTypeName;
 			this.categoryId = Text.toInteger(params.categoryId);
 
 			if (Type.isString(params.gridId))
@@ -30,15 +30,24 @@ class ItemListComponent
 			if(this.gridId && BX.Main.grid && BX.Main.gridManager)
 			{
 				this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
+				if (this.grid && params.backendUrl)
+				{
+					BX.addCustomEvent(window, "Grid::beforeRequest", (gridData, requestParams) => {
+						if (!gridData.parent || gridData.parent !== this.grid)
+						{
+							return;
+						}
+						requestParams.url = params.backendUrl;
+					});
+				}
 			}
 			if (Type.isElementNode(params.errorTextContainer))
 			{
 				this.errorTextContainer = params.errorTextContainer;
 			}
-			this.itemCreateUrl = params.itemCreateUrl;
 		}
 
-		instance = this;
+		this.reloadGridTimeoutId = 0;
 	}
 
 	init(): void
@@ -70,10 +79,52 @@ class ItemListComponent
 			if (this.grid)
 			{
 				toolbarComponent.subscribeCategoriesUpdatedEvent(() => {
-					this.grid.reload();
+					this.reloadGridAfterTimeout();
 				});
 			}
 		}
+
+		EventEmitter.subscribe("onLocalStorageSet", (event) => {
+			const parameters = event.data;
+			if (!Type.isArray(parameters) || !parameters[0])
+			{
+				return;
+			}
+			const params = parameters[0];
+			const key = params.key || '';
+			if(key !== "onCrmEntityCreate" && key !== "onCrmEntityUpdate" && key !== "onCrmEntityDelete" && key !== "onCrmEntityConvert")
+			{
+				return;
+			}
+			const eventData = params.value;
+			if (!Type.isPlainObject(eventData))
+			{
+				return;
+			}
+			if (!this.entityTypeName || !eventData.entityTypeName || this.entityTypeName !== eventData.entityTypeName)
+			{
+				return;
+			}
+
+			this.reloadGridAfterTimeout();
+		});
+	}
+
+	reloadGridAfterTimeout()
+	{
+		if (!this.grid)
+		{
+			return;
+		}
+		if (this.reloadGridTimeoutId > 0)
+		{
+			clearTimeout(this.reloadGridTimeoutId);
+			this.reloadGridTimeoutId = 0;
+		}
+
+		this.reloadGridTimeoutId = setTimeout(() => {
+			this.grid.reload();
+		}, 1000);
 	}
 
 	showErrors(errors: []): void
@@ -142,7 +193,7 @@ class ItemListComponent
 								id,
 							}
 				}).then(() => {
-					this.grid.reloadTable();
+					this.reloadGridAfterTimeout();
 				}).catch(this.showErrorsFromResponse.bind(this));
 
 				messageBox.close();
@@ -150,19 +201,6 @@ class ItemListComponent
 		});
 	}
 	//endregion
-
-	static handleAddButtonClick()
-	{
-		if (instance && instance.itemCreateUrl)
-		{
-			Router.openSlider(instance.itemCreateUrl).then(() => {
-				if (instance.grid)
-				{
-					instance.grid.reload();
-				}
-			});
-		}
-	}
 }
 
 namespace.ItemListComponent = ItemListComponent;

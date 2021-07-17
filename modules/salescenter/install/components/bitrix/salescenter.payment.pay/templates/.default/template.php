@@ -1,14 +1,17 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use Bitrix\Main,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\UI\Extension;
 
-CJSCore::Init(["popup", "loader", "documentpreview", "sidepanel"]);
+Extension::load(["popup", "loader", "documentpreview", "sidepanel", "ui.fonts.ruble"]);
+Main\Page\Asset::getInstance()->addJs("/bitrix/js/salescenter/payment-pay/script-es5.js");
 
-Extension::load(["ui.fonts.ruble"]);
 $payment = $arResult['PAYMENT'];
 $currentPaySystem = $payment['PAY_SYSTEM_INFO'];
 $currentPaySystemName = (mb_strlen($currentPaySystem['NAME']) > 20)
@@ -25,7 +28,7 @@ if (!empty($arResult["errorMessage"]))
 	{
 		?>
 		<div class="page-description"><?= $arResult["errorMessage"] ?></div>
-		<?
+		<?php
 	}
 	else
 	{
@@ -33,7 +36,7 @@ if (!empty($arResult["errorMessage"]))
 		{
 			?>
 			<div class="page-description"><?= $errorMessage ?></div>
-			<?
+			<?php
 		}
 	}
 }
@@ -93,7 +96,7 @@ elseif ($payment['PAID'] === 'Y')
 		}
 		?>
 	</div>
-	<?
+	<?php
 }
 else
 {
@@ -123,7 +126,7 @@ else
 						['#SUM#' => $payment['FORMATTED_SUM']]) ?></div>
 			</div>
 			<hr>
-			<?
+			<?php
 			if ($arResult['USER_CONSENT'] === 'Y')
 			{
 				$APPLICATION->IncludeComponent(
@@ -148,7 +151,7 @@ else
 				</button>
 			</div>
 		</div>
-		<?
+		<?php
 		$settings = array(
 			"paySystemId" => $currentPaySystem['ID'],
 			"paySystemData" => [$currentPaySystem],
@@ -165,10 +168,13 @@ else
 			BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 			BX.ready(function ()
 			{
+				BX.addCustomEvent(window, 'onChangePaySystems', BX.delegate(function () {
+					window.location.reload();
+				}));
 				BX.SalesCenter.Component.PaymentPayInner.create("<?=$id?>", <?=$settings?>);
 			});
 		</script>
-		<?
+		<?php
 	}
 	elseif (!empty($arResult['PAYSYSTEMS_LIST']))
 	{
@@ -185,40 +191,38 @@ else
 			<?php if ($title !== ''): ?>
 				<div class="page-section-title"><?= $title ?></div>
 			<?php endif; ?>
-			<div class="page-section-inner">
-				<div class="row no-gutters flex-column align-items-stretch justify-content-start <?= $paySystemListClassName ?>"></div>
-				<?php
-				if ($arParams['VIEW_MODE'] === 'Y')
-				{
-					?>
-					<div class="<?= $paySystemDescriptionClassName ?>"></div>
-					<?
-				}
-				if ($arParams['VIEW_MODE'] !== 'Y')
-				{
-					if ($arResult['USER_CONSENT'] === 'Y')
-					{
-						$APPLICATION->IncludeComponent(
-							'bitrix:main.userconsent.request',
-							'',
-							array(
-								'ID' => $arResult['USER_CONSENT_ID'],
-								'IS_CHECKED' => ($arResult['USER_CONSENT_IS_CHECKED'] === 'Y') ? 'Y' : 'N',
-								'IS_LOADED' => 'N',
-								'AUTO_SAVE' => 'N',
-								'SUBMIT_EVENT_NAME' => $userConsentEventName,
-								'REPLACE' => array(
-									'button_caption' => Loc::getMessage('SPP_PAY_BUTTON'),
-								),
-							)
-						);
-					}
-				}
+			<div class="<?= $paySystemListClassName ?>"></div>
+			<?php
+			if ($arParams['VIEW_MODE'] === 'Y')
+			{
 				?>
-			</div>
+				<div class="<?= $paySystemDescriptionClassName ?>"></div>
+				<?php
+			}
+			if ($arParams['VIEW_MODE'] !== 'Y')
+			{
+				if ($arResult['USER_CONSENT'] === 'Y')
+				{
+					$APPLICATION->IncludeComponent(
+						'bitrix:main.userconsent.request',
+						'',
+						array(
+							'ID' => $arResult['USER_CONSENT_ID'],
+							'IS_CHECKED' => ($arResult['USER_CONSENT_IS_CHECKED'] === 'Y') ? 'Y' : 'N',
+							'IS_LOADED' => 'N',
+							'AUTO_SAVE' => 'N',
+							'SUBMIT_EVENT_NAME' => $userConsentEventName,
+							'REPLACE' => array(
+								'button_caption' => Loc::getMessage('SPP_PAY_BUTTON'),
+							),
+						)
+					);
+				}
+			}
+			?>
 		</div>
 
-		<?
+		<?php
 		$first = current($arResult['PAYSYSTEMS_LIST']);
 		$settings = array(
 			"paySystemId" => (int)$currentPaySystem['PAY_SYSTEM_ID'] > 0 ? (int)$currentPaySystem['PAY_SYSTEM_ID'] : (int)$first['ID'],
@@ -241,10 +245,14 @@ else
 			BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 			BX.ready(function ()
 			{
+				BX.addCustomEvent(window, 'onChangePaySystems', BX.delegate(function () {
+					window.location.reload();
+				}));
+
 				BX.SalesCenter.Component.PaymentPayList.create("<?=$id?>", <?=$settings?>);
 			});
 		</script>
-		<?
+		<?php
 	}
 }
 

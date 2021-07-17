@@ -1741,6 +1741,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderTitle",
 	    value: function renderTitle(title) {
+	      if (main_core.Type.isArray(title)) {
+	        title = title[0];
+	      }
+
 	      title = main_core.Text.encode(title);
 	      var href = 'javascript:void(0);';
 

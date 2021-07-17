@@ -2,15 +2,12 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Crm;
-use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Report\VisualConstructor\Helper\Analytic;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 
@@ -139,6 +136,11 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 
 		$result['ORDER_STAGE'] = $this->createField(
 			'ORDER_STAGE',
+			array('type' => 'list', 'default' => false, 'partial' => true)
+		);
+
+		$result['DELIVERY_STAGE'] = $this->createField(
+			'DELIVERY_STAGE',
 			array('type' => 'list', 'default' => false, 'partial' => true)
 		);
 
@@ -296,6 +298,11 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			array('type' => 'list', 'default' => true, 'partial' => true)
 		);
 
+		$result['ORDER_SOURCE'] = $this->createField(
+			'ORDER_SOURCE',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
 		return $result;
 	}
 
@@ -353,6 +360,13 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			return array(
 				'params' => array('multiple' => 'Y'),
 				'items' => Crm\Order\OrderStage::getList()
+			);
+		}
+		elseif($fieldID === 'DELIVERY_STAGE')
+		{
+			return array(
+				'params' => array('multiple' => 'Y'),
+				'items' => Crm\Order\DeliveryStage::getList()
 			);
 		}
 		elseif($fieldID === 'STAGE_SEMANTIC_ID' || $fieldID === 'STAGE_SEMANTIC_ID_FROM_HISTORY')
@@ -507,6 +521,25 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('SOURCE')
 			);
 		}
+		elseif($fieldID === 'ORDER_SOURCE')
+		{
+			$orderSourceItems = [];
+			$tradingPlatformIterator = Sale\TradingPlatform\Manager::getList([
+				'select' => ['ID', 'NAME'],
+			]);
+			while ($tradingPlatformData = $tradingPlatformIterator->fetch())
+			{
+				$orderSourceItems[$tradingPlatformData['ID']]
+					= "{$tradingPlatformData['NAME']} [{$tradingPlatformData['ID']}]"
+				;
+			}
+
+			return array(
+				'params' => ['multiple' => 'Y'],
+				'items' => $orderSourceItems,
+			);
+		}
+
 		return null;
 	}
 

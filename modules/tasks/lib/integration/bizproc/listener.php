@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Integration\Bizproc;
 
 use Bitrix\Main;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 class Listener
@@ -29,7 +30,18 @@ class Listener
 
 		if (isset($fields['GROUP_ID']) && $fields['GROUP_ID'] > 0)
 		{
-			$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			$group = Workgroup::getById($fields['GROUP_ID']);
+			$isScrumTaskUpdated = ($group && $group->isScrumProject());
+
+			if ($isScrumTaskUpdated)
+			{
+				$projectDocumentType = Document\Task::resolveScrumProjectTaskType($fields['GROUP_ID']);
+			}
+			else
+			{
+				$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			}
+
 			//run automation
 			Automation\Factory::runOnAdd($projectDocumentType, $id, $fields);
 		}
@@ -65,7 +77,19 @@ class Listener
 			$previousFields['GROUP_ID'] > 0
 		)
 		{
-			Automation\Factory::stopAutomation(Document\Task::resolveProjectTaskType($previousFields['GROUP_ID']), $id);
+			$group = Workgroup::getById($previousFields['GROUP_ID']);
+			$isScrumTaskUpdated = ($group && $group->isScrumProject());
+
+			if ($isScrumTaskUpdated)
+			{
+				$projectTaskType = Document\Task::resolveScrumProjectTaskType($previousFields['GROUP_ID']);
+			}
+			else
+			{
+				$projectTaskType = Document\Task::resolveProjectTaskType($previousFields['GROUP_ID']);
+			}
+
+			Automation\Factory::stopAutomation($projectTaskType, $id);
 		}
 
 		//Check triggers for project tasks
@@ -81,7 +105,18 @@ class Listener
 			)
 		)
 		{
-			$projectDocumentType = Document\Task::resolveProjectTaskType($projectId);
+			$group = Workgroup::getById($projectId);
+			$isScrumTaskUpdated = ($group && $group->isScrumProject());
+
+			if ($isScrumTaskUpdated)
+			{
+				$projectDocumentType = Document\Task::resolveScrumProjectTaskType($projectId);
+			}
+			else
+			{
+				$projectDocumentType = Document\Task::resolveProjectTaskType($projectId);
+			}
+
 			Automation\Factory::runOnStatusChanged($projectDocumentType, $id, $fields);
 		}
 
@@ -162,7 +197,18 @@ class Listener
 		//Run project trigger
 		if ($fields['GROUP_ID'] > 0)
 		{
-			$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			$group = Workgroup::getById($fields['GROUP_ID']);
+			$isScrumTask = ($group && $group->isScrumProject());
+
+			if ($isScrumTask)
+			{
+				$projectDocumentType = Document\Task::resolveScrumProjectTaskType($fields['GROUP_ID']);
+			}
+			else
+			{
+				$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			}
+
 			Automation\Trigger\Expired::execute($projectDocumentType, $id, $fields);
 		}
 
@@ -185,7 +231,18 @@ class Listener
 		//Run project trigger
 		if ($fields['GROUP_ID'] > 0)
 		{
-			$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			$group = Workgroup::getById($fields['GROUP_ID']);
+			$isScrumTask = ($group && $group->isScrumProject());
+
+			if ($isScrumTask)
+			{
+				$projectDocumentType = Document\Task::resolveScrumProjectTaskType($fields['GROUP_ID']);
+			}
+			else
+			{
+				$projectDocumentType = Document\Task::resolveProjectTaskType($fields['GROUP_ID']);
+			}
+
 			Automation\Trigger\ExpiredSoon::execute($projectDocumentType, $id, $fields);
 		}
 
@@ -201,6 +258,15 @@ class Listener
 	private static function fireStatusTriggerOnProject($taskId, $projectId, $fields)
 	{
 		$documentType = Document\Task::resolveProjectTaskType($projectId);
+
+		if ($projectId && Main\Loader::includeModule('socialnetwork'))
+		{
+			$group = Workgroup::getById($projectId);
+			if ($group && $group->isScrumProject())
+			{
+				$documentType = Document\Task::resolveScrumProjectTaskType($projectId);
+			}
+		}
 
 		if ($documentType)
 		{

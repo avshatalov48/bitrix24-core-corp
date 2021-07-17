@@ -17,7 +17,7 @@ $arResult["IS_EXTRANET_SITE"] = (
 $globalSearchCategories = array(
 	"stream" => array(
 		"url" => ($arResult["IS_EXTRANET_SITE"] ? SITE_DIR : SITE_DIR."stream/")."?".(\Bitrix\Main\Composite\Helper::isOn() ? "ncc=1&" : "")."apply_filter=Y&FIND=",
-		"text" => GetMessage("CT_BST_GLOBAL_SEARCH_STREAM")
+		"text" => GetMessage("CT_BST_GLOBAL_SEARCH_NEWS")
 	),
 	"tasks" => array(
 		"url" => ($arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/user/".$USER->GetID()."/tasks/?apply_filter=Y&with_preset=Y&FIND=",

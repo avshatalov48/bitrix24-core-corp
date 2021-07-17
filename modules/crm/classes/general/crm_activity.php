@@ -22,10 +22,6 @@ class CAllCrmActivity
 	//const UF_WEBDAV_FIELD_NAME = 'UF_CRM_ACTIVITY_WDAV';
 	const COMMUNICATION_TABLE_ALIAS = 'AC';
 
-	private const COMPRESS_DESCRIPTION_PREFIX = '@gzcompressed@:';
-	private const COMPRESS_DESCRIPTION_PREFIX_LENGTH = 15; //strlen(self::COMPRESS_DESCRIPTION_PREFIX);
-	private const COMPRESS_DESCRIPTION_MIN_LENGTH = 256;
-
 	private static $FIELDS = null;
 	private static $FIELD_INFOS = null;
 	private static $COMM_FIELD_INFOS = null;
@@ -122,20 +118,12 @@ class CAllCrmActivity
 
 		self::NormalizeDateTimeFields($arFields);
 
-		//$description = $arFields['DESCRIPTION'];
-		//if ($description && !empty($options['COMPRESS_DESCRIPTION']))
-		//{
-		//	$arFields['DESCRIPTION'] = static::compressDescription($arFields['DESCRIPTION']);
-		//}
-
 		$ID = $DB->Add(CCrmActivity::TABLE_NAME, $arFields, array('DESCRIPTION', 'STORAGE_ELEMENT_IDS', 'SETTINGS', 'PROVIDER_PARAMS', 'PROVIDER_DATA'));
 		if(is_string($ID) && $ID !== '')
 		{
 			//MS SQL RETURNS STRING INSTEAD INT
 			$ID = intval($ID);
 		}
-
-		//$arFields['DESCRIPTION'] = $description;
 
 		if($ID === false)
 		{
@@ -324,14 +312,19 @@ class CAllCrmActivity
 
 			if($provider !== null)
 			{
-				$provider::onAfterAdd($arFields);
+				$provider::onAfterAdd(
+					$arFields,
+					[
+						'IS_RESTORATION' => $isRestoration
+					]
+				);
 			}
 
 
 			//Crm\Activity\Provider\ProviderManager::processRestorationFromRecycleBin(
 			\Bitrix\Crm\Activity\Provider\ProviderManager::processCreation(
 				$arFields,
-				array('BINDINGS' => $arBindings, 'IS_RESTORATION' => true)
+				array('BINDINGS' => $arBindings, 'IS_RESTORATION' => $isRestoration)
 			);
 
 			\Bitrix\Crm\Pseudoactivity\WaitEntry::processActivityCreation(
@@ -806,6 +799,16 @@ class CAllCrmActivity
 
 		$USER_FIELD_MANAGER->update(static::UF_ENTITY_TYPE, $ID, $arFields, $arFields['EDITOR_ID']);
 
+		if ($provider !== null)
+		{
+			$provider::onAfterUpdate(
+				$ID,
+				$arFields,
+				$arPrevEntity,
+				$arCurEntity
+			);
+		}
+
 		$rsEvents = GetModuleEvents('crm', 'OnActivityUpdate');
 		while ($arEvent = $rsEvents->Fetch())
 		{
@@ -1029,6 +1032,11 @@ class CAllCrmActivity
 		{
 			self::UnregisterLiveFeedEvent($ID);
 			CCrmSonetSubscription::UnRegisterSubscriptionByEntity(CCrmOwnerType::Activity, $ID);
+		}
+
+		if ($provider !== null)
+		{
+			$provider::onAfterDelete($ID, $ary);
 		}
 
 		$rsEvents = GetModuleEvents('crm', 'OnActivityDelete');
@@ -2683,8 +2691,8 @@ class CAllCrmActivity
 	public static function DetachBinding($srcOwnerTypeID, $srcOwnerID, $targOwnerTypeID, $targOwnerID)
 	{
 		$dbResult = \Bitrix\Main\Application::getConnection()->query(
-			"SELECT a.ID, a.RESPONSIBLE_ID 
-				FROM b_crm_act a INNER JOIN b_crm_act_bind b ON a.ID = b.ACTIVITY_ID  
+			"SELECT a.ID, a.RESPONSIBLE_ID
+				FROM b_crm_act a INNER JOIN b_crm_act_bind b ON a.ID = b.ACTIVITY_ID
 				WHERE b.OWNER_TYPE_ID = {$srcOwnerTypeID} AND b.OWNER_ID = {$srcOwnerID}"
 		);
 
@@ -5918,7 +5926,7 @@ class CAllCrmActivity
 			$deadline = '';
 		}
 
-		if($activityID > 0 && $deadline !== '')
+		if($activityID > 0 && $deadline !== '' && CheckDateTime($deadline))
 		{
 			CCrmActivity::DoSaveNearestUserActivity(
 				array(
@@ -7083,27 +7091,8 @@ class CAllCrmActivity
 		{
 			$fields['DESCRIPTION_RAW'] = mb_substr($fields['DESCRIPTION_RAW'], 0, $limit);
 		}
-	}
-
-	public static function compressDescription(string $description): string
-	{
-		if (!function_exists('gzcompress') || !isset($description[self::COMPRESS_DESCRIPTION_MIN_LENGTH]))
-		{
-			return $description;
-		}
-
-		return self::COMPRESS_DESCRIPTION_PREFIX . gzcompress($description, 9);
-	}
-
-	public static function uncompressDescription(string $compressed): string
-	{
-		if (!function_exists('gzuncompress') || strpos($compressed, self::COMPRESS_DESCRIPTION_PREFIX) !== 0)
-		{
-			return $compressed;
-		}
-		$result = gzuncompress(substr($compressed, self::COMPRESS_DESCRIPTION_PREFIX_LENGTH));
-
-		return $result !== false ? $result : $compressed;
+		$fields['DESCRIPTION_RAW'] = \Bitrix\Main\Text\Emoji::decode($fields['DESCRIPTION_RAW']);
+		if(isset($fields['SUBJECT'])) $fields['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($fields['SUBJECT']);
 	}
 }
 
@@ -7760,6 +7749,11 @@ class CCrmActivityEmailSender
 			$descriptionHtml = htmlspecialcharsbx($description);
 		}
 
+		if (isset($settings['DISABLE_SENDING_MESSAGE_COPY']) && $settings['DISABLE_SENDING_MESSAGE_COPY'] === 'Y')
+		{
+			$cc = '';
+		}
+
 		$postingData = array(
 			'STATUS' => 'D',
 			'FROM_FIELD' => $from,
@@ -7970,11 +7964,6 @@ class CCrmActivityDbResult extends CDBResult
 			{
 				$result['COMMUNICATIONS'] = CCrmActivity::GetCommunications($result['ID']);
 			}
-
-			//if (!empty($result['DESCRIPTION']))
-			//{
-			//	$result['DESCRIPTION'] = \CCrmActivity::uncompressDescription($result['DESCRIPTION']);
-			//}
 		}
 		return $result;
 	}

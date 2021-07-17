@@ -293,7 +293,7 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm'))
 
 	$gridColumns = $gridOptions->getUsedColumns();
 	$selectColumns = array_merge($gridColumns, ['ID', 'EXTERNAL_AUTH_ID']);
-	$selectColumns = array_intersect($selectColumns, array_keys(\Bitrix\Main\UserTable::getMap()));
+	$selectColumns = array_intersect($selectColumns, array_keys(\Bitrix\Main\UserTable::getEntity()->getFields()));
 
 	$navyParams = CDBResult::GetNavParams(CAdminUiResult::GetNavSize($sTableID));
 	$navyParams['PAGEN'] = (int)$navyParams['PAGEN'];

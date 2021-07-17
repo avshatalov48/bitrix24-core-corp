@@ -1,4 +1,5 @@
-<?
+<?php
+
 if(!$USER->IsAdmin())
 	return;
 
@@ -209,6 +210,17 @@ while ($arIBlock = $dbIBlock->Fetch())
 	$arIB[$arIBlock['IBLOCK_TYPE_ID']][$arIBlock['ID']] = ($arIBlock['CODE'] ? '['.$arIBlock['CODE'].'] ' : '').$arIBlock['NAME'];
 }
 
+$hideBlockNewUserLFCommon = true;
+foreach ($arSites as $site => $site_name)
+{
+	$val = \Bitrix\Main\Config\Option::get('intranet', 'BLOCK_NEW_USER_LF_SITE', false, $site);
+	if ($val === false)
+	{
+		$hideBlockNewUserLFCommon = false;
+		break;
+	}
+}
+
 foreach ($arSiteSettings as $param_name)
 {
 	$$param_name = array();
@@ -405,10 +417,21 @@ endif;
 	<tr class="heading">
 		<td colspan="2"><?echo GetMessage('INTR_OPT_OTHER')?></td>
 	</tr>
-	<tr>
-		<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_BLOCK_NEW_USER_LF")?></td>
-		<td valign="top" width="50%"><input type="checkbox" name="BLOCK_NEW_USER_LF" value="Y" <?php echo ($block_new_user_lf == "Y" ? " checked" : "")?> /></td>
-	</tr>
+	<?php
+	if ($hideBlockNewUserLFCommon)
+	{
+		?><input type="hidden" name="BLOCK_NEW_USER_LF" value="<?= ($block_new_user_lf === 'Y' ? "Y" : 'N') ?>" /><?php
+	}
+	else
+	{
+		?>
+		<tr>
+			<td valign="top" width="50%"><?php echo GetMessage('INTR_OPTION_BLOCK_NEW_USER_LF')?></td>
+			<td valign="top" width="50%"><input type="checkbox" name="BLOCK_NEW_USER_LF" value="Y" <?= ($block_new_user_lf === 'Y' ? ' checked' : '') ?> /></td>
+		</tr>
+		<?php
+	}
+	?>
 	<tr>
 		<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_VACATION_TYPES")?></td>
 		<td valign="top" width="50%">
@@ -499,7 +522,8 @@ foreach ($arSites as $SITE_ID => $SITE_NAME):
 		?>
 		<tr id="block_new_user_lf_site_row_<?=$SITE_ID?>">
 			<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_BLOCK_NEW_USER_LF")?></td>
-			<td valign="top" width="50%"><input type="checkbox" name="BLOCK_NEW_USER_LF_SITE_<?echo $SITE_ID?>" value="Y" <?php echo ($BLOCK_NEW_USER_LF_SITE[$SITE_ID] == "Y" ? " checked" : "")?> /></td>
+			<td valign="top" width="50%"><?
+				?><input type="checkbox" name="BLOCK_NEW_USER_LF_SITE_<?echo $SITE_ID?>" value="Y" <?php echo ($BLOCK_NEW_USER_LF_SITE[$SITE_ID] == "Y" ? " checked" : "")?> /></td>
 		</tr>
 		<?
 	endif;

@@ -177,6 +177,12 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			return;
 		}
 
+		if ($this->arResult['ENTITY_ID'] <= 0 && Cashbox\Manager::isEnabledPaySystemPrint())
+		{
+			ShowError(Loc::getMessage('CRM_ORDER_CASHBOX_MANUAL_PRINT_ERROR'));
+			return;
+		}
+
 		$this->arResult['ENTITY_DATA'] = $entityData;
 
 		//region GUID
@@ -408,13 +414,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			foreach ($additionList['PAYMENTS'] as $payment)
 			{
+				$paymentName = Loc::getMessage('CRM_ORDER_PAYMENT', array(
+					'#PAYMENT_NUMBER#' => $payment['ACCOUNT_NUMBER'],
+					'#PAYSYSTEM_NAME#' => $payment['NAME']
+				));
+				$paymentSum = \CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']);
 				$item = [
 					'TYPE' => Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT,
 					'VALUE' => $payment['ID'],
-					'NAME' => Loc::getMessage('CRM_ORDER_PAYMENT', array(
-						'#PAYMENT_NUMBER#' => $payment['ACCOUNT_NUMBER'],
-						'#PAYSYSTEM_NAME#' => $payment['NAME']
-					))
+					'NAME' => htmlspecialcharsbx($paymentName) . " ($paymentSum)"
 				];
 
 				$result[] = $item;
@@ -425,13 +433,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			foreach ($additionList['SHIPMENTS'] as $shipment)
 			{
+				$shipmentName = Loc::getMessage('CRM_ORDER_SHIPMENT', array(
+					'#SHIPMENT_NUMBER#' => $shipment['ACCOUNT_NUMBER'],
+					'#DELIVERY_SYSTEM_NAME#' => $shipment['NAME']
+				));
+				$shipmentSum = \CCrmCurrency::MoneyToString($shipment['PRICE_DELIVERY'], $shipment['CURRENCY']);
 				$result[] = [
 					'TYPE' => Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT,
 					'VALUE' => $shipment['ID'],
-					'NAME' => Loc::getMessage('CRM_ORDER_SHIPMENT', array(
-						'#SHIPMENT_NUMBER#' => $shipment['ACCOUNT_NUMBER'],
-						'#DELIVERY_SYSTEM_NAME#' => $shipment['NAME']
-					))
+					'NAME' => htmlspecialcharsbx($shipmentName) . " ($shipmentSum)"
 				];
 			}
 		}
@@ -450,12 +460,13 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			{
 				$paymentName = Loc::getMessage('CRM_ORDER_PAYMENT', array(
 					'#PAYMENT_NUMBER#' => $payment->getField('ACCOUNT_NUMBER'),
-					'#PAYSYSTEM_NAME#' => $payment->getPaymentSystemName()
+					'#PAYSYSTEM_NAME#' => $payment->getPaymentSystemName(),
 				));
+				$paymentSum = \CCrmCurrency::MoneyToString($payment->getSum(), $payment->getField('CURRENCY'));
 				$entityData = [
 					'VALUE' => $payment->getId(),
 					'TYPE' => Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT,
-					'NAME' => htmlspecialcharsbx($paymentName)
+					'NAME' => htmlspecialcharsbx($paymentName) . " ($paymentSum)",
 				];
 
 				$result[] = $entityData;
@@ -475,11 +486,12 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 						'#SHIPMENT_NUMBER#' => $shipment->getField('ACCOUNT_NUMBER'),
 						'#DELIVERY_SYSTEM_NAME#' => $shipment->getDeliveryName()
 					));
+					$shipmentSum = \CCrmCurrency::MoneyToString($shipment->getPrice(), $shipment->getCurrency());
 
 					$entityData = [
 						'VALUE' => $shipment->getId(),
 						'TYPE' => Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT,
-						'NAME' => htmlspecialcharsbx($shipmentName)
+						'NAME' => htmlspecialcharsbx($shipmentName) . " ($shipmentSum)",
 					];
 
 					$result[] = $entityData;
@@ -581,11 +593,13 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 				);
 				if ($type === 'PAYMENTS')
 				{
-					$entityData['TYPE'] = Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT;
-					$entityData['NAME'] = Loc::getMessage('CRM_ORDER_PAYMENT', array(
+					$paymentName = Loc::getMessage('CRM_ORDER_PAYMENT', array(
 						'#PAYMENT_NUMBER#' => $entity['ACCOUNT_NUMBER'],
 						'#PAYSYSTEM_NAME#' => $entity['NAME']
 					));
+					$paymentSum = \CCrmCurrency::MoneyToString($entity['SUM'], $entity['CURRENCY']);
+					$entityData['TYPE'] = Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT;
+					$entityData['NAME'] = htmlspecialcharsbx($paymentName) . " ($paymentSum)";
 					if (!empty($entity['PAYMENT_TYPES']) && is_array($entity['PAYMENT_TYPES']))
 					{
 						foreach ( $entity['PAYMENT_TYPES'] as &$paymentType)
@@ -598,11 +612,13 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 				}
 				else
 				{
-					$entityData['TYPE'] = Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT;
-					$entityData['NAME'] = Loc::getMessage('CRM_ORDER_SHIPMENT', array(
+					$shipmentName = Loc::getMessage('CRM_ORDER_SHIPMENT', array(
 						'#SHIPMENT_NUMBER#' => $entity['ACCOUNT_NUMBER'],
 						'#DELIVERY_SYSTEM_NAME#' => $entity['NAME']
 					));
+					$shipmentSum = \CCrmCurrency::MoneyToString($entity['PRICE_DELIVERY'], $entity['CURRENCY']);
+					$entityData['TYPE'] = Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT;
+					$entityData['NAME'] = htmlspecialcharsbx($shipmentName) . " ($shipmentSum)";
 				}
 
 				$result['ADDITION_LIST'][] = $entityData;

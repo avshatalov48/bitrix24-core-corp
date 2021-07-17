@@ -43,6 +43,16 @@ type ItemInfo = {
 	borderColor?: string
 }
 
+type SubTaskInfo = {
+	sourceId: number,
+	completed: 'Y' | 'N',
+	storyPoints: string | StoryPoints
+}
+
+type SubTasksInfo = {
+	[sourceId: number]: SubTaskInfo
+}
+
 export type ItemParams = {
 	itemId: number|string,
 	tmpId: string,
@@ -54,7 +64,6 @@ export type ItemParams = {
 	entityType?: string,
 	parentId?: number,
 	sourceId?: number,
-	parentSourceId?: number,
 	responsible?: Responsible,
 	storyPoints?: string,
 	completed?: 'Y' | 'N',
@@ -63,6 +72,7 @@ export type ItemParams = {
 	tags?: Array,
 	isParentTask?: 'Y' | 'N',
 	subTasksCount?: number,
+	subTasksInfo?: SubTasksInfo,
 	isLinkedTask?: 'Y' | 'N',
 	parentTaskId?: number,
 	isSubTask?: 'Y' | 'N'
@@ -96,25 +106,23 @@ export class Item extends EventEmitter
 		this.setEntityType(params.entityType);
 		this.setParentId(params.parentId);
 		this.setSourceId(params.sourceId);
-		this.setParentSourceId(params.parentSourceId);
-		this.setResponsible(params.responsible);
-		this.setStoryPoints(params.storyPoints);
 		this.setInfo(params.info);
-
-		this.setCompleted(params.completed);
-		this.setDisableStatus(this.isCompleted());
-
-		this.setAllowedActions(params.allowedActions);
-		this.setEpic(params.epic);
-		this.setTags(params.tags);
 
 		this.setParentTask(params.isParentTask);
 		this.setSubTasksCount(params.subTasksCount);
 		this.setLinkedTask(params.isLinkedTask);
 		this.setParentTaskId(params.parentTaskId);
 		this.setSubTask(params.isSubTask);
-
+		this.setSubTasksInfo(params.subTasksInfo);
+		this.setResponsible(params.responsible);
+		this.setCompleted(params.completed);
+		this.setDisableStatus(this.isCompleted());
+		this.setAllowedActions(params.allowedActions);
+		this.setEpic(params.epic);
+		this.setTags(params.tags);
 		this.setTaskCounts(params);
+
+		this.setStoryPoints(params.storyPoints);
 	}
 
 	static buildItem(params: ItemParams): Item
@@ -242,16 +250,6 @@ export class Item extends EventEmitter
 		return this.sourceId;
 	}
 
-	setParentSourceId(sourceId: number)
-	{
-		this.parentSourceId = (Type.isInteger(sourceId) ? parseInt(sourceId, 10) : 0);
-	}
-
-	getParentSourceId(): number
-	{
-		return this.parentSourceId;
-	}
-
 	setResponsible(responsible: Responsible)
 	{
 		this.responsible = (Type.isPlainObject(responsible) ? responsible : null);
@@ -276,6 +274,29 @@ export class Item extends EventEmitter
 
 		this.storyPoints.setPoints(storyPoints);
 
+		this.updateStoryPointsNode();
+	}
+
+	getStoryPoints(): StoryPoints
+	{
+		if (this.isParentTask())
+		{
+			const storyPoints = new StoryPoints();
+
+			Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
+				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+			});
+
+			return storyPoints;
+		}
+		else
+		{
+			return this.storyPoints;
+		}
+	}
+
+	updateStoryPointsNode()
+	{
 		if (this.isNodeCreated())
 		{
 			const storyPointsNode = this.getItemNode().querySelector('.tasks-scrum-item-story-points');
@@ -287,9 +308,101 @@ export class Item extends EventEmitter
 		}
 	}
 
-	getStoryPoints(): StoryPoints
+	setSubTasksInfo(subTasksInfo: SubTasksInfo)
 	{
-		return this.storyPoints;
+		if (Type.isUndefined(subTasksInfo))
+		{
+			this.subTasksInfo = [];
+
+			return;
+		}
+
+		Object.values(subTasksInfo).map((subTaskInfo: SubTaskInfo) => {
+			const storyPoints = new StoryPoints();
+			storyPoints.setPoints(subTaskInfo.storyPoints);
+			subTaskInfo.storyPoints = storyPoints;
+		});
+
+		this.subTasksInfo = subTasksInfo;
+	}
+
+	getSubTasksInfo(): SubTasksInfo
+	{
+		return this.subTasksInfo;
+	}
+
+	updateSubTasksPoints(sourceId: number, storyPoints: StoryPoints)
+	{
+		let newSubTasksInfo = this.getSubTasksInfo();
+		if (Type.isArray(newSubTasksInfo))
+		{
+			newSubTasksInfo = {};
+			newSubTasksInfo[sourceId] = {
+				sourceId: sourceId,
+				completed: 'N',
+				storyPoints: storyPoints.getPoints()
+			};
+			this.setSubTasksInfo(newSubTasksInfo);
+
+			this.updateStoryPointsNode();
+
+			return;
+		}
+
+		const subTasksInfo = this.getSubTasksInfo();
+
+		if (subTasksInfo.hasOwnProperty(sourceId))
+		{
+			subTasksInfo[sourceId].storyPoints = storyPoints;
+		}
+		else
+		{
+			subTasksInfo[sourceId] = {
+				sourceId: sourceId,
+				completed: 'N',
+				storyPoints: storyPoints
+			};
+		}
+
+		this.updateStoryPointsNode();
+	}
+
+	getCompletedSubTasksStoryPoints(): StoryPoints
+	{
+		const storyPoints = new StoryPoints();
+
+		if (this.isCompleted())
+		{
+			storyPoints.setPoints(this.storyPoints.getPoints());
+		}
+
+		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
+			if (subTaskInfo.completed === 'Y')
+			{
+				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+			}
+		});
+
+		return storyPoints;
+	}
+
+	getUncompletedSubTasksStoryPoints(): StoryPoints
+	{
+		const storyPoints = new StoryPoints();
+
+		if (!this.isCompleted())
+		{
+			storyPoints.setPoints(this.storyPoints.getPoints());
+		}
+
+		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
+			if (subTaskInfo.completed === 'N')
+			{
+				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+			}
+		});
+
+		return storyPoints;
 	}
 
 	setCompleted(value: string)
@@ -803,7 +916,7 @@ export class Item extends EventEmitter
 
 	renderSubTasksTick(): HTMLElement
 	{
-		if (!this.isParentTask())
+		if (!this.isParentTask() || this.isPreviewMode())
 		{
 			return '';
 		}
@@ -1074,72 +1187,15 @@ export class Item extends EventEmitter
 
 	isClickOnEditableName(event): boolean
 	{
-		return (this.isEditAllowed() && event.target.classList.contains('ui-ctl-element'));
+		return (event.target.classList.contains('ui-ctl-element'));
 	}
 
 	onNameClick(event)
 	{
-		if (this.isGroupMode())
+		if (event.target.classList.contains('ui-ctl-element'))
 		{
-			this.clickToGroupModeCheckbox();
-			this.showActionsPanel(event);
-			return;
+			this.emit('showTask');
 		}
-
-		if (!this.isEditAllowed())
-		{
-			return;
-		}
-
-		const targetNode = event.target;
-		if (Dom.hasClass(targetNode, 'ui-ctl-element') && targetNode.contentEditable === 'true')
-		{
-			return;
-		}
-
-		if (!Dom.hasClass(targetNode, 'ui-ctl-element') || this.isDisabled())
-		{
-			return;
-		}
-
-		const nameNode = event.currentTarget;
-		const borderNode = nameNode.querySelector('.ui-ctl');
-		const valueNode = nameNode.querySelector('.ui-ctl-element');
-		valueNode.textContent = valueNode.textContent.trim();
-		const oldValue = valueNode.textContent;
-
-		Dom.addClass(this.getItemNode(), 'tasks-scrum-item-edit-mode');
-		Dom.toggleClass(borderNode, 'ui-ctl-no-border');
-		valueNode.contentEditable = 'true';
-
-		this.deactivateDragNDrop();
-
-		this.placeCursorAtEnd(valueNode);
-
-		Event.bind(valueNode, 'keydown', this.blockEnterInput.bind(valueNode));
-
-		Event.bindOnce(valueNode, 'blur', () => {
-			Event.unbind(valueNode, 'keydown', this.blockEnterInput.bind(valueNode));
-
-			Dom.removeClass(this.getItemNode(), 'tasks-scrum-item-edit-mode');
-			Dom.addClass(borderNode, 'ui-ctl-no-border');
-			valueNode.contentEditable = 'false';
-
-			this.activateDragNDrop();
-
-			const newValue = valueNode.textContent.trim();
-			if (oldValue === newValue)
-			{
-				return;
-			}
-			this.emit('updateItem', {
-				itemId: this.getItemId(),
-				entityId: this.getEntityId(),
-				itemType: this.getItemType(),
-				name: newValue
-			});
-			this.name = newValue;
-		}, true);
 	}
 
 	clickToGroupModeCheckbox()
@@ -1206,15 +1262,10 @@ export class Item extends EventEmitter
 
 	onStoryPointsClick(event)
 	{
-		if (this.isGroupMode())
+		if (this.isGroupMode() || this.isDisabled() || this.isCompleted() || this.isParentTask())
 		{
 			this.clickToGroupModeCheckbox();
 			this.showActionsPanel(event);
-			return;
-		}
-
-		if (this.isDisabled())
-		{
 			return;
 		}
 
@@ -1249,15 +1300,14 @@ export class Item extends EventEmitter
 				return;
 			}
 
-			this.setStoryPoints(newValue);
-
 			this.emit('updateItem', {
 				itemId: this.getItemId(),
 				entityId: this.getEntityId(),
 				itemType: this.getItemType(),
 				storyPoints: newValue
 			});
-			this.sendEventToUpdateStoryPoints();
+
+			this.setStoryPoints(newValue);
 		}, true);
 	}
 
@@ -1422,6 +1472,11 @@ export class Item extends EventEmitter
 
 	updateResponsible()
 	{
+		if (!this.getItemNode())
+		{
+			return;
+		}
+
 		const responsibleNode = this.getItemNode().querySelector('.tasks-scrum-item-responsible');
 
 		if (!responsibleNode)

@@ -1,18 +1,15 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2013 Bitrix
- */
 
+use Bitrix\Tasks\Internals\TaskTable;
 
 class CTaskPlannerMaintance
 {
 	const PLANNER_COUNTER_CODE = 'planner_tasks';
 	const PLANNER_OPTION_CURRENT_TASKS = 'current_tasks_list';
 
-	private static $arTaskStatusOpened = array(4,5,7);
+	private const PLANNER_MAX_TASKS_COUNT = 30;
+
+	private static $arTaskStatusOpened = [4, 5, 7];
 
 	private static $SITE_ID = SITE_ID;
 	private static $USER_ID = null;
@@ -402,73 +399,80 @@ class CTaskPlannerMaintance
 		return $res;
 	}
 
-	private static function getTasksCount($arTasks)
+	private static function getTasksCount($taskIds): int
 	{
-		$cnt = 0;
-		if (is_array($arTasks) && count($arTasks) > 0)
+		$count = 0;
+
+		if (is_array($taskIds) && count($taskIds) > 0)
 		{
-			$dbRes = CTasks::GetCount(array(
-				'ID' => $arTasks,
+			$result = CTasks::GetCount([
+				'ID' => $taskIds,
 				'RESPONSIBLE_ID' => self::$USER_ID,
-				'!STATUS' => self::$arTaskStatusOpened
-			));
-			if ($arRes = $dbRes->Fetch())
+				'!STATUS' => self::$arTaskStatusOpened,
+			]);
+			if ($row = $result->Fetch())
 			{
-				$cnt = $arRes['CNT'];
+				$count = $row['CNT'];
 			}
 		}
 
-		return $cnt;
+		return $count;
 	}
 
 	public static function getCurrentTasksList()
 	{
 		static $checked;
 
-		$list = CUserOptions::GetOption('tasks', self::PLANNER_OPTION_CURRENT_TASKS, null);
+		$list = CUserOptions::GetOption(
+			'tasks',
+			self::PLANNER_OPTION_CURRENT_TASKS,
+			null
+		);
 		// current user hasn't already used tasks list or has list in timeman
-		if($list === null)
+		if ($list === null)
 		{
-			if(CModule::IncludeModule('timeman'))
+			$list = [];
+
+			if (CModule::IncludeModule('timeman') && $timeManUser = CTimeManUser::instance())
 			{
-				$TMUSER = CTimeManUser::instance();
-				$arInfo = $TMUSER->GetCurrentInfo();
-				if(is_array($arInfo['TASKS']))
+				$info = $timeManUser->GetCurrentInfo();
+				if (is_array($info['TASKS']))
 				{
-					$list = $arInfo['TASKS'];
+					$list = $info['TASKS'];
 				}
-			}
-			else
-			{
-				$list = array();
 			}
 
 			if ($list !== null)
+			{
 				self::setCurrentTasksList($list);
+			}
 		}
 
-		if(!is_array($list))
+		if (!is_array($list))
 		{
-			$list = array();
+			$list = [];
 		}
 
 		$list = array_unique(array_filter($list, 'intval'));
 
-		if(!empty($list) && !$checked)
+		if (!empty($list) && !$checked)
 		{
-			$items = array();
-			$res = \Bitrix\Tasks\Internals\TaskTable::getList(array(
-				'filter' => array('ID' => $list, '!ZOMBIE' => 'Y'),
-				'select' => array('ID')
-			));
-			while($item = $res->fetch())
+			$items = [];
+			$res = TaskTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'ID' => array_slice($list, 0, self::PLANNER_MAX_TASKS_COUNT),
+					'!ZOMBIE' => 'Y',
+				],
+			]);
+			while ($item = $res->fetch())
 			{
-				$items[] = intval($item['ID']);
+				$items[] = (int)$item['ID'];
 			}
 
 			$newList = array_intersect($list, $items);
 
-			if(count($list) != count($newList))
+			if (count($list) !== count($newList))
 			{
 				self::setCurrentTasksList($newList);
 				$list = $newList;

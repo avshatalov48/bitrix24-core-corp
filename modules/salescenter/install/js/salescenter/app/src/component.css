@@ -1363,9 +1363,11 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 50%;
+	margin-right: -22px;
 }
 
 .salescenter-app-payment-by-sms-item-container-payment-title-item-text {
+	display: inline;
 	height: 20px;
 	line-height: 24px;
 	transition: all .2s linear;

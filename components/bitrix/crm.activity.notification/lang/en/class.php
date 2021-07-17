@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_ACTIVITY_NOTIFICATION_ACTIVITY_NOT_FOUND"] = "Activity was not found.";
+$MESS["CRM_ACTIVITY_NOTIFICATION_MESSAGE_NOT_FOUND"] = "Message was not found.";
+$MESS["CRM_ACTIVITY_NOTIFICATION_NOTIFICATIONS_MODULE_IS_NOT_INSTALLED"] = "The Notification Center module is not installed";

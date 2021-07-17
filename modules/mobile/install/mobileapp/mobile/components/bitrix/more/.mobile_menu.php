@@ -283,7 +283,7 @@ JS
 									name:"user.disk",
 									object:"list",
 									version:"{$diskComponentVersion}",
-									componentParams:{userId: env.userId, ownerId: "shared_files_s1", entityType:"common"},
+									componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
 									widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
 							});
 						}
@@ -291,7 +291,7 @@ JS
 						{
 							PageManager.openList(
 							{
-								url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_s1",
+								url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
 								table_settings: 
 								{
 									name:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}",
@@ -318,7 +318,7 @@ JS
 					
 						PageManager.openList(
 						{
-							url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_s1",
+							url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
 							table_settings: 
 							{
 								useTagsInSearch:"NO",
@@ -440,7 +440,7 @@ if (
 {
 	$userPerms = CCrmPerms::GetCurrentUserPermissions();
 	$crmImageBackgroundColor = "#8590a2";
-	$menuStructure[] = [
+	$crmMenuItems = [
 		"title" => "CRM",
 		"sort" => 120,
 		"hidden" => false,
@@ -534,6 +534,8 @@ if (
 			],
 		]
 	];
+
+	$menuStructure[] = $crmMenuItems;
 }
 
 
@@ -848,7 +850,7 @@ JS
 					object: "list",
 					version: availableComponents["tab.settings"].version,
 					widgetParams:{
-						backdrop:{onlyMediumPosition: false, mediumPositionPercent: 60},
+						backdrop:{onlyMediumPosition: false, mediumPositionPercent: 80},
 						title:this.title,
 						groupStyle: true,
 					}

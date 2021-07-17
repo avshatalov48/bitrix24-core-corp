@@ -91,8 +91,9 @@ class Site
 		$params = $result->sanitizeKeys($params);
 		$getPublicUrl = false;
 		$getPreviewPicture = false;
+		$mobileHit = $initiator === 'mobile';
 
-		if ($initiator == 'mobile')
+		if ($mobileHit)
 		{
 			\Bitrix\Landing\Connector\Mobile::forceMobile();
 		}
@@ -215,7 +216,7 @@ class Site
 		// gets public url for sites
 		if ($getPublicUrl)
 		{
-			$urls = SiteCore::getPublicUrl(array_keys($data));
+			$urls = SiteCore::getPublicUrl(array_keys($data), true, !$mobileHit);
 			foreach ($urls as $siteId => $url)
 			{
 				$data[$siteId]['PUBLIC_URL'] = $url;

@@ -106,4 +106,25 @@ class Output extends Base\Output
 
 		return $result;
 	}
+
+	/**
+	 * @param array $messages
+	 * @return mixed
+	 */
+	protected function sendMessagesProcessing(array $messages): array
+	{
+		$oldMessages = $messages;
+
+		$messages = parent::sendMessagesProcessing($messages);
+
+		foreach ($messages as $cell=>$message)
+		{
+			if(isset($oldMessages[$cell]['message']['attachments']))
+			{
+				$messages[$cell]['attachments_old'] = $oldMessages[$cell]['message']['attachments'];
+			}
+		}
+
+		return $messages;
+	}
 }

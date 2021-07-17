@@ -5,4 +5,5 @@ $MESS["MENU_SETTINGS_INFO"] = "Привет! Мы пересместили ра�
 $MESS["MENU_SETTINGS_INFO_YES"] = "Да, хочу";
 $MESS["MB_BP_MAIN_STRESS_LEVEL"] = "Уровень стресса";
 $MESS["MEASURE_STRESS"] = "Замерить";
+$MESS["WELLTORY_SPOTLIGHT"] =  "Вы можете измерить\nсвой уровень стресса";
 ?>

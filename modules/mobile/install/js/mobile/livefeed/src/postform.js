@@ -378,6 +378,7 @@ class PostFormManager
 							postData.recipients[key].push({
 								id: code,
 								title: item.TITLE,
+								shortTitle: (Type.isStringFilled(item.SHORT_TITLE) ? item.SHORT_TITLE : item.TITLE),
 								avatar: (Type.isStringFilled(item.AVATAR) ? item.AVATAR : ''),
 							});
 						}

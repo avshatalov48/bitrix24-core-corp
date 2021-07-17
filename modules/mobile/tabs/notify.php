@@ -5,6 +5,7 @@ namespace Bitrix\Mobile\AppTabs;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\MobileApp\Janative\Manager;
 
 class Notify implements Tabable
 {
@@ -17,28 +18,64 @@ class Notify implements Tabable
 
 	public function getData()
 	{
-		return [
-			"sort" => 300,
-			"imageName" => "bell",
-			"badgeCode" => "notifications",
-			"page" => ["page_id" => "notifications", "url" => $this->context->siteDir . "mobile/im/notify.php"]
-		];
-
+		return $this->getDataInternal();
 	}
 
 	public function getMenuData()
 	{
-		return [
-			"sort" => $this->defaultSortValue(),
-			"counter" => "notifications",
+		$data = $this->getDataInternal();
+		$result = [
+			"title" => $this->getTitle(),
 			"useLetterImage" => true,
 			"color" => "#40465A",
 			"imageUrl" => "favorite/notify.png",
-			"title" => $this->getTitle(),
-			"params" => [
-				"page_id" => "notifications",
-				"url" => $this->context->siteDir . "mobile/im/notify.php"
-			]
+		];;
+
+		if($data["component"])
+		{
+			$result["params"]= [
+				"onclick"=>\Bitrix\Mobile\Tab\Utils::getComponentJSCode($data["component"]),
+				//"counter"=>"tasks_total",
+			];
+		}
+
+		return $result;
+	}
+
+	public function getDataInternal()
+	{
+//		return [
+//			"sort" => $this->defaultSortValue(),
+//			"counter" => "notifications",
+//			"useLetterImage" => true,
+//			"color" => "#40465A",
+//			"imageUrl" => "favorite/notify.png",
+//			"title" => $this->getTitle(),
+//			"params" => [
+//				"page_id" => "notifications",
+//				"url" => $this->context->siteDir . "mobile/im/notify.php"
+//			]
+//		];
+
+		return [
+			"sort" => $this->defaultSortValue(),
+			"imageName" => "bell",
+			"badgeCode" => "notifications",
+			"id" => $this->getId(),
+			"component" => [
+				"name" => "JSStackComponent",
+				"title" => 'Notifications', //todo
+				"componentCode" => "im.notify",
+				"scriptPath" => Manager::getComponentPath("im.notify"),
+				"rootWidget" => [
+					'name' => 'layout',
+					'settings' => [
+						//'useSearch' => true,
+						//'useLargeTitleMode' => true,
+						'objectName' => 'layoutWidget',
+					],
+				],
+			],
 		];
 	}
 

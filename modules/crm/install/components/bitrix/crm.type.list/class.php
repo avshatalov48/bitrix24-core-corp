@@ -3,7 +3,6 @@
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\DynamicSettings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
@@ -32,18 +31,6 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	protected function init(): void
 	{
 		parent::init();
-
-		$enableParameter = $this->request->get('enableDynamic');
-		if ($enableParameter !== null)
-		{
-			DynamicSettings::getCurrent()->setEnabled($enableParameter === 'y');
-		}
-
-		if (!DynamicSettings::getCurrent()->isEnabled())
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_COMMON_ERROR_DYNAMIC_DISABLED'));
-			return;
-		}
 
 		$consistentUrl = Container::getInstance()->getRouter()->getConsistentUrlFromPartlyDefined(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri());
 		if ($consistentUrl)

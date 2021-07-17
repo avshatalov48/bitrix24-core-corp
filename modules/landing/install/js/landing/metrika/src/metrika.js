@@ -68,7 +68,11 @@ export class Metrika
 	detectAnchor(): void
 	{
 		[...document.querySelectorAll('a')].map(node => {
-			const href = Dom.attr(node, 'href');
+			let href = Dom.attr(node, 'href');
+			if (href)
+			{
+				href = href.toString();
+			}
 			if (href && href.indexOf(':'))
 			{
 				const hrefPref = href.split(':')[0];
@@ -179,15 +183,15 @@ export class Metrika
 	 * Send label to the portal.
 	 * @param {string|null} portalUrl
 	 * @param {string} label
-	 * @param {string} value
+	 * @param {string|null} value
 	 */
-	sendLabel(portalUrl: ?string, label: string, value: string): void
+	sendLabel(portalUrl: ?string, label: string, value: ?string): void
 	{
 		if (this.sendedLabel.includes(label + value))
 		{
 			return;
 		}
-		if (value.substr(0, 1) === '#')
+		if (value && value.substr(0, 1) === '#')
 		{
 			value = value.substr(1);
 		}

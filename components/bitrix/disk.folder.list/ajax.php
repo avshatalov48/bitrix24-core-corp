@@ -891,15 +891,9 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$proxyType = $object->getRealObject()->getStorage()->getProxyType();
-
 		$this->sendJsonSuccessResponse(array(
 			'members' => $entityList,
-			'owner' => array(
-				'name' => $proxyType->getEntityTitle(),
-				'avatar' => $proxyType->getEntityImageSrc(58, 58),
-				'link' => $proxyType->getEntityUrl(),
-			),
+			'owner' => $this->getOwner($object),
 		));
 	}
 
@@ -954,16 +948,13 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($object, $this->getUser()->getId());
 		}
-		$proxyType = $object->getRealObject()->getStorage()->getProxyType();
+		$owner = $this->getOwner($object);
+		$owner['canOnlyShare'] = $canOnlyShare;
+		$owner['maxTaskName'] = $maxTaskName;
+
 		$this->sendJsonSuccessResponse(array(
 			'members' => $entityList,
-			'owner' => array(
-				'canOnlyShare' => $canOnlyShare,
-				'maxTaskName' => $maxTaskName,
-				'name' => $proxyType->getEntityTitle(),
-				'avatar' => $proxyType->getEntityImageSrc(58, 58),
-				'link' => $proxyType->getEntityUrl(),
-			),
+			'owner' => $owner,
 			'destination' => array(
 				'items' => array(
 					'users' => $destination['USERS'],
@@ -981,6 +972,27 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				'itemsSelected' => $destination['SELECTED'],
 			),
 		));
+	}
+
+	protected function getOwner(BaseObject $object): array
+	{
+		$proxyType = $object->getRealObject()->getStorage()->getProxyType();
+		if ($proxyType instanceof \Bitrix\Im\Disk\ProxyType\Im)
+		{
+			$createUser = $object->getRealObject()->getCreateUser();
+
+			return [
+				'name' => $createUser->getFormattedName(),
+				'avatar' => $createUser->getAvatarSrc(58, 58),
+				'link' => $createUser->getDetailUrl(),
+			];
+		}
+
+		return [
+			'name' => $proxyType->getEntityTitle(),
+			'avatar' => $proxyType->getEntityImageSrc(58, 58),
+			'link' => $proxyType->getEntityUrl(),
+		];
 	}
 
 	protected function processActionAppendSharing($objectId)
@@ -1080,6 +1092,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 		}
+		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
 		$this->sendJsonSuccessResponse();
 	}
 
@@ -1098,6 +1111,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
+
+		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
 
 		$entityToNewShared = $this->request->getPost('entityToNewShared');
 		if(!empty($entityToNewShared) && is_array($entityToNewShared))

@@ -96,6 +96,7 @@ if ($isErrorOccured)
 	}
 }
 
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
@@ -103,9 +104,7 @@ use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\Format\ContactAddressFormatter;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
@@ -1994,10 +1993,6 @@ $arResult['PERM_INVOICE'] = $bInvoice;
 
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
-$addressFormatOptions = $sExportType === 'csv'
-	? array('SEPARATOR' => AddressSeparator::Comma)
-	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true);
-
 $now = time() + CTimeZone::GetOffset();
 
 $allDocumentStates = [];
@@ -2338,7 +2333,18 @@ foreach($arResult['CONTACT'] as &$arContact)
 
 	if(isset($arSelectMap['FULL_ADDRESS']))
 	{
-		$arContact['FULL_ADDRESS'] = ContactAddressFormatter::format($arContact, $addressFormatOptions);
+		if ($sExportType === 'csv')
+		{
+			$arContact['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+				ContactAddress::mapEntityFields($arContact)
+			);
+		}
+		else
+		{
+			$arContact['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+				ContactAddress::mapEntityFields($arContact)
+			);
+		}
 	}
 
 	$arResult['CONTACT'][$entityID] = $arContact;

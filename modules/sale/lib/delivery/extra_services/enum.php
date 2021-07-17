@@ -165,4 +165,13 @@ class Enum extends Base
 		return "BX.onCustomEvent('onDeliveryExtraServiceValueChange', [{'id' : '".$id."', 'value': this.value, 'price': ".$this->getJSPrice($prices)."}]);";
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	public function getDisplayValue(): ?string
+	{
+		return isset($this->params['PRICES'][$this->value])
+			? (string)$this->params['PRICES'][$this->value]['TITLE']
+			: null;
+	}
 }

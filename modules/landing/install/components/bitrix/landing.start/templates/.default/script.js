@@ -56,7 +56,7 @@
 			return;
 		}
 
-		var metrika = new BX.Landing.Metrika();
+		var metrika = new BX.Landing.Metrika(true);
 		for (var i = 0, c = querySelector.length; i < c; i++)
 		{
 			BX.bind(querySelector[i], 'click', function(e)

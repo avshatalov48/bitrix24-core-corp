@@ -10,6 +10,9 @@ use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Category\DealCategory;
 
 class DealStageHistoryEntry
 {
@@ -344,5 +347,61 @@ class DealStageHistoryEntry
 		}
 
 		return isset($fields['CREATED_DATE']) ? $fields['CREATED_DATE'] : null;
+	}
+
+	public static function getListFilteredByPermissions(
+		array $parameters,
+		?int $userId = null,
+		string $operation = UserPermissions::OPERATION_READ
+	)
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		if ($userPermissions->getUserId() === 0)
+		{
+			// no data for unauthorized user
+			return [];
+		}
+		$entityTypes = array_merge(
+			[
+				\CCrmOwnerType::DealName,
+			],
+			DealCategory::getPermissionEntityTypeList()
+		);
+		$parameters['filter'] = $userPermissions->applyAvailableItemsFilter(
+			$parameters['filter'] ?? [],
+			$entityTypes,
+			$operation,
+			'OWNER_ID'
+		);
+
+		return DealStageHistoryTable::getList($parameters);
+	}
+
+	public static function getItemsCountFilteredByPermissions(
+		array $filter,
+		?int $userId = null,
+		string $operation = UserPermissions::OPERATION_READ
+	): int
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		if ($userPermissions->getUserId() === 0)
+		{
+			// no data for unauthorized user
+			return 0;
+		}
+		$entityTypes = array_merge(
+			[
+				\CCrmOwnerType::DealName,
+			],
+			DealCategory::getPermissionEntityTypeList()
+		);
+		$filter = $userPermissions->applyAvailableItemsFilter(
+			$filter,
+			$entityTypes,
+			$operation,
+			'OWNER_ID'
+		);
+
+		return DealStageHistoryTable::getCount($filter);
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector;
 
+use Bitrix\ImConnector\Connectors\Notifications;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Context;
 use Bitrix\Main\IO\Path;
@@ -206,6 +207,7 @@ class Library
 		'botframework.twilio',
 		'botframework.emailoffice365',
 		self::ID_FBINSTAGRAM_CONNECTOR,
+		Notifications::CONNECTOR_ID,
 	);
 
 	/** @var array A list of connectors that support group chat.*/
@@ -223,6 +225,7 @@ class Library
 		'botframework.slack',
 		'botframework.groupme',
 		self::ID_FBINSTAGRAM_CONNECTOR,
+		Notifications::CONNECTOR_ID,
 	);
 
 	/** @var array */

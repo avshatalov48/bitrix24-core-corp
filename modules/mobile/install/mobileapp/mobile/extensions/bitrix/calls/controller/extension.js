@@ -25,6 +25,7 @@
 			this.callTimerInterval = null;
 			this.callWithLegacyMobile = false;
 			this.nativeCall = null;
+			this.chatCounter = 0;
 
 			this.callVideoEnabled = false; // for proximity sensor
 			this.skipNextDeviceChangeEvent = false; // workaround to change device to speaker if headphones are removed
@@ -33,6 +34,7 @@
 			this.onCallUserStateChangedHandler = this.onCallUserStateChanged.bind(this);
 			this.onCallUserMicrophoneStateHandler = this.onCallUserMicrophoneState.bind(this);
 			this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
+			this.onCallUserVideoPausedHandler = this.onCallUserVideoPaused.bind(this);
 			this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 			this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 			this.onCallUserFloorRequestHandler = this.onCallUserFloorRequest.bind(this);
@@ -86,6 +88,7 @@
 
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 			BX.addCustomEvent("onAppPaused", this.onAppPaused.bind(this));
+			BX.addCustomEvent("ImRecent::counter::messages", this.onImMessagesCounter.bind(this));
 
 			BX.PULL.subscribe({
 				type: "server",
@@ -179,9 +182,12 @@
 					associatedEntityAvatar: associatedDialogData.avatar,
 					associatedEntityAvatarColor: associatedDialogData.color,
 					cameraState: video,
+					chatCounter: this.chatCounter,
 				});
 			}).then(() =>
 			{
+				BX.postComponentEvent("CallEvents::viewOpened", []);
+				BX.postWebEvent("CallEvents::viewOpened", {});
 				this.bindViewEvents();
 				media.audioPlayer().playSound("call_start");
 				return this.maybeShowLocalVideo(video && !isGroupChat);
@@ -263,6 +269,7 @@
 				device.setProximitySensorEnabled(true);
 				return this.openCallView({
 					status: "call",
+					chatCounter: this.chatCounter,
 				});
 			}).then(() =>
 			{
@@ -490,6 +497,7 @@
 					associatedEntityAvatarColor: this.currentCall.associatedEntity.avatarColor,
 					isVideoCall: params.video,
 					cameraState: false,
+					chatCounter: this.chatCounter
 				}).then(() =>
 				{
 					media.audioPlayer().playSound("call_incoming", 10);
@@ -618,6 +626,7 @@
 				.on(BX.Call.Event.onUserStateChanged, this.onCallUserStateChangedHandler)
 				.on(BX.Call.Event.onUserMicrophoneState, this.onCallUserMicrophoneStateHandler)
 				.on(BX.Call.Event.onUserScreenState, this.onCallUserScreenStateHandler)
+				.on(BX.Call.Event.onUserVideoPaused, this.onCallUserVideoPausedHandler)
 				.on(BX.Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler)
 				.on(BX.Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler)
 				.on(BX.Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler)
@@ -749,6 +758,9 @@
 				callInterface.indicator().imageUrl = associatedAvatar;
 				callInterface.indicator().show();
 				callInterface.indicator().once("tap", () => this.unfold());
+
+				BX.postComponentEvent("CallEvents::viewClosed", []);
+				BX.postWebEvent("CallEvents::viewClosed", {});
 			});
 		}
 
@@ -760,6 +772,9 @@
 				return;
 			}
 			uicomponent.widgetLayer().show();
+
+			BX.postComponentEvent("CallEvents::viewOpened", []);
+			BX.postWebEvent("CallEvents::viewOpened", {});
 		}
 
 		startCallTimer()
@@ -801,6 +816,15 @@
 			}
 		}
 
+		onImMessagesCounter(counter)
+		{
+			this.chatCounter = counter;
+			if (this.callView)
+			{
+				this.callView.setChatCounter(counter);
+			}
+		}
+
 		onAppActive()
 		{
 			if (!this.currentCall)
@@ -808,6 +832,7 @@
 				console.warn("no current call");
 				return;
 			}
+			this.currentCall.log("onAppActive");
 
 			const push = Application.getLastNotification();
 
@@ -842,8 +867,7 @@
 			}
 			else
 			{
-				this.currentCall.setVideoEnabled(this.callVideoEnabled);
-				this.callVideoEnabled = false;
+				this.currentCall.setVideoPaused(false);
 
 				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver")
 				{
@@ -860,8 +884,8 @@
 				return;
 			}
 
-			this.callVideoEnabled = this.currentCall.videoEnabled;
-			this.currentCall.setVideoEnabled(false);
+			this.currentCall.log("onAppPaused");
+			this.currentCall.setVideoPaused(true);
 		}
 
 		onProximitySensor()
@@ -873,13 +897,11 @@
 
 			if (device.proximityState)
 			{
-				this.callVideoEnabled = this.currentCall.videoEnabled;
-				this.currentCall.setVideoEnabled(false);
+				this.currentCall.setVideoPaused(true);
 			}
 			else
 			{
-				this.currentCall.setVideoEnabled(this.callVideoEnabled);
-				this.callVideoEnabled = false;
+				this.currentCall.setVideoPaused(false);
 			}
 		}
 
@@ -1105,6 +1127,14 @@
 			}
 		}
 
+		onCallUserVideoPaused(userId, videoPaused)
+		{
+			if (this.callView)
+			{
+				this.callView.setUserVideoPaused(userId, videoPaused);
+			}
+		}
+
 		onCallUserVoiceStarted(userId)
 		{
 			if (this.callView)
@@ -1245,7 +1275,6 @@
 
 				if (!this.ignoreNativeCallAnswer)
 				{
-					this.callVideoEnabled = this.nativeCall.params.video;
 					this.answerCurrentCall(this.nativeCall.params.video);
 				}
 			}
@@ -1314,6 +1343,9 @@
 			this.callWithLegacyMobile = false;
 			this.callVideoEnabled = false;
 			this.skipNextDeviceChangeEvent = false;
+
+			BX.postComponentEvent("CallEvents::viewClosed", []);
+			BX.postWebEvent("CallEvents::viewClosed", {});
 		}
 
 		isDeviceSupported()
@@ -1413,7 +1445,7 @@
 				status: status,
 				isGroupCall: true,
 				isVideoCall: true,
-				associatedEntityName: "Ivan Petrov",
+				associatedEntityName: "Very very long chat name. Very very long chat name. Very very long chat name. And again.",
 				associatedEntityAvatar: "",
 				...viewProps,
 			}).then(() =>

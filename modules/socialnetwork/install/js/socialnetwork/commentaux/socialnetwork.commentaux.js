@@ -60,6 +60,51 @@ BX.CommentAux.getLiveText = function(type, params)
 			result = result.replace('#SHARE_LIST#', this.getShareList(params));
 		}
 	}
+	else if (type === 'createentity')
+	{
+		if (
+			BX.type.isNotEmptyObject(params)
+			&& BX.type.isNotEmptyString(params.entityType)
+			&& typeof params.entityId != 'undefined'
+			&& parseInt(params.entityId) > 0
+			&& BX.type.isNotEmptyString(params.entityName)
+			&& BX.type.isNotEmptyString(params.sourceEntityType)
+			&& typeof params.sourceEntityId != 'undefined'
+			&& parseInt(params.sourceEntityId) > 0
+		)
+		{
+			var entityName = this.renderEntity({
+				ENTITY_TYPE: params.entityType,
+				NAME: params.entityName,
+				LINK: (BX.type.isNotEmptyString(params.entityUrl) ? params.entityUrl : ''),
+				VISIBILITY: this.getEntityVisibility(params),
+			});
+
+			var sourceEntityType = '';
+			var sourceEntityLink = (!BX.RenderParts.mobile ? '<a target="_blank" href="' + (BX.type.isNotEmptyString(params.sourceEntityLink) ? params.sourceEntityLink : '') + '">' : '');
+
+			if (this.isSourcePost(params.sourceEntityType))
+			{
+				sourceEntityType = (BX.type.isNotEmptyString(params.sourceEntityType) ? params.sourceEntityType : 'BLOG_POST') + (BX.type.isNotEmptyString(params.suffix) ? '_' + params.suffix : '');
+				result = BX.message('SONET_COMMENTAUX_JS_CREATEENTITY_POST_' + sourceEntityType)
+					.replace('#ENTITY_CREATED#', this.getEntityCreatedMessage(params.entityType))
+					.replace('#ENTITY_NAME#', entityName)
+					.replace('#A_BEGIN#', sourceEntityLink)
+					.replace('#A_END#', (!BX.RenderParts.mobile ? '</a>' : '')
+				);
+			}
+			else if (this.isSourceComment(params.sourceEntityType))
+			{
+				sourceEntityType = (BX.type.isNotEmptyString(params.sourceEntityType) ? params.sourceEntityType + (BX.type.isNotEmptyString(params.suffix) ? '_' + params.suffix : '') : 'BLOG_COMMENT');
+
+				result = BX.message('SONET_COMMENTAUX_JS_CREATEENTITY_COMMENT_' + sourceEntityType)
+					.replace('#ENTITY_CREATED#', this.getEntityCreatedMessage(params.entityType))
+					.replace('#ENTITY_NAME#', entityName)
+					.replace('#A_BEGIN#', sourceEntityLink)
+					.replace('#A_END#', (!BX.RenderParts.mobile ? '</a>' : ''));
+			}
+		}
+	}
 	else if (type === 'createtask')
 	{
 		if (
@@ -160,7 +205,7 @@ BX.CommentAux.renderEntity = function(entity)
 		&& entity.ENTITY_TYPE != 'undefined'
 	)
 	{
-		switch (entity.ENTITY_TYPE)
+		switch (entity.ENTITY_TYPE.toUpperCase())
 		{
 			case 'U':
 				result = BX.RenderParts.getNodeU(entity);
@@ -174,8 +219,14 @@ BX.CommentAux.renderEntity = function(entity)
 			case 'DR':
 				result = BX.RenderParts.getNodeDR(entity);
 				break;
-			case 'task':
+			case 'TASK':
 				result = BX.RenderParts.getNodeTask(entity);
+				break;
+			case 'BLOG_POST':
+				result = BX.RenderParts.getNodePost(entity);
+				break;
+			case 'CALENDAR_EVENT':
+				result = BX.RenderParts.getNodeCalendarEvent(entity);
 				break;
 			default:
 		}
@@ -192,5 +243,84 @@ BX.CommentAux.renderEntity = function(entity)
 
 	return result;
 };
+
+BX.CommentAux.getEntityCreatedMessage = function(entityType)
+{
+	var result = '';
+
+	if (!BX.type.isNotEmptyString(entityType))
+	{
+		return result;
+	}
+
+	switch (entityType)
+	{
+		case 'TASK':
+			result = BX.message('SONET_COMMENTAUX_JS_CREATEENTITY_ENTITY_CREATED_TASK');
+			break;
+		case 'BLOG_POST':
+			result = BX.message('SONET_COMMENTAUX_JS_CREATEENTITY_ENTITY_CREATED_BLOG_POST');
+			break;
+		case 'CALENDAR_EVENT':
+			result = BX.message('SONET_COMMENTAUX_JS_CREATEENTITY_ENTITY_CREATED_CALENDAR_EVENT');
+			break;
+
+		default:
+	}
+
+	return result;
+
+}
+
+BX.CommentAux.getEntityTypeName = function(entityType)
+{
+	var result = '';
+
+	if (!BX.type.isNotEmptyString(entityType))
+	{
+		return result;
+	}
+
+	switch (entityType)
+	{
+		case 'TASK':
+			result = BX.message('SONET_COMMENTAUX_CREATEENTITY_ENTITY_TASK');
+			break;
+		default:
+	}
+
+	return result;
+};
+
+BX.CommentAux.getEntityVisibility = function(params)
+{
+	var result = {};
+
+	if (params.entityType.toUpperCase() === 'TASK')
+	{
+		result.userId = (typeof params.taskResponsibleId != 'undefined' && parseInt(params.taskResponsibleId) > 0 ? parseInt(params.taskResponsibleId) : 0);
+	}
+	else if (params.entityType.toUpperCase() === 'BLOG_POST')
+	{
+		result.available = (
+			BX.type.isArray(params.socNetPermissions)
+			&& (
+				params.socNetPermissions.indexOf('G2') > -1
+				|| params.socNetPermissions.indexOf('UA') > -1
+				|| params.socNetPermissions.indexOf('U' + BX.message('USER_ID')) > -1
+				|| params.socNetPermissions.indexOf('US' + BX.message('USER_ID')) > -1
+			)
+		);
+	}
+	else if (params.entityType.toUpperCase() === 'CALENDAR_EVENT')
+	{
+		result.available = (
+			BX.type.isArray(params.attendees)
+			&& params.attendees.indexOf(BX.message('USER_ID')) > -1
+		);
+	}
+
+	return result;
+}
 
 })();

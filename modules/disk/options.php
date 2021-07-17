@@ -2,6 +2,7 @@
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\ZipNginx;
 
@@ -47,7 +48,8 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 
 	if(OnlyOfficeHandler::isEnabled())
 	{
-		$isValidToken = OnlyOfficeHandler::isValidToken(OnlyOfficeHandler::getSecretKey());
+		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
+		$isValidToken = OnlyOfficeHandler::isValidToken($secretKey);
 		if (!$isValidToken->isSuccess())
 		{
             $notices['disk_onlyoffice_secret_key'] = $isValidToken->getErrors()[0]->getMessage();
@@ -72,13 +74,13 @@ $arAllOptions = array_filter(array(
 	array("disk_allow_use_external_link", GetMessage("DISK_ALLOW_USE_EXTERNAL_LINK"), 'Y', array("checkbox", "Y")),
 	array("disk_version_limit_per_file", GetMessage("DISK_VERSION_LIMIT_PER_FILE"), 0, Array("selectbox", array(0 => GetMessage('DISK_VERSION_LIMIT_PER_FILE_UNLIMITED'), 3  => 3, 10 => 10, 25  => 25, 50 => 50, 100 => 100, 500 => 500))),
 	GetMessage("DISK_SETTINGS_SECTION_HEAD_FILE_LOCK"),
-    array("disk_object_lock_enabled", GetMessage("DISK_ENABLE_OBJECT_LOCK_SUPPORT"), 'N', array("checkbox", "Y")),
-//    Configuration::isEnabledObjectLock()? array("disk_auto_lock_on_object_edit", GetMessage("DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"), 'N', array("checkbox", "Y")) : null,
-//    Configuration::isEnabledObjectLock()? array("disk_auto_release_lock_on_save", GetMessage("DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"), 'N', array("checkbox", "Y")) : null,
-//    Configuration::isEnabledObjectLock()? array("disk_time_auto_release_object_lock", GetMessage("DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"), 0, Array("text", "20")) : null,
-//	array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")),
-//	array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")),
-//	array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")),
+	array("disk_object_lock_enabled", GetMessage("DISK_ENABLE_OBJECT_LOCK_SUPPORT"), 'N', array("checkbox", "Y")),
+	//    Configuration::isEnabledObjectLock()? array("disk_auto_lock_on_object_edit", GetMessage("DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"), 'N', array("checkbox", "Y")) : null,
+	//    Configuration::isEnabledObjectLock()? array("disk_auto_release_lock_on_save", GetMessage("DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"), 'N', array("checkbox", "Y")) : null,
+	//    Configuration::isEnabledObjectLock()? array("disk_time_auto_release_object_lock", GetMessage("DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"), 0, Array("text", "20")) : null,
+	Configuration::isEnabledDocuments() ? array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")) : null,
+	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")) : null,
+	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")) : null,
 ));
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),

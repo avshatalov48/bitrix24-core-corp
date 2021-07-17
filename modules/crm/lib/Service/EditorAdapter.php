@@ -32,6 +32,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UserField\Dispatcher;
+use Bitrix\Main\UserField\Types\BooleanType;
 use Bitrix\Main\Web\Json;
 
 class EditorAdapter
@@ -89,16 +90,15 @@ class EditorAdapter
 	{
 		return (
 			Loader::includeModule('catalog')
-			&&
-			Catalog\Config\Feature::isCommonProductProcessingEnabled()
+			&& Catalog\Config\Feature::isCommonProductProcessingEnabled()
 		);
 	}
 
 	public function processByItem(Item $item, EO_Status_Collection $stages, array $componentParameters = []): self
 	{
-		$mode = $componentParameters['mode'] ?? ComponentMode::VIEW;
-		$componentName = $componentParameters['componentName'] ?? '';
-		$fileHandlerUrl = $componentParameters['fileHandlerUrl'] ?? '';
+		$mode = (int)($componentParameters['mode'] ?? ComponentMode::VIEW);
+		$componentName = (string)($componentParameters['componentName'] ?? '');
+		$fileHandlerUrl = (string)($componentParameters['fileHandlerUrl'] ?? '');
 		$componentParameters['titleCreationPlaceholder'] = $item->getTitlePlaceholder();
 		/** @var EntityConversionWizard|null $conversionWizard */
 		$conversionWizard = $componentParameters['conversionWizard'] ?? null;
@@ -376,6 +376,7 @@ class EditorAdapter
 		{
 			throw new InvalidOperationException('call EditorAdapter::processByItem() first');
 		}
+
 		return $this->entityData;
 	}
 
@@ -394,7 +395,7 @@ class EditorAdapter
 		return $entityFields;
 	}
 
-	protected function processFieldsAttributes(array $fields, string $mode, Item $item): array
+	protected function processFieldsAttributes(array $fields, int $mode, Item $item): array
 	{
 		$fieldsToHide = [];
 
@@ -1003,7 +1004,7 @@ class EditorAdapter
 		$isEmptyField = true;
 
 		if ((is_string($fieldValue) && $fieldValue !== '')
-			|| (is_numeric($fieldValue) && $fieldValue !== 0)
+			|| (is_numeric($fieldValue) && ($fieldValue !== 0 || $fieldParams['USER_TYPE_ID'] === BooleanType::USER_TYPE_ID))
 			|| (is_array($fieldValue) && !empty($fieldValue))
 			|| (is_object($fieldValue)))
 		{

@@ -12,6 +12,7 @@ $MESS["TOP_MENU_LIVE_FEED2"] = "Новости";
 $MESS["TOP_MENU_TASKS"] = "Задачи и Проекты";
 $MESS["TOP_MENU_CALENDAR"] = "Календарь";
 $MESS["TOP_MENU_DISK"] = "Диск";
+$MESS["TOP_MENU_DISK_DOCUMENTS"] = "Документы";
 $MESS["TOP_MENU_PHOTO"] = "Фотографии";
 $MESS["TOP_MENU_BLOG"] = "Сообщения";
 $MESS["TOP_MENU_MAIL"] = "Почта";

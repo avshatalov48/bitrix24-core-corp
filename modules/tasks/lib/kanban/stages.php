@@ -395,7 +395,7 @@ class StagesTable extends Entity\DataManager
 				else if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
 				{
 					$kanbanService = new KanbanService();
-					$source = $kanbanService->getKanbanStages($entityId);
+					$source = $kanbanService->generateKanbanStages($entityId);
 				}
 				else
 				{

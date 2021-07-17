@@ -100,6 +100,7 @@ $MESS["MAIL_MESSAGE_LIST_COLUMN_BIND"] = "Обработано";
 
 $MESS['MAIL_MESSAGE_LIST_BTN_VIEW'] = "Открыть";
 $MESS['MAIL_MESSAGE_LIST_BTN_MOVE'] = "Переместить в папку";
+$MESS['MAIL_MESSAGE_LIST_BTN_DELETE_IMMEDIATELY'] = "Удалить безвозвратно";
 $MESS['MAIL_MESSAGE_LIST_BTN_DELETE'] = "Удалить";
 $MESS['MAIL_MESSAGE_LIST_BTN_SPAM'] = "Это спам";
 $MESS['MAIL_MESSAGE_LIST_BTN_NOT_SPAM'] = "Не спам";

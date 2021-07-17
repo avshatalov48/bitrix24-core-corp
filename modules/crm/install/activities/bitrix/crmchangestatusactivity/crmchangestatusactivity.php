@@ -1,8 +1,11 @@
-<?
+<?php
 
 use Bitrix\Crm;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmChangeStatusActivity extends CBPActivity
 {
@@ -29,7 +32,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		$targetStatus = (string)$this->TargetStatus;
 		if (is_numeric($targetStatus))
 		{
-			$targetStatus = (int) $targetStatus;
+			$targetStatus = (int)$targetStatus;
 		}
 
 		//check recursion
@@ -54,7 +57,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		}
 		// end check recursion
 
-		list ($entityTypeName, $entityId) = mb_split('_(?=[^_]*$)', $documentId[2]);
+		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$fieldKey = null;
 		$stages = [];
 
@@ -86,6 +89,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		if ($stages && !in_array($targetStatus, $stages, true))
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_CHANGE_STATUS_INCORRECT_STAGE'), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -111,8 +115,6 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 		//Stop running queue
 		throw new Exception('TerminateWorkflow');
-
-		return CBPActivityExecutionStatus::Closed;
 	}
 
 	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
@@ -145,7 +147,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
+			'siteId' => $siteId,
 		]);
 
 		$dialog->setMapCallback([__CLASS__, 'getPropertiesDialogMap']);
@@ -164,82 +166,73 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			return [];
 		}
 
-		$documentStatuses = [];
-		$documentType = $dialog->getDocumentType();
-		$documentType = $documentType[2];
+		$documentType = $dialog->getDocumentType()[2];
 		$context = $dialog->getContext();
 		$categoryId = isset($context['DOCUMENT_CATEGORY_ID']) ? (int)$context['DOCUMENT_CATEGORY_ID'] : null;
-		$fieldName = '';
+
+		$targetStatusProperty = [
+			'Name' => GetMessage('CRM_CHANGE_STATUS_STATUS'),
+			'FieldName' => 'target_status',
+			'Type' => 'select',
+			'Required' => true,
+		];
 
 		switch ($documentType)
 		{
 			case \CCrmOwnerType::DealName:
-				if ($categoryId !== null)
-					$documentStatuses = \Bitrix\Crm\Category\DealCategory::getStageList($categoryId);
-				else
-					$documentStatuses = \Bitrix\Crm\Category\DealCategory::getFullStageList();
-				$fieldName = GetMessage('CRM_CHANGE_STATUS_STAGE');
+				$targetStatusProperty['Name'] = GetMessage('CRM_CHANGE_STATUS_STAGE');
+				$targetStatusProperty['Type'] = 'deal_stage';
+				$targetStatusProperty['Settings'] = ['categoryId' => $categoryId];
 				break;
 
 			case \CCrmOwnerType::LeadName:
-				$documentStatuses = CCrmStatus::GetStatusList('STATUS');
-				$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
+				$targetStatusProperty['Type'] = 'lead_status';
 				break;
 
 			case \CCrmOwnerType::OrderName:
-				$documentStatuses = [];
+				$targetStatusProperty['Options'] = [];
 
 				$statuses = \Bitrix\Crm\Order\OrderStatus::getListInCrmFormat();
 				foreach ($statuses as $id => $statusInfo)
 				{
-					$documentStatuses[$statusInfo['STATUS_ID']] = $statusInfo['NAME'];
+					$targetStatusProperty['Options'][$statusInfo['STATUS_ID']] = $statusInfo['NAME'];
 				}
 
-				$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
 				break;
 
 			case \CCrmOwnerType::InvoiceName:
-				$documentStatuses = [];
+				$targetStatusProperty['Options'] = [];
 
 				$statuses = CCrmStatus::GetStatus('INVOICE_STATUS');
 				foreach ($statuses as $id => $statusInfo)
 				{
-					$documentStatuses[$statusInfo['STATUS_ID']] = $statusInfo['NAME'];
+					$targetStatusProperty['Options'][$statusInfo['STATUS_ID']] = $statusInfo['NAME'];
 				}
 
-				$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
 				break;
 			default:
 				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
 				$target = new \Bitrix\Crm\Automation\Target\ItemTarget($documentTypeId);
+				$targetStatusProperty['Options'] = [];
 
-				if($target->isAvailable())
+				if ($target->isAvailable())
 				{
-					foreach ($target->getStatusInfos() as $statusId => $statusInfo)
+					foreach ($target->getStatusInfos((int)$categoryId) as $statusId => $statusInfo)
 					{
-						$documentStatuses[$statusId] = $statusInfo['NAME'];
+						$targetStatusProperty['Options'][$statusId] = $statusInfo['NAME'];
 					}
-					$fieldName = GetMessage('CRM_CHANGE_STATUS_STATUS');
 				}
 				break;
 		}
 
-		$map = [
-			'TargetStatus' => [
-				'Name' => $fieldName,
-				'FieldName' => 'target_status',
-				'Type' => 'select',
-				'Required' => true,
-				'Options' => $documentStatuses
-			],
+		return [
+			'TargetStatus' => $targetStatusProperty,
 			'ModifiedBy' => [
 				'Name' => GetMessage('CRM_CHANGE_STATUS_MODIFIED_BY'),
-				'FieldName' => 'modified_by',//
-				'Type' => 'user'
-			]
+				'FieldName' => 'modified_by',
+				'Type' => 'user',
+			],
 		];
-
-		return $map;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
@@ -247,7 +240,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		$errors = [];
 		$properties = [
 			'TargetStatus' => $arCurrentValues['target_status'],
-			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues['modified_by'], $documentType, $errors)
+			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues['modified_by'], $documentType, $errors),
 		];
 
 		if (
@@ -290,7 +283,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			[],
 			[
 				'=ID' => $id,
-				'CHECK_PERMISSIONS' => 'N'
+				'CHECK_PERMISSIONS' => 'N',
 			],
 			false,
 			false,
@@ -311,6 +304,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 	{
 		$target = new \Bitrix\Crm\Automation\Target\ItemTarget($entityTypeId);
 		$target->setEntityById($entityId);
+
 		return $target->isAvailable() ? $target->getEntityStatuses() : [];
 	}
 }

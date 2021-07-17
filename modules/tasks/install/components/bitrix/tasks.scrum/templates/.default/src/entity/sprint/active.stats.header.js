@@ -15,19 +15,21 @@ export class ActiveStatsHeader extends StatsHeader
 		if (Type.isInteger(remainingDays) && remainingDays <= 1)
 		{
 			label = Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_ACTIVE_LAST_LABEL')
-				.replace('#percent#', '<b>' + percentage + '%</b>')
+				.replace('#percent#', percentage)
 			;
 		}
 		else
 		{
 			label = Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_ACTIVE_LABEL')
-				.replace('#days#', '<b>' + remainingDays + '</b>')
-				.replace('#percent#', '<b>' + percentage + '%</b>')
+				.replace('#days#', remainingDays)
+				.replace('#percent#', percentage)
 			;
 		}
 
+		const title = this.getSprintDate().getFormattedTitleDatePeriod();
+
 		this.headerNode = Tag.render`
-			<div class="${this.headerClass}">
+			<div class="${this.headerClass}" title="${title}">
 				${label}
 			</div>
 		`;
@@ -39,6 +41,7 @@ export class ActiveStatsHeader extends StatsHeader
 	{
 		const dateWithWeekendOffset = new Date();
 		dateWithWeekendOffset.setSeconds(dateWithWeekendOffset.getSeconds() + this.weekendDaysTime);
+		dateWithWeekendOffset.setHours(0, 0, 0, 0);
 
 		const dateEnd = new Date(endDate * 1000);
 

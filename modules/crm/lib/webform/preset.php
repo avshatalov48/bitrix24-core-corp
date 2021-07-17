@@ -17,21 +17,21 @@ Loc::loadMessages(__FILE__);
 
 class Preset
 {
-	protected $errors = array();
+	protected $errors = [];
 	protected static $version = 2;
 	protected static $versionOptionName = 'webform_preset_version';
 
-	protected static function getVersion()
+	protected static function getVersion(): int
 	{
 		return self::$version;
 	}
 
-	protected static function getInstalledVersion()
+	protected static function getInstalledVersion(): int
 	{
 		return (int) Option::get('crm', self::$versionOptionName, 0);
 	}
 
-	public static function updateInstalledVersion($version = null)
+	public static function updateInstalledVersion($version = null): void
 	{
 		if($version === null)
 		{
@@ -41,38 +41,31 @@ class Preset
 		Option::set('crm', self::$versionOptionName, $version);
 	}
 
-	public static function checkVersion()
+	public static function checkVersion(): bool
 	{
 		return self::getVersion() > self::getInstalledVersion();
 	}
 
-	public function getErrors()
+	public function getErrors(): array
 	{
 		return $this->errors;
 	}
 
-	public function hasErrors()
+	public function hasErrors(): bool
 	{
 		return count($this->errors) > 0;
 	}
 
-	public function isInstalled($xmlId)
+	public function isInstalled($xmlId): ?bool
 	{
-		$formDb = Internals\FormTable::getList(array(
-			'select' => array('ID'),
-			'filter' => array('=IS_SYSTEM' => 'Y', '=XML_ID' => $xmlId),
-		));
-		if($formDb->fetch())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		$formDb = Internals\FormTable::getList([
+			'select' => ['ID'],
+			'filter' => ['=IS_SYSTEM' => 'Y', '=XML_ID' => $xmlId],
+		]);
+		return $formDb->fetch() ? true : false;
 	}
 
-	public function install()
+	public function install(): bool
 	{
 		if(!self::checkVersion())
 		{
@@ -95,10 +88,10 @@ class Preset
 			self::updateInstalledVersion();
 		}
 
-		$callback = array(__CLASS__, 'installVersion' . self::getVersion());
+		$callback = [__CLASS__, 'installVersion' . self::getVersion()];
 		if (is_callable($callback))
 		{
-			call_user_func_array($callback, array());
+			call_user_func_array($callback, []);
 		}
 
 		return $this->hasErrors();
@@ -106,15 +99,15 @@ class Preset
 
 	public function uninstall($xmlId = null)
 	{
-		$filter = array('=IS_SYSTEM' => 'Y');
+		$filter = ['=IS_SYSTEM' => 'Y'];
 		if($xmlId)
 		{
 			$filter['=XML_ID'] = $xmlId;
 		}
-		$formDb = Internals\FormTable::getList(array(
-			'select' => array('ID'),
+		$formDb = Internals\FormTable::getList([
+			'select' => ['ID'],
 			'filter' => $filter,
-		));
+		]);
 		while($form = $formDb->fetch())
 		{
 			$deleteDb = Internals\FormTable::delete($form['ID']);
@@ -130,7 +123,7 @@ class Preset
 		}
 	}
 
-	protected function addForm($formData)
+	protected function addForm($formData): bool
 	{
 		$formData['IS_SYSTEM'] = 'Y';
 		$formData['ACTIVE_CHANGE_BY'] = self::getCurrentUserId();
@@ -170,7 +163,7 @@ class Preset
 		return $userId;
 	}
 
-	public static function getById($xmlId)
+	public static function getById($xmlId): ?array
 	{
 		$presets = static::getList();
 		foreach($presets as $preset)
@@ -184,15 +177,15 @@ class Preset
 		return null;
 	}
 
-	private static function isLeadEnabled()
+	private static function isLeadEnabled(): bool
 	{
 		return LeadSettings::getCurrent()->isEnabled();
 	}
 
-	public static function getList()
+	public static function getList(): array
 	{
-		$list = array(
-			array(
+		$list = [
+			[
 				'XML_ID' => 'crm_preset_cd', //cd - ContactData
 				'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CD_NAME'),
 				'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CD_CAPTION'),
@@ -208,8 +201,8 @@ class Preset
 					'DEAL_DC_ENABLED' => 'Y',
 				],
 				'BUTTON_CAPTION' => '',
-				'FIELDS' => array(
-					array(
+				'FIELDS' => [
+					[
 						'TYPE' => 'string',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
@@ -217,8 +210,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'string',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
@@ -226,8 +219,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'phone',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
@@ -235,8 +228,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'email',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_EMAIL' : 'CONTACT_EMAIL',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL'),
@@ -244,10 +237,10 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					)
-				)
-			),
-			array(
+					]
+				]
+			],
+			[
 				'XML_ID' => 'crm_preset_fb', //fb - FeedBack
 				'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_FB_NAME'),
 				'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_FB_CAPTION'),
@@ -263,8 +256,8 @@ class Preset
 					'DEAL_DC_ENABLED' => 'Y',
 				],
 				'BUTTON_CAPTION' => '',
-				'FIELDS' => array(
-					array(
+				'FIELDS' => [
+					[
 						'TYPE' => 'string',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
@@ -272,8 +265,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'string',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
@@ -281,8 +274,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'phone',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
@@ -290,8 +283,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'email',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_EMAIL' : 'CONTACT_EMAIL',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL'),
@@ -299,8 +292,8 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					),
-					array(
+					],
+					[
 						'TYPE' => 'text',
 						'CODE' => self::isLeadEnabled() ? 'LEAD_COMMENTS' : 'DEAL_COMMENTS',
 						'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_COMMENTS'),
@@ -308,10 +301,10 @@ class Preset
 						'REQUIRED' => 'N',
 						'MULTIPLE' => 'N',
 						'PLACEHOLDER' => '',
-					)
-				)
-			)
-		);
+					]
+				]
+			]
+		];
 
 		if (Loader::includeModule('voximplant'))
 		{
@@ -325,7 +318,7 @@ class Preset
 		return $list;
 	}
 
-	public static function getCallback($phoneCode, $phoneCaption)
+	public static function getCallback($phoneCode, $phoneCaption): array
 	{
 		if (!$phoneCode && Loader::includeModule('voximplant'))
 		{
@@ -337,9 +330,9 @@ class Preset
 			}
 		}
 
-		$callback = array(
+		$callback = [
 			'XML_ID' => 'crm_preset_cb_' . $phoneCode, //cb - CallBack
-			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_NAME', array('#call_from#' => $phoneCaption)),
+			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_NAME', ['#call_from#' => $phoneCaption]),
 			'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_CAPTION'),
 			'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_DESCRIPTION'),
 			'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT'),
@@ -356,8 +349,8 @@ class Preset
 				'DEAL_DC_ENABLED' => 'Y',
 			],
 			'BUTTON_CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION'),
-			'FIELDS' => array(
-				array(
+			'FIELDS' => [
+				[
 					'TYPE' => 'phone',
 					'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
 					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
@@ -365,21 +358,21 @@ class Preset
 					'REQUIRED' => 'Y',
 					'MULTIPLE' => 'N',
 					'PLACEHOLDER' => '',
-				)
-			)
-		);
+				]
+			]
+		];
 
 		return $callback;
 	}
 
 	public static function installVersion2()
 	{
-		$formDb = Internals\FormTable::getList(array(
-			'select' => array('ID'),
-			'filter' => array(
+		$formDb = Internals\FormTable::getList([
+			'select' => ['ID'],
+			'filter' => [
 				'IS_SYSTEM' => 'Y'
-			),
-		));
+			],
+		]);
 		while($form = $formDb->fetch())
 		{
 			Form::activate($form['ID'], true, self::getCurrentUserId());

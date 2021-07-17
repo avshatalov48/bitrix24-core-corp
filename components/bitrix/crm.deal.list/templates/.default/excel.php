@@ -134,7 +134,7 @@ else
 							$dealData['TYPE_ID'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
 							break;
 						case 'CURRENCY_ID':
-							$dealData['CURRENCY_ID'] = CCrmCurrency::GetCurrencyName($arDeal['CURRENCY_ID']);
+							$dealData['CURRENCY_ID'] = CCrmCurrency::GetEncodedCurrencyName($arDeal['CURRENCY_ID']);
 							break ;
 						case 'SOURCE_ID':
 							$sourceID = !empty($arDeal['SOURCE_ID']) ? $arDeal['SOURCE_ID'] : '';

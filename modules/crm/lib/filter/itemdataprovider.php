@@ -13,6 +13,7 @@ use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Crm\WebForm;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
@@ -128,6 +129,14 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_BOOLEAN,
+			],
+			Item::FIELD_NAME_WEBFORM_ID => [
+				'type' => static::TYPE_LIST,
+				'displayGrid' => false,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_LIST,
 			],
 		];
 
@@ -721,6 +730,13 @@ class ItemDataProvider extends EntityDataProvider
 			$result = [
 				'params' => ['multiple' => 'Y'],
 				'items' => StatusTable::getStatusesList(StatusTable::ENTITY_ID_SOURCE),
+			];
+		}
+		elseif ($fieldID === Item::FIELD_NAME_WEBFORM_ID)
+		{
+			$result = [
+				'params' => ['multiple' => 'Y'],
+				'items' => WebForm\Manager::getListNames()
 			];
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))

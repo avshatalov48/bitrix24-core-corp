@@ -20,9 +20,4 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
-?><script>
-
-	BX.ready(function() {
-		new BX.Crm.Catalog();
-	});
-</script>
+?>

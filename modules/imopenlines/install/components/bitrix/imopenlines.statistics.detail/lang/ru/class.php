@@ -99,3 +99,6 @@ $MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER'] = 'Переадресо
 $MESS['OL_COMPONENT_SESSION_LIST_GROUP_ACTION_TRANSFER_TITLE'] = 'Выполняется переадресация группы диалогов.';
 $MESS['OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION'] = 'Вы действительно хотите это сделать?';
 $MESS['OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE'] = 'Открытые линии';
+$MESS['OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE'] = 'Пользовательские поля диалогов открытых линий';
+$MESS['OL_COMPONENT_SESSION_FILTER_SHARE_URL'] = 'Скопировать ссылку';
+$MESS['OL_COMPONENT_SESSION_FILTER_SHARE_URL_DONE'] = 'Ссылка скопирована в буфер обмена.';

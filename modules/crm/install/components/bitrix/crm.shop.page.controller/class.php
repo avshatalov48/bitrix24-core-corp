@@ -10,21 +10,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  */
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\AccessDeniedException;
 use Bitrix\Main\LoaderException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\UI\Extension;
 
 class CCrmShopPageController extends CBitrixComponent
 {
-	public function onIncludeComponentLang()
-	{
-		$this->includeComponentLang(basename(__FILE__));
-		Loc::loadMessages(__FILE__);
-	}
-
 	public function onPrepareComponentParams($params)
 	{
 		$params["ADDITIONAL_PARAMS"] = (!empty($params["ADDITIONAL_PARAMS"]) ? $params["ADDITIONAL_PARAMS"] : array());
@@ -38,21 +30,16 @@ class CCrmShopPageController extends CBitrixComponent
 		try
 		{
 			$this->checkRequiredParams();
-
 			$this->checkUsageStatus();
-
 			$this->setMenuCount();
-
 			$this->formatResult();
 			$this->initCore();
-
 			\CCrmInvoice::installExternalEntities();
-
 			$this->includeComponentTemplate();
 		}
 		catch(AccessDeniedException $e)
 		{
-			if ($this->arParams["CONNECT_PAGE"] == "Y")
+			if ($this->arParams["CONNECT_PAGE"] === "Y")
 			{
 				ShowError($e->getMessage());
 			}
@@ -69,13 +56,6 @@ class CCrmShopPageController extends CBitrixComponent
 
 	/**
 	 * @throws AccessDeniedException
-	 * @throws ArgumentOutOfRangeException
-	 * @throws LoaderException
-	 * @throws SystemException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
 	 */
 	protected function checkRequiredParams()
 	{
@@ -91,6 +71,12 @@ class CCrmShopPageController extends CBitrixComponent
 		if (mb_strpos($requestUrl, "/shop/orders/menu/") === false)
 		{
 			return;
+		}
+
+		$storesUrl = '/shop/stores/';
+		if (!CCrmSaleHelper::isWithOrdersMode())
+		{
+			LocalRedirect($storesUrl);
 		}
 
 		$isOrder = false;
@@ -115,14 +101,10 @@ class CCrmShopPageController extends CBitrixComponent
 
 		if (!$isOrder && !$isStore)
 		{
-			LocalRedirect("/shop/stores/");
+			LocalRedirect($storesUrl);
 		}
 	}
 
-	/**
-	 * @throws LoaderException
-	 * @throws ArgumentOutOfRangeException
-	 */
 	protected function setMenuCount()
 	{
 		$additionalParams = $this->arParams["ADDITIONAL_PARAMS"];
@@ -156,8 +138,7 @@ class CCrmShopPageController extends CBitrixComponent
 		$this->arResult = array();
 
 		$this->arResult["ADDITIONAL_PARAMS"] = $this->arParams["ADDITIONAL_PARAMS"];
-		$this->arResult["GLOBAL_MENU_COUNTER"] = $this->arParams["GLOBAL_MENU_COUNTER"] ?
-			$this->arParams["GLOBAL_MENU_COUNTER"] : 0;
+		$this->arResult["GLOBAL_MENU_COUNTER"] = $this->arParams["GLOBAL_MENU_COUNTER"] ?: 0;
 		$this->arResult["CONNECT_PAGE"] = $this->arParams["CONNECT_PAGE"];
 	}
 

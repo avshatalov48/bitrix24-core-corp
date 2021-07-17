@@ -129,6 +129,6 @@ $MESS["INTRANET_INVITE_DIALOG_PICTURE_TITLE"] = "Пригласите колле
 $MESS["INTRANET_INVITE_DIALOG_TITLE"] = "Приглашение";
 $MESS["INTRANET_INVITE_DIALOG_USER_MAX_COUNT"] = "На вашем тарифном плане доступно пользователей";
 $MESS["INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR"] = "Перед приглашением необходимо подтвердить email создателя портала по ссылке из письма.";
-$MESS["INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT"] = "Сейчас в вашем Битрикс24 зарегистировано уже";
+$MESS["INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT"] = "Сейчас в вашем Битрикс24 зарегистрировано уже";
 $MESS["INTRANET_INVITE_DIALOG_UNLIMITED"] = "неограниченно";
 ?>

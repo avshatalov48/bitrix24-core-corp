@@ -230,7 +230,7 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 				'OPPORTUNITY' => '<nobr>'.$arQuote['OPPORTUNITY'].'</nobr>',
 				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arQuote['DATE_CREATE']), $now),
 				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arQuote['DATE_MODIFY']), $now),
-				'CURRENCY_ID' => CCrmCurrency::GetCurrencyName($arQuote['CURRENCY_ID']),
+				'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arQuote['CURRENCY_ID']),
 				'PRODUCT_ID' => isset($arQuote['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arQuote['PRODUCT_ROWS'])) : '',
 				'STATUS_ID' => CCrmViewHelper::RenderQuoteStatusControl(
 					array(
@@ -591,21 +591,24 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'NAVIGATION_BAR' => array(
-			'ITEMS' => array(
-				array(
-					//'icon' => 'kanban',
-					'id' => 'kanban',
-					'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
-					'active' => false,
-					'url' => $arParams['PATH_TO_QUOTE_KANBAN']
-				),
-				array(
-					//'icon' => 'table',
-					'id' => 'list',
-					'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
-					'active' => true,
-					'url' => $arResult['PATH_TO_QUOTE_LIST']
-				)
+			'ITEMS' => array_merge(
+				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Quote),
+				[
+					[
+						//'icon' => 'kanban',
+						'id' => 'kanban',
+						'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
+						'active' => false,
+						'url' => $arParams['PATH_TO_QUOTE_KANBAN']
+					],
+					[
+						//'icon' => 'table',
+						'id' => 'list',
+						'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
+						'active' => true,
+						'url' => $arResult['PATH_TO_QUOTE_LIST']
+					],
+				]
 			),
 			'BINDING' => array(
 				'category' => 'crm.navigation',

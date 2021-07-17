@@ -178,6 +178,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.data.isAutomationEnabled = isAutomationEnabled === true;
 	    }
 	  }, {
+	    key: "getIsBizProcEnabled",
+	    value: function getIsBizProcEnabled() {
+	      return this.data.isBizProcEnabled;
+	    }
+	  }, {
+	    key: "setIsBizProcEnabled",
+	    value: function setIsBizProcEnabled(isBizProcEnabled) {
+	      this.data.isBizProcEnabled = isBizProcEnabled === true;
+	    }
+	  }, {
 	    key: "getIsSetOpenPermissions",
 	    value: function getIsSetOpenPermissions() {
 	      return this.data.isSetOpenPermissions;
@@ -200,7 +210,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getCustomSectionId",
 	    value: function getCustomSectionId() {
-	      return this.data.customSectionId;
+	      if (this.data.hasOwnProperty('customSectionId')) {
+	        return main_core.Text.toInteger(this.data.customSectionId);
+	      }
+
+	      return null;
 	    }
 	  }, {
 	    key: "setCustomSectionId",
@@ -300,7 +314,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "getBooleanFieldNames",
 	    value: function getBooleanFieldNames() {
-	      return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isSetOpenPermissions'];
+	      return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isBizProcEnabled', 'isSetOpenPermissions'];
 	    }
 	  }]);
 	  return TypeModel;

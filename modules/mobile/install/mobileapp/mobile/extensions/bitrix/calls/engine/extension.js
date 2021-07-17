@@ -75,6 +75,7 @@
 		onUserInvited: 'onUserInvited',
 		onUserStateChanged: 'onUserStateChanged',
 		onUserMicrophoneState: 'onUserMicrophoneState',
+		onUserCameraState: 'onUserCameraState',
 		onUserScreenState: 'onUserScreenState',
 		onUserVoiceStarted: 'onUserVoiceStarted',
 		onUserVoiceStopped: 'onUserVoiceStopped',
@@ -111,7 +112,8 @@
 			BX.addCustomEvent("onPullClientEvent-im", this._onPullClientEventHandler);
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 
-			BX.addCustomEvent("onPullStatus", (e) => {
+			BX.addCustomEvent("onPullStatus", (e) =>
+			{
 				this.pullStatus = e.status;
 				console.log("[" + CallUtil.getTimeForLog() + "]: pull status: " + this.pullStatus);
 			});
@@ -171,8 +173,7 @@
 			try
 			{
 				pushParams = JSON.parse(push.params)
-			}
-			catch (e)
+			} catch (e)
 			{
 				navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E005"));
 			}
@@ -224,8 +225,7 @@
 				let callFields = pushParams.PARAMS.call;
 				let pushCallId = callFields.ID;
 				return callId == pushCallId;
-			}
-			catch (e)
+			} catch (e)
 			{
 				return false;
 			}
@@ -392,7 +392,7 @@
 		{
 			return new Promise((resolve, reject) =>
 			{
-				if(this.calls[id])
+				if (this.calls[id])
 				{
 					return resolve({
 						call: this.calls[id],
@@ -416,7 +416,7 @@
 					})
 				}).catch(function (error)
 				{
-					if (typeof(error.error) === "function")
+					if (typeof (error.error) === "function")
 					{
 						error = error.error().getError();
 					}
@@ -646,7 +646,7 @@
 
 		_instantiateCall(callFields, users, logToken)
 		{
-			if(this.calls[callFields['ID']])
+			if (this.calls[callFields['ID']])
 			{
 				console.error("Call " + callFields['ID'] + " already exists");
 				return this.calls[callFields['ID']];
@@ -957,7 +957,6 @@
 			return result + str;
 		}
 
-
 		isAvatarBlank(url)
 		{
 			return typeof (url) !== "string" || url == "" || url.endsWith(blankAvatar);
@@ -966,7 +965,7 @@
 		makeAbsolute(url)
 		{
 			var result;
-			if (typeof(url) !== "string")
+			if (typeof (url) !== "string")
 			{
 				return url;
 			}
@@ -1036,7 +1035,7 @@
 				{
 					try
 					{
-						text = text + ' | ' + (typeof (arguments[i]) == 'object' ? /*JSON.stringify(arguments[i])*/ 'object' : arguments[i]);
+						text = text + ' | ' + (typeof (arguments[i]) == 'object' ? this.printObject(arguments[i]) : arguments[i]);
 					} catch (e)
 					{
 						text = text + ' | (circular structure)';
@@ -1045,6 +1044,33 @@
 			}
 
 			return text;
+		}
+
+		printObject(obj)
+		{
+			let result = "[";
+
+			for (let key in obj)
+			{
+				if (obj.hasOwnProperty(key))
+				{
+					let val = obj[key];
+					switch (typeof val)
+					{
+						case 'object':
+							result += key + (val === null ? ": null; " : ": (object); ");
+							break;
+						case 'string':
+						case 'number':
+						case 'boolean':
+							result += key + ": " + val.toString() + "; ";
+							break;
+						default:
+							result += key + ": (" + typeof (val) + "); ";
+					}
+				}
+			}
+			return result + "]";
 		}
 
 		getUuidv4()
@@ -1059,10 +1085,22 @@
 		debounce(fn, timeout, ctx)
 		{
 			let timer = 0;
-			return function() {
+			return function ()
+			{
 				clearTimeout(timer);
 				timer = setTimeout(() => fn.apply(ctx, arguments), timeout);
 			};
+		}
+
+		array_flip(inputObject)
+		{
+			let result = {};
+			for (let key in inputObject)
+			{
+				result[inputObject[key]] = key;
+			}
+
+			return result;
 		}
 	}
 

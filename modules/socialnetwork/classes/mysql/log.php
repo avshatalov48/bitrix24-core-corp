@@ -419,7 +419,7 @@ class CSocNetLog extends CAllSocNetLog
 				foreach($arFilter as $key => $value)
 				{
 					if (
-						strpos($key, "PINNED_USER_ID") !== false
+						mb_strpos($key, "PINNED_USER_ID") !== false
 						&& $value
 					)
 					{

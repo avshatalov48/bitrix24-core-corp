@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Socialnetwork\Livefeed;
 
 use \Bitrix\Socialnetwork\Livefeed\Provider;
@@ -14,14 +15,14 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 	protected $logEntityType = null;
 	protected $logEntityId = null;
 
-	public static function getId()
+	public static function getId(): string
 	{
 		return static::PROVIDER_ID;
 	}
 
-	public function getEventId()
+	public function getEventId(): array
 	{
-		return array(
+		return [
 			\CCrmLiveFeedEvent::LeadPrefix.\CCrmLiveFeedEvent::Add.\CCrmLiveFeedEvent::CommentSuffix,
 			\CCrmLiveFeedEvent::LeadPrefix.\CCrmLiveFeedEvent::Progress.\CCrmLiveFeedEvent::CommentSuffix,
 			\CCrmLiveFeedEvent::LeadPrefix.\CCrmLiveFeedEvent::Denomination.\CCrmLiveFeedEvent::CommentSuffix,
@@ -43,8 +44,8 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Progress.\CCrmLiveFeedEvent::CommentSuffix,
 			\CCrmLiveFeedEvent::DealPrefix.\CCrmLiveFeedEvent::Message.\CCrmLiveFeedEvent::CommentSuffix,
 			\CCrmLiveFeedEvent::InvoicePrefix.\CCrmLiveFeedEvent::Add.\CCrmLiveFeedEvent::CommentSuffix,
-			\CCrmLiveFeedEvent::ActivityPrefix.\CCrmLiveFeedEvent::Add.\CCrmLiveFeedEvent::CommentSuffix
-		);
+			\CCrmLiveFeedEvent::ActivityPrefix.\CCrmLiveFeedEvent::Add.\CCrmLiveFeedEvent::CommentSuffix,
+		];
 	}
 
 	public function getType()
@@ -69,7 +70,7 @@ final class CrmEntityComment extends \Bitrix\Socialnetwork\Livefeed\Provider
 			));
 			if ($logComentFields = $res->fetch())
 			{
-				$logId = intval($logComentFields['LOG_ID']);
+				$logId = (int)$logComentFields['LOG_ID'];
 			}
 
 			if ($logId)

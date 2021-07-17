@@ -1319,6 +1319,37 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			activity.openDialog(BX.CrmDialogMode.edit);
 			return activity;
 		},
+		addDelivery: function(settings)
+		{
+			if (BX.CrmEntityType.names.deal !== settings.ownerType)
+			{
+				return null;
+			}
+
+			if(typeof(settings) !== 'object')
+			{
+				settings = {};
+			}
+
+			if(typeof(settings['ownerType']) === 'undefined')
+			{
+				settings['ownerType'] = this.getSetting('ownerType', '');
+			}
+
+			if(typeof(settings['ownerID']) === 'undefined')
+			{
+				settings['ownerID'] = this.getSetting('ownerID', '0');
+			}
+
+			if(typeof(settings['orderList']) === 'undefined')
+			{
+				settings['orderList'] = [];
+			}
+
+			var activity = BX.CrmActivityDelivery.create(settings, this);
+			activity.openDialog();
+			return activity;
+		},
 		addEmail: function(settings)
 		{
 			if(!this.isEmailsEnabled())
@@ -10341,6 +10372,130 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 	{
 		var self = new BX.CrmActivityCommunicationListDialog();
 		self.initialize(id, settings);
+		return self;
+	};
+
+	BX.CrmActivityDelivery = function()
+	{
+		this._settings = null;
+		this._editor = null;
+		this._ownerID = null;
+		this._ownerType = null;
+		this._orderList = null;
+		this._additionalOrders = [];
+	};
+	BX.CrmActivityDelivery.prototype =
+	{
+		initialize: function(settings, editor)
+		{
+			this._settings = settings || {};
+			this._editor = editor;
+			this._ownerID = this._settings['ownerID'] || 0;
+			this._ownerType = this._settings['ownerType'] || '';
+			this._orderList = this._settings['orderList'] || [];
+		},
+
+		openDialog: function()
+		{
+			var orderId = this._getLatestOrderId();
+			var options = {
+				context: 'deal',
+				templateMode: 'create',
+				mode: 'delivery',
+				analyticsLabel: 'salescenterClickDeliveryActivity',
+				ownerTypeId: BX.CrmEntityType.enumeration.deal,
+				ownerId: this._ownerID,
+				orderId: orderId,
+			};
+
+			BX.loadExt('salescenter.manager').then(function()
+			{
+				BX.Salescenter.Manager.openApplication(options).then(this._refreshDeal.bind(this));
+			}.bind(this));
+		},
+
+		_getLatestOrderId: function()
+		{
+			var ordersSet = this._orderList.map(function(item)
+			{
+				if (item.ORDER_ID)
+				{
+					return parseInt(item.ORDER_ID);
+				}
+				return 0;
+			});
+
+			this._additionalOrders.map(function(orderId)
+			{
+				ordersSet.push(parseInt(orderId));
+			});
+
+			if (ordersSet.length > 0)
+			{
+				return Math.max.apply(Math, ordersSet);
+			}
+
+			return 0;
+		},
+
+		_refreshDeal: function(result)
+		{
+			if (result)
+			{
+				var deal = result.get('deal');
+				if (deal && deal.PRODUCT_LIST)
+				{
+					this._refreshProductList(deal);
+				}
+
+				var order = result.get('order');
+				if (order && order.id)
+				{
+					this.rememberCurrentOrder(order.id);
+				}
+			}
+		},
+
+		_refreshProductList: function(deal)
+		{
+			try
+			{
+				var editor = BX.Crm.EntityEditor.getDefault();
+				editor.reload();
+
+				editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
+					if (controller._externalEditor)
+					{
+						controller._externalEditor.reinitialize(deal.PRODUCT_LIST);
+					}
+				});
+
+				editor.tapController('PRODUCT_LIST', function(controller) {
+					controller.reinitializeProductList();
+				});
+			}
+			catch (err)
+			{
+				//
+			}
+		},
+
+		rememberCurrentOrder: function(orderId)
+		{
+			this._additionalOrders.push(parseInt(orderId));
+		}
+	};
+
+	BX.CrmActivityDelivery.instance = null;
+	BX.CrmActivityDelivery.getInstance = function()
+	{
+		BX.CrmActivityDelivery.instance = BX.CrmActivityDelivery.instance || new BX.CrmActivityDelivery();
+		return BX.CrmActivityDelivery.instance;
+	};
+	BX.CrmActivityDelivery.create = function(settings, editor)
+	{
+		var self = BX.CrmActivityDelivery.getInstance();
+		self.initialize(settings, editor);
 		return self;
 	};
 }

@@ -3453,8 +3453,12 @@ if(typeof BX.Crm.ClientEditorCommunicationButton === "undefined")
 			},
 			addEmail: function(email)
 			{
+				var ownerTypeId = BX.prop.getInteger(this._settings, "ownerTypeId", 0);
+				var ownerId = BX.prop.getInteger(this._settings, "ownerId", 0);
 				BX.CrmActivityEditor.addEmail(
 					{
+						ownerID: ownerId,
+						ownerType: BX.CrmEntityType.resolveName(ownerTypeId),
 						communicationsLoaded: true,
 						communications:
 							[

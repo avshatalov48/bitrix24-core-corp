@@ -34,7 +34,6 @@ $MESS["CRM_ORD_PROP_47"] = "Billing address";
 $MESS["CRM_ORD_PROP_48"] = " ";
 $MESS["CRM_ORD_PROP_49"] = "TAX ID";
 $MESS["CRM_ORD_PROP_5"] = "Shipping address";
-$MESS["CRM_ORD_PROP_6"] = "Full name";
 $MESS["CRM_ORD_PROP_7"] = "Billing address";
 $MESS["CRM_ORD_PROP_8"] = "Company name";
 $MESS["CRM_ORD_PROP_9"] = "Phone";

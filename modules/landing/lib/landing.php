@@ -294,7 +294,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			// fill meta data
 			$keys = [
 				'CREATED_BY_ID', 'MODIFIED_BY_ID', 'DATE_CREATE',
-				'DATE_MODIFY', 'INITIATOR_APP_CODE'
+				'DATE_MODIFY', 'INITIATOR_APP_CODE', 'VIEWS'
 			];
 			foreach ($keys as $key)
 			{
@@ -313,6 +313,30 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			);
 			$this->title = Loc::getMessage('LANDING_TITLE_NOT_FOUND');
 		}
+	}
+
+	/**
+	 * Return true if landing exists and available.
+	 * @param int $id Landing id.
+	 * @param bool $deleted And from recycle bin.
+	 * @return bool
+	 */
+	public static function ping($id, $deleted = false)
+	{
+		$filter = [
+			'ID' => $id
+		];
+		if ($deleted)
+		{
+			$filter['=DELETED'] = ['Y', 'N'];
+		}
+		$check = self::getList([
+			'select' => [
+				'ID'
+			],
+				'filter' => $filter
+		]);
+		return (boolean) $check->fetch();
 	}
 
 	/**
@@ -514,35 +538,38 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		// first check
-		foreach (array('draft', 'public') as $code)
+		if (Rights::isOn())
 		{
-			self::setEditMode($code == 'draft');
-			$landing = self::createInstance($id, $params);
-			if ($landing->exist())
+			foreach (['draft', 'public'] as $code)
 			{
-				foreach ($landing->getBlocks() as $block)
+				self::setEditMode($code == 'draft');
+				$landing = self::createInstance($id, $params);
+				if ($landing->exist())
 				{
-					if ($block->getAccess() < $block::ACCESS_X)
+					foreach ($landing->getBlocks() as $block)
 					{
-						$result->addError(
-							new \Bitrix\Main\Error(
-								Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED'),
-								'ACCESS_DENIED'
-							)
-						);
-						return $result;
+						if ($block->getAccess() < $block::ACCESS_X)
+						{
+							$result->addError(
+								new \Bitrix\Main\Error(
+									Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED'),
+									'ACCESS_DENIED'
+								)
+							);
+							return $result;
+						}
 					}
 				}
-			}
-			else
-			{
-				if (!$landing->getError()->isEmpty())
+				else
 				{
-					$result->addError(
-						$landing->getError()->getErrors()[0]
-					);
+					if (!$landing->getError()->isEmpty())
+					{
+						$result->addError(
+							$landing->getError()->getErrors()[0]
+						);
+					}
+					return $result;
 				}
-				return $result;
 			}
 		}
 
@@ -948,7 +975,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					);
 				}
 			}
-			else if ($this->siteRow['LANDING_ID_INDEX'] != $this->id)
+			if ($this->siteRow['LANDING_ID_INDEX'] != $this->id)
 			{
 				Manager::getApplication()->addChainItem(
 					$this->title,
@@ -1037,7 +1064,42 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		// implode content and templates parts
 		if ($content && mb_strpos($content, '#CONTENT#') !== false)
 		{
-			$content = str_replace('#CONTENT#', $contentMain, $content);
+			$replace = ['#CONTENT#' => $contentMain];
+
+			// crm replace
+			if (self::$siteCode === 'STORE' && mb_strpos($content, '#crm') !== false)
+			{
+				$crmContacts = \Bitrix\Landing\Connector\Crm::getContacts(
+					$this->siteId
+				);
+				$replace['#crmCompanyTitle'] = \htmlspecialcharsbx($crmContacts['COMPANY']);
+				if (!empty($crmContacts['PHONE']))
+				{
+					$phone = $crmContacts['PHONE'];
+					$phone = \htmlspecialcharsbx($phone);
+					$replace['#crmPhoneTitle1'] = $phone;// a-tag inside
+					if (!$blockEditMode)
+					{
+						$replace['#crmPhone1'] = $phone;// a-href inside
+					}
+				}
+				if (!empty($crmContacts['EMAIL']))
+				{
+					$email = $crmContacts['EMAIL'];
+					$email = \htmlspecialcharsbx($email);
+					$replace['#crmEmailTitle1'] = $email;// a-tag inside
+					if (!$blockEditMode)
+					{
+						$replace['#crmEmail1'] = $email;// a-href inside
+					}
+				}
+			}
+
+			$content = str_replace(
+				array_keys($replace),
+				array_values($replace),
+				$content
+			);
 		}
 		else
 		{
@@ -1191,7 +1253,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 * @param string $content Landing content.
 	 * @return string
 	 */
-	protected function parseLocalUrl($content)
+	protected function parseLocalUrl(string $content): string
 	{
 		$pattern = '/([",\'\;]{1})#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
 		static $isIframe = null;
@@ -1224,22 +1286,25 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				$content);
 		}
 
+		$replace = [];
+
 		// for form in frames we should insert hidden tag
 		if ($isIframe)
 		{
-			$content = str_replace(
-				'</form>',
-				'<input type="hidden" name="IFRAME" value="Y" /></form>',
-				$content
-			);
+			$replace['</form>'] = '<input type="hidden" name="IFRAME" value="Y" /></form>';
 		}
 
 		// fix breadcrumb navigation
 		if ($this->siteRow['LANDING_ID_INDEX'] > 0)
 		{
+			$replace['#system_mainpage'] = '#landing' . $this->siteRow['LANDING_ID_INDEX'];
+		}
+
+		if ($replace)
+		{
 			$content = str_replace(
-				'#system_mainpage',
-				'#landing' . $this->siteRow['LANDING_ID_INDEX'],
+				array_keys($replace),
+				array_values($replace),
 				$content
 			);
 		}
@@ -1335,7 +1400,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			{
 				$urls['LANDING'] = $this->getPublicUrl(
 					$urls['LANDING'],
-					true,
+					!Connector\Mobile::isMobileHit(),
 					false,
 					$landingFull
 				);
@@ -1825,8 +1890,17 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 * @param array $data Data array of block.
 	 * @return int|false Id of new block or false on failure.
 	 */
-	public function addBlock($code, $data = array())
+	public function addBlock(string $code, array $data = array())
 	{
+		if (!$this->canEdit())
+		{
+			$this->error->addError(
+				'ACCESS_DENIED',
+				Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED')
+			);
+			return false;
+		}
+
 		if (!isset($data['PUBLIC']))
 		{
 			$data['PUBLIC'] = $this::$editMode ? 'N' : 'Y';

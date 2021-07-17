@@ -3,10 +3,13 @@
 namespace Bitrix\Crm\Integration\BizProc\Document;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Localization\Loc;
@@ -39,51 +42,88 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return Application::getUserTypeManager()->GetUserFields($factory->getUserFieldEntityId(), 0, $langId);
 	}
 
+	public static function CanUserOperateDocumentType($operation, $userId, $documentType, $arParameters = [])
+	{
+		$entityTypeId = static::GetDocumentInfo($documentType)['TYPE_ID'];
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (
+			isset($factory)
+			&& $factory->isCategoriesSupported()
+			&& !array_key_exists('DocumentCategoryId', $arParameters)
+		)
+		{
+			$arParameters['DocumentCategoryId'] = $factory->createDefaultCategoryIfNotExist()->getId();;
+		}
+
+		return parent::CanUserOperateDocumentType(
+			$operation,
+			$userId,
+			$documentType,
+			$arParameters
+		);
+	}
+
 	public static function CreateDocument($parentDocumentId, $fields)
 	{
 		$entityTypeId = static::GetDocumentInfo($parentDocumentId)['TYPE_ID'];
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
+		$newItem = $factory->createItem([]);
 
 		$documentFieldsMap = static::getEntityFields($entityTypeId);
-		$documentFields = [];
+		$compatibleFields = [];
 
 		foreach ($fields as $fieldId => $fieldValue)
 		{
-			if (array_key_exists($fieldId, $documentFields))
+			if (array_key_exists($fieldId, $documentFieldsMap))
 			{
-				$userFieldEntityId = $factory->getUserFieldEntityId();
 				$field = $documentFieldsMap[$fieldId];
 
-				$documentFieldId = static::convertFieldId($field, self::CONVERT_TO_DOCUMENT);
+				$documentFieldId = static::convertFieldId($fieldId, self::CONVERT_TO_DOCUMENT);
 
-				$documentFields[$documentFieldId] = static::convertToDocumentValue(
-					$userFieldEntityId,
-					$fieldId,
-					$field,
-					$fieldValue
+				$documentFieldValue = static::convertToDocumentValue(
+					$factory,
+					[
+						'fieldId' => $fieldId,
+						'Description' => $field,
+						'bpValue' => $fieldValue,
+					],
+					$newItem
 				);
+
+				if ($newItem->hasField($documentFieldId))
+				{
+					$newItem->set($documentFieldId, $documentFieldValue);
+				}
+				$compatibleFields[$documentFieldId] = $documentFieldValue;
 			}
 		}
 
-		$addOperation = $factory->getAddOperation($factory->createItem($documentFields));
+		$newItem->setFromCompatibleData($compatibleFields);
+		$addOperation = $factory->getAddOperation($newItem, static::getContext());
 
 		$result = static::launchOperation($addOperation);
 		$errorMessages = $result->getErrorMessages();
 
-		return $result->isSuccess() ? $result->getData()['ID'] : end($errorMessages);
+		return $result->isSuccess() ? $result->getId() : end($errorMessages);
 	}
 
 	public static function UpdateDocument($documentId, $fields)
 	{
 		$documentInfo = static::GetDocumentInfo($documentId);
+		if (!$documentInfo)
+		{
+			throw new ArgumentNullException('documentId');
+		}
 		[$entityTypeId, $entityId] = [$documentInfo['TYPE_ID'], $documentInfo['ID']];
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$item = $factory->getItem($entityId);
+		$item = isset($factory) ? $factory->getItem($entityId) : null;
 
 		$fieldsMap = static::getEntityFields($entityTypeId);
 
+		$compatibleFields = [];
 		foreach ($fields as $fieldId => $fieldValue)
 		{
 			if (!array_key_exists($fieldId, $fieldsMap))
@@ -92,19 +132,31 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			}
 
 			$field = $fieldsMap[$fieldId];
-			$userFieldEntityId = $factory->getUserFieldEntityId();
 
-			$documentFieldValue = static::convertToDocumentValue($userFieldEntityId, $fieldId, $field, $fieldValue);
+			$documentFieldValue = static::convertToDocumentValue(
+				$factory,
+				[
+					'fieldId' => $fieldId,
+					'Description' => $field,
+					'bpValue' => $fieldValue,
+				],
+				$item
+			);
 
-			$documentFieldId = static::convertFieldId($fieldId, self::CONVERT_TO_DOCUMENT);
+			$documentFieldId = static::convertFieldId($fieldId, static::CONVERT_TO_DOCUMENT);
 			if ($item->hasField($documentFieldId))
 			{
 				$item->set($documentFieldId, $documentFieldValue);
 			}
+			else
+			{
+				$compatibleFields[$documentFieldId] = $documentFieldValue;
+			}
 		}
 
-		$updateOperation = $factory->getUpdateOperation($item);
-		$updateOperation->getContext()->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
+		$item->setFromCompatibleData($compatibleFields);
+
+		$updateOperation = $factory->getUpdateOperation($item, static::getContext());
 
 		$result = static::launchOperation($updateOperation);
 		$errorMessages = $result->getErrorMessages();
@@ -113,49 +165,59 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 	}
 
 	protected static function convertToDocumentValue(
-		string $userFieldEntityId,
-		string $fieldId,
-		array $bpField,
-		$bpFieldValue
+		Crm\Service\Factory $factory,
+		array $fieldInfo,
+		Crm\Item $item
 	)
 	{
-		if (static::isUserField($fieldId) && $bpField['Type'] === FieldType::SELECT)
+		if (static::isUserField($fieldInfo['fieldId']) && $fieldInfo['Description']['Type'] === FieldType::SELECT)
 		{
-			$documentValue = [$fieldId => $bpFieldValue];
-			static::InternalizeEnumerationField($userFieldEntityId, $documentValue, $fieldId);
-			return $documentValue[$fieldId];
+			$documentValue = [$fieldInfo['fieldId'] => $fieldInfo['bpValue']];
+			static::InternalizeEnumerationField(
+				$factory->getUserFieldEntityId(),
+				$documentValue,
+				$fieldInfo['fieldId']
+			);
+
+			return $documentValue[$fieldInfo['fieldId']];
 		}
 
-		if (is_array($bpFieldValue))
+		if (is_array($fieldInfo['bpValue']))
 		{
-			$converter = function ($value) use ($userFieldEntityId, $fieldId, $bpField)
+			$converter = function ($value) use ($factory, $fieldInfo, $item)
 			{
-				return static::convertToDocumentValue($userFieldEntityId, $fieldId, $bpField, $value);
+				$fieldInfo['bpValue'] = $value;
+				return static::convertToDocumentValue($factory, $fieldInfo, $item);
 			};
 
 			return
-				$bpField['Multiple']
-					? array_map($converter, $bpFieldValue)
-					: $converter($bpFieldValue)
+				$fieldInfo['Description']['Multiple']
+					? array_map($converter, $fieldInfo['bpValue'])
+					: $converter($fieldInfo['bpValue'])
 			;
 		}
 
-		switch ($bpField['Type'])
+		switch ($fieldInfo['Description']['Type'])
 		{
 			case FieldType::BOOL:
-				return \CBPHelper::getBool($bpFieldValue);
+				return \CBPHelper::getBool($fieldInfo['bpValue']);
 
 			case FieldType::USER:
-				return (int)mb_substr($bpFieldValue, mb_strlen('user_'));
+				$documentId = \CCrmBizProcHelper::ResolveDocumentId($item->getEntityTypeId(), $item->getId());
+				return
+					mb_substr($fieldInfo['bpValue'], 0, mb_strlen('user_')) === 'user_'
+						? (int)mb_substr($fieldInfo['bpValue'], mb_strlen('user_'))
+						: static::GetUsersFromUserGroup($fieldInfo['bpValue'], $documentId[2])
+				;
 
 			case FieldType::FILE:
 				$file = false;
-				\CCrmFileProxy::TryResolveFile($bpFieldValue, $file, ['ENABLE_ID' => true]);
+				\CCrmFileProxy::TryResolveFile($fieldInfo['bpValue'], $file, ['ENABLE_ID' => true]);
 
 				return $file;
 
 			default:
-				return $bpFieldValue;
+				return $fieldInfo['bpValue'];
 		}
 	}
 
@@ -170,9 +232,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		[$entityTypeId, $entityId] = [$documentInfo['TYPE_ID'], $documentInfo['ID']];
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$deleteOperation = $factory->getDeleteOperation($factory->getItem($entityId));
+		$deleteOperation = $factory->getDeleteOperation($factory->getItem($entityId), static::getContext());
 
-		return static::launchOperation($deleteOperation)->isSuccess();
+		return static::launchOperation($deleteOperation->disableBizProc())->isSuccess();
 	}
 
 	protected static function launchOperation(Operation $operation): Result
@@ -183,7 +245,29 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$dbConnection->startTransaction();
 		}
 
+		$isBizProcEnabled = $operation->isBizProcEnabled();
+
+		// BizProc is disabled because it will be launched differently further
+		$operation->disableBizProc()->disableCheckFields()->disableCheckAccess();
 		$operationResult = $operation->launch();
+
+		if (
+			$operationResult->isSuccess()
+			&& $isBizProcEnabled
+			&& \COption::GetOptionString('crm', 'start_bp_within_bp', 'N') === 'Y'
+		)
+		{
+			$item = $operation->getItem();
+			$itemType = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
+			$itemId = $item->isNew() ? false : $item->getId();
+			$documentId = $item->isNew() ? false : $itemType . '_' . $item->getId();
+
+			$bizProc = new \CCrmBizProc($itemType);
+			if (!$bizProc->CheckFields($documentId, true) || !$bizProc->StartWorkflow($itemId))
+			{
+				$operationResult->addError(new Error($bizProc->LAST_ERROR));
+			}
+		}
 
 		if (static::shouldUseTransaction())
 		{
@@ -191,6 +275,15 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		}
 
 		return $operationResult;
+	}
+
+	protected static function getContext(): Crm\Service\Context
+	{
+		$context = Container::getInstance()->getContext();
+		$context->setUserId(0);
+		$context->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
+
+		return $context;
 	}
 
 	public static function getDocumentName($documentId)
@@ -251,7 +344,8 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$entityFields[static::convertFieldId($fieldId)] = [
 				'Name' => static::getFieldName($factory, $fieldId),
 				'Type' => static::resolveBPType($field['TYPE']),
-				'Options' => static::getFieldOptionsByType($field['TYPE']),
+				'Options' => static::getFieldOptions($field, $factory),
+				'Settings' => static::getFieldSettings($field, $factory),
 				'Editable' => $editable,
 				'Required' => $required,
 				'Multiple' => $multiple,
@@ -262,7 +356,10 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		$entityFields += static::getCommunicationFields();
 
 		$CCrmUserType = new \CCrmUserType(Application::getUserTypeManager(), $factory->getUserFieldEntityId());
-		$CCrmUserType->AddBPFields($entityFields, ['PRINTABLE_SUFFIX' => Loc::getMessage('CRM_FIELD_BP_TEXT')]);
+		$CCrmUserType->AddBPFields(
+			$entityFields,
+			['PRINTABLE_SUFFIX' => Loc::getMessage('CRM_FIELD_BP_TEXT')]
+		);
 
 		$entityFields += static::getUtmFields();
 
@@ -273,8 +370,12 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 	protected static function convertFieldId(string $fieldId, int $convertTo = self::CONVERT_TO_BP): string
 	{
-		$map = ['OBSERVERS' => 'OBSERVER_IDS'];
+		$map = [Crm\Item::FIELD_NAME_OBSERVERS => 'OBSERVER_IDS'];
 
+		if ($fieldId === Crm\Item::FIELD_NAME_CONTACTS)
+		{
+			return 'CONTACT_IDS';
+		}
 		if ($convertTo === self::CONVERT_TO_DOCUMENT)
 		{
 			$map = array_flip($map);
@@ -313,7 +414,6 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 				return FieldType::BOOL;
 
 			case 'crm':
-			case 'crm_status':
 			case 'money':
 			case 'url':
 			case 'address':
@@ -327,7 +427,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 				return 'UF:crm';
 
 			case 'enumeration':
+			case 'crm_status':
 			case 'crm_currency':
+			case 'crm_category':
 				return FieldType::SELECT;
 
 			case 'employee':
@@ -338,18 +440,104 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		}
 	}
 
-	protected static function getFieldOptionsByType(string $type): ?array
+	protected static function getFieldOptions(array $field, Crm\Service\Factory $factory): ?array
 	{
-		switch ($type)
+		if (array_key_exists('CLASS', $field))
+		{
+			switch ($field['CLASS'])
+			{
+				case Crm\Field\Category::class:
+					$categories = [];
+					foreach (static::getCategories($factory) as $category)
+					{
+						$categories[$category->getId()] = $category->getName();
+					}
+
+					return $categories;
+
+				case Crm\Field\PreviousStageId::class:
+				case Crm\Field\Stage::class:
+					$stages = [];
+					$categories = static::getCategories($factory) ?: [null];
+					foreach ($categories as $category)
+					{
+						foreach (static::getStages($factory, $category) as $stage)
+						{
+							$stagePrefix = isset($category) ? $category->getName() . '/' : '';
+							$stages[$stage['STATUS_ID']] = $stagePrefix . $stage['NAME'];
+						}
+					}
+
+					return $stages;
+			}
+		}
+
+		switch ($field['TYPE'])
 		{
 			case 'crm_contact':
 				return ['CONTACT' => 'Y'];
+
 			case 'crm_company':
 				return ['COMPANY' => 'Y'];
+
+			case 'crm_status':
+				return
+					array_key_exists('CRM_STATUS_TYPE', $field)
+						? \CCrmStatus::GetStatusList($field['CRM_STATUS_TYPE'])
+						: []
+				;
+
 			case 'crm_currency':
 				return \CCrmCurrencyHelper::PrepareListItems();
+
 			default:
 				return null;
 		}
+	}
+
+	protected static function getFieldSettings(array $field, Crm\Service\Factory $factory): ?array
+	{
+		if (array_key_exists('CLASS', $field))
+		{
+			switch ($field['CLASS'])
+			{
+				case Crm\Field\Stage::class:
+					$settings = ['Groups' => []];
+					foreach (static::getCategories($factory) as $category)
+					{
+						$stages = [];
+						foreach (static::getStages($factory, $category) as $stage)
+						{
+							$stages[$stage['STATUS_ID']] = $stage['NAME'];
+						}
+
+						$settings['Groups'][] = [
+							'name' => $category->getName(),
+							'items' => $stages,
+						];
+					}
+
+					return $settings;
+			}
+		}
+
+		return null;
+	}
+
+	protected static function getCategories(Crm\Service\Factory $factory): array
+	{
+		if ($factory->isCategoriesSupported())
+		{
+			return $factory->getCategories();
+		}
+		else
+		{
+			return [];
+		}
+	}
+
+	protected static function getStages(Crm\Service\Factory $factory, ?Category $category): Crm\EO_Status_Collection
+	{
+		return $factory->getStages(isset($category) ? $category->getId() : null);
 	}
 }

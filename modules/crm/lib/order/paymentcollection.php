@@ -16,4 +16,13 @@ if (!Main\Loader::includeModule('sale'))
  */
 class PaymentCollection extends Sale\PaymentCollection
 {
+	protected function isAllowAutoEdit()
+	{
+		if (!\CCrmSaleHelper::isWithOrdersMode())
+		{
+			return false;
+		}
+
+		return parent::isAllowAutoEdit();
+	}
 }

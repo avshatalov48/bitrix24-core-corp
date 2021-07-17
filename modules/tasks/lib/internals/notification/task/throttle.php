@@ -112,38 +112,44 @@ class ThrottleTable extends Main\Entity\DataManager
 		}
 	}
 
-	public static function getUpdateMessages()
+	public static function getUpdateMessages(): array
 	{
-		$result = array();
+		$result = [];
 
-		$res = static::getList(array('select' => array('TASK_ID', 'AUTHOR_ID', 'STATE_ORIG', 'STATE_LAST', 'INFORM_AUTHOR')));
+		$res = static::getList(['select' => ['TASK_ID', 'AUTHOR_ID', 'STATE_ORIG', 'STATE_LAST', 'INFORM_AUTHOR']]);
+
 		static::cleanUp();
-		while($item = $res->fetch())
+
+		while ($item = $res->fetch())
 		{
-			$rcpIgnore = array();
-			if(!intval($item['INFORM_AUTHOR']))
-			{
-				$rcpIgnore[$item['AUTHOR_ID']] = true;
-			}
-
-			$stateOrig = unserialize($item['STATE_ORIG'], ['allowed_classes' => false]);
-			if(!is_array($stateOrig))
-			{
-				$stateOrig = array();
-			}
-			$stateLast = unserialize($item['STATE_LAST'], ['allowed_classes' => false]);
-			if(!is_array($stateLast))
-			{
-				$stateLast = array();
-			}
-
-			$result[$item['TASK_ID']] = array(
-				'STATE_ORIG' => 	$stateOrig,
-				'STATE_LAST' => 	$stateLast,
-				'AUTHOR_ID' => 		$item['AUTHOR_ID'],
-				'TASK_ID' => 		$item['TASK_ID'],
-				'IGNORE_RECEPIENTS' => $rcpIgnore
+			$stateOrig = unserialize(
+				$item['STATE_ORIG'],
+				['allowed_classes' => ['DateTime', 'Bitrix\Tasks\Util\Type\DateTime']]
 			);
+			if (!is_array($stateOrig))
+			{
+				$stateOrig = [];
+			}
+
+			$stateLast = unserialize(
+				$item['STATE_LAST'],
+				['allowed_classes' => ['DateTime', 'Bitrix\Tasks\Util\Type\DateTime']]
+			);
+			if (!is_array($stateLast))
+			{
+				$stateLast = [];
+			}
+
+			$result[$item['TASK_ID']] = [
+				'STATE_ORIG' => $stateOrig,
+				'STATE_LAST' => $stateLast,
+				'AUTHOR_ID' => $item['AUTHOR_ID'],
+				'TASK_ID' => $item['TASK_ID'],
+				'IGNORE_RECIPIENTS' => [
+					// null to inform
+					$item['AUTHOR_ID'] => ((int)$item['INFORM_AUTHOR'] ? null : true),
+				],
+			];
 		}
 
 		return $result;

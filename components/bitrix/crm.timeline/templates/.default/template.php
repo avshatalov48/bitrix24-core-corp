@@ -14,8 +14,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
-Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons', 'ui.selector', 'crm.zoom', 'ui.timeline', 'ui.forms'));
-Bitrix\Main\UI\Extension::load(['crm.delivery.taxi']);
+Bitrix\Main\UI\Extension::load(
+	[
+		'ui.buttons',
+		'ui.icons',
+		'ui.selector',
+		'crm.zoom',
+		'ui.timeline',
+		'ui.forms',
+		'crm.delivery.taxi',
+		'crm.timeline',
+	]
+);
 
 //HACK: Preloading files for prevent trembling of player afer load.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
@@ -116,6 +126,42 @@ if(!empty($arResult['ERRORS']))
 					"TEXT" => GetMessage("CRM_TIMELINE_COMMENT"),
 				] + $baseMenuItem)];
 
+				if ($arResult["ENABLE_TASK"])
+				{
+					$menuItems[] = [
+							"ID" => "task",
+							"TEXT" => GetMessage('CRM_TIMELINE_TASK'),
+							"TITLE" => GetMessage('CRM_TIMELINE_TASK'),
+						] + $baseMenuItem;
+				}
+
+				if ($arResult["ENABLE_SMS"])
+				{
+					$menuItems[] = [
+							"ID" => "sms",
+							"TEXT" => GetMessage("CRM_TIMELINE_SMS_TITLE"),
+							"TITLE" => GetMessage("CRM_TIMELINE_SMS") ,
+						] + $baseMenuItem;
+				}
+
+				if ($arResult["ENABLE_EMAIL"])
+				{
+					$menuItems[] = [
+							"ID" => "email",
+							"TEXT" => GetMessage('CRM_TIMELINE_EMAIL'),
+							"TITLE" => GetMessage('CRM_TIMELINE_EMAIL'),
+						] + $baseMenuItem;
+				}
+
+				if ($arResult["ENABLE_DELIVERY"])
+				{
+					$menuItems[] = [
+							"ID" => "delivery",
+							"TEXT" => GetMessage("CRM_TIMELINE_DELIVERY"),
+							"TITLE" => GetMessage("CRM_TIMELINE_DELIVERY"),
+						] + $baseMenuItem;
+				}
+
 				if ($arResult["ENABLE_WAIT"])
 				{
 					$menuItems[] = [
@@ -124,6 +170,7 @@ if(!empty($arResult['ERRORS']))
 						"TITLE" => GetMessage("CRM_TIMELINE_WAIT"),
 					] + $baseMenuItem;
 				}
+
 				if ($arResult["ENABLE_ZOOM"])
 				{
 					$menuItems[] = [
@@ -144,6 +191,16 @@ if(!empty($arResult['ERRORS']))
 						"ON_CLICK" => "BX.Crm.Zoom.onNotAvailableHandler()",
 					] + $baseMenuItem;
 				}
+
+				if ($arResult["ENABLE_MEETING"])
+				{
+					$menuItems[] = [
+							"ID" => "meeting",
+							"TEXT" => GetMessage('CRM_TIMELINE_MEETING'),
+							"TITLE" => GetMessage('CRM_TIMELINE_MEETING'),
+						] + $baseMenuItem;
+				}
+
 				if ($arResult["ENABLE_CALL"])
 				{
 					$menuItems[] = [
@@ -152,38 +209,7 @@ if(!empty($arResult['ERRORS']))
 						"TITLE" => GetMessage("CRM_TIMELINE_CALL"),
 					] + $baseMenuItem;
 				}
-				if ($arResult["ENABLE_SMS"])
-				{
-					$menuItems[] = [
-						"ID" => "sms",
-						"TEXT" => GetMessage("CRM_TIMELINE_SMS_TITLE"),
-						"TITLE" => GetMessage("CRM_TIMELINE_SMS") ,
-					] + $baseMenuItem;
-				}
-				if ($arResult["ENABLE_EMAIL"])
-				{
-					$menuItems[] = [
-						"ID" => "email",
-						"TEXT" => GetMessage('CRM_TIMELINE_EMAIL'),
-						"TITLE" => GetMessage('CRM_TIMELINE_EMAIL'),
-					] + $baseMenuItem;
-				}
-				if ($arResult["ENABLE_TASK"])
-				{
-					$menuItems[] = [
-						"ID" => "task",
-						"TEXT" => GetMessage('CRM_TIMELINE_TASK'),
-						"TITLE" => GetMessage('CRM_TIMELINE_TASK'),
-					] + $baseMenuItem;
-				}
-				if ($arResult["ENABLE_MEETING"])
-				{
-					$menuItems[] = [
-						"ID" => "meeting",
-						"TEXT" => GetMessage('CRM_TIMELINE_MEETING'),
-						"TITLE" => GetMessage('CRM_TIMELINE_MEETING'),
-					] + $baseMenuItem;
-				}
+
 				if ($arResult["ENABLE_VISIT"])
 				{
 					$menuItems[] = [
@@ -200,15 +226,43 @@ if(!empty($arResult['ERRORS']))
 						"TITLE" => \Bitrix\Main\Text\HtmlFilter::encode($tab['name']),
 					] + $baseMenuItem;
 				}
+
+				$menuBarObjectId = mb_strtolower($arResult['ENTITY_TYPE_NAME']);
+				if (isset($arResult['EXTRAS']['CATEGORY_ID']) && $arResult['EXTRAS']['CATEGORY_ID'] > 0)
+				{
+					$menuBarObjectId .= '_' . $arResult['EXTRAS']['CATEGORY_ID'];
+				}
+				$menuBarObjectId .= '_menu';
+				$mode = true;
+
+				if (array_key_exists('ENTITY_CONFIG_SCOPE', $arParams)
+					&& array_key_exists('USER_SCOPE_ID', $arParams)
+					&& $arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL)
+				{
+					$menuBarObjectIdParts = [
+						'crm_scope_timeline',
+						$arParams['ENTITY_CONFIG_SCOPE'],
+						$arResult['ENTITY_TYPE_NAME'],
+					];
+					if (isset($arResult['EXTRAS']['CATEGORY_ID']) && $arResult['EXTRAS']['CATEGORY_ID'] > 0)
+					{
+						$menuBarObjectIdParts[] = $arResult['EXTRAS']['CATEGORY_ID'];
+					}
+					$menuBarObjectIdParts[] = $arParams['USER_SCOPE_ID'];
+
+					$menuBarObjectId = mb_strtolower(implode('_', $menuBarObjectIdParts));
+					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission() ? 'common' : false;
+				}
 				?><?$APPLICATION->IncludeComponent(
 					"bitrix:main.interface.buttons",
 					"",
 					array(
-						"ID" => mb_strtolower($arResult['ENTITY_TYPE_NAME']."_menu"),
+						"ID" => $menuBarObjectId,
 						"ITEMS" => array_map(function ($item) {
 							$item["ON_CLICK"] = str_replace("#ID#", $item["ID"], $item["ON_CLICK"]);
 							return $item;
 						}, $menuItems),
+						"EDIT_MODE" => $mode,
 					)
 				);?>
 				<div id="<?=htmlspecialcharsbx($commentContainerID)?>" class="crm-entity-stream-content-new-detail">
@@ -478,7 +532,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				quote: "<?=GetMessageJS('CRM_TIMELINE_QUOTE_CREATION')?>",
 				invoice: "<?=GetMessageJS('CRM_TIMELINE_INVOICE_CREATION')?>",
 				task: "<?=GetMessageJS('CRM_TIMELINE_TASK_CREATION')?>",
-				activity: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_CREATION')?>"
+				activity: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_CREATION')?>",
+				dealOrderTitle: "<?=GetMessageJS('CRM_TIMELINE_DEAL_ORDER_TITLE')?>",
 			};
 
 			BX.CrmHistoryItemLink.messages =
@@ -640,8 +695,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
 					deducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DEDUCTED')?>",
 					unshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNSHIPPED')?>",
-					viewed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_VIEWED')?>",
-					sent: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENT')?>",
+					viewed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_VIEWED')?>",
+					sent: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_SENT')?>",
 					allowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_ALLOWED_DELIVERY')?>",
 					disallowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DISALLOWED_DELIVERY')?>",
 					orderPayment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_TITLE')?>",
@@ -656,26 +711,34 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					orderPaymentProcess: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_PROCESS')?>",
 					orderPaymentStatusErrorReason: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_STATUS_ERROR_REASON_TITLE')?>",
 					orderPaymentPaySystemClick: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYSYSTEM_CLICK')?>",
+					orderManualContinuePay: "<?=GetMessageJS('CRM_TIMELINE_ORDER_MANUAL_CONTINUE_PAY')?>",
+					orderManualAddCheck: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK')?>",
+					orderManualAddCheckHelpLink: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK_HELP_LINK')?>",
 				};
 
 			BX.CrmHistoryItemFinalSummary.messages =
 				{
 					title: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_TITLE')?>",
-					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID')?>",
+					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID_2')?>",
 					basketBasePrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE')?>",
 					basketPrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_PRICE')?>",
 					paymentStatusY: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_PAYMENT_STATUS_Y')?>",
 					sumForPay: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_SUM_FOR_PAY')?>",
 				};
 
+			BX.CrmHistoryItemFinalSummaryDocuments.messages =
+				{
+					title: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_TITLE')?>",
+				};
+
 			BX.CrmHistoryItemOrcderCheck.messages =
 				{
 					orderCheck: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_TITLE')?>",
-					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PRINTED')?>",
-					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPRINTED')?>",
-					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENDED')?>",
+					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_PRINTED')?>",
+					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_UNPRINTED')?>",
+					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT')?>",
 					urlLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK')?>",
-					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SENDED_TITLE')?>",
+					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT_TITLE')?>",
 				};
 
 			BX.message({
@@ -714,7 +777,6 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_ZOOM_COPY_PASSWORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_COPY_PASSWORD")?>',
                 "CRM_TIMELINE_DOCUMENT_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED")?>',
                 "CRM_TIMELINE_DOCUMENT_VIEWED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_VIEWED_STATUS")?>',
-                "CRM_TIMELINE_ORDER_VIEWED": '<?=GetMessageJS("CRM_TIMELINE_ORDER_VIEWED")?>',
                 "CRM_TIMELINE_DOCUMENT_CREATED_STATUS": '<?=GetMessageJS("CRM_TIMELINE_DOCUMENT_CREATED_STATUS")?>',
 				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1")?>',
                 "CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_RATE_1.5")?>',
@@ -753,6 +815,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					ajaxId: "<?=CUtil::JSEscape($arResult['AJAX_ID'])?>",
 					currentUrl: "<?=CUtil::JSEscape($arResult['CURRENT_URL'])?>",
 					serviceUrl: "/bitrix/components/bitrix/crm.timeline/ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",
+					menuBarObjectId: "<?=CUtil::JSEscape($menuBarObjectId)?>",
 					menuBarContainer: "<?=CUtil::JSEscape($menuBarContainerID)?>",
 					editorContainer: "<?=CUtil::JSEscape($editorContainerID)?>",
 					editorCommentContainer: "<?=CUtil::JSEscape($commentContainerID)?>",

@@ -137,7 +137,7 @@
 			let error;
 			if (ajaxAnswer.answer.error)
 			{
-				error = {code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_decription};
+				error = {code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_description};
 			}
 			this.currentAnswer = ajaxAnswer;
 
@@ -285,6 +285,38 @@
 		return ajaxPromise;
 	};
 
+	/**
+	 *
+	 * @param {string} component
+	 * @param {string} action
+	 * @param {Object} config
+	 * @param {?string|?Object} [config.analyticsLabel]
+	 * @param {string} [config.method='POST']
+	 * @param {Object} [config.data]
+	 * @param {?Object} [config.getParameters]
+	 * @param {?Object} [config.headers]
+	 * @param {?Object} [config.timeout]
+	 * @param {Object} [config.navigation]
+	 * @param {number} [config.navigation.page]
+	 * @param {function} [config.onCreate]
+	 */
+	BX.ajax.runComponentAction = (component, action, config = {} )=>{
+		config.mode = config.mode || 'ajax';
+		let getParameters = prepareAjaxGetParameters(config);
+		getParameters.action = action;
+		getParameters.c = component;
+		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
+		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
+		config = {
+			url: url,
+			method:"POST",
+			dataType:"json",
+			data: config.data,
+		};
+		let ajaxPromise = BX.ajax(config);
+		onCreate(config.xhr);
+		return ajaxPromise;
+	};
 
 	let prepareAjaxGetParameters = function(config)
 	{

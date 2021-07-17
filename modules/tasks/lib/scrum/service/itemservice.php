@@ -25,15 +25,20 @@ class ItemService implements Errorable
 	const ERROR_COULD_NOT_CHANGE_SORT = 'TASKS_IS_10';
 	const ERROR_COULD_NOT_READ_ITEM_INFO = 'TASKS_IS_11';
 	const ERROR_COULD_NOT_UPDATE_ITEMS_ENTITY = 'TASKS_IS_12';
+	const ERROR_COULD_NOT_READ_ALL_ITEMS = 'TASKS_IS_13';
 
 	private $errorCollection;
+
+	private static $allEpicTags = [];
+	private static $taskIdsByParentId = [];
+	private static $epicInfo = [];
 
 	public function __construct()
 	{
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createTaskItem(ItemTable $item): ItemTable
+	public function createTaskItem(ItemTable $item, PushService $pushService = null): ItemTable
 	{
 		try
 		{
@@ -43,8 +48,10 @@ class ItemService implements Errorable
 			{
 				$item->setId($result->getId());
 
-				$pushService = new PushService();
-				$pushService->sendAddItemEvent($item);
+				if ($pushService)
+				{
+					$pushService->sendAddItemEvent($item);
+				}
 			}
 			else
 			{
@@ -61,7 +68,7 @@ class ItemService implements Errorable
 		return $item;
 	}
 
-	public function createEpicItem(ItemTable $epic): ItemTable
+	public function createEpicItem(ItemTable $epic, PushService $pushService = null): ItemTable
 	{
 		try
 		{
@@ -71,8 +78,10 @@ class ItemService implements Errorable
 			{
 				$epic->setId($result->getId());
 
-				$pushService = new PushService();
-				$pushService->sendAddEpicEvent($epic);
+				if ($pushService)
+				{
+					$pushService->sendAddEpicEvent($epic);
+				}
 			}
 			else
 			{
@@ -91,13 +100,18 @@ class ItemService implements Errorable
 
 	public function getEpicInfo(int $itemId): array
 	{
-		$epicInfo = [];
+		if (isset(self::$epicInfo[$itemId]))
+		{
+			return self::$epicInfo[$itemId];
+		}
+
+		self::$epicInfo[$itemId] = [];
 
 		$item = $this->getItemById($itemId);
 
 		if ($item->getId())
 		{
-			$epicInfo = [
+			self::$epicInfo[$itemId] = [
 				'id' => $item->getId(),
 				'name' => $item->getName(),
 				'description' => $item->getDescription(),
@@ -105,14 +119,19 @@ class ItemService implements Errorable
 			];
 		}
 
-		return $epicInfo;
+		return self::$epicInfo[$itemId];
 	}
 
 	public function getAllEpicTags(int $entityId): array
 	{
 		try
 		{
-			$tags = [];
+			if (isset(self::$allEpicTags[$entityId]))
+			{
+				return self::$allEpicTags[$entityId];
+			}
+
+			self::$allEpicTags[$entityId] = [];
 
 			$queryObject = ItemTable::getList([
 				'select' => [
@@ -129,7 +148,7 @@ class ItemService implements Errorable
 				$itemObject = ItemTable::createItemObject($itemData);
 				if (!$itemObject->isEmpty())
 				{
-					$tags[$itemObject->getId()] = [
+					self::$allEpicTags[$entityId][$itemObject->getId()] = [
 						'id' => $itemObject->getId(),
 						'name' => $itemObject->getName(),
 						'description' => $itemObject->getDescription(),
@@ -138,7 +157,7 @@ class ItemService implements Errorable
 				}
 			}
 
-			return $tags;
+			return self::$allEpicTags[$entityId];
 		}
 		catch (\Exception $exception)
 		{
@@ -195,7 +214,12 @@ class ItemService implements Errorable
 
 	public function getTaskIdsByParentId(int $parentId): array
 	{
-		$taskIds = [];
+		if (isset(self::$taskIdsByParentId[$parentId]))
+		{
+			return self::$taskIdsByParentId[$parentId];
+		}
+
+		self::$taskIdsByParentId[$parentId] = [];
 
 		$queryObject = ItemTable::getList([
 			'select' => ['SOURCE_ID'],
@@ -208,10 +232,10 @@ class ItemService implements Errorable
 		]);
 		while ($itemData = $queryObject->fetch())
 		{
-			$taskIds[] = $itemData['SOURCE_ID'];
+			self::$taskIdsByParentId[$parentId][] = $itemData['SOURCE_ID'];
 		}
 
-		return $taskIds;
+		return self::$taskIdsByParentId[$parentId];
 	}
 
 	public function getItemById(int $itemId): ItemTable
@@ -228,6 +252,38 @@ class ItemService implements Errorable
 		}
 
 		return $item;
+	}
+
+	/**
+	 * @param array $itemIds Item ids.
+	 * @return ItemTable[]
+	 */
+	public function getItemsByIds(array $itemIds): array
+	{
+		try
+		{
+			$items = [];
+
+			$queryObject = ItemTable::getList([
+				'filter' => ['ID' => $itemIds],
+				'order' => ['SORT' => 'ASC', 'ID' => 'DESC'],
+			]);
+			while ($itemData = $queryObject->fetch())
+			{
+				$item = ItemTable::createItemObject($itemData);
+
+				$items[$item->getId()] = $item;
+			}
+
+			return $items;
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ALL_ITEMS)
+			);
+			return [];
+		}
 	}
 
 	public function attachFilesToItem(\CUserTypeManager $manager, int $itemId, array $files): array
@@ -285,25 +341,29 @@ class ItemService implements Errorable
 		return [];
 	}
 
-	public function getItemStoryPointsBySourceId(int $sourceId): string
+	public function getItemsStoryPointsBySourceId(array $sourceIds): array
 	{
 		try
 		{
+			$itemsStoryPoints = [];
+
 			$queryObject = ItemTable::getList([
-				'select' => ['STORY_POINTS'],
-				'filter' => ['SOURCE_ID' => $sourceId]
+				'select' => ['ID', 'STORY_POINTS', 'SOURCE_ID'],
+				'filter' => ['SOURCE_ID' => $sourceIds]
 			]);
-			if ($itemData = $queryObject->fetch())
+			while ($itemData = $queryObject->fetch())
 			{
-				return ($itemData['STORY_POINTS'] ? $itemData['STORY_POINTS'] : '');
+				$itemsStoryPoints[$itemData['SOURCE_ID']] = $itemData['STORY_POINTS'] ? $itemData['STORY_POINTS'] : '';
 			}
+
+			return $itemsStoryPoints;
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
 		}
 
-		return '';
+		return [];
 	}
 
 	public function getItemBySourceId(int $sourceId): ItemTable
@@ -332,7 +392,7 @@ class ItemService implements Errorable
 		return ItemTable::createItemObject();
 	}
 
-	public function getItemIdsBySourceIds(array $sourceIds, int $entityId = 0): array
+	public function getItemIdsBySourceIds(array $sourceIds, int $entityId = 0, PageNavigation $nav = null): array
 	{
 		$itemIds = [];
 
@@ -344,14 +404,39 @@ class ItemService implements Errorable
 				$filter['ENTITY_ID'] = $entityId;
 			}
 
-			$queryObject = ItemTable::getList([
+			$queryParams = [
 				'select' => ['ID'],
 				'filter' => $filter,
-				'order' => ['SORT' => 'ASC', 'ID' => 'DESC'],
-			]);
+				'order' => [
+					'SORT' => 'ASC',
+					'ID' => 'DESC',
+				],
+			];
+
+			if ($nav)
+			{
+				$queryParams['offset'] = $nav->getOffset();
+				$queryParams['limit'] = $nav->getLimit() + 1;
+			}
+
+			$queryObject = ItemTable::getList($queryParams);
+
+			$n = 0;
 			while ($itemData = $queryObject->fetch())
 			{
+				$n++;
+
+				if ($nav && $n > $nav->getPageSize())
+				{
+					break;
+				}
+
 				$itemIds[] = $itemData['ID'];
+			}
+
+			if ($nav)
+			{
+				$nav->setRecordCount($nav->getOffset() + $n);
 			}
 		}
 		catch (\Exception $exception)
@@ -362,7 +447,7 @@ class ItemService implements Errorable
 		return $itemIds;
 	}
 
-	public function moveItemsToEntity(array $itemIds, int $entityId): void
+	public function moveItemsToEntity(array $itemIds, int $entityId, PushService $pushService = null): void
 	{
 		try
 		{
@@ -372,7 +457,7 @@ class ItemService implements Errorable
 				$item->setId($itemId);
 				$item->setEntityId($entityId);
 				$item->setSort(0);
-				$this->changeItem($item);
+				$this->changeItem($item, $pushService);
 			}
 		}
 		catch (\Exception $exception)
@@ -398,7 +483,7 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function changeItem(ItemTable $item): bool
+	public function changeItem(ItemTable $item, PushService $pushService = null): bool
 	{
 		try
 		{
@@ -406,8 +491,10 @@ class ItemService implements Errorable
 
 			if ($result->isSuccess())
 			{
-				$pushService = new PushService();
-				$pushService->sendUpdateItemEvent($item);
+				if ($pushService)
+				{
+					$pushService->sendUpdateItemEvent($item);
+				}
 
 				return true;
 			}
@@ -424,7 +511,11 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function removeItem(ItemTable $item, TaskService $taskService = null): bool
+	public function removeItem(
+		ItemTable $item,
+		PushService $pushService = null,
+		TaskService $taskService = null
+	): bool
 	{
 		try
 		{
@@ -439,8 +530,10 @@ class ItemService implements Errorable
 
 				ItemTable::deactivateBySourceId($item->getSourceId());
 
-				$pushService = new PushService();
-				$pushService->sendRemoveItemEvent($item);
+				if ($pushService)
+				{
+					$pushService->sendRemoveItemEvent($item);
+				}
 
 				return true;
 			}
@@ -449,8 +542,10 @@ class ItemService implements Errorable
 				$result = ItemTable::delete($item->getId());
 				if ($result->isSuccess())
 				{
-					$pushService = new PushService();
-					$pushService->sendRemoveItemEvent($item);
+					if ($pushService)
+					{
+						$pushService->sendRemoveItemEvent($item);
+					}
 
 					return true;
 				}
@@ -468,12 +563,11 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function moveAndSort(array $sortInfo): void
+	public function sortItems(array $sortInfo, PushService $pushService = null): void
 	{
 		try
 		{
 			$itemIds = [];
-			$entityIdWhens = [];
 			$sortWhens = [];
 
 			$updatedItems = [];
@@ -482,11 +576,11 @@ class ItemService implements Errorable
 			{
 				$itemId = (is_numeric($itemId) ? (int)$itemId : 0);
 				$sort = (is_numeric($info['sort']) ? (int)$info['sort'] : 0);
+				$entityId = (is_numeric($info['entityId']) ? (int)$info['entityId'] : 0);
 				if ($itemId)
 				{
 					$itemIds[] = $itemId;
 					$sortWhens[] = 'WHEN ID = '.$itemId.' THEN '.$sort;
-					$entityId = (is_numeric($info['entityId']) ? (int)$info['entityId'] : 0);
 					$updatedItemId = (is_numeric($info['updatedItemId']) ? (int)$info['updatedItemId'] : 0);
 					if ($updatedItemId)
 					{
@@ -500,10 +594,6 @@ class ItemService implements Errorable
 							$updatedItems[$itemId]['entityId'] = $entityId;
 						}
 					}
-					if ($entityId)
-					{
-						$entityIdWhens[] = 'WHEN ID = '.$itemId.' THEN '.$entityId;
-					}
 				}
 			}
 
@@ -512,16 +602,11 @@ class ItemService implements Errorable
 				$data = [
 					'SORT' => new SqlExpression('(CASE '.implode(' ', $sortWhens).' END)')
 				];
-				if ($entityIdWhens)
-				{
-					$data['ENTITY_ID'] = new SqlExpression('(CASE '.implode(' ', $entityIdWhens).' END)');
-				}
 				ItemTable::updateMulti($itemIds, $data);
 			}
 
-			if ($updatedItems)
+			if ($updatedItems && $pushService)
 			{
-				$pushService = new PushService();
 				$pushService->sendSortItemEvent($updatedItems);
 			}
 		}
@@ -617,9 +702,9 @@ class ItemService implements Errorable
 		$queryObject = ItemTable::getList([
 			'select' => ['SOURCE_ID'],
 			'filter' => [
-				'ID'=> (int) $itemId,
+				'ID'=> $itemId,
 				'ITEM_TYPE'=> ItemTable::TASK_TYPE,
-				'ACTIVE' => 'Y'
+				'ACTIVE' => 'Y',
 			]
 		]);
 		if ($itemData = $queryObject->fetch())
@@ -633,19 +718,53 @@ class ItemService implements Errorable
 	 * Returns a hierarchy of children by a parent entity id.
 	 *
 	 * @param EntityTable $entity Entity object.
+	 * @param PageNavigation|null $nav If you need to navigation.
+	 * @param array $filteredSourceIds If you need to get filtered items.
 	 * @return array ItemTable[]
 	 */
-	public function getHierarchyChildItems(EntityTable $entity): array
+	public function getHierarchyChildItems(
+		EntityTable $entity,
+		PageNavigation $nav = null,
+		array $filteredSourceIds = []
+	): array
 	{
-		$items = $this->getItemsFromDb(
-			['*'],
-			['ENTITY_ID'=> (int) $entity->getId(), 'ACTIVE' => 'Y'],
-			['SORT' => 'ASC', 'ID' => 'DESC']
-		);
+		$queryParams = [
+			'select' => ['*'],
+			'filter' => [
+				'ENTITY_ID'=> $entity->getId(),
+				'ACTIVE' => 'Y',
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'DESC',
+			],
+		];
+
+		if (!empty($filteredSourceIds))
+		{
+			$queryParams['filter']['SOURCE_ID'] = $filteredSourceIds;
+		}
+
+		if ($nav)
+		{
+			$queryParams['offset'] = $nav->getOffset();
+			$queryParams['limit'] = $nav->getLimit() + 1;
+		}
+
+		$queryObject = ItemTable::getList($queryParams);
 
 		$tree = [];
-		foreach ($items as $item)
+
+		$n = 0;
+		while ($item = $queryObject->fetch())
 		{
+			$n++;
+
+			if ($nav && $n > $nav->getPageSize())
+			{
+				break;
+			}
+
 			$itemObject = ItemTable::createItemObject($item);
 			if ($item['STORY_POINTS'] <> '')
 			{
@@ -653,6 +772,11 @@ class ItemService implements Errorable
 				$entity->setStoryPoints((float) $entity->getStoryPoints() + (float) $item['STORY_POINTS']);
 			}
 			$tree[] = $itemObject;
+		}
+
+		if ($nav)
+		{
+			$nav->setRecordCount($nav->getOffset() + $n);
 		}
 
 		return $tree;
@@ -681,15 +805,6 @@ class ItemService implements Errorable
 		return $sumStoryPoints;
 	}
 
-	public function cleanEpicInTaskName(string $name): string
-	{
-		if (isset($name) && preg_match_all('/\s@([^\s,\[\]<>]+)/is', ' '.$name, $matches))
-		{
-			$name = trim(str_replace($matches[0], '', $name));
-		}
-		return $name;
-	}
-
 	/**
 	 * The method returns an array of data in the required format for the client app.
 	 *
@@ -710,6 +825,24 @@ class ItemService implements Errorable
 			'epic' => $this->getEpicInfo($item->getParentId()),
 			'info' => $item->getInfo()->getInfoData(),
 		];
+	}
+
+	/**
+	 * The method returns an array of data in the required format for the client app.
+	 *
+	 * @param ItemTable[] $items Items.
+	 * @return array
+	 */
+	public function getItemsData(array $items): array
+	{
+		$itemsData = [];
+
+		foreach ($items as $item)
+		{
+			$itemsData[$item->getSourceId()] = $this->getItemData($item);
+		}
+
+		return $itemsData;
 	}
 
 	public function getErrors()

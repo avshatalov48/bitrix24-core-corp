@@ -57,6 +57,8 @@ class CBPRpaChangeStageActivity extends CBPActivity
 			$this->ModifiedBy
 		);
 
+		$this->workflow->Terminate();
+
 		throw new Exception(GetMessage('RPA_BP_CHS_TERMINATED'), CBPRuntime::EXCEPTION_CODE_INSTANCE_TERMINATED);
 	}
 

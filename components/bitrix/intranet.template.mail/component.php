@@ -27,7 +27,7 @@ if (
 				"LAST_NAME" => $arUser["LAST_NAME"],
 				"SECOND_NAME" => $arUser["SECOND_NAME"],
 				"LOGIN" => $arUser["LOGIN"]
-			));
+			), true);
 
 			if (intval($arUser["PERSONAL_PHOTO"]) > 0)
 			{

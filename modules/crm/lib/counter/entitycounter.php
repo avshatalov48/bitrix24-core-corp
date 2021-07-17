@@ -33,6 +33,9 @@ class EntityCounter extends CounterBase
 	/** @var int|null  */
 	protected $lastCalculatedTime = null;
 
+	/** @var bool */
+	protected $sendPullEvent = false;
+
 	/**
 	 * @param int $entityTypeID Entity Type ID (see \CCrmOwnerType).
 	 * @param int $typeID Type ID (see EntityCounterType).
@@ -165,6 +168,26 @@ class EntityCounter extends CounterBase
 		if(is_string($code) && $code !== '')
 		{
 			\CUserCounter::DeleteByCode($code);
+		}
+	}
+
+	public function increase(int $increment = 1): void
+	{
+		$code = $this->getCode();
+		$userId = (int)$this->getUserID();
+		if (is_string($code) && $code !== '' && $userId > 0)
+		{
+			\CUserCounter::Increment($userId, $code, '**', $this->sendPullEvent, $increment);
+		}
+	}
+
+	public function decrease(int $decrement = 1): void
+	{
+		$code = $this->getCode();
+		$userId = (int)$this->getUserID();
+		if (is_string($code) && $code !== '' && $userId > 0)
+		{
+			\CUserCounter::Decrement($userId, $code, '**', $this->sendPullEvent, $decrement);
 		}
 	}
 
@@ -467,6 +490,28 @@ class EntityCounter extends CounterBase
 						$highBound->setTime(0, 0, 0);
 						$activityQuery->addFilter('<DEADLINE', $highBound);
 					}
+					if (isset($options['PROVIDER_ID']))
+					{
+						if (is_array($options['PROVIDER_ID']))
+						{
+							$activityQuery->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
+						}
+						else
+						{
+							$activityQuery->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
+						}
+					}
+					if (isset($options['PROVIDER_TYPE_ID']))
+					{
+						if (is_array($options['PROVIDER_TYPE_ID']))
+						{
+							$activityQuery->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
+						}
+						else
+						{
+							$activityQuery->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
+						}
+					}
 
 					$activityQuery->addFilter('=COMPLETED', 'N');
 					$activityQuery->addSelect('ID');
@@ -603,6 +648,29 @@ class EntityCounter extends CounterBase
 						$highBound->setTime(0, 0, 0);
 						$query->addFilter('<DEADLINE', $highBound);
 					}
+
+					if (isset($options['PROVIDER_ID']))
+					{
+						if (is_array($options['PROVIDER_ID']))
+						{
+							$query->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
+						}
+						else
+						{
+							$query->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
+						}
+					}
+					if (isset($options['PROVIDER_TYPE_ID']))
+					{
+						if (is_array($options['PROVIDER_TYPE_ID']))
+						{
+							$query->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
+						}
+						else
+						{
+							$query->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
+						}
+					}
 				}
 
 				$results[] = $query;
@@ -655,17 +723,44 @@ class EntityCounter extends CounterBase
 		}
 		return $result;
 	}
+
 	public function synchronize()
 	{
 		$this->currentValue = $this->calculateValue();
 		if($this->code !== '')
 		{
-			\CUserCounter::Set($this->userID, $this->code, $this->currentValue, '**', '', false);
+			\CUserCounter::Set($this->userID, $this->code, $this->currentValue, '**', '', $this->sendPullEvent);
 			if($this->isOneDay())
 			{
 				$this->refreshLastCalculatedTime();
 			}
 		}
+	}
+
+	public function synchronizePostponed()
+	{
+		static $addedJobs = [];
+
+		$code = $this->getCode();
+		$userId = $this->getUserID();
+
+		if ($code === '' || $userId <= 0)
+		{
+			return;
+		}
+		$jobKey = $code.'_'.$userId;
+		if (isset($addedJobs[$jobKey]))
+		{
+			return;
+		}
+		$addedJobs[$jobKey] = true;
+
+		\Bitrix\Main\Application::getInstance()->addBackgroundJob(
+			function ()
+			{
+				$this->synchronize();
+			}
+		);
 	}
 	/**
 	 * Get details page URL.
@@ -744,6 +839,14 @@ class EntityCounter extends CounterBase
 		if(isset($params['STAGE_SEMANTIC_ID']))
 		{
 			$queryParams['STAGE_SEMANTIC_ID'] = $params['STAGE_SEMANTIC_ID'];
+		}
+		if(isset($params['PROVIDER_ID']))
+		{
+			$queryParams['PROVIDER_ID'] = $params['PROVIDER_ID'];
+		}
+		if(isset($params['PROVIDER_TYPE_ID']))
+		{
+			$queryParams['PROVIDER_TYPE_ID'] = $params['PROVIDER_TYPE_ID'];
 		}
 
 		$queries = $this->prepareQueries($queryParams);

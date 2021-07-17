@@ -16,10 +16,13 @@ global $APPLICATION;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
-Extension::load(['ui.counter', 'ui.label', 'tasks.list.item', 'ui.icons.b24']);
-?>
+Extension::load([
+	'ui.counter',
+	'ui.icons.b24',
+	'ui.label',
+	'ui.tour',
+]);
 
-<?php
 if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
 {
 	$APPLICATION->IncludeComponent(
@@ -31,11 +34,13 @@ if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
 	);
 }
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
-?>
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty(
+	'BodyClass',
+	"{$bodyClass} page-one-column transparent-workarea"
+);
 
-<?php $APPLICATION->IncludeComponent(
+$APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
 	array(
@@ -166,6 +171,7 @@ $APPLICATION->IncludeComponent(
 		'SORT'      => ($arParams['SORT'] ?? []),
 		'SORT_VARS' => ($arParams['SORT_VARS'] ?? []),
 		'ROWS'      => $arResult['ROWS'],
+		'STUB'      => (count($arResult['ROWS']) > 0 ? null : $arResult['STUB']),
 
 		'AJAX_MODE'           => 'Y',
 		//Strongly required
@@ -179,6 +185,7 @@ $APPLICATION->IncludeComponent(
 		"ALLOW_HORIZONTAL_SCROLL" => true,
 		"ALLOW_SORT"              => $arParams['SCRUM_BACKLOG'] != 'Y',
 		"ALLOW_PIN_HEADER"        => true,
+		'ALLOW_CONTEXT_MENU'      => true,
 		"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
 
 		"SHOW_CHECK_ALL_CHECKBOXES" => true,
@@ -209,6 +216,15 @@ $APPLICATION->IncludeComponent(
 	$component,
 	array('HIDE_ICONS' => 'Y')
 );
+
+$taskPath = CComponentEngine::MakePathFromTemplate(
+	($arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']),
+	[
+		'user_id' => $arResult['USER_ID'],
+		'group_id' => $arParams['GROUP_ID'],
+		'action' => 'view',
+	]
+);
 ?>
 
 <script>
@@ -216,6 +232,9 @@ $APPLICATION->IncludeComponent(
 		function() {
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
+			BX.Tasks.GridActions.taskPath = '<?= \CUtil::JSEscape($taskPath) ?>';
+			BX.Tasks.GridActions.groupId = '<?= (int)$arParams['GROUP_ID'] ?>';
+
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
 				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',
@@ -254,6 +273,14 @@ $APPLICATION->IncludeComponent(
 					TASKS_ACCESS_DENIED: "<?=GetMessageJS("TASKS_ACCESS_DENIED")?>"
 				}
 			});
+
+			BX.Tasks.TourGuideController = new BX.Tasks.TourGuideController(<?=
+				Json::encode([
+					'gridId' => $arParams['GRID_ID'],
+					'userId' => $arResult['USER_ID'],
+					'tours' => $arResult['tours'],
+				])
+			?>);
 		}
 	);
 </script>

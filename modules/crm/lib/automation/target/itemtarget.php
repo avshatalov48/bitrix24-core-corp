@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 
 class ItemTarget extends BaseTarget
 {
@@ -54,7 +55,20 @@ class ItemTarget extends BaseTarget
 
 	public function setEntityStatus($statusId)
 	{
-		$operation = $this->factory->getUpdateOperation($this->getEntity()->setStageId($statusId));
+		$context = Container::getInstance()->getContext();
+		$context->setUserId(0);
+		$context->setScope(Context::SCOPE_AUTOMATION);
+		$operation = $this->factory->getUpdateOperation(
+			$this->getEntity()->setStageId($statusId),
+			$context
+		);
+		$operation
+			->disableCheckFields()
+			->disableCheckAccess()
+			// automation will be launched right after
+			->disableAutomation()
+		;
+
 		return $operation->launch()->isSuccess();
 	}
 

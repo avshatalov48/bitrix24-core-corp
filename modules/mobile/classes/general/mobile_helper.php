@@ -1020,6 +1020,55 @@ class CMobileHelper
 	}
 
 	/**
+	 * @param int $taskId
+	 *
+	 * @return string
+	 * @throws CTaskAssertException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getParamsToCreateTaskLink(int $taskId): string
+	{
+		try
+		{
+			if (!\Bitrix\Main\Loader::includeModule('tasks'))
+			{
+				return '';
+			}
+			$taskData = \CTaskItem::getInstanceFromPool($taskId, $GLOBALS["USER"]->GetID())->getData(false);
+
+			$creatorIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
+			$responsibleIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
+			$title = addslashes(htmlspecialcharsbx($taskData['TITLE']));
+
+			$taskDataParams = [
+				[
+					'id' => $taskId,
+					'title' => 'TASK',
+					'taskInfo' => [
+						'title' => $title,
+						'creatorIcon' => $creatorIcon,
+						'responsibleIcon' => $responsibleIcon,
+					],
+				],
+				$taskId,
+				[
+					'taskId' => $taskId,
+					'getTaskInfo' => true,
+				]
+			];
+
+			$taskDataParams = \Bitrix\Main\Web\Json::encode($taskDataParams);
+
+			return $taskDataParams;
+		}
+		catch (\TasksException $exception)
+		{
+			return '';
+		}
+	}
+
+	/**
 	 * @param $text
 	 * @param $tag
 	 * @return string

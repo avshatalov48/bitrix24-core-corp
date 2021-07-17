@@ -606,6 +606,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      fields: [new landing_ui_field_fieldslistfield.FieldsListField({
 	        selector: 'fields',
 	        isLeadEnabled: _this.options.isLeadEnabled,
+	        dictionary: _this.options.dictionary,
 	        formOptions: babelHelpers.objectSpread({}, _this.options.formOptions),
 	        crmFields: babelHelpers.objectSpread({}, _this.options.crmFields),
 	        items: babelHelpers.toConsumableArray(_this.options.values.fields)
@@ -2049,12 +2050,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	      return this.cache.remember('categoriesDropdown', function () {
 	        return new BX.Landing.UI.Field.Dropdown({
-	          title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CATEGORIES_FIELD_TITLE'),
+	          title: _this3.options.listTitle || landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CATEGORIES_FIELD_TITLE'),
 	          content: _this3.options.value.category,
 	          items: _this3.options.categories.map(function (category) {
 	            return {
-	              name: category.NAME,
-	              value: category.ID
+	              name: category.NAME || category.name,
+	              value: category.ID || category.id
 	            };
 	          }),
 	          onChange: _this3.onCategoryChange.bind(_this3)
@@ -2066,7 +2067,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    value: function getCurrentCategory() {
 	      var currentCategoryId = this.getCategoriesDropdown().getValue();
 	      return this.options.categories.find(function (category) {
-	        return String(category.ID) === String(currentCategoryId);
+	        return String(category.ID || category.id) === String(currentCategoryId);
 	      });
 	    }
 	  }, {
@@ -2089,14 +2090,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      var _this4 = this;
 
 	      return this.cache.remember('stagesDropdown', function () {
-	        var stages = _this4.getCurrentCategory().STAGES;
+	        var stages = _this4.getCurrentCategory().STAGES || _this4.getCurrentCategory().stages;
 
 	        return new BX.Landing.UI.Field.Dropdown({
-	          title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_STAGES_FIELD_TITLE'),
+	          title: _this4.options.listTitle || landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_STAGES_FIELD_TITLE'),
 	          items: stages.map(function (stage) {
 	            return {
-	              name: stage.NAME,
-	              value: stage.ID
+	              name: stage.NAME || stage.name,
+	              value: stage.ID || stage.id
 	            };
 	          })
 	        });
@@ -2131,6 +2132,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	    _this.addItem(_this.getTypesField());
 
+	    if (_this.isDynamicAvailable()) {
+	      _this.addItem(_this.getDynamicEntitySettingsForm());
+	    }
+
 	    _this.addItem(_this.getExpertSettingsForm());
 
 	    _this.addItem(_this.getOrderSettingsForm());
@@ -2139,6 +2144,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 
 	  babelHelpers.createClass(CrmContent, [{
+	    key: "isDynamicAvailable",
+	    value: function isDynamicAvailable() {
+	      return main_core.Type.isArrayFilled(this.options.formDictionary.document.dynamic);
+	    }
+	  }, {
 	    key: "getHeader",
 	    value: function getHeader() {
 	      return this.cache.remember('header', function () {
@@ -2192,10 +2202,20 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      var _this4 = this;
 
 	      return this.cache.remember('formSettingsForm', function () {
+	        var scheme = _this4.getSchemeById(_this4.options.values.scheme);
+
+	        var isOpened = function () {
+	          if (scheme && scheme.dynamic === true) {
+	            return String(scheme.id).endsWith('1');
+	          }
+
+	          return main_core.Text.toNumber(_this4.options.values.scheme) > 4;
+	        }();
+
 	        return new landing_ui_form_formsettingsform.FormSettingsForm({
 	          title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_ORDER_HEADER'),
 	          toggleable: true,
-	          opened: main_core.Text.toNumber(_this4.options.values.scheme) > 4,
+	          opened: isOpened,
 	          fields: [_this4.getPaymentField(), new landing_ui_card_messagecard.MessageCard({
 	            id: 'orderMessage',
 	            header: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_ORDER_MESSAGE_HEADER'),
@@ -2248,9 +2268,68 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	    }
 	  }, {
+	    key: "getDynamicHeader",
+	    value: function getDynamicHeader(headerText) {
+	      var header = this.cache.remember('dynamicHeader', function () {
+	        return new landing_ui_card_headercard.HeaderCard({
+	          title: '',
+	          level: 2
+	        });
+	      });
+
+	      if (main_core.Type.isString(headerText)) {
+	        header.setTitle(headerText);
+	      }
+
+	      return header;
+	    }
+	  }, {
+	    key: "getDynamicEntitiesField",
+	    value: function getDynamicEntitiesField() {
+	      var _this5 = this;
+
+	      return this.cache.remember('dynamicEntitiesField', function () {
+	        var currentScheme = _this5.getSchemeById(_this5.options.values.scheme);
+
+	        return new BX.Landing.UI.Field.Dropdown({
+	          selector: 'dynamicScheme',
+	          title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CRM_SMART_ENTITY_LIST'),
+	          items: _this5.options.formDictionary.document.dynamic.map(function (scheme) {
+	            return {
+	              name: scheme.name,
+	              value: scheme.id
+	            };
+	          }),
+	          content: currentScheme.mainEntity,
+	          onChange: function onChange() {
+	            _this5.onTypeChange(new main_core_events.BaseEvent({
+	              data: {
+	                item: {
+	                  id: _this5.getSelectedSchemeId()
+	                }
+	              }
+	            }));
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getDynamicEntitySettingsForm",
+	    value: function getDynamicEntitySettingsForm() {
+	      var _this6 = this;
+
+	      return this.cache.remember('dynamicEntitySettingsForm', function () {
+	        return new landing_ui_form_formsettingsform.FormSettingsForm({
+	          opened: true,
+	          hidden: true,
+	          fields: [_this6.getDynamicEntitiesField()]
+	        });
+	      });
+	    }
+	  }, {
 	    key: "getExpertSettingsForm",
 	    value: function getExpertSettingsForm() {
-	      var _this5 = this;
+	      var _this7 = this;
 
 	      return this.cache.remember('expertSettingsForm', function () {
 	        return new landing_ui_form_formsettingsform.FormSettingsForm({
@@ -2261,21 +2340,21 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          fields: [new landing_ui_card_headercard.HeaderCard({
 	            title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CRM_TYPE_1').replace('&nbsp;', ' '),
 	            level: 2
-	          }), _this5.getDuplicatesField()]
+	          }), _this7.getDuplicatesField()]
 	        });
 	      });
 	    }
 	  }, {
 	    key: "getTypesField",
 	    value: function getTypesField() {
-	      var _this6 = this;
+	      var _this8 = this;
 
 	      return this.cache.remember('typesField', function () {
 	        setTimeout(function () {
-	          _this6.onTypeChange(new main_core_events.BaseEvent({
+	          _this8.onTypeChange(new main_core_events.BaseEvent({
 	            data: {
 	              item: {
-	                id: _this6.options.values.scheme
+	                id: _this8.options.values.scheme
 	              }
 	            }
 	          }));
@@ -2294,7 +2373,15 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          icon: 'landing-ui-crm-entity-type4'
 	        }];
 
-	        if (_this6.options.isLeadEnabled) {
+	        if (_this8.isDynamicAvailable()) {
+	          items.push({
+	            id: 'smart',
+	            title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CRM_TYPE_5'),
+	            icon: 'landing-ui-crm-entity-type5'
+	          });
+	        }
+
+	        if (_this8.options.isLeadEnabled) {
 	          items.unshift({
 	            id: '1',
 	            title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CRM_TYPE_1'),
@@ -2305,39 +2392,62 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        return new landing_ui_field_radiobuttonfield.RadioButtonField({
 	          selector: 'scheme',
 	          value: function () {
-	            if (String(_this6.options.values.scheme) === '8') {
+	            if (String(_this8.options.values.scheme) === '8') {
 	              return 1;
 	            }
 
-	            if (String(_this6.options.values.scheme) === '5') {
+	            if (String(_this8.options.values.scheme) === '5') {
 	              return 2;
 	            }
 
-	            if (String(_this6.options.values.scheme) === '6') {
+	            if (String(_this8.options.values.scheme) === '6') {
 	              return 3;
 	            }
 
-	            if (String(_this6.options.values.scheme) === '7') {
+	            if (String(_this8.options.values.scheme) === '7') {
 	              return 4;
 	            }
 
-	            return _this6.options.values.scheme;
+	            var scheme = _this8.getSchemeById(_this8.options.values.scheme);
+
+	            if (main_core.Type.isPlainObject(scheme) && scheme.dynamic === true) {
+	              return 'smart';
+	            }
+
+	            return _this8.options.values.scheme;
 	          }(),
 	          items: items,
-	          onChange: _this6.onTypeChange.bind(_this6)
+	          onChange: _this8.onTypeChange.bind(_this8)
 	        });
 	      });
 	    }
 	  }, {
 	    key: "getStagesField",
 	    value: function getStagesField() {
-	      var _this7 = this;
+	      var _this9 = this;
 
 	      return this.cache.remember('stagesField', function () {
 	        return new StageField({
-	          categories: _this7.options.categories,
+	          categories: _this9.options.categories,
 	          value: {
-	            category: _this7.options.values.category
+	            category: _this9.options.values.category
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getDynamicCategoriesField",
+	    value: function getDynamicCategoriesField(schemeId) {
+	      var _this10 = this;
+
+	      return this.cache.remember("dynamicCategories#".concat(schemeId), function () {
+	        var scheme = _this10.getDynamicSchemeById(schemeId);
+
+	        return new StageField({
+	          listTitle: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_SMART_STAGES_FIELD_TITLE'),
+	          categories: scheme.categories,
+	          value: {
+	            category: _this10.options.values.dynamicCategory
 	          }
 	        });
 	      });
@@ -2345,13 +2455,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }, {
 	    key: "getDuplicatesEnabledField",
 	    value: function getDuplicatesEnabledField() {
-	      var _this8 = this;
+	      var _this11 = this;
 
 	      return this.cache.remember('duplicatesEnabledField', function () {
 	        return new BX.Landing.UI.Field.Checkbox({
 	          selector: 'duplicatesEnabled',
 	          compact: true,
-	          value: [_this8.options.values.duplicatesEnabled],
+	          value: [_this11.options.values.duplicatesEnabled],
 	          items: [{
 	            name: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_CRM_DUPLICATES_ENABLED'),
 	            value: true
@@ -2360,14 +2470,38 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	    }
 	  }, {
+	    key: "getSchemeById",
+	    value: function getSchemeById(id) {
+	      return this.options.formDictionary.document.schemes.find(function (scheme) {
+	        return String(scheme.id) === String(id) || id === 'smart' && scheme.dynamic;
+	      });
+	    }
+	  }, {
+	    key: "getDynamicSchemeById",
+	    value: function getDynamicSchemeById(id) {
+	      var _this$getSchemeById = this.getSchemeById(id),
+	          mainEntity = _this$getSchemeById.mainEntity;
+
+	      return this.options.formDictionary.document.dynamic.find(function (scheme) {
+	        return String(scheme.id) === String(mainEntity);
+	      });
+	    }
+	  }, {
 	    key: "onTypeChange",
 	    value: function onTypeChange(event) {
 	      var _event$getData = event.getData(),
 	          item = _event$getData.item;
 
+	      var scheme = this.getSchemeById(item.id);
 	      this.clear();
 	      this.addItem(this.getHeader());
 	      this.addItem(this.getTypesField());
+
+	      if (this.isDynamicAvailable()) {
+	        this.addItem(this.getDynamicEntitySettingsForm());
+	        this.getDynamicEntitySettingsForm().hide();
+	      }
+
 	      var expertSettingsForm = this.getExpertSettingsForm();
 	      expertSettingsForm.clear();
 
@@ -2393,8 +2527,20 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        expertSettingsForm.addField(this.getDuplicatesField());
 	      }
 
-	      if (main_core.Text.toNumber(item.id) > 4 || this.getOrderSettingsForm().isOpened()) {
+	      if (main_core.Text.toNumber(item.id) > 4 && main_core.Type.isPlainObject(scheme) && scheme.dynamic !== true || this.getOrderSettingsForm().isOpened()) {
 	        this.getOrderSettingsForm().onSwitchChange(true);
+	      }
+
+	      if (main_core.Type.isPlainObject(scheme) && (String(item.id) === 'smart' || scheme.dynamic === true) && this.isDynamicAvailable()) {
+	        expertSettingsForm.addField(this.getDynamicHeader(scheme.name));
+	        expertSettingsForm.addField(this.getDynamicCategoriesField(scheme.id));
+	        expertSettingsForm.addField(this.getDuplicatesField());
+
+	        if (String(scheme.id).endsWith('1')) {
+	          this.getOrderSettingsForm().onSwitchChange(true);
+	        }
+
+	        this.getDynamicEntitySettingsForm().show();
 	      }
 
 	      this.addItem(expertSettingsForm);
@@ -2408,17 +2554,37 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }));
 	    }
 	  }, {
+	    key: "getSelectedSchemeId",
+	    value: function getSelectedSchemeId() {
+	      var typeId = this.getTypesField().getValue();
+
+	      if (String(typeId) === 'smart') {
+	        var entityId = this.getDynamicEntitiesField().getValue();
+
+	        if (this.getOrderSettingsForm().isOpened()) {
+	          return "".concat(entityId, "1");
+	        }
+
+	        return "".concat(entityId, "0");
+	      }
+
+	      return typeId;
+	    }
+	  }, {
 	    key: "valueReducer",
 	    value: function valueReducer(value) {
 	      var duplicateMode = this.getDuplicatesField().getValue()[0];
 	      var reducedValue = {
 	        duplicateMode: duplicateMode === 'ALLOW' ? '' : duplicateMode,
-	        scheme: this.getTypesField().getValue(),
+	        scheme: this.getSelectedSchemeId(),
 	        deal: {
 	          duplicatesEnabled: main_core.Text.toBoolean(this.getDuplicatesEnabledField().getValue()[0])
 	        },
 	        payment: {
 	          use: this.getPaymentField().getValue().length > 0
+	        },
+	        dynamic: {
+	          category: null
 	        }
 	      };
 
@@ -2442,6 +2608,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	      if (String(reducedValue.scheme) === '3' || String(reducedValue.scheme) === '6') {
 	        reducedValue.deal.category = this.getStagesField().getValue().category;
+	      }
+
+	      var scheme = this.getSchemeById(reducedValue.scheme);
+
+	      if (main_core.Type.isPlainObject(scheme) && scheme.dynamic) {
+	        reducedValue.dynamic.category = this.getDynamicCategoriesField(scheme.id).getValue().category;
 	      }
 
 	      return {
@@ -3099,7 +3271,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_CATEGORY_CRM')
 	}), new landing_ui_panel_basepresetpanel.PresetCategory({
 	  id: 'products',
-	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_CATEGORY_PRODUCTS')
+	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_CATEGORY_PRODUCTS_2')
 	}), new landing_ui_panel_basepresetpanel.PresetCategory({
 	  id: 'social',
 	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_CATEGORY_SOCIAL')
@@ -3114,10 +3286,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	var callbackIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/revertcall.svg";
 
-	var productWithTextIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/producttext.svg";
-
-	var productWithImageIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/productimage.svg";
-
 	var vkIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/vk.svg";
 
 	var facebookIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/facebook.svg";
@@ -3125,6 +3293,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	var crmFormIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/crm.svg";
 
 	var serviceIcon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/service.svg";
+
+	var product1Icon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/products1.svg";
+
+	var product2Icon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/products2.svg";
+
+	var product3Icon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/products3.svg";
+
+	var product4Icon = "/bitrix/js/landing/ui/panel/formsettingspanel/dist/images/icons/products4.svg";
 
 	var presets = [new landing_ui_panel_basepresetpanel.Preset({
 	  id: 'contacts',
@@ -3294,23 +3470,176 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    }
 	  }
 	}), new landing_ui_panel_basepresetpanel.Preset({
-	  id: 'products_small',
+	  id: 'products1',
 	  category: 'products',
-	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCTS_SMALL'),
-	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCTS_SMALL_DESCRIPTION'),
-	  icon: productWithTextIcon,
-	  items: ['analytics', 'embed', 'other'],
-	  disabled: true,
-	  soon: true
+	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_1'),
+	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_1_DESCRIPTION'),
+	  icon: product1Icon,
+	  items: ['fields', 'agreements', 'crm', 'embed', 'other'],
+	  options: {
+	    templateId: 'products1',
+	    name: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_1'),
+	    agreements: {
+	      use: true
+	    },
+	    data: {
+	      title: '',
+	      desc: '',
+	      fields: [{
+	        name: 'LEAD_NAME'
+	      }, {
+	        name: 'LEAD_PHONE'
+	      }, {
+	        name: 'LEAD_EMAIL'
+	      }, {
+	        type: 'product',
+	        bigPic: false
+	      }],
+	      agreements: [{
+	        checked: true
+	      }],
+	      dependencies: [],
+	      recaptcha: {
+	        use: false
+	      }
+	    },
+	    captcha: {
+	      key: '',
+	      secret: ''
+	    },
+	    document: {
+	      scheme: 1
+	    }
+	  }
 	}), new landing_ui_panel_basepresetpanel.Preset({
-	  id: 'products_big',
+	  id: 'products2',
 	  category: 'products',
-	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCTS_BIG'),
-	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCTS_BIG_DESCRIPTION'),
-	  icon: productWithImageIcon,
-	  items: ['identify', 'button_and_header', 'other'],
-	  disabled: true,
-	  soon: true
+	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_2'),
+	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_2_DESCRIPTION'),
+	  icon: product2Icon,
+	  items: ['fields', 'agreements', 'crm', 'embed', 'other'],
+	  options: {
+	    templateId: 'products2',
+	    name: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_2'),
+	    agreements: {
+	      use: true
+	    },
+	    data: {
+	      title: '',
+	      desc: '',
+	      fields: [{
+	        name: 'LEAD_NAME'
+	      }, {
+	        name: 'LEAD_PHONE'
+	      }, {
+	        name: 'LEAD_EMAIL'
+	      }, {
+	        type: 'product',
+	        bigPic: false
+	      }],
+	      agreements: [{
+	        checked: true
+	      }],
+	      dependencies: [],
+	      recaptcha: {
+	        use: false
+	      }
+	    },
+	    captcha: {
+	      key: '',
+	      secret: ''
+	    },
+	    document: {
+	      scheme: 8
+	    },
+	    payment: {
+	      use: true
+	    }
+	  }
+	}), new landing_ui_panel_basepresetpanel.Preset({
+	  id: 'products3',
+	  category: 'products',
+	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_3'),
+	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_3_DESCRIPTION'),
+	  icon: product3Icon,
+	  items: ['fields', 'agreements', 'crm', 'embed', 'other'],
+	  options: {
+	    templateId: 'products3',
+	    name: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_3'),
+	    agreements: {
+	      use: true
+	    },
+	    data: {
+	      title: '',
+	      desc: '',
+	      fields: [{
+	        name: 'LEAD_NAME'
+	      }, {
+	        name: 'LEAD_PHONE'
+	      }, {
+	        name: 'LEAD_EMAIL'
+	      }, {
+	        type: 'product',
+	        bigPic: false
+	      }],
+	      agreements: [{
+	        checked: true
+	      }],
+	      dependencies: [],
+	      recaptcha: {
+	        use: false
+	      }
+	    },
+	    captcha: {
+	      key: '',
+	      secret: ''
+	    },
+	    document: {
+	      scheme: 1
+	    }
+	  }
+	}), new landing_ui_panel_basepresetpanel.Preset({
+	  id: 'products4',
+	  category: 'products',
+	  title: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_4'),
+	  description: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_4_DESCRIPTION'),
+	  icon: product4Icon,
+	  items: ['fields', 'agreements', 'crm', 'embed', 'other'],
+	  options: {
+	    templateId: 'products4',
+	    name: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PRESET_PRODUCT_4'),
+	    agreements: {
+	      use: true
+	    },
+	    data: {
+	      title: '',
+	      desc: '',
+	      fields: [{
+	        name: 'LEAD_NAME'
+	      }, {
+	        name: 'LEAD_PHONE'
+	      }, {
+	        name: 'LEAD_EMAIL'
+	      }, {
+	        type: 'product',
+	        bigPic: true
+	      }],
+	      agreements: [{
+	        checked: true
+	      }],
+	      dependencies: [],
+	      recaptcha: {
+	        use: false
+	      }
+	    },
+	    captcha: {
+	      key: '',
+	      secret: ''
+	    },
+	    document: {
+	      scheme: 1
+	    }
+	  }
 	}), new landing_ui_panel_basepresetpanel.Preset({
 	  id: 'vk',
 	  category: 'social',
@@ -3584,9 +3913,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            if (main_core.Type.isPlainObject(preset.options.options) && main_core.Type.isPlainObject(preset.options.options.data)) {
 	              if (main_core.Type.isArrayFilled(preset.options.options.data.fields)) {
 	                preset.options.options.data.fields = preset.options.options.data.fields.map(function (field) {
-	                  return babelHelpers.objectSpread({}, field, {
-	                    name: field.name.replace(/^LEAD_/, 'CONTACT_')
-	                  });
+	                  var preparedField = babelHelpers.objectSpread({}, field);
+
+	                  if (main_core.Type.isStringFilled(field.name)) {
+	                    preparedField.name = field.name.replace(/^LEAD_/, 'CONTACT_');
+	                  }
+
+	                  return preparedField;
 	                });
 	              }
 
@@ -3943,6 +4276,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        return new FieldsContent({
 	          crmFields: this.getCrmFields(),
 	          formOptions: this.getFormOptions(),
+	          dictionary: this.getFormDictionary(),
 	          isLeadEnabled: this.isLeadEnabled(),
 	          values: {
 	            fields: this.getFormOptions().data.fields
@@ -3995,10 +4329,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          companies: this.getCrmCompanies(),
 	          categories: this.getCrmCategories(),
 	          isLeadEnabled: this.isLeadEnabled(),
+	          formDictionary: this.getFormDictionary(),
 	          values: {
 	            scheme: this.getFormOptions().document.scheme,
 	            duplicatesEnabled: this.getFormOptions().document.deal.duplicatesEnabled || 'Y',
 	            category: this.getFormOptions().document.deal.category,
+	            dynamicCategory: this.getFormOptions().document.dynamic.category,
 	            payment: this.getFormOptions().payment.use,
 	            duplicateMode: this.getFormOptions().document.duplicateMode
 	          }
@@ -4190,17 +4526,19 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	      main_core.Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
 	      this.getNotSynchronizedFields().then(function (result) {
-	        if (main_core.Type.isArrayFilled(result.sync.errors)) {
-	          _this15.showSynchronizationErrorPopup(result.sync.errors);
+	        if (main_core.Type.isPlainObject(result.sync)) {
+	          if (main_core.Type.isArrayFilled(result.sync.errors)) {
+	            _this15.showSynchronizationErrorPopup(result.sync.errors);
 
-	          return false;
-	        }
+	            return false;
+	          }
 
-	        if (main_core.Type.isArrayFilled(result.sync.fields)) {
-	          var fieldLabels = result.sync.fields.map(function (field) {
-	            return field.label;
-	          });
-	          return _this15.showSynchronizationPopup(fieldLabels);
+	          if (main_core.Type.isArrayFilled(result.sync.fields)) {
+	            var fieldLabels = result.sync.fields.map(function (field) {
+	              return field.label;
+	            });
+	            return _this15.showSynchronizationPopup(fieldLabels);
+	          }
 	        }
 
 	        return true;
@@ -4235,6 +4573,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          if (_this15.useBlockDesign() && _this15.isCrmFormPage()) {
 	            _this15.disableUseBlockDesign();
 	          }
+	        } else {
+	          main_core.Dom.removeClass(_this15.getSaveButton().layout, 'ui-btn-wait');
 	        }
 	      });
 	    }

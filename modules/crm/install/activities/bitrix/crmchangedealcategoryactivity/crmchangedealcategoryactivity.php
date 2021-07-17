@@ -1,20 +1,27 @@
-<?
+<?php
 
 use Bitrix\Bizproc\WorkflowInstanceTable;
 use Bitrix\Crm;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmChangeDealCategoryActivity
 	extends CBPActivity
 {
+	private static $cycleCounter = [];
+	const CYCLE_LIMIT = 150;
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			'Title' => '',
 			'CategoryId' => 0,
-		);
+			'StageId' => null,
+		];
 	}
 
 	public function Execute()
@@ -24,17 +31,20 @@ class CBPCrmChangeDealCategoryActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$sourceDealId = explode('_', $this->GetDocumentId()[2])[1];
+		$documentId = $this->GetDocumentId();
+		$this->checkCycling($documentId);
+
+		$sourceDealId = explode('_', $documentId[2])[1];
 		$sourceFields = [];
 
-		if($sourceDealId > 0)
+		if ($sourceDealId > 0)
 		{
 			$dbResult = \CCrmDeal::GetListEx(
-				array(),
-				array('=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'),
+				[],
+				['=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'],
 				false,
 				false,
-				array('ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID')
+				['ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID']
 			);
 			$sourceFields = $dbResult->Fetch();
 		}
@@ -42,15 +52,17 @@ class CBPCrmChangeDealCategoryActivity
 		if (!$sourceFields)
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_CDCA_NO_SOURCE_FIELDS'), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		$resultError = \CCrmDeal::MoveToCategory(
 			$sourceDealId,
-			(int) $this->CategoryId,
+			(int)$this->CategoryId,
 			[
 				'ENABLE_WORKFLOW_CHECK' => false,
-				'USER_ID' => $sourceFields['ASSIGNED_BY_ID']
+				'USER_ID' => $sourceFields['ASSIGNED_BY_ID'],
+				'PREFERRED_STAGE_ID' => $this->StageId,
 			]
 		);
 
@@ -78,11 +90,11 @@ class CBPCrmChangeDealCategoryActivity
 			$ds->UpdateDocument($documentId, []);
 
 			$dbResult = \CCrmDeal::GetListEx(
-				array(),
-				array('=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'),
+				[],
+				['=ID' => $sourceDealId, 'CHECK_PERMISSIONS' => 'N'],
 				false,
 				false,
-				array('ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID')
+				['ID', 'ASSIGNED_BY_ID', 'STAGE_ID', 'CATEGORY_ID']
 			);
 			$newFields = $dbResult->Fetch();
 
@@ -110,13 +122,36 @@ class CBPCrmChangeDealCategoryActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	private function checkCycling(array $documentId)
+	{
+		//check deal only.
+		if (!($documentId[0] === 'crm' && $documentId[1] === 'CCrmDocumentDeal'))
+		{
+			return true;
+		}
+
+		$key = $this->GetName();
+
+		if (!isset(self::$cycleCounter[$key]))
+		{
+			self::$cycleCounter[$key] = 0;
+		}
+
+		self::$cycleCounter[$key]++;
+		if (self::$cycleCounter[$key] > self::CYCLE_LIMIT)
+		{
+			$this->WriteToTrackingService(GetMessage("CRM_CDCA_CYCLING_ERROR"), 0, CBPTrackingType::Error);
+			throw new Exception();
+		}
+	}
+
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		$errors = [];
 
 		if ($arTestProperties["CategoryId"] === null || $arTestProperties["CategoryId"] === '')
 		{
-			$errors[] = array("code" => "NotExist", "parameter" => "CategoryId", "message" => GetMessage("CRM_CDCA_EMPTY_CATEGORY"));
+			$errors[] = ["code" => "NotExist", "parameter" => "CategoryId", "message" => GetMessage("CRM_CDCA_EMPTY_CATEGORY")];
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
@@ -129,7 +164,7 @@ class CBPCrmChangeDealCategoryActivity
 			return '';
 		}
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -137,17 +172,10 @@ class CBPCrmChangeDealCategoryActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
-		));
+			'siteId' => $siteId,
+		]);
 
-		$dialog->setMap(array(
-			'CategoryId' => array(
-				'Name' => GetMessage('CRM_CDCA_CATEGORY'),
-				'FieldName' => 'category_id',
-				'Type' => 'select',
-				'Options' => \Bitrix\Crm\Category\DealCategory::getSelectListItems(),
-			)
-		));
+		$dialog->setMap(static::getPropertiesDialogMap());
 
 		return $dialog;
 	}
@@ -155,6 +183,22 @@ class CBPCrmChangeDealCategoryActivity
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
 		$arProperties = ['CategoryId' => $arCurrentValues['category_id']];
+
+		if ($arProperties['CategoryId'] === '' && static::isExpression($arCurrentValues['category_id_text']))
+		{
+			$arProperties['CategoryId'] = $arCurrentValues['category_id_text'];
+		}
+
+		$documentService = CBPRuntime::GetRuntime(true)->getDocumentService();
+		$field = $documentService->getFieldTypeObject($documentType, static::getPropertiesDialogMap()['StageId']);
+		if ($field)
+		{
+			$arProperties['StageId'] = $field->extractValue(
+				['Field' => 'stage_id'],
+				$arCurrentValues,
+				$errors
+			);
+		}
 
 		$errors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 		if (count($errors) > 0)
@@ -166,6 +210,22 @@ class CBPCrmChangeDealCategoryActivity
 		$arCurrentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	protected static function getPropertiesDialogMap(): array
+	{
+		return [
+			'CategoryId' => [
+				'Name' => GetMessage('CRM_CDCA_CATEGORY'),
+				'FieldName' => 'category_id',
+				'Type' => 'deal_category',
+			],
+			'StageId' => [
+				'Name' => GetMessage('CRM_CDCA_STAGE'),
+				'FieldName' => 'stage_id',
+				'Type' => 'deal_stage',
+			],
+		];
 	}
 
 	private function resolveMoveCategoryErrorText($errorCode)

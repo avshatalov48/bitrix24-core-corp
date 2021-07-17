@@ -88,19 +88,42 @@ class AppTrigger extends BaseTrigger
 
 	private static function getAppNames(array $ids)
 	{
-		$appNames = array();
-		$appNamesResult = Rest\AppLangTable::getList(array(
-			'filter' => array(
+		$appNames = [];
+		$primary = Main\Application::getInstance()->getContext()->getLanguage();
+		$secondary = 'en';
+
+		$appNamesResult = Rest\AppLangTable::getList([
+			'filter' => [
 				'@APP_ID' => $ids,
-				'=LANGUAGE_ID' => Main\Application::getInstance()->getContext()->getLanguage(),
-				'=APP.ACTIVE' => 'Y'
-			),
-			'select' => array('APP_ID', 'MENU_NAME')
-		));
+				'=APP.ACTIVE' => 'Y',
+			],
+			'select' => ['APP_ID', 'MENU_NAME'],
+		]);
 
 		while ($row = $appNamesResult->fetch())
 		{
-			$appNames[$row['APP_ID']] = $row['MENU_NAME'];
+			if (!isset($appNames[$row['APP_ID']]))
+			{
+				$appNames[$row['APP_ID']] = [];
+			}
+
+			$appNames[$row['APP_ID']][$row['LANGUAGE_ID']] = $row['MENU_NAME'];
+		}
+
+		foreach ($appNames as $id => $appName)
+		{
+			if (isset($appName[$primary]))
+			{
+				$appNames[$id] = $appName[$primary];
+			}
+			elseif (isset($appName[$secondary]))
+			{
+				$appNames[$id] = $appName[$secondary];
+			}
+			else
+			{
+				$appNames[$id] = (string) reset($appName);
+			}
 		}
 
 		return $appNames;

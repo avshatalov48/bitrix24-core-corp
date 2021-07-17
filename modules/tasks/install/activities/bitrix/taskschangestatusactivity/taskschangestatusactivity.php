@@ -131,7 +131,10 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 
 		$canChange = false;
 
-		if (Tasks\Integration\Bizproc\Document\Task::isProjectTask($documentType))
+		if (
+			Tasks\Integration\Bizproc\Document\Task::isProjectTask($documentType)
+			|| Tasks\Integration\Bizproc\Document\Task::isScrumProjectTask($documentType)
+		)
 		{
 			$canChange = true;
 		}

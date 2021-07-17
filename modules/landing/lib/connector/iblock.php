@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Landing\Connector;
 
+use \Bitrix\Landing\Internals\HookDataTable;
+
 class Iblock
 {
 	/**
@@ -58,5 +60,31 @@ class Iblock
 		\Bitrix\Landing\Rights::setGlobalOn();
 
 		return $url;
+	}
+
+	/**
+	 * Callback on after delete iblock's section.
+	 * @param array $section Section's data.
+	 * @return void
+	 */
+	public static function onAfterIBlockSectionDelete(array $section): void
+	{
+		if ($section['ID'] ?? null)
+		{
+			$res = HookDataTable::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'=HOOK' => 'SETTINGS',
+					'=CODE' => 'SECTION_ID',
+					'=VALUE' => $section['ID']
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				HookDataTable::delete($row['ID'])->isSuccess();
+			}
+		}
 	}
 }

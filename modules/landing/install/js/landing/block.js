@@ -767,7 +767,7 @@
 								return new BX.Main.MenuItem({
 									id: "designblock",
 									text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_DESIGN_BLOCK"),
-									className: (this.access < ACCESS_W || this.php) ? "landing-ui-disabled" : "",
+									className: (this.access < ACCESS_W || this.php || this.isCrmFormPage()) ? "landing-ui-disabled" : "",
 									onclick: function() {
 										this.onDesignerBlockClick();
 										this.sidebarActionsMenu.close();
@@ -1000,8 +1000,8 @@
 						new ActionButton("designblock", {
 							text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_DESIGN_BLOCK"),
 							onClick: this.onDesignerBlockClick.bind(this),
-							disabled: this.access < ACCESS_W || this.php,
-							attrs: {title: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_DESIGN_BLOCK")}
+							disabled: this.access < ACCESS_W || this.php || this.isCrmFormPage(),
+							attrs: { title: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_DESIGN_BLOCK") }
 						})
 					);
 				}
@@ -2669,7 +2669,7 @@
 		{
 			var updatePromise = BX.Landing.Backend.getInstance().action(
 				"Block::updateContent",
-				{lid: this.lid, block: this.id, content: content.replaceAll('style="', 'bxstyle="')},
+				{lid: this.lid, block: this.id, content: content.replaceAll(' style="', ' bxstyle="')},
 				{code: this.manifest.code}
 			);
 			var reloadPromise = this.reload();

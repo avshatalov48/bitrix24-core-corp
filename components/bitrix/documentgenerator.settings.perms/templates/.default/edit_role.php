@@ -85,8 +85,8 @@ CJSCore::Init(['sidepanel']);
 		BX.ready(function() {
 			<?='BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');'?>
 			BX.message({
-				DOCGEN_SETTINGS_PERMS_FEATURE_TITLE: '<?=Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TITLE');?>',
-				DOCGEN_SETTINGS_PERMS_FEATURE_TEXT: '<?=Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TEXT');?>',
+				DOCGEN_SETTINGS_PERMS_FEATURE_TITLE: '<?=CUtil::JSEscape(Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TITLE'));?>',
+				DOCGEN_SETTINGS_PERMS_FEATURE_TEXT: '<?=CUtil::JSEscape(Loc::getMessage('DOCGEN_SETTINGS_PERMS_FEATURE_TEXT'));?>',
 			});
 			BX.DocumentGenerator.Role.init({isPermissionsFeatureEnabled: <?=($arResult['isPermissionsFeatureEnabled'] ? 'true' : 'false');?>});
 		})

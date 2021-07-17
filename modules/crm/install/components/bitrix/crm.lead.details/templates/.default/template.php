@@ -130,7 +130,13 @@ $APPLICATION->IncludeComponent(
 					'GROUP_TYPE_PIPELINE' => GetMessage('CRM_LEAD_DETAIL_ATTR_GR_TYPE_PIPELINE'),
 					'GROUP_TYPE_JUNK' => GetMessage('CRM_LEAD_DETAIL_ATTR_GR_TYPE_JUNK')
 				)
-			)
+			),
+			'COMPONENT_AJAX_DATA' => [
+				'RELOAD_ACTION_NAME' => 'LOAD',
+				'RELOAD_FORM_DATA' => [
+					'ACTION_ENTITY_ID' => $arResult['ENTITY_ID']
+				] + $editorContext
+			]
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",

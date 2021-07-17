@@ -227,9 +227,12 @@ final class CCrmEntityProductListComponent
 		$totalTax = isset($result['TAX_VALUE']) ? round((float)$result['TAX_VALUE'], $this->crmSettings['PRICE_PRECISION']) : 0;
 		$totalBeforeTax = round($totalSum - $totalTax, $this->crmSettings['PRICE_PRECISION']);
 		$totalBeforeDiscount = round($totalBeforeTax + $totalDiscount, $this->crmSettings['PRICE_PRECISION']);
+		$totalDelivery = $this->getTotalDeliverySum();
+		$totalSum = $totalSum + $totalDelivery;
 
 		$response = [
 			'totalCost' => $totalSum,
+			'totalDelivery' => $totalDelivery,
 			'totalTax' => $totalTax,
 			'totalWithoutTax' => $totalBeforeTax,
 			'totalDiscount' => $totalDiscount,
@@ -545,6 +548,7 @@ final class CCrmEntityProductListComponent
 		{
 			$this->entity['TYPE_NAME'] = $params['ENTITY_TYPE_NAME'];
 			$this->entity['ID'] = $params['ENTITY_ID'];
+			$this->entity['TITLE'] = $params['ENTITY_TITLE'];
 			if ($this->entity['TYPE_NAME'] === \CCrmOwnerType::OrderName)
 			{
 				$this->entity['CRM_FORMAT'] = false;
@@ -1311,7 +1315,6 @@ final class CCrmEntityProductListComponent
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_MAIN_INFO'),
 			'sort' => 'NAME',
 			'default' => true,
-			'width' => 420,
 		];
 		// $result['PROPERTIES'] = [
 		// 	'id' => 'PROPERTIES',
@@ -1816,11 +1819,29 @@ final class CCrmEntityProductListComponent
 			$totalTax = isset($result['TAX_VALUE']) ? round((float)$result['TAX_VALUE'], $this->crmSettings['PRICE_PRECISION']) : 0;
 		}
 
+		$deliverySum = $this->getTotalDeliverySum();
+		$this->arResult['TOTAL_DELIVERY_SUM'] = $deliverySum;
+		$this->arResult['TOTAL_SUM'] = $totalSum + $deliverySum;
+
 		$this->arResult['TOTAL_DISCOUNT'] = $totalDiscount;
-		$this->arResult['TOTAL_SUM'] = $totalSum;
 		$this->arResult['TOTAL_TAX'] = $totalTax;
-		$this->arResult['TOTAL_BEFORE_TAX'] = round($this->arResult['TOTAL_SUM'] - $this->arResult['TOTAL_TAX'], $this->crmSettings['PRICE_PRECISION']);
+		$this->arResult['TOTAL_BEFORE_TAX'] = round($totalSum - $this->arResult['TOTAL_TAX'], $this->crmSettings['PRICE_PRECISION']);
 		$this->arResult['TOTAL_BEFORE_DISCOUNT'] = $this->arResult['TOTAL_BEFORE_TAX'] + $this->arResult['TOTAL_DISCOUNT'];
+	}
+
+	/**
+	 * @return int|float
+	 */
+	private function getTotalDeliverySum()
+	{
+		$total = 0;
+
+		if ($this->entity['TYPE_NAME'] === CCrmOwnerType::DealName)
+		{
+			return CCrmDeal::calculateDeliveryTotal($this->entity['ID']);
+		}
+
+		return $total;
 	}
 
 	/**
@@ -2166,15 +2187,7 @@ final class CCrmEntityProductListComponent
 			}
 		}
 
-		$items = [
-			[
-				'id' => 'ADD_NEW_ROW_TOP',
-				'checked' => ($this->defaultSettings['NEW_ROW_POSITION'] !== 'bottom'),
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE'),
-				'desc' => '',
-				'action' => 'grid',
-			]
-		];
+		$items = [];
 
 		foreach ($gridColumnSettings as $setting => $columns)
 		{
@@ -2187,6 +2200,14 @@ final class CCrmEntityProductListComponent
 				'columns' => $columns,
 			];
 		}
+
+		$items[] = [
+			'id' => 'ADD_NEW_ROW_TOP',
+			'checked' => ($this->defaultSettings['NEW_ROW_POSITION'] !== 'bottom'),
+			'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE'),
+			'desc' => '',
+			'action' => 'grid',
+		];
 
 		return $items;
 	}

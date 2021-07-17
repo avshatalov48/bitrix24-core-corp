@@ -5,8 +5,10 @@ BX.Tasks.GridActions = {
 	groupSelector: null,
 	registeredTimerNodes: {},
 	defaultPresetId: '',
+	taskPath: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
+	groupId: 0,
 
 	checkCanMove: function()
 	{
@@ -88,6 +90,62 @@ BX.Tasks.GridActions = {
 
 		filterApi.setFields(fields);
 		filterApi.apply();
+	},
+
+	changePin: function(event)
+	{
+		var eventData = event.getData();
+		var button = eventData.button;
+		var row = eventData.row;
+		var groupId = BX.Tasks.GridActions.groupId;
+
+		if (BX.Dom.hasClass(button, BX.Grid.CellActionState.ACTIVE))
+		{
+			BX.Tasks.GridActions.action('unpin', row.getId(), {groupId: groupId});
+
+			BX.Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
+			BX.Dom.addClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
+		}
+		else
+		{
+			BX.Tasks.GridActions.action('pin', row.getId(), {groupId: groupId});
+
+			BX.Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
+			BX.Dom.removeClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
+		}
+	},
+
+	changeMute: function(event)
+	{
+		var eventData = event.getData();
+		var button = eventData.button;
+		var row = eventData.row;
+
+		if (BX.Dom.hasClass(button, BX.Grid.CellActionState.ACTIVE))
+		{
+			BX.Tasks.GridActions.action('unmute', row.getId());
+
+			BX.Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
+			BX.Dom.addClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
+		}
+		else
+		{
+			BX.Tasks.GridActions.action('mute', row.getId());
+
+			BX.Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
+			BX.Dom.removeClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
+		}
+	},
+
+	onCounterClick: function(event)
+	{
+		var eventData = event.getData();
+		var row = eventData.row;
+
+		if (BX.Tasks.GridActions.taskPath)
+		{
+			BX.SidePanel.Instance.open(BX.Tasks.GridActions.taskPath.replace('#task_id#', row.getId()));
+		}
 	},
 
     action: function(code, taskId, args)
@@ -259,7 +317,7 @@ BX.Tasks.GridActions = {
 	{
         curDeadline = curDeadline || (new Date).getDate();
 
-        BX.calendar({
+        var calendar = BX.calendar({
             node: node,
             value: curDeadline,
             form: '',
@@ -272,6 +330,12 @@ BX.Tasks.GridActions = {
 				(BX.Tasks.GridInstance.calendarSettings.deadlineTimeVisibility === 'Y') : false),
             callback_after: (function (node, taskId) {
                 return function (value) {
+                	var currentTime = new Date();
+                	if (value.getTime() > currentTime.getTime())
+					{
+						BX.onCustomEvent('Tasks.Tour.ExpiredTasksDeadlineChange:saveDeadline', []);
+					}
+
                     var path = BX.CJSTask.ajaxUrl;
 					BX.CJSTask.ajaxUrl = BX.CJSTask.ajaxUrl + '&_CODE=CHANGE_DEADLINE&viewType=VIEW_MODE_LIST';
                     BX.CJSTask.batchOperations(
@@ -304,6 +368,12 @@ BX.Tasks.GridActions = {
                 };
             })(node, taskId)
         });
+
+        var guide = BX.Tasks.TourGuideController.getGuide();
+        if (guide && guide.setCalendarPopup && guide.isCorrectRow(taskId) && !guide.getIsStopped())
+		{
+			guide.setCalendarPopup(calendar.popup);
+		}
     },
 
     onMarkChangeClick: function(taskId, bindElement, currentValues)
@@ -634,9 +704,13 @@ BX(function() {
 			commentAdd: 'commentAdd',
 			pinChanged: 'pinChanged'
 		};
+		this.classes = {
+			highlighted: 'task-list-item-highlighted',
+			pinned: 'tasks-list-item-pinned'
+		};
 
 		this.isMyList = this.userId === this.ownerId;
-		this.canPin = !this.groupId;
+		this.canPin = this.isMyList;
 
 		this.updateCanMove();
 		this.init(options);
@@ -646,8 +720,13 @@ BX(function() {
 		init: function(options)
 		{
 			this.bindEvents();
-			this.fillTasksList(options.taskList);
-			this.handleGridRows();
+			this.fillTaskListItems(options.taskList);
+			this.colorPinnedRows();
+
+			if (options.arParams && options.arParams['LAZY_LOAD'])
+			{
+				this.grid.reload();
+			}
 		},
 
 		bindEvents: function()
@@ -655,6 +734,7 @@ BX(function() {
 			var eventHandlers = {
 				comment_add: this.onPullCommentAdd,
 				comment_read_all: this.onPullCommentReadAll,
+				project_read_all: this.onPullProjectReadAll,
 				task_add: this.onPullTaskAdd,
 				task_update: this.onPullTaskUpdate,
 				task_view: this.onPullTaskView,
@@ -679,8 +759,8 @@ BX(function() {
 
 			BX.addCustomEvent('BX.Main.grid:paramsUpdated', function() {
 				this.updateCanMove();
-				this.handleGridRows();
-				this.taskList.clear();
+				this.colorPinnedRows();
+				this.clearTaskListItems();
 				this.getRows()
 					.map(function(row) {
 						return row.getId();
@@ -689,12 +769,13 @@ BX(function() {
 						return id !== 'template_0';
 					})
 					.forEach(function(id) {
-						this.taskList.set(id);
-					}.bind(this));
+						this.addTaskListItem(id);
+					}.bind(this))
+				;
 			}.bind(this));
 
 			BX.addCustomEvent('BX.Tasks.Filter.group', function(grid, groupType, value) {
-				if (this.grid === grid)
+				if (this.getGrid() === grid)
 				{
 					this[groupType] = value;
 				}
@@ -717,26 +798,21 @@ BX(function() {
 			return this.canMove;
 		},
 
-		fillTasksList: function(taskList)
-		{
-			Object.keys(taskList).forEach(function(key) {
-				this.taskList.set(key);
-			}.bind(this));
-		},
-
-		handleGridRows: function()
+		colorPinnedRows: function()
 		{
 			this.getRows().forEach(function(row) {
 				var node = row.getNode();
-				if (BX.data(node, 'pinned') === 'Y')
-				{
-					BX.addClass(node, 'tasks-list-item-pinned');
-				}
-				else
-				{
-					BX.removeClass(node, 'tasks-list-item-pinned');
-				}
-			});
+				this.getIsPinned(row.getId())
+					? BX.addClass(node, this.classes.pinned)
+					: BX.removeClass(node, this.classes.pinned)
+				;
+			}.bind(this));
+		},
+
+		getIsPinned: function(rowId)
+		{
+			return this.isRowExist(rowId)
+				&& this.getRowNodeById(rowId).querySelector('.main-grid-cell-content-action-pin.main-grid-cell-content-action-active')instanceof HTMLElement;
 		},
 
 		onPullTaskView: function(data)
@@ -750,11 +826,21 @@ BX(function() {
 
 		onPullCommentReadAll: function(data)
 		{
-			if (this.userId !== Number(data.USER_ID) || this.groupId !== Number(data.GROUP_ID))
+			this.onReadAll(data);
+		},
+
+		onPullProjectReadAll: function(data)
+		{
+			this.onReadAll(data);
+		},
+
+		onReadAll: function(data)
+		{
+			if (this.userId !== Number(data.USER_ID))
 			{
 				return;
 			}
-			this.updateActivityDateCellForTasks(Array.from(this.taskList.keys()));
+			this.updateActivityDateCellForTasks(this.getTaskListItems());
 		},
 
 		updateActivityDateCellForTasks: function(taskIds, rowData, parameters)
@@ -781,10 +867,15 @@ BX(function() {
 						if (this.isRowExist(taskId))
 						{
 							var row = this.getRowById(taskId);
+							var rowData = result.data[taskId];
+
 							if (row.getCellById('ACTIVITY_DATE'))
 							{
-								row.setCellsContent({ACTIVITY_DATE: result.data[taskId].content.ACTIVITY_DATE});
+								row.setCellsContent({ACTIVITY_DATE: rowData.content.ACTIVITY_DATE});
 							}
+							row.setCellActions(rowData.cellActions);
+							row.setCounters(rowData.counters);
+
 							if (parameters.highlightRow === true)
 							{
 								this.highlightGridRow(taskId);
@@ -816,7 +907,10 @@ BX(function() {
 		{
 			if (data.params.addCommentExists === false)
 			{
-				this.checkTask(data.TASK_ID.toString(), {action: this.actions.taskAdd});
+				this.checkTask(data.TASK_ID.toString(), {
+					action: this.actions.taskAdd,
+					userId: this.ownerId
+				});
 			}
 		},
 
@@ -824,7 +918,10 @@ BX(function() {
 		{
 			if (data.params.updateCommentExists === false)
 			{
-				this.checkTask(data.TASK_ID.toString(), {action: this.actions.taskUpdate});
+				this.checkTask(data.TASK_ID.toString(), {
+					action: this.actions.taskUpdate,
+					userId: this.ownerId
+				});
 			}
 			else if (
 				data.params.removedParticipants.includes(this.ownerId.toString())
@@ -855,54 +952,20 @@ BX(function() {
 			switch (Number(data.OPTION))
 			{
 				case 1:
-					this.onMuteChanged(taskId);
+					this.updateActivityDateCellForTasks([taskId]);
 					break;
 
 				case 2:
+				case 3:
 					if (this.canPin)
 					{
-						this.onPinChanged(taskId);
+						this.placeToNearTasks(taskId, null, {action: this.actions.pinChanged});
 					}
 					break;
 
 				default:
 					break;
 			}
-		},
-
-		onMuteChanged: function(taskId)
-		{
-			if (this.isRowExist(taskId))
-			{
-				var params = {
-					taskIds: [taskId],
-					arParams: this.arParams
-				};
-
-				this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-					if (result.data)
-					{
-						Object.keys(result.data).forEach(function(taskId) {
-							if (this.isRowExist(taskId))
-							{
-								var rowData = result.data[taskId];
-								var row = this.getRowById(taskId);
-								row.setCellsContent({
-									TITLE: rowData.content.TITLE,
-									ACTIVITY_DATE: rowData.content.ACTIVITY_DATE
-								});
-								row.setActions(rowData.actions);
-							}
-						}.bind(this));
-					}
-				}.bind(this));
-				this.query.execute();
-			}
-		},
-
-		onPinChanged: function(taskId)
-		{
-			this.placeToNearTasks(taskId, null, {action: this.actions.pinChanged});
 		},
 
 		placeToNearTasks: function(taskId, taskData, parameters)
@@ -1049,9 +1112,9 @@ BX(function() {
 			rowData = rowData || null;
 			parameters = parameters || {};
 
-			if (!this.taskList.has(taskId))
+			if (!this.hasTaskListItem(taskId))
 			{
-				this.taskList.set(taskId);
+				this.addTaskListItem(taskId);
 				this.addGridRow(taskId, rowData, parameters);
 			}
 			else
@@ -1075,24 +1138,41 @@ BX(function() {
 			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
 				if (result.data && result.data[rowId])
 				{
-					this.getGrid().hideEmptyStub();
-
 					var rowData = result.data[rowId];
-					var templateRow = this.getGrid().getTemplateRow();
-					templateRow.setId(rowId);
-					templateRow.setCellsContent(rowData.content);
-					templateRow.setActions(rowData.actions);
-					templateRow.makeCountable();
-					templateRow.show();
+					var options = {
+						id: rowId,
+						columns: rowData.content,
+						actions: rowData.actions,
+						cellActions: rowData.cellActions,
+						counters: rowData.counters
+					};
+					var moveRows = this.getGridMoveRows(rowId, parameters);
 
-					this.handlePinProp(templateRow);
-					this.moveGridRow(rowId, parameters);
-					this.highlightGridRow(rowId);
-					this.handleGridRows();
+					if (moveRows.rowAfter)
+					{
+						options.insertAfter = moveRows.rowAfter;
+					}
+					else if (moveRows.rowBefore)
+					{
+						options.insertBefore = moveRows.rowBefore;
+					}
+					else
+					{
+						options.append = true;
+					}
 
-					this.getGrid().bindOnRowEvents();
-					this.getGrid().updateCounterDisplayed();
-					this.getGrid().updateCounterSelected();
+					if (this.taskList.size > this.getPageNumber() * this.getPageSize())
+					{
+						var lastRowId = this.getLastRowId();
+
+						this.removeTaskListItem(lastRowId);
+						BX.remove(this.getRowNodeById(lastRowId));
+						this.showMoreButton();
+					}
+
+					this.hideStub();
+					this.getRealtime().addRow(options);
+					this.colorPinnedRows();
 				}
 			}.bind(this));
 			this.query.execute();
@@ -1122,11 +1202,19 @@ BX(function() {
 					var row = this.getRowById(rowId);
 					row.setCellsContent(rowData.content);
 					row.setActions(rowData.actions);
+					row.setCellActions(rowData.cellActions);
+					row.setCounters(rowData.counters);
 
-					this.handlePinProp(row);
-					this.moveGridRow(rowId, parameters);
-					this.highlightGridRow(rowId);
-					this.handleGridRows();
+					if (parameters.canMoveRow !== false)
+					{
+						this.getGrid().getRows().reset();
+
+						var moveRows = this.getGridMoveRows(rowId, parameters);
+						this.moveRow(rowId, moveRows.rowAfter, moveRows.rowBefore);
+					}
+					this.highlightGridRow(rowId).then(function() {
+						this.colorPinnedRows();
+					}.bind(this));
 
 					this.getGrid().bindOnRowEvents();
 				}
@@ -1141,37 +1229,33 @@ BX(function() {
 				return;
 			}
 
-			this.taskList.delete(id);
-			this.highlightGridRow(id).then(function() {
-				this.getGrid().removeRow(id);
-			}.bind(this));
+			this.removeTaskListItem(id);
+			this.getGrid().removeRow(id);
 		},
 
-		moveGridRow: function(rowId, parameters)
+		getGridMoveRows: function(rowId, parameters)
 		{
-			if (parameters.canMoveRow === false)
-			{
-				return;
-			}
-
-			this.getGrid().getRows().reset();
+			var rowBefore;
+			var rowAfter;
 
 			switch (parameters.action)
 			{
 				case this.actions.pinChanged:
-					this.moveRow(rowId, parameters.after, parameters.before);
-					break;
-
 				case this.actions.taskUpdate:
-					this.moveRow(rowId, parameters.after, parameters.before);
+					rowBefore = parameters.before;
+					rowAfter = parameters.after;
 					break;
 
 				default:
-					var row = this.getRowById(rowId);
-					var isPinned = (row && (this.getRowProp(row, 'pinned') === 'Y'));
-					this.moveRow(rowId, (isPinned ? 0 : this.getLastPinnedRowId()), this.getFirstRowId());
+					rowBefore = this.getFirstRowId();
+					rowAfter = (this.getIsPinned(rowId) ? 0 : this.getLastPinnedRowId());
 					break;
 			}
+
+			return {
+				rowBefore: rowBefore,
+				rowAfter: rowAfter
+			};
 		},
 
 		moveRow: function(rowId, after, before)
@@ -1188,16 +1272,17 @@ BX(function() {
 
 		getLastPinnedRowId: function()
 		{
-			var lastPinnedRowId = 0;
-
-			this.getRows().reverse().forEach(function(row) {
-				if (!lastPinnedRowId && this.getRowProp(row, 'pinned') === 'Y')
-				{
-					lastPinnedRowId = this.getRowProp(row, 'id');
-				}
+			var pinnedRows = Object.values(this.getRows()).filter(function(row) {
+				return this.getIsPinned(row.getId());
 			}.bind(this));
+			var keys = Object.keys(pinnedRows);
 
-			return lastPinnedRowId;
+			if (keys.length > 0)
+			{
+				return pinnedRows[keys[keys.length - 1]].getId();
+			}
+
+			return 0;
 		},
 
 		getFirstRowId: function()
@@ -1206,26 +1291,39 @@ BX(function() {
 			return (rows.length ? this.getRowProp(rows[0], 'id') : 0);
 		},
 
-		handlePinProp: function(row)
+		getLastRowId: function()
 		{
-			var isPinned = !!row.getCellById('TITLE').querySelector('.task-title-pin');
-			this.setRowProp(row, 'pinned', (isPinned ? 'Y' : 'N'))
+			var lastRow = this.getGrid().getRows().getBodyLastChild();
+			return (lastRow ? this.getRowProp(lastRow, 'id') : 0);
 		},
 
 		highlightGridRow: function(rowId)
 		{
 			var promise = new BX.Promise();
 
-			if (this.isRowExist(rowId))
+			if (!this.isRowExist(rowId))
 			{
-				var node = this.getRowNodeById(rowId);
-
-				BX.addClass(node, 'task-list-item-highlighted');
-				setTimeout(function() {
-					BX.removeClass(node, 'task-list-item-highlighted');
-					promise.fulfill();
-				}.bind(this), 1000);
+				promise.reject();
+				return promise;
 			}
+
+			var node = this.getRowNodeById(rowId);
+			var isPinned = BX.hasClass(node, this.classes.pinned);
+
+			if (isPinned)
+			{
+				BX.removeClass(node, this.classes.pinned);
+			}
+
+			BX.addClass(node, this.classes.highlighted);
+			setTimeout(function() {
+				BX.removeClass(node, this.classes.highlighted);
+				if (isPinned)
+				{
+					BX.addClass(node, this.classes.pinned);
+				}
+				promise.fulfill();
+			}.bind(this), 900);
 
 			return promise;
 		},
@@ -1297,6 +1395,66 @@ BX(function() {
 
 			return pageSize;
 		},
+
+		getRealtime: function()
+		{
+			return this.getGrid().getRealtime();
+		},
+
+		showStub: function()
+		{
+			if (this.stub)
+			{
+				this.getRealtime().showStub({content: this.stub});
+			}
+		},
+
+		hideStub: function()
+		{
+			this.getGrid().hideEmptyStub();
+		},
+
+		showMoreButton: function()
+		{
+			this.getGrid().getMoreButton().getNode().style.display = 'inline-block';
+		},
+
+		hideMoreButton: function()
+		{
+			this.getGrid().getMoreButton().getNode().style.display = 'none';
+		},
+
+		getTaskListItems: function()
+		{
+			return Array.from(this.taskList.keys());
+		},
+
+		hasTaskListItem: function(id)
+		{
+			return this.taskList.has(parseInt(id, 10));
+		},
+
+		addTaskListItem: function(id)
+		{
+			this.taskList.set(parseInt(id, 10));
+		},
+
+		removeTaskListItem: function(id)
+		{
+			this.taskList.delete(parseInt(id, 10));
+		},
+
+		fillTaskListItems: function(items)
+		{
+			Object.keys(items).forEach(function(id) {
+				this.addTaskListItem(id);
+			}.bind(this));
+		},
+
+		clearTaskListItems: function()
+		{
+			this.taskList.clear();
+		}
 	};
 
 	BX.addCustomEvent('tasksTaskEvent', BX.delegate(function(type, data) {
@@ -1342,38 +1500,11 @@ BX(function() {
 		window.history.pushState(null, null, url);
 	});
 
-	BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId) {
-		var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
-		if (!filterManager)
+	BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
+		var data = event.getData();
+		if (data.counter && data.counter.filter)
 		{
-			console.log('BX.Main.filterManager not initialised');
-			return;
-		}
-		var filterApi = filterManager.getApi();
-		var filterFields = filterManager.getFilterFieldsValues();
-
-		if (Number(counterId) === 12582912 || Number(counterId) === 6291456)
-		{
-			var fields = {
-				ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
-				PROBLEM: counterId
-			};
-			filterApi.setFields(fields);
-			filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
-		}
-		else
-		{
-			fields = {
-				preset_id: BX.Tasks.GridActions.defaultPresetId,
-				additional: {
-					PROBLEM: counterId,
-				}
-			};
-			if (filterFields.hasOwnProperty('ROLEID'))
-			{
-				fields.additional.ROLEID = filterFields.ROLEID;
-			}
-			filterApi.setFilter(fields);
+			data.counter.filter.toggleByField({PROBLEM: data.counter.filterValue});
 		}
 	});
 
@@ -1770,4 +1901,294 @@ BX(function() {
 		}
 	};
 
+	BX.Tasks.TourGuideController = function(options)
+	{
+		this.tours = options.tours;
+		this.guide = null;
+
+		this.initGuides(options);
+	}
+
+	BX.Tasks.TourGuideController.prototype = {
+		initGuides: function(options)
+		{
+			var firstGridTaskCreation = this.tours.firstGridTaskCreation;
+			var expiredTasksDeadlineChange = this.tours.expiredTasksDeadlineChange;
+
+			if (firstGridTaskCreation.show)
+			{
+				this.guide = new BX.Tasks.TourGuideController.FirstGridTaskCreationTourGuide(options);
+			}
+			else if (expiredTasksDeadlineChange.show || expiredTasksDeadlineChange.backgroundCheck)
+			{
+				this.guide = new BX.Tasks.TourGuideController.ExpiredTasksDeadlineChangeTourGuide(options);
+			}
+		},
+
+		getGuide: function()
+		{
+			return this.guide;
+		}
+	};
+
+	BX.Tasks.TourGuideController.FirstGridTaskCreationTourGuide = function(options)
+	{
+		this.tour = options.tours.firstGridTaskCreation;
+		this.popupData = this.tour.popupData;
+
+		this.start();
+	};
+
+	BX.Tasks.TourGuideController.FirstGridTaskCreationTourGuide.prototype = {
+		start: function()
+		{
+			var addButton = BX('tasks-buttonAdd');
+			if (!addButton)
+			{
+				return;
+			}
+			addButton.href = BX.Uri.addParam(addButton.href, {FIRST_GRID_TASK_CREATION_TOUR_GUIDE: 'Y'});
+
+			this.guide = new BX.UI.Tour.Guide({
+				steps: [
+					{
+						target: addButton,
+						title: this.popupData[0].title,
+						text: this.popupData[0].text
+					}
+				],
+				onEvents: true
+			});
+
+			BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
+				if (event.getData().guide === this.guide)
+				{
+					addButton.href = BX.Uri.removeParam(addButton.href, ['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']);
+				}
+			}.bind(this));
+
+			this.showNextStep();
+		},
+
+		showNextStep: function()
+		{
+			setTimeout(function() {
+				this.guide.showNextStep();
+			}.bind(this), 500);
+		},
+	};
+
+	BX.Tasks.TourGuideController.ExpiredTasksDeadlineChangeTourGuide = function(options)
+	{
+		this.userId = options.userId;
+		this.tour = options.tours.expiredTasksDeadlineChange;
+		this.popupData = this.tour.popupData
+		this.counterToCheck = this.tour.counterToCheck;
+
+		this.rowId = 0;
+		this.calendarPopup = 0;
+		this.isStopped = false;
+		this.viewMode = 'grid';
+		this.ajaxActionPrefix = 'tasks.tourguide.expiredtasksdeadlinechange.';
+
+		this.grid = BX.Main.gridManager.getInstanceById(options.gridId);
+
+		if (this.tour.show)
+		{
+			this.start();
+		}
+		else if (this.tour.backgroundCheck)
+		{
+			this.isPullListening = true;
+		}
+
+		this.bindEvents();
+	}
+
+	BX.Tasks.TourGuideController.ExpiredTasksDeadlineChangeTourGuide.prototype = {
+		bindEvents: function()
+		{
+			var eventHandlers = {
+				user_counter: this.onUserCounter.bind(this),
+			};
+			BX.addCustomEvent('onPullEvent-tasks', function(command, params) {
+				if (eventHandlers[command])
+				{
+					eventHandlers[command].apply(this, [params]);
+				}
+			}.bind(this));
+
+			BX.addCustomEvent('UI.Tour.Guide:onPopupClose', function() {
+				this.stop();
+			}.bind(this));
+
+			BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
+				if (event.getData().guide === this.guide && this.getCurrentStepIndex() === 0)
+				{
+					BX.addCustomEvent('BX.Main.grid:paramsUpdated', BX.proxy(this.onExpiredCounterGridReloaded, this));
+				}
+			}.bind(this));
+		},
+
+		onUserCounter: function(data)
+		{
+			if (!this.isPullListening || this.userId !== Number(data.userId))
+			{
+				return;
+			}
+
+			var newCounter = Number(data[0].view_role_originator.expired) + Number(data[0].view_role_responsible.expired);
+			if (newCounter >= Number(this.counterToCheck))
+			{
+				this.isPullListening = false;
+
+				BX.ajax.runAction(this.ajaxActionPrefix + 'proceed', {
+					analyticsLabel: {
+						viewMode: this.viewMode
+					}
+				}).then(function(result) {
+					if (result.data)
+					{
+						this.start();
+					}
+				}.bind(this));
+			}
+		},
+
+		start: function()
+		{
+			this.guide = new BX.UI.Tour.Guide({
+				steps: [
+					{
+						target: document.querySelector('.tasks-counters--item-counter'),
+						title: this.popupData[0].title,
+						text: this.popupData[0].text
+					}
+				],
+				onEvents: true
+			});
+
+			this.showNextStep();
+		},
+
+		markShowedStep: function(step)
+		{
+			BX.ajax.runAction(this.ajaxActionPrefix + 'markShowedStep', {
+				analyticsLabel: {
+					viewMode: this.viewMode,
+					step: step
+				}
+			});
+		},
+
+		onExpiredCounterGridReloaded: function()
+		{
+			BX.removeCustomEvent('BX.Main.grid:paramsUpdated', BX.proxy(this.onExpiredCounterGridReloaded, this));
+
+			var target = null;
+			Object.values(this.grid.getRows().getBodyChild()).forEach(function(row) {
+				if (!this.rowId && row.getNode().querySelector('.ui-label.ui-label-danger.ui-label-fill.ui-label-link'))
+				{
+					this.rowId = row.getId();
+					target = row.getNode().querySelector('.ui-label.ui-label-danger.ui-label-fill.ui-label-link');
+				}
+			}.bind(this));
+
+			if (this.rowId > 0 && target)
+			{
+				this.guide.steps.push(
+					new BX.UI.Tour.Step({
+						target: target,
+						title: this.popupData[1].title,
+						text: this.popupData[1].text
+					})
+				);
+				this.showNextStep();
+			}
+		},
+
+		setCalendarPopup: function(popup)
+		{
+			if (!this.calendarPopup && this.getCurrentStepIndex() === 1)
+			{
+				this.calendarPopup = popup;
+
+				BX.addCustomEvent(this.calendarPopup, 'onPopupAfterClose', BX.proxy(this.onCalendarPopupClose, this));
+			}
+		},
+
+		onCalendarPopupClose: function()
+		{
+			BX.removeCustomEvent(this.calendarPopup, 'onPopupAfterClose', BX.proxy(this.onCalendarPopupClose, this));
+
+			setTimeout(function() {
+				BX.removeCustomEvent('Tasks.Tour.ExpiredTasksDeadlineChange:saveDeadline', BX.proxy(this.onDeadlineSave, this));
+			}.bind(this), 500);
+
+			BX.addCustomEvent('Tasks.Tour.ExpiredTasksDeadlineChange:saveDeadline', BX.proxy(this.onDeadlineSave, this));
+		},
+
+		onDeadlineSave: function()
+		{
+			BX.addCustomEvent('BX.Main.grid:paramsUpdated', BX.proxy(this.onGridReloaded, this));
+		},
+
+		onGridReloaded: function()
+		{
+			BX.removeCustomEvent('BX.Main.grid:paramsUpdated', BX.proxy(this.onGridReloaded, this));
+
+			if (this.grid.getRows().getById(this.rowId) === null)
+			{
+				this.guide.steps.push(
+					new BX.UI.Tour.Step({
+						title: this.popupData[2].title,
+						text: this.popupData[2].text,
+						buttons: [
+							{
+								text: this.popupData[2].buttons[0],
+								event: function() {
+									this.stop();
+								}.bind(this)
+							}
+						]
+					})
+				);
+				this.showNextStep();
+			}
+		},
+
+		showNextStep: function()
+		{
+			if (this.isStopped)
+			{
+				return;
+			}
+
+			setTimeout(function() {
+				this.guide.showNextStep();
+				this.markShowedStep(this.getCurrentStepIndex());
+			}.bind(this), 500);
+		},
+
+		getCurrentStepIndex: function()
+		{
+			return this.guide.currentStepIndex;
+		},
+
+		isCorrectRow: function(rowId)
+		{
+			return Number(this.rowId) === Number(rowId);
+		},
+
+		getIsStopped: function()
+		{
+			return this.isStopped;
+		},
+
+		stop: function()
+		{
+			this.isStopped = true;
+			this.guide.close();
+		}
+	};
 });

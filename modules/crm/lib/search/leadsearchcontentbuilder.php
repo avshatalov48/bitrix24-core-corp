@@ -1,8 +1,9 @@
 <?php
 namespace Bitrix\Crm\Search;
 
-use \Bitrix\Crm\LeadTable;
-use \Bitrix\Crm\Format;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\LeadTable;
 
 class LeadSearchContentBuilder extends SearchContentBuilder
 {
@@ -156,7 +157,12 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 			//endregion
 
 			//region Address
-			$address = preg_replace('/[,.]/', '', Format\LeadAddressFormatter::format($fields));
+            $address = preg_replace(
+                '/[,.]/', '',
+                AddressFormatter::getSingleInstance()->formatTextComma(
+                    LeadAddress::mapEntityFields($fields)
+                )
+            );
 			if($address !== '')
 			{
 				$map->add($address);
@@ -213,27 +219,33 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 		LeadTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
 	}
 
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\ORM\Data\Result
+	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\DB\Result
 	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$searchContent = $helper->forSql($map->getString());
+
 		if ($checkExist)
 		{
-			if (\Bitrix\Crm\Entity\Index\LeadTable::getByPrimary(['LEAD_ID' => $entityId])->fetchObject())
+			$sql = "
+				INSERT INTO b_crm_lead_index(LEAD_ID, SEARCH_CONTENT)
+				VALUES({$entityId}, '{$searchContent}')
+				ON DUPLICATE KEY UPDATE SEARCH_CONTENT= '{$searchContent}'
+			";
+			try
 			{
-				return \Bitrix\Crm\Entity\Index\LeadTable::update(
-					$entityId,
-					['SEARCH_CONTENT' => $map->getString()]
-				);
+				return $connection->query($sql);
 			}
-
-			return \Bitrix\Crm\Entity\Index\LeadTable::add([
-				'LEAD_ID' => $entityId,
-				'SEARCH_CONTENT' => $map->getString()
-			]);
+			catch (\Exception $exception)
+			{
+				return $connection->query($sql);
+			}
 		}
 
-		return \Bitrix\Crm\Entity\Index\LeadTable::update(
-			$entityId,
-			['SEARCH_CONTENT' => $map->getString()]
-		);
+		$sql = "
+			UPDATE b_crm_lead_index SET SEARCH_CONTENT= '{$searchContent}' WHERE LEAD_ID = {$entityId}
+		";
+		return $connection->query($sql);
 	}
 }

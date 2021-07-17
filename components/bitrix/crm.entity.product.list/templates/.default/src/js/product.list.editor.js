@@ -6,6 +6,7 @@ import {DiscountType} from 'catalog.product-calculator';
 import SettingsPopup from './settings.button';
 import {CurrencyCore} from 'currency.currency-core';
 import {ProductSelector} from 'catalog.product-selector';
+import HintPopup from './hint.popup';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -18,6 +19,7 @@ export class Editor
 	container: ?HTMLElement;
 	form: ?HTMLElement
 	products: Row[] = [];
+	productsWasInitiated = false;
 	pageEventsManager: PageEventsManager;
 	cache = new Cache.MemoryCache();
 
@@ -349,7 +351,7 @@ export class Editor
 		// Cannot use editSelected because checkboxes have been removed
 		const rows = this.getGrid().getRows().getRows();
 		rows.forEach((current) => {
-			if(!current.isHeadChild() && !current.isTemplate())
+			if (!current.isHeadChild() && !current.isTemplate())
 			{
 				current.edit();
 			}
@@ -366,13 +368,33 @@ export class Editor
 
 	clearEditor()
 	{
+		this.unsubscribeProductsEvents();
+
 		this.products = [];
+		this.productsWasInitiated = false;
 
 		this.destroySettingsPopup();
 		this.unsubscribeDomEvents();
 		this.unsubscribeCustomEvents();
 
 		Event.unbindAll(this.container);
+	}
+
+	wasProductsInitiated()
+	{
+		return this.productsWasInitiated;
+	}
+
+	unsubscribeProductsEvents()
+	{
+		this.products.forEach((current) => {
+			const productSelector = this.getProductSelector(current.getField('ID'));
+			// Used to avoid dependence on catalog 21.100.0
+			if (productSelector && typeof productSelector.unsubscribeEvents !== 'undefined')
+			{
+				productSelector.unsubscribeEvents();
+			}
+		});
 	}
 
 	destroy()
@@ -912,7 +934,10 @@ export class Editor
 
 	getProductCount()
 	{
-		return this.products.length;
+		return this.products
+			.filter(item => !item.isEmpty())
+			.length
+			;
 	}
 
 	initProducts()
@@ -929,6 +954,8 @@ export class Editor
 				this.setDeleteButton(row.getNode(), fields.ID);
 			}
 		}
+
+		this.productsWasInitiated = true;
 	}
 
 	getGrid(): ?BX.Main.Grid
@@ -1114,6 +1141,13 @@ export class Editor
 				this.getSettingValue('popupSettings', []),
 				this
 			);
+		});
+	}
+
+	getHintPopup(): HintPopup
+	{
+		return this.cache.remember('hint-popup', () => {
+			return new HintPopup(this);
 		});
 	}
 
@@ -1645,7 +1679,7 @@ export class Editor
 		if (Type.isElementNode(item))
 		{
 			const currencyId = this.getCurrencyId();
-			const list = ['totalCost', 'totalTax', 'totalWithoutTax', 'totalDiscount', 'totalWithoutDiscount'];
+			const list = ['totalCost', 'totalDelivery', 'totalTax', 'totalWithoutTax', 'totalDiscount', 'totalWithoutDiscount'];
 
 			for (const id of list)
 			{
@@ -1810,13 +1844,7 @@ export class Editor
 	cleanProductRows(): void
 	{
 		this.products
-			.filter((item) => {
-				return (
-					!Type.isStringFilled(item.getField('PRODUCT_NAME', '').trim())
-					&& item.getField('PRODUCT_ID', 0) <= 0
-					&& item.getPrice() <= 0
-				);
-			})
+			.filter(item => item.isEmpty())
 			.forEach((row) => this.deleteRow(row.getField('ID'), true))
 		;
 	}

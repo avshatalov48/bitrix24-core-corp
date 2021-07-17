@@ -7,7 +7,9 @@ use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 class Quote extends Entity
 {
@@ -23,7 +25,7 @@ class Quote extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
+		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'CLOSEDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
 	}
 
 	protected function getDetailComponentName(): ?string
@@ -162,7 +164,7 @@ class Quote extends Entity
 	 */
 	protected function getColumnId(array $data): string
 	{
-		return $data['STATUS_ID'];
+		return ($data['STATUS_ID'] ?? '');
 	}
 
 	public function getRequiredFieldsByStages(array $stages): array
@@ -173,6 +175,11 @@ class Quote extends Entity
 			$this->getRequiredUserFieldNames(),
 			$stages
 		);
+	}
+
+	protected function getPopupFieldsBeforeUserFields(): array
+	{
+		return [];
 	}
 
 	public function getTypeInfo(): array
@@ -210,5 +217,25 @@ class Quote extends Entity
 		}
 
 		return $fields;
+	}
+
+	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
+	{
+		$factory = Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+		if (!$factory)
+		{
+			return parent::updateItemStage($id, $stageId, $newStateParams, $stages);
+		}
+
+		$item = $factory->getItem($id);
+		if (!$item)
+		{
+			$result = new Result();
+			return $result->addError(new Error(Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND')));
+		}
+		$item->setStageId($stageId);
+		$operation = $factory->getUpdateOperation($item);
+
+		return $operation->launch();
 	}
 }

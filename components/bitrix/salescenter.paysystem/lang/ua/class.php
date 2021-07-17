@@ -1,0 +1,20 @@
+<?php
+$MESS["SALESCENTER_SP_CASHBOX_COMMON_SETTINGS"] = "Параметри каси";
+$MESS["SALESCENTER_SP_CASHBOX_EMAIL_HINT"] = "У разі виникнення помилок під час друку  чеків на даний email будуть надсилатися повідомлення";
+$MESS["SALESCENTER_SP_CASHBOX_ERROR_NO_HANDLER_EXIST"] = "Неправильний обробник каси";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER"] = "Інший";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_SETTINGS"] = "Налаштування ОФД";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_TITLE"] = "ОФД";
+$MESS["SALESCENTER_SP_CASHBOX_VAT_ATTENTION"] = "Зверніть увагу, якщо ви не є платником ПДВ, то значення ставки \"Без ПДВ [0%]\" має збігатися зі значенням \"Без ПДВ [за замовчуванням]\"";
+$MESS["SP_MENU_ITEM_CASHBOX"] = "ФЗ-54";
+$MESS["SP_MENU_ITEM_PARAMS"] = "Параметри";
+$MESS["SP_MENU_ITEM_RESTRICTION"] = "Обмеження";
+$MESS["SP_MENU_ITEM_RESTRICTION_SET"] = "Мої обмеження";
+$MESS["SP_MENU_ITEM_SORT"] = "Сортування";
+$MESS["SP_PAYMENT_SUB_TITLE"] = "(оплата через #SUB_TITLE#)";
+$MESS["SP_RP_CONFIRM_DEL_MESSAGE"] = "Ви впевнені, що хочете видалити це обмеження?";
+$MESS["SP_RP_DELETE_DESCR"] = "Видалити";
+$MESS["SP_RP_EDIT_DESCR"] = "Редагувати";
+$MESS["SP_SALESCENTER_MODULE_ERROR"] = "Модуль \"Продажі в чаті\" не встановлено";
+$MESS["SP_SALESCENTER_SALE_ACCESS_DENIED"] = "Доступ заборонено.";
+$MESS["SP_SEO_MODULE_ERROR"] = "Модуль \"Пошукова оптимізація (seo)\" не встановлено";

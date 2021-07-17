@@ -326,6 +326,7 @@ select {
 }
 
 .crm-webform-edit-right-list-head {
+	display: flex;
 	cursor: pointer;
 }
 
@@ -338,6 +339,7 @@ select {
 	width: 16px;
 	height: 16px;
 	background: url(images/crm-webform-edit-sprite.svg) 0 -139px;
+	padding-right: 7px;
 }
 
 .crm-webform-edit-right-list-item-icon:after {
@@ -395,6 +397,10 @@ select {
 	display: inline-block;
 	padding: 0 0 0 5px;
 	vertical-align: top;
+	max-width: 200px;
+	text-overflow: ellipsis;
+	text-align: left;
+	overflow: hidden;
 }
 
 /* inner list with animation */

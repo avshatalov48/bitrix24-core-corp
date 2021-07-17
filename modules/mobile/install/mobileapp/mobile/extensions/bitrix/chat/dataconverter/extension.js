@@ -40,26 +40,27 @@ ChatDataConverter.getElementFormat = function(element)
 	{
 		item.title = element.user.name+(element.user.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
+		if (!item.imageUrl && !element.user.last_activity_date)
+		{
+			item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+		}
 		item.color = element.user.color;
 		item.sectionCode = element.pinned? 'pinned': 'general';
 		item.subtitle = element.message.text;
 
 		if (item.subtitle)
 		{
-			if (!element.user.last_activity_date)
+			if (element.invited && !element.user.last_activity_date)
 			{
 				item.color = "#6b6b6b";
 			}
 		}
 		else
 		{
-			if (
-				!element.user.last_activity_date
-				&& !(element.user.bot || element.user.network)
-			)
+			if (element.invited && !element.user.last_activity_date)
 			{
 				item.color = "#6b6b6b";
-				item.subtitle = BX.message("USER_INVITED");
+				item.subtitle = BX.message("USER_INVITED_2");
 			}
 			else if (element.user.work_position)
 			{
@@ -229,10 +230,21 @@ ChatDataConverter.getAvatarFormat = function(element)
 	let result = {};
 	if (element.type == 'user')
 	{
-		let status = this.getUserImageCode(element);
-		if (status)
+		if (element.invited && !element.user.last_activity_date)
 		{
-			result = {image: {name: 'status_'+status}};
+			result = {
+				image : {
+					url: this.imagePath+'/status_user_wait_x3.png'
+				}
+			}
+		}
+		else
+		{
+			let status = this.getUserImageCode(element);
+			if (status)
+			{
+				result = {image: {name: 'status_'+status}};
+			}
 		}
 	}
 	else if (element.type == 'notification')
@@ -475,18 +487,18 @@ ChatDataConverter.getTextFormat = function(element)
 	}
 	else if (
 		element.type === 'user'
-		&& !(element.user.bot || element.user.network)
+		&& element.invited
 		&& !element.user.last_activity_date
 	)
 	{
 		result = {
 			font: {
-				size: '13',
-				color: '#525C69',
+				size: '14',
+				color: '#27a1d6',
 				fontStyle: 'medium',
 			},
 			cornerRadius: 12,
-			backgroundColor: "#EEF2F4",
+			backgroundColor: "#D9F5FD",
 			padding: {
 				top:3.5,
 				right:12,
@@ -620,10 +632,7 @@ ChatDataConverter.getActionList = function(element)
 	{
 		result = [];
 
-		if (
-			!element.user.last_activity_date
-			&& !(element.user.bot || element.user.network)
-		)
+		if (element.invited && !element.user.last_activity_date)
 		{
 			if (
 				this.isIntranetInvitationAdmin
@@ -648,25 +657,41 @@ ChatDataConverter.getActionList = function(element)
 		else
 		{
 			result.push({
-				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-				identifier : element.unread || element.counter? "read": "unread",
-				color : "#23ce2c",
-				direction: 'leftToRight'
-			});
-			result.push({
 				title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 				identifier : element.pinned? "unpin": "pin",
 				color : "#3e99ce",
 				iconName : "action_"+(element.pinned? "unpin": "pin"),
 				direction: 'leftToRight'
 			});
+
+			result.push({
+				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+				identifier : element.unread || element.counter? "read": "unread",
+				color : "#23ce2c",
+				direction: 'leftToRight',
+				fillOnSwipe: true,
+			});
+
 			result.push({
 				title : BX.message("ELEMENT_MENU_PROFILE"),
 				identifier : "profile",
 				color : "#3e99ce",
 				iconName : "action_userlist",
 			});
+
+			if (
+				!element.options
+				|| !element.options.default_user_record
+			)
+			{
+				result.push({
+					title : BX.message("ELEMENT_MENU_HIDE"),
+					iconName : "action_delete",
+					identifier : "hide",
+					color : "#df532d"
+				});
+			}
 		}
 
 	}
@@ -674,18 +699,19 @@ ChatDataConverter.getActionList = function(element)
 	{
 		result = [];
 		result.push({
-			title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-			iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-			identifier : element.unread || element.counter? "read": "unread",
-			color : "#23ce2c",
-			direction: 'leftToRight'
-		});
-		result.push({
 			title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 			identifier : element.pinned? "unpin": "pin",
 			color : "#3e99ce",
 			iconName : "action_"+(element.pinned? "unpin": "pin"),
 			direction: 'leftToRight'
+		});
+		result.push({
+			title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+			iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+			identifier : element.unread || element.counter? "read": "unread",
+			color : "#23ce2c",
+			direction: 'leftToRight',
+			fillOnSwipe: true,
 		});
 		result.push({
 			title : BX.message("ELEMENT_MENU_DELETE"),
@@ -767,34 +793,38 @@ ChatDataConverter.getActionList = function(element)
 		else
 		{
 			result = [];
-			result.push({
-				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-				identifier : element.unread || element.counter? "read": "unread",
-				color : "#23ce2c",
-				direction: 'leftToRight'
-			});
-			result.push({
-				title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
-				identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
-				iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
-				color : "#aaabac"
-			});
 			if (element.chat.type !== 'announcement')
 			{
 				result.push({
-					title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-					iconName : "action_"+(element.pinned? "unpin": "pin"),
-					identifier : element.pinned? "unpin": "pin",
-					color : "#3e99ce",
-					direction: 'leftToRight'
+					title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
+					identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
+					iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
+					color : "#aaabac"
 				});
 			}
+
 			result.push({
 				title : BX.message("ELEMENT_MENU_HIDE"),
 				iconName : "action_delete",
 				identifier : "hide",
 				color : "#df532d"
+			});
+
+			result.push({
+				title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
+				iconName : "action_"+(element.pinned? "unpin": "pin"),
+				identifier : element.pinned? "unpin": "pin",
+				color : "#3e99ce",
+				direction: 'leftToRight'
+			});
+
+			result.push({
+				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
+				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
+				identifier : element.unread || element.counter? "read": "unread",
+				color : "#23ce2c",
+				direction: 'leftToRight',
+				fillOnSwipe: true,
 			});
 		}
 	}
@@ -942,7 +972,13 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		item.params.external_auth_id = element.user.external_auth_id;
 
 		item.title = element.user.name+(element.user.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
+
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
+		if (!item.imageUrl && !element.user.last_activity_date)
+		{
+			item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+		}
+
 		item.color = element.user.color;
 		item.shortTitle = element.user.first_name? element.user.first_name: element.user.name;
 		item.subtitle = element.user.work_position? element.user.work_position: '';
@@ -950,6 +986,7 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		{
 			item.subtitle = element.user.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
 		}
+
 	}
 	else if (type == 'notification')
 	{
@@ -1016,6 +1053,10 @@ ChatDataConverter.getListElementByUser = function(element)
 	item.sectionCode = 'user';
 	item.title = item.source.name+(item.source.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
+	if (!item.imageUrl && !item.last_activity_date)
+	{
+		item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+	}
 	item.color = item.source.color;
 	item.shortTitle = item.source.first_name? item.source.first_name: item.source.name;
 	item.subtitle = item.source.work_position? item.source.work_position: BX.message("IM_LIST_EMPLOYEE");

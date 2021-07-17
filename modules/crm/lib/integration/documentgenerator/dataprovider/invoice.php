@@ -124,6 +124,7 @@ class Invoice extends ProductsDataProvider
 		foreach($productRows as $product)
 		{
 			$result[] = [
+				'ID' => $product['ID'],
 				'OWNER_ID' => $this->source,
 				'OWNER_TYPE' => $this->getCrmProductOwnerType(),
 				'PRODUCT_ID' => isset($product['PRODUCT_ID']) ? $product['PRODUCT_ID'] : 0,

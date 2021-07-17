@@ -103,3 +103,7 @@
 .tasks-scrum-backlog-items.tasks-scrum-backlog-items-group-mode {
 	padding: 0 0 10px 16px;
 }
+
+.tasks-scrum-backlog-items-loader {
+	overflow: hidden;
+}

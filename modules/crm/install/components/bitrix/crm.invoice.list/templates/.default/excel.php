@@ -114,7 +114,7 @@ else
 							$invoiceData['STATUS_ID'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : $statusID;
 							break;
 						case 'CURRENCY':
-							$invoiceData['CURRENCY'] = CCrmCurrency::GetCurrencyName($arInvoice['CURRENCY']);
+							$invoiceData['CURRENCY'] = CCrmCurrency::GetEncodedCurrencyName($arInvoice['CURRENCY']);
 							break ;
 						case 'RESPONSIBLE_ID':
 							$invoiceData['RESPONSIBLE_ID'] = $arInvoice['RESPONSIBLE'];

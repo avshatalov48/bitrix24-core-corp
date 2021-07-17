@@ -307,4 +307,12 @@ abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 
 		return $result;
 	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getCustomerName(): ?string
+	{
+		return null;
+	}
 }

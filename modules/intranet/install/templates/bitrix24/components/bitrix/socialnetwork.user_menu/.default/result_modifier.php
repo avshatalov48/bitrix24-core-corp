@@ -84,7 +84,7 @@ if ($arResult["User"]["ID"] == $GLOBALS["USER"]->GetID())
 if(
 	!CModule::IncludeModule("timeman")
 	|| !CBXFeatures::IsFeatureEnabled('timeman')
-	|| in_array($arResult["User"]["EXTERNAL_AUTH_ID"], array('bot', 'email', 'replica', 'imconnector', 'shop'))
+	|| in_array($arResult['User']['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
 	|| $arResult['isExtranetSite']
 )
 {

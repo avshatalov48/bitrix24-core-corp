@@ -13,6 +13,7 @@ use Bitrix\Disk\User;
 use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
 
@@ -120,11 +121,36 @@ class DocumentHandlersManager
 		{
 			if ($handler instanceof CloudImportInterface)
 			{
+				if ($this->shouldHideFromUkraine($handler))
+				{
+					continue;
+				}
+
 				$list[$code] = $handler;
 			}
 		}
 
 		return $list;
+	}
+
+	protected function shouldHideFromUkraine(DocumentHandler $handler): bool
+	{
+		if (!($handler instanceof YandexDiskHandler))
+		{
+			return false;
+		}
+
+		$portalPrefix = '';
+		if (Loader::includeModule('bitrix24'))
+		{
+			$portalPrefix = \CBitrix24::getLicensePrefix();
+		}
+		elseif (Loader::includeModule('intranet'))
+		{
+			$portalPrefix = \CIntranetUtils::getPortalZone();
+		}
+
+		return $portalPrefix === 'ua';
 	}
 
 	/**
@@ -181,21 +207,21 @@ class DocumentHandlersManager
 
 	protected function buildDocumentHandlerList()
 	{
-		$this->documentHandlerList = [
-			BitrixHandler::getCode() => BitrixHandler::class,
-			GoogleHandler::getCode() => GoogleHandler::class,
-			OneDriveHandler::getCode() => OneDriveHandler::class,
-			Office365Handler::getCode() => Office365Handler::class,
-			DropboxHandler::getCode() => DropboxHandler::class,
-			GoogleViewerHandler::getCode() => GoogleViewerHandler::class,
-			YandexDiskHandler::getCode() => YandexDiskHandler::class,
-			BoxHandler::getCode() => BoxHandler::class,
-		];
+		$this->documentHandlerList = [];
 
 		if (OnlyOfficeHandler::isEnabled())
 		{
 			$this->documentHandlerList[OnlyOfficeHandler::getCode()] = OnlyOfficeHandler::class;
 		}
+
+		$this->documentHandlerList[BitrixHandler::getCode()] = BitrixHandler::class;
+		$this->documentHandlerList[GoogleHandler::getCode()] = GoogleHandler::class;
+		$this->documentHandlerList[OneDriveHandler::getCode()] = OneDriveHandler::class;
+		$this->documentHandlerList[Office365Handler::getCode()] = Office365Handler::class;
+		$this->documentHandlerList[DropboxHandler::getCode()] = DropboxHandler::class;
+		$this->documentHandlerList[GoogleViewerHandler::getCode()] = GoogleViewerHandler::class;
+		$this->documentHandlerList[YandexDiskHandler::getCode()] = YandexDiskHandler::class;
+		$this->documentHandlerList[BoxHandler::getCode()] = BoxHandler::class;
 
 		if (MyOfficeHandler::isEnabled() && MyOfficeHandler::getPredefinedUser($this->userId))
 		{

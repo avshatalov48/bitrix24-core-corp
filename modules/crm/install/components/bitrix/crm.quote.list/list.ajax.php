@@ -169,7 +169,7 @@ elseif ($action === 'SAVE_PROGRESS')
 
 	$arFields = array('STATUS_ID' => $statusID);
 	$CCrmQuote = new CCrmQuote(false);
-	$result = $CCrmQuote->Update($ID, $arFields, true, true, array('DISABLE_USER_FIELD_CHECK' => true, 'REGISTER_SONET_EVENT' => true));
+	$result = $CCrmQuote->Update($ID, $arFields, true, true);
 
 	$response = [
 		'TYPE' => $targetTypeName,

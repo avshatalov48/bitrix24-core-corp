@@ -1,6 +1,9 @@
 <?php
 
+use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -1530,17 +1533,19 @@ class CCrmMobileHelper
 			$item['~POST'] = $item['POST'] = '';
 		}
 
-		$item['FULL_ADDRESS'] = Bitrix\Crm\Format\ContactAddressFormatter::format(
-			array(
-				'ADDRESS' => $item['~ADDRESS'],
-				'ADDRESS_2' => $item['~ADDRESS_2'],
-				'ADDRESS_CITY' => $item['~ADDRESS_CITY'],
-				'ADDRESS_REGION' => $item['~ADDRESS_REGION'],
-				'ADDRESS_PROVINCE' => $item['~ADDRESS_PROVINCE'],
-				'ADDRESS_POSTAL_CODE' => $item['~ADDRESS_POSTAL_CODE'],
-				'ADDRESS_COUNTRY' => $item['~ADDRESS_COUNTRY']
-			),
-			array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak)
+		$item['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			ContactAddress::mapEntityFields(
+				[
+					'ADDRESS' => $item['~ADDRESS'],
+					'ADDRESS_2' => $item['~ADDRESS_2'],
+					'ADDRESS_CITY' => $item['~ADDRESS_CITY'],
+					'ADDRESS_REGION' => $item['~ADDRESS_REGION'],
+					'ADDRESS_PROVINCE' => $item['~ADDRESS_PROVINCE'],
+					'ADDRESS_POSTAL_CODE' => $item['~ADDRESS_POSTAL_CODE'],
+					'ADDRESS_COUNTRY' => $item['~ADDRESS_COUNTRY'],
+					'ADDRESS_LOC_ADDR_ID' => $item['~ADDRESS_LOC_ADDR_ID']
+				]
+			)
 		);
 
 		if(!isset($item['~COMMENTS']))
@@ -2238,17 +2243,19 @@ class CCrmMobileHelper
 
 		if (is_array($enums["FIELDS"]) && in_array("FULL_ADDRESS", $enums["FIELDS"]))
 		{
-			$item['FULL_ADDRESS'] = Bitrix\Crm\Format\LeadAddressFormatter::format(
-				array(
-					'ADDRESS' => $item['ADDRESS'],
-					'ADDRESS_2' => $item['ADDRESS_2'],
-					'ADDRESS_CITY' => $item['ADDRESS_CITY'],
-					'ADDRESS_REGION' => $item['ADDRESS_REGION'],
-					'ADDRESS_PROVINCE' => $item['ADDRESS_PROVINCE'],
-					'ADDRESS_POSTAL_CODE' => $item['ADDRESS_POSTAL_CODE'],
-					'ADDRESS_COUNTRY' => $item['ADDRESS_COUNTRY']
-				),
-				array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak)
+			$item['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+				LeadAddress::mapEntityFields(
+					[
+						'ADDRESS' => $item['ADDRESS'],
+						'ADDRESS_2' => $item['ADDRESS_2'],
+						'ADDRESS_CITY' => $item['ADDRESS_CITY'],
+						'ADDRESS_REGION' => $item['ADDRESS_REGION'],
+						'ADDRESS_PROVINCE' => $item['ADDRESS_PROVINCE'],
+						'ADDRESS_POSTAL_CODE' => $item['ADDRESS_POSTAL_CODE'],
+						'ADDRESS_COUNTRY' => $item['ADDRESS_COUNTRY'],
+						'ADDRESS_LOC_ADDR_ID' => $item['ADDRESS_LOC_ADDR_ID']
+					]
+				)
 			);
 		}
 		if (isset($item["DATE_CREATE"]))

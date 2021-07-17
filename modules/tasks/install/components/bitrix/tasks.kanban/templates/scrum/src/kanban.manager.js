@@ -1,4 +1,4 @@
-import {Loc, Dom, Tag, Type, Text, Event} from 'main.core';
+import {Loc, Dom, Tag, Type, Text, Event, Runtime} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {KanbanComponent} from './kanban.component';
@@ -57,6 +57,7 @@ type KanbanParams = {
 	admins: Object,
 	ownerId: number,
 	groupId: number,
+	kanbanHeader: boolean,
 	parentTaskId?: number,
 	parentTaskCompleted?: boolean
 }
@@ -79,6 +80,7 @@ export class KanbanManager
 		this.ajaxComponentParams = params.ajaxComponentParams;
 		this.sprintSelected = params.sprintSelected;
 
+		this.kanbanHeader = null;
 		this.kanban = null;
 		this.kanbanGroupedByParentTasks = new Map();
 
@@ -108,6 +110,7 @@ export class KanbanManager
 		this.inputRenderTo = renderTo;
 		this.inputKanbanParams = params;
 
+		this.drawKanbanHeader(renderTo, params);
 		this.drawKanbanWithoutGrouping(renderTo, params);
 		this.drawKanbanInGroupingMode(renderTo, params);
 		this.fillNeighborKanbans();
@@ -121,6 +124,11 @@ export class KanbanManager
 				this.adjustGroupHeadersWidth();
 			}, 200);
 		});
+	}
+
+	getKanbanHeader()
+	{
+		return this.kanbanHeader;
 	}
 
 	getKanban()
@@ -160,6 +168,18 @@ export class KanbanManager
 		}
 	}
 
+	drawKanbanHeader(renderTo: HTMLElement, params: KanbanParams)
+	{
+		const headerParams = Runtime.clone(params);
+
+		headerParams.kanbanHeader = true;
+		headerParams.items = [];
+
+		this.kanbanHeader = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
+
+		this.kanbanHeader.draw();
+	}
+
 	drawKanbanWithoutGrouping(renderTo: HTMLElement, params: KanbanParams)
 	{
 		this.kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, params));
@@ -171,16 +191,18 @@ export class KanbanManager
 	{
 		parentTaskId = parseInt(parentTaskId, 10);
 
-		params.columns = this.parentTasks[parentTaskId]['columns'];
-		params.items = this.parentTasks[parentTaskId]['items'];
-		params.parentTaskId = parentTaskId;
-		params.parentTaskCompleted = (this.parentTasks[parentTaskId]['completed'] === 'Y');
+		const headerParams = Runtime.clone(params);
 
-		const kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, params));
+		headerParams.columns = this.parentTasks[parentTaskId]['columns'];
+		headerParams.items = this.parentTasks[parentTaskId]['items'];
+		headerParams.parentTaskId = parentTaskId;
+		headerParams.parentTaskCompleted = (this.parentTasks[parentTaskId]['completed'] === 'Y');
+
+		const kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
 
 		kanban.draw();
 
-		if (params.parentTaskCompleted)
+		if (headerParams.parentTaskCompleted)
 		{
 			const container = kanban.getRenderToContainer().closest('.tasks-scrum-parent-task-kanban');
 			this.downGroupingVisibility(container);
@@ -199,6 +221,8 @@ export class KanbanManager
 
 	fillNeighborKanbans()
 	{
+		this.addNeighborKanban(this.kanbanHeader);
+
 		this.addNeighborKanban(this.kanban);
 
 		this.kanbanGroupedByParentTasks.forEach((parentTaskKanban) => {
@@ -208,6 +232,8 @@ export class KanbanManager
 
 	addNeighborKanban(kanban)
 	{
+		this.kanbanHeader.addNeighborGrid(kanban);
+
 		this.kanban.addNeighborGrid(kanban);
 
 		this.kanbanGroupedByParentTasks.forEach((parentTaskKanban) => {
@@ -219,6 +245,7 @@ export class KanbanManager
 	{
 		return {
 			isGroupingMode: true,
+			gridHeader: params.kanbanHeader,
 			parentTaskId: (params.parentTaskId ? params.parentTaskId : 0),
 			parentTaskCompleted: (params.parentTaskCompleted ? params.parentTaskCompleted : false),
 			renderTo: renderTo,

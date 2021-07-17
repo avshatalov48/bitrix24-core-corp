@@ -41,6 +41,7 @@ $this->getComponent()->addJsRouter($this);
 	'crm.item-details-component',
 	'ui.layout-form',
 	'ui.alerts',
+	'bp_starter',
 ]);
 
 $APPLICATION->IncludeComponent(

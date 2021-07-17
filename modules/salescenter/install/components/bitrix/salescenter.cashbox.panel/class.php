@@ -156,7 +156,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 							'preview' => 'y',
 						]),
 						'showMenu' => false,
-						'recommendation' => false,
+						'recommendation' => true,
 					],
 				],
 				[
@@ -176,7 +176,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 							'preview' => 'y',
 						]),
 						'showMenu' => false,
-						'recommendation' => false,
+						'recommendation' => true,
 					],
 				],
 				[
@@ -196,7 +196,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 							'preview' => 'y',
 						]),
 						'showMenu' => false,
-						'recommendation' => false,
+						'recommendation' => true,
 					],
 				],
 			]);

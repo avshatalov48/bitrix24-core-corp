@@ -1,35 +1,44 @@
 <?php
 namespace Bitrix\Tasks\Grid;
 
-use Bitrix\Main;
-
 /**
- * Class GridRow
+ * Class Row
  *
- * @package Bitrix\Tasks\TaskList
+ * @package Bitrix\Tasks\Grid
  */
-class Row
+abstract class Row
 {
-	/**
-	 * @param array $row
-	 * @param array $parameters
-	 * @return array|array[]
-	 * @throws Main\LoaderException
-	 */
-	public static function prepareActions(array $row, array $parameters): array
+	protected $data = [];
+	protected $parameters = [];
+
+	public function __construct(array $data = [], array $parameters = [])
 	{
-		return Row\Action::prepare($row, $parameters);
+		$this->data = $data;
+		$this->parameters = $parameters;
 	}
 
-	/**
-	 * @param array $row
-	 * @param array $parameters
-	 * @return array
-	 * @throws Main\LoaderException
-	 * @throws Main\ArgumentException
-	 */
-	public static function prepareContent(array $row, array $parameters): array
+	abstract public function prepareActions(): array;
+	abstract public function prepareContent(): array;
+	abstract public function prepareCellActions(): array;
+	abstract public function prepareCounters(): array;
+
+	public function getData(): array
 	{
-		return Row\Content::prepare($row, $parameters);
+		return $this->data;
+	}
+
+	public function setData(array $data): void
+	{
+		$this->data = $data;
+	}
+
+	public function getParameters(): array
+	{
+		return $this->parameters;
+	}
+
+	public function setParameters(array $parameters): void
+	{
+		$this->parameters = $parameters;
 	}
 }

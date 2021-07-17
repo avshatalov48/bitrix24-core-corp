@@ -27,6 +27,9 @@ Extension::load([
 	'applayout'
 ]);
 
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
+
 $paySystemTitle = Loc::getMessage('SPP_SALESCENTER_PAYSYSTEM_RECOMMENDATION_SUB_TITLE');
 if (!$arResult["isMainMode"])
 {

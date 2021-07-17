@@ -2028,6 +2028,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			if(is_array($arTasksIDs) && !empty($arTasksIDs))
 			{
+				if (in_array('NEW_COMMENTS_COUNT', $arSelect, true))
+				{
+					$newComments = Bitrix\Tasks\Internals\Counter::getInstance((int)$userId)->getCommentsCount($arTasksIDs);
+					foreach ($newComments as $taskId => $commentsCount)
+					{
+						$arItemsData[$taskId]['NEW_COMMENTS_COUNT'] = $commentsCount;
+					}
+				}
 				if(in_array('AUDITORS', $arSelect) || in_array('ACCOMPLICES', $arSelect) || in_array('*', $arSelect))
 				{
 					// fill ACCOMPLICES and AUDITORS

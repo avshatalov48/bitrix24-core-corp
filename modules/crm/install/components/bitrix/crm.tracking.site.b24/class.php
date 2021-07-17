@@ -27,8 +27,9 @@ class CrmTrackingB24SiteComponent extends \CBitrixComponent
 
 	protected function initParams()
 	{
-		$this->arParams['SET_TITLE'] = isset($this->arParams['SET_TITLE']) ? (bool) $this->arParams['SET_TITLE'] : true;
-		$this->arParams['IS_SHOP'] = isset($this->arParams['IS_SHOP']) ? (bool) $this->arParams['IS_SHOP'] : true;
+		$this->arParams['SET_TITLE'] = (bool)($this->arParams['SET_TITLE'] ?? false);
+		$this->arParams['IS_SHOP'] = (bool)($this->arParams['IS_SHOP'] ?? false);
+		$this->arParams['IS_CRM_SHOP'] = (bool)($this->arParams['IS_CRM_SHOP'] ?? false);
 	}
 
 	protected function preparePost()
@@ -56,10 +57,14 @@ class CrmTrackingB24SiteComponent extends \CBitrixComponent
 
 		Webpack\CallTracker::rebuildEnabled();
 
-		$uri = $this->arParams['IS_SHOP'] ?
-			$this->arParams['PATH_TO_SITE24']
-			:
-			$this->arParams['PATH_TO_SHOP24'];
+		$pathToShop =  $this->arParams['IS_CRM_SHOP']
+			? $this->arParams['PATH_TO_CRM-SHOP']
+			: $this->arParams['PATH_TO_SHOP24']
+		;
+		$uri = $this->arParams['IS_SHOP']
+			? $this->arParams['PATH_TO_SITE24']
+			: $pathToShop
+		;
 
 		$uri = (new \Bitrix\Main\Web\Uri($uri));
 		if ($this->arParams['IFRAME'])
@@ -76,13 +81,22 @@ class CrmTrackingB24SiteComponent extends \CBitrixComponent
 		$channel = isset($channels[$this->arParams['ID']]) ? $channels[$this->arParams['ID']] : [];
 		$this->arResult['ROW'] = $channel;
 
-		$this->arResult['SITES'] = Tracking\Provider::getB24Sites($this->arParams['IS_SHOP']);
+		$hideItems = $this->arParams['IS_SHOP'];
+		$showCrmShop = $this->arParams['IS_CRM_SHOP'];
+		$this->arResult['SITES'] = array_map(
+			function ($item) use ($hideItems, $showCrmShop)
+			{
+				$isCrmShop = $item['CODE'] === Tracking\Channel\Base::CrmShop;
+				$item['HIDDEN'] = $hideItems && ($showCrmShop XOR $isCrmShop);
+				return $item;
+			},
+			Tracking\Provider::getB24Sites($this->arParams['IS_SHOP'])
+		);
 
 		if ($this->request->isPost() && check_bitrix_sessid())
 		{
 			$this->preparePost();
 		}
-
 
 		$this->arResult['SOURCES'] = Webpack\CallTracker::getSources(true)
 			?: Webpack\CallTracker::getDemoSources();
@@ -105,7 +119,7 @@ class CrmTrackingB24SiteComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
-		$this->errors = new \Bitrix\Main\ErrorCollection();
+		$this->errors = new ErrorCollection();
 		if (!Loader::includeModule('crm'))
 		{
 			$this->errors->setError(new Error('Module `crm` is not installed.'));

@@ -100,12 +100,11 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\CompanyAddress;
-use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
@@ -1833,14 +1832,6 @@ $arResult['PERM_CONTACT'] = $bContact;
 
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
-$addressFormatOptions = $sExportType === 'csv'
-	? array('SEPARATOR' => AddressSeparator::Comma)
-	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true);
-
-$regAddressFormatOptions = $sExportType === 'csv'
-	? ['SEPARATOR' => AddressSeparator::Comma, 'TYPE_ID' => EntityAddressType::Registered]
-	: ['SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true, 'TYPE_ID' => EntityAddressType::Registered];
-
 $bizProcTabId = $isMyCompanyMode ? 'CRM_MYCOMPANY_SHOW_V12_active_tab' : 'CRM_COMPANY_SHOW_V12_active_tab';
 
 $now = time() + CTimeZone::GetOffset();
@@ -2142,12 +2133,34 @@ foreach($arResult['COMPANY'] as &$arCompany)
 
 	if(isset($arSelectMap['FULL_ADDRESS']))
 	{
-		$arCompany['FULL_ADDRESS'] = CompanyAddressFormatter::format($arCompany, $addressFormatOptions);
+		if ($sExportType === 'csv')
+		{
+			$arCompany['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+				CompanyAddress::mapEntityFields($arCompany)
+			);
+		}
+		else
+		{
+			$arCompany['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+				CompanyAddress::mapEntityFields($arCompany)
+			);
+		}
 	}
 
 	if(isset($arSelectMap['FULL_REG_ADDRESS']))
 	{
-		$arCompany['FULL_REG_ADDRESS'] = CompanyAddressFormatter::format($arCompany, $regAddressFormatOptions);
+		if ($sExportType === 'csv')
+		{
+			$arCompany['FULL_REG_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+				CompanyAddress::mapEntityFields($arCompany, ['TYPE_ID' => EntityAddressType::Registered])
+			);
+		}
+		else
+		{
+			$arCompany['FULL_REG_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+				CompanyAddress::mapEntityFields($arCompany, ['TYPE_ID' => EntityAddressType::Registered])
+			);
+		}
 	}
 
 	$arResult['COMPANY'][$entityID] = $arCompany;

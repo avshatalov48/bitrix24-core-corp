@@ -99,7 +99,7 @@ abstract class ItemList extends Base
 		}
 
 		$settings = new ItemSettings([
-			'ID' => $this->kanbanEntity->getGridId(),
+			'ID' => $this->getGridId(),
 			'categoryId' => $this->getCategoryId(),
 		], $type);
 		$this->provider = new ItemDataProvider($settings, $this->factory);
@@ -107,6 +107,11 @@ abstract class ItemList extends Base
 		$this->filter = new Filter($settings->getID(), $this->provider, [$this->ufProvider]);
 
 		$this->display = new Display($this->factory);
+	}
+
+	protected function getGridId(): string
+	{
+		return $this->kanbanEntity->getGridId();
 	}
 
 	protected function initCategory(): ?Category
@@ -255,15 +260,25 @@ abstract class ItemList extends Base
 
 	protected function prepareFilter(): array
 	{
+		$limits = null;
+		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+		if($searchRestriction->isExceeded($this->entityTypeId))
+		{
+			$limits = $searchRestriction->prepareStubInfo([
+				'ENTITY_TYPE_ID' => $this->entityTypeId
+			]);
+		}
+
 		return [
-			'FILTER_ID' => $this->kanbanEntity->getGridId(),
-			'GRID_ID' => $this->kanbanEntity->getGridId(),
+			'FILTER_ID' => $this->getGridId(),
+			'GRID_ID' => $this->getGridId(),
 			'FILTER' => $this->getDefaultFilterFields(),
 			'FILTER_PRESETS' => $this->getDefaultFilterPresets(),
 			'ENABLE_LABEL' => true,
 			'RESET_TO_DEFAULT_MODE' => true,
 			'DISABLE_SEARCH' => false,
 			'ENABLE_LIVE_SEARCH' => true,
+			'LIMITS' => $limits,
 		];
 	}
 

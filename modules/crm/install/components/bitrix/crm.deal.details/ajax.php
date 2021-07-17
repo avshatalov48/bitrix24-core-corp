@@ -502,6 +502,8 @@ elseif($action === 'SAVE')
 			if ($isManualOpportunity !='Y')
 			{
 				$fields['OPPORTUNITY'] = isset($totals['OPPORTUNITY']) ? $totals['OPPORTUNITY'] : 0.0;
+
+				$fields['OPPORTUNITY'] += \CCrmDeal::calculateDeliveryTotal($ID);
 			}
 			$fields['TAX_VALUE'] = isset($totals['TAX_VALUE']) ? $totals['TAX_VALUE'] : 0.0;
 		}
@@ -1057,12 +1059,11 @@ elseif($action === 'SAVE')
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
 	$component = new CCrmDealDetailsComponent();
+	$component->initComponent('bitrix:crm.deal.details');
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
-	$component->prepareEntityFieldAttributes();
-	$result = array('ENTITY_ID' => $ID, 'ENTITY_DATA' => $component->prepareEntityData());
+	$component->initializeData();
+	$result = $component->getEntityEditorData();
 
 	if($isNew)
 	{
@@ -1087,6 +1088,29 @@ elseif($action === 'SAVE')
 			array('ENABLE_SLIDER' => true)
 		);
 	}
+
+	__CrmDealDetailsEndJsonResonse($result);
+}
+elseif($action === 'LOAD')
+{
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
+
+	if ($ID <=0)
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
+	}
+	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR'=>'PERMISSION DENIED!']);
+	}
+
+	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
+	$component = new CCrmDealDetailsComponent();
+	$component->initializeParams($params);
+	$component->setEntityID($ID);
+	$component->initializeData();
+	$result = $component->getEntityEditorData();
 
 	__CrmDealDetailsEndJsonResonse($result);
 }
@@ -1560,9 +1584,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	$context['PARAMS'] = array_merge($params, $context['PARAMS']);
 
-	$component->prepareEntityData();
-	$component->prepareFieldInfos();
-	$component->prepareEntityFieldAttributes();
+	$component->initializeData();
 
 	if(empty($fieldNames))
 	{

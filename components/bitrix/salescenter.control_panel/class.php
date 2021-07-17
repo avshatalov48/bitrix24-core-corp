@@ -21,6 +21,8 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	protected const PANEL_ID_PAYMENTS = 'salescenter-payments-panel';
 	protected const PANEL_ID_SERVICES = 'salescenter-services-panel';
 	protected const PANEL_ID_PAYMENT_SYSTEMS = 'salescenter-paymentSystems-panel';
+	private const TITLE_LENGTH_LIMIT = 40;
+	private const MARKETPLACE_APP_LIMIT = 15;
 
 	private const LABEL_NEW = 'new';
 
@@ -54,39 +56,16 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		PullManager::getInstance()->subscribeOnConnect();
 		$this->arResult['managerParams'] = Driver::getInstance()->getManagerParams();
 
-		$paymentItemTiles[] = $this->getCrmStoreTile();
-
-		if (RestManager::getInstance()->isEnabled())
-		{
-			foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalescenterItemCodeList()) as $marketplaceItem)
-			{
-				$paymentItemTiles[] = $marketplaceItem;
-			}
-		}
-
-		$paymentItemTiles = array_merge($paymentItemTiles, [
-			$this->getPaymentsInChatTile(),
-			$this->getPaymentsInSmsTile(),
-			$this->getServicesInChatTile(),
-			$this->getServicesInSmsTile(),
-			$this->getConsultationTile(),
-		]);
-
-		if (Bitrix24Manager::getInstance()->isEnabled())
-		{
-			$paymentItemTiles[] = $this->getRecommendationItemTile();
-		}
-
 		$this->arResult['panels'] = [
 			[
 				'id' => static::PANEL_ID_PAYMENTS,
-				'items' => $paymentItemTiles,
+				'items' => $this->getPaymentsPanelItems(),
 				'itemType' => 'BX.Salescenter.PaymentItem',
 			],
 			[
 				'id' => static::PANEL_ID_PAYMENT_SYSTEMS,
 				'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_SETTINGS_TITLE'),
-				'items' => $this->getPanelItems(),
+				'items' => $this->getSettingsPanelItems(),
 				'itemType' => 'BX.Salescenter.PaymentSystemItem',
 			],
 		];
@@ -100,7 +79,49 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	/**
 	 * @return array
 	 */
-	protected function getPanelItems() : array
+	protected function getPaymentsPanelItems(): array
+	{
+		$tiles = [
+			$this->getCrmWithEshopTile(),
+			$this->getCrmStoreTile(),
+		];
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalescenterItemCodeList()) as $marketplaceItem)
+			{
+				$tiles[] = $marketplaceItem;
+			}
+		}
+
+		$tiles = array_merge($tiles, [
+			$this->getPaymentsInChatTile(),
+			$this->getPaymentsInSmsTile(),
+			$this->getServicesInChatTile(),
+			$this->getServicesInSmsTile(),
+			$this->getConsultationTile(),
+		]);
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			foreach ($this->getMarketplaceItemsTile($this->getMarketplaceSalesCenterItemCodeListAfter()) as $marketplaceItem)
+			{
+				$tiles[] = $marketplaceItem;
+			}
+		}
+
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			$tiles[] = $this->getRecommendationItemTile();
+		}
+
+		return $tiles;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getSettingsPanelItems(): array
 	{
 		$items = [
 			$this->getSmsProviderTile(),
@@ -124,6 +145,88 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		return $items;
 	}
 
+	protected function getCrmWithEshopTile(): array
+	{
+		$site = \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->getCrmStoreSite();
+		$isActive = ($site !== null);
+
+		$tile = [
+			'id' => 'crm-with-eshop',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_WITH_ESHOP_TILE'),
+			'image' => $this->getImagePath().'crm-with-eshop.svg',
+			'data' => [
+				'isDependsOnConnection' => false,
+				'active' => $isActive,
+				'activeColor' => '#DC3F49',
+				'activeImage' => $this->getImagePath().'crm-with-eshop-active.svg',
+				'label' => self::LABEL_NEW,
+				'reloadAction' => 'getCrmWithEshopTile',
+				'sliderOptions' => [
+					'width' => 1200,
+				],
+			],
+		];
+
+		if ($isActive)
+		{
+			$menu = [];
+
+			if ($dealsLink = CrmManager::getInstance()->getDealsLink())
+			{
+				$menu[] = [
+					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DEALS_MENU'),
+					'onclick' => "BX.Salescenter.Manager.openSlider('" . \CUtil::JSEscape($dealsLink) . "');"
+				];
+			}
+
+			$menu[] = [
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENT_SYSTEMS_MENU'),
+				'onclick' => 'BX.Salescenter.ControlPanel.paymentSystemsTileClick();'
+			];
+
+			$publicUrl = (string)$site['PUBLIC_URL'];
+			if ($publicUrl !== '')
+			{
+				$menu[] = [
+					'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_WITH_ESHOP_OPEN_SITE'),
+					'onclick' => "window.open('" . \CUtil::JSEscape($publicUrl) . "', '_blank');"
+				];
+			}
+
+			$menu[] = [
+				'delimiter' => true,
+			];
+
+			$menu[] = [
+				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_WITH_ESHOP_HOW_WORKS'),
+				'onclick' => 'BX.Salescenter.Manager.openHowCrmStoreWorks(arguments[0])',
+			];
+
+			$tile['data']['menu'] = $menu;
+		}
+		else
+		{
+			$tile['data']['url'] = '/shop/stores/site/edit/0/?super=Y';
+		}
+
+		return $tile;
+	}
+
+	public function getCrmWithEshopTileAction(): array
+	{
+		if (!Loader::includeModule('salescenter'))
+		{
+			return [];
+		}
+
+		$tile = $this->getCrmWithEshopTile();
+
+		return [
+			'menu' => $tile['data']['menu'],
+			'active' => $tile['data']['active'],
+		];
+	}
+
 	protected function getCrmStoreTile(): array
 	{
 		$userConsentSettingPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.crmstore');
@@ -131,7 +234,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		return [
 			'id' => 'crmstore',
-			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_STORE_TILE'),
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_STORE_TILE_2'),
 			'image' => $this->getImagePath().'crm-store-active.svg',
 			'data' => [
 				'isDependsOnConnection' => true,
@@ -194,25 +297,34 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		];
 	}
 
+	/**
+	 * @return array
+	 */
 	protected function getPaymentsMenu(): array
 	{
-		return [
-			[
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENT_SYSTEMS_MENU'),
-				'onclick' => 'BX.Salescenter.ControlPanel.paymentSystemsTileClick();'
-			],
-			[
-				'delimiter' => true,
-			],
-			[
+		$result = [];
+
+		$result[] = [
+			'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_PAYMENT_SYSTEMS_MENU'),
+			'onclick' => 'BX.Salescenter.ControlPanel.paymentSystemsTileClick();'
+		];
+
+		$result[] = ['delimiter' => true];
+
+		if (CCrmSaleHelper::isWithOrdersMode())
+		{
+			$result[] = [
 				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_ORDERS_MENU'),
 				'onclick' => 'BX.Salescenter.Manager.openSlider(\'/shop/orders/list/\');',
-			],
-			[
-				'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DEALS_MENU'),
-				'onclick' => 'BX.Salescenter.Manager.openSlider(\''.CrmManager::getInstance()->getDealsLink().'\');',
-			],
+			];
+		}
+
+		$result[] = [
+			'text' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_DEALS_MENU'),
+			'onclick' => 'BX.Salescenter.Manager.openSlider(\''.CrmManager::getInstance()->getDealsLink().'\');',
 		];
+
+		return $result;
 	}
 
 	protected function getServicesInChatTile(): array
@@ -618,7 +730,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 				$marketplaceItems[$marketplaceApp['CODE']] = [
 					'id' => $marketplaceApp['CODE'],
-					'title' => $title,
+					'title' => $this->getFormattedTitle($title),
 					'image' => $img,
 					'data' => [
 						'appId' => isset($installedMarketplaceItems[$marketplaceCode])
@@ -629,13 +741,26 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 						'active' => isset($installedMarketplaceItems[$marketplaceCode]),
 						'hasOwnIcon' => $hasOwnIcon,
 						'reloadAction' => 'getMarketplaceItemsTile',
-						'label' => self::LABEL_NEW,
 					],
 				];
 			}
 		}
 
 		return $marketplaceItems;
+	}
+
+	/**
+	 * @param string $title
+	 * @return string
+	 */
+	private function getFormattedTitle(string $title): string
+	{
+		if (mb_strlen($title) > self::TITLE_LENGTH_LIMIT)
+		{
+			$title = mb_substr($title, 0, self::TITLE_LENGTH_LIMIT - 3) . '...';
+		}
+
+		return $title;
 	}
 
 	/**
@@ -686,11 +811,41 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	 */
 	private function getMarketplaceSalescenterItemCodeList(): array
 	{
+		return $this->getMarketplaceItemCodeList(
+			[
+				RestManager::TAG_SALESCENTER,
+			]
+		);
+	}
+
+	/**
+	 * @return array|string[]
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceSalesCenterItemCodeListAfter(): array
+	{
+		return $this->getMarketplaceItemCodeList(
+			[
+				RestManager::TAG_SALES_CENTER,
+				RestManager::TAG_PARTNERS,
+				$this->getZone(),
+			],
+			self::MARKETPLACE_APP_LIMIT
+		);
+	}
+
+	/**
+	 * @param array $tags
+	 * @param int|bool $pageSize
+	 *
+	 * @return array|string[]
+	 * @throws Main\SystemException
+	 */
+	private function getMarketplaceItemCodeList(array $tags, $pageSize = false): array
+	{
 		$result = [];
 
-		$partnerItems = RestManager::getInstance()->getByTag([
-			RestManager::TAG_SALESCENTER,
-		]);
+		$partnerItems = RestManager::getInstance()->getByTag($tags, false, $pageSize);
 		if (!empty($partnerItems['ITEMS']))
 		{
 			foreach ($partnerItems['ITEMS'] as $partnerItem)

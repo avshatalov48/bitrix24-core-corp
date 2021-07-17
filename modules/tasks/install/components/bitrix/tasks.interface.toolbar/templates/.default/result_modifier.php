@@ -43,6 +43,7 @@ $arResult['JS_DATA'] = [
 	'showCounters' => $arResult['SHOW_COUNTERS'],
 	'counters' => $arResult['COUNTERS'],
 	'foreign_counters' => $arResult['FOREIGN_COUNTERS'],
+	'project_mode'	=> ($arParams['GROUP_ID'] > 0),
 	'templates' => [
 		'empty' => '<span id="tasksSimpleCounters" class="tasks-page-name">#TEXT#</span>',
 		'total' => '<span id="tasksSimpleCounters" class="tasks-counter-page-name">#TEXT#</span>',

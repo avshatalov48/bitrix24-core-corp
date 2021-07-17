@@ -7,9 +7,9 @@
  */
 namespace Bitrix\Crm\WebForm;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Settings\LeadSettings;
 
 Loc::loadMessages(__FILE__);
 
@@ -133,6 +133,8 @@ class Entity
 			),
 		);
 
+		$entityTypeMap += self::getDynamicMap();
+
 		if($entityTypeName)
 		{
 			return $entityTypeMap[$entityTypeName];
@@ -141,6 +143,56 @@ class Entity
 		{
 			return $entityTypeMap;
 		}
+	}
+
+	/**
+	 * Get dynamic entity map.
+	 *
+	 * @return array|null
+	 * @throws \Bitrix\Main\InvalidOperationException
+	 */
+	public static function getDynamicMap()
+	{
+		static $dynamicTypeMap = null;
+		if ($dynamicTypeMap !== null)
+		{
+			return $dynamicTypeMap;
+		}
+
+		$dynamicTypeMap = [];
+		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypes() as $type)
+		{
+			$dynamicTypeMap[\CCrmOwnerType::resolveName($type->getEntityTypeId())] = array(
+				'GET_FIELDS_CALL' => function () use ($type) {
+					$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
+					return $factory
+						? array_merge($factory->getFieldsInfo(), $factory->getUserFieldsInfo())
+						: []
+					;
+				},
+				'CLEAR_FIELDS_CACHE_CALL' => function () use ($type) {
+					$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
+					if ($factory)
+					{
+						$factory->clearUserFieldsInfoCache();
+					}
+				},
+				'GET_FIELD_CAPTION' => function ($fieldName) use ($type) {
+					$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
+					return $factory
+						? $factory->getFieldCaption($fieldName)
+						: null
+					;
+				},
+				'FIELD_AUTO_FILL_TEMPLATE' => array(
+					'TITLE' => array(
+						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
+					),
+				)
+			);
+		}
+
+		return $dynamicTypeMap;
 	}
 
 	public static function getCommonExcludedFieldCodes()
@@ -166,6 +218,9 @@ class Entity
 			//'PROBABILITY', 'DATE_PAY_BEFORE',
 			'REVENUE',
 			'OPPORTUNITY',
+
+			// DYNAMIC
+			'MYCOMPANY_ID', 'CONTACTS', 'OBSERVERS',
 
 			//LEAD
 			'CURRENCY_ID', 'OPENED', 'COMPANY_ID', 'CONTACT_ID',
@@ -206,6 +261,7 @@ class Entity
 	{
 		$result = array(
 			'HAS_DEAL' => false,
+			'HAS_DYNAMIC' => false,
 			'HAS_INVOICE' => false,
 			'SELECTED_DESCRIPTION' => '',
 			'BY_INVOICE' => array(),
@@ -237,6 +293,7 @@ class Entity
 				$result['SELECTED_ID'] = $selectedSchemeId;
 				$result['HAS_DEAL'] = $hasDeal;
 				$result['HAS_INVOICE'] = $hasInvoice;
+				$result['HAS_DYNAMIC'] = $scheme['DYNAMIC'];
 				$result['BY_NON_INVOICE'][$searchSchemeId]['SELECTED'] = true;
 				$result['SELECTED_DESCRIPTION'] = $scheme['DESCRIPTION'];
 			}
@@ -245,16 +302,31 @@ class Entity
 		return $result;
 	}
 
+	/**
+	 * Get schemes
+	 *
+	 * @param int|null $schemeId Scheme ID.
+	 * @return array|array[]
+	 */
 	public static function getSchemes($schemeId = null)
 	{
 		// ATTENTION!!! SCHEME ORDER IS IMPORTANT FOR getSchemesByInvoice
 		// ATTENTION!!! ENTITY ORDER IS IMPORTANT FOR SYNCHRONIZATION
+		static $schemes = null;
+		if ($schemes !== null)
+		{
+			return $schemeId ? ($schemes[$schemeId] ?? null) : $schemes;
+		}
+
 		$schemes = array(
 			self::ENUM_ENTITY_SCHEME_LEAD => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED'),
 				'ENTITIES' => array(
 					\CCrmOwnerType::LeadName
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Lead,
+				'HAS_INVOICE' => false,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED_DESC')
 			),
 			self::ENUM_ENTITY_SCHEME_LEAD_INVOICE => array(
@@ -265,6 +337,9 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Lead,
+				'HAS_INVOICE' => true,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_CONTACT => array(
@@ -273,6 +348,9 @@ class Entity
 					\CCrmOwnerType::ContactName,
 					\CCrmOwnerType::CompanyName,
 				),
+				'MAIN_ENTITY' => null,
+				'HAS_INVOICE' => false,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT_DESC')
 			),
 			self::ENUM_ENTITY_SCHEME_CONTACT_INVOICE => array(
@@ -282,6 +360,9 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
+				'MAIN_ENTITY' => null,
+				'HAS_INVOICE' => true,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_DEAL => array(
@@ -291,6 +372,9 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Deal,
+				'HAS_INVOICE' => false,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL_DESC')
 			),
 			self::ENUM_ENTITY_SCHEME_DEAL_INVOICE => array(
@@ -301,6 +385,9 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Deal,
+				'HAS_INVOICE' => true,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_QUOTE => array(
@@ -310,6 +397,9 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Quote,
+				'HAS_INVOICE' => false,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_DESC')
 			),
 			self::ENUM_ENTITY_SCHEME_QUOTE_INVOICE => array(
@@ -320,13 +410,47 @@ class Entity
 					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
 				),
+				'MAIN_ENTITY' => \CCrmOwnerType::Quote,
+				'HAS_INVOICE' => true,
+				'DYNAMIC' => false,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1')
 			),
 		);
 
+		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypes() as $type)
+		{
+			$entityTypeName = \CCrmOwnerType::resolveName($type->getEntityTypeId());
+			$schemes[$type->getEntityTypeId() * 10] = [
+				'NAME' => $type->getTitle(),
+				'ENTITIES' => [
+					$entityTypeName,
+					\CCrmOwnerType::CompanyName,
+					\CCrmOwnerType::ContactName,
+				],
+				'MAIN_ENTITY' => $type->getEntityTypeId(),
+				'HAS_INVOICE' => false,
+				'DYNAMIC' => true,
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_DESC')
+			];
+
+			$schemes[$type->getEntityTypeId() * 10 + 1] = [
+				'NAME' => $type->getTitle(),
+				'ENTITIES' => [
+					\CCrmOwnerType::InvoiceName,
+					$entityTypeName,
+					\CCrmOwnerType::CompanyName,
+					\CCrmOwnerType::ContactName,
+				],
+				'MAIN_ENTITY' => $type->getEntityTypeId(),
+				'HAS_INVOICE' => true,
+				'DYNAMIC' => true,
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_INVOICE_DESC')
+			];
+		}
+
 		if($schemeId)
 		{
-			return $schemes[$schemeId];
+			return $schemes[$schemeId] ?? null;
 		}
 		else
 		{
@@ -382,7 +506,12 @@ class Entity
 		}
 
 		$entity = $map[$entityName];
-		/**@var $className \CCrmInvoice*/
+		if (isset($entity['GET_FIELD_CAPTION']))
+		{
+			return $entity['GET_FIELD_CAPTION']($fieldId);
+		}
+
+		/**@var $className \CCrmLead*/
 		$className = $entity['CLASS_NAME'];
 		return $className::GetFieldCaption($fieldId);
 	}

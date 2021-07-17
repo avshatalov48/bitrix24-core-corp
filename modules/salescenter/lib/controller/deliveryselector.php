@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Internals\OrderPropsRelationTable;
 use Bitrix\Sale\Delivery;
+use Bitrix\Sale\Repository\ShipmentRepository;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\SalesCenter\Delivery\Handlers\IRestHandler;
 
@@ -19,9 +20,10 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 	/**
 	 * @param int $personTypeId
 	 * @param int $responsibleId
-	 * @return array
+	 * @param array $excludedServiceIds
+	 * @return array|null
 	 */
-	public function getInitializationDataAction(int $personTypeId, int $responsibleId = 0)
+	public function getInitializationDataAction(int $personTypeId, int $responsibleId = 0, array $excludedServiceIds = [])
 	{
 		if (!Loader::includeModule('sale'))
 		{
@@ -60,6 +62,11 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 				if (!$isChild && $installedHandler instanceof IRestHandler
 					&& $installedHandler->getRestHandlerCode() !== $service['CONFIG']['MAIN']['REST_CODE']
 				)
+				{
+					continue;
+				}
+
+				if (in_array($service['ID'], $excludedServiceIds))
 				{
 					continue;
 				}
@@ -154,10 +161,86 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 			}
 		}
 
-		/**
-		 * Related extra services
-		 */
-		$extraServices = [];
+		return [
+			'services' => $services,
+			'properties' => array_values($properties),
+			'extraServices' => $this->getExtraServices($deliveryServiceIds),
+			'deliverySettingsUrl' => $this->getDeliverySettingsUrl(),
+			'responsible' => $this->getResponsibleData($responsibleId),
+			'userPageTemplate' => Option::get(
+					'socialnetwork',
+					'user_page',
+					SITE_DIR.'company/personal/',
+					SITE_ID
+				).'user/#user_id#/',
+		];
+	}
+
+	public function getShipmentDataAction(int $id)
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			$this->addError(new Error('sale module is not installed'));
+			return null;
+		}
+
+		$shipment = ShipmentRepository::getInstance()->getById($id);
+		if (!$shipment)
+		{
+			$this->addError(new Error('shipment not found'));
+			return null;
+		}
+
+		$deliveryService = $shipment->getDelivery();
+		if (!$deliveryService)
+		{
+			$this->addError(new Error('delivery service not found'));
+			return null;
+		}
+
+		$parentDeliveryService = $deliveryService->getParentService();
+
+		$extraServiceDisplayValues = [];
+
+		$extraServiceInstances = $shipment->getExtraServicesObjects();
+		foreach ($extraServiceInstances as $extraServiceInstance)
+		{
+			$extraServiceDisplayValues[] = [
+				'name' => $extraServiceInstance->getName(),
+				'value' => $extraServiceInstance->getDisplayValue(),
+			];
+		}
+
+		return [
+			'shipment' => [
+				'deliveryService' => [
+					'name' => $deliveryService->getName(),
+					'logo' => $deliveryService->getLogotipPath(),
+					'parent' => $parentDeliveryService
+						? [
+							'name' => $parentDeliveryService->getName(),
+							'logo' => $parentDeliveryService->getLogotipPath(),
+						]
+						: null,
+				],
+				'priceDelivery' => $shipment->getField('PRICE_DELIVERY'),
+				'basePriceDelivery' => $shipment->getField('BASE_PRICE_DELIVERY'),
+				'currency' => $shipment->getCurrency(),
+				'extraServices' => $extraServiceDisplayValues,
+			],
+		];
+	}
+
+	/**
+	 * @param array $deliveryServiceIds
+	 * @return array
+	 */
+	private function getExtraServices(array $deliveryServiceIds): array
+	{
+		//@TODO extract to API
+
+		$result = [];
+
 		$dbExtraServices = \Bitrix\Sale\Delivery\ExtraServices\Table::getList(
 			[
 				'filter' => ['DELIVERY_ID' => $deliveryServiceIds],
@@ -183,7 +266,7 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 			$type = $knownClassesMap[$extraService['CLASS_NAME']];
 
 			$options = [];
-			if ($type == 'dropdown' && isset($extraService['PARAMS']['PRICES']) && is_array($extraService['PARAMS']['PRICES']))
+			if ($type === 'dropdown' && isset($extraService['PARAMS']['PRICES']) && is_array($extraService['PARAMS']['PRICES']))
 			{
 				foreach ($extraService['PARAMS']['PRICES'] as $id => $paramItem)
 				{
@@ -196,7 +279,7 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 				}
 			}
 
-			$extraServices[] = [
+			$result[] = [
 				'id' => $extraService['ID'],
 				'deliveryServiceCode' => $extraService['DELIVERY_SERVICE_CODE'],
 				'code' => $extraService['CODE'],
@@ -208,19 +291,7 @@ class DeliverySelector extends \Bitrix\Main\Engine\Controller
 			];
 		}
 
-		return [
-			'services' => $services,
-			'properties' => array_values($properties),
-			'extraServices' => $extraServices,
-			'deliverySettingsUrl' => $this->getDeliverySettingsUrl(),
-			'responsible' => $this->getResponsibleData($responsibleId),
-			'userPageTemplate' => Option::get(
-					'socialnetwork',
-					'user_page',
-					SITE_DIR.'company/personal/',
-					SITE_ID
-				).'user/#user_id#/',
-		];
+		return $result;
 	}
 
 	/**

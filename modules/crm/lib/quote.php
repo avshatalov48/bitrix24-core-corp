@@ -159,11 +159,13 @@ class QuoteTable extends DataManager
 			(new Reference('DEAL', DealTable::class, Join::on('this.DEAL_ID', 'ref.ID')))
 				->configureTitle(\CCrmOwnerType::GetAllDescriptions()[\CCrmOwnerType::Deal]),
 
-			(new IntegerField('COMPANY_ID')),
+			(new IntegerField('COMPANY_ID'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMPANY_ID')),
 
 			(new Reference('COMPANY_BY', CompanyTable::class, Join::on('this.COMPANY_ID', 'ref.ID'))),
 
-			(new IntegerField('CONTACT_ID')),
+			(new IntegerField('CONTACT_ID'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTACT_ID')),
 
 			(new Reference('CONTACT_BY', ContactTable::class, Join::on('this.CONTACT_ID', 'ref.ID'))),
 

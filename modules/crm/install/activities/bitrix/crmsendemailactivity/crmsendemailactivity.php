@@ -235,7 +235,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		$addOptions = [
 			'REGISTER_SONET_EVENT' => true,
-			'COMPRESS_DESCRIPTION' => true,
 		];
 
 		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
@@ -641,9 +640,48 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				}
 			}
 		}
-		else
+		elseif ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
 		{
 			$to = $this->getEntityEmail($entityTypeId, $entityId, $emailType, $emailSelectRule);
+		}
+		else
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			if ($factory)
+			{
+				$item = $factory->getItem((int)$entityId);
+				if ($item)
+				{
+					$contactBindings = $item->getContactBindings();
+					foreach ($contactBindings as $binding)
+					{
+						$contactId = (int)($binding['CONTACT_ID'] ?? 0);
+						if ($contactId > 0)
+						{
+							$to = $this->getEntityEmail(
+								\CCrmOwnerType::Contact,
+								$contactId,
+								$emailType,
+								$emailSelectRule
+							);
+							if (!empty($to))
+							{
+								break;
+							}
+						}
+					}
+
+					if (empty($to) && $item->getCompanyId() > 0)
+					{
+						$to = $this->getEntityEmail(
+							\CCrmOwnerType::Company,
+							$item->getCompanyId(),
+							$emailType,
+							$emailSelectRule
+						);
+					}
+				}
+			}
 		}
 
 		return [$to, $comEntityTypeId, $comEntityId];
@@ -685,19 +723,16 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$fromName = $fromEncoded = '';
 		$fromEmail = $from;
 
-		if (preg_match('/(.*)<(.+?)>\s*$/is', $from, $matches))
-		{
-			$fromName = trim($matches[1], "\"\x20\t\n\r\0\x0b");
-			$fromEmail = mb_strtolower(trim($matches[2]));
+		$address = new Mail\Address($from);
 
-			if ($fromName != '')
+		if ($address->validate())
+		{
+			$fromName = $address->getName();
+			$fromEmail = $address->getEmail();
+
+			if ($fromName)
 			{
-				$fromNameEscaped = str_replace(['\\', '"', '<', '>'], ['/', '\'', '(', ')'], $fromName);
-				$fromEncoded = sprintf(
-					'%s <%s>',
-					sprintf('=?%s?B?%s?=', SITE_CHARSET, base64_encode($fromNameEscaped)),
-					$fromEmail
-				);
+				$fromEncoded = $address->getEncoded();
 			}
 		}
 
@@ -706,20 +741,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'name' => $fromName,
 			'nameEncoded' => $fromEncoded
 		];
-	}
-
-	private static function makeMailboxesSelectOptions(array $mailboxes)
-	{
-		$options = [];
-		foreach ($mailboxes as $mailbox)
-		{
-			$options[] = sprintf(
-				$mailbox['name'] ? '%s <%s>' : '%s%s',
-				$mailbox['name'], $mailbox['email']
-			);
-		}
-
-		return $options;
 	}
 
 	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
@@ -817,28 +838,13 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				'FieldName' => 'use_link_tracker',
 				'Type' => 'bool',
 				'Default' => 'Y'
+			],
+			'MessageFrom' => [
+				'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
+				'FieldName' => 'message_from',
+				'Type' => 'mail_sender',
 			]
 		];
-
-		$mailboxes = Main\Mail\Sender::prepareUserMailboxes();
-
-		//deprecated "From"
-		$map['From'] = [
-			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
-			'FieldName' => 'from',
-			'Type' => 'string'
-		];
-
-		$map['MessageFrom'] = [
-			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
-			'FieldName' => 'message_from',
-			'Type' => 'select',
-			'Options' => static::makeMailboxesSelectOptions($mailboxes)
-		];
-
-		$dialog->setRuntimeData([
-			'mailboxes' => $mailboxes
-		]);
 
 		$dialog->setMap($map);
 
@@ -861,6 +867,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'MessageTextEncoded' => 0,
 			'Attachment' => []
 		];
+
+		if ($arCurrentValues['message_from'] === '' && static::isExpression($arCurrentValues['message_from_text']))
+		{
+			$properties['MessageFrom'] = $arCurrentValues['message_from_text'];
+		}
 
 		if ($properties['AttachmentType'] === static::ATTACHMENT_TYPE_DISK)
 		{

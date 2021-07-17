@@ -14,6 +14,8 @@ body
 }
 
 
+
+
 /* GENERAL WRAPPER */
 .bx-mobilechat-wrapper {
 	position: fixed;
@@ -323,9 +325,16 @@ body
 .bx-im-message-content-name {
 	font-size: 16px;
 }
-.bx-im-message-content {
+
+.bx-im-message-content,
+.bx-im-message-content a {
 	font-size: 17px;
 	line-height: 19px;
+}
+
+.bx-im-element-attach a {
+	font-size: 14px;
+	line-height: 18px;
 }
 
 .bx-mobilechat-dialog .bx-im-dialog-status-writing {

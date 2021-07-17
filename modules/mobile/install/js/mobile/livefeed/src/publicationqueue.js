@@ -116,7 +116,7 @@ class PublicationQueue extends EventEmitter
 		}, 3000);
 	}
 
-	addSuccess(key)
+	addSuccess(key, warningText)
 	{
 		if (
 			this.repo[key]
@@ -126,7 +126,7 @@ class PublicationQueue extends EventEmitter
 			this.repo[key].node.classList.remove(this.class.balloonHidden);
 			this.repo[key].node.classList.remove(this.class.balloonShow);
 			this.repo[key].node.classList.add(this.class.balloonPublished);
-			this.repo[key].node.lastElementChild.innerHTML = Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE');
+			this.repo[key].node.lastElementChild.innerHTML = (Type.isStringFilled(warningText) ? warningText : Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE'));
 		}
 
 		setTimeout(() => {
@@ -213,10 +213,7 @@ class PublicationQueue extends EventEmitter
 			params = {};
 		}
 
-		const
-			key = params.key ? params.key : '';
-
-		this.addSuccess(key);
+		this.addSuccess((params.key ? params.key : ''), params.warningText);
 		this.drawList();
 	}
 
@@ -227,10 +224,7 @@ class PublicationQueue extends EventEmitter
 			params = {};
 		}
 
-		const
-			key = params.key ? params.key : '';
-
-		this.addSuccess(key);
+		this.addSuccess(params.key ? params.key : '');
 		this.drawList();
 	}
 

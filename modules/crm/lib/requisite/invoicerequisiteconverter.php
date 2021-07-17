@@ -1,15 +1,13 @@
 <?php
 namespace Bitrix\Crm\Requisite;
+
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\Format\EntityAddressFormatter;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Format\AddressFormatter;
 
 class InvoiceRequisiteConverter extends EntityRequisiteConverter
 {
@@ -207,7 +205,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 	}
 	/**
 	 * Remove from text all non-alphanumeric characters.
-	 * @param $str Source string;
+	 * @param string $str Source string;
 	 * @return string
 	 */
 	private static function getAlphanum($str)
@@ -297,7 +295,14 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 				if(!isset($fields[$name][$addressType]))
 				{
 					$addressFields = EntityAddress::getByOwner($addressType, $this->entityTypeID, $entityID);
-					$address = is_array($addressFields) ? EntityAddressFormatter::format($addressFields) : '';
+					if (is_array($addressFields))
+                    {
+                        $address = AddressFormatter::getSingleInstance()->formatTextComma($addressFields);
+                    }
+					else
+                    {
+                        $address = '';
+                    }
 					if($address !== '' && strcasecmp(self::getAlphanum($value), self::getAlphanum($address)) === 0)
 					{
 						$fields[$name][$addressType] = $addressFields;

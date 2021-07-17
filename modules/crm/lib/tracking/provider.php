@@ -64,6 +64,12 @@ class Provider
 				'CONFIGURABLE' => false,
 			],
 			[
+				'CODE' => Channel\Base::CrmShop,
+				'ICON_CLASS' => 'ui-icon crm-tracking-ui-tile-crm-shop',
+				'CONFIGURED' => true,
+				'CONFIGURABLE' => true,
+			],
+			[
 				'CODE' => Channel\Base::Site,
 				'ICON_CLASS' => 'ui-icon ui-icon-service-site',
 				'CONFIGURABLE' => true,
@@ -113,7 +119,7 @@ class Provider
 		{
 			foreach ($items as $itemId => $item)
 			{
-				if ($itemId === 'calltracking')
+				if (in_array($itemId, ['calltracking', 'crm_shop']))
 				{
 					continue;
 				}
@@ -527,20 +533,22 @@ class Provider
 		}
 
 		$filter = [
-			'=ACTIVE' => 'Y'
+			'=ACTIVE' => 'Y',
 		];
 		if (is_bool($isStore))
 		{
 			$filter['=TYPE'] = $isStore ?  'STORE' : 'PAGE';
 		}
 
+		Landing\Rights::setGlobalOff();
 		$list = Landing\Site::getList([
 			'select' => [
-				'ID', 'TITLE', 'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
+				'ID', 'TITLE', 'TYPE', 'TPL_CODE', 'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
 				'DOMAIN_PROTOCOL' => 'DOMAIN.PROTOCOL'
 			],
 			'filter' => $filter
 		])->fetchAll();
+		Landing\Rights::setGlobalOn();
 
 		$list = array_filter(
 			$list,
@@ -550,6 +558,23 @@ class Provider
 			}
 		);
 		sort($list);
+		$list = array_map(
+			function ($item)
+			{
+				$code = Channel\Base::Site24;
+				if ($item['TYPE'] === 'STORE')
+				{
+					$code =  $item['TPL_CODE'] === 'store_v3'
+						? $code = Channel\Base::CrmShop
+						: $code = Channel\Base::Shop24
+					;
+				}
+
+				$item['CODE'] = $code;
+				return $item;
+			},
+			$list
+		);
 
 		$disabledList = array_column(Internals\SiteB24Table::getList()->fetchAll(), 'LANDING_SITE_ID');
 		foreach ($list as $index => $site)
@@ -567,15 +592,15 @@ class Provider
 	 */
 	public static function getReadyB24SiteDomains()
 	{
-		return array_keys(self::getReadyB24SiteIds());
+		return array_keys(self::getReadyB24Sites());
 	}
 
 	/**
-	 * Get ready b24 site domains.
+	 * Get ready b24 sites.
 	 *
 	 * @return array
 	 */
-	public static function getReadyB24SiteIds()
+	public static function getReadyB24Sites()
 	{
 		$result = [];
 		foreach (self::getB24Sites() as $site)
@@ -586,9 +611,23 @@ class Provider
 			}
 
 			$host = mb_strtolower(trim($site['DOMAIN_NAME']));
-			$result[$host] = $site['ID'];
+			$result[$host] = $site;
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Get ready b24 site domains.
+	 *
+	 * @return array
+	 */
+	public static function getReadyB24SiteIds()
+	{
+		$result = self::getReadyB24Sites();
+		return array_combine(
+			array_keys($result),
+			array_column($result, 'ID')
+		);
 	}
 }

@@ -569,8 +569,10 @@ class CommentPoster
 					return (int)$groupId > 0;
 				});
 				$groupNames = $this->getGroupNames($groups);
-				$old = ($groupNames[$old] ?? $noValue);
-				$new = ($groupNames[$new] ?? $noValue);
+				$old = ($old ?: 0);
+				$new = ($new ?: 0);
+				$old = "[GROUP_ID={$old}]" . ($groupNames[$old] ?? $noValue) . "[/GROUP_ID]";
+				$new = "[GROUP_ID={$new}]" . ($groupNames[$new] ?? $noValue) . "[/GROUP_ID]";
 				break;
 
 			case 'CREATED_BY':
@@ -854,7 +856,7 @@ class CommentPoster
 	{
 		$pingedStatusComments = [];
 
-		if ($this->getCommentByType(Comment::TYPE_EXPIRED))
+		if ($this->getCommentByType(Comment::TYPE_PING_STATUS))
 		{
 			return $pingedStatusComments;
 		}
@@ -1069,6 +1071,16 @@ class CommentPoster
 					$message = str_replace([$start, $end], '', $message);
 					break;
 			}
+		}
+
+		preg_match_all('/(?<=\[GROUP_ID=)\d+(?=])/', $message, $groupIds);
+		foreach ($groupIds[0] as $groupId)
+		{
+			$message = str_replace(
+				["[GROUP_ID={$groupId}]", "[/GROUP_ID]"],
+				($groupId > 0 ? ["[URL=/workgroups/group/{$groupId}/]", "[/URL]"] : ['', '']),
+				$message
+			);
 		}
 
 		return $message;

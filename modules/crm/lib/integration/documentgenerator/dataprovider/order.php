@@ -333,6 +333,7 @@ class Order extends ProductsDataProvider
 			while($product = $dbRes->fetch())
 			{
 				$result[] = [
+					'ID' => $product['ID'],
 					'OWNER_ID' => $this->source,
 					'OWNER_TYPE' => $this->getCrmProductOwnerType(),
 					'PRODUCT_ID' => $product['PRODUCT_ID'] ?? 0,

@@ -1118,6 +1118,7 @@
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2211%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%225.5%22%20cy%3D%225.5%22%20r%3D%225.5%22%20fill%3D%22%23EDEEF0%22/%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M7.177%202.211c-.011-.01-.026-.01-.037%200l-.709.71c-.01.01-.01.025%200%20.036L8.085%204.61c.01.01.025.01.036%200l.71-.71c.01-.01.01-.025%200-.036L7.176%202.211zM5.805%203.543L2.617%206.731c-.047.047%200%201.69%200%201.69s1.643.047%201.69%200l3.188-3.188c.01-.01.01-.025%200-.036L5.841%203.543c-.007-.01-.025-.01-.036%200zM4.13%207.69h-.768v-.767h.768v.767z%22%20opacity%3D%22.608%22/%3E%3C/g%3E%3C/svg%3E');
 }
 
+.bx-im-users-wrap .bx-messenger-cl-item-user-invited .bx-messenger-cl-avatar-img,
 .bx-im-users-wrap .bx-messenger-cl-status-writing .bx-messenger-cl-avatar-img,
 .bx-im-users-wrap .bx-messenger-cl-status-vacation .bx-messenger-cl-avatar-img,
 .bx-im-users-wrap .bx-messenger-cl-status-mobile .bx-messenger-cl-avatar-img,
@@ -1138,6 +1139,7 @@
 .bx-im-users-wrap .bx-messenger-cl-avatar-telegrambot .bx-messenger-cl-avatar-img {
 	-webkit-clip-path: url("#clip-avatar"/*://*/); /* a hack for Bitrix Assets */
 	clip-path: url("#clip-avatar"/*://*/);
+    transform: translateZ(0);
 }
 
 .bx-im-users-wrap .bx-messenger-cl-avatar-status-hide .bx-messenger-cl-avatar-img {

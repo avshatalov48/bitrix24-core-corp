@@ -17,6 +17,27 @@ if (!is_array($arResult["ITEMS"]) || empty($arResult["ITEMS"]))
 	return;
 ?>
 
+<?php
+if (is_array($arResult['INTEGRATION_ITEMS']) && !empty($arResult["INTEGRATION_ITEMS"]))
+{
+?>
+<div class="crm-onec-block-title"><?=Loc::getMessage('CRM_1C_START_INTEGRATION_TITLE')?></div>
+<div class="onec-block">
+	<div class="onec-wrap" id="onec-wrap-integration">
+		<?$APPLICATION->IncludeComponent("bitrix:ui.tile.list", "", [
+			'ID' => $arResult['INTEGRATION_TILE_ID'],
+			'LIST' => $arResult['INTEGRATION_ITEMS'],
+		]);?>
+	</div>
+</div>
+
+<br>
+<br>
+<?php
+}
+?>
+
+<div class="crm-onec-block-title"><?=Loc::getMessage('CRM_1C_START_CONNECTION_TITLE')?></div>
 <div class="onec-block">
 	<div class="onec-wrap" id="onec-wrap">
 		<?$APPLICATION->IncludeComponent("bitrix:ui.tile.list", "", [
@@ -89,6 +110,7 @@ if (is_array($arResult['PLACEMENT_ITEMS']) && !empty($arResult["PLACEMENT_ITEMS"
 $jsParams = array(
 	"tileManagerId" => $arResult['TILE_ID'],
 	"synchroTileManagerId" => $arResult['SYNCHRO_TILE_ID'],
+	"integrationTileManagerId" => $arResult['INTEGRATION_TILE_ID'],
 	"otherTileManagerId" => $arResult['OTHER_TILE_ID']
 );
 ?>

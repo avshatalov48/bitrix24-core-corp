@@ -104,6 +104,12 @@ final class DocumentController extends Document\DocumentController
 		return $fileData;
 	}
 
+	protected function trackDocument(): void
+	{
+		$trackedObjectManager = Driver::getInstance()->getTrackedObjectManager();
+		$trackedObjectManager->pushAttachedObject($this->getUser()->getId(), $this->attachedModel, true);
+	}
+
 	protected function processActionGetLastVersionUri()
 	{
 		$result = array(
@@ -114,23 +120,26 @@ final class DocumentController extends Document\DocumentController
 		$lastVersion = $this->file->getLastVersion();
 		if($lastVersion)
 		{
-			$lastAttachedObject = array_pop(AttachedObject::getModelList(array('filter' => array(
-				'=ENTITY_TYPE' => $this->attachedModel->getEntityType(),
-				'=VERSION_ID' => $lastVersion->getId(),
-			))));
-			if($lastAttachedObject)
+			$attachedObjects = AttachedObject::getModelList([
+				'filter' => [
+					'=ENTITY_TYPE' => $this->attachedModel->getEntityType(),
+					'=VERSION_ID' => $lastVersion->getId(),
+				]
+			]);
+			$lastAttachedObject = array_pop($attachedObjects);
+			if ($lastAttachedObject)
 			{
 				$urlManager = Driver::getInstance()->getUrlManager();
-				$result['editUrl'] = $urlManager->getUrlToStartEditUfFileByService($lastAttachedObject->getId(), 'bitrix');
+				$result['editUrl'] = $urlManager::getUrlToStartEditUfFileByService($lastAttachedObject->getId(), 'bitrix');
 				$result['version'] = $lastVersion->getGlobalContentVersion();
 				if($lastVersion->getView()->getId() && $lastVersion->getView()->getJsViewerType())
 				{
 					$result['src'] = $urlManager->getUrlForShowAttachedVersionViewHtml($lastAttachedObject->getId());
-					$result['iframeSrc'] = $urlManager->getUrlToShowAttachedFileByService($lastAttachedObject->getId(), 'gdrive');
+					$result['iframeSrc'] = $urlManager::getUrlToShowAttachedFileByService($lastAttachedObject->getId(), 'gdrive');
 				}
 				else
 				{
-					$result['src'] = $result['iframeSrc'] = $urlManager->getUrlToShowAttachedFileByService($lastAttachedObject->getId(), 'gdrive');
+					$result['src'] = $result['iframeSrc'] = $urlManager::getUrlToShowAttachedFileByService($lastAttachedObject->getId(), 'gdrive');
 				}
 			}
 		}

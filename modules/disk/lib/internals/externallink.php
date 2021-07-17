@@ -29,8 +29,11 @@ use Bitrix\Main\Type\DateTime;
 
 final class ExternalLinkTable extends DataManager
 {
-	const TYPE_AUTO   = 2;
-	const TYPE_MANUAL = 3;
+	public const TYPE_AUTO = 2;
+	public const TYPE_MANUAL = 3;
+
+	public const ACCESS_RIGHT_VIEW = 0;
+	public const ACCESS_RIGHT_EDIT = 2;
 
 	public static function getTableName()
 	{
@@ -89,6 +92,10 @@ final class ExternalLinkTable extends DataManager
 			'DOWNLOAD_COUNT' => array(
 				'data_type' => 'integer',
 				'default_value' => 0,
+			),
+			'ACCESS_RIGHT' => array(
+				'data_type' => 'integer',
+				'default_value' => self::ACCESS_RIGHT_VIEW,
 			),
 			'IS_EXPIRED' => array(
 				'data_type' => 'boolean',

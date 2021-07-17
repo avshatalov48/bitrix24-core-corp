@@ -9,6 +9,7 @@ BX.Bitrix24.LeftMenu = {
 		this.isAdmin = params.isAdmin === "Y";
 		this.hiddenCounters = params.hiddenCounters || [];
 		this.allCounters = params.allCounters || {};
+		this.allCountersInMenu = {};
 		this.isBitrix24 = params.isBitrix24 === "Y";
 		this.siteId = params.siteId || null;
 		this.siteDir = params.siteDir || null;
@@ -213,7 +214,9 @@ BX.Bitrix24.LeftMenu = {
 
 					if (isItemInLeftMenu)
 					{
-						this.deleteStandardItem(dataItem.DATA_ID);
+						this.deleteStandardItem({
+							itemId: dataItem.DATA_ID,
+						});
 					}
 					else
 					{
@@ -226,7 +229,11 @@ BX.Bitrix24.LeftMenu = {
 							startX = menuNodeCoord.left;
 							startY = menuNodeCoord.top;
 						}
-						this.addStandardItem(itemInfo, startX, startY);
+						this.addStandardItem({
+							itemInfo: itemInfo,
+							startX: startX,
+							startY: startY,
+						});
 					}
 
 					BX.PopupMenu.destroy(contextMenu.id);
@@ -234,6 +241,15 @@ BX.Bitrix24.LeftMenu = {
 				}.bind(this)
 			});
 		}.bind(this));
+
+		top.BX.addCustomEvent('UI.Toolbar:onRequestMenuItemData', function(params) {
+			this.onRequestMenuItemData(params);
+		}.bind(this));
+
+		BX.addCustomEvent('UI.Toolbar:onStarClick', function(params) {
+			this.onToolbarStarClick(params);
+		}.bind(this));
+
 
 		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeResetMenu", function (promises) {
 			promises.push(function ()
@@ -549,7 +565,9 @@ BX.Bitrix24.LeftMenu = {
 				{
 					var currentContext = BX.proxy_context;
 					currentContext.popupWindow.close();
-					this.deleteStandardItem(menuItemId);
+					this.deleteStandardItem({
+						itemId: menuItemId,
+					});
 					BX.PopupMenu.destroy("popup_" + menuItemId);
 				}, this)
 			});
@@ -675,11 +693,11 @@ BX.Bitrix24.LeftMenu = {
 					BX.proxy_context.popupWindow.close();
 					if (this.isCurrentPageInLeftMenu)
 					{
-						this.deleteStandardItem();
+						this.deleteStandardItem({});
 					}
 					else
 					{
-						this.addStandardItem();
+						this.addStandardItem({});
 					}
 				}, this)
 			};
@@ -1304,6 +1322,35 @@ BX.Bitrix24.LeftMenu = {
 		});
 	},
 
+	updateDesktopCounter: function()
+	{
+		if (typeof BXIM === "undefined")
+		{
+			return;
+		}
+
+		var countersSum = 0;
+
+		for (var counterId in this.allCountersInMenu)
+		{
+			if (counterId !== "im-message")
+			{
+				countersSum += parseInt(this.allCountersInMenu[counterId]);
+			}
+		}
+
+		if (countersSum < 0)
+		{
+			countersSum = 0;
+		}
+		else if (countersSum > 99)
+		{
+			countersSum = "99";
+		}
+
+		BXIM.desktop.setBrowserIconBadge(countersSum);
+	},
+
 	updateCounters: function(counters, send)
 	{
 		send = send !== false;
@@ -1337,6 +1384,8 @@ BX.Bitrix24.LeftMenu = {
 				{
 					valueToShow = counters[id];
 				}
+
+				this.allCountersInMenu[id] = valueToShow;
 
 				if (valueToShow > 0)
 				{
@@ -1386,6 +1435,8 @@ BX.Bitrix24.LeftMenu = {
 
 			BX("menu-hidden-counter").innerHTML = sumHiddenCounters > 99 ? "99+" : sumHiddenCounters;
 		}
+
+		this.updateDesktopCounter();
 	},
 
 	decrementCounter: function(node, iDecrement)
@@ -1614,7 +1665,7 @@ BX.Bitrix24.LeftMenu = {
 		BX.removeClass(itemNode, "menu-item-warning-state");
 	},
 
-	animateTopItemToLeft: function (itemInfo, startX, startY)
+	animateTopItemToLeft: function (itemInfo, startX, startY, useAnimation)
 	{
 		if (typeof itemInfo !== "object")
 			return;
@@ -1653,6 +1704,17 @@ BX.Bitrix24.LeftMenu = {
 		 }, this)
 		 })).animate();*/
 
+		if (!useAnimation)
+		{
+			BX.remove(topMenuNode);
+			itemInfo.type = "standard";
+			this.isCurrentPageInLeftMenu = true;
+			this.generateItemHtml(itemInfo);
+			this.saveItemsSort();
+
+			return;
+		}
+
 		(new BX.easing({
 			duration: 500,
 			start: {left: startX},
@@ -1687,10 +1749,19 @@ BX.Bitrix24.LeftMenu = {
 		})).animate();
 	},
 
-	addStandardItem: function (itemInfo, startX, startY)
+	addStandardItem: function (params)
 	{
+		var itemInfo = params.itemInfo;
+		var startX = params.startX;
+		var startY = params.startY;
+		var useAnimation = (!params.context || params.context === top.window);
+
+		var isCurrentPage = false;
+
 		if (typeof itemInfo !== "object")
 		{
+			isCurrentPage = true;
+
 			this.checkCurrentPageInTopMenu();
 
 			if (this.isCurrentPageStandard && BX.type.isDomNode(this.topMenuSelectedNode))
@@ -1711,9 +1782,21 @@ BX.Bitrix24.LeftMenu = {
 			}
 			else
 			{
+				var pageTitle = BX.type.isNotEmptyString(params.pageTitle) ? params.pageTitle : document.getElementById('pagetitle').innerText;
+				var pageLink = '';
+
+				if (BX.type.isNotEmptyString(params.pageLink))
+				{
+					pageLink = params.pageLink;
+				}
+				else
+				{
+					pageLink = BX.type.isNotEmptyString(this.currentPagePath) ? this.currentPagePath : document.location.pathname + document.location.search;
+				}
+
 				itemInfo = {
-					text: BX("pagetitle").innerText,
-					link: BX.type.isNotEmptyString(this.currentPagePath) ? this.currentPagePath : document.location.pathname + document.location.search,
+					text: pageTitle,
+					link: pageLink,
 					isStandardItem: false
 				};
 			}
@@ -1759,11 +1842,14 @@ BX.Bitrix24.LeftMenu = {
 
 						BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, this]);
 
-						this.animateTopItemToLeft(itemInfo, startX, startY);
+						this.animateTopItemToLeft(itemInfo, startX, startY, useAnimation);
 
-						this.showMessage(BX("uiToolbarStar"), BX.message("MENU_ITEM_WAS_ADDED_TO_LEFT"));
-						BX("uiToolbarStar").title = BX.message("MENU_DELETE_PAGE_FROM_LEFT_MENU");
-						BX.addClass(BX("uiToolbarStar"), "ui-toolbar-star-active");
+						this.onStandardItemChangedSuccess({
+							isCurrentPage: isCurrentPage,
+							isActive: true,
+							context: params.context,
+						});
+
 						this.isCurrentPageInLeftMenu = true;
 					}
 				}
@@ -1774,8 +1860,11 @@ BX.Bitrix24.LeftMenu = {
 		});
 	},
 
-	deleteStandardItem: function (itemId)
+	deleteStandardItem: function (params)
 	{
+		var itemId = params.itemId;
+		var useAnimation = (!params.context || params.context === top.window);
+
 		var itemData = {};
 		this.checkCurrentPageInTopMenu();
 
@@ -1794,7 +1883,7 @@ BX.Bitrix24.LeftMenu = {
 		else
 		{
 			itemData = {
-				link: document.location.pathname + document.location.search
+				link: (BX.type.isNotEmptyString(params.pageLink) ? params.pageLink : document.location.pathname + document.location.search),
 			};
 		}
 
@@ -1838,10 +1927,14 @@ BX.Bitrix24.LeftMenu = {
 							this.deleteItemFromAll(json.itemId);
 						}
 
-						this.showMessage(BX("uiToolbarStar"), BX.message("MENU_ITEM_WAS_DELETED_FROM_LEFT"));
-						BX("uiToolbarStar").title = BX.message("MENU_ADD_PAGE_TO_LEFT_MENU");
-						this.animateTopItemFromLeft("bx_left_menu_" + json.itemId);
-						BX.removeClass(BX("uiToolbarStar"), "ui-toolbar-star-active");
+						this.onStandardItemChangedSuccess({
+							isCurrentPage: !itemId,
+							isActive: false,
+							context: params.context,
+						});
+
+						this.animateTopItemFromLeft("bx_left_menu_" + json.itemId, useAnimation);
+
 						this.isCurrentPageInLeftMenu = false;
 					}
 				}
@@ -1985,10 +2078,21 @@ BX.Bitrix24.LeftMenu = {
 		}).show();
 	},
 
-	animateTopItemFromLeft: function (itemId)
+	animateTopItemFromLeft: function (itemId, useAnimation)
 	{
 		if (!BX.type.isDomNode(BX(itemId)))
+		{
 			return;
+		}
+
+		if (!useAnimation)
+		{
+			BX.remove(BX(itemId));
+			this.isCurrentPageInLeftMenu = false;
+			this.saveItemsSort();
+
+			return;
+		}
 
 		(new BX.easing({
 			duration: 700,
@@ -3753,51 +3857,49 @@ BX.Bitrix24.LeftMenu = {
 	 *
 	 * @returns {boolean}
 	 */
+
 	initPagetitleStar: function ()
 	{
 		this.checkCurrentPageInTopMenu();
-
-		var starContNode = BX("uiToolbarStar");
-		if (!starContNode)
-		{
-			return false;
-		}
-
-		var currentFullPath = document.location.pathname + document.location.search;
-
-		var currentPageInMenu = this.checkLinkInMenu(currentFullPath);
-		if (typeof currentPageInMenu == "object")
-		{
-			BX.addClass(starContNode, "ui-toolbar-star-active");
-		}
-		starContNode.title = BX.message(BX.hasClass(starContNode, "ui-toolbar-star-active") ? "MENU_DELETE_PAGE_FROM_LEFT_MENU" : "MENU_ADD_PAGE_TO_LEFT_MENU");
-
-		//default page
-		if (typeof currentPageInMenu == "object" && currentPageInMenu.getAttribute("data-type") === "default")
-		{
-			starContNode.title = BX.message("MENU_STAR_TITLE_DEFAULT_PAGE");
-			BX.bind(starContNode, "click", BX.proxy(function ()
-			{
-				this.showMessage(BX.proxy_context, BX.message("MENU_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR"));
-			}, this));
-
-			return true;
-		}
-
-		//any page
-		BX.bind(starContNode, "click", BX.proxy(function ()
-		{
-			if (BX.hasClass(starContNode, "ui-toolbar-star-active"))
-			{
-				this.deleteStandardItem();
-			}
-			else
-			{
-				this.addStandardItem();
-			}
-		}, this));
-
 		return true;
+	},
+
+	onRequestMenuItemData: function (params)
+	{
+		BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onSendMenuItemData', [{
+			currentPageInMenu: this.checkLinkInMenu(params.currentFullPath),
+			context: params.context,
+		}]);
+	},
+
+	onToolbarStarClick: function (params)
+	{
+		if (params.isActive)
+		{
+			this.deleteStandardItem({
+				context: params.context,
+				pageLink: params.pageLink,
+			});
+		}
+		else
+		{
+			this.addStandardItem({
+				context: params.context,
+				pageTitle: params.pageTitle,
+				pageLink: params.pageLink,
+			});
+		}
+	},
+
+	onStandardItemChangedSuccess: function (params)
+	{
+		if (params.isCurrentPage)
+		{
+			BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
+				isActive: params.isActive,
+				context: params.context,
+			}]);
+		}
 	},
 
 	initPreset: function ()

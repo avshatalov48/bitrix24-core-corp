@@ -10,6 +10,7 @@
 import {BaseRestHandler} from "im.provider.rest";
 import {LocalStorage} from "im.lib.localstorage";
 import {EventType} from "im.const";
+import {EventEmitter} from "main.core.events";
 
 export class MobileRestAnswerHandler extends BaseRestHandler
 {
@@ -70,7 +71,7 @@ export class MobileRestAnswerHandler extends BaseRestHandler
 
 	handleImDialogMessagesGetInitSuccess()
 	{
-		this.controller.application.emit(EventType.dialog.sendReadMessages);
+		// EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
 	}
 
 	handleImMessageAddSuccess(messageId, message)

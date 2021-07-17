@@ -61,6 +61,7 @@ $MESS["DEAL_EXPOSE"] = "Создать на основании: Сделку";
 $MESS["DEAL_EXPOSE_TITLE"] = "Создание сделки на основании шаблона регулярной сделки";
 $MESS["CRM_DEAL_CREATE_ON_BASIS"] = "Создать на основании";
 $MESS["DEAL_CRM_TYPE"] = "Режим работы СRM";
+$MESS["DEAL_ORDER_SCENARIO"] = "Режим работы с заказами";
 $MESS["DEAL_CHANGE_CATEGORY"] = "Перенести в направление";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Документ";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основании сделки";

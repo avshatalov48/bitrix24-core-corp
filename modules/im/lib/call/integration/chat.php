@@ -290,6 +290,13 @@ class Chat extends AbstractEntity
 		Application::getInstance()->addBackgroundJob([$this, 'sendMessage'], [$message, $muted]);
 	}
 
+	public function isBroadcast()
+	{
+		return $this->chatFields['entity_type'] === \Bitrix\Im\Alias::ENTITY_TYPE_VIDEOCONF
+			&& $this->chatFields['entity_data_1'] === 'BROADCAST'
+		;
+	}
+
 	public function sendMessage($message, $muted = false)
 	{
 		\CIMMessenger::add([
@@ -310,6 +317,7 @@ class Chat extends AbstractEntity
 		{
 			$currentUserId = $this->userId;
 		}
+
 		return [
 			'type' => $this->getEntityType(),
 			'id' => $this->getEntityId($currentUserId),
@@ -317,7 +325,12 @@ class Chat extends AbstractEntity
 			'avatar' => $this->getAvatar($currentUserId),
 			'avatarColor' => $this->getAvatarColor($currentUserId),
 			'advanced' => [
-				'chatType' => $this->chatFields['type']
+				'chatType' => $this->chatFields['type'],
+				'entityType' => $this->chatFields['entity_type'],
+				'entityId' => $this->chatFields['entity_id'],
+				'entityData1' => $this->chatFields['entity_data_1'],
+				'entityData2' => $this->chatFields['entity_data_2'],
+				'entityData3' => $this->chatFields['entity_data_3']
 			]
 		];
 	}

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Disk;
 
-use Bitrix\Disk\Integration\TransformerManager;
+use Bitrix\Disk;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Internals\EditSessionTable;
 use Bitrix\Disk\Internals\Error\Error;
@@ -13,6 +13,7 @@ use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
+use Bitrix\Disk\Internals\TrackedObjectTable;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Uf\FileUserType;
@@ -359,9 +360,9 @@ class File extends BaseObject
 	 * @param string $newName New name.
 	 * @return bool
 	 */
-	public function rename($newName)
+	public function rename($newName, bool $generateUniqueName = false)
 	{
-		$result = parent::rename($newName);
+		$result = parent::rename($newName, $generateUniqueName);
 		if($result)
 		{
 			$this->extension = null;
@@ -615,11 +616,15 @@ class File extends BaseObject
 			'SYNC_UPDATE_TIME' => $this->getSyncUpdateTime(),
 			'UPDATED_BY' => $updatedBy,
 		));
+		$this->updateRelated();
 
 		$driver = Driver::getInstance();
 		if ($this->getStorage()->isUseInternalRights())
 		{
-			$driver->getRecentlyUsedManager()->push($updatedBy, $this->getId());
+			$driver->getRecentlyUsedManager()->push(
+				$updatedBy,
+				$this
+			);
 		}
 
 		if ($this->getGlobalContentVersion() <= 1)
@@ -665,9 +670,11 @@ class File extends BaseObject
 	 * @return Version|null
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function addVersion(array $file, $createdBy, $disableJoin = false)
+	public function addVersion(array $file, $createdBy, $disableJoin = false, array $options = [])
 	{
 		$this->errorCollection->clear();
+
+		$commentAttachedObjects = $options['commentAttachedObjects'] ?? true;
 
 		if(Configuration::isEnabledStorageSizeRestriction())
 		{
@@ -720,7 +727,10 @@ class File extends BaseObject
 		}
 
 		$this->cleanVersionsOverLimit($createdBy);
-		$this->commentAttachedObjects($versionModel);
+		if ($commentAttachedObjects)
+		{
+			$this->commentAttachedObjects($versionModel);
+		}
 		$this->resetHeadVersionToAttachedObject($versionModel);
 
 		if ($this->getGlobalContentVersion() == 1)
@@ -770,45 +780,45 @@ class File extends BaseObject
 		}
 	}
 
-	private function commentAttachedObjects(Version $version)
+	public function commentAttachedObjects(Version $version): void
 	{
 		$createdBy = $version->getCreatedBy();
 		$valueVersionUf = FileUserType::NEW_FILE_PREFIX . $version->getId();
 
 		/** @var User $createUser */
 		$createUser = User::loadById($createdBy);
-		if(!$createUser)
+		if (!$createUser)
 		{
 			return;
 		}
 
 		$text = $this->getTextForComment($createUser);
-		$attachedObjects = $this->getAttachedObjects(array(
-			'filter' => array(
+		$attachedObjects = $this->getAttachedObjects([
+			'filter' => [
 				'=ALLOW_AUTO_COMMENT' => 1,
-			),
-		));
-		foreach ($attachedObjects as $attache)
+			],
+		]);
+		foreach ($attachedObjects as $attachedObject)
 		{
-			if(!$attache->getAllowAutoComment())
+			if (!$attachedObject->getAllowAutoComment())
 			{
 				continue;
 			}
 
-			AttachedObject::storeDataByObjectId($this->getId(), array(
-				'IS_EDITABLE' => $attache->isEditable(),
-				'ALLOW_EDIT' => $attache->getAllowEdit(),
-			));
+			AttachedObject::storeDataByObjectId($this->getId(), [
+				'IS_EDITABLE' => $attachedObject->isEditable(),
+				'ALLOW_EDIT' => $attachedObject->getAllowEdit(),
+				'STATE' => 'commentAttachedObjects',
+			]);
 
-			$attache->getConnector()->addComment($createdBy, array(
+			$attachedObject->getConnector()->addComment($createdBy, [
 				'text' => $text,
 				'versionId' => $valueVersionUf,
 				'authorGender' => $createUser->getPersonalGenderExact()
-			));
+			]);
 
 			AttachedObject::storeDataByObjectId($this->getId(), null);
 		}
-		unset($attache);
 	}
 
 	private function cleanVersionsOverLimit($createdBy)
@@ -920,7 +930,7 @@ class File extends BaseObject
 	 * @param int $createdBy Id of user.
 	 * @return Version|null
 	 */
-	public function uploadVersion(array $fileArray, $createdBy)
+	public function uploadVersion(array $fileArray, $createdBy, array $options = [])
 	{
 		$this->errorCollection->clear();
 
@@ -956,7 +966,7 @@ class File extends BaseObject
 		{
 			$fileArray['UPDATE_TIME'] = $updateTime;
 		}
-		$version = $this->addVersion($fileArray, $createdBy);
+		$version = $this->addVersion($fileArray, $createdBy, false, $options);
 		if(!$version)
 		{
 			CFile::delete($fileId);
@@ -1229,7 +1239,10 @@ class File extends BaseObject
 			$driver = Driver::getInstance();
 			if ($this->getStorage()->isUseInternalRights())
 			{
-				$driver->getRecentlyUsedManager()->push($restoredBy, $this->getId());
+				$driver->getRecentlyUsedManager()->push(
+					$restoredBy,
+					$this
+				);
 			}
 			$driver->getIndexManager()->indexFileByModuleSearch($this);
 			$driver->sendChangeStatusToSubscribers($this);
@@ -1276,6 +1289,14 @@ class File extends BaseObject
 		{
 			return false;
 		}
+
+		Document\OnlyOffice\Models\DocumentSessionTable::deleteBatch([
+			'OBJECT_ID' => $this->id,
+		]);
+
+		TrackedObjectTable::deleteBatch([
+			'REAL_OBJECT_ID' => $this->id,
+		]);
 
 		$success = ExternalLinkTable::deleteByFilter(array(
 			'OBJECT_ID' => $this->id,
@@ -1482,6 +1503,11 @@ class File extends BaseObject
 		{
 			parent::updateLinksAttributes($attr);
 		}
+	}
+
+	private function updateRelated()
+	{
+		Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($this);
 	}
 
 	/**

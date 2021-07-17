@@ -153,6 +153,8 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID')),
 			(new TextField('SOURCE_DESCRIPTION'))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_DESCRIPTION')),
+			(new IntegerField('WEBFORM_ID'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_WEBFORM_ID')),
 		];
 	}
 

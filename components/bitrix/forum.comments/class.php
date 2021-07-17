@@ -246,8 +246,10 @@ final class ForumCommentsComponent extends CBitrixComponent implements Main\Engi
 				}
 
 				$this->arResult['UNREAD_MID'] = $this->feed->getUserUnreadMessageId();
-				$this->feed->setUserAsRead();
-
+				if (!isset($this->arParams['SKIP_USER_READ']) || $this->arParams['SKIP_USER_READ'] !== 'Y')
+				{
+					$this->feed->setUserAsRead();
+				}
 				if ($this->arParams['SET_LAST_VISIT'] == "Y")
 				{
 					$this->feed->setUserLocation();

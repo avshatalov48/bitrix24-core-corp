@@ -1,5 +1,12 @@
 <?php
 $MESS["SONET_SGM_T_BUTTON_JOIN"] = "Join";
+$MESS["SONET_SGM_T_CHAT_TITLE"] = "Open workgroup chat";
+$MESS["SONET_SGM_T_CHAT_TITLE_PROJECT"] = "Open project chat";
+$MESS["SONET_SGM_T_CONTROL_HINT_COPYURL"] = "Copy page link to the Clipboard";
+$MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_ADD"] = "Add to favorites";
+$MESS["SONET_SGM_T_CONTROL_HINT_FAVORITES_REMOVE"] = "Remove from favorites";
+$MESS["SONET_SGM_T_CONTROL_HINT_OPENNEWWINDOW"] = "Open page in a new window";
+$MESS["SONET_SGM_T_CONTROL_NOTIFICATION_COPYURL"] = "Page link has been copied to the Clipboard";
 $MESS["SONET_SGM_T_LINKS_ABOUT"] = "About workgroup";
 $MESS["SONET_SGM_T_LINKS_ABOUT_PROJECT"] = "About project";
 $MESS["SONET_SGM_T_MEMBERS"] = "Members";
@@ -37,6 +44,7 @@ $MESS["SONET_UM_MEMBERS1"] = "Members";
 $MESS["SONET_UM_MOD"] = "Edit Moderators";
 $MESS["SONET_UM_MOD1"] = "Moderators";
 $MESS["SONET_UM_MODS"] = "Moderators";
+$MESS["SONET_UM_NEWS"] = "Feed";
 $MESS["SONET_UM_PHOTO"] = "Photo";
 $MESS["SONET_UM_REQUESTS"] = "Invites and requests";
 $MESS["SONET_UM_REQUESTS_OUT"] = "Group Invitations";

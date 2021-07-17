@@ -1,5 +1,4 @@
-import {Alert} from "./alert";
-import {Configure} from "./configure";
+import {Error} from "./error";
 import {MessageControl} from "./message-control";
 import {MessageEdit} from "./message-edit";
 import {MessageEditor} from "./message-editor";
@@ -9,8 +8,7 @@ import {UserAvatar} from "./user-avatar";
 
 export
 {
-	Alert,
-	Configure,
+	Error,
 	MessageControl,
 	MessageEdit,
 	MessageEditor,

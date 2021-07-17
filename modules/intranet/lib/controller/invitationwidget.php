@@ -29,7 +29,7 @@ class InvitationWidget extends \Bitrix\Main\Engine\Controller
 
 			if (\CBitrix24BusinessTools::isAvailable())
 			{
-				$maxUserCount = \CBitrix24::getMaxBusinessUsersCount();
+				$maxUserCount = 0;
 			}
 			else
 			{

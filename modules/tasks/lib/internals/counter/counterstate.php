@@ -8,8 +8,8 @@
 
 namespace Bitrix\Tasks\Internals\Counter;
 
-
-use Bitrix\Main\Application;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Registry\UserRegistry;
 
 class CounterState implements \Iterator
 {
@@ -17,8 +17,18 @@ class CounterState implements \Iterator
 
 	private $userId;
 	private $state = [];
-	private $counters = [];
+	private $counters = [
+		CounterDictionary::META_PROP_ALL => [],
+		CounterDictionary::META_PROP_PROJECT => [],
+		CounterDictionary::META_PROP_GROUP => [],
+		CounterDictionary::META_PROP_SONET => [],
+		CounterDictionary::META_PROP_NONE => [],
+	];
 
+	/**
+	 * @param int $userId
+	 * @return static
+	 */
 	public static function getInstance(int $userId): self
 	{
 		if (
@@ -33,20 +43,27 @@ class CounterState implements \Iterator
 	}
 
 	/**
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 */
+	public static function reload(int $userId)
+	{
+		if (
+			self::$instance
+			&& array_key_exists($userId, self::$instance)
+		)
+		{
+			$state = self::$instance[$userId];
+			$state->loadCounters();
+		}
+	}
+
+	/**
 	 * CounterState constructor.
 	 * @param int $userId
 	 */
 	private function __construct(int $userId)
 	{
 		$this->userId = $userId;
-		$this->loadCounters();
-	}
-
-	/**
-	 *
-	 */
-	public function reload()
-	{
 		$this->loadCounters();
 	}
 
@@ -72,11 +89,16 @@ class CounterState implements \Iterator
 	}
 
 	/**
+	 * @param string $meta
 	 * @return array
 	 */
-	public function getRawCounters(): array
+	public function getRawCounters(string $meta = CounterDictionary::META_PROP_ALL): array
 	{
-		return $this->counters;
+		if (!array_key_exists($meta, $this->counters))
+		{
+			return [];
+		}
+		return $this->counters[$meta];
 	}
 
 	/**
@@ -152,7 +174,6 @@ class CounterState implements \Iterator
 		$this->state = array_merge($this->state, $rawCounters);
 
 		$this->updateRawCounters();
-		$this->updateUserCounters();
 	}
 
 	/**
@@ -162,25 +183,27 @@ class CounterState implements \Iterator
 	 */
 	public function getValue(string $name, int $groupId = null): int
 	{
+		$counters = $this->counters[CounterDictionary::META_PROP_ALL];
+
 		if ($groupId > 0)
 		{
 			if (
-				!array_key_exists($name, $this->counters)
-				|| !array_key_exists($groupId, $this->counters[$name])
+				!array_key_exists($name, $counters)
+				|| !array_key_exists($groupId, $counters[$name])
 			)
 			{
 				return 0;
 			}
 
-			return $this->counters[$name][$groupId];
+			return $counters[$name][$groupId];
 		}
 
-		if (!array_key_exists($name, $this->counters))
+		if (!array_key_exists($name, $counters))
 		{
 			return 0;
 		}
 
-		return array_sum($this->counters[$name]);
+		return array_sum($counters[$name]);
 	}
 
 	/**
@@ -188,17 +211,29 @@ class CounterState implements \Iterator
 	 */
 	private function loadCounters(): void
 	{
-		$res = Application::getConnection()->query("
-			SELECT 
-				`VALUE`,
-			   	TASK_ID,
-		   		GROUP_ID,
-			   	`TYPE`
-			FROM ". CounterTable::getTableName(). "
-			WHERE
-				USER_ID IN ({$this->userId}, 0)
-		");
-		$rows = $res->fetchAll();
+		$query = CounterTable::query()
+			->setSelect([
+				'VALUE',
+				'TASK_ID',
+				'GROUP_ID',
+				'TYPE'
+			])
+			->where('USER_ID', $this->userId);
+
+		$limit = Counter::getGlobalLimit();
+
+		if ($limit === 0)
+		{
+			$query->where('TYPE', CounterDictionary::COUNTER_FLAG_COUNTED);
+			$query->setLimit(1);
+		}
+		elseif (!is_null($limit))
+		{
+			$query->setLimit($limit);
+			$query->addOrder('TASK_ID');
+		}
+
+		$rows = $query->exec()->fetchAll();
 
 		$this->updateState($rows);
 	}
@@ -208,42 +243,186 @@ class CounterState implements \Iterator
 	 */
 	private function updateRawCounters(): void
 	{
-		$this->counters = [];
-		$counters = [];
+		$this->counters = [
+			CounterDictionary::META_PROP_ALL => [],
+			CounterDictionary::META_PROP_PROJECT => [],
+			CounterDictionary::META_PROP_GROUP => [],
+			CounterDictionary::META_PROP_SONET => [],
+			CounterDictionary::META_PROP_NONE => []
+		];
+
+		$user = UserRegistry::getInstance($this->userId);
+		$groups = $user->getUserGroups(UserRegistry::MODE_GROUP);
+		$projects = $user->getUserGroups(UserRegistry::MODE_PROJECT);
+
+		$tmpHeap[] = [];
 		foreach ($this->state as $item)
 		{
 			if ($item['TYPE'] === CounterDictionary::COUNTER_FLAG_COUNTED)
 			{
 				continue;
 			}
-			if (in_array($item['TYPE'], CounterDictionary::MAP_EXPIRED))
+
+			$taskId = $item['TASK_ID'];
+			$groupId = $item['GROUP_ID'];
+			$value = $item['VALUE'];
+			$type = $item['TYPE'];
+
+			$meta = $this->getMetaProp($item, $groups, $projects);
+			$subType = $this->getItemSubType($type);
+
+			if (!isset($tmpHeap[$meta][$type][$groupId][$taskId]))
 			{
-				$counters[CounterDictionary::COUNTER_EXPIRED][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
+				$tmpHeap[$meta][$type][$groupId][$taskId] = $value;
+				$this->counters[$meta][$type][$groupId] += $value;
+
+				if (in_array($meta, [CounterDictionary::META_PROP_GROUP, CounterDictionary::META_PROP_PROJECT]))
+				{
+					$this->counters[CounterDictionary::META_PROP_SONET][$type][$groupId] += $value;
+				}
 			}
 
-			if (in_array($item['TYPE'], CounterDictionary::MAP_COMMENTS))
+			if (
+				$type !== $subType
+				&& !isset($tmpHeap[$meta][$subType][$groupId][$taskId])
+			)
 			{
-				$counters[CounterDictionary::COUNTER_NEW_COMMENTS][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
+				$tmpHeap[$meta][$subType][$groupId][$taskId] = $value;
+				$this->counters[$meta][$subType][$groupId] += $value;
+
+				if (in_array($meta, [CounterDictionary::META_PROP_GROUP, CounterDictionary::META_PROP_PROJECT]))
+				{
+					$this->counters[CounterDictionary::META_PROP_SONET][$subType][$groupId] += $value;
+				}
 			}
 
-			$counters[$item['TYPE']][$item['GROUP_ID']][$item['TASK_ID']] = $item['VALUE'];
+			if (!isset($tmpHeap[CounterDictionary::META_PROP_ALL][$type][$groupId][$taskId]))
+			{
+				$tmpHeap[CounterDictionary::META_PROP_ALL][$type][$groupId][$taskId] = $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][$type][$groupId] += $value;
+			}
+
+			if (
+				$type !== $subType
+				&& !isset($tmpHeap[CounterDictionary::META_PROP_ALL][$subType][$groupId][$taskId])
+			)
+			{
+				$tmpHeap[CounterDictionary::META_PROP_ALL][$subType][$groupId][$taskId] = $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][$subType][$groupId] += $value;
+			}
+
+			if ($meta === CounterDictionary::META_PROP_NONE)
+			{
+				continue;
+			}
+
+			// Total sum for the all groups/projects
+
+			if (
+				$subType === CounterDictionary::COUNTER_EXPIRED
+				&& !isset($tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0][$taskId])
+			)
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+
+				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0][$taskId] = $value;
+			}
+
+			if (
+				$subType === CounterDictionary::COUNTER_NEW_COMMENTS
+				&& !isset($tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0][$taskId])
+			)
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+
+				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0][$taskId] = $value;
+			}
+
+			if (
+				in_array($subType, [CounterDictionary::COUNTER_GROUP_EXPIRED, CounterDictionary::COUNTER_MUTED_EXPIRED])
+				&& !isset($tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0][$taskId])
+			)
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+
+				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0][$taskId] = $value;
+			}
+
+			if (
+				in_array($subType, [CounterDictionary::COUNTER_GROUP_COMMENTS, CounterDictionary::COUNTER_MUTED_NEW_COMMENTS])
+				&& !isset($tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0][$taskId])
+			)
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+
+				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0][$taskId] = $value;
+			}
 		}
 
-		foreach ($counters as $type => $groups)
-		{
-			foreach ($groups as $group => $values)
-			{
-				$this->counters[$type][$group] = array_sum($values);
-			}
-		}
+		unset($tmpHeap);
 	}
 
 	/**
-	 * @param array $names
+	 * @param array $item
+	 * @return string
 	 */
-	private function updateUserCounters(): void
+	private function getItemSubType(string $type): string
 	{
-		$value = $this->getValue(CounterDictionary::COUNTER_EXPIRED) + $this->getValue(CounterDictionary::COUNTER_NEW_COMMENTS);
-		\CUserCounter::Set($this->userId, CounterDictionary::getCounterId(CounterDictionary::COUNTER_TOTAL), $value, '**', '', false);
+		if (in_array($type, CounterDictionary::MAP_EXPIRED))
+		{
+			return CounterDictionary::COUNTER_EXPIRED;
+		}
+
+		if (in_array($type, CounterDictionary::MAP_MUTED_EXPIRED))
+		{
+			return CounterDictionary::COUNTER_MUTED_EXPIRED;
+		}
+
+		if (in_array($type, CounterDictionary::MAP_COMMENTS))
+		{
+			return CounterDictionary::COUNTER_NEW_COMMENTS;
+		}
+
+		if (in_array($type, CounterDictionary::MAP_MUTED_COMMENTS))
+		{
+			return CounterDictionary::COUNTER_MUTED_NEW_COMMENTS;
+		}
+
+		return $type;
+	}
+
+	/**
+	 * @param array $item
+	 * @return string
+	 */
+	private function getMetaProp(array $item, array $groups, array $projects): string
+	{
+		if (array_key_exists($item['GROUP_ID'], $groups))
+		{
+			return CounterDictionary::META_PROP_GROUP;
+		}
+
+		if (array_key_exists($item['GROUP_ID'], $projects))
+		{
+			return CounterDictionary::META_PROP_PROJECT;
+		}
+
+		return CounterDictionary::META_PROP_NONE;
 	}
 }

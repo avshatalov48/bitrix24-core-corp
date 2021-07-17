@@ -79,7 +79,7 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 			return false;
 		}},
 		<?endif;?>
-		<?if ($arResult['CAN_EDIT_USER'] && !in_array($arUser['EXTERNAL_AUTH_ID'], array('bot', 'imconnector'))):?>
+		<?if ($arResult['CAN_EDIT_USER'] && !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())):?>
 			<?if ($arUser["ID"] != $USER->GetID()):?>
 				{ text : "<?=$userActionMessage?>", onclick : function() {
 					if (confirmUser("<?=$arUser["ACTIVITY_STATUS"]?>"))

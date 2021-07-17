@@ -1,10 +1,13 @@
 import { Type, Loc, Dom } from 'main.core';
 import { Popup } from 'main.popup';
 import { TagSelector } from 'ui.entity-selector';
+import { EventEmitter } from "main.core.events";
 import 'main.date';
 
-export default class PostFormGratSelector
+export default class PostFormGratSelector extends EventEmitter
 {
+	static instance = null;
+
 	popupWindow = null;
 	sendEvent = true;
 	gratsContentElement = null;
@@ -14,9 +17,29 @@ export default class PostFormGratSelector
 
 	selector = null;
 
+	config = {
+		fields: {
+			employeesValue: {
+				name: 'GRAT_DEST_DATA',
+			},
+		},
+	};
+
+	static setInstance(instance)
+	{
+		PostFormGratSelector.instance = instance;
+	}
+
+	static getInstance()
+	{
+		return PostFormGratSelector.instance;
+	}
+
 	constructor(params)
 	{
+		super();
 		this.init(params);
+		PostFormGratSelector.setInstance(this);
 	}
 
 	init(params)
@@ -165,12 +188,12 @@ export default class PostFormGratSelector
 				context: 'GRATITUDE',
 				preselectedItems: (Type.isArray(params.preselectedItems) ? params.preselectedItems : []),
 				events: {
-					'Item:onSelect': () => {
-						this.recalcValue(this.selector.getDialog().getSelectedItems(), params.inputNodeId);
+					'Item:onSelect': (event) => {
+						this.recalcValue(event.getTarget().getSelectedItems(), params.inputNodeId);
 					},
-					'Item:onDeselect': () => {
-						this.recalcValue(this.selector.getDialog().getSelectedItems(), params.inputNodeId);
-					}
+					'Item:onDeselect': (event) => {
+						this.recalcValue(event.getTarget().getSelectedItems(), params.inputNodeId);
+					},
 				},
 				entities: [
 					{
@@ -194,6 +217,9 @@ export default class PostFormGratSelector
 		});
 
 		this.selector.renderTo(document.getElementById(params.tagNodeId));
+		this.selector.subscribe('onContainerClick', () => {
+			this.emit('Selector::onContainerClick');
+		});
 	};
 
 	recalcValue(selectedItems, inputNodeId): void

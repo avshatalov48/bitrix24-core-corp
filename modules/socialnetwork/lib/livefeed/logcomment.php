@@ -177,14 +177,14 @@ final class LogComment extends Provider
 
 	public function add($params = array())
 	{
-		global $USER, $DB;
+		global $USER;
 
 		static $parser = null;
 
 		$authorId = (
 			isset($params['AUTHOR_ID'])
-			&& intval($params['AUTHOR_ID']) > 0
-				? intval($params['AUTHOR_ID'])
+			&& (int)$params['AUTHOR_ID'] > 0
+				? (int)$params['AUTHOR_ID']
 				: $USER->getId()
 		);
 
@@ -256,7 +256,7 @@ final class LogComment extends Provider
 			"LOG_ID" => $logId,
 			"RATING_TYPE_ID" => "LOG_COMMENT",
 			"USER_ID" => $authorId,
-			"=LOG_DATE" => $DB->currentTimeFunction(),
+			"=LOG_DATE" => \CDatabase::currentTimeFunction(),
 		);
 
 		if (!empty($params['SHARE_DEST']))
@@ -271,7 +271,10 @@ final class LogComment extends Provider
 			));
 		}
 
-		return $sonetCommentId;
+		return [
+			'sonetCommentId' => $sonetCommentId,
+			'sourceCommentId' => $sonetCommentId
+		];
 	}
 
 }

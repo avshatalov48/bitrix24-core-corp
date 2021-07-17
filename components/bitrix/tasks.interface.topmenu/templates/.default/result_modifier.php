@@ -75,13 +75,14 @@ $arResult['ITEMS'][] = array(
 	"IS_ACTIVE" => ($arParams["MARK_TEMPLATES"] != "Y" &&
 					$arParams["MARK_SECTION_EFFECTIVE"] != "Y" &&
 					$arParams["MARK_SECTION_PROJECTS"] != "Y" &&
+					$arParams["MARK_SECTION_PROJECTS_LIST"] != "Y" &&
 					$arParams["MARK_SECTION_MANAGE"] != "Y" &&
 					$arParams["MARK_SECTION_EMPLOYEE_PLAN"] != "Y" &&
 					$arParams["MARK_RECYCLEBIN"] != "Y" &&
 					$arParams["MARK_SECTION_REPORTS"] != "Y") &&
 				   ($arParams['DEFAULT_ROLEID'] == 'view_all' || $arParams['DEFAULT_ROLEID'] == ''), // need refactoring
 	'COUNTER' => $arResult['TOTAL'],
-	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_TOTAL,
+	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
 );
 
@@ -116,18 +117,9 @@ $arResult['ITEMS'][] = [
 	"ID" => "view_projects",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
 	'SUB_LINK' => ['CLASS' => '', 'URL' => $createGroupLink],
+	'COUNTER' => $arResult['PROJECTS_COUNTER'],
+	'COUNTER_ID' => 'tasks_projects_counter',
 ];
-
-if ($arParams['SHOW_SECTION_PROJECTS'] == 'Y')
-{
-	$arResult['ITEMS'][] = [
-		"TEXT" => GetMessage("TASKS_PANEL_TAB_KANBAN"),
-		"URL" => $tasksLink.'projects_kanban/',
-		"ID" => "view_kanban",
-		"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS"] === "Y"),
-		'SUB_LINK' => ['CLASS' => '', 'URL' => $createGroupLink],
-	];
-}
 
 if ($arParams["SHOW_SECTION_MANAGE"] != "N")
 {

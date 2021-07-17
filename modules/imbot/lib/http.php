@@ -156,8 +156,8 @@ class Http
 
 		foreach ($params as $key => $value)
 		{
-			$value = $value === "0"? "#ZERO#": $value;
-			$params[$key] = empty($value)? '#EMPTY#': $value;
+			$value = $value === '0' ? '#ZERO#' : $value;
+			$params[$key] = empty($value) ? '#EMPTY#' : $value;
 		}
 
 		$params['BX_COMMAND'] = $command;
@@ -168,9 +168,9 @@ class Http
 		$params['BX_VERSION'] = self::VERSION;
 		$params['BX_LANG'] = \Bitrix\Im\Bot::getDefaultLanguage();
 		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
-		$params["BX_HASH"] = self::requestSign($this->type, md5(implode("|", $params)));
+		$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
 
-		$waitResponse = $waitResponse? true: \Bitrix\Main\Config\Option::get("imbot", "wait_response");
+		$waitResponse = $waitResponse ? true : \Bitrix\Main\Config\Option::get('imbot', 'wait_response', false);
 
 		Log::write(Array($this->controllerUrl, $params), 'COMMAND: '.$command);
 
@@ -179,10 +179,10 @@ class Http
 		$controllerUrl .= 'COMMAND='.$command;
 
 		$httpClient = new \Bitrix\Main\Web\HttpClient(array(
-			"socketTimeout" => 20,
-			"streamTimeout" => 60,
-			"waitResponse" => $waitResponse,
-			"disableSslVerification" => true,
+			'socketTimeout' => 20,
+			'streamTimeout' => 60,
+			'waitResponse' => $waitResponse,
+			'disableSslVerification' => true,
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix Bot Client ('.$this->botId.')');
 		$httpClient->setHeader('x-bitrix-licence', $this->licenceCode);
@@ -190,10 +190,7 @@ class Http
 
 		$result = $httpClient->post($controllerUrl, $params);
 
-		if (defined('BOT_CONTROLLER_URL'))
-		{
-			Log::write(Array($result), 'COMMAND RESULT: '.$command);
-		}
+		Log::write(array($result), 'COMMAND RESULT: '.$command);
 
 		if ($waitResponse)
 		{

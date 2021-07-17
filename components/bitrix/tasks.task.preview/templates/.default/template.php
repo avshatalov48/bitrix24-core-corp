@@ -1,59 +1,66 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
 /**
+ * @var $arParams
  * @var $arResult
  */
 
 use Bitrix\Main\UI;
+use Bitrix\Main\Localization\Loc;
 
-UI\Extension::load("ui.tooltip");
+UI\Extension::load([
+	'ui.tooltip',
+	'ui.link',
+	'ui.urlpreview',
+	'ui.icons.b24',
+]);
+
 ?>
-
 <div class="task-preview">
-	<div class="task-preview-header">
-		<div class="task-preview-header-icon">
-			<img src="<?=(isset($arResult['TASK']["CREATED_BY_PHOTO"]) && $arResult['TASK']["CREATED_BY_PHOTO"] <> '' ? $arResult['TASK']["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
-		</div>
+	<div class="task-preview-header"><?php
+		$style = (!empty($arResult['TASK']['CREATED_BY_PHOTO']) ? 'background-image: url('. \CHTTP::urnEncode($arResult['TASK']['CREATED_BY_PHOTO']) .');' : '');
+		?><span class="ui-icon ui-icon-common-user task-preview-header-icon" title="<?= htmlspecialcharsbx($arResult['TASK']['CREATED_BY_FORMATTED']) ?>">
+			<i style="<?= $style ?>"></i>
+		</span>
 		<span class="task-preview-header-title">
-			<a id="a_<?=htmlspecialcharsbx($arResult['TASK']['CREATED_BY_UNIQID'])?>" href="<?=htmlspecialcharsbx($arResult["TASK"]["CREATED_BY_PROFILE"])?>" target="_blank" bx-tooltip-user-id="<?=htmlspecialcharsbx($arResult["TASK"]["CREATED_BY"])?>">
-				<?=htmlspecialcharsbx($arResult['TASK']['CREATED_BY_FORMATTED'])?>
+			<a id="a_<?= htmlspecialcharsbx($arResult['TASK']['CREATED_BY_UNIQID']) ?>" href="<?= htmlspecialcharsbx($arResult["TASK"]["CREATED_BY_PROFILE"]) ?>" target="_blank" bx-tooltip-user-id="<?= htmlspecialcharsbx($arResult['TASK']['CREATED_BY']) ?>">
+				<?= htmlspecialcharsbx($arResult['TASK']['CREATED_BY_FORMATTED']) ?>
 			</a>
-		</span>
+		</span><?php
 
-		<?if((int)$arResult["TASK"]["RESPONSIBLE_ID"] > 0):?>
-			<span class="urlpreview__icon-destination"></span>
-			<div class="task-preview-header-icon">
-				<img src="<?=(isset($arResult['TASK']["RESPONSIBLE_PHOTO"]) && $arResult['TASK']["RESPONSIBLE_PHOTO"] <> '' ? $arResult['TASK']["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="<?=$arParams["AVATAR_SIZE"]?>" height="<?=$arParams["AVATAR_SIZE"]?>">
-			</div>
-			<span class="task-preview-header-title">
-				<a id="a_<?=htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_UNIQID'])?>" href="<?=htmlspecialcharsbx($arResult["TASK"]["RESPONSIBLE_PROFILE"])?>" target="_blank" bx-tooltip-user-id="<?=htmlspecialcharsbx($arResult["TASK"]["RESPONSIBLE_ID"])?>">
-					<?=htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_FORMATTED'])?>
-				</a>
+		if ((int)$arResult['TASK']['RESPONSIBLE_ID'] > 0)
+		{
+			?><span class="urlpreview__icon-destination"></span><?php
+			$style = (!empty($arResult['TASK']['RESPONSIBLE_PHOTO']) ? 'background-image: url('. \CHTTP::urnEncode($arResult['TASK']['RESPONSIBLE_PHOTO']) .');' : '');
+			?><span class="ui-icon ui-icon-common-user task-preview-header-icon" title="<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_FORMATTED']) ?>">
+				<i style="<?= $style ?>"></i>
 			</span>
-		<?endif?>
-		<span class="urlpreview__time-wrap">
-			<a href="<?=htmlspecialcharsbx($arParams['URL'])?>">
-				<span class="urlpreview__time">
-					<?=htmlspecialcharsbx($arResult["TASK"]["CREATED_DATE_FORMATTED"])?>
-				</span>
-			</a>
-		</span>
+			<span class="task-preview-header-title">
+				<a id="a_<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_UNIQID']) ?>" href="<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_PROFILE']) ?>" target="_blank" bx-tooltip-user-id="<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_ID']) ?>">
+					<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_FORMATTED']) ?>
+				</a>
+			</span><?php
+		}
+
+		?><a class="urlpreview__time" href="<?= htmlspecialcharsbx($arParams['URL']) ?>">
+			<?= htmlspecialcharsbx($arResult['TASK']['CREATED_DATE_FORMATTED']) ?>
+		</a>
 	</div>
 	<div class="task-preview-info">
-		<?=GetMessage("TASKS_TASK_TITLE_LABEL")?>:
-		<a href="<?=$arParams['URL']?>" target="_blank"><?=htmlspecialcharsbx($arResult["TASK"]["TITLE"])?></a><br>
+		<a href="<?= htmlspecialcharsbx($arParams['URL']) ?>" target="_blank" class="ui-link ui-link-dashed"><?= htmlspecialcharsbx($arResult['TASK']['TITLE']) ?></a><br>
+		<?= Loc::getMessage('TASKS_STATUS_' . $arResult['TASK']['REAL_STATUS']) ?><br>
 
-		<?=GetMessage('TASKS_STATUS')?>:
-		<?= GetMessage("TASKS_STATUS_".$arResult["TASK"]["REAL_STATUS"])?><br>
+		<?
+		if ($arResult['TASK']['DEADLINE'] <> '')
+		{
+			?><?= Loc::getMessage('TASKS_DEADLINE')?>: <?= FormatDateFromDB($arResult['TASK']['DEADLINE'], 'SHORT') ?><br><?php
+		}
 
-		<?if($arResult["TASK"]["DEADLINE"] <> ''):?>
-			<?=GetMessage("TASKS_DEADLINE")?>:
-			<?=FormatDateFromDB($arResult["TASK"]["DEADLINE"], "SHORT")?><br>
-		<?endif?>
-
-		<?if($arResult["TASK"]["CLOSED_DATE"] <> ''):?>
-			<?=GetMessage("TASKS_CLOSED_DATE")?>:
-			<?=FormatDateFromDB($arResult["TASK"]["CLOSED_DATE"], "SHORT")?><br>
-		<?endif?>
-	</div>
+		if ($arResult['TASK']['CLOSED_DATE'] <> '')
+		{
+			?><?= Loc::getMessage('TASKS_CLOSED_DATE') ?>: <?= FormatDateFromDB($arResult['TASK']['CLOSED_DATE'], 'SHORT') ?><br><?php
+		}
+	?></div>
 </div>

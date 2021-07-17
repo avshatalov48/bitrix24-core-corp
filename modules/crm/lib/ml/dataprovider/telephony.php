@@ -109,10 +109,14 @@ class Telephony extends Base
 
 		if(Loader::includeModule("voximplant"))
 		{
-			$origins = array_map(function($act) {return $act["ORIGIN_ID"];}, $activities);
+			$origins = array_column($activities, "ORIGIN_ID");
 			$origins = array_filter($origins, function($origin) {return mb_strpos($origin, "VI_") !== false;});
-			$callIds = array_map(function($origin) {
-				return mb_substr($origin, 3);}, $origins);
+			$callIds = array_map(
+				function($origin) {
+					return mb_substr($origin, 3);
+				},
+				$origins
+			);
 
 			if(count($callIds) > 0)
 			{
@@ -123,18 +127,17 @@ class Telephony extends Base
 				])->fetchAll();
 
 				// CALLS_MEDIAN_DURATION
-				$durations = array_map(function($call) {return $call["CALL_DURATION"];}, $calls);
+				$durations = array_column($calls, "DURATION");
 				$result["CALLS_MEDIAN_DURATION"] = FeatureBuilder::getMedianValue($durations);
 
 				// CALLS_TRANSCRIPTION
-				$sessionIds = array_map(function($call) {return $call["SESSION_ID"];}, $calls);
 				$messages = TranscriptLineTable::getList([
 					"select" => ["MESSAGE"],
 					"filter" => [
-						"=TRANSCRIPT.SESSION_ID" => $sessionIds
+						"=TRANSCRIPT.CALL_ID" => $callIds
 					]
 				])->fetchAll();
-				$messages = array_map(function($m){return $m["MESSAGE"];}, $messages);
+				$messages = array_column($messages, "MESSAGE");
 
 				if(count($messages) > 0)
 				{

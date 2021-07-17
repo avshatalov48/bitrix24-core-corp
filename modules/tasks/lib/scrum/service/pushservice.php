@@ -8,20 +8,8 @@ use Bitrix\Tasks\Scrum\Internal\ItemTable;
 
 class PushService
 {
-	private $isModuleIncluded;
-
-	public function __construct()
-	{
-		$this->isModuleIncluded = (Loader::includeModule('pull'));
-	}
-
 	public function sendAddItemEvent(ItemTable $item): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		if ($item->getItemType() === ItemTable::EPIC_TYPE)
 		{
 			$this->sendAddEpicEvent($item);
@@ -41,10 +29,7 @@ class PushService
 		$taskService = null;
 		if ($item->getSourceId())
 		{
-			global $USER_FIELD_MANAGER;
-
 			$taskService = new TaskService($item->getCreatedBy());
-			$taskService->setUserFieldManager($USER_FIELD_MANAGER);
 		}
 
 		$tag = 'itemActions_' . $entity->getGroupId();
@@ -61,11 +46,6 @@ class PushService
 
 	public function sendUpdateItemEvent(ItemTable $updatedItem): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		if ($updatedItem->getItemType() === ItemTable::EPIC_TYPE)
 		{
 			$this->sendUpdateEpicEvent($updatedItem);
@@ -88,10 +68,7 @@ class PushService
 		$taskService = null;
 		if ($item->getSourceId())
 		{
-			global $USER_FIELD_MANAGER;
-
 			$taskService = new TaskService($item->getCreatedBy());
-			$taskService->setUserFieldManager($USER_FIELD_MANAGER);
 		}
 
 		$tag = 'itemActions_' . $entity->getGroupId();
@@ -108,11 +85,6 @@ class PushService
 
 	public function sendRemoveItemEvent(ItemTable $removedItem): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		if ($removedItem->getItemType() === ItemTable::EPIC_TYPE)
 		{
 			$this->sendRemoveEpicEvent($removedItem);
@@ -142,11 +114,6 @@ class PushService
 
 	public function sendAddEpicEvent(ItemTable $epic): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($epic->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
@@ -173,11 +140,6 @@ class PushService
 
 	public function sendUpdateEpicEvent(ItemTable $epic): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($epic->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
@@ -204,11 +166,6 @@ class PushService
 
 	public function sendRemoveEpicEvent(ItemTable $epic): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($epic->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
@@ -230,11 +187,6 @@ class PushService
 
 	public function sendSortItemEvent(array $updatedItemsInfo): void
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$itemService = new ItemService();
 
 		reset($updatedItemsInfo);
@@ -267,11 +219,6 @@ class PushService
 
 	public function sendAddSprintEvent(EntityTable $inputSprint)
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$sprintService = new SprintService();
 		$sprint = $sprintService->getSprintById($inputSprint->getId());
 		if ($sprintService->getErrors() || $sprint->isEmpty())
@@ -298,11 +245,6 @@ class PushService
 
 	public function sendUpdateSprintEvent(EntityTable $inputSprint)
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$sprintService = new SprintService();
 		$sprint = $sprintService->getSprintById($inputSprint->getId());
 		if ($sprintService->getErrors() || $sprint->isEmpty())
@@ -343,11 +285,6 @@ class PushService
 
 	public function sendRemoveSprintEvent(EntityTable $inputSprint)
 	{
-		if (!$this->isModuleIncluded)
-		{
-			return;
-		}
-
 		$tag = 'entityActions_' . $inputSprint->getGroupId();
 
 		\CPullWatch::addToStack(
@@ -374,7 +311,52 @@ class PushService
 		$taskId = $item->getSourceId();
 		if ($taskService && $taskId)
 		{
-			$itemData = $itemData + $taskService->getItemData($taskId);
+			$itemData = $itemData + $taskService->getItemsData([$taskId])[$taskId];
+
+			$entityService = new EntityService();
+
+			$entity = $entityService->getEntityById($item->getEntityId());
+
+			if ($entity->isActiveSprint())
+			{
+				if ($itemData['isParentTask'] === 'N' && !empty($itemData['completedSubTasksInfo']))
+				{
+					$itemData['isParentTask'] = 'Y';
+				}
+
+				if ($itemData['isParentTask'] === 'Y')
+				{
+					$kanbanService = new KanbanService();
+
+					foreach ($itemData['completedSubTasksInfo'] as $sourceId => $subTaskInfo)
+					{
+						if ($kanbanService->isTaskInKanban($entity->getId(), $sourceId))
+						{
+							$itemData['subTasksInfo'][$sourceId] = $subTaskInfo;
+						}
+					}
+
+					unset($itemData['completedSubTasksInfo']);
+
+					$itemData['isParentTask'] = ($itemData['subTasksInfo'] ? 'Y' : 'N');
+					$itemData['subTasksCount'] = count($itemData['subTasksInfo']);
+					$itemData['subTasksInfo'] = $this->getSubStoryPoints($itemData['subTasksInfo'], $itemService);
+				}
+			}
+			else if ($entity->isCompletedSprint())
+			{
+				if ($itemData['isSubTask'] === 'Y')
+				{
+					$itemData['isSubTask'] = 'N';
+				}
+			}
+			else
+			{
+				if ($itemData['isParentTask'] === 'Y')
+				{
+					$itemData['subTasksInfo'] = $this->getSubStoryPoints($itemData['subTasksInfo'], $itemService);
+				}
+			}
 		}
 
 		if ($userService && isset($itemData['responsibleId']))
@@ -383,5 +365,16 @@ class PushService
 		}
 
 		return $itemData;
+	}
+
+	private function getSubStoryPoints(array $subTasksInfo, ItemService $itemService): array
+	{
+		foreach ($subTasksInfo as $sourceId => $subTaskInfo)
+		{
+			$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId([$sourceId]);
+			$subTasksInfo[$sourceId]['storyPoints'] = $itemsStoryPoints[$sourceId];
+		}
+
+		return $subTasksInfo;
 	}
 }

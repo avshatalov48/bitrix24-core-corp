@@ -284,16 +284,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 		if(isset($_POST['COMMENTS']))
 		{
 			$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-			if($comments !== '' && mb_strpos($comments, '<') !== false)
-			{
-				$sanitizer = new CBXSanitizer();
-				$sanitizer->ApplyDoubleEncode(false);
-				$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-				//Crutch for for Chrome line break behaviour in HTML editor.
-				$sanitizer->AddTags(array('div' => array()));
-				$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
-				$comments = $sanitizer->SanitizeHtml($comments);
-			}
+			$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 			$arFields['COMMENTS'] = $comments;
 		}
 
@@ -990,10 +981,19 @@ $arResult['FIELDS'][] = array(
 //address
 if ($arParams["RESTRICTED_MODE"])
 {
-	$addressHtml =  Bitrix\Crm\Format\LeadAddressFormatter::format(
-		$arResult['ELEMENT'],
-		array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
-	);
+	if (class_exists('Bitrix\Crm\Format\AddressFormatter'))
+	{
+		$addressHtml = Bitrix\Crm\Format\AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			Bitrix\Crm\LeadAddress::mapEntityFields($arResult['ELEMENT'])
+		);
+	}
+	else
+	{
+		$addressHtml =  Bitrix\Crm\Format\LeadAddressFormatter::format(
+			$arResult['ELEMENT'],
+			array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
+		);
+	}
 }
 else
 {

@@ -1,42 +1,64 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\User;
+
 /** @var array $arParams */
 /** @var array $arResult */
 
-$taskData = $arParams["TEMPLATE_DATA"]["DATA"]["TASK"];
+$taskData = $arParams['TEMPLATE_DATA']['DATA']['TASK'];
 
-$arParams["TEMPLATE_DATA"]["PATH_TO_TEMPLATES_TEMPLATE"] = \Bitrix\Tasks\UI\Task\Template::makeActionUrl($arParams["PATH_TO_TEMPLATES_TEMPLATE"], $taskData["SE_TEMPLATE"]["ID"], 'view');
-$arParams["TEMPLATE_DATA"]["PATH_TO_TEMPLATES_TEMPLATE_SOURCE"] = \Bitrix\Tasks\UI\Task\Template::makeActionUrl($arParams["PATH_TO_TEMPLATES_TEMPLATE"], $taskData["SE_TEMPLATE.SOURCE"]["ID"], 'view');
-
-$arParams["TEMPLATE_DATA"]["TAGS"] = \Bitrix\Tasks\UI\Task\Tag::formatTagString($taskData["SE_TAG"]);
+$arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE'] = UI\Task\Template::makeActionUrl(
+	$arParams['PATH_TO_TEMPLATES_TEMPLATE'],
+	$taskData['SE_TEMPLATE']['ID'],
+	'view'
+);
+$arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE_SOURCE'] = UI\Task\Template::makeActionUrl(
+	$arParams['PATH_TO_TEMPLATES_TEMPLATE'],
+	$taskData['SE_TEMPLATE.SOURCE']['ID'],
+	'view'
+);
+$arParams['TEMPLATE_DATA']['TAGS'] = UI\Task\Tag::formatTagString($taskData['SE_TAG']);
 
 //Dates
-$dates = array(
-	"STATUS_CHANGED_DATE",
-	"DEADLINE",
-	"CREATED_DATE",
-	"START_DATE_PLAN",
-	"END_DATE_PLAN"
-);
-
+$dates = [
+	'STATUS_CHANGED_DATE',
+	'DEADLINE',
+	'CREATED_DATE',
+	'START_DATE_PLAN',
+	'END_DATE_PLAN',
+];
 foreach ($dates as $date)
 {
 	$formattedDate = "";
 	if (isset($taskData[$date]) && mb_strlen($taskData[$date]))
 	{
-		$formattedDate = \Bitrix\Tasks\UI::formatDateTime(\Bitrix\Tasks\UI::parseDateTime($taskData[$date]), '^'.\Bitrix\Tasks\UI::getDateTimeFormat());
+		$formattedDate = UI::formatDateTime(
+			UI::parseDateTime($taskData[$date]),
+			'^' . UI::getDateTimeFormat()
+		);
 	}
-	
-	$arParams["TEMPLATE_DATA"][$date] = $formattedDate;
+	$arParams['TEMPLATE_DATA'][$date] = $formattedDate;
 }
 
+$currentUserId = User::getId();
+$members = array_merge(
+	(is_array($taskData['SE_ORIGINATOR']) ? [$taskData['SE_ORIGINATOR']] : []),
+	(is_array($taskData['SE_RESPONSIBLE']) ? $taskData['SE_RESPONSIBLE'] : []),
+	(is_array($taskData['SE_ACCOMPLICE']) ? $taskData['SE_ACCOMPLICE'] : []),
+	(is_array($taskData['SE_AUDITOR']) ? $taskData['SE_AUDITOR'] : [])
+);
+
 $iAmAuditor = false;
-$currentUserId = \Bitrix\Tasks\Util\User::getId();
-if(is_array($taskData["SE_AUDITOR"]))
+if (is_array($taskData['SE_AUDITOR']))
 {
-	foreach($taskData["SE_AUDITOR"] as $user)
+	foreach ($taskData['SE_AUDITOR'] as $user)
 	{
-		if($user['ID'] == $currentUserId)
+		if ((int)$user['ID'] === $currentUserId)
 		{
 			$iAmAuditor = true;
 			break;
@@ -44,10 +66,24 @@ if(is_array($taskData["SE_AUDITOR"]))
 	}
 }
 
-if($arParams['USER'])
+$showIntranetControl = false;
+foreach ($members as $member)
 {
-	$arParams['USER'] = \Bitrix\Tasks\Util\User::extractPublicData($arParams['USER']);
-	$arParams['USER']['AVATAR'] = \Bitrix\Tasks\UI::getAvatar($arParams['USER']['PERSONAL_PHOTO'], 58, 58);
+	if (
+		(int)$member['ID'] === $currentUserId
+		&& !$member['IS_EMAIL_USER']
+	)
+	{
+		$showIntranetControl = true;
+		break;
+	}
 }
 
 $arParams['TEMPLATE_DATA']['I_AM_AUDITOR'] = $iAmAuditor;
+$arParams['TEMPLATE_DATA']['SHOW_INTRANET_CONTROL'] = $showIntranetControl;
+
+if ($arParams['USER'])
+{
+	$arParams['USER'] = User::extractPublicData($arParams['USER']);
+	$arParams['USER']['AVATAR'] = UI::getAvatar($arParams['USER']['PERSONAL_PHOTO'], 58, 58);
+}

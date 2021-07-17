@@ -8,8 +8,7 @@ use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
 use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\Format\ContactAddressFormatter;
-use Bitrix\Crm\Format\AddressSeparator;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 
 if(!Main\Loader::includeModule('crm'))
@@ -311,7 +310,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$this->prepareEntityUserFields();
 		$this->prepareEntityUserFieldInfos();
-		$this->prepareEntityData();
+		$this->initializeData();
 
 		//region GUID
 		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
@@ -347,11 +346,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Fields
-		$this->prepareFieldInfos();
-
-		$this->prepareEntityFieldAttributes();
-
-		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
+		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
 		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
 			CCrmOwnerType::Contact,
 			$this->entityID
@@ -467,7 +462,11 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					)
 				)
 			);
-			if (CModule::IncludeModule('sale') && Main\Config\Option::get("crm", "crm_shop_enabled") === "Y")
+			if (
+				CModule::IncludeModule('sale')
+				&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
+				&& CCrmSaleHelper::isWithOrdersMode()
+			)
 			{
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_order',
@@ -1884,14 +1883,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		if($this->enableOutmodedFields)
 		{
-			$this->entityData['ADDRESS_HTML'] = ContactAddressFormatter::format(
-				$this->entityData,
-				array(
-					'SEPARATOR' => AddressSeparator::HtmlLineBreak,
-					'NL2BR' => true,
-					'HTML_ENCODE' => true
-				)
-			);
+			$this->entityData['ADDRESS_HTML'] =
+				AddressFormatter::getSingleInstance()->formatHtmlMultilineSpecialchar(
+					Crm\ContactAddress::mapEntityFields($this->entityData)
+				);
 		}
 
 		Tracking\UI\Details::prepareEntityData(
@@ -1962,5 +1957,21 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	public function initializeData()
+	{
+		$this->prepareEntityData();
+		$this->prepareFieldInfos();
+		$this->prepareEntityFieldAttributes();
+	}
+
+	public function getEntityEditorData(): array
+	{
+		return [
+			'ENTITY_ID' => $this->getEntityID(),
+			'ENTITY_DATA' => $this->prepareEntityData(),
+			'ENTITY_INFO' => $this->prepareEntityInfo()
+		];
 	}
 }

@@ -18,6 +18,11 @@ $isKanban = true;
 
 require_once __DIR__.'/header.php';
 
+if ($arResult['frameMode'] === 'Y')
+{
+	require_once __DIR__.'/slider_crutch.php';
+}
+
 Extension::load('tasks.scrum.dod');
 
 $APPLICATION->IncludeComponent(
@@ -66,7 +71,8 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <script>
-	BX.ready(function() {
+	BX.ready(function()
+	{
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			viewName: 'completedSprint',
@@ -80,6 +86,9 @@ $APPLICATION->IncludeComponent(
 			filterId: '<?= $filterId ?>',
 			sprints: <?= Json::encode($arResult['sprints']) ?>
 		});
+		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderCountersTo(document.getElementById('tasks-scrum-counters-container'));
+		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
+		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
 	});
 </script>

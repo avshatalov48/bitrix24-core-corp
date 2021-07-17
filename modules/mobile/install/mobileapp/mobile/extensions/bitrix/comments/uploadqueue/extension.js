@@ -19,12 +19,11 @@
 
 		setItem(data)
 		{
-			const
-				formId = (data.formId ? data.formId : null),
-				formUniqueId = (data.formUniqueId ? data.formUniqueId : null),
-				entityId = (data.entityId ? data.entityId : null),
-				entityXmlId = (data.entityXmlId ? data.entityXmlId : null),
-				commentVirtualId = (data.commentVirtualId ? data.commentVirtualId : null);
+			const formId = (data.formId ? data.formId : null);
+			const formUniqueId = (data.formUniqueId ? data.formUniqueId : null);
+			const entityId = (data.entityId ? data.entityId : null);
+			const entityXmlId = (data.entityXmlId ? data.entityXmlId : null);
+			const commentVirtualId = (data.commentVirtualId ? data.commentVirtualId : null);
 
 			if (
 				typeof data.taskIdList == 'undefined'
@@ -88,8 +87,7 @@
 				}
 				else
 				{
-					let
-						commentData = this.queue[commentVirtualId];
+					let commentData = this.queue[commentVirtualId];
 
 					if (
 						BX.type.isArray(commentData.taskIdList) // uploadTasks
@@ -152,23 +150,21 @@
 
 		handleFileUploadError(params)
 		{
-			const
-				commentVirtualId = params.commentVirtualId,
-				errorText = params.errorText;
+			const commentVirtualId = params.commentVirtualId;
+			const errorText = params.errorText;
 
 			if (!this.queue[commentVirtualId])
 			{
 				return;
 			}
 
-			const
-				commentData = this.queue[commentVirtualId];
+			const commentData = this.queue[commentVirtualId];
 
 			BX.postWebEvent('Comments.UploadQueue::error', {
 				commentData: commentData,
 				errorText: errorText,
 				formId: commentData.formId,
-				entityId: commentData.entityId
+				entityId: commentData.entityId,
 			});
 
 			delete this.queue[commentVirtualId];

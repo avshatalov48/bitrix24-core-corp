@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_LF_CRMLEAD_DESTINATION_PREFIX"] = "Лид";
 $MESS["CRM_LF_CRMCOMPANY_DESTINATION_PREFIX"] = "Компания";
 $MESS["CRM_LF_CRMCONTACT_DESTINATION_PREFIX"] = "Контакт";
@@ -140,4 +140,10 @@ $MESS["CRM_SL_DELETE_COMMENT_SOURCE_ERROR_FORUM_NOT_INSTALLED"] = "Модуль 
 $MESS["CRM_LF_SIP_MGR_UNKNOWN_RECIPIENT"] = "Неизвестный абонент";
 $MESS["CRM_LF_SIP_MGR_ENABLE_CALL_RECORDING"] = "Записать разговор";
 $MESS["CCRM_LF_SIP_MGR_MAKE_CALL"] = "Позвонить";
-?>
+$MESS["CRM_LF_NOTIFICATIONS_REACT_COMMENT"] = "Отреагировал(а) на ваш комментарий в ленте CRM \"#LINK#\"
+\"#REACTION#\"";
+$MESS["CRM_LF_NOTIFICATIONS_REACT_COMMENT_M"] = "Отреагировал на ваш комментарий в ленте CRM \"#LINK#\"
+\"#REACTION#\"";
+$MESS["CRM_LF_NOTIFICATIONS_REACT_COMMENT_F"] = "Отреагировала на ваш комментарий в ленте CRM \"#LINK#\"
+\"#REACTION#\"";
+$MESS["CRM_LF_NOTIFICATIONS_DISLIKE_COMMENT"] = "Мне больше не нравится ваш комментарий в ленте CRM \"#LINK#\"";

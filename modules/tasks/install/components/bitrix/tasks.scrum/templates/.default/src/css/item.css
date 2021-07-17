@@ -82,6 +82,10 @@
 	margin-bottom: 3px;
 }
 
+.tasks-scrum-item-name-field div.ui-ctl-element:hover {
+	color: #2067b0;
+}
+
 .tasks-scrum-item-name-field div.ui-ctl-element[contenteditable] {
 	padding: 4px 4px 7px;
 	font-size: 15px;

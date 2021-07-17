@@ -53,6 +53,11 @@ final class DocumentSessionManager implements IErrorable
 		return $this;
 	}
 
+	public function getUserId(): int
+	{
+		return $this->userId;
+	}
+
 	public function setVersion(?Version $version): self
 	{
 		$this->version = $version;
@@ -72,6 +77,42 @@ final class DocumentSessionManager implements IErrorable
 		$this->attachedObject = $attachedObject;
 
 		return $this;
+	}
+
+	public function findOrCreateSession(): ?Models\DocumentSession
+	{
+		$session = $this->findSession() ?: $this->addSession();
+		if (!$session)
+		{
+			return null;
+		}
+
+		if ($session->isView() && $session->isOutdatedByFileContent())
+		{
+			$session = $this->addSession();
+			if (!$session)
+			{
+				return null;
+			}
+		}
+
+		if (!$session->belongsToUser($this->getUserId()))
+		{
+			$fork = $session->forkForUser($this->getUserId(), $this->sessionContext);
+			if (!$fork)
+			{
+				$this->errorCollection->add($session->getErrors());
+			}
+
+			return $fork;
+		}
+
+		if ($session->isNonActive())
+		{
+			return $session->cloneWithNewHash($this->getUserId(), $this->sessionContext);
+		}
+
+		return $session;
 	}
 
 	public function findSession(): ?Models\DocumentSession
@@ -108,6 +149,7 @@ final class DocumentSessionManager implements IErrorable
 			'USER_ID' => $this->userId,
 			'TYPE' => $this->sessionType,
 			'IS_EXCLUSIVE' => false,
+			'STATUS' => Models\DocumentSession::STATUS_ACTIVE,
 			'VERSION_ID' => null,
 		];
 

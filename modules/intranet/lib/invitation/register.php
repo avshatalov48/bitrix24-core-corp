@@ -114,8 +114,15 @@ class Register
 		$arPhoneExist = [];
 		$arPhoneToRegister = [];
 
-		$bExtranetInstalled = (IsModuleInstalled("extranet")
-			&& \COption::GetOptionString("extranet", "extranet_site") <> '');
+		$bExtranetInstalled = (
+			IsModuleInstalled("extranet")
+			&& \COption::GetOptionString("extranet", "extranet_site") <> ''
+		);
+
+		if (Loader::includeModule('socialnetwork'))
+		{
+			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
+		}
 
 		foreach ($phoneItems as $item)
 		{
@@ -123,33 +130,29 @@ class Register
 				"=PHONE_NUMBER" => $item["PHONE_NUMBER"]
 			);
 
-			if (Loader::includeModule('socialnetwork'))
+			if (!empty($externalAuthIdList))
 			{
-				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
-				if (!empty($externalAuthIdList))
-				{
-					$filter['!=USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-				}
+				$filter['!=USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 			}
 
 			$rsUser = \Bitrix\Main\UserPhoneAuthTable::getList(array(
-			   'filter' => $filter,
-			   'select' => array(
-				   "USER_ID",
-				   "USER_CONFIRM_CODE" => "USER.CONFIRM_CODE",
-				   "USER_EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID",
-				   "USER_UF_DEPARTMENT" => "USER.UF_DEPARTMENT"
-			   )
-		   ));
+				'filter' => $filter,
+				'select' => array(
+					"USER_ID",
+					"USER_CONFIRM_CODE" => "USER.CONFIRM_CODE",
+					"USER_EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID",
+					"USER_UF_DEPARTMENT" => "USER.UF_DEPARTMENT"
+				)
+			));
 
 			$bFound = false;
 			while ($arUser = $rsUser->Fetch())
 			{
 				$arUser = array(
-					'ID'               => $arUser["USER_ID"],
-					'CONFIRM_CODE'     => $arUser["USER_CONFIRM_CODE"],
+					'ID' => $arUser["USER_ID"],
+					'CONFIRM_CODE' => $arUser["USER_CONFIRM_CODE"],
 					'EXTERNAL_AUTH_ID' => $arUser["USER_ID"],
-					'UF_DEPARTMENT'    => $arUser["USER_UF_DEPARTMENT"],
+					'UF_DEPARTMENT' => $arUser["USER_UF_DEPARTMENT"],
 				);
 
 				$bFound = true;
@@ -164,11 +167,11 @@ class Register
 							&& (
 								(
 									is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"][0]) > 0
+									&& (int)$arUser["UF_DEPARTMENT"][0] > 0
 								)
 								|| (
 									!is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"]) > 0
+									&& (int)$arUser["UF_DEPARTMENT"] > 0
 								)
 							)
 						)
@@ -179,11 +182,11 @@ class Register
 								!isset($arUser["UF_DEPARTMENT"])
 								|| (
 									is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"][0]) <= 0
+									&& (int)$arUser["UF_DEPARTMENT"][0] <= 0
 								)
 								|| (
 									!is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"]) <= 0
+									&& (int)$arUser["UF_DEPARTMENT"] <= 0
 								)
 							)
 						)
@@ -225,8 +228,15 @@ class Register
 		$arEmailExist = [];
 		$arEmailToRegister = [];
 
-		$bExtranetInstalled = (IsModuleInstalled("extranet")
-			&& \COption::GetOptionString("extranet", "extranet_site") <> '');
+		$bExtranetInstalled = (
+			IsModuleInstalled("extranet")
+			&& \COption::GetOptionString("extranet", "extranet_site") <> ''
+		);
+
+		if (Loader::includeModule('socialnetwork'))
+		{
+			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
+		}
 
 		foreach ($emailItems as $item)
 		{
@@ -234,13 +244,9 @@ class Register
 				"=EMAIL" => $item["EMAIL"]
 			);
 
-			if (Loader::includeModule('socialnetwork'))
+			if (!empty($externalAuthIdList))
 			{
-				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
-				if (!empty($externalAuthIdList))
-				{
-					$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-				}
+				$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 			}
 
 			$rsUser = UserTable::getList([
@@ -253,7 +259,10 @@ class Register
 			{
 				$bFound = true;
 
-				if ($arUser["EXTERNAL_AUTH_ID"] == 'email' || $arUser["EXTERNAL_AUTH_ID"] == 'shop')
+				if (
+					$arUser["EXTERNAL_AUTH_ID"] === 'email'
+					|| $arUser["EXTERNAL_AUTH_ID"] === 'shop'
+				)
 				{
 					if (isset($item["UF_DEPARTMENT"]))
 					{
@@ -271,11 +280,11 @@ class Register
 							&& (
 								(
 									is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"][0]) > 0
+									&& (int)$arUser["UF_DEPARTMENT"][0] > 0
 								)
 								|| (
 									!is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"]) > 0
+									&& (int)$arUser["UF_DEPARTMENT"] > 0
 								)
 							)
 						)
@@ -286,11 +295,11 @@ class Register
 								!isset($arUser["UF_DEPARTMENT"])
 								|| (
 									is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"][0]) <= 0
+									&& (int)$arUser["UF_DEPARTMENT"][0] <= 0
 								)
 								|| (
 									!is_array($arUser["UF_DEPARTMENT"])
-									&& intval($arUser["UF_DEPARTMENT"]) <= 0
+									&& (int)$arUser["UF_DEPARTMENT"] <= 0
 								)
 							)
 						)

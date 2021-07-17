@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Iblock\ElementTable;
@@ -95,9 +97,9 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			if($this->isLoaded())
 			{
 				$productsData = $this->loadProductsData();
-				$this->loadIblockProductsData($productsData);
 				foreach($productsData as $productData)
 				{
+					DocumentGeneratorManager::getInstance()->getProductLoader()->addRow($productData);
 					$product = new Product($productData);
 					$product->setParentProvider($this);
 					$products[] = $product;
@@ -123,6 +125,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				$crmProduct['PRICE'] = $crmProduct['PRICE_EXCLUSIVE'];
 			}
 			$result[] = [
+				'ID' => $crmProduct['ID'],
 				'NAME' => $crmProduct['PRODUCT_NAME'],
 				'PRODUCT_ID' => $crmProduct['PRODUCT_ID'],
 				'QUANTITY' => $crmProduct['QUANTITY'],
@@ -146,43 +149,12 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	}
 
 	/**
+	 * @deprecated
+	 * @see ProductLoader::loadIblockValues()
 	 * @param array $products
 	 */
 	protected function loadIblockProductsData(array &$products)
 	{
-		$ids = [];
-		foreach($products as $key => $product)
-		{
-			if($product['PRODUCT_ID'] > 0)
-			{
-				$ids[$product['PRODUCT_ID']][] = $key;
-			}
-		}
-		if(!empty($ids))
-		{
-			$query = ElementTable::getList(['select' => ['ID', 'DETAIL_TEXT', 'PREVIEW_PICTURE', 'DETAIL_PICTURE', 'IBLOCK_SECTION.NAME'], 'filter' => ['@ID' => array_keys($ids)]]);
-			while($data = $query->fetch())
-			{
-				$dataToMerge = [];
-				if(isset($ids[$data['ID']]))
-				{
-					$dataToMerge['DESCRIPTION'] = $data['DETAIL_TEXT'];
-					if($data['PREVIEW_PICTURE'] > 0)
-					{
-						$dataToMerge['PREVIEW_PICTURE'] = \CFile::GetPath($data['PREVIEW_PICTURE']);
-					}
-					if($data['DETAIL_PICTURE'] > 0)
-					{
-						$dataToMerge['DETAIL_PICTURE'] = \CFile::GetPath($data['DETAIL_PICTURE']);
-					}
-					$dataToMerge['SECTION'] = $data['IBLOCK_ELEMENT_IBLOCK_SECTION_NAME'];
-					foreach($ids[$data['ID']] as $key)
-					{
-						$products[$key] = array_merge($products[$key], $dataToMerge);
-					}
-				}
-			}
-		}
 	}
 
 	protected function calculateTotalFields()

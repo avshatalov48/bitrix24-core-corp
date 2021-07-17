@@ -127,7 +127,7 @@ else
 							$quoteData['TYPE_ID'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
 							break;*/
 						case 'CURRENCY_ID':
-							$quoteData['CURRENCY_ID'] = CCrmCurrency::GetCurrencyName($arQuote['CURRENCY_ID']);
+							$quoteData['CURRENCY_ID'] = CCrmCurrency::GetEncodedCurrencyName($arQuote['CURRENCY_ID']);
 							break ;
 						/*case 'EVENT_ID':
 							$eventID = !empty($arQuote['EVENT_ID']) ? $arQuote['EVENT_ID'] : '';

@@ -16,6 +16,9 @@ use Bitrix\Main\Localization\Loc;
  */
 class TunnelManager
 {
+	public const ROBOT_ACTION_COPY = 'copy';
+	public const ROBOT_ACTION_MOVE = 'move';
+
 	protected $entityTypeId;
 	protected $documentType;
 
@@ -23,6 +26,7 @@ class TunnelManager
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		Loc::loadMessages(Main\IO\Path::combine(__DIR__, 'TunnelManager.php'));
 	}
 
 	/**
@@ -78,7 +82,7 @@ class TunnelManager
 
 		$target = Factory::createTarget($this->entityTypeId);
 
-		foreach ($this->getCategories() as $key => $category)
+		foreach ($this->getCategories() as $category)
 		{
 			$categoryId = is_array($category) ? $category['ID'] : $category->getId();
 			$stages = $target->getStatusInfos($categoryId);
@@ -106,6 +110,8 @@ class TunnelManager
 	 * @param string $srcStage
 	 * @param int $dstCategory
 	 * @param string $dstStage
+	 * @param string $robotAction
+	 *
 	 * @return Main\Result
 	 */
 	public function addTunnel(
@@ -113,11 +119,17 @@ class TunnelManager
 		int $srcCategory,
 		string $srcStage,
 		int $dstCategory,
-		string $dstStage
+		string $dstStage,
+		string $robotAction = self::ROBOT_ACTION_COPY
 	): Main\Result
 	{
 		$result = new Main\Result();
 
+		if (!in_array($robotAction, [self::ROBOT_ACTION_COPY, self::ROBOT_ACTION_MOVE], true))
+		{
+			$result->addError(new Error('Unknown robot action'));
+			return $result;
+		}
 		if (!$this->isAvailable())
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_UNAVAILABLE')));
@@ -144,7 +156,7 @@ class TunnelManager
 				$robots = [];
 			}
 
-			$robot = $this->createRobot($dstCategory, $dstStage);
+			$robot = $this->createRobot($dstCategory, $dstStage, $robotAction);
 
 			array_unshift($robots, $robot);
 			$saveResult = $template->save($robots, $userId);
@@ -296,7 +308,7 @@ class TunnelManager
 				foreach ($template->getRobots() as $robot)
 				{
 					$result['hasRobots'] = true;
-					if ($robot->getType() === $this->getRobotType())
+					if ($robot->getType() === $this->getRobotType() || $robot->getType() === $this->getRobotType(self::ROBOT_ACTION_MOVE))
 					{
 						$result['tunnels'][] = $this->prepareRobotToTunnel($robot, $stageId, $categoryId);
 					}
@@ -329,6 +341,7 @@ class TunnelManager
 			'srcStage' => $stageId,
 			'dstCategory' => $props['CategoryId'],
 			'dstStage' => $props['StageId'],
+			'robotAction' => $this->getRobotAction($robot),
 			'robot' => $robot->toArray()
 		];
 	}
@@ -338,41 +351,68 @@ class TunnelManager
 	 * @param string $dstStage
 	 * @return Robot
 	 */
-	protected function createRobot(int $dstCategory, string $dstStage)
+	protected function createRobot(int $dstCategory, string $dstStage, string $robotAction = self::ROBOT_ACTION_COPY)
 	{
 		return new Robot([
 			'Name' => Robot::generateName(),
-			'Type' => $this->getRobotType(),
-			'Properties' => $this->getRobotProperties($dstCategory, $dstStage),
+			'Type' => $this->getRobotType($robotAction),
+			'Properties' => $this->getRobotProperties($dstCategory, $dstStage, $robotAction),
 		]);
 	}
 
 	/**
 	 * @return string
 	 */
-	protected function getRobotType(): string
+	protected function getRobotType(string $robotAction = self::ROBOT_ACTION_COPY): ?string
+	{
+		return $this->getRobotsActionMap()[$robotAction] ?? null;
+	}
+
+	/**
+	 * @param Robot $robot
+	 *
+	 * @return string
+	 */
+	protected function getRobotAction(Robot $robot): string
+	{
+		$actionsMap = $this->getRobotsActionMap();
+		return array_flip($actionsMap)[$robot->getType()] ?? self::ROBOT_ACTION_COPY;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	protected function getRobotsActionMap(): array
 	{
 		if (\CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId))
 		{
-			return 'CrmCopyDynamicActivity';
+			return [
+				self::ROBOT_ACTION_MOVE => 'CrmChangeDynamicCategoryActivity',
+				self::ROBOT_ACTION_COPY => 'CrmCopyDynamicActivity',
+			];
 		}
 		else
 		{
-			return 'CrmCopyDealActivity';
+			return [
+				self::ROBOT_ACTION_MOVE => 'CrmChangeDealCategoryActivity',
+				self::ROBOT_ACTION_COPY => 'CrmCopyDealActivity',
+			];
 		}
 	}
 
 	/**
 	 * @param int $dstCategory
 	 * @param string $dstStage
+	 * @param string $robotAction
 	 * @return array
 	 */
-	protected function getRobotProperties(int $dstCategory, string $dstStage): array
+	protected function getRobotProperties(int $dstCategory, string $dstStage, string $robotAction): array
 	{
+		$robotAction = mb_strtoupper($robotAction);
 		if (\CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId))
 		{
 			return [
-				'Title' => Loc::getMessage('CRM_AUTOMATION_TUNNEL_ROBOT_DYNAMIC_TITLE'),
+				'Title' => Loc::getMessage("CRM_AUTOMATION_TUNNEL_ROBOT_{$robotAction}_DYNAMIC_TITLE"),
 				'ItemTitle' => '{=Document:TITLE}',
 				'CategoryId' => $dstCategory,
 				'StageId' => $dstStage,
@@ -381,7 +421,7 @@ class TunnelManager
 		else
 		{
 			return [
-				'Title' => Loc::getMessage('CRM_AUTOMATION_TUNNEL_ROBOT_DEAL_TITLE'),
+				'Title' => Loc::getMessage("CRM_AUTOMATION_TUNNEL_ROBOT_{$robotAction}_DEAL_TITLE"),
 				'DealTitle' => '{=Document:TITLE}',
 				'CategoryId' => $dstCategory,
 				'StageId' => $dstStage,

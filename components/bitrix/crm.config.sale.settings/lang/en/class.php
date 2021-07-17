@@ -16,6 +16,7 @@ $MESS["CRM_CF_LOCATION_TITLE"] = "Online store address";
 $MESS["CRM_CF_LOCATION_ZIP"] = "Postal code:";
 $MESS["CRM_CF_NOTIFY_PRODUCT_USE"] = "Send back-in-stock notifications";
 $MESS["CRM_CF_NUMERATOR_TITLE"] = "Enable order numbering";
+$MESS["CRM_CF_ORDER_DEAL_CREATE"] = "Bind deals to all orders";
 $MESS["CRM_CF_ORDER_DEFAULT_RESPONSIBLE_ID"] = "Person in charge of the order (default)";
 $MESS["CRM_CF_ORDER_NUMERATOR_TEMPLATE"] = "Order numbering template";
 $MESS["CRM_CF_ORDER_TRACKING_AUTOCHECK"] = "Auto check shipment tracking";

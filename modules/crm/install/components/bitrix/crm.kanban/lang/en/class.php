@@ -11,6 +11,7 @@ $MESS["CRM_KANBAN_DELETE_CANCEL"] = "Cancel";
 $MESS["CRM_KANBAN_DELETE_RESTORE_SUCCESS"] = "Items have been recovered successfully.";
 $MESS["CRM_KANBAN_DELETE_SUCCESS"] = "Item #ELEMENT_NAME# has been deleted.";
 $MESS["CRM_KANBAN_DELETE_SUCCESS_MULTIPLE"] = "Items have been deleted.";
+$MESS["CRM_KANBAN_DELIVERY_STAGE"] = "Delivery status";
 $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Private";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Other";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Work";

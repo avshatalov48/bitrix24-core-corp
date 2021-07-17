@@ -67,7 +67,7 @@ class Request extends Base
 		return $html;
 	}
 
-	public static function onAfterAdd($activityFields)
+	public static function onAfterAdd($activityFields, array $params = null)
 	{
 		static::notify($activityFields);
 	}

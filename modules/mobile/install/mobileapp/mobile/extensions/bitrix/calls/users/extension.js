@@ -10,6 +10,7 @@
 			state: BX.prop.getString(config, "state", BX.Call.UserState.Idle),
 			talking: BX.prop.getBoolean(config, "talking", false),
 			cameraState: BX.prop.getBoolean(config, "cameraState", false),
+			videoPaused: BX.prop.getBoolean(config, "videoPaused", false),
 			microphoneState: BX.prop.getBoolean(config, "microphoneState", true),
 			screenState: BX.prop.getBoolean(config, "screenState", false),
 			floorRequestState: BX.prop.getBoolean(config, "floorRequestState", false),

@@ -84,7 +84,7 @@ class CrmWebFormEditTemplate
 		$replaceData = array('from' => array(), 'to' => array());
 		foreach($replaceList as $paramKey => $paramValue)
 		{
-			if(!is_string($paramValue))
+			if(!is_string($paramValue) && !is_integer($paramValue))
 			{
 				continue;
 			}

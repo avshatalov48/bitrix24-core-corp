@@ -21,6 +21,7 @@
 				},
 				{title: " ", id: "manual", height: 40},
 			];
+			this.needShowManualPresetSettings =  BX.componentParameters.get('showManualPresetSettings', false);
 			this.setSelected("default");
 			/**
 			 * @type {RequestExecutor} request
@@ -49,14 +50,7 @@
 				{
 					if (item.id === "manual")
 					{
-						PageManager.openWidget(
-							"list",
-							{
-								title: item.title,
-								onReady: obj => new ManualSettings(obj),
-								onError: error => console.log(error),
-							});
-
+						this.showManualSettings();
 						return;
 					}
 
@@ -121,6 +115,12 @@
 				});
 				this.setSelected(data.presets.current);
 				this.redraw();
+
+				if (this.needShowManualPresetSettings)
+				{
+					this.needShowManualPresetSettings = false;
+					this.showManualSettings();
+				}
 			}
 		}
 
@@ -146,6 +146,21 @@
 		redraw()
 		{
 			BX.onViewLoaded(()=>this.list.setItems(this.items, this.sections));
+		}
+
+		showManualSettings()
+		{
+			const manualPresetItem = this.items.filter(item => (item.id === 'manual'));
+			if (manualPresetItem.length)
+			{
+				PageManager.openWidget(
+					"list",
+					{
+						title: manualPresetItem[0].title,
+						onReady: obj => new ManualSettings(obj),
+						onError: error => console.log(error),
+					});
+			}
 		}
 
 		static cacheId()

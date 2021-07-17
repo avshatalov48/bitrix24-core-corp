@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_DEAL_CREATION_CANCELED"] = "Deal has not been created because the operation was canceled by event handler: \"#NAME#\"";
 $MESS["CRM_DEAL_DEFAULT_TITLE_TEMPLATE"] = "Deal #%NUMBER%";
 $MESS["CRM_DEAL_EVENT_ADD"] = "Deal added";
@@ -58,6 +58,7 @@ $MESS["CRM_DEAL_FIELD_UTM_TERM"] = "Campaign search term";
 $MESS["CRM_DEAL_FIELD_WEBFORM_ID"] = "Created by CRM form";
 $MESS["CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY"] = "You are no longer responsible for the deal: \"#title#\"";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY"] = "Deal \"#title#\" changed status from \"#start_status_title#\" to \"#final_status_title#\"";
+$MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_2"] = "Deal stage \"#title#\" changed from \"#start_status_title#\" to \"#final_status_title#\"";
 $MESS["CRM_DEAL_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the deal \"#title#\"";
 $MESS["CRM_DEAL_UPDATE_CANCELED"] = "Deal has not been updated because the operation was canceled by event handler: \"#NAME#\"";
 $MESS["CRM_ERROR_FIELD_INCORRECT"] = "The field \"%FIELD_NAME%\" is incorrect.";
@@ -95,4 +96,3 @@ $MESS["CRM_FIELD_OPPORTUNITY"] = "Income";
 $MESS["CRM_FIELD_TITLE"] = "Title";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
 $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Cannot verify permissions because no user was specified.";
-?>

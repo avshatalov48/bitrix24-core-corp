@@ -2,7 +2,10 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arResult */
 
-if (\Bitrix\Tasks\Integration\Bizproc\Document\Task::isProjectTask($arResult['DOCUMENT_TYPE']))
+if (
+	\Bitrix\Tasks\Integration\Bizproc\Document\Task::isProjectTask($arResult['DOCUMENT_TYPE'])
+	|| \Bitrix\Tasks\Integration\Bizproc\Document\Task::isScrumProjectTask($arResult['DOCUMENT_TYPE'])
+)
 {
 	$titleView = GetMessage('TASKS_AUTOMATION_CMP_TITLE_VIEW');
 	$titleEdit = GetMessage('TASKS_AUTOMATION_CMP_TITLE_TASK_EDIT');
@@ -80,7 +83,7 @@ global $APPLICATION;
 				var clickHandler = function (e, item)
 				{
 					menu.close();
-					if (item.id === currentGroupId && viewType === 'project')
+					if (item.id === currentGroupId && (viewType === 'project' || viewType === 'scrumProject'))
 					{
 						return;
 					}
@@ -88,7 +91,13 @@ global $APPLICATION;
 					// top.BX.onCustomEvent(top.window, 'BX.Kanban.ChangeGroup', [item.id, currentGroupId]);
 
 					selectorNode.innerHTML = item.text;
-					window.location.href = BX.util.add_url_param(window.location.href, {project_id: item.id, view: 'project'});
+					window.location.href = BX.util.add_url_param(
+						window.location.href,
+						{
+							project_id: item.id,
+							view: viewType
+						}
+					);
 				};
 
 				// fill menu array

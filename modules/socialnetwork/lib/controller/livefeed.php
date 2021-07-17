@@ -6,7 +6,9 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\Helper\ServiceComment;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Socialnetwork\CommentAux;
 
 class Livefeed extends \Bitrix\Main\Engine\Controller
 {
@@ -160,41 +162,81 @@ class Livefeed extends \Bitrix\Main\Engine\Controller
 		return $result;
 	}
 
+	public function createEntityCommentAction(array $params = []): void
+	{
+		$postEntityType = (isset($params['postEntityType']) && $params['postEntityType'] <> '' ? preg_replace('/[^a-z0-9_]/i', '', $params['postEntityType']) : false);
+		$sourceEntityType = (isset($params['sourceEntityType']) && $params['sourceEntityType'] <> '' ? preg_replace('/[^a-z0-9_]/i', '', $params['sourceEntityType']) : false);
+		$sourceEntityId = (int)($params['sourceEntityId'] ?? 0);
+		$sourceEntityData = (array)($params['sourceEntityData'] ?? []);
+		$entityType = (isset($params['entityType']) && $params['entityType'] <> '' ? preg_replace('/[^a-z0-9_]/i', '', $params['entityType']) : false);
+		$entityId = (int)($params['entityId'] ?? 0);
+		$logId = (int)($params['logId'] ?? 0);
+
+		if (
+			!$sourceEntityType
+			|| $sourceEntityId <= 0
+			|| !$entityType
+			|| $entityId <= 0
+		)
+		{
+			return;
+		}
+
+		if (in_array($sourceEntityType, [ CommentAux\CreateEntity::SOURCE_TYPE_BLOG_POST, CommentAux\CreateEntity::SOURCE_TYPE_BLOG_COMMENT ]))
+		{
+			ServiceComment::processBlogCreateEntity([
+				'ENTITY_TYPE' => $entityType,
+				'ENTITY_ID' => $entityId,
+				'SOURCE_ENTITY_TYPE' => $sourceEntityType,
+				'SOURCE_ENTITY_ID' => $sourceEntityId,
+				'SOURCE_ENTITY_DATA' => $sourceEntityData,
+				'LIVE' => 'Y',
+			]);
+		}
+		else
+		{
+			ServiceComment::processLogEntryCreateEntity([
+				'LOG_ID' => $logId,
+				'ENTITY_TYPE' => $entityType,
+				'ENTITY_ID' => $entityId,
+				'POST_ENTITY_TYPE' => $postEntityType,
+				'SOURCE_ENTITY_TYPE' => $sourceEntityType,
+				'SOURCE_ENTITY_ID' => $sourceEntityId,
+				'SOURCE_ENTITY_DATA' => $sourceEntityData,
+				'LIVE' => 'Y'
+			]);
+		}
+	}
+
+	/**
+	 * @deprecated use socialnetwork.api.livefeed.createEntityComment
+	 * @param array $params
+	 */
 	public function createTaskCommentAction(array $params = []): void
 	{
 		$postEntityType = (isset($params['postEntityType']) && $params['postEntityType'] <> '' ? preg_replace('/[^a-z0-9_]/i', '', $params['postEntityType']) : false);
-		$entityType = (isset($params['entityType']) && $params['entityType'] <> '' ? preg_replace("/[^a-z0-9_]/i", '', $params['entityType']) : false);
-		$entityId = (isset($params['entityId']) && (int)$params['entityId'] > 0 ? (int)$params['entityId'] : false);
+		$sourceEntityType = (isset($params['entityType']) && $params['entityType'] <> '' ? preg_replace("/[^a-z0-9_]/i", '', $params['entityType']) : false);
+		$sourceEntityId = (isset($params['entityId']) && (int)$params['entityId'] > 0 ? (int)$params['entityId'] : false);
 		$taskId = (isset($params['taskId']) && (int)$params['taskId'] > 0 ? (int)$params['taskId'] : false);
 		$logId = (isset($params['logId']) && (int)$params['logId'] > 0 ? (int)$params['logId'] : false);
 
 		if (
-			$entityType
-			&& $entityId
-			&& $taskId
+			!$sourceEntityType
+			|| !$sourceEntityId
+			|| !$taskId
 		)
 		{
-			if (in_array($entityType, [ 'BLOG_POST', 'BLOG_COMMENT' ]))
-			{
-				ComponentHelper::processBlogCreateTask([
-					'TASK_ID' => $taskId,
-					'SOURCE_ENTITY_TYPE' => $entityType,
-					'SOURCE_ENTITY_ID' => $entityId,
-					'LIVE' => 'Y'
-				]);
-			}
-			else
-			{
-				ComponentHelper::processLogEntryCreateTask([
-					'LOG_ID' => $logId,
-					'TASK_ID' => $taskId,
-					'POST_ENTITY_TYPE' => $postEntityType,
-					'SOURCE_ENTITY_TYPE' => $entityType,
-					'SOURCE_ENTITY_ID' => $entityId,
-					'LIVE' => 'Y'
-				]);
-			}
+			return;
 		}
+
+		$this->createEntityCommentAction([
+			'postEntityType' => $postEntityType,
+			'sourceEntityType' => $sourceEntityType,
+			'sourceEntityId' => $sourceEntityId,
+			'entityType' => CommentAux\CreateEntity::ENTITY_TYPE_TASK,
+			'entityId' => $taskId,
+			'logId' => $logId,
+		]);
 	}
 
 	public function changeFavoritesAction($logId, $value)
@@ -375,7 +417,7 @@ class Livefeed extends \Bitrix\Main\Engine\Controller
 			)
 		);
 	}
-	
+
 	private function getComponentReturnWhiteList()
 	{
 		return [ 'LAST_TS', 'LAST_ID', 'EMPTY', 'FORCE_PAGE_REFRESH' ];
@@ -425,5 +467,55 @@ class Livefeed extends \Bitrix\Main\Engine\Controller
 		$componentResponse = new \Bitrix\Main\Engine\Response\Component('bitrix:socialnetwork.log.ex', '', array_merge($componentParameters, $requestParameters), [], $this->getComponentReturnWhiteList());
 
 		return $componentResponse;
+	}
+
+	public function mobileCreateNotificationLinkAction($tag): string
+	{
+		$params = explode("|", $tag);
+		if (empty($params[1]) || empty($params[2]) || !Loader::includeModule('socialnetwork'))
+		{
+			return '';
+		}
+
+		$liveFeedEntity = \Bitrix\SocialNetwork\Livefeed\Provider::init([
+			'ENTITY_TYPE' => \Bitrix\Socialnetwork\Livefeed\Provider::DATA_ENTITY_TYPE_FORUM_POST,
+			'ENTITY_ID' => $params[2]
+		]);
+
+		$suffix = $liveFeedEntity->getSuffix();
+		if ($suffix === 'TASK')
+		{
+			$res = \Bitrix\Socialnetwork\LogTable::getList(array(
+				'filter' => array(
+					'ID' => $liveFeedEntity->getLogId()
+				),
+				'select' => [ 'ENTITY_ID', 'EVENT_ID', 'SOURCE_ID' ]
+			));
+			if ($logEntryFields = $res->fetch())
+			{
+				if ($logEntryFields['EVENT_ID'] === 'crm_activity_add')
+				{
+					if (
+						Loader::includeModule('crm')
+						&& ($activityFields = \CCrmActivity::getById($logEntryFields['ENTITY_ID'], false))
+						&& $activityFields['TYPE_ID'] == \CCrmActivityType::Task
+					)
+					{
+						$taskId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+					}
+				}
+				else
+				{
+					$taskId = (int)$logEntryFields['SOURCE_ID'];
+				}
+
+				if (isset($taskId) && $taskId > 0 && Loader::includeModule('mobile'))
+				{
+					return \CMobileHelper::getParamsToCreateTaskLink($taskId);
+				}
+			}
+		}
+
+		return SITE_DIR . "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=FORUM_POST&ENTITY_ID=" . $params[2];
 	}
 }

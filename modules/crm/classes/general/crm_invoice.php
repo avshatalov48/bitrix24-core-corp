@@ -3,9 +3,12 @@
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
-use \Bitrix\Crm\Invoice\Invoice;
-use \Bitrix\Crm\Invoice\Compatible;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Invoice\Invoice;
+use Bitrix\Crm\Invoice\Compatible;
 use Bitrix\Iblock;
 use Bitrix\Catalog;
 
@@ -2636,9 +2639,11 @@ class CAllCrmInvoice
 					}
 					elseif ($property['FIELDS']['CODE'] === 'COMPANY_ADR')
 					{
-						$curVal = Bitrix\Crm\Format\CompanyAddressFormatter::format(
-							$arCompany,
-							array('TYPE_ID' => EntityAddressType::Registered)
+						$curVal = AddressFormatter::getSingleInstance()->formatTextComma(
+							CompanyAddress::mapEntityFields(
+								$arCompany,
+								['TYPE_ID' => EntityAddressType::Registered]
+							)
 						);
 					}
 					elseif ($property['FIELDS']['CODE'] === 'INN')
@@ -2684,7 +2689,9 @@ class CAllCrmInvoice
 					}
 					elseif ($property['FIELDS']['CODE'] === 'ADDRESS')
 					{
-						$curVal = Bitrix\Crm\Format\ContactAddressFormatter::format($arContact);
+						$curVal = AddressFormatter::getSingleInstance()->formatTextComma(
+							ContactAddress::mapEntityFields($arContact)
+						);
 					}
 
 					$arInvoiceProperties[$propertyKey]['VALUE'] = $curVal;
@@ -2756,10 +2763,7 @@ class CAllCrmInvoice
 						{
 							$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId;
 							$requisiteValues[$valueKey] =
-								Bitrix\Crm\Format\EntityAddressFormatter::format(
-									$addrFields,
-									array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::Comma)
-								);
+								AddressFormatter::getSingleInstance()->formatTextComma($addrFields);
 						}
 					}
 				}
@@ -5107,14 +5111,15 @@ class CAllCrmInvoice
 						foreach ($requisite->getAddresses($requisiteId) as $addrTypeId => $addrFields)
 						{
 							$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId.'|'.$presetCountryId;
-							$requisiteValues[$valueKey] =
-								Bitrix\Crm\Format\EntityAddressFormatter::prepareLines(
-									$addrFields,
-									array(
-										'SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::NewLine,
-										'NL2BR' => false
-									)
-								);
+							$addressLines = explode(
+								"\n",
+								str_replace(
+									["\r\n", "\n", "\r"], "\n",
+									AddressFormatter::getSingleInstance()->formatTextMultiline($addrFields)
+								)
+							);
+							$requisiteValues[$valueKey] = is_array($addressLines) ? $addressLines : [];
+							unset($valueKey, $addressLines);
 						}
 					}
 				}
@@ -5408,14 +5413,15 @@ class CAllCrmInvoice
 						foreach ($requisite->getAddresses($mcRequisiteId) as $addrTypeId => $addrFields)
 						{
 							$valueKey = Bitrix\Crm\EntityRequisite::ADDRESS.'_'.$addrTypeId.'|'.$mcPresetCountryId;
-							$mcRequisiteValues[$valueKey] =
-								Bitrix\Crm\Format\EntityAddressFormatter::prepareLines(
-									$addrFields,
-									array(
-										'SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::NewLine,
-										'NL2BR' => false
-									)
-								);
+							$addressLines = explode(
+								"\n",
+								str_replace(
+									["\r\n", "\n", "\r"], "\n",
+									AddressFormatter::getSingleInstance()->formatTextMultiline($addrFields)
+								)
+							);
+							$mcRequisiteValues[$valueKey] = is_array($addressLines) ? $addressLines : [];
+							unset($valueKey, $addressLines);
 						}
 					}
 				}
@@ -5547,8 +5553,8 @@ class CAllCrmInvoice
 		$fields = $USER_FIELD_MANAGER->GetUserFields(CCrmInvoice::$sUFEntityID, null, LANGUAGE_ID);
 		foreach ($fields as $key => $field)
 		{
-			$value = $USER_FIELD_MANAGER->GetUserFieldValue(CCrmInvoice::$sUFEntityID, $key, $ID);
-			$userFields[$key] = $value;
+			$addressLines = $USER_FIELD_MANAGER->GetUserFieldValue(CCrmInvoice::$sUFEntityID, $key, $ID);
+			$userFields[$key] = $addressLines;
 		}
 
 		return array(

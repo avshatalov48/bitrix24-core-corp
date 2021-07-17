@@ -1,7 +1,10 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "Sie haben nicht genügend Rechte, um Statistik anzuzeigen.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "Das Modul Kommunikationskanäle ist nicht installiert.";
+$MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Benutzerdefinierte Felder in Konversationen der Kommunikationskanäle";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Möchten Sie wirklich fortfahren?";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL"] = "Link kopieren";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL_DONE"] = "Link in die Zwischenablage kopieren";
 $MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Kommunikationskanäle";
 $MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Aktion auswählen";
 $MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Verantwortliche Person bestimmen";

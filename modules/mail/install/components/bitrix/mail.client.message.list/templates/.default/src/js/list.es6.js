@@ -371,7 +371,16 @@ export class List
 		});
 	}
 
-	onDeleteClick(id)
+	onDeleteImmediately(id)
+	{
+		let additionalOptions =
+		{
+			'deleteImmediately' : true,
+		};
+		this.onDeleteClick(id,additionalOptions);
+	}
+
+	onDeleteClick(id,additionalOptions)
 	{
 		const selected = this.getGridInstance().getRows().getSelected();
 		if (id === undefined && selected.length === 0)
@@ -384,6 +393,7 @@ export class List
 			return;
 		}
 		let options = {
+			params: (additionalOptions !== undefined) ? additionalOptions : {},
 			keepRows: true,
 			analyticsLabel: {
 				'groupCount': selected.length,
@@ -404,7 +414,7 @@ export class List
 		selectedIds = this.filterRowsByClassName(this.disabledClassName, selectedIds, true);
 		options.ids = selectedIds;
 
-		if (this.userInterfaceManager.isCurrentFolderTrash)
+		if (this.userInterfaceManager.isCurrentFolderTrash || (additionalOptions !== undefined && additionalOptions['deleteImmediately']) )
 		{
 			const confirmPopup = this.getConfirmDeletePopup(options);
 			confirmPopup.show();
@@ -835,6 +845,7 @@ export class List
 				}
 			}
 		}
+
 		BX.ajax.runComponentAction('bitrix:mail.client', actionName, {
 			mode: 'ajax',
 			data: data,

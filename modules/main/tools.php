@@ -2094,19 +2094,11 @@ function extract_url($s)
 function convert_to_href($url, $link_class="", $event1="", $event2="", $event3="", $script="", $link_target="_self")
 {
 	$url = stripslashes($url);
-	$goto = $url;
-	if ($event1 <> '' || $event2 <> '')
-	{
-		$script = $script <> '' ? $script : "/bitrix/redirect.php";
-		$goto = $script.
-			"?event1=".urlencode($event1).
-			"&event2=".urlencode($event2).
-			"&event3=".urlencode($event3).
-			"&goto=".urlencode($goto);
-	}
+
 	$target = $link_target == '_self'? '': ' target="'.$link_target.'"';
 
-	$s = "<a class=\"".$link_class."\" href=\"".delete_special_symbols($goto)."\"".$target.">".$url."</a>";
+	$s = "<a class=\"".$link_class."\" href=\"".delete_special_symbols($url)."\"".$target.">".$url."</a>";
+
 	return $s;
 }
 
@@ -2134,7 +2126,7 @@ function TxtToHTML(
 	$code_body_class       = "tdcodebody",   // css класс на вторую TD таблицы кода
 	$code_textarea_class   = "codetextarea", // css класс на textarea в таблице кода
 	$link_class            = "txttohtmllink",// css класс на ссылках
-	$arUrlEvent            = array(),        // массив в нем если заданы ключи EVENT1, EVENT2, EVENT3 то ссылки будут через $arUrlEvent["SCRIPT"] (по умолчанию равен "/bitrix/redirect.php")
+	$arUrlEvent            = array(),        // deprecated
 	$link_target           = "_self"         // tagret открытия страницы
 )
 {
@@ -2195,15 +2187,10 @@ function TxtToHTML(
 	// chr(3).E-Mail.chr(3) => <a href="mailto:E-Mail">E-Mail</a>
 	if($bMakeUrls)
 	{
-		$script = ($arUrlEvent["SCRIPT"] ?? '');
 		$helper = new CConvertorsPregReplaceHelper("");
 		$helper->setLinkClass($link_class);
 		$helper->setLinkTarget($link_target);
-		$helper->setEvents(($arUrlEvent["EVENT1"] ?? ''), ($arUrlEvent["EVENT2"] ?? ''), ($arUrlEvent["EVENT3"] ?? ''));
-		if($script <> '')
-		{
-			$helper->setScript($script);
-		}
+
 		$str = preg_replace_callback("#\x01([^\n\x01]+?)/\x01#is", array($helper, "convertToHref"), $str);
 		$str = preg_replace_callback("#\x03([^\n\x03]+?)\x03#is", array($helper, "convertToMailTo"), $str);
 	}
@@ -4885,7 +4872,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZMmZkZjc5ZDVmYWI5YzAxZmJmM2Y3OTA1OTMzMGFlNzk=*/$GLOBALS['____1893186449']= array(base64_decode(''.'bX'.'Rfcm'.'FuZ'.'A=='),base64_decode('aXNfb2JqZWN0'),base64_decode('Y'.'2FsbF91c2'.'VyX2Z'.'1bmM='),base64_decode('Y2Fsb'.'F9'.'1'.'c2V'.'yX'.'2Z1'.'bmM'.'='),base64_decode('aW50dmFs'),base64_decode(''.'Y2FsbF91c2VyX2Z'.'1'.'bmM='),base64_decode('aW50dmFs'),base64_decode(''.'Y2FsbF9'.'1c2Vy'.'X2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___777298817')){function ___777298817($_1049586585){static $_1597778314= false; if($_1597778314 == false) $_1597778314=array('VVN'.'FUg==','VVN'.'FUg==','VV'.'NFU'.'g==','SXN'.'BdXRob3JpemVk','V'.'VNFUg='.'=','S'.'X'.'NBZ'.'G1p'.'bg'.'==','RE'.'I=',''.'U'.'0VMRUNU'.'IE'.'NPVU5'.'UKFUuS'.'UQpI'.'GFzI'.'EMgR'.'l'.'JPTSBi'.'X3VzZXIgVSBXSEVSRSB'.'V'.'Lk'.'lEID0g','VVNFUg==',''.'R2V0'.'SUQ=','IE'.'FO'.'RCBVLk'.'xBU1RfTE9HSU'.'4'.'g'.'SV'.'MgT'.'lVM'.'TA==','Qw==','VVN'.'FUg'.'==','TG9nb'.'3V0');return base64_decode($_1597778314[$_1049586585]);}};if($GLOBALS['____1893186449'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+4+4+4+4+4)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___777298817(0)]) && $GLOBALS['____1893186449'][1]($GLOBALS[___777298817(1)]) && $GLOBALS['____1893186449'][2](array($GLOBALS[___777298817(2)], ___777298817(3))) &&!$GLOBALS['____1893186449'][3](array($GLOBALS[___777298817(4)], ___777298817(5)))){ $_1178334217= $GLOBALS[___777298817(6)]->Query(___777298817(7).$GLOBALS['____1893186449'][4]($GLOBALS['____1893186449'][5](array($GLOBALS[___777298817(8)], ___777298817(9)))).___777298817(10), true); if($_145897737= $_1178334217->Fetch()){ if($GLOBALS['____1893186449'][6]($_145897737[___777298817(11)])>(1076/2-538)) $GLOBALS['____1893186449'][7](array($GLOBALS[___777298817(12)], ___777298817(13)));}}}/**/
+		/*ZDUyZmZOWM4MzQyNmNlNmJjODFmNWJiOTk1OWUxMDA1YzAzNWE=*/$GLOBALS['____1191253580']= array(base64_decode(''.'bXR'.'fcmFuZA=='),base64_decode(''.'aXNfb2'.'JqZWN'.'0'),base64_decode('Y2FsbF'.'91c2VyX2Z1'.'bmM='),base64_decode('Y2Fs'.'bF9'.'1c2VyX'.'2'.'Z1'.'bmM='),base64_decode('a'.'W50dmFs'),base64_decode('Y2FsbF91c2V'.'yX'.'2Z1bmM='),base64_decode(''.'a'.'W'.'50dmFs'),base64_decode('Y2FsbF91c2VyX'.'2Z1bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___495382551')){function ___495382551($_1071527727){static $_426269227= false; if($_426269227 == false) $_426269227=array('VVNF'.'Ug==',''.'VVNF'.'U'.'g==','VV'.'N'.'F'.'U'.'g'.'==',''.'SXN'.'B'.'dXRob3JpemV'.'k','VVNFUg'.'='.'=',''.'SXNBZG1pbg='.'=','R'.'EI=','U0VMRUNUIEN'.'PVU5U'.'KFUu'.'SUQpIGFzI'.'E'.'Mg'.'RlJPTSBiX3VzZXIgV'.'SBXSEV'.'SRSBV'.'LklEID'.'0'.'g','V'.'VN'.'FUg'.'='.'=','R2V0'.'S'.'UQ'.'=','IEFORCB'.'VLkx'.'BU1RfTE9HSU4gSVMgTlVMTA='.'=',''.'Q'.'w==',''.'VVNFU'.'g==','TG9nb'.'3V0');return base64_decode($_426269227[$_1071527727]);}};if($GLOBALS['____1191253580'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+20)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___495382551(0)]) && $GLOBALS['____1191253580'][1]($GLOBALS[___495382551(1)]) && $GLOBALS['____1191253580'][2](array($GLOBALS[___495382551(2)], ___495382551(3))) &&!$GLOBALS['____1191253580'][3](array($GLOBALS[___495382551(4)], ___495382551(5)))){ $_1147620589= $GLOBALS[___495382551(6)]->Query(___495382551(7).$GLOBALS['____1191253580'][4]($GLOBALS['____1191253580'][5](array($GLOBALS[___495382551(8)], ___495382551(9)))).___495382551(10), true); if($_318351765= $_1147620589->Fetch()){ if($GLOBALS['____1191253580'][6]($_318351765[___495382551(11)])>(1256/2-628)) $GLOBALS['____1191253580'][7](array($GLOBALS[___495382551(12)], ___495382551(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 

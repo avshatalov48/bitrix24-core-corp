@@ -8,4 +8,3 @@ $MESS["CRM_BP_LEAD"] = "Лид";
 $MESS["CRM_BP_CONTACT"] = "Контакт";
 $MESS["CRM_BP_COMPANY"] = "Компания";
 $MESS["CRM_BP_DEAL"] = "Сделка";
-?>

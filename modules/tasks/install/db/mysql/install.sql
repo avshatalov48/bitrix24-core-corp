@@ -179,17 +179,17 @@ CREATE TABLE b_tasks_viewed (
 );
 
 CREATE TABLE b_tasks_log (
-  ID int(11) NOT NULL AUTO_INCREMENT,
-  CREATED_DATE datetime NOT NULL,
-  USER_ID int(11) NOT NULL,
-  TASK_ID int(11) NOT NULL,
-  FIELD varchar(50) NOT NULL,
-  FROM_VALUE text,
-  TO_VALUE text,
-  PRIMARY KEY pk_b_tasks_log(ID)
+	ID int(11) NOT NULL AUTO_INCREMENT,
+	CREATED_DATE datetime NOT NULL,
+	USER_ID int(11) NOT NULL,
+	TASK_ID int(11) NOT NULL,
+	FIELD varchar(50) NOT NULL,
+	FROM_VALUE text,
+	TO_VALUE text,
+	PRIMARY KEY pk_b_tasks_log(ID),
+	INDEX b_tasks_log1 (TASK_ID, CREATED_DATE),
+	INDEX ix_tasks_log_user_id_field (USER_ID, FIELD)
 );
-
-CREATE INDEX b_tasks_log1 ON b_tasks_log(TASK_ID, CREATED_DATE);
 
 CREATE TABLE b_tasks_elapsed_time (
   ID int(11) NOT NULL AUTO_INCREMENT,
@@ -429,7 +429,8 @@ CREATE TABLE IF NOT EXISTS b_tasks_scorer (
 	PRIMARY KEY (`ID`),
 	INDEX `ix_tasks_scorer_group` (`GROUP_ID`),
 	INDEX `ix_tasks_scorer_utype` (`USER_ID`, `TYPE`, `TASK_ID`),
-	INDEX `ix_tasks_scorer_utype2` (`USER_ID`, `TASK_ID`, `TYPE`)
+	INDEX `ix_tasks_scorer_utype2` (`USER_ID`, `TASK_ID`, `TYPE`),
+	INDEX `ix_tasks_scorer_type` (`TASK_ID`, `TYPE`)
 );
 
 CREATE TABLE IF NOT EXISTS b_tasks_scorer_queue (
@@ -454,11 +455,13 @@ CREATE TABLE IF NOT EXISTS b_tasks_effective(
   `TASK_DEADLINE` DATETIME NULL,
   `USER_TYPE` CHAR(1) NOT NULL,
   `IS_VIOLATION` CHAR(1) NOT NULL DEFAULT 'N',
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  INDEX b_tasks_effective_DATETIME_USER_ID (DATETIME, USER_ID),
+  INDEX b_tasks_effective_USER_ID (USER_ID),
+  INDEX ix_tasks_effective_task_id_is_violation_datetime (TASK_ID, IS_VIOLATION, DATETIME),
+  INDEX ix_tasks_effective_user_id_is_violation_datetime (USER_ID, IS_VIOLATION, DATETIME),
+  INDEX ix_tasks_effective_group_id_is_violation_datetime (GROUP_ID, IS_VIOLATION, DATETIME)
 );
-
-ALTER TABLE b_tasks_effective ADD INDEX b_tasks_effective_DATETIME_USER_ID (DATETIME, USER_ID);
-ALTER TABLE b_tasks_effective ADD INDEX b_tasks_effective_USER_ID ( USER_ID);
 
 CREATE TABLE b_tasks_search_index (
     ID bigint(20) auto_increment primary key,
@@ -604,14 +607,29 @@ CREATE TABLE b_tasks_scrum_item_checklist_tree (
 );
 
 CREATE TABLE IF NOT EXISTS b_tasks_scorer_event (
-    `ID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `HID` VARCHAR(64) NOT NULL,
-    `TYPE` VARCHAR(64) NOT NULL,
-    `DATA` MEDIUMTEXT NOT NULL,
-    `TASK_DATA` MEDIUMTEXT NULL DEFAULT NULL,
-    `CREATED` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `PROCESSED` DATETIME NOT NULL,
-    PRIMARY KEY (`ID`),
-    INDEX `HID` (`HID`),
-    INDEX `PROCESSED` (`PROCESSED`)
+	`ID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`HID` VARCHAR(64) NOT NULL,
+	`TYPE` VARCHAR(64) NOT NULL,
+	`DATA` MEDIUMTEXT NOT NULL,
+	`TASK_DATA` MEDIUMTEXT NULL DEFAULT NULL,
+	`CREATED` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`PROCESSED` DATETIME NOT NULL,
+	PRIMARY KEY (`ID`),
+	INDEX `HID` (`HID`),
+	INDEX `PROCESSED` (`PROCESSED`)
+);
+
+CREATE TABLE b_tasks_project_last_activity (
+	PROJECT_ID int(11) NOT NULL,
+	ACTIVITY_DATE datetime NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (PROJECT_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_tasks_project_user_option (
+	ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	PROJECT_ID INT(11) NOT NULL,
+	USER_ID INT(11) NOT NULL,
+	OPTION_CODE INT NOT NULL,
+	UNIQUE KEY PROJECT_USER_OPTION (PROJECT_ID, USER_ID, OPTION_CODE),
+	INDEX IX_TASKS_PROJECT_USER_OPTION_USER_ID_OPTION_CODE (USER_ID, OPTION_CODE)
 );

@@ -283,6 +283,13 @@ class ObjectTable extends DataManager
 					'IF(%%TABLE_ALIAS.SEARCH_INDEX IS NOT NULL, TRUE, FALSE)'
 				],
 			),
+			'TRACKED_OBJECT' => array(
+				'data_type' => '\Bitrix\Disk\Internals\TrackedObjectTable',
+				'reference' => array(
+					'=this.ID' => 'ref.OBJECT_ID'
+				),
+				'join_type' => 'INNER',
+			),
 		);
 	}
 

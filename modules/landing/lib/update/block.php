@@ -348,17 +348,16 @@ class Block extends \Bitrix\Main\Update\Stepper
 
 		// gets common quantity
 		$res = BlockTable::getList([
-				'select' => [
-					new \Bitrix\Main\Entity\ExpressionField(
-						'CNT', 'COUNT(*)'
-					)
-				],
-				'filter' => [
-					'=CODE' => $rowUpdate['CODE'],
-					'!=DESIGNED' => 'Y'
-				]
+			'select' => [
+				new \Bitrix\Main\Entity\ExpressionField(
+					'CNT', 'COUNT(*)'
+				)
+			],
+			'filter' => [
+				'=CODE' => $rowUpdate['CODE'],
+				'!=DESIGNED' => 'Y',
 			]
-		);
+		]);
 
 		// skip blocks that not exists
 		$row = $res->fetch();
@@ -381,7 +380,7 @@ class Block extends \Bitrix\Main\Update\Stepper
 			'filter' => [
 				'<=ID' => $rowUpdate['LAST_BLOCK_ID'],
 				'=CODE' => $rowUpdate['CODE'],
-				'!=DESIGNED' => 'Y'
+				'!=DESIGNED' => 'Y',
 			]
 			]
 		);
@@ -394,7 +393,7 @@ class Block extends \Bitrix\Main\Update\Stepper
 		$lastId = $this::executeStep([
 				'>ID' => $rowUpdate['LAST_BLOCK_ID'],
 				'=CODE' => $rowUpdate['CODE'],
-				'!=DESIGNED' => 'Y'
+				'!=DESIGNED' => 'Y',
 			],
 		 	$count,
 		 	$this::STEPPER_COUNT,
@@ -429,7 +428,7 @@ class Block extends \Bitrix\Main\Update\Stepper
 				// youtube
 				if (strpos($node['src'], 'www.youtube.com') !== false)
 				{
-					if (!$node['preview'] && $node['source'])
+					if ($node['source'])
 					{
 						$pattern = "#(youtube\\.com|youtu\\.be|youtube\\-nocookie\\.com)\\/(watch\\?(.*&)?v=|v\\/|u\\/|embed\\/?)?(videoseries\\?list=(.*)|[\\w-]{11}|\\?listType=(.*)&list=(.*))(.*)#";
 						if(preg_match($pattern, $node['source'], $matches))

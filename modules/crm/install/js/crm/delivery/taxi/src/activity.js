@@ -267,7 +267,7 @@ export default Vue.extend({
 												{{localize.TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE}}
 											</div>
 											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
-												<span v-html="fields.DELIVERY_PRICE"></span>
+												<span style="font-size: 14px; color: #333;" v-html="fields.DELIVERY_PRICE"></span>
 											</div>
 										</div>
 									</td>
@@ -277,7 +277,7 @@ export default Vue.extend({
 												{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE}}
 											</div>
 											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">												
-												<span v-if="isExpectedPriceReceived">
+												<span style="font-size: 14px; color: #333; opacity: .5;" v-if="isExpectedPriceReceived">
 													<span v-html="fields.EXPECTED_PRICE_DELIVERY"></span></span>
 												<span v-else>
 													{{localize.TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED}}
@@ -292,6 +292,7 @@ export default Vue.extend({
 											:name="fields.PERFORMER_NAME"
 											:phone="fields.PERFORMER_PHONE"
 											:phoneExt="fields.PERFORMER_PHONE_EXT"
+											:canUseTelephony="fields.CAN_USE_TELEPHONY"
 										></performer>
 									</td>
 								</tr>

@@ -97,7 +97,7 @@ if(empty($arResult['NOTIFY'])):?>
 
 		newNotifyReload = null;
 		BX.addCustomEvent("onPull-im", function(data) {
-			if (data.command == 'confirmNotify')
+			if (data.command == 'notifyConfirm')
 			{
 				var notifyId = parseInt(data.params.id);
 				if (BX('notify'+notifyId))

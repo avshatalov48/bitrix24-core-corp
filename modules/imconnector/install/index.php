@@ -52,48 +52,47 @@ Class ImConnector extends CModule
 		}
 
 		$rsUserType = \CUserTypeEntity::GetList(
-			array(),
-			array(
+			[],
+			[
 				'ENTITY_ID'  => 'USER',
 				'FIELD_NAME' => 'UF_CONNECTOR_MD5',
-			)
+			]
 		);
 
 		if(is_object($rsUserType) && !$rsUserType->fetch())
 		{
 			$CAllUserTypeEntity = new \CUserTypeEntity();
 
-			$CAllUserTypeEntity->Add(array(
+			$CAllUserTypeEntity->Add([
 				'ENTITY_ID' => 'USER',
 				'FIELD_NAME' => 'UF_CONNECTOR_MD5',
 				'USER_TYPE_ID' => 'string',
 				'SHOW_IN_LIST' => 'N',
 				'EDIT_IN_LIST' => 'N',
-
-			));
+			]);
 		}
 
-		Option::set($this->MODULE_ID, 'uri_client', $arParams["public_url"]);
+		Option::set($this->MODULE_ID, 'uri_client', $arParams['public_url']);
 
 		$listConnector = [
 			'livechat',
-			'network',
-			'yandex',
+			'whatsappbytwilio',
+			'avito',
 			'viber',
 			'telegrambot',
+			'imessage',
+			'wechat',
+			'yandex',
 			'vkgroup',
 			'ok',
-			'fbinstagramdirect',
-			'instagram',
-			'facebookcomments',
-			'fbinstagram',
-			'botframework',
-			'avito',
-			'whatsappbytwilio',
-			'wechat',
 			'olx',
+			'facebook',
+			'facebookcomments',
+			'fbinstagramdirect',
+			'fbinstagram',
+			'network',
 		];
-		Option::set($this->MODULE_ID, 'list_connector', implode(",", $listConnector));
+		Option::set($this->MODULE_ID, 'list_connector', implode(',', $listConnector));
 
 		ModuleManager::registerModule($this->MODULE_ID);
 

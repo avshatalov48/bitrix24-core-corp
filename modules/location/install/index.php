@@ -43,8 +43,6 @@ Class location extends CModule
 		$this->InstallEvents();
 
 		$GLOBALS["errors"] = $this->errors;
-		$this->setDefaultFormatCode();
-		$this->installSources();
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("LOCATION_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/location/install/step1.php");
 	}
 
@@ -176,6 +174,9 @@ Class location extends CModule
 		{
 			\Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
 		}
+
+		$this->installSources();
+		$this->setDefaultFormatCode();
 
 		return true;
 	}

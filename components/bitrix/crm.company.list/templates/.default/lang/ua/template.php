@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Усього";
 $MESS["CRM_COMPANY_ACTION_DELETE"] = "Видалити";
 $MESS["CRM_COMPANY_ACTION_MERGE"] = "Об'єднати";
@@ -38,16 +38,16 @@ $MESS["CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенесення ст�
 $MESS["CRM_COMPANY_CONVERT_ADDRESSES_STATE"] = "#processed# з #total#";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Перенесення адрес з поля користувача в реквізити компаній";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE"] = "#processed# з #total#";
-$MESS["CRM_COMPANY_COPY"] = "Копіювати компанію";
+$MESS["CRM_COMPANY_COPY"] = "Копіювати";
 $MESS["CRM_COMPANY_COPY_TITLE"] = "Копіювати компанію";
 $MESS["CRM_COMPANY_CREATE_CALL_LIST"] = "Створити обдзвін";
 $MESS["CRM_COMPANY_DEAL_ADD"] = "Додати угоду";
 $MESS["CRM_COMPANY_DEAL_ADD_SHORT"] = "Угоду";
 $MESS["CRM_COMPANY_DEAL_ADD_TITLE"] = "Додати новою угоду";
-$MESS["CRM_COMPANY_DELETE"] = "Видалити компанію";
+$MESS["CRM_COMPANY_DELETE"] = "Видалити";
 $MESS["CRM_COMPANY_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити?";
 $MESS["CRM_COMPANY_DELETE_TITLE"] = "Видалити компанію";
-$MESS["CRM_COMPANY_EDIT"] = "Редагувати компанію";
+$MESS["CRM_COMPANY_EDIT"] = "Редагувати";
 $MESS["CRM_COMPANY_EDIT_TITLE"] = "Редагувати компанію";
 $MESS["CRM_COMPANY_EVENT"] = "Додати подію";
 $MESS["CRM_COMPANY_EVENT_SHORT"] = "Подія";
@@ -79,7 +79,7 @@ $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_DLG_SUMMARY"] = "Буде здійснено �
 $MESS["CRM_COMPANY_RQ_TX_PROC_DLG_TITLE"] = "Перенесення реквізитів";
 $MESS["CRM_COMPANY_RQ_TX_SELECTOR_FIELD"] = "Шаблон реквізиту";
 $MESS["CRM_COMPANY_RQ_TX_SELECTOR_TITLE"] = "Налаштування перенесення реквізитів";
-$MESS["CRM_COMPANY_SHOW"] = "Переглянути компанію";
+$MESS["CRM_COMPANY_SHOW"] = "Переглянути";
 $MESS["CRM_COMPANY_SHOW_TITLE"] = "Переглянути компанію";
 $MESS["CRM_COMPANY_START_CALL_LIST"] = "Обдзвонити";
 $MESS["CRM_COMPANY_STEPWISE_STATE_TEMPLATE"] = "#processed# з #total#";
@@ -97,4 +97,3 @@ $MESS["CRM_SHOW_ROW_COUNT"] = "Показати кількість";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Зателефонувати";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Невідомий абонент";
 $MESS["CRM_STATUS_INIT"] = "— Статус —";
-?>

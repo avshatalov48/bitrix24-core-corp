@@ -226,7 +226,7 @@ if (Loader::includeModule('recyclebin'))
 				]);
 
 				Counter\CounterService::addEvent(
-					Counter\CounterDictionary::EVENT_AFTER_TASK_RESTORE,
+					Counter\Event\EventDictionary::EVENT_AFTER_TASK_RESTORE,
 					$task->getData(false)
 				);
 

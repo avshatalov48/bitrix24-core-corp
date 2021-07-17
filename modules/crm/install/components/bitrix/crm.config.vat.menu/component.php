@@ -53,7 +53,7 @@ if ($vatAdd)
 	);
 }
 
-if($arParams['TYPE'] == 'list')
+if($vatEdit && $arParams['TYPE'] == 'list')
 {
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_VAT_SETTINGS'),

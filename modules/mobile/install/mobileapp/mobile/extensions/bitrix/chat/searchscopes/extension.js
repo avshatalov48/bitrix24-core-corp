@@ -55,6 +55,7 @@ ChatSearchScopes.init = function (config)
 
 	this.list = {};
 	this.skipList = {};
+	this.skipByProperty = {};
 	this.externalSearchEnable = {};
 
 	this.cacheIndex = {};
@@ -99,6 +100,10 @@ ChatSearchScopes.setType = function(type = this.TYPE_USER)
 	{
 		this.skipList[this.listType] = [];
 	}
+	if (typeof this.skipByProperty[this.listType] == 'undefined')
+	{
+		this.skipByProperty[this.listType] = {};
+	}
 
 	return true;
 };
@@ -106,6 +111,11 @@ ChatSearchScopes.setType = function(type = this.TYPE_USER)
 ChatSearchScopes.setSkipList = function(skipList, type = this.listType)
 {
 	this.skipList[type] = skipList;
+};
+
+ChatSearchScopes.setSkipByProperty = function(propertyList, type = this.listType)
+{
+	this.skipByProperty[type] = propertyList;
 };
 
 ChatSearchScopes.setList = function(list, type = this.listType)
@@ -604,6 +614,20 @@ ChatSearchScopes.setItems = function(items, filter)
 			{
 				return true;
 			}
+			if (this.skipByProperty[this.listType].length > 0)
+			{
+				const skipResult = this.skipByProperty[this.listType].find(skipProperty => {
+					return (
+						typeof element[skipProperty[0]] !== 'undefined'
+						&& element[skipProperty[0]] === skipProperty[1]
+					);
+				});
+				if (skipResult)
+				{
+					console.warn(element);
+					return true;
+				}
+			}
 			this.result.itemsIndex[element.id] = true;
 			if (this.listType == this.TYPE_USER)
 			{
@@ -642,6 +666,19 @@ ChatSearchScopes.appendItems = function(items, filter)
 		if (this.skipList.length > 0 && this.skipList.indexOf(element.id) > -1)
 		{
 			return true;
+		}
+		if (this.skipByProperty[this.listType].length > 0)
+		{
+			const skipResult = this.skipByProperty[this.listType].find(skipProperty => {
+				return (
+					typeof element[skipProperty[0]] !== 'undefined'
+					&& element[skipProperty[0]] === skipProperty[1]
+				);
+			});
+			if (skipResult)
+			{
+				return true;
+			}
 		}
 		this.result.itemsIndex[element.id] = true;
 

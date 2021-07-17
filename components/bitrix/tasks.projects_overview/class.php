@@ -239,11 +239,11 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 			$groupId = $group['GROUP_ID'];
 
 			$counters = $groupCounters[$groupId];
-//			if ($counters['ALL'] == 0)    // Skip groups without tasks
-//			{
-//				unset($groups[$key]);
-//				continue;
-//			}
+			//			if ($counters['ALL'] == 0)    // Skip groups without tasks
+			//			{
+			//				unset($groups[$key]);
+			//				continue;
+			//			}
 			$group['COUNTERS'] = $counters;
 
 			$groupPath = CComponentEngine::MakePathFromTemplate(
@@ -673,14 +673,14 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 				'editable' => false,
 				'default' => true
 			),
-//			'EFFECTIVE' => array(
-//				'id' => 'EFFECTIVE',
-//				'name' => GetMessage('TASKS_COLUMN_EFFECTIVE'),
-//				'sort' => false,
-//				'type' => 'custom',
-//				'editable' => false,
-//				'default' => true
-//			),
+			//			'EFFECTIVE' => array(
+			//				'id' => 'EFFECTIVE',
+			//				'name' => GetMessage('TASKS_COLUMN_EFFECTIVE'),
+			//				'sort' => false,
+			//				'type' => 'custom',
+			//				'editable' => false,
+			//				'default' => true
+			//			),
 			'IN_WORK' => array(
 				'id' => 'IN_WORK',
 				'name' => GetMessage('TASKS_COLUMN_IN_WORK'),
@@ -722,8 +722,8 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 					$selectorData = $selector['data'];
 					$selectorData['mode'] = $selector['type'];
 					$selectorData['multi'] = array_key_exists('params', $item) &&
-											 array_key_exists('multiple', $item['params']) &&
-											 $item['params']['multiple'] == 'Y';
+						array_key_exists('multiple', $item['params']) &&
+						$item['params']['multiple'] == 'Y';
 
 					$list[] = $selectorData;
 				}

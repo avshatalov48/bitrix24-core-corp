@@ -517,6 +517,7 @@ this.BX = this.BX || {};
 	    this.iBlockId = options.iBlockId;
 	    this.basePriceId = options.basePriceId;
 	    this.storeExists = options.storeExists;
+	    this.isCloud = options.isCloud || false;
 	    this.clientId = options.clientId;
 	    this.accountId = options.accountId;
 	    this.baseCurrency = options.baseCurrency;
@@ -1364,15 +1365,18 @@ this.BX = this.BX || {};
 	        dialogOptions: {
 	          id: 'seo-ads-regions',
 	          context: 'SEO_ADS_REGIONS',
-	          searchOptions: {
-	            allowCreateItem: false
-	          },
-	          recentTabOptions: {
+	          tabs: [{
+	            id: 'custom-region-tab',
+	            visible: true,
+	            title: main_core.Loc.getMessage('SEO_AD_BUILDER_REGION'),
 	            stub: true,
 	            stubOptions: {
 	              title: main_core.Loc.getMessage('UI_TAG_SELECTOR_START_INPUT'),
 	              arrow: true
 	            }
+	          }],
+	          searchOptions: {
+	            allowCreateItem: false
 	          },
 	          events: {
 	            'Item:onSelect': function ItemOnSelect(event) {
@@ -1392,6 +1396,7 @@ this.BX = this.BX || {};
 	        }
 	      });
 	      selector.renderTo(document.getElementById('seo-ads-regions'));
+	      selector.getDialog().getRecentTab().setVisible(false);
 	      var selectorOptions = {
 	        iblockId: this.iBlockId,
 	        basePriceId: this.basePriceId,
@@ -1402,7 +1407,7 @@ this.BX = this.BX || {};
 	        }
 	      };
 	      this.productSelector = new catalog_productSelector.ProductSelector('facebook-product-selector', selectorOptions);
-	      main_core_events.EventEmitter.subscribe('ProductSelector:onChange', this.productSelectedEvent.bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.Catalog.ProductSelector:onChange', this.productSelectedEvent.bind(this));
 	    }
 	  }, {
 	    key: "productSelectedEvent",
@@ -1423,8 +1428,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toCreateStoreSlider",
 	    value: function toCreateStoreSlider() {
-	      this.openTargetPageSlider();
-	      return;
+	      if (!this.isCloud) {
+	        this.openTargetPageSlider();
+	        return;
+	      }
+
 	      var sliderOptions = {
 	        width: 990,
 	        cacheable: true,

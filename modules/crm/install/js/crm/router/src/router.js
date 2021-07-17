@@ -192,11 +192,11 @@ class Router
         let template;
         if (currentListView === ListViewTypes.KANBAN)
         {
-            template = this.urlTemplates['bitrix:crm.kanban'];
+            template = this.getTemplate('bitrix:crm.kanban', entityTypeId);
         }
         else
         {
-            template = this.urlTemplates['bitrix:crm.item.list'];
+            template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
         }
 
         if (template)

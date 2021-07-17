@@ -22,6 +22,12 @@ Library::loadMessages();
  * @package Bitrix\ImConnector
  * @final
  * @internal
+ *
+ * Dynamic methods:
+ *
+ * @method register(array $data = []): \Bitrix\ImConnector\Result
+ * @method delete(array $data = []): \Bitrix\ImConnector\Result
+ *
  */
 final class Output
 {

@@ -35,6 +35,7 @@ $MESS["CRM_DEAL_EVENT_UPDATE_CLIENT"] = "Изменён клиент";
 $MESS["CRM_DEAL_RESPONSIBLE_IM_NOTIFY"] = "Вы назначены ответственным за сделку \"#title#\"";
 $MESS["CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY"] = "Вы перестали быть ответственным за сделку \"#title#\"";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY"] = "Статус сделки \"#title#\" изменен c \"#start_status_title#\" на \"#final_status_title#\"";
+$MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_2"] = "Стадия сделки \"#title#\" изменена c \"#start_status_title#\" на \"#final_status_title#\"";
 $MESS["CRM_DEAL_CREATION_CANCELED"] = "Создание сделки отменено обработчиком события: \"#NAME#\"";
 $MESS["CRM_DEAL_UPDATE_CANCELED"] = "Обновление сделки отменено обработчиком события: \"#NAME#\"";
 $MESS["CRM_DEAL_FIELD_ID"] = "ID";

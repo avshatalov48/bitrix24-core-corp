@@ -73,18 +73,6 @@ export default class Grid extends Kanban.Grid
 		});
 	}
 
-	addColumn(options): Column | null
-	{
-		const column = super.addColumn(options);
-
-		if (column.onChangeHandler)
-		{
-			column.onChangeHandler(column);
-		}
-
-		return column;
-	}
-
 	getColumns(): Array<Column> {
 		this.columnsOrder.sort((a, b) => {
 			if (a.getContainer().parentNode)

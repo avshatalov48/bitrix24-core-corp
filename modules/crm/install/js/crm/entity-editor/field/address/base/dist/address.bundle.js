@@ -676,6 +676,7 @@ this.BX = this.BX || {};
 	      addressItem.subscribe('onDelete', this.onDeleteAddress.bind(this));
 	      addressItem.subscribe('onStartLoadAddress', this.onStartLoadAddress.bind(this));
 	      addressItem.subscribe('onAddressLoaded', this.onAddressLoaded.bind(this));
+	      addressItem.subscribe('onAddressDataInputting', this.onAddressDataInputting.bind(this));
 	      addressItem.subscribe('onError', this.onError.bind(this));
 	      addressItem.subscribe('onCopyAddress', this.onCopyAddress.bind(this));
 	      this.updateAvailableTypes(type, null);
@@ -843,6 +844,12 @@ this.BX = this.BX || {};
 	    key: "onAddressLoaded",
 	    value: function onAddressLoaded(event) {
 	      main_core_events.EventEmitter.emit(this, 'onAddressLoaded');
+	    }
+	  }, {
+	    key: "onAddressDataInputting",
+	    value: function onAddressDataInputting(event) {
+	      //this.emitUpdateEvent();
+	      main_core_events.EventEmitter.emit(this, 'onAddressDataInputting');
 	    }
 	  }, {
 	    key: "onError",
@@ -1507,10 +1514,12 @@ this.BX = this.BX || {};
 	        this.emit('onStartLoadAddress', {
 	          id: this.getId()
 	        });
-	      }
-
-	      if (state === BX.Location.Widget.State.DATA_LOADED) {
+	      } else if (state === BX.Location.Widget.State.DATA_LOADED) {
 	        this.emit('onAddressLoaded', {
+	          id: this.getId()
+	        });
+	      } else if (state === BX.Location.Widget.State.DATA_INPUTTING) {
+	        this.emit('onAddressDataInputting', {
 	          id: this.getId()
 	        });
 	      }

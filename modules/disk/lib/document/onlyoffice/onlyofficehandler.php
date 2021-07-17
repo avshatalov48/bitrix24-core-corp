@@ -9,14 +9,21 @@ use Bitrix\Disk\Document\IViewer;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Result;
+use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\JWT;
+use Bitrix\Main\Web\Uri;
 
 class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewer
 {
+	public const CMD_META = 'meta';
+	public const CMD_FORCE_SAVE = 'forcesave';
+
 	public static function getCode()
 	{
 		return 'onlyoffice';
@@ -24,17 +31,15 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 
 	public static function getName()
 	{
-		return 'Bitrix24.Docs';
+		return Main\Localization\Loc::getMessage('DISK_ONLYOFFICE_HANDLER_NAME');
 	}
 
-	public static function getSecretKey(): string
+	public static function isEnabled(): bool
 	{
-		return Option::get(Driver::INTERNAL_MODULE_ID, 'disk_onlyoffice_secret_key', '');
-	}
+		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
+		$isEnabledDocuments = \Bitrix\Disk\Configuration::isEnabledDocuments();
 
-	public static function isEnabled()
-	{
-		return (bool)self::getSecretKey();
+		return $secretKey && $isEnabledDocuments;
 	}
 
 	/**
@@ -93,7 +98,7 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 	 */
 	protected static function getApiUrlRoot()
 	{
-		$server = rtrim(Option::get(Driver::INTERNAL_MODULE_ID, 'disk_onlyoffice_server', ''), '/');
+		$server = rtrim(ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(), '/');
 
 		return $server;
 	}
@@ -223,11 +228,58 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 		]);
 
 		$postBody = [
-			'c' => 'forcesave',
+			'c' => self::CMD_FORCE_SAVE,
 			'key' => $documentKey,
 		];
 		$http->setHeader('Content-Type', 'application/json');
-		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, self::getSecretKey()));
+		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
+		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, $secretKey));
+
+		$url = self::getApiUrlRoot() . '/coauthoring/CommandService.ashx';
+		$postFields = Json::encode($postBody);
+		if ($http->post($url, $postFields) === false)
+		{
+			return $result->addError(new Main\Error('Server is not available.'));
+		}
+		if ($http->getStatus() !== 200)
+		{
+			return $result->addError(new Main\Error('Server is not available. Status ' . $http->getStatus()));
+		}
+
+		$response = Json::decode($http->getResult());
+		if (isset($response['error']) && $response['error'] !== 0)
+		{
+			return $result->addError(new Main\Error("Server sent error code {{$response['error']}}"));
+		}
+
+		return $result;
+	}
+
+	public static function renameDocument(string $documentKey, string $newName): Result
+	{
+		$result = new Result();
+
+		$http = new HttpClient([
+			'socketTimeout' => 5,
+			'streamTimeout' => 10,
+			'version' => HttpClient::HTTP_1_1,
+		]);
+
+		if (!Application::getInstance()->isUtfMode())
+		{
+			$newName = Encoding::convertEncoding($newName, SITE_CHARSET, 'UTF-8');
+		}
+
+		$postBody = [
+			'c' => self::CMD_META,
+			'key' => $documentKey,
+			'meta' => [
+				'title' => $newName,
+			],
+		];
+		$http->setHeader('Content-Type', 'application/json');
+		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
+		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, $secretKey));
 
 		$url = self::getApiUrlRoot() . '/coauthoring/CommandService.ashx';
 		$postFields = Json::encode($postBody);

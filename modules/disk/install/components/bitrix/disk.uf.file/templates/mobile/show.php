@@ -172,6 +172,7 @@ if (!empty($arResult['FILES']))
 
 		$attributes = array(
 			"id" => "disk-attach-".$file['ID'],
+			"bx-attach-id" => $file['ID'],
 			"bx-attach-file-id" => $file['FILE_ID'],
 			"data-bx-title" => htmlspecialcharsbx($file["NAME"]),
 			"title" => htmlspecialcharsbx($file['NAVCHAIN'])
@@ -256,10 +257,23 @@ if(!empty($arResult['DELETED_FILES']))
 	BX.ready(function ()
 	{
 		new BX.Mobile.DiskFile({
-			imagesNode: document.getElementById('wdif-block-img-<?=CUtil::JSescape($arResult['UID'])?>'),
-			moreFilesNode: document.getElementById('wdif-block-more-<?=CUtil::JSescape($arResult['UID'])?>'),
-			toggleViewNode: document.getElementById('wdif-block-toggle-<?=CUtil::JSescape($arResult['UID'])?>'),
-			imagesIdList: [<?=$jsIds?>],
+			images : {
+				imagesNode: document.getElementById('wdif-block-img-<?=CUtil::JSescape($arResult['UID'])?>'),
+				imagesIdList: [<?=$jsIds?>],
+				toggleViewNode: document.getElementById('wdif-block-toggle-<?=CUtil::JSescape($arResult['UID'])?>'),
+			},
+			files: {
+				container: document.getElementById('wdif-block-<?=$arResult['UID']?>'),
+				files: <?=CUtil::PhpToJSObject(is_array($arResult['FILES']) ? array_map(function($file) {
+					return [
+						'id' => $file['ID'],
+						'downloadUrl' => $file['DOWNLOAD_URL'],
+						'extension' => $file['EXTENSION'],
+						'name' => $file['NAME'],
+						'size' => $file['SIZE'],
+					];
+				}, $arResult['FILES']) : [])?>
+			},
 			signedParameters: '<?=\Bitrix\Main\Component\ParameterSigner::signParameters($this->getComponent()->getName(), $arResult['SIGNED_PARAMS'])?>'
 		});
 	});

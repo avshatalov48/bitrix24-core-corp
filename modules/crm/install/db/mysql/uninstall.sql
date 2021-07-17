@@ -169,3 +169,4 @@ DROP TABLE IF EXISTS b_crm_order_sending_channels;
 DROP TABLE IF EXISTS b_crm_dp_autosearch_user_settings;
 DROP TABLE IF EXISTS b_crm_dp_automatic_index;
 DROP TABLE IF EXISTS b_crm_originator;
+DROP TABLE IF EXISTS b_crm_order_payment_stage;

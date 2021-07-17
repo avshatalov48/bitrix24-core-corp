@@ -81,7 +81,7 @@ class CIntranetInviteDialog
 
 			if (Loader::includeModule('socialnetwork'))
 			{
-				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
+				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
 				if (!empty($externalAuthIdList))
 				{
 					$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
@@ -436,21 +436,23 @@ class CIntranetInviteDialog
 				return false;
 			}
 
+			$externalAuthIdList = [];
+			if (Loader::includeModule('socialnetwork'))
+			{
+				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
+			}
+
 			foreach($arEmail as $email)
 			{
-				if($isPhone)
+				if ($isPhone)
 				{
 					$filter = array(
 						"=PHONE_NUMBER" => $email
 					);
 
-					if (Loader::includeModule('socialnetwork'))
+					if (!empty($externalAuthIdList))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
-						if (!empty($externalAuthIdList))
-						{
-							$filter['!@USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-						}
+						$filter['!@USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 					}
 
 					$rsUser = \Bitrix\Main\UserPhoneAuthTable::getList(array(
@@ -464,13 +466,9 @@ class CIntranetInviteDialog
 						"=EMAIL" => $email
 					);
 
-					if (Loader::includeModule('socialnetwork'))
+					if (!empty($externalAuthIdList))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'saleanonymous'));
-						if (!empty($externalAuthIdList))
-						{
-							$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-						}
+						$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 					}
 
 					$rsUser = UserTable::getList(array(

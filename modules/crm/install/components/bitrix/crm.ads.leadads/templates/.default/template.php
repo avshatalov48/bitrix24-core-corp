@@ -155,16 +155,16 @@ else
 								)?>
 							</span>
 
-							<span data-hint="<?=(
+							<span data-hint="<?=(htmlspecialcharsbx(
 								Loc::getMessage('CRM_ADS_LEADADS_GROUP_ROLE_HINT_' . $typeUpped)
-								. '<br>' .
+								. " " .
 								Loc::getMessage(
 									($provider['GROUP']['HAS_AUTH']
 										? 'CRM_ADS_LEADADS_GROUP_IS_AUTH_HINT_'
 										: 'CRM_ADS_LEADADS_GROUP_DO_AUTH_HINT_'
 									)
 									. $typeUpped)
-							)?>"></span>
+							))?>"></span>
 						</td>
 						<td>
 							<div data-bx-ads-account-loader="" class="crm-ads-forms-ldr-loader-sm" style="display: none;">

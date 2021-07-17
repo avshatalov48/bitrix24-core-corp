@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Total";
 $MESS["CRM_LEAD_ACTION_DELETE"] = "Delete";
 $MESS["CRM_LEAD_ACTION_MERGE"] = "Merge";
@@ -50,7 +50,7 @@ $MESS["CRM_LEAD_CONV_ENTITY_SEL_SEARCH_NO_RESULT"] = "No entries have been found
 $MESS["CRM_LEAD_CONV_ENTITY_SEL_TITLE"] = "Select contact and company";
 $MESS["CRM_LEAD_CONV_GENERAL_ERROR"] = "Generic conversion error.";
 $MESS["CRM_LEAD_CONV_OPEN_ENTITY_SEL"] = "Select from list...";
-$MESS["CRM_LEAD_COPY"] = "Copy Lead";
+$MESS["CRM_LEAD_COPY"] = "Copy";
 $MESS["CRM_LEAD_COPY_TITLE"] = "Copy lead";
 $MESS["CRM_LEAD_CREATE_CALL_LIST"] = "Create call list";
 $MESS["CRM_LEAD_CREATE_ON_BASIS"] = "Generate";
@@ -116,4 +116,3 @@ $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
 $MESS["CRM_STATUS_INIT"] = "- Status -";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Rebuild search index for leads, deals, contacts, companies and other entities";
-?>

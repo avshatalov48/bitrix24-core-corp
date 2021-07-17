@@ -1,4 +1,6 @@
 <?php
+use Bitrix\Main\Loader;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
@@ -17,13 +19,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid())
+if (!Loader::includeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid())
 {
 	die();
 }
 
 
-if (!CModule::IncludeModule('sale'))
+if (!Loader::includeModule('sale'))
 {
 	die();
 }

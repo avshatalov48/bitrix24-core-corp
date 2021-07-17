@@ -121,6 +121,7 @@ BX.namespace('Tasks.Component');
 
 			rerender: function(roleId)
 			{
+				return;
 				this.getToolbarData(roleId, this.render.bind(this));
 			},
 
@@ -144,12 +145,14 @@ BX.namespace('Tasks.Component');
 
 			render: function()
 			{
+				return;
 				var templates = this.option('templates');
 				var counters = this.option('counters');
 				var foreign_counters = this.option('foreign_counters');
 				var messages = this.option('messages');
 				var classes = this.option('classes');
 				var buttons = this.option('buttons');
+				var project_mode = this.option('project_mode');
 
 				var html = [];
 
@@ -251,13 +254,25 @@ BX.namespace('Tasks.Component');
 						&& element.nextSibling.dataset.counterId === 'new_comments'
 					)
 					{
-						BX.bind(element.nextSibling, 'click', function() {
-							BX.ajax.runAction('tasks.task.comment.readAll', {data: {
-								groupId: this.option('groupId') || 0,
-								userId: this.option('ownerId'),
-								role: roleId
-							}});
-						}.bind(this));
+						if (project_mode)
+						{
+							BX.bind(element.nextSibling, 'click', function() {
+								BX.ajax.runAction('tasks.task.comment.readProject', {data: {
+										groupId: this.option('groupId') || 0
+									}});
+							}.bind(this));
+						}
+						else
+						{
+							BX.bind(element.nextSibling, 'click', function() {
+								BX.ajax.runAction('tasks.task.comment.readAll', {data: {
+										groupId: this.option('groupId') || 0,
+										userId: this.option('ownerId'),
+										role: roleId
+									}});
+							}.bind(this));
+						}
+
 					}
 				}.bind(this));
 			},

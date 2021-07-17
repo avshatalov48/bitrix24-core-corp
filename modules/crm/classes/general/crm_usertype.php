@@ -16,13 +16,21 @@ class CCrmUserType
 	private static $enumerationItems = null;
 	protected $options;
 
-	protected function GetAbstractFields()
+	protected function GetAbstractFields(?array $params = [])
 	{
 		if($this->arFields === null)
 		{
 			$this->arFields = $this->cUFM->GetUserFields($this->sEntityID, 0, LANGUAGE_ID, false);
 
 			$this->arFields = $this->postFilterFields($this->arFields);
+
+			if (empty($params['skipUserFieldVisibilityCheck']))
+			{
+				$this->arFields = $this->postFilterAccessCheck(
+					$this->arFields,
+					Container::getInstance()->getContext()->getUserId()
+				);
+			}
 		}
 
 		return $this->arFields;
@@ -1781,8 +1789,18 @@ class CCrmUserType
 					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
 					if(is_object($rsEnum) && is_subclass_of($rsEnum, 'CAllDBResult'))
 					{
-						while($ar = $rsEnum->GetNext())
-							$editable['items'][$ar['ID']] = htmlspecialcharsback($ar['VALUE']);
+						$maxEditableCount = (int)\Bitrix\Main\Config\Option::get('crm', '~enumeration_max_editable_inline_count', 1000);
+						if ($rsEnum->SelectedRowsCount() <= $maxEditableCount)
+						{
+							while ($ar = $rsEnum->GetNext())
+							{
+								$editable['items'][$ar['ID']] = htmlspecialcharsback($ar['VALUE']);
+							}
+						}
+						else
+						{
+							$editable = false;
+						}
 					}
 				}
 			}
@@ -1826,9 +1844,13 @@ class CCrmUserType
 				$sType = 'int';
 			}
 
+			$fieldLabel = $arUserField['LIST_COLUMN_LABEL']
+				?? $arUserField['EDIT_FORM_LABEL']
+				?? $arUserField['LIST_FILTER_LABEL'];
+
 			$arHeaders[$FIELD_NAME] = array(
 				'id' => $FIELD_NAME,
-				'name' => htmlspecialcharsbx($arUserField['LIST_COLUMN_LABEL']),
+				'name' => htmlspecialcharsbx($fieldLabel),
 				'sort' => $arUserField['MULTIPLE'] == 'N' ? $FIELD_NAME : false,
 				'default' => $arUserField['SHOW_IN_LIST'] == 'Y',
 				'editable' => $editable,
@@ -2025,7 +2047,7 @@ class CCrmUserType
 			$arOptions = array();
 		}
 
-		$arUserFields = $this->GetAbstractFields();
+		$arUserFields = $this->GetAbstractFields(['skipUserFieldVisibilityCheck' => true]);
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
 		{
 			$beditable = true;

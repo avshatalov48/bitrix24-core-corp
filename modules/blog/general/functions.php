@@ -1,7 +1,7 @@
-<?
-use Bitrix\Main\Config\Option;
+<?php
 
 IncludeModuleLangFile(__FILE__);
+
 class blogTextParser extends CTextParser
 {
 	public $bPublic = false;
@@ -100,7 +100,7 @@ class blogTextParser extends CTextParser
 		return trim($text);
 	}
 
-	public function ParserCut(&$text, &$obj)
+	public static function ParserCut(&$text, &$obj)
 	{
 		if ($obj->bPreview)
 		{
@@ -112,7 +112,7 @@ class blogTextParser extends CTextParser
 			$text = preg_replace("#<cut[\s]*(/>|>)#is", "[cut]", $text);
 		}
 	}
-	public function ParserCutAfter(&$text, &$obj)
+	public static function ParserCutAfter(&$text, &$obj)
 	{
 		if (!$obj->bPreview)
 		{
@@ -120,12 +120,12 @@ class blogTextParser extends CTextParser
 		}
 	}
 	
-	public function ParserBlogImageBefore(&$text, &$obj = null)
+	public static function ParserBlogImageBefore(&$text, &$obj = null)
 	{
 		$text = preg_replace("/\[img([^\]]*)id\s*=\s*([0-9]+)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER, "[imag id=\\1 \\2 \\3]", $text);
 	}
 	
-	public function ParserBlogImage(&$text, &$obj)
+	public static function ParserBlogImage(&$text, &$obj)
 	{
 		if(is_callable(array($obj, 'convert_blog_image')))
 		{
@@ -147,7 +147,7 @@ class blogTextParser extends CTextParser
 		return $this->convert_blog_image('', $matches[2], '', 'mail');
 	}
 
-	public function ParserTag(&$text, &$obj)
+	public static function ParserTag(&$text, &$obj)
 	{
 		if($obj->allow["TAG"] != "N" && is_callable(array($obj, 'convert_blog_tag')))
 		{
@@ -170,44 +170,32 @@ class blogTextParser extends CTextParser
 			return;
 		return "TAG [".$name."]";
 	}
-	
-	function convert4im($text, $arImages = Array())
+
+	function convert4im($text, $arImages = [])
 	{
 		$text = preg_replace(
-			array(
-				"/\[(\/?)(code|quote)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
-				"/\\[url\\s*=\\s*(\\S+?)\\s*\\](.*?)\\[\\/url\\]/is".BX_UTF_PCRE_MODIFIER,
-				"/\\[(table)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER,
-				"/\\[\\/table(.*?)\\]/is".BX_UTF_PCRE_MODIFIER
-			),
-			array(
-				"",
-				"\\1",
+			[
+				"/\[(\/?)(code|quote)([^\]]*)\]/is" . BX_UTF_PCRE_MODIFIER,
+				"/\\[url\\s*=\\s*(\\S+?)\\s*\\](.*?)\\[\\/url\\]/is" . BX_UTF_PCRE_MODIFIER,
+				"/\\[(table)(.*?)\\]/is" . BX_UTF_PCRE_MODIFIER,
+				"/\\[\\/table(.*?)\\]/is" . BX_UTF_PCRE_MODIFIER
+			],
+			[
+				'',
+				"\\2",
 				"\n",
 				"\n",
-			),
+			],
 			$text
 		);
 
 		return $this->convert4mail($text, $arImages);
 	}
-	
+
 	public function convert4mail($text, $arImages = Array())
 	{
 		$text = parent::convert4mail($text);
-/*
-		$serverName = (
-			(defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
-				? SITE_SERVER_NAME
-				: COption::GetOptionString("main", "server_name", "")
-		);
-		if (strlen($serverName) <=0 )
-		{
-			$serverName = $_SERVER["SERVER_NAME"];
-		}
 
-		$this->serverName = $serverName;
-*/
 		$this->arImages = $arImages;
 
 		$text = preg_replace_callback(
@@ -556,7 +544,7 @@ class blogTextParser extends CTextParser
 		return $result;
 	}
 	
-	public function getEditorButtons($blog, $arResult)
+	public static function getEditorButtons($blog, $arResult)
 	{
 		$result = array();
 		
@@ -592,6 +580,7 @@ class blogTextParser extends CTextParser
 		return $result;
 	}
 }
+
 class CBlogTools
 {
 	public static function htmlspecialcharsExArray($array)
@@ -622,7 +611,7 @@ class CBlogTools
 		return $res;
 	}
 
-	function ResizeImage($aFile, $sizeX, $sizeY)
+	public static function ResizeImage($aFile, $sizeX, $sizeY)
 	{
 		$arFile = CFile::ResizeImageGet($aFile, array("width"=>$sizeX, "height"=>$sizeY));
 
@@ -632,7 +621,7 @@ class CBlogTools
 			return false;
 	}
 
-	function GetDateTimeFormat()
+	public static function GetDateTimeFormat()
 	{
 		$timestamp = mktime(7,30,45,2,22,2007);
 		return array(
@@ -671,7 +660,7 @@ class CBlogTools
 		return $text;
 	}
 
-	function blogUFfileEdit($arResult, $arParams)
+	public static function blogUFfileEdit($arResult, $arParams)
 	{
 		$result = false;
 		if (mb_strpos($arParams['arUserField']['FIELD_NAME'], CBlogPost::UF_NAME) === 0 || mb_strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
@@ -693,7 +682,7 @@ class CBlogTools
 		return $result;
 	}
 
-	function blogUFfileShow($arResult, $arParams)
+	public static function blogUFfileShow($arResult, $arParams)
 	{
 		$result = false;
 		if ($arParams['arUserField']['FIELD_NAME'] == CBlogPost::UF_NAME || mb_strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
@@ -744,4 +733,3 @@ class CBlogTools
 		return $result;
 	}
 }
-?>

@@ -41,10 +41,20 @@
 	      main_core_events.EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickDelete', this.handleTypeDelete.bind(this));
 	      var toolbarComponent = this.getToolbarComponent();
 
-	      if (this.gridId && main_core.Reflection.getClass('BX.Main.gridManager') && toolbarComponent) {
-	        toolbarComponent.subscribeTypeUpdatedEvent(function () {
-	          main_core.Dom.removeClass(document.getElementById('crm-type-list-container'), 'crm-type-list-grid-empty');
-	          BX.Main.gridManager.reload(_this.gridId);
+	      if (toolbarComponent) {
+	        /** @see BX.Crm.ToolbarComponent.subscribeTypeUpdatedEvent */
+	        toolbarComponent.subscribeTypeUpdatedEvent(function (event) {
+	          var isUrlChanged = main_core.Type.isObject(event.getData()) && event.getData().isUrlChanged === true;
+
+	          if (isUrlChanged) {
+	            window.location.reload();
+	            return;
+	          }
+
+	          if (_this.gridId && main_core.Reflection.getClass('BX.Main.gridManager.reload')) {
+	            main_core.Dom.removeClass(document.getElementById('crm-type-list-container'), 'crm-type-list-grid-empty');
+	            BX.Main.gridManager.reload(_this.gridId);
+	          }
 	        });
 	      }
 	    }
@@ -106,7 +116,14 @@
 	            data: {
 	              entityTypeId: entityTypeId
 	            }
-	          }).then(function () {
+	          }).then(function (response) {
+	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
+
+	            if (isUrlChanged) {
+	              window.location.reload();
+	              return;
+	            }
+
 	            _this2.grid.reloadTable();
 	          }).catch(_this2.showErrorsFromResponse.bind(_this2));
 	          messageBox.close();

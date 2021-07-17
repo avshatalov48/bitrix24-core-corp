@@ -2,6 +2,7 @@
 
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 
@@ -51,6 +52,21 @@ class Common
 	public static function getPublicFolder()
 	{
 		return self::GetPortalType() == self::TYPE_BITRIX24 || file_exists($_SERVER['DOCUMENT_ROOT'].'/openlines/')? '/openlines/': SITE_DIR . 'services/openlines/';
+	}
+
+	public static function getAddConnectorUrl(string $connectorId): ?string
+	{
+		if (!Loader::includeModule('imconnector'))
+		{
+			return null;
+		}
+		$connectors = \Bitrix\ImConnector\Connector::getListConnectorMenu(true);
+		if (!array_key_exists($connectorId, $connectors))
+		{
+			return null;
+		}
+
+		return Common::getPublicFolder() . "connector/" . "?ID=" . $connectorId;
 	}
 
 	public static function getServerAddress()

@@ -37,9 +37,23 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 	protected function getFieldName($fieldID)
 	{
 		$name = Loc::getMessage("CRM_QUOTE_FILTER_{$fieldID}");
-		if($name === null)
+		if (empty($name))
 		{
 			$name = \CCrmQuote::GetFieldCaption($fieldID);
+		}
+
+		if (empty($name))
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			if ($factory)
+			{
+				$name = $factory->getFieldCaption((string)$fieldID);
+			}
+		}
+
+		if (empty($name))
+		{
+			$name = $fieldID;
 		}
 
 		return $name;

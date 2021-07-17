@@ -30,15 +30,22 @@ class Authorization extends ActionFilter\Base
 		$authorizationHeader = $this->getAuthorizationHeader();
 		if (!$authorizationHeader)
 		{
+			Context::getCurrent()->getResponse()->setStatus('400 Bad Request');
 			$this->addError(new Error('Empty authorization header'));
 
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 
+		$oldValue = JWT::$leeway;
+		JWT::$leeway = 3;
+
 		try
 		{
 			$authorizationHeader = substr($authorizationHeader, strlen('Bearer '));
+
 			$data = JWT::decode($authorizationHeader, $this->secretKey, ['HS256']);
+			JWT::$leeway = $oldValue;
+
 			if (!$this->integrityGetKeys && $data)
 			{
 				return null;
@@ -74,11 +81,18 @@ class Authorization extends ActionFilter\Base
 		}
 		catch (\UnexpectedValueException $e)
 		{
-			$this->addError(new Error('Invalid authorization header'));
+			JWT::$leeway = $oldValue;
+
+			$this->addError(new Error('Invalid authorization header', 0, [
+				'invalidBearer' => $authorizationHeader,
+				'message' => $e->getMessage(),
+			]));
 		}
 
 		if (!$this->errorCollection->isEmpty())
 		{
+			Context::getCurrent()->getResponse()->setStatus('400 Bad Request');
+
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 

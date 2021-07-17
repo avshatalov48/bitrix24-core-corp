@@ -116,6 +116,7 @@
 
 .disk-external-link-setting-popup-password {
 	display: flex;
+	margin-bottom: 20px;
 }
 
 .disk-external-link-setting-popup-input-password {

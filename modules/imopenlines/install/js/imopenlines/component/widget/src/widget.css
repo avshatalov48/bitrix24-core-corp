@@ -1,3 +1,4 @@
+/* delete this comment (only this line) */
 /* BUTTON POSITION */
 .bx-livechat-position-top-left {
 	-webkit-transform-origin: top left;
@@ -72,9 +73,12 @@
 }
 
 .bx-livechat-page-mode {
-	position: relative;
 	position: initial;
 	width: 100%;
+}
+
+.bx-livechat-browser-ie.bx-livechat-page-mode {
+    position: static;
 }
 
 .bx-livechat-mobile {
@@ -194,9 +198,11 @@
 /* GENERAL */
 .bx-livechat-box {
 	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
 	height: 100%;
+	width: 100%;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	flex-direction: column;
 	border-radius: 5px;
 	overflow: hidden;
 	background-color: #fff;
@@ -215,7 +221,6 @@
 
 .bx-livechat-body {
 	position: relative;
-	display: flex;
 	flex-grow: 1;
 	flex-shrink: 1;
 	flex-wrap: wrap;
@@ -326,6 +331,11 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M8.01%205.99l3.245-2.409a.795.795%200%200%201%201.126.182.836.836%200%200%201-.178%201.152L8.562%207.619a.79.79%200%200%201-.552.153.79.79%200%200%201-.552-.153L3.817%204.915a.836.836%200%200%201-.178-1.152.795.795%200%200%201%201.126-.182l3.245%202.41zM1.445.016h13.141c.774%200%201.402.641%201.402%201.433v9.85c0%20.79-.628%201.432-1.402%201.432H1.445c-.774%200-1.402-.641-1.402-1.433v-9.85C.043.658.671.016%201.445.016zm.79%201.648c-.291%200-.527.24-.527.537v8.344c0%20.297.236.538.526.538h11.563c.29%200%20.525-.24.525-.538V2.2a.532.532%200%200%200-.525-.537H2.234z%22/%3E%3C/svg%3E') center no-repeat;
 }
 .bx-livechat-bright-header .bx-livechat-control-btn-mail { background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M8.01%205.99l3.245-2.409a.795.795%200%200%201%201.126.182.836.836%200%200%201-.178%201.152L8.562%207.619a.79.79%200%200%201-.552.153.79.79%200%200%201-.552-.153L3.817%204.915a.836.836%200%200%201-.178-1.152.795.795%200%200%201%201.126-.182l3.245%202.41zM1.445.016h13.141c.774%200%201.402.641%201.402%201.433v9.85c0%20.79-.628%201.432-1.402%201.432H1.445c-.774%200-1.402-.641-1.402-1.433v-9.85C.043.658.671.016%201.445.016zm.79%201.648c-.291%200-.527.24-.527.537v8.344c0%20.297.236.538.526.538h11.563c.29%200%20.525-.24.525-.538V2.2a.532.532%200%200%200-.525-.537H2.234z%22/%3E%3C/svg%3E') center no-repeat; }
+
+.bx-livechat-control-btn-menu {
+	width: 14px;
+	background: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2217%22%20height%3D%2217%22%20viewBox%3D%220%200%2017%2017%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M13.2521297%2C7.95849052%20C14.9330931%2C8.06426702%2015.8377469%2C9.93066311%2014.6359883%2C11.1100635%20L14.5208977%2C11.215321%20L8.91975798%2C15.991712%20C8.16930765%2C16.6292417%207.02114869%2C16.6667435%206.22719227%2C16.1035259%20L6.08265983%2C15.9908828%20L0.479214073%2C11.2151387%20C-0.891682378%2C10.0452699%200.0151057088%2C8.06746558%201.74809705%2C7.95849023%20L1.89862867%2C7.95378865%20L3.526%2C7.953%20L3.52601121%2C1.80689335%20C3.52601121%2C0.8567097%204.26158011%2C0.0805266985%205.19389558%2C0.00528385738%20L5.34265974%2C-0.00069477918%20L9.65613232%2C-0.00069477918%20C10.6087218%2C-0.00069477918%2011.3923005%2C0.727597092%2011.4682769%2C1.65832988%20L11.4743143%2C1.80689335%20L11.474%2C7.953%20L13.1016968%2C7.95378865%20L13.2521297%2C7.95849052%20Z%20M9.87431426%2C9.55378865%20L9.87431426%2C1.80689335%20C9.87431426%2C1.71256565%209.80807303%2C1.63129236%209.71493095%2C1.60682148%20L9.65613232%2C1.59930522%20L5.34265974%2C1.59930522%20C5.24156496%2C1.59930522%205.15851111%2C1.66488935%205.13363469%2C1.75222931%20L5.12601121%2C1.80689335%20L5.12601121%2C9.55378865%20L1.89862867%2C9.55378865%20C1.49582236%2C9.55378865%201.34850029%2C9.78798871%201.47588044%2C9.95428945%20L1.51744571%2C9.99773377%20L7.12139424%2C14.7739073%20C7.29314284%2C14.9207162%207.59545373%2C14.9390673%207.80114096%2C14.8285508%20L7.88271454%2C14.7732955%20L13.4825015%2C9.99805638%20C13.6598561%2C9.84670892%2013.5605805%2C9.5995235%2013.2050098%2C9.55937695%20L13.1016968%2C9.55378865%20L9.87431426%2C9.55378865%20Z%22%20transform%3D%22translate%281%29%22%2F%3E%0A%3C%2Fsvg%3E%0A') center no-repeat;
+}
 
 .bx-livechat-control-btn-close {
 	width: 12px;
@@ -552,6 +562,7 @@
 }
 
 /* CHAT */
+
 .bx-livechat-chat-start .bx-livechat-body {
 	flex-direction: column;
 	flex-wrap: nowrap;
@@ -560,14 +571,18 @@
 }
 .bx-livechat-chat-start .bx-livechat-body-with-message {
 	justify-content: flex-end;
+	display: initial;
 }
-.bx-livechat-dialog {
-	position: relative;
+.bx-livechat-browser-ie.bx-livechat-chat-start .bx-livechat-body-with-message {
+    display: block;
+}
+
+.bx-livechat-body {
 	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
+}
+.bx-livechat-dialog > div {
+	position: absolute;
 	width: 100%;
-	overflow: hidden;
 }
 
 .bx-livechat-dialog .bx-im-mention {

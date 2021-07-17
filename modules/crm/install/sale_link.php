@@ -1921,12 +1921,12 @@ foreach($arPaySystems as $val)
 	if ($data = $dbSalePaySystem->fetch())
 	{
 		$isPaySystemsEmpty = false;
-		$result = \Bitrix\Sale\Internals\PaySystemActionTable::update($data['ID'], $val);
+		$result = \Bitrix\Sale\PaySystem\Manager::update($data['ID'], $val);
 		$id = $data['ID'];
 	}
 	else
 	{
-		$result = \Bitrix\Sale\Internals\PaySystemActionTable::add($val);
+		$result = \Bitrix\Sale\PaySystem\Manager::add($val);
 		$id = $result->getId();
 	}
 
@@ -1983,7 +1983,7 @@ foreach($arPaySystems as $val)
 	$psParams['BX_PAY_SYSTEM_ID'] = array('TYPE' => '', 'VALUE' => $id);
 	$updateFields['PARAMS'] = serialize($psParams);
 
-	\Bitrix\Sale\Internals\PaySystemActionTable::update($id, $updateFields);
+	\Bitrix\Sale\PaySystem\Manager::update($id, $updateFields);
 }
 
 if ($isPaySystemsEmpty)
@@ -2102,6 +2102,7 @@ if(!($basePrice = $dbRes->Fetch()))
 	$arFields["BASE"] = "Y";
 	$arFields["SORT"] = 100;
 	$arFields["NAME"] = "BASE";
+	$arFields["XML_ID"] = "BASE";
 	$arFields["USER_GROUP"] = array(1, 2);
 	$arFields["USER_GROUP_BUY"] = array(1, 2);
 	$basePriceId = CCatalogGroup::Add($arFields);

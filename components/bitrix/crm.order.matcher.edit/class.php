@@ -119,7 +119,15 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 	{
 		if ($this->personTypes === null)
 		{
-			$this->personTypes = \Bitrix\Crm\Order\PersonType::load($this->getSiteId());
+			$personTypes = \Bitrix\Sale\PersonType::getList()->fetchAll();
+			if ($personTypes)
+			{
+				foreach ($personTypes as $personType)
+				{
+					$personType['NAME'] .= " ({$personType['ID']}) [{$personType['LID']}]";
+					$this->personTypes[$personType['ID']] = $personType;
+				}
+			}
 		}
 
 		return $this->personTypes;
@@ -468,6 +476,11 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 				'CODE' => 'P',
 				'NAME' => Loc::getMessage('CRM_ORDERFORM_RELATION_PAY_SYSTEM'),
 				'ITEMS' => array_values(FieldSynchronizer::getPaySystemRelations())
+			],
+			[
+				'CODE' => 'L',
+				'NAME' => Loc::getMessage('CRM_ORDERFORM_RELATION_LANDING'),
+				'ITEMS' => array_values(FieldSynchronizer::getLandingRelations())
 			]
 		];
 	}

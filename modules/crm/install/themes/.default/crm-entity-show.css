@@ -1903,8 +1903,14 @@ div.crm-activity-call_list a.crm-activity-subject:before { background-position: 
 /* SMS */
 div.crm-activity-crm_sms a.crm-activity-subject:before { background-position: 0 -693px; }
 
+/* NOTIFICATION */
+div.crm-activity-crm_notification a.crm-activity-subject:before { background-position: 0 -693px; }
+
 /* REST_APP */
 div.crm-activity-rest_app a.crm-activity-subject:before { background-position: 0 -721px; }
+
+/* CRM_PHONE_TRACKER */
+div.crm-activity-crm_phone_tracker-incoming a.crm-activity-subject:before { background-position: 0 -46px; }
 
 a.crm-activity-completed,
 a.crm-activity-not-completed {

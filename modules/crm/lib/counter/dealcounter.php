@@ -80,6 +80,7 @@ class DealCounter extends EntityCounter
 		$categoryID = $this->getIntegerExtraParam('DEAL_CATEGORY_ID', -1);
 		$typeIDs = EntityCounterType::splitType($this->typeID);
 
+		$isCurrentCounter = in_array(EntityCounterType::PENDING, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
 		foreach($typeIDs as $typeID)
 		{
 			//echo EntityCounterType::resolveName($typeID), "<br>";
@@ -162,6 +163,11 @@ class DealCounter extends EntityCounter
 			}
 			else if($typeID === EntityCounterType::PENDING || $typeID === EntityCounterType::OVERDUE)
 			{
+				if ($isCurrentCounter && $typeID === EntityCounterType::OVERDUE)
+				{
+					continue;
+				}
+
 				$query = new Query(DealTable::getEntity());
 
 				if($categoryID >= 0)
@@ -202,25 +208,57 @@ class DealCounter extends EntityCounter
 					$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
 				}
 
-				if($typeID === EntityCounterType::PENDING)
+				if ($isCurrentCounter)
 				{
-					$lowBound = self::getUserTime($userID);
-					$lowBound->setTime(0, 0, 0);
-					$activityQuery->addFilter('>=DEADLINE', $lowBound);
-
 					$highBound = self::getUserTime($userID);
 					$highBound->setTime(23, 59, 59);
 					$activityQuery->addFilter('<=DEADLINE', $highBound);
 				}
-				elseif($typeID === EntityCounterType::OVERDUE)
+				else
 				{
-					$highBound = self::getUserTime($userID);
-					$highBound->setTime(0, 0, 0);
-					$activityQuery->addFilter('<DEADLINE', $highBound);
+					if ($typeID === EntityCounterType::PENDING)
+					{
+						$lowBound = self::getUserTime($userID);
+						$lowBound->setTime(0, 0, 0);
+						$activityQuery->addFilter('>=DEADLINE', $lowBound);
+
+						$highBound = self::getUserTime($userID);
+						$highBound->setTime(23, 59, 59);
+						$activityQuery->addFilter('<=DEADLINE', $highBound);
+					}
+					elseif ($typeID === EntityCounterType::OVERDUE)
+					{
+						$highBound = self::getUserTime($userID);
+						$highBound->setTime(0, 0, 0);
+						$activityQuery->addFilter('<DEADLINE', $highBound);
+					}
 				}
 
 				$activityQuery->addFilter('=COMPLETED', 'N');
 				$activityQuery->addSelect('ID');
+
+				if (isset($options['PROVIDER_ID']))
+				{
+					if (is_array($options['PROVIDER_ID']))
+					{
+						$activityQuery->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
+					}
+					else
+					{
+						$activityQuery->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
+					}
+				}
+				if (isset($options['PROVIDER_TYPE_ID']))
+				{
+					if (is_array($options['PROVIDER_TYPE_ID']))
+					{
+						$activityQuery->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
+					}
+					else
+					{
+						$activityQuery->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
+					}
+				}
 
 				$query->registerRuntimeField(
 					'',
@@ -230,58 +268,6 @@ class DealCounter extends EntityCounter
 						array('join_type' => 'INNER')
 					)
 				);
-				//endregion
-
-				//region Activity (standard inner join)
-				/*
-				$query->registerRuntimeField(
-					'',
-					new ReferenceField('A',
-						ActivityTable::getEntity(),
-						array('=ref.ID' => 'this.B.ACTIVITY_ID'),
-						array('join_type' => 'INNER')
-					)
-				);
-
-				//Replace by IS_HANDLEABLE for ignore pseudo activities (like WAIT)
-				//$query->addFilter('=A.IS_HANDLEABLE', 'Y');
-				$query->addFilter('=A.COMPLETED', 'N');
-
-				if(is_array($userID))
-				{
-					$userCount = count($userID);
-					if($userCount > 1)
-					{
-						$query->addFilter('@ASSIGNED_BY_ID', $userID);
-					}
-					elseif($userCount === 1)
-					{
-						$query->addFilter('=ASSIGNED_BY_ID', $userID[0]);
-					}
-				}
-				elseif($userID > 0)
-				{
-					//Strongly required for counter design. We manage counters in user-oriented manner.
-					$query->addFilter('=ASSIGNED_BY_ID', $userID);
-				}
-
-				if($typeID === EntityCounterType::PENDING)
-				{
-					$lowBound = new DateTime();
-					$lowBound->setTime(0, 0, 0);
-					$query->addFilter('>=A.DEADLINE', $lowBound);
-
-					$highBound = new DateTime();
-					$highBound->setTime(23, 59, 59);
-					$query->addFilter('<=A.DEADLINE', $highBound);
-				}
-				elseif($typeID === EntityCounterType::OVERDUE)
-				{
-					$highBound = new DateTime();
-					$highBound->setTime(0, 0, 0);
-					$query->addFilter('<A.DEADLINE', $highBound);
-				}
-				*/
 				//endregion
 
 				if($select === 'ENTY')

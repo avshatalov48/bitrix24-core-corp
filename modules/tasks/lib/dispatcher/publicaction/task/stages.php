@@ -13,12 +13,17 @@ namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Scrum\Service\EntityService;
+use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use \Bitrix\Tasks\Util;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Internals\Task\SortingTable;
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use \Bitrix\Tasks\Integration\Bizproc;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
 
@@ -488,6 +493,17 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 				);
 			}
 		}
+
+		if ($this->errors->checkNoFatals() && Loader::includeModule('socialnetwork'))
+		{
+			$group = Workgroup::getById($task['GROUP_ID']);
+			$isScrumTask = ($group && $group->isScrumProject());
+			if ($isScrumTask)
+			{
+				return $this->moveScrumTask($id, $task['GROUP_ID'], $stage);
+			}
+		}
+
 		// chec access to sort
 		if ($this->errors->checkNoFatals())
 		{
@@ -579,5 +595,109 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		}
 
 		return $success;
+	}
+
+	private function moveScrumTask(int $taskId, int $groupId, array $stage): bool
+	{
+		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if ($itemService->getErrors() || $scrumItem->isEmpty())
+		{
+			return false;
+		}
+
+		$entity = $entityService->getEntityById($scrumItem->getEntityId());
+		if ($entityService->getErrors() || $entity->isEmpty())
+		{
+			return false;
+		}
+
+		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		{
+			return false;
+		}
+
+		$featurePerms = \CSocNetFeaturesPerms::currentUserCanPerformOperation(
+			SONET_ENTITY_GROUP,
+			[$groupId],
+			'tasks',
+			'sort'
+		);
+		$isAccess = (is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId]);
+		if (!$isAccess)
+		{
+			$this->errors->add(
+				'ACCESS_DENIED_MOVE',
+				Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_MOVE')
+			);
+
+			return false;
+		}
+
+		$taskObject = new \CTasks;
+
+		$queryObject = TaskStageTable::getList([
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'STAGE.ENTITY_ID' => $entity->getId()
+			]
+		]);
+		if ($taskStage = $queryObject->fetch())
+		{
+			TaskStageTable::update($taskStage['ID'], [
+				'STAGE_ID' => $stage['ID'],
+			]);
+
+			$taskObject->update($taskId, ['STAGE_ID' => $stage['ID']]);
+		}
+
+		// todo maybe need add push here
+
+		if ($stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
+		{
+			$this->completeTask($taskId);
+		}
+		else
+		{
+			$this->renewTask($taskId);
+		}
+
+		return true;
+	}
+
+	private function completeTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, Util\User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$task->complete();
+		}
+	}
+
+	private function renewTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, Util\User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$queryObject = \CTasks::getList(
+				[],
+				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+				['ID'],
+				['USER_ID' => Util\User::getId()]
+			);
+			if ($queryObject->fetch())
+			{
+				$task->renew();
+			}
+		}
 	}
 }

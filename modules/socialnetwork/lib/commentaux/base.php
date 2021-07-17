@@ -185,7 +185,7 @@ abstract class Base
 		{
 			$options = $this->options;
 
-			$commentAuthorId = (!empty($params['commentAuthorId']) && intval($params['commentAuthorId']) > 0 ? intval($params['commentAuthorId']) : 0);
+			$commentAuthorId = (!empty($params['commentAuthorId']) && (int)$params['commentAuthorId'] > 0 ? (int)$params['commentAuthorId'] : 0);
 
 			$siteList = $intranetSiteId = $extranetSiteId = false;
 

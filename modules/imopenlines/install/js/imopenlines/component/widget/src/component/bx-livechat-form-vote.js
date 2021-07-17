@@ -7,20 +7,16 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {VoteType, FormType} from "../const";
 
-Vue.component('bx-livechat-form-vote',
+BitrixVue.component('bx-livechat-form-vote',
 {
 	computed:
 	{
 		VoteType: () => VoteType,
 
-		localize()
-		{
-			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-		},
 		...Vuex.mapState({
 			widget: state => state.widget,
 		})
@@ -31,7 +27,7 @@ Vue.component('bx-livechat-form-vote',
 			this.$store.commit('widget/common', {showForm: FormType.none});
 			this.$store.commit('widget/dialog', {userVote: vote});
 
-			this.$root.$bitrixApplication.sendDialogVote(vote);
+			this.$Bitrix.Application.get().sendDialogVote(vote);
 		},
 		hideForm(event)
 		{

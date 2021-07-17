@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -6,17 +6,17 @@
  * @copyright 2001-2017 Bitrix
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 
 class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 {
-	private $configId = null;
-	private $config = null;
-
-	protected function checkModules()
+	protected function checkModules(): bool
 	{
 		if (!Loader::includeModule('im'))
 		{
@@ -31,7 +31,7 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 		return true;
 	}
 
-	public function executeComponent()
+	public function executeComponent(): bool
 	{
 		$this->includeComponentLang('class.php');
 
@@ -40,23 +40,43 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 			\Bitrix\Main\Mail\EventMessageThemeCompiler::stop();
 			return false;
 		}
-		
+
 		$this->arResult = $this->arParams;
-		
-		$select =  \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance();
+
+		$select = \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance();
 		$select['CONFIG_LANGUAGE_ID'] = 'CONFIG.LANGUAGE_ID';
-		
-		$orm = \Bitrix\ImOpenLines\Model\SessionTable::getList(Array(
+		$select['CONFIG_LINE_NAME'] = 'CONFIG.LINE_NAME';
+		$select['LIVECHAT_TEXT_PHRASES'] = 'LIVECHAT.TEXT_PHRASES';
+
+		$orm = \Bitrix\ImOpenLines\Model\SessionTable::getList([
 			'select' => $select,
-			'filter' => Array('=ID' => $this->arParams['TEMPLATE_SESSION_ID'])
-		));
+			'filter' => ['=ID' => $this->arParams['TEMPLATE_SESSION_ID']]
+		]);
 		$session = $orm->fetch();
 		if (!$session)
 		{
 			return false;
 		}
-		
-		if ($this->arParams['TEMPLATE_TYPE'] == 'HISTORY')
+
+		if (
+			isset($session['LIVECHAT_TEXT_PHRASES']['BX_LIVECHAT_TITLE'])
+			&& $session['LIVECHAT_TEXT_PHRASES']['BX_LIVECHAT_TITLE'] !== ''
+		)
+		{
+			$this->arResult['TEMPLATE_WIDGET_TITLE'] = $session['LIVECHAT_TEXT_PHRASES']['BX_LIVECHAT_TITLE'];
+		}
+		else
+		{
+			$this->arResult['TEMPLATE_WIDGET_TITLE'] = $session['CONFIG_LINE_NAME'];
+		}
+
+		$this->arResult['TEMPLATE_WIDGET_SESSION_ID'] = str_replace(
+			'#SESSION_ID#',
+			$session['ID'],
+			Loc::getMessage('IMOL_COMPONENT_SESSION_ID')
+		);
+
+		if ($this->arParams['TEMPLATE_TYPE'] === 'HISTORY')
 		{
 			$this->arResult['TEMPLATE_MESSAGES'] = \Bitrix\ImOpenLines\Mail::prepareSessionHistoryForTemplate($this->arParams['TEMPLATE_SESSION_ID']);
 			if (!$this->arResult['TEMPLATE_MESSAGES'])
@@ -74,7 +94,7 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 				return false;
 			}
 		}
-		
+
 		$parsedUrl = parse_url($this->arResult['TEMPLATE_WIDGET_URL']);
 		if (isset($parsedUrl['query']))
 		{
@@ -84,12 +104,12 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 		{
 			$this->arResult['TEMPLATE_WIDGET_URL'] .= (mb_substr($this->arResult['TEMPLATE_WIDGET_URL'], -1) != '?'? '?': '').'imolAction=answer';
 		}
-		
-		$this->arResult['LANGUAGE_ID'] = $session['CONFIG_LANGUAGE_ID']? $session['CONFIG_LANGUAGE_ID']: null;
+
+		$this->arResult['LANGUAGE_ID'] = $session['CONFIG_LANGUAGE_ID'] ?: null;
 		$this->arResult['SESSION'] = $session;
-		
+
 		$this->includeComponentTemplate();
 
 		return true;
 	}
-};
+}

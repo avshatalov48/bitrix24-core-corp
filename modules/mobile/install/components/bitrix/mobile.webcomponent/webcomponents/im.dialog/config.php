@@ -3,6 +3,7 @@ CModule::IncludeModule('mobileapp');
 
 return [
 	"rel" => [
+		"main.md5",
 		"date",
 		"ls",
 		"fx",

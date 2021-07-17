@@ -233,7 +233,7 @@ class Field
 		}
 
 		// Interpret bool 'false' as non-empty for boolean type
-		if ($this->type === static::TYPE_BOOLEAN && $fieldValue === false)
+		if ($this->type === static::TYPE_BOOLEAN && (bool)$fieldValue === false)
 		{
 			return false;
 		}

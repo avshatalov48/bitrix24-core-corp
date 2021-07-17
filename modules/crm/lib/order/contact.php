@@ -41,4 +41,19 @@ class Contact extends ContactCompanyEntity
 	{
 		return ENTITY_CRM_CONTACT;
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getCustomerName(): ?string
+	{
+		$contact = \CAllCrmContact::GetByID($this->getField('ENTITY_ID'), false);
+
+		if (!$contact)
+		{
+			return null;
+		}
+
+		return $contact['NAME'] ?: $contact['FULL_NAME'];
+	}
 }

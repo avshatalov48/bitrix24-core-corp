@@ -8,7 +8,6 @@ use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Settings\DealSettings;
-use Bitrix\Crm\Settings\DynamicSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\OrderSettings;
@@ -453,7 +452,10 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 	}
 }
 
-if (\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
+if (
+	\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y'
+	&& \CCrmSaleHelper::isWithOrdersMode()
+)
 {
 	$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
 		CCrmOwnerType::Order,
@@ -686,77 +688,75 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24') && in_array(\CBitrix24::getLi
 	);
 }
 
-if (DynamicSettings::getCurrent()->isEnabled())
+
+$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+if ($isAdmin || $userPermissions->canWriteConfig())
 {
-	$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
-	if ($isAdmin || $userPermissions->canWriteConfig())
+	$stdItems['DYNAMIC_ADD'] = [
+		'ID' => 'DYNAMIC_LIST',
+		'MENU_ID' => 'dynamic_menu',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
+		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
+	];
+}
+
+$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
+try
+{
+	$dynamicTypesMap->load([
+		'isLoadStages' => false,
+		'isLoadCategories' => true,
+	]);
+}
+catch (Exception $exception)
+{
+}
+catch (Error $error)
+{
+}
+foreach($dynamicTypesMap->getTypes() as $type)
+{
+	if (Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId()))
 	{
-		$stdItems['DYNAMIC_ADD'] = [
-			'ID' => 'DYNAMIC_LIST',
-			'MENU_ID' => 'dynamic_menu',
-			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
-			'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
-		];
+		continue;
 	}
 
-	$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
-	try
+	$actions = [];
+	$isCanAdd = $isAdmin;
+	$isAddRestricted = Crm\Restriction\RestrictionManager::getDynamicTypesLimitRestriction()->isCreateItemRestricted($type->getEntityTypeId());
+	if (!$isAddRestricted)
 	{
-		$dynamicTypesMap->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => true,
-		]);
-	}
-	catch (Exception $exception)
-	{
-	}
-	catch (Error $error)
-	{
-	}
-	foreach($dynamicTypesMap->getTypes() as $type)
-	{
-		if (Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId()))
+		if (!$isCanAdd)
 		{
-			continue;
-		}
-
-		$actions = [];
-		$isCanAdd = $isAdmin;
-		$isAddRestricted = Crm\Restriction\RestrictionManager::getDynamicTypesLimitRestriction()->isCreateItemRestricted($type->getEntityTypeId());
-		if (!$isAddRestricted)
-		{
-			if (!$isCanAdd)
+			$defaultCategory = $dynamicTypesMap->getDefaultCategory($type->getEntityTypeId());
+			if ($defaultCategory)
 			{
-				$defaultCategory = $dynamicTypesMap->getDefaultCategory($type->getEntityTypeId());
-				if ($defaultCategory)
-				{
-					$isCanAdd = Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(
-						$type->getEntityTypeId(),
-						$defaultCategory->getId()
-					);
-				}
-			}
-			if ($isCanAdd)
-			{
-				$actions[] = [
-					'ID' => 'CREATE',
-					'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
-						$type->getEntityTypeId(),
-						0
-					),
-				];
+				$isCanAdd = Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(
+					$type->getEntityTypeId(),
+					$defaultCategory->getId()
+				);
 			}
 		}
-		if ($userPermissions->canReadType($type->getEntityTypeId()))
+		if ($isCanAdd)
 		{
-			$id = CCrmOwnerType::ResolveName($type->getEntityTypeId());
-			$stdItems[$id] = [
-				'ID' => $id,
-				'NAME' => $type->getTitle(),
-				'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
-				'ACTIONS' => !empty($actions) ? $actions : null,
+			$actions[] = [
+				'ID' => 'CREATE',
+				'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					$type->getEntityTypeId(),
+					0
+				),
 			];
 		}
+	}
+	if ($userPermissions->canReadType($type->getEntityTypeId()))
+	{
+		$id = CCrmOwnerType::ResolveName($type->getEntityTypeId());
+		$stdItems[$id] = [
+			'ID' => $id,
+			'NAME' => $type->getTitle(),
+			'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
+			'ACTIONS' => !empty($actions) ? $actions : null,
+		];
 	}
 }
 

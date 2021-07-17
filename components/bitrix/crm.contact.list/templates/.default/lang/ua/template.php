@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Усього";
 $MESS["CRM_CONTACT_ACTION_DELETE"] = "Видалити";
 $MESS["CRM_CONTACT_ACTION_MERGE"] = "Об'єднати";
@@ -34,7 +34,7 @@ $MESS["CRM_CONTACT_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенесення ст�
 $MESS["CRM_CONTACT_CONVERT_ADDRESSES_STATE"] = "#processed# з #total#";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Перенесення адрес з поля користувача в реквізити контактів";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_STATE"] = "#processed# з #total#";
-$MESS["CRM_CONTACT_COPY"] = "Копіювати контакт";
+$MESS["CRM_CONTACT_COPY"] = "Копіювати";
 $MESS["CRM_CONTACT_COPY_TITLE"] = "Копіювати контакт";
 $MESS["CRM_CONTACT_CREATE_CALL_LIST"] = "Створити обдзвін";
 $MESS["CRM_CONTACT_DEAL_ADD"] = "Додати угоду";
@@ -46,9 +46,9 @@ $MESS["CRM_CONTACT_EDIT"] = "Редагувати";
 $MESS["CRM_CONTACT_EDIT_TITLE"] = "Редагувати контакт";
 $MESS["CRM_CONTACT_EVENT"] = "Додати подію";
 $MESS["CRM_CONTACT_EVENT_TITLE"] = "Додати нову подію";
-$MESS["CRM_CONTACT_EXPORT_NEW"] = "Бере участь в експорті";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_SUMMARY"] = "Вибраним контактам буде встановлений дозвіл для експорту. Виконання цієї операції може зайняти тривалий час при великій кількості даних.";
 $MESS["CRM_CONTACT_EXPORT_DIALOG_TITLE"] = "Встановлення дозволу експорту контактів";
+$MESS["CRM_CONTACT_EXPORT_NEW"] = "Бере участь в експорті";
 $MESS["CRM_CONTACT_EXPORT_OFF"] = "Ні";
 $MESS["CRM_CONTACT_EXPORT_ON"] = "Так";
 $MESS["CRM_CONTACT_LIST_ADD"] = "Додати контакт";
@@ -95,4 +95,3 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# з #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Показати кількість";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Зателефонувати";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Невідомий абонент";
-?>

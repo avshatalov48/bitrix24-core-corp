@@ -1740,6 +1740,27 @@ class Session
 			$fields['TIME_DIALOG'] = $fields['DATE_LAST_MESSAGE']->getTimestamp()-$this->session['DATE_CREATE']->getTimestamp();
 		}
 
+		if(
+			!isset($fields['DATE_FIRST_LAST_USER_ACTION'])
+			&& isset($fields['INPUT_MESSAGE'])
+			&& $fields['INPUT_MESSAGE'] === true
+			&& (
+				empty($this->session['DATE_FIRST_LAST_USER_ACTION'])
+				|| (
+					!empty($fields['STATUS'])
+					&& (
+						(int)$fields['STATUS'] === self::STATUS_CLIENT
+						|| (int)$fields['STATUS'] === self::STATUS_CLIENT_AFTER_OPERATOR
+					)
+					&& (int)$this->session['STATUS'] !== self::STATUS_CLIENT
+					&& (int)$this->session['STATUS'] !== self::STATUS_CLIENT_AFTER_OPERATOR
+				)
+			)
+		)
+		{
+			$fields['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
+		}
+
 		//The actual closing
 		if
 		(
@@ -1938,7 +1959,8 @@ class Session
 		unset(
 			$fields['USER_ID'],
 			$fields['SKIP_DATE_CLOSE'],
-			$fields['FORCE_CLOSE']
+			$fields['FORCE_CLOSE'],
+			$fields['INPUT_MESSAGE']
 		);
 
 		$isResponseOperator = null;
@@ -2096,6 +2118,11 @@ class Session
 
 		if($update)
 		{
+			if(isset($params['INPUT_MESSAGE']))
+			{
+				$update['INPUT_MESSAGE'] = $params['INPUT_MESSAGE'];
+			}
+
 			$update['DATE_MODIFY'] = new DateTime();
 			$this->update($update);
 		}

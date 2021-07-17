@@ -139,23 +139,6 @@ if ($isCompositeMode && !$isIndexPage)
 <?
 $APPLICATION->ShowBodyScripts();
 
-if (defined("BX24_HOST_NAME")):?>
-<script>
-var _baLoaded = BX.type.isArray(_ba);
-var _ba = _ba || []; _ba.push(["aid", "1682f9867b9ef36eacf05e345db46f3c"]);
-(function(alreadyLoaded) {
-	if (alreadyLoaded)
-	{
-		return;
-	}
-	var ba = document.createElement("script"); ba.type = "text/javascript"; ba.async = true;
-	ba.src = document.location.protocol + "//bitrix.info/ba.js";
-	var s = document.getElementsByTagName("script")[0];
-	s.parentNode.insertBefore(ba, s);
-})(_baLoaded);
-</script>
-<?endif;
-
 //$APPLICATION->IncludeComponent("bitrix:pull.request", "", Array(), false, Array("HIDE_ICONS" => "Y"));
 $APPLICATION->IncludeComponent("bitrix:intranet.mail.check", "", array(), false, array("HIDE_ICONS" => "Y"));
 

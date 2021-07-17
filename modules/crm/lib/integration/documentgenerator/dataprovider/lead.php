@@ -285,12 +285,14 @@ class Lead extends ProductsDataProvider
 
 	public function getHonorificName(): string
 	{
+		$value = null;
+
 		if($this->honorific)
 		{
 			$all = \CCrmStatus::GetStatusList('HONORIFIC');
-			return $all[$this->honorific];
+			$value = $all[$this->honorific];
 		}
 
-		return '';
+		return (string)$value;
 	}
 }

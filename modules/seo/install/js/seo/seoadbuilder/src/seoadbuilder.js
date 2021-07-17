@@ -42,6 +42,7 @@ export class SeoAdBuilder
 		this.iBlockId = options.iBlockId;
 		this.basePriceId = options.basePriceId;
 		this.storeExists = options.storeExists;
+		this.isCloud = options.isCloud || false;
 
 		this.clientId = options.clientId;
 		this.accountId = options.accountId;
@@ -958,15 +959,20 @@ export class SeoAdBuilder
 			dialogOptions: {
 				id: 'seo-ads-regions',
 				context: 'SEO_ADS_REGIONS',
+				tabs: [
+					{
+						id: 'custom-region-tab',
+						visible: true,
+						title: Loc.getMessage('SEO_AD_BUILDER_REGION'),
+						stub: true,
+						stubOptions: {
+							title: Loc.getMessage('UI_TAG_SELECTOR_START_INPUT'),
+							arrow: true
+						}
+					},
+				],
 				searchOptions: {
 					allowCreateItem: false
-				},
-				recentTabOptions: {
-					stub: true,
-					stubOptions: {
-						title: Loc.getMessage('UI_TAG_SELECTOR_START_INPUT'),
-						arrow: true
-					}
 				},
 				events: {
 					'Item:onSelect': event => {
@@ -989,6 +995,7 @@ export class SeoAdBuilder
 		});
 
 		selector.renderTo(document.getElementById('seo-ads-regions'));
+		selector.getDialog().getRecentTab().setVisible(false)
 		const selectorOptions = {
 			iblockId: this.iBlockId,
 			basePriceId: this.basePriceId,
@@ -1001,7 +1008,7 @@ export class SeoAdBuilder
 
 		this.productSelector = new ProductSelector('facebook-product-selector', selectorOptions);
 
-		EventEmitter.subscribe('ProductSelector:onChange', this.productSelectedEvent.bind(this));
+		EventEmitter.subscribe('BX.Catalog.ProductSelector:onChange', this.productSelectedEvent.bind(this));
 	}
 
 	productSelectedEvent(event)
@@ -1019,8 +1026,11 @@ export class SeoAdBuilder
 
 	toCreateStoreSlider()
 	{
-		this.openTargetPageSlider();
-		return;
+		if (!this.isCloud)
+		{
+			this.openTargetPageSlider();
+			return;
+		}
 
 		const sliderOptions = {
 			width: 990,

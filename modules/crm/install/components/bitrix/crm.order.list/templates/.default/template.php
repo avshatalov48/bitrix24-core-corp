@@ -1274,3 +1274,5 @@ if(!$isInternal):
 	);
 </script>
 <?endif;?>
+<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
+

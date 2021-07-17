@@ -45,7 +45,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 		"URL" => $arParams["SECTION_URL_PREFIX"].$arResult["VIEW_SECTION_ADVANCED_FILTER_HREF"]
 				 .'&clear_filter=Y&apply_filter=Y',
 		"ID" => "view_all",
-		'COUNTER' => $oCounters->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_TOTAL, $groupId),
+		'COUNTER' => $oCounters->get(\Bitrix\Tasks\Internals\Counter\CounterDictionary::COUNTER_MEMBER_TOTAL, $groupId),
 		'COUNTER_ID' => \CTaskCountersProcessor::COUNTER_TASKS_TOTAL,
 		'COUNTER_ACTIVE'=> 'Y',
 		"IS_ACTIVE" => $arResult["MARK_SECTION_ALL"] === "Y",
@@ -101,37 +101,6 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 			"COUNTER" => $counter > 0 ? $counter : "",
 			// do not update counters dynamically if I am at other user`s list now
 			"COUNTER_ID" => isset($counters[$role]) && $myPlace ? $counters[$role] : ""
-		);
-	}
-
-
-/*
-	// special presets
-	if (is_array($arResult["VIEW_STATE"]["SPECIAL_PRESETS"]))
-	{
-		foreach($arResult["VIEW_STATE"]["SPECIAL_PRESETS"] as $presetId => $preset)
-		{
-			$menuItems[] = array(
-				"TEXT" => htmlspecialcharsbx($preset["TITLE"]),
-				"URL" => $arParams["SECTION_URL_PREFIX"].$arResult["VIEW_HREFS"]["SPECIAL_PRESETS"][$presetId],
-				"ID" => "view_preset_".$presetId,
-				"IS_ACTIVE" => $arResult["MARK_SPECIAL_PRESET"] === "Y" && $preset["SELECTED"] === "Y",
-			);
-		}
-	}
-*/
-	if ($arResult['SHOW_SECTION_PROJECTS'] == 'Y')
-	{
-		$menuItems[] = array(
-			"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
-			"URL" => CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_PROJECTS"], array()),
-			"ID" => "view_projects",
-			"IS_ACTIVE" => $arParams["MARK_SECTION_PROJECTS"] === "Y",
-			'SUB_LINK'=>array(
-				'CLASS'=>'',
-				'URL'=> \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').
-						'user/'.
-						\Bitrix\Tasks\Util\User::getId().'/groups/create/?firstRow=project'),
 		);
 	}
 

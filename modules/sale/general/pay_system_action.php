@@ -1,9 +1,8 @@
-<?php
-
-use \Bitrix\Sale\Internals\PaySystemActionTable;
-use \Bitrix\Sale\Internals\ServiceRestrictionTable;
-use \Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
-use \Bitrix\Sale;
+<?
+use Bitrix\Sale\Internals\ServiceRestrictionTable;
+use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
+use Bitrix\Sale\Internals\PaySystemActionTable;
+use Bitrix\Sale;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -16,7 +15,7 @@ class CAllSalePaySystemAction
 	{
 		$id = (int)$id;
 
-		$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getById($id);
+		$dbRes = PaySystemActionTable::getById($id);
 		if ($res = $dbRes->fetch())
 			return $res;
 
@@ -55,7 +54,7 @@ class CAllSalePaySystemAction
 	{
 		$id = (int)$id;
 
-		$result = \Bitrix\Sale\Internals\PaySystemActionTable::delete($id);
+		$result = Sale\PaySystem\Manager::delete($id);
 		return $result->isSuccess();
 	}
 
@@ -599,7 +598,7 @@ class CAllSalePaySystemAction
 					$groupBy[self::getAlias($field)] = $order;
 				}
 			}
-			$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getList(array(
+			$dbRes = Sale\PaySystem\Manager::getList(array(
 					'select' => $select,
 					'filter' => $filter,
 					'order' => $orderBy,
@@ -929,13 +928,13 @@ class CAllSalePaySystemAction
 				$dbRes = PaySystemActionTable::getById($fields['PAY_SYSTEM_ID']);
 				$data = $dbRes->fetch();
 				if ($data['ACTION_FILE'] != '')
-					$result = PaySystemActionTable::add($fields);
+					$result = Sale\PaySystem\Manager::add($fields);
 				else
-					$result = PaySystemActionTable::update($fields['PAY_SYSTEM_ID'], $fields);
+					$result = Sale\PaySystem\Manager::update($fields['PAY_SYSTEM_ID'], $fields);
 			}
 			else
 			{
-				$result = PaySystemActionTable::add($fields);
+				$result = Sale\PaySystem\Manager::add($fields);
 			}
 
 			if ($result->isSuccess())
@@ -949,7 +948,7 @@ class CAllSalePaySystemAction
 								'TYPE' => '',
 								'VALUE' => $result->getId()
 						);
-						PaySystemActionTable::update($result->getId(), array('PARAMS' => serialize($params)));
+						Sale\PaySystem\Manager::update($result->getId(), array('PARAMS' => serialize($params)));
 						$consumers = \Bitrix\Sale\BusinessValue::getConsumers();
 						if (!isset($consumers['PAYSYSTEM_'.$result->getId()]))
 							\Bitrix\Sale\BusinessValue::addConsumer('PAYSYSTEM_'.$result->getId(), \Bitrix\Sale\PaySystem\Manager::getHandlerDescription($fields['ACTION_FILE']));
@@ -1030,7 +1029,7 @@ class CAllSalePaySystemAction
 				$fields['PARAMS'] = serialize($params);
 			}
 
-			$result = PaySystemActionTable::update($id, $fields);
+			$result = Sale\PaySystem\Manager::update($id, $fields);
 			if ($result->isSuccess())
 			{
 				if (array_key_exists('PARAMS', $fields))
@@ -1161,7 +1160,7 @@ class CAllSalePaySystemAction
 		if ($DB->TableExists('b_sale_pay_system_map') || $DB->TableExists('B_SALE_PAY_SYSTEM_MAP'))
 			return '';
 
-		$dbRes = \Bitrix\Sale\Internals\PaySystemActionTable::getList();
+		$dbRes = Sale\PaySystem\Manager::getList();
 		$oldActionFiles = self::getOldToNewHandlersMap();
 		$paySystems = array();
 		while ($paySystem = $dbRes->fetch())
@@ -1392,7 +1391,7 @@ class CAllSalePaySystemAction
 						$item['PARAMS'] = serialize($itemParams);
 						$itemId = $item['ID'];
 						unset($item['ID']);
-						\Bitrix\Sale\Internals\PaySystemActionTable::update($itemId, $item);
+						Sale\PaySystem\Manager::update($itemId, $item);
 					}
 				}
 			}
@@ -1522,7 +1521,7 @@ class CAllSalePaySystemAction
 		foreach ($mustDeleted as $items)
 		{
 			foreach ($items as $id)
-				PaySystemActionTable::delete($id);
+				Sale\PaySystem\Manager::delete($id);
 		}
 
 		/** DELIVERY2PAYSYSTEM */

@@ -228,4 +228,12 @@ abstract class Base
 	{
 		return $this->getPrice();
 	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getDisplayValue(): ?string
+	{
+		return is_null($this->value) ? null : (string)$this->value;
+	}
 }

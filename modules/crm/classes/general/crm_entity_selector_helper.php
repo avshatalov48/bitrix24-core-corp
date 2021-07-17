@@ -496,12 +496,7 @@ class CCrmEntitySelectorHelper
 				{
 					$result[$titleKey] = empty($arRes['TITLE']) ? $arRes['QUOTE_NUMBER'] : $arRes['QUOTE_NUMBER'].' - '.$arRes['TITLE'];
 
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', 'path_to_quote_show'),
-						array(
-							'quote_id' => $entityID
-						)
-					);
+					$result[$urlKey] = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Quote, $entityID);
 
 					$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
 					$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').$arRes['CONTACT_FULL_NAME'];

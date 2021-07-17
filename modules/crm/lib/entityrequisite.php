@@ -3,6 +3,8 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Requisite\EntityLink;
@@ -1673,7 +1675,9 @@ class EntityRequisite
 			'LIST_FILTER_LABEL' => array()
 		);
 
-		$langDbResult = \CLanguage::GetList();
+		$by = '';
+		$order = '';
+		$langDbResult = \CLanguage::GetList($by, $order);
 		while($lang = $langDbResult->Fetch())
 		{
 			$lid = $lang['LID'];
@@ -1885,14 +1889,6 @@ class EntityRequisite
 								{
 									$titlesByCountry[$countryId] = $phrases[$phraseId];
 								}
-								$titlesByCountry[$countryId] = (
-									$needConvertEncoding ?
-										Encoding::convertEncoding(
-											$phrases[$phraseId],
-											$sourceEncoding,
-											$targetEncoding
-										) : $phrases[$phraseId]
-								);
 							}
 						}
 					}
@@ -2325,14 +2321,9 @@ class EntityRequisite
 									{
 										if (isset($addressTypes[$addressTypeId]) && is_array($address))
 										{
-											$textValue = Format\RequisiteAddressFormatter::formatByCountry(
+											$textValue = AddressFormatter::getSingleInstance()->formatTextMultiline(
 												$address,
-												$presetCountryId,
-												array(
-													'SEPARATOR' => Format\AddressSeparator::NewLine,
-													'NL2BR' => false,
-													'TYPE_ID' => RequisiteAddress::Primary
-												)
+												RequisiteAddressFormatter::getFormatByCountryId($presetCountryId)
 											);
 											if (!empty($textValue))
 											{
@@ -2844,22 +2835,22 @@ class EntityRequisite
 	{
 		$result = '';
 		$typeId = (int)$typeId;
-		$fieldName = $this->resolveFieldNameByAddressType($typeId);
+		$prefix = $this->resolveFieldNameByAddressType($typeId);
 
-		if (!empty($fieldName))
+		if (!empty($prefix))
 		{
-			return Format\EntityAddressFormatter::format(
-				array(
-					'ADDRESS_1' => isset($fields[$fieldName.'_ADDRESS']) ? $fields[$fieldName.'_ADDRESS'] : '',
-					'ADDRESS_2' => isset($fields[$fieldName.'_ADDRESS_2']) ? $fields[$fieldName.'_ADDRESS_2'] : '',
-					'CITY' => isset($fields[$fieldName.'_CITY']) ? $fields[$fieldName.'_CITY'] : '',
-					'POSTAL_CODE' => isset($fields[$fieldName.'_POSTAL_CODE']) ? $fields[$fieldName.'_POSTAL_CODE'] : '',
-					'REGION' => isset($fields[$fieldName.'_REGION']) ? $fields[$fieldName.'_REGION'] : '',
-					'PROVINCE' => isset($fields[$fieldName.'_PROVINCE']) ? $fields[$fieldName.'_PROVINCE'] : '',
-					'COUNTRY' => isset($fields[$fieldName.'_COUNTRY']) ? $fields[$fieldName.'_COUNTRY'] : '',
-					'COUNTRY_CODE' => isset($fields[$fieldName.'_COUNTRY_CODE']) ? $fields[$fieldName.'_COUNTRY_CODE'] : '',
-					'LOC_ADDR_ID' => isset($fields[$fieldName.'_LOC_ADDR_ID']) ? (int)$fields[$fieldName.'_LOC_ADDR_ID'] : 0
-				)
+			return AddressFormatter::getSingleInstance()->formatTextComma(
+				[
+					'ADDRESS_1' => isset($fields[$prefix.'_ADDRESS']) ? $fields[$prefix.'_ADDRESS'] : '',
+					'ADDRESS_2' => isset($fields[$prefix.'_ADDRESS_2']) ? $fields[$prefix.'_ADDRESS_2'] : '',
+					'CITY' => isset($fields[$prefix.'_CITY']) ? $fields[$prefix.'_CITY'] : '',
+					'POSTAL_CODE' => isset($fields[$prefix.'_POSTAL_CODE']) ? $fields[$prefix.'_POSTAL_CODE'] : '',
+					'REGION' => isset($fields[$prefix.'_REGION']) ? $fields[$prefix.'_REGION'] : '',
+					'PROVINCE' => isset($fields[$prefix.'_PROVINCE']) ? $fields[$prefix.'_PROVINCE'] : '',
+					'COUNTRY' => isset($fields[$prefix.'_COUNTRY']) ? $fields[$prefix.'_COUNTRY'] : '',
+					'COUNTRY_CODE' => isset($fields[$prefix.'_COUNTRY_CODE']) ? $fields[$prefix.'_COUNTRY_CODE'] : '',
+					'LOC_ADDR_ID' => isset($fields[$prefix.'_LOC_ADDR_ID']) ? (int)$fields[$prefix.'_LOC_ADDR_ID'] : 0
+				]
 			);
 		}
 
@@ -5114,16 +5105,25 @@ class EntityRequisite
 										{
 											if (!empty($exportMode))
 											{
-												$addressValue = Format\RequisiteAddressFormatter::formatByCountry(
-													$addressData,
-													$fieldCountryId,
-													array(
-														'SEPARATOR' => Format\AddressSeparator::NewLine,
-														'NL2BR' => false,
-														'TYPE_ID' => RequisiteAddress::Primary,
-														'HTML_ENCODE' => ($exportMode === 'excel')
-													)
+												$formatter = AddressFormatter::getSingleInstance();
+												$formatId = RequisiteAddressFormatter::getFormatByCountryId(
+													$fieldCountryId
 												);
+												if ($exportMode === 'excel')
+												{
+													$addressValue = $formatter->formatTextMultilineSpecialchar(
+														$addressData,
+														$formatId
+													);
+												}
+												else
+												{
+													$addressValue = $formatter->formatTextMultiline(
+														$addressData,
+														$formatId
+													);
+												}
+												unset($formatter);
 
 												if ($valueIsSet)
 												{
@@ -5142,18 +5142,14 @@ class EntityRequisite
 											}
 											else
 											{
+												$formatter = AddressFormatter::getSingleInstance();
 												$addressValue = nl2br(
-													Format\RequisiteAddressFormatter::formatByCountry(
+													$formatter->formatHtmlMultilineSpecialchar(
 														$addressData,
-														$fieldCountryId,
-														array(
-															'SEPARATOR' => Format\AddressSeparator::HtmlLineBreak,
-															'NL2BR' => false,
-															'TYPE_ID' => RequisiteAddress::Primary,
-															'HTML_ENCODE' => true
-														)
+														RequisiteAddressFormatter::getFormatByCountryId($fieldCountryId)
 													)
 												);
+												unset($formatter);
 												if ($addressValue !== '')
 												{
 													$typeId = $addressData['TYPE_ID'] ?? 0;
@@ -5837,16 +5833,17 @@ class EntityRequisite
 					foreach ($requisiteFields[EntityRequisite::ADDRESS] as $addressTypeId => $address)
 					{
 						// format full address
-						$fullAddressValue = Format\RequisiteAddressFormatter::formatByCountry(
-							$address,
-							$countryId,
-							array(
-								'SEPARATOR' => Format\AddressSeparator::NewLine,
-								'NL2BR' => false,
-								'TYPE_ID' => RequisiteAddress::Primary,
-								'HTML_ENCODE' => ($exportType === 'excel')
-							)
-						);
+                        $formatter = AddressFormatter::getSingleInstance();
+                        $formatId = RequisiteAddressFormatter::getFormatByCountryId($countryId);
+                        if ($exportType === 'excel')
+                        {
+                            $fullAddressValue = $formatter->formatTextMultilineSpecialchar($address, $formatId);
+                        }
+                        else
+                        {
+                            $fullAddressValue = $formatter->formatTextMultiline($address, $formatId);
+                        }
+                        unset($formatter, $formatId);
 						$element = array(
 							EntityRequisite::ADDRESS.'_TYPE' => isset($addressTypes[$addressTypeId]) ?
 								$addressTypes[$addressTypeId] : $addressTypeId,

@@ -16,6 +16,7 @@ use Bitrix\Tasks\Integration\Pull;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
@@ -304,6 +305,11 @@ final class Task extends \Bitrix\Tasks\Item
 				FavoriteTable::add(['TASK_ID' => $taskId, 'USER_ID' => $userId], ['CHECK_EXISTENCE' => false]);
 			}
 
+			if ($groupId)
+			{
+				ProjectLastActivityTable::update($groupId, ['ACTIVITY_DATE' => $fullTaskData['ACTIVITY_DATE']]);
+			}
+
 			// note that setting occur as is deprecated. use access checker switch off instead
 			$occurAsUserId = (User::getOccurAsId() ?: $userId);
 
@@ -318,7 +324,7 @@ final class Task extends \Bitrix\Tasks\Item
 			}
 
 			Counter\CounterService::addEvent(
-				Counter\CounterDictionary::EVENT_AFTER_TASK_ADD,
+				Counter\Event\EventDictionary::EVENT_AFTER_TASK_ADD,
 				$data
 			);
 

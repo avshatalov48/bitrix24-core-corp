@@ -81,7 +81,7 @@ export class Decomposition extends EventEmitter
 		Dom.insertAfter(button, this.input.getNode());
 
 		Event.bind(button.querySelector('button'), 'click', () => {
-			if (this.isBacklogDecomposition() && this.firstDecomposition() && !item.isLinkedTask())
+			if (this.isBacklogDecomposition() && this.isFirstDecomposition() && !item.isLinkedTask())
 			{
 				item.setBorderColor();
 			}
@@ -120,7 +120,7 @@ export class Decomposition extends EventEmitter
 			const subTasks = this.getSubTasks(parentItem);
 			if (subTasks.length)
 			{
-				const lastSubTask = (this.firstDecomposition() ? subTasks[0] : subTasks.pop());
+				const lastSubTask = (this.isFirstDecomposition() ? subTasks[0] : subTasks.pop());
 
 				return lastSubTask.getItemNode();
 			}
@@ -196,7 +196,7 @@ export class Decomposition extends EventEmitter
 					const parentItem = this.getParentItem();
 					if (this.isBacklogDecomposition())
 					{
-						if (this.firstDecomposition() && !parentItem.isLinkedTask())
+						if (this.isFirstDecomposition() && !parentItem.isLinkedTask())
 						{
 							this.emit('updateParentItem', {
 								itemId: parentItem.getItemId(),
@@ -214,7 +214,7 @@ export class Decomposition extends EventEmitter
 		}
 	}
 
-	firstDecomposition(): boolean
+	isFirstDecomposition(): boolean
 	{
 		return (this.items.size === 1);
 	}

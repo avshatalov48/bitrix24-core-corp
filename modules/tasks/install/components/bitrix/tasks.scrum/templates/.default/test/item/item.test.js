@@ -24,7 +24,6 @@ describe('Tasks.Scrum.Item', () => {
 			assert(item.getEntityType() === itemParams.entityType);
 			assert(item.getParentId() === itemParams.parentId);
 			assert(item.getSourceId() === itemParams.sourceId);
-			assert(item.getParentSourceId() === itemParams.parentSourceId);
 			assert(item.getResponsible() === itemParams.responsible);
 			assert(item.getStoryPoints().getPoints() === itemParams.storyPoints);
 

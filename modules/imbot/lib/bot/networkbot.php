@@ -20,16 +20,13 @@ interface NetworkBot extends ChatBot
 	public static function unRegister($code = '', $notifyController = true);
 
 	/**
-	 * Returns OL code.
+	 * Event handler on answer add.
+	 * Alias for @see \Bitrix\Imbot\Bot\ChatBot::onAnswerAdd
 	 *
-	 * @return string
-	 */
-	public static function getBotCode();
-
-	/**
-	 * Is bot enabled.
+	 * @param string $command Text command alias.
+	 * @param array $params Command arguments.
 	 *
-	 * @return bool
+	 * @return \Bitrix\ImBot\Error|array
 	 */
-	public static function isEnabled();
+	public static function onReceiveCommand($command, $params);
 }

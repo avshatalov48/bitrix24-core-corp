@@ -1,4 +1,8 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+};
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -10,6 +14,8 @@ use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Integration\Calendar\ApiVersion;
 use Bitrix\Main\Web\Json;
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css');
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
@@ -23,6 +29,7 @@ $extensionsList = [
 	'videorecorder',
 	'ui.entity-selector',
 	'ui.buttons',
+	'ui.alerts',
 	'ui_date',
 	'ui.notification'
 ];
@@ -430,7 +437,8 @@ HTML;
 			ajaxUrl : '<?=CUtil::JSEscape(htmlspecialcharsBack(POST_FORM_ACTION_URI))?>',
 			container: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('full".$jsObjName."')" : "false")?>,
 			containerMicro: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('micro".$jsObjName."')" : "false")?>,
-			containerMicroInner: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('micro".$jsObjName."_inner')" : "false")?>
+			containerMicroInner: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('micro".$jsObjName."_inner')" : "false")?>,
+			successPostId: <?= (int)$request->get('successPostId') ?>,
 		});
 	</script><?
 
@@ -1027,6 +1035,8 @@ HTML;
 						"CLEAR_CANCEL" => "Y",
 					];
 				}
+
+				?><div class="feed-add-post-bottom-alert" id="feed-add-post-bottom-alert<?= $arParams['FORM_ID'] ?>"></div><?
 
 				?><div class="feed-buttons-block" id="feed-add-buttons-block<?=$arParams["FORM_ID"]?>" style="display:none;"><?
 					$scriptFunc = [];

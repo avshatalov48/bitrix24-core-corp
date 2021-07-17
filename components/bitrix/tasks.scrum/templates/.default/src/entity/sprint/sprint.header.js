@@ -114,8 +114,7 @@ export class SprintHeader extends EventEmitter
 		return Tag.render`
 			<div class="tasks-scrum-sprint-header-params">
 				${this.renderStatsHeader()}
-				${this.sprintDate ? this.sprintDate.createDate(
-				this.sprint.getDateStart(), this.sprint.getDateEnd()) : ''}
+				${this.sprintDate ? this.sprintDate.createDate() : ''}
 				${this.createButton()}
 				<div class="tasks-scrum-sprint-header-tick">
 					<div class="ui-btn ui-btn-sm ui-btn-light ${tickAngleClass}"></div>

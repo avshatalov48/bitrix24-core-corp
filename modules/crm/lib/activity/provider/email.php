@@ -104,7 +104,7 @@ class Email extends Activity\Provider\Base
 		return $result;
 	}
 
-	public static function onAfterAdd($activityFields)
+	public static function onAfterAdd($activityFields, array $params = null)
 	{
 		//region Mark incoming email as completed when reply message was sent.
 		$direction = isset($activityFields['DIRECTION']) ? (int)$activityFields['DIRECTION'] : \CCrmActivityDirection::Undefined;

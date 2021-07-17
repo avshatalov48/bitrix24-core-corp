@@ -3,8 +3,11 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Sale;
 use Bitrix\Main;
+use Bitrix\Sale\TradingPlatform\Landing\Landing;
+use Bitrix\Crm\Activity;
 
 if (!Main\Loader::includeModule('sale'))
 {
@@ -17,8 +20,6 @@ if (!Main\Loader::includeModule('sale'))
  */
 class Payment extends Sale\Payment
 {
-	private const STATUS_CODE_ERROR = 'ERROR';
-
 	/**
 	 * @param $isNew
 	 * @throws Main\ArgumentException
@@ -29,6 +30,7 @@ class Payment extends Sale\Payment
 		if ($isNew)
 		{
 			$this->addTimelineEntryOnCreate();
+			$this->setPaymentStageOnCreate();
 		}
 		elseif ($this->fields->isChanged('SUM') || $this->fields->isChanged('CURRENCY') )
 		{
@@ -45,21 +47,27 @@ class Payment extends Sale\Payment
 				);
 			}
 
-			if (!$this->getOrder()->isNew())
+			if (!$isNew && !$this->getOrder()->isNew())
 			{
 				$timelineParams =  [
 					'FIELDS' => $this->getFieldValues(),
 					'SETTINGS' => [
-						'CHANGED_ENTITY' => \CCrmOwnerType::OrderPaymentName,
 						'FIELDS' => [
 							'ORDER_PAID' => $this->getField('PAID'),
 							'ORDER_DONE' => 'N'
 						]
 					],
-					'BINDINGS' => $this->getTimelineBindings()
+					'BINDINGS' => $this->getTimelineBindings(),
+					'ENTITY' => $this,
 				];
 
 				Crm\Timeline\OrderPaymentController::getInstance()->onPaid($this->getId(), $timelineParams);
+				$this->updatePaymentStage();
+			}
+
+			if ($this->isPaid())
+			{
+				$this->sendOrderPaidSmsToClient();
 			}
 		}
 
@@ -155,40 +163,102 @@ class Payment extends Sale\Payment
 		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
 		{
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderPayment, $this->getId());
+			Crm\Binding\OrderPaymentStageTable::delete($this->getId());
 		}
 
 		return $deleteResult;
 	}
 
-	/**
-	 * @param Main\Event $event
-	 * @throws Main\ArgumentException
-	 * @noinspection PhpUnused
-	 */
-	public static function onSalePsInitiatePayError(Main\Event $event): void
+	private function sendOrderPaidSmsToClient(): void
 	{
-		/** @var Payment $payment */
-		$payment = $event->getParameter('payment');
-		if (!($payment instanceof self))
+		if (!Main\Loader::includeModule('landing'))
 		{
 			return;
 		}
 
-		$errors = $event->getParameter('errors');
+		$order = $this->getOrder();
 
-		$timelineParams =  [
-			'FIELDS' => $payment->getFieldValues(),
-			'SETTINGS' => [
-				'CHANGED_ENTITY' => \CCrmOwnerType::OrderPaymentName,
-				'FIELDS' => [
-					'PAY_SYSTEM_NAME' => $payment->getPaymentSystemName(),
-					'STATUS_CODE' => self::STATUS_CODE_ERROR,
-					'STATUS_DESCRIPTION' => implode("\n", $errors),
+		/** @var Contact|Company|null $entityCommunication */
+		$entityCommunication = $order->getEntityCommunication();
+		$phoneTo = $order->getEntityCommunicationPhone();
+
+		if (
+			$order->getTradeBindingCollection()->hasTradingPlatform(
+				Landing::TRADING_PLATFORM_CODE,
+				Landing::LANDING_STORE_STORE_V3
+			)
+			&& $entityCommunication
+			&& $phoneTo
+		)
+		{
+			Crm\MessageSender\MessageSender::send(
+				[
+					Crm\Integration\NotificationsManager::getSenderCode() => [
+						'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+						'TEMPLATE_CODE' => 'ORDER_PAID',
+						'PLACEHOLDERS' => [
+							'NAME' => $entityCommunication->getCustomerName(),
+						],
+					],
+					Crm\Integration\SmsManager::getSenderCode() => [
+						'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+						'MESSAGE_BODY' => Main\Localization\Loc::getMessage(
+							'CRM_PAYMENT_ORDER_PAID',
+							[
+								'#CUSTOMER_NAME#' => $entityCommunication->getCustomerName()
+							]
+						),
+					]
+				],
+				[
+					'COMMON_OPTIONS' => [
+						'PHONE_NUMBER' => $phoneTo,
+						'USER_ID' => $order->getField('RESPONSIBLE_ID'),
+						'ADDITIONAL_FIELDS' => [
+							'ENTITY_TYPE' => $entityCommunication::getEntityTypeName(),
+							'ENTITY_TYPE_ID' => $entityCommunication::getEntityType(),
+							'ENTITY_ID' => $entityCommunication->getField('ENTITY_ID'),
+							'BINDINGS' => Crm\Order\BindingsMaker\ActivityBindingsMaker::makeByPayment(
+								$this,
+								[
+									'extraBindings' => [
+										[
+											'TYPE_ID' => $entityCommunication::getEntityType(),
+											'ID' => $entityCommunication->getField('ENTITY_ID')
+										]
+									]
+								]
+							),
+						]
+					]
 				]
-			],
-			'BINDINGS' => $payment->getTimelineBindings()
-		];
+			);
+		}
+	}
 
-		Crm\Timeline\OrderPaymentController::getInstance()->onPaid($payment->getId(), $timelineParams);
+	private function setPaymentStageOnCreate()
+	{
+		$paymentId = (int)$this->getId();
+		$stage = $this->isPaid() ? PaymentStage::PAID : PaymentStage::NOT_PAID;
+		Crm\Binding\OrderPaymentStageTable::setStage($paymentId, $stage);
+	}
+
+	private function updatePaymentStage()
+	{
+		$paymentId = (int)$this->getId();
+		if ($this->isPaid())
+		{
+			$stage = PaymentStage::PAID;
+		}
+		elseif ($this->isReturn())
+		{
+			$stage = PaymentStage::REFUND;
+		}
+		else
+		{
+			$stage = PaymentStage::CANCEL;
+		}
+
+		Crm\Binding\OrderPaymentStageTable::setStage($paymentId, $stage);
 	}
 }

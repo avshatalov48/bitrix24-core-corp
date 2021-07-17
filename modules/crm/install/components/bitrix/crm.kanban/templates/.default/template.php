@@ -367,4 +367,6 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 			}
 		);
 	</script>
+<?elseif ($arParams['ENTITY_TYPE_CHR'] === 'DEAL'):?>
+	<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
 <?endif;

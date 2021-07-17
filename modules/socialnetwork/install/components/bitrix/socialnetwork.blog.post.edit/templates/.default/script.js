@@ -140,13 +140,22 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        this.container = main_core.Type.isDomNode(params.container) ? params.container : null;
 	        this.containerMicro = main_core.Type.isDomNode(params.containerMicro) ? params.containerMicro : null;
 	        this.containerMicroInner = main_core.Type.isDomNode(params.containerMicroInner) ? params.containerMicroInner : null;
+	        this.successPostId = !main_core.Type.isUndefined(params.successPostId) && parseInt(params.successPostId) > 0 ? parseInt(params.successPostId) : 0;
 	      }
 
 	      var sliderInstance = BX.SidePanel.Instance.getTopSlider();
 
-	      if (sliderInstance && !sliderInstance.getData().get('initialized')) {
-	        main_core_events.EventEmitter.subscribe(sliderInstance, 'SidePanel.Slider:onClose', this.onSliderClose);
-	        sliderInstance.getData().set('initialized', true);
+	      if (sliderInstance) {
+	        if (this.successPostId > 0) {
+	          BX.SidePanel.Instance.postMessage(window, 'Socialnetwork.PostForm:onAdd', {
+	            originatorSliderId: sliderInstance.getData().get('sliderId'),
+	            successPostId: this.successPostId
+	          });
+	          BX.SidePanel.Instance.close();
+	        } else if (!sliderInstance.getData().get('initialized')) {
+	          main_core_events.EventEmitter.subscribe(sliderInstance, 'BX.Socialnetwork.SidePanel.Slider:onClose', this.onSliderClose);
+	          sliderInstance.getData().set('initialized', true);
+	        }
 	      }
 	    }
 	  }, {
@@ -358,6 +367,19 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "clickDisabled", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tabContainer", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "arrow", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "config", {
+	      id: {
+	        message: 'message',
+	        task: 'tasks',
+	        calendar: 'calendar',
+	        file: 'file',
+	        gratitude: 'grat',
+	        important: 'important',
+	        vote: 'vote',
+	        more: 'more',
+	        listItem: 'lists'
+	      }
+	    });
 
 	    _this.setEventNamespace('BX.Socialnetwork.Livefeed.Post.Form.Tabs');
 
@@ -371,6 +393,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  babelHelpers.createClass(PostFormTabs, [{
 	    key: "init",
 	    value: function init() {
+	      var _this2 = this;
+
 	      this.tabContainer = document.getElementById('feed-add-post-form-tab');
 	      this.arrow = document.getElementById('feed-add-post-form-tab-arrow');
 	      this.tabs = {};
@@ -396,36 +420,36 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        }
 	      }
 
-	      if (!!this.tabs['file']) {
-	        this.bodies['file'] = [this.bodies['message']];
+	      if (!!this.tabs[this.config.id.file]) {
+	        this.bodies[this.config.id.file] = [this.bodies[this.config.id.message]];
 	      }
 
-	      if (!!this.tabs['calendar']) {
-	        this.bodies['calendar'] = [this.bodies['calendar']];
+	      if (!!this.tabs[this.config.id.calendar]) {
+	        this.bodies[this.config.id.calendar] = [this.bodies[this.config.id.calendar]];
 	      }
 
-	      if (!!this.tabs['vote']) {
-	        this.bodies['vote'] = [this.bodies['message'], this.bodies['vote']];
+	      if (!!this.tabs[this.config.id.vote]) {
+	        this.bodies[this.config.id.vote] = [this.bodies[this.config.id.message], this.bodies[this.config.id.vote]];
 	      }
 
-	      if (!!this.tabs['more']) {
-	        this.bodies['more'] = null;
+	      if (!!this.tabs[this.config.id.more]) {
+	        this.bodies[this.config.id.more] = null;
 	      }
 
-	      if (!!this.tabs['important']) {
-	        this.bodies['important'] = [this.bodies['message'], this.bodies['important']];
+	      if (!!this.tabs[this.config.id.important]) {
+	        this.bodies[this.config.id.important] = [this.bodies[this.config.id.message], this.bodies[this.config.id.important]];
 	      }
 
-	      if (!!this.tabs['grat']) {
-	        this.bodies['grat'] = [this.bodies['message'], this.bodies['grat']];
+	      if (!!this.tabs[this.config.id.gratitude]) {
+	        this.bodies[this.config.id.gratitude] = [this.bodies[this.config.id.message], this.bodies[this.config.id.gratitude]];
 	      }
 
-	      if (!!this.tabs['lists']) {
-	        this.bodies['lists'] = [this.bodies['lists']];
+	      if (!!this.tabs[this.config.id.listItem]) {
+	        this.bodies[this.config.id.listItem] = [this.bodies[this.config.id.listItem]];
 	      }
 
-	      if (!!this.tabs['tasks']) {
-	        this.bodies['tasks'] = [this.bodies['tasks']];
+	      if (!!this.tabs[this.config.id.task]) {
+	        this.bodies[this.config.id.task] = [this.bodies[this.config.id.task]];
 	      }
 
 	      for (var ii in this.bodies) {
@@ -465,31 +489,31 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        var _event$getData = event.getData(),
 	            type = _event$getData.type;
 
-	        if (type === 'more') {
+	        if (type === _this2.config.id.more) {
 	          return;
 	        }
 
 	        form.changePostFormTab.value = type;
 
 	        if (form['UF_BLOG_POST_IMPRTNT']) {
-	          form['UF_BLOG_POST_IMPRTNT'].value = type === 'important' ? '1' : '0';
+	          form['UF_BLOG_POST_IMPRTNT'].value = type === _this2.config.id.important ? '1' : '0';
 	        }
 	      });
 	    }
 	  }, {
 	    key: "createOnClick",
 	    value: function createOnClick(id, name, onclick) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      return function () {
 	        var btn = document.getElementById('feed-add-post-form-link-more');
 	        var btnText = document.getElementById('feed-add-post-form-link-text');
 	        btnText.innerHTML = name;
 
-	        if (id !== 'lists') {
+	        if (id !== _this3.config.id.listItem) {
 	          btn.className = "feed-add-post-form-link feed-add-post-form-link-more feed-add-post-form-link-active feed-add-post-form-".concat(id, "-link");
 
-	          _this2.changePostFormTab(id);
+	          _this3.changePostFormTab(id);
 	        } else {
 	          btn.className = "feed-add-post-form-link feed-add-post-form-link-more feed-add-post-form-".concat(id, "-link");
 	        }
@@ -498,7 +522,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          BX.evalGlobal(onclick);
 	        }
 
-	        _this2.menu.popupWindow.close();
+	        _this3.menu.popupWindow.close();
 	      };
 	    }
 	  }, {
@@ -513,15 +537,15 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "setActive",
 	    value: function setActive(type, iblock) {
-	      var _this3 = this;
+	      var _this4 = this;
 
-	      if (main_core.Type.isNull(type) || this.active === type && type !== 'lists') {
+	      if (main_core.Type.isNull(type) || this.active === type && type !== this.config.id.listItem) {
 	        return this.active;
 	      } else if (!this.tabs[type]) {
 	        return false;
 	      }
 
-	      var needAnimation = type !== 'tasks' || this.isTaskTabLoaded();
+	      var needAnimation = type !== this.config.id.task || this.isTaskTabLoaded();
 
 	      if (needAnimation) {
 	        this.startAnimation();
@@ -566,17 +590,17 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          },
 	          transition: BX.easing.makeEaseInOut(BX.easing.transitions.quart),
 	          step: function step(state) {
-	            _this3.arrow.style.left = "".concat(state.left, "px");
-	            _this3.arrow.style.width = "".concat(state.width, "px");
+	            _this4.arrow.style.left = "".concat(state.left, "px");
+	            _this4.arrow.style.width = "".concat(state.width, "px");
 	          },
 	          complete: function complete() {
-	            _this3.arrow.style.display = 'none';
+	            _this4.arrow.style.display = 'none';
 
-	            _this3.tabs[type].classList.add('feed-add-post-form-link-active');
+	            _this4.tabs[type].classList.add('feed-add-post-form-link-active');
 	          }
 	        }).animate();
 
-	        if (this.previousTab === 'file' || type === 'file') {
+	        if (this.previousTab === this.config.id.file || type === this.config.id.file) {
 	          var hasValuesFile = false;
 	          var hasValuesDocs = false;
 	          var messageBody = document.getElementById('divoPostFormLHE_blogPostForm');
@@ -602,13 +626,13 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	              } else if (main_core.Type.isDomNode(messageBody.childNodes[_ii]) && messageBody.childNodes[_ii].classList && !messageBody.childNodes[_ii].classList.contains('urlpreview') && !messageBody.childNodes[_ii].classList.contains('feed-add-post-strings-blocks')) {
 	                main_core.Dom.adjust(messageBody.childNodes[_ii], {
 	                  style: {
-	                    display: type === 'file' ? 'none' : ''
+	                    display: type === this.config.id.file ? 'none' : ''
 	                  }
 	                });
 	              }
 	            }
 
-	            if (type === 'file') {
+	            if (type === this.config.id.file) {
 	              if (!!window['PlEditorblogPostForm'] && !window['PlEditorblogPostForm'].SBPEBinded) {
 	                window['PlEditorblogPostForm'].SBPEBinded = true;
 	                main_core_events.EventEmitter.subscribe(window["PlEditorblogPostForm"].eventNode, 'onUploadsHasBeenChanged', function (event) {
@@ -620,8 +644,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 
 	                  document.getElementById('bx-b-uploadfile-blogPostForm').setAttribute('bx-press', 'pressOn');
 
-	                  if (_this3.active !== 'file') {
-	                    _this3.changePostFormTab('message');
+	                  if (_this4.active !== _this4.config.id.file) {
+	                    _this4.changePostFormTab(_this4.config.id.message);
 	                  }
 	                });
 	              }
@@ -646,7 +670,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          }));
 	        }
 
-	        if (type === 'lists') {
+	        if (type === this.config.id.listItem) {
 	          main_core_events.EventEmitter.emit('onDisplayClaimLiveFeed', new main_core_events.BaseEvent({
 	            compatData: [iblock]
 	          }));
@@ -671,7 +695,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        this.endAnimation();
 	      }
 
-	      if (type != 'lists') {
+	      if (type !== this.config.id.listItem) {
 	        this.restoreMoreMenu();
 	      }
 
@@ -761,7 +785,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "endAnimation",
 	    value: function endAnimation() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var container = document.getElementById('microblog-form');
 
@@ -787,7 +811,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        complete: function complete() {
 	          container.style.cssText = '';
 	          container.parentNode.style.cssText = '';
-	          _this4.animation = null;
+	          _this5.animation = null;
 	        }
 	      });
 	      this.animation.animate();
@@ -830,7 +854,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "getTaskForm",
 	    value: function getTaskForm() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var tabContainer = document.getElementById('feed-add-post-form-tab-tasks') && document.getElementById('feed-add-post-form-tab-tasks').style.display !== 'none' ? document.getElementById('feed-add-post-form-tab-tasks') : document.getElementById('feed-add-post-form-link-more');
 	      var content = document.getElementById('feed-add-post-content-tasks');
@@ -870,24 +894,24 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            });
 	            return true;
 	          } else {
-	            _this5.closeWait(contentContainer);
+	            _this6.closeWait(contentContainer);
 
-	            _this5.endAnimation();
+	            _this6.endAnimation();
 
 	            throw new Error();
 	          }
 	        }, function (reason) {
-	          _this5.closeWait(contentContainer);
+	          _this6.closeWait(contentContainer);
 
-	          _this5.endAnimation();
+	          _this6.endAnimation();
 
 	          throw new Error();
 	        }).then(function () {
-	          _this5.clickDisabled = false;
+	          _this6.clickDisabled = false;
 
-	          _this5.closeWait(contentContainer);
+	          _this6.closeWait(contentContainer);
 
-	          _this5.endAnimation();
+	          _this6.endAnimation();
 
 	          main_core_events.EventEmitter.emit(document.getElementById('divlivefeed_task_form'), 'OnShowLHE', new main_core_events.BaseEvent({
 	            compatData: ['justShow']
@@ -924,7 +948,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "getLists",
 	    value: function getLists() {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var tabContainer = document.getElementById('feed-add-post-form-tab-lists') && document.getElementById('feed-add-post-form-tab-lists').style.display !== 'none' ? document.getElementById('feed-add-post-form-tab-lists') : document.getElementById('feed-add-post-form-link-more');
 	      var tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists');
@@ -980,7 +1004,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	              }
 
 	              tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists');
-	              menuItemsLists = _this6.getMenuItems(tabs, _this6.createOnclickLists);
+	              menuItemsLists = _this7.getMenuItems(tabs, _this7.createOnclickLists);
 
 	              if (!tabsDefault.length) {
 	                for (var _k in result.permissions) {
@@ -1024,10 +1048,10 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	                tabsDefault = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists-default');
 	              }
 
-	              menuItemsListsDefault = _this6.getMenuItemsDefault(tabsDefault);
+	              menuItemsListsDefault = _this7.getMenuItemsDefault(tabsDefault);
 	              menuItemsLists = menuItemsLists.concat(menuItemsListsDefault);
 
-	              _this6.showMoreMenuLists(menuItemsLists);
+	              _this7.showMoreMenuLists(menuItemsLists);
 	            } else {
 	              tabContainer.appendChild(main_core.Dom.create('span', {
 	                attrs: {
@@ -1043,9 +1067,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	                }
 	              }));
 	              tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists-default');
-	              menuItemsLists = _this6.getMenuItems(tabs, false);
+	              menuItemsLists = _this7.getMenuItems(tabs, false);
 
-	              _this6.showMoreMenuLists(menuItemsLists);
+	              _this7.showMoreMenuLists(menuItemsLists);
 	            }
 	          }
 	        });
@@ -1312,23 +1336,50 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  return PostFormDateEnd;
 	}();
 
-	var PostFormGratSelector = /*#__PURE__*/function () {
+	var PostFormGratSelector = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(PostFormGratSelector, _EventEmitter);
+	  babelHelpers.createClass(PostFormGratSelector, null, [{
+	    key: "setInstance",
+	    value: function setInstance(instance) {
+	      PostFormGratSelector.instance = instance;
+	    }
+	  }, {
+	    key: "getInstance",
+	    value: function getInstance() {
+	      return PostFormGratSelector.instance;
+	    }
+	  }]);
+
 	  function PostFormGratSelector(params) {
+	    var _this;
+
 	    babelHelpers.classCallCheck(this, PostFormGratSelector);
-	    babelHelpers.defineProperty(this, "popupWindow", null);
-	    babelHelpers.defineProperty(this, "sendEvent", true);
-	    babelHelpers.defineProperty(this, "gratsContentElement", null);
-	    babelHelpers.defineProperty(this, "itemSelectedImageItem", {});
-	    babelHelpers.defineProperty(this, "itemSelectedInput", {});
-	    babelHelpers.defineProperty(this, "gratsList", {});
-	    babelHelpers.defineProperty(this, "selector", null);
-	    this.init(params);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PostFormGratSelector).call(this));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "popupWindow", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "sendEvent", true);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "gratsContentElement", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "itemSelectedImageItem", {});
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "itemSelectedInput", {});
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "gratsList", {});
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "selector", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "config", {
+	      fields: {
+	        employeesValue: {
+	          name: 'GRAT_DEST_DATA'
+	        }
+	      }
+	    });
+
+	    _this.init(params);
+
+	    PostFormGratSelector.setInstance(babelHelpers.assertThisInitialized(_this));
+	    return _this;
 	  }
 
 	  babelHelpers.createClass(PostFormGratSelector, [{
 	    key: "init",
 	    value: function init(params) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      if (!params.name) {
 	        params.name = 'lm';
@@ -1338,7 +1389,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	      this.itemSelectedInput[params.name] = params.itemSelectedInput;
 	      this.gratsList[params.name] = params.gratsList;
 	      this.itemSelectedImageItem[params.name].addEventListener('click', function (e) {
-	        _this.openDialog(params.name);
+	        _this2.openDialog(params.name);
 
 	        e.preventDefault();
 	      });
@@ -1347,7 +1398,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "openDialog",
 	    value: function openDialog(name) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      if (!name) {
 	        name = 'lm';
@@ -1374,7 +1425,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            click: function click(e) {
 	              var node = e.currentTarget;
 
-	              _this2.selectItem(name, node.getAttribute('data-code'), node.getAttribute('data-style'), node.getAttribute('data-title'));
+	              _this3.selectItem(name, node.getAttribute('data-code'), node.getAttribute('data-style'), node.getAttribute('data-title'));
 
 	              e.preventDefault();
 	            }
@@ -1427,10 +1478,10 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        },
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            _this2.popupWindow.destroy();
+	            _this3.popupWindow.destroy();
 	          },
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this2.popupWindow = null;
+	            _this3.popupWindow = null;
 	          }
 	        },
 	        content: this.gratsContentElement,
@@ -1460,7 +1511,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "createEntitySelector",
 	    value: function createEntitySelector(params) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      this.selector = new ui_entitySelector.TagSelector({
 	        id: params.id,
@@ -1469,11 +1520,11 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          context: 'GRATITUDE',
 	          preselectedItems: main_core.Type.isArray(params.preselectedItems) ? params.preselectedItems : [],
 	          events: {
-	            'Item:onSelect': function ItemOnSelect() {
-	              _this3.recalcValue(_this3.selector.getDialog().getSelectedItems(), params.inputNodeId);
+	            'Item:onSelect': function ItemOnSelect(event) {
+	              _this4.recalcValue(event.getTarget().getSelectedItems(), params.inputNodeId);
 	            },
-	            'Item:onDeselect': function ItemOnDeselect() {
-	              _this3.recalcValue(_this3.selector.getDialog().getSelectedItems(), params.inputNodeId);
+	            'Item:onDeselect': function ItemOnDeselect(event) {
+	              _this4.recalcValue(event.getTarget().getSelectedItems(), params.inputNodeId);
 	            }
 	          },
 	          entities: [{
@@ -1494,6 +1545,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        addButtonCaptionMore: main_core.Loc.getMessage('BLOG_GRATMEDAL_1')
 	      });
 	      this.selector.renderTo(document.getElementById(params.tagNodeId));
+	      this.selector.subscribe('onContainerClick', function () {
+	        _this4.emit('Selector::onContainerClick');
+	      });
 	    }
 	  }, {
 	    key: "recalcValue",
@@ -1510,9 +1564,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    }
 	  }]);
 	  return PostFormGratSelector;
-	}();
+	}(main_core_events.EventEmitter);
 
-	var PostFormEditor = /*#__PURE__*/function () {
+	babelHelpers.defineProperty(PostFormGratSelector, "instance", null);
+
+	var PostFormEditor = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(PostFormEditor, _EventEmitter);
 	  babelHelpers.createClass(PostFormEditor, null, [{
 	    key: "setInstance",
 	    value: function setInstance(id, instance) {
@@ -1526,19 +1583,25 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }]);
 
 	  function PostFormEditor(formID, params) {
+	    var _this;
+
 	    babelHelpers.classCallCheck(this, PostFormEditor);
-	    babelHelpers.defineProperty(this, "disabled", false);
-	    babelHelpers.defineProperty(this, "formId", '');
-	    this.init(formID, params);
-	    PostFormEditor.setInstance(formID, this);
-	    window['setBlogPostFormSubmitted'] = this.setBlogPostFormSubmitted.bind(this);
-	    window['submitBlogPostForm'] = this.submitBlogPostForm.bind(this);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PostFormEditor).call(this));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "disabled", false);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "formId", '');
+
+	    _this.init(formID, params);
+
+	    PostFormEditor.setInstance(formID, babelHelpers.assertThisInitialized(_this));
+	    window['setBlogPostFormSubmitted'] = _this.setBlogPostFormSubmitted.bind(babelHelpers.assertThisInitialized(_this));
+	    window['submitBlogPostForm'] = _this.submitBlogPostForm.bind(babelHelpers.assertThisInitialized(_this));
+	    return _this;
 	  }
 
 	  babelHelpers.createClass(PostFormEditor, [{
 	    key: "init",
 	    value: function init(formID, params) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.disabled = false;
 	      this.formId = formID;
@@ -1558,7 +1621,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            obj = _event$getData2[0],
 	            form = _event$getData2[1];
 
-	        _this.onHandlerInited(obj, form);
+	        _this2.onHandlerInited(obj, form);
 	      });
 
 	      if (this.formParams.handler) {
@@ -1570,7 +1633,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 1),
 	            editor = _event$getData4[0];
 
-	        _this.onEditorInited.bind(editor);
+	        _this2.onEditorInited.bind(editor);
 	      });
 
 	      if (this.formParams.editor) {
@@ -1583,7 +1646,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            p = _event$getData6[0];
 
 	        if (p === 'sonet_log_microblog_container') {
-	          _this.reinit();
+	          _this2.reinit();
 	        }
 	      });
 	      main_core.Event.ready(function () {
@@ -1625,6 +1688,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 
 	        if (params.activeTab !== '') {
 	          PostFormTabs.getInstance().changePostFormTab(params.activeTab);
+	        }
+
+	        PostFormTabs.getInstance().subscribe('changePostFormTab', _this2.checkHideAlert.bind(_this2));
+
+	        if (PostFormGratSelector.getInstance()) {
+	          PostFormGratSelector.getInstance().subscribe('Selector::onContainerClick', _this2.hideAlert.bind(_this2));
 	        }
 	      });
 	    }
@@ -1688,7 +1757,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "submitBlogPostForm",
 	    value: function submitBlogPostForm(editor, value) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      if (this.disabled) {
 	        return;
@@ -1714,13 +1783,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          document.getElementById('POST_TITLE').value = '';
 	        }
 
-	        var submitButton = null;
-
-	        if (value === 'save' && document.getElementById('blog-submit-button-save')) {
-	          submitButton = document.getElementById('blog-submit-button-save');
-	        } else if (value === 'draft' && document.getElementById('blog-submit-button-draft')) {
-	          submitButton = document.getElementById('blog-submit-button-draft');
-	        }
+	        var submitButton = this.getSubmitButton({
+	          buttonType: value
+	        });
 
 	        if (submitButton) {
 	          submitButton.classList.add('ui-btn-clock');
@@ -1729,8 +1794,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	            // is called on every sumbit, with or without dialog
 	            setTimeout(function () {
 	              BX.removeClass(submitButton, 'ui-btn-clock');
-	              _this2.disabled = false;
-	              _this2.formParams.submitted = false;
+	              _this3.disabled = false;
+	              _this3.formParams.submitted = false;
 	            }, 3000); // timeout needed to process a form on a back-end
 	          });
 	        }
@@ -1747,9 +1812,92 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          document.getElementById(this.formId).action = actionUrl;
 	        }
 
+	        if (activeTab === PostFormTabs.getInstance().config.id.gratitude && PostFormGratSelector.getInstance()) {
+	          if (!this.checkEmployeesValue({
+	            buttonType: value
+	          })) {
+	            return;
+	          }
+	        }
+
 	        BX.submit(document.getElementById(this.formId), value);
 	        this.formParams.submitted = true;
 	      }
+	    }
+	  }, {
+	    key: "checkEmployeesValue",
+	    value: function checkEmployeesValue(_ref) {
+	      var buttonType = _ref.buttonType;
+	      var employeesValueNode = document.getElementById(this.formId).elements[PostFormGratSelector.getInstance().config.fields.employeesValue.name];
+
+	      if (!employeesValueNode || !main_core.Type.isStringFilled(employeesValueNode.value) || employeesValueNode.value === '[]') {
+	        var submitButton = this.getSubmitButton({
+	          buttonType: buttonType
+	        });
+
+	        if (submitButton) {
+	          submitButton.classList.remove('ui-btn-clock');
+	          this.disabled = false;
+	        }
+
+	        var alertNode = document.getElementById('feed-add-post-bottom-alertblogPostForm');
+
+	        if (alertNode) {
+	          main_core.Dom.clean(alertNode);
+	          alertNode.appendChild(main_core.Dom.create('div', {
+	            props: {
+	              className: 'ui-alert ui-alert-danger'
+	            },
+	            children: [main_core.Dom.create('span', {
+	              props: {
+	                className: 'ui-alert-message'
+	              },
+	              text: main_core.Loc.getMessage('BLOG_POST_EDIT_T_GRAT_ERROR_NO_EMPLOYEES')
+	            })]
+	          }));
+	        }
+
+	        return false;
+	      }
+
+	      return true;
+	    }
+	  }, {
+	    key: "checkHideAlert",
+	    value: function checkHideAlert(event) {
+	      var _event$getData7 = event.getData(),
+	          type = _event$getData7.type;
+
+	      if (type === PostFormTabs.getInstance().config.id.gratitude) {
+	        return;
+	      }
+
+	      this.hideAlert();
+	    }
+	  }, {
+	    key: "hideAlert",
+	    value: function hideAlert() {
+	      var alertNode = document.getElementById('feed-add-post-bottom-alertblogPostForm');
+
+	      if (!alertNode) {
+	        return;
+	      }
+
+	      main_core.Dom.clean(alertNode);
+	    }
+	  }, {
+	    key: "getSubmitButton",
+	    value: function getSubmitButton(_ref2) {
+	      var buttonType = _ref2.buttonType;
+	      var result = null;
+
+	      if (buttonType === 'save' && document.getElementById('blog-submit-button-save')) {
+	        result = document.getElementById('blog-submit-button-save');
+	      } else if (buttonType === 'draft' && document.getElementById('blog-submit-button-draft')) {
+	        result = document.getElementById('blog-submit-button-draft');
+	      }
+
+	      return result;
 	    }
 	  }, {
 	    key: "onHandlerInited",
@@ -1760,7 +1908,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 
 	      this.formParams.handler = obj;
 	      main_core_events.EventEmitter.subscribe(obj.eventNode, 'OnControlClick', function () {
-	        PostFormTabs.getInstance().changePostFormTab('message');
+	        PostFormTabs.getInstance().changePostFormTab(PostFormTabs.getInstance().config.id.message);
 	      });
 	      main_core_events.EventEmitter.subscribe(obj.eventNode, 'OnAfterShowLHE', this.OnAfterShowLHE.bind(this));
 	      main_core_events.EventEmitter.subscribe(obj.eventNode, 'OnAfterHideLHE', this.OnAfterHideLHE.bind(this));
@@ -1774,7 +1922,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "OnAfterShowLHE",
 	    value: function OnAfterShowLHE() {
-	      var div = [document.getElementById('feed-add-post-form-notice-blockblogPostForm'), document.getElementById('feed-add-buttons-blockblogPostForm'), document.getElementById('feed-add-post-content-message-add-ins')];
+	      var div = [document.getElementById('feed-add-post-form-notice-blockblogPostForm'), document.getElementById('feed-add-buttons-blockblogPostForm'), document.getElementById('feed-add-post-bottom-alertblogPostForm'), document.getElementById('feed-add-post-content-message-add-ins')];
 
 	      for (var ii = 0; ii < div.length; ii++) {
 	        if (!div[ii]) {
@@ -1798,7 +1946,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "OnAfterHideLHE",
 	    value: function OnAfterHideLHE() {
-	      var div = [document.getElementById('feed-add-post-form-notice-blockblogPostForm'), document.getElementById('feed-add-buttons-blockblogPostForm'), document.getElementById('feed-add-post-content-message-add-ins')];
+	      var div = [document.getElementById('feed-add-post-form-notice-blockblogPostForm'), document.getElementById('feed-add-buttons-blockblogPostForm'), document.getElementById('feed-add-post-bottom-alertblogPostForm'), document.getElementById('feed-add-post-content-message-add-ins')];
 
 	      for (var ii = 0; ii < div.length; ii++) {
 	        if (!div[ii]) {
@@ -1933,7 +2081,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    }
 	  }]);
 	  return PostFormEditor;
-	}();
+	}(main_core_events.EventEmitter);
 
 	babelHelpers.defineProperty(PostFormEditor, "instance", {});
 

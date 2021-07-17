@@ -68,7 +68,7 @@
 				params: {
 					id: site['ID'],
 					title: site['TITLE'],
-					url: site['PUBLIC_URL'].replace(/ /g, '%20')
+					url: site['PUBLIC_URL']
 				},
 				styles: {
 					image: {

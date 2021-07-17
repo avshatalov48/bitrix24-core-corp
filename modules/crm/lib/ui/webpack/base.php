@@ -4,6 +4,8 @@ namespace Bitrix\Crm\UI\Webpack;
 
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\WebPacker;
 
@@ -52,6 +54,8 @@ abstract class Base
 	private $configured = false;
 	private $fileConfigured = false;
 	private $hasRow = false;
+	/** @var DateTime|null */
+	private $builtDate;
 
 	/**
 	 * Rebuild all packs.
@@ -95,9 +99,15 @@ abstract class Base
 		$this->id = (int) $id;
 		$this->fileName = static::$type . '.js';
 
-		$row = Internals\WebpackTable::getByPrimary($this->getWebpackPrimary())->fetch();
+		$row = Internals\WebpackTable::getByPrimary(
+			$this->getWebpackPrimary(),
+			['select' => ['*', 'FILE_DATE_UPDATE']]
+		)
+			->fetch()
+		;
 		$this->fileId = $row ? (int) $row['FILE_ID'] : null;
 		$this->hasRow = $row ? true : false;
+		$this->builtDate = $row['FILE_DATE_UPDATE'] ?: null;
 
 		$this->controller = (new WebPacker\FileController());
 	}
@@ -302,11 +312,25 @@ abstract class Base
 	/**
 	 * Return true if it was built.
 	 *
+	 * @param Date $dateFrom Check if file date update is greater Date from parameter.
 	 * @return bool
 	 */
-	public function isBuilt()
+	public function isBuilt(Date $dateFrom = null)
 	{
-		return !empty($this->fileId);
+		if (!$this->fileId)
+		{
+			return false;
+		}
+
+		if (!$dateFrom)
+		{
+			return true;
+		}
+
+		return $this->builtDate
+			? $this->builtDate->getTimestamp() >= $dateFrom->getTimestamp()
+			: false
+		;
 	}
 
 	/**

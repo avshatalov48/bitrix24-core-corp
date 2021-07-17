@@ -10,4 +10,8 @@
 			location.hash = '#com' + urlCommentId;
 		}
 	}
+
+	BX.ready(function() {
+		BX.UI && BX.UI.Tooltip && BX.UI.Tooltip.disable();
+	});
 })();

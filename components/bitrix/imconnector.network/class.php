@@ -11,6 +11,7 @@ use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Connectors\Network;
 
+
 class ImConnectorNetwork extends \CBitrixComponent
 {
 	private $cacheId;

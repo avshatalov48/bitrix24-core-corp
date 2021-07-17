@@ -242,8 +242,15 @@ if(!empty($arResult["Post"]))
 		><?
 			?><div id="post_item_top_wrap_<?=(int)$arParams["LOG_ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?
 				?><div class="post-item-top" id="post_item_top_<?=(int)$arParams["LOG_ID"]?>"><?
-					$avatarId = "post_item_avatar_".(int)$arParams["LOG_ID"];
-					?><div class="avatar" id="<?=$avatarId?>" <?if($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"] <> ''):?> data-src="<?=\CHTTP::urnEncode($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"])?>"<?endif?>></div><?
+
+					$avatarId = 'post_item_avatar_' . (int)$arParams['LOG_ID'];
+					$avatarDataSrc = (
+						$arResult['arUser']['PERSONAL_PHOTO_resized']['src'] <> ''
+							? ' data-src="' . $arResult['arUser']['PERSONAL_PHOTO_resized']['src'] . '"'
+							: ''
+					);
+
+					?><div class="avatar" id="<?= $avatarId ?>" <?= $avatarDataSrc ?>></div><?
 
 					if($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"] <> '')
 					{
@@ -867,11 +874,25 @@ if(!empty($arResult["Post"]))
 					)
 				)
 				{
-					$voteId = "BLOG_POST".'_'.$arResult["Post"]["ID"].'-'.(time()+rand(0, 1000));
-					$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"])? mb_strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
+					$voteId = 'BLOG_POST' . '_' . $arResult['Post']['ID'] . '-' . (time() + random_int(0, 1000));
+					$emotion = (
+						!empty($arResult['RATING'][$arResult['Post']['ID']]['USER_REACTION'])
+							? mb_strtoupper($arResult['RATING'][$arResult['Post']['ID']]['USER_REACTION'])
+							: 'LIKE'
+					);
 
-					?><span class="post-item-informers bx-ilike-block" id="rating_block_<?=$arParams["LOG_ID"]?>" data-counter="<?=intval($arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VOTES"])?>"><?
-						?><span data-rating-vote-id="<?=htmlspecialcharsbx($voteId)?>" id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="post-item-informer-like feed-inform-ilike"><?
+					?><span
+					 class="post-item-informers bx-ilike-block"
+					 id="rating_block_<?=$arParams['LOG_ID']?>"
+					 data-counter="<?= (int)$arResult['RATING'][$arResult['Post']['ID']]['TOTAL_VOTES'] ?>"
+					><?
+						?><span
+						 data-rating-vote-id="<?= htmlspecialcharsbx($voteId) ?>"
+						 data-rating-entity-type-id="BLOG_POST"
+						 data-rating-entity-id="<?= (int)$arResult['Post']['ID'] ?>"
+						 id="bx-ilike-button-<?= htmlspecialcharsbx($voteId) ?>"
+						 class="post-item-informer-like feed-inform-ilike"
+						><?php
 							$likeClassList = [ 'bx-ilike-left-wrap' ];
 							if (
 								isset($arResult["RATING"])
@@ -1077,7 +1098,7 @@ if(!empty($arResult["Post"]))
 					$arParams["SHOW_RATING"] === "Y"
 					&& (
 						!isset($arParams['TARGET'])
-						|| !in_array($arParams['TARGET'], [ 'postContent' ])
+						|| $arParams['TARGET'] !== 'postContent'
 					)
 				)
 				{

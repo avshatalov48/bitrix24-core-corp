@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_DELIVERY_TOTAL"] = "Delivery price";
 $MESS["CRM_ENTITY_PL_ADD"] = "Add";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT"] = "Add product";
 $MESS["CRM_ENTITY_PL_ADD_PRODUCT_TITLE"] = "Find or create a new product";
@@ -15,6 +16,7 @@ $MESS["CRM_ENTITY_PL_DELETE_WARNING"] = "Are you sure you want to delete this it
 $MESS["CRM_ENTITY_PL_DISCOUNT"] = "discount";
 $MESS["CRM_ENTITY_PL_DISCOUNTS_ABSENT"] = "No applicable discounts";
 $MESS["CRM_ENTITY_PL_DISCOUNT_PRICE"] = "Total amount for products after discount";
+$MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Price cannot be negative.";
 $MESS["CRM_ENTITY_PL_NO"] = "None";
 $MESS["CRM_ENTITY_PL_ORDER_DISCOUNT"] = "Discounts";
 $MESS["CRM_ENTITY_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Add";
@@ -27,6 +29,7 @@ $MESS["CRM_ENTITY_PL_SELECT_PRODUCT"] = "Select product";
 $MESS["CRM_ENTITY_PL_SELECT_PRODUCT_TITLE"] = "Select a product from the catalog";
 $MESS["CRM_ENTITY_PL_SETTING_DISABLED"] = "Option \"#NAME#\" is disabled";
 $MESS["CRM_ENTITY_PL_SETTING_ENABLED"] = "Option \"#NAME#\" is enabled";
+$MESS["CRM_ENTITY_PL_SMALL_PRICE_NOTICE"] = "Price values less than 1 (one) may sometimes incur incorrect discount calculation. Please check the discount total. As a possible solution, you may want to specify price per lot (e.g. 10 or 100 pcs) rather than per item.";
 $MESS["CRM_ENTITY_PL_SUM"] = "amount";
 $MESS["CRM_ENTITY_PL_TAX"] = "Tax";
 $MESS["CRM_ENTITY_PL_TOTAL_PRICE"] = "Total amount for products";

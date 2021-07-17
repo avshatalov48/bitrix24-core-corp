@@ -1,4 +1,11 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+\Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmchangedealcategoryactivity/script.js'));
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
 foreach ($dialog->getMap() as $fieldId => $field):
@@ -23,3 +30,13 @@ foreach ($dialog->getMap() as $fieldId => $field):
 		<?=GetMessage('CRM_CDCA_PD_INFO')?>
 	</td>
 </tr>
+
+<script>
+	BX.ready(function()
+	{
+		var script = new BX.Crm.Activity.CrmChangeDealCategoryActivity({
+			formName: '<?=CUtil::JSEscape($dialog->getFormName())?>'
+		});
+		script.init();
+	});
+</script>

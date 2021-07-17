@@ -18,7 +18,6 @@ $MESS['LANDING_SIDEBAR_BUTTON_OTHER'] = 'Другие настройки';
 
 
 $MESS['LANDING_FORM_SETTINGS_PRESET_CATEGORY_CRM'] = 'Работа с CRM';
-$MESS['LANDING_FORM_SETTINGS_PRESET_CATEGORY_PRODUCTS'] = 'Работа с товарами';
 $MESS['LANDING_FORM_SETTINGS_PRESET_CATEGORY_SOCIAL'] = 'Синхронизация с социальными сетями';
 $MESS['LANDING_FORM_SETTINGS_PRESET_CATEGORY_CRM_AUTOMATION'] = 'Автозаполнение полей';
 
@@ -43,12 +42,6 @@ $MESS['LANDING_FORM_SETTINGS_PRESET_CALLBACK_FAILURE_TEXT'] = 'Не удалос
 $MESS['LANDING_FORM_SETTINGS_PRESET_EXPERT'] = 'Экспертный режим';
 $MESS['LANDING_FORM_SETTINGS_PRESET_EXPERT_DESCRIPTION'] = 'Все возможности для индивидуальной настройки';
 
-$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCTS_SMALL'] = 'Товары с картинками';
-$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCTS_SMALL_DESCRIPTION'] = 'Форма с маленьким превью товара';
-
-$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCTS_BIG'] = 'Товары с картинками';
-$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCTS_BIG_DESCRIPTION'] = 'Форма с большим превью товара';
-
 $MESS['LANDING_FORM_SETTINGS_PRESET_VK'] = 'VK Сбор заявок';
 $MESS['LANDING_FORM_SETTINGS_PRESET_VK_DESCRIPTION'] = 'Собирайте заявки из социальной сети VK';
 
@@ -57,6 +50,20 @@ $MESS['LANDING_FORM_SETTINGS_PRESET_FB_DESCRIPTION'] = 'Собирайте за�
 
 $MESS['LANDING_FORM_SETTINGS_PRESET_PERSONALIZATION'] = 'Персонализированная';
 $MESS['LANDING_FORM_SETTINGS_PRESET_PERSONALIZATION_DESCRIPTION'] = 'Форма с заполненными контактами клиентов';
+
+$MESS['LANDING_FORM_SETTINGS_PRESET_CATEGORY_PRODUCTS_2'] = 'Продажа';
+
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_1'] = 'Товары без картинок';
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_1_DESCRIPTION'] = 'Товар, не требующий визуализации. Клиент выбирает по названию';
+
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_2'] = 'Товары с оплатой';
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_2_DESCRIPTION'] = 'Товар без визуализации. Клиент сразу оплачивает покупку';
+
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_3'] = 'Товары с картинками';
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_3_DESCRIPTION'] = 'Товар с картинкой. Название - главный критерий выбора';
+
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_4'] = 'Визуальные товары';
+$MESS['LANDING_FORM_SETTINGS_PRESET_PRODUCT_4_DESCRIPTION'] = 'Максимальная визуализация товара. Большие картинки';
 
 $MESS['LANDING_HEADER_AND_BUTTONS_TITLE'] = 'Заголовок и кнопка';
 $MESS['LANDING_HEADER_AND_BUTTONS_MESSAGE_HEADER'] = 'Сделайте форму персональной';
@@ -202,6 +209,10 @@ $MESS['LANDING_FORM_SETTINGS_CRM_TYPE_1'] = 'Лид';
 $MESS['LANDING_FORM_SETTINGS_CRM_TYPE_2'] = 'Клиент';
 $MESS['LANDING_FORM_SETTINGS_CRM_TYPE_3'] = 'Сделка +&nbsp;клиент';
 $MESS['LANDING_FORM_SETTINGS_CRM_TYPE_4'] = 'Предложение +&nbsp;клиент';
+$MESS['LANDING_FORM_SETTINGS_CRM_TYPE_5'] = 'Смарт-процесс';
+$MESS['LANDING_FORM_SETTINGS_CRM_SMART_ENTITY_LIST'] = 'Смарт-процесс';
+$MESS['LANDING_FORM_SETTINGS_SMART_STAGES_FIELD_TITLE'] = 'Направление';
+
 $MESS['LANDING_FORM_SETTINGS_CRM_DUPLICATES_ENABLED'] = 'Использовать активную сделку, не создавая новую';
 
 $MESS['LANDING_FORM_SETTINGS_EXPERT_MODE'] = 'Экспертная настройка';

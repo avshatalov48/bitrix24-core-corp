@@ -228,6 +228,13 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 
 		$filterData = $filterOption->getFilter($this->arResult['FILTER']);
 
+		$this->arResult['currentDir'] = '';
+
+		if (isset($filterData['DIR']) && is_scalar($filterData['DIR']))
+		{
+			$this->arResult['currentDir'] = $filterData['DIR'];
+		}
+
 		$filter = [
 			'=MAILBOX_ID' => $this->mailbox['ID'],
 		];
@@ -945,6 +952,15 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 						'text' => $this->arResult['gridActionsData']['event']['text'],
 						'disabled' => true,
 					],
+					[
+						'id' => $this->arResult['gridActionsData']['deleteImmediately']['id'],
+						'icon' => $this->arResult['gridActionsData']['deleteImmediately']['icon'],
+						'text' => $this->arResult['gridActionsData']['deleteImmediately']['text'],
+						'disabled' => ($this->arResult['currentDir'] !== '[Gmail]/All Mail') ? $isDisabled : true,
+						'onclick' => "BX.Mail.Client.Message.List['".
+									 CUtil::JSEscape($this->getComponentId()).
+									 "'].onDeleteImmediately('{$item['ID']}');",
+					],
 				]
 			);
 		}
@@ -993,6 +1009,11 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 				'id' => 'delete',
 				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
 				'text' => Loc::getMessage('MAIL_MESSAGE_LIST_BTN_DELETE'),
+			],
+			'deleteImmediately' => [
+				'id' => 'deleteImmediately',
+				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
+				'text' => Loc::getMessage('MAIL_MESSAGE_LIST_BTN_DELETE_IMMEDIATELY'),
 			],
 			'spam' => [
 				'id' => 'spam',

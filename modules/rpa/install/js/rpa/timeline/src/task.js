@@ -143,12 +143,13 @@ export class Task extends Timeline.Item
 		let users = taskUsers.map(({id, status}, i) => {
 
 			let user = this.users.get(id);
-			let sep = (taskUsers.length -1 !== i) ?
-				Tag.render`<span class="ui-item-detail-popup-item-separator">
+			let sep = (taskUsers.length -1 !== i)
+				? Tag.render`<span class="ui-item-detail-popup-item-separator">
 					${Loc.getMessage(this.data.participantJoint === 'and'
 					? 'RPA_TIMELINE_TASKS_SEPARATOR_AND' : 'RPA_TIMELINE_TASKS_SEPARATOR_OR')}
 					</span>`
-				: '';
+				: ''
+			;
 
 			let node = Tag.render`<div class="ui-item-detail-popup-item">
 					<a class="ui-item-detail-stream-content-employee"
@@ -308,7 +309,7 @@ export class Task extends Timeline.Item
 		}
 
 		const safeFullName = Text.encode(userData.fullName);
-		return Tag.render`<span class="ui-item-detail-stream-content-employee" title="${safeFullName}" ${userData.photo ? 'style="background-image: url(\'' + userData.photo + '\'); background-size: 100%;"' : ''}></span>`;
+		return Tag.render`<span class="ui-item-detail-stream-content-employee" title="${safeFullName}" ${userData.photo ? `style="background-image: url('${userData.photo}'); background-size: 100%;"` : ''}></span>`;
 	}
 
 	doTaskHandler(button)

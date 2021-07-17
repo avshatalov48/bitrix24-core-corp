@@ -38,11 +38,11 @@
 				content: this.render(),
 				padding: 0,
 				contentPadding: 14,
-				height: 54,  // 16 * 2 + 2 = 54 total
+				height: 60,  // 32 + (14 * 2) = 60 total
 				className: 'bx-call-view-popup-call-muted',
 				contentBackground: 'unset',
 
-				angle: { position: 'bottom', offset: 20 },
+				angle: this.options.bindElement ? { position: 'bottom', offset: 20 } : null,
 				events: {
 					onClose: function ()
 					{
@@ -68,7 +68,7 @@
 					}),
 					BX.create("div", {
 						props: {className: "bx-call-view-popup-call-muted-text"},
-						text: BX.util.htmlspecialchars(BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING"))
+						html: this.getPopupMessage()
 					}),
 					BX.create("div", {
 						props: {className: "ui-btn ui-btn-xs ui-btn-light-border ui-btn-round ui-btn-no-caps "},
@@ -86,12 +86,28 @@
 							click: function()
 							{
 								this.callbacks.onClose();
-								this.popup.close();
+								if (this.popup)
+								{
+									this.popup.close();
+								}
 							}.bind(this)
 						},
 					})
 				]
 			})
+		},
+
+		getPopupMessage: function()
+		{
+			var message = BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING_HOTKEY");
+			if (this.options.callFolded)
+			{
+				var hotkey = (BX.browser.IsMac() ? 'Shift + &#8984; + A' : 'Ctrl + Shift + A');
+				message = BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING_FOLDED_CALL_HOTKEY").replace('#HOTKEY#', hotkey);
+			}
+			var hotkeyText = '<span class="bx-call-view-popup-call-muted-text-hotkey">' + message + '</span>';
+
+			return 	BX.util.htmlspecialchars(BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING")) + '<br>' + hotkeyText;
 		},
 
 		close: function()

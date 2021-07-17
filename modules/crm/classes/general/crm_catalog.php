@@ -728,12 +728,7 @@ class CAllCrmCatalog
 
 		$propertyId = \CIBlockPropertyTools::createProperty(
 			$iblockId,
-			\CIBlockPropertyTools::CODE_MORE_PHOTO,
-			[
-				'XML_ID' => \CIBlockPropertyTools::CODE_MORE_PHOTO,
-				'MULTIPLE_CNT' => 1,
-				'WITH_DESCRIPTION' => 'Y'
-			]
+			\CIBlockPropertyTools::CODE_MORE_PHOTO
 		);
 		if (empty($propertyId))
 		{

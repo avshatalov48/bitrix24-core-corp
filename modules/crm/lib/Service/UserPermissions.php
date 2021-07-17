@@ -266,6 +266,14 @@ class UserPermissions
 			return $this->canReadType($entityTypeId, $categoryId);
 		}
 
+		if ($id > 0 && $categoryId === 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				$categoryId = $factory->getItemCategoryId($id) ?? 0;
+			}
+		}
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		return \CCrmAuthorizationHelper::CheckReadPermission(
@@ -405,7 +413,8 @@ class UserPermissions
 	public function applyAvailableItemsFilter(
 		?array $filter,
 		array $permissionEntityTypes,
-		?string $operation = self::OPERATION_READ
+		?string $operation = self::OPERATION_READ,
+		?string $primary = 'ID'
 	): array
 	{
 		if (!$operation)
@@ -442,14 +451,14 @@ class UserPermissions
 		if (!is_array($filter))
 		{
 			$filter = [
-				'@ID' => $expression,
+				'@' . $primary => $expression,
 			];
 		}
 		else
 		{
 			$filter = [
 				$filter,
-				'@ID' => $expression,
+				'@' . $primary => $expression,
 			];
 		}
 

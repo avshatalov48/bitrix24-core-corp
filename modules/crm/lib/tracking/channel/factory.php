@@ -80,6 +80,9 @@ class Factory
 			case Base::Shop24:
 				$class = Shop24::class;
 				break;
+			case Base::CrmShop:
+				$class = CrmShop::class;
+				break;
 			case Base::SiteDomain:
 				$class = SiteDomain::class;
 				break;
@@ -116,10 +119,11 @@ class Factory
 	 * Create site channel instance by host.
 	 *
 	 * @param string $host Host.
-	 * @return Site|Site24|SiteDomain
+	 * @return Base|Site|Site24|SiteDomain
 	 */
 	public static function createSiteChannelByHost($host)
 	{
+		$host = strtolower($host);
 		$siteId = Tracking\Internals\SiteTable::getSiteIdByHost($host);
 		if ($siteId)
 		{
@@ -129,11 +133,14 @@ class Factory
 		static $sites = null;
 		if ($sites === null)
 		{
-			$sites = Tracking\Provider::getReadyB24SiteIds();
+			$sites = Tracking\Provider::getReadyB24Sites();
 		}
 		if (isset($sites[$host]))
 		{
-			return new Site24($sites[$host]);
+			$site = $sites[$host];
+			$code = $site['CODE'] ?? '';
+			$code = self::isKnown($code) ? $code : Base::Site24;
+			return self::create($code, $site['ID']);
 		}
 
 		return new SiteDomain($host);

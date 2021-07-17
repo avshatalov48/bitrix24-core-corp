@@ -466,6 +466,69 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		})();
 
+		(function()
+		{
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-WEBHOOK', function(trigger, form)
+				{
+					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+
+					if (triggerData && triggerData['HANDLER'] && triggerData['HANDLER'].indexOf('{{PASSWORD}}') > 0)
+					{
+						var myAlertText =
+							BX.message('CRM_AUTOMATION_CMP_WEBHOOK_PASSWORD_ALERT')
+								.replace(
+									'#A1#',
+									'<a class="bizproc-automation-popup-settings-link '
+									+ 'bizproc-automation-popup-settings-link-light" data-role="token-gen">'
+								)
+								.replace('#A2#', '</a>')
+						;
+
+						var passwordAlert = new BX.UI.Alert({
+							color: BX.UI.Alert.Color.WARNING,
+							icon: BX.UI.Alert.Icon.WARNING,
+							text: myAlertText
+						});
+
+						BX.bind(
+							passwordAlert.getTextContainer().querySelector('[data-role="token-gen"]'),
+							'click',
+							function()
+							{
+								BX.ajax.runComponentAction(
+									'bitrix:crm.automation',
+									'generateWebhookPassword',
+									{mode: 'class'}
+								).then(
+									function(response)
+									{
+										if (response.data.error)
+										{
+											window.alert(response.data.error);
+										}
+										else if (response.data.password)
+										{
+											triggerData['HANDLER'] =
+												triggerData['HANDLER']
+													.replace('{{PASSWORD}}', response.data.password)
+											;
+											form.elements.webhook_handler.value =
+												form.elements.webhook_handler.value
+													.replace('{{PASSWORD}}', response.data.password)
+											;
+											passwordAlert.handleCloseBtnClick();
+										}
+									}
+								);
+							}
+						);
+
+						form.appendChild(passwordAlert.getContainer());
+					}
+				}
+			);
+		})();
+
 		(function() //SHIPMENT_CHANGED
 		{
 			var selector;

@@ -90,6 +90,7 @@
 	          }
 	        });
 	        menu.destroy();
+	        main_core.Event.unbindAll(button.getContainer(), 'click');
 	        categories.forEach(function (category) {
 	          var link = crm_router.Router.Instance.getItemListUrlInCurrentView(entityTypeId, category.id);
 	          items.splice(startKey, 0, {
@@ -107,6 +108,7 @@
 	        var options = menu.params;
 	        options.items = items;
 	        button.menuWindow = new main_popup.Menu(options);
+	        main_core.Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
 	      }).catch(function (response) {
 	        console.log('error trying reload categories', response.errors);
 	      });

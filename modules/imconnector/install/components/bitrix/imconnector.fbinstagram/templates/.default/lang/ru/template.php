@@ -1,7 +1,6 @@
 <?
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_DEL_REFERENCE"] = "Удалить привязку";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_AUTHORIZATION"] = "Авторизация";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_DESCRIPTION"] = "Подключите Instagram к Открытой линии, чтобы принимать комментарии ваших клиентов к вашим публикациям в рабочем чате Битрикс24. Для подключения необходимо создать публичную страницу Facebook или подключить уже существующую, где вы являетесь администратором и к которой подключен бизнес-аккаунт Instagram";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "Авторизуйтесь под аккаунтом администратора страницы Facebook, чтобы управлять комментариями привязанного бизнес-аккаунта Instagram внутри Битрикс24";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_EXPIRED_ACCOUNT_TOKEN"] = "Если необходимо внести изменения, авторизуйтесь под своим аккаунтом Facebook";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_EXPIRED_ACCOUNT_TOKEN_WARNING"] = "Обратите внимание! Если вы авторизуетесь под другим аккаунтом, к которому не привязана текущая страница, то она будет отключена от открытой линии Битрикс24";
@@ -13,13 +12,12 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE"] = "Сменить";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_SELECT_THE_PAGE"] = "Выберите бизнес-аккаунт Instagram, привязанный к публичной странице Facebook, который необходимо подключить к Открытой линии Битрикс24";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_OTHER_PAGES"] = "Другие аккаунты";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECTOR_ERROR_STATUS"] = "В ходе работы произошла ошибка. Пожалуйста, проверьте настройки.";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_TITLE"] = "Управляйте публичной страницей Facebook в Битрикс24";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_DESCRIPTION"] = "<p class=\"im-connector-settings-header-description\">Подключите публичную страницу Facebook вашей компании к Открытой линии и управляйте комментариями к записям в привязанном к странице бизнес-аккаунте Instagram, не уходя из Битрикс24.</p>
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_TITLE_NEW"] = "Комментарии к публикациям бизнес-аккаунта Instagram";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_DESCRIPTION_NEW"] = "<p class=\"im-connector-settings-header-description\">Подключите Instagram чтобы принимать комментарии ваших клиентов в рабочем чате Битрикс24. Для подключения необходимо создать публичную страницу Facebook или подключить уже существующую, где вы являетесь администратором и к которой подключен бизнес-аккаунт Instagram.</p>
 				<ul class=\"im-connector-settings-header-list\">
-					<li class=\"im-connector-settings-header-list-item\">мгновенные коммуникации с посетителями вашего аккаунта Instagram</li>
-					<li class=\"im-connector-settings-header-list-item\">автоматическое распределение обращений по правилам очереди</li>
-					<li class=\"im-connector-settings-header-list-item\">общение в привычном рабочем чате Битрикс24</li>
-					<li class=\"im-connector-settings-header-list-item\">автоматическое сохранение клиентов в CRM</li>
+					<li class=\"im-connector-settings-header-list-item\">комментарии к публикациям сразу приходят в чат Битрикс24</li>
+					<li class=\"im-connector-settings-header-list-item\">чаты автоматически распределяются по правилам очереди</li>
+					<li class=\"im-connector-settings-header-list-item\">клиенты сразу попадают в вашу CRM</li>
 				</ul>";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECTED"] = "Instagram подключен";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_AUTHORIZE"] = "Авторизоваться";

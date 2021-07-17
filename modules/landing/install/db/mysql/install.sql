@@ -405,3 +405,13 @@ create table if not exists b_landing_designer_repo
 	PRIMARY KEY(ID),
 	INDEX IX_B_XML_ID (XML_ID)
 );
+
+create table if not exists b_landing_entity_lock (
+    ID int(18) not null auto_increment,
+    ENTITY_ID int(18) not null,
+    ENTITY_TYPE char(1) not null,
+    LOCK_TYPE char(1) not null,
+    INDEX IX_ENTITY (ENTITY_ID, ENTITY_TYPE),
+    INDEX IX_TYPE (LOCK_TYPE),
+    PRIMARY KEY (ID)
+);

@@ -230,7 +230,11 @@ class B24button extends \Bitrix\Landing\Hook\Page
 					'landing-b24button-use-style'
 				);
 
-				$color = ($this->fields['COLOR']->getValue() === self::COLOR_TYPE_CUSTOM)
+				$color =
+					(
+						$this->fields['COLOR']->getValue() === self::COLOR_TYPE_CUSTOM
+						&& !empty($this->fields['COLOR_VALUE']->getValue())
+					)
 					? Theme::prepareColor($this->fields['COLOR_VALUE']->getValue())
 					: 'var(--theme-color-primary)';
 

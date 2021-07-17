@@ -8,14 +8,13 @@
  */
 
 // core
-
 import 'main.polyfill.customevent';
 
 // vue components
 import 'pull.component.status';
 import 'ui.vue.components.smiles';
-import 'im.view.dialog';
-import 'im.view.textarea';
+import 'im.component.dialog';
+import 'im.component.textarea';
 import 'im.view.quotepanel';
 import 'imopenlines.component.message';
 import 'imopenlines.component.form';

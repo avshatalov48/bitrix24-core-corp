@@ -31,7 +31,6 @@ export default {
 		initRelatedPropsValues: {required: false},
 		initRelatedPropsOptions: {required: false},
 		initResponsibleId: {default: null, required: false},
-		initEstimatedDeliveryPrice: {required: false},
 		initEnteredDeliveryPrice: {required: false},
 		initIsCalculated: {required: false},
 		personTypeId: {required: true},
@@ -42,6 +41,7 @@ export default {
 		currency: {type: String, required: true},
 		currencySymbol: {type: String, required: true},
 		availableServiceIds: {type: Array, required: true},
+		excludedServiceIds: {type: Array, required: true},
 		editable: {type: Boolean, required: true},
 	},
 	data()
@@ -93,7 +93,11 @@ export default {
 		{
 			ajax.runAction(
 				'salescenter.deliveryselector.getinitializationdata',
-				{data: {personTypeId: this.personTypeId, responsibleId: this.initResponsibleId}}
+				{data: {
+						personTypeId: this.personTypeId,
+						responsibleId: this.initResponsibleId,
+						excludedServiceIds: this.excludedServiceIds
+					}}
 			).then((result) => {
 				/**
 				 * Delivery services
@@ -126,11 +130,6 @@ export default {
 								}
 							}
 						}
-					}
-
-					if (!this.selectedDeliveryService)
-					{
-						this.selectedDeliveryService = this.deliveryServices[0];
 					}
 				}
 
@@ -211,10 +210,6 @@ export default {
 				/**
 				 *
 				 */
-				if (this.initEstimatedDeliveryPrice !== null)
-				{
-					this.estimatedDeliveryPrice = this.initEstimatedDeliveryPrice;
-				}
 				if (this.initEnteredDeliveryPrice !== null)
 				{
 					this.enteredDeliveryPrice = this.initEnteredDeliveryPrice;
@@ -255,14 +250,14 @@ export default {
 				this.actionData,
 				{
 					deliveryServiceId: this.selectedDeliveryServiceId,
-					deliveryRelatedPropValues: this.currentRelatedPropsValues,
+					shipmentPropValues: this.currentRelatedPropsValues,
 					deliveryRelatedServiceValues: this.currentRelatedServicesValues,
 					deliveryResponsibleId: this.responsibleUser ? this.responsibleUser.id : null,
 				}
 			);
 
 			ajax.runAction(this.action, {data: actionData}).then((result) => {
-				let deliveryPrice = result.data.deliveryCalculationResult.price;
+				let deliveryPrice = result.data.deliveryPrice;
 
 				this.estimatedDeliveryPrice = deliveryPrice;
 				this.enteredDeliveryPrice = deliveryPrice;
@@ -880,7 +875,7 @@ export default {
 					</div>
 				</template>
 				<div class="salescenter-delivery-bottom">
-					<div v-if="editable" class="salescenter-delivery-bottom-row">					
+					<div v-if="editable && selectedDeliveryService" class="salescenter-delivery-bottom-row">					
 						<div class="salescenter-delivery-bottom-col">
 							<span v-show="!isCalculating" @click="calculate" :class="calculateDeliveryPriceButtonClass">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>
 							
@@ -894,7 +889,7 @@ export default {
 						<div class="salescenter-delivery-bottom-col"></div>
 						<div class="salescenter-delivery-bottom-col">
 							<table class="salescenter-delivery-table-total">
-								<tr>
+								<tr v-show="editable">
 									<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>
 									<td>
 										<span v-html="estimatedDeliveryPriceFormatted"></span>&nbsp;<span v-html="currencySymbol"></span>

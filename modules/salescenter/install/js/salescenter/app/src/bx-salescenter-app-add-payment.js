@@ -54,6 +54,16 @@ Vue.component(config.templateAddPaymentName,
 				fields.push(item.fields);
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
+			this.$store.commit('orderCreation/setTotal', this.$root.$app.options.totals);
+
+			if (this.isNeedDisableSubmit())
+			{
+				this.$store.commit('orderCreation/disableSubmit');
+			}
+			else
+			{
+				this.$store.commit('orderCreation/enableSubmit')
+			}
 		}
 
 		this.productForm = new ProductForm({
@@ -67,6 +77,7 @@ Vue.component(config.templateAddPaymentName,
 			measures: this.$root.$app.options.measures,
 			showDiscountBlock: this.$root.$app.options.showProductDiscounts,
 			showTaxBlock: this.$root.$app.options.showProductTaxes,
+			urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
 		});
 
 		this.currencySymbol = this.$root.$app.options.currencySymbol;
@@ -77,11 +88,6 @@ Vue.component(config.templateAddPaymentName,
 		if (this.$root.$app.options.showPaySystemSettingBanner)
 		{
 			this.$store.commit('orderCreation/showBanner');
-		}
-
-		if (Type.isArray(this.$root.$app.options.basket))
-		{
-			this.$store.commit('orderCreation/enableSubmit');
 		}
 	},
 	methods:
@@ -99,7 +105,7 @@ Vue.component(config.templateAddPaymentName,
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
 
-			if (data.basket.length <= 0)
+			if (this.isNeedDisableSubmit())
 			{
 				this.$store.commit('orderCreation/disableSubmit');
 				return;
@@ -130,7 +136,6 @@ Vue.component(config.templateAddPaymentName,
 							sum: 0,
 							discount: 0,
 							result: 0,
-							resultNumeric: 0,
 						}
 					),
 					basket: BX.prop.get(data,"items",[])
@@ -148,7 +153,19 @@ Vue.component(config.templateAddPaymentName,
 		{
 			if (this.productForm)
 			{
-				this.productForm.setData(data);
+				const preparedBasket = [];
+				data.basket.forEach((item) => {
+					if (!Type.isStringFilled(item.innerId))
+					{
+						return;
+					}
+					preparedBasket.push({
+						selectorId: item.innerId,
+						fields: item,
+					});
+				});
+
+				this.productForm.setData({...data, ...{basket: preparedBasket}});
 				if (Type.isArray(data.basket))
 				{
 					this.$store.commit('orderCreation/setBasket', data.basket);
@@ -204,6 +221,19 @@ Vue.component(config.templateAddPaymentName,
 		{
 			Manager.openControlPanel();
 		},
+		isNeedDisableSubmit()
+		{
+			if (this.countItems <= 0)
+			{
+				return true;
+			}
+
+			const simpleProducts = this.order.basket.filter((item) => {
+				return (!Type.isStringFilled(item.module) || item.productId <= 0) && Type.isStringFilled(item.name);
+			});
+
+			return simpleProducts.length > 0;
+		}
 	},
 	computed:
 	{

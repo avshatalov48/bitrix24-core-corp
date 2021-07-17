@@ -90,11 +90,15 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 
 		$this->arResult['DOCUMENT_NAME'] = CCrmBizProcHelper::ResolveDocumentName($this->entityTypeId);
 		$this->arResult['DOCUMENT_TYPE'] = CCrmOwnerType::ResolveName($this->entityTypeId);
-		$this->arResult['DOCUMENT_ID'] = $this->arResult['DOCUMENT_TYPE'] . "_" . 0;
+		$this->arResult['DOCUMENT_ID'] = $this->arResult['DOCUMENT_TYPE'] . '_' . 0;
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
 		$this->arResult['PAGE_TITLE'] = Loc::getMessage('CRM_ITEM_AUTOMATION_TITLE', [
 			'#ENTITY#' => htmlspecialcharsbx($this->description),
 		]);
+		$this->arResult['BACK_URL'] = Container::getInstance()->getRouter()->getAutomationUrl(
+			$this->entityTypeId,
+			isset($this->category) ? $this->category->getId() : null
+		);
 		if ($this->category)
 		{
 			$this->arResult['CATEGORY_NAME'] = htmlspecialcharsbx($this->category->getName());

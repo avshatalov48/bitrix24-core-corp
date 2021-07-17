@@ -444,8 +444,8 @@ class CrmActivityEmailAjax
 						'viewURL'  => $item['VIEW_URL'],
 						'previewURL' => $item['PREVIEW_URL'],
 						'fileSize' => $item['SIZE'],
-						'objectId' => $file['ID'],
-						'bytes' => $file['BYTES'],
+						'objectId' => $item['ID'],
+						'bytes' => $item['BYTES'],
 					);
 				}
 			}

@@ -1,8 +1,12 @@
 <?php
 
+use Bitrix\Main\Web\Json;
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 \CJSCore::init("sidepanel");
+
+\Bitrix\Main\UI\Extension::load("popup");
 
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
@@ -25,7 +29,7 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 					if(w[b]['forms']) return;
 					var s=d.createElement('script');s.async=1;s.src=u+'?'+(1*new Date());
 					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-				})(window,document,'https://landing.bitrix24.ru/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
+				})(window,document,'<?= $arResult['domain'] ?>/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
 			</script>
 			<?$APPLICATION->ShowHead(); ?>
 		</head>
@@ -49,16 +53,18 @@ else
 			if(w[b]['forms']) return;
 			var s=d.createElement('script');s.async=1;s.src=u+'?'+(1*new Date());
 			var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-		})(window,document,'https://landing.bitrix24.ru/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
+		})(window,document,'<?= $arResult['domain'] ?>/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
 	</script>
 	<div class="document-limit-container"><?
 }
+
+unset($arResult['domain']);
 ?>
 			<div class="document-limit-inner" id="salescenter-feedback-form">
 				<script>
 					BX.ready(function()
 					{
-						var options = <?=\CUtil::PhpToJSObject($arResult);?>;
+						var options = <?= Json::encode($arResult); ?>;
 						options.node = BX('salescenter-feedback-form');
 						B24SalesCenterFeedback(options);
 					});

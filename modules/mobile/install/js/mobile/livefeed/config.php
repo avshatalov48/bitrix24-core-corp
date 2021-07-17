@@ -72,9 +72,9 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'mobile.imageviewer',
 		'mobile.utils',
 		'mobile.ajax',
+		'mobile.imageviewer',
 	],
 	'skip_core' => false,
 ];

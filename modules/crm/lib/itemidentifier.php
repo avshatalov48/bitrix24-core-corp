@@ -93,4 +93,9 @@ class ItemIdentifier
 
 		return "Entity type ID: {$entityTypeId} ({$entityName}), entity ID: {$entityId}";
 	}
+
+	public function getHash(): string
+	{
+		return 'type_' . $this->getEntityTypeId() . '_id_' . $this->getEntityId();
+	}
 }

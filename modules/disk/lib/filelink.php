@@ -16,6 +16,7 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
+use Bitrix\Disk;
 
 Loc::loadMessages(__FILE__);
 
@@ -128,9 +129,19 @@ final class FileLink extends File
 			$driver = Driver::getInstance();
 
 			$driver->sendChangeStatusToSubscribers($file, 'quick');
-			if ($file->getStorage()->isUseInternalRights())
+			$storage = $file->getStorage();
+			if ($storage->isUseInternalRights())
 			{
-				$driver->getRecentlyUsedManager()->push($file->getCreatedBy(), $file->getId());
+				$userId = $file->getCreatedBy();
+				if ($storage->getProxyType() instanceof ProxyType\User)
+				{
+					$userId = $storage->getEntityId();
+				}
+
+				$driver->getRecentlyUsedManager()->push(
+					$userId,
+					$file
+				);
 			}
 		}
 
@@ -285,9 +296,9 @@ final class FileLink extends File
 	 * @return Version|null
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function addVersion(array $file, $createdBy, $disableJoin = false)
+	public function addVersion(array $file, $createdBy, $disableJoin = false, array $options = [])
 	{
-		return $this->getRealObject()->addVersion($file, $createdBy, $disableJoin);
+		return $this->getRealObject()->addVersion($file, $createdBy, $disableJoin, $options);
 	}
 
 	/**

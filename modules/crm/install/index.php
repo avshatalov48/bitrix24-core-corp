@@ -778,6 +778,8 @@ class crm extends CModule
 		//endregion
 
 		\Bitrix\Main\Config\Option::set('crm', 'enable_slider', 'Y');
+		\Bitrix\Main\Config\Option::set('crm', 'enable_order_deal_create', 'Y');
+
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
 		// Adjust default address zone
@@ -1166,7 +1168,11 @@ class crm extends CModule
 		RegisterModuleDependences('socialnetwork', 'OnBeforeSocNetLogEntryGetRights', 'crm', 'CCrmLiveFeed', 'OnBeforeSocNetLogEntryGetRights');
 		RegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "crm", "CCrmLiveFeed", "OnSendMentionGetEntityFields");
 		RegisterModuleDependences("socialnetwork", "OnSonetLogCounterClear", "crm", "CCrmLiveFeedComponent", "OnSonetLogCounterClear");
+		RegisterModuleDependences("socialnetwork", "OnAfterSocNetLogCommentAdd", "crm", "CCrmLiveFeed", "OnAfterSocNetLogCommentAdd");
 		RegisterModuleDependences('main', 'OnAddRatingVote', 'crm', 'CCrmLiveFeed', 'OnAddRatingVote');
+		RegisterModuleDependences('main', 'OnGetRatingContentOwner', 'crm', 'CCrmLiveFeed', 'OnGetRatingContentOwner');
+		RegisterModuleDependences('im', 'OnGetMessageRatingVote', 'crm', 'CCrmLiveFeed', 'OnGetMessageRatingVote');
+
 		RegisterModuleDependences('forum', 'OnAfterCommentAdd', 'crm', 'CCrmLiveFeed', 'onAfterCommentAdd');
 		RegisterModuleDependences('imconnector', 'OnAddStatusConnector', 'crm', '\Bitrix\Crm\SiteButton\Manager', 'onImConnectorChange');
 		RegisterModuleDependences('imconnector', 'OnUpdateStatusConnector', 'crm', '\Bitrix\Crm\SiteButton\Manager', 'onImConnectorChange');
@@ -1251,7 +1257,6 @@ class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnBeforeSendUserInfo', 'crm', '\Bitrix\Crm\Order\Buyer', 'OnBeforeSendUserInfoHandler');
 		$eventManager->registerEventHandler('sale', 'OnModuleUnInstall', 'crm', '', 'CrmOnModuleUnInstallSale');
 
-
 		//analytics, visualconstructor events
 		$eventManager->registerEventHandler('report', 'onReportCategoryCollect', 'crm', '\Bitrix\Crm\Integration\Report\EventHandler', 'onReportCategoriesCollect');
 		$eventManager->registerEventHandler('report', 'onReportsCollect', 'crm', '\Bitrix\Crm\Integration\Report\EventHandler', 'onReportHandlerCollect');
@@ -1321,6 +1326,11 @@ class crm extends CModule
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
 
+		$eventManager->registerEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Order\EventsHandler\Check', 'OnCheckCollateDocuments');
+		$eventManager->registerEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
+		$eventManager->registerEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
+		$eventManager->registerEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
+
 		$eventManager->registerEventHandler(
 			'location', 'AddressOnUpdate',
 			'crm', '\Bitrix\Crm\EntityAddress', 'onLocationAddressUpdate'
@@ -1329,11 +1339,27 @@ class crm extends CModule
 			'location', 'AddressOnDelete',
 			'crm', '\Bitrix\Crm\EntityAddress', 'onLocationAddressDelete'
 		);
-		$eventManager->registerEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\Payment', 'onSalePsInitiatePayError');
+		$eventManager->registerEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsInitiatePayError');
 
 		$eventManager->registerEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
 
 		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory', 100);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyEnqueued',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Notification',
+			'onMessageSent'
+		);
 	}
 
 	private function installAgents()
@@ -1456,7 +1482,11 @@ class crm extends CModule
 		UnRegisterModuleDependences('socialnetwork', 'OnBeforeSocNetLogEntryGetRights', 'crm', 'CCrmLiveFeed', 'OnBeforeSocNetLogEntryGetRights');
 		UnRegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "crm", "CCrmLiveFeed", "OnSendMentionGetEntityFields");
 		UnRegisterModuleDependences("socialnetwork", "OnSonetLogCounterClear", "crm", "CCrmLiveFeedComponent", "OnSonetLogCounterClear");
+		UnRegisterModuleDependences("socialnetwork", "OnAfterSocNetLogCommentAdd", "crm", "CCrmLiveFeed", "OnAfterSocNetLogCommentAdd");
 		UnRegisterModuleDependences('main', 'OnAddRatingVote', 'crm', 'CCrmLiveFeed', 'OnAddRatingVote');
+		UnRegisterModuleDependences('main', 'OnGetRatingContentOwner', 'crm', 'CCrmLiveFeed', 'OnGetRatingContentOwner');
+		UnRegisterModuleDependences('im', 'OnGetMessageRatingVote', 'crm', 'CCrmLiveFeed', 'OnGetMessageRatingVote');
+
 		UnRegisterModuleDependences('imconnector', 'OnAddStatusConnector', 'crm', '\Bitrix\Crm\SiteButton\Manager', 'onImConnectorChange');
 		UnRegisterModuleDependences('imconnector', 'OnUpdateStatusConnector', 'crm', '\Bitrix\Crm\SiteButton\Manager', 'onImConnectorChange');
 		UnRegisterModuleDependences('imconnector', 'OnDeleteStatusConnector', 'crm', '\Bitrix\Crm\SiteButton\Manager', 'onImConnectorChange');
@@ -1472,7 +1502,6 @@ class crm extends CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
-
 		$eventManager->unregisterEventHandler('mail', 'OnMessageObsolete', 'crm', 'CCrmEMail', 'OnImapEmailMessageObsolete');
 		$eventManager->unregisterEventHandler('crm', 'OnActivityModified', 'crm', 'CCrmEMail', 'OnActivityModified');
 		$eventManager->unregisterEventHandler('crm', 'OnActivityDelete', 'crm', 'CCrmEMail', 'OnActivityDelete');
@@ -1571,7 +1600,7 @@ class crm extends CModule
 		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
 		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
 
-		$eventManager->unregisterEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\Payment', 'onSalePsInitiatePayError');
+		$eventManager->unregisterEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsInitiatePayError');
 
 		$eventManager->unRegisterEventHandler('recyclebin', 'OnModuleSurvey', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'OnModuleSurvey');
 		$eventManager->unRegisterEventHandler('recyclebin', 'onAdditionalDataRequest', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'onAdditionalDataRequest');
@@ -1609,6 +1638,28 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterUserTypeDelete');
 
 		$eventManager->unRegisterEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory');
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyEnqueued',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Notification',
+			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Order\EventsHandler\Check', 'OnCheckCollateDocuments');
+		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
+		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
+		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
+
 	}
 
 	private function uninstallAgents()

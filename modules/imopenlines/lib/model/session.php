@@ -222,6 +222,9 @@ class SessionTable extends DataManager
 			new DatetimeField('DATE_LAST_MESSAGE', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_LAST_MESSAGE_FIELD'),
 			]),
+			new DatetimeField('DATE_FIRST_LAST_USER_ACTION', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_FIRST_LAST_USER_ACTION_FIELD'),
+			]),
 			new DatetimeField('DATE_CLOSE', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_CLOSE_FIELD'),
 			]),

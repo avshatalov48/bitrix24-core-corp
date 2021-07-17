@@ -85,16 +85,12 @@ if ($structure_iblock_id = COption::GetOptionInt('intranet', 'iblock_structure',
 		));
 	}
 
-	//admin must be linked to company structure
-	//if(!WIZARD_IS_RERUN)
-	//{
-		$res_sect = CIBlockSection::GetList(array(), array("IBLOCK_ID"=>$structure_iblock_id, "DEPTH_LEVEL"=>1));
-		if($res_sect_arr = $res_sect->Fetch())
-		{
-			$admin = new CUser();
-			$admin->Update(1, array("UF_DEPARTMENT"=>array($res_sect_arr["ID"])));
-		}
-	//}
+	$res_sect = CIBlockSection::GetList(array(), array("IBLOCK_ID"=>$structure_iblock_id, "DEPTH_LEVEL"=>1));
+	if($res_sect_arr = $res_sect->Fetch())
+	{
+		$admin = new CUser();
+		$admin->Update(1, array("UF_DEPARTMENT"=>array($res_sect_arr["ID"])));
+	}
 }
 
 COption::SetOptionString("intranet", "iblock_type_calendar", "events");

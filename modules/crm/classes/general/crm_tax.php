@@ -1,4 +1,6 @@
-<?
+<?php
+Use Bitrix\Main\Loader,
+	Bitrix\Catalog;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,9 +13,9 @@ class CCrmTax
 
 	public static function GetAll()
 	{
-		$taxes = isset(self::$TAXES) ? self::$TAXES : null;
+		$taxes = self::$TAXES ?? null;
 
-		if(!$taxes && CModule::IncludeModule('sale'))
+		if(!$taxes && Loader::includeModule('sale'))
 		{
 			$taxes = array();
 			$dbResultList = CSaleTax::GetList( array('NAME' => 'ASC')	);
@@ -29,17 +31,20 @@ class CCrmTax
 
 	public static function GetByID($taxID)
 	{
-		if(intval($taxID) <= 0)
+		$taxID = (int)$taxID;
+		if ($taxID <= 0)
+		{
 			return false;
+		}
 
 		$taxies = self::GetAll();
 
-		return isset($taxies[$taxID]) ? $taxies[$taxID] : false;
+		return $taxies[$taxID] ?? false;
 	}
 
 	public static function GetRatesById($taxID)
 	{
-		if(!CModule::IncludeModule('sale'))
+		if(!Loader::includeModule('sale'))
 			return false;
 
 		$arRates = array();
@@ -81,8 +86,8 @@ class CCrmTax
 		if(self::$bVatMode !== null)
 			return self::$bVatMode;
 
-		if(!CModule::IncludeModule('catalog'))
-			return false;		
+		if(!Loader::includeModule('catalog'))
+			return false;
 
 		if(COption::GetOptionString("crm", "vatModeSetted", 'N') == 'Y')
 		{
@@ -102,10 +107,9 @@ class CCrmTax
 		if (self::isVatMode())
 			return false;
 
-		if(!CModule::IncludeModule('sale'))
+		if(!Loader::includeModule('sale'))
 			return false;
 
-		$count = 0;
 		$dbActiveTaxRates = CSaleTaxRate::GetList(array(), array('ACTIVE' => 'Y'));
 
 		$arFields = $dbActiveTaxRates->Fetch();
@@ -114,7 +118,7 @@ class CCrmTax
 
 	public static function setVatMode()
 	{
-		if(!CModule::IncludeModule('catalog'))
+		if(!Loader::includeModule('catalog'))
 			return false;
 
 		if(self::isVatMode())
@@ -150,7 +154,7 @@ class CCrmTax
 
 	public static function unSetVatMode()
 	{
-		if(!CModule::IncludeModule('catalog'))
+		if(!Loader::includeModule('catalog'))
 			return false;
 
 		$count = 0;
@@ -173,9 +177,9 @@ class CCrmTax
 	}
 	public static function GetVatRateNameByValue($value)
 	{
-		$value = round(doubleval($value), 2);
+		$value = round((float)$value, 2);
 		$infos = self::GetVatRateInfos();
-		foreach($infos as &$info)
+		foreach($infos as $info)
 		{
 			if($info['VALUE'] === $value)
 			{
@@ -193,7 +197,7 @@ class CCrmTax
 			return self::$DEFAULT_VAT_RATE;
 		}
 
-		if(!CModule::IncludeModule('catalog'))
+		if(!Loader::includeModule('catalog'))
 		{
 			return null;
 		}
@@ -219,32 +223,29 @@ class CCrmTax
 			return self::$VAT_RATES;
 		}
 
-		if(!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			return array();
 		}
 
 		self::$VAT_RATES = array();
-		$dbResult = CCatalogVat::GetListEx(
-			array('C_SORT' => 'ASC'),
-			array('ACTIVE' => 'Y'),
-			false,
-			false,
-			array('ID', 'NAME', 'RATE')
-		);
+		$dbResult = Catalog\VatTable::getList([
+			'select' => ['ID', 'NAME', 'RATE', 'SORT'],
+			'filter' => ['=ACTIVE' => 'Y'],
+			'order' => ['SORT' => 'ASC']
+		]);
 		if(is_object($dbResult))
 		{
-			while($fields = $dbResult->Fetch())
+			while($fields = $dbResult->fetch())
 			{
-				$ID = intval($fields['ID']);
+				$ID = (int)$fields['ID'];
 				self::$VAT_RATES[] = array(
 					'ID' => $ID,
-					'NAME' => isset($fields['NAME']) ? $fields['NAME'] : "[{$ID}]",
-					'VALUE' => isset($fields['RATE']) ? round(doubleval($fields['RATE']), 2) : 0.0
+					'NAME' => $fields['NAME'] ?? "[{$ID}]",
+					'VALUE' => isset($fields['RATE']) ? round((float)$fields['RATE'], 2) : 0.0
 				);
 			}
 		}
 		return self::$VAT_RATES;
 	}
 }
-?>

@@ -51,7 +51,10 @@ class Dictionary
 		return [
 			'languages' => $this->getLanguages(),
 			'views' => $this->getViews(),
-			'currencies' => $this->getCurrencies(),
+			'catalog' => [
+				'id' => \CAllCrmCatalog::EnsureDefaultExists(),
+				'currencies' => $this->getCurrencies(),
+			],
 			'payment' => $this->getPayment(),
 			'document' => $this->getDocument(),
 			'callback' => $this->getCallback(),
@@ -163,7 +166,13 @@ class Dictionary
 		$schemes = [];
 		foreach (WebForm\Entity::getSchemes() as $schemeId => $scheme)
 		{
-			$scheme = array_change_key_case($scheme);
+			foreach ($scheme as $key => $value)
+			{
+				unset($scheme[$key]);
+				$key = lcfirst(Main\Text\StringHelper::snake2camel($key));
+				$scheme[$key] = $value;
+			}
+
 			$scheme['id'] = $schemeId;
 			$schemes[] = $scheme;
 		}
@@ -180,6 +189,40 @@ class Dictionary
 			$dealCategories[] = ['id' => $category['ID'], 'name' => $category['NAME']];
 		}
 
+		$dynamic = [];
+		$typesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
+		$typesMap->load([
+			'isLoadCategories' => true,
+			'isLoadStages' => true,
+		]);
+		foreach ($typesMap->getTypes() as $type)
+		{
+			$categories = [];
+			foreach ($typesMap->getCategories($type->getEntityTypeId()) as $category)
+			{
+				$stages = [];
+				foreach ($typesMap->getStages($type->getEntityTypeId(), (int)$category->getId()) as $stage)
+				{
+					$stages[] = [
+						'id' => $stage->getStatusId(),
+						'name' => $stage->getName(),
+					];
+				}
+
+				$categories[] = [
+					'id' => (int)$category->getId(),
+					'name' => $category->getName(),
+					'stages' => $stages,
+				];
+			}
+
+			$dynamic[] = [
+				'id' => (int)$type->getEntityTypeId(),
+				'name' => $type->getTitle(),
+				'categories' => $categories,
+			];
+		}
+
 		return [
 			'schemes' => $schemes,
 			'duplicateModes' => $modes,
@@ -189,6 +232,7 @@ class Dictionary
 			'lead' => [
 				'enabled' => LeadSettings::getCurrent()->isEnabled()
 			],
+			'dynamic' => $dynamic,
 		];
 	}
 

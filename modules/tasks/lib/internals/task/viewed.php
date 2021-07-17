@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Event;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
@@ -11,6 +12,7 @@ use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
 use Exception;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 
 /**
  * Class ViewedTable
@@ -19,6 +21,8 @@ use Exception;
  */
 class ViewedTable extends Main\Entity\DataManager
 {
+	private const STEP_LIMIT = 5000;
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -74,6 +78,151 @@ class ViewedTable extends Main\Entity\DataManager
 				],
 			],
 		];
+	}
+
+	/**
+	 * @param int $userId
+	 * @param int $taskId
+	 * @throws Main\LoaderException
+	 */
+	public static function sendPushTaskView(int $userId, int $taskId): void
+	{
+		PushService::addEvent([$userId], [
+			'module_id' => 'tasks',
+			'command' => 'task_view',
+			'params' => [
+				'TASK_ID' => $taskId,
+				'USER_ID' => $userId,
+			],
+		]);
+	}
+
+	/**
+	 * @param int $currentUserId
+	 * @param string $userJoin
+	 * @param string $groupCondition
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\DB\SqlQueryException
+	 */
+	public static function readAll(int $currentUserId, string $userJoin, string $groupCondition = ''): void
+	{
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+
+		$sql = "
+			SELECT
+					T.ID as ID
+				FROM b_tasks T
+				INNER JOIN b_tasks_scorer TS
+					ON TS.TASK_ID = T.ID
+					AND TS.USER_ID = {$currentUserId}
+				{$userJoin}
+				WHERE 
+					TS.USER_ID = {$currentUserId}      
+					{$groupCondition}
+					AND TS.TYPE IN (
+						'".CounterDictionary::COUNTER_MY_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_MY_MUTED_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_ACCOMPLICES_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_ACCOMPLICES_MUTED_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_AUDITOR_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_AUDITOR_MUTED_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_ORIGINATOR_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_ORIGINATOR_MUTED_NEW_COMMENTS."',
+						'".CounterDictionary::COUNTER_GROUP_COMMENTS."'
+					)
+		";
+		$res = $connection->query($sql);
+
+		$inserts = [];
+		while ($row = $res->fetch())
+		{
+			$inserts[] = '(' . (int)$row['ID'] . ', ' . $currentUserId . ', ' . $viewedDate . ')';
+		}
+
+		$chunks = array_chunk($inserts, self::STEP_LIMIT);
+		unset($inserts);
+
+		foreach ($chunks as $chunk)
+		{
+			$sql = "
+				INSERT INTO b_tasks_viewed (TASK_ID, USER_ID, VIEWED_DATE)
+				VALUES " . implode(',', $chunk) . "
+				ON DUPLICATE KEY UPDATE VIEWED_DATE = {$viewedDate}
+			";
+			$connection->query($sql);
+		}
+	}
+
+	/**
+	 * @param int $userId
+	 * @param array $groupIds
+	 * @param bool $closedOnly
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\DB\SqlQueryException
+	 */
+	public static function readGroups(int $userId, array $groupIds, bool $closedOnly = false): void
+	{
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+
+		$intGroupIds = array_map(function($el) {
+			return (int) $el;
+		}, $groupIds);
+
+		$condition = [];
+		if (count($groupIds) === 1)
+		{
+			$condition[] = 'T.GROUP_ID = '. array_shift($groupIds);
+		}
+		else
+		{
+			$condition[] = 'T.GROUP_ID IN ('. implode(",", $intGroupIds) .')';
+		}
+
+		if ($closedOnly)
+		{
+			$condition[] = 'T.STATUS = '. \CTasks::STATE_COMPLETED;
+		}
+
+		$condition[] = 'TV.VIEWED_DATE IS NULL';
+		$condition[] = 'FM.POST_DATE >= T.CREATED_DATE';
+		$condition[] = 'FM.NEW_TOPIC = "N"';
+
+		$condition = '(' . implode(') AND (', $condition) . ')';
+
+		$sql = "
+			SELECT DISTINCT T.ID as ID
+			FROM b_tasks T
+				LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$userId}
+				LEFT JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+			WHERE
+				{$condition}
+		";
+		$res = $connection->query($sql);
+
+		$inserts = [];
+		while ($row = $res->fetch())
+		{
+			$inserts[] = '(' . (int)$row['ID'] . ', ' . $userId . ', ' . $viewedDate . ')';
+		}
+
+		$chunks = array_chunk($inserts, self::STEP_LIMIT);
+		unset($inserts);
+
+		foreach ($chunks as $chunk)
+		{
+			$sql = "
+				INSERT INTO b_tasks_viewed (TASK_ID, USER_ID, VIEWED_DATE)
+				VALUES " . implode(',', $chunk) . "
+				ON DUPLICATE KEY UPDATE VIEWED_DATE = {$viewedDate}
+			";
+			$connection->query($sql);
+		}
 	}
 
 	/**
@@ -173,28 +322,11 @@ class ViewedTable extends Main\Entity\DataManager
 		$event->send();
 
 		Counter\CounterService::addEvent(
-			Counter\CounterDictionary::EVENT_AFTER_TASK_VIEW,
+			Counter\Event\EventDictionary::EVENT_AFTER_TASK_VIEW,
 			[
 				'TASK_ID' => (int) $taskId,
 				'USER_ID' => (int) $userId
 			]
 		);
-	}
-
-	/**
-	 * @param int $userId
-	 * @param int $taskId
-	 * @throws Main\LoaderException
-	 */
-	public static function sendPushTaskView(int $userId, int $taskId): void
-	{
-		PushService::addEvent([$userId], [
-			'module_id' => 'tasks',
-			'command' => 'task_view',
-			'params' => [
-				'TASK_ID' => $taskId,
-				'USER_ID' => $userId,
-			],
-		]);
 	}
 }

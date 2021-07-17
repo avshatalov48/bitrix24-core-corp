@@ -130,6 +130,7 @@ input.tasks-scrum-sprint-header-name { border-bottom: 1px solid rgba(51, 51, 51,
 	color: #6b6f76;
 	text-decoration: none;
 	font-size: 12px;
+	cursor: default;
 }
 
 .tasks-scrum-sprint-header-stats .ui-ctl-label-text {

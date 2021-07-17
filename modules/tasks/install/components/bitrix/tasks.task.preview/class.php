@@ -11,7 +11,7 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 {
 	protected function prepareParams()
 	{
-		$this->arParams["AVATAR_SIZE"] = $this->arParams["AVATAR_SIZE"] ?: 40;
+		$this->arParams["AVATAR_SIZE"] = $this->arParams["AVATAR_SIZE"] ?: 100;
 		if(Main\Loader::includeModule('socialnetwork'))
 		{
 			CSocNetLogComponent::processDateTimeFormatParams($this->arParams);
@@ -88,12 +88,14 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 			{
 				$arFileTmp = CFile::ResizeImageGet(
 						$imageFile,
-						array(
-							"width" => $this->arParams["AVATAR_SIZE"],
-							"height" => $this->arParams["AVATAR_SIZE"]
-						),
+						[
+							'width' => $this->arParams['AVATAR_SIZE'],
+							'height' => $this->arParams['AVATAR_SIZE'],
+						],
 						BX_RESIZE_IMAGE_EXACT,
-						false
+						false,
+						false,
+						true
 				);
 				$this->arResult['TASK']["CREATED_BY_PHOTO"] = $arFileTmp["src"];
 			}
@@ -107,12 +109,14 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 			{
 				$arFileTmp = CFile::ResizeImageGet(
 						$imageFile,
-						array(
-							"width" => $this->arParams["AVATAR_SIZE"],
-							"height" => $this->arParams["AVATAR_SIZE"]
-						),
+						[
+							'width' => $this->arParams['AVATAR_SIZE'],
+							'height' => $this->arParams['AVATAR_SIZE'],
+						],
 						BX_RESIZE_IMAGE_EXACT,
-						false
+						false,
+						false,
+						true
 				);
 				$this->arResult['TASK']["RESPONSIBLE_PHOTO"] = $arFileTmp["src"];
 			}

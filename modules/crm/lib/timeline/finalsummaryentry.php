@@ -10,6 +10,8 @@ use Bitrix\Main\Type\DateTime;
  */
 class FinalSummaryEntry extends TimelineEntry
 {
+	protected const TIMELINE_ENTRY_TYPE = TimelineType::FINAL_SUMMARY;
+
 	/**
 	 * @param array $params
 	 * @return array|int
@@ -54,7 +56,7 @@ class FinalSummaryEntry extends TimelineEntry
 		$settings = $params['SETTINGS'] ?? [];
 
 		$result = Entity\TimelineTable::add([
-			'TYPE_ID' => TimelineType::FINAL_SUMMARY,
+			'TYPE_ID' => static::TIMELINE_ENTRY_TYPE,
 			'TYPE_CATEGORY_ID' => $categoryId,
 			'ASSOCIATED_ENTITY_ID' => $params['ENTITY_ID'] ?? '',
 			'ASSOCIATED_ENTITY_TYPE_ID' => $params['ENTITY_TYPE_ID'] ?? '',

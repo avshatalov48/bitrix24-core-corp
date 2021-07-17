@@ -17,9 +17,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 
 	    _this.sidePanelManager = BX.SidePanel.Instance;
+	    _this.contentSidePanelManager = new BX.SidePanel.Manager({});
 	    /* eslint-enable */
 
-	    _this.BX = window.top.BX;
+	    _this.contentSidePanels = new Set();
 
 	    _this.bindEvents();
 
@@ -31,50 +32,89 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function bindEvents() {
 	      var _this2 = this;
 
-	      /* eslint-disable */
-	      this.BX.addCustomEvent(window.top, 'SidePanel.Slider:onLoad', function (event) {
-	        var sidePanel = event.getSlider();
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onLoad', function (event) {
+	        var _event$getCompatData = event.getCompatData(),
+	            _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
+	            sliderEvent = _event$getCompatData2[0];
+
+	        var sidePanel = sliderEvent.getSlider();
 	        sidePanel.setCacheable(false);
 
 	        _this2.emit('onLoadSidePanel', sidePanel);
 	      });
-	      this.BX.addCustomEvent(window.top, 'SidePanel.Slider:onClose', function (event) {
-	        var sidePanel = event.getSlider();
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
+	        var _event$getCompatData3 = event.getCompatData(),
+	            _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	            sliderEvent = _event$getCompatData4[0];
+
+	        var sidePanel = sliderEvent.getSlider();
 
 	        _this2.emit('onCloseSidePanel', sidePanel);
 	      });
-	      /* eslint-enable */
-	    }
-	  }, {
-	    key: "isPreviousSidePanelExist",
-	    value: function isPreviousSidePanelExist(currentSidePanel) {
-	      return Boolean(this.sidePanelManager.getPreviousSlider(currentSidePanel));
-	    }
-	  }, {
-	    key: "reloadTopSidePanel",
-	    value: function reloadTopSidePanel() {
-	      this.sidePanelManager.getTopSlider().reload();
-	    }
-	  }, {
-	    key: "closeTopSidePanel",
-	    value: function closeTopSidePanel() {
-	      this.sidePanelManager.getTopSlider().close();
-	    }
-	  }, {
-	    key: "reloadPreviousSidePanel",
-	    value: function reloadPreviousSidePanel(currentSidePanel) {
-	      var previousSidePanel = this.sidePanelManager.getPreviousSlider(currentSidePanel);
-	      previousSidePanel.reload();
-	    }
-	  }, {
-	    key: "openSidePanelByUrl",
-	    value: function openSidePanelByUrl(url) {
-	      this.sidePanelManager.open(url);
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', function (event) {
+	        var _event$getCompatData5 = event.getCompatData(),
+	            _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 1),
+	            sliderEvent = _event$getCompatData6[0];
+
+	        var sidePanel = sliderEvent.getSlider();
+
+	        if (_this2.contentSidePanels.has(sidePanel.getUrl())) {
+	          _this2.contentSidePanels.delete(sidePanel.getUrl());
+
+	          if (!_this2.contentSidePanels.size) {
+	            _this2.resetBodyWidthHack();
+
+	            _this2.addEscapePressHandler();
+	          }
+	        }
+	      });
 	    }
 	  }, {
 	    key: "openSidePanel",
 	    value: function openSidePanel(id, options) {
-	      this.sidePanelManager.open(id, options);
+	      this.applyBodyWidthHack();
+	      this.removeEscapePressHandler();
+	      this.contentSidePanelManager.open(id, options);
+	      this.contentSidePanels.add(id);
+	    }
+	  }, {
+	    key: "existFrameTopSlider",
+	    value: function existFrameTopSlider() {
+	      return Boolean(this.sidePanelManager.getTopSlider());
+	    }
+	  }, {
+	    key: "addEscapePressHandler",
+	    value: function addEscapePressHandler() {
+	      var sidePanel = this.sidePanelManager.getTopSlider();
+
+	      if (sidePanel) {
+	        var frameWindow = sidePanel.getFrameWindow();
+	        frameWindow.addEventListener('keydown', sidePanel.handleFrameKeyDown);
+	      }
+	    }
+	  }, {
+	    key: "removeEscapePressHandler",
+	    value: function removeEscapePressHandler() {
+	      var sidePanel = this.sidePanelManager.getTopSlider();
+
+	      if (sidePanel) {
+	        var frameWindow = sidePanel.getFrameWindow();
+	        frameWindow.removeEventListener('keydown', sidePanel.handleFrameKeyDown);
+	      }
+	    }
+	  }, {
+	    key: "applyBodyWidthHack",
+	    value: function applyBodyWidthHack() {
+	      if (this.existFrameTopSlider()) {
+	        main_core.Dom.addClass(document.body, 'tasks-scrum-dod-panel-padding');
+	      }
+	    }
+	  }, {
+	    key: "resetBodyWidthHack",
+	    value: function resetBodyWidthHack() {
+	      if (this.existFrameTopSlider()) {
+	        main_core.Dom.removeClass(document.body, 'tasks-scrum-dod-panel-padding');
+	      }
 	    }
 	  }]);
 	  return SidePanel;
@@ -175,8 +215,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      return this.getListOptions().then(function (data) {
 	        if (_this.isRequiredToggle(data)) {
-	          _this.sidePanelId = 'tasks-scrum-dod-' + main_core.Text.getRandom();
+	          _this.sidePanelId = 'tasks-scrum-dod';
 	          _this.taskId = taskId;
+
+	          _this.sidePanel.unsubscribeAll('onLoadSidePanel');
 
 	          _this.sidePanel.subscribeOnce('onLoadSidePanel', _this.onLoadList.bind(_this));
 

@@ -16,6 +16,7 @@ $MESS["CRM_CF_LOCATION_TITLE"] = "Адреса магазину";
 $MESS["CRM_CF_LOCATION_ZIP"] = "Індекс:";
 $MESS["CRM_CF_NOTIFY_PRODUCT_USE"] = "Використовувати сповіщення про надходження товарів для сайтів";
 $MESS["CRM_CF_NUMERATOR_TITLE"] = "Використовувати";
+$MESS["CRM_CF_ORDER_DEAL_CREATE"] = "Прив'язувати угоди до всіх замовленнях";
 $MESS["CRM_CF_ORDER_DEFAULT_RESPONSIBLE_ID"] = "Відповідальний за замовлення (за замовчуванням)";
 $MESS["CRM_CF_ORDER_NUMERATOR_TEMPLATE"] = "Нумерація замовлень";
 $MESS["CRM_CF_ORDER_TRACKING_AUTOCHECK"] = "Автоматично перевіряти статуси відправлень";

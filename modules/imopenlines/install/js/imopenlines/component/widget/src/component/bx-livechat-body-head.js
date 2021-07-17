@@ -7,12 +7,13 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {Vue} from "ui.vue";
+import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import { SessionStatus, VoteType } from "../const";
 import {EventType} from "im.const";
+import { Browser } from "main.core.minimal";
 
-Vue.component('bx-livechat-head',
+BitrixVue.component('bx-livechat-head',
 {
 	/**
 	 * @emits 'close'
@@ -33,14 +34,22 @@ Vue.component('bx-livechat-head',
 		{
 			this.$emit('like');
 		},
-		history(event)
+		openMenu(event)
 		{
-			this.$emit('history');
+			this.$emit('openMenu', event);
 		},
 	},
 	computed:
 	{
 		VoteType: () => VoteType,
+
+		chatId()
+		{
+			if (this.application)
+			{
+				return this.application.dialog.chatId;
+			}
+		},
 
 		customBackgroundStyle(state)
 		{
@@ -115,7 +124,12 @@ Vue.component('bx-livechat-head',
 
 		localize()
 		{
-			return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
+			return BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
+		},
+
+		ie11()
+		{
+			return Browser.isIE11();
 		},
 		...Vuex.mapState({
 			widget: state => state.widget,
@@ -129,11 +143,12 @@ Vue.component('bx-livechat-head',
 			if (value)
 			{
 				setTimeout(() => {
-					this.$root.$emit(EventType.dialog.scrollToBottom);
+					this.$root.$emit(EventType.dialog.scrollToBottom, {chatId: this.chatId});
 				}, 300);
 			}
 		},
 	},
+	//language=Vue
 	template: `
 		<div class="bx-livechat-head-wrap">
 			<template v-if="isWidgetDisabled">
@@ -186,7 +201,12 @@ Vue.component('bx-livechat-head',
 					<div class="bx-livechat-control-box">
 						<span class="bx-livechat-control-box-active" v-if="widget.common.dialogStart && widget.dialog.sessionId">
 							<button v-if="widget.common.vote.enable && voteActive" :class="'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)" :title="localize.BX_LIVECHAT_VOTE_BUTTON" @click="like"></button>
-							<button v-if="false" class="bx-livechat-control-btn bx-livechat-control-btn-mail" :title="localize.BX_LIVECHAT_MAIL_BUTTON_NEW" @click="history"></button>
+							<button
+								v-if="!ie11 && application.dialog.chatId > 0"
+								class="bx-livechat-control-btn bx-livechat-control-btn-menu"
+								@click="openMenu"
+								:title="localize.BX_LIVECHAT_DOWNLOAD_HISTORY"
+							></button>
 						</span>	
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>
 					</div>

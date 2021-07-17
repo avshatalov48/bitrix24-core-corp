@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/sms-message.bundle.css',
 	'js' => 'dist/sms-message.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.popup',
 		'salescenter.manager',
-		'main.core',
 		'ui.vue',
 	],
 	'skip_core' => false,

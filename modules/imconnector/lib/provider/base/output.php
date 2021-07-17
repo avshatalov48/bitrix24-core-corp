@@ -175,9 +175,7 @@ class Output
 	{
 		foreach ($messages as $cell=>$message)
 		{
-			$message = Connector::initConnectorHandler($this->connector)->sendMessageProcessing($message, $this->line);
-
-			$messages[$cell] = $message;
+			$messages[$cell] = Connector::initConnectorHandler($this->connector)->sendMessageProcessing($message, $this->line);
 		}
 
 		return $messages;

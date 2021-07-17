@@ -12,6 +12,7 @@ namespace PHPSTORM_META
 		'crm.service.converter.ormObject',
 		'crm.service.converter.item',
 		'crm.service.converter.stage',
+		'crm.service.converter.type',
 		'crm.service.broker.user',
 		'crm.service.broker.company',
 		'crm.service.broker.contact',
@@ -29,6 +30,8 @@ namespace PHPSTORM_META
 		'crm.kanban.entity.order',
 		'crm.kanban.entity.dynamic',
 		'crm.integration.documentgeneratormanager',
+		'crm.integration.documentgeneratormanager.productLoader',
+		'crm.deal.paymentDocumentsRepository'
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -44,6 +47,7 @@ namespace PHPSTORM_META
 		'crm.service.converter.ormObject' => \Bitrix\Crm\Service\Converter\OrmObject::class,
 		'crm.service.converter.item' => \Bitrix\Crm\Service\Converter\Item::class,
 		'crm.service.converter.stage' => \Bitrix\Crm\Service\Converter\Stage::class,
+		'crm.service.converter.type' => \Bitrix\Crm\Service\Converter\Type::class,
 		'crm.service.broker.user' => \Bitrix\Crm\Service\Broker\User::class,
 		'crm.service.broker.company' => \Bitrix\Crm\Service\Broker\Company::class,
 		'crm.service.broker.contact' => \Bitrix\Crm\Service\Broker\Contact::class,
@@ -61,5 +65,7 @@ namespace PHPSTORM_META
 		'crm.kanban.entity.order' => \Bitrix\Crm\Kanban\Entity\Order::class,
 		'crm.kanban.entity.dynamic' => \Bitrix\Crm\Kanban\Entity\Dynamic::class,
 		'crm.integration.documentgeneratormanager' => \Bitrix\Crm\Integration\DocumentGeneratorManager::class,
+		'crm.integration.documentgeneratormanager.productLoader' => \Bitrix\Crm\Integration\DocumentGenerator\ProductLoader::class,
+		'crm.deal.paymentDocumentsRepository' => \Bitrix\Crm\Deal\PaymentDocumentsRepository::class,
 	]));
 }

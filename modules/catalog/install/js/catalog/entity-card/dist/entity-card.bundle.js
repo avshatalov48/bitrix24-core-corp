@@ -2258,10 +2258,22 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	var IblockFieldConfigurator = /*#__PURE__*/function (_BX$UI$EntityEditorFi) {
 	  babelHelpers.inherits(IblockFieldConfigurator, _BX$UI$EntityEditorFi);
+	  babelHelpers.createClass(IblockFieldConfigurator, null, [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
 
 	  function IblockFieldConfigurator() {
+	    var _this;
+
 	    babelHelpers.classCallCheck(this, IblockFieldConfigurator);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(IblockFieldConfigurator).apply(this, arguments));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(IblockFieldConfigurator).call(this));
+	    _this._enumItems = [];
+	    return _this;
 	  }
 
 	  babelHelpers.createClass(IblockFieldConfigurator, [{
@@ -2328,7 +2340,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "getEnumerationContainer",
 	    value: function getEnumerationContainer() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      var enumWrapper = main_core.Tag.render(_templateObject5$3(), BX.message("UI_ENTITY_EDITOR_UF_ENUM_ITEMS"));
 	      this._enumItemContainer = main_core.Tag.render(_templateObject6$2());
@@ -2340,7 +2352,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      if (this._field) {
 	        this._field.getItems().forEach(function (enumFields) {
 	          if (enumFields.VALUE !== '') {
-	            _this.createEnumerationItem({
+	            _this2.createEnumerationItem({
 	              VALUE: enumFields.NAME,
 	              FILE_ID: enumFields.IMAGE || null,
 	              IMAGE_SRC: enumFields.IMAGE_SRC || '',
@@ -2633,13 +2645,6 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      }
 
 	      return checkBox;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      var self = new this();
-	      self.initialize(id, settings);
-	      return self;
 	    }
 	  }]);
 	  return IblockFieldConfigurator;

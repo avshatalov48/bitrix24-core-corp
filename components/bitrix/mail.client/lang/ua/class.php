@@ -61,6 +61,7 @@ $MESS["MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK"] = "Адресна книга";
 $MESS["MAIL_MESSAGE_LIST_ATTACH_ICON_HINT"] = "Лист із вкладеннями";
 $MESS["MAIL_MESSAGE_LIST_BLACKLIST_LINK"] = "Чорний список";
 $MESS["MAIL_MESSAGE_LIST_BTN_DELETE"] = "Видалити";
+$MESS["MAIL_MESSAGE_LIST_BTN_DELETE_IMMEDIATELY"] = "Видалити безповоротно";
 $MESS["MAIL_MESSAGE_LIST_BTN_MOVE"] = "Перемістити у папку";
 $MESS["MAIL_MESSAGE_LIST_BTN_NOT_SPAM"] = "Не спам";
 $MESS["MAIL_MESSAGE_LIST_BTN_SEEN"] = "Прочитано";

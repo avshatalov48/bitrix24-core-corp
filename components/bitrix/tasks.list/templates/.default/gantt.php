@@ -159,7 +159,7 @@ BX.message({
 				this.adjustGanttHeight();
 			}
 		},
-		
+
 		adjustGanttHeight : function()
 		{
 			var ganttContainer = BX("gantt-container", true);
@@ -170,9 +170,9 @@ BX.message({
 				BX("gantt-container", true).style.paddingBottom = filterHeight - ganttHeight + "px";
 			else
 				BX("gantt-container", true).style.paddingBottom = "0px";
-				
+
 		},
-		
+
 		onFilterSwitch : function(event)
 		{
 			event = event || window.event;
@@ -181,7 +181,7 @@ BX.message({
 				this.adjustGanttHeight();
 		}
 	};
-	
+
 	var arFilter = <?php echo CUtil::PhpToJSObject($arResult["FILTER"])?>;
 	var arOrder = <?php echo CUtil::PhpToJSObject($arResult["ORDER"])?>;
 	var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.list/ajax.php?SITE_ID=<?php echo SITE_ID?><?php echo $arResult["TASK_TYPE"] == "group" ? "&GROUP_ID=".$arParams["GROUP_ID"] : ""?>";
@@ -339,11 +339,11 @@ BX.message({
 			BX("gantt-container"),
 			<?php $ts = time() + CTimeZone::GetOffset(); ?>
 			new Date(
-				<?php echo (int) date("Y", $ts); ?>, 
-				<?php echo (int) (date("n", $ts) - 1); ?>, 
-				<?php echo (int) date("j", $ts); ?>, 
-				<?php echo (int) date("G", $ts); ?>, 
-				<?php echo (int) date("i", $ts); ?>, 
+				<?php echo (int) date("Y", $ts); ?>,
+				<?php echo (int) (date("n", $ts) - 1); ?>,
+				<?php echo (int) date("j", $ts); ?>,
+				<?php echo (int) date("G", $ts); ?>,
+				<?php echo (int) date("i", $ts); ?>,
 				<?php echo (int) date("s", $ts); ?>
 			),
 			{
@@ -392,9 +392,9 @@ BX.message({
 								mode : "load",
 								DISABLE_IFRAME_POPUP: true
 							};
-							
+
 							var GanttObject = this;
-							
+
 							BX.ajax({
 								"method": "POST",
 								"dataType": "json",
@@ -551,7 +551,7 @@ BX.message({
 			{
 				$i++;
 				tasksRenderJSON(
-					$arTask, $arResult["CHILDREN_COUNT"]["PARENT_".$arTask["ID"]], 
+					$arTask, $arResult["CHILDREN_COUNT"]["PARENT_".$arTask["ID"]],
 					$arPaths, false, true, false, $arParams["NAME_TEMPLATE"], array(), false, array(
 						'DISABLE_IFRAME_POPUP' => true
 					)
@@ -564,7 +564,7 @@ BX.message({
 			}
 			?>
 		];
-		
+
 		for(var i = 0, count = tasks.length; i < count; i++)
 		{
 			__RenewMenuItems(tasks[i]);
@@ -710,7 +710,6 @@ if (!isset($arParams["HIDE_VIEWS"]) || $arParams["HIDE_VIEWS"] != "Y")
 			'SHOW_SECTIONS_BAR'     => 'Y',
 			'SHOW_FILTER_BAR'       => 'Y',
 			'SHOW_COUNTERS_BAR'     =>  $ynNotGroupList,
-			'SHOW_SECTION_PROJECTS' =>  $ynNotGroupList,
 			'SHOW_SECTION_MANAGE'   => 'A',
 			'SHOW_SECTION_COUNTERS' =>  $ynNotGroupList,
 			'MARK_ACTIVE_ROLE'      => 'Y',

@@ -484,36 +484,49 @@ class ActivityController extends EntityController
 		return self::$userID;
 	}
 
-	public static function isActivitySupported(array $fields)
+	/**
+	 * @param array $fields
+	 * @return bool
+	 */
+	public static function isActivitySupported(array $fields): bool
 	{
-		$typeID = isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : \CCrmActivityType::Undefined;
-		if($typeID === \CCrmActivityType::Email
-			|| $typeID === \CCrmActivityType::Call
-			|| $typeID === \CCrmActivityType::Meeting
-			|| $typeID === \CCrmActivityType::Task
-		)
+		$typeId = (isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : \CCrmActivityType::Undefined);
+		if(in_array($typeId, [
+			\CCrmActivityType::Email,
+			\CCrmActivityType::Call,
+			\CCrmActivityType::Meeting,
+			\CCrmActivityType::Task
+		], true))
 		{
 			return true;
 		}
 
-		if($typeID === \CCrmActivityType::Provider)
+		if($typeId === \CCrmActivityType::Provider)
 		{
-			$providerID = isset($fields['PROVIDER_ID']) ? $fields['PROVIDER_ID'] : '';
-			if($providerID === Activity\Provider\WebForm::getId()
-				|| $providerID === Activity\Provider\Wait::getId()
-				|| $providerID === Activity\Provider\Request::getId()
-				|| $providerID === Activity\Provider\OpenLine::getId()
-				|| $providerID === Activity\Provider\RestApp::getId()
-				|| $providerID === Activity\Provider\Delivery::getId()
-				|| $providerID === Activity\Provider\Zoom::getId()
-			)
-			{
-				return true;
-			}
+			$providerId = ($fields['PROVIDER_ID'] ?? '');
+			return in_array($providerId, self::getActivityProviders(), true);
 		}
 
 		return false;
 	}
+
+	/**
+	 * @return array
+	 */
+	private static function getActivityProviders(): array
+	{
+		return [
+			Activity\Provider\WebForm::getId(),
+			Activity\Provider\Wait::getId(),
+			Activity\Provider\Request::getId(),
+			Activity\Provider\OpenLine::getId(),
+			Activity\Provider\RestApp::getId(),
+			Activity\Provider\Delivery::getId(),
+			Activity\Provider\Zoom::getId(),
+			Activity\Provider\CallTracker::getId()
+		];
+	}
+
 	protected static function isActivityProviderSupported($providerID)
 	{
 		return(
@@ -522,6 +535,7 @@ class ActivityController extends EntityController
 			|| $providerID === Activity\Provider\Request::getId()
 			|| $providerID === Activity\Provider\OpenLine::getId()
 			|| $providerID === Activity\Provider\Sms::getId()
+			|| $providerID === Activity\Provider\Notification::getId()
 			|| $providerID === Activity\Provider\RestApp::getId()
 			|| $providerID === Activity\Provider\Visit::getId()
 			|| $providerID === Activity\Provider\Zoom::getId()
@@ -646,6 +660,10 @@ class ActivityController extends EntityController
 			}
 			$data['APP_TYPE'] = $appTypeInfo;
 		}
+		else if($providerID === \Bitrix\Crm\Activity\Provider\CallTracker::getId())
+		{
+			\Bitrix\Crm\Activity\Provider\CallTracker::modifyScheduleEntityData($data, $options);
+		}
 
 		$model = array(
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
@@ -744,6 +762,13 @@ class ActivityController extends EntityController
 				}
 			}
 		}
+		elseif($providerID === Activity\Provider\Notification::getId())
+		{
+			$fields['MESSAGE_INFO'] = Integration\NotificationsManager::getMessageByInfoId(
+				(int)$fields['ASSOCIATED_ENTITY_ID']
+			);
+			$fields['PULL_TAG_NAME'] = Integration\NotificationsManager::getPullTagName();
+		}
 		elseif($providerID === Activity\Provider\Zoom::getId())
 		{
 			$conferenceId = isset($fields['ASSOCIATED_ENTITY_ID']) ? (int)$fields['ASSOCIATED_ENTITY_ID'] : 0;
@@ -804,6 +829,10 @@ class ActivityController extends EntityController
 				}
 			}
 			$fields['APP_TYPE'] = $appTypeInfo;
+		}
+		elseif($providerID === \Bitrix\Crm\Activity\Provider\CallTracker::getId())
+		{
+			\Bitrix\Crm\Activity\Provider\CallTracker::modifyTimelineEntityData($ID, $fields, $options);
 		}
 
 		if(isset($fields['STORAGE_ELEMENT_IDS']))

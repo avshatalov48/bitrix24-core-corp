@@ -1,0 +1,3 @@
+<?php
+$MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_LINK_CONNECT"] = "Підключитися до Robokassa";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPKASSA_LINK_CONNECT"] = "Підключитися до Woopkassa";

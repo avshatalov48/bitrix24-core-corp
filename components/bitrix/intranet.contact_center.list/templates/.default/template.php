@@ -67,6 +67,19 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 							<div class="intranet-contact-name">
 								<span class="intranet-contact-name-text"><?=$item["NAME"]?></span>
 							</div>
+							<?php if (isset($item["IS_NEW"]) && $item["IS_NEW"] === true):
+								$phrase = $item["NEW_PHRASE"] ?? 'CONTACT_CENTER_NEW_LABEL';
+								$className = $item["SELECTED"]
+									? 'intranet-contact-center-item-label-new-active'
+									: 'intranet-contact-center-item-label-new';
+								$textClassName = $item["SELECTED"]
+									? 'intranet-contact-center-item-label-new-text-active'
+									: 'intranet-contact-center-item-label-new-text';
+								?>
+								<div data-role="item-new-label" class="<?=$className?>">
+									<div class="<?=$textClassName?>"><?=htmlspecialcharsbx(Loc::getMessage($phrase))?></div>
+								</div>
+							<?php endif;?>
 						</div>
 					</div>
 				<?

@@ -31,6 +31,7 @@ class ProjectTask extends Base
 	public function setDocumentStatus($statusId)
 	{
 		$task = new \CTasks();
+
 		$result = $task->update($this->getDocumentId(), ['STAGE_ID' => $statusId]);
 
 		if ($result)

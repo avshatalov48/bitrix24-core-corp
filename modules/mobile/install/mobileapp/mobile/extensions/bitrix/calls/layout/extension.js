@@ -203,6 +203,57 @@
 			height: 16,
 			color: "#6FFFFFFF",
 		},
+		bottomButtonContainer: {
+			marginLeft: 5,
+			marginRight: 5,
+			height: 60,
+			minWidth: 58,
+			alignSelf: "flex-end",
+			borderRadius: 10,
+			marginBottom: 10,
+			//borderWidth: 1,
+			//borderColor: "#0000FF",
+			justifyContent: "center",
+			color: "#ffffff",
+		},
+		bottomButtonImage: {
+			width: 30,
+			height: 30,
+			alignSelf: "center",
+		},
+		bottomButtonText: {
+			alignSelf: "center",
+			fontSize: 11,
+			marginTop: 6,
+			fontWeight: "bold",
+			color: "#ffffff"
+		},
+		bottomButtonCounter: {
+			position: "absolute",
+			top: 4,
+			right: 6,
+			height: 14,
+			paddingLeft: 7,
+			paddingRight: 7,
+
+			borderRadius: 7,
+			backgroundColor: "#FF5752",
+
+		},
+		bottomButtonCounterText: {
+			color: "#ffffff",
+			fontWeight: "bold",
+			fontSize: 11,
+		},
+		videoPausedOverlay: {
+			position: "absolute",
+			height: "100%",
+			opacity: 0.6,
+			width: "100%",
+			alignItems: "center",
+			justifyContent: "center",
+			backgroundColor: "#000000"
+		}
 	};
 
 	const EventName = {
@@ -250,6 +301,7 @@
 				panelVisible: true,
 				microphoneState: true,
 				cameraState: props.cameraState === true,
+				centralUserVideoPaused: false,
 				remoteStream: null,
 				localStream: null,
 				mirrorLocalVideo: true,
@@ -264,6 +316,7 @@
 				isVideoCall: props.isVideoCall === true,
 				associatedEntityName: props.associatedEntityName,
 				associatedEntityAvatar: props.associatedEntityAvatar,
+				chatCounter: props.chatCounter || 0,
 			};
 
 			this.localUserModel = new UserModel({
@@ -363,7 +416,8 @@
 			{
 				return;
 			}*/
-			if (!this.userRegistry.get(userId))
+			let userModel  = this.userRegistry.get(userId);
+			if (!userModel)
 			{
 				return;
 			}
@@ -375,6 +429,7 @@
 			this.centralUserId = userId;
 			this.setState({
 				centralUserId: userId,
+				centralUserVideoPaused: userModel.videoPaused,
 				remoteStream: this.videoStreams.hasOwnProperty(userId) ? this.videoStreams[userId] : null,
 				localStream: this.videoStreams.hasOwnProperty(this.userId) ? this.videoStreams[this.userId] : null,
 			});
@@ -543,6 +598,13 @@
 			clearTimeout(this.switchPresenterTimeout);
 		}
 
+		setChatCounter(chatCounter)
+		{
+			this.setState({
+				chatCounter: chatCounter,
+			});
+		}
+
 		setCameraState(cameraState)
 		{
 			cameraState = !!cameraState;
@@ -662,6 +724,22 @@
 			{
 				this.setState({});
 			}
+		}
+
+		setUserVideoPaused(userId, videoPaused)
+		{
+			/** @type {UserModel} */
+			var user = this.userRegistry.get(userId);
+			if (user && user.videoPaused != videoPaused)
+			{
+				user.videoPaused = videoPaused;
+
+				if (userId == this.centralUserId)
+				{
+					this.setState({centralUserVideoPaused: videoPaused});
+				}
+			}
+
 		}
 
 		getUserFloorRequestState(userId)
@@ -858,13 +936,28 @@
 			);
 		}
 
+		renderVideoPaused()
+		{
+			const userName = this.userRegistry.get(this.state.centralUserId).name;
+			return View(
+				{
+					style: styles.videoPausedOverlay,
+					clickable: false,
+				},
+				Text({
+					style: {fontSize: 15, color: "#FFFFFF"},
+					text: BX.message("MOBILE_CALL_USER_PAUSED_VIDEO").replace("#NAME#", userName),
+				})
+			);
+		}
+
 		renderCenter()
 		{
 			if (this.state.centralUserId == this.userId)
 			{
 				return null;
 			}
-			const showLargeAvatar = this.state.centralUserId != this.userId && !this.state.remoteStream;
+			const showLargeAvatar = this.state.centralUserId != this.userId && !this.state.remoteStream && !this.state.centralUserVideoPaused;
 			const showArrows = this.state.connectedUsers.length > 1;
 
 			const avatar = this.userRegistry.get(this.state.centralUserId).avatar ?
@@ -976,7 +1069,7 @@
 				this.state.isGroupCall && this.renderIncomingAvatars(),
 				View({
 					style: {
-						flexGrow: 1,
+						flex: 1,
 					},
 				}),
 				this.renderIncomingButtons(),
@@ -1004,7 +1097,7 @@
 				}),
 				View(
 					{
-						style: {marginTop: 30, flexDirection: "row"},
+						style: {marginTop: 30, flexDirection: "row", maxWidth: "90%"},
 					},
 					Image({
 						style: {width: 53, height: 53, borderRadius: 26.5},
@@ -1012,7 +1105,8 @@
 						...avatar,
 					}),
 					Text({
-						style: {fontSize: 20, marginLeft: 12, color: "#FFFFFF"},
+						style: {fontSize: 20, marginLeft: 12, color: "#FFFFFF", maxWidth: "80%"},
+						numberOfLines: 20,
 						text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
 					}),
 				),
@@ -1072,7 +1166,7 @@
 					style: {
 						flexDirection: "row",
 						marginBottom: 78,
-						justifyContent: "space-between",
+						justifyContent: "center",
 						alignItems: "center",
 						width: "100%",
 					},
@@ -1086,9 +1180,9 @@
 					svg: {content: Icons.incomingDecline},
 					onClick: () => this.emit(EventName.DeclineButtonClick),
 				}),
-				this.state.isVideoCall && Button({
+				Button({
 					style: {
-						color: "#FFFFFF",
+						color: this.state.isVideoCall ? "#FFFFFF" : "#00FFFFFF",
 						fontSize: 15,
 						height: 46,
 						paddingLeft: 16,
@@ -1097,8 +1191,8 @@
 						marginRight: 16,
 						borderWidth: 1,
 						borderRadius: 23,
-						borderColor: "#7FFFFFFF",
-						backgroundColor: "#33FFFFFF",
+						borderColor: this.state.isVideoCall ? "#7FFFFFFF" : "#00FFFFFF",
+						backgroundColor: this.state.isVideoCall ? "#33FFFFFF" : "#00FFFFFF",
 						flexShrink: 1,
 						textAlign: "center",
 
@@ -1203,6 +1297,7 @@
 					},
 				},
 				!!this.state.remoteStream && this.renderRemoteStream(),
+				this.state.centralUserVideoPaused && this.renderVideoPaused(),
 				needCentralUser && this.renderCenter(),
 				!showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame),
 				this.renderOverlay(),
@@ -1320,11 +1415,14 @@
 				this.button(
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_MENU"),
 					Icons.buttonMenu,
-					() => this.showCallMenu()),
-				this.button(
+					() => this.showCallMenu()
+				),
+				this.buttonWithCounter(
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_CHAT"),
+					this.state.chatCounter,
 					Icons.buttonChat,
-					() => this.emit(EventName.ChatButtonClick)),
+					() => this.emit(EventName.ChatButtonClick)
+				),
 				this.button(
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_HANGUP"),
 					Icons.buttonHangup,
@@ -1341,35 +1439,48 @@
 			return View(
 				{
 					onClick: click,
-					style: {
-						marginLeft: 5,
-						marginRight: 5,
-						height: 60,
-						minWidth: 58,
-						alignSelf: "flex-end",
-						borderRadius: 10,
-						marginBottom: 10,
-						//borderWidth: 1,
-						//borderColor: "#0000FF",
-						justifyContent: "center",
-						color: "#ffffff",
-
-					},
+					style: styles.bottomButtonContainer,
 				},
 				View({},
 					Image({
 						onClick: click,
-						style: {
-							width: 30,
-							height: 30,
-							alignSelf: "center",
-						},
+						style: styles.bottomButtonImage,
 						svg: {content: svgContent},
 						resizeMode: "center",
 					}),
 				),
 				Text({
-					style: {alignSelf: "center", fontSize: 11, marginTop: 6, fontWeight: "bold", color: "#ffffff"},
+					style: styles.bottomButtonText,
+					text: text,
+				})
+			);
+		}
+
+		buttonWithCounter(text, counter, svgContent, click)
+		{
+			return View(
+				{
+					onClick: click,
+					style: styles.bottomButtonContainer,
+				},
+				View({},
+					Image({
+						onClick: click,
+						style: styles.bottomButtonImage,
+						svg: {content: svgContent},
+						resizeMode: "center",
+					}),
+				),
+				(counter > 0) && View({
+					style: styles.bottomButtonCounter
+				},
+				Text({
+					style: styles.bottomButtonCounterText,
+					text: counter.toString()
+				})
+				),
+				Text({
+					style: styles.bottomButtonText,
 					text: text,
 				}));
 		}

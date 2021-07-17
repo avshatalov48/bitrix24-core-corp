@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Total";
 $MESS["CRM_COMPANY_ACTION_DELETE"] = "Delete";
 $MESS["CRM_COMPANY_ACTION_MERGE"] = "Merge";
@@ -38,7 +38,7 @@ $MESS["CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE"] = "Move legacy company addresse
 $MESS["CRM_COMPANY_CONVERT_ADDRESSES_STATE"] = "#processed# out of #total#";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Move addresses from user fields to company details";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE"] = "#processed# out of #total#";
-$MESS["CRM_COMPANY_COPY"] = "Copy Company";
+$MESS["CRM_COMPANY_COPY"] = "Copy";
 $MESS["CRM_COMPANY_COPY_TITLE"] = "Copy Company";
 $MESS["CRM_COMPANY_CREATE_CALL_LIST"] = "Create call list";
 $MESS["CRM_COMPANY_DEAL_ADD"] = "Add Deal";
@@ -97,4 +97,3 @@ $MESS["CRM_SHOW_ROW_COUNT"] = "Show quantity";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
 $MESS["CRM_STATUS_INIT"] = "- Status -";
-?>

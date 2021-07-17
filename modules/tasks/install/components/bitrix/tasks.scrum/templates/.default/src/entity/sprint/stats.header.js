@@ -2,6 +2,7 @@ import {Dom, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Sprint} from './sprint';
 import {StatsCalculator} from '../../utility/stats.calculator';
+import {SprintDate} from "./sprint.date";
 
 export class StatsHeader extends EventEmitter
 {
@@ -48,10 +49,21 @@ export class StatsHeader extends EventEmitter
 
 	setSprintData(sprint: Sprint)
 	{
+		this.setSprintDate(sprint);
 		this.setStoryPoints(sprint.getTotalStoryPoints().getPoints());
 		this.setCompletedStoryPoints(sprint.getTotalCompletedStoryPoints().getPoints());
 		this.setUncompletedStoryPoints(sprint.getTotalUncompletedStoryPoints().getPoints());
 		this.setEndDate(sprint.getDateEnd());
+	}
+
+	setSprintDate(sprint: Sprint)
+	{
+		this.sprintDate = new SprintDate(sprint);
+	}
+
+	getSprintDate(): SprintDate
+	{
+		return this.sprintDate;
 	}
 
 	setStoryPoints(storyPoints)

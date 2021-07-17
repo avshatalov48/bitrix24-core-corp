@@ -329,6 +329,11 @@ class BaseItem extends BX.TileGrid.Item
 		return this.data.menu;
 	}
 
+	hasMenu(): boolean
+	{
+		return Type.isArrayFilled(this.data.menu);
+	}
+
 	dropMenu(): BaseItem
 	{
 		delete this.data.menu;
@@ -351,6 +356,16 @@ class BaseItem extends BX.TileGrid.Item
 		if(Type.isString(this.data.url))
 		{
 			return this.data.url;
+		}
+
+		return null;
+	}
+
+	getSliderOptions()
+	{
+		if (Type.isPlainObject(this.data.sliderOptions))
+		{
+			return this.data.sliderOptions;
 		}
 
 		return null;
@@ -501,12 +516,13 @@ class PaymentItem extends BaseItem
 				this.showRestApplication(this.data.code);
 			}
 		}
-		else if (this.isCrmStoreTile())
+		else if (this.opensSlider())
 		{
 			const url = this.getUrl();
+			const options = this.getSliderOptions();
 			if(url)
 			{
-				Manager.openSlider(url);
+				Manager.openSlider(url, options).then(this.reloadTile.bind(this));
 			}
 		}
 		else if (this.isRecommendTile())
@@ -519,6 +535,15 @@ class PaymentItem extends BaseItem
 		}
 	}
 
+	opensSlider(): boolean
+	{
+		const tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile();
+		const tileHasUrl = this.getUrl();
+		const tileHasMenu = this.hasMenu();
+
+		return tileHasSlider && tileHasUrl && !tileHasMenu;
+	}
+
 	isRecommendTile()
 	{
 		return this.id === 'recommendation';
@@ -527,6 +552,11 @@ class PaymentItem extends BaseItem
 	isCrmStoreTile()
 	{
 		return this.id === 'crmstore';
+	}
+
+	isCrmWithEshopTile()
+	{
+		return this.id === 'crm-with-eshop';
 	}
 }
 

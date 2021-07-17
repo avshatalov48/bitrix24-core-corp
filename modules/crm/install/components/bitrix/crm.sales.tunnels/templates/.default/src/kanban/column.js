@@ -35,6 +35,7 @@ export default class Column extends Kanban.Column
 			.subscribe('Marker:linkTo', this.onMarkerLinkTo.bind(this))
 			.subscribe('Marker:stubLinkTo', this.onMarkerStubLinkTo.bind(this))
 			.subscribe('Marker:removeLinkFrom', this.onRemoveLinkFrom.bind(this))
+			.subscribe('Marker:changeRobotAction', this.onChangeRobotAction.bind(this))
 			.subscribe('Marker:editLink', this.onEditLink.bind(this))
 			.subscribe('Marker:unlink', this.onMarkerUnlink.bind(this))
 			.subscribe('Marker:unlinkStub', this.onMarkerUnlinkStub.bind(this))
@@ -91,6 +92,11 @@ export default class Column extends Kanban.Column
 		if (Type.isFunction(options.data.onRemoveLinkFrom))
 		{
 			this.onRemoveLinkFromHandler = options.data.onRemoveLinkFrom;
+		}
+
+		if (Type.isFunction(options.data.onChangeRobotAction))
+		{
+			this.onChangeRobotAction = options.data.onChangeRobotAction;
 		}
 
 		if (Type.isFunction(options.data.onEditLink))
@@ -376,28 +382,9 @@ export default class Column extends Kanban.Column
 		this.onColorChangeHandler(this);
 	}
 
-	// @todo: refactoring
 	handleAddColumnButtonClick(event)
 	{
-		super.handleAddColumnButtonClick(event);
-		const newColumn = this.getGrid().getNextColumnSibling(this);
-		newColumn.setOptions({
-			canRemove: true,
-			canSort: true,
-		});
-
-		const applyEditMode = newColumn.applyEditMode;
-		newColumn.applyEditMode = function() {
-			applyEditMode.apply(newColumn);
-			Marker.adjustLinks();
-		};
-
-		Event.bind(newColumn.getRemoveButton(), 'click', () => {
-			Marker.adjustLinks();
-		});
-
-		this.onAddColumnHandler(newColumn);
-		Marker.adjustLinks();
+		this.onAddColumnHandler(this);
 	}
 
 	handleRemoveButtonClick(event: any)

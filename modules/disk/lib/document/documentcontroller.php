@@ -207,6 +207,12 @@ class DocumentController extends Internals\Controller
 		return $this->file->canUnlock($securityContext);
 	}
 
+	protected function trackDocument(): void
+	{
+		$trackedObjectManager = Driver::getInstance()->getTrackedObjectManager();
+		$trackedObjectManager->pushFile($this->getUser()->getId(), $this->file, true);
+	}
+
 	/**
 	 * @return string
 	 */
@@ -555,6 +561,9 @@ class DocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 		$this->sendJsonSuccessResponse([
+			'object' => [
+				'id' => $this->file->getId(),
+			],
 			'objectId' => $this->file->getId(),
 			'newName' => $this->file->getName(),
 		]);
@@ -699,6 +708,8 @@ class DocumentController extends Internals\Controller
 			$this->errorCollection->add($this->documentHandler->getErrors());
 			$this->sendJsonErrorResponse();
 		}
+
+		$this->trackDocument();
 
 		//if somebody publish to google similar document
 		$onlineSession = $this->getOnlineEditSessionForFile();
@@ -911,11 +922,14 @@ class DocumentController extends Internals\Controller
 			$this->deleteFile($currentSession, $fileData);
 		}
 
-		$this->sendJsonSuccessResponse(array(
+		$this->sendJsonSuccessResponse([
+			'object' => [
+				'id' => $this->file->getId(),
+			],
 			'objectId' => $this->file->getId(),
 			'newName' => $this->file->getName(),
 			'oldName' => $oldName,
-		));
+		]);
 	}
 
 	protected function processActionGetLastVersionUri()

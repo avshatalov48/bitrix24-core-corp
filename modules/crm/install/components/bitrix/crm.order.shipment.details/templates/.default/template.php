@@ -2,8 +2,14 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
 
 CJSCore::Init(array('crm_entity_editor'));
+if (Loader::includeModule('sale'))
+{
+	Extension::load('sale.address');
+}
 
 /** @var array $arParams */
 /** @var array $arResult */

@@ -40,7 +40,7 @@ class AddressSeparator
 			case self::NewLine:
 				return "\n";
 			case self::HtmlLineBreak:
-				return '<br/>';
+				return '<br />';
 			default:
 				return '';
 		}

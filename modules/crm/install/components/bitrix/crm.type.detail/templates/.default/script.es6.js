@@ -24,10 +24,6 @@ declare type Relation = {
 	isChildrenListEnabled: boolean,
 }
 
-declare type CustomSectionElement = CustomSection & {
-	isSelected: boolean,
-}
-
 const namespace = Reflection.namespace('BX.Crm.Component');
 
 let instance: TypeDetail = null;
@@ -49,7 +45,6 @@ class TypeDetail
 		parent: Relation[],
 		child: Relation[],
 	};
-	customSections: ?CustomSectionElement[];
 	parentRelationsController: RelationsController;
 	childRelationsController: RelationsController;
 	customSectionController: ?CustomSectionsController;
@@ -65,7 +60,6 @@ class TypeDetail
         	parent: Relation[],
 			child: Relation[],
 		},
-		customSections: ?CustomSectionElement[],
     })
     {
         if(Type.isPlainObject(params))
@@ -77,10 +71,6 @@ class TypeDetail
             this.errorsContainer = params.errorsContainer;
             this.presets = params.presets;
             this.relations = params.relations;
-            if (Type.isArray(params.customSections))
-			{
-				this.customSections = params.customSections;
-			}
             this.isRestricted = Boolean(params.isRestricted);
         }
 
@@ -344,7 +334,10 @@ class TypeDetail
         {
             location.href = Router.Instance.getTypeDetailUrl(this.type.getEntityTypeId());
         }
-        this.emitTypeUpdatedEvent();
+
+        this.emitTypeUpdatedEvent({
+			isUrlChanged: (response.data.isUrlChanged === true),
+		});
     }
 
     getSlider()
@@ -367,12 +360,12 @@ class TypeDetail
 		return null;
 	}
 
-	emitTypeUpdatedEvent(): void
+	emitTypeUpdatedEvent(data): void
 	{
 		const toolbar = this.getToolbarComponent();
 		if (toolbar)
 		{
-			toolbar.emitTypeUpdatedEvent();
+			toolbar.emitTypeUpdatedEvent(data);
 		}
 	}
 
@@ -435,10 +428,13 @@ class TypeDetail
             () => {
                 return new Promise((resolve) => {
                     this.startProgress();
-                    this.type.delete().then(() => {
+                    this.type.delete().then((response) => {
                         this.stopProgress();
-						this.emitTypeUpdatedEvent();
-                        const slider = this.getSlider();
+
+                        const isUrlChanged = (Type.isObject(response.data) && (response.data.isUrlChanged === true));
+						this.emitTypeUpdatedEvent({isUrlChanged});
+
+						const slider = this.getSlider();
                         if(slider)
                         {
                             slider.close();
@@ -630,15 +626,12 @@ class TypeDetail
 
 	initCustomSections()
 	{
-		if (Type.isArray(this.customSections))
-		{
-			this.customSectionController = new CustomSectionsController({
-				switcher: BX.UI.Switcher.getById('crm-type-custom-section-switcher'),
-				container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
-				selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
-				customSections: this.customSections
-			});
-		}
+		this.customSectionController = new CustomSectionsController({
+			switcher: BX.UI.Switcher.getById('crm-type-custom-section-switcher'),
+			container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
+			selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
+			customSections: this.type.getCustomSections() || [],
+		});
 	}
 
 	static handleLeftMenuClick(tabName: string)
@@ -886,7 +879,7 @@ class CustomSectionsController
 	switcher: BX.UI.Switcher;
 	container: HTMLDivElement;
 	selectorContainer: HTMLDivElement;
-	customSections: CustomSectionElement[];
+	customSections: CustomSection[];
 	selector: TagSelector;
 	settingsContainer: HTMLDivElement;
 	sectionsListContainer: HTMLDivElement;
@@ -894,12 +887,24 @@ class CustomSectionsController
 	cancelButton: Element;
 	addSectionItemButton: Element;
 
-	constructor(options)
+	constructor(options: {
+		switcher: {},
+		container: Element,
+		selectorContainer: Element,
+		customSections?: CustomSection[]
+	})
 	{
 		this.switcher = options.switcher;
 		this.container = options.container;
 		this.selectorContainer = options.selectorContainer;
-		this.customSections = options.customSections;
+		if (Type.isArray(options.customSections))
+		{
+			this.customSections = options.customSections;
+		}
+		else
+		{
+			this.customSections = [];
+		}
 
 		this.initSelector();
 
@@ -1083,7 +1088,7 @@ class CustomSectionsController
 		listContainer.append(this.renderSectionItem());
 	}
 
-	renderSectionItem(section: ?CustomSectionElement): HTMLDivElement
+	renderSectionItem(section: ?CustomSection): HTMLDivElement
 	{
 		const item = new CustomSectionItem(section);
 		const node = Tag.render`<div style="margin-bottom: 10px;" class="ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row">
@@ -1124,7 +1129,7 @@ class CustomSectionsController
 		}
 	}
 
-	getSelectedSection(): ?CustomSectionElement
+	getSelectedSection(): ?CustomSection
 	{
 		const selectedItems = this.selector.getDialog().getSelectedItems();
 		if (selectedItems.length > 0)
@@ -1159,7 +1164,7 @@ class CustomSectionsController
 
 class CustomSectionItem
 {
-	constructor(customSection: CustomSectionElement = null)
+	constructor(customSection: CustomSection = null)
 	{
 		this.id = customSection ? customSection.id : 'new_' + Text.getRandom();
 		this.value = customSection ? customSection.title : '';

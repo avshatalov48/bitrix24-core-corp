@@ -13,6 +13,7 @@ import {Core} from "mobile.im.application.core";
 
 // main
 import "main.date";
+import {EventEmitter} from "main.core.events";
 
 // pull
 import {PULL as Pull, PullClient} from "mobile.pull.client";
@@ -39,16 +40,12 @@ import {Timer} from "im.lib.timer";
 
 // vue components
 import 'pull.component.status';
-import 'im.view.dialog';
 
 // dialog files
 import "./dialog.css";
 
 // widget components
 import "./component/bx-messenger";
-import "./component/bx-messenger-body-error";
-import "./component/bx-messenger-body-loading";
-import "./component/bx-messenger-body-empty";
 
 
 export class MobileDialogApplication
@@ -75,6 +72,7 @@ export class MobileDialogApplication
 
 		this.initCore()
 			.then(() => this.initComponentParams())
+			.then(result => this.initMobileEntity(result))
 			.then(result => this.initMobileSettings(result))
 			.then(() => this.initComponent())
 			.then(() => this.initEnvironment())
@@ -99,9 +97,38 @@ export class MobileDialogApplication
 		return BX.componentParameters.init();
 	}
 
+	initMobileEntity(data)
+	{
+		console.log('1. initMobileEntity');
+
+		return new Promise((resolve, reject) =>
+		{
+			if (data.DIALOG_ENTITY)
+			{
+				data.DIALOG_ENTITY = JSON.parse(data.DIALOG_ENTITY);
+				if (data.DIALOG_TYPE === 'user')
+				{
+					this.controller.getStore().dispatch('users/set', data.DIALOG_ENTITY).then(() => {
+						resolve(data);
+					});
+				}
+				else if (data.DIALOG_TYPE === 'chat')
+				{
+					this.controller.getStore().dispatch('dialogues/set', data.DIALOG_ENTITY).then(() => {
+						resolve(data);
+					});
+				}
+			}
+			else
+			{
+				resolve(data);
+			}
+		});
+	}
+
 	initMobileSettings(data)
 	{
-		console.log('1. initMobileSettings');
+		console.log('2. initMobileSettings');
 
 		// todo change to dynamic storage (LocalStorage web, PageParams for mobile)
 		let serverVariables = LocalStorage.get(this.controller.getSiteId(), 0, 'serverVariables', false);
@@ -137,8 +164,7 @@ export class MobileDialogApplication
 
 	initComponent()
 	{
-		console.log('2. initComponent');
-		this.controller.getStore().subscribe(mutation => this.eventStoreInteraction(mutation));
+		console.log('3. initComponent');
 
 
 		this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
@@ -172,7 +198,7 @@ export class MobileDialogApplication
 
 	initEnvironment()
 	{
-		console.log('5. initEnvironment');
+		console.log('4. initEnvironment');
 
 		this.setTextareaMessage = Utils.debounce(this.controller.application.setTextareaMessage, 300, this.controller.application);
 
@@ -181,20 +207,23 @@ export class MobileDialogApplication
 
 	initMobileEnvironment()
 	{
-		console.log('6. initMobileEnvironment');
+		console.log('5. initMobileEnvironment');
 
 		BXMobileApp.UI.Page.Scroll.setEnabled(false);
 		BXMobileApp.UI.Page.captureKeyboardEvents(true);
 
 		BX.addCustomEvent("onKeyboardWillShow", () => {
+			// EventEmitter.emit(EventType.dialog.beforeMobileKeyboard);
 			this.controller.getStore().dispatch('application/set', {mobile: {
 				keyboardShow: true,
 			}});
 		});
+
 		BX.addCustomEvent("onKeyboardDidShow", () => {
-			console.log('did show');
-			this.controller.application.emit('EventType.dialog.scrollToBottom', {duration: 300, cancelIfScrollChange: true});
+			console.log('Keyboard was showed');
+			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), duration: 300, cancelIfScrollChange: true});
 		});
+
 		BX.addCustomEvent("onKeyboardWillHide", () => {
 			clearInterval(this.keyboardOpeningInterval);
 			this.controller.getStore().dispatch('application/set', {mobile: {
@@ -218,6 +247,16 @@ export class MobileDialogApplication
 			}});
 		};
 
+		BXMobileApp.addCustomEvent("CallEvents::viewOpened", () => {
+			console.warn('CallView show - disable read message');
+			Vue.event.$emit('bitrixmobile:controller:blur');
+		});
+
+		BXMobileApp.addCustomEvent("CallEvents::viewClosed", () => {
+			console.warn('CallView hide - enable read message');
+			checkWindowFocused();
+		});
+
 		BX.addCustomEvent("onAppActive", () =>
 		{
 			checkWindowFocused();
@@ -231,12 +270,14 @@ export class MobileDialogApplication
 
 				this.getDialogUnread().then(() => {
 					this.processSendMessages();
-					this.controller.application.emit(EventType.dialog.sendReadMessages);
+					EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
+					EventEmitter.emit(EventType.dialog.scrollOnStart, {chatId: this.controller.application.getChatId()});
 				}).catch(() => {
 					this.processSendMessages();
 				});
 			}});
 		});
+
 		BX.addCustomEvent("onAppPaused", () => {
 			this.windowFocused = false;
 			Vue.event.$emit('bitrixmobile:controller:blur');
@@ -311,10 +352,15 @@ export class MobileDialogApplication
 
 	initPullClient()
 	{
-		console.log('7. initPullClient');
+		console.log('6. initPullClient');
 
 		if (this.storedEvents && this.storedEvents.length > 0)
 		{
+			//sort events and get first 50 (to match unread messages cache size)
+			this.storedEvents = this.storedEvents.sort((a, b) => {
+				return a.message.id - b.message.id;
+			});
+			this.storedEvents = this.storedEvents.slice(0, 50);
 			setTimeout(() => {
 				this.storedEvents = this.storedEvents.filter(event => {
 					BX.onCustomEvent('chatrecent::push::get', [event]);
@@ -364,6 +410,9 @@ export class MobileDialogApplication
 
 	initComplete()
 	{
+		console.log('7. init complete')
+		this.controller.getStore().subscribe(mutation => this.eventStoreInteraction(mutation));
+
 		this.inited = true;
 		this.initPromise.resolve(this);
 
@@ -436,7 +485,9 @@ export class MobileDialogApplication
 				let constGet = response[RestMethodHandler.mobileBrowserConstGet];
 				if (constGet.error())
 				{
-					// this.setError(constGet.error().ex.error, constGet.error().ex.error_description);
+					console.warn('Error load dialog', constGet.error().ex.error, constGet.error().ex.error_description)
+					console.warn('Try connect...');
+					setTimeout(() => this.requestData(), 5000);
 				}
 				else
 				{
@@ -833,9 +884,9 @@ export class MobileDialogApplication
 	setHeaderButtons()
 	{
 		if (this.callMenuSetted)
-        {
-            return true;
-        }
+		{
+			return true;
+		}
 
 		if (Utils.dialog.isChatId(this.controller.application.getDialogId()))
 		{
@@ -847,7 +898,11 @@ export class MobileDialogApplication
 
 			let isAvailableChatCall = Application.getApiVersion() >= 36;
 			let maxParticipants = this.controller.application.getData().call.maxParticipants;
-			if (dialogData.userCounter > maxParticipants || !isAvailableChatCall)
+			if (
+				dialogData.userCounter > maxParticipants
+				|| !isAvailableChatCall
+				|| dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST'
+			)
 			{
 				if (dialogData.type !== DialogType.call && dialogData.restrictions.extend)
 				{
@@ -871,25 +926,26 @@ export class MobileDialogApplication
 			}
 		}
 		else
-        {
-            let userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
-            if (!userData.init)
-            {
-                return false;
-            }
+		{
+			let userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+			if (!userData.init)
+			{
+				return false;
+			}
 
-            if (
-            	userData.bot
+			if (
+				!userData
+				|| userData.bot
 				|| userData.network
 				|| this.controller.application.getUserId() === parseInt(this.controller.application.getDialogId())
 			)
-            {
-                app.exec("setRightButtons", {items: []});
+			{
+				app.exec("setRightButtons", {items: []});
 
-                this.callMenuSetted = true;
-                return true;
-            }
-        }
+				this.callMenuSetted = true;
+				return true;
+			}
+		}
 
 		app.exec("setRightButtons", {items: [
 			{
@@ -905,7 +961,12 @@ export class MobileDialogApplication
 					}
 					else
 					{
-						this.openCallMenu();
+						let userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+						BXMobileApp.Events.postToComponent("onCallInvite", {
+							userId: this.controller.application.getDialogId(),
+							video: false,
+							userData: {[userData.id]: userData}
+						}, "calls");
 					}
 				}
 			},
@@ -918,11 +979,6 @@ export class MobileDialogApplication
 
 					if (Utils.dialog.isChatId(this.controller.application.getDialogId()))
 					{
-						console.warn({
-							dialogId: this.controller.application.getDialogId(),
-							video: true,
-							chatData: this.controller.application.getDialogData()
-						});
 						BXMobileApp.Events.postToComponent("onCallInvite", {
 							dialogId: this.controller.application.getDialogId(),
 							video: true,
@@ -1170,11 +1226,19 @@ export class MobileDialogApplication
 				{
 					return false;
 				}
-				if (element.type === 'user')
+
+				if (element.type !== 'user')
 				{
-					items.push(element.user);
-					itemsIndex[element.id] = true;
+					return false;
 				}
+
+				if (element.user.network || element.user.connector)
+				{
+					return false;
+				}
+
+				items.push(element.user);
+				itemsIndex[element.id] = true;
 
 				return true;
 			});
@@ -1186,6 +1250,12 @@ export class MobileDialogApplication
 			{
 				return false;
 			}
+
+			if (element.network || element.connector)
+			{
+				return false;
+			}
+
 			items.push(element);
 			itemsIndex[element.id] = true;
 		});
@@ -1201,11 +1271,19 @@ export class MobileDialogApplication
 			{
 				return false;
 			}
-			if (element.type === 'user')
+
+			if (element.type !== 'user')
 			{
-				items.push(element.user);
-				itemsIndex[element.id] = true;
+				return false;
 			}
+
+			if (element.user.network || element.user.connector)
+			{
+				return false;
+			}
+
+			items.push(element.user);
+			itemsIndex[element.id] = true;
 
 			return true;
 		});
@@ -1230,8 +1308,13 @@ export class MobileDialogApplication
 	{
 		if (data.type === 'dialogues/update' && data.payload && data.payload.fields)
 		{
+			if (data.payload.dialogId !== this.controller.application.getDialogId())
+			{
+				return;
+			}
+
 			if (
-			 	typeof data.payload.fields.name !== 'undefined'
+				typeof data.payload.fields.name !== 'undefined'
 				|| typeof data.payload.fields.userCounter !== 'undefined'
 			)
 			{
@@ -1243,22 +1326,27 @@ export class MobileDialogApplication
 			}
 
 			if (
-			 	typeof data.payload.fields.counter !== 'undefined'
+				typeof data.payload.fields.counter !== 'undefined'
 				&& typeof data.payload.dialogId !== 'undefined'
 			)
 			{
-			 	BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
-			 		dialogId: data.payload.dialogId,
-			 		counter: data.payload.fields.counter,
+				BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+					dialogId: data.payload.dialogId,
+					counter: data.payload.fields.counter,
 				}, true], 'im.recent');
 			}
 		}
 		else if (data.type === 'dialogues/set')
 		{
 			data.payload.forEach((dialog) => {
+				if (dialog.dialogId !== this.controller.application.getDialogId())
+				{
+					return;
+				}
+
 				BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
-			 		dialogId: dialog.dialogId,
-			 		counter: dialog.counter,
+					dialogId: dialog.dialogId,
+					counter: dialog.counter,
 				}, true], 'im.recent');
 			});
 		}
@@ -1275,7 +1363,8 @@ export class MobileDialogApplication
 				this.getDialogUnread().then(() => {
 					this.controller.pullBaseHandler.option.skip = false;
 					this.processSendMessages();
-					this.controller.application.emit(EventType.dialog.sendReadMessages);
+					EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
+					EventEmitter.emit(EventType.dialog.scrollOnStart, {chatId: this.controller.application.getChatId()});
 				}).catch(() => {
 					this.controller.pullBaseHandler.option.skip = false;
 					this.processSendMessages();
@@ -1526,7 +1615,7 @@ export class MobileDialogApplication
 					{
 						if (Utils.platform.isIos() && Utils.platform.getIosVersion() > 12)
 						{
-							this.controller.application.emit(EventType.dialog.scrollToBottom, {duration: 300, cancelIfScrollChange: true})
+							EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), duration: 300, cancelIfScrollChange: true})
 						}
 					}
 					else if (data.event === "removeFocus")
@@ -1598,7 +1687,7 @@ export class MobileDialogApplication
 			params,
 			sending: !file,
 		}).then(messageId => {
-
+			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), cancelIfScrollChange: true});
 			this.messagesQueue.push({
 				id: messageId,
 				chatId: this.controller.application.getChatId(),
@@ -1876,9 +1965,9 @@ export class MobileDialogApplication
 			'CONVERT_TEXT': 'Y'
 		}).then(result => {
 			this.controller.executeRestAnswer(RestMethodHandler.imDialogMessagesGet, result);
-			this.controller.application.emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
+			// this.controller.application.emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
 		}).catch(result => {
-			this.controller.emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
+			// this.controller.emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
 		});
 	}
 
@@ -1899,7 +1988,7 @@ export class MobileDialogApplication
 
 		if (!lastId)
 		{
-			this.controller.application.emit(EventType.dialog.requestUnreadResult, {error: {error: 'LAST_ID_EMPTY', error_description: 'LastId is empty.'}});
+			// this.controller.application.emit(EventType.dialog.requestUnreadResult, {error: {error: 'LAST_ID_EMPTY', error_description: 'LastId is empty.'}});
 
 			this.promiseGetDialogUnread.reject();
 			this.promiseGetDialogUnreadWait = false;
@@ -1934,8 +2023,6 @@ export class MobileDialogApplication
 			{
 				if (!response)
 				{
-					this.controller.application.emit(EventType.dialog.requestUnreadResult, {error: {error: 'EMPTY_RESPONSE', error_description: 'Server returned an empty response.'}});
-
 					this.promiseGetDialogUnread.reject();
 					this.promiseGetDialogUnreadWait = false;
 
@@ -1949,18 +2036,12 @@ export class MobileDialogApplication
 				}
 
 				let dialogMessageUnread = response[RestMethodHandler.imDialogMessagesGetUnread];
-				if (dialogMessageUnread.error())
+				if (!dialogMessageUnread.error())
 				{
-					this.controller.application.emit(EventType.dialog.requestUnreadResult, {error: dialogMessageUnread.error().ex});
-				}
-				else
-				{
-					this.controller.executeRestAnswer(RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
-
-					this.controller.application.emit(EventType.dialog.requestUnreadResult, {
-						firstMessageId: dialogMessageUnread.data().messages.length > 0? dialogMessageUnread.data().messages[0].id: 0,
-						count: dialogMessageUnread.data().messages.length
-					});
+					dialogMessageUnread = dialogMessageUnread.data();
+					this.controller.getStore().dispatch('users/set', dialogMessageUnread.users);
+					this.controller.getStore().dispatch('files/set', this.controller.application.prepareFilesBeforeSave(dialogMessageUnread.files));
+					this.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages);
 
 					app.titleAction("setParams", {useProgress: false, useLetterImage: true});
 					this.timer.stop('data', 'load', true);
@@ -2548,13 +2629,17 @@ export class MobileDialogApplication
 				quoteId: id
 			}
 		}).then(() => {
-			if (this.controller.getStore().state.application.mobile.keyboardShow)
-			{
-				setTimeout(() => this.controller.application.emit(EventType.dialog.scrollToBottom, {duration: 300, cancelIfScrollChange: true, force: true}), 300);
-			}
-			else
+			if (!this.controller.getStore().state.application.mobile.keyboardShow)
 			{
 				this.setTextFocus();
+				setTimeout(() => {
+					EventEmitter.emit(EventType.dialog.scrollToBottom, {
+						chatId: this.controller.application.getChatId(),
+						duration: 300,
+						cancelIfScrollChange: false,
+						force: true
+					});
+				}, 300);
 			}
 		});
 	}
@@ -2626,7 +2711,7 @@ export class MobileDialogApplication
 				editId: id
 			}
 		}).then(() => {
-			setTimeout(() => this.controller.application.emit(EventType.dialog.scrollToBottom, {duration: 300, cancelIfScrollChange: false, force: true}), 300);
+			setTimeout(() => EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), duration: 300, cancelIfScrollChange: false, force: true}), 300);
 			this.setTextFocus();
 		});
 

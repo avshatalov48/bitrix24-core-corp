@@ -41,13 +41,18 @@ if(!BX.Disk.pathToUser)
 		{
 			params = params || {};
 
-			if (command === 'onlyoffice' && params.hash)
+			if (command === 'onlyoffice' && params.documentSession)
 			{
-				var notify = BX.UI.Notification.Center.getBalloonById('session-' + params.hash);
+				if (params.event === 'saved')
+				{
+					BX.onCustomEvent('Disk.OnlyOffice:onSaved', [params.object, params.documentSession]);
+				}
+
+				var notify = BX.UI.Notification.Center.getBalloonById('session-' + params.documentSession.hash);
 				if (notify)
 				{
 					BX.UI.Notification.Center.notify({
-						content: BX.message('JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name)
+						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name)
 					});
 					notify.close();
 
@@ -95,8 +100,13 @@ if(!BX.Disk.pathToUser)
 						break;
 					}
 
+					var message = BX.message('DISK_JS_STATUS_ACTION_SUCCESS');
+					if (BX.message.DISK_FOLDER_LIST_LABEL_LIVE_UPDATE_FILE)
+					{
+						message = BX.message('DISK_FOLDER_LIST_LABEL_LIVE_UPDATE_FILE').replace('#NAME#', currentItem.getTitle());
+					}
 					BX.Disk.showModalWithStatusAction({
-						message: BX.message('DISK_FOLDER_LIST_LABEL_LIVE_UPDATE_FILE').replace('#NAME#', currentItem.getTitle())
+						message: message
 					});
 
 					viewer.reloadCurrentItem();
@@ -108,6 +118,7 @@ if(!BX.Disk.pathToUser)
 		BX.addCustomEvent('onPullEvent-disk', onPullDiskEvent);
 		BX.addCustomEvent('onTooltipShow', insertInTooltipLockedInfo);
 		BX.addCustomEvent('onTooltipInsertData', insertInTooltipLockedInfo);
+
 		BX.addCustomEvent('BX.UI.Viewer.Controller:onBeforeShow', function(viewer, index){
 			var item = viewer.getItemByIndex(index);
 			if (!item)
@@ -189,7 +200,7 @@ if(!BX.Disk.pathToUser)
 					BX.UI.Notification.Center.notify({
 						id: 'session-' + session.hash,
 						autoHide: false,
-						content: BX.message('JS_VIEWER_DOCUMENT_ONLYOFFICE_SAVE_PROCESS').replace('#name#', response.data.file.name),
+						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS').replace('#name#', response.data.file.name),
 						data: {
 							file: response.data.file
 						}
@@ -658,6 +669,25 @@ if(!BX.Disk.pathToUser)
 				return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 			},
 
+			sendTelemetryEvent: function(options)
+			{
+				if (!BX.Disk.isAvailableOnlyOffice())
+				{
+					return;
+				}
+
+				var url = (document.location.protocol === "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
+				var request =  new XMLHttpRequest();
+				request.open("POST", url, true);
+				request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				request.withCredentials = true;
+				options.op = "doc";
+				options.u = BX.message.USER_ID;
+				options.d = document.location.host;
+				var query = BX.util.buildQueryString(options);
+				request.send(query);
+			},
+
 			getFirstErrorFromResponse: function(reponse)
 			{
 				reponse = reponse || {};
@@ -832,6 +862,11 @@ if(!BX.Disk.pathToUser)
 				return BX.util.add_url_param('/bitrix/tools/disk/focus.php?ncc=1&action=openFileDetail', params);
 			},
 
+			isAvailableOnlyOffice: function ()
+			{
+				return BX.message('disk_onlyoffice_available');
+			},
+
 			getDocumentService: function ()
 			{
 				return BX.message('disk_document_service');
@@ -849,10 +884,15 @@ if(!BX.Disk.pathToUser)
 
 			saveDocumentService: function (serviceCode)
 			{
-				if(serviceCode !== this.getDocumentService())
+				if (BX.Disk.isAvailableOnlyOffice())
+				{
+					BX.userOptions.save('disk', 'doc_service', 'primary', serviceCode);
+				}
+				else
 				{
 					BX.userOptions.save('disk', 'doc_service', 'default', serviceCode);
 				}
+
 				BX.message({disk_document_service: serviceCode});
 				BX.onCustomEvent('Disk:onChangeDocumentService', [BX.message('disk_document_service')]);
 
@@ -1463,7 +1503,7 @@ if(!BX.Disk.pathToUser)
 
 							BX.Disk.modalWindow({
 								modalId: 'bx-disk-detail-sharing-folder',
-								title: BX.message('DISK_JS_SHARING_LABEL_TITLE_MODAL_2'),
+								title: BX.message('DISK_JS_SHARING_LABEL_TITLE_MODAL_3'),
 								contentClassName: '',
 								contentStyle: {
 									//paddingTop: '30px',

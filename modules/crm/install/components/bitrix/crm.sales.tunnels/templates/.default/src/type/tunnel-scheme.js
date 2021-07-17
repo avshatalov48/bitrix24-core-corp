@@ -3,6 +3,7 @@ export type Tunnel = {
 	srcStage: string,
 	dstCategory: string,
 	dstStage: string,
+	robotAction: string,
 	robot: any,
 }
 

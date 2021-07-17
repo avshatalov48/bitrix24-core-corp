@@ -299,10 +299,13 @@ ChatUserSelector.search.init = function ()
 		onDrawSearchResult: this.drawSearchResult.bind(this)
 	});
 
-	ChatSearchScopes.setSkipList(this.skipList, ChatSearchScopes.TYPE_USER);
 	ChatSearchScopes.setList(this.listUsers, ChatSearchScopes.TYPE_USER);
-
 	ChatSearchScopes.setList(this.listDepartment, ChatSearchScopes.TYPE_DEPARTMENT);
+	ChatSearchScopes.setSkipList(this.skipList, ChatSearchScopes.TYPE_USER);
+	ChatSearchScopes.setSkipByProperty([
+		['network', true],
+		['connector', true]
+	], ChatSearchScopes.TYPE_USER);
 	ChatSearchScopes.setMinTokenLength(1, ChatSearchScopes.TYPE_DEPARTMENT);
 };
 
@@ -315,15 +318,11 @@ ChatUserSelector.search.drawSearchResult = function (items, sections)
 ChatUserSelector.search.drawStartList = function()
 {
 	console.log('ChatUserSelector.search.drawStartList');
-	this.drawSearchResult(this.prepareItems(), []);
-};
 
-ChatUserSelector.search.prepareItems = function(type = this.listType)
-{
 	let items = [];
 	let itemsIndex = {};
 
-	if (type == ChatSearchScopes.TYPE_USER)
+	if (this.listType == ChatSearchScopes.TYPE_USER)
 	{
 		if (this.listUsers.length > 0)
 		{
@@ -344,7 +343,7 @@ ChatUserSelector.search.prepareItems = function(type = this.listType)
 		}
 		items = items.filter((element) => this.skipList.indexOf(element.id) == -1);
 	}
-	else if (type == ChatSearchScopes.TYPE_DEPARTMENT)
+	else if (this.listType == ChatSearchScopes.TYPE_DEPARTMENT)
 	{
 		if (this.listDepartment.length > 0)
 		{
@@ -371,8 +370,7 @@ ChatUserSelector.search.prepareItems = function(type = this.listType)
 		}
 	}
 
-	return items;
-};
-
+	ChatUserSelectorInterface.setSearchResult(items, []);
+}
 /* Initialization */
 ChatUserSelector.init();

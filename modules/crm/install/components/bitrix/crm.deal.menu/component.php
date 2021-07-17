@@ -1,5 +1,8 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -76,6 +79,8 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 $arResult['BUTTONS'] = array();
 
 $currentCategoryID = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : -1;
+
+$bConfig = false;
 if ($arParams['TYPE'] == 'list')
 {
 	$bRead   = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
@@ -603,7 +608,11 @@ if($arParams['TYPE'] === 'list')
 		];
 	}
 
-	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+	if(
+		\Bitrix\Main\Loader::includeModule('rest')
+		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
+		&& ($bAdd || $bWrite || $bConfig)
+	)
 	{
 		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_deal', 'setting_list');
 		$arResult['BUTTONS'][] = [
@@ -621,6 +630,14 @@ if($arParams['TYPE'] === 'list')
 			'TITLE' => GetMessage('DEAL_CRM_TYPE'),
 			'ONCLICK' => \Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup()
 		);
+
+		$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');
+		$scenarioSelectionPath = getLocalPath('components'.$scenarioSelectionPath.'/slider.php');
+		$arResult['BUTTONS'][] = [
+			'TEXT' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+			'TITLE' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+			'ONCLICK' => 'BX.SidePanel.Instance.open("' . $scenarioSelectionPath .'", {width: 900, cacheable: false});'
+		];
 	}
 
 	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']))

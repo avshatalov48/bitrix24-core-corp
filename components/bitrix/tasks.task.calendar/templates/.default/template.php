@@ -374,42 +374,11 @@ BX.addCustomEvent('Tasks.TopMenu:onItem', function(roleId, url) {
 //endregion
 
 //region Tasks.Toolbar:onItem
-BX.addCustomEvent('Tasks.Toolbar:onItem', function(counterId)
-{
-	var filterManager = BX.Main.filterManager.getById("<?=HtmlFilter::encode($arParams["FILTER_ID"])?>");
-	if (!filterManager)
+BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
+	var data = event.getData();
+	if (data.counter && data.counter.filter)
 	{
-		alert('BX.Main.filterManager not initialised');
-		return;
-	}
-	var filterApi = filterManager.getApi();
-	var filterFields = filterManager.getFilterFieldsValues();
-
-	if (
-		Number(counterId) === <?=\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS?>
-		|| Number(counterId) === <?=\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED?>
-	)
-	{
-		var fields = {
-			ROLEID: (filterFields.hasOwnProperty('ROLEID') ? filterFields.ROLEID : 0),
-			PROBLEM: counterId
-		};
-		filterApi.setFields(fields);
-		filterApi.apply({COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + counterId});
-	}
-	else
-	{
-		fields = {
-			preset_id: "<?= HtmlFilter::encode($arResult["DEFAULT_PRESET_KEY"])?>",
-			additional: {
-				PROBLEM: counterId,
-			}
-		};
-		if (filterFields.hasOwnProperty('ROLEID'))
-		{
-			fields.additional.ROLEID = filterFields.ROLEID;
-		}
-		filterApi.setFilter(fields);
+		data.counter.filter.toggleByField({PROBLEM: data.counter.filterValue});
 	}
 });
 //endregion

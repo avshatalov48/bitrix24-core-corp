@@ -61,7 +61,10 @@ BX.Bitrix24.SlidingPanel.prototype = {
 		if (!this.overlay.parentNode)
 		{
 			document.body.appendChild(this.overlay);
+			BX.ZIndexManager.register(this.overlay);
 		}
+
+		BX.ZIndexManager.bringToFront(this.overlay);
 
 		if (!this.container.parentNode)
 		{
@@ -193,6 +196,7 @@ BX.Bitrix24.SlidingPanel.prototype = {
 
 			if (this.overlay.parentNode)
 			{
+				BX.ZIndexManager.unregister(this.overlay);
 				this.overlay.parentNode.removeChild(this.overlay);
 			}
 

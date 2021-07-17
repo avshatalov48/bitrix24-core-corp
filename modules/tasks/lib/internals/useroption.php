@@ -297,7 +297,7 @@ class UserOption
 		if ($option === Option::MUTED)
 		{
 			Counter\CounterService::addEvent(
-				Counter\CounterDictionary::EVENT_AFTER_TASK_MUTE,
+				Counter\Event\EventDictionary::EVENT_AFTER_TASK_MUTE,
 				[
 					'TASK_ID' => $taskId,
 					'USER_ID' => $userId,

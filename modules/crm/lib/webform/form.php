@@ -15,6 +15,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\SalesCenter;
 use Bitrix\Crm\UI\Webpack;
 use Bitrix\Crm\SiteButton;
+use Bitrix\Crm\Service\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -45,6 +46,7 @@ class Form
 	protected $params = array();
 	protected $errors = array();
 	protected $isEmbeddedAvailableChanged = false;
+	protected $forceBuild = false;
 
 	public function __construct($id = null, array $params = null)
 	{
@@ -372,12 +374,16 @@ class Form
 		unset($result['ASSIGNED_WORK_TIME']);
 
 		// captcha
-		$captchaKey = isset($result['CAPTCHA_KEY']) ? $result['CAPTCHA_KEY'] : null;
-		$captchaSecret = isset($result['CAPTCHA_SECRET']) ? $result['CAPTCHA_SECRET'] : null;
-		$captchaVersion = isset($result['CAPTCHA_VERSION']) ? $result['CAPTCHA_VERSION'] : '';
-		if ($captchaKey !== null && $captchaSecret !== null)
+		$captchaKey = $result['CAPTCHA_KEY'] ?? '';
+		$captchaSecret = $result['CAPTCHA_SECRET'] ?? '';
+		$captchaVersion = $result['CAPTCHA_VERSION'] ?? '';
+		if ($captchaKey <> '' && $captchaSecret <> '')
 		{
-			ReCaptcha::setKey($captchaKey, $captchaSecret, $captchaVersion);
+			if ($captchaKey !== ReCaptcha::getKey($captchaVersion) && $captchaSecret !== ReCaptcha::getSecret($captchaVersion))
+			{
+				$this->forceBuild = true;
+				ReCaptcha::setKey($captchaKey, $captchaSecret, $captchaVersion);
+			}
 		}
 		unset($result['CAPTCHA_KEY']);
 		unset($result['CAPTCHA_SECRET']);
@@ -395,8 +401,10 @@ class Form
 			// captcha
 			if($result['USE_CAPTCHA'] == 'Y')
 			{
-				$hasCaptchaKey = ((ReCaptcha::getKey() <> '') ? 1 : 0) + ((ReCaptcha::getSecret() <> '') ? 1 : 0);
-				$hasCaptchaDefaultKey = ReCaptcha::getDefaultKey() <> '' && ReCaptcha::getDefaultSecret() <> '';
+				$hasCaptchaKey = ((ReCaptcha::getKey($captchaVersion) <> '') ? 1 : 0) +
+					((ReCaptcha::getSecret($captchaVersion) <> '') ? 1 : 0)
+				;
+				$hasCaptchaDefaultKey = ReCaptcha::getDefaultKey($captchaVersion) <> '' && ReCaptcha::getDefaultSecret($captchaVersion) <> '';
 				if ($hasCaptchaKey == 1 || ($hasCaptchaKey == 0 && !$hasCaptchaDefaultKey))
 				{
 					$this->errors[] = Loc::getMessage('CRM_WEBFORM_FORM_ERROR_CAPTCHA_KEY');
@@ -657,6 +665,16 @@ class Form
 			SiteButton\Manager::updateScriptCacheWithForm($this->getId());
 		}
 
+		$app = Webpack\Form\App::instance();
+		if ($this->forceBuild || !$app->isBuilt(new Main\Type\Date()))
+		{
+			if ($app->build())
+			{
+				Webpack\Form::addCheckResourcesAgent();
+			}
+		}
+
+		$this->forceBuild = false;
 		self::cleanCacheByTag($this->id);
 		return $result;
 	}
@@ -971,7 +989,7 @@ class Form
 
 	public function getExternalAnalyticsData()
 	{
-		$data = Helper::getExternalAnalyticsData($this->params['CAPTION'] ?: '#' . $this->getId());
+		$data = Helper::getExternalAnalyticsData($this->params['CAPTION'] ?: '#' . $this->getId(), $this->getId());
 		$steps = array();
 
 		$steps[] = array(
@@ -1596,9 +1614,21 @@ class Form
 			{
 				foreach($entityList as $entityName => $entityCaption)
 				{
+
 					if(!in_array($entityName, $entitySchemes[$formEntityScheme]['ENTITIES']))
 					{
 						unset($entityList[$entityName]);
+						continue;
+					}
+
+					$entityTypeId = \CCrmOwnerType::resolveID($entityName);
+					if ($entityTypeId && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+					{
+						$result['ENTITY'][] = array(
+							'ENTITY_NAME' => $entityName,
+							'ENTITY_CAPTION' => \CCrmOwnerType::GetDescription($entityTypeId),
+							'VALUE' => false,
+						);
 					}
 				}
 			}

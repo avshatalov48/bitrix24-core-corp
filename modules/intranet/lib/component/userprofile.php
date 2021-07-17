@@ -727,8 +727,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				Loader::includeModule("bitrix24")
 				&& $this->arParams["ID"] != $USER->GetID()
 				&& \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID())
-				&& \CBitrix24::IsPortalAdmin($this->arParams["ID"])
-				&& !\Bitrix\Bitrix24\Integrator::isIntegrator($this->arParams["ID"])
+				//&& \CBitrix24::IsPortalAdmin($this->arParams["ID"])
+				//&& !\Bitrix\Bitrix24\Integrator::isIntegrator($this->arParams["ID"])
 			)
 			{
 				$result['edit'] = false;

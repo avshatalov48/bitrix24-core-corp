@@ -7,12 +7,13 @@ import {PostFormManager} from "./postform";
 import {Post} from "./post";
 import {PinnedPanel} from "./pinned";
 import {Rating} from "./rating";
-import {Dom, Tag, Loc, Type, ajax, Runtime} from "main.core";
+import {ImportantManager} from "./important";
+import {Dom, Tag, Loc, Type, Runtime} from "main.core";
 import {BaseEvent, EventEmitter} from "main.core.events";
-
-import "mobile.imageviewer";
 import {Utils} from "mobile.utils";
 import {Ajax} from 'mobile.ajax';
+
+import 'mobile.imageviewer';
 
 class Feed
 {
@@ -181,7 +182,10 @@ class Feed
 
 		DatabaseUnsentPostInstance.delete(groupId);
 
-		if (postId <= 0)
+		if (
+			postId <= 0
+			|| Type.isStringFilled(params.warningText)
+		)
 		{
 			return;
 		}
@@ -460,6 +464,13 @@ class Feed
 			return;
 		}
 
+		const serverTimestamp = (
+			typeof (params.serverTimestamp) != 'undefined'
+			&& parseInt(params.serverTimestamp) > 0
+				? parseInt(params.serverTimestamp)
+				: 0
+		);
+
 		if (action === 'update')
 		{
 			let postContainer = document.getElementById('lenta_item_' + logId);
@@ -525,6 +536,15 @@ class Feed
 				Runtime.html(postContainer, contentPostItemTopWrap.innerHTML).then(() => {
 					oMSL.checkNodesHeight();
 					BitrixMobile.LazyLoad.showImages();
+
+					if (document.getElementById('framecache-block-feed'))
+					{
+						setTimeout(() => {
+							this.updateFrameCache({
+								timestamp: serverTimestamp
+							});
+						}, 750);
+					}
 				});
 			}
 
@@ -538,13 +558,6 @@ class Feed
 			{
 				const postNode = this.getNewPostContainer().querySelector(`div.${this.class.listPost}`);
 				Dom.style(this.getNewPostContainer(), 'height', `${postNode.scrollHeight + 12/*margin-bottom*/}px`);
-
-				const serverTimestamp = (
-					typeof (params.serverTimestamp) != 'undefined'
-					&& parseInt(params.serverTimestamp) > 0
-						? parseInt(params.serverTimestamp)
-						: 0
-				);
 
 				if (serverTimestamp > 0)
 				{
@@ -1175,6 +1188,24 @@ class Feed
 
 		return result;
 	}
+
+	sendErrorEval(script)
+	{
+		BX.evalGlobal('try { ' + script + ' } catch (e) { this.sendError(e.message, e.name, e.number); }');
+	};
+
+	sendError(message, url, linenumber)
+	{
+		Ajax.runAction('socialnetwork.api.livefeed.mobileLogError', {
+			data: {
+				message: message,
+				url: url,
+				lineNumber: linenumber,
+			}
+		}).then((response) => {
+		}, (response) => {
+		});
+	}
 }
 
 const Instance = new Feed();
@@ -1186,6 +1217,7 @@ const PostMenuInstance = new PostMenu();
 const PostFormManagerInstance = new PostFormManager();
 const PinnedPanelInstance = new PinnedPanel();
 const RatingInstance = new Rating();
+const ImportantManagerInstance = new ImportantManager();
 
 export {
 	Instance,
@@ -1197,4 +1229,5 @@ export {
 	PostFormManagerInstance,
 	PinnedPanelInstance,
 	RatingInstance,
+	ImportantManagerInstance,
 };

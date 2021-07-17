@@ -11,7 +11,6 @@ use \Bitrix\Main\Application;
 global
 	$arrViewedBanners,		// баннеры показанные на данной странице
 	$arrADV_KEYWORDS,		// массив ключевых слов для страницы
-	$strClickURL,
 	$strAdvCurUri,
 	$nRandom1,
 	$nRandom2,
@@ -33,7 +32,6 @@ $CACHE_ADVERTISING = array(
 $arrADV_VIEWED_BANNERS = false;
 $weightCalculated = false;
 
-$strClickURL = COption::GetOptionString("advertising", "REDIRECT_FILENAME");
 $nRandom1 = 4689*mt_rand(999, 31999);
 $nRandom2 = 4689*mt_rand(999, 31999);
 $nRandom3 = 4689*mt_rand(999, 31999);
@@ -1343,7 +1341,6 @@ class CAdvBanner_all
 				"SHOWS_FOR_VISITOR"		=> $arBanner["SHOWS_FOR_VISITOR"],
 				"MAX_SHOW_COUNT"		=> $arBanner["MAX_SHOW_COUNT"],
 				"RESET_SHOW_COUNT"		=> "Y",
-				"FIX_CLICK"			=> $arBanner["FIX_CLICK"],
 				"MAX_CLICK_COUNT"		=> $arBanner["MAX_CLICK_COUNT"],
 				"RESET_CLICK_COUNT"		=> $arBanner["RESET_CLICK_COUNT"],
 				"DATE_SHOW_FROM"		=> $arBanner["DATE_SHOW_FROM"],
@@ -1354,9 +1351,6 @@ class CAdvBanner_all
 				"NO_URL_IN_FLASH"		=> $arBanner["NO_URL_IN_FLASH"],
 				"CODE"				=> $arBanner["CODE"],
 				"CODE_TYPE"			=> $arBanner["CODE_TYPE"],
-				"STAT_EVENT_1"			=> $arBanner["STAT_EVENT_1"],
-				"STAT_EVENT_2"			=> $arBanner["STAT_EVENT_2"],
-				"STAT_EVENT_3"			=> $arBanner["STAT_EVENT_3"],
 				"FOR_NEW_GUEST"		=> $arBanner["FOR_NEW_GUEST"],
 				"COMMENTS"			=> $arBanner["COMMENTS"],
 				"SHOW_USER_GROUP"		=> $arBanner["SHOW_USER_GROUP"],
@@ -2183,9 +2177,6 @@ class CAdvBanner_all
 					}
 				}
 
-				if (($isAdmin || $isManager) && in_array("FIX_CLICK", $arrKeys) && ($arFields["FIX_CLICK"]=="Y" || $arFields["FIX_CLICK"]=="N"))
-					$arFields_i["FIX_CLICK"] = "'".$arFields["FIX_CLICK"]."'";
-
 				if (($isAdmin || $isManager) && in_array("FIX_SHOW", $arrKeys) && ($arFields["FIX_SHOW"]=="Y" || $arFields["FIX_SHOW"]=="N"))
 					$arFields_i["FIX_SHOW"] = "'".$arFields["FIX_SHOW"]."'";
 
@@ -2497,15 +2488,6 @@ class CAdvBanner_all
 						$modify_status = "Y";
 					}
 				}
-
-				if (in_array("STAT_EVENT_1", $arrKeys))
-					$arFields_i["STAT_EVENT_1"] = "'".$DB->ForSql($arFields["STAT_EVENT_1"],255)."'";
-
-				if (in_array("STAT_EVENT_2", $arrKeys))
-					$arFields_i["STAT_EVENT_2"] = "'".$DB->ForSql($arFields["STAT_EVENT_2"],255)."'";
-
-				if (in_array("STAT_EVENT_3", $arrKeys))
-					$arFields_i["STAT_EVENT_3"] = "'".$DB->ForSql($arFields["STAT_EVENT_3"],255)."'";
 
 				if (in_array("FOR_NEW_GUEST", $arrKeys))
 				{
@@ -4022,46 +4004,11 @@ class CAdvBanner_all
 
 	public static function GetRedirectURL($url, $arBanner)
 	{
-		global $strClickURL;
-
-		if ($arBanner["FIX_CLICK"]=="Y")
-		{
-			$arUrlParams = array(
-				"id=".$arBanner["ID"]
-			);
-
-			if (defined('SITE_ID'))
-				$arUrlParams[] = 'site_id=' . SITE_ID;
-
-			$event1 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_1"], $arBanner);
-			$event2 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_2"], $arBanner);
-			$event3 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_3"], $arBanner);
-
-			if ($event1 <> '') $arUrlParams[] = "event1=".urlencode($event1);
-			if ($event2 <> '') $arUrlParams[] = "event2=".urlencode($event2);
-			if ($event3 <> '') $arUrlParams[] = "event3=".urlencode($event3);
-
-			$arUrlParams[] = "goto=".urlencode($url);
-
-			$url = $strClickURL."?".implode("&amp;", $arUrlParams);
-		}
 		return $url;
 	}
 
 	public static function ReplaceURL($text, $arBanner)
 	{
-		if ($arBanner["FIX_CLICK"]=="Y")
-		{
-			$BegPos=0;
-			while (preg_match("'(<A[^>]+?HREF[\t ]*=[\t ]*(\"|\\'))(.*?)((\"|\\'))'i", mb_substr($text, $BegPos), $regs))
-			{
-				$BegPos = mb_strpos($text, $regs[1].$regs[3].$regs[5], $BegPos);
-				if($BegPos===false) return '';
-				$strUrl = CAdvBanner::GetRedirectURL($regs[3], $arBanner);
-				$text = mb_substr($text, 0, $BegPos + mb_strlen($regs[1])).$strUrl.mb_substr($text, $BegPos + mb_strlen($regs[1].$regs[3].$regs[5]) - 1);
-				$BegPos += mb_strlen($strUrl) + mb_strlen($regs[1]) + mb_strlen($regs[5]) - mb_strlen($regs[3]);
-			}
-		}
 		return $text;
 	}
 

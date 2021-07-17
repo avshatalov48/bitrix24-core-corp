@@ -1,7 +1,10 @@
 <?php
 namespace Bitrix\ImConnector;
 
+use Bitrix\ImConnector\Connectors\Notifications;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\EntitySelector\BaseProvider;
+
 Library::loadMessages();
 
 class Provider
@@ -32,7 +35,11 @@ class Provider
 		'network' =>
 			[
 				'network'
-			]
+			],
+		'notifications' =>
+			[
+				Notifications::CONNECTOR_ID
+			],
 	];
 
 	protected static $loadProvider;

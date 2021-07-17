@@ -138,11 +138,12 @@ class LeadController extends EntityController
 			$settings['SOURCE_ID'] = $fields['SOURCE_ID'];
 		}
 
+		$authorID = self::resolveCreatorID($fields);
 		$historyEntryID = CreationEntry::create(
 			array(
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
 				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => self::resolveCreatorID($fields),
+				'AUTHOR_ID' => $authorID,
 				'SETTINGS' => $settings,
 				'BINDINGS' => array(
 					array(
@@ -179,6 +180,12 @@ class LeadController extends EntityController
 				)
 			);
 		}
+
+		$isManualOpportunity = isset($fields['IS_MANUAL_OPPORTUNITY']) ? $fields['IS_MANUAL_OPPORTUNITY'] : 'N';
+		if ($isManualOpportunity === 'Y')
+		{
+			$this->createManualOpportunityModificationEntry($ownerID, $authorID, 'N', $isManualOpportunity);
+		}
 	}
 	public function onModify($ownerID, array $params)
 	{
@@ -199,6 +206,8 @@ class LeadController extends EntityController
 		$prevStatusID = isset($previousFields['STATUS_ID']) ? $previousFields['STATUS_ID'] : '';
 		$curStatusID = isset($currentFields['STATUS_ID']) ? $currentFields['STATUS_ID'] : $prevStatusID;
 
+		$authorID = self::resolveEditorID($currentFields);
+
 		$historyEntryID = 0;
 		if($prevStatusID !== $curStatusID)
 		{
@@ -207,7 +216,7 @@ class LeadController extends EntityController
 				array(
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
 					'ENTITY_ID' => $ownerID,
-					'AUTHOR_ID' => self::resolveEditorID($currentFields),
+					'AUTHOR_ID' => $authorID,
 					'SETTINGS' => array(
 						'FIELD' => 'STATUS_ID',
 						'START' => $prevStatusID,
@@ -244,6 +253,19 @@ class LeadController extends EntityController
 					'params' => $pushParams,
 				)
 			);
+		}
+
+		$prevIsManualOpportunity = isset($previousFields['IS_MANUAL_OPPORTUNITY'])
+			? $previousFields['IS_MANUAL_OPPORTUNITY']
+			: 'N';
+
+		$curIsManualOpportunity = isset($currentFields['IS_MANUAL_OPPORTUNITY'])
+			? $currentFields['IS_MANUAL_OPPORTUNITY']
+			: $prevIsManualOpportunity;
+
+		if ($prevIsManualOpportunity !== $curIsManualOpportunity)
+		{
+			$this->createManualOpportunityModificationEntry($ownerID, $authorID, $prevIsManualOpportunity, $curIsManualOpportunity);
 		}
 	}
 	public function onDelete($ownerID, array $params)
@@ -531,6 +553,12 @@ class LeadController extends EntityController
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}
+			if($fieldName === 'IS_MANUAL_OPPORTUNITY')
+			{
+				$data['TITLE'] =  Loc::getMessage('CRM_LEAD_MODIFICATION_IS_MANUAL_OPPORTUNITY');
+				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
+				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
+			}
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::CONVERSION)
@@ -564,4 +592,51 @@ class LeadController extends EntityController
 		return parent::prepareHistoryDataModel($data, $options);
 	}
 	//endregion
+
+
+	protected function createManualOpportunityModificationEntry($ownerId, $authorId, $prevValue, $curValue)
+	{
+		$names = [
+			'N' => Loc::getMessage('CRM_LEAD_MODIFICATION_IS_MANUAL_OPPORTUNITY_N'),
+			'Y' => Loc::getMessage('CRM_LEAD_MODIFICATION_IS_MANUAL_OPPORTUNITY_Y'),
+		];
+		$historyEntryID = ModificationEntry::create(
+			array(
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
+				'ENTITY_ID' => $ownerId,
+				'AUTHOR_ID' => $authorId,
+				'SETTINGS' => array(
+					'FIELD' => 'IS_MANUAL_OPPORTUNITY',
+					'START' => $prevValue,
+					'FINISH' => $curValue,
+					'START_NAME' => isset($names[$prevValue]) ? $names[$prevValue] : $prevValue,
+					'FINISH_NAME' => isset($names[$curValue]) ? $names[$curValue] : $curValue
+				)
+			)
+		);
+
+		$enableHistoryPush = $historyEntryID > 0;
+		if(($enableHistoryPush) && Main\Loader::includeModule('pull'))
+		{
+			$pushParams = array();
+			$historyFields = TimelineEntry::getByID($historyEntryID);
+			if (is_array($historyFields))
+			{
+				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
+					$historyFields,
+					array('ENABLE_USER_INFO' => true)
+				);
+			}
+			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Lead, $ownerId);
+
+			\CPullWatch::AddToStack(
+				$tag,
+				array(
+					'module_id' => 'crm',
+					'command' => 'timeline_activity_add',
+					'params' => $pushParams,
+				)
+			);
+		}
+	}
 }

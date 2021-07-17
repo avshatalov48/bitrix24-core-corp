@@ -499,7 +499,7 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 			$className = "group-panel-item";
 			$className .= $group["EXTRANET"] ? " group-panel-item-extranet" : " group-panel-item-intranet";
 			$className .= $group["FAVORITE"] ? " group-panel-item-favorite" : "";
-			?><a href="<?=SITE_DIR?>workgroups/group/<?=$group["ID"]?>/" class="<?=$className?>" data-id="<?=$group["ID"]?>"><?
+			?><a href="<?=SITE_DIR?>workgroups/group/<?=$group["ID"]?>/general/" class="<?=$className?>" data-id="<?=$group["ID"]?>"><?
 				?><span
 					class="group-panel-item-text"
 					title="<?=htmlspecialcharsbx($group["NAME"])?>"><?=htmlspecialcharsbx($group["NAME"])?></span><?

@@ -23,8 +23,10 @@ use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
+use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Manager\Task;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Error\Collection;
@@ -325,71 +327,71 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	protected function processAfterAction()
 	{
-		if(Type::isIterable($this->arResult['ACTION_RESULT']['task_action']) && !empty($this->arResult['ACTION_RESULT']['task_action']))
+		$actionResult = $this->getTaskActionResult();
+
+		if (empty($actionResult) || !Type::isIterable($actionResult))
 		{
-			$op = $this->getTaskActionResult();
-			$actionTask = false;
-
-			if($op['SUCCESS'])
-			{
-				$this->processAfterSaveAction($op);
-
-				$this->setEventType($op['OPERATION'] == 'task.add' ? 'ADD' : 'UPDATE');
-				$this->setEventTaskId(intval($op['RESULT']['DATA']['ID']));
-				$this->setEventOption('STAY_AT_PAGE', !!$this->request['STAY_AT_PAGE']);
-
-				foreach ($op['ERRORS'] as $error)
-				{
-					if ($error['CODE'] == 'SAVE_AS_TEMPLATE_ERROR')
-					{
-						$this->errors->addWarning(
-							$error['CODE'],
-							Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $error['MESSAGE']
-						);
-					}
-				}
-
-				if (!$this->errors->find(array('CODE' => 'SAVE_AS_TEMPLATE_ERROR'))->isEmpty())
-				{
-					$this->setEventOption('STAY_AT_PAGE', 'Y');
-				}
-				else
-				{
-					if($this->arParams['REDIRECT_ON_SUCCESS'])
-					{
-						$url = $this->makeRedirectUrl($op);
-						LocalRedirect($url);
-					}
-				}
-
-				$this->formData = false;
-				$this->success = true;
-				$actionTask = static::getOperationTaskId($op);
-			}
-			else
-			{
-				// merge errors
-				if(!empty($op['ERRORS']))
-				{
-					$this->errors->addForeignErrors($op['ERRORS'], array('CHANGE_TYPE_TO' => Util\Error::TYPE_ERROR));
-				}
-
-				$this->formData = Task::normalizeData($op['ARGUMENTS']['data']);
-				$this->success = false;
-			}
-
-			$this->arResult['COMPONENT_DATA']['ACTION'] = array(
-				'SUCCESS' => $this->success,
-				'ID' => $actionTask
-			);
+			return;
 		}
+
+		if ($actionResult['SUCCESS'])
+		{
+			$actionTaskId = static::getOperationTaskId($actionResult);
+
+			$this->processAfterSaveAction($actionResult);
+
+			$this->setEventType(($actionResult['OPERATION'] === 'task.add' ? 'ADD' : 'UPDATE'));
+			$this->setEventTaskId($actionTaskId);
+			$this->setEventOption('STAY_AT_PAGE', (bool)$this->request['STAY_AT_PAGE']);
+
+			foreach ($actionResult['ERRORS'] as $error)
+			{
+				if ($error['CODE'] === 'SAVE_AS_TEMPLATE_ERROR')
+				{
+					$this->errors->addWarning(
+						$error['CODE'],
+						Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $error['MESSAGE']
+					);
+				}
+			}
+
+			if (!$this->errors->find(['CODE' => 'SAVE_AS_TEMPLATE_ERROR'])->isEmpty())
+			{
+				$this->setEventOption('STAY_AT_PAGE', 'Y');
+			}
+			elseif ($this->arParams['REDIRECT_ON_SUCCESS'])
+			{
+				LocalRedirect($this->makeRedirectUrl($actionResult));
+			}
+
+			$this->formData = false;
+			$this->success = true;
+		}
+		else
+		{
+			$actionTaskId = false;
+
+			// merge errors
+			if (!empty($actionResult['ERRORS']))
+			{
+				$this->errors->addForeignErrors($actionResult['ERRORS'], ['CHANGE_TYPE_TO' => Util\Error::TYPE_ERROR]);
+			}
+			$this->formData = Task::normalizeData($actionResult['ARGUMENTS']['data']);
+			$this->success = false;
+		}
+
+		$this->arResult['COMPONENT_DATA']['ACTION'] = [
+			'SUCCESS' => $this->success,
+			'ID' => $actionTaskId,
+		];
 	}
 
-	// here we create all subtasks by template or task being copyed
-	protected function processAfterSaveAction(array $op)
+	protected function processAfterSaveAction(array $actionResult)
 	{
 		$this->manageSubTasks();
 		$this->manageTemplates();
+		$this->handleCalendarEvent();
+		$this->handleFirstGridTaskCreationTourGuide();
 	}
 
 	private function manageSubTasks()
@@ -429,6 +431,58 @@ class TasksTaskComponent extends TasksBaseComponent
 		// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here
 
 		Tasks\Item\Task\Template::leaveBatchState();
+	}
+
+	private function handleCalendarEvent(): void
+	{
+		$operationResult = $this->getTaskActionResult();
+		$isTaskAdding = ($operationResult['OPERATION'] === 'task.add');
+
+		if ($isTaskAdding && ($calendarEventId = (int)$this->request->get('CALENDAR_EVENT_ID')))
+		{
+			$calendarEventData = $this->request->get('CALENDAR_EVENT_DATA');
+			try
+			{
+				$calendarEventData = \Bitrix\Main\Web\Json::decode($calendarEventData);
+			}
+			catch (\Bitrix\Main\SystemException $e)
+			{
+				$calendarEventData = [];
+			}
+
+			// post comment to calendar event
+			if (Loader::includeModule('socialnetwork'))
+			{
+				\Bitrix\Socialnetwork\Helper\ServiceComment::processLogEntryCreateEntity([
+					'ENTITY_TYPE' => 'TASK',
+					'ENTITY_ID' => $operationResult['RESULT']['ID'],
+					'POST_ENTITY_TYPE' => 'CALENDAR_EVENT',
+					'SOURCE_ENTITY_TYPE' => 'CALENDAR_EVENT',
+					'SOURCE_ENTITY_ID' => $calendarEventId,
+					'SOURCE_ENTITY_DATA' => $calendarEventData,
+					'LIVE' => 'Y'
+				]);
+			}
+		}
+	}
+
+	private function handleFirstGridTaskCreationTourGuide(): void
+	{
+		$operationResult = $this->getTaskActionResult();
+		$isTaskAdding = ($operationResult['OPERATION'] === 'task.add');
+
+		if ($isTaskAdding && $this->request->get('FIRST_GRID_TASK_CREATION_TOUR_GUIDE') === 'Y')
+		{
+			$firstGridTaskCreationTour = Bitrix\Tasks\TourGuide\FirstGridTaskCreation::getInstance($this->userId);
+			$firstGridTaskCreationTour->finish();
+
+			\Bitrix\Tasks\AnalyticLogger::logToFile(
+				'finish',
+				'firstGridTaskCreation',
+				'',
+				'tourGuide'
+			);
+		}
 	}
 
 	private static function getOperationTaskId(array $operation)
@@ -771,78 +825,93 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$this->hitState->set($this->request->toArray(), 'INITIAL_TASK_DATA');
 
-		$data = array();
+		$data = [];
 
 		// parent task
 		$parentId = $this->hitState->get('INITIAL_TASK_DATA.PARENT_ID');
-		if($parentId)
+		if ($parentId)
 		{
-			$data[Task\ParentTask::getCode(true)] = array('ID' => $parentId);
+			$data[Task\ParentTask::getCode(true)] = ['ID' => $parentId];
 		}
 
 		// responsible
 		$responsibleId = $this->hitState->get('INITIAL_TASK_DATA.RESPONSIBLE_ID');
-		if($responsibleId)
+		if ($responsibleId)
 		{
-			$data['SE_RESPONSIBLE'] = array(array('ID' => $responsibleId));
+			$data[Task\Responsible::getCode(true)][] = ['ID' => $responsibleId];
+		}
+
+		// auditors
+		$auditors = $this->hitState->get('INITIAL_TASK_DATA.AUDITORS');
+		if (is_array($auditors) && !empty($auditors))
+		{
+			foreach ($auditors as $auditorId)
+			{
+				if (($auditorId = trim($auditorId)) !== '')
+				{
+					$data[Task\Auditor::getCode(true)][] = ['ID' => $auditorId];
+				}
+			}
 		}
 
 		// project
 		$projectFieldCode = Task\Project::getCode(true);
-		if($projectId = $this->hitState->get('INITIAL_TASK_DATA.GROUP_ID'))
+		if ($projectId = $this->hitState->get('INITIAL_TASK_DATA.GROUP_ID'))
 		{
-			$data[$projectFieldCode] = array('ID' => $projectId);
+			$data[$projectFieldCode] = ['ID' => $projectId];
 		}
-		elseif($projectId = intval($this->arParams['GROUP_ID']))
+		elseif ($projectId = (int)$this->arParams['GROUP_ID'])
 		{
-			$data[$projectFieldCode] = array('ID' => $projectId);
+			$data[$projectFieldCode] = ['ID' => $projectId];
 		}
-		else
+		elseif ($parentId)
 		{
-			// we can actually borrow project id from the parent task, if specified
-			if($parentId)
+			$parentTask = Bitrix\Tasks\Item\Task::getInstance($parentId, $this->userId);
+			if ($parentTask && $parentTask['GROUP_ID'])
 			{
-				$parentTask = Bitrix\Tasks\Item\Task::getInstance($parentId, $this->userId);
-				if($parentTask['GROUP_ID'])
-				{
-					$data[$projectFieldCode] = array('ID' => $parentTask['GROUP_ID']);
-				}
+				$data[$projectFieldCode] = ['ID' => $parentTask['GROUP_ID']];
 			}
 		}
 
 		// title
 		$title = $this->hitState->get('INITIAL_TASK_DATA.TITLE');
-		if($title != '')
+		if ($title !== '')
 		{
 			$data['TITLE'] = $title;
 		}
 
+		// description
+		$description = $this->hitState->get('INITIAL_TASK_DATA.DESCRIPTION');
+		if ($description !== '' && $this->request->get('CALENDAR_EVENT_ID'))
+		{
+			$data['DESCRIPTION'] = $description;
+		}
+
 		// crm links
 		$ufCrm = Integration\CRM\UserField::getMainSysUFCode();
-		$crm = $this->hitState->get('INITIAL_TASK_DATA.'.$ufCrm);
-		if($crm != '')
+		$crm = $this->hitState->get("INITIAL_TASK_DATA.{$ufCrm}");
+		if ($crm !== '')
 		{
-			$data[$ufCrm] = array($crm);
+			$data[$ufCrm] = [$crm];
 		}
 
 		$ufMail = Integration\Mail\UserField::getMainSysUFCode();
-		$email = $this->hitState->get('INITIAL_TASK_DATA.'.$ufMail);
+		$email = $this->hitState->get("INITIAL_TASK_DATA.{$ufMail}");
 		if ($email > 0)
 		{
-			$data[$ufMail] = array($email);
+			$data[$ufMail] = [$email];
 		}
 
 		// tags
 		$tags = $this->hitState->get('INITIAL_TASK_DATA.TAGS');
-		if(is_array($tags) && !empty($tags))
+		if (is_array($tags) && !empty($tags))
 		{
-			$trans = array();
-			foreach($tags as $tag)
+			$trans = [];
+			foreach ($tags as $tag)
 			{
-				$tag = trim($tag);
-				if($tag != '')
+				if (($tag = trim($tag)) !== '')
 				{
-					$trans[] = array('NAME' => $tag);
+					$trans[] = ['NAME' => $tag];
 				}
 			}
 
@@ -851,26 +920,26 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		// deadline
 		$deadline = $this->hitState->get('INITIAL_TASK_DATA.DEADLINE');
-		if(!empty($deadline))
+		if (!empty($deadline))
 		{
 			$data['DEADLINE'] = $deadline;
 		}
 
 		// START_DATE_PLAN
 		$startDatePlan = $this->hitState->get('INITIAL_TASK_DATA.START_DATE_PLAN');
-		if(!empty($startDatePlan))
+		if (!empty($startDatePlan))
 		{
 			$data['START_DATE_PLAN'] = $startDatePlan;
 		}
 
 		// END_DATE_PLAN
 		$endDatePlan = $this->hitState->get('INITIAL_TASK_DATA.END_DATE_PLAN');
-		if(!empty($endDatePlan))
+		if (!empty($endDatePlan))
 		{
 			$data['END_DATE_PLAN'] = $endDatePlan;
 		}
 
-		return array('DATA' => $data);
+		return ['DATA' => $data];
 	}
 
 	// get some data and decide what goes to arResult
@@ -881,6 +950,12 @@ class TasksTaskComponent extends TasksBaseComponent
 		//TasksTaskFormState::reset();
 		$this->arResult['COMPONENT_DATA']['STATE'] = static::getState();
 		$this->arResult['COMPONENT_DATA']['OPEN_TIME'] = (new DateTime())->getTimestamp();
+		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_ID'] = $this->request->get('CALENDAR_EVENT_ID');
+		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_DATA'] = $this->request->get('CALENDAR_EVENT_DATA');
+
+		$this->arResult['COMPONENT_DATA']['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'] =
+			$this->request->get('FIRST_GRID_TASK_CREATION_TOUR_GUIDE')
+		;
 
 		$formSubmitted = $this->formData !== false;
 
@@ -1031,10 +1106,21 @@ class TasksTaskComponent extends TasksBaseComponent
 		// kanban stages
 		if ($data['DATA']['GROUP_ID'] > 0)
 		{
-			$this->arResult['DATA']['STAGES'] = \Bitrix\Tasks\Kanban\StagesTable::getStages(
-				$data['DATA']['GROUP_ID'],
-				true
-			);
+			if ($this->arParams['IS_SCRUM_TASK'])
+			{
+				$kanbanService = new KanbanService();
+
+				$this->arResult['DATA']['STAGES'] = $kanbanService->getStagesToTask($data['DATA']['ID']);
+				$data['DATA']['STAGE_ID'] = $kanbanService->getTaskStageId($data['DATA']['ID']);
+			}
+			else
+			{
+				$this->arResult['DATA']['STAGES'] = StagesTable::getStages(
+					$data['DATA']['GROUP_ID'],
+					true
+				);
+			}
+
 			$data['CAN']['ACTION']['SORT'] = Loader::includeModule('socialnetwork') &&
 											SocialNetwork\Group::can(
 												$data['DATA']['GROUP_ID'],
@@ -1894,42 +1980,52 @@ if(CModule::IncludeModule('tasks'))
 
 		public function getRules()
 		{
-			return array(
-				'INITIAL_TASK_DATA' => array(
-					'VALUE' => array(
-						'PARENT_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
-						'RESPONSIBLE_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
-						'GROUP_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
-						'TITLE' => array('VALUE' => StructureChecker::TYPE_STRING),
-						Integration\CRM\UserField::getMainSysUFCode() => array('VALUE' => StructureChecker::TYPE_STRING),
-						Integration\Mail\UserField::getMainSysUFCode() => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
-						'TAGS' => array(
+			return [
+				'INITIAL_TASK_DATA' => [
+					'VALUE' => [
+						'PARENT_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+						'RESPONSIBLE_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+						'AUDITORS' => [
 							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
-							'CAST' => function($value)
-							{
-								if (!is_array($value))
-								{
-									$value = array_map('trim', explode(',', $value));
-								}
-								return $value;
-							}
-						),
-						'DEADLINE' => array('VALUE' => StructureChecker::TYPE_STRING),
-						'START_DATE_PLAN' => array('VALUE' => StructureChecker::TYPE_STRING),
-						'END_DATE_PLAN' => array('VALUE' => StructureChecker::TYPE_STRING)
-					),
-					'DEFAULT' => array(),
-				),
-				'BACKURL' => array('VALUE' => StructureChecker::TYPE_STRING),
-				'CANCELURL' => array('VALUE' => StructureChecker::TYPE_STRING),
-				'DATA_SOURCE' => array(
-					'VALUE' => array(
-						'TYPE' => array('VALUE' => StructureChecker::TYPE_STRING),
-						'ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
-					),
-					'DEFAULT' => array(),
-				),
-			);
+							'CAST' => function($value) {
+								return (
+									is_array($value)
+										? $value
+										: array_map('trim', explode(',', $value))
+								);
+							},
+						],
+						'GROUP_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+						'TITLE' => ['VALUE' => StructureChecker::TYPE_STRING],
+						'DESCRIPTION' => ['VALUE' => StructureChecker::TYPE_STRING],
+						Integration\CRM\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_STRING],
+						Integration\Mail\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+						'TAGS' => [
+							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
+							'CAST' => function($value) {
+								return (
+									is_array($value)
+										? $value
+										: array_map('trim', explode(',', $value))
+								);
+							},
+						],
+						'DEADLINE' => ['VALUE' => StructureChecker::TYPE_STRING],
+						'START_DATE_PLAN' => ['VALUE' => StructureChecker::TYPE_STRING],
+						'END_DATE_PLAN' => ['VALUE' => StructureChecker::TYPE_STRING],
+					],
+					'DEFAULT' => [],
+				],
+				'BACKURL' => ['VALUE' => StructureChecker::TYPE_STRING],
+				'CANCELURL' => ['VALUE' => StructureChecker::TYPE_STRING],
+				'DATA_SOURCE' => [
+					'VALUE' => [
+						'TYPE' => ['VALUE' => StructureChecker::TYPE_STRING],
+						'ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+					],
+					'DEFAULT' => [],
+				],
+			];
 		}
 	}
 }

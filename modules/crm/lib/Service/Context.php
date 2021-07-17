@@ -34,7 +34,7 @@ class Context
 
 	public function getUserId(): int
 	{
-		if($this->userId > 0)
+		if($this->userId !== null)
 		{
 			return (int) $this->userId;
 		}

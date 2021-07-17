@@ -23,24 +23,20 @@ BX.Vue.cloneComponent('bx-test-form', 'bx-im-view-message',
 		{
 		},
 		computed:
+		{
+			wasFilled()
 			{
-				localize()
-				{
-					return Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
-				},
-				wasFilled()
-				{
-					return !!this.message.params.CRM_FORM_VALUE;
-				},
-				...Vuex.mapState({
-					widget: state => state.widget,
-				}),
+				return !!this.message.params.CRM_FORM_VALUE;
 			},
+			...Vuex.mapState({
+				widget: state => state.widget,
+			}),
+		},
 		methods:
 		{
 			onFillForm()
 			{
-				this.$root.$bitrixRestClient.callMethod('imopenlines.widget.form.fill', {
+				this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.form.fill', {
 					'CRM_FORM_VALUE' : this.formValue,
 					'MESSAGE_ID' : this.message.id,
 				}).then(response => {

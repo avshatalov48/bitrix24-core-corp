@@ -1,0 +1,248 @@
+<?php
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage tasks
+ * @copyright 2001-2021 Bitrix
+ */
+
+namespace Bitrix\Tasks\Internals\Counter\Collector;
+
+
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\Internals\Counter\Deadline;
+
+class ProjectCollector
+{
+	public function __construct()
+	{
+
+	}
+
+	/**
+	 * @param string $counter
+	 * @param array $userIds
+	 * @param array $taskIds
+	 * @param array $groupIds
+	 * @return array
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function recount(string $counter, array $userIds = [], array $taskIds = [], array $groupIds = []): array
+	{
+		$counters = [];
+
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return [];
+		}
+
+		switch ($counter)
+		{
+			case CounterDictionary::COUNTER_GROUP_EXPIRED:
+				$counters = $this->recountExpired($groupIds, $taskIds, $userIds);
+				break;
+			case CounterDictionary::COUNTER_GROUP_COMMENTS:
+				$counters = $this->recountComments($groupIds, $taskIds, $userIds);
+				break;
+			default:
+				break;
+		}
+
+		return $counters;
+	}
+
+	/**
+	 * @param array $groupIds
+	 * @param array $taskIds
+	 * @param array $userIds
+	 * @return array
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 */
+	private function recountExpired(array $groupIds = [], array $taskIds = [], array $userIds = []): array
+	{
+		$expiredTime = Deadline::getExpiredTime()->format('Y-m-d H:i:s');
+
+		$joinFilter[] = "SU.GROUP_ID = T.GROUP_ID";
+
+		if (count($userIds) === 1)
+		{
+			$joinFilter[] = 'SU.USER_ID = '. (int) array_shift($userIds);
+		}
+		elseif (count($userIds) > 1)
+		{
+			$joinFilter[] = 'SU.USER_ID IN ('. implode(',', $userIds) .')';
+		}
+
+		$filter = [];
+		if (!empty($taskIds))
+		{
+			$filter[] = 'T.ID IN ('. implode(',', $taskIds) .')';
+		}
+
+		if (count($groupIds) === 1)
+		{
+			$groupId = (int) array_shift($groupIds);
+			$filter[] = 'T.GROUP_ID = '. $groupId;
+			$joinFilter[] = 'SU.GROUP_ID = '. $groupId;
+		}
+		elseif (count($groupIds) > 1)
+		{
+			$filter[] = 'T.GROUP_ID IN ('. implode(',', $groupIds) .')';
+			$joinFilter[] = 'SU.GROUP_ID IN ('. implode(',', $groupIds) .')';
+		}
+
+		$filter[] = "T.DEADLINE < '". $expiredTime ."'";
+		$filter[] = 'T.STATUS IN ('. implode(',', [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS]) .')';
+
+		$filter[] = "ZOMBIE = 'N'";
+
+		$filter = implode(' AND ', $filter);
+		$joinFilter = implode(' AND ', $joinFilter);
+
+		$sql = "
+			SELECT
+				T.ID,
+			    T.GROUP_ID,
+			    SU.USER_ID
+			FROM b_tasks T
+			INNER JOIN b_sonet_user2group SU
+				ON {$joinFilter}
+			WHERE
+				{$filter}
+		";
+
+		$res = Application::getConnection()->query($sql);
+		$rows = $res->fetchAll();
+
+		$counters = [];
+		foreach ($rows as $row)
+		{
+			$counters[] = [
+				'USER_ID'	=> (int) $row['USER_ID'],
+				'TASK_ID' 	=> (int) $row['ID'],
+				'GROUP_ID' 	=> (int) $row['GROUP_ID'],
+				'TYPE' 		=> CounterDictionary::COUNTER_GROUP_EXPIRED,
+				'VALUE' 	=> 1
+			];
+		}
+
+		return $counters;
+	}
+
+	/**
+	 * @param array $groupIds
+	 * @param array $taskIds
+	 * @param array $userIds
+	 * @return array
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 */
+	private function recountComments(array $groupIds = [], array $taskIds = [], array $userIds = []): array
+	{
+		$filter = [];
+		$joinFilter = [];
+
+		$joinFilter[] = "SU.GROUP_ID = T.GROUP_ID";
+
+		if (count($userIds) === 1)
+		{
+			$joinFilter[] = 'SU.USER_ID = '. (int) array_shift($userIds);
+		}
+		elseif (count($userIds) > 1)
+		{
+			$joinFilter[] = 'SU.USER_ID IN ('. implode(',', $userIds) .')';
+		}
+
+		if (count($groupIds) === 1)
+		{
+			$groupId = (int) array_shift($groupIds);
+			$filter[] = 'T.GROUP_ID = '. $groupId;
+			$joinFilter[] = 'SU.GROUP_ID = '. $groupId;
+		}
+		elseif (count($groupIds) > 1)
+		{
+			$filter[] = 'T.GROUP_ID IN ('. implode(',', $groupIds) .')';
+			$joinFilter[] = 'SU.GROUP_ID IN ('. implode(',', $groupIds) .')';
+		}
+
+		if (!empty($taskIds))
+		{
+			$filter[] = 'T.ID IN ('. implode(',', $taskIds) .')';
+		}
+
+		$filter[] = "T.ZOMBIE = 'N'";
+		$filter[] = "(
+			(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
+			OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
+		)";
+		$filter[] = "(
+			FM.POST_DATE >= SU.DATE_CREATE
+		)";
+		$filter[] = "(
+			(
+				FM.AUTHOR_ID <> SU.USER_ID
+				AND (
+				   (BUF.UF_TASK_COMMENT_TYPE IS NULL OR BUF.UF_TASK_COMMENT_TYPE = ". Comment::TYPE_DEFAULT .")
+				   OR BUF.UF_TASK_COMMENT_TYPE <> ". Comment::TYPE_EXPIRED ."
+				)
+			)
+			OR
+			(
+				BUF.UF_TASK_COMMENT_TYPE = ". Comment::TYPE_EXPIRED_SOON ."
+			)
+		)";
+		$filter[] = "FM.NEW_TOPIC = 'N'";
+
+		$startCounterDate = \COption::GetOptionString("tasks", "tasksDropCommentCounters", null);
+		if ($startCounterDate)
+		{
+			$filter[] = "FM.POST_DATE > '". $startCounterDate ."'";
+		}
+
+		$filter = implode(' AND ', $filter);
+		$joinFilter = implode(' AND ', $joinFilter);
+
+		$sql = "
+			SELECT 
+				T.ID as ID,
+			   	T.GROUP_ID as GROUP_ID,
+				SU.USER_ID as USER_ID,
+				COUNT(DISTINCT FM.ID) AS COUNT
+			FROM b_tasks T
+				INNER JOIN b_sonet_user2group SU
+					ON {$joinFilter}
+				LEFT JOIN b_tasks_viewed TV
+					ON TV.TASK_ID = T.ID AND TV.USER_ID = SU.USER_ID
+				INNER JOIN b_forum_message FM
+					ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+				LEFT JOIN b_uts_forum_message BUF
+					ON BUF.VALUE_ID = FM.ID
+			WHERE
+				{$filter}
+			GROUP BY T.ID, SU.USER_ID
+		";
+
+		$res = Application::getConnection()->query($sql);
+		$rows = $res->fetchAll();
+
+		$counters = [];
+
+		foreach ($rows as $row)
+		{
+			$counters[] = [
+				'USER_ID'	=> (int) $row['USER_ID'],
+				'TASK_ID' 	=> (int) $row['ID'],
+				'GROUP_ID' 	=> (int) $row['GROUP_ID'],
+				'TYPE' 		=> CounterDictionary::COUNTER_GROUP_COMMENTS,
+				'VALUE' 	=> (int) $row['COUNT']
+			];
+		}
+
+		return $counters;
+	}
+}

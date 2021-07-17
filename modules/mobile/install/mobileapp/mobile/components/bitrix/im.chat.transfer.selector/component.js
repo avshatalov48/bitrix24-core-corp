@@ -222,8 +222,10 @@ ChatTransferSelector.search.init = function ()
 
 	ChatSearchScopes.setSkipList(this.skipList, ChatSearchScopes.TYPE_USER);
 	ChatSearchScopes.setList(this.listUsers, ChatSearchScopes.TYPE_USER);
-
 	ChatSearchScopes.setList(this.listLines, ChatSearchScopes.TYPE_LINE);
+	ChatSearchScopes.setSkipByProperty([
+		['bot', true],
+	], ChatSearchScopes.TYPE_USER);
 	ChatSearchScopes.setExternalSearchEnable(false, ChatSearchScopes.TYPE_LINE);
 };
 

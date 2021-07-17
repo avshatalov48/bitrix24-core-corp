@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('DisableEventsCheck', true);
@@ -76,6 +79,12 @@ if($action == 'SAVE_COMMENT')
 	{
 		__CrmTimelineEndResponse(array('ERROR' => 'Empty comment message.'));
 	}
+
+	if (!\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($ownerTypeID, $ownerID))
+	{
+		__CrmTimelineEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+	}
+
 	$authorID = CCrmSecurityHelper::GetCurrentUserID();
 	$attachments = isset($_POST['ATTACHMENTS']) && is_array($_POST['ATTACHMENTS']) ? $_POST['ATTACHMENTS'] : array();
 
@@ -460,6 +469,9 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		$comEntityID = $ownerID;
 	}
 
+	$paymentId = isset($_REQUEST['PAYMENT_ID']) ? (int)$_REQUEST['PAYMENT_ID'] : null;
+	$shipmentId = isset($_REQUEST['SHIPMENT_ID']) ? (int)$_REQUEST['SHIPMENT_ID'] : null;
+
 	$bindings = array(array(
 		'OWNER_TYPE_ID' => $ownerTypeID,
 		'OWNER_ID' => $ownerID
@@ -473,33 +485,32 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		);
 	}
 
-	$order = null;
+	$additionalFields = [
+		'ACTIVITY_PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS,
+		'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeID),
+		'ENTITY_TYPE_ID' => $comEntityTypeID,
+		'ENTITY_ID' => $comEntityID,
+		'BINDINGS' => $bindings,
+		'ACTIVITY_AUTHOR_ID' => $responsibleID,
+		'ACTIVITY_DESCRIPTION' => $messageBody,
+		'MESSAGE_TO' => $messageTo,
+	];
+
 	if (
 		$source === 'order'
-		&&
-		preg_match('/(?:https?):\/\//', $messageBody)
+		&& $paymentId
+		&& \Bitrix\Main\Loader::includeModule('sale')
+		&& ($payment = \Bitrix\Sale\Repository\PaymentRepository::getInstance()->getById($paymentId))
+		&& preg_match('/(?:https?):\/\//', $messageBody)
 	)
 	{
-		$item = \Bitrix\Crm\Order\DealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => ['=DEAL_ID' => $ownerID],
-			'order' => ['ORDER_ID' => 'DESC'],
-			'limit' => 1
-		])->fetchRaw();
+		$bindings = array_merge($bindings, ActivityBindingsMaker::makeByPayment($payment));
 
-		if ($item)
-		{
-			/** @var \Bitrix\Crm\Order\Order $order */
-			$order = \Bitrix\Crm\Order\Order::load($item['ORDER_ID']);
-			if ($order)
-			{
-				$bindings[] = [
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Order,
-					'OWNER_ID' => $order->getId(),
-
-				];
-			}
-		}
+		$additionalFields['ENTITIES'] = [
+			'ORDER' => $payment->getOrder(),
+			'PAYMENT' => $payment,
+			'SHIPMENT' => $shipmentId ? \Bitrix\Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId) : null,
+		];
 	}
 
 	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage(array(
@@ -511,60 +522,15 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		'MESSAGE_HEADERS' => array(
 			'module_id' => 'crm',
 			'bindings' => $bindings
-		)
+		),
+		'ADDITIONAL_FIELDS' => $additionalFields
 	));
 
-	if ($order !== null)
-	{
-		$params = [
-			'ORDER_FIELDS' => $order->getFieldValues(),
-			'SETTINGS' => [
-				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
-				'FIELDS' => [
-					'ORDER_ID' => $order->getId(),
-					'DEAL_ID' => $ownerID,
-					'SENT' => 'Y',
-					'DESTINATION' => 'SMS',
-				]
-			],
-			'BINDINGS' => [
-				[
-					'ENTITY_TYPE_ID' => $ownerTypeID,
-					'ENTITY_ID' => $ownerID
-				],
-				[
-					'ENTITY_TYPE_ID' => CCrmOwnerType::Order,
-					'ENTITY_ID' => $order->getId()
-				]
-			]
-		];
-
-		\Bitrix\Crm\Timeline\OrderController::getInstance()->onSend($order->getId(), $params);
-	}
-
-	if ($result->isSuccess())
-	{
-		$activityID = \Bitrix\Crm\Activity\Provider\Sms::addActivity(array(
-			'AUTHOR_ID' => $responsibleID,
-			'DESCRIPTION' => $messageBody,
-			'ASSOCIATED_ENTITY_ID' => $result->getId(),
-			'BINDINGS' => $bindings,
-			'COMMUNICATIONS' => array(
-				array(
-					'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeID),
-					'ENTITY_TYPE_ID' => $comEntityTypeID,
-					'ENTITY_ID' => $comEntityID,
-					'TYPE' => \CCrmFieldMulti::PHONE,
-					'VALUE' => $messageTo
-				)
-			)
-		));
-		__CrmTimelineEndResponse(array('ID' => $activityID));
-	}
-	else
-	{
-		__CrmTimelineEndResponse(array('ERROR' => implode(PHP_EOL, $result->getErrorMessages())));
-	}
+	__CrmTimelineEndResponse(
+		$result->isSuccess()
+			? []
+			: ['ERROR' => implode(PHP_EOL, $result->getErrorMessages())]
+	);
 }
 elseif($action == 'CHANGE_FASTEN_ITEM')
 {
@@ -809,6 +775,12 @@ elseif($action == 'GET_COMMENT_CONTENT')
 	$entityTypeID = isset($_REQUEST['ENTITY_TYPE_ID']) ? (int)$_REQUEST['ENTITY_TYPE_ID'] : 0;
 	$id = isset($_POST['ID']) ? (int)$_POST['ID'] : 0;
 	$entityID = isset($_POST['ENTITY_ID']) ? (int)$_POST['ENTITY_ID'] : 0;
+
+	if (!\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($entityTypeID, $entityID))
+	{
+		__CrmTimelineEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+	}
+
 	$resultBind = Bitrix\Crm\Timeline\Entity\TimelineBindingTable::getList(
 		array(
 			'filter' => array('=OWNER_ID' => $id, "=ENTITY_TYPE_ID" => $entityTypeID, "=ENTITY_ID" => $entityID,),

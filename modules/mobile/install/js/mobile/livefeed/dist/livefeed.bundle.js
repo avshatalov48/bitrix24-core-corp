@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,mobile_imageviewer,mobile_utils,mobile_ajax) {
+(function (exports,main_core,main_core_events,mobile_utils,mobile_ajax) {
 	'use strict';
 
 	var BalloonNotifier = /*#__PURE__*/function () {
@@ -386,14 +386,14 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "addSuccess",
-	    value: function addSuccess(key) {
+	    value: function addSuccess(key, warningText) {
 	      var _this4 = this;
 
 	      if (this.repo[key] && this.repo[key].node) {
 	        this.repo[key].node.classList.remove(this.class.balloonHidden);
 	        this.repo[key].node.classList.remove(this.class.balloonShow);
 	        this.repo[key].node.classList.add(this.class.balloonPublished);
-	        this.repo[key].node.lastElementChild.innerHTML = main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE');
+	        this.repo[key].node.lastElementChild.innerHTML = main_core.Type.isStringFilled(warningText) ? warningText : main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE');
 	      }
 
 	      setTimeout(function () {
@@ -461,8 +461,7 @@ this.BX = this.BX || {};
 	        params = {};
 	      }
 
-	      var key = params.key ? params.key : '';
-	      this.addSuccess(key);
+	      this.addSuccess(params.key ? params.key : '', params.warningText);
 	      this.drawList();
 	    }
 	  }, {
@@ -472,8 +471,7 @@ this.BX = this.BX || {};
 	        params = {};
 	      }
 
-	      var key = params.key ? params.key : '';
-	      this.addSuccess(key);
+	      this.addSuccess(params.key ? params.key : '');
 	      this.drawList();
 	    }
 	  }, {
@@ -1342,6 +1340,7 @@ this.BX = this.BX || {};
 	                postData.recipients[key].push({
 	                  id: code,
 	                  title: item.TITLE,
+	                  shortTitle: main_core.Type.isStringFilled(item.SHORT_TITLE) ? item.SHORT_TITLE : item.TITLE,
 	                  avatar: main_core.Type.isStringFilled(item.AVATAR) ? item.AVATAR : ''
 	                });
 	              }
@@ -1678,6 +1677,93 @@ this.BX = this.BX || {};
 	  return Rating;
 	}(main_core_events.EventEmitter);
 
+	var ImportantManager = /*#__PURE__*/function () {
+	  function ImportantManager() {
+	    babelHelpers.classCallCheck(this, ImportantManager);
+	  }
+
+	  babelHelpers.createClass(ImportantManager, [{
+	    key: "setPostRead",
+	    value: function setPostRead(node) {
+	      var _this = this;
+
+	      if (!main_core.Type.isDomNode(node) || node.hasAttribute('done')) {
+	        return false;
+	      }
+
+	      var postId = parseInt(node.getAttribute('bx-data-post-id'));
+
+	      if (postId <= 0) {
+	        return false;
+	      }
+
+	      this.renderRead({
+	        node: node,
+	        value: true
+	      });
+	      mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.blogpost.important.vote', {
+	        data: {
+	          params: {
+	            POST_ID: postId
+	          }
+	        }
+	      }).then(function (response) {
+	        if (!main_core.Type.isStringFilled(response.data.success) || response.data.success !== 'Y') {
+	          _this.renderRead({
+	            node: node,
+	            value: false
+	          });
+	        } else {
+	          BXMobileApp.onCustomEvent('onLogEntryImpPostRead', {
+	            postId: postId
+	          }, true);
+	        }
+	      }, function (response) {
+	        _this.renderRead({
+	          node: node,
+	          value: false
+	        });
+	      });
+	      return true;
+	    }
+	  }, {
+	    key: "renderRead",
+	    value: function renderRead(params) {
+	      if (!main_core.Type.isObject(params) || !main_core.Type.isDomNode(params.node)) {
+	        return;
+	      }
+
+	      var node = params.node;
+	      var value = !!params.value;
+
+	      if (value) {
+	        node.checked = true;
+	        node.setAttribute('done', 'Y');
+	        main_core.Event.unbindAll(node);
+	      } else {
+	        node.checked = false;
+	        delete node.checked;
+	        node.removeAttribute('done');
+	      }
+
+	      var container = node.closest('.post-item-important');
+
+	      if (!container) {
+	        return;
+	      }
+
+	      var listNode = container.querySelector('.post-item-important-list');
+
+	      if (!listNode) {
+	        return;
+	      }
+
+	      listNode.classList.add('post-item-important-list-read');
+	    }
+	  }]);
+	  return ImportantManager;
+	}();
+
 	function _templateObject$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
 
@@ -1845,7 +1931,7 @@ this.BX = this.BX || {};
 
 	      DatabaseUnsentPostInstance.delete(groupId);
 
-	      if (postId <= 0) {
+	      if (postId <= 0 || main_core.Type.isStringFilled(params.warningText)) {
 	        return;
 	      }
 
@@ -2070,6 +2156,8 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
+	      var serverTimestamp = typeof params.serverTimestamp != 'undefined' && parseInt(params.serverTimestamp) > 0 ? parseInt(params.serverTimestamp) : 0;
+
 	      if (action === 'update') {
 	        var postContainer = document.getElementById('lenta_item_' + logId);
 
@@ -2124,6 +2212,14 @@ this.BX = this.BX || {};
 	          main_core.Runtime.html(postContainer, contentPostItemTopWrap.innerHTML).then(function () {
 	            oMSL.checkNodesHeight();
 	            BitrixMobile.LazyLoad.showImages();
+
+	            if (document.getElementById('framecache-block-feed')) {
+	              setTimeout(function () {
+	                _this4.updateFrameCache({
+	                  timestamp: serverTimestamp
+	                });
+	              }, 750);
+	            }
 	          });
 	        }
 
@@ -2137,7 +2233,6 @@ this.BX = this.BX || {};
 	          main_core.Dom.style(_this4.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12
 	          /*margin-bottom*/
 	          , "px"));
-	          var serverTimestamp = typeof params.serverTimestamp != 'undefined' && parseInt(params.serverTimestamp) > 0 ? parseInt(params.serverTimestamp) : 0;
 
 	          if (serverTimestamp > 0) {
 	            _this4.setOptions({
@@ -2644,6 +2739,22 @@ this.BX = this.BX || {};
 
 	      return result;
 	    }
+	  }, {
+	    key: "sendErrorEval",
+	    value: function sendErrorEval(script) {
+	      BX.evalGlobal('try { ' + script + ' } catch (e) { this.sendError(e.message, e.name, e.number); }');
+	    }
+	  }, {
+	    key: "sendError",
+	    value: function sendError(message, url, linenumber) {
+	      mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.mobileLogError', {
+	        data: {
+	          message: message,
+	          url: url,
+	          lineNumber: linenumber
+	        }
+	      }).then(function (response) {}, function (response) {});
+	    }
 	  }]);
 	  return Feed;
 	}();
@@ -2657,6 +2768,7 @@ this.BX = this.BX || {};
 	var PostFormManagerInstance = new PostFormManager();
 	var PinnedPanelInstance = new PinnedPanel();
 	var RatingInstance = new Rating();
+	var ImportantManagerInstance = new ImportantManager();
 
 	exports.Instance = Instance;
 	exports.BalloonNotifierInstance = BalloonNotifierInstance;
@@ -2667,6 +2779,7 @@ this.BX = this.BX || {};
 	exports.PostFormManagerInstance = PostFormManagerInstance;
 	exports.PinnedPanelInstance = PinnedPanelInstance;
 	exports.RatingInstance = RatingInstance;
+	exports.ImportantManagerInstance = ImportantManagerInstance;
 
-}((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX,BX.Mobile));
+}((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX.Mobile));
 //# sourceMappingURL=livefeed.bundle.js.map

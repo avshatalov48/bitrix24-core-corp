@@ -21,6 +21,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -259,9 +260,18 @@ class CatalogProductDetailsComponent
 
 		if ($variation === null)
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(sprintf(
-				'Product {%s} not found.', $productId
-			));
+			Toolbar::deleteFavoriteStar();
+
+			global $APPLICATION;
+			$APPLICATION->IncludeComponent(
+				"bitrix:catalog.notfounderror",
+				"",
+				[
+					'ERROR_MESSAGE' => Loc::getMessage('CPD_NOT_FOUND_ERROR_TITLE'),
+				]
+			);
+
+			return null;
 		}
 
 		return $variation->getParent();

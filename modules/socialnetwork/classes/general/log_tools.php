@@ -4752,14 +4752,29 @@ class CSocNetLogTools
 						: ''
 				);
 
+				$isEmail = (isset($arUserTmp['EXTERNAL_AUTH_ID']) && $arUserTmp['EXTERNAL_AUTH_ID'] === 'email');
+				$url = str_replace("#user_id#", $arUserTmp["ID"], $arParams["PATH_TO_USER"]);
+				if (
+					$isEmail
+					&& !empty($arParams['LOG_ID'])
+					&& (int)$arParams['LOG_ID'] > 0
+				)
+				{
+					$url = (new \Bitrix\Main\Web\Uri($url))->addParams([
+						'entityType' => 'LOG_ENTRY',
+						'entityId' => (int)$arParams['LOG_ID'],
+					])->getUri();
+				}
+
 				$arDestination[] = [
 					"TYPE" => "U",
 					"ID" => $arUserTmp["ID"],
 					"STYLE" => "users",
 					"TITLE" => CUser::FormatName($arParams["NAME_TEMPLATE"], $arUserTmp, ($arParams["SHOW_LOGIN"] === "Y"), $htmlEncode),
-					"URL" => str_replace("#user_id#", $arUserTmp["ID"], $arParams["PATH_TO_USER"]),
+					'SHORT_TITLE' => trim($htmlEncode ? htmlspecialcharsEx($arUserTmp['NAME']) : $arUserTmp['NAME']),
+					'URL' => $url,
 					"IS_EXTRANET" => (is_array($GLOBALS["arExtranetUserID"]) && in_array($arUserTmp["ID"], $GLOBALS["arExtranetUserID"]) ? "Y" : "N"),
-					"IS_EMAIL" => (isset($arUserTmp["EXTERNAL_AUTH_ID"]) && $arUserTmp["EXTERNAL_AUTH_ID"] === 'email' ? "Y" : "N"),
+					'IS_EMAIL' => ($isEmail ? 'Y' : 'N'),
 					"CRM_ENTITY" => (!empty($arUserTmp["UF_USER_CRM_ENTITY"]) ? $arUserTmp["UF_USER_CRM_ENTITY"] : false),
 					'AVATAR' => $avatarUrl,
 				];

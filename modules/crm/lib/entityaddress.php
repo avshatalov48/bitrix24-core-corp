@@ -618,7 +618,7 @@ class EntityAddress
 	 * @return Address|null
 	 * @throws Main\LoaderException
 	 */
-	protected static function getLocationAddressByFields(array $fields, string $languageId)
+	public static function getLocationAddressByFields(array $fields, string $languageId)
 	{
 		if ($languageId === '' || mb_strlen($languageId) !== 2)
 		{
@@ -645,15 +645,21 @@ class EntityAddress
 	{
 		$addressFieldMap = static::getAddressFieldMap();
 
+		$maxLocAddrFieldLength = 1024;    // b_location_addr_fld( ... `VALUE` VARCHAR(1024) NULL
 		$result = false;
 		foreach ($addressFieldMap as $crmAddressFieldName => $locationAddressFieldId)
 		{
 			if (isset($fields[$crmAddressFieldName]) && is_string($fields[$crmAddressFieldName]))
 			{
+				$value =
+					mb_strlen($fields[$crmAddressFieldName]) > $maxLocAddrFieldLength
+					? mb_substr($fields[$crmAddressFieldName], 0, $maxLocAddrFieldLength)
+					: $fields[$crmAddressFieldName]
+				;
 				$locationFieldValue = $locationAddress->getFieldValue($locationAddressFieldId);
-				if ($fields[$crmAddressFieldName] !== '' || ($locationFieldValue !== null && $fields[$crmAddressFieldName] !== $locationFieldValue))
+				if ($value !== '' || ($locationFieldValue !== null && $value !== $locationFieldValue))
 				{
-					$locationAddress->setFieldValue($locationAddressFieldId, $fields[$crmAddressFieldName]);
+					$locationAddress->setFieldValue($locationAddressFieldId, $value);
 					$result = true;
 				}
 			}

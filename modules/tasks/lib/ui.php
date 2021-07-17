@@ -295,6 +295,59 @@ class UI
 		return $dayTime;
 	}
 
+	public static function getHumanDateTimeFormat(int $timestamp): string
+	{
+		$dateFormat = static::getHumanDateFormat($timestamp);
+		$timeFormat = static::getHumanTimeFormat($timestamp);
+
+		return $dateFormat . ($timeFormat ? ', ' . $timeFormat : '');
+	}
+
+	public static function getHumanDateFormat(int $timestamp): string
+	{
+		$dateFormat = 'j F';
+
+		if (LANGUAGE_ID === 'en')
+		{
+			$dateFormat = "F j";
+		}
+		else if (LANGUAGE_ID === 'de')
+		{
+			$dateFormat = "j. F";
+		}
+
+		if (date('Y') !== date('Y', $timestamp))
+		{
+			if (LANGUAGE_ID === 'en')
+			{
+				$dateFormat .= ",";
+			}
+
+			$dateFormat .= ' Y';
+		}
+
+		return $dateFormat;
+	}
+
+	public static function getHumanTimeFormat(int $timestamp): string
+	{
+		$timeFormat = '';
+		$currentTimeFormat = 'HH:MI:SS';
+
+		$resSite = \CSite::GetByID(SITE_ID);
+		if ($site = $resSite->Fetch())
+		{
+			$currentTimeFormat = str_replace($site['FORMAT_DATE'].' ', '', $site['FORMAT_DATETIME']);
+		}
+
+		if (date('Hi', $timestamp) > 0)
+		{
+			$timeFormat = ($currentTimeFormat === 'HH:MI:SS' ? 'G:i' : 'g:i a');
+		}
+
+		return $timeFormat;
+	}
+
 	public static function getHintState()
 	{
 		$result = array();

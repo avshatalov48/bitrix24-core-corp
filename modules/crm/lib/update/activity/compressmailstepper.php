@@ -21,6 +21,8 @@ final class CompressMailStepper extends Main\Update\Stepper
 
 	function execute(array &$option)
 	{
+		return self::FINISH_EXECUTION;
+
 		$lastId = (int)($option['lastId'] ?? 0);
 
 		$listResult = \Bitrix\Crm\ActivityTable::getList([
@@ -42,12 +44,13 @@ final class CompressMailStepper extends Main\Update\Stepper
 
 		foreach ($listResult as $row)
 		{
-			$compressed = \CCrmActivity::compressDescription($row['DESCRIPTION']);
-
-			if ($compressed !== $row['DESCRIPTION'])
-			{
-				\Bitrix\Crm\ActivityTable::update($row['ID'], ['DESCRIPTION' => $compressed]);
-			}
+			//TODO some
+			//$compressed = \CCrmActivity::compressDescription($row['DESCRIPTION']);
+			//
+			//if ($compressed !== $row['DESCRIPTION'])
+			//{
+			//	\Bitrix\Crm\ActivityTable::update($row['ID'], ['DESCRIPTION' => $compressed]);
+			//}
 			$option['lastId'] = $row['ID'];
 		}
 		return self::CONTINUE_EXECUTION;

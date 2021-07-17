@@ -175,12 +175,17 @@ class License extends \Bitrix\Main\Engine\Controller
 		$licenseType = \CBitrix24::getLicenseType();
 		$licenseFamily = \CBitrix24::getLicenseFamily();
 		$licensePrefix = \CBitrix24::getLicensePrefix();
-		$isRusZone = in_array($licensePrefix, ['ru', 'ua', 'by', 'kz']);
 		$licenseTill = Option::get('main', '~controller_group_till');
 		$licenseTillMessage = '';
 		$daysLeftMessage = '';
 		$daysLeft = 0;
 		$isLicenseDateUnlimited = \CBitrix24::isLicenseDateUnlimited();
+		$isAutoPay = false;
+
+		if (\CBitrix24::IsLicensePaid())
+		{
+			$isAutoPay = Option::get('bitrix24', '~autopay', 'N') === 'Y';
+		}
 
 		$date= new Date;
 		$currentDate = $date->getTimestamp();
@@ -200,24 +205,6 @@ class License extends \Bitrix\Main\Engine\Controller
 			]);
 		}
 
-		$demoStart = Option::get("bitrix24", "DEMO_START");
-		$demoLicenseTillMessage = "";
-		$demoDaysLeftMessage = "";
-		$demoDaysLeft = 0;
-
-		if (intval($demoStart) > 0)
-		{
-			$demoDaysLeft = intval(($demoStart + 30 * 24 * 60 * 60 - $currentDate) / 60 / 60 / 24);
-
-			$demoLicenseTillConverted = ConvertTimeStamp($demoStart + 30 * 24 * 60 * 60);
-			$demoLicenseTillMessage = Loc::getMessage('INTRANET_LICENSE_TILL', [
-				'#LICENSE_TILL#' => $demoLicenseTillConverted
-			]);
-			$demoDaysLeftMessage = Loc::getMessage('INTRANET_LICENSE_DAYS_LEFT_SHORT', [
-				'#NUM_DAYS#' => FormatDate("ddiff", $currentDate, $demoStart + 30 * 24 * 60 * 60)
-			]);
-		}
-
 		$isAdmin = (
 			Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
 			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
@@ -225,6 +212,7 @@ class License extends \Bitrix\Main\Engine\Controller
 			? true : false;
 
 		$analyticaLabel = '?analyticsLabel[headerPopup]=Y&analyticsLabel[licenseType]='.$licenseType;
+		$isMarketAvailable = Loader::includeModule('rest') && \Bitrix\Rest\Marketplace\Client::isSubscriptionAccess();
 
 		$licenseData = [
 			'license' => [
@@ -240,12 +228,10 @@ class License extends \Bitrix\Main\Engine\Controller
 				'isCompanyTariff' => $licenseFamily === 'company',
 				'isUnlimitedDateTariff' => $isLicenseDateUnlimited,
 				'isDemoAvailable' => \Bitrix\Bitrix24\Feature::isEditionTrialable('demo'),
-				'demoDaysLeftMessage' => $demoDaysLeftMessage,
-				'demoTillMessage' => $demoLicenseTillMessage,
-				'isDemoExpired' => $demoDaysLeft < 14,
+				'isDemoExpired' => $daysLeft < 14,
 				'isAlmostExpired' => (
 					$licenseFamily !== 'project'
-					&& $isRusZone
+					&& !$isAutoPay
 					&& $daysLeft > 0
 					&& $daysLeft < 14
 					&& !$isLicenseDateUnlimited
@@ -257,17 +243,17 @@ class License extends \Bitrix\Main\Engine\Controller
 				),
 				'daysLeft' => $daysLeft,
 				'daysLeftMessage' => $daysLeftMessage,
-				'isRusZone' => $isRusZone,
+				'isAutoPay' => $isAutoPay,
 			],
 			'market' => [
-				'isMarketAvailable' => $licensePrefix === 'ru',
+				'isMarketAvailable' => $isMarketAvailable,
 			],
 			'isAdmin' => $isAdmin,
 			'isCloud' => ModuleManager::isModuleInstalled("bitrix24"),
 			'partner' => [],
 		];
 
-		if ($licenseData['market']['isMarketAvailable'])
+		if ($isMarketAvailable)
 		{
 			$licenseData['market'] = array_merge(
 				$licenseData['market'], \Bitrix\Bitrix24\License\Market::getData()
@@ -306,5 +292,10 @@ class License extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $licenseData;
+	}
+
+	public function analyticsLabelAction()
+	{
+
 	}
 }

@@ -2,29 +2,31 @@
 
 namespace Bitrix\ImBot\Bot;
 
-use Bitrix\ImBot\Log;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Im;
 use Bitrix\ImBot;
-
-Loc::loadMessages(__FILE__);
+use Bitrix\ImBot\Log;
 
 class SupportBox extends Network implements NetworkBot
 {
-	public const BOT_CODE = 'support';
+	public const
+		BOT_CODE = 'support',
 
-	public const OPTION_BOT_ID = 'support_bot_id';
-	public const OPTION_BOT_ACTIVE = 'support_enabled';
-	public const OPTION_BOT_CODE = 'support_code';
-	public const OPTION_BOT_NAME = 'support_name';
-	public const OPTION_BOT_DESC = 'support_desc';
-	public const OPTION_BOT_AVATAR = 'support_avatar';
-	public const OPTION_BOT_MESSAGES = 'support_messages';
+		OPTION_BOT_ID = 'support_bot_id',
+		OPTION_BOT_ACTIVE = 'support_enabled',
+		OPTION_BOT_CODE = 'support_code',
+		OPTION_BOT_NAME = 'support_name',
+		OPTION_BOT_DESC = 'support_desc',
+		OPTION_BOT_AVATAR = 'support_avatar',
+		OPTION_BOT_MESSAGES = 'support_messages',
 
-	public const COMMAND_ACTIVATE = 'activate';
+		COMMAND_ACTIVATE = 'activate';
 
-	protected const AVATAR = 'https://helpdesk.bitrix24.com/images/support/bot.png';
-	protected const HELP_DESK_CODE = '7577357';
+	protected const
+		AVATAR = 'https://helpdesk.bitrix24.com/images/support/bot.png',
+		HELP_DESK_CODE = '7577357';
 
 
 	/**
@@ -46,7 +48,7 @@ class SupportBox extends Network implements NetworkBot
 			return self::getBotId();// do nothing
 		}
 
-		\Bitrix\Im\Bot::clearCache();
+		Im\Bot::clearCache();
 
 		$showActivateMessage = true;
 
@@ -72,21 +74,21 @@ class SupportBox extends Network implements NetworkBot
 		{
 			// Stage I - register as local bot
 			$botParams['CODE'] = self::BOT_CODE;
-			$botParams['TYPE'] = \Bitrix\Im\Bot::TYPE_BOT;
-			$botParams['INSTALL_TYPE'] =  \Bitrix\Im\Bot::INSTALL_TYPE_SILENT;
+			$botParams['TYPE'] = Im\Bot::TYPE_BOT;
+			$botParams['INSTALL_TYPE'] =  Im\Bot::INSTALL_TYPE_SILENT;
 
-			$botId = (int)\Bitrix\Im\Bot::register($botParams);
+			$botId = (int)Im\Bot::register($botParams);
 
 			self::setBotId($botId);
 		}
 		elseif ($botId)
 		{
-			$botCache = \Bitrix\Im\Bot::getCache($botId);
+			$botCache = Im\Bot::getCache($botId);
 
 			self::setBotId($botId);
 
 			// upgrade previous one
-			\Bitrix\Im\Bot::update(['BOT_ID' => $botId], $botParams);
+			Im\Bot::update(['BOT_ID' => $botId], $botParams);
 
 			// perform activation
 			if (self::updateBotProperties())
@@ -107,9 +109,9 @@ class SupportBox extends Network implements NetworkBot
 
 		if ($botId)
 		{
-			\Bitrix\Im\Command::clearCache();
+			Im\Command::clearCache();
 
-			\Bitrix\Im\Command::register([
+			Im\Command::register([
 				'MODULE_ID' => self::MODULE_ID,
 				'BOT_ID' => $botId,
 				'COMMAND' => self::COMMAND_ACTIVATE,/** @see ImBot\Bot\SupportBox::activate */
@@ -130,11 +132,11 @@ class SupportBox extends Network implements NetworkBot
 		{
 			self::setActive(false);
 
-			$keyboard = new \Bitrix\Im\Bot\Keyboard(self::getBotId());
+			$keyboard = new Im\Bot\Keyboard(self::getBotId());
 			self::appendActivateButton($keyboard);
 
 			parent::sendMessage([
-				'DIALOG_ID' => 'ADMIN',
+				'DIALOG_ID' => self::USER_LEVEL_ADMIN,
 				'MESSAGE' => Loc::getMessage('SUPPORT_BOX_WELCOME_MESSAGE'),
 				'KEYBOARD' => $keyboard,
 				'SYSTEM' => 'N',
@@ -181,14 +183,14 @@ class SupportBox extends Network implements NetworkBot
 				$result = $result['result'];
 				if ($result)
 				{
-					Main\Config\Option::delete('imbot', ['name' => parent::BOT_CODE.'_'.$botCode.'_bot_id']);
+					Option::delete('imbot', ['name' => parent::BOT_CODE.'_'.$botCode.'_bot_id']);
 				}
 			}
 		}
 
 		if ($result === false && $botId == 0)
 		{
-			$res = \Bitrix\Im\Model\BotTable::getList([
+			$res = Im\Model\BotTable::getList([
 				'select' => ['BOT_ID'],
 				'filter' => [
 					'=CLASS' => static::class
@@ -202,7 +204,7 @@ class SupportBox extends Network implements NetworkBot
 
 		if ($result === false && $botId > 0)
 		{
-			$result = \Bitrix\Im\Bot::unRegister(['BOT_ID' => $botId]);
+			$result = Im\Bot::unRegister(['BOT_ID' => $botId]);
 		}
 
 		self::clearSettings();
@@ -244,18 +246,9 @@ class SupportBox extends Network implements NetworkBot
 
 	/**
 	 * Event handler on answer add.
+	 * Alias for @see \Bitrix\Imbot\Bot\ChatBot::onAnswerAdd
+	 * Called from @see \Bitrix\ImBot\Controller::sendToBot
 	 *
-	 * @param string $command
-	 * @param array $params
-	 *
-	 * @return array
-	 */
-	public static function onAnswerAdd($command, $params): array
-	{
-		return parent::onAnswerAdd($command, $params);
-	}
-
-	/**
 	 * @param string $command
 	 * @param array $params
 	 *
@@ -315,12 +308,12 @@ class SupportBox extends Network implements NetworkBot
 
 		if ($messageFields['COMMAND'] == self::COMMAND_ACTIVATE)
 		{
-			\Bitrix\Im\Bot::startWriting(['BOT_ID' => self::getBotId()], $messageFields['DIALOG_ID']);
+			Im\Bot::startWriting(['BOT_ID' => self::getBotId()], $messageFields['DIALOG_ID']);
 
 			if (self::activate())
 			{
 				parent::sendMessage([
-					'DIALOG_ID' => 'ADMIN',
+					'DIALOG_ID' => self::USER_LEVEL_ADMIN,
 					'MESSAGE' => self::getMessage('ACTIVATION_SUCCESS', Loc::getMessage('SUPPORT_BOX_ACTIVATION_SUCCESS')),
 					'SYSTEM' => 'N',
 					'URL_PREVIEW' => 'N'
@@ -349,7 +342,7 @@ class SupportBox extends Network implements NetworkBot
 					'#ERROR#' => $error->msg,
 					'#HELP_DESK#' => $helpDeskUrl,
 				]);
-				$keyboard = new \Bitrix\Im\Bot\Keyboard(self::getBotId());
+				$keyboard = new Im\Bot\Keyboard(self::getBotId());
 				self::appendActivateButton($keyboard);
 
 				parent::sendMessage([
@@ -424,7 +417,7 @@ class SupportBox extends Network implements NetworkBot
 				'LINE_DESC' => self::getBotDesc(),
 				'LINE_AVATAR' => self::getBotAvatar(),
 				'CLASS' => __CLASS__,
-				'TYPE' => \Bitrix\Im\Bot::TYPE_NETWORK,
+				'TYPE' => Im\Bot::TYPE_NETWORK,
 			]);
 
 			if (!$botId)
@@ -469,13 +462,13 @@ class SupportBox extends Network implements NetworkBot
 			return false;
 		}
 
-		\Bitrix\Im\Bot::clearCache();
+		Im\Bot::clearCache();
 
 		$botParams = [
 			'VERIFIED' => 'Y',
 			'CODE' => parent::BOT_CODE. '_'. $botCode,
 			'APP_ID' => $botCode,
-			'TYPE' => \Bitrix\Im\Bot::TYPE_NETWORK,
+			'TYPE' => Im\Bot::TYPE_NETWORK,
 			'MODULE_ID' => self::MODULE_ID,
 			'CLASS' => __CLASS__,
 			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see ImBot\Bot\SupportBox::onChatStart */
@@ -487,13 +480,13 @@ class SupportBox extends Network implements NetworkBot
 			]
 		];
 
-		$botAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), $botId);
+		$botAvatar = Im\User::uploadAvatar(self::getBotAvatar(), $botId);
 		if (!empty($botAvatar))
 		{
 			$botParams['PROPERTIES']['PERSONAL_PHOTO'] = $botAvatar;
 		}
 
-		\Bitrix\Im\Bot::update(['BOT_ID' => $botId], $botParams);
+		Im\Bot::update(['BOT_ID' => $botId], $botParams);
 
 		return true;
 	}
@@ -514,7 +507,7 @@ class SupportBox extends Network implements NetworkBot
 		$botId = (int)parent::getNetworkBotId(self::getPreviousBotCode(), true);
 		if ($botId > 0)
 		{
-			$botData = \Bitrix\Im\Bot::getCache($botId);
+			$botData = Im\Bot::getCache($botId);
 			if ($botData['CLASS'] != 'Bitrix\\ImBot\\Bot\\Support')
 			{
 				$botId = -1;
@@ -522,7 +515,7 @@ class SupportBox extends Network implements NetworkBot
 		}
 		else
 		{
-			$res = \Bitrix\Im\Model\BotTable::getList([
+			$res = Im\Model\BotTable::getList([
 				'select' => ['BOT_ID'],
 				'filter' => [
 					'=CLASS' => 'Bitrix\\ImBot\\Bot\\Support'
@@ -656,7 +649,7 @@ class SupportBox extends Network implements NetworkBot
 		];
 		foreach ($ids as $id)
 		{
-			Main\Config\Option::delete(self::MODULE_ID, ['name' => $id]);
+			Option::delete(self::MODULE_ID, ['name' => $id]);
 		}
 
 		return true;
@@ -687,7 +680,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	private static function isInstalled(): bool
 	{
-		$res = \Bitrix\Im\Model\BotTable::getList([
+		$res = Im\Model\BotTable::getList([
 			'select' => ['BOT_ID'],
 			'filter' => [
 				'=CLASS' => __CLASS__,
@@ -711,7 +704,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setActive(bool $enable): void
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ACTIVE, $enable);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_ACTIVE, $enable);
 	}
 
 
@@ -724,7 +717,7 @@ class SupportBox extends Network implements NetworkBot
 	{
 		return
 			(self::getBotId() > 0) &&
-			((bool)Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false) === true);
+			((bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false) === true);
 	}
 
 	/**
@@ -748,58 +741,6 @@ class SupportBox extends Network implements NetworkBot
 	}
 
 	/**
-	 * Returns bot's recent dialogs.
-	 *
-	 * @param int $daysDepth
-	 *
-	 * @return \Generator|iterable
-	 * <pre>
-	 * [
-	 *   0 => [
-	 *      (int) USER_ID
-	 *      (int) CHAT_ID
-	 *      (string) RECENTLY_TALK
-	 *      (int) MESSAGE_ID
-	 *   ],
-	 *   ...
-	 * </pre>
-	 */
-	private static function getRecentDialogs(int $daysDepth = 7): iterable
-	{
-		$botId = self::getBotId();
-		$query = "
-			SELECT
-				RU.USER_ID,
-				RU.CHAT_ID,
-				IF(UNIX_TIMESTAMP(M.DATE_CREATE) > UNIX_TIMESTAMP() - 86400 * {$daysDepth}, 'Y', 'N') RECENTLY_TALK,
-				M.ID AS MESSAGE_ID
-			FROM
-				b_im_relation RB
-				INNER JOIN b_im_relation RU 
-					ON RB.CHAT_ID = RU.CHAT_ID
-				LEFT JOIN b_im_message M 
-					ON RU.LAST_ID = M.ID
-			WHERE
-				RB.USER_ID = {$botId}
-				and RU.USER_ID != {$botId}
-				and RB.MESSAGE_TYPE = '".\IM_MESSAGE_PRIVATE."'
-				and RU.MESSAGE_TYPE = '".\IM_MESSAGE_PRIVATE."'
-		";
-		if ($res = Main\Application::getInstance()->getConnection()->query($query))
-		{
-			while ($dialog = $res->fetch())
-			{
-				if ($dialog['USER_ID'] == $botId)
-				{
-					continue;
-				}
-
-				yield $dialog;
-			}
-		}
-	}
-
-	/**
 	 * Detects portal language.
 	 * @return string
 	 */
@@ -820,7 +761,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function getBotCode()
 	{
-		return Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_CODE, '');
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_CODE, '');
 	}
 
 	/**
@@ -836,21 +777,21 @@ class SupportBox extends Network implements NetworkBot
 		$prevNetBotExits = false;
 		if ($prevBotCode !== '')
 		{
-			$prevNetBotId = Main\Config\Option::get(self::MODULE_ID, parent::BOT_CODE.'_'.$prevBotCode.'_bot_id', '');
+			$prevNetBotId = Option::get(self::MODULE_ID, parent::BOT_CODE.'_'.$prevBotCode.'_bot_id', '');
 			$prevNetBotExits = (int)$prevNetBotId > 0;
 
 			if ($prevNetBotExits)
 			{
-				Main\Config\Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$prevBotCode.'_bot_id']);
+				Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$prevBotCode.'_bot_id']);
 			}
 		}
 
 		if ($botCode !== '' && $prevNetBotExits)
 		{
-			Main\Config\Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCode.'_bot_id', $botId);
+			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCode.'_bot_id', $botId);
 		}
 
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_CODE, $botCode);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_CODE, $botCode);
 
 		return true;
 	}
@@ -861,7 +802,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function getBotId(): int
 	{
-		return (int)Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_ID, 0);
+		return (int)Option::get(self::MODULE_ID, self::OPTION_BOT_ID, 0);
 	}
 
 	/**
@@ -871,7 +812,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setBotId($botId)
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_ID, $botId);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_ID, $botId);
 
 		return true;
 	}
@@ -882,7 +823,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function getBotName(): string
 	{
-		$name = Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_NAME, '');
+		$name = Option::get(self::MODULE_ID, self::OPTION_BOT_NAME, '');
 		if ($name === '')
 		{
 			$name = Loc::getMessage('SUPPORT_BOX_NAME');
@@ -898,7 +839,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setBotName(string $botName): bool
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_NAME, $botName);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_NAME, $botName);
 
 		return true;
 	}
@@ -909,7 +850,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function getBotDesc(): string
 	{
-		$desc = Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_DESC, '');
+		$desc = Option::get(self::MODULE_ID, self::OPTION_BOT_DESC, '');
 		if ($desc === '')
 		{
 			$desc = Loc::getMessage('SUPPORT_BOX_POSITION');
@@ -925,7 +866,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setBotDesc(string $botDesc): bool
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_DESC, $botDesc);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_DESC, $botDesc);
 
 		return true;
 	}
@@ -936,7 +877,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function getBotAvatar(): string
 	{
-		return Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, self::AVATAR);
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, self::AVATAR);
 	}
 
 	/**
@@ -946,7 +887,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setBotAvatar(string $botAvatarUrl): bool
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_AVATAR, $botAvatarUrl);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_AVATAR, $botAvatarUrl);
 
 		return true;
 	}
@@ -958,7 +899,7 @@ class SupportBox extends Network implements NetworkBot
 	 */
 	public static function setBotMessages(string $botMessages): bool
 	{
-		Main\Config\Option::set(self::MODULE_ID, self::OPTION_BOT_MESSAGES, $botMessages);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_MESSAGES, $botMessages);
 
 		return true;
 	}
@@ -977,7 +918,7 @@ class SupportBox extends Network implements NetworkBot
 		if ($messages === null)
 		{
 			$messages = unserialize(
-				Main\Config\Option::get(self::MODULE_ID, self::OPTION_BOT_MESSAGES, 'a:0:{}'),
+				Option::get(self::MODULE_ID, self::OPTION_BOT_MESSAGES, 'a:0:{}'),
 				['allowed_classes' => false]
 			);
 		}
@@ -985,26 +926,11 @@ class SupportBox extends Network implements NetworkBot
 		return isset($messages[$code]) ? $messages[$code] : $defaultPhrase;
 	}
 
-	/**
-	 * Returns current context user.
-	 * @return \CUser
-	 */
-	public static function getCurrentUser(): \CUser
-	{
-		global $USER;
-		if ($USER instanceof \CUser)
-		{
-			return $USER;
-		}
-
-		return (new \CUser());
-	}
-
 	//endregion
 
 	//region Keyboard & buttons
 
-	private static function appendActivateButton(\Bitrix\Im\Bot\Keyboard &$keyboard): void
+	private static function appendActivateButton(Im\Bot\Keyboard &$keyboard): void
 	{
 		$keyboard->addButton([
 			"DISPLAY" => "LINE",
@@ -1081,15 +1007,15 @@ class SupportBox extends Network implements NetworkBot
 
 			if ($prevBotAvatar != self::getBotAvatar())
 			{
-				$botAvatar = \Bitrix\Im\User::uploadAvatar(self::getBotAvatar(), $botId);
+				$botAvatar = Im\User::uploadAvatar(self::getBotAvatar(), $botId);
 				if (!empty($botAvatar))
 				{
 					$botParams['PROPERTIES']['PERSONAL_PHOTO'] = $botAvatar;
 				}
 			}
 
-			\Bitrix\Im\Bot::clearCache();
-			\Bitrix\Im\Bot::update(['BOT_ID' => $botId], $botParams);
+			Im\Bot::clearCache();
+			Im\Bot::update(['BOT_ID' => $botId], $botParams);
 
 			//notify
 			/*
@@ -1202,10 +1128,7 @@ class SupportBox extends Network implements NetworkBot
 		}
 
 		$agentAdded = true;
-		$agents = \CAgent::GetList(
-			array('ID' => 'DESC'),
-			array('NAME' => __CLASS__.'::refreshAgent%')
-		);
+		$agents = \CAgent::GetList([], ['NAME' => __CLASS__.'::refreshAgent%']);
 		if (!$agents->Fetch())
 		{
 			$agentAdded = (bool)(\CAgent::AddAgent(

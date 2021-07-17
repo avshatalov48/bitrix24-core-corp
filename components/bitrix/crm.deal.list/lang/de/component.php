@@ -26,6 +26,7 @@ $MESS["CRM_COLUMN_CURRENCY_ID"] = "Währung";
 $MESS["CRM_COLUMN_DATE_CREATE"] = "Erstellt am";
 $MESS["CRM_COLUMN_DATE_MODIFY"] = "Geändert am";
 $MESS["CRM_COLUMN_DEAL"] = "Auftrag";
+$MESS["CRM_COLUMN_DELIVERY_STAGE"] = "Lieferstatus";
 $MESS["CRM_COLUMN_EVENT_DATE"] = "Aktivitätsdatum";
 $MESS["CRM_COLUMN_EVENT_DATE_FILTER"] = "Datum der geplanten Aktivität";
 $MESS["CRM_COLUMN_EVENT_DESCRIPTION"] = "Aktivitätsbeschreibung";

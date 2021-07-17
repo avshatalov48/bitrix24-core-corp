@@ -74,6 +74,12 @@
 	          main_core.Event.bind(button, 'click', this.conversionSettings.lockScript);
 	        }
 
+	        var menuButton = document.getElementById(this.conversionSettings.menuButtonId);
+
+	        if (menuButton) {
+	          main_core.Event.bind(menuButton, 'click', this.conversionSettings.lockScript);
+	        }
+
 	        main_core_events.EventEmitter.subscribe('CrmCreateDealFromQuote', this.conversionSettings.lockScript);
 	        main_core_events.EventEmitter.subscribe('CrmCreateInvoiceFromQuote', this.conversionSettings.lockScript);
 	        return;

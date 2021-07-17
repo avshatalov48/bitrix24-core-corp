@@ -557,7 +557,6 @@
 }
 
 .crm-entity-stream-content-event-process,
-.crm-entity-stream-content-event-shipped,
 .crm-entity-stream-content-event-allowed-delivery,
 .crm-entity-stream-content-event-skipped {
 	background-color: #fff6bf;
@@ -574,6 +573,7 @@
 }
 
 .crm-entity-stream-content-event-paid,
+.crm-entity-stream-content-event-shipped,
 .crm-entity-stream-content-event-successful {
 	background-color: #e3f6c8;
 	color: #589308;
@@ -618,7 +618,7 @@
 
 .crm-entity-stream-content-detail-title { margin-bottom: 3px; }
 
-.crm-entity-stream-content-detail-description {
+.crm-entity-stream-content-detail-description, .crm-entity-stream-content-document-description {
 	overflow-x: hidden;
 	margin-bottom: 3px;
 	word-break: break-all;
@@ -643,6 +643,13 @@
 .crm-entity-stream-content-detail-order-destination {
 	margin-left: 5px;
 }
+
+.crm-entity-stream-content-detail-order > a {
+	border-bottom: 1px solid transparent;
+	transition: 220ms border ease;
+}
+
+.crm-entity-stream-content-detail-order > a:hover { border-bottom: 1px solid; }
 
 .crm-entity-stream-content-detail-sms-order {
 	border-bottom: 1px solid #edeef0;
@@ -768,6 +775,10 @@
 	margin-right: 5px;
 }
 
+.crm-entity-stream-content-documents-table {
+	margin-top: 10px;
+}
+
 .crm-entity-stream-content-detail-table-row,
 .crm-entity-stream-content-detail-table-cost {
 	display: flex;
@@ -787,6 +798,13 @@
 	font-size: 14px;
 	margin: 8px 0 16px;
 	padding-bottom: 7px;
+}
+
+.crm-entity-stream-content-document-table-row:first-child {
+	border-bottom: 0;
+	font-size: inherit;
+	margin: inherit;
+	padding-bottom: 15px;
 }
 
 .crm-entity-stream-content-detail-table-row:first-child .crm-entity-stream-content-detail-cost-current {
@@ -3094,7 +3112,20 @@ table.blogquote td {
 	display: inline-flex;
 	align-items: center;
 	position: relative;
+	margin-left: 10px;
+	padding-left: 1px;
 	overflow: hidden;
+}
+
+.crm-entity-stream-content-delivery-title:before {
+	content: '';
+	position: absolute;
+	top: 5px;
+	left: 0;
+	height: 23px;
+	width: 1px;
+	background-color: #333;
+	opacity: .17;
 }
 
 .crm-entity-stream-content-delivery-status + .crm-entity-stream-content-delivery-title {
@@ -3194,15 +3225,32 @@ span + .crm-entity-stream-content-delivery-title .crm-entity-stream-content-deli
 	line-height: 16px;
 }
 
+.crm-entity-stream-content-delivery-order-box-label {
+	display: block;
+	margin-bottom: 5px;
+	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+
+.crm-entity-stream-content-delivery-order-box {
+	margin-bottom: 15px;
+	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+
+.crm-entity-stream-content-delivery-order-box:last-child {
+	margin-bottom: 25px;
+}
+
 .crm-entity-stream-content-delivery-order-value {
 	font-size: 18px;
-	color: #333;
+	color: #80868e;
 	line-height: 26px;
 }
 
 .crm-entity-stream-content-delivery-order-value--sm {
-	font-size: 14px;
-	line-height: 22px;
+	font-size: 13px;
+	line-height: 20px;
 }
 
 .crm-entity-stream-content-delivery-order-value--flex {
@@ -3440,6 +3488,11 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	line-height: 46px;
 	margin: 0 20px 0 0;
 }
+
+.crm-entity-stream-section-content .main-buttons-item-more {
+	margin: 0;
+}
+
 .crm-entity-stream-section-content .main-buttons-item-active {
 	height: 46px!important;
 	border-bottom: 1px solid #1058d0;
@@ -3733,4 +3786,12 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	height: 24px;
 	background-size: cover;
 	border-radius: 100%;
+}
+
+.crm-delivery-taxi-caption {
+	margin-bottom: 15px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid rgba(82,92,105,.14);
+	font: 14px Helvetica, Arial, sans-serif;
+	color: #333;
 }

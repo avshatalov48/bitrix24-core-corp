@@ -5,8 +5,9 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Utility\SprintRanges;
@@ -31,7 +32,7 @@ class SprintService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createSprint(EntityTable $sprint): EntityTable
+	public function createSprint(EntityTable $sprint, PushService $pushService = null): EntityTable
 	{
 		try
 		{
@@ -41,8 +42,10 @@ class SprintService implements Errorable
 			{
 				$sprint->setId($result->getId());
 
-				$pushService = new PushService();
-				$pushService->sendAddSprintEvent($sprint);
+				if ($pushService)
+				{
+					$pushService->sendAddSprintEvent($sprint);
+				}
 			}
 			else
 			{
@@ -57,7 +60,7 @@ class SprintService implements Errorable
 		return $sprint;
 	}
 
-	public function changeSprint(EntityTable $sprint): bool
+	public function changeSprint(EntityTable $sprint, PushService $pushService = null): bool
 	{
 		try
 		{
@@ -65,8 +68,10 @@ class SprintService implements Errorable
 
 			if ($result->isSuccess())
 			{
-				$pushService = new PushService();
-				$pushService->sendUpdateSprintEvent($sprint);
+				if ($pushService)
+				{
+					$pushService->sendUpdateSprintEvent($sprint);
+				}
 
 				return true;
 			}
@@ -85,7 +90,7 @@ class SprintService implements Errorable
 		}
 	}
 
-	public function startSprint(EntityTable $sprint, KanbanService $kanbanService): EntityTable
+	public function startSprint(EntityTable $sprint, PushService $pushService = null): EntityTable
 	{
 		try
 		{
@@ -96,8 +101,10 @@ class SprintService implements Errorable
 
 			if ($result->isSuccess())
 			{
-				$pushService = new PushService();
-				$pushService->sendUpdateSprintEvent($sprint);
+				if ($pushService)
+				{
+					$pushService->sendUpdateSprintEvent($sprint);
+				}
 			}
 			else
 			{
@@ -115,7 +122,7 @@ class SprintService implements Errorable
 		return $sprint;
 	}
 
-	public function completeSprint(EntityTable $sprint): EntityTable
+	public function completeSprint(EntityTable $sprint, PushService $pushService = null): EntityTable
 	{
 		try
 		{
@@ -124,8 +131,10 @@ class SprintService implements Errorable
 
 			$result = EntityTable::update($sprint->getId(), $sprint->getFieldsToUpdateEntity());
 
-			$pushService = new PushService();
-			$pushService->sendUpdateSprintEvent($sprint);
+			if ($pushService)
+			{
+				$pushService->sendUpdateSprintEvent($sprint);
+			}
 
 			if (!$result->isSuccess())
 			{
@@ -146,10 +155,15 @@ class SprintService implements Errorable
 	 * Gets active sprint by group id.
 	 *
 	 * @param int $groupId Group id.
-	 * @param ItemService $itemService Item Service.
+	 * @param ItemService|null $itemService Item Service.
+	 * @param array $filteredSourceIds If you need to get filtered items.
 	 * @return EntityTable
 	 */
-	public function getActiveSprintByGroupId(int $groupId, ItemService $itemService = null): EntityTable
+	public function getActiveSprintByGroupId(
+		int $groupId,
+		ItemService $itemService = null,
+		array $filteredSourceIds = []
+	): EntityTable
 	{
 		$sprint = EntityTable::createEntityObject();
 
@@ -166,7 +180,7 @@ class SprintService implements Errorable
 				$sprint = EntityTable::createEntityObject($sprintData);
 				if ($itemService)
 				{
-					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
+					$sprint->setChildren($itemService->getHierarchyChildItems($sprint, null, $filteredSourceIds));
 				}
 			}
 		}
@@ -205,11 +219,9 @@ class SprintService implements Errorable
 	 * Returns an array objects with sprints by scrum group id.
 	 *
 	 * @param int $groupId Scrum group id.
-	 * @param ItemService|null $itemService Item service object, if you need to fill with items.
-	 * @param Filter|null $filterInstance
 	 * @return EntityTable []
 	 */
-	public function getSprintsByGroupId(int $groupId, ItemService $itemService = null, $filterInstance = null): array
+	public function getSprintsByGroupId(int $groupId): array
 	{
 		$sprints = [];
 
@@ -217,24 +229,17 @@ class SprintService implements Errorable
 		{
 			$queryObject = EntityTable::getList([
 				'filter' => [
-					'GROUP_ID'=> (int) $groupId,
-					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE
+					'GROUP_ID'=> $groupId,
+					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
 				],
-				'order' => ['SORT' => 'ASC', 'DATE_END' => 'DESC']
+				'order' => [
+					'SORT' => 'ASC',
+					'DATE_END' => 'DESC',
+				]
 			]);
 			while ($sprintData = $queryObject->fetch())
 			{
 				$sprint = EntityTable::createEntityObject($sprintData);
-
-				$shouldGetItems = (
-					!$sprint->isCompletedSprint() ||
-					($filterInstance && $filterInstance->isSearchFieldApplied())
-				);
-
-				if ($itemService && $shouldGetItems)
-				{
-					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
-				}
 
 				$sprints[] = $sprint;
 			}
@@ -251,10 +256,9 @@ class SprintService implements Errorable
 	 * Returns an array objects with completed sprints by scrum group id.
 	 *
 	 * @param int $groupId Scrum group id.
-	 * @param ItemService|null $itemService Item service object, if you need to fill with items.
 	 * @return EntityTable []
 	 */
-	public function getCompletedSprintsByGroupId(int $groupId, ItemService $itemService = null): array
+	public function getCompletedSprintsByGroupId(int $groupId): array
 	{
 		$sprints = [];
 
@@ -262,9 +266,9 @@ class SprintService implements Errorable
 		{
 			$queryObject = EntityTable::getList([
 				'filter' => [
-					'GROUP_ID'=> (int) $groupId,
+					'GROUP_ID'=> $groupId,
 					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
-					'STATUS' => EntityTable::SPRINT_COMPLETED
+					'STATUS' => EntityTable::SPRINT_COMPLETED,
 				],
 				'order' => ['DATE_END' => 'ASC']
 			]);
@@ -272,12 +276,115 @@ class SprintService implements Errorable
 			{
 				$sprint = EntityTable::createEntityObject($sprintData);
 
+				$sprints[] = $sprint;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_SPRINT));
+		}
+
+		return $sprints;
+	}
+
+	public function getUncompletedSprints(
+		int $groupId,
+		ItemService $itemService = null,
+		array $filteredSourceIds = []
+	): array
+	{
+		$sprints = [];
+
+		try
+		{
+			$queryObject = EntityTable::getList([
+				'filter' => [
+					'GROUP_ID'=> $groupId,
+					'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
+					'!=STATUS' => EntityTable::SPRINT_COMPLETED,
+				],
+				'order' => [
+					'SORT' => 'ASC',
+					'DATE_END' => 'DESC',
+				]
+			]);
+			while ($sprintData = $queryObject->fetch())
+			{
+				$sprint = EntityTable::createEntityObject($sprintData);
+
 				if ($itemService)
+				{
+					$sprint->setChildren($itemService->getHierarchyChildItems($sprint, null, $filteredSourceIds));
+				}
+
+				$sprints[] = $sprint;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_SPRINT));
+		}
+
+		return $sprints;
+	}
+
+	public function getCompletedSprints(
+		int $groupId,
+		PageNavigation $nav = null,
+		ItemService $itemService = null,
+		$filterInstance = null
+	): array
+	{
+		$sprints = [];
+
+		try
+		{
+			$query = new Query(EntityTable::getEntity());
+
+			$query->setSelect(['*']);
+			$query->setFilter([
+				'GROUP_ID'=> $groupId,
+				'ENTITY_TYPE' => EntityTable::SPRINT_TYPE,
+				'STATUS' => EntityTable::SPRINT_COMPLETED,
+			]);
+			$query->setOrder([
+				'DATE_END' => 'DESC',
+			]);
+
+			$skipNavigation = ($filterInstance && $filterInstance->isSearchFieldApplied());
+
+			if ($nav && !$skipNavigation)
+			{
+				$query->setOffset($nav->getOffset());
+				$query->setLimit($nav->getLimit() + 1);
+			}
+
+			$queryObject = $query->exec();
+
+			$n = 0;
+			while ($sprintData = $queryObject->fetch())
+			{
+				$n++;
+				if ($nav && !$skipNavigation && ($n > $nav->getPageSize()))
+				{
+					break;
+				}
+
+				$sprint = EntityTable::createEntityObject($sprintData);
+
+				$shouldGetItems = (!$filterInstance || $filterInstance->isSearchFieldApplied());
+
+				if ($itemService && $shouldGetItems)
 				{
 					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
 				}
 
 				$sprints[] = $sprint;
+			}
+
+			if ($nav)
+			{
+				$nav->setRecordCount($nav->getOffset() + $n);
 			}
 		}
 		catch (\Exception $exception)
@@ -346,15 +453,17 @@ class SprintService implements Errorable
 		return $sprint;
 	}
 
-	public function removeSprint(EntityTable $sprint): bool
+	public function removeSprint(EntityTable $sprint, PushService $pushService = null): bool
 	{
 		try
 		{
 			$result = EntityTable::delete($sprint->getId());
 			if ($result->isSuccess())
 			{
-				$pushService = new PushService();
-				$pushService->sendRemoveSprintEvent($sprint);
+				if ($pushService)
+				{
+					$pushService->sendRemoveSprintEvent($sprint);
+				}
 
 				return true;
 			}
@@ -630,16 +739,40 @@ class SprintService implements Errorable
 		$this->errorCollection->setError(new Error(implode('; ', $result->getErrorMessages()), $code));
 	}
 
+	/**
+	 * Returns the time of the next weekend to display the remaining days in the sprint.
+	 *
+	 * @param EntityTable $sprint
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 */
 	private function getWeekendDaysTime(EntityTable $sprint): int
 	{
 		try
 		{
 			$calendar = new Util\Calendar();
+
 			$sprintRanges = $this->getSprintRanges($sprint, $calendar);
-			$amountOfDays = count($sprintRanges->getWeekendInfo());
+
+			$weekendInfo = $sprintRanges->getWeekendInfo();
+			$currentWeekDay = $sprintRanges->getCurrentWeekDay();
+
+			foreach ($weekendInfo as $weekendNumber => $weekend)
+			{
+				if ($currentWeekDay && $currentWeekDay > $weekendNumber)
+				{
+					unset($weekendInfo[$weekendNumber]);
+				}
+			}
+
+			$amountOfDays = count($weekendInfo);
+
 			return ($amountOfDays * 86400);
 		}
-		catch (Exception $exception) {}
+		catch (Exception $exception)
+		{
+
+		}
 
 		return 0;
 	}

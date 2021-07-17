@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Format;
 use Bitrix\Main;
+
 class EntityAddressFormatter
 {
 	const Undefined = 0;
@@ -250,6 +251,7 @@ class EntityAddressFormatter
 		}
 		return self::$allExamples;
 	}
+	/** @deprecated  */
 	public static function prepareLines(array $data, array $options = null)
 	{
 		if(!is_array($options))
@@ -269,12 +271,10 @@ class EntityAddressFormatter
 
 		$lines = array();
 		$address1 = isset($data['ADDRESS_1']) ? $data['ADDRESS_1'] : '';
+		$address1Index = -1;
 		if($address1 !== '')
 		{
-			if(isset($options['NL2BR']) && $options['NL2BR'] === true)
-			{
-				$address1 = nl2br($address1);
-			}
+			$address1Index = count($lines);
 			$lines[] = $address1;
 		}
 
@@ -347,7 +347,10 @@ class EntityAddressFormatter
 			}
 
 			if (!empty($tempLines))
+			{
 				$lines = array_merge($tempLines, $lines);
+				$address1Index += count($tempLines);
+			}
 
 			unset($tempLines);
 		}
@@ -374,7 +377,10 @@ class EntityAddressFormatter
 				$localities[] = $province;
 			}
 
-			$lines[] = implode(' ', $localities);
+			if (!empty($localities))
+			{
+				$lines[] = implode(' ', $localities);
+			}
 
 			if($country !== '')
 			{
@@ -431,7 +437,10 @@ class EntityAddressFormatter
 				$localities[] = mb_strtoupper($postalCode);
 			}
 
-			$lines[] = implode(' ', $localities);
+			if (!empty($localities))
+			{
+				$lines[] = implode(' ', $localities);
+			}
 
 			if($country !== '')
 			{
@@ -439,18 +448,28 @@ class EntityAddressFormatter
 			}
 		}
 
+		$isNl2Br = (isset($options['NL2BR']) && $options['NL2BR']);
+		$separatorType = isset($options['SEPARATOR']) ? (int)$options['SEPARATOR'] : AddressSeparator::Undefined;
+		$separator = AddressSeparator::getSeparator($separatorType);
+
 		if(isset($options['HTML_ENCODE']) && $options['HTML_ENCODE'] === true)
 		{
-			array_walk(
-				$lines,
-				function (&$v) {
-					$v = htmlspecialcharsbx($v);
+			array_walk($lines, function (&$v, $k) use ($address1Index, $isNl2Br, $separatorType, $separator) {
+				$v = htmlspecialcharsbx($v);
+				if ($isNl2Br && $k === $address1Index && $separatorType !== AddressSeparator::NewLine)
+				{
+					$v = str_replace("\n", $separator, $v);
 				}
-			);
+			});
+		}
+		else if ($isNl2Br && $separatorType !== AddressSeparator::NewLine)
+		{
+			$lines[$address1Index] = str_replace("\n", $separator, $lines[$address1Index]);
 		}
 
 		return $lines;
 	}
+	/** @deprecated  */
 	protected static function formatLines(array $lines, array $options = null)
 	{
 		if(!is_array($options))
@@ -461,6 +480,7 @@ class EntityAddressFormatter
 		$separatorType = isset($options['SEPARATOR']) ? (int)$options['SEPARATOR'] : AddressSeparator::Undefined;
 		return implode(AddressSeparator::getSeparator($separatorType), $lines);
 	}
+	/** @deprecated  */
 	public static function format(array $data, array $options = null)
 	{
 		return self::formatLines(self::prepareLines($data, $options), $options);

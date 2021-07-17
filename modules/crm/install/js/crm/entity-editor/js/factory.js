@@ -99,6 +99,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorMoney.create(controlId, settings);
 				}
+				else if(type === "calculated_delivery_price")
+				{
+					return BX.Crm.EntityEditorCalculatedDeliveryPrice.create(controlId, settings);
+				}
 				else if(type === "moneyPay")
 				{
 					return BX.Crm.EntityEditorMoneyPay.create(controlId, settings);
@@ -230,6 +234,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				else if(type === "order_product_property")
 				{
 					return BX.Crm.EntityEditorOrderProductProperty.create(controlId, settings);
+				}
+				else if(type === "order_trading_platform")
+				{
+					return BX.Crm.EntityEditorOrderTradingPlatform.create(controlId, settings);
 				}
 				else if(type === "order_person_type")
 				{

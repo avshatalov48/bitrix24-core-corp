@@ -10,7 +10,6 @@ use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
-use Bitrix\Crm\Settings\DynamicSettings;
 use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
@@ -33,10 +32,6 @@ class Type extends Base
 		$preFilters[] = new class extends ActionFilter\Base {
 			public function onBeforeAction(Event $event): ?EventResult
 			{
-				if (!DynamicSettings::getCurrent()->isEnabled())
-				{
-					$this->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_DYNAMIC_DISABLED')));
-				}
 				if ($this->getAction()->getController()->getScope() === Controller::SCOPE_REST)
 				{
 					Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
@@ -191,6 +186,7 @@ class Type extends Base
 			if (is_array($result) && ($this->getScope() === static::SCOPE_AJAX))
 			{
 				$result['urlTemplates'] = Container::getInstance()->getRouter()->getTemplatesForJsRouter();
+				$result['isUrlChanged'] = $customSectionsResult->getData()['isCustomSectionChanged'] ?? false;
 			}
 
 			return $result;
@@ -200,19 +196,30 @@ class Type extends Base
 		return null;
 	}
 
-	public function deleteAction(?\Bitrix\Crm\Model\Dynamic\Type $type): void
+	public function deleteAction(?\Bitrix\Crm\Model\Dynamic\Type $type): ?array
 	{
 		if($type === null)
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
-			return;
+			return null;
 		}
 
-		$result = $type->delete();
-		if(!$result->isSuccess())
+		$customSection = Integration\IntranetManager::getCustomSectionByEntityTypeId($type->getEntityTypeId());
+
+		$deleteResult = $type->delete();
+		if(!$deleteResult->isSuccess())
 		{
-			$this->addErrors($result->getErrors());
+			$this->addErrors($deleteResult->getErrors());
+			return null;
 		}
+
+		$result = [];
+		if ($this->getScope() === static::SCOPE_AJAX)
+		{
+			$result['isUrlChanged'] = !is_null($customSection);
+		}
+
+		return $result;
 	}
 
 	protected function saveConversionMap(int $entityTypeId, array $fields): void
@@ -244,17 +251,8 @@ class Type extends Base
 			return;
 		}
 
-		$linkedUserFieldsDescription = UserFieldManager::getLinkedUserFieldsDescription();
-		$linkedUserFields = UserFieldManager::getLinkedUserFields($linkedUserFieldsDescription);
-		$userFieldsMap = [];
-		foreach ($linkedUserFields as $userField)
-		{
-			$name = UserFieldManager::combineUserFieldFieldsToString(
-				$userField['ENTITY_ID'],
-				$userField['FIELD_NAME']
-			);
-			$userFieldsMap[$name] = $userField;
-		}
+		$userFieldsMap = UserFieldManager::getLinkedUserFieldsMap();
+
 		foreach ($settings as $name => $isEnabled)
 		{
 			if (isset($userFieldsMap[$name]))
@@ -407,10 +405,13 @@ class Type extends Base
 	 * @param \Bitrix\Crm\Model\Dynamic\Type $type
 	 * @param array $fields
 	 * @return Result
+	 * @todo refactor it!
 	 */
 	protected function saveCustomSections(\Bitrix\Crm\Model\Dynamic\Type $type, array $fields): Result
 	{
 		$result = new Result();
+		$result->setData(['isCustomSectionChanged' => false]);
+
 		if (!Integration\IntranetManager::isCustomSectionsAvailable())
 		{
 			return $result;
@@ -432,6 +433,7 @@ class Type extends Base
 				while ($pageRow = $pagesList->fetch())
 				{
 					CustomSectionPageTable::delete($pageRow['ID']);
+					$result->setData(['isCustomSectionChanged' => true]);
 				}
 			}
 			return $result;
@@ -509,8 +511,10 @@ class Type extends Base
 			}
 		}
 
+		$isCustomSectionChanged = false;
 		if ($customSectionId !== null && $realCustomSectionId > 0)
 		{
+			$isCustomSectionChanged = true;
 			if ($existingPageId > 0)
 			{
 				$updatePageResult = CustomSectionPageTable::update($existingPageId, [
@@ -541,6 +545,7 @@ class Type extends Base
 		}
 		elseif ($existingPageId > 0)
 		{
+			$isCustomSectionChanged = true;
 			$deletePageResult = CustomSectionPageTable::delete($existingPageId);
 			if (!$deletePageResult->isSuccess())
 			{
@@ -552,6 +557,8 @@ class Type extends Base
 		{
 			Container::getInstance()->getRouter()->reInit();
 		}
+
+		$result->setData(['isCustomSectionChanged' => $isCustomSectionChanged]);
 
 		return $result;
 	}

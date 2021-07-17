@@ -138,6 +138,26 @@ if (count($events) > 0)
 	$arResult["menu"] = $menu;
 }
 
+$arResult['spotlights'] = [];
+
+$event = new \Bitrix\Main\Event('mobile', 'onMobileMenuSpotlightBuildList', []);
+$event->send();
+foreach ($event->getResults() as $eventResult)
+{
+	/** @var \Bitrix\Main\EventResult $eventResult */
+	$spotlight = $eventResult->getParameters();
+	if (is_array($spotlight))
+	{
+		$arResult['spotlights'][] = $spotlight;
+	}
+}
+
+$crmCallTrackerSpotlight = \Bitrix\Mobile\Integration\Crm\CallTracker::getSpotlightParams();
+if (is_array($crmCallTrackerSpotlight))
+{
+	$arResult['spotlights'][] = $crmCallTrackerSpotlight;
+}
+
 $editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
 $workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"]);
 $canEditProfile = $USER->CanDoOperation('edit_own_profile');
@@ -249,6 +269,15 @@ $showStressItemCondition =(!Loader::includeModule('bitrix24') || \Bitrix\Bitrix2
 $arResult["releaseStressLevel"] = $showStressItemCondition;
 if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 {
+	$arResult['spotlights'][] = [
+		'id' => 'stress',
+		'minApiVersion' => 31,
+		'delayCount' => 3,
+		'menuId' => 'more',
+		'text' => Loc::getMessage('WELLTORY_SPOTLIGHT'),
+		'icon' => 'lightning'
+	];
+
 	$favoriteSection = &$arResult["menu"][0];
 	$colors = [
 		"green" => "#9DCF00",
@@ -331,11 +360,29 @@ JS;
 	}
 
 	$stressItem["attrs"]["onclick"] = $onclick;
-
+	if (!is_array($favoriteSection["items"]))
+	{
+		$favoriteSection["items"] = [];
+	}
 	array_unshift($favoriteSection["items"], $stressItem);
 }
 
 usort($arResult["menu"], 'sortMenu');
+
+usort($arResult['spotlights'], function($item1, $item2) {
+	$delayCount1 = (int)($item1['delayCount'] ?? 0);
+	$delayCount2 = (int)($item2['delayCount'] ?? 0);
+
+	if ($delayCount1 !== $delayCount2)
+	{
+		return $delayCount1 - $delayCount2;
+	}
+
+	$sort1 = (int)($item1['sort'] ?? 100);
+	$sort2 = (int)($item2['sort'] ?? 100);
+
+	return $sort1 - $sort2;
+});
 
 array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 	if (isset($section["items"]) && is_array($section["items"]))

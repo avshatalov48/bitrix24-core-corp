@@ -78,90 +78,77 @@
 	background: url(images/skeleton.svg) no-repeat;
 	height: 446px;
 }
-
+/*region tabs*/
 .crm-entity-section-tabs {
-	display: flex;
-	margin: 0 0 10px;
-	border-top: 1px solid #dce2e6;
-	justify-content: space-between;
-	align-items: flex-start;
+	margin: 27px 0;
 }
-
-.bitrix24-light-theme .crm-entity-section-tabs { border-top: 1px solid rgba(220, 226, 230, .5); }
-
-.crm-entity-section-status-wrap + .crm-entity-section-tabs {
-	margin: 10px 0;
-	border-top: none;
+.crm-entity-section-tabs .main-buttons {
+	height: 27px;
 }
-
-.crm-entity-section-tabs-container {
-	display: flex;
-	flex-direction: row;
+.crm-entity-section-tabs .main-buttons-inner-container,
+.template-bitrix24 .crm-entity-section-tabs .main-buttons-inner-container {
+	background: none;
+	padding: 0;
 	margin: 0;
-	padding: 15px 0;
-	list-style: none;
-	flex-wrap: wrap;
-	justify-content: flex-start;
-	align-items: center;
+	border: 0;
 }
-
-.crm-entity-section-tab,
-.crm-entity-section-tab-current {
-	display: inline-block;
-	overflow: hidden;
-	box-sizing: border-box;
-	margin: 2px 0;
-	padding: 0 18px;
-	min-height: 27px;
-	line-height: 27px;
+.crm-entity-section-tabs .main-buttons-inner-container > div.main-buttons-item {
+	background: none;
+	margin: 0;
+	border: 0;
+	height: 30px;
+	line-height: 25px;
 }
-
-.bitrix24-light-theme .crm-entity-section-tab,
-.bitrix24-light-theme .crm-entity-section-tab-current { padding: 0; }
-
-.crm-entity-section-tabs-container .crm-entity-section-tab:last-child,
-.crm-entity-section-tabs-container .crm-entity-section-tab-current:last-child { padding-right: 0; }
-
-.crm-entity-section-tab-link {
-	display: block;
-	overflow: hidden;
-	max-width: 100%;
+.crm-entity-section-tabs .main-buttons-item-link {
+	padding: 0;
+	margin: 0 18px;
+	color: #525c68;
+	height: 27px;
 	border-bottom: 2px solid transparent;
-	color: #525c68 !important;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font: 600 14px/25px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	cursor: pointer;
-	transition: all 220ms ease;
 }
-
-.bitrix24-light-theme .crm-entity-section-tab-link {
-	margin-right: 2px;
-	padding: 0 18px;
-	color: #fefefe !important;
-}
-
-.crm-entity-section-tab .crm-entity-section-tab-link:hover,
-.crm-entity-section-tab-current .crm-entity-section-tab-link {
+.crm-entity-section-tabs .main-buttons-inner-container div.crm-entity-section-tab-active .main-buttons-item-link,
+.crm-entity-section-tabs .main-buttons-inner-container div.main-buttons-item.over .main-buttons-item-link{
 	border-bottom-color: #1058d0;
-	color: #1058d0 !important;
+	color: #1058d0;
+}
+.crm-entity-section-tabs .main-buttons-item-more .main-buttons-item-link {
+	margin: 0 18px;
+	padding: 0;
 }
 
-.bitrix24-light-theme .crm-entity-section-tab:hover .crm-entity-section-tab-link,
-.bitrix24-light-theme .crm-entity-section-tab-current .crm-entity-section-tab-link {
+.crm-entity-section-tabs .main-buttons-item-more.main-buttons-item:after {
+	top: 17px;
+	right: 5px;
+	border-color: #525c68 transparent transparent transparent;
+}
+
+/*region .bitrix24-light-theme */
+.bitrix24-light-theme .crm-entity-section-tabs .main-buttons-item-link {
+	padding: 0 18px;
+	margin: 0;
+	color: #fefefe;
+}
+.bitrix24-light-theme .crm-entity-section-tabs .main-buttons-inner-container div.crm-entity-section-tab-active .main-buttons-item-link,
+.bitrix24-light-theme .crm-entity-section-tabs .main-buttons-inner-container div.main-buttons-item.over .main-buttons-item-link{
 	border-bottom-color: transparent;
 	border-radius: 13.5px;
 	background-color: rgba(255, 255, 255, .2);
-	color: #fff !important;
+	color: #fff;
+	transition: all 220ms ease;
 }
-
-li.crm-entity-section-tab-disabled .crm-entity-section-tab-link,
-li.crm-entity-section-tab-disabled:hover .crm-entity-section-tab-link {
+.bitrix24-light-theme .crm-entity-section-tabs .main-buttons-inner-container .main-buttons-item-more.main-buttons-item:after,
+.bitrix24-light-theme .crm-entity-section-tabs .main-buttons-inner-container div.main-buttons-item.over .main-buttons-item:after {
+	right: 7px;
+	border-color: #fff transparent transparent transparent;
+}
+.main-buttons-item.crm-entity-section-tab-disabled .main-buttons-item-link,
+.main-buttons-item.crm-entity-section-tab-disabled:hover .main-buttons-item-link{
 	border-color: transparent !important;
 	color: #9ca2a7 !important;
 	cursor: default;
 }
-
+/*endregion*/
 .crm-entity-section-tab-content-show,
 .crm-entity-section-tab-content-hide { position: relative; }
 
@@ -174,6 +161,7 @@ li.crm-entity-section-tab-disabled:hover .crm-entity-section-tab-link {
 	opacity: 0;
 	transform: translateX(100%);
 }
+/*/endregion*/
 
 /**/
 .crm-entity-section-tab-applications-container { padding: 15px 0; }
@@ -336,11 +324,6 @@ input.pagetitle-item {
 }
 
 .pagetitle-inner-container .ui-btn-split.ui-btn-primary { margin-right: 17px; }
-
-.pagetitle-inner-container .ui-btn-split.ui-btn-primary .ui-btn-extra {
-	width: 32px;
-	height: 39px;
-}
 
 .crm-entity-card-container,
 .crm-entity-card-container-shadow {

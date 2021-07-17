@@ -34,3 +34,5 @@ $MESS["MOBILE_CALL_SOUND_SPEAKER"] = "Громкая связь";
 $MESS["MOBILE_CALL_SOUND_BLUETOOTH"] = "Наушники Bluetooth";
 $MESS["MOBILE_CALL_SOUND_WIRED"] = "Наушники";
 $MESS["MOBILE_CALL_SOUND_NONE"] = "Неизвестное устройство";
+
+$MESS["MOBILE_CALL_USER_PAUSED_VIDEO"] = "#NAME# приостановил(а) видео";

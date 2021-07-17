@@ -25,3 +25,4 @@ $MESS["CRM_ORDER_FILTER_COUPON"] = "Купон, использованный в 
 $MESS["CRM_ORDER_FILTER_SHIPMENT_TRACKING_NUMBER"] = "Идентификатор отправления";
 $MESS["CRM_ORDER_FILTER_CHECK_PRINTED"] = "Чек напечатан";
 $MESS["CRM_ORDER_FILTER_SHIPMENT_DELIVERY_DOC_DATE"] = "Дата документа отгрузки";
+$MESS["CRM_ORDER_FILTER_HAS_ASSOCIATED_DEAL"] = "Имеет связь со сделкой";

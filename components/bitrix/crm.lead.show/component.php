@@ -10,9 +10,9 @@ if (!CModule::IncludeModule('crm'))
 // 'Fileman' module always installed
 CModule::IncludeModule('fileman');
 
-use Bitrix\Crm\Format\LeadAddressFormatter;
-use Bitrix\Crm\Format\AddressSeparator;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
+use Bitrix\Crm\LeadAddress;
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
@@ -517,9 +517,8 @@ if ($arResult['ELEMENT']['IS_RETURN_CUSTOMER'] != 'Y')
 		'id' => 'ADDRESS',
 		'name' => GetMessage('CRM_FIELD_ADDRESS'),
 		'type' => 'custom',
-		'value' =>  LeadAddressFormatter::format(
-			$arResult['ELEMENT'],
-			array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true)
+		'value' => AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+			LeadAddress::mapEntityFields($arResult['ELEMENT'])
 		),
 		'isTactile' => true
 	);

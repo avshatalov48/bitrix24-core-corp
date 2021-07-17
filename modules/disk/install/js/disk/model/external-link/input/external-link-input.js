@@ -209,6 +209,8 @@
 
 				paramMenu.show();
 			}
+
+			BX.onCustomEvent("Disk.ExternalLink.Input:onShowConfig", []);
 		},
 
 		adjustHeight: function ()

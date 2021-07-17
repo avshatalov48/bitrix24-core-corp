@@ -136,6 +136,21 @@ class UserProvider extends BaseProvider
 				$this->options['!userId'] = (int)$options['!userId'];
 			}
 		}
+
+		if (isset($options['selectFields']) && is_array($options['selectFields']))
+		{
+			$selectFields = [];
+			$allowedFields = static::getAllowedFields();
+			foreach ($options['selectFields'] as $field)
+			{
+				if (is_string($field) && array_key_exists($field, $allowedFields))
+				{
+					$selectFields[] = $field;
+				}
+			}
+
+			$this->options['selectFields'] = array_unique($selectFields);
+		}
 	}
 
 	public function isAvailable(): bool
@@ -243,10 +258,17 @@ class UserProvider extends BaseProvider
 
 			if ($inviteEmployeeLink || $inviteGuestLink)
 			{
-				$dialog->setFooter('BX.SocialNetwork.EntitySelector.Footer', [
-					'inviteEmployeeLink' => $inviteEmployeeLink,
-					'inviteGuestLink' => $inviteGuestLink
-				]);
+				$footerOptions = [];
+				if ($dialog->getFooter() === 'BX.SocialNetwork.EntitySelector.Footer')
+				{
+					// Footer could be set from ProjectProvider
+					$footerOptions = $dialog->getFooterOptions() ?? [];
+				}
+
+				$footerOptions['inviteEmployeeLink'] = $inviteEmployeeLink;
+				$footerOptions['inviteGuestLink'] = $inviteGuestLink;
+
+				$dialog->setFooter('BX.SocialNetwork.EntitySelector.Footer', $footerOptions);
 			}
 		}
 	}
@@ -352,6 +374,11 @@ class UserProvider extends BaseProvider
 		return self::hasUserRole($userId, 'extranet');
 	}
 
+	public static function getCurrentUserId(): int
+	{
+		return is_object($GLOBALS['USER']) ? (int)$GLOBALS['USER']->getId() : 0;
+	}
+
 	private static function hasUserRole(?int $userId, string $role): bool
 	{
 		static $roles = [
@@ -366,7 +393,7 @@ class UserProvider extends BaseProvider
 
 		if (is_null($userId))
 		{
-			$userId = is_object($GLOBALS['USER']) ? (int)$GLOBALS['USER']->getId() : 0;
+			$userId = self::getCurrentUserId();
 			if ($userId <= 0)
 			{
 				return false;
@@ -436,7 +463,7 @@ class UserProvider extends BaseProvider
 
 		if (is_null($userId))
 		{
-			$userId = is_object($GLOBALS['USER']) ? $GLOBALS['USER']->getId() : 0;
+			$userId = self::getCurrentUserId();
 			if ($userId <= 0)
 			{
 				return false;
@@ -446,14 +473,119 @@ class UserProvider extends BaseProvider
 		return isset($integrators[$userId]);
 	}
 
+	public static function getAllowedFields(): array
+	{
+		static $fields = null;
+
+		if ($fields !== null)
+		{
+			return $fields;
+		}
+
+		$fields = [
+			'lastName' => 'LAST_NAME',
+			'name' => 'NAME',
+			'secondName' => 'SECOND_NAME',
+			'login' => 'LOGIN',
+			'email' => 'EMAIL',
+			'title' => 'TITLE',
+			'position', 'WORK_POSITION',
+			'lastLogin' => 'LAST_LOGIN',
+			'dateRegister' => 'DATE_REGISTER',
+			'lastActivityDate' => 'LAST_ACTIVITY_DATE',
+			'online' => 'IS_ONLINE',
+			'profession' => 'PERSONAL_PROFESSION',
+			'www' => 'PERSONAL_WWW',
+			'birthday' => 'PERSONAL_BIRTHDAY',
+			'icq' => 'PERSONAL_ICQ',
+			'phone' => 'PERSONAL_PHONE',
+			'fax' => 'PERSONAL_FAX',
+			'mobile' => 'PERSONAL_MOBILE',
+			'pager' => 'PERSONAL_PAGER',
+			'street' => 'PERSONAL_STREET',
+			'city' => 'PERSONAL_CITY',
+			'state' => 'PERSONAL_STATE',
+			'zip' => 'PERSONAL_ZIP',
+			'mailbox' => 'PERSONAL_MAILBOX',
+			'country' => 'PERSONAL_COUNTRY',
+			'timeZoneOffset' => 'TIME_ZONE_OFFSET',
+			'company' => 'WORK_COMPANY',
+			'workPhone' => 'WORK_PHONE',
+			'workDepartment' => 'WORK_DEPARTMENT',
+			'workPosition' => 'WORK_POSITION',
+			'workCity' => 'WORK_CITY',
+			'workCountry' => 'WORK_COUNTRY',
+			'workStreet' => 'WORK_STREET',
+			'workState' => 'WORK_STATE',
+			'workZip' => 'WORK_ZIP',
+			'workMailbox' => 'WORK_MAILBOX',
+		];
+
+		foreach ($fields as $id => $dbName)
+		{
+			if (mb_strpos($dbName, 'PERSONAL_') === 0)
+			{
+				$fields['personal' . ucfirst($id)] = $dbName;
+			}
+
+			$fields[$dbName] = $dbName;
+		}
+
+		$intranetInstalled = ModuleManager::isModuleInstalled('intranet');
+		if ($intranetInstalled)
+		{
+			$userFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('USER');
+			$allowedUserFields = [
+				'ufPhoneInner' => 'UF_PHONE_INNER',
+				'ufDistrict' => 'UF_DISTRICT',
+				'ufSkype' => 'UF_SKYPE',
+				'ufSkypeLink' => 'UF_SKYPE_LINK',
+				'ufZoom' => 'UF_ZOOM',
+				'ufTwitter' => 'UF_TWITTER',
+				'ufFacebook' => 'UF_FACEBOOK',
+				'ufLinkedin' => 'UF_LINKEDIN',
+				'ufXing' => 'UF_XING',
+				'ufWebSites' => 'UF_WEB_SITES',
+				'ufSkills' => 'UF_SKILLS',
+				'ufInterests' => 'UF_INTERESTS',
+				'ufEmploymentDate' => 'UF_EMPLOYMENT_DATE',
+			];
+
+			foreach ($allowedUserFields as $id => $dbName)
+			{
+				if (array_key_exists($dbName, $userFields))
+				{
+					$fields[$id] = $dbName;
+					$fields[$dbName] = $dbName;
+				}
+			}
+		}
+
+		return $fields;
+	}
+
 	public static function getUsers(array $options = []): EO_User_Collection
 	{
-		$query = UserTable::query();
-		$query->setSelect([
+		$selectFields = [
 			'ID', 'ACTIVE', 'LAST_NAME', 'NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'TITLE',
 			'PERSONAL_GENDER', 'PERSONAL_PHOTO', 'WORK_POSITION',
 			'CONFIRM_CODE', 'EXTERNAL_AUTH_ID'
-		]);
+		];
+
+		if (isset($options['selectFields']) && is_array($options['selectFields']))
+		{
+			$allowedFields = static::getAllowedFields();
+			foreach ($options['selectFields'] as $field)
+			{
+				if (is_string($field) && array_key_exists($field, $allowedFields))
+				{
+					$selectFields[] = $allowedFields[$field];
+				}
+			}
+		}
+
+		$query = UserTable::query();
+		$query->setSelect(array_unique($selectFields));
 
 		$intranetInstalled = ModuleManager::isModuleInstalled('intranet');
 		if ($intranetInstalled)
@@ -787,16 +919,6 @@ class UserProvider extends BaseProvider
 			}
 		}
 
-		if (isset($options['showLogin']) && $options['showLogin'] === false)
-		{
-			unset($customData['login']);
-		}
-
-		if (isset($options['showEmail']) && $options['showEmail'] === false)
-		{
-			unset($customData['email']);
-		}
-
 		if (!empty($user->getPersonalGender()))
 		{
 			$customData['gender'] = $user->getPersonalGender();
@@ -812,6 +934,41 @@ class UserProvider extends BaseProvider
 		if ($user->getConfirmCode() && in_array($userType, ['employee', 'integrator']))
 		{
 			$customData['invited'] = true;
+		}
+
+		if (isset($options['selectFields']) && is_array($options['selectFields']))
+		{
+			$userData = $user->collectValues();
+			$allowedFields = static::getAllowedFields();
+			foreach ($options['selectFields'] as $field)
+			{
+				if (!is_string($field))
+				{
+					continue;
+				}
+
+				$dbName = $allowedFields[$field] ?? null;
+				$value = $userData[$dbName] ?? null;
+				if (!empty($value))
+				{
+					if ($field === 'country' || $field === 'workCountry')
+					{
+						$value = \Bitrix\Main\UserUtils::getCountryValue(['VALUE' => $value]);
+					}
+
+					$customData[$field] = $value;
+				}
+			}
+		}
+
+		if (isset($options['showLogin']) && $options['showLogin'] === false)
+		{
+			unset($customData['login']);
+		}
+
+		if (isset($options['showEmail']) && $options['showEmail'] === false)
+		{
+			unset($customData['email']);
 		}
 
 		$item = new Item([

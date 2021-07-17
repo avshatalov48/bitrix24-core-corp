@@ -102,6 +102,7 @@ class ToolbarComponent extends EventEmitter
 				}
 			});
 			menu.destroy();
+			Event.unbindAll(button.getContainer(), 'click');
 			categories.forEach((category) => {
 				const link = Router.Instance.getItemListUrlInCurrentView(entityTypeId, category.id);
 				items.splice(startKey, 0, {
@@ -118,6 +119,7 @@ class ToolbarComponent extends EventEmitter
 			const options = menu.params;
 			options.items = items;
 			button.menuWindow = new Menu(options);
+			Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
 		}).catch((response) => {
 			console.log('error trying reload categories', response.errors);
 		});

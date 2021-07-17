@@ -862,4 +862,155 @@ class Effective
 
 		return $count['COUNT'];
 	}
+
+	public static function getAverageEfficiencyForGroups(
+		DateTime $dateFrom = null,
+		DateTime $dateTo = null,
+		int $userId = 0,
+		array $groupIds = []
+	): array
+	{
+		if (!$dateFrom || !$dateTo)
+		{
+			$datesRange = static::getDatesRange();
+
+			$dateFrom = $datesRange['FROM'];
+			$dateTo = $datesRange['TO'];
+		}
+
+		$violations = static::getViolationsCountForGroups($dateFrom, $dateTo, $userId, $groupIds);
+		$inProgress = static::getInProgressCountForGroups($dateFrom, $dateTo, $userId, $groupIds);
+
+		$efficiencies = array_fill_keys($groupIds, 100);
+		foreach ($efficiencies as $groupId => $efficiency)
+		{
+			if ($inProgress[$groupId] > 0)
+			{
+				$efficiencies[$groupId] = (int)round(100 - ($violations[$groupId] / $inProgress[$groupId]) * 100);
+			}
+			elseif ($violations[$groupId] > 0)
+			{
+				$efficiencies[$groupId] = 0;
+			}
+
+			if ($efficiencies[$groupId] < 0)
+			{
+				$efficiencies[$groupId] = 0;
+			}
+		}
+
+		return $efficiencies;
+	}
+
+	private static function getViolationsCountForGroups(
+		DateTime $dateFrom,
+		DateTime $dateTo,
+		int $userId,
+		array $groupIds
+	): array
+	{
+		$query = new Query(EffectiveTable::getEntity());
+		$query->setSelect([
+			'GROUP_ID',
+			new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'TASK_ID'),
+		]);
+		$query->registerRuntimeField('T', new Entity\ReferenceField(
+			'T',
+			TaskTable::getEntity(),
+			Join::on('this.TASK_ID', 'ref.ID'),
+			['join_type' => 'inner']
+		));
+		$query
+			->where(($userId? Query::filter()->where('USER_ID', $userId) : []))
+			->where((!empty($groupIds) ? Query::filter()->whereIn('GROUP_ID', $groupIds) : []))
+			->where('IS_VIOLATION', 'Y')
+			->where('T.RESPONSIBLE_ID', '>', 0)
+			->where(
+				Query::filter()
+					->where('DATETIME', '<=', $dateTo)
+					->where(
+						Query::filter()
+							->logic('or')
+							->where('DATETIME', '>=', $dateFrom)
+							->where('DATETIME_REPAIR', NULL)
+							->where('DATETIME_REPAIR', '>=', $dateFrom)
+					)
+			);
+
+		$count = array_fill_keys($groupIds, 0);
+		$res = $query->exec();
+		while ($item = $res->fetch())
+		{
+			$count[$item['GROUP_ID']] = (int)$item['COUNT'];
+		}
+
+		return $count;
+	}
+
+	private static function getInProgressCountForGroups(
+		DateTime $dateFrom,
+		DateTime $dateTo,
+		int $userId,
+		array $groupIds
+	): array
+	{
+		$query = new Query(TaskTable::getEntity());
+		$query->setSelect([
+			'GROUP_ID',
+			new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'ID'),
+		]);
+
+		if ($userId > 0)
+		{
+			$query
+				->registerRuntimeField('TM', new Entity\ReferenceField(
+					'TM',
+					MemberTable::getEntity(),
+					Join::on('this.ID', 'ref.TASK_ID')
+						->where('ref.USER_ID', $userId)
+						->whereIn('ref.TYPE', ['R', 'A']),
+					['join_type' => 'inner']
+				))
+				->where(
+					Query::filter()
+						->logic('or')
+						->where(
+							Query::filter()
+								->where('TM.TYPE', 'R')
+								->whereColumn('CREATED_BY', '<>', 'RESPONSIBLE_ID')
+						)
+						->where(
+							Query::filter()
+								->where('TM.TYPE', 'A')
+								->where('CREATED_BY', '<>', $userId)
+								->where('RESPONSIBLE_ID', '<>', $userId)
+						)
+				);
+		}
+		else
+		{
+			$query->whereColumn('CREATED_BY', '<>', 'RESPONSIBLE_ID');
+		}
+
+		$query
+			->where('CREATED_DATE', '<=', $dateTo)
+			->where(
+				Query::filter()
+					->logic('or')
+					->where('CLOSED_DATE', '>=', $dateFrom)
+					->where('CLOSED_DATE', NULL)
+			)
+			->where('ZOMBIE', 'N')
+			->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
+			->where((!empty($groupIds) ? Query::filter()->whereIn('GROUP_ID', $groupIds) : []));
+
+		$count = array_fill_keys($groupIds, 0);
+		$res = $query->exec();
+		while ($item = $res->fetch())
+		{
+			$count[$item['GROUP_ID']] = (int)$item['COUNT'];
+		}
+
+		return $count;
+	}
 }

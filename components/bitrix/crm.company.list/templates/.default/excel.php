@@ -91,7 +91,7 @@ else
 					$result = isset($arCompany['INDUSTRY']) ? $arResult['INDUSTRY_LIST'][$arCompany['INDUSTRY']] : '';
 					break;
 				case 'CURRENCY_ID':
-					$result = isset($arCompany['CURRENCY_ID']) ? CCrmCurrency::GetCurrencyName($arCompany['CURRENCY_ID']) : '';
+					$result = isset($arCompany['CURRENCY_ID']) ? CCrmCurrency::GetEncodedCurrencyName($arCompany['CURRENCY_ID']) : '';
 					break;
 				case 'CREATED_BY':
 					$result = isset($arCompany['CREATED_BY_FORMATTED_NAME']) ? $arCompany['CREATED_BY_FORMATTED_NAME'] : '';

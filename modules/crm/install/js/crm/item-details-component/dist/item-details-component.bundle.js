@@ -2,35 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,ui_dialogs_messagebox,ui_stageflow,crm_stageModel,main_loader,main_popup) {
 	'use strict';
 
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pagetitle_sub\" class=\"pagetitle-sub\">\n\t\t\t\t\t\t<a href=\"#\" onclick=\"", "\">", "</a>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\">\n\t\t\t\t<span id=\"page_url_copy_btn\" class=\"crm-page-link-btn\"></span>\n\t\t\t</span>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3;
 	var BACKGROUND_COLOR = 'd3d7dc';
 	var ItemDetailsComponent = /*#__PURE__*/function () {
 	  function ItemDetailsComponent(params) {
@@ -77,6 +49,7 @@ this.BX = this.BX || {};
 	      this.editorGuid = params.editorGuid;
 	      this.isStageFlowActive = params.isStageFlowActive;
 	      this.pullTag = params.pullTag;
+	      this.bizprocStarterConfig = params.bizprocStarterConfig;
 	      this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
 	    }
 
@@ -204,10 +177,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initPageTitleButtons",
 	    value: function initPageTitleButtons() {
-	      var pageTitleButtons = main_core.Tag.render(_templateObject());
+	      var pageTitleButtons = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\">\n\t\t\t\t<span id=\"page_url_copy_btn\" class=\"crm-page-link-btn\"></span>\n\t\t\t</span>\n\t\t"])));
 
 	      if (this.isPageTitleEditable) {
-	        var editButton = main_core.Tag.render(_templateObject2());
+	        var editButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"])));
 	        main_core.Dom.prepend(editButton, pageTitleButtons);
 	      }
 
@@ -218,7 +191,7 @@ this.BX = this.BX || {};
 	        var currentCategory = this.getCurrentCategory();
 
 	        if (currentCategory) {
-	          var categoriesSelector = main_core.Tag.render(_templateObject3(), this.onCategorySelectorClick.bind(this), currentCategory.text);
+	          var categoriesSelector = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pagetitle_sub\" class=\"pagetitle-sub\">\n\t\t\t\t\t\t<a href=\"#\" onclick=\"", "\">", "</a>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.onCategorySelectorClick.bind(this), currentCategory.text);
 	          main_core.Dom.insertAfter(categoriesSelector, pageTitleButtons);
 	        }
 	      }
@@ -321,6 +294,10 @@ this.BX = this.BX || {};
 	    value: function bindEvents() {
 	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemDetailsComponent:onClickDelete', this.handleItemDelete.bind(this));
 
+	      if (this.bizprocStarterConfig) {
+	        main_core_events.EventEmitter.subscribe('BX.Crm.ItemDetailsComponent:onClickBizprocTemplates', this.handleBPTemplatesShow.bind(this));
+	      }
+
 	      if (this.editorGuid && this.userFieldCreateUrl && BX.SidePanel && BX.Crm.EntityEditor) {
 	        main_core_events.EventEmitter.subscribe('BX.UI.EntityConfigurationManager:onCreateClick', this.handleUserFieldCreationUrlClick.bind(this));
 	      }
@@ -404,6 +381,26 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function () {
 	        _this5.stopProgress();
+
+	        var currentSlider = null;
+
+	        if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
+	          currentSlider = BX.SidePanel.Instance.getTopSlider();
+	        }
+
+	        if (currentSlider !== null) {
+	          if (main_core.Reflection.getClass('BX.Crm.EntityEvent')) {
+	            var eventParams = null;
+
+	            if (currentSlider) {
+	              eventParams = {
+	                "sliderUrl": currentSlider.getUrl()
+	              };
+	            }
+
+	            BX.Crm.EntityEvent.fireUpdate(_this5.entityTypeId, _this5.id, '', eventParams);
+	          }
+	        }
 
 	        _this5.updateStage(stage);
 	      }).catch(function (response) {
@@ -540,6 +537,18 @@ this.BX = this.BX || {};
 	            }
 
 	            if (currentSlider !== null) {
+	              if (main_core.Reflection.getClass('BX.Crm.EntityEvent')) {
+	                var eventParams = null;
+
+	                if (currentSlider) {
+	                  eventParams = {
+	                    "sliderUrl": currentSlider.getUrl()
+	                  };
+	                }
+
+	                BX.Crm.EntityEvent.fireDelete(_this6.entityTypeId, _this6.id, '', eventParams);
+	              }
+
 	              currentSlider.close();
 	            } else {
 	              var link = data.redirectUrl;
@@ -554,6 +563,12 @@ this.BX = this.BX || {};
 	          messageBox.close();
 	        }
 	      });
+	    }
+	  }, {
+	    key: "handleBPTemplatesShow",
+	    value: function handleBPTemplatesShow(event) {
+	      var starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
+	      starter.showTemplatesMenu(event.data.button.button);
 	    }
 	  }, {
 	    key: "handleClosePartialEntityEditor",

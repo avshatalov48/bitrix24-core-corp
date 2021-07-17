@@ -17,6 +17,7 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.groupingMode = Boolean(options.isGroupingMode);
 	this.isSprintView = (options.isSprintView === 'Y');
 
+	this.gridHeader = Boolean(options.gridHeader);
 	this.parentTaskId = parseInt(options.parentTaskId, 10);
 	this.parentTaskCompleted = Boolean(options.parentTaskCompleted);
 
@@ -50,12 +51,6 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", BX.delegate(this.setKanbanRealtimeMode, this));
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanRealtimeMode, this));
-
-	if(this.isMultiSelect())
-	{
-		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStartMultiple", BX.delegate(this.setKanbanDragMode, this));
-		BX.addCustomEvent(this, "Kanban.Grid:onItemDragStopMultiple", BX.delegate(this.unSetKanbanDragMode, this));
-	}
 };
 
 BX.Tasks.Kanban.Grid.prototype = {
@@ -330,10 +325,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 	updateItem: function(item, options, notDestroy)
 	{
 		if (
-			notDestroy !== true &&
-			BX.Bitrix24 &&
-			BX.Bitrix24.Slider &&
-			BX.Bitrix24.Slider.destroy
+			notDestroy !== true
+			&& BX.Bitrix24
+			&& BX.Bitrix24.Slider
+			&& BX.Bitrix24.Slider.destroy
+			&& this.getItem(item)
 		)
 		{
 			var url = this.getItem(item).getTaskUrl(item);
@@ -341,6 +337,15 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 
 		BX.Kanban.Grid.prototype.updateItem.apply(this, arguments);
+	},
+
+	removeItem: function(itemId)
+	{
+		var item = BX.Kanban.Grid.prototype.removeItem.apply(this, arguments);
+
+		BX.onCustomEvent(this, 'Kanban.Grid:onItemRemoved', {itemId: itemId});
+
+		return item;
 	},
 
 	/**
@@ -745,6 +750,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 		var afterColumn = this.getPreviousColumnSibling(column);
 		var afterColumnId = afterColumn ? afterColumn.getId() : 0;
 
+		if (this.isScrumGridHeader())
+		{
+			this.moveColumnsInNeighborGrids(column, targetColumn);
+		}
+
 		this.ajax({
 				action: "moveColumn",
 				columnId: columnId,
@@ -979,6 +989,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 */
 	tasksTaskPull: function(command, data)
 	{
+		if (this.isScrumGridHeader())
+		{
+			return;
+		}
+
 		var taskId = this.recognizeTaskId(data);
 
 		switch (command)
@@ -1405,9 +1420,38 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 	},
 
+	getGridContainer: function()
+	{
+		var gridContainer = BX.Kanban.Grid.prototype.getGridContainer.call(this);
+
+		if (this.isScrumGridHeader())
+		{
+			gridContainer.style.overflow = 'hidden';
+		}
+
+		return gridContainer;
+	},
+
 	adjustHeight: function()
 	{
-		if (!this.isGroupingMode())
+		if (this.isGroupingMode())
+		{
+			if (this.isScrumGridHeader())
+			{
+				var outerContainer = this.getOuterContainer();
+				var scrumKanbanContainer = outerContainer.parentElement;
+
+				if (scrumKanbanContainer.getBoundingClientRect().top >= 15)
+				{
+					outerContainer.classList.remove('tasks-scrum-kanban-header');
+				}
+				else
+				{
+					outerContainer.classList.add('tasks-scrum-kanban-header');
+				}
+			}
+		}
+		else
 		{
 			BX.Kanban.Grid.prototype.adjustHeight.call(this);
 		}
@@ -1439,6 +1483,48 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}.bind(this), 20);
 	},
 
+	getEmptyStub: function()
+	{
+		if (this.isScrumGridHeader())
+		{
+			this.layout.emptyStub = document.createElement('div');
+
+			return this.layout.emptyStub;
+		}
+		else
+		{
+			return BX.Kanban.Grid.prototype.getEmptyStub.call(this);
+		}
+	},
+
+	getLeftEar: function()
+	{
+		if (this.isScrumGridHeader())
+		{
+			this.layout.earLeft = document.createElement('div');
+
+			return this.layout.earLeft;
+		}
+		else
+		{
+			return BX.Kanban.Grid.prototype.getLeftEar.call(this);
+		}
+	},
+
+	getRightEar: function()
+	{
+		if (this.isScrumGridHeader())
+		{
+			this.layout.earRight = document.createElement('div');
+
+			return this.layout.earRight;
+		}
+		else
+		{
+			return BX.Kanban.Grid.prototype.getRightEar.call(this);
+		}
+	},
+
 	/**
 	 * @neighborGrid {BX.Tasks.Kanban.Grid}
 	 */
@@ -1460,6 +1546,23 @@ BX.Tasks.Kanban.Grid.prototype = {
 		this.neighborGrids.forEach(function(neighborGrid) {
 			neighborGrid.removeColumn(neighborGrid.getColumn(columnId));
 		});
+	},
+
+	moveColumnsInNeighborGrids: function(column, targetColumn)
+	{
+		this.neighborGrids.forEach(function(neighborGrid) {
+			var neighborColumn = neighborGrid.getColumn(column.getId());
+			var neighborTargetColumn = neighborGrid.getColumn(targetColumn.getId());
+			if (neighborColumn && neighborTargetColumn)
+			{
+				neighborGrid.moveColumn(neighborColumn, neighborTargetColumn);
+			}
+		}.bind(this));
+	},
+
+	isScrumGridHeader: function()
+	{
+		return this.gridHeader;
 	},
 
 	isScrumGrid: function()

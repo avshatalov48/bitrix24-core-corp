@@ -67,6 +67,16 @@ $containerId = 'crm-tracking-site-b24';
 				<div class="crm-analytics-source-settings">
 				<?foreach ($arResult['SITES'] as $site):
 					$id = htmlspecialcharsbx('b24-site-' . $site['ID']);
+					if ($site['HIDDEN']):
+						?>
+							<input
+								type="hidden"
+								name="SITE[<?=(int)$site['ID']?>]"
+								value="<?=($site['EXCLUDED'] ? 'N' : 'Y')?>"
+							>
+						<?
+						continue;
+					endif;
 				?>
 
 					<div class="crm-analytics-source-settings-block">

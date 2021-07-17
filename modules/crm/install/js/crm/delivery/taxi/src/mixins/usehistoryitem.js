@@ -8,10 +8,6 @@ export default {
 			required: true,
 			type: Object
 		},
-		createdAt: {
-			required: true,
-			type: String
-		},
 	},
 	computed: {
 		data()
@@ -21,6 +17,10 @@ export default {
 		fields()
 		{
 			return this.data.FIELDS ? this.data.FIELDS : null;
+		},
+		createdAt()
+		{
+			return (this.self instanceof BX.CrmHistoryItem) ? this.self.formatTime(this.self.getCreatedTime()) : '';
 		},
 	}
 };

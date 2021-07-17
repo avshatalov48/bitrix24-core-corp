@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["INTERFACE_MAIL_CHECK_ALL"] = "Check All / Uncheck All";
 $MESS["MAIL_CLIENT_AJAX_ERROR"] = "Error processing the request.";
 $MESS["MAIL_CLIENT_BUTTON_LOADING"] = "Loading...";
@@ -61,6 +61,7 @@ $MESS["MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK"] = "Contacts";
 $MESS["MAIL_MESSAGE_LIST_ATTACH_ICON_HINT"] = "Contains attachments";
 $MESS["MAIL_MESSAGE_LIST_BLACKLIST_LINK"] = "Blacklist";
 $MESS["MAIL_MESSAGE_LIST_BTN_DELETE"] = "Delete";
+$MESS["MAIL_MESSAGE_LIST_BTN_DELETE_IMMEDIATELY"] = "Delete permanently";
 $MESS["MAIL_MESSAGE_LIST_BTN_MOVE"] = "Move to folder";
 $MESS["MAIL_MESSAGE_LIST_BTN_NOT_SPAM"] = "Not spam";
 $MESS["MAIL_MESSAGE_LIST_BTN_SEEN"] = "Read";

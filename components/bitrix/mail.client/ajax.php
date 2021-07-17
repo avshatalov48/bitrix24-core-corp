@@ -187,15 +187,16 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	/**
 	 * Deletes messages.
 	 * @param string[] $ids
+	 * @param boolean $deleteImmediately
 	 */
-	public function deleteAction($ids)
+	public function deleteAction($ids, $deleteImmediately = false)
 	{
 		$result = $this->getIds($ids);
 		if ($result->isSuccess())
 		{
 			$data = $result->getData();
 			$mailMarkerManager = new MailsFoldersManager($data['mailboxId'], $data['messagesIds']);
-			$result = $mailMarkerManager->deleteMails();
+			$result = $mailMarkerManager->deleteMails($deleteImmediately);
 			if (!$result->isSuccess())
 			{
 				$errors = $result->getErrors();

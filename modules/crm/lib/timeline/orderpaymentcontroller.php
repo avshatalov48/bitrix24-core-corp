@@ -1,9 +1,11 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Order;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Registry;
 
 Loc::loadMessages(__FILE__);
 
@@ -147,7 +149,42 @@ class OrderPaymentController extends EntityController
 	 */
 	public function onPaid($ownerId, array $params)
 	{
-		return $this->notifyOrderPaymentEntry($ownerId, $params);
+		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
+		$this->notifyOrderPaymentEntry($ownerId, $params);
+
+		if (isset($params['ENTITY']) && $params['ENTITY'] instanceof Payment)
+		{
+			$payment = $params['ENTITY'];
+
+			$isWithOrdersMode = \CCrmSaleHelper::isWithOrdersMode();
+			$canPrintCheck = $payment->getPaySystem()->canPrintCheck();
+			if ($isWithOrdersMode && $canPrintCheck)
+			{
+				$documents = \Bitrix\Sale\Cashbox\CheckManager::collateDocuments([$payment]);
+				if (empty($documents))
+				{
+					$cashboxList = \Bitrix\Sale\Cashbox\Manager::getListFromCache();
+					if ($cashboxList)
+					{
+						$this->notifyOrderPaymentEntry(
+							$ownerId,
+							[
+								'SETTINGS' => [
+									'CHANGED_ENTITY' => \CCrmOwnerType::OrderPaymentName,
+									'FIELDS' => [
+										'NEED_MANUAL_ADD_CHECK' => 'Y',
+										'ORDER_ID' => $payment->getOrderId(),
+										'PAYMENT_ID' => $payment->getId(),
+									],
+								],
+								'PAYMENT_FIELDS' => $payment->getFieldValues(),
+								'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByPayment($payment),
+							]
+						);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -157,8 +194,9 @@ class OrderPaymentController extends EntityController
 	 */
 	public function onClick($ownerId, array $params)
 	{
+		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
 		$params['SETTINGS']['FIELDS']['PAY_SYSTEM_CLICK'] = 'Y';
-		return $this->notifyOrderPaymentEntry($ownerId, $params);
+		$this->notifyOrderPaymentEntry($ownerId, $params);
 	}
 
 	/**
@@ -316,6 +354,64 @@ class OrderPaymentController extends EntityController
 	}
 
 	/**
+	 * @param $ownerId
+	 * @param $params
+	 * @throws Main\ArgumentException
+	 */
+	public function onView($ownerId, $params)
+	{
+		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
+		$params['SETTINGS']['FIELDS']['VIEWED'] = 'Y';
+		$this->notifyOrderPaymentEntry($ownerId, $params);
+	}
+
+	/**
+	 * @param $ownerId
+	 * @param $params
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\SystemException
+	 */
+	public function onSend($ownerId, $params)
+	{
+		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
+		$this->notifyOrderPaymentEntry($ownerId, $params);
+
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		/** @var \Bitrix\Sale\Payment $paymentClassName */
+		$paymentClassName = $registry->getPaymentClassName();
+		$orderData = $paymentClassName::getList([
+			'select' => ['ORDER_ID'],
+			'filter' => ['ID' => $ownerId],
+			'limit' => 1,
+		])->fetch();
+
+		if ($orderData)
+		{
+			$order = Order\Order::load($orderData['ORDER_ID']);
+			if ($order)
+			{
+				/** @var Order\DealBinding $dealBinding */
+				$dealBinding = $order->getDealBinding();
+				if ($dealBinding)
+				{
+					$this->changeOrderStageDealOnSentNoViewed(
+						$dealBinding->getDealId()
+					);
+				}
+			}
+		}
+	}
+
+	private function changeOrderStageDealOnSentNoViewed($dealId)
+	{
+		$fields = ['ORDER_STAGE' => Order\OrderStage::SENT_NO_VIEWED];
+
+		$deal = new \CCrmDeal(false);
+		$deal->Update($dealId, $fields);
+	}
+
+	/**
 	 * @param array $data
 	 * @param array|null $options
 	 * @return array
@@ -358,6 +454,10 @@ class OrderPaymentController extends EntityController
 				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($data['DATE_INSERT']),'SHORT'));
 			}
 
+			$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
+				'CRM_PAYMENT_PAID_TITLE',
+				['#ACCOUNT_NUMBER#' => $data['ASSOCIATED_ENTITY']['TITLE']]
+			);
 			$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
 				'CRM_PAYMENT_CREATION_MESSAGE',
 				[
@@ -381,6 +481,44 @@ class OrderPaymentController extends EntityController
 			{
 				$data['TITLE'] = Loc::getMessage('CRM_PAYMENT_PAYSYSTEM_CLICK_TITLE');
 				$data['ASSOCIATED_ENTITY']['CLICK'] = 'Y';
+			}
+			elseif (!empty($fields['VIEWED']) && $fields['VIEWED'] === 'Y')
+			{
+				$paymentAccountNumber = $data['ASSOCIATED_ENTITY']['TITLE'];
+				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
+				$data['ASSOCIATED_ENTITY']['SUBLEGEND'] = Loc::getMessage('CRM_PAYMENT_PAYSYSTEM_VIEWED_TITLE');
+				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
+					'CRM_PAYMENT_PAYSYSTEM_VIEWED_HTML_TITLE',
+					[
+						'#ACCOUNT_NUMBER#' => $paymentAccountNumber,
+						'#DATE#' => $data['ASSOCIATED_ENTITY']['DATE'],
+						'#SUM#' => $data['ASSOCIATED_ENTITY']['SUM_WITH_CURRENCY'],
+					]
+				);
+				$data['ASSOCIATED_ENTITY']['VIEWED'] = 'Y';
+			}
+			elseif (!empty($fields['SENT']) && $fields['SENT'] === 'Y')
+			{
+				if ($fields['DESTINATION'])
+				{
+					$destinationTitle = Loc::getMessage('CRM_ORDER_DESTINATION_TITLE_'.$fields['DESTINATION']);
+					if ($destinationTitle)
+					{
+						$data['ASSOCIATED_ENTITY']['DESTINATION_TITLE'] = $destinationTitle;
+					}
+				}
+
+				$paymentAccountNumber = $data['ASSOCIATED_ENTITY']['TITLE'];
+				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
+				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
+					'CRM_PAYMENT_PAYSYSTEM_VIEWED_HTML_TITLE',
+					[
+						'#ACCOUNT_NUMBER#' => $paymentAccountNumber,
+						'#DATE#' => $data['ASSOCIATED_ENTITY']['DATE'],
+						'#SUM#' => $data['ASSOCIATED_ENTITY']['SUM_WITH_CURRENCY'],
+					]
+				);
+				$data['ASSOCIATED_ENTITY']['SENT'] = 'Y';
 			}
 			else
 			{

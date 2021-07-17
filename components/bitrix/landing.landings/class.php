@@ -4,10 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Landing\Hook;
 use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\Rights;
+use Bitrix\Landing\Site\Type;
 use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Landing\Internals\TemplateRefTable;
 use \Bitrix\Main\Entity;
@@ -289,10 +291,40 @@ class LandingLandingsComponent extends LandingBaseComponent
 	}
 
 	/**
+	 * Returns array of landing ids with 'delete' locked.
+	 * @param array $ids Landing ids.
+	 * @return array
+	 */
+	protected function getDeleteLocked(array $ids): array
+	{
+		$statuses = [];
+
+		if ($ids)
+		{
+			$res = \Bitrix\Landing\Lock::getList([
+				'select' => [
+					'LANDING_ID' => 'ENTITY_ID'
+				],
+				'filter' => [
+					'ENTITY_ID' => $ids,
+					'=ENTITY_TYPE' => \Bitrix\Landing\Lock::ENTITY_TYPE_LANDING,
+					'=LOCK_TYPE' => \Bitrix\Landing\Lock::LOCK_TYPE_DELETE
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				$statuses[] = $row['LANDING_ID'];
+			}
+		}
+
+		return $statuses;
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
-	public function executeComponent()
+	public function executeComponent(): void
 	{
 		$init = $this->init();
 
@@ -308,13 +340,14 @@ class LandingLandingsComponent extends LandingBaseComponent
 			$this->checkParam('ACTION_FOLDER', 'folderId');
 			$this->checkParam('TILE_MODE', 'edit');
 			$this->checkParam('PAGE_URL_LANDING_EDIT', '');
+			$this->checkParam('PAGE_URL_LANDING_DESIGN', '');
 			$this->checkParam('PAGE_URL_LANDING_VIEW', '');
 			$this->checkParam('DRAFT_MODE', 'N');
 			$this->checkParam('~AGREEMENT', []);
 
-			\Bitrix\Landing\Hook::setEditMode(true);
+			Hook::setEditMode(true);
 
-			\Bitrix\Landing\Site\Type::setScope(
+			Type::setScope(
 				$this->arParams['TYPE']
 			);
 
@@ -339,7 +372,7 @@ class LandingLandingsComponent extends LandingBaseComponent
 				$this->arParams['TYPE']
 			);
 			$filter['SITE_ID'] = $this->arParams['SITE_ID'];
-		//	$filter['==AREAS.ID'] = null;
+			//$filter['==AREAS.ID'] = null;
 			if ($request->offsetExists($this->arParams['ACTION_FOLDER']))
 			{
 				$filter[] = array(
@@ -360,13 +393,13 @@ class LandingLandingsComponent extends LandingBaseComponent
 
 			// types mismatch
 			$availableType = [$this->arParams['TYPE']];
-			if ($this->arParams['TYPE'] == 'STORE')
+			if ($this->arParams['TYPE'] === 'STORE')
 			{
 				$availableType[] = 'SMN';
 			}
 			if (
 				!isset($sites[$siteId]) ||
-				$sites[$siteId]['SPECIAL'] == 'Y' ||
+				$sites[$siteId]['SPECIAL'] === 'Y' ||
 				!in_array($sites[$siteId]['TYPE'], $availableType)
 			)
 			{
@@ -379,7 +412,7 @@ class LandingLandingsComponent extends LandingBaseComponent
 			}
 			else if (
 				isset($sites[$this->arParams['SITE_ID']]) &&
-				$sites[$this->arParams['SITE_ID']]['TYPE'] == 'SMN'
+				$sites[$this->arParams['SITE_ID']]['TYPE'] === 'SMN'
 			)
 			{
 				$pictureFromCloud = false;
@@ -397,7 +430,7 @@ class LandingLandingsComponent extends LandingBaseComponent
 			];
 
 			// disable for un active pages for interface
-			$canViewUnActive = $access['EDIT'] == 'Y' || $access['PUBLICATION'] == 'Y';
+			$canViewUnActive = $access['EDIT'] === 'Y' || $access['PUBLICATION'] === 'Y';
 			if (!$canViewUnActive)
 			{
 				$filter['=ACTIVE'] = 'Y';
@@ -432,6 +465,9 @@ class LandingLandingsComponent extends LandingBaseComponent
 				'navigation' => $this::COUNT_PER_PAGE
 			));
 			$this->arResult['NAVIGATION'] = $this->getLastNavigation();
+			$this->arResult['DELETE_LOCKED'] = $this->getDeleteLocked(
+				array_keys($this->arResult['LANDINGS'])
+			);
 
 			// base data
 			$unActive = [];
@@ -439,16 +475,16 @@ class LandingLandingsComponent extends LandingBaseComponent
 			{
 				// collect un active pages
 				if (
-					$item['ACTIVE'] != 'Y' &&
-					$item['DELETED'] != 'Y'
+					$item['ACTIVE'] !== 'Y' &&
+					$item['DELETED'] !== 'Y'
 				)
 				{
 					$unActive[] = $item['ID'];
 				}
 				else if (
 					isset($sites[$item['SITE_ID']]) &&
-					$sites[$item['SITE_ID']]['ACTIVE'] != 'Y' &&
-					$sites[$item['SITE_ID']]['DELETED'] != 'Y'
+					$sites[$item['SITE_ID']]['ACTIVE'] !== 'Y' &&
+					$sites[$item['SITE_ID']]['DELETED'] !== 'Y'
 				)
 				{
 					$unActive[] = $item['ID'];
@@ -476,11 +512,11 @@ class LandingLandingsComponent extends LandingBaseComponent
 				$item['PUBLIC_URL'] = '';
 				$item['WAS_MODIFIED'] = $item['DATE_MODIFY_UNIX'] > $item['DATE_PUBLIC_UNIX'] ? 'Y' : 'N';
 				$item['PREVIEW'] = $pictureFromCloud ? '' : $landing->getPreview($item['ID'], true);
-				if ($item['FOLDER'] == 'Y')
+				if ($item['FOLDER'] === 'Y')
 				{
 					$item['FOLDER_PREVIEW'] = $this->getFolderPreviews($item['ID']);
 				}
-				if ($item['DELETED'] == 'Y')
+				if ($item['DELETED'] === 'Y')
 				{
 					$item['DATE_DELETED_DAYS'] = $deletedLTdays - intval((time() - $item['DATE_MODIFY']->getTimeStamp()) / 86400);
 					$item['DELETE_FINISH'] = $item['DATE_DELETED_DAYS'] <= 0;

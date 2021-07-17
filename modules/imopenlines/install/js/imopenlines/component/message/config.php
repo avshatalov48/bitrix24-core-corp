@@ -14,6 +14,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.view.message',
+		'main.core.events',
 	],
 	'skip_core' => true,
 ];

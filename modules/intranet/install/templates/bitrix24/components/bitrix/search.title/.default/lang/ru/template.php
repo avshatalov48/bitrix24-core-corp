@@ -4,6 +4,7 @@ $MESS["CT_BST_SEARCH_HINT"] = "искать сотрудника, докумен
 $MESS["CT_BST_WAITER_TEXT"] = "Идет поиск...";
 $MESS["CT_BST_GLOBAL_SEARCH"] = "Искать в";
 $MESS["CT_BST_GLOBAL_SEARCH_STREAM"] = "Живая лента";
+$MESS["CT_BST_GLOBAL_SEARCH_NEWS"] = "Новости";
 $MESS["CT_BST_GLOBAL_SEARCH_TASKS"] = "Задачи";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM"] = "CRM";
 $MESS["CT_BST_GLOBAL_SEARCH_CRM_LEAD"] = "Лиды";

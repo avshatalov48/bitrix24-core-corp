@@ -35,6 +35,7 @@ $MESS["DISK_FOLDER_LIST_ACT_SHARE_COMPLEX"] = "Поділитись";
 $MESS["DISK_FOLDER_LIST_ACT_SHOW_HISTORY"] = "Історія змін";
 $MESS["DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL"] = "Параметри спільного доступу";
 $MESS["DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2"] = "Загальний доступ";
+$MESS["DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3"] = "Загальний доступ";
 $MESS["DISK_FOLDER_LIST_ACT_START_BIZPROC"] = "Бізнес-процеси";
 $MESS["DISK_FOLDER_LIST_ACT_UNLOCK"] = "Розблокувати";
 $MESS["DISK_FOLDER_LIST_B24_APPEND_DISK_SPACE"] = "Додати місце на диск";

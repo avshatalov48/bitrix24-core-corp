@@ -15,23 +15,11 @@ $component = $this->getComponent();
 	'ui.alert',
 ]);
 
-$prepareErrorMessage = static function (\Bitrix\Main\Error $error): string {
-
-	$message = htmlspecialcharsbx($error->getMessage());
-
-	if (!empty($error->getCode()))
-	{
-		$message = htmlspecialcharsbx($error->getCode()) . ': ' . $message;
-	}
-
-	return $message;
-};
-
 if ($component->hasErrors()):
 	?>
 	<div class="ui-alert ui-alert-danger">
 		<?php foreach($component->getErrors() as $error):?>
-			<span class="ui-alert-message"><?= $prepareErrorMessage($error) ?></span>
+			<span class="ui-alert-message"><?= htmlspecialcharsbx($error->getMessage()) ?></span>
 		<?php endforeach;?>
 	</div>
 	<?php

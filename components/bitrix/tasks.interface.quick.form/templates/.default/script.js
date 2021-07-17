@@ -144,7 +144,7 @@ BX.Tasks.QuickForm.prototype.onQueryExecuted = function(result)
 	if (found)
 	{
 		var grid = this.getGrid();
-		if (grid)
+		if (grid && BX.Tasks.GridInstance && !BX.Tasks.GridInstance.checkCanMove())
 		{
 			BX.onCustomEvent(window, "onTasksQuickFormExecuted", [data]);
 			return grid.reloadTable("GET", {}, this.applyChanges.bind(this, data, found));
@@ -297,7 +297,7 @@ BX.Tasks.QuickForm.prototype.showError = function()
 
 BX.Tasks.QuickForm.prototype.fadeGrid = function()
 {
-	if (this.getGrid())
+	if (this.getGrid() && BX.Tasks.GridInstance && !BX.Tasks.GridInstance.checkCanMove())
 	{
 		this.getGrid().tableFade();
 	}
@@ -305,7 +305,7 @@ BX.Tasks.QuickForm.prototype.fadeGrid = function()
 
 BX.Tasks.QuickForm.prototype.unfadeGrid = function()
 {
-	if (this.getGrid())
+	if (this.getGrid() && BX.Tasks.GridInstance && !BX.Tasks.GridInstance.checkCanMove())
 	{
 		this.getGrid().tableUnfade();
 	}
@@ -395,13 +395,7 @@ BX.Tasks.QuickForm.prototype.fireEnterKey = function(event)
 
 BX.Tasks.QuickForm.prototype.getGrid = function()
 {
-	if (
-		this.gridId
-		&& BX.Main
-		&& BX.Main.gridManager
-		&& BX.Tasks.GridInstance
-		&& !BX.Tasks.GridInstance.checkCanMove()
-	)
+	if (this.gridId && BX.Main && BX.Main.gridManager)
 	{
 		return BX.Main.gridManager.getInstanceById(this.gridId);
 	}

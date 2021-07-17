@@ -240,6 +240,7 @@ html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-accept .menu-po
 
 html:not(.bx-ie) .disk-folder-list-context-menu-item.menu-popup-item-accept .menu-popup-item-icon {
 	background: none;
+	max-width: 32px;
 }
 
 html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-icon:before {

@@ -248,44 +248,6 @@ foreach ($providers as $provider)
 	}
 }
 
-if($arResult['TAB_ID'] === ''
-	&& $_SERVER['REQUEST_METHOD'] === 'GET'
-	&& isset($_GET['conv']))
-{
-	if(CCrmPerms::IsAdmin())
-	{
-		$conv = mb_strtoupper($_GET['conv']);
-		if($conv === 'EXEC_CAL')
-		{
-			CCrmActivityConverter::ConvertCalEvents(false, true);
-			COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_CALENDAR_EVENTS', 'Y');
-		}
-		elseif($conv === 'EXEC_TASK')
-		{
-			CCrmActivityConverter::ConvertTasks(false, true);
-			COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_OF_TASKS', 'Y');
-		}
-		elseif($conv === 'SKIP_CAL')
-		{
-			COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_CALENDAR_EVENTS', 'Y');
-		}
-		elseif($conv === 'SKIP_TASK')
-		{
-			COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_OF_TASKS', 'Y');
-		}
-		elseif($conv === 'RESET_CAL')
-		{
-			COption::RemoveOption('crm', '~CRM_ACTIVITY_LIST_CONVERTING_CALENDAR_EVENTS');
-		}
-		elseif($conv === 'RESET_TASK')
-		{
-			COption::RemoveOption('crm', '~CRM_ACTIVITY_LIST_CONVERTING_OF_TASKS');
-		}
-	}
-
-	LocalRedirect(CHTTP::urlDeleteParams($APPLICATION->GetCurPage(), array('conv')));
-}
-
 $arResult['FILTER'] = array(
 	array('id' => "{$filterFieldPrefix}ID", 'name' => 'ID', 'default' => false),
 	array('id' => "{$filterFieldPrefix}COMPLETED", 'name' => GetMessage('CRM_ACTIVITY_FILTER_COMPLETED'), 'type'=> 'list', 'items'=> array('Y' => GetMessage('CRM_ACTIVITY_FILTER_ITEM_COMPLETED'), 'N' => GetMessage('CRM_ACTIVITY_FILTER_ITEM_NOT_COMPLETED')), 'params' => array('multiple' => 'Y'), 'default' => true),
@@ -1352,40 +1314,6 @@ if($arResult['TAB_ID'] === '')
 	if(COption::GetOptionString('crm', '~CRM_BUILD_ACTIVITY_TIMELINE', 'N') === 'Y')
 	{
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = true;
-	}
-
-	if(CCrmPerms::IsAdmin())
-	{
-		$curPage = $APPLICATION->GetCurPage();
-		//Converting existing calendar events
-		if(COption::GetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_CALENDAR_EVENTS', 'N') !== 'Y')
-		{
-			if(CCrmActivityConverter::IsCalEventConvertigRequired())
-			{
-				$arResult['NEED_FOR_CONVERTING_OF_CALENDAR_EVENTS'] = true;
-				$arResult['CAL_EVENT_CONV_EXEC_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'exec_cal'));
-				$arResult['CAL_EVENT_CONV_SKIP_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'skip_cal'));
-			}
-			else
-			{
-				COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_CALENDAR_EVENTS', 'Y');
-			}
-		}
-
-		//Converting existing tasks
-		if(COption::GetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_OF_TASKS', 'N') !== 'Y')
-		{
-			if(CCrmActivityConverter::IsTaskConvertigRequired())
-			{
-				$arResult['NEED_FOR_CONVERTING_OF_TASKS'] = true;
-				$arResult['TASK_CONV_EXEC_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'exec_task'));
-				$arResult['TASK_CONV_SKIP_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'skip_task'));
-			}
-			else
-			{
-				COption::SetOptionString('crm', '~CRM_ACTIVITY_LIST_CONVERTING_OF_TASKS', 'Y');
-			}
-		}
 	}
 }
 

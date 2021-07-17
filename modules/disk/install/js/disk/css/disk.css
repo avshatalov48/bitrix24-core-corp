@@ -1336,48 +1336,40 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .bx-disk-info-popup-btn-wrap {
+	display: flex;
 	margin-top: 20px;
+	max-width: 700px;
 }
 
 .bx-disk-info-popup-btn {
-	-webkit-box-shadow: 0 0 0 1px transparent;
-	box-shadow: 0 0 0 1px transparent;
-	background-color: #fff;
-	cursor: pointer;
-	display: inline-block;
-	border-radius: 2px;
-	height: 108px;
-	margin: 0 5px;
-	padding: 0 5px 0 18px;
 	position: relative;
+	display: inline-block;
+	margin: 0 5px;
+	padding: 0 15px 15px 15px;
+	min-width: 225px;
+	border-radius: 2px;
+	background-color: #fff;
 	vertical-align: top;
-	width: 269px;
-
+	box-shadow: 0 0 0 1px transparent;
+	box-sizing: border-box;
+	cursor: pointer;
 }
 
 .bx-disk-info-popup-btn:hover {
-	-webkit-box-shadow: 0 0 0 2px #bdc3c8;
 	box-shadow: 0 0 0 2px #bdc3c8;
-
-	-webkit-transition: all 0.25s linear;
 	transition: all 0.25s linear;
 }
 
 .bx-disk-info-popup-btn-active,
 .bx-disk-info-popup-btn-active:hover {
 	background-color: #e2f1f8;
-	-webkit-box-shadow: 0 0 0 2px #3285d0;
 	box-shadow: 0 0 0 2px #3285d0;
 }
 
-
-
 .bx-disk-info-popup-btn-active.bx-disk-info-popup-btn:after {
 	opacity: 1;
-	-webkit-transition: opacity 0.25s linear;
 	transition: opacity 0.25s linear;
 }
-
 
 .bx-disk-info-popup-btn-text {
 	background: url(/bitrix/images/disk/sprite.png?2234) no-repeat 500px 500px;
@@ -1390,7 +1382,6 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	padding-left: 63px;
 	position: relative;
 	margin-top: 15px;
-
 }
 
 .bx-disk-info-popup-btn-text:before {
@@ -1402,12 +1393,11 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	position: absolute;
 	top: 0;
 	width: 54px;
-
-	-webkit-transition: opacity 0.25s linear;
 	transition: opacity 0.25s linear;
 }
 
 .bx-disk-info-popup-btn-local .bx-disk-info-popup-btn-text {
+	padding-left: 54px;
 	background-position: left -1280px;
 	/*width: 47px;*/
 }
@@ -1424,6 +1414,18 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	background-position: center -1376px;
 }
 
+.bx-disk-info-popup-btn-b24 .bx-disk-info-popup-btn-text {
+	padding-left: 47px;
+}
+
+.bx-disk-info-popup-btn-b24 .bx-disk-info-popup-btn-text:before {
+	background: url("data:image/svg+xml,%3Csvg width='39' height='39' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19.254 0c10.633 0 19.254 8.62 19.254 19.254 0 10.633-8.62 19.254-19.254 19.254C8.62 38.508 0 29.888 0 19.254 0 8.62 8.62 0 19.254 0zm-5.275 10.893c-2.234 0-4.112.687-5.466 1.303l.832 2.486c1.211-.544 2.519-1.065 4.11-1.065 1.189 0 2.306.473 2.306 1.823 0 3.079-7.13 3.529-7.771 11.226h11.383v-2.747H12.22c.998-3.292 6.94-4.5 6.94-8.81 0-2.463-1.688-4.216-5.181-4.216zm14.995.048h-2.33l-7.841 9.946v2.06h7.01v3.719h3.16v-3.719h2.33v-2.605h-2.33v-9.401zm-3.018 4.807c-.048.308-.143 1.705-.143 2.913v1.681h-1.426c-.546 0-1.687.048-1.972.072z' fill='%23556472' fill-rule='evenodd'/%3E%3C/svg%3E") no-repeat;
+    opacity: 1;
+}
+
+.bx-disk-info-popup-btn-active.bx-disk-info-popup-btn-b24 .bx-disk-info-popup-btn-text:before {
+	background: url("data:image/svg+xml,%3Csvg width='39' height='39' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19.254 0c10.633 0 19.254 8.62 19.254 19.254 0 10.633-8.62 19.254-19.254 19.254C8.62 38.508 0 29.888 0 19.254 0 8.62 8.62 0 19.254 0zm-5.275 10.893c-2.234 0-4.112.687-5.466 1.303l.832 2.486c1.211-.544 2.519-1.065 4.11-1.065 1.189 0 2.306.473 2.306 1.823 0 3.079-7.13 3.529-7.771 11.226h11.383v-2.747H12.22c.998-3.292 6.94-4.5 6.94-8.81 0-2.463-1.688-4.216-5.181-4.216zm14.995.048h-2.33l-7.841 9.946v2.06h7.01v3.719h3.16v-3.719h2.33v-2.605h-2.33v-9.401zm-3.018 4.807c-.048.308-.143 1.705-.143 2.913v1.681h-1.426c-.546 0-1.687.048-1.972.072z' fill='%230163C7' fill-rule='evenodd'/%3E%3C/svg%3E") no-repeat;
+}
 
 .bx-disk-info-popup-btn-active .bx-disk-info-popup-btn-text:before {
 	opacity: 1;
@@ -1444,13 +1446,12 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .bx-disk-info-popup-btn-check {
-	background: url(/bitrix/images/disk/sprite.png?2234) no-repeat 0 -1345px;
-	height: 13px;
-	left: 260px;
 	position: absolute;
 	top: 11px;
+	right: 13px;
 	width: 0;
-
+	height: 13px;
+	background: url(/bitrix/images/disk/sprite.png?2234) no-repeat 0 -1345px;
 }
 
 .bx-disk-info-popup-btn-active .bx-disk-info-popup-btn-check {
@@ -1465,29 +1466,20 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	height: 68px;
 	opacity: 0;
 	width: 68px;
-
-	-webkit-transition: opacity 0.2s linear;
 	transition: opacity 0.2s linear;
 }
 
 .disk-anim.disk-loading-circle {
-	-webkit-animation: feed-load 2s linear infinite;
 	animation: feed-load 2s linear infinite;
 	opacity: 1;
 }
 
-@-webkit-keyframes feed-load {
-	0% {-webkit-transform: rotate(0deg)}
-	100% {-webkit-transform: rotate(360deg)}
-	0% {transform: rotate(0deg)}
-	100% {transform: rotate(360deg)}
-}
 @keyframes feed-load {
 	0% {transform: rotate(0deg)}
 	100% {transform: rotate(360deg)}
 }
 
-.bx-disk-btn{
+.bx-disk-btn {
 	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 	font-size:12px;
 	font-weight:bold;
@@ -2764,3 +2756,82 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 .ui-btn-split.disk-viewer-panel-icon-l:before {
 	display: none;
 }
+
+/* region Balloon */
+
+.disk-viewer-balloon-box {
+	display: flex;
+	align-items: center;
+	padding: 13px 16px 13px 20px;
+	max-height: 46px;
+	border-radius: 23px;
+	background-color: rgba(47,198,246,.9);
+	box-shadow: 0 2px 6px 0 rgba(0,0,0,.1);
+	box-sizing: border-box;
+}
+
+.disk-viewer-balloon-icon {
+	display: block;
+	margin-right: 12px;
+	width: 15px;
+	height: 20px;
+	background: url("data:image/svg+xml,%3Csvg width='15' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.2.953a2 2 0 011.47.645l3.562 3.866a2 2 0 01.53 1.355v11.21a1 1 0 01-1 1H1.272a1 1 0 01-1-1V1.953a1 1 0 011-1H9.2zm-.42 11.981H3.5a.79.79 0 00-.79.79v.324c0 .436.353.79.79.79h5.28a.79.79 0 00.79-.79v-.324a.79.79 0 00-.79-.79zm2.054-3.566H3.499a.79.79 0 00-.79.79v.323c0 .436.354.79.79.79h7.335a.79.79 0 00.79-.79v-.324a.79.79 0 00-.79-.79zm0-3.616H3.499a.79.79 0 00-.79.79v.324c0 .436.354.79.79.79h7.335a.79.79 0 00.79-.79v-.324a.79.79 0 00-.79-.79z' fill='%23FFF' fill-rule='evenodd'/%3E%3C/svg%3E") center no-repeat;
+}
+
+.disk-viewer-balloon-text {
+	flex-grow: 1;
+	flex-shrink: 1;
+	margin-right: 15px;
+	max-width: 100%;
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #fff;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.disk-viewer-balloon-text span {
+	font-weight: 700;
+}
+
+.disk-viewer-balloon-text span:first-child {
+	margin-right: 3px;
+}
+
+.disk-viewer-balloon-btn {
+	margin-right: 12px;
+	border-color: rgba(255,255,255,.44);
+	background-color: rgba(255,255,255,.14);
+	color: #fff;
+}
+
+.disk-viewer-balloon-btn:hover {
+	border-color: rgba(255,255,255,.44);
+	background-color: transparent;
+	color: #fff;
+}
+
+.disk-viewer-balloon-btn-close {
+	display: block;
+	width: 19px;
+	height: 40px;
+	background: url("data:image/svg+xml,%3Csvg width='11' height='10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.01 5l3.106 3.105-1.553 1.553-3.105-3.105-3.105 3.105L.801 8.105 3.906 5 .8 1.895 2.353.342l3.105 3.105L8.563.342l1.553 1.553z' fill='%23FFF' fill-rule='evenodd'/%3E%3C/svg%3E") center no-repeat;
+	transition: opacity .3s;
+	opacity: .5;
+	cursor: pointer;
+}
+
+.disk-viewer-balloon-btn-close:hover {
+	opacity: 1;
+}
+
+/* endregion */
+
+/* region Live Feed Create Docs Popup */
+
+.item-b24-docs .menu-popup-item-icon {
+	background: url("data:image/svg+xml,%3Csvg viewBox='0 0 38 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.14 12.362h33.72c.968 0 1.752.784 1.752 1.752v8.758a2.628 2.628 0 01-2.628 2.628H3.016a2.628 2.628 0 01-2.628-2.628v-8.758c0-.968.784-1.752 1.752-1.752zm10.586 4.92c-.555 0-.899.48-.899 1.07v.774c0 .59.344 1.069.9 1.069h18.29c.554 0 .923-.479.923-1.069v-.775c0-.59-.369-1.068-.924-1.068h-18.29zm-5.77 4.082a2.433 2.433 0 100-4.865 2.433 2.433 0 000 4.865zM7.828.5H30.2a2.19 2.19 0 011.943 1.18l4.374 7.999H1.702l4.164-7.964A2.19 2.19 0 017.827.5z' fill='%232FC6F6' fill-rule='evenodd'/%3E%3C/svg%3E") 3px 13px no-repeat;
+	background-size: 65%;
+}
+
+/* endregion */

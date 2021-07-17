@@ -124,10 +124,14 @@ abstract class FactoryBasedController extends EntityController
 
 	protected function prepareModificationEntryParams(int $entityID, array $previousFields, array $currentFields, string $fieldName): array
 	{
+		$authorId = $currentFields[Item::FIELD_NAME_UPDATED_BY]
+			?? $previousFields[Item::FIELD_NAME_CREATED_BY]
+			?? $previousFields[Item::FIELD_NAME_ASSIGNED];
+
 		$entryParams = [
 			'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
 			'ENTITY_ID' => $entityID,
-			'AUTHOR_ID' => $currentFields[Item::FIELD_NAME_UPDATED_BY] ?? $previousFields[Item::FIELD_NAME_CREATED_BY],
+			'AUTHOR_ID' => $authorId,
 			'SETTINGS' => [
 				'FIELD' => $fieldName,
 				'START' => $previousFields[$fieldName],

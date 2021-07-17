@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\UserField;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 class UserFieldManager
 {
@@ -115,7 +115,7 @@ class UserFieldManager
 		{
 			$signatureParams['VALUE'] = $fieldInfo['VALUE'];
 		}
-		
+
 		return Main\UserField\Dispatcher::instance()->getSignature($signatureParams);
 	}
 
@@ -167,10 +167,8 @@ class UserFieldManager
 	 * Return full info about user fields from UserFieldTable by their description.
 	 *
 	 * @param array $descriptions
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 *
+	 * @return array[]
 	 */
 	public static function getLinkedUserFields(array $descriptions): array
 	{
@@ -212,6 +210,29 @@ class UserFieldManager
 	}
 
 	/**
+	 * Return array of user fields that are linked to crm user fields in other modules.
+	 *
+	 * @return array[] [string combinedUserFieldName => array userField]
+	 */
+	public static function getLinkedUserFieldsMap(): array
+	{
+		$description = static::getLinkedUserFieldsDescription();
+
+		$map = [];
+		foreach (static::getLinkedUserFields($description) as $linkedUserField)
+		{
+			$name = static::combineUserFieldFieldsToString(
+				$linkedUserField['ENTITY_ID'],
+				$linkedUserField['FIELD_NAME']
+			);
+
+			$map[$name] = $linkedUserField;
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Return entityId and fieldName of a userField from combined name.
 	 *
 	 * @param string $combinedFields
@@ -219,6 +240,7 @@ class UserFieldManager
 	 */
 	public static function parseUserFieldFieldsFromString(string $combinedFields): ?array
 	{
+		/** @var string[] $data */
 		$data = explode('|', $combinedFields);
 		if (count($data) === 2)
 		{

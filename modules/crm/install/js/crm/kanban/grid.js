@@ -605,12 +605,15 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Get items from one columns.
-	 * @param {BX.Kanban.Column} column
+	 * @param {BX.CRM.Kanban.Column} column
 	 * @returns {BX.Promise}
 	 */
 	getColumnItems: function(column)
 	{
 		var promise = new BX.Promise();
+
+		this.data.params['total'] = column.getTotal();
+		this.data.params['itemsCount'] = column.getItemsCount();
 
 		this.ajax({
 				action: "page",
@@ -787,7 +790,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * @param {boolean} forceUpdate Force update entity.
 	 * @returns {void}
 	 */
-	loadNew: function(id, force, forceUpdate )
+	loadNew: function(id, force, forceUpdate)
 	{
 		var gridData = this.getData();
 		var entityId = typeof id !== "undefined" ? id : 0;
@@ -1143,30 +1146,32 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 		}
 
-		// show popup for lead convert
-		if (
-			this.getTypeInfoParam('canShowPopupForLeadConvert')
-			&& targetColumn.getId() === 'CONVERTED'
-			&& this.itemMoving.dropEvent
-			&& !item.isChangedInPullRequest()
-		)
+		if (!item.isChangedInPullRequest())
 		{
-			BX.Crm.KanbanComponent.dropPopup(
-				this,
-				this.itemMoving.dropEvent
-			);
-		}
+			// show popup for lead convert
+			if (
+				this.getTypeInfoParam('canShowPopupForLeadConvert')
+				&& targetColumn.getId() === 'CONVERTED'
+				&& this.itemMoving.dropEvent
+			)
+			{
+				BX.Crm.KanbanComponent.dropPopup(
+					this,
+					this.itemMoving.dropEvent
+				);
+			}
 
-		// change price in old/new columns
-		if (this.itemMoving.item.getData().runtimePrice !== true)
-		{
-			this.itemMoving.oldColumn.decPrice(this.itemMoving.price);
-		}
-		if (!isDropZone)
-		{
-			targetColumn.incPrice(this.itemMoving.price);
-			targetColumn.renderSubTitle();
-			this.itemMoving.oldColumn.renderSubTitle();
+			// change price in old/new columns
+			if (this.itemMoving.item.getData().runtimePrice !== true)
+			{
+				this.itemMoving.oldColumn.decPrice(this.itemMoving.price);
+			}
+			if (!isDropZone)
+			{
+				targetColumn.incPrice(this.itemMoving.price);
+				targetColumn.renderSubTitle();
+				this.itemMoving.oldColumn.renderSubTitle();
+			}
 		}
 
 		this.itemMoving.item.setDataKey(

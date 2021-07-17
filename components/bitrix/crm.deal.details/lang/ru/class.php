@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_DEAL_FIELD_TITLE"] = "Название";
@@ -84,3 +84,4 @@ $MESS["CRM_DEAL_FIELD_RECURRING_DATE_CREATION_BEGINDATE_OFFSET_TITLE"] = "Сме
 $MESS["CRM_DEAL_FIELD_RECURRING_DATE_CREATION_CLOSEDATE_OFFSET_TITLE"] = "Смещение даты завершения от даты создания";
 $MESS["CRM_DEAL_FIELD_OBSERVERS"] = "Наблюдатели";
 $MESS["CRM_DEAL_FIELD_ADD_OBSERVER"] = "Добавить наблюдателя";
+$MESS["CRM_DEAL_FIELD_PAYMENT_DOCUMENTS"] = "Платежные документы";

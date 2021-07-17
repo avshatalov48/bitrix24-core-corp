@@ -33,6 +33,7 @@ $MESS['CRM_KANBAN_SYS_STATUS_DELETE'] = 'Удалить';
 $MESS['CRM_KANBAN_HEADER_OTHER_FIELDS'] = 'Прочее';
 $MESS['CRM_KANBAN_FIELD'] = 'Наблюдатели';
 $MESS['CRM_KANBAN_TRACKING_SOURCE_ID'] = 'Сквозная аналитика';
+$MESS['CRM_KANBAN_DELIVERY_STAGE'] = 'Статус доставки';
 $MESS['CRM_KANBAN_BOOLEAN_1'] = 'Да';
 $MESS['CRM_KANBAN_BOOLEAN_0'] = 'Нет';
 $MESS['CRM_KANBAN_CHAR_Y'] = 'Да';

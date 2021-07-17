@@ -15,3 +15,4 @@ $MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_EDIT"] = "Налаштування робо
 $MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_VIEW"] = "Поточний стан ліда: «#TITLE#»";
 $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_EDIT"] = "Налаштування роботів для всіх замовлень";
 $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_VIEW"] = "Поточний стан замовлення";
+$MESS["CRM_AUTOMATION_CMP_WEBHOOK_PASSWORD_ALERT"] = "Для роботи тригера необхідний Вхідний вебхук. #A1#Створити зараз#A2#?";

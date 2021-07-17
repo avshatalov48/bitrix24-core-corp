@@ -74,11 +74,13 @@ export class SprintSidePanel
 
 	showStartSidePanel(sprint: Sprint)
 	{
-		this.sidePanelId = 'tasks-scrum-start-' + Text.getRandom();
+		this.sidePanelId = 'tasks-scrum-sprint-start-side-panel';
 
 		this.currentSprint = sprint;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadStartPanel.bind(this));
+
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
 				return new Promise((resolve, reject) => {
@@ -92,11 +94,13 @@ export class SprintSidePanel
 
 	showCompleteSidePanel(sprint: Sprint)
 	{
-		this.sidePanelId = 'tasks-scrum-start-' + Text.getRandom();
+		this.sidePanelId = 'tasks-scrum-sprint-complete-side-panel';
 
 		this.currentSprint = sprint;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadCompletePanel.bind(this));
+
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
 				return new Promise((resolve, reject) => {
@@ -110,12 +114,14 @@ export class SprintSidePanel
 
 	showBurnDownChart(sprint: Sprint)
 	{
-		this.sidePanelId = 'tasks-scrum-burn-down-chart-' + Text.getRandom();
+		this.sidePanelId = 'tasks-scrum-sprint-burn-down-chart';
 
 		this.currentSprint = sprint;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadSprintBurnDownPanel.bind(this));
 		this.sidePanel.subscribe('onCloseSidePanel', this.onCloseBurnDownChart.bind(this));
+
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
 				return new Promise((resolve, reject) => {
@@ -214,6 +220,7 @@ export class SprintSidePanel
 
 		this.onLoadStartButtons().then((buttonsContainer: HTMLElement) => {
 			Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', this.onStartSprint.bind(this));
+			Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 		});
 	}
 
@@ -319,9 +326,12 @@ export class SprintSidePanel
 						</span>
 						<div class="tasks-scrum-sprint-sidepanel-uncompleted-list">
 							${[...this.currentSprint.getUncompletedItems().values()].map((item: Item) => {
-								const previewItem = item.getPreviewVersion();
-								this.uncompletedItems.set(previewItem.getItemId(), previewItem);
-								return previewItem.render();
+								if (!item.isSubTask())
+								{
+									const previewItem = item.getPreviewVersion();
+									this.uncompletedItems.set(previewItem.getItemId(), previewItem);
+									return previewItem.render();
+								}
 							})}
 						</div>
 					</div>
@@ -419,6 +429,7 @@ export class SprintSidePanel
 				'click',
 				this.onCompleteSprint.bind(this, sidePanel)
 			);
+			Event.bind(buttonsContainer.querySelector('[name=cancel]'), 'click', () => sidePanel.close());
 		});
 	}
 
@@ -426,13 +437,19 @@ export class SprintSidePanel
 	{
 		const sidePanel = baseEvent.getData();
 
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-sprint-sidepanel');
 
 		this.getBurnDownChartData().then((data) => {
+
+			sidePanel.closeLoader();
+			
 			setTimeout(() => {
 				this.burnDownChart = new BurnDownChart(data);
 				this.burnDownChart.createChart(this.form.querySelector('.tasks-scrum-sprint-sidepanel-chart'));
 			}, 300);
+
 		});
 	}
 
@@ -443,8 +460,11 @@ export class SprintSidePanel
 		if (this.sidePanelId === sidePanel.getUrl())
 		{
 			setTimeout(() => {
-				this.burnDownChart.destroyBurnDownChart();
-				this.burnDownChart = null;
+				if (this.burnDownChart)
+				{
+					this.burnDownChart.destroyBurnDownChart();
+					this.burnDownChart = null;
+				}
 			}, 300);
 		}
 	}

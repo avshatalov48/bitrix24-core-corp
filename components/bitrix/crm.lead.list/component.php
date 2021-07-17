@@ -124,14 +124,14 @@ if ($isErrorOccured)
 
 use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\Format\AddressSeparator;
-use Bitrix\Crm\Format\LeadAddressFormatter;
-use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Context\GridContext;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 
 $isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
@@ -333,6 +333,7 @@ $enableReportFilter = Main\Application::getInstance()->getContext()->getRequest(
 if ($enableReportFilter)
 {
 	$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
+	$boardId = preg_replace('/[^\w-_]/', '', $boardId);
 	$externalFilterId = 'report_board_' . $boardId . '_filter';
 
 	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
@@ -2237,10 +2238,6 @@ $arResult['STEXPORT_IS_LAST_PAGE'] = $enableNextPage ? 'N' : 'Y';
 $arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
-$addressFormatOptions = $sExportType === 'csv'
-	? array('SEPARATOR' => AddressSeparator::Comma)
-	: array('SEPARATOR' => AddressSeparator::HtmlLineBreak, 'NL2BR' => true);
-
 $now = time() + CTimeZone::GetOffset();
 $activitylessItems = array();
 $entityAttrs = CCrmLead::GetPermissionAttributes(array_keys($arResult['LEAD']));
@@ -2626,7 +2623,18 @@ foreach($arResult['LEAD'] as &$arLead)
 
 	if(isset($arSelectMap['FULL_ADDRESS']))
 	{
-		$arLead['FULL_ADDRESS'] = LeadAddressFormatter::format($arLead, $addressFormatOptions);
+		if ($sExportType === 'csv')
+		{
+			$arLead['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+				LeadAddress::mapEntityFields($arLead)
+			);
+		}
+		else
+		{
+			$arLead['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatHtmlMultiline(
+				LeadAddress::mapEntityFields($arLead)
+			);
+		}
 	}
 
 	$userActivityID = isset($arLead['~ACTIVITY_ID']) ? intval($arLead['~ACTIVITY_ID']) : 0;

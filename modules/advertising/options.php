@@ -25,7 +25,6 @@ $arAllOptions = array(
 	Array("BANNER_GRAPH_HEIGHT", GetMessage("AD_BANNER_GRAPH_HEIGHT"), Array("text", 5)),
 	Array("BANNER_DIAGRAM_DIAMETER", GetMessage("AD_BANNER_DIAGRAM_DIAMETER"), Array("text", 5)),
 	Array("COOKIE_DAYS", GetMessage("AD_COOKIE_DAYS"), Array("text", 5)),
-	Array("REDIRECT_FILENAME", GetMessage("AD_REDIRECT_FILENAME"), Array("text", 30))
 );
 
 $aTabs = array(

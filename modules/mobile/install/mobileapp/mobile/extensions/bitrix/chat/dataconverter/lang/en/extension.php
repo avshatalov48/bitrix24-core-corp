@@ -28,3 +28,4 @@ $MESS["IM_YOU"] = "it's you";
 $MESS["IM_YOU_2"] = "You: ";
 $MESS["NOTIFICATION_TITLE"] = "Notifications";
 $MESS["USER_INVITED"] = "Invitation has been sent";
+$MESS["USER_INVITED_2"] = "Invitation was not accepted";

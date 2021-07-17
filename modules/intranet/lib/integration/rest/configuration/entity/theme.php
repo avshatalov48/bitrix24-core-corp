@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Integration\Rest\Configuration\Entity;
 
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Intranet\Composite\CacheProvider;
+use Bitrix\Intranet\Internals\ThemeTable;
 use Bitrix\Rest\Configuration\Helper;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
@@ -35,7 +36,7 @@ class Theme
 		$result = null;
 		if (Helper::checkAccessManifest($params, static::$accessManifest))
 		{
-			$themePicker = ThemePicker::getInstance();
+			$themePicker = ThemePicker::getInstance(ThemePicker::ENTITY_TYPE_USER);
 			$theme = $themePicker->getDefaultTheme();
 			if ($theme['id'])
 			{
@@ -57,25 +58,27 @@ class Theme
 				else
 				{
 					$themeData = null;
-					$defaultTheme = Option::get('intranet', $themePicker->getDefaultThemeOptionName(), null);
-					if (\CheckSerializedData($defaultTheme))
-					{
-						$defaultTheme = unserialize($defaultTheme, ['allowed_classes' => false]);
-						if (is_array($defaultTheme) &&
-							isset($defaultTheme['userId']) &&
-							isset($defaultTheme['themeId']))
-						{
-							$themeList = \CUserOptions::getOption(
-								'intranet',
-								$themePicker->getCustomThemesOptionName(),
-								[],
-								$defaultTheme['userId']
-							);
 
-							if (!empty($themeList[$theme['id']]))
-							{
-								$themeData = $themeList[$theme['id']];
-							}
+					$res = ThemeTable::getList([
+						'filter' => [
+							'=ENTITY_TYPE' => $themePicker->getEntityType(),
+							'ENTITY_ID' => 0,
+							'=CONTEXT' => $themePicker->getContext(),
+						],
+						'select' => [ 'ID', 'USER_ID' ]
+					]);
+					while($themeFields = $res->fetch())
+					{
+						$themeList = \CUserOptions::getOption(
+							'intranet',
+							$themePicker->getCustomThemesOptionName(),
+							[],
+							$themeFields['USER_ID']
+						);
+
+						if (!empty($themeList[$theme['id']]))
+						{
+							$themeData = $themeList[$theme['id']];
 						}
 					}
 

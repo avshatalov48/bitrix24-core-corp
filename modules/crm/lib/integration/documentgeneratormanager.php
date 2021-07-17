@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
+use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
@@ -38,6 +39,11 @@ class DocumentGeneratorManager
 	public static function getInstance(): DocumentGeneratorManager
 	{
 		return ServiceLocator::getInstance()->get('crm.integration.documentgeneratormanager');
+	}
+
+	public function getProductLoader(): ProductLoader
+	{
+		return ServiceLocator::getInstance()->get('crm.integration.documentgeneratormanager.productLoader');
 	}
 
 	/**

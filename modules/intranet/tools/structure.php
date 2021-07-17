@@ -172,6 +172,7 @@ else
 	}
 	else
 	{
+		$arSection = [];
 		if (isset($arParams["UF_DEPARTMENT_ID"]))  //data for department's editing
 		{
 			$rsSection = CIBlockSection::GetList(array(), array("ID" => intval($arParams["UF_DEPARTMENT_ID"]), "IBLOCK_ID" => $iblockID),false, array('UF_HEAD'));

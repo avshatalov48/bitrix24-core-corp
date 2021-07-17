@@ -4,6 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arParams */
+/** @var array $arResult */
+
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 
@@ -20,7 +23,7 @@ $isSwitcher = in_array($this->getPageName(), ['crm_switcher', 'tasks_switcher'])
 	?><?if (!$frequency){?>data-slider-ignore-autobinding="true"<?}?> <?
 	   ?>id="<?= $id;?>_top" class="ui-btn-main" <?if (isset($frequency['onclick'])){?>onclick="<?= htmlspecialcharsbx($frequency['onclick']);?>; return false;"<?}?>>
 		<?= $arResult['FREQUENCY_MENU_ITEM']
-			? $arResult['FREQUENCY_MENU_ITEM']['text']
+			? TruncateText($arResult['FREQUENCY_MENU_ITEM']['text'], 50)
 			: Loc::getMessage('INTRANET_CMP_BIND_MENU_BUTTON_NAME');
 		?>
 	</a>

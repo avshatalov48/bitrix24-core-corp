@@ -121,6 +121,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_SOURCE_ID = 'SOURCE_ID';
 	public const FIELD_NAME_SOURCE_DESCRIPTION = 'SOURCE_DESCRIPTION';
 	public const FIELD_NAME_OBSERVERS = 'OBSERVERS';
+	public const FIELD_NAME_WEBFORM_ID = 'WEBFORM_ID';
 
 	protected const SORT_OFFSET = 10;
 
@@ -393,32 +394,36 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function setFromCompatibleData(array $data): self
 	{
-		$fieldNames = $this->getInternalizableFieldNames();
-
-		if (empty($data[static::FIELD_NAME_CONTACT_BINDINGS]) && isset($data['CONTACT_IDS']))
+		$isContactBindingsPassed = array_key_exists(static::FIELD_NAME_CONTACT_BINDINGS, $data);
+		if ($isContactBindingsPassed)
 		{
-			$data[static::FIELD_NAME_CONTACT_BINDINGS] = EntityBinding::prepareEntityBindings(
-				\CCrmOwnerType::Contact,
-				$data['CONTACT_IDS']
-			);
-		}
-
-		if (empty($data[static::FIELD_NAME_CONTACT_BINDINGS]))
-		{
-			$this->unbindContacts($this->getContactBindings());
+			if (empty($data[static::FIELD_NAME_CONTACT_BINDINGS]))
+			{
+				$this->unbindContacts($this->getContactBindings());
+			}
 		}
 		else
 		{
-			//todo If bindings are provided, ignore contactId. Rework is required
-			$fieldNames = array_flip($fieldNames);
-			unset($fieldNames[static::FIELD_NAME_CONTACT_ID]);
-			$fieldNames = array_flip($fieldNames);
+			if(isset($data['CONTACT_IDS']) && is_array($data['CONTACT_IDS']))
+			{
+				$data[static::FIELD_NAME_CONTACT_BINDINGS] = EntityBinding::prepareEntityBindings(
+					\CCrmOwnerType::Contact,
+					$data['CONTACT_IDS']
+				);
+			}
+			elseif (isset($data['CONTACT_ID']) && $data['CONTACT_ID'] > 0)
+			{
+				$data[static::FIELD_NAME_CONTACT_BINDINGS] = EntityBinding::prepareEntityBindings(
+					\CCrmOwnerType::Contact,
+					[$data['CONTACT_ID']]
+				);
+			}
 		}
 
+		$fieldNames = $this->getInternalizableFieldNames();
 		foreach ($fieldNames as $fieldName)
 		{
-			//todo check all possibilities
-			if(isset($data[$fieldName]))
+			if(array_key_exists($fieldName, $data))
 			{
 				$this->setFromExternalValue($fieldName, $data[$fieldName]);
 			}
@@ -511,15 +516,20 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	// region Contacts
 	public function getPrimaryContact(): ?Contact
 	{
+		$firstContact = null;
 		foreach ($this->getContacts() as $contact)
 		{
+			if (!$firstContact)
+			{
+				$firstContact = $contact;
+			}
 			if ($contact->getId() === $this->getContactId())
 			{
 				$primaryContact = $contact;
 			}
 		}
 
-		return $primaryContact ?? null;
+		return $primaryContact ?? $firstContact;
 	}
 
 	/**
@@ -1423,27 +1433,45 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			return $fieldValue->toArray();
 		}
 
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if ($factory)
+		{
+			$field = $factory->getFieldsCollection()->getField($entityFieldName);
+			if ($field && $field->isValueEmpty($fieldValue))
+			{
+				return null;
+			}
+		}
+
 		return $fieldValue;
 	}
 
 	protected function setFromExternalValue(string $fieldName, $value): self
 	{
-		if($this->isUtmField($fieldName))
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if ($factory)
+		{
+			$field = $factory->getFieldsCollection()->getField($fieldName);
+			if ($field && $field->isItemValueEmpty($this) && $field->isValueEmpty($value))
+			{
+				return $this;
+			}
+		}
+		if ($this->isUtmField($fieldName))
 		{
 			return $this->set($fieldName, $value);
 		}
-
-		$field = $this->entityObject->sysGetEntity()->getField($fieldName);
-		if($field instanceof ScalarField || $field instanceof UserTypeField)
+		$entityField = $this->entityObject->sysGetEntity()->getField($fieldName);
+		if ($entityField instanceof ScalarField || $entityField instanceof UserTypeField)
 		{
-			if($field instanceof BooleanField && !is_bool($value))
+			if($entityField instanceof BooleanField && !is_bool($value))
 			{
 				$value = ($value === 'Y');
 			}
 
 			$this->set($fieldName, $value);
 		}
-		elseif($fieldName === static::FIELD_NAME_CONTACT_BINDINGS && is_array($value))
+		elseif ($fieldName === static::FIELD_NAME_CONTACT_BINDINGS && is_array($value))
 		{
 			$added = [];
 			$removed = [];
@@ -1502,6 +1530,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 		return array_diff($names, [
 				static::FIELD_NAME_ID,
+				static::FIELD_NAME_CONTACT_ID,
 			]
 		);
 	}

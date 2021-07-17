@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SESSION_ENTITY_BLOCK_DATE"] = "Blocked on";
 $MESS["SESSION_ENTITY_BLOCK_REASON"] = "Block reason";
 $MESS["SESSION_ENTITY_CATEGORY_ID_FIELD"] = "Category";
@@ -17,6 +17,7 @@ $MESS["SESSION_ENTITY_CRM_TRACE_DATA_FIELD"] = "CRM tracker data";
 $MESS["SESSION_ENTITY_DATE_CLOSE_FIELD"] = "Conversation closed on";
 $MESS["SESSION_ENTITY_DATE_CREATE_FIELD"] = "Created on";
 $MESS["SESSION_ENTITY_DATE_FIRST_ANSWER_FIELD_NEW"] = "Agent replied on";
+$MESS["SESSION_ENTITY_DATE_FIRST_LAST_USER_ACTION_FIELD"] = "Customer's first action date and time in most recent batch";
 $MESS["SESSION_ENTITY_DATE_LAST_MESSAGE_FIELD"] = "Last message posted on";
 $MESS["SESSION_ENTITY_DATE_MODIFY_FIELD"] = "Last modified on";
 $MESS["SESSION_ENTITY_DATE_OPERATOR_ANSWER_FIELD_NEW_1"] = "Agent accepted conversation on";
@@ -49,4 +50,3 @@ $MESS["SESSION_ENTITY_WAIT_ACTION_FIELD"] = "Waiting for the final user action";
 $MESS["SESSION_ENTITY_WAIT_ANSWER_FIELD_NEW"] = "Waiting for agent to respond";
 $MESS["SESSION_ENTITY_WAIT_VOTE_FIELD"] = "Waiting for rating";
 $MESS["SESSION_ENTITY_WORKTIME_FIELD"] = "Conversation initiated during office hours";
-?>

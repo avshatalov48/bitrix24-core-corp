@@ -73,6 +73,16 @@ class EntityFieldProvider
 		{
 			foreach($entityFields['FIELDS'] as $fieldKey => $field)
 			{
+				if (
+					mb_strpos($entityName, 'DYNAMIC_') === 0
+					&&
+					in_array($field['entity_field_name'], ['CATEGORY_ID', 'STAGE_ID'])
+				)
+				{
+					unset($fieldsTree[$entityName]['FIELDS'][$fieldKey]);
+					continue;
+				}
+
 				if(!in_array($field['type'], $availableTypes))
 				{
 					unset($fieldsTree[$entityName]['FIELDS'][$fieldKey]);
@@ -271,17 +281,21 @@ class EntityFieldProvider
 
 	public static function getFieldsInternal($entityName, $entity)
 	{
-		$className = $entity['CLASS_NAME'];
-		$fieldInfoMethodName = isset($entity['GET_FIELDS_CALL']) ? $entity['GET_FIELDS_CALL'] : Entity::getDefaultFieldsInfoMethod();
-		$ufEntityId = $className::$sUFEntityID;
+		$fieldInfoMethodName = isset($entity['GET_FIELDS_CALL'])
+			? $entity['GET_FIELDS_CALL']
+			: Entity::getDefaultFieldsInfoMethod()
+		;
 
-		if(is_array($fieldInfoMethodName))
+		if(is_array($fieldInfoMethodName) || is_callable($fieldInfoMethodName))
 		{
 			$fieldsFunction = $fieldInfoMethodName;
 			$isAlreadyPreparedFields = true;
+			$ufEntityId = null;
 		}
 		else
 		{
+			$className = $entity['CLASS_NAME'];
+			$ufEntityId = $className::$sUFEntityID;
 			$fieldsFunction = array($className, $fieldInfoMethodName);
 			$isAlreadyPreparedFields = false;
 		}
@@ -292,8 +306,6 @@ class EntityFieldProvider
 		}
 
 		$fieldsInfo = call_user_func_array($fieldsFunction, array());
-		$userFieldsInfo = array();
-		self::prepareUserFieldsInfo($userFieldsInfo, $ufEntityId);
 		if($isAlreadyPreparedFields)
 		{
 			$commonExcludedFields = Entity::getEntityMapCommonExcludedFields();
@@ -306,19 +318,19 @@ class EntityFieldProvider
 
 				unset($fieldsInfo[$fieldId]);
 			}
-			//self::prepareMultiFieldsInfo($userFieldsInfo);
-			//$fieldsInfo = $fieldsInfo + $userFieldsInfo;
 		}
 		else
 		{
+			$userFieldsInfo = array();
+			self::prepareUserFieldsInfo($userFieldsInfo, $ufEntityId);
 			$fieldsInfo = $fieldsInfo + $userFieldsInfo;
-			if ($entity['HAS_MULTI_FIELDS'])
-			{
-				self::prepareMultiFieldsInfo($fieldsInfo);
-			}
-			$fieldsInfo = self::prepareFields($fieldsInfo);
 		}
 
+		if ($entity['HAS_MULTI_FIELDS'])
+		{
+			self::prepareMultiFieldsInfo($fieldsInfo);
+		}
+		$fieldsInfo = self::prepareFields($fieldsInfo);
 		return self::prepareWebFormFields($entityName, $fieldsInfo);
 	}
 

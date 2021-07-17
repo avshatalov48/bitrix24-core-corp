@@ -4,5 +4,6 @@ return [
 	"recipient",
 	"helpers/component",
 	"task",
-	"stress/more",
+	"menu/spotlight",
+	"stress/more"
 ];

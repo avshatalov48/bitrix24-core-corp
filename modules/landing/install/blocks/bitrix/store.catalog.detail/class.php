@@ -111,7 +111,8 @@ class StoreCatalogDetailBlock extends \Bitrix\Landing\LandingBlock
 				),
 				'filter' => array(
 					'IBLOCK_ID' => $this->params['IBLOCK_ID']
-				)
+				),
+				'limit' => 1
 			));
 			if ($row = $res->fetch())
 			{

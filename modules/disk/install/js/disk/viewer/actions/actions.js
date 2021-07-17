@@ -33,6 +33,8 @@
 
 	BX.Disk.Viewer.Actions.runActionDefaultEdit = function (item, params, additionalParams)
 	{
+		additionalParams = additionalParams || {};
+
 		if (BX.Disk.Viewer.Actions.checkFirstRun())
 		{
 			if (additionalParams.modalWindow)
@@ -43,8 +45,13 @@
 			return;
 		}
 
-		additionalParams = additionalParams || {};
-		if (BX.Disk.getDocumentService() !== 'l' && BX.Disk.getDocumentService() !== 'onlyoffice' && !BX.UI.Viewer.Instance.isOpen())
+		var isOnlyOffice = BX.Disk.getDocumentService() === 'onlyoffice';
+		if (!isOnlyOffice && BX.getClass('BX.Disk.Viewer.OnlyOfficeItem'))
+		{
+			isOnlyOffice = item instanceof BX.Disk.Viewer.OnlyOfficeItem;
+		}
+
+		if (BX.Disk.getDocumentService() !== 'l' && !isOnlyOffice && !BX.UI.Viewer.Instance.isOpen())
 		{
 			BX.UI.Viewer.Instance.openByNode(item.sourceNode);
 		}
@@ -97,8 +104,16 @@
 				onAfterSave: function(response) {
 					if (response.status === 'success' && BX.getClass('BX.UI.Viewer.Instance'))
 					{
-						BX.UI.Viewer.Instance.reloadCurrentItem();
+						if (BX.UI.Viewer.Instance.isOpen())
+						{
+							BX.UI.Viewer.Instance.reloadCurrentItem();
+						}
+						else if (BX.Disk.getDocumentService() !== 'onlyoffice')
+						{
+							BX.Disk.showModalWithStatusAction();
+						}
 					}
+
 				}
 			});
 

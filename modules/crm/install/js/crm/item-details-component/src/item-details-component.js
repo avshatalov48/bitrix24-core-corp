@@ -25,6 +25,7 @@ export type ItemDetailsComponentParams = {
 	editorGuid: ?string,
 	isStageFlowActive: ?boolean,
 	pullTag: ?string,
+	bizprocStarterConfig: ?Object,
 };
 
 declare type Category = {
@@ -60,6 +61,7 @@ export class ItemDetailsComponent
 	editorGuid: ?string;
 	isStageFlowActive: ?boolean;
 	pullTag: ?string;
+	bizprocStarterConfig: ?Object;
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -101,6 +103,7 @@ export class ItemDetailsComponent
 			this.editorGuid = params.editorGuid;
 			this.isStageFlowActive = params.isStageFlowActive;
 			this.pullTag = params.pullTag;
+			this.bizprocStarterConfig = params.bizprocStarterConfig;
 
 			this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
 		}
@@ -360,6 +363,13 @@ export class ItemDetailsComponent
 	bindEvents(): void
 	{
 		EventEmitter.subscribe('BX.Crm.ItemDetailsComponent:onClickDelete', this.handleItemDelete.bind(this));
+		if (this.bizprocStarterConfig)
+		{
+			EventEmitter.subscribe(
+				'BX.Crm.ItemDetailsComponent:onClickBizprocTemplates',
+				this.handleBPTemplatesShow.bind(this),
+			);
+		}
 		if (this.editorGuid && this.userFieldCreateUrl && BX.SidePanel && BX.Crm.EntityEditor)
 		{
 			EventEmitter.subscribe(
@@ -442,6 +452,25 @@ export class ItemDetailsComponent
 			}
 		}).then( () => {
 			this.stopProgress();
+
+			let currentSlider: ?BX.SidePanel.Slider = null;
+			if (Reflection.getClass('BX.SidePanel.Instance.getTopSlider'))
+			{
+				currentSlider = BX.SidePanel.Instance.getTopSlider();
+			}
+			if (currentSlider !== null)
+			{
+				if (Reflection.getClass('BX.Crm.EntityEvent'))
+				{
+					let eventParams = null;
+					if(currentSlider)
+					{
+						eventParams = { "sliderUrl": currentSlider.getUrl() };
+					}
+					BX.Crm.EntityEvent.fireUpdate(this.entityTypeId, this.id, '', eventParams);
+				}
+			}
+
 			this.updateStage(stage);
 		}).catch((response) => {
 			this.stopProgress();
@@ -583,6 +612,15 @@ export class ItemDetailsComponent
 
 					if (currentSlider !== null)
 					{
+						if (Reflection.getClass('BX.Crm.EntityEvent'))
+						{
+							let eventParams = null;
+							if(currentSlider)
+							{
+								eventParams = { "sliderUrl": currentSlider.getUrl() };
+							}
+							BX.Crm.EntityEvent.fireDelete(this.entityTypeId, this.id, '', eventParams);
+						}
 						currentSlider.close();
 					}
 					else
@@ -599,6 +637,12 @@ export class ItemDetailsComponent
 				messageBox.close();
 			}
 		});
+	}
+
+	handleBPTemplatesShow(event)
+	{
+		const starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
+		starter.showTemplatesMenu(event.data.button.button);
 	}
 
 	handleClosePartialEntityEditor(event: BaseEvent)

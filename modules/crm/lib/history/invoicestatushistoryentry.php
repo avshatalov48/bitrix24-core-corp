@@ -9,6 +9,8 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\History\Entity\InvoiceStatusHistoryTable;
+use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Crm\Service\Container;
 
 class InvoiceStatusHistoryEntry
 {
@@ -301,5 +303,51 @@ class InvoiceStatusHistoryEntry
 			)
 		);
 		return true;
+	}
+
+	public static function getListFilteredByPermissions(
+		array $parameters,
+		?int $userId = null,
+		string $operation = UserPermissions::OPERATION_READ
+	)
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		if ($userPermissions->getUserId() === 0)
+		{
+			// no data for unauthorized user
+			return [];
+		}
+
+		$parameters['filter'] = $userPermissions->applyAvailableItemsFilter(
+			$parameters['filter'] ?? [],
+			[\CCrmOwnerType::InvoiceName],
+			$operation,
+			'OWNER_ID'
+		);
+
+		return InvoiceStatusHistoryTable::getList($parameters);
+	}
+
+	public static function getItemsCountFilteredByPermissions(
+		array $filter,
+		?int $userId = null,
+		string $operation = UserPermissions::OPERATION_READ
+	): int
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		if ($userPermissions->getUserId() === 0)
+		{
+			// no data for unauthorized user
+			return 0;
+		}
+
+		$filter = $userPermissions->applyAvailableItemsFilter(
+			$filter,
+			[\CCrmOwnerType::InvoiceName],
+			$operation,
+			'OWNER_ID'
+		);
+
+		return InvoiceStatusHistoryTable::getCount($filter);
 	}
 }

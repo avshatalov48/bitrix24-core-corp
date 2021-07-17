@@ -1,5 +1,4 @@
-.page-description
-{
+.page-description {
 	color: #868693;
 	font: 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
@@ -7,164 +6,149 @@
 }
 
 .bx-dark,
-.bx-dark p
-{
+.bx-dark p {
 	color: #ccccd3;
 }
 
-.bx-dark hr
-{
+.bx-dark hr {
 	border-color: rgba(255, 255, 255, .1);
 }
 
-.order-list-header
-{
+.order-list-header {
 	padding: 18px 15px;
 }
-.order-list-header-title
-{
+
+.order-list-header-title {
 	font: 24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 	font-weight: bold;
 	color: #333;
 }
-.bx-dark .order-list-header-title
-{
+
+.bx-dark .order-list-header-title {
 	color: #fff;
 }
 
-.order-list-header-order
-{
-	font: 19px/23px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	/*tmp hack*/
-	font-family: "Roboto", Arial, sans-serif;
+.order-list-header-order {
+	font: 19px/23px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-weight: normal;
 	color: #9e9eae;
 }
-.bx-dark .order-list-header-order
-{
+
+.bx-dark .order-list-header-order {
 	color: #acacb4;
 }
 
-.order-list-container
-{
+.order-list-container {
 	position: relative;
 	z-index: 20;
 	width: auto;
 	background-color: #fff;
 }
 
-.bx-dark .order-list-container
-{
+.bx-dark .order-list-container {
 	background-color: #242426;
 }
 
-.order-list-title
-{
+.order-list-title {
 	text-align: center;
 	padding: 21px;
 	color: #333;
-	font: 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	/*tmp hack*/
-	font-family: "Roboto", Arial, sans-serif;
+	font: 16px/19px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.bx-dark .order-list-title
-{
+.bx-dark .order-list-title {
 	color: #fff;
 }
 
-.order-list-item
-{
+.order-list-item {
 	padding: 20px 15px;
 	border-bottom: 1px solid #eeeff0;
 }
 
-.order-list-item:last-child
-{
+.order-list-item:last-child {
 	border-color: #dcdee1;
 }
 
-.bx-dark .order-list-item
-{
+.bx-dark .order-list-item {
 	border-color: #3a3a3c;
 }
 
-.bx-dark .order-list-item:last-child
-{
+.bx-dark .order-list-item:last-child {
 	border-color: #666667;
 }
 
-.order-item-image
-{
+.order-item-image-container.col-auto {
 	width: 60px;
 	height: 80px;
-	object-fit: cover;
+}
+
+.order-item-image {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
 }
 
 .order-item-type,
-.order-item-quantity
-{
+.order-item-quantity {
 	color: #acacb4;
-	font: 12px/14px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	/*tmp hack*/
-	font-family: "Roboto", Arial, sans-serif;
+	font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;if;
 }
 
 .bx-dark .order-item-type,
-.bx-dark .order-item-quantity
-{
+.bx-dark .order-item-quantity {
 	color: #acacb4;
 }
 
-.order-item-title
-{
+.order-item-title {
 	color: #2c2c36;
-	font: 16px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	/*tmp hack*/
-	font-family: "Roboto", Arial, sans-serif;
+	font: 16px/24px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.bx-dark .order-item-title
-{
+.bx-dark .order-item-title {
 	color: #fff;
 }
 
-.order-item-quantity
-{
+.order-item-property {
+	font-size: 14px;
+	line-height: 19px;
+	color: #9e9eae;
+	text-overflow: ellipsis;
+}
+
+.bx-dark .order-item-property {
+	color: #acacb4;
+}
+
+.order-item-quantity {
 	margin-top: 8px;
 	text-align: right;
 }
 
-.order-total-container
-{
+.order-total-container {
 	position: relative;
 }
 
 .order-total-price-row,
 .order-total-price-old-row,
-.order-total-tax-row
-{
+.order-total-tax-row {
 	background-color: #fff;
 }
 
 .bx-dark .order-total-price-row,
 .bx-dark .order-total-price-old-row,
-.bx-dark .order-total-tax-row
-{
+.bx-dark .order-total-tax-row {
 	background-color: #242426;
 }
 
-.order-total table
-{
+.order-total table {
 	width: 100%;
 	border: none;
 	border-collapse: collapse;
 }
 
-.order-total-item
-{
+.order-total-item {
 	width: 100%;
 	padding: 0 0 15px 15px;
 	vertical-align: middle;
@@ -175,18 +159,15 @@
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-item
-{
+.bx-dark .order-total-item {
 	color: #acacb4;
 }
 
-.order-total-item.order-total-item-total-price
-{
+.order-total-item.order-total-item-total-price {
 	vertical-align: top;
 }
 
-.order-total-value
-{
+.order-total-value {
 	padding: 0 15px 18px;
 	color: #93939b;
 	text-align: right;
@@ -195,43 +176,36 @@
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-value
-{
+.bx-dark .order-total-value {
 	color: #fff
 }
 
-.order-total-price-row td
-{
-	padding-top: 18px;
-}
-.order-total-delivery-row td
-{
+.order-total-price-row td {
 	padding-top: 18px;
 }
 
-.order-total-delivery-row .order-total-price
-{
+.order-total-delivery-row td {
+	padding-top: 18px;
+}
+
+.order-total-delivery-row .order-total-price {
 	padding: 6px 0;
 }
 
-.order-total-delivery-row .order-total-item
-{
+.order-total-delivery-row .order-total-item {
 	font-size: 16px;
 	text-align: left;
 }
 
-.order-total-delivery-row td
-{
+.order-total-delivery-row td {
 	border-bottom: 1px solid #e6e7eb;
 }
 
-.bx-dark .order-total-delivery-row td
-{
+.bx-dark .order-total-delivery-row td {
 	border-color: #333;
 }
 
-.order-item-price, .order-total-price
-{
+.order-item-price, .order-total-price {
 	color: #2c2c36;
 	text-align: right;
 	white-space: nowrap;
@@ -240,22 +214,19 @@
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.order-item-price
-{
+.order-item-price {
 	font-weight: normal;
 }
 
 .order-total-container .rub,
-.order-item-price .rub
-{
+.order-item-price .rub {
 	font-family: 'rubleBitrix';
 }
 
 .order-item-price-old,
-.order-total-price-old
-{
+.order-total-price-old {
 	opacity: .7;
-	color: #4E8B9E;
+	color: #4e8b9e;
 	text-decoration: line-through;
 	white-space: nowrap;
 	font: 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -266,26 +237,23 @@
 }
 
 .bx-dark .order-item-price,
-.bx-dark .order-total-price
-{
+.bx-dark .order-total-price {
 	color: #fff;
 }
 
 .bx-dark .order-item-price-old,
-.bx-dark .order-total-price-old
-{
-	color: #8CC8DB;
+.bx-dark .order-total-price-old {
+	color: #8cc8db;
 	opacity: .5;
 }
 
 .order-total-sale-price,
-.order-total-delivery-price
-{
+.order-total-delivery-price {
 	display: inline-block;
 	padding: 6px 8px;
 	border-radius: 4px;
 	background-color: #ffcd4d;
-	color: #333333;
+	color: #333;
 	vertical-align: middle;
 	white-space: nowrap;
 	font: 600 16px/19px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -294,74 +262,91 @@
 }
 
 .bx-dark .order-total-sale-price,
-.bx-dark .order-total-delivery-price
-{
+.bx-dark .order-total-delivery-price {
 	background-color: #1457a3;
 	color: #fff;
 }
 
-.order-total-delivery-price
-{
+.order-total-delivery-price {
 	font: 500 15px/18px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 	background-color: #d0e8c7;
 }
 
-.bx-dark .order-total-delivery-price
-{
+.bx-dark .order-total-delivery-price {
 	background-color: #086022;
 }
 
 /**/
-.order-total-result
-{
+.order-total-result {
 	padding: 15px;
 }
 
-.order-total-result-name
-{
+.order-total-result-name {
 	color: #333;
 	font: 500 20px/24px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-result-name
-{
+.bx-dark .order-total-result-name {
 	color: #fff;
 }
 
-.order-total-result-value
-{
+.order-total-result-value {
 	color: #333;
 	font: 500 24px/29px "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .order-total-result-value
-{
+.bx-dark .order-total-result-value {
 	color: #fff;
 }
 
-/*endregion*/
+.checkout-basket-title {
+	font: 500 18px/21px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #121212;
+	margin-bottom: 16px;
+}
+
+.bx-dark .checkout-basket-title { color: #fff; }
+
+.alert.alert-danger {
+	background: rgba(255,87,82,.2);
+	border-color: transparent;
+	color: #CF2823;
+}
+
+.alert {
+	padding: 13px 17px;
+	font: 500 16px/21px Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.checkout-payment-title {
+	font: 500 18px/21px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #121212;
+	margin-bottom: 16px;
+}
+
+.bx-dark .checkout-payment-title {
+	color: #fff;
+}
+	/*endregion*/
 
 /*region contacts*/
-.contacts-phone
-{
+.contacts-phone {
 	font: 500 16px/24px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.bx-dark .contacts-phone
-{
+.bx-dark .contacts-phone {
 	color: #fff;
 }
 
-.contacts-maps-button
-{
+.contacts-maps-button {
 	padding: 15px 10px;
 	text-align: center;
 }
@@ -369,20 +354,17 @@
 /*endregion*/
 
 /*region Appointments*/
-.appointments-form-container
-{
+.appointments-form-container {
 }
 
-.appointments-form-days
-{
+.appointments-form-days {
 	overflow-x: auto;
 	min-height: 60px;
 	width: 100%;
 	-webkit-overflow-scrolling: touch;
 }
 
-.appointments-form-day-block
-{
+.appointments-form-day-block {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -405,8 +387,7 @@
 	justify-content: center;
 }
 
-.appointments-form-day-date
-{
+.appointments-form-day-date {
 	color: #6e6e79;
 	letter-spacing: 0.05em;
 	font: 500 16px/18px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -414,8 +395,7 @@
 	font-family: "Roboto", Arial, sans-serif;
 }
 
-.appointments-form-day-of-week
-{
+.appointments-form-day-of-week {
 	color: #acacb4;
 	letter-spacing: 0.05em;
 	font: 500 11px/15px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;

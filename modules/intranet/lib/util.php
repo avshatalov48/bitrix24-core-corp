@@ -496,6 +496,14 @@ class Util
 			return false;
 		}
 
+		if (
+			Loader::includeModule("bitrix24")
+			&& \Bitrix\Bitrix24\Integrator::isIntegrator($currentUserId)
+		)
+		{
+			return false;
+		}
+
 		$userData = \Bitrix\Main\UserTable::getList([
 			'select' => [ 'ID', 'UF_DEPARTMENT', 'ACTIVE' ],
 			'filter' => [
@@ -589,6 +597,14 @@ class Util
 			return false;
 		}
 
+		if (
+			Loader::includeModule("bitrix24")
+			&& \Bitrix\Bitrix24\Integrator::isIntegrator($currentUserId)
+		)
+		{
+			return false;
+		}
+		
 		$userData = \Bitrix\Main\UserTable::getList(array(
 			'select' => [ 'ID', 'UF_DEPARTMENT', 'ACTIVE' ],
 			'filter' => [

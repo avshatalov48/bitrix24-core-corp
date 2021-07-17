@@ -305,7 +305,7 @@ class Comment extends Base
 		$uiComment->sendMentions(
 			$timeline->getId(),
 			$timeline->getUserId(),
-			$text,
+			$timeline->getDescription(),
 			$message,
 			$previouslyMentionedUserIds
 		);

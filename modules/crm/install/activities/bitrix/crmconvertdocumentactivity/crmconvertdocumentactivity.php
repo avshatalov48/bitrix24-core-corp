@@ -1,13 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-use Bitrix\Crm\Conversion\DealConversionConfig;
-use Bitrix\Crm\Conversion\DealConversionWizard;
-use Bitrix\Crm\Conversion\LeadConversionConfig;
-use Bitrix\Crm\Conversion\LeadConversionWizard;
-use Bitrix\Crm\Conversion\LeadConversionScheme;
-use Bitrix\Crm\Conversion\LeadConversionType;
-use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmConvertDocumentActivity extends CBPActivity
 {
@@ -190,8 +186,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			$map['DealCategoryId'] = [
 				'Name' => GetMessage('CRM_CVTDA_DEAL_CATEGORY_ID'),
 				'FieldName' => 'deal_category_id',
-				'Type' => 'select',
-				'Options' => \Bitrix\Crm\Category\DealCategory::getSelectListItems()
+				'Type' => 'deal_category',
 			];
 
 			$map['DisableActivityCompletion'] = [
@@ -240,9 +235,16 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion']
 		);
 
-		if (count($errors) > 0)
+		if ($arProperties['DealCategoryId'] === '' && static::isExpression($arCurrentValues['deal_category_id_text']))
 		{
-			return false;
+			$arProperties['DealCategoryId'] = $arCurrentValues['deal_category_id_text'];
+		}
+
+		if (
+			$arProperties['DisableActivityCompletion'] === ''
+			&& static::isExpression($arCurrentValues['disable_activity_completion_text']))
+		{
+			$arProperties['DisableActivityCompletion'] = $arCurrentValues['disable_activity_completion_text'];
 		}
 
 		$errors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));

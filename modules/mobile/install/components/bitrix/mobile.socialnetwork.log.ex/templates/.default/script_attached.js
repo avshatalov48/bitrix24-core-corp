@@ -61,54 +61,14 @@
 function __MSLOnPostRead(node, e)
 {
 	if (
-		(node = BX(node))
-		&& node
-		&& !node.hasAttribute("done")
+		!BX.type.isDomNode(node)
+		|| node.hasAttribute('done')
 	)
 	{
-		oMSL.setLogEntryImpPostRead({
-			node: node,
-			value: true
-		});
-		var data = {
-			mobile_action : 'read_post',
-			action : 'read_post',
-			post_id : node.getAttribute("bx-data-post-id"),
-			options : [{ post_id : node.getAttribute("bx-data-post-id"), name : "BLOG_POST_IMPRTNT", value : "Y"}],
-			sessid : BX.bitrix_sessid()};
-
-		BX.ajax({
-			method : 'GET',
-			url : BX.message('SITE_DIR') + 'mobile/index.php?' + BX.ajax.prepareData(data),
-			dataType : 'json',
-			onsuccess : BX.delegate(function(responseData) {
-				if (
-					typeof responseData.SUCCESS != 'undefined'
-					&& responseData.SUCCESS == 'Y'
-				)
-				{
-					BXMobileApp.onCustomEvent('onLogEntryImpPostRead', {
-						postId: data.post_id
-					}, true);
-				}
-				else
-				{
-					oMSL.setLogEntryImpPostRead({
-						node: node,
-						value: false
-					});
-				}
-			}, this),
-			onfailure: function() {
-				oMSL.setLogEntryImpPostRead({
-					node: node,
-					value: false
-				});
-			}
-		});
-		return true;
+		return false;
 	}
-	return false;
+
+	return BX.MobileLivefeed.ImportantManagerInstance.setPostRead(node);
 }
 
 function __MSLOnFeedPreInit(params) // only for the list
@@ -702,13 +662,11 @@ function __MSLOnFeedInit(params)
 				});
 			});
 
-			BXMobileApp.addCustomEvent("onLogEntryImpPostRead", function(data) {
-				if (BX('important_post_' + data.postId))
-				{
-					oMSL.onLogEntryImpPostRead({
-						node: BX('important_post_' + data.postId)
-					});
-				}
+			BXMobileApp.addCustomEvent('onLogEntryImpPostRead', function(data) {
+				BX.MobileLivefeed.ImportantManagerInstance.renderRead({
+					node: BX('important_post_' + data.postId),
+					value: true
+				});
 			});
 
 			BXMobileApp.addCustomEvent("onLogEntryFollow", function(data)
@@ -2241,24 +2199,6 @@ function commentsNativeInputCallback(params)
 	});
 }
 
-__MSLSendError = function(message, url, linenumber)
-{
-	BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.mobileLogError', {
-		data: {
-			message: message,
-			url: url,
-			lineNumber: linenumber,
-		}
-	}).then(function(response) {
-	}, function(response) {
-	});
-};
-
-__MSLSendErrorEval = function(script)
-{
-	BX.evalGlobal('try { ' + script + ' } catch (e) { __MSLSendError(e.message, e.name, e.number); }');
-};
-
 BitrixMSL = function ()
 {
 	this.scriptsAttached = [];
@@ -2805,6 +2745,8 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 
 	if (!bReopen)
 	{
+		var ratingTextNode = document.getElementById('rating_text');
+
 		if (typeof data.ratingText != 'undefined')
 		{
 			if (BX('rating-footer-wrap'))
@@ -2821,21 +2763,56 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				BX('rating-footer-wrap').style.display = "block";
 			}
 
-			if (BX('rating_text'))
+			if (ratingTextNode)
 			{
 				if (typeof (data.ratingCounter) != 'undefined')
 				{
-					BX('rating_text').setAttribute('data-counter', parseInt(data.ratingCounter));
+					ratingTextNode.setAttribute('data-counter', parseInt(data.ratingCounter));
 				}
 
-				if (BX.type.isNotEmptyString(data.ratingText))
+				if (
+					BX.type.isNotEmptyString(data.ratingText)
+					&& typeof RatingLike !== 'undefined'
+				)
 				{
-					BX('rating_text').innerHTML = data.ratingText;
-					BX('rating_text').style.display = 'inline-block';
+					ratingTextNode.innerHTML = data.ratingText;
+					ratingTextNode.style.display = 'inline-block';
+
+					var ratingNode = ratingTextNode.querySelector('[data-rating-vote-id]');
+					if (ratingNode)
+					{
+						var ratingVoteId = ratingNode.getAttribute('data-rating-vote-id');
+						var ratingVoteEntityTypeId = ratingNode.getAttribute('data-rating-entity-type-id');
+						var ratingVoteEntityId = parseInt(ratingNode.getAttribute('data-rating-entity-id'));
+
+						if (
+							BX.type.isNotEmptyString(ratingVoteId)
+							&& BX.type.isNotEmptyString(ratingVoteEntityTypeId)
+							&& ratingVoteEntityId > 0
+						)
+						{
+							RatingLike.Set(
+								ratingVoteId,
+								ratingVoteEntityTypeId,
+								ratingVoteEntityId,
+								'Y',
+								BX.message('USER_ID'),
+								{
+									LIKE_Y: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
+									LIKE_N: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
+									LIKE_D: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_D'),
+								},
+								'like_react',
+								BX.message('MSLPathToUser'),
+								false,
+								true
+							);
+						}
+					}
 				}
 				else
 				{
-					BX('rating_text').style.display = 'none';
+					ratingTextNode.style.display = 'none';
 				}
 			}
 
@@ -2868,9 +2845,9 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				BX('rating_button_cont').style.display = 'none';
 			}
 
-			if (BX('rating_text'))
+			if (ratingTextNode)
 			{
-				BX('rating_text').style.display = 'none';
+				ratingTextNode.style.display = 'none';
 			}
 		}
 	}
@@ -3101,7 +3078,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				postTopBlock.innerHTML = data.topText;
 				var postScripts = oMSL.parseAndExecCode(data.topText, 0, false, true);
 				setTimeout(function() {
-					__MSLSendErrorEval(postScripts);
+					BX.MobileLivefeed.Instance.sendErrorEval(postScripts);
 				}, 0);
 			}
 		}
@@ -3209,7 +3186,7 @@ BitrixMSL.prototype.drawDetailPageText = function(data)
 
 	setTimeout(function()
 	{
-		__MSLSendErrorEval(postScripts);
+		BX.MobileLivefeed.Instance.sendErrorEval(postScripts);
 		BitrixMobile.LazyLoad.showImages(); // when redraw detail
 		if (
 			BX.message('MSLLoadScriptsNeeded') == 'Y'
@@ -3256,7 +3233,7 @@ BitrixMSL.prototype.onLogEntryPostUpdated = function(data)
 
 		setTimeout(function()
 		{
-			__MSLSendErrorEval(postScripts);
+			BX.MobileLivefeed.Instance.sendErrorEval(postScripts);
 			BitrixMobile.LazyLoad.showImages(); // when redraw detail
 			if (
 				BX.message('MSLLoadScriptsNeeded') == 'Y'
@@ -3642,7 +3619,7 @@ BitrixMSL.prototype.parseAndExecCode = function(text, timeout, bExec, bReturnScr
 		)
 		{
 			setTimeout(function() {
-				__MSLSendErrorEval(parsedScripts);
+				BX.MobileLivefeed.Instance.sendErrorEval(parsedScripts);
 			}, timeout);
 		}
 	}
@@ -5641,61 +5618,6 @@ BitrixMSL.prototype.onLogEntryRatingLike = function(params)
 	}
 
 	delete this.arRatingLikeProcess[rating_id];
-};
-
-BitrixMSL.prototype.onLogEntryImpPostRead = function(params)
-{
-	if (
-		typeof params == 'undefined'
-		|| typeof params.node == 'undefined'
-		|| !BX(params.node)
-	)
-	{
-		return;
-	}
-
-	oMSL.setLogEntryImpPostRead({
-		node: BX(params.node),
-		value: true
-	});
-};
-
-BitrixMSL.prototype.setLogEntryImpPostRead = function(params)
-{
-	if (
-		typeof params == 'undefined'
-		|| typeof params.node == 'undefined'
-		|| !BX(params.node)
-	)
-	{
-		return;
-	}
-
-	var node = BX(params.node);
-	var value = !!params.value;
-
-	if (value)
-	{
-		node.checked = true;
-		node.setAttribute("done", "Y");
-		BX.unbindAll(node);
-	}
-	else
-	{
-		node.checked = false;
-		delete node.checked;
-		node.removeAttribute("done");
-	}
-
-	var container = BX.findParent(node, { className: 'post-item-important' });
-	if (BX.type.isDomNode(container))
-	{
-		var listNode = container.querySelector('.post-item-important-list');
-		if (BX.type.isDomNode(listNode))
-		{
-			listNode.classList.add('post-item-important-list-read');
-		}
-	}
 };
 
 BitrixMSL.prototype.onLogCommentRatingLike = function(params)

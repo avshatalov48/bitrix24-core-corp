@@ -169,7 +169,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			'rest' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_REST'),
 		);
 
-		$runtime = CBPRuntime::getRuntime();
+		$runtime = CBPRuntime::getRuntime(true);
 		$documentType = \Bitrix\Disk\BizProcDocumentCompatible::generateDocumentComplexType($this->arParams['STORAGE_ID']);
 		$this->arResult['ACTIVITIES'] = $runtime->searchActivitiesByType('activity', $documentType);
 
@@ -191,13 +191,27 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			$this->application->setTitle(Loc::getMessage('BIZPROC_WFEDIT_TITLE_ADD'));
 		}
 
-		$defUserParamsStr = serialize(array('groups' => array()));
-		$userParamsStr = CUserOptions::getOption('~bizprocdesigner', 'activity_settings', $defUserParamsStr);
-		if (empty($userParamsStr) || !CheckSerializedData($userParamsStr))
-			$userParamsStr = $defUserParamsStr;
+		$userParamsStr = CUserOptions::GetOption('~bizprocdesigner', 'activity_settings');
+		if (is_array($userParamsStr))
+		{
+			$userParams = $userParamsStr;
+		}
+		elseif ($userParamsStr && CheckSerializedData($userParamsStr))
+		{
+			$userParams = unserialize($userParamsStr, ['allowed_classes' => false]);
+		}
 
-		$this->arResult['USER_PARAMS'] = unserialize($userParamsStr);
+		if (empty($userParams) || !is_array($userParams))
+		{
+			$userParams = ['SNIPPETS' => []];
+		}
+
+		$this->arResult['USER_PARAMS'] = $userParams;
 		$this->arResult['BACK_TO_STORAGE'] = $this->getUrlToStorage();
+
+		/** @var CBPDocumentService $documentService */
+		$documentService = $runtime->getDocumentService();
+		$this->arResult['DOCUMENT_FIELDS'] = $documentService->GetDocumentFields($documentType);
 
 		$this->includeComponentTemplate();
 	}
@@ -216,7 +230,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 
 	protected function processActionSaveAjax()
 	{
-		if ($this->request->isAjaxRequest())
+		//if ($this->request->isAjaxRequest())
 		{
 			$this->request->addFilter(new PostDecodeFilter);
 		}

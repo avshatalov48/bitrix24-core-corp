@@ -1,7 +1,10 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
+$MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Open Channel conversation custom fields";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Are you sure you want to proceed?";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL"] = "Copy link";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL_DONE"] = "Link copied to the Clipboard.";
 $MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Open Channels";
 $MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Select action";
 $MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Assign responsible person";

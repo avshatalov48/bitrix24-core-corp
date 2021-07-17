@@ -25,10 +25,10 @@ use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Contract\Controllerable;
-use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\Json;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ObjectException;
@@ -44,6 +44,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	public const TAB_NAME_EVENT = 'tab_event';
 	public const TAB_NAME_PRODUCTS = 'tab_products';
 	public const TAB_NAME_TREE = 'tab_tree';
+	public const TAB_NAME_BIZPROC = 'tab_bizproc';
 	public const TAB_NAME_AUTOMATION = 'tab_automation';
 
 	protected const MAX_ENTITIES_IN_TAB = 20;
@@ -121,14 +122,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		{
 			$this->item = $this->factory->createItem();
 
-			$parentItems = $this->parseParentIdsFromRequest();
-			foreach ($parentItems as $fieldName => $itemIdentifier)
-			{
-				if ($this->item->hasField($fieldName))
-				{
-					$this->item->set($fieldName, $itemIdentifier->getEntityId());
-				}
-			}
+			$this->fillParentFields();
 
 			if ($this->factory->isMyCompanyEnabled())
 			{
@@ -267,7 +261,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$this->arResult['activityEditorParams'] = $this->getActivityEditorConfig();
 		$this->arResult['jsParams'] = $this->getJsParams();
 
-		if($this->factory->isStagesEnabled())
+		if ($this->factory->isStagesEnabled())
 		{
 			$converter = Container::getInstance()->getStageConverter();
 			$stages = $this->factory->getStages($this->categoryId);
@@ -285,7 +279,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				}
 				$this->arResult['jsParams']['stages'][] = $converter->toJson($stage);
 			}
-			$this->arResult['jsParams']['currentStageId'] = $currentStage->getId();
+			$this->arResult['jsParams']['currentStageId'] = $currentStage ? $currentStage->getId() : null;
 		}
 
 		$this->arResult['jsParams']['item'] = $this->item->jsonSerialize();
@@ -379,6 +373,15 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			);
 		}
 
+		if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId()))
+		{
+			$starterConfig = $this->getBizprocStarterConfig();
+			if ($starterConfig)
+			{
+				$params['bizprocStarterConfig'] = $starterConfig;
+			}
+		}
+
 		return $params;
 	}
 
@@ -413,6 +416,13 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		];
 	}
 
+	protected function getExtras(): array
+	{
+		return [
+			'CATEGORY_ID' => $this->categoryId
+		];
+	}
+
 	protected function getEntityDetailsParams(): array
 	{
 		$entityId = $this->item->getId();
@@ -426,6 +436,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			'ENTITY_ID' => $entityId,
 			'GUID' => $this->getGuid(),
 			'ENTITY_INFO' => $this->getEntityInfo(),
+			'EXTRAS' => $this->getExtras(),
 			'READ_ONLY' => $this->isReadOnly(),
 			'TABS' => $this->getTabs(),
 			'EDITOR' => $this->getEditorConfig(),
@@ -520,10 +531,29 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				'enabled' => !$this->item->isNew(),
 			];
 		}
+		if ($tabCode === static::TAB_NAME_BIZPROC)
+		{
+			return [
+				'id' => static::TAB_NAME_BIZPROC,
+				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_BIZPROC'),
+				'loader' => [
+					'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+					'componentData' => [
+						'template' => 'frame',
+						'params' => [
+							'MODULE_ID' => 'crm',
+							'ENTITY' => \CCrmBizProcHelper::ResolveDocumentName($this->item->getEntityTypeId()),
+							'DOCUMENT_TYPE' => $this->factory->getEntityName(),
+							'DOCUMENT_ID' => $this->factory->getEntityName() . '_' . $this->item->getId(),
+						]
+					]
+				]
+			];
+		}
 		if ($tabCode === static::TAB_NAME_AUTOMATION)
 		{
 			return [
-				'id' => 'tab_automation',
+				'id' => static::TAB_NAME_AUTOMATION,
 				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_AUTOMATION'),
 				'loader' => [
 					'serviceUrl' => '/bitrix/components/bitrix/crm.automation/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
@@ -580,10 +610,16 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		$tabs[static::TAB_NAME_EVENT] = [];
 
+		if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->factory->getEntityTypeId()))
+		{
+			$tabs[static::TAB_NAME_BIZPROC] = [];
+		}
 		if ($this->factory->isAutomationEnabled())
 		{
 			$tabs[static::TAB_NAME_AUTOMATION] = [];
 		}
+
+		$tabs[static::TAB_NAME_TREE] = [];
 
 		return $tabs;
 	}
@@ -629,7 +665,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'CURRENCY_ID' => $this->item->getCurrencyId(),
 					// 'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
 					'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
-					'PRODUCTS' => $this->editorAdapter->getSrcItemProductsEntityData(),
+					'PRODUCTS' => $this->getProductsData(),
 					'PRODUCT_DATA_FIELD_NAME' => $this->getProductDataFieldName(),
 					'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
 					/*
@@ -724,11 +760,49 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			}
 		}
 
+		if (
+			\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
+			&& $this->getBizprocStarterConfig()
+		)
+		{
+			$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
+		}
+
 		return array_merge(parent::getToolbarParameters(), [
 			'buttons' => $buttons,
 			'communications' => $this->getCommunicationToolbarParameters(),
 			'hideBorder' => true,
 		]);
+	}
+
+	protected function getBizprocStarterConfig(): array
+	{
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType($this->item->getEntityTypeId());
+		$documentId = \CCrmBizProcHelper::ResolveDocumentId($this->item->getEntityTypeId(), $this->item->getId());
+
+		$config = [];
+		if (Loader::includeModule('bizproc'))
+		{
+			$templates = \CBPDocument::getTemplatesForStart(
+				$this->userID,
+				$documentType,
+				$documentId,
+				['DocumentStates' => []]
+			);
+
+			if ($templates)
+			{
+				$config = [
+					'templates' => $templates,
+					'moduleId' => 'crm',
+					'entity' => $documentType[1],
+					'documentType' => $documentType[2],
+					'documentId' => $documentId[2],
+				];
+			}
+		}
+
+		return $config;
 	}
 
 	protected function getCommunicationToolbarParameters(): array
@@ -818,6 +892,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				'COMPONENT_NAME' => $this->getName(),
 				'ACTION_NAME' => 'save',
 				'SIGNED_PARAMETERS' => $this->getSignedParameters(),
+				'RELOAD_ACTION_NAME' => 'load',
 			],
 			'CONTEXT' => $context,
 			'ATTRIBUTE_CONFIG' => $this->getEditorAttributeConfig(),
@@ -1104,6 +1179,24 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		return $result;
 	}
 
+	public function loadAction(): ?array
+	{
+		$this->init();
+		if ($this->getErrors())
+		{
+			return null;
+		}
+
+		$this->initializeEditorAdapter();
+
+		$result = [
+			'ENTITY_ID' => $this->item->getId(),
+			'ENTITY_DATA' => $this->editorAdapter->getEntityData(),
+		];
+
+		return $result;
+	}
+
 	protected function processItemFieldValues(array $data): array
 	{
 		$setData = [];
@@ -1114,6 +1207,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		{
 			$field = $this->factory->getFieldsCollection()->getField($name);
 			if (!$field)
+			{
+				continue;
+			}
+			if ($field->isItemValueEmpty($this->item) && $field->isValueEmpty($value))
 			{
 				continue;
 			}
@@ -1183,24 +1280,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		return null;
 	}
 
-	public function childrenAction(
-		int $entityTypeId,
-		int $parentEntityTypeId,
-		int $parentEntityId
-	): ?Component
-	{
-		return new Component(
-			'bitrix:crm.item.list',
-			'.default',
-			[
-				'entityTypeId' => $entityTypeId,
-				'parentEntityTypeId' => $parentEntityTypeId,
-				'parentEntityId' => $parentEntityId,
-				'enableInterfaceToolbar' => true,
-				'ajaxMode' => 'N',
-			]);
-	}
-
 	protected function saveRequisites(array $beforeSaveData, array $data): void
 	{
 		$requisiteInfo = EntityLink::determineRequisiteLinkBeforeSave(
@@ -1263,6 +1342,20 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			&& DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable()
 			&& $this->factory->isDocumentGenerationEnabled()
 		);
+	}
+
+	protected function getBizprocToolbarButton(): Buttons\Button
+	{
+		return new Buttons\Button([
+			'baseClassName' => 'ui-btn',
+			'classList' => [
+				'ui-btn-md',
+				'ui-btn-light-border',
+				'ui-btn-themes',
+				'crm-bizproc-starter-icon'
+			],
+			'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickBizprocTemplates'),
+		]);
 	}
 
 	protected function getDocumentToolbarButton(): Buttons\Button
@@ -1430,5 +1523,22 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		}
 
 		return EditorAdapter::getParentFieldName($relation->getParentEntityTypeId());
+	}
+
+	protected function fillParentFields(): void
+	{
+		$parentItems = $this->parseParentIdsFromRequest();
+		foreach ($parentItems as $fieldName => $itemIdentifier)
+		{
+			if ($this->item->hasField($fieldName))
+			{
+				$this->item->set($fieldName, $itemIdentifier->getEntityId());
+			}
+		}
+	}
+
+	protected function getProductsData(): ?array
+	{
+		return $this->editorAdapter->getSrcItemProductsEntityData();
 	}
 }

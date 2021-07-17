@@ -158,7 +158,17 @@ function showAjaxErrorPopup()
 			className: "",
 			events: {
 				click: function() {
-					BX.reload();
+					if (
+						BX.SidePanel
+						&& BX.SidePanel.Instance.getTopSlider() === BX.SidePanel.Instance.getSliderByWindow(window)
+					)
+					{
+						window.location.reload();
+					}
+					else
+					{
+						BX.reload();
+					}
 					this.popupWindow.close();
 				}
 			}

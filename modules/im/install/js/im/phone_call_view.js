@@ -65,7 +65,8 @@
 		onQualityGraded: 'phoneCallViewOnQualityGraded',
 		onDialpadButtonClicked: 'phoneCallViewOnDialpadButtonClicked',
 		onCommentShown: 'phoneCallViewOnCommentShown',
-		onSaveComment: 'phoneCallViewOnSaveComment'
+		onSaveComment: 'phoneCallViewOnSaveComment',
+		onSetAutoClose: 'phoneCallViewOnSetAutoClose',
 	};
 
 	var defaults = {
@@ -3183,6 +3184,7 @@
 		BX.desktop.addCustomEvent(desktopEvents.onDialpadButtonClicked, function(grade){self.callbacks.dialpadButtonClicked(grade)});
 		BX.desktop.addCustomEvent(desktopEvents.onCommentShown, function(commentShown){self.commentShown = commentShown});
 		BX.desktop.addCustomEvent(desktopEvents.onSaveComment, function(comment){self.comment = comment; self.saveComment();});
+		BX.desktop.addCustomEvent(desktopEvents.onSetAutoClose, function(autoClose){self.autoClose = autoClose;});
 
 	};
 
@@ -3319,12 +3321,20 @@
 	BX.PhoneCallView.prototype.disableAutoClose = function()
 	{
 		this.allowAutoClose = false;
+		if(this.isDesktop() && this.slave)
+		{
+			BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+		}
 		this.renderButtons();
 	};
 
 	BX.PhoneCallView.prototype.enableAutoClose = function()
 	{
 		this.allowAutoClose = true;
+		if(this.isDesktop() && this.slave)
+		{
+			BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+		}
 		this.renderButtons();
 	};
 

@@ -21,1024 +21,12 @@ if(typeof BX.Crm.EntityEditorField === "undefined")
 		this.eventsNamespace = 'BX.Crm.EntityEditorField';
 	};
 	BX.extend(BX.Crm.EntityEditorField, BX.UI.EntityEditorField);
-	// BX.Crm.EntityEditorField.prototype.ensureWrapperCreated = function(params)
-	// {
-	// 	if(!this._wrapper)
-	// 	{
-	// 		this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
-	// 	}
-	//
-	// 	this.createAdditionalWrapperBlock();
-	//
-	// 	var classNames = BX.prop.getArray(params, "classNames", []);
-	// 	for(var i = 0, length = classNames.length;  i < length; i++)
-	// 	{
-	// 		BX.addClass(this._wrapper, classNames[i]);
-	// 	}
-	// 	return this._wrapper;
-	// };
-	// BX.Crm.EntityEditorField.prototype.createAdditionalWrapperBlock = function()
-	// {
-	// 	if(!this._wrapper)
-	// 	{
-	// 		return;
-	// 	}
-	//
-	// 	var additionalBlock = BX.create("div", {
-	// 		props: { className: "crm-entity-widget-before-action" },
-	// 		attrs: { "data-field-tag": this.getId() }
-	// 	});
-	//
-	// 	this._wrapper.appendChild(additionalBlock);
-	//
-	// };
+
 	if(typeof(BX.Crm.EntityEditorField.messages) === "undefined")
 	{
 		BX.Crm.EntityEditorField.messages = {};
 	}
 }
-
-// if(typeof BX.Crm.EntityEditorField === "undefined")
-// {
-// 	BX.Crm.EntityEditorField = function()
-// 	{
-// 		BX.Crm.EntityEditorField.superclass.constructor.apply(this);
-// 		this._titleWrapper = null;
-//
-// 		this._singleEditButton = null;
-// 		this._singleEditButtonHandler = BX.delegate(this.onSingleEditBtnClick, this);
-// 		this._singleEditController = null;
-// 		this._singleEditTimeoutHandle = 0;
-//
-// 		this._viewController = null;
-//
-// 		this._validators = null;
-// 		this._hasError = false;
-// 		this._errorContainer = null;
-//
-// 		this._layoutAttributes = null;
-// 		this._spotlight = null;
-//
-// 		this._dragObjectType = BX.Crm.EditorDragObjectType.field;
-// 	};
-// 	BX.extend(BX.Crm.EntityEditorField, BX.Crm.EntityEditorControl);
-// 	BX.Crm.EntityEditorField.prototype.isNewEntity = function()
-// 	{
-// 		return this._editor && this._editor.isNew();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.configure = function()
-// 	{
-// 		if(this._parent)
-// 		{
-// 			this._parent.editChildConfiguration(this);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hasAttributeConfiguration = function(attributeTypeId)
-// 	{
-// 		return this._schemeElement.hasAttributeConfiguration(attributeTypeId);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getAttributeConfiguration = function(attributeTypeId)
-// 	{
-// 		return this._schemeElement.getAttributeConfiguration(attributeTypeId);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.setAttributeConfiguration = function(configuration)
-// 	{
-// 		return this._schemeElement.setAttributeConfiguration(configuration);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.removeAttributeConfiguration = function(attributeTypeId)
-// 	{
-// 		return this._schemeElement.removeAttributeConfiguration(attributeTypeId);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.setVisibilityConfiguration = function(configuration)
-// 	{
-// 		return this._schemeElement.setVisibilityConfiguration(configuration);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.removeVisibilityConfiguration = function(attributeTypeId)
-// 	{
-// 		return this._schemeElement.removeVisibilityConfiguration(attributeTypeId);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getDuplicateControlConfig = function()
-// 	{
-// 		return this._schemeElement ? this._schemeElement.getDataObjectParam("duplicateControl", null) : null;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.markAsChanged = function(params)
-// 	{
-// 		BX.Crm.EntityEditorField.superclass.markAsChanged.apply(this, arguments);
-// 		if(this.hasError())
-// 		{
-// 			this.clearError();
-// 		}
-//
-// 		var validators = this.getValidators();
-// 		for(var i = 0, length = validators.length; i < length; i++)
-// 		{
-// 			validators[i].processFieldChange(this);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.bindModel = function()
-// 	{
-// 		this._model.addChangeListener(BX.delegate(this.onModelChange, this));
-// 		this._model.addLockListener(BX.delegate(this.onModelLock, this));
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.onBeforeModeChange = function()
-// 	{
-// 		//Enable animation if it is going to view mode
-// 		this._layoutAttributes = null;
-// 		if(this.isInEditMode())
-// 		{
-// 			this._layoutAttributes = { animate: "show" };
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.onModelChange = function(sender, params)
-// 	{
-// 		this.processModelChange(params);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.onModelLock = function(sender, params)
-// 	{
-// 		this.processModelLock(params);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.processModelChange = function(params)
-// 	{
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.processModelLock = function(params)
-// 	{
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getMessage = function(name)
-// 	{
-// 		var m = BX.Crm.EntityEditorField.messages;
-// 		return (m.hasOwnProperty(name)
-// 				? m[name]
-// 				: BX.Crm.EntityEditorField.superclass.getMessage.apply(this, arguments)
-// 		);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hasContentWrapper = function()
-// 	{
-// 		return this.getContentWrapper() !== null;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getContentWrapper = function()
-// 	{
-// 		return null;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getHideButtonHint = function(enabled)
-// 	{
-// 		return this.getMessage(
-// 			enabled ? "hideButtonHint" : "hideButtonDisabledHint"
-// 		);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getEditButton = function()
-// 	{
-// 		return this._singleEditButton;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.ensureWrapperCreated = function(params)
-// 	{
-// 		if(!this._wrapper)
-// 		{
-// 			this._wrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block" } });
-// 		}
-//
-// 		this.createAdditionalWrapperBlock();
-//
-// 		var classNames = BX.prop.getArray(params, "classNames", []);
-// 		for(var i = 0, length = classNames.length;  i < length; i++)
-// 		{
-// 			BX.addClass(this._wrapper, classNames[i]);
-// 		}
-// 		return this._wrapper;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createAdditionalWrapperBlock = function()
-// 	{
-// 		if(!this._wrapper)
-// 		{
-// 			return;
-// 		}
-//
-// 		var additionalBlock = BX.create("div", {
-// 			props: { className: "crm-entity-widget-before-action" },
-// 			attrs: { "data-field-tag": this.getId() }
-// 		});
-//
-// 		this._wrapper.appendChild(additionalBlock);
-//
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.adjustWrapper = function()
-// 	{
-// 		if(!this._wrapper)
-// 		{
-// 			return;
-// 		}
-//
-// 		if(this.isInEditMode()
-// 			&& (this.checkModeOption(BX.Crm.EntityEditorModeOptions.exclusive)
-// 				|| this.checkModeOption(BX.Crm.EntityEditorModeOptions.individual)
-// 			)
-// 		)
-// 		{
-// 			BX.addClass(this._wrapper, "crm-entity-widget-content-block-edit");
-// 		}
-// 		else
-// 		{
-// 			BX.removeClass(this._wrapper, "crm-entity-widget-content-block-edit");
-// 		}
-//
-// 		//region Applying layout attributes
-// 		/*
-// 		for(var i = this._wrapper.attributes.length - 1; i >= 0; i--)
-// 		{
-// 			this._wrapper.removeAttribute(this._wrapper.attributes[i].name);
-// 		}
-// 		*/
-// 		if(this._layoutAttributes)
-// 		{
-// 			for(var key in this._layoutAttributes)
-// 			{
-// 				if(this._layoutAttributes.hasOwnProperty(key))
-// 				{
-// 					this._wrapper.setAttribute("data-" + key, this._layoutAttributes[key]);
-// 				}
-// 			}
-// 			this._layoutAttributes = null;
-// 		}
-// 		//endregion
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.needShowTitle = function()
-// 	{
-// 		/**
-// 		 * @todo check merge
-// 		 */
-// 		return true;
-// 		return this._schemeElement ? this._schemeElement.needShowTitle() : true;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.isVirtual = function()
-// 	{
-// 		return this._schemeElement ? this._schemeElement.isVirtual() : false;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createTitleNode = function(title)
-// 	{
-// 		this._titleWrapper = BX.create(
-// 			"div",
-// 			{
-// 				attrs: { className: "crm-entity-widget-content-block-title" }
-// 			}
-// 		);
-//
-// 		this.prepareTitleLayout(BX.type.isNotEmptyString(title) ? title : this.getTitle());
-// 		return this._titleWrapper;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.prepareTitleLayout = function(title)
-// 	{
-// 		if(!this._titleWrapper)
-// 		{
-// 			return;
-// 		}
-//
-// 		var titleNode = BX.create("span",
-// 			{ attrs: { className: "crm-entity-widget-content-block-title-text" }, text: title }
-// 		);
-// 		if (this._mode === BX.Crm.EntityEditorMode.edit)
-// 		{
-// 			BX.addClass(this._titleWrapper, "crm-entity-widget-content-block-title-edit");
-// 		}
-// 		var marker = this.createTitleMarker();
-// 		if(marker)
-// 		{
-// 			titleNode.appendChild(marker);
-// 		}
-// 		this._titleWrapper.appendChild(titleNode);
-//
-// 		var actionControls = this.createTitleActionControls();
-// 		if(actionControls.length > 0)
-// 		{
-// 			var actionWrapper = BX.create("span", { attrs: { className: "crm-entity-widget-content-block-title-actions" } });
-// 			this._titleWrapper.appendChild(actionWrapper);
-//
-// 			for(var i = 0, length = actionControls.length; i < length; i++)
-// 			{
-// 				actionWrapper.appendChild(actionControls[i]);
-// 			}
-// 		}
-//
-// 		/*
-// 		var editButton = this.createEditButton();
-// 		if(editButton)
-// 		{
-// 			this._titleWrapper.appendChild(editButton);
-// 		}
-// 		*/
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.refreshTitleLayout = function()
-// 	{
-// 		if(!this._titleWrapper)
-// 		{
-// 			return;
-// 		}
-//
-// 		BX.cleanNode(this._titleWrapper);
-// 		this.prepareTitleLayout(this.getTitle());
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createTitleMarker = function()
-// 	{
-// 		if(this._mode === BX.Crm.EntityEditorMode.view)
-// 		{
-// 			return null;
-// 		}
-//
-// 		if(this.isRequired())
-// 		{
-// 			return BX.create("span", { style: { color: "#f00", verticalAlign: "super" }, text: "*" });
-// 		}
-// 		else if(this.isRequiredConditionally())
-// 		{
-// 			return BX.create("span", { text: "*" });
-// 		}
-// 		return null;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createEditButton = function()
-// 	{
-// 		if(!(this.isInViewMode() && this.isSingleEditEnabled()))
-// 		{
-// 			return null;
-// 		}
-//
-// 		if(!this._singleEditButton)
-// 		{
-// 			this._singleEditButton = BX.create(
-// 				"span",
-// 				{
-// 					props: { className: "crm-entity-card-widget-title-edit-icon" }
-// 				}
-// 			);
-// 		}
-// 		return this._singleEditButton;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createTitleActionControls = function()
-// 	{
-// 		return [];
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createDragButton = function()
-// 	{
-// 		if(!this._dragButton)
-// 		{
-// 			this._dragButton = BX.create(
-// 				"div",
-// 				{
-// 					props: { className: "crm-entity-widget-content-block-draggable-btn-container" },
-// 					children:
-// 						[
-// 							BX.create(
-// 								"div",
-// 								{
-// 									props: { className: "crm-entity-widget-content-block-draggable-btn" }
-// 								}
-// 							)
-// 						]
-// 				}
-// 			);
-// 		}
-// 		return this._dragButton;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.createGhostNode = function()
-// 	{
-// 		if(!this._wrapper)
-// 		{
-// 			return null;
-// 		}
-//
-// 		var pos = BX.pos(this._wrapper);
-// 		var node = this._wrapper.cloneNode(true);
-// 		BX.addClass(node, "crm-entity-widget-content-block-drag");
-// 		node.style.width = pos.width + "px";
-// 		node.style.height = pos.height + "px";
-// 		return node;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.clearLayout = function(options)
-// 	{
-// 		if(!this._hasLayout)
-// 		{
-// 			return;
-// 		}
-//
-// 		this.releaseLightingAbilities();
-//
-// 		BX.Crm.EntityEditorField.superclass.clearLayout.apply(this, arguments);
-//
-// 		if(!BX.type.isPlainObject(options))
-// 		{
-// 			options = {};
-// 		}
-//
-// 		this.releaseDragDropAbilities();
-// 		this.releaseSwitchingAbilities();
-//
-// 		if(!BX.prop.getBoolean(options, "preservePosision", false))
-// 		{
-// 			this._wrapper = BX.remove(this._wrapper);
-// 		}
-// 		else
-// 		{
-// 			BX.removeClass(this._wrapper, "crm-entity-widget-content-block-click-editable");
-// 			BX.removeClass(this._wrapper, "crm-entity-widget-content-block-click-empty");
-// 			this._wrapper = BX.cleanNode(this._wrapper);
-// 			if(this.hasError())
-// 			{
-// 				this.clearError();
-// 			}
-// 		}
-//
-// 		if(this._singleEditButton)
-// 		{
-// 			this._singleEditButton = null;
-// 		}
-//
-// 		this.doClearLayout(options);
-//
-// 		this._hasLayout = false;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.doClearLayout = function(options)
-// 	{
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.registerLayout = function(options)
-// 	{
-// 		var isVisible = this.isVisible();
-// 		var isNeedToDisplay = this.isNeedToDisplay();
-//
-// 		this._wrapper.style.display = (isVisible && isNeedToDisplay) ? "" : "none";
-//
-// 		this.initializeSwitchingAbilities();
-// 		if(this.isInEditMode() && this.checkModeOption(BX.Crm.EntityEditorModeOptions.individual))
-// 		{
-// 			window.setTimeout(BX.delegate(this.focus, this), 0);
-// 		}
-// 		BX.Crm.EntityEditorField.superclass.registerLayout.apply(this, arguments);
-//
-// 		var lighting = BX.prop.getObject(options, "lighting", null);
-// 		if(lighting)
-// 		{
-// 			window.setTimeout(
-// 				function(){ this.initializeLightingAbilities(lighting); }.bind(this),
-// 				1000
-// 			)
-// 		}
-//
-// 		if(!isNeedToDisplay && BX.prop.getBoolean(options, "notifyIfNotDisplayed", false))
-// 		{
-// 			BX.UI.Notification.Center.notify(
-// 				{
-// 					content: this.getMessage("hiddenInViewMode").replace(/#TITLE#/gi, this.getTitle()),
-// 					position: "top-center",
-// 					autoHideDelay: 5000
-// 				}
-// 			);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.raiseLayoutEvent = function()
-// 	{
-// 		BX.onCustomEvent(window, "BX.Crm.EntityEditorField:onLayout", [ this ]);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hasContentToDisplay = function()
-// 	{
-// 		return this.hasValue();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.isNeedToDisplay = function(options)
-// 	{
-// 		if(this._mode === BX.Crm.EntityEditorMode.edit
-// 			|| this.checkOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways)
-// 		)
-// 		{
-// 			return true;
-// 		}
-//
-// 		if(this._editor && BX.prop.getBoolean(options, "enableLayoutResolvers", true))
-// 		{
-// 			return BX.prop.getBoolean(
-// 				this._editor.prepareFieldLayoutOptions(this),
-// 				"isNeedToDisplay",
-// 				true
-// 			);
-// 		}
-//
-// 		return this.hasContentToDisplay();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.isWaitingForInput = function()
-// 	{
-// 		return this.isInEditMode() && this.isRequired() && !this.hasValue();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hide = function()
-// 	{
-// 		if(!(this.isRequired() || this.isRequiredConditionally()))
-// 		{
-// 			BX.Crm.EntityEditorField.superclass.hide.apply(this, arguments);
-// 		}
-// 		else
-// 		{
-// 			this.showMessageDialog(
-// 				"operationDenied",
-// 				this.getMessage("hideDeniedDlgTitle"),
-// 				this.getMessage("hideDeniedDlgContent")
-// 			);
-// 		}
-// 	};
-// 	//region Value
-// 	BX.Crm.EntityEditorField.prototype.getEditPriority = function()
-// 	{
-// 		var hasValue = this.hasValue();
-// 		if(!hasValue && (this.isRequired() || this.isRequiredConditionally()))
-// 		{
-// 			return BX.Crm.EntityEditorPriority.high;
-// 		}
-//
-// 		if(!this._editor.isNew())
-// 		{
-// 			return BX.Crm.EntityEditorPriority.normal;
-// 		}
-//
-// 		return hasValue ? BX.Crm.EntityEditorPriority.high : this.doGetEditPriority();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.doGetEditPriority = function()
-// 	{
-// 		return BX.Crm.EntityEditorPriority.normal;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.checkIfNotEmpty = function(value)
-// 	{
-// 		if(BX.type.isString(value))
-// 		{
-// 			return value.trim() !== "";
-// 		}
-// 		return (value !== null && value !== undefined);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.setupFromModel = function(model, options)
-// 	{
-// 		if(!model)
-// 		{
-// 			model = this._model;
-// 		}
-//
-// 		if(!model)
-// 		{
-// 			return;
-// 		}
-//
-// 		var data = this.getRelatedModelData(model);
-// 		this._model.updateData(data, options);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getRelatedModelData = function(model)
-// 	{
-// 		if(!model)
-// 		{
-// 			model = this._model;
-// 		}
-//
-// 		if(!model)
-// 		{
-// 			return {};
-// 		}
-//
-// 		var data = {};
-// 		var keys = this.getRelatedDataKeys();
-// 		for(var i = 0, length = keys.length; i < length; i++)
-// 		{
-// 			var key = keys[i];
-// 			if(key !== "")
-// 			{
-// 				data[key] = model.getField(key, null);
-// 			}
-// 		}
-// 		return data;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getRelatedDataKeys = function()
-// 	{
-// 		return [this.getDataKey()];
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hasValue = function()
-// 	{
-// 		return this.checkIfNotEmpty(this.getValue());
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getValue = function(defaultValue)
-// 	{
-// 		if(!this._model)
-// 		{
-// 			return "";
-// 		}
-//
-// 		return(
-// 			this._model.getField(
-// 				this.getDataKey(),
-// 				(defaultValue !== undefined ? defaultValue : "")
-// 			)
-// 		);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getStringValue = function(defaultValue)
-// 	{
-// 		return this._model ? this._model.getStringField(this.getName(), defaultValue) : "";
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getRuntimeValue = function()
-// 	{
-// 		return "";
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getDataKey = function()
-// 	{
-// 		return this.getName();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.prepareSaveData = function(data)
-// 	{
-// 		data[this.getDataKey()] = this.getValue();
-// 	};
-// 	//endregion
-// 	//region Validators
-// 	BX.Crm.EntityEditorField.prototype.findValidatorIndex = function(validator)
-// 	{
-// 		if(!this._validators)
-// 		{
-// 			return -1;
-// 		}
-//
-// 		for(var i = 0, length = this._validators.length; i < length; i++)
-// 		{
-// 			if(this._validators[i] === validator)
-// 			{
-// 				return i;
-// 			}
-// 		}
-// 		return -1;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.addValidator = function(validator)
-// 	{
-// 		if(validator && this.findValidatorIndex(validator) < 0)
-// 		{
-// 			if(!this._validators)
-// 			{
-// 				this._validators = [];
-// 			}
-// 			this._validators.push(validator);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.removeValidator = function(validator)
-// 	{
-// 		if(!this._validators || !validator)
-// 		{
-// 			return;
-// 		}
-//
-// 		var index = this.findValidatorIndex(validator);
-// 		if(index >= 0)
-// 		{
-// 			this._validators.splice(index, 1);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getValidators = function()
-// 	{
-// 		return this._validators ? this._validators : [];
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.hasValidators = function()
-// 	{
-// 		return this._validators && this._validators.length > 0;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.executeValidators = function(result)
-// 	{
-// 		if(!this._validators)
-// 		{
-// 			return true;
-// 		}
-//
-// 		var isValid = true;
-// 		for(var i = 0, length = this._validators.length; i < length; i++)
-// 		{
-// 			if(!this._validators[i].validate(result))
-// 			{
-// 				isValid = false;
-// 			}
-// 		}
-// 		return isValid;
-// 	};
-// 	//endregion
-// 	BX.Crm.EntityEditorField.prototype.hasError =  function()
-// 	{
-// 		return this._hasError;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.showError =  function(error, anchor)
-// 	{
-// 		if(!this._errorContainer)
-// 		{
-// 			this._errorContainer = BX.create(
-// 				"div",
-// 				{ attrs: { className: "crm-entity-widget-content-error-text" } }
-// 			);
-// 		}
-//
-// 		this._errorContainer.innerHTML = error;
-// 		this._wrapper.appendChild(this._errorContainer);
-// 		BX.addClass(this._wrapper, "crm-entity-widget-content-error");
-// 		this._hasError = true;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.showRequiredFieldError =  function(anchor)
-// 	{
-// 		this.showError(this.getMessage("requiredFieldError"), anchor);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.clearError =  function()
-// 	{
-// 		if(!this._hasError)
-// 		{
-// 			return;
-// 		}
-//
-// 		if(this._errorContainer && this._errorContainer.parentNode)
-// 		{
-// 			this._errorContainer.parentNode.removeChild(this._errorContainer);
-// 		}
-// 		BX.removeClass(this._wrapper, "crm-entity-widget-content-error");
-// 		this._hasError = false;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.scrollAnimate = function()
-// 	{
-// 		var doc = BX.GetDocElement(document);
-// 		var anchor = this._wrapper;
-// 		window.setTimeout(
-// 			function()
-// 			{
-// 				(new BX.easing(
-// 						{
-// 							duration : 300,
-// 							start : { position: doc.scrollTop },
-// 							finish: { position: BX.pos(anchor).top - 10 },
-// 							step: function(state)
-// 							{
-// 								doc.scrollTop = state.position;
-// 							}
-// 						}
-// 					)
-// 				).animate();
-// 			},
-// 			0
-// 		);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.setDragObjectType = function(type)
-// 	{
-// 		this._dragObjectType = type;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getDragObjectType = function()
-// 	{
-// 		return this._dragObjectType;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.initializeDragDropAbilities = function()
-// 	{
-// 		if(this._dragItem)
-// 		{
-// 			return;
-// 		}
-//
-// 		this._dragItem = BX.Crm.EditorDragItemController.create(
-// 			"field_" +  this.getId(),
-// 			{
-// 				charge: BX.Crm.EditorFieldDragItem.create(
-// 					{
-// 						control: this,
-// 						contextId: this._draggableContextId,
-// 						scope: this.getDragScope()
-// 					}
-// 				),
-// 				node: this.createDragButton(),
-// 				showControlInDragMode: false,
-// 				ghostOffset: { x: 0, y: 0 }
-// 			}
-// 		);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.releaseDragDropAbilities = function()
-// 	{
-// 		if(this._dragItem)
-// 		{
-// 			this._dragItem.release();
-// 			this._dragItem = null;
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.initializeSwitchingAbilities = function()
-// 	{
-// 		if(this.isInViewMode())
-// 		{
-// 			if(this.isSingleEditEnabled())
-// 			{
-// 				BX.addClass(this._wrapper, "crm-entity-widget-content-block-click-editable");
-// 				if(!this.hasContentToDisplay())
-// 				{
-// 					BX.addClass(this._wrapper, "crm-entity-widget-content-block-click-empty");
-// 				}
-//
-// 				if(this._singleEditButton)
-// 				{
-// 					BX.bind(this._singleEditButton, "click", this._singleEditButtonHandler);
-// 				}
-// 			}
-//
-// 			if(this.hasContentWrapper()
-// 				&& BX.Crm.EntityEditorModeSwitchType.check(
-// 					this.getModeSwitchType(BX.Crm.EntityEditorMode.edit),
-// 					BX.Crm.EntityEditorModeSwitchType.content
-// 				)
-// 			)
-// 			{
-// 				this._viewController = BX.Crm.EditorFieldViewController.create(
-// 					this._id,
-// 					{ field: this, wrapper: this.getContentWrapper() }
-// 				);
-// 			}
-// 		}
-// 		else if(this.checkModeOption(BX.Crm.EntityEditorModeOptions.exclusive))
-// 		{
-// 			this._singleEditController = BX.Crm.EditorFieldSingleEditController.create(
-// 				this._id,
-// 				{ field: this }
-// 			);
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.releaseSwitchingAbilities = function()
-// 	{
-// 		if(this._singleEditButton)
-// 		{
-// 			BX.unbind(this._singleEditButton, "click", this._singleEditButtonHandler);
-// 		}
-//
-// 		if(this._viewController)
-// 		{
-// 			this._viewController.release();
-// 			this._viewController = null;
-// 		}
-//
-// 		if(this._singleEditController)
-// 		{
-// 			this._singleEditController.release();
-// 			this._singleEditController = null;
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.initializeLightingAbilities = function(params)
-// 	{
-// 		var text = BX.prop.getString(params, "text", "");
-// 		if(!BX.type.isNotEmptyString(text))
-// 		{
-// 			return;
-// 		}
-//
-// 		var wrapper = this.getContentWrapper();
-// 		if(!wrapper)
-// 		{
-// 			return;
-// 		}
-//
-// 		this._spotlight = new BX.SpotLight(
-// 			{
-// 				id: BX.prop.getString(params, "id", ""),
-// 				targetElement: wrapper,
-// 				autoSave: true,
-// 				content: text,
-// 				targetVertex: "middle-left",
-// 				zIndex: 200
-// 			}
-// 		);
-// 		this._spotlight.show();
-//
-// 		var events = BX.prop.getObject(params, "events", {});
-// 		for(var key in events)
-// 		{
-// 			if(events.hasOwnProperty(key))
-// 			{
-// 				BX.addCustomEvent(this._spotlight, key, events[key]);
-// 			}
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.releaseLightingAbilities = function()
-// 	{
-// 		if(this._spotlight)
-// 		{
-// 			this._spotlight.close();
-// 			this._spotlight = null;
-// 		}
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.prepareContextMenuItems = function()
-// 	{
-// 		var results = [];
-// 		results.push({ value: "hide", text: this.getMessage("hide") });
-// 		results.push({ value: "configure", text: this.getMessage("configure") });
-//
-// 		if (this._parent && this._parent.hasAdditionalMenu())
-// 		{
-// 			var additionalMenu = this._parent.getAdditionalMenu();
-// 			for (var i=0; i<additionalMenu.length; i++)
-// 			{
-// 				results.push(additionalMenu[i]);
-// 			}
-// 		}
-//
-// 		results.push(
-// 			{
-// 				value: "showAlways",
-// 				text: '<label class="crm-context-menu-item-hide-empty-wrap">' +
-// 					'<input type="checkbox"' +
-// 					(this.checkOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways) ? ' checked = "true"' : '') +
-// 					' class="crm-context-menu-item-hide-empty-input">' +
-// 					'<span class="crm-context-menu-item-hide-empty-text">' +
-// 					this.getMessage("showAlways") +
-// 					'</span></label>'
-// 			}
-// 		);
-//
-// 		this.doPrepareContextMenuItems(results);
-// 		return results;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.doPrepareContextMenuItems = function(menuItems)
-// 	{
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.processContextMenuCommand = function(e, command)
-// 	{
-// 		if(command === "showAlways")
-// 		{
-// 			var target = BX.getEventTarget(e);
-// 			if(target && target.tagName === "INPUT")
-// 			{
-// 				this.toggleOptionFlag(BX.Crm.EntityEditorControlOptions.showAlways);
-// 				if(this._parent)
-// 				{
-// 					this._parent.processChildControlSchemeChange(this);
-// 				}
-//
-// 				if(!this.isNeedToDisplay())
-// 				{
-// 					window.setTimeout(BX.delegate(this.clearLayout, this), 500);
-// 					BX.UI.Notification.Center.notify(
-// 						{
-// 							content: this.getMessage("isHiddenDueToShowAlwaysChanged").replace(/#TITLE#/gi, this.getTitle()),
-// 							position: "top-center",
-// 							autoHideDelay: 5000
-// 						}
-// 					);
-// 					this.closeContextMenu();
-// 				}
-// 			}
-// 			return;
-// 		}
-//
-// 		if(command === "hide")
-// 		{
-// 			window.setTimeout(BX.delegate(this.hide, this), 500);
-// 		}
-// 		else if(command === "configure")
-// 		{
-// 			this.configure();
-// 		}
-// 		else if (this._parent && this._parent.hasAdditionalMenu())
-// 		{
-// 			this._parent.processChildAdditionalMenuCommand(this, command);
-// 		}
-// 		this.closeContextMenu();
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.onSingleEditBtnClick = function(e)
-// 	{
-// 		if(!(this.isSingleEditEnabled() && this._editor))
-// 		{
-// 			return;
-// 		}
-//
-// 		if(this._singleEditTimeoutHandle > 0)
-// 		{
-// 			window.clearTimeout(this._singleEditTimeoutHandle);
-// 			this._singleEditTimeoutHandle = 0;
-// 		}
-//
-// 		this._singleEditTimeoutHandle = window.setTimeout(
-// 			BX.delegate(this.switchToSingleEditMode, this),
-// 			250
-// 		);
-//
-// 		BX.eventCancelBubble(e);
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.getModeSwitchType = function(mode)
-// 	{
-// 		var result = BX.Crm.EntityEditorModeSwitchType.common;
-// 		if(mode === BX.Crm.EntityEditorMode.edit)
-// 		{
-// 			result |= BX.Crm.EntityEditorModeSwitchType.button;
-// 		}
-// 		return result;
-// 	};
-// 	BX.Crm.EntityEditorField.prototype.switchToSingleEditMode = function(targetNode)
-// 	{
-// 		if(!(this.isSingleEditEnabled() && this._editor))
-// 		{
-// 			return;
-// 		}
-//
-// 		this._singleEditTimeoutHandle = 0;
-//
-// 		if(this._editor)
-// 		{
-// 			this._editor.switchControlMode(
-// 				this,
-// 				BX.Crm.EntityEditorMode.edit,
-// 				BX.Crm.EntityEditorModeOptions.individual
-// 			);
-// 		}
-// 	};
-// 	if(typeof(BX.Crm.EntityEditorField.messages) === "undefined")
-// 	{
-// 		BX.Crm.EntityEditorField.messages = {};
-// 	}
-// }
 
 if(typeof BX.Crm.EntityEditorSection === "undefined")
 {
@@ -1202,7 +190,7 @@ if(typeof BX.Crm.EntityEditorMoney === "undefined")
 		this._changeAmountEditModeListener = null;
 		this._hasRelatedProducts = false;
 		this.classPrefix = 'crm-';
-		this.wrapperClassName = "crm-entity-widget-content-block-field-money";
+		this.wrapperClassName = "crm-entity-widget-content-block-field-money crm-entity-widget-participants-block";
 	};
 	BX.extend(BX.Crm.EntityEditorMoney, BX.UI.EntityEditorMoney);
 	BX.Crm.EntityEditorMoney.prototype.doInitialize = function()
@@ -1467,6 +455,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		BX.Crm.EntityEditorMoneyPay.superclass.constructor.apply(this);
 		this._payButton = null;
 		this._isPayButtonVisible = null;
+		this._paymentDocumentsControl = null;
 	};
 
 	BX.Crm.EntityEditorMoneyPay.create = function(id, settings)
@@ -1484,6 +473,18 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		this._isPayButtonVisible = BX.prop.getBoolean(this._schemeElement._options, "isPayButtonVisible", true);
 		this._isPayButtonControlVisible = (this._model.getField("IS_PAY_BUTTON_CONTROL_VISIBLE", 'Y') === 'Y');
+
+		var modeWithOrders = this._model.getField('MODE_WITH_ORDERS', true);
+
+		if (!modeWithOrders)
+		{
+			var paymentDocumentsOptions = {
+				DEAL_ID: this._model.getField('ID'),
+				IS_DELIVERY_AVAILABLE: this._schemeElement.getDataBooleanParam('isDeliveryAvailable', false),
+				PARENT_CONTEXT: this
+			};
+			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
+		}
 	};
 
 	BX.Crm.EntityEditorMoneyPay.prototype.renderPayButton = function()
@@ -1496,7 +497,12 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 			}
 		);
 
-		BX.bind(a, "click", BX.delegate(this.startSalescenterApplication, this));
+		BX.bind(a, 'click', BX.delegate(function()
+		{
+			var orderId = this.getLatestOrderId();
+			this.startSalescenterApplication(orderId);
+		}, this));
+
 		BX.bind(a, "mousedown", function(event)
 		{
 			BX.PreventDefault(event);
@@ -1527,56 +533,69 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				this._innerWrapper.appendChild(this._payButton);
 			}
 		}
+
+		if (this.isNeedToDisplay() && this._paymentDocumentsControl)
+		{
+			this._wrapper.appendChild(this._paymentDocumentsControl.render());
+			this._paymentDocumentsControl.reloadModel();
+		}
 	};
 
-	BX.Crm.EntityEditorMoneyPay.prototype.startSalescenterApplication = function()
+	BX.Crm.EntityEditorMoneyPay.prototype.startSalescenterApplication = function(orderId, options)
 	{
-		BX.loadExt('salescenter.manager').then(function()
+		if (orderId === undefined)
 		{
-			BX.Salescenter.Manager.openApplication({
+			orderId = 0;
+		}
+
+		if (options === undefined)
+		{
+			options = {
 				disableSendButton: '',
 				context: 'deal',
+				templateMode: 'create',
+				mode: 'payment_delivery',
 				analyticsLabel: 'salescenterClickButtonPay',
 				ownerTypeId: BX.CrmEntityType.enumeration.deal,
-				ownerId: this._model.getField('ID')
-			}).then(function(result)
+				ownerId: this._model.getField('ID'),
+				orderId: orderId,
+			};
+		}
+
+		BX.loadExt('salescenter.manager').then(function()
+		{
+			BX.Salescenter.Manager.openApplication(options).then(function(result)
 			{
 				if (result)
 				{
+					if (result.get('deal') || result.get('order'))
+					{
+						this._editor.reload();
+					}
+
 					var deal = result.get('deal');
 					if (deal)
 					{
 						if (deal.PRODUCT_LIST)
 						{
-							var editor, i;
+							this._editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
+								if (controller._externalEditor)
+								{
+									controller._externalEditor.reinitialize(deal.PRODUCT_LIST);
+								}
+							});
 
-							for (i in this._editor._controllers)
-							{
-								if (!this._editor._controllers.hasOwnProperty(i))
-								{
-									continue;
-								}
-
-								if (this._editor._controllers[i]._id === 'PRODUCT_ROW_PROXY')
-								{
-									editor = this._editor._controllers[i]._externalEditor;
-									if (editor)
-									{
-										editor.reinitialize(deal.PRODUCT_LIST);
-									}
-									break;
-								}
-								else if (this._editor._controllers[i]._id === 'PRODUCT_LIST')
-								{
-									var controller = this._editor._controllers[i];
-									if (controller)
-									{
-										controller.reinitializeProductList();
-									}
-									break;
-								}
-							}
+							this._editor.tapController('PRODUCT_LIST', function(controller) {
+								controller.reinitializeProductList();
+							});
 						}
+					}
+
+					var order = result.get('order');
+					if (order && order.id && BX.CrmActivityDelivery)
+					{
+						var deliveryActivity = BX.CrmActivityDelivery.getInstance();
+						deliveryActivity.rememberCurrentOrder(order.id);
 					}
 				}
 			}.bind(this));
@@ -1611,6 +630,21 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 	{
 		var m = BX.Crm.EntityEditorMoneyPay.messages;
 		return m.hasOwnProperty(name) ? m[name] : BX.Crm.EntityEditorMoneyPay.superclass.getMessage.apply(this, arguments);
+	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.getLatestOrderId = function()
+	{
+		var orderList = this._model.getField('ORDER_LIST', []);
+		var orderId = 0;
+
+		if (orderList.length && orderList.length > 0)
+		{
+			orderList.map(function(item){
+				orderId = Math.max(orderId, parseInt(item.ORDER_ID));
+			});
+		}
+
+		return orderId;
 	};
 }
 
@@ -3056,20 +2090,26 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 	};
 }
 
-if(typeof BX.Crm.EntityEditorProductRowSummary === "undefined")
+if(typeof BX.Crm.EntityEditorProductRowSummary === 'undefined')
 {
 	BX.Crm.EntityEditorProductRowSummary = function()
 	{
 		BX.Crm.EntityEditorProductRowSummary.superclass.constructor.apply(this);
 		this._loader = null;
-		this._table = null;
+		this._productsContainer = null;
+		this._previousData = [];
 
 		this._itemCount = 0;
 		this._totalCount = 0;
 
+		this._showAllProducts = false;
 		this._moreButton = null;
 		this._moreButtonRow = null;
+		this._TotalsRow = null;
 		this._moreButtonClickHandler = BX.delegate(this._onMoreButtonClick, this);
+
+		this._visibleItemsLimit = 5;
+		this._showInTabItemsLimit = 10;
 	};
 	BX.extend(BX.Crm.EntityEditorProductRowSummary, BX.Crm.EntityEditorField);
 	BX.Crm.EntityEditorProductRowSummary.prototype.getMessage = function(name)
@@ -3077,15 +2117,28 @@ if(typeof BX.Crm.EntityEditorProductRowSummary === "undefined")
 		var m = BX.Crm.EntityEditorProductRowSummary.messages;
 		return m.hasOwnProperty(name) ? m[name] : BX.Crm.EntityEditorProductRowSummary.superclass.getMessage.apply(this, arguments);
 	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.clearLayout = function(options)
+	{
+		if(this.checkIfNeedClearLayout(options))	// clear layout if animation not required or position not preserved
+		{
+			return BX.Crm.EntityEditorProductRowSummary.superclass.clearLayout.apply(this, arguments);
+		}
+
+		this._hasLayout = false;
+	};
 	BX.Crm.EntityEditorProductRowSummary.prototype.layout = function(options)
 	{
 		if(this._hasLayout)
 		{
 			return;
 		}
+		var wasLayoutCleared = this.checkIfNeedClearLayout(options);
 
-		this.ensureWrapperCreated({});
-		this.adjustWrapper();
+		if (wasLayoutCleared)
+		{
+			this.ensureWrapperCreated({});
+			this.adjustWrapper();
+		}
 
 		var data = this.getValue();
 
@@ -3095,163 +2148,341 @@ if(typeof BX.Crm.EntityEditorProductRowSummary === "undefined")
 		}
 
 		var title = this.getTitle();
-		var items = BX.prop.getArray(data, "items", []);
-		this._totalCount = BX.prop.getInteger(data, "count", 0);
+		var items = BX.prop.getArray(data, 'items', []);
 
-		if(this.isDragEnabled())
-		{
-			this._wrapper.appendChild(this.createDragButton());
-		}
+		this._totalCount = BX.prop.getInteger(data, 'count', 0);
 
-		this._wrapper.appendChild(this.createTitleNode(title));
-
-		this._table = BX.create("table", { props: { className: "crm-entity-widget-content-block-products-list" } });
-
-		var length = this._itemCount = items.length;
+		this._itemCount = items.length;
+		var length = this._itemCount;
+		var maxLength = this._showAllProducts ? (this._showInTabItemsLimit - 1) : this._visibleItemsLimit;
 		var restLength = 0;
-		if(length > 5)
+		if(
+			(length > maxLength)
+		)
 		{
-			restLength = this._totalCount - 5;
-			length = 5;
+			restLength = (this._totalCount - maxLength);
+			length = maxLength;
 		}
 
-		for(var i = 0; i < length; i++)
+		if (wasLayoutCleared)
 		{
-			this.addProductRow(items[i], -1);
-		}
+			if (this.isDragEnabled())
+			{
+				this._wrapper.appendChild(this.createDragButton());
+			}
 
-		var row, cell;
-		this._moreButton = null;
-		if(restLength > 0)
-		{
-			row = this._moreButtonRow = this._table.insertRow(-1);
-			row.className = "crm-entity-widget-content-block-products-item";
-			cell = row.insertCell(-1);
-			cell.className = "crm-entity-widget-content-block-products-item-name";
-
-			this._moreButton = BX.create(
-				"span",
+			this._wrapper.appendChild(this.createTitleNode(title));
+			this._productsContainer = BX.create(
+				'div',
 				{
-					attrs: { className: "crm-entity-widget-content-block-products-show-more" },
-					events: { click: this._moreButtonClickHandler },
-					text: this.getMessage("notShown").replace(/#COUNT#/gi, restLength.toString())
+					props: {
+						className: 'crm-entity-widget-content-block-products-list'
+					}
 				}
-			);
-
-			cell.appendChild(this._moreButton);
-			cell = row.insertCell(-1);
-			cell.className = "crm-entity-widget-content-block-products-price";
-		}
-
-		row = this._table.insertRow(-1);
-		row.className = "crm-entity-widget-content-block-products-item";
-		cell = row.insertCell(-1);
-		cell.className = "crm-entity-widget-content-block-products-item-name";
-		cell.innerHTML = this.getMessage("total");
-
-		cell = row.insertCell(-1);
-		cell.className = "crm-entity-widget-content-block-products-price";
-		cell.appendChild(
-			BX.create(
-				"div",
-				{
-					attrs: { className: "crm-entity-widget-content-block-products-price-value" },
-					html: data["total"]
-				}
-			)
-		);
-
-		this._wrapper.appendChild(
-			BX.create(
-				"div",
-				{
-					props: { className: "crm-entity-widget-content-block-products" },
-					children: [ this._table ]
-				}
-			)
-		);
-
-		if(this.isContextMenuEnabled())
-		{
-			this._wrapper.appendChild(this.createContextMenuButton());
-		}
-
-		if(this.isDragEnabled())
-		{
-			this.initializeDragDropAbilities();
-		}
-
-		this.registerLayout(options);
-		this._hasLayout = true;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype._onMoreButtonClick = function(e)
-	{
-		if(this._totalCount > 10)
-		{
-			BX.onCustomEvent(window, "OpenEntityDetailTab", ["tab_products"]);
-			return;
-		}
-
-		this._moreButtonRow.style.display = "none";
-		var data = this.getValue();
-		var items = BX.prop.getArray(data, "items", []);
-		for(var i = 5; i < this._itemCount; i++)
-		{
-			this.addProductRow(items[i], i);
-		}
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.clearLayout = function()
-	{
-		if(!this._hasLayout)
-		{
-			return;
-		}
-
-		this._table = null;
-		this._moreButton = null;
-		this._moreButtonRow = null;
-		this._wrapper = BX.remove(this._wrapper);
-		this._hasLayout = false;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.addProductRow = function(data, index)
-	{
-		if(typeof(index) === "undefined")
-		{
-			index = -1;
-		}
-
-		var row, cell;
-		row = this._table.insertRow(index);
-		row.className = "crm-entity-widget-content-block-products-item";
-		cell = row.insertCell(-1);
-		cell.className = "crm-entity-widget-content-block-products-item-name";
-
-		var url = BX.prop.getString(data, "URL", "");
-		if(url !== "")
-		{
-			cell.appendChild(
-				BX.create("a", { attrs: { target: "_blank", href: url }, text: data["PRODUCT_NAME"] })
 			);
 		}
 		else
 		{
-			cell.innerHTML = BX.util.htmlspecialchars(data["PRODUCT_NAME"]);
+			BX.cleanNode(this._productsContainer);
 		}
 
-		cell = row.insertCell(-1);
-		cell.className = "crm-entity-widget-content-block-products-price";
-		cell.appendChild(
-			BX.create(
-				"div",
+		var needAnimate = BX.prop.getBoolean(options, 'isRefreshViewModeLayout', false);
+		if (!wasLayoutCleared && needAnimate)
+		{
+			items = this.addAnimationInfo(items, length, maxLength);
+			length = items.length; // because length maybe was changed
+		}
+		for (var i = 0; i < length; i++)
+		{
+			this.addProductRow(items[i]);
+		}
+
+		this._moreButton = null;
+		if (restLength > 0)
+		{
+			this.addMoreButton(restLength);
+		}
+		this.addTotalRow(data['total']);
+
+		if (wasLayoutCleared)
+		{
+			this._wrapper.appendChild(
+				BX.create(
+					'div',
+					{
+						props: {className: 'crm-entity-widget-content-block-products'},
+						children: [this._productsContainer]
+					}
+				)
+			);
+
+			if (this.isContextMenuEnabled())
+			{
+				this._wrapper.appendChild(this.createContextMenuButton());
+			}
+
+			if (this.isDragEnabled())
+			{
+				this.initializeDragDropAbilities();
+			}
+		}
+
+		this.registerLayout(options);
+		this._hasLayout = true;
+		this._previousData = data;
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.checkIfNeedClearLayout = function(options)
+	{
+		return (
+			!BX.prop.getBoolean(options, 'preservePosition', false)
+			|| !BX.prop.getBoolean(options, 'isRefreshViewModeLayout', false)
+		);
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.addAnimationInfo = function(products, lengthLimit, maxLengthLimit)
+	{
+		var result = [];
+		var oldProducts = BX.prop.getArray(this._previousData, 'items', []);
+		var sameProducts = this.extractSameProducts(oldProducts, products);
+		for (var i = 0; i < lengthLimit; i++)
+		{
+			if (oldProducts.length > i && !this.isProductInList(oldProducts[i], sameProducts))
+			{
+				oldProducts[i].animation = 'out';
+				result.push(oldProducts[i]); // animate product removal
+			}
+			if (!this.isProductInList(products[i], sameProducts))
+			{
+				products[i].animation = 'in'; // animate new product appeared
+			}
+			result.push(products[i]);
+		}
+		// also process items from old list if old list larger than current:
+		for (i = lengthLimit; i < oldProducts.length; i++)
+		{
+			if (i > maxLengthLimit)
+			{
+				break;
+			}
+			if (!this.isProductInList(oldProducts[i], sameProducts))
+			{
+				oldProducts[i].animation = 'out';
+				result.push(oldProducts[i]); // animate product removal
+			}
+		}
+		return result;
+	};
+	/** return items which are both in list1 and list2 */
+	BX.Crm.EntityEditorProductRowSummary.prototype.extractSameProducts = function(list1, list2)
+	{
+		var result = [];
+		for (var i = 0; i < list1.length; i++)
+		{
+			for (var j = 0; j < list2.length; j++)
+			{
+				if (this.areProductsEqual(list1[i], list2[j]))
 				{
-					attrs: { className: "crm-entity-widget-content-block-products-price-value" },
-					html: data["SUM"]
+					result.push(list1[i]);
+				}
+			}
+		}
+
+		return result;
+	};
+	/** check if "product" is in "list" */
+	BX.Crm.EntityEditorProductRowSummary.prototype.isProductInList = function(product, list)
+	{
+		for (var i = 0; i < list.length; i++)
+		{
+			if (this.areProductsEqual(product, list[i]))
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.areProductsEqual = function(product1, product2)
+	{
+		return (product1['PRODUCT_NAME'] === product2['PRODUCT_NAME']);
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.addMoreButton = function(restLength)
+	{
+		var row = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item'
+			}
+		});
+		this._moreButtonRow = row;
+		this._productsContainer.appendChild(row);
+
+		var nameCell = BX.create("div", {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item-name'
+			}
+		});
+		row.appendChild(nameCell);
+
+		this._moreButton = BX.create(
+			'span',
+			{
+				attrs: {
+					className: 'crm-entity-widget-content-block-products-show-more'
+				},
+				events: {
+					click: this._moreButtonClickHandler
+				},
+				text: this.getMessage('notShown').replace(/#COUNT#/gi, restLength.toString())
+			}
+		);
+		nameCell.appendChild(this._moreButton);
+
+		row.appendChild(
+			BX.create('div', {
+				props: {
+					className: 'crm-entity-widget-content-block-products-price'
+				}
+			})
+		);
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.addTotalRow = function(total)
+	{
+		var row = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item'
+			}
+		});
+		this._TotalsRow = row;
+		this._productsContainer.appendChild(row);
+		var nameCell = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item-name'
+			},
+			html: this.getMessage('total')
+		});
+		row.appendChild(nameCell);
+
+		var valueCell = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-price'
+			},
+			html: total
+		});
+		row.appendChild(valueCell);
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype._onMoreButtonClick = function(e)
+	{
+		if(this._totalCount >= this._showInTabItemsLimit)
+		{
+			BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
+			return;
+		}
+		BX.remove(this._moreButtonRow);
+		BX.remove(this._TotalsRow);
+
+		this._showAllProducts = true;
+
+		var data = this.getValue();
+		var items = BX.prop.getArray(data, 'items', []);
+		for(var i = this._visibleItemsLimit; i < this._itemCount; i++)
+		{
+			var product = BX.clone(items[i]);
+			product.animation = 'in';
+			this.addProductRow(product);
+		}
+
+		this.addTotalRow(data['total']);
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.doClearLayout = function()
+	{
+		this._productsContainer = null;
+		this._moreButton = null;
+		this._moreButtonRow = null;
+		this._TotalsRow = null;
+	};
+	BX.Crm.EntityEditorProductRowSummary.prototype.addProductRow = function(data)
+	{
+		var row = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item'
+			}
+		});
+
+		var animation = BX.prop.getString(data, 'animation', null);
+		switch (animation)
+		{
+			case 'in':
+				row.className += ' crm-entity-widget-content-block-products-in';
+				setTimeout(function()
+				{
+					if (BX.Type.isDomNode(row))
+					{
+						BX.Dom.removeClass(row, 'crm-entity-widget-content-block-products-in');
+					}
+				}, 1000);
+				break;
+			case 'out':
+				row.className += ' crm-entity-widget-content-block-products-out';
+				setTimeout(function()
+				{
+					if (BX.Type.isDomNode(row))
+					{
+						BX.Dom.remove(row);
+					}
+				}, 1000);
+				break;
+		}
+		this._productsContainer.appendChild(row);
+
+		var nameCell = BX.create('div', {
+			props: {
+				className: 'crm-entity-widget-content-block-products-item-name'
+			}
+		});
+		var url = BX.prop.getString(data, 'URL', '');
+		if(url !== '')
+		{
+			nameCell.appendChild(
+				BX.create(
+					'a',
+					{
+						attrs: {
+							target: '_blank',
+							href: url
+						},
+						text: data['PRODUCT_NAME']
+					}
+				)
+			);
+		}
+		else
+		{
+			nameCell.innerHTML = BX.util.htmlspecialchars(data['PRODUCT_NAME']);
+		}
+		row.appendChild(nameCell);
+
+		var valueCell = BX.create(
+			'div',
+			{
+				props: {
+					className: 'crm-entity-widget-content-block-products-price'
+				}
+			}
+		);
+		row.appendChild(valueCell);
+
+		valueCell.appendChild(
+			BX.create(
+				'div',
+				{
+					attrs: {
+						className: 'crm-entity-widget-content-block-products-price-value'
+					},
+					html: data['SUM']
 				}
 			)
 		);
 	};
 
-	if(typeof(BX.Crm.EntityEditorProductRowSummary.messages) === "undefined")
+	if(typeof(BX.Crm.EntityEditorProductRowSummary.messages) === 'undefined')
 	{
 		BX.Crm.EntityEditorProductRowSummary.messages = {};
 	}
@@ -10588,14 +9819,7 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 				click: function() {
 					this.getSelectorDialog().show();
 				}.bind(this),
-				input: function(event) {
-					var value = event.target.value;
-					if(value !== this._lastSearchQuery)
-					{
-						this._lastSearchQuery = value;
-						this.getSelectorDialog().search(value);
-					}
-				}.bind(this)
+				input: this.onSearchInput.bind(this)
 			}
 		});
 
@@ -10630,6 +9854,25 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 
 		this.registerLayout(options);
 		this._hasLayout = true;
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.onSearchInput = function(event)
+	{
+		var value = event.target.value;
+		if (value !== this._lastSearchQuery)
+		{
+			this._lastSearchQuery = value;
+			if (value.length === 0)
+			{
+				var selectedItems = this.getSelectorDialog().getSelectedItems();
+				if (selectedItems[0])
+				{
+					selectedItems[0].deselect();
+					this.onItemDelete();
+				}
+			}
+
+			this.getSelectorDialog().search(value);
+		}
 	};
 	BX.Crm.EntityEditorEntityTag.prototype.clearLayout = function(options)
 	{

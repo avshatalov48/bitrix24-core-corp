@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_DEAL_CREATE_ON_BASIS"] = "Generate";
 $MESS["CRM_DEAL_SL_SUBSCRIBE"] = "Follow";
 $MESS["CRM_DEAL_SL_SUBSCRIBE_TITLE"] = "Follow this deal (the deal's events will be visible in your Activity Stream)";
@@ -57,6 +57,7 @@ $MESS["DEAL_LIST"] = "List";
 $MESS["DEAL_LIST_TITLE"] = "All Deals";
 $MESS["DEAL_MIGRATION"] = "Migrate from other CRM";
 $MESS["DEAL_MIGRATION_TITLE"] = "Migrate from other CRM";
+$MESS["DEAL_ORDER_SCENARIO"] = "Order handling mode";
 $MESS["DEAL_REGISTER_CALL"] = "Register call";
 $MESS["DEAL_REGISTER_CALL_TITLE"] = "Register call";
 $MESS["DEAL_SHOW"] = "View";
@@ -68,4 +69,3 @@ $MESS["DEAL_VERTICAL_CRM"] = "Solution presets";
 $MESS["DEAL_VERTICAL_CRM_TITLE"] = "Solution presets";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Document";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Create document based on deal";
-?>

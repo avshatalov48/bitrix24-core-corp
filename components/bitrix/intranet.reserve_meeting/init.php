@@ -271,16 +271,18 @@ if (!Function_Exists("__IRM_InitReservation"))
 
 	function __IRM_SearchPeriodic($fromDate, $toDate, $iblockId, $meeting, $id = 0)
 	{
-		$iblockId = intval($iblockId);
-		if ($iblockId <= 0)
-			return array();
+		$fromDate = (int)$fromDate;
+		$toDate = (int)$toDate;
+		$iblockId = (int)$iblockId;
 
-		if (!Is_Array($meeting))
+		if ($iblockId <= 0)
 		{
-			if (intval($meeting) > 0)
-				$meeting = array(intval($meeting));
-			else
-				$meeting = array();
+			return [];
+		}
+
+		if (!is_array($meeting))
+		{
+			$meeting = intval($meeting) ? [intval($meeting)] : [];
 		}
 		else
 		{
@@ -290,12 +292,13 @@ if (!Function_Exists("__IRM_InitReservation"))
 			{
 				$m = intval($m);
 				if ($m > 0)
+				{
 					$meeting[] = $m;
+				}
 			}
 		}
 
 		$arPeriodElements = array();
-
 		$arWeeklyPeriods = array();
 		$arMonthlyPeriods = array();
 		$arYearlyPeriods = array();
@@ -306,7 +309,14 @@ if (!Function_Exists("__IRM_InitReservation"))
 		$w1 = Date("w", $fromDate);
 
 		$fromDateOnly = MkTime(0, 0, 0, $m1, $d1, $y1);
-		$toDateOnly = MkTime(0, 0, 0, Date("n", $toDate), Date("j", $toDate), Date("Y", $toDate));
+		$toDateOnly = MkTime(
+			0,
+			0,
+			0,
+			Date("n", $toDate),
+			Date("j", $toDate),
+			Date("Y", $toDate)
+		);
 
 		$n = intval(Round(($toDateOnly - $fromDateOnly) / 86400));
 

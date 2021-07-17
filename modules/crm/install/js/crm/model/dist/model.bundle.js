@@ -55,6 +55,11 @@ this.BX = this.BX || {};
           return this.getId() > 0;
         }
       }, {
+        key: "isDeleted",
+        value: function isDeleted() {
+          return this.deleted;
+        }
+      }, {
         key: "setData",
         value: function setData(data) {
           this.data = data;
@@ -68,7 +73,7 @@ this.BX = this.BX || {};
       }, {
         key: "setGetParameters",
         value: function setGetParameters(action, parameters) {
-          this.getParameters[action] = this.getParameters;
+          this.getParameters[action] = parameters;
         }
       }, {
         key: "getGetParameters",
@@ -252,10 +257,10 @@ this.BX = this.BX || {};
                 id: _this3.getId()
               },
               getParameters: _this3.getGetParameters('delete')
-            }).then(function () {
+            }).then(function (response) {
               _this3.deleted = true;
               _this3.progress = false;
-              resolve();
+              resolve(response);
             }).catch(function (response) {
               _this3.progress = false;
               response.errors.forEach(function (_ref4) {

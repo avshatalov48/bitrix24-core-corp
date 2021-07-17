@@ -2,6 +2,8 @@
 $MESS["CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE"] = "Additional options";
 $MESS["CRM_TYPE_DETAIL_AUTOMATION_CARD_DESCRIPTION"] = "Automate your Smart Process Automation items using automation rules and triggers (similar to running automation rules and triggers in deals or leads).";
 $MESS["CRM_TYPE_DETAIL_AUTOMATION_CARD_TITLE"] = "Automation rules and triggers";
+$MESS["CRM_TYPE_DETAIL_BIZ_PROC_CARD_DESCRIPTION"] = "Use the full-featured workflow designer. Configure your workflow templates to run when this SPA's items are created or modified.";
+$MESS["CRM_TYPE_DETAIL_BIZ_PROC_CARD_TITLE"] = "Workflow designer";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_CARD_DESCRIPTION"] = "You can create multiple pipelines for this Smart Process Automation (like with deal pipelines) and move items across various pipelines using the sales funnels. Each pipeline has individual stages, detail views and access permissions.";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_CARD_TITLE"] = "Pipelines and sales funnels";
 $MESS["CRM_TYPE_DETAIL_CATEGORIES_DISABLED_HINT"] = "There are more than one pipeline.";

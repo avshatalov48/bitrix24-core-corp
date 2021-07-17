@@ -1,0 +1,1 @@
+<?$MESS["IMCONNECTOR_PROVIDER_NOTIFICATIONS_ERROR_MODULE_NOT_INSTALLED"] = "Модуль notifications не установлен";

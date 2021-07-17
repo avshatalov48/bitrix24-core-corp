@@ -14,7 +14,7 @@ use Bitrix\Main\Localization\Loc;
 class CBPCrmCopyDynamicActivity extends CBPActivity
 {
 	protected static $cycleCounter = [];
-	const CYCLE_LIMIT = 200;
+	const CYCLE_LIMIT = 150;
 
 	protected $preparedProperties = [];
 
@@ -131,7 +131,19 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 
 	protected function checkPreparedProperties(Service\Factory $factory): bool
 	{
-		$newStageEntityId = $factory->getStage($this->preparedProperties['StageId'])->getEntityId();
+		$stage = $factory->getStage($this->preparedProperties['StageId']);
+		if (is_null($stage))
+		{
+			$this->WriteToTrackingService(
+				Loc::getMessage('CRM_CDA_STAGE_EXISTENCE_ERROR'),
+				0,
+				CBPTrackingType::Error
+			);
+
+			return false;
+		}
+
+		$newStageEntityId = $stage->getEntityId();
 		if (
 			is_null($newStageEntityId)
 			|| $newStageEntityId !== $factory->getStagesEntityId($this->preparedProperties['CategoryId'])
@@ -179,6 +191,11 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 	public function copyItem(Service\Factory $factory, Crm\Item $item): ?Crm\Item
 	{
 		$operation = $factory->getCopyOperation($item);
+		$operation
+			->disableCheckFields()
+			->disableBizProc()
+			->disableCheckAccess()
+		;
 		$copyResult = $operation->launch();
 
 		$errorMessages = $copyResult->getErrorMessages();

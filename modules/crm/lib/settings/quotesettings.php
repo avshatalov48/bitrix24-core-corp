@@ -17,7 +17,7 @@ class QuoteSettings
 	{
 		$this->isOpened = new BooleanSetting('quote_opened_flag', true);
 		$this->enableViewEvent = new BooleanSetting('quote_enable_view_event', true);
-		$this->isFactoryEnabled = new BooleanSetting('quote_enable_factory', false);
+		$this->isFactoryEnabled = new BooleanSetting('quote_enable_factory', true);
 	}
 	/**
 	 * Get current instance
@@ -56,6 +56,11 @@ class QuoteSettings
 	 */
 	public function isFactoryEnabled(): bool
 	{
+		if (\CCrmTax::isTaxMode())
+		{
+			return false;
+		}
+
 		return $this->isFactoryEnabled->get();
 	}
 

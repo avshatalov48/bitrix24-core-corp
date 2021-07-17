@@ -135,6 +135,7 @@ class CCrmOwnerType
 			|| $typeID === self::OrderPayment
 			|| $typeID === self::OrderShipment
 			|| $typeID === self::OrderCheck
+			|| $typeID === self::CheckCorrection
 		);
 
 		if($isStatic)
@@ -2195,6 +2196,7 @@ class CCrmOwnerType
 					'PAY_SYSTEM_NAME' => $arRes['PAY_SYSTEM_NAME'],
 					'SUM' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY'], '#'),
 					'CURRENCY' => \CCrmCurrency::GetCurrencyText($arRes['CURRENCY']),
+					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
 				);
 				if($enableEditUrl)
 				{
@@ -2208,27 +2210,30 @@ class CCrmOwnerType
 			}
 			case self::OrderShipment:
 			{
-				$deliveryPriceInfo = '';
-				if ($arRes['PRICE_DELIVERY'] > 0)
+				$dateInsert = '';
+				$culture = Bitrix\Main\Context::getCurrent()->getCulture();
+				if ($arRes['DATE_INSERT'] instanceof \Bitrix\Main\Type\Date && $culture)
 				{
-					$deliveryPriceInfo = GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_PRICE_DELIVERY_INFO', [
-						"#PRICE_DELIVERY_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE_DELIVERY'], $arRes['CURRENCY']),
-					]);
+					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_INSERT']->getTimestamp());
 				}
-				$result = array(
+
+				$result = [
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
-					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_LEGEND', [
-						"#DELIVERY_NAME#" => $arRes['DELIVERY_NAME'],
-						"#PRICE_DELIVERY_INFO#" => $deliveryPriceInfo,
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_LEGEND_2', [
+						"#DATE_INSERT#" => $dateInsert,
+						"#PRICE_DELIVERY_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE_DELIVERY'], $arRes['CURRENCY']),
+					]),
+					'SUBLEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_SUBLEGEND', [
+						"#DELIVERY_NAME#" => $arRes['DELIVERY_NAME']
 					]),
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' =>
 						CComponentEngine::MakePathFromTemplate(
 							COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-							array('shipment_id' => $ID)
+							['shipment_id' => $ID]
 						)
-				);
+				];
 				if($enableEditUrl)
 				{
 					$result['EDIT_URL'] =
@@ -2447,91 +2452,78 @@ class CCrmOwnerType
 		return is_array($fields) && isset($fields[$fieldName]) ? intval($fields[$fieldName]) : 0;
 	}
 
-	public static function GetResponsibleID($typeID, $ID, $checkRights = true)
+	public static function loadResponsibleId(int $entityTypeId, int $entityId, bool $checkRights = true): int
 	{
-		$typeID = intval($typeID);
-		$ID = intval($ID);
-
-		if(!(self::IsDefined($typeID) && $ID > 0))
-		{
-			return 0;
-		}
-
-		$key = "{$typeID}_{$ID}";
-		if(isset(self::$RESPONSIBLES[$key]))
-		{
-			return self::$RESPONSIBLES[$key];
-		}
-
 		$result = 0;
-		switch($typeID)
+
+		switch($entityTypeId)
 		{
 			case self::Lead:
 			{
-				$dbRes = CCrmLead::GetListEx(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
+				$dbRes = CCrmLead::GetListEx(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['ASSIGNED_BY_ID']) : 0;
 				break;
 			}
 			case self::Contact:
 			{
-				$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
+				$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['ASSIGNED_BY_ID']) : 0;
 				break;
 			}
 			case self::Company:
 			{
-				$dbRes = CCrmCompany::GetListEx(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
+				$dbRes = CCrmCompany::GetListEx(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['ASSIGNED_BY_ID']) : 0;
 				break;
 			}
 			case self::Deal:
 			{
-				$dbRes = CCrmDeal::GetListEx(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
+				$dbRes = CCrmDeal::GetListEx(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['ASSIGNED_BY_ID']) : 0;
 				break;
 			}
 			case self::Invoice:
 			{
-				$dbRes = CCrmInvoice::GetList(array(), array('ID' => $ID), false, false, array('RESPONSIBLE_ID'));
+				$dbRes = CCrmInvoice::GetList(array(), array('ID' => $entityId), false, false, array('RESPONSIBLE_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['RESPONSIBLE_ID']) : 0;
 				break;
 			}
 			case self::Activity:
 			{
-				$dbRes = CCrmActivity::GetList(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('RESPONSIBLE_ID'));
+				$dbRes = CCrmActivity::GetList(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('RESPONSIBLE_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['RESPONSIBLE_ID']) : 0;
 				break;
 			}
 			case self::Quote:
 			{
-				$dbRes = CCrmQuote::GetList(array(), array('=ID' => $ID, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
+				$dbRes = CCrmQuote::GetList(array(), array('=ID' => $entityId, 'CHECK_PERMISSIONS' => ($checkRights ? 'Y' : 'N')), false, false, array('ASSIGNED_BY_ID'));
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$result = $arRes ? intval($arRes['ASSIGNED_BY_ID']) : 0;
 				break;
 			}
 			case self::Order:
 			{
-				if($checkRights && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($ID))
+				if($checkRights && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($entityId))
 				{
 					break;
 				}
 
-				$dbRes = Bitrix\Crm\Order\Order::getList(array('filter' => array('=ID' => $ID), 'select' => array('RESPONSIBLE_ID')));
+				$dbRes = Bitrix\Crm\Order\Order::getList(array('filter' => array('=ID' => $entityId), 'select' => array('RESPONSIBLE_ID')));
 				$arRes = $dbRes ? $dbRes->fetch() : null;
 				$result = $arRes ? intval($arRes['RESPONSIBLE_ID']) : 0;
 				break;
 			}
 		}
 
-		if ($result === 0 && static::isPossibleDynamicTypeId($typeID))
+		if ($result === 0 && static::isPossibleDynamicTypeId($entityTypeId))
 		{
-			$factory = Container::getInstance()->getFactory($typeID);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
 				$parameters = [
@@ -2539,7 +2531,7 @@ class CCrmOwnerType
 						\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED,
 					],
 					'filter' => [
-						'=ID' => $ID,
+						'=ID' => $entityId,
 					],
 					'limit' => 1,
 				];
@@ -2557,6 +2549,28 @@ class CCrmOwnerType
 				}
 			}
 		}
+
+		return $result;
+	}
+
+	public static function GetResponsibleID($typeID, $ID, $checkRights = true)
+	{
+		$typeID = intval($typeID);
+		$ID = intval($ID);
+		$checkRights = $checkRights === true;
+
+		if(!(self::IsDefined($typeID) && $ID > 0))
+		{
+			return 0;
+		}
+
+		$key = "{$typeID}_{$ID}_" . ($checkRights ? 'Y' : 'N');
+		if(isset(self::$RESPONSIBLES[$key]))
+		{
+			return self::$RESPONSIBLES[$key];
+		}
+
+		$result = static::loadResponsibleId($typeID, $ID, $checkRights);
 
 		self::$RESPONSIBLES[$key] = $result;
 		return $result;

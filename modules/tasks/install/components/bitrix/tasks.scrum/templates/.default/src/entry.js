@@ -86,12 +86,39 @@ export class Entry
 		}
 	}
 
+	renderTabsTo(container: HTMLElement)
+	{
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().renderTabsTo(container);
+		}
+	}
+
 	renderCountersTo(container: HTMLElement)
 	{
 		const view = this.getView();
 		if (view instanceof View)
 		{
 			this.getView().renderCountersTo(container);
+		}
+	}
+
+	renderSprintStatsTo(container: HTMLElement)
+	{
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().renderSprintStatsTo(container);
+		}
+	}
+
+	renderButtonsTo(container: HTMLElement)
+	{
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().renderButtonsTo(container);
 		}
 	}
 

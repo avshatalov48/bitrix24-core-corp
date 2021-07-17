@@ -11,6 +11,11 @@ final class SonetCommentConnector extends StubConnector implements ISupportForei
 
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		if(!($comment = $this->loadLogCommentData()))
 		{
 			return null;

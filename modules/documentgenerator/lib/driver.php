@@ -287,6 +287,16 @@ final class Driver
 				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_PL'),
 				'LANGUAGE_ID' => 'pl',
 			],
+			'fr' => [
+				'CODE' => 'fr',
+				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_FR'),
+				'LANGUAGE_ID' => 'fr',
+			],
+			'sp' => [
+				'CODE' => 'sp',
+				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_SP'),
+				'LANGUAGE_ID' => 'la',
+			],
 		];
 	}
 

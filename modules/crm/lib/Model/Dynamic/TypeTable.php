@@ -170,6 +170,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureDefaultValue('N')
 			->configureRequired()
 			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_AUTOMATION_ENABLED_TITLE'));
+		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_BIZ_PROC_ENABLED'))
+			->configureStorageValues('N', 'Y')
+			->configureDefaultValue('N')
+			->configureRequired()
+			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_BIZ_PROC_ENABLED_TITLE'));
 		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_SET_OPEN_PERMISSIONS'))
 			->configureStorageValues('N', 'Y')
 			->configureDefaultValue('Y')

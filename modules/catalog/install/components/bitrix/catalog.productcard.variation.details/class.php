@@ -13,6 +13,7 @@ use Bitrix\Main\ErrorableImplementation;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -658,10 +659,16 @@ class CatalogProductVariationDetailsComponent
 
 		if ($variation === null)
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(sprintf(
-				'Variation {%s} for product {%s} not found.',
-				$this->getVariationId(), $this->getProductId()
-			));
+			Toolbar::deleteFavoriteStar();
+
+			global $APPLICATION;
+			$APPLICATION->IncludeComponent(
+				"bitrix:catalog.notfounderror",
+				'',
+				[
+					'ERROR_MESSAGE' => Loc::getMessage('CPVD_NOT_FOUND_ERROR_TITLE'),
+				]
+			);
 		}
 
 		return $variation;

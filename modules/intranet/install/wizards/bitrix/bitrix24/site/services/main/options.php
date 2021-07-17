@@ -18,7 +18,6 @@ WizardServices::SetUserOption('intranet', '~gadgets_dashboard_'.WIZARD_SITE_ID, 
 $obSite = new CSite();
 $obSite->Update(WIZARD_SITE_ID, Array("NAME" => COption::GetOptionString("main", "site_name", GetMessage("DEFAULT_SITE_NAME"))));
 
-CGroup::SetSubordinateGroups(WIZARD_PERSONNEL_DEPARTMENT_GROUP, Array(WIZARD_EMPLOYEES_GROUP));
 CGroup::SetSubordinateGroups(WIZARD_PORTAL_ADMINISTRATION_GROUP, Array(WIZARD_EMPLOYEES_GROUP));
 
 if(LANGUAGE_ID == "ru")
@@ -156,7 +155,6 @@ WizardServices::SetUserOption("form", "user_edit", Array(
 //public panel
 if(COption::GetOptionString("main", "show_panel_for_users", "") == '')
 {
-	COption::SetOptionString("main", "show_panel_for_users", serialize(array("G".WIZARD_ADMIN_SECTION_GROUP)));
 	COption::SetOptionString("main", "hide_panel_for_users", serialize(array("G2")));
 }
 

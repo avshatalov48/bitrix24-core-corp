@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Order\Permissions;
 use \Bitrix\Main\Type\Date;
+use Bitrix\Sale\Payment;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -110,9 +111,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function setPaymentPaidFieldAction()
 	{
-		$paymentId = isset($this->request['FIELDS']['PAYMENT_ID']) && intval($this->request['FIELDS']['PAYMENT_ID']) > 0 ? intval($this->request['FIELDS']['PAYMENT_ID']) : 0;
-		$paid = isset($this->request['FIELDS']['PAID']) ? trim($this->request['FIELDS']['PAID']) : '';
-		$isReturn = isset($this->request['FIELDS']['IS_RETURN']) ? trim($this->request['FIELDS']['IS_RETURN']) : '';
+		$this->setPaymentField('PAID');
+	}
+
+	protected function setPaymentReturnFieldAction()
+	{
+		$this->setPaymentField('IS_RETURN');
+	}
+
+	protected function setPaymentField($fieldName)
+	{
+		$paymentId = isset($this->request['FIELDS']['PAYMENT_ID']) && (int)$this->request['FIELDS']['PAYMENT_ID'] > 0 ? (int)$this->request['FIELDS']['PAYMENT_ID'] : 0;
 
 		if($paymentId <= 0)
 		{
@@ -120,7 +129,23 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if($paid != 'Y' && $paid != 'N')
+		if (!in_array($fieldName, ['PAID', 'IS_RETURN']))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+			return;
+		}
+
+		$value = isset($this->request['FIELDS'][$fieldName]) ? trim($this->request['FIELDS'][$fieldName]) : '';
+
+		if($fieldName === 'PAID' && !in_array($value, ['Y', 'N']))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+			return;
+		}
+
+		if(
+			$fieldName === 'IS_RETURN'
+			&& !in_array($value,[Payment::RETURN_NONE, Payment::RETURN_INNER, Payment::RETURN_PS]))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
 			return;
@@ -159,7 +184,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$payment = $res->fetch();
 
-		if(!$payment || intval($payment['ORDER_ID']) <= 0)
+		if(!$payment || (int)$payment['ORDER_ID'] <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND'));
 			return;
@@ -189,18 +214,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if($isReturn <> '')
+		if ($fieldName === 'PAID')
 		{
-			$setResult = $paymentObj->setReturn($isReturn);
-
-			if(!$setResult->isSuccess())
-			{
-				$this->addErrors($setResult->getErrors());
-				return;
-			}
+			$setResult = $paymentObj->setPaid($value);
 		}
-
-		$setResult = $paymentObj->setPaid($paid);
+		elseif ($fieldName === 'IS_RETURN')
+		{
+			$setResult = $paymentObj->setReturn($value);
+		}
 
 		if(!$setResult->isSuccess())
 		{

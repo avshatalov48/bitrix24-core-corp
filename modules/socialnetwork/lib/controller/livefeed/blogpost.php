@@ -407,14 +407,36 @@ class BlogPost extends \Bitrix\Socialnetwork\Controller\Base
 	{
 		global $APPLICATION;
 
+		$warnings = [];
+
 		try
 		{
-			$postId = \Bitrix\Socialnetwork\Item\Helper::addBlogPost($params, $this->getScope());
+			$postId = \Bitrix\Socialnetwork\Item\Helper::addBlogPost($params, $this->getScope(), $resultFields);
 			if ($postId <= 0)
 			{
+				if (
+					is_array($resultFields)
+					&& !empty($resultFields['ERROR_MESSAGE_PUBLIC'])
+				)
+				{
+					$this->addError(new Error($resultFields['ERROR_MESSAGE_PUBLIC'], 0, [
+						'public' => 'Y'
+					]));
+					return null;
+				}
+
 				$e = $APPLICATION->getException();
 				throw new \Exception($e ? $e->getString() : 'Cannot add blog post');
 			}
+
+			if (
+				is_array($resultFields)
+				&& !empty($resultFields['WARNING_MESSAGE_PUBLIC'])
+			)
+			{
+				$warnings[] = $resultFields['WARNING_MESSAGE_PUBLIC'];
+			}
+
 		}
 		catch (\Exception $e)
 		{
@@ -423,7 +445,8 @@ class BlogPost extends \Bitrix\Socialnetwork\Controller\Base
 		}
 
 		return [
-			'id' => $postId
+			'id' => $postId,
+			'warnings' => $warnings
 		];
 	}
 
@@ -434,9 +457,20 @@ class BlogPost extends \Bitrix\Socialnetwork\Controller\Base
 		try
 		{
 			$params['POST_ID'] = $id;
-			$postId = \Bitrix\Socialnetwork\Item\Helper::updateBlogPost($params, $this->getScope());
+			$postId = \Bitrix\Socialnetwork\Item\Helper::updateBlogPost($params, $this->getScope(), $resultFields);
 			if ($postId <= 0)
 			{
+				if (
+					is_array($resultFields)
+					&& !empty($resultFields['ERROR_MESSAGE_PUBLIC'])
+				)
+				{
+					$this->addError(new Error($resultFields['ERROR_MESSAGE_PUBLIC'], 0, [
+						'public' => 'Y'
+					]));
+					return null;
+				}
+
 				$e = $APPLICATION->getException();
 				throw new \Exception($e ? $e->getString() : 'Cannot update blog post');
 			}

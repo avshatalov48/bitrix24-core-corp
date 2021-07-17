@@ -25,4 +25,6 @@ $MESS["KANBAN_COLUMN_TITLE_PLACEHOLDER"] = "Название";
 $MESS["KANBAN_SPOTLIGHT_GROUPS"] = "Выберите проект";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
 $MESS["KANBAN_NO_ACTIVE_SPRINT"] = "У вас нет ни одного активного спринта, создайте первый из планирования";
+$MESS["KANBAN_QUICK_TASK"] = "Быстрая задача";
+$MESS["KANBAN_QUICK_TASK_ITEM_INFO"] = "Нажмите <span>Enter</span> чтобы создать";
 ?>

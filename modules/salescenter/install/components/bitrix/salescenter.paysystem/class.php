@@ -10,18 +10,51 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\BusinessValue;
+use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Helpers\Admin;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Seo;
+use Bitrix\Sale\Internals\Input;
 
-class SalesCenterPaySystemComponent extends CBitrixComponent
+class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Engine\Contract\Controllerable, Main\Errorable
 {
+	/** @var Main\ErrorCollection */
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		Loader::includeModule('sale');
+
+		return [];
+	}
+
+	/**
+	 * Getting array of errors.
+	 * @return Main\Error[]
+	 */
+	public function getErrors()
+	{
+		return $this->errorCollection->toArray();
+	}
+
+	/**
+	 * Getting once error with the necessary code.
+	 * @param string $code Code of error.
+	 * @return Main\Error
+	 */
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection->getErrorByCode($code);
+	}
+
 	/**
 	 * @param $arParams
 	 * @return array
 	 */
 	public function onPrepareComponentParams($arParams)
 	{
+		$this->errorCollection = new Main\ErrorCollection();
+
 		$this->arResult = [
 			'PAYSYSTEM_HANDLER' => ($arParams["PAYSYSTEM_HANDLER"] ? $arParams["PAYSYSTEM_HANDLER"] : null),
 			'PAYSYSTEM_PS_MODE' => ($arParams["PAYSYSTEM_PS_MODE"] ? $arParams["PAYSYSTEM_PS_MODE"] : null),
@@ -58,8 +91,6 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 			return;
 		}
 
-		$this->arResult['isCashboxEnabled'] = \Bitrix\SalesCenter\Driver::getInstance()->isCashboxEnabled();
-
 		$this->prepareResultArray();
 		$this->includeComponentTemplate();
 	}
@@ -81,7 +112,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		/** @noinspection PhpVariableNamingConventionInspection */
 		global $APPLICATION;
 
-		$this->arResult['IFRAME'] = $this->request->get('IFRAME') == 'Y';
+		$this->arResult['IFRAME'] = $this->request->get('IFRAME') === 'Y';
 		$this->arResult['ACTION_URL'] = $APPLICATION->GetCurPageParam();
 
 		if ($this->arResult['PAYSYSTEM_ID'])
@@ -97,6 +128,11 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 				$this->arResult['PAYSYSTEM_HANDLER'],
 				$this->arResult['PAYSYSTEM_PS_MODE']
 			);
+		}
+
+		if (!isset($this->arResult['PAYSYSTEM']['ACTION_FILE']))
+		{
+			$this->arResult['PAYSYSTEM']['ACTION_FILE'] = $this->arResult['PAYSYSTEM_HANDLER'];
 		}
 
 		if (!isset($this->arResult['PAYSYSTEM']['ACTIVE']))
@@ -167,6 +203,21 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 
 		$this->checkAvailabilityCashbox();
 		$this->initBusinessValue($this->arResult['PAYSYSTEM_ID'], $this->arResult['PAYSYSTEM_HANDLER']);
+
+		$this->arResult['IS_CASHBOX_ENABLED'] = \Bitrix\SalesCenter\Driver::getInstance()->isCashboxEnabled();
+
+		$this->arResult['IS_CAN_PRINT_CHECK_SELF'] = false;
+		$this->arResult['CASHBOX'] = [];
+
+		$service = new PaySystem\Service($this->arResult['PAYSYSTEM']);
+		if ($service->isSupportPrintCheck())
+		{
+			$initCashboxResult = $this->initCashbox($service);
+			if ($initCashboxResult)
+			{
+				$this->arResult = array_merge($this->arResult, $initCashboxResult);
+			}
+		}
 	}
 
 	/**
@@ -403,6 +454,56 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		}
 	}
 
+	private function initCashbox(PaySystem\Service $service, string $kkmId = ''): array
+	{
+		$result = [];
+
+		Cashbox\Cashbox::init();
+
+		$result['IS_CAN_PRINT_CHECK_SELF'] = true;
+		$result['IS_FISCALIZATION_ENABLE'] = true;
+
+		/** @var Cashbox\CashboxPaySystem $cashboxHandler */
+		$cashboxHandler = $service->getCashboxClass();
+
+		$supportedKkmModels = BusinessValue::getValuesByCode(
+			$service->getConsumerName(),
+			$cashboxHandler::getPaySystemCodeForKkm()
+		);
+		$result['SUPPORTED_KKM_MODELS'] = $supportedKkmModels;
+
+		if (!$kkmId && $supportedKkmModels)
+		{
+			$kkmId = (string)current($supportedKkmModels);
+		}
+
+		$handlerDescription = $service->getHandlerDescription();
+		$result['PAY_SYSTEM_CODE_NAME'] = $handlerDescription['CODES'][$cashboxHandler::getPaySystemCodeForKkm()]['NAME'];
+
+		$cashbox = Cashbox\Manager::getList([
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'=HANDLER' => $cashboxHandler,
+				'=KKM_ID' => $kkmId,
+			],
+		])->fetch();
+		if (!$cashbox)
+		{
+			$result['IS_FISCALIZATION_ENABLE'] = false;
+
+			$cashbox = [
+				'HANDLER' => $cashboxHandler,
+				'OFD' => '',
+			];
+		}
+
+		$result['CASHBOX'] = $this->getCashboxSettings($cashbox);
+		$result['CASHBOX']['code'] = mb_strtoupper($cashboxHandler::getCode());
+		$result['CASHBOX']['documentationCode'] = $this->getHelpdeskDocumentationCashboxCode($cashboxHandler);
+
+		return $result;
+	}
+
 	/**
 	 * @param $id
 	 * @return bool
@@ -432,7 +533,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 	 */
 	private function getHelpdeskDocumentationCode(string $handlerClass): string
 	{
-		$defaultCode = '10460164';
+		$defaultCode = '11864562';
 
 		try
 		{
@@ -455,5 +556,121 @@ class SalesCenterPaySystemComponent extends CBitrixComponent
 		];
 
 		return $helpdeskCodeMap[$className] ?? $defaultCode;
+	}
+
+	/**
+	 * @param string $cashboxHandler
+	 * @return string|null
+	 */
+	private function getHelpdeskDocumentationCashboxCode(string $cashboxHandler): ?string
+	{
+		$helpdeskCodeMap = [
+			'\\'.Cashbox\CashboxRobokassa::class => '12849128',
+		];
+
+		return $helpdeskCodeMap[$cashboxHandler] ?? null;
+	}
+
+	private function getCashboxSettings(array $cashbox)
+	{
+		$result = [];
+
+		/** @var Cashbox\Cashbox $handler */
+		$handler = $cashbox['HANDLER'];
+
+		if (class_exists($handler))
+		{
+			$commonSettingsTitle = Loc::getMessage(
+				'SALESCENTER_SP_CASHBOX_COMMON_SETTINGS_'.mb_strtoupper($handler::getCode())
+			);
+			if (!$commonSettingsTitle)
+			{
+				$commonSettingsTitle = Loc::getMessage('SALESCENTER_SP_CASHBOX_COMMON_SETTINGS');
+			}
+
+			$result['section']['common'] = [
+				'title' => $commonSettingsTitle,
+				'type' => 'settings',
+			];
+			$result['fields']['common'][] = [
+				'label' => 'Email',
+				'type' => 'string',
+				'input' => Input\Manager::getEditHtml(
+					'CASHBOX[EMAIL]',
+					[
+						'TYPE' => 'STRING',
+						'CLASS' => 'ui-ctl-element'
+					],
+					$cashbox['EMAIL']
+				),
+				'hint' => Loc::getMessage('SALESCENTER_SP_CASHBOX_EMAIL_HINT'),
+				'required' => true,
+			];
+
+			$cashboxSettings = $cashbox['SETTINGS'] ?? [];
+			$settings = $handler::getSettings($cashbox['KKM_ID']);
+			if ($settings)
+			{
+				foreach ($settings as $group => $block)
+				{
+					$warning = '';
+					if ($group === 'VAT')
+					{
+						$warning = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_ATTENTION');
+					}
+
+					$result['section'][$group] = [
+						'title' => htmlspecialcharsbx($block['LABEL']),
+						'type' => 'cashboxSettings',
+						'warning' => $warning,
+					];
+
+					foreach ($block['ITEMS'] as $code => $item)
+					{
+						$item['CLASS'] = 'ui-ctl-element';
+						$value = $cashboxSettings[$group][$code] ?? null;
+
+						$type = 'string';
+						if ($item['TYPE'] === 'ENUM')
+						{
+							$type = 'select';
+						}
+						elseif ($item['TYPE'] === 'Y/N')
+						{
+							$type = 'checkbox';
+						}
+
+						$isRequired = (
+							(isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y')
+							|| (isset($item['REQUIRED']) && $item['REQUIRED'] === 'Y')
+						);
+
+						$result['fields'][$group][] = [
+							'label' => htmlspecialcharsbx($item['LABEL']),
+							'type' => $type,
+							'input' => Input\Manager::getEditHtml(
+								'SETTINGS['.$group.']['.$code.']',
+								$item,
+								$value
+							),
+							'required' => $isRequired,
+						];
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public function reloadCashboxSettingsAction(int $paySystemId, string $kkmId): ?array
+	{
+		$service = PaySystem\Manager::getObjectById($paySystemId);
+		if (!$service)
+		{
+			return null;
+		}
+
+		return $this->initCashbox($service, $kkmId);
 	}
 }

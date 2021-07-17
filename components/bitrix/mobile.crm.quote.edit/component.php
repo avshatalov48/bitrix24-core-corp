@@ -566,28 +566,13 @@ if ($bPostChecked)
 		CUtil::JSPostUnescape();
 
 		$content = isset($_POST['CONTENT']) ? trim($_POST['CONTENT']) : '';
-		$terms = isset($_POST['TERMS']) ? trim($_POST['TERMS']) : '';
-		$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
-		$bSanContent = ($content !== '' && mb_strpos($content, '<'));
-		$bSanTerms = ($terms !== '' && mb_strpos($terms, '<'));
-		$bSanComments = ($comments !== '' && mb_strpos($comments, '<'));
-		if ($bSanContent || $bSanTerms || $bSanComments)
-		{
-			$sanitizer = new CBXSanitizer();
-			$sanitizer->ApplyDoubleEncode(false);
-			$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
-			//Crutch for for Chrome line break behaviour in HTML editor.
-			$sanitizer->AddTags(array('div' => array(), 'span'=> array('style')));
-			$sanitizer->AddTags(array('a' => array('href', 'title', 'name', 'style', 'alt', 'target')));
+		$content = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($content);
 
-			if($bSanContent)
-				$content = $sanitizer->SanitizeHtml($content);
-			if($bSanTerms)
-				$terms = $sanitizer->SanitizeHtml($terms);
-			if ($bSanComments)
-				$comments = $sanitizer->SanitizeHtml($comments);
-		}
-		unset($bSanContent, $bSanTerms, $bSanComments);
+		$terms = isset($_POST['TERMS']) ? trim($_POST['TERMS']) : '';
+		$terms = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($terms);
+
+		$comments = isset($_POST['COMMENTS']) ? trim($_POST['COMMENTS']) : '';
+		$comments = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($comments);
 
 		$arFields = array(
 			'TITLE' => trim($_POST['TITLE']),

@@ -7,8 +7,20 @@ const Hint = {
 		}
 
 	},
+	computed: {
+		hasContentSlot() {
+			try
+			{
+				return (this.$slots['default'][0].text !== '');
+			}
+			catch (err)
+			{
+				return false;
+			}
+		}
+	},
 	template: `
-		<div @click="onHint" class="salescenter-app-payment-by-sms-item-title-info">
+		<div v-if="hasContentSlot" @click="onHint" class="salescenter-app-payment-by-sms-item-title-info">
 			<slot></slot>
 		</div>
 	`

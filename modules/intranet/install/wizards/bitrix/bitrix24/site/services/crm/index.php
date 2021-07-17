@@ -148,9 +148,7 @@ if ($iRoleIDMan <= 0)
 	$iRoleIDMan = $CCrmRole->Add($arRoles['man']);
 
 $arRel['G1'] = array($iRoleIDAdm);
-if (WIZARD_DIRECTION_GROUP > 0)
-	$arRel['G'.WIZARD_DIRECTION_GROUP] = array($iRoleIDAdm);
-if (WIZARD_EMPLOYEES_GROUP > 0)
+if (defined('WIZARD_EMPLOYEES_GROUP') && WIZARD_EMPLOYEES_GROUP > 0)
 	$arRel['G'.WIZARD_EMPLOYEES_GROUP] = array($iRoleIDAdm);
 
 $CCrmRole->SetRelation($arRel);

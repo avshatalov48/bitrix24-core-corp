@@ -35,6 +35,13 @@ class BindingMenu
 			return $items;
 		}
 
+		$marketUrl = null;
+		$manifestCode = 'crm_smart_robots';
+		if (Loader::includeModule('rest'))
+		{
+			$marketUrl = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl($manifestCode);
+		}
+
 		foreach (['crm_switcher', 'crm_detail'] as $placement)
 		{
 			foreach (['lead', 'deal',] as $entity)
@@ -68,7 +75,7 @@ class BindingMenu
 				$scriptItems[] = [
 					'id' => 'script_list',
 					'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_LIST'),
-					'onclick' => "BX.Bizproc.Script.Manager.Instance.showScriptList({$docTypeParam}, {$placementParam})",
+					'onclick' => "BX.Bizproc.Script.Manager.Instance.showScriptList({$docTypeParam}, '{$manifestCode}')",
 					'sort' => 100
 				];
 				$scriptItems[] = ['delimiter' => true];
@@ -79,12 +86,16 @@ class BindingMenu
 					'onclick' => "BX.Bizproc.Script.Manager.Instance.createScript({$docTypeParam}, {$placementParam})",
 					'sort' => 101
 				];
-				$scriptItems[] = [
-					'id' => 'script_marketplace',
-					'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_MARKETPLACE'),
-					'onclick' => "BX.Bizproc.Script.Market.Instance.showForPlacement({$placementParam})",
-					'sort' => 102
-				];
+
+				if ($marketUrl)
+				{
+					$scriptItems[] = [
+						'id' => 'script_marketplace',
+						'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_MARKETPLACE'),
+						'href' => $marketUrl,
+						'sort' => 102
+					];
+				}
 
 				$items[] = [
 					'bindings' =>

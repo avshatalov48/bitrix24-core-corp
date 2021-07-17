@@ -7,7 +7,6 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Crm\Order\Permissions;
 use Bitrix\Sale\Delivery;
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -22,6 +21,8 @@ if(!Loader::includeModule('crm'))
 /** @internal  */
 final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 {
+	use \Bitrix\Crm\Component\EntityDetails\SaleProps\AjaxProcessorTrait;
+
 	protected function changeDeliveryAction()
 	{
 		if(!($formData = $this->getFormData()))
@@ -123,6 +124,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$productData
 		);
 
+		$shipmentFields['PROPERTIES'] = $this->getPropertiesField($this->request);
+
 		if(!($shipment = $this->buildShipment($shipmentFields)) || !$this->result->isSuccess())
 		{
 			return;
@@ -173,7 +176,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		);
 		$component->setEntityID($shipment->getId());
 		$component->setShipment($shipment);
-		return $component->prepareEntityData();
+
+		$entityData = $component->prepareEntityData();
+
+		$entityData['SHIPMENT_PROPERTIES_SCHEME'] = $component->prepareProperties(
+			$shipment->getPropertyCollection(),
+			\Bitrix\Crm\Order\ShipmentProperty::class,
+			$shipment->getPersonTypeId(),
+			($shipment->getId() === 0)
+		);
+
+		return $entityData;
 	}
 
 	/**
@@ -182,6 +195,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	 */
 	protected function buildShipment($formData)
 	{
+		$formData['PROPERTIES'] = $this->getPropertiesField($formData);
+
 		$builderSettings = new \Bitrix\Sale\Helpers\Order\Builder\SettingsContainer([]);
 		$orderBuilder = new \Bitrix\Crm\Order\OrderBuilderCrm($builderSettings);
 		$director = new \Bitrix\Sale\Helpers\Order\Builder\Director;
@@ -197,7 +212,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		if(!empty($orderBuilder->getErrorsContainer()->getErrors()))
 		{
 			$this->addErrors($orderBuilder->getErrorsContainer()->getErrors());
-			return null;
 		}
 
 		return $shipment;

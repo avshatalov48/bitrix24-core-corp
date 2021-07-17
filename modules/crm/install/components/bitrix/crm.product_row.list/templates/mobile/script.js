@@ -50,7 +50,7 @@ BX.Mobile.Crm.ProductEditor = {
 				if (!this.products[i].DATA_ROLE)
 					this.products[i].DATA_ROLE = this.products[i].ID;
 
-				this.products[i].FORMATTED_PRICE = this._currencyFormat.replace(/#/g, this.products[i].PRICE);
+				this.products[i].FORMATTED_PRICE = this._currencyFormat.replace(/(^|[^&])#/g, this.products[i].PRICE);
 
 				this.generateProductHtml(this.products[i]);
 			}
@@ -109,7 +109,7 @@ BX.Mobile.Crm.ProductEditor = {
 			var taxIncluded = this.isTaxIncluded();
 
 			var curPrice = (taxAllowed && !taxIncluded) ? product.PRICE_NETTO : product.PRICE_BRUTTO;
-			product.FORMATTED_PRICE = this._currencyFormat.replace(/#/g, curPrice);
+			product.FORMATTED_PRICE = this._currencyFormat.replace(/(^|[^&])#/g, curPrice);
 
 			var ttl = typeof(product.QUANTITY * curPrice) != 'undefined' ? parseFloat(product.QUANTITY * curPrice).toFixed(2) : '0.00';
 		}
@@ -118,7 +118,7 @@ BX.Mobile.Crm.ProductEditor = {
 			var ttl = typeof(product.QUANTITY * product.PRICE) != 'undefined' ? parseFloat(product.QUANTITY * product.PRICE).toFixed(2) : '0.00';
 		}
 
-		var sum =  this._currencyFormat.replace(/#/g, ttl);
+		var sum =  this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 
 		childrenNodes.push(
 			BX.create("span", {
@@ -255,7 +255,7 @@ BX.Mobile.Crm.ProductEditor = {
 						if (sumWithQuantityNode)
 						{
 							var ttl = typeof(curQuantity * this.products[i].PRICE) != 'undefined' ? parseFloat(curQuantity * this.products[i].PRICE).toFixed(2) : '0.00';
-							var sum =  this._currencyFormat.replace(/#/g, ttl);
+							var sum =  this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 
 							sumWithQuantityNode.innerHTML = sum;
 						}
@@ -451,7 +451,7 @@ BX.Mobile.Crm.ProductEditor = {
 		{
 			s = BX.type.isNotEmptyString(totals['TOTAL_BEFORE_DISCOUNT_FORMATTED']) ? totals['TOTAL_BEFORE_DISCOUNT_FORMATTED'] : '';
 			ttl = typeof(totals['TOTAL_BEFORE_DISCOUNT']) != 'undefined' ? parseFloat(totals['TOTAL_BEFORE_DISCOUNT']).toFixed(2) : '0.00';
-			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/#/g, ttl);
+			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 			//BX.onCustomEvent(this, 'totalBeforeDiscountChange', [ttl]);
 		}
 
@@ -461,7 +461,7 @@ BX.Mobile.Crm.ProductEditor = {
 			s = BX.type.isNotEmptyString(totals['TOTAL_DISCOUNT_FORMATTED']) ? totals['TOTAL_DISCOUNT_FORMATTED'] : '';
 			ttl = typeof(totals['TOTAL_DISCOUNT']) != 'undefined' ? parseFloat(totals['TOTAL_DISCOUNT']).toFixed(2) : '0.00';
 			this._discountExists = (parseFloat(ttl) !== 0.0);
-			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/#/g, ttl);
+			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 			//BX.onCustomEvent(this, 'totalDiscountChange', [ttl]);
 		}
 
@@ -470,7 +470,7 @@ BX.Mobile.Crm.ProductEditor = {
 		{
 			s = BX.type.isNotEmptyString(totals['TOTAL_BEFORE_TAX_FORMATTED']) ? totals['TOTAL_BEFORE_TAX_FORMATTED'] : '';
 			ttl = typeof(totals['TOTAL_BEFORE_TAX']) != 'undefined' ? parseFloat(totals['TOTAL_BEFORE_TAX']).toFixed(2) : '0.00';
-			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/#/g, ttl);
+			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 			//BX.onCustomEvent(this, 'totalBeforeTaxChange', [ttl]);
 		}
 
@@ -480,7 +480,7 @@ BX.Mobile.Crm.ProductEditor = {
 			s = BX.type.isNotEmptyString(totals['TOTAL_TAX_FORMATTED']) ? totals['TOTAL_TAX_FORMATTED'] : '';
 			ttl = typeof(totals['TOTAL_TAX']) != 'undefined' ? parseFloat(totals['TOTAL_TAX']).toFixed(2) : '0.00';
 			this._taxExists = (parseFloat(ttl) !== 0.0);
-			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/#/g, ttl);
+			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 			//BX.onCustomEvent(this, 'totalTaxChange', [ttl]);
 		}
 
@@ -490,7 +490,7 @@ BX.Mobile.Crm.ProductEditor = {
 		{
 			s = BX.type.isNotEmptyString(totals['TOTAL_SUM_FORMATTED']) ? totals['TOTAL_SUM_FORMATTED'] : '';
 			ttl = typeof(totals['TOTAL_SUM']) != 'undefined' ? parseFloat(totals['TOTAL_SUM']).toFixed(2) : '0.00';
-			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/#/g, ttl);
+			el.innerHTML = s !== '' ? s : this._currencyFormat.replace(/(^|[^&])#/g, ttl);
 			BX.onCustomEvent(this, 'sumTotalChange', [ttl]);
 		}
 
@@ -872,13 +872,13 @@ BX.Mobile.Crm.ProductEditor = {
 
 							var formatCurPrice = typeof(curPrice) != 'undefined' ? parseFloat(curPrice).toFixed(2) : '0.00';
 
-							priceNode.innerHTML = this._currencyFormat.replace(/#/g, formatCurPrice);
+							priceNode.innerHTML = this._currencyFormat.replace(/(^|[^&])#/g, formatCurPrice);
 
 							var priceWithQuantityNode = productNode.querySelector("[data-role='sumWithQuantity']");
 							if (priceWithQuantityNode)
 							{
 								var formatCurPrice = typeof(curProduct.QUANTITY * curPrice) != 'undefined' ? parseFloat(curProduct.QUANTITY * curPrice).toFixed(2) : '0.00';
-								var sum =  this._currencyFormat.replace(/#/g, formatCurPrice);
+								var sum =  this._currencyFormat.replace(/(^|[^&])#/g, formatCurPrice);
 
 								priceWithQuantityNode.innerHTML = sum;
 							}

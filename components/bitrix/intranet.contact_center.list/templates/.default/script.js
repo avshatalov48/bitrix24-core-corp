@@ -206,6 +206,11 @@
 				newItem.className = 'contact-center-list-item-status-inactive';
 			}
 
+			if (item.DISABLED)
+			{
+				newItem.disabled = true;
+			}
+
 			if (item.FIXED)
 			{
 				newItem.className = 'menu-popup-no-icon intranet-contact-list-item-add';
@@ -441,11 +446,52 @@
 			{
 				item.classList.add('intranet-contact-item-selected');
 				this.setBlockColor(item, '');
+				if (params.data.COLOR_CLASS)
+				{
+					item.classList.add(params.data.COLOR_CLASS);
+				}
+
+				if (
+					BX.type.isArray(params.data.LIST)
+					&& params.data.LIST.length > 0
+					&& params.data.ITEM_CODE
+				)
+				{
+					item.setAttribute('onclick', null);
+					item.setAttribute('id', 'feed-add-post-form-link-text-' + params.data.ITEM_CODE);
+				}
 			}
 			else
 			{
 				item.classList.remove('intranet-contact-item-selected');
 				item.style.backgroundColor = '#ffffff';
+			}
+			if (params.data.IS_NEW)
+			{
+				var labelClassName = params.data.SELECTED
+					? 'intranet-contact-center-item-label-new-active'
+					: 'intranet-contact-center-item-label-new';
+				var newLabel = item.querySelector('[data-role="item-new-label"]');
+				if (newLabel)
+				{
+					newLabel.classList.remove([
+						'intranet-contact-center-item-label-new',
+						'intranet-contact-center-item-label']
+					);
+					newLabel.classList.add(labelClassName);
+					var labelTextNode = newLabel.children[0];
+					if (labelTextNode)
+					{
+						var textClassName = params.data.SELECTED
+							? 'intranet-contact-center-item-label-new-text-active'
+							: 'intranet-contact-center-item-label-new-text';
+						labelTextNode.classList.remove([
+							'intranet-contact-center-item-label-new-text-active',
+							'intranet-contact-center-item-label-new-text']
+						);
+						labelTextNode.classList.add(textClassName);
+					}
+				}
 			}
 
 			if (params.js_data.menu)

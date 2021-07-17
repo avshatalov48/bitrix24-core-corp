@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\LeadAddress;
+
 if (!CModule::IncludeModule('bizproc'))
 	return;
 
@@ -337,9 +341,8 @@ class CCrmDocumentContact extends CCrmDocument
 
 	static public function PrepareDocument(array &$arFields)
 	{
-		$arFields['FULL_ADDRESS'] = Bitrix\Crm\Format\LeadAddressFormatter::format(
-			$arFields,
-			array('SEPARATOR' => Bitrix\Crm\Format\AddressSeparator::Comma)
+		$arFields['FULL_ADDRESS'] = AddressFormatter::getSingleInstance()->formatTextComma(
+			LeadAddress::mapEntityFields($arFields)
 		);
 		$arFields['COMPANY_IDS'] = \Bitrix\Crm\Binding\ContactCompanyTable::getContactCompanyIDs($arFields['ID']);
 	}

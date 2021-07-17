@@ -46,6 +46,11 @@ BX.ImMobile = function(params)
 	this.tryConnect = true;
 	this.animationSupport = true;
 
+	this.linesDetailCounter = {};
+	this.dialogDetailCounter = {};
+	
+	this.callController = null;
+
 	this.keyboardShow = false;
 	this.sendAjaxTry = 0;
 

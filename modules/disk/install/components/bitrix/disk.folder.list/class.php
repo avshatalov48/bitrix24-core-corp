@@ -425,7 +425,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		}
 
 		$rows = array();
-		foreach ($this->folder->getList($parameters) as $row)
+		foreach (Folder::getList($parameters) as $row)
 		{
 			$countObjectsOnPage++;
 
@@ -636,7 +636,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					$actionToShare[] = array(
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
-						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
+						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
 						"onclick" =>
 							$this->filterB24Feature(
 								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
@@ -656,7 +656,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					$actionToShare[] = array(
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
-						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
+						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
 						"onclick" =>
 							$this->filterB24Feature(
 								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
@@ -675,7 +675,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					$actionToShare[] = array(
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
-						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
+						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
 						"onclick" =>
 							$this->filterB24Feature(
 								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',

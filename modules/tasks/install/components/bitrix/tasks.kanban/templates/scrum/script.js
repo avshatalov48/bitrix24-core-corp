@@ -79,6 +79,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.ajaxComponentPath = params.ajaxComponentPath;
 	    this.ajaxComponentParams = params.ajaxComponentParams;
 	    this.sprintSelected = params.sprintSelected;
+	    this.kanbanHeader = null;
 	    this.kanban = null;
 	    this.kanbanGroupedByParentTasks = new Map();
 	    this.parentTasks = params.parentTasks;
@@ -113,6 +114,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.inputRenderTo = renderTo;
 	      this.inputKanbanParams = params;
+	      this.drawKanbanHeader(renderTo, params);
 	      this.drawKanbanWithoutGrouping(renderTo, params);
 	      this.drawKanbanInGroupingMode(renderTo, params);
 	      this.fillNeighborKanbans();
@@ -125,6 +127,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this2.adjustGroupHeadersWidth();
 	        }, 200);
 	      });
+	    }
+	  }, {
+	    key: "getKanbanHeader",
+	    value: function getKanbanHeader() {
+	      return this.kanbanHeader;
 	    }
 	  }, {
 	    key: "getKanban",
@@ -169,6 +176,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    }
 	  }, {
+	    key: "drawKanbanHeader",
+	    value: function drawKanbanHeader(renderTo, params) {
+	      var headerParams = main_core.Runtime.clone(params);
+	      headerParams.kanbanHeader = true;
+	      headerParams.items = [];
+	      this.kanbanHeader = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
+	      this.kanbanHeader.draw();
+	    }
+	  }, {
 	    key: "drawKanbanWithoutGrouping",
 	    value: function drawKanbanWithoutGrouping(renderTo, params) {
 	      this.kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, params));
@@ -180,14 +196,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this4 = this;
 
 	      parentTaskId = parseInt(parentTaskId, 10);
-	      params.columns = this.parentTasks[parentTaskId]['columns'];
-	      params.items = this.parentTasks[parentTaskId]['items'];
-	      params.parentTaskId = parentTaskId;
-	      params.parentTaskCompleted = this.parentTasks[parentTaskId]['completed'] === 'Y';
-	      var kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, params));
+	      var headerParams = main_core.Runtime.clone(params);
+	      headerParams.columns = this.parentTasks[parentTaskId]['columns'];
+	      headerParams.items = this.parentTasks[parentTaskId]['items'];
+	      headerParams.parentTaskId = parentTaskId;
+	      headerParams.parentTaskCompleted = this.parentTasks[parentTaskId]['completed'] === 'Y';
+	      var kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
 	      kanban.draw();
 
-	      if (params.parentTaskCompleted) {
+	      if (headerParams.parentTaskCompleted) {
 	        var container = kanban.getRenderToContainer().closest('.tasks-scrum-parent-task-kanban');
 	        this.downGroupingVisibility(container);
 	      }
@@ -205,6 +222,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function fillNeighborKanbans() {
 	      var _this5 = this;
 
+	      this.addNeighborKanban(this.kanbanHeader);
 	      this.addNeighborKanban(this.kanban);
 	      this.kanbanGroupedByParentTasks.forEach(function (parentTaskKanban) {
 	        _this5.addNeighborKanban(parentTaskKanban);
@@ -213,6 +231,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "addNeighborKanban",
 	    value: function addNeighborKanban(kanban) {
+	      this.kanbanHeader.addNeighborGrid(kanban);
 	      this.kanban.addNeighborGrid(kanban);
 	      this.kanbanGroupedByParentTasks.forEach(function (parentTaskKanban) {
 	        parentTaskKanban.addNeighborGrid(kanban);
@@ -223,6 +242,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getKanbanParams(renderTo, params) {
 	      return {
 	        isGroupingMode: true,
+	        gridHeader: params.kanbanHeader,
 	        parentTaskId: params.parentTaskId ? params.parentTaskId : 0,
 	        parentTaskCompleted: params.parentTaskCompleted ? params.parentTaskCompleted : false,
 	        renderTo: renderTo,

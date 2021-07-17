@@ -231,15 +231,6 @@ if ($ID > 0 && $saleModulePermissions >= "W")
 {
 	$aMenu[] = array("SEPARATOR" => "Y");
 
-	$addUrl = $selfFolderUrl."sale_delivery_eservice_edit.php?lang=".LANGUAGE_ID."&DELIVERY_ID=".$DELIVERY_ID;
-	$addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl).
-		(isset($_REQUEST["back_url"]) ? "&back_url=".urlencode($_REQUEST["back_url"]) : "");
-	$aMenu[] = array(
-		"TEXT" => Loc::getMessage("SALE_ESDE_CREATE_NEW"),
-		"LINK" => $addUrl,
-		"ICON" => "btn_new"
-	);
-
 	if ($fields["RIGHTS"][ExtraServices\Manager::RIGHTS_ADMIN_IDX] == "Y")
 	{
 		$deleteUrl = $selfFolderUrl."sale_delivery_service_edit.php?lang=".LANGUAGE_ID."&ID=".$DELIVERY_ID."&action=delete_extra_service".

@@ -45,7 +45,21 @@ type DocumentScheme = {
 	id: number;
 	name: string;
 	entities: Array<string>;
+	mainEntity: number;
+	hasInvoice: boolean;
+	dynamic: boolean;
 	description: string;
+};
+
+type DocumentDynamicCategory = {
+	id: number;
+	name: string;
+	stages: Array<EnumInt>;
+};
+type DocumentDynamic = {
+	id: number;
+	name: string;
+	categories: Array<DocumentDynamicCategory>;
 };
 
 type Document = {
@@ -53,6 +67,7 @@ type Document = {
 	duplicateModes: Array<EnumString>;
 	deal: DocumentDeal;
 	lead: DocumentLead;
+	dynamic: Array<DocumentDynamic>;
 };
 
 type Callback = {

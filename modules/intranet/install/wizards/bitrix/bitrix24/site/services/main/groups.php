@@ -25,29 +25,29 @@ if (intval($taskID) > 0)
 $arGroups = Array();
 
 $arGroups[] = Array(
-		"~ID" => "11",
-		"ACTIVE" => "Y",
-		"C_SORT" => 3,
-		"NAME" => WIZARD_SITE_NAME . ": " . GetMessage("EMPLOYEES_GROUP_NAME"),
-		"DESCRIPTION" => GetMessage("EMPLOYEES_GROUP_DESC"),
-		"STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID,
-		"TASKS_MODULE" => Array("main_change_profile"),
-		"TASKS_FILE" => Array(
-		),
-	);
+	"~ID" => "11",
+	"ACTIVE" => "Y",
+	"C_SORT" => 3,
+	"NAME" => WIZARD_SITE_NAME . ": " . GetMessage("EMPLOYEES_GROUP_NAME"),
+	"DESCRIPTION" => GetMessage("EMPLOYEES_GROUP_DESC"),
+	"STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID,
+	"TASKS_MODULE" => Array("main_change_profile"),
+	"TASKS_FILE" => Array(
+	),
+);
 $arGroups[] = Array(
-		"~ID" => "12",
-		"ACTIVE" => "Y",
-		"C_SORT" => 6,
-		"NAME" => WIZARD_SITE_NAME . ": " . GetMessage("PORTAL_ADMINISTRATION_GROUP_NAME"),
-		"DESCRIPTION" => GetMessage("PORTAL_ADMINISTRATION_GROUP_DESC"),
-		"STRING_ID" => "PORTAL_ADMINISTRATION_".WIZARD_SITE_ID,
-		"TASKS_MODULE" => Array("main_edit_subordinate_users"),
-		"TASKS_FILE" => Array(
-			Array("fm_folder_access_full", WIZARD_SITE_DIR),
-			Array("fm_folder_access_read", "/bitrix/admin/"),
-		),
-	);
+	"~ID" => "12",
+	"ACTIVE" => "Y",
+	"C_SORT" => 6,
+	"NAME" => WIZARD_SITE_NAME . ": " . GetMessage("PORTAL_ADMINISTRATION_GROUP_NAME"),
+	"DESCRIPTION" => GetMessage("PORTAL_ADMINISTRATION_GROUP_DESC"),
+	"STRING_ID" => "PORTAL_ADMINISTRATION_".WIZARD_SITE_ID,
+	"TASKS_MODULE" => Array("main_edit_subordinate_users"),
+	"TASKS_FILE" => Array(
+		Array("fm_folder_access_full", WIZARD_SITE_DIR),
+		Array("fm_folder_access_read", "/bitrix/admin/"),
+	),
+);
 $arGroups[] = Array(
 	"~ID" => "6",
 	"ACTIVE" => "Y",
@@ -88,7 +88,7 @@ foreach ($arGroups as $arGroup)
 	}
 
 	if (!empty($arTasksID))
-		CGroup::SetTasks($groupID, $arTasksID, true);
+		CGroup::SetTasks($groupID, $arTasksID);
 
 	if(!WIZARD_IS_INSTALLED)
 	{
@@ -108,18 +108,7 @@ foreach ($arGroups as $arGroup)
 			WizardServices::SetFilePermission(Array(WIZARD_SITE_ID, WIZARD_SITE_DIR), Array($groupID => 'R'));
 		}
 	}
-
-	if (WIZARD_IS_RERUN === false)
-	{
-		if ($arGroup["STRING_ID"] == "EMPLOYEES_".WIZARD_SITE_ID)
-		{
-			COption::SetOptionString("main", "new_user_registration_def_group", $groupID);
-
-		}
-
-	}
 }
-
 
 $dbGroupUsers = CGroup::GetList("id", "asc", Array("ACTIVE" => "Y"));
 $arGroupsId = Array("ADMIN_SECTION", "SUPPORT", "CREATE_GROUPS", "PERSONNEL_DEPARTMENT", "DIRECTION", "MARKETING_AND_SALES");
@@ -171,58 +160,6 @@ if($res = $z->Fetch())
 		$arAdminTasks[] = $arTask["ID"];
 		CGroup::SetTasks($groupAdmin, $arAdminTasks);
 	}
-}
-
-$dbResult = CGroup::GetList('', '', Array("STRING_ID" => "EMPLOYEES_".WIZARD_SITE_ID, "STRING_ID_EXACT_MATCH" => "Y"));
-if ($arExistsGroup = $dbResult->Fetch())
-	$groupID = $arExistsGroup["ID"];
-
-if($groupID && WIZARD_SITE_DEPARTAMENT && CModule::IncludeModule("iblock"))
-{
-
-	$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments", "TYPE" => "structure"));
-	$iblockID = false;
-	if ($arIBlock = $rsIBlock->Fetch())
-	{
-		$iblockID = $arIBlock["ID"];
-
-		$arFilter["ID"] = WIZARD_SITE_DEPARTAMENT;
-		$rsSections = CIBlockSection::GetList(array(), $arFilter);
-		$arSection = $rsSections->GetNext();
-
-		$arFilter = array (
-			"LEFT_MARGIN" => $arSection["LEFT_MARGIN"],
-			"RIGHT_MARGIN" => $arSection["RIGHT_MARGIN"],
-			"BLOCK_ID" => $iblockID,
-			'ACTIVE' => 'Y',
-			'GLOBAL_ACTIVE' => 'Y',
-		);
-
-		$rsSections = CIBlockSection::GetList(array("left_margin"=>"asc"), $arFilter);
-		$arSectionUsers = array();
-		while($arSection = $rsSections->GetNext())
-		{
-			$arSectionUsers[] =  $arSection['ID'];
-
-		}
-
-		$rsUsers = CUser::GetList("id", "asc", array("UF_DEPARTMENT" => $arSectionUsers));
-		while($arUsers = $rsUsers->Fetch())
-		{
-			CUser::AppendUserGroup($arUsers["ID"], $groupID);
-		}
-	}
-
-	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => "PERSONNEL_DEPARTMENT", "STRING_ID_EXACT_MATCH" => "Y"));
-	if ($arExistsGroup = $dbResult->Fetch())
-	{
-		$groupID = $arExistsGroup["ID"];
-		$arSubordinateGroups = CGroup::GetSubordinateGroups($groupID);
-		$arSubordinateGroups[] = $SiteGroups["EMPLOYEES_".WIZARD_SITE_ID];
-		CGroup::SetSubordinateGroups($groupID, $arSubordinateGroups);
-	}
-
-	CGroup::SetSubordinateGroups($SiteGroups["PORTAL_ADMINISTRATION_".WIZARD_SITE_ID], Array($SiteGroups["EMPLOYEES_".WIZARD_SITE_ID]));
 }
 
 $allowGuests = COption::GetOptionString("main", "wizard_allow_group", "N", WIZARD_SITE_ID);

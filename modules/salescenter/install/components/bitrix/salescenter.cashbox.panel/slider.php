@@ -21,7 +21,8 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => 'bitrix:salescenter.cashbox.panel',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

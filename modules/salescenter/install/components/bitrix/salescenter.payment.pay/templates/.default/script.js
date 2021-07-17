@@ -358,7 +358,7 @@ if(typeof(BX.SalesCenter.Component.PaymentPayList) === "undefined")
 			block.appendChild(BX.create('DIV',
 				{
 					props: {className: 'order-payment-method-description-text'},
-					html: BX.util.htmlspecialchars(selected.getDescription())
+					html: selected.getDescription()
 				}
 			));
 		}

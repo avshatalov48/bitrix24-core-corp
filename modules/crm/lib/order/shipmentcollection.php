@@ -16,4 +16,13 @@ if (!Main\Loader::includeModule('sale'))
  */
 class ShipmentCollection extends Sale\ShipmentCollection
 {
+	protected function isAllowAutoEdit(Sale\BasketItem $basketItem)
+	{
+		if (!\CCrmSaleHelper::isWithOrdersMode())
+		{
+			return false;
+		}
+
+		return parent::isAllowAutoEdit($basketItem);
+	}
 }

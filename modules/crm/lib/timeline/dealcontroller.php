@@ -1,12 +1,12 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Binding\OrderDealTable;
+use Bitrix\Crm\Deal\PaymentDocumentsRepository;
 use Bitrix\Crm\Order\DealBinding;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Main;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\History\DealStageHistoryEntry;
@@ -72,6 +72,14 @@ class DealController extends EntityController
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
 				'ENTITY_ID' => (int)$fields['LEAD_ID']
 			);
+		}
+
+		if (isset($fields['ORDER_ID']) && $fields['ORDER_ID'] > 0)
+		{
+			$settings['ORDER'] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => (int)$fields['ORDER_ID'],
+			];
 		}
 
 		$authorID = self::resolveCreatorID($fields);
@@ -304,7 +312,6 @@ class DealController extends EntityController
 						'select' => ['ORDER_ID'],
 						'filter' => [
 							'=DEAL_ID' => $ownerID,
-							'=ORDER.PAYED' => 'Y'
 						]
 					]);
 
@@ -315,21 +322,42 @@ class DealController extends EntityController
 
 					if ($orderIdList)
 					{
-						$entryId = FinalSummaryEntry::create([
-							'ENTITY_ID' => $ownerID,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-							'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-							'AUTHOR_ID' => $authorID,
-							'SETTINGS' => [
-								'ORDER_IDS' => $orderIdList
-							],
-							'BINDINGS' => [
-								[
-									'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-									'ENTITY_ID' => $ownerID
+						if (\CCrmSaleHelper::isWithOrdersMode())
+						{
+							$entryId = FinalSummaryEntry::create([
+								'ENTITY_ID' => $ownerID,
+								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+								'TYPE_CATEGORY_ID' => TimelineType::CREATION,
+								'AUTHOR_ID' => $authorID,
+								'SETTINGS' => [
+									'ORDER_IDS' => $orderIdList
+								],
+								'BINDINGS' => [
+									[
+										'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+										'ENTITY_ID' => $ownerID
+									]
 								]
-							]
-						]);
+							]);
+						}
+						else
+						{
+							$entryId = FinalSummaryDocumentsEntry::create([
+								'ENTITY_ID' => $ownerID,
+								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+								'TYPE_CATEGORY_ID' => TimelineType::CREATION,
+								'AUTHOR_ID' => $authorID,
+								'SETTINGS' => [
+									'ORDER_IDS' => $orderIdList
+								],
+								'BINDINGS' => [
+									[
+										'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+										'ENTITY_ID' => $ownerID
+									]
+								]
+							]);
+						}
 
 						self::pushHistoryEntry(
 							$entryId,
@@ -638,6 +666,7 @@ class DealController extends EntityController
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
 		$settings = isset($data['SETTINGS']) ? $data['SETTINGS'] : array();
+		$culture = Main\Context::getCurrent()->getCulture();
 
 		if($typeID === TimelineType::CREATION)
 		{
@@ -665,6 +694,28 @@ class DealController extends EntityController
 						{
 							$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
 						}
+					}
+				}
+
+				$order = $settings['ORDER'] ?? null;
+				if ($order)
+				{
+					$orderId = $order['ENTITY_ID'];
+					$order = Order::load($orderId);
+					if ($order)
+					{
+						$data['ASSOCIATED_ENTITY']['ORDER']['ID'] = $orderId;
+						$data['ASSOCIATED_ENTITY']['ORDER']['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
+							Main\Config\Option::get('crm', 'path_to_order_details'),
+							['order_id' => $orderId]
+						);
+						$data['ASSOCIATED_ENTITY']['ORDER']['SUM'] = \CCrmCurrency::MoneyToString(
+							$order->getPrice(),
+							$order->getCurrency()
+						);
+						$data['ASSOCIATED_ENTITY']['ORDER']['ORDER_DATE'] = \FormatDate(
+							$culture->getLongDateFormat(), $order->getDateInsert()->getTimestamp()
+						);
 					}
 				}
 			}
@@ -716,8 +767,6 @@ class DealController extends EntityController
 		}
 		elseif($typeID === TimelineType::FINAL_SUMMARY)
 		{
-			$culture = Main\Context::getCurrent()->getCulture();
-
 			$data['RESULT'] = [];
 			foreach ($data['SETTINGS']['ORDER_IDS'] as $orderId)
 			{
@@ -764,6 +813,7 @@ class DealController extends EntityController
 						$order->getPrice() - $order->getSumPaid(),
 						$order->getCurrency()
 					),
+					'IS_PAID' => $order->isPaid(),
 				];
 
 				$basePriceOrder = $order->getBasket()->getBasePrice() + $order->getShipmentCollection()->getBasePriceDelivery();
@@ -789,6 +839,31 @@ class DealController extends EntityController
 				$row['CHECK'] = $this->getCheckData($orderId);
 
 				$data['RESULT'][] = $row;
+			}
+		}
+		elseif ($typeID === TimelineType::FINAL_SUMMARY_DOCUMENTS)
+		{
+			$data['RESULT'] = [];
+
+			if ((int)$data['ASSOCIATED_ENTITY_TYPE_ID'] === \CCrmOwnerType::Deal)
+			{
+				$dealId = (int)$data['ASSOCIATED_ENTITY_ID'];
+
+				/** @var PaymentDocumentsRepository */
+				$repository = ServiceLocator::getInstance()->get('crm.deal.paymentDocumentsRepository');
+				$result = $repository->getDocumentsForDeal($dealId);
+				if ($result->isSuccess())
+				{
+					$data['RESULT']['TIMELINE_SUMMARY_OPTIONS'] = $result->getData();
+				}
+
+				$data['RESULT']['CHECKS'] = [];
+				foreach ($settings['ORDER_IDS'] as $orderId)
+				{
+					$data['RESULT']['CHECKS'][] = $this->getCheckData($orderId);
+				}
+
+				$data['RESULT']['CHECKS'] = array_merge(...$data['RESULT']['CHECKS']);
 			}
 		}
 

@@ -75,7 +75,6 @@
 		inputTextColor,
 		placeholderTextColor,
 		checkColoredText,
-		postTextCursorPosition,
 		rootHeightWithKeyboard,
 		marginTop,
 		marginBottom,
@@ -124,10 +123,6 @@
 			onPostMessageChange,
 			onCursorPositionChange,
 			focus: false,
-			selection: {
-				start: postTextCursorPosition,
-				end: postTextCursorPosition
-			},
 			autoCapitalize: 'sentences',
 		});
 

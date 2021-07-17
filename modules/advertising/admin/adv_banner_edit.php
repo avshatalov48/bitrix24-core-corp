@@ -41,10 +41,9 @@ if (class_exists('\Bitrix\Main\UI\FileInput', true))
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("AD_TAB_BANNER"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_TAB_TITLE_BANNER")),
 	array("DIV" => "edit2", "TAB" => GetMessage("AD_TAB_LIMIT"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_WHEN")),
-	array("DIV" => "edit3", "TAB" => GetMessage("AD_TAB_TARGET"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_WHERE")));
-if ($isAdmin || ($isDemo && !$isOwner))
-	$aTabs[] = array("DIV" => "edit4", "TAB" => GetMessage("AD_TAB_STAT"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_STAT"));
-$aTabs[] = array("DIV" => "edit5", "TAB" => GetMessage("AD_TAB_COMMENT"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_COMMENTS"));
+	array("DIV" => "edit3", "TAB" => GetMessage("AD_TAB_TARGET"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_WHERE")),
+	array("DIV" => "edit5", "TAB" => GetMessage("AD_TAB_COMMENT"), "ICON"=>"ad_banner_edit", "TITLE"=> GetMessage("AD_COMMENTS")),
+);
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -520,7 +519,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 	else
 	{
 		$ACTIVE = $ACTIVE == "Y" ? "Y" : "N";
-		$FIX_CLICK = $FIX_CLICK == "Y" ? "Y" : "N";
 		$FIX_SHOW = $FIX_SHOW == "Y" ? "Y" : "N";
 		if (!is_array($TEMPLATE_PROP))
 			$TEMPLATE_PROP = array();
@@ -575,7 +573,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 			"SHOWS_FOR_VISITOR"		=> $SHOWS_FOR_VISITOR,
 			"MAX_SHOW_COUNT"		=> $MAX_SHOW_COUNT,
 			"RESET_SHOW_COUNT"		=> $RESET_SHOW_COUNT,
-			"FIX_CLICK"			=> $FIX_CLICK,
 			"FIX_SHOW"		=> $FIX_SHOW,
 			"FLYUNIFORM"	=> ($FLYUNIFORM=="Y" ? "Y" : "N"),
 			"MAX_CLICK_COUNT"		=> $MAX_CLICK_COUNT,
@@ -589,9 +586,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 			"NO_URL_IN_FLASH"		=> ($NO_URL_IN_FLASH=="Y"? "Y" : "N"),
 			"CODE"				=> $CODE,
 			"CODE_TYPE"			=> $CODE_TYPE,
-			"STAT_EVENT_1"			=> $STAT_EVENT_1,
-			"STAT_EVENT_2"			=> $STAT_EVENT_2,
-			"STAT_EVENT_3"			=> $STAT_EVENT_3,
 			"FOR_NEW_GUEST"		=> $FOR_NEW_GUEST,
 			"COMMENTS"			=> $COMMENTS,
 			"SHOW_USER_GROUP"		=> $SHOW_USER_GROUP,
@@ -702,16 +696,12 @@ if (!$rsBanner || !$banner = $rsBanner->ExtractFields())
 	$str_AD_TYPE = 'image';
 	$str_WEIGHT = 100;
 	$str_ACTIVE = "Y";
-	$str_FIX_CLICK = "Y";
 	$str_FIX_SHOW = "N";
 	$str_FLYUNIFORM = "N";
 	$str_DATE_SHOW_FROM = $arContract["DATE_SHOW_FROM"];
 	$str_DATE_SHOW_TO = $arContract["DATE_SHOW_TO"];
 	$str_CODE_TYPE = "html";
 	//if ($isAdmin || $isManager) $str_STATUS_SID = "PUBLISHED";
-	$str_STAT_EVENT_1 = "banner";
-	$str_STAT_EVENT_2 = "click";
-	$str_STAT_EVENT_3 = "#CONTRACT_ID# / [#BANNER_ID#] [#TYPE_SID#] #BANNER_NAME#";
 	$str_MAX_SHOW_COUNT = $arContract["MAX_SHOW_COUNT"];
 	$str_MAX_CLICK_COUNT = $arContract["MAX_CLICK_COUNT"];
 	$arrSITE = array_keys($arrSites);
@@ -1891,46 +1881,6 @@ $context->Show();
 			</tr>
 		<? endif ?>
 
-		<? if ($isAdmin || ($isDemo && !$isOwner) || $isManager): ?>
-			<script>
-				function ObjDisableR(objName, v)
-				{
-					ObjT = document.getElementById(objName);
-					if ( ObjT != null )
-						ObjT.disabled = v;
-				}
-
-				function DisableFixClick()
-				{
-					if (!document.getElementById("FIX_CLICK").checked)
-					{
-						ObjDisableR("MAX_CLICK_COUNT", true);
-						ObjDisableR("RESET_CLICK_COUNT", true);
-					}
-					else
-					{
-						ObjDisableR("MAX_CLICK_COUNT", false);
-						ObjDisableR("RESET_CLICK_COUNT", false);
-					}
-				}
-			</script>
-		<?
-		$disableFixClick = "";
-		if ($str_FIX_CLICK != "Y")
-			$disableFixClick = " disabled";
-		?>
-			<tr valign="top">
-				<td width="40%"><label for="FIX_CLICK"><?=GetMessage("AD_FIX_CLICK")?></label></td>
-				<td width="60%"><?
-					if ($isEditMode):
-						echo InputType("checkbox", "FIX_CLICK", "Y", $str_FIX_CLICK, false, "", 'id="FIX_CLICK" OnClick="DisableFixClick();"');
-					else:
-						?><?=($str_FIX_CLICK=="Y" ? GetMessage("AD_YES") : GetMessage("AD_NO"))?><?
-					endif;
-					?></td>
-			</tr>
-		<? endif ?>
-
 		<? if (!$isEditMode): ?>
 			<tr valign="top">
 				<td><?=GetMessage("AD_CLICK_COUNT_2")?></td>
@@ -1939,13 +1889,13 @@ $context->Show();
 		<? else: ?>
 			<tr>
 				<td><?=GetMessage("AD_CLICK_COUNT")?></td>
-				<td><input type="text" name="MAX_CLICK_COUNT" id="MAX_CLICK_COUNT" size="10" value = "<?=$str_MAX_CLICK_COUNT?>"<?=$disableFixClick?>><?
+				<td><input type="text" name="MAX_CLICK_COUNT" id="MAX_CLICK_COUNT" size="10" value = "<?=$str_MAX_CLICK_COUNT?>"><?
 					if ($ID>0) :
 						?>&nbsp;<?=GetMessage("AD_CLICKED")?>&nbsp;<b><?=$str_CLICK_COUNT?></b>&nbsp;&nbsp;&nbsp;<?
 						if ($isAdmin || ($isDemo && !$isOwner) || $isManager)
 						{
 							echo '<label for="RESET_CLICK_COUNT">'.GetMessage("AD_RESET_COUNTER").'</label>';
-							?>&nbsp;<input type="checkbox" name="RESET_CLICK_COUNT" value="Y" id="RESET_CLICK_COUNT"<?=$disableFixClick?>><?
+							?>&nbsp;<input type="checkbox" name="RESET_CLICK_COUNT" value="Y" id="RESET_CLICK_COUNT"><?
 						}
 					endif;
 					?></td>
@@ -2400,131 +2350,13 @@ $context->Show();
 		</tr>
 
 		<?
-		if ($isAdmin || ($isDemo && !$isOwner)) :
-
-			$tabControl->BeginNextTab();
-			?>
-
-			<? if ($isEditMode): ?>
-			<script>
-				<!--
-				function PutEvent(str)
-				{
-					if (!t) return;
-					if (t.name=="STAT_EVENT_1" || t.name=="STAT_EVENT_2" || t.name=="STAT_EVENT_3" || t.name=="CODE")
-					{
-						t.value += str;
-						BX.fireEvent(t, 'change');
-					}
-				}
-				//-->
-				
-				function DisableClick()
-				{
-					if (!document.getElementById("FIX_STAT").checked)
-					{
-						document.getElementById("STAT_EVENT_1").disabled = true;
-						document.getElementById("STAT_EVENT_2").disabled = true;
-						document.getElementById("STAT_EVENT_3").disabled = true;
-					}
-					else
-					{
-						document.getElementById("STAT_EVENT_1").disabled = false;
-						document.getElementById("STAT_EVENT_2").disabled = false;
-						document.getElementById("STAT_EVENT_3").disabled = false;
-					}
-				}
-			</script>
-		<? endif ?>
-		<?
-		if ($str_STAT_EVENT_1 <> '' || $str_STAT_EVENT_2 <> '' || $str_STAT_EVENT_3 <> '')
-			$FIX_STAT="Y";
-		else
-			$FIX_STAT="N";
-		?>
-			<tr>
-				<td width="40%"><label for="FIX_STAT"><?=GetMessage("AD_FIX_STAT")?></label></td>
-				<td width="60%">
-					<? if ($isEditMode): ?>
-						<input type="checkbox" name="FIX_STAT" id="FIX_STAT" value="Y" OnClick="DisableClick()" <? if ($FIX_STAT=="Y") echo "checked";?>>
-					<? else: ?>
-						<?=GetMessage("ADV_".$FIX_STAT)?>
-					<? endif ?>
-				</td>
-			</tr>
-		<?
-		if ($isEditMode):
-		?>
-		<tr>
-			<td>event1:</td>
-			<td><input type="text" name="STAT_EVENT_1" id="STAT_EVENT_1" maxlength="255" size="30" value="<?=$str_STAT_EVENT_1?>" onfocus="t=this" <? if ($FIX_STAT!="Y") echo "disabled";?>></td>
-		</tr><?
-		else:
-		if ($str_STAT_EVENT_1 <> ''):
-			?>
-			<tr valign="top">
-				<td>event1:</td>
-				<td><?=$str_STAT_EVENT_1;?></td>
-			</tr>
-		<? endif;
-		endif;
-		?>
-		<?
-		if ($isEditMode): ?>
-			<tr>
-				<td>event2:</td>
-				<td><input type="text" name="STAT_EVENT_2" id="STAT_EVENT_2" maxlength="255" size="30" value="<?=$str_STAT_EVENT_2?>" onfocus="t=this" <? if ($FIX_STAT!="Y") echo "disabled";?>>
-				</td>
-			</tr>
-			<tr>
-				<td>&nbsp;</td>
-				<td><?=GetMessage("AD_EVENT12")?></td>
-			</tr>
-			<?
-		else:
-		if ($str_STAT_EVENT_2 <> ''):
-			?>
-			<tr valign="top">
-				<td>event2:</td>
-				<td><?=$str_STAT_EVENT_2;?></td>
-			</tr>
-		<? endif;
-		endif;
-		if ($isEditMode):
-		?>
-			<tr>
-				<td>event3:</td>
-				<td><input type="text" name="STAT_EVENT_3" id="STAT_EVENT_3" maxlength="255"  value="<?=$str_STAT_EVENT_3?>" onfocus="t=this" style="width:80%;" <? if ($FIX_STAT!="Y") echo "disabled";?>></td>
-			</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td><?=GetMessage("AD_EVENT3")?>
-				<a href="javascript:PutEvent('#BANNER_NAME#')" title="<?=GetMessage("AD_INS_TEMPL")?>">#BANNER_NAME#</a> - <?=GetMessage("AD_BANNER_NAME")?>,
-				<a href="javascript:PutEvent('#BANNER_ID#')" title="<?=GetMessage("AD_INS_TEMPL")?>">#BANNER_ID#</a> - <?=GetMessage("AD_BANNER_ID")?>,
-				<a href="javascript:PutEvent('#CONTRACT_ID#')" title="<?=GetMessage("AD_INS_TEMPL")?>">#CONTRACT_ID#</a> - <?=GetMessage("AD_CONTRACT_ID")?>,
-				<a href="javascript:PutEvent('#TYPE_SID#')" title="<?=GetMessage("AD_INS_TEMPL")?>">#TYPE_SID#</a> - <?=GetMessage("AD_TYPE_SID")?></td>
-		</tr><?
-		else:
-		if ($str_STAT_EVENT_3 <> ''):
-			?>
-			<tr valign="top">
-				<td>event3:</td>
-				<td><?=$str_STAT_EVENT_3;?></td>
-			</tr>
-		<? endif;
-		endif;
-		endif;?>
-
-		<?
 		$tabControl->BeginNextTab();
 		?>
 		<tr>
 			<td colspan="2" <? if ($isEditMode): ?>align="center"<? endif ?>><?
 				if ($isEditMode):
 					?>
-					<textarea style="width:85%" name="COMMENTS" rows="7" wrap="VIRTUAL">
-						<?=$str_COMMENTS?>
-					</textarea>
+					<textarea style="width:85%" name="COMMENTS" rows="7" wrap="VIRTUAL"><?=$str_COMMENTS?></textarea>
 					<?
 				else:
 					echo TxtToHtml($str_COMMENTS);

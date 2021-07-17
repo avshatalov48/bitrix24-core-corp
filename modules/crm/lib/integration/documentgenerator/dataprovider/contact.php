@@ -283,13 +283,15 @@ class Contact extends CrmEntityDataProvider
 	 */
 	public function getHonorificName()
 	{
+		$value = null;
+
 		if($this->data['HONORIFIC'])
 		{
 			$all = \CCrmStatus::GetStatusList('HONORIFIC');
-			return $all[$this->data['HONORIFIC']];
+			$value = $all[$this->data['HONORIFIC']];
 		}
 
-		return '';
+		return (string)$value;
 	}
 
 	/**

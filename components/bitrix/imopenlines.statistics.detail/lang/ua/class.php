@@ -1,7 +1,10 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "У вас недостатньо прав для перегляду статистики";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "Модуль 'Коннектори для зовнішніх месенджерів' не встановлено";
+$MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Поля користувача діалогів відкритих ліній";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Ви дійсно хочете це зробити?";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL"] = "Копіювати посилання";
+$MESS["OL_COMPONENT_SESSION_FILTER_SHARE_URL_DONE"] = "Посилання скопійоване в буфер обміну.";
 $MESS["OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE"] = "Відкриті лінії";
 $MESS["OL_COMPONENT_SESSION_LIST_CHOOSE_ACTION"] = "Оберіть дію";
 $MESS["OL_COMPONENT_SESSION_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Призначити відповідального";
