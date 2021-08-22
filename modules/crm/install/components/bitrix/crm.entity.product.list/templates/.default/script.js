@@ -66,8 +66,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	var _shouldShowSmallPriceHint = new WeakSet();
 
-	var _shouldShowNegativePriceHint = new WeakSet();
-
 	var _togglePriceHintPopup = new WeakSet();
 
 	var Row = /*#__PURE__*/function () {
@@ -75,8 +73,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.classCallCheck(this, Row);
 
 	    _togglePriceHintPopup.add(this);
-
-	    _shouldShowNegativePriceHint.add(this);
 
 	    _shouldShowSmallPriceHint.add(this);
 
@@ -641,13 +637,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "setPrice",
 	    value: function setPrice(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
+	      var originalPrice = value; // price can't be less than zero
+
+	      value = Math.max(value, 0);
 
 	      if (mode === MODE_SET) {
 	        this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
-	      } // price in model can't be less than zero
+	      }
 
-
-	      value = Math.max(value, 0);
 	      var isChangedValue = this.getBasePrice() !== value;
 
 	      if (isChangedValue) {
@@ -658,7 +655,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        this.addActionUpdateTotal();
 	      }
 
-	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this);
+	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice !== value);
 	    }
 	  }, {
 	    key: "setQuantity",
@@ -711,7 +708,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        this.addActionUpdateTotal();
 	      }
 
-	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, true);
+	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this);
 	    }
 	  }, {
 	    key: "setDiscountType",
@@ -1183,22 +1180,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return main_core.Text.toNumber(this.getField('PRICE')) > 0 && main_core.Text.toNumber(this.getField('PRICE')) < 1 && this.isDiscountPercentage() && (main_core.Text.toNumber(this.getField('DISCOUNT_SUM')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_RATE')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_ROW')) > 0);
 	};
 
-	var _shouldShowNegativePriceHint2 = function _shouldShowNegativePriceHint2() {
-	  var priceInput = this.getInputByFieldName('PRICE');
-
-	  if (main_core.Type.isDomNode(priceInput)) {
-	    return main_core.Text.toNumber(priceInput.value) < 0;
-	  }
-
-	  return false;
-	};
-
 	var _togglePriceHintPopup2 = function _togglePriceHintPopup2() {
-	  var ignoreNegative = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	  var showNegative = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
 	  if (_classPrivateMethodGet(this, _shouldShowSmallPriceHint, _shouldShowSmallPriceHint2).call(this)) {
 	    this.getHintPopup().load(this.getInputByFieldName('PRICE'), main_core.Loc.getMessage('CRM_ENTITY_PL_SMALL_PRICE_NOTICE')).show();
-	  } else if (!ignoreNegative && _classPrivateMethodGet(this, _shouldShowNegativePriceHint, _shouldShowNegativePriceHint2).call(this)) {
+	  } else if (showNegative) {
 	    this.getHintPopup().load(this.getInputByFieldName('PRICE'), main_core.Loc.getMessage('CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE')).show();
 	  } else {
 	    this.getHintPopup().close();
@@ -1535,6 +1522,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.defineProperty(this, "showSettingsPopupHandler", this.handleShowSettingsPopup.bind(this));
 	    babelHelpers.defineProperty(this, "onDialogSelectProductHandler", this.handleOnDialogSelectProduct.bind(this));
 	    babelHelpers.defineProperty(this, "onSaveHandler", this.handleOnSave.bind(this));
+	    babelHelpers.defineProperty(this, "onEditorSubmit", this.handleEditorSubmit.bind(this));
 	    babelHelpers.defineProperty(this, "onInnerCancelHandler", this.handleOnInnerCancel.bind(this));
 	    babelHelpers.defineProperty(this, "onBeforeGridRequestHandler", this.handleOnBeforeGridRequest.bind(this));
 	    babelHelpers.defineProperty(this, "onGridUpdatedHandler", this.handleOnGridUpdated.bind(this));
@@ -1609,6 +1597,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function subscribeCustomEvents() {
 	      main_core_events.EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 	      main_core_events.EventEmitter.subscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 	      main_core_events.EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
 	      main_core_events.EventEmitter.subscribe('Grid::updated', this.onGridUpdatedHandler);
@@ -1623,6 +1612,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function unsubscribeCustomEvents() {
 	      main_core_events.EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 	      main_core_events.EventEmitter.unsubscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 	      main_core_events.EventEmitter.unsubscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
 	      main_core_events.EventEmitter.unsubscribe('Grid::updated', this.onGridUpdatedHandler);
@@ -1669,6 +1659,24 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        items.push(item);
 	      });
 	      this.setSettingValue('items', items);
+	    }
+	  }, {
+	    key: "handleEditorSubmit",
+	    value: function handleEditorSubmit(event) {
+	      if (!this.isLocationDependantTaxesEnabled()) {
+	        return;
+	      }
+
+	      var entityData = event.getData()[0];
+
+	      if (!entityData || !entityData.hasOwnProperty('LOCATION_ID')) {
+	        return;
+	      }
+
+	      if (entityData['LOCATION_ID'] !== this.getLocationId()) {
+	        this.setLocationId(entityData['LOCATION_ID']);
+	        this.reloadGrid(false);
+	      }
 	    }
 	  }, {
 	    key: "handleOnInnerCancel",
@@ -1721,11 +1729,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      });
 	    }
 	    /*
-	    	keep in mind 4 actions for this handler:
+	    	keep in mind different actions for this handler:
 	    	- native reload by grid actions (columns settings, etc)		- products from request
 	    	- reload by tax/discount settings button					- products from request		this.reloadGrid(true)
 	    	- rollback													- products from db			this.reloadGrid(false)
 	    	- reload after SalesCenter order save						- products from db			this.reloadGrid(false)
+	    	- reload after save if location had been changed
 	     */
 
 	  }, {
@@ -1750,7 +1759,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      eventArgs.data = babelHelpers.objectSpread({}, eventArgs.data, {
 	        signedParameters: this.getSignedParameters(),
-	        products: useProductsFromRequest ? this.getProductsFields() : null
+	        products: useProductsFromRequest ? this.getProductsFields() : null,
+	        locationId: this.getLocationId()
 	      });
 	      this.clearEditor();
 
@@ -1986,6 +1996,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "setCurrencyId",
 	    value: function setCurrencyId(currencyId) {
 	      this.setSettingValue('currencyId', currencyId);
+	    }
+	  }, {
+	    key: "isLocationDependantTaxesEnabled",
+	    value: function isLocationDependantTaxesEnabled() {
+	      return this.getSettingValue('isLocationDependantTaxesEnabled', false);
+	    }
+	  }, {
+	    key: "getLocationId",
+	    value: function getLocationId() {
+	      return this.getSettingValue('locationId');
+	    }
+	  }, {
+	    key: "setLocationId",
+	    value: function setLocationId(locationId) {
+	      this.setSettingValue('locationId', locationId);
 	    }
 	  }, {
 	    key: "changeCurrencyId",

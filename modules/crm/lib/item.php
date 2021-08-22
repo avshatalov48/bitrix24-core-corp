@@ -83,6 +83,8 @@ use Bitrix\Main\Type\DateTime;
  * @method Item setSourceId(string $sourceId)
  * @method string|null getSourceDescription()
  * @method Item setSourceDescription(string $sourceDescription)
+ * @method int|null getWebformId()
+ * @method Item setWebformId(int $webformId)
  */
 abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 {
@@ -122,6 +124,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_SOURCE_DESCRIPTION = 'SOURCE_DESCRIPTION';
 	public const FIELD_NAME_OBSERVERS = 'OBSERVERS';
 	public const FIELD_NAME_WEBFORM_ID = 'WEBFORM_ID';
+	public const FIELD_NAME_LOCATION_ID = 'LOCATION_ID';
 
 	protected const SORT_OFFSET = 10;
 
@@ -287,6 +290,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function set(string $fieldName, $value): self
 	{
+		if (is_array($value))
+		{
+			$value = $this->clearEmptyMultipleValues($value);
+		}
 		$customMethod = $this->getCustomMethodNameIfExists('set', $fieldName);
 		if ($customMethod)
 		{
@@ -498,6 +505,22 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			}
 			$this->actualValues = $this->getUtm();
 			$this->currentValues = [];
+
+			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+			if ($factory)
+			{
+				foreach ($factory->getFieldsCollection() as $field)
+				{
+					if ($field->isFileUserField())
+					{
+						$files = (array)$this->get($field->getName());
+						foreach($files as $fileId)
+						{
+							Container::getInstance()->getFileUploader()->markFileAsPersistent((int)$fileId);
+						}
+					}
+				}
+			}
 		}
 
 		return $result;
@@ -1415,7 +1438,6 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return $data;
 	}
 
-	/** @noinspection PhpUnusedParameterInspection */
 	protected function transformToExternalValue(string $entityFieldName, $fieldValue)
 	{
 		if(is_bool($fieldValue))
@@ -1452,9 +1474,43 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		if ($factory)
 		{
 			$field = $factory->getFieldsCollection()->getField($fieldName);
-			if ($field && $field->isItemValueEmpty($this) && $field->isValueEmpty($value))
+			if ($field)
 			{
-				return $this;
+				if ($field->isItemValueEmpty($this) && $field->isValueEmpty($value))
+				{
+					return $this;
+				}
+				if (is_array($value) && $field->isFileUserField())
+				{
+					if ($field->isMultiple())
+					{
+						$files = [];
+						foreach ($value as $singleValue)
+						{
+							if (is_int($singleValue))
+							{
+								$files[] = $singleValue;
+								continue;
+							}
+							if (is_array($singleValue))
+							{
+								$fileId = Container::getInstance()->getFileUploader()->saveFileTemporary(
+									$field,
+									$singleValue
+								);
+								if ($fileId > 0)
+								{
+									$files[] = $fileId;
+								}
+							}
+						}
+						$value = $files;
+					}
+					else
+					{
+						$value = Container::getInstance()->getFileUploader()->saveFileTemporary($field, $value);
+					}
+				}
 			}
 		}
 		if ($this->isUtmField($fieldName))
@@ -1596,6 +1652,21 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public function getEntityEventName(string $eventName): string
 	{
 		return $this->entityObject->sysGetEntity()->getNamespace() . $this->entityObject->sysGetEntity()->getName() . '::';
+	}
+
+	protected function clearEmptyMultipleValues(array $values): array
+	{
+		$result = [];
+
+		foreach($values as $value)
+		{
+			if (!empty($value))
+			{
+				$result[] = $value;
+			}
+		}
+
+		return $result;
 	}
 
 	//region custom utm methods

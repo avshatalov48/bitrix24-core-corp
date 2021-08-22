@@ -22,7 +22,7 @@ class Date extends Content
 	{
 		if (!$date)
 		{
-			return Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_DATE_NOT_PRESENT');
+			return Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_DATE_NOT_PRESENT') ?? '';
 		}
 
 		$timestamp = $this->getDateTimestamp($date);

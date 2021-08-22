@@ -7,10 +7,29 @@
         -ms-flex-direction: column;
             flex-direction: column;
 }
+
+.bx-timeman-component-timeline-fade-enter-active, .bx-timeman-component-timeline-fade-leave-active {
+    -webkit-transition: opacity .3s;
+    -o-transition: opacity .3s;
+    transition: opacity .3s;
+}
+.bx-timeman-component-timeline-fade-enter, .bx-timeman-component-timeline-fade-leave-to {
+    opacity: 0;
+}
 .bx-timeman-component-timeline-chart {
     display: inline-block;
     height: 54px;
     margin: -18px 25px 48px;
+}
+
+.bx-timeman-component-timeline-over-chart {
+    display: inline-block;
+    height: 54px;
+    margin: -18px 25px 48px;
+    position: absolute;
+    left: 56px;
+    right: 50px;
+    z-index: 100;
 }
 
 .bx-timeman-component-timeline-chart-move {
@@ -66,6 +85,10 @@
     top: 29px;
     padding-right: 8px;
     left: -6px;
+}
+
+.bx-timeman-component-timeline-over-chart .bx-timeman-component-timeline-chart-outline {
+    opacity: 0;
 }
 
 .bx-timeman-component-timeline-chart-outline-background {
@@ -151,6 +174,18 @@
 
 .bx-timeman-component-timeline-chart-interval-item-inactive {
     background-color: #f5f5f5;
+}
+
+.bx-timeman-component-timeline-chart-interval-item-working.bx-timeman-component-timeline-chart-interval-item-selected {
+    background-color: #2FBE54;
+}
+
+.bx-timeman-component-timeline-chart-interval-item-personal.bx-timeman-component-timeline-chart-interval-item-selected {
+    background-color: #868D95;
+}
+
+.bx-timeman-component-timeline-chart-interval-item-transparent {
+    background-color: transparent;
 }
 
 .bx-timeman-component-timeline-chart-interval-marker-container {

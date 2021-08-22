@@ -18,10 +18,6 @@ this.BX = this.BX || {};
 	    },
 	    options: {
 	      required: false
-	    },
-	    editable: {
-	      required: true,
-	      type: Boolean
 	    }
 	  },
 	  created: function created() {
@@ -43,7 +39,7 @@ this.BX = this.BX || {};
 	      return this.settings && this.settings.MULTILINE === 'Y';
 	    }
 	  },
-	  template: "\n\t\t<div class=\"ui-ctl ui-ctl-w100\">\n\t\t\t<textarea v-if=\"isMultiline\" :disabled=\"!editable\" @input=\"onInput\" :name=\"name\" class=\"ui-ctl-element salescenter-delivery-comment-textarea\" rows=\"1\">{{value}}</textarea>\n\t\t\t<input v-else :disabled=\"!editable\" @input=\"onInput\" type=\"text\" :name=\"name\" :value=\"value\" class=\"ui-ctl-element ui-ctl-textbox\" />\n\t\t</div>\t\t\t\t\t\n\t"
+	  template: "\n\t\t<div class=\"ui-ctl ui-ctl-w100\">\n\t\t\t<textarea v-if=\"isMultiline\" @input=\"onInput\" :name=\"name\" class=\"ui-ctl-element salescenter-delivery-comment-textarea\" rows=\"1\">{{value}}</textarea>\n\t\t\t<input v-else :disabled=\"!editable\" @input=\"onInput\" type=\"text\" :name=\"name\" :value=\"value\" class=\"ui-ctl-element ui-ctl-textbox\" />\n\t\t</div>\t\t\t\t\t\n\t"
 	};
 
 	var handleOutsideClick;
@@ -109,10 +105,6 @@ this.BX = this.BX || {};
 	    options: {
 	      required: false
 	    },
-	    editable: {
-	      type: Boolean,
-	      default: true
-	    },
 	    isStartMarker: {
 	      type: Boolean,
 	      required: true
@@ -132,10 +124,6 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    switchToEditMode: function switchToEditMode() {
-	      if (!this.editable) {
-	        return;
-	      }
-
 	      this.showMap();
 	      this.editMode = true;
 	    },
@@ -151,10 +139,6 @@ this.BX = this.BX || {};
 	      }, 0);
 	    },
 	    clearAddress: function clearAddress() {
-	      if (!this.editable) {
-	        return;
-	      }
-
 	      this.addressWidget.address = null;
 	      this.changeValue(null);
 	      this.clarifyAddress();
@@ -230,7 +214,11 @@ this.BX = this.BX || {};
 	          _iterator.f();
 	        }
 
-	        return result;
+	        return result.filter(function (location, index, self) {
+	          return index === self.findIndex(function (l) {
+	            return l.name === location.name;
+	          });
+	        });
 	      };
 	    },
 
@@ -449,7 +437,7 @@ this.BX = this.BX || {};
 	    });
 	    this.syncRightIcon();
 	  },
-	  template: "\n\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t<div ref=\"map-marker\" :class=\"mapMarkerClass\"></div>\n\t\t\t\t<div\n\t\t\t\t\tv-closable=\"{\n\t\t\t\t\t\texclude: ['input-node'],\n\t\t\t\t\t\thandler: 'onControlBlur'\n\t\t\t\t\t}\"\n\t\t\t\t\tclass=\"ui-ctl-w100\"\n\t\t\t\t>\n\t\t\t\t\t<div :class=\"wrapperClass\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-show=\"isLoading\"\n\t\t\t\t\t\t\tclass=\"ui-ctl-after ui-ctl-icon-loader\"\n\t\t\t\t\t\t></div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-show=\"isEditMode\" \n\t\t\t\t\t\t\tref=\"autocomplete-menu\"\n\t\t\t\t\t\t\tclass=\"sale-address-control-path-input-wrapper\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t@click=\"onControlClicked\"\n\t\t\t\t\t\t\t\t@focus=\"onControlFocus\"\n\t\t\t\t\t\t\t\t:disabled=\"!editable\"\n\t\t\t\t\t\t\t\tref=\"input-node\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-show=\"!isLoading && isEditMode\"\n\t\t\t\t\t\t\t\t@click=\"clearAddress\"\n\t\t\t\t\t\t\t\t@mouseover.stop.prevent=\"\"\n\t\t\t\t\t\t\t\t:class=\"rightIconClass\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tv-show=\"needsClarification\"\n\t\t\t\t\t\t\t\t@mouseover.stop.prevent=\"\"\n\t\t\t\t\t\t\t\t@click=\"clarifyAddress\"\n\t\t\t\t\t\t\t\tclass=\"sale-address-control-path-input--alert\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLARIFY_ADDRESS}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-show=\"!isEditMode\"class=\"sale-address-control-path-input-wrapper\">\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t@click=\"switchToEditMode\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox sale-address-control-path-input\"\n\t\t\t\t\t\t\t\tcontenteditable=\"false\"\n\t\t\t\t\t\t\t\tv-html=\"addressFormatted\"\n\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<input v-model=\"value\" :name=\"name\" type=\"hidden\" />\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t<div ref=\"map-marker\" :class=\"mapMarkerClass\"></div>\n\t\t\t\t<div\n\t\t\t\t\tv-closable=\"{\n\t\t\t\t\t\texclude: ['input-node'],\n\t\t\t\t\t\thandler: 'onControlBlur'\n\t\t\t\t\t}\"\n\t\t\t\t\tclass=\"ui-ctl-w100\"\n\t\t\t\t>\n\t\t\t\t\t<div :class=\"wrapperClass\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-show=\"isLoading\"\n\t\t\t\t\t\t\tclass=\"ui-ctl-after ui-ctl-icon-loader\"\n\t\t\t\t\t\t></div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-show=\"isEditMode\" \n\t\t\t\t\t\t\tref=\"autocomplete-menu\"\n\t\t\t\t\t\t\tclass=\"sale-address-control-path-input-wrapper\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t@click=\"onControlClicked\"\n\t\t\t\t\t\t\t\t@focus=\"onControlFocus\"\n\t\t\t\t\t\t\t\tref=\"input-node\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-show=\"!isLoading && isEditMode\"\n\t\t\t\t\t\t\t\t@click=\"clearAddress\"\n\t\t\t\t\t\t\t\t@mouseover.stop.prevent=\"\"\n\t\t\t\t\t\t\t\t:class=\"rightIconClass\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tv-show=\"needsClarification\"\n\t\t\t\t\t\t\t\t@mouseover.stop.prevent=\"\"\n\t\t\t\t\t\t\t\t@click=\"clarifyAddress\"\n\t\t\t\t\t\t\t\tclass=\"sale-address-control-path-input--alert\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLARIFY_ADDRESS}}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-show=\"!isEditMode\"class=\"sale-address-control-path-input-wrapper\">\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t@click=\"switchToEditMode\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox sale-address-control-path-input\"\n\t\t\t\t\t\t\t\tcontenteditable=\"false\"\n\t\t\t\t\t\t\t\tv-html=\"addressFormatted\"\n\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<input v-model=\"value\" :name=\"name\" type=\"hidden\" />\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var CheckboxService = {
@@ -459,10 +447,6 @@ this.BX = this.BX || {};
 	    },
 	    initValue: {
 	      required: false
-	    },
-	    editable: {
-	      required: true,
-	      type: Boolean
 	    }
 	  },
 	  created: function created() {
@@ -479,7 +463,7 @@ this.BX = this.BX || {};
 	      this.$emit('change', this.value);
 	    }
 	  },
-	  template: "\n\t\t<label class=\"salescenter-delivery-selector salescenter-delivery-selector--hover salescenter-delivery-selector--checkbox\">\n\t\t\t<input :disabled=\"!editable\" @change=\"onChange\" :checked=\"value == 'Y' ? true : false\" type=\"checkbox\" value=\"Y\" />\n\t\t\t<span class=\"salescenter-delivery-selector-text\">{{name}}</span>\n\t\t</label>\n\t"
+	  template: "\n\t\t<label class=\"salescenter-delivery-selector salescenter-delivery-selector--hover salescenter-delivery-selector--checkbox\">\n\t\t\t<input @change=\"onChange\" :checked=\"value == 'Y' ? true : false\" type=\"checkbox\" value=\"Y\" />\n\t\t\t<span class=\"salescenter-delivery-selector-text\">{{name}}</span>\n\t\t</label>\n\t"
 	};
 
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
@@ -494,10 +478,6 @@ this.BX = this.BX || {};
 	    },
 	    initValue: {
 	      required: false
-	    },
-	    editable: {
-	      required: true,
-	      type: Boolean
 	    },
 	    options: {
 	      required: true,
@@ -636,9 +616,6 @@ this.BX = this.BX || {};
 	    initEnteredDeliveryPrice: {
 	      required: false
 	    },
-	    initIsCalculated: {
-	      required: false
-	    },
 	    personTypeId: {
 	      required: true
 	    },
@@ -665,16 +642,12 @@ this.BX = this.BX || {};
 	      type: String,
 	      required: true
 	    },
-	    availableServiceIds: {
-	      type: Array,
+	    availableServices: {
+	      type: Object,
 	      required: true
 	    },
 	    excludedServiceIds: {
 	      type: Array,
-	      required: true
-	    },
-	    editable: {
-	      type: Boolean,
 	      required: true
 	    }
 	  },
@@ -748,7 +721,8 @@ this.BX = this.BX || {};
 	                var deliveryService = _step.value;
 
 	                if (deliveryService.id == initDeliveryServiceId) {
-	                  _this.selectedDeliveryService = deliveryService;
+	                  _this.onDeliveryServiceChanged(deliveryService, true);
+
 	                  break;
 	                }
 
@@ -760,7 +734,8 @@ this.BX = this.BX || {};
 	                    var profile = _step2.value;
 
 	                    if (profile.id == initDeliveryServiceId) {
-	                      _this.selectedDeliveryService = profile;
+	                      _this.onDeliveryServiceChanged(profile, true);
+
 	                      break;
 	                    }
 	                  }
@@ -869,10 +844,6 @@ this.BX = this.BX || {};
 	          _this.enteredDeliveryPrice = _this.initEnteredDeliveryPrice;
 	        }
 
-	        if (_this.initIsCalculated !== null) {
-	          _this.isCalculated = _this.initIsCalculated;
-	        }
-
 	        new ui_ears.Ears({
 	          container: _this.$refs['delivery-methods'],
 	          smallSize: true,
@@ -944,23 +915,43 @@ this.BX = this.BX || {};
 	    onDeliveryServiceChanged: function onDeliveryServiceChanged(deliveryService) {
 	      var selfCall = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
-	      if (!this.editable) {
-	        return;
-	      }
-
 	      if (!this.isServiceAvailable(deliveryService) && !selfCall) {
 	        return;
 	      }
 
 	      if (!deliveryService.parentId && deliveryService.profiles.length > 0) {
-	        this.onDeliveryServiceChanged(deliveryService.profiles[0], true);
+	        var firstAvailableProfile;
+
+	        var _iterator5 = _createForOfIteratorHelper$2(deliveryService.profiles),
+	            _step5;
+
+	        try {
+	          for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+	            var profile = _step5.value;
+
+	            if (this.isServiceAvailable(profile)) {
+	              firstAvailableProfile = profile;
+	              break;
+	            }
+	          }
+	        } catch (err) {
+	          _iterator5.e(err);
+	        } finally {
+	          _iterator5.f();
+	        }
+
+	        if (firstAvailableProfile) {
+	          this.onDeliveryServiceChanged(firstAvailableProfile, true);
+	        } else {
+	          this.onDeliveryServiceChanged(deliveryService.profiles[0], true);
+	        }
 	      } else {
 	        this.selectedDeliveryService = deliveryService;
 	        this.emitChange();
 	      }
 	    },
 	    isServiceAvailable: function isServiceAvailable(service) {
-	      return this.availableServiceIds.includes(service.id);
+	      return this.availableServices.hasOwnProperty(service.id);
 	    },
 	    onPropValueChanged: function onPropValueChanged(event, relatedProp) {
 	      ui_vue.Vue.set(this.relatedPropsValues, relatedProp.id, event);
@@ -1015,10 +1006,6 @@ this.BX = this.BX || {};
 	    onAddMoreClicked: function onAddMoreClicked() {
 	      var _this3 = this;
 
-	      if (!this.editable) {
-	        return;
-	      }
-
 	      salescenter_manager.Manager.openSlider(this._deliverySettingsUrl).then(function () {
 	        _this3.initialize();
 
@@ -1026,21 +1013,21 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    getDeliveryServiceById: function getDeliveryServiceById(id) {
-	      var _iterator5 = _createForOfIteratorHelper$2(this.deliveryServices),
-	          _step5;
+	      var _iterator6 = _createForOfIteratorHelper$2(this.deliveryServices),
+	          _step6;
 
 	      try {
-	        for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-	          var deliveryService = _step5.value;
+	        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+	          var deliveryService = _step6.value;
 
 	          if (deliveryService.id == id) {
 	            return deliveryService;
 	          }
 	        }
 	      } catch (err) {
-	        _iterator5.e(err);
+	        _iterator6.e(err);
 	      } finally {
-	        _iterator5.f();
+	        _iterator6.f();
 	      }
 
 	      return null;
@@ -1066,6 +1053,28 @@ this.BX = this.BX || {};
 	      if (this.restrictionsHintPopup) {
 	        this.restrictionsHintPopup.hide();
 	      }
+	    },
+	    isProfileSelected: function isProfileSelected(profile) {
+	      return this.selectedDeliveryService && this.selectedDeliveryService.id == profile.id && this.isServiceAvailable(profile);
+	    },
+	    getProfileClass: function getProfileClass(profile) {
+	      return {
+	        'salescenter-delivery-car-item': true,
+	        'salescenter-delivery-car-item--selected': this.isProfileSelected(profile),
+	        'salescenter-delivery-car-item--disabled': !this.isServiceAvailable(profile)
+	      };
+	    },
+	    isRelatedServiceRelevant: function isRelatedServiceRelevant(relatedService) {
+	      return relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId);
+	    },
+	    isRelatedServiceAvailable: function isRelatedServiceAvailable(relatedService) {
+	      return relatedService.hasOwnProperty('isAvailable') && relatedService.isAvailable;
+	    },
+	    getRelatedServiceStyle: function getRelatedServiceStyle(relatedService) {
+	      return {
+	        'opacity': this.isRelatedServiceAvailable(relatedService) ? 1 : 0.5,
+	        'pointer-events': this.isRelatedServiceAvailable(relatedService) ? 'auto' : 'none'
+	      };
 	    }
 	  },
 	  created: function created() {
@@ -1088,6 +1097,42 @@ this.BX = this.BX || {};
 	            className: 'salescenter-delivery-ears'
 	          }).init();
 	        }, 0);
+	      }
+	    },
+	    isSelectedDeliveryServiceAvailable: function isSelectedDeliveryServiceAvailable(newValue, oldValue) {
+	      if (oldValue && !newValue) {
+	        this.isCalculated = false;
+	        this.estimatedDeliveryPrice = null;
+	        this.enteredDeliveryPrice = 0.00;
+	      }
+	    },
+	    availableServices: function availableServices(newValue, oldValue) {
+	      for (var i = 0; i < this.relatedServices.length; i++) {
+	        var relatedService = this.relatedServices[i];
+	        var isAvailable = false;
+
+	        var _iterator7 = _createForOfIteratorHelper$2(relatedService.deliveryServiceIds),
+	            _step7;
+
+	        try {
+	          for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+	            var deliveryServiceId = _step7.value;
+
+	            if (newValue.hasOwnProperty(deliveryServiceId)) {
+	              if (newValue[deliveryServiceId] === null || Array.isArray(newValue[deliveryServiceId]) && newValue[deliveryServiceId].includes(relatedService.id)) {
+	                isAvailable = true;
+	                break;
+	              }
+	            }
+	          }
+	        } catch (err) {
+	          _iterator7.e(err);
+	        } finally {
+	          _iterator7.f();
+	        }
+
+	        relatedService.isAvailable = isAvailable;
+	        ui_vue.Vue.set(this.relatedServices, i, relatedService);
 	      }
 	    }
 	  },
@@ -1128,7 +1173,7 @@ this.BX = this.BX || {};
 	      return this.selectedDeliveryService && this.selectedDeliveryService['code'] === 'NO_DELIVERY';
 	    },
 	    isCalculatingAllowed: function isCalculatingAllowed() {
-	      return this.selectedDeliveryServiceId && this.arePropValuesReady && !this.isCalculating && this.editable;
+	      return this.selectedDeliveryServiceId && this.arePropValuesReady && this.isSelectedDeliveryServiceAvailable && !this.isCalculating;
 	    },
 	    currentRelatedPropsValues: function currentRelatedPropsValues() {
 	      var result = [];
@@ -1137,12 +1182,12 @@ this.BX = this.BX || {};
 	        return result;
 	      }
 
-	      var _iterator6 = _createForOfIteratorHelper$2(this.relatedProps),
-	          _step6;
+	      var _iterator8 = _createForOfIteratorHelper$2(this.relatedProps),
+	          _step8;
 
 	      try {
-	        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-	          var relatedProp = _step6.value;
+	        for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+	          var relatedProp = _step8.value;
 
 	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
 	            continue;
@@ -1156,9 +1201,9 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      } catch (err) {
-	        _iterator6.e(err);
+	        _iterator8.e(err);
 	      } finally {
-	        _iterator6.f();
+	        _iterator8.f();
 	      }
 
 	      return result;
@@ -1178,12 +1223,12 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 
-	      var _iterator7 = _createForOfIteratorHelper$2(this.relatedProps),
-	          _step7;
+	      var _iterator9 = _createForOfIteratorHelper$2(this.relatedProps),
+	          _step9;
 
 	      try {
-	        for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-	          var relatedProp = _step7.value;
+	        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+	          var relatedProp = _step9.value;
 
 	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
 	            continue;
@@ -1194,9 +1239,9 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      } catch (err) {
-	        _iterator7.e(err);
+	        _iterator9.e(err);
 	      } finally {
-	        _iterator7.f();
+	        _iterator9.f();
 	      }
 
 	      return true;
@@ -1208,14 +1253,14 @@ this.BX = this.BX || {};
 	        return result;
 	      }
 
-	      var _iterator8 = _createForOfIteratorHelper$2(this.relatedServices),
-	          _step8;
+	      var _iterator10 = _createForOfIteratorHelper$2(this.relatedServices),
+	          _step10;
 
 	      try {
-	        for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
-	          var relatedService = _step8.value;
+	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
+	          var relatedService = _step10.value;
 
-	          if (!relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
+	          if (!(this.isRelatedServiceRelevant(relatedService) && this.isRelatedServiceAvailable(relatedService))) {
 	            continue;
 	          }
 
@@ -1227,9 +1272,9 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      } catch (err) {
-	        _iterator8.e(err);
+	        _iterator10.e(err);
 	      } finally {
-	        _iterator8.f();
+	        _iterator10.f();
 	      }
 
 	      return result;
@@ -1284,62 +1329,14 @@ this.BX = this.BX || {};
 	    extraServicesCount: function extraServicesCount() {
 	      var result = 0;
 
-	      var _iterator9 = _createForOfIteratorHelper$2(this.relatedServices),
-	          _step9;
-
-	      try {
-	        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-	          var relatedService = _step9.value;
-
-	          if (!relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
-	            continue;
-	          }
-
-	          result++;
-	        }
-	      } catch (err) {
-	        _iterator9.e(err);
-	      } finally {
-	        _iterator9.f();
-	      }
-
-	      return result;
-	    },
-	    relatedPropsOfAddressTypeCount: function relatedPropsOfAddressTypeCount() {
-	      var result = 0;
-
-	      var _iterator10 = _createForOfIteratorHelper$2(this.relatedPropsOfAddressType),
-	          _step10;
-
-	      try {
-	        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
-	          var relatedProp = _step10.value;
-
-	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
-	            continue;
-	          }
-
-	          result++;
-	        }
-	      } catch (err) {
-	        _iterator10.e(err);
-	      } finally {
-	        _iterator10.f();
-	      }
-
-	      return result;
-	    },
-	    relatedPropsOfOtherTypeCount: function relatedPropsOfOtherTypeCount() {
-	      var result = 0;
-
-	      var _iterator11 = _createForOfIteratorHelper$2(this.relatedPropsOfOtherTypes),
+	      var _iterator11 = _createForOfIteratorHelper$2(this.relatedServices),
 	          _step11;
 
 	      try {
 	        for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
-	          var relatedProp = _step11.value;
+	          var relatedService = _step11.value;
 
-	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
+	          if (!this.isRelatedServiceRelevant(relatedService)) {
 	            continue;
 	          }
 
@@ -1349,6 +1346,54 @@ this.BX = this.BX || {};
 	        _iterator11.e(err);
 	      } finally {
 	        _iterator11.f();
+	      }
+
+	      return result;
+	    },
+	    relatedPropsOfAddressTypeCount: function relatedPropsOfAddressTypeCount() {
+	      var result = 0;
+
+	      var _iterator12 = _createForOfIteratorHelper$2(this.relatedPropsOfAddressType),
+	          _step12;
+
+	      try {
+	        for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
+	          var relatedProp = _step12.value;
+
+	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
+	            continue;
+	          }
+
+	          result++;
+	        }
+	      } catch (err) {
+	        _iterator12.e(err);
+	      } finally {
+	        _iterator12.f();
+	      }
+
+	      return result;
+	    },
+	    relatedPropsOfOtherTypeCount: function relatedPropsOfOtherTypeCount() {
+	      var result = 0;
+
+	      var _iterator13 = _createForOfIteratorHelper$2(this.relatedPropsOfOtherTypes),
+	          _step13;
+
+	      try {
+	        for (_iterator13.s(); !(_step13 = _iterator13.n()).done;) {
+	          var relatedProp = _step13.value;
+
+	          if (!relatedProp.deliveryServiceIds.includes(this.selectedDeliveryServiceId)) {
+	            continue;
+	          }
+
+	          result++;
+	        }
+	      } catch (err) {
+	        _iterator13.e(err);
+	      } finally {
+	        _iterator13.f();
 	      }
 
 	      return result;
@@ -1365,9 +1410,12 @@ this.BX = this.BX || {};
 	      }
 
 	      return this.selectedParentDeliveryService.profiles;
+	    },
+	    isSelectedDeliveryServiceAvailable: function isSelectedDeliveryServiceAvailable() {
+	      return this.selectedDeliveryService && this.isServiceAvailable(this.selectedDeliveryService);
 	    }
 	  },
-	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-method\" ref=\"delivery-methods\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t'salescenter-delivery-method-item': true,\n\t\t\t\t\t\t\t'salescenter-delivery-method-item--selected': isParentDeliveryServiceSelected(deliveryService)\n\t\t\t\t\t\t}\"\n\t\t\t\t\t\t:data-role=\"isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t\t<img :src=\"deliveryService.logo\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"areProfilesVisible\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{selectedParentServiceName}}: {{localize.SALE_DELIVERY_SERVICE_SELECTOR_SHIPPING_SERVICES}}</div>\n\t\t\t\t<div ref=\"delivery-profiles\" class=\"salescenter-delivery-car salescenter-delivery-car--ya-delivery\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"(profile, index) in selectedParentServiceProfiles\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(profile)\"\n\t\t\t\t\t\t:class=\"{'salescenter-delivery-car-item': true, 'salescenter-delivery-car-item--selected': selectedDeliveryService.id == profile.id, 'salescenter-delivery-car-item--disabled': !isServiceAvailable(profile)}\"\n\t\t\t\t\t\t:data-role=\"selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div v-show=\"index === 0\" class=\"salescenter-delivery-car-lable\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-car-container\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-image\"\n\t\t\t\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + profile.logo + ')' }\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-param\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-title\">\n\t\t\t\t\t\t\t\t\t{{profile.name}}\n\t\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t\tv-show=\"profile.restrictions\"\n\t\t\t\t\t\t\t\t\t\t@mouseenter=\"onRestrictionsHintShow($event, profile)\"\n\t\t\t\t\t\t\t\t\t\t@mouseleave=\"onRestrictionsHintHide($event)\"\n\t\t\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-title-info\"\n\t\t\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-info\">{{profile.description}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\t\t\n\t\t\t<div v-show=\"extraServicesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServices\"\n\t\t\t\t\t\tv-show=\"relatedService.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\t\t:is=\"relatedService.type + '-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">{{relatedProp.name}}</div>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t:isStartMarker=\"index === 0\"\n\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t></component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"editable\" @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">\n\t\t\t\t\t\t\t<span v-html=\"error\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div v-if=\"editable && selectedDeliveryService\" class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedParentDeliveryService ? selectedParentDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr v-show=\"editable\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input :disabled=\"!editable\" v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-delivery\">\n\t\t\t<div class=\"salescenter-delivery-header\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-method\" ref=\"delivery-methods\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"deliveryService in deliveryServices\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(deliveryService)\"\n\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t'salescenter-delivery-method-item': true,\n\t\t\t\t\t\t\t'salescenter-delivery-method-item--selected': isParentDeliveryServiceSelected(deliveryService)\n\t\t\t\t\t\t}\"\n\t\t\t\t\t\t:data-role=\"isParentDeliveryServiceSelected(deliveryService) ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image\">\n\t\t\t\t\t\t\t<img :src=\"deliveryService.logo\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div v-if=\"deliveryService.title\" class=\"salescenter-delivery-method-title\">{{deliveryService.title}}</div>\n\t\t\t\t\t\t\t<div v-else=\"deliveryService.title\" class=\"salescenter-delivery-method-title\"></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">{{deliveryService.name}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"onAddMoreClicked\" class=\"salescenter-delivery-method-item salescenter-delivery-method-item--add\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-image-more\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-method-info\">\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-method-name\">\n\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_ADD_MORE}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-show=\"areProfilesVisible\">\n\t\t\t\t<div class=\"salescenter-delivery-car-title--sm\">{{selectedParentServiceName}}: {{localize.SALE_DELIVERY_SERVICE_SELECTOR_SHIPPING_SERVICES}}</div>\n\t\t\t\t<div ref=\"delivery-profiles\" class=\"salescenter-delivery-car salescenter-delivery-car--ya-delivery\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-for=\"(profile, index) in selectedParentServiceProfiles\"\n\t\t\t\t\t\t@click=\"onDeliveryServiceChanged(profile)\"\n\t\t\t\t\t\t:class=\"getProfileClass(profile)\"\n\t\t\t\t\t\t:data-role=\"selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div v-show=\"index === 0\" class=\"salescenter-delivery-car-lable\">\n\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_PROFITABLE}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-car-container\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-image\"\n\t\t\t\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + profile.logo + ')' }\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-param\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-title\">\n\t\t\t\t\t\t\t\t\t{{profile.name}}\n\t\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t\tv-show=\"profile.restrictions\"\n\t\t\t\t\t\t\t\t\t\t@mouseenter=\"onRestrictionsHintShow($event, profile)\"\n\t\t\t\t\t\t\t\t\t\t@mouseleave=\"onRestrictionsHintHide($event)\"\n\t\t\t\t\t\t\t\t\t\tclass=\"salescenter-delivery-car-title-info\"\n\t\t\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"salescenter-delivery-car-info\">{{profile.description}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\t\t\t\t\n\t\t\t<div v-show=\"extraServicesCount > 0\" class=\"salescenter-delivery-additionally\">\n\t\t\t\t<div class=\"salescenter-delivery-additionally-options\">\n\t\t\t\t\t<component\n\t\t\t\t\t\tv-for=\"relatedService in relatedServices\"\n\t\t\t\t\t\tv-show=\"isRelatedServiceRelevant(relatedService)\"\n\t\t\t\t\t\t:is=\"relatedService.type + '-service'\"\n\t\t\t\t\t\t:key=\"relatedService.id\"\n\t\t\t\t\t\t:name=\"relatedService.name\"\n\t\t\t\t\t\t:initValue=\"getServiceValue(relatedService)\"\t\t\t\t\t\t\n\t\t\t\t\t\t:options=\"relatedService.options\"\n\t\t\t\t\t\t:style=\"getRelatedServiceStyle(relatedService)\"\n\t\t\t\t\t\t@change=\"onServiceValueChanged($event, relatedService)\"\n\t\t\t\t\t>\n\t\t\t\t\t</component>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfAddressTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfAddressType\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title\">{{relatedProp.name}}</div>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'ADDRESS-control'\"\n\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t:isStartMarker=\"index === 0\"\n\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t></component>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<div v-show=\"relatedPropsOfOtherTypeCount > 0\" class=\"salescenter-delivery-path\">\n\t\t\t\t<div\n\t\t\t\t\tv-for=\"(relatedProp, index) in relatedPropsOfOtherTypes\"\n\t\t\t\t\tv-show=\"relatedProp.deliveryServiceIds.includes(selectedDeliveryServiceId)\"\n\t\t\t\t\tclass=\"salescenter-delivery-path-item\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-title-ordinary\">{{relatedProp.name}}</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-path-control\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"relatedProp.type + '-control'\"\n\t\t\t\t\t\t\t:key=\"relatedProp.id\"\n\t\t\t\t\t\t\t:name=\"'PROPS_' + relatedProp.id\"\n\t\t\t\t\t\t\t:initValue=\"getPropValue(relatedProp)\"\n\t\t\t\t\t\t\t:settings=\"relatedProp.settings\"\n\t\t\t\t\t\t\t:options=\"getPropOptions(relatedProp)\"\n\t\t\t\t\t\t\t@change=\"onPropValueChanged($event, relatedProp)\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isResponsibleUserSectionVisible\" class=\"salescenter-delivery-manager-wrapper\">\n\t\t\t\t<div class=\"ui-ctl-label-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_RESPONSIBLE_MANAGER}}</div>\n\t\t\t\t<div class=\"salescenter-delivery-manager\">\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-avatar\" :style=\"responsibleUser.photo ? {'background-image': 'url(' + responsibleUser.photo + ')'} : {}\"></div>\n\t\t\t\t\t<div class=\"salescenter-delivery-manager-content\">\n\t\t\t\t\t\t<div @click=\"responsibleUserClicked\" class=\"salescenter-delivery-manager-name\">{{responsibleUser.name}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div @click=\"openChangeResponsibleDialog\" class=\"salescenter-delivery-manager-edit\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t\t\t\n\t\t\t<div v-show=\"!selectedNoDelivery\">\n\t\t\t\t<template v-if=\"calculateErrors\">\n\t\t\t\t\t<div v-for=\"(error, index) in calculateErrors\" class=\"ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert\">\n\t\t\t\t\t\t<span  class=\"ui-alert-message\">\n\t\t\t\t\t\t\t<span v-html=\"error\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"salescenter-delivery-bottom\">\n\t\t\t\t\t<div class=\"salescenter-delivery-bottom-row\">\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<span v-show=\"!isCalculating\" @click=\"calculate\" :class=\"calculateDeliveryPriceButtonClass\">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t<span v-show=\"isCalculating\" class=\"salescenter-delivery-waiter\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-alert\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_LABEL}}</span>\n\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-waiter-text\">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATING_REQUEST_SENT}} {{selectedParentDeliveryService ? selectedParentDeliveryService.name : ''}}</span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-show=\"isSelectedDeliveryServiceAvailable && isCalculated\" class=\"salescenter-delivery-bottom-row\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\"></div>\n\t\t\t\t\t\t<div class=\"salescenter-delivery-bottom-col\">\n\t\t\t\t\t\t\t<table class=\"salescenter-delivery-table-total\">\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"estimatedDeliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol\">\n\t\t\t\t\t\t\t\t\t\t\t<input v-model=\"enteredDeliveryPrice\" @keypress=\"isNumber($event)\" type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{externalSumLabel}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"externalSumFormatted\"></span><span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_DELIVERY}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"deliveryPrice > 0\">\n\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"deliveryPriceFormatted\"></span>&nbsp;<span v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t<span v-show=\"!deliveryPrice\" class=\"salescenter-delivery-status salescenter-delivery-status--success\">\n\t\t\t\t\t\t\t\t\t\t\t{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE_FREE}}\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<tr class=\"salescenter-delivery-table-total-result\">\n\t\t\t\t\t\t\t\t\t<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_TOTAL}}:</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<span v-html=\"totalPriceFormatted\"></span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"salescenter-delivery-table-total-symbol\" v-html=\"currencySymbol\"></span>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	exports.default = deliveryselector;

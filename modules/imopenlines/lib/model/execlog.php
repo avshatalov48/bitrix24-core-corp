@@ -28,6 +28,19 @@ Loc::loadMessages(__FILE__);
  * <li> MESSAGE_ID int optional
  * <li> ADDITIONAL_FIELDS longtext optional
  *	</ul>
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ExecLog_Query query()
+ * @method static EO_ExecLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ExecLog_Result getById($id)
+ * @method static EO_ExecLog_Result getList(array $parameters = array())
+ * @method static EO_ExecLog_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_ExecLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_ExecLog_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_ExecLog wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_ExecLog_Collection wakeUpCollection($rows)
  */
 class ExecLogTable extends DataManager
 {

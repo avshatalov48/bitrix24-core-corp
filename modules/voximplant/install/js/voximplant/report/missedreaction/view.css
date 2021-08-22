@@ -15,6 +15,10 @@
 	border-bottom: 1px solid rgba(130,139,149,.19);
 	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #333;
+	max-width: 250px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 .telephony-report-missed-reaction-modal-subtitle-primary {
 	display: block;

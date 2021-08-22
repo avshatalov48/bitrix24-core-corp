@@ -28,7 +28,7 @@ class UserField extends Content
 
 		if ($userFieldData['USER_TYPE_ID'] !== 'boolean' && empty($fieldValue) && $fieldValue !== '0')
 		{
-			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_USER_FIELD_NOT_PRESENT');
+			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_USER_FIELD_NOT_PRESENT') ?? '';
 		}
 
 		if ($userFieldData['USER_TYPE_ID'] === 'boolean')

@@ -14,8 +14,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImOpenLines\LiveChatManager;
-use Bitrix\ImConnector\Connectors\WeChat;
-use Bitrix\ImConnector\Connectors\Notifications;
+use Bitrix\ImConnector\Connectors;
 
 Loc::loadMessages(__FILE__);
 Library::loadMessages();
@@ -28,28 +27,47 @@ class Connector
 {
 	const ERROR_CHOICE_DOMAIN_FOR_FEEDBACK = 'CHOICE_DOMAIN_FOR_FEEDBACK';
 
+	/** @var Connectors\Base[] */
+	private static $connectors = [];
+
 	/**
 	 * @param string $idConnector
 	 * @return Connectors\Base|Connectors\BotFramework|Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Yandex|Connectors\Network
 	 */
 	public static function initConnectorHandler($idConnector = '')
 	{
-		$class = 'Bitrix\\ImConnector\\Connectors\\Base';
-
-		if(
-			!empty($idConnector) &&
-			self::isConnector($idConnector)
+		if (
+			!isset(self::$connectors[$idConnector])
+			|| !(self::$connectors[$idConnector] instanceof Connectors\Base)
 		)
 		{
-			$realIdConnector = self::getConnectorRealId($idConnector);
-			$className = 'Bitrix\\ImConnector\\Connectors\\' . $realIdConnector;
-			if(class_exists($className))
+			$class = 'Bitrix\\ImConnector\\Connectors\\Base';
+
+			if (
+				!empty($idConnector) &&
+				self::isConnector($idConnector)
+			)
 			{
-				$class = $className;
+				$realIdConnector = self::getConnectorRealId($idConnector);
+				$className = 'Bitrix\\ImConnector\\Connectors\\'.$realIdConnector;
+				if (class_exists($className, true))
+				{
+					$class = $className;
+				}
 			}
+			self::$connectors[$idConnector] = new $class($idConnector);
 		}
 
-		return new $class($idConnector);
+		return self::$connectors[$idConnector];
+	}
+
+	/**
+	 * @param string $idConnector
+	 * @param Connectors\Base
+	 */
+	public static function setConnectorHandler(string $idConnector, Connectors\Base $connector): void
+	{
+		self::$connectors[$idConnector] = $connector;
 	}
 
 	/**
@@ -135,9 +153,14 @@ class Connector
 		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
 		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
 		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE');
-		if (WeChat::isEnabled())
+		if($serviceLocator->has('ImConnector.toolsWeChat'))
 		{
-			$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+			/** @var \Bitrix\ImConnector\Tools\Connectors\WeChat $toolsWeChat */
+			$toolsWeChat = $serviceLocator->get('ImConnector.toolsWeChat');
+			if($toolsWeChat->isEnabled())
+			{
+				$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+			}
 		}
 		$connectors['yandex'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_YANDEX');
 		$connectors['vkgroup'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
@@ -146,12 +169,17 @@ class Connector
 		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
 		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
 		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] =
-			Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
+					Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
 		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
 		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
-		if (Loader::includeModule('notifications') && \Bitrix\Notifications\Limit::isAvailable())
+		if($serviceLocator->has('ImConnector.toolsNotifications'))
 		{
-			$connectors[Notifications::CONNECTOR_ID] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS');
+			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+			$toolsNotifications = $serviceLocator->get('ImConnector.toolsNotifications');
+			if($toolsNotifications->isEnabled())
+			{
+				$connectors[Library::ID_NOTIFICATIONS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS');
+			}
 		}
 
 		return $connectors;
@@ -340,7 +368,7 @@ class Connector
 		$components['fbinstagram'] = 'bitrix:imconnector.fbinstagram';
 		$components['network'] = 'bitrix:imconnector.network';
 		$components['botframework'] = 'bitrix:imconnector.botframework';
-		$components[Notifications::CONNECTOR_ID] = 'bitrix:imconnector.notifications';
+		$components[Library::ID_NOTIFICATIONS_CONNECTOR] = 'bitrix:imconnector.notifications';
 
 		$customComponents = CustomConnectors::getListComponentConnector();
 
@@ -883,7 +911,7 @@ class Connector
 			'facebookmessenger' => 'fb-messenger',
 			'fbinstagram' => 'instagram-fb',
 			'network' => 'bitrix24',
-			Notifications::CONNECTOR_ID => 'bitrix24-sms',
+			Library::ID_NOTIFICATIONS_CONNECTOR => 'bitrix24-sms',
 			'botframework' => 'microsoft',
 			'skypebot' => 'skype',
 			'skype' => 'skype',

@@ -16,7 +16,20 @@ Loc::loadMessages(__FILE__);
  * Class LogTable
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Log_Query query()
+ * @method static EO_Log_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Log_Result getById($id)
+ * @method static EO_Log_Result getList(array $parameters = array())
+ * @method static EO_Log_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_Log createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_Log_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_Log wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_Log_Collection wakeUpCollection($rows)
+ */
 
 class LogTable extends DataManager
 {

@@ -1,10 +1,10 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
  *
  * Each method you put here you`ll be able to call as ENTITY_NAME.METHOD_NAME via AJAX and\or REST, so be careful.
@@ -12,6 +12,9 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task\Template;
 
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Item;
 
@@ -22,13 +25,21 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 	 */
 	public function add(array $data, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		$connectorField = Item\Task\Template\CheckList::getParentConnectorField();
+
+		if (
+			!array_key_exists($connectorField, $data)
+			|| !TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, (int)$data[$connectorField])
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if($this->errors->checkNoFatals())
 		{
-			// todo: check $data here, check for publicly-readable\writable keys\values
-
-			$connectorField = Item\Task\Template\CheckList::getParentConnectorField();
 			if(array_key_exists('_OWNER_ENTITY_ID_', $data))
 			{
 				$data[$connectorField] = $data['_OWNER_ENTITY_ID_'];
@@ -59,15 +70,28 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 	 */
 	public function update($id, array $data, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		$connectorField = Item\Task\Template\CheckList::getParentConnectorField();
 
 		if(!($id = $this->checkId($id)))
 		{
 			return $result;
 		}
+
+		$templateId = array_key_exists($connectorField, $data) ? (int)$data[$connectorField] : $this->getTemplateId($id);
+
+		if (
+			!$templateId
+			|| !TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, (int)$data[$connectorField])
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
 		$result['ID'] = $id;
 
-		$connectorField = Item\Task\Template\CheckList::getParentConnectorField();
 		if(array_key_exists('_OWNER_ENTITY_ID_', $data) || array_key_exists($connectorField, $data))
 		{
 			$this->errors->add('OWNER_ENTITY_ID_IS_READONLY', 'Can not change owner entity for an existing item');
@@ -111,7 +135,18 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 	 */
 	public function delete($id)
 	{
-		$result = array();
+		$result = [];
+
+		$templateId = $this->getTemplateId($id);
+
+		if (
+			!$templateId
+			|| !TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId)
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if(!($id = $this->checkId($id)))
 		{
@@ -148,7 +183,18 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 	public function moveAfter($id, $afterId)
 	{
 		// you can move check list items ONLY when you have write access to the task
-		$result = array();
+		$result = [];
+
+		$templateId = $this->getTemplateId($id);
+
+		if (
+			!$templateId
+			|| !TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId)
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if($id = $this->checkId($id))
 		{
@@ -175,5 +221,15 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param int $checklistId
+	 * @return int
+	 */
+	private function getTemplateId(int $checklistId): int
+	{
+		$res = TemplateCheckListFacade::getList(['TEMPLATE_ID'], ['ID' => $checklistId])[$checklistId];
+		return (int)$res['TEMPLATE_ID'];
 	}
 }

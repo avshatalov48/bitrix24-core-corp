@@ -14,6 +14,7 @@ class EntityService implements Errorable
 	const ERROR_COULD_NOT_READ_ENTITY_IDS = 'TASKS_ES_02';
 	const ERROR_COULD_NOT_READ_ITEM_SOURCE_IDS = 'TASKS_ES_03';
 	const ERROR_COULD_NOT_GET_LIST_READ_ENTITY = 'TASKS_ES_04';
+	const ERROR_COULD_NOT_GET_STORY_POINTS = 'TASKS_ES_05';
 
 	private $errorCollection;
 
@@ -72,7 +73,7 @@ class EntityService implements Errorable
 		{
 			$queryObject = EntityTable::getList([
 				'filter' => [
-					'ID' => (int)$entityId,
+					'ID' => $entityId,
 				],
 			]);
 			if ($entityData = $queryObject->fetch())
@@ -153,6 +154,69 @@ class EntityService implements Errorable
 		}
 
 		return $taskIds;
+	}
+
+	public function getCounters(int $entityId, ?TaskService $taskService = null): array
+	{
+		$storyPoints = '';
+		$countTotal = 0;
+
+		$storyPointsMap = [];
+
+		try
+		{
+			$queryObject = EntityTable::getList([
+				'select' => [
+					'SOURCE_ID' => 'ITEMS.SOURCE_ID',
+					'STORY_POINTS' => 'ITEMS.STORY_POINTS',
+				],
+				'filter' => [
+					'ID' => $entityId,
+					'ITEMS.ITEM_TYPE' => ItemTable::TASK_TYPE,
+					'ITEMS.ACTIVE' => 'Y',
+				],
+			]);
+
+			while ($data = $queryObject->fetch())
+			{
+				$storyPointsMap[$data['SOURCE_ID']] = $data['STORY_POINTS'];
+			}
+
+			if ($taskService)
+			{
+				$uncompletedTaskIds = $taskService->getUncompletedTaskIds(array_keys($storyPointsMap));
+
+				foreach ($uncompletedTaskIds as $taskId)
+				{
+					$countTotal++;
+
+					$storyPoints = (float) $storyPoints + (float) $storyPointsMap[$taskId];
+				}
+			}
+			else
+			{
+				foreach ($storyPointsMap as $points)
+				{
+					$countTotal++;
+
+					$storyPoints = (float) $storyPoints + (float) $points;
+				}
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_GET_STORY_POINTS
+				)
+			);
+		}
+
+		return [
+			'storyPoints' => $storyPoints,
+			'countTotal' => $countTotal,
+		];
 	}
 
 	public function getErrors()

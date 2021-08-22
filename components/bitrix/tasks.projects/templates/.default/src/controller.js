@@ -14,6 +14,8 @@ class Controller
 		this.filter = new Filter(options);
 		this.tourGuideController = new TourGuideController(options);
 
+		options.filter = this.filter;
+
 		ActionsController.setOptions(options);
 
 		this.initPull(options);

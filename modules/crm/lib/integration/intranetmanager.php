@@ -152,7 +152,11 @@ class IntranetManager
 		$list = CustomSectionTable::getList([
 			'filter' => [
 				'=MODULE_ID' => 'crm',
-			]
+			],
+			'cache' => [
+				// cache is valid for one week
+				'ttl' => 3600 * 24 * 7,
+			],
 		]);
 		/** @var array $sectionRow */
 		while ($sectionRow = $list->fetch())
@@ -172,6 +176,10 @@ class IntranetManager
 		$list = CustomSectionPageTable::getList([
 			'filter' => [
 				'=MODULE_ID' => 'crm',
+			],
+			'cache' => [
+				// cache is valid for one week
+				'ttl' => 3600 * 24 * 7,
 			],
 		]);
 

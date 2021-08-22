@@ -20,6 +20,22 @@ use Bitrix\Tasks\Util\Assert;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class TaskTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Task_Query query()
+ * @method static EO_Task_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Task_Result getById($id)
+ * @method static EO_Task_Result getList(array $parameters = array())
+ * @method static EO_Task_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\TaskObject createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\TaskObject wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection wakeUpCollection($rows)
+ */
 class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 {
 	/**

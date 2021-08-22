@@ -7,29 +7,20 @@
 		instance = this;
 
 		this.gridContainer = params.gridContainer;
+
 		this.exportButton = params.exportButton;
 		this.exportAllowed = params.exportAllowed;
 		this.exportType = params.exportType;
-
-		this.siteId = params.exportParams.siteId;
 		this.componentName = params.exportParams.componentName;
-		this.sToken = params.exportParams.sToken;
-		this.cToken = "";
-		this.token = "";
 
-		this.exporting = false;
-		this.exportPopup = null;
-		this.exportProgressBar = null;
-		this.exportExecuteButton = null;
-		this.exportStopButton = null;
-		this.exportInfo = null;
-		this.closeExportPopupButton = null;
-		this.beforeStartExportButtons = [];
-		this.afterStartExportButtons = [];
+		/** @type {BX.UI.StepProcessing.Process} */
+		this.exporter = null;
+
 		this.recordDownloading = null;
 		this.downloadPopup = null;
 
 		var grid = BX.Main.gridManager.getById(this.gridContainer.id);
+		/** @type {BX.Main.grid} */
 		this.grid = grid.instance;
 
 		this.progressBar = null;
@@ -54,7 +45,12 @@
 			this.createDownloadHint();
 			BX.addCustomEvent('Grid::updated', this.createDownloadHint);
 
-			this.exportButton.addEventListener('click', this.createExportPopup.bind(this));
+			this.exportButton.addEventListener('click', this.showExporter.bind(this));
+		}
+
+		if(this.exportAllowed)
+		{
+			this.initExporter();
 		}
 
 		this.initPlayer();
@@ -111,6 +107,8 @@
 		}.bind(this));
 	};
 
+	//region: Total
+
 	BX.VoximplantStatisticDetail.prototype.onShowTotalClick = function(event)
 	{
 		var placeholder = BX.create("span", {
@@ -131,7 +129,7 @@
 	BX.VoximplantStatisticDetail.prototype.showTotal = function()
 	{
 		var config = {
-			mode: "class",
+			mode: "class"
 		}
 
 		if (this.reportParams != null)
@@ -158,149 +156,47 @@
 		});
 	};
 
-	BX.VoximplantStatisticDetail.prototype.startExport = function()
+	//endregion
+
+	//region: Export
+
+	BX.VoximplantStatisticDetail.prototype.initExporter = function()
 	{
-		if (!this.exportExecuteButton.isActive())
-		{
-			return
-		}
-
-		this.exportProgressBar = new BX.UI.ProgressBar({
-			statusType: BX.UI.ProgressBar.Status.PERCENT,
-			size: BX.UI.ProgressBar.Size.LARGE,
-			fill: true
+		this.exporter = new BX.UI.StepProcessing.Process({
+			id: 'VoximplantStatisticDetailExport',
+			controller: "bitrix:voximplant.export",
+			messages: {
+				DialogTitle: BX.message('TEL_STAT_EXPORT_DETAIL_TO_EXCEL'),
+				DialogSummary: BX.message('TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION') + "\n\n"
+					+ BX.message('TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS'),
+				DialogStartButton: BX.message('TEL_STAT_ACTION_EXECUTE'),
+				DialogStopButton: BX.message('TEL_STAT_ACTION_STOP'),
+				DialogCloseButton: BX.message('TEL_STAT_ACTION_CLOSE'),
+				RequestError: BX.message('TEL_STAT_EXPORT_ERROR')
+			},
+			showButtons: {
+				start: true,
+				stop: true,
+				close: true
+			},
+			dialogMaxWidth: 650
 		});
-
-		this.exportInfo = BX.create("div", {
-			props: { className: "tel-stat-export-info" }
-		});
-
-		var progressBarContainer = BX.create("div", {
-			props: { className: "tel-stat-export-progress-container" },
-			state: BX.UI.Button.State.DISABLED,
-			children: [
-				this.exportInfo,
-				this.exportProgressBar.getContainer()
-			]
-		});
-
-		this.exportExecuteButton.removeClass("ui-btn-wait");
-		this.exportPopup.setContent(progressBarContainer);
-		this.exportPopup.setButtons(this.afterStartExportButtons);
-
-		this.cToken = "c" + Date.now();
-		this.token = this.sToken + this.cToken;
-		this.exporting = true;
-
-		this.nextExportStep();
-	};
-
-	BX.VoximplantStatisticDetail.prototype.nextExportStep = function()
-	{
-		if (!this.exporting)
-		{
-			return;
-		}
-
-		var config = {
-			data: {
-				"SITE_ID": this.siteId,
-				"PROCESS_TOKEN": this.token,
-				"EXPORT_TYPE": this.exportType,
-				"COMPONENT_NAME": this.componentName
-			}
-		};
 
 		if (this.reportParams != null)
 		{
-			Object.assign(config.data, this.reportParams);
+			this.exporter.setParams(this.reportParams);
 		}
 
-		var request = BX.ajax.runAction("bitrix:voximplant.export.dispatcher", config);
-
-		request.then(function(response)
-		{
-			var result = response.data;
-
-			if (result["STATUS"] === "PROGRESS")
-			{
-				this.setExportProgress(result["PROCESSED_ITEMS"], result["TOTAL_ITEMS"], result["SUMMARY_HTML"]);
-				this.nextExportStep();
-			}
-			else if (result["STATUS"] === "COMPLETED")
-			{
-				this.exportFinish(result);
-			}
-		}.bind(this)).catch(function(response)
-		{
-			console.error(response.errors);
-
-			this.setExportPopupMessage({ exportInfo: BX.message('TEL_STAT_EXPORT_ERROR') });
-		}.bind(this));
+		this.exporter
+			.setParam("EXPORT_TYPE", this.exportType)
+			.setParam("COMPONENT_NAME", this.componentName)
+			.addQueueAction({
+				action: 'dispatcher'
+			})
+		;
 	};
 
-	BX.VoximplantStatisticDetail.prototype.exportFinish = function(exportResult)
-	{
-		var exportInfo = exportResult["SUMMARY_HTML"];
-		var totalItems = exportResult["TOTAL_ITEMS"];
-		var processedItems = exportResult["PROCESSED_ITEMS"];
-
-		var params;
-
-		setTimeout(function()
-		{
-			this.setExportProgress(processedItems, totalItems, exportInfo);
-
-			if  (exportResult["DOWNLOAD_LINK"] !== undefined)
-			{
-				var downloadFileLink = exportResult["DOWNLOAD_LINK"];
-				var downloadFileLinkTitle = exportResult["DOWNLOAD_LINK_NAME"];
-				var removeFileLinkTitle = exportResult["CLEAR_LINK_NAME"];
-
-				params = {
-					exportInfo: exportInfo,
-					downloadFileLinkTitle: downloadFileLinkTitle,
-					removeFileLinkTitle: removeFileLinkTitle,
-					downloadFileLink: downloadFileLink
-				};
-
-				this.createExportFileActions(params);
-			}
-			else
-			{
-				this.setExportPopupMessage({ exportInfo: exportInfo });
-			}
-		}.bind(this), 300);
-	};
-
-	BX.VoximplantStatisticDetail.prototype.stopExport = function()
-	{
-		this.exporting = false;
-
-		var request = BX.ajax.runAction("bitrix:voximplant.export.cancel", {
-			data: {
-				"SITE_ID": this.siteId,
-				"PROCESS_TOKEN": this.token,
-				"EXPORT_TYPE": this.exportType,
-				"COMPONENT_NAME": this.componentName
-			}
-		});
-
-		this.exportStopButton.setState(BX.UI.Button.State.WAITING);
-		request.then(function(response)
-		{
-			this.exportStopButton.removeClass(BX.UI.Button.State.WAITING);
-			this.setExportPopupMessage({ exportInfo: response.data["SUMMARY_HTML"] });
-		}.bind(this)).catch(function(response)
-		{
-			console.error(response.errors);
-
-			this.exportStopButton.removeClass(BX.UI.Button.State.WAITING);
-			this.setExportPopupMessage({ exportInfo: BX.message('TEL_STAT_EXPORT_ERROR') });
-		}.bind(this));
-	};
-
-	BX.VoximplantStatisticDetail.prototype.createExportPopup = function()
+	BX.VoximplantStatisticDetail.prototype.showExporter = function()
 	{
 		if(!this.exportAllowed)
 		{
@@ -308,205 +204,12 @@
 			return;
 		}
 
-		this.exportButton.classList.add("ui-btn-wait");
-		this.exportButton.classList.add("ui-btn-disabled");
-
-		this.beforeStartExportButtons = [
-			this.exportExecuteButton = new BX.UI.Button({
-				text: BX.message("TEL_STAT_ACTION_EXECUTE"),
-				id: "export-execute-btn",
-				className: "ui-btn ui-btn-success",
-				state: BX.UI.Button.State.ACTIVE,
-				events: {
-					click: function()
-					{
-						this.startExport();
-					}.bind(this)
-				}
-			}),
-			this.closeExportPopupButton = new BX.UI.Button({
-				text: BX.message("TEL_STAT_ACTION_CLOSE"),
-				id: "export-popup-close-btn",
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				events: {
-					click: function()
-					{
-						this.closeExportPopup();
-					}.bind(this)
-				}
-			}),
-		];
-
-		this.afterStartExportButtons = [
-			this.exportStopButton = new BX.UI.Button({
-				text: BX.message("TEL_STAT_ACTION_STOP"),
-				id: "export-stop-btn",
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				events: {
-					click: function()
-					{
-						this.stopExport();
-					}.bind(this)
-				}
-			}),
-		];
-
-		this.exportPopup = new BX.PopupWindow("tel-stat-export-popup", null, {
-			zIndex: 10000,
-			titleBar: BX.message("TEL_STAT_EXPORT_DETAIL_TO_EXCEL"),
-			content: BX.create("div", {
-				props: { className: "tel-stat-export-description" },
-				text: BX.message("TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION") + "\n\n"
-					+ BX.message("TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS")
-			}),
-			closeByEsc: false,
-			closeIcon: {
-				opacity: 1
-			},
-			overlay: {
-				backgroundColor: "black",
-				opacity: 500
-			},
-			buttons: this.beforeStartExportButtons,
-			events: {
-				onPopupClose: function()
-				{
-					this.closeExportPopup();
-				}.bind(this)
-			}
-		});
-
-		this.exportPopup.show();
+		this.exporter.showDialog();
 	};
 
-	BX.VoximplantStatisticDetail.prototype.closeExportPopup = function()
-	{
-		if (!this.exporting)
-		{
-			this.exportButton.classList.remove("ui-btn-wait");
-			this.exportButton.classList.remove("ui-btn-disabled");
-			this.exportPopup.destroy();
+	//endregion
 
-			return;
-		}
-
-		var request = BX.ajax.runAction("bitrix:voximplant.export.cancel", {
-			data: {
-				"SITE_ID": this.siteId,
-				"PROCESS_TOKEN": this.token,
-				"EXPORT_TYPE": this.exportType,
-				"COMPONENT_NAME": this.componentName
-			}
-		});
-
-		request.then(function()
-		{
-			this.exportButton.classList.remove("ui-btn-wait");
-			this.exportButton.classList.remove("ui-btn-disabled");
-			this.exportPopup.destroy();
-		}.bind(this)).catch(function(response)
-		{
-			console.error(response.errors);
-
-			this.setExportPopupMessage({ exportInfo: BX.message('TEL_STAT_EXPORT_ERROR') });
-		}.bind(this));
-	};
-
-	BX.VoximplantStatisticDetail.prototype.setExportProgress = function(current, total, exportInfo)
-	{
-		this.exportInfo.innerHTML = exportInfo;
-
-		this.exportProgressBar.setMaxValue(total);
-		this.exportProgressBar.update(current);
-	};
-
-	BX.VoximplantStatisticDetail.prototype.createExportFileActions = function(params)
-	{
-		var exportInfo = params.exportInfo;
-		var downloadFileLinkTitle = params.downloadFileLinkTitle;
-		var removeFileLinkTitle = params.removeFileLinkTitle;
-		var downloadFileLink = params.downloadFileLink;
-
-		var exportResultContainer = BX.create("div", {
-			props: { className: "tel-stat-export-result-container" },
-			children: [
-				BX.create("div", {
-					props: { className: "tel-stat-export-info" },
-					html: exportInfo
-				}),
-				new BX.UI.Button({
-					text: downloadFileLinkTitle,
-					id: "export-execute-btn",
-					className: "ui-btn ui-btn-success",
-					icon: BX.UI.Button.Icon.DOWNLOAD,
-					onclick: function()
-					{
-						location.href = downloadFileLink;
-					}
-				}).getContainer(),
-				new BX.UI.Button({
-					text: removeFileLinkTitle,
-					id: "export-execute-btn",
-					className: "ui-btn",
-					icon: BX.UI.Button.Icon.REMOVE,
-					onclick: function()
-					{
-						this.removeExportFile();
-					}.bind(this)
-				}).getContainer()
-			]
-		});
-
-		this.afterExportFinish(true, exportResultContainer);
-	};
-
-	BX.VoximplantStatisticDetail.prototype.setExportPopupMessage = function(params)
-	{
-		var exportInfo = params.exportInfo;
-
-		var exportResultContainer = BX.create("div", {
-			props: { className: "tel-stat-export-result-container" },
-			children: [
-				BX.create("div", {
-					props: { className: "tel-stat-export-message" },
-					html: exportInfo
-				})
-			]
-		});
-
-		this.afterExportFinish(false, exportResultContainer);
-	};
-
-	BX.VoximplantStatisticDetail.prototype.afterExportFinish = function(success, exportResultContainer)
-	{
-		var exportExecuteButtonState = success ? BX.UI.Button.State.DISABLED : BX.UI.Button.State.ACTIVE;
-		this.exportExecuteButton.setState(exportExecuteButtonState);
-
-		this.exportPopup.setContent(exportResultContainer);
-		this.exportPopup.setButtons(this.beforeStartExportButtons);
-	};
-
-	BX.VoximplantStatisticDetail.prototype.removeExportFile = function()
-	{
-		var request = BX.ajax.runAction("bitrix:voximplant.export.clear", {
-			data: {
-				"SITE_ID": this.siteId,
-				"PROCESS_TOKEN": this.token,
-				"EXPORT_TYPE": this.exportType,
-				"COMPONENT_NAME": this.componentName
-			}
-		});
-
-		request.then(function(response)
-		{
-			this.setExportPopupMessage({ exportInfo: response.data["SUMMARY_HTML"] });
-		}.bind(this)).catch(function(response)
-		{
-			console.error(response.errors);
-
-			this.setExportPopupMessage({ exportInfo: BX.message('TEL_STAT_EXPORT_ERROR') });
-		}.bind(this));
-	};
+	//region: Download Records
 
 	BX.VoximplantStatisticDetail.prototype.downloadSelectedVoxRecords = function()
 	{
@@ -526,7 +229,7 @@
 			mode: "class",
 			data: {
 				historyIds: records
-			},
+			}
 		}).then(function(response)
 		{
 			if (response.data)
@@ -705,4 +408,5 @@
 		}
 	};
 
+	//endregion
 })();

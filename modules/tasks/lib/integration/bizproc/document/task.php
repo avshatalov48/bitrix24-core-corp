@@ -128,7 +128,10 @@ class Task implements \IBPWorkflowDocument
 						return false;
 					}
 
-					return (\CSocNetUserToGroup::GetUserRole($userId, $projectId) === \SONET_ROLES_OWNER);
+					return (
+						\CSocNetUserToGroup::GetUserRole($userId, $projectId) === \SONET_ROLES_OWNER
+						|| \CSocNetUserToGroup::GetUserRole($userId, $projectId) === \SONET_ROLES_MODERATOR
+					);
 				}
 			}
 			elseif (static::isPlanTask($documentType))
@@ -553,6 +556,11 @@ class Task implements \IBPWorkflowDocument
 		{
 			if (!isset($fields[$dateField]))
 			{
+				if (array_key_exists($dateField, $fields))
+				{
+					$fields[$dateField] = '';
+				}
+
 				continue;
 			}
 			$isMultiple = isset($userDateFields[$dateField]) && $userDateFields[$dateField]['Multiple'];

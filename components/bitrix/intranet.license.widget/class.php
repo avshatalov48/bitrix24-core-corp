@@ -10,6 +10,58 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class CIntranetLicenseWidgetComponent extends CBitrixComponent
 {
+	private function getButtonClassName()
+	{
+		$className = '';
+
+		if ($this->arResult['isFreeLicense'])
+		{
+			$className = "ui-btn-icon-tariff license-btn-orange";
+		}
+		else
+		{
+			if ($this->arResult['isLicenseAlmostExpired'])
+			{
+				$className = "license-btn-alert-border ui-btn-icon-low-battery";
+			}
+			else if ($this->arResult['isLicenseExpired'])
+			{
+				$className = "license-btn-alert-border ui-btn-icon-battery";
+			}
+			else
+			{
+				$className = "ui-btn-icon-tariff license-btn-blue-border";
+
+				if ($this->arResult['isDemoLicense'])
+				{
+					$className = "ui-btn-icon-demo license-btn-blue-border";
+				}
+			}
+		}
+
+		return $className;
+	}
+
+	private function getButtonName()
+	{
+		$buttonName = '';
+
+		if ($this->arResult['isFreeLicense'])
+		{
+			$buttonName = Loc::getMessage('INTRANET_LICENSE_WIDGET_BUY_TARIFF');
+		}
+		elseif ($this->arResult['isDemoLicense'])
+		{
+			$buttonName = Loc::getMessage('INTRANET_LICENSE_WIDGET_DEMO');
+		}
+		else
+		{
+			$buttonName = Loc::getMessage('INTRANET_LICENSE_WIDGET_MY_TARIFF');
+		}
+
+		return $buttonName;
+	}
+
 	public function executeComponent(): void
 	{
 		if (!Loader::includeModule('bitrix24'))
@@ -54,6 +106,12 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 			!$isLicenseDateUnlimited 
 			&& $this->arResult['isAutoPay'] ? $daysLeft < 0: $daysLeft <= 0
 		);
+
+		$this->arResult['buttonClassName'] = 'ui-btn ui-btn-round ui-btn-themes license-btn '
+			. $this->getButtonClassName()
+		;
+
+		$this->arResult['buttonName'] = $this->getButtonName();
 
 		$this->includeComponentTemplate();
 	}

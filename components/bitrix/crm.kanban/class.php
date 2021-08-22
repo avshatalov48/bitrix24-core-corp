@@ -17,6 +17,7 @@ use Bitrix\Main\Web\Uri;
 use \Bitrix\Sale;
 use \Bitrix\Rest\Marketplace;
 use \Bitrix\Crm\Kanban;
+use \Bitrix\Crm\Deal;
 use \Bitrix\Crm\Color\PhaseColorScheme;
 use \Bitrix\Crm\Format\PersonNameFormatter;
 use \Bitrix\Crm\Tracking;
@@ -649,23 +650,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 		}
-		if (isset($filter['ORDER_SOURCE']))
-		{
-			$orderSourceQuery = new \Bitrix\Main\Entity\Query(\Bitrix\Crm\DealTable::getEntity());
-			$orderSourceQuery->setSelect(['ID']);
-			$orderSourceQuery->setFilter([
-				'ORDER_BINDING.ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $filter['ORDER_SOURCE'],
-			]);
 
-			$orderSourceSql = $orderSourceQuery->getQuery();
-			$filter['__CONDITIONS'][] = [
-				'SQL' => \CCrmDeal::TABLE_ALIAS.".ID IN ({$orderSourceSql})",
-			];
-
-			unset($orderSourceQuery, $orderSourceSql, $filter['ORDER_SOURCE']);
-		}
-
-		$filter = $this->applyDeliveryStageFilter($filter);
+		$filter = Deal\OrderFilter::prepareFilter($filter);
 
 		//deal
 		if ($this->entity->isCategoriesSupported())
@@ -1512,17 +1498,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$columns[$filter[$statusKey]]['count'] <= static::MAX_SORTED_ITEMS_COUNT
 		);
 
-		$parameters['limit'] = $this->blockSize;
 		if(!$canGetAllItems)
 		{
+			$parameters['limit'] = $this->blockSize;
 			$parameters['offset'] = $this->blockSize * ($this->blockPage - 1);
-		}
-		else
-		{
-			$parameters['offset'] = ($this->arParams['EXTRA']['itemsCount'] ?? 0);
 		}
 
 		$res = $this->entity->getItems($parameters);
+		if($canGetAllItems)
+		{
+			$res->NavStart($this->blockSize, false, $this->blockPage);
+		}
 
 		$timeOffset = \CTimeZone::GetOffset();
 		$timeFull = time() + $timeOffset;
@@ -3496,14 +3482,23 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$ids = $ids ?: $this->request('id');
 		$ids = (array)$ids;
+
 		if(empty($ids))
 		{
 			return [];
 		}
+
 		$ignore = ($this->request('ignore') === 'Y');
 		$userPerms = $this->getCurrentUserPermissions();
 
-		$this->entity->deleteItems($ids, $ignore, $userPerms);
+		try
+		{
+			$this->entity->deleteItems($ids, $ignore, $userPerms);
+		}
+		catch (Exception $exception)
+		{
+			return ['error' => $exception->getMessage()];
+		}
 
 		return [];
 	}
@@ -3864,27 +3859,5 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Adds special SQL condition into $filter.
-	 * It filters deals by flag DEDUCTED in related shipments
-	 * @param array $filter
-	 * @return array
-	 */
-	protected function applyDeliveryStageFilter(array $filter): array
-	{
-		if (isset($filter['DELIVERY_STAGE']) && is_array($filter['DELIVERY_STAGE']))
-		{
-			$deliveryStageFilter = new Bitrix\Crm\Deal\DeliveryStageFilter($filter['DELIVERY_STAGE']);
-			if ($sql = $deliveryStageFilter->getDealIdQuery())
-			{
-				$filter['__CONDITIONS'][] = [
-					'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$sql})",
-				];
-			}
-			unset($filter['DELIVERY_STAGE']);
-		}
-		return $filter;
 	}
 }

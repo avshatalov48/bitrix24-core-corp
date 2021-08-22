@@ -4,8 +4,6 @@ import {ContentComponent} from "./content";
 export const PopupWrapperComponent = {
 	components: {LoaderComponent, ContentComponent},
 	props: [
-		"componentName",
-		"signedParameters",
 		"licenseType",
 	],
 	data()

@@ -48,6 +48,7 @@ use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Util\Db;
 
 class CTasks
 {
@@ -2695,7 +2696,7 @@ class CTasks
 					else
 						$arSqlSearch[] = CTasks::FilterCreate(
 							$sAliasPrefix."T.".$key,
-							$DB->CharToDateFunction($val),
+							Db::charToDateFunction($val),
 							"date",
 							$bFullJoin,
 							$cOperationType
@@ -2709,7 +2710,7 @@ class CTasks
 						." ELSE {$sAliasPrefix}T.{$key} END";
 					$arSqlSearch[] = CTasks::FilterCreate(
 						$fname,
-						$DB->CharToDateFunction($val),
+						Db::charToDateFunction($val),
 						"date",
 						$bFullJoin,
 						$cOperationType
@@ -2784,7 +2785,7 @@ class CTasks
 
 						if (MakeTimeStamp($val['START']) > 0)
 						{
-							$strDateStart = $DB->CharToDateFunction(
+							$strDateStart = Db::charToDateFunction(
 								$DB->ForSql(
 									CDatabase::FormatDate(
 										$val['START'],
@@ -2796,7 +2797,7 @@ class CTasks
 
 						if (MakeTimeStamp($val['END']))
 						{
-							$strDateEnd = $DB->CharToDateFunction(
+							$strDateEnd = Db::charToDateFunction(
 								$DB->ForSql(
 									CDatabase::FormatDate(
 										$val['END'],
@@ -3665,12 +3666,11 @@ class CTasks
 	 * @return array
 	 * @deprecated
 	 */
-	public static function getPermissionFilterConditions($arParams,
-														 $behaviour = array('ALIAS' => '', 'USE_PLACEHOLDERS' => false))
+	public static function getPermissionFilterConditions($arParams, $behaviour = ['ALIAS' => '', 'USE_PLACEHOLDERS' => false])
 	{
 		if (!is_array($behaviour))
 		{
-			$behaviour = array();
+			$behaviour = [];
 		}
 		if (!isset($behaviour['ALIAS']))
 		{
@@ -3721,7 +3721,7 @@ class CTasks
 			}
 
 			// group permission check
-			if ($arAllowedGroups = CTasks::GetAllowedGroups($arParams))
+			if ($arAllowedGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, $arParams['USER_ID']))
 			{
 				$arSubSqlSearch[] = "(" . static::placeFieldSql('GROUP_ID', $b, $f) . " IN (" . implode(",", $arAllowedGroups) . "))";
 			}
@@ -7074,7 +7074,7 @@ class CTasks
 			$arUpdatesCount = array();
 			foreach($arViewed as $key=>$val)
 			{
-				$arSqlSearch[] = "(CREATED_DATE > " . $DB->CharToDateFunction($val) . " AND TASK_ID = " . (int) $key . ")";
+				$arSqlSearch[] = "(CREATED_DATE > " . Db::charToDateFunction($val) . " AND TASK_ID = " . (int) $key . ")";
 				$arUpdatesCount[$key] = 0;
 			}
 

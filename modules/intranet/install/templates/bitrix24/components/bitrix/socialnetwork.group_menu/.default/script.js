@@ -113,6 +113,22 @@
 		{
 			BX.bind(BX('bx-group-menu-settings'), 'click', BX.delegate(this.showMenu, this));
 		}
+
+		var controlButtonContainer = document.getElementById('group-menu-control-button-cont');
+		if (controlButtonContainer)
+		{
+			BX.loadExt('intranet.control-button').then(function() {
+				if (BX.Intranet.ControlButton)
+				{
+					new BX.Intranet.ControlButton({
+						container: controlButtonContainer,
+						entityType: 'workgroup',
+						entityId: this.groupId,
+						buttonClassName: 'ui-btn-themes intranet-control-btn-no-hover',
+					});
+				}
+			}.bind(this));
+		}
 	};
 
 	BX.BXSGM24.bindEvents = function()

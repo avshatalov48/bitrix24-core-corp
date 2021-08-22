@@ -23,7 +23,7 @@ class TimeTrackingPermission extends Content
 			return '';
 		}
 
-		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_ALLOW_TIME_TRACKING_'.$row['ALLOW_TIME_TRACKING']);
+		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_ALLOW_TIME_TRACKING_'.$row['ALLOW_TIME_TRACKING']) ?? '';
 	}
 
 	/**

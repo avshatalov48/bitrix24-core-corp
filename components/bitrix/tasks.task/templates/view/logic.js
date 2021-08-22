@@ -49,7 +49,8 @@ BX.namespace('Tasks.Component');
 		this.showCloseConfirmation = false;
 
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
-		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
+		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
+		BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', this.onSliderClose.bind(this, true));
 		BX.addCustomEvent(window, 'OnUCCommentWasRead', this.onCommentRead.bind(this));
 
 		BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
@@ -86,7 +87,7 @@ BX.namespace('Tasks.Component');
 		}
 	};
 
-	BX.Tasks.Component.TaskView.prototype.onSliderClose = function(event)
+	BX.Tasks.Component.TaskView.prototype.onSliderClose = function(byEsc, event)
 	{
 		if (!this.checkListChanged || typeof BX.Tasks.CheckListInstance === 'undefined')
 		{
@@ -97,6 +98,16 @@ BX.namespace('Tasks.Component');
 		if (!checkListSlider || checkListSlider !== event.getSlider())
 		{
 			return;
+		}
+
+		if (byEsc)
+		{
+			var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+			if (treeStructure && treeStructure.checkActiveUpdateExist())
+			{
+				event.denyAction();
+				return;
+			}
 		}
 
 		if (!this.showCloseConfirmation)
@@ -333,7 +344,9 @@ BX.namespace('Tasks.Component');
 		}
 
 		this.isSaving = true;
+
 		BX.Tasks.CheckListInstance.activateLoading();
+		BX.Tasks.CheckListInstance.onSave();
 
 		this.saveCheckList();
 	};
@@ -345,7 +358,6 @@ BX.namespace('Tasks.Component');
 		var args = {
 			items: treeStructure.getRequestData(),
 			taskId: this.taskId,
-			userId: this.userId,
 			params: {
 				// openTime: this.openTime,
 				analyticsData: Object.assign(this.analyticsData, {

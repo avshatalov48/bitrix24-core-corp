@@ -19,6 +19,22 @@ use Bitrix\Main\ORM\Query\Result as QueryResult;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ElapsedTimeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ElapsedTime_Query query()
+ * @method static EO_ElapsedTime_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ElapsedTime_Result getById($id)
+ * @method static EO_ElapsedTime_Result getList(array $parameters = array())
+ * @method static EO_ElapsedTime_Entity getEntity()
+ * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime_Collection createCollection()
+ * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime_Collection wakeUpCollection($rows)
+ */
 final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
 {
 	/**

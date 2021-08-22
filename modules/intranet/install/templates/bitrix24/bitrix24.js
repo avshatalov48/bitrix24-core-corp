@@ -340,9 +340,9 @@ var B24 = {
 	{
 		BX.ready(function ()
 		{
-			if (BX.getClass("BX.Bitrix24.LeftMenuClass"))
+			if (BX.getClass("BX.Intranet.LeftMenu"))
 			{
-				BX.Bitrix24.LeftMenuClass.updateCounters(counters, send);
+				BX.Intranet.LeftMenu.updateCounters(counters, send);
 			}
 		});
 	},
@@ -351,9 +351,9 @@ var B24 = {
 	{
 		BX.ready(function ()
 		{
-			if (BX.getClass("BX.Bitrix24.LeftMenuClass"))
+			if (BX.getClass("BX.Intranet.LeftMenu"))
 			{
-				BX.Bitrix24.LeftMenuClass.decrementCounter(node, iDecrement);
+				BX.Intranet.LeftMenu.decrementCounter(node, iDecrement);
 			}
 		});
 	},
@@ -1198,8 +1198,12 @@ B24.PopupBlur.prototype = {
 		var container = this.getPopupContainer();
 		var backgroundImage = window.getComputedStyle(document.body).backgroundImage;
 		var backgroundColor = window.getComputedStyle(document.body).backgroundColor;
-		container.classList.add('popup-window-blur');
 
+		if (BX.Type.isDomNode(container))
+		{
+			container.classList.add('popup-window-blur');
+		}
+		
 		var style = BX.create('style', {
 			attrs: {
 				type: 'text/css'

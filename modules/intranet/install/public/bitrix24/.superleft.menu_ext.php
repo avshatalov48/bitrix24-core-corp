@@ -89,8 +89,7 @@ if ($bLandingIncluded)
 			array(),
 			array(
 				"menu_item_id" => "menu_knowledge",
-				"my_tools_section" => true,
-				"is_beta" => true,
+				"my_tools_section" => true
 			),
 			""
 		);

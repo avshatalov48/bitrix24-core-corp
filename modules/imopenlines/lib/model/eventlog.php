@@ -28,6 +28,19 @@ Loc::loadMessages(__FILE__);
  * <li> MESSAGE_ID int optional
  * <li> ADDITIONAL_FIELDS longtext optional
  *	</ul>
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EventLog_Query query()
+ * @method static EO_EventLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EventLog_Result getById($id)
+ * @method static EO_EventLog_Result getList(array $parameters = array())
+ * @method static EO_EventLog_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_EventLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_EventLog_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_EventLog wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_EventLog_Collection wakeUpCollection($rows)
  */
 class EventLogTable extends DataManager
 {

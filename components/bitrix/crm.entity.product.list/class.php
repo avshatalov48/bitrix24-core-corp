@@ -360,6 +360,9 @@ final class CCrmEntityProductListComponent
 			'PREFIX',
 			'ID',
 			'PRODUCT_DATA_FIELD_NAME',
+			'PERSON_TYPE_ID',
+			'ALLOW_LD_TAX',
+			'LOCATION_ID',
 			// prepareEntitySettings
 			'ENTITY_TYPE_NAME',
 			'ENTITY_ID',
@@ -782,11 +785,6 @@ final class CCrmEntityProductListComponent
 		foreach (CCrmTax::GetVatRateInfos() as $vatRow)
 		{
 			$this->productVatList[$vatRow['ID']] = $vatRow['VALUE'];
-		}
-
-		if (!in_array(0.0, $this->productVatList, true))
-		{
-			$taxRates[0] = 0.0;
 		}
 
 		asort($this->productVatList, SORT_NUMERIC);
@@ -1417,24 +1415,24 @@ final class CCrmEntityProductListComponent
 		// 	'id' => 'DIMENSIONS',
 		// 	'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_DIMENSIONS')
 		// ];
-		$result['WEIGHT'] = [
-			'id' => 'WEIGHT',
-			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_WEIGHT'),
-			'sort' => 'WEIGHT',
-			'editable' => [
-				'TYPE' => Types::TEXT,
-			],
-			'align' => 'right',
-			'width' => $columnDefaultWidth,
-		];
-		$result['PRODUCT_ID'] = [
-			'id' => 'PRODUCT_ID',
-			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_PRODUCT_ID'),
-			'sort' => 'PRODUCT_ID',
-			'editable' => false,
-			'align' => 'right',
-			'width' => $columnDefaultWidth,
-		];
+		// $result['WEIGHT'] = [
+		// 	'id' => 'WEIGHT',
+		// 	'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_WEIGHT'),
+		// 	'sort' => 'WEIGHT',
+		// 	'editable' => [
+		// 		'TYPE' => Types::TEXT,
+		// 	],
+		// 	'align' => 'right',
+		// 	'width' => $columnDefaultWidth,
+		// ];
+		// $result['PRODUCT_ID'] = [
+		// 	'id' => 'PRODUCT_ID',
+		// 	'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_PRODUCT_ID'),
+		// 	'sort' => 'PRODUCT_ID',
+		// 	'editable' => false,
+		// 	'align' => 'right',
+		// 	'width' => $columnDefaultWidth,
+		// ];
 
 		foreach ($result as &$item)
 		{

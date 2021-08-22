@@ -4,11 +4,9 @@ import {EventEmitter} from 'main.core.events';
 import {Filter} from '../service/filter';
 
 import {RequestSender} from '../utility/request.sender';
-import {Counters} from '../utility/counters';
+import {Counters} from '../counters/counters';
 
 import {Tabs} from './header/tabs';
-
-import type {CountersData} from '../utility/counters';
 
 import '../css/base.css';
 
@@ -30,7 +28,6 @@ type Params = {
 	isOwnerCurrentUser: 'Y' | 'N',
 	userId: number,
 	groupId: number,
-	counters?: ?CountersData,
 	filterId: string
 }
 
@@ -53,15 +50,6 @@ export class View extends EventEmitter
 			filterId: params.filterId,
 			scrumManager: this,
 			requestSender: this.requestSender
-		});
-
-		this.counters = new Counters({
-			requestSender: this.requestSender,
-			filter: this.filter,
-			counters: params.counters,
-			userId: params.userId,
-			groupId: params.groupId,
-			isOwnerCurrentUser: params.isOwnerCurrentUser
 		});
 
 		this.userId = parseInt(params.userId, 10);
@@ -88,11 +76,6 @@ export class View extends EventEmitter
 		});
 
 		Dom.append(tabs.render(), container);
-	}
-
-	renderCountersTo(container: HTMLElement)
-	{
-		this.counters.renderTo(container);
 	}
 
 	renderSprintStatsTo(container: HTMLElement)

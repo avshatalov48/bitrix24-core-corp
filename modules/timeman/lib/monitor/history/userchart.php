@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Timeman\Monitor\History;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Timeman\Model\Monitor\MonitorUserChartTable;
@@ -19,10 +21,28 @@ class UserChart
 				'USER_ID' => User::getCurrentUserId(),
 				'DESKTOP_CODE' => $history['desktopCode'],
 				'GROUP_TYPE' => $entry['type'],
-				'TIME_START' => new DateTime($entry['start'], \DateTime::ATOM),
-				'TIME_FINISH' => new DateTime($entry['finish'], \DateTime::ATOM),
+				'TIME_START' => new DateTime($entry['start'], \DateTimeInterface::RFC3339),
+				'TIME_FINISH' => new DateTime($entry['finish'], \DateTimeInterface::RFC3339),
 			]);
 		}
+	}
+
+	public static function remove(int $userId, string $dateLog, string $desktopCode): Result
+	{
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$dateLog = $sqlHelper->forSql($dateLog);
+		$desktopCode = $sqlHelper->forSql($desktopCode);
+
+		$deleteUserChartQuery = "
+			DELETE FROM b_timeman_monitor_user_chart 
+			WHERE DATE_LOG = '{$dateLog}' 
+			  and USER_ID = {$userId} 
+			  and DESKTOP_CODE = '{$desktopCode}'
+		";
+
+		return $connection->query($deleteUserChartQuery);
 	}
 
 	public static function getOnDate(int $userId, Date $date): array
@@ -49,10 +69,10 @@ class UserChart
 
 		foreach ($rawChartData as $chartData)
 		{
-			$chartDataByDesktop[$chartData['DESKTOP_CODE']]['CHART_DATA'][] = [
-				'TYPE' => $chartData['TYPE'],
-				'START' => $chartData['START'],
-				'FINISH' => $chartData['FINISH'],
+			$chartDataByDesktop['DATA'][$chartData['DESKTOP_CODE']]['CHART_DATA'][] = [
+				'type' => $chartData['TYPE'],
+				'start' => $chartData['START']->format('Y-m-d' . '\T' . 'H:i:s' . '\.\0\0\Z'),
+				'finish' => $chartData['FINISH']->format('Y-m-d' . '\T' . 'H:i:s' . '\.\0\0\Z'),
 			];
 		}
 

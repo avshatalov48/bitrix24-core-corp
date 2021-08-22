@@ -10,6 +10,19 @@ use Bitrix\Main\Entity\StringField;
 /**
  * Class DialogStatTable
  * @package Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DialogStat_Query query()
+ * @method static EO_DialogStat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DialogStat_Result getById($id)
+ * @method static EO_DialogStat_Result getList(array $parameters = array())
+ * @method static EO_DialogStat_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_DialogStat createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_DialogStat_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_DialogStat wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_DialogStat_Collection wakeUpCollection($rows)
  */
 class DialogStatTable extends DataManager
 {

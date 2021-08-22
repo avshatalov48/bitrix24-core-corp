@@ -77,6 +77,7 @@ $MESS["CRM_PRESET_CHANGE_YESTERDAY"] = "Змінені за вчора";
 $MESS["CRM_PRESET_IN_WORK"] = "Угоди в роботі";
 $MESS["CRM_PRESET_MY"] = "Мої угоди";
 $MESS["CRM_PRESET_NEW"] = "Нові угоди";
+$MESS["CRM_PRESET_PAYED"] = "Оплачені угоди";
 $MESS["CRM_PRESET_WON"] = "Закриті угоди";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Деякі угоди не вдалося перенести в обрану стадію. Заповніть обов'язкові поля та перенесіть угоди знову.";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Не вдалося перенести угоди.";

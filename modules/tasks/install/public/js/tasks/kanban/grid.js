@@ -138,6 +138,16 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 	},
 
+	renderLayout: function()
+	{
+		BX.Kanban.Grid.prototype.renderLayout.apply(this, arguments);
+
+		if (this.isScrumGridHeader())
+		{
+			this.observeScrumGridHeader();
+		}
+	},
+
 	/**
 	 * Hook on item drag start.
 	 * @param {Object} item
@@ -1434,27 +1444,50 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 	adjustHeight: function()
 	{
-		if (this.isGroupingMode())
-		{
-			if (this.isScrumGridHeader())
-			{
-				var outerContainer = this.getOuterContainer();
-				var scrumKanbanContainer = outerContainer.parentElement;
-
-				if (scrumKanbanContainer.getBoundingClientRect().top >= 15)
-				{
-					outerContainer.classList.remove('tasks-scrum-kanban-header');
-				}
-				else
-				{
-					outerContainer.classList.add('tasks-scrum-kanban-header');
-				}
-			}
-		}
-		else
+		if (!this.isGroupingMode())
 		{
 			BX.Kanban.Grid.prototype.adjustHeight.call(this);
 		}
+	},
+
+	observeScrumGridHeader: function()
+	{
+		if (typeof IntersectionObserver === 'undefined')
+		{
+			return;
+		}
+
+		var outerContainer = this.getOuterContainer();
+		var scrumKanbanContainer = outerContainer.parentElement;
+		var targetObserver = scrumKanbanContainer.querySelector('.tasks-scrum-kanban-header-target-observer');
+
+		if (!targetObserver)
+		{
+			return;
+		}
+
+		var scrumGridHeaderObserver = new IntersectionObserver(function(entries) {
+				if (entries[0].isIntersecting === true)
+				{
+					if (outerContainer.classList.contains('tasks-scrum-kanban-header'))
+					{
+						outerContainer.classList.remove('tasks-scrum-kanban-header');
+					}
+				}
+				else
+				{
+					if (!outerContainer.classList.contains('tasks-scrum-kanban-header'))
+					{
+						outerContainer.classList.add('tasks-scrum-kanban-header');
+					}
+				}
+			}.bind(this),
+			{
+				threshold: [0]
+			}
+		);
+
+		scrumGridHeaderObserver.observe(targetObserver);
 	},
 
 	scrollToRight: function()

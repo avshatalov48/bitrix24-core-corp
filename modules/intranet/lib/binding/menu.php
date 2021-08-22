@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Binding;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\EventResult;
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Rest\PlacementTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -462,8 +463,13 @@ class Menu
 			$groups = [];// array for group items position storage
 			$res = \Bitrix\Rest\PlacementTable::getList([
 				'select' => [
-					'ID', 'APP_ID', 'PLACEMENT', 'TITLE',
-					'APP_NAME' => 'REST_APP.APP_NAME', 'GROUP_NAME'
+					'ID',
+					'APP_ID',
+					'PLACEMENT',
+					'TITLE',
+					'APP_NAME' => 'REST_APP.APP_NAME',
+					'GROUP_NAME',
+					'LANG_ALL',
 				],
 				'filter' => [
 					'=PLACEMENT' => array_keys(self::REST_PLACEMENT_MAP)
@@ -472,38 +478,76 @@ class Menu
 					'ID' => 'desc'
 				]
 			]);
-			while ($row = $res->fetch())
+			foreach ($res->fetchCollection() as $row)
 			{
-				if (!isset(self::REST_PLACEMENT_MAP[$row['PLACEMENT']]))
+				if (!isset(self::REST_PLACEMENT_MAP[$row->getPlacement()]))
 				{
 					continue;
 				}
-				if (!trim($row['TITLE']))
+
+				$placementLang = [];
+				$placementLangAll = [];
+				if (!is_null($row->getLangAll()))
 				{
-					$row['TITLE'] = $row['APP_NAME'];
+					foreach ($row->getLangAll() as $lang)
+					{
+						if (trim($lang->getTitle()))
+						{
+							$placementLangAll[$lang->getLanguageId()] = [
+								'TITLE' => trim($lang->getTitle()),
+								'GROUP_NAME' => $lang->getGroupName(),
+							];
+						}
+					}
 				}
-				[$bindingCode, $menuCode] = explode('@', self::REST_PLACEMENT_MAP[$row['PLACEMENT']]);
+				if (!empty($placementLangAll))
+				{
+					$langList = \Bitrix\Rest\Lang::listLanguage();
+					foreach ($langList as $lang)
+					{
+						if ($placementLangAll[$lang])
+						{
+							$placementLang = $placementLangAll[$lang];
+							break;
+						}
+					}
+					if (!$placementLang['TITLE'])
+					{
+						$placementLang = reset($placementLangAll);
+					}
+				}
+				elseif ($row->getRestApp())
+				{
+					$placementLang['TITLE'] = $row->getRestApp()->getAppName();
+				}
+
+				if (!trim($placementLang['TITLE']))
+				{
+					$placementLang['TITLE'] = \Bitrix\Rest\PlacementTable::getDefaultTitle($row->getId());
+				}
+
+				[$bindingCode, $menuCode] = explode('@', self::REST_PLACEMENT_MAP[$row->getPlacement()]);
 				$bindingCode = mb_strtolower($bindingCode);
 				$menuCode = mb_strtolower($menuCode);
 				if (isset($map[$bindingCode]['items'][$menuCode]))
 				{
 					self::$needProvider = true;
 					$oneItem = [
-						'id' => 'rest_' . $row['ID'],
+						'id' => 'rest_' . $row->getId(),
 						'system' => false,
-						'text' => htmlspecialcharsbx($row['TITLE']),
+						'text' => htmlspecialcharsbx($placementLang['TITLE']),
 						'sort' => 500,
 						'sectionCode' => $menuSectionCode,
 						'linkProvider' => 'marketplace',
 						'params' => [
-							'app_id' => $row['APP_ID'],
-							'placement_id' => $row['ID'],
-							'placement' => $row['PLACEMENT']
+							'app_id' => $row->getAppId(),
+							'placement_id' => $row->getId(),
+							'placement' => $row->getPlacement(),
 						]
 					];
-					if ($row['GROUP_NAME'])
+					if ($placementLang['GROUP_NAME'])
 					{
-						$groupingKey = $row['PLACEMENT'] . '_' . $row['GROUP_NAME'];
+						$groupingKey = $row->getPlacement() . '_' . $placementLang['GROUP_NAME'];
 						if (isset($groups[$groupingKey]))
 						{
 							$i = $groups[$groupingKey];
@@ -512,7 +556,7 @@ class Menu
 						else
 						{
 							$map[$bindingCode]['items'][$menuCode][] = [
-								'text' => $row['GROUP_NAME'],
+								'text' => $placementLang['GROUP_NAME'],
 								'sort' => 500,
 								'sectionCode' => $menuSectionCode,
 								'items' => [
@@ -608,8 +652,9 @@ class Menu
 			$cache = new \CPHPCache;
 			$cacheManager = $GLOBALS['CACHE_MANAGER'];
 			$cacheTag = 'intranet_menu_binding';
+			$cacheKey = $cacheTag . '_' . LANGUAGE_ID;
 			$cacheDir = '/intranet/menu_binding';
-			if ($cache->initCache(8640000, $cacheTag, $cacheDir))
+			if ($cache->initCache(8640000, $cacheKey, $cacheDir))
 			{
 				[$bindings, self::$needProvider] = $cache->getVars();
 			}

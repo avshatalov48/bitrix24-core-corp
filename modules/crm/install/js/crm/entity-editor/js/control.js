@@ -551,7 +551,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		if (options === undefined)
 		{
 			options = {
-				disableSendButton: '',
+				disableSendButton: this._schemeElement.getDataStringParam('disableSendButton', ''),
 				context: 'deal',
 				templateMode: 'create',
 				mode: 'payment_delivery',

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_statistic
 	PORTAL_NUMBER varchar(50) NULL,
 	PHONE_NUMBER varchar(20) NOT NULL,
 	INCOMING varchar(50) not null default '1',
-	SESSION_ID int NULL,
+	SESSION_ID bigint unsigned NULL,
 	CALL_ID varchar(255) NOT NULL,
 	EXTERNAL_CALL_ID varchar(64) NULL,
 	CALL_CATEGORY varchar(20) NULL default 'external',
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_call
 	PORTAL_USER_ID int(11) NULL,
 	CALL_ID varchar(255) NOT NULL,
 	EXTERNAL_CALL_ID varchar(64) NULL,
-	SESSION_ID int NULL,
+	SESSION_ID bigint unsigned NULL,
 	INCOMING varchar(50) null,
 	CALLER_ID varchar(255) NULL,
 	STATUS varchar(50) NULL,
@@ -298,6 +298,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_queue
 	NO_ANSWER_RULE varchar(50) DEFAULT 'voicemail',
 	NEXT_QUEUE_ID int(11) NULL,
 	FORWARD_NUMBER varchar(20) NULL,
+	PHONE_NUMBER varchar(20) NULL,
 	ALLOW_INTERCEPT char(1) NOT NULL default 'N',
 	PRIMARY KEY(ID)
 );
@@ -399,7 +400,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_ivr_action
 CREATE TABLE IF NOT EXISTS b_voximplant_transcript
 (
 	ID int(11) NOT NULL auto_increment,
-	SESSION_ID int NULL,
+	SESSION_ID bigint unsigned NULL,
 	CALL_ID varchar(255) NULL,
 	URL varchar(255) NULL,
 	CONTENT text NULL,

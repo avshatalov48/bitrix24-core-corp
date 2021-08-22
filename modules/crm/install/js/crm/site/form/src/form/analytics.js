@@ -46,14 +46,13 @@ class Analytics
 
 	send(type, replace: Array = [])
 	{
-		/** @var Object webPacker */
-		if (!webPacker || !module || !type)
+		if (!b24form.common || !type)
 		{
 			return;
 		}
 
 		/**	@var Object[Type.Analytics] opt */
-		const opt = module.properties.analytics;
+		const opt = b24form.common.properties.analytics;
 		if(!opt || !opt[type])
 		{
 			return;
@@ -73,21 +72,21 @@ class Analytics
 		let gaEventAction = opt.template.name
 			.replace('%name%', action)
 			.replace('%form_id%', this.#form.identification.id);
-		webPacker.analytics.trackGa('event', gaEventCategory, gaEventAction);
+		b24form.util.analytics.trackGa('event', gaEventCategory, gaEventAction);
 
 		if (page)
 		{
 			const gaPageName = opt.template.code
 				.replace('%code%', page)
 				.replace('%form_id%', this.#form.identification.id);
-			webPacker.analytics.trackGa('pageview', gaPageName);
+			b24form.util.analytics.trackGa('pageview', gaPageName);
 		}
 
 		//////////// yandex
 		const yaEventName = opt.eventTemplate.code
 			.replace('%code%', page)
 			.replace('%form_id%', this.#form.identification.id);
-		webPacker.analytics.trackYa(yaEventName);
+		b24form.util.analytics.trackYa(yaEventName);
 	}
 }
 

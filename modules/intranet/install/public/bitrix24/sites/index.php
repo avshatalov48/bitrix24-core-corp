@@ -12,8 +12,10 @@
 			"domain_edit" => "domain/edit/#domain_edit#/",
 			"domains" => "domains/",
 			"landing_edit" => "site/#site_show#/#landing_edit#/",
+			"landing_design" => "site/#site_show#/design/#landing_edit#/",
 			"landing_view" => "site/#site_show#/view/#landing_edit#/",
 			"site_edit" => "site/edit/#site_edit#/",
+			"site_design" => "site/design/#site_edit#/",
 			"site_show" => "site/#site_show#/",
 			"sites" => ""
 		)

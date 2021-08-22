@@ -2,7 +2,6 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Util\Type\DateTime;
 
 //region TITLE
 $APPLICATION->SetPageProperty("title", Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', array('#USER_NAME#'=>htmlspecialcharsbx($arResult['USER_NAME']))));
@@ -59,7 +58,7 @@ if (!function_exists('prepareTaskRowUserBaloonHtml'))
 	}
 }
 
-$arResult['ROWS'] = [];
+$rows = [];
 
 if ($arResult['VIOLATION_LIST'])
 {
@@ -104,20 +103,7 @@ if ($arResult['VIOLATION_LIST'])
 		$item['TASK'] = '<a href="'.$taskLink.'">'.htmlspecialcharsbx($item['TASK_TITLE']).'</a> '
 			.($item['TASK_ZOMBIE'] === 'Y' ? '<em>'.Loc::getMessage('TASKS_EFFECTIVE_DETAIL_DELETED').'</em>' : '');
 
-		foreach (['DATE', 'DATE_REPAIR', 'DEADLINE'] as $key)
-		{
-			$item[$key] = ($item[$key] ? formatDateTasks(DateTime::createFromUserTime($item[$key])) : '');
-		}
-
-		if (!$item['DATE_REPAIR'])
-		{
-			$item['DATE_REPAIR'] = Loc::getMessage('TASKS_VIOLATION_NOT_REPAIR');
-		}
-
-		$arResult['ROWS'][] = [
-			'id' => $item['ID'],
-			'columns' => $item,
-		];
+		$rows[] = $item;
 	}
 }
 
@@ -125,56 +111,21 @@ $arResult['TEMPLATE_DATA'] = array(
 	// contains data generated in result_modifier.php
 );
 
-function formatDateTasks($date)
+$grid = new Bitrix\Tasks\Grid\Effective\Grid($rows, $arParams);
+$preparedRows = $grid->prepareRows();
+
+$arResult['ROWS'] = [];
+foreach ($rows as $key => $row)
 {
-	$curTimeFormat = "HH:MI:SS";
-	$format = 'j F';
-	if (LANGUAGE_ID == "en")
+	$taskId = (int)$row['TASK_ID'];
+
+	if (!$row['DATE_REPAIR'])
 	{
-		$format = "F j";
-	}
-	if (LANGUAGE_ID == "de")
-	{
-		$format = "j. F";
+		$preparedRows[$key]['content']['DATE_REPAIR'] = Loc::getMessage('TASKS_VIOLATION_NOT_REPAIR');
 	}
 
-	if (date('Y') != date('Y', strtotime($date)))
-	{
-		if (LANGUAGE_ID == "en")
-		{
-			$format .= ",";
-		}
-
-		$format .= ' Y';
-	}
-
-	$rsSite = CSite::GetByID(SITE_ID);
-	if ($arSite = $rsSite->Fetch())
-	{
-		$curDateFormat = $arSite["FORMAT_DATE"];
-		$curTimeFormat = str_replace($curDateFormat." ", "", $arSite["FORMAT_DATETIME"]);
-	}
-
-	if ($curTimeFormat == "HH:MI:SS")
-	{
-		$currentDateTimeFormat = " G:i";
-	}
-	else //($curTimeFormat == "H:MI:SS TT")
-	{
-		$currentDateTimeFormat = " g:i a";
-	}
-
-	if (date('Hi', strtotime($date)) > 0)
-	{
-		$format .= ', '.$currentDateTimeFormat;
-	}
-
-	$str = (!$date
-		? GetMessage('TASKS_NOT_PRESENT')
-		: \Bitrix\Tasks\UI::formatDateTime(
-			MakeTimeStamp($date),
-			$format
-		));
-
-	return $str;
+	$arResult['ROWS'][] = [
+		'id' => $row['ID'],
+		'columns' => $preparedRows[$key]['content'],
+	];
 }

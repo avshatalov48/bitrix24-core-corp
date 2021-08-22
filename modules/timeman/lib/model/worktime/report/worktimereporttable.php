@@ -9,6 +9,22 @@ use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 use Bitrix\Timeman\Service\DependencyManager;
 
+/**
+ * Class WorktimeReportTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_WorktimeReport_Query query()
+ * @method static EO_WorktimeReport_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_WorktimeReport_Result getById($id)
+ * @method static EO_WorktimeReport_Result getList(array $parameters = array())
+ * @method static EO_WorktimeReport_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Worktime\Report\EO_WorktimeReport_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Worktime\Report\EO_WorktimeReport_Collection wakeUpCollection($rows)
+ */
 class WorktimeReportTable extends Main\ORM\Data\DataManager
 {
 	const REPORT_TYPE_ERR_OPEN = 'ERR_OPEN';

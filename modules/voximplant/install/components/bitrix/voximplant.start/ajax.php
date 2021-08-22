@@ -13,6 +13,13 @@ class VoximplantStartAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function getConfigurationsAction()
 	{
+		$permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
+		if (!$permissions->canModifyLines())
+		{
+			$this->addError(new \Bitrix\Main\Error('Permission to modify line settings required', 'access_denied'));
+			return null;
+		}
+
 		return CVoxImplantConfig::GetConfigurations();
 	}
 

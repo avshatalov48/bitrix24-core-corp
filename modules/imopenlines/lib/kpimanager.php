@@ -129,25 +129,22 @@ class KpiManager
 	 * @param bool $includeNoticed
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getExpiredMessages($includeNoticed = true)
 	{
-		$filter = array(
+		$filter = [
 			'TIME_ANSWER' => null,
 			'TIME_STOP' => null,
 			'<TIME_EXPIRED' => DateTime::createFromTimestamp(time()),
-			'SESSION_ID' => $this->sessionId,
-		);
+			'=SESSION_ID' => $this->sessionId,
+		];
 
 		if (!$includeNoticed)
 		{
-			$filter['IS_SENT_EXPIRED_NOTIFICATION'] = 'N';
+			$filter['=IS_SENT_EXPIRED_NOTIFICATION'] = 'N';
 		}
 
-		$messages = SessionKpiMessagesTable::getList(array('filter' => $filter));
+		$messages = SessionKpiMessagesTable::getList(['filter' => $filter]);
 
 		return $messages->fetchAll();
 	}
@@ -165,24 +162,24 @@ class KpiManager
 	 */
 	public static function getLineExpiredMessages($lineId, $includeNoticed = true)
 	{
-		$select = array('*');
-		$filter = array(
-			'SESSION.CONFIG_ID' => $lineId,
+		$select = ['*'];
+		$filter = [
+			'=SESSION.CONFIG_ID' => $lineId,
 			'TIME_ANSWER' => null,
 			'TIME_STOP' => null,
 			'<TIME_EXPIRED' => DateTime::createFromTimestamp(time()),
-		);
+		];
 
 		if (!$includeNoticed)
 		{
-			$filter['IS_SENT_EXPIRED_NOTIFICATION'] = 'N';
+			$filter['=IS_SENT_EXPIRED_NOTIFICATION'] = 'N';
 		}
 
 		$expiredMessages = SessionKpiMessagesTable::getList(
-			array(
+			[
 				'select' => $select,
 				'filter' => $filter
-			)
+			]
 		)->fetchAll();
 
 		return $expiredMessages;

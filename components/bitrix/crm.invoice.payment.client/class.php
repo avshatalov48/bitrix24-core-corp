@@ -69,6 +69,11 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 		}
 		$this->arParams['FORM_ID'] = (int) $this->arParams['FORM_ID'];
 
+		if (!isset($this->arParams['RETURN_URL']))
+		{
+			$this->arParams['RETURN_URL'] = (new Sale\PaySystem\Context())->getUrl();
+		}
+
 		return true;
 	}
 
@@ -166,7 +171,7 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 		if ($this->checkModules())
 		{
 			$this->processExecution();
-		}		
+		}
 
 		$this->formatResultErrors();
 		$this->includeComponentTemplate();
@@ -259,6 +264,11 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 
 		$this->arResult['USE_FRAME'] = 'Y';
 
+		if ($this->arParams['RETURN_URL'])
+		{
+			$paySystemObject->getContext()->setUrl($this->arParams['RETURN_URL']);
+		}
+
 		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
 		if (!$paySystemBufferedOutput->isSuccess())
 		{
@@ -303,7 +313,7 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			return;
 		}
 
-		$paymentCollection = $invoice->loadPaymentCollection();
+		$paymentCollection = $invoice->getPaymentCollection();
 
 		/** @var Sale\Payment $payment */
 		$payment = $paymentCollection->current();
@@ -322,6 +332,11 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 				$service = Sale\PaySystem\Manager::getObjectById($this->arParams['PAY_SYSTEM_ID']);
 				if ($service !== null)
 				{
+					if ($this->arParams['RETURN_URL'])
+					{
+						$service->getContext()->setUrl($this->arParams['RETURN_URL']);
+					}
+
 					$result = $service->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
 					$result->getErrors();
 					$this->arResult['PAY_SYSTEM_TEMPLATE'] = $result->getTemplate();

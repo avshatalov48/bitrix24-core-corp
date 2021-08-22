@@ -2123,6 +2123,10 @@ class CAllCrmCompany
 
 			CCrmSearch::DeleteSearch('COMPANY', $ID);
 
+			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
+				CCrmOwnerType::Company
+			)->removeShortIndex($ID);
+
 			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='COMPANY' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 

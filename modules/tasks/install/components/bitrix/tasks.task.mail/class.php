@@ -35,7 +35,15 @@ class TasksMailTaskComponent extends TasksTaskComponent
 		$accessCheckParams = null;
 		$action = Tasks\Access\ActionDictionary::ACTION_TASK_READ;
 
-		$res = (new Tasks\Access\TaskAccessController($arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
+		if (
+			!array_key_exists('USER_ID', $arResult)
+			|| !$arResult['USER_ID']
+		)
+		{
+			return $error;
+		}
+
+		$res = (new Tasks\Access\TaskAccessController((int)$arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
 		if (!$res)
 		{
 			return $error;

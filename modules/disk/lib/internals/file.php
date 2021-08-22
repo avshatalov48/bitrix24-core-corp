@@ -10,6 +10,22 @@ use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * Class FileTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_File_Query query()
+ * @method static EO_File_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_File_Result getById($id)
+ * @method static EO_File_Result getList(array $parameters = array())
+ * @method static EO_File_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_File createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_File_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_File wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_File_Collection wakeUpCollection($rows)
+ */
 final class FileTable extends ObjectTable
 {
 	const TYPE = ObjectTable::TYPE_FILE;

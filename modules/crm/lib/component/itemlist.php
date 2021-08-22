@@ -6,7 +6,6 @@ use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
-use Bitrix\Crm\Filter\ItemSettings;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Restriction\RestrictionManager;
@@ -98,13 +97,18 @@ abstract class ItemList extends Base
 			return;
 		}
 
-		$settings = new ItemSettings([
-			'ID' => $this->getGridId(),
-			'categoryId' => $this->getCategoryId(),
-		], $type);
-		$this->provider = new ItemDataProvider($settings, $this->factory);
-		$this->ufProvider = new ItemUfDataProvider($settings);
-		$this->filter = new Filter($settings->getID(), $this->provider, [$this->ufProvider]);
+		$filterFactory = Container::getInstance()->getFilterFactory();
+		$settings = $filterFactory->getSettings(
+			$this->factory->getEntityTypeId(),
+			$this->getGridId(),
+			[
+				'categoryId' => $this->getCategoryId(),
+				'type' => $type,
+			]
+		);
+		$this->provider = $filterFactory->getDataProvider($settings);
+		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
+		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, [$this->ufProvider]);
 
 		$this->display = new Display($this->factory);
 	}

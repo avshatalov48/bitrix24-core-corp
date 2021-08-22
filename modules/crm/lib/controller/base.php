@@ -137,7 +137,7 @@ abstract class Base extends Controller
 		return isset($prefixes[str_replace($field, '', $filterName)]);
 	}
 
-	protected function uploadFile($fileContent): ?int
+	protected function uploadFile(Field $field, $fileContent): ?int
 	{
 		if (empty($fileContent))
 		{
@@ -151,16 +151,6 @@ abstract class Base extends Controller
 			return null;
 		}
 
-		$fileArray['MODULE_ID'] = 'crm';
-
-		$filePath = 'crm';
-		$fileId = \CFile::SaveFile($fileArray, $filePath);
-
-		if($fileId > 0)
-		{
-			return (int) $fileId;
-		}
-
-		return null;
+		return Container::getInstance()->getFileUploader()->saveFileTemporary($field, $fileArray);
 	}
 }

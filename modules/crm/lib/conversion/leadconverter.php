@@ -565,6 +565,11 @@ class LeadConverter extends EntityConverter
 			}
 			//endregion
 
+			if (isset($this->contextData['RESPONSIBLE_ID']))
+			{
+				$fields['ASSIGNED_BY_ID'] = $this->contextData['RESPONSIBLE_ID'];
+			}
+
 			if($entityTypeID === \CCrmOwnerType::Company)
 			{
 				$entity = new \CCrmCompany(false);

@@ -7,6 +7,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\Filter;
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Report\VisualConstructor;
 use Bitrix\Crm\Tracking;
 
@@ -85,6 +86,11 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 
 	protected function prepareResult()
 	{
+		$this->arResult['FEATURE_CODE'] = Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled("crm_tracking_reports")
+			? "crm_tracking_reports"
+			: null
+		;
+
 		/** @var Bitrix\Report\VisualConstructor\Entity\Widget $widget */
 		$this->arParams['IS_AD_ACCESSIBLE'] = Tracking\Manager::isAdAccessible();
 		$this->arParams['IS_COSTABLE'] = $this->dataProvider->isCostable();
@@ -104,10 +110,18 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			? []
 			: $filterRequest['SOURCE_CODE'];
 
-		$this->arResult['DATA'] = $this->getComparedData($sources, $periodFrom, $periodTo);
+		$this->arResult['DATA'] = $this->arResult['FEATURE_CODE']
+			? []
+			: $this->getComparedData($sources, $periodFrom, $periodTo)
+		;
+
 		if ($this->arParams['IS_GRID'])
 		{
-			if ($this->arParams['IS_TRAFFIC'])
+			if ($this->arResult['FEATURE_CODE'])
+			{
+				$this->arResult['GRID'] = [];
+			}
+			else if ($this->arParams['IS_TRAFFIC'])
 			{
 				$this->arResult['GRID'] = $this->getGridDataByEmployee($sources, $periodFrom, $periodTo);
 			}

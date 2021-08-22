@@ -129,6 +129,9 @@ class DynamicTypesMap
 		if(!$this->isStagesLoaded)
 		{
 			foreach (static::$stagesDataClass::getList([
+					'order' => [
+						'SORT' => 'ASC',
+					],
 					'filter' => [
 						'@ENTITY_ID' => array_keys($this->stageEntityIds),
 					]

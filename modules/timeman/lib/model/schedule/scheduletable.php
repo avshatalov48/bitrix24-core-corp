@@ -22,6 +22,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ScheduleTable
  * @package Bitrix\Timeman\Model\Schedule
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Schedule_Query query()
+ * @method static EO_Schedule_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Schedule_Result getById($id)
+ * @method static EO_Schedule_Result getList(array $parameters = array())
+ * @method static EO_Schedule_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Schedule createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\ScheduleCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Schedule wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\ScheduleCollection wakeUpCollection($rows)
  */
 class ScheduleTable extends Main\ORM\Data\DataManager
 {

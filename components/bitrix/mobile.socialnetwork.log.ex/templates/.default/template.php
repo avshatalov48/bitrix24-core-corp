@@ -1,4 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateFolder */
 /** @var array $arParams */
@@ -192,18 +198,6 @@ else
 				|| $arResult["bWebDavInstalled"]
 			)
 			{
-				if ($arResult["bDiskInstalled"])
-				{
-					?>
-					, MSLbDiskInstalled: 'Y'
-					<?
-				}
-				else
-				{
-					?>
-					, MSLbWebDavInstalled: 'Y'
-					<?
-				}
 				?>
 				, MSLPostFormDisk: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DISK")?>'
 				, MSLPostFormDiskTitle: '<?=GetMessageJS("MOBILE_LOG_POST_FORM_DISK_TITLE")?>'
@@ -228,8 +222,8 @@ else
 					? "true"
 					: "false"
 			)?>,
-			bEmptyGetComments: <?=($_REQUEST["empty_get_comments"] === "Y" ? "true" : "false")?>,
 			groupID: <?=$arParams["GROUP_ID"]?>,
+			groupImage: '<?=$arResult["GROUP_IMAGE"]?>',
 			curUrl: '<?=$APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "AJAX_CALL", "RELOAD", "RELOAD_JSON"))?>',
 			appCacheDebug: <?=AppCacheManifest::getInstance()->getDebug() ? "true" : "false"?>,
 			tmstmp: <?=time()?>,
@@ -299,10 +293,6 @@ else
 		?><script>
 			var arLogTs = {};
 			var arCanUserComment = {};
-			var bRefreshing = false;
-			var bGettingNextPage = false;
-			var iPageNumber = 1;
-			var nextPageXHR = null;
 
 			BX.message({
 				MSLPageId: '<?=CUtil::JSEscape(RandString(4))?>',
@@ -310,7 +300,6 @@ else
 				MSLSessid: '<?=bitrix_sessid()?>',
 				MSLSiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
 				MSLSiteDir: '<?=CUtil::JSEscape(SITE_DIR)?>',
-				MSLLangId: '<?=CUtil::JSEscape(LANGUAGE_ID)?>',
 				MSLDestinationLimit: '<?=intval($arParams["DESTINATION_LIMIT_SHOW"])?>',
 				MSLNameTemplate: '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>',
 				MSLShowLogin: '<?=CUtil::JSEscape($arParams["SHOW_LOGIN"])?>',
@@ -345,8 +334,8 @@ else
 			});
 		</script><?
 
-		require($_SERVER["DOCUMENT_ROOT"].$templateFolder."/include/informer.php");
-		require($_SERVER["DOCUMENT_ROOT"].$templateFolder."/include/pinned.php");
+		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/informer.php');
+		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/pinned.php');
 	}
 	elseif ($arParams["EMPTY_PAGE"] === "Y")
 	{
@@ -369,7 +358,6 @@ else
 				MSLPageId: '<?=CUtil::JSEscape(RandString(4))?>',
 				MSLSessid: '<?=bitrix_sessid()?>',
 				MSLSiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
-				MSLLangId: '<?=CUtil::JSEscape(LANGUAGE_ID)?>',
 				MSLDetailCommentsLoading: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_LOADING")?>',
 				MSLDetailCommentsFailed: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_FAILED")?>',
 				MSLDetailCommentsReload: '<?=GetMessageJS("MOBILE_LOG_EMPTY_COMMENTS_RELOAD")?>',
@@ -421,7 +409,6 @@ else
 				MSLPageId: '<?=CUtil::JSEscape(RandString(4))?>',
 				MSLSessid: '<?=bitrix_sessid()?>',
 				MSLSiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
-				MSLLangId: '<?=CUtil::JSEscape(LANGUAGE_ID)?>',
 				MSLLogId: <?=intval($arParams["LOG_ID"])?>,
 				MSLPathToUser: '<?=CUtil::JSEscape($arParams["PATH_TO_USER"])?>',
 				MSLPathToGroup: '<?=CUtil::JSEscape($arParams["PATH_TO_GROUP"])?>',
@@ -452,7 +439,7 @@ else
 
 			BX.ready(function() {
 				BX.bind(window, 'scroll', oMSL.onScrollDetail);
-				oMSL.checkScrollButton();
+				BX.MobileLivefeed.DetailPageScrollInstance.checkScrollButton();
 
 				BX.onCustomEvent(window, 'BX.UserContentView.onInitCall', [{
 					mobile: true,
@@ -464,13 +451,13 @@ else
 		</script><?
 	}
 
-	if ($arParams["NEW_LOG_ID"] <= 0)
+	if ($arParams['NEW_LOG_ID'] <= 0)
 	{
 		?><div class="feed-add-post-button" id="feed-add-post-button"></div><?
-		?><div class="lenta-wrapper" id="lenta_wrapper"><?
-			?><div class="post-comment-block-scroll post-comment-block-scroll-top" style="" id="post-scroll-button-top" onclick="oMSL.scrollTo('top');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?
-			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom" style="" id="post-scroll-button-bottom" onclick="oMSL.scrollTo('bottom');"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><? // scroll
-			?><span id="blog-post-first-after"></span><?
+		?><div class="lenta-wrapper" id="lenta_wrapper"><?php
+			?><div class="post-comment-block-scroll post-comment-block-scroll-top"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?php
+			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><?php
+			?><span id="blog-post-first-after"></span><?php
 	}
 
 	if($arResult["ErrorMessage"] <> '')
@@ -501,8 +488,6 @@ else
 	)
 	{
 		?><script type="text/javascript">
-			var commentVarSiteID = null;
-			var commentVarLanguageID = null;
 			var commentVarLogID = null;
 			var commentVarAvatarSize = <?=intval($arParams["AVATAR_SIZE_COMMENT"])?>;
 			var commentVarNameTemplate = '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>';
@@ -510,7 +495,6 @@ else
 			var commentVarDateTimeFormat = null;
 			var commentVarPathToUser = '<?=CUtil::JSEscape($arParams["PATH_TO_USER"])?>';
 			var commentVarPathToBlogPost = '<?=CUtil::JSEscape($arParams["PATH_TO_USER_MICROBLOG_POST"])?>';
-			var commentVarBlogPostID = null;
 			var commentVarURL = null;
 			var commentVarAction = null;
 			var commentVarEntityTypeID = null;
@@ -675,7 +659,6 @@ else
 		{
 			?><div class="lenta-block-empty" id="lenta_block_empty"><?=Loc::getMessage("MOBILE_LOG_MESSAGE_EMPTY");?></div><?
 		}
-
 	}
 
 	if ($arResult["AJAX_CALL"])
@@ -710,13 +693,13 @@ else
 			)
 			{
 				?>
-				url_next = '<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>';
+				BX.MobileLivefeed.PageInstance.setNextPageUrl('<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>');
 				<?
 			}
 			else
 			{
 				?>
-				oMSL.initScroll(false, true);
+				BX.MobileLivefeed.PageInstance.initScroll(false, true);
 				<?
 				if ($arParams["NEW_LOG_ID"] > 0)
 				{
@@ -816,26 +799,9 @@ else
 		{
 			if ($event_cnt >= $arParams["PAGE_SIZE"])
 			{
-				?><div id="next_post_more" class="lenta-item">
-					<div class="bx-placeholder-wrap">
-						<div class="bx-placeholder">
-							<table class="bx-feed-curtain">
-								<tr class="bx-curtain-row-0"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent"></td><td class="bx-curtain-cell-3"></td><td class="bx-curtain-cell-4"></td><td class="bx-curtain-cell-5"></td><td class="bx-curtain-cell-6"></td><td class="bx-curtain-cell-7"></td></tr>
-								<tr class="bx-curtain-row-1 2"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent"></td><td class="bx-curtain-cell-3"></td><td class="bx-curtain-cell-4 transparent"></td><td class="bx-curtain-cell-5" colspan="3"></td></tr>
-								<tr class="bx-curtain-row-2 3"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent" rowspan="2"><div class="bx-bx-curtain-avatar"></div></td><td class="bx-curtain-cell-3" colspan="5"></td></tr>
-								<tr class="bx-curtain-row-1"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-3"></td><td class="bx-curtain-cell-4 transparent" colspan="3"></td><td class="bx-curtain-cell-7"></td></tr>
-								<tr class="bx-curtain-row-2"><td class="bx-curtain-cell-1" colspan="7"></td></tr>
-								<tr class="bx-curtain-row-1"><td class="bx-curtain-cell-1" colspan="3"></td><td class="bx-curtain-cell-4 transparent" colspan="3"></td><td class="bx-curtain-cell-7"></td></tr>
-								<tr class="bx-curtain-row-2"><td class="bx-curtain-cell-1" colspan="7"></td></tr>
-							</table>
-						</div>
-					</div>
-				</div><?
-
-				?><div id="next_page_refresh_needed" style="display: none;">
-					<div class="feed-nextpage-locked"><?=Loc::getMessage('MOBILE_LOG_REFRESH_NEEDED')?></div>
-				</div><?
+				require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/nextpage_loader.php');
 			}
+
 			?></div><? // lenta-wrapper, lenta-wrapper-outer, lenta-wrapper-outer-cont
 		}
 
@@ -874,15 +840,16 @@ else
 			var isPullDownEnabled = false;
 			var isPullDownLocked = false;
 
-			var url_next = '<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>';
+			BX.MobileLivefeed.PageInstance.setNextPageUrl('<?=CUtil::JSEscape(htmlspecialcharsEx($uri->getUri()))?>');
+
 			<?
 			if (
-				($arParams["LOG_ID"] > 0 || $arParams["EMPTY_PAGE"] == "Y")
-				&& $_REQUEST["BOTTOM"] == "Y"
+				($arParams['LOG_ID'] > 0 || $arParams['EMPTY_PAGE'] === "Y")
+				&& $_REQUEST['BOTTOM'] === 'Y'
 			)
 			{
 				?>
-				__MSLDetailMoveBottom();
+				BX.MobileLivefeed.Post.moveBottom();
 				<?
 			}
 		?>

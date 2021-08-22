@@ -92,14 +92,16 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			];
 		}
 
-		/*$this->arResult["MENU_ITEMS"]["active_directory"] = [
-			"NAME_HTML" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ACTIVE_DIRECTORY").
-				"<span class='invite-menu-sub'>".Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_SOON")."</span>",
-			"ATTRIBUTES" => [
-				"data-role" => "menu-active-directory",
-				"data-action" => "active-directory"
-			]
-		];*/
+		if ($this->arResult["IS_CLOUD"] && in_array($this->arResult["LICENSE_ZONE"], ['ru']))
+		{
+			$this->arResult["MENU_ITEMS"]["active_directory"] = [
+				"NAME_HTML" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ACTIVE_DIRECTORY"),
+				"ATTRIBUTES" => [
+					"data-role" => "menu-active-directory",
+					"data-action" => "active-directory"
+				]
+			];
+		}
 	}
 
 	private function prepareLinkRegisterData()
@@ -150,6 +152,10 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		global $USER;
 
 		$this->arResult["IS_CLOUD"] = Loader::includeModule("bitrix24");
+		if ($this->arResult["IS_CLOUD"])
+		{
+			$this->arResult["LICENSE_ZONE"] = \CBitrix24::getLicensePrefix();
+		}
 
 		$this->arResult["IS_EXTRANET_INSTALLED"] = Loader::includeModule("extranet");
 		$this->arResult["EXTRANET_SITE_ID"] = Option::get("extranet", "extranet_site", "");
@@ -192,6 +198,25 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			$this->prepareLinkRegisterData();
 			$this->prepareUserData();
 			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = \CBitrix24::isEmailConfirmed();
+		}
+
+		$this->arResult['FIRST_INVITATION_BLOCK'] = $this->arResult["IS_CLOUD"] ? 'self' : 'invite';
+		if (
+			isset($_REQUEST['firstInvitationBlock'])
+			&& !empty($_REQUEST['firstInvitationBlock'])
+			&& in_array($_REQUEST['firstInvitationBlock'], [
+				'self',
+				'invite',
+				'mass-invite',
+				'invite-with-group-dp',
+				'add',
+				'extranet',
+				'integrator',
+				'active-directory',
+			])
+		)
+		{
+			$this->arResult['FIRST_INVITATION_BLOCK'] = $_GET['firstInvitationBlock'];
 		}
 
 		$this->includeComponentTemplate();

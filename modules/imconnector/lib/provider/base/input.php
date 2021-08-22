@@ -55,14 +55,14 @@ class Input
 	 */
 	public function reception(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
 			$resultReceiving = $this->routing($this->command, $this->connector, $this->line, $this->data);
 			if (
-				!is_object($resultReceiving) ||
-				!($resultReceiving instanceof Main\Result)
+				!is_object($resultReceiving)
+				|| !($resultReceiving instanceof Main\Result)
 			)
 			{
 				if (!is_array($resultReceiving))
@@ -76,12 +76,12 @@ class Input
 			}
 			else
 			{
-				if (!$result->isSuccess())
+				if (!$resultReceiving->isSuccess())
 				{
-					$result->addErrors($result->getErrors());
+					$result->addErrors($resultReceiving->getErrors());
 				}
 
-				$result->setData($result->getData());
+				$result->setData($resultReceiving->getData());
 			}
 		}
 
@@ -97,7 +97,7 @@ class Input
 	 */
 	public function routing($command, $connector, $line = null, $data = []): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -173,7 +173,7 @@ class Input
 	 */
 	protected function receivingTestConnect(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -188,7 +188,7 @@ class Input
 	 */
 	protected function receivingMessage(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -239,7 +239,7 @@ class Input
 	 */
 	protected function processingMessage($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -293,7 +293,7 @@ class Input
 	 */
 	protected function processingNewMessage($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -320,7 +320,7 @@ class Input
 	 */
 	protected function processingUpdateMessage($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -347,7 +347,7 @@ class Input
 	 */
 	protected function processingDelMessage($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -374,7 +374,7 @@ class Input
 	 */
 	protected function processingTypingStatus($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -401,7 +401,7 @@ class Input
 	 */
 	protected function processingNewPost($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -428,11 +428,11 @@ class Input
 	 */
 	protected function processingUpdatePost($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
-			$result = Connector::initConnectorHandler($this->connector)->inputUpdatePostProcessing($message, $this->line);
+			$result = Connector::initConnectorHandler($this->connector)->processingInputUpdatePost($message, $this->line);
 		}
 
 		if($result->isSuccess())
@@ -455,7 +455,7 @@ class Input
 	 */
 	protected function receivingStatusDelivery(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -482,7 +482,7 @@ class Input
 	 */
 	protected function receivingStatusReading(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -504,7 +504,7 @@ class Input
 	 */
 	protected function receivingError(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		foreach ($this->data as $error)
 		{
@@ -538,7 +538,7 @@ class Input
 	 */
 	protected function receivingStatusBlock(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -572,7 +572,7 @@ class Input
 	 */
 	protected function deactivateConnector(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -592,7 +592,7 @@ class Input
 	 */
 	protected function receivingBase(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -612,7 +612,7 @@ class Input
 	 */
 	protected function receivingDefault(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -730,7 +730,7 @@ class Input
 	 */
 	protected function sendEvent($data, string $eventName): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{

@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Data\DataManager,
 	Bitrix\Main\ORM\Fields\IntegerField,
 	Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
+/**
+ * Class ConfigAutomaticMessagesTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ConfigAutomaticMessages_Query query()
+ * @method static EO_ConfigAutomaticMessages_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ConfigAutomaticMessages_Result getById($id)
+ * @method static EO_ConfigAutomaticMessages_Result getList(array $parameters = array())
+ * @method static EO_ConfigAutomaticMessages_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages_Collection wakeUpCollection($rows)
+ */
 class ConfigAutomaticMessagesTable extends DataManager
 {
 	/**

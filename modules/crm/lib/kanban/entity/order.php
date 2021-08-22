@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Order\EntityMarker;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Crm\Order\Payment;
@@ -17,6 +18,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\FieldAdapter;
+
+Loc::loadMessages(__FILE__);
 
 class Order extends Entity
 {
@@ -374,17 +377,30 @@ class Order extends Entity
 		return $item;
 	}
 
+	/**
+	 * @param array $ids
+	 * @param bool $isIgnore
+	 * @param \CCrmPerms|null $permissions
+	 * @throws Exception
+	 */
 	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
 	{
 		foreach ($ids as $id)
 		{
 			$id = (int)$id;
 			$checkPermission = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $permissions);
+
 			if (!$checkPermission)
 			{
-				continue;
+				throw new Exception(Loc::getMessage('CRM_KANBAN_ORDER_PERMISSION_ERROR'));
 			}
-			\Bitrix\Crm\Order\Order::delete($id);
+
+			$res = \Bitrix\Crm\Order\Order::delete($id);
+
+			if(!$res->isSuccess())
+			{
+				throw new Exception(implode(', ', $res->getErrorMessages()));
+			}
 		}
 	}
 

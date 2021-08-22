@@ -1553,17 +1553,36 @@ MobileTelephony = function()
 
 	//from checkout
 	this.userId = parseInt(BX.componentParameters.get('userId', 0));
-	this.isAdmin = BX.componentParameters.get('isAdmin', false);
-	this.server = BX.componentParameters.get('voximplantServer', '');
-	this.login = BX.componentParameters.get('voximplantLogin', '');
-	this.voximplantInstalled = BX.componentParameters.get('voximplantInstalled', false);
-	this.canPerformCalls = BX.componentParameters.get('canPerformCalls', false);
-	this.lines = BX.componentParameters.get('lines',  {});
-	this.defaultLineId = BX.componentParameters.get('defaultLineId', '');
+
+	Object.defineProperties(this, {
+		isAdmin: {
+			get: () => BX.componentParameters.get('isAdmin', false)
+		},
+		server: {
+			get: () => BX.componentParameters.get('voximplantServer', '')
+		},
+		login: {
+			get: () => BX.componentParameters.get('voximplantLogin', '')
+		},
+		voximplantInstalled: {
+			get: () => BX.componentParameters.get('voximplantInstalled', false)
+		},
+		canPerformCalls: {
+			get: () => BX.componentParameters.get('canPerformCalls', false)
+		},
+		lines: {
+			get: () => BX.componentParameters.get('lines',  {})
+		},
+		defaultLineId: {
+			get: () => BX.componentParameters.get('defaultLineId', ''),
+			set: (lineId) => BX.componentParameters.set('defaultLineId', lineId)
+		},
+	})
 
 	this.call = null;
 	this.callId = '';
 	this.phoneNumber = null;
+	this.phoneFullNumber = null;
 	this.lineNumber = '';
 	this.phoneRinging = 0;
 	this.callConfig = {};
@@ -1800,7 +1819,19 @@ MobileTelephony.prototype.phoneCall = function(number, params)
 	this.callInit = true;
 	this.callActive = false;
 	this.phoneNumber = correctNumber;
+	this.phoneFullNumber = correctNumber;
+
 	this.phoneParams = params;
+	var matches = /(\+?\d+)([;#]*)([\d,]*)/.exec(correctNumber);
+	if(matches)
+	{
+		this.phoneNumber = matches[1];
+	}
+
+	if (this.phoneFullNumber != this.phoneNumber)
+	{
+		this.phoneParams['FULL_NUMBER'] = this.phoneFullNumber;
+	}
 
 	this.showCallForm({
 		status : BX.message('IM_M_CALL_ST_CONNECT'),
@@ -2673,7 +2704,7 @@ MobileTelephony.prototype._onCallInvite = function (params)
 		//params.callerId = this.BXIM.messenger.users[params.portalCallUserId].name;
 		params.phoneNumber = '';
 
-		if (params.params.portalCallUserId)
+		if (params.portalCallUserId)
 		{
 			this.crmData.FOUND = 'Y';
 			this.crmData.CONTACT = {

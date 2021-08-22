@@ -20,7 +20,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman\Model\Monitor
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_MonitorAbsence_Query query()
+ * @method static EO_MonitorAbsence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_MonitorAbsence_Result getById($id)
+ * @method static EO_MonitorAbsence_Result getList(array $parameters = array())
+ * @method static EO_MonitorAbsence_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection wakeUpCollection($rows)
+ */
 
 class MonitorAbsenceTable extends DataManager
 {

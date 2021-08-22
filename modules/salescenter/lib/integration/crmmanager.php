@@ -679,6 +679,7 @@ class CrmManager extends Base
 					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
 					'MESSAGE_BODY' => $messageBody,
 					'SENDER_ID' => $senderId,
+					'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
 				]
 			],
 			[

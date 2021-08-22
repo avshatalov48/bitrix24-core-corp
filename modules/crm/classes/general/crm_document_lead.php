@@ -39,6 +39,10 @@ class CCrmDocumentLead extends CCrmDocument
 				'Editable' => false,
 				'Required' => false,
 			),
+			'CRM_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
+				'Type' => 'string',
+			),
 			'TITLE' => array(
 				'Name' => GetMessage('CRM_FIELD_TITLE_LEAD'),
 				'Type' => 'string',

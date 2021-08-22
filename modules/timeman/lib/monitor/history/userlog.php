@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Timeman\Monitor\History;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Timeman\Model\Monitor\MonitorUserLogTable;
 use Bitrix\Timeman\Monitor\Utils\User;
@@ -27,5 +29,23 @@ class UserLog
 		}
 
 		return $history;
+	}
+
+	public static function remove(int $userId, string $dateLog, string $desktopCode): Result
+	{
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$dateLog = $sqlHelper->forSql($dateLog);
+		$desktopCode = $sqlHelper->forSql($desktopCode);
+
+		$deleteUserLogQuery = "
+			DELETE FROM b_timeman_monitor_user_log 
+			WHERE DATE_LOG = '{$dateLog}' 
+			  and USER_ID = {$userId} 
+			  and DESKTOP_CODE = '{$desktopCode}'
+		";
+
+		return $connection->query($deleteUserLogQuery);
 	}
 }

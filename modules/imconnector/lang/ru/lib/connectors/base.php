@@ -1,6 +1,7 @@
 <?php
 $MESS['IMCONNECTOR_GUEST_USER'] = 'Гость';
 $MESS['IMCONNECTOR_MESSAGE_ERROR_NOT_SEND_CHAT'] = 'Не удалось доставить сообщение';
+$MESS['IMCONNECTOR_MESSAGE_ERROR_NOT_DELETE_CHAT'] = 'Не удалось удалить сообщение';
 $MESS['IMCONNECTOR_MAPS_NAME'] = 'Карта';
 $MESS['IMCONNECTOR_FORWARDED_MESSAGE'] = 'Пересланное сообщение: ';
 $MESS['IMCONNECTOR_CONTACT_NAME'] = 'ФИО: ';

@@ -298,6 +298,8 @@
 		{
 			client = VoxImplant.getInstance();
 
+			var mediaServer = BX.message("voximplantMediaServer");
+
 			var clientParameters = {
 				micRequired: false,
 				progressTone: false,
@@ -305,6 +307,11 @@
 					preventRendering: true
 				}*/
 			};
+
+			if (mediaServer !== '')
+			{
+				clientParameters.serverIp = mediaServer;
+			}
 
 			if(config.debug === true)
 			{

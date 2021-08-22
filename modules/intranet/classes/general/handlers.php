@@ -1821,38 +1821,97 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 
 	public static function onRestAppInstall($params)
 	{
-		if (!isset($params["APP_ID"]) || !\Bitrix\Main\Loader::includeModule("rest"))
-			return;
-
-		$dbRes = \Bitrix\Rest\AppTable::getList(array(
-			'filter' => array(
-				'=ID' => $params["APP_ID"]
-			),
-			'select' => array(
-				'ID', 'CODE', 'CLIENT_ID', 'MENU_NAME' => 'LANG.MENU_NAME', 'MENU_NAME_DEFAULT' => 'LANG_DEFAULT.MENU_NAME', 'MENU_NAME_LICENSE' => 'LANG_LICENSE.MENU_NAME'
-			)
-		));
-
-		if ($appInfo = $dbRes->fetch())
+		if (!isset($params['APP_ID']) || !\Bitrix\Main\Loader::includeModule('rest'))
 		{
-			if (
-				$appInfo["MENU_NAME"] == ''
-				|| $appInfo['MENU_NAME_DEFAULT'] == ''
-				|| $appInfo['MENU_NAME_LICENSE'] == ''
-				|| $appInfo["CODE"] === \CRestUtil::BITRIX_1C_APP_CODE
-			)
+			return;
+		}
+
+		$text = '';
+		$dbRes = \Bitrix\Rest\AppTable::getList(
+			[
+				'filter' => [
+					'=ID' => $params['APP_ID'],
+				],
+				'select' => [
+					'ID',
+					'CODE',
+					'CLIENT_ID',
+					'MENU_NAME' => 'LANG.MENU_NAME',
+					'MENU_NAME_DEFAULT' => 'LANG_DEFAULT.MENU_NAME',
+					'MENU_NAME_LICENSE' => 'LANG_LICENSE.MENU_NAME',
+				],
+			]
+		);
+
+		foreach ($dbRes->fetchCollection() as $app)
+		{
+			$appInfo = [
+				'ID' => $app->getId(),
+				'CODE' => $app->getCode(),
+				'CLIENT_ID' => $app->getClientId(),
+				'MENU_NAME' => !is_null($app->getLang()) ? $app->getLang()->getMenuName() : '',
+				'MENU_NAME_DEFAULT' => !is_null($app->getLangDefault()) ? $app->getLangDefault()->getMenuName() : '',
+				'MENU_NAME_LICENSE' => !is_null($app->getLangLicense()) ? $app->getLangLicense()->getMenuName() : '',
+			];
+
+			if ($appInfo['CODE'] === \CRestUtil::BITRIX_1C_APP_CODE)
 			{
 				return;
 			}
 
-			$text = $appInfo['MENU_NAME'];
-			if($text == '')
+			if (
+				$appInfo['MENU_NAME'] === ''
+				&& $appInfo['MENU_NAME_DEFAULT'] === ''
+				&& $appInfo['MENU_NAME_LICENSE'] === ''
+			)
 			{
-				$text = $appInfo['MENU_NAME_DEFAULT'];
+				$app->fillLangAll();
+				if (!is_null($app->getLangAll()))
+				{
+					$langList = [];
+					foreach ($app->getLangAll() as $appLang)
+					{
+						if ($appLang->getMenuName() !== '')
+						{
+							$langList[$appLang->getLanguageId()] = $appLang->getMenuName();
+						}
+					}
+
+					$defaultLang = \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
+					if ($langList[LANGUAGE_ID])
+					{
+						$text = $langList[LANGUAGE_ID];
+					}
+					elseif ($langList[$defaultLang])
+					{
+						$text = $langList[$defaultLang];
+					}
+					elseif ($langList['en'])
+					{
+						$text = $langList['en'];
+					}
+					elseif (count($langList) > 0)
+					{
+						$text = reset($langList);
+					}
+				}
 			}
-			if($text == '')
+			else
 			{
-				$text = $appInfo['MENU_NAME_LICENSE'];
+				$text = $appInfo['MENU_NAME'];
+				if ($text == '')
+				{
+					$text = $appInfo['MENU_NAME_DEFAULT'];
+				}
+				if ($text == '')
+				{
+					$text = $appInfo['MENU_NAME_LICENSE'];
+				}
+			}
+
+			if ($text === '')
+			{
+				return;
 			}
 
 			$menuItem = array(

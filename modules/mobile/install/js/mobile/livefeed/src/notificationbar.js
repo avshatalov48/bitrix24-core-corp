@@ -1,5 +1,3 @@
-import {Loc} from "main.core";
-
 class NotificationBar
 {
 	constructor()

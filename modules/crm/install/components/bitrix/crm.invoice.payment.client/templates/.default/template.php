@@ -177,7 +177,8 @@ else
 					"accountNumber" => $arParams['ACCOUNT_NUMBER'],
 					"hash" => $arParams['HASH'],
 					"templateBill" => $arResult['BILL_TEMPLATE'],
-					"useFrame" => $arResult['USE_FRAME']
+					"useFrame" => $arResult['USE_FRAME'],
+					"returnUrl" => CUtil::JSEscape($arParams["RETURN_URL"]),
 				);
 				$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
 				?>

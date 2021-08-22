@@ -11,9 +11,23 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Web\Json;
-use Bitrix\Tasks\Scrum\Internal\Fields\InfoField;
 
+/**
+ * Class EntityTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Entity_Query query()
+ * @method static EO_Entity_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Entity_Result getById($id)
+ * @method static EO_Entity_Result getList(array $parameters = array())
+ * @method static EO_Entity_Entity getEntity()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Entity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Entity_Collection createCollection()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Entity wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Entity_Collection wakeUpCollection($rows)
+ */
 class EntityTable extends Entity\DataManager
 {
 	const BACKLOG_TYPE = 'backlog';
@@ -44,7 +58,6 @@ class EntityTable extends Entity\DataManager
 	private $children = [];
 
 	private $tmpId = '';
-	private $storyPoints;
 
 	public static function createEntityObject(array $fields = []): EntityTable
 	{
@@ -113,18 +126,19 @@ class EntityTable extends Entity\DataManager
 			self::SPRINT_COMPLETED
 		]);
 
-		$info = new InfoField('INFO');
-		$info->configureRequired(false);
-		$info->configureSerializeCallback(function(EntityInfoColumn $entityInfoColumn)
+		$info = new Fields\ObjectField('INFO');
+		$info->configureObjectClass(EntityInfoColumn::class);
+		$info->configureSerializeCallback(function (?EntityInfoColumn $entityInfoColumn)
 		{
-			$value = Json::encode($entityInfoColumn->getInfoData());
-			return ($value ? $value : null);
+			return $entityInfoColumn ? json_encode($entityInfoColumn->getInfoData()) : [];
 		});
-		$info->configureUnserializeCallback(function($value)
+		$info->configureUnserializeCallback(function ($value)
 		{
-			$value = (is_string($value) && !empty($value) ? Json::decode($value) : []);
+			$data = (is_string($value) && !empty($value) ? json_decode($value, true) : []);
+
 			$entityInfoColumn = new EntityInfoColumn();
-			$entityInfoColumn->setInfoData($value);
+			$entityInfoColumn->setInfoData($data);
+
 			return $entityInfoColumn;
 		});
 
@@ -298,6 +312,11 @@ class EntityTable extends Entity\DataManager
 		return ($this->status == self::SPRINT_ACTIVE);
 	}
 
+	public function isPlannedSprint(): bool
+	{
+		return ($this->status == self::SPRINT_PLANNED);
+	}
+
 	public function isCompletedSprint(): bool
 	{
 		return ($this->status == self::SPRINT_COMPLETED);
@@ -454,27 +473,6 @@ class EntityTable extends Entity\DataManager
 				$this->children[] = $child;
 			}
 		}
-	}
-
-	public function getStoryPoints()
-	{
-		if ($this->storyPoints)
-		{
-			return $this->storyPoints;
-		}
-
-		foreach ($this->children as $childItem)
-		{
-			// todo different types for storypoints
-			$this->setStoryPoints((float) $this->storyPoints + (float) $childItem->getStoryPoints());
-		}
-
-		return ($this->storyPoints ? $this->storyPoints : 0);
-	}
-
-	public function setStoryPoints($storyPoints): void
-	{
-		$this->storyPoints = $storyPoints;
 	}
 
 	/**

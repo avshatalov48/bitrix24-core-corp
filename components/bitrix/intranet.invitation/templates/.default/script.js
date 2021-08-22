@@ -247,6 +247,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "sendAction",
 	    value: function sendAction(action, requestData, analyticsLabel) {
+	      var _this3 = this;
+
 	      this.disableSubmitButton(true);
 	      requestData["userOptions"] = this.parent.userOptions;
 	      BX.ajax.runComponentAction(this.parent.componentName, action, {
@@ -255,25 +257,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        data: requestData,
 	        analyticsLabel: analyticsLabel
 	      }).then(function (response) {
-	        this.disableSubmitButton(false);
+	        _this3.disableSubmitButton(false);
 
 	        if (response.data) {
 	          if (action === "self") {
-	            this.parent.showSuccessMessage(response.data);
+	            _this3.parent.showSuccessMessage(response.data);
 	          } else {
-	            this.parent.changeContent("success");
-	            this.sendSuccessEvent(response.data);
+	            _this3.parent.changeContent("success");
+
+	            _this3.sendSuccessEvent(response.data);
 	          }
 	        }
-	      }.bind(this), function (response) {
-	        this.disableSubmitButton(false);
+	      }, function (response) {
+	        _this3.disableSubmitButton(false);
 
 	        if (response.data == "user_limit") {
 	          B24.licenseInfoPopup.show("featureID", BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
 	        } else {
-	          this.parent.showErrorMessage(response.errors[0].message);
+	          _this3.parent.showErrorMessage(response.errors[0].message);
 	        }
-	      }.bind(this));
+	      });
 	    }
 	  }, {
 	    key: "disableSubmitButton",
@@ -807,6 +810,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Selector;
 	}();
 
+	var ActiveDirectory = /*#__PURE__*/function () {
+	  function ActiveDirectory(parent) {
+	    babelHelpers.classCallCheck(this, ActiveDirectory);
+	    this.parent = parent;
+	  }
+
+	  babelHelpers.createClass(ActiveDirectory, [{
+	    key: "showForm",
+	    value: function showForm() {
+	      BX.UI.Feedback.Form.open({
+	        id: 'intranet-active-directory',
+	        defaultForm: {
+	          id: 309,
+	          sec: 'fbc0n3'
+	        }
+	      });
+	    }
+	  }]);
+	  return ActiveDirectory;
+	}();
+
 	var Form = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
 
@@ -827,6 +851,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
 	    _this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
+	    _this.firstInvitationBlock = params.firstInvitationBlock;
 
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
 	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
@@ -848,9 +873,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Event.bind(item, 'click', function () {
 	          _this.changeContent(item.getAttribute('data-action'));
 	        });
-	      });
 
-	      _this.changeContent(_this.menuItems[0].getAttribute('data-action'));
+	        if (item.getAttribute('data-action') === _this.firstInvitationBlock) {
+	          BX.fireEvent(item, 'click');
+	        }
+	      });
 	    }
 
 	    _this.submit = new Submit(babelHelpers.assertThisInitialized(_this));
@@ -888,6 +915,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.hideSuccessMessage();
 
 	      if (action.length > 0) {
+	        if (action === 'active-directory') {
+	          if (!this.activeDirectory) {
+	            this.activeDirectory = new ActiveDirectory(this);
+	          }
+
+	          this.activeDirectory.showForm();
+	          return;
+	        }
+
 	        for (var type in this.contentBlocks) {
 	          var block = this.contentBlocks[type];
 

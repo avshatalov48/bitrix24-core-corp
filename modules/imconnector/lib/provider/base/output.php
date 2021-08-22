@@ -137,7 +137,7 @@ class Output
 	 */
 	protected function validationMethodCall($name): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -218,7 +218,7 @@ class Output
 	 */
 	public function call($name, $arguments): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -253,7 +253,7 @@ class Output
 	 */
 	protected function sendMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -279,7 +279,7 @@ class Output
 	 */
 	protected function updateMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -307,7 +307,7 @@ class Output
 	 */
 	protected function deleteMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -346,7 +346,7 @@ class Output
 	 */
 	protected function deleteLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -375,7 +375,7 @@ class Output
 	 */
 	protected function query($command, array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{

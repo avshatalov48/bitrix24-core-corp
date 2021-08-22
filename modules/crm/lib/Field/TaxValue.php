@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Field;
 
-use Bitrix\Crm\Accounting;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -32,7 +32,7 @@ class TaxValue extends Field
 
 		if (!is_null($products) && count($products) > 0)
 		{
-			$item->set($this->getName(), Accounting\Products::calculateTaxValue($item, $products->getAll()));
+			$item->set($this->getName(), Container::getInstance()->getAccounting()->calculateByItem($item)->getTaxValue());
 		}
 
 		$productsWereDeleted = !$item->isNew() && (count($products) <= 0) && $item->isChanged(Item::FIELD_NAME_PRODUCTS);

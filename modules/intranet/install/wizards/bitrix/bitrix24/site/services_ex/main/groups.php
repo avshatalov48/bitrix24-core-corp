@@ -13,7 +13,6 @@ $arGroups = Array(
 		"TASKS_MODULE" => Array("main_change_profile"),
 		"TASKS_FILE" => Array(
 			Array("fm_folder_access_read", "/bitrix/components/bitrix/"),
-			Array("fm_folder_access_read", "/bitrix/rk.php"),
 			Array("fm_folder_access_read", "/bitrix/tools/"),
 			Array("fm_folder_access_read", "/bitrix/services/mobile/"),
 			Array("fm_folder_access_read", "/bitrix/services/mobileapp/"),

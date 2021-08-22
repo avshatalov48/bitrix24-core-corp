@@ -679,7 +679,7 @@ class Connector
 	 */
 	public function sendMessage($params): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{

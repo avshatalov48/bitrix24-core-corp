@@ -282,7 +282,7 @@ BX.Mobile.Tasks.CheckList = (function()
 
 		var p = new BX.Promise();
 		var title = BX.message('TASKS_CHECKLIST_MOBILE_COMPONENT_JS_NEW_CHECKLIST_TITLE').replace('#ITEM_NUMBER#', this.treeStructure.getDescendantsCount() + 1);
-		var newCheckList = new BX.Tasks.MobileCheckListItem({TITLE: title, DISPLAY_TITLE: title});
+		var newCheckList = new BX.Tasks.MobileCheckListItem({TITLE: title});
 
 		this.treeStructure.addCheckListItem(newCheckList).then(function(resolve) {
 			p.resolve(resolve);
@@ -354,6 +354,8 @@ BX.Mobile.Tasks.CheckList.OptionManager = (function()
 			urls: options.diskUrls,
 		};
 
+		this.showCompleteAllButton = options.showCompleteAllButton;
+		this.collapseOnCompleteAll = options.collapseOnCompleteAll;
 		this.showCompleted = options.options.SHOW_COMPLETED;
 		this.defaultMemberSelectorType = options.options.DEFAULT_MEMBER_SELECTOR_TYPE;
 		this.showOnlyMine = false;
@@ -392,6 +394,16 @@ BX.Mobile.Tasks.CheckList.OptionManager = (function()
 	OptionManager.prototype.isEditMode = function()
 	{
 		return (this.mode === 'edit');
+	};
+
+	OptionManager.prototype.getShowCompleteAllButton = function()
+	{
+		return this.showCompleteAllButton;
+	};
+
+	OptionManager.prototype.getCollapseOnCompleteAll = function()
+	{
+		return this.collapseOnCompleteAll;
 	};
 
 	OptionManager.prototype.getCanAddAccomplice = function()

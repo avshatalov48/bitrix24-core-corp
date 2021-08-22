@@ -33,6 +33,12 @@ class ChecklistToggleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$checklist = $this->getModelFromParams($params);
+		if ($checklist->getEntityId() !== $task->getId())
+		{
+			return false;
+		}
+
 		if (
 			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
 			|| $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)

@@ -49,6 +49,27 @@ class DateFormatter
 
 		return BX.date.format(format, date);
 	}
+
+	toString(date)
+	{
+		if (!Type.isDate(date))
+		{
+			date = new Date(date);
+		}
+
+		if (isNaN(date))
+		{
+			throw new Error("DateFormatter: Invalid date.");
+		}
+
+		const addZero = num => (num >= 0 && num <= 9) ? '0' + num : num;
+
+		const year = date.getFullYear();
+		const month = addZero(date.getMonth() + 1);
+		const day = addZero(date.getDate());
+
+		return year + '-' + month + '-' + day;
+	}
 }
 
 const dateFormatter = new DateFormatter();

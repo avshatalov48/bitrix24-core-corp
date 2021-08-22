@@ -313,6 +313,7 @@ class TunnelManager
 						$result['tunnels'][] = $this->prepareRobotToTunnel($robot, $stageId, $categoryId);
 					}
 				}
+				$result['tunnels'] = array_filter($result['tunnels']);
 			}
 		}
 
@@ -325,15 +326,25 @@ class TunnelManager
 	 * @param int $categoryId
 	 * @return array
 	 */
-	protected function prepareRobotToTunnel(Robot $robot, string $stageId, int $categoryId): array
+	protected function prepareRobotToTunnel(Robot $robot, string $stageId, int $categoryId): ?array
 	{
 		$props = $robot->getProperties();
+
+		if (!is_numeric($props['CategoryId']) || $categoryId === (int)$props['CategoryId'])
+		{
+			return null;
+		}
 
 		if (empty($props['StageId']))
 		{
 			$target = Factory::createTarget($this->entityTypeId);
 			$stages = array_keys($target->getStatusInfos($props['CategoryId']));
 			$props['StageId'] = reset($stages);
+		}
+
+		if (\CBPDocument::isExpression($props['StageId']))
+		{
+			return null;
 		}
 
 		return [

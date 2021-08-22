@@ -10,6 +10,7 @@ import {Item} from '../item/item';
 import {RequestSender} from './request.sender';
 import {DomBuilder} from './dom.builder';
 import {EntityStorage} from './entity.storage';
+import {EntityCounters} from './entity.counters';
 import {SubTasksManager} from './subtasks.manager';
 
 export type ItemsSortInfo = {
@@ -24,6 +25,7 @@ type Params = {
 	requestSender: RequestSender,
 	domBuilder: DomBuilder,
 	entityStorage: EntityStorage,
+	entityCounters: EntityCounters,
 	subTasksCreator: SubTasksManager
 }
 
@@ -33,9 +35,12 @@ export class ItemMover extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.ItemMover');
+
 		this.requestSender = params.requestSender;
 		this.domBuilder = params.domBuilder;
 		this.entityStorage = params.entityStorage;
+		this.entityCounters = params.entityCounters;
 		this.subTasksCreator = params.subTasksCreator;
 
 		this.bindHandlers();
@@ -264,12 +269,27 @@ export class ItemMover extends EventEmitter
 					fromActiveSprint: ((sourceEntity.getEntityType() === 'sprint' && sourceEntity.isActive()) ? 'Y' : 'N'),
 					toActiveSprint: ((endEntity.getEntityType() === 'sprint' && endEntity.isActive()) ? 'Y' : 'N'),
 					sortInfo: this.calculateSort(endContainer, new Set([item.getItemId()]), true)
+				}).then(() => {
+					this.updateEntityCounters(sourceEntity, endEntity);
 				}).catch((response) => {
 					this.requestSender.showErrorAlert(response);
 				});
 			};
 			moveInAnotherContainer();
 		}
+	}
+
+	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)
+	{
+		const entities = new Map();
+
+		entities.set(sourceEntity.getId(), sourceEntity);
+		if (endEntity)
+		{
+			entities.set(endEntity.getId(), endEntity);
+		}
+
+		this.entityCounters.updateCounters(entities);
 	}
 
 	calculateSort(container, updatedItemsIds?: Set, moveToAnotherEntity = false): ItemsSortInfo
@@ -342,9 +362,12 @@ export class ItemMover extends EventEmitter
 			else
 			{
 				const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
-				this.onMoveConfirm(entityFrom, message).then(() => {
-					this.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-				});
+				this.onMoveConfirm(entityFrom, message)
+					.then(() => {
+						this.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
+					})
+					.catch(() => {})
+				;
 			}
 		}
 		else
@@ -358,28 +381,34 @@ export class ItemMover extends EventEmitter
 				else
 				{
 					const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
-					this.onMoveConfirm(entityFrom, message).then(() => {
-						if (sprints.size === 0)
-						{
-							this.domBuilder.createSprint().then((sprint: Sprint) => {
-								this.moveTo(entityFrom, sprint, item);
-							});
-						}
-						else
-						{
-							sprints.forEach((sprint: Sprint) => {
-								this.moveTo(entityFrom, sprint, item);
-							});
-						}
-					});
+					this.onMoveConfirm(entityFrom, message)
+						.then(() => {
+							if (sprints.size === 0)
+							{
+								this.domBuilder.createSprint().then((sprint: Sprint) => {
+									this.moveTo(entityFrom, sprint, item);
+								});
+							}
+							else
+							{
+								sprints.forEach((sprint: Sprint) => {
+									this.moveTo(entityFrom, sprint, item);
+								});
+							}
+						})
+						.catch(() => {})
+					;
 				}
 			}
 			else
 			{
 				const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
-				this.onMoveConfirm(entityFrom, message).then(() => {
-					this.moveTo(entityFrom, targetEntity, item, false);
-				});
+				this.onMoveConfirm(entityFrom, message)
+					.then(() => {
+						this.moveTo(entityFrom, targetEntity, item, false);
+					})
+					.catch(() => {})
+				;
 			}
 		}
 	}
@@ -419,6 +448,8 @@ export class ItemMover extends EventEmitter
 				...this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
 				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
 			}
+		}).then(() => {
+			this.updateEntityCounters(entityFrom, entityTo);
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -493,6 +524,8 @@ export class ItemMover extends EventEmitter
 		}
 
 		this.moveItemFromEntityToEntity(item, entityFrom, entityTo);
+
+		this.updateEntityCounters(entityFrom, entityTo);
 	}
 
 	onMoveItemUpdate(entityFrom: Entity, entityTo: Entity, item: Item)
@@ -508,6 +541,8 @@ export class ItemMover extends EventEmitter
 				...this.calculateSort(entityTo.getListItemsNode(), new Set([item.getItemId()]), true),
 				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
 			}
+		}).then(() => {
+			this.updateEntityCounters(entityFrom, entityTo);
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -515,16 +550,6 @@ export class ItemMover extends EventEmitter
 
 	moveItemFromEntityToEntity(item: Item, entityFrom: Entity, entityTo: Entity)
 	{
-		if (entityFrom.isActive())
-		{
-			entityFrom.subtractTotalStoryPoints(item);
-		}
-
-		if (entityTo.isActive())
-		{
-			entityTo.addTotalStoryPoints(item);
-		}
-
 		entityFrom.removeItem(item);
 		item.setParentEntity(entityTo.getId(), entityTo.getEntityType());
 		item.setDisableStatus(false);
@@ -562,17 +587,20 @@ export class ItemMover extends EventEmitter
 						{
 							message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
 						}
-						this.onMoveConfirm(entityFrom, message).then(() => {
-							if (entityFrom.isGroupMode())
-							{
-								this.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-							}
-							else
-							{
-								this.moveTo(entityFrom, sprint, item);
-							}
+						this.onMoveConfirm(entityFrom, message)
+							.then(() => {
+								if (entityFrom.isGroupMode())
+								{
+									this.moveToWithGroupMode(entityFrom, sprint, item, true, false);
+								}
+								else
+								{
+									this.moveTo(entityFrom, sprint, item);
+								}
 
-						});
+							})
+							.catch(() => {})
+						;
 						menuItem.getMenuWindow().close();
 					}
 				});

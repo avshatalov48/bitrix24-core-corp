@@ -533,7 +533,7 @@ BX.Voximplant.Start = {
 
 	onSipPhonesButtonClick: function(e)
 	{
-		BX.Helper.show("redirect=detail&code=12932720");
+		top.BX.Helper.show("redirect=detail&code=12932720");
 
 		//TODO: remove /telephony/phones.php from intranet
 		/*BX.SidePanel.Instance.open("/telephony/phones.php", {

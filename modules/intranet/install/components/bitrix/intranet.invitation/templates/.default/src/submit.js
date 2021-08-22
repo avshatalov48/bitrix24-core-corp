@@ -260,7 +260,7 @@ export class Submit extends EventEmitter
 			mode: "ajax",
 			data: requestData,
 			analyticsLabel: analyticsLabel
-		}).then(function (response) {
+		}).then((response) => {
 
 			this.disableSubmitButton(false);
 
@@ -277,7 +277,7 @@ export class Submit extends EventEmitter
 				}
 			}
 
-		}.bind(this), function (response) {
+		}, (response) => {
 
 			this.disableSubmitButton(false);
 
@@ -293,7 +293,7 @@ export class Submit extends EventEmitter
 			{
 				this.parent.showErrorMessage(response.errors[0].message);
 			}
-		}.bind(this));
+		});
 	}
 
 	disableSubmitButton(isDisable)

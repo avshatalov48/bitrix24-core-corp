@@ -50,9 +50,9 @@ export class StatsHeader extends EventEmitter
 	setSprintData(sprint: Sprint)
 	{
 		this.setSprintDate(sprint);
-		this.setStoryPoints(sprint.getTotalStoryPoints().getPoints());
-		this.setCompletedStoryPoints(sprint.getTotalCompletedStoryPoints().getPoints());
-		this.setUncompletedStoryPoints(sprint.getTotalUncompletedStoryPoints().getPoints());
+		this.setStoryPoints(sprint.getStoryPoints().getPoints());
+		this.setCompletedStoryPoints(sprint.getCompletedStoryPoints().getPoints());
+		this.setUncompletedStoryPoints(sprint.getUncompletedStoryPoints().getPoints());
 		this.setEndDate(sprint.getDateEnd());
 	}
 

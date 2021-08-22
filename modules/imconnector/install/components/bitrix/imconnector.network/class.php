@@ -5,11 +5,11 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Connector;
-use Bitrix\ImConnector\Connectors\Network;
 
 
 class ImConnectorNetwork extends \CBitrixComponent
@@ -252,70 +252,98 @@ class ImConnectorNetwork extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$this->arResult["NAME"] = Connector::getNameConnectorReal($this->connector);
+		$this->arResult['NAME'] = Connector::getNameConnectorReal($this->connector);
 
-		$this->arResult["URL"]["DELETE"] = $APPLICATION->GetCurPageParam("", array($this->pageId, "open_block", "action"));
-		$this->arResult["URL"]["SIMPLE_FORM"] = $APPLICATION->GetCurPageParam($this->pageId . "=simple_form", array($this->pageId, "open_block", "action"));
-		$this->arResult["URL"]["SIMPLE_FORM_EDIT"] = $APPLICATION->GetCurPageParam($this->pageId . "=simple_form", array($this->pageId, "open_block", "action"));
+		$this->arResult['URL']['DELETE'] = $APPLICATION->GetCurPageParam('', [$this->pageId, 'open_block', 'action']);
+		$this->arResult['URL']['SIMPLE_FORM'] = $APPLICATION->GetCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
+		$this->arResult['URL']['SIMPLE_FORM_EDIT'] = $APPLICATION->GetCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
 
-		if(!empty($this->arResult["DATA_STATUS"]))
+		if(!empty($this->arResult['DATA_STATUS']))
 		{
-			if(empty($this->arResult["DATA_STATUS"]["CODE"]))
-				$this->arResult["FORM"]["CODE"] = '';
-			else
-				$this->arResult["FORM"]["CODE"] = $this->arResult["DATA_STATUS"]["CODE"];
-
-			$this->arResult["FORM"]["URL"] = Network::getPublicLink($this->arResult["FORM"]["CODE"]);
-
-			if(empty($this->arResult["DATA_STATUS"]["NAME"]))
-				$this->arResult["FORM"]["NAME"] = '';
-			else
-				$this->arResult["FORM"]["NAME"] = $this->arResult["DATA_STATUS"]["NAME"];
-
-			if(empty($this->arResult["DATA_STATUS"]["DESC"]))
-				$this->arResult["FORM"]["DESCRIPTION"] = '';
-			else
-				$this->arResult["FORM"]["DESCRIPTION"] = $this->arResult["DATA_STATUS"]["DESC"];
-
-			if(empty($this->arResult["DATA_STATUS"]["FIRST_MESSAGE"]))
-				$this->arResult["FORM"]["WELCOME_MESSAGE"] = '';
-			else
-				$this->arResult["FORM"]["WELCOME_MESSAGE"] = $this->arResult["DATA_STATUS"]["FIRST_MESSAGE"];
-
-			if(empty($this->arResult["DATA_STATUS"]["AVATAR"]))
+			if(empty($this->arResult['DATA_STATUS']['CODE']))
 			{
-				$this->arResult["FORM"]["AVATAR"] = NULL;
-				$this->arResult["FORM"]["AVATAR_LINK"] = NULL;
+				$this->arResult['FORM']['CODE'] = '';
 			}
 			else
 			{
-				$this->arResult["FORM"]["AVATAR"] = $this->arResult["DATA_STATUS"]["AVATAR"];
-				$this->arResult["FORM"]["AVATAR_LINK"] = CFile::GetPath($this->arResult["DATA_STATUS"]["AVATAR"]);
+				$this->arResult['FORM']['CODE'] = $this->arResult['DATA_STATUS']['CODE'];
+			}
+
+			$serviceLocator = ServiceLocator::getInstance();
+			if($serviceLocator->has('ImConnector.toolsNetwork'))
+			{
+				/** @var \Bitrix\ImConnector\Tools\Connectors\Network $toolsNetwork */
+				$toolsNetwork = $serviceLocator->get('ImConnector.toolsNetwork');
+				$this->arResult['FORM']['URL'] = $toolsNetwork->getPublicLink($this->arResult['FORM']['CODE']);
+			}
+
+			if(empty($this->arResult['DATA_STATUS']['NAME']))
+			{
+				$this->arResult['FORM']['NAME'] = '';
+			}
+			else
+			{
+				$this->arResult['FORM']['NAME'] = $this->arResult['DATA_STATUS']['NAME'];
+			}
+
+			if(empty($this->arResult['DATA_STATUS']['DESC']))
+			{
+				$this->arResult['FORM']['DESCRIPTION'] = '';
+			}
+			else
+			{
+				$this->arResult['FORM']['DESCRIPTION'] = $this->arResult['DATA_STATUS']['DESC'];
+			}
+
+			if(empty($this->arResult['DATA_STATUS']['FIRST_MESSAGE']))
+			{
+				$this->arResult['FORM']['WELCOME_MESSAGE'] = '';
+			}
+			else
+			{
+				$this->arResult['FORM']['WELCOME_MESSAGE'] = $this->arResult['DATA_STATUS']['FIRST_MESSAGE'];
+			}
+
+			if(empty($this->arResult['DATA_STATUS']['AVATAR']))
+			{
+				$this->arResult['FORM']['AVATAR'] = NULL;
+				$this->arResult['FORM']['AVATAR_LINK'] = NULL;
+			}
+			else
+			{
+				$this->arResult['FORM']['AVATAR'] = $this->arResult['DATA_STATUS']['AVATAR'];
+				$this->arResult['FORM']['AVATAR_LINK'] = CFile::GetPath($this->arResult['DATA_STATUS']['AVATAR']);
 			}
 
 
-			if(empty($this->arResult["DATA_STATUS"]["HIDDEN"]) || $this->arResult["DATA_STATUS"]["HIDDEN"] == 'N')
-				$this->arResult["FORM"]["SEARCHABLE"] = true;
+			if(
+				empty($this->arResult['DATA_STATUS']['HIDDEN'])
+				|| $this->arResult['DATA_STATUS']['HIDDEN'] === 'N')
+			{
+				$this->arResult['FORM']['SEARCHABLE'] = true;
+			}
 			else
-				$this->arResult["FORM"]["SEARCHABLE"] = false;
+			{
+				$this->arResult['FORM']['SEARCHABLE'] = false;
+			}
 
-			$uri = new Uri($this->arResult["URL"]["DELETE"]);
-			$uri->addParams(array('action' => 'disconnect'));
-			$this->arResult["URL"]["DELETE"] = $uri->getUri();
+			$uri = new Uri($this->arResult['URL']['DELETE']);
+			$uri->addParams(['action' => 'disconnect']);
+			$this->arResult['URL']['DELETE'] = $uri->getUri();
 
-			$uri = new Uri($this->arResult["URL"]["SIMPLE_FORM_EDIT"]);
-			$uri->addParams(array('action' => 'edit'));
-			$this->arResult["URL"]["SIMPLE_FORM_EDIT"] = $uri->getUri();
+			$uri = new Uri($this->arResult['URL']['SIMPLE_FORM_EDIT']);
+			$uri->addParams(['action' => 'edit']);
+			$this->arResult['URL']['SIMPLE_FORM_EDIT'] = $uri->getUri();
 		}
 
-		if (!$this->arResult["STATUS"])
+		if (!$this->arResult['STATUS'])
 		{
-			$uri = new Uri($this->arResult["URL"]["SIMPLE_FORM"]);
-			$uri->addParams(array('action' => 'connect'));
-			$this->arResult["URL"]["SIMPLE_FORM"] = $uri->getUri();
+			$uri = new Uri($this->arResult['URL']['SIMPLE_FORM']);
+			$uri->addParams(['action' => 'connect']);
+			$this->arResult['URL']['SIMPLE_FORM'] = $uri->getUri();
 		}
 
-		$this->arResult["CONNECTOR"] = $this->connector;
+		$this->arResult['CONNECTOR'] = $this->connector;
 	}
 
 	public function executeComponent()

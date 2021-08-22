@@ -5,17 +5,55 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm;
+
 class CBPCrmConvertDocumentActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
+			'Responsible' => null,
 			"Title" => "",
-			"Items" => array(),
+			"Items" => [],
 			"DealCategoryId" => 0,
-			'DisableActivityCompletion' => 'N'
-		);
+			'DisableActivityCompletion' => 'N',
+
+			//return
+			'InvoiceId' => null,
+			'QuoteId' => null,
+			'DealId' => null,
+			'ContactId' => null,
+			'CompanyId' => null,
+		];
+
+		$this->SetPropertiesTypes([
+			'InvoiceId' => [
+				'Type' => 'int',
+			],
+			'QuoteId' => [
+				'Type' => 'int',
+			],
+			'DealId' => [
+				'Type' => 'int',
+			],
+			'ContactId' => [
+				'Type' => 'int',
+			],
+			'CompanyId' => [
+				'Type' => 'int',
+			],
+		]);
+	}
+
+	protected function ReInitialize()
+	{
+		parent::ReInitialize();
+		$this->InvoiceId = null;
+		$this->QuoteId = null;
+		$this->DealId = null;
+		$this->ContactId = null;
+		$this->CompanyId = null;
 	}
 
 	public function Execute()
@@ -29,6 +67,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		if ($documentId[0] !== 'crm')
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_INCORRECT_DOCUMENT"), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -38,6 +77,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		if ($this->isAlreadyConverted($entityTypeId, $entityId))
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_ALREADY_CONVERTED"), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -48,6 +88,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		catch (\Bitrix\Main\NotSupportedException $e)
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_CVTDA_WIZARD_NOT_FOUND'), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -64,13 +105,19 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			$converter->setTargetItem($itemTypeId, $options);
 		}
 
+		$responsibleId = CBPHelper::ExtractUsers($this->Responsible, $documentId, true);
 		$conversionResult = $converter->execute([
-			'USER_ID' => \CCrmOwnerType::GetResponsibleID($entityTypeId, $entityId, false)
+			'USER_ID' => $responsibleId,
+			'RESPONSIBLE_ID' => $responsibleId,
 		]);
 
 		\Bitrix\Crm\Automation\Factory::registerConversionResult($entityTypeId, $entityId, $conversionResult);
 
-		if(!$conversionResult->isSuccess())
+		if ($conversionResult->isSuccess())
+		{
+			$this->setReturnIds($conversionResult);
+		}
+		else
 		{
 			$errorMessages = $conversionResult->getErrorMessages();
 
@@ -83,6 +130,27 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		}
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function setReturnIds(Crm\Automation\Converter\Result $result): void
+	{
+		$propertyMap = [
+			\CCrmOwnerType::Invoice => 'InvoiceId',
+			\CCrmOwnerType::Quote => 'QuoteId',
+			\CCrmOwnerType::Deal => 'DealId',
+			\CCrmOwnerType::Contact => 'ContactId',
+			\CCrmOwnerType::Company => 'CompanyId',
+		];
+
+		/** @var Crm\Entity\Identificator\Complex $boundEntity */
+		foreach ($result->getBoundEntities() as $boundEntity)
+		{
+			$key = $propertyMap[$boundEntity->getTypeId()];
+			if ($key)
+			{
+				$this->__set($key, $boundEntity->getId());
+			}
+		}
 	}
 
 	private function createRequest($errorText)
@@ -100,30 +168,34 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		$responsibleId = \CCrmOwnerType::GetResponsibleID($typeId, $id, false);
 
-		$description = GetMessage('CRM_CVTDA_REQUEST_DESCRIPTION_'.$typeName, array(
-			'#ITEMS#' => implode(' + ', $items)
-		)) . PHP_EOL . $errorText;
+		$description = GetMessage('CRM_CVTDA_REQUEST_DESCRIPTION_' . $typeName, [
+				'#ITEMS#' => implode(' + ', $items),
+			]) . PHP_EOL . $errorText;
 
-		$activityFields = array(
+		$activityFields = [
 			'AUTHOR_ID' => $responsibleId,
 			'START_TIME' => $start,
 			'END_TIME' => $start,
-			'SUBJECT' => GetMessage('CRM_CVTDA_REQUEST_SUBJECT_'.$typeName),
+			'SUBJECT' => GetMessage('CRM_CVTDA_REQUEST_SUBJECT_' . $typeName),
 			'PRIORITY' => CCrmActivityPriority::Medium,
 			'DESCRIPTION' => $description,
 			'DESCRIPTION_TYPE' => CCrmContentType::PlainText,
 			'PROVIDER_ID' => \Bitrix\Crm\Activity\Provider\Request::getId(),
-			'PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Request::getTypeId(array()),
-			'RESPONSIBLE_ID' => $responsibleId
-		);
+			'PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Request::getTypeId([]),
+			'RESPONSIBLE_ID' => $responsibleId,
+		];
 
-		$activityFields['BINDINGS'] = array(
-			array('OWNER_TYPE_ID' => $typeId, 'OWNER_ID' => $id)
-		);
+		$activityFields['BINDINGS'] = [
+			[
+				'OWNER_TYPE_ID' => $typeId,
+				'OWNER_ID' => $id,
+			],
+		];
 
-		if(!($id = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true))))
+		if (!($id = CCrmActivity::Add($activityFields, false, true, ['REGISTER_SONET_EVENT' => true])))
 		{
 			$this->WriteToTrackingService(CCrmActivity::GetLastErrorMessage(), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -132,23 +204,23 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			$this->requestId = $id;
 			if ($typeId == \CCrmOwnerType::Lead)
 			{
-				CCrmActivity::SaveCommunications($id, array(array(
+				CCrmActivity::SaveCommunications($id, [[
 					'ENTITY_ID' => (int)str_replace('LEAD_', '', $documentId[2]),
 					'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 					'ENTITY_TYPE' => CCrmOwnerType::LeadName,
-					'TYPE' => ''
-				)), $activityFields, false, false);
+					'TYPE' => '',
+				]], $activityFields, false, false);
 			}
 		}
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
-		$arErrors = array();
+		$arErrors = [];
 
 		if (empty($arTestProperties["Items"]) || !is_array($arTestProperties["Items"]))
 		{
-			$arErrors[] = array("code" => "NotExist", "parameter" => "Responsible", "message" => GetMessage("CRM_CVTDA_EMPTY_PROP"));
+			$arErrors[] = ["code" => "NotExist", "parameter" => "Responsible", "message" => GetMessage("CRM_CVTDA_EMPTY_PROP")];
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
@@ -159,7 +231,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		if (!CModule::IncludeModule("crm"))
 			return '';
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -167,18 +239,25 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
-		));
+			'siteId' => $siteId,
+		]);
 
 		$map = [
+			'Responsible' => [
+				'Name' => GetMessage("CRM_CVTDA_RESPONSIBLE"),
+				'FieldName' => 'responsible',
+				'Type' => 'user',
+				'Required' => true,
+				'Default' => Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
+			],
 			'Items' => [
 				'Name' => GetMessage('CRM_CVTDA_ITEMS'),
 				'FieldName' => 'items',
 				'Type' => 'select',
 				'Required' => true,
 				'Multiple' => true,
-				'Options' => static::getItemsList($documentType)
-			]
+				'Options' => static::getItemsList($documentType),
+			],
 		];
 
 		if ($documentType[2] === \CCrmOwnerType::LeadName)
@@ -193,7 +272,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 				'Name' => GetMessage('CRM_CVTDA_DISABLE_ACTIVITY_COMPLETION'),
 				'FieldName' => 'disable_activity_completion',
 				'Type' => 'bool',
-				'Default' => 'Y'
+				'Default' => 'Y',
 			];
 		}
 
@@ -204,22 +283,22 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 	private static function getItemsList($documentType)
 	{
-		$items = array();
+		$items = [];
 
 		if ($documentType[1] == 'CCrmDocumentLead')
 		{
-			$items = array(
+			$items = [
 				\CCrmOwnerType::DealName => GetMessage('CRM_CVTDA_DEAL'),
 				\CCrmOwnerType::ContactName => GetMessage('CRM_CVTDA_CONTACT'),
 				\CCrmOwnerType::CompanyName => GetMessage('CRM_CVTDA_COMPANY'),
-			);
+			];
 		}
 		elseif ($documentType[1] == 'CCrmDocumentDeal')
 		{
-			$items = array(
+			$items = [
 				\CCrmOwnerType::InvoiceName => GetMessage('CRM_CVTDA_INVOICE'),
 				\CCrmOwnerType::QuoteName => GetMessage('CRM_CVTDA_QUOTE'),
-			);
+			];
 		}
 
 		return $items;
@@ -229,11 +308,12 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 	{
 		$errors = [];
 
-		$arProperties = array(
+		$arProperties = [
+			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues["responsible"], $documentType, $errors),
 			'Items' => $arCurrentValues['items'],
 			'DealCategoryId' => $arCurrentValues['deal_category_id'] ?? 0,
-			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion']
-		);
+			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion'],
+		];
 
 		if ($arProperties['DealCategoryId'] === '' && static::isExpression($arCurrentValues['deal_category_id_text']))
 		{
@@ -264,11 +344,11 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$result = \CCrmLead::GetListEx(
-				array(),
-				array('=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
+				[],
+				['=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'],
 				false,
 				false,
-				array('STATUS_ID')
+				['STATUS_ID']
 			);
 			$presentFields = is_object($result) ? $result->Fetch() : null;
 

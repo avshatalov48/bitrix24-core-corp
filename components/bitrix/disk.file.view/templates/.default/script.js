@@ -674,11 +674,11 @@ BX.Disk.FileViewClass = (function ()
 				onclick: function() {
 					if (self.object.isHistoryBlocked)
 					{
-						BX.SidePanel.Instance.open(self.urls.fileHistory);
+						top.BX.UI.InfoHelper.show('limit_office_version_storage');
 					}
 					else
 					{
-						BX.UI.InfoHelper.show('limit_office_version_storage');
+						BX.SidePanel.Instance.open(self.urls.fileHistory);
 					}
 
 					this.close();

@@ -12,5 +12,20 @@ return array(
 			],
 		],
 		'readonly' => true,
-	]
+	],
+	'ui.entity-selector' => [
+		'value' => [
+			'entities' => [
+				[
+					'entityId' => 'task-tag',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TaskTagProvider',
+					],
+				],
+			],
+			'extensions' => ['tasks.entity-selector'],
+		],
+		'readonly' => true,
+	],
 );

@@ -1089,13 +1089,17 @@ this.BX.Location = this.BX.Location || {};
 
 	      if (!context["hasError"]) {
 	        // Kremlin,Moscow,Moscow,Russia,103132 -> Kremlin,Moscow,Russia,103132
-	        fieldValues = babelHelpers.toConsumableArray(new Set(fieldValues)); // The sign of the end of the group is received, the assembly of the group value.
+	        fieldValues = babelHelpers.toConsumableArray(new Set(fieldValues));
+	        var value = fieldValues.join(delimiterValue); // Kaliningrad, Narvskaya, 72, , kv 8 -> Kaliningrad, Narvskaya, 72, kv 8
+
+	        var reg = new RegExp("(".concat(delimiterValue, "){2,}"), 'gim');
+	        value = value.replace(new RegExp(reg), delimiterValue); // The sign of the end of the group is received, the assembly of the group value.
 
 	        context["info"] = {
 	          "type": "group",
 	          "position": groupStartPosition,
 	          "end": context["position"],
-	          "value": fieldValues.join(delimiterValue)
+	          "value": value
 	        };
 	      }
 
@@ -3014,6 +3018,8 @@ this.BX.Location = this.BX.Location || {};
 	exports.LocationType = LocationType;
 	exports.LocationFieldType = LocationFieldType;
 	exports.FormatTemplateType = FormatTemplateType;
+	exports.FormatTemplate = FormatTemplate;
+	exports.FormatTemplateCollection = FormatTemplateCollection;
 	exports.LocationRepository = LocationRepository;
 	exports.AddressRepository = AddressRepository;
 	exports.FormatRepository = FormatRepository;
@@ -3025,6 +3031,7 @@ this.BX.Location = this.BX.Location || {};
 	exports.BaseSource = SourceBase;
 	exports.MapBase = MapBase;
 	exports.GeocodingServiceBase = GeocodingServiceBase;
+	exports.LocationJsonConverter = LocationJsonConverter;
 	exports.ControlMode = ControlMode;
 	exports.SourceCreationError = SourceCreationError;
 	exports.MethodNotImplemented = MethodNotImplemented;

@@ -11,6 +11,22 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
 //Loc::loadMessages(__FILE__);
 
+/**
+ * Class TimerTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Timer_Query query()
+ * @method static EO_Timer_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Timer_Result getById($id)
+ * @method static EO_Timer_Result getList(array $parameters = array())
+ * @method static EO_Timer_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Timer createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Timer_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Timer wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Timer_Collection wakeUpCollection($rows)
+ */
 class TimerTable extends Main\Entity\DataManager
 {
 	/**

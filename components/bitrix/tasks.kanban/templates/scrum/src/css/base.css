@@ -1,3 +1,7 @@
+.tasks-scrum-kanban {
+	overflow-x: hidden;
+}
+
 .tasks-scrum-parent-task-kanban-header {
 	width: 99%;
 	color: #333;
@@ -64,4 +68,8 @@
 	z-index: 1000;
 	top: 0;
 	height: auto;
+}
+
+.tasks-scrum-kanban-header-target-observer {
+	overflow: hidden;
 }

@@ -8,6 +8,7 @@ $MESS["INTRANET_CONTROL_BUTTON_TASK_CHAT_FIRST_MESSAGE"] = "Чат создан 
 $MESS["INTRANET_CONTROL_BUTTON_CALENDAR_CHAT_TITLE"] = "Чат события \"#EVENT_TITLE#\"";
 $MESS["INTRANET_CONTROL_BUTTON_TASK_CHAT_TITLE"] = "Чат задачи \"#TASK_TITLE#\"";
 $MESS["INTRANET_CONTROL_BUTTON_VIDEOCALL_LIMIT"] = "Превышено максимально допустимое число участников для видеозвонка";
+$MESS["INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR"] = "Для видеозвонка необходимо несколько участников. Сейчас здесь только вы, добавьте других сотрудников и повторите вызов звонка снова.";
 $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_CALENDAR"] = "Создано на основании [url=#LINK#]встречи[/url]";
 $MESS["INTRANET_CONTROL_BUTTON_POST_MESSAGE_TASK"] = "Создано на основании [url=#LINK#]задачи[/url]";
 $MESS["INTRANET_CONTROL_BUTTON_CREATE_CHAT_LOCK_ERROR"] = "Ошибка создания чата. Попробуйте еще раз.";

@@ -19,6 +19,19 @@ use \Bitrix\Main\Entity\TextField,
  * </ul>
  *
  * @package Bitrix\ImConnector
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_BotFramework_Query query()
+ * @method static EO_BotFramework_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_BotFramework_Result getById($id)
+ * @method static EO_BotFramework_Result getList(array $parameters = array())
+ * @method static EO_BotFramework_Entity getEntity()
+ * @method static \Bitrix\ImConnector\Model\EO_BotFramework createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImConnector\Model\EO_BotFramework_Collection createCollection()
+ * @method static \Bitrix\ImConnector\Model\EO_BotFramework wakeUpObject($row)
+ * @method static \Bitrix\ImConnector\Model\EO_BotFramework_Collection wakeUpCollection($rows)
  */
 class BotFrameworkTable extends DataManager
 {

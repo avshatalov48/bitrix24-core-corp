@@ -2,7 +2,6 @@ export default {
 	props: {
 		name: {required: false},
 		initValue: {required: false},
-		editable: {required: true, type: Boolean},
 	},
 	created()
 	{
@@ -23,7 +22,7 @@ export default {
 	},
 	template: `
 		<label class="salescenter-delivery-selector salescenter-delivery-selector--hover salescenter-delivery-selector--checkbox">
-			<input :disabled="!editable" @change="onChange" :checked="value == 'Y' ? true : false" type="checkbox" value="Y" />
+			<input @change="onChange" :checked="value == 'Y' ? true : false" type="checkbox" value="Y" />
 			<span class="salescenter-delivery-selector-text">{{name}}</span>
 		</label>
 	`

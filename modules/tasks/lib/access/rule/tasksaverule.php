@@ -8,6 +8,7 @@
 
 namespace Bitrix\Tasks\Access\Rule;
 
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
@@ -59,6 +60,16 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
+		// user can set group
+		if (
+			$this->newTask->getGroupId()
+			&& $this->newTask->getGroupId() !== $this->oldTask->getGroupId()
+			&& !$this->canSetGroup($this->newTask->getGroupId())
+		)
+		{
+			return false;
+		}
+
 		// user can assign task to this man
 		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE) as $member)
 		{
@@ -82,6 +93,29 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			$this->changedDirector()
 			&& !in_array($this->user->getUserId(), $this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE))
 			&& !$this->controller->check(ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, $task)
+		)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param int $groupId
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	private function canSetGroup(int $groupId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		if (
+			!\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $groupId, "tasks", "edit_tasks")
+			&& !\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $groupId, "tasks", "create_tasks")
 		)
 		{
 			return false;

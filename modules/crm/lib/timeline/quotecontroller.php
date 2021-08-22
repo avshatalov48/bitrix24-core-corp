@@ -16,6 +16,7 @@ class QuoteController extends FactoryBasedController
 			Item::FIELD_NAME_TITLE,
 			Item::FIELD_NAME_ASSIGNED,
 			Item::FIELD_NAME_STAGE_ID,
+			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
 		];
 	}
 

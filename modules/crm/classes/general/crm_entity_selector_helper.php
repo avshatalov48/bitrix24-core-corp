@@ -237,6 +237,10 @@ class CCrmEntitySelectorHelper
 					}
 					$result[$advancedInfoKey]['hasEditRequisiteData'] = $requireEditRequisiteData;
 				}
+				else
+				{
+					$result['notFound'] = true;
+				}
 			}
 		}
 		elseif($entityTypeName === 'COMPANY')
@@ -329,6 +333,10 @@ class CCrmEntitySelectorHelper
 							}
 						}
 					}
+				}
+				else
+				{
+					$result['notFound'] = true;
 				}
 
 				// requisites
@@ -435,6 +443,10 @@ class CCrmEntitySelectorHelper
 						}
 					}
 				}
+				else
+				{
+					$result['notFound'] = true;
+				}
 			}
 		}
 		elseif($entityTypeName === 'DEAL')
@@ -473,6 +485,10 @@ class CCrmEntitySelectorHelper
 						$arRes['CONTACT_FULL_NAME'];
 					$result[$descKey] = $clientTitle;
 				}
+				else
+				{
+					$result['notFound'] = true;
+				}
 			}
 		}
 		elseif($entityTypeName === 'QUOTE')
@@ -501,6 +517,10 @@ class CCrmEntitySelectorHelper
 					$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
 					$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').$arRes['CONTACT_FULL_NAME'];
 					$result[$descKey] = $clientTitle;
+				}
+				else
+				{
+					$result['notFound'] = true;
 				}
 			}
 		}
@@ -547,6 +567,10 @@ class CCrmEntitySelectorHelper
 						]
 					);
 				}
+				else
+				{
+					$result['notFound'] = true;
+				}
 			}
 		}
 		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
@@ -572,6 +596,7 @@ class CCrmEntitySelectorHelper
 
 				if (!$item)
 				{
+					$result['notFound'] = true;
 					return $result;
 				}
 

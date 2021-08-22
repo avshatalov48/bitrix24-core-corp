@@ -8,6 +8,15 @@
     margin: 20px;
 }
 
+.crm-report-chart-grid-not-available {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 400px;
+    font-size: 26px;
+    color: #a0a0a0;
+}
 
 /* GRID STYLES */
 .crm-report-chart-grid {}

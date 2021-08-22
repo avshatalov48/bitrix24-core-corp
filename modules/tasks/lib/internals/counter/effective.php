@@ -4,6 +4,22 @@ namespace Bitrix\Tasks\Internals\Counter;
 use Bitrix\Main;
 use Bitrix\Main\Entity\DataManager;
 
+/**
+ * Class EffectiveTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Effective_Query query()
+ * @method static EO_Effective_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Effective_Result getById($id)
+ * @method static EO_Effective_Result getList(array $parameters = array())
+ * @method static EO_Effective_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Effective createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Effective_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Effective wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Effective_Collection wakeUpCollection($rows)
+ */
 class EffectiveTable extends DataManager
 {
 	public static function getTableName()

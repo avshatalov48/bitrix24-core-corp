@@ -9,6 +9,9 @@ use Bitrix\Location\Common\CachedPool;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
+use Bitrix\Fileman;
 
 /**
  * Class GoogleSource
@@ -65,7 +68,7 @@ class GoogleSource extends Source
 		);
 
 		$result = new Repository(
-			$this->config->getValue('API_KEY_BACKEND'),
+			$this->getBackendKey(),
 			$httpClient,
 			$this,
 			$cachePool
@@ -80,10 +83,53 @@ class GoogleSource extends Source
 	public function getJSParams(): array
 	{
 		return [
-			'apiKey' => $this->config->getValue('API_KEY_FRONTEND'),
+			'apiKey' => $this->getFrontendKey(),
 			'showPhotos' => $this->config->getValue('SHOW_PHOTOS_ON_MAP'),
 			'useGeocodingService' => $this->config->getValue('USE_GEOCODING_SERVICE'),
 		];
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getBackendKey(): string
+	{
+		$configKey = $this->config->getValue('API_KEY_BACKEND');
+		if ($configKey)
+		{
+			return (string)$configKey;
+		}
+
+		return (string)Option::get('location', 'google_map_api_key_backend', '');
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getFrontendKey(): string
+	{
+		$key = $this->config->getValue('API_KEY_FRONTEND');
+		if ($key)
+		{
+			return (string)$key;
+		}
+
+		$key = Option::get('location', 'google_map_api_key', '');
+		if ($key !== '')
+		{
+			return (string)$key;
+		}
+
+		if (Loader::includeModule('fileman'))
+		{
+			$key = Fileman\UserField\Types\AddressType::getApiKey();
+			if ($key !== '' && !is_null($key))
+			{
+				return $key;
+			}
+		}
+
+		return '';
 	}
 
 	/**

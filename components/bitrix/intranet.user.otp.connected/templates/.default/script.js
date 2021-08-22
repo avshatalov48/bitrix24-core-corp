@@ -61,7 +61,7 @@
 				{
 					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
 				}
-			}.bind(this), function (result) {
+			}.bind(this), function (response) {
 				if (BX.getClass("BX.Intranet.UserProfile.Security"))
 				{
 					BX.Intranet.UserProfile.Security.showErrorPopup(response["errors"][0].message);
@@ -81,7 +81,7 @@
 					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
 				}
 
-			}.bind(this), function (result) {
+			}.bind(this), function (response) {
 
 				if (BX.getClass("BX.Intranet.UserProfile.Security"))
 				{
@@ -104,7 +104,7 @@
 					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
 				}
 
-			}.bind(this), function (result) {
+			}.bind(this), function (response) {
 
 				if (BX.getClass("BX.Intranet.UserProfile.Security"))
 				{

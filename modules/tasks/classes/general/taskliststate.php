@@ -29,7 +29,6 @@ class CTaskListState
 	const VIEW_MODE_KANBAN               = 0x0000300;
 	const VIEW_MODE_TIMELINE             = 0x0000400;
 	const VIEW_MODE_PLAN                 = 0x0000500;
-	const VIEW_MODE_SPRINT               = 0x0000600;
 	const VIEW_MODE_CALENDAR             = 0x0000700;
 
 	const VIEW_SUBMODE_WITH_GROUPS       = 0x0000001;
@@ -731,7 +730,6 @@ class CTaskListState
 			self::VIEW_MODE_PLAN,
 			self::VIEW_MODE_CALENDAR,
 			self::VIEW_MODE_GANTT,
-			self::VIEW_MODE_SPRINT,
 		];
 	}
 
@@ -768,7 +766,6 @@ class CTaskListState
 			self::VIEW_MODE_KANBAN               => 'VIEW_MODE_KANBAN',
 			self::VIEW_MODE_TIMELINE             => 'VIEW_MODE_TIMELINE',
 			self::VIEW_MODE_PLAN                 => 'VIEW_MODE_PLAN',
-			self::VIEW_MODE_SPRINT               => 'VIEW_MODE_SPRINT',
 			self::VIEW_MODE_CALENDAR             => 'VIEW_MODE_CALENDAR',
 			self::VIEW_SUBMODE_WITH_GROUPS       => 'VIEW_SUBMODE_WITH_GROUPS',
 			self::VIEW_SUBMODE_WITH_SUBTASKS     => 'VIEW_SUBMODE_WITH_SUBTASKS',
@@ -932,10 +929,6 @@ class CTaskListState
 				self::VIEW_MODE_PLAN => array(
 					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_PLAN'),
 					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_PLAN_SHORT')
-				),
-				self::VIEW_MODE_SPRINT => array(
-					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_SPRINT'),
-					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_SPRINT_SHORT')
 				),
 				self::VIEW_MODE_CALENDAR => array(
 					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_CALENDAR'),

@@ -4960,7 +4960,19 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		{
 			if (!item.sender.canUse || !item.sender.fromList.length)
 			{
-				window.open(item.sender.manageUrl);
+				var url = BX.Uri.addParam(item.sender.manageUrl, {'IFRAME': 'Y'});
+				var slider = BX.SidePanel.Instance.getTopSlider();
+				BX.SidePanel.Instance.open(url, {
+					events: {
+						onClose: function()
+						{
+							if (slider)
+							{
+								slider.reload();
+							}
+						}
+					}
+				});
 				return;
 			}
 
@@ -7661,7 +7673,36 @@ if(typeof(BX.CrmHistoryItem) === "undefined")
 			)
 		);
 
-		var header = this.prepareHeaderLayout();
+		var header = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children:
+					[
+						BX.create("DIV",
+							{
+								attrs: { className: "crm-entity-stream-content-event-title" },
+								children:
+									[
+										BX.create("A",
+											{
+												attrs: { href: "#" },
+												events: { click: this._headerClickHandler },
+												text: this.getTitle()
+											}
+										)
+									]
+							}
+						),
+						BX.create("SPAN",
+							{
+								attrs: { className: "crm-entity-stream-content-event-time" },
+								text: this.formatTime(this.getCreatedTime())
+							}
+						)
+					]
+			}
+		);
+
 		contentWrapper.appendChild(header);
 
 		contentWrapper.appendChild(
@@ -11117,7 +11158,12 @@ if(typeof(BX.CrmHistoryItemSender) === "undefined")
 	BX.CrmHistoryItemSender.prototype.prepareStatusLayout = function()
 	{
 		var layoutClassName, textCaption;
-		if (this.getDataSetting('isUnsub'))
+		if (this.getDataSetting('isError'))
+		{
+			textCaption = this.getMessage('error');
+			layoutClassName = "crm-entity-stream-content-event-missing";
+		}
+		else if (this.getDataSetting('isUnsub'))
 		{
 			textCaption = this.getMessage('unsub');
 			layoutClassName = "crm-entity-stream-content-event-missing";
@@ -11139,7 +11185,7 @@ if(typeof(BX.CrmHistoryItemSender) === "undefined")
 	{
 		var header = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-header" } });
 		header.appendChild(this.prepareTitleLayout());
-		if (this.getDataSetting('isRead') || this.getDataSetting('isUnsub'))
+		if (this.getDataSetting('isError') || this.getDataSetting('isRead') || this.getDataSetting('isUnsub'))
 		{
 			header.appendChild(this.prepareStatusLayout());
 		}

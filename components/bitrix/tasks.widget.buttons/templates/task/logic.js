@@ -222,10 +222,14 @@ BX.namespace('Tasks.Component');
 							groupId: this.option('groupId')
 						});
 
-						var choiceMadePromise = this.scrumDod.showList(this.option('taskId'));
-						choiceMadePromise.then(function() {
-							taskCompletePromise.fulfill();
-						}.bind(this));
+						this.scrumDod.showList(this.option('taskId'))
+							.then(function() {
+								taskCompletePromise.fulfill();
+							}.bind(this))
+							.catch(function() {
+								taskCompletePromise.reject();
+							}.bind(this))
+						;
 					}
 					else
 					{

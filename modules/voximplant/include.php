@@ -1,4 +1,5 @@
 <?
+
 require_once __DIR__.'/autoload.php';
 
 CJSCore::RegisterExt('voximplant', array(
@@ -15,6 +16,7 @@ CJSCore::RegisterExt('voximplant', array(
 				'voximplantDefaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
 				'voximplantSdkUrl' => \CUtil::GetAdditionalFileURL("/bitrix/js/voximplant/voximplant.min.js"),
 				'voximplantCanMakeCalls' => \Bitrix\Voximplant\Limits::canCall() ? 'Y' : 'N',
+				'voximplantMediaServer' => CVoxImplantMain::getMediaServer(),
 			)
 		);
 	}

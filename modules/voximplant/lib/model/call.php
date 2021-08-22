@@ -25,7 +25,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Voximplant
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Call_Query query()
+ * @method static EO_Call_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Call_Result getById($id)
+ * @method static EO_Call_Result getList(array $parameters = array())
+ * @method static EO_Call_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_Call createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_Call_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_Call wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_Call_Collection wakeUpCollection($rows)
+ */
 
 class CallTable extends Model\Base
 {

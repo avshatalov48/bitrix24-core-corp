@@ -1,11 +1,14 @@
 export class Time
 {
-	static calculateInEntity(state, entity)
+	static calculateInEntityOnADate(state, entity, date)
 	{
 		return state.history
-			.filter(entry => entry.privateCode === entity.privateCode)
+			.filter(entry => (
+				entry.privateCode === entity.privateCode
+				&& entry.dateLog === date
+			))
 			.map(Time.calculateInEntry)
-			.reduce((sum, time) => sum + time, 0)
+			.reduce((sum, time) => sum + time, 0);
 	}
 
 	static calculateInEntry(entry)

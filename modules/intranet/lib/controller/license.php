@@ -69,100 +69,6 @@ class License extends \Bitrix\Main\Engine\Controller
 		return $telephonyInfo;
 	}
 
-	private function getPartnerOrderFormParams($licensePrefix)
-	{
-		$orderParams = [];
-
-		if ($licensePrefix !== LANGUAGE_ID)
-		{
-			$licensePrefix = 'en';
-		}
-
-		switch ($licensePrefix)
-		{
-			case 'ru':
-				$orderParams = [
-					'id'  => '1192',
-					'sec' => 'b5mzdk'
-				];
-				break;
-			case 'de':
-				$orderParams = [
-					'id'  => '1195',
-					'sec' => 'q1rq2q'
-				];
-				break;
-			case 'br':
-				$orderParams = [
-					'id'  => '1197',
-					'sec' => 'nvobax'
-				];
-				break;
-			case 'la':
-				$orderParams = [
-					'id'  => '1196',
-					'sec' => 'dkdhid'
-				];
-				break;
-			case 'by':
-				$orderParams = [
-					'id'  => '1205',
-					'sec' => '31inm5'
-				];
-				break;
-			case 'kz':
-				$orderParams = [
-					'id'  => '1203',
-					'sec' => '6nkdb1'
-				];
-				break;
-			case 'ua':
-				$orderParams = [
-					'id'  => '1204',
-					'sec' => '277p0u'
-				];
-				break;
-			case 'pl':
-				$orderParams = [
-					'id'  => '1198',
-					'sec' => 'h1013r'
-				];
-				break;
-			case 'it':
-				$orderParams = [
-					'id'  => '1199',
-					'sec' => 'xsrbsh'
-				];
-				break;
-			case 'fr':
-				$orderParams = [
-					'id'  => '1200',
-					'sec' => '3oupk4'
-				];
-				break;
-			case 'tr':
-				$orderParams = [
-					'id'  => '1202',
-					'sec' => 'k3bnjz'
-				];
-				break;
-			case 'vn':
-				$orderParams = [
-					'id'  => '1201',
-					'sec' => '9dxb9d'
-				];
-				break;
-			default : //en
-				$orderParams = [
-					'id'  => '1194',
-					'sec' => '6nivh3'
-				];
-		}
-		$orderParams['lang'] = LANGUAGE_ID;
-
-		return $orderParams;
-	}
-
 	public function getLicenseDataAction()
 	{
 		if (!Loader::includeModule('bitrix24'))
@@ -217,7 +123,7 @@ class License extends \Bitrix\Main\Engine\Controller
 		$licenseData = [
 			'license' => [
 				'name' => \CBitrix24::getLicenseName(),
-				'type' => $licenseFamily,
+				'type' => $licenseType,
 				'tillMessage' => $licenseTillMessage,
 				'demoPath' => \CBitrix24::PATH_LICENSE_DEMO . $analyticaLabel,
 				'allPath' => \CBitrix24::PATH_LICENSE_ALL . $analyticaLabel,
@@ -282,12 +188,11 @@ class License extends \Bitrix\Main\Engine\Controller
 		}
 		elseif ($isCloud)
 		{
-			$orderParams = $this->getPartnerOrderFormParams($licensePrefix);
-
 			$licenseData['partner'] = [
 				'isPartnerConnect' => false,
 				'isPartnerOrder' => true,
-				'orderPartnerJs' => $orderParams,
+				'formLang' => LANGUAGE_ID,
+				'formPortalUri' => \Bitrix\Intranet\Util::CP_BITRIX_PATH,
 			];
 		}
 

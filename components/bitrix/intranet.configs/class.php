@@ -7,6 +7,7 @@ use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Location\Repository\SourceRepository;
 use Bitrix\Location;
+use Bitrix\Main\Config\Option;
 
 final class IntranetConfigsComponent extends CBitrixComponent
 {
@@ -207,6 +208,76 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 			$APPLICATION->RestartBuffer();
 			die();
+		}
+	}
+
+	private function saveOtpSettings()
+	{
+		if (!Loader::includeModule('security'))
+		{
+			return;
+		}
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			//otp is always mandatory for integrator group in cloud
+
+			$otpRights = \Bitrix\Security\Mfa\Otp::getMandatoryRights();
+			$employeeGroup = 'G' . \CBitrix24::getEmployeeGroupId();
+			$adminGroup = 'G1';
+
+			if (isset($_POST['security_otp']))
+			{
+				if (!in_array($adminGroup, $otpRights))
+				{
+					$otpRights[] = $adminGroup;
+					$this->arResult['SHOW_OTP_INFO_POPUP'] = true;
+				}
+
+				if (!in_array($employeeGroup, $otpRights))
+				{
+					$otpRights[] = $employeeGroup;
+				}
+			}
+			else
+			{
+				foreach ($otpRights as $key => $group)
+				{
+					if ($group === $adminGroup || $group === $employeeGroup)
+					{
+						unset($otpRights[$key]);
+					}
+				}
+			}
+
+			\Bitrix\Security\Mfa\Otp::setMandatoryRights($otpRights);
+		}
+		else
+		{
+			if (isset($_POST['security_otp']) && !\CSecurityUser::IsOtpMandatory())
+			{
+				$this->arResult['SHOW_OTP_INFO_POPUP'] = true;
+			}
+
+			\Bitrix\Security\Mfa\Otp::setMandatoryUsing(isset($_POST['security_otp']) ? true : false);
+		}
+
+		if (isset($_POST['security_otp_days']))
+		{
+			$numDays = intval($_POST['security_otp_days']);
+			if ($numDays > 0)
+			{
+				\Bitrix\Security\Mfa\Otp::setSkipMandatoryDays($numDays);
+			}
+		}
+
+		if ($_POST['send_otp_push'] <> '')
+		{
+			Option::set('intranet', 'send_otp_push', 'Y');
+		}
+		else
+		{
+			Option::set('intranet', 'send_otp_push', 'N');
 		}
 	}
 
@@ -589,30 +660,8 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			COption::SetOptionString("main", "url_preview_enable", "N");
 
 		//security
-		if (Bitrix\Main\Loader::includeModule("security"))
-		{
-			$otpGetParam = false;
-			if (isset($_POST["security_otp_days"]))
-			{
-				$numDays = intval($_POST["security_otp_days"]);
-				if ($numDays)
-					Bitrix\Security\Mfa\Otp::setSkipMandatoryDays($numDays);
-			}
-			if (isset($_POST["security_otp"]) && CModule::IncludeModule("security"))
-			{
-				$currentMandatory = CSecurityUser::IsOtpMandatory();
-				if (!$currentMandatory)
-				{
-					$otpGetParam = true;
-				}
-			}
-			Bitrix\Security\Mfa\Otp::setMandatoryUsing(isset($_POST["security_otp"]) ? true : false);
-
-			if ($_POST["send_otp_push"] <> '')
-				COption::SetOptionString("intranet", "send_otp_push", "Y");
-			else
-				COption::SetOptionString("intranet", "send_otp_push", "N");
-		}
+		$this->arResult['SHOW_OTP_INFO_POPUP'] = false;
+		$this->saveOtpSettings();
 
 		if ($this->arResult["IS_BITRIX24"])
 		{
@@ -952,7 +1001,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				$this->arResult["IP_RIGHTS"] = $arIpSettings;
 			}
 
-			if ($otpGetParam)
+			if ($this->arResult['SHOW_OTP_INFO_POPUP'])
 				$url = $APPLICATION->GetCurPageParam("success=Y&otp=Y");
 			else
 				$url = $APPLICATION->GetCurPageParam("success=Y");
@@ -1091,18 +1140,38 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		}
 	}
 
-	private function prepareAdditionalData()
+	private function getOtpSettings()
 	{
 		global $USER;
 
-		$this->arResult["SECURITY_MODULE"] = false;
-		if (Bitrix\Main\Loader::includeModule("security"))
+		$this->arResult['SECURITY_MODULE'] = false;
+
+		if (!Loader::includeModule('security'))
 		{
-			$this->arResult["SECURITY_MODULE"] = true;
-			$this->arResult["SECURITY_IS_USER_OTP_ACTIVE"] = \CSecurityUser::IsUserOtpActive($USER->GetID());
-			$this->arResult["SECURITY_OTP"] = \Bitrix\Security\Mfa\Otp::isMandatoryUsing();
-			$this->arResult["SECURITY_OTP_DAYS"] = \Bitrix\Security\Mfa\Otp::getSkipMandatoryDays();
+			return;
 		}
+
+		$this->arResult['SECURITY_MODULE'] = true;
+		$this->arResult['SECURITY_IS_USER_OTP_ACTIVE'] = \CSecurityUser::IsUserOtpActive($USER->GetID());
+		$this->arResult['SECURITY_OTP_DAYS'] = \Bitrix\Security\Mfa\Otp::getSkipMandatoryDays();
+		$this->arResult['SECURITY_OTP'] = \Bitrix\Security\Mfa\Otp::isMandatoryUsing();
+
+		if (Loader::includeModule('bitrix24') && $this->arResult['SECURITY_OTP'])
+		{
+			$otpRights = \Bitrix\Security\Mfa\Otp::getMandatoryRights();
+			$adminGroup = 'G1';
+			$employeeGroup = 'G' . \CBitrix24::getEmployeeGroupId();
+
+			if (!in_array($adminGroup, $otpRights) || !in_array($employeeGroup, $otpRights))
+			{
+				$this->arResult['SECURITY_OTP'] = false;
+			}
+		}
+	}
+
+	private function prepareAdditionalData()
+	{
+		$this->getOtpSettings();
 
 		$this->arResult["IM_MODULE"] = ModuleManager::isModuleInstalled("im");
 
@@ -1214,8 +1283,6 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->showErrors();
 			return;
 		}
-
-		global $APPLICATION, $USER;
 
 		$this->prepareData();
 

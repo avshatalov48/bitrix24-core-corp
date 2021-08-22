@@ -20,6 +20,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	private const
 		ADDED = 'added',
 		CHANGED = 'changed',
+		DELETED = 'deleted',
 		STATUS_CHANGED = 'status_changed';
 
 	/**
@@ -161,7 +162,6 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		$fields = [
 			'PARENT_ID',
 			'TITLE',
-			'SORT_INDEX',
 			'IS_IMPORTANT',
 			'MEMBERS',
 			'ATTACHMENTS'

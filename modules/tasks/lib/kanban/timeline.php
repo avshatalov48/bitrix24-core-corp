@@ -183,9 +183,6 @@ class TimeLineTable// *Table for unity structure
 	 */
 	public static function getClosestWorkHour($timeStamp)
 	{
-		static $daysOff = null;
-		static $calendarSettings = null;
-
 		// compatibility
 		if ($timeStamp instanceof DateTime)
 		{
@@ -196,83 +193,16 @@ class TimeLineTable// *Table for unity structure
 			return false;
 		}
 
-		// prepare days off
-		if ($calendarSettings === null)
-		{
-			$calendarSettings = Calendar::getSettings();
-		}
-		if ($daysOff === null)
-		{
-			$daysOff = [
-				0 => []// weekends
-			];
-			// holidays
-			if (isset($calendarSettings['HOLIDAYS']))
-			{
-				foreach ((array)$calendarSettings['HOLIDAYS'] as $item)
-				{
-					if (
-						isset($item['M']) &&
-						isset($item['D'])
-					)
-					{
-						$item['M'] = intval($item['M']);
-						$item['D'] = intval($item['D']);
-						if (!isset($daysOff[$item['M']]))
-						{
-							$daysOff[$item['M']] = [];
-						}
-						$daysOff[$item['M']][] = $item['D'];
-					}
-				}
-			}
-			// weekends
-			$dayMap = array(
-				'MO' => 1,
-				'TU' => 2,
-				'WE' => 3,
-				'TH' => 4,
-				'FR' => 5,
-				'SA' => 6,
-				'SU' => 0
-			);
-			if (
-				isset($calendarSettings['WEEKEND']) &&
-				is_array($calendarSettings['WEEKEND'])
-			)
-			{
-				foreach ($calendarSettings['WEEKEND'] as $weekend)
-				{
-					if (
-						is_string($weekend) &&
-						isset($dayMap[$weekend])
-					)
-					{
-						$daysOff[0][] = $dayMap[$weekend];
-					}
-				}
-			}
-		}
+		$calendar = new Calendar();
+		$now = \Bitrix\Tasks\Util\Type\DateTime::createFromTimestamp(time());
+		$dateTime = \Bitrix\Tasks\Util\Type\DateTime::createFromTimestamp($timeStamp);
 
 		// get in the past, first work day
-		$attempt = 0;
-		while ($timeStamp > time())
+		while ($dateTime->checkGT($now))
 		{
-			$attempt++;
-			$nDate = date('n', $timeStamp);// month's day
-			$jDate = date('j', $timeStamp);// day without zero
-			$wDate = date('w', $timeStamp);// week's day
-
-			if (
-				(
-					isset($daysOff[$nDate]) &&
-					in_array($jDate, $daysOff[$nDate])
-				)
-				||
-				in_array($wDate, $daysOff[0])
-			)
+			if ($calendar->isWeekend($dateTime) || $calendar->isHoliday($dateTime))
 			{
-				$timeStamp -= 86400;
+				$dateTime->addDay(-1);
 			}
 			else
 			{
@@ -280,20 +210,22 @@ class TimeLineTable// *Table for unity structure
 			}
 		}
 
-		// we set start time of the day
-		$timeStamp = \MakeTimeStamp(date(self::getDatePhpFormat(FORMAT_DATE), $timeStamp));
-
-		// then plus end hour and end minutes
-		if (
-			isset($calendarSettings['HOURS']['END']['H']) &&
-			isset($calendarSettings['HOURS']['END']['M'])
-		)
+		$calendarSettings = Calendar::getSettings();
+		if (isset($calendarSettings['HOURS']['END']['H'], $calendarSettings['HOURS']['END']['M']))
 		{
-			$timeStamp += $calendarSettings['HOURS']['END']['H'] * 3600;
-			$timeStamp += $calendarSettings['HOURS']['END']['M'] * 60;
+			$dateTime->setTime($calendarSettings['HOURS']['END']['H'], $calendarSettings['HOURS']['END']['M']);
 		}
 
-		// and get new date fomat
-		return date(self::getDatePhpFormat(FORMAT_DATETIME), $timeStamp);
+		$result = date(self::getDatePhpFormat(), $dateTime->getTimestamp());
+		while (
+			$dateTime->checkLT($now)
+			|| !$calendar->isWorkTime(\Bitrix\Tasks\Util\Type\DateTime::createFromUserTimeGmt($result))
+		)
+		{
+			$dateTime->addDay(1);
+			$result = date(self::getDatePhpFormat(), $dateTime->getTimestamp());
+		}
+
+		return $result;
 	}
 }

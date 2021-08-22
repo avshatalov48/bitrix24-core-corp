@@ -311,6 +311,54 @@ abstract class CheckListFacade
 	 * @param int $entityId
 	 * @param int $userId
 	 * @param CheckList $checkList
+	 * @param array $fields
+	 * @return Result
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public static function updateComposite(int $entityId, int $userId, CheckList $checkList, array $fields): Result
+	{
+		$updateCompositeResult = new Result();
+
+		foreach ($checkList->getDescendants() as $descendant)
+		{
+			$updateCompositeResult->setData(
+				array_merge(
+					($updateCompositeResult->getData() ?? []),
+					static::updateComposite($entityId, $userId, $descendant, $fields)->getData()
+				)
+			);
+		}
+
+		if (
+			array_key_exists('IS_COMPLETE', $fields)
+			&& count($fields) === 1
+			&& static::checkAccess($entityId, $userId, ActionDictionary::ACTION_CHECKLIST_TOGGLE, $checkList)
+		)
+		{
+			$updateResult = static::update($entityId, $userId, $checkList, $fields);
+			if ($updateResult->isSuccess())
+			{
+				$updateCompositeResult->setData(
+					array_merge(
+						($updateCompositeResult->getData() ?? []),
+						[$updateResult]
+					)
+				);
+			}
+		}
+
+		return $updateCompositeResult;
+	}
+
+	/**
+	 * @param int $entityId
+	 * @param int $userId
+	 * @param CheckList $checkList
 	 * @return Result|bool
 	 * @throws ArgumentException
 	 * @throws NotImplementedException
@@ -706,6 +754,37 @@ abstract class CheckListFacade
 		$completeResult = static::update($entityId, $userId, $checkList, ['IS_COMPLETE' => true]);
 		return $completeResult;
 	}
+
+	/**
+	 * Completes all checklists recursively starting from $checkList.
+	 *
+	 * @param int $entityId
+	 * @param int $userId
+	 * @param CheckList $checkList
+	 * @return Result
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 */
+	public static function completeAll(int $entityId, int $userId, CheckList $checkList): Result
+	{
+		$completeAllResult = new Result();
+
+		$items = static::getByEntityId($entityId);
+		$itemsTree = static::getObjectStructuredRoots($items, $entityId, $userId);
+
+		/** @var CheckList $item */
+		foreach ($itemsTree as $item)
+		{
+			if ($checkListToComplete = $item->findById($checkList->getFields()['ID']))
+			{
+				return static::updateComposite($entityId, $userId, $checkListToComplete, ['IS_COMPLETE' => 'Y']);
+			}
+		}
+
+		return $completeAllResult;
+	}
+
 
 	/**
 	 * Renews checklist.

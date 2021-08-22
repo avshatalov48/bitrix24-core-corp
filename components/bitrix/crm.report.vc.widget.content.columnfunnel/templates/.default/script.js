@@ -217,6 +217,7 @@
 				noAllPaddings: true,
 				autoHide: false,
 				draggable: {restrict: false},
+				cacheable: false,
 				content: this.getInformationPopupContent(columnObject)
 			});
 			this.informationPopup.show();

@@ -4,7 +4,6 @@ export default {
 	props: {
 		name: {required: false},
 		initValue: {required: false},
-		editable: {required: true, type: Boolean},
 		options: {required: true, type: Array}
 	},
 	created()

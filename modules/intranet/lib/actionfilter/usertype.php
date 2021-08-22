@@ -11,15 +11,20 @@ use Bitrix\Main\EventResult;
 
 class UserType extends Engine\ActionFilter\Base
 {
-	public const TYPE_BOT            = 'bot';
-	public const TYPE_EMAIL          = 'email';
-	public const TYPE_EMPLOYEE       = 'employee';
-	public const TYPE_EXTRANET       = 'extranet';
-	public const TYPE_IMCONNECTOR    = 'imconnector';
-	public const TYPE_REPLICA        = 'replica';
-	public const TYPE_SALE           = 'sale';
+	/** @see \Bitrix\Main\UserTable::getExternalUserTypes */
+
+	public const TYPE_CONTROLLER = '__controller';
+	public const TYPE_BOT = 'bot';
+	public const TYPE_CALL = 'call';
+	public const TYPE_DOCUMENT_EDITOR = 'document_editor';
+	public const TYPE_EMAIL = 'email';
+	public const TYPE_EMPLOYEE = 'employee';
+	public const TYPE_EXTRANET = 'extranet';
+	public const TYPE_IMCONNECTOR = 'imconnector';
+	public const TYPE_REPLICA = 'replica';
+	public const TYPE_SALE = 'sale';
 	public const TYPE_SALE_ANONYMOUS = 'saleanonymous';
-	public const TYPE_SHOP           = 'shop';
+	public const TYPE_SHOP = 'shop';
 
 	public const ERROR_RESTRICTED_BY_USER_TYPE = 'restricted_by_user_type';
 

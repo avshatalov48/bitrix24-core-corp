@@ -15,6 +15,12 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function getUnassignedNumbersAction()
 	{
+		if (!\Bitrix\Voximplant\Security\Permissions::createWithCurrentUser()->canModifySettings())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		$cursor = \Bitrix\Voximplant\ConfigTable::getList([
 			'select' => [
 				'RENTED_NUMBER' => 'NUMBER.NUMBER'
@@ -44,6 +50,12 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function createGroupAction($name, array $numbers = [])
 	{
+		if (!\Bitrix\Voximplant\Security\Permissions::createWithCurrentUser()->canModifySettings())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		if(!is_string($name) || $name == "")
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage("VOX_LINES_ERROR_EMPTY_NAME"));
@@ -112,6 +124,12 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function addToGroupAction($number, $groupId)
 	{
+		if (!\Bitrix\Voximplant\Security\Permissions::createWithCurrentUser()->canModifySettings())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		$numberFields = \Bitrix\Voximplant\Model\NumberTable::getRow([
 			"filter" => [
 				"=NUMBER" => $number
@@ -162,6 +180,12 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function removeFromGroupAction($number)
 	{
+		if (!\Bitrix\Voximplant\Security\Permissions::createWithCurrentUser()->canModifySettings())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		$numberFields = \Bitrix\Voximplant\Model\NumberTable::getRow([
 			"filter" => [
 				"=NUMBER" => $number
@@ -203,6 +227,12 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function deleteGroupAction($id)
 	{
+		if (!\Bitrix\Voximplant\Security\Permissions::createWithCurrentUser()->canModifySettings())
+		{
+			$this->addError(new \Bitrix\Main\Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		$id = (int)$id;
 		$configFields = \Bitrix\Voximplant\ConfigTable::getRowById($id);
 		if($configFields["PORTAL_MODE"] != CVoxImplantConfig::MODE_GROUP)

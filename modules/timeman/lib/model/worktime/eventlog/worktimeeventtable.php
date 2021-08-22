@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 
+/**
+ * Class WorktimeEventTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_WorktimeEvent_Query query()
+ * @method static EO_WorktimeEvent_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_WorktimeEvent_Result getById($id)
+ * @method static EO_WorktimeEvent_Result getList(array $parameters = array())
+ * @method static EO_WorktimeEvent_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventCollection wakeUpCollection($rows)
+ */
 class WorktimeEventTable extends Main\ORM\Data\DataManager
 {
 	const EVENT_TYPE_START = 'START';

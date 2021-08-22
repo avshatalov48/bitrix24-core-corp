@@ -804,6 +804,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$dateFormat = Main\Type\Date::convertFormatToPhp(Main\Application::getInstance()->getContext()->getCulture()->getDateFormat());
 
+		$fakeValue = '';
 		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
@@ -822,10 +823,16 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						CCrmStatus::GetStatusList('HONORIFIC'),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_HONORIFIC_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => '',
+							'NOT_SELECTED_VALUE' => $fakeValue,
 						]
 					),
 					'defaultValue' => $this->defaultEntityData['HONORIFIC'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'HONORIFIC',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -921,10 +928,16 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						$this->prepareTypeList(),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_SOURCE_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
-					'defaultValue' => $this->defaultEntityData['TYPE_ID'] ?? null
+					'defaultValue' => $this->defaultEntityData['TYPE_ID'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'CONTACT_TYPE',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -937,10 +950,16 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						CCrmStatus::GetStatusList('SOURCE'),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_CONTACT_SOURCE_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
-					'defaultValue' => $this->defaultEntityData['SOURCE_ID'] ?? null
+					'defaultValue' => $this->defaultEntityData['SOURCE_ID'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'SOURCE',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -1144,6 +1163,25 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			}
 
 			$data = ['fieldInfo' => $fieldInfo];
+
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$data['innerConfig'] = \CCrmInstantEditorHelper::prepareInnerConfig(
+						$userField['USER_TYPE_ID'],
+						'crm.status.setItems',
+						$userField['SETTINGS']['ENTITY_TYPE'],
+						['']
+					);
+				}
+				unset($statusEntityId);
+			}
 
 			if(isset($visibilityConfig[$fieldName]))
 			{

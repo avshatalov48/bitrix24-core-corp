@@ -149,11 +149,16 @@ class Action extends Base
 				$listBySource[$sourceId] = [];
 			}
 
+			$currencyId = $row['CURRENCY_ID'];
+			if ($currencyId === 'BYN' && \CCrmCurrency::getAccountCurrencyID() === 'BYR')
+			{
+				$currencyId = 'BYR';
+			}
 			$listBySource[$sourceId][] = [
 				'CNT' => $row['CNT'],
 				'SUM' => \CCrmCurrency::convertMoney(
 					$row['SUM'],
-					$row['CURRENCY_ID'],
+					$currencyId,
 					\CCrmCurrency::getAccountCurrencyID()
 				)
 			];

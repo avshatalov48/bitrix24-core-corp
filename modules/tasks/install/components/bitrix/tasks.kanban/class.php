@@ -209,26 +209,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$params['SPRINT_SELECTED'] = 'N';
 			}
 		}
-		else
-		{
-			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
-			{
-				$sprint = \Bitrix\Tasks\Kanban\SprintTable::getSprint(
-					$params['GROUP_ID'],
-					$params['SPRINT_ID']
-				);
-				if ($sprint)
-				{
-					$params['SPRINT_ID'] = $sprint['ID'];
-				}
-				else
-				{
-					$params['SPRINT_ID'] = 0;
-				}
-				StagesTable::setWorkMode(StagesTable::WORK_MODE_SPRINT);
-				$params['SPRINT_SELECTED'] = 'Y';
-			}
-		}
 
 		// force set last user group
 		if ($params['PERSONAL'] == 'Y')
@@ -1868,7 +1848,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (\Bitrix\Tasks\Internals\Counter\Queue\Queue::getInstance()->isInQueue($userId))
+		if (\Bitrix\Tasks\Internals\Counter\Queue\Queue::isInQueue($userId))
 		{
 			return;
 		}
@@ -2302,7 +2282,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			return false;
 		}
 
-		return !Counter\Queue\Queue::getInstance()->isInQueue($this->userId);
+		return !Counter\Queue\Queue::isInQueue($this->userId);
 	}
 
 	/**
@@ -2695,7 +2675,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskItem = ItemTable::createItemObject();
 			$taskItem->setSourceId($taskId);
 			$taskItem->setEntityId($sprintId);
-			$taskItem->setSort(0);
 			$taskItem->setCreatedBy($fields['CREATED_BY']);
 			$taskItem->setItemType(ItemTable::TASK_TYPE);
 

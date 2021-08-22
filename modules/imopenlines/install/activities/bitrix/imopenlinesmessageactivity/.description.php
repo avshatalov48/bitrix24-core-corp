@@ -11,11 +11,9 @@ $arActivityDescription = array(
 		"ID" => "interaction",
 	),
 	'FILTER' => array(
-		'INCLUDE' => array(
-			array('crm'),
-		),
-	),
-	'FILTER' => array(
+		'INCLUDE' => [
+			['crm']
+		],
 		'EXCLUDE' => array(
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],

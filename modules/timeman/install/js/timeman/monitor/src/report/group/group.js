@@ -46,6 +46,7 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 			comment: '',
 			isCommentPopup: false,
 			isDetailPopup: false,
+			isReportCommentPopup: false,
 		};
 	},
 	computed:
@@ -53,6 +54,7 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 		...Vuex.mapGetters('monitor',[
 			'getWorkingEntities',
 			'getPersonalEntities',
+			'getReportComment',
 		]),
 		...Vuex.mapState({
 			monitor: state => state.monitor,
@@ -88,6 +90,10 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 					return this.personalTime;
 			}
 		},
+		reportComment()
+		{
+			return this.getReportComment;
+		},
 	},
 	methods:
 	{
@@ -117,6 +123,36 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 					onPopupDestroy: () =>
 					{
 						this.isCommentPopup = false;
+						this.popupInstance = null
+					}
+				},
+			});
+
+			//little hack for correct open several popups in a row.
+			this.$nextTick(() => this.popupInstance = popup);
+		},
+		onReportCommentClick()
+		{
+			this.isReportCommentPopup = true;
+			this.popupContent.title = this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_REPORT_COMMENT');
+			this.comment = this.reportComment;
+
+			if (this.popupInstance !== null)
+			{
+				this.popupInstance.destroy();
+				this.popupInstance = null;
+			}
+
+			const popup = PopupManager.create({
+				id: "bx-timeman-pwt-external-data",
+				targetContainer: document.body,
+				autoHide: true,
+				closeByEsc: true,
+				bindOptions: {position: "top"},
+				events: {
+					onPopupDestroy: () =>
+					{
+						this.isReportCommentPopup = false;
 						this.popupInstance = null
 					}
 				},
@@ -176,6 +212,12 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 
 			this.popupInstance.destroy();
 		},
+		saveReportComment()
+		{
+			this.$store.dispatch('monitor/setReportComment', this.comment);
+
+			this.popupInstance.destroy();
+		},
 		addNewLineToComment()
 		{
 			this.comment += '\n';
@@ -183,6 +225,14 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 		selectIntervalClick(event)
 		{
 			this.$emit('selectIntervalClick', event);
+		},
+		onIntervalSelected(privateCode)
+		{
+			this.$emit('intervalSelected', privateCode);
+		},
+		onIntervalUnselected()
+		{
+			this.$emit('intervalUnselected');
 		},
 	},
 	// language=Vue
@@ -200,6 +250,21 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 								  {{ formatSeconds(time) }}
 								</div>
 							</div>
+							<button 
+								v-if="this.displayedGroup.value === EntityGroup.working.value"
+								@click="onReportCommentClick"
+								class="bx-monitor-group-item-button-comment ui-icon ui-icon-xs"
+								:class="{
+									'ui-icon-service-imessage': reportComment, 
+									'ui-icon-service-light-imessage': !reportComment 
+								}"
+							>
+								<i 
+									:style="{
+										backgroundColor: reportComment ? '#77c18d' : 'transparent'
+									}"
+								/>
+							</button>
 						</div>
 						<button
 							v-if="(
@@ -237,6 +302,8 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 							:hint="item.hint !== '' ? item.hint : null"
 							@commentClick="onCommentClick"
 							@detailClick="onDetailClick"
+							@intervalSelected="onIntervalSelected"
+							@intervalUnselected="onIntervalUnselected"
 						/>
 					  
 					</transition-group>
@@ -250,7 +317,10 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 							<span class="bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text">
 								{{ popupContent.title }}
 							</span>
-							<span class="bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text">
+							<span 
+								v-if="isCommentPopup || isDetailPopup" 
+								class="bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text"
+							>
 								{{ popupContent.time }}
 							</span>
 						</div>
@@ -258,11 +328,15 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 							<textarea 
 								class="bx-timeman-monitor-popup-input"
 								id="bx-timeman-monitor-popup-input-comment"
-								v-if="isCommentPopup"
+								v-if="isCommentPopup || isReportCommentPopup"
 								v-model="comment"
 								v-bx-focus
 								:placeholder="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_ITEM_COMMENT')"
-								@keydown.enter.prevent.exact="saveComment(popupContent.privateCode)"
+								@keydown.enter.prevent.exact="
+									isCommentPopup 
+										? saveComment(popupContent.privateCode) 
+										: saveReportComment()
+								"
 								@keyup.shift.enter.exact="addNewLineToComment"
 							/>
 							<div v-if="isDetailPopup" class="bx-timeman-monitor-popup-items-container">
@@ -288,8 +362,12 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 						</div>
 						<div class="popup-window-buttons">
 							<button 
-								v-if="isCommentPopup" 
-								@click="saveComment(popupContent.privateCode)" 
+								v-if="isCommentPopup || isReportCommentPopup" 
+								@click="
+									isCommentPopup 
+										? saveComment(popupContent.privateCode) 
+										: saveReportComment()
+								"
 								class="ui-btn ui-btn-md ui-btn-primary"
 								:class="{'ui-btn-disabled': (comment.trim() === '' && popupContent.type === EntityType.absence)}"
 							>
@@ -298,7 +376,7 @@ export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group',
 								</span>
 							</button>
 							<button @click="popupInstance.destroy()" class="ui-btn ui-btn-md ui-btn-light">
-								<span v-if="isCommentPopup" class="ui-btn-text">
+								<span v-if="isCommentPopup || isReportCommentPopup" class="ui-btn-text">
 									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_CANCEL') }}
 								</span>
 								<span v-if="isDetailPopup" class="ui-btn-text">

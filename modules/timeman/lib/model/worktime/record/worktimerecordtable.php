@@ -12,6 +12,22 @@ use Bitrix\Timeman\Model\User\UserTable;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Service\DependencyManager;
 
+/**
+ * Class WorktimeRecordTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_WorktimeRecord_Query query()
+ * @method static EO_WorktimeRecord_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_WorktimeRecord_Result getById($id)
+ * @method static EO_WorktimeRecord_Result getList(array $parameters = array())
+ * @method static EO_WorktimeRecord_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordCollection wakeUpCollection($rows)
+ */
 class WorktimeRecordTable extends Main\ORM\Data\DataManager
 {
 	private static $writeCompatibleFields = true;

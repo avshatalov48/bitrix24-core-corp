@@ -6,10 +6,12 @@ import {Item} from '../item/item';
 import {RequestSender} from './request.sender';
 import {DomBuilder} from './dom.builder';
 import {EntityStorage} from './entity.storage';
+import {EntityCounters} from './entity.counters';
 import {TagSearcher} from './tag.searcher';
 import {ItemMover} from './item.mover';
 import {SubTasksManager} from './subtasks.manager';
-import {Counters} from './counters';
+
+import {Entity} from '../entity/entity';
 
 import type {ItemParams} from '../item/item';
 import type {ItemsSortInfo} from './item.mover';
@@ -18,10 +20,10 @@ type Params = {
 	requestSender: RequestSender,
 	domBuilder: DomBuilder,
 	entityStorage: EntityStorage,
+	entityCounters: EntityCounters,
 	tagSearcher: TagSearcher,
 	itemMover: ItemMover,
 	subTasksCreator: SubTasksManager,
-	counters: Counters,
 	currentUserId: number
 }
 
@@ -36,10 +38,10 @@ export class PullItem
 		this.requestSender = params.requestSender;
 		this.domBuilder = params.domBuilder;
 		this.entityStorage = params.entityStorage;
+		this.entityCounters = params.entityCounters;
 		this.tagSearcher = params.tagSearcher;
 		this.itemMover = params.itemMover;
 		this.subTasksCreator = params.subTasksCreator;
-		this.counters = params.counters;
 		this.currentUserId = params.currentUserId;
 
 		this.listToAddAfterUpdate = new Map();
@@ -72,6 +74,8 @@ export class PullItem
 	{
 		const item = new Item(itemData);
 
+		item.cleanTaskCounts();
+
 		this.setDelayedAdd(item);
 
 		this.externalAdd(item)
@@ -84,6 +88,8 @@ export class PullItem
 	onItemUpdated(itemData: ItemParams)
 	{
 		const item = new Item(itemData);
+
+		item.cleanTaskCounts();
 
 		if (this.isDelayedAdd(item))
 		{
@@ -187,7 +193,6 @@ export class PullItem
 					}).then((response) => {
 						const tmpItem = new Item(response.data.itemData);
 						this.updateItem(tmpItem, item);
-						this.counters.updateState(response.data.counters);
 					}).catch((response) => {
 						this.requestSender.showErrorAlert(response);
 					});
@@ -231,6 +236,8 @@ export class PullItem
 			item.onAfterAppend(entity.getListItemsNode());
 			entity.setItem(item);
 
+			this.updateEntityCounters(entity);
+
 			item.getTags().forEach((tag) => {
 				this.tagSearcher.addTagToSearcher(tag);
 			});
@@ -270,18 +277,24 @@ export class PullItem
 				return;
 			}
 
+			const targetEntityId = tmpItem.getEntityId();
+			const sourceEntityId = item.getEntityId();
+			const targetEntity = this.entityStorage.findEntityByEntityId(targetEntityId);
+			const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
+
 			if (tmpItem.getEntityId() !== item.getEntityId())
 			{
-				const targetEntityId = tmpItem.getEntityId();
-				const sourceEntityId = item.getEntityId();
-				const targetEntity = this.entityStorage.findEntityByEntityId(targetEntityId);
-				const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
 				if (targetEntity && sourceEntity)
 				{
 					this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
 					this.entityStorage.recalculateItemsSort();
 				}
 			}
+			else
+			{
+				this.updateEntityCounters(targetEntity);
+			}
+
 			item.updateYourself(tmpItem);
 		}
 		else
@@ -293,12 +306,29 @@ export class PullItem
 				{
 					parentItem.updateSubTasksPoints(tmpItem.getSourceId(), tmpItem.getStoryPoints());
 				}
+
+				const targetEntityId = tmpItem.getEntityId();
+				const targetEntity = this.entityStorage.findEntityByEntityId(targetEntityId);
+				this.updateEntityCounters(targetEntity);
 			}
 			else
 			{
 				this.addItemToEntity(tmpItem);
 			}
 		}
+	}
+
+	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)
+	{
+		const entities = new Map();
+
+		entities.set(sourceEntity.getId(), sourceEntity);
+		if (endEntity)
+		{
+			entities.set(endEntity.getId(), endEntity);
+		}
+
+		this.entityCounters.updateCounters(entities);
 	}
 
 	onCalculateSort(baseEvent: BaseEvent)

@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class DocumentInfoTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DocumentInfo_Query query()
+ * @method static EO_DocumentInfo_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DocumentInfo_Result getById($id)
+ * @method static EO_DocumentInfo_Result getList(array $parameters = array())
+ * @method static EO_DocumentInfo_Entity getEntity()
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection createCollection()
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo wakeUpObject($row)
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection wakeUpCollection($rows)
+ */
 final class DocumentInfoTable extends DataManager
 {
 	public const CONTENT_STATUS_INIT = 0;

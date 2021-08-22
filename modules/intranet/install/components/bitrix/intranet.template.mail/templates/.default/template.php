@@ -224,7 +224,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 																<img src="<?=$arResult["USER_PHOTO"]?>" width="40" height="40" alt="">
 															</td>
 															<?endif?>
-															<td valign="top" style="word-break: break-all; vertical-align: top;width: 464px; max-width: 100%;" <?if (!isset($arResult["USER_PHOTO"]) || empty($arResult["USER_PHOTO"])):?>colspan="2" <?endif?>>
+															<td valign="top" style="vertical-align: top;width: 464px; max-width: 100%;" <?if (!isset($arResult["USER_PHOTO"]) || empty($arResult["USER_PHOTO"])):?>colspan="2" <?endif?>>
 																<span style="display: block; border-radius: 14px; padding: 13px 16px; background-color: #fbfcfc;text-align: left;">
 																	<span style="display: block; font-size: 16px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif; color: #525c69;text-align: left;">
 																		<?=htmlspecialcharsback($arParams["MESSAGE"])?>
@@ -324,7 +324,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 																		<img src="<?=$data["USER_PHOTO"]?>" width="40" height="40" alt="">
 																	</td>
 																<?endif?>
-																<td valign="top" style="word-break: break-all; vertical-align: top;width: 464px; max-width: 100%;" <?if (!isset($data["USER_PHOTO"]) || empty($data["USER_PHOTO"])):?>colspan="2" <?endif?>>
+																<td valign="top" style="vertical-align: top;width: 464px; max-width: 100%;" <?if (!isset($data["USER_PHOTO"]) || empty($data["USER_PHOTO"])):?>colspan="2" <?endif?>>
 																	<span style="display: block; border-radius: 14px; padding: 13px 16px; background-color: #fbfcfc;text-align: left;">
 																		<span style="display: block; font-size: 16px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif; color: #525c69;text-align: left;">
 																			<?=($data["MESSAGE"])?>

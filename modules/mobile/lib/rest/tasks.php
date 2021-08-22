@@ -4,8 +4,10 @@ namespace Bitrix\Mobile\Rest;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Kanban\TimeLineTable;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
 
 /**
  * Class Tasks
@@ -38,6 +40,10 @@ class Tasks extends \IRestService
 			],
 			'mobile.task.link.params.get' => [
 				'callback' => [__CLASS__, 'getParamsToCreateLink'],
+				'options' => ['private' => false],
+			],
+			'mobile.tasks.efficiency.get' => [
+				'callback' => [__CLASS__, 'getEfficiency'],
 				'options' => ['private' => false],
 			],
 		];
@@ -163,5 +169,55 @@ class Tasks extends \IRestService
 		$taskId = (int)$params['taskId'];
 
 		return \CMobileHelper::getParamsToCreateTaskLink($taskId);
+	}
+
+	public static function getEfficiency(array $params)
+	{
+		$modules = ['mobile', 'tasks', 'socialnetwork'];
+		foreach ($modules as $name)
+		{
+			if (!Loader::includeModule($name))
+			{
+				throw new \Bitrix\Rest\RestException(
+					"Module {$name} is not installed",
+					'SERVER_ERROR',
+					\CRestServer::STATUS_WRONG_REQUEST
+				);
+			}
+		}
+
+		$userId = (int)$params['userId'];
+		$groupId = (int)$params['groupId'];
+
+		if (!$userId && !$groupId)
+		{
+			throw new \Bitrix\Rest\RestException(
+				'No data to get efficiency',
+				'DATA_ERROR',
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		$currentUserId = User::getId();
+		if (!$userId)
+		{
+			$userId = $currentUserId;
+		}
+
+		if (
+			$currentUserId !== $userId
+			&& !User::isSuper($currentUserId)
+			&& !User::isBossRecursively($currentUserId, $userId)
+		)
+		{
+			return false;
+		}
+
+		if ($groupId && !SocialNetwork\Group::canReadGroupTasks($userId, $groupId))
+		{
+			return false;
+		}
+
+		return Effective::getAverageEfficiency(null, null, $userId, $groupId);
 	}
 }

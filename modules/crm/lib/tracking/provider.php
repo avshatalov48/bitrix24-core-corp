@@ -119,7 +119,7 @@ class Provider
 		{
 			foreach ($items as $itemId => $item)
 			{
-				if (in_array($itemId, ['calltracking', 'crm_shop']))
+				if (in_array($itemId, ['calltracking', 'crm_shop', 'baseconnector']))
 				{
 					continue;
 				}

@@ -27,20 +27,47 @@ BX.namespace('Tasks.Component');
 			{
 				this.getManager();
 
+				var roleMap = {
+					'AUDITORS': 'auditor',
+					'ACCOMPLICES': 'accomplice',
+					'RESPONSIBLE': 'responsible'
+				};
+
+				var self = this;
+
 				if (this.option('role') === 'AUDITORS' || this.option('role') === 'ACCOMPLICES')
 				{
-					var self = this;
-					var roleMap = {
-						'AUDITORS': 'auditor',
-						'ACCOMPLICES': 'accomplice'
-					};
-
 					BX.Event.EventEmitter.subscribe(
 						'BX.Tasks.CheckListItem:' + roleMap[this.option('role')] + 'Added',
 						function(data)
 						{
 							self.getManager().onSelectorItemSelected(data.data);
 							self.onChangeByUser();
+						}
+					);
+				}
+
+				if (roleMap[this.option('role')])
+				{
+					BX.Event.EventEmitter.subscribe(
+						'BX.Tasks.MemberSelector:' + roleMap[this.option('role')] + 'Selected',
+						function(data)
+						{
+							self.getManager().onSelectorItemSelected(data.data);
+							self.onChangeByUser();
+						}
+					);
+
+					BX.Event.EventEmitter.subscribe(
+						'BX.Tasks.MemberSelector:' + roleMap[this.option('role')] + 'Deselected',
+						function(data)
+						{
+							self.getManager().onSelectorItemDeselected(data.data);
+
+							if (self.option('role') === 'AUDITORS' || self.option('role') === 'ACCOMPLICES')
+							{
+								self.onChangeByUser();
+							}
 						}
 					);
 				}
@@ -193,6 +220,7 @@ BX.namespace('Tasks.Component');
 	});
 
 	BX.Tasks.Component.TasksWidgetMemberSelectorView.Manager = BX.Tasks.UserItemSet.extend({
+		dialog: null,
 		sys: {
 			code: 'mem-sel-is'
 		},
@@ -215,6 +243,187 @@ BX.namespace('Tasks.Component');
 				this.callConstruct(BX.Tasks.UserItemSet);
 
 				this.fireUserTriggeredChangeDebounce = BX.debounce(this.fireUserTriggeredChangeDebounce, 800);
+
+				this.initDialog();
+			},
+
+			initDialog: function()
+			{
+				this.dialog = new BX.UI.EntitySelector.Dialog({
+					enableSearch: true,
+					multiple: this.option('max') > 1,
+					context: 'TASKS_MEMBER_SELECTOR_VIEW_' + this.option('role'),
+					entities: this.getDialogEntities(),
+					preselectedItems: this.getDialogSelectedItems(),
+					undeselectedItems: this.getDialogUndeselectedItems(),
+					events: {
+						'Item:onSelect': function(event) {
+							var item = event.getData().item;
+							var userData = this.prepareUserData(item);
+
+							var events = {
+								ACCOMPLICES: 'accomplice',
+								AUDITORS: 'auditor',
+								RESPONSIBLE: 'responsible'
+							}
+
+							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ events[this.option('role')] +'Selected', userData);
+						}.bind(this),
+						'Item:onDeselect': function(event)
+						{
+							var item = event.getData().item;
+							var userData = this.prepareUserData(item);
+
+							var events = {
+								ACCOMPLICES: 'accomplice',
+								AUDITORS: 'auditor',
+								RESPONSIBLE: 'responsible'
+							}
+
+							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ events[this.option('role')] +'Deselected', userData);
+						}.bind(this)
+					}
+				});
+
+				var targetNodes = this.scope().getElementsByClassName('js-id-mem-sel-is-control');
+				for (var i = 0; i < targetNodes.length; i++)
+				{
+					var node = targetNodes[i];
+					node.addEventListener('click', function(node) {
+						var userType = this.option('role');
+						var taskLimitExceeded = this.option('taskLimitExceeded');
+
+						if ((userType === 'ACCOMPLICES' || userType === 'AUDITORS') && taskLimitExceeded)
+						{
+							BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+							return;
+						}
+
+						this.dialog.setTargetNode(node);
+						this.dialog.show();
+					}.bind(this));
+				}
+			},
+
+			getDialogUndeselectedItems: function()
+			{
+				var data = this.option('data');
+				var items = [];
+
+				if (
+					this.option('min') !== 1
+					|| this.option('max') !== 1
+				)
+				{
+					return;
+				}
+
+				for (var i in data)
+				{
+					items.push(this.prepareItemData(data[i]));
+				}
+
+				return items;
+			},
+
+			getDialogSelectedItems: function()
+			{
+				var data = this.option('data');
+				var items = [];
+
+				for (var i in data)
+				{
+					items.push(this.prepareItemData(data[i]));
+				}
+
+				return items;
+			},
+
+			prepareItemData: function(data)
+			{
+				var id = 0;
+
+				if (data.ID)
+				{
+					id = data.ID;
+				}
+				else if (data.id)
+				{
+					id = data.id;
+				}
+
+				var mode = this.option('mode');
+				return [(mode === 'group') ? 'project' : 'user', id];
+			},
+
+			getDialogEntities: function()
+			{
+				var mode = this.option('mode');
+				var entities = [];
+
+				if (mode === 'user')
+				{
+					entities = [
+						{
+							id: 'user',
+							options: {
+								emailUsers: true,
+								networkUsers: true,
+								extranetUsers: true,
+								inviteGuestLink: true,
+								myEmailUsers: true
+							}
+						},
+						{
+							id: 'department',
+						}
+					];
+				}
+				else if (mode === 'group')
+				{
+					entities = [
+						{
+							id: 'project',
+						}
+					];
+				}
+
+				return entities;
+			},
+
+			prepareUserData: function(user)
+			{
+				var role = this.option('role');
+				var customData = user.getCustomData();
+				var entityType = user.getEntityType();
+				var mode = this.option('mode');
+
+				var types = {
+					ACCOMPLICES: 'A',
+					AUDITORS: 'U',
+					RESPONSIBLE: 'R'
+				};
+
+				return {
+					AVATAR: user.avatar,
+					DESCRIPTION: '',
+					entityType: types[role],
+					id: user.getId(),
+					name: customData.get('name'),
+					lastName: customData.get('lastName'),
+					email: customData.get('email'),
+					nameFormatted: BX.Text.encode(user.getTitle()),
+					networkId: '',
+					url: user.getLink(),
+					user_type: entityType,
+					type: {
+						crmemail: false,
+						extranet: (entityType === 'extranet'),
+						email: (entityType === 'email'),
+						network: (entityType === 'network')
+					},
+					VALUE: ((mode === 'group') ? 'SG' : 'U') + user.getId()
+				};
 			},
 
 			prepareData: function(data)
@@ -270,6 +479,32 @@ BX.namespace('Tasks.Component');
 			fireUserTriggeredChange: function()
 			{
 				this.fireEvent('change-by-user');
+			},
+
+			deleteItem: function (value, parameters)
+			{
+				if (this.callMethod(BX.Tasks.UserItemSet, 'deleteItem', arguments))
+				{
+					this.unselectDialogItem(value);
+					return true;
+				}
+
+				return false;
+			},
+
+			unselectDialogItem: function(value)
+			{
+				if (typeof value !== 'object')
+				{
+					return;
+				}
+
+				if (!this.dialog)
+				{
+					return;
+				}
+
+				this.dialog.getItem(this.prepareItemData(value.data())).deselect();
 			}
 		}
 	});

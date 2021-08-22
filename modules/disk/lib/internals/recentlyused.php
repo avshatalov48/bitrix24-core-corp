@@ -18,7 +18,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk\Internals
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RecentlyUsed_Query query()
+ * @method static EO_RecentlyUsed_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RecentlyUsed_Result getById($id)
+ * @method static EO_RecentlyUsed_Result getList(array $parameters = array())
+ * @method static EO_RecentlyUsed_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed_Collection wakeUpCollection($rows)
+ */
 
 final class RecentlyUsedTable extends DataManager
 {

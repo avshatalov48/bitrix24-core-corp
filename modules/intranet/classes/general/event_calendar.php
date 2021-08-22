@@ -1066,10 +1066,14 @@ class CEventCalendar
 							$con = $_POST['connections'][$i];
 							if ($con['id'] <= 0) // It's new connection
 							{
-								if ($con['del'] == 'Y')
+								if ($con['del'] === 'Y')
+								{
 									continue;
+								}
 								if (!CEventCalendar::CheckCalDavUrl($con['link'], $con['user_name'], $con['pass']))
+								{
 									return CEventCalendar::ThrowError(GetMessage("EC_CALDAV_URL_ERROR"));
+								}
 
 								$id = CDavConnection::Add(array(
 									"ENTITY_TYPE" => 'user',
@@ -1081,7 +1085,7 @@ class CEventCalendar
 									"SERVER_PASSWORD" => $con['pass']
 								));
 							}
-							elseif ($con['del'] != 'Y') // Edit connection
+							elseif ($con['del'] !== 'Y') // Edit connection
 							{
 								$arFields = array(
 									"NAME" => $con['name'],
@@ -1096,14 +1100,14 @@ class CEventCalendar
 								if ($con['pass'] !== 'bxec_not_modify_pass')
 									$arFields["SERVER_PASSWORD"] = $con['pass'];
 
-								CDavConnection::Update(intval($con['id']), $arFields);
+								CDavConnection::Update($con['id'], $arFields);
 							}
 							else
 							{
-								CDavConnection::Delete(intval($con['id']));
-								$db_res = CUserTypeEntity::GetList(array('ID'=>'ASC'), array(
+								CDavConnection::Delete($con['id']);
+								$db_res = CUserTypeEntity::GetList(['ID'=>'ASC'], [
 									"ENTITY_ID" => "IBLOCK_".$this->iblockId."_SECTION",
-									"FIELD_NAME" => "UF_BXDAVEX_CDAV_COL")
+									"FIELD_NAME" => "UF_BXDAVEX_CDAV_COL"]
 								);
 								if ($db_res && ($r = $db_res->GetNext()))
 								{
@@ -6948,7 +6952,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 
 	public static function GetCalendarModificationLabel($calendarId)
 	{
-		list($iblockId, $sectionId, $subSectionId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId] = $calendarId;
 
 		$arFilter = array(
 			"IBLOCK_ID" => $iblockId,
@@ -6968,7 +6972,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 
 	public static function DeleteCalendarEvent($calendarId, $eventId, $userId)
 	{
-		list($iblockId, $sectionId, $subSectionId, $ownerType, $ownerId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId, $ownerType, $ownerId] = $calendarId;
 
 		return CECEvent::Delete(array(
 			'id' => $eventId,
@@ -6983,7 +6987,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 
 	public static function GetCalendarEventsList($calendarId, $arFilter = array())
 	{
-		list($iblockId, $sectionId, $subSectionId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId] = $calendarId;
 
 		$arSelect = array("ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "NAME", "ACTIVE_FROM", "ACTIVE_TO", "DETAIL_TEXT", "DETAIL_TEXT_TYPE", "TIMESTAMP_X", "DATE_CREATE", "CREATED_BY", "XML_ID", "PROPERTY_*");
 
@@ -7046,7 +7050,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 	// return array('bAccess' => true/false, 'bReadOnly' => true/false, 'privateStatus' => 'time'/'title');
 	public static function GetUserPermissionsForCalendar($calendarId, $userId)
 	{
-		list($iblockId, $sectionId, $subSectionId, $ownerType, $owberId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId, $ownerType, $owberId] = $calendarId;
 
 		$ownerType = mb_strtoupper($ownerType);
 
@@ -7106,7 +7110,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 
 	public static function ModifyEvent($calendarId, $arFields)
 	{
-		list($iblockId, $sectionId, $subSectionId, $ownerType, $ownerId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId, $ownerType, $ownerId] = $calendarId;
 		$ownerType = mb_strtoupper($ownerType);
 
 		$cal = self::GetInstance();
@@ -7162,7 +7166,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 
 	public static function GetCalendarList($calendarId)
 	{
-		list($iblockId, $sectionId, $subSectionId, $ownerType) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId, $ownerType] = $calendarId;
 
 		$arFilter = array('IBLOCK_ID' => $iblockId, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => 'Y');
 		if (empty($ownerType))
@@ -7345,7 +7349,7 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		//	)
 		//)
 
-		list($iblockId, $sectionId, $subSectionId, $entityType, $entityId) = $calendarId;
+		[$iblockId, $sectionId, $subSectionId, $entityType, $entityId] = $calendarId;
 		$entityType = mb_strtoupper($entityType);
 
 		if ($connectionType == 'exchange')

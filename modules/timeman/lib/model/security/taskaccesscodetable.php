@@ -5,6 +5,22 @@ use \Bitrix\Main;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Fields;
 
+/**
+ * Class TaskAccessCodeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TaskAccessCode_Query query()
+ * @method static EO_TaskAccessCode_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TaskAccessCode_Result getById($id)
+ * @method static EO_TaskAccessCode_Result getList(array $parameters = array())
+ * @method static EO_TaskAccessCode_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Security\TaskAccessCode createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Security\EO_TaskAccessCode_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Security\TaskAccessCode wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Security\EO_TaskAccessCode_Collection wakeUpCollection($rows)
+ */
 class TaskAccessCodeTable extends Main\ORM\Data\DataManager
 {
 	public static function getObjectClass()

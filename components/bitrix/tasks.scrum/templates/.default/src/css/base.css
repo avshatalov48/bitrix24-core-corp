@@ -96,100 +96,14 @@
 	padding: 4px;
 }
 
-/** page **/
-.tasks-pagetitle-view .pagetitle-below,
-.tasks-pagetitle-view .ui-side-panel-wrap-below {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
-	box-sizing: border-box;
-	padding: 0 5px 0 13px;
-	border-top: 1px solid #dce2e6;
-}
-
-.tasks-pagetitle-view .pagetitle-below { min-height: 53px }
-
-.tasks-scrum-switcher {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	flex-grow: 0;
-	-ms-flex-align: center;
-	height: 53px;
-	color: #545c6a;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
-	-webkit-box-align: center;
-	align-items: center;
-}
-
-.tasks-scrum-switcher-views {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-flex: 0;
-	-ms-flex-positive: 0;
-	flex-grow: 0;
-}
-
-.tasks-scrum-switcher-tab,
-.tasks-scrum-switcher-tab:link,
-.tasks-scrum-switcher-tab:visited {
-	margin: 0 18px 0 0;
-	color: #545c6a;
-	text-decoration: none;
-	white-space: nowrap;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
-	letter-spacing: -0.32px;
-	cursor: pointer;
-	transition: color .3s;
-}
-
-.bitrix24-light-theme .tasks-scrum-switcher-tab,
-.bitrix24-light-theme .tasks-scrum-switcher-tab:link,
-.bitrix24-light-theme .tasks-scrum-switcher-tab:visited {
-	color: #fff;
-}
-
-.bitrix24-light-theme .tasks-scrum-switcher-tab:hover {
-	color: #fff;
-}
-
-.tasks-scrum-switcher-tab:empty { display: none; }
-
-.tasks-scrum-switcher-tab:hover { color: #1f2127; }
-
-.tasks-scrum-switcher-views .tasks-scrum-switcher-tab-active {
-	border-bottom: 2px solid #b1b8bf;
-}
-
-.bitrix24-light-theme .tasks-scrum-switcher-views .tasks-scrum-switcher-tab-active {
-	color: rgba(255, 255, 255, 0.5);
-	border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-	color: #fff;
-}
-
 .tasks-scrum-sprint-stats {
-	width: 100%;
-	text-align: center;
+	display: inline-flex;
+	padding: 8px 6px;
 	color: #fff;
 	text-decoration: none;
 	font-size: 13px;
 	font-weight: bold;
-}
-
-.tasks-scrum-buttons {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	white-space: nowrap;
 	margin-left: auto;
-}
-
-.tasks-scrum-button-container {
-	padding-left: 10px;
 }
 
 .tasks-scrum-entity-items-faded {
@@ -221,4 +135,8 @@
 
 .tasks-scrum-project-dod-options {
 	margin-top: 15px;
+}
+
+.tasks-scrum-entity-items-loader {
+	overflow: hidden;
 }

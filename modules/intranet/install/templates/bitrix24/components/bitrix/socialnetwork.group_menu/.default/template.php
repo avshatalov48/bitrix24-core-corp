@@ -9,6 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
 use Bitrix\Main\Loader;
@@ -33,6 +34,9 @@ $groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socia
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."profile-menu-mode");
+
+$group = Workgroup::getById($arResult['Group']['ID']);
+$isScrumProject = ($group && $group->isScrumProject());
 
 if (!$arResult['inIframe'] || $arResult['IS_CURRENT_PAGE_FIRST'])
 {
@@ -211,7 +215,6 @@ if (
 							}
 						}
 
-
 						if ($groupMember)
 						{
 							$APPLICATION->includeComponent(
@@ -229,12 +232,7 @@ if (
 
 						if ($arResult['CanView']['chat'])
 						{
-							?>
-							<button id="group_menu_chat_button" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"
-									title="<?= Loc::getMessage('SONET_SGM_T_CHAT_TITLE_PROJECT') ?>"
-									onclick="top.BXIM.openMessenger('sg<?= (int)$arResult['Group']['ID'] ?>');"
-							></button>
-							<?
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
 						}
 
 						if ($groupMember)
@@ -281,9 +279,7 @@ if (
 					else
 					{
 						$isDisabled = false;
-						if (
-							!in_array($key, ['general', 'tasks', 'calendar', 'files'], true)
-						)
+						if (!in_array($key, ['general', 'tasks', 'calendar', 'files'], true))
 						{
 							$isDisabled = true;
 						}
@@ -326,6 +322,11 @@ if (
 						$item['ID'] = 'view_all';
 						$item['COUNTER'] = $arResult['Tasks']['Counters']['view_all'];
 						$menuItems[] = $item;
+
+						if ($isScrumProject)
+						{
+							continue;
+						}
 
 						$defaultRoleId = $arResult['Tasks']['DefaultRoleId'];
 

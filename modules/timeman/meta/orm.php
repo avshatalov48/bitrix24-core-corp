@@ -295,18 +295,6 @@ namespace Bitrix\Timeman\Model {
 }
 namespace Bitrix\Timeman\Model {
 	/**
-	 * @method static EO_Absence_Query query()
-	 * @method static EO_Absence_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Absence_Result getById($id)
-	 * @method static EO_Absence_Result getList(array $parameters = array())
-	 * @method static EO_Absence_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\EO_Absence createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\EO_Absence_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\EO_Absence wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\EO_Absence_Collection wakeUpCollection($rows)
-	 */
-	class AbsenceTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -664,18 +652,6 @@ namespace Bitrix\Timeman\Model {
 }
 namespace Bitrix\Timeman\Model {
 	/**
-	 * @method static EO_Entries_Query query()
-	 * @method static EO_Entries_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Entries_Result getById($id)
-	 * @method static EO_Entries_Result getList(array $parameters = array())
-	 * @method static EO_Entries_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\EO_Entries createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\EO_Entries_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\EO_Entries wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\EO_Entries_Collection wakeUpCollection($rows)
-	 */
-	class EntriesTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -700,6 +676,1002 @@ namespace Bitrix\Timeman\Model {
 	 * @method \Bitrix\Timeman\Model\EO_Entries_Collection wakeUpCollection($rows)
 	 */
 	class EO_Entries_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable:timeman/lib/model/monitor/monitorabsencetable.php:19e4e42c1501aa4ece32a198c426a417 */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorAbsence
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence setUserLogId(\int|\Bitrix\Main\DB\SqlExpression $userLogId)
+	 * @method bool hasUserLogId()
+	 * @method bool isUserLogIdFilled()
+	 * @method bool isUserLogIdChanged()
+	 * @method \int remindActualUserLogId()
+	 * @method \int requireUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence resetUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence unsetUserLogId()
+	 * @method \int fillUserLogId()
+	 * @method \Bitrix\Main\Type\DateTime getTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence setTimeStart(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timeStart)
+	 * @method bool hasTimeStart()
+	 * @method bool isTimeStartFilled()
+	 * @method bool isTimeStartChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime requireTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence resetTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence unsetTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime fillTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime getTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence setTimeFinish(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timeFinish)
+	 * @method bool hasTimeFinish()
+	 * @method bool isTimeFinishFilled()
+	 * @method bool isTimeFinishChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualTimeFinish()
+	 * @method \Bitrix\Main\Type\DateTime requireTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence resetTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence unsetTimeFinish()
+	 * @method \Bitrix\Main\Type\DateTime fillTimeFinish()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence wakeUp($data)
+	 */
+	class EO_MonitorAbsence {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorAbsence_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getUserLogIdList()
+	 * @method \int[] fillUserLogId()
+	 * @method \Bitrix\Main\Type\DateTime[] getTimeStartList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime[] getTimeFinishList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillTimeFinish()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorAbsence_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorAbsence_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorAbsence_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection fetchCollection()
+	 */
+	class EO_MonitorAbsence_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorAbsence_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorAbsence_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorCommentTable:timeman/lib/model/monitor/monitorcommenttable.php:8e7085bf73fbd7f40e79c457d3bb8f96 */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorComment
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorCommentTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment setUserLogId(\int|\Bitrix\Main\DB\SqlExpression $userLogId)
+	 * @method bool hasUserLogId()
+	 * @method bool isUserLogIdFilled()
+	 * @method bool isUserLogIdChanged()
+	 * @method \int remindActualUserLogId()
+	 * @method \int requireUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment resetUserLogId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment unsetUserLogId()
+	 * @method \int fillUserLogId()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment resetUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment setComment(\string|\Bitrix\Main\DB\SqlExpression $comment)
+	 * @method bool hasComment()
+	 * @method bool isCommentFilled()
+	 * @method bool isCommentChanged()
+	 * @method \string remindActualComment()
+	 * @method \string requireComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment resetComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment unsetComment()
+	 * @method \string fillComment()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment wakeUp($data)
+	 */
+	class EO_MonitorComment {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorCommentTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorCommentTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorComment_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getUserLogIdList()
+	 * @method \int[] fillUserLogId()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getCommentList()
+	 * @method \string[] fillComment()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorComment $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorComment $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorComment $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorComment_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorCommentTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorCommentTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorComment_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorComment_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection fetchCollection()
+	 */
+	class EO_MonitorComment_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorComment_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorEntityTable:timeman/lib/model/monitor/monitorentitytable.php:029579795cd530f781fad77142ce8895 */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorEntity
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorEntityTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \string getType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity setType(\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \string remindActualType()
+	 * @method \string requireType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity resetType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity unsetType()
+	 * @method \string fillType()
+	 * @method \string getTitle()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
+	 * @method bool hasTitle()
+	 * @method bool isTitleFilled()
+	 * @method bool isTitleChanged()
+	 * @method \string remindActualTitle()
+	 * @method \string requireTitle()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity resetTitle()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity unsetTitle()
+	 * @method \string fillTitle()
+	 * @method \string getPublicCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity setPublicCode(\string|\Bitrix\Main\DB\SqlExpression $publicCode)
+	 * @method bool hasPublicCode()
+	 * @method bool isPublicCodeFilled()
+	 * @method bool isPublicCodeChanged()
+	 * @method \string remindActualPublicCode()
+	 * @method \string requirePublicCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity resetPublicCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity unsetPublicCode()
+	 * @method \string fillPublicCode()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity wakeUp($data)
+	 */
+	class EO_MonitorEntity {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorEntityTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorEntityTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorEntity_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \string[] getTypeList()
+	 * @method \string[] fillType()
+	 * @method \string[] getTitleList()
+	 * @method \string[] fillTitle()
+	 * @method \string[] getPublicCodeList()
+	 * @method \string[] fillPublicCode()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorEntity $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorEntity $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorEntity $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorEntity_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorEntityTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorEntityTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorEntity_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorEntity_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity_Collection fetchCollection()
+	 */
+	class EO_MonitorEntity_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorEntity_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorEntity_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable:timeman/lib/model/monitor/monitorreportcommenttable.php:f7f261df06d0d6c86b15b50c739fd40b */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorReportComment
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \Bitrix\Main\Type\Date getDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment setDateLog(\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $dateLog)
+	 * @method bool hasDateLog()
+	 * @method bool isDateLogFilled()
+	 * @method bool isDateLogChanged()
+	 * @method \Bitrix\Main\Type\Date remindActualDateLog()
+	 * @method \Bitrix\Main\Type\Date requireDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment resetDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment unsetDateLog()
+	 * @method \Bitrix\Main\Type\Date fillDateLog()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment resetUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment setDesktopCode(\string|\Bitrix\Main\DB\SqlExpression $desktopCode)
+	 * @method bool hasDesktopCode()
+	 * @method bool isDesktopCodeFilled()
+	 * @method bool isDesktopCodeChanged()
+	 * @method \string remindActualDesktopCode()
+	 * @method \string requireDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment resetDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment unsetDesktopCode()
+	 * @method \string fillDesktopCode()
+	 * @method \string getComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment setComment(\string|\Bitrix\Main\DB\SqlExpression $comment)
+	 * @method bool hasComment()
+	 * @method bool isCommentFilled()
+	 * @method bool isCommentChanged()
+	 * @method \string remindActualComment()
+	 * @method \string requireComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment resetComment()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment unsetComment()
+	 * @method \string fillComment()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment wakeUp($data)
+	 */
+	class EO_MonitorReportComment {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorReportComment_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \Bitrix\Main\Type\Date[] getDateLogList()
+	 * @method \Bitrix\Main\Type\Date[] fillDateLog()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getDesktopCodeList()
+	 * @method \string[] fillDesktopCode()
+	 * @method \string[] getCommentList()
+	 * @method \string[] fillComment()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorReportComment_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorReportCommentTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorReportComment_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorReportComment_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment_Collection fetchCollection()
+	 */
+	class EO_MonitorReportComment_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorReportComment_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorReportComment_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserChartTable:timeman/lib/model/monitor/monitorusercharttable.php:bfe97655a4940c1f9624135ffb5b65c9 */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorUserChart
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorUserChartTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \Bitrix\Main\Type\Date getDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setDateLog(\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $dateLog)
+	 * @method bool hasDateLog()
+	 * @method bool isDateLogFilled()
+	 * @method bool isDateLogChanged()
+	 * @method \Bitrix\Main\Type\Date remindActualDateLog()
+	 * @method \Bitrix\Main\Type\Date requireDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetDateLog()
+	 * @method \Bitrix\Main\Type\Date fillDateLog()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setDesktopCode(\string|\Bitrix\Main\DB\SqlExpression $desktopCode)
+	 * @method bool hasDesktopCode()
+	 * @method bool isDesktopCodeFilled()
+	 * @method bool isDesktopCodeChanged()
+	 * @method \string remindActualDesktopCode()
+	 * @method \string requireDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetDesktopCode()
+	 * @method \string fillDesktopCode()
+	 * @method \string getGroupType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setGroupType(\string|\Bitrix\Main\DB\SqlExpression $groupType)
+	 * @method bool hasGroupType()
+	 * @method bool isGroupTypeFilled()
+	 * @method bool isGroupTypeChanged()
+	 * @method \string remindActualGroupType()
+	 * @method \string requireGroupType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetGroupType()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetGroupType()
+	 * @method \string fillGroupType()
+	 * @method \Bitrix\Main\Type\DateTime getTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setTimeStart(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timeStart)
+	 * @method bool hasTimeStart()
+	 * @method bool isTimeStartFilled()
+	 * @method bool isTimeStartChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime requireTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetTimeStart()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime fillTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime getTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart setTimeFinish(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timeFinish)
+	 * @method bool hasTimeFinish()
+	 * @method bool isTimeFinishFilled()
+	 * @method bool isTimeFinishChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualTimeFinish()
+	 * @method \Bitrix\Main\Type\DateTime requireTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart resetTimeFinish()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unsetTimeFinish()
+	 * @method \Bitrix\Main\Type\DateTime fillTimeFinish()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart wakeUp($data)
+	 */
+	class EO_MonitorUserChart {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorUserChartTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorUserChartTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorUserChart_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \Bitrix\Main\Type\Date[] getDateLogList()
+	 * @method \Bitrix\Main\Type\Date[] fillDateLog()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getDesktopCodeList()
+	 * @method \string[] fillDesktopCode()
+	 * @method \string[] getGroupTypeList()
+	 * @method \string[] fillGroupType()
+	 * @method \Bitrix\Main\Type\DateTime[] getTimeStartList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillTimeStart()
+	 * @method \Bitrix\Main\Type\DateTime[] getTimeFinishList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillTimeFinish()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorUserChart_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorUserChartTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorUserChartTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorUserChart_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorUserChart_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection fetchCollection()
+	 */
+	class EO_MonitorUserChart_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorUserChart_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Monitor\MonitorUserLogTable:timeman/lib/model/monitor/monitoruserlogtable.php:933fff7346161a30184ea6eb977bf5cc */
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorUserLog
+	 * @see \Bitrix\Timeman\Model\Monitor\MonitorUserLogTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \Bitrix\Main\Type\Date getDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setDateLog(\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $dateLog)
+	 * @method bool hasDateLog()
+	 * @method bool isDateLogFilled()
+	 * @method bool isDateLogChanged()
+	 * @method \Bitrix\Main\Type\Date remindActualDateLog()
+	 * @method \Bitrix\Main\Type\Date requireDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetDateLog()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetDateLog()
+	 * @method \Bitrix\Main\Type\Date fillDateLog()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetUserId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getPrivateCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setPrivateCode(\string|\Bitrix\Main\DB\SqlExpression $privateCode)
+	 * @method bool hasPrivateCode()
+	 * @method bool isPrivateCodeFilled()
+	 * @method bool isPrivateCodeChanged()
+	 * @method \string remindActualPrivateCode()
+	 * @method \string requirePrivateCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetPrivateCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetPrivateCode()
+	 * @method \string fillPrivateCode()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetEntityId()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetEntityId()
+	 * @method \int fillEntityId()
+	 * @method \int getTimeSpend()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setTimeSpend(\int|\Bitrix\Main\DB\SqlExpression $timeSpend)
+	 * @method bool hasTimeSpend()
+	 * @method bool isTimeSpendFilled()
+	 * @method bool isTimeSpendChanged()
+	 * @method \int remindActualTimeSpend()
+	 * @method \int requireTimeSpend()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetTimeSpend()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetTimeSpend()
+	 * @method \int fillTimeSpend()
+	 * @method \string getDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog setDesktopCode(\string|\Bitrix\Main\DB\SqlExpression $desktopCode)
+	 * @method bool hasDesktopCode()
+	 * @method bool isDesktopCodeFilled()
+	 * @method bool isDesktopCodeChanged()
+	 * @method \string remindActualDesktopCode()
+	 * @method \string requireDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog resetDesktopCode()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unsetDesktopCode()
+	 * @method \string fillDesktopCode()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog set($fieldName, $value)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog reset($fieldName)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog wakeUp($data)
+	 */
+	class EO_MonitorUserLog {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorUserLogTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorUserLogTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * EO_MonitorUserLog_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \Bitrix\Main\Type\Date[] getDateLogList()
+	 * @method \Bitrix\Main\Type\Date[] fillDateLog()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getPrivateCodeList()
+	 * @method \string[] fillPrivateCode()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
+	 * @method \int[] getTimeSpendList()
+	 * @method \int[] fillTimeSpend()
+	 * @method \string[] getDesktopCodeList()
+	 * @method \string[] fillDesktopCode()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog $object)
+	 * @method bool has(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog getByPrimary($primary)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog[] getAll()
+	 * @method bool remove(\Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_MonitorUserLog_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Timeman\Model\Monitor\MonitorUserLogTable */
+		static public $dataClass = '\Bitrix\Timeman\Model\Monitor\MonitorUserLogTable';
+	}
+}
+namespace Bitrix\Timeman\Model\Monitor {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_MonitorUserLog_Result exec()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_MonitorUserLog_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog fetchObject()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection fetchCollection()
+	 */
+	class EO_MonitorUserLog_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog createObject($setDefaultValues = true)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection createCollection()
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog wakeUpObject($row)
+	 * @method \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection wakeUpCollection($rows)
+	 */
+	class EO_MonitorUserLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable:timeman/lib/model/schedule/assignment/department/scheduledepartmenttable.php:cbfcdf1768d89572a458aa49ff584d92 */
 namespace Bitrix\Timeman\Model\Schedule\Assignment\Department {
@@ -835,18 +1807,6 @@ namespace Bitrix\Timeman\Model\Schedule\Assignment\Department {
 	}
 }
 namespace Bitrix\Timeman\Model\Schedule\Assignment\Department {
-	/**
-	 * @method static EO_ScheduleDepartment_Query query()
-	 * @method static EO_ScheduleDepartment_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ScheduleDepartment_Result getById($id)
-	 * @method static EO_ScheduleDepartment_Result getList(array $parameters = array())
-	 * @method static EO_ScheduleDepartment_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\Department\EO_ScheduleDepartment_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\Department\EO_ScheduleDepartment_Collection wakeUpCollection($rows)
-	 */
-	class ScheduleDepartmentTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1007,18 +1967,6 @@ namespace Bitrix\Timeman\Model\Schedule\Assignment\User {
 	}
 }
 namespace Bitrix\Timeman\Model\Schedule\Assignment\User {
-	/**
-	 * @method static EO_ScheduleUser_Query query()
-	 * @method static EO_ScheduleUser_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ScheduleUser_Result getById($id)
-	 * @method static EO_ScheduleUser_Result getList(array $parameters = array())
-	 * @method static EO_ScheduleUser_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\EO_ScheduleUser_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\EO_ScheduleUser_Collection wakeUpCollection($rows)
-	 */
-	class ScheduleUserTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1199,18 +2147,6 @@ namespace Bitrix\Timeman\Model\Schedule\Calendar {
 }
 namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	/**
-	 * @method static EO_Calendar_Query query()
-	 * @method static EO_Calendar_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Calendar_Result getById($id)
-	 * @method static EO_Calendar_Result getList(array $parameters = array())
-	 * @method static EO_Calendar_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\Calendar createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_Calendar_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\Calendar wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_Calendar_Collection wakeUpCollection($rows)
-	 */
-	class CalendarTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1357,18 +2293,6 @@ namespace Bitrix\Timeman\Model\Schedule\Calendar {
 	}
 }
 namespace Bitrix\Timeman\Model\Schedule\Calendar {
-	/**
-	 * @method static EO_CalendarExclusion_Query query()
-	 * @method static EO_CalendarExclusion_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CalendarExclusion_Result getById($id)
-	 * @method static EO_CalendarExclusion_Result getList(array $parameters = array())
-	 * @method static EO_CalendarExclusion_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusion createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_CalendarExclusion_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusion wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_CalendarExclusion_Collection wakeUpCollection($rows)
-	 */
-	class CalendarExclusionTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1748,18 +2672,6 @@ namespace Bitrix\Timeman\Model\Schedule {
 }
 namespace Bitrix\Timeman\Model\Schedule {
 	/**
-	 * @method static EO_Schedule_Query query()
-	 * @method static EO_Schedule_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Schedule_Result getById($id)
-	 * @method static EO_Schedule_Result getList(array $parameters = array())
-	 * @method static EO_Schedule_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Schedule createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\ScheduleCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Schedule wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\ScheduleCollection wakeUpCollection($rows)
-	 */
-	class ScheduleTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1986,18 +2898,6 @@ namespace Bitrix\Timeman\Model\Schedule\Shift {
 }
 namespace Bitrix\Timeman\Model\Schedule\Shift {
 	/**
-	 * @method static EO_Shift_Query query()
-	 * @method static EO_Shift_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Shift_Result getById($id)
-	 * @method static EO_Shift_Result getList(array $parameters = array())
-	 * @method static EO_Shift_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Shift\Shift createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Shift\Shift wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection wakeUpCollection($rows)
-	 */
-	class ShiftTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2210,18 +3110,6 @@ namespace Bitrix\Timeman\Model\Schedule\ShiftPlan {
 	}
 }
 namespace Bitrix\Timeman\Model\Schedule\ShiftPlan {
-	/**
-	 * @method static EO_ShiftPlan_Query query()
-	 * @method static EO_ShiftPlan_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ShiftPlan_Result getById($id)
-	 * @method static EO_ShiftPlan_Result getList(array $parameters = array())
-	 * @method static EO_ShiftPlan_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection wakeUpCollection($rows)
-	 */
-	class ShiftPlanTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2543,18 +3431,6 @@ namespace Bitrix\Timeman\Model\Schedule\Violation {
 }
 namespace Bitrix\Timeman\Model\Schedule\Violation {
 	/**
-	 * @method static EO_ViolationRules_Query query()
-	 * @method static EO_ViolationRules_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ViolationRules_Result getById($id)
-	 * @method static EO_ViolationRules_Result getList(array $parameters = array())
-	 * @method static EO_ViolationRules_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRules createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRules wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection wakeUpCollection($rows)
-	 */
-	class ViolationRulesTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2702,18 +3578,6 @@ namespace Bitrix\Timeman\Model\Security {
 	}
 }
 namespace Bitrix\Timeman\Model\Security {
-	/**
-	 * @method static EO_TaskAccessCode_Query query()
-	 * @method static EO_TaskAccessCode_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TaskAccessCode_Result getById($id)
-	 * @method static EO_TaskAccessCode_Result getList(array $parameters = array())
-	 * @method static EO_TaskAccessCode_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Security\TaskAccessCode createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Security\EO_TaskAccessCode_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Security\TaskAccessCode wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Security\EO_TaskAccessCode_Collection wakeUpCollection($rows)
-	 */
-	class TaskAccessCodeTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2958,6 +3822,16 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method \Bitrix\Timeman\Model\User\User resetLanguageId()
 	 * @method \Bitrix\Timeman\Model\User\User unsetLanguageId()
 	 * @method \string fillLanguageId()
+	 * @method \string getTimeZone()
+	 * @method \Bitrix\Timeman\Model\User\User setTimeZone(\string|\Bitrix\Main\DB\SqlExpression $timeZone)
+	 * @method bool hasTimeZone()
+	 * @method bool isTimeZoneFilled()
+	 * @method bool isTimeZoneChanged()
+	 * @method \string remindActualTimeZone()
+	 * @method \string requireTimeZone()
+	 * @method \Bitrix\Timeman\Model\User\User resetTimeZone()
+	 * @method \Bitrix\Timeman\Model\User\User unsetTimeZone()
+	 * @method \string fillTimeZone()
 	 * @method \int getTimeZoneOffset()
 	 * @method \Bitrix\Timeman\Model\User\User setTimeZoneOffset(\int|\Bitrix\Main\DB\SqlExpression $timeZoneOffset)
 	 * @method bool hasTimeZoneOffset()
@@ -3390,16 +4264,6 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method \Bitrix\Timeman\Model\User\User resetAutoTimeZone()
 	 * @method \Bitrix\Timeman\Model\User\User unsetAutoTimeZone()
 	 * @method \string fillAutoTimeZone()
-	 * @method \string getTimeZone()
-	 * @method \Bitrix\Timeman\Model\User\User setTimeZone(\string|\Bitrix\Main\DB\SqlExpression $timeZone)
-	 * @method bool hasTimeZone()
-	 * @method bool isTimeZoneFilled()
-	 * @method bool isTimeZoneChanged()
-	 * @method \string remindActualTimeZone()
-	 * @method \string requireTimeZone()
-	 * @method \Bitrix\Timeman\Model\User\User resetTimeZone()
-	 * @method \Bitrix\Timeman\Model\User\User unsetTimeZone()
-	 * @method \string fillTimeZone()
 	 * @method \string getUserType()
 	 * @method \string remindActualUserType()
 	 * @method \string requireUserType()
@@ -3518,6 +4382,8 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method \string[] fillLid()
 	 * @method \string[] getLanguageIdList()
 	 * @method \string[] fillLanguageId()
+	 * @method \string[] getTimeZoneList()
+	 * @method \string[] fillTimeZone()
 	 * @method \int[] getTimeZoneOffsetList()
 	 * @method \int[] fillTimeZoneOffset()
 	 * @method \string[] getPersonalProfessionList()
@@ -3611,8 +4477,6 @@ namespace Bitrix\Timeman\Model\User {
 	 * @method \Bitrix\Main\EO_UserGroup_Collection fillGroups()
 	 * @method \string[] getAutoTimeZoneList()
 	 * @method \string[] fillAutoTimeZone()
-	 * @method \string[] getTimeZoneList()
-	 * @method \string[] fillTimeZone()
 	 * @method \string[] getUserTypeList()
 	 * @method \string[] fillUserType()
 	 * @method \Bitrix\Socialnetwork\EO_UserTag_Collection[] getTagsList()
@@ -3654,18 +4518,6 @@ namespace Bitrix\Timeman\Model\User {
 	}
 }
 namespace Bitrix\Timeman\Model\User {
-	/**
-	 * @method static EO_User_Query query()
-	 * @method static EO_User_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_User_Result getById($id)
-	 * @method static EO_User_Result getList(array $parameters = array())
-	 * @method static EO_User_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\User\User createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\User\UserCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\User\User wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\User\UserCollection wakeUpCollection($rows)
-	 */
-	class UserTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -3891,18 +4743,6 @@ namespace Bitrix\Timeman\Model\Worktime\EventLog {
 	}
 }
 namespace Bitrix\Timeman\Model\Worktime\EventLog {
-	/**
-	 * @method static EO_WorktimeEvent_Query query()
-	 * @method static EO_WorktimeEvent_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_WorktimeEvent_Result getById($id)
-	 * @method static EO_WorktimeEvent_Result getList(array $parameters = array())
-	 * @method static EO_WorktimeEvent_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventCollection wakeUpCollection($rows)
-	 */
-	class WorktimeEventTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4443,18 +5283,6 @@ namespace Bitrix\Timeman\Model\Worktime\Record {
 }
 namespace Bitrix\Timeman\Model\Worktime\Record {
 	/**
-	 * @method static EO_WorktimeRecord_Query query()
-	 * @method static EO_WorktimeRecord_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_WorktimeRecord_Result getById($id)
-	 * @method static EO_WorktimeRecord_Result getList(array $parameters = array())
-	 * @method static EO_WorktimeRecord_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordCollection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordCollection wakeUpCollection($rows)
-	 */
-	class WorktimeRecordTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -4655,18 +5483,6 @@ namespace Bitrix\Timeman\Model\Worktime\Report {
 	}
 }
 namespace Bitrix\Timeman\Model\Worktime\Report {
-	/**
-	 * @method static EO_WorktimeReport_Query query()
-	 * @method static EO_WorktimeReport_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_WorktimeReport_Result getById($id)
-	 * @method static EO_WorktimeReport_Result getList(array $parameters = array())
-	 * @method static EO_WorktimeReport_Entity getEntity()
-	 * @method static \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Timeman\Model\Worktime\Report\EO_WorktimeReport_Collection createCollection()
-	 * @method static \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport wakeUpObject($row)
-	 * @method static \Bitrix\Timeman\Model\Worktime\Report\EO_WorktimeReport_Collection wakeUpCollection($rows)
-	 */
-	class WorktimeReportTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

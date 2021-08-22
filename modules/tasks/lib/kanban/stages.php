@@ -12,6 +12,22 @@ use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class StagesTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Stages_Query query()
+ * @method static EO_Stages_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Stages_Result getById($id)
+ * @method static EO_Stages_Result getList(array $parameters = array())
+ * @method static EO_Stages_Entity getEntity()
+ * @method static \Bitrix\Tasks\Kanban\EO_Stages createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Kanban\EO_Stages_Collection createCollection()
+ * @method static \Bitrix\Tasks\Kanban\EO_Stages wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Kanban\EO_Stages_Collection wakeUpCollection($rows)
+ */
 class StagesTable extends Entity\DataManager
 {
 	const MY_PLAN_VERSION = '6';
@@ -20,7 +36,6 @@ class StagesTable extends Entity\DataManager
 	 * System type of stages (new, in progress, etc.).
 	 * Separated from other stages - timeline's stages, sprint's stages.
 	 * @see TimeLineTable::getStages()
-	 * @see SprintTable::getStages()
 	 */
 	const SYS_TYPE_NEW = 'NEW';
 	const SYS_TYPE_PROGRESS = 'WORK';
@@ -61,7 +76,6 @@ class StagesTable extends Entity\DataManager
 	const WORK_MODE_GROUP = 'G';
 	const WORK_MODE_USER = 'U';
 	const WORK_MODE_TIMELINE = 'P';
-	const WORK_MODE_SPRINT = 'S';
 	const WORK_MODE_ACTIVE_SPRINT = 'A';
 
 	/**
@@ -125,7 +139,6 @@ class StagesTable extends Entity\DataManager
 		return  $mode == self::WORK_MODE_GROUP ||
 				$mode == self::WORK_MODE_USER ||
 				$mode == self::WORK_MODE_TIMELINE ||
-				$mode == self::WORK_MODE_SPRINT ||
 				$mode == self::WORK_MODE_ACTIVE_SPRINT;
 	}
 
@@ -387,10 +400,6 @@ class StagesTable extends Entity\DataManager
 				if ($entityType == self::WORK_MODE_TIMELINE)
 				{
 					$source = TimeLineTable::getStages();
-				}
-				else if ($entityType == self::WORK_MODE_SPRINT)
-				{
-					$source = SprintTable::getStages($entityId);
 				}
 				else if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
 				{
@@ -662,7 +671,6 @@ class StagesTable extends Entity\DataManager
 		// if personal - search in another table
 		if (
 			self::getWorkMode() == self::WORK_MODE_USER ||
-			self::getWorkMode() == self::WORK_MODE_SPRINT ||
 			self::getWorkMode() == self::WORK_MODE_ACTIVE_SPRINT
 		)
 		{
@@ -718,7 +726,6 @@ class StagesTable extends Entity\DataManager
 			(
 				$entityType == self::WORK_MODE_USER ||
 				$entityType == self::WORK_MODE_GROUP ||
-				$entityType == self::WORK_MODE_SPRINT ||
 				$entityType == self::WORK_MODE_ACTIVE_SPRINT
 			)
 		)
@@ -1131,17 +1138,6 @@ class StagesTable extends Entity\DataManager
 		while ($row = $res->fetch())
 		{
 			parent::delete($row['ID']);
-		}
-
-		//tmp
-		$res = SprintTable::getList([
-			'filter' => [
-				'GROUP_ID' => $groupId
-			]
-		]		);
-		while ($row = $res->fetch())
-		{
-			SprintTable::delete($row['ID']);
 		}
 	}
 

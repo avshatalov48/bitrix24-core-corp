@@ -139,18 +139,6 @@ namespace Bitrix\ImConnector\Model {
 }
 namespace Bitrix\ImConnector\Model {
 	/**
-	 * @method static EO_BotFramework_Query query()
-	 * @method static EO_BotFramework_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_BotFramework_Result getById($id)
-	 * @method static EO_BotFramework_Result getList(array $parameters = array())
-	 * @method static EO_BotFramework_Entity getEntity()
-	 * @method static \Bitrix\ImConnector\Model\EO_BotFramework createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImConnector\Model\EO_BotFramework_Collection createCollection()
-	 * @method static \Bitrix\ImConnector\Model\EO_BotFramework wakeUpObject($row)
-	 * @method static \Bitrix\ImConnector\Model\EO_BotFramework_Collection wakeUpCollection($rows)
-	 */
-	class BotFrameworkTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -302,18 +290,6 @@ namespace Bitrix\ImConnector\Model {
 	}
 }
 namespace Bitrix\ImConnector\Model {
-	/**
-	 * @method static EO_ChatLastMessage_Query query()
-	 * @method static EO_ChatLastMessage_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ChatLastMessage_Result getById($id)
-	 * @method static EO_ChatLastMessage_Result getList(array $parameters = array())
-	 * @method static EO_ChatLastMessage_Entity getEntity()
-	 * @method static \Bitrix\ImConnector\Model\EO_ChatLastMessage createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImConnector\Model\EO_ChatLastMessage_Collection createCollection()
-	 * @method static \Bitrix\ImConnector\Model\EO_ChatLastMessage wakeUpObject($row)
-	 * @method static \Bitrix\ImConnector\Model\EO_ChatLastMessage_Collection wakeUpCollection($rows)
-	 */
-	class ChatLastMessageTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -599,18 +575,6 @@ namespace Bitrix\ImConnector\Model {
 }
 namespace Bitrix\ImConnector\Model {
 	/**
-	 * @method static EO_CustomConnectors_Query query()
-	 * @method static EO_CustomConnectors_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CustomConnectors_Result getById($id)
-	 * @method static EO_CustomConnectors_Result getList(array $parameters = array())
-	 * @method static EO_CustomConnectors_Entity getEntity()
-	 * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors_Collection createCollection()
-	 * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors wakeUpObject($row)
-	 * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors_Collection wakeUpCollection($rows)
-	 */
-	class CustomConnectorsTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -762,18 +726,6 @@ namespace Bitrix\ImConnector\Model {
 	}
 }
 namespace Bitrix\ImConnector\Model {
-	/**
-	 * @method static EO_InfoConnectors_Query query()
-	 * @method static EO_InfoConnectors_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_InfoConnectors_Result getById($id)
-	 * @method static EO_InfoConnectors_Result getList(array $parameters = array())
-	 * @method static EO_InfoConnectors_Entity getEntity()
-	 * @method static \Bitrix\ImConnector\Model\EO_InfoConnectors createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImConnector\Model\EO_InfoConnectors_Collection createCollection()
-	 * @method static \Bitrix\ImConnector\Model\EO_InfoConnectors wakeUpObject($row)
-	 * @method static \Bitrix\ImConnector\Model\EO_InfoConnectors_Collection wakeUpCollection($rows)
-	 */
-	class InfoConnectorsTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -974,18 +926,6 @@ namespace Bitrix\ImConnector\Model {
 	}
 }
 namespace Bitrix\ImConnector\Model {
-	/**
-	 * @method static EO_StatusConnectors_Query query()
-	 * @method static EO_StatusConnectors_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_StatusConnectors_Result getById($id)
-	 * @method static EO_StatusConnectors_Result getList(array $parameters = array())
-	 * @method static EO_StatusConnectors_Entity getEntity()
-	 * @method static \Bitrix\ImConnector\Model\EO_StatusConnectors createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImConnector\Model\EO_StatusConnectors_Collection createCollection()
-	 * @method static \Bitrix\ImConnector\Model\EO_StatusConnectors wakeUpObject($row)
-	 * @method static \Bitrix\ImConnector\Model\EO_StatusConnectors_Collection wakeUpCollection($rows)
-	 */
-	class StatusConnectorsTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

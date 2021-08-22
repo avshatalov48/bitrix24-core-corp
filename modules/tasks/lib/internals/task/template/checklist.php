@@ -15,6 +15,22 @@ use Exception;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class CheckListTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CheckList_Query query()
+ * @method static EO_CheckList_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CheckList_Result getById($id)
+ * @method static EO_CheckList_Result getList(array $parameters = array())
+ * @method static EO_CheckList_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_CheckList createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_CheckList_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_CheckList wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_CheckList_Collection wakeUpCollection($rows)
+ */
 class CheckListTable extends Main\Entity\DataManager
 {
 	/**
@@ -272,6 +288,8 @@ class CheckListTable extends Main\Entity\DataManager
 				'required' => true,
 				'validation' => array(__CLASS__, 'validateTitle'),
 				'title' => Loc::getMessage('TASKS_TASK_TEMPLATE_ENTITY_TITLE_FIELD'),
+				'save_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getSaveModificator'],
+				'fetch_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getFetchModificator'],
 			),
 			'CHECKED' => array(
 				'data_type' => 'integer',

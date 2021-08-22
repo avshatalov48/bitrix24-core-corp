@@ -10,7 +10,7 @@ class Input
 	protected $params = [];
 	/** @var Result */
 	protected $result;
-	/** @var Provider\ImConnectorServer\Input|Provider\LiveChat\Input|Provider\Network\Input|Provider\Custom\Input */
+	/** @var Provider\ImConnectorServer\Input|Provider\LiveChat\Input|Provider\Network\Input|Provider\Custom\Input|Provider\Notifications\Input $provider */
 	protected $provider;
 
 	/**
@@ -24,7 +24,7 @@ class Input
 
 		if(!empty($this->params['CONNECTOR']))
 		{
-			$provider = Provider::getProviderForConnectorInput($this->params['CONNECTOR'], [$this->params]);
+			$provider = Provider::getProviderForConnectorInput($this->params['CONNECTOR'], $this->params);
 			if($provider->isSuccess())
 			{
 				$this->provider = $provider->getResult();
@@ -47,7 +47,7 @@ class Input
 	 */
 	public function reception(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{

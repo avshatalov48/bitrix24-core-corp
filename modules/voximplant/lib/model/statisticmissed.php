@@ -24,7 +24,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Voximplant
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_StatisticMissed_Query query()
+ * @method static EO_StatisticMissed_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_StatisticMissed_Result getById($id)
+ * @method static EO_StatisticMissed_Result getList(array $parameters = array())
+ * @method static EO_StatisticMissed_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection wakeUpCollection($rows)
+ */
 
 class StatisticMissedTable extends DataManager
 {

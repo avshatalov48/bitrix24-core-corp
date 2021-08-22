@@ -8,6 +8,9 @@ use Bitrix\Crm\EO_Deal;
 use Bitrix\Crm\EO_Lead;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
 
 /**
  * Class QuoteItem
@@ -33,6 +36,8 @@ use Bitrix\Crm\QuoteTable;
  * @method Item setStorageElementIds(array $storageElementIds)
  * @method int|null getPersonTypeId()
  * @method Item setPersonTypeId(int $personTypeId)
+ * @method int|null getLocationId()
+ * @method Item setLocationId(int $locationId)
  */
 class Quote extends Item
 {
@@ -87,5 +92,32 @@ class Quote extends Item
 	protected function disableCheckUserFields(): void
 	{
 		QuoteTable::disableUserFieldsCheck();
+	}
+
+	public function getTitlePlaceholder(): ?string
+	{
+		return static::getTitlePlaceholderFromData($this->getCompatibleData());
+	}
+
+	public static function getTitlePlaceholderFromData(array $data): ?string
+	{
+		Container::getInstance()->getLocalization()->loadMessages();
+		$beginDate = $data['BEGINDATE'] ?? null;
+		if ($beginDate)
+		{
+			if ($beginDate instanceof Date)
+			{
+				$beginDate = (string)$beginDate;
+			}
+			else
+			{
+				$beginDate = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($beginDate), 'SHORT', SITE_ID));
+			}
+		}
+
+		return Loc::getMessage('CRM_QUOTE_TITLE', [
+			'#QUOTE_NUMBER#' => $data['QUOTE_NUMBER'] ?? '',
+			'#BEGINDATE#' => $beginDate ?? '-',
+		]);
 	}
 }

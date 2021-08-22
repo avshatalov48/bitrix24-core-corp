@@ -1035,6 +1035,41 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		]);
 	}
 
+	protected function fillPropsFromProfile(Order $order, int $userProfileId): void
+	{
+		$profileData = \Bitrix\Sale\OrderUserProperties::getList(
+			array(
+				'filter' => array(
+					'ID' => $userProfileId,
+					'USER_ID' => $order->getUserId(),
+					'PERSON_TYPE_ID' => $order->getPersonTypeId(),
+				),
+				'limit' => 1
+			)
+		);
+
+		if ($profile = $profileData->fetch())
+		{
+			$resultLoading =  \Bitrix\Sale\OrderUserProperties::loadProfiles($profile['USER_ID'], $profile['PERSON_TYPE_ID'], $profile['ID']);
+
+			if ($resultLoading->isSuccess())
+			{
+				$profileData = $resultLoading->getData();
+				$profileValues = $profileData[$profile['PERSON_TYPE_ID']][$profile['ID']]['VALUES'];
+				/**
+				 * @var  \Bitrix\Crm\Order\PropertyValue $property
+				 */
+				foreach ($order->getPropertyCollection() as $property)
+				{
+					if (isset($profileValues[$property->getPropertyId()]))
+					{
+						$property->setValue($profileValues[$property->getPropertyId()]);
+					}
+				}
+			}
+		}
+	}
+
 	protected function refreshOrderDataAction()
 	{
 		if(!($formData = $this->getFormData()))
@@ -1047,47 +1082,16 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		$propertyCollection = $order->getPropertyCollection();
-
 		if ($order->isNew())
 		{
 			if (
-				$order->getUserId() !== \Bitrix\Crm\Order\Manager::getAnonymousUserID()
-				&& !empty($order->getUserId())
-				&& (int)$formData['USER_PROFILE'] > 0
+				(int)$formData['USER_PROFILE'] > 0
 				&& (int)$formData['USER_PROFILE'] !== (int)$formData['OLD_USER_PROFILE']
+				&& !empty($order->getUserId())
+				&& $order->getUserId() !== \Bitrix\Crm\Order\Manager::getAnonymousUserID()
 			)
 			{
-				$profileData = \Bitrix\Sale\OrderUserProperties::getList(
-					array(
-						'filter' => array(
-							'ID' => (int)$formData['USER_PROFILE'],
-							'USER_ID' => $order->getUserId(),
-							'PERSON_TYPE_ID' => $order->getPersonTypeId(),
-						),
-						'limit' => 1
-					)
-				);
-
-				if ($profile = $profileData->fetch())
-				{
-					$resultLoading =  \Bitrix\Sale\OrderUserProperties::loadProfiles($profile['USER_ID'], $profile['PERSON_TYPE_ID'], $profile['ID']);
-					if ($resultLoading->isSuccess())
-					{
-						$profileData = $resultLoading->getData();
-						$profileValues = $profileData[$profile['PERSON_TYPE_ID']][$profile['ID']]['VALUES'];
-						/**
-						 * @var  \Bitrix\Crm\Order\PropertyValue $property
-						 */
-						foreach ($propertyCollection as $property)
-						{
-							if (isset($profileValues[$property->getPropertyId()]))
-							{
-								$property->setValue($profileValues[$property->getPropertyId()]);
-							}
-						}
-					}
-				}
+				$this->fillPropsFromProfile($order, (int)$formData['USER_PROFILE']);
 			}
 
 			if (
@@ -1198,6 +1202,10 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				if (!empty($freshData['USER_PROFILE_LIST']))
 				{
 					$freshData['USER_PROFILE'] = $freshData['USER_PROFILE_LIST'][0]['VALUE'];
+					$this->fillPropsFromProfile($order, (int)$freshData['USER_PROFILE']);
+
+					// It seems not optimal to call this method second time.
+					$freshData = array_merge($freshData, $this->createDataByComponent($order));
 				}
 			}
 

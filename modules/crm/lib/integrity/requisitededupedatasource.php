@@ -42,6 +42,7 @@ class RequisiteDedupeDataSource extends MatchHashDedupeDataSource
 		$entityTypeID = $this->getEntityTypeID();
 		foreach($map as $matchHash => &$entry)
 		{
+			$isValidEntry = false;
 			$primaryQty = isset($entry['PRIMARY']) ? count($entry['PRIMARY']) : 0;
 			if($primaryQty > 1)
 			{
@@ -55,7 +56,12 @@ class RequisiteDedupeDataSource extends MatchHashDedupeDataSource
 						$dup->addEntity(new DuplicateEntity($entityTypeID, $entityID));
 					}
 					$result->addItem($matchHash, $dup);
+					$isValidEntry = true;
 				}
+			}
+			if (!$isValidEntry)
+			{
+				$result->addInvalidItem((string)$matchHash);
 			}
 		}
 		unset($entry);

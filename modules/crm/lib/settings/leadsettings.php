@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Settings;
 use Bitrix\Main;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 class LeadSettings
 {
@@ -289,6 +290,11 @@ class LeadSettings
 	 */
 	public static function isEnabled()
 	{
+		if (!RestrictionManager::getLeadsRestriction()->hasPermission())
+		{
+			return false;
+		}
+
 		$isEnabled = \Bitrix\Main\Config\Option::get('crm', 'crm_lead_enabled', "Y");
 		return $isEnabled == "Y";
 	}

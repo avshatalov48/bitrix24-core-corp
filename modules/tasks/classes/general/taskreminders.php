@@ -172,7 +172,7 @@ class CTaskReminders
 					break;
 
 				case "REMIND_DATE":
-					$arSqlSearch[] = CTasks::FilterCreate("TR.".$key, $DB->CharToDateFunction($val), "date", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TR.".$key, \Bitrix\Tasks\Util\Db::charToDateFunction($val), "date", $bFullJoin, $cOperationType);
 					break;
 			}
 		}

@@ -354,7 +354,7 @@ export class MobileDialogApplication
 	{
 		console.log('6. initPullClient');
 
-		if (this.storedEvents && this.storedEvents.length > 0)
+		if (this.storedEvents && this.storedEvents.length > 0 && this.controller.application.isUnreadMessagesLoaded())
 		{
 			//sort events and get first 50 (to match unread messages cache size)
 			this.storedEvents = this.storedEvents.sort((a, b) => {
@@ -2041,14 +2041,23 @@ export class MobileDialogApplication
 					dialogMessageUnread = dialogMessageUnread.data();
 					this.controller.getStore().dispatch('users/set', dialogMessageUnread.users);
 					this.controller.getStore().dispatch('files/set', this.controller.application.prepareFilesBeforeSave(dialogMessageUnread.files));
-					this.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages);
+					this.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages).then(() => {
+						app.titleAction("setParams", { useProgress: false, useLetterImage: true });
+						this.timer.stop('data', 'load', true);
 
-					app.titleAction("setParams", {useProgress: false, useLetterImage: true});
-					this.timer.stop('data', 'load', true);
+						this.promiseGetDialogUnread.fulfill(response);
+						this.promiseGetDialogUnreadWait = false;
+
+						return true;
+					});
 				}
+				else
+				{
+					this.promiseGetDialogUnread.reject();
+					this.promiseGetDialogUnreadWait = false;
 
-				this.promiseGetDialogUnread.fulfill(response);
-				this.promiseGetDialogUnreadWait = false;
+					return false;
+				}
 
 			}, false, false, Utils.getLogTrackingParams({name: RestMethodHandler.imDialogMessagesGetUnread, dialog: this.controller.application.getDialogData()}));
 		});

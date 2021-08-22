@@ -265,7 +265,11 @@ if ($arParams['MODE'] != 'reload'):
 			if (CBitrix24::isInvitingUsersAllowed()):
 				?><button
 				class="ui-btn ui-btn-primary"
-				onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>"
+				onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink([
+					'analyticsLabel' => [
+						'analyticsLabel[source]' => 'visualStructure',
+					]
+				])?>"
 				><?=GetMessage("ISV_B24_INVITE")?></button><?
 			endif;
 

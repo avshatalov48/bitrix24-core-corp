@@ -1,10 +1,8 @@
-import {Popup} 			from 'main.popup';
-import {MessageEdit} 	from "./message-edit";
-import {MessageView} 	from "./message-view";
-import {MessageControl} from "./message-control";
-
-
+import {Popup} from 'main.popup';
 import {Loc} from 'main.core';
+import {MessageEdit} from "./message-edit";
+import {MessageView} from "./message-view";
+import {MessageControl} from "./message-control";
 
 const MODE_VIEW = 'view';
 const MODE_EDIT = 'edit';
@@ -19,10 +17,10 @@ const MessageEditor = {
 	data()
 	{
 		return {
-			mode: 				MODE_VIEW,
-			text: 				this.editor.template,
-			hasError: 			false,
-			orderPublicUrl: 	this.editor.url,
+			mode: MODE_VIEW,
+			text: this.editor.template,
+			hasError: false,
+			orderPublicUrl: this.editor.url,
 			smsEditMessageMode: false
 		}
 	},
@@ -50,21 +48,17 @@ const MessageEditor = {
 		{
 			return this.mode === MODE_EDIT;
 		},
-
 		resetError()
 		{
 			this.hasError = false;
 		},
 
-
 		//region edit
-
 		updateTemplate(text)
 		{
 			this.text = text;
 			this.$root.$app.sendingMethodDesc.text = text;
 		},
-
 		showPopupHint(target, message, timer)
 		{
 			if(this.popup)
@@ -100,29 +94,29 @@ const MessageEditor = {
 
 			this.popup.show();
 		},
-
 		afterPressKey(e)
 		{
 			this.afterSavePressKey(e);
 		},
-
 		beforeBlur()
 		{
 			this.hasError = false;
 		},
-
 		showHasLinkErrorHint(e)
 		{
 			this.hasError = true;
 		},
-
 		afterSavePressKey(e)
 		{
 			this.reverseMode();
 
 			if(this.hasError)
 			{
-				this.showPopupHint(e.target, Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'),2000);
+				this.showPopupHint(
+					e.target,
+					Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'),
+					2000
+				);
 			}
 
 			this.resetError();
@@ -160,19 +154,18 @@ const MessageEditor = {
 			}
 			else
 			{
-				this.showPopupHint(e.target, Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'),2000);
+				this.showPopupHint(
+					e.target,
+					Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'),
+					2000
+				);
 			}
 		},
 		//endregion
 	},
-	mounted()
-	{
-
-	},
 	template: `
 		<div class="salescenter-app-payment-by-sms-item-container-sms-content">
-			<div class="salescenter-app-payment-by-sms-item-container-sms-content-message">
-				
+			<div class="salescenter-app-payment-by-sms-item-container-sms-content-message">	
 				<template v-if="isEditable()">
 					<sms-message-edit-block				
 						:text="text"
@@ -190,7 +183,6 @@ const MessageEditor = {
 						v-on:view-on-mouseleave="hidePopupHint"
 					/>
 				</template>
-				
 				<sms-message-control-block 
 					:editable="isEditable()"
 					v-on:control-on-save="afterSaveControl"

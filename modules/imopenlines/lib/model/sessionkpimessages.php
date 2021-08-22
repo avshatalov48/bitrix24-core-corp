@@ -17,6 +17,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class SessionKpiMessagesTable
  * @package Bitrix\ImOpenLines\Model
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SessionKpiMessages_Query query()
+ * @method static EO_SessionKpiMessages_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SessionKpiMessages_Result getById($id)
+ * @method static EO_SessionKpiMessages_Result getList(array $parameters = array())
+ * @method static EO_SessionKpiMessages_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionKpiMessages createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionKpiMessages_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionKpiMessages wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionKpiMessages_Collection wakeUpCollection($rows)
  */
 class SessionKpiMessagesTable extends DataManager
 {

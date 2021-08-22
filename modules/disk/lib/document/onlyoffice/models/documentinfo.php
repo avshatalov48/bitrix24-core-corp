@@ -159,6 +159,16 @@ final class DocumentInfo extends Model
 		return in_array($this->getContentStatus(), $finalStatuses, true);
 	}
 
+	public function wasForceSaved(): bool
+	{
+		$forceSavedStatuses = [
+			self::CONTENT_STATUS_FORCE_SAVED,
+			self::CONTENT_STATUS_FORCE_SAVED_WITH_ERROR,
+		];
+
+		return in_array($this->getContentStatus(), $forceSavedStatuses, true);
+	}
+
 	public function isSaving(): bool
 	{
 		if ($this->getUserCount() !== 0)

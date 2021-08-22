@@ -796,9 +796,15 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				{
 					continue;
 				}
-				$propertyTableName = "PROPERTY_{$propertyItterator}";
 
+				$propertyTableName = "PROPERTY_{$propertyItterator}";
 				$propertyValueCode = str_replace($name, "{$propertyTableName}.VALUE", $k);
+
+				if (preg_match('/^[A-Z]/',$propertyValueCode))
+				{
+					$propertyValueCode = "%{$propertyValueCode}";
+				}
+
 				$runtime[] =
 					new Main\Entity\ReferenceField($propertyTableName,
 						\Bitrix\Sale\Internals\OrderPropsValueTable::getEntity(),
@@ -810,7 +816,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 				$result[] = [
 					"={$propertyTableName}.ORDER_PROPS_ID" => $propertyId,
-					"%{$propertyValueCode}" => $v
+					$propertyValueCode => $v
 				];
 
 				$propertyItterator++;
@@ -839,7 +845,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		if (!empty($contactCompanyFilter))
 		{
 			//caution! can be problem with filtering by companies from holding from sale module.
-			unset($result['COMPANY_ID']);
+			unset($result['COMPANY_ID'], $result['=COMPANY_ID']);
 
 			$result = array_merge($result, $contactCompanyFilter);
 			$runtime[] =
@@ -941,24 +947,24 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$result[] = [
 				'LOGIC' => 'OR',
 				[
-					'CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-					'CLIENT.ENTITY_ID' => $companyId,
+					'=CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'=CLIENT.ENTITY_ID' => $companyId,
 				],
 				[
-					'CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-					'CLIENT.ENTITY_ID' => $contactIds,
+					'=CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'=CLIENT.ENTITY_ID' => $contactIds,
 				],
 			];
 		}
 		elseif($companyId > 0)
 		{
-			$result['CLIENT.ENTITY_ID'] = $companyId;
-			$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Company;
+			$result['=CLIENT.ENTITY_ID'] = $companyId;
+			$result['=CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Company;
 		}
 		elseif(!empty($contactIds))
 		{
-			$result['CLIENT.ENTITY_ID'] = $contactIds;
-			$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Contact;
+			$result['=CLIENT.ENTITY_ID'] = $contactIds;
+			$result['=CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Contact;
 		}
 
 		return $result;
@@ -1904,7 +1910,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			$arOrder['STATUS_ID'] = isset($arOrder['STATUS_ID']) ? $arOrder['STATUS_ID'] : '';
 			$arOrder['ORDER_STAGE_NAME'] = $arOrder['STATUS_ID'];
-			$arOrder['PERSON_TYPE_ID'] = $personTypes[$arOrder['PERSON_TYPE_ID']]['NAME'];
+			$arOrder['PERSON_TYPE_ID'] = htmlspecialcharsbx($personTypes[$arOrder['PERSON_TYPE_ID']]['NAME']);
 
 			//region Client info
 			if($contactID > 0)

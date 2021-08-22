@@ -280,6 +280,34 @@
 	background-color: #E41F18;
 }
 
+.salescenter-platon-bank_card-icon { width: 97px; }
+.salescenter-platon-bank_card-icon i {
+	background-image: url(images/platon_bank_card.svg);
+	background-size: 70% auto;
+	background-color: #EC6125;
+}
+
+.salescenter-platon-apple_pay-icon { width: 97px; }
+.salescenter-platon-apple_pay-icon i {
+	background-image: url(images/platon_apple_pay.svg);
+	background-size: 70% auto;
+	background-color: #EC6125;
+}
+
+.salescenter-platon-google_pay-icon { width: 97px; }
+.salescenter-platon-google_pay-icon i {
+	background-image: url(images/platon_google_pay.svg);
+	background-size: 70% auto;
+	background-color: #EC6125;
+}
+
+.salescenter-platon-privat24-icon { width: 97px; }
+.salescenter-platon-privat24-icon i {
+	background-image: url(images/platon_privat24.svg);
+	background-size: 70% auto;
+	background-color: #EC6125;
+}
+
 .salescenter-skb-skb-icon { width: 97px; }
 .salescenter-skb-skb-icon i {
 	background-image: url(images/skb_skb.svg);

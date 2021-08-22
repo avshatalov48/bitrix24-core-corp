@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -12,6 +12,8 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Util\User;
 
 final class Favorite extends \Bitrix\Tasks\Dispatcher\RestrictedAction
@@ -21,7 +23,13 @@ final class Favorite extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function add($taskId)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		try
 		{
@@ -45,7 +53,13 @@ final class Favorite extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function delete($taskId)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		try
 		{

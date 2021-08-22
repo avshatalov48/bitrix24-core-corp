@@ -320,10 +320,11 @@ class CustomConnectors
 				'DATA' => $data,
 			];
 
-		$providerResult = Provider::getProviderForConnectorInput($connector, [$params]);
+		$providerResult = Provider::getProviderForConnectorInput($connector, $params);
 
 		if($providerResult->isSuccess())
 		{
+			/** @var  \Bitrix\ImConnector\Provider\Custom\Input $provider */
 			$provider = $providerResult->getResult();
 			if($provider instanceof Provider\Base\Input)
 			{

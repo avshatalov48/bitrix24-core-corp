@@ -64,7 +64,6 @@ const Conv = {
 	},
 	formatMoney(val: Number, format): String
 	{
-		console.log('format', format, format.replace('&#', '|||||'))
 		val = this.number(val).toFixed(2) || 0;
 		return (format || '#')
 			.replace('&#', '|||||')

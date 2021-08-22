@@ -60,7 +60,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 
 	protected function getConfigurationCategoryName(): string
 	{
-		return 'crm.entity.editor';
+		return \Bitrix\Crm\Entity\EntityEditorConfig::CATEGORY_NAME;
 	}
 
 	protected function getConfigurationOptionCategoryName(): string

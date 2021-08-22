@@ -7,7 +7,7 @@ this.BX.Disk = this.BX.Disk || {};
 	var ALLOWED_ATTEMPTS_TO_GET_USER_INFO = 3;
 	var SECONDS_TO_ACTUALIZE_ONLINE = 25;
 
-	var _makeLinkAbsolute = new WeakSet();
+	var _makeLinkAbsolute = /*#__PURE__*/new WeakSet();
 
 	var UserManager = /*#__PURE__*/function () {
 	  function UserManager(options) {
@@ -200,13 +200,13 @@ this.BX.Disk = this.BX.Disk || {};
 	  return UserManager;
 	}();
 
-	var _makeLinkAbsolute2 = function _makeLinkAbsolute2(link) {
+	function _makeLinkAbsolute2(link) {
 	  if (link.includes('http://') || link.includes('https://')) {
 	    return link;
 	  }
 
 	  return document.location.origin + link;
-	};
+	}
 
 	var BaseCommandHandler = /*#__PURE__*/function () {
 	  function BaseCommandHandler(commandOptions) {
@@ -420,6 +420,8 @@ this.BX.Disk = this.BX.Disk || {};
 	      data.action = action;
 	      data.uid = currentSliderData.get('uid');
 	      data.documentSessionId = this.context.documentSession.id;
+	      data.documentSessionHash = this.context.documentSession.hash;
+	      data.fileSize = this.context.object.size;
 	      BX.Disk.sendTelemetryEvent(data);
 	    }
 	  }, {

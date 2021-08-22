@@ -18,7 +18,20 @@ use Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\ImBot\Model
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_NetworkSession_Query query()
+ * @method static EO_NetworkSession_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_NetworkSession_Result getById($id)
+ * @method static EO_NetworkSession_Result getList(array $parameters = array())
+ * @method static EO_NetworkSession_Entity getEntity()
+ * @method static \Bitrix\ImBot\Model\EO_NetworkSession createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImBot\Model\EO_NetworkSession_Collection createCollection()
+ * @method static \Bitrix\ImBot\Model\EO_NetworkSession wakeUpObject($row)
+ * @method static \Bitrix\ImBot\Model\EO_NetworkSession_Collection wakeUpCollection($rows)
+ */
 
 class NetworkSessionTable extends Main\Entity\DataManager
 {

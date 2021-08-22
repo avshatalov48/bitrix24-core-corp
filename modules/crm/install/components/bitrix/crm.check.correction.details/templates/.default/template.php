@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
 
 CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip'));
-\Bitrix\Main\UI\Extension::load(['sidepanel']);
+\Bitrix\Main\UI\Extension::load(['sidepanel', 'ui.hint']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/slider.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
@@ -29,11 +29,7 @@ $editorContext = array(
 	'PARAMS' => $arResult['CONTEXT_PARAMS']
 );
 ?>
-<div class="crm-helpdesk-link">
-	<a href="https://helpdesk.bitrix24.ru/open/12301946" class="ui-link ui-link-dashed">
-		<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_CHECK_CORRECTION_HELPDESK_TITLE')?>
-	</a>
-</div>
+
 <div id="<?=htmlspecialcharsbx($wrapperId)?>">
 	<?
 	$APPLICATION->IncludeComponent(
@@ -66,6 +62,30 @@ $editorContext = array(
 
 
 <script>
+	BX.addCustomEvent(window, "BX.Crm.EntityEditorSection:onLayout", function (section, eventArgs) {
+		if (eventArgs.id === "main")
+		{
+			var helpdeskLink = BX.create('A', {
+				'attrs': {
+					'href': 'https://helpdesk.bitrix24.ru/open/12301946',
+					'className': 'ui-link ui-link-dashed',
+					'style': 'width: -webkit-max-content;width: -moz-max-content;width: max-content;'
+				},
+				'text': <?= CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::getMessage('CRM_CHECK_CORRECTION_HELPDESK_TITLE')) ?>,
+			});
+			eventArgs.customNodes.push(helpdeskLink);
+		}
+
+		if (eventArgs.id === "sum")
+		{
+			// add the hint node; adjust the section's style so that the hint is immediately to the right of the title
+			var hintNode = BX.UI.Hint.createNode(<?= CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::getMessage('CRM_CHECK_CORRECTION_SUM_HINT')) ?>);
+			eventArgs.customNodes.push(hintNode);
+			section.getWrapper().querySelector('.ui-entity-editor-header-title').style = 'width: unset;';
+			section.getWrapper().querySelector('.ui-entity-editor-section-header').style = 'justify-content: unset;';
+		}
+	});
+
 	BX.addCustomEvent(window, "onCrmEntityCreate", function () {
 		BX.SidePanel.Instance.getSliderByWindow(window).close();
 		BX.SidePanel.Instance.postMessage(window, 'CRM:CheckCorrection:onSave');

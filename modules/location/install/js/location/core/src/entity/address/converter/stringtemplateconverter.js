@@ -625,12 +625,18 @@ export default class StringTemplateConverter
 			// Kremlin,Moscow,Moscow,Russia,103132 -> Kremlin,Moscow,Russia,103132
 			fieldValues = [...new Set(fieldValues)];
 
+			let value = fieldValues.join(delimiterValue);
+
+			// Kaliningrad, Narvskaya, 72, , kv 8 -> Kaliningrad, Narvskaya, 72, kv 8
+			const reg = new RegExp(`(${delimiterValue}){2,}`, 'gim');
+			value = value.replace(new RegExp(reg), delimiterValue);
+
 			// The sign of the end of the group is received, the assembly of the group value.
 			context["info"] = {
 				"type": "group",
 				"position": groupStartPosition,
 				"end": context["position"],
-				"value": fieldValues.join(delimiterValue),
+				"value": value,
 			};
 		}
 
@@ -833,7 +839,6 @@ export default class StringTemplateConverter
 
 			result = parts.join(this.#delimiter);
 		}
-
 		return result;
 	}
 }

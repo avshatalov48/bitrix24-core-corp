@@ -137,6 +137,11 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'getItems');
 	}
 
+	getEntityCounters(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getEntityCounters');
+	}
+
 	getEpicDescriptionEditor(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getEpicDescriptionEditor');
@@ -252,29 +257,19 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'getTeamSpeedChartData');
 	}
 
-	getDodPanelData(data): Promise
+	getDodSettings(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'getDodPanelData');
+		return this.sendRequestToComponent(data, 'getDodSettings');
 	}
 
-	getDodComponent(data): Promise
+	getDodChecklist(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'getDodComponent');
+		return this.sendRequestToComponent(data, 'getDodChecklist');
 	}
 
-	getDodButtons(data): Promise
+	saveDodSettings(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'getDodButtons');
-	}
-
-	saveDod(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'saveDod');
-	}
-
-	readAllTasksComment(data): Promise
-	{
-		return this.sendRequest('tasks.task.comment.readAll', data);
+		return this.sendRequestToComponent(data, 'saveDodSettings');
 	}
 
 	updateBorderColorToLinkedItems(data): Promise
@@ -290,6 +285,21 @@ export class RequestSender
 	getSubTaskItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getSubTaskItems');
+	}
+
+	createType(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'createType');
+	}
+
+	changeTypeName(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'changeTypeName');
+	}
+
+	removeType(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'removeType');
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

@@ -109,6 +109,7 @@ abstract class BaseComponent extends Crm\Component\Base
 		if($entityTypeID === \CCrmOwnerType::Company)
 		{
 			$fields = array('TITLE' => $title);
+			$fields['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Contact)
 		{
@@ -125,6 +126,7 @@ abstract class BaseComponent extends Crm\Component\Base
 					$fields
 				);
 			}
+			$fields['OPENED'] = \Bitrix\Crm\Settings\ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 		}
 		else
 		{

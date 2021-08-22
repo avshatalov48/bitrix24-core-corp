@@ -82,8 +82,8 @@ const FieldResourceBooking = {
 				});
 			};
 
-			let scriptLink = (module.properties && module.properties.resourcebooking)
-				? module.properties.resourcebooking.link
+			let scriptLink = (b24form.common.properties && b24form.common.properties.resourcebooking)
+				? b24form.common.properties.resourcebooking.link
 				: null;
 			if (!loadAppPromise)
 			{

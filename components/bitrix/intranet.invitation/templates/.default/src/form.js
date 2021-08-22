@@ -4,6 +4,7 @@ import {SelfRegister} from './self-register';
 import {Row} from "./row";
 import {Selector} from "./selector";
 import {EventEmitter} from "main.core.events";
+import {ActiveDirectory} from "./active-directory";
 
 export default class Form extends EventEmitter
 {
@@ -26,6 +27,7 @@ export default class Form extends EventEmitter
 		this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
 		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 		this.regenerateUrlBase = params.regenerateUrlBase;
+		this.firstInvitationBlock = params.firstInvitationBlock;
 
 		if (Type.isDomNode(this.contentContainer))
 		{
@@ -54,9 +56,12 @@ export default class Form extends EventEmitter
 				Event.bind(item, 'click', () => {
 					this.changeContent(item.getAttribute('data-action'));
 				});
-			});
 
-			this.changeContent(this.menuItems[0].getAttribute('data-action'));
+				if (item.getAttribute('data-action') === this.firstInvitationBlock)
+				{
+					BX.fireEvent(item, 'click');
+				}
+			});
 		}
 
 		this.submit = new Submit(this);
@@ -91,6 +96,18 @@ export default class Form extends EventEmitter
 
 		if (action.length > 0)
 		{
+			if (action === 'active-directory')
+			{
+				if (!this.activeDirectory)
+				{
+					this.activeDirectory = new ActiveDirectory(this);
+				}
+
+				this.activeDirectory.showForm();
+
+				return;
+			}
+
 			for (let type in this.contentBlocks)
 			{
 				let block = this.contentBlocks[type];

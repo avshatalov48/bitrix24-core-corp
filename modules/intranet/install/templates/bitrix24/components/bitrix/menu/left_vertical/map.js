@@ -445,20 +445,14 @@ BX.Bitrix24.GroupPanel.prototype.onItemsClick = function(event)
 	var item = star.parentNode;
 	var groupId = item.dataset.id;
 
-	var action = BX.hasClass(item, "group-panel-item-favorite") ? "remove_from_favorites" : "add_to_favorites";
+	var action = BX.hasClass(item, "group-panel-item-favorite") ? "removeFromFavorites" : "addToFavorites";
 	BX.toggleClass(item, "group-panel-item-favorite");
 
 	this.animateStart(star);
-	this.animateCounter(action === "add_to_favorites");
+	this.animateCounter(action === "addToFavorites");
 
-	BX.ajax({
-		method: "POST",
-		dataType: "json",
-		url: this.ajaxPath,
+	BX.ajax.runAction('intranet.leftmenu.' + action, {
 		data: {
-			sessid : BX.bitrix_sessid(),
-			site_id : this.siteId,
-			action: action,
 			groupId: groupId
 		}
 	});
@@ -514,16 +508,10 @@ BX.Bitrix24.GroupPanel.prototype.saveFilter = function(filter)
 		return;
 	}
 
-	BX.ajax({
-		method: "POST",
-		dataType: "json",
-		url: this.ajaxPath,
+	BX.ajax.runAction('intranet.leftmenu.setGroupFilter', {
 		data: {
-			sessid : BX.bitrix_sessid(),
-			site_id : this.siteId,
-			action: "set_group_filter",
 			filter: filter
-		}
+		},
 	});
 };
 

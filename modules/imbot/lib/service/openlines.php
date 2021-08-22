@@ -4,7 +4,7 @@ namespace Bitrix\ImBot\Service;
 use Bitrix\ImConnector\Provider;
 
 use Bitrix\Main\Loader;
-
+use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\Error;
 
@@ -15,10 +15,26 @@ use Bitrix\ImBot\Error;
  */
 class Openlines
 {
-	public const BOT_CODE = 'network';
-	public const SERVICE_CODE = 'openlines';
+	public const
+		BOT_CODE = 'network',
+		SERVICE_CODE = 'openlines',
+
+		COMMAND_OPERATOR_MESSAGE_ADD = 'operatorMessageAdd',
+		COMMAND_OPERATOR_MESSAGE_UPDATE = 'operatorMessageUpdate',
+		COMMAND_OPERATOR_MESSAGE_DELETE = 'operatorMessageDelete',
+		COMMAND_OPERATOR_MESSAGE_RECEIVED = 'operatorMessageReceived',
+		COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting',
+		COMMAND_START_DIALOG_SESSION = 'startDialogSession',
+		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession'
+	;
+
+	/** @var ImBot\Http */
+	protected static $httpClient;
+
+	//region Incoming
 
 	/**
+	 * @see \Bitrix\ImBot\Controller::sendToService
 	 * @param string $command
 	 * @param array $params
 	 *
@@ -38,12 +54,15 @@ class Openlines
 			return false;
 		}
 
-		Log::write([$command,$params], 'NETWORK SERVICE');
+		$params['BX_COMMAND'] = $command;
 
-		$providerResult = Provider::getProviderForConnectorInput(self::BOT_CODE, [$command, $params]);
+		Log::write($params, 'NETWORK SERVICE');
+
+		$providerResult = Provider::getProviderForConnectorInput(self::BOT_CODE, $params);
 
 		if($providerResult->isSuccess())
 		{
+			/** @var \Bitrix\ImConnector\Provider\Network\Input $provider */
 			$provider = $providerResult->getResult();
 			$resultReception = $provider->reception();
 
@@ -73,7 +92,7 @@ class Openlines
 				__METHOD__,
 				'UNKNOWN_COMMAND',
 				'Command "'.$command.'" is not found.',
-				[$command, $params]
+				$params
 			);
 		}
 		elseif (!$result)
@@ -82,12 +101,15 @@ class Openlines
 				__METHOD__,
 				'ERROR_COMMAND',
 				'Command "'.$command.'" execute with errors.',
-				[$command, $params]
+				$params
 			);
 		}
 
 		return $result;
 	}
+
+	//endregion
+
 
 	/**
 	 * Removes mentions from message.
@@ -105,6 +127,8 @@ class Openlines
 		return $messageText;
 	}
 
+	//region Outgoing
+
 	/**
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorMessageAdd
 	 * @param array $params
@@ -115,9 +139,9 @@ class Openlines
 	{
 		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'operatorMessageAdd',
+			self::COMMAND_OPERATOR_MESSAGE_ADD,
 			$params
 		);
 		if (isset($query->error))
@@ -138,9 +162,9 @@ class Openlines
 	{
 		$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'operatorMessageUpdate',
+			self::COMMAND_OPERATOR_MESSAGE_UPDATE,
 			$params
 		);
 		if (isset($query->error))
@@ -159,9 +183,9 @@ class Openlines
 	 */
 	public static function operatorMessageDelete($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'operatorMessageDelete',
+			self::COMMAND_OPERATOR_MESSAGE_DELETE,
 			$params
 		);
 		if (isset($query->error))
@@ -180,9 +204,9 @@ class Openlines
 	 */
 	public static function operatorStartWriting($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'operatorStartWriting',
+			self::COMMAND_OPERATOR_START_WRITING,
 			$params
 		);
 		if (isset($query->error))
@@ -201,9 +225,9 @@ class Openlines
 	 */
 	public static function sessionStart($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'startDialogSession',
+			self::COMMAND_START_DIALOG_SESSION,
 			$params
 		);
 		if (isset($query->error))
@@ -222,9 +246,9 @@ class Openlines
 	 */
 	public static function sessionFinish($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'finishDialogSession',
+			self::COMMAND_FINISH_DIALOG_SESSION,
 			$params
 		);
 		if (isset($query->error))
@@ -243,9 +267,9 @@ class Openlines
 	 */
 	public static function operatorMessageReceived($params)
 	{
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$http = self::instanceHttpClient();
 		$query = $http->query(
-			'operatorMessageReceived',
+			self::COMMAND_OPERATOR_MESSAGE_RECEIVED,
 			$params
 		);
 		if (isset($query->error))
@@ -254,5 +278,33 @@ class Openlines
 		}
 
 		return true;
+	}
+
+	//endregion
+
+
+	/**
+	 * Returns web client.
+	 *
+	 * @return ImBot\Http
+	 */
+	protected static function instanceHttpClient(): ImBot\Http
+	{
+		if (!(self::$httpClient instanceof ImBot\Http))
+		{
+			self::$httpClient = new ImBot\Http(self::BOT_CODE);
+		}
+
+		return self::$httpClient;
+	}
+
+	/**
+	 * Replace web client.
+	 *
+	 * @return ImBot\Http
+	 */
+	public static function initHttpClient(ImBot\Http $httpClient): void
+	{
+		self::$httpClient = $httpClient;
 	}
 }

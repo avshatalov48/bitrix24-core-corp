@@ -150,11 +150,6 @@ input::-ms-clear { display: none; }
 }
 
 .bx-layout-inner-left {
-	/*
-		This value is duplicated in script.js and used in the following selectors:
-		- .page-header
-		- .feed-up-btn-wrap
-	*/
 	width: 240px;
 	-webkit-user-select: none;
 }
@@ -164,11 +159,6 @@ input::-ms-clear { display: none; }
 }
 
 .menu-collapsed-mode .bx-layout-inner-left {
-	/*
-		This value is duplicated in script.js and used in the following selectors:
-		- .page-header
-		- .feed-up-btn-wrap
-	*/
 	width: 66px;
 }
 
@@ -611,8 +601,8 @@ td.bx-layout-inner-inner-cont {
 .user-block:hover { background-color: #78808b; }
 
 .user-default-avatar {
-	background: #535c6a url(images/user-default-avatar.svg) no-repeat center;
-	background-size: 50%;
+	background: #7b8691 url(/bitrix/js/ui/icons/b24/images/ui-user.svg?v2) no-repeat center;
+	background-size: 100% auto;
 }
 
 /*.group-default-avatar {*/
@@ -962,19 +952,15 @@ td.bx-layout-inner-inner-cont {
 }
 
 .pagetitle-toolbar-field-view .pagetitle {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
-	-webkit-box-flex: 0;
-	-ms-flex: 0 1 auto;
 	flex: 0 1 auto;
 	margin: 0 45px 0 0;
 	padding: 21px 0 21px 0;
 	max-width: 100%;
 	/*min-width: 140px;*/
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	overflow: hidden;
 }
 
@@ -986,6 +972,10 @@ td.bx-layout-inner-inner-cont {
 
 .headerless-mode .pagetitle {
 	/*display: none;*/
+}
+
+.pagetitle-wrap-filter-opened .pagetitle {
+	display: inline-block;
 }
 
 /*
@@ -4433,4 +4423,62 @@ a.td1:hover {
 
 .ui-page-slider-wrapper .intranet-binding-menu-btn + script + .ui-btn {
 	margin-left: 12px;
+}
+
+.popup-window-blur {
+	background-color: transparent;
+	padding: 0;
+}
+
+.popup-window-blur .popup-window-content {
+	background-color: transparent;
+	overflow: hidden !important;
+	position: relative;
+	padding: 10px;
+}
+
+.popup-window-blur .popup-window-content:after {
+	content: '';
+	background-size: cover;
+	filter: blur(48px);
+	background-repeat: no-repeat;
+	background-position: -240px -200px;
+	transform: scale(1.2);
+	background-attachment: fixed;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -240px;
+	width: 100vw;
+	z-index: -2;
+	pointer-events: none;
+}
+
+.popup-window-blur .popup-window-content:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #fff;
+	opacity: .75;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.popup-window-blur .popup-window-angly:after {
+	content: '';
+	height: 15px;
+	position: absolute;
+	left: 9px;
+	top: 16px;
+	transform: rotate(45deg);
+	transform-origin: 50% 50%;
+	width: 14px;
+	z-index: -1;
+}
+
+.popup-window-blur .popup-window-angly:before {
+	opacity: .8;
 }

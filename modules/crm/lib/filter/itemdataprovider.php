@@ -18,6 +18,7 @@ use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Text\StringHelper;
+use Bitrix\Main\Loader;
 
 class ItemDataProvider extends EntityDataProvider
 {
@@ -32,11 +33,13 @@ class ItemDataProvider extends EntityDataProvider
 	public const TYPE_DATE = 'date';
 	public const TYPE_BOOLEAN = 'checkbox';
 	public const TYPE_CRM_ENTITY = 'crm_entity';
+	public const TYPE_ENTITY_SELECTOR = 'entity_selector';
 	public const TYPE_LIST = 'list';
 	public const TYPE_PARENT = 'parent';
 
 	public const FIELD_STAGE_SEMANTIC = 'STAGE_SEMANTIC_ID';
 
+	protected const PRESET_ENTITY_SELECTOR = 'preset_entity_selector';
 	protected const PRESET_DEST_SELECTOR = 'preset_dest_selector';
 	protected const PRESET_DATETIME = 'preset_datetime';
 	protected const PRESET_DATE = 'preset_date';
@@ -132,7 +135,7 @@ class ItemDataProvider extends EntityDataProvider
 			],
 			Item::FIELD_NAME_WEBFORM_ID => [
 				'type' => static::TYPE_LIST,
-				'displayGrid' => false,
+				'displayGrid' => true,
 				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => false,
@@ -259,12 +262,12 @@ class ItemDataProvider extends EntityDataProvider
 		if ($this->factory->isLinkWithProductsEnabled())
 		{
 			$fields[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = [
-				'type' => static::TYPE_CRM_ENTITY,
+				'type' => static::TYPE_ENTITY_SELECTOR,
 				'displayGrid' => true,
 				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 				'customCaption' => Loc::getMessage('CRM_COMMON_PRODUCTS'),
 			];
 			$fields['OPPORTUNITY_WITH_CURRENCY'] = [
@@ -569,6 +572,14 @@ class ItemDataProvider extends EntityDataProvider
 				'partial' => true
 			];
 		}
+		elseif ($fieldParams['filterOptionPreset'] === static::PRESET_ENTITY_SELECTOR)
+		{
+			$result = [
+				'type' => 'entity_selector',
+				'default' => $fieldParams['defaultFilter'],
+				'partial' => true
+			];
+		}
 		elseif ($fieldParams['filterOptionPreset'] === static::PRESET_DATETIME)
 		{
 			$result = [
@@ -690,6 +701,36 @@ class ItemDataProvider extends EntityDataProvider
 			{
 				$result['params']['enableCrmProducts'] = 'Y';
 				$result['params']['prefix'] = UISelector\CrmProducts::PREFIX_FULL;
+			}
+		}
+		elseif (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_ENTITY_SELECTOR, static::DISPLAY_IN_FILTER)))
+		{
+			$result = [
+				'params' => [
+					'multiple' => 'N',
+					'dialogOptions' => [
+						'height' => 200,
+						'context' => '',
+						'entities' => [],
+					],
+				],
+			];
+			if (
+				$fieldID === Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'
+				&& Loader::includeModule('iblock')
+				&& Loader::includeModule('catalog')
+			)
+			{
+				$result['params']['dialogOptions']['context'] = 'catalog-products';
+				$result['params']['dialogOptions']['entities'] = [
+					[
+						'id' => 'product',
+						'options' => [
+							'iblockId' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
+							'basePriceId' => \Bitrix\Crm\Product\Price::getBaseId(),
+						],
+					]
+				];
 			}
 		}
 		elseif ($fieldID === Item::FIELD_NAME_CURRENCY_ID)
@@ -868,6 +909,14 @@ class ItemDataProvider extends EntityDataProvider
 		}
 
 		foreach ($this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER) as $fieldName)
+		{
+			if (!empty($requestFilter[$fieldName]))
+			{
+				$filter['='.$fieldName] = (int)$requestFilter[$fieldName];
+			}
+		}
+
+		foreach ($this->getFieldNamesByType(static::TYPE_ENTITY_SELECTOR, static::DISPLAY_IN_FILTER) as $fieldName)
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{

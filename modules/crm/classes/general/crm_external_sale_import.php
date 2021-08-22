@@ -555,19 +555,26 @@ class CCrmExternalSaleImport
 
 		if (is_array($arOrder["CONTRACTOR"]["ADDRESS"]))
 		{
-			foreach ($arOrder["CONTRACTOR"]["ADDRESS"] as $key => $val)
-			{
-				if ($key == "VIEW")
-					continue;
-				if (!empty($arFields["ADDRESS"]))
-					$arFields["ADDRESS"] .= ", ";
-				$arFields["ADDRESS"] .= $val;
-			}
-			if (isset($arOrder["CONTRACTOR"]["ADDRESS"]["VIEW"]))
+			if (isset($arOrder["CONTRACTOR"]["ADDRESS"]["VIEW"]) && $arOrder["CONTRACTOR"]["ADDRESS"]["VIEW"] != '')
 			{
 				if (!empty($arFields["ADDRESS"]))
 					$arFields["ADDRESS"] .= "\n";
 				$arFields["ADDRESS"] .= $arOrder["CONTRACTOR"]["ADDRESS"]["VIEW"];
+			}
+			else
+			{
+				foreach ($arOrder["CONTRACTOR"]["ADDRESS"] as $key => $val)
+				{
+					if ($key == "VIEW")
+					{
+						continue;
+					}
+					if (!empty($arFields["ADDRESS"]))
+					{
+						$arFields["ADDRESS"] .= ", ";
+					}
+					$arFields["ADDRESS"] .= $val;
+				}
 			}
 		}
 		if (is_array($arOrder["CONTRACTOR"]["CONTACTS"]))
@@ -1456,7 +1463,7 @@ class CCrmExternalSaleImport
 			if (!$result)
 				return false;
 
-			list($companyId, $isNewCompany) = $result;
+			[$companyId, $isNewCompany] = $result;
 			if (!$skipBP)
 				$this->SaveOrderDataCompanyBP($companyId, $isNewCompany);
 		}
@@ -1466,7 +1473,7 @@ class CCrmExternalSaleImport
 			if (!$result)
 				return false;
 
-			list($contactId, $isNewContact) = $result;
+			[$contactId, $isNewContact] = $result;
 			if (!$skipBP)
 				$this->SaveOrderDataContactBP($contactId, $isNewContact);
 		}
@@ -1475,7 +1482,7 @@ class CCrmExternalSaleImport
 		if (!$result)
 			return false;
 
-		list($dealId, $isNewDeal) = $result;
+		[$dealId, $isNewDeal] = $result;
 
 		$this->SaveOrderDataProducts($arOrder, $dealId);
 

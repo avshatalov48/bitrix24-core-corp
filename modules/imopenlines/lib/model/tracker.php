@@ -23,7 +23,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Tracker_Query query()
+ * @method static EO_Tracker_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Tracker_Result getById($id)
+ * @method static EO_Tracker_Result getList(array $parameters = array())
+ * @method static EO_Tracker_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_Tracker createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_Tracker_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_Tracker wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_Tracker_Collection wakeUpCollection($rows)
+ */
 
 class TrackerTable extends Main\Entity\DataManager
 {

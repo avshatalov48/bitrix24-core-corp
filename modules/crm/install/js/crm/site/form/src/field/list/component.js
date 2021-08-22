@@ -212,7 +212,7 @@ const FieldList = {
 		{
 			return this.field.selectedItem()
 				? this.field.selectedItems()
-				: [this.field.item()];
+				: (this.field.item() ? [this.field.item()] : []);
 		},
 		isAddVisible()
 		{

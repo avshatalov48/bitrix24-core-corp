@@ -36,7 +36,7 @@ class CVoximplantQueueListComponent extends \CBitrixComponent
 
 	protected function checkAccess()
 	{
-		return $this->userPermissions->canPerform(Permissions::ENTITY_CALL_DETAIL, Permissions::ACTION_VIEW);
+		return $this->userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY);
 	}
 
 	protected function prepareData()
@@ -55,7 +55,7 @@ class CVoximplantQueueListComponent extends \CBitrixComponent
 		$cursor = Voximplant\Model\QueueTable::getList(array(
 			//"order" => $sorting["sort"],
 			"order" => array('ID' => 'ASC'),
-			"select" => array('ID', 'NAME', 'TYPE'),
+			"select" => array('ID', 'NAME', 'TYPE', 'PHONE_NUMBER'),
 			"count_total" => true,
 			"offset" => ($nav->getOffset()),
 			"limit" => ($nav->getLimit())
@@ -98,6 +98,7 @@ class CVoximplantQueueListComponent extends \CBitrixComponent
 			array("id" => "ID", "name" => GetMessage("VOX_QUEUE_LIST_ID"), "default" => true, "editable" => false),
 			array("id" => "NAME", "name" => GetMessage("VOX_QUEUE_LIST_NAME"), "default" => true, "editable" => false),
 			array("id" => "TYPE", "name" => GetMessage("VOX_QUEUE_LIST_TYPE"), "default" => true, "editable" => false),
+			array("id" => "PHONE_NUMBER", "name" => Loc::getMessage("VOX_QUEUE_LIST_PHONE_NUMBER"), "default" => true, "editable" => false),
 		);
 		$result["GRID_ID"] = $this->gridId;
 		$result["CAN_CREATE_GROUP"] = Limits::canCreateGroup();

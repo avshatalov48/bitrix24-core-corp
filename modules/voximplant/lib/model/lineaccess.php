@@ -5,6 +5,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Voximplant\ConfigTable;
 
+/**
+ * Class LineAccessTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LineAccess_Query query()
+ * @method static EO_LineAccess_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LineAccess_Result getById($id)
+ * @method static EO_LineAccess_Result getList(array $parameters = array())
+ * @method static EO_LineAccess_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_LineAccess createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_LineAccess_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_LineAccess wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_LineAccess_Collection wakeUpCollection($rows)
+ */
 class LineAccessTable extends Entity\DataManager
 {
 	/**

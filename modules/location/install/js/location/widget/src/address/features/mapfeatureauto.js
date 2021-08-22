@@ -1,13 +1,12 @@
-import {Address, ControlMode} from "location.core";
-import State from "../../state";
-import MapFeature from "./mapfeature";
+import {Address, ControlMode} from 'location.core';
+import State from '../../state';
+import MapFeature from './mapfeature';
 
 /**
  * Map feature for the address widget with auto map opening / closing behavior
  */
 export default class MapFeatureAuto extends MapFeature
 {
-	#isMouseOver = false;
 	#showMapTimerId = null;
 	#showMapDelay = 700;
 	#closeMapTimerId = null;
@@ -33,16 +32,17 @@ export default class MapFeatureAuto extends MapFeature
 		this.map.onMouseOutSubscribe(this.#processOnMouseOut.bind(this));
 	}
 
+	// eslint-disable-next-line no-unused-vars
 	#onControlWrapperClick(event)
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
 		if (this.addressWidget.mode === ControlMode.view)
 		{
-			if(this.map.isShown())
+			if (this.map.isShown())
 			{
 				this.closeMap();
 			}
@@ -55,7 +55,7 @@ export default class MapFeatureAuto extends MapFeature
 
 	#onDocumentClick(event)
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
@@ -68,7 +68,7 @@ export default class MapFeatureAuto extends MapFeature
 
 	#processOnMouseOver()
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
@@ -81,7 +81,7 @@ export default class MapFeatureAuto extends MapFeature
 			return;
 		}
 
-		if(this.addressWidget.address && !this.map.isShown())
+		if (this.addressWidget.address && !this.map.isShown())
 		{
 			this.#showMapTimerId = setTimeout(() => {
 					this.showMap();
@@ -93,7 +93,7 @@ export default class MapFeatureAuto extends MapFeature
 
 	#processOnMouseOut()
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
@@ -106,7 +106,7 @@ export default class MapFeatureAuto extends MapFeature
 			return;
 		}
 
-		if(this.addressWidget.mode === ControlMode.view && this.map.isShown())
+		if (this.addressWidget.mode === ControlMode.view && this.map.isShown())
 		{
 			this.#closeMapTimerId = setTimeout(() => {
 					this.closeMap();
@@ -118,22 +118,14 @@ export default class MapFeatureAuto extends MapFeature
 
 	setAddress(address: ?Address): void
 	{
-		/*
-		if(this.addressWidget.state === State.DATA_INPUTTING)
-		{
-			this.closeMap();
-			return;
-		}
-		*/
-
-		if(!address)
+		if (!address)
 		{
 			this.closeMap();
 		}
 
 		this.map.address = address;
 
-		if(address && this.addressWidget.state !== State.DATA_SUPPOSED)
+		if (address && this.addressWidget.state !== State.DATA_SUPPOSED)
 		{
 			this.showMap();
 		}
@@ -141,14 +133,14 @@ export default class MapFeatureAuto extends MapFeature
 
 	destroy()
 	{
-		if(this.#isDestroyed)
+		if (this.#isDestroyed)
 		{
 			return;
 		}
 
 		document.removeEventListener('click', this.#onDocumentClick);
 
-		if(this.addressWidget.controlWrapper)
+		if (this.addressWidget.controlWrapper)
 		{
 			this.addressWidget.controlWrapper.removeEventListener('click', this.#onControlWrapperClick);
 			this.addressWidget.controlWrapper.removeEventListener('mouseover', this.#processOnMouseOver);

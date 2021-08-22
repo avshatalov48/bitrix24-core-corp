@@ -6,6 +6,7 @@ use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Search\Reindex\BaseObjectIndex;
 use Bitrix\Disk\Search\Reindex\ExtendedIndex;
 use Bitrix\Disk\Search\Reindex\HeadIndex;
+use Bitrix\Disk\Storage;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\Document\Contract;
@@ -197,6 +198,17 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		return $controls[$buttonName];
 	}
 
+	private function shouldBeBlockAddButtons(Storage $storage): bool
+	{
+		$proxyType = $storage->getProxyType();
+		if (!($proxyType instanceof ProxyType\Common))
+		{
+			return false;
+		}
+
+		return !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
+	}
+
 	protected function processActionDefault()
 	{
 		$errorsInGridActions = $this->processGridActions();
@@ -229,6 +241,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'STORAGE' => array(
 				'ID' => $this->storage->getId(),
 				'NAME' => $proxyType->getEntityTitle(),
+				'BLOCK_ADD_BUTTONS' => $this->shouldBeBlockAddButtons($this->storage),
 				'LINK' => $proxyType->getBaseUrlFolderList(),
 				'TRASH_LINK' => $proxyType->getBaseUrlTashcanList(),
 				'FILE_LINK_PREFIX' => $proxyType->getBaseUrlFileDetail(),
@@ -711,13 +724,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_general_access.svg',
 						'className' => 'disk-folder-list-context-menu-item',
 						"onclick" =>
-							"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
-								object: {
-									id: {$objectId},
-									name: '" . CUtil::JSEscape($name) . "',
-									isFolder: " . ($isFolder? 'true' : 'false') . "
-								 }
-							})",
+							$this->filterB24Feature(
+								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
+								"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
+									object: {
+										id: {$objectId},
+										name: '" . CUtil::JSEscape($name) . "',
+										isFolder: " . ($isFolder? 'true' : 'false') . "
+									 }
+								})"
+							),
 					);
 				}
 

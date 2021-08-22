@@ -601,6 +601,12 @@
 	{
 		var appearance = new BX.ContactCenter.Appearance(params);
 		var ajax = new BX.ContactCenter.Ajax(params, appearance);
+
+		var route = (new BX.Uri(window.location.href)).getQueryParam('route') || '';
+		if (route && /^\/\w+/.test(route))
+		{
+			BX.SidePanel.Instance.emulateAnchorClick(route);
+		}
 	};
 
 	BX.ContactCenter.MarketplaceApp = function(applicationId, appCode)

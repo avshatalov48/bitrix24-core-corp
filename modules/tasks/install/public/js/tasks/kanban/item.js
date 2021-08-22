@@ -425,47 +425,101 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		var data = this.getData();
 
-		var selector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-			scope: BX.proxy_context,
-			id: action + "-" + this.getId(),
-			mode: "user",
-			query: false,
-			useSearch: true,
-			useAdd: false,
-			parent: this,
-			popupOffsetTop: 5,
-			popupOffsetLeft: 40
-		});
-		selector.bindEvent("item-selected", BX.delegate(function(data){
-			//this._control.setData(BX.util.htmlspecialcharsback(data.nameFormatted), data.id);
-			var gridData = this.getGridData();
+		var targetNode = this.responsible;
+		var userId = data.responsible.id;
+		var userRole = 'R';
 
-			this.getGrid().ajax({
-					action: action,
-					taskId: this.getId(),
-					columnId: this.getColumnId(),
-					userId: data.id
-				},
-				function(data)
-				{
-					if (data && !data.error)
-					{
-						this.getGrid().updateItem(data.id, data);
-					}
-					else if (data)
-					{
-						BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
-					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
-			);
+		if (action === 'changeAuthorTask')
+		{
+			targetNode = this.author;
+			userId = data.author.id;
+			userRole = 'O';
+		}
 
-			selector.close();
-		}, this));
-		selector.open();
+		BX.loadExt('ui.entity-selector').then(function() {
+			var userDialog = new BX.UI.EntitySelector.Dialog({
+				targetNode: targetNode,
+				enableSearch: true,
+				multiple: false,
+				context: 'KANBAN_RESPONSIBLE_SELECTOR_' + action + data.id,
+				preselectedItems: [
+					['user', userId]
+				],
+				undeselectedItems: [
+					['user', userId]
+				],
+				entities: [
+					{
+						id: 'user',
+						options: {
+							emailUsers: true,
+							networkUsers: true,
+							extranetUsers: true,
+							inviteGuestLink: true,
+							myEmailUsers: true
+						}
+					},
+					{
+						id: 'department',
+					}
+				],
+				events: {
+					'Item:onSelect': function(event) {
+						var item = event.getData().item;
+						var data = this.prepareUserData(item, userRole);
+
+						this.getGrid().ajax({
+								action: action,
+								taskId: this.getId(),
+								columnId: this.getColumnId(),
+								userId: data.id
+							},
+							function(data)
+							{
+								if (data && !data.error)
+								{
+									this.getGrid().updateItem(data.id, data);
+								}
+								else if (data)
+								{
+									BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+								}
+							}.bind(this),
+							function(error)
+							{
+								BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+							}.bind(this)
+						);
+					}.bind(this)
+				}
+			});
+
+			userDialog.show();
+		}.bind(this));
+	},
+
+	prepareUserData: function(user, userRole)
+	{
+		var customData = user.getCustomData();
+		var entityType = user.getEntityType();
+
+		return {
+			avatar: user.avatar,
+			description: '',
+			entityType: userRole,
+			id: user.getId(),
+			name: customData.get('name'),
+			lastName: customData.get('lastName'),
+			email: customData.get('email'),
+			nameFormatted: BX.Text.encode(user.getTitle()),
+			networkId: '',
+			type: {
+				crmemail: false,
+				extranet: (entityType === 'extranet'),
+				email: (entityType === 'email'),
+				network: (entityType === 'network')
+			}
+		};
 	},
 
 	/**
@@ -568,10 +622,14 @@ BX.Tasks.Kanban.Item.prototype = {
 				groupId: this.getData()['groupId']
 			});
 
-			var choiceMadePromise = this.scrumDod.showList(draggableItem.getId());
-			choiceMadePromise.then(function() {
-				taskCompletePromise.fulfill();
-			}.bind(this));
+			this.scrumDod.showList(draggableItem.getId())
+				.then(function() {
+					taskCompletePromise.fulfill();
+				}.bind(this))
+				.catch(function() {
+					taskCompletePromise.reject();
+				}.bind(this))
+			;
 		}
 		else
 		{

@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Scrum\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 
@@ -11,6 +12,7 @@ class BacklogService implements Errorable
 {
 	const ERROR_COULD_NOT_ADD_BACKLOG = 'TASKS_BS_01';
 	const ERROR_COULD_NOT_READ_BACKLOG = 'TASKS_BS_02';
+	const ERROR_COULD_NOT_UPDATE_BACKLOG = 'TASKS_BS_03';
 
 	private $errorCollection;
 
@@ -43,6 +45,36 @@ class BacklogService implements Errorable
 		}
 
 		return $backlog;
+	}
+
+	public function changeBacklog(EntityTable $backlog): bool
+	{
+		try
+		{
+			$result = EntityTable::update($backlog->getId(), $backlog->getFieldsToUpdateEntity());
+
+			if ($result->isSuccess())
+			{
+				return true;
+			}
+			else
+			{
+				$this->setErrors($result, self::ERROR_COULD_NOT_UPDATE_BACKLOG);
+
+				return false;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_UPDATE_BACKLOG
+				)
+			);
+
+			return false;
+		}
 	}
 
 	/**
@@ -78,6 +110,7 @@ class BacklogService implements Errorable
 				$backlog->setCreatedBy($backlogData['CREATED_BY']);
 				$backlog->setModifiedBy($backlogData['MODIFIED_BY']);
 				$backlog->setEntityType($backlogData['ENTITY_TYPE']);
+				$backlog->setInfo($backlogData['INFO']);
 
 				if ($itemService)
 				{
@@ -101,5 +134,15 @@ class BacklogService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	private function setErrors(Result $result, string $code): void
+	{
+		$this->errorCollection->setError(
+			new Error(
+				implode('; ', $result->getErrorMessages()),
+				$code
+			)
+		);
 	}
 }

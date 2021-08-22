@@ -54,6 +54,7 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 				$verification['ADDRESS'] = $verification['ZIP_CODE'].', '.$verification['COUNTRY'].', '.$verification['CITY'].', '.$verification['STREET'].' '.$verification['BUILDING_NUMBER'].($verification['BUILDING_LETTER'] ? '-'.$verification['BUILDING_LETTER'] : '');
 				$verification['DOCUMENTS'] = [];
 				$verification['DOCUMENTS'][] = [
+					'REG_ID' => $verification['ID'],
 					'UPLOADED' => 'n/a',
 					'OWNER' => $verification['SALUTATION'] . ' ' . $verification['FIRST_NAME'] . ' ' . $verification['LAST_NAME'],
 					'DOCUMENT_STATUS' => $verification['STATUS'],

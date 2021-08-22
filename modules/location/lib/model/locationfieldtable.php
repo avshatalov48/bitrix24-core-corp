@@ -6,6 +6,22 @@ use Bitrix\Main;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class LocationFieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LocationField_Query query()
+ * @method static EO_LocationField_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LocationField_Result getById($id)
+ * @method static EO_LocationField_Result getList(array $parameters = array())
+ * @method static EO_LocationField_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_LocationField createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_LocationField_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_LocationField wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_LocationField_Collection wakeUpCollection($rows)
+ */
 class LocationFieldTable extends Main\ORM\Data\DataManager
 {
 	/**

@@ -51,14 +51,6 @@ describe('Tasks.Scrum.Entity', () => {
 			entity.setExactSearchApplied(false);
 			assert(entity.isExactSearchApplied() === false);
 		});
-		it('Entity must be able to set, add and subtract a number tasks', () => {
-			entity.addNumberTasks(3);
-			assert(entity.getNumberTasks() === 3);
-			entity.subtractNumberTasks(1);
-			assert(entity.getNumberTasks() === 2);
-			entity.setNumberTasks(0);
-			assert(entity.getNumberTasks() === 0);
-		});
 		it('Entity must be able to add and remove an item', () => {
 			assert(entity.getItems().size === 0);
 			entity.setItem(item);

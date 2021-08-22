@@ -40,6 +40,15 @@ class Output
 
 	/**
 	 * @param int $chatId
+	 * @param Output $interactiveMessage
+	 */
+	public static function setInstance(int $chatId, Output $interactiveMessage): void
+	{
+		static::$instances[$chatId] = $interactiveMessage;
+	}
+
+	/**
+	 * @param int $chatId
 	 * @param string $connectorId
 	 * @return Output
 	 */

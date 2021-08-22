@@ -2,8 +2,11 @@
 namespace Bitrix\Location\Infrastructure;
 
 use Bitrix\Location\Entity\Location;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Service\GeoIp;
+use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class UserPoint
@@ -35,46 +38,20 @@ final class UserLocation
 
 	private static function findLocationByIp(string $ipAddress = ''): ?Location
 	{
-		$geoIpDataResult = GeoIp\Manager::getDataResult($ipAddress);
-
-		if (!$geoIpDataResult || !$geoIpDataResult->isSuccess())
-		{
-			return null;
-		}
-
-		$geoIpData = $geoIpDataResult->getGeoData();
-		if (!$geoIpData
-			|| $geoIpData->latitude === null
-			|| $geoIpData->longitude === null
+		$coordinates = GeoIp\Manager::getGeoPosition($ipAddress);
+		if (
+			!is_array($coordinates)
+			|| !isset($coordinates['latitude'])
+			|| !isset($coordinates['longitude'])
 		)
 		{
 			return null;
 		}
 
-		$name = '';
-		$type = Location\Type::UNKNOWN;
-
-		if ($geoIpData->cityName)
-		{
-			$name = $geoIpData->cityName;
-			$type = Location\Type::LOCALITY;
-		}
-		elseif($geoIpData->regionName)
-		{
-			$name = $geoIpData->regionName;
-			$type = Location\Type::ADM_LEVEL_1;
-		}
-		elseif ($geoIpData->countryName)
-		{
-			$name = $geoIpData->countryName;
-			$type = Location\Type::COUNTRY;
-		}
-
 		return (new Location())
-			->setLatitude($geoIpData->latitude)
-			->setLongitude($geoIpData->longitude)
-			->setType($type)
-			->setName($name);
+			->setLatitude($coordinates['latitude'])
+			->setLongitude($coordinates['longitude'])
+			->setType(Location\Type::LOCALITY);
 	}
 
 	private static function findLocationByPortalRegion(): Location
@@ -139,39 +116,25 @@ final class UserLocation
 		return $result;
 	}
 
+	/**
+	 * @return Location|null
+	 */
 	private static function findLocationByOption(): ?Location
 	{
-		$result = null;
-		$locationData = (string)\Bitrix\Main\Config\Option::get('location', 'user_location_data', '');
-
-		if($locationData !== '')
+		$lastLocationOptionValue = \CUserOptions::GetOption('location', 'last_selected_location');
+		if ($lastLocationOptionValue)
 		{
-			$locationData = explode(';', $locationData);
-
-			if (is_array($locationData) && count($locationData) === 3)
+			try
 			{
-				$result = (new Location())
-					->setLatitude($locationData[0])
-					->setLongitude($locationData[1])
-					->setType($locationData[2]);
+				return Location::fromArray(
+					Json::decode(
+						Encoding::convertEncoding($lastLocationOptionValue, SITE_CHARSET, 'UTF-8')
+					)
+				);
 			}
+			catch (ArgumentException $exception) {}
 		}
 
-		return $result;
-	}
-
-	/**
-	 * Set default user location
-	 * @param string $latitude
-	 * @param string $longitude
-	 * @param int $locationType One from \Bitrix\Location\Entity\Location\Type
-	 */
-	public static function setDefaultLocation(string $latitude, string $longitude, int $locationType): void
-	{
-		\Bitrix\Main\Config\Option::set(
-			'location',
-			'user_location_data',
-			$latitude . ";" . $longitude . ";" . (string)$locationType
-		);
+		return null;
 	}
 }

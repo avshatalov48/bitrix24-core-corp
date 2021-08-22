@@ -1707,6 +1707,8 @@ class CCrmDocument
 		$objDocument += static::getCommunicationFieldsValues($typeId, $arDocumentID['ID']);
 		\Bitrix\Crm\WebForm\Internals\BPDocument::fill($typeId, $arDocumentID['ID'], $objDocument);
 
+		$objDocument['CRM_ID'] = CCrmOwnerTypeAbbr::ResolveByTypeID($typeId) . '_' . $objDocument['ID'];
+
 		switch ($arDocumentID['TYPE'])
 		{
 			case 'DEAL':

@@ -189,6 +189,19 @@ class Checklist extends Base
 		return $this->getReturn($completeResult);
 	}
 
+	public function completeAllAction($taskId, CheckListItem $checkListItem)
+	{
+		$result = [];
+
+		$completeAllResult = TaskCheckListFacade::completeAll($taskId, CurrentUser::get()->getId(), $checkListItem);
+		foreach ($completeAllResult->getData() as $itemCompleteResult)
+		{
+			$result[] = $this->getReturnValue($itemCompleteResult)['checkListItem'];
+		}
+
+		return $result;
+	}
+
 	/**
 	 * @param $taskId
 	 * @param CheckListItem $checkListItem

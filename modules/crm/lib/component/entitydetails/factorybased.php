@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Component\EntityDetails;
 
-use Bitrix\Crm\Accounting;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Component\ComponentError;
@@ -38,6 +37,7 @@ use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use CLists;
 
 abstract class FactoryBased extends BaseComponent implements Controllerable
 {
@@ -46,6 +46,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	public const TAB_NAME_TREE = 'tab_tree';
 	public const TAB_NAME_BIZPROC = 'tab_bizproc';
 	public const TAB_NAME_AUTOMATION = 'tab_automation';
+	public const TAB_LISTS_PREFIX = 'tab_lists_';
 
 	protected const MAX_ENTITIES_IN_TAB = 20;
 
@@ -547,7 +548,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 							'DOCUMENT_ID' => $this->factory->getEntityName() . '_' . $this->item->getId(),
 						]
 					]
-				]
+				],
+				'enabled' => !$this->item->isNew(),
 			];
 		}
 		if ($tabCode === static::TAB_NAME_AUTOMATION)
@@ -569,7 +571,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 							)
 						]
 					]
-				]
+				],
+				'enabled' => !$this->item->isNew(),
 			];
 		}
 
@@ -597,7 +600,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			$this->item->isNew()
 		);
 
-		return array_merge($tabs, $relationTabs);
+		return array_merge($tabs, $relationTabs, $this->getAttachedListTabs());
 	}
 
 	protected function getTabCodes(): array
@@ -631,6 +634,12 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		ob_start();
 
+		$locationId = null;
+		$accountingService = Container::getInstance()->getAccounting();
+		if ($this->item->hasField(Item::FIELD_NAME_LOCATION_ID) && $accountingService->isTaxMode())
+		{
+			$locationId = $this->item->getLocationId();
+		}
 		if (EditorAdapter::isProductListEnabled())
 		{
 			$this->getApplication()->includeComponent(
@@ -661,9 +670,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'FORM_ID' => '',
 					'PERMISSION_TYPE' => $this->isReadOnly() ? 'READ' : 'WRITE',
 					'PERMISSION_ENTITY_TYPE' => $userPermissions::getPermissionEntityType($this->getEntityTypeID(), $this->categoryId),
-					'PERSON_TYPE_ID' => Accounting::resolvePersonTypeId($this->item),
+					'PERSON_TYPE_ID' => $accountingService->resolvePersonTypeId($this->item),
 					'CURRENCY_ID' => $this->item->getCurrencyId(),
-					// 'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
+					'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
+					'LOCATION_ID' => $locationId,
 					'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
 					'PRODUCTS' => $this->getProductsData(),
 					'PRODUCT_DATA_FIELD_NAME' => $this->getProductDataFieldName(),
@@ -700,9 +710,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'OWNER_TYPE' => $this->factory->getEntityAbbreviation(),
 					'PERMISSION_TYPE' => $this->isReadOnly() ? 'READ' : 'WRITE',
 					'PERMISSION_ENTITY_TYPE' => $userPermissions::getPermissionEntityType($this->getEntityTypeID(), $this->categoryId),
-					'PERSON_TYPE_ID' => Accounting::resolvePersonTypeId($this->item),
+					'PERSON_TYPE_ID' => $accountingService->resolvePersonTypeId($this->item),
 					'CURRENCY_ID' => $this->item->getCurrencyId(),
-					// 'LOCATION_ID' => $this->isTaxMode && ($this->getEntityData()['LOCATION_ID'] ?? ''),
+					'LOCATION_ID' => $locationId,
+					'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
 					'CLIENT_SELECTOR_ID' => '',
 					'PRODUCT_ROWS' =>  null,
 					'HIDE_MODE_BUTTON' => $this->isReadOnly() ? 'Y' : 'N',
@@ -725,6 +736,38 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		}
 
 		return ob_get_clean();
+	}
+
+	protected function getAttachedListTabs(): array
+	{
+		$tabs = [];
+
+		if (!$this->item->isNew() && Loader::includeModule('lists'))
+		{
+			$attachedIblocks = CLists::getIblockAttachedCrm($this->getEntityName());
+			foreach($attachedIblocks as $iblockId => $iblockName)
+			{
+				$tabId = static::TAB_LISTS_PREFIX . $iblockId;
+				$tabs[] = [
+					'id' => $tabId,
+					'name' => $iblockName,
+					'loader' => [
+						'serviceUrl' => '/bitrix/components/bitrix/lists.element.attached.crm/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get().'',
+						'componentData' => [
+							'template' => '',
+							'params' => [
+								'ENTITY_ID' => $this->item->getId(),
+								'ENTITY_TYPE' => $this->getEntityTypeID(),
+								'TAB_ID' => $tabId,
+								'IBLOCK_ID' => $iblockId,
+							],
+						],
+					],
+				];
+			}
+		}
+
+		return $tabs;
 	}
 
 	protected function getProductEditorId(): string
@@ -1216,6 +1259,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			}
 			if ($field->isUserField())
 			{
+				$userType = $field->getUserField()['USER_TYPE']['USER_TYPE_ID'];
 				$deletedFieldName = $name . '_del';
 				if (isset($data[$deletedFieldName]) && $field->isFileUserField())
 				{
@@ -1228,7 +1272,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 						$value = null;
 					}
 				}
-				elseif ($field->getUserField()['USER_TYPE'] === DoubleType::USER_TYPE_ID)
+				elseif ($userType === DoubleType::USER_TYPE_ID)
 				{
 					$value = str_replace(',', '.', $value);
 				}

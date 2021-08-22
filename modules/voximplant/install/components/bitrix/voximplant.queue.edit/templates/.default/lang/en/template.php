@@ -1,11 +1,13 @@
-<?
+<?php
 $MESS["LM_ADD1"] = "Add employees";
 $MESS["LM_ADD2"] = "Add more";
 $MESS["VI_CONFIG_EDIT_ALLOW_INTERCEPT"] = "Allow call interception in this queue group";
 $MESS["VI_CONFIG_EDIT_BACK"] = "Back to list";
 $MESS["VI_CONFIG_EDIT_CANCEL"] = "Cancel";
 $MESS["VI_CONFIG_EDIT_FORWARD_NUMBER_2"] = "Redirect to number";
+$MESS["VI_CONFIG_EDIT_GROUP_PHONE_NUMBER"] = "Group extension number";
 $MESS["VI_CONFIG_EDIT_NEXT_QUEUE_2"] = "Next queue group";
+$MESS["VI_CONFIG_EDIT_NOT_SPECIFIED"] = "not specified";
 $MESS["VI_CONFIG_EDIT_NO_ANSWER_2"] = "Missed call processing";
 $MESS["VI_CONFIG_EDIT_NO_ANSWER_ACTION_2"] = "Enable voice mail";
 $MESS["VI_CONFIG_EDIT_NO_ANSWER_ACTION_3_2"] = "Forward call to employee";
@@ -38,4 +40,3 @@ $MESS["VI_CONFIG_EDIT_QUEUE_TYPE_TIP"] = "<b>Evenly</b>: the order of employees 
 $MESS["VI_CONFIG_EDIT_QUEUE_TYPE_TIP_2"] = "<b>To everybody</b> means the call will be queued to all employees available.";
 $MESS["VI_CONFIG_EDIT_QUEUE_TYPE_TIP_ASTERISK_3"] = "If you use SIP phones: please keep in mind that a call can only be simultaneously routed to up to 10 phones.";
 $MESS["VI_CONFIG_EDIT_SAVE"] = "Save";
-?>

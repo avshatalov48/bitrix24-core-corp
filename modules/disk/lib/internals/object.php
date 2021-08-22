@@ -47,7 +47,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Object_Query query()
+ * @method static EO_Object_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Object_Result getById($id)
+ * @method static EO_Object_Result getList(array $parameters = array())
+ * @method static EO_Object_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_Object createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_Object_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_Object wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_Object_Collection wakeUpCollection($rows)
+ */
 
 Loc::loadMessages(__FILE__);
 

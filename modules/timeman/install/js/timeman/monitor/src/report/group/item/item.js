@@ -25,7 +25,9 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 			action: '',
 			hintOptions: {
 				targetContainer: document.body
-			}
+			},
+			selected: false,
+			selectIntervalTimeout: null,
 		};
 	},
 	computed:
@@ -44,6 +46,7 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 		addPersonal(privateCode)
 		{
 			this.$store.dispatch('monitor/addPersonal', privateCode);
+			this.onIntervalUnselected();
 		},
 		removePersonal(privateCode)
 		{
@@ -55,6 +58,7 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 			}
 
 			this.$store.dispatch('monitor/removePersonal', privateCode);
+			this.onIntervalUnselected();
 		},
 		addToStrictlyWorking(privateCode)
 		{
@@ -103,28 +107,85 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 				}
 			});
 		},
+		onIntervalSelected()
+		{
+			this.$emit('intervalSelected', this.privateCode);
+
+			if (this.readOnly)
+			{
+				return;
+			}
+
+			this.selectIntervalTimeout = setTimeout(() => {
+				this.selected = true;
+			}, 500);
+		},
+		onIntervalUnselected()
+		{
+			this.$emit('intervalUnselected');
+
+			if (this.readOnly)
+			{
+				return;
+			}
+
+			clearTimeout(this.selectIntervalTimeout);
+
+			this.selected = false;
+		},
 	},
 	// language=Vue
 	template: `
 		<div class="bx-monitor-group-item-wrap">
-			<div class="bx-monitor-group-item">
+			<div
+				:class="[
+            		'bx-monitor-group-item',
+					this.selected ? 'bx-monitor-group-item-' + this.group + '-selected' : ''
+				]"
+				@mouseenter="onIntervalSelected"
+				@mouseleave="onIntervalUnselected"
+			>
 				<template v-if="type !== EntityType.group">
 					<div class="bx-monitor-group-item-container">
 						<div class="bx-monitor-group-item-title-container">
-							<div
-								v-if="type === EntityType.absence"
-								:class="{
-								  'bx-monitor-group-item-title': comment, 
-								  'bx-monitor-group-item-title-small': !comment 
-								}"
-							>
-								<template v-if="comment">
-									{{ comment }}
-								</template>
-								<template v-else>
+						 	<template v-if="type === EntityType.absence">
+								<div 
+									class="bx-monitor-group-item-icon bx-monitor-group-item-icon-away"
+                                    v-bx-hint="{
+										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'), 
+										popupOptions: hintOptions,
+									}"
+								/>
+								<div
+									v-if="type === EntityType.absence"
+									:class="{
+									  'bx-monitor-group-item-title': comment, 
+									  'bx-monitor-group-item-title-small': !comment 
+									}"
+								>
+									<template v-if="comment">
+										<div class="bx-monitor-group-item-title">{{ comment }}</div>
+										<div class="bx-monitor-group-item-subtitle">{{ title }}</div>
+									</template>
+									<template v-else>
+										{{ title }}
+									</template>
+								</div>
+							</template>
+							<template v-else-if="type === EntityType.custom">
+								<div 
+									class="ui-icon ui-icon-common-user bx-monitor-group-item-icon"
+									v-bx-hint="{
+										text: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'), 
+										popupOptions: hintOptions,
+									}"
+								>
+									<i/>
+								</div>
+								<div class="bx-monitor-group-item-title">
 									{{ title }}
-								</template>
-							</div>
+								</div>
+							</template>
 							<div v-else class="bx-monitor-group-item-title">
 								<template v-if="type !== EntityType.site || readOnly">
 									{{ title }}
@@ -151,7 +212,7 @@ export const Item = BitrixVue.localComponent('bx-timeman-monitor-report-group-it
 								<i 
 									@click="onCommentClick" 
 									:style="{
-										backgroundColor: comment ? EntityGroup.working.primaryColor : 'transparent'
+										backgroundColor: comment ? '#77c18d' : 'transparent'
 									}"
 								/>
 							</button>

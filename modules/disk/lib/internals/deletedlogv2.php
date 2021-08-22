@@ -6,6 +6,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class DeletedLogV2Table
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DeletedLogV2_Query query()
+ * @method static EO_DeletedLogV2_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DeletedLogV2_Result getById($id)
+ * @method static EO_DeletedLogV2_Result getList(array $parameters = array())
+ * @method static EO_DeletedLogV2_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2 createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2 wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2_Collection wakeUpCollection($rows)
+ */
 final class DeletedLogV2Table extends DataManager
 {
 	public static function getTableName()

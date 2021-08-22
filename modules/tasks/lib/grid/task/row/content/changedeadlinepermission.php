@@ -23,7 +23,7 @@ class ChangeDeadlinePermission extends Content
 			return '';
 		}
 
-		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_ALLOW_CHANGE_DEADLINE_'.$row['ALLOW_CHANGE_DEADLINE']);
+		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_ALLOW_CHANGE_DEADLINE_'.$row['ALLOW_CHANGE_DEADLINE']) ?? '';
 	}
 
 	/**

@@ -38,8 +38,13 @@ class Item extends Event
 
 	set selected(value)
 	{
-		this._selectedInternal = value;
+		this._selectedInternal = this.onSelect(value);
 		this.emit(this.events.changeSelected);
+	}
+
+	onSelect(value)
+	{
+		return value;
 	}
 }
 

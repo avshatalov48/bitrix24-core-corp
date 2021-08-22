@@ -16,21 +16,25 @@ Extension::load([
  * @var array $arResult
  */
 
-$items = [];
-foreach ($arResult['PAYSYSTEMS_LIST'] as $item)
+if (is_array($arResult['PAYSYSTEMS_LIST']) && count($arResult['PAYSYSTEMS_LIST']) > 0)
 {
-	$items[] = array_merge($item, ['SHOW_DESCRIPTION'=>'N']);
-}
-$items = CUtil::PhpToJSObject($items);
+	$items = [];
+	foreach ($arResult['PAYSYSTEMS_LIST'] as $item)
+	{
+		$items[] = array_merge($item, ['SHOW_DESCRIPTION'=>'N']);
+	}
+	$items = CUtil::PhpToJSObject($items);
 ?>
 
-<div id="payment_method-list"></div>
+	<div id="payment_method-list"></div>
 
-<script>
-	var items = <?=$items?>;
-	BX.Vue.create({
-		el: '#payment_method-list',
-		data: () => {return {items}},
-		template: `<salescenter-payment_pay-payment_method-list :items='items'/>`,
-	});
-</script>
+	<script>
+		var items = <?=$items?>;
+		BX.Vue.create({
+			el: '#payment_method-list',
+			data: () => {return {items}},
+			template: `<salescenter-payment_pay-payment_method-list :items='items'/>`,
+		});
+	</script>
+<?php
+}

@@ -162,7 +162,7 @@ else
 						}
 						case 'CONTACT_ID':
 						{
-							$dealData['CONTACT_ID'] = isset($arDeal['CONTACT_FULL_NAME']) ? $arDeal['CONTACT_FULL_NAME'] : '';
+							$dealData['CONTACT_ID'] = isset($arDeal['CONTACT_FORMATTED_NAME']) ? $arDeal['CONTACT_FORMATTED_NAME'] : '';
 							break;
 						}
 						case 'CREATED_BY':

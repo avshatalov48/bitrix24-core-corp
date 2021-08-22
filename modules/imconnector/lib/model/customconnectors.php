@@ -28,6 +28,19 @@ use \Bitrix\Main\Entity\TextField,
  * </ul>
  *
  * @package Bitrix\ImConnector
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CustomConnectors_Query query()
+ * @method static EO_CustomConnectors_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CustomConnectors_Result getById($id)
+ * @method static EO_CustomConnectors_Result getList(array $parameters = array())
+ * @method static EO_CustomConnectors_Entity getEntity()
+ * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors_Collection createCollection()
+ * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors wakeUpObject($row)
+ * @method static \Bitrix\ImConnector\Model\EO_CustomConnectors_Collection wakeUpCollection($rows)
  */
 class CustomConnectorsTable extends DataManager
 {

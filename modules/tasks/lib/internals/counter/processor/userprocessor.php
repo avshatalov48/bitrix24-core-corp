@@ -43,19 +43,21 @@ class UserProcessor
 			$groupIds[] = $groupId;
 		}
 
-		$counters = array_merge(
+		$types = array_merge(
 			array_values(CounterDictionary::MAP_COMMENTS),
 			array_values(CounterDictionary::MAP_MUTED_COMMENTS),
-			[CounterDictionary::COUNTER_GROUP_COMMENTS]
 		);
+
+		$coverTypes = $types;
+		$coverTypes[] = CounterDictionary::COUNTER_GROUP_COMMENTS;
 
 		if (in_array($role, MemberTable::possibleTypes()))
 		{
-			$this->crossTypeReset([CounterDictionary::MAP_COMMENTS[$role], CounterDictionary::MAP_MUTED_COMMENTS[$role]], $counters, $groupIds);
+			$this->crossTypeReset([CounterDictionary::MAP_COMMENTS[$role], CounterDictionary::MAP_MUTED_COMMENTS[$role]], $coverTypes, $groupIds);
 		}
 		else
 		{
-			self::reset($this->userId, $counters, [], $groupIds);
+			$this->crossTypeReset($types, $coverTypes, $groupIds);
 		}
 
 		CounterState::reload($this->userId);

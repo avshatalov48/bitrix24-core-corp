@@ -9,7 +9,7 @@
 /**
  * This class is deprecated. Use CTaskElapsedItem instead.
  * Behaviour of this class not corresponds to new rights model.
- * 
+ *
  * @deprecated
  */
 class CTaskElapsedTime
@@ -308,7 +308,7 @@ class CTaskElapsedTime
 				case "CREATED_DATE":
 				case "DATE_START":
 				case "DATE_STOP":
-					$arSqlSearch[] = CTasks::FilterCreate("TE.".$key, $DB->CharToDateFunction($val), "date", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TE.".$key, \Bitrix\Tasks\Util\Db::charToDateFunction($val), "date", $bFullJoin, $cOperationType);
 					break;
 
 				case "ID":
@@ -426,7 +426,7 @@ class CTaskElapsedTime
 		elseif (
 			\Bitrix\Tasks\Util\User::isAdmin()
 			|| CTasksTools::IsPortalB24Admin()
-			|| ($userID == $task["RESPONSIBLE_ID"]) 
+			|| ($userID == $task["RESPONSIBLE_ID"])
 			|| (is_array($task["ACCOMPLICES"]) && in_array($userId, $task["ACCOMPLICES"]))
 		)
 		{

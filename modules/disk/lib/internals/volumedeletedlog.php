@@ -27,7 +27,20 @@ use Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_VolumeDeletedLog_Query query()
+ * @method static EO_VolumeDeletedLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_VolumeDeletedLog_Result getById($id)
+ * @method static EO_VolumeDeletedLog_Result getList(array $parameters = array())
+ * @method static EO_VolumeDeletedLog_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog_Collection wakeUpCollection($rows)
+ */
 
 
 final class VolumeDeletedLogTable extends DataManager

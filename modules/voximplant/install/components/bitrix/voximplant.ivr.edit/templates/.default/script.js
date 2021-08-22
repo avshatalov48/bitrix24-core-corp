@@ -1376,7 +1376,7 @@
 		}
 		else
 		{
-			this.playerId = 'file_player_' + (new Date()).getTime().toString();
+			this.playerId = 'file_player_' + BX.util.getRandomString(10);
 			uploaderNode = BX.create("div", {props: {className: 'ivr-uploader-subcontainer'}, children: [
 				BX.create("div", {props: {className: 'ivr-uploader-wrap'}, children: [
 					this.elements.playerContainer = BX.create('div', {props: {className: 'ivr-uploader-wrap'}, attrs: {id: this.playerId}})

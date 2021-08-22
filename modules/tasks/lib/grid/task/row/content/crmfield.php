@@ -23,7 +23,7 @@ class CrmField extends Content
 
 		if (empty($row['UF_CRM_TASK']))
 		{
-			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_CRM_FIELD_NOT_PRESENT');
+			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_CRM_FIELD_NOT_PRESENT') ?? '';
 		}
 
 		$collection = [];

@@ -12,6 +12,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ShiftTable
  * @package Bitrix\Timeman\Model\Schedule\Shift
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CalendarExclusion_Query query()
+ * @method static EO_CalendarExclusion_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CalendarExclusion_Result getById($id)
+ * @method static EO_CalendarExclusion_Result getList(array $parameters = array())
+ * @method static EO_CalendarExclusion_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusion createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_CalendarExclusion_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\CalendarExclusion wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_CalendarExclusion_Collection wakeUpCollection($rows)
  */
 class CalendarExclusionTable extends Main\ORM\Data\DataManager
 {

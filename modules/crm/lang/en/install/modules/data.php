@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CATALOG_NOT_INSTALLED"] = "The Commercial Catalog module is not installed.";
 $MESS["CRM_CATALOG_STORE_ADR"] = "944 5th Avenue";
 $MESS["CRM_CATALOG_STORE_DESCR"] = "Here you can find goods from leading global vendors";
@@ -15,14 +15,19 @@ $MESS["CRM_ORDER_PAY_SYSTEM_CASH_DESC"] = "Cash on delivery";
 $MESS["CRM_ORDER_PAY_SYSTEM_CASH_NAME"] = "Cash";
 $MESS["CRM_ORDER_PAY_SYSTEM_ORDERDOCUMENT_DESC"] = "Printable invoice (should open in a new window).";
 $MESS["CRM_ORDER_PAY_SYSTEM_ORDERDOCUMENT_NAME_V2"] = "Invoice";
+$MESS["CRM_ORD_PROP_2"] = "Location";
+$MESS["CRM_ORD_PROP_4"] = "Zip code";
+$MESS["CRM_ORD_PROP_5"] = "Shipping address";
+$MESS["CRM_ORD_PROP_6_2"] = "Full name";
+$MESS["CRM_ORD_PROP_7"] = "Billing address";
+$MESS["CRM_ORD_PROP_8"] = "Company name";
+$MESS["CRM_ORD_PROP_9"] = "Phone";
 $MESS["CRM_ORD_PROP_10"] = "Contact person";
 $MESS["CRM_ORD_PROP_11"] = "Fax";
 $MESS["CRM_ORD_PROP_12"] = "Shipping address";
 $MESS["CRM_ORD_PROP_13"] = "TAX ID";
 $MESS["CRM_ORD_PROP_14"] = " ";
-$MESS["CRM_ORD_PROP_2"] = "Location";
 $MESS["CRM_ORD_PROP_21"] = "City";
-$MESS["CRM_ORD_PROP_4"] = "Zip code";
 $MESS["CRM_ORD_PROP_40"] = "Company name";
 $MESS["CRM_ORD_PROP_41"] = "Contact person";
 $MESS["CRM_ORD_PROP_42"] = "Shipping address";
@@ -33,10 +38,6 @@ $MESS["CRM_ORD_PROP_46"] = " ";
 $MESS["CRM_ORD_PROP_47"] = "Billing address";
 $MESS["CRM_ORD_PROP_48"] = " ";
 $MESS["CRM_ORD_PROP_49"] = "TAX ID";
-$MESS["CRM_ORD_PROP_5"] = "Shipping address";
-$MESS["CRM_ORD_PROP_7"] = "Billing address";
-$MESS["CRM_ORD_PROP_8"] = "Company name";
-$MESS["CRM_ORD_PROP_9"] = "Phone";
 $MESS["CRM_ORD_PROP_BIC_SWIFT"] = "BIC/SWIFT";
 $MESS["CRM_ORD_PROP_BLZ"] = " ";
 $MESS["CRM_ORD_PROP_CRN"] = "Company Reg. No.";
@@ -58,4 +59,3 @@ $MESS["SALE_USER_GROUP_SHOP_ADMIN_DESC"] = "User group allowed to edit the onlin
 $MESS["SALE_USER_GROUP_SHOP_ADMIN_NAME"] = "Online store administrators";
 $MESS["SALE_USER_GROUP_SHOP_MANAGER_DESC"] = "User group allowed to use the online store functions";
 $MESS["SALE_USER_GROUP_SHOP_MANAGER_NAME"] = "Online store staff";
-?>

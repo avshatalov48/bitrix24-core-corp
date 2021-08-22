@@ -12847,7 +12847,8 @@ BX.Crm.Page =
 		orderShipment: { condition: new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") },
 		orderPayment: { condition: new RegExp("/shop/orders/payment/details/[0-9]+/", "i") },
 		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i") },
-		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") }
+		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
+		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i") }
 	},
 	items: [],
 	initialized: false,

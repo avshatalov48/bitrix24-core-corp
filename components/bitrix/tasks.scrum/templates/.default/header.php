@@ -14,9 +14,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 
 Extension::load([
 	'ui.forms',
+	'ui.layout-form',
 	'ui.buttons.icons',
 	'ui.cnt',
 	'ui.dialogs.messagebox',
@@ -26,6 +28,7 @@ Extension::load([
 	'ui.entity-selector',
 	'ui.confetti',
 ]);
+Extension::load('tasks.scrum.dod');
 Extension::load('date');
 Extension::load('sidepanel');
 Extension::load('popup');
@@ -45,6 +48,8 @@ if (Loader::includeModule('disk'))
 		'disk_external_loader',
 	]);
 }
+
+Asset::getInstance()->addCss('/bitrix/components/bitrix/tasks.interface.toolbar/templates/.default/style.css');
 
 $isKanban = $isKanban ?? false;
 $viewName = $this->getComponent()->getTemplatePage();
@@ -71,46 +76,6 @@ $APPLICATION->SetPageProperty(
 	'pagetitle-toolbar-field-view tasks-pagetitle-view '.
 	'no-all-paddings no-background tasks-scrum-wrapper'
 );
-
-if ($arParams['PROJECT_VIEW'])
-{
-	$APPLICATION->includeComponent(
-		'bitrix:tasks.interface.topmenu',
-		'',
-		[
-			'GRID_ID' => $filterId,
-			'FILTER_ID' => $filterId,
-			'USER_ID' => $arParams['USER_ID'],
-			'GROUP_ID' => $arParams['GROUP_ID'],
-			'PROJECT_VIEW' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
-			'SECTION_URL_PREFIX' => '',
-
-			'USE_AJAX_ROLE_FILTER' => $arParams['USE_AJAX_ROLE_FILTER'],
-			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
-			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
-			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
-			'MARK_TEMPLATES' => $arParams['MARK_TEMPLATES'],
-			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
-
-			'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
-			'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-			'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
-			'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
-
-			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
-			'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-			'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-			'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
-			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-
-			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
-			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
-		],
-		$component,
-		['HIDE_ICONS' => true]
-	);
-}
 
 $APPLICATION->includeComponent(
 	'bitrix:tasks.interface.filter',
@@ -177,10 +142,36 @@ if ($isBitrix24Template)
 }
 ?>
 
-<div id="tasks-scrum-switcher" class="tasks-scrum-switcher"></div>
-<div id="tasks-scrum-counters-container" class="tasks-scrum-counters-container"></div>
-<div id="tasks-scrum-sprint-stats" class="tasks-scrum-sprint-stats"></div>
-<div id="tasks-scrum-buttons-container" class="tasks-scrum-buttons"></div>
+<div class="task-interface-toolbar">
+	<div id="tasks-scrum-switcher" class="task-interface-toolbar--item --visible"></div>
+	<?php
+		if ($viewName === 'plan')
+		{
+			$APPLICATION->IncludeComponent(
+				'bitrix:tasks.interface.counters',
+				'',
+				[
+					'USER_ID' => (int) $arParams['OWNER_ID'],
+					'GROUP_ID' => (int) $arParams['GROUP_ID'],
+					'ROLE' => 'view_all',
+					'COUNTERS' => [
+						CounterDictionary::COUNTER_NEW_COMMENTS,
+						CounterDictionary::COUNTER_MUTED_NEW_COMMENTS,
+						CounterDictionary::COUNTER_GROUP_COMMENTS,
+					],
+					'GRID_ID' => $filterId,
+					'FILTER_FIELD' => 'PROBLEM',
+				],
+				$component
+			);
+		}
+	?>
+	<div id="tasks-scrum-sprint-stats" class=
+		"tasks-scrum-sprint-stats task-interface-toolbar--item --without-bg --align-right"></div>
+	<div class="task-interface-toolbar--item --without-bg --align-right">
+		<div id="tasks-scrum-buttons-container" class="task-interface-toolbar--item--scope"></div>
+	</div>
+</div>
 
 <?php
 if ($isBitrix24Template)

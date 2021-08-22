@@ -78,7 +78,7 @@ class Output extends Base\Output
 	 */
 	protected function delete(int $lineId = 0): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -100,7 +100,7 @@ class Output extends Base\Output
 			$resultDelete = ImConnector::unRegisterConnector($lineId);
 			if (!$resultDelete->isSuccess())
 			{
-				$this->result->addErrors($resultDelete->getErrors());
+				$result->addErrors($resultDelete->getErrors());
 			}
 			else
 			{
@@ -117,7 +117,7 @@ class Output extends Base\Output
 	 */
 	protected function sendStatusWriting(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -149,7 +149,7 @@ class Output extends Base\Output
 	 */
 	protected function sendMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -176,7 +176,7 @@ class Output extends Base\Output
 	 */
 	protected function updateMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		return $result->addError(new Error('Message update is not supported', 'NOT_SUPPORTED'));
 	}
@@ -189,7 +189,7 @@ class Output extends Base\Output
 	 */
 	protected function deleteMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		return $result->addError(new Error('Message delete is not supported', 'NOT_SUPPORTED'));
 	}

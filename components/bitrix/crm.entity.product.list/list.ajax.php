@@ -46,6 +46,7 @@ if ($request->get('signedParameters'))
 }
 
 $params['PRODUCTS'] = $request->get('products');
+$params['LOCATION_ID'] = $request->get('locationId');
 
 $APPLICATION->IncludeComponent(
 	$componentName,

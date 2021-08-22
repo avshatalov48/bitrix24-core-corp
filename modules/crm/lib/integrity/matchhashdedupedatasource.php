@@ -191,6 +191,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 			$matchHash = isset($fields['MATCH_HASH']) ? $fields['MATCH_HASH'] : '';
 			if($matchHash === '' || $quantity < 2)
 			{
+				$result->addInvalidItem($matchHash);
 				continue;
 			}
 

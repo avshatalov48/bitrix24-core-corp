@@ -219,7 +219,7 @@ class CBPCrmCopyDealActivity extends CBPActivity
 
 		$properties = [
 			'DealTitle' => $arCurrentValues['deal_title'],
-			'CategoryId' => $arCurrentValues['category_id'],
+			'CategoryId' => self::getCategoryId($arCurrentValues),
 			'StageId' => $arCurrentValues['stage_id'],
 			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues['responsible'], $documentType, $errors),
 		];
@@ -250,6 +250,15 @@ class CBPCrmCopyDealActivity extends CBPActivity
 		return true;
 	}
 
+	protected static function getCategoryId($currentValues)
+	{
+		if($currentValues['category_id'] == '' && self::isExpression($currentValues['category_id_text']))
+		{
+			return $currentValues['category_id_text'];
+		}
+		return $currentValues['category_id'];
+	}
+
 	private function checkCycling(array $documentId)
 	{
 		//check deal only.
@@ -275,6 +284,8 @@ class CBPCrmCopyDealActivity extends CBPActivity
 
 	private function prepareSourceFields(&$sourceFields)
 	{
+		unset($sourceFields['ORIGIN_ID'], $sourceFields['ORIGINATOR_ID']);
+
 		if (
 			!\Bitrix\Main\Loader::includeModule('calendar')
 			||

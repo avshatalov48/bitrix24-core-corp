@@ -521,6 +521,9 @@
 .b24-form-control-icon-after .b24-form-control,
 .b24-form-control-icon-after .b24-form-control-label { padding-right: 35px; }
 
+.b24-form-control-list .b24-form-control-icon-after .b24-form-control-not-empty.b24-form-control,
+.b24-form-control-list .b24-form-control-icon-after .b24-form-control-not-empty.b24-form-control-label { padding-right: 80px; }
+
 .b24-form-icon-after {
 	right: 0;
 	top: 0;

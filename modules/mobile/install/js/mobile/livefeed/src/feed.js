@@ -3,12 +3,21 @@ import {NotificationBar} from "./notificationbar";
 import {Database} from "./database";
 import {PublicationQueue} from "./publicationqueue";
 import {PostMenu} from "./menu/postmenu";
+import {PageMenu} from "./menu/pagemenu";
 import {PostFormManager} from "./postform";
-import {Post} from "./post";
+import {PostFormOldManager} from "./postformold";
 import {PinnedPanel} from "./pinned";
 import {Rating} from "./rating";
 import {ImportantManager} from "./important";
-import {Dom, Tag, Loc, Type, Runtime} from "main.core";
+import {SearchBar} from "./searchbar";
+import {DetailPageScroll} from "./detailpagescroll";
+import {FollowManager} from './followmanager';
+import {Comments} from './comments';
+import {Post} from './post';
+import {BlogPost} from './blogpost';
+import {Page} from "./page";
+
+import {Dom, Tag, Loc, Type, Runtime} from 'main.core';
 import {BaseEvent, EventEmitter} from "main.core.events";
 import {Utils} from "mobile.utils";
 import {Ajax} from 'mobile.ajax';
@@ -20,6 +29,7 @@ class Feed
 	constructor()
 	{
 		this.pageId = null;
+		this.logId = false;
 		this.refreshNeeded = false;
 		this.refreshStarted = false;
 		this.options = {};
@@ -60,6 +70,8 @@ class Feed
 		this.newPostContainer = null;
 		this.maxScroll = 0;
 
+		this.lastActivityDate = 0;
+
 		this.init();
 	}
 
@@ -94,6 +106,16 @@ class Feed
 	{
 		return this.pageId;
 	};
+
+	setLogId(value)
+	{
+		this.logId = parseInt(value);
+	}
+
+	getLogId()
+	{
+		return parseInt(this.logId);
+	}
 
 	setOptions(optionsList)
 	{
@@ -238,11 +260,11 @@ class Feed
 			selectedDestinations
 		);
 
-		oMSL.setPostFormParams({
-			selectedRecipients: selectedDestinations
+		PostFormOldManagerInstance.setParams({
+			selectedRecipients: selectedDestinations,
 		});
 
-		oMSL.setPostFormParams({
+		PostFormOldManagerInstance.setParams({
 			messageText: params.postData.POST_MESSAGE
 		});
 
@@ -259,7 +281,7 @@ class Feed
 			}
 			else
 			{
-				app.exec('showPostForm', oMSL.showNewPostForm());
+				app.exec('showPostForm', PostFormOldManagerInstance.show());
 			}
 		};
 		this.showPostError(params);
@@ -276,8 +298,8 @@ class Feed
 
 		params.callback = () =>
 		{
-			oMSL.editBlogPost({
-				post_id: parseInt(params.postId)
+			BlogPost.edit({
+				postId: parseInt(params.postId),
 			});
 		};
 		this.showPostError(params);
@@ -669,25 +691,6 @@ class Feed
 		this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
 	}
 
-	setPreventNextPage(status)
-	{
-		this.setOptions({
-			preventNextPage: !!status
-		});
-
-		const refreshNeededNode = document.getElementById('next_page_refresh_needed');
-		const nextPageCurtainNode = document.getElementById('next_post_more');
-
-		if (
-			refreshNeededNode
-			&& nextPageCurtainNode
-		)
-		{
-			refreshNeededNode.style.display = (!!status ? 'block' : 'none');
-			nextPageCurtainNode.style.display = (!!status ? 'none' : 'block');
-		}
-	}
-
 	onPinnedPanelChange(params)
 	{
 		const logId = (params.logId ? parseInt(params.logId) : 0);
@@ -794,7 +797,7 @@ class Feed
 			let context = 'list';
 
 			let postNode = e.target.closest(`.${this.class.listPost}`);
-			if (postNode) // lest
+			if (postNode) // list
 			{
 				menuNode = postNode.querySelector('[data-menu-type="post"]');
 				post = this.getPostFromNode(postNode);
@@ -839,7 +842,7 @@ class Feed
 			}
 			else
 			{
-				app.exec('showPostForm', oMSL.showNewPostForm());
+				app.exec('showPostForm', PostFormOldManagerInstance.show());
 			}
 		}
 		else if (
@@ -899,6 +902,26 @@ class Feed
 
 				e.stopPropagation();
 				return e.preventDefault();
+			}
+			else if (
+				e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButton}`)
+				|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButton}`)
+			)
+			{
+				if (
+					e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButtonTop}`)
+					|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButtonTop}`)
+				)
+				{
+					DetailPageScrollInstance.scrollTo('top');
+				}
+				else if (
+					e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButtonBottom}`)
+					|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButtonBottom}`)
+				)
+				{
+					DetailPageScrollInstance.scrollTo('bottom');
+				}
 			}
 		}
 		else if (e.target.closest(`.${this.class.postWrapper}`))
@@ -1183,6 +1206,9 @@ class Feed
 			case 'layoutPostForm':
 				result = 37;
 				break;
+			case 'pageMenu':
+				result = 34;
+				break;
 			default:
 		}
 
@@ -1206,6 +1232,16 @@ class Feed
 		}, (response) => {
 		});
 	}
+
+	setLastActivityDate()
+	{
+		this.lastActivityDate = Math.round(new Date().getTime() / 1000);
+	}
+
+	getLastActivityDate()
+	{
+		return this.lastActivityDate;
+	}
 }
 
 const Instance = new Feed();
@@ -1214,20 +1250,37 @@ const NotificationBarInstance = new NotificationBar();
 const DatabaseUnsentPostInstance = new Database();
 const PublicationQueueInstance = new PublicationQueue();
 const PostMenuInstance = new PostMenu();
+const PageMenuInstance = new PageMenu();
 const PostFormManagerInstance = new PostFormManager();
+const PostFormOldManagerInstance = new PostFormOldManager();
 const PinnedPanelInstance = new PinnedPanel();
 const RatingInstance = new Rating();
 const ImportantManagerInstance = new ImportantManager();
+const SearchBarInstance = new SearchBar();
+const DetailPageScrollInstance = new DetailPageScroll();
+const FollowManagerInstance = new FollowManager();
+const CommentsInstance = new Comments();
+const PageInstance = new Page();
 
 export {
+	Post,
+	BlogPost,
+
 	Instance,
 	BalloonNotifierInstance,
 	NotificationBarInstance,
 	DatabaseUnsentPostInstance,
 	PublicationQueueInstance,
 	PostMenuInstance,
+	PageMenuInstance,
 	PostFormManagerInstance,
+	PostFormOldManagerInstance,
 	PinnedPanelInstance,
 	RatingInstance,
 	ImportantManagerInstance,
+	SearchBarInstance,
+	DetailPageScrollInstance,
+	FollowManagerInstance,
+	CommentsInstance,
+	PageInstance,
 };

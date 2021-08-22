@@ -203,26 +203,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				}
 			}
 		}
-
-		if($entityId === 'STATUS')
-		{
-			$agent = \Bitrix\Crm\Agent\Semantics\LeadSemanticsRebuildAgent::getInstance();
-			if(!$agent->isRegistered())
-			{
-				$agent->enable(true);
-				$agent->register();
-			}
-		}
-
-		if($entityId === 'DEAL_STAGE' || preg_match("/DEAL_STAGE_\d+/", $entityId) == 1)
-		{
-			$agent = \Bitrix\Crm\Agent\Semantics\DealSemanticsRebuildAgent::getInstance();
-			if(!$agent->isRegistered())
-			{
-				$agent->enable(true);
-				$agent->register();
-			}
-		}
 	}
 
 	LocalRedirect($APPLICATION->GetCurPage().'?ACTIVE_TAB='.$_POST['ACTIVE_TAB']);

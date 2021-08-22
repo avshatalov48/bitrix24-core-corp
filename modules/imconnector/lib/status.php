@@ -106,6 +106,21 @@ class Status
 	}
 
 	/**
+	 * Sets a new state object for specific connector line.
+	 *
+	 * @param $connector
+	 * @param string $line
+	 * @param self $status
+	 *
+	 * @return void
+	 */
+	public static function setInstance($connector, $line, self $status): void
+	{
+		$connector = Connector::getConnectorRealId($connector);
+		self::$instance[$connector][$line] = $status;
+	}
+
+	/**
 	 * Removal of information about the all connector.
 	 *
 	 * @param string $line ID.

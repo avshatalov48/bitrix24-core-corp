@@ -11,37 +11,54 @@ use Bitrix\Tasks\Grid\Project\Row\Content;
  */
 class Tags extends Content
 {
-	public function prepare(): string
+	public function prepare(): array
 	{
 		$row = $this->getRowData();
 		$parameters = $this->getParameters();
 
-		$tags = [];
-		if (array_key_exists('TAGS', $row) && is_array($row['TAGS']))
+		$tags = [
+			'items' => [],
+		];
+
+		$userId = (int)$parameters['USER_ID'];
+		$user = [];
+		if (array_key_exists($userId, $row['MEMBERS']['HEADS']))
 		{
-			$tags = $row['TAGS'];
+			$user = $row['MEMBERS']['HEADS'][$userId];
+		}
+		elseif (array_key_exists($userId, $row['MEMBERS']['MEMBERS']))
+		{
+			$user = $row['MEMBERS']['MEMBERS'][$userId];
 		}
 
-		$tagsLayout = '';
-		foreach ($tags as $tag)
+		if ($user['IS_GROUP_OWNER'] === 'Y')
 		{
-			$safeTag = htmlspecialcharsbx($tag);
-			$encodedData = Json::encode(['TAGS' => $safeTag]);
-
-			$selector =
-				isset($parameters['FILTER_DATA']['TAGS']) && $parameters['FILTER_DATA']['TAGS'] === $safeTag
-					? 'tasks-projects-grid-tag tasks-projects-grid-filter-active'
-					: 'tasks-projects-grid-tag'
-			;
-
-			$tagsLayout .=
-				"<div class='ui-label ui-label-fill ui-label-tag-light {$selector}' onclick='BX.PreventDefault(); BX.Tasks.ProjectsInstance.getFilter().toggleByField({$encodedData});'>"
-				. "<span class='ui-label-inner'>{$safeTag}</span>"
-				. "<span class='tasks-projects-grid-filter-remove'></span>"
-				. "</div>"
-			;
+			$tags['addButton'] = [
+				'events' => [
+					'click' => "BX.Tasks.Projects.ActionsController.onTagAddClick.bind(BX.Tasks.Projects.ActionsController, {$row['ID']})",
+				],
+			];
 		}
 
-		return $tagsLayout;
+		if (!array_key_exists('TAGS', $row) || !is_array($row['TAGS']))
+		{
+			return $tags;
+		}
+
+		foreach ($row['TAGS'] as $tag)
+		{
+			$encodedData = Json::encode(['TAGS' => $tag]);
+			$selected = (isset($parameters['FILTER_DATA']['TAGS']) && $parameters['FILTER_DATA']['TAGS'] === $tag);
+
+			$tags['items'][] = [
+				'text' => $tag,
+				'active' => $selected,
+				'events' => [
+					'click' => "BX.Tasks.Projects.ActionsController.onTagClick.bind(BX.Tasks.Projects.ActionsController, {$encodedData})",
+				],
+			];
+		}
+
+		return $tags;
 	}
 }

@@ -3,7 +3,7 @@
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\StatusTable;
 
 class CCrmComponentHelper
 {
@@ -1135,6 +1135,60 @@ class CCrmInstantEditorHelper
 			$results[] = $item;
 		}
 		return $results;
+	}
+
+	protected static function prepareStatusItemsConfig(string $statusType, array $fakeValues): array
+	{
+		$result = [
+			'fakeValues' => $fakeValues,
+			'systemValues' => [],
+			'systemInitText' => [],
+		];
+
+		foreach (StatusTable::loadStatusesByEntityId($statusType) as $statusInfo)
+		{
+			if (isset($statusInfo['SYSTEM']) && $statusInfo['SYSTEM'] === 'Y')
+			{
+				$result['systemValues'][] = $statusInfo['STATUS_ID'];
+				$result['systemInitText'][$statusInfo['STATUS_ID']] =
+					is_string($statusInfo['NAME_INIT']) ? $statusInfo['NAME_INIT'] : ''
+				;
+			}
+		}
+
+		return $result;
+	}
+
+	public static function prepareInnerConfig(
+		string $type,
+		string $controller,
+		string $statusType,
+		array $fakeValues
+	): array
+	{
+		static $allowMap = null;
+
+		if ($allowMap === null)
+		{
+			$allowMap = array_fill_keys(
+				CCrmStatus::getAllowedInnerConfigTypes(),
+				CCrmStatus::CheckCreatePermission()
+			);
+		}
+
+		$result = [];
+
+		if (isset($allowMap[$statusType]) && $allowMap[$statusType])
+		{
+			$result = [
+				'type' => $type,
+				'controller' => $controller,
+				'statusType' => $statusType,
+				'itemsConfig' => self::prepareStatusItemsConfig($statusType, $fakeValues),
+			];
+		}
+
+		return $result;
 	}
 
 	public static function prepareRequisitesPresetList($defaultPresetId)

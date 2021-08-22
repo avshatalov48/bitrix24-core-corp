@@ -11,6 +11,7 @@ use Bitrix\Main\PhoneNumber\Formatter;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Notifications\Account;
 use Bitrix\Notifications\Billing;
+use Bitrix\Notifications\Limit;
 use Bitrix\Notifications\Model\ErrorCode;
 use Bitrix\Notifications\Model\Message;
 use Bitrix\Notifications\Model\MessageTable;
@@ -19,8 +20,9 @@ use Bitrix\Notifications\Model\QueueTable;
 use Bitrix\Notifications\MessageStatus;
 use Bitrix\Notifications\ProviderEnum;
 use Bitrix\Notifications\Integration\Pull;
+use Bitrix\ImConnector;
 use Bitrix\ImOpenLines\Common;
-use Bitrix\ImConnector\Connectors\Notifications;
+//use Bitrix\Main\DI\ServiceLocator;
 
 Loc::loadMessages(__FILE__);
 
@@ -31,6 +33,8 @@ Loc::loadMessages(__FILE__);
  */
 class NotificationsManager implements ICanSendMessage
 {
+	private const CONTACT_NAME_TEMPLATE_PLACEHOLDER = 'NAME';
+
 	/** @var bool */
 	private static $canUse;
 
@@ -41,7 +45,10 @@ class NotificationsManager implements ICanSendMessage
 	{
 		if (static::$canUse === null)
 		{
-			static::$canUse = Loader::includeModule('notifications');
+			static::$canUse = (
+				Loader::includeModule('notifications')
+				&& Loader::includeModule('imconnector')
+			);
 		}
 
 		return static::$canUse;
@@ -57,7 +64,18 @@ class NotificationsManager implements ICanSendMessage
 	 */
 	public static function isAvailable(): bool
 	{
-		return (static::canUse() && Account::isServiceAvailable());
+		if (!static::canUse())
+		{
+			return false;
+		}
+
+		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
+//		/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+//		$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
+//
+//		return $toolsNotifications->isEnabled();
+
+		return static::isEnabledTmp();
 	}
 
 	/**
@@ -77,16 +95,50 @@ class NotificationsManager implements ICanSendMessage
 	/**
 	 * @inheritDoc
 	 */
-	public static function getConnectUrl(): ?string
+	public static function getConnectUrl()
 	{
-		if (
-			static::canUse()
-			&& Loader::includeModule('imopenlines')
-			&& Loader::includeModule('imconnector')
-			&& Account::isServiceAvailable()
-		)
+		if (!static::canUse())
 		{
-			return Common::getAddConnectorUrl(Notifications::CONNECTOR_ID);
+			return null;
+		}
+
+		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
+//		/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+//		$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
+//		if (!$toolsNotifications->isEnabled())
+//		{
+//			return null;
+//		}
+
+		if (!static::isEnabledTmp())
+		{
+			return null;
+		}
+
+		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
+//		if ($toolsNotifications->canUse())
+		if (static::canUseTmp())
+		{
+			if (
+				Loader::includeModule('imopenlines')
+				&& Account::isServiceAvailable()
+			)
+			{
+				return Common::getAddConnectorUrl(
+					defined('\Bitrix\ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR')
+						? ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR
+						: 'notifications'
+				);
+			}
+		}
+		else
+		{
+			return [
+				'type' => 'ui_helper',
+				//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
+				//'value' => \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_NOTIFICATIONS,
+				'value' => 'limit_crm_sales_sms_whatsapp',
+			];
 		}
 
 		return null;
@@ -157,14 +209,26 @@ class NotificationsManager implements ICanSendMessage
 	public static function makeMessageFields(array $options, array $commonOptions): array
 	{
 		$phoneNumber = Parser::getInstance()->parse($commonOptions['PHONE_NUMBER']);
+		$e164PhoneNumber = $phoneNumber->isValid()
+			? Formatter::format($phoneNumber, Format::E164)
+			: null;
+
+		$templateCode = $options['TEMPLATE_CODE'] ?? '';
+
+		if (
+			isset($options['PLACEHOLDERS'][self::CONTACT_NAME_TEMPLATE_PLACEHOLDER])
+			&& self::doesTemplateUtilizeName($templateCode)
+			&& \CAllCrmContact::isDefaultName($options['PLACEHOLDERS'][self::CONTACT_NAME_TEMPLATE_PLACEHOLDER])
+		)
+		{
+			$options['PLACEHOLDERS'][self::CONTACT_NAME_TEMPLATE_PLACEHOLDER] = $e164PhoneNumber;
+		}
 
 		$result = [
-			'TEMPLATE_CODE' => $options['TEMPLATE_CODE'],
+			'TEMPLATE_CODE' => $templateCode,
 			'PLACEHOLDERS' => $options['PLACEHOLDERS'],
 			'USER_ID' => $commonOptions['USER_ID'],
-			'PHONE_NUMBER' => $phoneNumber->isValid()
-				? Formatter::format($phoneNumber, Format::E164)
-				: null,
+			'PHONE_NUMBER' => $e164PhoneNumber,
 			'LANGUAGE_ID' => LANGUAGE_ID,
 			'ADDITIONAL_FIELDS' => array_merge(
 				$commonOptions['ADDITIONAL_FIELDS'],
@@ -188,6 +252,25 @@ class NotificationsManager implements ICanSendMessage
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param string $templateCode
+	 * @return bool
+	 */
+	private static function doesTemplateUtilizeName(string $templateCode): bool
+	{
+		$nameUtilizingTemplates = [
+			'ORDER_LINK',
+			'ORDER_PAID',
+			'ORDER_COMPLETED',
+			'ORDER_IN_WORK',
+			'ORDER_READY_2',
+			'ORDER_IN_TRANSIT',
+			'ORDER_ISSUED_COURIER',
+		];
+
+		return in_array($templateCode, $nameUtilizingTemplates, true);
 	}
 
 	/**
@@ -345,8 +428,15 @@ class NotificationsManager implements ICanSendMessage
 					var crmShopMasterJustFinished = localStorage.getItem(key);
 					if (crmShopMasterJustFinished === 'Y')
 					{
-						<?if ($connectUrl):?>
+						<?if (is_string($connectUrl)):?>
 							BX.SidePanel.Instance.open("<?=\CUtil::JSescape($connectUrl)?>");
+						<?elseif (is_array($connectUrl) && isset($connectUrl['type'])):?>
+							<?if ($connectUrl['type'] === 'ui_helper'):?>
+								BX.loadExt('ui.info-helper').then(() =>
+								{
+									BX.UI.InfoHelper.show("<?=\CUtil::JSescape($connectUrl['value'])?>");
+								});
+							<?endif;?>
 						<?endif;?>
 
 						localStorage.removeItem(key);
@@ -355,5 +445,33 @@ class NotificationsManager implements ICanSendMessage
 			);
 		</script>
 		<?
+	}
+
+	/**
+	 * Temp method for getting rid of imconnector dependency in crm 21.600.0
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 * @see \Bitrix\ImConnector\Tools\Connectors\Notifications::isEnabled
+	 */
+	private static function isEnabledTmp(): bool
+	{
+		if (!Loader::includeModule('notifications'))
+		{
+			return false;
+		}
+
+		return !Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru';
+	}
+
+	/**
+	 * Temp method for getting rid of imconnector dependency in crm 21.600.0
+	 *
+	 * @return bool
+	 * @see \Bitrix\ImConnector\Tools\Connectors\Notifications::canUse
+	 */
+	private static function canUseTmp(): bool
+	{
+		return Loader::includeModule('notifications') && Limit::isAvailable();
 	}
 }

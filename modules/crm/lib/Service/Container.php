@@ -2,11 +2,14 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
+use Bitrix\Crm\UserField;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
 
@@ -19,9 +22,27 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.container');
 	}
 
-	protected static function getIdentifierByClassName(string $className, array $parameters = null): string
+	public static function getIdentifierByClassName(string $className, array $parameters = null): string
 	{
-		$identifier = str_replace(['\\', 'bitrix.'], ['.', ''], lcfirst($className));
+		$words = explode('\\', $className);
+		$identifier = '';
+		foreach ($words as $index => $word)
+		{
+			$word = lcfirst($word);
+			if ($word === 'bitrix' && $index === 0)
+			{
+				continue;
+			}
+			if (!empty($identifier))
+			{
+				$identifier .= '.';
+			}
+			$identifier .= $word;
+		}
+		if (empty($identifier))
+		{
+			throw new ArgumentException('className should be a valid string');
+		}
 		if(!empty($parameters))
 		{
 			$parameters = array_filter($parameters, static function($parameter) {
@@ -38,13 +59,17 @@ class Container
 
 	public function getFactory(int $entityTypeId): ?Factory
 	{
-		if ($entityTypeId === \CCrmOwnerType::Quote)
+		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
-			return ServiceLocator::getInstance()->get('crm.service.factory.quote');
+			return ServiceLocator::getInstance()->get('crm.service.factory.lead');
 		}
 		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			return ServiceLocator::getInstance()->get('crm.service.factory.deal');
+		}
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return ServiceLocator::getInstance()->get('crm.service.factory.quote');
 		}
 		if(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
@@ -278,5 +303,20 @@ class Container
 	public function getPullManager(): PullManager
 	{
 		return ServiceLocator::getInstance()->get('crm.integration.pullmanager');
+	}
+
+	public function getFilterFactory(): Filter\Factory
+	{
+		return ServiceLocator::getInstance()->get('crm.filter.factory');
+	}
+
+	public function getAccounting(): Accounting
+	{
+		return ServiceLocator::getInstance()->get('crm.service.accounting');
+	}
+
+	public function getFileUploader(): FileUploader
+	{
+		return ServiceLocator::getInstance()->get('crm.service.fileUploader');
 	}
 }

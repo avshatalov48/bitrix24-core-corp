@@ -17,7 +17,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Tasks
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Access_Query query()
+ * @method static EO_Access_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Access_Result getById($id)
+ * @method static EO_Access_Result getList(array $parameters = array())
+ * @method static EO_Access_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access_Collection wakeUpCollection($rows)
+ */
 
 class AccessTable extends Main\Entity\DataManager
 {

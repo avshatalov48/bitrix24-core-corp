@@ -5,17 +5,13 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Request;
-use Bitrix\Main\SystemException;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\RandomSequence;
-use Bitrix\Tasks\Scrum\Checklist\EntityChecklistFacade;
+use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
-use Bitrix\Tasks\Scrum\Internal\EntityInfoColumn;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Util\Result;
-use Bitrix\Tasks\Util\User as TasksUserUtil;
+use Bitrix\Tasks\Util\User;
 
 class DefinitionOfDoneService extends Controller
 {
@@ -24,8 +20,8 @@ class DefinitionOfDoneService extends Controller
 	const ERROR_COULD_NOT_IS_EMPTY = 'TASKS_DOD_03';
 	const ERROR_COULD_NOT_ADD_DEFAULT_LIST = 'TASKS_DOD_04';
 	const ERROR_COULD_NOT_SAVE_ITEM_LIST = 'TASKS_DOD_05';
-	const ERROR_COULD_NOT_SAVE_DOD_REQUIRED_OPTION = 'TASKS_DOD_06';
-	const ERROR_COULD_NOT_READ_DOD_REQUIRED_OPTION = 'TASKS_DOD_07';
+	const ERROR_COULD_NOT_READ_DOD_SETTINGS = 'TASKS_DOD_06';
+	const ERROR_COULD_NOT_REMOVE_LIST = 'TASKS_DOD_07';
 
 	private $executiveUserId;
 
@@ -62,27 +58,51 @@ class DefinitionOfDoneService extends Controller
 		return $result;
 	}
 
+	public function removeList(string $facade, int $entityId): void
+	{
+		try
+		{
+			$facade::$currentAccessAction = CheckListFacade::ACTION_REMOVE;
+			$facade::deleteByEntityId($entityId, $this->executiveUserId);
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_REMOVE_LIST
+				)
+			);
+		}
+	}
+
 	public function getComponent(int $entityId, string $entityType, array $items): Component
 	{
 		$randomGenerator = new RandomSequence(rand());
 
-		return new Component('bitrix:tasks.widget.checklist.new', '', [
-			'ENTITY_ID' => $entityId,
-			'ENTITY_TYPE' => $entityType,
-			'DATA' => $items,
-			'CONVERTED' => true,
-			'CAN_ADD_ACCOMPLICE' => false,
-			'SIGNATURE_SEED' => $randomGenerator->randString(6)
-		]);
+		return new Component(
+			'bitrix:tasks.widget.checklist.new',
+			'',
+			[
+				'ENTITY_ID' => $entityId,
+				'ENTITY_TYPE' => $entityType,
+				'DATA' => $items,
+				'CONVERTED' => true,
+				'CAN_ADD_ACCOMPLICE' => false,
+				'SIGNATURE_SEED' => $randomGenerator->randString(6),
+				'SHOW_COMPLETE_ALL_BUTTON' => $entityType === 'SCRUM_ITEM',
+				'COLLAPSE_ON_COMPLETE_ALL' => false,
+			]
+		);
 	}
 
-	public function getItemsByEntityId(int $entityId): array
+	public function getTypeItems(int $entityId): array
 	{
 		$items = [];
 
 		try
 		{
-			$items = EntityChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId);
+			$items = TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId);
 			foreach (array_keys($items) as $id)
 			{
 				$items[$id]['COPIED_ID'] = $id;
@@ -97,15 +117,18 @@ class DefinitionOfDoneService extends Controller
 		return $items;
 	}
 
-	public function isListEmpty(int $entityId): bool
+	public function isTypeListEmpty(int $entityId): bool
 	{
 		try
 		{
-			return empty(EntityChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId));
+			return empty(TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId));
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_IS_EMPTY));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_IS_EMPTY)
+			);
+
 			return false;
 		}
 	}
@@ -114,7 +137,7 @@ class DefinitionOfDoneService extends Controller
 	{
 		try
 		{
-			$result = EntityChecklistFacade::add($entityId, $this->executiveUserId, [
+			$result = TypeChecklistFacade::add($entityId, $this->executiveUserId, [
 				'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_0'),
 				'IS_COMPLETE' => 'N',
 				'PARENT_ID' => 0
@@ -123,7 +146,7 @@ class DefinitionOfDoneService extends Controller
 			$newItemId = $newItem->getFields()['ID'];
 			for ($i = 1; $i <= 10; $i++)
 			{
-				EntityChecklistFacade::add($entityId, $this->executiveUserId, [
+				TypeChecklistFacade::add($entityId, $this->executiveUserId, [
 					'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_'.$i),
 					'IS_COMPLETE' => 'N',
 					'PARENT_ID' => $newItemId
@@ -134,7 +157,7 @@ class DefinitionOfDoneService extends Controller
 		{
 			try
 			{
-				EntityChecklistFacade::deleteByEntityId($entityId, $this->executiveUserId);
+				TypeChecklistFacade::deleteByEntityId($entityId, $this->executiveUserId);
 			}
 			catch (\Exception $exception)
 			{
@@ -149,74 +172,94 @@ class DefinitionOfDoneService extends Controller
 		}
 	}
 
-	public function saveRequiredOption(int $entityId, string $value): bool
-	{
-		try
-		{
-			$entity = EntityTable::createEntityObject();
-			$entity->setId($entityId);
-
-			$entityInfo = new EntityInfoColumn();
-			$entityInfo->setDodItemsRequired($value);
-			$entity->setInfo($entityInfo);
-
-			$result = EntityTable::update($entity->getId(), $entity->getFieldsToUpdateEntity());
-
-			return $result->isSuccess();
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_SAVE_DOD_REQUIRED_OPTION)
-			);
-		}
-
-		return false;
-	}
-
-	public function getRequiredOption(int $entityId): string
-	{
-		try
-		{
-			return $this->getRequiredOptionValue($entityId);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_DOD_REQUIRED_OPTION)
-			);
-		}
-
-		return '';
-	}
-
-	public function getListOptionsAction(): ?array
+	public function getSettingsAction(): ?array
 	{
 		try
 		{
 			$post = $this->request->getPostList()->toArray();
 
 			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
 
+			$typeService = new TypeService();
 			$backlogService = new BacklogService();
+			$itemService = new ItemService();
+
 			$backlog = $backlogService->getBacklogByGroupId($groupId);
-			if ($backlogService->getErrors() || $backlog->isEmpty())
+
+			$types = [];
+			foreach ($typeService->getTypes($backlog->getId()) as $type)
 			{
-				return null;
+				$types[] = $typeService->getTypeData($type);
 			}
 
+			$item = $itemService->getItemBySourceId($taskId);
+			$activeTypeId = $item->getTypeId();
+
 			return [
-				'requiredOption' => $this->getRequiredOptionValue($backlog->getId())
+				'types' => $types,
+				'activeTypeId' => $activeTypeId,
 			];
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_DOD_REQUIRED_OPTION)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ_DOD_SETTINGS
+				)
 			);
 		}
 
 		return null;
+	}
+
+	public function getListAction(): ?Component
+	{
+		try
+		{
+			$post = $this->request->getPostList()->toArray();
+
+			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
+			$typeId = (is_numeric($post['typeId']) ? (int) $post['typeId'] : 0);
+
+			$backlogService = new BacklogService();
+			$itemService = new ItemService();
+
+			$backlog = $backlogService->getBacklogByGroupId($groupId);
+			$item = $itemService->getItemBySourceId($taskId);
+
+			if ($item->isEmpty() || $backlogService->getErrors() || $backlog->isEmpty())
+			{
+				$this->errorCollection->setError(
+					new Error(
+						'System error',
+						self::ERROR_COULD_NOT_GET_DATA
+					)
+				);
+
+				return null;
+			}
+
+			if ($this->isItemListEmpty($item->getId()) || $item->getTypeId() !== $typeId)
+			{
+				$typeItems = $this->getTypeItems($typeId);
+
+				$items = $this->convertTypeItems($item->getId(), $typeItems);
+			}
+			else
+			{
+				$items = $this->getItemItems($item->getId());
+			}
+
+			return $this->getComponent($item->getId(), 'SCRUM_ITEM', $items);
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage()));
+			return null;
+		}
 	}
 
 	public function saveListAction()
@@ -225,13 +268,16 @@ class DefinitionOfDoneService extends Controller
 		{
 			$post = $this->request->getPostList()->toArray();
 
+			$typeId = (is_numeric($post['typeId']) ? (int) $post['typeId'] : 0);
 			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
 			$items = (is_array($post['items']) ? $post['items'] : []);
 
-			$this->executiveUserId = (int) TasksUserUtil::getId();
+			$this->executiveUserId = User::getId();
 
 			$itemService = new ItemService();
+
 			$scrumItem = $itemService->getItemBySourceId($taskId);
+
 			if ($scrumItem->isEmpty())
 			{
 				$this->errorCollection->setError(
@@ -242,6 +288,10 @@ class DefinitionOfDoneService extends Controller
 				);
 				return null;
 			}
+
+			$scrumItem->setTypeId($typeId);
+
+			$itemService->changeItem($scrumItem);
 
 			$result = $this->mergeList(ItemChecklistFacade::class, $scrumItem->getId(), $items);
 
@@ -257,106 +307,33 @@ class DefinitionOfDoneService extends Controller
 						self::ERROR_COULD_NOT_SAVE_ITEM_LIST
 					)
 				);
+
 				return null;
 			}
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(new Error($exception->getMessage()));
+
 			return null;
 		}
 	}
 
-	public function getItemComponentAction(): ?Component
-	{
-		try
-		{
-			$post = $this->request->getPostList()->toArray();
-
-			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-			$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
-
-			$backlogService = new BacklogService();
-			$backlog = $backlogService->getBacklogByGroupId($groupId);
-			if ($backlogService->getErrors() || $backlog->isEmpty())
-			{
-				return null;
-			}
-
-			if ($this->isListEmpty($backlog->getId()))
-			{
-				$this->createDefaultList($backlog->getId());
-			}
-
-			$entityItems = $this->getItemsByEntityId($backlog->getId());
-
-			$itemService = new ItemService();
-			$item = $itemService->getItemBySourceId($taskId);
-			if ($item->isEmpty())
-			{
-				$this->errorCollection->setError(
-					new Error('System error', self::ERROR_COULD_NOT_READ_DOD_REQUIRED_OPTION)
-				);
-				return null;
-			}
-
-			$items = $this->getItemItemsByEntityItems($item->getId(), $entityItems);
-
-			return $this->getComponent($item->getId(), 'SCRUM_ITEM', $items);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(new Error($exception->getMessage()));
-			return null;
-		}
-	}
-
-	public function getTaskCompleteButtonsAction(): ?Component
-	{
-		try
-		{
-			if (!ModuleManager::isModuleInstalled('ui'))
-			{
-				throw new SystemException('Cannot connect required modules');
-			}
-
-			return new Component('bitrix:ui.button.panel', '', [
-				'FRAME' => true,
-				'BUTTONS' => [
-					[
-						'ID' => 'complete',
-						'TYPE' => 'save',
-						'CAPTION' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_TASK_COMPLETE_BUTTON')
-					],
-					[
-						'type' => 'custom',
-						'layout' => $this->getCancelButtonLayout(),
-					],
-				]
-			]);
-		}
-		catch (\Exception $exception)
-		{
-			return '';
-		}
-	}
-
-	private function getItemItemsByEntityItems(int $itemId, array $entityItems): array
+	private function convertTypeItems(int $itemId, array $typeItems): array
 	{
 		$items = [];
 
-		$entityItems = $this->generateNodeIdForItems($entityItems);
+		$typeItems = $this->generateNodeIdForItems($typeItems);
 
-		$parentsMap = $this->getParentsMap($entityItems);
+		$parentsMap = $this->getParentsMap($typeItems);
 
-		foreach ($entityItems as $entityItem)
+		foreach ($typeItems as $typeItem)
 		{
-			$parentId = (isset($parentsMap[$entityItem['PARENT_ID']]) ? $parentsMap[$entityItem['PARENT_ID']] : 0);
-			$items[$entityItem['NODE_ID']] = [
+			$items[$typeItem['NODE_ID']] = [
 				'ITEM_ID' => $itemId,
-				'NODE_ID' => $entityItem['NODE_ID'],
-				'PARENT_NODE_ID' => $parentId,
-				'TITLE' => $entityItem['TITLE'],
+				'NODE_ID' => $typeItem['NODE_ID'],
+				'PARENT_NODE_ID' => ($parentsMap[$typeItem['PARENT_ID']] ?? 0),
+				'TITLE' => $typeItem['TITLE'],
 				'ACTION' => [
 					'MODIFY' => false,
 					'REMOVE' => false,
@@ -368,63 +345,67 @@ class DefinitionOfDoneService extends Controller
 		return $items;
 	}
 
-	private function generateNodeIdForItems(array $entityItems): array
+	private function isItemListEmpty(int $itemId): bool
+	{
+		try
+		{
+			return empty(ItemChecklistFacade::getItemsForEntity($itemId, $this->executiveUserId));
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_IS_EMPTY)
+			);
+
+			return false;
+		}
+	}
+
+	private function getItemItems(int $itemId): array
+	{
+		$items = [];
+
+		try
+		{
+			$items = ItemChecklistFacade::getItemsForEntity($itemId, $this->executiveUserId);
+			foreach (array_keys($items) as $id)
+			{
+				$items[$id]['COPIED_ID'] = $id;
+				unset($items[$id]['ID']);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_DATA));
+		}
+
+		return $items;
+	}
+
+	private function generateNodeIdForItems(array $items): array
 	{
 		$randomGenerator = new RandomSequence(rand());
 
-		foreach ($entityItems as $itemId => &$entityItem)
+		foreach ($items as $itemId => $item)
 		{
-			$entityItem['NODE_ID'] = mb_strtolower($randomGenerator->randString(9));
+			$items[$itemId]['NODE_ID'] = mb_strtolower($randomGenerator->randString(9));
 		}
 
-		return $entityItems;
+		return $items;
 	}
 
-	private function getParentsMap(array $entityItems): array
+	private function getParentsMap(array $items): array
 	{
 		$parentsMap = [];
 
-		foreach ($entityItems as $itemId => $entityItem)
+		foreach ($items as $itemId => $item)
 		{
-			if ((int) $entityItem['PARENT_ID'] === 0)
+			if ((int) $item['PARENT_ID'] === 0)
 			{
-				$parentsMap[$itemId] = $entityItem['NODE_ID'];
+				$parentsMap[$itemId] = $item['NODE_ID'];
 			}
 		}
 
 		return $parentsMap;
-	}
-
-	private function getRequiredOptionValue(int $entityId): string
-	{
-		$queryObject = EntityTable::getList([
-			'select' => ['INFO'],
-			'filter' => [
-				'ID' => (int) $entityId
-			]
-		]);
-		if ($entityData = $queryObject->fetch())
-		{
-			/** @var EntityInfoColumn $entityInfo */
-			$entityInfo = $entityData['INFO'];
-			return $entityInfo->getDodItemsRequired();
-		}
-		else
-		{
-			$this->errorCollection->setError(
-				new Error(
-					Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_READ_REQUIRED_OPTION_ERROR'),
-					self::ERROR_COULD_NOT_READ_DOD_REQUIRED_OPTION
-				)
-			);
-
-			return '';
-		}
-	}
-
-	private function getCancelButtonLayout(): string
-	{
-		return '<a class="ui-btn ui-btn-link" name="cancel">'
-			.Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_TASK_CANCEL_BUTTON').'</a>';
 	}
 }

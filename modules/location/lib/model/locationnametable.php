@@ -10,6 +10,19 @@ use Bitrix\Main\ORM\Fields;
 /**
  * Class NameTable
  * @package Bitrix\Location\Model
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LocationName_Query query()
+ * @method static EO_LocationName_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LocationName_Result getById($id)
+ * @method static EO_LocationName_Result getList(array $parameters = array())
+ * @method static EO_LocationName_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_LocationName createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_LocationName_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_LocationName wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_LocationName_Collection wakeUpCollection($rows)
  */
 class LocationNameTable extends Main\ORM\Data\DataManager
 {

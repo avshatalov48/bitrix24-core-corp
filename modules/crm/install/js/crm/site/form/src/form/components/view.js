@@ -163,7 +163,7 @@ const viewMixin = {
 			return Util.Browser.isMobile()
 				? this.form.messages.get('moreFieldsYet')
 				: null
-		}
+		},
 	}
 };
 
@@ -182,7 +182,7 @@ const Popup = {
 			<b24-popup v-bind:key="form.id" 
 				:show="form.visible"
 				:position="form.view.position"  
-				:scrollDown="!form.isOnState()"  
+				:scrollDown="!this.form.isOnState()"  
 				:scrollDownText="scrollDownText"
 				@hide="form.hide()"
 			>
@@ -203,7 +203,7 @@ const Panel = {
 				:show="form.visible"
 				:position="form.view.position"
 				:vertical="form.view.vertical"
-				:scrollDown="!form.isOnState()"
+				:scrollDown="!this.form.isOnState()"
 				:scrollDownText="scrollDownText"
 				@hide="form.hide()"
 			>

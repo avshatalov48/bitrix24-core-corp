@@ -240,4 +240,11 @@ class DealSearchContentBuilder extends SearchContentBuilder
 		";
 		return $connection->query($sql);
 	}
+
+	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
+	{
+		return \Bitrix\Crm\Entity\Index\DealTable::delete([
+			'DEAL_ID' => $entityId,
+		]);
+	}
 }

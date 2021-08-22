@@ -38,4 +38,6 @@ $MESS["LM_ADD1"] = "Добавить сотрудников";
 $MESS["LM_ADD2"] = "Добавить еще";
 $MESS["VI_CONFIG_EDIT_ALLOW_INTERCEPT"] = "Разрешать перехватывать звонки в этой группе";
 $MESS["VI_CONFIG_EDIT_QUEUE_NAME_PLACEHOLDER"] = "Введите название группы...";
+$MESS["VI_CONFIG_EDIT_GROUP_PHONE_NUMBER"] = "Внутренний номер группы";
+$MESS["VI_CONFIG_EDIT_NOT_SPECIFIED"] = "не задан";
 ?>

@@ -577,7 +577,7 @@ BX.namespace('Tasks.Component');
 
 				treeStructure.getDescendants().forEach(function(descendant) {
 					popupMenuItems.push({
-						text: descendant.fields.getDisplayTitle(),
+						text: descendant.fields.getTitle(),
 						onclick: function(event, item) {
 							item.getMenuWindow().close();
 

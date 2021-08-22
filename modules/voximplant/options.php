@@ -81,16 +81,14 @@ if ($errorMessage):?>
 </tr>
 <tr>
 	<td width="40%"><?=GetMessage("VI_ACCOUNT_URL")?>:</td>
-	<td width="60%"><input type="text" name="PUBLIC_URL" value="<?=htmlspecialcharsbx(CVoxImplantHttp::GetServerAddress())?>" /></td>
+	<td width="60%"><input type="text" name="PUBLIC_URL"  value="<?=htmlspecialcharsbx(CVoxImplantHttp::GetServerAddress())?>" style="width: 100%;" /></td>
 </tr>
 <tr>
 	<td width="40%"><?=GetMessage("VI_ACCOUNT_DEBUG")?>:</td>
 	<td width="60%"><input type="checkbox" name="DEBUG_MODE" value="Y" <?=(COption::GetOptionInt("voximplant", "debug")? 'checked':'')?> /></td>
 </tr>
-<?if(!IsModuleInstalled('bitrix24')):?>
 <?$tabControl->Buttons();?>
 <input type="submit" name="Update" value="<?echo GetMessage('MAIN_SAVE')?>">
 <input type="reset" name="reset" value="<?echo GetMessage('MAIN_RESET')?>">
-<?endif;?>
 <?$tabControl->End();?>
 </form>

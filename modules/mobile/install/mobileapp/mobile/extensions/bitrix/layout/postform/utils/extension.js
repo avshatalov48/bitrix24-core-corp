@@ -52,7 +52,7 @@
 
 		formatSelectedRecipients: (recipients) => {
 			return Object.keys(recipients)
-				.filter(type => Array.isArray(recipients[type]) && recipients[type].length > 0)
+				.filter(type => Array.isArray(recipients[type]))
 				.reduce((result, type)=> {
 					result[type] = recipients[type].map(item => {
 						const colors = {
@@ -383,7 +383,10 @@
 			let result = null;
 			const fileType = this.Utils.getType(this.Utils.getFileMimeType(type));
 
-			if (imageUri.length > 0) // images and also B24 files
+			if (
+				(fileType === 'image' || fileType === 'video')
+				&& imageUri.length > 0
+			)
 			{
 				result = View({
 						testId: 'pinnedFileContainer',
@@ -438,7 +441,14 @@
 			}
 			else
 			{
-				const icon = (fileType ? fileType : 'empty');
+				const extension = this.Utils.getExtension({
+					uri: (name ? name : url),
+				});
+
+				let icon = this.Utils.getFileType({
+					extension,
+				});
+				icon = icon ?? 'empty';
 
 				result = View({
 						testId: 'pinnedFileContainer',
@@ -523,7 +533,7 @@
 		},
 
 		getExtension({ uri }) {
-			return (uri ? uri.split(".").pop().toLowerCase() : '');
+			return (uri && uri.indexOf('.') >= 0 ? uri.split('.').pop().toLowerCase() : '');
 		},
 
 		getFileType({
@@ -565,6 +575,7 @@
 				case 'mpeg':
 				case 'ogg':
 				case 'mov':
+				case '3gp':
 					result = 'video';
 					break;
 				case 'png':

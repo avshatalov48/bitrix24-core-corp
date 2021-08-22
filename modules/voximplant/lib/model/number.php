@@ -6,6 +6,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class NumberTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Number_Query query()
+ * @method static EO_Number_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Number_Result getById($id)
+ * @method static EO_Number_Result getList(array $parameters = array())
+ * @method static EO_Number_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_Number createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_Number_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_Number wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_Number_Collection wakeUpCollection($rows)
+ */
 class NumberTable extends ORM\Data\DataManager
 {
 	public static function getTableName()

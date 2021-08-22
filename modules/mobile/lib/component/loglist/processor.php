@@ -291,11 +291,12 @@ class Processor
 				],
 				false,
 				false,
-				['ID', 'NAME', 'OPENED']
+				['ID', 'NAME', 'OPENED', 'IMAGE_ID']
 			);
 			if($workgroupFields = $res->fetch())
 			{
 				$result['GROUP_NAME'] = $workgroupFields['NAME'];
+				$result['GROUP_IMAGE'] = (is_array($file = \CFile::GetFileArray($workgroupFields['IMAGE_ID'])) ? $file['SRC'] : '');
 				if(
 					$workgroupFields['OPENED'] === 'Y'
 					&& !\CSocNetUser::isCurrentUserModuleAdmin()

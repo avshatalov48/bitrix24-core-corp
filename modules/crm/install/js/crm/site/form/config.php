@@ -9,7 +9,7 @@ use Bitrix\Crm;
 
 return [
 	'js' => [
-		'dist/app.bundle.js',
+		'crm.site.form.js',
 	],
 	'skip_core' => true,
 	"lang" => [
@@ -22,6 +22,7 @@ return [
 			"useLangCamelCase" => true,
 			"deleteLangPrefixes" => ["CRM_SITE_FORM_"],
 			"properties" => [
+				"isResourcesMinified" => Main\IO\File::isFileExists(__DIR__ . '/dist/app.bundle.min.js'),
 				"analytics" => Main\Loader::includeModule('crm')
 					? Crm\WebForm\Helper::getExternalAnalyticsData(null, true)
 					: [],

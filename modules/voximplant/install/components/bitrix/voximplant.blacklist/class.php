@@ -127,6 +127,11 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 
 	public function addNumbersAction(array $numbers)
 	{
+		if(!$this->userPermissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		{
+			return false;
+		}
+
 		foreach ($numbers as $number)
 		{
 			$row = \Bitrix\Voximplant\BlacklistTable::getRow([
@@ -152,6 +157,11 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 
 	public function deleteNumberAction($numberId)
 	{
+		if(!$this->userPermissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		{
+			return false;
+		}
+		
 		\Bitrix\Voximplant\BlacklistTable::delete($numberId);
 		return true;
 	}

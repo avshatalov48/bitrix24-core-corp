@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Project;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Grid\Column;
 use Bitrix\Main\Grid\Panel;
 
 Loc::loadMessages(__FILE__);
@@ -67,6 +68,7 @@ class Grid extends \Bitrix\Tasks\Grid
 				'sort' => false,
 				'editable' => false,
 				'default' => true,
+				'type' => Column\Type::TAGS,
 			],
 			'OPENED' => [
 				'id' => 'OPENED',
@@ -100,7 +102,7 @@ class Grid extends \Bitrix\Tasks\Grid
 			&& array_key_exists(($key = key($parameters['GRID_SORT'])), $headers)
 		)
 		{
-			$headers[$key]['color'] = \Bitrix\Main\Grid\Column\Color::BLUE;
+			$headers[$key]['color'] = Column\Color::BLUE;
 		}
 
 		return $headers;

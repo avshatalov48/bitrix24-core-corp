@@ -23,7 +23,7 @@ class Output extends Base\Output
 	 */
 	protected function infoConnectorsLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 		$resultCustom = [];
 
 		if($result->isSuccess())

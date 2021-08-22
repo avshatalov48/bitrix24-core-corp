@@ -33,6 +33,8 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		die();
 	}
 
+	$optionCategory = \Bitrix\Crm\Entity\EntityEditorConfig::CATEGORY_NAME;
+
 	$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 	if($action === 'saveconfig')
 	{
@@ -45,11 +47,11 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
 			{
-				CUserOptions::DeleteOptionsByName('crm.entity.editor', $guid);
+				CUserOptions::DeleteOptionsByName($optionCategory, $guid);
 			}
-			CUserOptions::SetOption('crm.entity.editor', $guid, $config, true);
+			CUserOptions::SetOption($optionCategory, $guid, $config, true);
 		}
-		CUserOptions::SetOption('crm.entity.editor', $guid, $config);
+		CUserOptions::SetOption($optionCategory, $guid, $config);
 	}
 	elseif($action === 'resetconfig')
 	{
@@ -58,11 +60,11 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			&& CCrmAuthorizationHelper::CanEditOtherSettings()
 		)
 		{
-			CUserOptions::DeleteOptionsByName('crm.entity.editor', $guid);
+			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
 		}
 		else
 		{
-			CUserOptions::DeleteOption('crm.entity.editor', $guid);
+			CUserOptions::DeleteOption($optionCategory, $guid);
 		}
 	}
 	elseif($action === 'save')
@@ -83,18 +85,18 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
 			{
-				CUserOptions::DeleteOptionsByName('crm.entity.editor', $guid);
+				CUserOptions::DeleteOptionsByName($optionCategory, $guid);
 			}
-			CUserOptions::SetOption('crm.entity.editor', $guid, $config, true);
+			CUserOptions::SetOption($optionCategory, $guid, $config, true);
 		}
 
 		if($scope === EntityEditorConfigScope::COMMON)
 		{
-			CUserOptions::SetOption('crm.entity.editor', "{$guid}_common", $config, true);
+			CUserOptions::SetOption($optionCategory, "{$guid}_common", $config, true);
 		}
 		else if($scope === EntityEditorConfigScope::PERSONAL)
 		{
-			CUserOptions::SetOption('crm.entity.editor', $guid, $config);
+			CUserOptions::SetOption($optionCategory, $guid, $config);
 		}
 		else
 		{
@@ -116,7 +118,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		{
 			if($scope === EntityEditorConfigScope::COMMON)
 			{
-				CUserOptions::SetOption('crm.entity.editor', "{$guid}_common_opts", $options, true);
+				CUserOptions::SetOption($optionCategory, "{$guid}_common_opts", $options, true);
 			}
 			else if($scope === EntityEditorConfigScope::PERSONAL)
 			{
@@ -125,11 +127,11 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 				{
 					if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
 					{
-						CUserOptions::DeleteOptionsByName('crm.entity.editor', $optionID);
+						CUserOptions::DeleteOptionsByName($optionCategory, $optionID);
 					}
-					CUserOptions::SetOption('crm.entity.editor', $optionID, $options, true);
+					CUserOptions::SetOption($optionCategory, $optionID, $options, true);
 				}
-				CUserOptions::SetOption('crm.entity.editor', $optionID, $options);
+				CUserOptions::SetOption($optionCategory, $optionID, $options);
 			}
 			else
 			{
@@ -154,25 +156,25 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 		if($scope === EntityEditorConfigScope::COMMON)
 		{
-			CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_common", true, 0);
-			CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_common_opts", true, 0);
+			CUserOptions::DeleteOption($optionCategory, "{$guid}_common", true, 0);
+			CUserOptions::DeleteOption($optionCategory, "{$guid}_common_opts", true, 0);
 		}
 		else
 		{
 			if($forAllUsers)
 			{
-				CUserOptions::DeleteOptionsByName('crm.entity.editor', $guid);
-				CUserOptions::DeleteOptionsByName('crm.entity.editor', "{$guid}_opts");
-				CUserOptions::DeleteOptionsByName('crm.entity.editor', "{$guid}_scope");
+				CUserOptions::DeleteOptionsByName($optionCategory, $guid);
+				CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_opts");
+				CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_scope");
 			}
 			else
 			{
-				CUserOptions::DeleteOption('crm.entity.editor', $guid);
-				CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_opts");
-				//CUserOptions::DeleteOption('crm.entity.editor', "{$guid}_scope");
+				CUserOptions::DeleteOption($optionCategory, $guid);
+				CUserOptions::DeleteOption($optionCategory, "{$guid}_opts");
+				//CUserOptions::DeleteOption($optionCategory, "{$guid}_scope");
 
 				CUserOptions::SetOption(
-					'crm.entity.editor',
+					$optionCategory,
 					"{$guid}_scope",
 					EntityEditorConfigScope::PERSONAL
 				);
@@ -183,9 +185,9 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	{
 		if(\CCrmAuthorizationHelper::CanEditOtherSettings())
 		{
-			CUserOptions::DeleteOptionsByName('crm.entity.editor', $guid);
-			//CUserOptions::DeleteOptionsByName('crm.entity.editor', "{$guid}_opts");
-			CUserOptions::DeleteOptionsByName('crm.entity.editor', "{$guid}_scope");
+			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
+			//CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_opts");
+			CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_scope");
 		}
 	}
 	elseif($action === 'setScope')
@@ -195,7 +197,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 		if(EntityEditorConfigScope::isDefined($scope))
 		{
-			CUserOptions::SetOption('crm.entity.editor', "{$guid}_scope", $scope);
+			CUserOptions::SetOption($optionCategory, "{$guid}_scope", $scope);
 		}
 	}
 	else

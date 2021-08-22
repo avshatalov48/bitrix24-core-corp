@@ -6,6 +6,22 @@ use Bitrix\Disk\Configuration;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class ObjectExtendedIndexTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ObjectExtendedIndex_Query query()
+ * @method static EO_ObjectExtendedIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ObjectExtendedIndex_Result getById($id)
+ * @method static EO_ObjectExtendedIndex_Result getList(array $parameters = array())
+ * @method static EO_ObjectExtendedIndex_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection wakeUpCollection($rows)
+ */
 class ObjectExtendedIndexTable extends BaseIndexTable
 {
 	const STATUS_SHORT    = 2;

@@ -252,24 +252,31 @@ class PushService
 			return;
 		}
 
+		$entityService = new EntityService();
 		$kanbanService = new KanbanService();
 		$itemService = new ItemService();
 
 		$sprintData = $sprintService->getSprintData($sprint);
-		$sprintData['totalCompletedStoryPoints'] = $sprintService->getCompletedStoryPoints(
+
+		$entityCounters = $entityService->getCounters(
+			$sprint->getId(),
+			($sprint->isPlannedSprint() ? new TaskService($sprint->getCreatedBy()) : null)
+		);
+
+		$sprintData['storyPoints'] = $entityCounters['storyPoints'];
+		$sprintData['completedStoryPoints'] = $sprintService->getCompletedStoryPoints(
 			$sprint,
 			$kanbanService,
 			$itemService
 		);
-		$sprintData['totalUncompletedStoryPoints'] = $sprintService->getUnCompletedStoryPoints(
+		$sprintData['uncompletedStoryPoints'] = $sprintService->getUnCompletedStoryPoints(
 			$sprint,
 			$kanbanService,
 			$itemService
 		);
+
 		$sprintData['completedTasks'] = count($kanbanService->getFinishedTaskIdsInSprint($sprint->getId()));
 		$sprintData['uncompletedTasks'] = count($kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId()));
-		$storyPoints = $sprintData['totalCompletedStoryPoints'] + $sprintData['totalUncompletedStoryPoints'];
-		$sprintData['totalStoryPoints'] = ($sprint->isCompletedSprint() ? $storyPoints : $sprint->getStoryPoints());
 
 		$tag = 'entityActions_' . $sprint->getGroupId();
 
@@ -313,6 +320,8 @@ class PushService
 		{
 			$itemData = $itemData + $taskService->getItemsData([$taskId])[$taskId];
 
+			$itemData = $taskService->getItemsDynamicData([$taskId], [$taskId => $itemData])[$taskId];
+
 			$entityService = new EntityService();
 
 			$entity = $entityService->getEntityById($item->getEntityId());
@@ -335,8 +344,6 @@ class PushService
 							$itemData['subTasksInfo'][$sourceId] = $subTaskInfo;
 						}
 					}
-
-					unset($itemData['completedSubTasksInfo']);
 
 					$itemData['isParentTask'] = ($itemData['subTasksInfo'] ? 'Y' : 'N');
 					$itemData['subTasksCount'] = count($itemData['subTasksInfo']);

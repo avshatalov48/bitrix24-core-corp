@@ -2,6 +2,7 @@
 $MESS["TASKS_CHECKLIST_PROGRESS_BAR_PROGRESS_TEXT"] = "выполнено: #completed# из #total#";
 $MESS["TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER"] = "Название пункта";
 $MESS["TASKS_CHECKLIST_GROUP_ACTIONS"] = "Групповые действия";
+$MESS["TASKS_CHECKLIST_COMPLETE_ALL"] = "Выделить все";
 $MESS["TASKS_CHECKLIST_ADD_NEW_ITEM"] = "добавить пункт";
 $MESS["TASKS_CHECKLIST_DELETE_CHECKLIST"] = "удалить чек-лист";
 $MESS["TASKS_CHECKLIST_PANEL_AUDITOR"] = "наблюдатель";

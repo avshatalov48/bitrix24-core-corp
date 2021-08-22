@@ -13,6 +13,7 @@ export class ActionsPanel
 		this.itemList = {...{
 			task: {activity: false},
 			attachment: {activity: false},
+			dod: {activity: false},
 			move: {activity: false},
 			sprint: {activity: false},
 			backlog: {activity: false},
@@ -74,6 +75,7 @@ export class ActionsPanel
 	{
 		let task = '';
 		let attachment = '';
+		let dod = '';
 		let move = '';
 		let sprint = '';
 		let backlog = '';
@@ -103,6 +105,18 @@ export class ActionsPanel
 			attachment = Tag.render`
 				<div id="${this.showAttachmentActionButtonNodeId}" class=
 					"tasks-scrum-actions-panel-btn tasks-scrum-actions-panel-btn-attachment">
+					<span class="tasks-scrum-actions-panel-icon"></span>
+				</div>
+				<div class="tasks-scrum-actions-panel-separator"></div>
+			`;
+		}
+
+		if (this.itemList.dod.activity)
+		{
+			this.showDodActionButtonNodeId = 'tasks-scrum-actions-panel-btn-dod';
+			dod = Tag.render`
+				<div id="${this.showDodActionButtonNodeId}" class=
+					"tasks-scrum-actions-panel-btn tasks-scrum-actions-panel-btn-dod">
 					<span class="tasks-scrum-actions-panel-icon"></span>
 				</div>
 				<div class="tasks-scrum-actions-panel-separator"></div>
@@ -212,6 +226,7 @@ export class ActionsPanel
 				<div class="tasks-scrum-actions-panel">
 					${task}
 					${attachment}
+					${dod}
 					${move}
 					${sprint}
 					${backlog}
@@ -248,6 +263,15 @@ export class ActionsPanel
 				this.itemList.attachment.callback
 			);
 		}
+
+		if (this.itemList.dod.activity)
+		{
+			Event.bind(
+				document.getElementById(this.showDodActionButtonNodeId),
+				'click',
+				this.itemList.dod.callback
+			);
+		}s
 
 		if (this.itemList.move.activity)
 		{

@@ -9,6 +9,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -174,7 +175,10 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 			'COMMENTS' => $this->createField('COMMENTS'),
 			'PRODUCT_ROW_PRODUCT_ID' => $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
 			),
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
@@ -353,24 +357,27 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 		}
 		elseif($fieldID === 'PRODUCT_ROW_PRODUCT_ID')
 		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_LEAD_FILTER_PRODUCT_ID',
-					'contextCode' => 'CRM',
-					'useClientDatabase' => 'N',
-					'enableAll' => 'N',
-					'enableDepartments' => 'N',
-					'enableUsers' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'enableCrm' => 'Y',
-					'enableCrmProducts' => 'Y',
-					'convertJson' => 'Y'
-				)
-			);
+			return [
+				'params' => [
+					'multiple' => 'N',
+					'dialogOptions' => [
+						'height' => 200,
+						'context' => 'catalog-products',
+						'entities' => [
+							Loader::includeModule('iblock')
+							&& Loader::includeModule('catalog')
+								? [
+									'id' => 'product',
+									'options' => [
+										'iblockId' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
+										'basePriceId' => \Bitrix\Crm\Product\Price::getBaseId(),
+									],
+								]
+								: [],
+						],
+					],
+				],
+			];
 		}
 		elseif($fieldID === 'COMMUNICATION_TYPE')
 		{

@@ -110,7 +110,7 @@ $prefix = $arResult['GRID_ID'];
 		if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 		{
 			$arColumns['ENTITY_TYPE'] = !empty($arEvent['ENTITY_TYPE'])
-				? CCrmOwnerType::GetDescription(CCrmOwnerType::ResolveID($arEvent['ENTITY_TYPE'])) : '';
+				? htmlspecialcharsbx(CCrmOwnerType::GetDescription(CCrmOwnerType::ResolveID($arEvent['ENTITY_TYPE']))) : '';
 
 			$arColumns['ENTITY_TITLE'] = !empty($arEvent['ENTITY_TITLE'])?
 				'<a href="'.$arEvent['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arEvent['ENTITY_TYPE'].'_'.$arEvent['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arEvent['ENTITY_TYPE'])).'">'.$arEvent['ENTITY_TITLE'].'</a>'

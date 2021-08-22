@@ -26,7 +26,6 @@ class Item extends Base
 {
 	/** @var Factory */
 	protected $factory;
-	protected $uploadedFiles = [];
 
 	public function setFactory(Factory $factory): self
 	{
@@ -284,18 +283,15 @@ class Item extends Base
 					if (isset($currentFiles[$fileId]))
 					{
 						$result[] = $fileId;
-						$this->registerFile($field, $fileId);
 					}
 
 					continue;
 				}
 
-				$fileId = $this->uploadFile($file);
+				$fileId = $this->uploadFile($field, $file);
 				if ($fileId > 0)
 				{
 					$result[] = $fileId;
-					$this->uploadedFiles[] = $fileId;
-					$this->registerFile($field, $fileId);
 				}
 			}
 
@@ -314,34 +310,9 @@ class Item extends Base
 			}
 			else
 			{
-				$fileId = $this->uploadFile($fileData);
-			}
-			if ($fileId > 0)
-			{
-				$this->uploadedFiles[] = $fileId;
-				$this->registerFile($field, $fileId);
+				$fileId = $this->uploadFile($field, $fileData);
 			}
 			$item->set($fieldName, $fileId);
-		}
-	}
-
-	protected function registerFile(Field $field, int $fileId): void
-	{
-		$fileInputUtility = FileInputUtility::instance();
-		$controlId = $fileInputUtility->getUserFieldCid($field->getUserField());
-
-		$fileInputUtility->registerControl($controlId, $controlId);
-		$fileInputUtility->registerFile($controlId, $fileId);
-	}
-
-	protected function deleteUploadedFiles(): void
-	{
-		foreach($this->uploadedFiles as $fileId)
-		{
-			if($fileId > 0)
-			{
-				\CFile::Delete($fileId);
-			}
 		}
 	}
 
@@ -374,7 +345,6 @@ class Item extends Base
 
 		if (!Container::getInstance()->getUserPermissions()->canAddItem($item))
 		{
-			$this->deleteUploadedFiles();
 			$this->addError(new Error(
 				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
 				static::ERROR_CODE_ACCESS_DENIED
@@ -393,7 +363,6 @@ class Item extends Base
 			];
 		}
 
-		$this->deleteUploadedFiles();
 		$this->addErrors($result->getErrors());
 
 		return null;
@@ -439,7 +408,6 @@ class Item extends Base
 			];
 		}
 
-		$this->deleteUploadedFiles();
 		$this->addErrors($result->getErrors());
 
 		return null;
@@ -466,7 +434,8 @@ class Item extends Base
 	): ?Component
 	{
 		$entityTypeId = $this->factory->getEntityTypeId();
-		$componentName = $params['componentName'] ?? EditorAdapter::getDetailComponentName($entityTypeId);
+		$componentName = $params['componentName']
+			?? Container::getInstance()->getRouter()->getItemDetailComponentName($entityTypeId);
 		if (!$componentName)
 		{
 			$this->addError(new Error('Component for entity ' . $entityTypeId . ' not found'));

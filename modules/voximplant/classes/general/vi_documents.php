@@ -89,6 +89,31 @@ class CVoxImplantDocuments
 		}
 	}
 
+	public function GetAdditionalUploadUrl($verificationId)
+	{
+		$accessData = $this->GetUploadData();
+		if($accessData === false)
+			return false;
+
+		$params['account_id'] = $accessData['ACCOUNT_ID'];
+		$params['admin_user_name'] = $accessData['ADMIN_NAME'];
+		$params['regulation_address_id'] = $verificationId;
+		$params['session_id'] = $accessData['SESSION_ID'];
+
+		$language = Bitrix\Main\Context::getCurrent()->getLanguage();
+		if (in_array($language, ['ru', 'de', 'en'], true))
+		{
+			$params['_lang'] = $language;
+		}
+		else
+		{
+			$params['_lang'] = 'en';
+		}
+
+		$query = http_build_query($params);
+		return 'https://verify.voximplant.com/?'.$query;
+	}
+
 	public function GetStatus()
 	{
 		$ViHttp = new CVoxImplantHttp();

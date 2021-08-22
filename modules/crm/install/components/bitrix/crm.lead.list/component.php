@@ -333,7 +333,7 @@ $enableReportFilter = Main\Application::getInstance()->getContext()->getRequest(
 if ($enableReportFilter)
 {
 	$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
-	$boardId = preg_replace('/[^\w-_]/', '', $boardId);
+	$boardId = preg_replace('/[^\w\-_]/', '', $boardId);
 	$externalFilterId = 'report_board_' . $boardId . '_filter';
 
 	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
@@ -1178,6 +1178,10 @@ if($actionData['ACTIVE'])
 						}
 						else
 						{
+							$arResult['ERRORS'][] = [
+								'TITLE' => Main\Text\HtmlFilter::encode($arUpdateData['TITLE'] ?? $ID),
+								'TEXT' => Main\Text\HtmlFilter::encode(strip_tags($CCrmLead->LAST_ERROR)),
+							];
 							$DB->Rollback();
 						}
 					}
@@ -1242,12 +1246,6 @@ if($actionData['ACTIVE'])
 
 					while($arLead = $dbRes->Fetch())
 					{
-						// Skip leads in status 'CONVERTED'. 'CONVERTED' is system status and it can not be changed.
-						if(isset($arLead['STATUS_ID']) && $arLead['STATUS_ID'] === 'CONVERTED')
-						{
-							continue;
-						}
-
 						$arIDs[] = $arLead['ID'];
 					}
 				}
@@ -1266,12 +1264,6 @@ if($actionData['ACTIVE'])
 
 					while($arLead = $dbRes->Fetch())
 					{
-						// Skip leads in status 'CONVERTED'. 'CONVERTED' is system status and it can not be changed.
-						if(isset($arLead['STATUS_ID']) && $arLead['STATUS_ID'] === 'CONVERTED')
-						{
-							continue;
-						}
-
 						$arIDs[] = $arLead['ID'];
 					}
 				}

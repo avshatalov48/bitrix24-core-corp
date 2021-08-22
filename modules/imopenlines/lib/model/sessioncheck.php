@@ -30,7 +30,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SessionCheck_Query query()
+ * @method static EO_SessionCheck_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SessionCheck_Result getById($id)
+ * @method static EO_SessionCheck_Result getList(array $parameters = array())
+ * @method static EO_SessionCheck_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionCheck createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionCheck_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionCheck wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Model\EO_SessionCheck_Collection wakeUpCollection($rows)
+ */
 
 class SessionCheckTable extends DataManager
 {

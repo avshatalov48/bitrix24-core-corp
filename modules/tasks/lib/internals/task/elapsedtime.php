@@ -11,6 +11,22 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
 //Loc::loadMessages(__FILE__);
 
+/**
+ * Class ElapsedTimeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ElapsedTime_Query query()
+ * @method static EO_ElapsedTime_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ElapsedTime_Result getById($id)
+ * @method static EO_ElapsedTime_Result getList(array $parameters = array())
+ * @method static EO_ElapsedTime_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime_Collection wakeUpCollection($rows)
+ */
 class ElapsedTimeTable extends Main\Entity\DataManager
 {
 	/**

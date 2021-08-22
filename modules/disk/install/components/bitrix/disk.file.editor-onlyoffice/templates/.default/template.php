@@ -226,7 +226,8 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 		},
 		object: {
 			id: <?= $arResult['OBJECT']['ID'] ?>,
-			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>'
+			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>',
+			size: '<?= $arResult['OBJECT']['SIZE'] ?>',
 		},
 		attachedObject: {
 			id: <?= $arResult['ATTACHED_OBJECT']['ID'] ?: 'null' ?>,

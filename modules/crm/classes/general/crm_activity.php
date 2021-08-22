@@ -12,6 +12,7 @@ use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Disk\SpecificFolder;
+use Bitrix\Main\Localization\Loc;
 
 class CAllCrmActivity
 {
@@ -1660,6 +1661,32 @@ class CAllCrmActivity
 			}
 
 			unset($fields['DEADLINE'], $fields['~DEADLINE']);
+		}
+
+		$dateFieldsToCheck = [
+			'START_DATE',
+			'END_TIME',
+			'DEADLINE',
+			'CREATED',
+			'LAST_UPDATED',
+		];
+		foreach ($dateFieldsToCheck as $dateField)
+		{
+			if (
+				isset($fields[$dateField])
+				&& $fields[$dateField] != ''
+				&& !CheckDateTime($fields[$dateField])
+			)
+			{
+				self::registerError([
+					'text' => Loc::getMessage(
+						'CRM_ERROR_FIELD_INCORRECT',
+						[
+							'%FIELD_NAME%' => Loc::getMessage('CRM_ACTIVITY_FIELD_' . $dateField)
+						]
+					),
+				]);
+			}
 		}
 
 		$provider = self::GetActivityProvider($action == 'ADD' ? $fields : $prevFields);
@@ -7091,8 +7118,13 @@ class CAllCrmActivity
 		{
 			$fields['DESCRIPTION_RAW'] = mb_substr($fields['DESCRIPTION_RAW'], 0, $limit);
 		}
+
 		$fields['DESCRIPTION_RAW'] = \Bitrix\Main\Text\Emoji::decode($fields['DESCRIPTION_RAW']);
-		if(isset($fields['SUBJECT'])) $fields['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($fields['SUBJECT']);
+
+		if(isset($fields['SUBJECT']))
+		{
+			$fields['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($fields['SUBJECT']);
+		}
 	}
 }
 

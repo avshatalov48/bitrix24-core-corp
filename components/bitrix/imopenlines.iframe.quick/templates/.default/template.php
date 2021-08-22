@@ -1,7 +1,12 @@
-<?
-/** @var $arResult array */
-/** @var $arParams array */
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+/**
+ * @var array $arResult
+ * @var array $arParams
+ * @var \CMain $APPLICATION
+ * @var \CBitrixComponentTemplate $this
+ * @var \BotcontrollerIframeQuick $component
+ */
 ?>
 <html>
 <head>
@@ -9,7 +14,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8" />
 <?php
-	/** @var CMain $APPLICATION */
 	use Bitrix\Main\Localization\Loc;
 	\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
 	Loc::loadMessages(__FILE__);
@@ -20,7 +24,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 	$APPLICATION->ShowHeadScripts();
 ?>
 </head>
-<body style="height: 100%;margin: 0;padding: 0; background: #fff">
+<body class="imopenlines-iframe-quick <?=($arResult['DARK_MODE'] === true ? 'imopenlines-iframe-quick-dark' : '')?>">
 <div class="imopenlines-iframe-quick-info quick-hidden" id="quick-info-container">
 	<div class="imopenlines-iframe-quick-info-header">
 		<?=Loc::getMessage('IMOL_QUICK_ANSWERS_INFO_TITLE_NEW');?>
@@ -42,7 +46,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 				"ID" => "search_category_list",
 				"DISABLE_SETTINGS" => true,
 				"ITEMS" => $arResult['BUTTONS'],
-			)
+			),
+			$component,
+			['HIDE_ICONS' => true]
 		);
 		?>
 	</div>
@@ -97,7 +103,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 		<input type="hidden" name="id" id="quick-edit-id" value="" />
 	</div>
 	<div class="imopenlines-iframe-quick-edit-buttons">
-		<button class="imopenlines-iframe-quick-edit-button imopenlines-iframe-quick-edit-cancel" id="quick-edit-save"><?=Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_CREATE');?></button>
+		<button class="imopenlines-iframe-quick-edit-button imopenlines-iframe-quick-edit-save" id="quick-edit-save"><?=Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_CREATE');?></button>
 		<button class="imopenlines-iframe-quick-edit-button imopenlines-iframe-quick-edit-cancel" id="quick-edit-cancel"><?=Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_CANCEL');?></button>
 	</div>
 </div>

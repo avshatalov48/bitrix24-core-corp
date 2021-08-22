@@ -10,7 +10,7 @@ import BaseResponseConverter from './baseresponseconverter';
 
 export default class AutocompleteResponseConverter extends BaseResponseConverter
 {
-	convertResponse(response: {}, params: AutocompleteServiceParams): Array<Location>
+	convertResponse(response: {}, params: {autocompleteServiceParams: AutocompleteServiceParams, text: string}): Array<Location>
 	{
 		if (
 			!response
@@ -23,6 +23,8 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 
 		const result = [];
 		const hashMap = [];
+		const addressLine2 = response.address_tail ? response.address_tail : '';
+		const isLocationForBiasUsed = response.is_location_for_bias_used ? response.is_location_for_bias_used : false;
 
 		response.features.forEach((item) =>
 		{
@@ -42,18 +44,22 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 
 			hashMap.push(hash);
 
-			const location = this.#createLocation(item, params);
-
+			const location = this.#createLocation(item, params.autocompleteServiceParams);
 			if (location)
 			{
+				if (location.address && addressLine2)
+				{
+					location.address.setFieldValue(AddressType.ADDRESS_LINE_2, addressLine2);
+				}
+
 				result.push(location);
 			}
 		});
 
-		return this.#sortResultByDistance(result);
+		return isLocationForBiasUsed ? this.#sortResultByDistance(result) : result;
 	}
 
-	#createLocation(responseItem: {}, params: AutocompleteServiceParams): ?Location
+	#createLocation(responseItem: {}, autocompleteServiceParams: AutocompleteServiceParams): ?Location
 	{
 		if (!responseItem.properties)
 		{
@@ -99,12 +105,12 @@ export default class AutocompleteResponseConverter extends BaseResponseConverter
 			location.latitude = String(responseItem.geometry.coordinates[1]);
 			location.longitude = String(responseItem.geometry.coordinates[0]);
 
-			if (params.locationForBias)
+			if (autocompleteServiceParams.locationForBias)
 			{
 				distance = Math.round(
 					DistanceCalculator.getDistanceFromLatLonInKm(
-						params.locationForBias.latitude,
-						params.locationForBias.longitude,
+						autocompleteServiceParams.locationForBias.latitude,
+						autocompleteServiceParams.locationForBias.longitude,
 						responseItem.geometry.coordinates[1],
 						responseItem.geometry.coordinates[0]
 					)

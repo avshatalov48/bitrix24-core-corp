@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -35,7 +35,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	 */
 	public function get($id, array $parameters = array())
 	{
-		if (!TemplateAccessController::can(Util\User::getId(), ActionDictionary::ACTION_TEMPLATE_READ, $id))
+		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_READ, $id))
 		{
 			return [];
 		}
@@ -104,7 +104,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	{
 		$result = array();
 
-		if (!TemplateAccessController::can(Util\User::getId(), ActionDictionary::ACTION_TEMPLATE_CREATE))
+		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_CREATE))
 		{
 			return $result;
 		}
@@ -147,7 +147,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 		$mergeResult = TemplateCheckListFacade::merge(
 			$templateId,
-			Util\User::getId(),
+			$this->userId,
 			$checkListItems,
 			['analyticsData' => $analyticsData]
 		);
@@ -186,7 +186,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			return $result;
 		}
 
-		if (!TemplateAccessController::can(Util\User::getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
+		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
 		{
 			return $result;
 		}
@@ -220,7 +220,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			{
 				$mergeResult = TemplateCheckListFacade::merge(
 					$id,
-					Util\User::getId(),
+					$this->userId,
 					$checkListItems,
 					['analyticsData' => $analyticsData]
 				);
@@ -260,7 +260,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			return $result;
 		}
 
-		if (!TemplateAccessController::can(Util\User::getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
+		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
 		{
 			return $result;
 		}
@@ -316,7 +316,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		{
 			TasksTemplatePermissionTable::deleteList([
 				'=TEMPLATE_ID' => $template->getId(),
-				'!=ACCESS_CODE' => 'U'.Util\User::getId()
+				'!=ACCESS_CODE' => 'U'.$this->userId
 			]);
 		}
 

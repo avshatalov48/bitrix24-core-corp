@@ -14,7 +14,7 @@ use Bitrix\Voximplant\Integration\Report\Handler;
 
 class LostCallsBoard
 {
-	public const VERSION = 'v7';
+	public const VERSION = 'v10';
 	public const BOARD_KEY = 'telephony_lost_calls';
 
 	public static function get(): Dashboard
@@ -54,7 +54,7 @@ class LostCallsBoard
 		$widget->setCategoryKey('telephony');
 		$widget->setBoardId(static::BOARD_KEY);
 		$widget->getWidgetHandler(true)
-			   ->updateFormElementValue('label', Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS'));
+			   ->updateFormElementValue('label', Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_CHART_TITLE'));
 		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
 		$report = new Report();
@@ -79,7 +79,7 @@ class LostCallsBoard
 		$widget->setCategoryKey('telephony');
 		$widget->setBoardId(static::BOARD_KEY);
 		$widget->getWidgetHandler(true)
-			   ->updateFormElementValue('label', Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_TABLE_VIEW'));
+			   ->updateFormElementValue('label', Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_TABLE_VIEW_2'));
 		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
 		$report = new Report();

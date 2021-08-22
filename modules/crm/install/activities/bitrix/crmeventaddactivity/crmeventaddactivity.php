@@ -30,7 +30,8 @@ class CBPCrmEventAddActivity
 
 		$arEntity[$arDocumentInfo[1]] = array(
 			'ENTITY_TYPE' => $arDocumentInfo[0],
-			'ENTITY_ID' => (int) $arDocumentInfo[1]
+			'ENTITY_ID' => (int) $arDocumentInfo[1],
+			'USER_ID' => $userId ?: 0,
 		);
 
 		$arFields = array(

@@ -5,6 +5,12 @@ use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Model\BotFrameworkTable;
 
+/**
+ * @deprecated
+ *
+ * Class BotFramework
+ * @package Bitrix\ImConnector\Connectors
+ */
 class BotFramework extends Base
 {
 	//Input

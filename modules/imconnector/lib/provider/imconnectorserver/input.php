@@ -21,7 +21,7 @@ class Input extends Base\Input
 	 * @param $str
 	 * @return string
 	 */
-	protected static function requestSign($type, $str): string
+	protected function requestSign($type, $str): string
 	{
 		if (
 			$type == self::TYPE_BITRIX24
@@ -62,9 +62,9 @@ class Input extends Base\Input
 			if(
 				!(
 					$params['BX_TYPE'] === self::TYPE_BITRIX24
-					&& self::requestSign($params['BX_TYPE'], md5(implode('|', $params) . '|' . BX24_HOST_NAME)) === $hash
+					&& $this->requestSign($params['BX_TYPE'], md5(implode('|', $params) . '|' . BX24_HOST_NAME)) === $hash
 					|| $params['BX_TYPE'] === self::TYPE_CP
-					&& self::requestSign($params['BX_TYPE'], md5(implode('|', $params))) === $hash
+					&& $this->requestSign($params['BX_TYPE'], md5(implode('|', $params))) === $hash
 				)
 			)
 			{

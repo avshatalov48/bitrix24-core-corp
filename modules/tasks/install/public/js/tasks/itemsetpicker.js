@@ -55,7 +55,7 @@ BX.Tasks.UserItemSet = BX.Tasks.Util.ItemSet.extend({
 			this.instances.selector.bindEvent('item-deselected', BX.delegate(this.onSelectorItemDeselected, this));
 
 			BX.Tasks.Util.filterFocusBlur(
-				this.control('search'), 
+				this.control('search'),
 				false,
 				BX.delegate(this.onSearchBlurred, this),
 				200

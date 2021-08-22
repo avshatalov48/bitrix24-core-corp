@@ -118,8 +118,8 @@ Class intranet extends CModule
 
 		//auth provider
 		RegisterModuleDependences("main", "OnAuthProvidersBuildList", "intranet", "CIntranetAuthProvider", "GetProviders");
-		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'intranet', 'CIntranetAuthProvider', 'OnAfterUserUpdate');
-		RegisterModuleDependences('main', 'OnAfterUserAdd', 'intranet', 'CIntranetAuthProvider', 'OnAfterUserUpdate');
+		RegisterModuleDependences('main', 'OnBeforeUserUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeUserUpdate');
+		RegisterModuleDependences('main', 'OnAfterUserAdd', 'intranet', 'CIntranetAuthProvider', 'OnAfterUserAdd');
 		RegisterModuleDependences('iblock', 'OnBeforeIBlockSectionUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeIBlockSectionUpdate');
 		RegisterModuleDependences('iblock', 'OnAfterIBlockSectionDelete', 'intranet', 'CIntranetAuthProvider', 'OnAfterIBlockSectionDelete');
 		RegisterModuleDependences("search", "OnSearchCheckPermissions", "intranet", "CIntranetAuthProvider", "OnSearchCheckPermissions");

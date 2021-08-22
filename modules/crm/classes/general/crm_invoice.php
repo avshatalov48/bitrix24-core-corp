@@ -466,6 +466,24 @@ class CAllCrmInvoice
 		$userType = new CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], self::$sUFEntityID);
 		$userType->ListPrepareFilter($arFilter);
 
+		if (
+			$arNavStartParams === false
+			&& isset($arOptions['QUERY_OPTIONS'])
+			&& is_array($arOptions['QUERY_OPTIONS'])
+		)
+		{
+			$queryOptions = $arOptions['QUERY_OPTIONS'];
+			$limit = isset($queryOptions['LIMIT']) ? (int)$queryOptions['LIMIT'] : 0;
+			$offset = isset($queryOptions['OFFSET']) ? (int)$queryOptions['OFFSET'] : 0;
+			if ($limit > 0)
+			{
+				$arNavStartParams = [
+					'nPageSize' => $limit,
+					'iNumPage' => (int)(floor($offset / $limit) + 1),
+				];
+			}
+		}
+
 		$result = Compatible\Helper::getList(
 			$arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $arOptions
 		);

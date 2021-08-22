@@ -9,6 +9,19 @@ use Bitrix\Main\Entity\StringField;
 /**
  * Class TreatmentStatTable
  * @package Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TreatmentByHourStat_Query query()
+ * @method static EO_TreatmentByHourStat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TreatmentByHourStat_Result getById($id)
+ * @method static EO_TreatmentByHourStat_Result getList(array $parameters = array())
+ * @method static EO_TreatmentByHourStat_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_TreatmentByHourStat createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_TreatmentByHourStat_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_TreatmentByHourStat wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\EO_TreatmentByHourStat_Collection wakeUpCollection($rows)
  */
 class TreatmentByHourStatTable extends DataManager
 {

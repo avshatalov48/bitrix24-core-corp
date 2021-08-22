@@ -758,6 +758,10 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			}
 
 			$check['STATUS_NAME'] = Loc::getMessage('CRM_ORDER_CASHBOX_STATUS_'.$check['STATUS']);
+			if (isset($check['ERROR_MESSAGE']))
+			{
+				$check['STATUS_NAME'] .= ' (' . $check['ERROR_MESSAGE'] . ')';
+			}
 		}
 
 		$relatedDb = Cashbox\Internals\CheckRelatedEntitiesTable::getList(array(

@@ -5,7 +5,7 @@
 
 .bx-monitor-group-header {
     display: flex;
-    min-height: 60px;
+    min-height: 70px;
 }
 
 .bx-monitor-group-item {
@@ -18,6 +18,15 @@
     border:1px solid #e8e8ea;
     border-radius: 4px;
     height: 26px;
+    transition: border .2s;
+}
+
+.bx-monitor-group-item-working-selected {
+    border:1px solid #78c88d;
+}
+
+.bx-monitor-group-item-personal-selected {
+    border:1px solid #b8bec6;
 }
 
 .bx-monitor-group-sub-items-container {
@@ -37,7 +46,7 @@
 }
 
 .bx-monitor-group-item-title {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -46,7 +55,7 @@
 }
 
 .bx-monitor-group-item-title-full {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 185px;
     overflow: hidden;
     white-space: nowrap;
@@ -61,8 +70,28 @@
     user-select: none;
 }
 
+.bx-monitor-group-item-subtitle {
+    font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 115px;
+    overflow: hidden;
+    user-select: none;
+    color: #949595;
+}
+
+.bx-monitor-group-item-icon {
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    height: 16px;
+    width: 16px;
+    margin-right: 8px;
+}
+
+.bx-monitor-group-item-icon-away {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGZpbGw9IiNGODlCNTIiIGN4PSI5IiBjeT0iOSIgcj0iOSIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMCA5VjRIN3Y4aDdWOXoiLz48L2c+PC9zdmc+');
+}
+
 .bx-monitor-group-site-title {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -99,6 +128,7 @@
 
 .bx-monitor-group-item-button-comment {
     margin-left: 11px;
+    margin-right: 8px;
 }
 
 .bx-monitor-group-item-count {

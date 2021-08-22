@@ -45,11 +45,18 @@ class IvrAction extends Node
 		}
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_DIRECT_CODE)
 		{
-			$userInfo = \CVoxImplantIncoming::getUserByDirectCode($call->getGatheredDigits());
+			$entityInfo = \CVoxImplantIncoming::getByInternalPhoneNumber($call->getGatheredDigits());
 
-			if ($userInfo)
+			if ($entityInfo)
 			{
-				list($directNode, $nextNode) = Router::buildUserGraph($userInfo['USER_ID'], 'direct', 'voicemail');
+				if ($entityInfo['ENTITY_TYPE'] === 'user')
+				{
+					list($directNode, $nextNode) = Router::buildUserGraph($entityInfo['ENTITY_ID'], 'direct', 'voicemail');
+				}
+				else
+				{
+					list($directNode, $nextNode) = Router::buildQueueGraph($entityInfo['ENTITY_ID'], $config['TIMEMAN'] === 'Y');
+				}
 				$this->setNext($directNode);
 				$lastNode = $nextNode;
 			}

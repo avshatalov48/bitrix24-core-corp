@@ -29,3 +29,5 @@ $MESS['CRM_QUOTE_DETAILS_COPY_PAGE_URL'] = 'Скопировать ссылку 
 $MESS['CRM_QUOTE_DETAILS_PAGE_URL_COPIED'] = 'Ссылка на предложение скопирована в буфер обмена';
 $MESS['CRM_QUOTE_DETAILS_SECTION_MAIN'] = 'О предложении';
 $MESS['CRM_QUOTE_DETAILS_SECTION_ADDITIONAL'] = 'Дополнительно';
+$MESS['CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE'] = "Изменение режима расчёта суммы предложения";
+$MESS["CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT"] = "По умолчанию сумма предложения должна рассчитываться на основе списка товаров, однако в предложении уже сохранена другая сумма. Вы можете либо подтвердить автоматический перерасчет, либо оставить сохраненное значение.";

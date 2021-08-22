@@ -7,6 +7,11 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
+if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid())
+{
+	die();
+}
+
 $context = \Bitrix\Main\Application::getInstance()->getContext();
 $request = $context->getRequest();
 $params = (array)$request->get('PARAMS');

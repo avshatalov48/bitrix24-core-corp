@@ -32,11 +32,11 @@ export default class MapFeature extends BaseFeature
 			});
 	}
 
-	showMap(): void
+	showMap(useUserLocation: boolean = false): void
 	{
 		if(!this.#map.isShown())
 		{
-			this.#map.show();
+			this.#map.show(useUserLocation);
 		}
 	}
 

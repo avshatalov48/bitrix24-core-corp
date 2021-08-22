@@ -148,6 +148,10 @@
 }
 
 .profile-menu-top-extranet .profile-menu-group-info:before {
+	top: 8px;
+}
+
+.ui-page-slider-wrapper .profile-menu-top-extranet .profile-menu-group-info:before {
 	top: 13px;
 }
 
@@ -211,6 +215,11 @@
 
 .ui-page-slider-wrapper .profile-menu-group .profile-menu-top {
 	background-color: transparent;
+}
+
+.profile-menu-group .profile-menu-button-container {
+	margin-left: 12px;
+	margin-right: 12px;
 }
 
 a.profile-menu-name:hover {

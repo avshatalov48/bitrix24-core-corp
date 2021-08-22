@@ -13,11 +13,9 @@ export class TeamSpeedButton extends EventEmitter
 	render(): HTMLElement
 	{
 		const node = Tag.render`
-			<div class="tasks-scrum-button-container">
-				<button class="ui-btn ui-btn-primary ui-btn-xs">
-					${Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON')}
-				</button>
-			</div>
+			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-round ui-btn-xs">
+				${Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_BUTTON')}
+			</button>
 		`;
 
 		Event.bind(node, 'click', this.onClick.bind(this));

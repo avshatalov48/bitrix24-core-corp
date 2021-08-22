@@ -71,6 +71,6 @@ class Manager
 				->where('ENTITY_ID', '=', $order->getId())
 		);
 
-		return $query->fetch();
+		return $query->fetch() ?: [];
 	}
 }

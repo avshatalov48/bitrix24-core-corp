@@ -17,44 +17,50 @@ use CTimeZone;
  */
 class Deadline extends Date
 {
+	private const BXT_SELECTOR = 'bxt-tasks-grid-deadline';
 	private static $workTimeSettings = [];
 
-	public function prepare(): string
+	public function prepare()
 	{
 		$row = $this->getRowData();
 
 		$state = $this->getDeadlineStateData();
-		$timestamp = (
-			$row['DEADLINE']
-				? $this->getDateTimestamp($row['DEADLINE'])
-				: $this->getCompanyWorkTimeEnd()
-		);
+		$timestamp = ($row['DEADLINE'] ? $this->getDateTimestamp($row['DEADLINE']) : $this->getCompanyWorkTimeEnd());
 
 		$jsDeadline = DateTime::createFromTimestamp($timestamp - CTimeZone::GetOffset());
-		$deadline = ($state['state'] ?: $this->formatDate($row['DEADLINE']));
+		$text = ($state['state'] ?: $this->formatDate($row['DEADLINE']));
 
 		$onClick = '';
 		$link = '';
+
+		$gridLabel = [
+			'html' => '<span class="'.self::BXT_SELECTOR.'">'.$text.'</span>',
+		];
+
 		if ($row['ACTION']['CHANGE_DEADLINE'])
 		{
 			$taskId = (int)$row['ID'];
 			$onClick = "onclick=\"BX.Tasks.GridActions.onDeadlineChangeClick({$taskId}, this, '{$jsDeadline}'); event.stopPropagation();\"";
-			$link = ' task-deadline-date ui-label-link';
+			$link = ' task-deadline-date';
+
+			$gridLabel['events'] = [
+				'click' => "BX.Tasks.GridActions.onDeadlineChangeClick.bind(BX.Tasks.GridActions, {$taskId}, null, '{$jsDeadline}', event);",
+			];
 		}
 
 		if ($state['state'])
 		{
-			$color = "ui-label-{$state['color']}";
-			$fill = ($state['fill'] ? ' ui-label-fill' : '');
-			$link = str_replace(' task-deadline-date', '', $link);
+			$color = mb_strtoupper($state['color']);
+			$gridLabel['color'] = constant("Bitrix\Main\Grid\Cell\Label\Color::{$color}");
+			$gridLabel['light'] = !$state['fill'];
 
-			return "<div class=\"ui-label {$color}{$fill}{$link}\" {$onClick}><span class=\"ui-label-inner\">{$deadline}</span></div>";
+			return [$gridLabel];
 		}
 
-		$link = str_replace(' ui-label-link', '', $link);
 		$link = ($link ?: 'task-deadline-datetime');
+		$link .= ' '.self::BXT_SELECTOR;
 
-		return "<span class=\"{$link}\"><span {$onClick}>{$deadline}</span></span>";
+		return "<span class=\"{$link}\"><span {$onClick}>{$text}</span></span>";
 	}
 
 	/**

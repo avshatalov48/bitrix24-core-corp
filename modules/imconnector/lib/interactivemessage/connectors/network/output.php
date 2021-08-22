@@ -1,8 +1,8 @@
 <?php
+
 namespace Bitrix\ImConnector\InteractiveMessage\Connectors\Network;
 
 use \Bitrix\Main\Web\Json;
-
 use \Bitrix\ImConnector\InteractiveMessage;
 
 /**
@@ -16,12 +16,11 @@ class Output extends InteractiveMessage\Output
 	 *
 	 * @param array $message
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function nativeMessageProcessing($message): array
 	{
 		$command = 'session';
-		if($this->isLoadedKeyboard())
+		if ($this->isLoadedKeyboard())
 		{
 			foreach ($this->keyboardData as $keyboard)
 			{
@@ -43,7 +42,6 @@ class Output extends InteractiveMessage\Output
 					'TEXT_COLOR' => $keyboard['TEXT_COLOR'],
 					'DISPLAY' => 'LINE',
 				];
-
 			}
 		}
 

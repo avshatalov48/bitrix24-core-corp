@@ -356,6 +356,16 @@ class Field
 	}
 
 	/**
+	 * Return true if this field does not has the 'NotDisplayed' attribute.
+	 *
+	 * @return bool
+	 */
+	public function isDisplayed(): bool
+	{
+		return !in_array(\CCrmFieldInfoAttr::NotDisplayed, $this->getAttributes(), true);
+	}
+
+	/**
 	 * Return true if this field has the 'Required' attribute.
 	 *
 	 * @return bool

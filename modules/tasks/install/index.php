@@ -790,6 +790,13 @@ Class tasks extends CModule
 			);
 
 			CopyDirFiles(
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/js",
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+				true,
+				true
+			);
+
+			CopyDirFiles(
 				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/public/tools",
 				$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
 				true,

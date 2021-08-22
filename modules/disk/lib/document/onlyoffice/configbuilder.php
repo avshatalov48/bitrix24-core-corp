@@ -223,15 +223,6 @@ final class ConfigBuilder
 
 	private function supportPrint(): bool
 	{
-		$server = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer();
-		$host = (new Uri($server))->getHost();
-		switch ($host)
-		{
-			case 'oo-ru-01.bitrix24.com':
-			case 'oo-ms-01.bitrix24.com':
-				return false;
-		}
-
 		return true;
 	}
 
@@ -267,6 +258,7 @@ final class ConfigBuilder
 				'mode' => $this->mode,
 				'callbackUrl' => (string)$this->callbackUrl,
 				'customization' => [
+					'forcesave' => true,
 					'customer' => [
 						'address' => '',
 						'info' => Loc::getMessage('DISK_ONLYOFFICE_CONFIGBUILDER_CUSTOMER_INFO'),

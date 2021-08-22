@@ -46,10 +46,10 @@ class ByIdConverter extends BaseConverter
 
 		$result = (new Location())
 			->setSourceCode(Google\Repository::getSourceCode())
-			->setExternalId($data['place_id'])
-			->setName($data['name'])
-			->setLongitude($data['geometry']['location']['lng'])
-			->setLatitude($data['geometry']['location']['lat'])
+			->setExternalId((string)$data['place_id'])
+			->setName((string)$data['name'])
+			->setLongitude((string)$data['geometry']['location']['lng'])
+			->setLatitude((string)$data['geometry']['location']['lat'])
 			->setType($type)
 			->setLanguageId($this->languageId);
 

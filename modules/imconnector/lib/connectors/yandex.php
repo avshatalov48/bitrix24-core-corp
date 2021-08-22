@@ -28,8 +28,6 @@ class Yandex extends Base
 		//Processing rich links
 		$message = $this->processingMessageForRich($message);
 
-		$message = self::processingMessageForOperatorData($message);
-
-		return $message;
+		return $this->processingMessageForOperatorData($message);
 	}
 }

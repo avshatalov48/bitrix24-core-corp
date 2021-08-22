@@ -39,6 +39,9 @@ export class Counters
 				'sonet_foreign_expired',
 				'sonet_foreign_comments',
 			],
+			additional: [
+				'muted_new_comments',
+			],
 			expired: [
 				'expired',
 				'my_expired',
@@ -59,6 +62,7 @@ export class Counters
 				'originator_new_comments',
 				'accomplices_new_comments',
 				'auditor_new_comments',
+				'muted_new_comments',
 				'project_comments',
 				'projects_total_comments',
 				'projects_foreign_comments',
@@ -183,7 +187,7 @@ export class Counters
 		}
 		else
 		{
-			const counters = Object.assign({}, this.myCounters, this.otherCounters);
+			const counters = {...this.myCounters, ...this.otherCounters};
 			Object.values(counters).forEach((counter) => {
 				if (counter)
 				{
@@ -235,7 +239,7 @@ export class Counters
 			return;
 		}
 
-		let total = 0;
+		let newCommentsCount = 0;
 
 		Object.entries(data[this.groupId][this.role]).forEach(([type, value]) => {
 			if (this.myCounters[type])
@@ -248,12 +252,19 @@ export class Counters
 				}
 				else if (Counters.counterTypes.comment.includes(type))
 				{
-					this.$readAllInner.classList.remove('--fade');
+					newCommentsCount += value;
 				}
-
-				total = total + value;
+			}
+			else if (this.additionalCounters[type] && Counters.counterTypes.comment.includes(type))
+			{
+				newCommentsCount += value;
 			}
 		});
+
+		if (newCommentsCount > 0)
+		{
+			this.$readAllInner.classList.remove('--fade');
+		}
 	}
 
 	onProjectCounter(data)
@@ -295,12 +306,16 @@ export class Counters
 	{
 		this.myCounters = {};
 		this.otherCounters = {};
+		this.additionalCounters = {};
+
+		const availableTypes = [
+			...Counters.counterTypes.additional,
+			...Counters.counterTypes.my,
+			...Counters.counterTypes.other
+		];
 
 		Object.entries(counters).forEach(([type, data]) => {
-			if (
-				!Counters.counterTypes.my.includes(type)
-				&& !Counters.counterTypes.other.includes(type)
-			)
+			if (!availableTypes.includes(type))
 			{
 				return;
 			}
@@ -314,7 +329,11 @@ export class Counters
 				filterValue: data.FILTER_VALUE,
 			});
 
-			if (Counters.counterTypes.my.includes(type))
+			if (Counters.counterTypes.additional.includes(type))
+			{
+				this.additionalCounters[type] = counterItem;
+			}
+			else if (Counters.counterTypes.my.includes(type))
 			{
 				this.myCounters[type] = counterItem;
 			}
@@ -333,7 +352,7 @@ export class Counters
 
 	getReadAllBlock(): HTMLElement
 	{
-		const counters = Object.assign({}, this.myCounters, this.otherCounters);
+		const counters = {...this.myCounters, ...this.otherCounters, ...this.additionalCounters};
 		let newCommentsCount = 0;
 
 		Object.entries(counters).forEach(([type, counter]) => {
@@ -349,8 +368,9 @@ export class Counters
 						--action 
 						--read-all">
 				<div class="tasks-counters--item-head-read-all--icon"></div>
-				<div class="tasks-counters--item-head-read-all--text">${Loc.getMessage('TASKS_COUNTER_READ_ALL')}</div>
-				
+				<div class="tasks-counters--item-head-read-all--text">
+					${Loc.getMessage('TASKS_COUNTER_READ_ALL')}
+				</div>
 			</div>
 		`;
 
@@ -382,12 +402,12 @@ export class Counters
 
 	readAllForProjects()
 	{
-		const allCounters = Object.assign(this.myCounters, this.otherCounters);
-		Object.entries(allCounters).forEach(([type]) => {
-			if(allCounters[type] && Counters.counterTypes.comment.includes(type))
+		const allCounters = {...this.myCounters, ...this.otherCounters};
+		Object.entries(allCounters).forEach(([type, counter]) => {
+			if (Counters.counterTypes.comment.includes(type))
 			{
-				allCounters[type].updateCount(0);
-				allCounters[type].unActive();
+				counter.updateCount(0);
+				counter.unActive();
 			}
 		});
 
@@ -492,12 +512,7 @@ export class Counters
 		}
 
 		const content = [];
-		let totalCount = 0;
-		Object.values(this.otherCounters).forEach((counter) => {
-			content.push(counter.getContainer());
-			if(counter.count)
-				totalCount += counter.count;
-		});
+		Object.values(this.otherCounters).forEach(counter => content.push(counter.getContainer()));
 
 		this.$other.cropped = this.isCroppedBlock(this.$other.layout);
 
@@ -517,12 +532,7 @@ export class Counters
 	getContainer()
 	{
 		const content = [];
-		let totalCount = 0;
-		Object.values(this.myCounters).forEach((counter) => {
-			content.push(counter.getContainer());
-			if(counter.count)
-				totalCount += counter.count;
-		});
+		Object.values(this.myCounters).forEach(counter => content.push(counter.getContainer()));
 
 		this.$myTaskHead = Tag.render`
 			<div class="tasks-counters--item-head">

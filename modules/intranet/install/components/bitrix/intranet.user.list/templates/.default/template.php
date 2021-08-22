@@ -153,6 +153,7 @@ $gridContainerId = 'bx-iul-'.$arResult['GRID_ID'].'-container';
 			invitationLink: '<?=UrlManager::getInstance()->create('getSliderContent', [
 				'c' => 'bitrix:intranet.invitation',
 				'mode' => Router::COMPONENT_MODE_AJAX,
+				'analyticsLabel[source]' => 'userList',
 			]);?>'
 		});
 

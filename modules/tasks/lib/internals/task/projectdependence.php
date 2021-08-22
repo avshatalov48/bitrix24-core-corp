@@ -31,7 +31,20 @@ Loc::loadMessages(__FILE__);
  * See GanttDependency (tasks/install/public/js/tasks/gantt.js) for client-side implementation of this logic
  * This class does not check rights
  *
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ProjectDependence_Query query()
+ * @method static EO_ProjectDependence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ProjectDependence_Result getById($id)
+ * @method static EO_ProjectDependence_Result getList(array $parameters = array())
+ * @method static EO_ProjectDependence_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectDependence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectDependence_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectDependence wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectDependence_Collection wakeUpCollection($rows)
+ */
 
 final class ProjectDependenceTable extends Mesh
 {

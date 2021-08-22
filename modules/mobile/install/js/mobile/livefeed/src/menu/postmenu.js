@@ -1,5 +1,7 @@
 import {Loc, Type} from "main.core";
-import {Post} from "./../post";
+import {Post} from '../post';
+import {BlogPost} from '../blogpost';
+import {FollowManagerInstance, CommentsInstance} from '../feed';
 
 class PostMenu
 {
@@ -109,9 +111,9 @@ class PostMenu
 				sectionCode: this.sectionCode,
 				action: () =>
 				{
-					oMSL.editBlogPost({
-						feed_id: window.LiveFeedID,
-						post_id: this.postId,
+					BlogPost.edit({
+						feedId: window.LiveFeedID,
+						postId: this.postId,
 						pinnedContext: !!this.pinnedValue,
 					});
 				},
@@ -126,8 +128,8 @@ class PostMenu
 				sectionCode: this.sectionCode,
 				action: () =>
 				{
-					oMSL.deleteBlogPost({
-						post_id: this.postId
+					BlogPost.delete({
+						postId: this.postId,
 					});
 				},
 				arrowFlag: false
@@ -165,7 +167,7 @@ class PostMenu
 				sectionCode: this.sectionCode,
 				action: () =>
 				{
-					oMSL.setFollow({
+					FollowManagerInstance.setFollow({
 						logId: this.logId,
 						menuNode: this.target,
 						pageId: this.pageId,
@@ -188,11 +190,11 @@ class PostMenu
 					if (oMSL.bDetailEmptyPage)
 					{
 						// get comments on refresh from detail page menu
-						oMSL.getComments({
+						CommentsInstance.getComments({
 							ts: oMSL.iDetailTs,
 							bPullDown: true,
 							obFocus: {
-								form: false
+								form: false,
 							}
 						});
 					}

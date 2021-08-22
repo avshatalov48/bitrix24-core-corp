@@ -44,6 +44,7 @@ $MESS["TASKS_JS_MARK_N"] = "Negative";
 $MESS["TASKS_JS_MARK_NONE"] = "Keine";
 $MESS["TASKS_JS_MARK_P"] = "Positive";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Ping-Benachrichtigung gesendet";
+$MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Tag hinzufügen:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Aktion auswählen";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS"] = "Möchten Sie alle Aufgaben zusammen mit Teilaufgaben (auch auf anderen Seiten) wirklich löschen?";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS"] = "Möchten Sie die ausgewählten Aufgaben wirklich löschen?";

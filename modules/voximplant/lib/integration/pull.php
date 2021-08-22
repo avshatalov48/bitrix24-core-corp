@@ -52,12 +52,12 @@ class Pull
 		self::send(
 			'changeDefaultLineId',
 			$users,
-			array(
+			[
 				'defaultLineId' => $defaultLineId,
 				'line' => \CVoxImplantConfig::GetLine($defaultLineId)
-			),
-			array(),
-			1
+			],
+			null,
+			86400
 		);
 	}
 

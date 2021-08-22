@@ -52,13 +52,13 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 		$fields = $order->getFieldValues();
 		foreach($order->getContactCompanyCollection()->getContacts() as $contact)
 		{
-			$fields['CONTACT_IDS'][] = $contact->getId();
+			$fields['CONTACT_IDS'][] = $contact->getField('ENTITY_ID');
 		}
 
 		$company = $order->getContactCompanyCollection()->getPrimaryCompany();
 		if($company)
 		{
-			$fields['COMPANY_ID'] = $company->getId();
+			$fields['COMPANY_ID'] = $company->getField('ENTITY_ID');
 		}
 
 		foreach ($order->getPropertyCollection() as $property)

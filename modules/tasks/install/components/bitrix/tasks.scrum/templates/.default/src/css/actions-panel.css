@@ -78,6 +78,11 @@
 	width: 20px;
 }
 
+.tasks-scrum-actions-panel-btn-dod .tasks-scrum-actions-panel-icon {
+	background: no-repeat 0 center url(images/dod.svg);
+	width: 20px;
+}
+
 .tasks-scrum-actions-panel-btn-decomposition .tasks-scrum-actions-panel-icon {
 	background: no-repeat 0 center url(images/decompoz.svg);
 	width: 20px;

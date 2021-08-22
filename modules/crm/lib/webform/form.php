@@ -339,6 +339,7 @@ class Form
 			{
 				continue;
 			}
+
 			$agreements[] = [
 				'AGREEMENT_ID' => $agreementId,
 				'CHECKED' => $agreement['CHECKED'] === 'Y' ? 'Y' : 'N',
@@ -346,13 +347,28 @@ class Form
 			];
 		}
 		unset($result['AGREEMENTS']);
-		if ($result['AGREEMENT_ID'] && !in_array($result['AGREEMENT_ID'], array_column($agreements, 'AGREEMENT_ID')))
+		if ($result['AGREEMENT_ID'])
 		{
-			$agreements[] = [
-				'AGREEMENT_ID' => $result['AGREEMENT_ID'],
-				'CHECKED' => $result['LICENCE_BUTTON_IS_CHECKED'] === 'Y' ? 'Y' : 'N',
-				'REQUIRED' => 'Y',
-			];
+			if (!in_array($result['AGREEMENT_ID'], array_column($agreements, 'AGREEMENT_ID')))
+			{
+				$agreements[] = [
+					'AGREEMENT_ID' => $result['AGREEMENT_ID'],
+					'CHECKED' => $result['LICENCE_BUTTON_IS_CHECKED'] === 'Y' ? 'Y' : 'N',
+					'REQUIRED' => 'Y',
+				];
+			}
+			elseif (isset($result['LICENCE_BUTTON_IS_CHECKED']))
+			{
+				foreach ($agreements as $index => $agreement)
+				{
+					if ($agreement['AGREEMENT_ID'] != $result['AGREEMENT_ID'])
+					{
+						continue;
+					}
+
+					$agreements[$index]['CHECKED'] = $result['LICENCE_BUTTON_IS_CHECKED'] === 'Y' ? 'Y' : 'N';
+				}
+			}
 		}
 		$result['AGREEMENT_ID'] = null;
 
@@ -1296,6 +1312,8 @@ class Form
 				$isHidden = $dep['do']['action'] == 'hide';
 			}
 
+
+			$isHidden = true;
 			if($field['type'] == 'section')
 			{
 				foreach($sectionFields[$field['name']] as $sectionFieldName)

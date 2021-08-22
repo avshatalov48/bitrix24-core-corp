@@ -14,6 +14,22 @@ use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class DocumentSessionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DocumentSession_Query query()
+ * @method static EO_DocumentSession_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DocumentSession_Result getById($id)
+ * @method static EO_DocumentSession_Result getList(array $parameters = array())
+ * @method static EO_DocumentSession_Entity getEntity()
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection createCollection()
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession wakeUpObject($row)
+ * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection wakeUpCollection($rows)
+ */
 final class DocumentSessionTable extends DataManager
 {
 	public const TYPE_VIEW = 0;

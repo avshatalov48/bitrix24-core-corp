@@ -100,8 +100,6 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 	array(
 		'USER_ID' => $arParams[ 'USER_ID' ],
 		'GROUP_ID' => $arParams[ 'GROUP_ID' ],
-		'SPRINT_ID' => $arParams[ 'SPRINT_ID' ],
-		'SPRINT_SELECTED' => $arParams[ 'SPRINT_SELECTED' ],
 
 		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER_ID' => $arParams[ "FILTER_ID" ],
@@ -114,7 +112,7 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 
 		'SHOW_TOOLBAR'=>$arParams['MARK_SPECIAL_PRESET']=='Y' || $arParams['MARK_SECTION_ALL']=='Y' ? 'N' : 'Y',
 		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
-		'VIEW_MODE_LIST' => $arParams['PROJECT_VIEW'] == 'Y' ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT', 'VIEW_MODE_SPRINT'] : [],
+		'VIEW_MODE_LIST' => $arParams['PROJECT_VIEW'] == 'Y' ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT'] : [],
 	),
 	$component,
 	array('HIDE_ICONS' => true)

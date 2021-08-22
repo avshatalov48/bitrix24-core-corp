@@ -68,7 +68,12 @@ class Dictionary
 			'product' => [
 				'isCloud' => Crm\Integration\Bitrix24\Product::isCloud(),
 				'isRegionRussian' => Crm\Integration\Bitrix24\Product::isRegionRussian(),
-			]
+			],
+			'contentTypes' => [
+				['id' => 'image/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_IMAGE')],
+				['id' => 'audio/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO')],
+				['id' => 'video/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO')],
+			],
 		];
 	}
 

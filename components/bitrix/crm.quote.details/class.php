@@ -2,7 +2,6 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Accounting;
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Contact;
 use Bitrix\Crm\Conversion\ConversionManager;
@@ -17,6 +16,7 @@ use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Crm\Tracking;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -117,6 +117,8 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		return [
 			'COPY_PAGE_URL' => Loc::getMessage('CRM_QUOTE_DETAILS_COPY_PAGE_URL'),
 			'PAGE_URL_COPIED' => Loc::getMessage('CRM_QUOTE_DETAILS_PAGE_URL_COPIED'),
+			'MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE'),
+			'MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT'),
 		];
 	}
 
@@ -495,6 +497,12 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				['name' => EditorAdapter::FIELD_FILES],
 			],
 		];
+		if (Container::getInstance()->getAccounting()->isTaxMode())
+		{
+			$sectionMain['elements'][] = [
+				'name' => Item::FIELD_NAME_LOCATION_ID,
+			];
+		}
 		$sections[] = $sectionMain;
 
 		$sectionAdditional = [
@@ -635,6 +643,31 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			}
 
 		}
+
+		$additionalData = [];
+		Tracking\UI\Details::prepareEntityData(
+			$this->item->getEntityTypeId(),
+			$this->item->getId(),
+			$additionalData
+		);
+		foreach ($additionalData as $name => $value)
+		{
+			$this->editorAdapter->addEntityData($name, $value);
+		}
+		$this->editorAdapter->addEntityData('UTM_VIEW_HTML', EditorAdapter::getUtmEntityData($this->item));
+		$locationString = CCrmLocations::getLocationString($this->item->getLocationId());
+		if (empty($locationString))
+		{
+			$locationString = '';
+		}
+		$this->editorAdapter->addEntityData(Item\Quote::FIELD_NAME_LOCATION_ID . '_VIEW_HTML', $locationString);
+		$this->editorAdapter->addEntityData(
+			Item\Quote::FIELD_NAME_LOCATION_ID . '_EDIT_HTML',
+			EditorAdapter::getLocationFieldHtml(
+				$this->item,
+				Item\Quote::FIELD_NAME_LOCATION_ID
+			)
+		);
 
 		$this->editorAdapter
 			->addEntityData(Item\Quote::FIELD_NAME_STORAGE_TYPE, $this->item->getStorageTypeId())
@@ -847,48 +880,56 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		parent::fillParentFields();
 
 		$parentFieldNamesToPassProducts = $this->getParentEntityTypeIdsToLoadProducts();
-		foreach ($parentFieldNamesToPassProducts as $entityTypeId => $fieldName)
+		foreach ($parentFieldNamesToPassProducts as $parentEntityTypeId => $parentFieldName)
 		{
-			$entityId = $this->item->get($fieldName);
+			$entityId = $this->item->get($parentFieldName);
 			if ($entityId > 0)
 			{
-				$parentIdentifier = new ItemIdentifier($entityTypeId, $entityId);
+				$parentIdentifier = new ItemIdentifier($parentEntityTypeId, $entityId);
+
+				$factory = Container::getInstance()->getFactory($parentEntityTypeId);
+				if (!$factory)
+				{
+					return;
+				}
+				$entityObject = $factory->getDataClass()::getById($entityId)->fetchObject();
+				if (!$entityObject)
+				{
+					return;
+				}
+
+				$fieldsToPass = [
+					Item::FIELD_NAME_CURRENCY_ID,
+					Item::FIELD_NAME_COMPANY_ID,
+					Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
+					Item::FIELD_NAME_OPPORTUNITY,
+				];
+				foreach ($fieldsToPass as $fieldName)
+				{
+					$value = $entityObject->get($fieldName);
+					if ($value)
+					{
+						$this->item->set($fieldName, $value);
+					}
+				}
+
 				$parentRows = $this->getProductRowsFromParent($parentIdentifier);
 				if (!empty($parentRows))
 				{
 					$this->item->setProductRowsFromArrays($parentRows);
 					$productRows = $this->item->getProductRows();
-					if ($productRows)
+					if ($productRows && !$this->item->getIsManualOpportunity())
 					{
 						$this->item->set(
 							Item::FIELD_NAME_OPPORTUNITY,
-							Accounting\Products::calculateSum(
-								$this->item,
-								$this->item->getProductRows()->getAll()
-							)
+							Container::getInstance()->getAccounting()->calculateByItem($this->item)->getPrice()
 						);
 					}
 				}
 
-				$companyRelation = Container::getInstance()->getRelationManager()->getRelation(new RelationIdentifier(
-					\CCrmOwnerType::Company,
-					$entityTypeId
-				));
-				if ($companyRelation)
-				{
-					$companyIdentifiers = $companyRelation->getParentElements($parentIdentifier);
-					if (!empty($companyIdentifiers))
-					{
-						$companyId = $companyIdentifiers[0]->getEntityId();
-						if ($companyId > 0)
-						{
-							$this->item->setCompanyId($companyId);
-						}
-					}
-				}
 				$contactRelation = Container::getInstance()->getRelationManager()->getRelation(new RelationIdentifier(
 					\CCrmOwnerType::Contact,
-					$entityTypeId
+					$parentEntityTypeId
 				));
 				if ($contactRelation)
 				{

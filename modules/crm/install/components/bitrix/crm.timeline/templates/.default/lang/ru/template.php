@@ -132,6 +132,7 @@ $MESS["CRM_TIMELINE_LEAD_SCHEDULE_STUB"] = "У вас нет запланиро�
 $MESS["CRM_TIMELINE_DEAL_SCHEDULE_STUB"] = "У вас нет запланированных дел. Передвиньте стадию сделки, запланируйте дело или поставьте ожидание.";
 $MESS["CRM_TIMELINE_LEAD_LINK"] = "Добавлена связь с лидом";
 $MESS["CRM_TIMELINE_SENDER_TITLE"] = "Название";
+$MESS["CRM_TIMELINE_SENDER_ERROR"] = "Ошибка";
 $MESS["CRM_TIMELINE_SENDER_READ"] = "Прочитано";
 $MESS["CRM_TIMELINE_SENDER_CLICK"] = "Перешел по ссылке";
 $MESS["CRM_TIMELINE_SENDER_UNSUB"] = "Отписался";

@@ -78,7 +78,7 @@ export default class Prompt extends EventEmitter
 	 * @param {Address} address
 	 * @returns {*}
 	 */
-	setMenuItems(locationsList: Array<Location>, searchPhrase: string, address: Address): Menu
+	setMenuItems(locationsList: Array<Location>, searchPhrase: string, address: ?Address): Menu
 	{
 		this.getMenu().clearItems();
 
@@ -88,13 +88,21 @@ export default class Prompt extends EventEmitter
 
 			this.#locationList = locationsList.slice();
 
-			locationsList.forEach((location) => {
-
+			locationsList.forEach((location, index) => {
 				if(address && address.getFieldValue(AddressType.LOCALITY))
 				{
-					if (!isSeparatorSet && location && location.address && location.address.getFieldValue(AddressType.LOCALITY))
+					if (
+						!isSeparatorSet
+						&& location
+						&& location.address
+						&& location.address.getFieldValue(AddressType.LOCALITY)
+					)
 					{
-						if (address.getFieldValue(AddressType.LOCALITY) !== location.address.getFieldValue(AddressType.LOCALITY))
+						if (
+							!this.#getAddressPossibleLocalities(location.address).includes(
+								address.getFieldValue(AddressType.LOCALITY)
+							)
+						)
 						{
 							isSeparatorSet = true;
 							this.getMenu().addMenuItem({
@@ -106,35 +114,55 @@ export default class Prompt extends EventEmitter
 				}
 
 				this.getMenu().addMenuItem(
-					this.#createMenuItem(location, searchPhrase)
+					this.#createMenuItem(index, location, searchPhrase)
 				);
 			});
 		}
 	}
 
+	#getAddressPossibleLocalities(address: Address)
+	{
+		const result = [];
+
+		if (address.getFieldValue(AddressType.LOCALITY))
+		{
+			result.push(address.getFieldValue(AddressType.LOCALITY));
+		}
+
+		/**
+		 * Address break-down formed on frontend is very inaccurate so we can't rely only on the locality type field
+		 * @see #142094
+		 */
+		if (address.getFieldValue(AddressType.ADM_LEVEL_1))
+		{
+			result.push(address.getFieldValue(AddressType.ADM_LEVEL_1));
+		}
+
+		return result;
+	}
+
 	/**
+	 * @param {number} index
 	 * @param {Location} location
 	 * @param {string} searchPhrase
 	 * @returns {{onclick: onclick, text: string}}
 	 */
-	#createMenuItem(location: Location, searchPhrase): Object
+	#createMenuItem(index, location: Location, searchPhrase): Object
 	{
-		const externalId = location.externalId;
-
 		return {
-			id: externalId,
+			id: index,
 			title: location.name,
 			html: Prompt.createMenuItemText(location.name, searchPhrase, location),
 			onclick: (event, item) => {
-				this.#onItemSelect(externalId);
+				this.#onItemSelect(index);
 				this.close();
 			}
 		};
 	}
 
-	#onItemSelect(externalId: string): void
+	#onItemSelect(index: number): void
 	{
-		const location = this.#getLocationFromList(externalId);
+		const location = this.#getLocationFromList(index);
 
 		if(location)
 		{
@@ -166,7 +194,7 @@ export default class Prompt extends EventEmitter
 			}
 		}
 
-		return result;
+		return '<div data-role="location-widget-menu-item" tabindex="-1">' + result + '</div>';
 	}
 
 	static #extractClarification(location: Location): string
@@ -181,22 +209,18 @@ export default class Prompt extends EventEmitter
 		return clarification;
 	}
 
-	#getLocationFromList(externalId: string): ?Location
+	#getLocationFromList(index: number): ?Location
 	{
 		let result = null;
 
-		for(const location of this.#locationList)
+		if (this.#locationList[index] !== undefined)
 		{
-			if(location.externalId === externalId)
-			{
-				result = location;
-				break;
-			}
+			result = this.#locationList[index];
 		}
 
 		if(!result)
 		{
-			BX.debug(`Location with externalId ${externalId} was not found`);
+			BX.debug(`Location with index ${index} was not found`);
 		}
 
 		return result;
@@ -215,7 +239,7 @@ export default class Prompt extends EventEmitter
 			}
 			else
 			{
-				result = this.#getLocationFromList(item.id);
+				result = this.#getLocationFromList(this.getMenu().choseItemIdx);
 			}
 		}
 
@@ -235,7 +259,7 @@ export default class Prompt extends EventEmitter
 			}
 			else
 			{
-				result = this.#getLocationFromList(item.id);
+				result = this.#getLocationFromList(this.getMenu().choseItemIdx);
 			}
 		}
 
@@ -244,17 +268,17 @@ export default class Prompt extends EventEmitter
 
 	isItemChosen()
 	{
-		return this.#menu.isItemChosen();
+		return this.getMenu().isItemChosen();
 	}
 
 	getChosenItem()
 	{
 		let result = null;
-		const menuItem = this.#menu.getChosenItem();
+		const menuItem = this.getMenu().getChosenItem();
 
 		if(menuItem && menuItem.id)
 		{
-			result = this.#getLocationFromList(menuItem.id);
+			result = this.#getLocationFromList(this.getMenu().choseItemIdx);
 		}
 
 		return result;

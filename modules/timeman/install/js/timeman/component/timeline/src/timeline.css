@@ -2,3 +2,10 @@
     display: flex;
     flex-direction: column;
 }
+
+.bx-timeman-component-timeline-fade-enter-active, .bx-timeman-component-timeline-fade-leave-active {
+    transition: opacity .3s;
+}
+.bx-timeman-component-timeline-fade-enter, .bx-timeman-component-timeline-fade-leave-to {
+    opacity: 0;
+}

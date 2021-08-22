@@ -2111,21 +2111,24 @@ class Session
 			}
 		}
 
-		if (is_object($GLOBALS['USER']) && method_exists($GLOBALS['USER'], 'GetId'))
+		$update = [
+			'DATE_MODIFY' => new DateTime()
+		];
+
+		if (
+			is_object($GLOBALS['USER'])
+			&& method_exists($GLOBALS['USER'], 'GetId')
+		)
 		{
 			$update['USER_ID'] = $GLOBALS['USER']->GetId();
 		}
 
-		if($update)
+		if(isset($params['INPUT_MESSAGE']))
 		{
-			if(isset($params['INPUT_MESSAGE']))
-			{
-				$update['INPUT_MESSAGE'] = $params['INPUT_MESSAGE'];
-			}
-
-			$update['DATE_MODIFY'] = new DateTime();
-			$this->update($update);
+			$update['INPUT_MESSAGE'] = $params['INPUT_MESSAGE'];
 		}
+
+		$this->update($update);
 	}
 
 	/**

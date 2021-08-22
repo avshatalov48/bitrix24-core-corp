@@ -8,19 +8,16 @@ use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Timeman\Monitor\Config;
 use Bitrix\Timeman\Monitor\History\History;
-use Bitrix\Timeman\Monitor\Report\Status;
 
 class Monitor extends Controller
 {
 	public function recordHistoryAction($history)
 	{
 		$enabled = Config::getEnabled();
-		$state = Config::getState();
 		if ($enabled !== 'Y')
 		{
 			return [
 				'enabled' => $enabled,
-				'state' => $state
 			];
 		}
 
@@ -43,26 +40,11 @@ class Monitor extends Controller
 		}
 
 		$recorded = History::record($history);
-		if ($recorded)
-		{
-			Status::setForCurrentUser(Status::CLOSED);
-		}
 
 		return [
 			'enabled' => $enabled,
-			'state' => $state,
 			'recorded' => $recorded,
 		];
-	}
-
-	public function setStatusWaitingDataAction(): bool
-	{
-		return Status::setForCurrentUser(Status::WAITING_DATA);
-	}
-
-	public function isHistorySentAction(): bool
-	{
-		return Status::getForCurrentUser();
 	}
 
 	public function enableForCurrentUserAction(): bool

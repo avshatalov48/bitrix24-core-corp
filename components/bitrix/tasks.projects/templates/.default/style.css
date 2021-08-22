@@ -66,6 +66,10 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20width%3D%2210px%22%20height%3D%226px%22%20viewBox%3D%220%200%2010%206%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%0A%20%20%20%20%3Ctitle%3ERectangle%208%3C/title%3E%0A%20%20%20%20%3Cg%20id%3D%22Page-1%22%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20id%3D%22%u0413%u0440%u0438%u0434-2-3%22%20transform%3D%22translate%28-503.000000%2C%20-698.000000%29%22%20fill%3D%22%237BD500%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22Rectangle-8%22%20transform%3D%22translate%28503.000000%2C%20698.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M1.89357868%2C2.0148476%20L7.92942092%2C1.7532079%20C8.20530422%2C1.741249%208.43864643%2C1.955202%208.45060533%2C2.2310853%20C8.45126452%2C2.24629237%208.45122895%2C2.2615216%208.45049873%2C2.27672542%20L8.160817%2C8.30817582%20C8.14756956%2C8.58400025%207.9132305%2C8.79686096%207.63740607%2C8.78361352%20C7.51288283%2C8.77763285%207.39508546%2C8.72534934%207.30711396%2C8.63701576%20L1.56095345%2C2.86720506%20C1.36609272%2C2.67154232%201.36674288%2C2.3549605%201.56240562%2C2.16009977%20C1.6508081%2C2.07205965%201.76893171%2C2.02025075%201.89357868%2C2.0148476%20Z%22%20transform%3D%22translate%284.949747%2C%205.253835%29%20rotate%28-45.000000%29%20translate%28-4.949747%2C%20-5.253835%29%20%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') no-repeat;
 }
 
+.tasks-projects-user-list-container {
+    cursor: pointer;
+}
+
 .tasks-projects-user-list {
 	display: flex;
 	align-items: center;
@@ -104,7 +108,6 @@
 	margin: 0 5px 0 4px;
 	font: 12px 'OpenSans-SemiBold', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: rgba(82,92,105, .71);
-    cursor: pointer;
 }
 
 .tasks-projects-user-plus {
@@ -128,16 +131,104 @@
 }
 
 .ui-label.tasks-projects-badge-join {
-    border-color: lightgray !important;
-    background-color: white;
+	padding: 0 9px;
+	height: 28px;
+	border-radius: 14px;
+    border-color: rgba(47,198,246,.32) !important;
+    background-color: rgba(47,198,246,.17);
+	text-decoration: none;
+    cursor: pointer;
 }
 
-.ui-label.tasks-projects-badge-join .ui-label-inner {
-    color: #3465aa;
+.ui-label.tasks-projects-badge-join:hover {
+	text-decoration: none;
+}
+
+.ui-label.tasks-projects-badge-join .ui-label-inner:hover {
+	border-bottom: none!important;
+}
+
+.ui-label.tasks-projects-badge-join .ui-label-inner,
+.ui-label.tasks-projects-badge-invite .ui-label-inner,
+.ui-label.tasks-projects-badge-invite-accept .ui-label-inner {
+	border-bottom: none!important;
+	color: #2066b0;
+	font: 12px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.tasks-projects-badge-invite-box {
+	display: flex;
+	align-items: center;
+	margin-top: -6px;
+}
+
+.ui-label.tasks-projects-badge-invite,
+.ui-label.tasks-projects-badge-invite-accept {
+	padding: 0 15px;
+	height: 28px;
+	border-radius: 14px;
+	border-color: #7abaff !important;
+	background-color: #fff;
+}
+
+.ui-label.tasks-projects-badge-invite .ui-label-inner,
+.ui-label.tasks-projects-badge-invite-accept .ui-label-inner {
+	position: relative;
+	padding-left: 22px;
+}
+
+.ui-label.tasks-projects-badge-invite .ui-label-inner:before,
+.ui-label.tasks-projects-badge-invite-accept .ui-label-inner:before {
+	content: '';
+	position: absolute;
+	top: 1px;
+	left: 0;
+	width: 15px;
+	height: 14px;
+	background-image: url("data:image/svg+xml,%3Csvg width='15' height='14' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14.75 3.325v9.83H.45v-9.83h14.3zM9.734 5.37v2.108l-4.151.001v1.759h4.15v2.109l2.99-2.988-2.99-2.989zM8.494.644l1.787 1.788H.451V.644h8.043z' fill='%231FA8ED' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.ui-label.tasks-projects-badge-invite-accept,
+.ui-label.tasks-projects-badge-accept {
+	border-color: #92c001 !important;
+}
+
+.ui-label.tasks-projects-badge-invite-accept .ui-label-inner {
+	color: #779d00;
+}
+
+.ui-label.tasks-projects-badge-invite-accept .ui-label-inner:before {
+	top: 0;
+	width: 18px;
+	height: 13px;
+	background-image: url("data:image/svg+xml,%3Csvg width='18' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 4.227l6.985 5.165 4.093-3.026A4.543 4.543 0 0013.97 7.89v4.23c0 .487-.448.882-1.004.882H1.005C.45 13.003 0 12.609 0 12.12V4.227zm9.97-1.228a4.613 4.613 0 00.264 1.946l-3.249 2.37L1.075 3l8.894-.001zm5.536-2.05a2.421 2.421 0 110 4.843 2.421 2.421 0 010-4.842z' fill='%2392C001' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.ui-label.tasks-projects-badge-accept,
+.ui-label.tasks-projects-badge-cancel {
+	width: 38px;
+	height: 28px;
+	border-radius: 14px;
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+}
+
+.ui-label.tasks-projects-badge-accept {
+	background-image: url("data:image/svg+xml,%3Csvg width='14' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.393 11.316L.018 6.993l1.657-1.65 2.667 2.633L11.712.71 13.42 2.4z' fill='%2392C001' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-color: #ffffff;
+}
+
+.ui-label.tasks-projects-badge-cancel {
+	border-color: #ff5752 !important;
+	background-image: url("data:image/svg+xml,%3Csvg width='11' height='11' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.118 5.5l3.45 3.45-1.618 1.618-3.45-3.45-3.45 3.45L.432 8.95l3.45-3.45-3.45-3.45L2.05.432l3.45 3.45L8.95.432l1.618 1.618z' fill='%23FF5752' fill-rule='evenodd'/%3E%3C/svg%3E");
+	background-position: 12px 8px;
+    background-color: #ffffff;
 }
 
 .ui-label.tasks-projects-badge-green {
 	border-color: rgba(157,207,0,.36) !important;
+    background-color: #ffffff;
 }
 
 .ui-label.tasks-projects-badge-green .ui-label-inner {
@@ -146,6 +237,7 @@
 
 .ui-label.tasks-projects-badge-yellow {
     border-color: rgba(247,204,0,.63) !important;
+    background-color: #ffffff;
 }
 
 .ui-label.tasks-projects-badge-yellow .ui-label-inner {
@@ -154,6 +246,7 @@
 
 .ui-label.tasks-projects-badge-blue {
 	border-color: rgba(47,198,246,.32) !important;
+    background-color: #ffffff;
 }
 
 .ui-label.tasks-projects-badge-blue .ui-label-inner {
@@ -202,7 +295,63 @@
     border-radius: 18px;
 }
 
-.tasks-projects-members-popup-container {
+.tasks-projects-members-popup .tasks-projects-members-popup-container {
+    background-color:#fff;
+    display: block;
+    max-height: 200px;
+    margin: 0 0 2px 0;
+    padding: 0 8px 8px 8px;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    width: auto;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
+}
+
+.bx-firefox .tasks-projects-members-popup .tasks-projects-members-popup-container,
+.bx-ie .tasks-projects-members-popup .tasks-projects-members-popup-container {
+    min-width: 220px;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head {
+    display: flex;
+    margin: 0 0 10px 0;
+    border-bottom: 1px solid #D8D8D8;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item {
+    display: flex;
+    align-items: center;
+    margin: 0 11px 0 0;
+    height: 35px;
+    border-bottom: 2px solid transparent;
+    font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    color: #525C69;
+    transition: all .3s;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item:hover {
+    border-color: #D8D8D8;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item:last-child {
+    margin: 0;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item:first-child {
+    margin: 0 17px 0 0;
+}
+
+.tasks-projects-members-popup .tasks-projects-members-popup-head-item-current {
+    border-color: #0063C6;
+    cursor: default;
+    pointer-events: none;
+}
+
+.tasks-projects-members-popup-body {
     position: relative;
     display: block;
     max-height: none;
@@ -243,7 +392,7 @@
     display: block;
     padding: 0 17px 0 0;
     min-height: 26px;
-    max-height: 159px;
+    max-height: 135px;
     min-width: 150px;
     -webkit-scrollbar-track-color: #f9fafb;
     scrollbar-track-color: #f9fafb;

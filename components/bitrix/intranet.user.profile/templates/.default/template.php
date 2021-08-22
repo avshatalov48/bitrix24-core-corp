@@ -1,11 +1,47 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page;
 
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-all-paddings no-background');
-\Bitrix\Main\UI\Extension::load(array("ui.buttons", "ui.alerts", "ui.tooltip", "ui.hint"));
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-all-paddings no-background');
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.alerts',
+	'ui.tooltip',
+	'ui.hint',
+	'ui.icons.b24',
+]);
+
 \CJSCore::Init("loader");
+
+if (!$arResult['Permissions']['view'])
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrapper',
+		'',
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:socialnetwork.entity.error',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'POPUP_COMPONENT_PARAMS' => [
+				'ENTITY' => 'USER',
+			],
+		]
+	);
+
+	return;
+}
 
 Page\Asset::getInstance()->addJs($templateFolder.'/js/utils.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/stresslevel.js');
@@ -15,16 +51,6 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
-
-\Bitrix\Main\UI\Extension::load("ui.icons.b24");
-
-if (!$arResult["Permissions"]['view'])
-{
-	?><div class="ui-alert ui-alert-danger">
-		<span class="ui-alert-message"><?=Loc::getMessage('INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED')?></span>
-	</div><?
-	return;
-}
 
 $this->SetViewTarget('inside_pagetitle');
 $APPLICATION->includeComponent(
@@ -62,7 +88,7 @@ if (
 		&& ($arResult["IsOwnProfile"] || $USER->CanDoOperation('security_edit_user_otp'))
 	):?>
 		<span
-			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=security"?>', {width: 1100});"
+			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=otpConnected"?>', {width: 1100});"
 			class="ui-btn ui-btn-light-border ui-btn-themes"
 		>
 			<?=Loc::getMessage("INTRANET_USER_PROFILE_SECURITY")?>

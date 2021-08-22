@@ -35,11 +35,9 @@ export class RobotButton extends EventEmitter
 		}
 
 		const node = Tag.render`
-			<div class="tasks-scrum-button-container">
-				<button class="${className}">
-					${Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON')}
-				</button>
-			</div>
+			<button class="${className}">
+				${Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON')}
+			</button>
 		`;
 
 		Event.bind(node, 'click', this.onClick.bind(this));

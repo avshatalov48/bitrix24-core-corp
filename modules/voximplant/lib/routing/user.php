@@ -51,17 +51,24 @@ class User extends Node
 			]);
 		}
 
-		if($userData['AVAILABLE'] == 'Y')
+		if($userData['AVAILABLE'] === 'Y')
 		{
 			return Action::create(Command::INVITE, [
 				'USERS' => [$userData],
 				'TYPE_CONNECT' => $this->connectType
 			]);
 		}
-		else
+
+		if ($this->failureRule === \CVoxImplantIncoming::RULE_HUNGUP)
 		{
-			return false;
+			return Action::create(Command::HANGUP, [
+				'USERS' => [$userData],
+				'CODE' => 480,
+				'REASON' => 'User is not available',
+			]);
 		}
+
+		return false;
 	}
 
 	/**

@@ -289,13 +289,20 @@ class CCrmBizProcHelper
 			return 0;
 		}
 
-		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
+		[$entityTypeId, $entityId] = static::resolveEntityId($documentId);
 
 		return \CCrmOwnerType::loadResponsibleId(
-			\CCrmOwnerType::ResolveID($entityTypeName),
-			(int)$entityId,
+			$entityTypeId,
+			$entityId,
 			false
 		);
+	}
+
+	public static function resolveEntityId(array $documentId): array
+	{
+		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
+
+		return [\CCrmOwnerType::ResolveID($entityTypeName), (int)$entityId];
 	}
 }
 

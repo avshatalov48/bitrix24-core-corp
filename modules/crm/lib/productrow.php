@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Objectify\EntityObject;
@@ -162,7 +163,10 @@ class ProductRow extends EO_ProductRow
 	{
 		if (empty($this->getPriceExclusive()) && !empty($this->getPrice()))
 		{
-			$exclusivePrice = Accounting::calculatePriceWithoutTax((float)$this->getPrice(), (float)$this->getTaxRate());
+			$exclusivePrice = Container::getInstance()->getAccounting()->calculatePriceWithoutTax(
+				(float)$this->getPrice(),
+				(float)$this->getTaxRate()
+			);
 			$this->setPriceExclusive($exclusivePrice);
 		}
 	}
@@ -234,7 +238,10 @@ class ProductRow extends EO_ProductRow
 	{
 		if (is_null($this->getPriceBrutto()))
 		{
-			$priceBrutto = Accounting::calculatePriceWithTax((float)$this->getPriceNetto(), (float)$this->getTaxRate());
+			$priceBrutto = Container::getInstance()->getAccounting()->calculatePriceWithTax(
+				(float)$this->getPriceNetto(),
+				(float)$this->getTaxRate()
+			);
 			$this->setPriceBrutto($priceBrutto);
 		}
 	}

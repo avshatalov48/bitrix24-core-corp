@@ -1,6 +1,8 @@
 <?php
 
 use \Bitrix\Location\Service;
+use Bitrix\Main\Context;
+use Bitrix\Main\IO\File;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -34,6 +36,8 @@ return [
 		$sourceParams = [];
 		$sourceLanguageId = LANGUAGE_ID;
 
+		$autocompleteReplacements = [];
+
 		if($source = Service\SourceService::getInstance()->getSource())
 		{
 			if(!Service\AddressService::getInstance()->isLimitReached())
@@ -41,6 +45,7 @@ return [
 				$sourceCode = $source->getCode();
 				$sourceParams = $source->getJSParams();
 				$sourceLanguageId = $source->convertLang(LANGUAGE_ID);
+				$sourceParams['autocompleteReplacements'] = $source->getAutocompleteReplacements(LANGUAGE_ID);
 			}
 		}
 

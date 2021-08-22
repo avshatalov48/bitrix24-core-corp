@@ -80,6 +80,10 @@ export const ContentComponent = {
 			{
 				articleCode = "limit_why_pay_tariff";
 			}
+			else if (type === "licenseDesc")
+			{
+				articleCode = `limit_why_pay_tariff__${this.license.type}`;
+			}
 
 			BX.UI.InfoHelper.show(articleCode);
 			this.sendAnalytics(articleCode);
@@ -101,37 +105,30 @@ export const ContentComponent = {
 		{
 			if (this.partner.isPartnerOrder)
 			{
-				const params = {id: this.partner.orderPartnerJs.id, sec: this.partner.orderPartnerJs.sec};
+				const formLang = this.partner.formLang;
 
-				BX.PopupWindowManager.create("B24PartnerOrderForm", null, {
-					autoHide: true,
-					zIndex: 0,
-					offsetLeft: 0,
-					offsetTop: 0,
-					overlay: true,
-					height: Math.min(document.documentElement.clientHeight - 100, 740),
-					width: 560,
-					draggable: {restrict:true},
-					closeByEsc: true,
-					contentColor: "white",
-					contentNoPaddings: true,
-					content:
-						'<script data-b24-form="inline/'+params.id+'/'+params.sec+'" data-skip-moving="true">'+
-						'(function(w,d,u){'+
-						'var s=d.createElement("script");s.async=true;s.src=u+"?"+(Date.now()/180000|0);'+
-						'var h=d.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);'+
-						'})(window,document,"https://cp.bitrix.ru/upload/crm/form/loader_${params.id}_${params.sec}.js");'+
-						'</script>',
-					events: {
-						onPopupFirstShow: function()
-						{
-							(function(w,d,u){
-								var s=d.createElement('script');s.async=true;s.src=u+'?'+(Date.now()/180000|0);
-								var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-							})(window,document,'https://cp.bitrix.ru/upload/crm/form/loader_'+params.id+'_'+params.sec+'.js')
-						}
+				BX.UI.Feedback.Form.open(
+					{
+						id: 'intranet-license-partner',
+						portalUri: this.partner.formPortalUri,
+						forms: [
+							{zones: ['en', 'eu', 'in', 'uk'], id: 1194, lang: formLang, sec: '6nivh3'},
+							{zones: ['de'], id: 1195, lang: formLang, sec: 'q1rq2q'},
+							{zones: ['la', 'co', 'mx'], id: 1196, lang: formLang, sec: 'dkdhid'},
+							{zones: ['com.br'], id: 1197, lang: formLang, sec: 'nvobax'},
+							{zones: ['pl'], id: 1198, lang: formLang, sec: 'h1013r'},
+							{zones: ['it'], id: 1199, lang: formLang, sec: 'xsrbsh'},
+							{zones: ['fr'], id: 1200, lang: formLang, sec: '3oupk4'},
+							{zones: ['tr'], id: 1202, lang: formLang, sec: 'k3bnjz'},
+							{zones: ['vn'], id: 1201, lang: formLang, sec: '9dxb9d'},
+							{zones: ['ua'], id: 1204, lang: formLang, sec: '277p0u'},
+							{zones: ['by'], id: 1205, lang: formLang, sec: '31inm5'},
+							{zones: ['kz'], id: 1203, lang: formLang, sec: '6nkdb1'},
+							{zones: ['ru'], id: 1192, lang: formLang, sec: 'b5mzdk'},
+						],
+						defaultForm: {id: 1194, lang: 'en', sec: '6nivh3'}
 					}
-				}).show();
+				);
 			}
 			else
 			{
@@ -184,9 +181,9 @@ export const ContentComponent = {
 							<a 
 								v-else
 								key="licenseDesc"
-								:href="license.myPath"
 								class="license-widget-item-link-text"
 								target="_blank"
+								@click="showInfoHelper('licenseDesc')"
 							> 
 								{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }} 
 							</a>

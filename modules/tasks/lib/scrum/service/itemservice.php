@@ -26,6 +26,8 @@ class ItemService implements Errorable
 	const ERROR_COULD_NOT_READ_ITEM_INFO = 'TASKS_IS_11';
 	const ERROR_COULD_NOT_UPDATE_ITEMS_ENTITY = 'TASKS_IS_12';
 	const ERROR_COULD_NOT_READ_ALL_ITEMS = 'TASKS_IS_13';
+	const ERROR_COULD_NOT_READ_ITEM_BY_TYPE_ID = 'TASKS_IS_14';
+	const ERROR_COULD_NOT_CLEAN_ITEMS_TYPE_ID = 'TASKS_IS_15';
 
 	private $errorCollection;
 
@@ -447,6 +449,55 @@ class ItemService implements Errorable
 		return $itemIds;
 	}
 
+	public function getItemIdsByTypeId(int $typeId): array
+	{
+		$itemIds = [];
+
+		try
+		{
+			$queryObject = ItemTable::getList([
+				'select' => ['ID'],
+				'filter' => ['TYPE_ID' => $typeId],
+				'order' => ['ID' => 'DESC'],
+			]);
+			while ($itemData = $queryObject->fetch())
+			{
+				$itemIds[] = $itemData['ID'];
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ_ITEM_BY_TYPE_ID
+				)
+			);
+		}
+
+		return $itemIds;
+	}
+
+	public function cleanTypeIdToItems(array $itemIds): void
+	{
+		try
+		{
+			if ($itemIds)
+			{
+				ItemTable::updateMulti($itemIds, ['TYPE_ID' => null]);
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CLEAN_ITEMS_TYPE_ID
+				)
+			);
+		}
+	}
+
 	public function moveItemsToEntity(array $itemIds, int $entityId, PushService $pushService = null): void
 	{
 		try
@@ -456,7 +507,7 @@ class ItemService implements Errorable
 				$item = ItemTable::createItemObject();
 				$item->setId($itemId);
 				$item->setEntityId($entityId);
-				$item->setSort(0);
+
 				$this->changeItem($item, $pushService);
 			}
 		}
@@ -766,11 +817,7 @@ class ItemService implements Errorable
 			}
 
 			$itemObject = ItemTable::createItemObject($item);
-			if ($item['STORY_POINTS'] <> '')
-			{
-				//todo types storypoints
-				$entity->setStoryPoints((float) $entity->getStoryPoints() + (float) $item['STORY_POINTS']);
-			}
+
 			$tree[] = $itemObject;
 		}
 

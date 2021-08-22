@@ -5,6 +5,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 
+/**
+ * Class IvrActionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_IvrAction_Query query()
+ * @method static EO_IvrAction_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_IvrAction_Result getById($id)
+ * @method static EO_IvrAction_Result getList(array $parameters = array())
+ * @method static EO_IvrAction_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_IvrAction createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_IvrAction_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_IvrAction wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_IvrAction_Collection wakeUpCollection($rows)
+ */
 class IvrActionTable extends Entity\DataManager
 {
 	/**

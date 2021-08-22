@@ -41,6 +41,13 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		$checklist = $this->getModelFromParams($params);
+		if (
+			$checklist->getEntityId() > 0
+			&& $checklist->getEntityId() !== $task->getId()
+		)
+		{
+			return false;
+		}
 
 		if ($checklist->getOwnerId() === $this->user->getUserId())
 		{

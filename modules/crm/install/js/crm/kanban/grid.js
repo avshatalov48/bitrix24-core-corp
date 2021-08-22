@@ -286,6 +286,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				function(event){
 					if (
 						this.itemMoving
+						&& this.itemMoving.item.id === event.data.item.id
 						&& this.items[this.itemMoving.item.id] !== undefined
 						&& this.itemMoving.item.columnId === this.items[this.itemMoving.item.id].columnId
 					)
@@ -615,6 +616,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		this.data.params['total'] = column.getTotal();
 		this.data.params['itemsCount'] = column.getItemsCount();
 
+		column.loadingInProgress = true;
 		this.ajax({
 				action: "page",
 				page: column.getPagination().getPage() + 1,
@@ -1077,11 +1079,15 @@ BX.CRM.Kanban.Grid.prototype = {
 		var gridData = this.getData();
 		var isDropZone = targetColumn instanceof BX.Kanban.DropZone;
 
-		// first checking if targetColumn require some fields
-		if (
+		var isItemDataHasRequiredColumn = (
 			itemData.required
 			&& itemData.required[columnId]
 			&& itemData.required[columnId].length > 0
+		);
+
+		// first checking if targetColumn require some fields
+		if (
+			isItemDataHasRequiredColumn
 			&& this.itemMoving.oldColumn.getId() !== targetColumn.getId()
 			&& !item.isChangedInPullRequest()
 		)
@@ -1112,9 +1118,12 @@ BX.CRM.Kanban.Grid.prototype = {
 				{
 					var key = itemData.required[columnId][i];
 					if (
-						!(typeof item.rawData[key] === 'undefined'
-						|| item.rawData[key] === null
-						|| item.rawData[key] === '')
+						!(
+							typeof item.rawData[key] === 'undefined'
+							|| item.rawData[key] === null
+							|| item.rawData[key] === ''
+							|| (Array.isArray(item.rawData[key]) && !item.rawData[key].length)
+						)
 					)
 					{
 						requiredFields.splice(i, 1);

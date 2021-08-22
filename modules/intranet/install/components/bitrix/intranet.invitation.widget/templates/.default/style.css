@@ -1,47 +1,11 @@
-.license-widget--invite .license-widget-block .license-widget-item {
+.license-widget-block .license-widget-item,
+.license-widget-block:last-child,
+.license-widget-item:last-child {
 	margin-bottom: 0;
 }
 
-.license-widget-item--wide, .license-widget-item--main {
-	padding: 7px 14px 5px 12px;
-	box-sizing: border-box;
-}
-
-.license-widget-item--main {
-	margin-bottom: 12px;
-	min-height: 66px;
-	background: #fff;
-}
-
-.license-widget-item-name a {
-	border-bottom: 1px dashed rgba(140, 147, 156, .5);
-	transition: border-color .2s linear;
-	color: #333;
-	padding-bottom: 2px;
-	display: inline-block;
-}
-
-.license-widget-item-name:hover a, .license-widget-item-name:hover a:hover {
-	border-color: rgba(140, 147, 156, 1);
-	color: #333;
-}
-
-.license-widget-item-link {
-	line-height: 16px;
-	margin-top: -3px;
-	cursor: pointer;
-}
-
-.license-widget-item-link-text {
-	color: #8c939c;
-	font-size: 11px;
-	line-height: 11px;
-	border-bottom: 1px dashed rgba(140, 147, 156, .5);
-	transition: all .2s linear;
-}
-
-.license-widget-item-link-text:hover {
-	color: #525c69;
+.license-widget-block {
+	margin-bottom: 24px;
 }
 
 .license-widget-item-info--exp .license-widget-item-info-text:before {
@@ -49,9 +13,35 @@
 }
 
 .license-widget-item-icon--invite {
-	margin-top: 8px;
+	height: 36px;
+	width: 36px;
+	margin-right: 12px;
+	margin-top: 0;
 	background-color: rgba(255, 255, 255, .2);
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2225%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.89%202.23c.333-2.94%205.354-2.142%204.759-1.183%201.467-.272%201.133%203.066%201.133%203.066l-.318.863.105.077c.467.389.084.853.064%201.383-.03.832-.54.66-.54.66-.03%201.373-.708%201.554-.708%201.554-.128.863-.048.716-.048.716l.603.073v.196c.005.13.021.26.048.388.71.316.862.502%201.567.81%201.362.597%202.843%201.373%203.107%202.417.155.612.487%202.286.735%203.565-2.365%201.008-5.3%201.606-8.479%201.606-2.554%200-4.95-.386-7.022-1.061.318-1.738%201.083-4.619%201.083-4.619%200-.672.877-1.438%202.608-1.885a5.88%205.88%200%20001.651-.751c.11-.064.095-.65.095-.65l.557-.086.001-.033c.008-.149.047-.718.047-.718-.667-.224-.598-1.544-.598-1.544-.424.236-.7-.808-.7-.808-.46-1.335.138-1.367.237-1.364h.013a9.123%209.123%200%20010-2.672zM5.589%203.47l.2.024c.396.06.775.211%201.106.44.261.212.46.49.572.807.156.634.272%201.277.346%201.925.028.357.086.71.171%201.058l.103.27c.073.177.153.351.24.522l.136.252-.15-.118a2.783%202.783%200%2001-.398-.414s.13.41.151.466c.048.07.088.146.12.225-.028%200-.306.13-.306.13l-1.08.337.015.513.12.055c.155.081.292.194.403.33.052.114.116.223.19.323-.984.4-1.56.985-1.584%201.64-.016.116-.613%202.26-.647%202.743H3.728a34.774%2034.774%200%2001-2.949-.535c.052-.735.17-1.996.36-2.265.27-.384%201.229-.933%201.59-1.134.239-.138.49-.254.75-.345.134-.117.238-.263.303-.428.138-.172.318-.305.523-.386l.015-.513-1.08-.337-.022-.01a2.846%202.846%200%2000-.284-.12c.043-.09.093-.178.149-.261.02-.055.122-.428.122-.428-.118.151-.252.29-.399.414l-.15.117.174-.347c.111-.235.21-.475.297-.72.086-.34.146-.686.18-1.034.074-.649.19-1.292.346-1.926a1.81%201.81%200%2001.572-.805%202.65%202.65%200%20011.309-.464h.055zM22.536%204.56v2.183h2.211v1.46L22.536%208.2v2.184h-1.46V8.2h-2.211V6.742h2.21l.001-2.183h1.46z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--own {
+	width: 36px;
+	height: 36px;
+	margin-top: 0;
+	margin-right: 10px;
+	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2236%22%3E%3Cg%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M18%200c9.941%200%2018%208.059%2018%2018s-8.059%2018-18%2018S0%2027.941%200%2018%208.059%200%2018%200z%22%20opacity%3D%22.11%22%2F%3E%3Cpath%20d%3D%22M15.904%209.907c-.648-.98%204.727-1.798%205.24%201.092l.02.133a8.88%208.88%200%20010%202.772h.047c.161.007.664.122.274%201.285l-.091.268c-.101.285-.366.889-.727.7l.002.135c-.003.35-.068%201.28-.663%201.467l.053.778.615.088v.14c.002.183.02.488.105.534a6.71%206.71%200%20001.825.778c1.848.448%202.817%201.206%202.88%201.885l.002.07.514%202.497c-2.213.886-4.781%201.416-7.528%201.471h-.96c-2.74-.055-5.303-.583-7.512-1.465l.064-.422c.09-.57.196-1.15.304-1.554.29-1.083%201.927-1.888%203.433-2.506.779-.32.948-.512%201.732-.84.033-.15.051-.302.054-.454l-.001-.153.667-.075.008.009c.018.009.05-.043-.062-.752l-.038-.013c-.155-.061-.716-.369-.746-1.597l-.042.01c-.124.02-.488.025-.548-.591l-.007-.103c-.023-.559-.463-1.048.103-1.457l.084-.055-.352-.896-.018-.224c-.05-.761-.1-3.191%201.27-2.955z%22%20opacity%3D%22.247%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item-icon--access {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2212.5%22%20stroke%3D%22%23525C69%22%20opacity%3D%22.1%22%2F%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M9.44%2017.524h7.102a.7.7%200%2000.647-.432l2.422-5.849a.5.5%200%2000-.686-.638l-2.547%201.28a.5.5%200%2001-.668-.217l-2.276-4.372a.5.5%200%2000-.887%200l-2.268%204.371a.5.5%200%2001-.669.216l-2.537-1.277a.5.5%200%2000-.688.636l2.407%205.848a.7.7%200%2000.647.434z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+	margin-top: 2px;
+}
+
+.license-widget-item-icon--safe {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6%20.73c2.201%200%203.997%201.745%204.098%203.934l.005.194v1.428h.325a.92.92%200%2001.914.813l.006.107v6.458a.92.92%200%2001-.813.914l-.107.006H1.572a.92.92%200%2001-.914-.813l-.006-.107V7.206a.92.92%200%2001.813-.914l.107-.006h.325V4.858C1.897%202.578%203.734.731%206%20.731zm-.108%206.807c-.264%200-.501.026-.712.08a2.375%202.375%200%2000-.586.233c-.18.101-.402.27-.665.506l.759.888c.208-.18.394-.315.558-.407a.993.993%200%2001.488-.139c.157%200%20.278.039.364.116a.4.4%200%2001.13.315c0%20.107-.022.21-.065.308-.043.098-.12.215-.23.352l-.175.203c-.126.141-.3.328-.524.561l-1.25%201.264v.91h3.714v-1.141H5.762v-.035l.458-.414c.314-.287.532-.495.654-.622.173-.182.313-.355.418-.52.105-.164.182-.332.233-.502.05-.17.075-.356.075-.557%200-.268-.072-.51-.215-.726a1.388%201.388%200%2000-.606-.498%202.147%202.147%200%2000-.887-.175zM6%202.157A2.691%202.691%200%20003.32%204.7l-.004.158v1.428h5.368V4.858c0-1.491-1.202-2.7-2.684-2.7z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+	background-color: #e8e9ec;
+}
+
+.license-widget-item--active .license-widget-item-icon--safe {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6%20.73c2.201%200%203.997%201.745%204.098%203.934l.005.194v1.428h.325a.92.92%200%2001.914.813l.006.107v6.458a.92.92%200%2001-.813.914l-.107.006H1.572a.92.92%200%2001-.914-.813l-.006-.107V7.206a.92.92%200%2001.813-.914l.107-.006h.325V4.858C1.897%202.578%203.734.731%206%20.731zm-.108%206.807c-.264%200-.501.026-.712.08a2.375%202.375%200%2000-.586.233c-.18.101-.402.27-.665.506l.759.888c.208-.18.394-.315.558-.407a.993.993%200%2001.488-.139c.157%200%20.278.039.364.116a.4.4%200%2001.13.315c0%20.107-.022.21-.065.308-.043.098-.12.215-.23.352l-.175.203c-.126.141-.3.328-.524.561l-1.25%201.264v.91h3.714v-1.141H5.762v-.035l.458-.414c.314-.287.532-.495.654-.622.173-.182.313-.355.418-.52.105-.164.182-.332.233-.502.05-.17.075-.356.075-.557%200-.268-.072-.51-.215-.726a1.388%201.388%200%2000-.606-.498%202.147%202.147%200%2000-.887-.175zM6%202.157A2.691%202.691%200%20003.32%204.7l-.004.158v1.428h5.368V4.858c0-1.491-1.202-2.7-2.684-2.7z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+	background-color: #207EDE;
 }
 
 .license-widget-item-name .ui-hint {
@@ -97,16 +87,6 @@
 	color: #333;
 }
 
-.license-widget-item--expired, .license-widget-item--expired:hover {
-	background: #fa726e;
-}
-
-.license-widget-item--expired .license-widget-item-name,
-.license-widget-item--expired .license-widget-item-text {
-	color: #fff;
-	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
-}
-
 .license-widget-item--expired .license-widget-item-link-text {
 	color: #fff;
 	opacity: .7;
@@ -146,9 +126,52 @@
 	content: none;
 }
 
-.license-widget--invite .license-widget-item--main {
+.license-widget-invite {
+	margin-bottom: 12px;
+	border-radius: 12px;
+	min-height: 66px;
+	box-sizing: border-box;
+	width: 100%;
+	cursor: default;
+	overflow: visible;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.09);
+	transform: translate3d(0, 0, 0);
+	will-change: transform;
+	transition: all 0.15s linear;
+}
+
+.license-widget-invite-main {
 	background: #14bfd5;
-	padding-top: 9px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 9px 14px 9px 12px;
+	border-radius: 12px;
+	min-height: 66px;
+	box-sizing: border-box;
+}
+
+.license-widget-invite-main .license-widget-inner {
+	align-items: center;
+}
+
+.license-widget-invite-main .license-widget-item-name {
+	color: #fff;
+	font-size: 15px;
+	line-height: 17px;
+	word-break: break-word;
+	max-width: 155px;
+}
+
+.license-widget-invite-main .license-widget-item-content {
+	margin-right: 5px;
+	padding-top: 0;
+}
+
+.license-widget-invite-main .license-widget-item-btn {
+	height: 26px;
+	font-size: 12px;
+	margin-top: 0;
 }
 
 .license-widget-item-btn.license-widget-item-btn--invite {
@@ -157,14 +180,15 @@
 	line-height: 26px;
 }
 
-.license-widget-item--main:hover .license-widget-item-btn--invite {
+.license-widget-invite-main:hover .license-widget-item-btn--invite {
 	background: #fff;
 }
 
-.license-widget-item--main:hover .license-widget-item-btn--invite:hover {
+.license-widget-invite-main:hover .license-widget-item-btn--invite:hover {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .23);
 	background: #fff;
 	opacity: .9;
+	color: #525c69;
 }
 
 .license-widget-item-btn--invite:before {
@@ -177,27 +201,14 @@
 	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%228%22%3E%3Cpath%20fill%3D%22%2300A8BE%22%20fill-rule%3D%22evenodd%22%20d%3D%22M4.982.095v2.927h2.966V4.98H4.982v2.928H3.025V4.979H.06V3.022h2.965V.095h1.957z%22%2F%3E%3C%2Fsvg%3E) no-repeat center;
 }
 
-.license-widget--invite .license-widget-item--main .license-widget-item-name,
-.license-widget--invite .license-widget-item--main .license-widget-item-link-text {
+.license-widget-invite-main .license-widget-item-link-text {
 	color: #fff;
-}
-
-.license-widget--invite .license-widget-item--main .license-widget-item-name {
-	font-size: 15px;
-	line-height: 17px;
-}
-
-.license-widget--invite .license-widget-item--main .license-widget-item-link-text {
 	opacity: .8;
 	border-color: rgba(255, 255, 255, .7);
 }
 
-.license-widget--invite  .license-widget-item--main .license-widget-item-link-text:hover {
+.license-widget-invite-main .license-widget-item-link-text:hover {
 	opacity: 1;
-}
-
-.license-widget--invite .license-widget-item-link {
-	margin-top: 0;
 }
 
 .license-widget-item-logo {
@@ -214,8 +225,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding-top: 21px;
-	padding-bottom: 11px;
+	padding-top: 22px;
+	padding-bottom: 7px;
 	width: 37%;
 }
 
@@ -241,12 +252,13 @@
 
 .license-widget-item--emp .license-widget-inner {
 	flex-wrap: wrap;
-	height: auto;
 }
 
 .license-widget-item--emp .license-widget-item-content {
-	padding-bottom: 0;
 	padding-top: 10px;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
 }
 
 .license-widget-item--emp .license-widget-item-name {
@@ -254,10 +266,14 @@
 	color: #333;
 }
 
+.license-widget-employees {
+	margin-top: 3px;
+}
+
 .license-widget-item-progress {
 	width: 43px;
 	height: 43px;
-	margin: 21px 9px 5px 0;
+	margin: 7px 9px 5px 0;
 	flex-shrink: 0;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -302,10 +318,22 @@
 	margin-top: auto;
 }
 
-.license-widget-item-detail .license-widget-item-link-text:hover,
-.license-widget-item-detail .license-widget-item-link-text {
+.license-widget-item-detail span.license-widget-item-link-text:hover,
+.license-widget-item-detail span.license-widget-item-link-text {
 	color: #8c939c;
 	border-bottom: none;
+}
+
+.license-widget-item-detail span.license-widget-item-link-text:hover,
+.license-widget-item-detail span.license-widget-item-link-text {
+	color: #8c939c;
+	border-bottom: none;
+}
+
+.license-widget-item--emp-alert span.license-widget-item-link-text,
+.license-widget-item--emp-alert span.license-widget-item-link-text:hover {
+	color: #fa726e;
+	opacity: 1;
 }
 
 .license-widget-item-menu {
@@ -346,6 +374,358 @@
 	top: 3px;
 }
 
+.license-widget-item-ext-users {
+	font-size: 12px;
+	line-height: 14px;
+	color: #525c69;
+	opacity: .5;
+	margin-top: 4px;
+}
+
+.license-widget-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.license-widget-head-title {
+	color: #525c69;
+	font: 13px/18px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.license-widget-item--own {
+	width: 59%;
+	padding: 8px 11px 3px 14px;
+	min-height: 114px;
+}
+
+.license-widget-item--own .license-widget-item-name {
+	color: #525C69;
+	font-size: 12px;
+	line-height: 16px;
+	margin-bottom: 3px;
+}
+
+.license-widget-item--own .license-widget-inner {
+	height: calc(100% - 28px);
+	margin: 5px 0 3px;
+}
+
+.license-widget-item--own .license-widget-item-content {
+	padding-top: 0;
+}
+
+.license-widget-item--own .license-widget-item-btn {
+	margin-top: auto;
+}
+
+.license-widget-item--index {
+	width: 37%;
+	background: #fff;
+}
+
+.license-widget-item--index .license-widget-head-title {
+	color: #333;
+	line-height: 14px;
+}
+
+.license-widget-index-icon {
+	width: 34px;
+	height: 34px;
+	margin-right: 8px;
+	border: 2px solid #E2E4E6;
+	border-radius: 50%;
+	box-sizing: border-box;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.license-widget-index-icon--normal {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2213%22%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22%2F%3E%3C%2Fmask%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%3Cg%20opacity%3D%22.5%22%3E%3Cg%20opacity%3D%22.1%22%20fill%3D%22%23525C69%22%20mask%3D%22url%28%23b%29%22%3E%3Cpath%20d%3D%22M2-3h1v35H2zM7-3h1v35H7zM12-3h1v35h-1zM17-3h1v35h-1zM22-3h1v35h-1z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Cpath%20stroke%3D%22%2355D0E0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M3.028%2014.667h3.659L9.665%203.589l3.419%2018%203.542-11.723%201.455%204.801h4.947%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-icon--warning {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2213%22%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22%2F%3E%3C%2Fmask%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%3Cg%20opacity%3D%22.5%22%3E%3Cg%20opacity%3D%22.1%22%20fill%3D%22%23525C69%22%20mask%3D%22url%28%23b%29%22%3E%3Cpath%20d%3D%22M2-3h1v35H2zM7-3h1v35H7zM12-3h1v35h-1zM17-3h1v35h-1zM22-3h1v35h-1z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Cpath%20stroke%3D%22%23FFA900%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M3%2014.235h3.659l2.978-8.42%203.419%2013.034%203.542-7.814%201.456%203.2H23%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-icon--alert {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2213%22%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22%2F%3E%3C%2Fmask%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%3Cg%20opacity%3D%22.5%22%3E%3Cg%20opacity%3D%22.1%22%20fill%3D%22%23525C69%22%20mask%3D%22url%28%23b%29%22%3E%3Cpath%20d%3D%22M2-3h1v35H2zM7-3h1v35H7zM12-3h1v35h-1zM17-3h1v35h-1zM22-3h1v35h-1z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Cpath%20stroke%3D%22%23FA726E%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M3%2013.219h3.659l2.978-3.924%203.419%206.075%203.542-3.643%201.456%201.492H23%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-icon--rise {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2213%22%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22%2F%3E%3C%2Fmask%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%3Cg%20opacity%3D%22.5%22%3E%3Cg%20opacity%3D%22.1%22%20fill%3D%22%23525C69%22%20mask%3D%22url%28%23b%29%22%3E%3Cpath%20d%3D%22M-3.422%2023.128v-1h32.844v1zM-3.422%2018.128v-1h32.844v1zM-3.422%2013.128v-1h32.844v1zM-3.422%208.128v-1h32.844v1zM-3.422%203.128v-1h32.844v1z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Cpath%20fill%3D%22%2342D467%22%20d%3D%22M12.934%204.763L6.725%2010.16a.4.4%200%2000.005.608l1.035.873a.4.4%200%2000.52-.004l3.454-3.006v9.955c0%20.22.179.4.4.4h1.722a.4.4%200%2000.4-.4V8.63l3.453%203.006a.4.4%200%2000.52.004l1.036-.873a.4.4%200%2000.004-.608l-6.209-5.397a.1.1%200%2000-.13%200z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-icon--fall {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2226%22%20height%3D%2226%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2213%22%20cy%3D%2213%22%20r%3D%2213%22%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cmask%20id%3D%22b%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22%2F%3E%3C%2Fmask%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22%2F%3E%3Cg%20opacity%3D%22.5%22%3E%3Cg%20opacity%3D%22.1%22%20fill%3D%22%23525C69%22%20mask%3D%22url%28%23b%29%22%3E%3Cpath%20d%3D%22M-3.422%2023.128v-1h32.844v1zM-3.422%2018.128v-1h32.844v1zM-3.422%2013.128v-1h32.844v1zM-3.422%208.128v-1h32.844v1zM-3.422%203.128v-1h32.844v1z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M13.066%2019.223l6.209-5.397a.4.4%200%2000-.005-.608l-1.035-.873a.4.4%200%2000-.52.004l-3.454%203.006V5.4a.4.4%200%2000-.4-.4H12.14a.4.4%200%2000-.4.4v9.955l-3.454-3.006a.4.4%200%2000-.52-.004l-1.036.873a.4.4%200%2000-.004.608l6.209%205.397a.1.1%200%2000.131%200z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-value {
+	color: #333;
+	font: 15px/20px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.license-widget-index-dif {
+	color: #858c96;
+	position: relative;
+	font: 11px/12px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.license-widget-index-dif--rise:before,
+.license-widget-index-dif--fall:before {
+	content: '';
+	position: absolute;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 8px;
+	height: 8px;
+	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%228%22%3E%3Cpath%20fill%3D%22%2342D467%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.937.05L.392%202.912a.4.4%200%2000.004.627l.352.275a.4.4%200%2000.498-.004l1.993-1.61V7.6c0%20.22.18.4.4.4h.722a.4.4%200%2000.4-.4V2.199l1.993%201.61a.4.4%200%2000.498.004l.352-.275a.4.4%200%2000.004-.627L4.063.051a.1.1%200%2000-.126%200z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-index-dif--fall:before {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%228%22%20height%3D%228%22%3E%3Cpath%20fill%3D%22%23FF5752%22%20fill-rule%3D%22evenodd%22%20d%3D%22M4.063%207.95l3.545-2.861a.4.4%200%2000-.004-.627l-.352-.275a.4.4%200%2000-.498.004L4.76%205.801V.4a.4.4%200%2000-.4-.4h-.722a.4.4%200%2000-.4.4v5.401l-1.993-1.61a.4.4%200%2000-.498-.004l-.352.275a.4.4%200%2000-.004.627l3.545%202.86a.1.1%200%2000.126%200z%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--index {
+	padding: 9px 8px 10px 12px;
+}
+
+.license-widget-index-block {
+	display: flex;
+	margin: 9px 0 7px;
+}
+
+.license-widget-item--index .license-widget-item-link {
+	text-align: center;
+}
+
+.license-widget-item--access .license-widget-inner {
+	align-items: center;
+}
+
+.license-widget-item .license-widget-label {
+	background: #2fc6f6;
+	top: -4px;
+	right: 7px;
+	padding: 0 9px 1px 8px;
+}
+
+.license-widget-item--safe {
+	padding-top: 6px;
+	min-height: 66px;
+}
+
+.license-widget-mode-title {
+	color: #04ACC2;
+	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.license-widget-mode-head {
+	border-bottom: 1px solid #f6f6f7;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 3px 0 5px;
+	margin-bottom: 5px;
+}
+
+.license-widget-mode-text {
+	color: #A8ADB4;
+	font-size: 10px;
+	line-height: 14px;
+}
+
+.license-widget-mode-value {
+	color: #525C69;
+	font: 12px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.license-widget-mode {
+	background: #fff;
+	border-bottom-right-radius: 12px;
+	border-bottom-left-radius: 12px;
+	padding: 0 12px 12px;
+}
+
+.license-widget-invite--mode .license-widget-invite-main {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.license-widget-mode-detail {
+	display: flex;
+	align-items: center;
+}
+
+.license-widget-mode-users {
+	margin-right: 22px;
+	display: flex;
+	align-items: center;
+	margin-left: -2px;
+	margin-top: 4px;
+	z-index: 1;
+}
+
+.license-widget-mode-user {
+	position: relative;
+	display: inline-block;
+	margin-right: -7.5px;
+	width: 28px;
+	height: 28px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	transition: opacity .5s, width .5s;
+	overflow: hidden;
+	box-sizing: border-box;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+	background-color: #d9f5fd;
+	color: #0CAFE3;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font: 12px/24px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-align: center;
+}
+
+.license-widget-mode-user:first-child {
+	z-index: 1;
+}
+
+.license-widget-mode-user--eye {
+	background-size: auto;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2212%22%3E%3Cpath%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22evenodd%22%20d%3D%22M15.831%206.277c-.628.897-3.842%205.202-7.712%205.202-3.871%200-7.085-4.305-7.713-5.202a.278.278%200%20010-.325C1.034%205.056%204.248.75%208.12.75c3.87%200%207.084%204.306%207.712%205.202.07.1.07.225%200%20.325zm-4.976-.162a2.736%202.736%200%2011-5.473%200%202.736%202.736%200%20015.473%200z%22%20opacity%3D%22.88%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-mode .license-widget-item-link-text {
+	line-height: 16px;
+}
+
+.license-widget-item--alert {
+	background: #fa726e;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	margin-bottom: 12px;
+	min-height: 66px;
+	padding: 2px 14px 3px 14px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.license-widget-item--alert:before {
+	content: '';
+	position: absolute;
+	top: -16px;
+	right: 90px;
+	border: 8px solid transparent;
+	border-bottom-color: #fa726e;
+}
+
+.license-widget-item--alert:hover {
+	background: #fa726e;
+}
+
+.license-widget-item--alert .license-widget-item-name {
+	font-size: 15px;
+	line-height: 22px;
+	color: #fff;
+	margin-bottom: 2px;
+}
+
+.license-widget-item--alert .license-widget-item-info-text {
+	color: #fff;
+	opacity: .7;
+	vertical-align: top;
+	padding-right: 0;
+	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+}
+
+.license-widget-item--alert .license-widget-item-btn {
+	height: 26px;
+	font-size: 12px;
+	line-height: 26px;
+	margin-top: 0;
+	border: none;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .15);
+}
+
+.license-widget-hidden {
+	height: 0;
+	opacity: 0;
+	overflow: hidden;
+	transition: all .2s linear;
+	position: relative;
+	top: -24px;
+}
+
+.license-widget-hidden-inner {
+	padding-top: 12px;
+}
+
+.license-widget-block + .license-widget-hidden {
+	margin-top: 24px;
+}
+
+.license-widget-item--counter {
+	padding: 0;
+	width: 100%;
+}
+
+.license-widget-item--counter .intranet-ustat-online-box {
+	width: 100%;
+	margin-bottom: 0;
+	border-radius: 12px;
+	height: 88px;
+	padding: 20px 13px 15px 16px;
+}
+
+.license-widget-item--counter .ui-graph-circle-number {
+	font-size: 24px;
+	line-height: 24px;
+}
+
+.license-widget-item--counter .ui-graph-circle-wrapper {
+	width: 50px;
+	height: 50px;
+}
+
+.license-widget-item--counter .intranet-ustat-online-badge {
+	top: 12px;
+}
+
+.license-widget-item--counter .intranet-ustat-online-hint-item {
+	width: 32px;
+}
+
+.license-widget-item--counter .intranet-ustat-online-text {
+	font-size: 11px;
+}
+
+.license-widget-item--counter .intranet-ustat-online-hint-icon {
+	vertical-align: middle;
+	margin-top: 2px;
+}
+
+.license-widget-item--counter .intranet-ustat-online-info-item {
+	margin-right: 11px;
+}
+
+.license-widget-item--counter-inactive .intranet-ustat-online-badge {
+	background: #2fc6f6;
+}
+
+.license-widget-item--counter-inactive .ui-graph-circle-wrapper {
+	box-shadow: 0 0 0 3px #e0e2e4;
+	width: 50px;
+	height: 50px;
+}
+
+.license-widget-item--counter-inactive .ui-icon-common-user > i {
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%3E%3Cg%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M14%200c7.732%200%2014%206.268%2014%2014s-6.268%2014-14%2014S0%2021.732%200%2014%206.268%200%2014%200z%22%20opacity%3D%22.09%22%2F%3E%3Cpath%20d%3D%22M12.13%206.826c-.562-.893%204.108-1.636%204.554.993l.017.121a8.458%208.458%200%20010%202.522h.04c.14.007.578.111.239%201.17l-.08.244c-.087.259-.317.808-.631.637l.002.122c-.003.32-.06%201.164-.576%201.335l.045.708.535.08v.127c.002.167.017.445.091.486a5.695%205.695%200%20001.586.709c1.606.407%202.448%201.097%202.502%201.715l.003.063.446%202.273c-1.923.806-4.154%201.288-6.54%201.338h-.835c-2.381-.05-4.608-.53-6.528-1.333l.056-.384c.078-.518.17-1.047.264-1.414.253-.986%201.674-1.718%202.983-2.28.677-.292.823-.467%201.505-.765.029-.136.044-.274.047-.413l-.001-.139.58-.068.007.008c.015.008.043-.04-.054-.684l-.034-.012c-.134-.056-.621-.336-.647-1.453l-.037.008c-.108.019-.424.023-.476-.537l-.007-.094c-.02-.508-.402-.953.09-1.325l.073-.05-.306-.816-.016-.204c-.042-.693-.086-2.903%201.104-2.688z%22%20opacity%3D%22.247%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
 
 
 

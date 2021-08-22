@@ -70,6 +70,7 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 		$entityTypeID = $this->getEntityTypeID();
 		foreach($map as $matchHash => &$entry)
 		{
+			$isValidEntry = false;
 			$primaryQty = isset($entry['PRIMARY']) ? count($entry['PRIMARY']) : 0;
 			$secondaryQty = isset($entry['SECONDARY']) ? count($entry['SECONDARY']) : 0;
 
@@ -85,6 +86,7 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 						$dup->addEntity(new DuplicateEntity($entityTypeID, $entityID));
 					}
 					$result->addItem($matchHash, $dup);
+					$isValidEntry = true;
 				}
 			}
 
@@ -115,6 +117,7 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 						}
 
 						$result->addItem($secondaryEntityMatchHash, $dup);
+						$isValidEntry = true;
 						foreach($entry['PRIMARY'] as $primaryEntityID)
 						{
 							$matches = $this->getEntityMatchesByHash($entityTypeID, $primaryEntityID, $matchHash);
@@ -127,6 +130,10 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 						}
 					}
 				}
+			}
+			if (!$isValidEntry)
+			{
+				$result->addInvalidItem((string)$matchHash);
 			}
 		}
 		unset($entry);

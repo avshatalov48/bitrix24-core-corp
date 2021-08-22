@@ -6,6 +6,19 @@ use Bitrix\Main\Entity\DataManager;
 
 /**
  * Class MemberTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Member_Query query()
+ * @method static EO_Member_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Member_Result getById($id)
+ * @method static EO_Member_Result getList(array $parameters = array())
+ * @method static EO_Member_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\CheckList\EO_Member createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\CheckList\EO_Member_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\CheckList\EO_Member wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\CheckList\EO_Member_Collection wakeUpCollection($rows)
  */
 class MemberTable extends DataManager
 {

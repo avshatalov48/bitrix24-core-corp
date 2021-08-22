@@ -333,8 +333,9 @@ class UserPermissions
 	public function prepareItemPermissionAttributes(Item $item): array
 	{
 		// todo process multiple assigned
-		$attributes = ['U' . $item->getAssignedById()];
-		if($item->hasField(Item::FIELD_NAME_OPENED) && $item->getOpened())
+		$assignedById = $item->getAssignedById();
+		$attributes = ['U' . $assignedById];
+		if ($item->getOpened())
 		{
 			$attributes[] = static::ATTRIBUTES_OPENED;
 		}
@@ -357,7 +358,7 @@ class UserPermissions
 			}
 		}
 
-		$userAttributes = \CCrmPerms::BuildUserEntityAttr($this->userId);
+		$userAttributes = \CCrmPerms::BuildUserEntityAttr($assignedById);
 
 		return array_merge($attributes, $userAttributes['INTRANET']);
 	}

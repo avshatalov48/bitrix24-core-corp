@@ -34,6 +34,10 @@ if (!empty($arResult['PAYSYSTEM_HANDLER_CLASS_NAME']))
 			'TITLE' => Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_LINK_CONNECT'),
 			'HREF' => 'https://partner.robokassa.ru/Reg/Register?PromoCode=01Bitrix&culture=ru',
 		],
+		\Sale\Handlers\PaySystem\PlatonHandler::class => [
+			'TITLE' => Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_PLATON_LINK_CONNECT'),
+			'HREF' => 'https://devplaton.com.ua/invoices/1c_bitrix_form/',
+		]
 	];
 
 	$arResult['ADDITIONAL_LINK_FOR_DESCRIPTION'] = $helpdeskCodeMap[$className] ?? [];

@@ -27,9 +27,9 @@ export type SprintParams = {
 	dateEnd?: number,
 	weekendDaysTime?: number,
 	defaultSprintDuration: number,
-	totalStoryPoints?: string,
-	totalCompletedStoryPoints?: string,
-	totalUncompletedStoryPoints?: string,
+	storyPoints?: string,
+	completedStoryPoints?: string,
+	uncompletedStoryPoints?: string,
 	completedTasks?: number,
 	uncompletedTasks?: number,
 	status?: string,
@@ -64,9 +64,8 @@ export class Sprint extends Entity
 		this.setWeekendDaysTime(params.weekendDaysTime);
 		this.setDefaultSprintDuration(params.defaultSprintDuration);
 		this.setStatus(params.status);
-		this.setTotalStoryPoints(params.totalStoryPoints);
-		this.setTotalCompletedStoryPoints(params.totalCompletedStoryPoints);
-		this.setTotalUncompletedStoryPoints(params.totalUncompletedStoryPoints);
+		this.setCompletedStoryPoints(params.completedStoryPoints);
+		this.setUncompletedStoryPoints(params.uncompletedStoryPoints);
 		this.setCompletedTasks(params.completedTasks);
 		this.setUncompletedTasks(params.uncompletedTasks);
 		this.setItems(params.items);
@@ -156,14 +155,8 @@ export class Sprint extends Entity
 	setItem(newItem: Item)
 	{
 		super.setItem(newItem);
-		newItem.setDisableStatus(this.isDisabled());
-		this.updateStoryPoints();
-	}
 
-	removeItem(item: Item)
-	{
-		super.removeItem(item);
-		this.updateStoryPoints();
+		newItem.setDisableStatus(this.isDisabled());
 	}
 
 	setName(name)
@@ -241,42 +234,32 @@ export class Sprint extends Entity
 		return this.weekendDaysTime;
 	}
 
-	getStoryPoints(): StoryPoints
+	setCompletedStoryPoints(completedStoryPoints)
 	{
-		return this.totalStoryPoints;
+		this.completedStoryPoints = new StoryPoints();
+
+		this.completedStoryPoints.addPoints(completedStoryPoints);
+
+		this.updateStoryPointsNode();
 	}
 
-	setTotalStoryPoints(totalStoryPoints)
+	getCompletedStoryPoints(): StoryPoints
 	{
-		this.totalStoryPoints = new StoryPoints();
-		this.totalStoryPoints.addPoints(totalStoryPoints);
+		return this.completedStoryPoints;
 	}
 
-	getTotalStoryPoints(): StoryPoints
+	setUncompletedStoryPoints(uncompletedStoryPoints)
 	{
-		return this.totalStoryPoints;
+		this.uncompletedStoryPoints = new StoryPoints();
+
+		this.uncompletedStoryPoints.addPoints(uncompletedStoryPoints);
+
+		this.updateStoryPointsNode();
 	}
 
-	setTotalCompletedStoryPoints(totalCompletedStoryPoints)
+	getUncompletedStoryPoints(): StoryPoints
 	{
-		this.totalCompletedStoryPoints = new StoryPoints();
-		this.totalCompletedStoryPoints.addPoints(totalCompletedStoryPoints);
-	}
-
-	getTotalCompletedStoryPoints(): StoryPoints
-	{
-		return this.totalCompletedStoryPoints;
-	}
-
-	setTotalUncompletedStoryPoints(totalUncompletedStoryPoints)
-	{
-		this.totalUncompletedStoryPoints = new StoryPoints();
-		this.totalUncompletedStoryPoints.addPoints(totalUncompletedStoryPoints);
-	}
-
-	getTotalUncompletedStoryPoints(): StoryPoints
-	{
-		return this.totalUncompletedStoryPoints;
+		return this.uncompletedStoryPoints;
 	}
 
 	setItems(items)
@@ -298,19 +281,9 @@ export class Sprint extends Entity
 		this.info = (Type.isPlainObject(info) ? info : {sprintGoal: ''});
 	}
 
-	addNumberTasks(value: number)
+	setNumberTasks(numberTasks: number)
 	{
-		super.addNumberTasks(value);
-
-		if (this.storyPointsHeader)
-		{
-			this.storyPointsHeader.updateNumberTasks();
-		}
-	}
-
-	subtractNumberTasks(value: number)
-	{
-		super.subtractNumberTasks(value);
+		super.setNumberTasks(numberTasks);
 
 		if (this.storyPointsHeader)
 		{
@@ -427,9 +400,9 @@ export class Sprint extends Entity
 			this.setDateEnd(tmpSprint.getDateEnd());
 		}
 
-		this.setTotalStoryPoints(tmpSprint.getTotalStoryPoints().getPoints());
-		this.setTotalCompletedStoryPoints(tmpSprint.getTotalCompletedStoryPoints().getPoints());
-		this.setTotalUncompletedStoryPoints(tmpSprint.getTotalUncompletedStoryPoints().getPoints());
+		this.setStoryPoints(tmpSprint.getStoryPoints().getPoints());
+		this.setCompletedStoryPoints(tmpSprint.getCompletedStoryPoints().getPoints());
+		this.setUncompletedStoryPoints(tmpSprint.getUncompletedStoryPoints().getPoints());
 
 		if (tmpSprint.getStatus() !== this.getStatus())
 		{
@@ -469,9 +442,13 @@ export class Sprint extends Entity
 					<div class="tasks-scrum-sprint-items">
 						${this.listItems ? this.listItems.render() : ''}
 					</div>
+					<div class="tasks-scrum-entity-items-loader"></div>
 				</div>
 			</div>
 		`;
+
+		this.itemsLoaderNode = this.node.querySelector('.tasks-scrum-entity-items-loader');
+		this.bindItemsLoader(this.itemsLoaderNode);
 
 		return this.node;
 	}
@@ -504,127 +481,6 @@ export class Sprint extends Entity
 		}
 
 		super.onAfterAppend();
-	}
-
-	updateStoryPoints()
-	{
-		super.updateStoryPoints();
-
-		if (!this.isCompleted())
-		{
-			this.totalStoryPoints.clearPoints();
-			[...this.getItems().values()].map((item: Item) => {
-				if (!item.isSubTask())
-				{
-					this.totalStoryPoints.addPoints(item.getStoryPoints().getPoints());
-				}
-			});
-			this.totalCompletedStoryPoints.clearPoints();
-			[...this.getItems().values()].map((item: Item) => {
-				if (item.isCompleted())
-				{
-					if (!item.isSubTask())
-					{
-						this.totalCompletedStoryPoints.addPoints(item.getStoryPoints().getPoints());
-					}
-				}
-				else
-				{
-					if (item.isParentTask())
-					{
-						this.totalCompletedStoryPoints.addPoints(
-							item.getCompletedSubTasksStoryPoints().getPoints()
-						);
-					}
-				}
-			});
-			this.totalUncompletedStoryPoints.clearPoints();
-			[...this.getItems().values()].map((item: Item) => {
-				if (!item.isCompleted())
-				{
-					if (!item.isSubTask())
-					{
-						let storyPoints = item.getStoryPoints().getPoints();
-						if (item.isParentTask())
-						{
-							storyPoints = item.getUncompletedSubTasksStoryPoints().getPoints();
-						}
-						this.totalUncompletedStoryPoints.addPoints(storyPoints);
-					}
-				}
-				else
-				{
-					if (item.isParentTask())
-					{
-						this.totalUncompletedStoryPoints.addPoints(
-							item.getUncompletedSubTasksStoryPoints().getPoints()
-						);
-					}
-				}
-			});
-		}
-
-		if (this.storyPointsHeader)
-		{
-			if (this.isActive())
-			{
-				this.updateActiveSprintStoryPointsHeader();
-			}
-			else if (this.isCompleted())
-			{
-				this.storyPointsHeader.setStoryPoints(this.getTotalStoryPoints().getPoints());
-				this.storyPointsHeader.setCompletedStoryPoints(this.getTotalCompletedStoryPoints().getPoints());
-			}
-			else if (this.isPlanned())
-			{
-				this.storyPointsHeader.setStoryPoints(this.storyPoints.getPoints());
-			}
-		}
-
-		if (this.sprintHeader)
-		{
-			this.sprintHeader.updateStatsHeader();
-		}
-	}
-
-	addTotalStoryPoints(item: Item)
-	{
-		const itemStoryPoints = item.getStoryPoints().getPoints();
-
-		this.getTotalStoryPoints().addPoints(itemStoryPoints);
-		if (item.isCompleted())
-		{
-			this.getTotalCompletedStoryPoints().addPoints(itemStoryPoints);
-		}
-		else
-		{
-			this.getTotalUncompletedStoryPoints().addPoints(itemStoryPoints);
-		}
-	}
-
-	subtractTotalStoryPoints(item: Item)
-	{
-		const itemStoryPoints = item.getStoryPoints().getPoints();
-
-		this.getTotalStoryPoints().subtractPoints(itemStoryPoints);
-		if (item.isCompleted())
-		{
-			this.getTotalCompletedStoryPoints().subtractPoints(itemStoryPoints);
-		}
-		else
-		{
-			this.getTotalUncompletedStoryPoints().subtractPoints(itemStoryPoints);
-		}
-	}
-
-	updateActiveSprintStoryPointsHeader()
-	{
-		if (this.storyPointsHeader)
-		{
-			this.storyPointsHeader.setStoryPoints(this.getTotalStoryPoints().getPoints());
-			this.storyPointsHeader.setCompletedStoryPoints(this.getTotalCompletedStoryPoints().getPoints());
-			this.storyPointsHeader.setUncompletedStoryPoints(this.getTotalUncompletedStoryPoints().getPoints());
-		}
 	}
 
 	subscribeToItem(item)
@@ -771,6 +627,11 @@ export class Sprint extends Entity
 		{
 			this.getContentNode().style.display = 'block';
 		}
+
+		if (this.sprintHeader)
+		{
+			this.sprintHeader.upTick();
+		}
 	}
 
 	hideContent()
@@ -778,6 +639,11 @@ export class Sprint extends Entity
 		if (this.getContentNode())
 		{
 			this.getContentNode().style.display = 'none';
+		}
+
+		if (this.sprintHeader)
+		{
+			this.sprintHeader.downTick();
 		}
 	}
 
@@ -855,6 +721,23 @@ export class Sprint extends Entity
 		if (this.node)
 		{
 			return this.node.querySelector('.tasks-scrum-sprint-content');
+		}
+	}
+
+	updateStoryPointsNode()
+	{
+		super.updateStoryPointsNode();
+
+		if (this.storyPointsHeader)
+		{
+			this.storyPointsHeader.setStoryPoints(this.getStoryPoints().getPoints());
+			this.storyPointsHeader.setCompletedStoryPoints(this.getCompletedStoryPoints().getPoints());
+			this.storyPointsHeader.setUncompletedStoryPoints(this.getUncompletedStoryPoints().getPoints());
+		}
+
+		if (this.sprintHeader)
+		{
+			this.sprintHeader.updateStatsHeader();
 		}
 	}
 }

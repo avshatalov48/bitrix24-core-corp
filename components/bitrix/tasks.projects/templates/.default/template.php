@@ -251,9 +251,11 @@ $APPLICATION->IncludeComponent(
 <script type="text/javascript">
 	BX.ready(function() {
 		BX.message({
+			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL') ?>',
 			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS') ?>',
 			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS') ?>',
-			TASKS_PROJECTS_MEMBERS_POPUP_EMPTY: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY') ?>'
+			TASKS_PROJECTS_MEMBERS_POPUP_EMPTY: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY') ?>',
+			TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD: '<?= GetMessageJS('TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD') ?>'
 		});
 		var options = <?= Json::encode([
 			'signedParameters' => $this->getComponent()->getSignedParameters(),
@@ -267,7 +269,6 @@ $APPLICATION->IncludeComponent(
 				'pinned' => UserOptionTypeDictionary::OPTION_PINNED,
 			],
 			'tours' => $arResult['TOURS'],
-			'groupTaskPath' => $arParams['PATH_TO_GROUP_TASKS'],
 		]) ?>;
 		options.actionsPanel = actionsPanel;
 		BX.Tasks.ProjectsInstance = new BX.Tasks.Projects.Controller(options);

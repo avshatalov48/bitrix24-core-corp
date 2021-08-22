@@ -15,6 +15,7 @@ use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -238,8 +239,15 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 		'COUNTER' => $counter->getValue(),
 		'COUNTER_ID' => $counter->getCode(),
 		'ACTIONS' => $actions,
-		'IS_DISABLED' => !$isLeadEnabled
+		'IS_DISABLED' => !$isLeadEnabled,
 	);
+	if (!RestrictionManager::getLeadsRestriction()->hasPermission())
+	{
+		$leadItem['CLASS'] = 'crm-tariff-lock';
+		$leadItem['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
+		unset($leadItem['URL'], $leadItem['COUNTER'], $leadItem['COUNTER_ID']);
+		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareInfoHelperScript();
+	}
 }
 
 if (!empty($leadItem) && $isLeadEnabled)
@@ -408,25 +416,27 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 	{
 		$actions = [];
 
-		$catalogId = CCrmCatalog::EnsureDefaultExists();
-
-		if (
-			CIBlockSectionRights::UserHasRightTo($catalogId, 0, 'section_element_bind')
-			&& \Bitrix\Main\Engine\CurrentUser::get()->CanDoOperation('catalog_price')
-		)
+		$catalogId = Crm\Product\Catalog::getDefaultId();
+		if ($catalogId !== null)
 		{
-			$createUrl = CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_PRODUCT_DETAILS'],
-				[
-					'catalog_id' => $catalogId,
-					'product_id' => 0
-				]
-			);
+			if (
+				CIBlockSectionRights::UserHasRightTo($catalogId, 0, 'section_element_bind')
+				&& \Bitrix\Main\Engine\CurrentUser::get()->CanDoOperation('catalog_price')
+			)
+			{
+				$createUrl = CComponentEngine::MakePathFromTemplate(
+					$arParams['PATH_TO_PRODUCT_DETAILS'],
+					[
+						'catalog_id' => $catalogId,
+						'product_id' => 0
+					]
+				);
 
-			$actions[] = [
-				'ID' => 'CREATE',
-				'URL' => $createUrl
-			];
+				$actions[] = [
+					'ID' => 'CREATE',
+					'URL' => $createUrl
+				];
+			}
 		}
 
 		$stdItems['CATALOGUE'] = array(
@@ -548,6 +558,13 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 		'ACTIONS' => $actions,
 		'IS_DISABLED' => true
 	);
+	if (!RestrictionManager::getQuotesRestriction()->hasPermission())
+	{
+		$stdItems['QUOTE']['CLASS'] = 'crm-tariff-lock';
+		$stdItems['QUOTE']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
+		unset($stdItems['QUOTE']['URL']);
+		$stdItems['QUOTE']['ON_CLICK'] = RestrictionManager::getQuotesRestriction()->prepareInfoHelperScript();
+	}
 }
 
 $stdItems['RECYCLE_BIN'] = array(

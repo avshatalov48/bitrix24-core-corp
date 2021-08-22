@@ -91,6 +91,14 @@ class Item extends BaseItem
 		this.value.price = val;
 	}
 
+	onSelect(value)
+	{
+		return (!this.value.id && !this.value.price && !this.label)
+			? false
+			: value
+		;
+	}
+
 	getNextIncQuantity(): Number
 	{
 		let q = this.value.quantity + this.quantity.step;

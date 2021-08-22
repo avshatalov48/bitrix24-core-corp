@@ -382,42 +382,38 @@ class CTasksTools
 		return ($oSanitizer->SanitizeHtml(htmlspecialcharsback($rawHtml)));
 	}
 
-
 	/**
 	 * @param integer $userId
 	 * @param integer $groupId
 	 * @return bool true if user can access group, false otherwise
 	 */
-	public static function HasUserReadAccessToGroup ($userId, $groupId)
+	public static function HasUserReadAccessToGroup($userId, $groupId)
 	{
-		// Roles allowed for extranet user to grant access to read task in group
-		static $arAllowedRoles = array(
-			SONET_ROLES_MODERATOR,
-			SONET_ROLES_USER,
-			SONET_ROLES_OWNER
-		);
+		if (!CModule::IncludeModule('socialnetwork'))
+		{
+			return false;
+		}
 
-		if ( ! CModule::IncludeModule('socialnetwork') )
-			return (false);
-
-		if ( ! (($userId > 0) && ($groupId > 0)) )
-			return (false);
+		if ($userId <= 0 || $groupId <= 0)
+		{
+			return false;
+		}
 
 		if (self::IsIntranetUser($userId))
 		{
-
-			return (CSocNetGroup::CanUserViewGroup($userId, $groupId));
+			return CSocNetGroup::CanUserViewGroup($userId, $groupId);
 		}
 
-
+		// Roles allowed for extranet user to grant access to read task in group
+		static $arAllowedRoles = [
+			SONET_ROLES_MODERATOR,
+			SONET_ROLES_USER,
+			SONET_ROLES_OWNER,
+		];
 		$userRole = CSocNetUserToGroup::GetUserRole($userId, $groupId);
 
-		if (in_array($userRole, $arAllowedRoles))
-			return (true);
-
-		return (false);
+		return in_array($userRole, $arAllowedRoles, true);
 	}
-
 
 	public static function IsIntranetUser($userId)
 	{

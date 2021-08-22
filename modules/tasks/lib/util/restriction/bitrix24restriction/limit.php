@@ -23,9 +23,8 @@ class Limit extends Bitrix24Restriction
 	public static function isLimitExceeded(int $limit = 0): bool
 	{
 		$limit = ($limit > 0 ? $limit : static::getLimit());
-		$currentValue = static::getCurrentValue();
 
-		return (static::isLimitExist($limit) ? ($currentValue > $limit) : false);
+		return (static::isLimitExist($limit) && static::getCurrentValue() > $limit);
 	}
 
 	/**

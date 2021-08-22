@@ -16,7 +16,6 @@ class Viber extends Base
 	//Output
 
 	//END Output
-
 	/**
 	 * @param array $message
 	 * @param $line
@@ -29,8 +28,6 @@ class Viber extends Base
 		//Processing rich links
 		$message = $this->processingMessageForRich($message);
 
-		$message = self::processingMessageForOperatorData($message);
-
-		return $message;
+		return $this->processingMessageForOperatorData($message);
 	}
 }

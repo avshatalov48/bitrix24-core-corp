@@ -21,8 +21,8 @@ final class UpdateMicrosoftBotFramework extends Stepper
 	protected const ARTICLE_CODE = '11382470';
 	protected const PORTION = 5;
 	protected const OPTION_NAME = 'imconnector_old_botframework_channels_to_delete';
-	protected const MODULE_ID = 'imconnector';
 	protected const CONNECTOR_ID = 'botframework';
+	protected static $moduleId = 'imconnector';
 
 	public static function deleteConnectorStep1(): string
 	{
@@ -64,7 +64,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 	{
 		$return = false;
 
-		if (Loader::includeModule(self::MODULE_ID))
+		if (Loader::includeModule(static::$moduleId))
 		{
 			$status = $this->loadCurrentStatus();
 
@@ -101,7 +101,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 
 				if ($found)
 				{
-					Option::set(self::MODULE_ID, self::OPTION_NAME, serialize($status));
+					Option::set(static::$moduleId, self::OPTION_NAME, serialize($status));
 					$return = true;
 				}
 
@@ -110,7 +110,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 				if ($found === false)
 				{
 					self::deactivateConnector();
-					Option::delete(self::MODULE_ID, ['name' => self::OPTION_NAME]);
+					Option::delete(static::$moduleId, ['name' => self::OPTION_NAME]);
 				}
 			}
 			else
@@ -127,7 +127,7 @@ final class UpdateMicrosoftBotFramework extends Stepper
 	 */
 	public function loadCurrentStatus()
 	{
-		$status = Option::get(self::MODULE_ID, self::OPTION_NAME, '');
+		$status = Option::get(static::$moduleId, self::OPTION_NAME, '');
 		$status = ($status !== '' ? @unserialize($status, ['allowed_classes' => false]) : []);
 		$status = (is_array($status) ? $status : []);
 

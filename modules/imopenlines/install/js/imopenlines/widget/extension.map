@@ -22,8 +22,8 @@ ui.vue.vuex
 main.md5
 im.model
 im.lib.logger
-im.const
 im.lib.utils
+im.const
 main.date
 ui.vue.components.audioplayer
 ui.icons

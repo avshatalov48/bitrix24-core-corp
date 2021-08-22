@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
-use \Bitrix\Main\IO\File,
-	\Bitrix\Main\Security\Cipher,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\Input\ReceivingMessage;
+use Bitrix\Main\IO\File;
+use Bitrix\Main\Security\Cipher;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Library;
 
 class IMessage extends Base
 {
@@ -78,7 +78,7 @@ class IMessage extends Base
 
 				if($file !== false)
 				{
-					$file = self::getDecryptedFile($file, $key);
+					$file = $this->getDecryptedFile($file, $key);
 
 					$result = \CFile::SaveFile(
 						$file,
@@ -98,14 +98,14 @@ class IMessage extends Base
 	 * @param mixed $key
 	 * @return mixed
 	 */
-	protected static function getDecryptedFile($file, $key)
+	protected function getDecryptedFile($file, $key)
 	{
-		$key = self::convertFileKey($key);
+		$key = $this->convertFileKey($key);
 		$newFile = $file;
 		$content = File::getFileContents($file['tmp_name']);
 
-		$decryptedContent = self::decryptContent($content, $key);
-		$newFilePath = self::getNewFilePath($file['tmp_name']);
+		$decryptedContent = $this->decryptContent($content, $key);
+		$newFilePath = $this->getNewFilePath($file['tmp_name']);
 
 		File::putFileContents($newFilePath, $decryptedContent);
 
@@ -122,11 +122,9 @@ class IMessage extends Base
 	 * @param string $key
 	 * @return string
 	 */
-	protected static function decryptContent($content, $key): string
+	protected function decryptContent($content, $key): string
 	{
-		$decryptedContent = openssl_decrypt($content, 'AES-256-CTR', $key, OPENSSL_RAW_DATA, self::getIv());
-
-		return $decryptedContent;
+		return openssl_decrypt($content, 'AES-256-CTR', $key, OPENSSL_RAW_DATA, $this->getIv());
 	}
 
 	/**
@@ -134,7 +132,7 @@ class IMessage extends Base
 	 *
 	 * @return string
 	 */
-	protected static function getIv(): string
+	protected function getIv(): string
 	{
 		$iv = '0000000000000000';
 		$ivLength = mb_strlen($iv);
@@ -153,12 +151,9 @@ class IMessage extends Base
 	 * @param string $key
 	 * @return bool|float|int|string
 	 */
-	protected static function convertFileKey($key)
+	protected function convertFileKey($key)
 	{
-		$result = mb_substr($key, 2);
-		$result = pack('H*', $result);
-
-		return $result;
+		return pack('H*', mb_substr($key, 2));
 	}
 
 	/**
@@ -169,7 +164,7 @@ class IMessage extends Base
 	 * @return bool|string
 	 * @throws \Bitrix\Main\Security\SecurityException
 	 */
-	protected static function encryptContent($content, $key)
+	protected function encryptContent($content, $key)
 	{
 		$content = base64_encode($content);
 		$cipher = new Cipher();
@@ -185,14 +180,12 @@ class IMessage extends Base
 	 * @param string $filePath
 	 * @return string
 	 */
-	protected static function getNewFilePath($filePath): string
+	protected function getNewFilePath($filePath): string
 	{
 		$pointPosition = mb_strrpos($filePath, '.');
 		$fileName = mb_substr($filePath, 0, $pointPosition);
 		$fileExtension = mb_substr($filePath, $pointPosition);
 
-		$newFilePath = $fileName . '-decrypted' . $fileExtension;
-
-		return $newFilePath;
+		return $fileName . '-decrypted' . $fileExtension;
 	}
 }

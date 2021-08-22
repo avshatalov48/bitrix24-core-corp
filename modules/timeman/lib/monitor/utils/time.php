@@ -15,9 +15,12 @@ class Time
 		if ($time['hours'] > 0)
 		{
 			$hours = $time['hours'].' '.Loc::getMessage('TIMEMAN_MONITOR_HOUR_SHORT');
-			$minutes = $time['minutes'].' '.Loc::getMessage('TIMEMAN_MONITOR_MINUTES_SHORT');
+			$minutes = $time['minutes'] > 0
+				? ' ' . $time['minutes'] .' '. Loc::getMessage('TIMEMAN_MONITOR_MINUTES_SHORT')
+				: ''
+			;
 
-			return $hours.' '.$minutes;
+			return $hours.$minutes;
 		}
 
 		return $time['minutes'].' '.Loc::getMessage('TIMEMAN_MONITOR_MINUTES_SHORT');

@@ -24,7 +24,7 @@ if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
 if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
 {
 	$aMenuLinks[] = Array(
-		GetMessage("MENU_PROCESS_STREAM"),
+		GetMessage("MENU_PROCESS_STREAM2"),
 		"/bizproc/processes/",
 		Array(),
 		Array("menu_item_id" => "menu_processes"),

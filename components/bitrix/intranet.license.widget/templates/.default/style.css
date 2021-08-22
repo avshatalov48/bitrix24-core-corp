@@ -1,20 +1,24 @@
 .popup-with-radius {
-	border-radius: 30px;
-	background: #eaeced;
+	border-radius: 22px;
 	box-shadow: 0 12px 27px 0 rgba(0, 0, 0, .15);
 }
 
-.popup-with-radius .popup-window-angly:before {
-	background: #e9eaed;
+.popup-with-radius-loader {
+	background: #eaeced url(img/skeleton.svg) no-repeat top -25px center;
+	height: 483px;
+}
+
+.popup-with-radius .popup-window-content {
+	border-radius: 22px;
 }
 
 .popup-with-radius-show {
-	animation: show 300ms;
+	animation: licenseBtnIconBatteryShow 300ms;
 	animation-fill-mode: both;
 }
 
 .popup-with-radius-close {
-	animation: hide 300ms;
+	animation: licenseBtnIconBatteryHide 300ms;
 	animation-fill-mode: both;
 }
 
@@ -23,20 +27,12 @@
 }
 
 .license-widget {
-	background: #e9eaed;
 	border-radius: 22px;
 	color: #525c69;
 	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	padding: 13px;
-	min-width: 350px;
+	width: 350px;
 	box-sizing: border-box;
-}
-
-.license-widget-item {
-	margin-bottom: 24px;
-	width: 48%;
-	min-height: 62px;
-	cursor: default;
 }
 
 .license-widget-block {
@@ -45,7 +41,8 @@
 	justify-content: space-between;
 }
 
-.license-widget-item, .license-widget-option {
+.license-widget-item,
+.license-widget-option {
 	background: rgba(255, 255, 255, .75);
 	border-radius: 12px;
 	padding: 0 8px 0 10px;
@@ -57,10 +54,19 @@
 	transition: all 0.15s linear;
 }
 
-.license-widget-item:hover, .license-widget-option:hover {
+.license-widget-item:hover,
+.license-widget-option:hover {
 	transform: translate(0, -1px);
 	background: #fff;
 	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.13);
+}
+
+.license-widget-item {
+	margin-bottom: 24px;
+	width: 48%;
+	min-height: 62px;
+	cursor: default;
+	overflow: visible;
 }
 
 .license-widget-option {
@@ -87,7 +93,7 @@
 }
 
 .license-widget-option:hover svg {
-	fill: #207EDE;
+	fill: #207ede;
 	opacity: 1;
 }
 
@@ -95,7 +101,8 @@
 	color: #333;
 }
 
-.license-widget-item--wide, .license-widget-item--main {
+.license-widget-item--wide,
+.license-widget-item--main {
 	padding: 7px 14px 6px 12px;
 	box-sizing: border-box;
 }
@@ -107,14 +114,21 @@
 }
 
 .license-widget-item--wide {
-	min-height: 64px;
+	min-height: 56px;
 }
 
-.license-widget-option-list, .license-widget-item--wide, .license-widget-item--main {
+.license-widget-option-list,
+.license-widget-item--wide,
+.license-widget-item--main {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	overflow: hidden;
+}
+
+.license-widget-item--no-padding {
+	padding: 0;
 }
 
 .license-widget-item--wide .license-widget-item-icon {
@@ -138,7 +152,8 @@
 	display: inline-block;
 }
 
-.license-widget-item-name:hover a, .license-widget-item-name:hover a:hover {
+.license-widget-item-name:hover a,
+.license-widget-item-name:hover a:hover {
 	border-color: rgba(140, 147, 156, 1);
 	color: #333;
 }
@@ -161,13 +176,8 @@
 	position: relative;
 }
 
-.license-widget-item-btn--disabled {
-	opacity: .4;
-	pointer-events: none;
-}
-
 .license-widget-item:hover .license-widget-item-btn {
-	border-color: #EDEEF0;
+	border-color: #edeef0;
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .18);
 }
 
@@ -194,18 +204,13 @@
 	box-shadow: none;
 	border: 1px solid #bad9f8;
 	margin-top: 0;
-}
-
-.license-widget-item--main:hover .license-widget-item-btn--disabled,
-.license-widget-item--main:hover .license-widget-item-btn--disabled:hover {
-	background: #fff;
-	border-color: #bad9f8;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .license-widget-item--wide .license-widget-item-btn {
 	margin-top: 0;
-	height: 21px;
-	line-height: 19px;
 }
 
 .license-widget-item--main .license-widget-item-btn--free {
@@ -233,6 +238,9 @@
 }
 
 .license-widget-item--main .license-widget-item-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	color: #333;
 	font-size: 16px;
 	line-height: 16px;
@@ -252,6 +260,8 @@
 
 .license-widget-item--main .license-widget-item-content {
 	padding-bottom: 5px;
+	max-width: calc(100% - 36px);
+	overflow: hidden;
 }
 
 .license-widget-item--main .license-widget-item-icon {
@@ -426,6 +436,16 @@ a.license-widget-item-info-text:hover {
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2217%22%20height%3D%2219%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.841.975c-.444%200-.799.366-.799.824l.001%2010.25c0%20.458.355.825.8.825H7.3v1.082l-2.786%202.902a.847.847%200%20000%201.191.787.787%200%20001.155%200l2.458-2.536%202.459%202.536a.814.814%200%2000.592.245.797.797%200%2000.563-.245.847.847%200%20000-1.19l-2.784-2.872v-1.113h6.457c.445%200%20.8-.367.8-.825V1.8a.809.809%200%2000-.8-.824H.841zm2.713%207.487c-.327%200-.624-.238-.624-.557%200-.291.267-.556.624-.556h7.992c.328%200%20.625.238.625.556%200%20.292-.267.557-.595.557H3.554zM2.93%204.44c0%20.319.297.557.624.557h8.022c.328%200%20.595-.265.595-.557%200-.319-.297-.557-.625-.557H3.554c-.357%200-.624.265-.624.557z%22%2F%3E%3C%2Fsvg%3E);
 }
 
+.license-widget-item-icon--ext {
+	background-color: #e8e9ec;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7%200a7%207%200%20100%2014A7%207%200%20007%200zM2.516%2010.855a4.63%204.63%200%2001-.17.145%206.507%206.507%200%2001-.903-1.647A7.011%207.011%200%20011%206.878c0-.296.018-.59.053-.878.323.47.676%201.106.798%201.296.198.311.419.617.612.933.324.532.663%201.26.49%201.922-.074.284-.239.515-.437.704zm6.93-5.195c.232.835.843%201.218%201.835%201.149.47-.033.44%201.124.14%201.602-.372.592-.276%201.295-.627%201.885-.221.373-.597.649-.895.966-.372.399-.79.783-1.41.734-.41-.033-.58-.45-.66-.747-.133-.493-.245-1.243-.337-2.25C7.107%208.233%206.48%207.967%205.61%208.2c-1.305.35-1.57-.58-1.607-1.465-.089-2.18%201.905-2.411%202.136-2.373.331.055%201.304.208%201.548.332.827.42%201.673-.159%201.606-.465-.066-.306-2.12-.747-2.849-.795-.728-.047-.796.19-.995-.011-.162-.163-.013-.422.1-.56.804-.974%202.145-1.21%203.278-1.718.018-.007.044-.064.075-.146a6.734%206.734%200%20012.46%201.44%206.14%206.14%200%20011.435%201.958c.076.165.144.332.203.501-.241.131.24-.045-1.024.225-.843.18-1.686.36-2.53.536z%22%20opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E);
+}
+
+.license-widget-item--active .license-widget-item-icon--ext {
+	background-color: #ffa900;
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7%200a7%207%200%20100%2014A7%207%200%20007%200zM2.516%2010.855a4.63%204.63%200%2001-.17.145%206.507%206.507%200%2001-.903-1.647A7.011%207.011%200%20011%206.878c0-.296.018-.59.053-.878.323.47.676%201.106.798%201.296.198.311.419.617.612.933.324.532.663%201.26.49%201.922-.074.284-.239.515-.437.704zm6.93-5.195c.232.835.843%201.218%201.835%201.149.47-.033.44%201.124.14%201.602-.372.592-.276%201.295-.627%201.885-.221.373-.597.649-.895.966-.372.399-.79.783-1.41.734-.41-.033-.58-.45-.66-.747-.133-.493-.245-1.243-.337-2.25C7.107%208.233%206.48%207.967%205.61%208.2c-1.305.35-1.57-.58-1.607-1.465-.089-2.18%201.905-2.411%202.136-2.373.331.055%201.304.208%201.548.332.827.42%201.673-.159%201.606-.465-.066-.306-2.12-.747-2.849-.795-.728-.047-.796.19-.995-.011-.162-.163-.013-.422.1-.56.804-.974%202.145-1.21%203.278-1.718.018-.007.044-.064.075-.146a6.734%206.734%200%20012.46%201.44%206.14%206.14%200%20011.435%201.958c.076.165.144.332.203.501-.241.131.24-.045-1.024.225-.843.18-1.686.36-2.53.536z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
+}
+
 .license-widget-inner {
 	display: flex;
 	height: 100%;
@@ -494,17 +514,17 @@ a.license-widget-item-info-text:hover {
 }
 
 .license-widget-item--active .license-widget-item-icon--tel {
-	background-color: #207EDE;
+	background-color: #207ede;
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.88%202.281l1.156%201.691c.405.621.15%201.467-.472%201.881l-.694.464a.367.367%200%2000-.119.477%2011.63%2011.63%200%20003.712%203.946.376.376%200%2000.474-.102l.49-.695c.428-.605%201.3-.818%201.887-.377l1.653%201.24c.5.379.538%201.129.077%201.556-1.728%201.652-4.608%202.293-8.4-1.715C-.147%206.639.607%203.769%202.336%202.117a1.021%201.021%200%20011.544.164zM7.653.913a5.68%205.68%200%20014.096%201.673%205.679%205.679%200%20011.673%204.097.525.525%200%2001-.502.502.573.573%200%2001-.35-.142.475.475%200%2001-.143-.35%204.615%204.615%200%2000-1.372-3.412%204.618%204.618%200%2000-3.412-1.373.501.501%200%2001-.492-.492.525.525%200%2001.502-.503zm.285%202.122a3.299%203.299%200%20012.39.972c.639.638.982%201.483.973%202.391a.525.525%200%2001-.502.503.624.624%200%2001-.303-.104l-.047-.04a.475.475%200%2001-.143-.35%202.335%202.335%200%2000-.687-1.69%202.333%202.333%200%2000-1.69-.687.501.501%200%2001-.493-.493.525.525%200%2001.502-.502z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
 }
 
 .license-widget-item--active .license-widget-item-icon--demo {
-	background-color: #207EDE;
+	background-color: #207ede;
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2213%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M.62%200A.627.627%200%20000%20.64v7.948c0%20.356.276.64.62.64H5.63v.84l-2.161%202.25a.657.657%200%20000%20.923.61.61%200%2000.895%200l1.907-1.966%201.907%201.966a.63.63%200%2000.46.19c.16%200%20.32-.071.435-.19a.657.657%200%20000-.923L6.914%2010.09v-.863h5.007c.345%200%20.62-.284.62-.64V.64a.627.627%200%2000-.62-.64H.62zm2.104%205.807c-.254%200-.485-.185-.485-.432%200-.226.208-.432.485-.432h6.198c.254%200%20.484.185.484.432%200%20.226-.207.432-.46.432H2.723zm-.485-3.12c0%20.248.23.432.485.432h6.221c.254%200%20.46-.205.46-.432%200-.247-.23-.431-.483-.431H2.724c-.277%200-.485.205-.485.431z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
 }
 
 .license-widget-item--active .license-widget-item-icon--mp {
-	background-color: #207EDE;
+	background-color: #207ede;
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.77.004l-.036.018-5.54%202.193c-.14.065-.19.206-.194.373v7.06c.002.159.084.309.193.351l5.487%202.17a.36.36%200%2000.23.006l5.537-2.187c.11-.045.19-.198.19-.356V2.634c.003-.216-.051-.342-.194-.408L5.873.022c-.037-.02-.067-.028-.102-.018zm.034.752l4.599%201.826-4.6%201.814-4.602-1.82L5.804.756z%22%20opacity%3D%221%22%2F%3E%3C%2Fsvg%3E);
 }
 
@@ -517,7 +537,8 @@ a.license-widget-item-info-text:hover {
 	background-position: center;
 }
 
-.license-widget-item--expired, .license-widget-item--expired:hover {
+.license-widget-item--expired,
+.license-widget-item--expired:hover {
 	background: #fa726e;
 }
 
@@ -597,11 +618,11 @@ a.license-widget-item-info-text:hover {
 	position: absolute;
 	top: -6px;
 	right: 16px;
-
 	color: #fff;
 	font: 9px/12px "OpenSans-Semibold", Arial, Helvetica, sans-serif;
 	border-radius: 8px;
 	padding: 0 6px 1px 7px;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.15);
 }
 
 .license-widget-banner .license-widget-label {
@@ -609,7 +630,7 @@ a.license-widget-item-info-text:hover {
 }
 
 .ui-btn.license-btn .license-widget-label {
-	background: #2FC6F6;
+	background: #2fc6f6;
 }
 
 .license-widget-item--upd .license-widget-item-icon--upd {
@@ -617,7 +638,7 @@ a.license-widget-item-info-text:hover {
 }
 
 .license-widget-item--upd .license-widget-item-text {
-	color: #8EBB00;
+	color: #8ebb00;
 }
 
 .ui-btn.license-btn:not(.license-btn-animate) .license-btn-icon-battery,
@@ -635,7 +656,7 @@ a.license-widget-item-info-text:hover {
 	--ui-btn-color-active: #fff;
 	text-transform: none;
 	font: 14px/32px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	max-width: 170px;
+	max-width: 175px;
 	min-width: 106px;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -648,10 +669,6 @@ a.license-widget-item-info-text:hover {
 
 .ui-btn.license-btn .license-widget-label {
 	right: 7px;
-}
-
-.ui-btn.license-btn-primary {
-	margin-left: 12px !important;
 }
 
 .license-btn-num {
@@ -712,25 +729,27 @@ a.license-widget-item-info-text:hover {
 }
 
 .ui-btn.license-btn-primary {
-	background: #14BFD5;
-	border-color: #14BFD5;
+	background: #14bfd5;
+	border-color: #14bfd5;
+	margin-left: 12px !important;
+	display: flex;
 }
 
 .ui-btn.license-btn-primary:hover,
 .ui-btn.license-btn-primary:active {
-	background: #2CD4EA;
-	border-color: #2CD4EA;
+	background: #2cd4ea;
+	border-color: #2cd4ea;
 }
 
 .ui-btn.license-btn-orange {
-	background: #EBA51C;
-	border-color: #EBA51C;
+	background: #eba51c;
+	border-color: #eba51c;
 }
 
 .ui-btn.license-btn-orange:hover,
 .ui-btn.license-btn-orange:active {
-	background: #FBB62F;
-	border-color: #FBB62F;
+	background: #fbb62f;
+	border-color: #fbb62f;
 }
 
 .bitrix24-dark-theme .ui-btn-themes.license-btn-orange {
@@ -739,13 +758,13 @@ a.license-widget-item-info-text:hover {
 }
 
 .bitrix24-dark-theme .ui-btn-themes.license-btn-orange:hover,
-.bitrix24-dark-theme .ui-btn-themes.license-btn-orange:active{
+.bitrix24-dark-theme .ui-btn-themes.license-btn-orange:active {
 	background: rgba(255, 180, 32, .6);
 	border-color: rgba(255, 185, 48, .65);
 }
 
 .bitrix24-dark-theme .ui-btn-themes.license-btn-orange.ui-btn-icon-tariff:after {
-	background-color: #eba51C;
+	background-color: #eba51c;
 }
 
 .ui-btn.license-btn-orange-border {
@@ -813,13 +832,13 @@ a.license-widget-item-info-text:hover {
 }
 
 .ui-btn.license-btn-alert {
-	background: #EA5753;
-	border-color: #EA5753;
+	background: #ea5753;
+	border-color: #ea5753;
 }
 
 .ui-btn.license-btn-alert:hover,
 .ui-btn.license-btn-alert:active {
-	background: #FA726E;
+	background: #fa726e;
 	border-color: rgba(255, 87, 82, .64);
 }
 
@@ -905,6 +924,8 @@ a.license-widget-item-info-text:hover {
 .license-btn-icon-battery-full {
 	display: inline-block;
 	vertical-align: top;
+	position: relative;
+	z-index: 0;
 	width: 22px;
 	height: 14px;
 	background: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2222%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M20.231%2011.033a2%202%200%2001-2%202H2.778a2%202%200%2001-2-2V2.954a2%202%200%20012-2H18.23a2%202%200%20012%202v1.799a1.01%201.01%200%2001.116-.007H21a1%201%200%20011%201V8.24a1%201%200%2001-1%201h-.653l-.116-.006v1.798zM17.83%202.498H3.18a1%201%200%2000-.993.884l-.006.116v6.991a1%201%200%2000.883.993l.117.007h14.65a1%201%200%2000.993-.883l.006-.117v-6.99a1%201%200%2000-1-1z%22%2F%3E%3C%2Fsvg%3E) no-repeat center;
@@ -915,19 +936,20 @@ a.license-widget-item-info-text:hover {
 	animation: reduce 1.5s .5s linear forwards;
 }
 
-.license-btn-animate-forward, .license-btn-animate-back {
+.license-btn-animate-forward,
+.license-btn-animate-back {
 	-webkit-animation: flash 2s linear 3;
 	animation: flash 2s linear 3;
 }
 
 .license-btn-animate-forward .license-btn-icon-battery-full {
-	-webkit-animation: hide .5s 2s linear forwards;
-	animation: hide .5s 2s linear forwards;
+	-webkit-animation: licenseBtnIconBatteryHide .5s 2s linear forwards;
+	animation: licenseBtnIconBatteryHide .5s 2s linear forwards;
 }
 
 .license-btn-animate-forward .license-btn-icon-battery-cross {
-	-webkit-animation: show .5s 2.3s linear forwards;
-	animation: show .5s 2.3s linear forwards;
+	-webkit-animation: licenseBtnIconBatteryShow .5s 2.3s linear forwards;
+	animation: licenseBtnIconBatteryShow .5s 2.3s linear forwards;
 }
 
 .license-btn-animate-back .license-btn-icon-battery-full {
@@ -944,13 +966,36 @@ a.license-widget-item-info-text:hover {
 }
 
 .license-btn-animate-back .license-btn-icon-battery-full {
-	-webkit-animation: show .5s .8s linear forwards;
-	animation: show .5s .8s linear forwards;
+	-webkit-animation: licenseBtnIconBatteryShow .5s .8s linear forwards;
+	animation: licenseBtnIconBatteryShow .5s .8s linear forwards;
 }
 
 .license-btn-animate-back .license-btn-icon-battery-cross {
-	-webkit-animation: hide .5s .5s linear forwards;
-	animation: hide .5s .5s linear forwards;
+	-webkit-animation: licenseBtnIconBatteryHide .5s .5s linear forwards;
+	animation: licenseBtnIconBatteryHide .5s .5s linear forwards;
+}
+
+.license-btn-animate-dead .license-btn-icon-battery-full:before,
+.license-btn-animate-dead-white .license-btn-icon-battery-full:before {
+	content: '';
+	position: absolute;
+	left: 4px;
+	top: 4px;
+	background: #ff5752;
+	width: 3px;
+	height: 6px;
+	z-index: -1;
+	box-shadow: 0 0 1px 0 #ff5752;
+}
+
+.license-btn-animate-dead-white .license-btn-icon-battery-full:before {
+	background: #fff;
+}
+
+.license-btn-animate-dead .license-btn-icon-battery-inner,
+.license-btn-animate-dead-white .license-btn-icon-battery-inner {
+	-webkit-animation: reduce 1.5s .5s linear forwards;
+	animation: reduce 1.5s .5s linear forwards;
 }
 
 @-webkit-keyframes reduce {
@@ -1029,7 +1074,7 @@ a.license-widget-item-info-text:hover {
 	}
 }
 
-@-webkit-keyframes hide {
+@-webkit-keyframes licenseBtnIconBatteryHide {
 	0% {
 		opacity: 1;
 	}
@@ -1038,7 +1083,7 @@ a.license-widget-item-info-text:hover {
 	}
 }
 
-@keyframes hide {
+@keyframes licenseBtnIconBatteryHide {
 	0% {
 		opacity: 1;
 	}
@@ -1047,7 +1092,7 @@ a.license-widget-item-info-text:hover {
 	}
 }
 
-@-webkit-keyframes show {
+@-webkit-keyframes licenseBtnIconBatteryShow {
 	0% {
 		opacity: 0;
 	}
@@ -1056,7 +1101,7 @@ a.license-widget-item-info-text:hover {
 	}
 }
 
-@keyframes show {
+@keyframes licenseBtnIconBatteryShow {
 	0% {
 		opacity: 0;
 	}
@@ -1065,8 +1110,114 @@ a.license-widget-item-info-text:hover {
 	}
 }
 
+.license-btn-animate-pulse .license-btn-num {
+	-webkit-animation: pulseCounter 1.2s ease forwards;
+	animation: pulseCounter 1.2s ease forwards;
+}
 
+@-webkit-keyframes pulseCounter {
+	0%, 100% {
+		box-shadow: 0 0 0 0 #fff;
+	}
+	20%, 40% {
+		box-shadow: 0 0 0 2px #fff;
+	}
+	30% {
+		box-shadow: 0 0 0 1px #fff;
+	}
+}
 
+@keyframes pulseCounter {
+	0%, 100% {
+		box-shadow: 0 0 0 0 #fff;
+	}
+	20%, 40% {
+		box-shadow: 0 0 0 2px #fff;
+	}
+	30% {
+		box-shadow: 0 0 0 1px #fff;
+	}
+}
 
+.license-btn-animate-icon:after {
+	-webkit-animation: pulseIcon .8s linear forwards;
+	animation: pulseIcon .8s linear forwards;
+}
 
+@-webkit-keyframes pulseIcon {
+	0%, 50%, 100% {
+		transform: translateY(-50%) scale(1);
+	}
+	30%, 80% {
+		transform: translateY(-50%) scale(1.2);
+	}
+}
 
+@keyframes pulseIcon {
+	0%, 50%, 100% {
+		transform: translateY(-50%) scale(1);
+	}
+	30%, 80% {
+		transform: translateY(-50%) scale(1.2);
+	}
+}
+
+.license-btn-animate-btn {
+	-webkit-animation: pulseBtn 1.2s ease forwards;
+	animation: pulseBtn 1.2s ease forwards;
+}
+
+@-webkit-keyframes pulseBtn {
+	0%, 100% {
+		box-shadow: 0 0 0 0 #2cd4ea;
+	}
+	20%, 40% {
+		box-shadow: 0 0 0 2px #2cd4ea;
+	}
+	30% {
+		box-shadow: 0 0 0 1px #2cd4ea;
+	}
+	0%, 40% {
+		background: #2cd4ea;
+		border-color: #2cd4ea;
+	}
+	100% {
+		background: #14bfd5;
+		border-color: #14bfd5;
+	}
+}
+
+@keyframes pulseBtn {
+	0%, 100% {
+		box-shadow: 0 0 0 0 #2cd4ea;
+	}
+	20%, 40% {
+		box-shadow: 0 0 0 2px #2cd4ea;
+	}
+	30% {
+		box-shadow: 0 0 0 1px #2cd4ea;
+	}
+	0%, 40% {
+		background: #2cd4ea;
+		border-color: #2cd4ea;
+	}
+	100% {
+		background: #14bfd5;
+		border-color: #14bfd5;
+	}
+}
+
+.invitation-widget-ustat-online {
+	width: 100%;
+}
+
+.invitation-widget-ustat-online .intranet-ustat-online-box {
+	width: 100%;
+	margin-bottom: 0;
+	background: transparent;
+}
+
+.license-right-popup-menu {
+	border-radius: 10px;
+	overflow: hidden;
+}

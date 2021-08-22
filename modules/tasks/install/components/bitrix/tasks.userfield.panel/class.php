@@ -457,15 +457,6 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 					{
 						Restriction::canUse($ufController->getEntityCode(), 0, true);
 					}
-					// todo: not sure about delete
-//					else
-//					{
-//						$fData = $ufController->getField($id);
-//						if($fData !== null)
-//						{
-//							static::deleteRelatedFields($fData['FIELD_NAME'], $parameters['RELATED_ENTITIES'], $field, $result);
-//						}
-//					}
 				}
 			}
 		}

@@ -12,14 +12,20 @@ class InvitationWidget
 	constructor(params)
 	{
 		this.node = params.wrapper;
+		this.isCrurrentUserAdmin = params.isCrurrentUserAdmin === "Y";
 		this.enterTimeout = null;
 		this.leaveTimeout = null;
 		this.popupLeaveTimeout = null;
+		this.stopMouseLeave = false;
 
 		this.renderButton();
 
 		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showInvitationSlider', (event) => {
 			this.closePopup();
+		});
+
+		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:stopPopupMouseOut', (event) => {
+			this.stopMouseLeave = true;
 		});
 	}
 
@@ -62,11 +68,14 @@ class InvitationWidget
 
 					InvitationWidgetInstance.leaveTimeout = setTimeout(() =>
 						{
-							InvitationWidgetInstance.closePopup();
+							if (!InvitationWidgetInstance.stopMouseLeave)
+							{
+								InvitationWidgetInstance.closePopup();
+							}
 						}, 500
 					);
 				},
-				togglePopup()
+				togglePopup(e)
 				{
 					if (InvitationWidgetInstance.popup)
 					{
@@ -76,7 +85,7 @@ class InvitationWidget
 						}
 						else
 						{
-							InvitationWidgetInstance.popup.show();
+							InvitationWidgetInstance.initPopup(e.target);
 						}
 					}
 				},
@@ -94,31 +103,32 @@ class InvitationWidget
 
 	initPopup(bindElement)
 	{
-		if (!this.popup)
-		{
-			this.popup = new Popup({
-				autoHide: true,
-				closeByEsc: true,
-				contentPadding: 0,
-				padding: 0,
-				minWidth: 350,
-				minHeight: 220,
-				offsetLeft: -150,
-				animation: {
-					showClassName: "popup-with-radius-show",
-					closeClassName: "popup-with-radius-close",
-					closeAnimationType: "animation"
-				},
-				className: 'popup-with-radius',
-				contentBackground: 'rgba(0,0,0,0)',
-				angle: { position: 'top', offset: 235 },
-				bindElement: bindElement,
-				content: this.renderPopupContent(),
-			});
+		this.popup = new B24.PopupBlur({
+			autoHide: true,
+			closeByEsc: true,
+			contentPadding: 0,
+			padding: 0,
+			minWidth: 350,
+			minHeight: 220,
+			offsetLeft: -150,
+			animation: {
+				showClassName: "popup-with-radius-show",
+				closeClassName: "popup-with-radius-close",
+				closeAnimationType: "animation"
+			},
+			className: 'popup-with-radius',
+			// contentBackground: 'rgba(0,0,0,0)',
+			angle: { position: 'top', offset: 235 },
+			bindElement: bindElement,
+			content: this.renderPopupContent(),
+			events: {
+				onPopupClose: () => {
+					this.popup.destroy();
+				}
+			},
+		});
 
-			this.initEvents();
-		}
-
+		this.initEvents();
 		this.popup.show();
 	}
 
@@ -134,7 +144,10 @@ class InvitationWidget
 		this.popup.getPopupContainer().addEventListener('mouseleave', (event) =>
 		{
 			this.popupLeaveTimeout = setTimeout(() => {
-				this.closePopup();
+				if (!this.stopMouseLeave)
+				{
+					this.closePopup();
+				}
 			}, 500);
 
 		});
@@ -142,16 +155,27 @@ class InvitationWidget
 
 	renderPopupContent()
 	{
+		const InvitationWidgetInstance = this;
+
 		let content = Vue.create({
 			el: document.createElement('div'),
 			components: {PopupWrapperComponent},
+			data()
+			{
+				return {
+					isCrurrentUserAdmin: InvitationWidgetInstance.isCrurrentUserAdmin,
+				};
+			},
 			computed: {
 				localize(state)
 				{
 					return Vue.getFilteredPhrases('INTRANET_INVITATION_WIDGET_');
 				}
 			},
-			template: `<PopupWrapperComponent/>`
+			template: `
+				<PopupWrapperComponent
+					:isCrurrentUserAdmin="isCrurrentUserAdmin"
+				/>`
 		});
 
 		return content.$el;

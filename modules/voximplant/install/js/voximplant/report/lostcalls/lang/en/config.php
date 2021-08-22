@@ -1,2 +1,3 @@
 <?php
 $MESS["TELEPHONY_REPORT_LOST_CALLS"] = "Missed calls";
+$MESS["TELEPHONY_REPORT_LOST_CALLS_BUBBLE"] = "Unanswered calls";

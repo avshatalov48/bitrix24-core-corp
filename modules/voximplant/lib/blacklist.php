@@ -17,7 +17,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Voximplant
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Blacklist_Query query()
+ * @method static EO_Blacklist_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Blacklist_Result getById($id)
+ * @method static EO_Blacklist_Result getList(array $parameters = array())
+ * @method static EO_Blacklist_Entity getEntity()
+ * @method static \Bitrix\Voximplant\EO_Blacklist createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\EO_Blacklist_Collection createCollection()
+ * @method static \Bitrix\Voximplant\EO_Blacklist wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\EO_Blacklist_Collection wakeUpCollection($rows)
+ */
 
 class BlacklistTable extends Entity\DataManager
 {

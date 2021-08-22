@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_CALL_ADD"] = "Phone call created";
 $MESS["CRM_ACTIVITY_CALL_DIRECTION_INCOMING"] = "Incoming call";
 $MESS["CRM_ACTIVITY_CALL_DIRECTION_OUTGOING"] = "Outgoing call";
@@ -61,6 +61,11 @@ $MESS["CRM_ACTIVITY_EMAIL_TO"] = "To";
 $MESS["CRM_ACTIVITY_EVENT_ADD"] = "Activity created";
 $MESS["CRM_ACTIVITY_EVENT_REMOVE"] = "Activity deleted";
 $MESS["CRM_ACTIVITY_FIELD_COMPARE_EMPTY"] = "- Empty -";
+$MESS["CRM_ACTIVITY_FIELD_CREATED"] = "Created on";
+$MESS["CRM_ACTIVITY_FIELD_DEADLINE"] = "Deadline";
+$MESS["CRM_ACTIVITY_FIELD_END_TIME"] = "End date and time";
+$MESS["CRM_ACTIVITY_FIELD_LAST_UPDATED"] = "Modified on";
+$MESS["CRM_ACTIVITY_FIELD_START_DATE"] = "Start date and time";
 $MESS["CRM_ACTIVITY_FILE_ADD_CALL"] = "File attached to phone call \"#NAME#\"";
 $MESS["CRM_ACTIVITY_FILE_ADD_EMAIL"] = "File attached to e-mail \"#NAME#\"";
 $MESS["CRM_ACTIVITY_FILE_ADD_MEETING"] = "File attached to meeting \"#NAME#\"";
@@ -95,10 +100,10 @@ $MESS["CRM_ACTIVITY_TYPE_EMAIL"] = "E-mail";
 $MESS["CRM_ACTIVITY_TYPE_MEETING"] = "Meeting";
 $MESS["CRM_ACTIVITY_TYPE_PROVIDER"] = "User action";
 $MESS["CRM_ACTIVITY_TYPE_TASK"] = "Task";
+$MESS["CRM_ERROR_FIELD_INCORRECT"] = "The field \"%FIELD_NAME%\" is incorrect.";
 $MESS["CRM_NOTIFY_TYPE_DAY"] = "days";
 $MESS["CRM_NOTIFY_TYPE_HOUR"] = "hr.";
 $MESS["CRM_NOTIFY_TYPE_MIN"] = "min.";
 $MESS["CRM_PRIORITY_HIGH"] = "high";
 $MESS["CRM_PRIORITY_LOW"] = "low";
 $MESS["CRM_PRIORITY_MEDIUM"] = "normal";
-?>

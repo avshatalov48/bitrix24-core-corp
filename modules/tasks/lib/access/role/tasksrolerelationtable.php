@@ -10,6 +10,22 @@ namespace Bitrix\Tasks\Access\Role;
 
 use Bitrix\Main\Access\Role\AccessRoleRelationTable;
 
+/**
+ * Class TasksRoleRelationTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TasksRoleRelation_Query query()
+ * @method static EO_TasksRoleRelation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TasksRoleRelation_Result getById($id)
+ * @method static EO_TasksRoleRelation_Result getList(array $parameters = array())
+ * @method static EO_TasksRoleRelation_Entity getEntity()
+ * @method static \Bitrix\Tasks\Access\Role\TasksRoleRelation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Access\Role\EO_TasksRoleRelation_Collection createCollection()
+ * @method static \Bitrix\Tasks\Access\Role\TasksRoleRelation wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Access\Role\EO_TasksRoleRelation_Collection wakeUpCollection($rows)
+ */
 class TasksRoleRelationTable extends AccessRoleRelationTable
 {
 	public static function getTableName()

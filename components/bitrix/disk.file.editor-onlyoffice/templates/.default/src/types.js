@@ -39,6 +39,7 @@ export type DocumentSession = {
 export type BaseObject = {
 	id: number,
 	name: string,
+	size: ?number,
 }
 
 export type AttachedObject = {

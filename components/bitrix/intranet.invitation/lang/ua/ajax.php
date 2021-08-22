@@ -15,3 +15,4 @@ $MESS["BX24_INVITE_DIALOG_SELF_SUCCESS"] = "Налаштування для шв
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Помилка при створенні поштової скриньки:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Підтвердження пароля не співпадає з паролем";
 $MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "Перевищена максимально допустима довжина в 50 символів";
+$MESS["INTRANET_INVITE_DIALOG_USER_COUNT_ERROR"] = "Перевищено максимальну кількість запрошених користувачів за добу";

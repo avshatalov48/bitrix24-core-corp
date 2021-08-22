@@ -3,13 +3,15 @@ return array(
 	'controllers' => array(
 		'value' => array(
 			'defaultNamespace' => '\\Bitrix\\Crm\\Controller',
-			'namespaces' => array(
+			'namespaces' => [
 				'\\Bitrix\\Crm\\Controller\\DocumentGenerator' => 'documentgenerator',
 				'\\Bitrix\\Crm\\Controller' => 'api',
 				'\\Bitrix\\Crm\\Integration' => 'integration',
 				'\\Bitrix\\Crm\\Controller\\Site' => 'site',
-				'\\Bitrix\\Crm\\Controller\\Requisite' => 'requisite'
-			),
+				'\\Bitrix\\Crm\\Controller\\Requisite' => 'requisite',
+				'\\Bitrix\\Crm\\Controller\\Status' => 'status',
+				'\\Bitrix\\Crm\\Controller\\Ads' => 'ads',
+			],
 			'restIntegration' => [
 				'enabled' => true,
 			],
@@ -46,6 +48,9 @@ return array(
 			],
 			'crm.service.factory.deal' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Deal',
+			],
+			'crm.service.factory.lead' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Lead',
 			],
 			'crm.type.factory' => [
 				'className' => '\\Bitrix\\Crm\\Model\\Dynamic\\Factory',
@@ -92,6 +97,12 @@ return array(
 			'crm.service.parentFieldManager' => [
 				'className' => '\\Bitrix\\Crm\\Service\\ParentFieldManager',
 			],
+			'crm.service.accounting' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Accounting',
+			],
+			'crm.service.fileUploader' => [
+				'className' => '\\Bitrix\\Crm\\Service\\FileUploader',
+			],
 			'crm.kanban.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Lead',
 			],
@@ -125,8 +136,25 @@ return array(
 			'crm.recycling.dynamicController' => [
 				'className' => '\\Bitrix\\Crm\\Recycling\\DynamicController',
 			],
+			'crm.service.ads.conversion.facebook' => [
+				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\ConversionWrapper',
+				'constructorParams' => function () {
+					$locator = \Bitrix\Main\DI\ServiceLocator::getInstance();
+					if (\Bitrix\Main\Loader::includeModule('seo') && $locator->has('seo.business.conversion'))
+					{
+						return [$locator->get('seo.business.conversion')];
+					}
+					return null;
+				}
+			],
+			'crm.service.ads.conversion.configurator' => [
+				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\Configuration\\Configurator'
+			],
 			'crm.deal.paymentDocumentsRepository' => [
 				'className' => '\\Bitrix\\Crm\\Deal\\PaymentDocumentsRepository',
+			],
+			'crm.filter.factory' => [
+				'className' => '\\Bitrix\\Crm\\Filter\\Factory',
 			],
 		],
 		'readonly' => true,

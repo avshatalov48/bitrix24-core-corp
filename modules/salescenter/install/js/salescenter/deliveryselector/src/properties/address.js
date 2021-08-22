@@ -15,7 +15,6 @@ export default
 		initValue: {},
 		settings: {},
 		options: {required: false},
-		editable: {type: Boolean, default: true},
 		isStartMarker: {type: Boolean, required: true},
 	},
 	data()
@@ -34,11 +33,6 @@ export default
 	methods: {
 		switchToEditMode()
 		{
-			if (!this.editable)
-			{
-				return;
-			}
-
 			this.showMap();
 			this.editMode = true;
 		},
@@ -52,10 +46,6 @@ export default
 		},
 		clearAddress()
 		{
-			if (!this.editable)
-			{
-				return;
-			}
 			this.addressWidget.address = null;
 			this.changeValue(null);
 			this.clarifyAddress();
@@ -130,7 +120,6 @@ export default
 					? this.options.defaultItems.map((item) => new Location(item))
 					: [];
 
-
 				for (let enteredAddress of this.enteredAddresses)
 				{
 					let location = enteredAddress.toLocation();
@@ -149,7 +138,11 @@ export default
 					result.push(location);
 				}
 
-				return result;
+				return result.filter((location, index, self) =>
+					index === self.findIndex((l) => (
+						l.name === location.name
+					))
+				);
 			};
 		},
 		/**
@@ -423,7 +416,6 @@ export default
 							<input
 								@click="onControlClicked"
 								@focus="onControlFocus"
-								:disabled="!editable"
 								ref="input-node"
 								type="text"
 								class="ui-ctl-element"

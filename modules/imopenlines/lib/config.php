@@ -1823,7 +1823,7 @@ class Config
 			'filter' => ['=ACTIVE' => 'Y'],
 			'order' => $order,
 			'runtime' => $runtime,
-			'cache' => ['ttl' => 86400, 'cache_joins' => true]
+			'cache' => ['ttl' => 86400]
 		]);
 		while ($config = $orm->fetch())
 		{

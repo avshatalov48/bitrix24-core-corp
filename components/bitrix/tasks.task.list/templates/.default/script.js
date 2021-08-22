@@ -5,10 +5,8 @@ BX.Tasks.GridActions = {
 	groupSelector: null,
 	registeredTimerNodes: {},
 	defaultPresetId: '',
-	taskPath: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
-	groupId: 0,
 
 	checkCanMove: function()
 	{
@@ -42,6 +40,116 @@ BX.Tasks.GridActions = {
 			}
 			this.groupSelector.open();
 		}, this));
+	},
+
+	onTagUpdateClick: function(taskId, event)
+	{
+		var onRowUpdate = function(event) {
+			var id = event.getData().id;
+			if (Number(id) === Number(taskId))
+			{
+				var row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(id);
+				var button = row.getCellById('TAG').querySelector('.main-grid-tag-add');
+
+				dialog.setTargetNode(button);
+			}
+		};
+		var onRowRemove = function(event) {
+			var id = event.getData().id;
+			if (Number(id) === Number(taskId))
+			{
+				dialog.hide();
+			}
+		};
+		var onTagsChange = function(event) {
+			var dialog = event.getTarget();
+			var tags = dialog.getSelectedItems().map(function(item) {
+				return item.getId();
+			});
+			BX.Tasks.GridActions.action('update', taskId, {data: {TAGS: tags}});
+		};
+		var eventData = event.getData();
+		var dialog = new BX.UI.EntitySelector.Dialog({
+			targetNode: eventData.button,
+			enableSearch: true,
+			width: 350,
+			height: 400,
+			multiple: true,
+			dropdownMode: true,
+			compactView: true,
+			context: 'TASKS_TAG',
+			entities: [
+				{
+					id: 'task-tag',
+					options: {
+						taskId: taskId
+					}
+				}
+			],
+			searchOptions: {
+				allowCreateItem: true,
+				footerOptions: {
+					label: BX.message('TASKS_LIST_ADD_TAG_FOOTER_LABEL')
+				}
+			},
+			footer: BX.Tasks.EntitySelector.Footer,
+			events: {
+				'onShow': function() {
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', BX.proxy(onRowUpdate, this));
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+				}.bind(this),
+				'onHide': function() {
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', BX.proxy(onRowUpdate, this));
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+				}.bind(this),
+				'Search:onItemCreateAsync': function(event) {
+					var promise = new BX.Promise();
+					var searchQuery = event.getData().searchQuery;
+					var dialog = event.getTarget();
+
+					setTimeout(function() {
+						var item = dialog.addItem({
+							id: searchQuery.getQuery(),
+							entityId: 'tag',
+							title: searchQuery.getQuery(),
+							tabs: 'all'
+						});
+						if (item)
+						{
+							item.select();
+						}
+						promise.fulfill();
+					}, 1000);
+
+					return promise;
+				},
+				'Item:onSelect': onTagsChange,
+				'Item:onDeselect': onTagsChange
+			}
+		});
+		dialog.show();
+	},
+
+	onProjectAddClick: function(taskId, target)
+	{
+		var dialog = new BX.UI.EntitySelector.Dialog({
+			targetNode: target,
+			enableSearch: true,
+			context: 'TASKS_PROJECT',
+			entities: [
+				{
+					id: 'project'
+				}
+			],
+			events: {
+				'Item:onSelect': function(event) {
+					var item = event.getData().item;
+					BX.Tasks.GridActions.action('setgroup', taskId, {groupId: item.getId()});
+					event.getTarget().hide();
+				}
+			}
+		});
+		dialog.show();
 	},
 
 	toggleFilter: function (options, selected)
@@ -92,30 +200,28 @@ BX.Tasks.GridActions = {
 		filterApi.apply();
 	},
 
-	changePin: function(event)
+	changePin: function(taskId, groupId, event)
 	{
 		var eventData = event.getData();
 		var button = eventData.button;
-		var row = eventData.row;
-		var groupId = BX.Tasks.GridActions.groupId;
 
 		if (BX.Dom.hasClass(button, BX.Grid.CellActionState.ACTIVE))
 		{
-			BX.Tasks.GridActions.action('unpin', row.getId(), {groupId: groupId});
+			BX.Tasks.GridActions.action('unpin', taskId, {groupId: groupId});
 
 			BX.Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
 			BX.Dom.addClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
 		}
 		else
 		{
-			BX.Tasks.GridActions.action('pin', row.getId(), {groupId: groupId});
+			BX.Tasks.GridActions.action('pin', taskId, {groupId: groupId});
 
 			BX.Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
 			BX.Dom.removeClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
 		}
 	},
 
-	changeMute: function(event)
+	changeMute: function(taskId, event)
 	{
 		var eventData = event.getData();
 		var button = eventData.button;
@@ -123,28 +229,17 @@ BX.Tasks.GridActions = {
 
 		if (BX.Dom.hasClass(button, BX.Grid.CellActionState.ACTIVE))
 		{
-			BX.Tasks.GridActions.action('unmute', row.getId());
+			BX.Tasks.GridActions.action('unmute', taskId);
 
 			BX.Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
 			BX.Dom.addClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
 		}
 		else
 		{
-			BX.Tasks.GridActions.action('mute', row.getId());
+			BX.Tasks.GridActions.action('mute', taskId);
 
 			BX.Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
 			BX.Dom.removeClass(button, BX.Grid.CellActionState.SHOW_BY_HOVER);
-		}
-	},
-
-	onCounterClick: function(event)
-	{
-		var eventData = event.getData();
-		var row = eventData.row;
-
-		if (BX.Tasks.GridActions.taskPath)
-		{
-			BX.SidePanel.Instance.open(BX.Tasks.GridActions.taskPath.replace('#task_id#', row.getId()));
 		}
 	},
 
@@ -313,9 +408,10 @@ BX.Tasks.GridActions = {
         }.bind(this));
     },
 
-    onDeadlineChangeClick: function(taskId, node, curDeadline)
+    onDeadlineChangeClick: function(taskId, node, curDeadline, event)
 	{
         curDeadline = curDeadline || (new Date).getDate();
+		node = node || event.getData().button;
 
         var calendar = BX.calendar({
             node: node,
@@ -1217,6 +1313,8 @@ BX(function() {
 					}.bind(this));
 
 					this.getGrid().bindOnRowEvents();
+
+					BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', {id: rowId});
 				}
 			}.bind(this));
 			this.query.execute();
@@ -1231,6 +1329,8 @@ BX(function() {
 
 			this.removeTaskListItem(id);
 			this.getGrid().removeRow(id);
+
+			BX.onCustomEvent('Tasks.Tasks.Grid:RowRemove', {id: id});
 		},
 
 		getGridMoveRows: function(rowId, parameters)

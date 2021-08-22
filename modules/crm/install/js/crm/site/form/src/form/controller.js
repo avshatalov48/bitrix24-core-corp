@@ -1,4 +1,3 @@
-import {Vue} from "../vue/vue2.js";
 import * as Type from "./types";
 import * as Field from "../field/registry";
 import * as Pager from "./pager";
@@ -542,7 +541,7 @@ class Controller extends Event
 
 	values()
 	{
-		return this.#fields.reduce((acc, field) => {
+		return this.#fields.filter(field => field.visible).reduce((acc, field) => {
 			acc[field.name] = field.values();
 			return acc;
 		}, {});
@@ -590,6 +589,9 @@ class Controller extends Event
 			components: Components.Definition,
 			data: {
 				form: this,
+				flags: {
+					hideEars: false,
+				},
 			},
 			template: `
 				<component v-bind:is="'b24-form-' + form.view.type"

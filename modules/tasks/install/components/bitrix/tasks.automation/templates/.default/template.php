@@ -83,7 +83,7 @@ global $APPLICATION;
 				var clickHandler = function (e, item)
 				{
 					menu.close();
-					if (item.id === currentGroupId && (viewType === 'project' || viewType === 'scrumProject'))
+					if (item.id === currentGroupId && viewType === 'project')
 					{
 						return;
 					}
@@ -91,13 +91,7 @@ global $APPLICATION;
 					// top.BX.onCustomEvent(top.window, 'BX.Kanban.ChangeGroup', [item.id, currentGroupId]);
 
 					selectorNode.innerHTML = item.text;
-					window.location.href = BX.util.add_url_param(
-						window.location.href,
-						{
-							project_id: item.id,
-							view: viewType
-						}
-					);
+					window.location.href = BX.util.add_url_param(window.location.href, {project_id: item.id, view: 'project'});
 				};
 
 				// fill menu array

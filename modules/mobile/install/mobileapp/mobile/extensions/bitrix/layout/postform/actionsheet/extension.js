@@ -37,10 +37,6 @@
 			iconMarginBottom: 11,
 		};
 
-		recipientsString = recipientsString
-			.replace('<', '&lt;').replace('>', '&gt;')
-			.replace('#ALL_BEGIN#', ``).replace('#ALL_END#', '');
-
 		return PanView(
 			{
 				testId: 'actionSheet',
@@ -252,6 +248,22 @@
 		config,
 	}) => {
 
+		const BBCodeVersion = 38;
+
+		if (Application.getApiVersion() >= BBCodeVersion)
+		{
+			value = value
+				.replace(/&nbsp;/g, ' ')
+				.replace('#ALL_BEGIN#', '[B]').replace('#ALL_END#', '[/B]');
+		}
+		else
+		{
+			value = value
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace('#ALL_BEGIN#', `<b>`).replace('#ALL_END#', '</b>');
+		}
+
 		return (
 			View(
 				{
@@ -296,17 +308,31 @@
 							fontSize: config.fontSize,
 						},
 					}),
-					Text({
-						html: value,
-						style: {
-							fontWeight: 'bold',
-							marginTop: 5,
-							marginBottom: 5,
-							maxWidth: '65%',
-							color: config.fontColor,
-							fontSize: config.fontSize,
-						},
-					}),
+					(
+						Application.getApiVersion() >= BBCodeVersion
+							? BBCodeText({
+								value: value,
+								style: {
+									marginTop: 5,
+									marginBottom: 5,
+									maxWidth: '65%',
+									color: config.fontColor,
+									fontSize: config.fontSize,
+								},
+							})
+							: Text({
+								html: value,
+								style: {
+									marginTop: 5,
+									marginBottom: 5,
+									maxWidth: '65%',
+									color: config.fontColor,
+									fontSize: config.fontSize,
+								},
+							})
+
+					)
+					,
 					View({
 							style: {
 								flex: 1,

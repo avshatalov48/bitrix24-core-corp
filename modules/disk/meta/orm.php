@@ -1,5 +1,441 @@
 <?php
 
+/* ORMENTITYANNOTATION:Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable:disk/lib/document/onlyoffice/models/documentinfotable.php:2dea97c3137b9836ff897543d598ded1 */
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * EO_DocumentInfo
+	 * @see \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string getExternalHash()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
+	 * @method bool hasExternalHash()
+	 * @method bool isExternalHashFilled()
+	 * @method bool isExternalHashChanged()
+	 * @method \int getObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
+	 * @method bool hasObjectId()
+	 * @method bool isObjectIdFilled()
+	 * @method bool isObjectIdChanged()
+	 * @method \int remindActualObjectId()
+	 * @method \int requireObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetObjectId()
+	 * @method \int fillObjectId()
+	 * @method \int getVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
+	 * @method bool hasVersionId()
+	 * @method bool isVersionIdFilled()
+	 * @method bool isVersionIdChanged()
+	 * @method \int remindActualVersionId()
+	 * @method \int requireVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetVersionId()
+	 * @method \int fillVersionId()
+	 * @method \int getOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
+	 * @method bool hasOwnerId()
+	 * @method bool isOwnerIdFilled()
+	 * @method bool isOwnerIdChanged()
+	 * @method \int remindActualOwnerId()
+	 * @method \int requireOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetOwnerId()
+	 * @method \int fillOwnerId()
+	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method bool hasCreateTime()
+	 * @method bool isCreateTimeFilled()
+	 * @method bool isCreateTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime getUpdateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
+	 * @method bool hasUpdateTime()
+	 * @method bool isUpdateTimeFilled()
+	 * @method bool isUpdateTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualUpdateTime()
+	 * @method \Bitrix\Main\Type\DateTime requireUpdateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetUpdateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetUpdateTime()
+	 * @method \Bitrix\Main\Type\DateTime fillUpdateTime()
+	 * @method \int getUsers()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setUsers(\int|\Bitrix\Main\DB\SqlExpression $users)
+	 * @method bool hasUsers()
+	 * @method bool isUsersFilled()
+	 * @method bool isUsersChanged()
+	 * @method \int remindActualUsers()
+	 * @method \int requireUsers()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetUsers()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetUsers()
+	 * @method \int fillUsers()
+	 * @method \int getContentStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setContentStatus(\int|\Bitrix\Main\DB\SqlExpression $contentStatus)
+	 * @method bool hasContentStatus()
+	 * @method bool isContentStatusFilled()
+	 * @method bool isContentStatusChanged()
+	 * @method \int remindActualContentStatus()
+	 * @method \int requireContentStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetContentStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetContentStatus()
+	 * @method \int fillContentStatus()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo set($fieldName, $value)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo reset($fieldName)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo wakeUp($data)
+	 */
+	class EO_DocumentInfo {
+		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable */
+		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * EO_DocumentInfo_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string[] getExternalHashList()
+	 * @method \int[] getObjectIdList()
+	 * @method \int[] fillObjectId()
+	 * @method \int[] getVersionIdList()
+	 * @method \int[] fillVersionId()
+	 * @method \int[] getOwnerIdList()
+	 * @method \int[] fillOwnerId()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreateTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime[] getUpdateTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillUpdateTime()
+	 * @method \int[] getUsersList()
+	 * @method \int[] fillUsers()
+	 * @method \int[] getContentStatusList()
+	 * @method \int[] fillContentStatus()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
+	 * @method bool has(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo getByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_DocumentInfo_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable */
+		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable';
+	}
+}
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_DocumentInfo_Result exec()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo fetchObject()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_DocumentInfo_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo fetchObject()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection fetchCollection()
+	 */
+	class EO_DocumentInfo_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection createCollection()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo wakeUpObject($row)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection wakeUpCollection($rows)
+	 */
+	class EO_DocumentInfo_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable:disk/lib/document/onlyoffice/models/documentsessiontable.php:f7153f5533cea0e56a0d8d152b3e1c1d */
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * EO_DocumentSession
+	 * @see \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
+	 * @method bool hasObjectId()
+	 * @method bool isObjectIdFilled()
+	 * @method bool isObjectIdChanged()
+	 * @method \int remindActualObjectId()
+	 * @method \int requireObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetObjectId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetObjectId()
+	 * @method \int fillObjectId()
+	 * @method \int getVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
+	 * @method bool hasVersionId()
+	 * @method bool isVersionIdFilled()
+	 * @method bool isVersionIdChanged()
+	 * @method \int remindActualVersionId()
+	 * @method \int requireVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetVersionId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetVersionId()
+	 * @method \int fillVersionId()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetUserId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \int getOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
+	 * @method bool hasOwnerId()
+	 * @method bool isOwnerIdFilled()
+	 * @method bool isOwnerIdChanged()
+	 * @method \int remindActualOwnerId()
+	 * @method \int requireOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetOwnerId()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetOwnerId()
+	 * @method \int fillOwnerId()
+	 * @method \boolean getIsExclusive()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setIsExclusive(\boolean|\Bitrix\Main\DB\SqlExpression $isExclusive)
+	 * @method bool hasIsExclusive()
+	 * @method bool isIsExclusiveFilled()
+	 * @method bool isIsExclusiveChanged()
+	 * @method \boolean remindActualIsExclusive()
+	 * @method \boolean requireIsExclusive()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetIsExclusive()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetIsExclusive()
+	 * @method \boolean fillIsExclusive()
+	 * @method \string getExternalHash()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
+	 * @method bool hasExternalHash()
+	 * @method bool isExternalHashFilled()
+	 * @method bool isExternalHashChanged()
+	 * @method \string remindActualExternalHash()
+	 * @method \string requireExternalHash()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetExternalHash()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetExternalHash()
+	 * @method \string fillExternalHash()
+	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method bool hasCreateTime()
+	 * @method bool isCreateTimeFilled()
+	 * @method bool isCreateTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetCreateTime()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
+	 * @method \int getType()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setType(\int|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \int remindActualType()
+	 * @method \int requireType()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetType()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetType()
+	 * @method \int fillType()
+	 * @method \int getStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setStatus(\int|\Bitrix\Main\DB\SqlExpression $status)
+	 * @method bool hasStatus()
+	 * @method bool isStatusFilled()
+	 * @method bool isStatusChanged()
+	 * @method \int remindActualStatus()
+	 * @method \int requireStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetStatus()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetStatus()
+	 * @method \int fillStatus()
+	 * @method \string getContext()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setContext(\string|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \string remindActualContext()
+	 * @method \string requireContext()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetContext()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetContext()
+	 * @method \string fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession set($fieldName, $value)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession reset($fieldName)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession wakeUp($data)
+	 */
+	class EO_DocumentSession {
+		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable */
+		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * EO_DocumentSession_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getObjectIdList()
+	 * @method \int[] fillObjectId()
+	 * @method \int[] getVersionIdList()
+	 * @method \int[] fillVersionId()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \int[] getOwnerIdList()
+	 * @method \int[] fillOwnerId()
+	 * @method \boolean[] getIsExclusiveList()
+	 * @method \boolean[] fillIsExclusive()
+	 * @method \string[] getExternalHashList()
+	 * @method \string[] fillExternalHash()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreateTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreateTime()
+	 * @method \int[] getTypeList()
+	 * @method \int[] fillType()
+	 * @method \int[] getStatusList()
+	 * @method \int[] fillStatus()
+	 * @method \string[] getContextList()
+	 * @method \string[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
+	 * @method bool has(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession getByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_DocumentSession_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable */
+		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable';
+	}
+}
+namespace Bitrix\Disk\Document\OnlyOffice\Models {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_DocumentSession_Result exec()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession fetchObject()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_DocumentSession_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession fetchObject()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection fetchCollection()
+	 */
+	class EO_DocumentSession_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection createCollection()
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession wakeUpObject($row)
+	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection wakeUpCollection($rows)
+	 */
+	class EO_DocumentSession_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Disk\Internals\AttachedObjectTable:disk/lib/internals/attachedobject.php:a79724def8c37325f2ff04d84316185f */
 namespace Bitrix\Disk\Internals {
 	/**
@@ -250,18 +686,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_AttachedObject_Query query()
-	 * @method static EO_AttachedObject_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AttachedObject_Result getById($id)
-	 * @method static EO_AttachedObject_Result getList(array $parameters = array())
-	 * @method static EO_AttachedObject_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedObject createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedObject_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedObject wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedObject_Collection wakeUpCollection($rows)
-	 */
-	class AttachedObjectTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -395,18 +819,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_AttachedViewType_Query query()
-	 * @method static EO_AttachedViewType_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AttachedViewType_Result getById($id)
-	 * @method static EO_AttachedViewType_Result getList(array $parameters = array())
-	 * @method static EO_AttachedViewType_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedViewType createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedViewType_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedViewType wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_AttachedViewType_Collection wakeUpCollection($rows)
-	 */
-	class AttachedViewTypeTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -720,18 +1132,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_CloudImport_Query query()
-	 * @method static EO_CloudImport_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CloudImport_Result getById($id)
-	 * @method static EO_CloudImport_Result getList(array $parameters = array())
-	 * @method static EO_CloudImport_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_CloudImport createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_CloudImport_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_CloudImport wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_CloudImport_Collection wakeUpCollection($rows)
-	 */
-	class CloudImportTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -908,18 +1308,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_DeletedLog_Query query()
-	 * @method static EO_DeletedLog_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_DeletedLog_Result getById($id)
-	 * @method static EO_DeletedLog_Result getList(array $parameters = array())
-	 * @method static EO_DeletedLog_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLog createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLog_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLog wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLog_Collection wakeUpCollection($rows)
-	 */
-	class DeletedLogTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1095,18 +1483,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_DeletedLogV2_Query query()
-	 * @method static EO_DeletedLogV2_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_DeletedLogV2_Result getById($id)
-	 * @method static EO_DeletedLogV2_Result getList(array $parameters = array())
-	 * @method static EO_DeletedLogV2_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2 createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2 wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_DeletedLogV2_Collection wakeUpCollection($rows)
-	 */
-	class DeletedLogV2Table extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1358,18 +1734,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_EditSession_Query query()
-	 * @method static EO_EditSession_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_EditSession_Result getById($id)
-	 * @method static EO_EditSession_Result getList(array $parameters = array())
-	 * @method static EO_EditSession_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_EditSession createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_EditSession_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_EditSession wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_EditSession_Collection wakeUpCollection($rows)
-	 */
-	class EditSessionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1395,7 +1759,7 @@ namespace Bitrix\Disk\Internals {
 	 */
 	class EO_EditSession_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ExternalLinkTable:disk/lib/internals/externallink.php:f589c306523448842df83760b6867fa1 */
+/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ExternalLinkTable:disk/lib/internals/externallink.php:bf3e2b5890aa129cb0052d08ecb98122 */
 namespace Bitrix\Disk\Internals {
 	/**
 	 * EO_ExternalLink
@@ -1509,6 +1873,16 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\EO_ExternalLink resetDownloadCount()
 	 * @method \Bitrix\Disk\Internals\EO_ExternalLink unsetDownloadCount()
 	 * @method \int fillDownloadCount()
+	 * @method \int getAccessRight()
+	 * @method \Bitrix\Disk\Internals\EO_ExternalLink setAccessRight(\int|\Bitrix\Main\DB\SqlExpression $accessRight)
+	 * @method bool hasAccessRight()
+	 * @method bool isAccessRightFilled()
+	 * @method bool isAccessRightChanged()
+	 * @method \int remindActualAccessRight()
+	 * @method \int requireAccessRight()
+	 * @method \Bitrix\Disk\Internals\EO_ExternalLink resetAccessRight()
+	 * @method \Bitrix\Disk\Internals\EO_ExternalLink unsetAccessRight()
+	 * @method \int fillAccessRight()
 	 * @method \boolean getIsExpired()
 	 * @method \boolean remindActualIsExpired()
 	 * @method \boolean requireIsExpired()
@@ -1622,6 +1996,8 @@ namespace Bitrix\Disk\Internals {
 	 * @method \string[] fillDescription()
 	 * @method \int[] getDownloadCountList()
 	 * @method \int[] fillDownloadCount()
+	 * @method \int[] getAccessRightList()
+	 * @method \int[] fillAccessRight()
 	 * @method \boolean[] getIsExpiredList()
 	 * @method \boolean[] fillIsExpired()
 	 * @method \string[] getTypeList()
@@ -1666,18 +2042,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_ExternalLink_Query query()
-	 * @method static EO_ExternalLink_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ExternalLink_Result getById($id)
-	 * @method static EO_ExternalLink_Result getList(array $parameters = array())
-	 * @method static EO_ExternalLink_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ExternalLink createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ExternalLink_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ExternalLink wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ExternalLink_Collection wakeUpCollection($rows)
-	 */
-	class ExternalLinkTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1703,7 +2067,7 @@ namespace Bitrix\Disk\Internals {
 	 */
 	class EO_ExternalLink_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ObjectTable:disk/lib/internals/object.php:7816c5054e8f6b612a2b0bf756628546 */
+/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ObjectTable:disk/lib/internals/object.php:8f3c4ae180fb349de73427ab7c4e7e4c */
 namespace Bitrix\Disk\Internals {
 	/**
 	 * EO_Object
@@ -2101,6 +2465,16 @@ namespace Bitrix\Disk\Internals {
 	 * @method bool isHasSearchIndexFilled()
 	 * @method \Bitrix\Disk\Internals\EO_Object unsetHasSearchIndex()
 	 * @method \boolean fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject getTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject remindActualTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject requireTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_Object setTrackedObject(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method \Bitrix\Disk\Internals\EO_Object resetTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_Object unsetTrackedObject()
+	 * @method bool hasTrackedObject()
+	 * @method bool isTrackedObjectFilled()
+	 * @method bool isTrackedObjectChanged()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject fillTrackedObject()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2236,6 +2610,9 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection fillExtendedIndex()
 	 * @method \boolean[] getHasSearchIndexList()
 	 * @method \boolean[] fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject[] getTrackedObjectList()
+	 * @method \Bitrix\Disk\Internals\EO_Object_Collection getTrackedObjectCollection()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection fillTrackedObject()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2268,18 +2645,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_Object_Query query()
-	 * @method static EO_Object_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Object_Result getById($id)
-	 * @method static EO_Object_Result getList(array $parameters = array())
-	 * @method static EO_Object_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Object createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Object_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Object wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Object_Collection wakeUpCollection($rows)
-	 */
-	class ObjectTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2704,6 +3069,16 @@ namespace Bitrix\Disk\Internals {
 	 * @method bool isHasSearchIndexFilled()
 	 * @method \Bitrix\Disk\Internals\EO_File unsetHasSearchIndex()
 	 * @method \boolean fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject getTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject remindActualTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject requireTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_File setTrackedObject(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method \Bitrix\Disk\Internals\EO_File resetTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_File unsetTrackedObject()
+	 * @method bool hasTrackedObject()
+	 * @method bool isTrackedObjectFilled()
+	 * @method bool isTrackedObjectChanged()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject fillTrackedObject()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2839,6 +3214,9 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection fillExtendedIndex()
 	 * @method \boolean[] getHasSearchIndexList()
 	 * @method \boolean[] fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject[] getTrackedObjectList()
+	 * @method \Bitrix\Disk\Internals\EO_File_Collection getTrackedObjectCollection()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection fillTrackedObject()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2871,18 +3249,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_File_Query query()
-	 * @method static EO_File_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_File_Result getById($id)
-	 * @method static EO_File_Result getList(array $parameters = array())
-	 * @method static EO_File_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_File createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_File_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_File wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_File_Collection wakeUpCollection($rows)
-	 */
-	class FileTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -3307,6 +3673,16 @@ namespace Bitrix\Disk\Internals {
 	 * @method bool isHasSearchIndexFilled()
 	 * @method \Bitrix\Disk\Internals\EO_Folder unsetHasSearchIndex()
 	 * @method \boolean fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject getTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject remindActualTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject requireTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_Folder setTrackedObject(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method \Bitrix\Disk\Internals\EO_Folder resetTrackedObject()
+	 * @method \Bitrix\Disk\Internals\EO_Folder unsetTrackedObject()
+	 * @method bool hasTrackedObject()
+	 * @method bool isTrackedObjectFilled()
+	 * @method bool isTrackedObjectChanged()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject fillTrackedObject()
 	 * @method \boolean getHasSubfolders()
 	 * @method \boolean remindActualHasSubfolders()
 	 * @method \boolean requireHasSubfolders()
@@ -3449,6 +3825,9 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection fillExtendedIndex()
 	 * @method \boolean[] getHasSearchIndexList()
 	 * @method \boolean[] fillHasSearchIndex()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject[] getTrackedObjectList()
+	 * @method \Bitrix\Disk\Internals\EO_Folder_Collection getTrackedObjectCollection()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection fillTrackedObject()
 	 * @method \boolean[] getHasSubfoldersList()
 	 * @method \boolean[] fillHasSubfolders()
 	 *
@@ -3483,18 +3862,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_Folder_Query query()
-	 * @method static EO_Folder_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Folder_Result getById($id)
-	 * @method static EO_Folder_Result getList(array $parameters = array())
-	 * @method static EO_Folder_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Folder createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Folder_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Folder wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Folder_Collection wakeUpCollection($rows)
-	 */
-	class FolderTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -3661,18 +4028,6 @@ namespace Bitrix\Disk\Internals\Index {
 }
 namespace Bitrix\Disk\Internals\Index {
 	/**
-	 * @method static EO_ObjectExtendedIndex_Query query()
-	 * @method static EO_ObjectExtendedIndex_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectExtendedIndex_Result getById($id)
-	 * @method static EO_ObjectExtendedIndex_Result getList(array $parameters = array())
-	 * @method static EO_ObjectExtendedIndex_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection wakeUpCollection($rows)
-	 */
-	class ObjectExtendedIndexTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -3826,18 +4181,6 @@ namespace Bitrix\Disk\Internals\Index {
 }
 namespace Bitrix\Disk\Internals\Index {
 	/**
-	 * @method static EO_ObjectHeadIndex_Query query()
-	 * @method static EO_ObjectHeadIndex_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectHeadIndex_Result getById($id)
-	 * @method static EO_ObjectHeadIndex_Result getList(array $parameters = array())
-	 * @method static EO_ObjectHeadIndex_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectHeadIndex createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectHeadIndex_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectHeadIndex wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\Index\EO_ObjectHeadIndex_Collection wakeUpCollection($rows)
-	 */
-	class ObjectHeadIndexTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -3863,7 +4206,7 @@ namespace Bitrix\Disk\Internals\Index {
 	 */
 	class EO_ObjectHeadIndex_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ObjectLockTable:disk/lib/internals/objectlock.php:3831f890c48a3cd65630ee793e0c4f69 */
+/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\ObjectLockTable:disk/lib/internals/objectlock.php:adfbad31e3b09b67bddd4b0fd3bcfa8d */
 namespace Bitrix\Disk\Internals {
 	/**
 	 * EO_ObjectLock
@@ -3927,6 +4270,13 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\EO_ObjectLock resetCreateTime()
 	 * @method \Bitrix\Disk\Internals\EO_ObjectLock unsetCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
+	 * @method \boolean getIsReadyAutoUnlock()
+	 * @method \boolean remindActualIsReadyAutoUnlock()
+	 * @method \boolean requireIsReadyAutoUnlock()
+	 * @method bool hasIsReadyAutoUnlock()
+	 * @method bool isIsReadyAutoUnlockFilled()
+	 * @method \Bitrix\Disk\Internals\EO_ObjectLock unsetIsReadyAutoUnlock()
+	 * @method \boolean fillIsReadyAutoUnlock()
 	 * @method \Bitrix\Main\Type\DateTime getExpiryTime()
 	 * @method \Bitrix\Disk\Internals\EO_ObjectLock setExpiryTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $expiryTime)
 	 * @method bool hasExpiryTime()
@@ -4012,6 +4362,8 @@ namespace Bitrix\Disk\Internals {
 	 * @method \int[] fillCreatedBy()
 	 * @method \Bitrix\Main\Type\DateTime[] getCreateTimeList()
 	 * @method \Bitrix\Main\Type\DateTime[] fillCreateTime()
+	 * @method \boolean[] getIsReadyAutoUnlockList()
+	 * @method \boolean[] fillIsReadyAutoUnlock()
 	 * @method \Bitrix\Main\Type\DateTime[] getExpiryTimeList()
 	 * @method \Bitrix\Main\Type\DateTime[] fillExpiryTime()
 	 * @method \string[] getTypeList()
@@ -4050,18 +4402,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_ObjectLock_Query query()
-	 * @method static EO_ObjectLock_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectLock_Result getById($id)
-	 * @method static EO_ObjectLock_Result getList(array $parameters = array())
-	 * @method static EO_ObjectLock_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectLock createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectLock_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectLock wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectLock_Collection wakeUpCollection($rows)
-	 */
-	class ObjectLockTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4215,18 +4555,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_ObjectPath_Query query()
-	 * @method static EO_ObjectPath_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectPath_Result getById($id)
-	 * @method static EO_ObjectPath_Result getList(array $parameters = array())
-	 * @method static EO_ObjectPath_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectPath createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectPath_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectPath wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectPath_Collection wakeUpCollection($rows)
-	 */
-	class ObjectPathTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -4354,18 +4682,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_ObjectSaveIndex_Query query()
-	 * @method static EO_ObjectSaveIndex_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectSaveIndex_Result getById($id)
-	 * @method static EO_ObjectSaveIndex_Result getList(array $parameters = array())
-	 * @method static EO_ObjectSaveIndex_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectSaveIndex createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectSaveIndex_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectSaveIndex wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectSaveIndex_Collection wakeUpCollection($rows)
-	 */
-	class ObjectSaveIndexTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4541,18 +4857,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_ObjectTtl_Query query()
-	 * @method static EO_ObjectTtl_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ObjectTtl_Result getById($id)
-	 * @method static EO_ObjectTtl_Result getList(array $parameters = array())
-	 * @method static EO_ObjectTtl_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectTtl createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectTtl_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectTtl wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ObjectTtl_Collection wakeUpCollection($rows)
-	 */
-	class ObjectTtlTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -4704,18 +5008,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_RecentlyUsed_Query query()
-	 * @method static EO_RecentlyUsed_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RecentlyUsed_Result getById($id)
-	 * @method static EO_RecentlyUsed_Result getList(array $parameters = array())
-	 * @method static EO_RecentlyUsed_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_RecentlyUsed_Collection wakeUpCollection($rows)
-	 */
-	class RecentlyUsedTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4958,18 +5250,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_Right_Query query()
-	 * @method static EO_Right_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Right_Result getById($id)
-	 * @method static EO_Right_Result getList(array $parameters = array())
-	 * @method static EO_Right_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Right createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Right_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Right wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Right_Collection wakeUpCollection($rows)
-	 */
-	class RightTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -5180,18 +5460,6 @@ namespace Bitrix\Disk\Internals\Rights\Table {
 	}
 }
 namespace Bitrix\Disk\Internals\Rights\Table {
-	/**
-	 * @method static EO_RightSetupSession_Query query()
-	 * @method static EO_RightSetupSession_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RightSetupSession_Result getById($id)
-	 * @method static EO_RightSetupSession_Result getList(array $parameters = array())
-	 * @method static EO_RightSetupSession_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession_Collection wakeUpCollection($rows)
-	 */
-	class RightSetupSessionTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -5595,18 +5863,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_Sharing_Query query()
-	 * @method static EO_Sharing_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Sharing_Result getById($id)
-	 * @method static EO_Sharing_Result getList(array $parameters = array())
-	 * @method static EO_Sharing_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Sharing createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Sharing_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Sharing wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Sharing_Collection wakeUpCollection($rows)
-	 */
-	class SharingTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -5866,18 +6122,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_ShowSession_Query query()
-	 * @method static EO_ShowSession_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ShowSession_Result getById($id)
-	 * @method static EO_ShowSession_Result getList(array $parameters = array())
-	 * @method static EO_ShowSession_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_ShowSession createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_ShowSession_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_ShowSession wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_ShowSession_Collection wakeUpCollection($rows)
-	 */
-	class ShowSessionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -6017,18 +6261,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_SimpleRight_Query query()
-	 * @method static EO_SimpleRight_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_SimpleRight_Result getById($id)
-	 * @method static EO_SimpleRight_Result getList(array $parameters = array())
-	 * @method static EO_SimpleRight_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_SimpleRight createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_SimpleRight_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_SimpleRight wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_SimpleRight_Collection wakeUpCollection($rows)
-	 */
-	class SimpleRightTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -6278,18 +6510,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_Storage_Query query()
-	 * @method static EO_Storage_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Storage_Result getById($id)
-	 * @method static EO_Storage_Result getList(array $parameters = array())
-	 * @method static EO_Storage_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Storage createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Storage_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Storage wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Storage_Collection wakeUpCollection($rows)
-	 */
-	class StorageTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -6573,18 +6793,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_TmpFile_Query query()
-	 * @method static EO_TmpFile_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TmpFile_Result getById($id)
-	 * @method static EO_TmpFile_Result getList(array $parameters = array())
-	 * @method static EO_TmpFile_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_TmpFile createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_TmpFile_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_TmpFile wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_TmpFile_Collection wakeUpCollection($rows)
-	 */
-	class TmpFileTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -6609,6 +6817,194 @@ namespace Bitrix\Disk\Internals {
 	 * @method \Bitrix\Disk\Internals\EO_TmpFile_Collection wakeUpCollection($rows)
 	 */
 	class EO_TmpFile_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Disk\Internals\TrackedObjectTable:disk/lib/internals/trackedobjecttable.php:3ec75a98bba8996d59bac4ee3f551bb3 */
+namespace Bitrix\Disk\Internals {
+	/**
+	 * EO_TrackedObject
+	 * @see \Bitrix\Disk\Internals\TrackedObjectTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetUserId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \int getObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
+	 * @method bool hasObjectId()
+	 * @method bool isObjectIdFilled()
+	 * @method bool isObjectIdChanged()
+	 * @method \int remindActualObjectId()
+	 * @method \int requireObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetObjectId()
+	 * @method \int fillObjectId()
+	 * @method \int getRealObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setRealObjectId(\int|\Bitrix\Main\DB\SqlExpression $realObjectId)
+	 * @method bool hasRealObjectId()
+	 * @method bool isRealObjectIdFilled()
+	 * @method bool isRealObjectIdChanged()
+	 * @method \int remindActualRealObjectId()
+	 * @method \int requireRealObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetRealObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetRealObjectId()
+	 * @method \int fillRealObjectId()
+	 * @method \int getAttachedObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setAttachedObjectId(\int|\Bitrix\Main\DB\SqlExpression $attachedObjectId)
+	 * @method bool hasAttachedObjectId()
+	 * @method bool isAttachedObjectIdFilled()
+	 * @method bool isAttachedObjectIdChanged()
+	 * @method \int remindActualAttachedObjectId()
+	 * @method \int requireAttachedObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetAttachedObjectId()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetAttachedObjectId()
+	 * @method \int fillAttachedObjectId()
+	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method bool hasCreateTime()
+	 * @method bool isCreateTimeFilled()
+	 * @method bool isCreateTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetCreateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime getUpdateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
+	 * @method bool hasUpdateTime()
+	 * @method bool isUpdateTimeFilled()
+	 * @method bool isUpdateTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualUpdateTime()
+	 * @method \Bitrix\Main\Type\DateTime requireUpdateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject resetUpdateTime()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unsetUpdateTime()
+	 * @method \Bitrix\Main\Type\DateTime fillUpdateTime()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject set($fieldName, $value)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject reset($fieldName)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Disk\Internals\EO_TrackedObject wakeUp($data)
+	 */
+	class EO_TrackedObject {
+		/* @var \Bitrix\Disk\Internals\TrackedObjectTable */
+		static public $dataClass = '\Bitrix\Disk\Internals\TrackedObjectTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Disk\Internals {
+	/**
+	 * EO_TrackedObject_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \int[] getObjectIdList()
+	 * @method \int[] fillObjectId()
+	 * @method \int[] getRealObjectIdList()
+	 * @method \int[] fillRealObjectId()
+	 * @method \int[] getAttachedObjectIdList()
+	 * @method \int[] fillAttachedObjectId()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreateTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreateTime()
+	 * @method \Bitrix\Main\Type\DateTime[] getUpdateTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillUpdateTime()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method bool has(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject getByPrimary($primary)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Internals\EO_TrackedObject $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Disk\Internals\EO_TrackedObject_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_TrackedObject_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Disk\Internals\TrackedObjectTable */
+		static public $dataClass = '\Bitrix\Disk\Internals\TrackedObjectTable';
+	}
+}
+namespace Bitrix\Disk\Internals {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_TrackedObject_Result exec()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject fetchObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_TrackedObject_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject fetchObject()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection fetchCollection()
+	 */
+	class EO_TrackedObject_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection createCollection()
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject wakeUpObject($row)
+	 * @method \Bitrix\Disk\Internals\EO_TrackedObject_Collection wakeUpCollection($rows)
+	 */
+	class EO_TrackedObject_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Disk\Internals\VersionTable:disk/lib/internals/version.php:12dd889aee05627ebd692bdd80ffffcd */
 namespace Bitrix\Disk\Internals {
@@ -6921,18 +7317,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_Version_Query query()
-	 * @method static EO_Version_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Version_Result getById($id)
-	 * @method static EO_Version_Result getList(array $parameters = array())
-	 * @method static EO_Version_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Version createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Version_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Version wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Version_Collection wakeUpCollection($rows)
-	 */
-	class VersionTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -7556,18 +7940,6 @@ namespace Bitrix\Disk\Internals {
 }
 namespace Bitrix\Disk\Internals {
 	/**
-	 * @method static EO_Volume_Query query()
-	 * @method static EO_Volume_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Volume_Result getById($id)
-	 * @method static EO_Volume_Result getList(array $parameters = array())
-	 * @method static EO_Volume_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_Volume createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_Volume_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_Volume wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_Volume_Collection wakeUpCollection($rows)
-	 */
-	class VolumeTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -7915,18 +8287,6 @@ namespace Bitrix\Disk\Internals {
 	}
 }
 namespace Bitrix\Disk\Internals {
-	/**
-	 * @method static EO_VolumeDeletedLog_Query query()
-	 * @method static EO_VolumeDeletedLog_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_VolumeDeletedLog_Result getById($id)
-	 * @method static EO_VolumeDeletedLog_Result getList(array $parameters = array())
-	 * @method static EO_VolumeDeletedLog_Entity getEntity()
-	 * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog_Collection createCollection()
-	 * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog wakeUpObject($row)
-	 * @method static \Bitrix\Disk\Internals\EO_VolumeDeletedLog_Collection wakeUpCollection($rows)
-	 */
-	class VolumeDeletedLogTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

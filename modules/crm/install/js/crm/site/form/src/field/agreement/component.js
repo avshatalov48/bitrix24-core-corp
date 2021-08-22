@@ -29,7 +29,7 @@ const FieldAgreement = {
 			let url = this.field.options.content.url.trim();
 			if (!/^http:|^https:/.test(url))
 			{
-				return '';
+				url = 'https://' + url;
 			}
 
 			const node = document.createElement('div');

@@ -43,6 +43,8 @@ class Trace
 
 	protected $ref;
 
+	protected $gid;
+
 	/** @var bool Use detecting of Date Create. */
 	private $useDetectingOfDateCreate = false;
 
@@ -179,6 +181,12 @@ class Trace
 			}
 		}
 
+		$gid = self::getValueByKey($data, 'gid');
+		if ($gid)
+		{
+			$this->setGid($gid);
+		}
+
 		$url = self::getValueByKey($data, 'url');
 		if (!$url && $this->pages)
 		{
@@ -281,6 +289,28 @@ class Trace
 	public function getPages()
 	{
 		return $this->pages;
+	}
+
+	/**
+	 * Get guest id.
+	 *
+	 * @return string|null
+	 */
+	public function getGid()
+	{
+		return $this->gid;
+	}
+
+	/**
+	 * Set guest id.
+	 *
+	 * @param string $gid Guest ID.
+	 * @return $this
+	 */
+	public function setGid($gid)
+	{
+		$this->gid = $gid;
+		return $this;
 	}
 
 	/**

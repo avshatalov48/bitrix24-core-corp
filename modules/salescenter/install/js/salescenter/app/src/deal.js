@@ -49,6 +49,11 @@ export default {
 		},
 		sendPaymentDeliveryForm(event)
 		{
+			if (!this.isAllowedPaymentDeliverySubmitButton)
+			{
+				return;
+			}
+
 			if (this.editable)
 			{
 				this.$root.$app.sendPayment(event.target);
@@ -60,6 +65,11 @@ export default {
 		},
 		sendDeliveryForm(event)
 		{
+			if (!this.isAllowedDeliverySubmitButton)
+			{
+				return;
+			}
+
 			this.$root.$app.sendShipment(event.target);
 		},
 		// region menu item handlers
@@ -104,7 +114,26 @@ export default {
 		},
 		isAllowedPaymentDeliverySubmitButton()
 		{
-			if (this.$root.$app.disableSendButton || this.$root.$app.options.contactPhone === '')
+			if (this.$root.$app.options.contactPhone === '')
+			{
+				return false;
+			}
+
+			let isCurrentSenderConnected = false;
+			for (let sender of this.$root.$app.options.senders)
+			{
+				if (sender.code !== this.$root.$app.options.currentSenderCode)
+				{
+					continue;
+				}
+
+				if (sender.isConnected)
+				{
+					isCurrentSenderConnected = true;
+					break;
+				}
+			}
+			if (!isCurrentSenderConnected)
 			{
 				return false;
 			}
@@ -115,6 +144,11 @@ export default {
 		{
 			const deliveryId = this.$store.getters['orderCreation/getDeliveryId'];
 			if (!deliveryId)
+			{
+				return false;
+			}
+
+			if (!this.$store.getters['orderCreation/isAllowedSubmit'])
 			{
 				return false;
 			}

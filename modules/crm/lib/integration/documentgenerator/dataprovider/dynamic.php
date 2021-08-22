@@ -153,6 +153,18 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 		return $this->fields;
 	}
 
+	protected function fetchData()
+	{
+		parent::fetchData();
+
+		$this->getFields();
+		foreach ($this->userFieldDescriptions as $name => $description)
+		{
+			// we should purge values or they will not be processed in self::getUserFieldValue()
+			unset($this->data[$name]);
+		}
+	}
+
 	protected function getFactory(): ?Factory\Dynamic
 	{
 		if(\CCrmOwnerType::isPossibleDynamicTypeId($this->getCrmOwnerType()))

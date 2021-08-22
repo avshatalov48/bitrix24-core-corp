@@ -34,7 +34,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 			$licensePrefix = \CBitrix24::getLicensePrefix();
 			$licenseType = \CBitrix24::getLicenseType();
-			if ($licensePrefix === "cn" && $licenseType === "project")
+			if (in_array($licensePrefix, ['cn', 'en', 'vn', 'jp']) && $licenseType === "project")
 			{
 				$res = InvitationTable::getList([
 					'filter' => [
@@ -46,8 +46,9 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 					)
 				])->fetch();
 
-				if ((int)$res['CNT'] >= 5)
+				if ((int)$res['CNT'] >= 10)
 				{
+					$this->addError(new \Bitrix\Main\Error(Loc::getMessage('INTRANET_INVITE_DIALOG_USER_COUNT_ERROR')));
 					return false;
 				}
 			}
@@ -534,10 +535,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!Integrator::isMoreIntegratorsAvailable())
 		{
-			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("BX24_INVITE_DIALOG_INTEGRATOR_COUNT_ERROR", array(
-				"#LINK_START#" => "<a href=\"/company/?apply_filter=Y&INTEGRATOR=Y&FIRED=N\">",
-				"#LINK_END#" => "</a>",
-			))));
+			$this->addError(
+				new \Bitrix\Main\Error(
+					Loc::getMessage(
+						"BX24_INVITE_DIALOG_INTEGRATOR_COUNT_ERROR",
+						[
+							"#LINK_START#" => "",
+							"#LINK_END#" => "",
+						]
+					)
+				)
+			);
 			return false;
 		}
 
@@ -550,8 +558,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		$messageText = Loc::getMessage("BX24_INVITE_DIALOG_INTEGRATOR_INVITE_TEXT");
 
-		//$oldIntegratorId = \CBitrix24::getIntegratorId();
-
 		$strError = "";
 		$newIntegratorId = CIntranetInviteDialog::inviteIntegrator(SITE_ID, $_POST["integrator_email"], $messageText, $strError);
 
@@ -560,11 +566,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}
-
-		/*if ($oldIntegratorId && $newIntegratorId)
-		{
-			$USER->Update($oldIntegratorId, array("ACTIVE" => "N"));
-		}*/
 
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 

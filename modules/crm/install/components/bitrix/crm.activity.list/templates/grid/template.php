@@ -268,8 +268,14 @@ foreach($arResult['ITEMS'] as &$item)
 	$ownerTypeID = isset($item['OWNER_TYPE_ID']) ? intval($item['OWNER_TYPE_ID']) : 0;
 	$ownerID = isset($item['OWNER_ID']) ? intval($item['OWNER_ID']) : 0;
 	$ownerInfo = null;
-	if($ownerID > 0
-		&& ($ownerTypeID === CCrmOwnerType::Deal || $ownerTypeID === CCrmOwnerType::Lead)
+	if (
+		$ownerID > 0
+		&& (
+			$ownerTypeID === CCrmOwnerType::Deal
+			|| $ownerTypeID === CCrmOwnerType::Lead
+			|| $ownerTypeID === CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID)
+		)
 		&& isset($arResult['OWNER_INFOS'][$ownerTypeID])
 		&& isset($arResult['OWNER_INFOS'][$ownerTypeID][$ownerID])
 	)

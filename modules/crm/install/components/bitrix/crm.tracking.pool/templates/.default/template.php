@@ -14,7 +14,10 @@ use Bitrix\Main\Web\Json;
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
-Extension::load(["ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms", "loader", "ui.sidepanel-content"]);
+Extension::load([
+	"ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms",
+	"loader", "ui.sidepanel-content", "ui.info-helper"
+]);
 
 $containerId = 'crm-tracking-channel-pool';
 ?>
@@ -137,7 +140,7 @@ $containerId = 'crm-tracking-channel-pool';
 		</div>
 
 		<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
-			'BUTTONS' => ['save', 'cancel' => $arParams['PATH_TO_LIST']]
+			'BUTTONS' => ($arResult['FEATURE_CODE'] ? [] : ['save']) + ['cancel' => $arParams['PATH_TO_LIST']]
 		]);?>
 	</form>
 
@@ -171,6 +174,7 @@ $containerId = 'crm-tracking-channel-pool';
 				'typeId' => $arParams['TYPE_ID'],
 				'componentName' => $this->getComponent()->getName(),
 				'signedParameters' => $this->getComponent()->getSignedParameters(),
+				'featureCode' => $arResult['FEATURE_CODE'],
 				'mess' => [
 					'searcherTitle' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_AV_ITEMS_' . $arParams['TYPE_NAME']),
 					'searcherCategory' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_AV'),

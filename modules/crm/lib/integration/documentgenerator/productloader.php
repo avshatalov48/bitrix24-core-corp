@@ -196,12 +196,15 @@ class ProductLoader
 		}
 
 		$offersData = \CCatalogSku::getProductList(array_keys($allIds), $this->offerIblockId);
-		foreach ($offersData as $offerId => $offerData)
+		if (is_array($offersData))
 		{
-			$this->offerIds[$offerId] = $allIds[$offerId];
-			$productId = (int)$offerData['ID'];
-			$this->productIds[$productId] = $allIds[$productId] ?? null;
-			$this->offerToProductsMap[$offerId] = $productId;
+			foreach ($offersData as $offerId => $offerData)
+			{
+				$this->offerIds[$offerId] = $allIds[$offerId];
+				$productId = (int)$offerData['ID'];
+				$this->productIds[$productId] = $allIds[$productId] ?? null;
+				$this->offerToProductsMap[$offerId] = $productId;
+			}
 		}
 
 		foreach ($allIds as $productId => $rowId)

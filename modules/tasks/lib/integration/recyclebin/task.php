@@ -8,6 +8,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
+use Bitrix\Recyclebin\Internals\Entity;
+use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
+use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
@@ -25,10 +28,6 @@ use Bitrix\Tasks\Scrum\Internal\ItemTable as ScrumItem;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
-
-use Bitrix\Recyclebin\Recyclebin;
-use Bitrix\Recyclebin\Internals\Entity;
-use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 
 use \CTasks;
 
@@ -474,13 +473,35 @@ if (Loader::includeModule('recyclebin'))
 			];
 		}
 
-		public static function isInTheRecycleBin(int $taskId): bool
+		/**
+		 * Checks if tasks are in the recycle bin.
+		 *
+		 * @param array $taskIds
+		 * @return array The map task ids with the result.
+		 */
+		public static function isInTheRecycleBin(array $taskIds): array
 		{
-			$taskId = (int) $taskId;
+			$resultMap = [];
 
-			$recycleBinEntityId = Recyclebin::findId('tasks', Manager::TASKS_RECYCLEBIN_ENTITY, $taskId);
+			foreach ($taskIds as $taskId)
+			{
+				$resultMap[$taskId] = false;
+			}
 
-			return (!empty($recycleBinEntityId));
+			$queryObject = RecyclebinTable::getList([
+				'select' => ['ENTITY_ID'],
+				'filter' => [
+					'=MODULE_ID' => 'tasks',
+					'=ENTITY_TYPE' => Manager::TASKS_RECYCLEBIN_ENTITY,
+					'=ENTITY_ID' => $taskIds
+				],
+			]);
+			while ($data = $queryObject->fetch())
+			{
+				$resultMap[$data['ENTITY_ID']] = true;
+			}
+
+			return $resultMap;
 		}
 	}
 }

@@ -6,13 +6,13 @@
 }
 
 .header-search {
+	flex: 1 1 auto;
 	position: relative;
 	height: 34px;
 	/*flex:1;*/
 	order: 3;
 	/*top: 15px;*/
 	overflow: hidden;
-	width: 100%;
 	transition: width .2s;
 	margin-left: 10px;
 }

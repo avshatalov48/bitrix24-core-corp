@@ -285,3 +285,13 @@ CREATE TABLE IF NOT EXISTS b_timeman_monitor_user_chart (
     PRIMARY KEY (ID),
     INDEX IX_B_TIMEMAN_MONITOR_USER_CHART_1 (DATE_LOG, USER_ID, DESKTOP_CODE)
 );
+
+CREATE TABLE IF NOT EXISTS b_timeman_monitor_report_comment (
+	ID int not null auto_increment,
+	DATE_LOG date not null,
+    USER_ID int not null,
+	DESKTOP_CODE varchar(32) default null,
+    COMMENT text default '',
+    PRIMARY KEY (ID),
+    INDEX IX_B_TIMEMAN_MONITOR_REPORT_COMMENT_1 (USER_ID, DATE_LOG, DESKTOP_CODE)
+);

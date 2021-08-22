@@ -5,11 +5,15 @@ CJSCore::Init("finder");
 
 use Bitrix\Main\Localization\Loc;
 
-$this->SetViewTarget("sidebar", 10);
-$frame = $this->createFrame()->begin();
+if ($arResult['DISPLAY_MODE'] === 'sidebar')
+{
+	$this->SetViewTarget("sidebar", 10);
+	$frame = $this->createFrame()->begin();
+}
 
+$containerDataId = 'intranet-ustat-online-container-' . rand();
 ?>
-<div class="intranet-ustat-online-box js-intranet-ustat-online-container">
+<div class="intranet-ustat-online-box" data-id="<?=$containerDataId?>">
 	<div class="intranet-ustat-online-badge">live</div>
 	<div id="intranet-ustat-online-hint" class="intranet-ustat-online-hint" onclick="BX.Helper.show('redirect=detail&code=11584442');">
 		<div class="intranet-ustat-online-hint-item">
@@ -62,47 +66,51 @@ $frame = $this->createFrame()->begin();
 			"INTRANET_USTAT_ONLINE_FINISHED_DAY" : "<?=CUtil::JSEscape(Loc::getMessage("INTRANET_USTAT_ONLINE_FINISHED_DAY"))?>"
 		});
 
-		BX.Intranet.UstatOnline = new BX.Intranet.UstatOnline({
+		new BX.Intranet.UstatOnline({
 			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 			componentName: '<?=$this->getComponent()->getName() ?>',
 			users: <?=$arResult['USERS']?>,
 			currentUserId: <?=$USER->GetID()?>,
 			limitOnlineSeconds: <?=$arResult["LIMIT_ONLINE_SECONDS"]?>,
 			maxOnlineUserCountToday: '<?=$arResult["MAX_ONLINE_USER_COUNT_TODAY"]?>',
+			maxUserToShow: '<?=$arResult["MAX_USER_TO_SHOW"]?>',
 			allOnlineUserIdToday: <?=CUtil::PhpToJSObject($arResult["ALL_ONLINE_USER_ID_TODAY"])?>,
-			ustatOnlineContainerNode: document.querySelector('.js-intranet-ustat-online-container'),
-			userBlockNode: document.querySelector('.intranet-ustat-online-icon-box'),
-			userInnerBlockNode: document.querySelector('.intranet-ustat-online-icon-inner'),
-			circleNode: document.querySelector('.ui-graph-circle'),
-			timemanNode: document.querySelector('.intranet-ustat-online-info'),
+			ustatOnlineContainerNode: document.querySelector("[data-id='<?=$containerDataId?>']"),
 			isTimemanAvailable: '<?=$arResult["IS_FEATURE_TIMEMAN_AVAILABLE"] ? "Y" : "N"?>',
 			isFullAnimationMode: '<?=$arResult["IS_FULL_ANIMATION_MODE"] ? "Y" : "N"?>'
 		});
 	});
 </script>
 
-<?$frame->beginStub();?>
-<div class="intranet-ustat-online-box js-intranet-ustat-online-container">
-	<div class="intranet-ustat-online-badge">live</div>
-	<div class="intranet-ustat-online-counter">
-		<div class="ui-graph-circle ui-graph-circle-waves-blue ui-graph-circle-bar-progress-green">
-			<div class="ui-graph-circle-wrapper ui-graph-circle-wrapper-animate ui-graph-circle-counter">
-				<canvas class="ui-graph-circle-canvas" height="200" width="200"></canvas>
+<?
+if ($arResult['DISPLAY_MODE'] === 'sidebar')
+{
+	$frame->beginStub();
+?>
+	<div class="intranet-ustat-online-box js-intranet-ustat-online-container">
+		<div class="intranet-ustat-online-badge">live</div>
+		<div class="intranet-ustat-online-counter">
+			<div class="ui-graph-circle ui-graph-circle-waves-blue ui-graph-circle-bar-progress-green">
+				<div class="ui-graph-circle-wrapper ui-graph-circle-wrapper-animate ui-graph-circle-counter">
+					<canvas class="ui-graph-circle-canvas" height="200" width="200"></canvas>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="intranet-ustat-online-main">
-		<div class="intranet-ustat-online-icon-box"></div>
-		<?if ($arResult["IS_TIMEMAN_INSTALLED"]):?>
-			<div class="intranet-ustat-online-info">
-				<div class="intranet-ustat-online-info-item js-ustat-online-timeman-opened-block">
-					<span class="intranet-ustat-online-text js-ustat-online-timeman-text"><?=Loc::getMessage("INTRANET_USTAT_ONLINE_STARTED_DAY")?></span>
+		<div class="intranet-ustat-online-main">
+			<div class="intranet-ustat-online-icon-box"></div>
+			<?if ($arResult["IS_TIMEMAN_INSTALLED"]):?>
+				<div class="intranet-ustat-online-info">
+					<div class="intranet-ustat-online-info-item js-ustat-online-timeman-opened-block">
+						<span class="intranet-ustat-online-text js-ustat-online-timeman-text"><?=Loc::getMessage("INTRANET_USTAT_ONLINE_STARTED_DAY")?></span>
+					</div>
+					<div class="intranet-ustat-online-info-item js-ustat-online-timeman-closed-block">
+						<span class="intranet-ustat-online-text js-ustat-online-timeman-text"><?=Loc::getMessage("INTRANET_USTAT_ONLINE_FINISHED_DAY")?></span>
+					</div>
 				</div>
-				<div class="intranet-ustat-online-info-item js-ustat-online-timeman-closed-block">
-					<span class="intranet-ustat-online-text js-ustat-online-timeman-text"><?=Loc::getMessage("INTRANET_USTAT_ONLINE_FINISHED_DAY")?></span>
-				</div>
-			</div>
-		<?endif?>
+			<?endif?>
+		</div>
 	</div>
-</div>
-<?$frame->end(); ?>
+<?
+	$frame->end();
+}
+?>

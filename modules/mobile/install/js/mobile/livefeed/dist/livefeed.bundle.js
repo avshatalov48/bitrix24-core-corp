@@ -4,7 +4,10 @@ this.BX = this.BX || {};
 
 	var BalloonNotifier = /*#__PURE__*/function () {
 	  function BalloonNotifier() {
+	    var _this = this;
+
 	    babelHelpers.classCallCheck(this, BalloonNotifier);
+	    this.initialized = false;
 	    this.classes = {
 	      show: 'lenta-notifier-shown'
 	    };
@@ -12,11 +15,63 @@ this.BX = this.BX || {};
 	      notifier: 'lenta_notifier',
 	      notifierCounter: 'lenta_notifier_cnt',
 	      notifierCounterTitle: 'lenta_notifier_cnt_title',
-	      refreshNeeded: 'lenta_notifier_2'
+	      refreshNeeded: 'lenta_notifier_2',
+	      refreshError: 'lenta_refresh_error',
+	      nextPageError: 'lenta_nextpage_error'
 	    };
+	    this.init();
+	    main_core_events.EventEmitter.subscribe('onFrameDataProcessed', function () {
+	      _this.init();
+	    });
 	  }
 
 	  babelHelpers.createClass(BalloonNotifier, [{
+	    key: "init",
+	    value: function init() {
+	      var notifierNode = this.getNotifierNode();
+
+	      if (!notifierNode || this.initialized) {
+	        return;
+	      }
+
+	      this.initialized = true;
+	      this.initEvents();
+	    }
+	  }, {
+	    key: "initEvents",
+	    value: function initEvents() {
+	      var notifierNode = this.getNotifierNode();
+	      notifierNode.addEventListener('click', function () {
+	        PageInstance.refresh(true);
+	        return false;
+	      });
+	      var refreshNeededNode = this.getRefreshNeededNode();
+
+	      if (refreshNeededNode) {
+	        refreshNeededNode.addEventListener('click', function () {
+	          app.exec('pullDownLoadingStart');
+	          PageInstance.refresh(true);
+	          return false;
+	        });
+	      }
+
+	      var refreshErrorNode = this.getRefreshErrorNode();
+
+	      if (refreshErrorNode) {
+	        refreshErrorNode.addEventListener('click', function () {
+	          PageInstance.requestError('refresh', false);
+	        });
+	      }
+
+	      var nextPageErrorNode = this.getNextPageErrorNode();
+
+	      if (nextPageErrorNode) {
+	        nextPageErrorNode.addEventListener('click', function () {
+	          PageInstance.requestError('nextPage', false);
+	        });
+	      }
+	    }
+	  }, {
 	    key: "getNotifierNode",
 	    value: function getNotifierNode() {
 	      return document.getElementById(this.nodeIdList.notifier);
@@ -35,6 +90,16 @@ this.BX = this.BX || {};
 	    key: "getRefreshNeededNode",
 	    value: function getRefreshNeededNode() {
 	      return document.getElementById(this.nodeIdList.refreshNeeded);
+	    }
+	  }, {
+	    key: "getRefreshErrorNode",
+	    value: function getRefreshErrorNode() {
+	      return document.getElementById(this.nodeIdList.refreshError);
+	    }
+	  }, {
+	    key: "getNextPageErrorNode",
+	    value: function getNextPageErrorNode() {
+	      return document.getElementById(this.nodeIdList.nextPageError);
 	    }
 	  }, {
 	    key: "showRefreshNeededNotifier",
@@ -504,9 +569,21 @@ this.BX = this.BX || {};
 	  return PublicationQueue;
 	}(main_core_events.EventEmitter);
 
-	var Post = /*#__PURE__*/function () {
-	  function Post(data) {
-	    babelHelpers.classCallCheck(this, Post);
+	var Post$$1 = /*#__PURE__*/function () {
+	  babelHelpers.createClass(Post$$1, null, [{
+	    key: "moveBottom",
+	    value: function moveBottom() {
+	      window.scrollTo(0, document.body.scrollHeight);
+	    }
+	  }, {
+	    key: "moveTop",
+	    value: function moveTop() {
+	      window.scrollTo(0, 0);
+	    }
+	  }]);
+
+	  function Post$$1(data) {
+	    babelHelpers.classCallCheck(this, Post$$1);
 	    this.logId = 0;
 	    this.entryType = '';
 	    this.useFollow = false;
@@ -526,7 +603,7 @@ this.BX = this.BX || {};
 	    this.init(data);
 	  }
 
-	  babelHelpers.createClass(Post, [{
+	  babelHelpers.createClass(Post$$1, [{
 	    key: "init",
 	    value: function init(data) {
 	      var logId = data.logId,
@@ -634,7 +711,7 @@ this.BX = this.BX || {};
 	        }).then(function (response) {
 	          if (response.data.success) {
 	            if (newValue === 'Y') {
-	              oMSL.setFollow({
+	              FollowManagerInstance.setFollow({
 	                logId: _this.logId,
 	                bOnlyOn: true,
 	                bRunEvent: true,
@@ -795,7 +872,244 @@ this.BX = this.BX || {};
 	      oMSL.expandText(this.logId);
 	    }
 	  }]);
-	  return Post;
+	  return Post$$1;
+	}();
+
+	var BlogPost$$1 = /*#__PURE__*/function () {
+	  function BlogPost$$1() {
+	    babelHelpers.classCallCheck(this, BlogPost$$1);
+	  }
+
+	  babelHelpers.createClass(BlogPost$$1, null, [{
+	    key: "delete",
+	    value: function _delete(params) {
+	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
+
+	      if (postId <= 0) {
+	        return false;
+	      }
+
+	      app.confirm({
+	        title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_TITLE'),
+	        text: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_DESCRIPTION'),
+	        buttons: [main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_BUTTON_OK'), main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_BUTTON_CANCEL')],
+	        callback: function callback(btnNum) {
+	          if (parseInt(btnNum) !== 1) {
+	            return false;
+	          }
+
+	          app.showPopupLoader({
+	            text: ''
+	          });
+	          var actionUrl = main_core.Uri.addParam("".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/ajax.php"), {
+	            b24statAction: 'deleteBlogPost',
+	            b24statContext: 'mobile'
+	          });
+	          mobile_ajax.Ajax.wrap({
+	            type: 'json',
+	            method: 'POST',
+	            url: actionUrl,
+	            data: {
+	              action: 'delete_post',
+	              mobile_action: 'delete_post',
+	              sessid: main_core.Loc.getMessage('bitrix_sessid'),
+	              site: main_core.Loc.getMessage('SITE_ID'),
+	              lang: main_core.Loc.getMessage('LANGUAGE_ID'),
+	              post_id: postId
+	            },
+	            processData: true,
+	            callback: function callback(response) {
+	              app.hidePopupLoader();
+
+	              if (!main_core.Type.isStringFilled(response.SUCCESS) || response.SUCCESS !== 'Y') {
+	                return;
+	              }
+
+	              BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
+	              app.closeController({
+	                drop: true
+	              });
+	            },
+	            callback_failure: function callback_failure() {
+	              app.hidePopupLoader();
+	            }
+	          });
+	          return false;
+	        }
+	      });
+	    }
+	  }, {
+	    key: "edit",
+	    value: function edit(params) {
+	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
+
+	      if (postId <= 0) {
+	        return;
+	      }
+
+	      var pinnedContext = !main_core.Type.isUndefined(params.pinnedContext) ? !!params.pinnedContext : false;
+
+	      if (Application.getApiVersion() >= Instance.getApiVersion('layoutPostForm')) {
+	        PostFormManagerInstance.show({
+	          pageId: Instance.getPageId(),
+	          postId: postId
+	        });
+	      } else {
+	        this.getData({
+	          postId: postId,
+	          callback: function callback(postData) {
+	            PostFormOldManagerInstance.formParams = {};
+
+	            if (!main_core.Type.isUndefined(postData.PostPerm) && postData.PostPerm >= 'W') {
+	              var selectedDestinations = {
+	                a_users: [],
+	                b_groups: []
+	              };
+	              PostFormOldManagerInstance.setExtraDataArray({
+	                postId: postId,
+	                postAuthorId: postData.post_user_id,
+	                logId: postData.log_id,
+	                pinnedContext: pinnedContext
+	              });
+
+	              if (!main_core.Type.isUndefined(postData.PostDetailText)) {
+	                PostFormOldManagerInstance.setParams({
+	                  messageText: postData.PostDetailText
+	                });
+	              }
+
+	              if (main_core.Type.isPlainObject(postData.PostDestination)) {
+	                for (var _i = 0, _Object$entries = Object.entries(postData.PostDestination); _i < _Object$entries.length; _i++) {
+	                  var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
+	                      key = _Object$entries$_i[0],
+	                      value = _Object$entries$_i[1];
+
+	                  if (main_core.Type.isStringFilled(postData.PostDestination[key].STYLE) && postData.PostDestination[key].STYLE === 'all-users') {
+	                    PostFormOldManagerInstance.addDestination(selectedDestinations, {
+	                      type: 'UA'
+	                    });
+	                  } else if (main_core.Type.isStringFilled(postData.PostDestination[key].TYPE) && ['U', 'SG'].includes(postData.PostDestination[key].TYPE)) {
+	                    PostFormOldManagerInstance.addDestination(selectedDestinations, {
+	                      type: postData.PostDestination[key].TYPE,
+	                      id: postData.PostDestination[key].ID,
+	                      name: main_core.Text.decode(postData.PostDestination[key].TITLE)
+	                    });
+	                  }
+	                }
+	              }
+
+	              if (!main_core.Type.isUndefined(postData.PostDestinationHidden)) {
+	                PostFormOldManagerInstance.setExtraData({
+	                  hiddenRecipients: postData.PostDestinationHidden
+	                });
+	              }
+
+	              PostFormOldManagerInstance.setParams({
+	                selectedRecipients: selectedDestinations
+	              });
+
+	              if (!main_core.Type.isUndefined(postData.PostFiles)) {
+	                PostFormOldManagerInstance.setParams({
+	                  messageFiles: postData.PostFiles
+	                });
+	              }
+
+	              if (!main_core.Type.isUndefined(postData.PostUFCode)) {
+	                PostFormOldManagerInstance.setExtraData({
+	                  messageUFCode: postData.PostUFCode
+	                });
+	              }
+
+	              app.exec('showPostForm', PostFormOldManagerInstance.show());
+	            }
+	          }
+	        });
+	      }
+	    }
+	  }, {
+	    key: "getData",
+	    value: function getData(params) {
+	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
+
+	      if (postId <= 0) {
+	        return;
+	      }
+
+	      var callbackFunction = main_core.Type.isFunction(params.callback) ? params.callback : null;
+
+	      if (main_core.Type.isNull(callbackFunction)) {
+	        return;
+	      }
+
+	      var result = {};
+
+	      if (postId > 0) {
+	        app.showPopupLoader();
+	        mobile_ajax.Ajax.wrap({
+	          type: 'json',
+	          method: 'POST',
+	          url: "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/ajax.php"),
+	          processData: true,
+	          data: {
+	            action: 'get_blog_post_data',
+	            mobile_action: 'get_blog_post_data',
+	            sessid: main_core.Loc.getMessage('bitrix_sessid'),
+	            site: main_core.Loc.getMessage('SITE_ID'),
+	            lang: main_core.Loc.getMessage('LANGUAGE_ID'),
+	            post_id: postId,
+	            nt: main_core.Loc.getMessage('MSLNameTemplate'),
+	            sl: main_core.Loc.getMessage('MSLShowLogin')
+	          },
+	          callback: function callback(data) {
+	            app.hidePopupLoader();
+	            result.id = postId;
+
+	            if (!main_core.Type.isUndefined(data.log_id) && parseInt(data.log_id) > 0) {
+	              result.log_id = data.log_id;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.post_user_id) && parseInt(data.post_user_id) > 0) {
+	              result.post_user_id = data.post_user_id;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostPerm)) {
+	              result.PostPerm = data.PostPerm;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostDestination)) {
+	              result.PostDestination = data.PostDestination;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostDestinationHidden)) {
+	              result.PostDestinationHidden = data.PostDestinationHidden;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostDetailText)) {
+	              result.PostDetailText = data.PostDetailText;
+	            }
+
+	            if (main_core.Type.isUndefined(data.PostFiles)) {
+	              result.PostFiles = data.PostFiles;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostBackgroundCode)) {
+	              result.PostBackgroundCode = data.PostBackgroundCode;
+	            }
+
+	            if (!main_core.Type.isUndefined(data.PostUFCode)) {
+	              result.PostUFCode = data.PostUFCode;
+	            }
+
+	            callbackFunction(result);
+	          },
+	          callback_failure: function callback_failure() {
+	            app.hidePopupLoader();
+	          }
+	        });
+	      }
+	    }
+	  }]);
+	  return BlogPost$$1;
 	}();
 
 	var PostMenu = /*#__PURE__*/function () {
@@ -840,7 +1154,7 @@ this.BX = this.BX || {};
 	          iconUrl: this.iconUrlFolderPath + (!!this.pinnedValue ? 'unpin.png' : 'pin.png'),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            var postInstance = new Post({
+	            var postInstance = new Post$$1({
 	              logId: _this.logId
 	            });
 	            return postInstance.setPinned({
@@ -895,9 +1209,9 @@ this.BX = this.BX || {};
 	          iconUrl: this.iconUrlFolderPath + 'pencil.png',
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            oMSL.editBlogPost({
-	              feed_id: window.LiveFeedID,
-	              post_id: _this.postId,
+	            BlogPost$$1.edit({
+	              feedId: window.LiveFeedID,
+	              postId: _this.postId,
 	              pinnedContext: !!_this.pinnedValue
 	            });
 	          },
@@ -910,8 +1224,8 @@ this.BX = this.BX || {};
 	          iconName: 'delete',
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            oMSL.deleteBlogPost({
-	              post_id: _this.postId
+	            BlogPost$$1.delete({
+	              postId: _this.postId
 	            });
 	          },
 	          arrowFlag: false
@@ -925,7 +1239,7 @@ this.BX = this.BX || {};
 	          iconUrl: this.iconUrlFolderPath + 'favorite.png',
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            var postInstance = new Post({
+	            var postInstance = new Post$$1({
 	              logId: _this.logId
 	            });
 	            return postInstance.setFavorites({
@@ -944,7 +1258,7 @@ this.BX = this.BX || {};
 	          iconUrl: this.iconUrlFolderPath + 'eye.png',
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            oMSL.setFollow({
+	            FollowManagerInstance.setFollow({
 	              logId: _this.logId,
 	              menuNode: _this.target,
 	              pageId: _this.pageId,
@@ -965,7 +1279,7 @@ this.BX = this.BX || {};
 	          action: function action() {
 	            if (oMSL.bDetailEmptyPage) {
 	              // get comments on refresh from detail page menu
-	              oMSL.getComments({
+	              CommentsInstance.getComments({
 	                ts: oMSL.iDetailTs,
 	                bPullDown: true,
 	                obFocus: {
@@ -1018,6 +1332,160 @@ this.BX = this.BX || {};
 	    }
 	  }]);
 	  return PostMenu;
+	}();
+
+	var PageMenu = /*#__PURE__*/function () {
+	  function PageMenu() {
+	    babelHelpers.classCallCheck(this, PageMenu);
+	    this.type = 'list';
+	    this.listPageMenuItems = [];
+	    this.detailPageMenuItems = [];
+	  }
+
+	  babelHelpers.createClass(PageMenu, [{
+	    key: "init",
+	    value: function init(data) {
+	      this.type = data.type === 'detail' ? 'detail' : 'list';
+	      var menuItems = this.getPageMenuItems();
+	      var title = this.type === 'detail' ? main_core.Type.isStringFilled(main_core.Loc.getMessage('MSLLogEntryTitle')) ? main_core.Loc.getMessage('MSLLogEntryTitle') : '' : main_core.Type.isStringFilled(main_core.Loc.getMessage('MSLLogTitle')) ? main_core.Loc.getMessage('MSLLogTitle') : '';
+
+	      if (menuItems.length > 0) {
+	        if (BXMobileAppContext.getApiVersion() >= Instance.getApiVersion('pageMenu')) {
+	          BXMobileApp.UI.Page.TopBar.title.params.largeMode = true;
+
+	          BXMobileApp.UI.Page.TopBar.title._applyParams();
+
+	          this.initPagePopupMenu();
+	        } else {
+	          app.menuCreate({
+	            items: menuItems
+	          });
+	          BXMobileApp.UI.Page.TopBar.title.setCallback(function () {
+	            app.menuShow();
+	          });
+	        }
+	      } else if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
+	        BXMobileApp.UI.Page.TopBar.title.setCallback("");
+	      }
+
+	      BXMobileApp.UI.Page.TopBar.title.setText(title);
+	      BXMobileApp.UI.Page.TopBar.title.show();
+	    }
+	  }, {
+	    key: "initPagePopupMenu",
+	    value: function initPagePopupMenu() {
+	      var _this = this;
+
+	      if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
+	        return;
+	      }
+
+	      var buttons = [];
+
+	      if (!oMSL.logId) {
+	        buttons.push({
+	          type: 'search',
+	          callback: function callback() {
+	            app.exec("showSearchBar");
+	          }
+	        });
+	      }
+
+	      var menuItems = this.getPageMenuItems(this.type);
+
+	      if (BX.type.isArray(menuItems) && menuItems.length > 0) {
+	        buttons.push({
+	          type: 'more',
+	          callback: function callback() {
+	            _this.showPageMenu(_this.type);
+	          }
+	        });
+	      }
+
+	      app.exec('setRightButtons', {
+	        items: buttons
+	      });
+	    }
+	  }, {
+	    key: "showPageMenu",
+	    value: function showPageMenu() {
+	      if (this.type === 'detail') {
+	        this.detailPageMenuItems = this.buildDetailPageMenu(oMSL.menuData);
+	      }
+
+	      var menuItems = this.getPageMenuItems();
+
+	      if (menuItems.length <= 0) {
+	        return;
+	      }
+
+	      var popupMenuItems = [];
+	      var popupMenuActions = {};
+	      menuItems.forEach(function (menuItem) {
+	        popupMenuItems.push({
+	          id: menuItem.id,
+	          title: menuItem.name,
+	          iconUrl: main_core.Type.isStringFilled(menuItem.image) ? menuItem.image : '',
+	          iconName: main_core.Type.isStringFilled(menuItem.iconName) ? menuItem.iconName : '',
+	          sectionCode: 'defaultSection'
+	        });
+	        popupMenuActions[menuItem.id] = menuItem.action;
+	      });
+	      app.exec('setPopupMenuData', {
+	        items: popupMenuItems,
+	        sections: [{
+	          id: 'defaultSection'
+	        }],
+	        callback: function callback(event) {
+	          if (event.eventName === 'onDataSet') {
+	            app.exec('showPopupMenu');
+	          } else if (event.eventName === 'onItemSelected' && main_core.Type.isPlainObject(event.item) && main_core.Type.isStringFilled(event.item.id) && main_core.Type.isFunction(popupMenuActions[event.item.id])) {
+	            popupMenuActions[event.item.id]();
+	          }
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getPageMenuItems",
+	    value: function getPageMenuItems() {
+	      return this.type === 'detail' ? this.detailPageMenuItems : this.listPageMenuItems;
+	    }
+	  }, {
+	    key: "buildDetailPageMenu",
+	    value: function buildDetailPageMenu(data) {
+	      var menuNode = null;
+
+	      if (BXMobileAppContext.getApiVersion() >= Instance.getApiVersion('pageMenu')) {
+	        menuNode = document.getElementById("log-entry-menu-".concat(Instance.getLogId()));
+	      }
+
+	      PostMenuInstance.init({
+	        logId: Instance.getLogId(),
+	        postId: parseInt(data.post_id),
+	        postPerms: data.post_perm,
+	        useShare: data.entry_type === 'blog',
+	        useFavorites: menuNode && menuNode.getAttribute('data-use-favorites') === 'Y',
+	        useFollow: data.read_only !== 'Y',
+	        usePinned: Instance.getLogId() > 0,
+	        useRefreshComments: true,
+	        favoritesValue: menuNode && menuNode.getAttribute('data-favorites') === 'Y',
+	        followValue: FollowManagerInstance.getFollowValue(),
+	        pinnedValue: menuNode && menuNode.getAttribute('data-pinned') === 'Y',
+	        contentTypeId: data.post_content_type_id,
+	        contentId: parseInt(data.post_content_id),
+	        target: menuNode,
+	        context: 'detail'
+	      });
+	      return PostMenuInstance.getMenuItems().map(function (item) {
+	        item.name = item.title;
+	        item.image = item.iconUrl;
+	        delete item.title;
+	        delete item.iconUrl;
+	        return item;
+	      });
+	    }
+	  }]);
+	  return PageMenu;
 	}();
 
 	var PostFormManager = /*#__PURE__*/function () {
@@ -1373,6 +1841,575 @@ this.BX = this.BX || {};
 	  return PostFormManager;
 	}();
 
+	var PostFormOldManager = /*#__PURE__*/function () {
+	  function PostFormOldManager() {
+	    babelHelpers.classCallCheck(this, PostFormOldManager);
+	    this.postFormParams = {};
+	    this.postFormExtraData = {};
+	  }
+
+	  babelHelpers.createClass(PostFormOldManager, [{
+	    key: "setExtraDataArray",
+	    value: function setExtraDataArray(extraData) {
+	      var ob = null;
+
+	      for (var _i = 0, _Object$entries = Object.entries(extraData); _i < _Object$entries.length; _i++) {
+	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
+	            key = _Object$entries$_i[0],
+	            value = _Object$entries$_i[1];
+
+	        if (extraData.hasOwnProperty(key)) {
+	          ob = {};
+	          ob[key] = value;
+	          this.setExtraData(ob);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "setExtraData",
+	    value: function setExtraData(params) {
+	      if (!main_core.Type.isPlainObject(params)) {
+	        return;
+	      }
+
+	      for (var _i2 = 0, _Object$entries2 = Object.entries(params); _i2 < _Object$entries2.length; _i2++) {
+	        var _Object$entries2$_i = babelHelpers.slicedToArray(_Object$entries2[_i2], 2),
+	            key = _Object$entries2$_i[0],
+	            value = _Object$entries2$_i[1];
+
+	        if (key == 'hiddenRecipients' || key == 'logId' || key == 'postId' || key == 'postAuthorId' || key == 'messageUFCode' || key == 'commentId' || key == 'commentType' || key == 'nodeId' || key == 'pinnedContext') {
+	          this.postFormExtraData[key] = value;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "getExtraData",
+	    value: function getExtraData() {
+	      return this.postFormExtraData;
+	    }
+	  }, {
+	    key: "setParams",
+	    value: function setParams(params) {
+	      if (!main_core.Type.isPlainObject(params)) {
+	        return;
+	      }
+
+	      for (var _i3 = 0, _Object$entries3 = Object.entries(params); _i3 < _Object$entries3.length; _i3++) {
+	        var _Object$entries3$_i = babelHelpers.slicedToArray(_Object$entries3[_i3], 2),
+	            key = _Object$entries3$_i[0],
+	            value = _Object$entries3$_i[1];
+
+	        if (['selectedRecipients', 'messageText', 'messageFiles'].indexOf(key) !== -1) {
+	          this.postFormParams[key] = value;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "addDestination",
+	    value: function addDestination(selectedDestinations, params) {
+	      if (!main_core.Type.isPlainObject(params) || !main_core.Type.isStringFilled(params.type)) {
+	        return;
+	      }
+
+	      var searchRes = null;
+
+	      if (params.type === 'UA') {
+	        searchRes = selectedDestinations.a_users.some(this.findDestinationCallBack, {
+	          value: 0
+	        });
+
+	        if (!searchRes) {
+	          selectedDestinations.a_users.push({
+	            id: 0,
+	            name: main_core.Loc.getMessage('MSLPostDestUA'),
+	            bubble_background_color: '#A7F264',
+	            bubble_text_color: '#54901E'
+	          });
+	        }
+	      } else if (params.type === 'U') {
+	        searchRes = selectedDestinations.a_users.some(this.findDestinationCallBack, {
+	          value: params.id
+	        });
+
+	        if (!searchRes) {
+	          selectedDestinations.a_users.push({
+	            id: params.id,
+	            name: params.name,
+	            bubble_background_color: '#BCEDFC',
+	            bubble_text_color: '#1F6AB5'
+	          });
+	        }
+	      } else if (params.type === 'SG') {
+	        searchRes = selectedDestinations.b_groups.some(this.findDestinationCallBack, {
+	          value: params.id
+	        });
+
+	        if (!searchRes) {
+	          selectedDestinations.b_groups.push({
+	            id: params.id,
+	            name: params.name,
+	            bubble_background_color: '#FFD5D5',
+	            bubble_text_color: '#B54827'
+	          });
+	        }
+	      }
+	    }
+	  }, {
+	    key: "findDestinationCallBack",
+	    value: function findDestinationCallBack(element, index, array) {
+	      return element.id == this.value;
+	    }
+	  }, {
+	    key: "show",
+	    value: function show(params) {
+	      var _this = this;
+
+	      if (!main_core.Type.isPlainObject(params)) {
+	        params = {};
+	      }
+
+	      var entityType = main_core.Type.isStringFilled(params.entityType) ? params.entityType : 'post';
+	      var extraData = this.getExtraData();
+	      var postFormParams = {
+	        attachButton: this.getAttachButton(),
+	        mentionButton: this.getMentionButton(),
+	        attachFileSettings: this.getAttachFileSettings(),
+	        extraData: extraData ? extraData : {},
+	        smileButton: {},
+	        supportLocalFilesInText: entityType === 'post',
+	        okButton: {
+	          callback: function callback(data) {
+	            if (!main_core.Type.isStringFilled(data.text)) {
+	              return;
+	            }
+
+	            var postData = _this.buildRequestStub({
+	              type: entityType,
+	              extraData: data.extraData,
+	              text: _this.parseMentions(data.text),
+	              pinnedContext: main_core.Type.isStringFilled(data.extraData.pinnedContext) && data.extraData.pinnedContext === 'YES'
+	            });
+
+	            var ufCode = data.extraData.messageUFCode;
+
+	            _this.buildFiles(postData, data.attachedFiles, {
+	              ufCode: ufCode
+	            }).then(function () {
+	              if (entityType !== 'post') {
+	                return;
+	              }
+
+	              _this.buildDestinations(postData, data.selectedRecipients, main_core.Type.isPlainObject(data.extraData) && !main_core.Type.isUndefined(data.extraData.hiddenRecipients) ? data.extraData.hiddenRecipients : [], {});
+
+	              if (!postData.postVirtualId) {
+	                return;
+	              }
+
+	              postData.ufCode = ufCode;
+	              postData.contentType = 'post';
+	              oMSL.initPostForm({
+	                groupId: params.groupId ? params.groupId : null
+	              });
+	              BXMobileApp.onCustomEvent('Livefeed.PublicationQueue::setItem', {
+	                key: postData.postVirtualId,
+	                pinnedContext: !!postData.pinnedContext,
+	                item: postData,
+	                pageId: Instance.getPageId(),
+	                groupId: params.groupId ? params.groupId : null
+	              }, true);
+	            }, function () {});
+	          },
+	          name: main_core.Loc.getMessage('MSLPostFormSend')
+	        },
+	        cancelButton: {
+	          callback: function callback() {
+	            oMSL.initPostForm({
+	              groupId: params.groupId ? params.groupId : null
+	            });
+	          },
+	          name: main_core.Loc.getMessage('MSLPostFormCancel')
+	        }
+	      };
+
+	      if (!main_core.Type.isUndefined(this.postFormParams.messageText)) {
+	        postFormParams.message = {
+	          text: this.postFormParams.messageText
+	        };
+	      }
+
+	      if (!main_core.Type.isUndefined(this.postFormParams.messageFiles)) {
+	        postFormParams.attachedFiles = this.postFormParams.messageFiles;
+	      }
+
+	      if (entityType === 'post') {
+	        postFormParams.recipients = {
+	          dataSource: this.getRecipientsDataSource()
+	        };
+
+	        if (!main_core.Type.isUndefined(this.postFormParams.selectedRecipients)) {
+	          postFormParams.recipients.selectedRecipients = this.postFormParams.selectedRecipients;
+	        }
+
+	        if (!main_core.Type.isUndefined(this.postFormParams.backgroundCode)) {
+	          postFormParams.backgroundCode = this.postFormParams.backgroundCode;
+	        }
+	      }
+
+	      return postFormParams;
+	    }
+	  }, {
+	    key: "getAttachButton",
+	    value: function getAttachButton() {
+	      var attachButtonItems = [];
+
+	      if (main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') === 'Y' || main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED') === 'Y') {
+	        var diskAttachParams = {
+	          id: 'disk',
+	          name: main_core.Loc.getMessage('MSLPostFormDisk'),
+	          dataSource: {
+	            multiple: 'NO',
+	            url: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') === 'Y' ? "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=").concat(main_core.Loc.getMessage('USER_ID')) : "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/webdav/user/").concat(main_core.Loc.getMessage('USER_ID'), "/")
+	          }
+	        };
+	        var tableSettings = {
+	          searchField: 'YES',
+	          showtitle: 'YES',
+	          modal: 'YES',
+	          name: main_core.Loc.getMessage('MSLPostFormDiskTitle')
+	        }; //FIXME temporary workaround
+
+	        if (window.platform === 'ios') {
+	          diskAttachParams.dataSource.table_settings = tableSettings;
+	        } else {
+	          diskAttachParams.dataSource.TABLE_SETTINGS = tableSettings;
+	        }
+
+	        attachButtonItems.push(diskAttachParams);
+	      }
+
+	      attachButtonItems.push({
+	        id: 'mediateka',
+	        name: main_core.Loc.getMessage('MSLPostFormPhotoGallery')
+	      });
+	      attachButtonItems.push({
+	        id: 'camera',
+	        name: main_core.Loc.getMessage('MSLPostFormPhotoCamera')
+	      });
+	      return {
+	        items: attachButtonItems
+	      };
+	    }
+	  }, {
+	    key: "getMentionButton",
+	    value: function getMentionButton() {
+	      return {
+	        dataSource: {
+	          return_full_mode: 'YES',
+	          outsection: 'NO',
+	          okname: main_core.Loc.getMessage('MSLPostFormTableOk'),
+	          cancelname: main_core.Loc.getMessage('MSLPostFormTableCancel'),
+	          multiple: 'NO',
+	          alphabet_index: 'YES',
+	          url: "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/index.php?mobile_action=get_user_list&use_name_format=Y")
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getAttachFileSettings",
+	    value: function getAttachFileSettings() {
+	      return {
+	        resize: [40, 1, 1, 1000, 1000, 0, 2, false, true, false, null, 0],
+	        saveToPhotoAlbum: true
+	      };
+	    }
+	  }, {
+	    key: "buildRequestStub",
+	    value: function buildRequestStub(params) {
+	      var request = null;
+
+	      if (params.type === 'post') {
+	        request = {
+	          ACTION: 'ADD_POST',
+	          AJAX_CALL: 'Y',
+	          PUBLISH_STATUS: 'P',
+	          is_sent: 'Y',
+	          apply: 'Y',
+	          sessid: main_core.Loc.getMessage('bitrix_sessid'),
+	          POST_MESSAGE: params.text,
+	          decode: 'Y',
+	          SPERM: {},
+	          SPERM_NAME: {},
+	          MOBILE: 'Y',
+	          PARSE_PREVIEW: 'Y'
+	        };
+
+	        if (!main_core.Type.isUndefined(params.extraData.postId) && parseInt(params.extraData.postId) > 0) {
+	          request.post_id = parseInt(params.extraData.postId);
+	          request.post_user_id = parseInt(params.extraData.postAuthorId);
+	          request.pinnedContext = !!params.pinnedContext;
+	          request.ACTION = 'EDIT_POST';
+
+	          if (!main_core.Type.isUndefined(params.extraData.logId) && parseInt(params.extraData.logId) > 0) {
+	            request.log_id = parseInt(params.extraData.logId);
+	          }
+	        }
+	      } else if (params.type === 'comment' && !main_core.Type.isUndefined(params.extraData.commentId) && parseInt(params.extraData.commentId) > 0 && main_core.Type.isStringFilled(params.extraData.commentType)) {
+	        request = {
+	          action: 'EDIT_COMMENT',
+	          text: this.parseMentions(params.text),
+	          commentId: parseInt(params.extraData.commentId),
+	          nodeId: params.extraData.nodeId,
+	          sessid: main_core.Loc.getMessage('bitrix_sessid')
+	        };
+
+	        if (params.extraData.commentType === 'blog') {
+	          request.comment_post_id = null;
+	        }
+	      }
+
+	      return request;
+	    }
+	  }, {
+	    key: "parseMentions",
+	    value: function parseMentions(text) {
+	      var parsedText = text;
+
+	      if (typeof oMSL.arMention != 'undefined') {
+	        for (var _i4 = 0, _Object$entries4 = Object.entries(oMSL.arMention); _i4 < _Object$entries4.length; _i4++) {
+	          var _Object$entries4$_i = babelHelpers.slicedToArray(_Object$entries4[_i4], 2),
+	              key = _Object$entries4$_i[0],
+	              value = _Object$entries4$_i[1];
+
+	          parsedText = parsedText.replace(new RegExp(key, 'g'), value);
+	        }
+
+	        oMSL.arMention = {};
+	        oMSL.commentTextCurrent = '';
+	      }
+
+	      return parsedText;
+	    }
+	  }, {
+	    key: "buildFiles",
+	    value: function buildFiles(postData, attachedFiles, params) {
+	      var _this2 = this;
+
+	      var promise = new Promise(function (resolve, reject) {
+	        var ufCode = params.ufCode;
+	        postData.postVirtualId = parseInt(Math.random() * 100000);
+	        postData.tasksList = [];
+
+	        if (main_core.Type.isArray(attachedFiles) && attachedFiles.length > 0) {
+	          var readedFileCount = 0;
+	          var fileTotal = attachedFiles.length;
+
+	          var fileCountIncrement = function fileCountIncrement() {
+	            readedFileCount++;
+
+	            if (readedFileCount >= fileTotal) {
+	              _this2.postProgressingFiles(postData, attachedFiles, params);
+
+	              resolve();
+	            }
+	          };
+
+	          var uploadTasks = [];
+	          attachedFiles.forEach(function (fileData) {
+	            var isFileFromBitrix24Disk = !main_core.Type.isUndefined(fileData.VALUE) // Android
+	            || !main_core.Type.isUndefined(fileData.id) && parseInt(fileData.id) > 0 // disk object
+	            || main_core.Type.isPlainObject(fileData.dataAttributes) && !main_core.Type.isUndefined(fileData.dataAttributes.VALUE) // iOS and modern Android too
+	            || main_core.Type.isStringFilled(fileData.ufCode) && fileData.ufCode === ufCode;
+	            var isNewFileOnDevice = main_core.Type.isUndefined(fileData.url) || !main_core.Type.isNumber(fileData.id);
+
+	            if (main_core.Type.isStringFilled(fileData.url) && isNewFileOnDevice && !isFileFromBitrix24Disk) {
+	              var taskId = "postTask_".concat(parseInt(Math.random() * 100000));
+	              var mimeType = mobile_utils.MobileUtils.getFileMimeType(fileData.type);
+	              uploadTasks.push({
+	                taskId: taskId,
+	                type: fileData.type,
+	                mimeType: mimeType,
+	                folderId: parseInt(main_core.Loc.getMessage('MOBILE_EXT_UTILS_USER_FOLDER_FOR_SAVED_FILES')),
+	                //							chunk: parseInt(Loc.getMessage('MOBILE_EXT_UTILS_MAX_UPLOAD_CHUNK_SIZE')),
+	                params: {
+	                  postVirtualId: postData.postVirtualId,
+	                  pinnedContext: !!postData.pinnedContext
+	                },
+	                name: mobile_utils.MobileUtils.getUploadFilename(fileData.name, fileData.type),
+	                url: fileData.url,
+	                previewUrl: fileData.previewUrl ? fileData.previewUrl : null,
+	                resize: mobile_utils.MobileUtils.getResizeOptions(fileData.type)
+	              });
+	              postData.tasksList.push(taskId);
+	            } else {
+	              if (isFileFromBitrix24Disk) {
+	                if (main_core.Type.isUndefined(postData[ufCode])) {
+	                  postData[ufCode] = [];
+	                }
+
+	                if (!main_core.Type.isUndefined(fileData.VALUE)) {
+	                  postData[ufCode].push(fileData.VALUE);
+	                } else if (parseInt(fileData.id) > 0) {
+	                  postData[ufCode].push(parseInt(fileData.id));
+	                } else {
+	                  postData[ufCode].push(fileData.dataAttributes.VALUE);
+	                }
+	              }
+
+	              fileCountIncrement();
+	            }
+	          });
+
+	          if (uploadTasks.length > 0) {
+	            BXMobileApp.onCustomEvent('onFileUploadTaskReceived', {
+	              files: uploadTasks
+	            }, true);
+	          }
+
+	          resolve();
+	        } else {
+	          _this2.postProgressingFiles(postData, attachedFiles, params);
+
+	          resolve();
+	        }
+	      });
+	      promise.catch(function (error) {
+	        console.error(error);
+	      });
+	      return promise;
+	    }
+	  }, {
+	    key: "buildDestinations",
+	    value: function buildDestinations(postData, selectedRecipients, hiddenRecipients, params) {
+	      postData['DEST'] = [];
+
+	      if (main_core.Type.isPlainObject(selectedRecipients.a_users)) {
+	        for (var _i5 = 0, _Object$entries5 = Object.entries(selectedRecipients.a_users); _i5 < _Object$entries5.length; _i5++) {
+	          var _Object$entries5$_i = babelHelpers.slicedToArray(_Object$entries5[_i5], 2),
+	              key = _Object$entries5$_i[0],
+	              userData = _Object$entries5$_i[1];
+
+	          var prefix = 'U';
+
+	          if (main_core.Type.isUndefined(postData.SPERM[prefix])) {
+	            postData.SPERM[prefix] = [];
+	          }
+
+	          if (main_core.Type.isUndefined(postData.SPERM_NAME[prefix])) {
+	            postData.SPERM_NAME[prefix] = [];
+	          }
+
+	          var id = !main_core.Type.isUndefined(userData.ID) ? userData.ID : userData.id;
+	          var name = !main_core.Type.isUndefined(userData.NAME) ? userData.NAME : userData.name;
+	          var value = parseInt(id) === 0 ? 'UA' : "U".concat(id);
+	          postData.SPERM[prefix].push(value);
+	          postData.DEST.push(value);
+	          postData.SPERM_NAME[prefix].push(name);
+	        }
+	      }
+
+	      if (main_core.Type.isPlainObject(selectedRecipients.b_groups)) {
+	        for (var _i6 = 0, _Object$entries6 = Object.entries(selectedRecipients.b_groups); _i6 < _Object$entries6.length; _i6++) {
+	          var _Object$entries6$_i = babelHelpers.slicedToArray(_Object$entries6[_i6], 2),
+	              _key = _Object$entries6$_i[0],
+	              groupData = _Object$entries6$_i[1];
+
+	          var _prefix = 'SG';
+
+	          if (main_core.Type.isUndefined(postData.SPERM[_prefix])) {
+	            postData.SPERM[_prefix] = [];
+	          }
+
+	          if (main_core.Type.isUndefined(postData.SPERM_NAME[_prefix])) {
+	            postData.SPERM_NAME[_prefix] = [];
+	          }
+
+	          var _id = !main_core.Type.isUndefined(groupData.ID) ? groupData.ID : groupData.id;
+
+	          var _name = !main_core.Type.isUndefined(groupData.NAME) ? groupData.NAME : groupData.name;
+
+	          var _value = "SG".concat(_id);
+
+	          postData.SPERM[_prefix].push(_value);
+
+	          postData.DEST.push(_value);
+
+	          postData.SPERM_NAME[_prefix].push(_name);
+	        }
+	      }
+
+	      for (var _key2 in hiddenRecipients) {
+	        if (!hiddenRecipients.hasOwnProperty(_key2)) {
+	          continue;
+	        }
+
+	        var _prefix2 = hiddenRecipients[_key2].TYPE;
+
+	        if (main_core.Type.isUndefined(postData.SPERM[_prefix2])) {
+	          postData.SPERM[_prefix2] = [];
+	        }
+
+	        var _value2 = "".concat(hiddenRecipients[_key2].TYPE).concat(hiddenRecipients[_key2].ID);
+
+	        postData.SPERM[_prefix2].push(_value2);
+
+	        postData.DEST.push(_value2);
+	      }
+	    }
+	  }, {
+	    key: "getRecipientsDataSource",
+	    value: function getRecipientsDataSource() {
+	      return {
+	        return_full_mode: 'YES',
+	        outsection: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DEST_TO_ALL_DENIED') !== 'Y' ? 'YES' : 'NO',
+	        okname: main_core.Loc.getMessage('MSLPostFormTableOk'),
+	        cancelname: main_core.Loc.getMessage('MSLPostFormTableCancel'),
+	        multiple: 'YES',
+	        alphabet_index: 'YES',
+	        showtitle: 'YES',
+	        user_all: 'YES',
+	        url: "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/index.php?mobile_action=").concat(main_core.Loc.getmessage('MOBILE_EXT_LIVEFEED_CURRENT_EXTRANET_SITE') === 'Y' ? 'get_group_list' : 'get_usergroup_list', "&feature=blog")
+	      };
+	    }
+	  }, {
+	    key: "postProgressingFiles",
+	    value: function postProgressingFiles(postData, attachedFiles, params) {
+	      var ufCode = params.ufCode;
+
+	      if (main_core.Type.isUndefined(postData[ufCode])) {
+	        postData[ufCode] = [];
+	      }
+
+	      if (main_core.Type.isUndefined(attachedFiles)) {
+	        attachedFiles = [];
+	      }
+
+	      for (var keyOld in this.postFormParams.messageFiles)
+	      /* existing */
+	      {
+	        if (!this.postFormParams.messageFiles.hasOwnProperty(keyOld)) {
+	          continue;
+	        }
+
+	        for (var keyNew in attachedFiles) {
+	          if (!attachedFiles.hasOwnProperty(keyNew)) {
+	            continue;
+	          }
+
+	          if (this.postFormParams.messageFiles[keyOld].id == attachedFiles[keyNew].id || this.postFormParams.messageFiles[keyOld].id == attachedFiles[keyNew].ID) {
+	            postData[ufCode].push(this.postFormParams.messageFiles[keyOld].id);
+	            break;
+	          }
+	        }
+	      }
+
+	      if (postData[ufCode].length <= 0) {
+	        postData[ufCode].push('empty');
+	      }
+	    }
+	  }]);
+	  return PostFormOldManager;
+	}();
+
 	function _templateObject$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"]);
 
@@ -1593,7 +2630,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 
-	        var postInstance = new Post({
+	        var postInstance = new Post$$1({
 	          logId: logId
 	        });
 	        return postInstance.setPinned({
@@ -1606,8 +2643,7 @@ this.BX = this.BX || {};
 	      this.recalcPanel({
 	        type: 'insert'
 	      });
-
-	      __MSLOnFeedScroll();
+	      PageInstance.onScroll();
 	    }
 	  }, {
 	    key: "extractEntry",
@@ -1764,10 +2800,1379 @@ this.BX = this.BX || {};
 	  return ImportantManager;
 	}();
 
+	var SearchBar = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(SearchBar, _EventEmitter);
+
+	  function SearchBar() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, SearchBar);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SearchBar).call(this));
+	    _this.findTextMode = false;
+	    _this.ftMinTokenSize = 3;
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(SearchBar, [{
+	    key: "init",
+	    value: function init(params) {
+	      var _this2 = this;
+
+	      if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
+	        return;
+	      }
+
+	      if (main_core.Type.isPlainObject(params) && parseInt(params.ftMinTokenSize) > 0) {
+	        this.ftMinTokenSize = parseInt(params.ftMinTokenSize);
+	      }
+
+	      this.subscribe('onSearchBarCancelButtonClicked', this.searchBarEventCallback.bind(this));
+	      this.subscribe('onSearchBarSearchButtonClicked', this.searchBarEventCallback.bind(this));
+	      BXMobileApp.UI.Page.params.set({
+	        useSearchBar: true
+	      });
+	      app.exec('setParamsSearchBar', {
+	        params: {
+	          callback: function callback(event) {
+	            if (event.eventName === 'onSearchButtonClicked' && main_core.Type.isPlainObject(event.data) && main_core.Type.isStringFilled(event.data.text)) {
+	              if (event.data.text.length >= _this2.ftMinTokenSize) {
+	                _this2.findTextMode = true;
+	              }
+
+	              _this2.emit('onSearchBarSearchButtonClicked', new main_core_events.BaseEvent({
+	                data: {
+	                  text: event.data.text
+	                }
+	              }));
+	            } else if (['onCancelButtonClicked', 'onSearchHide'].includes(event.eventName)) {
+	              _this2.emit('onSearchBarCancelButtonClicked', new main_core_events.BaseEvent({
+	                data: {}
+	              }));
+	            }
+	          }
+	        }
+	      });
+	    }
+	  }, {
+	    key: "searchBarEventCallback",
+	    value: function searchBarEventCallback(event) {
+	      var eventData = event.getData();
+	      var text = main_core.Type.isPlainObject(eventData) && main_core.Type.isStringFilled(eventData.text) ? eventData.text : '';
+
+	      if (text.length >= this.ftMinTokenSize) {
+	        app.exec('showSearchBarProgress');
+
+	        var _event = new main_core_events.BaseEvent({
+	          compatData: [{
+	            text: text
+	          }]
+	        });
+
+	        main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshStart', _event);
+	      } else {
+	        if (this.findTextMode) {
+	          main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
+	          app.exec('hideSearchBarProgress');
+	          BX.frameCache.readCacheWithID('framecache-block-feed', function (params) {
+	            var container = document.getElementById('bxdynamic_feed_refresh');
+
+	            if (!main_core.Type.isArray(params.items) || !container) {
+	              return;
+	            }
+
+	            var block = params.items.find(function (item) {
+	              return main_core.Type.isStringFilled(item.ID) && item.ID === 'framecache-block-feed';
+	            });
+
+	            if (main_core.Type.isUndefined(block)) {
+	              return;
+	            }
+
+	            main_core.Runtime.html(container, block.CONTENT).then(function () {
+	              BX.processHTML(block.CONTENT, true);
+	            });
+	            Post$$1.moveTop();
+	            setTimeout(function () {
+	              BitrixMobile.LazyLoad.showImages();
+	            }, 1000);
+	          });
+	        }
+
+	        this.findTextMode = false;
+	      }
+	    }
+	  }]);
+	  return SearchBar;
+	}(main_core_events.EventEmitter);
+
+	var DetailPageScroll = /*#__PURE__*/function () {
+	  function DetailPageScroll() {
+	    babelHelpers.classCallCheck(this, DetailPageScroll);
+	    this.canCheckScrollButton = true;
+	    this.showScrollButtonTimeout = null;
+	    this.showScrollButtonBottom = false;
+	    this.showScrollButtonTop = false;
+	    this.class = {
+	      scrollButton: 'post-comment-block-scroll',
+	      scrollButtonTop: 'post-comment-block-scroll-top',
+	      scrollButtonBottom: 'post-comment-block-scroll-bottom',
+	      scrollButtonTopActive: 'post-comment-block-scroll-top-active',
+	      scrollButtonBottomActive: 'post-comment-block-scroll-bottom-active'
+	    };
+	    this.init();
+	  }
+
+	  babelHelpers.createClass(DetailPageScroll, [{
+	    key: "init",
+	    value: function init() {
+	      if (window.platform === 'ios') {
+	        return;
+	      }
+
+	      document.addEventListener('scroll', this.onScrollDetail.bind(this));
+	    }
+	  }, {
+	    key: "onScrollDetail",
+	    value: function onScrollDetail() {
+	      var _this = this;
+
+	      if (!this.canCheckScrollButton) {
+	        return;
+	      }
+
+	      clearTimeout(this.showScrollButtonTimeout);
+	      this.showScrollButtonTimeout = setTimeout(function () {
+	        Instance.setLastActivityDate();
+
+	        _this.checkScrollButton();
+	      }, 200);
+	    }
+	  }, {
+	    key: "checkScrollButton",
+	    value: function checkScrollButton() {
+	      var scrollTop = window.scrollY; // document.body.scrollTop
+
+	      var maxScroll = document.documentElement.scrollHeight - window.innerHeight - 100; // (this.keyboardShown ? 500 : 300)
+
+	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 || // short page
+	      scrollTop >= maxScroll // too much low
+	      && (scrollTop > 0 // refresh patch
+	      || maxScroll > 0));
+	      this.showScrollButtonTop = scrollTop > 200;
+	      this.showHideScrollButton();
+	    }
+	  }, {
+	    key: "showHideScrollButton",
+	    value: function showHideScrollButton() {
+	      var postScrollButtonBottom = document.querySelector(".".concat(this.class.scrollButtonBottom));
+	      var postScrollButtonTop = document.querySelector(".".concat(this.class.scrollButtonTop));
+
+	      if (postScrollButtonBottom) {
+	        if (this.showScrollButtonBottom) {
+	          if (!postScrollButtonBottom.classList.contains("".concat(this.class.scrollButtonBottomActive))) {
+	            postScrollButtonBottom.classList.add("".concat(this.class.scrollButtonBottomActive));
+	          }
+	        } else {
+	          if (postScrollButtonBottom.classList.contains("".concat(this.class.scrollButtonBottomActive))) {
+	            postScrollButtonBottom.classList.remove("".concat(this.class.scrollButtonBottomActive));
+	          }
+	        }
+	      }
+
+	      if (postScrollButtonTop) {
+	        if (this.showScrollButtonTop) {
+	          if (!postScrollButtonTop.classList.contains("".concat(this.class.scrollButtonTopActive))) {
+	            postScrollButtonTop.classList.add("".concat(this.class.scrollButtonTopActive));
+	          }
+	        } else {
+	          if (postScrollButtonTop.classList.contains("".concat(this.class.scrollButtonTopActive))) {
+	            postScrollButtonTop.classList.remove("".concat(this.class.scrollButtonTopActive));
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: "scrollTo",
+	    value: function scrollTo(type) {
+	      var _this2 = this;
+
+	      if (type !== 'top') {
+	        type = 'bottom';
+	      }
+
+	      this.canCheckScrollButton = false;
+	      this.showScrollButtonBottom = false;
+	      this.showScrollButtonTop = false;
+	      this.showHideScrollButton();
+	      var startValue = window.scrollY; // document.body.scrollTop
+
+	      var finishValue = type == 'bottom' ? document.documentElement.scrollHeight : 0;
+	      BitrixAnimation.animate({
+	        duration: 500,
+	        start: {
+	          scroll: startValue
+	        },
+	        finish: {
+	          scroll: finishValue
+	        },
+	        transition: BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
+	        step: function step(state) {
+	          window.scrollTo(0, state.scroll);
+	        },
+	        complete: function complete() {
+	          _this2.canCheckScrollButton = true;
+
+	          _this2.checkScrollButton();
+	        }
+	      });
+	    }
+	  }]);
+	  return DetailPageScroll;
+	}();
+
+	var FollowManager = /*#__PURE__*/function () {
+	  function FollowManager() {
+	    babelHelpers.classCallCheck(this, FollowManager);
+	    this.defaultValue = true;
+	    this.value = true;
+	    this.class = {
+	      postItemFollow: 'post-item-follow',
+	      postItemFollowActive: 'post-item-follow-active'
+	    };
+	  }
+
+	  babelHelpers.createClass(FollowManager, [{
+	    key: "init",
+	    value: function init() {}
+	  }, {
+	    key: "setFollow",
+	    value: function setFollow(params) {
+	      var _this = this;
+
+	      var logId = !main_core.Type.isUndefined(params.logId) ? parseInt(params.logId) : 0;
+	      var pageId = !main_core.Type.isUndefined(params.pageId) ? params.pageId : false;
+	      var runEvent = !main_core.Type.isUndefined(params.bRunEvent) ? params.bRunEvent : true;
+	      var useAjax = !main_core.Type.isUndefined(params.bAjax) ? params.bAjax : false;
+	      var turnOnOnly = typeof params.bOnlyOn != 'undefined' ? params.bOnlyOn : false;
+
+	      if (turnOnOnly == 'NO') {
+	        turnOnOnly = false;
+	      }
+
+	      var menuNode = null;
+
+	      if (main_core.Type.isDomNode(params.menuNode)) {
+	        menuNode = params.menuNode;
+	      } else if (main_core.Type.isStringFilled(params.menuNode)) {
+	        menuNode = document.getElementById(params.menuNode);
+	      }
+
+	      if (!menuNode) {
+	        menuNode = document.getElementById("log-entry-menu-".concat(logId));
+	      }
+
+	      var followBlock = document.getElementById("log_entry_follow_".concat(logId));
+
+	      if (!followBlock) {
+	        followBlock = document.getElementById("log_entry_follow");
+	      }
+
+	      var followWrap = document.getElementById("post_item_top_wrap_".concat(logId));
+
+	      if (!followWrap) {
+	        followWrap = document.getElementById("post_item_top_wrap");
+	      }
+
+	      var oldValue = null;
+
+	      if (menuNode) {
+	        oldValue = menuNode.getAttribute('data-follow') === 'Y' ? 'Y' : 'N';
+	      } else if (followBlock) {
+	        oldValue = followBlock.getAttribute('data-follow') == 'Y' ? 'Y' : 'N';
+	      } else {
+	        return false;
+	      }
+
+	      var newValue = oldValue === 'Y' ? 'N' : 'Y';
+
+	      if ((!main_core.Type.isStringFilled(Instance.getOption('detailPageId')) || Instance.getOption('detailPageId') !== pageId) && (!turnOnOnly || oldValue === 'N')) {
+	        this.drawFollow({
+	          value: oldValue !== 'Y',
+	          followBlock: followBlock,
+	          followWrap: followWrap,
+	          menuNode: menuNode,
+	          runEvent: runEvent,
+	          turnOnOnly: turnOnOnly,
+	          logId: logId
+	        });
+	      }
+
+	      if (useAjax) {
+	        mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.changeFollow', {
+	          data: {
+	            logId: logId,
+	            value: newValue
+	          },
+	          analyticsLabel: {
+	            b24statAction: newValue === 'Y' ? 'setFollow' : 'setUnfollow'
+	          }
+	        }).then(function (response) {
+	          if (response.data.success) {
+	            return;
+	          }
+
+	          _this.drawFollow({
+	            value: oldValue === 'Y',
+	            followBlock: followBlock,
+	            followWrap: followWrap,
+	            menuNode: menuNode,
+	            runEvent: true,
+	            turnOnOnly: turnOnOnly,
+	            logId: logId
+	          });
+	        }, function (response) {
+	          _this.drawFollow({
+	            value: oldValue === 'Y',
+	            followBlock: followBlock,
+	            followWrap: followWrap,
+	            menuNode: menuNode,
+	            runEvent: false
+	          });
+	        });
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "drawFollow",
+	    value: function drawFollow(params) {
+	      var value = main_core.Type.isBoolean(params.value) ? params.value : null;
+
+	      if (main_core.Type.isNull(value)) {
+	        return;
+	      }
+
+	      var followBlock = main_core.Type.isDomNode(params.followBlock) ? params.followBlock : null;
+
+	      if (followBlock) {
+	        followBlock.classList.remove(value ? this.class.postItemFollow : this.class.postItemFollowActive);
+	        followBlock.classList.add(value ? this.class.postItemFollowActive : this.class.postItemFollow);
+	        followBlock.setAttribute('data-follow', value ? 'Y' : 'N');
+	      }
+
+	      var followWrap = main_core.Type.isDomNode(params.followWrap) ? params.followWrap : null;
+
+	      if (followWrap && !this.getFollowDefaultValue()) {
+	        if (value) {
+	          followWrap.classList.add(this.class.postItemFollow);
+	        } else {
+	          followWrap.classList.remove(this.class.postItemFollow);
+	        }
+	      }
+
+	      var menuNode = main_core.Type.isDomNode(params.menuNode) ? params.menuNode : null;
+
+	      if (menuNode) {
+	        menuNode.setAttribute('data-follow', value ? 'Y' : 'N');
+	      }
+
+	      var detailPageId = Instance.getOption('detailPageId');
+
+	      if (main_core.Type.isStringFilled(detailPageId)) {
+	        this.setFollowValue(value);
+	        this.setFollowMenuItemName();
+	      }
+
+	      var runEvent = main_core.Type.isBoolean(params.runEvent) ? params.runEvent : false;
+	      var logId = !main_core.Type.isUndefined(params.logId) ? parseInt(params.logId) : 0;
+	      var turnOnOnly = main_core.Type.isBoolean(params.turnOnOnly) ? params.turnOnOnly : false;
+
+	      if (runEvent && logId > 0) {
+	        BXMobileApp.onCustomEvent('onLogEntryFollow', {
+	          logId: logId,
+	          pageId: main_core.Type.isStringFilled(detailPageId) ? detailPageId : '',
+	          bOnlyOn: turnOnOnly ? 'Y' : 'N'
+	        }, true);
+	      }
+	    }
+	  }, {
+	    key: "setFollowDefault",
+	    value: function setFollowDefault(params) {
+	      var _this2 = this;
+
+	      if (main_core.Type.isUndefined(params.value)) {
+	        return;
+	      }
+
+	      var value = !!params.value;
+
+	      if (!main_core.Type.isStringFilled(Instance.getOption('detailPageId'))) {
+	        this.setFollowDefaultValue(value);
+	        this.setDefaultFollowMenuItemName();
+	      }
+
+	      var postData = {
+	        sessid: BX.bitrix_sessid(),
+	        site: main_core.Loc.getMessage('SITE_ID'),
+	        lang: main_core.Loc.getMessage('LANGUAGE_ID'),
+	        value: value ? 'Y' : 'N',
+	        action: 'change_follow_default',
+	        mobile_action: 'change_follow_default'
+	      };
+	      oMSL.changeListMode(postData, function () {
+	        oMSL.pullDownAndRefresh();
+	      }, function (response) {
+	        _this2.setFollowDefaultValue(response.value !== 'Y');
+
+	        _this2.setDefaultFollowMenuItemName();
+	      });
+	    }
+	  }, {
+	    key: "setFollowValue",
+	    value: function setFollowValue(value) {
+	      this.value = !!value;
+	    }
+	  }, {
+	    key: "getFollowValue",
+	    value: function getFollowValue() {
+	      return this.value;
+	    }
+	  }, {
+	    key: "setFollowDefaultValue",
+	    value: function setFollowDefaultValue(value) {
+	      this.defaultValue = !!value;
+	    }
+	  }, {
+	    key: "getFollowDefaultValue",
+	    value: function getFollowDefaultValue() {
+	      return this.defaultValue;
+	    }
+	  }, {
+	    key: "setFollowMenuItemName",
+	    value: function setFollowMenuItemName() {
+	      var menuItemIndex = PageMenuInstance.detailPageMenuItems.findIndex(function (item) {
+	        return main_core.Type.isStringFilled(item.feature) && item.feature === 'follow';
+	      });
+
+	      if (menuItemIndex < 0) {
+	        return;
+	      }
+
+	      var menuItem = PageMenuInstance.detailPageMenuItems[menuItemIndex];
+	      menuItem.name = this.getFollowValue() ? main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_Y') : main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_N');
+	      PageMenuInstance.detailPageMenuItems[menuItemIndex] = menuItem;
+	      PageMenuInstance.init({
+	        type: 'detail'
+	      });
+	    }
+	  }, {
+	    key: "setDefaultFollowMenuItemName",
+	    value: function setDefaultFollowMenuItemName() {
+	      var menuItemIndex = PageMenuInstance.listPageMenuItems.findIndex(function (item) {
+	        return main_core.Type.isStringFilled(item.feature) && item.feature === 'follow';
+	      });
+
+	      if (menuItemIndex < 0) {
+	        return;
+	      }
+
+	      var menuItem = PageMenuInstance.listPageMenuItems[menuItemIndex];
+	      menuItem.name = this.getFollowDefaultValue() ? main_core.Loc.getMessage('MSLMenuItemFollowDefaultY') : main_core.Loc.getMessage('MSLMenuItemFollowDefaultN');
+	      PageMenuInstance.listPageMenuItems[menuItemIndex] = menuItem;
+	      PageMenuInstance.init({
+	        type: 'list'
+	      });
+	    }
+	  }]);
+	  return FollowManager;
+	}();
+
+	function _templateObject4() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"]);
+
+	  _templateObject4 = function _templateObject4() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"]);
+
+	  _templateObject3 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
 
 	  _templateObject$2 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	var Comments = /*#__PURE__*/function () {
+	  function Comments() {
+	    babelHelpers.classCallCheck(this, Comments);
+	    this.emptyCommentsXhr = null;
+	    this.repoLog = {};
+	    this.mid = {};
+	    this.init();
+	  }
+
+	  babelHelpers.createClass(Comments, [{
+	    key: "init",
+	    value: function init() {
+	      main_core_events.EventEmitter.subscribe('OnUCommentWasDeleted', this.deleteHandler.bind(this));
+	      main_core_events.EventEmitter.subscribe('OnUCommentWasHidden', this.deleteHandler.bind(this));
+	      main_core_events.EventEmitter.subscribe('OnUCRecordHasDrawn', this.drawHandler.bind(this));
+	      main_core_events.EventEmitter.subscribe('OnUCFormSubmit', this.submitHandler.bind(this));
+	    }
+	  }, {
+	    key: "deleteHandler",
+	    value: function deleteHandler(event) {
+	      var _event$getData = event.getData(),
+	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
+	          ENTITY_XML_ID = _event$getData2[0],
+	          id = _event$getData2[1];
+
+	      var logId = Instance.getLogId();
+
+	      if (this.mid[id.join('-')] !== 'hidden') {
+	        this.mid[id.join('-')] = 'hidden';
+
+	        if (this.repoLog[logId]) {
+	          this.repoLog[logId]['POST_NUM_COMMENTS']--;
+	          BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
+	            log_id: logId,
+	            num: this.repoLog[logId]['POST_NUM_COMMENTS']
+	          }, true);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "drawHandler",
+	    value: function drawHandler(event) {
+	      var _event$getData3 = event.getData(),
+	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
+	          ENTITY_XML_ID = _event$getData4[0],
+	          id = _event$getData4[1];
+
+	      var logId = Instance.getLogId();
+	      this.mid[ENTITY_XML_ID] = this.mid[ENTITY_XML_ID] || {};
+
+	      if (this.mid[id.join('-')] !== 'drawn') {
+	        this.mid[id.join('-')] = 'drawn';
+	        var node = false;
+
+	        if (this.repoLog[logId] && (node = document.getElementById("record-".concat(id.join('-'), "-cover"))) && node && node.parentNode == document.getElementById("record-".concat(ENTITY_XML_ID, "-new"))) {
+	          this.repoLog[logId]['POST_NUM_COMMENTS']++;
+	          BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
+	            log_id: logId,
+	            num: this.repoLog[logId]['POST_NUM_COMMENTS']
+	          }, true);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "submitHandler",
+	    value: function submitHandler(event) {
+	      var _event$getData5 = event.getData(),
+	          _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 4),
+	          entity_xml_id = _event$getData6[0],
+	          id = _event$getData6[1],
+	          obj = _event$getData6[2],
+	          post_data = _event$getData6[3];
+
+	      if (post_data && post_data.mobile_action && post_data.mobile_action === 'add_comment' && id > 0) {
+	        post_data.mobile_action = post_data.action = 'edit_comment';
+	        post_data.edit_id = id;
+	      }
+	    }
+	  }, {
+	    key: "setRepoItem",
+	    value: function setRepoItem(id, data) {
+	      this.repoLog[id] = data;
+	    }
+	  }, {
+	    key: "getList",
+	    value: function getList(params) {
+	      var _this = this;
+
+	      var timestampValue = params.ts;
+	      var pullDown = !!params.bPullDown;
+	      var pullDownTop = main_core.Type.isUndefined(params.bPullDownTop) || params.bPullDownTop;
+	      var moveBottom = main_core.Type.isUndefined(params.obFocus.form) || params.obFocus.form === 'NO' ? 'NO' : 'YES';
+	      var moveTop = main_core.Type.isUndefined(params.obFocus.comments) || params.obFocus.comments === 'NO' ? 'NO' : 'YES';
+	      var logId = oMSL.logId;
+	      var container = document.getElementById('post-comments-wrap');
+
+	      if (!pullDown) {
+	        if (pullDownTop) {
+	          BXMobileApp.UI.Page.Refresh.start();
+	        }
+
+	        main_core.Dom.clean(container);
+	        container.appendChild(main_core.Tag.render(_templateObject$2()));
+	      }
+
+	      this.showEmptyListWaiter({
+	        container: container,
+	        enable: true
+	      });
+	      main_core_events.EventEmitter.emit('BX.MobileLF:onCommentsGet');
+	      BXMobileApp.UI.Page.TextPanel.hide();
+	      this.emptyCommentsXhr = mobile_ajax.Ajax.wrap({
+	        type: 'json',
+	        method: 'GET',
+	        url: "".concat(main_core.Loc.getMessage('MSLPathToLogEntry').replace("#log_id#", logId), "&empty_get_comments=Y").concat(!main_core.Type.isNil(timestampValue) ? "&LAST_LOG_TS=".concat(timestampValue) : ''),
+	        data: '',
+	        processData: true,
+	        callback: function callback(response) {
+	          var formWrap = document.getElementById('post-comments-form-wrap');
+
+	          if (pullDown) {
+	            app.exec('pullDownLoadingStop');
+	          } else if (pullDownTop) {
+	            BXMobileApp.UI.Page.Refresh.stop();
+	          }
+
+	          _this.showEmptyListWaiter({
+	            container: container,
+	            enable: false
+	          });
+
+	          if (main_core.Type.isStringFilled(response.POST_PERM)) {
+	            oMSL.menuData.post_perm = response.POST_PERM;
+	            PageMenuInstance.detailPageMenuItems = PageMenuInstance.buildDetailPageMenu(oMSL.menuData);
+	            PageMenuInstance.init({
+	              type: 'detail'
+	            });
+	          }
+
+	          if (main_core.Type.isStringFilled(response.TEXT)) {
+	            if (pullDown) {
+	              main_core.Dom.clean(container);
+
+	              if (!main_core.Type.isUndefined(response.POST_NUM_COMMENTS)) {
+	                BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
+	                  log_id: logId,
+	                  num: parseInt(response.POST_NUM_COMMENTS)
+	                }, true);
+	              }
+	            }
+
+	            _this.setRepoItem(logId, {
+	              POST_NUM_COMMENTS: response.POST_NUM_COMMENTS
+	            });
+
+	            var contentData = BX.processHTML(response.TEXT, true);
+	            container.innerHTML = contentData.HTML;
+	            container.appendChild(main_core.Tag.render(_templateObject2()));
+	            var cnt = 0;
+
+	            var func = function func() {
+	              cnt++;
+
+	              if (cnt < 100) {
+	                if (container.childNodes.length > 0) {
+	                  BX.ajax.processScripts(contentData.SCRIPT);
+	                } else {
+	                  BX.defer(func, _this)();
+	                }
+	              }
+	            };
+
+	            BX.defer(func, _this)();
+	            var event = new main_core_events.BaseEvent({
+	              compatData: [{
+	                mobile: true,
+	                ajaxUrl: "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/ajax.php"),
+	                commentsContainerId: 'post-comments-wrap',
+	                commentsClassName: 'post-comment-wrap'
+	              }]
+	            });
+	            main_core_events.EventEmitter.emit('BX.UserContentView.onInitCall', event);
+	            main_core_events.EventEmitter.emit('BX.UserContentView.onClearCall', event);
+
+	            if (!pullDown) // redraw form
+	              {
+	                if (formWrap) {
+	                  formWrap.innerHTML = '';
+	                }
+
+	                __MSLDetailPullDownInit(true);
+
+	                if (moveBottom === 'YES') {
+	                  _this.setFocusOnComments('form');
+	                } else if (moveTop == 'YES') {
+	                  _this.setFocusOnComments('list');
+	                }
+	              }
+
+	            Instance.setLastActivityDate();
+	            DetailPageScrollInstance.checkScrollButton();
+	            var logIdContainer = document.getElementById('post_log_id');
+
+	            if (!main_core.Type.isUndefined(response.TS) && logIdContainer) {
+	              logIdContainer.setAttribute('data-ts', response.TS);
+	            }
+	          } else {
+	            if (!pullDown) {
+	              _this.showEmptyListWaiter({
+	                container: container,
+	                enable: false
+	              });
+	            }
+
+	            app.alert({
+	              title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_ALERT_ERROR_TITLE'),
+	              text: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_ALERT_ERROR_POST_NOT_FOUND_TEXT'),
+	              button: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_ALERT_ERROR_BUTTON'),
+	              callback: function callback() {
+	                BXMobileApp.onCustomEvent('Livefeed::onLogEntryDetailNotFound', {
+	                  logId: logId
+	                }, true);
+	                BXMPage.close();
+	              }
+	            });
+	          }
+	        },
+	        callback_failure: function callback_failure() {
+	          if (pullDown) {
+	            app.exec('pullDownLoadingStop');
+	          } else {
+	            BXMobileApp.UI.Page.Refresh.stop();
+	          }
+
+	          _this.showEmptyListWaiter({
+	            container: container,
+	            enable: false
+	          });
+
+	          _this.showEmptyListFailed({
+	            container: container,
+	            timestampValue: timestampValue,
+	            pullDown: pullDown,
+	            moveBottom: moveBottom
+	          });
+	        }
+	      });
+	    }
+	  }, {
+	    key: "showEmptyListWaiter",
+	    value: function showEmptyListWaiter(params) {
+	      var container = params.container;
+	      var enable = !!params.enable;
+
+	      if (!main_core.Type.isDomNode(container)) {
+	        return;
+	      }
+
+	      var waiterNode = container.querySelector('.post-comments-load-btn-wrap');
+
+	      if (waiterNode) {
+	        main_core.Dom.clean(waiterNode);
+	        main_core.Dom.remove(waiterNode);
+	      }
+
+	      if (!enable) {
+	        return;
+	      }
+
+	      container.appendChild(main_core.Tag.render(_templateObject3(), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
+	    }
+	  }, {
+	    key: "showEmptyListFailed",
+	    value: function showEmptyListFailed(params) {
+	      var _this2 = this;
+
+	      var container = params.container,
+	          timestampValue = params.timestampValue,
+	          pullDown = params.pullDown,
+	          moveBottom = params.moveBottom,
+	          data = params.data;
+
+	      if (!main_core.Type.isDomNode(container)) {
+	        return;
+	      }
+
+	      var errorMessage = main_core.Type.isObject(data) && main_core.Type.isStringFilled(data.ERROR_MESSAGE) ? data.ERROR_MESSAGE : main_core.Loc.getMessage('MSLDetailCommentsFailed');
+	      container.appendChild(main_core.Tag.render(_templateObject4(), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
+	      var button = container.querySelector('.post-comments-load-btn');
+
+	      if (!button) {
+	        return;
+	      }
+
+	      button.addEventListener('click', function (event) {
+	        if (main_core.Type.isDomNode(event.target.parent)) {
+	          main_core.Dom.clean(event.target.parent);
+	          main_core.Dom.remove(event.target.parent);
+	        } // repeat get comments request (after error shown)
+
+
+	        _this2.getList({
+	          ts: ts,
+	          bPullDown: bPullDown,
+	          obFocus: {
+	            form: false
+	          }
+	        });
+	      });
+	      button.addEventListener('touchstart', function (event) {
+	        event.target.classList.add('post-comments-load-btn-active');
+	      });
+	      button.addEventListener('touchend', function (event) {
+	        event.target.classList.remove('post-comments-load-btn-active');
+	      });
+	    }
+	  }, {
+	    key: "abortXhr",
+	    value: function abortXhr() {
+	      if (this.emptyCommentsXhr) {
+	        this.emptyCommentsXhr.abort();
+	      }
+	    }
+	  }, {
+	    key: "setFocusOnComments",
+	    value: function setFocusOnComments(type) {
+	      type = type === 'list' ? 'list' : 'form';
+
+	      if (type === 'form') {
+	        this.setFocusOnCommentForm();
+	        Post$$1.moveBottom();
+	      } else if (type === 'list') {
+	        var container = document.getElementById('post-comments-wrap');
+
+	        if (!container) {
+	          return false;
+	        }
+
+	        var firstNewComment = container.querySelector('.post-comment-block-new');
+
+	        if (firstNewComment) {
+	          window.scrollTo(0, firstNewComment.offsetTop);
+	        } else {
+	          var firstComment = BX.findChild(container, {
+	            className: 'post-comment-block'
+	          }, true);
+	          window.scrollTo(0, firstComment ? firstComment.offsetTop : 0);
+	        }
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "setFocusOnCommentForm",
+	    value: function setFocusOnCommentForm() {
+	      BXMobileApp.UI.Page.TextPanel.focus();
+	      return false;
+	    }
+	  }, {
+	    key: "onLogEntryCommentAdd",
+	    value: function onLogEntryCommentAdd(logId, value) // for the feed
+	    {
+	      var newValue;
+	      var valuePassed = !main_core.Type.isUndefined(value);
+	      value = !main_core.Type.isUndefined(value) ? parseInt(value) : 0;
+	      var container = document.getElementById("informer_comments_".concat(logId));
+	      var containerNew = document.getElementById("informer_comments_new_".concat(logId));
+
+	      if (container && !containerNew) // detail page
+	        {
+	          if (value > 0) {
+	            newValue = value;
+	          } else if (!valuePassed) {
+	            newValue = (container.innerHTML.length > 0 ? parseInt(container.innerHTML) : 0) + 1;
+	          }
+
+	          if (parseInt(newValue) > 0) {
+	            container.innerHTML = newValue;
+	            container.style.display = 'inline-block';
+
+	            if (document.getElementById("informer_comments_text2_".concat(logId))) {
+	              document.getElementById("informer_comments_text2_".concat(logId)).style.display = 'inline-block';
+	            }
+
+	            if (document.getElementById("informer_comments_text_".concat(logId))) {
+	              document.getElementById("informer_comments_text_".concat(logId)).style.display = 'none';
+	            }
+	          }
+	        }
+
+	      var containerAll = document.getElementById('comcntleave-all');
+
+	      if (containerAll) // more comments
+	        {
+	          if (value > 0) {
+	            newValue = value;
+	          } else if (!valuePassed) {
+	            newValue = (containerAll.innerHTML.length > 0 ? parseInt(containerAll.innerHTML) : 0) + 1;
+	          }
+
+	          containerAll.innerHTML = newValue;
+	        }
+	    }
+	  }]);
+	  return Comments;
+	}();
+
+	function _templateObject$3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
+
+	  _templateObject$3 = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	var Page = /*#__PURE__*/function () {
+	  function Page() {
+	    babelHelpers.classCallCheck(this, Page);
+	    this.isBusyGettingNextPage = false;
+	    this.isBusyRefreshing = false;
+	    this.pageNumber = 1;
+	    this.nextPageXhr = null;
+	    this.refreshXhr = null;
+	    this.nextUrl = '';
+	    this.requestErrorTimeout = {
+	      refresh: null,
+	      nextPage: null
+	    };
+	    this.class = {
+	      notifier: 'lenta-notifier-waiter',
+	      notifierActive: 'lenta-notifier-shown'
+	    };
+	    this.onScroll = this.onScroll.bind(this);
+	    this.refreshErrorScroll = this.refreshErrorScroll.bind(this);
+	    this.nextPageErrorScroll = this.nextPageErrorScroll.bind(this);
+	    this.init();
+	  }
+
+	  babelHelpers.createClass(Page, [{
+	    key: "init",
+	    value: function init() {
+	      this.setPageNumber(1);
+	    }
+	  }, {
+	    key: "initScroll",
+	    value: function initScroll(enable, process_waiter) {
+	      enable = !!enable;
+	      process_waiter = !!process_waiter;
+
+	      if (enable) {
+	        document.removeEventListener('scroll', this.onScroll);
+	        document.addEventListener('scroll', this.onScroll);
+	      } else {
+	        document.removeEventListener('scroll', this.onScroll);
+	      }
+
+	      if (process_waiter && document.getElementById('next_post_more')) {
+	        document.getElementById('next_post_more').style.display = enable ? 'block' : 'none';
+	      }
+	    }
+	  }, {
+	    key: "onScroll",
+	    value: function onScroll() {
+	      var _this = this;
+
+	      var deviceMaxScroll = Instance.getMaxScroll();
+
+	      if (!((window.pageYOffset >= deviceMaxScroll || document.documentElement.scrollHeight <= window.innerHeight // when small workarea
+	      ) && (window.pageYOffset > 0 // refresh patch
+	      || deviceMaxScroll > 0) && !this.isBusyRefreshing && !this.isBusyGettingNextPage)) {
+	        return;
+	      }
+
+	      if (Instance.getOption('preventNextPage', false) === true) {
+	        return;
+	      }
+
+	      document.removeEventListener('scroll', this.onScroll);
+	      this.isBusyGettingNextPage = true;
+	      this.nextPageXhr = mobile_ajax.Ajax.wrap({
+	        type: 'json',
+	        method: 'GET',
+	        url: this.getNextPageUrl(),
+	        data: '',
+	        callback: function callback(data) {
+	          _this.nextPageXhr = null;
+
+	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT) && (main_core.Type.isUndefined(data.LAST_TS) || parseInt(data.LAST_TS) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) <= 0 || parseInt(data.LAST_TS) < parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')))) {
+	            _this.processAjaxBlock(data.PROPS, {
+	              type: 'next',
+	              callback: function callback() {
+	                Instance.recalcMaxScroll();
+	                oMSL.registerBlocksToCheck();
+	                setTimeout(oMSL.checkNodesHeight.bind(oMSL), 100);
+	                main_core_events.EventEmitter.emit('BX.UserContentView.onRegisterViewAreaListCall', new main_core_events.BaseEvent({
+	                  compatData: [{
+	                    containerId: 'lenta_wrapper',
+	                    className: 'post-item-contentview',
+	                    fullContentClassName: 'post-item-full-content'
+	                  }]
+	                }));
+	              }
+	            });
+
+	            var pageNumber = _this.getPageNumber();
+
+	            if (parseInt(main_core.Loc.getMessage('MSLPageNavNum')) > 0 && pageNumber > 0) {
+	              _this.setPageNumber(pageNumber + 1);
+
+	              var nextUrl = main_core.Uri.removeParam(_this.getNextPageUrl(), ['PAGEN_' + main_core.Loc.getMessage('MSLPageNavNum')]);
+	              nextUrl = main_core.Uri.addParam(nextUrl, babelHelpers.defineProperty({}, "PAGEN_".concat(parseInt(main_core.Loc.getMessage('MSLPageNavNum'))), _this.getPageNumber() + 1));
+
+	              _this.setNextPageUrl(nextUrl);
+	            }
+
+	            document.addEventListener('scroll', _this.onScroll);
+	          } else {
+	            _this.requestError('nextPage', true);
+	          }
+
+	          _this.isBusyGettingNextPage = false;
+	        },
+	        callback_failure: function callback_failure() {
+	          _this.requestError('nextPage', true);
+
+	          _this.nextPageXhr = null;
+	          _this.isBusyGettingNextPage = false;
+	        }
+	      });
+	    }
+	  }, {
+	    key: "refresh",
+	    value: function refresh(bScroll, params) {
+	      var _this2 = this;
+
+	      bScroll = !!bScroll;
+
+	      if (this.isBusyGettingNextPage && !main_core.Type.isNull(this.nextPageXhr)) {
+	        this.nextPageXhr.abort();
+	      }
+
+	      var notifier = document.getElementById('lenta_notifier');
+
+	      if (notifier) {
+	        notifier.classList.add(this.class.notifier);
+	      }
+
+	      Instance.setRefreshNeeded(false);
+	      Instance.setRefreshStarted(true);
+	      BalloonNotifierInstance.hideRefreshNeededNotifier();
+	      NotificationBarInstance.hideAll();
+	      this.isBusyRefreshing = true;
+	      var reloadUrl = main_core.Uri.removeParam(document.location.href, ['RELOAD', 'RELOAD_JSON', 'FIND']);
+	      reloadUrl = main_core.Uri.addParam(reloadUrl, {
+	        RELOAD: 'Y',
+	        RELOAD_JSON: 'Y'
+	      });
+
+	      if (main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.find)) {
+	        reloadUrl = main_core.Uri.addParam(reloadUrl, {
+	          FIND: params.find
+	        });
+	      }
+
+	      var headers = [{
+	        name: 'BX-ACTION-TYPE',
+	        value: 'get_dynamic'
+	      }, {
+	        name: 'BX-REF',
+	        value: document.referrer
+	      }, {
+	        name: 'BX-CACHE-MODE',
+	        value: 'APPCACHE'
+	      }, {
+	        name: 'BX-APPCACHE-PARAMS',
+	        value: JSON.stringify(window.appCacheVars)
+	      }, {
+	        name: 'BX-APPCACHE-URL',
+	        value: !main_core.Type.isUndefined(BX.frameCache) && main_core.Type.isPlainObject(BX.frameCache.vars) && main_core.Type.isStringFilled(BX.frameCache.vars.PAGE_URL) ? BX.frameCache.vars.PAGE_URL : oMSL.curUrl
+	      }];
+	      this.refreshXhr = mobile_ajax.Ajax.wrap({
+	        type: 'json',
+	        method: 'GET',
+	        url: reloadUrl,
+	        data: '',
+	        headers: headers,
+	        callback: function callback(data) {
+	          _this2.refreshXhr = null;
+
+	          _this2.setPageNumber(1);
+
+	          Instance.setRefreshStarted(false);
+	          Instance.setRefreshNeeded(false);
+
+	          if (document.getElementById('lenta_notifier')) {
+	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
+	          }
+
+	          app.exec('pullDownLoadingStop');
+	          app.exec('hideSearchBarProgress');
+
+	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT)) {
+	            _this2.setPreventNextPage(false);
+
+	            BitrixMobile.LazyLoad.clearImages();
+	            app.hidePopupLoader();
+	            BalloonNotifierInstance.hideNotifier();
+	            BalloonNotifierInstance.hideRefreshNeededNotifier();
+
+	            if (!main_core.Type.isUndefined(data.COUNTER_TO_CLEAR)) {
+	              BXMobileApp.onCustomEvent('onClearLFCounter', [data.COUNTER_TO_CLEAR], true);
+	              BXMobileApp.Events.postToComponent('onClearLiveFeedCounter', {
+	                counterCode: data.COUNTER_TO_CLEAR,
+	                serverTime: data.COUNTER_SERVER_TIME,
+	                serverTimeUnix: data.COUNTER_SERVER_TIME_UNIX
+	              }, 'communication');
+	            }
+
+	            _this2.processAjaxBlock(data.PROPS, {
+	              type: 'refresh',
+	              callback: function callback() {
+	                PinnedPanelInstance.resetFlags();
+	                PinnedPanelInstance.init();
+
+	                if (!main_core.Type.isUndefined(BX.frameCache) && document.getElementById('bxdynamic_feed_refresh') && (main_core.Type.isUndefined(data.REWRITE_FRAMECACHE) || data.REWRITE_FRAMECACHE !== 'N')) {
+	                  var serverTimestamp = !main_core.Type.isUndefined(data.TS) && parseInt(data.TS) > 0 ? parseInt(data.TS) : 0;
+
+	                  if (serverTimestamp > 0) {
+	                    Instance.setOptions({
+	                      frameCacheTs: serverTimestamp
+	                    });
+	                  }
+
+	                  Instance.updateFrameCache({
+	                    timestamp: serverTimestamp
+	                  });
+	                }
+
+	                oMSL.registerBlocksToCheck(); //Android hack.
+	                //The processing of javascript and insertion of html works not so fast as expected
+
+	                setTimeout(function () {
+	                  BitrixMobile.LazyLoad.showImages(); // when refresh
+	                }, 1000);
+	                BalloonNotifierInstance.initEvents();
+	              }
+	            });
+
+	            if (bScroll) {
+	              BitrixAnimation.animate({
+	                duration: 1000,
+	                start: {
+	                  scroll: document.body.scrollTop
+	                },
+	                finish: {
+	                  scroll: 0
+	                },
+	                transition: BitrixAnimation.makeEaseOut(BitrixAnimation.transitions.quart),
+	                step: function step(state) {
+	                  window.scrollTo(0, state.scroll);
+	                },
+	                complete: function complete() {}
+	              });
+	            }
+
+	            if (window.applicationCache && data.isManifestUpdated == '1' && !oMSL.appCacheDebug && (window.applicationCache.status == window.applicationCache.IDLE || window.applicationCache.status == window.applicationCache.UPDATEREADY)) //the manifest has been changed
+	              {
+	                window.applicationCache.update();
+	              }
+	          } else {
+	            _this2.requestError('refresh', true);
+	          }
+
+	          _this2.isBusyRefreshing = false;
+	        },
+	        callback_failure: function callback_failure() {
+	          _this2.refreshXhr = null;
+	          Instance.setRefreshStarted(false);
+	          Instance.setRefreshNeeded(false);
+
+	          if (document.getElementById('lenta_notifier')) {
+	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
+	          }
+
+	          app.exec('pullDownLoadingStop');
+	          app.exec('hideSearchBarProgress');
+
+	          _this2.requestError('refresh', true);
+
+	          _this2.isBusyRefreshing = false;
+	        }
+	      });
+	    }
+	  }, {
+	    key: "processAjaxBlock",
+	    value: function processAjaxBlock(block, params) {
+	      if (!main_core.Type.isPlainObject(params) || !main_core.Type.isStringFilled(params.type) || ['refresh', 'next'].indexOf(params.type) < 0) {
+	        return;
+	      }
+
+	      var htmlWasInserted = false;
+	      var scriptsLoaded = false;
+	      processCSS(insertHTML);
+	      processExternalJS(processInlineJS);
+
+	      function processCSS(callback) {
+	        if (main_core.Type.isArray(block.CSS) && block.CSS.length > 0) {
+	          BX.load(block.CSS, callback);
+	        } else {
+	          callback();
+	        }
+	      }
+
+	      function insertHTML() {
+	        if (params.type === 'refresh') {
+	          document.getElementById('lenta_wrapper_global').innerHTML = block.CONTENT;
+	        } else // next
+	          {
+	            document.getElementById('lenta_wrapper').insertBefore(main_core.Tag.render(_templateObject$3(), block.CONTENT), document.getElementById('next_post_more'));
+	          }
+
+	        htmlWasInserted = true;
+
+	        if (scriptsLoaded) {
+	          processInlineJS();
+	        }
+	      }
+
+	      function processExternalJS(callback) {
+	        if (main_core.Type.isArray(block.JS) && block.JS.length > 0) {
+	          BX.load(block.JS, callback); // to initialize
+	        } else {
+	          callback();
+	        }
+	      }
+
+	      function processInlineJS() {
+	        scriptsLoaded = true;
+
+	        if (htmlWasInserted) {
+	          main_core.ajax.processRequestData(block.CONTENT, {
+	            scriptsRunFirst: false,
+	            dataType: 'HTML',
+	            onsuccess: function onsuccess() {
+	              if (main_core.Type.isFunction(params.callback)) {
+	                params.callback();
+	              }
+	            }
+	          });
+	        }
+	      }
+	    }
+	  }, {
+	    key: "requestError",
+	    value: function requestError(type, show) {
+	      var _this3 = this;
+
+	      if (!['refresh', 'nextPage'].includes(type)) {
+	        type = 'refresh';
+	      }
+
+	      show = !!show;
+	      var errorBlock = document.getElementById("lenta_".concat(type.toLowerCase(), "_error"));
+
+	      if (this.requestErrorTimeout[type]) {
+	        clearTimeout(this.requestErrorTimeout[type]);
+	      }
+
+	      if (errorBlock) {
+	        if (show) {
+	          errorBlock.classList.add(this.class.notifierActive);
+
+	          if (type === 'refresh') {
+	            document.addEventListener('scroll', this.refreshErrorScroll);
+	          }
+	        } else {
+	          if (type === 'refresh') {
+	            document.removeEventListener('scroll', this.refreshErrorScroll);
+	          }
+
+	          errorBlock.classList.remove(this.class.notifierActive);
+	        }
+	      } else {
+	        this.requestErrorTimeout[type] = setTimeout(function () {
+	          _this3.requestError(type, show);
+	        }, 500);
+	      }
+
+	      if (type === 'nextPage') {
+	        this.initScroll(!show, true);
+	      }
+	    }
+	  }, {
+	    key: "refreshErrorScroll",
+	    value: function refreshErrorScroll() {
+	      this.requestError('refresh', false);
+	    }
+	  }, {
+	    key: "nextPageErrorScroll",
+	    value: function nextPageErrorScroll() {
+	      this.requestError('nextPage', false);
+	    }
+	  }, {
+	    key: "setPageNumber",
+	    value: function setPageNumber(value) {
+	      this.pageNumber = parseInt(value);
+	    }
+	  }, {
+	    key: "getPageNumber",
+	    value: function getPageNumber() {
+	      return this.pageNumber;
+	    }
+	  }, {
+	    key: "setNextPageUrl",
+	    value: function setNextPageUrl(value) {
+	      this.nextUrl = value;
+	    }
+	  }, {
+	    key: "getNextPageUrl",
+	    value: function getNextPageUrl() {
+	      return this.nextUrl;
+	    }
+	  }, {
+	    key: "setPreventNextPage",
+	    value: function setPreventNextPage(status) {
+	      Instance.setOptions({
+	        preventNextPage: !!status
+	      });
+	      var refreshNeededNode = document.getElementById('next_page_refresh_needed');
+	      var nextPageCurtainNode = document.getElementById('next_post_more');
+
+	      if (refreshNeededNode && nextPageCurtainNode) {
+	        refreshNeededNode.style.display = !!status ? 'block' : 'none';
+	        nextPageCurtainNode.style.display = !!status ? 'none' : 'block';
+	      }
+	    }
+	  }]);
+	  return Page;
+	}();
+
+	function _templateObject$4() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
+
+	  _templateObject$4 = function _templateObject() {
 	    return data;
 	  };
 
@@ -1778,6 +4183,7 @@ this.BX = this.BX || {};
 	  function Feed() {
 	    babelHelpers.classCallCheck(this, Feed);
 	    this.pageId = null;
+	    this.logId = false;
 	    this.refreshNeeded = false;
 	    this.refreshStarted = false;
 	    this.options = {};
@@ -1814,6 +4220,7 @@ this.BX = this.BX || {};
 	    };
 	    this.newPostContainer = null;
 	    this.maxScroll = 0;
+	    this.lastActivityDate = 0;
 	    this.init();
 	  }
 
@@ -1848,6 +4255,16 @@ this.BX = this.BX || {};
 	    key: "getPageId",
 	    value: function getPageId() {
 	      return this.pageId;
+	    }
+	  }, {
+	    key: "setLogId",
+	    value: function setLogId(value) {
+	      this.logId = parseInt(value);
+	    }
+	  }, {
+	    key: "getLogId",
+	    value: function getLogId() {
+	      return parseInt(this.logId);
 	    }
 	  }, {
 	    key: "setOptions",
@@ -1977,10 +4394,10 @@ this.BX = this.BX || {};
 	        b_groups: []
 	      };
 	      oMSL.buildSelectedDestinations(params.postData, selectedDestinations);
-	      oMSL.setPostFormParams({
+	      PostFormOldManagerInstance.setParams({
 	        selectedRecipients: selectedDestinations
 	      });
-	      oMSL.setPostFormParams({
+	      PostFormOldManagerInstance.setParams({
 	        messageText: params.postData.POST_MESSAGE
 	      });
 	      DatabaseUnsentPostInstance.save(params.postData, groupId);
@@ -1992,7 +4409,7 @@ this.BX = this.BX || {};
 	            postId: 0
 	          });
 	        } else {
-	          app.exec('showPostForm', oMSL.showNewPostForm());
+	          app.exec('showPostForm', PostFormOldManagerInstance.show());
 	        }
 	      };
 
@@ -2008,8 +4425,8 @@ this.BX = this.BX || {};
 	      var context = main_core.Type.isStringFilled(params.context) ? params.context : '';
 
 	      params.callback = function () {
-	        oMSL.editBlogPost({
-	          post_id: parseInt(params.postId)
+	        BlogPost$$1.edit({
+	          postId: parseInt(params.postId)
 	        });
 	      };
 
@@ -2225,7 +4642,7 @@ this.BX = this.BX || {};
 
 	        contentWrapper.remove();
 	      } else if (action === 'add') {
-	        this.setNewPostContainer(main_core.Tag.render(_templateObject$2(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
+	        this.setNewPostContainer(main_core.Tag.render(_templateObject$4(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
 	          var postNode = _this4.getNewPostContainer().querySelector("div.".concat(_this4.class.listPost));
@@ -2331,20 +4748,6 @@ this.BX = this.BX || {};
 	      this.setMaxScroll(document.documentElement.scrollHeight - window.innerHeight - 190);
 	    }
 	  }, {
-	    key: "setPreventNextPage",
-	    value: function setPreventNextPage(status) {
-	      this.setOptions({
-	        preventNextPage: !!status
-	      });
-	      var refreshNeededNode = document.getElementById('next_page_refresh_needed');
-	      var nextPageCurtainNode = document.getElementById('next_post_more');
-
-	      if (refreshNeededNode && nextPageCurtainNode) {
-	        refreshNeededNode.style.display = !!status ? 'block' : 'none';
-	        nextPageCurtainNode.style.display = !!status ? 'none' : 'block';
-	      }
-	    }
-	  }, {
 	    key: "onPinnedPanelChange",
 	    value: function onPinnedPanelChange(params) {
 	      var logId = params.logId ? parseInt(params.logId) : 0;
@@ -2433,7 +4836,7 @@ this.BX = this.BX || {};
 	        var context = 'list';
 	        var postNode = e.target.closest(".".concat(this.class.listPost));
 
-	        if (postNode) // lest
+	        if (postNode) // list
 	          {
 	            menuNode = postNode.querySelector('[data-menu-type="post"]');
 	            post = this.getPostFromNode(postNode);
@@ -2468,7 +4871,7 @@ this.BX = this.BX || {};
 	            groupId: this.getOption('groupId', 0)
 	          });
 	        } else {
-	          app.exec('showPostForm', oMSL.showNewPostForm());
+	          app.exec('showPostForm', PostFormOldManagerInstance.show());
 	        }
 	      } else if ((e.target.closest(".".concat(this.class.listWrapper)) || e.target.closest(".".concat(this.class.pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
 	        var detailFromPinned = !!(e.target.classList.contains(this.class.postItemPinnedBlock) || e.target.closest(".".concat(this.class.postItemPinnedBlock)));
@@ -2497,6 +4900,12 @@ this.BX = this.BX || {};
 
 	          e.stopPropagation();
 	          return e.preventDefault();
+	        } else if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButton)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButton))) {
+	          if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButtonTop)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButtonTop))) {
+	            DetailPageScrollInstance.scrollTo('top');
+	          } else if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButtonBottom)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButtonBottom))) {
+	            DetailPageScrollInstance.scrollTo('bottom');
+	          }
 	        }
 	      } else if (e.target.closest(".".concat(this.class.postWrapper))) {
 	        var expand = !!(e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore)) || e.target.classList.contains(this.class.postItemMore) || e.target.closest(".".concat(this.class.postItemMore)));
@@ -2520,7 +4929,7 @@ this.BX = this.BX || {};
 
 	          var logId = this.getOption('logId', 0);
 
-	          var _post2 = new Post({
+	          var _post2 = new Post$$1({
 	            logId: logId
 	          });
 
@@ -2584,7 +4993,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      return new Post({
+	      return new Post$$1({
 	        logId: logId,
 	        entryType: node.getAttribute('data-livefeed-post-entry-type'),
 	        useFollow: node.getAttribute('data-livefeed-post-use-follow') === 'Y',
@@ -2613,7 +5022,7 @@ this.BX = this.BX || {};
 	        return result;
 	      }
 
-	      result = new Post({
+	      result = new Post$$1({
 	        logId: logId
 	      });
 	      return result;
@@ -2734,6 +5143,10 @@ this.BX = this.BX || {};
 	          result = 37;
 	          break;
 
+	        case 'pageMenu':
+	          result = 34;
+	          break;
+
 	        default:
 	      }
 
@@ -2755,6 +5168,16 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {}, function (response) {});
 	    }
+	  }, {
+	    key: "setLastActivityDate",
+	    value: function setLastActivityDate() {
+	      this.lastActivityDate = Math.round(new Date().getTime() / 1000);
+	    }
+	  }, {
+	    key: "getLastActivityDate",
+	    value: function getLastActivityDate() {
+	      return this.lastActivityDate;
+	    }
 	  }]);
 	  return Feed;
 	}();
@@ -2765,21 +5188,37 @@ this.BX = this.BX || {};
 	var DatabaseUnsentPostInstance = new Database();
 	var PublicationQueueInstance = new PublicationQueue();
 	var PostMenuInstance = new PostMenu();
+	var PageMenuInstance = new PageMenu();
 	var PostFormManagerInstance = new PostFormManager();
+	var PostFormOldManagerInstance = new PostFormOldManager();
 	var PinnedPanelInstance = new PinnedPanel();
 	var RatingInstance = new Rating();
 	var ImportantManagerInstance = new ImportantManager();
+	var SearchBarInstance = new SearchBar();
+	var DetailPageScrollInstance = new DetailPageScroll();
+	var FollowManagerInstance = new FollowManager();
+	var CommentsInstance = new Comments();
+	var PageInstance = new Page();
 
+	exports.Post = Post$$1;
+	exports.BlogPost = BlogPost$$1;
 	exports.Instance = Instance;
 	exports.BalloonNotifierInstance = BalloonNotifierInstance;
 	exports.NotificationBarInstance = NotificationBarInstance;
 	exports.DatabaseUnsentPostInstance = DatabaseUnsentPostInstance;
 	exports.PublicationQueueInstance = PublicationQueueInstance;
 	exports.PostMenuInstance = PostMenuInstance;
+	exports.PageMenuInstance = PageMenuInstance;
 	exports.PostFormManagerInstance = PostFormManagerInstance;
+	exports.PostFormOldManagerInstance = PostFormOldManagerInstance;
 	exports.PinnedPanelInstance = PinnedPanelInstance;
 	exports.RatingInstance = RatingInstance;
 	exports.ImportantManagerInstance = ImportantManagerInstance;
+	exports.SearchBarInstance = SearchBarInstance;
+	exports.DetailPageScrollInstance = DetailPageScrollInstance;
+	exports.FollowManagerInstance = FollowManagerInstance;
+	exports.CommentsInstance = CommentsInstance;
+	exports.PageInstance = PageInstance;
 
 }((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX.Mobile));
 //# sourceMappingURL=livefeed.bundle.js.map

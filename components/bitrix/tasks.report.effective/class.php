@@ -66,7 +66,9 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['PATH_TO_TASK_ADD'], '/company/personal/user/'.User::getId().'/tasks/task/edit/0/');
 		static::tryParseStringParameter($arParams['USE_PAGINATION'], true);
 		static::tryParseStringParameter($arParams['DEFAULT_PAGE_SIZE'], $this->defaultPageSize);
+		static::tryParseStringParameter($arParams['PLATFORM'], 'web');
 		static::tryParseArrayParameter($arParams['PAGE_SIZES'], $this->pageSizes);
+		static::tryParseIntegerParameter($arParams['GROUP_ID'], 0);
 
 		$this->userId = ($this->arParams['USER_ID'] ?: User::getId());
 		$this->groupId = ($this->arParams['GROUP_ID'] ?: 0);
@@ -79,9 +81,6 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		$this->arResult['FILTERS'] = static::getFilterList();
 		$this->arResult['PRESETS'] = static::getPresetList();
 
-		$this->arResult['JS_DATA']['userId'] = $this->userId;
-		$this->arResult['JS_DATA']['efficiencyData'] = static::getEfficiencyData($this->userId);
-
 		if (TaskLimit::isLimitExceeded())
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
@@ -90,9 +89,14 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		else
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = false;
-			$efficiencyData = static::getEfficiencyData($this->arParams['USER_ID']);
+			$efficiencyData = (
+				$this->arParams['PLATFORM'] === 'mobile'
+					? $this->getEfficiencyDataForMobile($this->userId, $this->groupId)
+					: static::getEfficiencyData($this->userId)
+			);
 		}
 
+		$this->arResult['JS_DATA']['userId'] = $this->userId;
 		$this->arResult['JS_DATA']['efficiencyData'] = $efficiencyData;
 	}
 
@@ -210,6 +214,55 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 					Filter\DateType::NEXT_MONTH
 				],
 			],
+		];
+	}
+
+	public function getEfficiencyDataForMobile(int $userId = 0, int $groupId = 0): array
+	{
+		$datesRange = Effective::getDatesRange();
+		$dateFrom = $datesRange['FROM'];
+		$dateTo = $datesRange['TO'];
+
+		$tasksCounters = Effective::getCountersByRange($dateFrom, $dateTo, $userId, $groupId);
+		$graphData = static::getGraphData($dateFrom, $dateTo, $userId, $groupId, false);
+
+		$efficiency = 100;
+		$violations = $tasksCounters['VIOLATIONS'];
+		$inProgress = $tasksCounters['IN_PROGRESS'];
+
+		if ($inProgress > 0)
+		{
+			$efficiency = (int)round(100 - ($violations / $inProgress) * 100);
+		}
+		else if ($violations > 0)
+		{
+			$efficiency = 0;
+		}
+
+		if ($efficiency < 0)
+		{
+			$efficiency = 0;
+		}
+
+		if (!empty($graphData))
+		{
+			$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+			$graphData = array_reverse(array_slice(array_reverse($graphData), 0, 6));
+			foreach ($graphData as $key => $value)
+			{
+				$graphData[$key]['DATE'] = FormatDate(
+					$culture->getDayShortMonthFormat(),
+					(new DateTime($value['DATE'], 'Y-m-d'))->getTimestamp()
+				);
+			}
+		}
+
+		return [
+			'EFFICIENCY' => $efficiency,
+			'COMPLETED' => $tasksCounters['COMPLETED'],
+			'VIOLATIONS' => $tasksCounters['VIOLATIONS'],
+			'IN_PROGRESS' => $tasksCounters['IN_PROGRESS'],
+			'GRAPH_DATA' => $graphData,
 		];
 	}
 

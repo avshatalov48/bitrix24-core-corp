@@ -331,6 +331,7 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 		$defaultCounters = [
 			CounterDictionary::COUNTER_EXPIRED,
 			CounterDictionary::COUNTER_NEW_COMMENTS,
+			CounterDictionary::COUNTER_MUTED_NEW_COMMENTS,
 		];
 
 		if ($this->arParams['GROUP_ID'] > 0)
@@ -432,6 +433,12 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 				Counter\Role::ACCOMPLICE => CounterDictionary::COUNTER_ACCOMPLICES_NEW_COMMENTS,
 				Counter\Role::ORIGINATOR => CounterDictionary::COUNTER_ORIGINATOR_NEW_COMMENTS,
 				Counter\Role::AUDITOR => CounterDictionary::COUNTER_AUDITOR_NEW_COMMENTS,
+			],
+			CounterDictionary::COUNTER_MUTED_NEW_COMMENTS => [
+				Counter\Role::RESPONSIBLE => CounterDictionary::COUNTER_MY_MUTED_NEW_COMMENTS,
+				Counter\Role::ACCOMPLICE => CounterDictionary::COUNTER_ACCOMPLICES_MUTED_NEW_COMMENTS,
+				Counter\Role::ORIGINATOR => CounterDictionary::COUNTER_ORIGINATOR_MUTED_NEW_COMMENTS,
+				Counter\Role::AUDITOR => CounterDictionary::COUNTER_AUDITOR_MUTED_NEW_COMMENTS,
 			],
 		];
 

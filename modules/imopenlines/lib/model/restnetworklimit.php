@@ -17,7 +17,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RestNetworkLimit_Query query()
+ * @method static EO_RestNetworkLimit_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RestNetworkLimit_Result getById($id)
+ * @method static EO_RestNetworkLimit_Result getList(array $parameters = array())
+ * @method static EO_RestNetworkLimit_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_RestNetworkLimit createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_RestNetworkLimit_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_RestNetworkLimit wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_RestNetworkLimit_Collection wakeUpCollection($rows)
+ */
 
 class RestNetworkLimitTable extends Main\Entity\DataManager
 {

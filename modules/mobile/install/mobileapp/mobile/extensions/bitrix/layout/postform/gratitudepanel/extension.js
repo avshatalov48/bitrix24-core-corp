@@ -360,18 +360,9 @@
 
 	onGratitudeEmployeeSelected = ({
 		onSetGratitudeEmployee,
-		recipients
+		recipients,
 	}) => {
-		if (
-			!recipients.users
-			|| recipients.users.length <= 0
-		)
-		{
-			return;
-		}
-
 		recipients = Utils.formatSelectedRecipients(recipients);
-
 		onSetGratitudeEmployee(recipients.users);
 	};
 

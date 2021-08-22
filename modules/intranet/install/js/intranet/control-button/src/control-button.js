@@ -1,4 +1,4 @@
-import {Type, Tag, Loc, Dom, Text, ajax} from 'main.core';
+import {Type, Tag, Loc, Dom, Text, ajax, Reflection} from 'main.core';
 import {Menu, Popup} from 'main.popup';
 import "pull.client";
 import {BaseEvent, EventEmitter} from 'main.core.events';
@@ -37,6 +37,10 @@ export class ControlButton
 			{
 				this.items = ['chat', 'videocall', 'blog_post', 'task'];
 			}
+			else if (this.entityType === 'workgroup')
+			{
+				this.items = ['chat', 'videocall'];
+			}
 			else
 			{
 				this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
@@ -45,7 +49,8 @@ export class ControlButton
 
 		this.contextBx = (window.top.BX || window.BX);
 		this.sliderId = `controlButton:${this.entityType + this.entityId}${Math.floor(Math.random() * 1000)}`;
-		this.isVideoCallEnabled = this.contextBx.Call.Util.isWebRTCSupported();
+		this.isVideoCallEnabled = Reflection.getClass(`${this.contextBx}.Call.Util`)
+			? this.contextBx.Call.Util.isWebRTCSupported() : true;
 		this.chatLockCounter = 0;
 
 		if (!Type.isPlainObject(analyticsLabelParam))
@@ -57,6 +62,8 @@ export class ControlButton
 			entity: this.entityType,
 			...analyticsLabelParam
 		};
+
+		this.buttonClassName = params.buttonClassName || '';
 
 		this.renderButton();
 		this.subscribeEvents();
@@ -122,33 +129,32 @@ export class ControlButton
 	renderButton()
 	{
 		const isChatButton = (!this.isVideoCallEnabled || this.mainItem === 'chat');
+		const onClickValue = (isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this));
+		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME'));
+		const buttonClass = `${isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue'} intranet-control-btn ui-btn-light-border ui-btn-icon-inline ${this.buttonClassName}`;
 
-		this.button = Tag.render`
-			<button	class="control-btn ${isChatButton ? 'control-btn-text-chat' : 'control-btn-text-video'}">
-				<span class="control-btn-text" onclick="${
-					isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this)
-				}">
-					${
-						(isChatButton)
-							? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') 
-							: Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME')
-					}
-				</span>
-				<span class="control-btn-arrow" onclick="${this.showMenu.bind(this)}"></span>
-			</button>
-		`;
+		this.button = (
+			this.items.length > 1
+				? Tag.render`
+					<div class="ui-btn-split ${buttonClass}">
+						<button class="ui-btn-main" onclick="${onClickValue}">${buttonTitle}</button>
+						<button class="ui-btn-menu" onclick="${this.showMenu.bind(this)}"></button> 
+					</div>
+				`
+				: Tag.render`<button class="ui-btn ${buttonClass}" onclick="${onClickValue}">${buttonTitle}</button>`
+		);
 
 		Dom.append(this.button, this.container);
 	}
 
 	showLoader()
 	{
-		Dom.addClass(this.button, 'control-btn--loader');
+		Dom.addClass(this.button, 'ui-btn-wait');
 	}
 
 	hideLoader()
 	{
-		Dom.removeClass(this.button, 'control-btn--loader');
+		Dom.removeClass(this.button, 'ui-btn-wait');
 	}
 
 	getAvailableItems()
@@ -260,6 +266,15 @@ export class ControlButton
 
 	openChat()
 	{
+		if (this.entityType === 'workgroup')
+		{
+			if (top.window.BXIM)
+			{
+				top.BXIM.openMessenger('sg' + this.entityId);
+			}
+			return;
+		}
+
 		this.showLoader();
 
 		ajax.runAction('intranet.controlbutton.getChat', {
@@ -295,6 +310,15 @@ export class ControlButton
 
 	startVideoCall()
 	{
+		if (this.entityType === 'workgroup')
+		{
+			if (top.window.BXIM)
+			{
+				top.BXIM.callTo('sg' + this.entityId);
+			}
+			return;
+		}
+
 		this.showLoader();
 
 		ajax.runAction('intranet.controlbutton.getVideoCallChat', {
@@ -349,9 +373,14 @@ export class ControlButton
 			analyticsLabel: this.analyticsLabel
 		}).then((response) => {
 
-			const users = response.data.userIds.map((userId) => {
-				return {id: parseInt(userId), entityId: 'user'};
-			});
+			let users = [];
+
+			if (Type.isArrayLike(response.data.userIds))
+			{
+				users = response.data.userIds.map((userId) => {
+					return {id: parseInt(userId), entityId: 'user'};
+				});
+			}
 			
 			new (window.top.BX || window.BX).Calendar.SliderLoader(
 				0,
@@ -441,7 +470,7 @@ export class ControlButton
 				onAfterPopupShow: function () {
 					setTimeout(function () {
 						this.close();
-					}.bind(this), 4000);
+					}.bind(this), 5000);
 				}
 			}
 		}).show();

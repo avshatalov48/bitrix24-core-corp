@@ -19,6 +19,9 @@ use Bitrix\Crm\Integrity\DuplicateEntityRanking;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webform/entity.php');
 
 class CAllCrmContact
 {
@@ -2404,6 +2407,10 @@ class CAllCrmContact
 
 			CCrmSearch::DeleteSearch('CONTACT', $ID);
 
+			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
+				CCrmOwnerType::Contact
+			)->removeShortIndex($ID);
+
 			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='CONTACT' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 
@@ -3412,5 +3419,25 @@ class CAllCrmContact
 	public static function GetDefaultTitle($number = '')
 	{
 		return GetMessage('CRM_CONTACT_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
+	}
+
+	/**
+	 * Indicates if a contact has default name
+	 *
+	 * @param string $name
+	 * @return bool
+	 */
+	public static function isDefaultName(string $name): bool
+	{
+		$defaultNames = [
+			self::GetDefaultName(),
+			Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_CONTACT_TEMPLATE')
+		];
+		if (in_array($name, $defaultNames, true))
+		{
+			return true;
+		}
+
+		return mb_strpos($name, self::GetDefaultTitle('')) === 0;
 	}
 }

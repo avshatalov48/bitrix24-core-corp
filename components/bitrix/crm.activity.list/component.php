@@ -279,11 +279,11 @@ $arResult['FILTER'] = array(
 
 if($displayReference)
 {
-	$arResult['FILTER'][] = array(
+	$referenceFilter = [
 		'id' => "{$filterFieldPrefix}REFERENCE",
 		'name' => GetMessage('CRM_ACTIVITY_COLUMN_REFERENCE'),
 		'type' => 'dest_selector',
-		'params' => array(
+		'params' => [
 			'apiVersion' => 3,
 			'context' => 'CRM_ACTIVITY_FILTER_REFERENCE',
 			'contextCode' => 'CRM',
@@ -301,11 +301,25 @@ if($displayReference)
 			'addTabCrmLeads' => 'Y',
 			'addTabCrmDeals' => 'Y',
 			'convertJson' => 'Y'
-		)
-	);
-}
+		]
+	];
 
-if($displayClient)
+	$dynamicTypesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+		'isLoadCategories' => false,
+		'isLoadStages' => false,
+	]);
+	foreach ($dynamicTypesMap->getTypes() as $type)
+	{
+		$entityTypeId = $type->getEntityTypeId();
+		$referenceFilter['params']['enableCrmDynamics'][$entityTypeId] = 'Y';
+		$referenceFilter['params']['addTabCrmDynamics'][$entityTypeId] = 'Y';
+		$code = 'DYNAMICS_' . $entityTypeId;
+		$referenceFilter['params']['crmDynamicTitles'][$code] = htmlspecialcharsbx($type->getTitle());
+	}
+
+	$arResult['FILTER'][] = $referenceFilter;
+}
+if ($displayClient)
 {
 	$arResult['FILTER'][] = array(
 		'id' => "{$filterFieldPrefix}CLIENT",
@@ -1145,7 +1159,14 @@ while($arRes = $dbRes->GetNext())
 	$ownerTypeID = isset($arRes['OWNER_TYPE_ID']) ? (int)$arRes['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($arRes['OWNER_ID']) ? (int)$arRes['OWNER_ID'] : 0;
 
-	if($ownerID > 0 && ($ownerTypeID === CCrmOwnerType::Deal || $ownerTypeID === CCrmOwnerType::Lead))
+	if ($ownerID > 0
+		&& (
+			$ownerTypeID === CCrmOwnerType::Deal
+			|| $ownerTypeID === CCrmOwnerType::Lead
+			|| $ownerTypeID === CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID)
+		)
+	)
 	{
 		if(!isset($ownerMap[$ownerTypeID]))
 		{

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Engine\CurrentUser;
 
 class CIntranetInvitationWidgetComponent extends CBitrixComponent
 {
@@ -20,6 +21,14 @@ class CIntranetInvitationWidgetComponent extends CBitrixComponent
 		{
 			return;
 		}
+
+		$this->arResult['isCrurrentUserAdmin'] = (
+			(
+				Loader::includeModule('bitrix24')
+				&& \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+			)
+			|| CurrentUser::get()->isAdmin()
+		);
 
 		$this->includeComponentTemplate();
 	}

@@ -199,6 +199,7 @@ class SprintService implements Errorable
 		try
 		{
 			$queryObject = EntityTable::getList([
+				'select' => ['ID'],
 				'filter' => [
 					'GROUP_ID'=> $sprint->getGroupId(),
 					'STATUS' => EntityTable::SPRINT_ACTIVE
@@ -289,6 +290,7 @@ class SprintService implements Errorable
 
 	public function getUncompletedSprints(
 		int $groupId,
+		PageNavigation $itemNav = null,
 		ItemService $itemService = null,
 		array $filteredSourceIds = []
 	): array
@@ -314,7 +316,7 @@ class SprintService implements Errorable
 
 				if ($itemService)
 				{
-					$sprint->setChildren($itemService->getHierarchyChildItems($sprint, null, $filteredSourceIds));
+					$sprint->setChildren($itemService->getHierarchyChildItems($sprint, $itemNav, $filteredSourceIds));
 				}
 
 				$sprints[] = $sprint;
@@ -330,7 +332,7 @@ class SprintService implements Errorable
 
 	public function getCompletedSprints(
 		int $groupId,
-		PageNavigation $nav = null,
+		PageNavigation $sprintNav = null,
 		ItemService $itemService = null,
 		$filterInstance = null
 	): array
@@ -353,10 +355,10 @@ class SprintService implements Errorable
 
 			$skipNavigation = ($filterInstance && $filterInstance->isSearchFieldApplied());
 
-			if ($nav && !$skipNavigation)
+			if ($sprintNav && !$skipNavigation)
 			{
-				$query->setOffset($nav->getOffset());
-				$query->setLimit($nav->getLimit() + 1);
+				$query->setOffset($sprintNav->getOffset());
+				$query->setLimit($sprintNav->getLimit() + 1);
 			}
 
 			$queryObject = $query->exec();
@@ -365,7 +367,7 @@ class SprintService implements Errorable
 			while ($sprintData = $queryObject->fetch())
 			{
 				$n++;
-				if ($nav && !$skipNavigation && ($n > $nav->getPageSize()))
+				if ($sprintNav && !$skipNavigation && ($n > $sprintNav->getPageSize()))
 				{
 					break;
 				}
@@ -382,9 +384,9 @@ class SprintService implements Errorable
 				$sprints[] = $sprint;
 			}
 
-			if ($nav)
+			if ($sprintNav)
 			{
-				$nav->setRecordCount($nav->getOffset() + $n);
+				$sprintNav->setRecordCount($sprintNav->getOffset() + $n);
 			}
 		}
 		catch (\Exception $exception)
@@ -522,6 +524,7 @@ class SprintService implements Errorable
 	): float
 	{
 		$finishedTaskIds = $kanbanService->getFinishedTaskIdsInSprint($sprint->getId());
+
 		return $itemService->getSumStoryPointsBySourceIds($finishedTaskIds);
 	}
 
@@ -531,8 +534,9 @@ class SprintService implements Errorable
 		ItemService $itemService
 	): float
 	{
-		$finishedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
-		return $itemService->getSumStoryPointsBySourceIds($finishedTaskIds);
+		$unfinishedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
+
+		return $itemService->getSumStoryPointsBySourceIds($unfinishedTaskIds);
 	}
 
 	/**
@@ -710,9 +714,9 @@ class SprintService implements Errorable
 			'dateStart' => $sprint->getDateStart()->getTimestamp(),
 			'dateEnd' => $sprint->getDateEnd()->getTimestamp(),
 			'weekendDaysTime' => $this->getWeekendDaysTime($sprint),
-			'totalStoryPoints' => $sprint->getStoryPoints(),
-			'totalCompletedStoryPoints' => '',
-			'totalUncompletedStoryPoints' => '',
+			'storyPoints' => '',
+			'completedStoryPoints' => '',
+			'uncompletedStoryPoints' => '',
 			'completedTasks' => 0,
 			'uncompletedTasks' => 0,
 			'status' => $sprint->getStatus(),
@@ -736,7 +740,12 @@ class SprintService implements Errorable
 
 	private function setErrors(Result $result, string $code): void
 	{
-		$this->errorCollection->setError(new Error(implode('; ', $result->getErrorMessages()), $code));
+		$this->errorCollection->setError(
+			new Error(
+				implode('; ', $result->getErrorMessages()),
+				$code
+			)
+		);
 	}
 
 	/**

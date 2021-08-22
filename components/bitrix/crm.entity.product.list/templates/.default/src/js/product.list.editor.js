@@ -48,6 +48,7 @@ export class Editor
 
 	onDialogSelectProductHandler = this.handleOnDialogSelectProduct.bind(this);
 	onSaveHandler = this.handleOnSave.bind(this);
+	onEditorSubmit = this.handleEditorSubmit.bind(this);
 	onInnerCancelHandler = this.handleOnInnerCancel.bind(this);
 	onBeforeGridRequestHandler = this.handleOnBeforeGridRequest.bind(this);
 	onGridUpdatedHandler = this.handleOnGridUpdated.bind(this);
@@ -153,6 +154,7 @@ export class Editor
 	{
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.subscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.subscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 		EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
 		EventEmitter.subscribe('Grid::updated', this.onGridUpdatedHandler);
@@ -167,6 +169,7 @@ export class Editor
 	{
 		EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.unsubscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.unsubscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 		EventEmitter.unsubscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
 		EventEmitter.unsubscribe('Grid::updated', this.onGridUpdatedHandler);
@@ -212,6 +215,24 @@ export class Editor
 		});
 
 		this.setSettingValue('items', items);
+	}
+
+	handleEditorSubmit(event: BaseEvent)
+	{
+		if (!this.isLocationDependantTaxesEnabled())
+		{
+			return;
+		}
+		const entityData = event.getData()[0];
+		if (!entityData || !entityData.hasOwnProperty('LOCATION_ID'))
+		{
+			return;
+		}
+		if (entityData['LOCATION_ID'] !== this.getLocationId())
+		{
+			this.setLocationId(entityData['LOCATION_ID']);
+			this.reloadGrid(false);
+		}
 	}
 
 	handleOnInnerCancel(event: BaseEvent)
@@ -260,11 +281,12 @@ export class Editor
 	}
 
 	/*
-		keep in mind 4 actions for this handler:
+		keep in mind different actions for this handler:
 		- native reload by grid actions (columns settings, etc)		- products from request
 		- reload by tax/discount settings button					- products from request		this.reloadGrid(true)
 		- rollback													- products from db			this.reloadGrid(false)
 		- reload after SalesCenter order save						- products from db			this.reloadGrid(false)
+		- reload after save if location had been changed
 	 */
 	handleOnBeforeGridRequest(event: BaseEvent)
 	{
@@ -285,7 +307,8 @@ export class Editor
 		eventArgs.data = {
 			...eventArgs.data,
 			signedParameters: this.getSignedParameters(),
-			products: useProductsFromRequest ? this.getProductsFields() : null
+			products: useProductsFromRequest ? this.getProductsFields() : null,
+			locationId: this.getLocationId(),
 		};
 
 		this.clearEditor();
@@ -511,6 +534,21 @@ export class Editor
 	setCurrencyId(currencyId): void
 	{
 		this.setSettingValue('currencyId', currencyId);
+	}
+
+	isLocationDependantTaxesEnabled(): bool
+	{
+		return this.getSettingValue('isLocationDependantTaxesEnabled', false);
+	}
+
+	getLocationId(): ?string
+	{
+		return this.getSettingValue('locationId');
+	}
+
+	setLocationId(locationId: string): void
+	{
+		this.setSettingValue('locationId', locationId);
 	}
 
 	changeCurrencyId(currencyId): void

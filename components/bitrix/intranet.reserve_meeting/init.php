@@ -6,7 +6,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 
 	function __IRM_InitReservation($iblockId)
 	{
-		$arResult = array();
+		$arResult = [];
 
 		$arResult["ALLOWED_FIELDS"] = array(
 			"ID" => array(
@@ -287,7 +287,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 		else
 		{
 			$meetingTmp = $meeting;
-			$meeting = array();
+			$meeting = [];
 			foreach ($meetingTmp as $m)
 			{
 				$m = intval($m);
@@ -298,10 +298,10 @@ if (!Function_Exists("__IRM_InitReservation"))
 			}
 		}
 
-		$arPeriodElements = array();
-		$arWeeklyPeriods = array();
-		$arMonthlyPeriods = array();
-		$arYearlyPeriods = array();
+		$arPeriodElements = [];
+		$arWeeklyPeriods = [];
+		$arMonthlyPeriods = [];
+		$arYearlyPeriods = [];
 
 		$y1 = Date("Y", $fromDate);
 		$m1 = Date("n", $fromDate);
@@ -446,7 +446,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 		);
 		while ($arElement = $dbElements->GetNext())
 		{
-			$arDates = array();
+			$arDates = [];
 
 			$dateActiveFrom = MakeTimeStamp($arElement["DATE_ACTIVE_FROM"], FORMAT_DATETIME);
 			$dateActiveTo = MakeTimeStamp($arElement["DATE_ACTIVE_TO"], FORMAT_DATETIME);
@@ -492,7 +492,7 @@ if (!Function_Exists("__IRM_InitReservation"))
 				if ($arElement["PROPERTY_PERIOD_COUNT_VALUE"] <= 0)
 					$arElement["PROPERTY_PERIOD_COUNT_VALUE"] = 1;
 
-				$arPeriodAdditional = array();
+				$arPeriodAdditional = [];
 				if ($arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"] <> '')
 				{
 					$arPeriodAdditionalTmp = Explode(",", $arElement["PROPERTY_PERIOD_ADDITIONAL_VALUE"]);

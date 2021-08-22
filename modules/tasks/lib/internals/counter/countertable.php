@@ -7,6 +7,19 @@ use Bitrix\Main\Entity\DataManager;
  * Class CounterTable
  *
  * @package Bitrix\Tasks\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Counter_Query query()
+ * @method static EO_Counter_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Counter_Result getById($id)
+ * @method static EO_Counter_Result getList(array $parameters = array())
+ * @method static EO_Counter_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Counter createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Counter_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Counter wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Counter\EO_Counter_Collection wakeUpCollection($rows)
  */
 class CounterTable extends DataManager
 {

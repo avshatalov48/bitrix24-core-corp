@@ -300,17 +300,21 @@ class Ad
 			$result = $result['EXPENSES'];
 			/** @var $result Seo\Analytics\Internals\Expenses  */
 
+			$currencyId = $result->getCurrency();
+			if ($currencyId === 'BYN' && \CCrmCurrency::getAccountCurrencyID() === 'BYR')
+			{
+				$currencyId = 'BYR';
+			}
 			$expenses = [
 				'impressions' => $result->getImpressions(),
 				'actions' => $result->getActions(),
-				'spend' => ($result->getSpend() && $result->getCurrency()) ?
-					\CCrmCurrency::convertMoney(
+				'spend' => ($result->getSpend() && $result->getCurrency())
+					? \CCrmCurrency::convertMoney(
 						$result->getSpend(),
-						$result->getCurrency(),
+						$currencyId,
 						\CCrmCurrency::GetAccountCurrencyID()
 					)
-					:
-					$result->getSpend(),
+					: $result->getSpend(),
 				'currency' => \CCrmCurrency::GetAccountCurrencyID(),
 			];
 		}

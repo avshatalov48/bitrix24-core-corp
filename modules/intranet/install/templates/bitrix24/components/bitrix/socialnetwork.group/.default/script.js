@@ -32,6 +32,7 @@ window.B24SGControl = function()
 	this.canProcessRequestsIn = false;
 	this.canPickTheme = false;
 	this.urls = {};
+	this.slider = false;
 };
 
 window.B24SGControl.getInstance = function()
@@ -70,11 +71,13 @@ window.B24SGControl.prototype = {
 		this.canModify = !!params.canModify;
 		this.canProcessRequestsIn = !!params.canProcessRequestsIn;
 		this.canPickTheme = !!params.canPickTheme;
+		this.slider = !!params.slider;
 
 		if (BX.type.isObject(params.urls))
 		{
 			this.urls = params.urls;
 		}
+
 
 		if (BX('bx-group-join-submit'))
 		{
@@ -131,6 +134,8 @@ window.B24SGControl.prototype = {
 				}
 			}
 		}, this));
+
+		this.initIntranetControlButton();
 	},
 
 	showMenu: function(event)
@@ -212,13 +217,13 @@ window.B24SGControl.prototype = {
 				save: 'Y',
 				sessid: BX.bitrix_sessid()
 			},
-			onsuccess: BX.delegate(function(responseData) {
+			onsuccess: function(responseData) {
 				BX.SocialnetworkUICommon.hideButtonWait(BX('bx-group-join-submit'));
 
 				if (
-					typeof responseData.MESSAGE != 'undefined'
+					BX.type.isNotEmptyString(responseData.MESSAGE)
 					&& responseData.MESSAGE == 'SUCCESS'
-					&& typeof responseData.URL != 'undefined'
+					&& BX.type.isNotEmptyString(responseData.URL)
 				)
 				{
 					BX.addClass(BX('bx-group-join-form'), 'sonet-group-user-request-form-invisible');
@@ -228,7 +233,17 @@ window.B24SGControl.prototype = {
 							groupId: this.groupId
 						}
 					} ]);
-					top.location.href = responseData.URL;
+
+					if (this.slider)
+					{
+						location.href = BX.Uri.addParam(responseData.URL, {
+							IFRAME: 'Y',
+						})
+					}
+					else
+					{
+						top.location.href = responseData.URL;
+					}
 				}
 				else if (
 					typeof responseData.MESSAGE != 'undefined'
@@ -239,11 +254,11 @@ window.B24SGControl.prototype = {
 				{
 					BX.SocialnetworkUICommon.showError(responseData.ERROR_MESSAGE, BX('bx-group-join-error'));
 				}
-			}, this),
-			onfailure: BX.delegate(function() {
+			}.bind(this),
+			onfailure: function() {
 				BX.SocialnetworkUICommon.showError(BX.message('SONET_C6_T_AJAX_ERROR'), BX('bx-group-join-error'));
 				BX.SocialnetworkUICommon.hideButtonWait(BX('bx-group-join-submit'));
-			}, this)
+			}.bind(this)
 		});
 	},
 
@@ -527,6 +542,20 @@ window.B24SGControl.prototype = {
 			closeIcon: true
 		});
 		errorPopup.show();
+	},
+
+	initIntranetControlButton: function()
+	{
+		BX.loadExt('intranet.control-button').then(function() {
+			if (BX.Intranet.ControlButton)
+			{
+				new BX.Intranet.ControlButton({
+					container: BX('socialnetwork-group-sidebar-videocall'),
+					entityType: 'workgroup',
+					entityId: this.groupId,
+				});
+			}
+		}.bind(this));
 	}
 };
 

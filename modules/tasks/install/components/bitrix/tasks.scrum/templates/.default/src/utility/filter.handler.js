@@ -5,6 +5,7 @@ import {Filter} from '../service/filter';
 
 import {RequestSender} from './request.sender';
 import {EntityStorage} from './entity.storage';
+import {SubTasksManager} from './subtasks.manager';
 
 import {Sprint} from '../entity/sprint/sprint';
 import {Item} from '../item/item';
@@ -12,7 +13,8 @@ import {Item} from '../item/item';
 type Params = {
 	filter: Filter,
 	requestSender: RequestSender,
-	entityStorage: EntityStorage
+	entityStorage: EntityStorage,
+	subTasksCreator: SubTasksManager
 }
 
 export class FilterHandler extends EventEmitter
@@ -24,6 +26,7 @@ export class FilterHandler extends EventEmitter
 		this.filter = params.filter;
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
+		this.subTasksCreator = params.subTasksCreator;
 
 		this.filter.subscribe('applyFilter', this.onApplyFilter.bind(this));
 	}
@@ -36,13 +39,18 @@ export class FilterHandler extends EventEmitter
 
 		this.updateExactSearchStatusToEntities();
 
-		this.requestSender.applyFilter().then(response => {
+		this.requestSender.applyFilter().then((response) => {
 			filterInfo.promise.fulfill();
 
 			const filteredItemsData = response.data;
 
-			this.entityStorage.getAllItems().forEach((item) => {
+			this.entityStorage.getAllItems().forEach((item: Item) => {
 				const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
+				if (item.isParentTask())
+				{
+					this.subTasksCreator.cleanVisibility(item);
+					this.subTasksCreator.cleanSubTasks(item);
+				}
 				entity.removeItem(item);
 				item.removeYourself();
 			});
@@ -53,13 +61,9 @@ export class FilterHandler extends EventEmitter
 				Dom.append(item.render(), entity.getListItemsNode());
 				entity.setItem(item);
 				item.onAfterAppend(entity.getListItemsNode());
-			});
-
-			this.entityStorage.getBacklog().updateStoryPoints();
-			this.entityStorage.getSprints().forEach((sprint: Sprint) => {
-				if (!sprint.isCompleted())
+				if (item.isParentTask())
 				{
-					sprint.updateStoryPoints();
+					item.downSubTasksTick();
 				}
 			});
 

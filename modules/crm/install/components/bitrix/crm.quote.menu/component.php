@@ -201,7 +201,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = [
 				'TEXT' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
 				'TITLE' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
-				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $userFieldListUrl . '")',
+				'ONCLICK' => 'BX.SidePanel.Instance.open("' . $userFieldListUrl . '")',
 			];
 		}
 	}

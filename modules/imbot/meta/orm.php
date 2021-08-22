@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\ImBot\Model\NetworkSessionTable:imbot/lib/model/networksession.php:24d1727b423c4da016e1bc83dc76276b */
+/* ORMENTITYANNOTATION:Bitrix\ImBot\Model\NetworkSessionTable:imbot/lib/model/networksession.php:b3913d472b31cba0e05d03f6a930d54d */
 namespace Bitrix\ImBot\Model {
 	/**
 	 * EO_NetworkSession
@@ -54,6 +54,16 @@ namespace Bitrix\ImBot\Model {
 	 * @method \Bitrix\ImBot\Model\EO_NetworkSession resetGreetingShown()
 	 * @method \Bitrix\ImBot\Model\EO_NetworkSession unsetGreetingShown()
 	 * @method \boolean fillGreetingShown()
+	 * @method \string getMenuState()
+	 * @method \Bitrix\ImBot\Model\EO_NetworkSession setMenuState(\string|\Bitrix\Main\DB\SqlExpression $menuState)
+	 * @method bool hasMenuState()
+	 * @method bool isMenuStateFilled()
+	 * @method bool isMenuStateChanged()
+	 * @method \string remindActualMenuState()
+	 * @method \string requireMenuState()
+	 * @method \Bitrix\ImBot\Model\EO_NetworkSession resetMenuState()
+	 * @method \Bitrix\ImBot\Model\EO_NetworkSession unsetMenuState()
+	 * @method \string fillMenuState()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -106,6 +116,8 @@ namespace Bitrix\ImBot\Model {
 	 * @method \int[] fillSessionId()
 	 * @method \boolean[] getGreetingShownList()
 	 * @method \boolean[] fillGreetingShown()
+	 * @method \string[] getMenuStateList()
+	 * @method \string[] fillMenuState()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -138,18 +150,6 @@ namespace Bitrix\ImBot\Model {
 	}
 }
 namespace Bitrix\ImBot\Model {
-	/**
-	 * @method static EO_NetworkSession_Query query()
-	 * @method static EO_NetworkSession_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_NetworkSession_Result getById($id)
-	 * @method static EO_NetworkSession_Result getList(array $parameters = array())
-	 * @method static EO_NetworkSession_Entity getEntity()
-	 * @method static \Bitrix\ImBot\Model\EO_NetworkSession createObject($setDefaultValues = true)
-	 * @method static \Bitrix\ImBot\Model\EO_NetworkSession_Collection createCollection()
-	 * @method static \Bitrix\ImBot\Model\EO_NetworkSession wakeUpObject($row)
-	 * @method static \Bitrix\ImBot\Model\EO_NetworkSession_Collection wakeUpCollection($rows)
-	 */
-	class NetworkSessionTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

@@ -92,6 +92,8 @@ export default class OnlyOffice
 		data.action = action;
 		data.uid = currentSliderData.get('uid');
 		data.documentSessionId = this.context.documentSession.id;
+		data.documentSessionHash = this.context.documentSession.hash;
+		data.fileSize = this.context.object.size;
 
 		BX.Disk.sendTelemetryEvent(data);
 	}

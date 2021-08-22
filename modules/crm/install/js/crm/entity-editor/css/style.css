@@ -4044,6 +4044,11 @@ div.crm-entity-widget-content-block-radio-label {
 .crm-entity-card-container-content .ui-entity-editor-content-block .crm-entity-widget-content-block:last-child {
 	margin-bottom: 0;
 }
+
+.crm-entity-card-container-content .ui-ctl-element::placeholder {
+	color: lightgrey;
+}
+
 .client-editor-popup .ui-dropdown-item {
 	position: relative;
 	overflow: hidden;

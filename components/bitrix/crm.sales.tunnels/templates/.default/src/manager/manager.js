@@ -453,6 +453,8 @@ export default class Manager
 							stage.TUNNELS.push(response.data.tunnel);
 						})
 						.catch((response) => {
+							const link = event.data.link;
+							link.from.removeLink(link, true);
 							this.showErrorPopup(makeErrorMessageFromResponse(response));
 						});
 				}

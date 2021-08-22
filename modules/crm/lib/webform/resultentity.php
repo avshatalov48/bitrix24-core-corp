@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\WebForm;
 
+use Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\WebFormTrigger;
 use Bitrix\Crm;
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\EntityManageFacility;
@@ -212,6 +213,18 @@ class ResultEntity
 				{
 					$entityFields['FM'] = $entityMultiFields;
 				}
+				
+				if (in_array($entityTypeName, [\CCrmOwnerType::DealName, \CCrmOwnerType::ContactName, \CCrmOwnerType::CompanyName]))
+				{
+					$fieldName = $entityTypeName === \CCrmOwnerType::ContactName ? 'NAME' : 'TITLE';
+					$filledValue = $this->fields[$entityTypeName][$fieldName] ?? null;
+					$mergedValue = $fields[$fieldName] ?? null;
+					if ($mergedValue && !$filledValue)
+					{
+						unset($fields[$fieldName]);
+					}
+				}
+
 				$merger = new $mergerClass(0, false);
 				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
 				$entityObject->Update($rowId, $entityFields);
@@ -518,7 +531,8 @@ class ResultEntity
 			{
 				$entityFields['WEBFORM_ID'] = $this->formId;
 				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::resolveID($entityName));
-				$dynamicItem = $dynamicFactory->createItem($entityFields);
+				$dynamicItem = $dynamicFactory->createItem();
+				$dynamicItem->setFromCompatibleData($entityFields);
 				if (empty($entityFields['STAGE_ID']) && !empty($entityFields['CATEGORY_ID']))
 				{
 					$dynamicStageId = $dynamicFactory->getStages($entityFields['CATEGORY_ID'])->getStatusIdList()[0] ?? null;
@@ -1098,6 +1112,15 @@ class ResultEntity
 		}
 	}
 
+	/**
+	 * Get trace.
+	 * @return Tracking\Trace
+	 */
+	public function getTrace()
+	{
+		return $this->performTrace();
+	}
+
 	protected function performTrace()
 	{
 		if ($this->trace)
@@ -1666,6 +1689,7 @@ class ResultEntity
 			$this->addActivity();
 			$this->addConsent();
 			$this->runAutomation();
+			WebFormTrigger::onFormFill($this);
 
 			if(count($this->resultEntityPack) > 0)
 			{
@@ -1692,6 +1716,14 @@ class ResultEntity
 	public function setFormId($formId)
 	{
 		$this->formId = $formId;
+	}
+
+	/**
+	 * @return null|int form Id
+	 */
+	public function getFormId()
+	{
+		return $this->formId;
 	}
 
 	/**
@@ -1763,7 +1795,7 @@ class ResultEntity
 	{
 		$this->commonData = $commonData;
 	}
-	
+
 	/*
 	 * Set callback data.
 	 *

@@ -11,11 +11,25 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Web\Json;
-use Bitrix\Tasks\Scrum\Internal\Fields\InfoField;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\PushService;
 
+/**
+ * Class ItemTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Item_Query query()
+ * @method static EO_Item_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Item_Result getById($id)
+ * @method static EO_Item_Result getList(array $parameters = array())
+ * @method static EO_Item_Entity getEntity()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item_Collection createCollection()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item_Collection wakeUpCollection($rows)
+ */
 class ItemTable extends Entity\DataManager
 {
 	const TASK_TYPE = 'task';
@@ -23,6 +37,7 @@ class ItemTable extends Entity\DataManager
 
 	private $id;
 	private $entityId;
+	private $typeId;
 	private $active;
 	private $name;
 	private $description;
@@ -73,6 +88,8 @@ class ItemTable extends Entity\DataManager
 
 		$entityId = new Fields\IntegerField('ENTITY_ID');
 
+		$typeId = new Fields\IntegerField('TYPE_ID');
+
 		$active = new Fields\StringField('ACTIVE');
 		$active->addValidator(new Validators\LengthValidator(1, 1));
 		$active->configureDefaultValue('Y');
@@ -102,18 +119,20 @@ class ItemTable extends Entity\DataManager
 
 		$sourceId = new Fields\IntegerField('SOURCE_ID');
 
-		$info = new InfoField('INFO');
+		$info = new Fields\ObjectField('INFO');
 		$info->configureRequired(false);
-		$info->configureSerializeCallback(function(ItemInfoColumn $itemInfoColumn)
+		$info->configureObjectClass(ItemInfoColumn::class);
+		$info->configureSerializeCallback(function (?ItemInfoColumn $itemInfoColumn)
 		{
-			$value = Json::encode($itemInfoColumn->getInfoData());
-			return ($value ? $value : null);
+			return $itemInfoColumn ? json_encode($itemInfoColumn->getInfoData()) : [];
 		});
-		$info->configureUnserializeCallback(function($value)
+		$info->configureUnserializeCallback(function ($value)
 		{
-			$value = (is_string($value) && !empty($value) ? Json::decode($value) : []);
+			$data = (is_string($value) && !empty($value) ? json_decode($value, true) : []);
+
 			$itemInfoColumn = new ItemInfoColumn();
-			$itemInfoColumn->setInfoData($value);
+			$itemInfoColumn->setInfoData($data);
+
 			return $itemInfoColumn;
 		});
 
@@ -123,6 +142,7 @@ class ItemTable extends Entity\DataManager
 		return [
 			$id,
 			$entityId,
+			$typeId,
 			$active,
 			$name,
 			$description,
@@ -218,6 +238,11 @@ class ItemTable extends Entity\DataManager
 			$fields['ENTITY_ID'] = $this->entityId;
 		}
 
+		if ($this->typeId)
+		{
+			$fields['TYPE_ID'] = $this->typeId;
+		}
+
 		if ($this->itemType)
 		{
 			$fields['ITEM_TYPE'] = $this->itemType;
@@ -270,7 +295,7 @@ class ItemTable extends Entity\DataManager
 			'ENTITY_ID' => $this->entityId,
 			'ITEM_TYPE' => self::TASK_TYPE,
 			'PARENT_ID' => $this->parentId,
-			'SORT' => $this->sort,
+			'SORT' => $this->getSort(),
 			'CREATED_BY' => $this->createdBy,
 			'MODIFIED_BY' => $this->createdBy,
 			'STORY_POINTS' => $this->storyPoints,
@@ -333,6 +358,16 @@ class ItemTable extends Entity\DataManager
 		$this->entityId = (int) $entityId;
 	}
 
+	public function getTypeId(): int
+	{
+		return ($this->typeId ? $this->typeId : 0);
+	}
+
+	public function setTypeId(int $typeId): void
+	{
+		$this->typeId = (int) $typeId;
+	}
+
 	public function getActive(): string
 	{
 		return ($this->active ? $this->active : 'Y');
@@ -375,7 +410,7 @@ class ItemTable extends Entity\DataManager
 
 	public function getSort(): int
 	{
-		return ($this->sort ? $this->sort : 0);
+		return ($this->sort ? $this->sort : 1);
 	}
 
 	public function setSort(int $sort): void
@@ -504,6 +539,10 @@ class ItemTable extends Entity\DataManager
 		if ($itemData['ENTITY_ID'])
 		{
 			$item->setEntityId($itemData['ENTITY_ID']);
+		}
+		if ($itemData['TYPE_ID'])
+		{
+			$item->setTypeId($itemData['TYPE_ID']);
 		}
 		if ($itemData['ACTIVE'])
 		{

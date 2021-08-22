@@ -372,7 +372,7 @@
 
 /*other*/
 
-@media screen and (max-width: 1440px) {
+@media screen and (max-width: 1640px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn {
 		width: 37px;
 		height: 24px;
@@ -397,6 +397,11 @@
 		border: none !important;
 	}
 
+	.bitrix24-default-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn,
+	.bitrix24-dark-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn {
+		border: 1px solid rgba(0, 0, 0, .06);
+	}
+
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .ui-btn-menu:before {
 		position: absolute;
 		top: 0;
@@ -409,6 +414,12 @@
 		width: auto;
 		border: none;
 		background: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='5' viewBox='0 0 17 5'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M6.25,10.4166667 C7.40059323,10.4166667 8.33333333,11.3494068 8.33333333,12.5 C8.33333333,13.6505932 7.40059323,14.5833333 6.25,14.5833333 C5.09940677,14.5833333 4.16666667,13.6505932 4.16666667,12.5 C4.16666667,11.3494068 5.09940677,10.4166667 6.25,10.4166667 Z M12.5,10.4166667 C13.6505932,10.4166667 14.5833333,11.3494068 14.5833333,12.5 C14.5833333,13.6505932 13.6505932,14.5833333 12.5,14.5833333 C11.3494068,14.5833333 10.4166667,13.6505932 10.4166667,12.5 C10.4166667,11.3494068 11.3494068,10.4166667 12.5,10.4166667 Z M18.75,10.4166667 C19.9005932,10.4166667 20.8333333,11.3494068 20.8333333,12.5 C20.8333333,13.6505932 19.9005932,14.5833333 18.75,14.5833333 C17.5994068,14.5833333 16.6666667,13.6505932 16.6666667,12.5 C16.6666667,11.3494068 17.5994068,10.4166667 18.75,10.4166667 Z' transform='translate(-4 -10)'/%3E%3C/svg%3E%0A") center no-repeat;
+	}
+
+	.bitrix24-default-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .ui-btn-menu:before,
+	.bitrix24-dark-theme .bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .ui-btn-menu:before {
+		/*border: 1px solid rgba(0, 0, 0, .06);*/
+		background-image: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='5' viewBox='0 0 17 5'%3E%3Cpath fill='%23535C69' fill-rule='evenodd' d='M6.25,10.4166667 C7.40059323,10.4166667 8.33333333,11.3494068 8.33333333,12.5 C8.33333333,13.6505932 7.40059323,14.5833333 6.25,14.5833333 C5.09940677,14.5833333 4.16666667,13.6505932 4.16666667,12.5 C4.16666667,11.3494068 5.09940677,10.4166667 6.25,10.4166667 Z M12.5,10.4166667 C13.6505932,10.4166667 14.5833333,11.3494068 14.5833333,12.5 C14.5833333,13.6505932 13.6505932,14.5833333 12.5,14.5833333 C11.3494068,14.5833333 10.4166667,13.6505932 10.4166667,12.5 C10.4166667,11.3494068 11.3494068,10.4166667 12.5,10.4166667 Z M18.75,10.4166667 C19.9005932,10.4166667 20.8333333,11.3494068 20.8333333,12.5 C20.8333333,13.6505932 19.9005932,14.5833333 18.75,14.5833333 C17.5994068,14.5833333 16.6666667,13.6505932 16.6666667,12.5 C16.6666667,11.3494068 17.5994068,10.4166667 18.75,10.4166667 Z' transform='translate(-4 -10)'/%3E%3C/svg%3E%0A");
 	}
 
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn .ui-btn-menu:after {

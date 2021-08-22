@@ -5,6 +5,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main;
+use Bitrix\Bitrix24\Feature;
 
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Settings\LeadSettings;
@@ -110,7 +111,16 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 		];
 
 		$this->arResult['ERRORS'] = array();
-		$this->arResult['ROWS'] = $builder->getRows($this->arParams['LEVEL'], $this->arParams['PARENT_ID']);
+
+		$this->arResult['FEATURE_CODE'] = Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled("crm_tracking_reports")
+			? "crm_tracking_reports"
+			: null
+		;
+
+		$this->arResult['ROWS'] = $this->arResult['FEATURE_CODE']
+			? []
+			: $builder->getRows($this->arParams['LEVEL'], $this->arParams['PARENT_ID'])
+		;
 
 		$this->setUiGridColumns();
 

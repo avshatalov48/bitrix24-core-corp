@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,ui_vue_vuex,main_md5,main_sha1,ui_notification,ui_forms,ui_layoutForm,ui_alerts,ui_vuex,ui_vue_components_hint,ui_vue_portal,main_popup,ui_dialogs_messagebox,ui_icons,ui_vue,timeman_component_timeline,timeman_const,main_loader,timeman_dateformatter,timeman_timeformatter,pull_client,main_core) {
+(function (exports,ui_vue_vuex,main_md5,main_sha1,ui_forms,ui_layoutForm,ui_alerts,ui_vuex,ui_vue_components_hint,ui_dialogs_messagebox,ui_icons,timeman_component_timeline,timeman_const,ui_vue_portal,ui_vue,ui_notification,main_popup,main_loader,timeman_dateformatter,timeman_timeformatter,pull_client,main_core) {
 	'use strict';
 
 	var Code = /*#__PURE__*/function () {
@@ -53,10 +53,10 @@ this.BX = this.BX || {};
 	  }
 
 	  babelHelpers.createClass(Time, null, [{
-	    key: "calculateInEntity",
-	    value: function calculateInEntity(state, entity) {
+	    key: "calculateInEntityOnADate",
+	    value: function calculateInEntityOnADate(state, entity, date) {
 	      return state.history.filter(function (entry) {
-	        return entry.privateCode === entity.privateCode;
+	        return entry.privateCode === entity.privateCode && entry.dateLog === date;
 	      }).map(Time.calculateInEntry).reduce(function (sum, time) {
 	        return sum + time;
 	      }, 0);
@@ -262,6 +262,52 @@ this.BX = this.BX || {};
 
 	var debug = new Debug();
 
+	var Notification = /*#__PURE__*/function () {
+	  function Notification(title, text, callback) {
+	    babelHelpers.classCallCheck(this, Notification);
+	    this.title = title.toString();
+	    this.text = text.toString();
+
+	    if (main_core.Type.isFunction(callback)) {
+	      this.callback = callback;
+	    }
+
+	    return this;
+	  }
+
+	  babelHelpers.createClass(Notification, [{
+	    key: "show",
+	    value: function show() {
+	      var _this = this;
+
+	      BXIM.playSound('newMessage1');
+	      var messageTemplate = BXIM.notify.createNotify({
+	        id: 0,
+	        type: 4,
+	        date: new Date(),
+	        params: {},
+	        title: this.title,
+	        text: this.text
+	      }, true);
+	      var messageJs = "\n\t\t\tvar notify = BX.findChildByClassName(document.body, \"bx-notifier-item\");\n\t\t\t\n\t\t\tnotify.style.cursor = \"pointer\";\n\t\t\t\n\t\t\tBX.bind(notify, \"click\", function() {\n\t\t\t\tBX.desktop.onCustomEvent(\"main\", \"bxImClickPwtMessage\", []);\n\t\t\t\tBX.desktop.windowCommand(\"close\")\n\t\t\t});\n\t\t\t\n\t\t\tBX.bind(BX.findChildByClassName(notify, \"bx-notifier-item-delete\"), \"click\", function(event) { \n\t\t\t\tBX.desktop.windowCommand(\"close\"); \n\t\t\t\tBX.MessengerCommon.preventDefault(event); \n\t\t\t});\n\t\t\t\n\t\t\tBX.bind(notify, \"contextmenu\", function() {\n\t\t\t\tBX.desktop.windowCommand(\"close\")\n\t\t\t});\n\t\t";
+	      BXIM.desktop.openNewMessage('pwt' + new Date(), messageTemplate, messageJs);
+	      BX.desktop.addCustomEvent('bxImClickPwtMessage', function () {
+	        return _this.click();
+	      });
+	    }
+	  }, {
+	    key: "click",
+	    value: function click() {
+	      if (main_core.Type.isFunction(this.callback)) {
+	        this.callback();
+	      }
+
+	      BX.desktop.removeCustomEvents('bxImClickPwtMessage');
+	    }
+	  }]);
+	  return Notification;
+	}();
+
 	var MonitorModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(MonitorModel, _VuexBuilderModel);
 
@@ -293,10 +339,14 @@ this.BX = this.BX || {};
 	          secret: Code.createSecret(),
 	          desktopCode: Code.getDesktopCode(),
 	          otherTime: this.getVariable('config.otherTime', 1800000),
-	          shortAbsenceTime: this.getVariable('config.shortAbsenceTime', 1800000)
+	          shortAbsenceTime: this.getVariable('config.shortAbsenceTime', 1800000),
+	          pausedUntil: null,
+	          lastSuccessfulSendDate: null,
+	          lastRemindDate: null
 	        },
 	        reportState: {
-	          dateLog: this.getDateLog()
+	          dateLog: this.getDateLog(),
+	          comments: []
 	        },
 	        personal: [],
 	        strictlyWorking: [],
@@ -313,7 +363,7 @@ this.BX = this.BX || {};
 	        title: '',
 	        publicCode: '',
 	        privateCode: '',
-	        comment: '',
+	        comments: [],
 	        extra: {}
 	      };
 	    }
@@ -335,6 +385,7 @@ this.BX = this.BX || {};
 	    value: function getSentQueueState() {
 	      return {
 	        dateLog: this.getDateLog(),
+	        comment: '',
 	        historyPackage: [],
 	        chartPackage: [],
 	        desktopCode: ''
@@ -353,6 +404,31 @@ this.BX = this.BX || {};
 	            if (main_core.Type.isDate(date) && !isNaN(date) && payload.length === 10) {
 	              store.commit('setDateLog', payload);
 	            }
+	          }
+	        },
+	        refreshDateLog: function refreshDateLog(store) {
+	          if (main_core.Type.isArrayFilled(store.state.history)) {
+	            var firstHistoryEntryDateLog = store.state.history[0].dateLog;
+
+	            _this.getActions().setDateLog(store, firstHistoryEntryDateLog);
+
+	            logger.log("Report date is set for ".concat(firstHistoryEntryDateLog));
+	            debug.log("Report date is set for ".concat(firstHistoryEntryDateLog));
+	          } else {
+	            var dateLog = _this.getDateLog();
+
+	            _this.getActions().setDateLog(store, dateLog);
+
+	            logger.log("Report date is set for ".concat(dateLog));
+	            debug.log("Report date is set for ".concat(dateLog));
+	          }
+	        },
+	        setLastRemindDate: function setLastRemindDate(store, date) {
+	          store.commit('setLastRemindDate', date);
+	        },
+	        setLastSuccessfulSendDate: function setLastSuccessfulSendDate(store, date) {
+	          if (main_core.Type.isDate(date) && !isNaN(date)) {
+	            store.commit('setLastSuccessfulSendDate', date);
 	          }
 	        },
 	        addPersonal: function addPersonal(store, privateCode) {
@@ -448,6 +524,23 @@ this.BX = this.BX || {};
 	          if (result.type !== timeman_const.EntityType.custom) {
 	            store.commit('startIntervalForHistoryEntry', historyEntry);
 	          }
+
+	          var lastRemindDate = store.state.config.lastRemindDate;
+	          var canShowReminder = new Date(lastRemindDate) < new Date(_this.getDateLog());
+
+	          var isHistorySent = _this.getGetters().isHistorySent(store.state);
+
+	          if (!lastRemindDate || canShowReminder && !isHistorySent) {
+	            if (_this.getGetters().getWorkingTimeForToday(store.state) >= 32400) //9 hour in seconds
+	              {
+	                new Notification(main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REMINDER_TITLE'), main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REMINDER_TEXT'), function () {
+	                  BX.desktop.windowCommand("show");
+	                  BX.desktop.changeTab('im');
+	                  BX.MessengerWindow.changeTab('timeman-pwt');
+	                }).show();
+	                store.commit('setLastRemindDate', _this.getDateLog());
+	              }
+	          }
 	        },
 	        preFinishLastInterval: function preFinishLastInterval(store) {
 	          store.commit('preFinishLastInterval');
@@ -465,8 +558,13 @@ this.BX = this.BX || {};
 
 	          var sentQueue = _this.collectSentQueue(store);
 
+	          var reportComment = store.state.reportState.comments.find(function (comment) {
+	            return comment.dateLog === store.state.reportState.dateLog;
+	          });
+
 	          var result = _this.validateSentQueue({
 	            dateLog: store.state.reportState.dateLog,
+	            comment: reportComment ? reportComment.text : '',
 	            historyPackage: sentQueue.history,
 	            chartPackage: sentQueue.chart,
 	            desktopCode: store.state.config.desktopCode
@@ -477,8 +575,19 @@ this.BX = this.BX || {};
 	        clearSentQueue: function clearSentQueue(store) {
 	          store.commit('clearSentQueue');
 	        },
-	        clearStorage: function clearStorage(store) {
-	          store.commit('clearStorage');
+	        clearSentHistory: function clearSentHistory(store) {
+	          var lastSuccessfulSendDate = store.state.config.lastSuccessfulSendDate;
+
+	          if (!lastSuccessfulSendDate) {
+	            return;
+	          }
+
+	          if (new Date(_this.getDateLog()) > new Date(lastSuccessfulSendDate)) {
+	            store.commit('clearStorageBeforeDate', new Date(lastSuccessfulSendDate));
+	          }
+	        },
+	        clearStorageBeforeDate: function clearStorageBeforeDate(store, date) {
+	          store.commit('clearStorageBeforeDate', new Date(date));
 	        },
 	        setComment: function setComment(store, payload) {
 	          var entity = store.state.entity.find(function (entity) {
@@ -492,8 +601,24 @@ this.BX = this.BX || {};
 	            });
 	          }
 	        },
+	        setPausedUntil: function setPausedUntil(store, dateTime) {
+	          if (main_core.Type.isDate(dateTime) && main_core.Type.isNumber(dateTime.getTime()) && dateTime > new Date()) {
+	            store.commit('setPausedUntil', dateTime);
+	            logger.warn('Monitor paused until ', dateTime.toString());
+	            debug.log('Monitor paused until ', dateTime.toString());
+	          }
+	        },
+	        clearPausedUntil: function clearPausedUntil(store) {
+	          store.commit('clearPausedUntil');
+	        },
+	        setReportComment: function setReportComment(store, comment) {
+	          store.commit('setReportComment', comment.toString());
+	        },
 	        processUnfinishedEvents: function processUnfinishedEvents(store) {
 	          store.commit('processUnfinishedEvents');
+	        },
+	        migrateHistory: function migrateHistory(store) {
+	          store.commit('migrateHistory');
 	        }
 	      };
 	    }
@@ -505,6 +630,14 @@ this.BX = this.BX || {};
 	      return {
 	        setDateLog: function setDateLog(state, payload) {
 	          state.reportState.dateLog = payload;
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        setLastSuccessfulSendDate: function setLastSuccessfulSendDate(state, date) {
+	          state.config.lastSuccessfulSendDate = date;
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        setLastRemindDate: function setLastRemindDate(state, date) {
+	          state.config.lastRemindDate = date;
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        addPersonal: function addPersonal(state, payload) {
@@ -570,11 +703,19 @@ this.BX = this.BX || {};
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        finishLastInterval: function finishLastInterval(state) {
+	          var shouldRemoveTransitionInterval = false;
 	          state.history.map(function (entry) {
 	            entry.time = entry.time.map(function (time) {
 	              if (time.finish === null) {
 	                time.finish = new Date();
 	                time.preFinish = null;
+
+	                if (new Date(time.start).getDate() !== time.finish.getDate()) {
+	                  shouldRemoveTransitionInterval = true;
+	                  time.markedForDeletion = true;
+	                  logger.warn('Interval marked for deletion');
+	                  debug.log('Interval marked for deletion');
+	                }
 
 	                if (entry.type !== timeman_const.EntityType.absence) {
 	                  return time;
@@ -587,7 +728,7 @@ this.BX = this.BX || {};
 	                  }
 	                }).map(function (entity) {
 	                  return babelHelpers.objectSpread({}, entity, {
-	                    time: Time.calculateInEntity(state, entity)
+	                    time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog)
 	                  });
 	                }).sort(function (currentEntity, nextEntity) {
 	                  return currentEntity.time - nextEntity.time;
@@ -596,7 +737,7 @@ this.BX = this.BX || {};
 	                    return;
 	                  }
 
-	                  if (entity.comment.trim() === '') {
+	                  if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '') {
 	                    if (shortAbsenceTimeRest - entity.time >= 0) {
 	                      shortAbsenceTimeRest -= entity.time;
 	                      return;
@@ -608,9 +749,18 @@ this.BX = this.BX || {};
 	              }
 
 	              return time;
+	            }).filter(function (interval) {
+	              return !interval.markedForDeletion;
 	            });
 	            return entry;
 	          });
+
+	          if (shouldRemoveTransitionInterval) {
+	            state.history = state.history.filter(function (entry) {
+	              return main_core.Type.isArrayFilled(entry.time);
+	            });
+	          }
+
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        preFinishLastInterval: function preFinishLastInterval(state) {
@@ -639,7 +789,11 @@ this.BX = this.BX || {};
 	          state.sentQueue = [];
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
-	        clearStorage: function clearStorage(state) {
+	        clearStorageBeforeDate: function clearStorageBeforeDate(state, date) {
+	          state.history = state.history.filter(function (entry) {
+	            return new Date(entry.dateLog) > date;
+	          });
+
 	          var getCodesToStore = function getCodesToStore(privateCode) {
 	            var entity = state.entity.find(function (entity) {
 	              return entity.privateCode === privateCode;
@@ -649,6 +803,17 @@ this.BX = this.BX || {};
 	              if (entity.type !== timeman_const.EntityType.absence) {
 	                return true;
 	              }
+
+	              var isInUnsentHistory = state.history.find(function (entry) {
+	                return entry.privateCode === privateCode;
+	              });
+
+	              if (isInUnsentHistory) {
+	                return true;
+	              }
+
+	              logger.warn("".concat(entity.title, " has been removed from personal"));
+	              debug.log("".concat(entity.title, " has been removed from personal"));
 	            }
 
 	            return false;
@@ -656,16 +821,76 @@ this.BX = this.BX || {};
 
 	          state.personal = state.personal.filter(getCodesToStore);
 	          state.strictlyWorking = state.strictlyWorking.filter(getCodesToStore);
-	          state.entity = [];
-	          state.history = [];
+
+	          if (main_core.Type.isArrayFilled(state.history)) {
+	            var privateCodesToStore = [];
+	            state.history.forEach(function (entry) {
+	              if (!privateCodesToStore.includes(entry.privateCode)) {
+	                privateCodesToStore.push(entry.privateCode);
+	              }
+	            });
+	            state.entity = state.entity.filter(function (entity) {
+	              return privateCodesToStore.includes(entity.privateCode);
+	            });
+	            state.entity = state.entity.map(function (entity) {
+	              entity.comments = entity.comments.filter(function (comment) {
+	                return new Date(comment.dateLog) > date;
+	              });
+	              return entity;
+	            });
+	          } else {
+	            state.entity = [];
+	          }
+
 	          state.sentQueue = [];
-	          logger.log('Local storage cleared');
+	          state.reportState.comments = state.reportState.comments.filter(function (comment) {
+	            return new Date(comment.dateLog) > date;
+	          });
+	          logger.log("Local history before ".concat(timeman_dateformatter.DateFormatter.toString(date), " cleared"));
 	          debug.space();
-	          debug.log('Local storage cleared');
+	          debug.log("Local history before ".concat(timeman_dateformatter.DateFormatter.toString(date), " cleared"));
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        setComment: function setComment(state, payload) {
-	          payload.entity.comment = payload.comment;
+	          var dateLog = state.reportState.dateLog;
+	          var comment = payload.entity.comments.find(function (comment) {
+	            return comment.dateLog === dateLog;
+	          });
+
+	          if (comment) {
+	            comment.text = payload.comment;
+	          } else {
+	            payload.entity.comments.push({
+	              dateLog: dateLog,
+	              text: payload.comment
+	            });
+	          }
+
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        setReportComment: function setReportComment(state, text) {
+	          var dateLog = state.reportState.dateLog;
+	          var comment = state.reportState.comments.find(function (comment) {
+	            return comment.dateLog === dateLog;
+	          });
+
+	          if (comment) {
+	            comment.text = text;
+	          } else {
+	            state.reportState.comments.push({
+	              dateLog: dateLog,
+	              text: text
+	            });
+	          }
+
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        setPausedUntil: function setPausedUntil(state, dateTime) {
+	          state.config.pausedUntil = dateTime;
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        clearPausedUntil: function clearPausedUntil(state) {
+	          state.config.pausedUntil = null;
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        },
 	        processUnfinishedEvents: function processUnfinishedEvents(state) {
@@ -694,6 +919,38 @@ this.BX = this.BX || {};
 	            return entry;
 	          });
 	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
+	        },
+	        migrateHistory: function migrateHistory(state) {
+	          state.entity.map(function (entity) {
+	            if (!entity.hasOwnProperty('comments')) {
+	              entity.comments = [];
+
+	              if (entity.comment) {
+	                entity.comments.push({
+	                  dateLog: state.reportState.dateLog,
+	                  text: entity.comment
+	                });
+	              }
+	            }
+
+	            delete entity.comment;
+	            return entity;
+	          });
+
+	          if (!state.reportState.hasOwnProperty('comments')) {
+	            state.reportState.comments = [];
+
+	            if (state.reportState.comment) {
+	              state.reportState.comments.push({
+	                dateLog: state.reportState.dateLog,
+	                text: state.reportState.comment
+	              });
+	            }
+
+	            delete state.reportState.comment;
+	          }
+
+	          babelHelpers.get(babelHelpers.getPrototypeOf(MonitorModel.prototype), "saveState", _this2).call(_this2, state);
 	        }
 	      };
 	    }
@@ -708,8 +965,12 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          workingEntities = workingEntities.map(function (entity) {
+	            var comment = entity.comments.find(function (comment) {
+	              return comment.dateLog === state.reportState.dateLog;
+	            });
 	            var workingEntity = babelHelpers.objectSpread({}, entity, {
-	              time: Time.calculateInEntity(state, entity)
+	              time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
+	              comment: comment ? comment.text : ''
 	            });
 
 	            if (workingEntity.type === timeman_const.EntityType.unknown) {
@@ -717,6 +978,8 @@ this.BX = this.BX || {};
 	            }
 
 	            return workingEntity;
+	          }).filter(function (entity) {
+	            return entity.time > 0;
 	          });
 	          var otherTimeRest = Time.msToSec(state.config.otherTime);
 	          var others = workingEntities.sort(function (currentEntity, nextEntity) {
@@ -741,7 +1004,7 @@ this.BX = this.BX || {};
 	              return false;
 	            }
 
-	            if (entity.comment.trim() === '') {
+	            if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '') {
 	              if (shortAbsenceTimeRest - entity.time >= 0) {
 	                shortAbsenceTimeRest -= entity.time;
 	                return true;
@@ -769,7 +1032,8 @@ this.BX = this.BX || {};
 	              title: timeman_const.EntityGroup.other.title,
 	              time: Time.msToSec(state.config.otherTime) - otherTimeRest,
 	              allowedTime: Time.msToSec(state.config.otherTime),
-	              hint: timeman_const.EntityGroup.other.hint
+	              hint: timeman_const.EntityGroup.other.hint,
+	              privateCode: timeman_const.EntityGroup.other.value
 	            });
 	          }
 
@@ -781,7 +1045,8 @@ this.BX = this.BX || {};
 	                return sum + entity.time;
 	              }, 0),
 	              allowedTime: Time.msToSec(state.config.shortAbsenceTime),
-	              hint: timeman_const.EntityGroup.absence.hint
+	              hint: timeman_const.EntityGroup.absence.hint,
+	              privateCode: timeman_const.EntityGroup.absence.value
 	            });
 	          }
 
@@ -794,9 +1059,15 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          return personalEntities.map(function (entity) {
-	            return babelHelpers.objectSpread({}, entity, {
-	              time: Time.calculateInEntity(state, entity)
+	            var comment = entity.comments.find(function (comment) {
+	              return comment.dateLog === state.reportState.dateLog;
 	            });
+	            return babelHelpers.objectSpread({}, entity, {
+	              time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
+	              comment: comment ? comment.text : ''
+	            });
+	          }).filter(function (entity) {
+	            return entity.time > 0;
 	          }).sort(function (a, b) {
 	            return b.time - a.time;
 	          });
@@ -805,7 +1076,7 @@ this.BX = this.BX || {};
 	          return function (privateCode) {
 	            var history = BX.util.objectClone(state.history);
 	            var entries = history.filter(function (entry) {
-	              return entry.privateCode === privateCode;
+	              return entry.privateCode === privateCode && entry.dateLog === state.reportState.dateLog;
 	            });
 	            entries.map(function (entry) {
 	              entry.time = Time.calculateInEntry(entry);
@@ -829,7 +1100,9 @@ this.BX = this.BX || {};
 	            return emptyChart;
 	          }
 
-	          var history = BX.util.objectClone(state.history);
+	          var history = state.history.filter(function (entry) {
+	            return entry.dateLog === state.reportState.dateLog;
+	          });
 	          var minute = 60000; //collecting real intervals
 
 	          history.forEach(function (entry) {
@@ -919,6 +1192,184 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          return chartData;
+	        },
+	        getOverChartData: function getOverChartData(state) {
+	          return function (selectedPrivateCode) {
+	            var selectedCodes = [];
+	            var workingEntities = [];
+
+	            if (selectedPrivateCode === timeman_const.EntityGroup.other.value || selectedPrivateCode === timeman_const.EntityGroup.absence.value) {
+	              workingEntities = state.entity.filter(function (entity) {
+	                if (!state.personal.includes(entity.privateCode)) {
+	                  return entity;
+	                }
+	              }).map(function (entity) {
+	                var workingEntity = babelHelpers.objectSpread({}, entity, {
+	                  time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog)
+	                });
+
+	                if (workingEntity.type === timeman_const.EntityType.unknown) {
+	                  workingEntity.hint = timeman_const.EntityGroup.unknown.hint;
+	                }
+
+	                return workingEntity;
+	              }).filter(function (entity) {
+	                return entity.time > 0;
+	              });
+	            }
+
+	            if (selectedPrivateCode === timeman_const.EntityGroup.other.value) {
+	              var otherTimeRest = Time.msToSec(state.config.otherTime);
+	              var others = workingEntities.sort(function (currentEntity, nextEntity) {
+	                return currentEntity.time - nextEntity.time;
+	              }).filter(function (entity) {
+	                if (state.strictlyWorking.includes(entity.privateCode) || entity.type === timeman_const.EntityType.absence) {
+	                  return false;
+	                }
+
+	                if (otherTimeRest - entity.time >= 0) {
+	                  otherTimeRest -= entity.time;
+	                  return true;
+	                } else {
+	                  return false;
+	                }
+	              });
+	              others.forEach(function (entity) {
+	                return selectedCodes.push(entity.privateCode);
+	              });
+	            } else if (selectedPrivateCode === timeman_const.EntityGroup.absence.value) {
+	              var shortAbsenceTimeRest = Time.msToSec(state.config.shortAbsenceTime);
+	              var shortAbsence = workingEntities.sort(function (currentEntity, nextEntity) {
+	                return currentEntity.time - nextEntity.time;
+	              }).filter(function (entity) {
+	                if (state.strictlyWorking.includes(entity.privateCode) || entity.type !== timeman_const.EntityType.absence) {
+	                  return false;
+	                }
+
+	                if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '') {
+	                  if (shortAbsenceTimeRest - entity.time >= 0) {
+	                    shortAbsenceTimeRest -= entity.time;
+	                    return true;
+	                  }
+
+	                  return false;
+	                }
+	              });
+	              shortAbsence.forEach(function (entity) {
+	                return selectedCodes.push(entity.privateCode);
+	              });
+	            } else {
+	              selectedCodes = [selectedPrivateCode];
+	            }
+
+	            var segments = [];
+	            var history = BX.util.objectClone(state.history).filter(function (entry) {
+	              return entry.dateLog === state.reportState.dateLog;
+	            });
+	            var minute = 60000; //collecting real intervals
+
+	            history.forEach(function (entry) {
+	              var type = state.personal.includes(entry.privateCode) ? timeman_const.EntityGroup.personal.value : timeman_const.EntityGroup.working.value;
+	              entry.display = selectedCodes.includes(entry.privateCode) ? 'selected' : 'transparent';
+	              entry.time.forEach(function (interval) {
+	                var start = new Date(interval.start);
+	                var finish = interval.finish ? new Date(interval.finish) : new Date();
+	                segments.push({
+	                  type: type,
+	                  start: start,
+	                  finish: finish,
+	                  display: entry.display
+	                });
+	              });
+	            });
+	            segments = segments.sort(function (currentSegment, nextSegment) {
+	              return currentSegment.start - nextSegment.start;
+	            }); //create the leftmost interval
+
+	            var firstSegmentFrom = segments[0].start;
+
+	            if (firstSegmentFrom.getHours() + firstSegmentFrom.getMinutes() > 0) {
+	              segments.unshift({
+	                start: new Date(firstSegmentFrom.getFullYear(), firstSegmentFrom.getMonth(), firstSegmentFrom.getDate(), 0, 0),
+	                finish: firstSegmentFrom,
+	                type: timeman_const.EntityGroup.inactive.value,
+	                display: 'transparent'
+	              });
+	            } //create inactive intervals throughout the day
+
+
+	            segments.forEach(function (interval, index) {
+	              if (index > 0 && interval.start - segments[index - 1].finish >= minute * 3) {
+	                var start = segments[index - 1].finish;
+	                var finish = interval.start;
+	                start.setMinutes(start.getMinutes() + 1);
+	                finish.setMinutes(finish.getMinutes() - 1);
+	                segments.push({
+	                  start: start,
+	                  finish: finish,
+	                  type: timeman_const.EntityGroup.inactive.value,
+	                  display: 'transparent'
+	                });
+	              }
+	            });
+	            segments = segments.sort(function (currentSegment, nextSegment) {
+	              return currentSegment.start - nextSegment.start;
+	            }); //create the rightmost interval
+
+	            var lastSegmentTo = segments[segments.length - 1].finish;
+
+	            if (lastSegmentTo.getHours() + lastSegmentTo.getMinutes() < 82) {
+	              lastSegmentTo.setMinutes(lastSegmentTo.getMinutes() + 1);
+	              segments.push({
+	                start: lastSegmentTo,
+	                finish: new Date(lastSegmentTo.getFullYear(), lastSegmentTo.getMonth(), lastSegmentTo.getDate(), 23, 59),
+	                type: timeman_const.EntityGroup.inactive.value,
+	                display: 'transparent'
+	              });
+	            }
+
+	            return segments;
+	          };
+	        },
+	        isHistorySent: function isHistorySent(state) {
+	          var lastSuccessfulSendDate = state.config.lastSuccessfulSendDate;
+	          var hasUnsentHistory = main_core.Type.isArrayFilled(state.history) && new Date(state.history[0].dateLog) < new Date(MonitorModel.prototype.getDateLog());
+
+	          if (!lastSuccessfulSendDate) {
+	            return !hasUnsentHistory;
+	          }
+
+	          lastSuccessfulSendDate = new Date(lastSuccessfulSendDate);
+	          lastSuccessfulSendDate.setHours(0);
+	          lastSuccessfulSendDate.setMinutes(0);
+	          lastSuccessfulSendDate.setSeconds(0);
+	          lastSuccessfulSendDate.setMilliseconds(0);
+	          var currentDate = new Date();
+	          currentDate.setHours(0);
+	          currentDate.setMinutes(0);
+	          currentDate.setSeconds(0);
+	          currentDate.setMilliseconds(0);
+	          return currentDate - lastSuccessfulSendDate <= 86400000 || !hasUnsentHistory;
+	        },
+	        getWorkingTimeForToday: function getWorkingTimeForToday(state) {
+	          var workingEntities = state.entity.filter(function (entity) {
+	            if (!state.personal.includes(entity.privateCode)) {
+	              return entity;
+	            }
+	          });
+	          return workingEntities.map(function (entity) {
+	            return babelHelpers.objectSpread({}, entity, {
+	              time: Time.calculateInEntityOnADate(state, entity, MonitorModel.prototype.getDateLog())
+	            });
+	          }).reduce(function (sum, entity) {
+	            return sum + entity.time;
+	          }, 0);
+	        },
+	        getReportComment: function getReportComment(state) {
+	          var reportComment = state.reportState.comments.find(function (comment) {
+	            return comment.dateLog === state.reportState.dateLog;
+	          });
+	          return reportComment ? reportComment.text : '';
 	        }
 	      };
 	    }
@@ -949,8 +1400,8 @@ this.BX = this.BX || {};
 	          result.title = entity.title.toString();
 	        }
 
-	        if (main_core.Type.isString(entity.comment) || main_core.Type.isNumber(entity.comment)) {
-	          result.comment = entity.comment.toString();
+	        if (main_core.Type.isArrayFilled(entity.comments)) {
+	          result.comments = entity.comments;
 	        }
 	      }
 
@@ -963,6 +1414,10 @@ this.BX = this.BX || {};
 	      var result = {};
 
 	      if (main_core.Type.isObject(historyEntry) && historyEntry) {
+	        if (main_core.Type.isString(historyEntry.dateLog) && main_core.Type.isDate(new Date(historyEntry.dateLog)) && !isNaN(new Date(historyEntry.dateLog))) {
+	          result.dateLog = historyEntry.dateLog;
+	        }
+
 	        if (main_core.Type.isString(historyEntry.title) || main_core.Type.isNumber(historyEntry.title)) {
 	          result.title = historyEntry.title.toString();
 	        }
@@ -1005,6 +1460,10 @@ this.BX = this.BX || {};
 	        if (main_core.Type.isString(sentQueueItem.desktopCode)) {
 	          result.desktopCode = sentQueueItem.desktopCode;
 	        }
+
+	        if (main_core.Type.isString(sentQueueItem.comment)) {
+	          result.comment = sentQueueItem.comment;
+	        }
 	      }
 
 	      return result;
@@ -1012,15 +1471,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getHistoryEntryByPrivateCode",
 	    value: function getHistoryEntryByPrivateCode(store, privateCode) {
+	      var _this3 = this;
+
 	      return store.state.history.find(function (entry) {
-	        return entry.privateCode === privateCode;
+	        return entry.privateCode === privateCode && entry.dateLog === _this3.getDateLog();
 	      });
 	    }
 	  }, {
 	    key: "getHistoryEntryBySiteUrl",
 	    value: function getHistoryEntryBySiteUrl(store, siteUrl) {
+	      var _this4 = this;
+
 	      return store.state.history.find(function (entry) {
-	        return entry.siteUrl === siteUrl;
+	        return entry.siteUrl === siteUrl && entry.dateLog === _this4.getDateLog();
 	      });
 	    }
 	  }, {
@@ -1036,6 +1499,14 @@ this.BX = this.BX || {};
 	      return store.state.entity.find(function (entity) {
 	        return entity.title === title;
 	      });
+	    }
+	  }, {
+	    key: "getCommentByEntity",
+	    value: function getCommentByEntity(state, entity) {
+	      var comment = entity.comments.find(function (comment) {
+	        return comment.dateLog === state.reportState.dateLog;
+	      });
+	      return comment ? comment.text : '';
 	    }
 	  }, {
 	    key: "getDateLog",
@@ -1077,6 +1548,7 @@ this.BX = this.BX || {};
 	        }
 
 	        delete entry.extra;
+	        delete entry.hint;
 	        return entry;
 	      });
 	      logger.log('History to send:', history);
@@ -1118,7 +1590,7 @@ this.BX = this.BX || {};
 	        break;
 
 	      case timeman_const.EntityType.unknown:
-	        this.createUnknown();
+	        this.createUnknown(params);
 	        break;
 
 	      case timeman_const.EntityType.incognito:
@@ -1171,9 +1643,11 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "createUnknown",
-	    value: function createUnknown() {
+	    value: function createUnknown(params) {
 	      this.type = timeman_const.EntityType.unknown;
 	      this.title = main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_UNKNOWN');
+	      this.pureName = params.name;
+	      this.pureTitle = params.title;
 	    }
 	  }, {
 	    key: "createIncognito",
@@ -1364,6 +1838,10 @@ this.BX = this.BX || {};
 	      }
 
 	      this.enabled = false;
+	      this.lastCaught = {
+	        name: null,
+	        url: null
+	      };
 	      this.preFinishInterval = null;
 	      this.store.dispatch('monitor/finishLastInterval');
 	      logger.log('EventHandler stopped');
@@ -1406,13 +1884,6 @@ this.BX = this.BX || {};
 	          _this.attempt = 0;
 
 	          _this.afterSuccessSend();
-
-	          if (result.data.state === monitor.getStateStop()) {
-	            logger.warn('Stopped after server response');
-	            debug.log('Stopped after server response');
-	            monitor.setState(result.data.state);
-	            monitor.stop();
-	          }
 
 	          if (result.data.enabled === monitor.getStatusDisabled()) {
 	            logger.warn('Disabled after server response');
@@ -1484,132 +1955,28 @@ this.BX = this.BX || {};
 	    value: function afterSuccessSend() {
 	      var _this2 = this;
 
-	      var currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-	      var reportDateLog = new Date(this.store.state.monitor.reportState.dateLog);
 	      logger.warn('History sent');
 	      debug.space();
 	      debug.log('History sent');
-	      monitor.isHistorySent = true;
-	      BX.SidePanel.Instance.close();
+	      this.store.dispatch('monitor/setLastSuccessfulSendDate', new Date(this.store.state.monitor.reportState.dateLog)).then(function () {
+	        _this2.store.dispatch('monitor/clearSentHistory').then(function () {
+	          _this2.store.dispatch('monitor/refreshDateLog');
 
-	      if (currentDateLog > reportDateLog) {
-	        logger.warn('The next day came. Clearing the history and changing the date of the report.');
-	        debug.log('The next day came. Clearing the history and changing the date of the report.');
-	        this.store.dispatch('monitor/clearStorage').then(function () {
-	          _this2.store.dispatch('monitor/setDateLog', MonitorModel.prototype.getDateLog());
+	          _this2.store.dispatch('monitor/clearSentQueue');
 
+	          BX.SidePanel.Instance.close();
 	          ui_notification.UI.Notification.Center.notify({
-	            content: main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_STORAGE_CLEARED'),
-	            autoHideDelay: 5000,
-	            position: 'bottom-right'
+	            content: main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SENT'),
+	            autoHideDelay: 5000
 	          });
 	        });
-	      } else {
-	        logger.warn('History has been sent, report date has not changed.');
-	        debug.log('History has been sent, report date has not changed.');
-	        this.store.dispatch('monitor/clearSentQueue');
-	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SENT'),
-	          autoHideDelay: 5000,
-	          position: 'bottom-right'
-	        });
-	      }
+	      });
 	    }
 	  }]);
 	  return Sender;
 	}();
 
 	var sender = new Sender();
-
-	var Control = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-control', {
-	  data: function data() {
-	    return {
-	      status: timeman_const.DayState.unknown
-	    };
-	  },
-	  computed: {
-	    DayState: function DayState() {
-	      return timeman_const.DayState;
-	    }
-	  },
-	  mounted: function mounted() {
-	    var _this = this;
-
-	    this.getDayStatus();
-	    pull_client.PULL.subscribe({
-	      type: pull_client.PullClient.SubscriptionType.Server,
-	      moduleId: 'timeman',
-	      command: 'changeDayState',
-	      callback: function callback(params, extra, command) {
-	        _this.getDayStatus();
-	      }
-	    });
-	  },
-	  methods: {
-	    getDayStatus: function getDayStatus() {
-	      this.callRestMethod('timeman.status', {}, this.setStatusByResult);
-	    },
-	    closeDay: function closeDay() {
-	      //tmp hack to close day in desktop app via old popup and link this to a component update.
-	      var dayControl = BX('tm-component-pwt-day-control');
-
-	      if (dayControl) {
-	        dayControl.style.display = 'block';
-	        dayControl.style.position = 'absolute';
-	        dayControl.style.left = 'calc(100vw - 115px)';
-	        dayControl.style.top = 0;
-	      }
-
-	      var callPopup = BX('bx_tm');
-
-	      if (!dayControl && callPopup) {
-	        callPopup.style.position = 'absolute';
-	        callPopup.style.left = 'calc(100vw - 115px)';
-	        callPopup.style.top = 0;
-	      }
-
-	      if (callPopup) {
-	        callPopup.click();
-	        var popup = BX('tm-popup');
-
-	        if (!main_core.ZIndexManager.getComponent(popup)) {
-	          main_core.ZIndexManager.register(popup);
-	        }
-
-	        main_core.ZIndexManager.bringToFront(popup);
-	      } //this.callRestMethod('timeman.close', {}, this.setStatusByResult);
-
-	    },
-	    openDayAndSendHistory: function openDayAndSendHistory() {
-	      BX.Timeman.Monitor.send();
-	      this.callRestMethod('timeman.open', {}, this.setStatusByResult);
-	    },
-	    callRestMethod: function callRestMethod(method, params, callback) {
-	      this.$Bitrix.RestClient.get().callMethod(method, params, callback);
-	    },
-	    setStatusByResult: function setStatusByResult(result) {
-	      if (!result.error()) {
-	        this.status = result.data().STATUS;
-	      }
-	    },
-	    closeReport: function closeReport() {
-	      BX.SidePanel.Instance.close();
-	    },
-	    isAllowedToStartDayAndSendHistory: function isAllowedToStartDayAndSendHistory() {
-	      var currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-	      var reportDateLog = new Date(this.$store.state.monitor.reportState.dateLog);
-	      var isHistorySent = BX.Timeman.Monitor.isHistorySent;
-
-	      if (currentDateLog > reportDateLog && !isHistorySent) {
-	        return true;
-	      }
-
-	      return false;
-	    }
-	  },
-	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-timeman-component-day-control-wrap\">\n\t\t\t<button\n\t\t\t\tv-if=\"this.status === DayState.unknown\"\n\t\t\t\tclass=\"ui-btn ui-btn-default ui-btn-wait ui-btn-disabled\"\n\t\t\t\tstyle=\"width: 130px\"\n\t\t\t/>\n\n\t\t\t<button\n\t\t\t\tv-if=\"\n\t\t\t\t\t\tthis.status === DayState.opened\n\t\t\t\t\t\t|| this.status === DayState.paused\n\t\t\t\t\t\t|| this.status === DayState.expired\n\t\t\t\t\t\"\n\t\t\t\t@click=\"closeDay\"\n\t\t\t\tclass=\"ui-btn ui-btn-danger ui-btn-icon-stop\"\n\t\t\t>\n\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SEND_BUTTON') }}\n\t\t\t</button>\n\n\t\t\t<button\n\t\t\t\tv-if=\"\n\t\t\t\t\tthis.status === DayState.closed\n\t\t\t\t\t&& this.isAllowedToStartDayAndSendHistory()\n\t\t\t\t\"\n\t\t\t\t@click=\"openDayAndSendHistory\"\n\t\t\t\tclass=\"ui-btn ui-btn-success ui-btn-icon-start\"\n\t\t\t>\n\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_OPEN_SEND_BUTTON') }}\n\t\t\t</button>\n\n\t\t\t<button\n\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t@click=\"closeReport\"\n\t\t\t>\n\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CANCEL_BUTTON') }}\n\t\t\t</button>\n\t\t</div>\n\t"
-	});
 
 	var AddIntervalPopup = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-popup-addinterval', {
 	  directives: {
@@ -1644,6 +2011,9 @@ this.BX = this.BX || {};
 	  computed: {
 	    TimeFormatter: function TimeFormatter() {
 	      return timeman_timeformatter.TimeFormatter;
+	    },
+	    DateFormatter: function DateFormatter() {
+	      return timeman_dateformatter.DateFormatter;
 	    },
 	    Type: function Type() {
 	      return main_core.Type;
@@ -1682,9 +2052,13 @@ this.BX = this.BX || {};
 	      var start = this.createDateFromTimeString(this.start);
 	      var finish = this.createDateFromTimeString(this.finish);
 	      this.$store.dispatch('monitor/addHistory', {
+	        dateLog: timeman_dateformatter.DateFormatter.toString(start),
 	        title: this.title,
 	        type: timeman_const.EntityType.custom,
-	        comment: this.comment,
+	        comments: [{
+	          dateLog: timeman_dateformatter.DateFormatter.toString(start),
+	          text: this.comment
+	        }],
 	        time: [{
 	          start: start,
 	          preFinish: null,
@@ -1902,7 +2276,9 @@ this.BX = this.BX || {};
 	      action: '',
 	      hintOptions: {
 	        targetContainer: document.body
-	      }
+	      },
+	      selected: false,
+	      selectIntervalTimeout: null
 	    };
 	  },
 	  computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getSiteDetailByPrivateCode']), ui_vuex.Vuex.mapState({
@@ -1920,6 +2296,7 @@ this.BX = this.BX || {};
 	  methods: {
 	    addPersonal: function addPersonal(privateCode) {
 	      this.$store.dispatch('monitor/addPersonal', privateCode);
+	      this.onIntervalUnselected();
 	    },
 	    removePersonal: function removePersonal(privateCode) {
 	      var _this = this;
@@ -1934,6 +2311,7 @@ this.BX = this.BX || {};
 	      }
 
 	      this.$store.dispatch('monitor/removePersonal', privateCode);
+	      this.onIntervalUnselected();
 	    },
 	    addToStrictlyWorking: function addToStrictlyWorking(privateCode) {
 	      var _this2 = this;
@@ -1980,10 +2358,33 @@ this.BX = this.BX || {};
 	          time: this.time
 	        }
 	      });
+	    },
+	    onIntervalSelected: function onIntervalSelected() {
+	      var _this3 = this;
+
+	      this.$emit('intervalSelected', this.privateCode);
+
+	      if (this.readOnly) {
+	        return;
+	      }
+
+	      this.selectIntervalTimeout = setTimeout(function () {
+	        _this3.selected = true;
+	      }, 500);
+	    },
+	    onIntervalUnselected: function onIntervalUnselected() {
+	      this.$emit('intervalUnselected');
+
+	      if (this.readOnly) {
+	        return;
+	      }
+
+	      clearTimeout(this.selectIntervalTimeout);
+	      this.selected = false;
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-monitor-group-item-wrap\">\n\t\t\t<div class=\"bx-monitor-group-item\">\n\t\t\t\t<template v-if=\"type !== EntityType.group\">\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"type === EntityType.absence\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title': comment, \n\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title-small': !comment \n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<template v-if=\"comment\">\n\t\t\t\t\t\t\t\t\t{{ comment }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div v-else class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t<template v-if=\"type !== EntityType.site || readOnly\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<a \n\t\t\t\t\t\t\t\t\t\t@click=\"onDetailClick\" \n\t\t\t\t\t\t\t\t\t\thref=\"#\" \n\t\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-site-title\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"group === EntityGroup.working.value\" \n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-button-comment ui-icon ui-icon-xs\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t  'ui-icon-service-imessage': comment, \n\t\t\t\t\t\t\t\t  'ui-icon-service-light-imessage': !comment \n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i \n\t\t\t\t\t\t\t\t\t@click=\"onCommentClick\" \n\t\t\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\t\t\tbackgroundColor: comment ? EntityGroup.working.primaryColor : 'transparent'\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t{{ time }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"group === EntityGroup.personal.value && !readOnly\"\n\t\t\t\t\t\t@click=\"removePersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_WORKING') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\tgroup === EntityGroup.working.value \n\t\t\t\t\t\t\t&& (type !== EntityType.unknown && type !== EntityType.custom) \n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"addPersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_PERSONAL') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\ttype === EntityType.custom\n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"removeEntityByPrivateCode(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_REMOVE') }}\n\t\t\t\t\t</button>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-full\">\n\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-menu\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t\t{{ time }} / {{ allowedTime }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-monitor-group-item-wrap\">\n\t\t\t<div\n\t\t\t\t:class=\"[\n            \t\t'bx-monitor-group-item',\n\t\t\t\t\tthis.selected ? 'bx-monitor-group-item-' + this.group + '-selected' : ''\n\t\t\t\t]\"\n\t\t\t\t@mouseenter=\"onIntervalSelected\"\n\t\t\t\t@mouseleave=\"onIntervalUnselected\"\n\t\t\t>\n\t\t\t\t<template v-if=\"type !== EntityType.group\">\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t \t<template v-if=\"type === EntityType.absence\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-icon bx-monitor-group-item-icon-away\"\n                                    v-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE'), \n\t\t\t\t\t\t\t\t\t\tpopupOptions: hintOptions,\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tv-if=\"type === EntityType.absence\"\n\t\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title': comment, \n\t\t\t\t\t\t\t\t\t  'bx-monitor-group-item-title-small': !comment \n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-if=\"comment\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">{{ comment }}</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-subtitle\">{{ title }}</div>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"type === EntityType.custom\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-common-user bx-monitor-group-item-icon\"\n\t\t\t\t\t\t\t\t\tv-bx-hint=\"{\n\t\t\t\t\t\t\t\t\t\ttext: $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CUSTOM_HINT'), \n\t\t\t\t\t\t\t\t\t\tpopupOptions: hintOptions,\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<i/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div v-else class=\"bx-monitor-group-item-title\">\n\t\t\t\t\t\t\t\t<template v-if=\"type !== EntityType.site || readOnly\">\n\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<a \n\t\t\t\t\t\t\t\t\t\t@click=\"onDetailClick\" \n\t\t\t\t\t\t\t\t\t\thref=\"#\" \n\t\t\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-site-title\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"group === EntityGroup.working.value\" \n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-button-comment ui-icon ui-icon-xs\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t  'ui-icon-service-imessage': comment, \n\t\t\t\t\t\t\t\t  'ui-icon-service-light-imessage': !comment \n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i \n\t\t\t\t\t\t\t\t\t@click=\"onCommentClick\" \n\t\t\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\t\t\tbackgroundColor: comment ? '#77c18d' : 'transparent'\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t{{ time }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"group === EntityGroup.personal.value && !readOnly\"\n\t\t\t\t\t\t@click=\"removePersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_WORKING') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\tgroup === EntityGroup.working.value \n\t\t\t\t\t\t\t&& (type !== EntityType.unknown && type !== EntityType.custom) \n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"addPersonal(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_TO_PERSONAL') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"\n\t\t\t\t\t\t\ttype === EntityType.custom\n\t\t\t\t\t\t\t&& !readOnly\n\t\t\t\t\t\t\"\n\t\t\t\t\t\t@click=\"removeEntityByPrivateCode(privateCode)\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-danger-light ui-btn-round bx-monitor-group-btn-right\" \t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_REMOVE') }}\n\t\t\t\t\t</button>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-monitor-group-item-container\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-container\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-title-full\">\n\t\t\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<bx-hint v-if=\"hint\" :text=\"hint\" :popupOptions=\"hintOptions\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-monitor-group-item-menu\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-item-time\">\n\t\t\t\t\t\t\t\t{{ time }} / {{ allowedTime }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	var Group = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-group', {
@@ -2015,10 +2416,11 @@ this.BX = this.BX || {};
 	      },
 	      comment: '',
 	      isCommentPopup: false,
-	      isDetailPopup: false
+	      isDetailPopup: false,
+	      isReportCommentPopup: false
 	    };
 	  },
-	  computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getPersonalEntities']), ui_vuex.Vuex.mapState({
+	  computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getPersonalEntities', 'getReportComment']), ui_vuex.Vuex.mapState({
 	    monitor: function monitor(state) {
 	      return state.monitor;
 	    }
@@ -2051,6 +2453,9 @@ this.BX = this.BX || {};
 	        case timeman_const.EntityGroup.personal.value:
 	          return this.personalTime;
 	      }
+	    },
+	    reportComment: function reportComment() {
+	      return this.getReportComment;
 	    }
 	  }),
 	  methods: {
@@ -2090,8 +2495,40 @@ this.BX = this.BX || {};
 	        return _this.popupInstance = popup;
 	      });
 	    },
-	    onDetailClick: function onDetailClick(event) {
+	    onReportCommentClick: function onReportCommentClick() {
 	      var _this2 = this;
+
+	      this.isReportCommentPopup = true;
+	      this.popupContent.title = this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_REPORT_COMMENT');
+	      this.comment = this.reportComment;
+
+	      if (this.popupInstance !== null) {
+	        this.popupInstance.destroy();
+	        this.popupInstance = null;
+	      }
+
+	      var popup = main_popup.PopupManager.create({
+	        id: "bx-timeman-pwt-external-data",
+	        targetContainer: document.body,
+	        autoHide: true,
+	        closeByEsc: true,
+	        bindOptions: {
+	          position: "top"
+	        },
+	        events: {
+	          onPopupDestroy: function onPopupDestroy() {
+	            _this2.isReportCommentPopup = false;
+	            _this2.popupInstance = null;
+	          }
+	        }
+	      }); //little hack for correct open several popups in a row.
+
+	      this.$nextTick(function () {
+	        return _this2.popupInstance = popup;
+	      });
+	    },
+	    onDetailClick: function onDetailClick(event) {
+	      var _this3 = this;
 
 	      this.isDetailPopup = true;
 	      this.popupContent.privateCode = event.content.privateCode;
@@ -2114,14 +2551,14 @@ this.BX = this.BX || {};
 	        },
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this2.isDetailPopup = false;
-	            _this2.popupInstance = null;
+	            _this3.isDetailPopup = false;
+	            _this3.popupInstance = null;
 	          }
 	        }
 	      }); //little hack for correct open several popups in a row.
 
 	      this.$nextTick(function () {
-	        return _this2.popupInstance = popup;
+	        return _this3.popupInstance = popup;
 	      });
 	    },
 	    saveComment: function saveComment(privateCode) {
@@ -2140,15 +2577,25 @@ this.BX = this.BX || {};
 
 	      this.popupInstance.destroy();
 	    },
+	    saveReportComment: function saveReportComment() {
+	      this.$store.dispatch('monitor/setReportComment', this.comment);
+	      this.popupInstance.destroy();
+	    },
 	    addNewLineToComment: function addNewLineToComment() {
 	      this.comment += '\n';
 	    },
 	    selectIntervalClick: function selectIntervalClick(event) {
 	      this.$emit('selectIntervalClick', event);
+	    },
+	    onIntervalSelected: function onIntervalSelected(privateCode) {
+	      this.$emit('intervalSelected', privateCode);
+	    },
+	    onIntervalUnselected: function onIntervalUnselected() {
+	      this.$emit('intervalUnselected');
 	    }
 	  },
 	  // language=Vue
-	  template: "\t\t  \n\t\t<div class=\"bx-timeman-monitor-report-group-wrap\">\t\t\t\n\t\t\t<div class=\"bx-monitor-group\">\t\t\t\t  \n\t\t\t\t<div class=\"bx-monitor-group-header\" v-bind:style=\"{ background: displayedGroup.secondaryColor }\">\n\t\t\t\t\t<div class=\"bx-monitor-group-title-container\">\n                      \t<div class=\"bx-monitor-group-title-wrap\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-title\">\n\t\t\t\t\t\t\t\t{{ displayedGroup.title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-title-wrap\">\n\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-subtitle\">\n\t\t\t\t\t\t\t\t  {{ formatSeconds(time) }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"(\n\t\t\t\t\t\t\t    this.displayedGroup.value === EntityGroup.working.value\n\t\t\t\t\t\t\t    && !readOnly\n\t\t\t\t\t\t\t)\"\n\t\t\t\t\t\t\t@click=\"selectIntervalClick\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light ui-btn-round bx-monitor-group-btn-add\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t{{ '+ ' + $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_ADD') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"!readOnly\" class=\"bx-monitor-group-subtitle-wrap\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-hint\">\n\t\t\t\t\t\t\t{{ displayedGroup.hint }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-monitor-group-content\" v-bind:style=\"{ background: displayedGroup.lightColor }\">\n\t\t\t\t\t<transition-group name=\"bx-monitor-group-item\" class=\"bx-monitor-group-content-wrap\">\n\t\t\t\t\t\n\t\t\t\t\t\t<Item\n\t\t\t\t\t\t\tv-for=\"item of items\"\n\t\t\t\t\t\t\t:key=\"item.privateCode ? item.privateCode : item.title\"\n\t\t\t\t\t\t\t:group=\"displayedGroup.value\"\n\t\t\t\t\t\t\t:privateCode=\"item.privateCode\"\n\t\t\t\t\t\t\t:type=\"item.type\"\n\t\t\t\t\t\t\t:title=\"item.title\"\n\t\t\t\t\t\t\t:comment=\"item.comment\"\n\t\t\t\t\t\t\t:time=\"formatSeconds(item.time)\"\n\t\t\t\t\t\t\t:allowedTime=\"item.allowedTime ? formatSeconds(item.allowedTime) : null\"\n\t\t\t\t\t\t\t:readOnly=\"!!readOnly\"\n\t\t\t\t\t\t\t:hint=\"item.hint !== '' ? item.hint : null\"\n\t\t\t\t\t\t\t@commentClick=\"onCommentClick\"\n\t\t\t\t\t\t\t@detailClick=\"onDetailClick\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t  \n\t\t\t\t\t</transition-group>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<mounting-portal :mount-to=\"popupIdSelector\" append v-if=\"popupInstance\">\n\t\t\t\t<div class=\"bx-timeman-monitor-popup-wrap\">\t\t\t\t\t\n\t\t\t\t\t<div class=\"popup-window popup-window-with-titlebar ui-message-box ui-message-box-medium-buttons popup-window-fixed-width popup-window-fixed-height\" style=\"padding: 0\">\n\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-title popup-window-titlebar\">\n\t\t\t\t\t\t\t<span class=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\">\n\t\t\t\t\t\t\t\t{{ popupContent.title }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\">\n\t\t\t\t\t\t\t\t{{ popupContent.time }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"popup-window-content\" style=\"overflow: auto; background: transparent;\">\n\t\t\t\t\t\t\t<textarea \n\t\t\t\t\t\t\t\tclass=\"bx-timeman-monitor-popup-input\"\n\t\t\t\t\t\t\t\tid=\"bx-timeman-monitor-popup-input-comment\"\n\t\t\t\t\t\t\t\tv-if=\"isCommentPopup\"\n\t\t\t\t\t\t\t\tv-model=\"comment\"\n\t\t\t\t\t\t\t\tv-bx-focus\n\t\t\t\t\t\t\t\t:placeholder=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_ITEM_COMMENT')\"\n\t\t\t\t\t\t\t\t@keydown.enter.prevent.exact=\"saveComment(popupContent.privateCode)\"\n\t\t\t\t\t\t\t\t@keyup.shift.enter.exact=\"addNewLineToComment\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<div v-if=\"isDetailPopup\" class=\"bx-timeman-monitor-popup-items-container\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tv-for=\"detailItem in popupContent.detail\" \n\t\t\t\t\t\t\t\t\tclass=\"bx-timeman-monitor-popup-item\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t{{ detailItem.siteTitle }}\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t<a target=\"_blank\" :href=\"detailItem.siteUrl\" class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{ detailItem.siteUrl }}\n\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-time\">\n\t\t\t\t\t\t\t\t\t\t{{ formatSeconds(detailItem.time) }}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"popup-window-buttons\">\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"isCommentPopup\" \n\t\t\t\t\t\t\t\t@click=\"saveComment(popupContent.privateCode)\" \n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-primary\"\n\t\t\t\t\t\t\t\t:class=\"{'ui-btn-disabled': (comment.trim() === '' && popupContent.type === EntityType.absence)}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_OK') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button @click=\"popupInstance.destroy()\" class=\"ui-btn ui-btn-md ui-btn-light\">\n\t\t\t\t\t\t\t\t<span v-if=\"isCommentPopup\" class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_CANCEL') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-if=\"isDetailPopup\" class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_CLOSE') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</mounting-portal>\n\t\t</div>\n\t"
+	  template: "\t\t  \n\t\t<div class=\"bx-timeman-monitor-report-group-wrap\">\t\t\t\n\t\t\t<div class=\"bx-monitor-group\">\t\t\t\t  \n\t\t\t\t<div class=\"bx-monitor-group-header\" v-bind:style=\"{ background: displayedGroup.secondaryColor }\">\n\t\t\t\t\t<div class=\"bx-monitor-group-title-container\">\n                      \t<div class=\"bx-monitor-group-title-wrap\">\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-title\">\n\t\t\t\t\t\t\t\t{{ displayedGroup.title }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"bx-monitor-group-title-wrap\">\n\t\t\t\t\t\t\t\t<div class=\"bx-monitor-group-subtitle\">\n\t\t\t\t\t\t\t\t  {{ formatSeconds(time) }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"this.displayedGroup.value === EntityGroup.working.value\"\n\t\t\t\t\t\t\t\t@click=\"onReportCommentClick\"\n\t\t\t\t\t\t\t\tclass=\"bx-monitor-group-item-button-comment ui-icon ui-icon-xs\"\n\t\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t\t'ui-icon-service-imessage': reportComment, \n\t\t\t\t\t\t\t\t\t'ui-icon-service-light-imessage': !reportComment \n\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i \n\t\t\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\t\t\tbackgroundColor: reportComment ? '#77c18d' : 'transparent'\n\t\t\t\t\t\t\t\t\t}\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"(\n\t\t\t\t\t\t\t    this.displayedGroup.value === EntityGroup.working.value\n\t\t\t\t\t\t\t    && !readOnly\n\t\t\t\t\t\t\t)\"\n\t\t\t\t\t\t\t@click=\"selectIntervalClick\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-light ui-btn-round bx-monitor-group-btn-add\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t{{ '+ ' + $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_ADD') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"!readOnly\" class=\"bx-monitor-group-subtitle-wrap\">\n\t\t\t\t\t\t<div class=\"bx-monitor-group-hint\">\n\t\t\t\t\t\t\t{{ displayedGroup.hint }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-monitor-group-content\" v-bind:style=\"{ background: displayedGroup.lightColor }\">\n\t\t\t\t\t<transition-group name=\"bx-monitor-group-item\" class=\"bx-monitor-group-content-wrap\">\n\t\t\t\t\t\n\t\t\t\t\t\t<Item\n\t\t\t\t\t\t\tv-for=\"item of items\"\n\t\t\t\t\t\t\t:key=\"item.privateCode ? item.privateCode : item.title\"\n\t\t\t\t\t\t\t:group=\"displayedGroup.value\"\n\t\t\t\t\t\t\t:privateCode=\"item.privateCode\"\n\t\t\t\t\t\t\t:type=\"item.type\"\n\t\t\t\t\t\t\t:title=\"item.title\"\n\t\t\t\t\t\t\t:comment=\"item.comment\"\n\t\t\t\t\t\t\t:time=\"formatSeconds(item.time)\"\n\t\t\t\t\t\t\t:allowedTime=\"item.allowedTime ? formatSeconds(item.allowedTime) : null\"\n\t\t\t\t\t\t\t:readOnly=\"!!readOnly\"\n\t\t\t\t\t\t\t:hint=\"item.hint !== '' ? item.hint : null\"\n\t\t\t\t\t\t\t@commentClick=\"onCommentClick\"\n\t\t\t\t\t\t\t@detailClick=\"onDetailClick\"\n\t\t\t\t\t\t\t@intervalSelected=\"onIntervalSelected\"\n\t\t\t\t\t\t\t@intervalUnselected=\"onIntervalUnselected\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t  \n\t\t\t\t\t</transition-group>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t<mounting-portal :mount-to=\"popupIdSelector\" append v-if=\"popupInstance\">\n\t\t\t\t<div class=\"bx-timeman-monitor-popup-wrap\">\t\t\t\t\t\n\t\t\t\t\t<div class=\"popup-window popup-window-with-titlebar ui-message-box ui-message-box-medium-buttons popup-window-fixed-width popup-window-fixed-height\" style=\"padding: 0\">\n\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-title popup-window-titlebar\">\n\t\t\t\t\t\t\t<span class=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\">\n\t\t\t\t\t\t\t\t{{ popupContent.title }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span \n\t\t\t\t\t\t\t\tv-if=\"isCommentPopup || isDetailPopup\" \n\t\t\t\t\t\t\t\tclass=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ popupContent.time }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"popup-window-content\" style=\"overflow: auto; background: transparent;\">\n\t\t\t\t\t\t\t<textarea \n\t\t\t\t\t\t\t\tclass=\"bx-timeman-monitor-popup-input\"\n\t\t\t\t\t\t\t\tid=\"bx-timeman-monitor-popup-input-comment\"\n\t\t\t\t\t\t\t\tv-if=\"isCommentPopup || isReportCommentPopup\"\n\t\t\t\t\t\t\t\tv-model=\"comment\"\n\t\t\t\t\t\t\t\tv-bx-focus\n\t\t\t\t\t\t\t\t:placeholder=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_ITEM_COMMENT')\"\n\t\t\t\t\t\t\t\t@keydown.enter.prevent.exact=\"\n\t\t\t\t\t\t\t\t\tisCommentPopup \n\t\t\t\t\t\t\t\t\t\t? saveComment(popupContent.privateCode) \n\t\t\t\t\t\t\t\t\t\t: saveReportComment()\n\t\t\t\t\t\t\t\t\"\n\t\t\t\t\t\t\t\t@keyup.shift.enter.exact=\"addNewLineToComment\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<div v-if=\"isDetailPopup\" class=\"bx-timeman-monitor-popup-items-container\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tv-for=\"detailItem in popupContent.detail\" \n\t\t\t\t\t\t\t\t\tclass=\"bx-timeman-monitor-popup-item\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t{{ detailItem.siteTitle }}\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t<a target=\"_blank\" :href=\"detailItem.siteUrl\" class=\"bx-timeman-monitor-popup-content-title\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{ detailItem.siteUrl }}\n\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-timeman-monitor-popup-time\">\n\t\t\t\t\t\t\t\t\t\t{{ formatSeconds(detailItem.time) }}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"popup-window-buttons\">\n\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\tv-if=\"isCommentPopup || isReportCommentPopup\" \n\t\t\t\t\t\t\t\t@click=\"\n\t\t\t\t\t\t\t\t\tisCommentPopup \n\t\t\t\t\t\t\t\t\t\t? saveComment(popupContent.privateCode) \n\t\t\t\t\t\t\t\t\t\t: saveReportComment()\n\t\t\t\t\t\t\t\t\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-primary\"\n\t\t\t\t\t\t\t\t:class=\"{'ui-btn-disabled': (comment.trim() === '' && popupContent.type === EntityType.absence)}\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_OK') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button @click=\"popupInstance.destroy()\" class=\"ui-btn ui-btn-md ui-btn-light\">\n\t\t\t\t\t\t\t\t<span v-if=\"isCommentPopup || isReportCommentPopup\" class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_CANCEL') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-if=\"isDetailPopup\" class=\"ui-btn-text\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_BUTTON_CLOSE') }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</mounting-portal>\n\t\t</div>\n\t"
 	});
 
 	var Windows = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-consent-windows', {
@@ -2180,7 +2627,11 @@ this.BX = this.BX || {};
 
 	var Timeline = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-timeline', {
 	  props: {
-	    readOnly: Boolean
+	    readOnly: Boolean,
+	    selectedPrivateCode: {
+	      type: String,
+	      default: null
+	    }
 	  },
 	  mixins: [Time$1],
 	  computed: {
@@ -2192,6 +2643,13 @@ this.BX = this.BX || {};
 	    },
 	    chartData: function chartData() {
 	      return this.$store.getters['monitor/getChartData'];
+	    },
+	    overChartData: function overChartData() {
+	      if (this.selectedPrivateCode) {
+	        return this.$store.getters['monitor/getOverChartData'](this.selectedPrivateCode);
+	      }
+
+	      return [];
 	    },
 	    legendData: function legendData() {
 	      return [{
@@ -2211,7 +2669,83 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-timeman-component-monitor-timeline\">\n\t\t\t<bx-timeman-component-timeline\n\t\t\t\tv-if=\"Type.isArrayFilled(chartData)\"\n\t\t\t\t:chart=\"chartData\"\n\t\t\t\t:legend=\"legendData\"\n\t\t\t\t:fixedSizeType=\"EntityGroup.inactive.value\"\n\t\t\t\t:readOnly=\"readOnly\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-timeman-component-monitor-timeline\">\n\t\t\t<bx-timeman-component-timeline\n\t\t\t\tv-if=\"Type.isArrayFilled(chartData)\"\n\t\t\t\t:chart=\"chartData\"\n\t\t\t\t:overChart=\"overChartData\"\n\t\t\t\t:legend=\"legendData\"\n\t\t\t\t:fixedSizeType=\"EntityGroup.inactive.value\"\n\t\t\t\t:readOnly=\"readOnly\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\t\t</div>\n\t"
+	});
+
+	var PausePopup = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-popup-pause', {
+	  props: {
+	    popupInstance: Object
+	  },
+	  mounted: function mounted() {
+	    this.popupInstance.show();
+	  },
+	  beforeDestroy: function beforeDestroy() {
+	    this.close();
+	  },
+	  methods: {
+	    hourPause: function hourPause() {
+	      var pauseUntilTime = new Date();
+	      pauseUntilTime.setHours(pauseUntilTime.getHours() + 1);
+	      pauseUntilTime.setSeconds(0);
+	      pauseUntilTime.setMilliseconds(0);
+	      this.pause(pauseUntilTime);
+	      this.close();
+	    },
+	    fourHourPause: function fourHourPause() {
+	      var pauseUntilTime = new Date();
+	      pauseUntilTime.setHours(pauseUntilTime.getHours() + 4);
+	      pauseUntilTime.setSeconds(0);
+	      pauseUntilTime.setMilliseconds(0);
+	      this.pause(pauseUntilTime);
+	      this.close();
+	    },
+	    dayPause: function dayPause() {
+	      var pauseUntilTime = new Date();
+	      pauseUntilTime.setDate(pauseUntilTime.getDate() + 1);
+	      pauseUntilTime.setHours(0);
+	      pauseUntilTime.setMinutes(0);
+	      pauseUntilTime.setSeconds(0);
+	      pauseUntilTime.setMilliseconds(0);
+	      this.pause(pauseUntilTime);
+	      this.close();
+	    },
+	    pause: function pause(dateTime) {
+	      this.$emit('monitorPause', dateTime);
+	    },
+	    close: function close() {
+	      this.popupInstance.destroy();
+	    }
+	  },
+	  //language=Vue
+	  template: "\n\t\t<div class=\"bx-timeman-monitor-report-popup-pause\">\n\t\t\t<button @click=\"hourPause\" class=\"ui-btn ui-btn-light ui-btn-no-caps bx-timeman-pwt-popup-pause-btn\">\n\t\t\t  {{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PAUSE_ONE_HOUR_BUTTON') }}\n\t\t\t</button>\n\t\t\t<button @click=\"fourHourPause\" class=\"ui-btn ui-btn-light ui-btn-no-caps bx-timeman-pwt-popup-pause-btn\">\n\t\t\t  {{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PAUSE_FOUR_HOURS_BUTTON') }}\n\t\t\t</button>\n\t\t\t<button @click=\"dayPause\" class=\"ui-btn ui-btn-light ui-btn-no-caps bx-timeman-pwt-popup-pause-btn\">\n\t\t\t  {{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PAUSE_UNTIL_TOMORROW_BUTTON') }}\n\t\t\t</button>\n\t\t</div>\n\t"
+	});
+
+	var ConfirmPopup = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-popup-confirm', {
+	  props: {
+	    popupInstance: Object,
+	    title: String,
+	    text: String,
+	    buttonOkTitle: String,
+	    buttonCancelTitle: String
+	  },
+	  mounted: function mounted() {
+	    this.popupInstance.show();
+	  },
+	  beforeDestroy: function beforeDestroy() {
+	    this.close();
+	  },
+	  methods: {
+	    ok: function ok() {
+	      this.$emit('okClick');
+	      this.close();
+	    },
+	    close: function close() {
+	      this.$emit('cancelClick');
+	      this.popupInstance.destroy();
+	    }
+	  },
+	  //language=Vue
+	  template: "\n\t\t<div class=\"bx-timeman-monitor-report-popup-confirm\">\n\t\t\t<div class=\"popup-window popup-window-with-titlebar ui-message-box ui-message-box-medium-buttons popup-window-fixed-width popup-window-fixed-height\" style=\"padding: 0\">\n\t\t\t\t<div class=\"bx-timeman-monitor-popup-title popup-window-titlebar\">\n\t\t\t\t\t<span class=\"bx-timeman-monitor-popup--titlebar-text popup-window-titlebar-text\">\n\t\t\t\t\t\t{{ title }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"popup-window-content\" style=\"overflow: auto; background: transparent;\">\n\t\t\t\t\t{{ text }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"popup-window-buttons\">\n\t\t\t\t\t<button @click=\"ok\" class=\"ui-btn ui-btn-success\">\n\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t{{ buttonOkTitle }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</button>\n\t\t\t\t\t<button @click=\"close\" class=\"ui-btn ui-btn-light\">\n\t\t\t\t\t\t<span class=\"ui-btn-text\">\n\t\t\t\t\t\t\t{{ buttonCancelTitle }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	function _templateObject() {
@@ -2232,7 +2766,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Report, [{
 	    key: "loadComponents",
 	    value: function loadComponents() {
-	      return main_core.Runtime.loadExtension(['ui.pinner', 'ui.alerts', 'timeman.component.day-control']);
+	      return main_core.Runtime.loadExtension(['ui.pinner', 'ui.alerts']);
 	    }
 	  }, {
 	    key: "open",
@@ -2256,12 +2790,7 @@ this.BX = this.BX || {};
 	          onLoad: function onLoad() {
 	            return _this.createEditor(store);
 	          },
-	          onClose: function onClose() {
-	            if (main_core.Type.isFunction(BXIM.desktop.setPreventEsc)) {
-	              BXIM.desktop.setPreventEsc(false);
-	            }
-	          },
-	          onDestroy: function onDestroy() {
+	          onCloseComplete: function onCloseComplete() {
 	            if (main_core.Type.isFunction(BXIM.desktop.setPreventEsc)) {
 	              BXIM.desktop.setPreventEsc(false);
 	            }
@@ -2324,46 +2853,54 @@ this.BX = this.BX || {};
 	          Group: Group,
 	          AddIntervalPopup: AddIntervalPopup,
 	          SelectIntervalPopup: SelectIntervalPopup,
-	          Consent: Consent
+	          Consent: Consent,
+	          MountingPortal: ui_vue_portal.MountingPortal,
+	          PausePopup: PausePopup,
+	          ConfirmPopup: ConfirmPopup
 	        },
 	        store: store,
 	        data: function data() {
 	          return {
 	            newInterval: null,
-	            showSelectInternalPopup: false
+	            showSelectInternalPopup: false,
+	            popupInstance: null,
+	            popupId: null,
+	            showPlayAlert: false,
+	            selectedPrivateCode: null,
+	            selectIntervalTimeout: null
 	          };
 	        },
 	        computed: {
 	          EntityGroup: function EntityGroup() {
 	            return timeman_const.EntityGroup;
 	          },
-	          dateLog: function dateLog() {
-	            var sentQueue = this.$store.state.monitor.sentQueue;
-	            var sentQueueDateLog = main_core.Type.isArrayFilled(sentQueue) ? sentQueue[0].dateLog : '';
-	            var history = this.$store.state.monitor.history;
-	            var historyDateLog = main_core.Type.isArrayFilled(history) ? history[0].dateLog : '';
-
-	            if (main_core.Type.isStringFilled(sentQueueDateLog)) {
-	              return timeman_dateformatter.DateFormatter.toLong(sentQueueDateLog);
-	            } else if (main_core.Type.isStringFilled(historyDateLog)) {
-	              return timeman_dateformatter.DateFormatter.toLong(historyDateLog);
-	            }
-
-	            return timeman_dateformatter.DateFormatter.toLong(new Date());
+	          TimeFormatter: function TimeFormatter() {
+	            return timeman_timeformatter.TimeFormatter;
 	          },
-	          isAllowedToStartDay: function isAllowedToStartDay() {
-	            var currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-	            var reportDateLog = new Date(this.$store.state.monitor.reportState.dateLog);
-	            var isHistorySent = BX.Timeman.Monitor.isHistorySent;
-
-	            if (currentDateLog > reportDateLog && !isHistorySent) {
-	              return false;
-	            }
-
-	            return true;
+	          dateLog: function dateLog() {
+	            return timeman_dateformatter.DateFormatter.toLong(new Date(this.$store.state.monitor.reportState.dateLog));
+	          },
+	          isHistorySent: function isHistorySent() {
+	            return !!this.$store.getters['monitor/isHistorySent'];
 	          },
 	          isPermissionGranted: function isPermissionGranted() {
 	            return true;
+	          },
+	          isPaused: function isPaused() {
+	            return !!this.$store.state.monitor.config.pausedUntil;
+	          },
+	          pausedUntil: function pausedUntil() {
+	            var pausedUntil = this.$store.state.monitor.config.pausedUntil;
+
+	            if (!pausedUntil) {
+	              return '';
+	            }
+
+	            if (pausedUntil.getDay() - new Date().getDay() !== 0) {
+	              return this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_TOMORROW');
+	            }
+
+	            return timeman_timeformatter.TimeFormatter.toShort(pausedUntil);
 	          }
 	        },
 	        methods: {
@@ -2382,10 +2919,118 @@ this.BX = this.BX || {};
 	          },
 	          onSelectIntervalPopupCloseClick: function onSelectIntervalPopupCloseClick() {
 	            this.showSelectInternalPopup = false;
+	          },
+	          pauseClick: function pauseClick(event) {
+	            var _this5 = this;
+
+	            if (this.popupInstance != null) {
+	              this.popupInstance.destroy();
+	              this.popupInstance = null;
+	            }
+
+	            var popup = main_popup.PopupManager.create({
+	              id: 'bx-timeman-pwt-editor-pause-popup',
+	              targetContainer: document.body,
+	              className: 'bx-timeman-pwt-pause-popup',
+	              bindElement: event.target,
+	              lightShadow: true,
+	              offsetTop: 0,
+	              offsetLeft: 10,
+	              autoHide: true,
+	              closeByEsc: true,
+	              angle: {},
+	              bindOptions: {
+	                position: 'top'
+	              },
+	              events: {
+	                onPopupClose: function onPopupClose() {
+	                  return _this5.popupInstance.destroy();
+	                },
+	                onPopupDestroy: function onPopupDestroy() {
+	                  return _this5.popupInstance = null;
+	                }
+	              }
+	            });
+	            this.popupIdSelector = "#bx-timeman-pwt-editor-pause-popup";
+	            this.popupId = 'PausePopup'; //little hack for correct open several popups in a row.
+
+	            this.$nextTick(function () {
+	              _this5.popupInstance = popup;
+	            });
+	          },
+	          pause: function pause(dateTime) {
+	            monitor.pauseUntil(dateTime);
+	          },
+	          play: function play() {
+	            var _this6 = this;
+
+	            monitor.play();
+	            this.showPlayAlert = true;
+	            setTimeout(function () {
+	              return _this6.showPlayAlert = false;
+	            }, 1000);
+	          },
+	          openReportPreview: function openReportPreview() {
+	            monitor.openReportPreview();
+	          },
+	          selectInterval: function selectInterval(privateCode) {
+	            var _this7 = this;
+
+	            this.selectIntervalTimeout = setTimeout(function () {
+	              _this7.selectedPrivateCode = privateCode;
+	            }, 500);
+	          },
+	          unselectInterval: function unselectInterval() {
+	            clearTimeout(this.selectIntervalTimeout);
+	            this.selectedPrivateCode = null;
+	          },
+	          openSkipConfirm: function openSkipConfirm() {
+	            var _this8 = this;
+
+	            if (this.popupInstance != null) {
+	              this.popupInstance.destroy();
+	              this.popupInstance = null;
+	            }
+
+	            var popup = main_popup.PopupManager.create({
+	              id: 'bx-timeman-pwt-skip-report-confirm-popup',
+	              targetContainer: BX('pwt-report-container-editor'),
+	              autoHide: false,
+	              closeByEsc: true,
+	              overlay: true,
+	              events: {
+	                onPopupDestroy: function onPopupDestroy() {
+	                  _this8.popupInstance = null;
+	                }
+	              }
+	            });
+	            this.popupIdSelector = "#bx-timeman-pwt-skip-report-confirm-popup";
+	            this.popupId = 'SkipReportPopup'; //little hack for correct open several popups in a row.
+
+	            this.$nextTick(function () {
+	              _this8.popupInstance = popup;
+	            });
+	          },
+	          skipReport: function skipReport() {
+	            var _this9 = this;
+
+	            this.$store.dispatch('monitor/clearStorageBeforeDate', this.$store.state.monitor.reportState.dateLog).then(function () {
+	              logger.warn("Report for ".concat(_this9.$store.state.monitor.reportState.dateLog, " deleted by user"));
+	              debug.log("Report for ".concat(_this9.$store.state.monitor.reportState.dateLog, " deleted by user"));
+
+	              var notifyText = _this9.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIPPED').replace('#DATE#', _this9.dateLog);
+
+	              _this9.$store.dispatch('monitor/refreshDateLog').then(function () {
+	                ui_notification.UI.Notification.Center.notify({
+	                  content: notifyText,
+	                  autoHideDelay: 5000
+	                });
+	              });
+	            });
 	          }
 	        },
 	        // language=Vue
-	        template: "\n\t\t\t\t<div class=\"pwt-report\">\n\t\t\t\t\t<Consent v-if=\"!isPermissionGranted\"/>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"!isAllowedToStartDay\"\n\t\t\t\t\t\t\tclass=\"pwt-report-alert ui-alert ui-alert-md ui-alert-danger ui-alert-icon-danger\">\n\t\t\t\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_NOT_SENT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header\">\n\t\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<Timeline\n\t\t\t\t\t\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-groups\">\n\t\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.working.value\"\n\t\t\t\t\t\t\t\t\t\t@selectIntervalClick=\"onSelectIntervalClick\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.personal.value\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tclass=\"\n\t\t\t\t\t\t\t\tpwt-report-button-panel-wrapper \n\t\t\t\t\t\t\t\tui-pinner \n\t\t\t\t\t\t\t\tui-pinner-bottom \n\t\t\t\t\t\t\t\tui-pinner-full-width\" \n\t\t\t\t\t\t\tstyle=\"z-index: 0\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t\t\t<bx-timeman-component-day-control\n\t\t\t\t\t\t\t\t\tv-if=\"isAllowedToStartDay\"\n\t\t\t\t\t\t\t\t\t:isButtonCloseHidden=\"true\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\" \n\t\t\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t\t\t\tonclick=\"BX.Timeman.Monitor.openReportPreview()\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_BUTTON') }}\n\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div id=\"bx-timeman-pwt-popup-editor\" class=\"bx-timeman-pwt-popup\">\n\t\t\t\t\t\t\t<SelectIntervalPopup\n\t\t\t\t\t\t\t\tv-if=\"showSelectInternalPopup\"\n\t\t\t\t\t\t\t\t@selectIntervalPopupCloseClick=\"onSelectIntervalPopupCloseClick\"\n\t\t\t\t\t\t\t\t@intervalSelected=\"onIntervalClick\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<AddIntervalPopup\n\t\t\t\t\t\t\t\tv-if=\"newInterval\"\n\t\t\t\t\t\t\t\t:minStart=\"newInterval.start\"\n\t\t\t\t\t\t\t\t:maxFinish=\"newInterval.finish\"\n\t\t\t\t\t\t\t\t@addIntervalPopupClose=\"onAddIntervalPopupClose\"\n\t\t\t\t\t\t\t\t@addIntervalPopupHide=\"onAddIntervalPopupHide\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n                    </template>\n\t\t\t\t</div>\n\t\t\t"
+	        template: "\n\t\t\t\t<div id=\"pwt-report-container-editor\" class=\"pwt-report-container\">\n\t\t\t\t\t<div class=\"pwt-report\">\n\t\t\t\t\t\t<Consent v-if=\"!isPermissionGranted\"/>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t \t<transition-group\n\t\t\t\t\t\t\t\tname=\"bx-timeman-pwt-report\"\n\t\t\t\t\t\t\t\ttag=\"div\"\n\t\t\t\t\t\t\t\tclass=\"pwt-report-content-container\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t:key=\"'reportNotSentAlert'\"\n\t\t\t\t\t\t\t\t\tv-if=\"!isHistorySent\"\n\t\t\t\t\t\t\t\t\tclass=\"pwt-report-alert ui-alert ui-alert-md ui-alert-danger ui-alert-icon-danger\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t\t{{ \n\t\t\t\t\t\t\t\t\t\t\t$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_NOT_SENT')\n\t\t\t\t\t\t\t\t\t\t\t\t.replace('#DATE#', dateLog)\n\t\t\t\t\t\t\t\t\t\t}}\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\t:key=\"'pauseAlert'\"\n\t\t\t\t\t\t\t\t\tv-if=\"isPaused || showPlayAlert\"\n\t\t\t\t\t\t\t\t\t:class=\"[\n\t\t\t\t\t\t\t\t\t\t'pwt-report-alert',\n\t\t\t\t\t\t\t\t\t\t'ui-alert',\n\t\t\t\t\t\t\t\t\t\t'ui-alert-md',\n\t\t\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\t\t\t'ui-alert-warning ui-alert-icon-warning': isPaused, \n\t\t\t\t\t\t\t\t\t\t\t'ui-alert-success ui-alert-icon-info' : showPlayAlert,\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t]\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span v-if=\"isPaused\" class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t\t{{ \n\t\t\t\t\t\t\t\t\t\t\t$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_PAUSE_UNTIL_TIME')\n\t\t\t\t\t\t\t\t\t\t\t\t.replace('#TIME#', pausedUntil)\n\t\t\t\t\t\t\t\t\t\t}}\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t<span v-if=\"showPlayAlert\" class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_PLAY') }}\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tv-if=\"isPaused\"\n\t\t\t\t\t\t\t\t\t\t@click=\"play\"\n\t\t\t\t\t\t\t\t\t\tclass=\"\n\t\t\t\t\t\t\t\t\t\t\tui-btn \n\t\t\t\t\t\t\t\t\t\t\tui-btn-xs \n\t\t\t\t\t\t\t\t\t\t\tui-btn-success-dark\n\t\t\t\t\t\t\t\t\t\t\tui-btn-round \n\t\t\t\t\t\t\t\t\t\t\tui-btn-icon-start\n\t\t\t\t\t\t\t\t\t\t\tbx-monitor-group-btn-right\n\t\t\t\t\t\t\t\t\t\t\tbx-monitor-alert-btn-right\n\t\t\t\t\t\t\t\t\t\t\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PLAY') }}\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div> \n\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content\" :key=\"'report-header'\">\n\t\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<Timeline\n\t\t\t\t\t\t\t\t\t\t:selectedPrivateCode=\"selectedPrivateCode\"\n\t\t\t\t\t\t\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content\" :key=\"'report-content'\">\n\t\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-groups\">\n\t\t\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.working.value\"\n\t\t\t\t\t\t\t\t\t\t\t@selectIntervalClick=\"onSelectIntervalClick\"\n\t\t\t\t\t\t\t\t\t\t\t@intervalSelected=\"selectInterval\"\n\t\t\t\t\t\t\t\t\t\t\t@intervalUnselected=\"unselectInterval\"\n\t\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.personal.value\"\n\t\t\t\t\t\t\t\t\t\t\t@intervalSelected=\"selectInterval\"\n\t\t\t\t\t\t\t\t\t\t\t@intervalUnselected=\"unselectInterval\"\n\t\t\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</transition-group>\n\t\n\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\tclass=\"\n\t\t\t\t\t\t\t\t\tpwt-report-button-panel-wrapper \n\t\t\t\t\t\t\t\t\tui-pinner \n\t\t\t\t\t\t\t\t\tui-pinner-bottom \n\t\t\t\t\t\t\t\t\tui-pinner-full-width\" \n\t\t\t\t\t\t\t\tstyle=\"z-index: 0\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success ui-btn-icon-page\"\n\t\t\t\t\t\t\t\t\t\t@click=\"openReportPreview\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_BUTTON') }}\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tid=\"timeman-pwt-button-pause\"\n\t\t\t\t\t\t\t\t\t\t@click=\"pauseClick\"\n\t\t\t\t\t\t\t\t\t\tclass=\"\n\t\t\t\t\t\t\t\t\t\t\tui-btn \n\t\t\t\t\t\t\t\t\t\t\tui-btn-light-border \n\t\t\t\t\t\t\t\t\t\t\tui-btn-dropdown \n\t\t\t\t\t\t\t\t\t\t\tui-btn-icon-pause\n\t\t\t\t\t\t\t\t\t\t\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PAUSE_BUTTON') }}\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tv-if=\"!isHistorySent\"\n\t\t\t\t\t\t\t\t\t\t@click=\"openSkipConfirm\"\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-danger ui-btn-icon-remove\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SKIP_BUTTON') }}\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t\t<mounting-portal \n\t\t\t\t\t\t\t\t\t\t:mount-to=\"popupIdSelector\" \n\t\t\t\t\t\t\t\t\t\tappend \n\t\t\t\t\t\t\t\t\t\tv-if=\"popupInstance\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t<PausePopup\n                                            v-if=\"popupId === 'PausePopup'\"\n\t\t\t\t\t\t\t\t\t\t\t:popupInstance=\"popupInstance\" \n\t\t\t\t\t\t\t\t\t\t\t@monitorPause=\"pause\"\n\t\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t\t<ConfirmPopup\n                                            v-if=\"popupId === 'SkipReportPopup'\"\n\t\t\t\t\t\t\t\t\t\t\t:popupInstance=\"popupInstance\"\n\t\t\t\t\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIP_POPUP_TITLE')\"\n\t\t\t\t\t\t\t\t\t\t\t:text=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIP_POPUP_TEXT')\"\n\t\t\t\t\t\t\t\t\t\t\t:buttonOkTitle=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SKIP_CONFIRM_BUTTON')\"\n\t\t\t\t\t\t\t\t\t\t\t:buttonCancelTitle=\"$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CANCEL_BUTTON')\"\n\t\t\t\t\t\t\t\t\t\t\t@okClick=\"skipReport\"\n\t\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t</mounting-portal>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\n\t\t\t\t\t\t\t<div id=\"bx-timeman-pwt-popup-editor\" class=\"bx-timeman-pwt-popup\">\n\t\t\t\t\t\t\t\t<SelectIntervalPopup\n\t\t\t\t\t\t\t\t\tv-if=\"showSelectInternalPopup\"\n\t\t\t\t\t\t\t\t\t@selectIntervalPopupCloseClick=\"onSelectIntervalPopupCloseClick\"\n\t\t\t\t\t\t\t\t\t@intervalSelected=\"onIntervalClick\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<AddIntervalPopup\n\t\t\t\t\t\t\t\t\tv-if=\"newInterval\"\n\t\t\t\t\t\t\t\t\t:minStart=\"newInterval.start\"\n\t\t\t\t\t\t\t\t\t:maxFinish=\"newInterval.finish\"\n\t\t\t\t\t\t\t\t\t@addIntervalPopupClose=\"onAddIntervalPopupClose\"\n\t\t\t\t\t\t\t\t\t@addIntervalPopupHide=\"onAddIntervalPopupHide\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"
 	      }).mount('#pwt');
 	    }
 	  }, {
@@ -2395,7 +3040,13 @@ this.BX = this.BX || {};
 	        components: {
 	          Timeline: Timeline,
 	          Group: Group,
-	          Control: Control
+	          MountingPortal: ui_vue_portal.MountingPortal
+	        },
+	        data: function data() {
+	          return {
+	            popupIdSelector: false,
+	            popupInstance: null
+	          };
 	        },
 	        store: store,
 	        computed: {
@@ -2403,22 +3054,19 @@ this.BX = this.BX || {};
 	            return timeman_const.EntityGroup;
 	          },
 	          dateLog: function dateLog() {
-	            var sentQueue = this.$store.state.monitor.sentQueue;
-	            var sentQueueDateLog = main_core.Type.isArrayFilled(sentQueue) ? sentQueue[0].dateLog : '';
-	            var history = this.$store.state.monitor.history;
-	            var historyDateLog = main_core.Type.isArrayFilled(history) ? history[0].dateLog : '';
-
-	            if (main_core.Type.isStringFilled(sentQueueDateLog)) {
-	              return timeman_dateformatter.DateFormatter.toLong(sentQueueDateLog);
-	            } else if (main_core.Type.isStringFilled(historyDateLog)) {
-	              return timeman_dateformatter.DateFormatter.toLong(historyDateLog);
-	            }
-
-	            return timeman_dateformatter.DateFormatter.toLong(new Date());
+	            return timeman_dateformatter.DateFormatter.toLong(new Date(this.$store.state.monitor.reportState.dateLog));
+	          }
+	        },
+	        methods: {
+	          sendReport: function sendReport() {
+	            monitor.send();
+	          },
+	          close: function close() {
+	            BX.SidePanel.Instance.close();
 	          }
 	        },
 	        // language=Vue
-	        template: "\n\t\t\t\t<div class=\"pwt-report\">\n\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t<div class=\"pwt-report-content-header\" style=\"margin-bottom: 0\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_TITLE') }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content-header\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<Timeline\n\t\t\t\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content-groups\">\n\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.working.value\"\n\t\t\t\t\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t\t<Control/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div id=\"bx-timeman-pwt-popup-preview\" class=\"bx-timeman-pwt-popup\"/>\n\t\t\t\t</div>\n\t\t\t"
+	        template: "\n\t\t\t\t<div id=\"pwt-report-container-preview\" class=\"pwt-report-container\">\n\t\t\t\t\t<div class=\"pwt-report\">\n\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content-header\" style=\"margin-bottom: 0\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_TITLE') }}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header\">\n\t\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-header-title\">\n\t\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<Timeline\n\t\t\t\t\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t\t\t\t<div class=\"pwt-report-content-groups\">\n\t\t\t\t\t\t\t\t\t<Group \n\t\t\t\t\t\t\t\t\t\t:group=\"EntityGroup.working.value\"\n\t\t\t\t\t\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t@click=\"sendReport\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success ui-btn-icon-share\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SEND_BUTTON') }}\n\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CANCEL_BUTTON') }}\n\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div id=\"bx-timeman-pwt-popup-preview\" class=\"bx-timeman-pwt-popup\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"
 	      }).mount('#pwt');
 	    }
 	  }]);
@@ -2436,23 +3084,6 @@ this.BX = this.BX || {};
 	    key: "getModuleId",
 	    value: function getModuleId() {
 	      return 'timeman';
-	    }
-	  }, {
-	    key: "handleChangeDayState",
-	    value: function handleChangeDayState(params) {
-	      monitor.setState(params.state);
-
-	      if (!monitor.isEnabled()) {
-	        logger.warn('Ignore day state, monitor is disabled!');
-	        debug.log('Ignore day state, monitor is disabled!');
-	        return;
-	      }
-
-	      if (params.state === monitor.getStateStart()) {
-	        monitor.start();
-	      } else if (params.state === monitor.getStateStop()) {
-	        monitor.stop();
-	      }
 	    }
 	  }, {
 	    key: "handleChangeMonitorEnabled",
@@ -2494,10 +3125,8 @@ this.BX = this.BX || {};
 	    key: "init",
 	    value: function init(options) {
 	      this.enabled = options.enabled;
-	      this.state = options.state;
-	      this.isHistorySent = options.isHistorySent;
+	      this.playTimeout = null;
 	      this.isAway = false;
-	      this.isAppInit = false;
 	      this.vuex = {};
 	      this.defaultStorageConfig = {
 	        config: {
@@ -2522,10 +3151,11 @@ this.BX = this.BX || {};
 	      }
 
 	      debug.log("Enabled: ".concat(this.enabled));
-	      logger.warn('History sent status: ', this.isHistorySent);
-	      debug.log("History sent status: ".concat(this.isHistorySent));
-	      this.removeDeprecatedStorage();
-	      this.initApp();
+
+	      if (this.isEnabled()) {
+	        this.initApp();
+	      }
+
 	      pull_client.PULL.subscribe(new CommandHandler());
 	    }
 	  }, {
@@ -2537,40 +3167,22 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      return new Promise(function (resolve, reject) {
-	        _this.initStorage().then(function (builder) {
-	          _this.vuex.store = builder.store;
-	          _this.vuex.models = builder.models;
-	          _this.vuex.builder = builder.builder;
-
-	          _this.vuex.store.dispatch('monitor/processUnfinishedEvents').then(function () {
-	            _this.initTracker(_this.getStorage());
-
-	            _this.isAppInit = true;
-	            resolve();
-	          });
-	        }).catch(function () {
-	          var errorMessage = "PWT: Storage initialization error";
-	          logger.error(errorMessage);
-	          debug.log(errorMessage);
-	          reject();
-	        });
-	      });
-	    }
-	  }, {
-	    key: "initStorage",
-	    value: function initStorage() {
-	      return new ui_vue_vuex.VuexBuilder().addModel(MonitorModel.create().setVariables(this.defaultStorageConfig).useDatabase(true)).setDatabaseConfig({
+	      new ui_vue_vuex.VuexBuilder().addModel(MonitorModel.create().setVariables(this.defaultStorageConfig).useDatabase(true)).setDatabaseConfig({
 	        name: 'timeman-pwt',
 	        type: ui_vue_vuex.VuexBuilder.DatabaseType.indexedDb,
 	        siteId: main_core.Loc.getMessage('SITE_ID'),
 	        userId: main_core.Loc.getMessage('USER_ID')
-	      }).build();
-	    }
-	  }, {
-	    key: "getStorage",
-	    value: function getStorage() {
-	      return this.vuex.hasOwnProperty('store') ? this.vuex.store : null;
+	      }).build().then(function (builder) {
+	        _this.vuex.store = builder.store;
+
+	        _this.getStorage().dispatch('monitor/processUnfinishedEvents').then(function () {
+	          return _this.initTracker(_this.getStorage());
+	        });
+	      }).catch(function () {
+	        var errorMessage = "PWT: Storage initialization error";
+	        logger.error(errorMessage);
+	        debug.log(errorMessage);
+	      });
 	    }
 	  }, {
 	    key: "initTracker",
@@ -2608,16 +3220,127 @@ this.BX = this.BX || {};
 	      });
 
 	      if (this.isEnabled()) {
-	        this.afterTrackerInit();
-
-	        if (this.isWorkingDayStarted()) {
-	          this.start();
-	        } else {
-	          logger.warn('Monitor: Zzz...');
-	        }
+	        this.launch();
 	      } else {
 	        logger.warn('Monitor is disabled');
 	      }
+	    }
+	  }, {
+	    key: "launch",
+	    value: function launch() {
+	      var _this3 = this;
+
+	      if (this.isAway) {
+	        logger.log('Pause is over, but computer is in sleep mode. Waiting for the return of the user.');
+	        debug.log('Pause is over, but computer is in sleep mode. Waiting for the return of the user.');
+	        return;
+	      }
+
+	      this.getStorage().dispatch('monitor/migrateHistory').then(function () {
+	        _this3.getStorage().dispatch('monitor/clearSentHistory').then(function () {
+	          _this3.getStorage().dispatch('monitor/refreshDateLog').then(function () {
+	            if (_this3.isPaused()) {
+	              if (_this3.isPauseRelevant()) {
+	                logger.warn("Can't start, monitor is paused!");
+	                debug.log("Can't start, monitor is paused!");
+
+	                _this3.setPlayTimeout();
+
+	                return;
+	              }
+
+	              _this3.clearPausedUntil().then(function () {
+	                return _this3.start();
+	              });
+
+	              return;
+	            }
+
+	            _this3.start();
+	          });
+	        });
+	      });
+	    }
+	  }, {
+	    key: "start",
+	    value: function start() {
+	      if (!this.isEnabled()) {
+	        logger.warn("Can't start, monitor is disabled!");
+	        debug.log("Can't start, monitor is disabled!");
+	        return;
+	      }
+
+	      if (this.isPaused()) {
+	        logger.warn("Can't start, monitor is paused!");
+	        debug.log("Can't start, monitor is paused!");
+	        return;
+	      }
+
+	      debug.log('Monitor started');
+	      debug.space();
+
+	      if (this.isTrackerEventsApiAvailable()) {
+	        logger.log('Events started');
+	        BXDesktopSystem.TrackerStart();
+	      }
+
+	      eventHandler.start();
+	      sender.start();
+	      logger.warn('Monitor started');
+	    }
+	  }, {
+	    key: "stop",
+	    value: function stop() {
+	      if (this.isTrackerEventsApiAvailable()) {
+	        logger.log('Events stopped');
+	        BXDesktopSystem.TrackerStop();
+	      }
+
+	      eventHandler.stop();
+	      sender.stop();
+	      logger.warn('Monitor stopped');
+	      debug.log('Monitor stopped');
+	    }
+	  }, {
+	    key: "pause",
+	    value: function pause() {
+	      this.stop();
+	      this.setPlayTimeout();
+	    }
+	  }, {
+	    key: "onAway",
+	    value: function onAway(away) {
+	      if (!this.isEnabled() || this.isPaused()) {
+	        return;
+	      }
+
+	      if (away && !this.isAway) {
+	        this.isAway = true;
+	        logger.warn('User AWAY');
+	        debug.space();
+	        debug.log('User AWAY');
+	        this.stop();
+	        eventHandler.catchAbsence(away);
+	      } else if (!away && this.isAway) {
+	        this.isAway = false;
+	        logger.warn('User RETURNED, continue monitoring...');
+	        debug.space();
+	        debug.log('User RETURNED, continue monitoring...');
+	        this.launch();
+	      }
+	    }
+	  }, {
+	    key: "send",
+	    value: function send() {
+	      if (!this.vuex.hasOwnProperty('store')) {
+	        logger.warn('Unable to send report. Store is not initialized.');
+	        debug.log('Unable to send report. Store is not initialized.');
+	        return;
+	      }
+
+	      this.getStorage().dispatch('monitor/createSentQueue').then(function () {
+	        return sender.send();
+	      });
 	    }
 	  }, {
 	    key: "openReport",
@@ -2638,132 +3361,65 @@ this.BX = this.BX || {};
 	      report.openPreview(this.getStorage());
 	    }
 	  }, {
-	    key: "start",
-	    value: function start() {
-	      var _this3 = this;
-
-	      if (!this.isEnabled()) {
-	        logger.warn("Can't start, monitor is disabled!");
-	        debug.log("Can't start, monitor is disabled!");
-	        return;
-	      }
-
-	      if (!this.isWorkingDayStarted()) {
-	        logger.warn("Can't start monitor, working day is stopped!");
-	        debug.log("Can't start monitor, working day is stopped!");
-	        return;
-	      }
-
-	      if (!this.isAppInit) {
-	        this.initApp().then(function () {
-	          return _this3.startTracker();
-	        });
-	      } else {
-	        this.startTracker();
-	      }
+	    key: "getPausedUntilTime",
+	    value: function getPausedUntilTime() {
+	      return this.getStorage().state.monitor.config.pausedUntil;
 	    }
 	  }, {
-	    key: "startTracker",
-	    value: function startTracker() {
+	    key: "clearPausedUntil",
+	    value: function clearPausedUntil() {
+	      return this.getStorage().dispatch('monitor/clearPausedUntil');
+	    }
+	  }, {
+	    key: "isPaused",
+	    value: function isPaused() {
+	      return !!this.getPausedUntilTime();
+	    }
+	  }, {
+	    key: "isPauseRelevant",
+	    value: function isPauseRelevant() {
+	      return this.getPausedUntilTime() - new Date() > 0;
+	    }
+	  }, {
+	    key: "setPlayTimeout",
+	    value: function setPlayTimeout() {
 	      var _this4 = this;
 
-	      if (!this.isAppInit) {
-	        return;
+	      logger.warn("Monitor will be turned on at ".concat(this.getPausedUntilTime().toString()));
+	      debug.log("Monitor will be turned on at ".concat(this.getPausedUntilTime().toString()));
+	      this.playTimeout = setTimeout(function () {
+	        return _this4.clearPausedUntil().then(function () {
+	          return _this4.launch();
+	        });
+	      }, this.getPausedUntilTime() - new Date());
+	    }
+	  }, {
+	    key: "pauseUntil",
+	    value: function pauseUntil(dateTime) {
+	      var _this5 = this;
+
+	      if (main_core.Type.isDate(dateTime) && main_core.Type.isNumber(dateTime.getTime()) && dateTime > new Date()) {
+	        this.getStorage().dispatch('monitor/setPausedUntil', dateTime).then(function () {
+	          return _this5.pause();
+	        });
+	      } else {
+	        throw Error('Pause must be set as a date in the future');
 	      }
+	    }
+	  }, {
+	    key: "play",
+	    value: function play() {
+	      var _this6 = this;
 
-	      debug.log('Monitor started');
-	      debug.space();
-
-	      if (this.isTrackerEventsApiAvailable()) {
-	        logger.log('Events started');
-	        BXDesktopSystem.TrackerStart();
-	      }
-
-	      this.afterTrackerInit();
-	      BX.ajax.runAction('bitrix:timeman.api.monitor.setStatusWaitingData').then(function () {
-	        _this4.isHistorySent = false;
+	      this.playTimeout = null;
+	      this.clearPausedUntil().then(function () {
+	        return _this6.launch();
 	      });
-	      eventHandler.start();
-	      sender.start();
-	      logger.warn('Monitor started');
-	    }
-	  }, {
-	    key: "stop",
-	    value: function stop() {
-	      if (this.isTrackerEventsApiAvailable()) {
-	        logger.log('Events stopped');
-	        BXDesktopSystem.TrackerStop();
-	      }
-
-	      eventHandler.stop();
-	      sender.stop();
-	      logger.warn('Monitor stopped');
-	      debug.log('Monitor stopped');
-	    }
-	  }, {
-	    key: "isTrackerEventsApiAvailable",
-	    value: function isTrackerEventsApiAvailable() {
-	      return BX.desktop.getApiVersion() >= 55;
-	    }
-	  }, {
-	    key: "onAway",
-	    value: function onAway(away) {
-	      if (!this.isEnabled() || !this.isWorkingDayStarted()) {
-	        return;
-	      }
-
-	      if (away && !this.isAway) {
-	        this.isAway = true;
-	        logger.warn('User AWAY');
-	        debug.space();
-	        debug.log('User AWAY');
-	        this.stop();
-	        eventHandler.catchAbsence(away);
-	      } else if (!away && this.isAway) {
-	        this.isAway = false;
-	        logger.warn('User RETURNED, continue monitoring...');
-	        debug.space();
-	        debug.log('User RETURNED, continue monitoring...');
-	        this.start();
-	      }
-	    }
-	  }, {
-	    key: "send",
-	    value: function send() {
-	      if (!this.vuex.hasOwnProperty('store')) {
-	        logger.warn('Unable to send report. Store is not initialized.');
-	        debug.log('Unable to send report. Store is not initialized.');
-	        return;
-	      }
-
-	      this.vuex.store.dispatch('monitor/createSentQueue').then(function () {
-	        return sender.send();
-	      });
-	    }
-	  }, {
-	    key: "isWorkingDayStarted",
-	    value: function isWorkingDayStarted() {
-	      return this.getState() === this.getStateStart();
-	    }
-	  }, {
-	    key: "setState",
-	    value: function setState(state) {
-	      this.state = state;
-	    }
-	  }, {
-	    key: "getState",
-	    value: function getState() {
-	      return this.state;
 	    }
 	  }, {
 	    key: "isEnabled",
 	    value: function isEnabled() {
 	      return this.enabled === this.getStatusEnabled();
-	    }
-	  }, {
-	    key: "isInactive",
-	    value: function isInactive() {
-	      return !(this.isEnabled() || this.getStorage() !== null || this.isAppInit);
 	    }
 	  }, {
 	    key: "enable",
@@ -2775,7 +3431,6 @@ this.BX = this.BX || {};
 	    value: function disable() {
 	      this.stop();
 	      BX.MessengerWindow.hideTab('timeman-pwt');
-	      this.isAppInit = false;
 	      this.vuex = {};
 	      this.enabled = this.getStatusDisabled();
 	    }
@@ -2790,40 +3445,14 @@ this.BX = this.BX || {};
 	      return 'N';
 	    }
 	  }, {
-	    key: "getStateStart",
-	    value: function getStateStart() {
-	      return 'start';
+	    key: "isTrackerEventsApiAvailable",
+	    value: function isTrackerEventsApiAvailable() {
+	      return BX.desktop.getApiVersion() >= 55;
 	    }
 	  }, {
-	    key: "getStateStop",
-	    value: function getStateStop() {
-	      return 'stop';
-	    }
-	  }, {
-	    key: "removeDeprecatedStorage",
-	    value: function removeDeprecatedStorage() {
-	      if (BX.desktop.getLocalConfig('bx_timeman_monitor_history')) {
-	        BX.desktop.removeLocalConfig('bx_timeman_monitor_history');
-	        logger.log("Deprecated storage has been cleared");
-	        debug.log("Deprecated storage has been cleared");
-	      }
-	    }
-	  }, {
-	    key: "afterTrackerInit",
-	    value: function afterTrackerInit() {
-	      var _this5 = this;
-
-	      var currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-	      var reportDateLog = new Date(this.vuex.store.state.monitor.reportState.dateLog);
-
-	      if (currentDateLog > reportDateLog && this.isHistorySent) {
-	        logger.warn('The next day came. Clearing the history and changing the date of the report.');
-	        debug.space();
-	        debug.log('The next day came. Clearing the history and changing the date of the report.');
-	        this.vuex.store.dispatch('monitor/clearStorage').then(function () {
-	          _this5.vuex.store.dispatch('monitor/setDateLog', MonitorModel.prototype.getDateLog());
-	        });
-	      }
+	    key: "getStorage",
+	    value: function getStorage() {
+	      return this.vuex.hasOwnProperty('store') ? this.vuex.store : null;
 	    }
 	  }]);
 	  return Monitor;
@@ -2833,5 +3462,5 @@ this.BX = this.BX || {};
 
 	exports.Monitor = monitor;
 
-}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX,BX,BX,BX,BX.UI,BX.UI,BX,window,BX.Vue,BX.Main,BX.UI.Dialogs,BX,BX,BX.Timeman.Component,BX.Timeman.Const,BX,BX.Timeman,BX.Timeman,BX,BX));
+}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX,BX,BX,BX.UI,BX.UI,BX,window,BX.UI.Dialogs,BX,BX.Timeman.Component,BX.Timeman.Const,BX.Vue,BX,BX,BX.Main,BX,BX.Timeman,BX.Timeman,BX,BX));
 //# sourceMappingURL=monitor.bundle.js.map

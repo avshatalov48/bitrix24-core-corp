@@ -78,18 +78,20 @@ export class DomBuilder extends EventEmitter
 		});
 		this.draggableItems = new Draggable({
 			container: itemContainers,
-			draggable: '.tasks-scrum-item-drag', // todo add tmp class
+			draggable: '.tasks-scrum-item-drag',
 			dragElement: '.tasks-scrum-item',
 			type: Draggable.DROP_PREVIEW,
-			delay: 200
+			delay: 260
 		});
 		this.draggableItems.subscribe('start', (baseEvent) => {
 			const dragEndEvent = baseEvent.getData();
 			this.emit('itemMoveStart', dragEndEvent);
+			this.showDropZoneForSprintCreating(dragEndEvent);
 		});
 		this.draggableItems.subscribe('end', (baseEvent) => {
 			const dragEndEvent = baseEvent.getData();
 			this.emit('itemMoveEnd', dragEndEvent);
+			this.hideDropZoneForSprintCreating(dragEndEvent);
 		});
 
 		this.draggableSprints = new Draggable({
@@ -117,13 +119,15 @@ export class DomBuilder extends EventEmitter
 		};
 
 		const createCreatingDropZone = () => {
-			if (this.entityStorage.getSprints().size)
-			{
-				return '';
-			}
 			this.sprintCreatingDropZoneNodeId = 'tasks-scrum-sprint-creating-drop-zone';
+
+			const className = this.entityStorage.getSprints().size
+				? 'tasks-scrum-sprint-sprint-drop-hide'
+				: 'tasks-scrum-sprint-sprint-drop'
+			;
+
 			return Tag.render`
-				<div id="${this.sprintCreatingDropZoneNodeId}">
+				<div id="${this.sprintCreatingDropZoneNodeId}" class="${className}">
 					<label class="ui-ctl ui-ctl-file-drop tasks-scrum-sprint-sprint-add-drop">
 						<div class="ui-ctl-label-text">
 							<small>${Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_DROP')}</small>
@@ -190,6 +194,55 @@ export class DomBuilder extends EventEmitter
 		this.bindLoadCompletedSprints(this.completedSprintLoader);
 
 		return sprintsNode;
+	}
+
+	showDropZoneForSprintCreating(dragEndEvent)
+	{
+		if (this.isSprintSourceEntity(dragEndEvent))
+		{
+			return;
+		}
+
+		const dropZoneNode = this.getSprintCreatingDropZoneNode();
+		if (!dropZoneNode)
+		{
+			return;
+		}
+
+		dropZoneNode.className = 'tasks-scrum-sprint-sprint-drop';
+	}
+
+	hideDropZoneForSprintCreating(dragEndEvent)
+	{
+		if (this.isSprintSourceEntity(dragEndEvent))
+		{
+			return;
+		}
+
+		const dropZoneNode = this.getSprintCreatingDropZoneNode();
+		if (!dropZoneNode)
+		{
+			return;
+		}
+
+		dropZoneNode.className = 'tasks-scrum-sprint-sprint-drop-hide';
+	}
+
+	isSprintSourceEntity(dragEndEvent)
+	{
+		if (dragEndEvent && dragEndEvent.sourceContainer)
+		{
+			const sourceContainer = dragEndEvent.sourceContainer;
+			const sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
+			const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
+
+			if (sourceEntity && sourceEntity.getEntityType() === 'sprint')
+			{
+				return true
+			}
+		}
+
+		return false;
 	}
 
 	bindLoadCompletedSprints(loader: HTMLElement)
@@ -279,7 +332,7 @@ export class DomBuilder extends EventEmitter
 
 	createSprint(): Promise
 	{
-		this.remove(this.sprintCreatingDropZoneNode);
+		this.hideDropZoneForSprintCreating();
 
 		const countSprints = this.entityStorage.getSprints().size;
 		const title = Loc.getMessage('TASKS_SCRUM_SPRINT_NAME').replace('%s', countSprints + 1);
@@ -390,5 +443,5 @@ export class DomBuilder extends EventEmitter
 		{
 			Dom.append(newItemNode, bindItemNode.parentElement);
 		}
-	};
+	}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CVTDA_ALREADY_CONVERTED"] = "Document is already converted. Operation has been aborted.";
 $MESS["CRM_CVTDA_COMPANY"] = "Company";
 $MESS["CRM_CVTDA_CONTACT"] = "Contact";
@@ -15,5 +15,5 @@ $MESS["CRM_CVTDA_REQUEST_DESCRIPTION_DEAL"] = "The following entities need to be
 $MESS["CRM_CVTDA_REQUEST_DESCRIPTION_LEAD"] = "The following entities need to be created using the Lead: #ITEMS#";
 $MESS["CRM_CVTDA_REQUEST_SUBJECT_DEAL"] = "Deal needs to be converted";
 $MESS["CRM_CVTDA_REQUEST_SUBJECT_LEAD"] = "Lead needs to be converted";
+$MESS["CRM_CVTDA_RESPONSIBLE"] = "Responsible person";
 $MESS["CRM_CVTDA_WIZARD_NOT_FOUND"] = "Cannot initialize the Convertion Wizard.";
-?>

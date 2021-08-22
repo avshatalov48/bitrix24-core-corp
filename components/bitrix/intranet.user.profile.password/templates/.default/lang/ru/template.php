@@ -6,4 +6,4 @@ $MESS["INTRANET_USER_PROFILE_PASSWORD_BUTTON_CANCEL"] = "Отменить";
 $MESS["INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TEXT"] = "Будет произведен выход из всех Битрикс24, во всех браузерах и приложениях кроме текущего.";
 $MESS["INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TITLE"] = "Выход";
 $MESS["INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS"] = "Выход со всех устройств успешно произведен";
-?>
+$MESS["INTRANET_USER_PROFILE_PASSWORD_CLOSE"] = "Закрыть";

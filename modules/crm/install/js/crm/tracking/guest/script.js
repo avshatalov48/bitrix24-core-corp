@@ -56,13 +56,13 @@
 		},
 		checkReturn: function()
 		{
-			if (!this.getGidCookie() || webPacker.cookie.get(this.returnCookieName))
+			if (!this.getGidCookie() || !window.sessionStorage || sessionStorage.getItem(this.returnCookieName))
 			{
 				return;
 			}
 
-			Request.query(this.requestUrl, {a: 'event', e: 'Return'}, this.onAjaxResponse.bind(this));
-			webPacker.cookie.set(this.returnCookieName, 'y', 3600 * 6);
+			Request.query(this.requestUrl, {gid: this.getGidCookie(), a: 'event', e: 'Return'}, this.onAjaxResponse.bind(this));
+			this.markReturned();
 		},
 		storeTrace: function(trace, action)
 		{
@@ -91,10 +91,10 @@
 		{
 			response = response || {};
 			response.data = response.data || {};
-			if (this.getGidCookie() == null && !!response.data.gid)
+			if (!this.getGidCookie() && !!response.data.gid)
 			{
-				webPacker.cookie.set(this.cookieName, response.data.gid);
-				webPacker.cookie.set(this.returnCookieName, 'y', 3600 * 6);
+				webPacker.ls.setItem(this.cookieName, response.data.gid);
+				this.markReturned();
 			}
 		},
 		getPages: function ()
@@ -173,7 +173,19 @@
 		},
 		getGidCookie: function ()
 		{
-			return webPacker.cookie.get(this.cookieName)
+			return webPacker.ls.getItem(this.cookieName);
+		},
+		setGid: function(gid)
+		{
+			this.markReturned();
+			return webPacker.ls.setItem(this.cookieName, gid);
+		},
+		markReturned: function()
+		{
+			if (window.sessionStorage)
+			{
+				sessionStorage.setItem(this.returnCookieName, 'y');
+			}
 		}
 	};
 

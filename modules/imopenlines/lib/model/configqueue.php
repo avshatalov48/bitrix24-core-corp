@@ -16,6 +16,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ConfigQueueTable
  * @package Bitrix\ImOpenLines\Model
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ConfigQueue_Query query()
+ * @method static EO_ConfigQueue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ConfigQueue_Result getById($id)
+ * @method static EO_ConfigQueue_Result getList(array $parameters = array())
+ * @method static EO_ConfigQueue_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigQueue createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigQueue_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigQueue wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigQueue_Collection wakeUpCollection($rows)
  */
 class ConfigQueueTable extends DataManager
 {

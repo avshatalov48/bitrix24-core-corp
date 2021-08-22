@@ -23,21 +23,23 @@ const FieldProductSubItem = {
 				v-if="item.selected"
 			>
 				<div class="b24-form-control-product-quantity-remove"
-					@click="item.decQuantity()"
+					v-if="item.price"
 					:style="{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}"
+					@click="item.decQuantity()"
 				></div>
 				<div class="b24-form-control-product-quantity-counter">
-					{{ item.value.quantity }}
+					<span
+						v-if="item.price || item.quantity.unit"
+					>{{ item.value.quantity }}</span>
 					{{ item.quantity.unit }}
 				</div>
 				<div class="b24-form-control-product-quantity-add"
-					@click="item.incQuantity()"
+					v-if="item.price"
 					:style="{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}"
+					@click="item.incQuantity()"
 				></div>
 			</div>
-			<div class="b24-form-control-product-price"
-				v-if="item.price"
-			>
+			<div class="b24-form-control-product-price">
 				<div>
 					<div class="b24-form-control-product-price-old"
 						v-if="item.discount"

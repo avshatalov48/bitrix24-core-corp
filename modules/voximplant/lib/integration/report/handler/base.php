@@ -190,7 +190,14 @@ abstract class Base extends BaseReport
 					break;
 
 				case 'INCOMING':
-					$query->where('INCOMING', '=', $filterValue);
+					if (is_array($filterValue))
+					{
+						$query->whereIn('INCOMING', $filterValue);
+					}
+					else
+					{
+						$query->where('INCOMING', '=', $filterValue);
+					}
 					break;
 
 				case 'STATUS':
@@ -843,8 +850,8 @@ abstract class Base extends BaseReport
 		switch ($callType)
 		{
 			case CallType::INCOMING:
-				$expression = 'count(if((%s = 2 and %s = 200), 1, null))';
-				$buildFrom = ['INCOMING', 'CALL_FAILED_CODE'];
+				$expression = 'count(if(((%s = 2 or %s = 3) and %s = 200), 1, null))';
+				$buildFrom = ['INCOMING', 'INCOMING', 'CALL_FAILED_CODE'];
 				break;
 			case CallType::OUTGOING:
 				$expression = 'count(if(%s = 1, 1, null))';

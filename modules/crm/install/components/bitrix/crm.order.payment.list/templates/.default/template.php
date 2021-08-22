@@ -205,6 +205,7 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 			'CURRENCY' => CCrmCurrency::GetEncodedCurrencyName($payment['CURRENCY']),
 			'PAY_SYSTEM_FULL' => $paySystemFull,
 			'PAID' => Loc::getMessage($messageCode),
+			'ACCOUNT_NUMBER' => htmlspecialcharsbx($payment['ACCOUNT_NUMBER']),
 			'USER_ID' => $payment['BUYER_FORMATTED_NAME'] <> '' ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
 		)
 	);

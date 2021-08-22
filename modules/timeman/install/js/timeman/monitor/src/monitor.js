@@ -10,17 +10,15 @@ import {TimeFormatter} from "timeman.timeformatter";
 
 import {PULL as Pull} from 'pull.client';
 import {CommandHandler} from './lib/commandhandler';
-import {Loc} from 'main.core';
+import {Loc, Type} from 'main.core';
 
 class Monitor
 {
 	init(options)
 	{
 		this.enabled = options.enabled;
-		this.state = options.state;
-		this.isHistorySent = options.isHistorySent;
+		this.playTimeout = null;
 		this.isAway = false;
-		this.isAppInit = false;
 		this.vuex = {};
 
 		this.defaultStorageConfig = {
@@ -49,12 +47,10 @@ class Monitor
 
 		Debug.log(`Enabled: ${this.enabled}`);
 
-		Logger.warn('History sent status: ', this.isHistorySent);
-		Debug.log(`History sent status: ${this.isHistorySent}`);
-
-		this.removeDeprecatedStorage();
-
-		this.initApp();
+		if (this.isEnabled())
+		{
+			this.initApp();
+		}
 
 		Pull.subscribe(new CommandHandler());
 	}
@@ -66,36 +62,7 @@ class Monitor
 			return;
 		}
 
-		return new Promise((resolve, reject) =>
-		{
-			this.initStorage()
-				.then(builder => {
-					this.vuex.store = builder.store;
-					this.vuex.models = builder.models;
-					this.vuex.builder = builder.builder;
-
-					this.vuex.store.dispatch('monitor/processUnfinishedEvents').then(() => {
-						this.initTracker(this.getStorage());
-
-						this.isAppInit = true;
-
-						resolve();
-					});
-				})
-				.catch(() => {
-					const errorMessage = "PWT: Storage initialization error";
-
-					Logger.error(errorMessage);
-					Debug.log(errorMessage);
-
-					reject();
-				});
-		});
-	}
-
-	initStorage()
-	{
-		return new VuexBuilder()
+		new VuexBuilder()
 			.addModel(
 				MonitorModel
 					.create()
@@ -108,12 +75,20 @@ class Monitor
 				siteId: Loc.getMessage('SITE_ID'),
 				userId: Loc.getMessage('USER_ID')
 			})
-			.build();
-	}
+			.build()
+			.then(builder => {
+				this.vuex.store = builder.store;
 
-	getStorage()
-	{
-		return (this.vuex.hasOwnProperty('store') ? this.vuex.store : null);
+				this.getStorage().dispatch('monitor/processUnfinishedEvents')
+					.then(() => this.initTracker(this.getStorage()));
+			})
+			.catch(() => {
+				const errorMessage = "PWT: Storage initialization error";
+
+				Logger.error(errorMessage);
+				Debug.log(errorMessage);
+			})
+		;
 	}
 
 	initTracker(store)
@@ -158,16 +133,7 @@ class Monitor
 
 		if (this.isEnabled())
 		{
-			this.afterTrackerInit();
-
-			if (this.isWorkingDayStarted())
-			{
-				this.start();
-			}
-			else
-			{
-				Logger.warn('Monitor: Zzz...');
-			}
+			this.launch();
 		}
 		else
 		{
@@ -175,24 +141,38 @@ class Monitor
 		}
 	}
 
-	openReport()
+	launch()
 	{
-		if (!this.isEnabled())
+		if (this.isAway)
 		{
+			Logger.log('Pause is over, but computer is in sleep mode. Waiting for the return of the user.');
+			Debug.log('Pause is over, but computer is in sleep mode. Waiting for the return of the user.');
+
 			return;
 		}
 
-		Report.open(this.getStorage());
-	}
+		this.getStorage().dispatch('monitor/migrateHistory').then(() => {
+			this.getStorage().dispatch('monitor/clearSentHistory').then(() => {
+				this.getStorage().dispatch('monitor/refreshDateLog').then(() => {
+					if (this.isPaused())
+					{
+						if (this.isPauseRelevant())
+						{
+							Logger.warn("Can't start, monitor is paused!");
+							Debug.log("Can't start, monitor is paused!");
 
-	openReportPreview()
-	{
-		if (!this.isEnabled())
-		{
-			return;
-		}
+							this.setPlayTimeout();
+							return;
+						}
 
-		Report.openPreview(this.getStorage());
+						this.clearPausedUntil().then(() => this.start());
+						return;
+					}
+
+					this.start();
+				});
+			});
+		});
 	}
 
 	start()
@@ -205,28 +185,11 @@ class Monitor
 			return;
 		}
 
-		if (!this.isWorkingDayStarted())
+		if (this.isPaused())
 		{
-			Logger.warn("Can't start monitor, working day is stopped!");
-			Debug.log("Can't start monitor, working day is stopped!");
+			Logger.warn("Can't start, monitor is paused!");
+			Debug.log("Can't start, monitor is paused!");
 
-			return;
-		}
-
-		if (!this.isAppInit)
-		{
-			this.initApp().then(() => this.startTracker());
-		}
-		else
-		{
-			this.startTracker();
-		}
-	}
-
-	startTracker()
-	{
-		if (!this.isAppInit)
-		{
 			return;
 		}
 
@@ -238,13 +201,6 @@ class Monitor
 			Logger.log('Events started');
 			BXDesktopSystem.TrackerStart();
 		}
-
-		this.afterTrackerInit();
-
-		BX.ajax.runAction('bitrix:timeman.api.monitor.setStatusWaitingData')
-			.then(() => {
-				this.isHistorySent = false;
-			});
 
 		EventHandler.start();
 		Sender.start();
@@ -267,14 +223,15 @@ class Monitor
 		Debug.log('Monitor stopped');
 	}
 
-	isTrackerEventsApiAvailable()
+	pause()
 	{
-		return (BX.desktop.getApiVersion() >= 55);
+		this.stop();
+		this.setPlayTimeout();
 	}
 
 	onAway(away)
 	{
-		if (!this.isEnabled() || !this.isWorkingDayStarted())
+		if (!this.isEnabled() || this.isPaused())
 		{
 			return;
 		}
@@ -299,7 +256,7 @@ class Monitor
 			Debug.space();
 			Debug.log('User RETURNED, continue monitoring...');
 
-			this.start();
+			this.launch();
 		}
 	}
 
@@ -313,36 +270,85 @@ class Monitor
 			return;
 		}
 
-		this.vuex.store.dispatch('monitor/createSentQueue').then(() => Sender.send());
+		this.getStorage().dispatch('monitor/createSentQueue').then(() => Sender.send());
 	}
 
-	isWorkingDayStarted()
+	openReport()
 	{
-		return (this.getState() === this.getStateStart())
+		if (!this.isEnabled())
+		{
+			return;
+		}
+
+		Report.open(this.getStorage());
 	}
 
-	setState(state)
+	openReportPreview()
 	{
-		this.state = state;
+		if (!this.isEnabled())
+		{
+			return;
+		}
+
+		Report.openPreview(this.getStorage());
 	}
 
-	getState()
+	getPausedUntilTime()
 	{
-		return this.state;
+		return this.getStorage().state.monitor.config.pausedUntil;
+	}
+
+	clearPausedUntil()
+	{
+		return this.getStorage().dispatch('monitor/clearPausedUntil');
+	}
+
+	isPaused()
+	{
+		return !!this.getPausedUntilTime();
+	}
+
+	isPauseRelevant()
+	{
+		return this.getPausedUntilTime() - new Date() > 0;
+	}
+
+	setPlayTimeout()
+	{
+		Logger.warn(`Monitor will be turned on at ${this.getPausedUntilTime().toString()}`);
+		Debug.log(`Monitor will be turned on at ${this.getPausedUntilTime().toString()}`);
+
+		this.playTimeout = setTimeout(
+			() => this.clearPausedUntil().then(() => this.launch()),
+			this.getPausedUntilTime() - new Date()
+		);
+	}
+
+	pauseUntil(dateTime: Date)
+	{
+		if (
+			Type.isDate(dateTime)
+			&& Type.isNumber(dateTime.getTime())
+			&& dateTime > new Date()
+		)
+		{
+			this.getStorage().dispatch('monitor/setPausedUntil', dateTime).then(() => this.pause());
+		}
+		else
+		{
+			throw Error('Pause must be set as a date in the future');
+		}
+	}
+
+	play()
+	{
+		this.playTimeout = null;
+		this.clearPausedUntil().then(() => this.launch());
 	}
 
 	isEnabled()
 	{
 		return (this.enabled === this.getStatusEnabled())
-	}
-
-	isInactive()
-	{
-		return !(
-			this.isEnabled()
-			|| this.getStorage() !== null
-			|| this.isAppInit
-		);
 	}
 
 	enable()
@@ -355,7 +361,6 @@ class Monitor
 		this.stop();
 
 		BX.MessengerWindow.hideTab('timeman-pwt');
-		this.isAppInit = false;
 		this.vuex = {};
 
 		this.enabled = this.getStatusDisabled();
@@ -371,46 +376,14 @@ class Monitor
 		return 'N';
 	}
 
-	getStateStart()
+	isTrackerEventsApiAvailable()
 	{
-		return 'start';
+		return (BX.desktop.getApiVersion() >= 55);
 	}
 
-	getStateStop()
+	getStorage()
 	{
-		return 'stop';
-	}
-
-	removeDeprecatedStorage()
-	{
-		if (BX.desktop.getLocalConfig('bx_timeman_monitor_history'))
-		{
-			BX.desktop.removeLocalConfig('bx_timeman_monitor_history');
-
-			Logger.log(`Deprecated storage has been cleared`);
-			Debug.log(`Deprecated storage has been cleared`);
-		}
-	}
-
-	afterTrackerInit()
-	{
-		let currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-		let reportDateLog = new Date(this.vuex.store.state.monitor.reportState.dateLog);
-
-		if (
-			currentDateLog > reportDateLog
-			&& this.isHistorySent
-		)
-		{
-			Logger.warn('The next day came. Clearing the history and changing the date of the report.');
-			Debug.space();
-			Debug.log('The next day came. Clearing the history and changing the date of the report.');
-
-			this.vuex.store.dispatch('monitor/clearStorage')
-				.then(() => {
-					this.vuex.store.dispatch('monitor/setDateLog', MonitorModel.prototype.getDateLog());
-				});
-		}
+		return (this.vuex.hasOwnProperty('store') ? this.vuex.store : null);
 	}
 }
 

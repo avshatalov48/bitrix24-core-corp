@@ -23,6 +23,6 @@ class Status extends Content
 			return '';
 		}
 
-		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.$row['REAL_STATUS']);
+		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.$row['REAL_STATUS']) ?? '';
 	}
 }

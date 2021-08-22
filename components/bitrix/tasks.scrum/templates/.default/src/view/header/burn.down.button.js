@@ -13,11 +13,9 @@ export class BurnDownButton extends EventEmitter
 	render(): HTMLElement
 	{
 		const node = Tag.render`
-			<div class="tasks-scrum-button-container">
-				<button class="ui-btn ui-btn-primary ui-btn-xs">
-					${Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON')}
-				</button>
-			</div>
+			<button class="ui-btn ui-btn-primary ui-btn-xs">
+				${Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON')}
+			</button>
 		`;
 
 		Event.bind(node, 'click', this.onClick.bind(this));

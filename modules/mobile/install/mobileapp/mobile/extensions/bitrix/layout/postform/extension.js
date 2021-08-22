@@ -1158,6 +1158,13 @@
 			{
 				this.attachmentSlider.setState(newState)
 			}
+			if (this.attachmentWidget)
+			{
+				this.attachmentWidget.setTitle({
+					text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', attachments.length),
+					largeMode:true
+				});
+			}
 		}
 
 		processChangeMessageType(newStateData, params) {

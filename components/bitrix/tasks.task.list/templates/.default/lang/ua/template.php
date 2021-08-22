@@ -44,6 +44,7 @@ $MESS["TASKS_JS_MARK_N"] = "Негативна";
 $MESS["TASKS_JS_MARK_NONE"] = "Немає оцінки";
 $MESS["TASKS_JS_MARK_P"] = "Позитивна";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Пінг-повідомлення надіслане";
+$MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Додати тег:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Виберіть дію";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS"] = "Видалити всі завдання списку (включаючи їх підзавдання), в тому числі на інших сторінках?";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS"] = "Видалити зазначені завдання?";

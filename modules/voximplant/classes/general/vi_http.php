@@ -799,7 +799,8 @@ class CVoxImplantHttp
 
 		$query = $this->Query(
 			'GetVerifications',
-			$parameters
+			$parameters,
+			['returnArray' => true]
 		);
 		if (isset($query->error))
 		{

@@ -234,6 +234,12 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 				'editable' => false,
 				'default'  => true
 			),
+			'DEADLINE'    => array(
+				'id'       => 'DEADLINE',
+				'name'     => GetMessage('TASKS_COLUMN_DEADLINE'),
+				'editable' => false,
+				'default'  => true
+			),
 			'DATE'        => array(
 				'id'       => 'DATE',
 				'name'     => GetMessage('TASKS_COLUMN_CREATED_DATE'),
@@ -249,12 +255,6 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 			'USER_TYPE'   => array(
 				'id'       => 'USER_TYPE',
 				'name'     => GetMessage('TASKS_COLUMN_USER_TYPE2'),
-				'editable' => false,
-				'default'  => false
-			),
-			'DEADLINE'    => array(
-				'id'       => 'DEADLINE',
-				'name'     => GetMessage('TASKS_COLUMN_DEADLINE'),
 				'editable' => false,
 				'default'  => false
 			),

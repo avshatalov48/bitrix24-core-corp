@@ -5,6 +5,7 @@ namespace Bitrix\Location\Source\Osm;
 use Bitrix\Location\Entity\Source;
 use Bitrix\Location\Repository\Location\IRepository;
 use Bitrix\Location\Source\Osm\Api\Api;
+use Bitrix\Main\IO\File;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Context;
 
@@ -59,7 +60,7 @@ final class OsmSource extends Source
 			'serviceUrl' => $this->getOsmApiUrl(),
 			'token' => $token ? $token->getToken() : null,
 			'useGeocodingService' => true,
-			'hostName' => $this->getOsmHostName(),
+			'hostName' => $this->getOsmHostName()
 		];
 	}
 

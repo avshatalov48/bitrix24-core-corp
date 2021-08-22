@@ -11,7 +11,7 @@ export default class AutocompleteService extends AutocompleteServiceBase
 		this.#autocompleteRequester = props.autocompleteRequester;
 	}
 
-	autocomplete(text: String, autocompleteParams: AutocompleteServiceParams): Promise<Array<Location>, Error>
+	autocomplete(text: String, autocompleteServiceParams: AutocompleteServiceParams): Promise<Array<Location>, Error>
 	{
 		if (text === '')
 		{
@@ -21,6 +21,6 @@ export default class AutocompleteService extends AutocompleteServiceBase
 			});
 		}
 
-		return this.#autocompleteRequester.request({text, autocompleteParams});
+		return this.#autocompleteRequester.request({text, autocompleteServiceParams});
 	}
 }

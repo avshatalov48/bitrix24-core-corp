@@ -17,6 +17,22 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
 //Loc::loadMessages(__FILE__);
 
+/**
+ * Class ThrottleTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Throttle_Query query()
+ * @method static EO_Throttle_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Throttle_Result getById($id)
+ * @method static EO_Throttle_Result getList(array $parameters = array())
+ * @method static EO_Throttle_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Notification\Task\EO_Throttle createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Notification\Task\EO_Throttle_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Notification\Task\EO_Throttle wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Notification\Task\EO_Throttle_Collection wakeUpCollection($rows)
+ */
 class ThrottleTable extends Main\Entity\DataManager
 {
 	/**

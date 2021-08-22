@@ -193,4 +193,11 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 		";
 		return $connection->query($sql);
 	}
+
+	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
+	{
+		return \Bitrix\Crm\Entity\Index\CompanyTable::delete([
+			'COMPANY_ID' => $entityId,
+		]);
+	}
 }

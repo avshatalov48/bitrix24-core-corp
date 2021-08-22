@@ -55,6 +55,7 @@
 .task-detail-sidebar-info-user-extranet,
 .task-detail-sidebar-info-user-network,
 .task-detail-sidebar-info-user-mail,
+.task-detail-sidebar-info-user-email,
 .task-detail-sidebar-info-user-crmemail {
 }
 
@@ -99,11 +100,13 @@
 .task-detail-sidebar-info-user-extranet .task-detail-sidebar-info-user-name,
 .task-detail-sidebar-info-user-network .task-detail-sidebar-info-user-name,
 .task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name,
+.task-detail-sidebar-info-user-email .task-detail-sidebar-info-user-name,
 .task-detail-sidebar-info-user-crmemail .task-detail-sidebar-info-user-name {
 	color: #bf7700;
 }
 
 .task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name:before,
+.task-detail-sidebar-info-user-email .task-detail-sidebar-info-user-name:before,
 .task-detail-sidebar-info-user-network .task-detail-sidebar-info-user-name:before,
 .task-detail-sidebar-info-user-extranet .task-detail-sidebar-info-user-name:before,
 .task-detail-sidebar-info-user-crmemail .task-detail-sidebar-info-user-name:before {
@@ -120,7 +123,8 @@
 	background: url("/bitrix/js/tasks/css/images/icon-crmuser-block.png") no-repeat 0 0;
 }
 
-.task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name:before {
+.task-detail-sidebar-info-user-mail .task-detail-sidebar-info-user-name:before,
+.task-detail-sidebar-info-user-email .task-detail-sidebar-info-user-name:before {
 	background-position: 0 -366px;
 }
 

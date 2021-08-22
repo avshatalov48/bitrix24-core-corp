@@ -826,15 +826,61 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
-		/*
-		// check test-stage mode
-		if (!self::checkPortalStageMode($fromUserId))
+		// check user vote for session by direct text input '1' or '0'
+		if (
+			$messageFields['COMMAND_CONTEXT'] === 'TEXTAREA'
+			&& ($messageFields['MESSAGE'] === '1' || $messageFields['MESSAGE'] === '0')
+		)
 		{
-			self::markMessageUndelivered($messageId);
+			$i = 0;
+			$voteMessage = null;
+			$lastMessages = (new \CIMMessage())->getLastMessage($fromUserId, self::getBotId(), false, false);
+			foreach ($lastMessages['message'] as $message)
+			{
+				if (
+					$message['senderId'] == self::getBotId()
+					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE])
+					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE])
+					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE])
+					&& (int)$message['params'][self::MESSAGE_PARAM_IMOL_VOTE] > 0 //SESSION_ID
+				)
+				{
+					$voteMessage = $message;
+					break;
+				}
+				// check only 7 last messages
+				if (++$i > 7)
+				{
+					break;
+				}
+			}
+			if ($voteMessage)
+			{
+				$isActionLike = $messageFields['MESSAGE'] === '1';
 
-			return false;
+				self::sendMessage([
+					'DIALOG_ID' => $fromUserId,
+					'MESSAGE' => $isActionLike
+						? $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE]
+						: $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE],
+					'SYSTEM' => 'N',
+					'URL_PREVIEW' => 'N',
+				]);
+
+				$voteParams = [
+					'BOT_ID' => self::getBotId(),
+					'USER_ID' => $fromUserId,
+					'ACTION' => ($isActionLike ? 'like' : 'dislike'),
+					'SESSION_ID' => $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE],//SESSION_ID
+					'MESSAGE' => [
+						'MESSAGE' => $voteMessage['text'],
+						'PARAMS' => $voteMessage['params'],//CONNECTOR_MID
+					]
+				];
+
+				return self::clientSessionVote($voteParams);
+			}
 		}
-		*/
 
 		// ITR menu on before any dialog starts
 		if ($allowShowMenu)
@@ -855,7 +901,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 					]);
 				}
 
-				if ($lastMenuItemId !== self::COMMAND_MENU_EXIT)
+				if ($lastMenuItemId !== self::MENU_EXIT_ID)
 				{
 					self::markMessageUndelivered($messageId);
 
@@ -960,14 +1006,6 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
-		/*
-		// check test-stage mode
-		if (!self::checkPortalStageMode((int)$params['USER_ID']))
-		{
-			return false;
-		}
-		*/
-
 		// ITR menu on before any dialog starts
 		if (self::hasBotMenu())
 		{
@@ -1057,19 +1095,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function finishDialogSession($params)
 	{
-		if (Main\Loader::includeModule('bitrix24'))
+		if (isset($params['DIALOG_ID']) && preg_match('/^[0-9]+$/i', $params['DIALOG_ID']))
 		{
-			// Only for ru, by, kz regions.
-			$prefix = \CBitrix24::getLicensePrefix();
-			if (in_array($prefix, ['ru', 'by', 'kz'], true))
-			{
-				if (isset($params['DIALOG_ID']) && preg_match('/^[0-9]+$/i', $params['DIALOG_ID']))
-				{
-					$userId = (int)$params['DIALOG_ID'];
-
-					self::scheduleAction($userId, self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
-				}
-			}
+			$userId = (int)$params['DIALOG_ID'];
+			self::scheduleAction($userId, self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
 		}
 
 		return parent::finishDialogSession($params);

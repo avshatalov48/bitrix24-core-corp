@@ -30,31 +30,33 @@ class CellAction
 	 */
 	public function prepare(): array
 	{
-		$canPin = $this->parameters['CAN_USE_PIN'];
-		$isMuted = ($this->rowData['IS_MUTED'] === 'Y');
-
-		if ($this->parameters['GROUP_ID'])
-		{
-			$isPinned = array_key_exists('IS_PINNED_IN_GROUP', $this->rowData) && $this->rowData['IS_PINNED_IN_GROUP'] === 'Y';
-		}
-		else
-		{
-			$isPinned = ($this->rowData['IS_PINNED'] === 'Y');
-		}
+		$taskId = $this->rowData['ID'];
 
 		$cellActions = [
 			'TITLE' => [],
 		];
 
-		if ($canPin)
+		if ($this->parameters['CAN_USE_PIN'])
 		{
+			if ($groupId = $this->parameters['GROUP_ID'])
+			{
+				$isPinned = (
+					array_key_exists('IS_PINNED_IN_GROUP', $this->rowData)
+					&& $this->rowData['IS_PINNED_IN_GROUP'] === 'Y'
+				);
+			}
+			else
+			{
+				$isPinned = ($this->rowData['IS_PINNED'] === 'Y');
+			}
+
 			$cellActions['TITLE'][] = [
 				'class' => [
 					Grid\CellActions::PIN,
 					($isPinned ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
 				],
 				'events' => [
-					'click' => 'BX.Tasks.GridActions.changePin',
+					'click' => "BX.Tasks.GridActions.changePin.bind(BX.Tasks.GridActions, {$taskId}, {$groupId})",
 				],
 			];
 		}
@@ -62,10 +64,10 @@ class CellAction
 		$cellActions['TITLE'][] = [
 			'class' => [
 				Grid\CellActions::MUTE,
-				($isMuted ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
+				($this->rowData['IS_MUTED'] === 'Y' ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
 			],
 			'events' => [
-				'click' => 'BX.Tasks.GridActions.changeMute',
+				'click' => "BX.Tasks.GridActions.changeMute.bind(BX.Tasks.GridActions, {$taskId})",
 			],
 		];
 

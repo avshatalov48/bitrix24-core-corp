@@ -7,11 +7,11 @@ use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
 use Bitrix\Crm\Attribute\FieldAttributeType;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Recurring;
+use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Sale;
 
 if(!Main\Loader::includeModule('crm'))
@@ -1301,6 +1301,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			}
 		}
 
+		$fakeValue = '';
 		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
@@ -1346,10 +1347,16 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 						$this->prepareTypeList(),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_DEAL_SOURCE_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
 					'defaultValue' => $this->defaultEntityData['TYPE_ID'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'DEAL_TYPE',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -1357,14 +1364,21 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_SOURCE_ID'),
 				'type' => 'list',
 				'editable' => true,
-				'data' => array('items'=> \CCrmInstantEditorHelper::PrepareListOptions(
-					CCrmStatus::GetStatusList('SOURCE'),
-					array(
-						'NOT_SELECTED' => Loc::getMessage('CRM_DEAL_SOURCE_NOT_SELECTED'),
-						'NOT_SELECTED_VALUE' => ''
-					)
-				)
-				)
+				'data' => [
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
+						CCrmStatus::GetStatusList('SOURCE'),
+						[
+							'NOT_SELECTED' => Loc::getMessage('CRM_DEAL_SOURCE_NOT_SELECTED'),
+							'NOT_SELECTED_VALUE' => $fakeValue
+						]
+					),
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'SOURCE',
+						[$fakeValue]
+					),
+				]
 			),
 			array(
 				'name' => 'SOURCE_DESCRIPTION',
@@ -1403,6 +1417,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'formatted' => 'FORMATTED_OPPORTUNITY',
 					'formattedWithCurrency' => 'FORMATTED_OPPORTUNITY_WITH_CURRENCY',
 					'isDeliveryAvailable' => Crm\Integration\SalesCenterManager::getInstance()->hasInstallableDeliveryItems(),
+					'disableSendButton' => Crm\Integration\SmsManager::canSendMessage() ? '' : 'y',
 				)
 			),
 			array(
@@ -1694,6 +1709,25 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			}
 
 			$data = ['fieldInfo' => $fieldInfo];
+
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$data['innerConfig'] = \CCrmInstantEditorHelper::prepareInnerConfig(
+						$userField['USER_TYPE_ID'],
+						'crm.status.setItems',
+						$userField['SETTINGS']['ENTITY_TYPE'],
+						['']
+					);
+				}
+				unset($statusEntityId);
+			}
 
 			if(isset($visibilityConfig[$fieldName]))
 			{

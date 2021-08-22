@@ -40,7 +40,10 @@ class CallDurationGrid extends CallDuration implements IReportMultipleData
 				'url' => [
 					'INCOMING_DURATION' => $this->createUrl(self::TELEPHONY_DETAIL_URI, [
 						'PORTAL_USER_ID' => $row['PORTAL_USER_ID'],
-						'INCOMING' => CVoxImplantMain::CALL_INCOMING,
+						'INCOMING' => [
+							CVoxImplantMain::CALL_INCOMING,
+							CVoxImplantMain::CALL_INCOMING_REDIRECT,
+						],
 						'STATUS' => self::CALL_STATUS_SUCCESS,
 					]),
 					'OUTGOING_DURATION' => $this->createUrl(self::TELEPHONY_DETAIL_URI, [

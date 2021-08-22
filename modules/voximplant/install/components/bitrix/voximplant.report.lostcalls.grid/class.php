@@ -125,7 +125,7 @@ class VoximplantReportLostCallsGridComponent extends \CBitrixComponent
 			[
 				'id' => 'LOST_CALLS_COUNT',
 				'sort' => 'LOST_CALLS_COUNT',
-				'name' => Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS'),
+				'name' => Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_COUNT'),
 				'default' => true,
 			],
 			[

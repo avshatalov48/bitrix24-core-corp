@@ -16,6 +16,7 @@ export const Interval = BitrixVue.localComponent('bx-timeman-component-timeline-
 		hint: String,
 		isFirst: Boolean,
 		isLast: Boolean,
+		display: String,
 	},
 	computed:
 	{
@@ -28,6 +29,7 @@ export const Interval = BitrixVue.localComponent('bx-timeman-component-timeline-
 				this.isFirst && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-first' : '',
 				this.isLast && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-last' : '',
 				this.isFirst && this.isLast ? 'bx-timeman-component-timeline-chart-interval-round' : '',
+				this.display ? 'bx-timeman-component-timeline-chart-interval-item-' + this.display : '',
 			]
 		},
 		intervalInlineStyle()

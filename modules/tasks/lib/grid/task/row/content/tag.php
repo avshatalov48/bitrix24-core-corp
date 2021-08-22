@@ -13,15 +13,26 @@ use Bitrix\Tasks\Grid\Task\Row\Content;
 class Tag extends Content
 {
 	/**
-	 * @return string
+	 * @return array
 	 * @throws Main\ArgumentException
 	 */
-	public function prepare(): string
+	public function prepare(): array
 	{
 		$row = $this->getRowData();
 		$parameters = $this->getParameters();
 
-		$tags = '';
+		$tags = [
+			'items' => [],
+		];
+
+		if ($row['ACTION']['EDIT'])
+		{
+			$tags['addButton'] = [
+				'events' => [
+					'click' => "BX.Tasks.GridActions.onTagUpdateClick.bind(BX.Tasks.GridActions, {$row['ID']})",
+				],
+			];
+		}
 
 		if (!array_key_exists('TAG', $row) || !is_array($row['TAG']))
 		{
@@ -30,26 +41,16 @@ class Tag extends Content
 
 		foreach ($row['TAG'] as $tag)
 		{
-			$safeTag = htmlspecialcharsbx($tag);
-			$encodedData = Json::encode(['TAG' => $safeTag]);
+			$encodedData = Json::encode(['TAG' => $tag]);
+			$selected = (int)(isset($parameters['FILTER_FIELDS']['TAG']) && $parameters['FILTER_FIELDS']['TAG'] === $tag);
 
-			$selected = 0;
-			$selector = 'tasks-grid-tag';
-			if (
-				isset($parameters['FILTER_FIELDS']['TAG'])
-				&& $parameters['FILTER_FIELDS']['TAG'] === $safeTag
-			)
-			{
-				$selected = 1;
-				$selector .= ' tasks-grid-filter-active';
-			}
-
-			$tags .=
-				"<div class='ui-label ui-label-fill ui-label-tag-light {$selector}' onclick='BX.PreventDefault(); BX.Tasks.GridActions.toggleFilter({$encodedData}, {$selected});'>"
-				. "<span class='ui-label-inner'>{$safeTag}</span>"
-				. "<span class='tasks-grid-filter-remove'></span>"
-				. "</div>"
-			;
+			$tags['items'][] = [
+				'text' => $tag,
+				'active' => (bool)$selected,
+				'events' => [
+					'click' => "BX.Tasks.GridActions.toggleFilter.bind(BX.Tasks.GridActions, {$encodedData}, {$selected})",
+				],
+			];
 		}
 
 		return $tags;

@@ -1,0 +1,6 @@
+<?php
+
+$MESS["INTRANET_LICENSE_WIDGET_BUY_TARIFF"] = "Купить тариф";
+$MESS["INTRANET_LICENSE_WIDGET_DEMO"] = "Демо-режим";
+$MESS["INTRANET_LICENSE_WIDGET_MY_TARIFF"] = "Мой тариф";
+

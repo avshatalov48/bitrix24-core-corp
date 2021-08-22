@@ -4,6 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global array $arResult
  */
 
+use Bitrix\Main\Localization\Loc;
+
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/voximplant.config.edit/templates/.default/style.css');
 
 CJSCore::Init(["socnetlogdest", "voximplant.common", "sidepanel", "ui.hint", "ui.buttons"]);
@@ -37,7 +39,16 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 				<?= GetMessage("VI_CONFIG_EDIT_QUEUE_TIP_2") ?>
 			</div>
 			<div class="tel-set-destination-container" id="users_for_queue"></div>
-
+			<div class="voximplant-control-row">
+				<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_GROUP_PHONE_NUMBER") ?></div>
+				<input type="text"
+					   name="PHONE_NUMBER"
+					   class="voximplant-control-input"
+					   placeholder="<?=Loc::getMessage("VI_CONFIG_EDIT_NOT_SPECIFIED")?>"
+					   maxlength="4"
+					   value="<?= htmlspecialcharsbx($arResult["ITEM"]["PHONE_NUMBER"])?>"
+				>
+			</div>
 			<div class="voximplant-control-row">
 				<div class="voximplant-control-subtitle"><?= GetMessage("VI_CONFIG_EDIT_QUEUE_TYPE_2") ?></div>
 				<div class="voximplant-control-select-flexible">

@@ -27,7 +27,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Queue_Query query()
+ * @method static EO_Queue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Queue_Result getById($id)
+ * @method static EO_Queue_Result getList(array $parameters = array())
+ * @method static EO_Queue_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Model\EO_Queue createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Model\EO_Queue_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Model\EO_Queue wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Model\EO_Queue_Collection wakeUpCollection($rows)
+ */
 
 class QueueTable extends Main\ORM\Data\DataManager
 {

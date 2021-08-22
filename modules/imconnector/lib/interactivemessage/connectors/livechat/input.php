@@ -17,22 +17,26 @@ class Input extends InteractiveMessage\Input
 	 * @param $command
 	 * @param $data
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function processingCommandKeyboard($command, $data): Result
 	{
 		$result = new Result();
 		if(!empty($data))
 		{
-			$data = Json::decode($data);
+			try
+			{
+				$data = Json::decode($data);
+			}
+			catch (\Exception $e)
+			{
+				$result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
+			}
 		}
 
 		if(
-			$command === 'session' &&
-			!empty($data)
+			$command === 'session'
+			&& !empty($data)
+			&& $result->isSuccess()
 		)
 		{
 			$result = $this->runCommand($data);

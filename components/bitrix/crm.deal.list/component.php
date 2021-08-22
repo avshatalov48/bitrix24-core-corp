@@ -401,7 +401,7 @@ if($fromAnalytics)
 	else
 	{
 		$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
-		$boardId = preg_replace('/[^\w-_]/', '', $boardId);
+		$boardId = preg_replace('/[^\w\-_]/', '', $boardId);
 		$externalFilterId = 'report_board_' . $boardId . '_filter';
 	}
 }
@@ -483,26 +483,32 @@ if (!$bInternal && $arParams['IS_RECURRING'] !== 'Y')
 {
 	$currentUserID = $arResult['CURRENT_USER_ID'];
 	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
-	$arResult['FILTER_PRESETS'] = array(
-		'filter_in_work' => array(
+	$arResult['FILTER_PRESETS'] = [
+		'filter_in_work' => [
 			'name' => GetMessage('CRM_PRESET_IN_WORK'),
 			'default' => true,
-			'fields' => array('STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::PROCESS))
-		),
-		'filter_my' => array(
+			'fields' => ['STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::PROCESS]]
+		],
+		'filter_my' => [
 			'name' => GetMessage('CRM_PRESET_MY'),
 			'disallow_for_all' => true,
-			'fields' => array(
+			'fields' => [
 				'ASSIGNED_BY_ID_name' => $currentUserName,
 				'ASSIGNED_BY_ID' => $currentUserID,
-				'STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::PROCESS)
-			)
-		),
-		'filter_closed' => array(
+				'STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::PROCESS]
+			]
+		],
+		'filter_closed' => [
 			'name' => GetMessage('CRM_PRESET_WON'),
-			'fields' => array('STAGE_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE))
-		),
-	);
+			'fields' => ['STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE]]
+		],
+		'filter_payed' => [
+			'name' => GetMessage('CRM_PRESET_PAYED'),
+			'fields' => [
+				'ORDER_STAGE' => [Crm\Order\OrderStage::PAID]
+			]
+		],
+	];
 }
 //endregion
 
@@ -1065,34 +1071,7 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 }
 //endregion
 
-if (isset($arFilter['ORDER_SOURCE']))
-{
-	$orderSourceQuery = new Main\Entity\Query(Crm\DealTable::getEntity());
-	$orderSourceQuery->setSelect(['ID']);
-	$orderSourceQuery->setFilter([
-		'ORDER_BINDING.ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $arFilter['ORDER_SOURCE'],
-	]);
-
-	$orderSourceSql = $orderSourceQuery->getQuery();
-
-	$arFilter['__CONDITIONS'][] = [
-		'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$orderSourceSql})",
-	];
-
-	unset($orderSourceQuery, $orderSourceSql, $arFilter['ORDER_SOURCE']);
-}
-
-if (isset($arFilter['DELIVERY_STAGE']) && is_array($arFilter['DELIVERY_STAGE']))
-{
-	$deliveryStageFilter = new Crm\Deal\DeliveryStageFilter($arFilter['DELIVERY_STAGE']);
-	if ($sql = $deliveryStageFilter->getDealIdQuery())
-	{
-		$arFilter['__CONDITIONS'][] = [
-			'SQL' => CCrmDeal::TABLE_ALIAS.".ID IN ({$sql})",
-		];
-	}
-	unset($arFilter['DELIVERY_STAGE']);
-}
+$arFilter = Crm\Deal\OrderFilter::prepareFilter($arFilter);
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 
@@ -1311,6 +1290,10 @@ if($actionData['ACTIVE'])
 						}
 						else
 						{
+							$arResult['ERRORS'][] = [
+								'TITLE' => Main\Text\HtmlFilter::encode($arUpdateData['TITLE'] ?? $ID),
+								'TEXT' => Main\Text\HtmlFilter::encode(strip_tags($CCrmDeal->LAST_ERROR)),
+							];
 							$DB->Rollback();
 						}
 					}

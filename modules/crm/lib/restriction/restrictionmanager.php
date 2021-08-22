@@ -55,6 +55,11 @@ class RestrictionManager
 	private static $callTrackerRestriction;
 	/** @var DynamicTypesLimit  */
 	private static $dynamicTypesLimit;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $leadsRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $quotesRestriction;
+
 	/**
 	* @return SqlRestriction
 	*/
@@ -752,4 +757,47 @@ class RestrictionManager
 
 		return static::$dynamicTypesLimit;
 	}
+
+	public static function getLeadsRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$leadsRestriction === null)
+		{
+			self::$leadsRestriction = new Bitrix24AccessRestriction(
+				'crm_leads',
+				false,
+				null,
+				['ID' => 'limit_crm_leads']
+			);
+			if(!self::$leadsRestriction->load())
+			{
+				self::$leadsRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_leads')
+				);
+			}
+		}
+
+		return self::$leadsRestriction;
+	}
+
+	public static function getQuotesRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$quotesRestriction === null)
+		{
+			self::$quotesRestriction = new Bitrix24AccessRestriction(
+				'crm_quotes',
+				false,
+				null,
+				['ID' => 'limit_crm_quotes']
+			);
+			if(!self::$quotesRestriction->load())
+			{
+				self::$quotesRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_quotes')
+				);
+			}
+		}
+
+		return self::$quotesRestriction;
+	}
+
 }

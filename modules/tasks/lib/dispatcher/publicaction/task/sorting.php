@@ -43,7 +43,6 @@ final class Sorting extends RestrictedAction
 		$newGroupId = isset($data["newGroupId"]) ? intval($data["newGroupId"]) : null;
 		$newParentId = isset($data["newParentId"]) ? intval($data["newParentId"]) : null;
 		$currentGroupId = isset($data["currentGroupId"]) ? intval($data["currentGroupId"]) : 0;
-		$userId = Tasks\Util\User::getId();
 
 		if ($sourceId === $targetId || $sourceId < 1)
 		{
@@ -52,7 +51,7 @@ final class Sorting extends RestrictedAction
 
 		try
 		{
-			$sourceTask = new \CTaskItem($sourceId, $userId);
+			$sourceTask = new \CTaskItem($sourceId, $this->userId);
 			if (!$sourceTask->checkCanRead())
 			{
 				$this->errors->add("SOURCE_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_SOURCE_TASK"));
@@ -106,7 +105,7 @@ final class Sorting extends RestrictedAction
 
 		try
 		{
-			$targetTask = new \CTaskItem($targetId, $userId);
+			$targetTask = new \CTaskItem($targetId, $this->userId);
 			if (!$targetTask->checkCanRead())
 			{
 				$this->errors->add("TARGET_TASK_NOT_FOUND", Loc::getMessage("TASKS_SORTING_WRONG_TARGET_TASK"));
@@ -119,7 +118,7 @@ final class Sorting extends RestrictedAction
 			return false;
 		}
 
-		SortingTable::setSorting($userId, $currentGroupId, $sourceId, $targetId, $before);
+		SortingTable::setSorting($this->userId, $currentGroupId, $sourceId, $targetId, $before);
 		return array();
 	}
 }

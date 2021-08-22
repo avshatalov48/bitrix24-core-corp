@@ -566,7 +566,7 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 
 	protected function modifyInputSettingsByType(&$propertySettings)
 	{
-		if ($this->property['MULTIPLE'] === 'Y')
+		if ($this->property['MULTIPLE'] === 'Y' || $this->property['TYPE'] === 'DATE')
 		{
 			$propertySettings['IS_FILTERED']['DISABLED'] = 'Y';
 		}
@@ -736,8 +736,6 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 		{
 			$this->validateVariants();
 		}
-
-		$this->validateRelations();
 
 		return !$this->hasErrors();
 	}
@@ -932,38 +930,6 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 						unset($this->propertySettings['DEFAULT_VALUE']['OPTIONS'][$row['VALUE']]);
 					}
 				}
-			}
-		}
-	}
-
-	protected function validateRelations()
-	{
-		$hasRelations = false;
-
-		if (!empty($this->property['ID']))
-		{
-			$result = \CSaleOrderProps::GetOrderPropsRelations(['PROPERTY_ID' => $this->property['ID']]);
-			if ($row = $result->Fetch())
-			{
-				$hasRelations = true;
-			}
-		}
-
-		if ($hasRelations)
-		{
-			if ($this->property['IS_LOCATION4TAX'] === 'Y')
-			{
-				$this->errors[] = Loc::getMessage('ERROR_LOCATION4TAX_RELATION_NOT_ALLOWED');
-			}
-
-			if ($this->property['IS_EMAIL'] === 'Y')
-			{
-				$this->errors[] = Loc::getMessage('ERROR_EMAIL_RELATION_NOT_ALLOWED');
-			}
-
-			if ($this->property['IS_PROFILE_NAME'] === 'Y')
-			{
-				$this->errors[] = Loc::getMessage('ERROR_PROFILE_NAME_RELATION_NOT_ALLOWED');
 			}
 		}
 	}

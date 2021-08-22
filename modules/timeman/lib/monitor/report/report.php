@@ -4,6 +4,8 @@ namespace Bitrix\Timeman\Monitor\Report;
 use Bitrix\Main\Type\Date;
 use Bitrix\Timeman\Monitor\Group\Group;
 use Bitrix\Timeman\Monitor\History\History;
+use Bitrix\Timeman\Monitor\History\ReportComment;
+use Bitrix\Timeman\Monitor\History\UserChart;
 use Bitrix\Timeman\Monitor\Utils\Time;
 
 class Report
@@ -13,7 +15,8 @@ class Report
 	private $userId;
 	private $history;
 	private $report;
-	private $line;
+	private $timeline;
+	private $comment;
 
 	public function __construct(int $userId, Date $dateStart, Date $dateFinish)
 	{
@@ -22,6 +25,8 @@ class Report
 		$this->dateFinish = $dateFinish;
 
 		$this->history = History::getForPeriod($this->userId, $this->dateStart, $this->dateFinish);
+		$this->timeline = UserChart::getOnDate($this->userId, $this->dateStart);
+		$this->comment = ReportComment::getOnDate($this->userId, $this->dateStart);
 
 		if ($this->history)
 		{
@@ -35,8 +40,9 @@ class Report
 			'userId' => $this->userId,
 			'dateStart' => $this->dateStart,
 			'dateFinish' => $this->dateFinish,
-			'line' => $this->line,
-			'report' => $this->report
+			'timeline' => $this->timeline,
+			'report' => $this->report,
+			'comment' => $this->comment,
 		];
 	}
 

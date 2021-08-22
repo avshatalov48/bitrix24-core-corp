@@ -89,7 +89,7 @@ class ItemTarget extends BaseTarget
 
 	public function getEntityStatuses()
 	{
-		$categoryId = $this->factory->isCategoriesEnabled() ? $this->getEntity()->getCategoryId() : 0;
+		$categoryId = $this->factory->isCategoriesSupported() ? $this->getEntity()->getCategoryId() : 0;
 		return array_keys($this->getStatusInfos($categoryId));
 	}
 

@@ -260,7 +260,11 @@ class UserEventProcessor
 		}
 
 		$members = array_keys($members);
-		$members[] = $readAll;
+
+		if ($readAll)
+		{
+			$members[] = $readAll;
+		}
 
 		return $members;
 	}

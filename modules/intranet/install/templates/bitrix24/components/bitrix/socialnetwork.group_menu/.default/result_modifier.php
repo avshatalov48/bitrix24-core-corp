@@ -1,6 +1,6 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true){
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
 	die();
 }
 
@@ -60,15 +60,19 @@ if ($arResult['Group']['PROJECT'] === 'Y')
 	];
 }
 
-if (!\CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["Group"]["ID"], 'tasks'))
-{
-	unset($sampleKeysList['tasks']);
-}
-
-if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet'))
-{
-	$arResult['CanView']['blog'] = false;
-}
+$sampleKeysList = array_filter($sampleKeysList, static function($key) use ($arResult) {
+	return (
+		(
+			$key === 'general'
+			&& array_key_exists('blog', $arResult['CanView'])
+			&& $arResult['CanView']['blog']
+		)
+		|| (
+			array_key_exists($key, $arResult['CanView'])
+			&& $arResult['CanView'][$key]
+		)
+	);
+}, ARRAY_FILTER_USE_KEY);
 
 reset($sampleKeysList);
 $firstKeyDefault = key($sampleKeysList);
@@ -150,15 +154,11 @@ if ($arParams['PAGE_ID'] === 'group')
 			}
 		}
 	}
-/*
-	elseif (
-		$firstKeyDefault !== 'general'
-		&& $arResult['CanView'][$firstKeyDefault]
-	)
+	elseif (!$arResult['CanView']['blog'])
 	{
 		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
 	}
-*/
+
 	if ($redirectUrl)
 	{
 		if ($arResult['inIframe'])
@@ -242,11 +242,7 @@ $arResult["Urls"]["Subscribe"] = CComponentEngine::MakePathFromTemplate($arParam
 $arResult["Urls"]["GroupsList"] = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupSEFUrl();
 $arResult["Urls"]["Copy"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_COPY"], array("group_id" => $arResult["Group"]["ID"]));
 
-$arResult["CanView"]["chat"] = (
-	array_key_exists("chat", $arResult["ActiveFeatures"])
-	&& in_array($arResult["CurrentUserPerms"]["UserRole"], UserToGroupTable::getRolesMember())
-);
-$arResult["CanView"]["general"] = true;
+$arResult['CanView']['general'] = (CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $arResult['Group']['ID'], 'blog'));
 
 $arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && $arResult["ActiveFeatures"]["chat"] <> '') ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
 $arResult["OnClicks"] = array(

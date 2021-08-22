@@ -13,6 +13,7 @@ use Bitrix\Crm\Kanban\SortTable;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -145,7 +146,9 @@ class QuoteTable extends DataManager
 
 			(new BooleanField('OPENED'))
 				->configureStorageValues('N', 'Y')
-				->configureDefaultValue('N')
+				->configureDefaultValue(static function() {
+					return QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+				})
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPENED')),
 
 			(new IntegerField('LEAD_ID'))
@@ -201,6 +204,11 @@ class QuoteTable extends DataManager
 				->configureScale(2)
 				->configureDefaultValue(0.00)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY')),
+
+			(new BooleanField('IS_MANUAL_OPPORTUNITY'))
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue('N')
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY')),
 
 			(new DecimalField('TAX_VALUE'))
 				->configurePrecision(18)
@@ -281,6 +289,7 @@ class QuoteTable extends DataManager
 				->addSaveDataModifier([static::class, 'normalizeStorageElementIds']),
 
 			(new StringField('LOCATION_ID'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
 				->configureSize(100),
 
 			(new IntegerField('WEBFORM_ID')),

@@ -59,6 +59,10 @@ const Dropdown = {
 					this.observers.move.toggle(val, this.$refs.header);
 				}, 0);
 			}
+			if (this.$root.flags)
+			{
+				this.$root.flags.hideEars = val;
+			}
 		}
 	},
 	methods: {

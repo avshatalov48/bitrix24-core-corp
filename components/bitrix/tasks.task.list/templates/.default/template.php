@@ -1,8 +1,11 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
@@ -14,10 +17,12 @@ CJSCore::Init("tasks_integration_socialnetwork");
 
 global $APPLICATION;
 
+Asset::getInstance()->addJs("/bitrix/js/tasks/task-iframe-popup.js");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 Extension::load([
 	'ui.counter',
+	'ui.entity-selector',
 	'ui.icons.b24',
 	'ui.label',
 	'ui.tour',
@@ -33,6 +38,14 @@ if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
 		array("HIDE_ICONS" => "Y")
 	);
 }
+
+$APPLICATION->IncludeComponent(
+	"bitrix:tasks.iframe.popup",
+	".default",
+	[],
+	null,
+	["HIDE_ICONS" => "Y"]
+);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
@@ -180,10 +193,10 @@ $APPLICATION->IncludeComponent(
 		"AJAX_OPTION_HISTORY" => "N",
 
 		"ALLOW_COLUMNS_SORT"      => true,
-		"ALLOW_ROWS_SORT"         => $arResult['CAN']['SORT'] || $arParams['SCRUM_BACKLOG'] == 'Y',
+		"ALLOW_ROWS_SORT"         => $arResult['CAN']['SORT'],
 		"ALLOW_COLUMNS_RESIZE"    => true,
 		"ALLOW_HORIZONTAL_SCROLL" => true,
-		"ALLOW_SORT"              => $arParams['SCRUM_BACKLOG'] != 'Y',
+		"ALLOW_SORT"              => true,
 		"ALLOW_PIN_HEADER"        => true,
 		'ALLOW_CONTEXT_MENU'      => true,
 		"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
@@ -216,15 +229,6 @@ $APPLICATION->IncludeComponent(
 	$component,
 	array('HIDE_ICONS' => 'Y')
 );
-
-$taskPath = CComponentEngine::MakePathFromTemplate(
-	($arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']),
-	[
-		'user_id' => $arResult['USER_ID'],
-		'group_id' => $arParams['GROUP_ID'],
-		'action' => 'view',
-	]
-);
 ?>
 
 <script>
@@ -232,8 +236,6 @@ $taskPath = CComponentEngine::MakePathFromTemplate(
 		function() {
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
-			BX.Tasks.GridActions.taskPath = '<?= \CUtil::JSEscape($taskPath) ?>';
-			BX.Tasks.GridActions.groupId = '<?= (int)$arParams['GROUP_ID'] ?>';
 
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
@@ -249,7 +251,9 @@ $taskPath = CComponentEngine::MakePathFromTemplate(
 
 				TASKS_TASK_CONFIRM_START_TIMER_TITLE: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER_TITLE')?>',
 				TASKS_TASK_CONFIRM_START_TIMER: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER')?>',
-				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
+				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>',
+
+				TASKS_LIST_ADD_TAG_FOOTER_LABEL: '<?= GetMessageJS('TASKS_LIST_ADD_TAG_FOOTER_LABEL') ?>'
 			});
 
 			BX.Tasks.GridInstance = new BX.Tasks.Grid(<?=Json::encode([

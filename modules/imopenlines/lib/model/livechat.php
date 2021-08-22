@@ -34,7 +34,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Livechat_Query query()
+ * @method static EO_Livechat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Livechat_Result getById($id)
+ * @method static EO_Livechat_Result getList(array $parameters = array())
+ * @method static EO_Livechat_Entity getEntity()
+ * @method static \Bitrix\Imopenlines\Model\EO_Livechat createObject($setDefaultValues = true)
+ * @method static \Bitrix\Imopenlines\Model\EO_Livechat_Collection createCollection()
+ * @method static \Bitrix\Imopenlines\Model\EO_Livechat wakeUpObject($row)
+ * @method static \Bitrix\Imopenlines\Model\EO_Livechat_Collection wakeUpCollection($rows)
+ */
 
 class LivechatTable extends DataManager
 {

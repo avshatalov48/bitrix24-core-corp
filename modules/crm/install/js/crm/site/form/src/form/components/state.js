@@ -8,7 +8,6 @@ const StateBlock = {
 	},
 	mounted()
 	{
-		console.log(this.isSmallHeight, this.$el.parentElement.offsetHeight);
 		this.isSmallHeight = this.$el.parentElement.offsetHeight >= 1000;
 	},
 	template: `

@@ -26,6 +26,7 @@
 		this.context = BX(params.containerId);
 		this.componentName = params.componentName;
 		this.signedParameters = params.signedParameters;
+		this.featureCode = params.featureCode;
 		this.mess = params.mess || {};
 		this.typeId = params.typeId;
 
@@ -50,6 +51,11 @@
 
 		this.itemDialogBtn = BX('item-add');
 		BX.bind(this.itemDialogBtn, 'click', this.showAddItemDialog.bind(this));
+
+		if (this.featureCode)
+		{
+			BX.UI.InfoHelper.show(this.featureCode);
+		}
 	};
 	Editor.prototype.showSelectorPopup = function (selector)
 	{
@@ -370,6 +376,12 @@
 		start: function ()
 		{
 			this.clear();
+
+			if (this.manager.featureCode)
+			{
+				BX.UI.InfoHelper.show(this.manager.featureCode);
+				return;
+			}
 
 			BX.removeClass(this.nodeFrom, 'ui-ctl-danger');
 			var numberFrom = this.nodeFromInput.value;

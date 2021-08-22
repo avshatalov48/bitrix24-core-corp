@@ -19,6 +19,17 @@ use Bitrix\Crm\Settings\LeadSettings;
 
 Extension::load(["ui.icons", "ui.hint", "crm.report.tracking.ad.report"]);
 
+
+if ($arResult['FEATURE_CODE'])
+{
+	?>
+	<div class="crm-report-chart-grid-not-available">
+		<div><?=Loc::getMessage('CRM_REPORT_VC_W_C_CHART_GRID_NOT_AVAILABLE')?></div>
+	</div>
+	<?php
+	return;
+}
+
 $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC'] ? '-traffic' : '');
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-report-chart-grid-wrapper">

@@ -2,8 +2,18 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_popup,pull_client,main_core_events) {
 	'use strict';
 
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ", "\" onclick=\"", "\">", "</button>"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button\tclass=\"control-btn ", "\">\n\t\t\t\t<span class=\"control-btn-text\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<span class=\"control-btn-arrow\" onclick=\"", "\"></span>\n\t\t\t</button>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-btn-split ", "\">\n\t\t\t\t\t\t<button class=\"ui-btn-main\" onclick=\"", "\">", "</button>\n\t\t\t\t\t\t<button class=\"ui-btn-menu\" onclick=\"", "\"></button> \n\t\t\t\t\t</div>\n\t\t\t\t"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -38,6 +48,8 @@ this.BX = this.BX || {};
 	        this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
 	      } else if (this.entityType === 'calendar_event') {
 	        this.items = ['chat', 'videocall', 'blog_post', 'task'];
+	      } else if (this.entityType === 'workgroup') {
+	        this.items = ['chat', 'videocall'];
 	      } else {
 	        this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
 	      }
@@ -45,7 +57,7 @@ this.BX = this.BX || {};
 
 	    this.contextBx = window.top.BX || window.BX;
 	    this.sliderId = "controlButton:".concat(this.entityType + this.entityId).concat(Math.floor(Math.random() * 1000));
-	    this.isVideoCallEnabled = this.contextBx.Call.Util.isWebRTCSupported();
+	    this.isVideoCallEnabled = main_core.Reflection.getClass("".concat(this.contextBx, ".Call.Util")) ? this.contextBx.Call.Util.isWebRTCSupported() : true;
 	    this.chatLockCounter = 0;
 
 	    if (!main_core.Type.isPlainObject(analyticsLabelParam)) {
@@ -55,6 +67,7 @@ this.BX = this.BX || {};
 	    this.analyticsLabel = babelHelpers.objectSpread({
 	      entity: this.entityType
 	    }, analyticsLabelParam);
+	    this.buttonClassName = params.buttonClassName || '';
 	    this.renderButton();
 	    this.subscribeEvents();
 	  }
@@ -117,18 +130,21 @@ this.BX = this.BX || {};
 	    key: "renderButton",
 	    value: function renderButton() {
 	      var isChatButton = !this.isVideoCallEnabled || this.mainItem === 'chat';
-	      this.button = main_core.Tag.render(_templateObject(), isChatButton ? 'control-btn-text-chat' : 'control-btn-text-video', isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this), isChatButton ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME'), this.showMenu.bind(this));
+	      var onClickValue = isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this);
+	      var buttonTitle = isChatButton ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME');
+	      var buttonClass = "".concat(isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue', " intranet-control-btn ui-btn-light-border ui-btn-icon-inline ").concat(this.buttonClassName);
+	      this.button = this.items.length > 1 ? main_core.Tag.render(_templateObject(), buttonClass, onClickValue, buttonTitle, this.showMenu.bind(this)) : main_core.Tag.render(_templateObject2(), buttonClass, onClickValue, buttonTitle);
 	      main_core.Dom.append(this.button, this.container);
 	    }
 	  }, {
 	    key: "showLoader",
 	    value: function showLoader() {
-	      main_core.Dom.addClass(this.button, 'control-btn--loader');
+	      main_core.Dom.addClass(this.button, 'ui-btn-wait');
 	    }
 	  }, {
 	    key: "hideLoader",
 	    value: function hideLoader() {
-	      main_core.Dom.removeClass(this.button, 'control-btn--loader');
+	      main_core.Dom.removeClass(this.button, 'ui-btn-wait');
 	    }
 	  }, {
 	    key: "getAvailableItems",
@@ -249,6 +265,14 @@ this.BX = this.BX || {};
 	    value: function openChat() {
 	      var _this3 = this;
 
+	      if (this.entityType === 'workgroup') {
+	        if (top.window.BXIM) {
+	          top.BXIM.openMessenger('sg' + this.entityId);
+	        }
+
+	        return;
+	      }
+
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getChat', {
 	        data: {
@@ -281,6 +305,14 @@ this.BX = this.BX || {};
 	    key: "startVideoCall",
 	    value: function startVideoCall() {
 	      var _this4 = this;
+
+	      if (this.entityType === 'workgroup') {
+	        if (top.window.BXIM) {
+	          top.BXIM.callTo('sg' + this.entityId);
+	        }
+
+	        return;
+	      }
 
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', {
@@ -332,12 +364,17 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: this.analyticsLabel
 	      }).then(function (response) {
-	        var users = response.data.userIds.map(function (userId) {
-	          return {
-	            id: parseInt(userId),
-	            entityId: 'user'
-	          };
-	        });
+	        var users = [];
+
+	        if (main_core.Type.isArrayLike(response.data.userIds)) {
+	          users = response.data.userIds.map(function (userId) {
+	            return {
+	              id: parseInt(userId),
+	              entityId: 'user'
+	            };
+	          });
+	        }
+
 	        new (window.top.BX || window.BX).Calendar.SliderLoader(0, {
 	          sliderId: _this5.sliderId,
 	          participantsEntityList: users,
@@ -421,7 +458,7 @@ this.BX = this.BX || {};
 	          onAfterPopupShow: function onAfterPopupShow() {
 	            setTimeout(function () {
 	              this.close();
-	            }.bind(this), 4000);
+	            }.bind(this), 5000);
 	          }
 	        }
 	      }).show();

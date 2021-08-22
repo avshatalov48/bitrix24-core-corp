@@ -71,17 +71,17 @@ class CVoxImplantMain
 		}
 		$phone = $phoneNormalize;
 
-		$hrPhoto = Array();
+		$hrPhoto = [];
 
 		$openChat = true;
-		$result = VI\PhoneTable::getList(Array(
-			'select' => Array('USER_ID', 'PHONE_MNEMONIC'),
-			'filter' => Array(
+		$result = VI\PhoneTable::getList([
+			'select' => ['USER_ID', 'PHONE_MNEMONIC'],
+			'filter' => [
 				'=PHONE_NUMBER' => $phone,
 				'=USER.ACTIVE' => 'Y',
-				'!=USER.EXTERNAL_AUTH_ID' => array("bot", "email", "controller", "replica", "imconnector")
-			)
-		));
+				'=USER.IS_REAL_USER' => 'Y'
+			]
+		]);
 
 		$userId = false;
 		while ($row = $result->fetch())
@@ -395,6 +395,7 @@ class CVoxImplantMain
 				'showCrmCard' => $params['SHOW_CRM_CARD'],
 				'crmEntityType' => $params['CRM_ENTITY_TYPE'],
 				'crmEntityId' => $params['CRM_ENTITY_ID'],
+				'crmBindings' => $params['CRM_BINDINGS'],
 				'crmActivityId' => $params['CRM_ACTIVITY_ID'],
 				'crmActivityEditUrl' => $params['CRM_ACTIVITY_EDIT_URL'],
 				'config' => $params['CONFIG'],
@@ -901,5 +902,20 @@ class CVoxImplantMain
 		{
 			return $amount . ' ' . $currency;
 		}
+	}
+
+	/**
+	 * Returns designated media server address (if found in portal config)
+	 *
+	 * @return string
+	 */
+	public static function getMediaServer(): string
+	{
+		if (defined('VOXIMPLANT_MEDIA_SERVER'))
+		{
+			return VOXIMPLANT_MEDIA_SERVER;
+		}
+
+		return \Bitrix\Main\Config\Option::get('voximplant', 'media_server', '');
 	}
 }

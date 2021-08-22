@@ -19,7 +19,20 @@ use Bitrix\Main\ORM\Query\Join;
  * </ul>
  *
  * @package Bitrix\Location
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Hierarchy_Query query()
+ * @method static EO_Hierarchy_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Hierarchy_Result getById($id)
+ * @method static EO_Hierarchy_Result getList(array $parameters = array())
+ * @method static EO_Hierarchy_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_Hierarchy createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_Hierarchy_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_Hierarchy wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_Hierarchy_Collection wakeUpCollection($rows)
+ */
 
 class HierarchyTable extends Main\Entity\DataManager
 {

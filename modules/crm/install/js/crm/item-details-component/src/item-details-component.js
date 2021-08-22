@@ -416,6 +416,21 @@ export class ItemDetailsComponent
 		Pull.extendWatch(this.pullTag);
 	}
 
+	getEditor(): ?BX.Crm.EntityEditor
+	{
+		if (BX.Crm.EntityEditor)
+		{
+			if (this.editorGuid)
+			{
+				return BX.Crm.EntityEditor.get(this.editorGuid);
+			}
+
+			return BX.Crm.EntityEditor.getDefault();
+		}
+
+		return null;
+	}
+
 	bindPartialEntityEditorEvents()
 	{
 		EventEmitter.subscribe('Crm.PartialEditorDialog.Close', this.handleClosePartialEntityEditor);
@@ -712,7 +727,7 @@ export class ItemDetailsComponent
 
 	reloadPageIfNotChanged()
 	{
-		const editor = BX.Crm.EntityEditor.getDefault();
+		const editor = this.getEditor();
 		if (editor)
 		{
 			if(editor.isChanged())

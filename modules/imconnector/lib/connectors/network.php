@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Im\User;
 
 use Bitrix\ImConnector\Error;
@@ -21,7 +21,8 @@ class Network extends Base
 	protected const MODULE_ID_IMOPENLINES = 'imopenlines';
 	protected const EXTERNAL_AUTH_ID = 'imconnector';
 
-	//Input
+	//region Input
+
 	/**
 	 * @param $message
 	 * @param $line
@@ -42,7 +43,7 @@ class Network extends Base
 			));
 		}
 
-		if($message['MESSAGE_TYPE'] !== 'P')
+		if ($message['MESSAGE_TYPE'] !== 'P')
 		{
 			$result->addError(new Error(
 				'Invalid message type',
@@ -52,9 +53,9 @@ class Network extends Base
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			$userId = self::getUserId($message['USER']);
+			$userId = $this->getUserId($message['USER']);
 
 			if (empty($userId))
 			{
@@ -67,7 +68,7 @@ class Network extends Base
 			}
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$messageData = [
 				'id' => $message['MESSAGE_ID'],
@@ -249,34 +250,19 @@ class Network extends Base
 	 */
 	public function processingInputUpdateMessage($message, $line): Result
 	{
-		$result = new Result();
+		$result = $this->processingInputBase($message, $line);
 
-		$userId = self::getUserId($message['USER']);
-		if (empty($userId))
+		if ($result->isSuccess())
 		{
-			$result->addError(new Error(
-				'Failed to create or update user',
-				'ERROR_IMCONNECTOR_FAILED_USER',
-				__METHOD__,
-				$message
-			));
-		}
+			$resultData = $result->getResult();
 
-		if($result->isSuccess())
-		{
-			$messageData = [
+			$resultData['message'] = [
 				'id' => $message['MESSAGE_ID'],
 				'date' => '',
 				'text' => $message['MESSAGE_TEXT']
 			];
 
-			$result->setResult([
-				'user' => $userId,
-				'chat' => [
-					'id' => $message['GUID']
-				],
-				'message' => $messageData
-			]);
+			$result->setResult($resultData);
 		}
 
 		return $result;
@@ -289,9 +275,42 @@ class Network extends Base
 	 */
 	public function processingInputDelMessage($message, $line): Result
 	{
-		$result = new Result();
+		$result = $this->processingInputBase($message, $line);
 
-		$userId = self::getUserId($message['USER']);
+		if ($result->isSuccess())
+		{
+			$resultData = $result->getResult();
+
+			$resultData['message'] = [
+				'id' => $message['MESSAGE_ID'],
+			];
+
+			$result->setResult($resultData);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $message
+	 * @param $line
+	 * @return Result
+	 */
+	public function processingInputTypingStatus($message, $line): Result
+	{
+		return $this->processingInputBase($message, $line);
+	}
+
+	/**
+	 * @param $message
+	 * @param $line
+	 * @return Result
+	 */
+	protected function processingInputBase($message, $line): Result
+	{
+		$result = new Result();
+		$userId = $this->getUserId($message['USER']);
+
 		if (empty($userId))
 		{
 			$result->addError(new Error(
@@ -302,7 +321,7 @@ class Network extends Base
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result->setResult([
 				'user' => $userId,
@@ -316,39 +335,140 @@ class Network extends Base
 	}
 
 	/**
-	 * @param $message
+	 * @param $params
 	 * @param $line
 	 * @return Result
 	 */
-	public function processingInputTypingStatus($message, $line): Result
+	public function processingInputCommandKeyboard($params, $line): Result
 	{
 		$result = new Result();
+		$userId = 0;
 
-		$userId = self::getUserId($message['USER']);
-		if (empty($userId))
+		if (
+			!isset($params['USER'])
+			&& $result->isSuccess()
+		)
 		{
 			$result->addError(new Error(
-				'Failed to create or update user',
-				'ERROR_IMCONNECTOR_FAILED_USER',
+				'User data not transmitted',
+				'ERROR_IMCONNECTOR_NOT_TRANSMITTED_USER_DATA',
 				__METHOD__,
-				$message
+				$params
 			));
 		}
+
 		if ($result->isSuccess())
 		{
-			$result->setResult([
-				'user' => $userId,
-				'chat' => [
-					'id' => $message['GUID']
-				]
-			]);
+			$userId = $this->getUserId($params['USER']);
+
+			if (empty($userId))
+			{
+				$result->addError(new Error(
+					'Failed to create or update user',
+					'ERROR_IMCONNECTOR_FAILED_USER',
+					__METHOD__,
+					$params
+				));
+			}
 		}
+
+		if ($result->isSuccess())
+		{
+			$interactiveMessage = InteractiveMessage\Input::init('network');
+			$resultProcessing = $interactiveMessage->processingCommandKeyboard($params['COMMAND'], $params['COMMAND_PARAMS']);
+
+			if (!$resultProcessing->isSuccess())
+			{
+				$result->addErrors($resultProcessing->getErrors());
+			}
+		}
+
+		$result->setResult([
+			'PARAMS' => $params,
+			'USER_ID' => $userId,
+		]);
 
 		return $result;
 	}
-	//END Input
 
-	//Output
+	/**
+	 * @param $params
+	 * @param $line
+	 * @return Result
+	 */
+	public function processingInputSessionVote($params, $line): Result
+	{
+		$result = new Result();
+
+		if (!Loader::includeModule('im'))
+		{
+			$result->addError(new Error(
+				'Failed to load the im module',
+				'ERROR_IMCONNECTOR_FAILED_LOAD_IM',
+				__METHOD__
+			));
+		}
+
+		if (!isset($params['USER']))
+		{
+			$result->addError(new Error(
+				'User data not transmitted',
+				'ERROR_IMCONNECTOR_NOT_TRANSMITTED_USER_DATA',
+				__METHOD__,
+				$params
+			));
+		}
+
+		if ($result->isSuccess())
+		{
+			$userId = $this->getUserId($params['USER']);
+
+			if (empty($userId))
+			{
+				$result->addError(new Error(
+					'Failed to create or update user',
+					'ERROR_IMCONNECTOR_FAILED_USER',
+					__METHOD__,
+					$params
+				));
+			}
+		}
+
+		$messageParams['IMOL_VOTE'] = 0;
+
+		if ($result->isSuccess())
+		{
+			$messageParamService = ServiceLocator::getInstance()->get('Im.Services.MessageParam');
+			if ($messageParamService instanceof \Bitrix\Im\Services\MessageParam)
+			{
+				$messageParams = $messageParamService->getParams((int)$params['MESSAGE_ID']);
+			}
+
+			if ($messageParams['IMOL_VOTE'] != $params['SESSION_ID'])
+			{
+				$result->addError(new Error(
+					'Voting for the wrong session',
+					'ERROR_IMCONNECTOR_VOTING_FOR_WRONG_SESSION',
+					__METHOD__,
+					$params
+				));
+			}
+		}
+
+		$result->setResult(
+			[
+				'PARAMS' => $params,
+				'MESSAGE_PARAMS' => $messageParams,
+			]
+		);
+
+		return $result;
+	}
+
+	//endregion
+
+	//region Output
+
 	/**
 	 * @param array $message
 	 * @param $line
@@ -380,12 +500,12 @@ class Network extends Base
 			'PARAMS' => $message['message']['params']
 		];
 
-		if($isActiveKeyboard === true)
+		if ($isActiveKeyboard === true)
 		{
 			$result['KEYBOARD'] = $message['message']['keyboardData'];
 		}
 
-		if(!empty($message['user']))
+		if (!empty($message['user']))
 		{
 			$result['USER'] = [
 				'ID' => $message['user']['ID'],
@@ -432,22 +552,32 @@ class Network extends Base
             "CONNECTOR_MID" => is_array($message['message']['id'])? $message['message']['id'][0]: $message['message']['id']
         ];
 	}
-	//END Output
 
-	//Tools
+	//endregion
+
+	//region Tools
+
 	/**
 	 * @param $params
 	 * @param bool $createUser
 	 * @return false|int|mixed|string
 	 */
-	public static function getUserId($params, bool $createUser = true)
+	public function getUserId($params, bool $createUser = true)
 	{
 		$userId = 0;
 
-		if(Loader::includeModule('im'))
+		if (Loader::includeModule('im'))
 		{
 			$orm = UserTable::getList([
-				'select' => ['ID', 'NAME', 'LAST_NAME', 'PERSONAL_GENDER', 'PERSONAL_PHOTO', 'PERSONAL_WWW', 'EMAIL'],
+				'select' => [
+					'ID',
+					'NAME',
+					'LAST_NAME',
+					'PERSONAL_GENDER',
+					'PERSONAL_PHOTO',
+					'PERSONAL_WWW',
+					'EMAIL'
+				],
 				'filter' => [
 					'=EXTERNAL_AUTH_ID' => self::EXTERNAL_AUTH_ID,
 					'=XML_ID' => 'network|' . $params['UUID']
@@ -455,39 +585,65 @@ class Network extends Base
 				'limit' => 1
 			]);
 
-			if($userFields = $orm->fetch())
+			if ($userFields = $orm->fetch())
 			{
 				$userId = $userFields['ID'];
 
 				$updateFields = [];
-				if (!empty($params['NAME']) && $params['NAME'] != $userFields['NAME'])
+				if (
+					!empty($params['NAME'])
+					&& $params['NAME'] !== $userFields['NAME']
+				)
 				{
 					$updateFields['NAME'] = $params['NAME'];
 				}
-				if (isset($params['LAST_NAME']) && $params['LAST_NAME'] != $userFields['LAST_NAME'])
+				if (
+					isset($params['LAST_NAME'])
+					&& $params['LAST_NAME'] !== $userFields['LAST_NAME']
+				)
 				{
 					$updateFields['LAST_NAME'] = $params['LAST_NAME'];
 				}
-				if (isset($params['PERSONAL_GENDER']) && $params['PERSONAL_GENDER'] != $userFields['PERSONAL_GENDER'])
+				if (
+					isset($params['PERSONAL_GENDER'])
+					&& $params['PERSONAL_GENDER'] !== $userFields['PERSONAL_GENDER']
+				)
 				{
 					$updateFields['PERSONAL_GENDER'] = $params['PERSONAL_GENDER'];
 				}
-				if (isset($params['PERSONAL_WWW']) && $params['PERSONAL_WWW'] != $userFields['PERSONAL_WWW'])
+				if (
+					isset($params['PERSONAL_WWW'])
+					&& $params['PERSONAL_WWW'] !== $userFields['PERSONAL_WWW']
+				)
 				{
 					$updateFields['PERSONAL_WWW'] = $params['PERSONAL_WWW'];
 				}
-				if (isset($params['EMAIL']) && $params['EMAIL'] != $userFields['EMAIL'])
+				if (
+					isset($params['EMAIL'])
+					&& $params['EMAIL'] !== $userFields['EMAIL']
+				)
 				{
 					$updateFields['EMAIL'] = $params['EMAIL'];
 				}
 
-				if (isset($params['PERSONAL_PHOTO']) && !empty($params['PERSONAL_PHOTO']))
+				if (
+					isset($params['PERSONAL_PHOTO'])
+					&& !empty($params['PERSONAL_PHOTO'])
+				)
 				{
 					$userAvatar = User::uploadAvatar($params['PERSONAL_PHOTO'], $userId);
-					if ($userAvatar && $userFields['PERSONAL_PHOTO'] != $userAvatar)
+					if (
+						$userAvatar
+						&& $userFields['PERSONAL_PHOTO'] != $userAvatar
+					)
 					{
 						$connection = Application::getConnection();
-						$connection->query('UPDATE b_user SET PERSONAL_PHOTO = ' . (int)$userAvatar . ' WHERE ID = ' . (int)$userId);
+						$connection->query(
+							'UPDATE b_user SET PERSONAL_PHOTO = '
+							. (int)$userAvatar
+							. ' WHERE ID = '
+							. (int)$userId
+						);
 						$updateFields['ID'] = $userId;
 					}
 				}
@@ -500,7 +656,7 @@ class Network extends Base
 			}
 			elseif ($createUser)
 			{
-				$userName = $params['NAME'] ?: Loc::getMessage('IMOL_NETWORK_GUEST_NAME');
+				$userName = $params['NAME'] ?: Loc::getMessage('IMCONNECTOR_CONNECTOR_NETWORK_GUEST_NAME');
 				$userLastName = $params['LAST_NAME'];
 				$userGender = $params['PERSONAL_GENDER'];
 				$userWww = $params['PERSONAL_WWW'];
@@ -531,27 +687,17 @@ class Network extends Base
 					$userAvatar = User::uploadAvatar($params['PERSONAL_PHOTO'], $userId);
 
 					$connection = Application::getConnection();
-					$connection->query('UPDATE b_user SET PERSONAL_PHOTO = ' . (int)$userAvatar . ' WHERE ID = ' . (int)$userId);
+					$connection->query(
+						'UPDATE b_user SET PERSONAL_PHOTO = '
+						. (int)$userAvatar
+						. ' WHERE ID = '
+						. (int)$userId
+					);
 				}
 			}
 		}
 
 		return $userId;
 	}
-
-	/**
-	 * @param $code
-	 * @return string
-	 */
-	public static function getPublicLink($code): string
-	{
-		$result = '';
-
-		if (Loader::includeModule('socialservices'))
-		{
-			$result = \CSocServBitrix24Net::NETWORK_URL . '/oauth/select/?preset=im&IM_DIALOG=networkLines' . $code;
-		}
-
-		return $result;
-	}
+	//endregion
 }

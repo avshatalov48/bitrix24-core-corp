@@ -6,6 +6,7 @@ $MESS["VI_DOCS_STATUS_IN_PROGRESS"] = "Документы на проверке"
 $MESS["VI_DOCS_STATUS_VERIFIED"] = "Документы подтверждены";
 $MESS["VI_DOCS_STATUS_DECLINED"] = "Документы отклонены";
 $MESS["VI_DOCS_STATUS_REJECTED"] = "Документы отклонены";
+$MESS["VI_DOCS_STATUS_PENDING"] = "Требуются дополнительные документы";
 $MESS["VI_DOCS_DOCUMENT_STATUS_ACCEPTED"] = "Подтверждено";
 $MESS["VI_DOCS_DOCUMENT_STATUS_IN_PROGRESS"] = "На проверке";
 $MESS["VI_DOCS_DOCUMENT_STATUS_INCOMPLETE_SET"] = "Не полный набор";

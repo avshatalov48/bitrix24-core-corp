@@ -56,11 +56,6 @@ class QuoteSettings
 	 */
 	public function isFactoryEnabled(): bool
 	{
-		if (\CCrmTax::isTaxMode())
-		{
-			return false;
-		}
-
 		return $this->isFactoryEnabled->get();
 	}
 

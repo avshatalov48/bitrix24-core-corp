@@ -5,8 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
@@ -18,7 +19,7 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 {
 	use Bitrix\Main\ErrorableImplementation;
 
-	private $connector = \Bitrix\ImConnector\Connectors\Notifications::CONNECTOR_ID;
+	private $connector = Library::ID_NOTIFICATIONS_CONNECTOR;
 
 	private $error = [];
 	private $pageId = 'page_unc';
@@ -183,7 +184,16 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 
 	public function getTermsOfServiceAction()
 	{
-		$result = \Bitrix\ImConnector\Connectors\Notifications::getAgreementTerms();
+		$result = false;
+
+		$serviceLocator = ServiceLocator::getInstance();
+		if($serviceLocator->has('ImConnector.toolsNotifications'))
+		{
+			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+			$toolsNotifications = $serviceLocator->get('ImConnector.toolsNotifications');
+			$result = $toolsNotifications->getAgreementTerms();
+
+		}
 		if (!$result)
 		{
 			$this->errorCollection[] = new Error('Could not load agreement text');
@@ -199,11 +209,18 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 		global $USER;
 		Loader::requireModule('notifications');
 
-		\Bitrix\ImConnector\Connectors\Notifications::addUserConsentAgreementTerms();
-		\Bitrix\Notifications\Account::saveTOSAgreement(
-			$USER->getId(),
-			new \Bitrix\Main\Type\DateTime(),
-			\Bitrix\Main\Context::getCurrent()->getServer()->getRemoteAddr()
-		);
+		$serviceLocator = ServiceLocator::getInstance();
+		if($serviceLocator->has('ImConnector.toolsNotifications'))
+		{
+			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+			$toolsNotifications = $serviceLocator->get('ImConnector.toolsNotifications');
+			$toolsNotifications->addUserConsentAgreementTerms();
+
+			\Bitrix\Notifications\Account::saveTOSAgreement(
+				$USER->getId(),
+				new \Bitrix\Main\Type\DateTime(),
+				\Bitrix\Main\Context::getCurrent()->getServer()->getRemoteAddr()
+			);
+		}
 	}
 }

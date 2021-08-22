@@ -166,6 +166,22 @@ class UtmUserTable extends Entity\DataManager
 
 }
 
+/**
+ * Class UtsIblockSectionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_UtsIblockSection_Query query()
+ * @method static EO_UtsIblockSection_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_UtsIblockSection_Result getById($id)
+ * @method static EO_UtsIblockSection_Result getList(array $parameters = array())
+ * @method static EO_UtsIblockSection_Entity getEntity()
+ * @method static \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\EO_UtsIblockSection createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\EO_UtsIblockSection_Collection createCollection()
+ * @method static \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\EO_UtsIblockSection wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\EO_UtsIblockSection_Collection wakeUpCollection($rows)
+ */
 class UtsIblockSectionTable extends Entity\DataManager
 {
 

@@ -2,7 +2,35 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,ui_dialogs_messagebox,ui_stageflow,crm_stageModel,main_loader,main_popup) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3;
+	function _templateObject3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pagetitle_sub\" class=\"pagetitle-sub\">\n\t\t\t\t\t\t<a href=\"#\" onclick=\"", "\">", "</a>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
+
+	  _templateObject3 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\">\n\t\t\t\t<span id=\"page_url_copy_btn\" class=\"crm-page-link-btn\"></span>\n\t\t\t</span>\n\t\t"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 	var BACKGROUND_COLOR = 'd3d7dc';
 	var ItemDetailsComponent = /*#__PURE__*/function () {
 	  function ItemDetailsComponent(params) {
@@ -177,10 +205,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initPageTitleButtons",
 	    value: function initPageTitleButtons() {
-	      var pageTitleButtons = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\">\n\t\t\t\t<span id=\"page_url_copy_btn\" class=\"crm-page-link-btn\"></span>\n\t\t\t</span>\n\t\t"])));
+	      var pageTitleButtons = main_core.Tag.render(_templateObject());
 
 	      if (this.isPageTitleEditable) {
-	        var editButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"])));
+	        var editButton = main_core.Tag.render(_templateObject2());
 	        main_core.Dom.prepend(editButton, pageTitleButtons);
 	      }
 
@@ -191,7 +219,7 @@ this.BX = this.BX || {};
 	        var currentCategory = this.getCurrentCategory();
 
 	        if (currentCategory) {
-	          var categoriesSelector = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pagetitle_sub\" class=\"pagetitle-sub\">\n\t\t\t\t\t\t<a href=\"#\" onclick=\"", "\">", "</a>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.onCategorySelectorClick.bind(this), currentCategory.text);
+	          var categoriesSelector = main_core.Tag.render(_templateObject3(), this.onCategorySelectorClick.bind(this), currentCategory.text);
 	          main_core.Dom.insertAfter(categoriesSelector, pageTitleButtons);
 	        }
 	      }
@@ -340,6 +368,19 @@ this.BX = this.BX || {};
 	        }
 	      });
 	      Pull.extendWatch(this.pullTag);
+	    }
+	  }, {
+	    key: "getEditor",
+	    value: function getEditor() {
+	      if (BX.Crm.EntityEditor) {
+	        if (this.editorGuid) {
+	          return BX.Crm.EntityEditor.get(this.editorGuid);
+	        }
+
+	        return BX.Crm.EntityEditor.getDefault();
+	      }
+
+	      return null;
 	    }
 	  }, {
 	    key: "bindPartialEntityEditorEvents",
@@ -639,7 +680,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "reloadPageIfNotChanged",
 	    value: function reloadPageIfNotChanged() {
-	      var editor = BX.Crm.EntityEditor.getDefault();
+	      var editor = this.getEditor();
 
 	      if (editor) {
 	        if (editor.isChanged()) {

@@ -47,3 +47,6 @@ $MESS['TASKS_SCRUM_SPRINT_COMPLETE_BUTTON'] = 'Завершить';
 $MESS['TASKS_SCRUM_SPRINT_CLOSE_BUTTON'] = 'Закрыть';
 $MESS['TASKS_SCRUM_SPRINT_GET_COMPLETED_ITEMS_ERROR'] = 'Произошла ошибка получения завершенных задач.';
 $MESS['TASKS_SCRUM_SPRINT_GET_DATA_ERROR'] = 'Произошла ошибка получения данных спринта.';
+$MESS['TASKS_SCRUM_TYPE_PRODUCT_NAME'] = 'Продуктовая задача';
+$MESS['TASKS_SCRUM_TYPE_TECHNICAL_NAME'] = 'Техническая задача';
+$MESS['TASKS_SCRUM_TITLE_BASE'] = 'Задачи в проекте';

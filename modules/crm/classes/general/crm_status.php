@@ -207,6 +207,32 @@ class CCrmStatus
 	}
 
 	/**
+	 * Returns types available for setting as a simple list in an entity details.
+	 *
+	 * @return array
+	 */
+	public static function getAllowedInnerConfigTypes(): array
+	{
+		static $result = null;
+
+		if ($result === null)
+		{
+			$result = [
+				'SOURCE',
+				'CONTACT_TYPE',
+				'COMPANY_TYPE',
+				'EMPLOYEES',
+				'INDUSTRY',
+				'DEAL_TYPE',
+				'HONORIFIC',
+				'EVENT_TYPE',
+			];
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @deprecated
 	 * @return array
 	 */

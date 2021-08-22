@@ -55,11 +55,13 @@ export default class PhotoService extends PhotoServiceBase
 				if(props.location.sourceCode !== this.#googleSource.sourceCode)
 				{
 					resolve([]);
+					return;
 				}
 
 				if(props.location.externalId.length <= 0)
 				{
 					resolve([]);
+					return;
 				}
 
 				this.#service.getDetails(

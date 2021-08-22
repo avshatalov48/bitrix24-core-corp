@@ -1,4 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -863,15 +869,14 @@ else
 					{
 						oMSL.InitDetail({
 							commentsType: 'log',
-							detailPageId: 'log_' + <?=$arEvent["EVENT"]["ID"]?>,
-							logId: <?=$arEvent["EVENT"]["ID"]?>,
-							entityXMLId: '<?=CUtil::JSEscape($entity_xml_id)?>',
-							bUseFollow: <?=($arParams["USE_FOLLOW"] == 'N' ? 'false' : 'true')?>,
-							bFollow: <?=($arParams["FOLLOW"] == 'N' ? 'false' : 'true')?>,
+							detailPageId: 'log_' + <?= $arEvent['EVENT']['ID'] ?>,
+							logId: <?= $arEvent['EVENT']['ID'] ?>,
+							entityXMLId: '<?= CUtil::JSEscape($entity_xml_id) ?>',
+							bFollow: <?= ($arParams['FOLLOW'] === 'N' ? 'false' : 'true') ?>,
 							entryParams: {
-								post_content_type_id: '<?=(!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : '')?>',
-								post_content_id: <?=(!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0)?>
-							}
+								post_content_type_id: '<?= (!empty($arResult['POST_CONTENT_TYPE_ID']) ? $arResult['POST_CONTENT_TYPE_ID'] : '') ?>',
+								post_content_id: <?= (!empty($arResult['POST_CONTENT_ID']) ? $arResult['POST_CONTENT_ID'] : 0) ?>,
+							},
 						});
 					});
 					<?
@@ -980,7 +985,7 @@ else
 							"URL" => $APPLICATION->GetCurPageParam("", array(
 								"sessid", "comment_post_id", "act", "post", "comment",
 								"decode", "ACTION", "ENTITY_TYPE_ID", "ENTITY_ID",
-								"empty_get_form", "empty_get_comments")),
+								"empty_get_comments")),
 							"FIELDS" => array(
 								"log_id" => $arParams["LOG_ID"]
 							)
@@ -1113,4 +1118,3 @@ if ($targetHtml <> '')
 	$APPLICATION->RestartBuffer();
 	echo $targetHtml;
 }
-?>

@@ -1088,6 +1088,7 @@ abstract class Entity
 	 * @param array $ids
 	 * @param bool $isIgnore
 	 * @param \CCrmPerms|null $permissions
+	 * @throws Exception
 	 */
 	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
 	{

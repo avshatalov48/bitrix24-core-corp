@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\InteractiveMessage;
 
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 
@@ -16,6 +17,7 @@ use Bitrix\ImOpenLines\Session;
 use Bitrix\ImOpenLines\AutomaticAction;
 use Bitrix\ImOpenLines\Model\SessionTable;
 
+use Bitrix\ImConnector;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Connector;
@@ -39,14 +41,14 @@ class Input
 	{
 		$class = __CLASS__;
 
-		if(
+		if (
 			!empty($idConnector) &&
 			Connector::isConnector($idConnector)
 		)
 		{
 			$idConnector = Connector::getConnectorRealId($idConnector);
 			$className = "Bitrix\\ImConnector\\InteractiveMessage\\Connectors\\" . $idConnector . "\\Input";
-			if(class_exists($className))
+			if (class_exists($className))
 			{
 				$class = $className;
 			}
@@ -98,7 +100,7 @@ class Input
 	{
 		$result = true;
 
-		if($this->isProcessing === true)
+		if ($this->isProcessing === true)
 		{
 			$result = false;
 		}
@@ -126,11 +128,13 @@ class Input
 	{
 		$result = new Result();
 
-		if(Loader::includeModule('imopenlines'))
+		if (Loader::includeModule('imopenlines'))
 		{
-			if(!empty($message))
+			if (!empty($message))
 			{
-				Im::addMessage([
+				/** @var \Bitrix\ImOpenLines\Services\Message $messenger */
+				$messenger = ServiceLocator::getInstance()->get('ImOpenLines.Services.Message');
+				$messenger->addMessage([
 					'TO_CHAT_ID' => $chatId,
 					'MESSAGE' => $message,
 					'SYSTEM' => 'Y',
@@ -145,10 +149,13 @@ class Input
 				]);
 			}
 
-			$chat = new Chat($chatId);
+			/** @var \Bitrix\ImOpenLines\Services\ChatDispatcher $chatDispatcher */
+			$chatDispatcher = ServiceLocator::getInstance()->get('ImOpenLines.Services.ChatDispatcher');
+			$chat = $chatDispatcher->getChat((int)$chatId);
+
 			$resultFinishChat = $chat->finish($userId, true);
 
-			if($resultFinishChat->isSuccess())
+			if ($resultFinishChat->isSuccess())
 			{
 				$result->setResult(true);
 			}
@@ -175,98 +182,25 @@ class Input
 	{
 		$result = new Result();
 
-		if(Loader::includeModule('imopenlines'))
+		if (Loader::includeModule('imopenlines'))
 		{
-			if(!empty($message))
+			if (!empty($message))
 			{
-				$chat = ChatTable::getById($chatId)->fetch();
-				if(!empty($chat))
+				/** @var \Bitrix\ImOpenLines\Services\ChatDispatcher $chatDispatcher */
+				$chatDispatcher = ServiceLocator::getInstance()->get('ImOpenLines.Services.ChatDispatcher');
+				$chat = $chatDispatcher->getChat((int)$chatId);
+
+				$resultChatOperation = $chat->continueSession($userId, $message);
+
+				if ($resultChatOperation->isSuccess())
 				{
-					$keyLock = Chat::PREFIX_KEY_LOCK_NEW_SESSION . $chat['ENTITY_ID'];
-					$iteration = 0;
-					$isAddMessage = false;
-					do
-					{
-						$iteration++;
-						if (
-							$iteration > ImOpenLines\Connector::LOCK_MAX_ITERATIONS
-							|| Tools\Lock::getInstance()->set($keyLock)
-						)
-						{
-							$session = new Session();
-							$resultLoadSession = $session->load([
-								'USER_CODE' => $chat['ENTITY_ID'],
-								'SKIP_CREATE' => 'Y'
-							]);
-							if ($resultLoadSession)
-							{
-								$messageId = Im::addMessage([
-									'TO_CHAT_ID' => $chatId,
-									'MESSAGE' => $message,
-									'SYSTEM' => 'Y',
-									'IMPORTANT_CONNECTOR' => 'Y',
-									'NO_SESSION_OL' => 'Y',
-									'PARAMS' => [
-										'CLASS' => 'bx-messenger-content-item-ol-output',
-										'IMOL_FORM' => 'offline',
-										'TYPE' => 'lines',
-										'COMPONENT_ID' => 'bx-imopenlines-message',
-									],
-								]);
-								if(!empty($messageId))
-								{
-									(new AutomaticAction($session))->automaticAddMessage($messageId);
-
-									$session->update([
-										'MESSAGE_COUNT' => true,
-										'DATE_LAST_MESSAGE' => new DateTime()
-									]);
-
-									$queueManager = Queue::initialization($session);
-									if($queueManager)
-									{
-										$queueManager->automaticActionAddMessage();
-									}
-
-									$result->setResult(true);
-								}
-								else
-								{
-									$result->addError(new Error(
-										'Failed to add message',
-										'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_ADD_MESSAGE',
-										__METHOD__
-									));
-								}
-							}
-							else
-							{
-								$result->addError(new Error(
-									'Failed to load session',
-									'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_SESSION',
-									__METHOD__
-								));
-							}
-
-							$isAddMessage = true;
-							Tools\Lock::getInstance()->delete($keyLock);
-						}
-						else
-						{
-							sleep($iteration);
-						}
-					}
-					while ($isAddMessage === false);
-
+					$result->setResult(true);
 				}
 				else
 				{
-					$result->addError(new Error(
-						'Failed to load chat',
-						'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CHAT',
-						__METHOD__
-					));
+					$result->addErrors($resultChatOperation->getErrors());
 				}
+
 			}
 		}
 		else
@@ -291,12 +225,15 @@ class Input
 	{
 		$result = new Result();
 
-		if(Loader::includeModule('imopenlines'))
+		if (Loader::includeModule('imopenlines'))
 		{
-			$chat = new Chat($chatId);
-			$resultSessionNew = $chat->startSessionAndCloseOldSession($userId, $message);
+			/** @var \Bitrix\ImOpenLines\Services\ChatDispatcher $chatDispatcher */
+			$chatDispatcher = ServiceLocator::getInstance()->get('ImOpenLines.Services.ChatDispatcher');
+			$chat = $chatDispatcher->getChat((int)$chatId);
 
-			if($resultSessionNew->isSuccess())
+			$resultSessionNew = $chat->restartSession($userId, $message);
+
+			if ($resultSessionNew->isSuccess())
 			{
 				$result->setResult(true);
 			}
@@ -307,7 +244,11 @@ class Input
 		}
 		else
 		{
-			$result->addError(new Error('Failed to load the open lines module', 'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_MODULES_IMOPENLINES', __METHOD__));
+			$result->addError(new Error(
+				'Failed to load the open lines module',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_MODULES_IMOPENLINES',
+				__METHOD__
+			));
 		}
 
 		return $result;
@@ -321,148 +262,166 @@ class Input
 	{
 		$result = new Result();
 
-		if(Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('imopenlines'))
 		{
-			$configTask = [];
+			return $result->addError(new Error(
+				'Failed to load the open lines module',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_MODULES_IMOPENLINES',
+				__METHOD__
+			));
+		}
 
-			if(
-				!empty($params['COMMAND']) &&
-				!empty($params['CHAT_ID']) &&
-				!empty($params['SESSION_ID']) &&
-				!empty($params['TASK_ID']) &&
-				!empty($params['CONFIG_TASK_ID'])
-			)
+		$configTask = [];
+
+		if (
+			!empty($params['COMMAND'])
+			&& !empty($params['CHAT_ID'])
+			&& !empty($params['SESSION_ID'])
+			&& !empty($params['TASK_ID'])
+			&& !empty($params['CONFIG_TASK_ID'])
+		)
+		{
+			$querySession = ImConnector\Data\Session::getInstance()->query();
+			$rawSession = $querySession
+				->setSelect([
+					'STATUS',
+					'SOURCE',
+					'CONFIG_ID',
+					'OPERATOR_ID',
+					'USER_ID',
+					'CHAT_ID',
+					'CLOSED'
+				])
+				->setFilter([
+					'=ID' => $params['SESSION_ID']
+				])
+				->exec()
+			;
+			if ($sessionData = $rawSession->fetch())
 			{
-				$rawSession = SessionTable::getList([
-					'select' => [
-						'STATUS',
-						'SOURCE',
-						'CONFIG_ID',
-						'OPERATOR_ID',
-						'USER_ID',
-						'CHAT_ID',
-						'CLOSED'
-					],
-					'filter' => [
-						'=ID' => $params['SESSION_ID']
-					]
-				]);
-
-				if($sessionData = $rawSession->fetch())
-				{
-					if(
-						$sessionData['CLOSED'] === 'Y' ||
-						$sessionData['STATUS'] >= Session::STATUS_CLOSE
-					)
-					{
-						$result->addError(new Error(
-							'You can\'t perform actions in a closed session',
-							'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_SESSION_CLOSED',
-							__METHOD__,
-							['command' => $params['COMMAND'], 'data' => $params]
-						));
-					}
-					elseif($sessionData['SOURCE'] !== $this->idConnector)
-					{
-						$result->addError(new Error(
-							'The connector ID in the session does not match the connector ID in the request',
-							'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_CONNECTORS_DIVERGE',
-							__METHOD__,
-							['command' => $params['COMMAND'], 'data' => $params]
-						));
-					}
-				}
-				else
+				if (
+					$sessionData['CLOSED'] === 'Y' ||
+					$sessionData['STATUS'] >= Session::STATUS_CLOSE
+				)
 				{
 					$result->addError(new Error(
-						'Session failed to load',
-						'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+						'You can\'t perform actions in a closed session',
+						'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_SESSION_CLOSED',
 						__METHOD__,
 						['command' => $params['COMMAND'], 'data' => $params]
 					));
 				}
-
-				if($result->isSuccess())
+				elseif ($sessionData['SOURCE'] !== $this->idConnector)
 				{
-					$configManager = new Config();
+					$result->addError(new Error(
+						'The connector ID in the session does not match the connector ID in the request',
+						'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_CONNECTORS_DIVERGE',
+						__METHOD__,
+						['command' => $params['COMMAND'], 'data' => $params]
+					));
+				}
+			}
+			else
+			{
+				$result->addError(new Error(
+					'Session failed to load',
+					'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+					__METHOD__,
+					['command' => $params['COMMAND'], 'data' => $params]
+				));
+			}
 
-					$automaticMessagesThisConfig = $configManager->getAutomaticMessage($sessionData['CONFIG_ID']);
+			if ($result->isSuccess())
+			{
+				/** @var \Bitrix\ImOpenLines\Config $configManager */
+				$configManager = ServiceLocator::getInstance()->get('ImOpenLines.Config');
 
-					foreach ($automaticMessagesThisConfig as $value)
+				$automaticMessagesThisConfig = $configManager->getAutomaticMessage($sessionData['CONFIG_ID']);
+
+				foreach ($automaticMessagesThisConfig as $value)
+				{
+					if ($value['ID'] === $params['CONFIG_TASK_ID'])
 					{
-						if($value['ID'] === $params['CONFIG_TASK_ID'])
-						{
-							$configTask = $value;
-						}
+						$configTask = $value;
 					}
+				}
 
-					if(empty($configTask))
-					{
-						$result->addError(new Error(
-							'Failed to load automatic message task configuration',
-							'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_DATA_AUTOMATIC_MESSAGE_TASK',
+				if (empty($configTask))
+				{
+					$result->addError(new Error(
+						'Failed to load automatic message task configuration',
+						'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_DATA_AUTOMATIC_MESSAGE_TASK',
+						__METHOD__,
+						['command' => $params['COMMAND'], 'data' => $params]
+					));
+				}
+			}
+
+			if ($result->isSuccess())
+			{
+				switch ($params['COMMAND'])
+				{
+					case 'sessionClose':
+						$resultCommand = $this->sessionClose(
+							$params['CHAT_ID'],
+							$sessionData['USER_ID'],
+							$configTask['AUTOMATIC_TEXT_CLOSE']
+						);
+						break;
+
+					case 'sessionContinue':
+						$resultCommand = $this->sessionContinue(
+							$params['CHAT_ID'],
+							$sessionData['USER_ID'],
+							$configTask['AUTOMATIC_TEXT_CONTINUE']
+						);
+						break;
+
+					case 'sessionNew':
+						$resultCommand = $this->sessionNew(
+							$params['CHAT_ID'],
+							$sessionData['USER_ID'],
+							$configTask['AUTOMATIC_TEXT_NEW']
+						);
+						break;
+
+					default:
+						$resultCommand = new Result();
+						$resultCommand->addError(new Error(
+							'An unsupported command was passed',
+							'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_COMMAND_NOT_SUPPORTED',
 							__METHOD__,
 							['command' => $params['COMMAND'], 'data' => $params]
 						));
-					}
+						break;
 				}
 
-				if($result->isSuccess())
+				if ($resultCommand->isSuccess())
 				{
-					switch ($params['COMMAND'])
-					{
-						case 'sessionClose':
-							$resultCommand = $this->sessionClose(
-								$params['CHAT_ID'],
-								$sessionData['USER_ID'],
-								$configTask['AUTOMATIC_TEXT_CLOSE']
-							);
-							break;
-
-						case 'sessionContinue':
-							$resultCommand = $this->sessionContinue(
-								$params['CHAT_ID'],
-								$sessionData['USER_ID'],
-								$configTask['AUTOMATIC_TEXT_CONTINUE']
-							);
-							break;
-
-						case 'sessionNew':
-							$resultCommand = $this->sessionNew(
-								$params['CHAT_ID'],
-								$sessionData['USER_ID'],
-								$configTask['AUTOMATIC_TEXT_NEW']
-							);
-							break;
-
-						default:
-							$resultCommand = new Result();
-							$resultCommand->addError(new Error(
-								'An unsupported command was passed',
-								'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_COMMAND_NOT_SUPPORTED',
-								__METHOD__,
-								['command' => $params['COMMAND'], 'data' => $params]
-							));
-							break;
-					}
-
-					if($resultCommand->isSuccess())
-					{
-						$result->setResult($resultCommand->getResult());
-					}
-					else
-					{
-						$result->addErrors($resultCommand->getErrors());
-					}
+					$result->setResult($resultCommand->getResult());
 				}
+				else
+				{
+					$result->addErrors($resultCommand->getErrors());
+				}
+			}
+			else
+			{
+				$result->addError(new Error(
+					'Invalid data was transmitted',
+					'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+ 					__METHOD__,
+					['command' => $params['COMMAND'], 'data' => $params]
+				));
 			}
 		}
 		else
 		{
 			$result->addError(new Error(
-				'Failed to load the open lines module',
-				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_MODULES_IMOPENLINES',
-				__METHOD__
+				'Invalid data was transmitted',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+				__METHOD__,
+				['command' => $params['COMMAND'], 'data' => $params]
 			));
 		}
 

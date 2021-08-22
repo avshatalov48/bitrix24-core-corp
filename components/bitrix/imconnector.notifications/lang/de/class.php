@@ -7,3 +7,4 @@ $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_NO_ACTIVE_CONNECTOR"] = "Dieser Conne
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_NO_SAVE"] = "Fehler beim Speichern der Daten. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie erneut.";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_OK_SAVE"] = "Informationen wurden erfolgreich gespeichert.";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_SESSION_HAS_EXPIRED"] = "Ihre Sitzung ist abgelaufen. Senden Sie bitte das Formular erneut.";
+$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_TOS_AGREE"] = "Ich akzeptiere";

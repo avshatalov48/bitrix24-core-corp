@@ -14,7 +14,7 @@
 						'</div>' +
 						'<div class="telephony-report-call-dynamics-modal-main">' +
 							'<div class="telephony-report-call-dynamics-modal-subtitle">' +
-								BX.message('TELEPHONY_REPORT_LOST_CALLS') +
+								BX.message('TELEPHONY_REPORT_LOST_CALLS_BUBBLE') +
 							'</div>' +
 							'<div class="telephony-report-call-dynamics-modal-content">' +
 							'<div class="telephony-report-call-dynamics-modal-value">' +

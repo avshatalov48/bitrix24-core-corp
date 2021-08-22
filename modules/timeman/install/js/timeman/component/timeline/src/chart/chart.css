@@ -4,6 +4,16 @@
     margin: -18px 25px 48px;
 }
 
+.bx-timeman-component-timeline-over-chart {
+    display: inline-block;
+    height: 54px;
+    margin: -18px 25px 48px;
+    position: absolute;
+    left: 56px;
+    right: 50px;
+    z-index: 100;
+}
+
 .bx-timeman-component-timeline-chart-move {
     transition: transform 1s;
 }
@@ -43,6 +53,10 @@
     top: 29px;
     padding-right: 8px;
     left: -6px;
+}
+
+.bx-timeman-component-timeline-over-chart .bx-timeman-component-timeline-chart-outline {
+    opacity: 0;
 }
 
 .bx-timeman-component-timeline-chart-outline-background {

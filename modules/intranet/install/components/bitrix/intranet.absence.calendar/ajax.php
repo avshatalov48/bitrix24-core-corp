@@ -32,6 +32,15 @@ elseif ($MODE == 'INFO')
 }
 elseif ($MODE == 'GET')
 {
+	if (
+		\Bitrix\Main\Loader::includeModule('bitrix24')
+		&& COption::GetOptionString('bitrix24', 'absence_limits_enabled', '') === 'Y'
+		&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('absence')
+	)
+	{
+		return;
+	}
+	
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.absence.calendar', 
 		'', 

@@ -96,11 +96,22 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$userIds = $newUserIds;
 	}
 
-	private function getTaskData($id)
+	private function getTaskData($entityId)
 	{
 		global $USER;
 
 		if (!Loader::includeModule('tasks'))
+		{
+			return;
+		}
+
+		if (
+			!\Bitrix\Tasks\Access\TaskAccessController::can(
+				$USER->GetID(),
+				\Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ,
+				$entityId
+			)
+		)
 		{
 			return;
 		}
@@ -118,7 +129,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			//'TM_TYPE' => 'TM.TYPE',
 		]);
 		$query->setFilter([
-			'=ID' => $id,
+			'=ID' => $entityId,
 		]);
 
 		$query->registerRuntimeField('', new ReferenceField(
@@ -175,6 +186,11 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		}
 
 		$entry = \CCalendarEvent::getEventForViewInterface($entityId);
+
+		if (!$entry)
+		{
+			return;
+		}
 
 		$pathToCalendar = \CCalendar::GetPathForCalendarEx($USER->GetID());
 		$pathToEvent = \CHTTP::urlAddParams($pathToCalendar, ['EVENT_ID' => $entry['ID']]);
@@ -444,6 +460,12 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			return;
 		}
 
+		if ($userCount === 1)
+		{
+			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR')));
+			return;
+		}
+
 		return self::getChatAction($entityType, $entityId);
 	}
 
@@ -453,9 +475,9 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 
 		$result = [
 			'link' => '',
-			'title' => '',
-			'description' => '',
-			'auditors' => '',
+			'TITLE' => '',
+			'DESCRIPTION' => '',
+			'AUDITORS' => '',
 		];
 
 		if (!$entityType || !$entityId)
@@ -523,6 +545,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$result = [
 			'link' => '',
 			'destTo' => [],
+			'title' => '',
 		];
 
 		if (!$entityType || !$entityId)
@@ -547,16 +570,19 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			]);
 		}
 
-		foreach ($data['USER_IDS'] as $key => $userId)
+		if (is_array($data))
 		{
-			$result['destTo'][] = 'U' . (int)$userId;
-		}
+			foreach ($data['USER_IDS'] as $key => $userId)
+			{
+				$result['destTo'][] = 'U' . (int)$userId;
+			}
 
-		$result['title'] = $data['TITLE'];
+			$result['title'] = $data['TITLE'];
 
-		if (isset($data['GROUP_ID']) && (int)$data['GROUP_ID'] > 0)
-		{
-			$result['destTo'][] = 'SG' . (int)$data['GROUP_ID'];
+			if (isset($data['GROUP_ID']) && (int)$data['GROUP_ID'] > 0)
+			{
+				$result['destTo'][] = 'SG' . (int)$data['GROUP_ID'];
+			}
 		}
 
 		return $result;

@@ -69,7 +69,7 @@ if (!$emptyKanban) {
 $workMode = StagesTable::getWorkMode();
 $isTimeline = ($workMode === StagesTable::WORK_MODE_TIMELINE);
 $isMyPlan = ($workMode === StagesTable::WORK_MODE_USER);
-$isSprintView = ($workMode == StagesTable::WORK_MODE_SPRINT || $workMode == StagesTable::WORK_MODE_ACTIVE_SPRINT);
+$isSprintView = ($workMode == StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
 $viewMode = '';
 if ($isMyPlan)

@@ -347,6 +347,11 @@ final class FileUserType
 			return;
 		}
 
+		if (!$realValue)
+		{
+			return;
+		}
+
 		$attachedModel = AttachedObject::loadById($realValue, array('OBJECT'));
 		if (!$attachedModel)
 		{

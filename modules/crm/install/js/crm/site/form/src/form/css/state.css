@@ -79,11 +79,14 @@ div.b24-form-loader {
 	background-repeat: no-repeat;
 }
 
+.b24-form-state-text {
+	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/30px var(--b24-font-family);
+}
+
 .b24-form-success .b24-form-state-text {
 	display: block;
 	margin: 0 0 27px;
-	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font: 20px/30px var(--b24-font-family);
 	color: #000;
 	text-align: center;
 	opacity: .8;
@@ -110,8 +113,6 @@ div.b24-form-loader {
 .b24-form-error .b24-form-state-text {
 	display: block;
 	margin: 0 0 30px;
-	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font: 20px/30px var(--b24-font-family);
 	color: #fff;
 }
 
@@ -137,8 +138,6 @@ div.b24-form-loader {
 
 .b24-form-warning .b24-form-state-text {
 	margin: 0 0 35px;
-	font: 400 17px/25px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font: 400 17px/25px var(--b24-font-family);
 	color: #333;
 	opacity: .8;
 }
@@ -156,3 +155,11 @@ div.b24-form-loader {
 	flex: 1;
 }
 /*endregion*/
+
+
+@media (max-width: 530px) {
+	.b24-form-state-text {
+		font-size: 16px;
+		line-height: 18px;
+	}
+}

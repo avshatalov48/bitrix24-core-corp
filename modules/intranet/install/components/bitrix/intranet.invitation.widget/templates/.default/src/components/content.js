@@ -1,12 +1,17 @@
 import {Vue} from 'ui.vue';
 import {Text, Type, Event} from "main.core";
+import {RightsComponent} from "./rights";
+import {UserOnlineComponent} from "./user-online";
 
 export const ContentComponent = {
+	components: {RightsComponent, UserOnlineComponent},
 	props: [
+		"isCrurrentUserAdmin",
 		"invitationLink",
 		"structureLink",
 		"users",
 		"isInvitationAvailable",
+		"isExtranetAvailable",
 	],
 	computed: {
 		localize(state)
@@ -15,18 +20,28 @@ export const ContentComponent = {
 		}
 	},
 	methods: {
-		showInvitationSlider()
+		showInvitationSlider(e, type)
 		{
 			if (this.isInvitationAvailable)
 			{
-				BX.SidePanel.Instance.open(this.invitationLink, {cacheable: false, allowChangeHistory: false, width: 1100});
+				let link = this.invitationLink;
+
+				if (type === 'extranet')
+				{
+					link = `${link}&firstInvitationBlock=extranet`;
+				}
+
+				BX.SidePanel.Instance.open(
+					link,
+					{ cacheable: false, allowChangeHistory: false, width: 1100 }
+				);
 				Event.EventEmitter.emit('BX.Intranet.InvitationWidget:showInvitationSlider');
 			}
 			else
 			{
 				this.showHintPopup(
-					BX.message("INTRANET_INVITATION_WIDGET_DISABLED_TEXT"),
-					document.querySelector("[data-role='invitationPopupButton']")
+					this.localize.INTRANET_INVITATION_WIDGET_DISABLED_TEXT,
+					e.target
 				);
 			}
 		},
@@ -74,30 +89,39 @@ export const ContentComponent = {
 			BX.UI.InfoHelper.show(code);
 			this.sendAnalytics(code);
 		},
+		showExtranetHelper()
+		{
+			const article = "6770709";
+
+			BX.Helper.show(`redirect=detail&code=${article}`);
+			this.sendAnalytics(article);
+		},
 	},
 	template: `
 		<div class="license-widget license-widget--invite">
-			<div class="license-widget-item license-widget-item--main">
-				<div class="license-widget-inner">
-					<div class="license-widget-item-icon license-widget-item-icon--invite"></div>
-					<div class="license-widget-item-content">
-						<div class="license-widget-item-name">
-							<span>{{ localize.INTRANET_INVITATION_WIDGET_INVITE_EMPLOYEE }}</span>
-						</div>
-						<div class="license-widget-item-link">
-							<span class="license-widget-item-link-text" @click="showInvitationHelper">
-								{{ localize.INTRANET_INVITATION_WIDGET_DESC }}
-							</span>
+			<div class="license-widget-invite">
+				<div class="license-widget-invite-main">
+					<div class="license-widget-inner">
+						<div class="license-widget-item-icon license-widget-item-icon--invite"></div>
+						<div class="license-widget-item-content">
+							<div class="license-widget-item-name">
+								<span>{{ localize.INTRANET_INVITATION_WIDGET_INVITE_EMPLOYEE }}</span>
+							</div>
+							<div class="license-widget-item-link">
+								<span class="license-widget-item-link-text" @click="showInvitationHelper">
+									{{ localize.INTRANET_INVITATION_WIDGET_DESC }}
+								</span>
+							</div>
 						</div>
 					</div>
+					<a 
+						data-role="invitationPopupButton"
+						class="license-widget-item-btn license-widget-item-btn--invite"
+						@click="showInvitationSlider" 
+					> 
+						{{ localize.INTRANET_INVITATION_WIDGET_INVITE }} 
+					</a>	
 				</div>
-				<a 
-					data-role="invitationPopupButton"
-					class="license-widget-item-btn license-widget-item-btn--invite"
-					@click="showInvitationSlider" 
-				> 
-					{{ localize.INTRANET_INVITATION_WIDGET_INVITE }} 
-				</a>	
 			</div>
 			
 			<div class="license-widget-block">
@@ -118,48 +142,92 @@ export const ContentComponent = {
 					:class="{ 'license-widget-item--emp-alert' : users.isLimit }"
 				>
 					<div class="license-widget-inner">
-						<div 
-							class="license-widget-item-progress"
-							:class="[
-								users.isLimit 
-								? 'license-widget-item-progress--crit' 
-								: 'license-widget-item-progress--full'
-							]"
-						></div>
 						<div class="license-widget-item-content">
-							<div class="license-widget-item-name">
-								<span>{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES }}</span>
-							</div>
-							<div class="license-widget-item-num">
-								{{ users.currentUserCountMessage }}
-							</div>
+							<div 
+								class="license-widget-item-progress"
+								:class="[
+									users.isLimit 
+									? 'license-widget-item-progress--crit' 
+									: 'license-widget-item-progress--full'
+								]"
+							></div>
+							<div class="license-widget-employees">
+								<div class="license-widget-item-name">
+									<span>{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES }}</span>
+								</div>
+								<div class="license-widget-item-num">
+									{{ users.currentUserCountMessage }}
+								</div>
+							</div>	
 						</div>
 						<!--<div class="license-widget-item-menu"></div>-->
-					</div>
-					<div class="license-widget-item-detail">
-						<span 
-							v-if="users.maxUserCount == 0" 
-							key="employeeCount"
-							class="license-widget-item-link-text"
-						>
-							{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES_NO_LIMIT }}
-						</span>
-						<span 
-							v-else-if="users.isLimit"
-							key="employeeCount" 
-							class="license-widget-item-link-text"
-						>
-							{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES_LIMIT }}
-						</span>
-						<span 
-							v-else-if="!users.isLimit" 
-							key="employeeCount"
-							class="license-widget-item-link-text"
-						>
-							{{ users.leftCountMessage }}
-						</span>
+					
+						<div class="license-widget-item-detail">
+							<span 
+								v-if="users.maxUserCount == 0" 
+								key="employeeCount"
+								class="license-widget-item-link-text"
+							>
+								{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES_NO_LIMIT }}
+							</span>
+							<span 
+								v-else-if="users.isLimit"
+								key="employeeCount" 
+								class="license-widget-item-link-text"
+							>
+								{{ localize.INTRANET_INVITATION_WIDGET_EMPLOYEES_LIMIT }}
+							</span>
+							<span 
+								v-else-if="!users.isLimit" 
+								key="employeeCount"
+								class="license-widget-item-link-text"
+							>
+								{{ users.leftCountMessage }}
+							</span>
+						</div>
+						<RightsComponent
+							v-if="isCrurrentUserAdmin"
+						></RightsComponent>
 					</div>
 				</div>
+			</div>
+			
+			<div 
+				v-if="isExtranetAvailable"
+				key="extranetBlock"
+				class="license-widget-item license-widget-item--wide"
+				:class="{ 'license-widget-item--active' : users.currentExtranetUserCount > 0 }"
+			>
+				<div class="license-widget-inner">
+					<div class="license-widget-item-icon license-widget-item-icon--ext"></div>
+					<div class="license-widget-item-content">
+						<div class="license-widget-item-name">
+							<span>{{ localize.INTRANET_INVITATION_WIDGET_EXTRANET }}</span>
+						</div>
+						<div class="license-widget-item-link">
+							<a class="license-widget-item-link-text" @click="showExtranetHelper">
+								{{ localize.INTRANET_INVITATION_WIDGET_EXTRANET_DESC }}
+							</a>
+						</div>
+						<div 
+							v-if="users.currentExtranetUserCount > 0" 
+							key="extranetEmployeeCount"
+							class="license-widget-item-ext-users"
+						>
+							{{ users.currentExtranetUserCountMessage }}
+						</div>
+					</div>
+				</div>
+				<button 
+					class="license-widget-item-btn" 	
+					type="button" 
+					@click="showInvitationSlider($event, 'extranet')"
+				>
+					{{ localize.INTRANET_INVITATION_WIDGET_INVITE }}
+				</button>
+			</div>
+			<div class="license-widget-item license-widget-item--wide license-widget-item--no-padding">
+				<UserOnlineComponent></UserOnlineComponent>
 			</div>
 		</div>
 	`,

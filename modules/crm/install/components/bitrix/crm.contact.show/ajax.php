@@ -104,7 +104,7 @@ if($mode === 'GET_CLIENT_INFO')
 
 	$normalizeMultifields = isset($params['NORMALIZE_MULTIFIELDS']) && $params['NORMALIZE_MULTIFIELDS'] === 'Y';
 
-	$isReadPermitted = CCrmCompany::CheckReadPermission($entityID, $userPermissions);
+	$isReadPermitted = CCrmContact::CheckReadPermission($entityID, $userPermissions);
 	$data = CCrmEntitySelectorHelper::PrepareEntityInfo(
 		CCrmOwnerType::ContactName,
 		$entityID,

@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Rest\RestException;
 use Bitrix\Crm\WebForm;
 use Bitrix\Crm\UI\Webpack;
+use Bitrix\Crm\SiteButton\Guest;
 
 /**
  * Class Rest
@@ -143,10 +144,29 @@ class Rest
 			self::printErrors($result->getErrors());
 		}
 
+
+		$gid = $result->getResultEntity()->getTrace()->getGid();
+		if (!$gid)
+		{
+			$gid = Guest::register([
+				'ENTITIES' => array_map(
+					function (array $item)
+					{
+						return [
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::resolveID($item['ENTITY_TYPE']),
+							'ENTITY_ID' => $item['ENTITY_ID'],
+						];
+					},
+					$result->getResultEntity()->getResultEntities()
+				)
+			]);
+		}
+
 		return [
 			'resultId' => $result->getId(),
 			'pay' => $form->isPayable(),
 			'message' => $form->getSuccessText(),
+			'gid' => $gid,
 			'redirect' => [
 				'url' => $result->getUrl(),
 				'delay' => $form->getRedirectDelay(),

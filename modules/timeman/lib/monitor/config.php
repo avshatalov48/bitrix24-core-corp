@@ -10,7 +10,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
 use Bitrix\Pull\Event;
 use Bitrix\Timeman\Absence;
-use Bitrix\Timeman\Monitor\Report\Status;
 
 final class Config
 {
@@ -41,7 +40,6 @@ final class Config
 		return [
 			'enabled' => self::getEnabled(),
 			'debugEnabled' => self::isDebugEnabledForCurrentUser(),
-			'state' => self::getState(),
 			'resendTimeout' => self::$resendTimeout,
 			'otherTime' => self::$otherTime,
 			'shortAbsenceTime' => self::$shortAbsenceTime,
@@ -54,7 +52,6 @@ final class Config
 				'short' => 'H:i', //$culture->getShortTimeFormat(),
 				'long' => 'H:i:s', //$culture->getLongTimeFormat(),
 			],
-			'isHistorySent' => Status::getForCurrentUser(),
 		];
 	}
 
@@ -77,16 +74,6 @@ final class Config
 		}
 
 		return self::isMonitorDebugEnabledForUser($userId);
-	}
-
-	public static function getState(): string
-	{
-		return (self::isWorkingDayOpened() ? State::START : State::STOP);
-	}
-
-	private static function isWorkingDayOpened(): bool
-	{
-		return (\CTimeManUser::instance()->State() === 'OPENED');
 	}
 
 	public static function getMonitorEnableType(): ?string

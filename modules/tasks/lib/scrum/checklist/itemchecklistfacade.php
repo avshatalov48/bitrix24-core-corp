@@ -46,6 +46,8 @@ class ItemChecklistFacade extends CheckListFacade
 
 	public static $entityIdName = 'ITEM_ID';
 
+	public static $currentAccessAction;
+
 	/**
 	 * Returns class that extends abstract class CheckListTree
 	 * @see CheckListTree

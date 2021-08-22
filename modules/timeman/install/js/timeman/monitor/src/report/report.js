@@ -2,14 +2,22 @@ import {Type} from 'main.core';
 import {Loc, Runtime, Tag} from 'main.core';
 import {BitrixVue} from 'ui.vue';
 import {EntityGroup} from 'timeman.const';
-import {Control} from "./control/control";
 import {AddIntervalPopup} from "./popup/addintervalpopup/addintervalpopup"
 import {SelectIntervalPopup} from "./popup/selectintervalpopup/selectIntervalpopup"
 import {Group} from "./group/group";
 import {Consent} from "./consent/consent";
 import {Timeline} from "./timeline/timeline";
-import {MonitorModel} from "../model/monitor";
 import {DateFormatter} from "timeman.dateformatter";
+import {TimeFormatter} from "timeman.timeformatter";
+import {Monitor} from "../monitor";
+import {MountingPortal} from 'ui.vue.portal';
+import {PausePopup} from "./popup/pausepopup/pausepopup";
+import {ConfirmPopup} from "./popup/confirmpopup/confirmpopup";
+import {UI} from 'ui.notification';
+import {Logger} from "../lib/logger";
+import {Debug} from "../lib/debug";
+
+import {PopupManager} from "main.popup";
 import {Loader} from 'main.loader';
 
 import './report.css';
@@ -21,7 +29,6 @@ class Report
 		return Runtime.loadExtension([
 			'ui.pinner',
 			'ui.alerts',
-			'timeman.component.day-control',
 		]);
 	}
 
@@ -42,14 +49,7 @@ class Report
 					}
 				},
 				onLoad: () => this.createEditor(store),
-				onClose: () =>
-				{
-					if (Type.isFunction(BXIM.desktop.setPreventEsc))
-					{
-						BXIM.desktop.setPreventEsc(false);
-					}
-				},
-				onDestroy: () =>
+				onCloseComplete: () =>
 				{
 					if (Type.isFunction(BXIM.desktop.setPreventEsc))
 					{
@@ -121,52 +121,56 @@ class Report
 				AddIntervalPopup,
 				SelectIntervalPopup,
 				Consent,
+				MountingPortal,
+				PausePopup,
+				ConfirmPopup,
 			},
 			store,
 			data: function() {
 				return {
 					newInterval: null,
 					showSelectInternalPopup: false,
+					popupInstance: null,
+					popupId: null,
+					showPlayAlert: false,
+					selectedPrivateCode: null,
+					selectIntervalTimeout: null,
 				}
 			},
 			computed:
 			{
 				EntityGroup: () => EntityGroup,
+				TimeFormatter: () => TimeFormatter,
 				dateLog()
 				{
-					const sentQueue = this.$store.state.monitor.sentQueue;
-					const sentQueueDateLog = Type.isArrayFilled(sentQueue) ? sentQueue[0].dateLog : '';
-
-					const history = this.$store.state.monitor.history;
-					const historyDateLog = Type.isArrayFilled(history) ? history[0].dateLog : '';
-
-					if (Type.isStringFilled(sentQueueDateLog))
-					{
-						return DateFormatter.toLong(sentQueueDateLog);
-					}
-					else if (Type.isStringFilled(historyDateLog))
-					{
-						return DateFormatter.toLong(historyDateLog);
-					}
-
-					return DateFormatter.toLong(new Date());
+					return DateFormatter.toLong(new Date(this.$store.state.monitor.reportState.dateLog));
 				},
-				isAllowedToStartDay()
+				isHistorySent()
 				{
-					let currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-					let reportDateLog = new Date(this.$store.state.monitor.reportState.dateLog);
-					let isHistorySent = BX.Timeman.Monitor.isHistorySent;
-
-					if (currentDateLog > reportDateLog && !isHistorySent)
-					{
-						return false;
-					}
-
-					return true;
+					return !!this.$store.getters['monitor/isHistorySent'];
 				},
 				isPermissionGranted()
 				{
 					return true;
+				},
+				isPaused()
+				{
+					return !!this.$store.state.monitor.config.pausedUntil;
+				},
+				pausedUntil()
+				{
+					let pausedUntil = this.$store.state.monitor.config.pausedUntil;
+					if (!pausedUntil)
+					{
+						return '';
+					}
+
+					if (pausedUntil.getDay() - new Date().getDay() !== 0)
+					{
+						return this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_TOMORROW');
+					}
+
+					return TimeFormatter.toShort(pausedUntil);
 				}
 			},
 			methods:
@@ -192,84 +196,281 @@ class Report
 				{
 					this.showSelectInternalPopup = false;
 				},
+				pauseClick(event)
+				{
+					if (this.popupInstance != null)
+					{
+						this.popupInstance.destroy();
+						this.popupInstance = null;
+					}
+
+					const popup = PopupManager.create({
+						id: 'bx-timeman-pwt-editor-pause-popup',
+						targetContainer: document.body,
+						className: 'bx-timeman-pwt-pause-popup',
+						bindElement: event.target,
+						lightShadow : true,
+						offsetTop: 0,
+						offsetLeft: 10,
+						autoHide: true,
+						closeByEsc: true,
+						angle: {},
+						bindOptions: {position: 'top'},
+						events: {
+							onPopupClose: () => this.popupInstance.destroy(),
+							onPopupDestroy: () => this.popupInstance = null
+						},
+					});
+
+					this.popupIdSelector = `#bx-timeman-pwt-editor-pause-popup`;
+					this.popupId = 'PausePopup';
+
+					//little hack for correct open several popups in a row.
+					this.$nextTick(() => {this.popupInstance = popup});
+				},
+				pause(dateTime)
+				{
+					Monitor.pauseUntil(dateTime);
+				},
+				play()
+				{
+					Monitor.play();
+
+					this.showPlayAlert = true;
+					setTimeout(() => this.showPlayAlert = false, 1000)
+				},
+				openReportPreview()
+				{
+					Monitor.openReportPreview();
+				},
+				selectInterval(privateCode)
+				{
+					this.selectIntervalTimeout = setTimeout(() => {
+						this.selectedPrivateCode = privateCode;
+					}, 500);
+				},
+				unselectInterval()
+				{
+					clearTimeout(this.selectIntervalTimeout);
+
+					this.selectedPrivateCode = null;
+				},
+				openSkipConfirm()
+				{
+					if (this.popupInstance != null)
+					{
+						this.popupInstance.destroy();
+						this.popupInstance = null;
+					}
+
+					const popup = PopupManager.create({
+						id: 'bx-timeman-pwt-skip-report-confirm-popup',
+						targetContainer: BX('pwt-report-container-editor'),
+						autoHide: false,
+						closeByEsc: true,
+						overlay: true,
+						events: {
+							onPopupDestroy: () =>
+							{
+								this.popupInstance = null;
+							}
+						},
+					});
+
+					this.popupIdSelector = `#bx-timeman-pwt-skip-report-confirm-popup`;
+					this.popupId = 'SkipReportPopup';
+
+					//little hack for correct open several popups in a row.
+					this.$nextTick(() => {this.popupInstance = popup});
+				},
+				skipReport()
+				{
+					this.$store.dispatch('monitor/clearStorageBeforeDate', this.$store.state.monitor.reportState.dateLog)
+						.then(() => {
+							Logger.warn(`Report for ${this.$store.state.monitor.reportState.dateLog} deleted by user`);
+							Debug.log(`Report for ${this.$store.state.monitor.reportState.dateLog} deleted by user`);
+
+							const notifyText = this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIPPED')
+								.replace('#DATE#', this.dateLog);
+
+							this.$store.dispatch('monitor/refreshDateLog').then(() => {
+								UI.Notification.Center.notify({
+									content: notifyText,
+									autoHideDelay: 5000,
+								});
+							});
+						});
+				},
 			},
 			// language=Vue
 			template: `
-				<div class="pwt-report">
-					<Consent v-if="!isPermissionGranted"/>
-					<template v-else>
-						<div class="pwt-report-header-container">
-							<div class="pwt-report-header-title">
-								{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}
-							</div>
-						</div>
-						<div
-							v-if="!isAllowedToStartDay"
-							class="pwt-report-alert ui-alert ui-alert-md ui-alert-danger ui-alert-icon-danger">
-							<span class="ui-alert-message">
-								{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_NOT_SENT') }}
-							</span>
-						</div>
-						<div class="pwt-report-content-container">
-							<div class="pwt-report-content">
-								<div class="pwt-report-content-header">
-									<div class="pwt-report-content-header-title">
-										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}
-									</div>
-								</div>
-								<Timeline
-									@intervalClick="onIntervalClick"
-								/>
-							</div>
-							<div class="pwt-report-content">
-								<div class="pwt-report-content-groups">
-									<Group 
-										:group="EntityGroup.working.value"
-										@selectIntervalClick="onSelectIntervalClick"
-									/>
-									<Group 
-										:group="EntityGroup.personal.value"
-									/>
+				<div id="pwt-report-container-editor" class="pwt-report-container">
+					<div class="pwt-report">
+						<Consent v-if="!isPermissionGranted"/>
+						<template v-else>
+							<div class="pwt-report-header-container">
+								<div class="pwt-report-header-title">
+									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}
 								</div>
 							</div>
-						</div>
-						<div 
-							class="
-								pwt-report-button-panel-wrapper 
-								ui-pinner 
-								ui-pinner-bottom 
-								ui-pinner-full-width" 
-							style="z-index: 0"
-						>
-							<div class="pwt-report-button-panel">
-								<bx-timeman-component-day-control
-									v-if="isAllowedToStartDay"
-									:isButtonCloseHidden="true"
-								/>
-								<button 
-									class="ui-btn ui-btn-success" 
-									style="margin-left: 16px;"
-									onclick="BX.Timeman.Monitor.openReportPreview()"
+
+						 	<transition-group
+								name="bx-timeman-pwt-report"
+								tag="div"
+								class="pwt-report-content-container"
+							>
+								<div
+									:key="'reportNotSentAlert'"
+									v-if="!isHistorySent"
+									class="pwt-report-alert ui-alert ui-alert-md ui-alert-danger ui-alert-icon-danger"
 								>
-									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_BUTTON') }}
-								</button>
+									<span class="ui-alert-message">
+										{{ 
+											$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_NOT_SENT')
+												.replace('#DATE#', dateLog)
+										}}
+									</span>
+								</div>
+								<div 
+									:key="'pauseAlert'"
+									v-if="isPaused || showPlayAlert"
+									:class="[
+										'pwt-report-alert',
+										'ui-alert',
+										'ui-alert-md',
+										{
+											'ui-alert-warning ui-alert-icon-warning': isPaused, 
+											'ui-alert-success ui-alert-icon-info' : showPlayAlert,
+										}
+									]"
+								>
+									<span v-if="isPaused" class="ui-alert-message">
+										{{ 
+											$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_PAUSE_UNTIL_TIME')
+												.replace('#TIME#', pausedUntil)
+										}}
+									</span>
+									<span v-if="showPlayAlert" class="ui-alert-message">
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_ALERT_PLAY') }}
+									</span>
+									<button
+										v-if="isPaused"
+										@click="play"
+										class="
+											ui-btn 
+											ui-btn-xs 
+											ui-btn-success-dark
+											ui-btn-round 
+											ui-btn-icon-start
+											bx-monitor-group-btn-right
+											bx-monitor-alert-btn-right
+										"
+									>
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PLAY') }}
+									</button>
+								</div> 
+
+								<div class="pwt-report-content" :key="'report-header'">
+									<div class="pwt-report-content-header">
+										<div class="pwt-report-content-header-title">
+											{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}
+										</div>
+									</div>
+									<Timeline
+										:selectedPrivateCode="selectedPrivateCode"
+										@intervalClick="onIntervalClick"
+									/>
+								</div>
+								<div class="pwt-report-content" :key="'report-content'">
+									<div class="pwt-report-content-groups">
+										<Group 
+											:group="EntityGroup.working.value"
+											@selectIntervalClick="onSelectIntervalClick"
+											@intervalSelected="selectInterval"
+											@intervalUnselected="unselectInterval"
+										/>
+										<Group 
+											:group="EntityGroup.personal.value"
+											@intervalSelected="selectInterval"
+											@intervalUnselected="unselectInterval"
+											/>
+										</div>
+								</div>
+							</transition-group>
+	
+							<div 
+								class="
+									pwt-report-button-panel-wrapper 
+									ui-pinner 
+									ui-pinner-bottom 
+									ui-pinner-full-width" 
+								style="z-index: 0"
+							>
+								<div class="pwt-report-button-panel">
+									<button 
+										class="ui-btn ui-btn-success ui-btn-icon-page"
+										@click="openReportPreview"
+									>
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_BUTTON') }}
+									</button>
+									<button
+										id="timeman-pwt-button-pause"
+										@click="pauseClick"
+										class="
+											ui-btn 
+											ui-btn-light-border 
+											ui-btn-dropdown 
+											ui-btn-icon-pause
+										"
+									>
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PAUSE_BUTTON') }}
+									</button>
+									<button
+										v-if="!isHistorySent"
+										@click="openSkipConfirm"
+										class="ui-btn ui-btn-danger ui-btn-icon-remove"
+									>
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SKIP_BUTTON') }}
+									</button>
+									<mounting-portal 
+										:mount-to="popupIdSelector" 
+										append 
+										v-if="popupInstance"
+									>
+										<PausePopup
+                                            v-if="popupId === 'PausePopup'"
+											:popupInstance="popupInstance" 
+											@monitorPause="pause"
+										/>
+										<ConfirmPopup
+                                            v-if="popupId === 'SkipReportPopup'"
+											:popupInstance="popupInstance"
+											:title="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIP_POPUP_TITLE')"
+											:text="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIP_POPUP_TEXT')"
+											:buttonOkTitle="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SKIP_CONFIRM_BUTTON')"
+											:buttonCancelTitle="$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CANCEL_BUTTON')"
+											@okClick="skipReport"
+										/>
+									</mounting-portal>
+								</div>
 							</div>
-						</div>
-						<div id="bx-timeman-pwt-popup-editor" class="bx-timeman-pwt-popup">
-							<SelectIntervalPopup
-								v-if="showSelectInternalPopup"
-								@selectIntervalPopupCloseClick="onSelectIntervalPopupCloseClick"
-								@intervalSelected="onIntervalClick"
-							/>
-							<AddIntervalPopup
-								v-if="newInterval"
-								:minStart="newInterval.start"
-								:maxFinish="newInterval.finish"
-								@addIntervalPopupClose="onAddIntervalPopupClose"
-								@addIntervalPopupHide="onAddIntervalPopupHide"
-							/>
-						</div>
-                    </template>
+	
+							<div id="bx-timeman-pwt-popup-editor" class="bx-timeman-pwt-popup">
+								<SelectIntervalPopup
+									v-if="showSelectInternalPopup"
+									@selectIntervalPopupCloseClick="onSelectIntervalPopupCloseClick"
+									@intervalSelected="onIntervalClick"
+								/>
+								<AddIntervalPopup
+									v-if="newInterval"
+									:minStart="newInterval.start"
+									:maxFinish="newInterval.finish"
+									@addIntervalPopupClose="onAddIntervalPopupClose"
+									@addIntervalPopupHide="onAddIntervalPopupHide"
+								/>
+							</div>
+						</template>
+					</div>
 				</div>
 			`,
 		}).mount('#pwt');
@@ -282,7 +483,13 @@ class Report
 			{
 				Timeline,
 				Group,
-				Control,
+				MountingPortal,
+			},
+			data: function() {
+				return {
+					popupIdSelector: false,
+					popupInstance: null,
+				}
 			},
 			store,
 			computed:
@@ -290,60 +497,69 @@ class Report
 				EntityGroup: () => EntityGroup,
 				dateLog()
 				{
-					const sentQueue = this.$store.state.monitor.sentQueue;
-					const sentQueueDateLog = Type.isArrayFilled(sentQueue) ? sentQueue[0].dateLog : '';
-
-					const history = this.$store.state.monitor.history;
-					const historyDateLog = Type.isArrayFilled(history) ? history[0].dateLog : '';
-
-					if (Type.isStringFilled(sentQueueDateLog))
-					{
-						return DateFormatter.toLong(sentQueueDateLog);
-					}
-					else if (Type.isStringFilled(historyDateLog))
-					{
-						return DateFormatter.toLong(historyDateLog);
-					}
-
-					return DateFormatter.toLong(new Date());
-				}
+					return DateFormatter.toLong(new Date(this.$store.state.monitor.reportState.dateLog));
+				},
+			},
+			methods:
+			{
+				sendReport()
+				{
+					Monitor.send();
+				},
+				close()
+				{
+					BX.SidePanel.Instance.close();
+				},
 			},
 			// language=Vue
 			template: `
-				<div class="pwt-report">
-					<div class="pwt-report-content">
-						<div class="pwt-report-content-header" style="margin-bottom: 0">
-							<div class="pwt-report-content-header-title">
-								{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_TITLE') }}
-							</div>
-						</div>
-					</div>
-					<div class="pwt-report-content-container">
+				<div id="pwt-report-container-preview" class="pwt-report-container">
+					<div class="pwt-report">
 						<div class="pwt-report-content">
-							<div class="pwt-report-content-header">
+							<div class="pwt-report-content-header" style="margin-bottom: 0">
 								<div class="pwt-report-content-header-title">
-									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}
+									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_PREVIEW_SLIDER_TITLE') }}
 								</div>
 							</div>
-							<Timeline
-								:readOnly="true"
-							/>
 						</div>
-						<div class="pwt-report-content">
-							<div class="pwt-report-content-groups">
-								<Group 
-									:group="EntityGroup.working.value"
+						<div class="pwt-report-content-container">
+							<div class="pwt-report-content">
+								<div class="pwt-report-content-header">
+									<div class="pwt-report-content-header-title">
+										{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_WORKDAY') }}, {{ dateLog }}
+									</div>
+								</div>
+								<Timeline
 									:readOnly="true"
 								/>
 							</div>
+							<div class="pwt-report-content">
+								<div class="pwt-report-content-groups">
+									<Group 
+										:group="EntityGroup.working.value"
+										:readOnly="true"
+									/>
+								</div>
+							</div>
 						</div>
-					</div>
-					<div class="pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width" style="z-index: 0">
-						<div class="pwt-report-button-panel">
-							<Control/>
+						<div class="pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width" style="z-index: 0">
+							<div class="pwt-report-button-panel">
+								<button
+									@click="sendReport"
+									class="ui-btn ui-btn-success ui-btn-icon-share"
+								>
+									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SEND_BUTTON') }}
+								</button>
+								<button
+									@click="close"
+									class="ui-btn ui-btn-light-border"
+								>
+									{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CANCEL_BUTTON') }}
+								</button>
+							</div>
 						</div>
+						<div id="bx-timeman-pwt-popup-preview" class="bx-timeman-pwt-popup"/>
 					</div>
-					<div id="bx-timeman-pwt-popup-preview" class="bx-timeman-pwt-popup"/>
 				</div>
 			`,
 		}).mount('#pwt');

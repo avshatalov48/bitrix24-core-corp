@@ -683,6 +683,7 @@ if(!BX.Disk.pathToUser)
 				request.withCredentials = true;
 				options.op = "doc";
 				options.u = BX.message.USER_ID;
+				options.t = Date.now();
 				options.d = document.location.host;
 				var query = BX.util.buildQueryString(options);
 				request.send(query);

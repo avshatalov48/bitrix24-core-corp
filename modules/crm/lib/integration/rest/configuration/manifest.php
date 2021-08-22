@@ -45,7 +45,7 @@ class Manifest
 			'DISABLE_CLEAR_FULL' => 'Y',
 			'CODE' => 'crm_form',
 			'VERSION' => 1,
-			'ACTIVE' => 'Y',
+			'ACTIVE' => 'N',
 			'PLACEMENT' => [
 				'crm',
 				'crm_lead',

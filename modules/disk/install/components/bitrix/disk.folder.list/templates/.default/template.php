@@ -17,6 +17,7 @@ use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Integration\BizProcManager;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -111,10 +112,11 @@ $jsSettingsDropdown = $jsSortFields = array();
 
 if(!empty($arResult['STORAGE']['CAN_CHANGE_RIGHTS_ON_STORAGE']))
 {
+	$onclickRightsOnStorage = Bitrix24Manager::filterJsAction('disk_folder_sharing', "BX.Disk['FolderListClass_{$component->getComponentId()}'].showRightsOnStorage();");
 	$jsSettingsDropdown[] = array(
 		'text' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_CHANGE_RIGHTS'),
 		'title' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_CHANGE_RIGHTS'),
-		'href' => "javascript:BX.Disk['FolderListClass_{$component->getComponentId()}'].showRightsOnStorage(); BX.PopupMenu.destroy('settings_disk');",
+		'href' => "javascript: {$onclickRightsOnStorage}; BX.PopupMenu.destroy('settings_disk');",
 	);
 }
 if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && BizProcManager::isAvailable())
@@ -219,9 +221,11 @@ Toolbar::addButton([
 
 if (empty($arResult['IS_TRASH_MODE']))
 {
+	$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
 	$addBtn = new Button([
         "color" => Color::PRIMARY,
-		"className" => 'js-disk-add-button',
+		"className" => $filterJsAction? '' : 'js-disk-add-button',
+		"click" => new JsCode($filterJsAction),
 		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
     ]);
 	$addBtn->setDropdown();
@@ -634,28 +638,31 @@ BX(function () {
 		{
 			?>
 				var addButton = document.querySelector('.js-disk-add-button');
-				var buttonRect = addButton.getBoundingClientRect();
-				var menu = BX.PopupMenu.create(
-					"popupMenuAdd",
-					addButton,
-					menuItemsLists,
-					{
-						closeByEsc: true,
-						offsetLeft: buttonRect.width / 2,
-						angle: true,
-						events : {
-							onPopupShow : function() { BX.onCustomEvent(window, "onDiskUploadPopupShow", [BX('menuItemsListsUpload').parentNode]); },
-							onPopupClose : function() { BX.onCustomEvent(window, "onDiskUploadPopupClose", [BX('menuItemsListsUpload').parentNode]); }
+				if (addButton)
+				{
+					var buttonRect = addButton.getBoundingClientRect();
+					var menu = BX.PopupMenu.create(
+						"popupMenuAdd",
+						addButton,
+						menuItemsLists,
+						{
+							closeByEsc: true,
+							offsetLeft: buttonRect.width / 2,
+							angle: true,
+							events : {
+								onPopupShow : function() { BX.onCustomEvent(window, "onDiskUploadPopupShow", [BX('menuItemsListsUpload').parentNode]); },
+								onPopupClose : function() { BX.onCustomEvent(window, "onDiskUploadPopupClose", [BX('menuItemsListsUpload').parentNode]); }
+							}
 						}
-					}
-				);
+					);
 
-				BX.bind(addButton, "click", function()	{
-					if (!BX.hasClass(BX("bx-disk-add-menu"), 'ui-btn-disabled'))
-					{
-						menu.popupWindow.show();
-					}
-				});
+					BX.bind(addButton, "click", function()	{
+						if (!BX.hasClass(BX("bx-disk-add-menu"), 'ui-btn-disabled'))
+						{
+							menu.popupWindow.show();
+						}
+					});
+				}
 			<?
 		}
 	?>

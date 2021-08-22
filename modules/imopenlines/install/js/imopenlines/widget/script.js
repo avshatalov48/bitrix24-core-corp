@@ -9546,7 +9546,7 @@
 	  }, {
 	    key: "isFile",
 	    value: function isFile(value) {
-	      return Type.isBlob(value) && Type.isObjectLike(value.lastModifiedDate) && Type.isNumber(value.lastModified) && Type.isString(value.name);
+	      return Type.isBlob(value) && Type.isNumber(value.lastModified) && Type.isString(value.name);
 	    }
 	    /**
 	     * Checks that value is FormData
@@ -12791,7 +12791,7 @@
 	  }, {
 	    key: "isIPad",
 	    value: function isIPad() {
-	      return UA.includes('ipad;');
+	      return UA.includes('ipad;') || this.isMac() && this.isTouchDevice();
 	    }
 	  }, {
 	    key: "isIPhone",
@@ -12812,6 +12812,11 @@
 	    key: "isRetina",
 	    value: function isRetina() {
 	      return window.devicePixelRatio && window.devicePixelRatio >= 2;
+	    }
+	  }, {
+	    key: "isTouchDevice",
+	    value: function isTouchDevice() {
+	      return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 	    }
 	  }, {
 	    key: "isDoctype",
@@ -13196,10 +13201,28 @@
 	    /**
 	     * Gets message by id
 	     * @param {string} messageId
+	     * @param {object} replacements
 	     * @return {?string}
 	     */
 	    value: function getMessage(messageId) {
-	      return message(messageId);
+	      var replacements = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var mess = message(messageId);
+
+	      if (Type.isString(mess) && Type.isPlainObject(replacements)) {
+	        Object.keys(replacements).forEach(function (replacement) {
+	          var globalRegexp = new RegExp(replacement, 'gi');
+	          mess = mess.replace(globalRegexp, function () {
+	            return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
+	          });
+	        });
+	      }
+
+	      return mess;
+	    }
+	  }, {
+	    key: "hasMessage",
+	    value: function hasMessage(messageId) {
+	      return Type.isString(messageId) && !Type.isNil(message[messageId]);
 	    }
 	    /**
 	     * Sets message or messages
@@ -15215,10 +15238,6 @@
 	 * @copyright 2001-2021 Bitrix
 	 */
 	var BitrixVue = /*#__PURE__*/function () {
-	  /**
-	   * @deprecated
-	   * @type {boolean}
-	   */
 	  function BitrixVue(VueVendor) {
 	    babelHelpers.classCallCheck(this, BitrixVue);
 	    this._components = {};
@@ -16026,7 +16045,16 @@
 	      }; // 1.4  Application EventEmitter
 
 	      $Bitrix.eventEmitter = new main_core_events.EventEmitter();
-	      $Bitrix.eventEmitter.setEventNamespace('vue:app:' + app._uid); // 1.5  Application RestClient
+
+	      if (typeof $Bitrix.eventEmitter.setEventNamespace === 'function') {
+	        $Bitrix.eventEmitter.setEventNamespace('vue:app:' + app._uid);
+	      } else // hack for old version of Bitrix SM
+	        {
+	          window.BX.Event.EventEmitter.prototype.setEventNamespace = function () {};
+
+	          $Bitrix.eventEmitter.setEventNamespace = function () {};
+	        } // 1.5  Application RestClient
+
 
 	      $Bitrix.RestClient = {
 	        instance: null,
@@ -21121,6 +21149,7 @@
 
 
 })();
+ 
 
 
 
@@ -50375,6 +50404,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  chat: 'chat',
 	  users: 'users',
 	  split: 'split'
+	}); //BX.Call.UserState sync
+
+	var ConferenceUserState = Object.freeze({
+	  Idle: 'Idle',
+	  Busy: 'Busy',
+	  Calling: 'Calling',
+	  Unavailable: 'Unavailable',
+	  Declined: 'Declined',
+	  Ready: 'Ready',
+	  Connecting: 'Connecting',
+	  Connected: 'Connected',
+	  Failed: 'Failed'
 	});
 
 	/**
@@ -50404,6 +50445,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  delivered: 'delivered'
 	};
 
+	var NotificationTypesCodes = Object.freeze({
+	  confirm: 1,
+	  simple: 3,
+	  placeholder: 5
+	});
+
 	exports.DateFormat = DateFormat;
 	exports.DeviceType = DeviceType;
 	exports.DeviceOrientation = DeviceOrientation;
@@ -50424,10 +50471,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	exports.ConferenceStateType = ConferenceStateType;
 	exports.ConferenceErrorCode = ConferenceErrorCode;
 	exports.ConferenceRightPanelMode = ConferenceRightPanelMode;
+	exports.ConferenceUserState = ConferenceUserState;
 	exports.ChatTypes = ChatTypes;
 	exports.TemplateTypes = TemplateTypes;
 	exports.RecentSection = RecentSection;
 	exports.MessageStatus = MessageStatus;
+	exports.NotificationTypesCodes = NotificationTypesCodes;
 
 }((this.BX.Messenger.Const = this.BX.Messenger.Const || {})));
  
@@ -52438,7 +52487,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 // file: /bitrix/js/im/model/dist/registry.bundle.js
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports,im_lib_logger,main_core_events,im_const,ui_vue,ui_vue_vuex,im_lib_utils,main_core) {
+(function (exports,im_lib_logger,main_core_events,im_lib_utils,ui_vue,ui_vue_vuex,main_core,im_const) {
 	'use strict';
 
 	/**
@@ -53962,7 +54011,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          readCounter++;
 	        }
 
-	        if (count >= im_const.StorageLimit.messages && readCounter === 50) {
+	        if (count >= im_const.StorageLimit.messages && readCounter >= 50) {
 	          break;
 	        }
 
@@ -57214,7 +57263,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        total: 0,
 	        host: this.getVariable('host', location.protocol + '//' + location.host),
 	        unreadCounter: 0,
-	        schema: []
+	        schema: {}
 	      };
 	    }
 	  }, {
@@ -57225,14 +57274,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        authorId: 0,
 	        date: new Date(),
 	        text: '',
-	        sectionCode: 'notification',
+	        sectionCode: im_const.NotificationTypesCodes.simple,
 	        textConverted: '',
 	        unread: false,
-	        template: 'item',
-	        templateId: 0,
 	        display: true,
-	        settingName: 'im|default',
-	        type: 0
+	        settingName: 'im|default'
 	      };
 	    }
 	  }, {
@@ -57489,6 +57535,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              if (!existingItem.element) {
 	                state.collection.push(element);
 	              } else {
+	                // we trust unread status of existing item to prevent notifications blinking while init loading.
+	                if (element.unread !== state.collection[existingItem.index].unread) {
+	                  element.unread = state.collection[existingItem.index].unread;
+	                  state.unreadCounter = element.unread === true ? state.unreadCounter + 1 : state.unreadCounter - 1;
+	                }
+
 	                state.collection[existingItem.index] = Object.assign(state.collection[existingItem.index], element);
 	              }
 	            }
@@ -57531,13 +57583,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        add: function add(state, payload) {
 	          var firstNotificationIndex = null;
 
-	          if (payload.data.sectionCode === 'confirm') {
+	          if (payload.data.sectionCode === im_const.NotificationTypesCodes.confirm) {
 	            //new confirms should always add to the beginning of the collection
 	            state.collection.unshift(payload.data);
-	          } else //if (payload.data.sectionCode === 'notification')
+	          } else //if (payload.data.sectionCode === NotificationTypesCodes.simple)
 	            {
 	              for (var index = 0; state.collection.length > index; index++) {
-	                if (state.collection[index].sectionCode === 'notification') {
+	                if (state.collection[index].sectionCode === im_const.NotificationTypesCodes.simple) {
 	                  firstNotificationIndex = index;
 	                  break;
 	                }
@@ -57565,7 +57617,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        readAll: function readAll(state, payload) {
 	          for (var index = 0; state.collection.length > index; index++) {
-	            if (state.collection[index].sectionCode === 'notification') {
+	            if (state.collection[index].sectionCode === im_const.NotificationTypesCodes.simple) {
 	              state.collection[index].unread = false;
 	            }
 	          }
@@ -57690,12 +57742,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        });
 	      }
 
-	      if (fields.notify_type === 1 || fields.type === 1) {
-	        result.sectionCode = 'confirm';
-	      }
-
-	      if (main_core.Type.isNumber(fields.notify_type)) {
-	        result.type = fields.notify_type;
+	      if (fields.notify_type === im_const.NotificationTypesCodes.confirm || fields.type === im_const.NotificationTypesCodes.confirm) {
+	        result.sectionCode = im_const.NotificationTypesCodes.confirm;
+	      } else if (fields.type === im_const.NotificationTypesCodes.placeholder) {
+	        result.sectionCode = im_const.NotificationTypesCodes.placeholder;
 	      }
 
 	      if (!main_core.Type.isNil(fields.notify_read)) {
@@ -57705,14 +57755,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (!main_core.Type.isNil(fields.read)) {
 	        result.unread = fields.read === 'N'; //?
-	      }
-
-	      if (main_core.Type.isString(fields.templateId)) {
-	        result.templateId = fields.templateId;
-	      }
-
-	      if (main_core.Type.isString(fields.template)) {
-	        result.template = fields.template;
 	      }
 
 	      if (main_core.Type.isString(fields.setting_name)) {
@@ -57803,9 +57845,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "sortByType",
 	    value: function sortByType(a, b) {
-	      if (a.sectionCode === 'confirm' && b.sectionCode !== 'confirm') {
+	      if (a.sectionCode === im_const.NotificationTypesCodes.confirm && b.sectionCode !== im_const.NotificationTypesCodes.confirm) {
 	        return -1;
-	      } else if (a.sectionCode !== 'confirm' && b.sectionCode === 'confirm') {
+	      } else if (a.sectionCode !== im_const.NotificationTypesCodes.confirm && b.sectionCode === im_const.NotificationTypesCodes.confirm) {
 	        return 1;
 	      } else {
 	        return 0;
@@ -57900,6 +57942,170 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return NotificationsModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
+	/**
+	 * Bitrix Messenger
+	 * Call Application model (Vuex Builder model)
+	 *
+	 * @package bitrix
+	 * @subpackage im
+	 * @copyright 2001-2020 Bitrix
+	 */
+	var CallModel = /*#__PURE__*/function (_VuexBuilderModel) {
+	  babelHelpers.inherits(CallModel, _VuexBuilderModel);
+
+	  function CallModel() {
+	    babelHelpers.classCallCheck(this, CallModel);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallModel).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(CallModel, [{
+	    key: "getName",
+	    value: function getName() {
+	      return 'call';
+	    }
+	  }, {
+	    key: "getState",
+	    value: function getState() {
+	      return {
+	        users: {}
+	      };
+	    }
+	  }, {
+	    key: "getElementState",
+	    value: function getElementState() {
+	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      return {
+	        id: params.id ? params.id : 0,
+	        state: im_const.ConferenceUserState.Idle,
+	        talking: false,
+	        pinned: false,
+	        cameraState: false,
+	        microphoneState: false,
+	        screenState: false,
+	        floorRequestState: false
+	      };
+	    }
+	  }, {
+	    key: "getGetters",
+	    value: function getGetters() {
+	      var _this = this;
+
+	      return {
+	        getUser: function getUser(state) {
+	          return function (userId) {
+	            userId = parseInt(userId, 10);
+
+	            if (!state.users[userId]) {
+	              return _this.getElementState({
+	                id: userId
+	              });
+	            }
+
+	            return state.users[userId];
+	          };
+	        },
+	        getBlankUser: function getBlankUser(state) {
+	          return function (userId) {
+	            userId = parseInt(userId, 10);
+	            return _this.getElementState({
+	              id: userId
+	            });
+	          };
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getActions",
+	    value: function getActions() {
+	      var _this2 = this;
+
+	      return {
+	        updateUser: function updateUser(store, payload) {
+	          payload.id = parseInt(payload.id, 10);
+	          payload.fields = Object.assign({}, _this2.validate(payload.fields));
+	          store.commit('updateUser', payload);
+	        },
+	        unpinUser: function unpinUser(store, payload) {
+	          store.commit('unpinUser');
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getMutations",
+	    value: function getMutations() {
+	      var _this3 = this;
+
+	      return {
+	        updateUser: function updateUser(state, payload) {
+	          if (!state.users[payload.id]) {
+	            ui_vue.WidgetVue.set(state.users, payload.id, Object.assign(_this3.getElementState(), payload.fields, {
+	              id: payload.id
+	            }));
+	          } else {
+	            state.users[payload.id] = Object.assign(state.users[payload.id], payload.fields);
+	          }
+	        },
+	        unpinUser: function unpinUser(state, payload) {
+	          var pinnedUser = Object.values(state.users).find(function (user) {
+	            return user.pinned === true;
+	          });
+
+	          if (pinnedUser) {
+	            state.users[pinnedUser.id].pinned = false;
+	          }
+	        }
+	      };
+	    }
+	  }, {
+	    key: "validate",
+	    value: function validate(payload) {
+	      var result = {};
+
+	      if (main_core.Type.isNumber(payload.id) || main_core.Type.isString(payload.id)) {
+	        result.id = parseInt(payload.id, 10);
+	      }
+
+	      if (im_const.ConferenceUserState[payload.state]) {
+	        result.state = payload.state;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.talking)) {
+	        result.talking = payload.talking;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.pinned)) {
+	        result.pinned = payload.pinned;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.cameraState)) {
+	        result.cameraState = payload.cameraState;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.microphoneState)) {
+	        result.microphoneState = payload.microphoneState;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.screenState)) {
+	        result.screenState = payload.screenState;
+	      }
+
+	      if (main_core.Type.isBoolean(payload.floorRequestState)) {
+	        result.floorRequestState = payload.floorRequestState;
+	      }
+
+	      return result;
+	    }
+	  }, {
+	    key: "getStateSaveException",
+	    value: function getStateSaveException() {
+	      return {
+	        users: false
+	      };
+	    }
+	  }]);
+	  return CallModel;
+	}(ui_vue_vuex.WidgetVuexBuilderModel);
+
 	exports.ApplicationModel = ApplicationModel;
 	exports.ConferenceModel = ConferenceModel;
 	exports.MessagesModel = MessagesModel;
@@ -57908,8 +58114,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	exports.FilesModel = FilesModel;
 	exports.RecentModel = RecentModel;
 	exports.NotificationsModel = NotificationsModel;
+	exports.CallModel = CallModel;
 
-}((this.BX.Messenger.Model = this.BX.Messenger.Model || {}),BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX,BX,BX.Messenger.Lib,BX));
+}((this.BX.Messenger.Model = this.BX.Messenger.Model || {}),BX.Messenger.Lib,BX.Event,BX.Messenger.Lib,BX,BX,BX,BX.Messenger.Const));
  
 
 
@@ -59202,9 +59409,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var element = event.element;
 	      var eventData = event.event;
 
-	      if (element.LINK) {
+	      if (!im_lib_utils.Utils.platform.isBitrixMobile() && element.LINK) {
+	        return;
+	      }
+
+	      if (element.LINK && eventData.target.tagName !== 'A') {
 	        im_lib_utils.Utils.platform.openNewPage(element.LINK);
-	      } else {
+	      } else if (!element.LINK) {
 	        var entity = {
 	          id: null,
 	          type: null
@@ -59279,7 +59490,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    methods: {
 	      getWidth: function getWidth(element) {
-	        if (this.type !== 'row') {
+	        if (element.DISPLAY !== 'row') {
 	          return element.WIDTH ? element.WIDTH + 'px' : '';
 	        }
 
@@ -59312,13 +59523,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        });
 	      }
 	    },
-	    computed: {
-	      type: function type() {
-	        return this.config.GRID[0].DISPLAY.toLowerCase();
-	      }
-	    },
 	    //language=Vue
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-grid\">\n\t\t\t\t<template v-if=\"type === 'block'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-block\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'line'\">\n\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-card\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"type === 'row'\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-column\">\n\t\t\t\t\t\t<table class=\"bx-im-element-attach-type-display-column-table\">\n\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.NAME\">\n\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-name\" :colspan=\"element.VALUE? 1: 2\" :style=\"{width: getWidth(element)}\">{{element.NAME}}</td>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.VALUE\">\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t\t\t\t\t<td \n\t\t\t\t\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t:colspan=\"element.NAME? 1: 2\" \n\t\t\t\t\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" @click.prevent=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-value\" :colspan=\"element.NAME? 1: 2\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-grid\">\n\t\t\t\t<template v-for=\"(element, index) in config.GRID\">\n\t\t\t\t\t<template v-if=\"element.DISPLAY.toLowerCase() === 'block'\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-block\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" target=\"_blank\" @click=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"element.DISPLAY.toLowerCase() === 'line'\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-card\" :style=\"{width: getWidth(element)}\">\n\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-name\">{{element.NAME}}</div>\n\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" target=\"_blank\" @click=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-element-value\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"element.DISPLAY.toLowerCase() === 'row'\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-grid-display bx-im-element-attach-type-display-column\">\n\t\t\t\t\t\t\t<table class=\"bx-im-element-attach-type-display-column-table\">\n\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.NAME\">\n\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-name\" :colspan=\"element.VALUE? 1: 2\" :style=\"{width: getWidth(element)}\">{{element.NAME}}</td>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.VALUE\">\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"element.LINK\">\n\t\t\t\t\t\t\t\t\t\t\t\t<td\n\t\t\t\t\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-grid-element-value bx-im-element-attach-type-grid-element-value-link\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t:colspan=\"element.NAME? 1: 2\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t:style=\"{color: element.COLOR? element.COLOR: ''}\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<a :href=\"element.LINK\" target=\"_blank\" @click=\"openLink({element: element, event: $event})\" v-html=\"getValue(element)\"></a>\n\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"bx-im-element-attach-type-grid-element-value\" :colspan=\"element.NAME? 1: 2\" :style=\"{color: element.COLOR? element.COLOR: ''}\" v-html=\"getValue(element)\"></td>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -59503,7 +59709,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    components: babelHelpers.defineProperty({}, AttachTypeImage.name, AttachTypeImage.component),
 	    //language=Vue
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-link\">\n\t\t\t\t<template v-for=\"(element, index) in config.LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-link-element\" :key=\"index\">\n\t\t\t\t\t\t<a \n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\"\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-name\" \n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span \n\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-ajax-link\"\n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-link-desc\">{{element.DESC}}</div>\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tv-if=\"element.PREVIEW\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-image\"\n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-link\">\n\t\t\t\t<template v-for=\"(element, index) in config.LINK\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-link-element\" :key=\"index\">\n\t\t\t\t\t\t<a \n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\"\n\t\t\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-name\" \n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span \n\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-ajax-link\"\n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{getLinkName(element)}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<div v-if=\"element.DESC\" class=\"bx-im-element-attach-type-link-desc\">{{element.DESC}}</div>\n\t\t\t\t\t\t<div \n\t\t\t\t\t\t\tv-if=\"element.PREVIEW\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-link-image\"\n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<component :is=\"imageComponentName\" :config=\"getImageConfig(element)\" :color=\"color\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -59642,7 +59848,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    },
 	    //language=Vue
-	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-user\">\n\t\t\t\t<template v-for=\"(element, index) in config.USER\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-body\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-avatar\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-element-attach-type-user-avatar-type', getAvatarType(element)]\" :style=\"{backgroundColor: element.AVATAR? '': color}\">\n\t\t\t\t\t\t\t\t<img v-if=\"element.AVATAR\" \n\t\t\t\t\t\t\t\t\tv-bx-lazyload\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-avatar-source\"\n\t\t\t\t\t\t\t\t\t:data-lazyload-src=\"element.AVATAR\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-name\" \n\t\t\t\t\t\t\t@click.prevent=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span v-else @click.prevent=\"openLink({element: element, event: $event})\">\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
+	    template: "\n\t\t\t<div class=\"bx-im-element-attach-type-user\">\n\t\t\t\t<template v-for=\"(element, index) in config.USER\">\n\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-body\">\n\t\t\t\t\t\t<div class=\"bx-im-element-attach-type-user-avatar\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-element-attach-type-user-avatar-type', getAvatarType(element)]\" :style=\"{backgroundColor: element.AVATAR? '': color}\">\n\t\t\t\t\t\t\t\t<img v-if=\"element.AVATAR\" \n\t\t\t\t\t\t\t\t\tv-bx-lazyload\n\t\t\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-avatar-source\"\n\t\t\t\t\t\t\t\t\t:data-lazyload-src=\"element.AVATAR\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\tv-if=\"element.LINK\"\n\t\t\t\t\t\t\t:href=\"element.LINK\" \n\t\t\t\t\t\t\tclass=\"bx-im-element-attach-type-user-name\"\n\t\t\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t\t\t\t@click=\"openLink({element: element, event: $event})\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span v-else @click.prevent=\"openLink({element: element, event: $event})\">\n\t\t\t\t\t\t\t{{element.NAME}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t"
 	  }
 	};
 
@@ -62996,42 +63202,55 @@ this.BX = this.BX || {};
 	   */
 	  props: {
 	    userId: {
+	      type: Number,
 	      default: 0
 	    },
 	    dialogId: {
-	      default: 0
+	      type: String,
+	      default: "0"
 	    },
 	    messageLimit: {
+	      type: Number,
 	      default: 50
 	    },
 	    enableReadMessages: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableReactions: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableDateActions: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableCreateContent: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableGestureQuote: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableGestureQuoteFromRight: {
+	      type: Boolean,
 	      default: true
 	    },
 	    enableGestureMenu: {
+	      type: Boolean,
 	      default: false
 	    },
 	    showMessageUserName: {
+	      type: Boolean,
 	      default: true
 	    },
 	    showMessageAvatar: {
+	      type: Boolean,
 	      default: true
 	    },
 	    showMessageMenu: {
+	      type: Boolean,
 	      default: true
 	    }
 	  },
@@ -63046,31 +63265,19 @@ this.BX = this.BX || {};
 	      messagesSet: false,
 	      scrollAnimating: false,
 	      showScrollButton: false,
-	      TemplateType: im_const.DialogTemplateType,
-	      ObserverType: ObserverType,
-	      DialogReferenceClassName: im_const.DialogReferenceClassName,
 	      captureMove: false,
 	      capturedMoveEvent: null,
 	      lastMessageId: null,
-	      historyMessageLimit: 50,
-	      unreadMessageLimit: 50,
 	      isRequestingHistory: false,
 	      historyPagesRequested: 0,
 	      stopHistoryLoading: false,
 	      isRequestingUnread: false,
 	      unreadPagesRequested: 0,
-	      placeholdersComposition: [],
 	      placeholderCount: 0,
-	      lastScroll: 0,
-	      scrollingDownThreshold: 1000,
-	      scrollingUpThreshold: 1000,
-	      messageScrollOffset: 20,
 	      pagesLoaded: 0
 	    };
 	  },
 	  created: function created() {
-	    this.count = 1;
-	    this.placeholdersComposition = this.getPlaceholdersComposition();
 	    im_lib_logger.Logger.warn('MessageList component is created');
 	    this.initParams();
 	    this.initEvents();
@@ -63099,6 +63306,15 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  computed: babelHelpers.objectSpread({
+	    TemplateType: function TemplateType() {
+	      return im_const.DialogTemplateType;
+	    },
+	    ObserverType: function ObserverType$$1() {
+	      return ObserverType;
+	    },
+	    DialogReferenceClassName: function DialogReferenceClassName() {
+	      return im_const.DialogReferenceClassName;
+	    },
 	    localize: function localize() {
 	      return ui_vue.WidgetBitrixVue.getFilteredPhrases('IM_MESSENGER_DIALOG_', this);
 	    },
@@ -63282,7 +63498,14 @@ this.BX = this.BX || {};
 	  methods: {
 	    /* region 01. Init and destroy */
 	    initParams: function initParams() {
+	      this.placeholdersComposition = this.getPlaceholdersComposition();
+	      this.historyMessageLimit = 50;
+	      this.unreadMessageLimit = 50;
 	      this.showScrollButton = this.unreadCounter > 0;
+	      this.scrollingDownThreshold = 1000;
+	      this.scrollingUpThreshold = 1000;
+	      this.messageScrollOffset = 20;
+	      this.lastScroll = 0;
 	      this.scrollChangedByUser = false;
 	      this.scrollButtonDiff = 100;
 	      this.scrollButtonShowTimeout = null;
@@ -63332,7 +63555,7 @@ this.BX = this.BX || {};
 	    /* endregion 01. Init and destroy */
 
 	    /* region 02. Event handlers */
-	    onReadMessage: function onReadMessage() {//reassign method to ignore handler from ReadMessages mixin
+	    onReadMessage: function onReadMessage() {//redeclare method to ignore handler from ReadMessages mixin
 	    },
 	    onDialogClick: function onDialogClick(event) {
 	      if (ui_vue.WidgetBitrixVue.testNode(event.target, {
@@ -67149,13 +67372,19 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "handleNotifyDelete",
 	    value: function handleNotifyDelete(params, extra) {
+	      var _this3 = this;
+
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
 
-	      var idToDelete = +Object.keys(params.id)[0];
-	      this.store.dispatch('notifications/delete', {
-	        id: idToDelete
+	      var idsToDelete = Object.keys(params.id).map(function (id) {
+	        return parseInt(id, 10);
+	      });
+	      idsToDelete.forEach(function (id) {
+	        _this3.store.dispatch('notifications/delete', {
+	          id: id
+	        });
 	      });
 	      this.updateRecentListOnDelete(params.counter);
 	      this.store.dispatch('notifications/setCounter', {

@@ -1,4 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @var CBitrixComponent $this */
 /** @var string $componentPath */
 /** @var string $componentName */
@@ -37,7 +43,7 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 	/** @var  ErrorCollection */
 	protected $errorCollection;
 
-	protected function listKeysSignedParameters()
+	protected function listKeysSignedParameters(): array
 	{
 		return [
 			'GROUP_ID',
@@ -54,17 +60,17 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 
 	public function getEntryLogIdAction($params)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('MOBILE_LIVEFEED_SOCIALNETWORK_MODULE_NOT_INSTALLED', 'MOBILE_LIVEFEED_SOCIALNETWORK_MODULE_NOT_INSTALLED'))]);
 			return;
 		}
 
-		$entityType = (isset($params['entityType']) ? $params['entityType'] : '');
-		$entityId = (isset($params['entityId']) ? intval($params['entityId']) : 0);
+		$entityType = (string)($params['entityType'] ?? '');
+		$entityId = (int)($params['entityId'] ?? 0);
 
 		if (
-			$entityType == ''
+			$entityType === ''
 			|| $entityId <= 0
 		)
 		{
@@ -88,21 +94,21 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 
 	public function getEntryContentAction($params)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('MOBILE_LIVEFEED_SOCIALNETWORK_MODULE_NOT_INSTALLED', 'MOBILE_LIVEFEED_SOCIALNETWORK_MODULE_NOT_INSTALLED'))]);
 			return;
 		}
 
-		$logId = (isset($params['logId']) ? (int)$params['logId'] : 0);
+		$logId = (int)($params['logId'] ?? 0);
 		$pinnedContext = (isset($params['pinned']) && $params['pinned'] === 'Y');
-		$entityType = (isset($params['entityType']) ? $params['entityType'] : '');
-		$entityId = (isset($params['entityId']) ? (int)$params['entityId'] : 0);
-		$siteTemplateId = (isset($params['siteTemplateId']) ? $params['siteTemplateId'] : 'mobile_app');
+		$entityType = (string)($params['entityType'] ?? '');
+		$entityId = (int)($params['entityId'] ?? 0);
+		$siteTemplateId = (string)($params['siteTemplateId'] ?? 'mobile_app');
 
 		if (
 			$logId <= 0
-			&& $entityType <> ''
+			&& $entityType !== ''
 			&& $entityId > 0
 		)
 		{
@@ -138,12 +144,11 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 	{
 		global $APPLICATION;
 
-		\CPageOption::setOptionString('main', 'nav_page_in_session', 'N');
+		CPageOption::setOptionString('main', 'nav_page_in_session', 'N');
 		$APPLICATION->setPageProperty('BodyClass', ($this->arParams['LOG_ID'] > 0 || $this->arParams['EMPTY_PAGE'] === 'Y' ? 'post-card' : 'lenta-page'));
 
 		$this->arResult = $this->prepareData();
 
 		$this->includeComponentTemplate();
 	}
-
 }

@@ -77,10 +77,6 @@
 		{
 			b24form.App.initFormScript24(form);
 		},
-		checkBabelHelpers: function ()
-		{
-			return window.babelHelpers;
-		},
 		checkPolyfills: function ()
 		{
 			return window.fetch && window.Request && window.Response

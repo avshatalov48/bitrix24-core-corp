@@ -25,7 +25,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman\Model\Monitor
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_MonitorUserLog_Query query()
+ * @method static EO_MonitorUserLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_MonitorUserLog_Result getById($id)
+ * @method static EO_MonitorUserLog_Result getList(array $parameters = array())
+ * @method static EO_MonitorUserLog_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserLog_Collection wakeUpCollection($rows)
+ */
 
 class MonitorUserLogTable extends DataManager
 {

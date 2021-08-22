@@ -51,6 +51,21 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 		return false;
 	}
 
+	protected function isIntegrator()
+	{
+		global $USER;
+
+		if (
+			Loader::includeModule('bitrix24')
+			&& \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID())
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public function deactivateOtpAction($numDays)
 	{
 		global $USER;
@@ -61,7 +76,10 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
-		if (!$this->canEditOtp())
+		if (
+			!$this->canEditOtp()
+			|| $this->isIntegrator()
+		)
 		{
 			$this->addError(new \Bitrix\Main\Error("No rights"));
 			return false;

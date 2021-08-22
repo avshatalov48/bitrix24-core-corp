@@ -35,33 +35,23 @@
 			destinationPrefixColor: '#ababab',
 		};
 
-		let visibilityButtonTitle = '';
-		if (
-			forAll
-			&& recipientsCount === 1
-		)
-		{
-			visibilityButtonTitle = BX.message('MOBILE_EXT_LAYOUT_POSTFORM_KEYBOARDPANEL_ITEM_DESTINATIONA_ALL').toUpperCase();
-		}
-		else if (
-			forAll
-			&& recipientsCount > 1
-		)
-		{
-			visibilityButtonTitle = BX.message('MOBILE_EXT_LAYOUT_POSTFORM_KEYBOARDPANEL_ITEM_DESTINATIONA_ALL_PLUS_NUMBER').replace('#NUM#', (recipientsCount - 1)).toUpperCase();
-		}
-		else if (
-			!forAll
-			&& recipientsCount > 0
-		)
-		{
-			visibilityButtonTitle = recipientsCount;
-		}
+		const BBCodeVersion = 38;
 
-		recipientsString = recipientsString
-			.replace('<', '&lt;').replace('>', '&gt;')
-			.replace('#PREFIX_BEGIN#', `<font color="${config.destinationPrefixColor}">`).replace('#PREFIX_END#', '</font>')
-			.replace('#ALL_BEGIN#', `<b><font color="${config.destinationAllColor}">`).replace('#ALL_END#', '</font></b>');
+		if (Application.getApiVersion() >= BBCodeVersion)
+		{
+			recipientsString = recipientsString
+				.replace(/&nbsp;/g, ' ')
+				.replace('#PREFIX_BEGIN#', `[COLOR=${config.destinationPrefixColor}]`).replace('#PREFIX_END#', '[/COLOR]')
+				.replace('#ALL_BEGIN#', `[B][COLOR=${config.destinationAllColor}]`).replace('#ALL_END#', '[/COLOR][/B]');
+		}
+		else
+		{
+			recipientsString = recipientsString
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace('#PREFIX_BEGIN#', `<font color="${config.destinationPrefixColor}">`).replace('#PREFIX_END#', '</font>')
+				.replace('#ALL_BEGIN#', `<b><font color="${config.destinationAllColor}">`).replace('#ALL_END#', '</font></b>');
+		}
 
 		return View(
 			{
@@ -146,20 +136,38 @@
 								});
 							},
 						},
-						Text({
-							html: `<font color="${config.destinationColor}">${recipientsString}</font>`,
-							style: {
-								fontSize: 14,
-								textAlignVertical: 'center',
-								minHeight: iconHeightNormal,
-								maxWidth: device.screen.width
-									- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
-									- (2 * config.paddingLeftRight) // keyboard left and right padding
-									- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
-									- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
-									- config.widthEllipsisButton, //
-							},
-						}),
+						(
+							Application.getApiVersion() >= BBCodeVersion
+								? BBCodeText({
+									value: `[COLOR=${config.destinationColor}]${recipientsString}[/COLOR]`,
+									style: {
+										fontSize: 14,
+										textAlignVertical: 'center',
+										minHeight: iconHeightNormal,
+										maxWidth: device.screen.width
+											- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
+											- (2 * config.paddingLeftRight) // keyboard left and right padding
+											- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
+											- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
+											- config.widthEllipsisButton, //
+									},
+								})
+								: Text({
+									html: `<font color="${config.destinationColor}">${recipientsString}</font>`,
+									style: {
+										fontSize: 14,
+										textAlignVertical: 'center',
+										minHeight: iconHeightNormal,
+										maxWidth: device.screen.width
+											- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
+											- (2 * config.paddingLeftRight) // keyboard left and right padding
+											- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
+											- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
+											- config.widthEllipsisButton, //
+									},
+								})
+						)
+						,
 					),
 					View({
 							style: {

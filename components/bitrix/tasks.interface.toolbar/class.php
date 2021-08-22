@@ -40,7 +40,6 @@ class TasksToolbarComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['PROJECT_VIEW'], 'N');
 		static::tryParseStringParameter($arParams['SCOPE'], '');
 		static::tryParseStringParameter($arParams['FILTER_FIELD'], 'PROBLEM');
-		static::tryParseStringParameter($arParams['SPRINT_SELECTED'], 'N');
 
 		if ($arParams['GROUP_ID'] > 0)
 		{
@@ -59,8 +58,7 @@ class TasksToolbarComponent extends TasksBaseComponent
 		$this->listCtrl = Filter\Task::getListCtrlInstance();
 		$this->listCtrl->useState($this->listState);
 
-		$this->arResult['IS_NOT_SPRINT'] = ($this->arParams['SPRINT_SELECTED'] !== 'Y');
-		$this->arResult['SHOW_COUNTERS'] = ($this->arParams['SPRINT_SELECTED'] !== 'Y' && $this->hasAccessToCounters());
+		$this->arResult['SHOW_COUNTERS'] = $this->hasAccessToCounters();
 		$this->arResult['SPOTLIGHT_SIMPLE_COUNTERS'] = (
 			$this->arParams['SHOW_VIEW_MODE'] === 'Y'
 			&& $this->showSpotlight('simple_counters')

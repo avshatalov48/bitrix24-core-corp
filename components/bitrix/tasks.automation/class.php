@@ -74,24 +74,21 @@ class TasksAutomationComponent extends \CBitrixComponent
 		if (!$viewType)
 		{
 			$viewType = ($projectId > 0) ? 'project' : 'plan';
-
-			if ($viewType === 'project' && Loader::includeModule('socialnetwork'))
-			{
-				$group = Workgroup::getById($projectId);
-				if ($group && $group->isScrumProject())
-				{
-					$viewType = 'scrumProject';
-				}
-			}
 		}
 
 		if ($viewType === 'project')
 		{
 			$documentType = Tasks\Integration\Bizproc\Document\Task::resolveProjectTaskType($projectId);
-		}
-		elseif ($viewType === 'scrumProject')
-		{
-			$documentType = Tasks\Integration\Bizproc\Document\Task::resolveScrumProjectTaskType($projectId);
+
+			if (Loader::includeModule('socialnetwork'))
+			{
+				$group = Workgroup::getById($projectId);
+				if ($group && $group->isScrumProject())
+				{
+					$documentType = Tasks\Integration\Bizproc\Document\Task::resolveScrumProjectTaskType($projectId);
+				}
+			}
+
 		}
 		elseif ($viewType === 'plan')
 		{

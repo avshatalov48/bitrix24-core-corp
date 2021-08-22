@@ -972,6 +972,7 @@ include('InAppNotifier');
 					lastTime: now.getTime(),
 					value: result.deadlines,
 				},
+				efficiency: false,
 			});
 		}
 
@@ -1035,6 +1036,10 @@ include('InAppNotifier');
 				},
 				user_option_changed: {
 					method: this.list.onUserOptionChanged,
+					context: this.list,
+				},
+				user_efficiency_counter: {
+					method: this.list.onUserEfficiencyCounter,
 					context: this.list,
 				},
 				user_counter: {
@@ -1206,6 +1211,7 @@ include('InAppNotifier');
 
 			this.checkDeadlinesUpdate();
 			this.prepareTaskGroupList();
+			this.getEfficiencyCounter();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -1626,6 +1632,7 @@ include('InAppNotifier');
 		runOnAppActiveRepeatedActions()
 		{
 			this.filter.updateCounters();
+			this.getEfficiencyCounter();
 			this.reload();
 
 			this.prepareTaskGroupList();
@@ -1652,6 +1659,41 @@ include('InAppNotifier');
 						value: response.result,
 					}));
 			}
+		}
+
+		getEfficiencyCounter()
+		{
+			this.efficiency = false;
+
+			if (!this.isMyList())
+			{
+				return;
+			}
+
+			this.efficiency = this.options.get().efficiency;
+
+			(new Request('mobile.tasks.'))
+				.call('efficiency.get', {
+					userId: this.owner.id,
+				})
+				.then((response) => {
+					this.efficiency = response.result;
+					this.options.update('efficiency', this.efficiency);
+				});
+		}
+
+		onUserEfficiencyCounter(eventData)
+		{
+			console.log('onUserEfficiencyCounter', eventData, this.isMyList());
+
+			if (!this.isMyList())
+			{
+				return;
+			}
+
+			const {value} = eventData;
+			this.efficiency = value;
+			this.options.update('efficiency', this.efficiency);
 		}
 
 		onTabsSelected(tabName)
@@ -2928,6 +2970,24 @@ include('InAppNotifier');
 			});
 			actionItems.forEach(actionItem => menuItems.push(actionItem));
 
+			if (
+				apiVersion >= 38
+				&& this.efficiency !== false
+				&& this.efficiency >= 0
+			)
+			{
+				menuItems.push({
+					id: 'efficiency',
+					title: BX.message('TASKS_POPUP_MENU_EFFICIENCY'),
+					iconUrl: `${urlPrefix}efficiency.png`,
+					sectionCode: 'default',
+					counterValue: `${this.efficiency}%`,
+					counterStyle: {
+						backgroundColor: '#9DCF00',
+					},
+				});
+			}
+
 			return menuItems;
 		}
 
@@ -2961,10 +3021,22 @@ include('InAppNotifier');
 					BX.postComponentEvent('task.list.onToggleCompleted', []);
 					break;
 
+				case 'efficiency':
+					this.openEfficiencyPage();
+					break;
+
 				default:
 					this.reload(0, true);
 					break;
 			}
+		}
+
+		openEfficiencyPage()
+		{
+			BX.postComponentEvent('taskbackground::efficiency::open', [{
+				userId: this.owner.id,
+				groupId: this.groupId,
+			}]);
 		}
 
 		onReadAllClick()

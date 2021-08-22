@@ -1672,7 +1672,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('TITLE', 'ASSIGNED_BY_ID')
+					array('ID', 'TITLE', 'ASSIGNED_BY_ID', 'BEGINDATE', 'QUOTE_NUMBER')
 				);
 				break;
 			}
@@ -1754,7 +1754,38 @@ class CCrmOwnerType
 
 		if(!is_object($dbRes))
 		{
-			return;
+			$factory = Container::getInstance()->getFactory($typeID);
+			if (!$factory)
+			{
+				return;
+			}
+
+			$params = [
+				'select' => [
+					\Bitrix\Crm\Item::FIELD_NAME_ID,
+					\Bitrix\Crm\Item::FIELD_NAME_TITLE,
+					\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED,
+				],
+				'filter' => [
+					'@ID' => $IDs,
+				],
+			];
+
+			if ($checkPermissions)
+			{
+				$items = $factory->getItemsFilteredByPermissions($params);
+			}
+			else
+			{
+				$items = $factory->getItems($params);
+			}
+			$data = [];
+			foreach ($items as $item)
+			{
+				$data[] = $item->getCompatibleData();
+			}
+			$dbRes = new \CDBResult();
+			$dbRes->InitFromArray($data);
 		}
 
 		$enableResponsible = isset($options['ENABLE_RESPONSIBLE']) && $options['ENABLE_RESPONSIBLE'] === true;
@@ -2094,16 +2125,20 @@ class CCrmOwnerType
 			}
 			case self::Quote:
 			{
+				$title = $arRes['TITLE'] ?? '';
+				if (empty($title))
+				{
+					$title = Bitrix\Crm\Item\Quote::getTitlePlaceholderFromData($arRes);
+				}
 				$result = array(
-					'TITLE' => isset($arRes['TITLE']) ? $arRes['TITLE'] : '',
+					'TITLE' => $title,
 					'LEGEND' => '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_quote_show'),
-							array('quote_id' => $ID)
-						)
+					'SHOW_URL' => Container::getInstance()->getRouter()->getItemDetailUrl(
+						static::Quote,
+						$arRes['ID']
+					)
 				);
 				if($enableEditUrl)
 				{
@@ -2255,6 +2290,19 @@ class CCrmOwnerType
 				);
 			}
 		}
+
+		if (static::isPossibleDynamicTypeId($typeID))
+		{
+			return [
+				'TITLE' => $arRes[\Bitrix\Crm\Item::FIELD_NAME_TITLE] ?? '',
+				'RESPONSIBLE_ID' => $arRes[\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED] ?? 0,
+				'SHOW_URL' => Container::getInstance()->getRouter()->getItemDetailUrl(
+					$typeID,
+					$arRes['ID'] ?? 0
+				)->getUri(),
+			];
+		}
+
 		return null;
 	}
 

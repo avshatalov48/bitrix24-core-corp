@@ -2,6 +2,7 @@
 namespace Bitrix\Location\Entity\Address\Normalizer;
 
 use Bitrix\Main\IO\File;
+use Bitrix\Main\Localization;
 
 /**
  * Normalize location name due to language specialties
@@ -119,7 +120,14 @@ class LanguageNormalizer implements INormalizer
 			{
 				if (File::isFileExists($langDataPath))
 				{
-					$result = require $langDataPath;
+					if (Localization\Translation::allowConvertEncoding())
+					{
+						$result = Localization\SteamConverter::include($langDataPath, $lang);
+					}
+					else
+					{
+						$result = require $langDataPath;
+					}
 				}
 			}
 		}

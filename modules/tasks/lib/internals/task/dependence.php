@@ -18,7 +18,20 @@ use Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\Tasks
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Dependence_Query query()
+ * @method static EO_Dependence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Dependence_Result getById($id)
+ * @method static EO_Dependence_Result getList(array $parameters = array())
+ * @method static EO_Dependence_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Dependence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Dependence_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Dependence wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Dependence_Collection wakeUpCollection($rows)
+ */
 
 class DependenceTable extends Main\Entity\DataManager
 {

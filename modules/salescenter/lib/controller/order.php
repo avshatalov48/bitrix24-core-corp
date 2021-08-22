@@ -287,11 +287,12 @@ class Order extends Base
 			}
 		}
 
-		$availableServiceIds = [];
+		$availableServices = [];
 		$activeServices = Delivery\Services\Manager::getActiveList();
 		foreach ($activeServices as $service)
 		{
 			$isCompatible = false;
+			$compatibleExtraServiceIds = null;
 
 			if (is_null($shipment))
 			{
@@ -304,17 +305,18 @@ class Order extends Base
 				if ($serviceObject && $serviceObject->isCompatible($shipment))
 				{
 					$isCompatible = true;
+					$compatibleExtraServiceIds = $serviceObject->getCompatibleExtraServiceIds($shipment);
 				}
 			}
 
 			if ($isCompatible)
 			{
-				$availableServiceIds[] = $service['ID'];
+				$availableServices[$service['ID']] = $compatibleExtraServiceIds;
 			}
 		}
 
 		return [
-			'availableServiceIds' => $availableServiceIds
+			'availableServices' => $availableServices
 		];
 	}
 
@@ -382,142 +384,253 @@ class Order extends Base
 	}
 
 	/**
-	 * @param int $dealId
-	 * @param array $products
-	 * @param Crm\Order\Order $order
+	 * @param $dealId
+	 * @param $products
+	 * @param $order
+	 * @throws Main\ArgumentException
 	 */
 	protected function syncOrderProductsWithDeal($dealId, $products, $order)
 	{
-		$result = \CCrmDeal::LoadProductRows($dealId);
+		$result = [];
 
-		foreach ($products as $product)
+		if (\CCrmSaleHelper::isWithOrdersMode())
 		{
-			$productId = $product['skuId'] ?? $product['productId'];
-
-			if (
-				!empty($product['additionalFields']['originBasketId'])
-				&& $product['additionalFields']['originBasketId'] !== $product['code']
-			)
+			if ($this->getCountBindingOrders($dealId) > 1)
 			{
-				$basketItem = $order->getBasket()->getItemByBasketCode($product['additionalFields']['originBasketId']);
+				$result = \CCrmDeal::LoadProductRows($dealId);
+			}
 
-				if ($basketItem)
+			$sort = $this->getMaxProductDealSort($result);
+
+			foreach ($products as $product)
+			{
+				$sort += 10;
+				$item = [
+					'PRODUCT_ID' => $product['skuId'] ?? $product['productId'],
+					'PRODUCT_NAME' => $product['name'],
+					'PRICE' => $product['price'],
+					'PRICE_ACCOUNT' => $product['price'],
+					'PRICE_EXCLUSIVE' => $product['basePrice'],
+					'PRICE_NETTO' => $product['basePrice'],
+					'PRICE_BRUTTO' => $product['price'],
+					'QUANTITY' => $product['quantity'],
+					'MEASURE_CODE' => $product['measureCode'],
+					'MEASURE_NAME' => $product['measureName'],
+					'TAX_RATE' => $product['taxRate'],
+					'TAX_INCLUDED' => $product['taxIncluded'],
+					'SORT' => $sort,
+				];
+
+				if (!empty($product['discount']))
 				{
-					$index = $this->searchProduct($result, $basketItem->getProductId());
-					if ($index !== false)
-					{
-						$result[$index]['QUANTITY'] = $basketItem->getQuantity();
-					}
+					$item['DISCOUNT_TYPE_ID'] =
+						(int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY
+							? \Bitrix\Crm\Discount::MONETARY
+							: \Bitrix\Crm\Discount::PERCENTAGE
+					;
+					$item['DISCOUNT_RATE'] = $product['discountRate'];
+					$item['DISCOUNT_SUM'] = $product['discount'];
+				}
+
+				$result[] = $item;
+			}
+
+			/**
+			 * Delivery
+			 */
+			$hasActualDelivery = false;
+			$emptyDeliveryServiceId = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+			$deliverySystemIds = $order->getDeliveryIdList();
+			foreach ($deliverySystemIds as $deliverySystemId)
+			{
+				if ($deliverySystemId != $emptyDeliveryServiceId)
+				{
+					$hasActualDelivery = true;
+					break;
 				}
 			}
-			elseif (
-				!empty($product['additionalFields']['originProductId'])
-				&& $product['additionalFields']['originProductId'] !== $productId
-			)
-			{
-				$index = $this->searchProduct($result, $product['additionalFields']['originProductId']);
-				if ($index !== false)
-				{
-					$result[$index]['PRODUCT_ID'] = $productId;
-					if ($result[$index]['QUANTITY'] < $product['quantity'])
-					{
-						$result[$index]['QUANTITY'] = $product['quantity'];
-					}
 
-					continue;
-				}
-			}
-			else
+			if ($hasActualDelivery)
 			{
-				$index = $this->searchProduct($result, $productId);
-				if ($index !== false)
+				$deliveryPrice = $order->getDeliveryPrice();
+
+				$sort += 10;
+
+				$result[] = [
+					'PRODUCT_NAME' => Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_DELIVERY'),
+					'PRICE' => $deliveryPrice,
+					'PRICE_ACCOUNT' => $deliveryPrice,
+					'PRICE_EXCLUSIVE' => $deliveryPrice,
+					'PRICE_NETTO' => $deliveryPrice,
+					'PRICE_BRUTTO' => $deliveryPrice,
+					'QUANTITY' => 1,
+					'SORT' => $sort,
+				];
+			}
+		}
+		else
+		{
+			$result = \CCrmDeal::LoadProductRows($dealId);
+
+			foreach ($products as $product)
+			{
+				$productId = $product['skuId'] ?? $product['productId'];
+
+				if (
+					!empty($product['additionalFields']['originBasketId'])
+					&& $product['additionalFields']['originBasketId'] !== $product['code']
+				)
 				{
-					$basketItem = $order->getBasket()->getItemByXmlId($product['innerId']);
+					$basketItem = $order->getBasket()->getItemByBasketCode($product['additionalFields']['originBasketId']);
+
 					if ($basketItem)
 					{
-						if ($result[$index]['QUANTITY'] < $basketItem->getQuantity())
+						$index = $this->searchProduct($result, $basketItem->getProductId());
+						if ($index !== false)
 						{
 							$result[$index]['QUANTITY'] = $basketItem->getQuantity();
 						}
-
-						$result[$index]['PRICE'] = $product['basePrice'];
-						$result[$index]['PRICE_EXCLUSIVE'] = $product['basePrice'];
-						$result[$index]['PRICE_ACCOUNT'] = $product['basePrice'];
-						$result[$index]['PRICE_NETTO'] = $product['basePrice'];
-						$result[$index]['PRICE_BRUTTO'] = $product['basePrice'];
-
-						$discount = 0;
-						if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
+					}
+				}
+				elseif (
+					!empty($product['additionalFields']['originProductId'])
+					&& $product['additionalFields']['originProductId'] !== $productId
+				)
+				{
+					$index = $this->searchProduct($result, $product['additionalFields']['originProductId']);
+					if ($index !== false)
+					{
+						$result[$index]['PRODUCT_ID'] = $productId;
+						if ($result[$index]['QUANTITY'] < $product['quantity'])
 						{
-							$discount = $product['discount'];
-
-							$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
-							$result[$index]['DISCOUNT_RATE'] = $product['discountRate'];
-							$result[$index]['DISCOUNT_SUM'] = $product['discount'];
+							$result[$index]['QUANTITY'] = $product['quantity'];
 						}
-						elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
-						{
-							$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
-							$result[$index]['DISCOUNT_SUM'] = $product['discount'];
-
-							$discount = $product['discount'];
-						}
-
-						$result[$index]['PRICE'] -= $discount;
-						$result[$index]['PRICE_ACCOUNT'] -= $discount;
-						$result[$index]['PRICE_EXCLUSIVE'] -= $discount;
 
 						continue;
 					}
 				}
-			}
-
-			$item = [
-				'PRODUCT_ID' => $productId,
-				'PRODUCT_NAME' => $product['name'],
-				'PRICE' => $product['basePrice'],
-				'PRICE_ACCOUNT' => $product['basePrice'],
-				'PRICE_EXCLUSIVE' => $product['basePrice'],
-				'PRICE_NETTO' => $product['basePrice'],
-				'PRICE_BRUTTO' => $product['basePrice'],
-				'QUANTITY' => $product['quantity'],
-				'MEASURE_CODE' => $product['measureCode'],
-				'MEASURE_NAME' => $product['measureName'],
-				'TAX_RATE' => $product['taxRate'],
-				'TAX_INCLUDED' => $product['taxIncluded'],
-			];
-
-			$discount = 0;
-			if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
-			{
-				if ($product['discount'] > 0)
+				else
 				{
-					$discount = $product['discount'];
+					$index = $this->searchProduct($result, $productId);
+					if ($index !== false)
+					{
+						$basketItem = $order->getBasket()->getItemByXmlId($product['innerId']);
+						if ($basketItem)
+						{
+							if ($result[$index]['QUANTITY'] < $basketItem->getQuantity())
+							{
+								$result[$index]['QUANTITY'] = $basketItem->getQuantity();
+							}
 
-					$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
-					$item['DISCOUNT_RATE'] = $product['discountRate'];
-					$item['DISCOUNT_SUM'] = $product['discount'];
+							$result[$index]['PRICE'] = $product['basePrice'];
+							$result[$index]['PRICE_EXCLUSIVE'] = $product['basePrice'];
+							$result[$index]['PRICE_ACCOUNT'] = $product['basePrice'];
+							$result[$index]['PRICE_NETTO'] = $product['basePrice'];
+							$result[$index]['PRICE_BRUTTO'] = $product['basePrice'];
+
+							$discount = 0;
+							if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
+							{
+								$discount = $product['discount'];
+
+								$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
+								$result[$index]['DISCOUNT_RATE'] = $product['discountRate'];
+								$result[$index]['DISCOUNT_SUM'] = $product['discount'];
+							}
+							elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
+							{
+								$result[$index]['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
+								$result[$index]['DISCOUNT_SUM'] = $product['discount'];
+
+								$discount = $product['discount'];
+							}
+
+							$result[$index]['PRICE'] -= $discount;
+							$result[$index]['PRICE_ACCOUNT'] -= $discount;
+							$result[$index]['PRICE_EXCLUSIVE'] -= $discount;
+
+							continue;
+						}
+					}
 				}
+
+				$item = [
+					'PRODUCT_ID' => $productId,
+					'PRODUCT_NAME' => $product['name'],
+					'PRICE' => $product['basePrice'],
+					'PRICE_ACCOUNT' => $product['basePrice'],
+					'PRICE_EXCLUSIVE' => $product['basePrice'],
+					'PRICE_NETTO' => $product['basePrice'],
+					'PRICE_BRUTTO' => $product['basePrice'],
+					'QUANTITY' => $product['quantity'],
+					'MEASURE_CODE' => $product['measureCode'],
+					'MEASURE_NAME' => $product['measureName'],
+					'TAX_RATE' => $product['taxRate'],
+					'TAX_INCLUDED' => $product['taxIncluded'],
+				];
+
+				$discount = 0;
+				if ((int)$product['discountType'] === \Bitrix\Crm\Discount::PERCENTAGE)
+				{
+					if ($product['discount'] > 0)
+					{
+						$discount = $product['discount'];
+
+						$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::PERCENTAGE;
+						$item['DISCOUNT_RATE'] = $product['discountRate'];
+						$item['DISCOUNT_SUM'] = $product['discount'];
+					}
+				}
+				elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
+				{
+					$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
+					$item['DISCOUNT_SUM'] = $product['discount'];
+
+					$discount = $product['discount'];
+				}
+
+				$item['PRICE'] -= $discount;
+				$item['PRICE_ACCOUNT'] -= $discount;
+				$item['PRICE_EXCLUSIVE'] -= $discount;
+
+				$result[] = $item;
 			}
-			elseif ((int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY)
-			{
-				$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
-				$item['DISCOUNT_SUM'] = $product['discount'];
-
-				$discount = $product['discount'];
-			}
-
-			$item['PRICE'] -= $discount;
-			$item['PRICE_ACCOUNT'] -= $discount;
-			$item['PRICE_EXCLUSIVE'] -= $discount;
-
-			$result[] = $item;
 		}
 
 		if ($result)
 		{
 			\CCrmDeal::SaveProductRows($dealId, $result);
 		}
+	}
+
+	protected function getMaxProductDealSort($products)
+	{
+		$sort = 0;
+		foreach ($products as $product)
+		{
+			if ($product['SORT'] > $sort)
+			{
+				$sort = $product['SORT'];
+			}
+		}
+
+		return $sort;
+	}
+
+	protected function getCountBindingOrders($dealId)
+	{
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Crm\Order\DealBinding $dealBinding */
+		$dealBinding = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+
+		return $dealBinding::getList([
+			'select' => ['ORDER_ID'],
+			'filter' => [
+				'=DEAL_ID' => $dealId
+			],
+			'count_total' => true
+		])->getCount();
 	}
 
 	private function searchProduct(array $productList, int $productId)
@@ -1982,7 +2095,7 @@ HTML;
 			return;
 		}
 
-		LocationManager::getInstance()->setDefaultLocationFrom($addressId);
+		LocationManager::getInstance()->storeLocationFrom($addressId);
 	}
 
 	private function onAfterDealAdd(int $dealId, int $sessionId): void

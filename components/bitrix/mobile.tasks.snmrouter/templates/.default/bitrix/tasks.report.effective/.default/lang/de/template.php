@@ -1,0 +1,4 @@
+<?php
+$MESS["TASKS_MOBILE_EFFICIENCY_COMPLETED"] = "Aufgaben abgeschlossen";
+$MESS["TASKS_MOBILE_EFFICIENCY_IN_PROGRESS"] = "Aufgaben gesamt";
+$MESS["TASKS_MOBILE_EFFICIENCY_VIOLATIONS"] = "Kommentare zu Aufgaben";

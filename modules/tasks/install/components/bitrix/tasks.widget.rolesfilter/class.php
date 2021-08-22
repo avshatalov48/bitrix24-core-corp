@@ -66,7 +66,7 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 				'TITLE' => $role['TITLE'],
 				'COUNTER_ID' => 'tasks_'.$countersId[$roleCode],
 				'COUNTER' => $this->getCounter($roleCode),
-				'COUNTER_VIOLATIONS' => isset($counters[Counter\CounterDictionary::COUNTER_EXPIRED]['counter']) ? $counters[Counter\CounterDictionary::COUNTER_EXPIRED]['counter'] : 0,
+				'COUNTER_VIOLATIONS' => $this->getCounterViolations($counters),
 				'HREF' => $this->getRoleUrl($role['ID']),
 			];
 		}
@@ -76,13 +76,11 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 
 	/**
 	 * @param string $roleCode
-	 * @return int
-	 * @throws Main\Db\SqlQueryException
+	 * @return string
+	 * @throws Main\DB\SqlQueryException
 	 */
-	private function getCounter(string $roleCode): int
+	private function getCounter(string $roleCode): string
 	{
-		$counter = 0;
-
 		$userType = $this->roleCodeToUserType()[$roleCode];
 		$statuses = [
 			CTasks::STATE_PENDING,
@@ -93,23 +91,21 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 		$statuses = implode(',', $statuses);
 
 		$sql = "
-			SELECT COUNT(DISTINCT T.ID) as COUNT
+			SELECT DISTINCT T.ID
 			FROM b_tasks T
 				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID
 			WHERE 
 				TM.USER_ID = {$this->arParams['USER_ID']}
-				".($userType === 'O' ? 'AND TM.USER_ID != T.RESPONSIBLE_ID' : '')."
+				" . ($userType === 'O' ? 'AND TM.USER_ID != T.RESPONSIBLE_ID' : '') . "
 				AND TM.TYPE = '{$userType}'
 				AND T.STATUS IN ({$statuses})
+			LIMIT 100
 		";
 
 		$res = Application::getConnection()->query($sql);
-		if ($row = $res->fetch())
-		{
-			$counter = (int)$row['COUNT'];
-		}
+		$counter = $res->getSelectedRowsCount();
 
-		return ($counter ?: 0);
+		return ($counter > 99 ? '99+' : $counter);
 	}
 
 	/**
@@ -123,6 +119,18 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 			Counter\Role::ORIGINATOR => MemberTable::MEMBER_TYPE_ORIGINATOR,
 			Counter\Role::AUDITOR => MemberTable::MEMBER_TYPE_AUDITOR,
 		];
+	}
+
+	/**
+	 * @param array $counters
+	 * @return string
+	 */
+	private function getCounterViolations(array $counters): string
+	{
+		$counter = $counters[Counter\CounterDictionary::COUNTER_EXPIRED]['counter'];
+		$counter = ($counter ?? 0);
+
+		return ($counter > 99 ? '99+' : $counter);
 	}
 
 	/**

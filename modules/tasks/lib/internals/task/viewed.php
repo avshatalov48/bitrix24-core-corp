@@ -18,6 +18,19 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
  * Class ViewedTable
  *
  * @package Bitrix\Tasks\Internals\Task
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Viewed_Query query()
+ * @method static EO_Viewed_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Viewed_Result getById($id)
+ * @method static EO_Viewed_Result getList(array $parameters = array())
+ * @method static EO_Viewed_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection wakeUpCollection($rows)
  */
 class ViewedTable extends Main\Entity\DataManager
 {

@@ -86,7 +86,7 @@ function getJsTitle()
 <!DOCTYPE html>
 <html <?if (LANGUAGE_ID == "tr"):?>lang="<?=LANGUAGE_ID?>"<?endif?>>
 <head>
-<meta name="viewport" content="width=1135">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <?if ($isBitrix24Cloud):?>
 <meta name="apple-itunes-app" content="app-id=561683423" />

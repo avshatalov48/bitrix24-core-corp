@@ -126,7 +126,8 @@ class UserRegistry
 				)
 			)
 			->setFilter([
-				'=USER_ID' => $this->userId
+				'=USER_ID' => $this->userId,
+				'@ROLE' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER]
 			])
 			->fetchAll();
 

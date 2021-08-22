@@ -14,6 +14,19 @@ use Bitrix\Main\SystemException;
  * Class SearchIndexTable
  *
  * @package Bitrix\Tasks\Internals\Task
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SearchIndex_Query query()
+ * @method static EO_SearchIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SearchIndex_Result getById($id)
+ * @method static EO_SearchIndex_Result getList(array $parameters = array())
+ * @method static EO_SearchIndex_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex_Collection wakeUpCollection($rows)
  */
 class SearchIndexTable extends DataManager
 {

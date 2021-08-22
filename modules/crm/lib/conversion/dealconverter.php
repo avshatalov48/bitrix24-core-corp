@@ -292,6 +292,12 @@ class DealConverter extends EntityConverter
 			}
 			//endregion
 
+			if (isset($this->contextData['RESPONSIBLE_ID']))
+			{
+				$assignedKey = $entityTypeID === \CCrmOwnerType::Invoice ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID';
+				$fields[$assignedKey] = $this->contextData['RESPONSIBLE_ID'];
+			}
+
 			if($entityTypeID === \CCrmOwnerType::Invoice)
 			{
 				// requisite link 1 of 2

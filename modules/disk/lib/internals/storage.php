@@ -22,7 +22,20 @@ use Bitrix\Main\Entity;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Storage_Query query()
+ * @method static EO_Storage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Storage_Result getById($id)
+ * @method static EO_Storage_Result getList(array $parameters = array())
+ * @method static EO_Storage_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_Storage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_Storage_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_Storage wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_Storage_Collection wakeUpCollection($rows)
+ */
 
 final class StorageTable extends DataManager
 {

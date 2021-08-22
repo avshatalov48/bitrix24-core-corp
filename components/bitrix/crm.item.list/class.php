@@ -26,6 +26,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected $parentEntityTypeId;
 	protected $parentEntityId;
 	protected $parents = [];
+	protected $webForms = [];
 
 	protected function init(): void
 	{
@@ -311,6 +312,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				$itemIds[] = $item->getId();
 			}
 			$this->users = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
+			$this->webForms = Bitrix\Crm\WebForm\Manager::getListNames();
 
 			$this->parents = Container::getInstance()->getParentFieldManager()->getParentFields(
 				$itemIds,
@@ -390,6 +392,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				$result[$columnName] = Loc::getMessage('CRM_COMMON_GRID_NO');
 			}
 		}
+
+		$result[Item::FIELD_NAME_WEBFORM_ID] = $this->webForms[$item->getWebformId()] ?? '';
 
 		$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()));
 		$result['TITLE'] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item->getTitle()).'</a>';

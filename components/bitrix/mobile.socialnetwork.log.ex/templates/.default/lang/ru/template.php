@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MOBILE_LOG_NEXT_POST_MORE"] = "Загрузка ...";
 $MESS["MOBILE_LOG_DESTINATION_HIDDEN_1"] = "и еще #COUNT# скрытая группа";
 $MESS["MOBILE_LOG_DESTINATION_HIDDEN_2"] = "и еще #COUNT# скрытых группы";
@@ -23,6 +23,7 @@ $MESS["MOBILE_LOG_EMPTY_COMMENTS_DELETE"] = "Удалить";
 $MESS["MOBILE_LOG_RELOAD_NEEDED"] = "Обновите живую ленту";
 $MESS["MOBILE_LOG_RELOAD_NEEDED2"] = "Обновите ленту новостей";
 $MESS["MOBILE_LOG_RELOAD_ERROR"] = "Ошибка при обновлении ленты";
+$MESS["MOBILE_LOG_NEXTPAGE_ERROR"] = "Ошибка при получении следующей страницы";
 $MESS["MOBILE_LOG_FAVORITES"] = "Избранное";
 $MESS["MOBILE_LOG_MY"] = "Моё";
 $MESS["MOBILE_LOG_IMPORTANT"] = "Важное";
@@ -64,4 +65,3 @@ $MESS['MOBILE_LOG_REFRESH_NEEDED'] = "Пожалуйста, обновите л�
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_POSTS'] = "Закрепленных постов:";
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_COMMENTS'] = "Новых комментариев:";
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_BUTTON'] = "развернуть";
-?>

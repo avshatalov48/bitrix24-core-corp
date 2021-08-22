@@ -1,4 +1,4 @@
-<? //
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -29,194 +29,6 @@ Loc::loadMessages(__FILE__);
 
 final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 {
-	/**
-	 * Current user is admin?
-	 * @return bool
-	 */
-	private function isAdmin()
-	{
-		return $GLOBALS['USER']->isAdmin() || \CTasksTools::IsPortalB24Admin();
-	}
-
-	/**
-	 * Check if module socialnetwork is installed.
-	 * @return boolean
-	 */
-	private function checkSonetInstalled()
-	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			$this->errors->add(
-				'SOCIALNETWORK_IS_NOT_INSTALLED',
-				Loc::getMessage('STAGES_ERROR_SOCIALNETWORK_IS_NOT_INSTALLED')
-			);
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Check can read group tasks.
-	 * @param int $groupId Group id.
-	 * @return void
-	 */
-	private function canReadGroupTask($groupId)
-	{
-		if (
-			$this->checkSonetInstalled() &&
-			!SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_VIEW_OWN_TASKS) &&
-			!SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_VIEW_ALL_TASKS)
-		)
-		{
-			$this->errors->add(
-				'ACCESS_DENIED',
-				Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_GROUP_TASK')
-			);
-		}
-	}
-
-	/**
-	 * Check can edit group stages.
-	 * @param int $groupId Group id.
-	 * @return void
-	 */
-	private function canEditGroupStages($groupId)
-	{
-		if ($this->checkSonetInstalled())
-		{
-			$right = \CSocNetUserToGroup::GetUserRole(Util\User::getId(), $groupId);
-			if ($right != SONET_ROLES_OWNER && $right != SONET_ROLES_MODERATOR)
-			{
-				$this->errors->add(
-					'ACCESS_DENIED',
-					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_STAGES')
-				);
-			}
-		}
-	}
-
-	/**
-	 * Check can sort tasks.
-	 * @param int $entityId Entity id.
-	 * @param string $entityType Entity type.
-	 * @param boolean $checkMode Throw error or only check.
-	 * @return boolean
-	 */
-	private function canSortTask($entityId, $entityType, $checkMode = false)
-	{
-		if ($entityType == StagesTable::WORK_MODE_GROUP)
-		{
-			if (
-				$this->checkSonetInstalled() &&
-				!SocialNetwork\Group::can($entityId, SocialNetwork\Group::ACTION_SORT_TASKS)
-			)
-			{
-				if (!$checkMode)
-				{
-					$this->errors->add(
-						'ACCESS_DENIED_MOVE',
-						Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_MOVE')
-					);
-				}
-				return false;
-			}
-		}
-		elseif ($entityId != Util\User::getId())
-		{
-			if (!$checkMode)
-			{
-				$this->errors->add(
-					'ACCESS_DENIED_MOVE',
-					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_MOVE')
-				);
-			}
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Add / update stage. Return stage id.
-	 * @param array $fields Data array.
-	 * @param boolean $isAdmin Make action as portal admin.
-	 * @return int|null
-	 */
-	private function modify($fields, $isAdmin = false)
-	{
-		$result = null;
-
-		// first check
-		if (
-			!isset($fields['TITLE']) ||
-			trim($fields['TITLE']) == ''
-		)
-		{
-			$this->errors->add(
-				'EMPTY_TITLE',
-				Loc::getMessage('STAGES_ERROR_EMPTY_TITLE')
-			);
-		}
-		if (!isset($fields['ID']))
-		{
-			$fields['ID'] = 0;
-		}
-		if (
-			!isset($fields['ENTITY_ID']) ||
-			$fields['ENTITY_ID'] <= 0
-		)
-		{
-			$fields['ENTITY_ID'] = 0;
-		}
-		// check access
-		if ($isAdmin && !$this->isAdmin())
-		{
-			$isAdmin = false;
-		}
-		if (!$isAdmin && $fields['ENTITY_ID'] > 0)
-		{
-			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_GROUP)
-			{
-				$this->canEditGroupStages($fields['ENTITY_ID']);
-			}
-			elseif ($fields['ENTITY_ID'] != Util\User::getId())
-			{
-				$this->errors->add(
-					'ACCESS_DENIED',
-					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_STAGES')
-				);
-			}
-		}
-		// add / update if no errors
-		if ($this->errors->checkNoFatals())
-		{
-			$add = array(
-				'TITLE' => $fields['TITLE'],
-				'ENTITY_ID' => $fields['ENTITY_ID']
-			);
-			if (isset($fields['COLOR']))
-			{
-				$add['COLOR'] = $fields['COLOR'];
-			}
-			if (isset($fields['AFTER_ID']))
-			{
-				$add['AFTER_ID'] = $fields['AFTER_ID'];
-			}
-			if ($add['ENTITY_ID'] == 0)
-			{
-				StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
-				$add['ENTITY_ID'] = Util\User::getId();
-			}
-			StagesTable::getStages($add['ENTITY_ID']);
-			$res = StagesTable::updateByCode($fields['ID'], $add);
-			if ($res->isSuccess())
-			{
-				$result = $res->getId();
-			}
-		}
-
-		return $result;
-	}
 
 	/**
 	 * Add new stage. Return new stage id.
@@ -566,8 +378,8 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		}
 		// and set sorting
 		$sortingGroup = $stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP
-						? $task['GROUP_ID']
-						: 0;
+			? $task['GROUP_ID']
+			: 0;
 		// pin in new stage
 		if ($before == 0 && $after == 0)
 		{
@@ -595,6 +407,195 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Current user is admin?
+	 * @return bool
+	 */
+	private function isAdmin()
+	{
+		return $GLOBALS['USER']->isAdmin() || \CTasksTools::IsPortalB24Admin();
+	}
+
+	/**
+	 * Check if module socialnetwork is installed.
+	 * @return boolean
+	 */
+	private function checkSonetInstalled()
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			$this->errors->add(
+				'SOCIALNETWORK_IS_NOT_INSTALLED',
+				Loc::getMessage('STAGES_ERROR_SOCIALNETWORK_IS_NOT_INSTALLED')
+			);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check can read group tasks.
+	 * @param int $groupId Group id.
+	 * @return void
+	 */
+	private function canReadGroupTask($groupId)
+	{
+		if (
+			$this->checkSonetInstalled() &&
+			!SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_VIEW_OWN_TASKS) &&
+			!SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_VIEW_ALL_TASKS)
+		)
+		{
+			$this->errors->add(
+				'ACCESS_DENIED',
+				Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_GROUP_TASK')
+			);
+		}
+	}
+
+	/**
+	 * Check can edit group stages.
+	 * @param int $groupId Group id.
+	 * @return void
+	 */
+	private function canEditGroupStages($groupId)
+	{
+		if ($this->checkSonetInstalled())
+		{
+			$right = \CSocNetUserToGroup::GetUserRole(Util\User::getId(), $groupId);
+			if ($right != SONET_ROLES_OWNER && $right != SONET_ROLES_MODERATOR)
+			{
+				$this->errors->add(
+					'ACCESS_DENIED',
+					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_STAGES')
+				);
+			}
+		}
+	}
+
+	/**
+	 * Check can sort tasks.
+	 * @param int $entityId Entity id.
+	 * @param string $entityType Entity type.
+	 * @param boolean $checkMode Throw error or only check.
+	 * @return boolean
+	 */
+	private function canSortTask($entityId, $entityType, $checkMode = false)
+	{
+		if ($entityType == StagesTable::WORK_MODE_GROUP)
+		{
+			if (
+				$this->checkSonetInstalled() &&
+				!SocialNetwork\Group::can($entityId, SocialNetwork\Group::ACTION_SORT_TASKS)
+			)
+			{
+				if (!$checkMode)
+				{
+					$this->errors->add(
+						'ACCESS_DENIED_MOVE',
+						Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_MOVE')
+					);
+				}
+				return false;
+			}
+		}
+		elseif ($entityId != Util\User::getId())
+		{
+			if (!$checkMode)
+			{
+				$this->errors->add(
+					'ACCESS_DENIED_MOVE',
+					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_MOVE')
+				);
+			}
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Add / update stage. Return stage id.
+	 * @param array $fields Data array.
+	 * @param boolean $isAdmin Make action as portal admin.
+	 * @return int|null
+	 */
+	private function modify($fields, $isAdmin = false)
+	{
+		$result = null;
+
+		// first check
+		if (
+			!isset($fields['TITLE']) ||
+			trim($fields['TITLE']) == ''
+		)
+		{
+			$this->errors->add(
+				'EMPTY_TITLE',
+				Loc::getMessage('STAGES_ERROR_EMPTY_TITLE')
+			);
+		}
+		if (!isset($fields['ID']))
+		{
+			$fields['ID'] = 0;
+		}
+		if (
+			!isset($fields['ENTITY_ID']) ||
+			$fields['ENTITY_ID'] <= 0
+		)
+		{
+			$fields['ENTITY_ID'] = 0;
+		}
+		// check access
+		if ($isAdmin && !$this->isAdmin())
+		{
+			$isAdmin = false;
+		}
+		if (!$isAdmin && $fields['ENTITY_ID'] > 0)
+		{
+			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_GROUP)
+			{
+				$this->canEditGroupStages($fields['ENTITY_ID']);
+			}
+			elseif ($fields['ENTITY_ID'] != Util\User::getId())
+			{
+				$this->errors->add(
+					'ACCESS_DENIED',
+					Loc::getMessage('STAGES_ERROR_ACCESS_DENIED_STAGES')
+				);
+			}
+		}
+		// add / update if no errors
+		if ($this->errors->checkNoFatals())
+		{
+			$add = array(
+				'TITLE' => $fields['TITLE'],
+				'ENTITY_ID' => $fields['ENTITY_ID']
+			);
+			if (isset($fields['COLOR']))
+			{
+				$add['COLOR'] = $fields['COLOR'];
+			}
+			if (isset($fields['AFTER_ID']))
+			{
+				$add['AFTER_ID'] = $fields['AFTER_ID'];
+			}
+			if ($add['ENTITY_ID'] == 0)
+			{
+				StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
+				$add['ENTITY_ID'] = Util\User::getId();
+			}
+			StagesTable::getStages($add['ENTITY_ID']);
+			$res = StagesTable::updateByCode($fields['ID'], $add);
+			if ($res->isSuccess())
+			{
+				$result = $res->getId();
+			}
+		}
+
+		return $result;
 	}
 
 	private function moveScrumTask(int $taskId, int $groupId, array $stage): bool

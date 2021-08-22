@@ -22,7 +22,7 @@ if ($arResult["OTP"]["IS_ENABLED"] == "N")
 <?
 if (
 	$USER->GetID() == $arParams["USER_ID"]
-	|| $USER->CanDoOperation('security_edit_user_otp')
+	|| $arResult["OTP"]["USER_HAS_EDIT_RIGHTS"]
 )
 {
 ?>
@@ -36,7 +36,7 @@ if (
 				<?=GetMessage("INTRANET_USER_OTP_ACTIVE")?>
 			</span>
 
-			<?if ($USER->CanDoOperation('security_edit_user_otp') || !$arResult["OTP"]["IS_MANDATORY"]):?>
+			<?if ($arResult["OTP"]["USER_HAS_EDIT_RIGHTS"]|| !$arResult["OTP"]["IS_MANDATORY"]):?>
 				<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" data-role="intranet-otp-deactivate">
 					<?=GetMessage("INTRANET_USER_OTP_DEACTIVATE")?>
 				</a>

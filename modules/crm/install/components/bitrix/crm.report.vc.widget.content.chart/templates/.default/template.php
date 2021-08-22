@@ -16,8 +16,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load("ui.icons");
-Extension::load("ui.hint");
+Extension::load(['ui.icons', 'ui.hint', 'ui.info-helper']);
 
 $this->addExternalJs($this->GetFolder() . '/js/helper.js');
 $this->addExternalJs($this->GetFolder() . '/js/popup.js');
@@ -29,11 +28,25 @@ $this->addExternalJs($this->GetFolder() . '/js/polygon.js');
 $this->addExternalJs($this->GetFolder() . '/js/source.js');
 $this->addExternalJs($this->GetFolder() . '/js/stage.js');
 
+
+if ($arResult['FEATURE_CODE'])
+{
+	?>
+	<script>BX.UI.InfoHelper.show('<?=$arResult['FEATURE_CODE']?>');</script>
+	<div class="crm-report-chart-not-available">
+		<div><?=Loc::getMessage('CRM_REPORT_VC_W_C_CHART_NOT_AVAILABLE')?></div>
+	</div>
+	<?php
+	return;
+}
+
 $containerId = 'crm-analytics-report-view-chart';
 $stages = $arResult['DATA']['dict']['stages'];
 $firstStageCode = current($stages);
 $lastStageCode = end($stages);
 ?>
+
+
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-report-chart-wrapper">
 
 <table class="crm-report-chart-table <?=(!$arParams['IS_COSTABLE'] ? 'crm-report-chart-temporary-active' : '')?>">

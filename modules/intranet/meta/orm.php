@@ -1,5 +1,1036 @@
 <?php
 
+/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable:intranet/lib/customsection/entity/customsectionpagetable.php:0ef8bb6d17557ef3363ce83a3561dec5 */
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * EO_CustomSectionPage
+	 * @see \Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setCustomSectionId(\int|\Bitrix\Main\DB\SqlExpression $customSectionId)
+	 * @method bool hasCustomSectionId()
+	 * @method bool isCustomSectionIdFilled()
+	 * @method bool isCustomSectionIdChanged()
+	 * @method \int remindActualCustomSectionId()
+	 * @method \int requireCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetCustomSectionId()
+	 * @method \int fillCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection getCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection remindActualCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection requireCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setCustomSection(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSection $object)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetCustomSection()
+	 * @method bool hasCustomSection()
+	 * @method bool isCustomSectionFilled()
+	 * @method bool isCustomSectionChanged()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection fillCustomSection()
+	 * @method \string getCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method bool hasCode()
+	 * @method bool isCodeFilled()
+	 * @method bool isCodeChanged()
+	 * @method \string remindActualCode()
+	 * @method \string requireCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetCode()
+	 * @method \string fillCode()
+	 * @method \string getTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
+	 * @method bool hasTitle()
+	 * @method bool isTitleFilled()
+	 * @method bool isTitleChanged()
+	 * @method \string remindActualTitle()
+	 * @method \string requireTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetTitle()
+	 * @method \string fillTitle()
+	 * @method \int getSort()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setSort(\int|\Bitrix\Main\DB\SqlExpression $sort)
+	 * @method bool hasSort()
+	 * @method bool isSortFilled()
+	 * @method bool isSortChanged()
+	 * @method \int remindActualSort()
+	 * @method \int requireSort()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetSort()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetSort()
+	 * @method \int fillSort()
+	 * @method \string getModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setModuleId(\string|\Bitrix\Main\DB\SqlExpression $moduleId)
+	 * @method bool hasModuleId()
+	 * @method bool isModuleIdFilled()
+	 * @method bool isModuleIdChanged()
+	 * @method \string remindActualModuleId()
+	 * @method \string requireModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetModuleId()
+	 * @method \string fillModuleId()
+	 * @method \string getSettings()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage setSettings(\string|\Bitrix\Main\DB\SqlExpression $settings)
+	 * @method bool hasSettings()
+	 * @method bool isSettingsFilled()
+	 * @method bool isSettingsChanged()
+	 * @method \string remindActualSettings()
+	 * @method \string requireSettings()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage resetSettings()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unsetSettings()
+	 * @method \string fillSettings()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage set($fieldName, $value)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage reset($fieldName)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage wakeUp($data)
+	 */
+	class EO_CustomSectionPage {
+		/* @var \Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable */
+		static public $dataClass = '\Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * EO_CustomSectionPage_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getCustomSectionIdList()
+	 * @method \int[] fillCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection[] getCustomSectionList()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection getCustomSectionCollection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection fillCustomSection()
+	 * @method \string[] getCodeList()
+	 * @method \string[] fillCode()
+	 * @method \string[] getTitleList()
+	 * @method \string[] fillTitle()
+	 * @method \int[] getSortList()
+	 * @method \int[] fillSort()
+	 * @method \string[] getModuleIdList()
+	 * @method \string[] fillModuleId()
+	 * @method \string[] getSettingsList()
+	 * @method \string[] fillSettings()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage $object)
+	 * @method bool has(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage getByPrimary($primary)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_CustomSectionPage_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable */
+		static public $dataClass = '\Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable';
+	}
+}
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_CustomSectionPage_Result exec()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage fetchObject()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_CustomSectionPage_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage fetchObject()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection fetchCollection()
+	 */
+	class EO_CustomSectionPage_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection createCollection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage wakeUpObject($row)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection wakeUpCollection($rows)
+	 */
+	class EO_CustomSectionPage_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionTable:intranet/lib/customsection/entity/customsectiontable.php:16a742cf9181fff1bdc82eabb8aaa7b3 */
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * EO_CustomSection
+	 * @see \Bitrix\Intranet\CustomSection\Entity\CustomSectionTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \string getCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method bool hasCode()
+	 * @method bool isCodeFilled()
+	 * @method bool isCodeChanged()
+	 * @method \string remindActualCode()
+	 * @method \string requireCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection resetCode()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection unsetCode()
+	 * @method \string fillCode()
+	 * @method \string getTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
+	 * @method bool hasTitle()
+	 * @method bool isTitleFilled()
+	 * @method bool isTitleChanged()
+	 * @method \string remindActualTitle()
+	 * @method \string requireTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection resetTitle()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection unsetTitle()
+	 * @method \string fillTitle()
+	 * @method \string getModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection setModuleId(\string|\Bitrix\Main\DB\SqlExpression $moduleId)
+	 * @method bool hasModuleId()
+	 * @method bool isModuleIdFilled()
+	 * @method bool isModuleIdChanged()
+	 * @method \string remindActualModuleId()
+	 * @method \string requireModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection resetModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection unsetModuleId()
+	 * @method \string fillModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection getPages()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection requirePages()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection fillPages()
+	 * @method bool hasPages()
+	 * @method bool isPagesFilled()
+	 * @method bool isPagesChanged()
+	 * @method void addToPages(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage $customSectionPage)
+	 * @method void removeFromPages(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage $customSectionPage)
+	 * @method void removeAllPages()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection resetPages()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection unsetPages()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection set($fieldName, $value)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection reset($fieldName)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection wakeUp($data)
+	 */
+	class EO_CustomSection {
+		/* @var \Bitrix\Intranet\CustomSection\Entity\CustomSectionTable */
+		static public $dataClass = '\Bitrix\Intranet\CustomSection\Entity\CustomSectionTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * EO_CustomSection_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \string[] getCodeList()
+	 * @method \string[] fillCode()
+	 * @method \string[] getTitleList()
+	 * @method \string[] fillTitle()
+	 * @method \string[] getModuleIdList()
+	 * @method \string[] fillModuleId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection[] getPagesList()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection getPagesCollection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection fillPages()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSection $object)
+	 * @method bool has(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSection $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection getByPrimary($primary)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSection $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_CustomSection_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\CustomSection\Entity\CustomSectionTable */
+		static public $dataClass = '\Bitrix\Intranet\CustomSection\Entity\CustomSectionTable';
+	}
+}
+namespace Bitrix\Intranet\CustomSection\Entity {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_CustomSection_Result exec()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection fetchObject()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_CustomSection_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection fetchObject()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection fetchCollection()
+	 */
+	class EO_CustomSection_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection createCollection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection wakeUpObject($row)
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection wakeUpCollection($rows)
+	 */
+	class EO_CustomSection_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\InvitationTable:intranet/lib/internals/invitation.php:1ae0f9766b6f0aeed7127db3e2202737 */
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Invitation
+	 * @see \Bitrix\Intranet\Internals\InvitationTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \int getOriginatorId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setOriginatorId(\int|\Bitrix\Main\DB\SqlExpression $originatorId)
+	 * @method bool hasOriginatorId()
+	 * @method bool isOriginatorIdFilled()
+	 * @method bool isOriginatorIdChanged()
+	 * @method \int remindActualOriginatorId()
+	 * @method \int requireOriginatorId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetOriginatorId()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetOriginatorId()
+	 * @method \int fillOriginatorId()
+	 * @method \string getInvitationType()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setInvitationType(\string|\Bitrix\Main\DB\SqlExpression $invitationType)
+	 * @method bool hasInvitationType()
+	 * @method bool isInvitationTypeFilled()
+	 * @method bool isInvitationTypeChanged()
+	 * @method \string remindActualInvitationType()
+	 * @method \string requireInvitationType()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetInvitationType()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetInvitationType()
+	 * @method \string fillInvitationType()
+	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
+	 * @method bool hasDateCreate()
+	 * @method bool isDateCreateFilled()
+	 * @method bool isDateCreateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetDateCreate()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
+	 * @method \boolean getInitialized()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setInitialized(\boolean|\Bitrix\Main\DB\SqlExpression $initialized)
+	 * @method bool hasInitialized()
+	 * @method bool isInitializedFilled()
+	 * @method bool isInitializedChanged()
+	 * @method \boolean remindActualInitialized()
+	 * @method \boolean requireInitialized()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetInitialized()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetInitialized()
+	 * @method \boolean fillInitialized()
+	 * @method \Bitrix\Main\EO_User getUser()
+	 * @method \Bitrix\Main\EO_User remindActualUser()
+	 * @method \Bitrix\Main\EO_User requireUser()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setUser(\Bitrix\Main\EO_User $object)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetUser()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetUser()
+	 * @method bool hasUser()
+	 * @method bool isUserFilled()
+	 * @method bool isUserChanged()
+	 * @method \Bitrix\Main\EO_User fillUser()
+	 * @method \Bitrix\Main\EO_User getOriginator()
+	 * @method \Bitrix\Main\EO_User remindActualOriginator()
+	 * @method \Bitrix\Main\EO_User requireOriginator()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation setOriginator(\Bitrix\Main\EO_User $object)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetOriginator()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetOriginator()
+	 * @method bool hasOriginator()
+	 * @method bool isOriginatorFilled()
+	 * @method bool isOriginatorChanged()
+	 * @method \Bitrix\Main\EO_User fillOriginator()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation set($fieldName, $value)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation reset($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\Internals\EO_Invitation wakeUp($data)
+	 */
+	class EO_Invitation {
+		/* @var \Bitrix\Intranet\Internals\InvitationTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\InvitationTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Invitation_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \int[] getOriginatorIdList()
+	 * @method \int[] fillOriginatorId()
+	 * @method \string[] getInvitationTypeList()
+	 * @method \string[] fillInvitationType()
+	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
+	 * @method \boolean[] getInitializedList()
+	 * @method \boolean[] fillInitialized()
+	 * @method \Bitrix\Main\EO_User[] getUserList()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection getUserCollection()
+	 * @method \Bitrix\Main\EO_User_Collection fillUser()
+	 * @method \Bitrix\Main\EO_User[] getOriginatorList()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection getOriginatorCollection()
+	 * @method \Bitrix\Main\EO_User_Collection fillOriginator()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\Internals\EO_Invitation $object)
+	 * @method bool has(\Bitrix\Intranet\Internals\EO_Invitation $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation getByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\Internals\EO_Invitation $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Invitation_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\Internals\InvitationTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\InvitationTable';
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Invitation_Result exec()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Invitation_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection fetchCollection()
+	 */
+	class EO_Invitation_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection createCollection()
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation wakeUpObject($row)
+	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUpCollection($rows)
+	 */
+	class EO_Invitation_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\QueueTable:intranet/lib/internals/queue.php:256e2f9d3b792c5872db79f482c878de */
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Queue
+	 * @see \Bitrix\Intranet\Internals\QueueTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string getEntityId()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \string getLastItem()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue setLastItem(\string|\Bitrix\Main\DB\SqlExpression $lastItem)
+	 * @method bool hasLastItem()
+	 * @method bool isLastItemFilled()
+	 * @method bool isLastItemChanged()
+	 * @method \string remindActualLastItem()
+	 * @method \string requireLastItem()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue resetLastItem()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue unsetLastItem()
+	 * @method \string fillLastItem()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue set($fieldName, $value)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue reset($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\Internals\EO_Queue wakeUp($data)
+	 */
+	class EO_Queue {
+		/* @var \Bitrix\Intranet\Internals\QueueTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\QueueTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Queue_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] getEntityIdList()
+	 * @method \string[] getLastItemList()
+	 * @method \string[] fillLastItem()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\Internals\EO_Queue $object)
+	 * @method bool has(\Bitrix\Intranet\Internals\EO_Queue $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue getByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\Internals\EO_Queue $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\Internals\EO_Queue_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\Internals\EO_Queue current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Queue_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\Internals\QueueTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\QueueTable';
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Queue_Result exec()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Queue_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Queue fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection fetchCollection()
+	 */
+	class EO_Queue_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Queue createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection createCollection()
+	 * @method \Bitrix\Intranet\Internals\EO_Queue wakeUpObject($row)
+	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection wakeUpCollection($rows)
+	 */
+	class EO_Queue_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\ThemeTable:intranet/lib/internals/theme.php:10eb02626e6eff9ae1589f6b108478fb */
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Theme
+	 * @see \Bitrix\Intranet\Internals\ThemeTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \string getThemeId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setThemeId(\string|\Bitrix\Main\DB\SqlExpression $themeId)
+	 * @method bool hasThemeId()
+	 * @method bool isThemeIdFilled()
+	 * @method bool isThemeIdChanged()
+	 * @method \string remindActualThemeId()
+	 * @method \string requireThemeId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme resetThemeId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unsetThemeId()
+	 * @method \string fillThemeId()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme resetUserId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string remindActualEntityType()
+	 * @method \string requireEntityType()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme resetEntityType()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unsetEntityType()
+	 * @method \string fillEntityType()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme resetEntityId()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unsetEntityId()
+	 * @method \int fillEntityId()
+	 * @method \string getContext()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme setContext(\string|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \string remindActualContext()
+	 * @method \string requireContext()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme resetContext()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unsetContext()
+	 * @method \string fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme set($fieldName, $value)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme reset($fieldName)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\Internals\EO_Theme wakeUp($data)
+	 */
+	class EO_Theme {
+		/* @var \Bitrix\Intranet\Internals\ThemeTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\ThemeTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * EO_Theme_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \string[] getThemeIdList()
+	 * @method \string[] fillThemeId()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] fillEntityType()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
+	 * @method \string[] getContextList()
+	 * @method \string[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\Internals\EO_Theme $object)
+	 * @method bool has(\Bitrix\Intranet\Internals\EO_Theme $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme getByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\Internals\EO_Theme $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\Internals\EO_Theme_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\Internals\EO_Theme current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Theme_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\Internals\ThemeTable */
+		static public $dataClass = '\Bitrix\Intranet\Internals\ThemeTable';
+	}
+}
+namespace Bitrix\Intranet\Internals {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Theme_Result exec()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Theme_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Theme fetchObject()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme_Collection fetchCollection()
+	 */
+	class EO_Theme_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\Internals\EO_Theme createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme_Collection createCollection()
+	 * @method \Bitrix\Intranet\Internals\EO_Theme wakeUpObject($row)
+	 * @method \Bitrix\Intranet\Internals\EO_Theme_Collection wakeUpCollection($rows)
+	 */
+	class EO_Theme_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Intranet\RatingSubordinateTable:intranet/lib/ratingsubordinate.php:e5ff65deec0665d3b6fd1749e32041f1 */
+namespace Bitrix\Intranet {
+	/**
+	 * EO_RatingSubordinate
+	 * @see \Bitrix\Intranet\RatingSubordinateTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getRatingId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate setRatingId(\int|\Bitrix\Main\DB\SqlExpression $ratingId)
+	 * @method bool hasRatingId()
+	 * @method bool isRatingIdFilled()
+	 * @method bool isRatingIdChanged()
+	 * @method \int remindActualRatingId()
+	 * @method \int requireRatingId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetRatingId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetRatingId()
+	 * @method \int fillRatingId()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetEntityId()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetEntityId()
+	 * @method \int fillEntityId()
+	 * @method \float getVotes()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate setVotes(\float|\Bitrix\Main\DB\SqlExpression $votes)
+	 * @method bool hasVotes()
+	 * @method bool isVotesFilled()
+	 * @method bool isVotesChanged()
+	 * @method \float remindActualVotes()
+	 * @method \float requireVotes()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetVotes()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetVotes()
+	 * @method \float fillVotes()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate set($fieldName, $value)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate reset($fieldName)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Intranet\EO_RatingSubordinate wakeUp($data)
+	 */
+	class EO_RatingSubordinate {
+		/* @var \Bitrix\Intranet\RatingSubordinateTable */
+		static public $dataClass = '\Bitrix\Intranet\RatingSubordinateTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Intranet {
+	/**
+	 * EO_RatingSubordinate_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getRatingIdList()
+	 * @method \int[] fillRatingId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
+	 * @method \float[] getVotesList()
+	 * @method \float[] fillVotes()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Intranet\EO_RatingSubordinate $object)
+	 * @method bool has(\Bitrix\Intranet\EO_RatingSubordinate $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate getByPrimary($primary)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\EO_RatingSubordinate $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Intranet\EO_RatingSubordinate_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_RatingSubordinate_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Intranet\RatingSubordinateTable */
+		static public $dataClass = '\Bitrix\Intranet\RatingSubordinateTable';
+	}
+}
+namespace Bitrix\Intranet {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_RatingSubordinate_Result exec()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate fetchObject()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_RatingSubordinate_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate fetchObject()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection fetchCollection()
+	 */
+	class EO_RatingSubordinate_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection createCollection()
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate wakeUpObject($row)
+	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection wakeUpCollection($rows)
+	 */
+	class EO_RatingSubordinate_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Intranet\UserTable:intranet/lib/user.php:a70e1d3600769f70d0569c77e88152ba */
 namespace Bitrix\Intranet {
 	/**
@@ -218,6 +1249,16 @@ namespace Bitrix\Intranet {
 	 * @method \Bitrix\Intranet\EO_User resetLanguageId()
 	 * @method \Bitrix\Intranet\EO_User unsetLanguageId()
 	 * @method \string fillLanguageId()
+	 * @method \string getTimeZone()
+	 * @method \Bitrix\Intranet\EO_User setTimeZone(\string|\Bitrix\Main\DB\SqlExpression $timeZone)
+	 * @method bool hasTimeZone()
+	 * @method bool isTimeZoneFilled()
+	 * @method bool isTimeZoneChanged()
+	 * @method \string remindActualTimeZone()
+	 * @method \string requireTimeZone()
+	 * @method \Bitrix\Intranet\EO_User resetTimeZone()
+	 * @method \Bitrix\Intranet\EO_User unsetTimeZone()
+	 * @method \string fillTimeZone()
 	 * @method \int getTimeZoneOffset()
 	 * @method \Bitrix\Intranet\EO_User setTimeZoneOffset(\int|\Bitrix\Main\DB\SqlExpression $timeZoneOffset)
 	 * @method bool hasTimeZoneOffset()
@@ -758,6 +1799,8 @@ namespace Bitrix\Intranet {
 	 * @method \string[] fillLid()
 	 * @method \string[] getLanguageIdList()
 	 * @method \string[] fillLanguageId()
+	 * @method \string[] getTimeZoneList()
+	 * @method \string[] fillTimeZone()
 	 * @method \int[] getTimeZoneOffsetList()
 	 * @method \int[] fillTimeZoneOffset()
 	 * @method \string[] getPersonalProfessionList()
@@ -891,18 +1934,6 @@ namespace Bitrix\Intranet {
 }
 namespace Bitrix\Intranet {
 	/**
-	 * @method static EO_User_Query query()
-	 * @method static EO_User_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_User_Result getById($id)
-	 * @method static EO_User_Result getList(array $parameters = array())
-	 * @method static EO_User_Entity getEntity()
-	 * @method static \Bitrix\Intranet\EO_User createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\EO_User_Collection createCollection()
-	 * @method static \Bitrix\Intranet\EO_User wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\EO_User_Collection wakeUpCollection($rows)
-	 */
-	class UserTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -927,530 +1958,6 @@ namespace Bitrix\Intranet {
 	 * @method \Bitrix\Intranet\EO_User_Collection wakeUpCollection($rows)
 	 */
 	class EO_User_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\InvitationTable:intranet/lib/internals/invitation.php:1ae0f9766b6f0aeed7127db3e2202737 */
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * EO_Invitation
-	 * @see \Bitrix\Intranet\Internals\InvitationTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int getId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setId(\int|\Bitrix\Main\DB\SqlExpression $id)
-	 * @method bool hasId()
-	 * @method bool isIdFilled()
-	 * @method bool isIdChanged()
-	 * @method \int getUserId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
-	 * @method bool hasUserId()
-	 * @method bool isUserIdFilled()
-	 * @method bool isUserIdChanged()
-	 * @method \int remindActualUserId()
-	 * @method \int requireUserId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetUserId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetUserId()
-	 * @method \int fillUserId()
-	 * @method \int getOriginatorId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setOriginatorId(\int|\Bitrix\Main\DB\SqlExpression $originatorId)
-	 * @method bool hasOriginatorId()
-	 * @method bool isOriginatorIdFilled()
-	 * @method bool isOriginatorIdChanged()
-	 * @method \int remindActualOriginatorId()
-	 * @method \int requireOriginatorId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetOriginatorId()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetOriginatorId()
-	 * @method \int fillOriginatorId()
-	 * @method \string getInvitationType()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setInvitationType(\string|\Bitrix\Main\DB\SqlExpression $invitationType)
-	 * @method bool hasInvitationType()
-	 * @method bool isInvitationTypeFilled()
-	 * @method bool isInvitationTypeChanged()
-	 * @method \string remindActualInvitationType()
-	 * @method \string requireInvitationType()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetInvitationType()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetInvitationType()
-	 * @method \string fillInvitationType()
-	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
-	 * @method bool hasDateCreate()
-	 * @method bool isDateCreateFilled()
-	 * @method bool isDateCreateChanged()
-	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
-	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetDateCreate()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetDateCreate()
-	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
-	 * @method \boolean getInitialized()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setInitialized(\boolean|\Bitrix\Main\DB\SqlExpression $initialized)
-	 * @method bool hasInitialized()
-	 * @method bool isInitializedFilled()
-	 * @method bool isInitializedChanged()
-	 * @method \boolean remindActualInitialized()
-	 * @method \boolean requireInitialized()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetInitialized()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetInitialized()
-	 * @method \boolean fillInitialized()
-	 * @method \Bitrix\Main\EO_User getUser()
-	 * @method \Bitrix\Main\EO_User remindActualUser()
-	 * @method \Bitrix\Main\EO_User requireUser()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setUser(\Bitrix\Main\EO_User $object)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetUser()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetUser()
-	 * @method bool hasUser()
-	 * @method bool isUserFilled()
-	 * @method bool isUserChanged()
-	 * @method \Bitrix\Main\EO_User fillUser()
-	 * @method \Bitrix\Main\EO_User getOriginator()
-	 * @method \Bitrix\Main\EO_User remindActualOriginator()
-	 * @method \Bitrix\Main\EO_User requireOriginator()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation setOriginator(\Bitrix\Main\EO_User $object)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation resetOriginator()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unsetOriginator()
-	 * @method bool hasOriginator()
-	 * @method bool isOriginatorFilled()
-	 * @method bool isOriginatorChanged()
-	 * @method \Bitrix\Main\EO_User fillOriginator()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation set($fieldName, $value)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation reset($fieldName)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation wakeUp($data)
-	 */
-	class EO_Invitation {
-		/* @var \Bitrix\Intranet\Internals\InvitationTable */
-		static public $dataClass = '\Bitrix\Intranet\Internals\InvitationTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * EO_Invitation_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int[] getIdList()
-	 * @method \int[] getUserIdList()
-	 * @method \int[] fillUserId()
-	 * @method \int[] getOriginatorIdList()
-	 * @method \int[] fillOriginatorId()
-	 * @method \string[] getInvitationTypeList()
-	 * @method \string[] fillInvitationType()
-	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
-	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
-	 * @method \boolean[] getInitializedList()
-	 * @method \boolean[] fillInitialized()
-	 * @method \Bitrix\Main\EO_User[] getUserList()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection getUserCollection()
-	 * @method \Bitrix\Main\EO_User_Collection fillUser()
-	 * @method \Bitrix\Main\EO_User[] getOriginatorList()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection getOriginatorCollection()
-	 * @method \Bitrix\Main\EO_User_Collection fillOriginator()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Intranet\Internals\EO_Invitation $object)
-	 * @method bool has(\Bitrix\Intranet\Internals\EO_Invitation $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation getByPrimary($primary)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation[] getAll()
-	 * @method bool remove(\Bitrix\Intranet\Internals\EO_Invitation $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 */
-	class EO_Invitation_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Intranet\Internals\InvitationTable */
-		static public $dataClass = '\Bitrix\Intranet\Internals\InvitationTable';
-	}
-}
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * @method static EO_Invitation_Query query()
-	 * @method static EO_Invitation_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Invitation_Result getById($id)
-	 * @method static EO_Invitation_Result getList(array $parameters = array())
-	 * @method static EO_Invitation_Entity getEntity()
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection createCollection()
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUpCollection($rows)
-	 */
-	class InvitationTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_Invitation_Result exec()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation fetchObject()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_Invitation_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation fetchObject()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection fetchCollection()
-	 */
-	class EO_Invitation_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation createObject($setDefaultValues = true)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection createCollection()
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation wakeUpObject($row)
-	 * @method \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUpCollection($rows)
-	 */
-	class EO_Invitation_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\QueueTable:intranet/lib/internals/queue.php:256e2f9d3b792c5872db79f482c878de */
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * EO_Queue
-	 * @see \Bitrix\Intranet\Internals\QueueTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \string getEntityType()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
-	 * @method bool hasEntityType()
-	 * @method bool isEntityTypeFilled()
-	 * @method bool isEntityTypeChanged()
-	 * @method \string getEntityId()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
-	 * @method bool hasEntityId()
-	 * @method bool isEntityIdFilled()
-	 * @method bool isEntityIdChanged()
-	 * @method \string getLastItem()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue setLastItem(\string|\Bitrix\Main\DB\SqlExpression $lastItem)
-	 * @method bool hasLastItem()
-	 * @method bool isLastItemFilled()
-	 * @method bool isLastItemChanged()
-	 * @method \string remindActualLastItem()
-	 * @method \string requireLastItem()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue resetLastItem()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue unsetLastItem()
-	 * @method \string fillLastItem()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue set($fieldName, $value)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue reset($fieldName)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue wakeUp($data)
-	 */
-	class EO_Queue {
-		/* @var \Bitrix\Intranet\Internals\QueueTable */
-		static public $dataClass = '\Bitrix\Intranet\Internals\QueueTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * EO_Queue_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \string[] getEntityTypeList()
-	 * @method \string[] getEntityIdList()
-	 * @method \string[] getLastItemList()
-	 * @method \string[] fillLastItem()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Intranet\Internals\EO_Queue $object)
-	 * @method bool has(\Bitrix\Intranet\Internals\EO_Queue $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue getByPrimary($primary)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue[] getAll()
-	 * @method bool remove(\Bitrix\Intranet\Internals\EO_Queue $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Intranet\Internals\EO_Queue current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 */
-	class EO_Queue_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Intranet\Internals\QueueTable */
-		static public $dataClass = '\Bitrix\Intranet\Internals\QueueTable';
-	}
-}
-namespace Bitrix\Intranet\Internals {
-	/**
-	 * @method static EO_Queue_Query query()
-	 * @method static EO_Queue_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Queue_Result getById($id)
-	 * @method static EO_Queue_Result getList(array $parameters = array())
-	 * @method static EO_Queue_Entity getEntity()
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue_Collection createCollection()
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\Internals\EO_Queue_Collection wakeUpCollection($rows)
-	 */
-	class QueueTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_Queue_Result exec()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue fetchObject()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_Queue_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Intranet\Internals\EO_Queue fetchObject()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection fetchCollection()
-	 */
-	class EO_Queue_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Intranet\Internals\EO_Queue createObject($setDefaultValues = true)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection createCollection()
-	 * @method \Bitrix\Intranet\Internals\EO_Queue wakeUpObject($row)
-	 * @method \Bitrix\Intranet\Internals\EO_Queue_Collection wakeUpCollection($rows)
-	 */
-	class EO_Queue_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Intranet\RatingSubordinateTable:intranet/lib/ratingsubordinate.php:e5ff65deec0665d3b6fd1749e32041f1 */
-namespace Bitrix\Intranet {
-	/**
-	 * EO_RatingSubordinate
-	 * @see \Bitrix\Intranet\RatingSubordinateTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int getId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate setId(\int|\Bitrix\Main\DB\SqlExpression $id)
-	 * @method bool hasId()
-	 * @method bool isIdFilled()
-	 * @method bool isIdChanged()
-	 * @method \int getRatingId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate setRatingId(\int|\Bitrix\Main\DB\SqlExpression $ratingId)
-	 * @method bool hasRatingId()
-	 * @method bool isRatingIdFilled()
-	 * @method bool isRatingIdChanged()
-	 * @method \int remindActualRatingId()
-	 * @method \int requireRatingId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetRatingId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetRatingId()
-	 * @method \int fillRatingId()
-	 * @method \int getEntityId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
-	 * @method bool hasEntityId()
-	 * @method bool isEntityIdFilled()
-	 * @method bool isEntityIdChanged()
-	 * @method \int remindActualEntityId()
-	 * @method \int requireEntityId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetEntityId()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetEntityId()
-	 * @method \int fillEntityId()
-	 * @method \float getVotes()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate setVotes(\float|\Bitrix\Main\DB\SqlExpression $votes)
-	 * @method bool hasVotes()
-	 * @method bool isVotesFilled()
-	 * @method bool isVotesChanged()
-	 * @method \float remindActualVotes()
-	 * @method \float requireVotes()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate resetVotes()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate unsetVotes()
-	 * @method \float fillVotes()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate set($fieldName, $value)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate reset($fieldName)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate wakeUp($data)
-	 */
-	class EO_RatingSubordinate {
-		/* @var \Bitrix\Intranet\RatingSubordinateTable */
-		static public $dataClass = '\Bitrix\Intranet\RatingSubordinateTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Intranet {
-	/**
-	 * EO_RatingSubordinate_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int[] getIdList()
-	 * @method \int[] getRatingIdList()
-	 * @method \int[] fillRatingId()
-	 * @method \int[] getEntityIdList()
-	 * @method \int[] fillEntityId()
-	 * @method \float[] getVotesList()
-	 * @method \float[] fillVotes()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Intranet\EO_RatingSubordinate $object)
-	 * @method bool has(\Bitrix\Intranet\EO_RatingSubordinate $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate getByPrimary($primary)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate[] getAll()
-	 * @method bool remove(\Bitrix\Intranet\EO_RatingSubordinate $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 */
-	class EO_RatingSubordinate_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Intranet\RatingSubordinateTable */
-		static public $dataClass = '\Bitrix\Intranet\RatingSubordinateTable';
-	}
-}
-namespace Bitrix\Intranet {
-	/**
-	 * @method static EO_RatingSubordinate_Query query()
-	 * @method static EO_RatingSubordinate_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RatingSubordinate_Result getById($id)
-	 * @method static EO_RatingSubordinate_Result getList(array $parameters = array())
-	 * @method static EO_RatingSubordinate_Entity getEntity()
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate_Collection createCollection()
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\EO_RatingSubordinate_Collection wakeUpCollection($rows)
-	 */
-	class RatingSubordinateTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_RatingSubordinate_Result exec()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate fetchObject()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_RatingSubordinate_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate fetchObject()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection fetchCollection()
-	 */
-	class EO_RatingSubordinate_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate createObject($setDefaultValues = true)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection createCollection()
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate wakeUpObject($row)
-	 * @method \Bitrix\Intranet\EO_RatingSubordinate_Collection wakeUpCollection($rows)
-	 */
-	class EO_RatingSubordinate_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\DepartmentDayTable:intranet/lib/ustat/departmentday.php:209793287c7b4fb0153a85cc6441d473 */
 namespace Bitrix\Intranet\UStat {
@@ -1668,18 +2175,6 @@ namespace Bitrix\Intranet\UStat {
 	}
 }
 namespace Bitrix\Intranet\UStat {
-	/**
-	 * @method static EO_DepartmentDay_Query query()
-	 * @method static EO_DepartmentDay_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_DepartmentDay_Result getById($id)
-	 * @method static EO_DepartmentDay_Result getList(array $parameters = array())
-	 * @method static EO_DepartmentDay_Entity getEntity()
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentDay createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentDay_Collection createCollection()
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentDay wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentDay_Collection wakeUpCollection($rows)
-	 */
-	class DepartmentDayTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1899,18 +2394,6 @@ namespace Bitrix\Intranet\UStat {
 }
 namespace Bitrix\Intranet\UStat {
 	/**
-	 * @method static EO_DepartmentHour_Query query()
-	 * @method static EO_DepartmentHour_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_DepartmentHour_Result getById($id)
-	 * @method static EO_DepartmentHour_Result getList(array $parameters = array())
-	 * @method static EO_DepartmentHour_Entity getEntity()
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentHour createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentHour_Collection createCollection()
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentHour wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\UStat\EO_DepartmentHour_Collection wakeUpCollection($rows)
-	 */
-	class DepartmentHourTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2129,18 +2612,6 @@ namespace Bitrix\Intranet\UStat {
 }
 namespace Bitrix\Intranet\UStat {
 	/**
-	 * @method static EO_UserDay_Query query()
-	 * @method static EO_UserDay_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_UserDay_Result getById($id)
-	 * @method static EO_UserDay_Result getList(array $parameters = array())
-	 * @method static EO_UserDay_Entity getEntity()
-	 * @method static \Bitrix\Intranet\UStat\EO_UserDay createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\UStat\EO_UserDay_Collection createCollection()
-	 * @method static \Bitrix\Intranet\UStat\EO_UserDay wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\UStat\EO_UserDay_Collection wakeUpCollection($rows)
-	 */
-	class UserDayTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2358,18 +2829,6 @@ namespace Bitrix\Intranet\UStat {
 	}
 }
 namespace Bitrix\Intranet\UStat {
-	/**
-	 * @method static EO_UserHour_Query query()
-	 * @method static EO_UserHour_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_UserHour_Result getById($id)
-	 * @method static EO_UserHour_Result getList(array $parameters = array())
-	 * @method static EO_UserHour_Entity getEntity()
-	 * @method static \Bitrix\Intranet\UStat\EO_UserHour createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Intranet\UStat\EO_UserHour_Collection createCollection()
-	 * @method static \Bitrix\Intranet\UStat\EO_UserHour wakeUpObject($row)
-	 * @method static \Bitrix\Intranet\UStat\EO_UserHour_Collection wakeUpCollection($rows)
-	 */
-	class UserHourTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

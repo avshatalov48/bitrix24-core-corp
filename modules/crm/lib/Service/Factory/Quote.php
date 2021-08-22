@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
@@ -151,6 +152,16 @@ class Quote extends Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::NotDisplayed],
 				'CLASS' => Field\PersonTypeId::class,
 			];
+
+			$locationAttributes = [];
+			if (!Container::getInstance()->getAccounting()->isTaxMode())
+			{
+				$locationAttributes = [\CCrmFieldInfoAttr::NotDisplayed];
+			}
+			$info[Item\Quote::FIELD_NAME_LOCATION_ID] = [
+				'TYPE' => Field::TYPE_LOCATION,
+				'ATTRIBUTES' => $locationAttributes,
+			];
 		}
 
 		if ($this->isLinkWithProductsEnabled())
@@ -158,6 +169,10 @@ class Quote extends Factory
 			$info[Item::FIELD_NAME_OPPORTUNITY] = [
 				'TYPE' => Field::TYPE_DOUBLE,
 				'CLASS' => Field\Opportunity::class,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			];
+			$info[Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY] = [
+				'TYPE' => Field::TYPE_BOOLEAN,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
 			];
 			$info[Item::FIELD_NAME_TAX_VALUE] = [
@@ -308,6 +323,7 @@ class Quote extends Factory
 			Item::FIELD_NAME_STAGE_ID,
 			Item::FIELD_NAME_MYCOMPANY_ID,
 			Item::FIELD_NAME_COMPANY_ID,
+			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
 		];
 	}
 
@@ -462,6 +478,17 @@ class Quote extends Factory
 	public function getEditorAdapter(): EditorAdapter
 	{
 		$adapter = parent::getEditorAdapter();
+
+		$adapter->addEntityField(
+			EditorAdapter::getUtmField(
+				$this->getFieldCaption(EditorAdapter::FIELD_UTM)
+			)
+		);
+		$locationField = $this->getFieldsCollection()->getField(Item\Quote::FIELD_NAME_LOCATION_ID);
+		if ($locationField && $locationField->isDisplayed())
+		{
+			$adapter->addEntityField(EditorAdapter::getLocationFieldDescription($locationField));
+		}
 
 		$adapter->addEntityField([
 			'name' => EditorAdapter::FIELD_FILES,

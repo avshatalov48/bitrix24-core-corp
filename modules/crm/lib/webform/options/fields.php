@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Catalog;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\Localization\Loc;
 
 /**
  * Class Fields
@@ -186,6 +187,16 @@ final class Fields
 					break;
 			}
 
+			if (self::isFieldFileImage($options['name']))
+			{
+				$contentTypes = ['image/*'];
+			}
+			else
+			{
+				$contentTypes = $field['SETTINGS_DATA']['CONTENT_TYPES'] ?? null;
+			}
+
+
 			$this->cachedResult[] = $options + [
 				'type' => $type,
 				'placeholder' => $field['PLACEHOLDER'],
@@ -194,6 +205,7 @@ final class Fields
 				'bigPic' => !empty($field['SETTINGS_DATA']['BIG_PIC'])
 					? $field['SETTINGS_DATA']['BIG_PIC'] === 'Y'
 					: false,
+				'contentTypes' => $contentTypes,
 			];
 		}
 
@@ -450,6 +462,7 @@ final class Fields
 			'valueTypes' => $valueTypes,
 			'canBeMultiple' => $data['MULTIPLE_ORIGINAL'] ?? $isValuableType,
 			'canBeRequired' => $isValuableType,
+			'supportContentTypes' => $field['TYPE'] === 'file' && !self::isFieldFileImage($data['CODE']),
 			'supportListableItems' => $hasListableItems,
 			'supportCustomItems' => $field['TYPE'] === 'product',
 			'catalog' => $field['TYPE'] === 'product' ? $catalog : null,
@@ -604,7 +617,13 @@ final class Fields
 			$data['SETTINGS_DATA']['BIG_PIC'] = ($options['bigPic'] ?? false) ? 'Y' : 'N';
 			$multipleOriginal = true;
 		}
-
+		if($data['TYPE'] == 'file' && !self::isFieldFileImage($options['name']))
+		{
+			$data['SETTINGS_DATA']['CONTENT_TYPES'] = is_array($options['contentTypes'] ?? null)
+				? $options['contentTypes']
+				: []
+			;
+		}
 
 		$data['REQUIRED'] = $options['required'] ? 'Y' : 'N';
 		$data['MULTIPLE'] = $options['multiple'] && $multipleOriginal ? 'Y' : 'N';
@@ -721,5 +740,13 @@ final class Fields
 		}
 
 		return $result;
+	}
+
+	private static function isFieldFileImage($name)
+	{
+		return in_array(
+			$name,
+			['CONTACT_PHOTO', 'COMPANY_LOGO']
+		);
 	}
 }

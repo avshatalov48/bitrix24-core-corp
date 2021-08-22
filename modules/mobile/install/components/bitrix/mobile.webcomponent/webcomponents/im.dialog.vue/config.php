@@ -11,6 +11,7 @@ return [
 		"menu/header",
 
 		"webcomponent/parameters",
+		"utils/urlrewrite/rules",
 		"webcomponent/urlrewrite",
 		"webcomponent/storage",
 

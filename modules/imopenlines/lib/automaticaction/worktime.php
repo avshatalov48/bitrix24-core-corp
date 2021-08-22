@@ -212,7 +212,7 @@ class WorkTime
 				'SYSTEM' => 'Y',
 				'IMPORTANT_CONNECTOR' => 'Y',
 				'PARAMS' => [
-					'"CLASS" '=> 'bx-messenger-content-item-ol-output',
+					'CLASS'=> 'bx-messenger-content-item-ol-output',
 					'IMOL_FORM' => 'offline',
 					'TYPE' => 'lines',
 					'COMPONENT_ID' => 'bx-imopenlines-message',

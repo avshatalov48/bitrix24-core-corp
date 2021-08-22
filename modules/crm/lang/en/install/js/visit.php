@@ -11,7 +11,7 @@ $MESS["CRM_ACTIVITY_VISIT_FACEID_AGREEMENT"] = "<div class=\"tracker-agreement-p
    <ol class=\"tracker-agreement-popup-list\">
     <li class=\"tracker-agreement-popup-list-item\">
  The FindFace Service (hereinafter referred to as \"FindFace Service\") is provided by N-TECH.LAB LTD. 
- Users of the FindFace Service are required to enter into an agreement with FindFace Service and must agree to the <a href=\"https://saas.findface.pro/files/docs/license_us.pdf\" class=\"tracker-link\">following terms and conditions</a> by selecting \"I Agree\". 
+ Users of the FindFace Service are required to enter into an agreement with FindFace Service and must agree to the <a target=\"_blank\" href=\"https://saas.findface.pro/files/docs/license_us.pdf\" class=\"tracker-link\">following terms and conditions</a> by selecting \"I Agree\". 
  <br>
  By selecting \"I Agree\" the User is agreeing and guaranteeing that they will adhere to the following requirements: 
      <ul class=\"tracker-agreement-popup-inner-list\">

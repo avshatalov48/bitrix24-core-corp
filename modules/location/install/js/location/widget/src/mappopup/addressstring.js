@@ -1,5 +1,5 @@
-import {Tag} from "main.core";
-import {Address, Format, AddressStringConverter} from "location.core";
+import {Tag} from 'main.core';
+import {Address, Format, AddressStringConverter, FormatTemplateType} from 'location.core';
 
 export default class AddressString
 {
@@ -10,7 +10,7 @@ export default class AddressString
 
 	constructor(props)
 	{
-		if(!(props.addressFormat instanceof Format))
+		if (!(props.addressFormat instanceof Format))
 		{
 			throw new Error('addressFormat must be instance of Format');
 		}
@@ -22,18 +22,18 @@ export default class AddressString
 	{
 		this.#address = address;
 
-		if(!this.#stringElement)
+		if (!this.#stringElement)
 		{
 			return;
 		}
 
 		this.#stringElement.innerHTML = this.#convertAddressToString(address);
 
-		if(!address && !this.isHidden())
+		if (!address && !this.isHidden())
 		{
 			this.hide();
 		}
-		else if(address && this.isHidden())
+		else if (address && this.isHidden())
 		{
 			this.show();
 		}
@@ -41,14 +41,22 @@ export default class AddressString
 
 	#convertAddressToString(address: ?Address): string
 	{
-		if(!address)
+		let result = '';
+
+		if (address)
 		{
-			return '';
+			result = AddressStringConverter.convertAddressToStringTemplate(
+				address,
+				this.#addressFormat.getTemplate(FormatTemplateType.DEFAULT),
+				AddressStringConverter.CONTENT_TYPE_HTML,
+				', ',
+				this.#addressFormat
+			);
 		}
 
-		return address.toString(this.#addressFormat, AddressStringConverter.STRATEGY_TYPE_FIELD_SORT);
+		return result;
 	}
-
+	
 	render(props): Element
 	{
 		this.#address = props.address;
@@ -61,7 +69,7 @@ export default class AddressString
 				${this.#stringElement}
 			</div>`;
 
-		if(addresStr === '')
+		if (addresStr === '')
 		{
 			this.hide();
 		}
@@ -71,7 +79,7 @@ export default class AddressString
 
 	show()
 	{
-		if(this.#element)
+		if (this.#element)
 		{
 			this.#element.style.display = 'block';
 		}
@@ -79,7 +87,7 @@ export default class AddressString
 
 	hide()
 	{
-		if(this.#element)
+		if (this.#element)
 		{
 			this.#element.style.display = 'none';
 		}

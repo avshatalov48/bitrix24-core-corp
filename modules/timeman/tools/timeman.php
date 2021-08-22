@@ -1349,21 +1349,6 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							}
 						}
 
-						if (
-							$device === ScheduleTable::ALLOWED_DEVICES_MOBILE
-							&& Config::isMonitorEnabledForCurrentUser()
-							&& Status::getForCurrentUser() === Status::WAITING_DATA
-						)
-						{
-							$res = false;
-							$error = \Bitrix\Main\Web\Json::encode([
-								'error_id' => 'ALERT_WARNING',
-								'error' => \Bitrix\Main\Localization\Loc::getMessage('TM_DAY_OPEN_ERROR_MONITOR_ENABLED'),
-							]);
-
-							break;
-						}
-
 						if ($_REQUEST['timestamp'] > 0)
 						{
 							$timestamp = intval($_REQUEST['timestamp']) % 86400;

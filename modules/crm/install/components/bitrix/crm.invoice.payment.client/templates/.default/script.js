@@ -6,6 +6,7 @@ BX.crmInvoicePaymentClient = (function()
 		this.nameValue = params.nameValue || "buyMoney";
 		this.ajaxUrl = params.url + "?hash=" + params.hash;
 		this.hash = params.hash || {};
+		this.returnUrl = params.returnUrl || "";
 		this.wrapperId = params.wrapperId || "";
 		this.templateBill = params.templateBill || "";
 		this.templateFolder = params.templateFolder;
@@ -19,7 +20,7 @@ BX.crmInvoicePaymentClient = (function()
 		this.switcher = this.wrapper.getElementsByClassName('crm-invoice-payment-system-return-list')[0];
 		this.frame = document.getElementById('crm-invoice-payment-template-frame');
 		this.useFrame = params.useFrame === 'Y';
-		
+
 		if (this.useFrame)
 		{
 			var base = document.createElement('base');
@@ -34,7 +35,7 @@ BX.crmInvoicePaymentClient = (function()
 
 		BX.ready(BX.proxy(this.init, this));
 	};
-	
+
 	classDescription.prototype.init = function()
 	{
 		var paySystemNames = this.wrapper.getElementsByClassName('crm-invoice-payment-system-name');
@@ -66,7 +67,8 @@ BX.crmInvoicePaymentClient = (function()
 							sessid: BX.bitrix_sessid(),
 							paySystemId: targetInput.value,
 							accountNumber: this.accountNumber,
-							hash: this.hash
+							hash: this.hash,
+							returnUrl: this.returnUrl,
 						},
 						onsuccess: BX.proxy(function(result)
 						{
@@ -128,7 +130,7 @@ BX.crmInvoicePaymentClient = (function()
 				this.paySystemsTemplate.innerHTML = null;
 			}, this)
 		);
-		
+
 		return this;
 	};
 
@@ -140,5 +142,5 @@ BX.crmInvoicePaymentClient = (function()
 		this.frame.contentDocument.body.style.padding = 0;
 	};
 
-	return classDescription;	  
+	return classDescription;
 })();

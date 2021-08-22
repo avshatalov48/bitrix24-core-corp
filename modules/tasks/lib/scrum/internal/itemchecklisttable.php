@@ -5,6 +5,22 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators;
 
+/**
+ * Class ItemChecklistTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ItemChecklist_Query query()
+ * @method static EO_ItemChecklist_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemChecklist_Result getById($id)
+ * @method static EO_ItemChecklist_Result getList(array $parameters = array())
+ * @method static EO_ItemChecklist_Entity getEntity()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist_Collection createCollection()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist_Collection wakeUpCollection($rows)
+ */
 class ItemChecklistTable extends DataManager
 {
 	public static function getTableName()

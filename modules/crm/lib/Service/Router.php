@@ -845,7 +845,7 @@ class Router
 
 	protected function loadCurrentViews(): array
 	{
-		return \CUserOptions::GetOption('crm.navigation', 'index', []);
+		return (array)\CUserOptions::GetOption('crm.navigation', 'index', []);
 	}
 
 	protected function saveCurrentViews(array $currentViews): void
@@ -855,6 +855,10 @@ class Router
 
 	public function getAutomationUrlTemplate(int $entityTypeId): ?string
 	{
+		if ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			return '/shop/orders/automation/0/';
+		}
 		if ($this->isNewRoutingForAutomationEnabled($entityTypeId))
 		{
 			return $this->getPreparedTemplates()['bitrix:crm.item.automation'] ?? null;
@@ -1010,5 +1014,25 @@ class Router
 		]);
 
 		return $url;
+	}
+
+	/**
+	 * Return name of detail component by $entityTypeId.
+	 *
+	 * @param int $entityTypeId
+	 * @return string|null
+	 */
+	public function getItemDetailComponentName(int $entityTypeId): ?string
+	{
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return 'bitrix:crm.quote.details';
+		}
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return 'bitrix:crm.item.details';
+		}
+
+		return null;
 	}
 }

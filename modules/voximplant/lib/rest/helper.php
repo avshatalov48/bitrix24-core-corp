@@ -652,6 +652,7 @@ class Helper
 			'SHOW_CRM_CARD' => $call->isCrmEnabled(),
 			'CRM_ENTITY_TYPE' => $call->getPrimaryEntityType(),
 			'CRM_ENTITY_ID' => $call->getPrimaryEntityId(),
+			'CRM_BINDINGS' => \CVoxImplantCrmHelper::resolveBindingNames($call->getCrmBindings()),
 			'CRM' => \CVoxImplantCrmHelper::GetDataForPopup($call->getCallId(), $call->getCallerId(), $userId),
 			'CONFIG' => array(
 				'CRM_CREATE' => 'none'

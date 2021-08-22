@@ -24,7 +24,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Absence_Query query()
+ * @method static EO_Absence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Absence_Result getById($id)
+ * @method static EO_Absence_Result getList(array $parameters = array())
+ * @method static EO_Absence_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\EO_Absence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\EO_Absence_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\EO_Absence wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\EO_Absence_Collection wakeUpCollection($rows)
+ */
 
 class AbsenceTable extends Main\Entity\DataManager
 {

@@ -76,47 +76,83 @@ class LocationManager extends Base
 	/**
 	 * @param int $addressId
 	 */
-	public function setDefaultLocationFrom(int $addressId)
+	public function storeLocationFrom(int $addressId): void
 	{
-		$locationArray = $this->getFormattedLocation($addressId);
-		//$locationArray = $this->getFormattedAddressArray($addressId);
-		if (!$locationArray)
+		$location = $this->getFormattedLocation($addressId);
+		if (!$location)
 		{
 			return;
+		}
+
+		$newLocations = [
+			$this->makeLocationCode($location) => $location,
+		];
+		$currentLocations = $this->getLocationsFromList();
+		if (is_array($currentLocations))
+		{
+			$newLocations = array_merge($newLocations, $currentLocations);
 		}
 
 		Main\Config\Option::set(
 			'salescenter',
 			'default_location_from',
-			serialize($locationArray)
+			serialize($newLocations)
 		);
 	}
 
 	/**
 	 * @return mixed|null
 	 */
-	public function getDefaultLocationFrom()
+	public function getLocationsFromList(): ?array
 	{
-		$defaultLocationFrom = Main\Config\Option::get('salescenter', 'default_location_from');
-
-		if (!$defaultLocationFrom)
+		$optionValue = Main\Config\Option::get('salescenter', 'default_location_from');
+		if (!$optionValue)
 		{
 			return null;
 		}
 
-		if (!CheckSerializedData($defaultLocationFrom))
+		if (!CheckSerializedData($optionValue))
 		{
 			return null;
 		}
 
-		$locationArray = unserialize($defaultLocationFrom, ['allowed_classes' => false]);
-
-		if (!$locationArray)
+		$defaultLocationsFrom = unserialize($optionValue, ['allowed_classes' => false]);
+		if (!$defaultLocationsFrom)
 		{
 			return null;
 		}
 
-		return $locationArray;
+		/**
+		 * If it's a single location we must turn it into array
+		 */
+		if (array_key_exists('externalId', $defaultLocationsFrom))
+		{
+			$defaultLocationsFrom = [
+				$this->makeLocationCode($defaultLocationsFrom) => $defaultLocationsFrom,
+			];
+		}
+
+		return $defaultLocationsFrom;
+	}
+
+	/**
+	 * @param array $location
+	 * @return string
+	 */
+	public function makeLocationCode(array $location): string
+	{
+		$fieldCollection = (
+			isset($location['address']['fieldCollection'])
+			&& is_array($location['address']['fieldCollection'])
+		)
+			? $location['address']['fieldCollection']
+			: [];
+
+		return implode('_', [
+			(string)$location['sourceCode'],
+			(string)$location['externalId'],
+			md5(serialize($fieldCollection))
+		]);
 	}
 
 	/**
@@ -135,7 +171,7 @@ class LocationManager extends Base
 				continue;
 			}
 
-			$result[] = $formattedAddress;
+			$result[$this->makeLocationCode($formattedAddress)] = $formattedAddress;
 		}
 
 		return $result;

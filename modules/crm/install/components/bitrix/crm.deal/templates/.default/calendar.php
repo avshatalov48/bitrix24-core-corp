@@ -124,13 +124,20 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 	$userFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields("CRM_DEAL", 0, LANGUAGE_ID);
 	$selectedField = $filterSelect == 'CLOSEDATE' || $filterSelect == 'DATE_CREATE';
 
+	$editorConfig = \Bitrix\Crm\Entity\EntityEditorConfig::createWithCurrentScope(
+		CCrmOwnerType::Deal,
+		[
+			'DEAL_CATEGORY_ID' => $categoryID,
+		]
+	);
+
 	foreach ($userFields as $userField)
 	{
 		if ($userField['USER_TYPE_ID'] == 'resourcebooking' && $userField['MULTIPLE'] == 'Y'
 			|| $userField['USER_TYPE_ID'] == 'date' && $userField['MULTIPLE'] == 'N'
 			|| $userField['USER_TYPE_ID'] == 'datetime' && $userField['MULTIPLE'] == 'N')
 		{
-			if (!Calendar::isUserfieldShownInForm($userField, "CRM_DEAL", $categoryID))
+			if (!$editorConfig->isFormFieldVisible($userField['FIELD_NAME']))
 			{
 				continue;
 			}

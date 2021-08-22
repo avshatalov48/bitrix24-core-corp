@@ -11,8 +11,6 @@ class LicenseWidget
 
 	constructor(params)
 	{
-		this.signedParameters = params.signedParameters;
-		this.componentName = params.componentName;
 		this.isFreeLicense = params.isFreeLicense === "Y";
 		this.isDemoLicense = params.isDemoLicense === "Y";
 		this.isAutoPay = params.isAutoPay === "Y";
@@ -171,7 +169,7 @@ class LicenseWidget
 	{
 		if (!this.popup)
 		{
-			this.popup = new Popup({
+			this.popup = new B24.PopupBlur({
 				autoHide: true,
 				closeByEsc: true,
 				contentPadding: 0,
@@ -185,7 +183,7 @@ class LicenseWidget
 				},
 				offsetLeft: -20,
 				className: 'popup-with-radius',
-				contentBackground: 'rgba(0,0,0,0)',
+				// contentBackground: 'rgba(0,0,0,0)',
 				angle: { position: 'top', offset: 120 },
 				bindElement: bindElement,
 				content: this.renderPopupContent(),
@@ -205,12 +203,12 @@ class LicenseWidget
 			clearTimeout(this.popupLeaveTimeout);
 		});
 
-		this.popup.getPopupContainer().addEventListener('mouseleave', () =>
-		{
-			this.popupLeaveTimeout = setTimeout(() => {
-				this.closePopup();
-			}, 500);
-		});
+		// this.popup.getPopupContainer().addEventListener('mouseleave', () =>
+		// {
+		// 	this.popupLeaveTimeout = setTimeout(() => {
+		// 		this.closePopup();
+		// 	}, 500);
+		// });
 	}
 
 	renderPopupContent()
@@ -223,8 +221,6 @@ class LicenseWidget
 			data()
 			{
 				return {
-					componentName: LicenceWidgetInstance.componentName,
-					signedParameters: LicenceWidgetInstance.signedParameters,
 					licenseType: LicenceWidgetInstance.licenseType,
 				};
 			},
@@ -236,8 +232,6 @@ class LicenseWidget
 			},
 			template: `
 				<PopupWrapperComponent 
-					:componentName="componentName" 
-					:signedParameters="signedParameters" 
 					:licenseType="licenseType" 
 				/>`,
 		});

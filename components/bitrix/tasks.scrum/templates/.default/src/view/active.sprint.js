@@ -235,8 +235,8 @@ export class ActiveSprint extends View
 	{
 		this.itemsInFinishStage.set(kanbanItem.getId(), kanbanItem.getStoryPoints());
 
-		sprint.getTotalCompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
-		sprint.getTotalUncompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
+		sprint.getCompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
+		sprint.getUncompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
 
 		sprint.setCompletedTasks(sprint.getCompletedTasks() + 1);
 		sprint.setUncompletedTasks(sprint.getUncompletedTasks() - 1);
@@ -267,8 +267,8 @@ export class ActiveSprint extends View
 	{
 		this.itemsInFinishStage.delete(kanbanItem.getId());
 
-		sprint.getTotalCompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
-		sprint.getTotalUncompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
+		sprint.getCompletedStoryPoints().subtractPoints(kanbanItem.getStoryPoints());
+		sprint.getUncompletedStoryPoints().addPoints(kanbanItem.getStoryPoints());
 
 		sprint.setCompletedTasks(sprint.getCompletedTasks() - 1);
 		sprint.setUncompletedTasks(sprint.getUncompletedTasks() + 1);

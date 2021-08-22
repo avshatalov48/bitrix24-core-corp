@@ -1,7 +1,8 @@
 <?php
 namespace Bitrix\ImOpenLines\Im\Messages;
 
-use \Bitrix\ImOpenLines\Im;
+use Bitrix\ImOpenLines\Im;
+
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -18,7 +19,29 @@ class Error
 	 * @param string $messageExternalError
 	 * @return bool|int
 	 */
-	public static function addErrorNotSendChat($chatId, $message, $messageExternalError = '')
+	public static function addErrorNotSendChat($chatId, $message, string $messageExternalError = '')
+	{
+		return self::sendError($chatId, $message, $messageExternalError);
+	}
+
+	/**
+	 * @param $chatId
+	 * @param $message
+	 * @param string $messageExternalError
+	 * @return bool|int
+	 */
+	public static function addErrorNotDeleteChat($chatId, $message, string $messageExternalError = '')
+	{
+		return self::sendError($chatId, $message, $messageExternalError);
+	}
+
+	/**
+	 * @param $chatId
+	 * @param $message
+	 * @param string $messageExternalError
+	 * @return bool|int
+	 */
+	protected static function sendError($chatId, $message, string $messageExternalError = '')
 	{
 		if(!empty($messageExternalError))
 		{

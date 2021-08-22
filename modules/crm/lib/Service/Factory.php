@@ -75,8 +75,7 @@ abstract class Factory
 	}
 
 	/**
-	 * Returns fields map used for an \Bitrix\Crm\Item object creation
-	 * @see Item
+	 * Returns map of common field names that have entity-specific name for the entity
 	 *
 	 * @return string[] commonFieldName => entityFieldName
 	 */
@@ -1296,14 +1295,6 @@ abstract class Factory
 				$this->editorAdapter->addEntityField(
 					EditorAdapter::getProductRowSummaryField(
 						$this->getFieldCaption(EditorAdapter::FIELD_PRODUCT_ROW_SUMMARY)
-					)
-				);
-			}
-			if ($this->isCrmTrackingEnabled())
-			{
-				$this->editorAdapter->addEntityField(
-					EditorAdapter::getUtmField(
-						$this->getFieldCaption(EditorAdapter::FIELD_UTM)
 					)
 				);
 			}

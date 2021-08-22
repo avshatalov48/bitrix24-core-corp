@@ -10,6 +10,22 @@ use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\SipTable;
 
+/**
+ * Class ExternalLineTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ExternalLine_Query query()
+ * @method static EO_ExternalLine_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ExternalLine_Result getById($id)
+ * @method static EO_ExternalLine_Result getList(array $parameters = array())
+ * @method static EO_ExternalLine_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_ExternalLine createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_ExternalLine_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_ExternalLine wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_ExternalLine_Collection wakeUpCollection($rows)
+ */
 class ExternalLineTable extends Base
 {
 	const TYPE_REST_APP = "rest-app";

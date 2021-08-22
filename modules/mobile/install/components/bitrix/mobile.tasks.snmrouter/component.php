@@ -39,6 +39,7 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'NAME_TEMPLATE' => ($arParams['NAME_TEMPLATE'] ?: CSite::GetNameFormat(false)),
 		'NEW_CARD' => ($this->request->getQuery('NEW_CARD') === 'Y' ? 'Y' : 'N'),
 		'GUID' => ($this->request->getQuery('GUID') ?? ''),
+		'PLATFORM' => 'mobile',
 	];
 
 	foreach ($params as $k => $v)
@@ -57,6 +58,7 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'projects',
 		'selector',
 		'view',
+		'efficiency',
 	];
 
 	$routePage = ($this->request->getQuery('routePage') ?: 'roles');

@@ -170,6 +170,11 @@
 			return this.pathToAdd;
 		},
 
+		/**
+		 *
+		 * @param {BX.CRM.Kanban.Item} item
+		 * @param {BX.CRM.Kanban.Item} beforeItem
+		 */
 		addItem: function(item, beforeItem)
 		{
 			if (!(item instanceof BX.Kanban.Item))
@@ -211,6 +216,11 @@
 				{
 					this.items.push(item);
 				}
+
+				if (item.isCountable())
+				{
+					this.incrementTotal();
+				}
 			}
 
 			item.animate({
@@ -219,25 +229,20 @@
 					item.layout.container.style.opacity = progress*100+'%';
 				},
 				useAnimation: item.useAnimation
-			});
-
-			if (item.isCountable() && !alreadySet)
-			{
-				this.incrementTotal();
-			}
+			}).then(function(){
+				BX.Event.EventEmitter.emit(
+					'Crm.Kanban.Column:onItemAdded',
+					{
+						item:item,
+						targetColumn: this,
+						beforeItem: beforeItem
+					});
+			}.bind(this));
 
 			if (this.getGrid().isRendered())
 			{
 				this.render();
 			}
-
-			BX.Event.EventEmitter.emit(
-				'Crm.Kanban.Column:onItemAdded',
-				{
-					item:item,
-					targetColumn: this,
-					beforeItem: beforeItem
-				});
 		},
 
 		addItems: function(items, beforeItem)

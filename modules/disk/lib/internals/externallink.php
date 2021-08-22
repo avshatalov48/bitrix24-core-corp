@@ -25,7 +25,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ExternalLink_Query query()
+ * @method static EO_ExternalLink_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ExternalLink_Result getById($id)
+ * @method static EO_ExternalLink_Result getList(array $parameters = array())
+ * @method static EO_ExternalLink_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_ExternalLink createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_ExternalLink_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_ExternalLink wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_ExternalLink_Collection wakeUpCollection($rows)
+ */
 
 final class ExternalLinkTable extends DataManager
 {

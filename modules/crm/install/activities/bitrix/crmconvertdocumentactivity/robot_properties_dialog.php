@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
 $map = $dialog->getMap();
+$responsible = $map['Responsible'];
 $items = $map['Items'];
 
 $document = $dialog->getDocumentType();
@@ -16,6 +17,10 @@ $selectedDealCategory = $dealCategoryId ? $dialog->getCurrentValue($dealCategory
 $disableActivityCompletion = isset($map['DisableActivityCompletion']) ? $map['DisableActivityCompletion'] : null;
 $disableActivityCompletionValue = $disableActivityCompletion ? $dialog->getCurrentValue($disableActivityCompletion['FieldName']) : 'N';
 ?>
+<div class="crm-automation-popup-settings">
+	<span class="crm-automation-popup-settings-title"><?=htmlspecialcharsbx($responsible['Name'])?>: </span>
+	<?=$dialog->renderFieldControl($responsible, $dialog->getCurrentValue($responsible['FieldName']))?>
+</div>
 <div class="bizproc-automation-popup-settings">
 	<span class="bizproc-automation-popup-settings-title"><?=htmlspecialcharsbx($items['Name'])?>: </span>
 	<div style="display:inline-block; vertical-align: top">

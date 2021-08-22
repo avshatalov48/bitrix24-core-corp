@@ -19,7 +19,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Imopenlines
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ConfigStatistic_Query query()
+ * @method static EO_ConfigStatistic_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ConfigStatistic_Result getById($id)
+ * @method static EO_ConfigStatistic_Result getList(array $parameters = array())
+ * @method static EO_ConfigStatistic_Entity getEntity()
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigStatistic createObject($setDefaultValues = true)
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigStatistic_Collection createCollection()
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigStatistic wakeUpObject($row)
+ * @method static \Bitrix\ImOpenLines\Model\EO_ConfigStatistic_Collection wakeUpCollection($rows)
+ */
 
 class ConfigStatisticTable extends Main\Entity\DataManager
 {

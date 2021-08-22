@@ -20,14 +20,14 @@ const Scrollable = {
 			</div>
 			<transition name="b24-a-fade">
 				<div class="b24-window-scroll-arrow-down-box"
-					v-if="enabled && !text && !anchorBottomIntersected"
+					v-if="enabled && !text && !anchorBottomIntersected && !hideEars"
 					:style="{ zIndex: zIndexComputed + 10}"
 					@click="scrollTo(true)"
 				>
 					<button type="button" class="b24-window-scroll-arrow-down"></button>
 				</div>
 				<div class="b24-form-scroll-textable"
-					v-if="enabled && text && !anchorBottomIntersected" 
+					v-if="enabled && text && !anchorBottomIntersected && !hideEars" 
 					:style="{ zIndex: zIndexComputed + 10}"
 					@click="scrollTo(true)"
 				>
@@ -54,7 +54,11 @@ const Scrollable = {
 		zIndexComputed()
 		{
 			return this.zIndex || 200;
-		}
+		},
+		hideEars()
+		{
+			return this.$root.flags ? this.$root.flags.hideEars : false;
+		},
 	},
 	methods: {
 		getScrollNode()
@@ -121,7 +125,6 @@ const Scrollable = {
 			this.anchorObserver = new IntersectionObserver(
 				entries => {
 					entries.forEach(entry => {
-						//debugger;
 						if (entry.target === topAnchor)
 						{
 							this.anchorTopIntersected = !!entry.isIntersecting;

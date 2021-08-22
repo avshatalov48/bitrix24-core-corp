@@ -1070,7 +1070,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		return $this->checkModules() && $this->checkPermissions();
 	}
 
-	public function processActionAction(string $action, array $ids): ?array
+	public function processActionAction(string $action, array $ids, array $data = []): ?array
 	{
 		if (!$this->checkRequirementsForAjaxCalls())
 		{
@@ -1111,6 +1111,10 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 				$result = Group::removeFromArchive($ids);
 				break;
 
+			case 'update':
+				$result = Group::update($ids, $data);
+				break;
+
 			case 'delete':
 				$result = Group::delete($ids);
 				break;
@@ -1136,16 +1140,16 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 
 		$members = [];
 
-		$roles = (
-			$type === 'heads'
-				? [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR]
-				: [UserToGroupTable::ROLE_USER]
-		);
+		$rolesMap = [
+			'all' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER],
+			'heads' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR],
+			'members' => [UserToGroupTable::ROLE_USER],
+		];
 		$limit = 10;
 
 		$query = $this->getPrimaryUsersQuery([$groupId]);
 		$query
-			->whereIn('ROLE', $roles)
+			->whereIn('ROLE', $rolesMap[$type])
 			->setLimit($limit)
 			->setOffset(($page - 1) * $limit)
 		;
@@ -1254,19 +1258,5 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			'projectBefore' => ($index === 0 ? 0 : $projects[$index - 1]),
 			'projectAfter' => ($index === count($projects) - 1 ? 0 : $projects[$index + 1]),
 		];
-	}
-
-	public function finishFirstProjectCreationTourGuideAction(): ?bool
-	{
-		if (!$this->checkRequirementsForAjaxCalls())
-		{
-			return null;
-		}
-
-		/** @var TourGuide\FirstProjectCreation $firstProjectCreationTour */
-		$firstProjectCreationTour = TourGuide\FirstProjectCreation::getInstance($this->arParams['USER_ID']);
-		$firstProjectCreationTour->finish();
-
-		return true;
 	}
 }

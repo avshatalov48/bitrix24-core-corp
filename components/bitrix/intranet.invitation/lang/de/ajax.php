@@ -15,3 +15,4 @@ $MESS["BX24_INVITE_DIALOG_SELF_SUCCESS"] = "Einstellungen für die Schnellregist
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Fehler beim Erstellen einer neuen Mailbox:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Ihr Passwort und Ihre Passwortbestätigung stimmen nicht überein";
 $MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "Maximale Länge von 50 zeichen überschritten";
+$MESS["INTRANET_INVITE_DIALOG_USER_COUNT_ERROR"] = "Maximale Anzahl der täglich eingeladenen Nutzer überschritten";

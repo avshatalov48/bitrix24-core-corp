@@ -24,6 +24,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
+\Bitrix\Main\UI\Extension::load('crm.router');
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -351,11 +352,25 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 			if(IsModuleInstalled('sale'))
 			{
-				$arActions[] = array(
+				$quoteAction = [
 					'TITLE' => GetMessage('CRM_LEAD_ADD_QUOTE_TITLE'),
 					'TEXT' => GetMessage('CRM_LEAD_ADD_QUOTE'),
-					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD'])."');"
-				);
+					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD'])."');",
+				];
+				if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
+				{
+					unset($quoteAction['ONCLICK']);
+					$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+						\CCrmOwnerType::Quote,
+						0,
+						null
+					);
+					$link->addParams([
+						'lead_id' => $arLead['ID'],
+					]);
+					$quoteAction['HREF'] = $link;
+				}
+				$arActions[] = $quoteAction;
 			}
 			if($arResult['IS_BIZPROC_AVAILABLE'])
 			{

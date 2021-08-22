@@ -4,37 +4,36 @@ namespace Bitrix\ImConnector\Provider\Network;
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
-
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\ImBot;
-
-use Bitrix\Im\Model\MessageTable;
-use Bitrix\Im\Model\MessageParamTable;
-
 use Bitrix\ImOpenLines\Im;
 use Bitrix\ImOpenlines\Session;
 use Bitrix\Imopenlines\Model\SessionTable;
-
+use Bitrix\ImConnector;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
-use Bitrix\ImConnector\Connectors;
+use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Provider\Base;
-use Bitrix\ImConnector\InteractiveMessage;
 
+/**
+ * Class Input provider for Network connector.
+ *
+ * @package Bitrix\ImConnector\Provider\Network
+ */
 class Input extends Base\Input
 {
 	/**
 	 * Input constructor.
-	 * @param string $command
 	 * @param array $params
 	 */
-	public function __construct(string $command, array $params)
+	public function __construct(array $params)
 	{
 		parent::__construct($params);
 
+		$this->command = $params['BX_COMMAND'];
+		unset($params['BX_COMMAND']);
 		$this->params = $params;
-
-		$this->command = $command;
 		$this->connector = 'network';
 		$this->line = $this->params['LINE_ID'];
 		$this->data = [$this->params];
@@ -97,6 +96,7 @@ class Input extends Base\Input
 					$result = $this->receivingCommandKeyboard();
 					break;
 				default:
+					//todo: Using parent:: to fire error, against current method.
 					$result = parent::receivingDefault();
 			}
 		}
@@ -117,7 +117,7 @@ class Input extends Base\Input
 	 */
 	protected function receivingStatusDelivery(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if(!Loader::includeModule('im'))
 		{
@@ -130,39 +130,42 @@ class Input extends Base\Input
 
 		if($result->isSuccess())
 		{
+			$resultData = [];
 			foreach ($this->data as $cell => $params)
 			{
 				$resultStatus = new Result();
 				$messageData = [];
-				$status['MESSAGE_ID'] = (int)$params['MESSAGE_ID'];
+
+				$params['MESSAGE_ID'] = (int)$params['MESSAGE_ID'];
 				if ($params['MESSAGE_ID'] <= 0)
 				{
 					$resultStatus->addError(new Error(
-						'Failed to load the im module',
-						'ERROR_IMCONNECTOR_FAILED_LOAD_IM',
+						'Got wrong or empty parameter MESSAGE_ID',
+						'ERROR_IMCONNECTOR_WRONG_PARAMETER',
 						__METHOD__,
 						$params
 					));
 				}
 
-				if($resultStatus->isSuccess())
+				if ($resultStatus->isSuccess())
 				{
-					$messageData = MessageTable::getList([
-						'select' => [
+					$queryMessage = ImConnector\Data\Message::getInstance()->query();
+					$messageData = $queryMessage
+						->setSelect([
 							'CHAT_ENTITY_TYPE' => 'CHAT.ENTITY_TYPE',
 							'CHAT_ENTITY_ID' => 'CHAT.ENTITY_ID',
 							'CHAT_ID'
-						],
-						'filter' => [
+						])
+						->setFilter([
 							'=ID' => $params['MESSAGE_ID']
-						]
-					])->fetch();
-
+						])
+						->exec()
+						->fetch()
+					;
 					if (
 						!$messageData
 						|| $messageData['CHAT_ENTITY_TYPE'] != 'LINES'
-						||
-						mb_strpos(
+						|| mb_strpos(
 							$messageData['CHAT_ENTITY_ID'], 'network|'
 							. $params['LINE_ID']
 							. '|'
@@ -179,15 +182,18 @@ class Input extends Base\Input
 					}
 				}
 
-				if($resultStatus->isSuccess())
+				if ($resultStatus->isSuccess())
 				{
-					$messageParamData = MessageParamTable::getList([
-						'select' => ['PARAM_VALUE'],
-						'filter' => [
+					$queryMessageParam = ImConnector\Data\MessageParam::getInstance()->query();
+					$messageParamData = $queryMessageParam
+						->addSelect('PARAM_VALUE')
+						->setFilter([
 							'=MESSAGE_ID' => $params['MESSAGE_ID'],
-							'=PARAM_NAME' => 'SENDING'
-						]
-					])->fetch();
+							'=PARAM_NAME' => 'SENDING',
+						])
+						->exec()
+						->fetch()
+					;
 					if (
 						!$messageParamData
 						|| $messageParamData['PARAM_VALUE'] != 'Y'
@@ -202,11 +208,11 @@ class Input extends Base\Input
 					}
 				}
 
-				if($resultStatus->isSuccess())
+				if ($resultStatus->isSuccess())
 				{
 					$status = [
 						'chat' => [
-							'id' => $params['DIALOG_ID']
+							'id' => $params['GUID']
 						],
 						'im' => [
 							'message_id' => $params['MESSAGE_ID'],
@@ -220,10 +226,22 @@ class Input extends Base\Input
 					$event = $this->sendEventStatusDelivery($status);
 					if (!$event->isSuccess())
 					{
-						$result->addErrors($event->getErrors());
+						$resultStatus->addErrors($event->getErrors());
 					}
 				}
+
+				if ($resultStatus->isSuccess())
+				{
+					$resultData[$cell]['SUCCESS'] = true;
+				}
+				else
+				{
+					$resultData[$cell]['SUCCESS'] = false;
+					$resultData[$cell]['ERRORS'] = $resultStatus->getErrorMessages();
+				}
 			}
+
+			$result->setResult($resultData);
 		}
 
 		return $result;
@@ -234,18 +252,42 @@ class Input extends Base\Input
 	 */
 	protected function receivingSessionVote(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
-		if(!Loader::includeModule('im'))
+		if($result->isSuccess())
 		{
-			$result->addError(new Error(
-				'Failed to load the im module',
-				'ERROR_IMCONNECTOR_FAILED_LOAD_IM',
-				__METHOD__
-			));
+			$resultData = [];
+			foreach ($this->data as $cell => $params)
+			{
+				$resultProcessingSessionVote = $this->processingSessionVote($params);
+
+				$resultData[$cell] = $resultProcessingSessionVote->getResult();
+				if($resultProcessingSessionVote->isSuccess())
+				{
+					$resultData[$cell]['SUCCESS'] = true;
+				}
+				else
+				{
+					$resultData[$cell]['SUCCESS'] = false;
+					$resultData[$cell]['ERRORS'] = $resultProcessingSessionVote->getErrorMessages();
+				}
+			}
+			$result->setResult($resultData);
 		}
 
-		if(!Loader::includeModule('imopenlines'))
+		return $result;
+	}
+
+	/**
+	 * @param array $params
+	 * @return Result
+	 */
+	protected function processingSessionVote(array $params): Result
+	{
+		$result = clone $this->result;
+		$messageParams = [];
+
+		if (!Loader::includeModule('imopenlines'))
 		{
 			$result->addError(new Error(
 				'Failed to load the imopenlines module',
@@ -254,77 +296,48 @@ class Input extends Base\Input
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			foreach ($this->data as $cell => $params)
+			$resultProcessing = Connector::initConnectorHandler($this->connector)->processingInputSessionVote($params, $this->line);
+
+			if ($resultProcessing->isSuccess())
 			{
-				if (
-					!isset($params['USER'])
-					&& $result->isSuccess()
-				)
+				$params = $resultProcessing->getResult()['PARAMS'];
+				$messageParams = $resultProcessing->getResult()['MESSAGE_PARAMS'];
+			}
+			else
+			{
+				$result->addErrors($resultProcessing->getErrors());
+			}
+		}
+
+		if ($result->isSuccess())
+		{
+			$params['ACTION'] = $params['ACTION'] === 'dislike' ? 'dislike': 'like';
+
+			$resultVote = false;
+			$sessionManager = ServiceLocator::getInstance()->get('ImOpenLines.Services.SessionManager');
+			if ($sessionManager instanceof \Bitrix\ImOpenLines\Services\SessionManager)
+			{
+				$resultVote = $sessionManager->voteAsUser((int)$messageParams['IMOL_VOTE'], $params['ACTION']);
+			}
+
+			if ($resultVote)
+			{
+				$messageParamService = ServiceLocator::getInstance()->get('Im.Services.MessageParam');
+				if ($messageParamService instanceof \Bitrix\Im\Services\MessageParam)
 				{
-					$result->addError(new Error(
-						'User data not transmitted',
-						'ERROR_IMCONNECTOR_NOT_TRANSMITTED_USER_DATA',
-						__METHOD__,
-						$params
-					));
+					$messageParamService->setParam((int)$params['MESSAGE_ID'], 'IMOL_VOTE', $params['ACTION'], true);
 				}
-
-				if($result->isSuccess())
-				{
-					$userId = Connectors\Network::getUserId($params['USER']);
-
-					if (empty($userId))
-					{
-						$result->addError(new Error(
-							'Failed to create or update user',
-							'ERROR_IMCONNECTOR_FAILED_USER',
-							__METHOD__,
-							$params
-						));
-					}
-				}
-
-				$messageParams['IMOL_VOTE'] = 0;
-
-				if($result->isSuccess())
-				{
-					$messageParams = \CIMMessageParam::Get($params['MESSAGE_ID']);
-
-					if ($messageParams['IMOL_VOTE'] != $params['SESSION_ID'])
-					{
-						$result->addError(new Error(
-							'Voting for the wrong session',
-							'ERROR_IMCONNECTOR_VOTING_FOR_WRONG_SESSION',
-							__METHOD__,
-							$params
-						));
-					}
-				}
-
-				if($result->isSuccess())
-				{
-					$params['ACTION'] = $params['ACTION'] === 'dislike'? 'dislike': 'like';
-
-					$resultVote = Session::voteAsUser($messageParams['IMOL_VOTE'], $params['ACTION']);
-					if ($resultVote)
-					{
-						\CIMMessageParam::Set($params['MESSAGE_ID'], [
-							'IMOL_VOTE' => $params['ACTION']
-						]);
-						\CIMMessageParam::SendPull($params['MESSAGE_ID'], ['IMOL_VOTE']);
-					}
-					else
-					{
-						$result->addError(new Error(
-							'Voting error',
-							'ERROR_IMCONNECTOR_VOTING_ERROR',
-							__METHOD__,
-							$params
-						));
-					}
-				}
+			}
+			else
+			{
+				$result->addError(new Error(
+					'Voting error',
+					'ERROR_IMCONNECTOR_VOTING_ERROR',
+					__METHOD__,
+					$params
+				));
 			}
 		}
 
@@ -337,7 +350,7 @@ class Input extends Base\Input
 	 */
 	protected function finishSession($message): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if(!Loader::includeModule('im'))
 		{
@@ -359,73 +372,109 @@ class Input extends Base\Input
 
 		if($result->isSuccess())
 		{
+			$resultData = [];
 			foreach ($this->data as $cell => $params)
 			{
-				$sessions = array_map(function($value){return (int)$value;}, $params['SESSIONS']);
+				$resultProcessingFinishSession = $this->processingFinishSession($params, $message);
 
-				if (
-					empty($sessions)
-					&& $result->isSuccess()
+				$resultData[$cell] = $resultProcessingFinishSession->getResult();
+				if($resultProcessingFinishSession->isSuccess())
+				{
+					$resultData[$cell]['SUCCESS'] = true;
+				}
+				else
+				{
+					$resultData[$cell]['SUCCESS'] = false;
+					$resultData[$cell]['ERRORS'] = $resultProcessingFinishSession->getErrorMessages();
+				}
+			}
+			$result->setResult($resultData);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $params
+	 * @param $message
+	 * @return Result
+	 */
+	protected function processingFinishSession(array $params, $message): Result
+	{
+		$result = clone $this->result;
+
+		$sessions = array_map(function($value){return (int)$value;}, $params['SESSIONS']);
+
+		if (
+			empty($sessions)
+			&& $result->isSuccess()
+		)
+		{
+			$result->addError(new Error(
+				'No session',
+				'ERROR_IMCONNECTOR_ERROR_NO_SESSION',
+				__METHOD__,
+				$params
+			));
+		}
+
+		if ($result->isSuccess())
+		{
+			$querySession = ImConnector\Data\Session::getInstance()->query();
+			$orm = $querySession
+				->setSelect(['ID', 'CONFIG_ID', 'USER_ID', 'SOURCE', 'CHAT_ID', 'USER_CODE'])
+				->setFilter([
+					'=ID' => $sessions,
+					'=CLOSED' => 'N',
+				])
+				->exec()
+			;
+			while (
+				($row = $orm->fetch())
+				&& $result->isSuccess()
+			)
+			{
+				/** @var \Bitrix\ImOpenLines\Services\Message $messenger */
+				$messenger = ServiceLocator::getInstance()->get('ImOpenLines.Services.Message');
+				$messenger->addMessage([
+					'MESSAGE_TYPE' => \IM_MESSAGE_OPEN_LINE,
+					'TO_CHAT_ID' => $row['CHAT_ID'],
+					'MESSAGE' => $params['MESSAGE'] ? : $message,
+					'SYSTEM' => 'Y',
+					'SKIP_COMMAND' => 'Y',
+					'RECENT_ADD' => 'N',
+					'PARAMS' => [
+						'CLASS' => 'bx-messenger-content-item-system'
+					],
+				]);
+
+				/** @var \Bitrix\ImOpenLines\Services\SessionManager $sessionManager */
+				$sessionManager = ServiceLocator::getInstance()->get('ImOpenLines.Services.SessionManager');
+				$session = $sessionManager->create();
+
+				$resultSessionStart = $session->start(array_merge($row, [
+					'SKIP_CREATE' => 'Y',
+				]));
+
+				if(
+					!$resultSessionStart->isSuccess() ||
+					$resultSessionStart->getResult() !== true
 				)
 				{
 					$result->addError(new Error(
-						'No session',
-						'ERROR_IMCONNECTOR_ERROR_NO_SESSION',
+						'Failed to load session',
+						'ERROR_IMCONNECTOR_FAILED_LOAD_SESSION',
 						__METHOD__,
 						$params
 					));
 				}
-
-				if($result->isSuccess())
+				else
 				{
-					$orm = SessionTable::getList([
-						'select' => ['ID', 'CONFIG_ID', 'USER_ID', 'SOURCE', 'CHAT_ID', 'USER_CODE'],
-						'filter' => [
-							'=ID' => $sessions,
-							'=CLOSED' => 'N',
-						]
+					$session->update([
+						'WAIT_ACTION' => 'Y',
+						'WAIT_ANSWER' => 'N',
 					]);
-					while(
-						($row = $orm->fetch())
-						&& $result->isSuccess()
-					)
-					{
-						Im::addMessage([
-							'TO_CHAT_ID' => $row['CHAT_ID'],
-							'MESSAGE' => $params['MESSAGE'] ? : $message,
-							'SYSTEM' => 'Y',
-							'SKIP_COMMAND' => 'Y',
-							'RECENT_ADD' => 'N',
-							'PARAMS' => [
-								'CLASS' => 'bx-messenger-content-item-system'
-							],
-						]);
-
-						$session = new Session();
-						$resultSessionStart = $session->start(array_merge($row, [
-							'SKIP_CREATE' => 'Y',
-						]));
-						if(
-							!$resultSessionStart->isSuccess() ||
-							$resultSessionStart->getResult() !== true
-						)
-						{
-							$result->addError(new Error(
-								'Failed to load session',
-								'ERROR_IMCONNECTOR_FAILED_LOAD_SESSION',
-								__METHOD__,
-								$params
-							));
-						}
-						else
-						{
-							$session->update([
-								'WAIT_ACTION' => 'Y',
-								'WAIT_ANSWER' => 'N',
-							]);
-							$session->finish();
-						}
-					}
+					$session->finish();
 				}
 			}
 		}
@@ -438,7 +487,49 @@ class Input extends Base\Input
 	 */
 	protected function receivingCommandKeyboard(): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
+
+		if($result->isSuccess())
+		{
+			$resultData = [];
+			foreach ($this->data as $cell => $params)
+			{
+				$resultProcessingCommandKeyboard = $this->processingCommandKeyboard($params);
+
+				$resultData[$cell] = $resultProcessingCommandKeyboard->getResult();
+				if($resultProcessingCommandKeyboard->isSuccess())
+				{
+					$resultData[$cell]['SUCCESS'] = true;
+				}
+				else
+				{
+					$resultData[$cell]['SUCCESS'] = false;
+					$resultData[$cell]['ERRORS'] = $resultProcessingCommandKeyboard->getErrorMessages();
+				}
+			}
+			$result->setResult($resultData);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $params
+	 * @return Result
+	 */
+	protected function processingCommandKeyboard(array $params): Result
+	{
+		$result = clone $this->result;
+		$userId = 0;
+
+		if(!Loader::includeModule('imbot'))
+		{
+			$result->addError(new Error(
+				'Failed to load the ImBot module',
+				'ERROR_IMCONNECTOR_FAILED_LOAD_IM_BOT',
+				__METHOD__
+			));
+		}
 
 		if(!Loader::includeModule('im'))
 		{
@@ -451,85 +542,55 @@ class Input extends Base\Input
 
 		if($result->isSuccess())
 		{
-			foreach ($this->data as $cell => $params)
+			$resultProcessing = Connector::initConnectorHandler($this->connector)->processingInputCommandKeyboard($params, $this->line);
+
+			if($resultProcessing->isSuccess())
 			{
-				$userId = 0;
+				$params = $resultProcessing->getResult()['PARAMS'];
+				$userId = $resultProcessing->getResult()['USER_ID'];
+			}
+			else
+			{
+				$result->addErrors($resultProcessing->getErrors());
+			}
+		}
 
-				if (
-					$result->isSuccess()
-					&& !isset($params['USER'])
-				)
+		if($result->isSuccess())
+		{
+			/** @var \Bitrix\Im\Services\Message $messager */
+			$messager = ServiceLocator::getInstance()->get('Im.Services.Message');
+			$message = $messager->getMessage((int)$params['MESSAGE_ID']);
+
+			if ($message['PARAMS']['CONNECTOR_MID'][0] == $params['CONNECTOR_MID'])
+			{
+				foreach ($message['PARAMS']['KEYBOARD'] as &$button)
 				{
-					$result->addError(new Error(
-						'User data not transmitted',
-						'ERROR_IMCONNECTOR_NOT_TRANSMITTED_USER_DATA',
-						__METHOD__,
-						$params
-					));
+					$button['DISABLED'] = 'Y';
 				}
 
-				if($result->isSuccess())
-				{
-					$userId = Connectors\Network::getUserId($params['USER']);
+				ImBot\Service\Openlines::operatorMessageUpdate([
+					'LINE_ID' => $params['LINE_ID'],
+					'GUID' => $params['GUID'],
+					'MESSAGE_ID' => $params['MESSAGE_ID'],
+					'CONNECTOR_MID' => $params['CONNECTOR_MID'],
+					'MESSAGE_TEXT' => $message['MESSAGE'],
+					'URL_PREVIEW' => 'N',
+					'KEYBOARD' => $message['PARAMS']['KEYBOARD'],
+				]);
+			}
 
-					if (empty($userId))
-					{
-						$result->addError(new Error(
-							'Failed to create or update user',
-							'ERROR_IMCONNECTOR_FAILED_USER',
-							__METHOD__,
-							$params
-						));
-					}
-				}
+			$resultEvent = $this->sendEvent([
+				'user' => $userId,
+				'chat' => [
+					'id' => $params['GUID']
+				],
+				'command' => $params['COMMAND'],
+				'command_params' => $params['COMMAND_PARAMS'],
+			], Library::EVENT_RECEIVED_MESSAGE);
 
-				if($result->isSuccess())
-				{
-					$interactiveMessage = InteractiveMessage\Input::init('network');
-					$resultProcessing = $interactiveMessage->processingCommandKeyboard($params['COMMAND'], $params['COMMAND_PARAMS']);
-
-					if ($resultProcessing->isSuccess())
-					{
-						$message = \CIMMessenger::GetById($params['MESSAGE_ID']);
-						if ($message['PARAMS']['CONNECTOR_MID'][0] == $params['CONNECTOR_MID'])
-						{
-							foreach ($message['PARAMS']['KEYBOARD'] as &$button)
-							{
-								$button['DISABLED'] = 'Y';
-							}
-
-							ImBot\Service\Openlines::operatorMessageUpdate([
-								'LINE_ID' => $params['LINE_ID'],
-								'GUID' => $params['GUID'],
-								'MESSAGE_ID' => $params['MESSAGE_ID'],
-								'CONNECTOR_MID' => $params['CONNECTOR_MID'],
-								'MESSAGE_TEXT' => $message['MESSAGE'],
-								'URL_PREVIEW' => 'N',
-								'KEYBOARD' => $message['PARAMS']['KEYBOARD'],
-							]);
-						}
-					}
-					else
-					{
-						$result->addErrors($resultProcessing->getErrors());
-					}
-				}
-
-				if($result->isSuccess())
-				{
-					$resultEvent = $this->sendEvent([
-						'user' => $userId,
-						'chat' => [
-							'id' => $params['GUID']
-						],
-						'command' => $params['COMMAND'],
-						'command_params' => $params['COMMAND_PARAMS'],
-					], Library::EVENT_RECEIVED_MESSAGE);
-					if(!$resultEvent->isSuccess())
-					{
-						$result->addErrors($resultEvent->getErrors());
-					}
-				}
+			if(!$resultEvent->isSuccess())
+			{
+				$result->addErrors($resultEvent->getErrors());
 			}
 		}
 

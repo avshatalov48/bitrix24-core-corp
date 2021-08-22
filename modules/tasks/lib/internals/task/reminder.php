@@ -24,6 +24,22 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
 //Loc::loadMessages(__FILE__);
 
+/**
+ * Class ReminderTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Reminder_Query query()
+ * @method static EO_Reminder_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Reminder_Result getById($id)
+ * @method static EO_Reminder_Result getList(array $parameters = array())
+ * @method static EO_Reminder_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder_Collection wakeUpCollection($rows)
+ */
 class ReminderTable extends Main\Entity\DataManager
 {
 	const TYPE_DEADLINE = "D";

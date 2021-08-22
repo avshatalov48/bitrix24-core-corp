@@ -155,29 +155,6 @@
 
 .order-pay-method-btn-block {}
 
-
-
-
-
-
-
-/*.order-payment-method-item-block {*/
-/*	padding: 18px 15px;*/
-/*	position: relative;*/
-/*	width: 100%;*/
-/*	height: 70px;*/
-/*	border-bottom: 1px solid #eeeff0;*/
-/*	transition: 250ms linear all;*/
-/*	display: flex;*/
-/*	align-items: center;*/
-/*	justify-content: space-between;*/
-/*	cursor: pointer;*/
-/*}*/
-
-/*.order-payment-method-item-block:last-child { border: none; }*/
-
-/*.bx-dark .order-payment-method-item-block { border-color: #32323d; }*/
-
 .order-payment-method-item-img {
 	max-height: 100%;
 	max-width: 170px;
@@ -208,11 +185,10 @@
 	font-size: 15px !important;
 	line-height: 18px !important;
 	text-transform: uppercase;
-
-	color: #55A8FF;
+	color: #55a8ff;
 }
 
-.btn.info-mode:hover{ color: #fff; }
+.btn.info-mode:hover { color: #fff; }
 
 .bx-dark .order-payment-method-item-button.info-mode { color: #55a8ff; }
 

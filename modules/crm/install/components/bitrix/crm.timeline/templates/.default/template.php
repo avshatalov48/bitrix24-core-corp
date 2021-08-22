@@ -24,6 +24,7 @@ Bitrix\Main\UI\Extension::load(
 		'ui.forms',
 		'crm.delivery.taxi',
 		'crm.timeline',
+		'sidepanel',
 	]
 );
 
@@ -659,6 +660,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				read: "<?=GetMessageJS('CRM_TIMELINE_SENDER_READ')?>",
 				click: "<?=GetMessageJS('CRM_TIMELINE_SENDER_CLICK')?>",
 				unsub: "<?=GetMessageJS('CRM_TIMELINE_SENDER_UNSUB')?>",
+				error: "<?=GetMessageJS('CRM_TIMELINE_SENDER_ERROR')?>",
 				removed: "<?=GetMessageJS('CRM_TIMELINE_SENDER_NAME_REMOVED')?>"
 			};
 

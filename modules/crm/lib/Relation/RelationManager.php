@@ -13,7 +13,6 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -666,7 +665,7 @@ class RelationManager
 		$result = [];
 		foreach ($tabCodes as $tabCode => $entityTypeId)
 		{
-			$detailComponent = EditorAdapter::getDetailComponentName($entityTypeId);
+			$detailComponent = Container::getInstance()->getRouter()->getItemDetailComponentName($entityTypeId);
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($entityTypeId === \CCrmOwnerType::Quote)
 			{
@@ -687,7 +686,8 @@ class RelationManager
 								'PARENT_ENTITY_ID' => $parentEntityId,
 							]
 						]
-					]
+					],
+					'enabled' => !$isNew,
 				];
 			}
 			elseif ($factory && $detailComponent)
@@ -702,6 +702,7 @@ class RelationManager
 							$parentEntityId
 						),
 					],
+					'enabled' => !$isNew,
 				];
 			}
 		}

@@ -1494,7 +1494,10 @@ a.bx-crm-dialog-activity-fwplayer-download-link {
 
 .crm-connection-search-dlg-button:hover .crm-connection-search-dlg-button-t { background-position: 0 -621px; }
 
-.crm-connection-search-dlg-content { }
+.crm-connection-search-dlg-content {
+	max-height: 300px;
+	overflow: auto;
+}
 
 .crm-connection-search-block {
 	padding-bottom: 4px;

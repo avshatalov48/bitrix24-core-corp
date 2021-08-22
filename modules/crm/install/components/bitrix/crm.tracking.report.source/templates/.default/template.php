@@ -10,7 +10,7 @@ use Bitrix\Main\Localization\Loc;
 /** @var array $arParams */
 /** @var array $arResult */
 
-Extension::load(['crm.report.tracking.ad.report']);
+Extension::load(['crm.report.tracking.ad.report', 'ui.info-helper']);
 
 $rows = [];
 $columnIds = array_column($arResult['COLUMNS'], 'id');
@@ -126,6 +126,11 @@ foreach ($arResult['ROWS'] as $item)
 	<?=htmlspecialcharsbx($arResult['SIBLINGS']['CURRENT']['title'])?>
 </span>
 <?php
+
+if ($arResult['FEATURE_CODE'])
+{
+	?><script>BX.UI.InfoHelper.show('<?=$arResult['FEATURE_CODE']?>');</script><?php
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',

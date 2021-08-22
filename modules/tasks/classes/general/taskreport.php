@@ -280,9 +280,9 @@ class CTaskReport
 		}
 		$condition = "CASE WHEN ".
 			($arPeriod["START"] || $arPeriod["END"] ?
-				($arPeriod["START"] ? "T.".$field." >= ".$DB->CharToDateFunction($arPeriod["START"]) : "").
+				($arPeriod["START"] ? "T.".$field." >= ".\Bitrix\Tasks\Util\Db::charToDateFunction($arPeriod["START"]) : "").
 				($arPeriod["START"] && $arPeriod["END"] ? " AND " : "").
-				($arPeriod["END"] ? "T.".$field." <= ".$DB->CharToDateFunction($arPeriod["END"]) : "").
+				($arPeriod["END"] ? "T.".$field." <= ".\Bitrix\Tasks\Util\Db::charToDateFunction($arPeriod["END"]) : "").
 			" AND " :
 			"").
 			$extraCond." THEN 1 ELSE 0 END";

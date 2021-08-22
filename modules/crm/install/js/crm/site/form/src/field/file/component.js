@@ -27,6 +27,7 @@ const FieldFileItem = {
 					{{ field.messages.get('fieldFileChoose') }}
 					<input type="file" style="display: none;"
 						ref="inputFiles"
+						:accept="field.getAcceptTypes()"
 						@change="setFiles"
 						@blur="$emit('input-blur')"
 						@focus="$emit('input-focus')"
@@ -76,6 +77,30 @@ const FieldFileItem = {
 	methods: {
 		setFiles() {
 			let file = this.$refs.inputFiles.files[0];
+
+			if (file && this.field.contentTypes.length > 0)
+			{
+				const isTypeValid = this.field.contentTypes.some(type => {
+					type = type || '';
+					const fileType = file.type || '';
+					if (type === fileType)
+					{
+						return true;
+					}
+
+					if (type.indexOf('*') >= 0)
+					{
+						return fileType.indexOf(type.replace(/\*/g, '')) >= 0;
+					}
+
+					return false;
+				});
+				if (!isTypeValid)
+				{
+					file = null;
+				}
+			}
+
 			if (!file)
 			{
 				this.value = null;

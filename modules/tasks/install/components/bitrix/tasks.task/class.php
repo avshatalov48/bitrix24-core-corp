@@ -1890,7 +1890,6 @@ class TasksTaskComponent extends TasksBaseComponent
 	/**
 	 * @param $items
 	 * @param $taskId
-	 * @param $userId
 	 * @param $params
 	 * @return array|Util\Result
 	 * @throws \Bitrix\Main\ArgumentException
@@ -1898,9 +1897,10 @@ class TasksTaskComponent extends TasksBaseComponent
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function saveCheckList($items, $taskId, $userId, $params)
+	public static function saveCheckList($items, $taskId, $params)
 	{
 		$result = new Util\Result();
+		$userId = User::getId();
 
 		if (isset($params['openTime']) && $params['openTime'])
 		{

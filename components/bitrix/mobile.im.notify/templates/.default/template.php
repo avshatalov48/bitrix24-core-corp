@@ -16,6 +16,16 @@ if(empty($arResult['NOTIFY'])):?>
 		foreach ($arResult['NOTIFY'] as $data):
 			$avatarId = "notif-avatar-".randString(5);
 			$jsIds .= $jsIds !== "" ? ', "'.$avatarId.'"' : '"'.$avatarId.'"';
+			$moreUsersCount = 0;
+			if (isset($data['params']['USERS']))
+			{
+				$moreUsersCount = count($data['params']['USERS']);
+				$moreUsersText = str_replace(
+					['#COUNT#'],
+					[$moreUsersCount],
+					GetMessage('NM_MORE_USERS')
+				);
+			}
 
 			$arFormat = Array(
 				"tommorow" => "tommorow, ".GetMessage('NM_FORMAT_TIME'),
@@ -62,7 +72,15 @@ if(empty($arResult['NOTIFY'])):?>
 				</div>
 				<div class="notif-cont">
 					<div class="notif-header">
-						<div class="notif-title"><?=$data['userName']? $data['userName']: GetMessage('NM_SYSTEM_USER');?> </div>
+						<div class="notif-title">
+							<?=$data['userName']? $data['userName']: GetMessage('NM_SYSTEM_USER');?>
+							<?if ($moreUsersCount > 0):?>
+								<span style="font-weight: normal">
+									<?=$moreUsersText?>
+								</span>
+							<?endif;?>
+						</div>
+
 						<div class="notif-delete" data-id="<?=$data['id']?>" onclick="deleteNotification(event)"></div>
 					</div>
 

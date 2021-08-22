@@ -1568,7 +1568,7 @@ class FieldSynchronizer
 
 	protected static function getDefaultRelations()
 	{
-		return ['P' => [], 'D' => []];
+		return ['P' => [], 'D' => [], 'L' => []];
 	}
 
 	protected static function parseRelations($relations)
@@ -1578,6 +1578,7 @@ class FieldSynchronizer
 		$existingRelationEntities = [
 			'P' => array_keys(static::getPaySystemRelations()),
 			'D' => array_keys(static::getDeliveryRelations()),
+			'L' => array_keys(static::getLandingRelations()),
 		];
 
 		foreach ($relations as $relation)

@@ -219,7 +219,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			'USE_IN_ENTITIES' => false,
 			'ENTITIES' => array(),
 			'SHOW_USER_FIELDS' => false,
-			'HISTORY_BLOCKED_BY_FEATURE' => Bitrix24Manager::isFeatureEnabled('disk_file_history'),
+			'HISTORY_BLOCKED_BY_FEATURE' => !Bitrix24Manager::isFeatureEnabled('disk_file_history'),
 			'USER_FIELDS' => array(),
 			'EXTERNAL_LINK' => $externalLinkData,
 			'FILE' => array(

@@ -3,6 +3,22 @@ namespace Bitrix\Tasks;
 
 use \Bitrix\Main\Entity;
 
+/**
+ * Class ProjectsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Projects_Query query()
+ * @method static EO_Projects_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Projects_Result getById($id)
+ * @method static EO_Projects_Result getList(array $parameters = array())
+ * @method static EO_Projects_Entity getEntity()
+ * @method static \Bitrix\Tasks\EO_Projects createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\EO_Projects_Collection createCollection()
+ * @method static \Bitrix\Tasks\EO_Projects wakeUpObject($row)
+ * @method static \Bitrix\Tasks\EO_Projects_Collection wakeUpCollection($rows)
+ */
 class ProjectsTable extends Entity\DataManager
 {
 	/**

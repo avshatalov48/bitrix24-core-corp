@@ -228,31 +228,7 @@ class CAllCrmQuote
 			$sEntityPerm = $userPerms->GetPermType('QUOTE', $sPermission, $arEntityAttr);
 			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
-			// Calculation of Account Data
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : null,
-					'SUM' => isset($arFields['OPPORTUNITY']) ? $arFields['OPPORTUNITY'] : null,
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : null
-				)
-			);
-
-			if(is_array($accData))
-			{
-				$arFields['ACCOUNT_CURRENCY_ID'] = $accData['ACCOUNT_CURRENCY_ID'];
-				$arFields['OPPORTUNITY_ACCOUNT'] = $accData['ACCOUNT_SUM'];
-			}
-
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : null,
-					'SUM' => isset($arFields['TAX_VALUE']) ? $arFields['TAX_VALUE'] : null,
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : null
-				)
-			);
-
-			if(is_array($accData))
-				$arFields['TAX_VALUE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
+			$arFields = array_merge($arFields, \CCrmAccountingHelper::calculateAccountingData($arFields, [], true));
 
 			$arFields['CLOSED'] = self::GetStatusSemantics($arFields['STATUS_ID']) === 'process' ? 'N' : 'Y';
 
@@ -839,31 +815,7 @@ class CAllCrmQuote
 				}
 			}
 
-			// Calculation of Account Data
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : (isset($arRow['CURRENCY_ID']) ? $arRow['CURRENCY_ID'] : null),
-					'SUM' => isset($arFields['OPPORTUNITY']) ? $arFields['OPPORTUNITY'] : (isset($arRow['OPPORTUNITY']) ? $arRow['OPPORTUNITY'] : null),
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : (isset($arRow['EXCH_RATE']) ? $arRow['EXCH_RATE'] : null)
-				)
-			);
-
-			if(is_array($accData))
-			{
-				$arFields['ACCOUNT_CURRENCY_ID'] = $accData['ACCOUNT_CURRENCY_ID'];
-				$arFields['OPPORTUNITY_ACCOUNT'] = $accData['ACCOUNT_SUM'];
-			}
-
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : (isset($arRow['CURRENCY_ID']) ? $arRow['CURRENCY_ID'] : null),
-					'SUM' => isset($arFields['TAX_VALUE']) ? $arFields['TAX_VALUE'] : (isset($arRow['TAX_VALUE']) ? $arRow['TAX_VALUE'] : null),
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : (isset($arRow['EXCH_RATE']) ? $arRow['EXCH_RATE'] : null)
-				)
-			);
-
-			if(is_array($accData))
-				$arFields['TAX_VALUE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
+			$arFields = array_merge($arFields, \CCrmAccountingHelper::calculateAccountingData($arFields, $arRow, true));
 
 			if(isset($arFields['STATUS_ID']))
 			{

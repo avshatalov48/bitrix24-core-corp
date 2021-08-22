@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -12,6 +12,8 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task\DayPlan;
 
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Util\User;
 
 final class Timer extends \Bitrix\Tasks\Dispatcher\RestrictedAction
@@ -25,20 +27,24 @@ final class Timer extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function start($taskId, $stopPrevious = false)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_TIME_TRACKING, (int)$taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if($taskId = $this->checkTaskId($taskId))
 		{
-			$userId = User::getId();
-
-			$timer = \CTaskTimerManager::getInstance($userId);
+			$timer = \CTaskTimerManager::getInstance($this->userId);
 			$lastTimer = $timer->getLastTimer();
 			if(!$stopPrevious && $lastTimer['TASK_ID'] && $lastTimer['TIMER_STARTED_AT'] > 0 && intval($lastTimer['TASK_ID']) && $lastTimer['TASK_ID'] != $taskId)
 			{
 				$additional = array();
 
 				// use direct query here, avoiding cached CTaskItem::getData(), because $lastTimer['TASK_ID'] unlikely will be in cache
-				list($tasks, $res) = \CTaskItem::fetchList($userId, array(), array('ID' => intval($lastTimer['TASK_ID'])), array(), array('ID', 'TITLE'));
+				list($tasks, $res) = \CTaskItem::fetchList($this->userId, array(), array('ID' => intval($lastTimer['TASK_ID'])), array(), array('ID', 'TITLE'));
 				if(is_array($tasks))
 				{
 					$task = array_shift($tasks);
@@ -77,7 +83,13 @@ final class Timer extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function stop($taskId)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_TIME_TRACKING, (int)$taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if($taskId = $this->checkTaskId($taskId))
 		{

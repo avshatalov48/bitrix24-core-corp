@@ -142,6 +142,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 
 		$productEditorCfg = array(
 			'sessid' => bitrix_sessid(),
+			'languageId' => LANGUAGE_ID,
 			'serviceUrl'=> '/bitrix/components/bitrix/crm.product_row.list/ajax.php?'.bitrix_sessid_get(),
 			'productSearchUrl'=> '/bitrix/components/bitrix/crm.product.list/list.ajax.php?'.bitrix_sessid_get(),
 			'pathToProductShow' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_SHOW']),

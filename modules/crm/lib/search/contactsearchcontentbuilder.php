@@ -210,4 +210,11 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 		";
 		return $connection->query($sql);
 	}
+
+	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
+	{
+		return \Bitrix\Crm\Entity\Index\ContactTable::delete([
+			'CONTACT_ID' => $entityId,
+		]);
+	}
 }

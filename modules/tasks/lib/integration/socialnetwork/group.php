@@ -301,6 +301,24 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		return $result;
 	}
 
+	public static function update(array $groupIds, array $data): array
+	{
+		$result = [];
+
+		if (empty($groupIds) || !static::includeModule())
+		{
+			return $result;
+		}
+
+		$permissions = static::checkPermissions($groupIds);
+		foreach ($permissions as $groupId => $canUpdate)
+		{
+			$result[$groupId] = ($canUpdate ? \CSocNetGroup::Update($groupId, $data) : false);
+		}
+
+		return $result;
+	}
+
 	public static function addToArchive(array $groupIds): array
 	{
 		$result = [];

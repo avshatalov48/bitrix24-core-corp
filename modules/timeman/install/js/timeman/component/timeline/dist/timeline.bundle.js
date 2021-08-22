@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Timeman = this.BX.Timeman || {};
-(function (exports,timeman_timeformatter,ui_vue_components_hint,ui_vue) {
+(function (exports,main_core,timeman_timeformatter,ui_vue_components_hint,ui_vue) {
     'use strict';
 
     var Interval = ui_vue.BitrixVue.localComponent('bx-timeman-component-timeline-chart-interval', {
@@ -15,11 +15,12 @@ this.BX.Timeman = this.BX.Timeman || {};
         clickable: Boolean,
         hint: String,
         isFirst: Boolean,
-        isLast: Boolean
+        isLast: Boolean,
+        display: String
       },
       computed: {
         intervalItemClass: function intervalItemClass() {
-          return ['bx-timeman-component-timeline-chart-interval-item', this.type ? 'bx-timeman-component-timeline-chart-interval-item-' + this.type : '', this.clickable ? 'bx-timeman-component-timeline-chart-interval-item-clickable' : '', this.isFirst && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-first' : '', this.isLast && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-last' : '', this.isFirst && this.isLast ? 'bx-timeman-component-timeline-chart-interval-round' : ''];
+          return ['bx-timeman-component-timeline-chart-interval-item', this.type ? 'bx-timeman-component-timeline-chart-interval-item-' + this.type : '', this.clickable ? 'bx-timeman-component-timeline-chart-interval-item-clickable' : '', this.isFirst && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-first' : '', this.isLast && !(this.isFirst && this.isLast) ? 'bx-timeman-component-timeline-chart-interval-last' : '', this.isFirst && this.isLast ? 'bx-timeman-component-timeline-chart-interval-round' : '', this.display ? 'bx-timeman-component-timeline-chart-interval-item-' + this.display : ''];
         },
         intervalInlineStyle: function intervalInlineStyle() {
           var style = {};
@@ -60,7 +61,15 @@ this.BX.Timeman = this.BX.Timeman || {};
       props: {
         intervals: Array,
         fixedSizeType: String,
-        readOnly: Boolean
+        readOnly: Boolean,
+        showMarkers: {
+          type: Boolean,
+          default: true
+        },
+        isOverChart: {
+          type: Boolean,
+          default: false
+        }
       },
       computed: {
         processedIntervals: function processedIntervals() {
@@ -115,6 +124,11 @@ this.BX.Timeman = this.BX.Timeman || {};
           } else if (intervals.length === 3) {
             intervals[intervals.length - 1].showStartMarker = true;
             intervals[intervals.length - 2].showStartMarker = true;
+          } //to avoid collisions between markers of the last interval
+
+
+          if (intervals[intervals.length - 1].finish - intervals[intervals.length - 1].start <= oneHour) {
+            intervals[intervals.length - 1].showStartMarker = false;
           }
 
           return intervals;
@@ -126,7 +140,7 @@ this.BX.Timeman = this.BX.Timeman || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"bx-timeman-component-timeline-chart\">\n\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline\">\n\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline-background\"/>\n\t\t\t</div>\n\t\t\t\n\t\t\t<transition-group \n\t\t\t\tname=\"bx-timeman-component-timeline-chart\"\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-container\"\n\t\t\t\ttag=\"div\"\n\t\t\t>\n\n\t\t\t<Interval\n\t\t\t\tv-for=\"interval of processedIntervals\"\n\t\t\t\t:key=\"interval.start.getTime()\"\n\t\t\t\t:type=\"interval.type\"\n\t\t\t\t:start=\"interval.start\"\n\t\t\t\t:finish=\"interval.finish\"\n\t\t\t\t:showStartMarker=\"interval.showStartMarker\"\n\t\t\t\t:showFinishMarker=\"interval.showFinishMarker\"\n\t\t\t\t:clickable=\"!readOnly ? interval.clickable : false\"\n\t\t\t\t:hint=\"!readOnly ? interval.clickableHint : null\"\n\t\t\t\t:fixedSize=\"interval.fixedSize\"\n\t\t\t\t:size=\"interval.size\"\n\t\t\t\t:isFirst=\"interval.isFirst\"\n\t\t\t\t:isLast=\"interval.isLast\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\n\t\t\t</transition-group>\n\t\t</div>\n\t"
+      template: "\n\t\t<div \n\t\t\t:class=\"{\n\t\t\t\t'bx-timeman-component-timeline-chart': !this.isOverChart,\n\t\t\t\t'bx-timeman-component-timeline-over-chart': this.isOverChart,\n\t\t  \t}\"\n\t\t>\n\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline\">\n\t\t\t\t<div class=\"bx-timeman-component-timeline-chart-outline-background\"/>\n\t\t\t</div>\n\t\t\t\n\t\t\t<transition-group \n\t\t\t\tname=\"bx-timeman-component-timeline-chart\"\n\t\t\t\tclass=\"bx-timeman-component-timeline-chart-container\"\n\t\t\t\ttag=\"div\"\n\t\t\t>\n\n\t\t\t<Interval\n\t\t\t\tv-for=\"interval of processedIntervals\"\n\t\t\t\t:key=\"interval.start.getTime()\"\n\t\t\t\t:type=\"interval.type\"\n\t\t\t\t:start=\"interval.start\"\n\t\t\t\t:finish=\"interval.finish\"\n\t\t\t\t:showStartMarker=\"showMarkers ? interval.showStartMarker: false\"\n\t\t\t\t:showFinishMarker=\"showMarkers ? interval.showFinishMarker: false\"\n\t\t\t\t:clickable=\"!readOnly ? interval.clickable : false\"\n\t\t\t\t:hint=\"!readOnly ? interval.clickableHint : null\"\n\t\t\t\t:fixedSize=\"interval.fixedSize\"\n\t\t\t\t:size=\"interval.size\"\n\t\t\t\t:isFirst=\"interval.isFirst\"\n\t\t\t\t:isLast=\"interval.isLast\"\n\t\t\t\t:display=\"interval.display\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\n\t\t\t</transition-group>\n\t\t</div>\n\t"
     });
 
     var Item = ui_vue.BitrixVue.localComponent('bx-timeman-component-timeline-legend-item', {
@@ -151,9 +165,15 @@ this.BX.Timeman = this.BX.Timeman || {};
       },
       props: {
         chart: Array,
-        fixedSizeType: String,
         legend: Array,
-        readOnly: Boolean
+        fixedSizeType: String,
+        readOnly: Boolean,
+        overChart: Array
+      },
+      computed: {
+        Type: function Type() {
+          return main_core.Type;
+        }
       },
       methods: {
         onIntervalClick: function onIntervalClick(event) {
@@ -161,8 +181,8 @@ this.BX.Timeman = this.BX.Timeman || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"bx-timeman-component-timeline\">\n\t\t\t<Chart\n\t\t\t\t:intervals=\"chart\"\n\t\t\t\t:fixedSizeType=\"fixedSizeType\"\n\t\t\t\t:readOnly=\"readOnly\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\t\t\t\n\t\t\t<Legend\n\t\t\t\t:items=\"legend\"\n\t\t\t/>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"bx-timeman-component-timeline\">\n\t\t\t<Chart\n\t\t\t\t:intervals=\"chart\"\n\t\t\t\t:fixedSizeType=\"fixedSizeType\"\n\t\t\t\t:readOnly=\"readOnly\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\t\t\t\n\t\t\t<Legend\n\t\t\t\t:items=\"legend\"\n\t\t\t/>\n\n\t\t\t<transition appear name=\"bx-timeman-component-timeline-fade\">\n\t\t\t\t<Chart\n\t\t\t\t\tv-if=\"Type.isArrayFilled(overChart)\"\n\t\t\t\t\t:intervals=\"overChart\"\n\t\t\t\t\t:fixedSizeType=\"fixedSizeType\"\n\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t:showMarkers=\"false\"\n\t\t\t\t\t:isOverChart=\"true\"\n\t\t\t\t/>\n\t\t\t</transition>\n\t\t</div>\n\t"
     });
 
-}((this.BX.Timeman.Component = this.BX.Timeman.Component || {}),BX.Timeman,window,BX));
+}((this.BX.Timeman.Component = this.BX.Timeman.Component || {}),BX,BX.Timeman,window,BX));
 //# sourceMappingURL=timeline.bundle.js.map

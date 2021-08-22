@@ -123,7 +123,7 @@ class EventHandler
 		$lostCalls = new AnalyticBoard(LostCallsBoard::BOARD_KEY);
 		$lostCalls->setBatchKey(self::BATCH_GENERAL_ANALYSIS);
 		$lostCalls->setGroup(self::BATCH_GROUP_TELEPHONY_GENERAL);
-		$lostCalls->setTitle(Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_TITLE'));
+		$lostCalls->setTitle(Loc::getMessage('TELEPHONY_REPORT_LOST_CALLS_TITLE_2'));
 		$lostCalls->setFilter(new LostCallsFilter(LostCallsBoard::BOARD_KEY));
 		$lostCalls->addFeedbackButton();
 		$boards[] = $lostCalls;

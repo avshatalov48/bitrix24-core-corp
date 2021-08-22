@@ -132,7 +132,7 @@ export default class Factory
 						addressFormat,
 						source,
 						userLocation: userLocation,
-						presetLocationsProvider,
+						presetLocationsProvider
 					}));
 			}
 
@@ -179,7 +179,7 @@ export default class Factory
 					&& data.eventCode === AutocompleteFeature.showOnMapClickedEvent
 				)
 				{
-					mapFeature.showMap();
+					mapFeature.showMap(true);
 				}
 			});
 		}

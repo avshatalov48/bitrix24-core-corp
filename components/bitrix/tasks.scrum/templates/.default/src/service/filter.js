@@ -56,6 +56,11 @@ export class Filter extends EventEmitter
 		return this.filterManager.getSearch().getContainer();
 	}
 
+	getFilterManager()
+	{
+		return this.filterManager;
+	}
+
 	scrollToSearchContainer()
 	{
 		const filterSearchContainer = this.getSearchContainer();

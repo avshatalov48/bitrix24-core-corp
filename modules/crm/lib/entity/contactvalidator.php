@@ -62,13 +62,12 @@ class ContactValidator extends EntityValidator
 		{
 			if($fieldName === 'COMPANY')
 			{
-				$effectiveFieldName = 'COMPANY_IDS';
+				$result = $this->innerCheckAnyFieldPresence(['COMPANY_IDS', 'COMPANY_ID']);
 			}
 			else
 			{
-				$effectiveFieldName = $fieldName;
+				$result = $this->innerCheckFieldPresence($fieldName);
 			}
-			$result = $this->innerCheckFieldPresence($effectiveFieldName);
 		}
 
 		if(!$result)

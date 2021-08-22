@@ -10,9 +10,11 @@ IncludeModuleLangFile(__FILE__);
 
 class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 {
+	const ID = 'intranet';
+
 	public function __construct()
 	{
-		$this->id = 'intranet';
+		$this->id = self::ID;
 	}
 
 	public function UpdateCodes($USER_ID)
@@ -573,25 +575,61 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		return $arItems;
 	}
 
-	public static function OnAfterUserUpdate(&$arFields)
+	public static function OnBeforeUserUpdate($arFields)
 	{
-		if(isset($arFields["UF_DEPARTMENT"]))
+		if (isset($arFields["UF_DEPARTMENT"]) && is_array($arFields["UF_DEPARTMENT"]))
 		{
-			$provider = new CIntranetAuthProvider();
-
-			//clear for user himself
-			$provider->DeleteByUser($arFields["ID"]);
-
-			//clear for users's managers
-			$managers = CIntranetUtils::GetDepartmentManager($arFields["UF_DEPARTMENT"], $arFields["ID"], true);
-			foreach($managers as $manager)
+			// compare with the old data
+			$user = CUser::GetByID($arFields["ID"]);
+			if($userData = $user->Fetch())
 			{
-				$provider->DeleteByUser($manager["ID"]);
+				if (!is_array($userData["UF_DEPARTMENT"]))
+				{
+					$userData["UF_DEPARTMENT"] = [];
+				}
+
+				// get rid of empty values
+				$arFields["UF_DEPARTMENT"] = array_filter($arFields["UF_DEPARTMENT"]);
+
+				// we need sort for arrays comparison
+				sort($arFields["UF_DEPARTMENT"]);
+				sort($userData["UF_DEPARTMENT"]);
+
+				if ($arFields["UF_DEPARTMENT"] != $userData["UF_DEPARTMENT"])
+				{
+					// recalculate for user himself
+					CAccess::RecalculateForUser($arFields["ID"], self::ID);
+
+					// new and old departments differ - recalculate both sets of departments
+					static::RecalculateManagers($userData["UF_DEPARTMENT"], $arFields["ID"]);
+					static::RecalculateManagers($arFields["UF_DEPARTMENT"], $arFields["ID"]);
+				}
 			}
 		}
 	}
 
-	public static function OnBeforeIBlockSectionUpdate(&$arFields)
+	public static function OnAfterUserAdd($arFields)
+	{
+		if (isset($arFields["UF_DEPARTMENT"]))
+		{
+			// recalculate for user himself
+			CAccess::RecalculateForUser($arFields["ID"], self::ID);
+
+			// recalculate for users's managers
+			static::RecalculateManagers($arFields["UF_DEPARTMENT"], $arFields["ID"]);
+		}
+	}
+
+	protected static function RecalculateManagers($departments, $userId)
+	{
+		$managers = CIntranetUtils::GetDepartmentManager($departments, $userId, true);
+		foreach ($managers as $manager)
+		{
+			CAccess::RecalculateForUser($manager["ID"], self::ID);
+		}
+	}
+
+	public static function OnBeforeIBlockSectionUpdate($arFields)
 	{
 		if(COption::GetOptionString('intranet', 'iblock_structure', '') == $arFields['IBLOCK_ID'])
 		{
@@ -611,15 +649,13 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 					)
 					{
 						//departments structure's been changed
-						$provider = new CIntranetAuthProvider();
-						$provider->DeleteAll();
+						CAccess::RecalculateForProvider(self::ID);
 					}
 					elseif(isset($arFields["UF_HEAD"]) && $arSect["UF_HEAD"] <> intval($arFields["UF_HEAD"]))
 					{
 						//department boss has been changed
-						$provider = new CIntranetAuthProvider();
-						$provider->DeleteByUser($arFields["UF_HEAD"]);
-						$provider->DeleteByUser($arSect["UF_HEAD"]);
+						CAccess::RecalculateForUser($arFields["UF_HEAD"], self::ID);
+						CAccess::RecalculateForUser($arSect["UF_HEAD"], self::ID);
 					}
 				}
 			}
@@ -632,8 +668,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		if(COption::GetOptionString('intranet', 'iblock_structure', '') == $arFields['IBLOCK_ID'])
 		{
 			//departments structure's been changed
-			$provider = new CIntranetAuthProvider();
-			$provider->DeleteAll();
+			CAccess::RecalculateForProvider(self::ID);
 		}
 	}
 

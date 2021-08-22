@@ -37,7 +37,6 @@ class CheckListItemFields
 			'parentId',
 			'title',
 			'sortIndex',
-			'displayTitle',
 			'displaySortIndex',
 			'isComplete',
 			'isImportant',
@@ -53,7 +52,6 @@ class CheckListItemFields
 		this.parentId = null;
 		this.title = '';
 		this.sortIndex = 0;
-		this.displayTitle = '';
 		this.displaySortIndex = '';
 		this.isComplete = false;
 		this.isImportant = false;
@@ -123,7 +121,7 @@ class CheckListItemFields
 
 	setTitle(title)
 	{
-		this.title = title;
+		this.title = Text.encode(title);
 	}
 
 	getSortIndex()
@@ -134,16 +132,6 @@ class CheckListItemFields
 	setSortIndex(sortIndex)
 	{
 		this.sortIndex = sortIndex;
-	}
-
-	getDisplayTitle()
-	{
-		return this.displayTitle;
-	}
-
-	setDisplayTitle(displayTitle)
-	{
-		this.displayTitle = displayTitle;
 	}
 
 	getDisplaySortIndex()

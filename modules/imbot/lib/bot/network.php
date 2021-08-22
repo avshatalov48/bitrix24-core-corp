@@ -4,6 +4,7 @@ namespace Bitrix\ImBot\Bot;
 
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im;
 use Bitrix\ImBot;
@@ -27,15 +28,26 @@ class Network extends Base implements NetworkBot
 
 		COMMAND_NETWORK_SESSION = 'session',
 
-		COMMAND_MENU = 'menu',
-		COMMAND_MENU_EXIT = 'exit',
-		COMMAND_MENU_ENTRANCE = 'default',
+		COMMAND_CONNECTOR_REGISTER = 'RegisterConnector',
+		COMMAND_CONNECTOR_UPDATE = 'UpdateConnector',
+		COMMAND_CONNECTOR_UNREGISTER = 'UnRegisterConnector',
 
+		COMMAND_MENU = 'menu',
+		MENU_EXIT_ID = 'exit',
+		MENU_ENTRANCE_ID = 'default',
+		MENU_ACTION_NEXT = 'MENU',
+		MENU_ACTION_LINK = 'LINK',
+		MENU_ACTION_HELP = 'HELPCODE',
+		MENU_ACTION_QUEUE = 'QUEUE',
 		MENU_BUTTON_DISABLED = '#aaa',
 		MENU_BUTTON_ACTIVE = "#29619b",
 
-		MESSAGE_PARAM_ALLOW_QUOTE = 'IMOL_QUOTE_MSG',
-		MESSAGE_PARAM_SESSION_ID = 'IMOL_SID',
+		MESSAGE_PARAM_MENU_ACTION = 'IMB_MENU_ACTION',// menu action parameter
+		MESSAGE_PARAM_ALLOW_QUOTE = 'IMOL_QUOTE_MSG',// allow|disallow to quote message
+		MESSAGE_PARAM_SESSION_ID = 'IMOL_SID',// OL session Id
+		MESSAGE_PARAM_IMOL_VOTE = 'IMOL_VOTE',
+		MESSAGE_PARAM_IMOL_VOTE_DISLIKE = 'IMOL_VOTE_DISLIKE',
+		MESSAGE_PARAM_IMOL_VOTE_LIKE = 'IMOL_VOTE_LIKE',
 		MESSAGE_PARAM_CONNECTOR_MID = 'CONNECTOR_MID',
 		MESSAGE_PARAM_KEYBOARD = 'KEYBOARD',
 		MESSAGE_PARAM_ATTACH = 'ATTACH',
@@ -614,7 +626,7 @@ class Network extends Base implements NetworkBot
 		}
 
 		$http = self::instanceHttpClient();
-		$result = $http->query('checkPublicUrl', [], true);
+		$result = $http->query(self::COMMAND_CHECK_PUBLIC_URL, [], true);
 
 		if (isset($result['error']))
 		{
@@ -813,7 +825,7 @@ class Network extends Base implements NetworkBot
 
 	//endregion
 
-	//region Operator commands
+	//region Client commands
 
 	/**
 	 * @param int $messageId
@@ -980,6 +992,16 @@ class Network extends Base implements NetworkBot
 	 * Sends new client message into network line.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientMessageAdd
 	 * @param array $fields Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) USER_ID
+	 * 	(string|array) MESSAGE
+	 * 	(int) BOT_ID
+	 * 	(array) FILES
+	 * 	(array) ATTACH
+	 * 	(array) PARAMS
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool|array
 	 */
@@ -1009,7 +1031,7 @@ class Network extends Base implements NetworkBot
 				$demoStartTime = (int)Option::get("bitrix24", "DEMO_START");
 			}
 
-			if(!$portalCreateTime)
+			if (!$portalCreateTime)
 			{
 				$portalCreateTime = time();
 			}
@@ -1018,7 +1040,7 @@ class Network extends Base implements NetworkBot
 			{
 				$userLevel = self::USER_LEVEL_INTEGRATOR;
 			}
-			else if (\CBitrix24::isPortalAdmin($fields['USER_ID']))
+			elseif (\CBitrix24::isPortalAdmin($fields['USER_ID']))
 			{
 				$userLevel = self::USER_LEVEL_ADMIN;
 			}
@@ -1054,8 +1076,9 @@ class Network extends Base implements NetworkBot
 				'MESSAGE_ID' => $messageId,
 				'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
 				'MESSAGE_TEXT' => $messageText,
-				'FILES' => $fields['FILES'],
-				'ATTACH' => $fields['ATTACH'],
+				'FILES' => $fields['FILES'] ?? null,
+				'ATTACH' => $fields['ATTACH'] ?? null,
+				'PARAMS' => $fields['PARAMS'] ?? null,
 				'USER' => $user,
 			]
 		);
@@ -1833,10 +1856,13 @@ class Network extends Base implements NetworkBot
 
 		elseif ($messageFields['COMMAND'] === self::COMMAND_MENU)
 		{
-			if ($messageFields['COMMAND_PARAMS'] === self::COMMAND_MENU_EXIT)
+			if (
+				$messageFields['COMMAND_PARAMS'] === self::MENU_EXIT_ID
+				|| preg_match("/^".self::MENU_EXIT_ID.";([a-z0-9;:_\/]+)/i", $messageFields['COMMAND_PARAMS'], $commandParams)
+			)
 			{
 				$menuState = self::getMenuState((int)$messageFields['FROM_USER_ID']) or [];
-				$menuState['track'][] = self::COMMAND_MENU_EXIT;//finish
+				$menuState['track'][] = self::MENU_EXIT_ID;//finish
 
 				self::disableMessageButtons((int)$messageId, false);
 
@@ -1850,15 +1876,25 @@ class Network extends Base implements NetworkBot
 					self::MESSAGE_PARAM_KEYBOARD
 				]);
 
+				$params = [
+					self::MESSAGE_PARAM_ALLOW_QUOTE => 'N'
+				];
+				if (isset($commandParams, $commandParams[1]))
+				{
+					$menuState['menu_action'] = $commandParams[1];
+					$params[self::MESSAGE_PARAM_MENU_ACTION] = $commandParams[1];
+				}
 				self::sendMenuResult(
 					[
 						'BOT_ID' => static::getBotId(),
 						'DIALOG_ID' => $messageFields['FROM_USER_ID'],
 						'MESSAGE_ID' => $messageId,
+						'PARAMS' => $params,
 					],
 					$menuState
 				);
 
+				/*
 				self::sendMessage([
 					'FROM_USER_ID' => static::getBotId(),
 					'DIALOG_ID' => $messageFields['FROM_USER_ID'],
@@ -1867,6 +1903,7 @@ class Network extends Base implements NetworkBot
 					'URL_PREVIEW' => 'N',
 					'PARAMS' => [self::MESSAGE_PARAM_ALLOW_QUOTE => 'N'],
 				]);
+				*/
 			}
 			else
 			{
@@ -2139,7 +2176,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return ImBot\Http
 	 */
-	protected static function instanceHttpClient()
+	protected static function instanceHttpClient(): ImBot\Http
 	{
 		if (!(self::$httpClient instanceof ImBot\Http))
 		{
@@ -2153,6 +2190,16 @@ class Network extends Base implements NetworkBot
 		}
 
 		return self::$httpClient;
+	}
+
+	/**
+	 * Replace web client.
+	 *
+	 * @return ImBot\Http
+	 */
+	public static function initHttpClient(ImBot\Http $httpClient): void
+	{
+		self::$httpClient = $httpClient;
 	}
 
 	/**
@@ -2509,7 +2556,7 @@ class Network extends Base implements NetworkBot
 		}
 		$lastMenuItemId = is_array($menuState['track']) ? end($menuState['track']) : null;
 
-		return ($lastMenuItemId === self::COMMAND_MENU_EXIT);
+		return ($lastMenuItemId === self::MENU_EXIT_ID);
 	}
 
 	/**
@@ -2523,9 +2570,9 @@ class Network extends Base implements NetworkBot
 	{
 		$menuState = self::getMenuState($dialogId) or [];
 		$lastMenuItemId = is_array($menuState['track']) ? end($menuState['track']) : null;
-		if (self::COMMAND_MENU_EXIT !== $lastMenuItemId)
+		if (self::MENU_EXIT_ID !== $lastMenuItemId)
 		{
-			$menuState['track'][] = self::COMMAND_MENU_EXIT;//do not show menu
+			$menuState['track'][] = self::MENU_EXIT_ID;//do not show menu
 			self::saveMenuState($dialogId, $menuState);
 		}
 		$messageId = isset($menuState['message_id']) ? (int)$menuState['message_id'] : null;
@@ -2565,7 +2612,7 @@ class Network extends Base implements NetworkBot
 		if ($previousMenuState)
 		{
 			$lastMenuItemId = $getLast($previousMenuState['track']);
-			if ($lastMenuItemId === self::COMMAND_MENU_EXIT)
+			if ($lastMenuItemId === self::MENU_EXIT_ID)
 			{
 				return $previousMenuState;//finish has reached
 			}
@@ -2593,7 +2640,7 @@ class Network extends Base implements NetworkBot
 
 		$previousMessageId = null;
 
-		$currentMenuItemId = $menuData['start'] ?? self::COMMAND_MENU_ENTRANCE;
+		$currentMenuItemId = $menuData['start'] ?? self::MENU_ENTRANCE_ID;
 
 		// go to next menu level
 		if (
@@ -2668,16 +2715,16 @@ class Network extends Base implements NetworkBot
 					];
 					switch ($buttonData['action'])
 					{
-						case "MENU":
+						case self::MENU_ACTION_NEXT:
 							$button["COMMAND"] = self::COMMAND_MENU;
 							$button["COMMAND_PARAMS"] = $buttonData['action_value'];
 							break;
 
-						case "LINK":
+						case self::MENU_ACTION_LINK:
 							$button["LINK"] = $buttonData['action_value'];
 							break;
 
-						case "HELPCODE":
+						case self::MENU_ACTION_HELP:
 							if ($buttonData['action_value'] && !empty($buttonData['action_value']))
 							{
 								$button["FUNCTION"] = "BX.Helper.show(\'redirect=detail&HD_ID=".$buttonData['action_value']."\')";
@@ -2688,9 +2735,14 @@ class Network extends Base implements NetworkBot
 							}
 							break;
 
-						case "QUEUE":
+						case self::MENU_ACTION_QUEUE:
 							$button["COMMAND"] = self::COMMAND_MENU;
-							$button["COMMAND_PARAMS"] = self::COMMAND_MENU_EXIT;
+							$button["COMMAND_PARAMS"] = self::MENU_EXIT_ID;
+							// add some additional action params
+							if ($buttonData['action_value'] && !empty($buttonData['action_value']))
+							{
+								$button["COMMAND_PARAMS"] .= ';'.$buttonData['action_value'];
+							}
 							break;
 					}
 					$keyboard->addButton($button);
@@ -2744,6 +2796,7 @@ class Network extends Base implements NetworkBot
 	 *   (int) BOT_ID Bot id.
 	 *   (int) DIALOG_ID Dialog id.
 	 *   (int) MESSAGE_ID Message id.
+	 *   (array) PARAMS Some extra action data.
 	 * ]
 	 * @param array|null $menuState Saved user track.
 	 *
@@ -2781,7 +2834,7 @@ class Network extends Base implements NetworkBot
 			return null;
 		};
 
-		$startMenuItemId = $menuData['start'] ?? self::COMMAND_MENU_ENTRANCE;
+		$startMenuItemId = $menuData['start'] ?? self::MENU_ENTRANCE_ID;
 		$previousMenuItem = $getMenuItem($startMenuItemId);
 
 		$level = 0;
@@ -2789,7 +2842,7 @@ class Network extends Base implements NetworkBot
 		foreach ($menuState['track'] as $itemId)
 		{
 			$menuItem = $getMenuItem($itemId);
-			if (!$menuItem && $itemId != self::COMMAND_MENU_EXIT)
+			if (!$menuItem && $itemId != self::MENU_EXIT_ID)
 			{
 				continue;
 			}
@@ -2804,13 +2857,44 @@ class Network extends Base implements NetworkBot
 			{
 				foreach ($previousMenuItem['buttons'] as $buttonData)
 				{
-					if ($buttonData['action'] == "MENU" && $buttonData['action_value'] == $itemId)
+					if ($buttonData['action'] == self::MENU_ACTION_NEXT && $buttonData['action_value'] == $itemId)
 					{
 						$answer = $buttonData['text'];
+						break;
 					}
-					elseif ($buttonData['action'] == "QUEUE" || $buttonData['action_value'] == self::COMMAND_MENU_EXIT)
+					elseif ($buttonData['action'] == self::MENU_ACTION_QUEUE)
+					{
+						if (
+							isset($menuState['menu_action'])
+							&& !empty($menuState['menu_action'])
+							&& isset($buttonData['action_value'])
+							&& !empty($buttonData['action_value'])
+							&& $menuState['menu_action'] === $buttonData['action_value']
+						)
+						{
+							$answer = $buttonData['text'];
+							break;
+						}
+						elseif (
+							(
+								!isset($menuState['menu_action'])
+								|| empty($menuState['menu_action'])
+							)
+							&&
+							(
+								!isset($buttonData['action_value'])
+								|| empty($buttonData['action_value'])
+							)
+						)
+						{
+							$answer = $buttonData['text'];
+							break;
+						}
+					}
+					elseif ($buttonData['action_value'] == self::MENU_EXIT_ID)
 					{
 						$answer = $buttonData['text'];
+						break;
 					}
 				}
 			}
@@ -2841,7 +2925,8 @@ class Network extends Base implements NetworkBot
 			'MESSAGE' => [
 				'ID' => ($params['MESSAGE_ID'] ?: 0),
 				'TEXT' => Loc::getMessage('IMBOT_NETWORK_BOT_MENU_RESULT'),
-			]
+			],
+			'PARAMS' => ($params['PARAMS'] ?? null),
 		]);
 	}
 
@@ -3172,12 +3257,18 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function registerConnector($lineId, $fields = [])
 	{
-		$send['LINE_ID'] = intval($lineId);
+		$send = [];
+		$send['LINE_ID'] = (int)$lineId;
 		if ($send['LINE_ID'] <= 0)
 		{
 			return false;
 		}
-		$configManager = new \Bitrix\ImOpenLines\Config();
+		if (!Main\Loader::includeModule('imopenlines'))
+		{
+			return false;
+		}
+		/** @var \Bitrix\ImOpenLines\Config $configManager */
+		$configManager = ServiceLocator::getInstance()->get('ImOpenLines.Config');
 		$config = $configManager->get($lineId);
 		if (!$config)
 		{
@@ -3224,7 +3315,7 @@ class Network extends Base implements NetworkBot
 
 		$http = self::instanceHttpClient();
 		$result = $http->query(
-			'RegisterConnector',
+			self::COMMAND_CONNECTOR_REGISTER,
 			$send,
 			true
 		);
@@ -3256,7 +3347,8 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function updateConnector($lineId, $fields)
 	{
-		$update['LINE_ID'] = intval($lineId);
+		$update = [];
+		$update['LINE_ID'] = (int)$lineId;
 		if ($update['LINE_ID'] <= 0)
 		{
 			return false;
@@ -3322,7 +3414,7 @@ class Network extends Base implements NetworkBot
 
 		$http = self::instanceHttpClient();
 		$result = $http->query(
-			'UpdateConnector',
+			self::COMMAND_CONNECTOR_UPDATE,
 			$update,
 			true
 		);
@@ -3342,7 +3434,8 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function unRegisterConnector($lineId)
 	{
-		$update['LINE_ID'] = intval($lineId);
+		$update = [];
+		$update['LINE_ID'] = (int)$lineId;
 		if ($update['LINE_ID'] <= 0)
 		{
 			return false;
@@ -3350,7 +3443,7 @@ class Network extends Base implements NetworkBot
 
 		$http = self::instanceHttpClient();
 		$result = $http->query(
-			'UnRegisterConnector',
+			self::COMMAND_CONNECTOR_UNREGISTER,
 			['LINE_ID' => $lineId],
 			true
 		);

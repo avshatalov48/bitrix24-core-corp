@@ -220,4 +220,10 @@ abstract class SearchContentBuilder
 		// not implemented by default
 		return null;
 	}
+
+	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
+	{
+		// not implemented by default
+		return new \Bitrix\Main\ORM\Data\Result();
+	}
 }

@@ -163,7 +163,7 @@ class Call
 
 		$fields['CRM'] = 'Y';
 
-		if(!$fields['QUEUE_ID'])
+		if(!$fields['QUEUE_ID'] && (int)$fields['INCOMING'] !== \CVoxImplantMain::CALL_OUTGOING)
 		{
 			if(isset($config['QUEUE_ID']))
 			{
@@ -244,7 +244,7 @@ class Call
 	 */
 	public function getPortalUserId()
 	{
-		return $this->portalUserId;
+		return (int)$this->portalUserId;
 	}
 
 	/**
@@ -255,9 +255,9 @@ class Call
 		$this->update(['PORTAL_USER_ID' => $portalUserId]);
 	}
 
-	public function isInternalCall()
+	public function isInternalCall(): bool
 	{
-		return $this->portalUserId != '';
+		return (int)$this->incoming === \CVoxImplantMain::CALL_OUTGOING && ($this->portalUserId > 0 || $this->queueId > 0) ;
 	}
 
 	/**
@@ -879,6 +879,11 @@ class Call
 			}
 			else if ($user['STATUS'] == CallUserTable::STATUS_CONNECTED)
 			{
+				if ($this->isInternalCall() && !$this->portalUserId && $userId != $this->getUserId())
+				{
+					$this->updatePortalUserId($userId);
+					$this->signaling->sendUpdatePortalUser($this->getUserId());
+				}
 				$this->signaling->sendStart($userId, $user['DEVICE']);
 			}
 		}
@@ -1102,7 +1107,7 @@ class Call
 		$this->id = array_key_exists('ID', $fields) ? $fields['ID'] : $this->id;
 		$this->configId = array_key_exists('CONFIG_ID', $fields) ? $fields['CONFIG_ID'] : $this->configId;
 		$this->userId = array_key_exists('USER_ID', $fields) ? $fields['USER_ID'] : $this->userId;
-		$this->portalUserId = array_key_exists('PORTAL_USER_ID', $fields) ? $fields['PORTAL_USER_ID'] : $this->portalUserId;
+		$this->portalUserId = array_key_exists('PORTAL_USER_ID', $fields) ? (int)$fields['PORTAL_USER_ID'] : $this->portalUserId;
 		$this->callId = array_key_exists('CALL_ID', $fields) ? $fields['CALL_ID'] : $this->callId;
 		$this->externalCallId = array_key_exists('EXTERNAL_CALL_ID', $fields) ? $fields['EXTERNAL_CALL_ID'] : $this->externalCallId;
 		$this->incoming = array_key_exists('INCOMING', $fields) ? $fields['INCOMING'] : $this->incoming;
@@ -1119,7 +1124,7 @@ class Call
 		$this->portalNumber = array_key_exists('PORTAL_NUMBER', $fields) ? $fields['PORTAL_NUMBER'] : $this->portalNumber;
 		$this->stage = array_key_exists('STAGE', $fields) ? $fields['STAGE'] : $this->stage;
 		$this->ivrActionId = array_key_exists('IVR_ACTION_ID', $fields) ? $fields['IVR_ACTION_ID'] : $this->ivrActionId;
-		$this->queueId = array_key_exists('QUEUE_ID', $fields) ? $fields['QUEUE_ID'] : $this->queueId;
+		$this->queueId = array_key_exists('QUEUE_ID', $fields) ? (int)$fields['QUEUE_ID'] : $this->queueId;
 		$this->queueHistory = array_key_exists('QUEUE_HISTORY', $fields) ? $fields['QUEUE_HISTORY'] : $this->queueHistory;
 		$this->sessionId = array_key_exists('SESSION_ID', $fields) ? $fields['SESSION_ID'] : $this->sessionId;
 		$this->callbackParameters = array_key_exists('CALLBACK_PARAMETERS', $fields) ? $fields['CALLBACK_PARAMETERS'] : $this->callbackParameters;

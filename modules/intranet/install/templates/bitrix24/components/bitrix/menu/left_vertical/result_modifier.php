@@ -574,7 +574,7 @@ if (
 )
 {
 	$licenseFamily = \CBitrix24::getLicenseFamily();
-	if ($licenseFamily !== "company")
+	if (!\CBitrix24::isMaximalLicense())
 	{
 		$arResult["SHOW_LICENSE_BUTTON"] = true;
 		$arResult["B24_LICENSE_PATH"] = CBitrix24::PATH_LICENSE_ALL;

@@ -104,7 +104,7 @@ class ThemePicker
 			$this->entityId = $this->userId;
 		}
 
-		if (Loader::includeModule("bitrix24"))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$this->zoneId = \CBitrix24::getPortalZone();
 		}
@@ -121,6 +121,7 @@ class ThemePicker
 				'=CONTEXT' => $this->getContext(),
 			],
 			'select' => [ 'THEME_ID', 'ENTITY_TYPE', 'USER_ID' ],
+			'cache' => static::getSelectCacheParams(),
 		]);
 
 		if (
@@ -353,7 +354,8 @@ class ThemePicker
 							'ENTITY_ID' => $entityId,
 							'=CONTEXT' => $context,
 						],
-						'select' => ['ID']
+						'select' => [ 'ID' ],
+						'cache' => static::getSelectCacheParams(),
 					]);
 					while ($themeFields = $res->fetch())
 					{
@@ -376,7 +378,8 @@ class ThemePicker
 					'ENTITY_ID' => $entityId,
 					'=CONTEXT' => $this->getContext(),
 				],
-				'select' => ['ID']
+				'select' => [ 'ID' ],
+				'cache' => static::getSelectCacheParams(),
 			]);
 			while($themeFields = $res->fetch())
 			{
@@ -470,7 +473,8 @@ class ThemePicker
 					'ENTITY_ID' => 0,
 					'=CONTEXT' => $this->getContext(),
 				],
-				'select' => ['ID']
+				'select' => [ 'ID' ],
+				'cache' => static::getSelectCacheParams(),
 			]);
 			while($themeFields = $res->fetch())
 			{
@@ -503,7 +507,8 @@ class ThemePicker
 					'ENTITY_ID' => $this->getEntityId(),
 					'=CONTEXT' => $this->getContext(),
 				],
-				'select' => ['ID']
+				'select' => [ 'ID' ],
+				'cache' => static::getSelectCacheParams(),
 			]);
 			while($themeFields = $res->fetch())
 			{
@@ -752,7 +757,8 @@ class ThemePicker
 				'ENTITY_ID' => 0,
 				'=CONTEXT' => $this->getContext(),
 			],
-			'select' => [ 'THEME_ID', 'USER_ID' ]
+			'select' => [ 'THEME_ID', 'USER_ID' ],
+			'cache' => static::getSelectCacheParams(),
 		]);
 
 		if ($themeFields = $res->fetch())
@@ -1177,5 +1183,12 @@ class ThemePicker
 			false,
 			$this->getUserId()
 		);
+	}
+
+	private static function getSelectCacheParams()
+	{
+		return [
+			'ttl' => 3600 * 24 * 365,
+		];
 	}
 }

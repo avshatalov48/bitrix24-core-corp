@@ -697,36 +697,50 @@ abstract class CDavExchangeClient
 	private function GetResponse()
 	{
 		if (!$this->connected)
+		{
 			return null;
+		}
 
 		$arHeaders = array();
 		$body = "";
 
 		while ($line = fgets($this->fp, 4096))
 		{
-			if ($line == "\r\n")
+			if ($line === "\r\n")
+			{
 				break;
+			}
 
 			$arHeaders[] = trim($line);
 		}
 
 		if (count($arHeaders) <= 0)
+		{
 			return null;
+		}
 
 		$bChunked = $bConnectionClosed = false;
 		$contentLength = null;
 		foreach ($arHeaders as $value)
 		{
 			if (!$bChunked && preg_match("#Transfer-Encoding:\s*chunked#i", $value))
+			{
 				$bChunked = true;
+			}
 			if (!$bConnectionClosed && preg_match('#Connection:\s*close#i', $value))
+			{
 				$bConnectionClosed = true;
+			}
 			if (is_null($contentLength))
 			{
 				if (preg_match('#Content-Length:\s*([0-9]*)#i', $value, $arMatches))
+				{
 					$contentLength = intval($arMatches[1]);
+				}
 				if (preg_match('#HTTP/1\.1\s+204#i', $value))
+				{
 					$contentLength = 0;
+				}
 			}
 		}
 
@@ -815,7 +829,7 @@ abstract class CDavExchangeClient
 		$responce = new CDavExchangeClientResponce($arHeaders, $body);
 
 		$httpVersion = $responce->GetStatus('version');
-		if (is_null($httpVersion) || ($httpVersion != 'HTTP/1.1' && $httpVersion != 'HTTP/1.0'))
+		if (is_null($httpVersion) || ($httpVersion !== 'HTTP/1.1' && $httpVersion !== 'HTTP/1.0'))
 			return null;
 
 		return $responce;

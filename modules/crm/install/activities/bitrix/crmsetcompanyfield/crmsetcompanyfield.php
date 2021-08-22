@@ -80,6 +80,11 @@ class CBPCrmSetCompanyField
 			$entity = \CCrmDeal::GetByID($entityId, false);
 			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
 		}
+		elseif ($entityType === \CCrmOwnerType::ContactName)
+		{
+			$entity = \CCrmContact::GetByID($entityId, false);
+			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
+		}
 		else
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);

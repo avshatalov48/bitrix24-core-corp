@@ -841,6 +841,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			return $this->entityFieldInfos;
 		}
 
+		$fakeValue = '';
 		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
@@ -891,10 +892,16 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						$this->prepareTypeList(),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_TYPE_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
-					'defaultValue' => $this->defaultEntityData['COMPANY_TYPE'] ?? null
+					'defaultValue' => $this->defaultEntityData['COMPANY_TYPE'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'COMPANY_TYPE',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -907,10 +914,16 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						CCrmStatus::GetStatusList('INDUSTRY'),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_INDUSTRY_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
-					'defaultValue' => $this->defaultEntityData['INDUSTRY'] ?? null
+					'defaultValue' => $this->defaultEntityData['INDUSTRY'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'INDUSTRY',
+						[$fakeValue]
+					),
 				]
 
 			),
@@ -924,10 +937,16 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						CCrmStatus::GetStatusList('EMPLOYEES'),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_COMPANY_EMPLOYEES_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
-					'defaultValue' => $this->defaultEntityData['EMPLOYEES'] ?? null
+					'defaultValue' => $this->defaultEntityData['EMPLOYEES'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'EMPLOYEES',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -1188,6 +1207,25 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			}
 
 			$data = ['fieldInfo' => $fieldInfo];
+
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$data['innerConfig'] = \CCrmInstantEditorHelper::prepareInnerConfig(
+						$userField['USER_TYPE_ID'],
+						'crm.status.setItems',
+						$userField['SETTINGS']['ENTITY_TYPE'],
+						['']
+					);
+				}
+				unset($statusEntityId);
+			}
 
 			if(isset($visibilityConfig[$fieldName]))
 			{

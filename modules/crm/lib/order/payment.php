@@ -39,6 +39,7 @@ class Payment extends Sale\Payment
 
 		if ($this->fields->isChanged('PAID'))
 		{
+
 			if ($this->isPaid() && Crm\Automation\Factory::canUseAutomation())
 			{
 				Crm\Automation\Trigger\PaymentTrigger::execute(

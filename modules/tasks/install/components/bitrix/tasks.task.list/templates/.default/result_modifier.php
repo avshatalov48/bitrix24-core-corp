@@ -1,8 +1,16 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 
 use Bitrix\Main;
 use Bitrix\Main\Grid;
@@ -37,14 +45,25 @@ if (Main\ModuleManager::isModuleInstalled('rest'))
 CJSCore::Init(['tasks_util_query', 'task_popups']);
 
 //region TITLE
-
 if ($arParams['PROJECT_VIEW'] === 'Y')
 {
 	$title = $shortTitle = Loc::getMessage('TASKS_TITLE_PROJECT');
 }
 elseif ($arParams['GROUP_ID'] > 0)
 {
-	$title = $shortTitle = Loc::getMessage('TASKS_TITLE_GROUP_TASKS');
+	$shortTitle = Loc::getMessage('TASKS_TITLE_GROUP_TASKS');
+	$title = $shortTitle;
+
+	if (
+		Main\Loader::includeModule('socialnetwork')
+		&& method_exists(Bitrix\Socialnetwork\ComponentHelper::class, 'getWorkgroupPageTitle')
+	)
+	{
+		$title = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupPageTitle([
+			'WORKGROUP_ID' => $arParams['GROUP_ID'],
+			'TITLE' => $shortTitle
+		]);
+	}
 }
 elseif ((int)$arParams['USER_ID'] === User::getId())
 {
@@ -175,40 +194,6 @@ if (!function_exists('prepareGroupActionItems'))
 				],
 			],
 		];
-
-		if ($arParams['SCRUM_BACKLOG'] == 'Y')
-		{
-			$actionList[] = [
-				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SPRINT'),
-				'VALUE' => 'setsprint',
-				'ONCHANGE' => [
-					[
-						'ACTION' => Grid\Panel\Actions::CREATE,
-						'DATA' => [
-							[
-								'TYPE' => Grid\Panel\Types::CUSTOM,
-								'ID' => 'action_set_sprint_title',
-								'NAME' => 'ACTION_SET_SPRINT_TITLE',
-								'VALUE' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SPRINT_TITLE'),
-							],
-							[
-								'TYPE' => Grid\Panel\Types::DATE,
-								'ID' => 'action_set_sprint',
-								'NAME' => 'ACTION_SET_SPRINT',
-								'VALUE' => '',
-								'TIME' => true,
-							],
-						],
-					],
-					[
-						'ACTION' => Grid\Panel\Actions::CALLBACK,
-						'DATA' => [
-							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setsprint')"],
-						],
-					],
-				],
-			];
-		}
 
 		$actionList[] = [
 			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_COMPLETE'),

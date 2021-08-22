@@ -466,7 +466,7 @@ class CTasksReportHelper extends CReportHelper
 		// group permission
 		if (isset($_GET['select_group_tasks']))
 		{
-			$allowedGroups = CTasks::GetAllowedGroups();
+			$allowedGroups = \Bitrix\Tasks\Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, \Bitrix\Tasks\Util\User::getId());
 			$permFilter[] = array('=GROUP_ID' => $allowedGroups);
 		}
 

@@ -19,7 +19,7 @@ Extension::load([
 	"ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.icons", "ui.forms",
 	"color_picker", "sidepanel", "clipboard",
 	"seo.ads.client_selector",
-	"seo.ads.login"
+	"seo.ads.login", "ui.info-helper"
 ]);
 
 $this->addExternalCss($this->GetFolder() . '/utm.css');
@@ -40,6 +40,10 @@ $containerId = 'crm-analytics-source-ads-editor';
 				'added' => $arParams['IS_ADDED'],
 			])?>]
 		);
+
+		<?if ($arResult['FEATURE_CODE']):?>
+			BX.UI.InfoHelper.show('<?=$arResult['FEATURE_CODE']?>');
+		<?endif;?>
 	});
 </script>
 
@@ -392,13 +396,15 @@ $containerId = 'crm-analytics-source-ads-editor';
 
 		<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 			'BUTTONS' => [
-				'save', 'cancel' => $arParams['PATH_TO_LIST'],
+				($arResult['FEATURE_CODE'] ? null : 'save'),
+				'cancel' => $arParams['PATH_TO_LIST'],
 				(
 					$arResult['ROW']['ID'] &&
 					$arResult['ROW']['ACTIVE'] != 'N'
 				)
 					? ['TYPE' => 'remove', 'NAME' => 'archive', 'CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_ARCHIVE'),]
-					: null,
+					: null
+				,
 			]
 		]);?>
 

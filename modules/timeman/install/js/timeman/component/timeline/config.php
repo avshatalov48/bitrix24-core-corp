@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'timeman.timeformatter',
 		'ui.vue.components.hint',
 		'ui.vue',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

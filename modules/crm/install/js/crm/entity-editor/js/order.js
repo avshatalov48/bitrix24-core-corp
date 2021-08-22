@@ -6326,7 +6326,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 			if (this.isEditable())
 			{
 				this._editButton = BX.create("span", { props: { className: "crm-widget-employee-change" }, text: this.getMessage("change") });
-				BX.bind(this._editButton, "click", BX.delegate(this.switchToSingleEditMode, this));
+				BX.bind(this._editButton, "click", BX.delegate(this.onEditButtonClick, this));
 				userElement.appendChild(this._editButton);
 			}
 
@@ -6377,6 +6377,15 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 
 		this._hasLayout = true;
 	};
+
+	BX.Crm.EntityEditorOrderUser.prototype.onEditButtonClick = function(event)
+	{
+		this.switchToSingleEditMode(event.target);
+	};
+	BX.Crm.EntityEditorOrderUser.prototype.isSingleEditEnabled = function()
+	{
+		return true;
+	}
 	BX.Crm.EntityEditorOrderUser.prototype.hasContentToDisplay = function()
 	{
 		return this.hasValue();

@@ -6,6 +6,22 @@ use Bitrix\Main;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class AddressLinkTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AddressLink_Query query()
+ * @method static EO_AddressLink_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AddressLink_Result getById($id)
+ * @method static EO_AddressLink_Result getList(array $parameters = array())
+ * @method static EO_AddressLink_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_AddressLink createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_AddressLink_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_AddressLink wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_AddressLink_Collection wakeUpCollection($rows)
+ */
 class AddressLinkTable extends Main\ORM\Data\DataManager
 {
 	/**

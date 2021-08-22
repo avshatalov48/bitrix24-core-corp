@@ -1,4 +1,5 @@
 import {Vue} from "ui.vue";
+import {Type} from "main.core";
 import "./timeline.css";
 import {Chart} from "./chart/chart";
 import {Legend} from "./legend/legend";
@@ -11,9 +12,14 @@ Vue.component('bx-timeman-component-timeline', {
 	},
 	props: {
 		chart: Array,
-		fixedSizeType: String,
 		legend: Array,
+		fixedSizeType: String,
 		readOnly: Boolean,
+		overChart: Array,
+	},
+	computed:
+	{
+		Type: () => Type,
 	},
 	methods:
 	{
@@ -35,6 +41,17 @@ Vue.component('bx-timeman-component-timeline', {
 			<Legend
 				:items="legend"
 			/>
+
+			<transition appear name="bx-timeman-component-timeline-fade">
+				<Chart
+					v-if="Type.isArrayFilled(overChart)"
+					:intervals="overChart"
+					:fixedSizeType="fixedSizeType"
+					:readOnly="true"
+					:showMarkers="false"
+					:isOverChart="true"
+				/>
+			</transition>
 		</div>
 	`
 });

@@ -139,4 +139,5 @@ export type FormDictionary = {
 	deps: Deps;
 	restriction: Restriction;
 	product: Product;
+	contentTypes: Array<EnumString>;
 };

@@ -204,6 +204,11 @@ BX.Tasks.CheckList = (function()
 
 				return;
 			}
+			else if (key === 'title')
+			{
+				fields[key] = BX.util.htmlspecialcharsback(treeStructure.fields[key]);
+				return;
+			}
 
 			fields[key] = treeStructure.fields[key];
 		});
@@ -279,7 +284,7 @@ BX.Tasks.CheckList = (function()
 
 		var p = new BX.Promise();
 		var title = BX.message('TASKS_CHECKLIST_COMPONENT_JS_NEW_CHECKLIST_TITLE_2').replace('#ITEM_NUMBER#', this.treeStructure.getDescendantsCount() + 1);
-		var newCheckList = new BX.Tasks.CheckListItem({TITLE: title, DISPLAY_TITLE: title});
+		var newCheckList = new BX.Tasks.CheckListItem({TITLE: title});
 
 		this.treeStructure.addCheckListItem(newCheckList).then(function(resolve) {
 			p.resolve(resolve);
@@ -313,8 +318,7 @@ BX.Tasks.CheckList = (function()
 			e.target.closest('.tasks-checklist-header-name'),
 			e.target.closest('#files_chooser'),
 			e.target.closest('#DiskFileDialog'),
-			e.target.closest('#menu-popup-to-another-checklist'),
-			e.target.closest('#BXSocNetLogDestinationContainer')
+			e.target.closest('.ui-selector-dialog')
 		];
 
 		validAreas.forEach(function(area) {
@@ -331,6 +335,11 @@ BX.Tasks.CheckList = (function()
 
 		this.treeStructure.disableAllUpdateModes();
 		this.treeStructure.handleTaskOptions();
+	};
+
+	CheckList.prototype.onSave = function()
+	{
+		this.treeStructure.disableAllGroup();
 	};
 
 	return CheckList;
@@ -419,6 +428,8 @@ BX.Tasks.CheckList.OptionManager = (function()
 		this.attachments = options.attachments;
 		this.diskUrls = options.diskUrls;
 
+		this.showCompleteAllButton = options.showCompleteAllButton;
+		this.collapseOnCompleteAll = options.collapseOnCompleteAll;
 		this.showCompleted = options.options.SHOW_COMPLETED;
 		this.defaultMemberSelectorType = options.options.DEFAULT_MEMBER_SELECTOR_TYPE;
 		this.showOnlyMine = false;
@@ -457,6 +468,16 @@ BX.Tasks.CheckList.OptionManager = (function()
 	OptionManager.prototype.getCanAddAccomplice = function()
 	{
 		return this.commonAction.canAddAccomplice;
+	};
+
+	OptionManager.prototype.getShowCompleteAllButton = function()
+	{
+		return this.showCompleteAllButton;
+	};
+
+	OptionManager.prototype.getCollapseOnCompleteAll = function()
+	{
+		return this.collapseOnCompleteAll;
 	};
 
 	OptionManager.prototype.getShowCompleted = function()

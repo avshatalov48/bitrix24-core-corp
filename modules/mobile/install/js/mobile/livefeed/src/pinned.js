@@ -1,7 +1,8 @@
-import {Dom, Type, Tag, Loc} from "main.core";
+import {Dom, Type, Tag, Loc} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Post} from "./post";
 import {Ajax} from 'mobile.ajax';
+import {PageInstance} from './feed';
 
 class PinnedPanel
 {
@@ -268,7 +269,7 @@ class PinnedPanel
 		this.recalcPanel({
 			type: 'insert'
 		});
-		__MSLOnFeedScroll();
+		PageInstance.onScroll();
 	}
 
 	extractEntry({

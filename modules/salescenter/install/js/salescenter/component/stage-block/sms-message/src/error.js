@@ -1,5 +1,3 @@
-import {Manager} from 'salescenter.manager';
-
 const Error = {
 	props: {
 		error: {
@@ -10,7 +8,7 @@ const Error = {
 	methods: {
 		openSlider()
 		{
-			Manager.openSlider(this.error.fixUrl).then(() => this.onConfigure());
+			this.error.fixer().then(() => this.onConfigure())
 		},
 		onConfigure()
 		{
@@ -23,7 +21,7 @@ const Error = {
 				{{error.text}}
 			</span>
 			<span
-				v-if="error.fixUrl && error.fixText"
+				v-if="error.fixer && error.fixText"
 				class="salescenter-app-payment-by-sms-item-container-alert-config"
 				@click="openSlider()"
 			>

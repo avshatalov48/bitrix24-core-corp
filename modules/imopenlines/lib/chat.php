@@ -1474,15 +1474,16 @@ class Chat
 	}
 
 	/**
+	 * Starts new session and closes previous one.
 	 * @param $userId
 	 * @param string $message
 	 * @return Result
 	 */
-	public function startSessionAndCloseOldSession($userId, $message = ''): Result
+	public function restartSession($userId, $message = ''): Result
 	{
 		$result = new Result();
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
 			$keyLock = self::PREFIX_KEY_LOCK_NEW_SESSION . $this->chat['ENTITY_ID'];
 
@@ -1497,7 +1498,7 @@ class Chat
 				]);
 				if ($resultLoad)
 				{
-					if($this->validationAction($session->getData('CHAT_ID')))
+					if ($this->validationAction($session->getData('CHAT_ID')))
 					{
 						Im::addMessage([
 							'TO_CHAT_ID' => $this->chat['ID'],
@@ -1516,9 +1517,9 @@ class Chat
 					}
 				}
 
-				if($result->isSuccess())
+				if ($result->isSuccess())
 				{
-					if(ImUser::getInstance($userId)->isConnector())
+					if (ImUser::getInstance($userId)->isConnector())
 					{
 						$mode = Session::MODE_INPUT;
 					}
@@ -1532,7 +1533,7 @@ class Chat
 						'MODE' => $mode,
 					]);
 
-					if(
+					if (
 						$resultCreate &&
 						$session->isNowCreated()
 					)
@@ -1546,13 +1547,13 @@ class Chat
 							'CHECK_DATE_CLOSE' => $dateClose
 						];
 
-						if(ImUser::getInstance($userId)->isConnector())
+						if (ImUser::getInstance($userId)->isConnector())
 						{
 							$sessionUpdate['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
 						}
 						$session->update($sessionUpdate);
 
-						if(
+						if (
 							$mode === Session::MODE_INPUT &&
 							empty($message)
 						)
@@ -1561,7 +1562,7 @@ class Chat
 								'#USER#' => '[USER='.$user->getId().'][/USER]',
 							]);
 						}
-						if(!empty($message))
+						if (!empty($message))
 						{
 							Im::addMessage([
 								'TO_CHAT_ID' => $this->chat['ID'],
@@ -1584,10 +1585,125 @@ class Chat
 
 				Tools\Lock::getInstance()->delete($keyLock);
 			}
+			else
+			{
+				$result->addError(new Error(
+					'This chat is blocked for this operation. Running a parallel competitive query.',
+					'IMOL_CHAT_ERROR_NOT_START_SESSION',
+					__METHOD__,
+					['chat' => $this->chat]
+				));
+			}
 		}
 		else
 		{
-			$result->addError(new Error('This chat is blocked for this operation. Running a parallel competitive query.', 'IMOL_CHAT_ERROR_NOT_START_SESSION', __METHOD__, ['chat' => $this->chat]));
+			$result->addError(new Error(
+				'Chat failed to load',
+				'NOT_LOAD_CHAT',
+				__METHOD__,
+				['chat' => $this->chat, 'userId' => $userId, 'message' => $message]
+			));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Continues session.
+	 * @param $userId
+	 * @param string $message
+	 * @return Result
+	 */
+	public function continueSession($userId, $message = ''): Result
+	{
+		$result = new Result();
+
+		if ($this->isDataLoaded())
+		{
+			$keyLock = self::PREFIX_KEY_LOCK_NEW_SESSION . $this->chat['ENTITY_ID'];
+			$iteration = 0;
+			$isAddMessage = false;
+			do
+			{
+				$iteration++;
+				if (
+					$iteration > Connector::LOCK_MAX_ITERATIONS
+					|| Tools\Lock::getInstance()->set($keyLock)
+				)
+				{
+					$session = new Session();
+					$resultLoadSession = $session->load([
+						'USER_CODE' => $this->chat['ENTITY_ID'],
+						'SKIP_CREATE' => 'Y'
+					]);
+					if ($resultLoadSession)
+					{
+						$messageId = Im::addMessage([
+							'TO_CHAT_ID' => $this->chat['ID'],
+							'MESSAGE' => $message,
+							'SYSTEM' => 'Y',
+							'IMPORTANT_CONNECTOR' => 'Y',
+							'NO_SESSION_OL' => 'Y',
+							'PARAMS' => [
+								'CLASS' => 'bx-messenger-content-item-ol-output',
+								'IMOL_FORM' => 'offline',
+								'TYPE' => 'lines',
+								'COMPONENT_ID' => 'bx-imopenlines-message',
+							],
+						]);
+						if (!empty($messageId))
+						{
+							(new AutomaticAction($session))->automaticAddMessage($messageId);
+
+							$session->update([
+								'MESSAGE_COUNT' => true,
+								'DATE_LAST_MESSAGE' => new DateTime()
+							]);
+
+							$queueManager = Queue::initialization($session);
+							if ($queueManager)
+							{
+								$queueManager->automaticActionAddMessage();
+							}
+
+							$result->setResult(true);
+						}
+						else
+						{
+							$result->addError(new Error(
+								'Failed to add message',
+								'IMOL_INTERACTIVE_MESSAGE_ERROR_NOT_ADD_MESSAGE',
+								__METHOD__
+							));
+						}
+					}
+					else
+					{
+						$result->addError(new Error(
+							'Failed to load session',
+							'IMOL_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_SESSION',
+							__METHOD__
+						));
+					}
+
+					$isAddMessage = true;
+					Tools\Lock::getInstance()->delete($keyLock);
+				}
+				else
+				{
+					sleep($iteration);
+				}
+			}
+			while ($isAddMessage === false);
+		}
+		else
+		{
+			$result->addError(new Error(
+				'Chat failed to load',
+				'NOT_LOAD_CHAT',
+				__METHOD__,
+				['chat' => $this->chat, 'userId' => $userId, 'message' => $message]
+			));
 		}
 
 		return $result;

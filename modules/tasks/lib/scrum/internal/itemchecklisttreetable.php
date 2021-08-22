@@ -4,6 +4,22 @@ namespace Bitrix\Tasks\Scrum\Internal;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Fields;
 
+/**
+ * Class ItemChecklistTreeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ItemChecklistTree_Query query()
+ * @method static EO_ItemChecklistTree_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemChecklistTree_Result getById($id)
+ * @method static EO_ItemChecklistTree_Result getList(array $parameters = array())
+ * @method static EO_ItemChecklistTree_Entity getEntity()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklistTree createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklistTree_Collection createCollection()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklistTree wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklistTree_Collection wakeUpCollection($rows)
+ */
 class ItemChecklistTreeTable extends DataManager
 {
 	public static function getTableName()

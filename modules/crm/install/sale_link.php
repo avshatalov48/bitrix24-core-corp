@@ -377,6 +377,7 @@ while ($arUF = $dbRes->Fetch())
 	$arUFNames[] = $arUF['FIELD_NAME'];
 }
 unset($dbRes, $arUF, $i);
+$ufIndexableFields = [];
 $arOrderUserFields = array();
 if (!in_array('UF_DEAL_ID', $arUFNames))
 {
@@ -385,6 +386,7 @@ if (!in_array('UF_DEAL_ID', $arUFNames))
 		'USER_TYPE_ID' => 'integer',
 		'XML_ID' => 'uf_deal_id'
 	);
+	$ufIndexableFields['DEAL_ID'] = 'UF_DEAL_ID';
 }
 if (!in_array('UF_QUOTE_ID', $arUFNames))
 {
@@ -401,6 +403,7 @@ if (!in_array('UF_COMPANY_ID', $arUFNames))
 		'USER_TYPE_ID' => 'integer',
 		'XML_ID' => 'uf_company_id'
 	);
+	$ufIndexableFields['COMPANY_ID'] = 'UF_COMPANY_ID';
 }
 if (!in_array('UF_CONTACT_ID', $arUFNames))
 {
@@ -409,6 +412,7 @@ if (!in_array('UF_CONTACT_ID', $arUFNames))
 		'USER_TYPE_ID' => 'integer',
 		'XML_ID' => 'uf_contact_id'
 	);
+	$ufIndexableFields['CONTACT_ID'] = 'UF_CONTACT_ID';
 }
 if (!in_array('UF_MYCOMPANY_ID', $arUFNames))
 {
@@ -449,6 +453,18 @@ foreach ($arOrderUserFields as $field)
 
 if ($bError)
 	return;
+
+foreach ($ufIndexableFields as $ixNameSuffix => $ufIndexableField)
+{
+	if ($DB->GetIndexName('b_uts_crm_invoice', [$ufIndexableField], true) === '')
+	{
+		// IX_UTS_INVOICE_DEAL_ID
+		// IX_UTS_INVOICE_CONTACT_ID
+		// IX_UTS_INVOICE_COMPANY_ID
+		$inName = 'IX_UTS_INVOICE_' . $ixNameSuffix;
+		$DB->Query("ALTER TABLE b_uts_crm_invoice ADD INDEX {$inName} ({$ufIndexableField})");
+	}
+}
 
 //Order Prop Group
 $arPropGroup = array();

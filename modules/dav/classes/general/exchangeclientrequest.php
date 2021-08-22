@@ -261,6 +261,10 @@ class CDavExchangeClientRequest
 	{
 		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
 		$this->body .= "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\r\n";
+		if (method_exists($this->exchangeClient, "GetItemHeader"))
+		{
+			$this->body .= $this->exchangeClient->GetItemHeader($arFields);
+		}
 		$this->body .= " <soap:Body>\r\n";
 		$this->body .= "  <CreateItem SendMeetingInvitations=\"SendOnlyToAll\" xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\r\n";
 

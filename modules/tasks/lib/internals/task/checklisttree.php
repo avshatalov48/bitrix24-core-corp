@@ -7,6 +7,19 @@ use Bitrix\Main\Entity\DataManager;
  * Class CheckListTree
  *
  * @package Bitrix\Tasks\Internals\Task
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CheckListTree_Query query()
+ * @method static EO_CheckListTree_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CheckListTree_Result getById($id)
+ * @method static EO_CheckListTree_Result getList(array $parameters = array())
+ * @method static EO_CheckListTree_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckListTree createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckListTree_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckListTree wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckListTree_Collection wakeUpCollection($rows)
  */
 class CheckListTreeTable extends DataManager
 {

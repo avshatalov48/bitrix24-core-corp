@@ -22,7 +22,6 @@ Extension::load([
 
 $isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
 $showViewMode = $arParams['SHOW_VIEW_MODE'] == 'Y';
-$isSprintMode = $arParams['SPRINT_SELECTED'] == 'Y';
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
@@ -37,9 +36,6 @@ if ($isBitrix24Template)
 <div class="task-interface-toolbar--item --visible">
     <div class="tasks-view-switcher">
         <?php
-			// temporary we show agile parts only by option
-			$optionName = 'agile_enabled_group_'.$arParams['GROUP_ID'];
-			$showSprint = Option::get('tasks', $optionName, 'N') === 'Y';
 			$template = ($arParams['GROUP_ID'] > 0 ? 'PATH_TO_GROUP_TASKS' : 'PATH_TO_USER_TASKS');
 			$link = CComponentEngine::makePathFromTemplate($template, [
 				'user_id' => $arParams['OWNER_ID'],
@@ -48,11 +44,8 @@ if ($isBitrix24Template)
 
 			foreach ($arResult['VIEW_LIST'] as $viewKey => $view)
 			{
-				$hideSprint = ($viewKey === 'VIEW_MODE_SPRINT' && !$showSprint);
-				$isOfKanbanType = in_array($viewKey, ['VIEW_MODE_KANBAN', 'VIEW_MODE_SPRINT']);
-
-				// kanban and sprint only for group
-				if ($hideSprint || (int)$arParams['GROUP_ID'] <= 0 && $isOfKanbanType)
+				// kanban only for group
+				if ((int) $arParams['GROUP_ID'] <= 0 && $viewKey == 'VIEW_MODE_KANBAN')
 				{
 					continue;
 				}
@@ -123,7 +116,7 @@ if ($isBitrix24Template)
 		<?php
 	}
 
-	if (\Bitrix\Main\Loader::includeModule('intranet') && !$isSprintMode)
+	if (\Bitrix\Main\Loader::includeModule('intranet'))
 	{
 		$context = $arParams['GROUP_ID']
 			? ['GROUP_ID' => $arParams['GROUP_ID']]
@@ -179,7 +172,7 @@ if ($isBitrix24Template)
 		]);
 	?>
 
-	<?php if ((\Bitrix\Tasks\Internals\Counter\Queue\Queue::getInstance())->isInQueue((int) $arParams['USER_ID'])): ?>
+	<?php if (\Bitrix\Tasks\Internals\Counter\Queue\Queue::isInQueue((int) $arParams['USER_ID'])): ?>
 		<?php \CJSCore::Init(array('update_stepper')); ?>
 		<div class="main-stepper-block">
 			<div class="main-stepper main-stepper-show" >

@@ -3,7 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load(["ui.forms", "ui.buttons", "ui.buttons.icons", "ui.alerts",
-	"ui.selector", "ui.hint", 'ui.entity-selector']);
+	"ui.selector", "ui.hint", 'ui.entity-selector', 'ui.feedback.form']);
 \CJSCore::Init(['phone_number']);
 
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background invite-body');
@@ -471,7 +471,8 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			isExtranetInstalled: '<?=$arResult["IS_EXTRANET_INSTALLED"] ? "Y" : "N"?>',
 			regenerateUrlBase: '<?=$arResult["REGISTER_URL_BASE"]?>',
 			isInvitationBySmsAvailable: '<?=$arResult["IS_SMS_INVITATION_AVAILABLE"] ? "Y" : "N"?>',
-			isCreatorEmailConfirmed: '<?=$arResult["IS_CREATOR_EMAIL_CONFIRMED"] ? "Y" : "N"?>'
+			isCreatorEmailConfirmed: '<?=$arResult["IS_CREATOR_EMAIL_CONFIRMED"] ? "Y" : "N"?>',
+			firstInvitationBlock: '<?=$arResult['FIRST_INVITATION_BLOCK']?>'
 		});
 
 		var imageMail = document.getElementById("invite-wrap-decal");

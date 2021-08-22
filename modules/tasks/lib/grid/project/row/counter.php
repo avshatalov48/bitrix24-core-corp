@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Project\Row;
 
 use \Bitrix\Main\Grid;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\ProjectCounter;
 
@@ -31,6 +32,7 @@ class Counter
 	{
 		$userId = (int)$this->parameters['USER_ID'];
 		$groupId = (int)$this->rowData['ID'];
+		$groupUrl = $this->rowData['PATH'];
 
 		$counter = [
 			'COLOR' => CounterStyle::STYLE_GRAY,
@@ -51,13 +53,22 @@ class Counter
 			CounterStyle::STYLE_RED => Grid\Counter\Color::DANGER,
 		];
 
+		$sliderOptions = Json::encode([
+			'contentClassName' => 'bitrix24-group-slider-content',
+			'loader' => 'intranet:tasklist',
+			'cacheable' => false,
+			'customLeftBoundary' => 0,
+			'newWindowLabel' => true,
+			'copyLinkLabel' => true,
+		]);
+
 		return [
 			'ACTIVITY_DATE' => [
 				'type' => Grid\Counter\Type::LEFT_ALIGNED,
 				'color' => $colorMap[$counter['COLOR']],
 				'value' => $counter['VALUE'],
 				'events' => [
-					'click' => 'BX.Tasks.Projects.ActionsController.onCounterClick',
+					'click' => "BX.SidePanel.Instance.open.bind(BX.SidePanel.Instance, '{$groupUrl}', {$sliderOptions})",
 				],
 				'class' => 'tasks-projects-counter',
 			],

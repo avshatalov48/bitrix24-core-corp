@@ -60,8 +60,8 @@ final class Database
 		}
 
 		$result = $this->createQuery($languageId)
-			->addFilter('EXTERNAL_ID', $externalId)
-			->addFilter('SOURCE_CODE', $sourceCode)
+			->addFilter('=EXTERNAL_ID', $externalId)
+			->addFilter('=SOURCE_CODE', $sourceCode)
 			->fetchObject();
 
 		if($result)
@@ -364,7 +364,7 @@ final class Database
 	private function createQuery(string $languageId)
 	{
 		return $this->locationTable::query()
-			->addFilter('NAME.LANGUAGE_ID', $languageId)
+			->addFilter('=NAME.LANGUAGE_ID', $languageId)
 			->addSelect('*')
 			->addSelect('NAME')
 			->addSelect('FIELDS');

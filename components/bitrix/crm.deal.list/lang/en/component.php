@@ -77,6 +77,7 @@ $MESS["CRM_PRESET_CHANGE_YESTERDAY"] = "Modified Yesterday";
 $MESS["CRM_PRESET_IN_WORK"] = "Deals in progress";
 $MESS["CRM_PRESET_MY"] = "My Deals";
 $MESS["CRM_PRESET_NEW"] = "New Deals";
+$MESS["CRM_PRESET_PAYED"] = "Paid deals";
 $MESS["CRM_PRESET_WON"] = "Won deals";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Some of the deals cannot be moved to the selected stage. Please complete the required fields and try again.";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Cannot move deals";

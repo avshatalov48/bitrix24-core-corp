@@ -23,7 +23,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AttachedObject_Query query()
+ * @method static EO_AttachedObject_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AttachedObject_Result getById($id)
+ * @method static EO_AttachedObject_Result getList(array $parameters = array())
+ * @method static EO_AttachedObject_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_AttachedObject createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_AttachedObject_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_AttachedObject wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_AttachedObject_Collection wakeUpCollection($rows)
+ */
 
 final class AttachedObjectTable extends DataManager
 {

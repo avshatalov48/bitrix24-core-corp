@@ -3,7 +3,6 @@ import {Monitor} from './monitor';
 import {Logger} from './lib/logger';
 import {Debug} from './lib/debug';
 import {UI} from 'ui.notification';
-import {MonitorModel} from './model/monitor';
 
 class Sender
 {
@@ -37,15 +36,6 @@ class Sender
 					this.attempt = 0;
 
 					this.afterSuccessSend();
-
-					if (result.data.state === Monitor.getStateStop())
-					{
-						Logger.warn('Stopped after server response');
-						Debug.log('Stopped after server response');
-
-						Monitor.setState(result.data.state);
-						Monitor.stop();
-					}
 
 					if (result.data.enabled === Monitor.getStatusDisabled())
 					{
@@ -124,46 +114,29 @@ class Sender
 
 	afterSuccessSend()
 	{
-		let currentDateLog = new Date(MonitorModel.prototype.getDateLog());
-		let reportDateLog = new Date(this.store.state.monitor.reportState.dateLog);
-
 		Logger.warn('History sent');
 		Debug.space();
 		Debug.log('History sent');
 
-		Monitor.isHistorySent = true;
+		this.store.dispatch(
+			'monitor/setLastSuccessfulSendDate',
+			new Date(this.store.state.monitor.reportState.dateLog)
+		)
+			.then(() => {
+				this.store.dispatch('monitor/clearSentHistory')
+					.then(() => {
+						this.store.dispatch('monitor/refreshDateLog');
+						this.store.dispatch('monitor/clearSentQueue');
 
-		BX.SidePanel.Instance.close();
+						BX.SidePanel.Instance.close();
 
-		if (currentDateLog > reportDateLog)
-		{
-			Logger.warn('The next day came. Clearing the history and changing the date of the report.');
-			Debug.log('The next day came. Clearing the history and changing the date of the report.');
-
-			this.store.dispatch('monitor/clearStorage')
-				.then(() => {
-					this.store.dispatch('monitor/setDateLog', MonitorModel.prototype.getDateLog());
-
-					UI.Notification.Center.notify({
-						content: Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_STORAGE_CLEARED'),
-						autoHideDelay: 5000,
-						position: 'bottom-right',
+						UI.Notification.Center.notify({
+							content: Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SENT'),
+							autoHideDelay: 5000,
+						});
 					});
-				});
-		}
-		else
-		{
-			Logger.warn('History has been sent, report date has not changed.');
-			Debug.log('History has been sent, report date has not changed.');
-
-			this.store.dispatch('monitor/clearSentQueue');
-
-			UI.Notification.Center.notify({
-				content: Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SENT'),
-				autoHideDelay: 5000,
-				position: 'bottom-right',
-			});
-		}
+			}
+		);
 	}
 }
 

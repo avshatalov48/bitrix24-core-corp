@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -17,6 +17,18 @@ use Bitrix\Tasks\Internals;
 
 final class Counters extends \Bitrix\Tasks\Dispatcher\PublicAction
 {
+	/**
+	 * @param $userId
+	 * @param int $groupId
+	 * @param string $type
+	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 *
+	 * Access rights willbe check into the Counter
+	 */
 	public function get($userId, $groupId = 0, $type = 'view_all')
 	{
 		$result = new Result();

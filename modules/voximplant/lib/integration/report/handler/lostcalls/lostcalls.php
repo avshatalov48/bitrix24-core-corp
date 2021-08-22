@@ -24,6 +24,11 @@ use CTimeZone;
  */
 class LostCalls extends Base implements IReportMultipleData
 {
+	protected $reportFilterKeysForSlider = [
+		'PHONE_NUMBER',
+		'PORTAL_USER_ID'
+	];
+
 	/**
 	 * Prepares report data.
 	 *

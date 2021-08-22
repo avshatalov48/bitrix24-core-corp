@@ -44,7 +44,8 @@ class Export extends Main\Controller\Export
 			$this->addError(new Error('Entity type is not specified.'));
 		}
 		$entityTypeId = \CCrmOwnerType::ResolveID($this->entityType);
-		if($entityTypeId === \CCrmOwnerType::Undefined && $this->entityType !== 'PRODUCT')
+		$allowedTypes = ['PRODUCT', \CCrmOwnerType::CheckCorrectionName];
+		if($entityTypeId === \CCrmOwnerType::Undefined && !in_array($this->entityType, $allowedTypes))
 		{
 			$this->addError(new Error('Undefined entity type is specified.'));
 		}

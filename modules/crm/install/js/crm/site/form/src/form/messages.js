@@ -28,7 +28,7 @@ class Storage
 			return mess[lang][code];
 		}
 
-		return '';
+		return mess[code] || '';
 	}
 }
 

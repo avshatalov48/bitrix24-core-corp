@@ -324,3 +324,33 @@
 .tasks-list-cursor {
     cursor: pointer;
 }
+
+.tasks-list-project-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: -5px;
+    margin-bottom: -3px;
+}
+
+.tasks-list-project-add {
+    background: url("images/add-icon.svg") center center no-repeat;
+    display: inline-flex;
+    width: 31px;
+    height: 21px;
+    border-radius: 14px;
+    margin-right: 5px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    border: 1px rgba(82, 92, 105, .37) solid;
+    cursor: pointer;
+    transition: 200ms all ease;
+    opacity: 0;
+}
+
+.main-grid-row:hover .tasks-list-project-add {
+    opacity: .7;
+}
+
+.main-grid-row:hover .tasks-list-project-add:hover {
+    opacity: 1;
+}

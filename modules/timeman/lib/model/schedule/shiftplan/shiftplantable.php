@@ -8,6 +8,22 @@ use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ShiftPlanTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ShiftPlan_Query query()
+ * @method static EO_ShiftPlan_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ShiftPlan_Result getById($id)
+ * @method static EO_ShiftPlan_Result getList(array $parameters = array())
+ * @method static EO_ShiftPlan_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection wakeUpCollection($rows)
+ */
 class ShiftPlanTable extends Main\ORM\Data\DataManager
 {
 	const DATE_FORMAT = 'Y-m-d';

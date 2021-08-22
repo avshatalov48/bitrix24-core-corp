@@ -671,7 +671,9 @@ else
 		public static function DataSync($paramEntityType = null, $paramEntityId = 0)
 		{
 			if (DAV_CALDAV_DEBUG)
+			{
 				CDav::WriteToLog("Starting CalDAV sync", "SYNCC");
+			}
 
 			self::InitUserEntity();
 			$siteId = CDav::GetIntranetSite();
@@ -680,7 +682,7 @@ else
 			$index = 0;
 			$bShouldClearCache = false;
 
-			$paramEntityId = intval($paramEntityId);
+			$paramEntityId = (int)$paramEntityId;
 			$arConnectionsFilter = array("ACCOUNT_TYPE" => 'caldav');
 			if (!is_null($paramEntityType) && ($paramEntityId > 0))
 			{
@@ -689,11 +691,11 @@ else
 			}
 
 			$dbConnections = CDavConnection::GetList(
-				array("SYNCHRONIZED" => "ASC"),
+				["SYNCHRONIZED" => "ASC"],
 				$arConnectionsFilter,
 				false,
 				false,
-				array("ID", "ENTITY_TYPE", "ENTITY_ID", "SERVER_SCHEME", "SERVER_HOST", "SERVER_PORT", "SERVER_USERNAME", "SERVER_PASSWORD", "SERVER_PATH", "SYNCHRONIZED")
+				["ID", "ENTITY_TYPE", "ENTITY_ID", "SERVER_SCHEME", "SERVER_HOST", "SERVER_PORT", "SERVER_USERNAME", "SERVER_PASSWORD", "SERVER_PATH", "SYNCHRONIZED"]
 			);
 			while ($arConnection = $dbConnections->Fetch())
 			{

@@ -6,6 +6,22 @@ use Bitrix\Main;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class AddressFieldTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AddressField_Query query()
+ * @method static EO_AddressField_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AddressField_Result getById($id)
+ * @method static EO_AddressField_Result getList(array $parameters = array())
+ * @method static EO_AddressField_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_AddressField createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_AddressField_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_AddressField wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_AddressField_Collection wakeUpCollection($rows)
+ */
 class AddressFieldTable extends Main\ORM\Data\DataManager
 {
 	/**

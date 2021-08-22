@@ -20,7 +20,6 @@ export class Grid
 
 		this.sort = options.sort;
 		this.actionsPanel = options.actionsPanel;
-		this.eventsToEmit = options.eventsToEmit || {};
 
 		this.items = new Map();
 		this.fillItems(options.items);
@@ -95,10 +94,7 @@ export class Grid
 		this.getRealtime().addRow(options);
 		this.colorPinnedRows();
 
-		if (this.eventsToEmit.onProjectGridRowAdd)
-		{
-			EventEmitter.emit('Tasks.Projects.Grid:RowAdd', {id});
-		}
+		EventEmitter.emit('Tasks.Projects.Grid:RowAdd', {id});
 	}
 
 	updateRow(id, data, params)
@@ -114,6 +110,8 @@ export class Grid
 		this.highlightRow(id, (params.highlightParams || {})).then(() => this.colorPinnedRows(), () => {});
 
 		this.grid.bindOnRowEvents();
+
+		EventEmitter.emit('Tasks.Projects.Grid:RowUpdate', {id});
 	}
 
 	removeRow(id)
@@ -124,6 +122,8 @@ export class Grid
 		}
 
 		this.grid.removeRow(id);
+
+		EventEmitter.emit('Tasks.Projects.Grid:RowRemove', {id});
 	}
 
 	moveRow(rowId, params): void

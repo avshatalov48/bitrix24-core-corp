@@ -120,7 +120,6 @@ const DeliveryVuex = {
 				}
 
 				return {
-					isCalculated: this.$root.$app.options.templateMode === 'view',
 					personTypeId: this.$root.$app.options.personTypeId,
 					basket: this.order.basket,
 					currencySymbol: this.$root.$app.options.currencySymbol,
@@ -134,7 +133,6 @@ const DeliveryVuex = {
 					deliveryServiceId,
 					responsibleId: this.$root.$app.options.assignedById,
 					deliveryPrice,
-					editable: this.editable,
 				};
 			},
 			isViewTemplateMode()

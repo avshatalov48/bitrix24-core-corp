@@ -18,7 +18,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DeletedLog_Query query()
+ * @method static EO_DeletedLog_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DeletedLog_Result getById($id)
+ * @method static EO_DeletedLog_Result getList(array $parameters = array())
+ * @method static EO_DeletedLog_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLog createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLog_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLog wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_DeletedLog_Collection wakeUpCollection($rows)
+ */
 
 final class DeletedLogTable extends DataManager
 {

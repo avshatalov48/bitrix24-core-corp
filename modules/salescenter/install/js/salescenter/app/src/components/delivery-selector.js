@@ -13,7 +13,7 @@ export default {
 	data()
 	{
 		return {
-			availableServiceIds: [],
+			availableServices: [],
 		};
 	},
 	methods: {
@@ -48,7 +48,7 @@ export default {
 
 			if (prevFrom !== newFrom)
 			{
-				this.refreshAvailableServiceIds();
+				this.refreshAvailableServices();
 			}
 
 			this.$emit('change', payload);
@@ -96,7 +96,7 @@ export default {
 		{
 			this.$emit('delivery-settings-changed');
 		},
-		refreshAvailableServiceIds()
+		refreshAvailableServices()
 		{
 			ajax.runAction(
 				'salescenter.order.getCompatibleDeliverySystems',
@@ -116,10 +116,9 @@ export default {
 				}
 			).then((result) => {
 				let data = BX.prop.getObject(result, "data", {});
-
-				this.availableServiceIds = (data.availableServiceIds) ? data.availableServiceIds : [];
+				this.availableServices = data.availableServices ? data.availableServices : {};
 			}).catch((result) => {
-				this.availableServiceIds = [];
+				this.availableServices = {};
 			});
 		}
 	},
@@ -127,7 +126,7 @@ export default {
 	{
 		this.$store.dispatch('orderCreation/setPersonTypeId', this.config.personTypeId);
 
-		this.refreshAvailableServiceIds();
+		this.refreshAvailableServices();
 	},
 
 	computed: {
@@ -194,10 +193,8 @@ export default {
 	},
 	template: `
 		<delivery-selector
-			:editable="this.config.editable"
-			:available-service-ids="availableServiceIds"
-			:excluded-service-ids="excludedServiceIds"
-			:init-is-calculated="config.isCalculated"				
+			:available-services="availableServices"
+			:excluded-service-ids="excludedServiceIds"				
 			:init-entered-delivery-price="config.deliveryPrice"
 			:init-delivery-service-id="config.deliveryServiceId"
 			:init-related-services-values="config.relatedServicesValues"

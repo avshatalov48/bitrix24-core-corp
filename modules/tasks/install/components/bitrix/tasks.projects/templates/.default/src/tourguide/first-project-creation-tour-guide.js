@@ -7,9 +7,6 @@ export class FirstProjectCreationTourGuide
 {
 	constructor(options)
 	{
-		options.eventsToEmit = {
-			onProjectGridRowAdd: true,
-		};
 		this.grid = new Grid(options);
 		this.signedParameters = options.signedParameters;
 		this.popupData = options.tours.firstProjectCreation.popupData;

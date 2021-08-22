@@ -1,4 +1,5 @@
 <?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -6,20 +7,22 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(['ui.button', 'ui.vue']);
+\Bitrix\Main\UI\Extension::load(['ui.button', 'ui.vue', 'ui.feedback.form']);
 
-$frame = $this->createFrame()->begin('');
+$frame = $this->createFrame()->begin();
 ?>
 
-<span data-id="licenseWidgetWrapper"></span>
+<span data-id="licenseWidgetWrapper">
+	<button class="<?=$arResult['buttonClassName']?>">
+		<?=$arResult['buttonName']?>
+	</button>
+</span>
 
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 
 	BX.ready(function () {
 		BX.Intranet.LicenseWidget = new BX.Intranet.LicenseWidget({
-			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
-			componentName: '<?=$this->getComponent()->getName() ?>',
 			wrapper: document.querySelector("[data-id='licenseWidgetWrapper']"),
 			isFreeLicense: '<?=$arResult['isFreeLicense'] ? 'Y' : 'N'?>',
 			isDemoLicense: '<?=$arResult['isDemoLicense'] ? 'Y' : 'N'?>',
@@ -31,4 +34,10 @@ $frame = $this->createFrame()->begin('');
 	});
 </script>
 
-<?$frame->end(); ?>
+<?php $frame->beginStub(); ?>
+
+<button class="<?=$arResult['buttonClassName']?>">
+	<?=$arResult['buttonName']?>
+</button>
+
+<?php $frame->end(); ?>

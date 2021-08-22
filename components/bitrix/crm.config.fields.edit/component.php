@@ -162,8 +162,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			break;
 
 			case 'enumeration':
+				$isNew = $arResult['NEW_FIELD'];
 				$arField['SETTINGS']['DISPLAY'] = $_POST['E_DISPLAY'];
 				$arField['SETTINGS']['LIST_HEIGHT'] = isset($_POST['E_LIST_HEIGHT']) ? $_POST['E_LIST_HEIGHT'] : 5;
+				if ($arField['SETTINGS']['LIST_HEIGHT'] === '')
+				{
+					$arField['SETTINGS']['LIST_HEIGHT'] = 5;
+				}
 				$arField['SETTINGS']['CAPTION_NO_VALUE'] = isset($_POST['E_CAPTION_NO_VALUE']) ? trim($_POST['E_CAPTION_NO_VALUE']) : '';
 				//create values 'map'
 				$max_sort = 0;
@@ -171,7 +176,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 				if(isset($_POST['LIST']) && is_array($_POST['LIST']))
 				{
-					$isNew = $arResult['NEW_FIELD'];
 					$enumFieldMap = array();
 					if(!$isNew)
 					{

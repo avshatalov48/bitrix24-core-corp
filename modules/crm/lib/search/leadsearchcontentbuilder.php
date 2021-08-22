@@ -248,4 +248,11 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 		";
 		return $connection->query($sql);
 	}
+
+	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
+	{
+		return \Bitrix\Crm\Entity\Index\LeadTable::delete([
+			'LEAD_ID' => $entityId,
+		]);
+	}
 }

@@ -1,5 +1,6 @@
-import {Type} from 'main.core';
+import {Dom, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
+import {Loader} from 'main.loader';
 
 import {Item} from '../item/item';
 import {GroupActionsButton} from './group.actions.button';
@@ -16,7 +17,9 @@ type EntityParams = {
 	id: number,
 	views?: Views,
 	numberTasks?: number,
-	isExactSearchApplied: 'Y' | 'N'
+	isExactSearchApplied: 'Y' | 'N',
+	storyPoints?: string,
+	pageNumberItems: number
 };
 
 export class Entity extends EventEmitter
@@ -28,8 +31,6 @@ export class Entity extends EventEmitter
 		this.setEventNamespace('BX.Tasks.Scrum.Entity');
 
 		this.setEntityParams(params);
-
-		this.storyPoints = new StoryPoints();
 
 		this.items = new Map();
 
@@ -48,8 +49,11 @@ export class Entity extends EventEmitter
 		this.setId(params.id);
 		this.setViews(params.views);
 		this.setNumberTasks(params.numberTasks);
+		this.setStoryPoints(params.storyPoints);
 
 		this.exactSearchApplied = (params.isExactSearchApplied === 'Y');
+
+		this.pageNumberItems = parseInt(params.pageNumberItems, 10);
 	}
 
 	addGroupActionsButton(groupActionsButton: GroupActionsButton)
@@ -129,6 +133,16 @@ export class Entity extends EventEmitter
 		return this.items;
 	}
 
+	getPageNumberItems(): number
+	{
+		return this.pageNumberItems;
+	}
+
+	incrementPageNumberItems()
+	{
+		this.pageNumberItems++;
+	}
+
 	recalculateItemsSort()
 	{
 		const listItemsNode = this.getListItemsNode();
@@ -160,11 +174,6 @@ export class Entity extends EventEmitter
 		[...this.items.values()].map((item) => {
 			this.setItemMoveActivity(item);
 		});
-
-		if (!newItem.isSubTask())
-		{
-			this.addNumberTasks(1);
-		}
 	}
 
 	setItemMoveActivity(item: Item)
@@ -181,11 +190,6 @@ export class Entity extends EventEmitter
 			[...this.items.values()].map((item) => {
 				this.setItemMoveActivity(item);
 			});
-
-			if (!item.isSubTask())
-			{
-				this.subtractNumberTasks(1);
-			}
 		}
 	}
 
@@ -202,22 +206,6 @@ export class Entity extends EventEmitter
 	getNumberTasks(): number
 	{
 		return (this.numberTasks ? this.numberTasks : this.getItems().size);
-	}
-
-	addNumberTasks(value: number)
-	{
-		if (!Type.isUndefined(value) && !isNaN(parseInt(value, 10)))
-		{
-			this.numberTasks = (this.numberTasks + parseInt(value, 10));
-		}
-	}
-
-	subtractNumberTasks(value: number)
-	{
-		if (!Type.isUndefined(value) && !isNaN(parseInt(value, 10)))
-		{
-			this.numberTasks = (this.numberTasks - parseInt(value, 10));
-		}
 	}
 
 	hasInput(): boolean
@@ -267,7 +255,7 @@ export class Entity extends EventEmitter
 			});
 		}
 
-		this.updateStoryPoints();
+		this.updateStoryPointsNode();
 	}
 
 	subscribeToItem(item: Item)
@@ -294,7 +282,6 @@ export class Entity extends EventEmitter
 					parentItem.updateSubTasksPoints(item.getSourceId(), item.getStoryPoints());
 				}
 			}
-			this.updateStoryPoints();
 		});
 
 		item.subscribe('showTask', (baseEvent) => this.emit('showTask', baseEvent.getTarget()));
@@ -318,6 +305,10 @@ export class Entity extends EventEmitter
 				item: baseEvent.getTarget(),
 				attachedIds: baseEvent.getData()
 			})
+		});
+
+		item.subscribe('dod', (baseEvent) => {
+			this.emit('showDod', baseEvent.getTarget())
 		});
 
 		item.subscribe('showTagSearcher', (baseEvent) => {
@@ -376,21 +367,6 @@ export class Entity extends EventEmitter
 		});
 	}
 
-	updateStoryPoints()
-	{
-		this.storyPoints.clearPoints();
-		[...this.getItems().values()].map((item: Item) => {
-			if (!item.isSubTask())
-			{
-				this.storyPoints.addPoints(item.getStoryPoints().getPoints());
-			}
-		});
-	}
-
-	addTotalStoryPoints(item: Item) {}
-
-	subtractTotalStoryPoints(item: Item) {}
-
 	getItemByItemId(itemId: number|string): Item|undefined
 	{
 		return this.items.get((Type.isInteger(itemId) ? parseInt(itemId, 10) : itemId));
@@ -413,6 +389,15 @@ export class Entity extends EventEmitter
 		});
 
 		return items;
+	}
+
+	setStoryPoints(storyPoints)
+	{
+		this.storyPoints = new StoryPoints();
+
+		this.storyPoints.addPoints(storyPoints);
+
+		this.updateStoryPointsNode();
 	}
 
 	getStoryPoints(): StoryPoints
@@ -494,4 +479,62 @@ export class Entity extends EventEmitter
 	{
 		this.groupModeItems.delete(item.getItemId());
 	}
+
+	bindItemsLoader(loader: HTMLElement)
+	{
+		this.setActiveLoadItems(false);
+
+		if (typeof IntersectionObserver === `undefined`)
+		{
+			return;
+		}
+
+		const observer = new IntersectionObserver((entries) =>
+			{
+				if(entries[0].isIntersecting === true)
+				{
+					if (!this.isActiveLoadItems())
+					{
+						this.emit('loadItems');
+					}
+				}
+			},
+			{
+				threshold: [0]
+			}
+		);
+
+		observer.observe(loader);
+	}
+
+	setActiveLoadItems(value: boolean)
+	{
+		this.activeLoadItems = Boolean(value);
+	}
+
+	isActiveLoadItems(): boolean
+	{
+		return this.activeLoadItems;
+	}
+
+	showItemsLoader()
+	{
+		const listPosition = Dom.getPosition(this.itemsLoaderNode);
+
+		const loader = new Loader({
+			target: this.itemsLoaderNode,
+			size: 60,
+			mode: 'inline',
+			color: 'rgba(82, 92, 105, 0.9)',
+			offset: {
+				left: `${(listPosition.width / 2 - 30)}px`
+			}
+		});
+
+		loader.show();
+
+		return loader;
+	}
+
+	updateStoryPointsNode() {}
 }

@@ -77,6 +77,7 @@ $MESS["CRM_PRESET_CHANGE_YESTERDAY"] = "Gestern geändert";
 $MESS["CRM_PRESET_IN_WORK"] = "Aufträge in Arbeit";
 $MESS["CRM_PRESET_MY"] = "Meine Aufträge";
 $MESS["CRM_PRESET_NEW"] = "Neue Aufträge";
+$MESS["CRM_PRESET_PAYED"] = "Bezahlte Aufträge";
 $MESS["CRM_PRESET_WON"] = "Aufträge bekommen";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Einige Aufträge können nicht in die ausgewählte Phase verschoben werden. Bitte füllen Sie die erforderlichen Felder aus, dann versuchen Sie erneut.";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Aufträge können nicht verschoben werden";

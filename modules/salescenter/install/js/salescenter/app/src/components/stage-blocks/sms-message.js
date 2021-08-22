@@ -116,7 +116,7 @@ const SmsMessage = {
 
 					result.push({
 						text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED'),
-						fixUrl: sender.connectUrl,
+						fixer: this.getFixer(sender.connectUrl),
 						fixText: Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'),
 					});
 
@@ -144,7 +144,7 @@ const SmsMessage = {
 					{
 						result.push({
 							text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_' + this.currentSender.code.toUpperCase() + '_NOT_CONNECTED'),
-							fixUrl: this.currentSender.connectUrl,
+							fixer: this.getFixer(this.currentSender.connectUrl),
 							fixText: Loc.getMessage('SALESCENTER_PRODUCT_DISCOUNT_EDIT_PAGE_URL_TITLE'),
 						});
 
@@ -163,7 +163,7 @@ const SmsMessage = {
 
 			if (this.pushedToUseBitrix24Notifications === 'N' && bitrix24ConnectUrlError)
 			{
-				Manager.openSlider(bitrix24ConnectUrlError).then(() => this.handleErrorFix());
+				this.getFixer(bitrix24ConnectUrlError)().then(() => this.handleErrorFix());
 				BX.userOptions.save('salescenter', 'payment_sender_options', 'pushed_to_use_bitrix24_notifications', 'Y');
 				this.pushedToUseBitrix24Notifications = 'Y';
 			}
@@ -175,6 +175,28 @@ const SmsMessage = {
 		this.initialize(this.initCurrentSenderCode, this.initSenders, this.initPushedToUseBitrix24Notifications);
 	},
 	methods: {
+		getFixer(fixUrl)
+		{
+			return () => {
+				if (typeof fixUrl === 'string')
+				{
+					return Manager.openSlider(fixUrl);
+				}
+
+				if (typeof fixUrl === 'object' && fixUrl !== null)
+				{
+					if (fixUrl.type === 'ui_helper')
+					{
+						return BX.loadExt('ui.info-helper').then(() =>
+						{
+							BX.UI.InfoHelper.show(fixUrl.value);
+						});
+					}
+				}
+
+				return Promise.resolve();
+			};
+		},
 		onItemHint(e)
 		{
 			BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {width: 1200} );
@@ -206,6 +228,10 @@ const SmsMessage = {
 					}
 				});
 		},
+		openBitrix24NotificationsHelp(event)
+		{
+			BX.Salescenter.Manager.openBitrix24NotificationsHelp(event);
+		},
 	},
 	template: `
 		<stage-block-item			
@@ -232,11 +258,21 @@ const SmsMessage = {
 					<div class="salescenter-app-payment-by-sms-item-container-sms">
 						<sms-user-avatar-block :manager="manager"/>
 						<div class="salescenter-app-payment-by-sms-item-container-sms-content">
-							<sms-message-editor-block :editor="editor"/>
+							<div v-if="currentSenderCode === 'bitrix24'" class="salescenter-app-payment-by-sms-item-container-sms-content">
+								<div class="salescenter-app-payment-by-sms-item-container-sms-content-message">
+									<div contenteditable="false" class="salescenter-app-payment-by-sms-item-container-sms-content-message-text">
+										${Loc.getMessage('SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT')}
+										<a @click.stop.prevent="openBitrix24NotificationsHelp(event)" href="#">
+											${Loc.getMessage('SALESCENTER_MORE_DETAILS')}
+										</a>
+									</div>
+								</div>
+							</div>
+							<sms-message-editor-block v-else :editor="editor"/>
 							<template v-if="currentSenderCode === 'bitrix24'">
 								<div class="salescenter-app-payment-by-sms-item-container-sms-content-info">
 									${Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24')}
-									<span @click="BX.Salescenter.Manager.openBitrix24NotificationsHelp(event)">
+									<span @click="openBitrix24NotificationsHelp(event)">
 										${Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')}
 									</span>
 								</div>

@@ -38,6 +38,19 @@ final class Deal extends Factory
 		return DealTable::class;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	public function getFieldsMap(): array
+	{
+		return [
+			Item::FIELD_NAME_CREATED_TIME => 'DATE_CREATE',
+			Item::FIELD_NAME_UPDATED_TIME => 'DATE_MODIFY',
+			Item::FIELD_NAME_CREATED_BY => 'CREATED_BY_ID',
+			Item::FIELD_NAME_UPDATED_BY => 'MODIFY_BY_ID',
+		];
+	}
+
 	public function isNewRoutingForDetailEnabled(): bool
 	{
 		return false;
@@ -51,6 +64,11 @@ final class Deal extends Factory
 	public function isNewRoutingForAutomationEnabled(): bool
 	{
 		return false;
+	}
+
+	public function isRecyclebinEnabled(): bool
+	{
+		return true;
 	}
 
 	public function getEntityTypeId(): int

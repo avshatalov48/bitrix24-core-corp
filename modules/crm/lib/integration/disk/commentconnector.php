@@ -17,6 +17,11 @@ class CommentConnector extends Uf\StubConnector
 {
 	public function getDataToShow()
 	{
+		return $this->getDataToShowByUser($this->getUser()->getId());
+	}
+
+	public function getDataToShowByUser(int $userId)
+	{
 		$timelineBinding = TimelineBindingTable::getList(
 			array(
 				"filter" => array('OWNER_ID' => $this->entityId),

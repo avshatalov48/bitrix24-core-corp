@@ -5,6 +5,8 @@ import {Code} from './utils/code';
 import {Time} from './utils/time';
 import {Logger} from '../lib/logger';
 import {Debug} from '../lib/debug';
+import {DateFormatter} from 'timeman.dateformatter';
+import {Notification} from "../lib/notification";
 
 export class MonitorModel extends VuexBuilderModel
 {
@@ -31,9 +33,13 @@ export class MonitorModel extends VuexBuilderModel
 				desktopCode: Code.getDesktopCode(),
 				otherTime: this.getVariable('config.otherTime', 1800000),
 				shortAbsenceTime: this.getVariable('config.shortAbsenceTime', 1800000),
+				pausedUntil: null,
+				lastSuccessfulSendDate: null,
+				lastRemindDate: null,
 			},
 			reportState: {
 				dateLog: this.getDateLog(),
+				comments: [],
 			},
 			personal: [],
 			strictlyWorking: [],
@@ -50,7 +56,7 @@ export class MonitorModel extends VuexBuilderModel
 			title: '',
 			publicCode: '',
 			privateCode: '',
-			comment: '',
+			comments: [],
 			extra: {},
 		};
 	}
@@ -72,6 +78,7 @@ export class MonitorModel extends VuexBuilderModel
 	{
 		return {
 			dateLog: this.getDateLog(),
+			comment: '',
 			historyPackage: [],
 			chartPackage: [],
 			desktopCode: '',
@@ -81,7 +88,7 @@ export class MonitorModel extends VuexBuilderModel
 	getActions()
 	{
 		return {
-			setDateLog(store, payload)
+			setDateLog: (store, payload) =>
 			{
 				if (Type.isString(payload))
 				{
@@ -95,6 +102,42 @@ export class MonitorModel extends VuexBuilderModel
 					{
 						store.commit('setDateLog', payload);
 					}
+				}
+			},
+
+			refreshDateLog: (store) =>
+			{
+				if (Type.isArrayFilled(store.state.history))
+				{
+					let firstHistoryEntryDateLog = store.state.history[0].dateLog;
+					this.getActions().setDateLog(store, firstHistoryEntryDateLog);
+
+					Logger.log(`Report date is set for ${firstHistoryEntryDateLog}`);
+					Debug.log(`Report date is set for ${firstHistoryEntryDateLog}`);
+				}
+				else
+				{
+					let dateLog = this.getDateLog();
+					this.getActions().setDateLog(store, dateLog);
+
+					Logger.log(`Report date is set for ${dateLog}`);
+					Debug.log(`Report date is set for ${dateLog}`);
+				}
+			},
+
+			setLastRemindDate: (store, date) =>
+			{
+				store.commit('setLastRemindDate', date);
+			},
+
+			setLastSuccessfulSendDate: (store, date) =>
+			{
+				if (
+					Type.isDate(date)
+					&& !isNaN(date)
+				)
+				{
+					store.commit('setLastSuccessfulSendDate', date);
 				}
 			},
 
@@ -257,6 +300,28 @@ export class MonitorModel extends VuexBuilderModel
 				{
 					store.commit('startIntervalForHistoryEntry', historyEntry);
 				}
+
+				let lastRemindDate = store.state.config.lastRemindDate;
+				let canShowReminder = new Date(lastRemindDate) < new Date(this.getDateLog());
+				let isHistorySent = this.getGetters().isHistorySent(store.state);
+
+				if (!lastRemindDate || (canShowReminder && !isHistorySent))
+				{
+					if (this.getGetters().getWorkingTimeForToday(store.state) >= 32400) //9 hour in seconds
+					{
+						new Notification(
+							Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REMINDER_TITLE'),
+							Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REMINDER_TEXT'),
+							() => {
+								BX.desktop.windowCommand("show");
+								BX.desktop.changeTab('im');
+								BX.MessengerWindow.changeTab('timeman-pwt');
+							}
+						).show();
+
+						store.commit('setLastRemindDate', this.getDateLog());
+					}
+				}
 			},
 
 			preFinishLastInterval: (store) =>
@@ -282,9 +347,12 @@ export class MonitorModel extends VuexBuilderModel
 				}
 
 				let sentQueue = this.collectSentQueue(store);
+				let reportComment = store.state.reportState.comments
+					.find(comment => comment.dateLog === store.state.reportState.dateLog);
 
 				let result = this.validateSentQueue({
 					dateLog: store.state.reportState.dateLog,
+					comment: reportComment ? reportComment.text : '',
 					historyPackage: sentQueue.history,
 					chartPackage: sentQueue.chart,
 					desktopCode: store.state.config.desktopCode,
@@ -301,9 +369,23 @@ export class MonitorModel extends VuexBuilderModel
 				store.commit('clearSentQueue');
 			},
 
-			clearStorage: (store) =>
+			clearSentHistory: (store) =>
 			{
-				store.commit('clearStorage');
+				let lastSuccessfulSendDate = store.state.config.lastSuccessfulSendDate;
+				if (!lastSuccessfulSendDate)
+				{
+					return;
+				}
+
+				if (new Date(this.getDateLog()) > new Date(lastSuccessfulSendDate))
+				{
+					store.commit('clearStorageBeforeDate', new Date(lastSuccessfulSendDate));
+				}
+			},
+
+			clearStorageBeforeDate: (store, date) =>
+			{
+				store.commit('clearStorageBeforeDate', new Date(date));
 			},
 
 			setComment: (store, payload) =>
@@ -319,9 +401,39 @@ export class MonitorModel extends VuexBuilderModel
 				}
 			},
 
+			setPausedUntil: (store, dateTime) =>
+			{
+				if (
+					Type.isDate(dateTime)
+					&& Type.isNumber(dateTime.getTime())
+					&& dateTime > new Date()
+				)
+				{
+					store.commit('setPausedUntil', dateTime);
+
+					Logger.warn('Monitor paused until ', dateTime.toString());
+					Debug.log('Monitor paused until ', dateTime.toString());
+				}
+			},
+
+			clearPausedUntil: (store) =>
+			{
+				store.commit('clearPausedUntil');
+			},
+
+			setReportComment: (store, comment) =>
+			{
+				store.commit('setReportComment', comment.toString());
+			},
+
 			processUnfinishedEvents: (store) =>
 			{
 				store.commit('processUnfinishedEvents');
+			},
+
+			migrateHistory: (store) =>
+			{
+				store.commit('migrateHistory');
 			}
 		}
 	}
@@ -332,6 +444,20 @@ export class MonitorModel extends VuexBuilderModel
 			setDateLog: (state, payload) =>
 			{
 				state.reportState.dateLog = payload;
+
+				super.saveState(state);
+			},
+
+			setLastSuccessfulSendDate: (state, date) =>
+			{
+				state.config.lastSuccessfulSendDate = date;
+
+				super.saveState(state);
+			},
+
+			setLastRemindDate: (state, date) =>
+			{
+				state.config.lastRemindDate = date;
 
 				super.saveState(state);
 			},
@@ -419,14 +545,24 @@ export class MonitorModel extends VuexBuilderModel
 				super.saveState(state);
 			},
 
-			finishLastInterval: (state) =>
-			{
+			finishLastInterval: (state) => {
+				let shouldRemoveTransitionInterval = false;
+
 				state.history.map(entry => {
 					entry.time = entry.time.map(time => {
 						if (time.finish === null)
 						{
 							time.finish = new Date();
 							time.preFinish = null;
+
+							if (new Date(time.start).getDate() !== time.finish.getDate())
+							{
+								shouldRemoveTransitionInterval = true;
+								time.markedForDeletion = true;
+
+								Logger.warn('Interval marked for deletion');
+								Debug.log('Interval marked for deletion');
+							}
 
 							if (entry.type !== EntityType.absence)
 							{
@@ -437,14 +573,15 @@ export class MonitorModel extends VuexBuilderModel
 
 							state.entity
 								.filter(entity => {
-									if (!state.personal.includes(entity.privateCode)) {
+									if (!state.personal.includes(entity.privateCode))
+									{
 										return entity;
 									}
 								})
 								.map(entity => {
 									return {
 										...entity,
-										time: Time.calculateInEntity(state, entity),
+										time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
 									}
 								})
 								.sort((currentEntity, nextEntity) => currentEntity.time - nextEntity.time)
@@ -452,12 +589,15 @@ export class MonitorModel extends VuexBuilderModel
 									if (
 										state.strictlyWorking.includes(entity.privateCode)
 										|| entity.type !== EntityType.absence
-									) {
+									)
+									{
 										return;
 									}
 
-									if (entity.comment.trim() === '') {
-										if (shortAbsenceTimeRest - entity.time >= 0) {
+									if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '')
+									{
+										if (shortAbsenceTimeRest - entity.time >= 0)
+										{
 											shortAbsenceTimeRest -= entity.time;
 											return;
 										}
@@ -468,10 +608,15 @@ export class MonitorModel extends VuexBuilderModel
 						}
 
 						return time;
-					})
+					}).filter(interval => !interval.markedForDeletion);
 
 					return entry;
 				});
+
+				if (shouldRemoveTransitionInterval)
+				{
+					state.history = state.history.filter(entry => Type.isArrayFilled(entry.time));
+				}
 
 				super.saveState(state);
 			},
@@ -516,8 +661,11 @@ export class MonitorModel extends VuexBuilderModel
 				super.saveState(state);
 			},
 
-			clearStorage: (state) =>
+			clearStorageBeforeDate: (state, date) =>
 			{
+				state.history = state.history
+					.filter(entry => new Date(entry.dateLog) > date);
+
 				const getCodesToStore = privateCode => {
 
 					const entity = state.entity.find(entity => entity.privateCode === privateCode);
@@ -528,6 +676,15 @@ export class MonitorModel extends VuexBuilderModel
 						{
 							return true;
 						}
+
+						const isInUnsentHistory = state.history.find(entry => entry.privateCode === privateCode);
+						if (isInUnsentHistory)
+						{
+							return true;
+						}
+
+						Logger.warn(`${entity.title} has been removed from personal`);
+						Debug.log(`${entity.title} has been removed from personal`);
 					}
 
 					return false;
@@ -536,20 +693,92 @@ export class MonitorModel extends VuexBuilderModel
 				state.personal = state.personal.filter(getCodesToStore);
 				state.strictlyWorking = state.strictlyWorking.filter(getCodesToStore);
 
-				state.entity = [];
-				state.history = [];
-				state.sentQueue = [];
+				if (Type.isArrayFilled(state.history))
+				{
+					let privateCodesToStore = [];
 
-				Logger.log('Local storage cleared');
+					state.history.forEach(entry => {
+						if (!privateCodesToStore.includes(entry.privateCode))
+						{
+							privateCodesToStore.push(entry.privateCode);
+						}
+					});
+
+					state.entity = state.entity
+						.filter(entity => privateCodesToStore.includes(entity.privateCode));
+
+					state.entity = state.entity.map(entity => {
+						entity.comments = entity.comments.filter(comment => new Date(comment.dateLog) > date);
+
+						return entity;
+					});
+				}
+				else
+				{
+					state.entity = [];
+				}
+
+				state.sentQueue = [];
+				state.reportState.comments = state.reportState.comments
+					.filter(comment => new Date(comment.dateLog) > date);
+
+				Logger.log(`Local history before ${DateFormatter.toString(date)} cleared`);
 				Debug.space();
-				Debug.log('Local storage cleared');
+				Debug.log(`Local history before ${DateFormatter.toString(date)} cleared`);
 
 				super.saveState(state);
 			},
 
 			setComment: (state, payload) =>
 			{
-				payload.entity.comment = payload.comment;
+				const dateLog = state.reportState.dateLog;
+
+				let comment = payload.entity.comments.find(comment => comment.dateLog === dateLog);
+				if (comment)
+				{
+					comment.text = payload.comment;
+				}
+				else
+				{
+					payload.entity.comments.push({
+						dateLog,
+						text: payload.comment
+					});
+				}
+
+				super.saveState(state);
+			},
+
+			setReportComment: (state, text) =>
+			{
+				const dateLog = state.reportState.dateLog;
+
+				let comment = state.reportState.comments.find(comment => comment.dateLog === dateLog);
+				if (comment)
+				{
+					comment.text = text;
+				}
+				else
+				{
+					state.reportState.comments.push({
+						dateLog,
+						text
+					});
+				}
+
+				super.saveState(state);
+			},
+
+			setPausedUntil: (state, dateTime) =>
+			{
+				state.config.pausedUntil = dateTime;
+
+				super.saveState(state);
+			},
+
+			clearPausedUntil: (state) =>
+			{
+				state.config.pausedUntil = null;
 
 				super.saveState(state);
 			},
@@ -593,7 +822,46 @@ export class MonitorModel extends VuexBuilderModel
 				});
 
 				super.saveState(state);
-			}
+			},
+
+			migrateHistory: (state) =>
+			{
+				state.entity.map(entity => {
+					if (!entity.hasOwnProperty('comments'))
+					{
+						entity.comments = [];
+
+						if (entity.comment)
+						{
+							entity.comments.push({
+								dateLog: state.reportState.dateLog,
+								text: entity.comment,
+							});
+						}
+					}
+
+					delete entity.comment;
+
+					return entity;
+				});
+
+				if (!state.reportState.hasOwnProperty('comments'))
+				{
+					state.reportState.comments = [];
+
+					if (state.reportState.comment)
+					{
+						state.reportState.comments.push({
+							dateLog: state.reportState.dateLog,
+							text: state.reportState.comment,
+						});
+					}
+
+					delete state.reportState.comment;
+				}
+
+				super.saveState(state);
+			},
 		}
 	}
 
@@ -609,19 +877,24 @@ export class MonitorModel extends VuexBuilderModel
 					}
 				});
 
-				workingEntities = workingEntities.map(entity => {
-					const workingEntity = {
-						...entity,
-						time: Time.calculateInEntity(state, entity),
-					}
+				workingEntities = workingEntities
+					.map(entity => {
+						const comment = entity.comments.find(comment => comment.dateLog === state.reportState.dateLog);
 
-					if (workingEntity.type === EntityType.unknown)
-					{
-						workingEntity.hint = EntityGroup.unknown.hint;
-					}
+						const workingEntity = {
+							...entity,
+							time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
+							comment: comment ? comment.text : '',
+						}
 
-					return workingEntity;
-				});
+						if (workingEntity.type === EntityType.unknown)
+						{
+							workingEntity.hint = EntityGroup.unknown.hint;
+						}
+
+						return workingEntity;
+					})
+					.filter(entity => entity.time > 0);
 
 				let otherTimeRest = Time.msToSec(state.config.otherTime);
 				const others = workingEntities
@@ -660,7 +933,7 @@ export class MonitorModel extends VuexBuilderModel
 							return false;
 						}
 
-						if (entity.comment.trim() === '')
+						if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '')
 						{
 							if (shortAbsenceTimeRest - entity.time >= 0)
 							{
@@ -689,6 +962,7 @@ export class MonitorModel extends VuexBuilderModel
 						time: Time.msToSec(state.config.otherTime) - otherTimeRest,
 						allowedTime: Time.msToSec(state.config.otherTime),
 						hint: EntityGroup.other.hint,
+						privateCode: EntityGroup.other.value,
 					});
 				}
 
@@ -700,6 +974,7 @@ export class MonitorModel extends VuexBuilderModel
 						time: shortAbsence.reduce((sum, entity) => sum + entity.time, 0),
 						allowedTime: Time.msToSec(state.config.shortAbsenceTime),
 						hint: EntityGroup.absence.hint,
+						privateCode: EntityGroup.absence.value,
 					});
 				}
 
@@ -716,17 +991,24 @@ export class MonitorModel extends VuexBuilderModel
 
 				return personalEntities
 					.map(entity => {
+						const comment = entity.comments.find(comment => comment.dateLog === state.reportState.dateLog);
+
 						return {
 							...entity,
-							time: Time.calculateInEntity(state, entity),
+							time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
+							comment: comment ? comment.text : '',
 						}
 					})
+					.filter(entity => entity.time > 0)
 					.sort((a, b) => b.time - a.time);
 			},
 			getSiteDetailByPrivateCode: state => privateCode => {
 				const history = BX.util.objectClone(state.history);
 
-				let entries = history.filter(entry => entry.privateCode === privateCode);
+				let entries = history.filter(entry => (
+					entry.privateCode === privateCode
+					&& entry.dateLog === state.reportState.dateLog
+				));
 
 				entries.map(entry => {
 					entry.time = Time.calculateInEntry(entry);
@@ -765,7 +1047,7 @@ export class MonitorModel extends VuexBuilderModel
 					return emptyChart;
 				}
 
-				const history = BX.util.objectClone(state.history);
+				let history = state.history.filter(entry => entry.dateLog === state.reportState.dateLog);
 				const minute = 60000;
 
 				//collecting real intervals
@@ -896,7 +1178,251 @@ export class MonitorModel extends VuexBuilderModel
 				;
 
 				return chartData;
-			}
+			},
+			getOverChartData: state => selectedPrivateCode =>
+			{
+				let selectedCodes = [];
+
+				let workingEntities = [];
+				if (
+					selectedPrivateCode === EntityGroup.other.value
+					|| selectedPrivateCode === EntityGroup.absence.value
+				)
+				{
+					workingEntities = state.entity
+						.filter(entity => {
+							if (!state.personal.includes(entity.privateCode))
+							{
+								return entity;
+							}
+						})
+						.map(entity => {
+							const workingEntity = {
+								...entity,
+								time: Time.calculateInEntityOnADate(state, entity, state.reportState.dateLog),
+							}
+
+							if (workingEntity.type === EntityType.unknown)
+							{
+								workingEntity.hint = EntityGroup.unknown.hint;
+							}
+
+							return workingEntity;
+						})
+						.filter(entity => entity.time > 0);
+				}
+
+				if (selectedPrivateCode === EntityGroup.other.value)
+				{
+					let otherTimeRest = Time.msToSec(state.config.otherTime);
+					const others = workingEntities
+						.sort((currentEntity, nextEntity) => currentEntity.time - nextEntity.time)
+						.filter(entity => {
+							if (
+								state.strictlyWorking.includes(entity.privateCode)
+								|| entity.type === EntityType.absence
+							)
+							{
+								return false;
+							}
+
+							if (otherTimeRest - entity.time >= 0)
+							{
+								otherTimeRest -= entity.time;
+
+								return true;
+							}
+							else
+							{
+								return false;
+							}
+						});
+
+					others.forEach(entity => selectedCodes.push(entity.privateCode));
+				}
+				else if (selectedPrivateCode === EntityGroup.absence.value)
+				{
+					let shortAbsenceTimeRest = Time.msToSec(state.config.shortAbsenceTime);
+
+					const shortAbsence = workingEntities
+						.sort((currentEntity, nextEntity) => currentEntity.time - nextEntity.time)
+						.filter(entity => {
+							if (
+								state.strictlyWorking.includes(entity.privateCode)
+								|| entity.type !== EntityType.absence
+							)
+							{
+								return false;
+							}
+
+							if (MonitorModel.prototype.getCommentByEntity(state, entity).trim() === '')
+							{
+								if (shortAbsenceTimeRest - entity.time >= 0)
+								{
+									shortAbsenceTimeRest -= entity.time;
+
+									return true;
+								}
+
+								return false;
+							}
+						});
+
+					shortAbsence.forEach(entity => selectedCodes.push(entity.privateCode));
+				}
+				else
+				{
+					selectedCodes = [selectedPrivateCode];
+				}
+
+				let segments = [];
+
+				let history = BX.util.objectClone(state.history).filter(entry => entry.dateLog === state.reportState.dateLog);
+				const minute = 60000;
+
+				//collecting real intervals
+				history.forEach(entry => {
+					const type = state.personal.includes(entry.privateCode)
+						? EntityGroup.personal.value
+						: EntityGroup.working.value
+					;
+
+					entry.display = (selectedCodes.includes(entry.privateCode) ? 'selected' : 'transparent');
+
+					entry.time.forEach(interval => {
+						const start = new Date(interval.start);
+						const finish = interval.finish ? new Date(interval.finish) : new Date();
+
+						segments.push({ type, start, finish, display: entry.display });
+					})
+				});
+
+				segments = segments
+					.sort((currentSegment, nextSegment) => currentSegment.start - nextSegment.start)
+				;
+
+				//create the leftmost interval
+				let firstSegmentFrom = segments[0].start;
+				if (firstSegmentFrom.getHours() + firstSegmentFrom.getMinutes() > 0)
+				{
+					segments.unshift({
+						start: new Date(
+							firstSegmentFrom.getFullYear(),
+							firstSegmentFrom.getMonth(),
+							firstSegmentFrom.getDate(),
+							0,
+							0
+						),
+						finish: firstSegmentFrom,
+						type: EntityGroup.inactive.value,
+						display: 'transparent',
+					});
+				}
+
+				//create inactive intervals throughout the day
+				segments
+					.forEach((interval, index) => {
+						if (
+							index > 0
+							&& interval.start - segments[index - 1].finish >= minute * 3
+						)
+						{
+							const start = segments[index - 1].finish;
+							const finish = interval.start;
+
+							start.setMinutes(start.getMinutes() + 1);
+							finish.setMinutes(finish.getMinutes() - 1);
+
+							segments.push({
+								start,
+								finish,
+								type: EntityGroup.inactive.value,
+								display: 'transparent',
+							});
+						}
+					})
+				;
+
+				segments = segments
+					.sort((currentSegment, nextSegment) => currentSegment.start - nextSegment.start)
+				;
+
+				//create the rightmost interval
+				let lastSegmentTo = segments[segments.length - 1].finish;
+				if (lastSegmentTo.getHours() + lastSegmentTo.getMinutes() < 82)
+				{
+					lastSegmentTo.setMinutes(lastSegmentTo.getMinutes() + 1);
+
+					segments.push({
+						start: lastSegmentTo,
+						finish: new Date(
+							lastSegmentTo.getFullYear(),
+							lastSegmentTo.getMonth(),
+							lastSegmentTo.getDate(),
+							23,
+							59
+						),
+						type: EntityGroup.inactive.value,
+						display: 'transparent',
+					});
+				}
+
+				return segments;
+			},
+			isHistorySent(state)
+			{
+				let lastSuccessfulSendDate = state.config.lastSuccessfulSendDate;
+
+				let hasUnsentHistory = (
+					Type.isArrayFilled(state.history)
+					&& new Date(state.history[0].dateLog) < new Date(MonitorModel.prototype.getDateLog())
+				);
+
+				if (!lastSuccessfulSendDate)
+				{
+					return !hasUnsentHistory;
+				}
+
+				lastSuccessfulSendDate = new Date(lastSuccessfulSendDate);
+				lastSuccessfulSendDate.setHours(0);
+				lastSuccessfulSendDate.setMinutes(0);
+				lastSuccessfulSendDate.setSeconds(0);
+				lastSuccessfulSendDate.setMilliseconds(0);
+
+				let currentDate = new Date();
+				currentDate.setHours(0);
+				currentDate.setMinutes(0);
+				currentDate.setSeconds(0);
+				currentDate.setMilliseconds(0);
+
+				return currentDate - lastSuccessfulSendDate <= 86400000
+					|| !hasUnsentHistory;
+			},
+			getWorkingTimeForToday(state)
+			{
+				let workingEntities = state.entity.filter(entity => {
+					if (!state.personal.includes(entity.privateCode))
+					{
+						return entity;
+					}
+				});
+
+				return workingEntities
+					.map(entity => {
+						return {
+							...entity,
+							time: Time.calculateInEntityOnADate(state, entity, MonitorModel.prototype.getDateLog()),
+						};
+					})
+					.reduce((sum, entity) => sum + entity.time, 0);
+			},
+			getReportComment(state)
+			{
+				let reportComment = state.reportState.comments
+					.find(comment => comment.dateLog === state.reportState.dateLog);
+
+				return reportComment ? reportComment.text : '';
+			},
 		}
 	}
 
@@ -928,9 +1454,9 @@ export class MonitorModel extends VuexBuilderModel
 				result.title = entity.title.toString();
 			}
 
-			if (Type.isString(entity.comment) || Type.isNumber(entity.comment))
+			if (Type.isArrayFilled(entity.comments))
 			{
-				result.comment = entity.comment.toString();
+				result.comments = entity.comments;
 			}
 		}
 
@@ -943,6 +1469,15 @@ export class MonitorModel extends VuexBuilderModel
 
 		if (Type.isObject(historyEntry) && historyEntry)
 		{
+			if (
+				Type.isString(historyEntry.dateLog)
+				&& Type.isDate(new Date(historyEntry.dateLog))
+				&& !isNaN(new Date(historyEntry.dateLog))
+			)
+			{
+				result.dateLog = historyEntry.dateLog;
+			}
+
 			if (Type.isString(historyEntry.title) || Type.isNumber(historyEntry.title))
 			{
 				result.title = historyEntry.title.toString();
@@ -993,6 +1528,11 @@ export class MonitorModel extends VuexBuilderModel
 			{
 				result.desktopCode = sentQueueItem.desktopCode;
 			}
+
+			if (Type.isString(sentQueueItem.comment))
+			{
+				result.comment = sentQueueItem.comment;
+			}
 		}
 
 		return result;
@@ -1000,12 +1540,18 @@ export class MonitorModel extends VuexBuilderModel
 
 	getHistoryEntryByPrivateCode(store, privateCode)
 	{
-		return store.state.history.find(entry => entry.privateCode === privateCode);
+		return store.state.history.find(entry => (
+			entry.privateCode === privateCode
+			&& entry.dateLog === this.getDateLog()
+		));
 	}
 
 	getHistoryEntryBySiteUrl(store, siteUrl)
 	{
-		return store.state.history.find(entry => entry.siteUrl === siteUrl);
+		return store.state.history.find(entry => (
+			entry.siteUrl === siteUrl
+			&& entry.dateLog === this.getDateLog()
+		));
 	}
 
 	getEntityByPrivateCode(store, privateCode)
@@ -1016,6 +1562,13 @@ export class MonitorModel extends VuexBuilderModel
 	getEntityByTitle(store, title)
 	{
 		return store.state.entity.find(entity => entity.title === title);
+	}
+
+	getCommentByEntity(state, entity)
+	{
+		const comment = entity.comments.find(comment => comment.dateLog === state.reportState.dateLog);
+
+		return comment ? comment.text : '';
 	}
 
 	getDateLog()
@@ -1070,6 +1623,7 @@ export class MonitorModel extends VuexBuilderModel
 			}
 
 			delete entry.extra;
+			delete entry.hint;
 
 			return entry;
 		});

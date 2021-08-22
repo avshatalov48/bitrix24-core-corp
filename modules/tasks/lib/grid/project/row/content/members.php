@@ -39,7 +39,7 @@ class Members extends Content
 				"<div style='display: inline-block'>"
 					. "<div class='tasks-projects-user-list tasks-projects-user-list--green'>"
 						. $innerLayouts
-						. $this->makeOtherHeadsCounterLayout(((int)$row['NUMBER_OF_MODERATORS'] - $visibleMembersCount))
+						. $this->makeOtherCounterLayout(((int)$row['NUMBER_OF_MODERATORS'] - $visibleMembersCount))
 					. "</div>"
 				. "</div>"
 			;
@@ -70,7 +70,7 @@ class Members extends Content
 				"<div style='display: inline-block'>"
 					. "<div class='tasks-projects-user-list'>"
 						. $innerLayouts
-						. $this->makeOtherUsersCounterLayout(
+						. $this->makeOtherCounterLayout(
 							((int)$row['NUMBER_OF_MEMBERS'] - (int)$row['NUMBER_OF_MODERATORS'] - $visibleMembersCount)
 						)
 					. "</div>"
@@ -78,7 +78,12 @@ class Members extends Content
 			;
 		}
 
-		return $headsLayout.$usersLayout;
+		return
+			"<div class='tasks-projects-user-list-container' onclick='{$this->getMembersPopupShowFunction()}'>"
+				. $headsLayout
+				. $usersLayout
+			. "</div>"
+		;
 	}
 
 	private function fillUsersLayout(array $users): array
@@ -87,7 +92,7 @@ class Members extends Content
 		{
 			$style = ($user['PHOTO'] ? "style='background-image: url(\"{$user['PHOTO']}\")'" : '');
 			$users[$id]['LAYOUT'] =
-				"<a class='tasks-projects-user-item' {$style} href='{$user['HREF']}' title='{$user['FORMATTED_NAME']}'>"
+				"<a class='tasks-projects-user-item' {$style}>"
 					. "<div class='tasks-projects-user-crown'></div>"
 				. "</a>"
 			;
@@ -96,35 +101,20 @@ class Members extends Content
 		return $users;
 	}
 
-	private function makeOtherHeadsCounterLayout(int $otherHeadsCount): string
+	private function makeOtherCounterLayout(int $otherCount): string
 	{
-		if ($otherHeadsCount > 0)
+		if ($otherCount <= 0)
 		{
-			$groupId = (int)$this->getRowData()['ID'];
-
-			return "<div
-						class='tasks-projects-user-count'
-						onclick='BX.Tasks.ProjectsInstance.getMembersPopup().show({$groupId}, \"heads\", this); event.stopPropagation();'
-					><span class='tasks-projects-user-plus'>+</span>{$otherHeadsCount}</div>"
-			;
+			return "";
 		}
 
-		return '';
+		return "<div class='tasks-projects-user-count'><span class='tasks-projects-user-plus'>+</span>{$otherCount}</div>";
 	}
 
-	private function makeOtherUsersCounterLayout(int $otherUsersCount): string
+	private function getMembersPopupShowFunction(): string
 	{
-		if ($otherUsersCount > 0)
-		{
-			$groupId = (int)$this->getRowData()['ID'];
+		$row = $this->getRowData();
 
-			return "<div
-						class='tasks-projects-user-count'
-						onclick='BX.Tasks.ProjectsInstance.getMembersPopup().show({$groupId}, \"members\", this); event.stopPropagation();'
-					><span class='tasks-projects-user-plus'>+</span>{$otherUsersCount}</div>"
-			;
-		}
-
-		return '';
+		return "BX.Tasks.ProjectsInstance.getMembersPopup().show({$row['ID']}, this); event.stopPropagation();";
 	}
 }

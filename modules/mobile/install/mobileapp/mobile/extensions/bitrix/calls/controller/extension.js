@@ -147,7 +147,7 @@
 				}
 				MediaDevices.getUserMedia({audio: true, video: true}).then(stream =>
 				{
-					this.callView.setVideoStream(env.userId, stream);
+					this.callView.setVideoStream(env.userId, stream, (MediaDevices.cameraDirection === "front"));
 					resolve();
 				}).catch(err => reject(err));
 			});

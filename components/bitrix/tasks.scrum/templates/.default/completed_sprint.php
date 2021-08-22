@@ -11,19 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $messages */
 /** @var string $filterId */
 
-use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
 $isKanban = true;
 
 require_once __DIR__.'/header.php';
-
-if ($arResult['frameMode'] === 'Y')
-{
-	require_once __DIR__.'/slider_crutch.php';
-}
-
-Extension::load('tasks.scrum.dod');
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.kanban',
@@ -87,7 +79,6 @@ $APPLICATION->IncludeComponent(
 			sprints: <?= Json::encode($arResult['sprints']) ?>
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
-		BX.Tasks.Scrum.Entry.renderCountersTo(document.getElementById('tasks-scrum-counters-container'));
 		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
 		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
 	});

@@ -168,7 +168,16 @@ class CCrmProduct
 		}
 
 		$element = new CIBlockElement();
-		$ID = isset($arFields['ID']) ? $arFields['ID'] : null;
+		$ID = $arFields['ID'] ?? null;
+		if ($ID !== null)
+		{
+			$ID = (int)$ID;
+			if ($ID <= 0)
+			{
+				unset($arFields['ID']);
+				$ID = null;
+			}
+		}
 		if ($ID === null)
 		{
 			//Try to create a CIBlockElement
@@ -298,7 +307,7 @@ class CCrmProduct
 				return false;
 			}
 
-			$ID = intval($element->Add($arElement));
+			$ID = (int)$element->Add($arElement);
 			if($ID <= 0)
 			{
 				self::$LAST_ERROR = $element->LAST_ERROR;
@@ -313,22 +322,21 @@ class CCrmProduct
 			return false;
 		}
 
-		$CCatalogProduct = new CCatalogProduct();
 		$arCatalogProductFields = array('ID' => $ID, 'QUANTITY' => 0);
 		if (isset($arFields['VAT_INCLUDED']))
 			$arCatalogProductFields['VAT_INCLUDED'] = $arFields['VAT_INCLUDED'];
 		if (isset($arFields['VAT_ID']) && !empty($arFields['VAT_ID']))
 			$arCatalogProductFields['VAT_ID'] = $arFields['VAT_ID'];
 		if (isset($arFields['MEASURE']) && !empty($arFields['MEASURE']))
-			$arCatalogProductFields['MEASURE'] = $arFields['MEASURE'];
-		if ($CCatalogProduct->Add($arCatalogProductFields))
+			$arCatalogProductFields['MEASURE'] = (int)$arFields['MEASURE'];
+		if (self::innerProductModify($arCatalogProductFields))
 		{
 			if (isset($arFields['PRICE']))
 			{
 				self::setPrice(
 					$ID,
 					$arFields['PRICE'],
-					isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : false
+					$arFields['CURRENCY_ID'] ?? false
 				);
 			}
 		}
@@ -556,17 +564,20 @@ class CCrmProduct
 		}
 
 		// update VAT
-		$CCatalogProduct = new CCatalogProduct();
 		$arCatalogProductFields = array();
 		if (isset($arFields['VAT_INCLUDED']))
 			$arCatalogProductFields['VAT_INCLUDED'] = $arFields['VAT_INCLUDED'];
 		if (isset($arFields['VAT_ID']) && !empty($arFields['VAT_ID']))
 			$arCatalogProductFields['VAT_ID'] = $arFields['VAT_ID'];
 		if (isset($arFields['MEASURE']) && !empty($arFields['MEASURE']))
-			$arCatalogProductFields['MEASURE'] = $arFields['MEASURE'];
-		if (count($arCatalogProductFields) > 0)
+			$arCatalogProductFields['MEASURE'] = (int)$arFields['MEASURE'];
+		if (!empty($arCatalogProductFields))
 		{
-			$CCatalogProduct->Update($ID, $arCatalogProductFields);
+			$arCatalogProductFields['ID'] = (int)$ID;
+			if (!self::innerProductModify($arCatalogProductFields))
+			{
+				return false;
+			}
 			if (!$iblockElementUpdated)
 			{
 				$needUpdateIblockElement = true;
@@ -736,6 +747,30 @@ class CCrmProduct
 		}
 		unset($crmEvent);
 		unset($fields, $id);
+	}
+
+	private static function innerProductModify(array $fields): bool
+	{
+		$existProduct = false;
+		$data = Catalog\Model\Product::getCacheItem($fields['ID'], true);
+		if (!empty($data))
+		{
+			$existProduct = !empty($data['ID']);
+		}
+		unset($data);
+
+		$result = $existProduct
+			? Catalog\Model\Product::update($fields['ID'], $fields)
+			: Catalog\Model\Product::add($fields)
+		;
+		$success = $result->isSuccess();
+		if (!$success)
+		{
+			self::$LAST_ERROR = implode(' ', $result->getErrorMessages());
+		}
+		unset($result);
+
+		return $success;
 	}
 	//<-- CRUD
 
@@ -1469,8 +1504,8 @@ class CCrmProduct
 		if($rowsCount > 0 || CCrmInvoice::HasProductRows($ID))
 		{
 			self::RegisterError(Loc::getMessage(
-					'CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST',
-					array('#NAME#' => static::GetProductName($ID)))
+					'CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST_EXT',
+					array('#NAME#' => static::GetProductName($ID), '#ID#' => $ID))
 			);
 			return false;
 		}

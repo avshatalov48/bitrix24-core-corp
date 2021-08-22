@@ -6,6 +6,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ArgumentException;
 
+/**
+ * Class QueueUserTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_QueueUser_Query query()
+ * @method static EO_QueueUser_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_QueueUser_Result getById($id)
+ * @method static EO_QueueUser_Result getList(array $parameters = array())
+ * @method static EO_QueueUser_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_QueueUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_QueueUser_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_QueueUser wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_QueueUser_Collection wakeUpCollection($rows)
+ */
 class QueueUserTable extends Entity\DataManager
 {
 	/**

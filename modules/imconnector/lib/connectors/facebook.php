@@ -1,10 +1,12 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc;
-use \Bitrix\ImConnector\Library;
-use \Bitrix\UI;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+
+use Bitrix\ImConnector\Library;
+
+use Bitrix\UI;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,9 +28,8 @@ class Facebook extends Base
 	 * @param $paramsError
 	 * @param string $message
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	protected function receivedErrorNotSendMessageChat($paramsError, $message = ''): bool
+	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
 		if(
 			(int)$paramsError['params']['errorCode'] === 10 &&

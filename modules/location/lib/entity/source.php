@@ -4,6 +4,8 @@ namespace Bitrix\Location\Entity;
 
 use Bitrix\Location\Entity\Source\Config;
 use Bitrix\Location\Repository\Location\IRepository;
+use Bitrix\Main\Context;
+use Bitrix\Main\IO\File;
 
 /**
  * Class Source
@@ -23,6 +25,9 @@ abstract class Source
 
 	/** @var Config|null */
 	protected $config;
+
+	/** @var array|null  */
+	protected $autocompleteReplacements = null;
 
 	/**
 	 * @return string
@@ -87,6 +92,34 @@ abstract class Source
 		$this->config = $config;
 
 		return $this;
+	}
+
+	/**
+	 * Returns replacements for the source autocomplete search
+	 *
+	 * @param string $languageId
+	 * @return array
+	 */
+	public function getAutocompleteReplacements(string $languageId): array
+	{
+		if($this->autocompleteReplacements === null)
+		{
+			$this->autocompleteReplacements = [];
+
+			$path = Context::getCurrent()->getServer()->getDocumentRoot()
+				. '/bitrix/modules/location/lang/'
+				. $languageId
+				. '/lib/source/'
+				. strtolower($this->code)
+				. '/autocompletereplacements.php';
+
+			if (File::isFileExists($path))
+			{
+				$this->autocompleteReplacements = require $path;
+			}
+		}
+
+		return $this->autocompleteReplacements;
 	}
 
 	/**

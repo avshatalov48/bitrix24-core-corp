@@ -190,6 +190,10 @@ class ClientResolver
 								array('#STREET#' => $street)
 							);
 						}
+						elseif (isset($info['ADDRESS_STREET_TYPE']) && $info['ADDRESS_STREET_TYPE'] !== '')
+						{
+							$street .= ' ' . $info['ADDRESS_STREET_TYPE'];
+						}
 						$address1Parts[] = $street;
 					}
 

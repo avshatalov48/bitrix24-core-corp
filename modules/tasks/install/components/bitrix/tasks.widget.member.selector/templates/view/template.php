@@ -8,6 +8,8 @@ Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+
+\Bitrix\Main\UI\Extension::load('ui.entity-selector');
 ?>
 
 <?//$helper->displayFatals();?>
@@ -30,11 +32,10 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 	<div id="<?=$helper->getScopeId()?>" class="tasks task-user-selector mem-sel-empty-true<?if($readOnly):?> readonly<?endif?><?if(!$multiple):?> single<?endif?>">
 
-		<?//$helper->displayWarnings();?>
-		<div class="task-detail-sidebar-info-link <?if(!$readOnly):?>js-id-mem-sel-is-open-form<?else:?>js-id-mem-sel-header-button<?endif?>">
+		<div class="task-detail-sidebar-info-link <?if($readOnly):?>js-id-mem-sel-header-button<?endif?>">
 			<?if(!$readOnly):?>
-				<span class="task-user-selector-change"><?=Loc::getMessage("TASKS_COMMON_CHANGE_LCF")?></span>
-				<span class="task-user-selector-add"><?=Loc::getMessage("TASKS_COMMON_ADD_LCF")?></span>
+				<span class="task-user-selector-change js-id-mem-sel-is-control"><?= Loc::getMessage("TASKS_COMMON_CHANGE_LCF")?></span>
+				<span class="task-user-selector-add js-id-mem-sel-is-control"><?=Loc::getMessage("TASKS_COMMON_ADD_LCF")?></span>
 			<?elseif($arParams['HEADER_BUTTON_LABEL_IF_READ_ONLY'] != ''):?>
 				<?=htmlspecialcharsbx($arParams['HEADER_BUTTON_LABEL_IF_READ_ONLY'])?>
 			<?endif?>

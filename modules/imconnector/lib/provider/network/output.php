@@ -3,6 +3,7 @@ namespace Bitrix\ImConnector\Provider\Network;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImBot\Bot;
 use Bitrix\ImBot\Service;
@@ -17,33 +18,42 @@ use Bitrix\ImConnector\Connectors\Network;
 class Output extends Base\Output
 {
 	/**
-	 * @param $eventName
-	 * @param array $data
+	 * Adds delayed execution of the session action.
+	 *
+	 * @param $eventName Action type: sessionStart or sessionFinish.
+	 * @param array $data Action data.
+	 * @param bool $immediately Run action immediately.
+	 *
 	 * @return Result
 	 */
-	protected function addEventSession($eventName, array $data): Result
+	protected function addEventSession($eventName, array $data, bool $immediately = false): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
 			foreach ($data as $message)
 			{
 				$args = [
-					[
-						'LINE_ID' => $this->line,
-						'GUID' => $message['chat']['id'],
-						'USER' => $message['user']['id'],
-						'SESSION_ID' => $message['session']['id'],
-						'PARENT_ID' => $message['session']['parent_id'],
-					]
+					'LINE_ID' => $this->line,
+					'GUID' => $message['chat']['id'],
+					'USER' => $message['user']['id'],
+					'SESSION_ID' => $message['session']['id'],
+					'PARENT_ID' => $message['session']['parent_id'],
 				];
 
-				Application::getInstance()->addBackgroundJob(
-					['\Bitrix\ImBot\Service\Openlines', $eventName],
-					$args,
-					Application::JOB_PRIORITY_LOW
-				);
+				if ($immediately)
+				{
+					\Bitrix\ImBot\Service\Openlines::$eventName($args);
+				}
+				else
+				{
+					Application::getInstance()->addBackgroundJob(
+						['\Bitrix\ImBot\Service\Openlines', $eventName],
+						[$args],
+						Application::JOB_PRIORITY_LOW
+					);
+				}
 			}
 		}
 
@@ -76,7 +86,7 @@ class Output extends Base\Output
 	 */
 	protected function register(array $data = []): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -85,7 +95,7 @@ class Output extends Base\Output
 			{
 				$error = Bot\Network::getError();
 
-				$this->result->addError(new Error(
+				$result->addError(new Error(
 					$error->msg,
 					$error->code,
 					__METHOD__,
@@ -107,7 +117,7 @@ class Output extends Base\Output
 	 */
 	protected function update(array $data = []): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -116,7 +126,7 @@ class Output extends Base\Output
 			{
 				$error = Bot\Network::getError();
 
-				$this->result->addError(new Error(
+				$result->addError(new Error(
 					$error->msg,
 					$error->code,
 					__METHOD__,
@@ -139,7 +149,7 @@ class Output extends Base\Output
 	 */
 	protected function delete($lineId = 0): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -153,7 +163,7 @@ class Output extends Base\Output
 			{
 				$error = Bot\Network::getError();
 
-				$this->result->addError(new Error(
+				$result->addError(new Error(
 					$error->msg,
 					$error->code,
 					__METHOD__
@@ -174,7 +184,7 @@ class Output extends Base\Output
 	 */
 	protected function sendStatusWriting(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -192,7 +202,6 @@ class Output extends Base\Output
 					]
 				]);
 			}
-
 		}
 
 		return $result;
@@ -206,7 +215,7 @@ class Output extends Base\Output
 	 */
 	protected function sendMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -229,7 +238,7 @@ class Output extends Base\Output
 	 */
 	protected function updateMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -252,7 +261,7 @@ class Output extends Base\Output
 	 */
 	protected function deleteMessage(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -269,20 +278,24 @@ class Output extends Base\Output
 
 	/**
 	 * @param array $data
+	 * @param bool $immediately
+	 *
 	 * @return Result
 	 */
-	protected function sessionStart(array $data): Result
+	protected function sessionStart(array $data, bool $immediately = false): Result
 	{
-		return $this->addEventSession('sessionStart', $data);
+		return $this->addEventSession('sessionStart', $data, $immediately);
 	}
 
 	/**
 	 * @param array $data
+	 * @param bool $immediately
+	 *
 	 * @return Result
 	 */
-	protected function sessionFinish(array $data): Result
+	protected function sessionFinish(array $data, bool $immediately = false): Result
 	{
-		return $this->addEventSession('sessionFinish', $data);
+		return $this->addEventSession('sessionFinish', $data, $immediately);
 	}
 
 	/**
@@ -293,7 +306,7 @@ class Output extends Base\Output
 	 */
 	protected function deleteLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -311,7 +324,7 @@ class Output extends Base\Output
 	 */
 	protected function infoConnectorsLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 		$resultNetwork = [];
 
 		if(
@@ -327,7 +340,14 @@ class Output extends Base\Output
 
 				if(!empty($dataNetwork['CODE']))
 				{
-					$linkNetwork = Network::getPublicLink($dataNetwork['CODE']);
+					$linkNetwork = '';
+					$serviceLocator = ServiceLocator::getInstance();
+					if($serviceLocator->has('ImConnector.toolsNetwork'))
+					{
+						/** @var \Bitrix\ImConnector\Tools\Connectors\Network $toolsNetwork */
+						$toolsNetwork = $serviceLocator->get('ImConnector.toolsNetwork');
+						$linkNetwork = $toolsNetwork->getPublicLink($dataNetwork['CODE']);
+					}
 
 					if(!empty($linkNetwork))
 					{

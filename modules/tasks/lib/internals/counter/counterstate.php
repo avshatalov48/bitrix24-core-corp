@@ -211,6 +211,14 @@ class CounterState implements \Iterator
 	 */
 	private function loadCounters(): void
 	{
+		$limit = Counter::getGlobalLimit();
+		if ($limit === 0)
+		{
+			$rowFlag = $this->loadFlag();
+			$this->updateState([$rowFlag]);
+			return;
+		}
+
 		$query = CounterTable::query()
 			->setSelect([
 				'VALUE',
@@ -220,22 +228,44 @@ class CounterState implements \Iterator
 			])
 			->where('USER_ID', $this->userId);
 
-		$limit = Counter::getGlobalLimit();
-
-		if ($limit === 0)
+		$rowFlag = null;
+		if (!is_null($limit))
 		{
-			$query->where('TYPE', CounterDictionary::COUNTER_FLAG_COUNTED);
-			$query->setLimit(1);
-		}
-		elseif (!is_null($limit))
-		{
+			$rowFlag = $this->loadFlag();
 			$query->setLimit($limit);
-			$query->addOrder('TASK_ID');
 		}
 
 		$rows = $query->exec()->fetchAll();
+		if ($rowFlag)
+		{
+			$rows[] = $rowFlag;
+		}
 
 		$this->updateState($rows);
+	}
+
+	/**
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function loadFlag(): ?array
+	{
+		$query = CounterTable::query()
+			->setSelect([
+				'VALUE',
+				'TASK_ID',
+				'GROUP_ID',
+				'TYPE'
+			])
+			->where('USER_ID', $this->userId)
+			->where('TYPE', CounterDictionary::COUNTER_FLAG_COUNTED)
+			->setLimit(1);
+
+		$row = $query->exec()->fetch();
+
+		return $row ? $row : null;
 	}
 
 	/**

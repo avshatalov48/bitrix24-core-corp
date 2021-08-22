@@ -32,8 +32,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>',
 			debugMode: '<?= $arResult['debugMode'] ?>',
 			isOwnerCurrentUser: '<?= ($arResult['isOwnerCurrentUser'] ? 'Y' : 'N') ?>',
-			userId: '<?= (int)$arParams['USER_ID'] ?>',
-			groupId: '<?= (int)$arParams['GROUP_ID'] ?>',
+			userId: '<?= (int) $arParams['USER_ID'] ?>',
+			groupId: '<?= (int) $arParams['GROUP_ID'] ?>',
 			defaultSprintDuration: '<?=(int) $arResult['defaultSprintDuration'] ?>',
 			pageNumberToCompletedSprints: '1',
 			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
@@ -43,11 +43,9 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			views: <?= Json::encode($arResult['views']) ?>,
 			activeSprintId: '<?= $arResult['activeSprintId'] ?>',
 			filterId: '<?= $filterId ?>',
-			defaultResponsible: <?= Json::encode($arResult['defaultResponsible']) ?>,
-			counters: <?= $arResult['counters'] ? Json::encode($arResult['counters']) : 'null' ?>,
+			defaultResponsible: <?= Json::encode($arResult['defaultResponsible']) ?>
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
-		BX.Tasks.Scrum.Entry.renderCountersTo(document.getElementById('tasks-scrum-counters-container'));
 		BX.Tasks.Scrum.Entry.renderButtonsTo(document.getElementById('tasks-scrum-buttons-container'));
 		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});

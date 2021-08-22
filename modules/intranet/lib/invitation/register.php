@@ -33,13 +33,14 @@ class Register
 
 	public static function getMaxEmailCount()
 	{
-		if (Loader::includeModule("bitrix24"))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$licensePrefix = \CBitrix24::getLicensePrefix();
 			$licenseType = \CBitrix24::getLicenseType();
-			if ($licensePrefix === "cn" && $licenseType === "project")
+
+			if (in_array($licensePrefix, ['cn', 'en', 'vn', 'jp']) && $licenseType === 'project')
 			{
-				return 5;
+				return 10;
 			}
 		}
 

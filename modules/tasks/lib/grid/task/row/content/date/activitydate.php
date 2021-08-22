@@ -5,7 +5,6 @@ use Bitrix\Tasks\Grid\Task\Row\Content\Date;
 
 /**
  * Class ActivityDate
- *
  * @package Bitrix\Tasks\Grid\Task\Row\Content\Date
  */
 class ActivityDate extends Date
@@ -17,8 +16,8 @@ class ActivityDate extends Date
 	{
 		$row = $this->getRowData();
 
-		$activityDate = $this->formatDate($row['ACTIVITY_DATE']);
+		$date = $this->formatDate($row[$this->fieldKey]);
 
-		return "<span id='changedDate' style='margin-left: 3px'>{$activityDate}</span>";
+		return "<span id='changedDate' style='margin-left: 3px'>{$date}</span>";
 	}
 }

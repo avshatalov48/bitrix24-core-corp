@@ -14,6 +14,22 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\RegExpValidator;
 
+/**
+ * Class CustomSectionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CustomSection_Query query()
+ * @method static EO_CustomSection_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CustomSection_Result getById($id)
+ * @method static EO_CustomSection_Result getList(array $parameters = array())
+ * @method static EO_CustomSection_Entity getEntity()
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection createObject($setDefaultValues = true)
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection createCollection()
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection wakeUpObject($row)
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection wakeUpCollection($rows)
+ */
 class CustomSectionTable extends DataManager
 {
 	/**

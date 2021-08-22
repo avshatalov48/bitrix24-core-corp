@@ -32,6 +32,11 @@ trait ChecklistTrait
 	 */
 	private function getModelFromParams($params): ChecklistModel
 	{
+		if ($params instanceof ChecklistModel)
+		{
+			return $params;
+		}
+
 		if (is_array($params) && !$this->isList($params))
 		{
 			return ChecklistModel::createFromArray($params);

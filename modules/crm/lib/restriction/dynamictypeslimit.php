@@ -3,8 +3,6 @@
 namespace Bitrix\Crm\Restriction;
 
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Crm\Model\Dynamic\TypeTable;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
@@ -13,7 +11,7 @@ use Bitrix\UI\Buttons\JsHandler;
 
 class DynamicTypesLimit
 {
-	public const FEATURE_SLIDER_NAME = 'limit_crm_smart_process_automation';
+	public const FEATURE_SLIDER_NAME = 'limit_smart_process_automation';
 	public const FEATURE_NAME = 'crm_smart_processes';
 
 	public const ERROR_CODE_CREATE_TYPE_RESTRICTED = 'CREATE_DYNAMIC_TYPE_RESTRICTED';
@@ -22,12 +20,8 @@ class DynamicTypesLimit
 	public const ERROR_CODE_UPDATE_ITEM_RESTRICTED = 'UPDATE_DYNAMIC_ITEM_RESTRICTED';
 
 	protected $isEnabled;
-	/** @var TypeTable */
-	protected $typeTable = TypeTable::class;
 	/** @var Feature */
 	protected $feature = Feature::class;
-
-	protected $fullControllableEntityTypeIds;
 
 	public function __construct()
 	{
@@ -54,16 +48,6 @@ class DynamicTypesLimit
 	public function isEnabled(): bool
 	{
 		return $this->isEnabled;
-	}
-
-	/**
-	 * Return feature name.
-	 *
-	 * @return string
-	 */
-	public function getFeatureName(): string
-	{
-		return static::FEATURE_NAME;
 	}
 
 	/**

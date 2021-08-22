@@ -11,23 +11,36 @@ Library::loadMessages();
  *
  * @see \Bitrix\ImConnectorServer\Connectors\Facebook\Lib::delUserActive
  * @method Result delUserActive($idUser)
+ *
  * @see \Bitrix\ImConnectorServer\Connectors\Facebook\Lib::delPageActive
  * @method Result delPageActive($idPage, $local = false)
+ *
  * @see \Bitrix\ImConnectorServer\Connectors\Facebook\Lib::authorizationPage
  * @method Result authorizationPage($idPage)
+ *
  * @see \Bitrix\ImConnectorServer\Connectors\Connector::deleteConnector
  * @method Result deleteConnector($sendDeactivateConnector = false)
+ *
  * @see \Bitrix\ImConnectorServer\Connectors\Facebook\LibInstagram::getAuthorizationInformation
  * @method Result getAuthorizationInformation($returnUrl = '')
- * @package Bitrix\ImConnector
- * @final
- * @internal
  *
  * Dynamic methods:
  *
- * @method register(array $data = []): \Bitrix\ImConnector\Result
- * @method delete(array $data = []): \Bitrix\ImConnector\Result
+ * @method Result register(array $data = [])
+ * @method Result update(array $data = [])
+ * @method Result delete(array $data = [])
  *
+ * @method Result sendStatusWriting(array $data)
+ * @method Result sessionStart(array $data)
+ * @method Result sessionFinish(array $data)
+ *
+ * @method Result sendMessage(array $data)
+ * @method Result updateMessage(array $data)
+ * @method Result deleteMessage(array $data)
+ *
+ * @package Bitrix\ImConnector
+ * @final
+ * @internal
  */
 final class Output
 {
@@ -87,7 +100,7 @@ final class Output
 	 */
 	public function __call($name, $arguments): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{

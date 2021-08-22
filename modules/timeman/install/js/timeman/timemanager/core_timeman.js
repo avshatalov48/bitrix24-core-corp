@@ -1298,15 +1298,6 @@ BX.CTimeManWindow.prototype.isMonitorEnabled = function()
 		});
 }
 
-BX.CTimeManWindow.prototype.isPwtHistorySent = function()
-{
-	return BX.ajax.runAction("bitrix:timeman.api.monitor.isHistorySent")
-		.then(function(response)
-		{
-			return response.data;
-		});
-}
-
 BX.CTimeManWindow.prototype.addPwt = function()
 {
 	if (BX.MessengerCommon.isDesktop())
@@ -2203,87 +2194,47 @@ BX.CTimeManWindow.prototype.MainButtonClick = function(e)
 		this.REPORT.Reset();
 	}
 
-	if (this.MAIN_BTN_HANDLER == this.ACTIONS.OPEN)
+	if ((this.MAIN_BTN_HANDLER == this.ACTIONS.CLOSE))
 	{
-		var isDesktopWithMonitor =
-			BX.MessengerCommon.isDesktop()
-			&& typeof BX.Timeman !== 'undefined'
-			&& BX.Timeman.Monitor.isEnabled()
-		;
-
-		if (isDesktopWithMonitor)
-		{
-			BX.Timeman.Monitor.send();
-
-			return this.MAIN_BTN_HANDLER(e);
-		}
-
-		this.isMonitorEnabled().then(function(result)
-		{
-			if (result === true)
+		this.isMonitorEnabled().then(function(result) {
+			if (!result)
 			{
-				this.isPwtHistorySent().then(function(result)
+				return;
+			}
+
+			BX.desktopUtils.runningCheck(
+				function()
 				{
-					if (result === false)
-					{
-						this.openMonitorReport();
-					}
-					else
-					{
-						return this.MAIN_BTN_HANDLER(e);
-					}
-				}.bind(this));
-			}
-			else
-			{
-				return this.MAIN_BTN_HANDLER(e);
-			}
-		}.bind(this));
-
-		return;
-	}
-
-	if (this.MAIN_BTN_HANDLER == this.ACTIONS.CLOSE)
-	{
-		var isDesktopWithMonitor =
-			BX.MessengerCommon.isDesktop()
-			&& typeof BX.Timeman !== 'undefined'
-			&& BX.Timeman.Monitor.isEnabled()
-		;
-
-		if (isDesktopWithMonitor)
-		{
-			BX.Timeman.Monitor.send();
-
-			return this.MAIN_BTN_HANDLER(e);
-		}
-
-		this.isMonitorEnabled().then(function(result)
-		{
-			if (result === true)
-			{
-				this.isPwtHistorySent().then(function(result)
+					var notification = BX.UI.Notification.Center.notify({
+						content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION'),
+						autoHideDelay: 5000,
+						actions: [
+							{
+								title: BX.message('JS_CORE_TM_MONITOR_REPORT_OPEN'),
+								events:
+									{
+										click: function() {
+											this.openMonitorReport();
+											notification.close();
+										}.bind(this),
+									}
+							},
+						],
+					});
+				}.bind(this),
+				function()
 				{
-					if (result === false)
-					{
-						this.openMonitorReport();
-					}
-					else
-					{
-						return this.MAIN_BTN_HANDLER(e);
-					}
-				}.bind(this));
-			}
-			else
-			{
-				return this.MAIN_BTN_HANDLER(e);
-			}
+					BX.UI.Notification.Center.notify({
+						content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED'),
+						autoHideDelay: 5000,
+					});
+				}.bind(this)
+			);
+
 		}.bind(this));
 	}
-	else
-	{
-		return this.MAIN_BTN_HANDLER(e);
-	}
+
+	return this.MAIN_BTN_HANDLER(e);
 }
 
 BX.CTimeManWindow.prototype.clearTempData = function()

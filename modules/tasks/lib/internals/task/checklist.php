@@ -7,6 +7,19 @@ use Bitrix\Main;
  * Class CheckListTable
  *
  * @package Bitrix\Tasks\Internals\Task
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CheckList_Query query()
+ * @method static EO_CheckList_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CheckList_Result getById($id)
+ * @method static EO_CheckList_Result getList(array $parameters = array())
+ * @method static EO_CheckList_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection wakeUpCollection($rows)
  */
 class CheckListTable extends Main\Entity\DataManager
 {
@@ -66,6 +79,8 @@ class CheckListTable extends Main\Entity\DataManager
 			'TITLE' => array(
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateTitle'),
+				'save_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getSaveModificator'],
+				'fetch_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getFetchModificator'],
 			),
 			'IS_COMPLETE' => array(
 				'data_type' => 'boolean',

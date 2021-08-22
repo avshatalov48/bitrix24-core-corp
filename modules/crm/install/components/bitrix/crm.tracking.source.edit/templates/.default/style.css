@@ -28,6 +28,7 @@
 	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #333;
 	margin: 27px 0 15px;
+	word-break: break-word;
 }
 
 .crm-analytics-source-block .crm-analytics-source-header {

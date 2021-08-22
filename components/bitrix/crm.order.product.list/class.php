@@ -302,7 +302,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		/** @var \Bitrix\Crm\Order\BasketItem $basketItem */
 		foreach($rawValues as $values)
 		{
-			if(isset($values["MODULE"]) && $values["MODULE"] == "catalog")
+			if(isset($values["MODULE"]) && $values["MODULE"] === "catalog")
 			{
 				$catalogProductIds[] = $values['PRODUCT_ID'];
 			}
@@ -415,6 +415,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			}
 			$data["DISCOUNT_PRICE"] = CCrmCurrency::MoneyToString($values['DISCOUNT_PRICE'], $values['CURRENCY']);
 			$data["CUSTOM_PRICE"] = $values["CUSTOM_PRICE"];
+			$data['NAME'] = htmlspecialcharsbx($data['NAME']);
 			$rows[] = $data;
 		}
 

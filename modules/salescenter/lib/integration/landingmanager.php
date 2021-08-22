@@ -8,6 +8,7 @@ use Bitrix\Landing\Internals\BlockTable;
 use Bitrix\Landing\Landing;
 use Bitrix\Landing\Rights;
 use Bitrix\Landing\Site;
+use Bitrix\Landing\Subtype;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\UrlManager;
@@ -773,45 +774,24 @@ class LandingManager extends Base
 
 	//region webforms
 	/**
-	 * @param array $landingIds
 	 * @return array
 	 */
-	protected function getBlocksWithWebForms(array $landingIds)
+	public function getConnectedWebForms(): array
 	{
-		if(empty($landingIds))
-		{
-			return [];
-		}
-
-		return BlockTable::getList([
-			'select' => ['*'],
-			'filter' => [
-				'=LID' => $landingIds,
-				'=DELETED' => 'N',
-				'CONTENT' => '%data-b24form=%',
-			]
-		])->fetchAll();
-	}
-
-	/**
-	 * @return array
-	 */
-	public function getConnectedWebForms()
-	{
-		if($this->connectedWebForms === null)
+		if ($this->connectedWebForms === null)
 		{
 			$this->connectedWebForms = [];
 			$landings = $this->getLandings();
-			$blocks = $this->getBlocksWithWebForms(array_keys($landings));
-			foreach($blocks as $block)
+			$blocks = Subtype\Form::getLandingFormBlocks(array_keys($landings));
+			foreach ($blocks as $block)
 			{
-				if(preg_match('#data-b24form\=\"(\d+)\|([a-z0-9]{6})\"#', $block['CONTENT'], $matches))
+				$formId = Subtype\Form::getFormByBlock((int)$block['ID']);
+				if ($formId)
 				{
 					$this->connectedWebForms[] = [
-						'blockId' => $block['ID'],
-						'formId' => $matches[1],
-						'landingId' => $block['LID'],
-						'formCode' => $matches[2],
+						'blockId' => (int)$block['ID'],
+						'formId' => (int)$formId,
+						'landingId' => (int)$block['LID'],
 					];
 				}
 			}
@@ -930,7 +910,7 @@ class LandingManager extends Base
 		$previousWebFormPage = $this->getLastCreatedWebFormLanding($webFormPageCode);
 		$component->actionSelect($webFormPageCode);
 		$lastWebFormPage = $this->getLastCreatedWebFormLanding($webFormPageCode);
-		if($lastWebFormPage && !$previousWebFormPage || $lastWebFormPage['ID'] > $previousWebFormPage['ID'])
+		if(($lastWebFormPage && !$previousWebFormPage) || $lastWebFormPage['ID'] > $previousWebFormPage['ID'])
 		{
 			$landingId = $lastWebFormPage['ID'];
 			$result->setData(['landingId' => $landingId]);
@@ -975,64 +955,37 @@ class LandingManager extends Base
 	 * @param $formId
 	 * @return Result
 	 */
-	protected function setPageWebFormId($landingId, $formId)
+	protected function setPageWebFormId($landingId, $formId): Result
 	{
 		$result = new Result();
-		$attributeValue = $this->getWebFormAttributeValue($formId);
-		if(!$attributeValue)
+		$form = CrmManager::getInstance()->getWebForms()[$formId];
+		if (!$form)
 		{
 			return $result->addError(new Error('Form not found'));
 		}
-		$blocks = $this->getBlocksWithWebForms([$landingId]);
-		if(empty($blocks))
+		$blocks = Subtype\Form::getLandingFormBlocks($landingId);
+		if (empty($blocks))
 		{
 			return $result->addError(new Error('Could not found block with form on the page'));
 		}
-		foreach($blocks as $blockData)
+		foreach ($blocks as $blockData)
 		{
-			$block = new Block($blockData['ID'], $blockData);
-			$block->setAttributes([
-				'.bitrix24forms' => [
-					'data-b24form' => $attributeValue,
-				]
-			]);
-			$block->save();
-			if(!$block->getError()->isEmpty())
+			if (!Subtype\Form::setFormIdToBlock((int)$blockData['ID'], (int)$formId))
 			{
-				$result->addErrors($block->getError()->getErrors());
+				return $result->addError(new Error('Error while set form ID to block'));
 			}
-			else
+			if ($this->connectedWebForms !== null)
 			{
-				if($this->connectedWebForms !== null)
-				{
-					$this->connectedWebForms[] = [
-						'blockId' => $blockData['ID'],
-						'formId' => $formId,
-						'landingId' => $landingId,
-						'formCode' => CrmManager::getInstance()->getWebForms()[$formId]['SECURITY_CODE'],
-					];
-				}
+				$this->connectedWebForms[] = [
+					'blockId' => (int)$blockData['ID'],
+					'formId' => (int)$formId,
+					'landingId' => (int)$landingId,
+				];
 			}
 		}
 
 		return $result;
 	}
-
-	/**
-	 * @param $formId
-	 * @return false|string
-	 */
-	protected function getWebFormAttributeValue($formId)
-	{
-		$form = CrmManager::getInstance()->getWebForms()[$formId];
-		if($form)
-		{
-			return $form['ID'].'|'.$form['SECURITY_CODE'];
-		}
-
-		return false;
-	}
-
 	/**
 	 * @param $webFormPageCode
 	 * @return array|false

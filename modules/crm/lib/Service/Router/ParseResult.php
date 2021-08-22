@@ -8,7 +8,11 @@ class ParseResult
 	protected $componentParameters;
 	protected $templateName;
 
-	public function __construct(string $componentName = null, array $componentParameters = null, string $templateName = null)
+	public function __construct(
+		string $componentName = null,
+		array $componentParameters = null,
+		string $templateName = null
+	)
 	{
 		$this->componentName = $componentName;
 		$this->componentParameters = $componentParameters;

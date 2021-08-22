@@ -156,7 +156,8 @@ create table if not exists b_intranet_custom_section (
 	`TITLE` varchar(255) not null,
 	`MODULE_ID` varchar(50) not null,
 	PRIMARY KEY (`ID`),
-	UNIQUE ux_intranet_custom_section_table(`CODE`)
+	UNIQUE ux_intranet_custom_section_table(`CODE`),
+	INDEX ix_intranet_custom_section_module_id (`MODULE_ID`)
 );
 
 create table if not exists b_intranet_custom_section_page (
@@ -166,6 +167,7 @@ create table if not exists b_intranet_custom_section_page (
 	`TITLE` varchar(255) not null,
 	`SORT` int not null,
 	`MODULE_ID` varchar(50) not null,
-	`SETTINGS` text not null,
-	PRIMARY KEY (`ID`)
+	`SETTINGS` varchar(255) not null,
+	PRIMARY KEY (`ID`),
+	INDEX ix_intranet_custom_section_page_module_id_settings (`MODULE_ID`, `SETTINGS`)
 );

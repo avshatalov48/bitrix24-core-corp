@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -11,9 +11,6 @@
  */
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Integration;
-
-
-use Bitrix\Main\Application;
 
 final class SocialNetwork extends \Bitrix\Tasks\Dispatcher\PublicAction
 {

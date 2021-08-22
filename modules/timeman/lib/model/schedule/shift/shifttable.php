@@ -12,6 +12,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ShiftTable
  * @package Bitrix\Timeman\Model\Schedule\Shift
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Shift_Query query()
+ * @method static EO_Shift_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Shift_Result getById($id)
+ * @method static EO_Shift_Result getList(array $parameters = array())
+ * @method static EO_Shift_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Shift\Shift createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Shift\Shift wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection wakeUpCollection($rows)
  */
 class ShiftTable extends Main\ORM\Data\DataManager
 {

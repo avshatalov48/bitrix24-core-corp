@@ -132,6 +132,10 @@ if (!empty($arProducts) && !empty($props))
 	$iblockProperties = array();
 	foreach (array_keys($arProducts) as $index)
 	{
+		if ($arProducts[$index]['TYPE'] !== 'E')
+		{
+			continue;
+		}
 		$item = $arProducts[$index];
 		if (!isset($iblockData[$item['IBLOCK_ID']]))
 			$iblockData[$item['IBLOCK_ID']] = array();
@@ -175,6 +179,10 @@ if (!empty($arProducts) && !empty($props))
 
 foreach ($arProducts as $productID => $arItems)
 {
+	if ($arItems['TYPE'] !== 'E')
+	{
+		continue;
+	}
 	if (is_array($arItems['PRICES']) && isset($arItems['PRICES'][$priceTypeId]))
 	{
 		if (is_array($arItems['PRICES'][$priceTypeId])

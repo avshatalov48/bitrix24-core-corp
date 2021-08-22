@@ -12,8 +12,6 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
-use Bitrix\Timeman\Monitor\Config;
-use Bitrix\Timeman\Monitor\Report\Status;
 
 // check permissions
 $accessAllowed = false;
@@ -106,14 +104,7 @@ if (!empty($_POST['action']))
 		$outputVisitor = array('id' => (int) $_POST['id']);
 		$tmUser = new CTimeManUser($outputVisitor['id']);
 
-		if (
-			Config::isMonitorEnabledForUser($outputVisitor['id'])
-			&& Status::getForUser($outputVisitor['id']) === Status::WAITING_DATA
-		)
-		{
-			$errorResponse = ['msg' => Loc::getMessage("FACEID_TRACKERWD_CMP_ERROR_OPEN_DAY_MONITOR_ENABLED")];
-		}
-		elseif ($tmUser->openDay(false, '', ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
+		if ($tmUser->openDay(false, '', ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
 		{
 			// ok
 			$actionStatus = 'OPENED';

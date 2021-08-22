@@ -188,8 +188,13 @@ else
 </script>
 
 <div class="user-block" id="user-block" onclick="showUserMenu()">
-	<span class="ui-icon ui-icon-common-user user-img">
-		<i <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=CHTTP::urnEncode($arResult["USER_PERSONAL_PHOTO_SRC"])?>') no-repeat center; background-size: cover;"<?endif?>></i>
+	<span class="ui-icon ui-icon-common-user user-img"><?php
+		$style = (
+			$arResult['USER_PERSONAL_PHOTO_SRC']
+				? "background: url('" . $arResult['USER_PERSONAL_PHOTO_SRC']. "') no-repeat center; background-size: cover;"
+				: ''
+		);
+		?><i style="<?= $style ?>"></i>
 	</span>
 	<span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
 </div>

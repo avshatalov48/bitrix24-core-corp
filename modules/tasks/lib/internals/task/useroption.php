@@ -7,6 +7,19 @@ use Bitrix\Main;
  * Class UserOptionTable
  *
  * @package Bitrix\Tasks\Internals\Task
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_UserOption_Query query()
+ * @method static EO_UserOption_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_UserOption_Result getById($id)
+ * @method static EO_UserOption_Result getList(array $parameters = array())
+ * @method static EO_UserOption_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_UserOption createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_UserOption_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_UserOption wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_UserOption_Collection wakeUpCollection($rows)
  */
 class UserOptionTable extends Main\Entity\DataManager
 {

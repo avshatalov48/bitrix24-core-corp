@@ -2,6 +2,8 @@ import {Type, Dom} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
 
+import {ScrumDod} from 'tasks.scrum.dod';
+
 import {View} from './view';
 import {TeamSpeedButton} from './header/team.speed.button';
 
@@ -11,19 +13,21 @@ import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
 import {Entity} from '../entity/entity';
 import {Item} from '../item/item';
 import {Decomposition} from '../item/task/decomposition';
+import {DodSidePanel} from '../dod/side.panel';
+import {TeamSpeedSidePanel} from '../team.speed/side.panel';
 
 import {SidePanel} from '../service/side.panel';
 import {PULL as Pull} from 'pull.client';
 
 import {DomBuilder} from '../utility/dom.builder';
 import {EntityStorage} from '../utility/entity.storage';
+import {EntityCounters} from '../utility/entity.counters';
 import {FilterHandler} from '../utility/filter.handler';
 import {Epic} from '../utility/epic';
 import {TagSearcher} from '../utility/tag.searcher';
-import {ProjectSidePanel} from '../utility/project.side.panel';
-import {PullSprint} from '../utility/pull.sprint';
-import {PullItem} from '../utility/pull.item';
-import {PullEpic} from '../utility/pull.epic';
+import {PullSprint} from '../pull/pull.sprint';
+import {PullItem} from '../pull/pull.item';
+import {PullEpic} from '../pull/pull.epic';
 import {SprintMover} from '../utility/sprint.mover';
 import {ItemMover} from '../utility/item.mover';
 import {ItemStyleDesigner} from '../utility/item.style.designer';
@@ -33,6 +37,7 @@ import type {BacklogParams} from '../entity/backlog/backlog';
 import type {SprintParams} from '../entity/sprint/sprint';
 import type {EpicType, ItemParams} from '../item/item';
 import type {Views} from './view';
+import {Counters} from "../counters/counters";
 
 type Responsible = {
 	name: string,
@@ -77,12 +82,18 @@ export class Plan extends View
 			this.entityStorage.addSprint(sprint);
 		});
 
-		this.sidePanel = new SidePanel();
-
-		this.filterHandler = new FilterHandler({
-			filter: this.filter,
+		this.entityCounters = new EntityCounters({
 			requestSender: this.requestSender,
 			entityStorage: this.entityStorage
+		});
+
+		this.sidePanel = new SidePanel();
+
+		this.counters = new Counters({
+			filter: this.filter,
+			userId: params.userId,
+			groupId: params.groupId,
+			isOwnerCurrentUser: params.isOwnerCurrentUser
 		});
 
 		this.tagSearcher = new TagSearcher();
@@ -105,11 +116,11 @@ export class Plan extends View
 		});
 		this.domBuilder.subscribe(
 			'createSprint',
-			(baseEvent: BaseEvent) => this.onSubscribeToSprint(baseEvent.getData())
+			(baseEvent: BaseEvent) => this.subscribeToSprint(baseEvent.getData())
 		);
 		this.domBuilder.subscribe(
 			'createSprintNode',
-			(baseEvent: BaseEvent) => this.onSubscribeToSprint(baseEvent.getData())
+			(baseEvent: BaseEvent) => this.subscribeToSprint(baseEvent.getData())
 		);
 
 		this.sprintMover = new SprintMover({
@@ -123,10 +134,18 @@ export class Plan extends View
 			domBuilder: this.domBuilder
 		});
 
+		this.filterHandler = new FilterHandler({
+			filter: this.filter,
+			requestSender: this.requestSender,
+			entityStorage: this.entityStorage,
+			subTasksCreator: this.subTasksCreator
+		});
+
 		this.itemMover = new ItemMover({
 			requestSender: this.requestSender,
 			domBuilder: this.domBuilder,
 			entityStorage: this.entityStorage,
+			entityCounters: this.entityCounters,
 			subTasksCreator: this.subTasksCreator
 		});
 
@@ -154,6 +173,7 @@ export class Plan extends View
 			requestSender: this.requestSender,
 			domBuilder: this.domBuilder,
 			entityStorage: this.entityStorage,
+			entityCounters: this.entityCounters,
 			tagSearcher: this.tagSearcher,
 			itemMover: this.itemMover,
 			subTasksCreator: this.subTasksCreator,
@@ -165,6 +185,10 @@ export class Plan extends View
 			domBuilder: this.domBuilder,
 			entityStorage: this.entityStorage,
 			epic: this.epic,
+		});
+
+		this.itemDod = new ScrumDod({
+			groupId: this.groupId
 		});
 
 		this.bindHandlers();
@@ -209,6 +233,7 @@ export class Plan extends View
 		this.entityStorage.getBacklog().subscribe('openListEpicGrid', this.onOpenListEpicGrid.bind(this));
 		this.entityStorage.getBacklog().subscribe('openDefinitionOfDone', this.onOpenDefinitionOfDone.bind(this));
 		this.entityStorage.getBacklog().subscribe('attachFilesToTask', this.onAttachFilesToTask.bind(this));
+		this.entityStorage.getBacklog().subscribe('showDod', this.onShowDod.bind(this));
 		this.entityStorage.getBacklog().subscribe('showTagSearcher', this.onShowTagSearcher.bind(this));
 		this.entityStorage.getBacklog().subscribe('showEpicSearcher', this.onShowEpicSearcher.bind(this));
 		this.entityStorage.getBacklog().subscribe('startDecomposition', this.onStartDecomposition.bind(this));
@@ -220,14 +245,14 @@ export class Plan extends View
 		this.entityStorage.getBacklog().subscribe('filterByTag', this.onFilterByTag.bind(this));
 		this.entityStorage.getBacklog().subscribe('activateGroupMode', this.onActivateGroupMode.bind(this));
 		this.entityStorage.getBacklog().subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
-		this.entityStorage.getBacklog().subscribe('loadBacklogItems', this.onLoadBacklogItems.bind(this));
+		this.entityStorage.getBacklog().subscribe('loadItems', this.onLoadItems.bind(this));
 
-		this.entityStorage.getSprints().forEach((sprint) => this.onSubscribeToSprint(sprint));
+		this.entityStorage.getSprints().forEach((sprint) => this.subscribeToSprint(sprint));
 
 		this.epic.subscribe('filterByTag', this.onFilterByTag.bind(this));
 	}
 
-	onSubscribeToSprint(sprint: Sprint)
+	subscribeToSprint(sprint: Sprint)
 	{
 		sprint.subscribe('createTaskItem', this.onCreateTaskItem.bind(this));
 		sprint.subscribe('updateItem', this.onUpdateItem.bind(this));
@@ -243,6 +268,7 @@ export class Plan extends View
 		sprint.subscribe('changeSprintName', this.onChangeSprintName.bind(this));
 		sprint.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
 		sprint.subscribe('attachFilesToTask', this.onAttachFilesToTask.bind(this));
+		sprint.subscribe('showDod', this.onShowDod.bind(this));
 		sprint.subscribe('showTagSearcher', this.onShowTagSearcher.bind(this));
 		sprint.subscribe('showEpicSearcher', this.onShowEpicSearcher.bind(this));
 		sprint.subscribe('startDecomposition', this.onStartDecomposition.bind(this));
@@ -257,6 +283,7 @@ export class Plan extends View
 		sprint.subscribe('getSprintCompletedItems', this.onGetSprintCompletedItems.bind(this));
 		sprint.subscribe('showSprintBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
 		sprint.subscribe('toggleSubTasks', this.onToggleSubTasks.bind(this));
+		sprint.subscribe('loadItems', this.onLoadItems.bind(this));
 	}
 
 	onCreateTaskItem(baseEvent: BaseEvent)
@@ -284,6 +311,7 @@ export class Plan extends View
 				this.tagSearcher.addTagToSearcher(tag);
 			});
 			entity.setItem(newItem);
+			this.updateEntityCounters(entity);
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -291,11 +319,23 @@ export class Plan extends View
 
 	onUpdateItem(baseEvent: BaseEvent)
 	{
+		const entity = baseEvent.getTarget();
 		const updateData = baseEvent.getData();
+
 		this.pullItem.addIdToSkipUpdating(updateData.itemId);
-		this.requestSender.updateItem(baseEvent.getData()).catch((response) => {
-			this.requestSender.showErrorAlert(response);
-		});
+
+		this.requestSender.updateItem(baseEvent.getData())
+			.then(() => {
+				const isStoryPointsUpdated = (!Type.isUndefined(updateData.storyPoints));
+				if (isStoryPointsUpdated)
+				{
+					this.updateEntityCounters(entity);
+				}
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
+		;
 	}
 
 	onRemoveItem(baseEvent: BaseEvent)
@@ -492,6 +532,18 @@ export class Plan extends View
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
+	}
+
+	onShowDod(baseEvent: BaseEvent)
+	{
+		const item = baseEvent.getData();
+
+		this.itemDod.skipNotificationPopups();
+
+		this.itemDod.showList(item.getSourceId())
+			.then(() => {})
+			.catch(() => {})
+		;
 	}
 
 	onToggleSubTasks(baseEvent: BaseEvent)
@@ -737,6 +789,7 @@ export class Plan extends View
 					this.tagSearcher.addTagToSearcher(tag);
 				});
 				entity.setItem(newItem);
+				this.updateEntityCounters(entity);
 				if (!decomposition.isBacklogDecomposition())
 				{
 					if (lastDecomposedItem.getItemId() === parentItem.getItemId())
@@ -836,17 +889,17 @@ export class Plan extends View
 		});
 	}
 
-	onLoadBacklogItems(baseEvent: BaseEvent)
+	onLoadItems(baseEvent: BaseEvent)
 	{
-		const backlog = baseEvent.getTarget();
+		const entity = baseEvent.getTarget();
 
-		backlog.setActiveLoadBacklogItems(true);
+		entity.setActiveLoadItems(true);
 
-		const loader = backlog.showItemsLoader();
+		const loader = entity.showItemsLoader();
 
 		const requestData = {
-			entityId: backlog.getId(),
-			pageNumber: backlog.getPageNumberItems() + 1
+			entityId: entity.getId(),
+			pageNumber: entity.getPageNumberItems() + 1
 		};
 
 		this.requestSender.getItems(requestData)
@@ -854,16 +907,16 @@ export class Plan extends View
 				const items = response.data;
 				if (Type.isArray(items) && items.length)
 				{
-					backlog.incrementPageNumberItems();
-					backlog.setActiveLoadBacklogItems(false);
+					entity.incrementPageNumberItems();
+					entity.setActiveLoadItems(false);
 
-					this.createItemsInEntity(backlog, items);
+					this.createItemsInEntity(entity, items);
 				}
 				loader.hide();
 			})
 			.catch((response) => {
 				loader.hide();
-				backlog.setActiveLoadBacklogItems(false);
+				entity.setActiveLoadItems(false);
 				this.requestSender.showErrorAlert(response);
 			})
 		;
@@ -873,6 +926,7 @@ export class Plan extends View
 	{
 		items.forEach((itemData: ItemParams) => {
 			const item = new Item(itemData);
+			item.setEntityType(entity.getEntityType());
 			if (!this.entityStorage.findItemByItemId(item.getItemId()))
 			{
 				this.domBuilder.append(item.render(), entity.getListItemsNode());
@@ -884,11 +938,11 @@ export class Plan extends View
 
 	onShowTeamSpeedChart(baseEvent: BaseEvent)
 	{
-		const projectSidePanel = new ProjectSidePanel({
+		const teamSpeedSidePanel = new TeamSpeedSidePanel({
 			sidePanel: this.sidePanel,
 			requestSender: this.requestSender
 		});
-		projectSidePanel.showTeamSpeedChart();
+		teamSpeedSidePanel.showTeamSpeedChart();
 	}
 
 	onOpenAddEpicForm(baseEvent: BaseEvent)
@@ -909,11 +963,13 @@ export class Plan extends View
 	onOpenDefinitionOfDone(baseEvent: BaseEvent)
 	{
 		const entity = baseEvent.getTarget();
-		const projectSidePanel = new ProjectSidePanel({
+
+		const sidePanel = new DodSidePanel({
 			sidePanel: this.sidePanel,
 			requestSender: this.requestSender
 		});
-		projectSidePanel.showDefinitionOfDone(entity);
+
+		sidePanel.showSettingsPanel(entity);
 	}
 
 	createItem(itemType: string, value: string): Item
@@ -1007,5 +1063,18 @@ export class Plan extends View
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
+	}
+
+	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)
+	{
+		const entities = new Map();
+
+		entities.set(sourceEntity.getId(), sourceEntity);
+		if (endEntity)
+		{
+			entities.set(endEntity.getId(), endEntity);
+		}
+
+		this.entityCounters.updateCounters(entities);
 	}
 }

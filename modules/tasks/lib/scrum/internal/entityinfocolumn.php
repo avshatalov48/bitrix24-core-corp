@@ -4,13 +4,13 @@ namespace Bitrix\Tasks\Scrum\Internal;
 class EntityInfoColumn
 {
 	private $sprintGoal = '';
-	private $dodItemsRequired = 'Y';
+	private $typesGenerated = 'N';
 
 	public function getInfoData(): array
 	{
 		return [
 			$this->getSprintGoalKey() => $this->getSprintGoal(),
-			$this->getDodItemsRequiredKey() => $this->getDodItemsRequired()
+			$this->getTypesGeneratedKey() => $this->getTypesGenerated(),
 		];
 	}
 
@@ -21,9 +21,9 @@ class EntityInfoColumn
 			$this->setSprintGoal($infoData[$this->getSprintGoalKey()]);
 		}
 
-		if (isset($infoData[$this->getDodItemsRequiredKey()]) && is_string($infoData[$this->getDodItemsRequiredKey()]))
+		if (isset($infoData[$this->getTypesGeneratedKey()]) && is_string($infoData[$this->getTypesGeneratedKey()]))
 		{
-			$this->setDodItemsRequired($infoData[$this->getDodItemsRequiredKey()]);
+			$this->setTypesGenerated($infoData[$this->getTypesGeneratedKey()]);
 		}
 	}
 
@@ -32,9 +32,24 @@ class EntityInfoColumn
 		return 'sprintGoal';
 	}
 
+	public function getTypesGeneratedKey(): string
+	{
+		return 'typesGenerated';
+	}
+
 	public function getSprintGoal(): string
 	{
 		return $this->sprintGoal;
+	}
+
+	public function getTypesGenerated(): string
+	{
+		return $this->typesGenerated;
+	}
+
+	public function isTypesGenerated(): bool
+	{
+		return $this->typesGenerated === 'Y';
 	}
 
 	public function setSprintGoal(string $sprintGoal): void
@@ -42,23 +57,13 @@ class EntityInfoColumn
 		$this->sprintGoal = $sprintGoal;
 	}
 
-	public function getDodItemsRequiredKey(): string
-	{
-		return 'dodItemsRequired';
-	}
-
-	public function getDodItemsRequired(): string
-	{
-		return $this->dodItemsRequired;
-	}
-
-	public function setDodItemsRequired(string $dodItemsRequired): void
+	public function setTypesGenerated(string $typesGenerated): void
 	{
 		$availableValues = ['Y', 'N'];
-		if (!in_array($dodItemsRequired, $availableValues))
+		if (!in_array($typesGenerated, $availableValues))
 		{
-			$dodItemsRequired = 'Y';
+			$typesGenerated = 'N';
 		}
-		$this->dodItemsRequired = $dodItemsRequired;
+		$this->typesGenerated = $typesGenerated;
 	}
 }

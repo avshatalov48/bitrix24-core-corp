@@ -243,6 +243,32 @@ export class SprintHeader extends EventEmitter
 		}
 	}
 
+	upTick()
+	{
+		if (!this.node)
+		{
+			return;
+		}
+
+		const tickButtonNode = this.node.querySelector('.tasks-scrum-sprint-header-tick');
+
+		Dom.removeClass(tickButtonNode.firstElementChild, 'ui-btn-icon-angle-down');
+		Dom.addClass(tickButtonNode.firstElementChild, 'ui-btn-icon-angle-up');
+	}
+
+	downTick()
+	{
+		if (!this.node)
+		{
+			return;
+		}
+
+		const tickButtonNode = this.node.querySelector('.tasks-scrum-sprint-header-tick');
+
+		Dom.removeClass(tickButtonNode.firstElementChild, 'ui-btn-icon-angle-up');
+		Dom.addClass(tickButtonNode.firstElementChild, 'ui-btn-icon-angle-down');
+	}
+
 	onButtonClick()
 	{
 		if (this.sprint.isActive())

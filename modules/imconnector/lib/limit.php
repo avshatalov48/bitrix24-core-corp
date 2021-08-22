@@ -8,6 +8,7 @@ class Limit
 	protected const OPTION_CONNECTOR_IMESSAGE = 'imconnector_can_use_apple_business_chat';
 
 	public const INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE = 'limit_contact_center_apple_business_chat';
+	public const INFO_HELPER_LIMIT_CONNECTOR_NOTIFICATIONS = 'limit_crm_sales_sms_whatsapp';
 
 	/**
 	 * @return bool

@@ -18,6 +18,13 @@ class CallView extends Engine\Controller
 			return null;
 		}
 
+		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		if ($entityId > 0 && !\CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		{
+			$this->addError(new Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		return new Engine\Response\Component(
 			'bitrix:crm.card.show',
 			'',

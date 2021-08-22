@@ -137,7 +137,7 @@ class CTaskLog
 
 			switch ($key) {
 				case "CREATED_DATE":
-					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, $DB->CharToDateFunction($val), "date", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, \Bitrix\Tasks\Util\Db::charToDateFunction($val), "date", $bFullJoin, $cOperationType);
 					break;
 
 				case "USER_ID":

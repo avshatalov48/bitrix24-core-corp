@@ -1,10 +1,12 @@
 <?php
 namespace Bitrix\Intranet;
 
+use Bitrix\ImConnector\Tools\Connectors\Notifications;
 use Bitrix\ImOpenLines\Common;
 use Bitrix\ImOpenlines\Security\Helper;
 use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
@@ -160,11 +162,11 @@ class ContactCenter
 	 * @return Result
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function voximplantGetItems($filter = array())
+	public function voximplantGetItems($filter = [])
 	{
 		$result = new Result();
 		$module = "voximplant";
-		$itemsList = array();
+		$itemsList = [];
 
 		if (!Loader::includeModule($module))
 		{
@@ -190,12 +192,12 @@ class ContactCenter
 
 				if ($isAddItemToList)
 				{
-					$itemsList["voximplant"] = array(
+					$itemsList["voximplant"] = [
 						"NAME" => Loc::getMessage("CONTACT_CENTER_TELEPHONY"),
 						"LINK" => \CUtil::JSEscape(SITE_DIR . "telephony/index.php"),
 						"SELECTED" => $selected,
 						"LOGO_CLASS" => "ui-icon ui-icon-service-call"
-					);
+					];
 
 					$permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
 					if(Limits::canRentMultiple() && $permissions->canModifyLines())
@@ -205,23 +207,23 @@ class ContactCenter
 							!method_exists(\Bitrix\Voximplant\Limits::class,"canManageTelephony")
 							|| Limits::canManageTelephony()
 						);
-						$itemsList["voximplant_rent5"] = array(
+						$itemsList["voximplant_rent5"] = [
 							"NAME" => Loc::getMessage("CONTACT_CENTER_RENT_5_NUMBERS"),
-							$canManageTelephony ?
+							"ONCLICK" => $canManageTelephony ?
 								"BX.Voximplant.NumberRent.create({packetSize: 5}).show();"
 								: "BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');",
 							"SELECTED" => \CVoxImplantPhone::hasRentedNumberPacket(5),
 							"LOGO_CLASS" => "ui-icon ui-icon-package-numbers-five"
 
-						);
-						$itemsList["voximplant_rent10"] = array(
+						];
+						$itemsList["voximplant_rent10"] = [
 							"NAME" => Loc::getMessage("CONTACT_CENTER_RENT_10_NUMBERS"),
 							"ONCLICK" => $canManageTelephony ?
 								"BX.Voximplant.NumberRent.create({packetSize: 10}).show();"
 								: "BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');",
 							"SELECTED" => \CVoxImplantPhone::hasRentedNumberPacket(10),
 							"LOGO_CLASS" => "ui-icon ui-icon-package-numbers-ten"
-						);
+						];
 					}
 				}
 			}
@@ -373,6 +375,16 @@ class ContactCenter
 				)
 				{
 					$connectionInfoHelperLimit = \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_IMESSAGE;
+				}
+
+				if ($code === \Bitrix\ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR && $selected === false)
+				{
+					/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
+					$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
+					if (!$toolsNotifications->canUse())
+					{
+						$connectionInfoHelperLimit = \Bitrix\ImConnector\Limit::INFO_HELPER_LIMIT_CONNECTOR_NOTIFICATIONS;
+					}
 				}
 
 				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);

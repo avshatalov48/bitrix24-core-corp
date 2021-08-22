@@ -158,7 +158,8 @@ $groupPopupExists = false;
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && $item["OPEN_IN_NEW_PAGE"]):?>
 								target="_blank"
 							<?endif?>
-							onclick="if (BX.Bitrix24.LeftMenuClass.isEditMode()) return false;
+							<?= (mb_strpos($curLink, SITE_DIR . 'workgroups/group/') === 0 ? 'data-slider-ignore-autobinding="true"' : '') ?>
+							onclick="if (BX.Intranet.LeftMenu.isEditMode()) return false;
 							<?if (isset($item["PARAMS"]["onclick"])):?>
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
 							<?endif?>">
@@ -187,7 +188,7 @@ $groupPopupExists = false;
 						endif
 						?><span
 							class="menu-fav-editable-btn menu-favorites-btn<?=$editBtnHideClass?>"
-							onclick="BX.Bitrix24.LeftMenuClass.openMenuPopup(this, '<?=CUtil::JSEscape($item["PARAMS"]["menu_item_id"])?>')"><?
+							onclick="BX.Intranet.LeftMenu.openMenuPopup(this, '<?=CUtil::JSEscape($item["PARAMS"]["menu_item_id"])?>')"><?
 							?><span class="menu-favorites-btn-icon"></span><?
 						?></span><?
 					?></li><?
@@ -243,7 +244,13 @@ $groupPopupExists = false;
 
 			<?
 			if (CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed()):?>
-				<div class="menu-invite-employees" onclick="<?=CIntranetInviteDialog::showInviteDialogLink()?>">
+				<div class="menu-invite-employees" onclick="<?=CIntranetInviteDialog::showInviteDialogLink(
+						[
+							'analyticsLabel' => [
+								'analyticsLabel[source]' => 'leftMenu',
+							]
+						]
+				)?>">
 					<span class="menu-invite-icon-box"><span class="menu-invite-icon"></span></span>
 					<span class="menu-invite-employees-text"><?=Loc::getMessage("BITRIX24_INVITE_ACTION")?></span>
 				</div>
@@ -398,7 +405,7 @@ $arJSParams = array(
 		MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>'
 	});
 
-	BX.Bitrix24.LeftMenu.init(<?=CUtil::PhpToJSObject($arJSParams)?>);
+	BX.Intranet.LeftMenu = new BX.Intranet.LeftMenu(<?=CUtil::PhpToJSObject($arJSParams)?>);
 </script>
 
 <?
@@ -406,10 +413,10 @@ $arJSParams = array(
 $js = <<<HTML
 
 <script>
-if (!BX.Bitrix24.LeftMenu.initPagetitleStar())
+if (!BX.Intranet.LeftMenu.initPagetitleStar())
 {
 	BX.ready(function() {
-		BX.Bitrix24.LeftMenu.initPagetitleStar()
+		BX.Intranet.LeftMenu.initPagetitleStar()
 	});
 }
 
@@ -499,7 +506,7 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 			$className = "group-panel-item";
 			$className .= $group["EXTRANET"] ? " group-panel-item-extranet" : " group-panel-item-intranet";
 			$className .= $group["FAVORITE"] ? " group-panel-item-favorite" : "";
-			?><a href="<?=SITE_DIR?>workgroups/group/<?=$group["ID"]?>/general/" class="<?=$className?>" data-id="<?=$group["ID"]?>"><?
+			?><a href="<?=SITE_DIR?>workgroups/group/<?=$group["ID"]?>/" class="<?=$className?>" data-id="<?=$group["ID"]?>" data-slider-ignore-autobinding="true"><?
 				?><span
 					class="group-panel-item-text"
 					title="<?=htmlspecialcharsbx($group["NAME"])?>"><?=htmlspecialcharsbx($group["NAME"])?></span><?

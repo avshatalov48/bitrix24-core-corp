@@ -284,7 +284,10 @@ export class Item extends EventEmitter
 			const storyPoints = new StoryPoints();
 
 			Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
-				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				if (subTaskInfo.storyPoints instanceof StoryPoints)
+				{
+					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				}
 			});
 
 			return storyPoints;
@@ -319,7 +322,10 @@ export class Item extends EventEmitter
 
 		Object.values(subTasksInfo).map((subTaskInfo: SubTaskInfo) => {
 			const storyPoints = new StoryPoints();
-			storyPoints.setPoints(subTaskInfo.storyPoints);
+			if (Type.isString(subTaskInfo.storyPoints))
+			{
+				storyPoints.setPoints(subTaskInfo.storyPoints);
+			}
 			subTaskInfo.storyPoints = storyPoints;
 		});
 
@@ -379,7 +385,10 @@ export class Item extends EventEmitter
 		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
 			if (subTaskInfo.completed === 'Y')
 			{
-				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				if (subTaskInfo.storyPoints instanceof StoryPoints)
+				{
+					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				}
 			}
 		});
 
@@ -398,7 +407,10 @@ export class Item extends EventEmitter
 		Object.values(this.getSubTasksInfo()).map((subTaskInfo: SubTaskInfo) => {
 			if (subTaskInfo.completed === 'N')
 			{
-				storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				if (subTaskInfo.storyPoints instanceof StoryPoints)
+				{
+					storyPoints.addPoints(subTaskInfo.storyPoints.getPoints());
+				}
 			}
 		});
 
@@ -498,6 +510,11 @@ export class Item extends EventEmitter
 	getTaskCounts(): TaskCounts|null
 	{
 		return this.taskCounts;
+	}
+
+	cleanTaskCounts()
+	{
+		this.taskCounts = null;
 	}
 
 	setInfo(info: ?ItemInfo)
@@ -668,13 +685,12 @@ export class Item extends EventEmitter
 	getPreviewVersion(): Item
 	{
 		const previewItem = Runtime.clone(this);
+
 		previewItem.setItemId();
 		previewItem.itemNode = null;
-		if (previewItem.taskCounts)
-		{
-			previewItem.taskCounts = new TaskCounts(previewItem);
-		}
 		previewItem.activatePreviewMode();
+		previewItem.taskCounts = null
+
 		return previewItem;
 	}
 
@@ -794,7 +810,7 @@ export class Item extends EventEmitter
 				attachedFilesCount: tmpItem.getTaskCounts().getAttachedFilesCount(),
 				checkListComplete: tmpItem.getTaskCounts().getCheckListComplete(),
 				checkListAll: tmpItem.getTaskCounts().getCheckListAll(),
-				newCommentsCount: tmpItem.getTaskCounts().getNewCommentsCount(),
+				taskCounter: tmpItem.getTaskCounts().getTaskCounters(),
 			});
 		}
 		if (tmpItem.isCompleted() !== this.isCompleted())
@@ -811,6 +827,8 @@ export class Item extends EventEmitter
 		this.setLinkedTask(tmpItem.isLinkedTask() ? 'Y' : 'N');
 		this.setParentTaskId(tmpItem.getParentTaskId());
 		this.setSubTask(tmpItem.isSubTask() ? 'Y' : 'N');
+
+		this.setSubTasksInfo(tmpItem.getSubTasksInfo());
 
 		if (this.isNodeCreated())
 		{
@@ -958,12 +976,45 @@ export class Item extends EventEmitter
 		}
 	}
 
+	upSubTasksTick()
+	{
+		if (!this.isNodeCreated())
+		{
+			return;
+		}
+
+		const subTasksTick = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
+
+		if (subTasksTick)
+		{
+			Dom.removeClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-down');
+			Dom.addClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-up');
+		}
+	}
+
+	downSubTasksTick()
+	{
+		if (!this.isNodeCreated())
+		{
+			return;
+		}
+
+		const subTasksTick = this.getItemNode().querySelector('.tasks-scrum-item-subtasks-tick');
+
+		if (subTasksTick)
+		{
+			Dom.removeClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-up');
+			Dom.addClass(subTasksTick.firstElementChild, 'ui-btn-icon-angle-down');
+		}
+	}
+
 	renderTags(): ?HTMLElement|string
 	{
 		if (this.epic === null && this.tags.length === 0)
 		{
 			return '';
 		}
+
 		return Tag.render`
 			<div class="tasks-scrum-item-tags-container">
 				${this.getEpicTag()}
@@ -1164,7 +1215,7 @@ export class Item extends EventEmitter
 
 	onItemClick(event)
 	{
-		if (this.isClickOnEditableName(event))
+		if (this.isClickOnEditableName(event) && !this.isGroupMode())
 		{
 			return;
 		}
@@ -1192,7 +1243,7 @@ export class Item extends EventEmitter
 
 	onNameClick(event)
 	{
-		if (event.target.classList.contains('ui-ctl-element'))
+		if (this.isClickOnEditableName(event) && !this.isGroupMode())
 		{
 			this.emit('showTask');
 		}
@@ -1360,6 +1411,13 @@ export class Item extends EventEmitter
 						diskManager.showAttachmentMenu(event.currentTarget);
 					},
 				},
+				dod: {
+					activity: (!this.decompositionMode && !this.isGroupMode()),
+					callback: () => {
+						this.emit('dod');
+						this.actionsPanel.destroy();
+					},
+				},
 				move: {
 					activity: (!this.decompositionMode && this.isMovable() && !this.isSubTask()),
 					callback: (event) => {
@@ -1441,6 +1499,11 @@ export class Item extends EventEmitter
 	{
 		this.epic = (Type.isPlainObject(epic) || epic === null ? epic : this.epic);
 		this.tags = (Type.isArray(tags) ? tags : this.tags);
+
+		if (this.epic === null && this.tags.length === 0)
+		{
+			return;
+		}
 
 		this.updateTagsContainer();
 	}

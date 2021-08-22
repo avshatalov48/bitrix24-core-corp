@@ -510,3 +510,7 @@ a.socialnetwork-group-title-link:hover {
 	content: '';
 	margin: 0;
 }
+
+.socialnetwork-group-sidebar-videocall {
+	padding-bottom: 25px;
+}

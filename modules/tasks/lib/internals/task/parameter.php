@@ -17,7 +17,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Tasks
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Parameter_Query query()
+ * @method static EO_Parameter_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Parameter_Result getById($id)
+ * @method static EO_Parameter_Result getList(array $parameters = array())
+ * @method static EO_Parameter_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter_Collection wakeUpCollection($rows)
+ */
 
 class ParameterTable extends Main\Entity\DataManager
 {

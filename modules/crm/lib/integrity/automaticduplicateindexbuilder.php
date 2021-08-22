@@ -146,7 +146,14 @@ class AutomaticDuplicateIndexBuilder extends DuplicateIndexBuilder
 	{
 		if (isset($filter['MATCH_HASH']))
 		{
-			$filter['=MATCH_HASH'] = $filter['MATCH_HASH'];
+			if (is_array($filter['MATCH_HASH']))
+			{
+				$filter['@MATCH_HASH'] = $filter['MATCH_HASH'];
+			}
+			else
+			{
+				$filter['=MATCH_HASH'] = $filter['MATCH_HASH'];
+			}
 			unset($filter['MATCH_HASH']);
 		}
 		if (isset($filter['SCOPE']))
@@ -358,5 +365,31 @@ class AutomaticDuplicateIndexBuilder extends DuplicateIndexBuilder
 	protected static function markDuplicateIndexAsJunk($entityTypeID, $entityID)
 	{
 		throw new NotImplementedException('Automatic duplicate index can not be junk');
+	}
+
+	protected function processInvalidDirtyItems(array $invalidHashes)
+	{
+		if (empty($invalidHashes))
+		{
+			return;
+		}
+		static::deleteDuplicateIndexByFilter([
+			'TYPE_ID' => $this->getTypeID(),
+			'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
+			'USER_ID' => $this->getUserID(),
+			'SCOPE' => $this->getScope(),
+			'MATCH_HASH' => $invalidHashes,
+			'IS_DIRTY' => true,
+		]);
+	}
+
+	protected function markAsNotDirty($primary)
+	{
+		Entity\AutomaticDuplicateIndexTable::update(
+			$primary,
+			[
+				'IS_DIRTY' => false,
+			]
+		);
 	}
 }

@@ -26,7 +26,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman\Model\Monitor
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_MonitorUserChart_Query query()
+ * @method static EO_MonitorUserChart_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_MonitorUserChart_Result getById($id)
+ * @method static EO_MonitorUserChart_Result getList(array $parameters = array())
+ * @method static EO_MonitorUserChart_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorUserChart_Collection wakeUpCollection($rows)
+ */
 
 class MonitorUserChartTable extends DataManager
 {

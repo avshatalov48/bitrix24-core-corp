@@ -363,6 +363,10 @@ class OrderDataProvider extends Main\Filter\EntityDataProvider
 			{
 				$type = 'list';
 			}
+			elseif ($property['TYPE'] === 'DATE')
+			{
+				$type = 'string';
+			}
 			else
 			{
 				$type = mb_strtolower($property['TYPE']);

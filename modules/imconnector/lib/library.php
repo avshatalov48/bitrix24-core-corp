@@ -35,6 +35,7 @@ class Library
 	public const ID_FBINSTAGRAMDIRECT_CONNECTOR = 'fbinstagramdirect';
 	const ID_IMESSAGE_CONNECTOR = 'imessage';
 	const ID_OLX_CONNECTOR = 'olx';
+	public const ID_NOTIFICATIONS_CONNECTOR = 'notifications';
 
 	const COMPONENT_NAME_REST = 'bitrix:imconnector.rest';
 
@@ -78,7 +79,8 @@ class Library
 	const ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR = 'FAILED_TO_SAVE_SETTINGS_CONNECTOR';//Failed to save settings connector
 	const ERROR_FAILED_TO_TEST_CONNECTOR = 'FAILED_TO_TEST_CONNECTOR';//Failed to test the connection of the connector
 	const ERROR_FAILED_REGISTER_CONNECTOR = 'FAILED_REGISTER_CONNECTOR';//Failed to register connector
-	const ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT = 'CONNECTOR_NOT_SEND_MESSAGE_CHAT';
+	public const ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT = 'CONNECTOR_NOT_SEND_MESSAGE_CHAT';
+	public const ERROR_CONNECTOR_DELETE_MESSAGE = 'CONNECTOR_ERROR_DELETE_MESSAGE';
 
 	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR = 'APPLICATION_REGISTRATION_ERROR';//Application registration error
 	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT = 'APPLICATION_REGISTRATION_ERROR_POINT';
@@ -207,7 +209,7 @@ class Library
 		'botframework.twilio',
 		'botframework.emailoffice365',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-		Notifications::CONNECTOR_ID,
+		self::ID_NOTIFICATIONS_CONNECTOR,
 	);
 
 	/** @var array A list of connectors that support group chat.*/
@@ -225,32 +227,34 @@ class Library
 		'botframework.slack',
 		'botframework.groupme',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-		Notifications::CONNECTOR_ID,
+		self::ID_NOTIFICATIONS_CONNECTOR,
 	);
 
 	/** @var array */
-	public static $listConnectorEditInternalMessages = array(
+	public static $listConnectorEditInternalMessages = [
+		'vkgroup',
 		'facebookcomments',
 		'telegrambot',
 
 		'botframework.skype',
 		'botframework.slack',
 		'botframework.telegram',
-	);
+	];
 
 	/** @var array */
-	public static $listConnectorDelInternalMessages = array(
+	public static $listConnectorDelInternalMessages = [
+		'vkgroup',
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
 
 		'botframework.slack',
-	);
+	];
 
 	/** @var array */
-	public static $listConnectorDelExternalMessages = array(
+	public static $listConnectorDelExternalMessages = [
 		'facebookcomments',
 		self::ID_FBINSTAGRAM_CONNECTOR,
-	);
+	];
 
 	/** @var array A list of connectors, where it is not necessary to send the signature.*/
 	public static $listNotNeedSignature = [

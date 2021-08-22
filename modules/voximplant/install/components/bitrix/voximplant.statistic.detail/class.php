@@ -34,7 +34,6 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	protected $enableExport = true;
 	protected $isExternalFilter = false;
 	protected $externalQuery = null;
-	protected $sliderQuery = null;
 
 	protected $pageNumber = -1;
 	protected $pageSize = -1;
@@ -411,7 +410,6 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 
 	protected function prepareData()
 	{
-		global $APPLICATION;
 		$this->arResult["ENABLE_EXPORT"] = $this->enableExport;
 		$this->arResult["TRIAL_TEXT"] = CVoxImplantMain::GetTrialText();
 
@@ -492,12 +490,12 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 			else
 			{
-				$this->createReportSliderQuery();
+				$sliderQuery = $this->createReportSliderQuery();
 
-				$this->sliderQuery->setOffset($nav->getOffset());
-				$this->sliderQuery->setLimit($nav->getLimit() + 1);
+				$sliderQuery->setOffset($nav->getOffset());
+				$sliderQuery->setLimit($nav->getLimit() + 1);
 
-				$idRows = $this->sliderQuery->exec()->fetchAll();
+				$idRows = $sliderQuery->exec()->fetchAll();
 			}
 		}
 
@@ -626,35 +624,37 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		);
 	}
 
-	public function createReportSliderQuery(): void
+	public function createReportSliderQuery(): Query
 	{
 		$reportEntity = Entity::getInstanceByQuery($this->externalQuery);
 
-		$this->sliderQuery = new Query($reportEntity);
-		$this->sliderQuery->addSelect('ID');
+		$sliderQuery = new Query($reportEntity);
+		$sliderQuery->addSelect('ID');
 
 		$filterDefinition = $this->getFilterDefinition();
 		$filter = $this->getFilter($filterDefinition);
 		if ($filter)
 		{
-			$this->sliderQuery->setFilter($filter);
+			$sliderQuery->setFilter($filter);
 		}
 
 		if (!$filterDefinition)
 		{
-			return;
+			return $sliderQuery;
 		}
 
 		$runtimeFields = $this->getRuntimeFields($filterDefinition);
 		if (!$runtimeFields)
 		{
-			return;
+			return $sliderQuery;
 		}
 
 		foreach ($runtimeFields as $field)
 		{
-			$this->sliderQuery->registerRuntimeField($field);
+			$sliderQuery->registerRuntimeField($field);
 		}
+
+		return $sliderQuery;
 	}
 
 	function getUserData(array $userIds)
@@ -1027,15 +1027,17 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 	 */
 	public function executeComponent()
 	{
-		global $APPLICATION;
-
 		if (!Loader::includeModule(self::MODULE))
+		{
 			return false;
+		}
 
 		$this->init();
 
 		if(!$this->checkAccess())
+		{
 			return false;
+		}
 
 		$this->prepareData();
 
@@ -1048,9 +1050,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		else
 		{
 			$this->arResult['EXPORT_PARAMS'] = [
-				'componentName' => 'bitrix:voximplant.statistic.detail',
-				'siteId' => SITE_ID,
-				'sToken' => 's'.time(),
+				'componentName' => $this->getName(),
 			];
 
 			$this->includeComponentTemplate();
@@ -1082,12 +1082,17 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		}
 		else
 		{
-			$this->createReportSliderQuery();
-			$row['CNT'] = count($this->sliderQuery->exec()->fetchAll());
+			$row["CNT"] = $this->createReportSliderQuery()
+				->setSelect([
+					"CNT" => Query::expr()->count("ID")
+				])
+				->exec()
+				->fetch()["CNT"]
+			;
 		}
 
 		return [
-			"rowsCount" => $row['CNT'],
+			"rowsCount" => $row["CNT"],
 			"sql" => Query::getLastQuery()
 		];
 	}

@@ -21,7 +21,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
-	
+
 	public function onPrepareComponentParams($params)
 	{
 		global  $APPLICATION;
@@ -282,6 +282,10 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			}
 
 			$check['CHECK_STATUS'] = Loc::getMessage('CRM_ORDER_CASHBOX_STATUS_'.$check['STATUS']);
+			if (isset($check['ERROR_MESSAGE']))
+			{
+				$check['CHECK_STATUS'] .= ' (' . $check['ERROR_MESSAGE'] . ')';
+			}
 			$rows[$check['ID']] = $check;
 		}
 

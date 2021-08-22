@@ -465,13 +465,14 @@ class CVoxImplantPhone
 		{
 			foreach ($result->result as $value)
 			{
+				$parsedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($value->phone_number, $country);
 				$arResult[$value->phone_number] = Array(
 					'FULL_PRICE' => floatval($value->phone_price)+floatval($value->can_list_phone_numbers),
 					'INSTALLATION_PRICE' => $value->phone_installation_price,
 					'MONTH_PRICE' => $value->phone_price,
 					'PHONE_NUMBER' => $value->phone_number,
-					'PHONE_NUMBER_INTERNATIONAL' => \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($value->phone_number)->format(\Bitrix\Main\PhoneNumber\Format::INTERNATIONAL),
-					'PHONE_NUMBER_LOCAL' => \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($value->phone_number)->format(\Bitrix\Main\PhoneNumber\Format::NATIONAL),
+					'PHONE_NUMBER_INTERNATIONAL' => $parsedNumber->format(\Bitrix\Main\PhoneNumber\Format::INTERNATIONAL),
+					'PHONE_NUMBER_LOCAL' => $parsedNumber->format(\Bitrix\Main\PhoneNumber\Format::NATIONAL),
 					'COUNTRY_CODE' => $country,
 					'REGION_ID' => $regionId,
 					'CURRENCY' => $currency

@@ -50,9 +50,9 @@ Class imopenlines extends CModule
 		{
 			if ($this->CheckModules())
 			{
-				$this->InstallDB(Array(
+				$this->InstallDB([
 					'PUBLIC_URL' => $_REQUEST["PUBLIC_URL"]
-				));
+				]);
 				$this->InstallFiles();
 			}
 			$APPLICATION->IncludeAdminFile(GetMessage("IMOPENLINES_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/step2.php");
@@ -115,7 +115,7 @@ Class imopenlines extends CModule
 		}
 	}
 
-	public function InstallDB($params = Array())
+	public function InstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
 
@@ -123,16 +123,16 @@ Class imopenlines extends CModule
 
 		if($DB->type !== 'MYSQL')
 		{
-			$this->errors = array(
+			$this->errors = [
 				GetMessage('IMOPENLINES_DB_NOT_SUPPORTED'),
-			);
+			];
 		}
 
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$this->errors)
 			{
-				$this->errors = Array();
+				$this->errors = [];
 			}
 			$this->errors[] = GetMessage('IMOPENLINES_CHECK_PUBLIC_PATH');
 		}

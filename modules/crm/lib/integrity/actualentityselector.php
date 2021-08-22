@@ -295,6 +295,7 @@ class ActualEntitySelector
 	 */
 	public function __construct(array $criteria = array())
 	{
+		$this->fillDynamicEntityDictionary();
 		$this->isAutoUsingFinishedLeadEnabled = LeadSettings::getCurrent()->isAutoUsingFinishedLeadEnabled()
 			&& LeadSettings::getCurrent()->isEnabled();
 		$this->initialEntities = $this->entities;
@@ -1257,5 +1258,10 @@ class ActualEntitySelector
 		}
 
 		return true;
+	}
+
+	protected function fillDynamicEntityDictionary()
+	{
+
 	}
 }

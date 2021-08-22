@@ -36,7 +36,9 @@ $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $data = $arResult['DATA'];
 ?>
 
-<div id="scrum_kanban"></div>
+<div id="scrum_kanban">
+	<div class="tasks-scrum-kanban-header-target-observer"></div>
+</div>
 
 <script type="text/javascript">
 

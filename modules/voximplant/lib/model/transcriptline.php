@@ -5,6 +5,22 @@ namespace Bitrix\Voximplant\Model;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
+/**
+ * Class TranscriptLineTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TranscriptLine_Query query()
+ * @method static EO_TranscriptLine_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TranscriptLine_Result getById($id)
+ * @method static EO_TranscriptLine_Result getList(array $parameters = array())
+ * @method static EO_TranscriptLine_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine_Collection wakeUpCollection($rows)
+ */
 class TranscriptLineTable extends Entity\DataManager
 {
 	public static function getTableName()

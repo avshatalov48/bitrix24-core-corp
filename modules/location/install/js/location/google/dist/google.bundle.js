@@ -3,15 +3,14 @@ this.BX.Location = this.BX.Location || {};
 (function (exports,main_core,location_core) {
 	'use strict';
 
-	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
-
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } return value; }
 
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
+
 	/**
 	 * Loads google source services
-	 * todo: save loaded instances
 	 */
 	var Loader = /*#__PURE__*/function () {
 	  function Loader() {
@@ -42,8 +41,21 @@ this.BX.Location = this.BX.Location || {};
 	  return Loader;
 	}();
 
+	var _getRegion = function _getRegion(languageId) {
+	  var map = {
+	    'en': 'US',
+	    'uk': 'UA',
+	    'zh': 'CN',
+	    'ja': 'JP',
+	    'vi': 'VN',
+	    'ms': 'MY',
+	    'hi': 'IN'
+	  };
+	  return typeof map[languageId] !== 'undefined' ? map[languageId] : languageId.toUpperCase();
+	};
+
 	var _createSrc = function _createSrc(apiKey, languageId) {
-	  return 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places&language=' + languageId;
+	  return 'https://maps.googleapis.com/maps/api/js' + "?key=".concat(apiKey) + '&libraries=places' + "&language=".concat(languageId) + "&region=".concat(_classStaticPrivateMethodGet(this, Loader, _getRegion).call(this, languageId));
 	};
 
 	var _loadingPromise = {
@@ -908,10 +920,12 @@ this.BX.Location = this.BX.Location || {};
 	        loaderPromise.then(function () {
 	          if (props.location.sourceCode !== babelHelpers.classPrivateFieldGet(_this2, _googleSource$2).sourceCode) {
 	            resolve([]);
+	            return;
 	          }
 
 	          if (props.location.externalId.length <= 0) {
 	            resolve([]);
+	            return;
 	          }
 
 	          babelHelpers.classPrivateFieldGet(_this2, _service).getDetails({

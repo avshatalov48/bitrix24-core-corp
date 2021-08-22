@@ -10,6 +10,25 @@
 					TaskBackgroundAction.executeAction(data, taskId, params, extra, delay);
 				}
 			);
+			BX.addCustomEvent('taskbackground::efficiency::open', (eventData) => {
+				TaskBackgroundAction.openEfficiencyPage(eventData);
+			});
+		}
+
+		static openEfficiencyPage(eventData)
+		{
+			const {userId, groupId} = eventData;
+
+			PageManager.openPage({
+				url: `/mobile/tasks/snmrouter/?routePage=efficiency&USER_ID=${userId}&GROUP_ID=${groupId}`,
+				titleParams: {
+					text: BX.message('MOBILE_TASKS_BACKGROUND_EFFICIENCY_PAGE_TITLE'),
+				},
+				backdrop: {
+					mediumPositionHeight: 600,
+				},
+				cache: false,
+			});
 		}
 
 		static executeAction(data, taskId, params, extra = false, delay = null)

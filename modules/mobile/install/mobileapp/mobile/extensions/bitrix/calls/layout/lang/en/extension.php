@@ -32,3 +32,4 @@ $MESS["MOBILE_CALL_SOUND_NONE"] = "Unknown device";
 $MESS["MOBILE_CALL_SOUND_PHONE"] = "Phone";
 $MESS["MOBILE_CALL_SOUND_SPEAKER"] = "Speaker";
 $MESS["MOBILE_CALL_SOUND_WIRED"] = "Headphones";
+$MESS["MOBILE_CALL_USER_PAUSED_VIDEO"] = "#NAME# paused the video";

@@ -163,8 +163,12 @@ if (
 
 	LocalRedirect($url, false, '301 Moved Permanently');
 }
-else
+
+if (
+	!Crm\Restriction\RestrictionManager::getQuotesRestriction()->hasPermission()
+	&& ($componentPage !== 'details')
+)
 {
-	$this->IncludeComponentTemplate($componentPage);
+	$componentPage = 'restrictions';
 }
-?>
+$this->IncludeComponentTemplate($componentPage);

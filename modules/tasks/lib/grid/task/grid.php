@@ -1,7 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Grid\Task;
 
-use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Grid\Column;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
@@ -34,7 +34,6 @@ class Grid extends \Bitrix\Tasks\Grid
 				'sort' => 'TITLE',
 				'first_order' => 'desc',
 				'editable' => false,
-				'type' => 'custom',
 				'prevent_default' => false,
 				'shift' => true,
 				'default' => true,
@@ -55,6 +54,7 @@ class Grid extends \Bitrix\Tasks\Grid
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => true,
+				'type' => Column\Type::LABELS,
 			],
 			'ORIGINATOR_NAME' => [
 				'id' => 'ORIGINATOR_NAME',
@@ -161,6 +161,7 @@ class Grid extends \Bitrix\Tasks\Grid
 				'sort' => false,
 				'editable' => false,
 				'default' => true,
+				'type' => Column\Type::TAGS,
 			],
 		];
 
@@ -228,7 +229,7 @@ class Grid extends \Bitrix\Tasks\Grid
 			&& array_key_exists(($key = key($parameters['SORT'])), $headers)
 		)
 		{
-			$headers[$key]['color'] = \Bitrix\Main\Grid\Column\Color::BLUE;
+			$headers[$key]['color'] = Column\Color::BLUE;
 		}
 
 		return $headers;
@@ -236,8 +237,6 @@ class Grid extends \Bitrix\Tasks\Grid
 
 	/**
 	 * @return array
-	 * @throws LoaderException
-	 * @throws ArgumentException
 	 */
 	public function prepareRows(): array
 	{

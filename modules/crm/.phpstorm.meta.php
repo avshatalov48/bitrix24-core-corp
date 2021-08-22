@@ -8,6 +8,7 @@ namespace PHPSTORM_META
 		'crm.service.context',
 		'crm.service.factory.quote',
 		'crm.service.factory.deal',
+		'crm.service.factory.lead',
 		'crm.type.factory',
 		'crm.service.converter.ormObject',
 		'crm.service.converter.item',
@@ -23,6 +24,8 @@ namespace PHPSTORM_META
 		'crm.relation.relationManager',
 		'crm.service.broker.typePreset',
 		'crm.service.parentFieldManager',
+		'crm.service.accounting',
+		'crm.service.fileUploader',
 		'crm.kanban.entity.lead',
 		'crm.kanban.entity.deal',
 		'crm.kanban.entity.invoice',
@@ -31,7 +34,8 @@ namespace PHPSTORM_META
 		'crm.kanban.entity.dynamic',
 		'crm.integration.documentgeneratormanager',
 		'crm.integration.documentgeneratormanager.productLoader',
-		'crm.deal.paymentDocumentsRepository'
+		'crm.deal.paymentDocumentsRepository',
+		'crm.filter.factory',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -43,6 +47,7 @@ namespace PHPSTORM_META
 		'crm.service.context' => \Bitrix\Crm\Service\Context::class,
 		'crm.service.factory.quote' => \Bitrix\Crm\Service\Factory\Quote::class,
 		'crm.service.factory.deal' => \Bitrix\Crm\Service\Factory\Deal::class,
+		'crm.service.factory.lead' => \Bitrix\Crm\Service\Factory\Lead::class,
 		'crm.type.factory' => \Bitrix\Crm\Model\Dynamic\Factory::class,
 		'crm.service.converter.ormObject' => \Bitrix\Crm\Service\Converter\OrmObject::class,
 		'crm.service.converter.item' => \Bitrix\Crm\Service\Converter\Item::class,
@@ -58,6 +63,8 @@ namespace PHPSTORM_META
 		'crm.relation.relationManager' => \Bitrix\Crm\Relation\RelationManager::class,
 		'crm.service.broker.typePreset' => \Bitrix\Crm\Service\Broker\TypePreset::class,
 		'crm.service.parentFieldManager' => \Bitrix\Crm\Service\ParentFieldManager::class,
+		'crm.service.accounting' => \Bitrix\Crm\Service\Accounting::class,
+		'crm.service.fileUploader' => \Bitrix\Crm\Service\FileUploader::class,
 		'crm.kanban.entity.lead' => \Bitrix\Crm\Kanban\Entity\Lead::class,
 		'crm.kanban.entity.deal' => \Bitrix\Crm\Kanban\Entity\Deal::class,
 		'crm.kanban.entity.invoice' => \Bitrix\Crm\Kanban\Entity\Invoice::class,
@@ -67,5 +74,6 @@ namespace PHPSTORM_META
 		'crm.integration.documentgeneratormanager' => \Bitrix\Crm\Integration\DocumentGeneratorManager::class,
 		'crm.integration.documentgeneratormanager.productLoader' => \Bitrix\Crm\Integration\DocumentGenerator\ProductLoader::class,
 		'crm.deal.paymentDocumentsRepository' => \Bitrix\Crm\Deal\PaymentDocumentsRepository::class,
+		'crm.filter.factory' => \Bitrix\Crm\Filter\Factory::class,
 	]));
 }

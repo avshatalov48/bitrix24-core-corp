@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter;
 
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -302,6 +303,17 @@ class Effective
 	{
 		$efficiency = static::getAverageEfficiency(null, null, $userId);
 		static::setEfficiencyToUserCounter($userId, $efficiency);
+
+		PushService::addEvent(
+			$userId,
+			[
+				'module_id' => 'tasks',
+				'command' => 'user_efficiency_counter',
+				'params' => [
+					'value' => $efficiency,
+				],
+			]
+		);
 	}
 
 	/**
@@ -445,36 +457,43 @@ class Effective
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function getEfficiencyForGraph(DateTime $timeFrom = null, Datetime $timeTo = null, $userId = 0, $groupId = 0, $groupBy = 'DATE')
+	public static function getEfficiencyForGraph(
+		DateTime $timeFrom = null,
+		Datetime $timeTo = null,
+		int $userId = 0,
+		int $groupId = 0,
+		string $groupBy = 'DATE'
+	)
 	{
 		if ($groupBy !== 'HOUR')
 		{
 			$groupBy = 'DATE';
 		}
-
 		$expressions = [
 			'EFFECTIVE' => new Entity\ExpressionField('EFFECTIVE', 'AVG(EFFECTIVE)'),
 			'DATE' => new Entity\ExpressionField('DATE', 'DATE(DATETIME)'),
 			'HOUR' => new Entity\ExpressionField('HOUR', 'DATE_FORMAT(DATETIME, "%%Y-%%m-%%d %%H:00:01")')
 		];
 		$select = [$expressions['EFFECTIVE'], $expressions[$groupBy]];
-		$group = [$groupBy, 'USER_ID'];
+		$group = [$groupBy];
 
-		$query = new Query(EffectiveTable::getEntity());
-
+		$query = EffectiveTable::query();
 		$query->setSelect($select);
-		$query->setGroup($group);
 		$query
 			->where('DATETIME', '>=', $timeFrom)
 			->where('DATETIME', '<=', $timeTo)
-			->where('USER_ID', $userId);
-
+		;
+		if ($userId)
+		{
+			$query->where('USER_ID', $userId);
+			$group[] = 'USER_ID';
+		}
 		if ($groupId)
 		{
 			$query->where('GROUP_ID', $groupId);
 			$group[] = 'GROUP_ID';
-			$query->setGroup($group);
 		}
+		$query->setGroup($group);
 
 		return $query->exec()->fetchAll();
 	}
@@ -489,6 +508,13 @@ class Effective
 	 */
 	public static function getEfficiencyForNow($userId, $groupId = 0)
 	{
+		static $cache = [];
+
+		if (array_key_exists($userId, $cache) && array_key_exists($groupId, $cache[$userId]))
+		{
+			return $cache[$userId][$groupId];
+		}
+
 		$efficiency = 100;
 		$expiredTasksCount = static::getExpiredTasksCountForNow($userId, $groupId);
 		$inProgressTasksCount = static::getInProgressTasksCountForNow($userId, $groupId);
@@ -497,6 +523,8 @@ class Effective
 		{
 			$efficiency = round(100 - ($expiredTasksCount / $inProgressTasksCount) * 100);
 		}
+
+		$cache[$userId][$groupId] = $efficiency;
 
 		return $efficiency;
 	}

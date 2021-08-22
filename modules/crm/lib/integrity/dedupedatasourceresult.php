@@ -6,7 +6,8 @@ class DedupeDataSourceResult
 {
 	protected $processedItemCount = 0;
 	/** @var Duplicate[]*/
-	protected $items = array();
+	protected $items = [];
+	protected $invalidItems = [];
 
 	public function addItem($key, Duplicate $item)
 	{
@@ -56,5 +57,15 @@ class DedupeDataSourceResult
 			$result = array_merge($result, $item->getAllRankings());
 		}
 		return $result;
+	}
+
+	public function addInvalidItem(string $key)
+	{
+		$this->invalidItems[] = $key;
+	}
+
+	public function getInvalidItems(): array
+	{
+		return $this->invalidItems;
 	}
 }

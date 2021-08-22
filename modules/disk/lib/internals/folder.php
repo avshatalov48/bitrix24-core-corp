@@ -8,6 +8,22 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * Class FolderTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Folder_Query query()
+ * @method static EO_Folder_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Folder_Result getById($id)
+ * @method static EO_Folder_Result getList(array $parameters = array())
+ * @method static EO_Folder_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_Folder createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_Folder_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_Folder wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_Folder_Collection wakeUpCollection($rows)
+ */
 final class FolderTable extends ObjectTable
 {
 	const TYPE = ObjectTable::TYPE_FOLDER;

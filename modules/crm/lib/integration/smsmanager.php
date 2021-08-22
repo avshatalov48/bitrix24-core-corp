@@ -62,7 +62,7 @@ class SmsManager implements ICanSendMessage
 	/**
 	 * @inheritDoc
 	 */
-	public static function getConnectUrl(): ?string
+	public static function getConnectUrl()
 	{
 		if (!static::canUse())
 		{
@@ -522,7 +522,7 @@ class SmsManager implements ICanSendMessage
 
 		return [
 			'SENDER_ID' => $sender->getId(),
-			'MESSAGE_FROM' => $sender->getFirstFromList(),
+			'MESSAGE_FROM' => $options['MESSAGE_FROM'] ?? $sender->getFirstFromList(),
 			'MESSAGE_BODY' => $options['MESSAGE_BODY'],
 			'AUTHOR_ID' => $commonOptions['USER_ID'],
 			'MESSAGE_TO' => $commonOptions['PHONE_NUMBER'],

@@ -43,10 +43,10 @@ BX.namespace('Tasks.Component');
 					this.getSelector().bindEvent('change', this.onChanged.bind(this));
 				}
 
+				var self = this;
+
 				if (this.option('userType') === 'auditor' || this.option('userType') === 'accomplice')
 				{
-					var self = this;
-
 					BX.Event.EventEmitter.subscribe(
 						'BX.Tasks.CheckListItem:' + this.option('userType') + 'Added',
 						function(data)
@@ -55,6 +55,22 @@ BX.namespace('Tasks.Component');
 						}
 					);
 				}
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.MemberSelector:' + this.option('userType') + 'Selected',
+					function(data)
+					{
+						self.getSelector().onControlItemSelected(data.data);
+					}
+				);
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.MemberSelector:' + this.option('userType') + 'Deselected',
+					function(data)
+					{
+						self.getSelector().onSelectorItemDeselected(data.data);
+					}
+				);
 			},
 
 			onChanged: function(items)
@@ -147,6 +163,8 @@ BX.namespace('Tasks.Component');
 	});
 
 	BX.Tasks.Component.TasksWidgetMemberSelector.ItemManager = BX.Tasks.UserItemSet.extend({
+		dialog: null,
+		dialogCallback: true,
 		sys: {
 			code: 'tdp-mem-sel-is'
 		},
@@ -162,6 +180,212 @@ BX.namespace('Tasks.Component');
 			hidePreviousIfSingleAndRequired: false
 		},
 		methods: {
+
+			construct: function()
+			{
+				this.callConstruct(BX.Tasks.UserItemSet);
+				this.initDialog();
+			},
+
+			initDialog: function()
+			{
+				this.dialog = new BX.UI.EntitySelector.Dialog({
+					enableSearch: true,
+					multiple: this.option('max') > 1,
+					context: 'TASKS_MEMBER_SELECTOR_EDIT_' + this.option('userType'),
+					entities: this.getDialogEntities(),
+					preselectedItems: this.getDialogSelectedItems(),
+					events: {
+						'Item:onSelect': function(event)
+						{
+							if (this.dialogCallback === false)
+							{
+								return;
+							}
+
+							var item = event.getData().item;
+							var userData = this.prepareUserData(item);
+
+							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ this.option('userType') +'Selected', userData);
+						}.bind(this),
+						'Item:onDeselect': function(event)
+						{
+							if (this.dialogCallback === false)
+							{
+								return;
+							}
+
+							var item = event.getData().item;
+							var userData = this.prepareUserData(item);
+
+							if(
+								this.option('hidePreviousIfSingleAndRequired')
+								&& this.vars.constraint.min === 1
+								&& this.count() === 1
+							) // special behaviour
+							{
+								this.forceDeleteFirst();
+							}
+							else
+							{
+								BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ this.option('userType') +'Deselected', userData);
+							}
+						}.bind(this),
+						'onHide': function(event)
+						{
+							if (
+								this.option('hidePreviousIfSingleAndRequired')
+								&& this.vars.constraint.min > 0
+								&& this.count() < 1
+							)
+							{
+								this.restoreKept();
+							}
+						}.bind(this)
+					}
+				});
+
+				var targetNodes = this.scope().getElementsByClassName('js-id-tdp-mem-sel-is-control');
+
+				for (var i = 0; i < targetNodes.length; i++)
+				{
+					var node = targetNodes[i];
+					node.addEventListener('click', function(node) {
+						var userType = this.option('userType');
+						var taskLimitExceeded = this.option('taskLimitExceeded');
+
+						if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
+						{
+							BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+							return;
+						}
+
+						this.dialog.setTargetNode(node);
+						this.dialog.show();
+					}.bind(this));
+				}
+			},
+
+			getDialogSelectedItems: function()
+			{
+				var data = this.option('data');
+				var items = [];
+
+				for (var i = 0; i < data.length; i++)
+				{
+					items.push(this.prepareItemData(data[i]));
+				}
+
+				return items;
+			},
+
+			getDialogUndeselectedItems: function()
+			{
+				var data = this.option('data');
+				var items = [];
+
+				if (
+					this.option('min') !== 1
+					|| this.option('max') !== 1
+				)
+				{
+					return;
+				}
+
+				for (var i = 0; i < data.length; i++)
+				{
+					items.push(this.prepareItemData(data[i]));
+				}
+
+				return items;
+			},
+
+			getDialogEntities: function()
+			{
+				var mode = this.option('mode');
+				var entities = [];
+
+				if (mode === 'user')
+				{
+					entities = [
+						{
+							id: 'user',
+							options: {
+								emailUsers: true,
+								networkUsers: true,
+								extranetUsers: true,
+								inviteGuestLink: true,
+								myEmailUsers: true
+							}
+						},
+						{
+							id: 'department',
+						}
+					];
+				}
+				else if (mode === 'group')
+				{
+					entities = [
+						{
+							id: 'project',
+						}
+					];
+				}
+
+				return entities;
+			},
+
+			prepareItemData: function(data)
+			{
+				var id = 0;
+
+				if (typeof data === 'string')
+				{
+					id =  data.replace(/[A-Za-z]/gi, '');
+				}
+				else if (typeof data === 'object')
+				{
+					if (data.ID)
+					{
+						id = data.ID;
+					}
+					else if (data.id)
+					{
+						id = data.id;
+					}
+				}
+
+				var mode = this.option('mode');
+				return [(mode === 'group') ? 'project' : 'user', id];
+			},
+
+			prepareUserData: function(user)
+			{
+				var customData = user.getCustomData();
+				var entityType = user.getEntityType();
+				var mode = this.option('mode');
+
+				return {
+					AVATAR: user.avatar,
+					DESCRIPTION: '',
+					ENTITY_TYPE: ((mode === 'group') ? 'SG' : 'U'),
+					ID: user.getId(),
+					NAME: customData.get('name'),
+					LAST_NAME: customData.get('lastName'),
+					EMAIL: customData.get('email'),
+					nameFormatted: BX.Text.encode(user.getTitle()),
+					NETWORK_ID: '',
+					URL: user.getLink(),
+					USER_TYPE: entityType,
+					type: {
+						crmemail: false,
+						extranet: (entityType === 'extranet'),
+						email: (entityType === 'email'),
+						network: (entityType === 'network'),
+					},
+					VALUE: ((mode === 'group') ? 'SG' : 'U') + user.getId()
+				};
+			},
 
 			onSearchBlurred: function()
 			{
@@ -207,6 +431,11 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
+			onControlItemSelected: function(data)
+			{
+				this.callMethod(BX.Tasks.UserItemSet, 'onSelectorItemSelected', arguments);
+			},
+
 			// link clicked
 			openAddForm: function()
 			{
@@ -237,10 +466,14 @@ BX.namespace('Tasks.Component');
 				{
 					if(this.option('hidePreviousIfSingleAndRequired')) // special behaviour
 					{
-						if(this.vars.constraint.min == 1 && this.count() == 1)
+						if (
+							this.vars.constraint.min === 1
+							&& this.count() === 1
+						)
 						{
 							this.forceDeleteFirst();
-							this.callMethod(BX.Tasks.UserItemSet, 'openAddForm');
+							this.dialog.setTargetNode(this.scope());
+							this.dialog.show();
 						}
 					}
 
@@ -267,6 +500,58 @@ BX.namespace('Tasks.Component');
 					this.addItem(this.vars.toDelete, {checkRestrictions: false});
 					this.vars.toDelete = false;
 				}
+			},
+
+			addItem: function (value, parameters)
+			{
+				this.callMethod(BX.Tasks.UserItemSet, 'addItem', arguments);
+				this.selectDialogItem(value);
+			},
+
+			deleteItem: function (value, parameters)
+			{
+				if (this.callMethod(BX.Tasks.UserItemSet, 'deleteItem', arguments))
+				{
+					this.unselectDialogItem(value);
+					return true;
+				}
+
+				return false;
+			},
+
+			unselectDialogItem: function(value)
+			{
+				if (!this.dialog)
+				{
+					return;
+				}
+
+				this.dialogCallback = false;
+
+				if (typeof value === 'object')
+				{
+					value = value.data();
+				}
+
+				var item = this.dialog.getItem(this.prepareItemData(value));
+				item && item.deselect();
+
+				this.dialogCallback = true;
+			},
+
+			selectDialogItem: function(value)
+			{
+				if (!this.dialog)
+				{
+					return;
+				}
+
+				this.dialogCallback = false;
+
+				var item = this.dialog.getItem(this.prepareItemData(value));
+				item && item.select(true);
+
+				this.dialogCallback = true;
 			}
 		}
 	});

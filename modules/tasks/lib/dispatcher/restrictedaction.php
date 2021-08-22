@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -18,7 +18,7 @@ abstract class RestrictedAction extends PublicAction
 	{
 		if(!\Bitrix\Tasks\Util\Restriction::canManageTask())
 		{
-			$this->errors->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_RESTRICTED'));
+			$this->errors->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 			return false;
 		}
 

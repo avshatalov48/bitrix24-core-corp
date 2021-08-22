@@ -1,6 +1,7 @@
 import {BitrixVue} from "ui.vue";
 import {EntityType} from "timeman.const";
 import {TimeFormatter} from "timeman.timeformatter";
+import {DateFormatter} from "timeman.dateformatter";
 import {Type} from "main.core";
 
 import "ui.icons";
@@ -48,6 +49,7 @@ export const AddIntervalPopup = BitrixVue.localComponent('bx-timeman-monitor-rep
 	computed:
 	{
 		TimeFormatter: () => TimeFormatter,
+		DateFormatter: () => DateFormatter,
 		Type: () => Type,
 		saveMaxFinish()
 		{
@@ -98,9 +100,13 @@ export const AddIntervalPopup = BitrixVue.localComponent('bx-timeman-monitor-rep
 			const finish = this.createDateFromTimeString(this.finish);
 
 			this.$store.dispatch('monitor/addHistory', {
+				dateLog: DateFormatter.toString(start),
 				title: this.title,
 				type: EntityType.custom,
-				comment: this.comment,
+				comments: [{
+					dateLog: DateFormatter.toString(start),
+					text: this.comment
+				}],
 				time: [{
 					start,
 					preFinish: null,

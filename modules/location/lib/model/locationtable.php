@@ -24,7 +24,20 @@ use Bitrix\Main\ORM\Fields\Relations;
  *
  * @package Bitrix\Location\Model
  * @internal
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Location_Query query()
+ * @method static EO_Location_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Location_Result getById($id)
+ * @method static EO_Location_Result getList(array $parameters = array())
+ * @method static EO_Location_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_Location createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_Location_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_Location wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_Location_Collection wakeUpCollection($rows)
+ */
 
 class LocationTable extends Main\ORM\Data\DataManager
 {

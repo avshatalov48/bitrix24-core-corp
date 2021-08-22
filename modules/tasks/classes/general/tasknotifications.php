@@ -867,7 +867,7 @@ class CTaskNotifications
 				"=LOG_UPDATE" => (
 					$arTask["CHANGED_DATE"] <> ''?
 						(MakeTimeStamp($arTask["CHANGED_DATE"], CSite::GetDateFormat("FULL", SITE_ID)) > time()+CTimeZone::GetOffset()?
-							$DB->CharToDateFunction($arTask["CHANGED_DATE"], "FULL", SITE_ID) :
+							\Bitrix\Tasks\Util\Db::charToDateFunction($arTask["CHANGED_DATE"], "FULL", SITE_ID) :
 							$DB->CurrentTimeFunction()) :
 						$DB->CurrentTimeFunction()
 				),
@@ -1559,7 +1559,7 @@ class CTaskNotifications
 
 				if ($createdDateTimestamp > $curTimeTimestamp)
 				{
-					$logDate = $DB->CharToDateFunction(
+					$logDate = \Bitrix\Tasks\Util\Db::charToDateFunction(
 						$arFields["CHANGED_DATE"],
 						"FULL",
 						SITE_ID
@@ -1632,7 +1632,7 @@ class CTaskNotifications
 
 				if ($createdDateTimestamp > $curTimeTimestamp)
 				{
-					$logDate = $DB->CharToDateFunction(
+					$logDate = \Bitrix\Tasks\Util\Db::charToDateFunction(
 						$arFields["CREATED_DATE"],
 						"FULL",
 						SITE_ID

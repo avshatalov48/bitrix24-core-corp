@@ -151,6 +151,7 @@ $MESS["CRM_TIMELINE_SCHEDULE_STUB"] = "Немає запланованих за�
 $MESS["CRM_TIMELINE_SCORING_TITLE_2"] = "AI скоринг:";
 $MESS["CRM_TIMELINE_SEND"] = "Відправити";
 $MESS["CRM_TIMELINE_SENDER_CLICK"] = "Перейшов за посиланням";
+$MESS["CRM_TIMELINE_SENDER_ERROR"] = "Помилка";
 $MESS["CRM_TIMELINE_SENDER_NAME_REMOVED"] = "Розсилка видалена";
 $MESS["CRM_TIMELINE_SENDER_READ"] = "Прочитано";
 $MESS["CRM_TIMELINE_SENDER_TITLE"] = "Назва";

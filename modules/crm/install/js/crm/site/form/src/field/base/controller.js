@@ -28,6 +28,7 @@ type Options = {
 	values: ?Array;
 	messages: ?Messages.Storage;
 	design: ?Design.Model;
+	contentTypes: ?Array<string>;
 };
 
 let DefaultOptions: Options = {
@@ -175,7 +176,7 @@ class Controller extends Event
 
 		if (this.required)
 		{
-			if (items.length === 0 || !items[0].selected || (items[0].value+'').trim() === '')
+			if (items.length === 0 || !items[0] || !items[0].selected || (items[0].value+'').trim() === '')
 			{
 				return true;
 			}
@@ -215,12 +216,15 @@ class Controller extends Event
 		}
 
 		let item = this.constructor.createItem(options);
+		if (item)
+		{
+			item.subscribe(item.events.changeSelected, (data, obj, type) => {
+				this.emit(this.events.changeSelected, {data, type, item: obj});
+			});
 
-		item.subscribe(item.events.changeSelected, (data, obj, type) => {
-			this.emit(this.events.changeSelected, {data, type, item: obj});
-		});
+			this.items.push(item);
+		}
 
-		this.items.push(item);
 		return item;
 	}
 

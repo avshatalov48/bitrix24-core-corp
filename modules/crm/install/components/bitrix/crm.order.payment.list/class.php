@@ -753,7 +753,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			);
 
 			$payment['PAYMENT_SUMMARY'] = Loc::getMessage('CRM_PAYMENT_NAME', array(
-				'#ACCOUNT_NUMBER#' => $payment['ACCOUNT_NUMBER'],
+				'#ACCOUNT_NUMBER#' => htmlspecialcharsbx($payment['ACCOUNT_NUMBER']),
 				'#DATE_BILL#' => $payment['DATE_BILL']
 			));
 

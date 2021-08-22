@@ -197,40 +197,58 @@ export default class MapPopup extends EventEmitter
 			});
 	}
 
-	#convertAddressToLocation(address: ?Address): Promise<?Location>
+	#extractLatLon(address: Address): ?Array
+	{
+		let result = null;
+		let lat;
+		let lon;
+
+		if (address.latitude && address.longitude)
+		{
+			lat = address.latitude;
+			lon = address.longitude;
+		}
+		else if (address.location
+			&& address.location.latitude
+			&& address.location.longitude
+		)
+		{
+			lat = address.location.latitude;
+			lon = address.location.longitude;
+		}
+
+		if (lat && lat !== '0' && lon && lon !== '0')
+		{
+			result = [lat, lon];
+		}
+
+		return result;
+	}
+
+	#convertAddressToLocation(address: ?Address, useUserLocation: boolean = false): Promise<?Location>
 	{
 		return new Promise((resolve) => {
+
+			let location = null;
+
+			if (useUserLocation)
+			{
+				location = this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null;
+			}
+
 			if (address)
 			{
-				let lat;
-				let lon;
+				const latLon = this.#extractLatLon(address);
 
-				if (address.latitude && address.longitude)
-				{
-					lat = address.latitude;
-					lon = address.longitude;
-				}
-				else if (address.location
-					&& address.location.latitude
-					&& address.location.longitude
-				)
-				{
-					lat = address.location.latitude;
-					lon = address.location.longitude;
-				}
-
-				if (lat && lat !== '0' && lon && lon !== '0')
+				if (latLon)
 				{
 					resolve(new Location({
-						latitude: lat,
-						longitude: lon,
+						latitude: latLon[0],
+						longitude: latLon[1],
 						type: address.getType()
 					}));
 					return;
 				}
-
-				// If we'll not find the address location - let's use the user's one
-				let location = this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null;
 
 				// Try to find via geocoding by string name
 				if (this.#geocodingService)
@@ -258,8 +276,7 @@ export default class MapPopup extends EventEmitter
 				}
 			}
 
-			// If address is null, let's use the user's location in view mode.
-			resolve(this.#userLocation && this.#mode !== ControlMode.view ? this.#userLocation : null);
+			resolve(location);
 		});
 	}
 
@@ -288,9 +305,9 @@ export default class MapPopup extends EventEmitter
 		});
 	}
 
-	show(): void
+	show(useUserLocation: boolean = false): void
 	{
-		this.#convertAddressToLocation(this.#address)
+		this.#convertAddressToLocation(this.#address, useUserLocation)
 			.then((location) => {
 				if (!location)
 				{

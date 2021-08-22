@@ -4,6 +4,11 @@
  * @license MIT
  */
 (function (global) {
+  if (global.babelHelpers)
+  {
+    return;
+  }
+
   var babelHelpers = global.babelHelpers = {};
 
   function _typeof(obj) {

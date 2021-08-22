@@ -19,10 +19,11 @@ class VoximplantStartComponent extends \CBitrixComponent
 	{
 		parent::__construct($component);
 
-		\Bitrix\Main\Loader::includeModule("voximplant");
-
-		$this->account = new CVoxImplantAccount();
-		$this->permissions = Permissions::createWithCurrentUser();
+		if (\Bitrix\Main\Loader::includeModule("voximplant"))
+		{
+			$this->account = new CVoxImplantAccount();
+			$this->permissions = Permissions::createWithCurrentUser();
+		}
 	}
 
 	public function prepareResult()
@@ -166,6 +167,11 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
+		if (!\Bitrix\Main\Loader::includeModule("voximplant"))
+		{
+			ShowError('voximplant module is not installed');
+			return false;
+		}
 		$this->arResult = $this->prepareResult();
 
 		if(Loader::includeModule("pull"))

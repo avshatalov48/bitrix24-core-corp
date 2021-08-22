@@ -15,9 +15,11 @@ class Signaling
 	protected $call;
 
 	const COMMAND_INVITE = 'invite';
+	const COMMAND_OUTGOING = 'outgoing';
 	const COMMAND_TIMEOUT = 'timeout';
 	const COMMAND_ANSWER_SELF = 'answer_self';
 	const COMMAND_UPDATE_CRM = 'update_crm';
+	const COMMAND_UPDATE_PORTAL_USER = 'updatePortalUser';
 	const COMMAND_REPLACE_CALLERID = 'replaceCallerId';
 	const COMMAND_START = 'start';
 	const COMMAND_HOLD = 'hold';
@@ -173,12 +175,76 @@ class Signaling
 	}
 
 	/**
+	 * @param int $userId
+	 * @param string $callDevice
+	 */
+	public function sendOutgoing(int $userId,$callDevice = 'WEBRTC')
+	{
+		$call = $this->call;
+		$config = $call->getConfig();
+		$queueId = $call->getQueueId();
+		$queueName = $queueId ? Queue::createWithId($queueId)->getName() : null;
+
+		if ($call->isInternalCall() && Loader::includeModule('im'))
+		{
+			$userData = \CIMContactList::GetUserData([
+				'ID' => $call->getUserIds(),
+				'DEPARTMENT' => 'N',
+				'HR_PHOTO' => 'Y']
+			);
+		}
+		else
+		{
+			$userData = [];
+		}
+
+		$crmData = $call->isInternalCall() ? [] : \CVoxImplantCrmHelper::GetDataForPopup($call->getCallId(), $call->getCallerId(), $userId);
+
+		$config = [
+			'callId' => $call->getCallId(),
+			'callDevice' => $callDevice === 'PHONE'? 'PHONE': 'WEBRTC',
+			'phoneNumber' => $call->getCallerId(),
+			'portalCall' => $call->isInternalCall(),
+			'portalCallUserId' => $call->isInternalCall() ? $call->getPortalUserId(): 0,
+			'portalCallData' => $call->isInternalCall() ? $userData: [],
+			'portalCallQueueName' => $queueName,
+			'config' => \CVoxImplantConfig::getConfigForPopup($call->getCallId()),
+			'lineNumber' => $call->getPortalNumber() ?: '',
+			'lineName' => $config['PORTAL_MODE'] === \CVoxImplantConfig::MODE_SIP ? $config['PHONE_TITLE'] : $config['PHONE_NAME'],
+			"CRM" => $crmData,
+		];
+
+		if(!$call->isInternalCall())
+		{
+			$config['showCrmCard'] = ($call->isCrmEnabled());
+			$config['crmEntityType'] = $call->getPrimaryEntityType();
+			$config['crmEntityId'] = $call->getPrimaryEntityId();
+			$config['crmBindings'] = \CVoxImplantCrmHelper::resolveBindingNames($call->getCrmBindings());
+		}
+
+		\CVoxImplantHistory::WriteToLog([
+			'COMMAND' => 'outgoing',
+			'USER_ID' => $userId,
+			'CALL_ID' => $call->getId(),
+			'CALL_DEVICE' => $callDevice,
+			'PHONE_NUMBER' => $call->getCallerId(),
+			'PORTAL_CALL_USER_ID' => $call->getPortalUserId(),
+			'CRM' => $crmData,
+			'CRM_ENTITY_TYPE' => $call->getPrimaryEntityType(),
+			'CRM_ENTITY_ID' => $call->getPrimaryEntityId(),
+			'CRM_ACTIVITY_ID' => $call->getCrmActivityId(),
+		]);
+
+		$this->send([$userId],static::COMMAND_OUTGOING, $config, null);
+	}
+
+	/**
 	 * @param array $users
 	 * @param array $additioanalParams
 	 */
 	public function sendTimeout(array $users, $additionalParams = [])
 	{
-		$this->send($users,static::COMMAND_TIMEOUT, $additionalParams, $this->getCancelingPush());
+		$this->send($users,static::COMMAND_TIMEOUT, $additionalParams, $this->getCancelingPush('_FINISH'));
 	}
 
 	/**
@@ -186,7 +252,7 @@ class Signaling
 	 */
 	public function sendAnswerSelf($userId)
 	{
-		$this->send([$userId],static::COMMAND_ANSWER_SELF, [], $this->getCancelingPush());
+		$this->send([$userId],static::COMMAND_ANSWER_SELF, [], $this->getCancelingPush('_ANSWER'));
 	}
 
 	public function sendStart($userId, $device)
@@ -198,7 +264,33 @@ class Signaling
 				'callDevice' => $device,
 				'CRM' => \CVoxImplantCrmHelper::GetDataForPopup($this->call->getCallId(), $this->call->getCallerId(), $userId)
 			],
-			$this->getCancelingPush()
+			$this->getCancelingPush('_ANSWER')
+		);
+	}
+
+	public function sendUpdatePortalUser($userId)
+	{
+		if($this->call->isInternalCall() && Loader::includeModule('im'))
+		{
+			$portalCallData = \CIMContactList::GetUserData([
+				'ID' => [$this->call->getPortalUserId()],
+				'DEPARTMENT' => 'N',
+				'HR_PHOTO' => 'Y',
+			]);
+		}
+		else
+		{
+			$portalCallData = [];
+		}
+
+		$this->send(
+			[$userId],
+			static::COMMAND_UPDATE_PORTAL_USER,
+			[
+				'portalCall' => $this->call->isInternalCall(),
+				'portalCallData' => $portalCallData,
+				'portalCallUserId' => $this->call->isInternalCall() ? $this->call->getPortalUserId() : 0,
+			]
 		);
 	}
 
@@ -259,12 +351,13 @@ class Signaling
 		]);
 	}
 
-	protected function getCancelingPush()
+	protected function getCancelingPush($idSuffix = '')
 	{
 		return [
 			'send_immediately' => 'Y',
 			'advanced_params' => [
-				"notificationsToCancel" => ['VI_CALL_'.$this->call->getCallId()],
+				'id' => 'VI_CALL_' . $this->call->getCallId() . $idSuffix,
+				'notificationsToCancel' => ['VI_CALL_' . $this->call->getCallId()],
 			]
 		];
 	}

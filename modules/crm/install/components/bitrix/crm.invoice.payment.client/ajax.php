@@ -38,7 +38,12 @@ if (!isset($params['PAY_SYSTEM_ID']) || ($params['PAY_SYSTEM_ID'] <= 0))
 $params['IS_AJAX_PAY'] = "Y";
 
 $params['HASH'] = $request->get('hash');
-	
+
+if ($request->get('returnUrl'))
+{
+	$params['RETURN_URL'] = $request->get('returnUrl');
+}
+
 CBitrixComponent::includeComponentClass("bitrix:crm.invoice.payment.client");
 
 $orderPayment = new CrmInvoicePaymentClientComponent();

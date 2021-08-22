@@ -102,7 +102,15 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 
 	public function isFullAnimationMode()
 	{
-		return self::getUserCount() > 100 ? false : true;
+		if (
+			self::getUserCount() > 100
+			|| $this->arResult['DISPLAY_MODE'] !== 'sidebar'
+		)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	public function getCurrentOnlineUserData()

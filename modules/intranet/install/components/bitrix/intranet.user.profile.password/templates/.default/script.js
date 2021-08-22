@@ -182,21 +182,31 @@
 
 		showSuccessPopup: function()
 		{
-			BX.PopupWindowManager.create({
-				id: "socserv-logout-success-popup",
-				content:
-					BX.create("div", {
-						props : {
-							style : "max-width: 450px"
-						},
-						html: BX.message("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS")
-					}),
-				closeIcon : true,
-				lightShadow : true,
-				offsetLeft : 100,
-				overlay : false,
-				contentPadding: 10
-			}).show();
+			var popup = new BX.PopupWindow({
+				autoHide: true,
+				closeByEsc: true,
+				closeIcon: true,
+				contentColor: "white",
+				titleBar: BX.message("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TITLE"),
+				content: BX.create("div", {
+					props : {
+						style : "max-width: 450px"
+					},
+					html: BX.message("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS")
+				}),
+				cacheable: false,
+				width: 450,
+				buttons: [
+					new BX.UI.Button({
+						text : BX.message("INTRANET_USER_PROFILE_PASSWORD_CLOSE"),
+						color: BX.UI.Button.Color.PRIMARY,
+						onclick: function() {
+							popup.close();
+						}
+					})
+				]
+			});
+			popup.show();
 		}
 	};
 

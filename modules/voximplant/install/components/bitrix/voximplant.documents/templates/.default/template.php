@@ -12,7 +12,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
     <div class="tel-set-item">
         <div class="bx-vi-docs-body">
 			<?=GetMessage('VI_DOCS_BODY_2');?>
-			<? if (count($arResult['DOCUMENTS']) == 0): ?>
+			<? if (empty($arResult['DOCUMENTS'])): ?>
 				<?=GetMessage('VI_DOCS_UPLOAD_WHILE_RENT');?>
 			<? endif; ?>
 		</div>
@@ -60,7 +60,8 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 						<col width="15%">
 						<col width="15%">
 						<col width="15%">
-						<col width="55%">
+						<col width="40%">
+						<col width="15%">
 						<tr>
 							<td class="tel-phones-list-th" ><?=GetMessage('VI_DOCS_TABLE_UPLOAD');?></td>
 							<td class="tel-phones-list-th"><?=GetMessage('VI_DOCS_TABLE_STATUS');?></td>
@@ -70,14 +71,15 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 								<td class="tel-phones-list-th"><?=GetMessage('VI_DOCS_TABLE_OWNER');?></td>
 							<? endif ?>
 							<td class="tel-phones-list-th"><?=GetMessage('VI_DOCS_TABLE_COMMENT');?></td>
+							<td class="tel-phones-list-th"></td>
 						</tr>
 						<?if (is_array($verification['DOCUMENTS'])): ?>
 							<?foreach ($verification['DOCUMENTS'] as $document):?>
 								<?
 								$tdColor = 'red';
-								if ($document['DOCUMENT_STATUS'] == 'ACCEPTED' || $document['DOCUMENT_STATUS'] == 'VERIFIED')
+								if ($document['DOCUMENT_STATUS'] === 'ACCEPTED' || $document['DOCUMENT_STATUS'] === 'VERIFIED')
 									$tdColor = 'VERIFIED';
-								else if ($document['DOCUMENT_STATUS'] == 'REJECTED' || $document['DOCUMENT_STATUS'] == 'DECLINED')
+								else if ($document['DOCUMENT_STATUS'] === 'REJECTED' || $document['DOCUMENT_STATUS'] === 'DECLINED')
 									$tdColor = 'DECLINED';
 								else
 									$tdColor = 'yellow';
@@ -92,15 +94,24 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 									<? else: ?>
 										<td class="tel-phones-list-td" style="white-space: nowrap;"><?=htmlspecialcharsbx($document['OWNER'])?></td>
 									<? endif ?>
-									<td class="tel-phones-list-td"><?=($document['REVIEWER_COMMENT'] <> ''? $document['REVIEWER_COMMENT']: '-')?></td>
+									<td class="tel-phones-list-td"><?=((string)$document['REVIEWER_COMMENT'] !== ''? $document['REVIEWER_COMMENT']: '-')?></td>
+									<td class="tel-phones-list-td">
+										<? if ($document['DOCUMENT_STATUS'] === 'PENDING'): ?>
+											<button
+													class="ui-btn ui-btn-xs ui-btn-primary"
+													data-verification-id="<?= (int)$document['REG_ID']?>"
+													data-role="upload-additional"
+											><?= GetMessage("VI_DOCS_SERVICE_UPLOAD") ?></button>
+										<? endif ?>
+									</td>
 								</tr>
 							<?endforeach;?>
 						<?endif;?>
 						<tr>
-							<td colspan="4" class="tel-phones-list-td-footer">
+							<td colspan="5" class="tel-phones-list-td-footer">
 								<?if($verification['COUNTRY_CODE']==='RU'):?>
 									<a id="vi_docs_upload_btn_<?=$verification['COUNTRY_CODE']?>" href="#docs" class="ui-btn ui-btn-primary">
-										<?=($verification['STATUS'] == 'REQUIRED'? GetMessage('VI_DOCS_UPLOAD_BTN'): GetMessage('VI_DOCS_UPDATE_BTN'))?>
+										<?=($verification['STATUS'] === 'REQUIRED'? GetMessage('VI_DOCS_UPLOAD_BTN'): GetMessage('VI_DOCS_UPDATE_BTN'))?>
 									</a>
 								<?endif?>
 							</td>
@@ -168,6 +179,24 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 
                     BX.PreventDefault(e);
                 });
+                document.querySelectorAll('[data-role="upload-additional"]').forEach(function(element)
+				{
+					element.addEventListener('click', function ()
+					{
+						var verificationId = element.dataset.verificationId;
+						BX.ajax.runAction("voximplant.urlmanager.getAdditionalDocumentsUploadUrl", {
+							data: {verificationId: verificationId}
+						}).then(function (response)
+						{
+							var data = response.data;
+							console.log(data.url)
+							window.open(data.url);
+						}).catch(function (response)
+						{
+							console.error(response.errors);
+						})
+					})
+				})
             </script>
 			<? $previousCountry = $verification['COUNTRY_CODE'] ?>
         <?endforeach;?>

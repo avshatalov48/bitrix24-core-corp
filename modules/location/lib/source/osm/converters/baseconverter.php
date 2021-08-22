@@ -477,6 +477,13 @@ abstract class BaseConverter
 			}
 		}
 
+		if (!empty($this->details['addresstags']['street']))
+		{
+			return [
+				'localname' => $this->details['addresstags']['street'],
+			];
+		}
+
 		return null;
 	}
 
@@ -494,6 +501,13 @@ abstract class BaseConverter
 			{
 				return $addressComponent;
 			}
+		}
+
+		if (!empty($this->details['addresstags']['housenumber']))
+		{
+			return [
+				'localname' => $this->details['addresstags']['housenumber'],
+			];
 		}
 
 		return null;

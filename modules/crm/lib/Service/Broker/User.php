@@ -78,7 +78,7 @@ class User extends Broker
 			$photo = \CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [
 				'width' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
 				'height' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
-			]);
+			], BX_RESIZE_IMAGE_EXACT, true, false, true);
 			if($photo)
 			{
 				$user['PHOTO_URL'] = $photo['src'];

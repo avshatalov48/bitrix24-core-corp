@@ -109,6 +109,11 @@ $arResult['IS_BIZPROC_DESIGNER_ENABLED'] = \Bitrix\Crm\Automation\Factory::isBiz
 	CCrmOwnerType::ResolveID($arResult['DOCUMENT_TYPE'])
 );
 
+if ($arResult['DOCUMENT_TYPE'] === 'ORDER')
+{
+	$arResult['IS_BIZPROC_DESIGNER_ENABLED'] = false;
+}
+
 $arResult['~ENTITY_LIST_URL'] = $arParams['~ENTITY_LIST_URL'];
 $arResult['ENTITY_LIST_URL'] = htmlspecialcharsbx($arResult['~ENTITY_LIST_URL']);
 

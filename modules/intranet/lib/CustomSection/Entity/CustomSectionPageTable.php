@@ -11,10 +11,26 @@ use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
-use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\ORM\Fields\Validators\RegExpValidator;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class CustomSectionPageTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CustomSectionPage_Query query()
+ * @method static EO_CustomSectionPage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CustomSectionPage_Result getById($id)
+ * @method static EO_CustomSectionPage_Result getList(array $parameters = array())
+ * @method static EO_CustomSectionPage_Entity getEntity()
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection createCollection()
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage wakeUpObject($row)
+ * @method static \Bitrix\Intranet\CustomSection\Entity\EO_CustomSectionPage_Collection wakeUpCollection($rows)
+ */
 class CustomSectionPageTable extends DataManager
 {
 	/**
@@ -59,9 +75,16 @@ class CustomSectionPageTable extends DataManager
 				->configureSize(50)
 				->configureRequired()
 			,
-			(new TextField('SETTINGS'))
+			(new StringField('SETTINGS'))
+				->configureSize(255)
 				->configureRequired()
 				->configureDefaultValue('')
+				->addValidator(
+					new LengthValidator(
+						null,
+						255
+					)
+				)
 			,
 		];
 	}

@@ -111,6 +111,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->arResult['OBJECT'] = [
 			'ID' => $documentSession->getObjectId(),
 			'NAME' => $documentSession->getObject()->getName(),
+			'SIZE' => $documentSession->getObject()->getSize(),
 		];
 		$this->arResult['ATTACHED_OBJECT'] = [
 			'ID' => $documentSession->getContext()->getAttachedObjectId(),
@@ -233,6 +234,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->arResult['OBJECT'] = [
 			'ID' => $documentSession->getObjectId(),
 			'NAME' => $documentSession->getObject()->getName(),
+			'SIZE' => $documentSession->getObject()->getSize(),
 		];
 
 		$this->includeComponentTemplate('saving');

@@ -106,11 +106,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$arParams['context'] = $this->request->get('context');
 		}
 
-		if (!isset($arParams['orderId']))
-		{
-			$arParams['orderId'] = $this->request->get('orderId');
-		}
-
 		if (!isset($arParams['paymentId']))
 		{
 			$arParams['paymentId'] = (int)$this->request->get('paymentId');
@@ -133,8 +128,9 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		if (!isset($arParams['ownerId']))
 		{
-			$arParams['ownerId'] = intval($this->request->get('ownerId'));
+			$arParams['ownerId'] = (int)$this->request->get('ownerId');
 		}
+
 		if (!isset($arParams['ownerTypeId']))
 		{
 			$arParams['ownerTypeId'] = $this->request->get('ownerTypeId');
@@ -149,6 +145,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			$arParams['templateMode'] = self::TEMPLATE_CREATE_MODE;
 		}
+
+		$arParams['orderId'] = $this->getOrderIdFromParams($arParams);
 
 		if ($this->needOrderFromDeal($arParams))
 		{
@@ -192,13 +190,35 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->includeComponentTemplate();
 	}
 
+	private function getOrderIdFromParams(array $arParams): ?int
+	{
+		if (
+			$arParams['templateMode'] === self::TEMPLATE_CREATE_MODE
+			&& \CCrmSaleHelper::isWithOrdersMode()
+		)
+		{
+			return null;
+		}
+
+		return $arParams['orderId'] ? (int)$arParams['orderId'] : (int)$this->request->get('orderId');
+	}
+
 	private function needOrderFromDeal(array $arParams): bool
 	{
+		if (!empty($arParams['orderId']) && (int)$arParams['orderId'] > 0)
+		{
+			return false;
+		}
+
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			return false;
+		}
+
 		$isChat = (
 			!empty($arParams['dialogId'])
 			&& !empty($arParams['sessionId'])
 			&& !empty($arParams['ownerId'])
-			&& empty($arParams['orderId'])
 		);
 
 		$isSms = (
@@ -206,7 +226,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			&& !empty($arParams['ownerTypeId'])
 			&& (int)$arParams['ownerTypeId'] === CCrmOwnerType::Deal
 			&& !empty($arParams['ownerId'])
-			&& empty($arParams['orderId'])
 		);
 
 		return $isChat || $isSms;
@@ -324,19 +343,23 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['personTypeId'] = (int)Sale\Helpers\Admin\Blocks\OrderBuyer::getDefaultPersonType(SITE_ID);
 		}
 
-		if (
-			(
-				isset($this->arParams['ownerId'])
-				&& (int)$this->arParams['ownerId'] > 0
-			)
-			&& (
-				(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-				|| $this->arParams['context'] === self::CONTEXT_CHAT
-				|| $this->arParams['context'] === self::CONTEXT_SMS
-			)
-		)
+		if (!\CCrmSaleHelper::isWithOrdersMode())
 		{
-			$this->arResult['orderList'] = $this->getOrderIdListByDealId((int)$this->arParams['ownerId']);
+			if (
+				(
+					isset($this->arParams['ownerId'])
+					&& (int)$this->arParams['ownerId'] > 0
+				)
+				&&
+				(
+					(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+					|| $this->arParams['context'] === self::CONTEXT_CHAT
+					|| $this->arParams['context'] === self::CONTEXT_SMS
+				)
+			)
+			{
+				$this->arResult['orderList'] = $this->getOrderIdListByDealId((int)$this->arParams['ownerId']);
+			}
 		}
 
 		if ($this->arParams['context'] === self::CONTEXT_DEAL)
@@ -360,12 +383,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$this->arResult['contactPhone'] = CrmManager::getInstance()->getDealContactPhoneFormat($this->deal['ID']);
 				$this->arResult['orderPropertyValues'] = [];
 				$this->arResult['timeline'] = $this->getTimeLine();
-
-				$this->arResult['basket'] = $this->getBasket();
-				$this->arResult['totals'] = $this->getTotalSumList(
-					array_column($this->arResult['basket'], 'fields'),
-					$this->arResult['currencyCode']
-				);
 
 				$this->arResult['shipmentData'] = $this->getShipmentData();
 				$this->arResult['emptyDeliveryServiceId'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
@@ -403,16 +420,27 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$this->arResult['urlProductBuilderContext'] = Crm\Product\Url\ProductBuilder::TYPE_ID;
 			}
 		}
-		elseif ($this->arParams['context'] === self::CONTEXT_CHAT)
-		{
-			$this->arResult['basket'] = $this->getBasket();
-		}
-		elseif (
-			$this->arParams['context'] === self::CONTEXT_SMS
-			&& (int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+
+		if (
+			!\CCrmSaleHelper::isWithOrdersMode()
+			||
+			$this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
+			||
+			(
+				(
+					(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+					|| $this->arParams['context'] === self::CONTEXT_CHAT
+				)
+				&& (int)$this->arParams['ownerId'] > 0
+				&& count($this->getOrderIdListByDealId((int)$this->arParams['ownerId'])) === 0
+			)
 		)
 		{
 			$this->arResult['basket'] = $this->getBasket();
+			$this->arResult['totals'] = $this->getTotalSumList(
+				array_column($this->arResult['basket'], 'fields'),
+				$this->arResult['currencyCode']
+			);
 		}
 
 		if ($this->arResult['sessionId'] > 0)
@@ -788,13 +816,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			CrmManager::getInstance()->getMyCompanyAddressList()
 		);
 
-		$defaultLocationFrom = LocationManager::getInstance()->getDefaultLocationFrom();
+		$defaultLocationFrom = LocationManager::getInstance()->getLocationsFromList();
 		if ($defaultLocationFrom)
 		{
-			array_unshift($result, $defaultLocationFrom);
+			$result = array_merge($defaultLocationFrom, $result);
 		}
 
-		return $result;
+		return array_values($result);
 	}
 
 	/**
@@ -802,8 +830,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function getDeliveryToList(): array
 	{
-		return LocationManager::getInstance()->getFormattedLocations(
-			CrmManager::getInstance()->getDealClientAddressList($this->deal['ID'])
+		return array_values(
+			LocationManager::getInstance()->getFormattedLocations(
+				CrmManager::getInstance()->getDealClientAddressList($this->deal['ID'])
+			)
 		);
 	}
 

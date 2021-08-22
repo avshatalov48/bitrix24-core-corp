@@ -723,95 +723,95 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		
 	<!-- GDPR for Europe-->
 		<?
-		if ($arResult["IS_BITRIX24"])
+		if (
+			$arResult["IS_BITRIX24"]
+			&& !in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by"))
+		)
 		{
 		?>
 			<tr>
 				<td class="content-edit-form-header" colspan="3">
-					<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_HEADER_GDRP')?></div>
+					<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue">
+						<?=Loc::getMessage("CONFIG_HEADER_GDRP", null, $arResult["LICENSE_PREFIX"])?>
+					</div>
 				</td>
 			</tr>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left">
+					<?=GetMessage('CONFIG_GDRP_LABEL3')?>
+				</td>
+				<td class="content-edit-form-field-input">
+					<input
+						type="checkbox"
+						name="gdpr_data_processing"
+						onchange="BX.Bitrix24.Configs.Functions.onGdprChange(this);"
+						<?if (COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y"):?>
+							checked
+						<?endif?>
+						class="content-edit-form-field-input-selector"
+					/>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+
 			<?
-			if (!in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
-			{
+			$isGdprDataShown = COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y";
 			?>
-				<tr>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left">
-						<?=GetMessage('CONFIG_GDRP_LABEL3')?>
-					</td>
-					<td class="content-edit-form-field-input">
-						<input
-							type="checkbox"
-							name="gdpr_data_processing"
-							onchange="BX.Bitrix24.Configs.Functions.onGdprChange(this);"
-							<?if (COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y"):?>
-								checked
-							<?endif?>
-							class="content-edit-form-field-input-selector"
-						/>
-					</td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left" colspan="3"><?=GetMessage('CONFIG_GDRP_TITLE2')?></td>
+			</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL4')?></td>
+				<td class="content-edit-form-field-input"><input type="text" name="gdpr_legal_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_legal_name"]) ? $_POST["gdpr_legal_name"] : COption::GetOptionString("bitrix24", "gdpr_legal_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL5')?></td>
+				<td class="content-edit-form-field-input"><input type="text" name="gdpr_contact_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_contact_name"]) ? $_POST["gdpr_contact_name"] : COption::GetOptionString("bitrix24", "gdpr_contact_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL6')?></td>
+				<td class="content-edit-form-field-input"><input type="text" name="gdpr_title" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_title"]) ? $_POST["gdpr_title"] : COption::GetOptionString("bitrix24", "gdpr_title", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL7')?></td>
+				<td class="content-edit-form-field-input">
+					<?$APPLICATION->IncludeComponent(
+						"bitrix:main.calendar",
+						"",
+						array(
+							"SHOW_INPUT"=>"Y",
+							"INPUT_NAME"=> "gdpr_date",
+							"INPUT_VALUE"=> htmlspecialcharsbx(isset($_POST["gdpr_date"]) ? $_POST["gdpr_date"] : COption::GetOptionString("bitrix24", "gdpr_date", "")),
+							"INPUT_ADDITIONAL_ATTR"=>'class="content-edit-form-field-input-text" style="width: 100px;"',
+							"SHOW_TIME" =>  'N',
+						),
+						$component,
+						array("HIDE_ICONS"=>true)
+					);?>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL8')?></td>
+				<td class="content-edit-form-field-input"><input type="text" name="gdpr_notification_email" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_notification_email"]) ? $_POST["gdpr_notification_email"] : COption::GetOptionString("bitrix24", "gdpr_notification_email", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
 
-				<?
-				$isGdprDataShown = COption::GetOptionString("bitrix24", "gdpr_data_processing", "") == "Y";
-				?>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left" colspan="3"><?=GetMessage('CONFIG_GDRP_TITLE2')?></td>
-				</tr>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL4')?></td>
-					<td class="content-edit-form-field-input"><input type="text" name="gdpr_legal_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_legal_name"]) ? $_POST["gdpr_legal_name"] : COption::GetOptionString("bitrix24", "gdpr_legal_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL5')?></td>
-					<td class="content-edit-form-field-input"><input type="text" name="gdpr_contact_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_contact_name"]) ? $_POST["gdpr_contact_name"] : COption::GetOptionString("bitrix24", "gdpr_contact_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL6')?></td>
-					<td class="content-edit-form-field-input"><input type="text" name="gdpr_title" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_title"]) ? $_POST["gdpr_title"] : COption::GetOptionString("bitrix24", "gdpr_title", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL7')?></td>
-					<td class="content-edit-form-field-input">
-						<?$APPLICATION->IncludeComponent(
-							"bitrix:main.calendar",
-							"",
-							array(
-								"SHOW_INPUT"=>"Y",
-								"INPUT_NAME"=> "gdpr_date",
-								"INPUT_VALUE"=> htmlspecialcharsbx(isset($_POST["gdpr_date"]) ? $_POST["gdpr_date"] : COption::GetOptionString("bitrix24", "gdpr_date", "")),
-								"INPUT_ADDITIONAL_ATTR"=>'class="content-edit-form-field-input-text" style="width: 100px;"',
-								"SHOW_TIME" =>  'N',
-							),
-							$component,
-							array("HIDE_ICONS"=>true)
-						);?>
-					</td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
-				<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
-					<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL8')?></td>
-					<td class="content-edit-form-field-input"><input type="text" name="gdpr_notification_email" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_notification_email"]) ? $_POST["gdpr_notification_email"] : COption::GetOptionString("bitrix24", "gdpr_notification_email", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
-					<td class="content-edit-form-field-error"></td>
-				</tr>
-
-				<?\CJSCore::init("sidepanel");?>
-				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=GetMessage("CONFIG_GDRP_TITLE3")?><br/>
-							<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdprstaff/');"><?=GetMessage("CONFIG_GDRP_APP1")?></a>
-							<br/>
-							<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdpr/');"><?=GetMessage("CONFIG_GDRP_APP2")?></a>
-						</div>
-					</td>
-				</tr>
+			<?\CJSCore::init("sidepanel");?>
+			<tr>
+				<td colspan="3">
+					<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+						<?=GetMessage("CONFIG_GDRP_TITLE3")?><br/>
+						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdprstaff/');"><?=GetMessage("CONFIG_GDRP_APP1")?></a>
+						<br/>
+						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdpr/');"><?=GetMessage("CONFIG_GDRP_APP2")?></a>
+					</div>
+				</td>
+			</tr>
 		<?
-			}
 		}
 		?>
 	<!-- //GDPR for Europe-->
@@ -826,16 +826,34 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</td>
 		</tr>
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_OTP_SECURITY2')?></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" <?if (!$arResult["SECURITY_IS_USER_OTP_ACTIVE"] && !$arResult["SECURITY_OTP"]):?> onclick="BX.Bitrix24.Configs.Functions.adminOtpIsRequiredInfo(this);return false;"<?endif?> onchange="BX.Bitrix24.Configs.Functions.otpSwitchOffInfo(this);" name="security_otp"  class="content-edit-form-field-input-selector" <?if ($arResult["SECURITY_OTP"]):?>checked<?endif?>/></td>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<?=GetMessage('CONFIG_OTP_SECURITY2')?>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input
+					name="security_otp"
+					type="checkbox"
+					class="content-edit-form-field-input-selector"
+					<?if (!$arResult["SECURITY_IS_USER_OTP_ACTIVE"] && !$arResult["SECURITY_OTP"]):?>
+						onclick="BX.Bitrix24.Configs.Functions.adminOtpIsRequiredInfo(this);return false;"
+					<?endif?>
+					onchange="BX.Bitrix24.Configs.Functions.otpSwitchOffInfo(this);"
+					<?if ($arResult["SECURITY_OTP"]):?>checked<?endif?>
+				/>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_OTP_SECURITY_DAYS')?></td>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<?=GetMessage('CONFIG_OTP_SECURITY_DAYS')?>
+			</td>
 			<td class="content-edit-form-field-input">
 				<select id="security_otp_days" name="security_otp_days">
 					<?for($i=5; $i<=10; $i++):?>
-						<option value="<?=$i?>" <?if ($arResult["SECURITY_OTP_DAYS"] == $i) echo 'selected="selected"';?>><?=FormatDate("ddiff", time()-60*60*24*$i)?></option>
+						<option
+							value="<?=$i?>"
+							<?if ($arResult["SECURITY_OTP_DAYS"] == $i) echo 'selected="selected"';?>
+						><?=FormatDate("ddiff", time()-60*60*24*$i)?></option>
 					<?endfor;?>
 				</select>
 			</td>

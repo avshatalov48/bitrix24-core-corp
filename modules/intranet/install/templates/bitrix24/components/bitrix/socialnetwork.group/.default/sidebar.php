@@ -178,6 +178,8 @@ if ($_REQUEST['BLOCK_RELOAD'] != 'Y')
 
 	?></table><?
 
+	?><div class="socialnetwork-group-sidebar-videocall" id="socialnetwork-group-sidebar-videocall"></div><?php
+
 	if (
 		$arResult["Group"]["DESCRIPTION"] <> '' &&
 		$arResult["Group"]["DESCRIPTION"] !== GetMessage("SONET_GCE_T_DESCR") &&

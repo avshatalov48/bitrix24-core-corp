@@ -14,6 +14,19 @@ use Bitrix\Main\Type;
  * Class InvitationTable
  *
  * @package Bitrix\Intranet\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Invitation_Query query()
+ * @method static EO_Invitation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Invitation_Result getById($id)
+ * @method static EO_Invitation_Result getList(array $parameters = array())
+ * @method static EO_Invitation_Entity getEntity()
+ * @method static \Bitrix\Intranet\Internals\EO_Invitation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection createCollection()
+ * @method static \Bitrix\Intranet\Internals\EO_Invitation wakeUpObject($row)
+ * @method static \Bitrix\Intranet\Internals\EO_Invitation_Collection wakeUpCollection($rows)
  */
 class InvitationTable extends Entity\DataManager
 {

@@ -25,6 +25,8 @@ import LocationType from './entity/location/locationtype';
 import AddressType from './entity/address/addresstype';
 import LocationFieldType from './entity/location/locationfieldtype';
 
+import LocationJsonConverter from "./entity/location/locationjsonconverter";
+
 import StringConverter from './entity/address/converter/stringconverter';
 import {SourceCreationError, MethodNotImplemented} from './common/error';
 import ErrorPublisher from './common/errorpublisher';
@@ -43,6 +45,8 @@ export {
 	LocationType,
 	LocationFieldType,
 	FormatTemplateType,
+	FormatTemplate,
+	FormatTemplateCollection,
 
 	LocationRepository,
 	AddressRepository,
@@ -55,6 +59,8 @@ export {
 	BaseSource,
 	MapBase,
 	GeocodingServiceBase,
+
+	LocationJsonConverter,
 
 	ControlMode,
 

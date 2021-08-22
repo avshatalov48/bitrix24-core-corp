@@ -50,6 +50,26 @@ this.BX = this.BX || {};
 
 	      return BX.date.format(_format, date);
 	    }
+	  }, {
+	    key: "toString",
+	    value: function toString(date) {
+	      if (!main_core.Type.isDate(date)) {
+	        date = new Date(date);
+	      }
+
+	      if (isNaN(date)) {
+	        throw new Error("DateFormatter: Invalid date.");
+	      }
+
+	      var addZero = function addZero(num) {
+	        return num >= 0 && num <= 9 ? '0' + num : num;
+	      };
+
+	      var year = date.getFullYear();
+	      var month = addZero(date.getMonth() + 1);
+	      var day = addZero(date.getDate());
+	      return year + '-' + month + '-' + day;
+	    }
 	  }]);
 	  return DateFormatter;
 	}();

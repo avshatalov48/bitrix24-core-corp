@@ -20,7 +20,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman\Model\Monitor
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_MonitorComment_Query query()
+ * @method static EO_MonitorComment_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_MonitorComment_Result getById($id)
+ * @method static EO_MonitorComment_Result getList(array $parameters = array())
+ * @method static EO_MonitorComment_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Monitor\EO_MonitorComment_Collection wakeUpCollection($rows)
+ */
 
 class MonitorCommentTable extends DataManager
 {

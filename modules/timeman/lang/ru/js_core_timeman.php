@@ -121,4 +121,7 @@ $MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON"] = "Включить Персональ
 $MESS["JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"] = "Скачать Битрикс24";
 $MESS["JS_CORE_TM_MONITOR_ENABLED"] = "Персональный ассистент рабочего времени включён";
 $MESS["JS_CORE_TM_MONITOR_UPDATE_DESKTOP"] = "Вам доступен Персональный ассистент рабочего времени. Чтобы его активировать, установите новую версию приложения Битрикс24 для Windows/Mac";
+$MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Не забудьте поделиться отчетом о рабочем времени с руководителем.";
+$MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED"] = "Не забудьте поделиться отчетом о рабочем времени с руководителем в приложении Битрикс24.";
+$MESS["JS_CORE_TM_MONITOR_REPORT_OPEN"] = "Посмотреть";
 ?>

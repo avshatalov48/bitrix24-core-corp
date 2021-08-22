@@ -8,6 +8,7 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 {
 	public function executeComponent()
 	{
+		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
 		CJSCore::Init(array('fx'));
@@ -34,6 +35,7 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 		$this->arResult['SECTIONS'] = $this->getSectionList();
 		$this->arResult['BUTTONS'] = $this->prepareSectionsForInterfaceButtons();
 		$this->arResult['ALL_COUNT'] = QuickAnswer::getCount();
+		$this->arResult['DARK_MODE'] = ($this->arParams['DARK_MODE'] ?? 'N') === 'Y';
 		$this->includeComponentTemplate();
 	}
 

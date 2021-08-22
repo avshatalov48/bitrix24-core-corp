@@ -61,7 +61,8 @@ export default class OSMFactory
 			serviceUrl: params.serviceUrl,
 			hostName: params.hostName,
 			tokenContainer: tokenContainer,
-			responseConverter: autocompleteResponseConverter
+			responseConverter: autocompleteResponseConverter,
+			autocompleteReplacements: params.autocompleteReplacements
 		});
 
 		osmParams.autocompleteService = new AutocompleteService({

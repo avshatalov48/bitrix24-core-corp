@@ -1105,15 +1105,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  return List;
 	}();
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-folder-list-no-data-inner\">\n\t\t\t<div class=\"disk-folder-list-no-data-inner-message\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"disk-folder-list-no-data-inner-variable\">\n\t\t\t\t<div class=\"disk-folder-list-no-data-inner-create-file\" onmouseover=\"BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);\">\n\t\t\t\t\t", "</div>\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var Tile = /*#__PURE__*/function () {
 	  function Tile() {
@@ -1199,7 +1191,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }], [{
 	    key: "generateEmptyBlock",
 	    value: function generateEmptyBlock() {
-	      return main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE'), main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD'));
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-folder-list-no-data-inner\">\n\t\t\t<div class=\"disk-folder-list-no-data-inner-message\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t<div class=\"disk-folder-list-no-data-inner-variable\">\n\t\t\t\t<div class=\"disk-folder-list-no-data-inner-create-file\" onmouseover=\"BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);\">\n\t\t\t\t\t", "</div>\n\t\t\t</div>\n\t\t</div>"])), main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE'), main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD'));
 	    }
 	  }]);
 	  return Tile;

@@ -381,6 +381,7 @@ class StatusTable extends Entity\DataManager
 			],
 			'order' => [
 				'SORT' => 'ASC',
+				'ID' => 'ASC'
 			],
 		]);
 		while($status = $list->fetch())

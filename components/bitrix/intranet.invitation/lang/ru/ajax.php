@@ -15,4 +15,4 @@ $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Ошибка при 
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Подтверждение пароля не совпадает с паролем";
 $MESS["BX24_INVITE_DIALOG_INTEGRATOR_INVITE_TEXT"] = "Приглашаю вас в наш Битрикс24! Вы получаете все права Интегратора, чтобы помочь нам с настройками и реализацией новых бизнес-сценариев в Битрикс24. Это полные права доступа, за исключением возможности приглашать или увольнять администраторов.";
 $MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "Превышена максимально допустимая длина в 50 символов";
-?>
+$MESS["INTRANET_INVITE_DIALOG_USER_COUNT_ERROR"] = "Превышено максимальное число приглашенных пользователей за сутки";

@@ -3,8 +3,8 @@
 use Bitrix\Main\Application;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
-use Bitrix\Tasks\Util\User; ?>
-<?
+use Bitrix\Tasks\Util\User;
+
 CUtil::InitJSCore(array("popup"));
 
 if (
@@ -60,26 +60,32 @@ elseif ($arResult["User"]["IS_EXTRANET"] == 'Y')
 {
 	$className = ' profile-menu-user-info-extranet';
 }
-?>
 
-<?
 $requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
+$items = [];
 
-$items = array(
-	"profile" => array
+$profileItem = array(
+	'profile' => array
 	(
-		"TEXT" => GetMessage("SONET_UM_GENERAL"),
-		"CLASS" => "",
-		"CLASS_SUBMENU_ITEM" => "",
-		"ID" => "profile",
-		"SUB_LINK" => "",
-		"COUNTER" => "",
-		"COUNTER_ID" => "",
-		"IS_ACTIVE" => true,
-		"IS_LOCKED" => "",
-		"IS_DISABLED" => 1
+		'TEXT' => GetMessage('SONET_UM_GENERAL'),
+		'CLASS' => '',
+		'CLASS_SUBMENU_ITEM' => '',
+		'ID' => 'profile',
+		'SUB_LINK' => '',
+		'COUNTER' => '',
+		'COUNTER_ID' => '',
+		'IS_ACTIVE' => true,
+		'IS_LOCKED' => '',
+		'IS_DISABLED' => 1,
 	),
 );
+
+if ($arResult['User']['ID'] !== $USER->GetID())
+{
+	$profileItem['profile']['URL'] = SITE_DIR . 'company/personal/user/' . $arResult['User']['ID'] . '/';
+}
+
+$items = array_merge($items, $profileItem);
 
 if (
 	is_array($arResult["CanView"])
@@ -90,19 +96,24 @@ if (
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
-	$items = array_merge($items, array(
+	$taskItem = array(
 		"tasks" => array
 		(
 			"ID" => "tasks",
 			"TEXT" => $arResult["Title"]['tasks'],
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:tasklist', })",
-			'SUB_LINK' => array(
-				'CLASS' => '',
-				'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
-			),
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['tasks']) === 0)
 		)
-	));
+	);
+
+	if (!$arResult['isExtranetSite'])
+	{
+		$taskItem['tasks']['SUB_LINK'] = array(
+			'CLASS' => '',
+			'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
+		);
+	}
+	$items = array_merge($items, $taskItem);
 }
 
 if (

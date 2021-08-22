@@ -525,6 +525,13 @@ class CVoxImplantRestService extends IRestService
 						case 'CALL_TYPE':
 							$field = 'INCOMING';
 							break;
+						case 'CRM_BINDINGS.ENTITY_TYPE':
+						case 'CRM_BINDINGS.ENTITY_ID':
+							if ($operation == '')
+							{
+								$operation = '=';
+							}
+							break;
 					}
 					if($operation == '' && StatisticTable::getEntity()->hasField($field))
 					{
@@ -1288,10 +1295,20 @@ class CVoxImplantRestService extends IRestService
 		if(!in_array($params['TYPE'], CVoxImplantMain::getCallTypes()))
 			throw new \Bitrix\Rest\RestException('Unknown TYPE');
 
-		if(isset($params['CALL_START_DATE']))
-			$startDate = new \Bitrix\Main\Type\DateTime(CRestUtil::unConvertDateTime($params['CALL_START_DATE']));
+		if(isset($params['CALL_START_DATE']) && $params['CALL_START_DATE'] !== '')
+		{
+			$parsedDate = CRestUtil::unConvertDateTime($params['CALL_START_DATE']);
+			if ($parsedDate === false)
+			{
+				throw new \Bitrix\Rest\RestException('CALL_START_DATE should be in the ISO-8601 format');
+			}
+
+			$startDate = new \Bitrix\Main\Type\DateTime($parsedDate);
+		}
 		else
+		{
 			$startDate = new \Bitrix\Main\Type\DateTime();
+		}
 
 		$result = Rest\Helper::registerExternalCall(array(
 			'USER_ID' => $userId,

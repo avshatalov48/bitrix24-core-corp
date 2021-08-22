@@ -1,9 +1,7 @@
 <?php
 namespace Bitrix\ImConnector;
 
-use Bitrix\ImConnector\Connectors\Notifications;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\UI\EntitySelector\BaseProvider;
 
 Library::loadMessages();
 
@@ -38,7 +36,7 @@ class Provider
 			],
 		'notifications' =>
 			[
-				Notifications::CONNECTOR_ID
+				Library::ID_NOTIFICATIONS_CONNECTOR
 			],
 	];
 
@@ -250,7 +248,7 @@ class Provider
 	{
 		return self::getProviderForConnector(
 			$connector,
-			$params,
+			[$params],
 			'input'
 		);
 	}

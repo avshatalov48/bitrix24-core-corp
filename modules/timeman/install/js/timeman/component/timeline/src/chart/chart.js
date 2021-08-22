@@ -11,7 +11,15 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 	props: {
 		intervals: Array,
 		fixedSizeType: String,
-		readOnly: Boolean
+		readOnly: Boolean,
+		showMarkers: {
+			type: Boolean,
+			default: true,
+		},
+		isOverChart: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed:
 	{
@@ -99,6 +107,12 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 				intervals[intervals.length - 2].showStartMarker = true;
 			}
 
+			//to avoid collisions between markers of the last interval
+			if (intervals[intervals.length - 1].finish - intervals[intervals.length - 1].start <= oneHour)
+			{
+				intervals[intervals.length - 1].showStartMarker = false;
+			}
+
 			return intervals;
 		},
 	},
@@ -111,7 +125,12 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 	},
 	// language=Vue
 	template: `
-		<div class="bx-timeman-component-timeline-chart">
+		<div 
+			:class="{
+				'bx-timeman-component-timeline-chart': !this.isOverChart,
+				'bx-timeman-component-timeline-over-chart': this.isOverChart,
+		  	}"
+		>
 			<div class="bx-timeman-component-timeline-chart-outline">
 				<div class="bx-timeman-component-timeline-chart-outline-background"/>
 			</div>
@@ -128,14 +147,15 @@ export const Chart = BitrixVue.localComponent('bx-timeman-component-timeline-cha
 				:type="interval.type"
 				:start="interval.start"
 				:finish="interval.finish"
-				:showStartMarker="interval.showStartMarker"
-				:showFinishMarker="interval.showFinishMarker"
+				:showStartMarker="showMarkers ? interval.showStartMarker: false"
+				:showFinishMarker="showMarkers ? interval.showFinishMarker: false"
 				:clickable="!readOnly ? interval.clickable : false"
 				:hint="!readOnly ? interval.clickableHint : null"
 				:fixedSize="interval.fixedSize"
 				:size="interval.size"
 				:isFirst="interval.isFirst"
 				:isLast="interval.isLast"
+				:display="interval.display"
 				@intervalClick="onIntervalClick"
 			/>
 

@@ -24,10 +24,7 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		if (
-			$task->isClosed()
-			|| $task->getStatus() === \CTasks::STATE_SUPPOSEDLY_COMPLETED
-		)
+		if ($task->isClosed())
 		{
 			return false;
 		}
@@ -35,6 +32,18 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if ($this->user->isAdmin())
 		{
 			return true;
+		}
+
+		if ($task->getStatus() === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		{
+			if (
+				$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
+				|| $this->isSubordinateTask($task)
+			)
+			{
+				return true;
+			}
+			return false;
 		}
 
 		if (

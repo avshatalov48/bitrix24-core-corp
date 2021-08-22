@@ -229,7 +229,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 				$arResult['value'][$entityTypeName]['items'][$itemId] = [
 					'ENTITY_TYPE_ID' => $entityTypeId,
 					'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
-					'ENTITY_TITLE' => HtmlFilter::encode($item->getTitle()),
+					'ENTITY_TITLE' => $item->getTitle(),
 					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
 				];
 			}

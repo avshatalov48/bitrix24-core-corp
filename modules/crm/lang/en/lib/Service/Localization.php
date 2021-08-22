@@ -45,6 +45,7 @@ $MESS["CRM_COMMON_SETTINGS"] = "Settings";
 $MESS["CRM_COMMON_TITLE"] = "Name";
 $MESS["CRM_COMMON_UTM"] = "UTM parameters";
 $MESS["CRM_COMMON_YES"] = "Yes";
+$MESS["CRM_QUOTE_TITLE"] = "Quote ##QUOTE_NUMBER# of #BEGINDATE#";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Access to pipeline was denied";
 $MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "New pipeline";
 $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Pipeline was not found";

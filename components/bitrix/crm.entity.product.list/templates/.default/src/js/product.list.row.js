@@ -596,13 +596,14 @@ export class Row
 
 	setPrice(value, mode = MODE_SET)
 	{
+		const originalPrice = value;
+		// price can't be less than zero
+		value = Math.max(value, 0);
+
 		if (mode === MODE_SET)
 		{
 			this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
 		}
-
-		// price in model can't be less than zero
-		value = Math.max(value, 0);
 
 		const isChangedValue = this.getBasePrice() !== value;
 		if (isChangedValue)
@@ -615,7 +616,7 @@ export class Row
 			this.addActionUpdateTotal();
 		}
 
-		this.#togglePriceHintPopup();
+		this.#togglePriceHintPopup(originalPrice !== value);
 	}
 
 	#shouldShowSmallPriceHint(): boolean
@@ -632,18 +633,7 @@ export class Row
 		);
 	}
 
-	#shouldShowNegativePriceHint(): boolean
-	{
-		const priceInput = this.getInputByFieldName('PRICE');
-		if (Type.isDomNode(priceInput))
-		{
-			return Text.toNumber(priceInput.value) < 0;
-		}
-
-		return false;
-	}
-
-	#togglePriceHintPopup(ignoreNegative: boolean = false): void
+	#togglePriceHintPopup(showNegative: boolean = false): void
 	{
 		if (this.#shouldShowSmallPriceHint())
 		{
@@ -655,7 +645,7 @@ export class Row
 				.show()
 			;
 		}
-		else if (!ignoreNegative && this.#shouldShowNegativePriceHint())
+		else if (showNegative)
 		{
 			this.getHintPopup()
 				.load(
@@ -723,7 +713,7 @@ export class Row
 			this.addActionUpdateTotal();
 		}
 
-		this.#togglePriceHintPopup(true);
+		this.#togglePriceHintPopup();
 	}
 
 	setDiscountType(value)

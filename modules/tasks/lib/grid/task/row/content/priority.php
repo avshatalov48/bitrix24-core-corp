@@ -23,6 +23,6 @@ class Priority extends Content
 			return '';
 		}
 
-		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_PRIORITY_'.$row['PRIORITY']);
+		return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_PRIORITY_'.$row['PRIORITY']) ?? '';
 	}
 }

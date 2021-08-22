@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Main;
+use Bitrix\Main\NotImplementedException;
 
 class DuplicateIndexBuilder
 {
@@ -400,9 +401,14 @@ class DuplicateIndexBuilder
 		foreach($items as $matchHash => $item)
 		{
 			$enableOverwrite = $item->getOption('enableOverwrite', true);
-			if(!$enableOverwrite
+			if(
+				!$enableOverwrite
 				&& $this->duplicateIndexExists($this->getPrimaryKey($matchHash)))
 			{
+				if ($this->params->limitByDirtyIndexItems())
+				{
+					$this->markAsNotDirty($this->getPrimaryKey($matchHash));
+				}
 				continue;
 			}
 
@@ -410,6 +416,10 @@ class DuplicateIndexBuilder
 			$data['STATUS_ID'] = DuplicateStatus::PENDING;
 			$this->saveDuplicateIndexItem($data);
 			$effectiveItemCount++;
+		}
+		if ($this->params->limitByDirtyIndexItems())
+		{
+			$this->processInvalidDirtyItems($result->getInvalidItems());
 		}
 
 		$processedItemCount = $result->getProcessedItemCount();
@@ -696,5 +706,15 @@ class DuplicateIndexBuilder
 	protected static function markDuplicateIndexAsJunk($entityTypeID, $entityID)
 	{
 		Entity\DuplicateIndexTable::markAsJunk($entityTypeID, $entityID);
+	}
+
+	protected function processInvalidDirtyItems(array $invalidHashes)
+	{
+		// do nothing. Used only in AutomaticDuplicateIndexBuilder
+	}
+
+	protected function markAsNotDirty($primary)
+	{
+		throw new NotImplementedException('This duplicate index can not be dirty');
 	}
 }

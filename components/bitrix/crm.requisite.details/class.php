@@ -425,7 +425,16 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		// Detect read-only mode and check write permissions
-		if (!EntityRequisite::checkUpdatePermissionOwnerEntity($this->entityTypeId, $this->entityId))
+		if (
+			(
+				$this->entityId > 0
+				&& !EntityRequisite::checkUpdatePermissionOwnerEntity($this->entityTypeId, $this->entityId)
+			)
+			|| (
+				!$this->entityId
+				&& (!EntityRequisite::checkCreatePermissionOwnerEntity($this->entityTypeId))
+			)
+		)
 		{
 			$this->isReadOnly = true;
 

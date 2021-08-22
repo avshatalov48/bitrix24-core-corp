@@ -22,12 +22,19 @@ class CIntranetInviteDialog
 {
 	public static $bSendPassword = false;
 
-	public static function ShowInviteDialogLink($arParams = array())
+	public static function ShowInviteDialogLink($params = array())
 	{
-		$invitationLink = UrlManager::getInstance()->create('getSliderContent', [
+		$data = [
 			'c' => 'bitrix:intranet.invitation',
 			'mode' => Router::COMPONENT_MODE_AJAX,
-		]);
+		];
+
+		if (isset($params['analyticsLabel']))
+		{
+			$data = array_merge($data, $params['analyticsLabel']);
+		}
+
+		$invitationLink = UrlManager::getInstance()->create('getSliderContent', $data);
 
 		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false, width: 1100})";
 	}

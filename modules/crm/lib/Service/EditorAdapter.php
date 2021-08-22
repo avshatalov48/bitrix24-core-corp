@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Catalog;
-use Bitrix\Crm\Accounting\Products;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CompanyTable;
@@ -24,7 +23,6 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\StatusTable;
-use Bitrix\Crm\Tracking;
 use Bitrix\Currency\CurrencyTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
@@ -34,6 +32,7 @@ use Bitrix\Main\Result;
 use Bitrix\Main\UserField\Dispatcher;
 use Bitrix\Main\UserField\Types\BooleanType;
 use Bitrix\Main\Web\Json;
+use CSaleLocation;
 
 class EditorAdapter
 {
@@ -51,6 +50,8 @@ class EditorAdapter
 	public const FIELD_FILES = 'FILES';
 	public const FIELD_CLIENT_DATA_NAME = 'CLIENT_DATA';
 	public const FIELD_PARENT_PREFIX = 'PARENT_ID_';
+
+	public const CONTROLLER_PRODUCT_LIST = 'PRODUCT_LIST';
 
 	public const DATA_FILES = 'DISK_FILES';
 
@@ -204,16 +205,6 @@ class EditorAdapter
 		{
 			$this->entityData[static::FIELD_PRODUCT_ROW_SUMMARY] = $this->getProductsSummaryEntityData($item);
 			$this->entityData = array_merge($this->entityData, $this->getOpportunityEntityData($item));
-		}
-
-		if ($item->hasUtmSource())
-		{
-			Tracking\UI\Details::prepareEntityData(
-				$item->getEntityTypeId(),
-				$item->getId(),
-				$this->entityData
-			);
-			$this->entityData['UTM_VIEW_HTML'] = $this->getUtmEntityData($item);
 		}
 
 		if ($this->fieldsCollection->hasField(Item::FIELD_NAME_MYCOMPANY_ID))
@@ -535,9 +526,10 @@ class EditorAdapter
 		}
 		elseif ($type === Field::TYPE_CRM_STATUS)
 		{
+			$fakeValue = '';
 			$field['data']['items'][] = [
 				'NAME' => Loc::getMessage('CRM_COMMON_NOT_SELECTED'),
-				'VALUE' => '',
+				'VALUE' => $fakeValue,
 			];
 
 			$statusEntityId = $info['CRM_STATUS_TYPE'] ?? null;
@@ -550,6 +542,12 @@ class EditorAdapter
 						'VALUE' => $statusId,
 					];
 				}
+				$field['data']['innerConfig'] = \CCrmInstantEditorHelper::prepareInnerConfig(
+					$type,
+					'crm.status.setItems',
+					$statusEntityId,
+					[$fakeValue]
+				);
 			}
 		}
 
@@ -589,7 +587,7 @@ class EditorAdapter
 
 	protected function getFieldTypeByInfo(array $fieldDescription): string
 	{
-		$type = $fieldDescription['TYPE'];
+		$type = $fieldDescription['TYPE'] ?? null;
 
 		if($type === Field::TYPE_INTEGER || $type === Field::TYPE_DOUBLE)
 		{
@@ -759,21 +757,44 @@ class EditorAdapter
 					'items' => static::getCurrencyListEscaped(),
 				],
 				'amount' => Item::FIELD_NAME_OPPORTUNITY,
-				'formatted' => 'FORMATTED_'.Item::FIELD_NAME_OPPORTUNITY,
-				'formattedWithCurrency' => 'FORMATTED_OPPORTUNITY_WITH_CURRENCY',
+				'formatted' => 'FORMATTED_' . Item::FIELD_NAME_OPPORTUNITY,
+				'formattedWithCurrency' => 'FORMATTED_' . static::FIELD_OPPORTUNITY,
 			],
 		];
 	}
 
 	public static function getUtmField(string $title, ?string $fieldName = null): array
 	{
+		if (!$fieldName)
+		{
+			$fieldName = static::FIELD_UTM;
+		}
 		return [
-			'name' => $fieldName ?? static::FIELD_UTM,
+			'name' => $fieldName,
 			'title' => $title,
 			'type' => 'custom',
-			'data' => ['view' => 'UTM_VIEW_HTML'],
+			'data' => [
+				'view' => $fieldName . '_VIEW_HTML'
+			],
 			'editable' => false,
 			'enableAttributes' => false,
+		];
+	}
+
+	public static function getLocationFieldDescription(Field $field): array
+	{
+		return [
+			'name' => $field->getName(),
+			'title' => $field->getTitle(),
+			'type' => 'custom',
+			'data' => [
+				'view' => $field->getName() . '_VIEW_HTML',
+				'edit' => $field->getName() . '_EDIT_HTML',
+			],
+			'editable' => true,
+			'enableAttributes' => true,
+			'required' => $field->isRequired(),
+			'showAlways' => true,
 		];
 	}
 
@@ -838,7 +859,7 @@ class EditorAdapter
 	public static function getProductListController(
 		string $productListId,
 		string $currencyId,
-		?string $fieldName = 'PRODUCT_LIST'
+		?string $fieldName = self::CONTROLLER_PRODUCT_LIST
 	): array
 	{
 		return [
@@ -930,6 +951,27 @@ class EditorAdapter
 			if(isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
 			{
 				$entityUserFields[$fieldName]['required'] = true;
+			}
+
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$entityUserFields[$fieldName]['data']['innerConfig'] =
+						\CCrmInstantEditorHelper::prepareInnerConfig(
+							$userField['USER_TYPE_ID'],
+							'crm.status.setItems',
+							$userField['SETTINGS']['ENTITY_TYPE'],
+							['']
+						)
+					;
+				}
+				unset($statusEntityId);
 			}
 
 			if(isset($visibilityConfig[$fieldName]))
@@ -1292,7 +1334,7 @@ class EditorAdapter
 		$total = 0;
 		if (count($products) > 0)
 		{
-			$total = Products::calculateSum($item, $products->getAll());
+			$total = Container::getInstance()->getAccounting()->calculateByItem($item)->getPrice();
 		}
 
 		return [
@@ -1324,10 +1366,10 @@ class EditorAdapter
 			}
 		}
 
-		$opportunityEntityData['FORMATTED_'.Item::FIELD_NAME_OPPORTUNITY] = Money::formatWithCustomTemplate(
+		$opportunityEntityData['FORMATTED_' . Item::FIELD_NAME_OPPORTUNITY] = Money::formatWithCustomTemplate(
 			$item->getOpportunity(), $item->getCurrencyId()
 		);
-		$opportunityEntityData['FORMATTED_OPPORTUNITY_WITH_CURRENCY'] = Money::format(
+		$opportunityEntityData['FORMATTED_' . static::FIELD_OPPORTUNITY] = Money::format(
 			$item->getOpportunity(), $item->getCurrencyId()
 		);
 
@@ -1383,7 +1425,7 @@ class EditorAdapter
 	{
 		$canReadClient = EntityAuthorization::checkReadPermission($clientEntityTypeId, $clientEntityId);
 
-		return \CCrmEntitySelectorHelper::PrepareEntityInfo(
+		$clientInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 			\CCrmOwnerType::ResolveName($clientEntityTypeId),
 			$clientEntityId,
 			[
@@ -1397,6 +1439,13 @@ class EditorAdapter
 				'NAME_TEMPLATE' => PersonNameFormatter::getFormat(),
 			]
 		);
+
+		if (isset($clientInfo['notFound']) && $clientInfo['notFound'] === true)
+		{
+			return [];
+		}
+
+		return $clientInfo;
 	}
 
 	protected function getRecentlyUsedItems(int $entityTypeId, string $componentName): array
@@ -1416,15 +1465,45 @@ class EditorAdapter
 		return $APPLICATION;
 	}
 
-	protected function getUtmEntityData(Item $item): string
+	public static function getUtmEntityData(Item $item): string
 	{
 		ob_start();
-		$this->getApplication()->IncludeComponent(
+		global $APPLICATION;
+		$APPLICATION->IncludeComponent(
 			'bitrix:crm.utm.entity.view',
 			'',
 			['FIELDS' => $item->getUtm()],
 			false,
 			['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
+		);
+
+		return ob_get_clean();
+	}
+
+	public static function getLocationFieldHtml(Item $item, string $fieldName): ?string
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			return null;
+		}
+		ob_start();
+		\CSaleLocation::proxySaleAjaxLocationsComponent(
+			[
+				'AJAX_CALL' => 'N',
+				'COUNTRY_INPUT_NAME' => $fieldName . '_COUNTRY',
+				'REGION_INPUT_NAME' => $fieldName . '_REGION',
+				'CITY_INPUT_NAME' => $fieldName,
+				'CITY_OUT_LOCATION' => 'Y',
+				'LOCATION_VALUE' => $item->get($fieldName),
+				'ORDER_PROPS_ID' => "",
+				'SHOW_QUICK_CHOOSE' => 'Y',
+			],
+			[
+				"CODE" => $item->get($fieldName),
+				"ID" => "",
+				"PROVIDE_LINK_BY" => "code",
+			],
+			'popup'
 		);
 
 		return ob_get_clean();
@@ -1704,20 +1783,6 @@ class EditorAdapter
 	public function setContext(array $context): void
 	{
 		$this->context = $context;
-	}
-
-	public static function getDetailComponentName(int $entityTypeId): ?string
-	{
-		if ($entityTypeId === \CCrmOwnerType::Quote)
-		{
-			return 'bitrix:crm.quote.details';
-		}
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-		{
-			return 'bitrix:crm.item.details';
-		}
-
-		return null;
 	}
 
 	public static function combineConfigIntoOneSection(array $entityConfig, string $title = null): array

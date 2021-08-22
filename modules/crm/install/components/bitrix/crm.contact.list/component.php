@@ -1031,6 +1031,10 @@ if($actionData['ACTIVE'])
 						}
 						else
 						{
+							$arResult['ERRORS'][] = [
+								'TITLE' => Main\Text\HtmlFilter::encode($arUpdateData['TITLE'] ?? $ID),
+								'TEXT' => Main\Text\HtmlFilter::encode(strip_tags($CCrmContact->LAST_ERROR)),
+							];
 							$DB->Rollback();
 						}
 					}

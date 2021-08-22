@@ -210,6 +210,11 @@ class EventHandler
 
 		this.enabled = false;
 
+		this.lastCaught = {
+			name: null,
+			url: null
+		}
+
 		this.preFinishInterval = null;
 
 		this.store.dispatch('monitor/finishLastInterval');

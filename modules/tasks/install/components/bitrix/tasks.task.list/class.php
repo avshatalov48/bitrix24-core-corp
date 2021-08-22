@@ -346,12 +346,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			__checkForum($this->arParams["FORUM_ID"]);
 		}
 
-		static::tryParseStringParameter($this->arParams['SCRUM_BACKLOG'], 'N'); // use tasks list as scrum backlog
-		if ($this->arParams['GROUP_ID'] <= 0)
-		{
-			$this->arParams['SCRUM_BACKLOG'] = 'N';
-		}
-
 		$this->exportAs = (array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false);
 		if ($this->exportAs !== false)
 		{
@@ -646,32 +640,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			case 'setdeadline':
 				$arguments['newDeadline'] = $controls['ACTION_SET_DEADLINE_from'];
 				break;
-			case 'setsprint':
-				// at first create new sprint
-				if ($this->arParams['SCRUM_BACKLOG'] == 'Y')
-				{
-					$res = \Bitrix\Tasks\Kanban\SprintTable::createNext(
-						$this->arParams['GROUP_ID'],
-						new \Bitrix\Main\Type\DateTime(
-							$controls['ACTION_SET_SPRINT_from']
-						)
-					);
-					if (!$res->isSuccess())
-					{
-
-						$this->arResult['MESSAGES'] = array(
-							'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
-							'TITLE' => GetMessage('TASKS_GROUP_ACTION_ERROR_TITLE'),
-							'TEXT' => implode("\n", $res->getErrorMessages())
-						);
-						return;
-					}
-					else
-					{
-						$arguments['sprintId'] = $res->getId();
-					}
-				}
-				break;
 			case 'substractdeadline':
 			case 'adjustdeadline':
 				$arguments['type'] = $controls['type'];
@@ -859,7 +827,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return false;
 		}
 
-		return !Counter\Queue\Queue::getInstance()->isInQueue($this->userId);
+		return !Counter\Queue\Queue::isInQueue($this->userId);
 	}
 
 	protected function getSelect()
@@ -938,12 +906,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-		// for scrum backlog we force user's sorting
-		if ($this->arParams['SCRUM_BACKLOG'] == 'Y')
-		{
-			$gridSort['SORTING'] = 'asc';
-		}
-		else if ($request->get('SORTF') != null && in_array($request->get('SORTF'), Column::getFieldsForSorting()))
+
+		if ($request->get('SORTF') != null && in_array($request->get('SORTF'), Column::getFieldsForSorting()))
 		{
 			$sortResult[$request->get('SORTF')] = ($request->get('SORTD') ?: 'asc');
 
@@ -1144,13 +1108,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$getListParameters['NAV_PARAMS']['NavShowAll'] = true;
 		}
 
-		// @todo: needed to refactor
-		if ($this->arParams['SCRUM_BACKLOG'] === 'Y')
-		{
-			$getListParameters['legacyFilter']['ONLY_ROOT_TASKS'] = 'N';
-			$getListParameters['NAV_PARAMS']['nPageSize'] = 500;
-		}
-
 		$parameters = $this->arParams['PROVIDER_PARAMETERS'];
 		$parameters['ERRORS'] = $this->errors;
 		$parameters['TARGET_USER_ID'] = $this->arParams['USER_ID'];
@@ -1192,11 +1149,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['SUB_TASK_COUNTERS'] = $this->processSubTaskCounters();
 		$this->arResult['STUB'] = $this->getStub();
 
-		if ($this->arParams['SCRUM_BACKLOG'] === 'Y')
-		{
-			$this->arResult['LIST'] = $this->collapseParents($this->arResult['LIST']);
-		}
-
 		$this->arResult['LIST'] = self::setFilesCount($this->arResult['LIST']);
 		$this->arResult['LIST'] = self::setCheckListCount($this->arResult['LIST']);
 		$this->arResult['LIST'] = self::setGroupData($this->arResult['LIST']);
@@ -1213,6 +1165,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	private function getStub()
 	{
+		if ($this->arParams['LAZY_LOAD'] && !$this->request->isAjaxRequest())
+		{
+			return [];
+		}
+
 		if ($this->isUserFilterApplied())
 		{
 			return [
@@ -1333,7 +1290,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return;
 		}
 
-		if (Counter\Queue\Queue::getInstance()->isInQueue($userId))
+		if (Counter\Queue\Queue::isInQueue($userId))
 		{
 			return;
 		}

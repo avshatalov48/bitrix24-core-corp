@@ -3,6 +3,7 @@ $MESS["VI_DOCS_BODY"] = "For some countries, it is required by law that a teleph
 $MESS["VI_DOCS_BODY_2"] = "It is required by law in some countries that a telephone company must request legal documentation from you before you can use your rented numbers.<br>This is a requirement if you want to keep and use the numbers during the lease term. You will not be able to use the numbers until you upload the documentation required and have it approved.";
 $MESS["VI_DOCS_COUNTRY_RU"] = "Russia";
 $MESS["VI_DOCS_SERVICE_ERROR"] = "Error sending request to document upload service";
+$MESS["VI_DOCS_SERVICE_UPLOAD"] = "Upload";
 $MESS["VI_DOCS_STATUS"] = "Status:";
 $MESS["VI_DOCS_TABLE_COMMENT"] = "Comment";
 $MESS["VI_DOCS_TABLE_LINK"] = "Document upload history";

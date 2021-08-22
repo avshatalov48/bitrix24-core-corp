@@ -38,10 +38,9 @@ class ReCaptcha
 			return this.#key;
 		}
 
-		/** @var Object webPacker */
-		if (webPacker && module)
+		if (b24form && b24form.common)
 		{
-			return (module.properties.recaptcha || {}).key;
+			return (b24form.common.properties.recaptcha || {}).key;
 		}
 
 		return null;

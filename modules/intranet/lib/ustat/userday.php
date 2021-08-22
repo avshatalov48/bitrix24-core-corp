@@ -14,6 +14,19 @@ use Bitrix\Main\Entity\DataManager;
  * Class description
  * @package bitrix
  * @subpackage intranet
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_UserDay_Query query()
+ * @method static EO_UserDay_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_UserDay_Result getById($id)
+ * @method static EO_UserDay_Result getList(array $parameters = array())
+ * @method static EO_UserDay_Entity getEntity()
+ * @method static \Bitrix\Intranet\UStat\EO_UserDay createObject($setDefaultValues = true)
+ * @method static \Bitrix\Intranet\UStat\EO_UserDay_Collection createCollection()
+ * @method static \Bitrix\Intranet\UStat\EO_UserDay wakeUpObject($row)
+ * @method static \Bitrix\Intranet\UStat\EO_UserDay_Collection wakeUpCollection($rows)
  */ 
 class UserDayTable extends DataManager
 {

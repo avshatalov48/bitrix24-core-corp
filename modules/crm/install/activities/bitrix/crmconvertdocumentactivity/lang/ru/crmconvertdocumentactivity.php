@@ -1,5 +1,6 @@
 <?
 $MESS["CRM_CVTDA_WIZARD_NOT_FOUND"] = "Не удалось инициализировать мастер конвертации";
+$MESS["CRM_CVTDA_RESPONSIBLE"] = "Ответственный";
 $MESS["CRM_CVTDA_ITEMS"] = "Создать на основании";
 $MESS["CRM_CVTDA_DISABLE_ACTIVITY_COMPLETION"] = "Не закрывать дела при конвертации";
 $MESS["CRM_CVTDA_DEAL_CATEGORY_ID"] = "Направление сделки";

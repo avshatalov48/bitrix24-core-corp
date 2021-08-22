@@ -218,7 +218,15 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['ANALYTIC_PARAMS'] = isset($this->arParams['~ANALYTIC_PARAMS']) && is_array($this->arParams['~ANALYTIC_PARAMS'])
 			? $this->arParams['~ANALYTIC_PARAMS'] : array();
 
-		$this->includeComponentTemplate();
+		$this->arResult['RESTRICTIONS_SCRIPT'] = $this->getRestrictionsScript();
+		if ($this->arResult['RESTRICTIONS_SCRIPT'] !== '')
+		{
+			$this->includeComponentTemplate('restrictions');
+		}
+		else
+		{
+			$this->includeComponentTemplate();
+		}
 	}
 
 	protected function updateTabsByEvent(array $tabs): array
@@ -243,5 +251,26 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 
 		return $tabs;
+	}
+
+	protected function getRestrictionsScript(): string
+	{
+		$restriction = null;
+
+		switch ($this->entityTypeID)
+		{
+			case CCrmOwnerType::Lead:
+				$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction();
+				break;
+			case CCrmOwnerType::Quote:
+				$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getQuotesRestriction();
+				break;
+		}
+		if ($restriction && !$restriction->hasPermission())
+		{
+			return $restriction->prepareInfoHelperScript();
+		}
+
+		return '';
 	}
 }

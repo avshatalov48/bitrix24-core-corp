@@ -8,9 +8,6 @@ if($arResult["delete_blog_post"] == "Y")
 	if($arResult["ERROR_MESSAGE"] <> '')
 	{
 		?>
-		<script bxrunfirst="yes">
-		top.deletePostEr = 'Y';
-		</script>
 		<div class="feed-add-error">
 			<span class="feed-add-info-icon"></span><span class="feed-add-info-text"><?=$arResult["ERROR_MESSAGE"]?></span>
 		</div>

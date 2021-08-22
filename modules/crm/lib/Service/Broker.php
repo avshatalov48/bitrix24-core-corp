@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Main\Type\Collection;
+
 abstract class Broker
 {
 	protected $cache = [];
@@ -13,6 +15,7 @@ abstract class Broker
 
 	public function getBunchByIds(array $ids): array
 	{
+		Collection::normalizeArrayValuesByInt($ids);
 		if (empty($ids))
 		{
 			return [];

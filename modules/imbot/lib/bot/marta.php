@@ -620,11 +620,8 @@ class Marta extends Base
 		$attaches = Array();
 		if (\Bitrix\Main\Loader::includeModule('intranet') && \Bitrix\Main\Loader::includeModule('calendar'))
 		{
-        	$calendarUrl = \CCalendar::GetPathForCalendarEx($userId);
-			$calendarEventUrl = $calendarUrl.((mb_strpos($calendarUrl, "?") === false) ? '?' : '&').'EVENT_ID=';
-
+			$calendarEventUrl = \CCalendar::GetPath('user', $userId, true);
 			$attach = new \CIMMessageParamAttach(1, \CIMMessageParamAttach::CHAT);
-
 			$events = \CCalendarEventHandlers::OnPlannerInit(Array(
 				'FULL' => true,
 				'USER_ID' => $userId
@@ -644,7 +641,12 @@ class Marta extends Base
 					$attach->AddGrid(Array(
 						Array(
 							"VALUE" => $eventTimeFormatted,
-							"LINK" => $calendarEventUrl.$event['ID'],
+							"LINK" => \CHTTP::urlAddParams(
+								$calendarEventUrl,
+								[
+									'EVENT_ID' => (int)$event['ID'],
+									'EVENT_DATE' => urlencode($event['DATE_FROM'])
+								]),
 							"DISPLAY" => "LINE",
 							"WIDTH" => 120,
 						),

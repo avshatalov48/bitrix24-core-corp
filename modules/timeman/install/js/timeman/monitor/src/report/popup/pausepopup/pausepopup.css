@@ -1,0 +1,16 @@
+#popup-window-content-bx-timeman-pwt-editor-pause-popup {
+    display: none;
+}
+
+.bx-timeman-monitor-report-popup-pause {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.bx-timeman-pwt-popup-pause-btn {
+    display: flex;
+    justify-content: flex-start;
+    margin-left: 0 !important;
+    width: 100%;
+}

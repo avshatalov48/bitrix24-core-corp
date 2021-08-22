@@ -4,6 +4,22 @@ namespace Bitrix\Tasks\Kanban;
 use \Bitrix\Tasks\Internals\TaskTable as Task;
 use \Bitrix\Main\Entity;
 
+/**
+ * Class TaskStageTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TaskStage_Query query()
+ * @method static EO_TaskStage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TaskStage_Result getById($id)
+ * @method static EO_TaskStage_Result getList(array $parameters = array())
+ * @method static EO_TaskStage_Entity getEntity()
+ * @method static \Bitrix\Tasks\Kanban\EO_TaskStage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Kanban\EO_TaskStage_Collection createCollection()
+ * @method static \Bitrix\Tasks\Kanban\EO_TaskStage wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Kanban\EO_TaskStage_Collection wakeUpCollection($rows)
+ */
 class TaskStageTable extends Entity\DataManager
 {
 	/**

@@ -13,6 +13,7 @@
 		180ms linear border-color,
 		180ms linear background-color;
 	position: relative;
+	user-select: none;
 }
 
 .tasks-scrum-subtask-item {

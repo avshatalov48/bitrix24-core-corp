@@ -3,6 +3,8 @@ import {EventEmitter, BaseEvent} from 'main.core.events';
 import {LocationRepository, AutocompleteServiceBase, Format, Address, Location,
 	DistanceCalculator,	ErrorPublisher, LocationType,
 	AutocompleteServiceFilter,
+	AddressType,
+	LocationJsonConverter
 } from 'location.core';
 import type {AutocompleteServiceParams} from 'location.core';
 import Prompt from './prompt';
@@ -51,9 +53,6 @@ export default class Autocomplete extends EventEmitter
 	/** {Element} */
 	#inputNode;
 
-	/** {Location} */
-	#lastSelectedLocation = null;
-
 	#searchPhrase = {
 		requested: '',
 		current: '',
@@ -70,6 +69,8 @@ export default class Autocomplete extends EventEmitter
 
 	#maxFirstItemUserDistanceKm = 100;
 	#onLocationSelectTimerId = null;
+
+	#lastSelectedLocationLocalStorageKey = `bitrixLocationLastSelectedLocation`;
 
 	/** {AutocompleteServiceFilter} */
 	#filter;
@@ -205,34 +206,32 @@ export default class Autocomplete extends EventEmitter
 			return;
 		}
 
-		// If we have selected item from prompt, the focusOut event will be first.
-		setTimeout(() => {
+		if (
+			this.#state === State.DATA_INPUTTING
+			&& !(
+				e.relatedTarget
+				&& (e.relatedTarget.getAttribute('data-role') === 'location-widget-menu-item')
+			)
+		) {
+			this.#setState(State.DATA_SUPPOSED);
 
-			if (this.#state === State.DATA_INPUTTING)
-			{
-				this.#setState(State.DATA_SUPPOSED);
-
-				if (this.#addressString)
-				{
-					if (!this.#address || !this.#addressString.hasPureAddressString())
-					{
-						this.#address = this.#convertStringToAddress(
-							this.#addressString.value
-						);
-					}
-					// this.#addressString === null until autocompete'll be rendered
-					else if (this.#addressString.customTail !== '')
-					{
-						this.#address.setFieldValue(
-							this.#addressFormat.fieldForUnRecognized,
-							this.#addressString.customTail
-						);
-					}
+			if (this.#addressString) {
+				if (!this.#address || !this.#addressString.hasPureAddressString()) {
+					this.#address = this.#convertStringToAddress(
+						this.#addressString.value
+					);
 				}
-
-				this.#onAddressChangedEventEmit();
+				// this.#addressString === null until autocompete'll be rendered
+				else if (this.#addressString.customTail !== '') {
+					this.#address.setFieldValue(
+						this.#addressFormat.fieldForUnRecognized,
+						this.#addressString.customTail
+					);
+				}
 			}
-		}, 1);
+
+			this.#onAddressChangedEventEmit();
+		}
 
 		if (this.#prompt)
 		{
@@ -260,15 +259,15 @@ export default class Autocomplete extends EventEmitter
 		}
 	}
 
-	#makeAutocompleteFilter(locationForBias: ?Location): AutocompleteServiceFilter
+	#makeAutocompleteFilter(): AutocompleteServiceFilter
 	{
+		const locationForBias = this.#getLastSelectedLocation();
 		const result = new AutocompleteServiceFilter();
 
 		if (!locationForBias)
 		{
 			return result;
 		}
-
 		let filterType = null;
 
 		if (locationForBias.type === LocationType.COUNTRY)
@@ -288,7 +287,6 @@ export default class Autocomplete extends EventEmitter
 		{
 			result.types = [filterType];
 		}
-
 		return result;
 	}
 
@@ -297,9 +295,10 @@ export default class Autocomplete extends EventEmitter
 		let locationForBias = null;
 		const result: AutocompleteServiceParams = {};
 
-		if (this.#lastSelectedLocation)
+		const lastSelectedLocation = this.#getLastSelectedLocation();
+		if (lastSelectedLocation)
 		{
-			locationForBias = this.#lastSelectedLocation;
+			locationForBias = lastSelectedLocation;
 		}
 		else if (this.#userLocation)
 		{
@@ -423,7 +422,7 @@ export default class Autocomplete extends EventEmitter
 				return;
 			}
 
-			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested, this.address);
+			this.#prompt.setMenuItems(locationsList, this.#searchPhrase.requested, this.#getCurrentAddress());
 			this.#showMenu(Loc.getMessage('LOCATION_WIDGET_PICK_ADDRESS_OR_SHOW_ON_MAP'), locationsList[0]);
 		}
 		else
@@ -454,6 +453,29 @@ export default class Autocomplete extends EventEmitter
 				this.#showMenu(Loc.getMessage('LOCATION_WIDGET_CHECK_ADDRESS_OR_SHOW_ON_MAP'), null);
 			}
 		}
+	}
+
+	#getCurrentAddress()
+	{
+		if (
+			this.address
+			&& this.address.getFieldValue(AddressType.LOCALITY)
+		)
+		{
+			return this.address;
+		}
+
+		const lastSelectedLocation = this.#getLastSelectedLocation();
+		if (
+			lastSelectedLocation
+			&& lastSelectedLocation.address
+			&& lastSelectedLocation.address.getFieldValue(AddressType.LOCALITY)
+		)
+		{
+			return lastSelectedLocation.address;
+		}
+
+		return null;
 	}
 
 	#getShowOnMapHandler(location: ?Location)
@@ -545,8 +567,18 @@ export default class Autocomplete extends EventEmitter
 			if (location.hasExternalRelation() && this.#sourceCode === location.sourceCode)
 			{
 				result = this.#getLocationDetails(location)
-					.then((location: ?Location) => {
-							this.#createOnLocationSelectTimer(location, 0);
+					.then(
+						(detailedLocation: ?Location) => {
+
+							if (location.address && location.address.getFieldValue(AddressType.ADDRESS_LINE_2))
+							{
+								detailedLocation.address.setFieldValue(
+									AddressType.ADDRESS_LINE_2,
+									location.address.getFieldValue(AddressType.ADDRESS_LINE_2)
+								);
+							}
+
+							this.#createOnLocationSelectTimer(detailedLocation, 0);
 							return true;
 						},
 						(response) => ErrorPublisher.getInstance().notify(response.errors)
@@ -646,8 +678,12 @@ export default class Autocomplete extends EventEmitter
 	 */
 	#onLocationSelect(location: ?Location): void
 	{
-		this.#lastSelectedLocation = location;
-		this.#filter = this.#makeAutocompleteFilter(this.#lastSelectedLocation);
+		if (location)
+		{
+			this.#setLastSelectedLocation(location);
+		}
+
+		this.#filter = this.#makeAutocompleteFilter();
 		this.#address = location ? location.toAddress() : null;
 		this.#addressString.setValueFromAddress(this.#address);
 		this.#onAddressChangedEventEmit();
@@ -818,35 +854,59 @@ export default class Autocomplete extends EventEmitter
 	#createTimer(searchPhrase: string, promptDelay: number): number
 	{
 		return setTimeout(() => {
-			// to avoid multiple parallel requests, server responses are too slow.
-			if (this.#isAutocompleteRequestStarted)
-			{
-				clearTimeout(this.#timerId);
-				this.#timerId = this.#createTimer(searchPhrase, promptDelay);
-				return;
-			}
+				// to avoid multiple parallel requests, server responses are too slow.
+				if (this.#isAutocompleteRequestStarted)
+				{
+					clearTimeout(this.#timerId);
+					this.#timerId = this.#createTimer(searchPhrase, promptDelay);
+					return;
+				}
 
-			this.emit(Autocomplete.#onSearchStartedEvent);
-			this.#isAutocompleteRequestStarted = true;
-			const params = this.#makeAutocompleteServiceParams();
+				this.emit(Autocomplete.#onSearchStartedEvent);
+				this.#isAutocompleteRequestStarted = true;
+				const params = this.#makeAutocompleteServiceParams();
 
-			this.#autocompleteService.autocomplete(searchPhrase, params)
-				.then(
-					(locationsList: Array<Location>) => {
-						this.#timerId = null;
-						this.#onPromptsReceived(locationsList, params);
-						this.emit(Autocomplete.#onSearchCompletedEvent);
-						this.#isAutocompleteRequestStarted = false;
-					},
-					(error) => {
-						this.emit(Autocomplete.#onSearchCompletedEvent);
-						this.#isAutocompleteRequestStarted = false;
-						BX.debug(error);
-					}
-				);
-		},
-		promptDelay
+				this.#autocompleteService.autocomplete(searchPhrase, params)
+					.then(
+						(locationsList: Array<Location>) => {
+							this.#timerId = null;
+							this.#onPromptsReceived(locationsList, params);
+							this.emit(Autocomplete.#onSearchCompletedEvent);
+							this.#isAutocompleteRequestStarted = false;
+						},
+						(error) => {
+							this.emit(Autocomplete.#onSearchCompletedEvent);
+							this.#isAutocompleteRequestStarted = false;
+							BX.debug(error);
+						}
+					);
+			},
+			promptDelay
 		);
+	}
+
+	#getLastSelectedLocation()
+	{
+		const lastSelectedLocation = localStorage.getItem(this.#lastSelectedLocationLocalStorageKey);
+
+		if (lastSelectedLocation)
+		{
+			try
+			{
+				return LocationJsonConverter.convertJsonToLocation(JSON.parse(lastSelectedLocation));
+			}
+			catch(e) {}
+		}
+
+		return null;
+	}
+
+	#setLastSelectedLocation(location: Location)
+	{
+		const jsonLocation = location.toJson();
+
+		localStorage.setItem(this.#lastSelectedLocationLocalStorageKey, jsonLocation);
+		BX.userOptions.save('location', 'last_selected_location', null, jsonLocation);
 	}
 
 	destroy(): void

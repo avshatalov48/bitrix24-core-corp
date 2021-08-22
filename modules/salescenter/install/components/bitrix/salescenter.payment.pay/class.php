@@ -105,6 +105,11 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			$params['ALLOW_PAYMENT_REDIRECT'] = 'Y';
 		}
 
+		if (empty($params['RETURN_URL']))
+		{
+			$params['RETURN_URL'] = (new PaySystem\Context())->getUrl();
+		}
+
 		if ((int)($params['PAYMENT_ID']) > 0 || $params['PAYMENT_ACCOUNT_NUMBER'] != '')
 		{
 			$this->initPaymentDataByPaymentId($params);
@@ -233,9 +238,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 					}
 				}
 
-				$this->arResult['RETURN_URL'] = $this->arParams['RETURN_URL'] !== ''
-					? $this->arParams['RETURN_URL']
-					: (new PaySystem\Context())->getUrl();
+				$this->arResult['RETURN_URL'] = $this->arParams['RETURN_URL'];
 			}
 		}
 
@@ -504,7 +507,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		$formattedPaySystems = [];
 		$salesCenterRestrictionIds = PaySystem\Manager::getList([
 			'filter' => [
-				'!=ACTION_FILE' => 'inner',
+				'!=ACTION_FILE' => ['inner', 'cash'],
 				'ACTIVE' => 'Y',
 			],
 			'select' => ['ID']

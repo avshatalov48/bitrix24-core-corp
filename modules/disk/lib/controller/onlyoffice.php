@@ -64,6 +64,7 @@ final class OnlyOffice extends Engine\Controller
 
 	/** @var array */
 	protected $documentSessions;
+	private $addExtendedErrorInfo = false;
 
 	public function getAutoWiredParameters()
 	{
@@ -276,6 +277,8 @@ final class OnlyOffice extends Engine\Controller
 
 	public function downloadAction(Models\DocumentSession $documentSession)
 	{
+		$this->enableExtendedErrorInfo();
+
 		if ($documentSession->isVersion())
 		{
 			return Response\BFile::createByFileId($documentSession->getVersion()->getFileId(), $documentSession->getVersion()->getName());
@@ -286,6 +289,8 @@ final class OnlyOffice extends Engine\Controller
 
 	public function handleOnlyOfficeAction(Models\DocumentSession $documentSession, JsonPayload $payload): ?Response\Json
 	{
+		$this->enableExtendedErrorInfo();
+
 		$status = $payload->getData()['status'];
 
 		Application::getInstance()->addBackgroundJob(function () use ($status, $documentSession){
@@ -308,7 +313,7 @@ final class OnlyOffice extends Engine\Controller
 				break;
 
 			case self::STATUS_CLOSE_WITHOUT_CHANGES:
-				$this->deactivateDocumentSessions($documentSession->getExternalHash());
+				$this->handleDocumentClosedWithoutChanges($documentSession);
 				break;
 
 			case self::STATUS_FORCE_SAVE:
@@ -361,6 +366,21 @@ final class OnlyOffice extends Engine\Controller
 				break;
 		}
 
+	}
+
+	protected function handleDocumentClosedWithoutChanges(Models\DocumentSession $documentSession): void
+	{
+		$this->deactivateDocumentSessions($documentSession->getExternalHash());
+		$documentInfo = $documentSession->getInfo();
+		if (!$documentInfo)
+		{
+			return;
+		}
+
+		if ($documentInfo->wasForceSaved())
+		{
+			$this->commentAttachedObjects($documentSession);
+		}
 	}
 
 	protected function handleDocumentIsEditing(Models\DocumentSession $documentSession, JsonPayload $payload): void
@@ -780,5 +800,28 @@ final class OnlyOffice extends Engine\Controller
 		]);
 
 		return $this->redirectTo($link);
+	}
+
+	private function enableExtendedErrorInfo(): void
+	{
+		$this->addExtendedErrorInfo = true;
+	}
+
+	protected function runProcessingThrowable(\Throwable $throwable)
+	{
+		parent::runProcessingThrowable($throwable);
+
+		if ($this->addExtendedErrorInfo)
+		{
+			$httpRequest = Context::getCurrent()->getRequest();
+			$this->addError(new Disk\Internals\Error\Error(
+				'Detailed info',
+				'onlyoffice-01',
+				[
+					'r' => $httpRequest->getDecodedUri(),
+					'h' => $httpRequest->getHttpHost(),
+				]
+			));
+		}
 	}
 }

@@ -9,6 +9,10 @@ import "./timeline.css";
 export const Timeline = BitrixVue.localComponent('bx-timeman-monitor-report-timeline', {
 	props: {
 		readOnly: Boolean,
+		selectedPrivateCode: {
+			type: String,
+			default: null,
+		}
 	},
 	mixins: [Time],
 	computed:
@@ -18,6 +22,15 @@ export const Timeline = BitrixVue.localComponent('bx-timeman-monitor-report-time
 		chartData()
 		{
 			return this.$store.getters['monitor/getChartData'];
+		},
+		overChartData()
+		{
+			if (this.selectedPrivateCode)
+			{
+				return this.$store.getters['monitor/getOverChartData'](this.selectedPrivateCode);
+			}
+
+			return [];
 		},
 		legendData()
 		{
@@ -48,6 +61,7 @@ export const Timeline = BitrixVue.localComponent('bx-timeman-monitor-report-time
 			<bx-timeman-component-timeline
 				v-if="Type.isArrayFilled(chartData)"
 				:chart="chartData"
+				:overChart="overChartData"
 				:legend="legendData"
 				:fixedSizeType="EntityGroup.inactive.value"
 				:readOnly="readOnly"

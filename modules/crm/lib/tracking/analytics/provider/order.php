@@ -66,7 +66,7 @@ class Order extends Base
 	 */
 	public function getPath()
 	{
-		return '/shop/orders/';
+		return '/shop/orders/list/';
 	}
 
 	/**

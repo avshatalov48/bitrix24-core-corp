@@ -13,18 +13,24 @@ class UstatOnline
 	{
 		this.signedParameters = params.signedParameters;
 		this.componentName = params.componentName;
-		this.userBlockNode = params.userBlockNode || "";
-		this.userInnerBlockNode = params.userInnerBlockNode || "";
-		this.circleNode = params.circleNode || "";
-		this.timemanNode = params.timemanNode || "";
 		this.ustatOnlineContainerNode = params.ustatOnlineContainerNode || "";
-		this.maxUserToShow = 7;
+		this.maxUserToShow = params.maxUserToShow;
 		this.maxOnlineUserCountToday = params.maxOnlineUserCountToday;
 		this.currentUserId = parseInt(params.currentUserId);
 		this.isTimemanAvailable = params.isTimemanAvailable === "Y";
 		this.isFullAnimationMode = params.isFullAnimationMode === "Y";
 		this.limitOnlineSeconds = params.limitOnlineSeconds;
 		this.renderingFinished = true;
+
+		if (!Type.isDomNode(this.ustatOnlineContainerNode))
+		{
+			return;
+		}
+
+		this.userBlockNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-icon-box');
+		this.userInnerBlockNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-icon-inner');
+		this.circleNode = this.ustatOnlineContainerNode.querySelector('.ui-graph-circle');
+		this.timemanNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-info');
 
 		let users = params.users;
 		let allOnlineUserIdToday = params.allOnlineUserIdToday;
@@ -691,3 +697,4 @@ class UstatOnline
 }
 
 namespace.UstatOnline = UstatOnline;
+export {UstatOnline};

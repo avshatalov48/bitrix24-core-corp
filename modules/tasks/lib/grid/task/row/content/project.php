@@ -24,7 +24,11 @@ class Project extends Content
 		$groupId = (int)$row['GROUP_ID'];
 		if (!$groupId)
 		{
-			return "<div></div>";
+			return (
+				$row['ACTION']['EDIT']
+					? "<div class='tasks-list-project-container'><span class='tasks-list-project-add' onclick='BX.PreventDefault(); BX.Tasks.GridActions.onProjectAddClick({$row['ID']}, this)'></span></div>"
+					: "<span></span>"
+			);
 		}
 
 		$groupName = htmlspecialcharsbx($row['GROUP_NAME']);
@@ -63,7 +67,7 @@ class Project extends Content
 		}
 
 		return "<a class='{$selector}' onclick='{$onClick}' href='javascript:void(0)'>
-					<span class='ui-icon ui-icon-common-user-group tasks-grid-avatar'><i ". ((!empty($groupImage)) ? "style='background-image: url({$groupImage});'" : "") ."></i></span>
+					<span class='ui-icon ui-icon-common-user-group tasks-grid-avatar'><i ". ((!empty($groupImage)) ? "style='background-image: url(\"{$groupImage}\");'" : "") ."></i></span>
 					<span class='tasks-grid-group-inner'>{$groupName}</span><span class='tasks-grid-filter-remove'></span>
 				</a>";
 

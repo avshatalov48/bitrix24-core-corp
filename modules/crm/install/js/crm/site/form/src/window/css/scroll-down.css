@@ -6,7 +6,7 @@
 
 @media (max-width: 512px) {
 	.b24-form .b24-window-scrollable {
-		padding-bottom: 50px;
+		padding-bottom: 95px;
 	}
 }
 
@@ -171,4 +171,7 @@
 	transform: rotate(180deg) translate(43%, 0);
 }
 
-.b24-window-scroll-anchor { height: 0; }
+.b24-window-scroll-anchor {
+	height: 1px;
+	opacity: 0;
+}

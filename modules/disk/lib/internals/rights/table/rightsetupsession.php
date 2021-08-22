@@ -5,6 +5,22 @@ use Bitrix\Disk\Internals\DataManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class RightSetupSessionTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RightSetupSession_Query query()
+ * @method static EO_RightSetupSession_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RightSetupSession_Result getById($id)
+ * @method static EO_RightSetupSession_Result getList(array $parameters = array())
+ * @method static EO_RightSetupSession_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\Rights\Table\EO_RightSetupSession_Collection wakeUpCollection($rows)
+ */
 final class RightSetupSessionTable extends DataManager
 {
 	const STATUS_STARTED      = 2;

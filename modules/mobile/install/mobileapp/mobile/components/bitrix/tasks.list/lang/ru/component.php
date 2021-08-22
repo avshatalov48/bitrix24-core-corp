@@ -63,6 +63,7 @@ $MESS['TASKS_POPUP_MENU_READ_ALL_V2'] = 'Прочитать все коммен�
 $MESS['TASKS_POPUP_MENU_DEADLINE'] = 'Сроки';
 $MESS['TASKS_POPUP_MENU_ORDER_DEADLINE'] = 'Сортировать по срокам';
 $MESS['TASKS_POPUP_MENU_ORDER_ACTIVITY'] = 'Сортировать по активности';
+$MESS['TASKS_POPUP_MENU_EFFICIENCY'] = 'Эффективность';
 
 $MESS['TASKS_CONFIRM_DELETE'] = 'Переместить в корзину?';
 $MESS['TASKS_CONFIRM_DELETE_YES'] = 'Да';

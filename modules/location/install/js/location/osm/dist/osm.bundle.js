@@ -25,7 +25,7 @@ this.BX.Location = this.BX.Location || {};
 
 	  babelHelpers.createClass(AutocompleteService, [{
 	    key: "autocomplete",
-	    value: function autocomplete(text, autocompleteParams) {
+	    value: function autocomplete(text, autocompleteServiceParams) {
 	      if (text === '') {
 	        return new Promise(function (resolve) {
 	          resolve([]);
@@ -34,7 +34,7 @@ this.BX.Location = this.BX.Location || {};
 
 	      return babelHelpers.classPrivateFieldGet(this, _autocompleteRequester).request({
 	        text: text,
-	        autocompleteParams: autocompleteParams
+	        autocompleteServiceParams: autocompleteServiceParams
 	      });
 	    }
 	  }]);
@@ -14371,6 +14371,8 @@ this.BX.Location = this.BX.Location || {};
 
 	      var result = [];
 	      var hashMap = [];
+	      var addressLine2 = response.address_tail ? response.address_tail : '';
+	      var isLocationForBiasUsed = response.is_location_for_bias_used ? response.is_location_for_bias_used : false;
 	      response.features.forEach(function (item) {
 	        if (babelHelpers.typeof(item.properties) !== 'object') {
 	          return;
@@ -14386,19 +14388,23 @@ this.BX.Location = this.BX.Location || {};
 
 	        hashMap.push(hash);
 
-	        var location = _classPrivateMethodGet$4(_this2, _createLocation$1, _createLocation2$1).call(_this2, item, params);
+	        var location = _classPrivateMethodGet$4(_this2, _createLocation$1, _createLocation2$1).call(_this2, item, params.autocompleteServiceParams);
 
 	        if (location) {
+	          if (location.address && addressLine2) {
+	            location.address.setFieldValue(location_core.AddressType.ADDRESS_LINE_2, addressLine2);
+	          }
+
 	          result.push(location);
 	        }
 	      });
-	      return _classPrivateMethodGet$4(this, _sortResultByDistance, _sortResultByDistance2).call(this, result);
+	      return isLocationForBiasUsed ? _classPrivateMethodGet$4(this, _sortResultByDistance, _sortResultByDistance2).call(this, result) : result;
 	    }
 	  }]);
 	  return AutocompleteResponseConverter;
 	}(BaseResponseConverter);
 
-	var _createLocation2$1 = function _createLocation2(responseItem, params) {
+	var _createLocation2$1 = function _createLocation2(responseItem, autocompleteServiceParams) {
 	  if (!responseItem.properties) {
 	    return null;
 	  }
@@ -14435,8 +14441,8 @@ this.BX.Location = this.BX.Location || {};
 	    location.latitude = String(responseItem.geometry.coordinates[1]);
 	    location.longitude = String(responseItem.geometry.coordinates[0]);
 
-	    if (params.locationForBias) {
-	      distance = Math.round(location_core.DistanceCalculator.getDistanceFromLatLonInKm(params.locationForBias.latitude, params.locationForBias.longitude, responseItem.geometry.coordinates[1], responseItem.geometry.coordinates[0]));
+	    if (autocompleteServiceParams.locationForBias) {
+	      distance = Math.round(location_core.DistanceCalculator.getDistanceFromLatLonInKm(autocompleteServiceParams.locationForBias.latitude, autocompleteServiceParams.locationForBias.longitude, responseItem.geometry.coordinates[1], responseItem.geometry.coordinates[0]));
 	    }
 	  } // We'll try to sort by distance a bit later
 
@@ -14658,11 +14664,17 @@ this.BX.Location = this.BX.Location || {};
 	  return osmType.substr(0, 1).toLocaleUpperCase() + osmId;
 	};
 
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
 	var _locationBiasScale = new WeakMap();
 
 	var _autocompletePromptsCount = new WeakMap();
 
 	var _sourceCode = new WeakMap();
+
+	var _autocompleteReplacements = new WeakMap();
+
+	var _processQuery = new WeakSet();
 
 	var AutocompleteRequester = /*#__PURE__*/function (_BaseRequester) {
 	  babelHelpers.inherits(AutocompleteRequester, _BaseRequester);
@@ -14673,6 +14685,8 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classCallCheck(this, AutocompleteRequester);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteRequester).call(this, props));
+
+	    _processQuery.add(babelHelpers.assertThisInitialized(_this));
 
 	    _locationBiasScale.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
@@ -14689,36 +14703,54 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
+	    _autocompleteReplacements.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompletePromptsCount, props.autocompletePromptsCount || 7);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationBiasScale, props.locationBiasScale || 9);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceCode, props.sourceCode || 'OSM');
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompleteReplacements, props.autocompleteReplacements || {});
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(AutocompleteRequester, [{
 	    key: "createUrl",
 	    value: function createUrl(params) {
-	      var text = params.text;
-	      var autocompleteParams = params.autocompleteParams;
+	      var text = _classPrivateMethodGet$5(this, _processQuery, _processQuery2).call(this, params.text);
+
+	      var autocompleteServiceParams = params.autocompleteServiceParams;
 	      var result = "".concat(this.serviceUrl, "/?") + 'action=osmgateway.autocomplete.autocomplete' + "&params[q]=".concat(encodeURIComponent(text)) + "&params[limit]=".concat(babelHelpers.classPrivateFieldGet(this, _autocompletePromptsCount)) + "&params[lang]=".concat(this.languageId);
 
-	      if (autocompleteParams.locationForBias) {
-	        var lat = autocompleteParams.locationForBias.latitude;
-	        var lon = autocompleteParams.locationForBias.longitude;
-	        result += "&params[lat]=".concat(lat) + "&params[lon]=".concat(lon) + "&params[location_bias_scale]=".concat(babelHelpers.classPrivateFieldGet(this, _locationBiasScale));
+	      if (autocompleteServiceParams.locationForBias) {
+	        var lat = autocompleteServiceParams.locationForBias.latitude;
+	        var lon = autocompleteServiceParams.locationForBias.longitude;
+
+	        if (lat && lon) {
+	          result += "&params[lat]=".concat(lat) + "&params[lon]=".concat(lon) + "&params[location_bias_scale]=".concat(babelHelpers.classPrivateFieldGet(this, _locationBiasScale));
+	        }
+
+	        if (autocompleteServiceParams.locationForBias.address) {
+	          var address = autocompleteServiceParams.locationForBias.address;
+
+	          if (address.getFieldValue(location_core.LocationType.LOCALITY)) {
+	            result += "&params[probable_city]=".concat(address.getFieldValue(location_core.LocationType.LOCALITY));
+	          }
+	        }
 	      }
 
-	      if (autocompleteParams.filter && autocompleteParams.filter.types) {
-	        if (autocompleteParams.filter.types.indexOf(location_core.LocationType.BUILDING) !== -1) {
-	          result += '&params[osm_tag]=building&params[osm_tag]=place';
+	      if (autocompleteServiceParams.filter && autocompleteServiceParams.filter.types) {
+	        if (autocompleteServiceParams.filter.types.indexOf(location_core.LocationType.BUILDING) !== -1) {
+	          result += '&params[osm_tag][]=building&params[osm_tag][]=place&params[osm_tag][]=amenity';
 	        }
 
-	        if (autocompleteParams.filter.types.indexOf(location_core.LocationType.STREET) !== -1) {
-	          result += '&params[osm_tag]=highway';
+	        if (autocompleteServiceParams.filter.types.indexOf(location_core.LocationType.STREET) !== -1) {
+	          result += '&params[osm_tag][]=highway';
 	        }
 
-	        if (autocompleteParams.filter.types.indexOf(location_core.LocationType.LOCALITY) !== -1) {
-	          result += '&params[osm_tag]=:locality';
+	        if (autocompleteServiceParams.filter.types.indexOf(location_core.LocationType.LOCALITY) !== -1) {
+	          result += '&params[osm_tag][]=:locality';
 	        }
 	      }
 
@@ -14727,6 +14759,18 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return AutocompleteRequester;
 	}(BaseRequester);
+
+	var _processQuery2 = function _processQuery2(query) {
+	  var result = query;
+
+	  for (var i in babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)) {
+	    if (babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements).hasOwnProperty(i)) {
+	      result = result.replace(i, babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)[i]);
+	    }
+	  }
+
+	  return result;
+	};
 
 	var OSMFactory = /*#__PURE__*/function () {
 	  function OSMFactory() {
@@ -14769,7 +14813,8 @@ this.BX.Location = this.BX.Location || {};
 	        serviceUrl: params.serviceUrl,
 	        hostName: params.hostName,
 	        tokenContainer: tokenContainer,
-	        responseConverter: autocompleteResponseConverter
+	        responseConverter: autocompleteResponseConverter,
+	        autocompleteReplacements: params.autocompleteReplacements
 	      });
 	      osmParams.autocompleteService = new AutocompleteService({
 	        languageId: params.languageId,

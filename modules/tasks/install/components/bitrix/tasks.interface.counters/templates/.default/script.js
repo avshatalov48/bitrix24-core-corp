@@ -76,55 +76,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Filter;
 	}();
 
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter ", "\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-counters--item-counter-title\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"task-counters--popup-item\">\n\t\t\t\t\t<span class=\"tasks-counters--item-counter-num ", "\">", "</span>\n\t\t\t\t\t<span class=\"task-counters--popup-item-text\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-remove\"></div>\n\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num-text ", "\">", "</div>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num ", "\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-num-text --stop --without-animate\">", "</div>\t\t\t\t\t\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 
 	var CountersItem = /*#__PURE__*/function () {
 	  function CountersItem(options) {
@@ -156,7 +108,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getCounter() {
 	      if (!this.$counter) {
 	        var count = this.count > 99 ? '99+' : this.count;
-	        this.$counter = main_core.Tag.render(_templateObject(), this.getCounterColor(), count);
+	        this.$counter = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num ", "\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-num-text --stop --without-animate\">", "</div>\t\t\t\t\t\n\t\t\t\t</div>\n\t\t\t"])), this.getCounterColor(), count);
 	      }
 
 	      return this.$counter;
@@ -194,7 +146,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var timer = setInterval(function () {
 	        value < start ? start-- : start++;
-	        var node = main_core.Tag.render(_templateObject2(), value < start ? '--decrement' : '', start);
+	        var node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num-text ", "\">", "</div>\n\t\t\t"])), value < start ? '--decrement' : '', start);
 
 	        if (start === value) {
 	          node.classList.add('--stop');
@@ -223,7 +175,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getRemove",
 	    value: function getRemove() {
 	      if (!this.$remove) {
-	        this.$remove = main_core.Tag.render(_templateObject3());
+	        this.$remove = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-remove\"></div>\n\t\t\t"])));
 	      }
 
 	      return this.$remove;
@@ -264,13 +216,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getPopupMenuItemContainer",
 	    value: function getPopupMenuItemContainer() {
 	      var title = main_core.Loc.getMessage('TASKS_COUNTER_OTHER_TASKS').replace('#TITLE#', this.name.toLowerCase());
-	      return main_core.Tag.render(_templateObject4(), this.getCounterColor(), this.count, title);
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"task-counters--popup-item\">\n\t\t\t\t\t<span class=\"tasks-counters--item-counter-num ", "\">", "</span>\n\t\t\t\t\t<span class=\"task-counters--popup-item-text\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.getCounterColor(), this.count, title);
 	    }
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer(param) {
 	      if (!this.$container) {
-	        this.$container = main_core.Tag.render(_templateObject5(), Number(this.count) === 0 ? ' --fade' : '', this.getCounter(), this.name, this.getRemove());
+	        this.$container = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter ", "\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-counters--item-counter-title\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), Number(this.count) === 0 ? ' --fade' : '', this.getCounter(), this.name, this.getRemove());
 
 	        if (this.filter.isFilteredByFieldValue(this.filterField, this.filterValue)) {
 	          this.active(this.$container);
@@ -285,85 +237,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CountersItem;
 	}();
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters tasks-counters--scope\">\n\t\t\t\t<div class=\"tasks-counters--item\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-counters--item-content\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-head\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item --other\" ", "\">\n\t\t\t\t<div data-role=\"tasks-counters--item-head-other\" class=\"tasks-counters--item-head\">", "</div>\n\t\t\t\t<div class=\"tasks-counters--item-content\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-counter--more\">\n\t\t\t\t<div class=\"tasks-counters--item-counter-wrapper\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-title\">", ":</div>\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-num\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject5$1 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-counter-arrow\"></div>\n\t\t"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-arrow\"></div>\n\t\t\t"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item\">", "</div>\n\t\t"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div data-role=\"tasks-counters--item-head-read-all\" class=\"tasks-counters--item-head\n\t\t\t\t\t\t", " \n\t\t\t\t\t\t--action \n\t\t\t\t\t\t--read-all\">\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--icon\"></div>\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--text\">", "</div>\n\t\t\t\t\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8;
 	var Counters = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Counters, null, [{
 	    key: "counterTypes",
@@ -371,8 +245,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return {
 	        my: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'projects_total_expired', 'projects_total_comments', 'sonet_total_expired', 'sonet_total_comments', 'groups_total_expired', 'groups_total_comments'],
 	        other: ['project_expired', 'project_comments', 'projects_foreign_expired', 'projects_foreign_comments', 'groups_foreign_expired', 'groups_foreign_comments', 'sonet_foreign_expired', 'sonet_foreign_comments'],
+	        additional: ['muted_new_comments'],
 	        expired: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired'],
-	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments']
+	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'muted_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments']
 	      };
 	    }
 	  }]);
@@ -493,7 +368,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.updateRole();
 	        this.updateCountersData();
 	      } else {
-	        var counters = Object.assign({}, this.myCounters, this.otherCounters);
+	        var counters = babelHelpers.objectSpread({}, this.myCounters, this.otherCounters);
 	        Object.values(counters).forEach(function (counter) {
 	          if (counter) {
 	            _this3.filter.isFilteredByFieldValue(counter.filterField, counter.filterValue) ? counter.active() : counter.unActive();
@@ -540,6 +415,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.isUserTaskList() || !this.isMyTaskList() || !has.call(data, this.groupId) || this.userId !== Number(data.userId)) {
 	        return;
 	      }
+
+	      var newCommentsCount = 0;
 	      Object.entries(data[this.groupId][this.role]).forEach(function (_ref) {
 	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
 	            type = _ref2[0],
@@ -551,10 +428,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          if (value === 0) {
 	            _this5.myCounters[type].unActive();
 	          } else if (Counters.counterTypes.comment.includes(type)) {
-	            _this5.$readAllInner.classList.remove('--fade');
+	            newCommentsCount += value;
 	          }
+	        } else if (_this5.additionalCounters[type] && Counters.counterTypes.comment.includes(type)) {
+	          newCommentsCount += value;
 	        }
 	      });
+
+	      if (newCommentsCount > 0) {
+	        this.$readAllInner.classList.remove('--fade');
+	      }
 	    }
 	  }, {
 	    key: "onProjectCounter",
@@ -594,12 +477,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.myCounters = {};
 	      this.otherCounters = {};
+	      this.additionalCounters = {};
+	      var availableTypes = [].concat(babelHelpers.toConsumableArray(Counters.counterTypes.additional), babelHelpers.toConsumableArray(Counters.counterTypes.my), babelHelpers.toConsumableArray(Counters.counterTypes.other));
 	      Object.entries(counters).forEach(function (_ref3) {
 	        var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
 	            type = _ref4[0],
 	            data = _ref4[1];
 
-	        if (!Counters.counterTypes.my.includes(type) && !Counters.counterTypes.other.includes(type)) {
+	        if (!availableTypes.includes(type)) {
 	          return;
 	        }
 
@@ -612,7 +497,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          filterValue: data.FILTER_VALUE
 	        });
 
-	        if (Counters.counterTypes.my.includes(type)) {
+	        if (Counters.counterTypes.additional.includes(type)) {
+	          _this6.additionalCounters[type] = counterItem;
+	        } else if (Counters.counterTypes.my.includes(type)) {
 	          _this6.myCounters[type] = counterItem;
 	        } else if (Counters.counterTypes.other.includes(type)) {
 	          _this6.otherCounters[type] = counterItem;
@@ -629,7 +516,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getReadAllBlock() {
 	      var _this7 = this;
 
-	      var counters = Object.assign({}, this.myCounters, this.otherCounters);
+	      var counters = babelHelpers.objectSpread({}, this.myCounters, this.otherCounters, this.additionalCounters);
 	      var newCommentsCount = 0;
 	      Object.entries(counters).forEach(function (_ref5) {
 	        var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
@@ -640,13 +527,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          newCommentsCount += counter.count;
 	        }
 	      });
-	      this.$readAllInner = main_core.Tag.render(_templateObject$1(), newCommentsCount === 0 ? '--fade' : '', main_core.Loc.getMessage('TASKS_COUNTER_READ_ALL'));
+	      this.$readAllInner = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div data-role=\"tasks-counters--item-head-read-all\" class=\"tasks-counters--item-head\n\t\t\t\t\t\t", " \n\t\t\t\t\t\t--action \n\t\t\t\t\t\t--read-all\">\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--icon\"></div>\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), newCommentsCount === 0 ? '--fade' : '', main_core.Loc.getMessage('TASKS_COUNTER_READ_ALL'));
 	      var readAllClick = this.isUserTaskList() || this.isProjectsTaskList() && this.role !== 'view_all' ? this.readAllByRole.bind(this) : this.readAllForProjects.bind(this);
 	      main_core.Event.bind(this.$readAllInner, 'click', readAllClick);
 	      main_core.Event.bind(this.$readAllInner, 'click', function () {
 	        return _this7.$readAllInner.classList.add('--fade');
 	      });
-	      this.$readAll.layout = main_core.Tag.render(_templateObject2$1(), this.$readAllInner);
+	      this.$readAll.layout = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item\">", "</div>\n\t\t"])), this.$readAllInner);
 	      return this.$readAll.layout;
 	    }
 	  }, {
@@ -663,14 +550,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "readAllForProjects",
 	    value: function readAllForProjects() {
-	      var allCounters = Object.assign(this.myCounters, this.otherCounters);
+	      var allCounters = babelHelpers.objectSpread({}, this.myCounters, this.otherCounters);
 	      Object.entries(allCounters).forEach(function (_ref7) {
-	        var _ref8 = babelHelpers.slicedToArray(_ref7, 1),
-	            type = _ref8[0];
+	        var _ref8 = babelHelpers.slicedToArray(_ref7, 2),
+	            type = _ref8[0],
+	            counter = _ref8[1];
 
-	        if (allCounters[type] && Counters.counterTypes.comment.includes(type)) {
-	          allCounters[type].updateCount(0);
-	          allCounters[type].unActive();
+	        if (Counters.counterTypes.comment.includes(type)) {
+	          counter.updateCount(0);
+	          counter.unActive();
 	        }
 	      });
 	      main_core.ajax.runAction('tasks.task.comment.readProject', {
@@ -727,7 +615,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getMoreArrow",
 	    value: function getMoreArrow() {
 	      if (!this.$moreArrow) {
-	        this.$moreArrow = main_core.Tag.render(_templateObject3$1());
+	        this.$moreArrow = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-arrow\"></div>\n\t\t\t"])));
 	      }
 
 	      return this.$moreArrow;
@@ -742,8 +630,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        value += Number(counter.count);
 	      });
 	      var count = value > 99 ? '99+' : value;
-	      this.$moreArrow = main_core.Tag.render(_templateObject4$1());
-	      this.$more = main_core.Tag.render(_templateObject5$1(), main_core.Loc.getMessage('TASKS_COUNTER_MORE'), count, this.$moreArrow);
+	      this.$moreArrow = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-counter-arrow\"></div>\n\t\t"])));
+	      this.$more = main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-counter--more\">\n\t\t\t\t<div class=\"tasks-counters--item-counter-wrapper\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-title\">", ":</div>\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-num\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_COUNTER_MORE'), count, this.$moreArrow);
 	      main_core.Event.bind(this.$more, 'click', function () {
 	        return _this9.getPopup().show();
 	      });
@@ -757,26 +645,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      var content = [];
-	      var totalCount = 0;
 	      Object.values(this.otherCounters).forEach(function (counter) {
-	        content.push(counter.getContainer());
-	        if (counter.count) totalCount += counter.count;
+	        return content.push(counter.getContainer());
 	      });
 	      this.$other.cropped = this.isCroppedBlock(this.$other.layout);
-	      this.$other.layout = main_core.Tag.render(_templateObject6(), this.$other.cropped ? '--cropp' : '', main_core.Loc.getMessage('TASKS_COUNTER_OTHER'), content, this.getMore());
+	      this.$other.layout = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item --other\" ", "\">\n\t\t\t\t<div data-role=\"tasks-counters--item-head-other\" class=\"tasks-counters--item-head\">", "</div>\n\t\t\t\t<div class=\"tasks-counters--item-content\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.$other.cropped ? '--cropp' : '', main_core.Loc.getMessage('TASKS_COUNTER_OTHER'), content, this.getMore());
 	      return this.$other.layout;
 	    }
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
 	      var content = [];
-	      var totalCount = 0;
 	      Object.values(this.myCounters).forEach(function (counter) {
-	        content.push(counter.getContainer());
-	        if (counter.count) totalCount += counter.count;
+	        return content.push(counter.getContainer());
 	      });
-	      this.$myTaskHead = main_core.Tag.render(_templateObject7(), main_core.Loc.getMessage('TASKS_COUNTER_MY'));
-	      this.$element = main_core.Tag.render(_templateObject8(), this.$myTaskHead, content, this.getOther(), this.isUserTaskList() && !this.isMyTaskList() ? '' : this.getReadAllBlock());
+	      this.$myTaskHead = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters--item-head\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_COUNTER_MY'));
+	      this.$element = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-counters tasks-counters--scope\">\n\t\t\t\t<div class=\"tasks-counters--item\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-counters--item-content\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.$myTaskHead, content, this.getOther(), this.isUserTaskList() && !this.isMyTaskList() ? '' : this.getReadAllBlock());
 	      return this.$element;
 	    }
 	  }, {

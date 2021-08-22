@@ -18,6 +18,19 @@ use Bitrix\Main\Localization\Loc;
  * </ul>
  *
  * @package Bitrix\Dav
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Tokens_Query query()
+ * @method static EO_Tokens_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Tokens_Result getById($id)
+ * @method static EO_Tokens_Result getList(array $parameters = array())
+ * @method static EO_Tokens_Entity getEntity()
+ * @method static \Bitrix\Dav\EO_Tokens createObject($setDefaultValues = true)
+ * @method static \Bitrix\Dav\EO_Tokens_Collection createCollection()
+ * @method static \Bitrix\Dav\EO_Tokens wakeUpObject($row)
+ * @method static \Bitrix\Dav\EO_Tokens_Collection wakeUpCollection($rows)
  */
 class TokensTable extends Entity\DataManager
 {

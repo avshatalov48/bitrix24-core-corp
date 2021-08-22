@@ -1,8 +1,8 @@
-<?
+<?php
 $MESS["CRM_VOLUME_TITLE"] = "Чем занято место";
 $MESS["CRM_VOLUME_CLEARING"] = "Очистка CRM";
 $MESS["CRM_VOLUME_START_TITLE"] = "Освободите место";
-$MESS["CRM_VOLUME_START_COMMENT"] = "Битрикс24 автоматически просканирует все документы и подскажет какие из них можно удалить и очистить место.";
+$MESS["CRM_VOLUME_START_COMMENT"] = "Битрикс24 автоматически просканирует все документы и подскажет, какие из них можно удалить и очистить место.";
 $MESS["CRM_VOLUME_MEASURE_DATA"] = "Начать сканирование";
 $MESS["CRM_VOLUME_MEASURE_TITLE"] = "Выполняется анализ занятого места...";
 $MESS["CRM_VOLUME_MEASURE_PROCESS"] = "Процесс сканирования может занять достаточно длительное время.";
@@ -24,4 +24,3 @@ $MESS["CRM_VOLUME_SUCCESS"] = "Успешно";
 $MESS["CRM_VOLUME_CANCEL_WORKERS"] = "Отменить все задания очистки";
 $MESS["CRM_VOLUME_CANCEL"] = "Отмена";
 $MESS["CRM_VOLUME_PERFORMING_CANCEL_WORKERS"] = "Отмена задания очистки";
-?>

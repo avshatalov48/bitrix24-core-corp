@@ -1,6 +1,5 @@
 /**
  * Loads google source services
- * todo: save loaded instances
  */
 export default class Loader
 {
@@ -8,7 +7,26 @@ export default class Loader
 
 	static #createSrc(apiKey, languageId)
 	{
-		return 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places&language=' + languageId;
+		return 'https://maps.googleapis.com/maps/api/js'
+			+ `?key=${apiKey}`
+			+ '&libraries=places'
+			+ `&language=${languageId}`
+			+ `&region=${this.#getRegion(languageId)}`;
+	}
+
+	static #getRegion(languageId: string): string
+	{
+		const map = {
+			'en': 'US',
+			'uk': 'UA',
+			'zh': 'CN',
+			'ja': 'JP',
+			'vi': 'VN',
+			'ms': 'MY',
+			'hi': 'IN'
+		};
+
+		return typeof map[languageId] !== 'undefined' ? map[languageId] : languageId.toUpperCase();
 	}
 
 	/**
@@ -19,7 +37,7 @@ export default class Loader
 	 */
 	static load(apiKey: string, languageId: string): Promise
 	{
-		if(Loader.#loadingPromise === null)
+		if (Loader.#loadingPromise === null)
 		{
 			Loader.#loadingPromise = new Promise((resolve) => {
 

@@ -32,7 +32,6 @@ export default {
 		initRelatedPropsOptions: {required: false},
 		initResponsibleId: {default: null, required: false},
 		initEnteredDeliveryPrice: {required: false},
-		initIsCalculated: {required: false},
 		personTypeId: {required: true},
 		action: {type: String, required: true },
 		actionData: {type: Object, required: true },
@@ -40,9 +39,8 @@ export default {
 		externalSumLabel: {type: String, required: true},
 		currency: {type: String, required: true},
 		currencySymbol: {type: String, required: true},
-		availableServiceIds: {type: Array, required: true},
+		availableServices: {type: Object, required: true},
 		excludedServiceIds: {type: Array, required: true},
-		editable: {type: Boolean, required: true},
 	},
 	data()
 	{
@@ -117,7 +115,7 @@ export default {
 						{
 							if (deliveryService.id == initDeliveryServiceId)
 							{
-								this.selectedDeliveryService = deliveryService;
+								this.onDeliveryServiceChanged(deliveryService, true);
 								break;
 							}
 
@@ -125,7 +123,7 @@ export default {
 							{
 								if (profile.id == initDeliveryServiceId)
 								{
-									this.selectedDeliveryService = profile;
+									this.onDeliveryServiceChanged(profile, true);
 									break;
 								}
 							}
@@ -215,11 +213,6 @@ export default {
 					this.enteredDeliveryPrice = this.initEnteredDeliveryPrice;
 				}
 
-				if (this.initIsCalculated !== null)
-				{
-					this.isCalculated = this.initIsCalculated;
-				}
-
 				(new Ears({
 					container: this.$refs['delivery-methods'],
 					smallSize: true,
@@ -302,11 +295,6 @@ export default {
 		},
 		onDeliveryServiceChanged(deliveryService, selfCall = false)
 		{
-			if (!this.editable)
-			{
-				return;
-			}
-
 			if (!this.isServiceAvailable(deliveryService) && !selfCall)
 			{
 				return;
@@ -314,18 +302,34 @@ export default {
 
 			if (!deliveryService.parentId && deliveryService.profiles.length > 0)
 			{
-				this.onDeliveryServiceChanged(deliveryService.profiles[0], true);
+				let firstAvailableProfile;
+				for (let profile of deliveryService.profiles)
+				{
+					if (this.isServiceAvailable(profile))
+					{
+						firstAvailableProfile = profile;
+						break;
+					}
+				}
+
+				if (firstAvailableProfile)
+				{
+					this.onDeliveryServiceChanged(firstAvailableProfile, true);
+				}
+				else
+				{
+					this.onDeliveryServiceChanged(deliveryService.profiles[0], true);
+				}
 			}
 			else
 			{
 				this.selectedDeliveryService = deliveryService;
-
 				this.emitChange();
 			}
 		},
 		isServiceAvailable(service)
 		{
-			return this.availableServiceIds.includes(service.id);
+			return this.availableServices.hasOwnProperty(service.id);
 		},
 		onPropValueChanged(event, relatedProp)
 		{
@@ -385,11 +389,6 @@ export default {
 		},
 		onAddMoreClicked()
 		{
-			if (!this.editable)
-			{
-				return;
-			}
-
 			Manager.openSlider(this._deliverySettingsUrl).then(() => {
 				this.initialize();
 				this.$emit('settings-changed');
@@ -435,6 +434,40 @@ export default {
 				this.restrictionsHintPopup.hide();
 			}
 		},
+		isProfileSelected(profile)
+		{
+			return (
+				this.selectedDeliveryService
+				&& this.selectedDeliveryService.id == profile.id
+				&& this.isServiceAvailable(profile)
+			);
+		},
+		getProfileClass(profile)
+		{
+			return {
+				'salescenter-delivery-car-item': true,
+				'salescenter-delivery-car-item--selected': this.isProfileSelected(profile),
+				'salescenter-delivery-car-item--disabled': !this.isServiceAvailable(profile)
+			};
+		},
+		isRelatedServiceRelevant(relatedService)
+		{
+			return relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId);
+		},
+		isRelatedServiceAvailable(relatedService)
+		{
+			return (
+				relatedService.hasOwnProperty('isAvailable')
+				&& relatedService.isAvailable
+			);
+		},
+		getRelatedServiceStyle(relatedService)
+		{
+			return {
+				'opacity': this.isRelatedServiceAvailable(relatedService) ? 1 : 0.5,
+				'pointer-events': this.isRelatedServiceAvailable(relatedService) ? 'auto' : 'none',
+			};
+		},
 	},
 	created()
 	{
@@ -459,7 +492,45 @@ export default {
 					})).init();
 				}, 0);
 			}
-		}
+		},
+		isSelectedDeliveryServiceAvailable(newValue, oldValue)
+		{
+			if (oldValue && !newValue)
+			{
+				this.isCalculated = false;
+				this.estimatedDeliveryPrice = null;
+				this.enteredDeliveryPrice = 0.00;
+			}
+		},
+		availableServices(newValue, oldValue)
+		{
+			for (let i = 0; i < this.relatedServices.length; i++)
+			{
+				let relatedService = this.relatedServices[i];
+
+				let isAvailable = false;
+				for (let deliveryServiceId of relatedService.deliveryServiceIds)
+				{
+					if (newValue.hasOwnProperty(deliveryServiceId))
+					{
+						if (
+							newValue[deliveryServiceId] === null
+							|| (
+								Array.isArray(newValue[deliveryServiceId])
+								&& newValue[deliveryServiceId].includes(relatedService.id)
+							)
+						) {
+							isAvailable = true;
+							break;
+						}
+					}
+				}
+
+				relatedService.isAvailable = isAvailable;
+
+				Vue.set(this.relatedServices, i, relatedService);
+			}
+		},
 	},
 	computed: {
 		state()
@@ -511,8 +582,8 @@ export default {
 		{
 			return this.selectedDeliveryServiceId
 				&& this.arePropValuesReady
-				&& !this.isCalculating
-				&& this.editable;
+				&& this.isSelectedDeliveryServiceAvailable
+				&& !this.isCalculating;
 		},
 		currentRelatedPropsValues()
 		{
@@ -589,7 +660,12 @@ export default {
 
 			for (let relatedService of this.relatedServices)
 			{
-				if (!relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId))
+				if (
+					! (
+						this.isRelatedServiceRelevant(relatedService)
+						&& this.isRelatedServiceAvailable(relatedService)
+					)
+				)
 				{
 					continue;
 				}
@@ -671,7 +747,7 @@ export default {
 
 			for (let relatedService of this.relatedServices)
 			{
-				if (!relatedService.deliveryServiceIds.includes(this.selectedDeliveryServiceId))
+				if (!this.isRelatedServiceRelevant(relatedService))
 				{
 					continue;
 				}
@@ -730,6 +806,10 @@ export default {
 
 			return this.selectedParentDeliveryService.profiles;
 		},
+		isSelectedDeliveryServiceAvailable()
+		{
+			return this.selectedDeliveryService && this.isServiceAvailable(this.selectedDeliveryService);
+		},
 	},
 	template: `
 		<div class="salescenter-delivery">
@@ -770,7 +850,7 @@ export default {
 					<div
 						v-for="(profile, index) in selectedParentServiceProfiles"
 						@click="onDeliveryServiceChanged(profile)"
-						:class="{'salescenter-delivery-car-item': true, 'salescenter-delivery-car-item--selected': selectedDeliveryService.id == profile.id, 'salescenter-delivery-car-item--disabled': !isServiceAvailable(profile)}"
+						:class="getProfileClass(profile)"
 						:data-role="selectedDeliveryService.id == profile.id ? 'ui-ears-active' : ''"
 					>
 						<div v-show="index === 0" class="salescenter-delivery-car-lable">
@@ -796,19 +876,18 @@ export default {
 						</div>
 					</div>
 				</div>
-			</div>
-							
+			</div>							
 			<div v-show="extraServicesCount > 0" class="salescenter-delivery-additionally">
 				<div class="salescenter-delivery-additionally-options">
 					<component
 						v-for="relatedService in relatedServices"
-						v-show="relatedService.deliveryServiceIds.includes(selectedDeliveryServiceId)"
+						v-show="isRelatedServiceRelevant(relatedService)"
 						:is="relatedService.type + '-service'"
 						:key="relatedService.id"
 						:name="relatedService.name"
 						:initValue="getServiceValue(relatedService)"						
 						:options="relatedService.options"
-						:editable="editable"
+						:style="getRelatedServiceStyle(relatedService)"
 						@change="onServiceValueChanged($event, relatedService)"
 					>
 					</component>
@@ -826,7 +905,6 @@ export default {
 						:key="relatedProp.id"
 						:name="'PROPS_' + relatedProp.id"							
 						:initValue="getPropValue(relatedProp)"
-						:editable="editable"
 						:options="getPropOptions(relatedProp)"
 						:isStartMarker="index === 0"
 						@change="onPropValueChanged($event, relatedProp)"
@@ -846,7 +924,6 @@ export default {
 							:is="relatedProp.type + '-control'"
 							:key="relatedProp.id"
 							:name="'PROPS_' + relatedProp.id"
-							:editable="editable"
 							:initValue="getPropValue(relatedProp)"
 							:settings="relatedProp.settings"
 							:options="getPropOptions(relatedProp)"
@@ -862,7 +939,7 @@ export default {
 					<div class="salescenter-delivery-manager-content">
 						<div @click="responsibleUserClicked" class="salescenter-delivery-manager-name">{{responsibleUser.name}}</div>
 					</div>
-					<div v-if="editable" @click="openChangeResponsibleDialog" class="salescenter-delivery-manager-edit">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>
+					<div @click="openChangeResponsibleDialog" class="salescenter-delivery-manager-edit">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CHANGE_RESPONSIBLE}}</div>
 				</div>
 			</div>
 					
@@ -875,7 +952,7 @@ export default {
 					</div>
 				</template>
 				<div class="salescenter-delivery-bottom">
-					<div v-if="editable && selectedDeliveryService" class="salescenter-delivery-bottom-row">					
+					<div class="salescenter-delivery-bottom-row">					
 						<div class="salescenter-delivery-bottom-col">
 							<span v-show="!isCalculating" @click="calculate" :class="calculateDeliveryPriceButtonClass">{{isCalculated ? localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE_UPDATE : localize.SALE_DELIVERY_SERVICE_SELECTOR_CALCULATE}}</span>
 							
@@ -885,11 +962,11 @@ export default {
 							</span>
 						</div>
 					</div>
-					<div v-show="isCalculated" class="salescenter-delivery-bottom-row">
+					<div v-show="isSelectedDeliveryServiceAvailable && isCalculated" class="salescenter-delivery-bottom-row">
 						<div class="salescenter-delivery-bottom-col"></div>
 						<div class="salescenter-delivery-bottom-col">
 							<table class="salescenter-delivery-table-total">
-								<tr v-show="editable">
+								<tr>
 									<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_EXPECTED_DELIVERY_PRICE}}:</td>
 									<td>
 										<span v-html="estimatedDeliveryPriceFormatted"></span>&nbsp;<span v-html="currencySymbol"></span>
@@ -899,7 +976,7 @@ export default {
 									<td>{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLIENT_DELIVERY_PRICE}}:</td>
 									<td>
 										<div class="ui-ctl ui-ctl-md ui-ctl-wa salescenter-delivery-bottom-input-symbol">
-											<input :disabled="!editable" v-model="enteredDeliveryPrice" @keypress="isNumber($event)" type="text" class="ui-ctl-element ui-ctl-textbox">
+											<input v-model="enteredDeliveryPrice" @keypress="isNumber($event)" type="text" class="ui-ctl-element ui-ctl-textbox">
 											<span v-html="currencySymbol"></span>
 										</div>
 									</td>

@@ -1,7 +1,7 @@
 import './css/check-list-item.css';
 
-import {Dom, Loc, Tag, Text} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import {Dom, Loc, Runtime, Tag, Text} from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {CompositeTreeItem} from './composite-tree-item';
 import {CheckListItemFields} from './check-list-item-fields';
@@ -82,7 +82,7 @@ class CheckListItem extends CompositeTreeItem
 
 	static getFileExtension(ext)
 	{
-		let fileExtension = ext;
+		let fileExtension;
 
 		switch (ext)
 		{
@@ -217,24 +217,24 @@ class CheckListItem extends CompositeTreeItem
 		return {start, end};
 	}
 
-	static getDefaultDisplayTitle(title)
+	static getDefaultCheckListTitle(title)
 	{
-		let defaultDisplayTitle = title;
+		let defaultTitle = title;
 
 		if (title.indexOf('BX_CHECKLIST') === 0)
 		{
 			if (title === 'BX_CHECKLIST')
 			{
-				defaultDisplayTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_2');
+				defaultTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_2');
 			}
 			else if (title.match(/BX_CHECKLIST_\d+$/))
 			{
 				const itemNumber = title.replace('BX_CHECKLIST_', '');
-				defaultDisplayTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_WITH_NUMBER').replace('#ITEM_NUMBER#', itemNumber);
+				defaultTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_WITH_NUMBER').replace('#ITEM_NUMBER#', itemNumber);
 			}
 		}
 
-		return defaultDisplayTitle;
+		return defaultTitle;
 	}
 
 	static smoothScroll(node)
@@ -298,6 +298,19 @@ class CheckListItem extends CompositeTreeItem
 	static getLinkLayout(url)
 	{
 		return `<a class="tasks-checklist-item-link" href="${url}" target="_blank">${url}</a>`;
+	}
+
+	static get keyCodes()
+	{
+		return {
+			esc: 27,
+			enter: 13,
+			plus: 43,
+			atsign: 64,
+			tab: 9,
+			up: 38,
+			down: 40,
+		};
 	}
 
 	constructor(fields = {})
@@ -624,10 +637,17 @@ class CheckListItem extends CompositeTreeItem
 			case 'AUDITOR_ADDED':
 			case 'ACCOMPLICE_ADDED':
 			{
+				let image = '';
+				if (data.avatar)
+				{
+					image = Tag.render`
+						<img class="tasks-checklist-notification-balloon-avatar-img" src="${data.avatar}" alt=""/>
+					`;
+				}
 				content = Tag.render`
 					<div class="tasks-checklist-notification-balloon-message-container">
 						<div class="tasks-checklist-notification-balloon-avatar">
-							<img class="tasks-checklist-notification-balloon-avatar-img" src="${data.avatar}" alt=""/>
+							${image}
 						</div>
 						<span class="tasks-checklist-notification-balloon-message">
 							${Loc.getMessage(`TASKS_CHECKLIST_NOTIFICATION_BALLOON_ACTION_${action}`)}
@@ -692,7 +712,7 @@ class CheckListItem extends CompositeTreeItem
 		{
 			this.getDescendants().forEach((descendant) => {
 				popupMenuItems.push({
-					text: descendant.fields.getDisplayTitle(),
+					text: descendant.fields.getTitle(),
 					onclick: (event, item) => {
 						item.getMenuWindow().close();
 
@@ -720,7 +740,7 @@ class CheckListItem extends CompositeTreeItem
 
 		checkLists.forEach((descendant) => {
 			popupMenuItems.push({
-				text: descendant.fields.getDisplayTitle(),
+				text: descendant.fields.getTitle(),
 				onclick: (event, item) => {
 					item.getMenuWindow().close();
 					this.makeChildOf(descendant);
@@ -738,7 +758,7 @@ class CheckListItem extends CompositeTreeItem
 	moveToNewCheckList(number)
 	{
 		const title = `${Loc.getMessage('TASKS_CHECKLIST_NEW_CHECKLIST_TITLE')}`.replace('#ITEM_NUMBER#', number);
-		const newCheckList = new CheckListItem({TITLE: title, DISPLAY_TITLE: title});
+		const newCheckList = new CheckListItem({TITLE: title});
 
 		this.getRootNode().addCheckListItem(newCheckList).then(() => {
 			if (this.checkSelectedItems())
@@ -763,22 +783,16 @@ class CheckListItem extends CompositeTreeItem
 
 	processMemberSelect(member)
 	{
-		if (this.memberSelector)
-		{
-			this.memberSelector.close();
-		}
-
 		if (this.checkSelectedItems())
 		{
 			this.runForEachSelectedItem((selectedItem) => {
-				const displayTitle = selectedItem.fields.getDisplayTitle();
-				const space = displayTitle.slice(-1) === ' ' ? '' : ' ';
-				const newTitle = `${displayTitle}${space}${member.nameFormatted}`.substring(0, 255);
+				const title = selectedItem.fields.getTitle();
+				const space = (title.slice(-1) === ' ' ? '' : ' ');
+				const newTitle = `${title}${space}${member.nameFormatted}`.substring(0, 255);
 
 				selectedItem.fields.addMember(member);
-
-				selectedItem.updateTitle(newTitle);
-				selectedItem.updateDisplayTitle(newTitle);
+				selectedItem.updateTitle(Text.decode(newTitle));
+				selectedItem.updateTitleNode();
 			});
 
 			return;
@@ -806,36 +820,63 @@ class CheckListItem extends CompositeTreeItem
 	onSocNetSelectorAuditorSelected(auditor)
 	{
 		const type = 'auditor';
-		const action = `${type.toUpperCase()}_ADDED`;
-		const data = {avatar: auditor.avatar};
-		const resultAuditor = {...auditor, type};
+		const userData = this.prepareUserData(auditor);
+		const resultAuditor = {...userData, type};
+
+		const notificationAction = `${type.toUpperCase()}_ADDED`;
+		const notificationData = {avatar: auditor.avatar};
 
 		this.processMemberSelect(resultAuditor);
-		this.getNotificationBalloon(action, data);
+		this.getNotificationBalloon(notificationAction, notificationData);
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:auditorAdded', auditor);
+		EventEmitter.emit('BX.Tasks.CheckListItem:auditorAdded', userData);
 		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'addAuditor'});
 	}
 
 	onSocNetSelectorAccompliceSelected(accomplice)
 	{
 		const type = 'accomplice';
-		const action = `${type.toUpperCase()}_ADDED`;
-		const data = {avatar: accomplice.avatar};
-		const resultAccomplice = {...accomplice, type};
+		const userData = this.prepareUserData(accomplice);
+		const resultAccomplice = {...userData, type};
+
+		const notificationAction = `${type.toUpperCase()}_ADDED`;
+		const notificationData = {avatar: accomplice.avatar};
 
 		this.processMemberSelect(resultAccomplice);
-		this.getNotificationBalloon(action, data);
+		this.getNotificationBalloon(notificationAction, notificationData);
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:accompliceAdded', accomplice);
+		EventEmitter.emit('BX.Tasks.CheckListItem:accompliceAdded', userData);
 		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'addAccomplice'});
+	}
+
+	prepareUserData(user)
+	{
+		const customData = user.getCustomData();
+		const entityType = user.getEntityType();
+
+		return {
+			avatar: user.avatar,
+			description: '',
+			entityType: 'U',
+			id: user.getId(),
+			name: customData.get('name'),
+			lastName: customData.get('lastName'),
+			email: customData.get('email'),
+			nameFormatted: Text.encode(user.getTitle()),
+			networkId: '',
+			type: {
+				crmemail: false,
+				extranet: (entityType === 'extranet'),
+				email: (entityType === 'email'),
+				network: (entityType === 'network'),
+			},
+		};
 	}
 
 	getMemberSelector(e, memberType = 'auditor', mentioned = false)
 	{
 		if (!this.checkCanAddAccomplice())
 		{
-			this.isSelectorLoading = false;
 			return;
 		}
 
@@ -845,24 +886,42 @@ class CheckListItem extends CompositeTreeItem
 		};
 		const typeFunction = typeFunctionMap[memberType] || typeFunctionMap.auditor;
 
-		this.memberSelector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-			scope: e.target,
-			mode: 'user',
-			useSearch: true,
-			useAdd: false,
-			controlBind: e.target,
-			parent: this,
+		this.isSelectorLoading = true;
+
+		Runtime.loadExtension('ui.entity-selector').then(exports => {
+			const {Dialog} = exports;
+			const dialog = new Dialog({
+				targetNode: e.target,
+				enableSearch: true,
+				multiple: false,
+				entities: [
+					{
+						id: 'user',
+						options: {
+							inviteGuestLink: false,
+							inviteEmployeeLink: false,
+							emailUsers: true,
+							networkUsers: true,
+							extranetUsers: true,
+						},
+					},
+				],
+				events: {
+					'onLoad': (event: BaseEvent) => {
+						this.isSelectorLoading = false;
+					},
+					'Item:onSelect': (event: BaseEvent) => {
+						this.isSelectorLoading = false;
+						this.mentioned = mentioned;
+						this.retrieveFocus();
+
+						const {item: selectedItem} = event.getData();
+						typeFunction(selectedItem);
+					},
+				},
+			});
+			dialog.show();
 		});
-		this.memberSelector.bindEvent('initialized', () => {
-			this.isSelectorLoading = false;
-		});
-		this.memberSelector.bindEvent('close', () => {
-			this.mentioned = mentioned;
-			this.isSelectorLoading = false;
-			this.retrieveFocus();
-		});
-		this.memberSelector.bindEvent('item-selected', typeFunction);
-		this.memberSelector.open();
 	}
 
 	onAddAuditorClick(e)
@@ -935,7 +994,6 @@ class CheckListItem extends CompositeTreeItem
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 				<span class="tasks-checklist-item-editor-panel-text">${Tag.message`+ ${'TASKS_CHECKLIST_PANEL_ACCOMPLICE'}`}</span>
 			</div>
-			<div class="tasks-checklist-item-editor-panel-separator"></div>
 		`;
 		const attachmentButtonLayout = Tag.render`
 			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-attachment" onclick="${this.onUploadAttachmentClick.bind(this)}">
@@ -966,10 +1024,12 @@ class CheckListItem extends CompositeTreeItem
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 			</div>
 		`;
+		const separator = Tag.render`<div class="tasks-checklist-item-editor-panel-separator"></div>`;
 
 		return Tag.render`
 			<div class="tasks-checklist-item-editor-panel ${this.isTaskRoot() || this.isCheckList() ? 'tasks-checklist-item-editor-group-panel' : ''}">
 				${this.checkCanAddAccomplice() ? membersLayout : ''}
+				${this.checkCanAddAccomplice() && !this.isCheckList() ? separator : ''}
 				${!this.isCheckList() ? itemsActionButtonsLayout : ''}
 			</div>
 		`;
@@ -980,26 +1040,21 @@ class CheckListItem extends CompositeTreeItem
 		this.fields.setTitle(text);
 	}
 
-	updateDisplayTitle(text)
+	updateTitleNode()
 	{
-		const oldTitleNode = this.getTitleNodeContainer();
-		const newTitleNode = this.getTitleLayout();
-
-		this.fields.setDisplayTitle(text);
-
-		Dom.replace(oldTitleNode, newTitleNode);
+		Dom.replace(this.getTitleNodeContainer(), this.getTitleLayout());
 	}
 
 	getTitleLayout()
 	{
 		const {userPath} = this.optionManager;
+		const escapeRegExp = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 		let title = this.fields.getTitle();
 
-		title = this.isCheckList() ? CheckListItem.getDefaultDisplayTitle(title) : title;
+		title = (this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title);
 
-		this.fields.setDisplayTitle(title);
 		this.fields.getMembers().forEach(({id, nameFormatted, type}) => {
-			const regExp = new RegExp(nameFormatted, 'g');
+			const regExp = new RegExp(escapeRegExp(nameFormatted), 'g');
 			const url = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
 			title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url));
 		});
@@ -1013,12 +1068,12 @@ class CheckListItem extends CompositeTreeItem
 		`;
 	}
 
-	processMembersFromText(text)
+	processMembersFromText()
 	{
 		const membersToDelete = [];
 
 		this.fields.getMembers().forEach(({id, nameFormatted}) => {
-			if (text.indexOf(nameFormatted) === -1)
+			if (this.fields.getTitle().indexOf(nameFormatted) === -1)
 			{
 				membersToDelete.push(id);
 			}
@@ -1250,7 +1305,7 @@ class CheckListItem extends CompositeTreeItem
 					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline 
 								tasks-checklist-header-name-editor">
 						<input class="ui-ctl-element" type="text" id="text_${nodeId}"
-							   value="${this.fields.getDisplayTitle()}"
+							   value="${this.fields.getTitle()}"
 							   onkeypress="${this.onInputKeyPressed.bind(this)}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
@@ -1285,7 +1340,7 @@ class CheckListItem extends CompositeTreeItem
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100">
 						<input class="ui-ctl-element" type="text" id="text_${nodeId}"
 							   placeholder="${Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER')}"
-							   value="${this.fields.getDisplayTitle()}"
+							   value="${this.fields.getTitle()}"
 							   onkeypress="${this.onInputKeyPressed.bind(this)}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
@@ -1371,11 +1426,11 @@ class CheckListItem extends CompositeTreeItem
 	disableUpdateMode()
 	{
 		const currentInner = this.getInnerContainer();
-		const text = Text.encode(currentInner.querySelector(`#text_${this.getNodeId()}`).value.trim().substring(0, 255));
+		const text = currentInner.querySelector(`#text_${this.getNodeId()}`).value.trim().substring(0, 255);
 
-		this.processMembersFromText(text);
 		this.updateTitle(text);
-		this.updateDisplayTitle(text);
+		this.processMembersFromText();
+		this.updateTitleNode();
 
 		Dom.removeClass(currentInner.nextElementSibling, this.hiddenClass);
 		Dom.remove(currentInner);
@@ -1436,9 +1491,13 @@ class CheckListItem extends CompositeTreeItem
 	{
 		if (this.updateMode)
 		{
-			if (e.keyCode === 13 || e.keyCode === 9)
+			if (e.keyCode === CheckListItem.keyCodes.enter || e.keyCode === CheckListItem.keyCodes.tab)
 			{
 				this.handleUpdateEnding(!this.isCheckList());
+			}
+			else if (e.keyCode === CheckListItem.keyCodes.esc)
+			{
+				this.handleUpdateEnding();
 			}
 		}
 		else
@@ -1464,20 +1523,16 @@ class CheckListItem extends CompositeTreeItem
 			return;
 		}
 
-		const keys = {
-			enter: 13,
-			plus: 43,
-			atsign: 64,
-		};
-
-		if (e.keyCode === keys.enter)
+		if (e.keyCode === CheckListItem.keyCodes.enter)
 		{
 			this.toggleUpdateMode(e);
 			e.preventDefault();
 		}
-		else if (e.keyCode === keys.plus || (e.shiftKey && e.keyCode === keys.atsign))
+		else if (
+			e.keyCode === CheckListItem.keyCodes.plus
+			|| (e.shiftKey && e.keyCode === CheckListItem.keyCodes.atsign)
+		)
 		{
-			this.isSelectorLoading = true;
 			this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
 		}
 
@@ -1486,11 +1541,11 @@ class CheckListItem extends CompositeTreeItem
 
 	onInputKeyDown(e)
 	{
-		const keys = {
-			tab: 9,
-			up: 38,
-			down: 40,
-		};
+		if (this.isSelectorLoading)
+		{
+			e.preventDefault();
+			return;
+		}
 
 		switch (e.keyCode)
 		{
@@ -1498,7 +1553,13 @@ class CheckListItem extends CompositeTreeItem
 				// do nothing
 				break;
 
-			case keys.tab:
+			case CheckListItem.keyCodes.esc:
+			{
+				setTimeout(() => this.toggleUpdateMode(e));
+				break;
+			}
+
+			case CheckListItem.keyCodes.tab:
 			{
 				if (!this.isCheckList())
 				{
@@ -1508,7 +1569,7 @@ class CheckListItem extends CompositeTreeItem
 				break;
 			}
 
-			case keys.up:
+			case CheckListItem.keyCodes.up:
 			{
 				const leftSiblingThrough = this.getLeftSiblingThrough();
 				if (leftSiblingThrough && leftSiblingThrough !== this.getRootNode())
@@ -1518,7 +1579,7 @@ class CheckListItem extends CompositeTreeItem
 				break;
 			}
 
-			case keys.down:
+			case CheckListItem.keyCodes.down:
 			{
 				const rightSiblingThrough = this.getRightSiblingThrough();
 				if (rightSiblingThrough)
@@ -1647,6 +1708,53 @@ class CheckListItem extends CompositeTreeItem
 		}
 	}
 
+	onCompleteAllButtonClick()
+	{
+		if (this.fields.getIsSelected() || this.updateMode)
+		{
+			return;
+		}
+
+		this.completeAll();
+		this.runAjaxCompleteAll();
+	}
+
+	completeAll(): void
+	{
+		this.getDescendants().forEach((descendant) => {
+			if (
+				descendant.checkCanToggle()
+				&& !descendant.updateMode
+				&& !descendant.fields.getIsComplete()
+			)
+			{
+				descendant.toggleComplete(false);
+			}
+			descendant.completeAll();
+		});
+	}
+
+	runAjaxCompleteAll(): void
+	{
+		const {ajaxActions, entityId, entityType, stableTreeStructure} = this.optionManager;
+
+		if (!ajaxActions || !ajaxActions.COMPLETE_ALL)
+		{
+			return;
+		}
+
+		BX.ajax.runAction(ajaxActions.COMPLETE_ALL, {
+			data: {
+				[`${entityType.toLowerCase()}Id`]: entityId,
+				checkListItemId: this.fields.getId(),
+			}
+		}).then((response) => {
+			response.data.forEach(item => {
+				this.findById(item.id).updateStableTreeStructure(item.isComplete, stableTreeStructure, stableTreeStructure);
+			});
+		});
+	}
+
 	onCompleteButtonClick()
 	{
 		if (
@@ -1661,7 +1769,7 @@ class CheckListItem extends CompositeTreeItem
 		this.toggleComplete();
 	}
 
-	toggleComplete()
+	toggleComplete(runAjax = true)
 	{
 		const isComplete = this.fields.getIsComplete();
 
@@ -1674,7 +1782,10 @@ class CheckListItem extends CompositeTreeItem
 		this.handleCheckListChanges();
 		this.handleTaskOptions();
 
-		this.runAjaxToggleComplete();
+		if (runAjax)
+		{
+			this.runAjaxToggleComplete();
+		}
 	}
 
 	runAjaxToggleComplete()
@@ -1890,7 +2001,11 @@ class CheckListItem extends CompositeTreeItem
 
 		checkList.fields.setIsComplete(checkListIsComplete);
 
-		if (checkListIsComplete && !Dom.hasClass(checkList.container, 'tasks-checklist-collapse'))
+		if (
+			checkListIsComplete
+			&& !Dom.hasClass(checkList.container, 'tasks-checklist-collapse')
+			&& this.collapseOnCompleteAll()
+		)
 		{
 			checkList.toggleCollapse();
 		}
@@ -1920,6 +2035,16 @@ class CheckListItem extends CompositeTreeItem
 	{
 		return this.skipUpdateClasses[area]
 			&& this.skipUpdateClasses[area].find(item => e.target.closest(item));
+	}
+
+	showCompleteAllButton()
+	{
+		return this.optionManager.getShowCompleteAllButton();
+	}
+
+	collapseOnCompleteAll()
+	{
+		return this.optionManager.getCollapseOnCompleteAll();
 	}
 
 	checkCanAdd()
@@ -2587,6 +2712,11 @@ class CheckListItem extends CompositeTreeItem
 		const maxValue = this.fields.getTotalCount();
 		const layouts = {
 			listActionsPanel: Tag.render`<div class="tasks-checklist-items-list-actions droppable"></div>`,
+			completeAllButton: Tag.render`
+				<div class="tasks-checklist-action-complete-all-btn" onclick="${this.onCompleteAllButtonClick.bind(this)}">
+					${Loc.getMessage('TASKS_CHECKLIST_COMPLETE_ALL')}
+				</div>
+			`,
 			groupButton: '',
 			dndButton: Tag.render`<div class="tasks-checklist-wrapper-dragndrop"></div>`,
 		};
@@ -2623,6 +2753,11 @@ class CheckListItem extends CompositeTreeItem
 			layouts.dndButton.style.visibility = 'hidden';
 		}
 
+		if (!this.showCompleteAllButton())
+		{
+			layouts.completeAllButton = '';
+		}
+
 		this.progress = new BX.UI.ProgressBar({
 			value,
 			maxValue,
@@ -2650,6 +2785,7 @@ class CheckListItem extends CompositeTreeItem
 						</div>
 					</div>
 					<div class="tasks-checklist-header-actions">
+						${layouts.completeAllButton}
 						${layouts.groupButton}
 						<div class="tasks-checklist-action-collapse-btn collapsed" onclick="${this.onCollapseButtonClick.bind(this)}"></div>
 					</div>
@@ -3059,7 +3195,7 @@ class MobileCheckListItem extends CheckListItem
 		checkLists.forEach((descendant) => {
 			popupChecklistsList.push({
 				id: descendant.getNodeId(),
-				title: descendant.fields.getDisplayTitle(),
+				title: Text.decode(descendant.fields.getTitle()),
 				sectionCode: '0',
 			});
 		});
@@ -3082,7 +3218,7 @@ class MobileCheckListItem extends CheckListItem
 			return;
 		}
 
-		const displayTitle = node.fields.getDisplayTitle();
+		const title = node.fields.getTitle();
 		let newTitle = '';
 
 		member.nameFormatted = Text.encode(member.nameFormatted);
@@ -3090,20 +3226,20 @@ class MobileCheckListItem extends CheckListItem
 		if (focusInput)
 		{
 			const start = position || 0;
-			const startSpace = (start === 0 || start - 1 === 0 || displayTitle.charAt(start - 2) === ' ') ? '' : ' ';
-			const endSpace = (displayTitle.charAt(start - 1) === ' ' ? '' : ' ');
-			const newInputText = `${displayTitle.slice(0, start - 1)}${startSpace}${member.nameFormatted}${endSpace}`;
-			newTitle = `${newInputText}${displayTitle.slice(start)}`;
+			const startSpace = ((start === 0 || start - 1 === 0 || title.charAt(start - 2) === ' ') ? '' : ' ');
+			const endSpace = (title.charAt(start - 1) === ' ' ? '' : ' ');
+			const newInputText = `${title.slice(0, start - 1)}${startSpace}${member.nameFormatted}${endSpace}`;
+			newTitle = `${newInputText}${title.slice(start)}`;
 		}
 		else
 		{
-			const space = (displayTitle.slice(-1) === ' ' ? '' : ' ');
-			newTitle = `${displayTitle}${space}${member.nameFormatted}`.substring(0, 255);
+			const space = (title.slice(-1) === ' ' ? '' : ' ');
+			newTitle = `${title}${space}${member.nameFormatted}`.substring(0, 255);
 		}
 
 		node.fields.addMember(member);
-		node.updateTitle(newTitle);
-		node.updateDisplayTitle(newTitle);
+		node.updateTitle(Text.decode(newTitle));
+		node.updateTitleNode();
 
 		if (!this.checkEditMode())
 		{
@@ -3372,7 +3508,7 @@ class MobileCheckListItem extends CheckListItem
 	moveToNewCheckList(number)
 	{
 		const title = `${Loc.getMessage('TASKS_CHECKLIST_NEW_CHECKLIST_TITLE')}`.replace('#ITEM_NUMBER#', number);
-		const newCheckList = new MobileCheckListItem({TITLE: title, DISPLAY_TITLE: title});
+		const newCheckList = new MobileCheckListItem({TITLE: title});
 
 		this.getRootNode().addCheckListItem(newCheckList).then(() => {
 			this.makeChildOf(newCheckList);
@@ -3472,11 +3608,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onInputKeyPressed(e)
 	{
-		const keys = {
-			enter: 13,
-		};
-
-		if (e.keyCode === keys.enter)
+		if (e.keyCode === CheckListItem.keyCodes.enter)
 		{
 			this.toggleUpdateMode(e);
 			e.preventDefault();
@@ -3510,7 +3642,7 @@ class MobileCheckListItem extends CheckListItem
 			localParams = {
 				popupChecklists: this.getPopupChecklistsList(),
 				popupMenuItems: this.getPopupMenuItems(),
-				popupMenuSections: [{id: '0', title: Text.decode(this.fields.getDisplayTitle())}],
+				popupMenuSections: [{id: '0', title: Text.decode(this.fields.getTitle())}],
 			};
 		}
 		else if (type === 'attachments')
@@ -3545,7 +3677,7 @@ class MobileCheckListItem extends CheckListItem
 			return Tag.render`
 				<div class="mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode">
 					<input class="mobile-task-checklist-item-input" type="text" id="text_${nodeId}"
-						   value="${this.fields.getDisplayTitle()}"
+						   value="${this.fields.getTitle()}"
 						   oninput="${this.onInput.bind(this)}"
 						   onkeypress="${this.onInputKeyPressed.bind(this)}"
 						   onblur="${this.rememberInputState.bind(this)}"/>
@@ -3571,7 +3703,7 @@ class MobileCheckListItem extends CheckListItem
 					<div class="tasks-checklist-item-number" style="display: none">${this.fields.getDisplaySortIndex()}</div>
 					<input class="mobile-task-checklist-item-input" type="text" id="text_${nodeId}"
 						   placeholder="${Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER')}"
-						   value="${this.fields.getDisplayTitle()}"
+						   value="${this.fields.getTitle()}"
 						   oninput="${this.onInput.bind(this)}"
 						   onkeypress="${this.onInputKeyPressed.bind(this)}"
 						   onblur="${this.rememberInputState.bind(this)}"/>

@@ -1,11 +1,16 @@
 import {Dom, Tag, Text, Type} from 'main.core';
 
+type TaskCounter = {
+	color: string,
+	value: number
+}
+
 type Params = {
 	itemId: number|string,
 	attachedFilesCount: number,
 	checkListComplete: number,
 	checkListAll: number,
-	newCommentsCount: number
+	taskCounters: TaskCounter
 }
 
 export class TaskCounts
@@ -16,7 +21,7 @@ export class TaskCounts
 		this.setAttachedFilesCount(params.attachedFilesCount);
 		this.setCheckListComplete(params.checkListComplete);
 		this.setCheckListAll(params.checkListAll);
-		this.setNewCommentsCount(params.newCommentsCount);
+		this.setTaskCounters(params.taskCounters);
 	}
 
 	setItemId(itemId: number|string)
@@ -57,19 +62,28 @@ export class TaskCounts
 		return this.checkListAll;
 	}
 
-	setNewCommentsCount(count: number)
+	setTaskCounters(taskCounter: TaskCounter)
 	{
-		this.newCommentsCount = (Type.isInteger(count) ? parseInt(count, 10) : 0);
+		if (Type.isUndefined(taskCounter))
+		{
+			taskCounter = {
+				color: '',
+				value: 0
+			};
+		}
+
+		this.taskCounter = taskCounter;
 	}
 
-	getNewCommentsCount(): number
+	getTaskCounters(): TaskCounter
 	{
-		return this.newCommentsCount;
+		return this.taskCounter;
 	}
 
 	renderIndicators(): ?HTMLElement|string
 	{
 		this.indicatorsNodeId = 'tasks-scrum-item-indicators-' + this.itemId;
+
 		return Tag.render`
 			<span id="${this.indicatorsNodeId}" class="task-title-indicators">
 				<div class="task-attachment-counter ui-label ui-label-sm ui-label-light">
@@ -79,8 +93,8 @@ export class TaskCounts
 					<span class='ui-label-inner'>${this.checkListComplete}/${this.checkListAll}</span>
 				</div>
 				<div class='task-comments-counter'>
-					<div class='ui-counter ui-counter-success'>
-						<div class='ui-counter-inner'>${this.newCommentsCount}</div>
+					<div class='ui-counter ${this.taskCounter.color}'>
+						<div class='ui-counter-inner'>${this.taskCounter.value}</div>
 					</div>
 				</div>
 			</span>
@@ -98,6 +112,7 @@ export class TaskCounts
 		this.updateVisibility();
 	}
 
+	//todo update all object data and render
 	updateIndicators(data: Object)
 	{
 		if (!this.indicatorsNode)
@@ -120,11 +135,16 @@ export class TaskCounts
 			this.checkListAll = parseInt(data.checkListAll, 10);
 			this.checklistNode.firstElementChild.textContent = this.checkListComplete + '/' + this.checkListAll;
 		}
-		if (data.newCommentsCount)
+
+		if (data.taskCounter)
 		{
-			this.newCommentsCount = parseInt(data.newCommentsCount, 10);
+			this.setTaskCounters(data.taskCounter);
+
+			const commentCounter = this.commentsNode.querySelector('.ui-counter');
 			const innerCommentCounter = this.commentsNode.querySelector('.ui-counter-inner');
-			innerCommentCounter.textContent = this.newCommentsCount;
+
+			commentCounter.className = `ui-counter ${Text.encode(this.taskCounter.color)}`;
+			innerCommentCounter.textContent = parseInt(this.taskCounter.value, 10);
 		}
 
 		this.updateVisibility();
@@ -150,7 +170,7 @@ export class TaskCounts
 			this.hideNode(this.checklistNode);
 		}
 
-		if (this.newCommentsCount > 0)
+		if (this.taskCounter.value > 0)
 		{
 			this.showNode(this.commentsNode);
 		}

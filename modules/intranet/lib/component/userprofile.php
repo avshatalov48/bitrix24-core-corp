@@ -12,6 +12,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Engine\CurrentUser;
 
 class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
@@ -336,6 +337,17 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 	}
 
+	protected function isCurrentUserAdmin()
+	{
+		return (
+			(
+				Loader::includeModule('bitrix24')
+				&& \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+			)
+			||CurrentUser::get()->isAdmin()
+		);
+	}
+
 	public function saveAction(array $data)
 	{
 		global $USER, $USER_FIELD_MANAGER;
@@ -353,9 +365,15 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			return null;
 		}
 
-		if (isset($data["UF_DEPARTMENT"]) && empty($data["UF_DEPARTMENT"][0]))
+		if (isset($data["UF_DEPARTMENT"]))
 		{
-			unset($data["UF_DEPARTMENT"]);
+			if (
+				empty($data["UF_DEPARTMENT"][0])
+				|| !$this->isCurrentUserAdmin()
+			)
+			{
+				unset($data["UF_DEPARTMENT"]);
+			}
 		}
 
 		$fields = [
@@ -385,6 +403,15 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				}
 
 				$newFields[$key] = $data[$key];
+			}
+		}
+
+		$ufReserved = $this->getFormInstance()->getReservedUfFields();
+		foreach ($data as $fieldName => $fieldValue)
+		{
+			if (in_array($fieldName, $ufReserved))
+			{
+				unset($data[$fieldName]);
 			}
 		}
 
@@ -727,8 +754,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				Loader::includeModule("bitrix24")
 				&& $this->arParams["ID"] != $USER->GetID()
 				&& \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID())
-				//&& \CBitrix24::IsPortalAdmin($this->arParams["ID"])
-				//&& !\Bitrix\Bitrix24\Integrator::isIntegrator($this->arParams["ID"])
+				&& \CBitrix24::IsPortalAdmin($this->arParams["ID"])
+				&& !\Bitrix\Bitrix24\Integrator::isIntegrator($this->arParams["ID"])
 			)
 			{
 				$result['edit'] = false;

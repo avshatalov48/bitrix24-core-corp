@@ -14,13 +14,11 @@ export class ActiveSprintActionButton extends EventEmitter
 	render(): HTMLElement
 	{
 		const node = Tag.render`
-			<div class="tasks-scrum-button-container">
-				<div class="ui-btn-split ui-btn-primary ui-btn-xs"> 
-					<button class="ui-btn-main">
-						${Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT')}
-					</button> 
-					<button class="ui-btn-menu"></button> 
-				</div>
+			<div class="ui-btn-split ui-btn-primary ui-btn-xs"> 
+				<button class="ui-btn-main">
+					${Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT')}
+				</button> 
+				<button class="ui-btn-menu"></button> 
 			</div>
 		`;
 

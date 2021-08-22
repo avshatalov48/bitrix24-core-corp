@@ -139,18 +139,6 @@ namespace Bitrix\Voximplant {
 }
 namespace Bitrix\Voximplant {
 	/**
-	 * @method static EO_Blacklist_Query query()
-	 * @method static EO_Blacklist_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Blacklist_Result getById($id)
-	 * @method static EO_Blacklist_Result getList(array $parameters = array())
-	 * @method static EO_Blacklist_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\EO_Blacklist createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\EO_Blacklist_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\EO_Blacklist wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\EO_Blacklist_Collection wakeUpCollection($rows)
-	 */
-	class BlacklistTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -176,7 +164,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Blacklist_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\ConfigTable:voximplant/lib/config.php:1f3f2ccbe3c5ab542c358d52688c448a */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\ConfigTable:voximplant/lib/config.php:1876163efc4e5c1d0124cd91a5b7b9a9 */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Config
@@ -1052,18 +1040,6 @@ namespace Bitrix\Voximplant {
 }
 namespace Bitrix\Voximplant {
 	/**
-	 * @method static EO_Config_Query query()
-	 * @method static EO_Config_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Config_Result getById($id)
-	 * @method static EO_Config_Result getList(array $parameters = array())
-	 * @method static EO_Config_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\EO_Config createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\EO_Config_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\EO_Config wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\EO_Config_Collection wakeUpCollection($rows)
-	 */
-	class ConfigTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1579,18 +1555,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_Call_Query query()
-	 * @method static EO_Call_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Call_Result getById($id)
-	 * @method static EO_Call_Result getList(array $parameters = array())
-	 * @method static EO_Call_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Call createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Call_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Call wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Call_Collection wakeUpCollection($rows)
-	 */
-	class CallTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1616,7 +1580,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Call_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallCrmEntityTable:voximplant/lib/model/callcrmentity.php:edd64bda46b793248e5dd74fae5c7fee */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallCrmEntityTable:voximplant/lib/model/callcrmentity.php:089482aeeba527daf77bae8b42982392 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_CallCrmEntity
@@ -1660,6 +1624,16 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity resetIsCreated()
 	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity unsetIsCreated()
 	 * @method \boolean fillIsCreated()
+	 * @method \Bitrix\Voximplant\EO_Statistic getCall()
+	 * @method \Bitrix\Voximplant\EO_Statistic remindActualCall()
+	 * @method \Bitrix\Voximplant\EO_Statistic requireCall()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity setCall(\Bitrix\Voximplant\EO_Statistic $object)
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity resetCall()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity unsetCall()
+	 * @method bool hasCall()
+	 * @method bool isCallFilled()
+	 * @method bool isCallChanged()
+	 * @method \Bitrix\Voximplant\EO_Statistic fillCall()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1710,6 +1684,9 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \boolean[] fillIsPrimary()
 	 * @method \boolean[] getIsCreatedList()
 	 * @method \boolean[] fillIsCreated()
+	 * @method \Bitrix\Voximplant\EO_Statistic[] getCallList()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection getCallCollection()
+	 * @method \Bitrix\Voximplant\EO_Statistic_Collection fillCall()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1742,18 +1719,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_CallCrmEntity_Query query()
-	 * @method static EO_CallCrmEntity_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CallCrmEntity_Result getById($id)
-	 * @method static EO_CallCrmEntity_Result getList(array $parameters = array())
-	 * @method static EO_CallCrmEntity_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallCrmEntity createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallCrmEntity wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection wakeUpCollection($rows)
-	 */
-	class CallCrmEntityTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1931,18 +1896,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_CallerId_Query query()
-	 * @method static EO_CallerId_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CallerId_Result getById($id)
-	 * @method static EO_CallerId_Result getList(array $parameters = array())
-	 * @method static EO_CallerId_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallerId createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallerId_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallerId wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallerId_Collection wakeUpCollection($rows)
-	 */
-	class CallerIdTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2113,18 +2066,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_CallUser_Query query()
-	 * @method static EO_CallUser_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_CallUser_Result getById($id)
-	 * @method static EO_CallUser_Result getList(array $parameters = array())
-	 * @method static EO_CallUser_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallUser createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallUser_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_CallUser wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_CallUser_Collection wakeUpCollection($rows)
-	 */
-	class CallUserTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2150,7 +2091,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_CallUser_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\ExternalLineTable:voximplant/lib/model/externalline.php:c930eada3ead24a915e677b213014c00 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\ExternalLineTable:voximplant/lib/model/externalline.php:24d93cf67da3aa95cae9a452408abf45 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_ExternalLine
@@ -2350,18 +2291,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_ExternalLine_Query query()
-	 * @method static EO_ExternalLine_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_ExternalLine_Result getById($id)
-	 * @method static EO_ExternalLine_Result getList(array $parameters = array())
-	 * @method static EO_ExternalLine_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_ExternalLine createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_ExternalLine_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_ExternalLine wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_ExternalLine_Collection wakeUpCollection($rows)
-	 */
-	class ExternalLineTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -2501,18 +2430,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_Ivr_Query query()
-	 * @method static EO_Ivr_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Ivr_Result getById($id)
-	 * @method static EO_Ivr_Result getList(array $parameters = array())
-	 * @method static EO_Ivr_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Ivr createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Ivr_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Ivr wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Ivr_Collection wakeUpCollection($rows)
-	 */
-	class IvrTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2702,18 +2619,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_IvrAction_Query query()
-	 * @method static EO_IvrAction_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_IvrAction_Result getById($id)
-	 * @method static EO_IvrAction_Result getList(array $parameters = array())
-	 * @method static EO_IvrAction_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrAction createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrAction_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrAction wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrAction_Collection wakeUpCollection($rows)
-	 */
-	class IvrActionTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -2988,18 +2893,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_IvrItem_Query query()
-	 * @method static EO_IvrItem_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_IvrItem_Result getById($id)
-	 * @method static EO_IvrItem_Result getList(array $parameters = array())
-	 * @method static EO_IvrItem_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrItem createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrItem_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrItem wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_IvrItem_Collection wakeUpCollection($rows)
-	 */
-	class IvrItemTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -3152,18 +3045,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_LineAccess_Query query()
-	 * @method static EO_LineAccess_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_LineAccess_Result getById($id)
-	 * @method static EO_LineAccess_Result getList(array $parameters = array())
-	 * @method static EO_LineAccess_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_LineAccess createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_LineAccess_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_LineAccess wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_LineAccess_Collection wakeUpCollection($rows)
-	 */
-	class LineAccessTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -3398,18 +3279,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_Number_Query query()
-	 * @method static EO_Number_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Number_Result getById($id)
-	 * @method static EO_Number_Result getList(array $parameters = array())
-	 * @method static EO_Number_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Number createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Number_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Number wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Number_Collection wakeUpCollection($rows)
-	 */
-	class NumberTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -3435,7 +3304,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Number_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueTable:voximplant/lib/model/queue.php:be28a458f562ae5e0fd6d2b08dc62348 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueTable:voximplant/lib/model/queue.php:7bfb0d793f466c6e0db0aefe473589c1 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Queue
@@ -3519,6 +3388,16 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \Bitrix\Voximplant\Model\EO_Queue resetAllowIntercept()
 	 * @method \Bitrix\Voximplant\Model\EO_Queue unsetAllowIntercept()
 	 * @method \boolean fillAllowIntercept()
+	 * @method \string getPhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_Queue setPhoneNumber(\string|\Bitrix\Main\DB\SqlExpression $phoneNumber)
+	 * @method bool hasPhoneNumber()
+	 * @method bool isPhoneNumberFilled()
+	 * @method bool isPhoneNumberChanged()
+	 * @method \string remindActualPhoneNumber()
+	 * @method \string requirePhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_Queue resetPhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_Queue unsetPhoneNumber()
+	 * @method \string fillPhoneNumber()
 	 * @method \string getCnt()
 	 * @method \string remindActualCnt()
 	 * @method \string requireCnt()
@@ -3584,6 +3463,8 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \string[] fillForwardNumber()
 	 * @method \boolean[] getAllowInterceptList()
 	 * @method \boolean[] fillAllowIntercept()
+	 * @method \string[] getPhoneNumberList()
+	 * @method \string[] fillPhoneNumber()
 	 * @method \string[] getCntList()
 	 * @method \string[] fillCnt()
 	 *
@@ -3618,18 +3499,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_Queue_Query query()
-	 * @method static EO_Queue_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Queue_Result getById($id)
-	 * @method static EO_Queue_Result getList(array $parameters = array())
-	 * @method static EO_Queue_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Queue createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Queue_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Queue wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Queue_Collection wakeUpCollection($rows)
-	 */
-	class QueueTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -3830,18 +3699,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_QueueUser_Query query()
-	 * @method static EO_QueueUser_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_QueueUser_Result getById($id)
-	 * @method static EO_QueueUser_Result getList(array $parameters = array())
-	 * @method static EO_QueueUser_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_QueueUser createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_QueueUser_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_QueueUser wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_QueueUser_Collection wakeUpCollection($rows)
-	 */
-	class QueueUserTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -3969,18 +3826,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_Role_Query query()
-	 * @method static EO_Role_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Role_Result getById($id)
-	 * @method static EO_Role_Result getList(array $parameters = array())
-	 * @method static EO_Role_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Role createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Role_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Role wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Role_Collection wakeUpCollection($rows)
-	 */
-	class RoleTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4134,18 +3979,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_RoleAccess_Query query()
-	 * @method static EO_RoleAccess_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RoleAccess_Result getById($id)
-	 * @method static EO_RoleAccess_Result getList(array $parameters = array())
-	 * @method static EO_RoleAccess_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_RoleAccess createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_RoleAccess_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_RoleAccess wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_RoleAccess_Collection wakeUpCollection($rows)
-	 */
-	class RoleAccessTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4337,18 +4170,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_RolePermission_Query query()
-	 * @method static EO_RolePermission_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RolePermission_Result getById($id)
-	 * @method static EO_RolePermission_Result getList(array $parameters = array())
-	 * @method static EO_RolePermission_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_RolePermission createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_RolePermission_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_RolePermission wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_RolePermission_Collection wakeUpCollection($rows)
-	 */
-	class RolePermissionTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -4477,18 +4298,6 @@ namespace Bitrix\Voximplant\Model {
 }
 namespace Bitrix\Voximplant\Model {
 	/**
-	 * @method static EO_StatisticIndex_Query query()
-	 * @method static EO_StatisticIndex_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_StatisticIndex_Result getById($id)
-	 * @method static EO_StatisticIndex_Result getList(array $parameters = array())
-	 * @method static EO_StatisticIndex_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_StatisticIndex createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_StatisticIndex_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_StatisticIndex wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_StatisticIndex_Collection wakeUpCollection($rows)
-	 */
-	class StatisticIndexTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -4513,6 +4322,182 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \Bitrix\Voximplant\Model\EO_StatisticIndex_Collection wakeUpCollection($rows)
 	 */
 	class EO_StatisticIndex_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\StatisticMissedTable:voximplant/lib/model/statisticmissed.php:30b26d1f1a4861ecd10e3d110d008be2 */
+namespace Bitrix\Voximplant\Model {
+	/**
+	 * EO_StatisticMissed
+	 * @see \Bitrix\Voximplant\Model\StatisticMissedTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \Bitrix\Main\Type\DateTime getCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setCallStartDate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $callStartDate)
+	 * @method bool hasCallStartDate()
+	 * @method bool isCallStartDateFilled()
+	 * @method bool isCallStartDateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCallStartDate()
+	 * @method \Bitrix\Main\Type\DateTime requireCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed resetCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unsetCallStartDate()
+	 * @method \Bitrix\Main\Type\DateTime fillCallStartDate()
+	 * @method \string getPhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setPhoneNumber(\string|\Bitrix\Main\DB\SqlExpression $phoneNumber)
+	 * @method bool hasPhoneNumber()
+	 * @method bool isPhoneNumberFilled()
+	 * @method bool isPhoneNumberChanged()
+	 * @method \string remindActualPhoneNumber()
+	 * @method \string requirePhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed resetPhoneNumber()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unsetPhoneNumber()
+	 * @method \string fillPhoneNumber()
+	 * @method \int getPortalUserId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setPortalUserId(\int|\Bitrix\Main\DB\SqlExpression $portalUserId)
+	 * @method bool hasPortalUserId()
+	 * @method bool isPortalUserIdFilled()
+	 * @method bool isPortalUserIdChanged()
+	 * @method \int remindActualPortalUserId()
+	 * @method \int requirePortalUserId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed resetPortalUserId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unsetPortalUserId()
+	 * @method \int fillPortalUserId()
+	 * @method \int getCallbackId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setCallbackId(\int|\Bitrix\Main\DB\SqlExpression $callbackId)
+	 * @method bool hasCallbackId()
+	 * @method bool isCallbackIdFilled()
+	 * @method bool isCallbackIdChanged()
+	 * @method \int remindActualCallbackId()
+	 * @method \int requireCallbackId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed resetCallbackId()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unsetCallbackId()
+	 * @method \int fillCallbackId()
+	 * @method \Bitrix\Main\Type\DateTime getCallbackCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed setCallbackCallStartDate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $callbackCallStartDate)
+	 * @method bool hasCallbackCallStartDate()
+	 * @method bool isCallbackCallStartDateFilled()
+	 * @method bool isCallbackCallStartDateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCallbackCallStartDate()
+	 * @method \Bitrix\Main\Type\DateTime requireCallbackCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed resetCallbackCallStartDate()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unsetCallbackCallStartDate()
+	 * @method \Bitrix\Main\Type\DateTime fillCallbackCallStartDate()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed set($fieldName, $value)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed reset($fieldName)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed wakeUp($data)
+	 */
+	class EO_StatisticMissed {
+		/* @var \Bitrix\Voximplant\Model\StatisticMissedTable */
+		static public $dataClass = '\Bitrix\Voximplant\Model\StatisticMissedTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Voximplant\Model {
+	/**
+	 * EO_StatisticMissed_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \Bitrix\Main\Type\DateTime[] getCallStartDateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCallStartDate()
+	 * @method \string[] getPhoneNumberList()
+	 * @method \string[] fillPhoneNumber()
+	 * @method \int[] getPortalUserIdList()
+	 * @method \int[] fillPortalUserId()
+	 * @method \int[] getCallbackIdList()
+	 * @method \int[] fillCallbackId()
+	 * @method \Bitrix\Main\Type\DateTime[] getCallbackCallStartDateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCallbackCallStartDate()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Voximplant\Model\EO_StatisticMissed $object)
+	 * @method bool has(\Bitrix\Voximplant\Model\EO_StatisticMissed $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed getByPrimary($primary)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed[] getAll()
+	 * @method bool remove(\Bitrix\Voximplant\Model\EO_StatisticMissed $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_StatisticMissed_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Voximplant\Model\StatisticMissedTable */
+		static public $dataClass = '\Bitrix\Voximplant\Model\StatisticMissedTable';
+	}
+}
+namespace Bitrix\Voximplant\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_StatisticMissed_Result exec()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed fetchObject()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_StatisticMissed_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed fetchObject()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection fetchCollection()
+	 */
+	class EO_StatisticMissed_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed createObject($setDefaultValues = true)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection createCollection()
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed wakeUpObject($row)
+	 * @method \Bitrix\Voximplant\Model\EO_StatisticMissed_Collection wakeUpCollection($rows)
+	 */
+	class EO_StatisticMissed_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\TranscriptTable:voximplant/lib/model/transcript.php:c0c6bd4b35c10b4bc555e78b97f67f97 */
 namespace Bitrix\Voximplant\Model {
@@ -4676,18 +4661,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_Transcript_Query query()
-	 * @method static EO_Transcript_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Transcript_Result getById($id)
-	 * @method static EO_Transcript_Result getList(array $parameters = array())
-	 * @method static EO_Transcript_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_Transcript createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_Transcript_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_Transcript wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_Transcript_Collection wakeUpCollection($rows)
-	 */
-	class TranscriptTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -4877,18 +4850,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_TranscriptLine_Query query()
-	 * @method static EO_TranscriptLine_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_TranscriptLine_Result getById($id)
-	 * @method static EO_TranscriptLine_Result getList(array $parameters = array())
-	 * @method static EO_TranscriptLine_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_TranscriptLine_Collection wakeUpCollection($rows)
-	 */
-	class TranscriptLineTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -5133,6 +5094,16 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \Bitrix\Voximplant\Model\EO_User resetLanguageId()
 	 * @method \Bitrix\Voximplant\Model\EO_User unsetLanguageId()
 	 * @method \string fillLanguageId()
+	 * @method \string getTimeZone()
+	 * @method \Bitrix\Voximplant\Model\EO_User setTimeZone(\string|\Bitrix\Main\DB\SqlExpression $timeZone)
+	 * @method bool hasTimeZone()
+	 * @method bool isTimeZoneFilled()
+	 * @method bool isTimeZoneChanged()
+	 * @method \string remindActualTimeZone()
+	 * @method \string requireTimeZone()
+	 * @method \Bitrix\Voximplant\Model\EO_User resetTimeZone()
+	 * @method \Bitrix\Voximplant\Model\EO_User unsetTimeZone()
+	 * @method \string fillTimeZone()
 	 * @method \int getTimeZoneOffset()
 	 * @method \Bitrix\Voximplant\Model\EO_User setTimeZoneOffset(\int|\Bitrix\Main\DB\SqlExpression $timeZoneOffset)
 	 * @method bool hasTimeZoneOffset()
@@ -5648,6 +5619,8 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \string[] fillLid()
 	 * @method \string[] getLanguageIdList()
 	 * @method \string[] fillLanguageId()
+	 * @method \string[] getTimeZoneList()
+	 * @method \string[] fillTimeZone()
 	 * @method \int[] getTimeZoneOffsetList()
 	 * @method \int[] fillTimeZoneOffset()
 	 * @method \string[] getPersonalProfessionList()
@@ -5773,18 +5746,6 @@ namespace Bitrix\Voximplant\Model {
 	}
 }
 namespace Bitrix\Voximplant\Model {
-	/**
-	 * @method static EO_User_Query query()
-	 * @method static EO_User_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_User_Result getById($id)
-	 * @method static EO_User_Result getList(array $parameters = array())
-	 * @method static EO_User_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\Model\EO_User createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\Model\EO_User_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\Model\EO_User wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\Model\EO_User_Collection wakeUpCollection($rows)
-	 */
-	class UserTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -5950,18 +5911,6 @@ namespace Bitrix\Voximplant {
 	}
 }
 namespace Bitrix\Voximplant {
-	/**
-	 * @method static EO_Phone_Query query()
-	 * @method static EO_Phone_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Phone_Result getById($id)
-	 * @method static EO_Phone_Result getList(array $parameters = array())
-	 * @method static EO_Phone_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\EO_Phone createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\EO_Phone_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\EO_Phone wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\EO_Phone_Collection wakeUpCollection($rows)
-	 */
-	class PhoneTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -6269,18 +6218,6 @@ namespace Bitrix\Voximplant {
 }
 namespace Bitrix\Voximplant {
 	/**
-	 * @method static EO_Sip_Query query()
-	 * @method static EO_Sip_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Sip_Result getById($id)
-	 * @method static EO_Sip_Result getList(array $parameters = array())
-	 * @method static EO_Sip_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\EO_Sip createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\EO_Sip_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\EO_Sip wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\EO_Sip_Collection wakeUpCollection($rows)
-	 */
-	class SipTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -6306,7 +6243,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Sip_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\StatisticTable:voximplant/lib/statistic.php:6d54bd1db161bd45d17e14562fddbeef */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\StatisticTable:voximplant/lib/statistic.php:8ccea84a8309d831810b20bfb8600e4b */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Statistic
@@ -6670,6 +6607,17 @@ namespace Bitrix\Voximplant {
 	 * @method bool isTranscriptFilled()
 	 * @method bool isTranscriptChanged()
 	 * @method \Bitrix\Voximplant\Model\EO_Transcript fillTranscript()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection getCrmBindings()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection requireCrmBindings()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection fillCrmBindings()
+	 * @method bool hasCrmBindings()
+	 * @method bool isCrmBindingsFilled()
+	 * @method bool isCrmBindingsChanged()
+	 * @method void addToCrmBindings(\Bitrix\Voximplant\Model\EO_CallCrmEntity $callCrmEntity)
+	 * @method void removeFromCrmBindings(\Bitrix\Voximplant\Model\EO_CallCrmEntity $callCrmEntity)
+	 * @method void removeAllCrmBindings()
+	 * @method \Bitrix\Voximplant\EO_Statistic resetCrmBindings()
+	 * @method \Bitrix\Voximplant\EO_Statistic unsetCrmBindings()
 	 * @method \string getHasRecord()
 	 * @method \string remindActualHasRecord()
 	 * @method \string requireHasRecord()
@@ -6807,6 +6755,9 @@ namespace Bitrix\Voximplant {
 	 * @method \Bitrix\Voximplant\Model\EO_Transcript[] getTranscriptList()
 	 * @method \Bitrix\Voximplant\EO_Statistic_Collection getTranscriptCollection()
 	 * @method \Bitrix\Voximplant\Model\EO_Transcript_Collection fillTranscript()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection[] getCrmBindingsList()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection getCrmBindingsCollection()
+	 * @method \Bitrix\Voximplant\Model\EO_CallCrmEntity_Collection fillCrmBindings()
 	 * @method \string[] getHasRecordList()
 	 * @method \string[] fillHasRecord()
 	 * @method \string[] getTotalDurationList()
@@ -6845,18 +6796,6 @@ namespace Bitrix\Voximplant {
 	}
 }
 namespace Bitrix\Voximplant {
-	/**
-	 * @method static EO_Statistic_Query query()
-	 * @method static EO_Statistic_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Statistic_Result getById($id)
-	 * @method static EO_Statistic_Result getList(array $parameters = array())
-	 * @method static EO_Statistic_Entity getEntity()
-	 * @method static \Bitrix\Voximplant\EO_Statistic createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Voximplant\EO_Statistic_Collection createCollection()
-	 * @method static \Bitrix\Voximplant\EO_Statistic wakeUpObject($row)
-	 * @method static \Bitrix\Voximplant\EO_Statistic_Collection wakeUpCollection($rows)
-	 */
-	class StatisticTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

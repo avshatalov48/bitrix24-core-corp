@@ -30,6 +30,7 @@ class CellAction
 	 */
 	public function prepare(): array
 	{
+		$groupId = $this->rowData['ID'];
 		$isPinned = ($this->rowData['IS_PINNED'] === 'Y');
 
 		return [
@@ -40,7 +41,7 @@ class CellAction
 						($isPinned ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
 					],
 					'events' => [
-						'click' => 'BX.Tasks.Projects.ActionsController.changePin',
+						'click' => "BX.Tasks.Projects.ActionsController.changePin.bind(BX.Tasks.Projects.ActionsController, {$groupId})",
 					],
 				],
 			],

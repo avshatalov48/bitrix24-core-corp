@@ -33,11 +33,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "doAction",
 	    value: function doAction(action, groupId) {
+	      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 	      return new Promise(function (resolve, reject) {
 	        BX.ajax.runComponentAction('bitrix:tasks.projects', 'processAction', {
 	          mode: 'class',
 	          data: {
 	            action: action,
+	            data: data,
 	            ids: ActionsController.getActionIds(groupId) || []
 	          },
 	          signedParameters: ActionsController.options.signedParameters
@@ -173,30 +175,126 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "changePin",
-	    value: function changePin(event) {
+	    value: function changePin(groupId, event) {
 	      var _event$getData = event.getData(),
-	          button = _event$getData.button,
-	          row = _event$getData.row;
+	          button = _event$getData.button;
 
 	      if (main_core.Dom.hasClass(button, CellActionState.ACTIVE)) {
-	        ActionsController.doAction('unpin', row.getId()).then(function () {
+	        ActionsController.doAction('unpin', groupId).then(function () {
 	          main_core.Dom.removeClass(button, CellActionState.ACTIVE);
 	          main_core.Dom.addClass(button, CellActionState.SHOW_BY_HOVER);
 	        });
 	      } else {
-	        ActionsController.doAction('pin', row.getId()).then(function () {
+	        ActionsController.doAction('pin', groupId).then(function () {
 	          main_core.Dom.addClass(button, CellActionState.ACTIVE);
 	          main_core.Dom.removeClass(button, CellActionState.SHOW_BY_HOVER);
 	        });
 	      }
 	    }
 	  }, {
-	    key: "onCounterClick",
-	    value: function onCounterClick(event) {
-	      var _event$getData2 = event.getData(),
-	          row = _event$getData2.row;
+	    key: "onTagClick",
+	    value: function onTagClick(field) {
+	      var filter = ActionsController.options.filter;
+	      filter.toggleByField(field);
+	    }
+	  }, {
+	    key: "onTagAddClick",
+	    value: function onTagAddClick(groupId, event) {
+	      main_core.Runtime.loadExtension('ui.entity-selector').then(function (exports) {
+	        var onRowUpdate = function onRowUpdate(event) {
+	          var _event$getData2 = event.getData(),
+	              id = _event$getData2.id;
 
-	      BX.SidePanel.Instance.open(ActionsController.options.groupTaskPath.replace('#group_id#', row.getId()));
+	          if (id === groupId) {
+	            var row = ActionsController.getGridInstance().getRows().getById(id);
+	            var button = row.getCellById('TAGS').querySelector('.main-grid-tag-add');
+	            dialog.setTargetNode(button);
+	          }
+	        };
+
+	        var onRowRemove = function onRowRemove(event) {
+	          var _event$getData3 = event.getData(),
+	              id = _event$getData3.id;
+
+	          if (id === groupId) {
+	            dialog.hide();
+	          }
+	        };
+
+	        var onTagsChange = function onTagsChange(event) {
+	          var dialog = event.getTarget();
+	          var tags = dialog.getSelectedItems().map(function (item) {
+	            return item.getId();
+	          });
+	          void ActionsController.doAction('update', groupId, {
+	            KEYWORDS: tags.join(',')
+	          });
+	        };
+
+	        var Dialog = exports.Dialog;
+	        var dialog = new Dialog({
+	          targetNode: event.getData().button,
+	          enableSearch: true,
+	          width: 350,
+	          height: 400,
+	          multiple: true,
+	          dropdownMode: true,
+	          compactView: true,
+	          context: 'PROJECT_TAG',
+	          entities: [{
+	            id: 'project-tag',
+	            options: {
+	              groupId: groupId
+	            }
+	          }],
+	          searchOptions: {
+	            allowCreateItem: true,
+	            footerOptions: {
+	              label: main_core.Loc.getMessage('TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD')
+	            }
+	          },
+	          footer: BX.SocialNetwork.EntitySelector.Footer,
+	          footerOptions: {
+	            tagCreationLabel: true
+	          },
+	          events: {
+	            'onShow': function onShow() {
+	              main_core_events.EventEmitter.subscribe('Tasks.Projects.Grid:RowUpdate', onRowUpdate);
+	              main_core_events.EventEmitter.subscribe('Tasks.Projects.Grid:RowRemove', onRowRemove);
+	            },
+	            'onHide': function onHide() {
+	              main_core_events.EventEmitter.unsubscribe('Tasks.Projects.Grid:RowUpdate', onRowUpdate);
+	              main_core_events.EventEmitter.unsubscribe('Tasks.Projects.Grid:RowRemove', onRowRemove);
+	            },
+	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
+	              return new Promise(function (resolve) {
+	                var _event$getData4 = event.getData(),
+	                    searchQuery = _event$getData4.searchQuery;
+
+	                var name = searchQuery.getQuery().toLowerCase();
+	                var dialog = event.getTarget();
+	                setTimeout(function () {
+	                  var item = dialog.addItem({
+	                    id: name,
+	                    entityId: 'project-tag',
+	                    title: name,
+	                    tabs: 'all'
+	                  });
+
+	                  if (item) {
+	                    item.select();
+	                  }
+
+	                  resolve();
+	                }, 1000);
+	              });
+	            },
+	            'Item:onSelect': onTagsChange,
+	            'Item:onDeselect': onTagsChange
+	          }
+	        });
+	        dialog.show();
+	      });
 	    }
 	  }]);
 	  return ActionsController;
@@ -282,18 +380,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Filter;
 	}();
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var MembersPopup = /*#__PURE__*/function () {
-	  babelHelpers.createClass(MembersPopup, null, [{
-	    key: "titles",
-	    get: function get() {
-	      return {
-	        heads: main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS'),
-	        members: main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS')
-	      };
-	    }
-	  }]);
-
 	  function MembersPopup(options) {
 	    babelHelpers.classCallCheck(this, MembersPopup);
 	    this.signedParameters = options.signedParameters;
@@ -301,16 +389,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	  babelHelpers.createClass(MembersPopup, [{
 	    key: "show",
-	    value: function show(groupId, type, bindNode) {
+	    value: function show(groupId, bindNode) {
 	      var _this = this;
+
+	      var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'all';
 
 	      if (this.isPopupShown) {
 	        this.popup.destroy();
 	      }
 
-	      this.currentPage = 1;
-	      this.innerContainer = '';
-	      this.renderedUsers = [];
+	      this.groupId = groupId;
+	      this.resetPopupData();
+	      this.changeType(type, false);
 	      this.popup = main_popup.PopupWindowManager.create({
 	        id: 'projects-members-popup-menu',
 	        className: 'tasks-projects-members-popup',
@@ -338,13 +428,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            _this.popup.destroy();
 	          },
 	          onAfterPopupShow: function onAfterPopupShow(popup) {
-	            var popupContainer = _this.renderContainer(type);
+	            popup.contentContainer.appendChild(_this.renderContainer());
 
-	            var loaderNode = popupContainer.querySelector('.tasks-projects-members-popup-content');
-	            _this.innerContainer = popupContainer.querySelector('.tasks-projects-members-popup-inner');
-	            popup.contentContainer.appendChild(popupContainer);
-
-	            _this.showLoader(loaderNode);
+	            _this.showLoader();
 
 	            _this.showUsers(groupId, type);
 
@@ -357,25 +443,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "renderContainer",
-	    value: function renderContainer(type) {
-	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<span class=\"tasks-projects-members-popup-name-title\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<div class=\"tasks-projects-members-popup-container\">\n\t\t\t\t\t<div class=\"tasks-projects-members-popup-content\">\n\t\t\t\t\t\t<div class=\"tasks-projects-members-popup-content-box\">\n\t\t\t\t\t\t\t<div class=\"tasks-projects-members-popup-inner\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), MembersPopup.titles[type]);
+	    value: function renderContainer() {
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"tasks-projects-members-popup-container\">\n\t\t\t\t<span class=\"tasks-projects-members-popup-head\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<span class=\"tasks-projects-members-popup-body\">\n\t\t\t\t\t<div class=\"tasks-projects-members-popup-content\">\n\t\t\t\t\t\t<div class=\"tasks-projects-members-popup-content-box\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t"])), this.popupData.all.tab, this.popupData.heads.tab, this.popupData.members.tab, this.getCurrentPopupData().innerContainer);
 	    }
 	  }, {
 	    key: "popupScroll",
 	    value: function popupScroll(groupId, type) {
 	      var _this2 = this;
 
-	      if (!BX.type.isDomNode(this.innerContainer)) {
+	      if (!BX.type.isDomNode(this.getCurrentPopupData().innerContainer)) {
 	        return;
 	      }
 
-	      main_core.Event.bind(this.innerContainer, 'scroll', function (event) {
+	      main_core.Event.bind(this.getCurrentPopupData().innerContainer, 'scroll', function (event) {
 	        var area = event.target;
 
 	        if (area.scrollTop > (area.scrollHeight - area.offsetHeight) / 1.5) {
 	          _this2.showUsers(groupId, type);
 
-	          main_core.Event.unbindAll(_this2.innerContainer);
+	          main_core.Event.unbindAll(_this2.getCurrentPopupData().innerContainer);
 	        }
 	      });
 	    }
@@ -389,19 +475,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        data: {
 	          groupId: groupId,
 	          type: type,
-	          page: this.currentPage
+	          page: this.getCurrentPopupData().currentPage
 	        },
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
-	        if (response.data) {
-	          _this3.currentPage++;
+	        if (_this3.groupId !== groupId || _this3.currentType !== type) {
+	          _this3.hideLoader();
 
+	          return;
+	        }
+
+	        if (response.data.length > 0) {
 	          _this3.renderUsers(response.data);
 
-	          _this3.popupScroll(groupId, type);
-	        } else if (!_this3.innerContainer.hasChildNodes()) {
-	          _this3.innerContainer.innerText = main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY');
+	          _this3.popupScroll(groupId, _this3.currentType);
+	        } else if (!_this3.getCurrentPopupData().innerContainer.hasChildNodes()) {
+	          _this3.getCurrentPopupData().innerContainer.innerText = main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY');
 	        }
+
+	        _this3.getCurrentPopupData().currentPage++;
 
 	        _this3.hideLoader();
 	      }, function () {
@@ -414,13 +506,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this4 = this;
 
 	      Object.values(users).forEach(function (user) {
-	        if (_this4.renderedUsers.indexOf(user.ID) >= 0) {
+	        if (_this4.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0) {
 	          return;
 	        }
 
-	        _this4.renderedUsers.push(user.ID);
+	        _this4.getCurrentPopupData().renderedUsers.push(user.ID);
 
-	        _this4.innerContainer.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-name\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t"])), user['HREF'], _this4.getAvatar(user), user['FORMATTED_NAME']));
+	        _this4.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-name\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t"])), user['HREF'], _this4.getAvatar(user), user['FORMATTED_NAME']));
 	      });
 	    }
 	  }, {
@@ -434,10 +526,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "showLoader",
-	    value: function showLoader(target) {
+	    value: function showLoader() {
 	      if (!this.loader) {
 	        this.loader = new main_loader.Loader({
-	          target: target,
+	          target: this.popup.getPopupContainer().querySelector('.tasks-projects-members-popup-content'),
 	          size: 40
 	        });
 	      }
@@ -451,6 +543,55 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        void this.loader.hide();
 	        this.loader = null;
 	      }
+	    }
+	  }, {
+	    key: "changeType",
+	    value: function changeType(newType) {
+	      var loadUsers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+	      var oldType = this.currentType;
+	      this.currentType = newType;
+	      Object.values(this.popupData).forEach(function (item) {
+	        main_core.Dom.removeClass(item.tab, 'tasks-projects-members-popup-head-item-current');
+	      });
+	      main_core.Dom.addClass(this.getCurrentPopupData().tab, 'tasks-projects-members-popup-head-item-current');
+
+	      if (oldType) {
+	        main_core.Dom.replace(this.popupData[oldType].innerContainer, this.getCurrentPopupData().innerContainer);
+	      }
+
+	      if (loadUsers && this.getCurrentPopupData().currentPage === 1) {
+	        this.showLoader();
+	        this.showUsers(this.groupId, newType);
+	      }
+	    }
+	  }, {
+	    key: "resetPopupData",
+	    value: function resetPopupData() {
+	      this.popupData = {
+	        all: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-item\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'all'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL')),
+	          innerContainer: main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        },
+	        heads: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-item\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'heads'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS')),
+	          innerContainer: main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        },
+	        members: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-item\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'members'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS')),
+	          innerContainer: main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getCurrentPopupData",
+	    value: function getCurrentPopupData() {
+	      return this.popupData[this.currentType];
 	    }
 	  }]);
 	  return MembersPopup;
@@ -474,7 +615,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.stub = options.gridStub;
 	    this.sort = options.sort;
 	    this.actionsPanel = options.actionsPanel;
-	    this.eventsToEmit = options.eventsToEmit || {};
 	    this.items = new Map();
 	    this.fillItems(options.items);
 	    this.bindEvents();
@@ -544,12 +684,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.hideStub();
 	      this.getRealtime().addRow(options);
 	      this.colorPinnedRows();
-
-	      if (this.eventsToEmit.onProjectGridRowAdd) {
-	        main_core_events.EventEmitter.emit('Tasks.Projects.Grid:RowAdd', {
-	          id: id
-	        });
-	      }
+	      main_core_events.EventEmitter.emit('Tasks.Projects.Grid:RowAdd', {
+	        id: id
+	      });
 	    }
 	  }, {
 	    key: "updateRow",
@@ -567,6 +704,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return _this.colorPinnedRows();
 	      }, function () {});
 	      this.grid.bindOnRowEvents();
+	      main_core_events.EventEmitter.emit('Tasks.Projects.Grid:RowUpdate', {
+	        id: id
+	      });
 	    }
 	  }, {
 	    key: "removeRow",
@@ -576,6 +716,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      this.grid.removeRow(id);
+	      main_core_events.EventEmitter.emit('Tasks.Projects.Grid:RowRemove', {
+	        id: id
+	      });
 	    }
 	  }, {
 	    key: "moveRow",
@@ -1163,9 +1306,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var FirstProjectCreationTourGuide = /*#__PURE__*/function () {
 	  function FirstProjectCreationTourGuide(options) {
 	    babelHelpers.classCallCheck(this, FirstProjectCreationTourGuide);
-	    options.eventsToEmit = {
-	      onProjectGridRowAdd: true
-	    };
 	    this.grid = new Grid(options);
 	    this.signedParameters = options.signedParameters;
 	    this.popupData = options.tours.firstProjectCreation.popupData;
@@ -1305,6 +1445,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.membersPopup = new MembersPopup(options);
 	    this.filter = new Filter(options);
 	    this.tourGuideController = new TourGuideController(options);
+	    options.filter = this.filter;
 	    ActionsController.setOptions(options);
 	    this.initPull(options);
 	  }

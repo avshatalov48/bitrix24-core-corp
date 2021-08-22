@@ -47,7 +47,7 @@ class Output extends Base\Output
 	 */
 	protected function sendStatusWriting(array $data): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -68,7 +68,7 @@ class Output extends Base\Output
 	 */
 	protected function deleteLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 
 		if($result->isSuccess())
 		{
@@ -87,7 +87,7 @@ class Output extends Base\Output
 	 */
 	protected function infoConnectorsLine($lineId): Result
 	{
-		$result = $this->result;
+		$result = clone $this->result;
 		$resultLiveChat = [];
 
 		if($result->isSuccess())

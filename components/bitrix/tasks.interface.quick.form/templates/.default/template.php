@@ -4,6 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+\Bitrix\Main\UI\Extension::load('ui.entity-selector');
+
 $projectId = 0;
 $projectName = GetMessage("TASKS_QUICK_IN_GROUP");
 if (is_array($arResult["GROUP"]))

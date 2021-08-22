@@ -25,7 +25,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CloudImport_Query query()
+ * @method static EO_CloudImport_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CloudImport_Result getById($id)
+ * @method static EO_CloudImport_Result getList(array $parameters = array())
+ * @method static EO_CloudImport_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_CloudImport createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_CloudImport_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_CloudImport wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_CloudImport_Collection wakeUpCollection($rows)
+ */
 
 
 final class CloudImportTable extends DataManager

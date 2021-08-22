@@ -573,9 +573,11 @@ class CDavWebDavServer
 		{
 			return '404 Not Found'; //"409 Conflict"?
 		}
-		/** @var File $file */
 
-		$file = File::load(array('NAME' => $filename, 'PARENT_ID' => $folder->getRealObjectId()));
+		$file = File::load([
+			'=NAME' => $filename,
+			'PARENT_ID' => $folder->getRealObjectId(),
+		]);
 
 		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
 		if (!$file)

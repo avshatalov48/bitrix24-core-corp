@@ -12,6 +12,22 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Tasks\Util\Type\DateTime;
 
+/**
+ * Class EventTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Event_Query query()
+ * @method static EO_Event_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Event_Result getById($id)
+ * @method static EO_Event_Result getList(array $parameters = array())
+ * @method static EO_Event_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event_Collection wakeUpCollection($rows)
+ */
 class EventTable extends DataManager
 {
 	private const LOST_LIMIT = 50;

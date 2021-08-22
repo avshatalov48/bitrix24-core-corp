@@ -1,8 +1,19 @@
+import {FollowManagerInstance} from "./feed";
 import {Loc, Type} from 'main.core';
 import {Ajax} from 'mobile.ajax';
 
 class Post
 {
+	static moveBottom()
+	{
+		window.scrollTo(0, document.body.scrollHeight);
+	}
+
+	static moveTop()
+	{
+		window.scrollTo(0, 0);
+	}
+
 	constructor(data)
 	{
 		this.logId = 0;
@@ -156,7 +167,7 @@ class Post
 				{
 					if (newValue === 'Y')
 					{
-						oMSL.setFollow({
+						FollowManagerInstance.setFollow({
 							logId: this.logId,
 							bOnlyOn: true,
 							bRunEvent: true,

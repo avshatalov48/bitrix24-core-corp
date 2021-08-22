@@ -98,7 +98,7 @@ if ($arResult['SETTED_UP'] !== false): ?>
 
 		ExternalMail.warning = function (id)
 		{
-			var menu = BX.getClass("BX.Bitrix24.LeftMenu");
+			var menu = BX.getClass("BX.Intranet.LeftMenu");
 			if (!menu)
 			{
 				return;
@@ -108,11 +108,11 @@ if ($arResult['SETTED_UP'] !== false): ?>
 			{
 				var url = "<?=\CUtil::jsEscape(Option::get("intranet", "path_mail_config", "/mail/")) ?>".replace("#id#", id);
 
-				BX.Bitrix24.LeftMenu.showItemWarning({
+				BX.Intranet.LeftMenu.showItemWarning({
 					itemId: "menu_external_mail",
 					events: {
-						click: function(event) {
-							BX.SidePanel.Instance.open(url, { width: 760, allowChangeHistory: false });
+						click: function (event) {
+							BX.SidePanel.Instance.open(url, {width: 760, allowChangeHistory: false});
 							event.preventDefault();
 						}
 					},
@@ -121,7 +121,7 @@ if ($arResult['SETTED_UP'] !== false): ?>
 			}
 			else
 			{
-				BX.Bitrix24.LeftMenu.removeItemWarning("menu_external_mail");
+				BX.Intranet.LeftMenu.removeItemWarning("menu_external_mail");
 			}
 		};
 

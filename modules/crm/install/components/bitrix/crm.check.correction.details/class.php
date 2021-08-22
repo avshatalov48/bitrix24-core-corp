@@ -286,14 +286,34 @@ class CCrmCheckCorrectionDetailsComponent extends Crm\Component\EntityDetails\Ba
 			[
 				'name' => 'CORRECTION_PAYMENT_CASH',
 				'title' => Loc::getMessage('CRM_COLUMN_CHECK_CORRECTION_CORRECTION_PAYMENT_CASH'),
-				'type' => 'text',
-				'editable' => $this->entityID == 0
+				'type' => 'money',
+				'editable' => $this->entityID == 0,
+				'data' => [
+					'affectedFields' => ['CURRENCY', 'SUM'],
+					'currency' => [
+						'name' => 'CURRENCY',
+						'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
+					],
+					'amount' => 'CORRECTION_PAYMENT_CASH',
+					'formatted' => 'FORMATTED_CASH',
+					'formattedWithCurrency' => 'FORMATTED_CASH_WITH_CURRENCY'
+				]
 			],
 			[
 				'name' => 'CORRECTION_PAYMENT_CASHLESS',
 				'title' => Loc::getMessage('CRM_COLUMN_CHECK_CORRECTION_CORRECTION_PAYMENT_CASHLESS'),
-				'type' => 'text',
-				'editable' => $this->entityID == 0
+				'type' => 'money',
+				'editable' => $this->entityID == 0,
+				'data' => [
+					'affectedFields' => ['CURRENCY', 'SUM'],
+					'currency' => [
+						'name' => 'CURRENCY',
+						'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
+					],
+					'amount' => 'CORRECTION_PAYMENT_CASHLESS',
+					'formatted' => 'FORMATTED_CASHLESS',
+					'formattedWithCurrency' => 'FORMATTED_CASHLESS_WITH_CURRENCY'
+				]
 			],
 			[
 				'name' => 'CORRECTION_VAT_NONE',
@@ -491,7 +511,22 @@ class CCrmCheckCorrectionDetailsComponent extends Crm\Component\EntityDetails\Ba
 			'DESCRIPTION' => Loc::getMessage('CRM_CASHBOX_CHECK_CORRECTION_DESCRIPTION'),
 		];
 
-		$paymentIdList = $this->request->get('payment_id');
+		$isForAllRows = $this->request->get('is_for_all') === 'Y';
+		if ($isForAllRows)
+		{
+			$filter = Sale\Helpers\Admin\Correction::getFilterValues();
+			$filter = Sale\Helpers\Admin\Correction::prepareFilter($filter);
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+			$paymentClass = $registry->getPaymentClassName();
+			$queryParams = Sale\Helpers\Admin\Correction::getPaymentSelectParams($filter);
+			$queryResult = $paymentClass::getList($queryParams)->fetchAll();
+
+			$paymentIdList = array_column($queryResult, 'ID');
+		}
+		else
+		{
+			$paymentIdList = $this->request->get('payment_id');
+		}
 
 		$repository = Sale\Repository\PaymentRepository::getInstance();
 
@@ -535,6 +570,32 @@ class CCrmCheckCorrectionDetailsComponent extends Crm\Component\EntityDetails\Ba
 				$result['CORRECTION_VAT_NONE'] += $payment->getSum();
 			}
 		}
+
+		$result['FORMATTED_CASH_WITH_CURRENCY'] = CCrmCurrency::MoneyToString(
+			$result['CORRECTION_PAYMENT_CASH'],
+			$payment->getField('CURRENCY'),
+			''
+		);
+
+		$result['FORMATTED_CASH'] = CCrmCurrency::MoneyToString(
+			$result['CORRECTION_PAYMENT_CASH'],
+			$payment->getField('CURRENCY'),
+			'#'
+		);
+
+		$result['FORMATTED_CASHLESS_WITH_CURRENCY'] = CCrmCurrency::MoneyToString(
+			$result['CORRECTION_PAYMENT_CASHLESS'],
+			$payment->getField('CURRENCY'),
+			''
+		);
+
+		$result['FORMATTED_CASHLESS'] = CCrmCurrency::MoneyToString(
+			$result['CORRECTION_PAYMENT_CASHLESS'],
+			$payment->getField('CURRENCY'),
+			'#'
+		);
+
+		$result['CURRENCY'] = $payment->getField('CURRENCY');
 
 		return $result;
 	}

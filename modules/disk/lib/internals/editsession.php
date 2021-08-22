@@ -22,7 +22,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Disk
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EditSession_Query query()
+ * @method static EO_EditSession_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EditSession_Result getById($id)
+ * @method static EO_EditSession_Result getList(array $parameters = array())
+ * @method static EO_EditSession_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_EditSession createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_EditSession_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_EditSession wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_EditSession_Collection wakeUpCollection($rows)
+ */
 
 final class EditSessionTable extends DataManager
 {

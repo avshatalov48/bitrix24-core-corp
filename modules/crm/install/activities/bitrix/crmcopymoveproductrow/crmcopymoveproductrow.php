@@ -1,0 +1,223 @@
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm;
+
+class CBPCrmCopyMoveProductRow extends CBPActivity
+{
+	private const OP_COPY = 'cp';
+	private const OP_MOVE = 'mv';
+
+	public function __construct($name)
+	{
+		parent::__construct($name);
+		$this->arProperties = [
+			'Title' => '',
+			'DstEntityType' => null,
+			'DstEntityId' => null,
+			'Operation' => self::OP_COPY,
+		];
+	}
+
+	public function Execute()
+	{
+		if (!CModule::IncludeModule('crm'))
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
+
+		$dstEntity = $this->resolveDstEntityId();
+		if (!$dstEntity)
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CMPR_NO_DST_ENTITY'), 0, CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		[$dstEntityTypeId, $dstEntityId] = $dstEntity;
+
+		if ($entityTypeId === $dstEntityTypeId && $entityId === $dstEntityId)
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CMPR_SAME_ENTITY_ERROR'), 0, CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$copyResult = $this->copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId);
+
+		if ($copyResult && $this->Operation === self::OP_MOVE)
+		{
+			$this->deleteRows($entityTypeId, $entityId);
+		}
+
+		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function deleteRows($entityTypeId, $entityId): bool
+	{
+		$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+
+		\CCrmProductRow::DeleteByOwner($entityType, $entityId);
+		\CCrmProductRow::DeleteSettings($entityType, $entityId);
+
+		return true;
+	}
+
+	private function copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId): bool
+	{
+		$sourceRows = \CCrmProductRow::LoadRows(
+			\CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId),
+			$entityId,
+			true
+		);
+
+		if (!$sourceRows)
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CMPR_NO_SOURCE_PRODUCTS'), 0, CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		foreach ($sourceRows as $i => $product)
+		{
+			unset($sourceRows[$i]['ID'], $sourceRows[$i]['OWNER_ID'], $sourceRows[$i]['OWNER_TYPE_ID']);
+		}
+
+		$saveResult = false;
+
+		if ($dstEntityTypeId === \CCrmOwnerType::Deal)
+		{
+			$saveResult = \CCrmDeal::addProductRows($dstEntityId, $sourceRows, [], false);
+		}
+
+		if (!$saveResult)
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CDA_COPY_PRODUCTS_ERROR'), 0, CBPTrackingType::Error);
+		}
+
+		return $saveResult;
+	}
+
+	private function resolveDstEntityId(): ?array
+	{
+		$entityType = $this->DstEntityType;
+		$entityId = $this->DstEntityId;
+		if (is_array($entityId))
+		{
+			$entityId = \CBPHelper::MakeArrayFlat($entityId);
+			$entityId = reset($entityId);
+		}
+
+		if ($entityType === \CCrmOwnerTypeAbbr::Deal)
+		{
+			if (\CCrmDeal::Exists($entityId))
+			{
+				return [\CCrmOwnerType::Deal, (int)$entityId];
+			}
+		}
+		/*elseif ($entityType === \CCrmOwnerTypeAbbr::Order)
+		{
+			if (Crm\Order\Order::load($entityId))
+			{
+				return [\CCrmOwnerType::Order, $entityId];
+			}
+		}
+		elseif ($entityType === \CCrmOwnerTypeAbbr::Invoice)
+		{
+			if (\CCrmInvoice::Exists($entityId))
+			{
+				return [\CCrmOwnerType::Invoice, $entityId];
+			}
+		}*/
+
+		return null;
+	}
+
+	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
+	{
+		if (!CModule::IncludeModule('crm'))
+		{
+			return '';
+		}
+
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
+			'documentType' => $documentType,
+			'activityName' => $activityName,
+			'workflowTemplate' => $arWorkflowTemplate,
+			'workflowParameters' => $arWorkflowParameters,
+			'workflowVariables' => $arWorkflowVariables,
+			'currentValues' => $arCurrentValues,
+			'formName' => $formName,
+			'siteId' => $siteId,
+		]);
+
+		$dialog->setMap([
+			'DstEntityType' => [
+				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_TYPE'),
+				'FieldName' => 'dst_entity_type',
+				'Type' => 'select',
+				'Default' => \CCrmOwnerTypeAbbr::Deal,
+				'Options' => [
+					\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+					//\CCrmOwnerTypeAbbr::Order => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
+					//\CCrmOwnerTypeAbbr::Invoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
+				],
+				'Required' => true,
+			],
+			'DstEntityId' => [
+				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_ID'),
+				'FieldName' => 'dst_entity_id',
+				'Type' => 'int',
+				'Required' => true,
+				'AllowSelection' => true,
+			],
+			'Operation' => [
+				'Name' => GetMessage('CRM_CMPR_OPERATION'),
+				'FieldName' => 'operation',
+				'Type' => 'select',
+				'Default' => self::OP_COPY,
+				'Options' => [
+					self::OP_COPY => GetMessage('CRM_CMPR_OPERATION_CP'),
+					self::OP_MOVE => GetMessage('CRM_CMPR_OPERATION_MV'),
+				],
+				'Required' => true,
+			],
+
+		]);
+
+		return $dialog;
+	}
+
+	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
+	{
+		$errors = [];
+
+		$properties = [
+			'DstEntityType' => $arCurrentValues['dst_entity_type'],
+			'DstEntityId' => $arCurrentValues['dst_entity_id'],
+			'Operation' => $arCurrentValues['operation'],
+		];
+
+		if ($properties['Operation'] !== self::OP_MOVE)
+		{
+			$properties['Operation'] = self::OP_COPY;
+		}
+
+		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		if ($errors)
+		{
+			return false;
+		}
+
+		$activity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
+		$activity['Properties'] = $properties;
+
+		return true;
+	}
+}

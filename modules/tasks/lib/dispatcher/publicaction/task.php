@@ -12,6 +12,10 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction;
 
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Item;
@@ -25,25 +29,17 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function get($id, array $parameters = array())
 	{
-		// todo: field access policy here?
-		// todo: move to \Bitrix\Tasks\Item\Task (don`t forget ENTITY_SELECT + CAN)
-//		$select = array();
-//		if(array_key_exists('select', $parameters) && count($parameters['select']))
-//		{
-//			$select = $parameters['select'];
-//		}
-//
-//		$template = new \Bitrix\Tasks\Item\Task($id);
-//
-//		return array(
-//			'DATA' => $template->getData($select),
-//			'CAN' => ...
-//		);
+		$result = [];
 
-		$result = array();
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
 		if ($id = $this->checkTaskId($id))
 		{
-			$mgrResult = Manager\Task::get(Util\User::getId(), $id, array(
+			$mgrResult = Manager\Task::get($this->userId, $id, array(
 				'ENTITY_SELECT' => $parameters[ 'ENTITY_SELECT' ],
 				'PUBLIC_MODE' => true,
 				'ERRORS' => $this->errors
@@ -63,12 +59,14 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	}
 
 	/**
+	 * @deprecated since tasks 21.200.0
+	 *
 	 * Get a list of tasks
+	 *
+	 * Access rights will be check into the Task
 	 */
 	public function find(array $parameters = array())
 	{
-		// todo: field access policy here?
-
 		if (!array_key_exists('limit', $parameters) || intval($parameters[ 'limit' ] > 10))
 		{
 			$parameters['limit' ] = 10;
@@ -102,18 +100,20 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 * Get a list of tasks
 	 * @deprecated
 	 * @see \Bitrix\Tasks\Dispatcher\PublicAction\Task::find
+	 *
+	 * Access rights will be check into the CTasks::GetList()
 	 */
 	public function getList(array $order = array(), array $filter = array(), array $select = array(), array $parameters = array())
 	{
 		$result = array();
 
-		$mgrResult = Manager\Task::getList(Util\User::getId(), array(
+		$mgrResult = Manager\Task::getList($this->userId, array(
 			'order' => $order,
 			'legacyFilter' => $filter,
 			'select' => $select,
 		), array(
-											   'PUBLIC_MODE' => true
-										   ));
+		   'PUBLIC_MODE' => true
+		));
 
 		$this->errors->load($mgrResult[ 'ERRORS' ]);
 
@@ -133,8 +133,20 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function add(array $data, array $parameters = array('RETURN_DATA' => false))
 	{
+		$result = [];
+
+
+		$newTask = TaskModel::createFromRequest($data);
+		$oldTask = TaskModel::createNew($newTask->getGroupId());
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
 		// todo: move to \Bitrix\Tasks\Item\Task
-		$mgrResult = Manager\Task::add(Util\User::getId(), $data, array(
+		$mgrResult = Manager\Task::add($this->userId, $data, array(
 			'PUBLIC_MODE' => true,
 			'ERRORS' => $this->errors,
 			'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ]
@@ -152,7 +164,65 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function update($id, array $data, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		$oldTask = TaskModel::createFromId((int)$id);
+		$newTask = clone $oldTask;
+
+		if (
+			count($data) === 1
+			&& array_key_exists('DEADLINE', $data)
+		)
+		{
+			$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, (int)$id);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_RESPONSIBLE', $data)
+		)
+		{
+			$members = $newTask->getMembers();
+			foreach ($data['SE_RESPONSIBLE'] as $responsible)
+			{
+				$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int)$responsible['ID'];
+			}
+			$newTask->setMembers($members);
+
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, $oldTask, $newTask);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_ACCOMPLICE', $data)
+		)
+		{
+			$members = $newTask->getMembers();
+			foreach ($data['SE_ACCOMPLICE'] as $accomplice)
+			{
+				$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accomplice['ID'];
+			}
+			$newTask->setMembers($members);
+
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES, $oldTask, $newTask);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_REMINDER', $data)
+		)
+		{
+			$newTask = TaskModel::createFromRequest($data);
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_REMINDER, $oldTask, $data['SE_REMINDER']);
+		}
+		else
+		{
+			$newTask = TaskModel::createFromRequest($data);
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask);
+		}
+
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -188,10 +258,18 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 
 	/**
 	 * Delete a task
+	 *
+	 * Access rights will be check into the CTaskItem
 	 */
 	public function delete($id, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_REMOVE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -206,6 +284,15 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $value
+	 * @param array $parameters
+	 * @return array
+	 * @throws \CTaskAssertException
+	 *
+	 * Access rights will be check into the CTaskItem
+	 */
 	public function settaskcontrol($id, $value, array $parameters = [])
 	{
 		$result = [];
@@ -218,9 +305,22 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $newDeadline
+	 * @param array $parameters
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function setdeadline($id, $newDeadline, array $parameters = array())
 	{
 		$result = array();
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -234,36 +334,12 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	}
 
 	/**
-	 * Set task to the Sprint id.
-	 * @param int $id Task id.
-	 * @param int $sprintId Sprint id.
+	 * @param $id
+	 * @param $num
+	 * @param $type
+	 * @param array $parameters
 	 * @return array
 	 */
-	public function setSprint($id, $sprintId)
-	{
-		$result = ['result' => false];
-		$taskId = intval($id);
-		$sprintId = intval($sprintId);
-
-		if ($taskId && $sprintId)
-		{
-			$res = \Bitrix\Tasks\Kanban\SprintTable::addToSprint(
-				$sprintId,
-				$taskId
-			);
-			if ($res->isSuccess())
-			{
-				$result = ['result' => true];
-			}
-			else
-			{
-				$result['ERRORS'] = $res->getErrorMessages();
-			}
-		}
-
-		return $result;
-	}
-
 	public function substractDeadline($id, $num, $type, array $parameters = array())
 	{
 		$num *= -1;
@@ -271,9 +347,23 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $this->adjustDeadline($id, $num, $type, $parameters);
 	}
 
+	/**
+	 * @param $id
+	 * @param $num
+	 * @param $type
+	 * @param array $parameters
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function adjustDeadline($id, $num, $type, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -303,9 +393,21 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param array $parameters
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function addtofavorite($id, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -318,9 +420,21 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param array $parameters
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function removefromfavorite($id, array $parameters = array())
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -340,12 +454,25 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = [];
 
+		$oldTask = TaskModel::createFromId((int)$id);
+		$newTask = clone $oldTask;
+		$members = $newTask->getMembers();
+		$members[RoleDictionary::ROLE_RESPONSIBLE] = [
+			(int)$userId
+		];
+		$newTask->setMembers($members);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_DELEGATE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
 		if ($id = $this->checkTaskId($id))
 		{
 			try
 			{
-				// todo: move to \Bitrix\Tasks\Item\Task
-				$task = \CTaskItem::getInstance($id, Util\User::getId());
+				$task = \CTaskItem::getInstance($id, $this->userId);
 				$task->delegate($userId);
 			}
 			catch (\TasksException $exception)
@@ -362,16 +489,9 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function checkCanRead($id)
 	{
-		$result = array('READ' => false);
-
-		if ($id = $this->checkTaskId($id))
-		{
-			// todo: move to \Bitrix\Tasks\Item\Task
-			$task = \CTaskItem::getInstance($id, Util\User::getId());
-			$result['READ' ] = $task->checkCanRead();
-		}
-
-		return $result;
+		return [
+			'READ' => TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id)
+		];
 	}
 
 	/**
@@ -379,7 +499,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function start($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_START, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -393,10 +519,18 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 
 	/**
 	 * Pause execution of a specified task
+	 *
+	 * Access rights will be check into the CTaskItem
 	 */
 	public function pause($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_PAUSE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -413,7 +547,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function complete($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -430,7 +570,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function renew($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_RENEW, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -447,7 +593,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function defer($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEFER, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -464,7 +616,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function approve($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_APPROVE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -481,7 +639,13 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function disapprove($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DISAPPROVE, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
@@ -498,12 +662,18 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function enterAuditor($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
 			// todo: move to \Bitrix\Tasks\Item\Task
-			$task = \CTaskItem::getInstance($id, Util\User::getId());
+			$task = \CTaskItem::getInstance($id, $this->userId);
 			$task->startWatch();
 		}
 
@@ -515,23 +685,41 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function leaveAuditor($id)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		if ($id = $this->checkTaskId($id))
 		{
 			// todo: move to \Bitrix\Tasks\Item\Task
-			$task = \CTaskItem::getInstance($id, Util\User::getId());
+			$task = \CTaskItem::getInstance($id, $this->userId);
 			$task->stopWatch();
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $auditorId
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function addAuditor($id, $auditorId)
 	{
-		$result = array();
+		$result = [];
 
-		$task = \CTaskItem::getInstance($id, Util\User::getId());
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($id, $this->userId);
 		try
 		{
 			$arTask = $task->getData(false);
@@ -546,11 +734,29 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $accompliceId
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function addAccomplice($id, $accompliceId)
 	{
-		$result = array();
+		$result = [];
 
-		$task = \CTaskItem::getInstance($id, Util\User::getId());
+		$oldTask = TaskModel::createFromId((int)$id);
+		$newTask = clone $oldTask;
+		$members = $newTask->getMembers();
+		$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accompliceId;
+		$newTask->setMembers($members);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($id, $this->userId);
 		try
 		{
 			$arTask = $task->getData(false);
@@ -566,9 +772,25 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $groupId
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function setGroup($id, $groupId)
 	{
-		$result = array();
+		$result = [];
+
+		$oldTask = TaskModel::createFromId((int)$id);
+		$newTask = clone $oldTask;
+		$newTask->setGroupId((int)$groupId);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		$task = \CTaskItem::getInstance($id, Util\User::getId());
 		$task->update(array('GROUP_ID' => $groupId));
@@ -576,9 +798,29 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $responsibleId
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function setResponsible($id, $responsibleId)
 	{
-		$result = array();
+		$result = [];
+
+		$oldTask = TaskModel::createFromId((int)$id);
+		$newTask = clone $oldTask;
+		$members = $newTask->getMembers();
+		$members[RoleDictionary::ROLE_RESPONSIBLE] = [
+			(int)$responsibleId
+		];
+		$newTask->setMembers($members);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		$task = \CTaskItem::getInstance($id, Util\User::getId());
 		$task->update(array('RESPONSIBLE_ID' => $responsibleId));
@@ -586,9 +828,21 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @param $originatorId
+	 * @return array
+	 * @throws \CTaskAssertException
+	 */
 	public function setOriginator($id, $originatorId)
 	{
-		$result = array();
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		$task = \CTaskItem::getInstance($id, Util\User::getId());
 		$task->update(array('CREATED_BY' => $originatorId));
@@ -596,18 +850,51 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		return $result;
 	}
 
+	/**
+	 * @param $id
+	 * @return Util\Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function mute($id)
 	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+
+			$result = new Util\Result();
+			$result->loadErrors($this->errors);
+			return $result;
+		}
+
 		return UserOption::add($id, Util\User::getId(), UserOption\Option::MUTED);
 	}
 
 	public function unmute($id)
 	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+
+			$result = new Util\Result();
+			$result->loadErrors($this->errors);
+			return $result;
+		}
+
 		return UserOption::delete($id, Util\User::getId(), UserOption\Option::MUTED);
 	}
 
 	public function pin($id, $groupId = 0)
 	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			$result = new Util\Result();
+			$result->loadErrors($this->errors);
+			return $result;
+		}
+
 		$option = UserOption\Option::PINNED;
 		$groupId = (int)$groupId;
 		if ($groupId)
@@ -619,6 +906,15 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 
 	public function unpin($id, $groupId = 0)
 	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+
+			$result = new Util\Result();
+			$result->loadErrors($this->errors);
+			return $result;
+		}
+
 		$option = UserOption\Option::PINNED;
 		$groupId = (int)$groupId;
 		if ($groupId)
@@ -631,6 +927,12 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	public function ping($id): array
 	{
 		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
 
 		$userId = Util\User::getId();
 		$task = \CTaskItem::getInstance($id, $userId);

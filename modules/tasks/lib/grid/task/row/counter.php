@@ -31,6 +31,7 @@ class Counter
 	{
 		$userId = (int)$this->parameters['USER_ID'];
 		$taskId = (int)$this->rowData['ID'];
+		$groupId = (int)$this->rowData['GROUP_ID'];
 
 		$colorMap = [
 			CounterStyle::STYLE_GRAY => Grid\Counter\Color::GRAY,
@@ -51,13 +52,23 @@ class Counter
 			$rowCounter = (new TaskCounter($userId))->getRowCounter($taskId);
 		}
 
+		$taskUrlTemplate = (
+			$groupId > 0 ? $this->parameters['PATH_TO_GROUP_TASKS_TASK'] : $this->parameters['PATH_TO_USER_TASKS_TASK']
+		);
+		$taskUrl = \CComponentEngine::MakePathFromTemplate($taskUrlTemplate, [
+			'user_id' => $userId,
+			'task_id' => $taskId,
+			'group_id' => $groupId,
+			'action' => 'view',
+		]);
+
 		return [
 			'ACTIVITY_DATE' => [
 				'type' => Grid\Counter\Type::LEFT_ALIGNED,
 				'color' => $colorMap[$rowCounter['COLOR']],
 				'value' => $rowCounter['VALUE'],
 				'events' => [
-					'click' => 'BX.Tasks.GridActions.onCounterClick',
+					'click' => "BX.SidePanel.Instance.open.bind(BX.SidePanel.Instance, '{$taskUrl}')",
 				],
 				'class' => 'tasks-list-cursor',
 			],

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -13,7 +13,8 @@
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Ui;
 
 use Bitrix\Tasks;
-use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Util\Result;
 
 final class Task extends \Bitrix\Tasks\Dispatcher\PublicAction
@@ -28,6 +29,14 @@ final class Task extends \Bitrix\Tasks\Dispatcher\PublicAction
 	public function edit($taskId = 0, array $parameters = array())
 	{
 		$result = new Result();
+		$taskId = (int)$taskId;
+
+		if ($taskId && !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+		{
+			$this->addForbiddenError();
+			$result->loadErrors($this->errors);
+			return $result;
+		}
 
 		$componentParameters = array();
 		if(is_array($parameters['COMPONENT_PARAMETERS']))

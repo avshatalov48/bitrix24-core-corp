@@ -2,6 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Security\Permissions;
 
 Loc::loadMessages(__FILE__);
 
@@ -12,6 +13,9 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 	public function executeComponent()
 	{
 		if(!\Bitrix\Main\Loader::includeModule('voximplant'))
+			return false;
+
+		if(!$this::checkAccess())
 			return false;
 
 		$action = $_REQUEST['action'];
@@ -26,6 +30,12 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 		}
 	}
 
+	protected static function checkAccess()
+	{
+		$userPermissions = Permissions::createWithCurrentUser();
+		return $userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY);
+	}
+
 	protected function executeEditAction()
 	{
 		$this->arResult = $this->prepareEditData();
@@ -35,7 +45,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 
 	protected function executeSaveAction()
 	{
-		$saveResult = $this->save($_POST);
+		$saveResult = static::save($_POST);
 		if($saveResult->isSuccess())
 		{
 			LocalRedirect(CVoxImplantMain::GetPublicFolder()."groups.php");
@@ -88,7 +98,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 
 		return $result;
 	}
-	
+
 	protected function getDestinationParams(array $userIds)
 	{
 		if (!CModule::IncludeModule("socialnetwork"))
@@ -130,19 +140,51 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 	public static function save($request)
 	{
 		$result = new \Bitrix\Main\Result();
+		if (!static::checkAccess())
+		{
+			$result->addError(new \Bitrix\Main\Error("VI_CONFIG_ERROR_ACCESS_DENIED", "access_denied"));
+			return $result;
+		}
 		$id = (int)$request['ID'];
-		
+
 		$queueFields = array(
 			'NAME' => (string) $request['NAME'],
+			'PHONE_NUMBER' => preg_replace('/\D/', '', $request['PHONE_NUMBER']),
 			'WAIT_TIME' => (int)$request['WAIT_TIME'],
 			'NO_ANSWER_RULE' => (string)$request['NO_ANSWER_RULE'],
 			'ALLOW_INTERCEPT' => ($request['ALLOW_INTERCEPT'] === 'Y' && \Bitrix\Voximplant\Limits::canInterceptCall() ? 'Y' : 'N'),
 		);
-		
+
 		if($queueFields['NAME'] == '')
 		{
-			$result->addError(new \Bitrix\Main\Error(Loc::getMessage('VI_CONFIG_ERROR_EMPTY_NAME')));
-			return $result;
+			return $result->addError(new \Bitrix\Main\Error(Loc::getMessage('VI_CONFIG_ERROR_EMPTY_NAME')));
+		}
+
+		if($queueFields['PHONE_NUMBER'] != '')
+		{
+			if (mb_strlen($queueFields['PHONE_NUMBER']) > 4)
+			{
+				return $result->addError(new \Bitrix\Main\Error(Loc::getMessage("VI_CONFIG_ERROR_PHONE_NUMBER_TOO_LONG")));
+			}
+
+			$entity = CVoxImplantIncoming::getByInternalPhoneNumber($queueFields['PHONE_NUMBER']);
+			if ($entity && !($entity['ENTITY_TYPE'] === 'queue' && $entity['ENTITY_ID'] === $id))
+			{
+				if ($entity['ENTITY_TYPE'] === 'queue')
+				{
+					$result->addError(new \Bitrix\Main\Error(Loc::getMessage("VI_CONFIG_ERROR_NUMBER_IN_USE_BY_GROUP", [
+						'#NAME#' => static::getQueueName($entity['ENTITY_ID'])
+					])));
+				}
+				else
+				{
+					$result->addError(new \Bitrix\Main\Error(Loc::getMessage("VI_CONFIG_ERROR_NUMBER_IN_USE_BY_USER", [
+						'#NAME#' => static::getUserName($entity['ENTITY_ID'])
+					])));
+				}
+
+				return $result;
+			}
 		}
 
 		if($request['TYPE'] === CVoxImplantConfig::QUEUE_TYPE_ALL)
@@ -212,5 +254,31 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 		));
 
 		return $result;
+	}
+
+	protected static function getUserName(int $id): ?string
+	{
+		$userFields = \Bitrix\Main\UserTable::getList([
+			'select' => ['LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME'],
+			'filter' => ['=ID' => $id]
+		])->fetch();
+		if ($userFields)
+		{
+			return \CUser::formatName(CSite::getNameFormat(), $userFields);
+		}
+		return null;
+	}
+
+	protected static function getQueueName(int $id): ?string
+	{
+		$queueFields = \Bitrix\Voximplant\Model\QueueTable::getList([
+			'select' => ['NAME'],
+			'filter' => ['=ID' => $id]
+		]);
+		if ($queueFields)
+		{
+			return $queueFields['NAME'];
+		}
+		return null;
 	}
 }

@@ -11,6 +11,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ShiftTable
  * @package Bitrix\Timeman\Model\Schedule\Shift
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Calendar_Query query()
+ * @method static EO_Calendar_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Calendar_Result getById($id)
+ * @method static EO_Calendar_Result getList(array $parameters = array())
+ * @method static EO_Calendar_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\Calendar createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_Calendar_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\Calendar wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\Calendar\EO_Calendar_Collection wakeUpCollection($rows)
  */
 class CalendarTable extends Main\ORM\Data\DataManager
 {

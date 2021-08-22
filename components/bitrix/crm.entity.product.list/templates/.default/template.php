@@ -96,6 +96,8 @@ $editorConfig = [
 	'allowTax' => $arResult['ALLOW_TAX'] ? 'Y' : 'N',
 	'enableTax' => $arResult['ENABLE_TAX'] ? 'Y' : 'N',
 	'taxUniform' => $arResult['PRODUCT_ROW_TAX_UNIFORM'],
+	'isLocationDependantTaxesEnabled' => $arResult['ALLOW_LD_TAX'] ? 'Y' : 'N',
+	'locationId' => $arResult['LOCATION_ID'],
 
 	'newRowPosition' => $arResult['NEW_ROW_POSITION'],
 	'enableDiscount' => $arResult['ENABLE_DISCOUNT'] ? 'Y' : 'N',

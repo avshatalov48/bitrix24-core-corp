@@ -15,7 +15,7 @@ $MESS["CRM_ACTIVITY_VISIT_DEFAULT_CAMERA"] = "Камера по умолчани
 $MESS["CRM_ACTIVITY_VISIT_FACEID_AGREEMENT"] = "<div class=\"tracker-agreement-popup-content\">
 			<ol class=\"tracker-agreement-popup-list\">
 				<li class=\"tracker-agreement-popup-list-item\">
-					Сервис FindFace (далее – Сервис) предоставляется компанией N-TECH.LAB LTD на условиях предусмотренных <a href=\"https://saas.findface.pro/files/docs/license_us.pdf\" class=\"tracker-link\">соглашением</a> и, <span class=\"tracker-text-bold\">нажимая кнопку «Я согласен», Вы заявляете и гарантируете следующее:</span>
+					Сервис FindFace (далее – Сервис) предоставляется компанией N-TECH.LAB LTD на условиях предусмотренных <a target=\"_blank\" href=\"https://saas.findface.pro/files/docs/license_us.pdf\" class=\"tracker-link\">соглашением</a> и, <span class=\"tracker-text-bold\">нажимая кнопку «Я согласен», Вы заявляете и гарантируете следующее:</span>
 					<ul class=\"tracker-agreement-popup-inner-list\">
 						<li class=\"tracker-agreement-popup-inner-list-item\">
 							<span class=\"tracker-text-bold\">Вы обязуетесь неукоснительно соблюдать требования законодательства в области защиты персональных данных, частной жизни</span> и т.п., действующего в Вашей стране (далее – применимое законодательство), в течение всего срока использования Сервиса;

@@ -1,7 +1,12 @@
-<?
+<?php
 /**
  * @var array $arResult
  * @var array $arParams
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponent $component
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -18,7 +23,8 @@ CJSCore::Init([
 	'ui.progressbar',
 	'ui.notification',
 	'ui.icons.b24',
-	'ui.hint'
+	'ui.hint',
+	'ui.stepprocessing'
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/components/bitrix/voximplant.statistic.detail/player/skins/audio/audio.css");
@@ -26,7 +32,7 @@ CJSCore::Init([
 ShowError($arResult["ERROR_TEXT"]);
 if (!$arResult["ENABLE_EXPORT"])
 {
-	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", [], $component);
 }
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
@@ -101,6 +107,7 @@ $totalContainer = '
 ';
 ?><div id="tel-stat-grid-container"><?
 
+	$actionPanel = false;
 	if (!$inReportSlider)
 	{
 		$actionPanel = [
@@ -158,7 +165,8 @@ $totalContainer = '
 			"AJAX_OPTION_JUMP" => "N",
 			"AJAX_OPTION_HISTORY" => "N",
 		),
-		$component, array("HIDE_ICONS" => "Y")
+		$component,
+		array("HIDE_ICONS" => "Y")
 	);
 ?></div><?
 

@@ -41,13 +41,12 @@ class TimelineEntryCategory
 	 */
 	public static function getDescriptions()
 	{
-		return [
+		$result = [
 			self::COMMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_COMMENT'),
 			self::DOCUMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_DOCUMENT'),
 			self::SMS => Loc::getMessage('CRM_TIMELINE_CATEGORY_SMS'),
 			self::NOTIFICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_NOTIFICATION_2'),
 			self::ACTIVITY_ZOOM => Loc::getMessage('CRM_TIMELINE_CATEGORY_ZOOM'),
-			self::ACTIVITY_CALL_TRACKER => Loc::getMessage('CRM_TIMELINE_CATEGORY_CALL_TRACKER'),
 			self::BIZ_PROCESS => Loc::getMessage('CRM_TIMELINE_CATEGORY_BIZ_PROCESS'),
 			self::ACTIVITY_REQUEST => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_REQUEST'),
 			self::ACTIVITY_TASK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ACTIVITY_TASK'),
@@ -65,6 +64,12 @@ class TimelineEntryCategory
 			self::ORDER => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER'),
 			self::ORDER_CHECK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER_CHECK'),
 		];
+		if (Main\Config\Option::get('mobile', 'crm_call_tracker_enabled', 'N') === 'Y')
+		{
+			$result[self::ACTIVITY_CALL_TRACKER] = Loc::getMessage('CRM_TIMELINE_CATEGORY_CALL_TRACKER');
+		}
+
+		return $result;
 	}
 
 	/**

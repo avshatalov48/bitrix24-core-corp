@@ -57,6 +57,7 @@ export class Epic extends EventEmitter
 		this.id = Text.getRandom();
 		this.sidePanelId = 'tasks-scrum-epic-' + this.id;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadAddForm.bind(this));
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
@@ -73,6 +74,7 @@ export class Epic extends EventEmitter
 		this.id = Text.getRandom();
 		this.sidePanelId = 'tasks-scrum-epic-' + this.id;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadEditForm.bind(this));
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
@@ -92,6 +94,7 @@ export class Epic extends EventEmitter
 		this.id = Text.getRandom();
 		this.sidePanelId = 'tasks-scrum-epic-' + this.id;
 
+		this.sidePanel.unsubscribeAll('onLoadSidePanel');
 		this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadViewForm.bind(this));
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
@@ -115,6 +118,7 @@ export class Epic extends EventEmitter
 
 		this.sidePanel.openSidePanel(this.sidePanelId, {
 			contentCallback: () => {
+				this.sidePanel.unsubscribeAll('onLoadSidePanel');
 				this.sidePanel.subscribeOnce('onLoadSidePanel', this.onLoadListGrid.bind(this));
 				this.sidePanel.subscribeOnce('onCloseSidePanel', this.destroyGrid.bind(this));
 				return new Promise((resolve, reject) => {
@@ -142,11 +146,15 @@ export class Epic extends EventEmitter
 	onLoadAddForm(baseEvent)
 	{
 		const sidePanel = baseEvent.getData();
+
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-epic-form');
 		this.currentEpic = null;
 		this.onLoadEditor();
 		this.onLoadColorPicker();
 		this.onLoadAddButtons().then((buttonsContainer) => {
+			sidePanel.closeLoader();
 			Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', () => {
 				this.requestSender.createEpic(this.getRequestData()).then((response) => {
 					this.onAfterCreateEpic(response.data);
@@ -176,10 +184,14 @@ export class Epic extends EventEmitter
 	onLoadViewForm(baseEvent)
 	{
 		const sidePanel = baseEvent.getData();
+
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-epic-form');
 		this.onLoadDescription();
 		this.onLoadFiles();
 		this.onLoadViewButtons().then((buttonsContainer) => {
+			sidePanel.closeLoader();
 			Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', () => {
 				sidePanel.close(false, () => {
 					this.openEditForm(this.currentEpic.id);
@@ -192,10 +204,14 @@ export class Epic extends EventEmitter
 	onLoadEditForm(baseEvent)
 	{
 		const sidePanel = baseEvent.getData();
+
+		sidePanel.showLoader();
+
 		this.form = sidePanel.getContainer().querySelector('.tasks-scrum-epic-form');
 		this.onLoadEditor();
 		this.onLoadColorPicker();
 		this.onLoadEditButtons().then((buttonsContainer) => {
+			sidePanel.closeLoader();
 			Event.bind(buttonsContainer.querySelector('[name=save]'), 'click', () => {
 				this.requestSender.editEpic(this.getRequestData()).then((response) => {
 					this.emit('onAfterEditEpic', response);
@@ -321,7 +337,10 @@ export class Epic extends EventEmitter
 		const form = sidePanel.getContainer().querySelector('.tasks-scrum-epics-list');
 		const list = sidePanel.getContainer().querySelector('.tasks-scrum-epics-list-grid');
 
+		sidePanel.showLoader();
+
 		this.getEpicsList().then((responseData) => {
+			sidePanel.closeLoader();
 			if (responseData.html)
 			{
 				Runtime.html(list, responseData.html);

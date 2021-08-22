@@ -439,18 +439,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classCallCheck(this, UstatOnline);
 	    this.signedParameters = params.signedParameters;
 	    this.componentName = params.componentName;
-	    this.userBlockNode = params.userBlockNode || "";
-	    this.userInnerBlockNode = params.userInnerBlockNode || "";
-	    this.circleNode = params.circleNode || "";
-	    this.timemanNode = params.timemanNode || "";
 	    this.ustatOnlineContainerNode = params.ustatOnlineContainerNode || "";
-	    this.maxUserToShow = 7;
+	    this.maxUserToShow = params.maxUserToShow;
 	    this.maxOnlineUserCountToday = params.maxOnlineUserCountToday;
 	    this.currentUserId = parseInt(params.currentUserId);
 	    this.isTimemanAvailable = params.isTimemanAvailable === "Y";
 	    this.isFullAnimationMode = params.isFullAnimationMode === "Y";
 	    this.limitOnlineSeconds = params.limitOnlineSeconds;
 	    this.renderingFinished = true;
+
+	    if (!main_core.Type.isDomNode(this.ustatOnlineContainerNode)) {
+	      return;
+	    }
+
+	    this.userBlockNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-icon-box');
+	    this.userInnerBlockNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-icon-inner');
+	    this.circleNode = this.ustatOnlineContainerNode.querySelector('.ui-graph-circle');
+	    this.timemanNode = this.ustatOnlineContainerNode.querySelector('.intranet-ustat-online-info');
 	    var users = params.users;
 	    var allOnlineUserIdToday = params.allOnlineUserIdToday;
 	    this.users = users.map(function (user) {
@@ -1058,6 +1063,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}();
 
 	namespace.UstatOnline = UstatOnline;
+
+	exports.UstatOnline = UstatOnline;
 
 }((this.BX.Intranet.UstatOnline = this.BX.Intranet.UstatOnline || {}),BX,BX,BX,BX.UI.Graph));
 //# sourceMappingURL=script.js.map

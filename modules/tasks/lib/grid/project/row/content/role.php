@@ -55,14 +55,12 @@ class Role extends Content
 				['group_id' => $row['ID']]
 			);
 
-			// todo: remove all about tasks-projects-badge-join
 			return
 				"<div
 					class='ui-label tasks-projects-badge-join'
 					id='requestButton{$row['ID']}'
 					bx-request-url='{$requestUrl}'
 					onclick='event.stopPropagation(); BX.Tasks.Projects.ActionsController.sendJoinRequest(this)'
-					style='cursor: pointer'
 				><span class='ui-label-inner'>{$text}</span></div>"
 			;
 		}
@@ -76,12 +74,47 @@ class Role extends Content
 
 	private function createRequestingLayout(array $user): string
 	{
+		$requestPath = \CComponentEngine::makePathFromTemplate(
+			$this->getParameters()['PATH_TO_USER_REQUESTS'],
+			['user_id' => $user['ID']]
+		);
+		$userGroupRelationId = $this->getRowData()['USER_GROUP_ID'];
+
 		if ($user['IS_GROUP_ACCESS_REQUESTING_BY_ME'] === 'Y')
 		{
-			return Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_ROLE_REQUEST_SENT');
+			$text = Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_ROLE_REQUEST_SENT');
+
+			return
+				"
+				<div class='tasks-projects-badge-invite-box'>
+					<div class='ui-label tasks-projects-badge-invite'>
+						<span class='ui-label-inner'>{$text}</span>
+					</div>
+					<div class='ui-label tasks-projects-badge-cancel' onclick='event.stopPropagation(); BX.Tasks.Projects.ActionsController.sendCancelRequest({$userGroupRelationId}, \"{$requestPath}\");'>
+						<span class='ui-label-inner'></span>
+					</div>
+				</div>
+				"
+			;
 		}
 
-		return Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_ROLE_INVITED');
+		$text = Loc::getMessage('TASKS_GRID_PROJECT_ROW_CONTENT_ROLE_INVITED');
+
+		return
+			"
+			<div class='tasks-projects-badge-invite-box'>
+				<div class='ui-label tasks-projects-badge-invite-accept'>
+					<span class='ui-label-inner'>{$text}</span>
+				</div>
+				<div class='ui-label tasks-projects-badge-accept' onclick='event.stopPropagation(); BX.Tasks.Projects.ActionsController.sendAcceptRequest({$userGroupRelationId}, \"{$requestPath}\");'>
+					<span class='ui-label-inner'></span>
+				</div>
+				<div class='ui-label tasks-projects-badge-cancel' onclick='event.stopPropagation(); BX.Tasks.Projects.ActionsController.sendDenyRequest({$userGroupRelationId}, \"{$requestPath}\");'>
+					<span class='ui-label-inner'></span>
+				</div>
+			</div>
+			"
+		;
 	}
 
 	private function createRoleLayout(array $user): string

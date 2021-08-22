@@ -13,28 +13,6 @@ export class CommandHandler
 		return 'timeman';
 	}
 
-	handleChangeDayState(params)
-	{
-		Monitor.setState(params.state);
-
-		if (!Monitor.isEnabled())
-		{
-			Logger.warn('Ignore day state, monitor is disabled!');
-			Debug.log('Ignore day state, monitor is disabled!');
-
-			return;
-		}
-
-		if (params.state === Monitor.getStateStart())
-		{
-			Monitor.start();
-		}
-		else if (params.state === Monitor.getStateStop())
-		{
-			Monitor.stop();
-		}
-	}
-
 	handleChangeMonitorEnabled(params)
 	{
 		if (params.enabled === Monitor.getStatusEnabled())

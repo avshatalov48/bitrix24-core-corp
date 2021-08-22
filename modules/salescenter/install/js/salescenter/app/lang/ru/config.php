@@ -129,3 +129,5 @@ $MESS["SALESCENTER_SHIPMENT_DELIVERY_PRICE_RECEIVED"] = "Получена рас
 $MESS["SALESCENTER_SHIPMENT_EXTRA_SERVICES"] = "Дополнительно";
 $MESS["SALESCENTER_ORDER_SELECTOR_ORDER_NUM"] = "Заказ №#ORDER_ID#";
 $MESS["SALESCENTER_ORDER_SELECTOR_TOOLTIP"] = "По умолчанию оплата (доставка) создается в рамках последнего заказа. Если оплата относится к другому заказу, выберите его";
+$MESS["SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT"] = "Сообщение будет отправлено по шаблону.";
+$MESS["SALESCENTER_MORE_DETAILS"] = "Подробнее";

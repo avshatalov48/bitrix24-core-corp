@@ -13,6 +13,19 @@ Loc::loadMessages(__FILE__);
 /**
  * Class ScheduleTable
  * @package Bitrix\Timeman\Model\Schedule
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ScheduleUser_Query query()
+ * @method static EO_ScheduleUser_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ScheduleUser_Result getById($id)
+ * @method static EO_ScheduleUser_Result getList(array $parameters = array())
+ * @method static EO_ScheduleUser_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\EO_ScheduleUser_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\Assignment\User\EO_ScheduleUser_Collection wakeUpCollection($rows)
  */
 class ScheduleUserTable extends Main\ORM\Data\DataManager
 {

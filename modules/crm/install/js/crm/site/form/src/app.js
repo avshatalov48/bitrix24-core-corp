@@ -3,9 +3,6 @@ import {Conv} from './util/registry';
 import * as Form from './form/registry';
 import * as Compatibility from './compatibility';
 
-/** @requires module:webpacker */
-/** @var {Object} module Current module.*/
-
 class Application
 {
 	#forms: Array<Form.Controller> = [];
@@ -64,7 +61,7 @@ class Application
 
 		if (!options.provider.entities)
 		{
-			let entities = webPacker.url.parameter.get('b24form_entities');
+			let entities = b24form.util.url.parameter.get('b24form_entities');
 			if (entities)
 			{
 				entities = JSON.parse(entities);
@@ -81,10 +78,10 @@ class Application
 			options.language = b24options.lang;
 		}
 
-		options.languages = module.languages || [];
+		options.languages = b24form.common.languages || [];
 		options.messages = options.messages || {};
 		options.messages = Object.assign(
-			module.messages,
+			b24form.common.messages,
 			options.messages || {}
 		);
 		options.identification = {
@@ -130,11 +127,11 @@ class Application
 	getUserProvider24(b24options: B24Options): Promise|Object
 	{
 		let signTtl = 3600 * 24;
-		let sign = webPacker.url.parameter.get('b24form_user');
+		let sign = b24form.util.url.parameter.get('b24form_user');
 		if (sign)
 		{
 			b24options.sign = sign;
-			if (webPacker.ls.getItem('b24-form-sign', sign, signTtl))
+			if (b24form.util.ls.getItem('b24-form-sign', sign, signTtl))
 			{
 				sign = null;
 			}
@@ -149,7 +146,7 @@ class Application
 				return b24form.user.fields || {};
 			}
 
-			let user = webPacker.ls.getItem('b24-form-user', ttl);
+			let user = b24form.util.ls.getItem('b24-form-user', ttl);
 			if (user !== null && typeof user === 'object')
 			{
 				return user.fields || {};
@@ -166,7 +163,7 @@ class Application
 			return null;
 		}
 
-		webPacker.ls.setItem('b24-form-sign', sign, signTtl);
+		b24form.util.ls.setItem('b24-form-sign', sign, signTtl);
 
 		let formData = new FormData();
 		formData.set('security_sign', sign);
@@ -188,7 +185,7 @@ class Application
 			user = user && typeof user === 'object' ? user : {};
 			user.fields = user && typeof user.fields === 'object' ? user.fields : {};
 
-			webPacker.ls.setItem('b24-form-user', user, ttl);
+			b24form.util.ls.setItem('b24-form-user', user, ttl);
 			return user.fields;
 		});
 
@@ -222,6 +219,11 @@ class Application
 				}
 
 				data = data.result;
+				if (data && data.gid && window.b24Tracker && b24Tracker.guest && b24Tracker.guest.setGid)
+				{
+					b24Tracker.guest.setGid(data.gid);
+				}
+
 				return new Promise(resolve => {
 					resolve(data);
 				});
@@ -231,8 +233,6 @@ class Application
 
 	initFormScript24(b24options: B24Options): Form.Controller|null
 	{
-		let options = b24options.data;
-		// noinspection JSUnresolvedVariable
 		if (b24options.usedBySiteButton)
 		{
 			this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));

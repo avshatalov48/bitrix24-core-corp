@@ -44,6 +44,7 @@ $MESS["TASKS_JS_MARK_N"] = "Negative";
 $MESS["TASKS_JS_MARK_NONE"] = "None";
 $MESS["TASKS_JS_MARK_P"] = "Positive";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Ping notification sent";
+$MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Add tag:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Select action";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS"] = "Do you want to delete all the tasks along with child subtasks, including those on subsequent pages?";
 $MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS"] = "Do you want to delete the selected tasks?";

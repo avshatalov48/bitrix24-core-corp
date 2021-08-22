@@ -1,6 +1,7 @@
 <?php
 use Bitrix\Disk\Banner;
 use Bitrix\Disk\Desktop;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main\Localization\Loc;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
@@ -42,18 +43,23 @@ $folder = \Bitrix\Disk\Folder::loadById($arResult['VARIABLES']['FOLDER_ID']);
 					$component
 				);?>
 			</div>
-<?$APPLICATION->IncludeComponent(
-	'bitrix:disk.file.upload',
-	'',
-	array(
-		'STORAGE' => $arResult['STORAGE'],
-		'FOLDER' => $folder,
-		'CID' => 'FolderList',
-		'DROPZONE' => 'BX("bx-disk-container")'
-	),
-	$component,
-	array("HIDE_ICONS" => "Y")
-);?>
+<?php
+if (Bitrix24Manager::isFeatureEnabled('disk_common_storage'))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:disk.file.upload',
+		'',
+		[
+			'STORAGE' => $arResult['STORAGE'],
+			'FOLDER' => $folder,
+			'CID' => 'FolderList',
+			'DROPZONE' => 'BX("bx-disk-container")'
+		],
+		$component,
+		["HIDE_ICONS" => "Y"]
+	);
+}
+?>
 <script type="text/javascript">
 BX.ready(function(){
 	if (BX('BXDiskRightInputPlug') && BX.DiskUpload.getObj('FolderList'))

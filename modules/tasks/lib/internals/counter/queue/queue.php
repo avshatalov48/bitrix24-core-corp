@@ -8,7 +8,31 @@ use Bitrix\Tasks\Internals\Counter\Exception\CounterQueuePopException;
 class Queue
 {
 	private $popped = [];
-	public static $instance;
+	private static $instance;
+	private static $inQueue = [];
+
+	/**
+	 * @param int $userId
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isInQueue(int $userId): bool
+	{
+		if (!array_key_exists($userId, self::$inQueue))
+		{
+			$res = QueueTable::getRow([
+				'filter' => [
+					'=USER_ID' => $userId
+				]
+			]);
+
+			self::$inQueue[$userId] = (bool) $res;
+		}
+
+		return self::$inQueue[$userId];
+	}
 
 	public static function getInstance()
 	{
@@ -49,6 +73,8 @@ class Queue
 		";
 
 		Application::getConnection()->query($sql);
+
+		self::$inQueue[$userId] = true;
 	}
 
 	/**
@@ -116,23 +142,5 @@ class Queue
 		Application::getConnection()->query($sql);
 
 		$this->popped = [];
-	}
-
-	/**
-	 * @param int $userId
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function isInQueue(int $userId): bool
-	{
-		$res = QueueTable::getRow([
-			'filter' => [
-				'=USER_ID' => $userId
-			]
-		]);
-
-		return (bool) $res;
 	}
 }

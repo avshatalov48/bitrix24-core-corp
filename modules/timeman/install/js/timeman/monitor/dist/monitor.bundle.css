@@ -1,3 +1,7 @@
+.pwt-report-container {
+    height: 100%;
+}
+
 .pwt-report {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -188,6 +192,52 @@
 .bx-desktop-tab-icon-timeman-pwt:hover {
     background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='28' viewBox='-1 0 42 42'%3E%3Cpath fill='%2317B0E1' d='M28.174 28.962h3.217c.606-1.523.942-3.193.942-4.94 0-7.394-5.977-13.37-13.13-12.895-5.9.393-10.776 5.234-11.453 11.388a13.42 13.42 0 00.86 6.447h3.216a10.28 10.28 0 01-1.224-5.779c.381-4.862 4.208-8.758 8.858-9.026 5.473-.316 9.971 4.203 9.971 9.865 0 1.801-.459 3.489-1.257 4.94zm-6.781-1.788a2.529 2.529 0 01-3.33.029c-1.297-1.108-1.38-3.15-.252-4.377.513-.558 1.177-.846 1.85-.86l6.718-4.359-3.977 7.34a3.025 3.025 0 01-1.01 2.227z'/%3E%3C/svg%3E");
 }
+
+.bx-monitor-alert-btn-right {
+    position: absolute;
+    right: 16px;
+    top: calc(50% - 12px);
+}
+
+.bx-timeman-pwt-report-alert-enter-active, .bx-timeman-pwt-report-alert-leave-active {
+    -webkit-transition: opacity .3s;
+    -o-transition: opacity .3s;
+    transition: opacity .3s;
+}
+.bx-timeman-pwt-report-alert-enter, .bx-timeman-pwt-report-alert-leave-to {
+    opacity: 0;
+}
+
+.bx-timeman-pwt-report-container-stretchable {
+    height: 100%;
+    overflow: hidden;
+}
+
+.bx-timeman-pwt-report {
+    -webkit-transition: all 1s;
+    -o-transition: all 1s;
+    transition: all 1s;
+    display: inline-block;
+}
+
+.bx-timeman-pwt-report-move {
+    -webkit-transition: -webkit-transform .2s;
+    transition: -webkit-transform .2s;
+    -o-transition: transform .2s;
+    transition: transform .2s;
+    transition: transform .2s, -webkit-transform .2s;
+}
+
+.bx-timeman-pwt-report-enter, .bx-timeman-pwt-report-leave-to {
+    opacity: 0;
+    -webkit-transform: translateY(30px);
+        -ms-transform: translateY(30px);
+            transform: translateY(30px);
+}
+
+.bx-timeman-pwt-report-leave-active {
+    position: absolute;
+}
 .bx-timeman-monitor-report-popup-wrap {
     position: absolute;
     left: 0;
@@ -377,7 +427,7 @@
             flex-direction: column;
     font: 13px/18px "Open Sans", Arial, normal;
     font-weight: 600;
-    padding: 11px 13px;
+    padding: 11px 13px 15px 13px;
     border-radius: 4px 4px 0 0;
 }
 
@@ -430,21 +480,22 @@
     -webkit-box-pack: justify;
         -ms-flex-pack: justify;
             justify-content: space-between;
+    height: 26px;
 }
 
 .bx-monitor-group-title-wrap {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
 }
 
 .bx-monitor-group-title {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
-    -webkit-box-align: center;
-        -ms-flex-align: center;
-            align-items: center;
     text-transform: uppercase;
 	margin-right: 8px;
     -webkit-user-select: none;
@@ -468,6 +519,12 @@
 }
 
 .bx-monitor-group-subtitle {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
     font: 13px/18px "Open Sans", Arial, normal;
     color: #505A69;
     margin-right: 8px;
@@ -699,6 +756,40 @@
     display: -ms-flexbox;
     display: flex;
 }
+#popup-window-content-bx-timeman-pwt-editor-pause-popup {
+    display: none;
+}
+
+.bx-timeman-monitor-report-popup-pause {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+            flex-direction: column;
+    -webkit-box-align: start;
+        -ms-flex-align: start;
+            align-items: flex-start;
+}
+
+.bx-timeman-pwt-popup-pause-btn {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: start;
+        -ms-flex-pack: start;
+            justify-content: flex-start;
+    margin-left: 0 !important;
+    width: 100%;
+}
+#bx-timeman-pwt-skip-report-confirm-popup {
+	padding: 0;
+}
+
+.bx-timeman-monitor-report-popup-confirm {
+	width: 380px;
+}
 .bx-timeman-monitor-report-popup-selectintervalpopup-interval {
     width: 100%;
 }
@@ -716,7 +807,7 @@
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
-    min-height: 60px;
+    min-height: 70px;
 }
 
 .bx-monitor-group-item {
@@ -735,6 +826,17 @@
     border:1px solid #e8e8ea;
     border-radius: 4px;
     height: 26px;
+    -webkit-transition: border .2s;
+    -o-transition: border .2s;
+    transition: border .2s;
+}
+
+.bx-monitor-group-item-working-selected {
+    border:1px solid #78c88d;
+}
+
+.bx-monitor-group-item-personal-selected {
+    border:1px solid #b8bec6;
 }
 
 .bx-monitor-group-sub-items-container {
@@ -762,7 +864,7 @@
 }
 
 .bx-monitor-group-item-title {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -775,7 +877,7 @@
 }
 
 .bx-monitor-group-item-title-full {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 185px;
     overflow: hidden;
     white-space: nowrap;
@@ -797,8 +899,31 @@
             user-select: none;
 }
 
+.bx-monitor-group-item-subtitle {
+    font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 115px;
+    overflow: hidden;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+    color: #949595;
+}
+
+.bx-monitor-group-item-icon {
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    height: 16px;
+    width: 16px;
+    margin-right: 8px;
+}
+
+.bx-monitor-group-item-icon-away {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGZpbGw9IiNGODlCNTIiIGN4PSI5IiBjeT0iOSIgcj0iOSIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMCA5VjRIN3Y4aDdWOXoiLz48L2c+PC9zdmc+');
+}
+
 .bx-monitor-group-site-title {
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -851,6 +976,7 @@
 
 .bx-monitor-group-item-button-comment {
     margin-left: 11px;
+    margin-right: 8px;
 }
 
 .bx-monitor-group-item-count {

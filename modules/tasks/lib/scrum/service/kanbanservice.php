@@ -152,48 +152,6 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
-			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
-
-			if (!$defaultStageId)
-			{
-				$this->errorCollection->setError(
-					new Error('Failed to get the default stage', self::ERROR_COULD_NOT_ADD_TASK)
-				);
-				return false;
-			}
-
-			$this->removeTasksFromKanban($sprintId, $taskIds);
-
-			foreach ($taskIds as $taskId)
-			{
-				TaskStageTable::add([
-					'TASK_ID' => $taskId,
-					'STAGE_ID' => $defaultStageId,
-				]);
-			}
-
-			return true;
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_TASK));
-			return false;
-		}
-	}
-
-	/**
-	 * Add the sub tasks to stage of the sprint. Saves positions for sub tasks that were in the previous sprint.
-	 *
-	 * @param int $sprintId Sprint id.
-	 * @param array $taskIds List task id.
-	 * @return bool
-	 */
-	public function addSubTasksToKanban(int $sprintId, array $taskIds): bool
-	{
-		try
-		{
 			if (empty($taskIds))
 			{
 				return false;
@@ -204,6 +162,7 @@ class KanbanService implements Errorable
 			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
 
 			$taskStageIdsMap = [];
+
 			if ($lastSprintId = $this->getLastCompletedSprintIdSameGroup($sprintId))
 			{
 				$stageIdsMap = $this->getStageIdsMapBetweenTwoSprints($sprintId, $lastSprintId);
@@ -238,9 +197,11 @@ class KanbanService implements Errorable
 
 			foreach ($taskIds as $taskId)
 			{
+				$stageId = ($taskStageIdsMap[$taskId] ?? $defaultStageId);
+
 				TaskStageTable::add([
 					'TASK_ID' => $taskId,
-					'STAGE_ID' => (isset($taskStageIdsMap[$taskId]) ? $taskStageIdsMap[$taskId] : $defaultStageId),
+					'STAGE_ID' => $stageId,
 				]);
 			}
 
@@ -521,9 +482,14 @@ class KanbanService implements Errorable
 			]);
 			while ($taskStage = $queryObject->fetch())
 			{
-				if (!$this->isTaskInTheBasket($taskStage['TASK_ID']))
+				$taskIds[$taskStage['TASK_ID']] = $taskStage['TASK_ID'];
+			}
+
+			foreach ($this->isTasksInBasket($taskIds) as $taskId => $result)
+			{
+				if ($result === true)
 				{
-					$taskIds[] = $taskStage['TASK_ID'];
+					unset($taskIds[$taskId]);
 				}
 			}
 		}
@@ -532,7 +498,7 @@ class KanbanService implements Errorable
 			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_TASKS));
 		}
 
-		return $taskIds;
+		return array_values($taskIds);
 	}
 
 	public function getLastCompletedSprintIdSameGroup(int $sprintId): int
@@ -710,18 +676,22 @@ class KanbanService implements Errorable
 		return 0;
 	}
 
-	private function isTaskInTheBasket(int $taskId): bool
+	private function isTasksInBasket(array $taskIds): array
 	{
 		try
 		{
-			return TaskRecycleBin::isInTheRecycleBin($taskId);
+			return TaskRecycleBin::isInTheRecycleBin($taskIds);
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_TASK_IN_BASKET)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CHECK_IS_TASK_IN_BASKET
+				)
 			);
-			return false;
+
+			return [];
 		}
 	}
 }

@@ -337,8 +337,6 @@ BX.Tasks.QuickForm.prototype.calendar = function(event)
 		value: BX.CJSTask.ui.getInputDateTimeValue(deadlineInput),
 		bHideTimebar: false
 	});
-
-	BX.SocNetLogDestination.closeDialog();
 };
 
 BX.Tasks.QuickForm.prototype.show = function()
@@ -519,49 +517,35 @@ BX.Tasks.QuickForm.ProjectSelector = function(id, form)
 	this.projectName = this.form.layout.projectLink.innerHTML;
 	this.projectId = parseInt(this.form.layout.projectId.value, 10);
 
-	var settings = this.form.parameters.destination || {};
-
-	BX.SocNetLogDestination.init({
-		name : id,
-		showSearchInput: true,
-		sendAjaxSearch: (typeof settings["SONETGROUPS_LIMITED"] != 'undefined' && settings["SONETGROUPS_LIMITED"] == 'Y'),
-		useClientDatabase: false,
-		allowUserSearch: false,
-		allowSonetGroupsAjaxSearch: (typeof settings["SONETGROUPS_LIMITED"] != 'undefined' && settings["SONETGROUPS_LIMITED"] == 'Y'),
-		departmentSelectDisable: true,
-		bindMainPopup : { node : this.form.layout.projectLink},
-		bindSearchPopup : { node : this.form.layout.projectLink},
-		callback : {
-			select : BX.proxy(this.onSelect, this)
-		},
-		items : {
-			users: {},
-			groups: {},
-			department: {},
-			departmentRelation: {},
-			projects: settings["PROJECTS"] || {},
-			sonetgroups: settings["SONETGROUPS"] || {}
-		},
-		itemsLast: {
-			users: {},
-			groups: {},
-			department: {},
-			projects: settings["LAST"] && settings["LAST"]["PROJECTS"] ? settings["LAST"]["PROJECTS"] : {},
-			sonetgroups: settings["LAST"] && settings["LAST"]["SONETGROUPS"] ? settings["LAST"]["SONETGROUPS"] : {}
-		},
-		itemsSelected : {}
-	});
-
 	BX.bind(this.form.layout.projectLink, "click", BX.proxy(this.openDialog, this));
 	BX.bind(this.form.layout.projectClearing, "click", BX.proxy(this.clearProject, this));
+
+	this.projectDialog = new BX.UI.EntitySelector.Dialog({
+		targetNode: this.form.layout.projectLink,
+		enableSearch: true,
+		multiple: false,
+		context: 'TASKS_QUICK_FORM_PROJECT',
+		entities: [
+			{
+				id: 'project',
+			}
+		],
+		events: {
+			'Item:onSelect': function(event) {
+				var item = event.getData().item;
+				this.onSelect(item);
+			}.bind(this),
+			'Item:onDeselect': function(event)
+			{
+				this.clearProject();
+			}.bind(this)
+		}
+	});
 };
 
 BX.Tasks.QuickForm.ProjectSelector.prototype.openDialog = function(event)
 {
-	if (!BX.SocNetLogDestination.isOpenDialog())
-	{
-		BX.SocNetLogDestination.openDialog(this.id);
-	}
+	this.projectDialog.show();
 
 	if (event)
 	{
@@ -571,16 +555,13 @@ BX.Tasks.QuickForm.ProjectSelector.prototype.openDialog = function(event)
 
 BX.Tasks.QuickForm.ProjectSelector.prototype.onSelect = function(item)
 {
-	this.projectId = parseInt(item.entityId, 10);
-	this.projectName = item.name;
+	this.projectId = item.getId();
+	this.projectName = item.getTitle();
 
 	this.form.layout.projectId.value = this.projectId;
 	this.form.layout.projectLink.innerHTML = this.projectName;
 
 	BX.addClass(this.form.layout.projectClearing, "task-top-panel-tab-close-active");
-
-	BX.SocNetLogDestination.deleteLastItem(this.id);
-	BX.SocNetLogDestination.closeDialog();
 };
 
 BX.Tasks.QuickForm.ProjectSelector.prototype.clearProject = function()
@@ -593,7 +574,8 @@ BX.Tasks.QuickForm.ProjectSelector.prototype.clearProject = function()
 
 	BX.removeClass(this.form.layout.projectClearing, "task-top-panel-tab-close-active");
 
-	BX.SocNetLogDestination.closeDialog();
+	this.projectDialog.deselectAll();
+	this.projectDialog.hide();
 };
 
 BX.Tasks.QuickForm.UserSelector = function(id, form)
@@ -608,42 +590,9 @@ BX.Tasks.QuickForm.UserSelector = function(id, form)
 	this.userName = "";
 	this.userLastName = "";
 
-	var settings = this.form.parameters.destination || {};
-
-	BX.SocNetLogDestination.init({
-		name : id,
-		searchInput : this.form.layout.responsible,
-		departmentSelectDisable: true,
-		bindMainPopup : { node : this.form.layout.responsible },
-		bindSearchPopup : { node : this.form.layout.responsible },
-		allowAddUser: this.form.canAddMailUsers,
-		callback : {
-			select : BX.proxy(this.onSelect, this)
-		},
-		items : {
-			users: settings["USERS"] || {},
-			department: settings["DEPARTMENT"] || {},
-			departmentRelation: settings["DEPARTMENT_RELATION"] || {}
-		},
-		itemsLast: {
-			users: settings["LAST"] && settings["LAST"]["USERS"] ? settings["LAST"]["USERS"] : {}
-		},
-		itemsSelected : settings["SELECTED"] || {}
-	});
-
-	BX.addCustomEvent("BX.SocNetLogDestination:onBeforeSelectItemFocus", BX.proxy(this.onBeforeSelectItemFocus, this));
-
-	BX.bind(this.form.layout.responsible, "focus", BX.proxy(this.openDialog, this));
 	BX.bind(this.form.layout.responsible, "click", BX.proxy(this.openDialog, this));
-	BX.bind(this.form.layout.responsible, "blur", BX.proxy(this.onBlur, this));
-
-	var params = {
-		formName: this.id,
-		inputName: this.form.layout.responsible.getAttribute("id")
-	};
-
-	BX.bind(this.form.layout.responsible, "keyup", BX.proxy(BX.SocNetLogDestination.BXfpSearch, params));
-	BX.bind(this.form.layout.responsible, "keydown", BX.proxy(BX.SocNetLogDestination.BXfpSearchBefore, params));
+	BX.bind(this.form.layout.responsible, "keyup", function(event) {BX.PreventDefault(event);});
+	BX.bind(this.form.layout.responsible, "keydown", function(event) {BX.PreventDefault(event);});
 };
 
 BX.Tasks.QuickForm.UserSelector.prototype.getUserId = function()
@@ -670,11 +619,52 @@ BX.Tasks.QuickForm.UserSelector.prototype.openDialog = function(event)
 {
 	BX.calendar.get().Close();
 	BX.PreventDefault(event);
-	this.form.layout.responsible.value = "";
-	if (!BX.SocNetLogDestination.isOpenDialog())
+
+	this.initDialog();
+	this.userDialog.show();
+};
+
+BX.Tasks.QuickForm.UserSelector.prototype.initDialog = function()
+{
+	if (this.userDialog)
 	{
-		BX.SocNetLogDestination.openDialog(this.id);
+		return;
 	}
+
+	this.userDialog = new BX.UI.EntitySelector.Dialog({
+		targetNode: this.form.layout.responsible,
+		enableSearch: true,
+		multiple: false,
+		context: 'TASKS_QUICK_FORM_RESPONSIBLE',
+		preselectedItems: [
+			['user', this.userId]
+		],
+		entities: [
+			{
+				id: 'user',
+				options: {
+					emailUsers: true,
+					networkUsers: true,
+					extranetUsers: true,
+					inviteGuestLink: true,
+					myEmailUsers: true
+				}
+			},
+			{
+				id: 'department',
+			}
+		],
+		events: {
+			'Item:onSelect': function(event) {
+				var item = event.getData().item;
+				this.onSelect(item);
+			}.bind(this),
+			'Item:onDeselect': function(event)
+			{
+				this.form.layout.responsible.value = "";
+			}.bind(this)
+		}
+	});
 };
 
 BX.Tasks.QuickForm.UserSelector.prototype.onBeforeSelectItemFocus = function(sender)
@@ -687,33 +677,19 @@ BX.Tasks.QuickForm.UserSelector.prototype.onBeforeSelectItemFocus = function(sen
 
 BX.Tasks.QuickForm.UserSelector.prototype.onSelect = function(item, type, search)
 {
-	this.userId = item.entityId || 0;
-	this.userNameFormatted = BX.util.htmlspecialcharsback(item.name);
+	this.userId = item.getId();
+	this.userNameFormatted = BX.util.htmlspecialcharsback(item.getTitle());
 
-	var params = item.params || {};
-	this.userEmail = params.email || "";
-	this.userName = params.name || "";
-	this.userLastName = params.lastName || "";
+	var customData = item.getCustomData();
+
+	this.userEmail = customData.get('email');
+	this.userName = customData.get('name');
+	this.userLastName = customData.get('lastName');
 
 	this.form.layout.responsible.value = this.userNameFormatted;
 	this.form.layout.responsibleId.value = this.userId;
 
-	BX.SocNetLogDestination.deleteLastItem(this.id);
-	BX.SocNetLogDestination.closeDialog();
+	this.userDialog.hide();
 };
-
-BX.Tasks.QuickForm.UserSelector.prototype.onBlur = function()
-{
-	setTimeout(BX.proxy(function() {
-		if (!BX.SocNetLogDestination.isOpenDialog() &&
-			!BX.SocNetLogDestination.isOpenSearch() &&
-			this.form.layout.responsible.value.length <= 0)
-		{
-			this.form.layout.responsible.value = this.userNameFormatted;
-			this.form.layout.responsibleId.value = this.userId;
-		}
-	}, this), 100);
-};
-
 
 })();

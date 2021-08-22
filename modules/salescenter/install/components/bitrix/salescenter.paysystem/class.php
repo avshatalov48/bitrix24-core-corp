@@ -553,6 +553,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			\Sale\Handlers\PaySystem\WooppayHandler::class => '12183852',
 			\Sale\Handlers\PaySystem\AlfaBankHandler::class => '12595422',
 			\Sale\Handlers\PaySystem\RoboxchangeHandler::class => '12595360',
+			\Sale\Handlers\PaySystem\PlatonHandler::class => '13920167',
 		];
 
 		return $helpdeskCodeMap[$className] ?? $defaultCode;

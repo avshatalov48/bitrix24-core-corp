@@ -27,48 +27,51 @@ $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.activity.editor',
-	'',
-	array(
-		'CONTAINER_ID' => '',
-		'EDITOR_ID' => $activityEditorID,
-		'PREFIX' => $prefix,
-		'ENABLE_UI' => false,
-		'ENABLE_TOOLBAR' => false,
-		'ENABLE_EMAIL_ADD' => true,
-		'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK'],
-		'MARK_AS_COMPLETED_ON_VIEW' => false,
-		'SKIP_VISUAL_COMPONENTS' => 'Y'
-	),
-	$component,
-	array('HIDE_ICONS' => 'Y')
-);
+if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermission())
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.activity.editor',
+		'',
+		[
+			'CONTAINER_ID' => '',
+			'EDITOR_ID' => $activityEditorID,
+			'PREFIX' => $prefix,
+			'ENABLE_UI' => false,
+			'ENABLE_TOOLBAR' => false,
+			'ENABLE_EMAIL_ADD' => true,
+			'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK'],
+			'MARK_AS_COMPLETED_ON_VIEW' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
+		],
+		$component,
+		['HIDE_ICONS' => 'Y']
+	);
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.lead.menu',
-	'',
-	array(
-		'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
-		'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
-		'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
-		'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
-		'ELEMENT_ID' => $arResult['ENTITY_ID'],
-		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
-		'OWNER_INFO' => $arResult['ENTITY_INFO'],
-		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
-		'TYPE' => 'details',
-		'SCRIPTS' => array(
-			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
-			'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processExclusion();'
-		)
-	),
-	$component
-);
-
-?><script type="text/javascript">
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.lead.menu',
+		'',
+		[
+			'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
+			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
+			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
+			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
+			'ELEMENT_ID' => $arResult['ENTITY_ID'],
+			'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
+				? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : [],
+			'OWNER_INFO' => $arResult['ENTITY_INFO'],
+			'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
+			'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+			'TYPE' => 'details',
+			'SCRIPTS' => [
+				'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();',
+				'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processExclusion();'
+			]
+		],
+		$component
+	);
+}
+?>
+	<script type="text/javascript">
 		BX.message({
 			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
 		});

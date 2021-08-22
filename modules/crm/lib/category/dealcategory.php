@@ -780,7 +780,9 @@ class DealCategory
 	{
 		\CCrmStatus::BulkCreate(
 			self::convertToStatusEntityID($ID),
-			\CCrmStatus::GetDefaultDealStages(self::prepareStageNamespaceID($ID))
+			self::normalizeStatusIds(
+				\CCrmStatus::GetDefaultDealStages(self::prepareStageNamespaceID($ID))
+			)
 		);
 	}
 
@@ -1425,5 +1427,19 @@ class DealCategory
 		{
 			self::$langIncluded = IncludeModuleLangFile(__FILE__);
 		}
+	}
+
+	public static function normalizeStatusIds(array $stages)
+	{
+		$maxStatusLength = 21; // @see \CCrmStatus::validateStatusId for details
+		foreach ($stages as $i => $stage)
+		{
+			if (isset($stage['STATUS_ID']) && mb_strlen($stage['STATUS_ID']) > $maxStatusLength)
+			{
+				$stages[$i]['STATUS_ID'] = mb_substr($stage['STATUS_ID'], 0, $maxStatusLength);
+			}
+		}
+
+		return $stages;
 	}
 }

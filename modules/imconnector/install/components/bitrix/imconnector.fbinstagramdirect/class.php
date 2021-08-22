@@ -8,12 +8,12 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DI\ServiceLocator;
 
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Connector;
-use Bitrix\ImConnector\Connectors\FbInstagramDirect;
 
 class ImConnectorFBInstagramDirect extends CBitrixComponent
 {
@@ -120,9 +120,16 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 					//Reset cache
 					$this->cleanCache();
 
-					if(!empty($this->request[$this->connector . '_agreement_terms']))
+					$serviceLocator = ServiceLocator::getInstance();
+					if(
+						!empty($this->request[$this->connector . '_agreement_terms'])
+						&& $serviceLocator->has('ImConnector.toolsFbInstagramDirect')
+					)
 					{
-						FbInstagramDirect::addUserConsentAgreementTerms();
+						/** @var \Bitrix\ImConnector\Tools\Connectors\FbInstagramDirect $toolsFbInstagramDirect */
+						$toolsFbInstagramDirect = $serviceLocator->get('ImConnector.toolsFbInstagramDirect');
+
+						$toolsFbInstagramDirect->addUserConsentAgreementTerms();
 					}
 				}
 
@@ -274,6 +281,7 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 	public function constructionForm(): void
 	{
 		global $APPLICATION;
+		$serviceLocator = ServiceLocator::getInstance();
 
 		$this->arResult['NAME'] = Connector::getNameConnectorReal($this->connector);
 
@@ -405,16 +413,21 @@ class ImConnectorFBInstagramDirect extends CBitrixComponent
 			}
 			//Analytic tags end
 		}
-		elseif(FbInstagramDirect::isUserConsentAgreementTerms() === false)
+		elseif($serviceLocator->has('ImConnector.toolsFbInstagramDirect'))
 		{
-			$agreementTerms = FbInstagramDirect::getAgreementTerms();
-
-			if(
-				!empty($agreementTerms) &&
-				!empty($agreementTerms['HTML'])
-			)
+			/** @var \Bitrix\ImConnector\Tools\Connectors\FbInstagramDirect $toolsFbInstagramDirect */
+			$toolsFbInstagramDirect = $serviceLocator->get('ImConnector.toolsFbInstagramDirect');
+			if($toolsFbInstagramDirect->isUserConsentAgreementTerms() === false)
 			{
-				$this->arResult['AGREEMENT_TERMS'] = $agreementTerms;
+				$agreementTerms = $toolsFbInstagramDirect->getAgreementTerms();
+
+				if(
+					!empty($agreementTerms) &&
+					!empty($agreementTerms['HTML'])
+				)
+				{
+					$this->arResult['AGREEMENT_TERMS'] = $agreementTerms;
+				}
 			}
 		}
 

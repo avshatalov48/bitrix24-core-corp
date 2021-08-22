@@ -930,6 +930,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			}
 		}
 
+		$fakeValue = '';
 		$this->arResult['ENTITY_FIELDS'] = array(
 			array(
 				'name' => 'ID',
@@ -1013,10 +1014,16 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 						CCrmStatus::GetStatusList('SOURCE'),
 						[
 							'NOT_SELECTED' => Loc::getMessage('CRM_LEAD_HONORIFIC_NOT_SELECTED'),
-							'NOT_SELECTED_VALUE' => ''
+							'NOT_SELECTED_VALUE' => $fakeValue
 						]
 					),
 					'defaultValue' => $this->defaultEntityData['SOURCE_ID'] ?? null,
+					'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+						'crm_status',
+						'crm.status.setItems',
+						'SOURCE',
+						[$fakeValue]
+					),
 				]
 			),
 			array(
@@ -1093,10 +1100,16 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 								CCrmStatus::GetStatusList('HONORIFIC'),
 								[
 									'NOT_SELECTED' => Loc::getMessage('CRM_LEAD_HONORIFIC_NOT_SELECTED'),
-									'NOT_SELECTED_VALUE' => '',
+									'NOT_SELECTED_VALUE' => $fakeValue,
 								]
 							),
 							'defaultValue' => $this->defaultEntityData['HONORIFIC'] ?? null,
+							'innerConfig' => \CCrmInstantEditorHelper::prepareInnerConfig(
+								'crm_status',
+								'crm.status.setItems',
+								'HONORIFIC',
+								[$fakeValue]
+							),
 						]
 					),
 					array(
@@ -1696,6 +1709,25 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				$data['attrConfigs'] = $attrConfigs[$fieldName];
 			}
 			//endregion
+
+			if ($userField['USER_TYPE_ID'] === 'crm_status')
+			{
+				if (
+					is_array($userField['SETTINGS'])
+					&& isset($userField['SETTINGS']['ENTITY_TYPE'])
+					&& is_string($userField['SETTINGS']['ENTITY_TYPE'])
+					&& $userField['SETTINGS']['ENTITY_TYPE'] !== ''
+				)
+				{
+					$data['innerConfig'] = \CCrmInstantEditorHelper::prepareInnerConfig(
+						$userField['USER_TYPE_ID'],
+						'crm.status.setItems',
+						$userField['SETTINGS']['ENTITY_TYPE'],
+						['']
+					);
+				}
+				unset($statusEntityId);
+			}
 
 			if(isset($visibilityConfig[$fieldName]))
 			{

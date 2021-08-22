@@ -117,6 +117,7 @@ class Bitrix24Manager
 			'disk_manual_external_folder' => 'limit_office_share_link',
 			'disk_file_sharing' => 'limit_office_files_access_permissions',
 			'disk_folder_sharing' => 'limit_office_folders_access_permissions',
+			'disk_common_storage' => 'limit_company_common_disk',
 		];
 
 		$helpdeskId = $map[$feature];

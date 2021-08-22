@@ -33,7 +33,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Timeman
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Entries_Query query()
+ * @method static EO_Entries_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Entries_Result getById($id)
+ * @method static EO_Entries_Result getList(array $parameters = array())
+ * @method static EO_Entries_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\EO_Entries createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\EO_Entries_Collection createCollection()
+ * @method static \Bitrix\Timeman\Model\EO_Entries wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\EO_Entries_Collection wakeUpCollection($rows)
+ */
 
 class EntriesTable extends Main\Entity\DataManager
 {

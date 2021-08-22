@@ -105,6 +105,7 @@ class Dynamic extends Service\Factory
 			],
 			Item::FIELD_NAME_WEBFORM_ID => [
 				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
 			],
 		];
 
@@ -206,7 +207,7 @@ class Dynamic extends Service\Factory
 			];
 			$info[Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY] = [
 				'TYPE' => Field::TYPE_BOOLEAN,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed]
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
 			];
 			$info[Item::FIELD_NAME_TAX_VALUE] = [
 				'TYPE' => Field::TYPE_DOUBLE,

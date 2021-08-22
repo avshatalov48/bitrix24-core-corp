@@ -9,6 +9,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Bitrix24\Feature;
 
 use Bitrix\Crm\Communication;
 use Bitrix\Crm\Tracking;
@@ -55,6 +56,11 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 			$this->arParams['HAS_ACCESS'] = $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 			*/
 		}
+
+		$this->arResult['FEATURE_CODE'] = Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled("crm_tracking_call")
+			? "crm_tracking_call"
+			: null
+		;
 	}
 
 	protected function preparePost()
@@ -162,7 +168,7 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 		}
 		$this->arResult['SOURCES'] = $sources;
 
-		if ($this->request->isPost() && check_bitrix_sessid())
+		if ($this->request->isPost() && check_bitrix_sessid() && !$this->arResult['FEATURE_CODE'])
 		{
 			$this->preparePost();
 		}

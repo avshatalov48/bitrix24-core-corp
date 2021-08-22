@@ -1,11 +1,7 @@
 <?php
-if(!CModule::IncludeModule('rest'))
-{
-	return;
-}
-
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Rest\AccessException;
 use Bitrix\Rest\RestException;
@@ -30,6 +26,12 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Iblock;
+
+if (!Loader::includeModule('rest'))
+{
+	return;
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -3358,7 +3360,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		{
 			throw new RestException("The Event \"{$eventName}\" is not supported in current context");
 		}
-		
+
 		if (!($arParams[0] instanceof Bitrix\Main\Event))
 		{
 			throw new RestException("Invalid parameters of event \"{$eventName}\"");
@@ -3898,6 +3900,11 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$enableCatalogData = !empty($catalogSelect);
 		}
 
+		if (empty($propertiesSelect) && $selectAll)
+		{
+			$propertiesSelect[] = 'PROPERTY_*';
+		}
+
 		$filter['CATALOG_ID'] = $catalogID;
 		$dbResult = CCrmProduct::GetList($order, $filter, $select, $navigation);
 		if(!$enableCatalogData)
@@ -3979,6 +3986,11 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 		if ($productID <= 0)
 			return;
 
+		if (empty($propertiesSelect))
+		{
+			return;
+		}
+
 		$this->initializePropertiesInfo($catalogID);
 
 		$selectAll = false;
@@ -3987,6 +3999,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			if($v === 'PROPERTY_*')
 			{
 				$selectAll = true;
+				unset($propertiesSelect[$k]);
 				break;
 			}
 		}
@@ -4434,12 +4447,11 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 		/** @global CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!CModule::IncludeModule('iblock'))
+		if(!Loader::includeModule('iblock'))
 		{
 			throw new RestException('Could not load iblock module.');
 		}
 
-		/** @var CCrmPerms $userPerms */
 		$userPerms = CCrmPerms::GetCurrentUserPermissions();
 		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 		{
@@ -4447,58 +4459,76 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$iblockId = intval(CCrmCatalog::EnsureDefaultExists());
+		$iblockId = (int)CCrmCatalog::EnsureDefaultExists();
 
-		$userTypeSettings = array();
+		if (!isset($fields['PROPERTY_TYPE']))
+		{
+			$fields['PROPERTY_TYPE'] = Iblock\PropertyTable::TYPE_STRING;
+		}
+
+		$userTypeSettings = [];
 		if (isset($fields['USER_TYPE_SETTINGS']) && is_array($fields['USER_TYPE_SETTINGS']))
 			foreach ($fields['USER_TYPE_SETTINGS'] as $key => $value)
 				$userTypeSettings[mb_strtolower($key)] = $value;
 
-		$arFields = array(
+		$arFields = [
 			'ACTIVE' => isset($fields['ACTIVE']) ? ($fields['ACTIVE'] === 'Y' ? 'Y' : 'N') : 'Y',
 			'IBLOCK_ID' => $iblockId,
 			'PROPERTY_TYPE' => $fields['PROPERTY_TYPE'],
-			'USER_TYPE' => isset($fields['USER_TYPE']) ? $fields['USER_TYPE'] : '',
-			'LINK_IBLOCK_ID' => ($fields['PROPERTY_TYPE'] === 'E' || $fields['PROPERTY_TYPE'] === 'G') ? $iblockId : 0,
+			'USER_TYPE' => $fields['USER_TYPE'] ?? '',
+			'LINK_IBLOCK_ID' => $fields['PROPERTY_TYPE'] === Iblock\PropertyTable::TYPE_ELEMENT ? $iblockId : 0,
 			'NAME' => $fields['NAME'],
-			'SORT' => isset($fields['SORT']) ? $fields['SORT'] : 500,
-			'CODE' => '',
+			'SORT' => (int)$fields['SORT'] ?? 500,
+			'CODE' => $fields['CODE'] ?? '',
 			'MULTIPLE' => isset($fields['MULTIPLE']) ? ($fields['MULTIPLE'] === 'Y' ? 'Y' : 'N') : 'N',
 			'IS_REQUIRED' => isset($fields['IS_REQUIRED']) ? ($fields['IS_REQUIRED'] === 'Y' ? 'Y' : 'N') : 'N',
 			'SEARCHABLE' => 'N',
 			'FILTRABLE' => 'N',
 			'WITH_DESCRIPTION' => '',
-			'MULTIPLE_CNT' => isset($fields['MULTIPLE_CNT']) ? $fields['MULTIPLE_CNT'] : 0,
+			'MULTIPLE_CNT' => $fields['MULTIPLE_CNT'] ?? 0,
 			'HINT' => '',
-			'ROW_COUNT' => isset($fields['ROW_COUNT']) ? $fields['ROW_COUNT'] : 1,
-			'COL_COUNT' => isset($fields['COL_COUNT']) ? $fields['COL_COUNT'] : 30,
-			'DEFAULT_VALUE' => isset($fields['DEFAULT_VALUE']) ? $fields['DEFAULT_VALUE'] : null,
+			'ROW_COUNT' => $fields['ROW_COUNT'] ?? 1,
+			'COL_COUNT' => $fields['COL_COUNT'] ?? 30,
+			'DEFAULT_VALUE' => $fields['DEFAULT_VALUE'] ?? null,
 			'LIST_TYPE' => 'L',
 			'USER_TYPE_SETTINGS' => $userTypeSettings,
-			'FILE_TYPE' => isset($fields['FILE_TYPE']) ? $fields['FILE_TYPE'] : '',
-			'XML_ID' => isset($fields['XML_ID']) ? $fields['XML_ID'] : ''
-		);
+			'FILE_TYPE' => $fields['FILE_TYPE'] ?? '',
+			'XML_ID' => $fields['XML_ID'] ?? '',
+		];
 
 		if ($arFields['PROPERTY_TYPE'].':'.$arFields['USER_TYPE'] === 'S:map_yandex')
+		{
 			$arFields['MULTIPLE'] = 'N';
+		}
 
-		if ($fields['PROPERTY_TYPE'] === 'L' && isset($fields['VALUES']) && is_array($fields['VALUES']))
+		if (
+			$fields['PROPERTY_TYPE'] === Iblock\PropertyTable::TYPE_LIST
+			&& isset($fields['VALUES'])
+			&& is_array($fields['VALUES'])
+		)
 		{
 			$values = array();
 
 			$newKey = 0;
 			foreach ($fields['VALUES'] as $key => $value)
 			{
-				if (!is_array($value) || !isset($value['VALUE']) || '' == trim($value['VALUE']))
+				if (!is_array($value) || !isset($value['VALUE']) || trim($value['VALUE']) === '')
+				{
 					continue;
-				$values[(0 < intval($key) ? $key : 'n'.$newKey)] = array(
-					'ID' => (0 < intval($key) ? $key : 'n'.$newKey),
-					'VALUE' => strval($value['VALUE']),
-					'XML_ID' => (isset($value['XML_ID']) ? strval($value['XML_ID']) : ''),
-					'SORT' => (isset($value['SORT']) ? intval($value['SORT']) : 500),
-					'DEF' => (isset($value['DEF']) ? ($value['DEF'] === 'Y' ? 'Y' : 'N') : 'N')
-				);
-				$newKey++;
+				}
+				$valueId = (int)$key;
+				if ($valueId <= 0)
+				{
+					$valueId = 'n'.$newKey;
+					$newKey++;
+				}
+				$values[$valueId] = [
+					'ID' => $valueId,
+					'VALUE' => (string)$value['VALUE'],
+					'XML_ID' => $value['XML_ID'] ?? '',
+					'SORT' => (int)$value['SORT'] ?? 500,
+					'DEF' => (isset($value['DEF']) ? ($value['DEF'] === 'Y' ? 'Y' : 'N') : 'N'),
+				];
 			}
 
 			$arFields['VALUES'] = $values;
@@ -4507,12 +4537,16 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 		$property = new CIBlockProperty;
 		$result = $property->Add($arFields);
 
-		if (intval($result) <= 0)
+		if ((int)$result <= 0)
 		{
 			if (!empty($property->LAST_ERROR))
+			{
 				$errors[] = $property->LAST_ERROR;
-			else if($e = $APPLICATION->GetException())
+			}
+			else if ($e = $APPLICATION->GetException())
+			{
 				$errors[] = $e->GetString();
+			}
 		}
 
 		return $result;
@@ -15125,7 +15159,7 @@ class CCrmEntityEditorRestProxy implements ICrmRestProxy
 		}
 
 		$scope = \CCrmRestHelper::resolveParam($arParams, 'scope', '');
-		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
+		if ($scope !== \Bitrix\Crm\Entity\EntityEditorConfigScope::COMMON)
 		{
 			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
 		}

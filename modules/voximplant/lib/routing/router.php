@@ -138,31 +138,38 @@ class Router
 		$queueId = 0;
 		$userId = 0;
 
-		if(mb_substr($phoneNumber, 0, 6) == 'queue:')
+		if(mb_strpos($phoneNumber, 'queue:') === 0)
 		{
 			$queueId = (int)mb_substr($phoneNumber, 6);
 		}
-		else if(mb_substr($phoneNumber, 0, 5) == 'user:')
+		else if(mb_strpos($phoneNumber, 'user:') === 0)
 		{
 			$userId = (int)mb_substr($phoneNumber, 5);
 		}
 		else
 		{
-			$userData = \CVoxImplantIncoming::getUserByDirectCode($phoneNumber);
-			if($userData)
+			$entityInfo = \CVoxImplantIncoming::getByInternalPhoneNumber($phoneNumber);
+			if($entityInfo)
 			{
-				$userId = $userData['USER_ID'];
+				if ($entityInfo['ENTITY_TYPE'] === 'user')
+				{
+					$userId = $entityInfo['ENTITY_ID'];
+				}
+				else
+				{
+					$queueId = $entityInfo['ENTITY_ID'];
+				}
 			}
 		}
 
 		if($userId)
 		{
-			list($userNode, $nextNode) = $this->buildUserGraph($userId, 'direct', 'hangup');
+			list($userNode, $nextNode) = static::buildUserGraph($userId, 'direct', \CVoxImplantIncoming::RULE_HUNGUP);
 			$lastNode->setNext($userNode);
 		}
 		else if($queueId)
 		{
-			$queueNode = $this->buildQueueGraph($queueId, false);
+			$queueNode = static::buildQueueGraph($queueId, false);
 			if($queueNode instanceof Node)
 			{
 				$lastNode->setNext($queueNode);
@@ -173,7 +180,7 @@ class Router
 			$securityNode = new SecurityCheck();
 			$lastNode->setNext($securityNode);
 
-			$pstnNode = new Pstn($phoneNumber, 'hangup');
+			$pstnNode = new Pstn($phoneNumber, \CVoxImplantIncoming::RULE_HUNGUP);
 			$securityNode->setNext($pstnNode);
 		}
 
@@ -197,12 +204,21 @@ class Router
 			if(preg_match('/^sip:(\d+)@/', $sipTo, $matches))
 			{
 				$extension = $matches[1];
-				$userInfo = \CVoxImplantIncoming::getUserByDirectCode($extension);
-				if($userInfo)
+				$entityInfo = \CVoxImplantIncoming::getByInternalPhoneNumber($extension);
+				if ($entityInfo)
 				{
-					list($sipNode, $nextNode) = $this->buildUserGraph($userInfo['USER_ID'], 'sip_to', \CVoxImplantIncoming::RULE_QUEUE);
-					$lastNode->setNext($sipNode);
-					$lastNode = $nextNode;
+					if ($entityInfo['ENTITY_TYPE'] === 'user')
+					{
+						[$sipNode, $nextNode] = static::buildUserGraph($entityInfo['ENTITY_ID'],'sip_to',\CVoxImplantIncoming::RULE_QUEUE);
+						$lastNode->setNext($sipNode);
+						$lastNode = $nextNode;
+					}
+					else
+					{
+						$queueNode = static::buildQueueGraph($entityInfo['ENTITY_ID'],$config['TIMEMAN'] === 'Y');
+						$lastNode->setNext($queueNode);
+						$lastNode = $queueNode;
+					}
 				}
 			}
 		}
@@ -212,16 +228,34 @@ class Router
 			$gatheredDigits = $call->getGatheredDigits();
 			if($gatheredDigits)
 			{
-				$userInfo = \CVoxImplantIncoming::getUserByDirectCode($gatheredDigits);
-				if($userInfo)
+
+				$entityInfo = \CVoxImplantIncoming::getByInternalPhoneNumber($gatheredDigits);
+				if ($entityInfo)
 				{
-					list($directNode, $nextNode) = $this->buildUserGraph($userInfo['USER_ID'], 'direct', $config['DIRECT_CODE_RULE'], true);
-					$lastNode->setNext($directNode);
-					$lastNode = $nextNode;
+					if ($entityInfo['ENTITY_TYPE'] === 'user')
+					{
+						[$directNode, $nextNode] = static::buildUserGraph(
+							$entityInfo['ENTITY_ID'],
+							'direct',
+							$config['DIRECT_CODE_RULE'],
+							true
+						);
+						$lastNode->setNext($directNode);
+						$lastNode = $nextNode;
+					}
+					else
+					{
+						$queueNode = static::buildQueueGraph(
+							$entityInfo['ENTITY_ID'],
+							$config['TIMEMAN'] === 'Y'
+						);
+						$lastNode->setNext($queueNode);
+						$lastNode = $queueNode;
+					}
 				}
 				else
 				{
-					$lastNode->setNext(new Hangup(404, 'Could not find user with extension number ' . $this->call->getGatheredDigits()));
+					$lastNode->setNext(new Hangup(404, 'Could not find user or queue with extension number ' . $this->call->getGatheredDigits()));
 					return $rootNode;
 				}
 			}
@@ -421,13 +455,22 @@ class Router
 		}
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_DIRECT_CODE)
 		{
-			$userInfo = \CVoxImplantIncoming::getUserByDirectCode($this->call->getGatheredDigits());
+			$entityInfo = \CVoxImplantIncoming::getByInternalPhoneNumber($this->call->getGatheredDigits());
 
-			if($userInfo)
+			if($entityInfo)
 			{
-				list($directNode, $nextNode) = $this->buildUserGraph($userInfo['USER_ID'], 'direct', 'voicemail');
-				$lastNode->setNext($directNode);
-				$lastNode = $nextNode;
+				if ($entityInfo['ENTITY_TYPE'] === 'user')
+				{
+					list($directNode, $nextNode) = static::buildUserGraph($entityInfo['ENTITY_ID'], 'direct', 'voicemail');
+					$lastNode->setNext($directNode);
+					$lastNode = $nextNode;
+				}
+				else
+				{
+					$queueNode = static::buildQueueGraph($entityInfo['ENTITY_ID'], $config['TIMEMAN' === 'Y']);
+					$lastNode->setNext($queueNode);
+					$lastNode = $queueNode;
+				}
 			}
 			else
 			{
@@ -440,7 +483,7 @@ class Router
 	protected function updateCallStateWithAction(Action $action)
 	{
 		$firstUserId = 0;
-		if($action->getCommand() == Command::INVITE)
+		if($action->getCommand() === Command::INVITE)
 		{
 			$userIds = [];
 			foreach($action->getParameter('USERS') as $userFields)
@@ -453,7 +496,7 @@ class Router
 				$firstUserId = (int)$userIds[0];
 			}
 		}
-		else if($action->getCommand() == Command::PSTN)
+		else if($action->getCommand() === Command::PSTN)
 		{
 			$firstUserId = (int)$action->getParameter('USER_ID');
 			if($firstUserId > 0)

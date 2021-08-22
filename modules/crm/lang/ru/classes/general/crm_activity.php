@@ -101,4 +101,10 @@ $MESS["CRM_ACTIVITY_CHANGE_MEETING_END_TIME"] = "Перенесено время
 $MESS["CRM_ACTIVITY_CHANGE_CALL_END_TIME"] = "Перенесено время завершения звонка \"#NAME#\"";
 $MESS["CRM_ACTIVITY_CHANGE_TASK_END_TIME"] = "Перенесено время завершения задачи \"#NAME#\"";
 $MESS["CRM_ACTIVITY_HIDDEN_CLIENT"] = "Скрытый клиент";
+$MESS["CRM_ERROR_FIELD_INCORRECT"] = "Некорректно заполнено поле \"%FIELD_NAME%\"";
+$MESS["CRM_ACTIVITY_FIELD_START_DATE"] = "Дата и время начала";
+$MESS["CRM_ACTIVITY_FIELD_END_TIME"] = "Дата и время окончания";
+$MESS["CRM_ACTIVITY_FIELD_DEADLINE"] = "Крайний срок";
+$MESS["CRM_ACTIVITY_FIELD_CREATED"] = "Дата создания";
+$MESS["CRM_ACTIVITY_FIELD_LAST_UPDATED"] = "Дата изменения";
 ?>

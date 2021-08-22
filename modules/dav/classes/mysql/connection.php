@@ -8,11 +8,13 @@ class CDavConnection
 	{
 		global $DB, $APPLICATION;
 
-		$r = self::ParseFields($arFields);
-		if ($r !== true)
+		$res = self::ParseFields($arFields);
+		if ($res !== true)
 		{
-			foreach ($r as $v)
+			foreach ($res as $v)
+			{
 				$APPLICATION->ThrowException($v[0], $v[1]);
+			}
 			return;
 		}
 
@@ -23,7 +25,32 @@ class CDavConnection
 			"VALUES(".$arInsert[1].", ".$DB->CurrentTimeFunction().", ".$DB->CurrentTimeFunction().")";
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
-		return intval($DB->LastID());
+		$id = (int)$DB->LastID();
+		if (($id > 0) && \Bitrix\Main\Loader::includeModule('calendar'))
+		{
+			$connectionType = \Bitrix\Calendar\Util::isGoogleConnection($arFields['ACCOUNT_TYPE'])
+				? 'google'
+				: (CCalendarSync::isYandex($arFields['SERVER_HOST'])
+					? 'yandex'
+					: 'caldav')
+			;
+			$connectionName = $connectionType . $id;
+			\Bitrix\Calendar\Util::addPullEvent(
+				'add_sync_connection',
+				$arFields['ENTITY_ID'],
+				[
+					'syncInfo' => [
+						$connectionName => [
+							'type' => $connectionType,
+						],
+					]
+				]
+			);
+
+			AddEventToStatFile('calendar', 'sync_connection_connected', $connectionType, '', 'server_connection');
+		}
+
+		return $id;
 	}
 
 	public static function GetList($arOrder = array("ID" => "ASC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
@@ -114,8 +141,10 @@ class CDavConnection
 		}
 		else
 		{
-			if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
-				$strSql .= "LIMIT ".intval($arNavStartParams["nTopCount"]);
+			if (is_array($arNavStartParams) && (int)$arNavStartParams["nTopCount"] > 0)
+			{
+				$strSql .= "LIMIT " . (int)$arNavStartParams["nTopCount"];
+			}
 
 			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}

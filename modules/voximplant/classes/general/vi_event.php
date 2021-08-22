@@ -63,36 +63,20 @@ class CVoxImplantEvent
 		{
 			if ($arFields["UF_PHONE_INNER"] <> '')
 			{
-				$phoneInner = preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]);
+				$phoneInner = preg_replace("/\D/", "", $arFields["UF_PHONE_INNER"]);
 				$phoneLength = mb_strlen($phoneInner);
 				if ($phoneLength > 0 && $phoneLength < 5)
 				{
-					$result = \Bitrix\Main\UserTable::getList(array(
-						'select' => array('COUNT'),
-						'filter' => array(
-							'!=ID' => (int)$arFields['ID'],
-							'=UF_PHONE_INNER' => $phoneInner,
-							'=ACTIVE' => 'Y'
-						),
-						'runtime' => array(
-							'COUNT' => array(
-								'data_type' => 'integer',
-								'expression' => array('COUNT(1)')
-							)
-						)
-					));
-					$data = $result->fetch();
-					CVoxImplantHistory::WriteToLog($data);
-					if ($data['COUNT'] > 0)
+					$existingEntity = CVoxImplantIncoming::getByInternalPhoneNumber($phoneInner);
+					if ($existingEntity && !($existingEntity['ENTITY_TYPE'] === 'user' && $existingEntity['ENTITY_ID'] == $arFields['ID']))
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER'));
+						$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_IN_USAGE'));
 						$error = true;
 					}
 					else
 					{
 						$arFields["UF_PHONE_INNER"] = $phoneInner;
 					}
-
 				}
 				else
 				{
@@ -178,28 +162,14 @@ class CVoxImplantEvent
 			{
 				if ($arFields["UF_PHONE_INNER"] <> '')
 				{
-					$phoneInner = preg_replace("/[^0-9]/i", "", $arFields["UF_PHONE_INNER"]);
+					$phoneInner = preg_replace("/\D/", "", $arFields["UF_PHONE_INNER"]);
 					$phoneLength = mb_strlen($phoneInner);
 					if ($phoneLength > 0 && $phoneLength < 5)
 					{
-						$result = \Bitrix\Main\UserTable::getList(array(
-							'select' => array('COUNT'),
-							'filter' => array(
-								'!=ID' => (int)$arFields['ID'],
-								'=UF_PHONE_INNER' => $phoneInner,
-								'=ACTIVE' => 'Y'
-							),
-							'runtime' => array(
-								'COUNT' => array(
-									'data_type' => 'integer',
-									'expression' => array('COUNT(1)')
-								)
-							)
-						));
-						$data = $result->fetch();
-						if ($data['COUNT'] > 0)
+						$existingEntity = CVoxImplantIncoming::getByInternalPhoneNumber($phoneInner);
+						if ($existingEntity && !($existingEntity['ENTITY_TYPE'] === 'user' && $existingEntity['ENTITY_ID'] == $arFields['ID']))
 						{
-							$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER'));
+							$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_IN_USAGE'));
 							$error = true;
 						}
 						else
@@ -207,7 +177,6 @@ class CVoxImplantEvent
 							$arFields["UF_PHONE_INNER"] = $phoneInner;
 							$arCorrectPhones["UF_PHONE_INNER"] = $phoneInner;
 						}
-
 					}
 					else
 					{

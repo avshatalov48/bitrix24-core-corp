@@ -134,7 +134,7 @@ export class SprintSidePanel
 
 	buildStartPanel(): HTMLElement
 	{
-		let differenceStoryPoints = this.currentSprint.getTotalStoryPoints().getPoints();
+		let differenceStoryPoints = this.currentSprint.getStoryPoints().getPoints();
 		differenceStoryPoints = (differenceStoryPoints > 0 ? '+' + differenceStoryPoints : differenceStoryPoints);
 		if (this.lastCompletedSprint)
 		{
@@ -173,7 +173,7 @@ export class SprintSidePanel
 							</div>
 							<div class="tasks-scrum-sprint-sidepanel-info-content">
 								<span class="tasks-scrum-sprint-sidepanel-info-value">
-									${Text.encode(this.currentSprint.getTotalStoryPoints().getPoints())}
+									${Text.encode(this.currentSprint.getStoryPoints().getPoints())}
 								</span>
 								<span class="tasks-scrum-sprint-sidepanel-info-extra">
 									${differenceStoryPoints}
@@ -344,13 +344,13 @@ export class SprintSidePanel
 	{
 		const statsCalculator = new StatsCalculator();
 		const percentage = statsCalculator.calculatePercentage(
-			this.currentSprint.getTotalStoryPoints().getPoints(),
-			this.currentSprint.getTotalCompletedStoryPoints().getPoints()
+			this.currentSprint.getStoryPoints().getPoints(),
+			this.currentSprint.getCompletedStoryPoints().getPoints()
 		);
 
 		let differencePercentage = statsCalculator.calculatePercentage(
-			this.currentSprint.getTotalStoryPoints().getPoints(),
-			this.currentSprint.getTotalCompletedStoryPoints().getPoints()
+			this.currentSprint.getStoryPoints().getPoints(),
+			this.currentSprint.getCompletedStoryPoints().getPoints()
 		);
 		if (this.lastCompletedSprint)
 		{
@@ -493,7 +493,7 @@ export class SprintSidePanel
 	getDifferenceStoryPointsBetweenSprints(firstSprint: Sprint, secondSprint: Sprint): string
 	{
 		let difference = parseFloat(
-			firstSprint.getTotalStoryPoints().getPoints() - secondSprint.getTotalStoryPoints().getPoints()
+			firstSprint.getStoryPoints().getPoints() - secondSprint.getStoryPoints().getPoints()
 		);
 
 		if (Type.isFloat(difference))
@@ -516,13 +516,13 @@ export class SprintSidePanel
 		const statsCalculator = new StatsCalculator();
 
 		const firstPercentage = statsCalculator.calculatePercentage(
-			firstSprint.getTotalStoryPoints().getPoints(),
-			firstSprint.getTotalCompletedStoryPoints().getPoints()
+			firstSprint.getStoryPoints().getPoints(),
+			firstSprint.getCompletedStoryPoints().getPoints()
 		);
 
 		const secondPercentage = statsCalculator.calculatePercentage(
-			secondSprint.getTotalStoryPoints().getPoints(),
-			secondSprint.getTotalCompletedStoryPoints().getPoints()
+			secondSprint.getStoryPoints().getPoints(),
+			secondSprint.getCompletedStoryPoints().getPoints()
 		);
 
 		return parseFloat(firstPercentage) - parseFloat(secondPercentage);

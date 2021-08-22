@@ -5,6 +5,7 @@ $MESS["IMCONNECTOR_FORWARDED_MESSAGE"] = "Forwarded message: ";
 $MESS["IMCONNECTOR_GUEST_USER"] = "Guest";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST"] = "Link to original post: #LINK#";
 $MESS["IMCONNECTOR_MAPS_NAME"] = "Map";
+$MESS["IMCONNECTOR_MESSAGE_ERROR_NOT_DELETE_CHAT"] = "Cannot delete message";
 $MESS["IMCONNECTOR_MESSAGE_ERROR_NOT_SEND_CHAT"] = "Message could not be delivered";
 $MESS["IMCONNECTOR_WALL_DATE_TEXT"] = "from";
 $MESS["IMCONNECTOR_WALL_TEXT"] = "User wall post";

@@ -75,6 +75,8 @@ if (Loader::includeModule('disk'))
 			'taskGuid' => $arResult['TASK_GUID'],
 			'userPath' => $arResult['PATH_TO_USER_PROFILE'],
 			'converted' => $arResult['CONVERTED'],
+			'showCompleteAllButton' => $arResult['SHOW_COMPLETE_ALL_BUTTON'],
+			'collapseOnCompleteAll' => $arResult['COLLAPSE_ON_COMPLETE_ALL'],
 			'ajaxActions' => $arResult['AJAX_ACTIONS'],
 			'options' => $arResult['USER_OPTIONS'],
 			'diskFolderId' => $arResult['DISK_FOLDER_ID'],

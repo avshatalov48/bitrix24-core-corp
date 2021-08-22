@@ -26,7 +26,6 @@ class CheckListFields
 	private $parentId;
 	private $title = '';
 	private $sortIndex;
-	private $displayTitle = '';
 	private $displaySortIndex = '';
 	private $isComplete = false;
 	private $isImportant = false;
@@ -207,10 +206,6 @@ class CheckListFields
 			'SORT_INDEX' => [
 				'SET_CHECK' => $setCheckFunctions['INT'],
 				'SAVE_CHECK' => $saveCheckFunctions['INT'],
-			],
-			'DISPLAY_TITLE' => [
-				'SET_CHECK' => $setCheckFunctions['STRING'],
-				'SAVE_CHECK' => $saveCheckFunctions['STRING'],
 			],
 			'DISPLAY_SORT_INDEX' => [
 				'SET_CHECK' => $setCheckFunctions['STRING'],
@@ -580,22 +575,6 @@ class CheckListFields
 	public function setSortIndex($sortIndex)
 	{
 		$this->sortIndex = $sortIndex;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDisplayTitle()
-	{
-		return $this->displayTitle;
-	}
-
-	/**
-	 * @param $displayTitle
-	 */
-	public function setDisplayTitle($displayTitle)
-	{
-		$this->displayTitle = $displayTitle;
 	}
 
 	/**

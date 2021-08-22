@@ -144,6 +144,10 @@ class Calendar
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Crm\Entity\EntityEditorConfig::isFormFieldVisible
+	 */
 	public static function isUserfieldShownInForm($userfield, $entityType, $categoryId = 0)
 	{
 		$map = array();

@@ -413,12 +413,6 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$arGroups[] = $integratorGroupId;
 		$fields["GROUP_ID"] = $arGroups;
 
-		/*$oldIntegratorId = \CBitrix24::getIntegratorId();
-		if ($oldIntegratorId)
-		{
-			$USER->Update($oldIntegratorId, array("ACTIVE" => "N"));
-		}*/
-
 		$USER->Update($this->userId, $fields);
 
 		return true;

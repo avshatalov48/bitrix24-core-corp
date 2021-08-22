@@ -8,7 +8,20 @@ Loc::loadMessages(__FILE__);
 /**
  * Class QueueTable
  * @package Bitrix\Voximplant
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Queue_Query query()
+ * @method static EO_Queue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Queue_Result getById($id)
+ * @method static EO_Queue_Result getList(array $parameters = array())
+ * @method static EO_Queue_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_Queue createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_Queue_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_Queue wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_Queue_Collection wakeUpCollection($rows)
+ */
 
 class QueueTable extends Entity\DataManager
 {
@@ -62,6 +75,7 @@ class QueueTable extends Entity\DataManager
 				'values' => array('N', 'Y'),
 				'default_value' => 'N'
 			)),
+			'PHONE_NUMBER' => new Entity\StringField('PHONE_NUMBER'),
 			'CNT' => new Entity\ExpressionField('CNT', 'COUNT(*)')
 		);
 	}

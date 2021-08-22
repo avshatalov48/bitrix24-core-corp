@@ -115,6 +115,7 @@ $MESS["TASKS_COPY_TASK"] = "Копировать";
 $MESS["TASKS_ADD_TASK_TO_TIMEMAN"] = "Добавить в план рабочего дня";
 $MESS["TASKS_ADD_TASK_TO_TIMEMAN_EX"] = "Добавить в план рабочего дня";
 $MESS["TASKS_CLOSE_PAGE_CONFIRM"] = "Возможно, внесенные изменения не сохранятся.";
+$MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Добавить тег:";
 
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = 'Пинг-уведомление отправлено';

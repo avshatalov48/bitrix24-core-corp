@@ -125,6 +125,42 @@ class Base
 	}
 
 	/**
+	 * @param $params
+	 * @param $line
+	 * @return Result
+	 */
+	public function processingInputCommandKeyboard($params, $line): Result
+	{
+		$result = new Result();
+
+		$result->addError(new Error(
+			'Does not support this method call',
+			'ERROR_IMCONNECTOR_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+			__METHOD__
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param $params
+	 * @param $line
+	 * @return Result
+	 */
+	public function processingInputSessionVote($params, $line): Result
+	{
+		$result = new Result();
+
+		$result->addError(new Error(
+			'Does not support this method call',
+			'ERROR_IMCONNECTOR_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+			__METHOD__
+		));
+
+		return $result;
+	}
+
+	/**
 	 * Temporary method for processing incoming messages.
 	 *
 	 * @param $message
@@ -155,7 +191,7 @@ class Base
 				//Forwarded message
 				if (!Library::isEmpty($attachment['forward']))
 				{
-					$text = self::formationQuotedText($attachment['forward']);
+					$text = $this->formationQuotedText($attachment['forward']);
 
 					$message['message']['text'] =
 						"------------------------------------------------------\n"
@@ -167,7 +203,7 @@ class Base
 				//Answered message
 				if (!Library::isEmpty($attachment['reply']))
 				{
-					$text = self::formationQuotedText($attachment['reply']);
+					$text = $this->formationQuotedText($attachment['reply']);
 
 					$message['message']['text'] =
 						"------------------------------------------------------\n"
@@ -358,7 +394,7 @@ class Base
 	 * @param array $attachment An array describing quotes.
 	 * @return string
 	 */
-	protected static function formationQuotedText($attachment)
+	protected function formationQuotedText($attachment)
 	{
 		$returnText = '';
 
@@ -764,9 +800,14 @@ class Base
 	{
 		$result = false;
 
-		if($paramsError['code'] === Library::ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT)
+		switch($paramsError['code'])
 		{
-			$result = $this->receivedErrorNotSendMessageChat($paramsError);
+			case Library::ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT:
+				$result = $this->receivedErrorNotSendMessageChat($paramsError);
+				break;
+			case Library::ERROR_CONNECTOR_DELETE_MESSAGE:
+				$result = $this->receivedErrorNotDeleteMessageChat($paramsError);
+				break;
 		}
 
 		return $result;
@@ -777,7 +818,41 @@ class Base
 	 * @param string $message
 	 * @return bool
 	 */
-	protected function receivedErrorNotSendMessageChat($paramsError, $message = ''): bool
+	protected function receivedErrorNotDeleteMessageChat($paramsError, string $message = ''): bool
+	{
+		$result = false;
+
+		if(
+			!empty($paramsError['chatId'])
+			&& $paramsError['chatId'] > 0
+			&& Loader::includeModule('imopenlines')
+		)
+		{
+			$messageExternalError = '';
+			if(!empty($paramsError['messageConnector']))
+			{
+				$messageExternalError = $paramsError['messageConnector'];
+			}
+
+			if(empty($message))
+			{
+				$message = Loc::getMessage('IMCONNECTOR_MESSAGE_ERROR_NOT_DELETE_CHAT');
+			}
+
+			Messages\Error::addErrorNotDeleteChat((int)$paramsError['chatId'], $message, $messageExternalError);
+
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $paramsError
+	 * @param string $message
+	 * @return bool
+	 */
+	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
 		$result = false;
 
@@ -863,7 +938,7 @@ class Base
 	 * @param array $message
 	 * @return array
 	 */
-	protected static function processingMessageForRich(array $message): array
+	protected function processingMessageForRich(array $message): array
 	{
 		$richData = [];
 		if (
@@ -873,58 +948,65 @@ class Base
 		{
 			foreach ($message['message']['attachments'] as $attachment)
 			{
-				$attachment = Web\Json::decode($attachment);
-				if (
-					isset($attachment['BLOCKS'])
-					&& is_array($attachment['BLOCKS'])
-				)
+				try
 				{
-					foreach ($attachment['BLOCKS'] as $block)
+					$attachment = Web\Json::decode($attachment);
+
+					if (
+						isset($attachment['BLOCKS'])
+						&& is_array($attachment['BLOCKS'])
+					)
 					{
-						if (
-							isset($block['RICH_LINK'])
-							&& is_array($block['RICH_LINK'])
-						)
+						foreach ($attachment['BLOCKS'] as $block)
 						{
-							foreach ($block['RICH_LINK'] as $richData)
+							if (
+								isset($block['RICH_LINK'])
+								&& is_array($block['RICH_LINK'])
+							)
 							{
-								if (!empty($richData))
+								foreach ($block['RICH_LINK'] as $richData)
 								{
-									if ($richData['LINK'])
+									if (!empty($richData))
 									{
-										$richData['richData']['url'] = $richData['LINK'];
-									}
-
-									if ($richData['NAME'])
-									{
-										$richData['richData']['title'] = $richData['NAME'];
-									}
-
-									if ($richData['DESC'])
-									{
-										$richData['richData']['description'] = $richData['DESC'];
-									}
-
-									if ($richData['PREVIEW'])
-									{
-										$uri = new Uri($richData['PREVIEW']);
-										if ($uri->getHost())
+										if ($richData['LINK'])
 										{
-											$richData['richData']['image'] = $richData['PREVIEW'];
+											$richData['richData']['url'] = $richData['LINK'];
 										}
-										else
+
+										if ($richData['NAME'])
 										{
-											$richData['richData']['image'] = Connector::getDomainDefault() .'/'. $richData['PREVIEW'];
+											$richData['richData']['title'] = $richData['NAME'];
 										}
-									}
-									elseif($richData['EXTRA_IMAGE'])
-									{
-										$richData['richData']['image'] = $richData['EXTRA_IMAGE'];
+
+										if ($richData['DESC'])
+										{
+											$richData['richData']['description'] = $richData['DESC'];
+										}
+
+										if ($richData['PREVIEW'])
+										{
+											$uri = new Uri($richData['PREVIEW']);
+											if ($uri->getHost())
+											{
+												$richData['richData']['image'] = $richData['PREVIEW'];
+											}
+											else
+											{
+												$richData['richData']['image'] = Connector::getDomainDefault() .'/'. $richData['PREVIEW'];
+											}
+										}
+										elseif($richData['EXTRA_IMAGE'])
+										{
+											$richData['richData']['image'] = $richData['EXTRA_IMAGE'];
+										}
 									}
 								}
 							}
 						}
 					}
+				}
+				catch (\Exception $e)
+				{
 				}
 			}
 		}
@@ -938,7 +1020,7 @@ class Base
 	 * @param array $message
 	 * @return array
 	 */
-	protected static function processingMessageForOperatorData(array $message): array
+	protected function processingMessageForOperatorData(array $message): array
 	{
 		if(!empty($message['user']))
 		{

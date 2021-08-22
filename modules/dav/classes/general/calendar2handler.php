@@ -1011,19 +1011,19 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			]);
 		}
 
-		public function GetAttendees($codeAttendees)
+		public static function GetAttendees($codeAttendees)
 		{
 			$userIdList = [];
 			$userList = [];
 
 			foreach ($codeAttendees as $codeAttend)
 			{
-				if (mb_substr($codeAttend, 0, 1) === 'U')
+				if (mb_strpos($codeAttend, 'U') === 0)
 				{
 					$userId = (int)(mb_substr($codeAttend, 1));
 					$userIdList[] = $userId;
 				}
-				}
+			}
 
 			if (!empty($userIdList))
 			{

@@ -3,6 +3,22 @@ namespace Bitrix\Voximplant\Model;
 
 use Bitrix\Main\Entity;
 
+/**
+ * Class IvrTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Ivr_Query query()
+ * @method static EO_Ivr_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Ivr_Result getById($id)
+ * @method static EO_Ivr_Result getList(array $parameters = array())
+ * @method static EO_Ivr_Entity getEntity()
+ * @method static \Bitrix\Voximplant\Model\EO_Ivr createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\Model\EO_Ivr_Collection createCollection()
+ * @method static \Bitrix\Voximplant\Model\EO_Ivr wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\Model\EO_Ivr_Collection wakeUpCollection($rows)
+ */
 class IvrTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -1,0 +1,4 @@
+<?php
+$MESS["TASKS_MOBILE_EFFICIENCY_IN_PROGRESS"] = "Всего задач";
+$MESS["TASKS_MOBILE_EFFICIENCY_COMPLETED"] = "Завершено задач";
+$MESS["TASKS_MOBILE_EFFICIENCY_VIOLATIONS"] = "Замечаний к задачам";

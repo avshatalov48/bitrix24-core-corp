@@ -3,6 +3,9 @@ import {ContentComponent} from "./content";
 
 export const PopupWrapperComponent = {
 	components: {LoaderComponent, ContentComponent},
+	props: [
+		"isCrurrentUserAdmin",
+	],
 	data()
 	{
 		return {
@@ -31,6 +34,7 @@ export const PopupWrapperComponent = {
 				this.invitationLink = response.data.invitationLink;
 				this.structureLink = response.data.structureLink;
 				this.isInvitationAvailable = response.data.isInvitationAvailable;
+				this.isExtranetAvailable = response.data.isExtranetAvailable;
 				this.users = response.data.users;
 				this.loaded = true;
 				this.loading = false;
@@ -48,7 +52,9 @@ export const PopupWrapperComponent = {
 				:invitationLink="invitationLink"
 				:structureLink="structureLink"
 				:isInvitationAvailable="isInvitationAvailable"
+				:isExtranetAvailable="isExtranetAvailable"
 				:users="users"
+				:isCrurrentUserAdmin="isCrurrentUserAdmin"
 			>
 			</ContentComponent>
 		</div>

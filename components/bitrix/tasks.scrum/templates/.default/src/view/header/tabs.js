@@ -15,23 +15,35 @@ export class Tabs
 
 	render(): HTMLElement
 	{
-		const planTabActiveClass = (this.views['plan'].active ? 'tasks-scrum-switcher-tab-active' : '');
-		const activeTabActiveClass = (this.views['activeSprint'].active ? 'tasks-scrum-switcher-tab-active' : '');
-		const completedTabActiveClass = (this.views['completedSprint'].active ? 'tasks-scrum-switcher-tab-active' : '');
+		const planTabActiveClass = (
+			this.views['plan'].active
+			? 'tasks-view-switcher--item --active'
+			: ''
+		);
+		const activeTabActiveClass = (
+			this.views['activeSprint'].active
+			? 'tasks-view-switcher--item --active'
+			: ''
+		);
+		const completedTabActiveClass = (
+			this.views['completedSprint'].active
+			? 'tasks-view-switcher--item --active'
+			: ''
+		);
 
 		return Tag.render`
-			<div class="tasks-scrum-switcher-views">
+			<div class="tasks-view-switcher">
 				<a
 					href="${this.views['plan'].url}"
-					class="tasks-scrum-switcher-tab ${planTabActiveClass}"
+					class="tasks-view-switcher--item ${planTabActiveClass}"
 				>${Text.encode(this.views['plan'].name)}</a>
 				<a
 					href="${this.views['activeSprint'].url}"
-					class="tasks-scrum-switcher-tab ${activeTabActiveClass}"
+					class="tasks-view-switcher--item ${activeTabActiveClass}"
 				>${Text.encode(this.views['activeSprint'].name)}</a>
 				<a
 					href="${this.views['completedSprint'].url}"
-					class="tasks-scrum-switcher-tab ${completedTabActiveClass}"
+					class="tasks-view-switcher--item ${completedTabActiveClass}"
 				>${Text.encode(this.views['completedSprint'].name)}</a>
 			</div>
 		`;

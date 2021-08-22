@@ -1,6 +1,8 @@
 <?
 $MESS["CRM_DEAL_FILTER_ALL"] = "(все)";
 $MESS["CRM_DEAL_FILTER_ORDER_STAGE"] = "Статус оплаты сделки";
+$MESS["CRM_DEAL_FILTER_PAYMENT_STAGE"] = "Статус оплаты";
+$MESS["CRM_DEAL_FILTER_PAYMENT_PAID"] = "Дата проведения оплаты";
 $MESS["CRM_DEAL_FILTER_DELIVERY_STAGE"] = "Статус доставки";
 $MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID"] = "Группа стадий";
 $MESS["CRM_DEAL_FILTER_ACTIVITY_COUNTER"] = "Дела";

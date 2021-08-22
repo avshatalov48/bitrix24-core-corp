@@ -8,6 +8,22 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class ViolationRulesTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ViolationRules_Query query()
+ * @method static EO_ViolationRules_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ViolationRules_Result getById($id)
+ * @method static EO_ViolationRules_Result getList(array $parameters = array())
+ * @method static EO_ViolationRules_Entity getEntity()
+ * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRules createObject($setDefaultValues = true)
+ * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection createCollection()
+ * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRules wakeUpObject($row)
+ * @method static \Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection wakeUpCollection($rows)
+ */
 class ViolationRulesTable extends Main\ORM\Data\DataManager
 {
 	const USERS_TO_NOTIFY_USER_MANAGER = 'USER_MANAGER';

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -12,9 +12,9 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 
-use \Bitrix\Tasks\DependenceTable;
-use \Bitrix\Tasks\DB\Tree;
-use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Internals\DataBase\Tree\Exception;
 
 final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 {
@@ -23,17 +23,26 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function add($taskIdFrom, $taskIdTo, $linkType)
 	{
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskIdFrom)
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskIdTo)
+		)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
 		try
 		{
-			$task = new \CTaskItem($taskIdTo, User::getId());
+			$task = new \CTaskItem($taskIdTo, $this->userId);
 			$task->addDependOn($taskIdFrom, $linkType);
 		}
-		catch(Tree\Exception | \CTaskAssertException $e)
+		catch(Exception | \CTaskAssertException $e)
 		{
 			$this->errors->add('ILLEGAL_NEW_LINK', \Bitrix\Tasks\Dispatcher::proxyExceptionMessage($e));
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
@@ -41,16 +50,25 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function delete($taskIdFrom, $taskIdTo)
 	{
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskIdFrom)
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskIdTo)
+		)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
 		try
 		{
-			$task = new \CTaskItem($taskIdTo, User::getId());
+			$task = new \CTaskItem($taskIdTo, $this->userId);
 			$task->deleteDependOn($taskIdFrom);
 		}
-		catch(Tree\Exception | \CTaskAssertException $e)
+		catch(Exception | \CTaskAssertException $e)
 		{
 			$this->errors->add('ILLEGAL_LINK', \Bitrix\Tasks\Dispatcher::proxyExceptionMessage($e));
 		}
 
-		return array();
+		return [];
 	}
 }

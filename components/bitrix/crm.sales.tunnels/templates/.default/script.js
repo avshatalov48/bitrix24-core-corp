@@ -3339,6 +3339,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	            stage.TUNNELS.push(response.data.tunnel);
 	          }).catch(function (response) {
+	            var link = event.data.link;
+	            link.from.removeLink(link, true);
+
 	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
 	          });
 	        }

@@ -22,7 +22,7 @@ export class Entity
 				break;
 
 			case EntityType.unknown:
-				this.createUnknown();
+				this.createUnknown(params);
 				break;
 
 			case EntityType.incognito:
@@ -83,10 +83,13 @@ export class Entity
 		this.title = Loc.getMessage('TIMEMAN_PWT_REPORT_ABSENCE');
 	}
 
-	createUnknown()
+	createUnknown(params)
 	{
 		this.type = EntityType.unknown;
 		this.title = Loc.getMessage('TIMEMAN_PWT_REPORT_UNKNOWN');
+
+		this.pureName = params.name;
+		this.pureTitle = params.title;
 	}
 
 	createIncognito()

@@ -27,6 +27,8 @@ Loc::loadMessages(__FILE__);
  */
 class Util
 {
+	const CP_BITRIX_PATH = 'https://cp.bitrix.ru';
+
 	public static function getDepartmentEmployees($params)
 	{
 		if (!is_array($params["DEPARTMENTS"]))

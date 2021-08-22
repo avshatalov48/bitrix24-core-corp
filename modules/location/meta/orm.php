@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Location\Model\AddressFieldTable:location/lib/model/addressfieldtable.php:0ff7400d22fa5d28ec391dd5f9aecf6b */
+/* ORMENTITYANNOTATION:Bitrix\Location\Model\AddressFieldTable:location/lib/model/addressfieldtable.php:8240c50789d3f5ffd298d5d38603e379 */
 namespace Bitrix\Location\Model {
 	/**
 	 * EO_AddressField
@@ -133,18 +133,6 @@ namespace Bitrix\Location\Model {
 	}
 }
 namespace Bitrix\Location\Model {
-	/**
-	 * @method static EO_AddressField_Query query()
-	 * @method static EO_AddressField_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AddressField_Result getById($id)
-	 * @method static EO_AddressField_Result getList(array $parameters = array())
-	 * @method static EO_AddressField_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_AddressField createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_AddressField_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_AddressField wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_AddressField_Collection wakeUpCollection($rows)
-	 */
-	class AddressFieldTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -286,18 +274,6 @@ namespace Bitrix\Location\Model {
 	}
 }
 namespace Bitrix\Location\Model {
-	/**
-	 * @method static EO_AddressLink_Query query()
-	 * @method static EO_AddressLink_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_AddressLink_Result getById($id)
-	 * @method static EO_AddressLink_Result getList(array $parameters = array())
-	 * @method static EO_AddressLink_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_AddressLink createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_AddressLink_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_AddressLink wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_AddressLink_Collection wakeUpCollection($rows)
-	 */
-	class AddressLinkTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -504,18 +480,6 @@ namespace Bitrix\Location\Model {
 }
 namespace Bitrix\Location\Model {
 	/**
-	 * @method static EO_Address_Query query()
-	 * @method static EO_Address_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Address_Result getById($id)
-	 * @method static EO_Address_Result getList(array $parameters = array())
-	 * @method static EO_Address_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_Address createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_Address_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_Address wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_Address_Collection wakeUpCollection($rows)
-	 */
-	class AddressTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -676,18 +640,6 @@ namespace Bitrix\Location\Model {
 }
 namespace Bitrix\Location\Model {
 	/**
-	 * @method static EO_Hierarchy_Query query()
-	 * @method static EO_Hierarchy_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Hierarchy_Result getById($id)
-	 * @method static EO_Hierarchy_Result getList(array $parameters = array())
-	 * @method static EO_Hierarchy_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_Hierarchy createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_Hierarchy_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_Hierarchy wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_Hierarchy_Collection wakeUpCollection($rows)
-	 */
-	class HierarchyTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -835,18 +787,6 @@ namespace Bitrix\Location\Model {
 }
 namespace Bitrix\Location\Model {
 	/**
-	 * @method static EO_LocationField_Query query()
-	 * @method static EO_LocationField_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_LocationField_Result getById($id)
-	 * @method static EO_LocationField_Result getList(array $parameters = array())
-	 * @method static EO_LocationField_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_LocationField createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_LocationField_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_LocationField wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_LocationField_Collection wakeUpCollection($rows)
-	 */
-	class LocationFieldTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -872,7 +812,7 @@ namespace Bitrix\Location\Model {
 	 */
 	class EO_LocationField_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Location\Model\LocationNameTable:location/lib/model/locationnametable.php:2943e389f280a1e18555bd11032800c6 */
+/* ORMENTITYANNOTATION:Bitrix\Location\Model\LocationNameTable:location/lib/model/locationnametable.php:3d75ce1a7c9792df5cbda3d344b2392b */
 namespace Bitrix\Location\Model {
 	/**
 	 * EO_LocationName
@@ -1005,18 +945,6 @@ namespace Bitrix\Location\Model {
 	}
 }
 namespace Bitrix\Location\Model {
-	/**
-	 * @method static EO_LocationName_Query query()
-	 * @method static EO_LocationName_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_LocationName_Result getById($id)
-	 * @method static EO_LocationName_Result getList(array $parameters = array())
-	 * @method static EO_LocationName_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_LocationName createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_LocationName_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_LocationName wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_LocationName_Collection wakeUpCollection($rows)
-	 */
-	class LocationNameTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------
@@ -1288,18 +1216,6 @@ namespace Bitrix\Location\Model {
 }
 namespace Bitrix\Location\Model {
 	/**
-	 * @method static EO_Location_Query query()
-	 * @method static EO_Location_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Location_Result getById($id)
-	 * @method static EO_Location_Result getList(array $parameters = array())
-	 * @method static EO_Location_Entity getEntity()
-	 * @method static \Bitrix\Location\Model\EO_Location createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Location\Model\EO_Location_Collection createCollection()
-	 * @method static \Bitrix\Location\Model\EO_Location wakeUpObject($row)
-	 * @method static \Bitrix\Location\Model\EO_Location_Collection wakeUpCollection($rows)
-	 */
-	class LocationTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -1324,4 +1240,144 @@ namespace Bitrix\Location\Model {
 	 * @method \Bitrix\Location\Model\EO_Location_Collection wakeUpCollection($rows)
 	 */
 	class EO_Location_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Location\Model\SourceTable:location/lib/model/sourcetable.php:f403856cae290adc7a05962b4257aed2 */
+namespace Bitrix\Location\Model {
+	/**
+	 * EO_Source
+	 * @see \Bitrix\Location\Model\SourceTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string getCode()
+	 * @method \Bitrix\Location\Model\EO_Source setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method bool hasCode()
+	 * @method bool isCodeFilled()
+	 * @method bool isCodeChanged()
+	 * @method \string getName()
+	 * @method \Bitrix\Location\Model\EO_Source setName(\string|\Bitrix\Main\DB\SqlExpression $name)
+	 * @method bool hasName()
+	 * @method bool isNameFilled()
+	 * @method bool isNameChanged()
+	 * @method \string remindActualName()
+	 * @method \string requireName()
+	 * @method \Bitrix\Location\Model\EO_Source resetName()
+	 * @method \Bitrix\Location\Model\EO_Source unsetName()
+	 * @method \string fillName()
+	 * @method \string getConfig()
+	 * @method \Bitrix\Location\Model\EO_Source setConfig(\string|\Bitrix\Main\DB\SqlExpression $config)
+	 * @method bool hasConfig()
+	 * @method bool isConfigFilled()
+	 * @method bool isConfigChanged()
+	 * @method \string remindActualConfig()
+	 * @method \string requireConfig()
+	 * @method \Bitrix\Location\Model\EO_Source resetConfig()
+	 * @method \Bitrix\Location\Model\EO_Source unsetConfig()
+	 * @method \string fillConfig()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Location\Model\EO_Source set($fieldName, $value)
+	 * @method \Bitrix\Location\Model\EO_Source reset($fieldName)
+	 * @method \Bitrix\Location\Model\EO_Source unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Location\Model\EO_Source wakeUp($data)
+	 */
+	class EO_Source {
+		/* @var \Bitrix\Location\Model\SourceTable */
+		static public $dataClass = '\Bitrix\Location\Model\SourceTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Location\Model {
+	/**
+	 * EO_Source_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \string[] getCodeList()
+	 * @method \string[] getNameList()
+	 * @method \string[] fillName()
+	 * @method \string[] getConfigList()
+	 * @method \string[] fillConfig()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Location\Model\EO_Source $object)
+	 * @method bool has(\Bitrix\Location\Model\EO_Source $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Location\Model\EO_Source getByPrimary($primary)
+	 * @method \Bitrix\Location\Model\EO_Source[] getAll()
+	 * @method bool remove(\Bitrix\Location\Model\EO_Source $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Location\Model\EO_Source_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Location\Model\EO_Source current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Source_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Location\Model\SourceTable */
+		static public $dataClass = '\Bitrix\Location\Model\SourceTable';
+	}
+}
+namespace Bitrix\Location\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Source_Result exec()
+	 * @method \Bitrix\Location\Model\EO_Source fetchObject()
+	 * @method \Bitrix\Location\Model\EO_Source_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Source_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Location\Model\EO_Source fetchObject()
+	 * @method \Bitrix\Location\Model\EO_Source_Collection fetchCollection()
+	 */
+	class EO_Source_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Location\Model\EO_Source createObject($setDefaultValues = true)
+	 * @method \Bitrix\Location\Model\EO_Source_Collection createCollection()
+	 * @method \Bitrix\Location\Model\EO_Source wakeUpObject($row)
+	 * @method \Bitrix\Location\Model\EO_Source_Collection wakeUpCollection($rows)
+	 */
+	class EO_Source_Entity extends \Bitrix\Main\ORM\Entity {}
 }

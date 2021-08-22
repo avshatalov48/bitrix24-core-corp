@@ -8,6 +8,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class CIntranetUstatOnlineComponent extends UstatOnline
 {
+	protected function checkParams(): void
+	{
+		if (isset($this->arParams['MODE']) && $this->arParams['MODE'] === 'popup')
+		{
+			$this->arResult['DISPLAY_MODE'] = 'popup';
+		}
+
+		if (isset($this->arParams['MAX_USER_TO_SHOW']))
+		{
+			$this->arParams['MAX_USER_TO_SHOW'] = intval($this->arParams['MAX_USER_TO_SHOW']);
+			if ($this->arParams['MAX_USER_TO_SHOW'] >= 7 && $this->arParams['MAX_USER_TO_SHOW'] <= 10)
+			{
+				$this->arResult['MAX_USER_TO_SHOW'] = $this->arParams['MAX_USER_TO_SHOW'];
+			}
+		}
+	}
+
 	public function executeComponent(): void
 	{
 		if (!$this->checkModules())
@@ -15,6 +32,11 @@ class CIntranetUstatOnlineComponent extends UstatOnline
 			$this->showErrors();
 			return;
 		}
+
+		$this->arResult['DISPLAY_MODE'] = 'sidebar';
+		$this->arResult['MAX_USER_TO_SHOW'] = 7;
+
+		$this->checkParams();
 
 		$this->arResult["LIMIT_ONLINE_SECONDS"] = $this->getLimitOnlineSeconds();
 		$this->arResult["IS_FULL_ANIMATION_MODE"] = self::isFullAnimationMode();

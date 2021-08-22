@@ -4,17 +4,22 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2016 Bitrix
- * 
+ *
  * @access private
  */
 
 namespace Bitrix\Tasks\Dispatcher;
 
+use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
 use \Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\User;
 
 abstract class PublicAction
 {
 	protected $errors = null;
+	protected $userId;
+	protected $request;
 
 	// todo: the ability to specify according to which version API should behave
 	// todo: transform number-dot notation (like '10.5.3') into an integer
@@ -25,6 +30,8 @@ abstract class PublicAction
 	public function __construct()
 	{
 		$this->errors = new Collection();
+		$this->userId = (int)User::getId();
+		$this->request = $this->getRequest();
 	}
 
 	public function getErrors()
@@ -73,6 +80,23 @@ abstract class PublicAction
 	protected function checkTaskId($id)
 	{
 		return $this->checkId($id, 'Task item');
+	}
+
+	/**
+	 * @return \Bitrix\Main\Type\ParameterDictionary
+	 */
+	protected function getRequest()
+	{
+		\CUtil::JSPostUnescape();
+
+		$request = Context::getCurrent()->getRequest();
+		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
+		return $request->getPostList();
+	}
+
+	protected function addForbiddenError()
+	{
+		$this->errors->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 
 	protected function checkId($id, $itemName = 'Item')

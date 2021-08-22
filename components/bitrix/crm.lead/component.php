@@ -200,10 +200,14 @@ if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, array('encode' => true));
 		}
 	}
-	LocalRedirect($redirectUrl, '301 Moved Permanently');
+	LocalRedirect($redirectUrl, false,'301 Moved Permanently');
 }
-else
+
+if (
+	!Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermission()
+	&& ($componentPage !== 'details')
+)
 {
-	$this->IncludeComponentTemplate($componentPage);
+	$componentPage = 'restrictions';
 }
-?>
+$this->IncludeComponentTemplate($componentPage);

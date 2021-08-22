@@ -38,14 +38,6 @@ export default {
 				fields.push(item.fields);
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
-			if (this.isNeedDisableSubmit())
-			{
-				this.$store.commit('orderCreation/disableSubmit');
-			}
-			else
-			{
-				this.$store.commit('orderCreation/enableSubmit')
-			}
 		}
 		if (Type.isObject(this.$root.$app.options.totals))
 		{
@@ -69,6 +61,15 @@ export default {
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
 			}
 		);
+
+		if (this.isNeedDisableSubmit())
+		{
+			this.$store.commit('orderCreation/disableSubmit');
+		}
+		else
+		{
+			this.$store.commit('orderCreation/enableSubmit')
+		}
 
 		EventEmitter.subscribe(
 			this.productForm,
@@ -169,7 +170,11 @@ export default {
 		isNeedDisableSubmit()
 		{
 			const basket = this.$store.getters['orderCreation/getBasket']();
-			if (basket.length <= 0 || this.$root.$app.options.contactPhone === '')
+
+			if (
+				basket.length <= 0
+				|| (this.productForm && this.productForm.hasErrors())
+			)
 			{
 				return true;
 			}

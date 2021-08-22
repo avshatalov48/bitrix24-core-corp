@@ -1295,21 +1295,6 @@ if(typeof(BX.Crm.EditorTabLazyLoader) === "undefined")
 					}
 				}).then(this._onRequestSuccess.bind(this), this._onRequestFailure.bind(this));
 			}
-			else if (request.isComponentAjaxAction && request.detailComponent)
-			{
-				BX.ajax.runComponentAction(request.detailComponent, 'children', {
-					mode: 'class',
-					data: {
-						parentEntityTypeId: request.params.PARENT_ENTITY_TYPE_ID,
-						parentEntityId: request.params.PARENT_ENTITY_ID,
-						entityTypeId: request.params.ENTITY_TYPE_ID
-					}
-				}).then(function (response){
-					this._container.innerHTML = response.data.html;
-					var result = BX.processHTML(response.data.html);
-					BX.ajax.processScripts(result.SCRIPT);
-				}.bind(this));
-			}
 			else
 			{
 				BX.ajax({

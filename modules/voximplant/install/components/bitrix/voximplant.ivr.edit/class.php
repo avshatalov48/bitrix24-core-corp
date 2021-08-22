@@ -2,6 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Security\Permissions;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,6 +24,9 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 		if(!\Bitrix\Main\Loader::includeModule('voximplant'))
 			return false;
 
+		if(!$this::checkAccess())
+			return false;
+
 		$this->init();
 		$this->arResult = $this->prepareData();
 		if(isset($_REQUEST['html']))
@@ -32,6 +36,12 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 		return $this->arResult;
 	}
 
+	protected static function checkAccess()
+	{
+		$userPermissions = Permissions::createWithCurrentUser();
+		return $userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY);
+	}
+
 	public static function saveIvr(array $ivr)
 	{
 		$result = new \Bitrix\Main\Result();
@@ -39,6 +49,12 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 		if(!\Bitrix\Voximplant\Ivr\Ivr::isEnabled())
 		{
 			$result->addError(new \Bitrix\Main\Error(GetMessage('VOX_IVR_EDIT_ERROR_IVR_NOT_AVAILABLE')));
+			return $result;
+		}
+
+		if(!static::checkAccess())
+		{
+			$result->addError(new \Bitrix\Main\Error(GetMessage('VOX_IVR_EDIT_ERROR_ACCESS_DENIED')));
 			return $result;
 		}
 
@@ -237,6 +253,12 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 		if(!isset($_FILES['FILE']))
 		{
 			$result->addError(new \Bitrix\Main\Error(Loc::getMessage('VOX_IVR_FILE_UPLOAD_ERROR')));
+			return $result;
+		}
+
+		if(!static::checkAccess())
+		{
+			$result->addError(new \Bitrix\Main\Error(GetMessage('VOX_IVR_EDIT_ERROR_ACCESS_DENIED')));
 			return $result;
 		}
 

@@ -49,12 +49,6 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 					}
 				}
 			}
-			else
-			{
-				$sprints = \Bitrix\Tasks\Kanban\SprintTable::getAllSprints(
-					$this->arParams['GROUP_ID']
-				);
-			}
 		}
 
 		return $sprints;

@@ -67,13 +67,16 @@ $APPLICATION->IncludeComponent(
 $filterLayout = ob_get_clean();
 */
 
-$this->SetViewTarget('pagetitle');
-?>
-	<button id="crm-tracking-expenses-add" type="button" class="ui-btn ui-btn-primary">
-		<?=Loc::getMessage('CRM_TRACKING_EXPENSES_BTN_ADD')?>
-	</button>
-<?
-$this->EndViewTarget();
+if ($arResult['SOURCE_NAME'])
+{
+	$this->SetViewTarget('pagetitle');
+	?>
+		<button id="crm-tracking-expenses-add" type="button" class="ui-btn ui-btn-primary">
+			<?=Loc::getMessage('CRM_TRACKING_EXPENSES_BTN_ADD')?>
+		</button>
+	<?
+	$this->EndViewTarget();
+}
 
 $snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));

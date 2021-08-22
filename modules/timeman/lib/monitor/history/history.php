@@ -1,10 +1,8 @@
 <?php
 namespace Bitrix\Timeman\Monitor\History;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -104,9 +102,15 @@ class History
 				}
 			}
 
+			//TODO: refactor, transfer only what is needed instead of the whole history
 			if (is_array($history['chartPackage']))
 			{
 				UserChart::record($history);
+			}
+
+			if ($history['comment'] !== '')
+			{
+				ReportComment::record($history);
 			}
 		}
 
@@ -115,54 +119,17 @@ class History
 
 	public static function deleteForCurrentUser(string $dateLog, string $desktopCode): bool
 	{
-		$connection = Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
-
-		$dateLog = $sqlHelper->forSql($dateLog);
-		$desktopCode = $sqlHelper->forSql($desktopCode);
 		$userId = User::getCurrentUserId();
 
-		$deleteAbsenceQuery = "
-			DELETE FROM b_timeman_monitor_absence WHERE USER_LOG_ID IN (
-				SELECT ID
-				FROM b_timeman_monitor_user_log
-				WHERE DATE_LOG = '{$dateLog}' 
-				  and USER_ID = {$userId} 
-				  and DESKTOP_CODE = '{$desktopCode}'
-			);
-		";
+		Absence::remove($userId, $dateLog, $desktopCode);
 
-		$connection->query($deleteAbsenceQuery);
+		Comment::remove($userId, $dateLog, $desktopCode);
 
-		$deleteCommentsQuery = "
-			DELETE FROM b_timeman_monitor_comment WHERE USER_LOG_ID IN (
-				SELECT ID
-				FROM b_timeman_monitor_user_log
-				WHERE DATE_LOG = '{$dateLog}' 
-				  and USER_ID = {$userId} 
-				  and DESKTOP_CODE = '{$desktopCode}'
-			);
-		";
+		ReportComment::remove($userId, $dateLog, $desktopCode);
 
-		$connection->query($deleteCommentsQuery);
+		UserLog::remove($userId, $dateLog, $desktopCode);
 
-		$deleteUserLogQuery = "
-			DELETE FROM b_timeman_monitor_user_log 
-			WHERE DATE_LOG = '{$dateLog}' 
-			  and USER_ID = {$userId} 
-			  and DESKTOP_CODE = '{$desktopCode}'
-		";
-
-		$connection->query($deleteUserLogQuery);
-
-		$deleteUserChartQuery = "
-			DELETE FROM b_timeman_monitor_user_chart 
-			WHERE DATE_LOG = '{$dateLog}' 
-			  and USER_ID = {$userId} 
-			  and DESKTOP_CODE = '{$desktopCode}'
-		";
-
-		$connection->query($deleteUserChartQuery);
+		UserChart::remove($userId, $dateLog, $desktopCode);
 
 		return true;
 	}
@@ -214,7 +181,7 @@ class History
 
 			$absence[] = [
 				'USER_LOG_ID' => $entity['USER_LOG_ID'],
-				'TIME_START' => new DateTime($entity['timeStart'], \DateTime::ATOM),
+				'TIME_START' => new DateTime($entity['timeStart'], \DateTimeInterface::RFC3339),
 			];
 		}
 

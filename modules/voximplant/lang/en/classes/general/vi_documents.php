@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DOCUMENTS_VERIFICATION_NOTIFY"] = "Documentation required to rent phone numbers has been verified.";
 $MESS["DOCUMENTS_VERIFICATION_NOTIFY_BODY_REQUIRED"] = "Reason: #REJECT_REASON#. Please click \"Manage Numbers\" to submit documentation again.";
 $MESS["DOCUMENTS_VERIFICATION_NOTIFY_BODY_VERIFIED"] = "You can now rent a phone number and handle calls in your Bitrix24!";
@@ -21,7 +21,7 @@ $MESS["VI_DOCS_IS_INDIVIDUAL_Y"] = "Natural person";
 $MESS["VI_DOCS_STATUS_DECLINED"] = "Documents rejected";
 $MESS["VI_DOCS_STATUS_IN_PROGRESS"] = "Verifying documents";
 $MESS["VI_DOCS_STATUS_NOT_REQUIRED"] = "No documentation is required (there are no rented phone numbers)";
+$MESS["VI_DOCS_STATUS_PENDING"] = "Additional documents are required";
 $MESS["VI_DOCS_STATUS_REJECTED"] = "Documents rejected";
 $MESS["VI_DOCS_STATUS_REQUIRED"] = "Documents pending";
 $MESS["VI_DOCS_STATUS_VERIFIED"] = "Documents verified";
-?>

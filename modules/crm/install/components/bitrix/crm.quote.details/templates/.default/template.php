@@ -20,12 +20,14 @@ if($this->getComponent()->getErrors())
 
 	return;
 }
-/** @see \Bitrix\Crm\Component\Base::addTopPanel() */
-$this->getComponent()->addTopPanel($this);
+if (\Bitrix\Crm\Restriction\RestrictionManager::getQuotesRestriction()->hasPermission())
+{
+	/** @see \Bitrix\Crm\Component\Base::addTopPanel() */
+	$this->getComponent()->addTopPanel($this);
 
-/** @see \Bitrix\Crm\Component\Base::addToolbar() */
-$this->getComponent()->addToolbar($this);
-
+	/** @see \Bitrix\Crm\Component\Base::addToolbar() */
+	$this->getComponent()->addToolbar($this);
+}
 /** @see \Bitrix\Crm\Component\Base::addJsRouter() */
 $this->getComponent()->addJsRouter($this);
 ?>

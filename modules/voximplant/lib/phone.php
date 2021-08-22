@@ -21,7 +21,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Voximplant
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Phone_Query query()
+ * @method static EO_Phone_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Phone_Result getById($id)
+ * @method static EO_Phone_Result getList(array $parameters = array())
+ * @method static EO_Phone_Entity getEntity()
+ * @method static \Bitrix\Voximplant\EO_Phone createObject($setDefaultValues = true)
+ * @method static \Bitrix\Voximplant\EO_Phone_Collection createCollection()
+ * @method static \Bitrix\Voximplant\EO_Phone wakeUpObject($row)
+ * @method static \Bitrix\Voximplant\EO_Phone_Collection wakeUpCollection($rows)
+ */
 
 class PhoneTable extends Model\Base
 {

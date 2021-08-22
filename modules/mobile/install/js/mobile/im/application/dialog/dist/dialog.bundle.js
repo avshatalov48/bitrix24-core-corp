@@ -816,7 +816,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      console.log('6. initPullClient');
 
-	      if (this.storedEvents && this.storedEvents.length > 0) {
+	      if (this.storedEvents && this.storedEvents.length > 0 && this.controller.application.isUnreadMessagesLoaded()) {
 	        //sort events and get first 50 (to match unread messages cache size)
 	        this.storedEvents = this.storedEvents.sort(function (a, b) {
 	          return a.message.id - b.message.id;
@@ -2333,19 +2333,25 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	            _this25.controller.getStore().dispatch('files/set', _this25.controller.application.prepareFilesBeforeSave(dialogMessageUnread.files));
 
-	            _this25.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages);
+	            _this25.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages).then(function () {
+	              app.titleAction("setParams", {
+	                useProgress: false,
+	                useLetterImage: true
+	              });
 
-	            app.titleAction("setParams", {
-	              useProgress: false,
-	              useLetterImage: true
+	              _this25.timer.stop('data', 'load', true);
+
+	              _this25.promiseGetDialogUnread.fulfill(response);
+
+	              _this25.promiseGetDialogUnreadWait = false;
+	              return true;
 	            });
+	          } else {
+	            _this25.promiseGetDialogUnread.reject();
 
-	            _this25.timer.stop('data', 'load', true);
+	            _this25.promiseGetDialogUnreadWait = false;
+	            return false;
 	          }
-
-	          _this25.promiseGetDialogUnread.fulfill(response);
-
-	          _this25.promiseGetDialogUnreadWait = false;
 	        }, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	          name: im_const.RestMethodHandler.imDialogMessagesGetUnread,
 	          dialog: _this25.controller.application.getDialogData()
@@ -3031,5 +3037,5 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	exports.MobileDialogApplication = MobileDialogApplication;
 
-}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,BX.Messenger.Lib,window,BX,BX.Messenger.Lib,BX.Messenger.Const,BX.Messenger.Lib,BX.Messenger,window,BX.Event,BX,window,BX.Messenger.Mixin));
+}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,BX.Messenger.Lib,window,BX,BX.Messenger.Lib,BX.Messenger.Const,BX.Messenger.Lib,BX.Messenger,BX,BX.Event,BX,window,BX.Messenger.Mixin));
 //# sourceMappingURL=dialog.bundle.js.map

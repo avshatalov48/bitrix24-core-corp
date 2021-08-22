@@ -27,9 +27,9 @@ interface ICanSendMessage
 	public static function isConnected(): bool;
 
 	/**
-	 * @return string|null
+	 * @return string|array|null
 	 */
-	public static function getConnectUrl(): ?string;
+	public static function getConnectUrl();
 
 	/**
 	 * @return array

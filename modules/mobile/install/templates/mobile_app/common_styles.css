@@ -962,7 +962,8 @@ a {
 	padding-top: 0;
 }
 .info-block-background.info-block-important .post-item-important {
-	margin-bottom: 17px;
+	margin-bottom: 8px;
+	padding-top: 9px;
 }
 
 .info-block-important-icon {
@@ -3683,7 +3684,7 @@ table.forum-spoiler th {
 }
 
 .post-comment-block-scroll-bottom-active {
-	bottom: 10px;
+/*	bottom: 10px;*/
 }
 
 .post-comment-block-scroll-top-active {

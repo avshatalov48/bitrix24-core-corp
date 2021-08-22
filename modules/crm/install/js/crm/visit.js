@@ -375,7 +375,7 @@
 	BX.CrmActivityVisit.prototype._checkRecognizeConsent = function(next)
 	{
 		var self = this;
-		if(!this.faceIdInstalled)
+		if(!this.faceIdInstalled || !this.faceIdEnabled)
 		{
 			next();
 			return;

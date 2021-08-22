@@ -105,6 +105,10 @@ class CCrmDocumentDeal extends CCrmDocument
 				'Editable' => false,
 				'Required' => false,
 			),
+			'CRM_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
+				'Type' => 'string',
+			),
 			'TITLE' => array(
 				'Name' => GetMessage('CRM_FIELD_TITLE_DEAL'),
 				'Type' => 'string',
@@ -366,6 +370,20 @@ class CCrmDocumentDeal extends CCrmDocument
 				"Type" => "int",
 				"Multiple" => true,
 			),
+			'IS_REPEATED_APPROACH' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_DEAL_IS_REPEATED_APPROACH'),
+				'Type' => 'bool',
+				'Editable' => false,
+			),
+			"PRODUCT_IDS" => array(
+				"Name" => GetMessage("CRM_DOCUMENT_FIELD_PRODUCT_IDS"),
+				"Type" => "int",
+				"Multiple" => true,
+			),
+			"PRODUCT_IDS_PRINTABLE" => array(
+				"Name" => GetMessage("CRM_DOCUMENT_FIELD_PRODUCT_IDS") . $printableFieldNameSuffix,
+				"Type" => "text",
+			),
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -403,6 +421,23 @@ class CCrmDocumentDeal extends CCrmDocument
 
 		$arFields['ORDER_IDS'] = array_column($orderIds, 'ORDER_ID');
 
+		$productRows = Crm\ProductRowTable::getList([
+			'select' => ['ID', 'PRODUCT_ID', 'CP_PRODUCT_NAME', 'SUM_ACCOUNT'],
+			'filter' => [
+				'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::Deal,
+				'=OWNER_ID' => $arFields['ID'],
+			],
+			'order' => ['SORT' => 'ASC']
+		])->fetchAll();
+
+		$arFields['PRODUCT_IDS'] = array_column($productRows, 'ID');
+		$arFields['PRODUCT_IDS_PRINTABLE'] = '';
+
+		if (!empty($arFields['PRODUCT_IDS']))
+		{
+			$arFields['PRODUCT_IDS_PRINTABLE'] = self::getProductRowsPrintable($productRows);
+		}
+
 		if ($arFields['COMPANY_ID'] <= 0)
 		{
 			//set empty value instead "0"
@@ -414,6 +449,28 @@ class CCrmDocumentDeal extends CCrmDocument
 			//set empty value instead "0"
 			$arFields['CONTACT_ID'] = null;
 		}
+	}
+
+	private static function getProductRowsPrintable(array $rows): string
+	{
+		$text = sprintf(
+			'[table][tr][th]%s[/th][th]%s[/th][/tr]',
+			GetMessage('CRM_DOCUMENT_FIELD_PRODUCT_NAME'),
+			GetMessage('CRM_DOCUMENT_FIELD_PRODUCT_SUM')
+		);
+
+		$currencyId = \CCrmCurrency::GetAccountCurrencyID();
+
+		foreach ($rows as $row)
+		{
+			$text .= sprintf(
+				'[tr][td]%s[/td][td]%s[/td][/tr]',
+				$row['CP_PRODUCT_NAME'],
+				\CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId)
+			);
+		}
+
+		return $text . '[/table]';
 	}
 
 	static public function CreateDocument($parentDocumentId, $arFields)

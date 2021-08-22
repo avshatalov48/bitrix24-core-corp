@@ -152,6 +152,15 @@ else
 	$ID = 1;
 	if($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid())
 	{
+		if (
+			\Bitrix\Main\Loader::includeModule('bitrix24')
+			&& COption::GetOptionString('bitrix24', 'absence_limits_enabled', '') === 'Y'
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('absence')
+		)
+		{
+			die('error:<li>'.GetMessage('INTR_USER_ERR_NO_RIGHT').'</li>');
+		}
+
 		if (isset($_POST['absence_element_id']) && CIBlockElementRights::UserHasRightTo($iblockID, intval($_POST['absence_element_id']), 'element_edit'))
 		{
 			$ID = EditAbsence($_POST);

@@ -387,8 +387,13 @@
 	};
 
 	BX.onCustomEvent("onMenuLoaded", [this.result]);
-	let lastNotification = Application.getLastNotification("calendar_sync");
-	if(lastNotification["intent"] && lastNotification["intent"] === "calendar_sync")
+	let intentResult = ["calendar_sync_slider", "calendar_sync_banner"]
+		.find((name, index, intents) => {
+			({intent} = Application.getLastNotification(name))
+			return intents.includes(intent)
+		});
+
+	if(intentResult)
 	{
 		if (Application.getPlatform() === "ios")
 		{
@@ -410,9 +415,20 @@
 			if(typeof Application["davSyncEnable"] !== "undefined")
 			{
 				Application.davSyncEnable("calendar");
+				let urlPath = "/pub/calendar_android_guide.php";
+				Application.openUrl(currentDomain + urlPath);
 			}
 		}
 
+		BX.ajax.runAction('calendar.api.calendarajax.analytical', {
+			analyticsLabel: {
+				mobile_sync_device_platform: Application.getPlatform(),
+				link_place: intentResult === 'calendar_sync_banner' ? 'banner' : 'slider',
+				mobile_sync_calendar: 'mobile_sync_calendar',
+			}
+		});
+
+		analytics.send( "calendar_sync_" + Application.getPlatform(), {type: intentResult})
 	}
 }).bind(this)();
 

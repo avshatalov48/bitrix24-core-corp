@@ -7,6 +7,22 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Disk;
 
+/**
+ * Class TrackedObjectTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TrackedObject_Query query()
+ * @method static EO_TrackedObject_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TrackedObject_Result getById($id)
+ * @method static EO_TrackedObject_Result getList(array $parameters = array())
+ * @method static EO_TrackedObject_Entity getEntity()
+ * @method static \Bitrix\Disk\Internals\EO_TrackedObject createObject($setDefaultValues = true)
+ * @method static \Bitrix\Disk\Internals\EO_TrackedObject_Collection createCollection()
+ * @method static \Bitrix\Disk\Internals\EO_TrackedObject wakeUpObject($row)
+ * @method static \Bitrix\Disk\Internals\EO_TrackedObject_Collection wakeUpCollection($rows)
+ */
 final class TrackedObjectTable extends DataManager
 {
 	private const MAX_COUNT_FOR_USER = 100;

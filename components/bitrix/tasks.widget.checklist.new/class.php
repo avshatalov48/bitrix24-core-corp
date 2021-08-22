@@ -10,7 +10,7 @@ use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
-use Bitrix\Tasks\Scrum\Checklist\EntityChecklistFacade;
+use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Util\User;
 
@@ -31,6 +31,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			'ACTIONS' => [
 				'RENEW' => 'tasks.task.checklist.renew',
 				'COMPLETE' => 'tasks.task.checklist.complete',
+				'COMPLETE_ALL' => 'tasks.task.checklist.completeAll',
 			],
 			'OPTIONS' => [
 				'PREFIX' => 'task_options_checklist_',
@@ -41,13 +42,14 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			'ACTIONS' => [
 				'RENEW' => 'tasks.template.checklist.renew',
 				'COMPLETE' => 'tasks.template.checklist.complete',
+				'COMPLETE_ALL' => 'tasks.template.checklist.completeAll',
 			],
 			'OPTIONS' => [
 				'PREFIX' => 'template_options_checklist_',
 			],
 		],
 		'SCRUM_ENTITY' => [
-			'FACADE' => EntityChecklistFacade::class,
+			'FACADE' => TypeChecklistFacade::class,
 		],
 		'SCRUM_ITEM' => [
 			'FACADE' => ItemChecklistFacade::class,
@@ -82,6 +84,13 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['PATH_TO_USER_PROFILE'] = static::tryParseStringParameter(
 			$this->arParams['PATH_TO_USER_PROFILE'],
 			'/company/personal/user/#user_id#/'
+		);
+		$this->arResult['SHOW_COMPLETE_ALL_BUTTON'] = static::tryParseBooleanParameter(
+			$this->arParams['SHOW_COMPLETE_ALL_BUTTON']
+		);
+		$this->arResult['COLLAPSE_ON_COMPLETE_ALL'] = static::tryParseBooleanParameter(
+			$this->arParams['COLLAPSE_ON_COMPLETE_ALL'],
+			true
 		);
 
 		$mode = mb_strtolower(static::tryParseStringParameter($this->arParams['MODE'], 'view'));
@@ -157,7 +166,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		{
 			$commonActions = [
 				'CAN_ADD' => static::$facade::isActionAllowed($entityId, null, $userId, static::$facade::ACTION_ADD),
-				'CAN_REORDER' => static::$facade::isActionAllowed($entityId, null, $userId, static::$facade::ACTION_REORDER),
+				'CAN_REORDER' => true, // static::$facade::isActionAllowed($entityId, null, $userId, static::$facade::ACTION_REORDER),
 				'CAN_ADD_ACCOMPLICE' => $this->arResult['CAN_ADD_ACCOMPLICE'],
 			];
 		}
@@ -256,7 +265,6 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	{
 		static::$nodeId++;
 
-		$root['TITLE'] = htmlspecialcharsbx($root['TITLE']);
 		$root['SORT_INDEX'] = $sortIndex;
 		$root['DISPLAY_SORT_INDEX'] = htmlspecialcharsbx($displaySortIndex);
 

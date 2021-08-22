@@ -97,10 +97,14 @@
 					groupId: draggableItem.getData()['groupId']
 				});
 
-				var choiceMadePromise = this.scrumDod.showList(draggableItem.getId());
-				choiceMadePromise.then(function() {
-					taskCompletePromise.fulfill();
-				}.bind(this));
+				this.scrumDod.showList(draggableItem.getId())
+					.then(function() {
+						taskCompletePromise.fulfill();
+					}.bind(this))
+					.catch(function() {
+						taskCompletePromise.reject();
+					}.bind(this))
+				;
 			}
 			else
 			{

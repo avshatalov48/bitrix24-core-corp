@@ -65,6 +65,7 @@ $MESS["CRM_COMMON_CATEGORY"] = "Направление";
 $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
 $MESS["CRM_COMMON_DETAIL"] = "Подробнее";
 $MESS["CRM_COMMON_ROBOTS"] = "Роботы";
+$MESS["CRM_COMMON_EMPTY_VALUE"] = "Не заполнено";
 
 $MESS["CRM_COMMON_READ_ACCESS_DENIED"] = "У Вас нет прав на просмотр этого элемента";
 $MESS["CRM_COMMON_ADD_ACCESS_DENIED"] = "У вас нет прав на добавление нового элемента сущности #ENTITY_DESCRIPTION#";
@@ -121,6 +122,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_SOURCE_ID"] = "Источник";
 $MESS["CRM_TYPE_ITEM_FIELD_SOURCE_DESCRIPTION"] = "Дополнительно об источнике";
 $MESS["CRM_TYPE_ITEM_FIELD_OBSERVERS"] = "Наблюдатели";
 $MESS["CRM_TYPE_ITEM_FIELD_WEBFORM_ID"] = "Создано CRM-формой";
+$MESS["CRM_TYPE_ITEM_FIELD_LOCATION"] = "Местоположение";
 
 $MESS["CRM_TYPE_QUOTE_FIELD_FILES"] = "Файлы";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY"] = "Сумма и валюта";
@@ -130,3 +132,5 @@ $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Направление не най
 $MESS["CRM_TYPE_CATEGORY_SETTINGS"] = "Направления";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Доступ к направлению ограничен";
 $MESS["CRM_TYPE_CATEGORY_SORT_TITLE"] = "Сортировка";
+
+$MESS["CRM_QUOTE_TITLE"] = "Предложение №#QUOTE_NUMBER# от #BEGINDATE#";

@@ -19,7 +19,7 @@ class Crm extends UserField
 
 		if (empty($row['UF_CRM_TASK']))
 		{
-			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_USER_FIELD_CRM_NOT_PRESENT');
+			return Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_USER_FIELD_CRM_NOT_PRESENT') ?? '';
 		}
 
 		sort($row['UF_CRM_TASK']);

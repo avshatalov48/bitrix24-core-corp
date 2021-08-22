@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Field;
 
-use Bitrix\Crm\Accounting;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -57,7 +57,7 @@ class Opportunity extends Field
 
 		if ($isAutoOpportunity && !$areProductsEmpty)
 		{
-			$item->set($this->getName(), Accounting\Products::calculateSum($item, $products->getAll()));
+			$item->set($this->getName(), Container::getInstance()->getAccounting()->calculateByItem($item)->getPrice());
 		}
 		elseif ($isAutoOpportunity && $productsWereDeleted)
 		{

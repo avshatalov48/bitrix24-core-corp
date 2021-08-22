@@ -1546,32 +1546,7 @@ class CAllCrmDeal
 				$arFields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($arFields['CURRENCY_ID']);
 			}
 
-			// Calculation of Account Data
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => $arFields['CURRENCY_ID'],
-					'SUM' => isset($arFields['OPPORTUNITY']) ? $arFields['OPPORTUNITY'] : null,
-					'EXCH_RATE' => $arFields['EXCH_RATE']
-				)
-			);
-			if(is_array($accData))
-			{
-				$arFields['ACCOUNT_CURRENCY_ID'] = $accData['ACCOUNT_CURRENCY_ID'];
-				$arFields['OPPORTUNITY_ACCOUNT'] = $accData['ACCOUNT_SUM'];
-			}
-
-			// Calculation of Tax Account Data
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => $arFields['CURRENCY_ID'],
-					'SUM' => isset($arFields['TAX_VALUE']) ? $arFields['TAX_VALUE'] : null,
-					'EXCH_RATE' => $arFields['EXCH_RATE']
-				)
-			);
-			if(is_array($accData))
-			{
-				$arFields['TAX_VALUE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
-			}
+			$arFields = array_merge($arFields, \CCrmAccountingHelper::calculateAccountingData($arFields, [], true));
 
 			//Scavenging
 			if(isset($arFields['BEGINDATE']) && (!is_string($arFields['BEGINDATE']) || trim($arFields['BEGINDATE']) === ''))
@@ -2725,28 +2700,7 @@ class CAllCrmDeal
 				}
 			}
 
-			// Calculation of Account Data
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : (isset($arRow['CURRENCY_ID']) ? $arRow['CURRENCY_ID'] : null),
-					'SUM' => isset($arFields['OPPORTUNITY']) ? $arFields['OPPORTUNITY'] : (isset($arRow['OPPORTUNITY']) ? $arRow['OPPORTUNITY'] : null),
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : (isset($arRow['EXCH_RATE']) ? $arRow['EXCH_RATE'] : null)
-				)
-			);
-			if(is_array($accData))
-			{
-				$arFields['ACCOUNT_CURRENCY_ID'] = $accData['ACCOUNT_CURRENCY_ID'];
-				$arFields['OPPORTUNITY_ACCOUNT'] = $accData['ACCOUNT_SUM'];
-			}
-			$accData = CCrmAccountingHelper::PrepareAccountingData(
-				array(
-					'CURRENCY_ID' => isset($arFields['CURRENCY_ID']) ? $arFields['CURRENCY_ID'] : (isset($arRow['CURRENCY_ID']) ? $arRow['CURRENCY_ID'] : null),
-					'SUM' => isset($arFields['TAX_VALUE']) ? $arFields['TAX_VALUE'] : (isset($arRow['TAX_VALUE']) ? $arRow['TAX_VALUE'] : null),
-					'EXCH_RATE' => isset($arFields['EXCH_RATE']) ? $arFields['EXCH_RATE'] : (isset($arRow['EXCH_RATE']) ? $arRow['EXCH_RATE'] : null)
-				)
-			);
-			if(is_array($accData))
-				$arFields['TAX_VALUE_ACCOUNT'] = $accData['ACCOUNT_SUM'];
+			$arFields = array_merge($arFields, \CCrmAccountingHelper::calculateAccountingData($arFields, $arRow, true));
 
 			$currentDate = ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'SHORT', SITE_ID);
 			$enableCloseDateSync = DealSettings::getCurrent()->isCloseDateSyncEnabled();
@@ -3234,7 +3188,7 @@ class CAllCrmDeal
 			}
 
 
-			if ($bResult)
+			if ($bResult && !$syncStageSemantics)
 			{
 				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
 					->createPullItem(array_merge($arRow, $arFields));
@@ -3344,6 +3298,10 @@ class CAllCrmDeal
 			self::SynchronizeCustomerData($ID, $arFields, array('ENABLE_SOURCE' => false));
 
 			CCrmSearch::DeleteSearch('DEAL', $ID);
+
+			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
+				CCrmOwnerType::Deal
+			)->removeShortIndex($ID);
 
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::DealName);
 

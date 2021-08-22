@@ -839,6 +839,7 @@
 				rendererParams.source = this.state.remoteStream;
 			}
 			return VideoRenderer({
+					testId: 'callsRemoteVideo_' + this.state.centralUserId,
 					resizeMode: "center", // ? do we need it?
 					style: styles.remoteVideo,
 					...rendererParams,
@@ -882,6 +883,7 @@
 
 				View(
 					{
+						testId: showInFrame ? 'callsLocalVideoCenter' : 'callsLocalVideoFrame',
 						onClick: () =>
 						{
 							if (showInFrame)
@@ -969,6 +971,7 @@
 					clickable: false,
 				},
 				showArrows && Image({
+					testId: 'callsArrowLeft',
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
 						marginLeft: (device.screen.safeArea.left || 4),
@@ -997,6 +1000,7 @@
 				}),
 				),
 				showArrows && Image({
+					testId: 'callsArrowRight',
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
 						marginRight: (device.screen.safeArea.right || 4),
@@ -1172,6 +1176,7 @@
 					},
 				},
 				ImageButton({
+					testId: 'callsIncomingDeclineBtn',
 					style: {
 						width: 66,
 						height: 66,
@@ -1181,6 +1186,7 @@
 					onClick: () => this.emit(EventName.DeclineButtonClick),
 				}),
 				Button({
+					testId: 'callsIncomingAnswerAudioBtn',
 					style: {
 						color: this.state.isVideoCall ? "#FFFFFF" : "#00FFFFFF",
 						fontSize: 15,
@@ -1201,6 +1207,7 @@
 					onClick: () => this.emit(EventName.AnswerButtonClick, [false]),
 				}),
 				ImageButton({
+					testId: 'callsIncomingAnswerBtn',
 					style: {
 						width: 66,
 						height: 66,
@@ -1406,11 +1413,13 @@
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_MICROPHONE"),
 					(this.state.microphoneState ? Icons.buttonMic : Icons.buttonMicOff),
 					() => this.emit(EventName.MicButtonClick),
+					'callsButtonMic_' + this.state.microphoneState ? 'on' : 'off',
 				),
 				this.button(
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_CAMERA"),
 					(this.state.cameraState ? Icons.buttonCamera : Icons.buttonCameraOff),
 					() => this.emit(EventName.CameraButtonClick),
+					'callsButtonCamera_' + this.state.cameraState ? 'on' : 'off',
 				),
 				this.button(
 					BX.message("MOBILE_CALL_LAYOUT_BUTTON_MENU"),
@@ -1434,10 +1443,12 @@
 			);
 		}
 
-		button(text, svgContent, click)
+		button(text, svgContent, click, testId)
 		{
+			testId = testId || '';
 			return View(
 				{
+					testId: testId,
 					onClick: click,
 					style: styles.bottomButtonContainer,
 				},
@@ -1692,11 +1703,13 @@
 							style: styles.centralUserDescriptionTop,
 						},
 						!userModel.cameraState && Image({
+							testId: 'callsRemoteUserCameraOff',
 							style: styles.centralUserCameraOff,
 							resizeMode: "contain",
 							svg: {content: Icons.cameraOff},
 						}),
 						!userModel.microphoneState && Image({
+							testId: 'callsRemoteUserMicOff',
 							style: styles.centralUserMicOff,
 							resizeMode: "contain",
 							svg: {content: Icons.microphoneOff},

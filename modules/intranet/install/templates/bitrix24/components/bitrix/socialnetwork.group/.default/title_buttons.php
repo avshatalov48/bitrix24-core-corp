@@ -17,11 +17,6 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_community.php');
 $APPLICATION->AddHeadScript('/bitrix/templates/bitrix24/components/bitrix/socialnetwork.user_groups.link.add/.default/script.js');
 
-$frameMode = (
-	isset($_REQUEST['IFRAME'])
-	&& $_REQUEST['IFRAME'] === 'Y'
-);
-
 ?>
 <script>
 	BX.ready(function() {
@@ -45,6 +40,7 @@ $frameMode = (
 					: 'false'
 			) ?>,
 			urls: <?= CUtil::PhpToJSObject($arResult['Urls']) ?>,
+			slider: <?= ($arResult['IS_IFRAME'] ? 'true' : 'false') ?>,
 		});
 	});
 
@@ -61,7 +57,7 @@ $frameMode = (
 </script>
 
 <div class="socialnetwork-group-title-buttons"><?php
-	if (!$frameMode && in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()))
+	if (!$arResult['IS_IFRAME'] && in_array($arResult['CurrentUserPerms']['UserRole'], \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()))
 	{
 		$APPLICATION->includeComponent(
 			'bitrix:intranet.binding.menu',

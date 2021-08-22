@@ -24,6 +24,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	$namePrefix = 'PRODUCT['.$product['BASKET_CODE'].']';
 	$code2Id[$product['BASKET_CODE']] = $product['PRODUCT_ID'];
 
+
 	//extract SKU props
 	$skuHtml = '';
 
@@ -216,7 +217,7 @@ foreach($arResult['PRODUCTS'] as $product)
 		$properties .= '</div>';
 	}
 
-	$name = htmlspecialcharsbx($product['NAME']);
+	$name = $product['NAME'];
 	$actionEditScript = ''; //For custom products
 	$productEditUrl = ''; //For catalog products
 
@@ -259,7 +260,7 @@ foreach($arResult['PRODUCTS'] as $product)
 				<div class="crm-order-product-info-image-container">
 					<img
 						src="'.(!empty($product['PICTURE_URL']) ? $product['PICTURE_URL'] : $templateFolder.'/images/nofoto.svg').'"								
-						alt="'.htmlspecialcharsbx($product['NAME']).'"
+						alt="'.$product['NAME'].'"
 						class="crm-order-product-info-image">
 				</div>'
 				.$skuHtml.
@@ -328,7 +329,7 @@ foreach($arResult['PRODUCTS'] as $product)
 			</div>'
 	];
 
-	$product['CURRENCY'] = $currencyList[$product['CURRENCY']];
+	$product['CURRENCY'] =  htmlspecialcharsbx($currencyList[$product['CURRENCY']]);
 
 	$actions = [];
 	$controlPanel = array('GROUPS' => array(array('ITEMS' => array())));

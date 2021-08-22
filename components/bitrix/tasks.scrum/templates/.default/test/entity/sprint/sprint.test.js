@@ -72,12 +72,12 @@ describe('Tasks.Scrum.Sprint', () => {
 				assert(typeof Sprint === 'function');
 			});
 			it('Sprint must be initialized successfully', () => {
-				const totalStoryPoints = new StoryPoints();
-				totalStoryPoints.addPoints(sprintParams.totalStoryPoints);
-				const totalCompletedStoryPoints = new StoryPoints();
-				totalCompletedStoryPoints.addPoints(sprintParams.totalCompletedStoryPoints);
-				const totalUncompletedStoryPoints = new StoryPoints();
-				totalUncompletedStoryPoints.addPoints(sprintParams.totalUncompletedStoryPoints);
+				const storyPoints = new StoryPoints();
+				storyPoints.addPoints(sprintParams.storyPoints);
+				const completedStoryPoints = new StoryPoints();
+				completedStoryPoints.addPoints(sprintParams.completedStoryPoints);
+				const uncompletedStoryPoints = new StoryPoints();
+				uncompletedStoryPoints.addPoints(sprintParams.uncompletedStoryPoints);
 
 				assert(sprint.getId() === sprintParams.id);
 				assert(sprint.getName() === sprintParams.name);
@@ -87,9 +87,9 @@ describe('Tasks.Scrum.Sprint', () => {
 				assert(sprint.getWeekendDaysTime() === sprintParams.weekendDaysTime);
 				assert(sprint.getDefaultSprintDuration() === sprintParams.defaultSprintDuration);
 				assert(sprint.getStatus() === sprintParams.status);
-				assert(sprint.getTotalStoryPoints().getPoints() === totalStoryPoints.getPoints());
-				assert(sprint.getTotalCompletedStoryPoints().getPoints() === totalCompletedStoryPoints.getPoints());
-				assert(sprint.getTotalUncompletedStoryPoints().getPoints() === totalUncompletedStoryPoints.getPoints());
+				assert(sprint.getStoryPoints().getPoints() === storyPoints.getPoints());
+				assert(sprint.getCompletedStoryPoints().getPoints() === completedStoryPoints.getPoints());
+				assert(sprint.getUncompletedStoryPoints().getPoints() === uncompletedStoryPoints.getPoints());
 				assert(sprint.getCompletedTasks() === sprintParams.completedTasks);
 				assert(sprint.getUncompletedTasks() === sprintParams.uncompletedTasks);
 				assert(sprint.getItems().size === 0);
@@ -123,8 +123,8 @@ describe('Tasks.Scrum.Sprint', () => {
 				assert(sprint.getNode() === null);
 			});
 			it('Sprint must be return correct story points type', () => {
-				assert(sprint.getTotalCompletedStoryPoints() instanceof StoryPoints);
-				assert(sprint.getTotalUncompletedStoryPoints() instanceof StoryPoints);
+				assert(sprint.getCompletedStoryPoints() instanceof StoryPoints);
+				assert(sprint.getUncompletedStoryPoints() instanceof StoryPoints);
 			});
 			it('Sprint must be correctly update its visibility when base filtering', () => {
 				sprint.setExactSearchApplied(false);

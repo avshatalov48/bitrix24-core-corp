@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -26,7 +30,7 @@ if(!empty($arResult["Post"]))
 			Array(
 				"PATH_TO_BLOG" => $arParams["PATH_TO_BLOG"],
 				"PATH_TO_POST" => "/company/personal/user/#user_id#/blog/#post_id#/",
-				"PATH_TO_POST_MOBILE" => $APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "empty_get_comments", "empty_get_form")),
+				"PATH_TO_POST_MOBILE" => $APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "empty_get_comments")),
 				"PATH_TO_USER" => $arParams["PATH_TO_USER"],
 				"PATH_TO_SMILE" => $arParams["PATH_TO_SMILE"],
 				"PATH_TO_MESSAGES_CHAT" => $arParams["PATH_TO_MESSAGES_CHAT"],
@@ -72,76 +76,6 @@ if(!empty($arResult["Post"]))
 	}
 	else
 	{
-
-		if (
-			$_REQUEST["empty_get_form"] === "Y"
-			|| !$arParams["IS_LIST"]
-		)
-		{
-			$commentsFormBlock = "";
-			ob_start();
-
-			if(
-				$_REQUEST["empty_get_form"] === "Y"
-				|| (int)$_REQUEST["comment_post_id"] <= 0
-			)
-			{
-				?><script>
-					commentVarBlogPostID = <?=intval($arResult["Post"]["ID"])?>;
-					commentVarURL = '<?=$GLOBALS["APPLICATION"]->GetCurPageParam("", array("sessid", "comment_post_id", "act", "post", "comment", "decode", "ACTION", "ENTITY_TYPE_ID", "ENTITY_ID", "empty_get_form", "empty_get_comments"))?>';
-					commentVarLogID = <?=intval($arParams["LOG_ID"])?>;
-					<?
-					if (
-						$_REQUEST["ACTION"] === "CONVERT"
-						&& $_REQUEST["ENTITY_TYPE_ID"] <> ''
-						&& intval($_REQUEST["ENTITY_ID"]) > 0
-					)
-					{
-						?>
-						commentVarAction = 'CONVERT';
-						commentVarEntityTypeID = '<?=CUtil::JSEscape($_REQUEST["ENTITY_TYPE_ID"])?>';
-						commentVarEntityID = <?=intval($_REQUEST["ENTITY_ID"])?>;
-						<?
-					}
-					else
-					{
-						?>
-						commentVarAction = false;
-						commentVarEntityTypeID = false;
-						commentVarEntityID = false;
-						<?
-					}
-					?>
-
-					entryType = 'blog';
-
-					oMSL.createCommentInputForm({
-						placeholder: "<?=GetMessageJS("BLOG_C_ADD_TITLE")?>",
-						mentionDataSource: {outsection: false,
-							url: (BX.message('MobileSiteDir')
-								? BX.message('MobileSiteDir') : '/') + "mobile/index.php?mobile_action=get_user_list&use_name_format=Y"
-						},
-						button_name: "<?=GetMessageJS("BLOG_C_BUTTON_SEND")?>",
-						useImageButton: true,
-						action: function(text)
-						{
-							commonNativeInputCallback(text);
-						}
-					});
-				</script><?
-			}
-
-			$commentsFormBlock = ob_get_contents();
-			ob_end_clean();
-		}
-
-		if ($_REQUEST["empty_get_form"] === "Y")
-		{
-			$APPLICATION->RestartBuffer();
-			echo $commentsFormBlock;
-			die();
-		}
-
 		$itemClassList = [];
 		if (!$arParams['IS_LIST'])
 		{
@@ -195,7 +129,6 @@ if(!empty($arResult["Post"]))
 						detailPageId: 'blog_' + <?=$arResult["Post"]["ID"]?>,
 						logId: <?=(int)$arParams["LOG_ID"]?>,
 						entityXMLId: 'BLOG_<?=(int)$arResult["Post"]["ID"]?>',
-						bUseFollow: <?=($arParams["USE_FOLLOW"] === 'N' ? 'false' : 'true')?>,
 						bFollow: <?=($arParams["FOLLOW"] === 'N' ? 'false' : 'true')?>,
 						feed_id: parseInt(Math.random() * 100000),
 						entryParams: {
@@ -638,23 +571,25 @@ if(!empty($arResult["Post"]))
 						$textClassList[] = 'lenta-important-block-text';
 					}
 
-					?><div class="<?=implode(' ', $textClassList)?>" id="post_block_check_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["textFormated"]?></div><?
+					?><div class="<?= implode(' ', $textClassList) ?>" id="post_block_check_<?= (int)$arParams['LOG_ID'] ?>"><?= $arResult['Post']['textFormated'] ?><?php
 
-					if (!empty($arResult['Post']['IMPORTANT']))
-					{
-						?><div class="post-item-important">
-							<input id="important_post_<?=$arResult['Post']['ID']?>" bx-data-post-id="<?=$arResult['Post']['ID']?>" type="checkbox" onclick="return __MSLOnPostRead(this, event);" <?if ($arResult['Post']['IMPORTANT']['IS_READ'] === 'Y'): ?>checked="checked" <? endif;?>/>
-							<span class="checked webform-small-button"><?=Loc::getMessage('BLOG_ALREADY_READ')?></span>
-							<label for="important_post_<?=$arResult['Post']['ID']?>" class="unchecked ui-btn ui-btn-md ui-btn-success ui-btn-round"><?=Loc::getMessage(trim('BLOG_READ_'.$arResult['Post']['IMPORTANT']['USER']['PERSONAL_GENDER']))?></label><?
+						if (!empty($arResult['Post']['IMPORTANT']))
+						{
+							?><div class="post-item-important">
+								<input id="important_post_<?= $arResult['Post']['ID'] ?>" bx-data-post-id="<?= $arResult['Post']['ID'] ?>" type="checkbox" onclick="return BX.MobileLivefeed.ImportantManagerInstance.setPostRead(this);" <?if ($arResult['Post']['IMPORTANT']['IS_READ'] === 'Y'): ?>checked="checked" <? endif;?>/>
+								<span class="checked webform-small-button"><?= Loc::getMessage('BLOG_ALREADY_READ') ?></span>
+								<label for="important_post_<?= $arResult['Post']['ID'] ?>" class="unchecked ui-btn ui-btn-md ui-btn-success ui-btn-round"><?= Loc::getMessage(trim('BLOG_READ_'.$arResult['Post']['IMPORTANT']['USER']['PERSONAL_GENDER'])) ?></label><?php
 
-							$readUsersCount = (int)$arResult['Post']['IMPORTANT']['COUNT'];
+								$readUsersCount = (int)$arResult['Post']['IMPORTANT']['COUNT'];
 
-							?><div class="post-item-important-list"><?
-								?><div class="post-item-important-list-text post-item-important-list-text-current"><?=Loc::getMessage('BLOG_IMPORTANT_READ_LIST_'.($readUsersCount % 10), [ '#NUM#' => $readUsersCount ])?></div><?
-								?><div class="post-item-important-list-text post-item-important-list-text-plus"><?=Loc::getMessage('BLOG_IMPORTANT_READ_LIST_'.(($readUsersCount+1) % 10), [ '#NUM#' => ($readUsersCount+1) ])?></div><?
-							?></div><?
-						?></div><?
-					}
+								?><div class="post-item-important-list"><?php
+									?><div class="post-item-important-list-text post-item-important-list-text-current"><?= Loc::getMessage('BLOG_IMPORTANT_READ_LIST_' . ($readUsersCount % 10), [ '#NUM#' => $readUsersCount ]) ?></div><?php
+									?><div class="post-item-important-list-text post-item-important-list-text-plus"><?= Loc::getMessage('BLOG_IMPORTANT_READ_LIST_' . (($readUsersCount+1) % 10), [ '#NUM#' => ($readUsersCount+1) ]) ?></div><?php
+								?></div><?php
+							?></div><?php
+						}
+
+					?></div><?php
 
 					if (!empty($arResult["images"]))
 					{
@@ -1152,26 +1087,6 @@ if(!empty($arResult["Post"]))
 			}
 
 		?></div><? // post-wrap / lenta-item
-
-		if (!$arParams["IS_LIST"])
-		{
-			// comments form block
-
-			if ($arResult["GetCommentsFormOnly"])
-			{
-				$APPLICATION->RestartBuffer();
-			}
-
-			if ($arCommentsResult["CanUserComment"])
-			{
-				echo $commentsFormBlock;
-			}
-
-			if ($arResult["GetCommentsFormOnly"])
-			{
-				die();
-			}
-		}
 	}
 }
 elseif(!$arResult["bFromList"])
@@ -1184,4 +1099,3 @@ if ($targetHtml <> '')
 	$APPLICATION->RestartBuffer();
 	echo $targetHtml;
 }
-?>

@@ -10,6 +10,19 @@ use Bitrix\Main\ORM\Query\Join;
  * Class AddressTable
  * @package Bitrix\Location\Model
  * @internal
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Address_Query query()
+ * @method static EO_Address_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Address_Result getById($id)
+ * @method static EO_Address_Result getList(array $parameters = array())
+ * @method static EO_Address_Entity getEntity()
+ * @method static \Bitrix\Location\Model\EO_Address createObject($setDefaultValues = true)
+ * @method static \Bitrix\Location\Model\EO_Address_Collection createCollection()
+ * @method static \Bitrix\Location\Model\EO_Address wakeUpObject($row)
+ * @method static \Bitrix\Location\Model\EO_Address_Collection wakeUpCollection($rows)
  */
 class AddressTable extends Main\ORM\Data\DataManager
 {

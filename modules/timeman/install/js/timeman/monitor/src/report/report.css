@@ -1,3 +1,7 @@
+.pwt-report-container {
+    height: 100%;
+}
+
 .pwt-report {
     display: flex;
     flex-direction: column;
@@ -137,4 +141,40 @@
 }
 .bx-desktop-tab-icon-timeman-pwt:hover {
     background: url("../../images/bx-desktop-tab-icon-timeman-pwt-hover.svg");
+}
+
+.bx-monitor-alert-btn-right {
+    position: absolute;
+    right: 16px;
+    top: calc(50% - 12px);
+}
+
+.bx-timeman-pwt-report-alert-enter-active, .bx-timeman-pwt-report-alert-leave-active {
+    transition: opacity .3s;
+}
+.bx-timeman-pwt-report-alert-enter, .bx-timeman-pwt-report-alert-leave-to {
+    opacity: 0;
+}
+
+.bx-timeman-pwt-report-container-stretchable {
+    height: 100%;
+    overflow: hidden;
+}
+
+.bx-timeman-pwt-report {
+    transition: all 1s;
+    display: inline-block;
+}
+
+.bx-timeman-pwt-report-move {
+    transition: transform .2s;
+}
+
+.bx-timeman-pwt-report-enter, .bx-timeman-pwt-report-leave-to {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.bx-timeman-pwt-report-leave-active {
+    position: absolute;
 }

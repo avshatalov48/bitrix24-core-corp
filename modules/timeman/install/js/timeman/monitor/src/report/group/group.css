@@ -21,7 +21,7 @@
     flex-direction: column;
     font: 13px/18px "Open Sans", Arial, normal;
     font-weight: 600;
-    padding: 11px 13px;
+    padding: 11px 13px 15px 13px;
     border-radius: 4px 4px 0 0;
 }
 
@@ -67,15 +67,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    height: 26px;
 }
 
 .bx-monitor-group-title-wrap {
 	display: flex;
+    align-items: center;
 }
 
 .bx-monitor-group-title {
     display: flex;
-    align-items: center;
     text-transform: uppercase;
 	margin-right: 8px;
     user-select: none;
@@ -92,6 +93,8 @@
 }
 
 .bx-monitor-group-subtitle {
+    display: flex;
+    align-items: center;
     font: 13px/18px "Open Sans", Arial, normal;
     color: #505A69;
     margin-right: 8px;
