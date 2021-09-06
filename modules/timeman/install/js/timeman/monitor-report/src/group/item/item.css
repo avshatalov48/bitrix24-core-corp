@@ -1,0 +1,153 @@
+.bx-monitor-group-item-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.bx-monitor-group-header {
+    display: flex;
+    min-height: 70px;
+}
+
+.bx-monitor-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 11px;
+    margin: 0 7px 11px 11px;
+    background: #fff;
+    border:1px solid #e8e8ea;
+    border-radius: 4px;
+    height: 26px;
+    transition: border .2s;
+}
+
+.bx-monitor-group-item-working-selected {
+    border:1px solid #78c88d;
+}
+
+.bx-monitor-group-item-personal-selected {
+    border:1px solid #b8bec6;
+}
+
+.bx-monitor-group-sub-items-container {
+    padding-left: 30px;
+}
+
+.bx-monitor-group-item-container {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.bx-monitor-group-item-title-container
+{
+    display: flex;
+    align-items: center;
+}
+
+.bx-monitor-group-item-title {
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 130px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: none;
+}
+
+.bx-monitor-group-item-title-full {
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 185px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: none;
+}
+
+.bx-monitor-group-item-title-small {
+    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 115px;
+    overflow: hidden;
+    user-select: none;
+}
+
+.bx-monitor-group-item-subtitle {
+    font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 115px;
+    overflow: hidden;
+    user-select: none;
+    color: #949595;
+}
+
+.bx-monitor-group-item-icon {
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    height: 16px;
+    width: 16px;
+    margin-right: 8px;
+}
+
+.bx-monitor-group-item-icon-away {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGZpbGw9IiNGODlCNTIiIGN4PSI5IiBjeT0iOSIgcj0iOSIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMCA5VjRIN3Y4aDdWOXoiLz48L2c+PC9zdmc+');
+}
+
+.bx-monitor-group-item-icon-comment {
+    margin-left: 8px;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjk0Mi45OTRjMS4xNiAwIDIuMS45NCAyLjEgMi4xdjcuOGEyLjEgMi4xIDAgMDEtMi4xIDIuMUg2LjM0M0wzLjk1IDE1LjcwOGEuNC40IDAgMDEtLjctLjI2NHYtMi40NUgyLjE1NGEyLjEgMi4xIDAgMDEtMi4xLTIuMXYtNy44YzAtMS4xNi45NC0yLjEgMi4xLTIuMWgxMC43ODh6bS0uMjgzIDEuNzk0SDIuNDc3YS43LjcgMCAwMC0uNjkzLjYwNWwtLjAwNy4wOTV2Ny4wMWEuNy43IDAgMDAuNjA1LjY5NGwuMDk1LjAwN2gyLjE5N3YxLjA1bC45NS0xLjA1aDcuMDM1YS43LjcgMCAwMC42OTQtLjYwNWwuMDA2LS4wOTV2LTcuMDFhLjcuNyAwIDAwLS43LS43ek01LjMgNS45NTJhLjMuMyAwIDAxLjMuM3YxLjUwNGEuMy4zIDAgMDEtLjMuM0gzLjc5NGEuMy4zIDAgMDEtLjMtLjNWNi4yNTJhLjMuMyAwIDAxLjMtLjNINS4zem0zLjEwNiAwYS4zLjMgMCAwMS4zLjN2MS41MDRhLjMuMyAwIDAxLS4zLjNINi45MDFhLjMuMyAwIDAxLS4zLS4zVjYuMjUyYS4zLjMgMCAwMS4zLS4zaDEuNTA0em0zLjEwNyAwYS4zLjMgMCAwMS4zLjN2MS41MDRhLjMuMyAwIDAxLS4zLjNoLTEuNTA0YS4zLjMgMCAwMS0uMy0uM1Y2LjI1MmEuMy4zIDAgMDEuMy0uM2gxLjUwNHoiIGZpbGw9IiM5Mzk3OUIiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==');
+    border-radius: 0 !important;
+    background-color: transparent !important;
+}
+
+.bx-monitor-group-site-title {
+    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 130px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.bx-monitor-group-item-menu {
+    display: flex;
+    align-items: center;
+}
+
+.bx-monitor-group-item-count-container {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e1e3e5;
+    border-radius: 10px;
+    padding: 2px 4px;
+    margin-right: 8px;
+}
+
+.bx-monitor-group-item-count-icon {
+    margin-right: 4px;
+    color: #e1e3e5;
+}
+
+.bx-monitor-group-item-time {
+    display: flex;
+    align-items: center;
+    margin-right: 11px;
+    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    user-select: none;
+}
+
+.bx-monitor-group-item-button-comment {
+    margin-left: 11px;
+    margin-right: 8px;
+}
+
+.bx-monitor-group-item-count {
+    display: flex;
+    align-items: center;
+    font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bx-monitor-group-btn-right {
+    margin-left: 0 !important;
+}
+
+.bx-monitor-group-btn-left {
+    margin-right: 11px;
+}

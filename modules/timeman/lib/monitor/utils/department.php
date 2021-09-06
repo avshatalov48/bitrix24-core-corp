@@ -53,4 +53,18 @@ class Department
 	{
 		return \CIntranetUtils::GetDeparmentsTree($departmentId, true);
 	}
+
+	public static function getDepartmentsEmployees(array $departmentIds, bool $recursive = false): array
+	{
+		$departmentsEmployees = [];
+
+		$users = \CIntranetUtils::getDepartmentEmployees($departmentIds, $recursive);
+
+		while ($user = $users->Fetch())
+		{
+			$departmentsEmployees[] = (int)$user['ID'];
+		}
+
+		return $departmentsEmployees;
+	}
 }

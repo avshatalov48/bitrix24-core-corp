@@ -41,4 +41,9 @@ class Time
 			'minutes' => $minutes
 		];
 	}
+
+	public static function msToSec(int $milliseconds)
+	{
+		return $milliseconds / 1000;
+	}
 }

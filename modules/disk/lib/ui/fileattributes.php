@@ -175,4 +175,15 @@ final class FileAttributes extends ItemAttributes
 			'application/vnd.ms-powerpoint',
 		];
 	}
+
+	public function __toString()
+	{
+		$extension = $this->getExtension();
+		if ($extension)
+		{
+			Extension::load($extension);
+		}
+
+		return parent::__toString();
+	}
 }

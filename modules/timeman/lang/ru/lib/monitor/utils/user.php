@@ -1,0 +1,2 @@
+<?php
+$MESS['TIMEMAN_MONITOR_UTILS_DEFAULT_USER_NAME'] = 'Без имени';

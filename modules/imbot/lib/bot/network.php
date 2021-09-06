@@ -607,22 +607,40 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$publicHandler = new Main\IO\File(Main\Application::getDocumentRoot(). self::PORTAL_PATH);
-		if (!$publicHandler->isExists())
+		$documentRoot = '';
+		$siteList = \CSite::getList('', '', ['DOMAIN' => $host, 'ACTIVE' => 'Y']);
+		if ($site = $siteList->fetch())
 		{
-			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH', ['#PATH#' => self::PORTAL_PATH]);
-			if (empty($message))
+			$documentRoot = $site['ABS_DOC_ROOT'];
+		}
+		else
+		{
+			$siteList = \CSite::getList('', '', ['DEFAULT' => 'Y', 'ACTIVE' => 'Y']);
+			if ($site = $siteList->fetch())
 			{
-				$message = 'The file handler has not been found within the site document root. Expected: '.self::PORTAL_PATH;
+				$documentRoot = $site['ABS_DOC_ROOT'];
 			}
+		}
+		if ($documentRoot)
+		{
+			$documentRoot = Main\IO\Path::normalize($documentRoot);
+			$publicHandler = new Main\IO\File($documentRoot. self::PORTAL_PATH);
+			if (!$publicHandler->isExists())
+			{
+				$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH', ['#PATH#' => self::PORTAL_PATH]);
+				if (empty($message))
+				{
+					$message = 'The file handler has not been found within the site document root. Expected: '.self::PORTAL_PATH;
+				}
 
-			self::$lastError = new ImBot\Error(
-				__METHOD__,
-				'PUBLIC_URL_HANDLER_PATH',
-				$message
-			);
+				self::$lastError = new ImBot\Error(
+					__METHOD__,
+					'PUBLIC_URL_HANDLER_PATH',
+					$message
+				);
 
-			return false;
+				return false;
+			}
 		}
 
 		$http = self::instanceHttpClient();

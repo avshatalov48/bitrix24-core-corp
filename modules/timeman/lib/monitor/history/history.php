@@ -10,7 +10,7 @@ use Bitrix\Timeman\Model\Monitor\MonitorAbsenceTable;
 use Bitrix\Timeman\Model\Monitor\MonitorCommentTable;
 use Bitrix\Timeman\Model\Monitor\MonitorEntityTable;
 use Bitrix\Timeman\Model\Monitor\MonitorUserLogTable;
-use Bitrix\Timeman\Monitor\Group\EntityType;
+use Bitrix\Timeman\Monitor\Constant\EntityType;
 use Bitrix\Timeman\Monitor\Utils\User;
 
 class History
@@ -54,6 +54,66 @@ class History
 
 		foreach ($history as $index => $entity)
 		{
+			if ($entity['ABSENCE_TIME_START'])
+			{
+				$history[$index]['TITLE'] =
+					$entity['TITLE']
+					. ' '
+					. Loc::getMessage('TIMEMAN_MONITOR_HISTORY_FROM_TIME')
+					. ' '
+					. DateTime::createFromUserTime($entity['ABSENCE_TIME_START'])->format('H:i')
+				;
+			}
+		}
+
+		return $history;
+	}
+
+	public static function getOnDate(int $userId, Date $date): array
+	{
+		$query = MonitorUserLogTable::query();
+
+		$query->setSelect([
+			'type' => 'entity.TYPE',
+			'title' => 'entity.TITLE',
+			'entityId' => 'ENTITY_ID',
+			'time' => 'TIME_SPEND',
+			'comment' => 'monitor_comment.COMMENT',
+			'timeStart' => 'absence.TIME_START',
+			'desktopCode' => 'DESKTOP_CODE',
+		]);
+
+		$query->registerRuntimeField(new ReferenceField(
+			'entity',
+			MonitorEntityTable::class,
+			Join::on('this.ENTITY_ID', 'ref.ID')
+		));
+
+		$query->registerRuntimeField(new ReferenceField(
+			'monitor_comment',
+			MonitorCommentTable::class,
+			Join::on('this.ID', 'ref.USER_LOG_ID')
+				->whereColumn('this.USER_ID', 'USER_ID')
+		));
+
+		$query->registerRuntimeField(new ReferenceField(
+			'absence',
+			MonitorAbsenceTable::class,
+			Join::on('this.ID', 'ref.USER_LOG_ID')
+		));
+
+		$query->addFilter('=USER_ID', $userId);
+		$query->addFilter('=DATE_LOG', $date);
+
+		$query->addOrder('TIME_SPEND', 'DESC');
+
+		$history = $query->exec()->fetchAll();
+
+		foreach ($history as $index => $entity)
+		{
+			$history[$index]['time'] = (int)$history[$index]['time'];
+			$history[$index]['entityId'] = (int)$history[$index]['entityId'];
+
 			if ($entity['ABSENCE_TIME_START'])
 			{
 				$history[$index]['TITLE'] =

@@ -1,0 +1,205 @@
+.pwt-report-container {
+    height: 100%;
+}
+
+.pwt-report {
+    display: flex;
+    flex-direction: column;
+    padding: 0 15px 21px 21px;
+    height: calc(100% - 65px);
+}
+
+.pwt-report-header-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.bx-timeman-pwt-popup {
+    height: 0;
+    z-index: 1000;
+}
+
+.pwt-report-header-title {
+    font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+    padding: 21px 0 9px 12px !important;
+    user-select: none;
+}
+
+.pwt-report-header-buttons-container {
+    display: flex;
+    padding: 21px 12px 9px 0;
+}
+
+.pwt-report-header-menu {
+    display: flex;
+    height: 74px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pwt-report-alert {
+    width: auto;
+    margin: 12px !important;
+}
+
+.pwt-report-alert-link {
+    font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-decoration: none;
+    color: #2066b0;
+    border-bottom: 1px dashed rgba(39, 107, 179, .4);
+    transition: border-bottom .3s;
+    cursor: pointer;
+}
+
+.pwt-report-alert-link:hover {
+    border-bottom: 1px dashed transparent;
+}
+
+.pwt-report-content-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.pwt-report-content-header {
+    display: flex;
+    align-items: center;
+}
+
+.pwt-report-content-header-title {
+    font: 14px/23px "Helvetica Neue", Helvetica, "Open Sans", Arial;
+    font-weight: bold;
+    color: #525c69;
+    user-select: none;
+}
+
+.pwt-report-content {
+    display: flex;
+    flex-direction: column;
+    padding: 23px;
+    color: #535c69;
+    font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    margin: 12px;
+    border-radius: 6px;
+    background-color: #fff;
+    overflow: inherit;
+}
+
+.pwt-report-content:last-child {
+    height: 100%;
+    margin-bottom: 0;
+}
+
+.pwt-report-content-groups {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+	overflow-x: auto;
+}
+
+.pwt-report-content-single-group {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    overflow-x: auto;
+}
+
+@media (max-width: 1240px) {
+    .pwt-report-content-groups {
+        display: flex;
+        justify-content: flex-start;
+        height: 100%;
+        overflow-x: auto;
+    }
+}
+
+.pwt-report-content-groups::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+    background-color: transparent;
+}
+
+.pwt-report-content-groups::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.pwt-report-content-groups::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	transition: .2s;
+}
+
+.pwt-report-content-groups:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.pwt-report-content-groups:hover::-webkit-scrollbar-thumb:hover {
+	background: #c8cdd2;
+}
+
+.pwt-report-button-panel-wrapper {
+    width: 100%;
+    opacity: 1;
+}
+
+.pwt-report-button-panel-wrapper-hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pwt-report-button-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 13px;
+    opacity: 1;
+    background: white;
+}
+
+.bx-desktop-tab-icon-timeman-pwt {
+    background: url("../../images/bx-desktop-tab-icon-timeman-pwt.svg");
+}
+.bx-desktop-tab-icon-timeman-pwt:hover {
+    background: url("../../images/bx-desktop-tab-icon-timeman-pwt-hover.svg");
+}
+
+.bx-monitor-alert-btn-right {
+    position: absolute;
+    right: 16px;
+    top: calc(50% - 12px);
+}
+
+.bx-timeman-pwt-report-alert-enter-active, .bx-timeman-pwt-report-alert-leave-active {
+    transition: opacity .3s;
+}
+.bx-timeman-pwt-report-alert-enter, .bx-timeman-pwt-report-alert-leave-to {
+    opacity: 0;
+}
+
+.bx-timeman-pwt-report-container-stretchable {
+    height: 100%;
+    overflow: hidden;
+}
+
+.bx-timeman-pwt-report {
+    transition: all 1s;
+    display: inline-block;
+}
+
+.bx-timeman-pwt-report-move {
+    transition: transform .2s;
+}
+
+.bx-timeman-pwt-report-enter, .bx-timeman-pwt-report-leave-to {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.bx-timeman-pwt-report-leave-active {
+    position: absolute;
+}

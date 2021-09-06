@@ -20,5 +20,8 @@
       "name": "Alexander Shatalov",
       "email": "alexander.shataloff@gmail.com"
     }
-  ]
+  ],
+  "require": {
+    "php": ">=7.0"
+  }
 }

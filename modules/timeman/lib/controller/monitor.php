@@ -5,9 +5,12 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Timeman\Monitor\Config;
 use Bitrix\Timeman\Monitor\History\History;
+use Bitrix\Timeman\Monitor\Report\DayReport;
+use Bitrix\Timeman\Monitor\Security\Permissions;
 
 class Monitor extends Controller
 {
@@ -60,5 +63,18 @@ class Monitor extends Controller
 	public function isAvailableAction(): bool
 	{
 		return Config::isAvailable();
+	}
+
+	public function getDayReportAction(int $userId, string $dateLog): ?array
+	{
+		if (!Permissions::createForCurrentUser()->isUserAvailable($userId))
+		{
+			$this->errorCollection[] = new Error('Access denied', 'ACCESS_DENIED');
+			return null;
+		}
+
+		$report = new DayReport($userId, new Date($dateLog, 'Y-m-d'));
+
+		return $report->getData();
 	}
 }

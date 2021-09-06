@@ -2,7 +2,7 @@
 namespace Bitrix\Timeman\Monitor\Report;
 
 use Bitrix\Main\Type\Date;
-use Bitrix\Timeman\Monitor\Group\Group;
+use Bitrix\Timeman\Monitor\Constant\Group;
 use Bitrix\Timeman\Monitor\History\History;
 use Bitrix\Timeman\Monitor\History\ReportComment;
 use Bitrix\Timeman\Monitor\History\UserChart;
@@ -25,7 +25,7 @@ class Report
 		$this->dateFinish = $dateFinish;
 
 		$this->history = History::getForPeriod($this->userId, $this->dateStart, $this->dateFinish);
-		$this->timeline = UserChart::getOnDate($this->userId, $this->dateStart);
+		$this->timeline = UserChart::getReportOnDate($this->userId, $this->dateStart);
 		$this->comment = ReportComment::getOnDate($this->userId, $this->dateStart);
 
 		if ($this->history)

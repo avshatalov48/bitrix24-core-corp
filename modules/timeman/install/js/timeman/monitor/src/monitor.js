@@ -2,7 +2,7 @@ import {VuexBuilder} from "ui.vue.vuex";
 import {MonitorModel} from './model/monitor';
 import {EventHandler} from './eventhandler';
 import {Sender} from './sender';
-import {Report} from './report/report';
+import {MonitorReport} from 'timeman.monitor-report';
 import {Logger} from './lib/logger';
 import {Debug} from './lib/debug';
 import {DateFormatter} from "timeman.dateformatter";
@@ -151,6 +151,14 @@ class Monitor
 			return;
 		}
 
+		if (!this.getStorage().state.monitor.config.grantingPermissionDate)
+		{
+			Logger.log('History access not provided. Monitor is not started.');
+			Debug.log('History access not provided. Monitor is not started.');
+
+			return;
+		}
+
 		this.getStorage().dispatch('monitor/migrateHistory').then(() => {
 			this.getStorage().dispatch('monitor/clearSentHistory').then(() => {
 				this.getStorage().dispatch('monitor/refreshDateLog').then(() => {
@@ -280,7 +288,7 @@ class Monitor
 			return;
 		}
 
-		Report.open(this.getStorage());
+		MonitorReport.open(this.getStorage());
 	}
 
 	openReportPreview()
@@ -290,7 +298,7 @@ class Monitor
 			return;
 		}
 
-		Report.openPreview(this.getStorage());
+		MonitorReport.openPreview(this.getStorage());
 	}
 
 	getPausedUntilTime()

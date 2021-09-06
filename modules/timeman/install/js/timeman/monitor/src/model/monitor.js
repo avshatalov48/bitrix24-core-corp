@@ -36,6 +36,7 @@ export class MonitorModel extends VuexBuilderModel
 				pausedUntil: null,
 				lastSuccessfulSendDate: null,
 				lastRemindDate: null,
+				grantingPermissionDate: null,
 			},
 			reportState: {
 				dateLog: this.getDateLog(),
@@ -128,6 +129,11 @@ export class MonitorModel extends VuexBuilderModel
 			setLastRemindDate: (store, date) =>
 			{
 				store.commit('setLastRemindDate', date);
+			},
+
+			grantPermission: (store) =>
+			{
+				store.commit('setGrantingPermissionDate', new Date());
 			},
 
 			setLastSuccessfulSendDate: (store, date) =>
@@ -458,6 +464,13 @@ export class MonitorModel extends VuexBuilderModel
 			setLastRemindDate: (state, date) =>
 			{
 				state.config.lastRemindDate = date;
+
+				super.saveState(state);
+			},
+
+			setGrantingPermissionDate: (state, date) =>
+			{
+				state.config.grantingPermissionDate = date;
 
 				super.saveState(state);
 			},
@@ -1422,6 +1435,20 @@ export class MonitorModel extends VuexBuilderModel
 					.find(comment => comment.dateLog === state.reportState.dateLog);
 
 				return reportComment ? reportComment.text : '';
+			},
+			hasActivityOtherThanBitrix24(state)
+			{
+				let hasActivity = false;
+
+				let appSiteEntities = state.entity
+					.filter(entity => entity.type === EntityType.app || entity.type === EntityType.site);
+
+				if (Type.isArrayFilled(appSiteEntities) && appSiteEntities.length > 1)
+				{
+					hasActivity = true;
+				}
+
+				return hasActivity;
 			},
 		}
 	}

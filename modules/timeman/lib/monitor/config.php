@@ -10,6 +10,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
 use Bitrix\Pull\Event;
 use Bitrix\Timeman\Absence;
+use Bitrix\Timeman\Monitor\Constant\State;
 
 final class Config
 {
@@ -23,8 +24,8 @@ final class Config
 	public const TYPE_FOR_USER = 'USER';
 
 	private static $resendTimeout = 60000; //1 min
-	private static $otherTime = 1800000; //30 min
-	private static $shortAbsenceTime = 1800000; //30 min
+	public static $otherTime = 1800000; //30 min
+	public static $shortAbsenceTime = 1800000; //30 min
 
 	public static function isAvailable(): bool
 	{

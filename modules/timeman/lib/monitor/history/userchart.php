@@ -59,6 +59,23 @@ class UserChart
 		$query->addFilter('=USER_ID', $userId);
 		$query->addFilter('=DATE_LOG', $date);
 
+		return $query->exec()->fetchAll();
+	}
+
+	public static function getReportOnDate(int $userId, Date $date): array
+	{
+		$query = MonitorUserChartTable::query();
+
+		$query->setSelect([
+			'TYPE' => 'GROUP_TYPE',
+			'START' => 'TIME_START',
+			'FINISH' => 'TIME_FINISH',
+			'DESKTOP_CODE',
+		]);
+
+		$query->addFilter('=USER_ID', $userId);
+		$query->addFilter('=DATE_LOG', $date);
+
 		$rawChartData = $query->exec()->fetchAll();
 
 		$chartDataByDesktop = [];
