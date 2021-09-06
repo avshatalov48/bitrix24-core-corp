@@ -1,0 +1,24 @@
+{
+  "name": "avshatalov48/bitrix24-core-corp",
+  "description": "1C-Bitrix24 Core. Corporate Portal",
+  "license": "MIT",
+  "keywords": [
+    "php",
+    "core",
+    "bitrix",
+    "1c-bitrix",
+    "bitrix24",
+    "autocomplete",
+    "ide-helper"
+  ],
+  "support": {
+    "issues": "https://github.com/avshatalov48/bitrix24-core-corp/issues",
+    "source": "https://github.com/avshatalov48/bitrix24-core-corp"
+  },
+  "authors": [
+    {
+      "name": "Alexander Shatalov",
+      "email": "alexander.shataloff@gmail.com"
+    }
+  ]
+}

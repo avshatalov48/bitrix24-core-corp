@@ -43,6 +43,10 @@
 
 ![PHPStorm](./images/phpstorm.png "Подключение в PHPStorm")
 
+## Composer
+
+* `composer require avshatalov48/bitrix24-core-corp --dev`
+
 ## Разное
 
 * С 01.04.2021 будет ограничена поддержка наших продуктов на PHP версии ниже 7.3.0. Рекомендуемая версия PHP - 7.4.0 и выше.
